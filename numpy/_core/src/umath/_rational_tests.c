@@ -10,6 +10,7 @@
 #include "common.h"  /* for error_converting */
 
 #include <math.h>
+#include <ctype.h>
 
 
 /* Relevant arithmetic exceptions */
