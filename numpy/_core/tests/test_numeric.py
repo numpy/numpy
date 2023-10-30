@@ -2942,6 +2942,21 @@ class TestIsclose:
         with assert_raises(ValueError, msg=message):
             np.isclose(x, y, rtol=rtol)
 
+    def test_nep50_isclose(self):
+        below_one = float(1.-np.finfo('f8').eps)
+        f32 = np.array(below_one, 'f4')  # This is just 1 at float32 precision
+        assert f32 > np.array(below_one)
+        # NEP 50 broadcasting of python scalars
+        assert f32 == below_one
+        # Test that it works for isclose arguments too (and that those fail if
+        # one uses a numpy float64).
+        assert np.isclose(f32, below_one, atol=0, rtol=0)
+        assert np.isclose(f32, np.float32(0), atol=below_one)
+        assert np.isclose(f32, 2, atol=0, rtol=below_one/2)
+        assert not np.isclose(f32, np.float64(below_one), atol=0, rtol=0)
+        assert not np.isclose(f32, np.float32(0), atol=np.float64(below_one))
+        assert not np.isclose(f32, 2, atol=0, rtol=np.float64(below_one/2))
+
     def tst_all_isclose(self, x, y):
         assert_(np.all(np.isclose(x, y)), "%s and %s not close" % (x, y))
 

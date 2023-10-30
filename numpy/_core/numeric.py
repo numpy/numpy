@@ -51,7 +51,7 @@ __all__ = [
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
     'identity', 'allclose', 'putmask',
-    'flatnonzero', 'inf', 'nan', 'False_', 'True_', 'bitwise_not', 
+    'flatnonzero', 'inf', 'nan', 'False_', 'True_', 'bitwise_not',
     'full', 'full_like', 'matmul', 'shares_memory', 'may_share_memory',
     '_get_promotion_state', '_set_promotion_state']
 
@@ -682,22 +682,22 @@ def correlate(a, v, mode='valid'):
     See Also
     --------
     convolve : Discrete, linear convolution of two one-dimensional sequences.
-    scipy.signal.correlate : uses FFT which has superior performance 
+    scipy.signal.correlate : uses FFT which has superior performance
         on large arrays.
 
     Notes
     -----
-    The definition of correlation above is not unique and sometimes 
+    The definition of correlation above is not unique and sometimes
     correlation may be defined differently. Another common definition is [1]_:
 
     .. math:: c'_k = \sum_n a_{n} \cdot \overline{v_{n+k}}
 
     which is related to :math:`c_k` by :math:`c'_k = c_{-k}`.
 
-    `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5) 
+    `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5)
     because it does not use the FFT to compute the convolution; in that case,
     `scipy.signal.correlate` might be preferable.
-    
+
     References
     ----------
     .. [1] Wikipedia, "Cross-correlation",
@@ -1585,7 +1585,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
 
     if (a.ndim < 1) or (b.ndim < 1):
         raise ValueError("At least one array has zero dimension")
-    
+
     # Check axisa and axisb are within bounds
     axisa = normalize_axis_index(axisa, a.ndim, msg_prefix='axisa')
     axisb = normalize_axis_index(axisb, b.ndim, msg_prefix='axisb')
@@ -1889,7 +1889,7 @@ def isscalar(element):
 
     In most cases ``np.ndim(x) == 0`` should be used instead of this function,
     as that will also return true for 0d arrays. This is how numpy overloads
-    functions in the style of the ``dx`` arguments to `gradient` and 
+    functions in the style of the ``dx`` arguments to `gradient` and
     the ``bins`` argument to `histogram`. Some key differences:
 
     +------------------------------------+---------------+-------------------+
@@ -1965,12 +1965,12 @@ def binary_repr(num, width=None):
     width : int, optional
         The length of the returned string if `num` is positive, or the length
         of the two's complement if `num` is negative, provided that `width` is
-        at least a sufficient number of bits for `num` to be represented in 
+        at least a sufficient number of bits for `num` to be represented in
         the designated form.
 
         If the `width` value is insufficient, it will be ignored, and `num`
         will be returned in binary (`num` > 0) or two's complement (`num` < 0)
-        form with its width equal to the minimum number of bits needed to 
+        form with its width equal to the minimum number of bits needed to
         represent the number in the designated form. This behavior is
         deprecated and will later raise an error.
 
@@ -2337,11 +2337,10 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     >>> np.isclose([1e-10, 1e-10], [1e-20, 0.999999e-10], atol=0.0)
     array([False,  True])
     """
-    def within_tol(x, y, atol, rtol):
-        with errstate(invalid='ignore'), _no_nep50_warning():
-            return less_equal(abs(x-y), atol + rtol * abs(y))
-
-    x, y, atol, rtol = np.broadcast_arrays(a, b, atol, rtol, subok=True)
+    # Turn all but python scalars into arrays.
+    x, y, atol, rtol = (
+        a if isinstance(a, (int, float, complex)) else asanyarray(a)
+        for a in (a, b, atol, rtol))
 
     # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
     # This will cause casting of x later. Also, make sure to allow subclasses
@@ -2350,30 +2349,20 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     #       possibly be deprecated. See also gh-18286.
     #       timedelta works if `atol` is an integer or also a timedelta.
     #       Although, the default tolerances are unlikely to be useful
-    if y.dtype.kind != "m":
+    if (dtype := getattr(y, "dtype", None)) is not None and dtype.kind != "m":
         dt = multiarray.result_type(y, 1.)
         y = asanyarray(y, dtype=dt)
+    elif isinstance(y, int):
+        y = float(y)
 
-    xfin = isfinite(x)
-    yfin = isfinite(y)
-    if all(xfin) and all(yfin):
-        return within_tol(x, y, atol, rtol)
-    else:
-        finite = xfin & yfin
-        cond = zeros_like(finite, subok=True)
-        # Avoid subtraction with infinite/nan values...
-        cond[finite] = within_tol(x[finite], y[finite],
-                                  atol[finite], rtol[finite])
-        # Check for equality of infinite values...
-        cond[~finite] = (x[~finite] == y[~finite])
+    with errstate(invalid='ignore'), _no_nep50_warning():
+        result = (less_equal(abs(x-y), atol + rtol * abs(y))
+                  & isfinite(y)
+                  | (x == y))
         if equal_nan:
-            # Make NaN == NaN
-            both_nan = isnan(x) & isnan(y)
+            result |= isnan(x) & isnan(y)
 
-            # Needed to treat masked arrays correctly. = True would not work.
-            cond[both_nan] = both_nan[both_nan]
-
-        return cond[()]  # Flatten 0d arrays to scalars
+    return result[()]  # Flatten 0d arrays to scalars
 
 
 def _array_equal_dispatcher(a1, a2, equal_nan=None):
