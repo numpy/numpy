@@ -7,6 +7,7 @@ import numbers
 import builtins
 
 import numpy as np
+import numpy.dtypes
 from . import multiarray
 from . import numerictypes as nt
 from .multiarray import (
@@ -2396,7 +2397,7 @@ _no_nan_types = {
 
 
 def _dtype_cannot_hold_nan(dtype):
-    return type(dtype) in _no_nan_types
+    return dtype in _no_nan_types
 
 
 @array_function_dispatch(_array_equal_dispatcher)
