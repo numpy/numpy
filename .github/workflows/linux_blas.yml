@@ -20,9 +20,12 @@ name: BLAS tests (Linux)
 #   - openblas_cmake:
 #         Tests whether OpenBLAS LP64 is detected correctly when only CMake
 #         and not pkg-config is installed.
-#   - netlib:
-#         Installs vanilla blas/lapack, which is the last option tried in
-#         auto-detection.
+#   - netlib-debian:
+#         Installs libblas/liblapack, which in Debian contains libcblas within
+#         libblas.
+#   - netlib-split:
+#         Installs vanilla Netlib blas/lapack with separate libcblas, which is
+#         the last option tried in auto-detection.
 #   - mkl:
 #         Tests MKL installed from PyPI (because easiest/fastest, if broken) in
 #         3 ways: both LP64 and ILP64 via pkg-config, and then using the
@@ -204,10 +207,10 @@ jobs:
       run: spin test -j auto -- numpy/linalg
 
  
-  netlib:
+  netlib-debian:
     if: "github.repository == 'numpy/numpy'"
     runs-on: ubuntu-latest
-    name: "Netlib BLAS/LAPACK"
+    name: "Debian libblas/liblapack"
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
@@ -229,6 +232,37 @@ jobs:
     - name: Test
       run: |
         pip install pytest pytest-xdist hypothesis typing_extensions
+        spin test -j auto -- numpy/linalg
+
+
+  netlib-split:
+    if: "github.repository == 'numpy/numpy'"
+    runs-on: ubuntu-latest
+    container: opensuse/tumbleweed
+    name: "OpenSUSE Netlib BLAS/LAPACK"
+    steps:
+    - name: Install system dependencies
+      run: |
+        # No blas.pc on OpenSUSE as of Nov 2023, so no need to install pkg-config.
+        # If it is needed in the future, use install name `pkgconf-pkg-config`
+        zypper install -y git gcc-c++ python3-pip python3-devel blas cblas lapack
+
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Install PyPI dependencies
+      run: |
+        pip install --break-system-packages -r build_requirements.txt
+
+    - name: Build
+      run: |
+        spin build -- -Dblas=blas -Dlapack=lapack -Ddisable-optimization=true -Dallow-noblas=false
+
+    - name: Test
+      run: |
+        pip install --break-system-packages pytest pytest-xdist hypothesis typing_extensions
         spin test -j auto -- numpy/linalg
 
 
