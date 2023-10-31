@@ -59,6 +59,7 @@ def _get_precision_dict() -> dict[str, str]:
         ("_NBitShort", np.short),
         ("_NBitIntC", np.intc),
         ("_NBitIntP", np.intp),
+        ("_NBitInt", np.int_),
         ("_NBitLong", np.long),
         ("_NBitLongLong", np.longlong),
 

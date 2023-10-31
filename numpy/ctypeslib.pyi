@@ -24,11 +24,13 @@ from numpy import (
     intc,
     long,
     longlong,
+    intp,
     ubyte,
     ushort,
     uintc,
     ulong,
     ulonglong,
+    uintp,
     single,
     double,
     longdouble,
@@ -156,7 +158,9 @@ def as_ctypes_type(dtype: _ShortCodes | _DTypeLike[short] | type[ctypes.c_short]
 @overload
 def as_ctypes_type(dtype: _IntCCodes | _DTypeLike[intc] | type[ctypes.c_int]) -> type[ctypes.c_int]: ...
 @overload
-def as_ctypes_type(dtype: _LongCodes | _DTypeLike[long] | type[int | ctypes.c_long]) -> type[ctypes.c_long]: ...
+def as_ctypes_type(dtype: _LongCodes | _DTypeLike[long] | type[ctypes.c_long]) -> type[ctypes.c_long]: ...
+@overload
+def as_ctypes_type(dtype: type[int]) -> type[c_intp]: ...
 @overload
 def as_ctypes_type(dtype: _LongLongCodes | _DTypeLike[longlong] | type[ctypes.c_longlong]) -> type[ctypes.c_longlong]: ...
 @overload
