@@ -24,7 +24,7 @@ a 32-bit integer named 'age', and 3. a 32-bit float named 'weight'.
 If you index ``x`` at position 1 you get a structure::
 
  >>> x[1]
- ('Fido', 3, 27.)
+ np.void(('Fido', 3, 27.0), dtype=[('name', '<U10'), ('age', '<i4'), ('weight', '<f4')])
 
 You can access and modify individual fields of a structured array by indexing
 with the field name::
@@ -165,6 +165,11 @@ attribute of the dtype object::
  >>> d = np.dtype([('x', 'i8'), ('y', 'f4')])
  >>> d.names
  ('x', 'y')
+
+The dtype of each individual field can be looked up by name::
+
+ >>> d['x']
+ dtype('int64')
 
 The field names may be modified by assigning to the ``names`` attribute using a
 sequence of strings of the same length.
@@ -510,7 +515,7 @@ a structured scalar::
  >>> x = np.array([(1, 2., 3.)], dtype='i, f, f')
  >>> scalar = x[0]
  >>> scalar
- (1, 2., 3.)
+ np.void((1, 2.0, 3.0), dtype=[('f0', '<i4'), ('f1', '<f4'), ('f2', '<f4')])
  >>> type(scalar)
  <class 'numpy.void'>
 
@@ -571,7 +576,7 @@ So the following is also valid (note the ``'f4'`` dtype for the ``'a'`` field):
  array([True, False])
 
 To compare two structured arrays, it must be possible to promote them to a
-common dtype as returned by `numpy.result_type` and `np.promote_types`.
+common dtype as returned by `numpy.result_type` and `numpy.promote_types`.
 This enforces that the number of fields, the field names, and the field titles
 must match precisely.
 When promotion is not possible, for example due to mismatching field names,
@@ -625,8 +630,8 @@ Record Arrays
 =============
 
 As an optional convenience numpy provides an ndarray subclass,
-:class:`numpy.recarray` that allows access to fields of structured arrays by
-attribute instead of only by index.
+:class:`numpy.recarray` that allows access to fields of structured arrays
+by attribute instead of only by index.
 Record arrays use a special datatype, :class:`numpy.record`, that allows
 field access by attribute on the structured scalars obtained from the array.
 The ``numpy.rec`` module provides functions for creating recarrays from
@@ -635,7 +640,7 @@ Additional helper functions for creating and manipulating structured arrays
 can be found in :mod:`numpy.lib.recfunctions`.
 
 The simplest way to create a record array is with
-:func:`numpy.rec.array <numpy.core.records.array>`::
+:func:`numpy.rec.array <numpy.rec.array>`::
 
  >>> recordarr = np.rec.array([(1, 2., 'Hello'), (2, 3., "World")],
  ...                    dtype=[('foo', 'i4'),('bar', 'f4'), ('baz', 'S10')])
@@ -651,7 +656,7 @@ The simplest way to create a record array is with
  >>> recordarr[1].baz
  b'World'
 
-:func:`numpy.rec.array <numpy.core.records.array>` can convert a wide variety
+:func:`numpy.rec.array <numpy.rec.array>` can convert a wide variety
 of arguments into record arrays, including structured arrays::
 
  >>> arr = np.array([(1, 2., 'Hello'), (2, 3., "World")],
@@ -666,7 +671,7 @@ A record array representation of a structured array can be obtained using the
 appropriate `view <numpy-ndarray-view>`_::
 
  >>> arr = np.array([(1, 2., 'Hello'), (2, 3., "World")],
- ...                dtype=[('foo', 'i4'),('bar', 'f4'), ('baz', 'a10')])
+ ...                dtype=[('foo', 'i4'),('bar', 'f4'), ('baz', 'S10')])
  >>> recordarr = arr.view(dtype=np.dtype((np.record, arr.dtype)),
  ...                      type=np.recarray)
 
@@ -692,7 +697,7 @@ array if the field has a structured type but as a plain ndarray otherwise. ::
  >>> type(recordarr.foo)
  <class 'numpy.ndarray'>
  >>> type(recordarr.bar)
- <class 'numpy.recarray'>
+ <class 'numpy.rec.recarray'>
 
 Note that if a field has the same name as an ndarray attribute, the ndarray
 attribute takes precedence. Such fields will be inaccessible by attribute but

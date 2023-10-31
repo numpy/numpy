@@ -12,6 +12,11 @@ or distributed).
 `~SeedSequence` spawning
 ------------------------
 
+NumPy allows you to spawn new (with very high probability) independent
+`~BitGenerator` and `~Generator` instances via their ``spawn()`` method.
+This spawning is implemented by the `~SeedSequence` used for initializing
+the bit generators random stream.
+
 `~SeedSequence` `implements an algorithm`_ to process a user-provided seed,
 typically as an integer of some size, and to convert it into an initial state for
 a `~BitGenerator`. It uses hashing techniques to ensure that low-quality seeds
@@ -53,15 +58,25 @@ wrap this together into an API that is easy to use and difficult to misuse.
 
 .. end_block
 
-Child `~SeedSequence` objects can also spawn to make grandchildren, and so on.
-Each `~SeedSequence` has its position in the tree of spawned `~SeedSequence`
-objects mixed in with the user-provided seed to generate independent (with very
-high probability) streams.
+For convenience the direct use of `~SeedSequence` is not necessary.
+The above ``streams`` can be spawned directly from a parent generator
+via `~Generator.spawn`:
 
 .. code-block:: python
 
-  grandchildren = child_seeds[0].spawn(4)
-  grand_streams = [default_rng(s) for s in grandchildren]
+  parent_rng = default_rng(12345)
+  streams = parent_rng.spawn(10)
+
+.. end_block
+
+Child objects can also spawn to make grandchildren, and so on.
+Each child has a `~SeedSequence` with its position in the tree of spawned
+child objects mixed in with the user-provided seed to generate independent
+(with very high probability) streams.
+
+.. code-block:: python
+
+  grandchildren = streams[0].spawn(4)
 
 .. end_block
 
@@ -103,8 +118,8 @@ territory ([2]_).
        a collision internal to `SeedSequence` is the way a failure would be
        observed.
 
-.. _`implements an algorithm`: http://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html
-.. _`suffers if there are too many 0s`: http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html
+.. _`implements an algorithm`: https://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html
+.. _`suffers if there are too many 0s`: http://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/MT2002/emt19937ar.html
 .. _`avalanche properties`: https://en.wikipedia.org/wiki/Avalanche_effect
 .. _`not unique to numpy`: https://www.iro.umontreal.ca/~lecuyer/myftp/papers/parallel-rng-imacs.pdf
 

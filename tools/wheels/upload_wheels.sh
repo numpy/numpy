@@ -23,7 +23,7 @@ set_upload_vars() {
         export ANACONDA_UPLOAD="true"
     elif [[ "$IS_SCHEDULE_DISPATCH" == "true" ]]; then
         echo scheduled or dispatched event
-        export ANACONDA_ORG="scipy-wheels-nightly"
+        export ANACONDA_ORG="scientific-python-nightly-wheels"
         export TOKEN="$NUMPY_NIGHTLY_UPLOAD_TOKEN"
         export ANACONDA_UPLOAD="true"
     else
@@ -37,15 +37,13 @@ upload_wheels() {
         if [[ -z ${TOKEN} ]]; then
             echo no token set, not uploading
         else
-            python -m pip install \
-            git+https://github.com/Anaconda-Platform/anaconda-client.git@be1e14936a8e947da94d026c990715f0596d7043
             # sdists are located under dist folder when built through setup.py
             if compgen -G "./dist/*.gz"; then
                 echo "Found sdist"
-                anaconda -q -t ${TOKEN} upload --skip -u ${ANACONDA_ORG} ./dist/*.gz
+                anaconda -q -t ${TOKEN} upload --force -u ${ANACONDA_ORG} ./dist/*.gz
             elif compgen -G "./wheelhouse/*.whl"; then
                 echo "Found wheel"
-                anaconda -q -t ${TOKEN} upload --skip -u ${ANACONDA_ORG} ./wheelhouse/*.whl
+                anaconda -q -t ${TOKEN} upload --force -u ${ANACONDA_ORG} ./wheelhouse/*.whl
             else
                 echo "Files do not exist"
                 return 1

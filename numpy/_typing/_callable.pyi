@@ -43,7 +43,7 @@ from ._scalars import (
     _NumberLike_co,
 )
 from . import NBitBase
-from ._generic_alias import NDArray
+from ._array_like import NDArray
 from ._nested_sequence import _NestedSequence
 
 _T1 = TypeVar("_T1")

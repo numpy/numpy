@@ -1,10 +1,11 @@
 from functools import reduce
+import pickle
 
 import pytest
 
 import numpy as np
-import numpy.core.umath as umath
-import numpy.core.fromnumeric as fromnumeric
+import numpy._core.umath as umath
+import numpy._core.fromnumeric as fromnumeric
 from numpy.testing import (
     assert_, assert_raises, assert_equal,
     )
@@ -21,7 +22,6 @@ from numpy.ma import (
     repeat, resize, shape, sin, sinh, sometrue, sort, sqrt, subtract, sum,
     take, tan, tanh, transpose, where, zeros,
     )
-from numpy.compat import pickle
 
 pi = np.pi
 
@@ -194,16 +194,16 @@ class TestMa:
         assert_(eq(np.sum(x, axis=0), sum(x, axis=0)))
         assert_(eq(np.sum(filled(xm, 0), axis=0), sum(xm, axis=0)))
         assert_(eq(np.sum(x, 0), sum(x, 0)))
-        assert_(eq(np.product(x, axis=0), product(x, axis=0)))
-        assert_(eq(np.product(x, 0), product(x, 0)))
-        assert_(eq(np.product(filled(xm, 1), axis=0),
+        assert_(eq(np.prod(x, axis=0), product(x, axis=0)))
+        assert_(eq(np.prod(x, 0), product(x, 0)))
+        assert_(eq(np.prod(filled(xm, 1), axis=0),
                            product(xm, axis=0)))
         if len(s) > 1:
             assert_(eq(np.concatenate((x, y), 1),
                                concatenate((xm, ym), 1)))
             assert_(eq(np.add.reduce(x, 1), add.reduce(x, 1)))
             assert_(eq(np.sum(x, 1), sum(x, 1)))
-            assert_(eq(np.product(x, 1), product(x, 1)))
+            assert_(eq(np.prod(x, 1), product(x, 1)))
 
     def test_testCI(self):
         # Test of conversions and indexing
@@ -821,13 +821,15 @@ class TestArrayMethods:
     def test_ptp(self):
         (x, X, XX, m, mx, mX, mXX,) = self.d
         (n, m) = X.shape
-        assert_equal(mx.ptp(), mx.compressed().ptp())
-        rows = np.zeros(n, np.float_)
-        cols = np.zeros(m, np.float_)
+        # print(type(mx), mx.compressed())
+        # raise Exception()
+        assert_equal(mx.ptp(), np.ptp(mx.compressed()))
+        rows = np.zeros(n, np.float64)
+        cols = np.zeros(m, np.float64)
         for k in range(m):
-            cols[k] = mX[:, k].compressed().ptp()
+            cols[k] = np.ptp(mX[:, k].compressed())
         for k in range(n):
-            rows[k] = mX[k].compressed().ptp()
+            rows[k] = np.ptp(mX[k].compressed())
         assert_(eq(mX.ptp(0), cols))
         assert_(eq(mX.ptp(1), rows))
 

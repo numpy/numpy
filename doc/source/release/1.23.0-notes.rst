@@ -83,8 +83,8 @@ Expired deprecations
 * The ``UPDATEIFCOPY`` array flag has been removed together with the enum
   ``NPY_ARRAY_UPDATEIFCOPY``. The associated (and deprecated)
   ``PyArray_XDECREF_ERR`` was also removed. These were all deprecated in 1.14. They
-  are replaced by ``WRITEBACKIFCOPY``, that requires calling
-  ``PyArray_ResoveWritebackIfCopy`` before the array is deallocated.
+  are replaced by ``NPY_ARRAY_WRITEBACKIFCOPY``, that requires calling
+  ``PyArray_ResolveWritebackIfCopy`` before the array is deallocated.
 
   (`gh-20589 <https://github.com/numpy/numpy/pull/20589>`__)
 

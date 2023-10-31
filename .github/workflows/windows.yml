@@ -1,0 +1,114 @@
+name: Windows tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  python64bit_openblas:
+    name: x86-64, LP64 OpenBLAS
+    runs-on: windows-2019
+    if: "github.repository == 'numpy/numpy'"
+    strategy:
+      matrix:
+        compiler: ["MSVC", "Clang-cl"]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Setup Python
+      uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
+      with:
+        python-version: '3.11'
+
+    - name: Install build dependencies from PyPI
+      run: |
+        python -m pip install spin Cython
+
+    - name: Install pkg-config
+      run: |
+        choco install -y --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+
+    - name: Install Clang-cl
+      if: matrix.compiler == 'Clang-cl'
+      run: |
+        choco install llvm -y --version=16.0.6
+
+    - name: Install NumPy (MSVC)
+      if: matrix.compiler == 'MSVC'
+      env:
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
+      run: |
+        python -m pip install scipy-openblas32
+        spin build --with-scipy-openblas=32 -j2 -- --vsenv
+
+    - name: Install NumPy (Clang-cl)
+      if: matrix.compiler == 'Clang-cl'
+      env:
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
+      run: |
+        "[binaries]","c = 'clang-cl'","cpp = 'clang-cl'","ar = 'llvm-lib'","c_ld = 'lld-link'","cpp_ld = 'lld-link'" | Out-File $PWD/clang-cl-build.ini -Encoding ascii
+        python -m pip install scipy-openblas32
+        spin build --with-scipy-openblas=32 -j2 -- --vsenv --native-file=$PWD/clang-cl-build.ini
+
+    - name: Meson Log
+      shell: bash
+      if: ${{ failure()  }}
+      run: |
+        cat build/meson-logs/meson-log.txt
+
+    - name: Install test dependencies
+      run: |
+        python -m pip install -r test_requirements.txt
+        python -m pip install threadpoolctl
+
+    - name: Run test suite
+      run: |
+        spin test
+
+  msvc_32bit_python_no_openblas:
+    name: MSVC, 32-bit Python, no BLAS
+    runs-on: windows-2019
+    if: "github.repository == 'numpy/numpy'"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup Python (32-bit)
+        uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
+        with:
+          python-version: '3.10'
+          architecture: 'x86'
+
+      - name: Setup MSVC (32-bit)
+        uses: bus1/cabuild/action/msdevshell@e22aba57d6e74891d059d66501b6b5aed8123c4d  # v1
+        with:
+          architecture: 'x86'
+
+      - name: Build and install
+        run: |
+          python -m pip install . -v -Ccompile-args="-j2" -Csetup-args="-Dallow-noblas=true"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install -r test_requirements.txt
+
+      - name: Run test suite (fast)
+        run: |
+          cd tools
+          python -m pytest --pyargs numpy -m "not slow" -n2

@@ -3,7 +3,7 @@
 .. _reference:
 
 ###############
-NumPy Reference
+NumPy reference
 ###############
 
 :Release: |version|

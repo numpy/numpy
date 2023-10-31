@@ -10,12 +10,12 @@ from unittest import TestCase
 from . import _private
 from ._private.utils import *
 from ._private.utils import (_assert_valid_refcount, _gen_alignment_data)
-from ._private import extbuild, decorators as dec
-from ._private.nosetester import (
-    run_module_suite, NoseTester as Tester
-    )
+from ._private import extbuild
+from . import overrides
 
-__all__ = _private.utils.__all__ + ['TestCase', 'run_module_suite']
+__all__ = (
+    _private.utils.__all__ + ['TestCase', 'overrides']
+)
 
 from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)

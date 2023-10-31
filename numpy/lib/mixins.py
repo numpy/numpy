@@ -1,5 +1,5 @@
 """Mixin classes for custom array types that don't inherit from ndarray."""
-from numpy.core import umath as um
+from numpy._core import umath as um
 
 
 __all__ = ['NDArrayOperatorsMixin']
@@ -133,6 +133,7 @@ class NDArrayOperatorsMixin:
 
     .. versionadded:: 1.13
     """
+    __slots__ = ()
     # Like np.ndarray, this mixin class implements "Option 1" from the ufunc
     # overrides NEP.
 

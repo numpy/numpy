@@ -19,23 +19,23 @@ Warnings
 
    ComplexWarning             Given when converting complex to real.
    VisibleDeprecationWarning  Same as a DeprecationWarning, but more visible.
+   RankWarning                Issued when the design matrix is rank deficient.
 
 Exceptions
 ----------
 .. autosummary::
    :toctree: generated/
 
-    AxisError       Given when an axis was invalid.
-    TooHardError    Error specific to `numpy.shares_memory`.
+    AxisError          Given when an axis was invalid.
+    DTypePromotionError   Given when no common dtype could be found.
+    TooHardError       Error specific to `numpy.shares_memory`.
 
 """
 
 
-from ._utils import set_module as _set_module
-
 __all__ = [
-    "ComplexWarning", "VisibleDeprecationWarning",
-    "TooHardError", "AxisError"]
+    "ComplexWarning", "VisibleDeprecationWarning", "ModuleDeprecationWarning",
+    "TooHardError", "AxisError", "DTypePromotionError"]
 
 
 # Disallow reloading this module so as to preserve the identities of the
@@ -45,13 +45,6 @@ if '_is_loaded' in globals():
 _is_loaded = True
 
 
-# TODO: One day, we should remove the _set_module here before removing them
-#       fully.  Not doing it now, just to allow unpickling to work on older
-#       versions for a bit.  (Module exists since NumPy 1.25.)
-#       This then also means that the typing stubs should be moved!
-
-
-@_set_module('numpy')
 class ComplexWarning(RuntimeWarning):
     """
     The warning raised when casting a complex dtype to a real dtype.
@@ -62,13 +55,13 @@ class ComplexWarning(RuntimeWarning):
     """
     pass
 
-@_set_module("numpy")
+
 class ModuleDeprecationWarning(DeprecationWarning):
     """Module deprecation warning.
 
     .. warning::
 
-        This warning should not be used, since nose testing is not relvant
+        This warning should not be used, since nose testing is not relevant
         anymore.
 
     The nose tester turns ordinary Deprecation warnings into test failures.
@@ -77,9 +70,9 @@ class ModuleDeprecationWarning(DeprecationWarning):
     nose tester will let pass without making tests fail.
 
     """
+    pass
 
 
-@_set_module("numpy")
 class VisibleDeprecationWarning(UserWarning):
     """Visible deprecation warning.
 
@@ -88,10 +81,19 @@ class VisibleDeprecationWarning(UserWarning):
     the usage is most likely a user bug.
 
     """
+    pass
+
+
+class RankWarning(RuntimeWarning):
+    """Matrix rank warning.
+    
+    Issued by polynomial functions when the design matrix is rank deficient.
+    
+    """
+    pass
 
 
 # Exception used in shares_memory()
-@_set_module('numpy')
 class TooHardError(RuntimeError):
     """max_work was exceeded.
 
@@ -101,20 +103,19 @@ class TooHardError(RuntimeError):
     to fail.
 
     """
-
     pass
 
 
-@_set_module('numpy')
 class AxisError(ValueError, IndexError):
     """Axis supplied was invalid.
 
     This is raised whenever an ``axis`` parameter is specified that is larger
     than the number of array dimensions.
     For compatibility with code written against older numpy versions, which
-    raised a mixture of `ValueError` and `IndexError` for this situation, this
-    exception subclasses both to ensure that ``except ValueError`` and
-    ``except IndexError`` statements continue to catch `AxisError`.
+    raised a mixture of :exc:`ValueError` and :exc:`IndexError` for this
+    situation, this exception subclasses both to ensure that
+    ``except ValueError`` and ``except IndexError`` statements continue
+    to catch ``AxisError``.
 
     .. versionadded:: 1.13
 
@@ -149,24 +150,24 @@ class AxisError(ValueError, IndexError):
     >>> np.cumsum(array_1d, axis=1)
     Traceback (most recent call last):
       ...
-    numpy.AxisError: axis 1 is out of bounds for array of dimension 1
+    numpy.exceptions.AxisError: axis 1 is out of bounds for array of dimension 1
 
     Negative axes are preserved:
 
     >>> np.cumsum(array_1d, axis=-2)
     Traceback (most recent call last):
       ...
-    numpy.AxisError: axis -2 is out of bounds for array of dimension 1
+    numpy.exceptions.AxisError: axis -2 is out of bounds for array of dimension 1
 
     The class constructor generally takes the axis and arrays'
     dimensionality as arguments:
 
-    >>> print(np.AxisError(2, 1, msg_prefix='error'))
+    >>> print(np.exceptions.AxisError(2, 1, msg_prefix='error'))
     error: axis 2 is out of bounds for array of dimension 1
 
     Alternatively, a custom exception message can be passed:
 
-    >>> print(np.AxisError('Custom error message'))
+    >>> print(np.exceptions.AxisError('Custom error message'))
     Custom error message
 
     """
@@ -195,3 +196,48 @@ class AxisError(ValueError, IndexError):
             if self._msg is not None:
                 msg = f"{self._msg}: {msg}"
             return msg
+
+
+class DTypePromotionError(TypeError):
+    """Multiple DTypes could not be converted to a common one.
+
+    This exception derives from ``TypeError`` and is raised whenever dtypes
+    cannot be converted to a single common one.  This can be because they
+    are of a different category/class or incompatible instances of the same
+    one (see Examples).
+
+    Notes
+    -----
+    Many functions will use promotion to find the correct result and
+    implementation.  For these functions the error will typically be chained
+    with a more specific error indicating that no implementation was found
+    for the input dtypes.
+
+    Typically promotion should be considered "invalid" between the dtypes of
+    two arrays when `arr1 == arr2` can safely return all ``False`` because the
+    dtypes are fundamentally different.
+
+    Examples
+    --------
+    Datetimes and complex numbers are incompatible classes and cannot be
+    promoted:
+
+    >>> np.result_type(np.dtype("M8[s]"), np.complex128)
+    DTypePromotionError: The DType <class 'numpy.dtype[datetime64]'> could not
+    be promoted by <class 'numpy.dtype[complex128]'>. This means that no common
+    DType exists for the given inputs. For example they cannot be stored in a
+    single array unless the dtype is `object`. The full list of DTypes is:
+    (<class 'numpy.dtype[datetime64]'>, <class 'numpy.dtype[complex128]'>)
+
+    For example for structured dtypes, the structure can mismatch and the
+    same ``DTypePromotionError`` is given when two structured dtypes with
+    a mismatch in their number of fields is given:
+
+    >>> dtype1 = np.dtype([("field1", np.float64), ("field2", np.int64)])
+    >>> dtype2 = np.dtype([("field1", np.float64)])
+    >>> np.promote_types(dtype1, dtype2)
+    DTypePromotionError: field names `('field1', 'field2')` and `('field1',)`
+    mismatch.
+
+    """
+    pass

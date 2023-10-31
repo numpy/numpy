@@ -532,7 +532,7 @@ are not yet fully clear, we anticipate, and accept the following changes:
     have to be changed to use the new API. Such changes are expected to be
     necessary in very few project.
 
-* **dtype implementors (C-API)**:
+* **dtype implementers (C-API)**:
 
   * The array which is currently provided to some functions (such as cast functions),
     will no longer be provided.

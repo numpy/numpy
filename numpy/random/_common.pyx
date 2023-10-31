@@ -171,7 +171,7 @@ cdef object prepare_ctypes(bitgen_t *bitgen):
                         ctypes.c_void_p(<uintptr_t>bitgen))
     return _ctypes
 
-cdef double kahan_sum(double *darr, np.npy_intp n):
+cdef double kahan_sum(double *darr, np.npy_intp n) noexcept:
     """
     Parameters
     ----------

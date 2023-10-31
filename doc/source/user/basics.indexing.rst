@@ -481,16 +481,17 @@ tuple (of length :attr:`obj.ndim <ndarray.ndim>`) of integer index
 arrays showing the :py:data:`True` elements of *obj*. However, it is
 faster when ``obj.shape == x.shape``.
 
-If ``obj.ndim == x.ndim``, ``x[obj]`` returns a 1-dimensional array
-filled with the elements of *x* corresponding to the :py:data:`True`
-values of *obj*.  The search order will be :term:`row-major`,
-C-style. If *obj* has :py:data:`True` values at entries that are outside
-of the bounds of *x*, then an index error will be raised. If *obj* is
-smaller than *x* it is identical to filling it with :py:data:`False`.
+If ``obj.ndim == x.ndim``, ``x[obj]``
+returns a 1-dimensional array filled with the elements of *x*
+corresponding to the :py:data:`True` values of *obj*. The search order
+will be :term:`row-major`, C-style. An index error will be raised if
+the shape of *obj* does not match the corresponding dimensions of *x*,
+regardless of whether those values are :py:data:`True` or
+:py:data:`False`.
 
 A common use case for this is filtering for desired element values.
 For example, one may wish to select all entries from an array which
-are not :const:`NaN`::
+are not :const:`numpy.nan`::
 
     >>> x = np.array([[1., 2.], [np.nan, 3.], [np.nan, np.nan]])
     >>> x[~np.isnan(x)]
@@ -784,7 +785,7 @@ exceptions (assigning complex to floats or ints): ::
  >>> x[1] = 1.2
  >>> x[1]
  1
- >>> x[1] = 1.2j
+ >>> x[1] = 1.2j  # doctest: +IGNORE_EXCEPTION_DETAIL
  Traceback (most recent call last):
    ...
  TypeError: can't convert complex to int

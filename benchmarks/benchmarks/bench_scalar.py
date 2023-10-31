@@ -65,3 +65,15 @@ class ScalarMath(Benchmark):
         other + int32
         other + int32
         other + int32
+
+
+class ScalarStr(Benchmark):
+    # Test scalar to str conversion
+    params = [TYPES1]
+    param_names = ["type"]
+
+    def setup(self, typename):
+        self.a = np.array([100] * 100, dtype=typename)
+
+    def time_str_repr(self, typename):
+        res = [str(x) for x in self.a]

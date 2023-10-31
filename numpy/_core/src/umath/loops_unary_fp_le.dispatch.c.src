@@ -1,0 +1,565 @@
+/*@targets
+ ** $maxopt baseline
+ ** sse2 sse41
+ ** vsx2
+ ** neon asimd
+ **/
+
+/**
+ * Force use SSE only on x86, even if AVX2 or AVX512F are enabled
+ * through the baseline, since scatter(AVX512F) and gather very costly
+ * to handle non-contiguous memory access comparing with SSE for
+ * such small operations that this file covers.
+ */
+#define NPY_SIMD_FORCE_128
+#define _UMATHMODULE
+#define _MULTIARRAYMODULE
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#include <float.h>
+#include "numpy/npy_math.h"
+#include "simd/simd.h"
+#include "loops_utils.h"
+#include "loops.h"
+#include "lowlevel_strided_loops.h"
+// Provides the various *_LOOP macros
+#include "fast_loop_macros.h"
+
+/**
+ * This code should really be merged into loops_unary_fp.dispatch.c.src
+ * However there is an issue with enabling the code here for VX and VXE
+ * as the shifts don't behave as expected.
+ * See the code below that references NPY__CPU_TARGET_VX and
+ * NPY_BIG_ENDIAN. Suspect that this is a big endian vector issue.
+ *
+ * Splitting the files out allows us to keep loops_unary_fp.dispatch.c.src
+ * building for VX and VXE so we don't regress performance while adding this
+ * code for other platforms.
+ */
+// TODO(@seiko2plus): add support for big-endian
+#if NPY_SIMD_BIGENDIAN
+    #undef NPY_SIMD
+    #undef NPY_SIMD_F32
+    #undef NPY_SIMD_F64
+    #define NPY_SIMD 0
+    #define NPY_SIMD_F32 0
+    #define NPY_SIMD_F64 0
+#endif
+
+/*******************************************************************************
+ ** extra SIMD intrinsics
+ ******************************************************************************/
+
+#if NPY_SIMD
+
+/**
+ * We define intrinsics for isnan, isinf, isfinite, and signbit below.  There's
+ * a few flavors of each.  We'll use f32 as an example although f64 versions
+ * are also defined.
+ * 
+ * npyv_u32 npyv_KIND_f32(npyv_f32 v)
+ *   These are mainly used for the single vector loops.  As such, result should
+ *   be bool true / false, ready to write back.
+ * 
+ * npyv_b32 _npyv_KIND_f32(npyv_f32 v)
+ *   These are used by the geneal intrinsics above as well as the multi-vector
+ *   packing intrinsics.  The multi-vector packing intrinsics are the ones
+ *   utilized in the unrolled vector loops.  Results should be vector masks
+ *   of 0x00/0xff.
+ * 
+ * npyv_u8 npyv_pack_KIND_f32(npyv_f32 v0, npyv_f32 v1, npyv_f32 v2, npyv_f32 v3)
+ *   These are the multi-vector packing intrinsics utilized by unrolled vector
+ *   loops.  They perform the operation on all input vectors and pack the
+ *   results to a single npyv_u8.  Assuming NPY_SIMD == 128, that means we
+ *   can pack results from 4x npyv_f32 or 8x npyv_64 in a single npyv_u8.
+ *   Result should be bool true / false, ready to write back.
+ */
+
+#if NPY_SIMD_F32
+NPY_FINLINE npyv_u32
+npyv_isnan_f32(npyv_f32 v)
+{
+    const npyv_u8 truemask = npyv_reinterpret_u8_u32(npyv_setall_u32(1==1));
+    npyv_u8 notnan = npyv_reinterpret_u8_u32(npyv_cvt_u32_b32(npyv_notnan_f32(v)));
+    return npyv_reinterpret_u32_u8(npyv_andc_u8(truemask, notnan));
+}
+NPY_FINLINE npyv_u8
+npyv_pack_isnan_f32(npyv_f32 v0, npyv_f32 v1, npyv_f32 v2, npyv_f32 v3)
+{
+    const npyv_u8 truemask = npyv_setall_u8(1==1);
+    npyv_b32 b0 = npyv_notnan_f32(v0);
+    npyv_b32 b1 = npyv_notnan_f32(v1);
+    npyv_b32 b2 = npyv_notnan_f32(v2);
+    npyv_b32 b3 = npyv_notnan_f32(v3);
+    npyv_b8 notnan = npyv_pack_b8_b32(b0, b1, b2, b3);
+    return npyv_andc_u8(truemask, npyv_cvt_u8_b8(notnan));
+}
+#endif
+#if NPY_SIMD_F64
+NPY_FINLINE npyv_u64
+npyv_isnan_f64(npyv_f64 v)
+{
+    const npyv_u8 truemask = npyv_reinterpret_u8_u64(npyv_setall_u64(1==1));
+    npyv_u8 notnan = npyv_reinterpret_u8_u64(npyv_cvt_u64_b64(npyv_notnan_f64(v)));
+    return npyv_reinterpret_u64_u8(npyv_andc_u8(truemask, notnan));
+}
+NPY_FINLINE npyv_u8
+npyv_pack_isnan_f64(npyv_f64 v0, npyv_f64 v1, npyv_f64 v2, npyv_f64 v3,
+                    npyv_f64 v4, npyv_f64 v5, npyv_f64 v6, npyv_f64 v7)
+{
+    const npyv_u8 truemask = npyv_setall_u8(1==1);
+    npyv_b64 b0 = npyv_notnan_f64(v0);
+    npyv_b64 b1 = npyv_notnan_f64(v1);
+    npyv_b64 b2 = npyv_notnan_f64(v2);
+    npyv_b64 b3 = npyv_notnan_f64(v3);
+    npyv_b64 b4 = npyv_notnan_f64(v4);
+    npyv_b64 b5 = npyv_notnan_f64(v5);
+    npyv_b64 b6 = npyv_notnan_f64(v6);
+    npyv_b64 b7 = npyv_notnan_f64(v7);
+    npyv_b8 notnan = npyv_pack_b8_b64(b0, b1, b2, b3, b4, b5, b6, b7);
+    return npyv_andc_u8(truemask, npyv_cvt_u8_b8(notnan));
+}
+#endif
+
+#if NPY_SIMD_F32
+NPY_FINLINE npyv_b32
+_npyv_isinf_f32(npyv_f32 v)
+{
+#if defined(NPY_HAVE_NEON)
+    // abs(v) > FLT_MAX
+    const npyv_f32 fltmax = npyv_setall_f32(FLT_MAX);
+    return vcagtq_f32(v, fltmax);
+#else
+    // cast out the sign and check if all exponent bits are set.
+    const npyv_u32 exp_mask = npyv_setall_u32(0xff000000);
+    npyv_u32 bits = npyv_shli_u32(npyv_reinterpret_u32_f32(v), 1);
+    return npyv_cmpeq_u32(bits, exp_mask);
+#endif
+}
+NPY_FINLINE npyv_u32
+npyv_isinf_f32(npyv_f32 v)
+{
+    const npyv_u32 truemask = npyv_setall_u32(1==1);
+    return npyv_and_u32(truemask, npyv_cvt_u32_b32(_npyv_isinf_f32(v)));
+}
+NPY_FINLINE npyv_u8
+npyv_pack_isinf_f32(npyv_f32 v0, npyv_f32 v1, npyv_f32 v2, npyv_f32 v3)
+{
+    const npyv_u8 truemask = npyv_setall_u8(1==1);
+    npyv_b32 b0 = _npyv_isinf_f32(v0);
+    npyv_b32 b1 = _npyv_isinf_f32(v1);
+    npyv_b32 b2 = _npyv_isinf_f32(v2);
+    npyv_b32 b3 = _npyv_isinf_f32(v3);
+    npyv_b8 isinf = npyv_pack_b8_b32(b0, b1, b2, b3);
+    return npyv_and_u8(truemask, npyv_cvt_u8_b8(isinf));
+}
+#endif // NPY_SIMD_F32
+#if NPY_SIMD_F64
+NPY_FINLINE npyv_b64
+_npyv_isinf_f64(npyv_f64 v)
+{
+#if defined(NPY_HAVE_NEON)
+    // abs(v) > DBL_MAX
+    const npyv_f64 fltmax = npyv_setall_f64(DBL_MAX);
+    return vcagtq_f64(v, fltmax);
+#else
+    // cast out the sign and check if all exponent bits are set.
+    const npyv_u64 exp_mask = npyv_setall_u64(0xffe0000000000000);
+    npyv_u64 bits = npyv_shli_u64(npyv_reinterpret_u64_f64(v), 1);
+    return npyv_cmpeq_u64(bits, exp_mask);
+#endif
+}
+NPY_FINLINE npyv_u64
+npyv_isinf_f64(npyv_f64 v)
+{
+    const npyv_u64 truemask = npyv_setall_u64(1==1);
+    return npyv_and_u64(truemask, npyv_cvt_u64_b64(_npyv_isinf_f64(v)));
+}
+NPY_FINLINE npyv_u8
+npyv_pack_isinf_f64(npyv_f64 v0, npyv_f64 v1, npyv_f64 v2, npyv_f64 v3,
+                    npyv_f64 v4, npyv_f64 v5, npyv_f64 v6, npyv_f64 v7)
+{
+    const npyv_u8 truemask = npyv_setall_u8(1==1);
+    npyv_b64 b0 = _npyv_isinf_f64(v0);
+    npyv_b64 b1 = _npyv_isinf_f64(v1);
+    npyv_b64 b2 = _npyv_isinf_f64(v2);
+    npyv_b64 b3 = _npyv_isinf_f64(v3);
+    npyv_b64 b4 = _npyv_isinf_f64(v4);
+    npyv_b64 b5 = _npyv_isinf_f64(v5);
+    npyv_b64 b6 = _npyv_isinf_f64(v6);
+    npyv_b64 b7 = _npyv_isinf_f64(v7);
+    npyv_b8 isinf = npyv_pack_b8_b64(b0, b1, b2, b3, b4, b5, b6, b7);
+    return npyv_and_u8(truemask, npyv_cvt_u8_b8(isinf));
+}
+#endif // NPY_SIMD_F64
+
+
+#if NPY_SIMD_F32
+NPY_FINLINE npyv_b32
+npyv_notfinite_f32(npyv_f32 v)
+{
+    // cast out the sign and check if all exponent bits are set
+    // no matter the mentissa is.
+    const npyv_u32 exp_mask = npyv_setall_u32(0x7f800000);
+    npyv_u32 bits = npyv_reinterpret_u32_f32(v);
+    bits = npyv_and_u32(bits, exp_mask);
+    return npyv_cmpeq_u32(bits, exp_mask);
+}
+NPY_FINLINE npyv_u32
+npyv_isfinite_f32(npyv_f32 v)
+{
+    const npyv_u8 truemask = npyv_reinterpret_u8_u32(npyv_setall_u32(1==1));
+    npyv_u8 notfinite = npyv_reinterpret_u8_u32(npyv_cvt_u32_b32(npyv_notfinite_f32(v)));
+    return npyv_reinterpret_u32_u8(npyv_andc_u8(truemask, notfinite));
+}
+NPY_FINLINE npyv_u8
+npyv_pack_isfinite_f32(npyv_f32 v0, npyv_f32 v1, npyv_f32 v2, npyv_f32 v3)
+{
+#if defined(NPY_HAVE_NEON) && defined(__aarch64__)
+    // F32 exponent is 8-bits, which means we can pack multiple into
+    // a single vector.  We shift out sign bit so that we're left
+    // with only exponent in high byte.  If not all bits are set,
+    // then we've got a finite number.
+    uint8x16x4_t tbl;
+    tbl.val[0] = npyv_reinterpret_u8_u32(npyv_shli_u32(npyv_reinterpret_u32_f32(v0), 1));
+    tbl.val[1] = npyv_reinterpret_u8_u32(npyv_shli_u32(npyv_reinterpret_u32_f32(v1), 1));
+    tbl.val[2] = npyv_reinterpret_u8_u32(npyv_shli_u32(npyv_reinterpret_u32_f32(v2), 1));
+    tbl.val[3] = npyv_reinterpret_u8_u32(npyv_shli_u32(npyv_reinterpret_u32_f32(v3), 1));
+
+    const npyv_u8 permute = {3,7,11,15,  19,23,27,31,  35,39,43,47,  51,55,59,63};
+    npyv_u8 r = vqtbl4q_u8(tbl, permute);
+
+    const npyv_u8 expmask = npyv_setall_u8(0xff);
+    r = npyv_cmpneq_u8(r, expmask);
+    r = vshrq_n_u8(r, 7);
+    return r;
+#else
+    const npyv_u8 truemask = npyv_setall_u8(1==1);
+    npyv_b32 b0 = npyv_notfinite_f32(v0);
+    npyv_b32 b1 = npyv_notfinite_f32(v1);
+    npyv_b32 b2 = npyv_notfinite_f32(v2);
+    npyv_b32 b3 = npyv_notfinite_f32(v3);
+    npyv_b8 notfinite = npyv_pack_b8_b32(b0, b1, b2, b3);
+    return npyv_andc_u8(truemask, npyv_cvt_u8_b8(notfinite));
+#endif
+}
+#endif // NPY_SIMD_F32
+#if NPY_SIMD_F64
+NPY_FINLINE npyv_b64
+npyv_notfinite_f64(npyv_f64 v)
+{
+    // cast out the sign and check if all exponent bits are set
+    // no matter the mantissa is.
+    const npyv_u64 exp_mask = npyv_setall_u64(0x7ff0000000000000);
+    npyv_u64 bits = npyv_reinterpret_u64_f64(v);
+    bits = npyv_and_u64(bits, exp_mask);
+    return npyv_cmpeq_u64(bits, exp_mask);
+}
+NPY_FINLINE npyv_u64
+npyv_isfinite_f64(npyv_f64 v)
+{
+    const npyv_u8 truemask = npyv_reinterpret_u8_u64(npyv_setall_u64(1==1));
+    npyv_u8 notfinite = npyv_reinterpret_u8_u64(npyv_cvt_u64_b64(npyv_notfinite_f64(v)));
+    return npyv_reinterpret_u64_u8(npyv_andc_u8(truemask, notfinite));
+}
+NPY_FINLINE npyv_u8
+npyv_pack_isfinite_f64(npyv_f64 v0, npyv_f64 v1, npyv_f64 v2, npyv_f64 v3,
+                       npyv_f64 v4, npyv_f64 v5, npyv_f64 v6, npyv_f64 v7)
+{
+#if defined(NPY_HAVE_NEON) && defined(__aarch64__)
+    // F64 exponent is 11-bits, which means we can pack multiple into
+    // a single vector.  We'll need to use u16 to fit all exponent
+    // bits.  If not all bits are set, then we've got a finite number.
+    uint8x16x4_t t0123, t4567;
+    t0123.val[0] = npyv_reinterpret_u8_f64(v0);
+    t0123.val[1] = npyv_reinterpret_u8_f64(v1);
+    t0123.val[2] = npyv_reinterpret_u8_f64(v2);
+    t0123.val[3] = npyv_reinterpret_u8_f64(v3);
+    t4567.val[0] = npyv_reinterpret_u8_f64(v4);
+    t4567.val[1] = npyv_reinterpret_u8_f64(v5);
+    t4567.val[2] = npyv_reinterpret_u8_f64(v6);
+    t4567.val[3] = npyv_reinterpret_u8_f64(v7);
+
+    const npyv_u8 permute = {6,7,14,15,  22,23,30,31,  38,39,46,47,  54,55,62,63};
+    npyv_u16 r0 = npyv_reinterpret_u16_u8(vqtbl4q_u8(t0123, permute));
+    npyv_u16 r1 = npyv_reinterpret_u16_u8(vqtbl4q_u8(t4567, permute));
+
+    const npyv_u16 expmask = npyv_setall_u16(0x7ff0);
+    r0 = npyv_and_u16(r0, expmask);
+    r0 = npyv_cmpneq_u16(r0, expmask);
+    r0 = npyv_shri_u16(r0, 15);
+    r1 = npyv_and_u16(r1, expmask);
+    r1 = npyv_cmpneq_u16(r1, expmask);
+    r1 = npyv_shri_u16(r1, 15);
+
+    npyv_u8 r = npyv_pack_b8_b16(r0, r1);
+    return r;
+#else
+    const npyv_u8 truemask = npyv_setall_u8(1==1);
+    npyv_b64 b0 = npyv_notfinite_f64(v0);
+    npyv_b64 b1 = npyv_notfinite_f64(v1);
+    npyv_b64 b2 = npyv_notfinite_f64(v2);
+    npyv_b64 b3 = npyv_notfinite_f64(v3);
+    npyv_b64 b4 = npyv_notfinite_f64(v4);
+    npyv_b64 b5 = npyv_notfinite_f64(v5);
+    npyv_b64 b6 = npyv_notfinite_f64(v6);
+    npyv_b64 b7 = npyv_notfinite_f64(v7);
+    npyv_b8 notfinite = npyv_pack_b8_b64(b0, b1, b2, b3, b4, b5, b6, b7);
+    return npyv_andc_u8(truemask, npyv_cvt_u8_b8(notfinite));
+#endif
+}
+#endif // NPY_SIMD_F64
+
+#if NPY_SIMD_F32
+NPY_FINLINE npyv_u32
+npyv_signbit_f32(npyv_f32 v)
+{
+    return npyv_shri_u32(npyv_reinterpret_u32_f32(v), (sizeof(npyv_lanetype_f32)*8)-1);
+}
+NPY_FINLINE npyv_u8
+npyv_pack_signbit_f32(npyv_f32 v0, npyv_f32 v1, npyv_f32 v2, npyv_f32 v3)
+{
+#if defined(NPY_HAVE_NEON) && defined(__aarch64__)
+    // We only need high byte for signbit, which means we can pack
+    // multiple inputs into a single vector.
+    uint8x16x4_t tbl;
+    tbl.val[0] = npyv_reinterpret_u8_f32(v0);
+    tbl.val[1] = npyv_reinterpret_u8_f32(v1);
+    tbl.val[2] = npyv_reinterpret_u8_f32(v2);
+    tbl.val[3] = npyv_reinterpret_u8_f32(v3);
+
+    const npyv_u8 permute = {3,7,11,15,  19,23,27,31,  35,39,43,47,  51,55,59,63};
+    npyv_u8 r = vqtbl4q_u8(tbl, permute);
+            r = vshrq_n_u8(r, 7);
+    return r;
+#else
+    npyv_b32 b0 = npyv_cvt_b32_u32(npyv_signbit_f32(v0));
+    npyv_b32 b1 = npyv_cvt_b32_u32(npyv_signbit_f32(v1));
+    npyv_b32 b2 = npyv_cvt_b32_u32(npyv_signbit_f32(v2));
+    npyv_b32 b3 = npyv_cvt_b32_u32(npyv_signbit_f32(v3));
+    npyv_b8 signbit = npyv_pack_b8_b32(b0, b1, b2, b3);
+    return npyv_cvt_u8_b8(signbit);
+#endif
+}
+#endif // NPY_SIMD_F32
+#if NPY_SIMD_F64
+NPY_FINLINE npyv_u64
+npyv_signbit_f64(npyv_f64 v)
+{
+    return npyv_shri_u64(npyv_reinterpret_u64_f64(v), (sizeof(npyv_lanetype_f64)*8)-1);
+}
+NPY_FINLINE npyv_u8
+npyv_pack_signbit_f64(npyv_f64 v0, npyv_f64 v1, npyv_f64 v2, npyv_f64 v3,
+                      npyv_f64 v4, npyv_f64 v5, npyv_f64 v6, npyv_f64 v7)
+{
+#if defined(NPY_HAVE_NEON) && defined(__aarch64__)
+    // We only need high byte for signbit, which means we can pack
+    // multiple inputs into a single vector.
+
+    // vuzp2 faster than vtbl for f64
+    npyv_u32 v01 = vuzp2q_u32(npyv_reinterpret_u32_f64(v0), npyv_reinterpret_u32_f64(v1));
+    npyv_u32 v23 = vuzp2q_u32(npyv_reinterpret_u32_f64(v2), npyv_reinterpret_u32_f64(v3));
+    npyv_u32 v45 = vuzp2q_u32(npyv_reinterpret_u32_f64(v4), npyv_reinterpret_u32_f64(v5));
+    npyv_u32 v67 = vuzp2q_u32(npyv_reinterpret_u32_f64(v6), npyv_reinterpret_u32_f64(v7));
+
+    npyv_u16 v0123 = vuzp2q_u16(npyv_reinterpret_u16_u32(v01), npyv_reinterpret_u16_u32(v23));
+    npyv_u16 v4567 = vuzp2q_u16(npyv_reinterpret_u16_u32(v45), npyv_reinterpret_u16_u32(v67));
+
+    npyv_u8 r = vuzp2q_u8(npyv_reinterpret_u8_u16(v0123), npyv_reinterpret_u8_u16(v4567));
+            r = vshrq_n_u8(r, 7);
+    return r;
+#else
+    npyv_b64 b0 = npyv_cvt_b64_u64(npyv_signbit_f64(v0));
+    npyv_b64 b1 = npyv_cvt_b64_u64(npyv_signbit_f64(v1));
+    npyv_b64 b2 = npyv_cvt_b64_u64(npyv_signbit_f64(v2));
+    npyv_b64 b3 = npyv_cvt_b64_u64(npyv_signbit_f64(v3));
+    npyv_b64 b4 = npyv_cvt_b64_u64(npyv_signbit_f64(v4));
+    npyv_b64 b5 = npyv_cvt_b64_u64(npyv_signbit_f64(v5));
+    npyv_b64 b6 = npyv_cvt_b64_u64(npyv_signbit_f64(v6));
+    npyv_b64 b7 = npyv_cvt_b64_u64(npyv_signbit_f64(v7));
+    npyv_b8 signbit = npyv_pack_b8_b64(b0, b1, b2, b3, b4, b5, b6, b7);
+    return npyv_cvt_u8_b8(signbit);
+#endif
+}
+#endif // NPY_SIMD_F64
+
+#endif // NPY_SIMD
+
+/********************************************************************************
+ ** Defining the SIMD kernels
+ ********************************************************************************/
+/** Notes:
+ * - avoid the use of libmath to unify fp/domain errors
+ *   for both scalars and vectors among all compilers/architectures.
+ * - use intrinsic npyv_load_till_* instead of npyv_load_tillz_
+ *   to fill the remind lanes with 1.0 to avoid divide by zero fp
+ *   exception in reciprocal.
+ */
+#define CONTIG  0
+#define NCONTIG 1
+
+/**begin repeat
+ * #TYPE = FLOAT, DOUBLE#
+ * #sfx  = f32, f64#
+ * #VCHK = NPY_SIMD_F32, NPY_SIMD_F64#
+ * #ssfx = 32, 64#
+ */
+#if @VCHK@
+/**begin repeat1
+ * #kind = isnan, isinf, isfinite, signbit#
+ */
+/**begin repeat2
+ * #STYPE  = CONTIG, NCONTIG, CONTIG,  NCONTIG#
+ * #DTYPE  = CONTIG, CONTIG,  NCONTIG, NCONTIG#
+ */
+static void simd_unary_@kind@_@TYPE@_@STYPE@_@DTYPE@
+(const void *src, npy_intp istride, void *dst, npy_intp ostride, npy_intp len)
+{
+    const npyv_lanetype_@sfx@ *ip = src;
+    npy_bool *op = dst;
+
+    // How many vectors can be packed into a u8 / bool vector?
+    #define PACK_FACTOR (NPY_SIMD_WIDTH / npyv_nlanes_@sfx@)
+    assert(PACK_FACTOR == 4 || PACK_FACTOR == 8);
+
+    const int vstep = npyv_nlanes_@sfx@;
+    const int wstep = vstep * PACK_FACTOR;
+
+    // unrolled iterations
+    for (; len >= wstep; len -= wstep, ip += istride*wstep, op += ostride*wstep) {
+        // Load vectors
+        #if @STYPE@ == CONTIG
+            // contiguous input
+            npyv_@sfx@ v0 = npyv_load_@sfx@(ip + vstep * 0);
+            npyv_@sfx@ v1 = npyv_load_@sfx@(ip + vstep * 1);
+            npyv_@sfx@ v2 = npyv_load_@sfx@(ip + vstep * 2);
+            npyv_@sfx@ v3 = npyv_load_@sfx@(ip + vstep * 3);
+            #if PACK_FACTOR == 8
+            npyv_@sfx@ v4 = npyv_load_@sfx@(ip + vstep * 4);
+            npyv_@sfx@ v5 = npyv_load_@sfx@(ip + vstep * 5);
+            npyv_@sfx@ v6 = npyv_load_@sfx@(ip + vstep * 6);
+            npyv_@sfx@ v7 = npyv_load_@sfx@(ip + vstep * 7);
+            #endif
+        #else
+            // non-contiguous input
+            npyv_@sfx@ v0 = npyv_loadn_@sfx@(ip + istride * vstep * 0, istride);
+            npyv_@sfx@ v1 = npyv_loadn_@sfx@(ip + istride * vstep * 1, istride);
+            npyv_@sfx@ v2 = npyv_loadn_@sfx@(ip + istride * vstep * 2, istride);
+            npyv_@sfx@ v3 = npyv_loadn_@sfx@(ip + istride * vstep * 3, istride);
+            #if PACK_FACTOR == 8
+            npyv_@sfx@ v4 = npyv_loadn_@sfx@(ip + istride * vstep * 4, istride);
+            npyv_@sfx@ v5 = npyv_loadn_@sfx@(ip + istride * vstep * 5, istride);
+            npyv_@sfx@ v6 = npyv_loadn_@sfx@(ip + istride * vstep * 6, istride);
+            npyv_@sfx@ v7 = npyv_loadn_@sfx@(ip + istride * vstep * 7, istride);
+            #endif
+        #endif
+
+        #if PACK_FACTOR == 4
+        npyv_u8 r = npyv_pack_@kind@_@sfx@(v0, v1, v2, v3);
+        #elif PACK_FACTOR == 8
+        npyv_u8 r = npyv_pack_@kind@_@sfx@(v0, v1, v2, v3, v4, v5, v6, v7);
+        #endif
+
+        #if @DTYPE@ == CONTIG
+            npyv_store_u8(op, r);
+        #else // @DTYPE@ == CONTIG
+            // Results are packed, so we can just loop over them
+            npy_uint8 lane[npyv_nlanes_u8];
+            npyv_store_u8(lane, r);
+            for (int ln=0; (ln * sizeof(npyv_lanetype_@sfx@)) < npyv_nlanes_u8; ++ln){
+                op[ln * ostride] = lane[ln * sizeof(npyv_lanetype_@sfx@)];
+            }
+        #endif // @DTYPE@ == CONTIG
+    }
+
+    // vector-sized iterations
+    for (; len >= vstep; len -= vstep, ip += istride*vstep, op += ostride*vstep) {
+    #if @STYPE@ == CONTIG
+        npyv_@sfx@ v = npyv_load_@sfx@(ip);
+    #else
+        npyv_@sfx@ v = npyv_loadn_@sfx@(ip, istride);
+    #endif
+
+        npyv_u@ssfx@ r = npyv_@kind@_@sfx@(v);
+
+        npy_uint8 lane[npyv_nlanes_u8];
+        npyv_store_u8(lane, npyv_reinterpret_u8_u@ssfx@(r));
+
+        op[0 * ostride] = lane[0 * sizeof(npyv_lanetype_@sfx@)];
+        op[1 * ostride] = lane[1 * sizeof(npyv_lanetype_@sfx@)];
+        #if npyv_nlanes_@sfx@ == 4
+        op[2 * ostride] = lane[2 * sizeof(npyv_lanetype_@sfx@)];
+        op[3 * ostride] = lane[3 * sizeof(npyv_lanetype_@sfx@)];
+        #endif
+    }
+
+    #undef PACK_FACTOR
+
+    // Scalar loop to finish off
+    for (; len > 0; --len, ip += istride, op += ostride) {
+        *op = (npy_@kind@(*ip) != 0);
+    }
+
+    npyv_cleanup();
+}
+/**end repeat2**/
+/**end repeat1**/
+
+#endif // @VCHK@
+/**end repeat**/
+
+/********************************************************************************
+ ** Defining ufunc inner functions
+ ********************************************************************************/
+/**begin repeat
+ * #TYPE = FLOAT, DOUBLE#
+ * #sfx  = f32, f64#
+ * #VCHK = NPY_SIMD_F32, NPY_SIMD_F64#
+ */
+
+/**begin repeat1
+ * #kind = isnan, isinf, isfinite, signbit#
+ **/
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+#if @VCHK@
+    const char *ip = args[0];
+    char *op = args[1];
+    const npy_intp istep = steps[0];
+    const npy_intp ostep = steps[1];
+    npy_intp len = dimensions[0];
+    const int ilsize = sizeof(npyv_lanetype_@sfx@);
+    const int olsize = sizeof(npy_bool);
+    const npy_intp istride = istep / ilsize;
+    const npy_intp ostride = ostep / olsize;
+    assert(len <= 1 || ostep % olsize == 0);
+
+    if ((istep % ilsize == 0) &&
+        !is_mem_overlap(ip, istep, op, ostep, len) &&
+        npyv_loadable_stride_@sfx@(istride) &&
+        npyv_storable_stride_@sfx@(ostride))
+    {
+        if (istride == 1 && ostride == 1) {
+            simd_unary_@kind@_@TYPE@_CONTIG_CONTIG(ip, 1, op, 1, len);
+        }
+        else if (ostride == 1) {
+            simd_unary_@kind@_@TYPE@_NCONTIG_CONTIG(ip, istride, op, 1, len);
+        }
+        else if (istride == 1) {
+            simd_unary_@kind@_@TYPE@_CONTIG_NCONTIG(ip, 1, op, ostride, len);
+        } else {
+            simd_unary_@kind@_@TYPE@_NCONTIG_NCONTIG(ip, istride, op, ostride, len);
+        }
+    } else
+#endif // @VCHK@
+    {
+    UNARY_LOOP {
+        const npyv_lanetype_@sfx@ in = *(npyv_lanetype_@sfx@ *)ip1;
+        *((npy_bool *)op1) = (npy_@kind@(in) != 0);
+    }
+    }
+
+    npy_clear_floatstatus_barrier((char*)dimensions);
+}
+/**end repeat1**/
+/**end repeat**/

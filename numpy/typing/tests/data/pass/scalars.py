@@ -135,7 +135,7 @@ int(td)
 int(U)
 int(S)
 int(AR)
-with pytest.warns(np.ComplexWarning):
+with pytest.warns(np.exceptions.ComplexWarning):
     int(c16)
 
 float(i8)
@@ -146,7 +146,7 @@ float(td)
 float(U)
 float(S)
 float(AR)
-with pytest.warns(np.ComplexWarning):
+with pytest.warns(np.exceptions.ComplexWarning):
     float(c16)
 
 complex(i8)
@@ -175,8 +175,6 @@ c16.byteswap()
 c16.transpose()
 
 # Aliases
-np.string_()
-
 np.byte()
 np.short()
 np.intc()
@@ -194,18 +192,11 @@ np.ulonglong()
 np.half()
 np.single()
 np.double()
-np.float_()
 np.longdouble()
-np.longfloat()
 
 np.csingle()
-np.singlecomplex()
 np.cdouble()
-np.complex_()
-np.cfloat()
 np.clongdouble()
-np.clongfloat()
-np.longcomplex()
 
 b.item()
 i8.item()

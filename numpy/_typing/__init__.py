@@ -98,6 +98,7 @@ from ._nbit import (
     _NBitIntC as _NBitIntC,
     _NBitIntP as _NBitIntP,
     _NBitInt as _NBitInt,
+    _NBitLong as _NBitLong,
     _NBitLongLong as _NBitLongLong,
     _NBitHalf as _NBitHalf,
     _NBitSingle as _NBitSingle,
@@ -124,12 +125,14 @@ from ._char_codes import (
     _IntCCodes as _IntCCodes,
     _IntPCodes as _IntPCodes,
     _IntCodes as _IntCodes,
+    _LongCodes as _LongCodes,
     _LongLongCodes as _LongLongCodes,
     _UByteCodes as _UByteCodes,
     _UShortCodes as _UShortCodes,
     _UIntCCodes as _UIntCCodes,
     _UIntPCodes as _UIntPCodes,
     _UIntCodes as _UIntCodes,
+    _ULongCodes as _ULongCodes,
     _ULongLongCodes as _ULongLongCodes,
     _HalfCodes as _HalfCodes,
     _SingleCodes as _SingleCodes,
@@ -180,6 +183,7 @@ from ._dtype_like import (
     _DTypeLikeComplex_co as _DTypeLikeComplex_co,
 )
 from ._array_like import (
+    NDArray as NDArray,
     ArrayLike as ArrayLike,
     _ArrayLike as _ArrayLike,
     _FiniteNestedSequence as _FiniteNestedSequence,
@@ -200,11 +204,6 @@ from ._array_like import (
     _ArrayLikeBytes_co as _ArrayLikeBytes_co,
     _ArrayLikeUnknown as _ArrayLikeUnknown,
     _UnknownType as _UnknownType,
-)
-from ._generic_alias import (
-    NDArray as NDArray,
-    _DType as _DType,
-    _GenericAlias as _GenericAlias,
 )
 
 if TYPE_CHECKING:

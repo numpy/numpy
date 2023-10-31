@@ -19,19 +19,20 @@ permissions:
 jobs:
   build-wasm-emscripten:
     runs-on: ubuntu-22.04
-    if: github.repository == 'numpy/numpy'
+    if: false  # NOTE: job disabled, it needs to be moved to Meson (see gh-24603)
+    # if: "github.repository == 'numpy/numpy'"
     env:
-      PYODIDE_VERSION: 0.22.0a3
+      PYODIDE_VERSION: 0.23.1
       # PYTHON_VERSION and EMSCRIPTEN_VERSION are determined by PYODIDE_VERSION.
       # The appropriate versions can be found in the Pyodide repodata.json
       # "info" field, or in Makefile.envs:
       # https://github.com/pyodide/pyodide/blob/main/Makefile.envs#L2
-      PYTHON_VERSION: 3.10.7
-      EMSCRIPTEN_VERSION: 3.1.24
+      PYTHON_VERSION: 3.11.2
+      EMSCRIPTEN_VERSION: 3.1.32
       NODE_VERSION: 18
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@v3
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: true
           # versioneer.py requires the latest tag to be reachable. Here we
@@ -42,23 +43,27 @@ jobs:
 
       - name: set up python
         id: setup-python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - uses: mymindstorm/setup-emsdk@v11
+      - uses: mymindstorm/setup-emsdk@ab889da2abbcbb280f91ec4c215d3bb4f3a8f775 # v12
         with:
           version: ${{ env.EMSCRIPTEN_VERSION }}
           actions-cache-folder: emsdk-cache
 
       - name: Install pyodide-build
-        run: pip install pyodide-build==$PYODIDE_VERSION
+        run: pip install "pydantic<2" pyodide-build==$PYODIDE_VERSION
 
       - name: Build
-        run: CFLAGS=-g2 LDFLAGS=-g2 pyodide build
+        run: |
+          # Pyodide is still in the process of adding better/easier support for
+          # non-setup.py based builds.
+          cp pyproject.toml.setuppy pyproject.toml
+          CFLAGS=-g2 LDFLAGS=-g2 pyodide build
 
       - name: set up node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -67,6 +72,7 @@ jobs:
           pyodide venv .venv-pyodide
           source .venv-pyodide/bin/activate
           pip install dist/*.whl
+          python -c "import sys; print(sys.platform)"
           pip install -r test_requirements.txt
       - name: Test
         run: |

@@ -1,6 +1,6 @@
 from math import nan, inf
 import pytest
-from numpy.core import array, arange, printoptions
+from numpy._core import array, arange, printoptions
 import numpy.polynomial as poly
 from numpy.testing import assert_equal, assert_
 
@@ -477,6 +477,10 @@ class TestPrintOptions:
     The exponential notation is enabled automatically when the values 
     are too small or too large.
     """
+
+    @pytest.fixture(scope='class', autouse=True)
+    def use_ascii(self):
+        poly.set_default_printstyle('ascii')
 
     def test_str(self):
         p = poly.Polynomial([1/2, 1/7, 1/7*10**8, 1/7*10**9])

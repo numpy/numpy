@@ -1,5 +1,5 @@
 #!python
-#cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
+#cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3, binding=True
 import operator
 import warnings
 from collections.abc import Sequence
@@ -11,7 +11,7 @@ from cpython.mem cimport PyMem_Malloc, PyMem_Free
 cimport cython
 import numpy as np
 cimport numpy as np
-from numpy.core.multiarray import normalize_axis_index
+from numpy.lib.array_utils import normalize_axis_index
 
 from .c_distributions cimport *
 from libc cimport string
@@ -63,7 +63,7 @@ cdef int64_t _safe_sum_nonneg_int64(size_t num_colors, int64_t *colors):
 cdef inline void _shuffle_raw_wrap(bitgen_t *bitgen, np.npy_intp n,
                                    np.npy_intp first, np.npy_intp itemsize,
                                    np.npy_intp stride,
-                                   char* data, char* buf) nogil:
+                                   char* data, char* buf) noexcept nogil:
     # We trick gcc into providing a specialized implementation for
     # the most common case, yielding a ~33% performance improvement.
     # Note that apparently, only one branch can ever be specialized.
@@ -76,7 +76,7 @@ cdef inline void _shuffle_raw_wrap(bitgen_t *bitgen, np.npy_intp n,
 cdef inline void _shuffle_raw(bitgen_t *bitgen, np.npy_intp n,
                               np.npy_intp first, np.npy_intp itemsize,
                               np.npy_intp stride,
-                              char* data, char* buf) nogil:
+                              char* data, char* buf) noexcept nogil:
     """
     Parameters
     ----------
@@ -107,7 +107,7 @@ cdef inline void _shuffle_raw(bitgen_t *bitgen, np.npy_intp n,
 
 
 cdef inline void _shuffle_int(bitgen_t *bitgen, np.npy_intp n,
-                              np.npy_intp first, int64_t* data) nogil:
+                              np.npy_intp first, int64_t* data) noexcept nogil:
     """
     Parameters
     ----------
@@ -237,6 +237,64 @@ cdef class Generator:
             The bit generator instance used by the generator
         """
         return self._bit_generator
+
+    def spawn(self, int n_children):
+        """
+        spawn(n_children)
+
+        Create new independent child generators.
+
+        See :ref:`seedsequence-spawn` for additional notes on spawning
+        children.
+
+        .. versionadded:: 1.25.0
+
+        Parameters
+        ----------
+        n_children : int
+
+        Returns
+        -------
+        child_generators : list of Generators
+
+        Raises
+        ------
+        TypeError
+            When the underlying SeedSequence does not implement spawning.
+
+        See Also
+        --------
+        random.BitGenerator.spawn, random.SeedSequence.spawn :
+            Equivalent method on the bit generator and seed sequence.
+        bit_generator :
+            The bit generator instance used by the generator.
+
+        Examples
+        --------
+        Starting from a seeded default generator:
+
+        >>> # High quality entropy created with: f"0x{secrets.randbits(128):x}"
+        >>> entropy = 0x3034c61a9ae04ff8cb62ab8ec2c4b501
+        >>> rng = np.random.default_rng(entropy)
+
+        Create two new generators for example for parallel execution:
+
+        >>> child_rng1, child_rng2 = rng.spawn(2)
+
+        Drawn numbers from each are independent but derived from the initial
+        seeding entropy:
+
+        >>> rng.uniform(), child_rng1.uniform(), child_rng2.uniform()
+        (0.19029263503854454, 0.9475673279178444, 0.4702687338396767)
+
+        It is safe to spawn additional children from the original ``rng`` or
+        the children:
+
+        >>> more_child_rngs = rng.spawn(20)
+        >>> nested_spawn = child_rng1.spawn(20)
+
+        """
+        return [type(self)(g) for g in self._bit_generator.spawn(n_children)]
 
     def random(self, size=None, dtype=np.float64, out=None):
         """
@@ -379,6 +437,22 @@ cdef class Generator:
         -------
         out : ndarray or scalar
             Drawn samples from the parameterized exponential distribution.
+
+        Examples
+        --------
+        A real world example: Assume a company has 10000 customer support 
+        agents and the average time between customer calls is 4 minutes.
+
+        >>> n = 10000
+        >>> time_between_calls = np.random.default_rng().exponential(scale=4, size=n)
+
+        What is the probability that a customer will call in the next 
+        4 to 5 minutes? 
+        
+        >>> x = ((time_between_calls < 5).sum())/n 
+        >>> y = ((time_between_calls < 4).sum())/n
+        >>> x-y
+        0.08 # may vary
 
         References
         ----------
@@ -530,7 +604,7 @@ cdef class Generator:
         ----------
         .. [1] Daniel Lemire., "Fast Random Integer Generation in an Interval",
                ACM Transactions on Modeling and Computer Simulation 29 (1), 2019,
-               http://arxiv.org/abs/1805.10941.
+               https://arxiv.org/abs/1805.10941.
 
         """
         if high is None:
@@ -1202,7 +1276,7 @@ cdef class Generator:
         ----------
         .. [1] Weisstein, Eric W. "Gamma Distribution." From MathWorld--A
                Wolfram Web Resource.
-               http://mathworld.wolfram.com/GammaDistribution.html
+               https://mathworld.wolfram.com/GammaDistribution.html
         .. [2] Wikipedia, "Gamma distribution",
                https://en.wikipedia.org/wiki/Gamma_distribution
 
@@ -1290,7 +1364,7 @@ cdef class Generator:
         ----------
         .. [1] Weisstein, Eric W. "Gamma Distribution." From MathWorld--A
                Wolfram Web Resource.
-               http://mathworld.wolfram.com/GammaDistribution.html
+               https://mathworld.wolfram.com/GammaDistribution.html
         .. [2] Wikipedia, "Gamma distribution",
                https://en.wikipedia.org/wiki/Gamma_distribution
 
@@ -1453,7 +1527,7 @@ cdef class Generator:
         ----------
         .. [1] Weisstein, Eric W. "Noncentral F-Distribution."
                From MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/NoncentralF-Distribution.html
+               https://mathworld.wolfram.com/NoncentralF-Distribution.html
         .. [2] Wikipedia, "Noncentral F-distribution",
                https://en.wikipedia.org/wiki/Noncentral_F-distribution
 
@@ -1679,7 +1753,7 @@ cdef class Generator:
               https://www.itl.nist.gov/div898/handbook/eda/section3/eda3663.htm
         .. [2] Weisstein, Eric W. "Cauchy Distribution." From MathWorld--A
               Wolfram Web Resource.
-              http://mathworld.wolfram.com/CauchyDistribution.html
+              https://mathworld.wolfram.com/CauchyDistribution.html
         .. [3] Wikipedia, "Cauchy distribution"
               https://en.wikipedia.org/wiki/Cauchy_distribution
 
@@ -2237,7 +2311,7 @@ cdef class Generator:
                Generalizations, " Birkhauser, 2001.
         .. [3] Weisstein, Eric W. "Laplace Distribution."
                From MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/LaplaceDistribution.html
+               https://mathworld.wolfram.com/LaplaceDistribution.html
         .. [4] Wikipedia, "Laplace distribution",
                https://en.wikipedia.org/wiki/Laplace_distribution
 
@@ -2441,7 +2515,7 @@ cdef class Generator:
                Fields," Birkhauser Verlag, Basel, pp 132-133.
         .. [2] Weisstein, Eric W. "Logistic Distribution." From
                MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/LogisticDistribution.html
+               https://mathworld.wolfram.com/LogisticDistribution.html
         .. [3] Wikipedia, "Logistic-distribution",
                https://en.wikipedia.org/wiki/Logistic_distribution
 
@@ -2560,7 +2634,7 @@ cdef class Generator:
         >>> b = []
         >>> for i in range(1000):
         ...    a = 10. + rng.standard_normal(100)
-        ...    b.append(np.product(a))
+        ...    b.append(np.prod(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
         >>> count, bins, ignored = plt.hist(b, 100, density=True, align='mid')
@@ -2879,7 +2953,7 @@ cdef class Generator:
                and Quigley, 1972.
         .. [4] Weisstein, Eric W. "Binomial Distribution." From MathWorld--A
                Wolfram Web Resource.
-               http://mathworld.wolfram.com/BinomialDistribution.html
+               https://mathworld.wolfram.com/BinomialDistribution.html
         .. [5] Wikipedia, "Binomial distribution",
                https://en.wikipedia.org/wiki/Binomial_distribution
 
@@ -3028,7 +3102,7 @@ cdef class Generator:
         ----------
         .. [1] Weisstein, Eric W. "Negative Binomial Distribution." From
                MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/NegativeBinomialDistribution.html
+               https://mathworld.wolfram.com/NegativeBinomialDistribution.html
         .. [2] Wikipedia, "Negative binomial distribution",
                https://en.wikipedia.org/wiki/Negative_binomial_distribution
 
@@ -3130,7 +3204,7 @@ cdef class Generator:
         ----------
         .. [1] Weisstein, Eric W. "Poisson Distribution."
                From MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/PoissonDistribution.html
+               https://mathworld.wolfram.com/PoissonDistribution.html
         .. [2] Wikipedia, "Poisson distribution",
                https://en.wikipedia.org/wiki/Poisson_distribution
 
@@ -3375,7 +3449,7 @@ cdef class Generator:
                and Quigley, 1972.
         .. [2] Weisstein, Eric W. "Hypergeometric Distribution." From
                MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/HypergeometricDistribution.html
+               https://mathworld.wolfram.com/HypergeometricDistribution.html
         .. [3] Wikipedia, "Hypergeometric distribution",
                https://en.wikipedia.org/wiki/Hypergeometric_distribution
         .. [4] Stadlober, Ernst, "The ratio of uniforms approach for generating
@@ -3403,7 +3477,7 @@ cdef class Generator:
         #   answer = 0.003 ... pretty unlikely!
 
         """
-        DEF HYPERGEOM_MAX = 10**9
+        cdef double HYPERGEOM_MAX = 10**9
         cdef bint is_scalar = True
         cdef np.ndarray ongood, onbad, onsample
         cdef int64_t lngood, lnbad, lnsample
@@ -3533,8 +3607,8 @@ cdef class Generator:
         generalization of the one-dimensional normal distribution to higher
         dimensions.  Such a distribution is specified by its mean and
         covariance matrix.  These parameters are analogous to the mean
-        (average or "center") and variance (standard deviation, or "width,"
-        squared) of the one-dimensional normal distribution.
+        (average or "center") and variance (the squared standard deviation,
+        or "width") of the one-dimensional normal distribution.
 
         Parameters
         ----------
@@ -3589,9 +3663,9 @@ cdef class Generator:
         Instead of specifying the full covariance matrix, popular
         approximations include:
 
-          - Spherical covariance (`cov` is a multiple of the identity matrix)
-          - Diagonal covariance (`cov` has non-negative elements, and only on
-            the diagonal)
+        - Spherical covariance (`cov` is a multiple of the identity matrix)
+        - Diagonal covariance (`cov` has non-negative elements, and only on
+          the diagonal)
 
         This geometrical property can be seen in two dimensions by plotting
         generated data-points:
@@ -3610,6 +3684,12 @@ cdef class Generator:
         Note that the covariance matrix must be positive semidefinite (a.k.a.
         nonnegative-definite). Otherwise, the behavior of this method is
         undefined and backwards compatibility is not guaranteed.
+
+        This function internally uses linear algebra routines, and thus results
+        may not be identical (even up to precision) across architectures, OSes,
+        or even builds. For example, this is likely if ``cov`` has multiple equal
+        singular values and ``method`` is ``'svd'`` (default). In this case,
+        ``method='cholesky'`` may be more robust.
 
         References
         ----------
@@ -4247,7 +4327,7 @@ cdef class Generator:
         Raises
         ------
         ValueError
-            If any value in ``alpha`` is less than or equal to zero
+            If any value in ``alpha`` is less than zero
 
         Notes
         -----
@@ -4273,7 +4353,7 @@ cdef class Generator:
         ----------
         .. [1] David McKay, "Information Theory, Inference and Learning
                Algorithms," chapter 23,
-               http://www.inference.org.uk/mackay/itila/
+               https://www.inference.org.uk/mackay/itila/
         .. [2] Wikipedia, "Dirichlet distribution",
                https://en.wikipedia.org/wiki/Dirichlet_distribution
 
@@ -4326,8 +4406,9 @@ cdef class Generator:
         alpha_arr = <np.ndarray>np.PyArray_FROMANY(
             alpha, np.NPY_DOUBLE, 1, 1,
             np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
-        if np.any(np.less_equal(alpha_arr, 0)):
-            raise ValueError('alpha <= 0')
+        if np.any(np.less(alpha_arr, 0)):
+            raise ValueError('alpha < 0')
+
         alpha_data = <double*>np.PyArray_DATA(alpha_arr)
 
         if size is None:
@@ -4387,17 +4468,23 @@ cdef class Generator:
                 csum += alpha_data[j]
                 alpha_csum_data[j] = csum
 
-            with self.lock, nogil:
-                while i < totsize:
-                    acc = 1.
-                    for j in range(k - 1):
-                        v = random_beta(&self._bitgen, alpha_data[j],
-                                        alpha_csum_data[j + 1])
-                        val_data[i + j] = acc * v
-                        acc *= (1. - v)
-                    val_data[i + k - 1] = acc
-                    i = i + k
-
+            # If csum == 0, then all the values in alpha are 0, and there is
+            # nothing to do, because diric was created with np.zeros().
+            if csum > 0:
+                with self.lock, nogil:
+                    while i < totsize:
+                        acc = 1.
+                        for j in range(k - 1):
+                            v = random_beta(&self._bitgen, alpha_data[j],
+                                            alpha_csum_data[j + 1])
+                            val_data[i + j] = acc * v
+                            acc *= (1. - v)
+                            if alpha_csum_data[j + 1] == 0:
+                                # v must be 1, so acc is now 0. All
+                                # remaining elements will be left at 0.
+                                break
+                        val_data[i + k - 1] = acc
+                        i = i + k
         else:
             # Standard case: Unit normalisation of a vector of gamma random
             # variates
@@ -4745,7 +4832,7 @@ cdef class Generator:
         >>> rng.permutation("abc")
         Traceback (most recent call last):
             ...
-        numpy.AxisError: axis 0 is out of bounds for array of dimension 0
+        numpy.exceptions.AxisError: axis 0 is out of bounds for array of dimension 0
 
         >>> arr = np.arange(9).reshape((3, 3))
         >>> rng.permutation(arr, axis=1)
@@ -4788,8 +4875,8 @@ def default_rng(seed=None):
     seed : {None, int, array_like[ints], SeedSequence, BitGenerator, Generator}, optional
         A seed to initialize the `BitGenerator`. If None, then fresh,
         unpredictable entropy will be pulled from the OS. If an ``int`` or
-        ``array_like[ints]`` is passed, then it will be passed to
-        `SeedSequence` to derive the initial `BitGenerator` state. One may also
+        ``array_like[ints]`` is passed, then all values must be non-negative and will be
+        passed to `SeedSequence` to derive the initial `BitGenerator` state. One may also
         pass in a `SeedSequence` instance.
         Additionally, when passed a `BitGenerator`, it will be wrapped by
         `Generator`. If passed a `Generator`, it will be returned unaltered.
@@ -4803,6 +4890,8 @@ def default_rng(seed=None):
     -----
     If ``seed`` is not a `BitGenerator` or a `Generator`, a new `BitGenerator`
     is instantiated. This function does not manage a default global instance.
+
+    See :ref:`seeding_and_entropy` for more information about seeding.
     
     Examples
     --------

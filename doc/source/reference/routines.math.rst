@@ -39,6 +39,7 @@ Rounding
 .. autosummary::
    :toctree: generated/
 
+   round
    around
    rint
    fix
@@ -63,7 +64,6 @@ Sums, products, differences
    ediff1d
    gradient
    cross
-   trapz
 
 Exponents and logarithms
 ------------------------
@@ -148,13 +148,15 @@ Extrema Finding
    :toctree: generated/
 
    maximum
-   fmax
+   max
    amax
+   fmax
    nanmax
    
    minimum
-   fmin
+   min
    amin
+   fmin
    nanmin
    
 
@@ -179,3 +181,5 @@ Miscellaneous
    real_if_close
 
    interp
+
+   bitwise_count

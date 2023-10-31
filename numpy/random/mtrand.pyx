@@ -1,5 +1,5 @@
 #!python
-#cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
+#cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3, binding=True
 import operator
 import warnings
 from collections.abc import Sequence
@@ -537,6 +537,22 @@ cdef class RandomState:
         out : ndarray or scalar
             Drawn samples from the parameterized exponential distribution.
 
+        Examples
+        --------
+        A real world example: Assume a company has 10000 customer support 
+        agents and the average time between customer calls is 4 minutes.
+
+        >>> n = 10000
+        >>> time_between_calls = np.random.default_rng().exponential(scale=4, size=n)
+
+        What is the probability that a customer will call in the next 
+        4 to 5 minutes? 
+        
+        >>> x = ((time_between_calls < 5).sum())/n 
+        >>> y = ((time_between_calls < 4).sum())/n
+        >>> x-y
+        0.08 # may vary
+
         See Also
         --------
         random.Generator.exponential: which should be used for new code.
@@ -670,7 +686,7 @@ cdef class RandomState:
         `high` is None (the default), then results are from [0, `low`).
 
         .. note::
-            New code should use the `~numpy.random.Generator.randint`
+            New code should use the `~numpy.random.Generator.integers`
             method of a `~numpy.random.Generator` instance instead;
             please see the :ref:`random-quick-start`.
 
@@ -1273,11 +1289,11 @@ cdef class RandomState:
         """
         random_integers(low, high=None, size=None)
 
-        Random integers of type `np.int_` between `low` and `high`, inclusive.
+        Random integers of type `numpy.int_` between `low` and `high`, inclusive.
 
-        Return random integers of type `np.int_` from the "discrete uniform"
+        Return random integers of type `numpy.int_` from the "discrete uniform"
         distribution in the closed interval [`low`, `high`].  If `high` is
-        None (the default), then results are from [1, `low`]. The `np.int_`
+        None (the default), then results are from [1, `low`]. The `numpy.int_`
         type translates to the C long integer type and its precision
         is platform dependent.
 
@@ -1596,7 +1612,7 @@ cdef class RandomState:
         ----------
         .. [1] Weisstein, Eric W. "Gamma Distribution." From MathWorld--A
                Wolfram Web Resource.
-               http://mathworld.wolfram.com/GammaDistribution.html
+               https://mathworld.wolfram.com/GammaDistribution.html
         .. [2] Wikipedia, "Gamma distribution",
                https://en.wikipedia.org/wiki/Gamma_distribution
 
@@ -1681,7 +1697,7 @@ cdef class RandomState:
         ----------
         .. [1] Weisstein, Eric W. "Gamma Distribution." From MathWorld--A
                Wolfram Web Resource.
-               http://mathworld.wolfram.com/GammaDistribution.html
+               https://mathworld.wolfram.com/GammaDistribution.html
         .. [2] Wikipedia, "Gamma distribution",
                https://en.wikipedia.org/wiki/Gamma_distribution
 
@@ -1860,7 +1876,7 @@ cdef class RandomState:
         ----------
         .. [1] Weisstein, Eric W. "Noncentral F-Distribution."
                From MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/NoncentralF-Distribution.html
+               https://mathworld.wolfram.com/NoncentralF-Distribution.html
         .. [2] Wikipedia, "Noncentral F-distribution",
                https://en.wikipedia.org/wiki/Noncentral_F-distribution
 
@@ -2112,7 +2128,7 @@ cdef class RandomState:
               https://www.itl.nist.gov/div898/handbook/eda/section3/eda3663.htm
         .. [2] Weisstein, Eric W. "Cauchy Distribution." From MathWorld--A
               Wolfram Web Resource.
-              http://mathworld.wolfram.com/CauchyDistribution.html
+              https://mathworld.wolfram.com/CauchyDistribution.html
         .. [3] Wikipedia, "Cauchy distribution"
               https://en.wikipedia.org/wiki/Cauchy_distribution
 
@@ -2712,7 +2728,7 @@ cdef class RandomState:
                Generalizations, " Birkhauser, 2001.
         .. [3] Weisstein, Eric W. "Laplace Distribution."
                From MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/LaplaceDistribution.html
+               https://mathworld.wolfram.com/LaplaceDistribution.html
         .. [4] Wikipedia, "Laplace distribution",
                https://en.wikipedia.org/wiki/Laplace_distribution
 
@@ -2927,7 +2943,7 @@ cdef class RandomState:
                Fields," Birkhauser Verlag, Basel, pp 132-133.
         .. [2] Weisstein, Eric W. "Logistic Distribution." From
                MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/LogisticDistribution.html
+               https://mathworld.wolfram.com/LogisticDistribution.html
         .. [3] Wikipedia, "Logistic-distribution",
                https://en.wikipedia.org/wiki/Logistic_distribution
 
@@ -3050,7 +3066,7 @@ cdef class RandomState:
         >>> b = []
         >>> for i in range(1000):
         ...    a = 10. + np.random.standard_normal(100)
-        ...    b.append(np.product(a))
+        ...    b.append(np.prod(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
         >>> count, bins, ignored = plt.hist(b, 100, density=True, align='mid')
@@ -3401,7 +3417,7 @@ cdef class RandomState:
                and Quigley, 1972.
         .. [4] Weisstein, Eric W. "Binomial Distribution." From MathWorld--A
                Wolfram Web Resource.
-               http://mathworld.wolfram.com/BinomialDistribution.html
+               https://mathworld.wolfram.com/BinomialDistribution.html
         .. [5] Wikipedia, "Binomial distribution",
                https://en.wikipedia.org/wiki/Binomial_distribution
 
@@ -3546,7 +3562,7 @@ cdef class RandomState:
         ----------
         .. [1] Weisstein, Eric W. "Negative Binomial Distribution." From
                MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/NegativeBinomialDistribution.html
+               https://mathworld.wolfram.com/NegativeBinomialDistribution.html
         .. [2] Wikipedia, "Negative binomial distribution",
                https://en.wikipedia.org/wiki/Negative_binomial_distribution
 
@@ -3627,7 +3643,7 @@ cdef class RandomState:
         ----------
         .. [1] Weisstein, Eric W. "Poisson Distribution."
                From MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/PoissonDistribution.html
+               https://mathworld.wolfram.com/PoissonDistribution.html
         .. [2] Wikipedia, "Poisson distribution",
                https://en.wikipedia.org/wiki/Poisson_distribution
 
@@ -3888,7 +3904,7 @@ cdef class RandomState:
                and Quigley, 1972.
         .. [2] Weisstein, Eric W. "Hypergeometric Distribution." From
                MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/HypergeometricDistribution.html
+               https://mathworld.wolfram.com/HypergeometricDistribution.html
         .. [3] Wikipedia, "Hypergeometric distribution",
                https://en.wikipedia.org/wiki/Hypergeometric_distribution
 
@@ -4106,9 +4122,9 @@ cdef class RandomState:
         Instead of specifying the full covariance matrix, popular
         approximations include:
 
-          - Spherical covariance (`cov` is a multiple of the identity matrix)
-          - Diagonal covariance (`cov` has non-negative elements, and only on
-            the diagonal)
+        - Spherical covariance (`cov` is a multiple of the identity matrix)
+        - Diagonal covariance (`cov` has non-negative elements, and only on
+          the diagonal)
 
         This geometrical property can be seen in two dimensions by plotting
         generated data-points:
@@ -4439,7 +4455,7 @@ cdef class RandomState:
         ----------
         .. [1] David McKay, "Information Theory, Inference and Learning
                Algorithms," chapter 23,
-               http://www.inference.org.uk/mackay/itila/
+               https://www.inference.org.uk/mackay/itila/
         .. [2] Wikipedia, "Dirichlet distribution",
                https://en.wikipedia.org/wiki/Dirichlet_distribution
 

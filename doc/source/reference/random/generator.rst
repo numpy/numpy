@@ -18,12 +18,13 @@ can be changed by passing an instantized BitGenerator to ``Generator``.
     :members: __init__
     :exclude-members: __init__
 
-Accessing the BitGenerator
---------------------------
+Accessing the BitGenerator and Spawning
+---------------------------------------
 .. autosummary::
    :toctree: generated/
 
    ~numpy.random.Generator.bit_generator
+   ~numpy.random.Generator.spawn
 
 Simple random data
 ------------------

@@ -43,14 +43,14 @@ When you use :func:`numpy.array` to define a new array, you should
 consider the :doc:`dtype <basics.types>` of the elements in the array,
 which can be specified explicitly. This feature gives you
 more control over the underlying data structures and how the elements
-are handled in C/C++ functions. If you are not careful with ``dtype``
-assignments, you can get unwanted overflow, as such 
+are handled in C/C++ functions.
+When values do not fit and you are using a ``dtype``, NumPy may raise an
+error::
 
-::
-
-  >>> a = np.array([127, 128, 129], dtype=np.int8)
-  >>> a
-  array([ 127, -128, -127], dtype=int8)
+  >>> np.array([127, 128, 129], dtype=np.int8)
+  Traceback (most recent call last):
+  ...
+  OverflowError: Python integer 128 out of bounds for int8
 
 An 8-bit signed integer represents integers from -128 to 127.
 Assigning the ``int8`` array to integers outside of this range results
@@ -75,8 +75,8 @@ the computation, here ``uint32`` and ``int32`` can both be represented in
 as ``int64``. 
 
 The default NumPy behavior is to create arrays in either 32 or 64-bit signed
-integers (platform dependent and matches C int size) or double precision
-floating point numbers, int32/int64 and float, respectively. If you expect your
+integers (platform dependent and matches C ``long`` size) or double precision
+floating point numbers. If you expect your
 integer arrays to be a specific type, then you need to specify the dtype while
 you create the array.
 
@@ -352,7 +352,7 @@ and :func:`numpy.genfromtxt`. These functions have more involved use cases in
  2, 4
  3, 9
 
-Importing ``simple.csv`` is accomplished using :func:`loadtxt`::
+Importing ``simple.csv`` is accomplished using :func:`numpy.loadtxt`::
 
  >>> np.loadtxt('simple.csv', delimiter = ',', skiprows = 1) # doctest: +SKIP
  array([[0., 0.],

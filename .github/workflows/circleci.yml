@@ -4,21 +4,22 @@
 
 name: CircleCI artifact redirector
 
-permissions:
-  contents: read # to fetch code (actions/checkout)
-
 on: [status]
+
+permissions: read-all
+
 jobs:
   circleci_artifacts_redirector_job:
     runs-on: ubuntu-latest
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[circle skip]') && !contains(github.event.head_commit.message, '[skip circle]')  && github.event.context == 'ci/circleci: build'"
     name: Run CircleCI artifacts redirector
     permissions:
-      pull-requests: write
-    # if: github.repository == 'numpy/numpy'
+      statuses: write
     steps:
       - name: GitHub Action step
-        uses: larsoner/circleci-artifacts-redirector-action@master
+        uses: larsoner/circleci-artifacts-redirector-action@7e80b26b4c58b5d3272effc05491c18296b1ad6e # master
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          api-token: ${{ secrets.CIRCLE_TOKEN }}
           artifact-path: 0/doc/build/html/index.html
           circleci-jobs: build

@@ -6,6 +6,7 @@ Utility functions for
 - determining paths to tests
 
 """
+import glob
 import os
 import sys
 import subprocess
@@ -19,7 +20,7 @@ import contextlib
 import numpy
 
 from pathlib import Path
-from numpy.compat import asbytes, asstr
+from numpy._utils import asunicode
 from numpy.testing import temppath, IS_WASM
 from importlib import import_module
 
@@ -29,6 +30,10 @@ from importlib import import_module
 
 _module_dir = None
 _module_num = 5403
+
+if sys.platform == "cygwin":
+    NUMPY_INSTALL_ROOT = Path(__file__).parent.parent.parent
+    _module_list = list(NUMPY_INSTALL_ROOT.glob("**/*.dll"))
 
 
 def _cleanup():
@@ -139,13 +144,28 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
         out, err = p.communicate()
         if p.returncode != 0:
             raise RuntimeError("Running f2py failed: %s\n%s" %
-                               (cmd[4:], asstr(out)))
+                               (cmd[4:], asunicode(out)))
     finally:
         os.chdir(cwd)
 
         # Partial cleanup
         for fn in dst_sources:
             os.unlink(fn)
+
+    # Rebase (Cygwin-only)
+    if sys.platform == "cygwin":
+        # If someone starts deleting modules after import, this will
+        # need to change to record how big each module is, rather than
+        # relying on rebase being able to find that from the files.
+        _module_list.extend(
+            glob.glob(os.path.join(d, "{:s}*".format(module_name)))
+        )
+        subprocess.check_call(
+            ["/usr/bin/rebase", "--database", "--oblivious", "--verbose"]
+            + _module_list
+        )
+
+
 
     # Import
     return import_module(module_name)
@@ -298,7 +318,7 @@ if __name__ == "__main__":
     script = os.path.join(d, get_temp_module_name() + ".py")
     dst_sources.append(script)
     with open(script, "wb") as f:
-        f.write(asbytes(code))
+        f.write(code.encode('latin1'))
 
     # Build
     cwd = os.getcwd()

@@ -403,11 +403,29 @@ float random_gamma_f(bitgen_t *bitgen_state, float shape, float scale) {
   return scale * random_standard_gamma_f(bitgen_state, shape);
 }
 
+#define BETA_TINY_THRESHOLD 3e-103
+
+/*
+ *  Note: random_beta assumes that a != 0 and b != 0.
+ */
 double random_beta(bitgen_t *bitgen_state, double a, double b) {
   double Ga, Gb;
 
   if ((a <= 1.0) && (b <= 1.0)) {
     double U, V, X, Y, XpY;
+
+    if (a < BETA_TINY_THRESHOLD && b < BETA_TINY_THRESHOLD) {
+      /*
+       * When a and b are this small, the probability that the
+       * sample would be a double precision float that is not
+       * 0 or 1 is less than approx. 1e-100.  So we use the
+       * proportion a/(a + b) and a single uniform sample to
+       * generate the result.
+       */
+      U = next_double(bitgen_state);
+      return (a + b)*U < a;
+    }
+
     /* Use Johnk's algorithm */
 
     while (1) {
@@ -417,8 +435,8 @@ double random_beta(bitgen_t *bitgen_state, double a, double b) {
       Y = pow(V, 1.0 / b);
       XpY = X + Y;
       /* Reject if both U and V are 0.0, which is approx 1 in 10^106 */
-      if ((XpY <= 1.0) && (XpY > 0.0)) {
-        if (X + Y > 0) {
+      if ((XpY <= 1.0) && (U + V > 0.0)) {
+        if (XpY > 0) {
           return X / XpY;
         } else {
           double logX = log(U) / a;
@@ -960,7 +978,15 @@ RAND_INT_TYPE random_geometric_search(bitgen_t *bitgen_state, double p) {
 }
 
 int64_t random_geometric_inversion(bitgen_t *bitgen_state, double p) {
-  return (int64_t)ceil(-random_standard_exponential(bitgen_state) / npy_log1p(-p));
+  double z = ceil(-random_standard_exponential(bitgen_state) / npy_log1p(-p));
+  /*
+   * The constant 9.223372036854776e+18 is the smallest double that is
+   * larger than INT64_MAX.
+   */
+  if (z >= 9.223372036854776e+18) {
+    return INT64_MAX;
+  }
+  return (int64_t) z;
 }
 
 int64_t random_geometric(bitgen_t *bitgen_state, double p) {

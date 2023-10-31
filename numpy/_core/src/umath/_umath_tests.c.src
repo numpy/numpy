@@ -1,0 +1,837 @@
+/* -*- c -*- */
+
+/*
+ *****************************************************************************
+ **                            INCLUDES                                     **
+ *****************************************************************************
+ */
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#if defined(NPY_INTERNAL_BUILD)
+#undef NPY_INTERNAL_BUILD
+#endif
+#include "numpy/arrayobject.h"
+#include "numpy/ufuncobject.h"
+#include "numpy/npy_math.h"
+
+#include "npy_pycompat.h"
+
+#include "npy_config.h"
+#include "npy_cpu_features.h"
+#include "npy_cpu_dispatch.h"
+#include "numpy/npy_cpu.h"
+#include "npy_import.h"
+#include "numpy/experimental_dtype_api.h"
+
+
+/*
+ *****************************************************************************
+ **                            BASICS                                       **
+ *****************************************************************************
+ */
+
+#define INIT_OUTER_LOOP_1       \
+    npy_intp dN = *dimensions++;\
+    npy_intp N_;                \
+    npy_intp s0 = *steps++;
+
+#define INIT_OUTER_LOOP_2       \
+    INIT_OUTER_LOOP_1           \
+    npy_intp s1 = *steps++;
+
+#define INIT_OUTER_LOOP_3       \
+    INIT_OUTER_LOOP_2           \
+    npy_intp s2 = *steps++;
+
+#define INIT_OUTER_LOOP_4       \
+    INIT_OUTER_LOOP_3           \
+    npy_intp s3 = *steps++;
+
+#define BEGIN_OUTER_LOOP_2      \
+    for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1) {
+
+#define BEGIN_OUTER_LOOP_3      \
+    for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1, args[2] += s2) {
+
+#define BEGIN_OUTER_LOOP_4      \
+    for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1, args[2] += s2, args[3] += s3) {
+
+#define END_OUTER_LOOP  }
+
+
+/*
+ *****************************************************************************
+ **                             UFUNC LOOPS                                 **
+ *****************************************************************************
+ */
+
+static void
+always_error_loop(
+        char **NPY_UNUSED(args), npy_intp const *NPY_UNUSED(dimensions),
+        npy_intp const *NPY_UNUSED(steps), void *NPY_UNUSED(func))
+{
+    NPY_ALLOW_C_API_DEF
+    NPY_ALLOW_C_API;
+    PyErr_SetString(PyExc_RuntimeError, "How unexpected :)!");
+    NPY_DISABLE_C_API;
+    return;
+}
+
+
+char *inner1d_signature = "(i),(i)->()";
+
+/**begin repeat
+
+   #TYPE=LONG,DOUBLE#
+   #typ=npy_long,npy_double#
+*/
+
+/*
+ *  This implements the function
+ *        out[n] = sum_i { in1[n, i] * in2[n, i] }.
+ */
+
+static void
+@TYPE@_inner1d(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_3
+    npy_intp di = dimensions[0];
+    npy_intp i;
+    npy_intp is1=steps[0], is2=steps[1];
+    BEGIN_OUTER_LOOP_3
+        char *ip1=args[0], *ip2=args[1], *op=args[2];
+        @typ@ sum = 0;
+        for (i = 0; i < di; i++) {
+            sum += (*(@typ@ *)ip1) * (*(@typ@ *)ip2);
+            ip1 += is1;
+            ip2 += is2;
+        }
+        *(@typ@ *)op = sum;
+    END_OUTER_LOOP
+}
+
+/**end repeat**/
+
+char *innerwt_signature = "(i),(i),(i)->()";
+
+/**begin repeat
+
+   #TYPE=LONG,DOUBLE#
+   #typ=npy_long,npy_double#
+*/
+
+
+/*
+ *  This implements the function
+ *        out[n] = sum_i { in1[n, i] * in2[n, i] * in3[n, i] }.
+ */
+
+static void
+@TYPE@_innerwt(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_4
+    npy_intp di = dimensions[0];
+    npy_intp i;
+    npy_intp is1=steps[0], is2=steps[1], is3=steps[2];
+    BEGIN_OUTER_LOOP_4
+        char *ip1=args[0], *ip2=args[1], *ip3=args[2], *op=args[3];
+        @typ@ sum = 0;
+        for (i = 0; i < di; i++) {
+            sum += (*(@typ@ *)ip1) * (*(@typ@ *)ip2) * (*(@typ@ *)ip3);
+            ip1 += is1;
+            ip2 += is2;
+            ip3 += is3;
+        }
+        *(@typ@ *)op = sum;
+    END_OUTER_LOOP
+}
+
+/**end repeat**/
+
+char *matrix_multiply_signature = "(m,n),(n,p)->(m,p)";
+/* for use with matrix_multiply code, but different signature */
+char *matmul_signature = "(m?,n),(n,p?)->(m?,p?)";
+
+/**begin repeat
+
+   #TYPE=FLOAT,DOUBLE,LONG#
+   #typ=npy_float,npy_double,npy_long#
+*/
+
+/*
+ *  This implements the function
+ *        out[k, m, p] = sum_n { in1[k, m, n] * in2[k, n, p] }.
+ */
+
+static void
+@TYPE@_matrix_multiply(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    /* no BLAS is available */
+    INIT_OUTER_LOOP_3
+    npy_intp dm = dimensions[0];
+    npy_intp dn = dimensions[1];
+    npy_intp dp = dimensions[2];
+    npy_intp m,n,p;
+    npy_intp is1_m=steps[0], is1_n=steps[1], is2_n=steps[2], is2_p=steps[3],
+         os_m=steps[4], os_p=steps[5];
+    npy_intp ib1_n = is1_n*dn;
+    npy_intp ib2_n = is2_n*dn;
+    npy_intp ib2_p = is2_p*dp;
+    npy_intp ob_p  = os_p *dp;
+    if (dn == 0) {
+        /* No operand, need to zero the output */
+        BEGIN_OUTER_LOOP_3
+            char *op=args[2];
+            for (m = 0; m < dm; m++) {
+                for (p = 0; p < dp; p++) {
+                    *(@typ@ *)op = 0;
+                    op  +=  os_p;
+                }
+                op  +=  os_m - ob_p;
+            }
+        END_OUTER_LOOP
+        return;
+    }
+    BEGIN_OUTER_LOOP_3
+        char *ip1=args[0], *ip2=args[1], *op=args[2];
+        for (m = 0; m < dm; m++) {
+            for (n = 0; n < dn; n++) {
+                @typ@ val1 = (*(@typ@ *)ip1);
+                for (p = 0; p < dp; p++) {
+                    if (n == 0) *(@typ@ *)op = 0;
+                    *(@typ@ *)op += val1 * (*(@typ@ *)ip2);
+                    ip2 += is2_p;
+                    op  +=  os_p;
+                }
+                ip2 -= ib2_p;
+                op  -=  ob_p;
+                ip1 += is1_n;
+                ip2 += is2_n;
+            }
+            ip1 -= ib1_n;
+            ip2 -= ib2_n;
+            ip1 += is1_m;
+            op  +=  os_m;
+        }
+    END_OUTER_LOOP
+}
+
+/**end repeat**/
+
+char *cross1d_signature = "(3),(3)->(3)";
+
+/**begin repeat
+
+   #TYPE=LONG,DOUBLE#
+   #typ=npy_long, npy_double#
+*/
+
+/*
+ *  This implements the cross product:
+ *        out[n, 0] = in1[n, 1]*in2[n, 2] - in1[n, 2]*in2[n, 1]
+ *        out[n, 1] = in1[n, 2]*in2[n, 0] - in1[n, 0]*in2[n, 2]
+ *        out[n, 2] = in1[n, 0]*in2[n, 1] - in1[n, 1]*in2[n, 0]
+ */
+static void
+@TYPE@_cross1d(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_3
+    npy_intp is1=steps[0], is2=steps[1], os = steps[2];
+    BEGIN_OUTER_LOOP_3
+        @typ@ i1_x = *(@typ@ *)(args[0] + 0*is1);
+        @typ@ i1_y = *(@typ@ *)(args[0] + 1*is1);
+        @typ@ i1_z = *(@typ@ *)(args[0] + 2*is1);
+
+        @typ@ i2_x = *(@typ@ *)(args[1] + 0*is2);
+        @typ@ i2_y = *(@typ@ *)(args[1] + 1*is2);
+        @typ@ i2_z = *(@typ@ *)(args[1] + 2*is2);
+        char *op = args[2];
+
+        *(@typ@ *)op = i1_y * i2_z - i1_z * i2_y;
+        op += os;
+        *(@typ@ *)op = i1_z * i2_x - i1_x * i2_z;
+        op += os;
+        *(@typ@ *)op = i1_x * i2_y - i1_y * i2_x;
+    END_OUTER_LOOP
+}
+
+/**end repeat**/
+
+char *euclidean_pdist_signature = "(n,d)->(p)";
+
+/**begin repeat
+
+   #TYPE=FLOAT,DOUBLE#
+   #typ=npy_float,npy_double#
+   #sqrt_func=sqrtf,sqrt#
+*/
+
+/*
+ *  This implements the function
+ *        out[j*(2*n-3-j)+k-1] = sum_d { (in1[j, d] - in1[k, d])^2 }
+ *  with 0 < k < j < n, i.e. computes all unique pairwise euclidean distances.
+ */
+
+static void
+@TYPE@_euclidean_pdist(char **args, npy_intp const *dimensions, npy_intp const *steps,
+                       void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_2
+    npy_intp len_n = *dimensions++;
+    npy_intp len_d = *dimensions++;
+    npy_intp stride_n = *steps++;
+    npy_intp stride_d = *steps++;
+    npy_intp stride_p = *steps;
+
+    assert(len_n * (len_n - 1) / 2 == *dimensions);
+
+    BEGIN_OUTER_LOOP_2
+        const char *data_this = (const char *)args[0];
+        char *data_out = args[1];
+        npy_intp n;
+        for (n = 0; n < len_n; ++n) {
+            const char *data_that = data_this + stride_n;
+            npy_intp nn;
+            for (nn = n + 1; nn < len_n; ++nn) {
+                const char *ptr_this = data_this;
+                const char *ptr_that = data_that;
+                @typ@ out = 0;
+                npy_intp d;
+                for (d = 0; d < len_d; ++d) {
+                    const @typ@ delta = *(const @typ@ *)ptr_this -
+                                        *(const @typ@ *)ptr_that;
+                    out += delta * delta;
+                    ptr_this += stride_d;
+                    ptr_that += stride_d;
+                }
+                *(@typ@ *)data_out = @sqrt_func@(out);
+                data_that += stride_n;
+                data_out += stride_p;
+            }
+            data_this += stride_n;
+        }
+    END_OUTER_LOOP
+}
+
+/**end repeat**/
+
+char *cumsum_signature = "(i)->(i)";
+
+/*
+ *  This implements the function
+ *        out[n] = sum_i^n in[i]
+ */
+
+/**begin repeat
+
+   #TYPE=LONG,DOUBLE#
+   #typ=npy_long,npy_double#
+*/
+
+static void
+@TYPE@_cumsum(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_2
+    npy_intp di = dimensions[0];
+    npy_intp i;
+    npy_intp is=steps[0], os=steps[1];
+    BEGIN_OUTER_LOOP_2
+        char *ip=args[0], *op=args[1];
+        @typ@ cumsum = 0;
+        for (i = 0; i < di; i++, ip += is, op += os) {
+            cumsum += (*(@typ@ *)ip);
+            *(@typ@ *)op = cumsum;
+        }
+    END_OUTER_LOOP
+}
+
+/**end repeat**/
+
+static int
+INT32_negative(PyArrayMethod_Context *NPY_UNUSED(context),
+               char **args, npy_intp const *dimensions,
+               npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
+{
+    npy_intp di = dimensions[0];
+    npy_intp i;
+    npy_intp is=steps[0], os=steps[1];
+    char *ip=args[0], *op=args[1];
+    for (i = 0; i < di; i++, ip += is, op += os) {
+        if (i == 3) {
+            *(int32_t *)op = - 100;
+        } else {
+            *(int32_t *)op = - *(int32_t *)ip;
+        }
+    }
+    return 0;
+}
+
+
+static int
+INT32_negative_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
+                           char * const*args, npy_intp const *dimensions,
+                           npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indxp = args[1];
+    npy_intp is1 = steps[0], isindex = steps[1];
+    npy_intp n = dimensions[0];
+    npy_intp shape = steps[3];
+    npy_intp i;
+    int32_t *indexed;
+    for(i = 0; i < n; i++, indxp += isindex) {
+        npy_intp indx = *(npy_intp *)indxp;
+        if (indx < 0) {
+            indx += shape;
+        }
+        indexed = (int32_t *)(ip1 + is1 * indx);
+        if (i == 3) {
+            *indexed = -200;
+        } else {
+            *indexed = - *indexed;
+        }
+    }
+    return 0;
+}
+
+
+
+/*  The following lines were generated using a slightly modified
+    version of code_generators/generate_umath.py and adding these
+    lines to defdict:
+
+defdict = {
+'inner1d' :
+    Ufunc(2, 1, None_,
+        r'''inner on the last dimension and broadcast on the rest \n"
+        "     \"(i),(i)->()\" \n''',
+        TD('ld'),
+        ),
+'innerwt' :
+    Ufunc(3, 1, None_,
+        r'''inner1d with a weight argument \n"
+        "     \"(i),(i),(i)->()\" \n''',
+        TD('ld'),
+        ),
+}
+
+*/
+
+static PyUFuncGenericFunction always_error_functions[] = { always_error_loop };
+static void *always_error_data[] = { (void *)NULL };
+static char always_error_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static PyUFuncGenericFunction inner1d_functions[] = { LONG_inner1d, DOUBLE_inner1d };
+static void *inner1d_data[] = { (void *)NULL, (void *)NULL };
+static char inner1d_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static PyUFuncGenericFunction innerwt_functions[] = { LONG_innerwt, DOUBLE_innerwt };
+static void *innerwt_data[] = { (void *)NULL, (void *)NULL };
+static char innerwt_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static PyUFuncGenericFunction matrix_multiply_functions[] = { LONG_matrix_multiply, FLOAT_matrix_multiply, DOUBLE_matrix_multiply };
+static void *matrix_multiply_data[] = { (void *)NULL, (void *)NULL, (void *)NULL };
+static char matrix_multiply_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG,  NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,  NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static PyUFuncGenericFunction cross1d_functions[] = { LONG_cross1d, DOUBLE_cross1d };
+static void *cross1d_data[] = { (void *)NULL, (void *)NULL };
+static char cross1d_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static PyUFuncGenericFunction euclidean_pdist_functions[] =
+                            { FLOAT_euclidean_pdist, DOUBLE_euclidean_pdist };
+static void *eucldiean_pdist_data[] = { (void *)NULL, (void *)NULL };
+static char euclidean_pdist_signatures[] = { NPY_FLOAT, NPY_FLOAT,
+                                             NPY_DOUBLE, NPY_DOUBLE };
+
+static PyUFuncGenericFunction cumsum_functions[] = { LONG_cumsum, DOUBLE_cumsum };
+static void *cumsum_data[] = { (void *)NULL, (void *)NULL };
+static char cumsum_signatures[] = { NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE };
+
+
+static int
+addUfuncs(PyObject *dictionary) {
+    PyObject *f;
+
+    f = PyUFunc_FromFuncAndData(always_error_functions, always_error_data,
+            always_error_signatures, 1, 2, 1, PyUFunc_None, "always_error",
+            "simply, broken, ufunc that sets an error (but releases the GIL).",
+            0);
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "always_error", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(always_error_functions,
+            always_error_data, always_error_signatures, 1, 2, 1, PyUFunc_None,
+            "always_error_gufunc",
+            "simply, broken, gufunc that sets an error (but releases the GIL).",
+            0, "(i),()->()");
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "always_error_gufunc", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(inner1d_functions, inner1d_data,
+                    inner1d_signatures, 2, 2, 1, PyUFunc_None, "inner1d",
+                    "inner on the last dimension and broadcast on the rest \n"
+                    "     \"(i),(i)->()\" \n",
+                    0, inner1d_signature);
+    /*
+     * yes, this should not happen, but I (MHvK) just spent an hour looking at
+     * segfaults because I screwed up something that seemed totally unrelated.
+     */
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "inner1d", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(innerwt_functions, innerwt_data,
+                    innerwt_signatures, 2, 3, 1, PyUFunc_None, "innerwt",
+                    "inner1d with a weight argument \n"
+                    "     \"(i),(i),(i)->()\" \n",
+                    0, innerwt_signature);
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "innerwt", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(matrix_multiply_functions,
+                    matrix_multiply_data, matrix_multiply_signatures,
+                    3, 2, 1, PyUFunc_None, "matrix_multiply",
+                    "matrix multiplication on last two dimensions \n"
+                    "     \"(m,n),(n,p)->(m,p)\" \n",
+                    0, matrix_multiply_signature);
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "matrix_multiply", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(matrix_multiply_functions,
+                    matrix_multiply_data, matrix_multiply_signatures,
+                    3, 2, 1, PyUFunc_None, "matmul",
+                    "matmul on last two dimensions, with some being optional\n"
+                    "     \"(m?,n),(n,p?)->(m?,p?)\" \n",
+                    0, matmul_signature);
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "matmul", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(euclidean_pdist_functions,
+                    eucldiean_pdist_data, euclidean_pdist_signatures,
+                    2, 1, 1, PyUFunc_None, "euclidean_pdist",
+                    "pairwise euclidean distance on last two dimensions \n"
+                    "     \"(n,d)->(p)\" \n",
+                    0, euclidean_pdist_signature);
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "euclidean_pdist", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(cumsum_functions,
+                    cumsum_data, cumsum_signatures,
+                    2, 1, 1, PyUFunc_None, "cumsum",
+                    "Cumulative sum of the input (n)->(n)\n",
+                    0, cumsum_signature);
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "cumsum", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(inner1d_functions, inner1d_data,
+                    inner1d_signatures, 2, 2, 1, PyUFunc_None, "inner1d_no_doc",
+                    NULL,
+                    0, inner1d_signature);
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "inner1d_no_doc", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(cross1d_functions, cross1d_data,
+                    cross1d_signatures, 2, 2, 1, PyUFunc_None, "cross1d",
+                    "cross product on the last dimension and broadcast on the rest \n"\
+                    "     \"(3),(3)->(3)\" \n",
+                    0, cross1d_signature);
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "cross1d", f);
+    Py_DECREF(f);
+
+    f = PyUFunc_FromFuncAndDataAndSignature(NULL, NULL,
+            NULL, 0, 0, 0, PyUFunc_None, "_pickleable_module_global.ufunc",
+            "A dotted name for pickle testing, does nothing.", 0, NULL);
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "_pickleable_module_global_ufunc", f);
+    Py_DECREF(f);
+
+    return 0;
+}
+
+
+static PyObject *
+UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    int nin, nout, i;
+    PyObject *signature=NULL, *sig_str=NULL;
+    PyUFuncObject *f=NULL;
+    PyObject *core_num_dims=NULL, *core_dim_ixs=NULL;
+    PyObject *core_dim_flags=NULL, *core_dim_sizes=NULL;
+    int core_enabled;
+    int core_num_ixs = 0;
+
+    if (!PyArg_ParseTuple(args, "iiO", &nin, &nout, &signature)) {
+        return NULL;
+    }
+
+    if (PyBytes_Check(signature)) {
+        sig_str = signature;
+    } else if (PyUnicode_Check(signature)) {
+        sig_str = PyUnicode_AsUTF8String(signature);
+    } else {
+        PyErr_SetString(PyExc_ValueError, "signature should be a string");
+        return NULL;
+    }
+
+    f = (PyUFuncObject*)PyUFunc_FromFuncAndDataAndSignature(
+        NULL, NULL, NULL,
+        0, nin, nout, PyUFunc_None, "no name",
+        "doc:none",
+        1, PyBytes_AS_STRING(sig_str));
+    if (sig_str != signature) {
+        Py_DECREF(sig_str);
+    }
+    if (f == NULL) {
+        return NULL;
+    }
+    core_enabled = f->core_enabled;
+    /*
+     * Don't presume core_num_dims and core_dim_ixs are defined;
+     * they currently are even if core_enabled=0, but there's no real
+     * reason they should be.  So avoid segfaults if we change our mind.
+     */
+    if (f->core_num_dims != NULL) {
+        core_num_dims = PyTuple_New(f->nargs);
+        if (core_num_dims == NULL) {
+            goto fail;
+        }
+        for (i = 0; i < f->nargs; i++) {
+            PyObject *val = PyLong_FromLong(f->core_num_dims[i]);
+            PyTuple_SET_ITEM(core_num_dims, i, val);
+            core_num_ixs += f->core_num_dims[i];
+        }
+    }
+    else {
+        Py_INCREF(Py_None);
+        core_num_dims = Py_None;
+    }
+    if (f->core_dim_ixs != NULL) {
+        core_dim_ixs = PyTuple_New(core_num_ixs);
+        if (core_dim_ixs == NULL) {
+            goto fail;
+        }
+        for (i = 0; i < core_num_ixs; i++) {
+            PyObject *val = PyLong_FromLong(f->core_dim_ixs[i]);
+            PyTuple_SET_ITEM(core_dim_ixs, i, val);
+        }
+    }
+    else {
+        Py_INCREF(Py_None);
+        core_dim_ixs = Py_None;
+    }
+    if (f->core_dim_flags != NULL) {
+        core_dim_flags = PyTuple_New(f->core_num_dim_ix);
+        if (core_dim_flags == NULL) {
+            goto fail;
+        }
+        for (i = 0; i < f->core_num_dim_ix; i++) {
+            PyObject *val = PyLong_FromLong(f->core_dim_flags[i]);
+            PyTuple_SET_ITEM(core_dim_flags, i, val);
+        }
+    }
+    else {
+        Py_INCREF(Py_None);
+        core_dim_flags = Py_None;
+    }
+    if (f->core_dim_sizes != NULL) {
+        core_dim_sizes = PyTuple_New(f->core_num_dim_ix);
+        if (core_dim_sizes == NULL) {
+            goto fail;
+        }
+        for (i = 0; i < f->core_num_dim_ix; i++) {
+            PyObject *val = PyLong_FromLong(f->core_dim_sizes[i]);
+            PyTuple_SET_ITEM(core_dim_sizes, i, val);
+        }
+    }
+    else {
+        Py_INCREF(Py_None);
+        core_dim_sizes = Py_None;
+    }
+    Py_DECREF(f);
+    return Py_BuildValue("iNNNN", core_enabled, core_num_dims,
+                         core_dim_ixs, core_dim_flags, core_dim_sizes);
+
+fail:
+    Py_XDECREF(f);
+    Py_XDECREF(core_num_dims);
+    Py_XDECREF(core_dim_ixs);
+    Py_XDECREF(core_dim_flags);
+    Py_XDECREF(core_dim_sizes);
+    return NULL;
+}
+
+// Testing the utilities of the CPU dispatcher
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "_umath_tests.dispatch.h"
+#endif
+NPY_CPU_DISPATCH_DECLARE(extern const char *_umath_tests_dispatch_var)
+NPY_CPU_DISPATCH_DECLARE(const char *_umath_tests_dispatch_func, (void))
+NPY_CPU_DISPATCH_DECLARE(void _umath_tests_dispatch_attach, (PyObject *list))
+
+static PyObject *
+UMath_Tests_test_dispatch(PyObject *NPY_UNUSED(dummy), PyObject *NPY_UNUSED(dummy2))
+{
+    const char *highest_func, *highest_var;
+    NPY_CPU_DISPATCH_CALL(highest_func = _umath_tests_dispatch_func, ());
+    NPY_CPU_DISPATCH_CALL(highest_var  = _umath_tests_dispatch_var);
+    const char *highest_func_xb = "nobase", *highest_var_xb = "nobase";
+    NPY_CPU_DISPATCH_CALL_XB(highest_func_xb = _umath_tests_dispatch_func, ());
+    NPY_CPU_DISPATCH_CALL_XB(highest_var_xb  = _umath_tests_dispatch_var);
+
+    PyObject *dict = PyDict_New(), *item;
+    if (dict == NULL) {
+        return NULL;
+    }
+    /**begin repeat
+     * #str = func, var, func_xb, var_xb#
+    */
+    item = PyUnicode_FromString(highest_@str@);
+    if (item == NULL || PyDict_SetItemString(dict, "@str@", item) < 0) {
+        goto err;
+    }
+    Py_DECREF(item);
+    /**end repeat**/
+    item = PyList_New(0);
+    if (item == NULL || PyDict_SetItemString(dict, "all", item) < 0) {
+        goto err;
+    }
+    NPY_CPU_DISPATCH_CALL_ALL(_umath_tests_dispatch_attach, (item));
+    Py_SETREF(item, NULL);
+    if (PyErr_Occurred()) {
+        goto err;
+    }
+    return dict;
+err:
+    Py_XDECREF(item);
+    Py_DECREF(dict);
+    return NULL;
+}
+
+static int
+add_INT32_negative_indexed(PyObject *module, PyObject *dict) {
+    if (import_experimental_dtype_api(__EXPERIMENTAL_DTYPE_API_VERSION) < 0) {
+        return -1;
+    }
+
+    PyObject * negative = PyUFunc_FromFuncAndData(NULL, NULL, NULL, 0, 1, 1,
+                                    PyUFunc_Zero, "indexed_negative", NULL, 0);
+    if (negative == NULL) {
+        return -1;
+    }
+    PyArray_DTypeMeta *dtypes[] = {&PyArray_Int32DType, &PyArray_Int32DType};
+
+    PyType_Slot slots[] = {
+        {NPY_METH_contiguous_indexed_loop, INT32_negative_indexed},
+        {NPY_METH_strided_loop, INT32_negative},
+        {0, NULL}
+    };
+
+    PyArrayMethod_Spec spec = {
+        .name = "negative_indexed_loop",
+        .nin = 1,
+        .nout = 1,
+        .dtypes = dtypes,
+        .slots = slots,
+        .flags = NPY_METH_NO_FLOATINGPOINT_ERRORS
+    };
+
+    if (PyUFunc_AddLoopFromSpec(negative, &spec) < 0) {
+        Py_DECREF(negative);
+        return -1;
+    }
+    PyDict_SetItemString(dict, "indexed_negative", negative);
+    Py_DECREF(negative);
+    return 0;
+}
+
+static PyMethodDef UMath_TestsMethods[] = {
+    {"test_signature",  UMath_Tests_test_signature, METH_VARARGS,
+     "Test signature parsing of ufunc. \n"
+     "Arguments: nin nout signature \n"
+     "If fails, it returns NULL. Otherwise it returns a tuple of ufunc "
+     "internals. \n",
+     },
+    {"test_dispatch", UMath_Tests_test_dispatch, METH_NOARGS, NULL},
+    {NULL, NULL, 0, NULL}        /* Sentinel */
+};
+
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "_umath_tests",
+        NULL,
+        -1,
+        UMath_TestsMethods,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+};
+
+/* Initialization function for the module */
+PyMODINIT_FUNC PyInit__umath_tests(void) {
+    PyObject *m;
+    PyObject *d;
+    PyObject *version;
+
+    // Initialize CPU features
+    if (npy_cpu_init() < 0) {
+        return NULL;
+    }
+
+    m = PyModule_Create(&moduledef);
+    if (m == NULL) {
+        return NULL;
+    }
+
+    import_array();
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
+    import_ufunc();
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
+
+    d = PyModule_GetDict(m);
+
+    version = PyUnicode_FromString("0.1");
+    PyDict_SetItemString(d, "__version__", version);
+    Py_DECREF(version);
+
+    /* Load the ufunc operators into the module's namespace */
+    if (addUfuncs(d) < 0) {
+        Py_DECREF(m);
+        PyErr_Print();
+        PyErr_SetString(PyExc_RuntimeError,
+                        "cannot load _umath_tests module.");
+        return NULL;
+    }
+
+    if (add_INT32_negative_indexed(m, d) < 0) {
+        Py_DECREF(m);
+        PyErr_Print();
+        PyErr_SetString(PyExc_RuntimeError,
+                        "cannot load _umath_tests module.");
+        return NULL;
+    }
+    return m;
+}

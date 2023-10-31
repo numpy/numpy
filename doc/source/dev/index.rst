@@ -45,7 +45,7 @@ Here's the short summary, complete TOC links are below:
 
    * Clone the project to your local computer::
 
-      git clone https://github.com/your-username/numpy.git
+      git clone --recurse-submodules https://github.com/your-username/numpy.git
 
    * Change the directory::
 
@@ -60,12 +60,16 @@ Here's the short summary, complete TOC links are below:
      - ``upstream``, which refers to the ``numpy`` repository
      - ``origin``, which refers to your personal fork
 
-2. Develop your contribution:
-
-   * Pull the latest changes from upstream::
+   * Pull the latest changes from upstream, including tags::
 
       git checkout main
-      git pull upstream main
+      git pull upstream main --tags
+
+   * Initialize numpy's submodules::
+
+      git submodule update --init
+
+2. Develop your contribution:
 
    * Create a branch for the feature you want to work on. Since the
      branch name will appear in the merge message, use a sensible name
@@ -180,7 +184,7 @@ Guidelines
   get no response to your pull request within a week.
 
 .. _stylistic-guidelines:
-  
+
 Stylistic Guidelines
 --------------------
 
@@ -210,18 +214,17 @@ Running NumPy's test suite locally requires some additional packages, such as
 in ``test_requirements.txt`` in the top-level directory, and can conveniently
 be installed with::
 
-    pip install -r test_requirements.txt
+    $ python -m pip install -r test_requirements.txt
 
 Tests for a module should ideally cover all code in that module,
 i.e., statement coverage should be at 100%.
 
-To measure the test coverage, install
-`pytest-cov <https://pytest-cov.readthedocs.io/en/latest/>`__
-and then run::
+To measure the test coverage, run::
 
-  $ python runtests.py --coverage
+  $ spin test --coverage
 
-This will create a report in ``build/coverage``, which can be viewed with::
+This will create a report in ``html`` format at ``build/coverage``, which can be
+viewed with your browser, e.g.::
 
   $ firefox build/coverage/index.html
 
@@ -230,10 +233,12 @@ This will create a report in ``build/coverage``, which can be viewed with::
 Building docs
 -------------
 
-To build docs, run ``make`` from the ``doc`` directory. ``make help`` lists
-all targets. For example, to build the HTML documentation, you can run::
+To build the HTML documentation, use::
 
-    make html
+  spin docs
+
+You can also run ``make`` from the ``doc`` directory. ``make help`` lists
+all targets.
 
 To get the appropriate dependencies and other requirements,
 see :ref:`howto-build-docs`.
@@ -256,9 +261,8 @@ The rest of the story
 .. toctree::
    :maxdepth: 2
 
-   Git Basics <gitwash/index>
+   Git for development <gitwash/index>
    development_environment
-   development_gitpod
    howto_build_docs
    development_workflow
    development_advanced_debugging

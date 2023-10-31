@@ -65,8 +65,8 @@ Update ``cversions.txt`` to add current release. There should be no new hash
 to worry about at this early point, just add a comment following previous
 practice::
 
-    $ gvim numpy/core/code_generators/cversions.txt
-    $ git add numpy/core/code_generators/cversions.txt
+    $ gvim numpy/_core/code_generators/cversions.txt
+    $ git add numpy/_core/code_generators/cversions.txt
 
 Check your work, commit it, and push::
 

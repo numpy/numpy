@@ -3,9 +3,9 @@
 
 """
 
-from numpy.core.overrides import ARRAY_FUNCTIONS as _array_functions
+from numpy._core.overrides import ARRAY_FUNCTIONS as _array_functions
 from numpy import ufunc as _ufunc
-import numpy.core.umath as _umath
+import numpy._core.umath as _umath
 
 def get_overridable_numpy_ufuncs():
     """List all numpy ufuncs overridable via `__array_ufunc__`
@@ -21,10 +21,11 @@ def get_overridable_numpy_ufuncs():
     """
     ufuncs = {obj for obj in _umath.__dict__.values()
               if isinstance(obj, _ufunc)}
+    return ufuncs
     
 
 def allows_array_ufunc_override(func):
-    """Determine if a function can be overriden via `__array_ufunc__`
+    """Determine if a function can be overridden via `__array_ufunc__`
 
     Parameters
     ----------
@@ -37,9 +38,9 @@ def allows_array_ufunc_override(func):
         `True` if `func` is overridable via `__array_ufunc__` and
         `False` otherwise.
 
-    Note
-    ----
-    This function is equivalent to `isinstance(func, np.ufunc)` and
+    Notes
+    -----
+    This function is equivalent to ``isinstance(func, np.ufunc)`` and
     will work correctly for ufuncs defined outside of Numpy.
 
     """
@@ -66,7 +67,7 @@ def get_overridable_numpy_array_functions():
     return _array_functions.copy()
 
 def allows_array_function_override(func):
-    """Determine if a Numpy function can be overriden via `__array_function__`
+    """Determine if a Numpy function can be overridden via `__array_function__`
 
     Parameters
     ----------

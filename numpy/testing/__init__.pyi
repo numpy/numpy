@@ -18,7 +18,6 @@ from numpy.testing._private.utils import (
     jiffies as jiffies,
     memusage as memusage,
     print_assert_equal as print_assert_equal,
-    raises as raises,
     rundocs as rundocs,
     runstring as runstring,
     verbose as verbose,
@@ -47,10 +46,4 @@ from numpy.testing._private.utils import (
 )
 
 __all__: list[str]
-__path__: list[str]
 test: PytestTester
-
-def run_module_suite(
-    file_to_run: None | str = ...,
-    argv: None | list[str] = ...,
-) -> None: ...

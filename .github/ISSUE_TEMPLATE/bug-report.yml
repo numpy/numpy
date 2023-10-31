@@ -45,8 +45,10 @@ body:
 
 - type: textarea
   attributes:
-    label: "NumPy/Python version information:"
-    description: Output from `import sys, numpy; print(numpy.__version__, sys.version)`.
+    label: "Runtime information:"
+    description: >
+      Output from `import sys, numpy; print(numpy.__version__); print(sys.version)`
+      If you are running NumPy 1.24+, also show `print(numpy.show_runtime())`
   validations:
     required: true
 

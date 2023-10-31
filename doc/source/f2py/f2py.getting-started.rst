@@ -18,6 +18,7 @@ following steps:
 
 * F2PY reads a signature file and writes a Python C/API module containing
   Fortran/C/Python bindings.
+
 * F2PY compiles all sources and builds an extension module containing
   the wrappers.
 
@@ -25,6 +26,13 @@ following steps:
     supports a number of Fortran 77/90/95 compilers, including Gnu, Intel, Sun
     Fortran, SGI MIPSpro, Absoft, NAG, Compaq etc. For different build systems,
     see :ref:`f2py-bldsys`.
+
+  * Depending on your operating system, you may need to install the Python
+    development headers (which provide the file ``Python.h``) separately. In
+    Linux Debian-based distributions this package should be called ``python3-dev``,
+    in Fedora-based distributions it is ``python3-devel``. For macOS, depending
+    how Python was installed, your mileage may vary. In Windows, the headers are
+    typically installed already.
 
 Depending on the situation, these steps can be carried out in a single composite
 command or step-by-step; in which case some steps can be omitted or combined

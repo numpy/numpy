@@ -19,6 +19,7 @@ import re
 import os
 from .crackfortran import markoutercomma
 from . import cb_rules
+from ._isocbind import iso_c_binding_map
 
 # The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
@@ -31,9 +32,6 @@ __all__ = [
     'cb_sign2map', 'cb_routsign2map', 'common_sign2map'
 ]
 
-
-# Numarray and Numeric users should set this False
-using_newcore = True
 
 depargs = []
 lcb_map = {}
@@ -58,89 +56,48 @@ c2py_map = {'double': 'float',
             'string': 'string',
             'character': 'bytes',
             }
-c2capi_map = {'double': 'NPY_DOUBLE',
-              'float': 'NPY_FLOAT',
-              'long_double': 'NPY_DOUBLE',           # forced casting
-              'char': 'NPY_STRING',
-              'unsigned_char': 'NPY_UBYTE',
-              'signed_char': 'NPY_BYTE',
-              'short': 'NPY_SHORT',
-              'unsigned_short': 'NPY_USHORT',
-              'int': 'NPY_INT',
-              'unsigned': 'NPY_UINT',
-              'long': 'NPY_LONG',
-              'long_long': 'NPY_LONG',                # forced casting
-              'complex_float': 'NPY_CFLOAT',
-              'complex_double': 'NPY_CDOUBLE',
-              'complex_long_double': 'NPY_CDOUBLE',   # forced casting
-              'string': 'NPY_STRING',
-              'character': 'NPY_CHAR'}
 
-# These new maps aren't used anywhere yet, but should be by default
-#  unless building numeric or numarray extensions.
-if using_newcore:
-    c2capi_map = {'double': 'NPY_DOUBLE',
-                  'float': 'NPY_FLOAT',
-                  'long_double': 'NPY_LONGDOUBLE',
-                  'char': 'NPY_BYTE',
-                  'unsigned_char': 'NPY_UBYTE',
-                  'signed_char': 'NPY_BYTE',
-                  'short': 'NPY_SHORT',
-                  'unsigned_short': 'NPY_USHORT',
-                  'int': 'NPY_INT',
-                  'unsigned': 'NPY_UINT',
-                  'long': 'NPY_LONG',
-                  'unsigned_long': 'NPY_ULONG',
-                  'long_long': 'NPY_LONGLONG',
-                  'unsigned_long_long': 'NPY_ULONGLONG',
-                  'complex_float': 'NPY_CFLOAT',
-                  'complex_double': 'NPY_CDOUBLE',
-                  'complex_long_double': 'NPY_CDOUBLE',
-                  'string': 'NPY_STRING',
-                  'character': 'NPY_STRING'}
+c2capi_map = {'double': 'NPY_DOUBLE',
+                'float': 'NPY_FLOAT',
+                'long_double': 'NPY_LONGDOUBLE',
+                'char': 'NPY_BYTE',
+                'unsigned_char': 'NPY_UBYTE',
+                'signed_char': 'NPY_BYTE',
+                'short': 'NPY_SHORT',
+                'unsigned_short': 'NPY_USHORT',
+                'int': 'NPY_INT',
+                'unsigned': 'NPY_UINT',
+                'long': 'NPY_LONG',
+                'unsigned_long': 'NPY_ULONG',
+                'long_long': 'NPY_LONGLONG',
+                'unsigned_long_long': 'NPY_ULONGLONG',
+                'complex_float': 'NPY_CFLOAT',
+                'complex_double': 'NPY_CDOUBLE',
+                'complex_long_double': 'NPY_CDOUBLE',
+                'string': 'NPY_STRING',
+                'character': 'NPY_STRING'}
 
 c2pycode_map = {'double': 'd',
                 'float': 'f',
-                'long_double': 'd',                       # forced casting
-                'char': '1',
-                'signed_char': '1',
-                'unsigned_char': 'b',
-                'short': 's',
-                'unsigned_short': 'w',
+                'long_double': 'g',
+                'char': 'b',
+                'unsigned_char': 'B',
+                'signed_char': 'b',
+                'short': 'h',
+                'unsigned_short': 'H',
                 'int': 'i',
-                'unsigned': 'u',
+                'unsigned': 'I',
                 'long': 'l',
-                'long_long': 'L',
+                'unsigned_long': 'L',
+                'long_long': 'q',
+                'unsigned_long_long': 'Q',
                 'complex_float': 'F',
                 'complex_double': 'D',
-                'complex_long_double': 'D',               # forced casting
-                'string': 'c',
-                'character': 'c'
-                }
-
-if using_newcore:
-    c2pycode_map = {'double': 'd',
-                    'float': 'f',
-                    'long_double': 'g',
-                    'char': 'b',
-                    'unsigned_char': 'B',
-                    'signed_char': 'b',
-                    'short': 'h',
-                    'unsigned_short': 'H',
-                    'int': 'i',
-                    'unsigned': 'I',
-                    'long': 'l',
-                    'unsigned_long': 'L',
-                    'long_long': 'q',
-                    'unsigned_long_long': 'Q',
-                    'complex_float': 'F',
-                    'complex_double': 'D',
-                    'complex_long_double': 'G',
-                    'string': 'S',
-                    'character': 'c'}
+                'complex_long_double': 'G',
+                'string': 'S',
+                'character': 'c'}
 
 # https://docs.python.org/3/c-api/arg.html#building-values
-# c2buildvalue_map is NumPy agnostic, so no need to bother with using_newcore
 c2buildvalue_map = {'double': 'd',
                     'float': 'f',
                     'char': 'b',
@@ -174,6 +131,7 @@ f2cmap_all = {'real': {'': 'float', '4': 'float', '8': 'double',
               'byte': {'': 'char'},
               }
 
+f2cmap_all = deep_merge(f2cmap_all, iso_c_binding_map)
 f2cmap_default = copy.deepcopy(f2cmap_all)
 
 f2cmap_mapped = []
@@ -196,7 +154,7 @@ def load_f2cmap_file(f2cmap_file):
     # they use PARAMETERS in type specifications.
     try:
         outmess('Reading f2cmap from {!r} ...\n'.format(f2cmap_file))
-        with open(f2cmap_file, 'r') as f:
+        with open(f2cmap_file) as f:
             d = eval(f.read().lower(), {}, {})
         for k, d1 in d.items():
             for k1 in d1.keys():
@@ -342,9 +300,9 @@ def getstrlength(var):
 def getarrdims(a, var, verbose=0):
     ret = {}
     if isstring(var) and not isarray(var):
-        ret['dims'] = getstrlength(var)
-        ret['size'] = ret['dims']
-        ret['rank'] = '1'
+        ret['size'] = getstrlength(var)
+        ret['rank'] = '0'
+        ret['dims'] = ''
     elif isscalar(var):
         ret['size'] = '1'
         ret['rank'] = '0'

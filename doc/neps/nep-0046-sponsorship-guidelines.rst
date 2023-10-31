@@ -108,11 +108,12 @@ About page) will be added to acknowledge all current and previous sponsors,
 partners, and any other entities and individuals who provided $5,000 or more of
 financial or in-kind support. This page will include relevant details of
 support (dates, amounts, names, and purpose); no logos will be used on this
-page. The rationale for the $5,000 minimum level is to keep the amount of work
-maintaining the page reasonable; the level is the equivalent of, e.g., one GSoC
-or a person-week's worth of engineering time in a Western country, which seems
-like a reasonable lower limit.
-
+page. Such support, if provided for a specific enhancements or fix, may be
+acknowledged in the appropriate release note snippet. The rationale for the
+$5,000 minimum level is to keep the amount of work maintaining the page
+reasonable; the level is the equivalent of, e.g., one GSoC or a person-week's
+worth of engineering time in a Western country, which seems like a reasonable
+lower limit.
 
 Implementation
 --------------
@@ -127,7 +128,6 @@ The following content changes need to be made:
   eligibility requirements and benefits.
 - Update https://numpy.org/about with details on how to get in touch with the
   NumPy project about sponsorship related matters (see next section).
-
 
 NumPy Funding Team
 ~~~~~~~~~~~~~~~~~~

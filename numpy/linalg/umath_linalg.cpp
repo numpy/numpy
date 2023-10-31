@@ -11,6 +11,7 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
+#include "numpy/npy_math.h"
 
 #include "npy_pycompat.h"
 
@@ -22,15 +23,11 @@
 #include <cstdio>
 #include <cassert>
 #include <cmath>
+#include <type_traits>
 #include <utility>
 
 
 static const char* umath_linalg_version_string = "0.1.5";
-
-struct scalar_trait {};
-struct complex_trait {};
-template<typename typ>
-using dispatch_scalar = typename std::conditional<std::is_scalar<typ>::value, scalar_trait, complex_trait>::type;
 
 /*
  ****************************************************************************
@@ -468,6 +465,7 @@ constexpr double numeric_limits<double>::minus_one;
 const double numeric_limits<double>::ninf = -NPY_INFINITY;
 const double numeric_limits<double>::nan = NPY_NAN;
 
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 template<>
 struct numeric_limits<npy_cfloat> {
 static constexpr npy_cfloat one = {1.0f, 0.0f};
@@ -481,6 +479,21 @@ constexpr npy_cfloat numeric_limits<npy_cfloat>::zero;
 constexpr npy_cfloat numeric_limits<npy_cfloat>::minus_one;
 const npy_cfloat numeric_limits<npy_cfloat>::ninf = {-NPY_INFINITYF, 0.0f};
 const npy_cfloat numeric_limits<npy_cfloat>::nan = {NPY_NANF, NPY_NANF};
+#else
+template<>
+struct numeric_limits<npy_cfloat> {
+static constexpr npy_cfloat one = 1.0f;
+static constexpr npy_cfloat zero = 0.0f;
+static constexpr npy_cfloat minus_one = -1.0f;
+static const npy_cfloat ninf;
+static const npy_cfloat nan;
+};
+constexpr npy_cfloat numeric_limits<npy_cfloat>::one;
+constexpr npy_cfloat numeric_limits<npy_cfloat>::zero;
+constexpr npy_cfloat numeric_limits<npy_cfloat>::minus_one;
+const npy_cfloat numeric_limits<npy_cfloat>::ninf = -NPY_INFINITYF;
+const npy_cfloat numeric_limits<npy_cfloat>::nan = NPY_NANF;
+#endif
 
 template<>
 struct numeric_limits<f2c_complex> {
@@ -496,6 +509,7 @@ constexpr f2c_complex numeric_limits<f2c_complex>::minus_one;
 const f2c_complex numeric_limits<f2c_complex>::ninf = {-NPY_INFINITYF, 0.0f};
 const f2c_complex numeric_limits<f2c_complex>::nan = {NPY_NANF, NPY_NANF};
 
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 template<>
 struct numeric_limits<npy_cdouble> {
 static constexpr npy_cdouble one = {1.0, 0.0};
@@ -509,6 +523,21 @@ constexpr npy_cdouble numeric_limits<npy_cdouble>::zero;
 constexpr npy_cdouble numeric_limits<npy_cdouble>::minus_one;
 const npy_cdouble numeric_limits<npy_cdouble>::ninf = {-NPY_INFINITY, 0.0};
 const npy_cdouble numeric_limits<npy_cdouble>::nan = {NPY_NAN, NPY_NAN};
+#else
+template<>
+struct numeric_limits<npy_cdouble> {
+static constexpr npy_cdouble one = 1.0;
+static constexpr npy_cdouble zero = 0.0;
+static constexpr npy_cdouble minus_one = -1.0;
+static const npy_cdouble ninf;
+static const npy_cdouble nan;
+};
+constexpr npy_cdouble numeric_limits<npy_cdouble>::one;
+constexpr npy_cdouble numeric_limits<npy_cdouble>::zero;
+constexpr npy_cdouble numeric_limits<npy_cdouble>::minus_one;
+const npy_cdouble numeric_limits<npy_cdouble>::ninf = -NPY_INFINITY;
+const npy_cdouble numeric_limits<npy_cdouble>::nan = NPY_NAN;
+#endif
 
 template<>
 struct numeric_limits<f2c_doublecomplex> {
@@ -839,6 +868,12 @@ template<> struct basetype<f2c_doublecomplex> { using type = fortran_doublereal;
 template<typename T>
 using basetype_t = typename basetype<T>::type;
 
+struct scalar_trait {};
+struct complex_trait {};
+template<typename typ>
+using dispatch_scalar = typename std::conditional<sizeof(basetype_t<typ>) == sizeof(typ), scalar_trait, complex_trait>::type;
+
+
              /* rearranging of 2D matrices using blas */
 
 template<typename typ>
@@ -974,7 +1009,7 @@ identity_matrix(typ *matrix, size_t n)
 {
     size_t i;
     /* in IEEE floating point, zeroes are represented as bitwise 0 */
-    memset(matrix, 0, n*n*sizeof(typ));
+    memset((void *)matrix, 0, n*n*sizeof(typ));
 
     for (i = 0; i < n; ++i)
     {
@@ -1045,8 +1080,26 @@ det_from_slogdet(typ sign, typ logdet)
 npy_float npyabs(npy_cfloat z) { return npy_cabsf(z);}
 npy_double npyabs(npy_cdouble z) { return npy_cabs(z);}
 
-#define RE(COMPLEX) (COMPLEX).real
-#define IM(COMPLEX) (COMPLEX).imag
+inline float RE(npy_cfloat *c) { return npy_crealf(*c); }
+inline double RE(npy_cdouble *c) { return npy_creal(*c); }
+#if NPY_SIZEOF_COMPLEX_LONGDOUBLE != NPY_SIZEOF_COMPLEX_DOUBLE
+inline longdouble_t RE(npy_clongdouble *c) { return npy_creall(*c); }
+#endif
+inline float IM(npy_cfloat *c) { return npy_cimagf(*c); }
+inline double IM(npy_cdouble *c) { return npy_cimag(*c); }
+#if NPY_SIZEOF_COMPLEX_LONGDOUBLE != NPY_SIZEOF_COMPLEX_DOUBLE
+inline longdouble_t IM(npy_clongdouble *c) { return npy_cimagl(*c); }
+#endif
+inline void SETRE(npy_cfloat *c, float real) { npy_csetrealf(c, real); }
+inline void SETRE(npy_cdouble *c, double real) { npy_csetreal(c, real); }
+#if NPY_SIZEOF_COMPLEX_LONGDOUBLE != NPY_SIZEOF_COMPLEX_DOUBLE
+inline void SETRE(npy_clongdouble *c, double real) { npy_csetreall(c, real); }
+#endif
+inline void SETIM(npy_cfloat *c, float real) { npy_csetimagf(c, real); }
+inline void SETIM(npy_cdouble *c, double real) { npy_csetimag(c, real); }
+#if NPY_SIZEOF_COMPLEX_LONGDOUBLE != NPY_SIZEOF_COMPLEX_DOUBLE
+inline void SETIM(npy_clongdouble *c, double real) { npy_csetimagl(c, real); }
+#endif
 
 template<typename typ>
 static inline typ
@@ -1054,8 +1107,8 @@ mult(typ op1, typ op2)
 {
     typ rv;
 
-    RE(rv) = RE(op1)*RE(op2) - IM(op1)*IM(op2);
-    IM(rv) = RE(op1)*IM(op2) + IM(op1)*RE(op2);
+    SETRE(&rv, RE(&op1)*RE(&op2) - IM(&op1)*IM(&op2));
+    SETIM(&rv, RE(&op1)*IM(&op2) + IM(&op1)*RE(&op2));
 
     return rv;
 }
@@ -1076,8 +1129,8 @@ slogdet_from_factored_diagonal(typ* src,
     {
         basetyp abs_element = npyabs(*src);
         typ sign_element;
-        RE(sign_element) = RE(*src) / abs_element;
-        IM(sign_element) = IM(*src) / abs_element;
+        SETRE(&sign_element, RE(src) / abs_element);
+        SETIM(&sign_element, IM(src) / abs_element);
 
         sign_acc = mult(sign_acc, sign_element);
         logdet_acc += npylog(abs_element);
@@ -1093,12 +1146,10 @@ static inline typ
 det_from_slogdet(typ sign, basetyp logdet)
 {
     typ tmp;
-    RE(tmp) = npyexp(logdet);
-    IM(tmp) = numeric_limits<basetyp>::zero;
+    SETRE(&tmp, npyexp(logdet));
+    SETIM(&tmp, numeric_limits<basetyp>::zero);
     return mult(sign, tmp);
 }
-#undef RE
-#undef IM
 
 
 /* As in the linalg package, the determinant is computed via LU factorization
@@ -1148,7 +1199,7 @@ slogdet(char **args,
                void *NPY_UNUSED(func))
 {
     fortran_int m;
-    npy_uint8 *tmp_buff = NULL;
+    char *tmp_buff = NULL;
     size_t matrix_size;
     size_t pivot_size;
     size_t safe_m;
@@ -1162,10 +1213,11 @@ slogdet(char **args,
      */
     INIT_OUTER_LOOP_3
     m = (fortran_int) dimensions[0];
-    safe_m = m;
+    /* avoid empty malloc (buffers likely unused) and ensure m is `size_t` */
+    safe_m = m != 0 ? m : 1;
     matrix_size = safe_m * safe_m * sizeof(typ);
     pivot_size = safe_m * sizeof(fortran_int);
-    tmp_buff = (npy_uint8 *)malloc(matrix_size + pivot_size);
+    tmp_buff = (char *)malloc(matrix_size + pivot_size);
 
     if (tmp_buff) {
         LINEARIZE_DATA_t lin_data;
@@ -1182,6 +1234,13 @@ slogdet(char **args,
 
         free(tmp_buff);
     }
+    else {
+        /* TODO: Requires use of new ufunc API to indicate error return */
+        NPY_ALLOW_C_API_DEF
+        NPY_ALLOW_C_API;
+        PyErr_NoMemory();
+        NPY_DISABLE_C_API;
+    }
 }
 
 template<typename typ, typename basetyp>
@@ -1192,7 +1251,7 @@ det(char **args,
            void *NPY_UNUSED(func))
 {
     fortran_int m;
-    npy_uint8 *tmp_buff;
+    char *tmp_buff;
     size_t matrix_size;
     size_t pivot_size;
     size_t safe_m;
@@ -1206,10 +1265,11 @@ det(char **args,
      */
     INIT_OUTER_LOOP_2
     m = (fortran_int) dimensions[0];
-    safe_m = m;
+    /* avoid empty malloc (buffers likely unused) and ensure m is `size_t` */
+    safe_m = m != 0 ? m : 1;
     matrix_size = safe_m * safe_m * sizeof(typ);
     pivot_size = safe_m * sizeof(fortran_int);
-    tmp_buff = (npy_uint8 *)malloc(matrix_size + pivot_size);
+    tmp_buff = (char *)malloc(matrix_size + pivot_size);
 
     if (tmp_buff) {
         LINEARIZE_DATA_t lin_data;
@@ -1229,6 +1289,13 @@ det(char **args,
         END_OUTER_LOOP
 
         free(tmp_buff);
+    }
+    else {
+        /* TODO: Requires use of new ufunc API to indicate error return */
+        NPY_ALLOW_C_API_DEF
+        NPY_ALLOW_C_API;
+        PyErr_NoMemory();
+        NPY_DISABLE_C_API;
     }
 }
 
@@ -3737,15 +3804,15 @@ scalar_trait)
     fortran_int lda = fortran_int_max(1, m);
     fortran_int ldb = fortran_int_max(1, fortran_int_max(m,n));
 
-    mem_buff = (npy_uint8 *)malloc(a_size + b_size + s_size);
+    size_t msize = a_size + b_size + s_size;
+    mem_buff = (npy_uint8 *)malloc(msize != 0 ? msize : 1);
 
-    if (!mem_buff)
-        goto error;
-
+    if (!mem_buff) {
+        goto no_memory;
+    }
     a = mem_buff;
     b = a + a_size;
     s = b + b_size;
-
 
     params->M = m;
     params->N = n;
@@ -3766,9 +3833,9 @@ scalar_trait)
         params->RWORK = NULL;
         params->LWORK = -1;
 
-        if (call_gelsd(params) != 0)
+        if (call_gelsd(params) != 0) {
             goto error;
-
+        }
         work_count = (fortran_int)work_size_query;
 
         work_size  = (size_t) work_size_query * sizeof(ftyp);
@@ -3776,9 +3843,9 @@ scalar_trait)
     }
 
     mem_buff2 = (npy_uint8 *)malloc(work_size + iwork_size);
-    if (!mem_buff2)
-        goto error;
-
+    if (!mem_buff2) {
+        goto no_memory;
+    }
     work = mem_buff2;
     iwork = work + work_size;
 
@@ -3788,12 +3855,18 @@ scalar_trait)
     params->LWORK = work_count;
 
     return 1;
+
+ no_memory:
+    NPY_ALLOW_C_API_DEF
+    NPY_ALLOW_C_API;
+    PyErr_NoMemory();
+    NPY_DISABLE_C_API;
+
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
     free(mem_buff);
     free(mem_buff2);
     memset(params, 0, sizeof(*params));
-
     return 0;
 }
 
@@ -3857,15 +3930,16 @@ using frealtyp = basetype_t<ftyp>;
     fortran_int lda = fortran_int_max(1, m);
     fortran_int ldb = fortran_int_max(1, fortran_int_max(m,n));
 
-    mem_buff = (npy_uint8 *)malloc(a_size + b_size + s_size);
+    size_t msize = a_size + b_size + s_size;
+    mem_buff = (npy_uint8 *)malloc(msize != 0 ? msize : 1);
 
-    if (!mem_buff)
-        goto error;
+    if (!mem_buff) {
+        goto no_memory;
+    }
 
     a = mem_buff;
     b = a + a_size;
     s = b + b_size;
-
 
     params->M = m;
     params->N = n;
@@ -3887,8 +3961,9 @@ using frealtyp = basetype_t<ftyp>;
         params->RWORK = &rwork_size_query;
         params->LWORK = -1;
 
-        if (call_gelsd(params) != 0)
+        if (call_gelsd(params) != 0) {
             goto error;
+        }
 
         work_count = (fortran_int)work_size_query.r;
 
@@ -3898,8 +3973,9 @@ using frealtyp = basetype_t<ftyp>;
     }
 
     mem_buff2 = (npy_uint8 *)malloc(work_size + rwork_size + iwork_size);
-    if (!mem_buff2)
-        goto error;
+    if (!mem_buff2) {
+        goto no_memory;
+    }
 
     work = mem_buff2;
     rwork = work + work_size;
@@ -3911,6 +3987,13 @@ using frealtyp = basetype_t<ftyp>;
     params->LWORK = work_count;
 
     return 1;
+
+ no_memory:
+    NPY_ALLOW_C_API_DEF
+    NPY_ALLOW_C_API;
+    PyErr_NoMemory();
+    NPY_DISABLE_C_API;
+
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
     free(mem_buff);
@@ -3949,7 +4032,7 @@ abs2(typ *p, npy_intp n, complex_trait) {
     basetype_t<typ> res = 0;
     for (i = 0; i < n; i++) {
         typ el = p[i];
-        res += el.real*el.real + el.imag*el.imag;
+        res += RE(&el)*RE(&el) + IM(&el)*IM(&el);
     }
     return res;
 }
@@ -4563,6 +4646,12 @@ PyMODINIT_FUNC PyInit__umath_linalg(void)
     if (addUfuncs(d) < 0) {
         return NULL;
     }
+
+#ifdef HAVE_BLAS_ILP64
+    PyDict_SetItemString(d, "_ilp64", Py_True);
+#else
+    PyDict_SetItemString(d, "_ilp64", Py_False);
+#endif
 
     return m;
 }

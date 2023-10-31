@@ -51,11 +51,6 @@ Decorators
 .. autosummary::
    :toctree: generated/
 
-   dec.deprecated
-   dec.knownfailureif
-   dec.setastest
-   dec.skipif
-   dec.slow
    decorate_methods
 
 Test Running
@@ -63,10 +58,8 @@ Test Running
 .. autosummary::
    :toctree: generated/
 
-   Tester
    clear_and_catch_warnings
    measure
-   run_module_suite
    rundocs
    suppress_warnings
 

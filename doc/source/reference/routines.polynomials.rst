@@ -18,14 +18,14 @@ Therefore :mod:`numpy.polynomial` is recommended for new coding.
 .. note:: **Terminology**
 
    The term *polynomial module* refers to the old API defined in
-   `numpy.lib.polynomial`, which includes the :class:`numpy.poly1d` class and
+   ``numpy.lib.polynomial``, which includes the :class:`numpy.poly1d` class and
    the polynomial functions prefixed with *poly* accessible from the `numpy`
    namespace (e.g. `numpy.polyadd`, `numpy.polyval`, `numpy.polyfit`, etc.).
 
    The term *polynomial package* refers to the new API defined in 
    `numpy.polynomial`, which includes the convenience classes for the
-   different kinds of polynomials (`numpy.polynomial.Polynomial`,
-   `numpy.polynomial.Chebyshev`, etc.).
+   different kinds of polynomials (:class:`~numpy.polynomial.polynomial.Polynomial`,
+   :class:`~numpy.polynomial.chebyshev.Chebyshev`, etc.).
 
 Transitioning from `numpy.poly1d` to `numpy.polynomial`
 -------------------------------------------------------

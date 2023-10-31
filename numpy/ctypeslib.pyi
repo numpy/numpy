@@ -3,13 +3,11 @@
 from ctypes import c_int64 as _c_intp
 
 import os
-import sys
 import ctypes
 from collections.abc import Iterable, Sequence
 from typing import (
     Literal as L,
     Any,
-    Union,
     TypeVar,
     Generic,
     overload,
@@ -36,8 +34,8 @@ from numpy import (
     longdouble,
     void,
 )
-from numpy.core._internal import _ctypes
-from numpy.core.multiarray import flagsobj
+from numpy._core._internal import _ctypes
+from numpy._core.multiarray import flagsobj
 from numpy._typing import (
     # Arrays
     NDArray,
@@ -91,10 +89,10 @@ class _ndptr(ctypes.c_void_p, Generic[_DTypeOptional]):
 
     @overload
     @classmethod
-    def from_param(cls: type[_ndptr[None]], obj: ndarray[Any, Any]) -> _ctypes: ...
+    def from_param(cls: type[_ndptr[None]], obj: NDArray[Any]) -> _ctypes[Any]: ...
     @overload
     @classmethod
-    def from_param(cls: type[_ndptr[_DType]], obj: ndarray[Any, _DType]) -> _ctypes: ...
+    def from_param(cls: type[_ndptr[_DType]], obj: ndarray[Any, _DType]) -> _ctypes[Any]: ...
 
 class _concrete_ndptr(_ndptr[_DType]):
     _dtype_: ClassVar[_DType]

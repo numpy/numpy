@@ -215,16 +215,16 @@ Behaviors
 - ``--cpu-baseline`` escapes any specified features that aren't supported
   by the target platform or compiler rather than raising fatal errors.
 
-   .. note::
+  .. note::
 
-        Since ``--cpu-baseline`` combines all implied features, the maximum
-        supported of implied features will be enabled rather than escape all of them.
-        For example::
+       Since ``--cpu-baseline`` combines all implied features, the maximum
+       supported of implied features will be enabled rather than escape all of them.
+       For example::
 
-           # Requesting `AVX2,FMA3` but the compiler only support **SSE** features
-           python setup.py build --cpu-baseline="avx2 fma3"
-           # is equivalent to
-           python setup.py build --cpu-baseline="sse sse2 sse3 ssse3 sse41 popcnt sse42"
+          # Requesting `AVX2,FMA3` but the compiler only support **SSE** features
+          python setup.py build --cpu-baseline="avx2 fma3"
+          # is equivalent to
+          python setup.py build --cpu-baseline="sse sse2 sse3 ssse3 sse41 popcnt sse42"
 
 - ``--cpu-dispatch`` does not combain any of implied CPU features,
   so you must add them unless you want to disable one or all of them::
@@ -333,7 +333,7 @@ and here is how it looks on x86_64/gcc:
 .. literalinclude:: log_example.txt
    :language: bash
 
-As you see, there is a separate report for each of ``build_ext`` and ``build_clib``
+There is a separate report for each of ``build_ext`` and ``build_clib``
 that includes several sections, and each section has several values, representing the following:
 
 **Platform**:
@@ -371,6 +371,56 @@ that includes several sections, and each section has several values, representin
   - The lines that come after the above property and end with a ':' on a separate line,
     represent the paths of c/c++ sources that define the generated optimizations.
 
-Runtime Trace
--------------
-To be completed.
+.. _runtime-simd-dispatch:
+
+Runtime dispatch
+----------------
+Importing NumPy triggers a scan of the available CPU features from the set
+of dispatchable features. This can be further restricted by setting the
+environment variable ``NPY_DISABLE_CPU_FEATURES`` to a comma-, tab-, or
+space-separated list of features to disable. This will raise an error if
+parsing fails or if the feature was not enabled. For instance, on ``x86_64``
+this will disable ``AVX2`` and ``FMA3``::
+
+    NPY_DISABLE_CPU_FEATURES="AVX2,FMA3"
+
+If the feature is not available, a warning will be emitted.
+
+Tracking dispatched functions
+-----------------------------
+Discovering which CPU targets are enabled for different optimized functions is achievable
+through the Python function ``numpy.lib.introspect.opt_func_info``.
+This function offers the flexibility of applying filters using two optional arguments:
+one for refining function names and the other for specifying data types in the signatures.
+
+For example::
+
+   >> func_info = numpy.lib.introspect.opt_func_info(func_name='add|abs', signature='float64|complex64')
+   >> print(json.dumps(func_info, indent=2))
+   {
+     "absolute": {
+       "dd": {
+         "current": "SSE41",
+         "available": "SSE41 baseline(SSE SSE2 SSE3)"
+       },
+       "Ff": {
+         "current": "FMA3__AVX2",
+         "available": "AVX512F FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+       },
+       "Dd": {
+         "current": "FMA3__AVX2",
+         "available": "AVX512F FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+       }
+     },
+     "add": {
+       "ddd": {
+         "current": "FMA3__AVX2",
+         "available": "FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+       },
+       "FFF": {
+         "current": "FMA3__AVX2",
+         "available": "FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+       }
+    }
+  }
+

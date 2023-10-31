@@ -64,8 +64,8 @@ To access NumPy and its functions import it in your Python code like this::
   import numpy as np
 
 We shorten the imported name to ``np`` for better readability of code using
-NumPy. This is a widely adopted convention that you should follow so that
-anyone working with your code can easily understand it.
+NumPy. This is a widely adopted convention that makes your code more readable
+for everyone working on it. We recommend to always use import numpy as ``np``.
 
 Reading the example code
 ------------------------
@@ -448,7 +448,7 @@ You can use ``np.newaxis`` to add a new axis::
   >>> a2.shape
   (1, 6)
 
-You can explicitly convert a 1D array with either a row vector or a column
+You can explicitly convert a 1D array to either a row vector or a column
 vector using ``np.newaxis``. For example, you can convert a 1D array to a row
 vector by inserting an axis along the first dimension::
 
@@ -581,10 +581,11 @@ example::
 
   >>> for coord in list_of_coordinates:
   ...     print(coord)
-  (0, 0)
-  (0, 1)
-  (0, 2)
-  (0, 3)
+  (np.int64(0), np.int64(0))
+  (np.int64(0), np.int64(1))
+  (np.int64(0), np.int64(2))
+  (np.int64(0), np.int64(3))
+
 
 You can also use ``np.nonzero()`` to print the elements in an array that are less
 than 5 with::
@@ -1698,4 +1699,4 @@ For directions regarding installing Matplotlib, see the official
 
 -------------------------------------------------------
 
-*Image credits: Jay Alammar http://jalammar.github.io/*
+*Image credits: Jay Alammar https://jalammar.github.io/*

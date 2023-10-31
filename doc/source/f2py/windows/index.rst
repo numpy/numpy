@@ -56,7 +56,7 @@ PGI Compilers (commercial)
    Windows support`_.
 
 Cygwin (FOSS)
-   Can also be used for ``gfortran``. Howeve, the POSIX API compatibility layer provided by
+   Can also be used for ``gfortran``. However, the POSIX API compatibility layer provided by
    Cygwin is meant to compile UNIX software on Windows, instead of building
    native Windows programs. This means cross compilation is required.
 

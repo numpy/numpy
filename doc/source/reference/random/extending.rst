@@ -25,7 +25,7 @@ provided by ``ctypes.next_double``.
 Both CTypes and CFFI allow the more complicated distributions to be used
 directly in Numba after compiling the file distributions.c into a ``DLL`` or
 ``so``.  An example showing the use of a more complicated distribution is in
-the `examples` section below.
+the `Examples`_ section below.
 
 .. _random_cython:
 
@@ -113,6 +113,6 @@ Examples
 
 .. toctree::
     Numba <examples/numba>
-    CFFI + Numba <examples/numba_cffi> 
+    CFFI + Numba <examples/numba_cffi>
     Cython <examples/cython/index>
     CFFI <examples/cffi>

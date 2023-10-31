@@ -457,9 +457,10 @@ class TestMiscCharacter(util.F2PyTest):
          character(len=*), intent(in) :: x(:)
          !f2py intent(out) x
          integer :: i
-         do i=1, size(x)
-           print*, "x(",i,")=", x(i)
-         end do
+         ! Uncomment for debug printing:
+         !do i=1, size(x)
+         !   print*, "x(",i,")=", x(i)
+         !end do
        end subroutine {fprefix}_gh4519
 
        pure function {fprefix}_gh3425(x) result (y)
@@ -568,3 +569,29 @@ class TestMiscCharacter(util.F2PyTest):
         assert_equal(len(a), 2)
 
         assert_raises(Exception, lambda: f(b'c'))
+
+
+class TestStringScalarArr(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "string", "scalar_string.f90")]
+
+    def test_char(self):
+        for out in (self.module.string_test.string,
+                    self.module.string_test.string77):
+            expected = ()
+            assert out.shape == expected
+            expected = '|S8'
+            assert out.dtype == expected
+
+    def test_char_arr(self):
+        for out in (self.module.string_test.strarr,
+                    self.module.string_test.strarr77):
+            expected = (5,7)
+            assert out.shape == expected
+            expected = '|S12'
+            assert out.dtype == expected
+
+class TestStringAssumedLength(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "string", "gh24008.f")]
+
+    def test_gh24008(self):
+        self.module.greet("joe", "bob")

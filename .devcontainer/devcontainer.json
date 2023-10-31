@@ -1,55 +1,17 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.245.2/containers/python-3-anaconda
 {
-	"name": "Numpy (devcontainer)",
-	"build": { 
-		"context": "..",
-		"dockerfile": "Dockerfile",
-		"args": {
-			"NODE_VERSION": "lts/*"
-		}
-	},
+	// More info about Features: https://containers.dev/features
+	"image": "mcr.microsoft.com/devcontainers/universal:2",
+	"features": {},
 
-	// Configure tool-specific properties.
+	"onCreateCommand": ".devcontainer/setup.sh",
+	"postCreateCommand": "",
+
 	"customizations": {
-		// Configure properties specific to VS Code.
 		"vscode": {
-			// Set *default* container specific settings.json values on container create.
-			"settings": { 
-				"python.defaultInterpreterPath": "/opt/conda/bin/python",
-				"python.linting.enabled": true,
-				"python.linting.pylintEnabled": true,
-				"python.formatting.autopep8Path": "/opt/conda/bin/autopep8",
-				"python.formatting.yapfPath": "/opt/conda/bin/yapf",
-				"python.linting.flake8Path": "/opt/conda/bin/flake8",
-				"python.linting.pycodestylePath": "/opt/conda/bin/pycodestyle",
-				"python.linting.pydocstylePath": "/opt/conda/bin/pydocstyle",
-				"python.linting.pylintPath": "/opt/conda/bin/pylint"
-			},
-			
-			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
-				"ms-python.python",
-				"ms-python.vscode-pylance",
-				"njpwerner.autodocstring",
-				"ms-toolsai.jupyter",
-				"donjayamanne.python-environment-manager",
-				"ms-azuretools.vscode-docker"
-			]
-		}
-	},
-
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-
-	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "conda init",
-
-	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-	"remoteUser": "vscode",
-	"features": {
-		"ghcr.io/devcontainers/features/rust:1": {
-			"version": "latest"
+				"ms-python.python"
+			],
+			"settings": {}
 		}
 	}
 }

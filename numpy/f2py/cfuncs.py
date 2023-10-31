@@ -53,6 +53,7 @@ includes0['setjmp.h'] = '#include <setjmp.h>'
 
 includes['arrayobject.h'] = '''#define PY_ARRAY_UNIQUE_SYMBOL PyArray_API
 #include "arrayobject.h"'''
+includes['npy_math.h'] = '#include "numpy/npy_math.h"'
 
 includes['arrayobject.h'] = '#include "fortranobject.h"'
 includes['stdarg.h'] = '#include <stdarg.h>'
@@ -800,16 +801,23 @@ character_from_pyobj(character* v, PyObject *obj, const char *errmess) {
         }
     }
     {
+        /* TODO: This error (and most other) error handling needs cleaning. */
         char mess[F2PY_MESSAGE_BUFFER_SIZE];
         strcpy(mess, errmess);
         PyObject* err = PyErr_Occurred();
         if (err == NULL) {
             err = PyExc_TypeError;
+            Py_INCREF(err);
+        }
+        else {
+            Py_INCREF(err);
+            PyErr_Clear();
         }
         sprintf(mess + strlen(mess),
                 " -- expected str|bytes|sequence-of-str-or-bytes, got ");
         f2py_describe(obj, mess + strlen(mess));
         PyErr_SetString(err, mess);
+        Py_DECREF(err);
     }
     return 0;
 }
@@ -1089,7 +1097,7 @@ float_from_pyobj(float* v, PyObject *obj, const char *errmess)
 
 
 needs['complex_long_double_from_pyobj'] = ['complex_long_double', 'long_double',
-                                           'complex_double_from_pyobj']
+                                           'complex_double_from_pyobj', 'npy_math.h']
 cfuncs['complex_long_double_from_pyobj'] = """\
 static int
 complex_long_double_from_pyobj(complex_long_double* v, PyObject *obj, const char *errmess)
@@ -1101,8 +1109,8 @@ complex_long_double_from_pyobj(complex_long_double* v, PyObject *obj, const char
             return 1;
         }
         else if (PyArray_Check(obj) && PyArray_TYPE(obj)==NPY_CLONGDOUBLE) {
-            (*v).r = ((npy_clongdouble *)PyArray_DATA(obj))->real;
-            (*v).i = ((npy_clongdouble *)PyArray_DATA(obj))->imag;
+            (*v).r = npy_creall(*(((npy_clongdouble *)PyArray_DATA(obj))));
+            (*v).i = npy_cimagl(*(((npy_clongdouble *)PyArray_DATA(obj))));
             return 1;
         }
     }
@@ -1116,7 +1124,7 @@ complex_long_double_from_pyobj(complex_long_double* v, PyObject *obj, const char
 """
 
 
-needs['complex_double_from_pyobj'] = ['complex_double']
+needs['complex_double_from_pyobj'] = ['complex_double', 'npy_math.h']
 cfuncs['complex_double_from_pyobj'] = """\
 static int
 complex_double_from_pyobj(complex_double* v, PyObject *obj, const char *errmess) {
@@ -1131,14 +1139,14 @@ complex_double_from_pyobj(complex_double* v, PyObject *obj, const char *errmess)
         if (PyArray_IsScalar(obj, CFloat)) {
             npy_cfloat new;
             PyArray_ScalarAsCtype(obj, &new);
-            (*v).r = (double)new.real;
-            (*v).i = (double)new.imag;
+            (*v).r = (double)npy_crealf(new);
+            (*v).i = (double)npy_cimagf(new);
         }
         else if (PyArray_IsScalar(obj, CLongDouble)) {
             npy_clongdouble new;
             PyArray_ScalarAsCtype(obj, &new);
-            (*v).r = (double)new.real;
-            (*v).i = (double)new.imag;
+            (*v).r = (double)npy_creall(new);
+            (*v).i = (double)npy_cimagl(new);
         }
         else { /* if (PyArray_IsScalar(obj, CDouble)) */
             PyArray_ScalarAsCtype(obj, v);
@@ -1156,8 +1164,8 @@ complex_double_from_pyobj(complex_double* v, PyObject *obj, const char *errmess)
         if (arr == NULL) {
             return 0;
         }
-        (*v).r = ((npy_cdouble *)PyArray_DATA(arr))->real;
-        (*v).i = ((npy_cdouble *)PyArray_DATA(arr))->imag;
+        (*v).r = npy_creal(*(((npy_cdouble *)PyArray_DATA(arr))));
+        (*v).i = npy_cimag(*(((npy_cdouble *)PyArray_DATA(arr))));
         Py_DECREF(arr);
         return 1;
     }
@@ -1227,8 +1235,8 @@ static int try_pyarr_from_character(PyObject* obj, character* v) {
             strcpy(mess, "try_pyarr_from_character failed"
                          " -- expected bytes array-scalar|array, got ");
             f2py_describe(obj, mess + strlen(mess));
+            PyErr_SetString(err, mess);
         }
-        PyErr_SetString(err, mess);
     }
     return 0;
 }

@@ -143,7 +143,7 @@ exactly.
 
 Vectorized indexing in particular can be challenging to implement with array
 storage backends not based on NumPy. In contrast, indexing by 1D arrays along
-at least one dimension in the style of outer indexing is much more acheivable.
+at least one dimension in the style of outer indexing is much more achievable.
 This has led many libraries (including dask and h5py) to attempt to define a
 safe subset of NumPy-style indexing that is equivalent to outer indexing, e.g.,
 by only allowing indexing with an array along at most one dimension. However,
@@ -377,7 +377,7 @@ instead of ``arr.oindex[indices]``). Functionally, this would be equivalent,
 but indexing is such a common operation that we think it is important to
 minimize syntax and worth implementing it directly on `ndarray` objects
 themselves. Indexing attributes also define a clear interface that is easier
-for alternative array implementations to copy, nonwithstanding ongoing
+for alternative array implementations to copy, notwithstanding ongoing
 efforts to make it easier to override NumPy functions [2]_.
 
 Discussion
