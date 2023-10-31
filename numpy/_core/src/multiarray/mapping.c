@@ -925,6 +925,7 @@ array_boolean_subscript(PyArrayObject *self,
     npy_intp size, itemsize;
     char *ret_data;
     PyArray_Descr *dtype;
+    PyArray_Descr *ret_dtype;
     PyArrayObject *ret;
 
     size = count_boolean_trues(PyArray_NDIM(bmask), PyArray_DATA(bmask),
@@ -935,6 +936,8 @@ array_boolean_subscript(PyArrayObject *self,
     Py_INCREF(dtype);
     ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1, &size,
                                 NULL, NULL, 0, NULL);
+    /* not same as *dtype* if the DType class replaces dtypes */
+    ret_dtype = PyArray_DESCR(ret);
     if (ret == NULL) {
         return NULL;
     }
@@ -981,7 +984,7 @@ array_boolean_subscript(PyArrayObject *self,
         if (PyArray_GetDTypeTransferFunction(
                         IsUintAligned(self) && IsAligned(self),
                         fixed_strides[0], itemsize,
-                        dtype, dtype,
+                        dtype, ret_dtype,
                         0,
                         &cast_info,
                         &cast_flags) != NPY_SUCCEED) {
@@ -1051,9 +1054,9 @@ array_boolean_subscript(PyArrayObject *self,
     if (!PyArray_CheckExact(self)) {
         PyArrayObject *tmp = ret;
 
-        Py_INCREF(dtype);
+        Py_INCREF(ret_dtype);
         ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
-                Py_TYPE(self), dtype,
+                Py_TYPE(self), ret_dtype,
                 1, &size, PyArray_STRIDES(ret), PyArray_BYTES(ret),
                 PyArray_FLAGS(self), (PyObject *)self, (PyObject *)tmp);
 
