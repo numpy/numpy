@@ -7,7 +7,7 @@ _NBitByte = Any
 _NBitShort = Any
 _NBitIntC = Any
 _NBitIntP = Any
-_NBitInt = _NBitIntP
+_NBitInt = Any
 _NBitLong = Any
 _NBitLongLong = Any
 
