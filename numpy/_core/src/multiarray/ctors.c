@@ -662,7 +662,13 @@ PyArray_NewFromDescr_int(
     finalize_descr_function *finalize =
             NPY_DT_SLOTS(NPY_DTYPE(descr))->finalize_descr;
     if (finalize != NULL && data == NULL) {
-        Py_SETREF(descr, finalize(descr));
+        PyArray_Descr *finalize_descr = finalize(descr);
+        if (finalize_descr == NULL) {
+            Py_DECREF(descr);
+            return NULL;
+        }
+        /* may or may not be the same as descr */
+        Py_SETREF(descr, finalize_descr);
     }
 
     nbytes = descr->elsize;
