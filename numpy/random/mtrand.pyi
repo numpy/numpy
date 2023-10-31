@@ -216,7 +216,7 @@ class RandomState:
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
         dtype: dtype[int_] | type[int] | type[int_] | _IntCodes | _SupportsDType[dtype[int_]] = ...,
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
     @overload
     def randint(  # type: ignore[misc]
         self,
@@ -224,7 +224,7 @@ class RandomState:
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
         dtype: dtype[uint] | type[uint] | _UIntCodes | _SupportsDType[dtype[uint]] = ...,
-    ) -> NDArray[uint]: ...
+    ) -> NDArray[ulong]: ...
     def bytes(self, length: int) -> builtins.bytes: ...
     @overload
     def choice(
