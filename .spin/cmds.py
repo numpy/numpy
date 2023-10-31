@@ -33,6 +33,24 @@ def _get_numpy_tools(filename):
     return module
 
 
+def _get_numpy_version():
+    cwd = pathlib.Path.cwd()
+    try:
+        site_packages = meson._set_pythonpath()
+    except FileNotFoundError:
+        return None
+
+    p = util.run(
+        ['python', '-c', 'import numpy as np; print(np.__version__)'],
+        cwd=site_packages,
+        echo=False,
+        output=False
+    )
+
+    os.chdir(cwd)
+
+    return p.stdout.strip().decode('ascii')
+
 @click.command()
 @click.option(
     "-t", "--token",
@@ -593,23 +611,10 @@ def notes(ctx, version):
     $ spin notes
     """
     if not version:
-        cmd = ["pip", "show", "numpy"]
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8")
-        output, error = p.communicate()
-        if error:
+        if not (version := _get_numpy_version()):
             raise click.ClickException(
-                f"`pip show numpy` returned error: {error}"
+                "Unable to determine NumPy version automatically"
             )
-        import re
-        version_match = re.search(r'Version: (.*)', output)
-        if not version_match:
-            raise click.ClickException(
-                "Unable to determine NumPy version through pip info"
-            )
-        version = version_match.group(1)
-        click.secho(
-            f"Using inferred version {version}"
-        )
 
     click.secho(
         f"Generating release notes for NumPy {version}",
