@@ -241,15 +241,15 @@ def test_average_matrix():
     assert_equal(r, [[2.5, 10.0/3]])
 
 
-def test_trapz_matrix():
+def test_dot_matrix():
     # Test to make sure matrices give the same answer as ndarrays
     # 2018-04-29: moved here from core.tests.test_function_base.
     x = np.linspace(0, 5)
-    y = x * x
-    r = np.trapz(y, x)
+    y = np.linspace(-5, 0)
     mx = np.matrix(x)
     my = np.matrix(y)
-    mr = np.trapz(my, mx)
+    r = np.dot(x, y)
+    mr = np.dot(mx, my.T)
     assert_almost_equal(mr, r)
 
 
@@ -332,8 +332,8 @@ def test_array_equal_error_message_matrix():
     Arrays are not equal
 
     (shapes (2,), (1, 2) mismatch)
-     x: array([1, 2])
-     y: matrix([[1, 2]])""")
+     ACTUAL: array([1, 2])
+     DESIRED: matrix([[1, 2]])""")
     assert_equal(msg, msg_reference)
 
 

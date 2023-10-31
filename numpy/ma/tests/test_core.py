@@ -19,8 +19,8 @@ import pytest
 
 import numpy as np
 import numpy.ma.core
-import numpy.core.fromnumeric as fromnumeric
-import numpy.core.umath as umath
+import numpy._core.fromnumeric as fromnumeric
+import numpy._core.umath as umath
 from numpy.exceptions import AxisError
 from numpy.testing import (
     assert_raises, assert_warns, suppress_warnings, IS_WASM
@@ -3929,13 +3929,13 @@ class TestMaskedArrayMathMethods:
         # Tests ptp on MaskedArrays.
         (x, X, XX, m, mx, mX, mXX, m2x, m2X, m2XX) = self.d
         (n, m) = X.shape
-        assert_equal(mx.ptp(), mx.compressed().ptp())
+        assert_equal(mx.ptp(), np.ptp(mx.compressed()))
         rows = np.zeros(n, float)
         cols = np.zeros(m, float)
         for k in range(m):
-            cols[k] = mX[:, k].compressed().ptp()
+            cols[k] = np.ptp(mX[:, k].compressed())
         for k in range(n):
-            rows[k] = mX[k].compressed().ptp()
+            rows[k] = np.ptp(mX[k].compressed())
         assert_equal(mX.ptp(0), cols)
         assert_equal(mX.ptp(1), rows)
 

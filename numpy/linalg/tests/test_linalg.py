@@ -11,12 +11,12 @@ import pytest
 
 import numpy as np
 from numpy import array, single, double, csingle, cdouble, dot, identity, matmul
-from numpy.core import swapaxes
+from numpy._core import swapaxes
 from numpy.exceptions import AxisError
 from numpy import multiply, atleast_2d, inf, asarray
 from numpy import linalg
 from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
-from numpy.linalg.linalg import _multi_dot_matrix_chain_order
+from numpy.linalg._linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_allclose, suppress_warnings,
@@ -1851,8 +1851,8 @@ def test_byteorder_check():
 
     for dtt in (np.float32, np.float64):
         arr = np.eye(4, dtype=dtt)
-        n_arr = arr.newbyteorder(native)
-        sw_arr = arr.newbyteorder('S').byteswap()
+        n_arr = arr.view(arr.dtype.newbyteorder(native))
+        sw_arr = arr.view(arr.dtype.newbyteorder("S")).byteswap()
         assert_equal(arr.dtype.byteorder, '=')
         for routine in (linalg.inv, linalg.det, linalg.pinv):
             # Normal call
@@ -2201,3 +2201,30 @@ def test_blas64_geqrf_lwork_smoketest():
     # Should result to an integer of a reasonable size
     lwork = int(work.item())
     assert_(2**32 < lwork < 2**42)
+
+
+def test_diagonal():
+    # Here we only test if selected axes are compatible
+    # with Array API (last two). Core implementation
+    # of `diagonal` is tested in `test_multiarray.py`.
+    x = np.arange(60).reshape((3, 4, 5))
+    actual = np.linalg.diagonal(x)
+    expected = np.array(
+        [
+            [0,  6, 12, 18],
+            [20, 26, 32, 38],
+            [40, 46, 52, 58],
+        ]
+    )
+    assert_equal(actual, expected)
+
+
+def test_trace():
+    # Here we only test if selected axes are compatible
+    # with Array API (last two). Core implementation
+    # of `trace` is tested in `test_multiarray.py`.
+    x = np.arange(60).reshape((3, 4, 5))
+    actual = np.linalg.trace(x)
+    expected = np.array([36, 116, 196])
+
+    assert_equal(actual, expected)

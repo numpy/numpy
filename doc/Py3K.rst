@@ -179,7 +179,7 @@ In ``numerictypes.py``, the "common" types were replaced by their
 plain equivalents, and `IntType` was dropped.
 
 
-numpy.core.numerictypes
+numpy._core.numerictypes
 -----------------------
 
 In numerictypes, types on Python 3 were changed so that:

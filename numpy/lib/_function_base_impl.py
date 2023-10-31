@@ -6,22 +6,22 @@ import sys
 import warnings
 
 import numpy as np
-import numpy.core.numeric as _nx
-from numpy.core import transpose, overrides
-from numpy.core.numeric import (
+import numpy._core.numeric as _nx
+from numpy._core import transpose, overrides
+from numpy._core.numeric import (
     ones, zeros_like, arange, concatenate, array, asarray, asanyarray, empty,
     ndarray, take, dot, where, intp, integer, isscalar, absolute
     )
-from numpy.core.umath import (
+from numpy._core.umath import (
     pi, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
     mod, exp, not_equal, subtract
     )
-from numpy.core.fromnumeric import (
+from numpy._core.fromnumeric import (
     ravel, nonzero, partition, mean, any, sum
     )
-from numpy.core.numerictypes import typecodes
+from numpy._core.numerictypes import typecodes
 from numpy.lib._twodim_base_impl import diag
-from numpy.core.multiarray import (
+from numpy._core.multiarray import (
     _place, bincount, normalize_axis_index, _monotonicity,
     interp as compiled_interp, interp_complex as compiled_interp_complex
     )
@@ -712,7 +712,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
 
     Examples
     --------
-    Define the sigma function, which is -1 for ``x < 0`` and +1 for ``x >= 0``.
+    Define the signum function, which is -1 for ``x < 0`` and +1 for ``x >= 0``.
 
     >>> x = np.linspace(-2.5, 2.5, 6)
     >>> np.piecewise(x, [x < 0, x >= 0], [-1, 1])
@@ -821,22 +821,19 @@ def select(condlist, choicelist, default=0):
     if len(condlist) == 0:
         raise ValueError("select with an empty condition list is not possible")
 
-    choicelist = [np.asarray(choice) for choice in choicelist]
+    # TODO: This preserves the Python int, float, complex manually to get the
+    #       right `result_type` with NEP 50.  Most likely we will grow a better
+    #       way to spell this (and this can be replaced).
+    choicelist = [
+        choice if type(choice) in (int, float, complex) else np.asarray(choice)
+        for choice in choicelist]
+    choicelist.append(default if type(default) in (int, float, complex)
+                      else np.asarray(default))
 
     try:
-        intermediate_dtype = np.result_type(*choicelist)
+        dtype = np.result_type(*choicelist)
     except TypeError as e:
-        msg = f'Choicelist elements do not have a common dtype: {e}'
-        raise TypeError(msg) from None
-    default_array = np.asarray(default)
-    choicelist.append(default_array)
-
-    # need to get the result type before broadcasting for correct scalar
-    # behaviour
-    try:
-        dtype = np.result_type(intermediate_dtype, default_array)
-    except TypeError as e:
-        msg = f'Choicelists and default value do not have a common dtype: {e}'
+        msg = f'Choicelist and default value do not have a common dtype: {e}'
         raise TypeError(msg) from None
 
     # Convert conditions to arrays and broadcast conditions and choices
@@ -1145,7 +1142,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     .. [3]  Fornberg B. (1988) Generation of Finite Difference Formulas on
             Arbitrarily Spaced Grids,
             Mathematics of Computation 51, no. 184 : 699-706.
-            `PDF <http://www.ams.org/journals/mcom/1988-51-184/
+            `PDF <https://www.ams.org/journals/mcom/1988-51-184/
             S0025-5718-1988-0935077-0/S0025-5718-1988-0935077-0.pdf>`_.
     """
     f = np.asanyarray(f)
@@ -2284,7 +2281,7 @@ class vectorize:
            [0., 0., 0., 1., 2., 1.]])
 
     Decorator syntax is supported.  The decorator can be called as
-    a function to provide keyword arguments.
+    a function to provide keyword arguments:
 
     >>> @np.vectorize
     ... def identity(x):
@@ -3653,7 +3650,7 @@ def sinc(x):
     References
     ----------
     .. [1] Weisstein, Eric W. "Sinc Function." From MathWorld--A Wolfram Web
-           Resource. http://mathworld.wolfram.com/SincFunction.html
+           Resource. https://mathworld.wolfram.com/SincFunction.html
     .. [2] Wikipedia, "Sinc function",
            https://en.wikipedia.org/wiki/Sinc_function
 
@@ -4245,7 +4242,9 @@ def percentile(a,
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
-    q = np.true_divide(q, 100)
+    # Use dtype of array if possible (e.g., if q is a python int or float)
+    # by making the divisor have the dtype of the data array.
+    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100)
     q = asanyarray(q)  # undo any decay that the ufunc performed (see gh-13105)
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
@@ -4356,8 +4355,8 @@ def quantile(a,
     -------
     quantile : scalar or ndarray
         If `q` is a single probability and `axis=None`, then the result
-        is a scalar. If multiple probabilies levels are given, first axis of
-        the result corresponds to the quantiles. The other axes are
+        is a scalar. If multiple probability levels are given, first axis
+        of the result corresponds to the quantiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
         contains integers or floats smaller than ``float64``, the output
         data-type is ``float64``. Otherwise, the output data-type is the
@@ -4549,7 +4548,12 @@ def quantile(a,
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
-    q = np.asanyarray(q)
+    # Use dtype of array if possible (e.g., if q is a python int or float).
+    if isinstance(q, (int, float)) and a.dtype.kind == "f":
+        q = np.asanyarray(q, dtype=a.dtype)
+    else:
+        q = np.asanyarray(q)
+
     if not _quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
 
@@ -4591,7 +4595,7 @@ def _quantile_is_valid(q):
             if not (0.0 <= q[i] <= 1.0):
                 return False
     else:
-        if not (np.all(0 <= q) and np.all(q <= 1)):
+        if not (q.min() >= 0 and q.max() <= 1):
             return False
     return True
 
@@ -4657,7 +4661,9 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
     """
     gamma = np.asanyarray(virtual_indexes - previous_indexes)
     gamma = method["fix_gamma"](gamma, virtual_indexes)
-    return np.asanyarray(gamma)
+    # Ensure both that we have an array, and that we keep the dtype
+    # (which may have been matched to the input array).
+    return np.asanyarray(gamma, dtype=virtual_indexes.dtype)
 
 
 def _lerp(a, b, t, out=None):
@@ -4939,6 +4945,9 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     r"""
     Integrate along the given axis using the composite trapezoidal rule.
 
+    .. deprecated:: 2.0
+        Use `scipy.integrate.trapezoid` instead.
+
     If `x` is provided, the integration happens in sequence along its
     elements - they are not sorted.
 
@@ -5036,6 +5045,14 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     >>> np.trapz(a, axis=1)
     array([2.,  8.])
     """
+
+    # Deprecated in NumPy 2.0, 2023-08-18
+    warnings.warn(
+        "`trapz` is deprecated. Use `scipy.integrate.trapezoid` instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     y = asanyarray(y)
     if x is None:
         d = dx
@@ -5761,7 +5778,7 @@ def digitize(x, bins, right=False):
     much better for larger number of bins than the previous linear search.
     It also removes the requirement for the input array to be 1-dimensional.
 
-    For monotonically _increasing_ `bins`, the following are equivalent::
+    For monotonically *increasing* `bins`, the following are equivalent::
 
         np.digitize(x, bins, right=True)
         np.searchsorted(bins, x, side='left')

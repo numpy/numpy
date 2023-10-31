@@ -1,0 +1,2 @@
+Arrays of 2-dimensional vectors for ``np.cross`` have been deprecated.
+Use arrays of 3-dimensional vectors instead.

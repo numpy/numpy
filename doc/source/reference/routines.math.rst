@@ -64,7 +64,6 @@ Sums, products, differences
    ediff1d
    gradient
    cross
-   trapz
 
 Exponents and logarithms
 ------------------------
@@ -182,3 +181,5 @@ Miscellaneous
    real_if_close
 
    interp
+
+   bitwise_count

@@ -247,3 +247,21 @@ class StatsMethods(Benchmark):
 
     def time_sum(self, dtype, size):
         self.data.sum()
+
+
+class NumPyChar(Benchmark):
+    def setup(self):
+        self.A = np.array([100*'x', 100*'y'])
+        self.B = np.array(1000 * ['aa'])
+
+    def time_isalpha_small_list_big_string(self):
+        np.char.isalpha(self.A)
+
+    def time_isalpha_big_list_small_string(self):
+        np.char.isalpha(self.B)
+
+    def time_add_small_list_big_string(self):
+        np.char.add(self.A, self.A)
+
+    def time_add_big_list_small_string(self):
+        np.char.add(self.B, self.B)

@@ -113,7 +113,7 @@ or ``pytest`` updates).
 
 This allows to run the test suite, or part of it, conveniently::
 
-    python3.8d runtests.py -t numpy/core/tests/test_multiarray.py -- -R2:3 -s
+    python3.8d runtests.py -t numpy/_core/tests/test_multiarray.py -- -R2:3 -s
 
 where ``-R2:3`` is the ``pytest-leaks`` command (see its documentation), the
 ``-s`` causes output to print and may be necessary (in some versions captured
@@ -189,7 +189,7 @@ You can run the test suite with valgrind which may be sufficient
 when you are only interested in a few tests::
 
     PYTHOMMALLOC=malloc valgrind python runtests.py \
-     -t numpy/core/tests/test_multiarray.py -- --continue-on-collection-errors
+     -t numpy/_core/tests/test_multiarray.py -- --continue-on-collection-errors
 
 Note the ``--continue-on-collection-errors``, which is currently necessary due to
 missing ``longdouble`` support causing failures (this will usually not be

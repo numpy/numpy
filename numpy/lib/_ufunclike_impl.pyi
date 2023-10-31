@@ -1,6 +1,6 @@
 from typing import Any, overload, TypeVar
 
-from numpy import floating, bool_, object_, ndarray
+from numpy import floating, bool_, object_
 from numpy._typing import (
     NDArray,
     _FloatLike_co,
@@ -8,7 +8,7 @@ from numpy._typing import (
     _ArrayLikeObject_co,
 )
 
-_ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
+_ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
 __all__: list[str]
 

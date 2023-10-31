@@ -11,7 +11,6 @@ npyrandom_sources = [
 npyrandom_lib = static_library('npyrandom',
   npyrandom_sources,
   c_args: staticlib_cflags,
-  # include_directories: '../core/include',
   dependencies: [py_dep, np_core_dep],
   install: true,
   install_dir: np_dir / 'random/lib',
@@ -35,7 +34,8 @@ _cython_tree_random += custom_target('_bounded_integer_pxd',
   input: '_bounded_integers.pxd.in',
   command: [tempita_cli, '@INPUT@', '-o', '@OUTPUT@'],
   install: true,
-  install_dir: np_dir / 'random'
+  install_dir: np_dir / 'random',
+  install_tag: 'devel'
 )
 
 _bounded_integers_pyx = custom_target('_bounded_integer_pyx',
@@ -52,23 +52,26 @@ if host_machine.system() == 'cygwin'
   c_args_random += ['-Wl,--export-all-symbols']
 endif
 
-# name, sources, extra link libs, extra c_args
+# name, sources, extra c_args, extra static libs to link
 random_pyx_sources = [
-  ['_bounded_integers', _bounded_integers_pyx, [], npymath_lib],
-  ['_common', '_common.pyx', [], []],
-  ['_mt19937', ['_mt19937.pyx', 'src/mt19937/mt19937.c', 'src/mt19937/mt19937-jump.c'], [], []],
-  ['_philox', ['_philox.pyx', 'src/philox/philox.c'], [], []],
-  ['_pcg64', ['_pcg64.pyx', 'src/pcg64/pcg64.c'], ['-U__GNUC_GNU_INLINE__'], []],
-  ['_sfc64', ['_sfc64.pyx', 'src/sfc64/sfc64.c'], [], []],
-  ['bit_generator', 'bit_generator.pyx', [], []],
+  ['_bounded_integers', _bounded_integers_pyx, [], [npyrandom_lib, npymath_lib]],
+  ['_common', '_common.pyx', [], [npyrandom_lib]],
+  ['_mt19937', ['_mt19937.pyx', 'src/mt19937/mt19937.c', 'src/mt19937/mt19937-jump.c'],
+    [], [npyrandom_lib]
+  ],
+  ['_philox', ['_philox.pyx', 'src/philox/philox.c'], [], [npyrandom_lib]],
+  ['_pcg64', ['_pcg64.pyx', 'src/pcg64/pcg64.c'], ['-U__GNUC_GNU_INLINE__'], [npyrandom_lib]],
+  ['_sfc64', ['_sfc64.pyx', 'src/sfc64/sfc64.c'], [], [npyrandom_lib]],
+  ['bit_generator', 'bit_generator.pyx', [], [npyrandom_lib]],
   # The `fs.copyfile` usage here is needed because these two .pyx files import
   # from _bounded_integers,and its pxd file is only present in the build directory
-  ['_generator', fs.copyfile('_generator.pyx'), [], npymath_lib],
+  ['_generator', fs.copyfile('_generator.pyx'), [], [npyrandom_lib, npymath_lib]],
   ['mtrand', [
       fs.copyfile('mtrand.pyx'),
       'src/distributions/distributions.c',
       'src/legacy/legacy-distributions.c'
-    ], ['-DNP_RANDOM_LEGACY=1'], npymath_lib,
+    ],
+    ['-DNP_RANDOM_LEGACY=1'], [npymath_lib],
   ],
 ]
 foreach gen: random_pyx_sources
@@ -77,7 +80,7 @@ foreach gen: random_pyx_sources
     c_args: [c_args_random, gen[2]],
     include_directories: 'src',
     dependencies: np_core_dep,
-    link_with: [npyrandom_lib, gen[3]],
+    link_with: gen[3],
     install: true,
     subdir: 'numpy/random',
   )

@@ -14,6 +14,7 @@ i | f8  # E: Unsupported operand types
 i8 ^ f8  # E: No overload variant
 u8 & f8  # E: No overload variant
 ~f8  # E: Unsupported operand type
+# TODO: Certain mixes like i4 << u8 go to float and thus should fail
 
 # mypys' error message for `NoReturn` is unfortunately pretty bad
 # TODO: Re-enable this once we add support for numerical precision for `number`s

@@ -136,7 +136,7 @@ command-line option, e.g.::
 Masked records
 --------------
 
-Like *numpy.core.ma*, the *ndarray*-based implementation
+Like *numpy.ma.core*, the *ndarray*-based implementation
 of MaskedArray is limited when working with records: you can
 mask any record of the array, but not a field in a record. If you
 need this feature, you may want to give the *mrecords* package

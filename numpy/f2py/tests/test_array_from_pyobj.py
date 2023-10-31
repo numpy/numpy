@@ -7,16 +7,16 @@ import pytest
 import numpy as np
 
 from numpy.testing import assert_, assert_equal
-from numpy.core.multiarray import typeinfo as _typeinfo
+from numpy._core._type_aliases import c_names_dict as _c_names_dict
 from . import util
 
 wrap = None
 
 # Extend core typeinfo with CHARACTER to test dtype('c')
-_ti = _typeinfo['STRING']
-typeinfo = dict(
-    CHARACTER=type(_ti)(('c', _ti.num, 8, _ti.alignment, _ti.type)),
-    **_typeinfo)
+c_names_dict = dict(
+    CHARACTER=np.dtype("c"),
+    **_c_names_dict
+)
 
 
 def setup_module():
@@ -185,7 +185,7 @@ class Type:
         if isinstance(name, np.dtype):
             dtype0 = name
             name = None
-            for n, i in typeinfo.items():
+            for n, i in c_names_dict.items():
                 if not isinstance(i, type) and dtype0.type is i.type:
                     name = n
                     break
@@ -201,19 +201,19 @@ class Type:
         self.NAME = name.upper()
 
         if self.NAME == 'CHARACTER':
-            info = typeinfo[self.NAME]
+            info = c_names_dict[self.NAME]
             self.type_num = getattr(wrap, 'NPY_STRING')
             self.elsize = 1
             self.dtype = np.dtype('c')
         elif self.NAME.startswith('STRING'):
-            info = typeinfo[self.NAME[:6]]
+            info = c_names_dict[self.NAME[:6]]
             self.type_num = getattr(wrap, 'NPY_STRING')
             self.elsize = int(self.NAME[6:] or 0)
             self.dtype = np.dtype(f'S{self.elsize}')
         else:
-            info = typeinfo[self.NAME]
+            info = c_names_dict[self.NAME]
             self.type_num = getattr(wrap, 'NPY_' + self.NAME)
-            self.elsize = info.bits // 8
+            self.elsize = info.itemsize
             self.dtype = np.dtype(info.type)
 
         assert self.type_num == info.num
@@ -233,28 +233,28 @@ class Type:
         return [self.__class__(_m) for _m in _type_names]
 
     def smaller_types(self):
-        bits = typeinfo[self.NAME].alignment
+        bits = c_names_dict[self.NAME].alignment
         types = []
         for name in _type_names:
-            if typeinfo[name].alignment < bits:
+            if c_names_dict[name].alignment < bits:
                 types.append(Type(name))
         return types
 
     def equal_types(self):
-        bits = typeinfo[self.NAME].alignment
+        bits = c_names_dict[self.NAME].alignment
         types = []
         for name in _type_names:
             if name == self.NAME:
                 continue
-            if typeinfo[name].alignment == bits:
+            if c_names_dict[name].alignment == bits:
                 types.append(Type(name))
         return types
 
     def larger_types(self):
-        bits = typeinfo[self.NAME].alignment
+        bits = c_names_dict[self.NAME].alignment
         types = []
         for name in _type_names:
-            if typeinfo[name].alignment > bits:
+            if c_names_dict[name].alignment > bits:
                 types.append(Type(name))
         return types
 

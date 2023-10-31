@@ -252,7 +252,7 @@ Array-protocol type strings (see :ref:`arrays.interface`)
       >>> dt = np.dtype('i4')   # 32-bit signed integer
       >>> dt = np.dtype('f8')   # 64-bit floating-point number
       >>> dt = np.dtype('c16')  # 128-bit complex floating-point number
-      >>> dt = np.dtype('a25')  # 25-length zero-terminated bytes
+      >>> dt = np.dtype('S25')  # 25-length zero-terminated bytes
       >>> dt = np.dtype('U25')  # 25-character string
 
    .. _string-dtype-note:
@@ -293,10 +293,10 @@ String with comma-separated fields
       - field named ``f2`` containing a 3 x 4 sub-array
         containing 10-character strings
 
-      >>> dt = np.dtype("a3, 3u8, (3,4)a10")
+      >>> dt = np.dtype("S3, 3u8, (3,4)S10")
 
 Type strings
-   Any string in :obj:`numpy.sctypeDict`.keys():
+   Any string name of a NumPy dtype, e.g.:
 
    .. admonition:: Example
 

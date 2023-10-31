@@ -1,0 +1,11 @@
+Renamed ``numpy.core`` to ``numpy._core``
+-----------------------------------------
+Accessing ``numpy.core`` now emits a DeprecationWarning. In practice
+we have found that most downstream usage of ``numpy.core`` was to access
+functionality that is available in the main ``numpy`` namespace.
+If for some reason you are using functionality in ``numpy.core`` that
+is not available in the main ``numpy`` namespace, this means you are likely
+using private NumPy internals. You can still access these internals via
+``numpy._core`` without a deprecation warning but we do not provide any
+backward compatibility guarantees for NumPy internals. Please open an issue
+if you think a mistake was made and something needs to be made public.

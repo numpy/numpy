@@ -19,22 +19,22 @@ class Records(Benchmark):
         self.buffer = self.l50.tostring() * self.fields_number
 
     def time_fromarrays_w_dtype(self):
-        np.core.records.fromarrays(self.arrays, dtype=self.dtype_)
+        np._core.records.fromarrays(self.arrays, dtype=self.dtype_)
 
     def time_fromarrays_wo_dtype(self):
-        np.core.records.fromarrays(self.arrays)
+        np._core.records.fromarrays(self.arrays)
 
     def time_fromarrays_formats_as_list(self):
-        np.core.records.fromarrays(self.arrays, formats=self.formats)
+        np._core.records.fromarrays(self.arrays, formats=self.formats)
 
     def time_fromarrays_formats_as_string(self):
-        np.core.records.fromarrays(self.arrays, formats=self.formats_str)
+        np._core.records.fromarrays(self.arrays, formats=self.formats_str)
 
     def time_fromstring_w_dtype(self):
-        np.core.records.fromstring(self.buffer, dtype=self.dtype_)
+        np._core.records.fromstring(self.buffer, dtype=self.dtype_)
 
     def time_fromstring_formats_as_list(self):
-        np.core.records.fromstring(self.buffer, formats=self.formats)
+        np._core.records.fromstring(self.buffer, formats=self.formats)
 
     def time_fromstring_formats_as_string(self):
-        np.core.records.fromstring(self.buffer, formats=self.formats_str)
+        np._core.records.fromstring(self.buffer, formats=self.formats_str)

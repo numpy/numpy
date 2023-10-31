@@ -16,6 +16,7 @@ Pearu Peterson
 """
 import pprint
 import sys
+import re
 import types
 from functools import reduce
 from copy import deepcopy
@@ -27,7 +28,7 @@ __all__ = [
     'applyrules', 'debugcapi', 'dictappend', 'errmess', 'gentitle',
     'getargs2', 'getcallprotoargument', 'getcallstatement',
     'getfortranname', 'getpymethoddef', 'getrestdoc', 'getusercode',
-    'getusercode1', 'hasbody', 'hascallstatement', 'hascommon',
+    'getusercode1', 'getdimension', 'hasbody', 'hascallstatement', 'hascommon',
     'hasexternals', 'hasinitvalue', 'hasnote', 'hasresultnote',
     'isallocatable', 'isarray', 'isarrayofstrings',
     'ischaracter', 'ischaracterarray', 'ischaracter_or_characterarray',
@@ -43,7 +44,7 @@ __all__ = [
     'ismodule', 'ismoduleroutine', 'isoptional', 'isprivate', 'isrequired',
     'isroutine', 'isscalar', 'issigned_long_longarray', 'isstring',
     'isstringarray', 'isstring_or_stringarray', 'isstringfunction',
-    'issubroutine',
+    'issubroutine', 'get_f2py_modulename',
     'issubroutine_wrap', 'isthreadsafe', 'isunsigned', 'isunsigned_char',
     'isunsigned_chararray', 'isunsigned_long_long',
     'isunsigned_long_longarray', 'isunsigned_short',
@@ -417,6 +418,13 @@ def isoptional(var):
 
 def isexternal(var):
     return 'attrspec' in var and 'external' in var['attrspec']
+
+
+def getdimension(var):
+    dimpattern = r"\((.*?)\)"
+    if 'attrspec' in var.keys():
+        if any('dimension' in s for s in var['attrspec']):
+            return [re.findall(dimpattern, v) for v in var['attrspec']][0]
 
 
 def isrequired(var):
@@ -912,3 +920,20 @@ def deep_merge(dict1, dict2):
         else:
             merged_dict[key] = value
     return merged_dict
+
+_f2py_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',
+                                     re.I).match
+_f2py_user_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*?'
+                                          r'__user__[\w_]*)', re.I).match
+
+def get_f2py_modulename(source):
+    name = None
+    with open(source) as f:
+        for line in f:
+            m = _f2py_module_name_match(line)
+            if m:
+                if _f2py_user_module_name_match(line): # skip *__user__* names
+                    continue
+                name = m.group('name')
+                break
+    return name

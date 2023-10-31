@@ -359,7 +359,7 @@ existing array rather than create a new one.
     >>> a += b  # b is not automatically converted to integer type
     Traceback (most recent call last):
         ...
-    numpy.core._exceptions._UFuncOutputCastingError: Cannot cast ufunc 'add' output from dtype('float64') to dtype('int64') with casting rule 'same_kind'
+    numpy._core._exceptions._UFuncOutputCastingError: Cannot cast ufunc 'add' output from dtype('float64') to dtype('int64') with casting rule 'same_kind'
 
 When operating with arrays of different types, the type of the resulting
 array corresponds to the more general or precise one (a behavior known
@@ -766,14 +766,6 @@ It is equivalent to `hstack` only for 2D arrays::
     >>> np.hstack((a[:, newaxis], b[:, newaxis]))  # the result is the same
     array([[4., 3.],
            [2., 8.]])
-
-On the other hand, the function `row_stack` is equivalent to `vstack`
-for any input arrays. In fact, `row_stack` is an alias for `vstack`::
-
-    >>> np.column_stack is np.hstack
-    False
-    >>> np.row_stack is np.vstack
-    True
 
 In general, for arrays with more than two dimensions,
 `hstack` stacks along their second
@@ -1484,5 +1476,5 @@ Further reading
 -  :ref:`reference`
 -  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/tutorial/index.html>`__
 -  `SciPy Lecture Notes <https://scipy-lectures.org>`__
--  A `matlab, R, IDL, NumPy/SciPy dictionary <http://mathesaurus.sf.net/>`__
+-  A `matlab, R, IDL, NumPy/SciPy dictionary <https://mathesaurus.sourceforge.net/>`__
 -  :doc:`tutorial-svd <numpy-tutorials:content/tutorial-svd>`
