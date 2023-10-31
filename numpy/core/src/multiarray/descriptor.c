@@ -1478,6 +1478,11 @@ PyArray_DTypeOrDescrConverterRequired(PyObject *obj, npy_dtype_info *dt_info)
     dt_info->descr = NULL;
 
     if (PyObject_TypeCheck(obj, &PyArrayDTypeMeta_Type)) {
+        if (obj == (PyObject *)&PyArrayDescr_Type) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Cannot convert np.dtype into a dtype.");
+            return NPY_FAIL;
+        }
         Py_INCREF(obj);
         dt_info->dtype = (PyArray_DTypeMeta *)obj;
         dt_info->descr = NULL;
