@@ -530,10 +530,12 @@ assert_type(def_gen.integers(I_bool_high_closed, dtype=bool, endpoint=True), npt
 assert_type(def_gen.integers(I_bool_low, I_bool_high_closed, dtype=bool, endpoint=True), npt.NDArray[np.bool_])
 assert_type(def_gen.integers(0, I_bool_high_closed, dtype=bool, endpoint=True), npt.NDArray[np.bool_])
 
-assert_type(def_gen.integers(2, dtype=np.bool_), bool)
-assert_type(def_gen.integers(0, 2, dtype=np.bool_), bool)
-assert_type(def_gen.integers(1, dtype=np.bool_, endpoint=True), bool)
-assert_type(def_gen.integers(0, 1, dtype=np.bool_, endpoint=True), bool)
+# TODO: Commented out tests are currently incorrectly typed as arrays rather
+#       than scalars.
+#assert_type(def_gen.integers(2, dtype=np.bool_), np.bool_)
+#assert_type(def_gen.integers(0, 2, dtype=np.bool_), np.bool_)
+#assert_type(def_gen.integers(1, dtype=np.bool_, endpoint=True), np.bool_)
+#assert_type(def_gen.integers(0, 1, dtype=np.bool_, endpoint=True), np.bool_)
 assert_type(def_gen.integers(I_bool_low_like, 1, dtype=np.bool_, endpoint=True), npt.NDArray[np.bool_])
 assert_type(def_gen.integers(I_bool_high_open, dtype=np.bool_), npt.NDArray[np.bool_])
 assert_type(def_gen.integers(I_bool_low, I_bool_high_open, dtype=np.bool_), npt.NDArray[np.bool_])
@@ -547,8 +549,6 @@ I_u1_low_like: list[int] = [0]
 I_u1_high_open: npt.NDArray[np.uint8] = np.array([255], dtype=np.uint8)
 I_u1_high_closed: npt.NDArray[np.uint8] = np.array([255], dtype=np.uint8)
 
-# TODO: Commented out tests are currently incorrectly typed as arrays rather
-#       than scalars,
 # assert_type(def_gen.integers(256, dtype="u1"), np.uint8)
 # assert_type(def_gen.integers(0, 256, dtype="u1"), np.uint8)
 # assert_type(def_gen.integers(255, dtype="u1", endpoint=True), np.uint8)

@@ -121,7 +121,7 @@ class RandomState:
         low: int,
         high: None | int = ...,
         size: None = ...,
-        dtype: bool = ...,
+        dtype: type[bool] = ...,
     ) -> bool: ...
     @overload
     def randint(  # type: ignore[misc]
@@ -129,7 +129,7 @@ class RandomState:
         low: int,
         high: None | int = ...,
         size: None = ...,
-        dtype: int = ...,
+        dtype: type[int] = ...,
     ) -> int: ...
     @overload
     def randint(  # type: ignore[misc]
