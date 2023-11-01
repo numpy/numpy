@@ -24,7 +24,7 @@ language it may help to explicitly cast to a ``long``, for example with:
 Libraries interfacing with compiled code that are written in C, Cython, or
 a similar language may require updating to accomodate user input if they
 are using the ``long`` or equivalent type on the C-side.
-In this case, you may wish to using ``intp`` and cast user input or support
+In this case, you may wish to use ``intp`` and cast user input or support
 both ``long`` and ``intp`` (to better support NumPy 1.x as well).
 When creating a new integer array in C or Cython, the new ``NPY_DEFAULT_INT``
 macro will evaluate to either ``NPY_LONG`` or ``NPY_INTP`` depending on the
