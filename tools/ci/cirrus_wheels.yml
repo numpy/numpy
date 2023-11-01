@@ -148,9 +148,7 @@ wheels_upload_task:
         bash miniconda.sh -b -p $HOME/miniconda3
         $HOME/miniconda3/bin/conda init bash
         source $HOME/miniconda3/bin/activate
-        #conda install -y anaconda-client
-        # pin urllib3 until anaconda-client is fixed upstream
-        conda install -y anaconda-client 'urllib3<2.0.0'
+        conda install -y anaconda-client
 
         # The name of the zip file is derived from the `wheels_artifact` line.
         # If you change the artifact line to `myfile_artifact` then it would be
