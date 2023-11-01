@@ -257,37 +257,6 @@ foreach filefunc_maybe: optional_file_funcs
   endif
 endforeach
 
-# Optional locale function
-have_strtold_l = cc.has_function('strtold_l', include_directories: inc_curdir,
-  prefix:'''
-  #include <stdlib.h>
-  #include <xlocale.h>
-  #include "feature_detection_locale.h"
-''')
-if not have_strtold_l
-  # Retry with locale.h, seems to vary across Linux distros
-  have_strtold_l = cc.has_function('strtold_l', include_directories: inc_curdir,
-    prefix:'''
-    #include <stdlib.h>
-    #include <locale.h>
-    #include "feature_detection_locale.h"
-  ''')
-endif
-if have_strtold_l
-  cdata.set10('HAVE_STRTOLD_L', true)
-else
-  # FIXME: this is wrong! the HAVE_ define should not exist, or it'll be
-  # interpreted as the function being available (true/false does nothing, see
-  # note on HAVE_ defines higher up). This is necessary though in order to make
-  # the Linux CI job pass. So either the check is wrong somehow, or this
-  # function is not available in CI. For the latter there is a fallback path,
-  # but that is broken because we don't have the exact long double
-  # representation checks.
-  if cc.get_argument_syntax() != 'msvc'
-    cdata.set10('HAVE_STRTOLD_L', false)
-  endif
-endif
-
 # Other optional functions
 optional_misc_funcs = [
   'backtrace',
@@ -305,7 +274,7 @@ endforeach
 # SSE headers only enabled automatically on amd64/x32 builds
 optional_headers = [
   'features.h',   # for glibc version linux
-  'xlocale.h',    # see GH#8367
+  'xlocale.h',    # removed in glibc 2.26, but may still be useful - see gh-8367
   'dlfcn.h',      # dladdr
   'execinfo.h',   # backtrace
   'libunwind.h',  # backtrace for LLVM/Clang using libunwind
@@ -316,6 +285,19 @@ foreach header: optional_headers
     cdata.set10('HAVE_' + header.to_upper().replace('.', '_').replace('/', '_'), true)
   endif
 endforeach
+
+# Optional locale function - GNU-specific
+_strtold_prefix = '''
+#define _GNU_SOURCE
+#include <locale.h>
+#include <stdlib.h>
+'''
+if cdata.get('HAVE_XLOCALE_H', 0) == 1
+  _strtold_prefix += '#include <xlocale.h>'
+endif
+if cc.has_function('strtold_l', include_directories: inc_curdir, prefix: _strtold_prefix)
+  cdata.set10('HAVE_STRTOLD_L', true)
+endif
 
 # Optional compiler attributes
 # TODO: this doesn't work with cc.has_function_attribute, see
