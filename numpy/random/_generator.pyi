@@ -226,7 +226,7 @@ class Generator:
         low: int,
         high: None | int = ...,
         size: None = ...,
-        dtype: _DTypeLikeInt | _DTypeLikeUInt = ...,
+        dtype: int = ...,
         endpoint: bool = ...,
     ) -> int: ...
     @overload
