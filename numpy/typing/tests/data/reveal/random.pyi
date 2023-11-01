@@ -1551,8 +1551,8 @@ assert_type(random_st.random_sample(1), npt.NDArray[np.float64])
 assert_type(random_st.random_sample(size=(1, 2)), npt.NDArray[np.float64])
 
 assert_type(random_st.tomaxint(), int)
-assert_type(random_st.tomaxint(1), npt.NDArray[np.int_])
-assert_type(random_st.tomaxint((1,)), npt.NDArray[np.int_])
+assert_type(random_st.tomaxint(1), npt.NDArray[np.int64])
+assert_type(random_st.tomaxint((1,)), npt.NDArray[np.int64])
 
 assert_type(np.random.set_bit_generator(pcg64), None)
 assert_type(np.random.get_bit_generator(), np.random.BitGenerator)
