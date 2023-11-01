@@ -17,7 +17,7 @@ from numpy import (
     ubyte,
     ushort,
     uintc,
-    uint,
+    ulong,
     ulonglong,
     byte,
     short,
