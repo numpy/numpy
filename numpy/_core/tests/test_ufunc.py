@@ -2894,6 +2894,28 @@ def test_addition_unicode_inverse_byte_order(order1, order2):
     assert result == 2*element
 
 
+@pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64])
+def test_find_non_long_args(dtype):
+    element = 'abcd'
+    start = dtype(0)
+    end = dtype(len(element))
+    arr = np.array([element])
+    result = np._core.umath.find(arr, "a", start, end)
+    assert result.dtype == np.dtype("intp")
+    assert result == 0
+
+
+def test_find_access_past_buffer():
+    # This checks that no read past the string buffer occurs in
+    # string_fastsearch.h. The READC macro is there to check this.
+    # To see it in action, you can redefine READC to just read the
+    # i'th character of the buffer and this test will produce an
+    # 'Invalid read' if run under valgrind.
+    arr = np.array([b'abcd', b'ebcd'])
+    result = np._core.umath.find(arr, b'cde', 0, np.iinfo(np.int64).max)
+    assert np.all(result == -1)
+
+
 class TestLowlevelAPIAccess:
     def test_resolve_dtypes_basic(self):
         # Basic test for dtype resolution:
