@@ -1542,7 +1542,7 @@ _convert_from_type(PyObject *obj) {
         return PyArray_DescrFromTypeObject(obj);
     }
     else if (typ == &PyLong_Type) {
-        return PyArray_DescrFromType(NPY_LONG);
+        return PyArray_DescrFromType(NPY_INTP);
     }
     else if (typ == &PyFloat_Type) {
         return PyArray_DescrFromType(NPY_DOUBLE);

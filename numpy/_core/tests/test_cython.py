@@ -125,6 +125,10 @@ def test_abstract_scalars(install_temp):
     assert checks.is_integer(np.int8(1))
     assert checks.is_integer(np.uint64(1))
 
+def test_default_int(install_temp):
+    import checks
+
+    assert checks.get_default_integer() is np.dtype(int)
 
 def test_convert_datetime64_to_datetimestruct(install_temp):
     # GH#21199

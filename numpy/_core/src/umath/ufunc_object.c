@@ -2742,14 +2742,14 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
                 && ((strcmp(ufunc->name, "add") == 0)
                     || (strcmp(ufunc->name, "multiply") == 0))) {
             if (PyTypeNum_ISBOOL(typenum)) {
-                typenum = NPY_LONG;
+                typenum = NPY_INTP;
             }
-            else if ((size_t)PyArray_DESCR(arr)->elsize < sizeof(long)) {
+            else if ((size_t)PyArray_DESCR(arr)->elsize < sizeof(npy_intp)) {
                 if (PyTypeNum_ISUNSIGNED(typenum)) {
-                    typenum = NPY_ULONG;
+                    typenum = NPY_UINTP;
                 }
                 else {
-                    typenum = NPY_LONG;
+                    typenum = NPY_INTP;
                 }
             }
             signature[0] = PyArray_DTypeFromTypeNum(typenum);
@@ -6564,7 +6564,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
         }
          /* Explicitly allow int, float, and complex for the "weak" types. */
         else if (descr_obj == (PyObject *)&PyLong_Type) {
-            descr = PyArray_DescrFromType(NPY_LONG);
+            descr = PyArray_DescrFromType(NPY_INTP);
             dummy_arrays[i] = (PyArrayObject *)PyArray_Empty(0, NULL, descr, 0);
             if (dummy_arrays[i] == NULL) {
                 goto finish;

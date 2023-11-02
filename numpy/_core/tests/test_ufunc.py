@@ -1898,11 +1898,11 @@ class TestUfunc:
         assert_equal(result, target)
 
     def test_operand_flags(self):
-        a = np.arange(16, dtype='l').reshape(4, 4)
-        b = np.arange(9, dtype='l').reshape(3, 3)
+        a = np.arange(16, dtype=int).reshape(4, 4)
+        b = np.arange(9, dtype=int).reshape(3, 3)
         opflag_tests.inplace_add(a[:-1, :-1], b)
         assert_equal(a, np.array([[0, 2, 4, 3], [7, 9, 11, 7],
-            [14, 16, 18, 11], [12, 13, 14, 15]], dtype='l'))
+            [14, 16, 18, 11], [12, 13, 14, 15]]))
 
         a = np.array(0)
         opflag_tests.inplace_add(a, 3)
@@ -2930,8 +2930,16 @@ class TestLowlevelAPIAccess:
             np.equal.resolve_dtypes((dts, dts, None))
 
     def test_resolve_dtypes_reduction(self):
+        i2 = np.dtype("i2")
+        default_int_ = np.dtype(np.int_)
+        # Check special addition resolution:
+        res = np.add.resolve_dtypes((None, i2, None), reduction=True)
+        assert res == (default_int_, default_int_, default_int_)
+
+    def test_resolve_dtypes_reduction_no_output(self):
         i4 = np.dtype("i4")
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(TypeError):
+            # May be allowable at some point?
             np.add.resolve_dtypes((i4, i4, i4), reduction=True)
 
     @pytest.mark.parametrize("dtypes", [
@@ -2942,13 +2950,6 @@ class TestLowlevelAPIAccess:
     def test_resolve_dtypes_errors(self, dtypes):
         with pytest.raises(TypeError):
             np.add.resolve_dtypes(dtypes)
-
-    def test_resolve_dtypes_reduction(self):
-        i2 = np.dtype("i2")
-        long_ = np.dtype("long")
-        # Check special addition resolution:
-        res = np.add.resolve_dtypes((None, i2, None), reduction=True)
-        assert res == (long_, long_, long_)
 
     def test_resolve_dtypes_reduction_errors(self):
         i2 = np.dtype("i2")

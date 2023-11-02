@@ -94,7 +94,13 @@ class TypeDescription:
 
 
 def _check_order(types1, types2):
-    dtype_order = allP + "O"
+    """
+    Helper to check that the loop types are ordered. The legacy type resolver
+    (and potentially downstream) may pick use the first loop to which operands
+    can be cast safely.
+    """
+    # Insert kK (int64) after all other ints (assumes long long isn't larger)
+    dtype_order = bints + 'kK' + times + flts + cmplxP + "O"
     for t1, t2 in zip(types1, types2):
         # We have no opinion on object or time ordering for now:
         if t1 in "OP" or t2 in "OP":
@@ -275,6 +281,10 @@ chartoname = {
     'I': 'uint',
     'l': 'long',
     'L': 'ulong',
+    # We sometimes need int64, but we have no obvious char for it, use k and
+    # define it as `int64` below.
+    'k': 'int64',
+    'K': 'uint64',
     'q': 'longlong',
     'Q': 'ulonglong',
     'e': 'half',
@@ -330,13 +340,8 @@ nodatetime_or_obj = bints + inexact
 no_bool_times_obj = ints + inexact
 
 # Find which code corresponds to int64.
-int64 = ''
-uint64 = ''
-for code in 'bhilq':
-    if struct.calcsize(code) == 8:
-        int64 = code
-        uint64 = english_upper(code)
-        break
+int64 = 'k'
+uint64 = 'K'
 
 # This dictionary describes all the ufunc implementations, generating
 # all the function names and their corresponding ufunc signatures.  TD is
@@ -1090,12 +1095,12 @@ defdict = {
           None,
           [TypeDescription('e', None, 'ei', 'e'),
           TypeDescription('f', None, 'fi', 'f', dispatch='loops_exponent_log'),
-          TypeDescription('e', FuncNameSuffix('long'), 'el', 'e'),
-          TypeDescription('f', FuncNameSuffix('long'), 'fl', 'f'),
+          TypeDescription('e', FuncNameSuffix('int64'), 'e'+int64, 'e'),
+          TypeDescription('f', FuncNameSuffix('int64'), 'f'+int64, 'f'),
           TypeDescription('d', None, 'di', 'd', dispatch='loops_exponent_log'),
-          TypeDescription('d', FuncNameSuffix('long'), 'dl', 'd'),
+          TypeDescription('d', FuncNameSuffix('int64'), 'd'+int64, 'd'),
           TypeDescription('g', None, 'gi', 'g'),
-          TypeDescription('g', FuncNameSuffix('long'), 'gl', 'g'),
+          TypeDescription('g', FuncNameSuffix('int64'), 'g'+int64, 'g'),
           ],
           ),
 'frexp' :

@@ -2858,7 +2858,7 @@ byte = signedinteger[_NBitByte]
 short = signedinteger[_NBitShort]
 intc = signedinteger[_NBitIntC]
 intp = signedinteger[_NBitIntP]
-int_ = signedinteger[_NBitInt]
+int_ = intp
 long = signedinteger[_NBitLong]
 longlong = signedinteger[_NBitLongLong]
 
@@ -2940,7 +2940,7 @@ ubyte = unsignedinteger[_NBitByte]
 ushort = unsignedinteger[_NBitShort]
 uintc = unsignedinteger[_NBitIntC]
 uintp = unsignedinteger[_NBitIntP]
-uint = unsignedinteger[_NBitInt]
+uint = uintp
 ulong = unsignedinteger[_NBitLong]
 ulonglong = unsignedinteger[_NBitLongLong]
 
