@@ -1,7 +1,7 @@
 .. _f2py-bldsys:
 
 =======================
-F2py and build systems
+F2PY and build systems
 =======================
 
 In this section we will cover the various popular build systems and their usage

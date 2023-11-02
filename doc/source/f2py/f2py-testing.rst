@@ -1,7 +1,7 @@
 .. _f2py-testing:
 
 ===============
-F2py test suite
+F2PY test suite
 ===============
 
 F2PY's test suite is present in the directory ``numpy/f2py/tests``. Its aim

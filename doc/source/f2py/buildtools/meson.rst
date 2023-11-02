@@ -14,7 +14,7 @@ comfortable and amenable to extension for ``python`` users.
     Meson needs to be at-least ``0.46.0`` in order to resolve the ``python`` include directories.
 
 
-Fibonacci walkthrough (f77)
+Fibonacci walkthrough (F77)
 ===========================
 
 

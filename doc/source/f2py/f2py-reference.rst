@@ -1,6 +1,6 @@
 .. _f2py-reference:
 
-F2py reference manual
+F2PY reference manual
 =====================
 
 .. toctree::

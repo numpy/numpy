@@ -1,6 +1,6 @@
 .. _f2py-user:
 
-F2py user guide
+F2PY user guide
 ===============
 
 .. toctree::

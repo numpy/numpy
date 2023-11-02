@@ -3,7 +3,7 @@
 .. _c-code-explanations:
 
 *************************
-NumPy c code explanations
+NumPy C code explanations
 *************************
 
     Fanaticism consists of redoubling your efforts when you have forgotten
@@ -90,7 +90,7 @@ arbitrary numbers. Therefore, the possibility of encountering misaligned
 data must be recognized and taken into account if necessary.
 
 
-N-d iterators
+N-D iterators
 =============
 
 .. seealso:: :ref:`arrays.nditer`
