@@ -114,7 +114,7 @@ next section.
 F2PY
 ====
 
-F2py allows you to automatically construct an extension module that
+F2PY allows you to automatically construct an extension module that
 interfaces to routines in Fortran 77/90/95 code. It has the ability to
 parse Fortran 77/90/95 code and automatically generate Python
 signatures for the subroutines it encounters, or you can guide how the

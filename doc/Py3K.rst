@@ -161,7 +161,7 @@ The Print statement changed to a builtin function in Py3.
 Also this is taken care of by 2to3.
 
 ``types`` module
-------------
+----------------
 
 The following items were removed from `types` module in Py3:
 
