@@ -21,8 +21,8 @@ ShortDType = np.dtype[np.short]
 UShortDType = np.dtype[np.ushort]
 IntDType = np.dtype[np.intc]
 UIntDType = np.dtype[np.uintc]
-LongDType = np.dtype[np.int_]  # Unfortunately, the correct scalar
-ULongDType = np.dtype[np.uint]  # Unfortunately, the correct scalar
+LongDType = np.dtype[np.long]
+ULongDType = np.dtype[np.ulong]
 LongLongDType = np.dtype[np.longlong]
 ULongLongDType = np.dtype[np.ulonglong]
 # Floats
