@@ -118,7 +118,7 @@ After a lively discussion on the mailing list:
 - `MaskedArray` will stay where it is, at least until the new masked array
   class materializes and has been tried in the wild.
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. [1] Subclassing ndarray,

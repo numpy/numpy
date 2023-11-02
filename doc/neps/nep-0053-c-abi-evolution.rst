@@ -1,7 +1,7 @@
 .. _NEP53:
 
 ===============================================
-NEP 53 — Evolving the NumPy C-API for NumPy 2.0
+NEP 53 — Evolving the NumPy c-API for numpy 2.0
 ===============================================
 
 :Author: Sebastian Berg <sebastianb@nvidia.com>
@@ -43,7 +43,7 @@ The implementation of this NEP consists would consist of two steps:
    * require some downstream code changes to adapt to changed API.
 
 
-Motivation and Scope
+Motivation and scope
 ====================
 
 The NumPy API conists of more than 300 functions and numerous macros.
@@ -85,7 +85,7 @@ we expect that this is unnecessary and that the provisions introduced here:
 should allow to add such an API also in a minor release.
 
 
-Usage and Impact
+Usage and impact
 ================
 
 Backwards compatible builds
@@ -114,7 +114,7 @@ should be necessary at most for a hand-full of users worldwide.
 This mechanism is much the same as the `Python limited API`_ since NumPy's
 C-API has a similar need for ABI stability.
 
-Breaking the C-API and changing the ABI
+Breaking the c-API and changing the ABI
 ---------------------------------------
 
 NumPy has too many functions, many of which are aliases.  The following
@@ -163,7 +163,7 @@ making it generally safe for NumPy 2.0 change.
 (One can imagine code that wants to know the actual runtime value.
 We have not seen such code in practice, but it would need to be adjusted.)
 
-Impact on Cython users
+Impact on cython users
 ----------------------
 
 Cython users may use the NumPy C-API via ``cimport numpy as cnp``.
@@ -299,7 +299,7 @@ Discussion
 
 
 
-References and Footnotes
+References and footnotes
 ========================
 
 .. [1] Each NEP must either be explicitly labeled as placed in the public domain (see

@@ -1,7 +1,7 @@
 .. _NEP43:
 
 ==============================================================================
-NEP 43 — Enhancing the extensibility of UFuncs
+NEP 43 — Enhancing the extensibility of ufuncs
 ==============================================================================
 
 :title: Enhancing the Extensibility of UFuncs
@@ -108,7 +108,7 @@ promotion and dispatching.
 
 
 ***********************
-Backwards Compatibility
+Backwards compatibility
 ***********************
 
 The general backwards compatibility issues have also been listed
@@ -295,7 +295,7 @@ are described and motivated in details later. Briefly:
   ``class.method`` is a method, while ``class().method`` returns a "bound" method.
 
 
-Customizing Dispatching and Promotion
+Customizing dispatching and Promotion
 =====================================
 
 Finding the correct implementation when ``np.positive.resolve_impl()`` is
@@ -329,7 +329,7 @@ Where ``Integer`` is an abstract DType (compare NEP 42).
 .. _steps_of_a_ufunc_call:
 
 ****************************************************************************
-Steps involved in a UFunc call
+Steps involved in a ufunc call
 ****************************************************************************
 
 Before going into more detailed API choices, it is helpful to review the
@@ -419,7 +419,7 @@ and which are handled by NumPy:
 
 
 *****************************************************************************
-ArrayMethod
+Arraymethod
 *****************************************************************************
 
 A central proposal of this NEP is the creation of the ``ArrayMethod`` as an object
@@ -500,7 +500,7 @@ And ``flags`` stored properties, for whether:
 *Note: More information is expected to be added as necessary.*
 
 
-The call ``Context``
+The call ``context``
 ====================
 
 The "context" object is analogous to Python's ``self`` that is
@@ -584,7 +584,7 @@ fast C-functions and NumPy API creates the new ``ArrayMethod`` or
 
 .. _ArrayMethod_specs:
 
-ArrayMethod Specifications
+Arraymethod specifications
 ==========================
 
 .. highlight:: c
@@ -833,7 +833,7 @@ feature in NumPy. The error handling is further complicated by the way
 CPUs signal floating point errors.
 Both are discussed in the next section.
 
-Error Handling
+Error handling
 """"""""""""""
 
 .. highlight:: c
@@ -921,7 +921,7 @@ the ``context`` in principle.
 
 .. highlight:: python
 
-Reusing existing Loops/Implementations
+Reusing existing loops/implementations
 ======================================
 
 For many DTypes the above definition for adding additional C-level loops will be
@@ -1246,7 +1246,7 @@ power and complexity carefully and responsibly.
 
 
 ***************
-User Guidelines
+User guidelines
 ***************
 
 In general adding a promoter to a UFunc must be done very carefully.

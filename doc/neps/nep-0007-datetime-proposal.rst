@@ -505,7 +505,7 @@ With this, the above operation can be done as follows::
   Out[12]: array([366, 366, 366],  dtype="timedelta64[D]")
 
 
-dtype vs time units conversions
+Dtype vs time units conversions
 ===============================
 
 For changing the date/time dtype of an existing array, we propose to use
@@ -600,7 +600,7 @@ There is a new ufunc C-API call to set the data for a particular
 function pointer (for a particular set of data-types) to be the list of arrays
 passed in to the ufunc.
 
-Array Interface Extensions
+Array interface extensions
 --------------------------
 
 The array interface is extended to both handle datetime and timedelta
@@ -619,7 +619,7 @@ list of tuples describing a data-format can itself be a tuple of
 Final considerations
 ====================
 
-Why the fractional time and events: [3Y/12]//50
+Why the fractional time and events: [3y/12]//50
 -----------------------------------------------
 
 It is difficult to come up with enough units to satisfy every need.  For

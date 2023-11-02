@@ -1,7 +1,7 @@
 .. _NEP26:
 
 ====================================================
-NEP 26 — Summary of missing data NEPs and discussion
+NEP 26 — Summary of missing data neps and discussion
 ====================================================
 
 :Author: Mark Wiebe <mwwiebe@gmail.com>, Nathaniel J. Smith <njs@pobox.com>
@@ -88,7 +88,7 @@ the project to add missing data support to NumPy should be, and which
 kinds of problems are in scope. Let's start with the
 best understood situation where "missing data" comes into play:
 
-"Statistical missing data"
+"statistical missing data"
 --------------------------
 
 In statistics, social science, etc., "missing data" is a term of art
@@ -99,7 +99,7 @@ have a table listing the height, age, and income of a number of
 individuals, but one person did not provide their income, then we need
 some way to represent this::
 
-  Person | Height | Age | Income
+  person | height | age | income
   ------------------------------
      1   |   63   | 25  | 15000
      2   |   58   | 32  | <missing>
@@ -132,7 +132,7 @@ for floats it's a special NaN value that's distinguishable from
 other NaNs, ...) Then, they arrange that in computations, this
 value has a special semantics that we will call "NA semantics".
 
-NA Semantics
+Na semantics
 ------------
 
 The idea of NA semantics is that any computations involving NA
@@ -551,7 +551,7 @@ What **Mark** thinks, overall:
 
   * The mask approach works universally with all data types.
 
-Recommendations for Moving Forward
+Recommendations for moving forward
 ==================================
 
 **Nathaniel** thinks we should:
@@ -703,7 +703,7 @@ and I believe backing out this code because these worries would create a
 risk of reducing developer contribution.
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 :ref:`NEP12` describes Mark's NA-semantics/mask implementation/view based mask

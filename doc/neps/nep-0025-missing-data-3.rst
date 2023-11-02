@@ -1,7 +1,7 @@
 .. _NEP25:
 
 ======================================
-NEP 25 — NA support via special dtypes
+NEP 25 — Na support via special dtypes
 ======================================
 
 :Author: Nathaniel J. Smith <njs@pobox.com>
@@ -129,7 +129,7 @@ Some example use cases:
 
 .. _categorical data: http://mail.scipy.org/pipermail/numpy-discussion/2010-August/052401.html
 
-dtype C-level API extensions
+Dtype c-level API extensions
 ============================
 
 .. highlight:: c
@@ -361,7 +361,7 @@ own global singleton.) So for now we stick to scalar indexing just returning
 
 .. highlight:: python
 
-Python API for generic NA support
+Python API for generic na support
 =================================
 
 NumPy will gain a global singleton called ``numpy.NA``, similar to None, but with
@@ -411,7 +411,7 @@ values where-ever the dtype's ``isna`` function returned true. ``np.isnumber``
 is only defined for numeric dtypes, and returns True for all elements which are
 not NA, and for which ``np.isfinite`` would return True.
 
-Builtin NA dtypes
+Builtin na dtypes
 =================
 
 The above describes the generic machinery for NA support in dtypes. It's

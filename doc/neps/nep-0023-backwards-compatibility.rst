@@ -20,7 +20,7 @@ processes for individual cases where breaking backwards compatibility
 is considered.
 
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 NumPy has a very large user base.  Those users rely on NumPy being stable
@@ -187,7 +187,7 @@ made to indicate when the behavior changed:
 
     def argsort(self, axis=np._NoValue, ...):
         """
-        Parameters
+        parameters
         ----------
         axis : int, optional
             Axis along which to sort. If None, the default, the flattened array
@@ -330,7 +330,7 @@ Discussion
 - `PR with review comments on the Dec 2020 update of this NEP <https://github.com/numpy/numpy/pull/18097>`__
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 - `Issue requesting semantic versioning <https://github.com/numpy/numpy/issues/10156>`__
