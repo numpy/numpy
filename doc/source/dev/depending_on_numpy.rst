@@ -7,7 +7,7 @@ This document aims to explain some best practices for authoring a package that
 depends on NumPy.
 
 
-Understanding NumPy's versioning and API/abi stability
+Understanding NumPy's versioning and API/ABI stability
 ------------------------------------------------------
 
 NumPy uses a standard, :pep:`440` compliant, versioning scheme:

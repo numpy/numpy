@@ -16,7 +16,7 @@ we will be happy to help if you get stuck and appreciate any improvements
 or suggestions to these workflows.
 
 
-Finding c errors with additional tooling
+Finding C errors with additional tooling
 ########################################
 
 Most development will not require more than a typical debugging toolchain

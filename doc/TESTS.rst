@@ -155,7 +155,7 @@ originally written without unit tests, there are still several modules
 that don't have tests yet. Please feel free to choose one of these
 modules and develop tests for it.
 
-Using c code in tests
+Using C code in tests
 ---------------------
 
 NumPy exposes a rich :ref:`C-API<c-api>` . These are tested using c-extension

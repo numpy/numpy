@@ -47,7 +47,7 @@ Changes that have been marked for this release must be backported to the
 maintenance/1.21.x branch.
 
 
-Make a release pr
+Make a release PR
 =================
 
 Five documents usually need to be updated or created for the release PR:
@@ -137,7 +137,7 @@ cloned it locally. You can also edit ``.git/config`` and add ``upstream`` if it
 isn't already present.
 
 
-1. prepare the release commit
+1. Prepare the release commit
 -----------------------------
 
 Checkout the branch for the release, make sure it is up to date, and clean the
@@ -164,7 +164,7 @@ If you need to delete the tag due to error::
    $ git push --delete upstream v1.21.0
 
 
-2. build wheels
+2. Build wheels
 ---------------
 
 Tagging the build at the beginning of this process will trigger a wheel build
@@ -193,7 +193,7 @@ If a wheel build fails for unrelated reasons, you can rerun it individually:
 .. _`Wheel builder`: https://github.com/numpy/numpy/actions/workflows/wheels.yml
 
 
-3. download wheels
+3. Download wheels
 ------------------
 
 When the wheels have all been successfully built and staged, download them from the
@@ -204,7 +204,7 @@ Anaconda staging directory using the ``tools/download-wheels.py`` script::
     $ python3 tools/download-wheels.py 1.21.0
 
 
-4. generate the readme files
+4. Generate the README files
 ----------------------------
 
 This needs to be done after all installers are downloaded, but before the pavement
@@ -213,7 +213,7 @@ file is updated for continued development::
     $ paver write_release
 
 
-5. upload to PyPI
+5. Upload to PyPI
 -----------------
 
 Upload to PyPI using ``twine``. A recent version of ``twine`` of is needed
@@ -232,7 +232,7 @@ wheel. PyPI only allows a single source distribution, here we have
 chosen the zip archive.
 
 
-6. upload files to github
+6. Upload files to GitHub
 -------------------------
 
 Go to `<https://github.com/numpy/numpy/releases>`_, there should be a ``v1.21.0
@@ -251,7 +251,7 @@ may take several tries to get it look right. Then
 - Hit the ``{Publish,Update} release`` button at the bottom.
 
 
-7. upload documents to numpy.org (skip for prereleases)
+7. Upload documents to numpy.org (skip for prereleases)
 -------------------------------------------------------
 
 .. note:: You will need a GitHub personal access token to push the update.
@@ -300,7 +300,7 @@ Once everything seems satisfactory, update, commit and upload the changes::
     $ popd
 
 
-8. reset the maintenance branch into a development state (skip for prereleases)
+8. Reset the maintenance branch into a development state (skip for prereleases)
 -------------------------------------------------------------------------------
 
 Create release notes for next release and edit them to set the version. These
@@ -327,7 +327,7 @@ Commit the result::
 Go to GitHub and make a PR. It should be merged quickly.
 
 
-9. announce the release on numpy.org (skip for prereleases)
+9. Announce the release on numpy.org (skip for prereleases)
 -----------------------------------------------------------
 
 This assumes that you have forked `<https://github.com/numpy/numpy.org>`_::
@@ -351,7 +351,7 @@ commit and push::
 Go to GitHub and make a PR.
 
 
-10. announce to mailing lists
+10. Announce to mailing lists
 -----------------------------
 
 The release should be announced on the numpy-discussion, scipy-devel, and
@@ -361,7 +361,7 @@ release notes above. If you crosspost, make sure that python-announce-list is
 BCC so that replies will not be sent to that list.
 
 
-11. post-release update main (skip for prereleases)
+11. Post-release update main (skip for prereleases)
 ---------------------------------------------------
 
 Checkout main and forward port the documentation changes::
@@ -378,7 +378,7 @@ Checkout main and forward port the documentation changes::
 Go to GitHub and make a PR.
 
 
-12. update oldest-supported-numpy
+12. Update oldest-supported-numpy
 ---------------------------------
 
 If this release is the first one to support a new Python version, or the first

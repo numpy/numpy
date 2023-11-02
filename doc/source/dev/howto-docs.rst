@@ -217,7 +217,7 @@ shown in their :ref:`example <numpydoc:example>`.
 
 .. _doc_c_code:
 
-Documenting c/c++ code
+Documenting C/C++ code
 ======================
 
 NumPy uses Doxygen_ to parse specially-formatted C/C++ comment blocks. This generates
@@ -225,7 +225,7 @@ XML files, which are  converted by Breathe_ into RST, which is used by Sphinx.
 
 **It takes three steps to complete the documentation process**:
 
-1. writing the comment blocks
+1. Writing the comment blocks
 -----------------------------
 
 Although there is still no commenting style set to follow, the Javadoc
@@ -301,7 +301,7 @@ Example
 
 .. doxygenfunction:: doxy_reST_example
 
-2. feeding doxygen
+2. Feeding Doxygen
 ------------------
 
 Not all headers files are collected automatically. You have to add the desired
@@ -330,7 +330,7 @@ rather only use the concatenation operator "+=". For example::
     @CUR_DIR is a template constant returns the current
     dir path of the sub-config file.
 
-3. inclusion directives
+3. Inclusion directives
 -----------------------
 
 Breathe_ provides a wide range of custom directives to allow

@@ -297,7 +297,7 @@ directory, following the instructions and format in the
 
 .. _workflow_PR_timeline:
 
-Getting your pr reviewed
+Getting your PR reviewed
 ========================
 
 We review pull requests as soon as we can, typically within a week. If you get
