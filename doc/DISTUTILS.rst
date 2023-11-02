@@ -94,7 +94,7 @@ Finally, ``Configuration`` has ``.todict()`` method that returns all
 the configuration data as a dictionary suitable for passing on to the
 ``setup(..)`` function.
 
-``configuration`` instance attributes
+``Configuration`` instance attributes
 -------------------------------------
 
 In addition to attributes that can be specified via keyword arguments
@@ -109,7 +109,7 @@ in writing setup scripts:
 
 + ``config.top_path`` - path to the location of main ``setup.py`` file.
 
-``configuration`` instance methods
+``Configuration`` instance methods
 ----------------------------------
 
 + ``config.todict()`` --- returns configuration dictionary suitable for

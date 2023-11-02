@@ -120,7 +120,7 @@ twine keyring_  documentation for how to do that.
 .. _keyring: https://twine.readthedocs.io/en/stable/#keyring-support
 
 
-Generating author/pr lists
+Generating author/PR lists
 --------------------------
 You will need a personal access token
 `<https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/>`_
@@ -184,7 +184,7 @@ all deprecated code that should be removed is actually removed, and all new
 deprecations say in the docstring or deprecation warning what version the code
 will be removed.
 
-Check the c API version number
+Check the C API version number
 ------------------------------
 The C API version needs to be tracked in three places
 

@@ -35,7 +35,7 @@ compatible version. Its 3K SVN branch, however, works quite well:
 - http://python-nose.googlecode.com/svn/branches/py3k
 
 
-Known semantic changes on py2
+Known semantic changes on Py2
 =============================
 
 As a side effect, the Py3 adaptation has caused the following semantic
@@ -48,7 +48,7 @@ changes that are visible on Py2.
 * Otherwise, there are no known semantic changes.
 
 
-Known semantic changes on py3
+Known semantic changes on Py3
 =============================
 
 The following semantic changes have been made on Py3:
@@ -215,7 +215,7 @@ C code
 ======
 
 
-Npy_py3k
+NPY_PY3K
 --------
 
 A #define in config.h, defined when building for Py3.
@@ -226,7 +226,7 @@ A #define in config.h, defined when building for Py3.
    Is this sensible (we could also use Py_VERSION_HEX)?
 
 
-Private/npy_3kcompat.h
+private/npy_3kcompat.h
 ----------------------
 
 Convenience macros for Python 3 support:
@@ -249,14 +249,14 @@ Any new ones that need to be added should be added in this file.
    sources is a sign of an error...
 
 
-Ob_type, ob_size
+ob_type, ob_size
 ----------------
 
 These use Py_SIZE, etc. macros now.  The macros are also defined in
 npy_3kcompat.h for the Python versions that don't have them natively.
 
 
-Py_tpflags_checktypes
+Py_TPFLAGS_CHECKTYPES
 ---------------------
 
 Python 3 no longer supports type coercion in arithmetic.
@@ -278,7 +278,7 @@ relevant ``__r*__`` methods, since they cannot any more automatically
 fall back to ndarray code.
 
 
-Pynumbermethods
+PyNumberMethods
 ---------------
 
 The structures have been converted to the new format:
@@ -360,7 +360,7 @@ The Py2/Py3 compatible structure definition looks like::
 
 
 
-Pybuffer (provider)
+PyBuffer (provider)
 -------------------
 
 PyBuffer usage is widely spread in multiarray:
@@ -423,7 +423,7 @@ The Py2/Py3 compatible PyBufferMethods definition looks like::
    There's stuff to clean up in numarray/_capi.c
 
 
-Pybuffer (consumer)
+PyBuffer (consumer)
 -------------------
 
 There are two places in which we may want to be able to consume buffer
@@ -491,7 +491,7 @@ This amounts to possible semantic changes:
    There's some buffer code in numarray/_capi.c that needs to be addressed.
 
 
-Pybuffer (object)
+PyBuffer (object)
 -----------------
 
 Since there is a native buffer object in Py3, the `memoryview`, the
@@ -499,7 +499,7 @@ Since there is a native buffer object in Py3, the `memoryview`, the
 Py3: their functionality is taken over by the new `memoryview` object.
 
 
-Pystring
+PyString
 --------
 
 There is no PyString in Py3, everything is either Bytes or Unicode.
@@ -584,7 +584,7 @@ Some specific decisions that have been made so far:
    Check that non-UString field names are not accepted anywhere.
 
 
-Pyunicode
+PyUnicode
 ---------
 
 PyUnicode in Py3 is pretty much as it was in Py2, except that it is
@@ -599,7 +599,7 @@ comparison between Unicode and Bytes undefined.
    Check that indeed all comparison routines were changed.
 
 
-Fate of the 's' dtype
+Fate of the 'S' dtype
 ---------------------
 
 On Python 3, the 'S' dtype will still be Bytes.
@@ -609,7 +609,7 @@ However,::
 	str, str_ == unicode_
 
 
-Pyint
+PyInt
 -----
 
 There is no limited-range integer type any more in Py3.  It makes no
@@ -646,7 +646,7 @@ as appropriate.
 The PyNumberMethods entry is #ifdef'd out on Py3, see above.
 
 
-Tp_compare, pyobject_compare
+tp_compare, PyObject_Compare
 ----------------------------
 
 The compare method has vanished, and is replaced with richcompare.
@@ -696,7 +696,7 @@ The module initialization API changed in Python 3.1.
 Most NumPy modules are now converted.
 
 
-Pytypeobject
+PyTypeObject
 ------------
 
 The PyTypeObject of py3k is binary compatible with the py2k version and the
@@ -787,7 +787,7 @@ The Py2/Py3 compatible TypeObject definition looks like::
 
 
 
-Pysequencemethods
+PySequenceMethods
 -----------------
 
 Types with tp_as_sequence defined
@@ -814,7 +814,7 @@ the semantics of the slots needs to be checked::
     };
 
 
-Pymappingmethods
+PyMappingMethods
 ----------------
 
 Types with tp_as_mapping defined
@@ -835,7 +835,7 @@ of the slots needs to be checked::
     };
 
 
-Pyfile
+PyFile
 ------
 
 Many of the PyFile items have disappeared:
@@ -863,7 +863,7 @@ obtained must be closed with fclose after use.
    Perhaps using PyFile_* makes numpy.tofile e.g. to a gzip to work?
 
 
-Readonly
+READONLY
 --------
 
 The RO alias for READONLY is no more.
@@ -871,7 +871,7 @@ The RO alias for READONLY is no more.
 These were replaced, as READONLY is present also on Py2.
 
 
-Pyos
+PyOS
 ----
 
 Deprecations:
@@ -881,7 +881,7 @@ Deprecations:
    causes segfaults
 
 
-Pyinstance
+PyInstance
 ----------
 
 There are some checks for PyInstance in ``common.c`` and ``ctors.c``.
@@ -894,7 +894,7 @@ possibly, not the correct thing to do.
    Do the right thing for PyInstance checks.
 
 
-Pycobject / pycapsule
+PyCObject / PyCapsule
 ---------------------
 
 The PyCObject API is removed in Python 3.2, so we need to rewrite it

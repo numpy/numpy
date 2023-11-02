@@ -117,13 +117,13 @@ The Intel compilers work with Intel MKL, see the application note linked above.
 For an overview of the state of BLAS/LAPACK libraries on Windows, see
 `here <https://mingwpy.github.io/blas_lapack.html>`_.
 
-Macos
+macOS
 -----
 
 On macOS >= 13.3, you can use Apple's Accelerate library. On older macOS versions,
 Accelerate has bugs and we recommend using OpenBLAS or (on x86-64) Intel MKL.
 
-Ubuntu/debian
+Ubuntu/Debian
 -------------
 
 For best performance, a development package providing BLAS and CBLAS should be
