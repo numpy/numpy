@@ -129,7 +129,7 @@ For example::
 Header only functionality (such as a new macro) typically does not need to be
 guarded.
 
-Github workflow
+GitHub workflow
 ---------------
 
 When reviewing pull requests, please use workflow tracking features on GitHub as
