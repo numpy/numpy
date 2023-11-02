@@ -4276,3 +4276,77 @@ add_newdoc('numpy._core.umath', 'isalpha',
     --------
     str.isalpha
     """)
+
+add_newdoc('numpy.core.umath', 'find',
+    """
+    For each element, return the lowest index in the string where
+    substring `x2` is found, such that `sub` is contained in the
+    range [`x3`, `x4`].
+
+    Parameters
+    ----------
+    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+
+    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+
+    x3 : array_like, with ``int_`` dtype
+
+    x4 : array_like, with ``int_`` dtype
+        $PARAMS
+
+    `x3` and `x4` are interpreted as in slice notation.
+
+    Returns
+    -------
+    y : ndarray
+        Output array of ints
+        $OUT_SCALAR_2
+
+    See Also
+    --------
+    str.find
+
+    Examples
+    --------
+    >>> a = np.array(["NumPy is a Python library"])
+    >>> np.char.find(a, "Python", 0, None)
+    array([11])
+
+    """)
+
+add_newdoc('numpy.core.umath', 'rfind',
+    """
+    For each element, return the highest index in the string where
+    substring `x2` is found, such that `sub` is contained in the
+    range [`x3`, `x4`].
+
+    Parameters
+    ----------
+    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+
+    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+
+    x3 : array_like, with ``int_`` dtype
+
+    x4 : array_like, with ``int_`` dtype
+        $PARAMS
+
+    `x3` and `x4` are interpreted as in slice notation.
+
+    Returns
+    -------
+    y : ndarray
+        Output array of ints
+        $OUT_SCALAR_2
+
+    See Also
+    --------
+    str.find
+
+    Examples
+    --------
+    >>> a = np.array(["NumPy is a Python library"])
+    >>> np.char.find(a, "Python", 0, None)
+    array([11])
+
+    """)
