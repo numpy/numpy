@@ -19,14 +19,14 @@
 
 
 ===========================
- reading and writing files
+ Reading and writing files
 ===========================
 
 This page tackles common applications; for the full collection of I/O
 routines, see :ref:`routines.io`.
 
 
-Reading text and csv_ files
+Reading text and CSV_ files
 ===========================
 
 .. _CSV: https://en.wikipedia.org/wiki/Comma-separated_values
@@ -300,7 +300,7 @@ Write files for reading by other (non-NumPy) tools
 Formats for **exchanging data** with other tools include HDF5, Zarr, and
 NetCDF (see :ref:`how-to-io-large-arrays`).
 
-Write or read a json file
+Write or read a JSON file
 =========================
 
 NumPy arrays and most NumPy scalars are **not** directly
@@ -324,7 +324,7 @@ required.
 :func:`numpy.load` and `pickle` submodule also support unpickling files
 created with NumPy 1.26.
 
-Convert from a pandas dataframe to a NumPy array
+Convert from a pandas DataFrame to a NumPy array
 ================================================
 
 See :meth:`pandas.DataFrame.to_numpy`.

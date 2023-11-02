@@ -111,7 +111,7 @@ distributed with NumPy and allows easy integration with Fortran and
 next section.
 
 
-F2py
+F2PY
 ====
 
 F2py allows you to automatically construct an extension module that
@@ -195,7 +195,7 @@ implemented using Cython. These examples were compiled into extension
 modules using Cython 0.21.1.
 
 
-Complex addition in cython
+Complex addition in Cython
 --------------------------
 
 Here is part of a Cython module named ``add.pyx`` which implements the
@@ -248,7 +248,7 @@ view syntax, we could also have used Cython's special NumPy array syntax,
 but the view syntax is preferred.
 
 
-Image filter in cython
+Image filter in Cython
 ----------------------
 
 The two-dimensional example we created using Fortran is just as easy to write
@@ -330,10 +330,10 @@ C or Fortran code.
    single: cython
 
 
-Ctypes
+ctypes
 ======
 
-`Ctypes <https://docs.python.org/3/library/ctypes.html>`_
+`ctypes <https://docs.python.org/3/library/ctypes.html>`_
 is a Python extension module, included in the stdlib, that
 allows you to call an arbitrary function in a shared library directly
 from Python. This approach allows you to interface with C-code directly
@@ -813,7 +813,7 @@ you as many options as possible for tackling the problem of easily integrating
 your code.
 
 
-Swig
+SWIG
 ----
 
 .. index::
@@ -887,7 +887,7 @@ Boost.Python.
 Pyfort
 ------
 
-PyFort is a nice tool for wrapping Fortran and Fortran-like C-code
+Pyfort is a nice tool for wrapping Fortran and Fortran-like C-code
 into Python with support for Numeric arrays. It was written by Paul
 Dubois, a distinguished computer scientist and the very first
 maintainer of Numeric (now retired). It is worth mentioning in the

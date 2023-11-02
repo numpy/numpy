@@ -1,5 +1,5 @@
 **************
-I/o with NumPy
+I/O with NumPy
 **************
 
 .. toctree::

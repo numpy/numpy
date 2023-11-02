@@ -4,7 +4,7 @@
 Miscellaneous
 *************
 
-Ieee 754 floating point special values
+IEEE 754 floating point special values
 --------------------------------------
 
 Special values defined in numpy: nan, inf,
@@ -102,7 +102,7 @@ Examples
  >>> j = np.seterr(**oldsettings) # restore previous
  ...                              # error-handling settings
 
-Interfacing to c
+Interfacing to C
 ----------------
 Only a survey of the choices. Little detail on how each works.
 
@@ -205,7 +205,7 @@ Pyfort is an older alternative, but not supported any longer.
 Fwrap is a newer project that looked promising but isn't being developed any
 longer.
 
-Interfacing to c++:
+Interfacing to C++:
 -------------------
  1) Cython
  2) CXX

@@ -1,7 +1,7 @@
 
 .. _extending_cython_example:
 
-Extending `numpy.random` via cython
+Extending `numpy.random` via Cython
 -----------------------------------
 
 .. _note:

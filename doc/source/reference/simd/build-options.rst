@@ -1,5 +1,5 @@
 *****************
-Cpu build options
+CPU build options
 *****************
 
 Description

@@ -118,7 +118,7 @@ Configuration class
 
     .. automethod:: get_info
 
-Building installable c libraries
+Building installable C libraries
 ================================
 
 Conventional C libraries (installed through `add_library`) are not installed, and
@@ -136,7 +136,7 @@ install the C library, you just use the method `add_installed_library` instead o
 
   >>> config.add_installed_library('foo', sources=['foo.c'], install_dir='lib')
 
-Npy-pkg-config files
+npy-pkg-config files
 --------------------
 
 To make the necessary build options available to third parties, you could use
@@ -189,7 +189,7 @@ replaced by ``subst_dict['version']``. The dictionary has an additional prefix
 substitution rule automatically added, which contains the install prefix (since
 this is not easy to get from setup.py).
 
-Reusing a c library from another package
+Reusing a C library from another package
 ----------------------------------------
 
 Info are easily retrieved from the `get_info` function in

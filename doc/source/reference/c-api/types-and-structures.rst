@@ -1,6 +1,6 @@
 
 *****************************
-Python types and c-structures
+Python types and C-structures
 *****************************
 
 .. sectionauthor:: Travis E. Oliphant
@@ -58,7 +58,7 @@ types are place holders that allow the array scalars to fit into a
 hierarchy of actual Python types.
 
 
-Pyarray_type and pyarrayobject
+PyArray_Type and PyArrayObject
 ------------------------------
 
 .. c:var:: PyTypeObject PyArray_Type
@@ -196,7 +196,7 @@ Pyarray_type and pyarrayobject
       A solution guaranteed to be compatible with any future NumPy version
       requires the use of a runtime calculate offset and allocation size.
 
-Pygenericarrtype_type
+PyGenericArrType_Type
 ---------------------
 
 .. c:var:: PyTypeObject PyGenericArrType_Type
@@ -205,7 +205,7 @@ Pygenericarrtype_type
    create the `numpy.generic` python type.
 
 
-Pyarraydescr_type and pyarray_descr
+PyArrayDescr_Type and PyArray_Descr
 -----------------------------------
 
 .. c:var:: PyTypeObject PyArrayDescr_Type
@@ -712,7 +712,7 @@ The :c:data:`PyArray_Type` can also be sub-typed.
     methods can also be altered using :c:func:`PyArray_SetStringFunction`.
 
 
-Pyufunc_type and pyufuncobject
+PyUFunc_Type and PyUFuncObject
 ------------------------------
 
 .. c:var:: PyTypeObject PyUFunc_Type
@@ -949,7 +949,7 @@ Pyufunc_type and pyufuncobject
     if the dim size will be determined from the operands
     and not from a :ref:`frozen <frozen>` signature
 
-Pyarrayiter_type and pyarrayiterobject
+PyArrayIter_Type and PyArrayIterObject
 --------------------------------------
 
 .. c:var:: PyTypeObject PyArrayIter_Type
@@ -1059,7 +1059,7 @@ with it through the use of the macros :c:func:`PyArray_ITER_NEXT` (it),
 :c:expr:`PyArrayIterObject *`.
 
 
-Pyarraymultiiter_type and pyarraymultiiterobject
+PyArrayMultiIter_Type and PyArrayMultiIterObject
 ------------------------------------------------
 
 .. c:var:: PyTypeObject PyArrayMultiIter_Type
@@ -1121,7 +1121,7 @@ Pyarraymultiiter_type and pyarraymultiiterobject
        arrays to be broadcast together. On return, the iterators are
        adjusted for broadcasting.
 
-Pyarrayneighborhooditer_type and pyarrayneighborhooditerobject
+PyArrayNeighborhoodIter_Type and PyArrayNeighborhoodIterObject
 --------------------------------------------------------------
 
 .. c:var:: PyTypeObject PyArrayNeighborhoodIter_Type
@@ -1160,7 +1160,7 @@ Pyarrayneighborhooditer_type and pyarrayneighborhooditerobject
           int mode;
       } PyArrayNeighborhoodIterObject;
 
-Pyarrayflags_type and pyarrayflagsobject
+PyArrayFlags_Type and PyArrayFlagsObject
 ----------------------------------------
 
 .. c:var:: PyTypeObject PyArrayFlags_Type
@@ -1182,7 +1182,7 @@ Pyarrayflags_type and pyarrayflagsobject
       } PyArrayFlagsObject;
 
 
-Scalararraytypes
+ScalarArrayTypes
 ----------------
 
 There is a Python type for each of the different built-in data types
@@ -1206,7 +1206,7 @@ value from the array scalar and the function :c:func:`PyArray_Scalar`
 (...) can be used to construct an array scalar from a C-value.
 
 
-Other c-structures
+Other C-structures
 ==================
 
 A few new C-structures were found to be useful in the development of
@@ -1216,7 +1216,7 @@ defined is to make it easy to use the Python ParseTuple C-API to
 convert from Python objects to a useful C-Object.
 
 
-Pyarray_dims
+PyArray_Dims
 ------------
 
 .. c:type:: PyArray_Dims
@@ -1244,7 +1244,7 @@ Pyarray_dims
        access *ptr* [0] to *ptr* [len-1].
 
 
-Pyarray_chunk
+PyArray_Chunk
 -------------
 
 .. c:type:: PyArray_Chunk
@@ -1292,7 +1292,7 @@ Pyarray_chunk
        be used to interpret the memory.
 
 
-Pyarrayinterface
+PyArrayInterface
 ----------------
 
 .. seealso:: :ref:`arrays.interface`

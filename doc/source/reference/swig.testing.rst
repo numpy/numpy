@@ -103,7 +103,7 @@ defines a C macro ``TEST_FUNCS`` that has the same arguments and works
 in the same way as ``TEST_FUNC_PROTOS`` does in ``Vector.h``.
 ``TEST_FUNCS`` is implemented for each of the 12 data types as above.
 
-Testing swig interface files
+Testing SWIG interface files
 ----------------------------
 
 ``Vector.i`` is a `SWIG`_ interface file that defines python module

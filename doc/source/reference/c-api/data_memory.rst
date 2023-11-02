@@ -36,7 +36,7 @@ respectively, but when ``npy_free_cache`` is called, it adds the pointer to a
 short list of available blocks marked by size. These blocks can be re-used by
 subsequent calls to ``npy_alloc*``, avoiding memory thrashing.
 
-Configurable memory routines in NumPy (nep 49)
+Configurable memory routines in NumPy (NEP 49)
 ----------------------------------------------
 
 Users may wish to override the internal data memory routines with ones of their
@@ -187,7 +187,7 @@ Here is an example on how to use ``np.lib.tracemalloc_domain``:
     # before moving to the next section.
     tracemalloc.clear_traces()
     
-    # section 2
+    # Section 2
     #----------
     
     # We are only using NumPy

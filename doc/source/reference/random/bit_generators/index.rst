@@ -12,7 +12,7 @@ setting the state, jumping or advancing the state, and for accessing
 low-level wrappers for consumption by code that can efficiently
 access the functions provided, e.g., `numba <https://numba.pydata.org>`_.
 
-Supported bitgenerators
+Supported BitGenerators
 -----------------------
 
 The included BitGenerators are:

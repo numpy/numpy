@@ -35,7 +35,7 @@ value of preserving ABI compatibility. By deprecating this direct
 access, we will in the future be able to improve NumPy's performance
 in ways we cannot presently.
 
-Deprecation mechanism npy_no_deprecated_API
+Deprecation mechanism NPY_NO_DEPRECATED_API
 -------------------------------------------
 
 In C, there is no equivalent to the deprecation warnings that Python

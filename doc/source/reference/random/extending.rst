@@ -60,7 +60,7 @@ Cython can be used to directly access the functions in
 See :ref:`extending_cython_example` for the complete listings of these examples
 and a minimal ``setup.py`` to build the c-extension modules.
 
-Cffi
+CFFI
 ----
 
 CFFI can be used to directly access the functions in
@@ -79,7 +79,7 @@ directly from the ``_generator`` shared object, using the `BitGenerator.cffi` in
     :start-after: dlopen
 
 
-New bit generators
+New BitGenerators
 ------------------
 `~Generator` can be used with user-provided `~BitGenerator`\ s. The simplest
 way to write a new BitGenerator is to examine the pyx file of one of the

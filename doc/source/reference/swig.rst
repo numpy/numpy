@@ -1,5 +1,5 @@
 **************
-NumPy and swig
+NumPy and SWIG
 **************
 
 .. sectionauthor:: Bill Spotz

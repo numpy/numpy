@@ -16,7 +16,7 @@ Troubleshooting
     viewing the most `up-to-date version <https://numpy.org/devdocs/user/troubleshooting-importerror.html>`_.
 
 
-Importerror
+ImportError
 ===========
 
 In certain cases a failed installation or setup issue can cause you to
@@ -52,7 +52,7 @@ If none of the following tips help you, please be sure to note the following:
 when investigating further and asking for support.
 
 
-Using Python from ``conda`` (anaconda)
+Using Python from ``conda`` (Anaconda)
 --------------------------------------
 
 Please make sure that you have activated your conda environment.
@@ -60,22 +60,22 @@ See also the `conda user-guide <https://docs.conda.io/projects/conda/en/latest/u
 If you use an external editor/development environment it will have to be set
 up correctly.  See below for solutions for some common setups.
 
-Using pycharm with anaconda/conda Python
-----------------------------------------
+Using PyCharm with Anaconda Python
+----------------------------------
 
 There are fairly common issues when using PyCharm together with Anaconda,
 please see the `PyCharm support <https://www.jetbrains.com/help/pycharm/conda-support-creating-conda-virtual-environment.html>`_
 
-Using vscode with anaconda/conda Python (or environments)
----------------------------------------------------------
+Using VS Code with Anaconda Python (or environments)
+----------------------------------------------------
 
 A commonly reported issue is related to the environment activation within
 VSCode. Please see the `VSCode support <https://code.visualstudio.com/docs/python/environments>`_
 for information on how to correctly set up VSCode with virtual environments
 or conda.
 
-Using eclipse/pydev with anaconda/conda Python (or environments)
-----------------------------------------------------------------
+Using Eclipse/PyDev with Anaconda Python (or environments)
+----------------------------------------------------------
 
 Please see the
 `Anaconda Documentation <https://docs.anaconda.com/anaconda/user-guide/tasks/integration/eclipse-pydev/>`_
@@ -83,7 +83,7 @@ on how to properly configure Eclipse/PyDev to use Anaconda Python with specific
 conda environments.
 
 
-Raspberry pi
+Raspberry Pi
 ------------
 
 There are sometimes issues reported on Raspberry Pi setups when installing
@@ -105,7 +105,7 @@ to install the missing libraries expected by the self-compiled NumPy
     apt install python3-numpy
 
 
-Debug build on windows
+Debug build on Windows
 ----------------------
 
 Rather than building your project in ``DEBUG`` mode on windows, try

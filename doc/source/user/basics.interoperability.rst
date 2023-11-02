@@ -36,7 +36,7 @@ with NumPy:
 We describe these features below.
 
 
-1. using arbitrary objects in NumPy
+1. Using arbitrary objects in NumPy
 -----------------------------------
 
 The first set of interoperability features from the NumPy API allows foreign
@@ -149,7 +149,7 @@ it can only convert objects whose data exists on the CPU. But other libraries,
 like PyTorch_ and CuPy_, may exchange data on GPU using this protocol.
 
 
-2. operating on foreign objects without converting
+2. Operating on foreign objects without converting
 --------------------------------------------------
 
 A second set of methods defined by the NumPy API allows us to defer the
@@ -219,7 +219,7 @@ except the operation is specified by an arbitrary callable object rather than a
 ufunc instance and method. For more details, see :ref:`NEP18`.
 
 
-3. returning foreign objects
+3. Returning foreign objects
 ----------------------------
 
 A third type of feature set is meant to use the NumPy function implementation

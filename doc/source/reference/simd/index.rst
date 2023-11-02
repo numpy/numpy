@@ -2,7 +2,7 @@
 .. currentmodule:: numpysimd
 
 ***********************
-Cpu/simd optimizations
+CPU/SIMD optimizations
 ***********************
 
 NumPy comes with a flexible working mechanism that allows it to harness the SIMD

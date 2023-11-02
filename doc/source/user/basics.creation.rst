@@ -22,7 +22,7 @@ There are 6 general mechanisms for creating arrays:
 You can use these methods to create ndarrays or :ref:`structured_arrays`.
 This document will cover general methods for ndarray creation. 
 
-1) converting Python sequences to NumPy arrays
+1) Converting Python sequences to NumPy arrays
 ==============================================
 
 NumPy arrays can be defined using Python sequences such as lists and
@@ -80,7 +80,7 @@ floating point numbers. If you expect your
 integer arrays to be a specific type, then you need to specify the dtype while
 you create the array.
 
-2) intrinsic NumPy array creation functions
+2) Intrinsic NumPy array creation functions
 ===========================================
 
 ..
@@ -96,7 +96,7 @@ dimension of the array they create:
 2) 2D arrays
 3) ndarrays
 
-1 - 1d array creation functions
+1 - 1D array creation functions
 -------------------------------
 
 The 1D array creation functions e.g. :func:`numpy.linspace` and
@@ -131,7 +131,7 @@ The advantage of this creation function is that you guarantee the
 number of elements and the starting and end point. The previous
 ``arange(start, stop, step)`` will not include the value ``stop``.
 
-2 - 2d array creation functions
+2 - 2D array creation functions
 -------------------------------
 
 The 2D array creation functions e.g. :func:`numpy.eye`, :func:`numpy.diag`, and :func:`numpy.vander`
@@ -263,7 +263,7 @@ dimension: ::
 This is particularly useful for evaluating functions of multiple dimensions on
 a regular grid.
 
-3) replicating, joining, or mutating existing arrays
+3) Replicating, joining, or mutating existing arrays
 ====================================================
 
 Once you have created arrays, you can replicate, join, or mutate those
@@ -309,7 +309,7 @@ arrays into a 4-by-4 array using ``block``::
 Other routines use similar syntax to join ndarrays. Check the
 routine's documentation for further examples and syntax. 
 
-4) reading arrays from disk, either from standard or custom formats
+4) Reading arrays from disk, either from standard or custom formats
 ===================================================================
 
 This is the most common case of large array creation. The details depend
@@ -333,7 +333,7 @@ Examples of formats that cannot be read directly but for which it is not hard to
 convert are those formats supported by libraries like PIL (able to read and
 write many image formats such as jpg, png, etc).
 
-Common ascii formats
+Common ASCII formats
 --------------------
 
 Delimited files such as comma separated value (csv) and tab separated
@@ -364,7 +364,7 @@ Importing ``simple.csv`` is accomplished using :func:`numpy.loadtxt`::
 More generic ASCII files can be read using `scipy.io` and `Pandas
 <https://pandas.pydata.org/>`_.
 
-5) creating arrays from raw bytes through the use of strings or buffers
+5) Creating arrays from raw bytes through the use of strings or buffers
 =======================================================================
 
 There are a variety of approaches one can use. If the file has a relatively
@@ -375,7 +375,7 @@ read the data, one can wrap that library with a variety of techniques though
 that certainly is much more work and requires significantly more advanced
 knowledge to interface with C or C++.
 
-6) use of special library functions (e.g., SciPy, pandas, and opencv)
+6) Use of special library functions (e.g., SciPy, pandas, and OpenCV)
 =====================================================================
 
 NumPy is the fundamental library for array containers in the Python Scientific Computing

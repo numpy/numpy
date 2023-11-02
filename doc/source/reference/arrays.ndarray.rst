@@ -3,7 +3,7 @@
 .. _arrays.ndarray:
 
 ******************************************
-The n-dimensional array (:class:`ndarray`)
+The N-dimensional array (:class:`ndarray`)
 ******************************************
 
 An :class:`ndarray` is a (usually fixed-size) multidimensional

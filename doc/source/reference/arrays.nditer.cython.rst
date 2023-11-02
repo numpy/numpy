@@ -1,4 +1,4 @@
-Putting the inner loop in cython
+Putting the inner loop in Cython
 ================================
 
 Those who want really good performance out of their low level operations

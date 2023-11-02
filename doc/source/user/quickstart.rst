@@ -1391,7 +1391,7 @@ Tricks and tips
 
 Here we give a list of short and useful tips.
 
-"automatic" reshaping
+"Automatic" reshaping
 ---------------------
 
 To change the dimensions of an array, you can omit one of the sizes

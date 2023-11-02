@@ -9,7 +9,7 @@ or distributed).
 
 .. _seedsequence-spawn:
 
-`~seedsequence` spawning
+`~SeedSequence` spawning
 ------------------------
 
 NumPy allows you to spawn new (with very high probability) independent
@@ -234,7 +234,7 @@ coordination between the parallel processes.
 
 .. _parallel-jumped:
 
-Jumping the bitgenerator state
+Jumping the BitGenerator state
 ------------------------------
 
 ``jumped`` advances the state of the BitGenerator *as-if* a large number of

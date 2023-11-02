@@ -1,7 +1,7 @@
 .. _numpy-for-matlab-users:
 
 ======================
-NumPy for matlab users
+NumPy for MATLAB users
 ======================
 
 Introduction
@@ -636,7 +636,7 @@ code which relies on the scan order, then this MATLAB code: ``z =
 reshape(x,3,4);`` should become ``z = x.reshape(3,4,order='F').copy()`` in
 NumPy.
 
-'array' or 'matrix'? which should i use?
+'array' or 'matrix'? Which should I use?
 ========================================
 
 Historically, NumPy has provided a special matrix type, `np.matrix`, which

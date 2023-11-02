@@ -28,7 +28,7 @@ One way to control the number of threads is the package
 `threadpoolctl <https://pypi.org/project/threadpoolctl/>`_
 
 
-Madvise hugepage on linux
+madvise hugepage on Linux
 -------------------------
 
 When working with very large arrays on modern Linux kernels,
@@ -49,7 +49,7 @@ is to use madvise on Kernels 4.6 and newer. These kernels presumably
 experience a large speedup with hugepage support.
 This flag is checked at import time.
 
-Simd feature selection
+SIMD feature selection
 ----------------------
 
 Setting ``NPY_DISABLE_CPU_FEATURES`` will exclude simd features at runtime.

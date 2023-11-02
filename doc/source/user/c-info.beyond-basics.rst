@@ -361,7 +361,7 @@ an error condition set if it was not successful.
    pair: dtype; adding new
 
 
-Subtyping the ndarray in c
+Subtyping the ndarray in C
 ==========================
 
 One of the lesser-used features that has been lurking in Python since

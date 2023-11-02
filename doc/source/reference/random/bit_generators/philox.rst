@@ -1,4 +1,4 @@
-Philox counter-based rng
+Philox counter-based RNG
 ========================
 
 .. currentmodule:: numpy.random

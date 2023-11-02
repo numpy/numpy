@@ -1,7 +1,7 @@
 .. _c-api:
 
 ###########
-NumPy c-API
+NumPy C-API
 ###########
 
 .. sectionauthor:: Travis E. Oliphant

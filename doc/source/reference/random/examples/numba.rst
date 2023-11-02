@@ -1,4 +1,4 @@
-Extending via numba
+Extending via Numba
 -------------------
 
 .. literalinclude:: ../../../../../numpy/random/_examples/numba/extending.py

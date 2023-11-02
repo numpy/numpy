@@ -1,4 +1,4 @@
-Distutils.misc_util
+distutils.misc_util
 ===================
 
 .. automodule:: numpy.distutils.misc_util

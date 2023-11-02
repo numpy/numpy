@@ -12,7 +12,7 @@ compared to other Python objects.  On this page we explain the machinery
 that allows you to subclass ndarray, and the implications for
 implementing a subclass.
 
-Ndarrays and object creation
+ndarrays and object creation
 ----------------------------
 
 Subclassing ndarray is complicated by the fact that new instances of

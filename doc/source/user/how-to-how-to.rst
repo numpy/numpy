@@ -76,7 +76,7 @@ If a how-to has many steps:
   where they left off.
 
 ******************************************************************************
-Why write how-tos when there's stack overflow, reddit, gitter...?
+Why write how-tos when there's Stack Overflow, Reddit, Gitter...?
 ******************************************************************************
 
 - We have authoritative answers.

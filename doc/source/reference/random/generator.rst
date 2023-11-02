@@ -1,7 +1,7 @@
 .. currentmodule:: numpy.random
 
-Random generator
-================
+Random ``Generator``
+====================
 The `~Generator` provides access to
 a wide range of distributions, and served as a replacement for
 :class:`~numpy.random.RandomState`.  The main difference between
@@ -18,7 +18,7 @@ can be changed by passing an instantized BitGenerator to ``Generator``.
     :members: __init__
     :exclude-members: __init__
 
-Accessing the bitgenerator and spawning
+Accessing the BitGenerator and spawning
 ---------------------------------------
 .. autosummary::
    :toctree: generated/

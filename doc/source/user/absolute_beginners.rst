@@ -422,7 +422,7 @@ to preserve the indexing convention or not reorder the data.
 :ref:`Learn more about shape manipulation here <quickstart.shape-manipulation>`.
 
 
-How to convert a 1d array into a 2d array (how to add a new axis to an array)
+How to convert a 1D array into a 2D array (how to add a new axis to an array)
 -----------------------------------------------------------------------------
 
 *This section covers* ``np.newaxis``, ``np.expand_dims``
@@ -1364,7 +1364,7 @@ followed by the docstring of ``ndarray`` of which ``a`` is an instance):
   For more information, refer to the `numpy` module and examine the
   methods and attributes of an array.
 
-  parameters
+  Parameters
   ----------
   (for the __new__ method; see Notes below)
 
@@ -1538,7 +1538,7 @@ With `savetxt`, you can specify headers, footers, comments, and more.
 Learn more about :ref:`input and output routines here <routines.io>`.
 
 
-Importing and exporting a csv
+Importing and exporting a CSV
 -----------------------------
 
 .. save a csv
@@ -1633,7 +1633,7 @@ Learn how to install Pandas with the
 `official Pandas installation information <https://pandas.pydata.org/pandas-docs/stable/install.html>`_.
 
 
-Plotting arrays with matplotlib
+Plotting arrays with Matplotlib
 -------------------------------
 
 If you need to generate a plot for your values, it's very simple with

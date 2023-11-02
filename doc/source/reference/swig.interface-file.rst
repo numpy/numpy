@@ -1,4 +1,4 @@
-numpy.i: a swig interface file for numpy
+numpy.i: a SWIG interface file for NumPy
 ========================================
 
 Introduction
@@ -529,7 +529,7 @@ NumPy complex types, ``%numpy_typemap`` expansions as above (with
 the user's complex type substituted for the first argument) should
 work.
 
-NumPy array scalars and swig
+NumPy array scalars and SWIG
 ----------------------------
 
 `SWIG`_ has sophisticated type checking for numerical types.  For
