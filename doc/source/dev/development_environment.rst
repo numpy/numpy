@@ -69,7 +69,7 @@ virtual environment and back to your previous shell.
 Building from source
 --------------------
 
-See building-from-source_
+See :ref:`building-from-source`.
 
 .. _testing-builds:
 

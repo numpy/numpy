@@ -1480,8 +1480,8 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
         The array of dates to process.
     offsets : array_like of int
         The array of offsets, which is broadcast with ``dates``.
-    roll : {'raise', 'nat', 'forward', 'following', 'backward', 'preceding',
-            'modifiedfollowing', 'modifiedpreceding'}, optional
+    roll : {'raise', 'nat', 'forward', 'following', 'backward', 'preceding', \
+        'modifiedfollowing', 'modifiedpreceding'}, optional
         How to treat dates that do not fall on a valid day. The default
         is 'raise'.
 
