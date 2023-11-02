@@ -1,7 +1,7 @@
 .. _f2py-win-pgi:
 
 ===============================
-F2py and pgi Fortran on windows
+F2PY and PGI Fortran on Windows
 ===============================
 
 A variant of these are part of the so called "classic" Flang, however, 

@@ -1,7 +1,7 @@
 .. _f2py-windows:
 
 =================
-F2py and windows
+F2PY and Windows
 =================
 
 .. warning::
@@ -119,7 +119,7 @@ For an understanding of the key issues motivating the need for such a matrix
 excellent resource. An entertaining explanation of an application binary
 interface (ABI) can be found in this post by `JeanHeyd Meneide`_. 
 
-Powershell and msvc
+PowerShell and MSVC
 ====================
 
 MSVC is installed either via the Visual Studio Bundle or the lighter (preferred)
@@ -153,10 +153,10 @@ Now, testing the compiler toolchain could look like:
    # or
    $vsPath = (Join-Path ${env:ProgramFiles(x86)} -ChildPath 'Microsoft Visual Studio\\2019\\BuildTools'); 
    Import-Module (Join-Path $vsPath 'Common7\\Tools\\Microsoft.VisualStudio.DevShell.dll');
-   enter-vsdevshell -vsinstallpath $vspath -skipautomaticlocation
+   Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation
    **********************************************************************
    ** Visual Studio 2019 Developer PowerShell v16.11.9
-   ** copyright (c) 2021 microsoft corporation
+   ** Copyright (c) 2021 Microsoft Corporation
    **********************************************************************
    cd $HOME
    echo "#include<stdio.h>" > blah.cpp; echo 'int main(){printf("Hi");return 1;}' >> blah.cpp
@@ -169,8 +169,8 @@ It is also possible to check that the environment has been updated correctly
 with ``$ENV:PATH``.
 
 
-Windows store Python paths
-==========================
+Microsoft Store Python paths
+============================
 
 The MS Windows version of Python discussed here installs to a non-deterministic
 path using a hash. This needs to be added to the ``PATH`` variable.

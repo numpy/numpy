@@ -40,7 +40,7 @@ basic statistical operations, random simulation and much more.
     .. grid-item-card::
         :img-top: ../source/_static/index-images/getting_started.svg
 
-        getting started
+        Getting started
         ^^^^^^^^^^^^^^^
 
         New to NumPy? Check out the Absolute Beginner's Guide. It contains an
@@ -58,7 +58,7 @@ basic statistical operations, random simulation and much more.
     .. grid-item-card::
         :img-top: ../source/_static/index-images/user_guide.svg
 
-        user guide
+        User guide
         ^^^^^^^^^^
 
         The user guide provides in-depth information on the
@@ -96,7 +96,7 @@ basic statistical operations, random simulation and much more.
     .. grid-item-card::
         :img-top: ../source/_static/index-images/contributor.svg
 
-        contributor's guide
+        Contributor's guide
         ^^^^^^^^^^^^^^^^^^^
 
         Want to add to the codebase? Can help add translation or a flowchart to the

@@ -140,7 +140,7 @@ then you should either use the existing API or, in case it's infeasible, reach o
 with a request to restore the removed entry.
 
 
-Ndarray and scalar namespace
+ndarray and scalar namespace
 ----------------------------
 
 A few methods from ``np.ndarray`` and ``np.generic`` scalar classes have been removed.

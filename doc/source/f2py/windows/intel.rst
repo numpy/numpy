@@ -1,7 +1,7 @@
 .. _f2py-win-intel:
 
 ==============================
-F2py and windows intel Fortran
+F2PY and Windows Intel Fortran
 ==============================
 
 As of NumPy 1.23, only the classic Intel compilers (``ifort``) are supported.
