@@ -1,5 +1,5 @@
 ===========
-Using f2py
+Using F2PY
 ===========
 
 This page contains a reference to all command-line options for the ``f2py``

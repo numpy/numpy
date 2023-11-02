@@ -1,5 +1,5 @@
 ==================
- signature file
+ Signature file
 ==================
 
 The interface definition file (.pyf) is how you can fine-tune the interface
@@ -73,7 +73,7 @@ more of a previous section. So, ``[]...`` is to be read as zero or more of a
 previous section.
 
 
-Fortran/c routine signatures
+Fortran/C routine signatures
 ----------------------------
 
 The signature of a Fortran routine has the following structure::
@@ -263,7 +263,7 @@ Other statements
         ``callstatement`` and ``callprotoargument`` can be used only if they are
         valid for all entry routines, etc.
 
-F2py statements
+F2PY statements
 ^^^^^^^^^^^^^^^^
 
 In addition, F2PY introduces the following statements:
@@ -600,7 +600,7 @@ The following attributes can be used by F2PY.
 Extensions
 ----------
 
-F2py directives
+F2PY directives
 ^^^^^^^^^^^^^^^^
 
 The F2PY directives allow using F2PY signature file constructs in Fortran 77/90

@@ -1,5 +1,5 @@
 ==================================
-Using f2py bindings in Python
+Using F2PY bindings in Python
 ==================================
 
 In this page, you can find a full description and a few examples of common usage

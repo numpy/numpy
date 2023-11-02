@@ -1,7 +1,7 @@
 .. _f2py-getting-started:
 
 ======================================
- three ways to wrap - getting started
+ Three ways to wrap - getting started
 ======================================
 
 Wrapping Fortran or C functions to Python using F2PY consists of the
@@ -90,11 +90,11 @@ Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
 
   Wrapper for ``fib``.
 
-  parameters
+  Parameters
   ----------
   a : input rank-1 array('d') with bounds (n)
 
-  other parameters
+  Other parameters
   ----------------
   n : input int, optional
       Default: len(a)
@@ -229,11 +229,11 @@ In Python::
 
   Wrapper for ``fib``.
 
-  parameters
+  Parameters
   ----------
   n : input int
 
-  returns
+  Returns
   -------
   a : rank-1 array('d') with bounds (n)
 
@@ -288,11 +288,11 @@ the previous case::
 
   Wrapper for ``fib``.
 
-  parameters
+  Parameters
   ----------
   n : input int
 
-  returns
+  Returns
   -------
   a : rank-1 array('d') with bounds (n)
 

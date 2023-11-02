@@ -1,7 +1,7 @@
 .. _f2py:
 
 =====================================
-F2py user guide and reference manual
+F2PY user guide and reference manual
 =====================================
 
 The purpose of the ``F2PY`` --*Fortran to Python interface generator*-- utility
