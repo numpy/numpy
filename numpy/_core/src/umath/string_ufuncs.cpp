@@ -228,7 +228,7 @@ adjust_offsets(npy_int64 *start, npy_int64 *end, npy_int64 len)
 }
 
 template <ENCODING enc>
-static inline npy_long
+static inline npy_intp
 string_find(char *str1, int elsize1, char *str2, int elsize2,
             npy_int64 start, npy_int64 end)
 {
@@ -240,20 +240,20 @@ string_find(char *str1, int elsize1, char *str2, int elsize2,
 
     adjust_offsets(&start, &end, len1);
     if (end - start < len2) {
-        return (npy_long) -1;
+        return (npy_intp) -1;
     }
 
     if (len2 == 1) {
         npy_ucs4 ch = *buf2;
-        npy_long result = (npy_long) findchar<enc>(buf1 + start, end - start, ch);
+        npy_intp result = (npy_intp) findchar<enc>(buf1 + start, end - start, ch);
         if (result == -1) {
-            return (npy_long) -1;
+            return (npy_intp) -1;
         } else {
-            return result + (npy_long) start;
+            return result + (npy_intp) start;
         }
     }
 
-    return (npy_long) findslice<enc>(buf1 + start,
+    return (npy_intp) findslice<enc>(buf1 + start,
                                      end - start,
                                      buf2,
                                      len2,
@@ -261,7 +261,7 @@ string_find(char *str1, int elsize1, char *str2, int elsize2,
 }
 
 template <ENCODING enc>
-static inline npy_long
+static inline npy_intp
 string_rfind(char *str1, int elsize1, char *str2, int elsize2,
              npy_int64 start, npy_int64 end)
 {
@@ -273,20 +273,20 @@ string_rfind(char *str1, int elsize1, char *str2, int elsize2,
 
     adjust_offsets(&start, &end, len1);
     if (end - start < len2) {
-        return (npy_long) -1;
+        return (npy_intp) -1;
     }
 
     if (len2 == 1) {
         npy_ucs4 ch = *buf2;
-        npy_long result = (npy_long) rfindchar(buf1 + start, end - start, ch);
+        npy_intp result = (npy_intp) rfindchar(buf1 + start, end - start, ch);
         if (result == -1) {
-            return (npy_long) -1;
+            return (npy_intp) -1;
         } else {
-            return result + (npy_long) start;
+            return result + (npy_intp) start;
         }
     }
 
-    return (npy_long) rfindslice(buf1 + start,
+    return (npy_intp) rfindslice(buf1 + start,
                                  end - start,
                                  buf2,
                                  len2,
@@ -448,9 +448,9 @@ string_find_loop(PyArrayMethod_Context *context,
     npy_intp N = dimensions[0];
 
     while (N--) {
-        npy_long idx = string_find<enc>(in1, elsize1, in2, elsize2,
+        npy_intp idx = string_find<enc>(in1, elsize1, in2, elsize2,
                                          *(npy_int64 *)in3, *(npy_int64 *)in4);
-        *(npy_long *)out = idx;
+        *(npy_intp *)out = idx;
 
         in1 += strides[0];
         in2 += strides[1];
@@ -480,9 +480,9 @@ string_rfind_loop(PyArrayMethod_Context *context,
     npy_intp N = dimensions[0];
 
     while (N--) {
-        npy_long idx = string_rfind<enc>(in1, elsize1, in2, elsize2,
+        npy_intp idx = string_rfind<enc>(in1, elsize1, in2, elsize2,
                                           *(npy_int64 *)in3, *(npy_int64 *)in4);
-        *(npy_long *)out = idx;
+        *(npy_intp *)out = idx;
 
         in1 += strides[0];
         in2 += strides[1];
@@ -534,7 +534,7 @@ string_find_rfind_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
     new_op_dtypes[1] = op_dtypes[1];
     new_op_dtypes[2] = PyArray_DTypeFromTypeNum(NPY_INT64);
     new_op_dtypes[3] = PyArray_DTypeFromTypeNum(NPY_INT64);
-    new_op_dtypes[4] = PyArray_DTypeFromTypeNum(NPY_LONG);
+    new_op_dtypes[4] = PyArray_DTypeFromTypeNum(NPY_DEFAULT_INT);
     return 0;
 }
 
@@ -779,7 +779,7 @@ init_string_ufuncs(PyObject *umath)
 
     dtypes[0] = dtypes[1] = NPY_STRING;
     dtypes[2] = dtypes[3] = NPY_INT64;
-    dtypes[4] = NPY_LONG;
+    dtypes[4] = NPY_DEFAULT_INT;
     if (init_ufunc(umath, "find", "templated_string_find", 4, 1, dtypes,
                    string_find_loop<ENCODING::ASCII>, string_find_loop<ENCODING::UTF32>,
                    NULL, string_find_rfind_promoter) < 0) {
@@ -788,7 +788,7 @@ init_string_ufuncs(PyObject *umath)
 
     dtypes[0] = dtypes[1] = NPY_STRING;
     dtypes[2] = dtypes[3] = NPY_INT64;
-    dtypes[4] = NPY_LONG;
+    dtypes[4] = NPY_DEFAULT_INT;
     if (init_ufunc(umath, "rfind", "templated_string_rfind", 4, 1, dtypes,
                    string_rfind_loop<ENCODING::ASCII>, string_rfind_loop<ENCODING::UTF32>,
                    NULL, string_find_rfind_promoter) < 0) {
