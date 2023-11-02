@@ -1,7 +1,7 @@
 .. _NEP06:
 
 ===================================================
-NEP 6 — Replacing trac with a different bug tracker
+NEP 6 — Replacing Trac with a different bug tracker
 ===================================================
 
 :Author: David Cournapeau, Stefan van der Walt

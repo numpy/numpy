@@ -77,7 +77,7 @@ proposed elsewhere for customizing subclass ufunc behavior with a
 _numpy_ufunc_ member function would allow a subclass with a different
 default to be created.
 
-Unknown yet existing data (na)
+Unknown yet existing data (NA)
 ==============================
 
 This is the approach taken in the R project, defining a missing element
@@ -98,7 +98,7 @@ such things to the theoretical limit is probably not worth it,
 and in many cases either raising an exception or returning all
 missing values may be preferred to doing precise calculations.
 
-Data that doesn't exist or is being skipped (ignore)
+Data that doesn't exist or is being skipped (IGNORE)
 ====================================================
 
 Another useful interpretation is that the missing elements should be
@@ -353,7 +353,7 @@ instead of masked and unmasked values. The functions are
 'np.isna' and 'np.isavail', which test for NA or available values
 respectively.
 
-Creating na-masked arrays
+Creating NA-masked arrays
 =========================
 
 The usual way to create an array with an NA mask is to pass the keyword
@@ -555,7 +555,7 @@ Since 'np.any' is the reduction for 'np.logical_or', and 'np.all'
 is the reduction for 'np.logical_and', it makes sense for them to
 have a 'skipna=' parameter like the other similar reduction functions.
 
-Parameterized na data types
+Parameterized NA data types
 ===========================
 
 A masked array isn't the only way to deal with missing data, and
@@ -645,7 +645,7 @@ cannot hold values, but will conform to the input types in functions like
 maps to [('a', 'NA[f4]'), ('b', 'NA[i4]')]. Thus, to view the memory
 of an 'f8' array 'arr' with 'NA[f8]', you can say arr.view(dtype='NA').
 
-Future expansion to multi-na payloads
+Future expansion to multi-NA payloads
 =====================================
 
 The packages SAS and Stata both support multiple different "NA" values.
@@ -814,7 +814,7 @@ R uses. That is, to produce the following::
 If, in user testing, this is found necessary for pragmatic reasons,
 the feature should be added even though it is inconsistent.
 
-Pep 3118
+PEP 3118
 ========
 
 PEP 3118 doesn't have any mask mechanism, so arrays with masks will
@@ -876,7 +876,7 @@ both the mask and the data are taken simultaneously. The result
 is two views which share the same mask memory and the same data memory,
 which still preserves the missing value abstraction.
 
-Interaction with Pre-existing C API usage
+Interaction with pre-existing C API usage
 =========================================
 
 Making sure existing code using the C API, whether it's written in C, C++,
@@ -887,7 +887,7 @@ a few different access patterns people use to get ahold of the numpy array data,
 here we examine a few of them to see what numpy can do. These examples are
 found from doing google searches of numpy C API array access.
 
-NumPy documentation - how to extend numpy
+NumPy documentation - how to extend NumPy
 -----------------------------------------
 
 https://docs.scipy.org/doc/numpy/user/c-info.how-to-extend.html#dealing-with-array-objects
@@ -907,7 +907,7 @@ it is an ndarray and checks some flags, will silently produce incorrect results.
 of code does not provide any opportunity for numpy to say "hey, this array is special",
 so also is not compatible with future ideas of lazy evaluation, derived dtypes, etc.
 
-Tutorial from cython website
+Tutorial from Cython website
 ----------------------------
 
 http://docs.cython.org/src/tutorial/numpy.html
@@ -937,7 +937,7 @@ PyObject_GetBuffer. This call gives numpy the opportunity to raise an
 exception if the inputs are arrays with NA-masks, something not supported
 by the Python buffer protocol.
 
-Numerical Python - jpl website
+Numerical Python - JPL website
 ------------------------------
 
 http://dsnra.jpl.nasa.gov/software/Python/numpydoc/numpy-13.html
@@ -1116,7 +1116,7 @@ NPY_ITER_VIRTUAL
     allows for creating a "virtual mask", specifying which values
     are unmasked without ever creating a full mask array.
 
-Iterator na-array features
+Iterator NA-array features
 ==========================
 
 We add several new per-operand flags:
@@ -1140,7 +1140,7 @@ NPY_ITER_IGNORE_MASKNA
 Rejected alternative
 ********************
 
-Parameterized data type which adds additional memory for the na flag
+Parameterized data type which adds additional memory for the NA flag
 ====================================================================
 
 Another alternative to having a separate mask added to the array is

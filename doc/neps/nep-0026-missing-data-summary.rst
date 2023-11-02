@@ -1,7 +1,7 @@
 .. _NEP26:
 
 ====================================================
-NEP 26 — Summary of missing data neps and discussion
+NEP 26 — Summary of missing data NEPs and discussion
 ====================================================
 
 :Author: Mark Wiebe <mwwiebe@gmail.com>, Nathaniel J. Smith <njs@pobox.com>
@@ -88,7 +88,7 @@ the project to add missing data support to NumPy should be, and which
 kinds of problems are in scope. Let's start with the
 best understood situation where "missing data" comes into play:
 
-"statistical missing data"
+"Statistical missing data"
 --------------------------
 
 In statistics, social science, etc., "missing data" is a term of art
@@ -99,7 +99,7 @@ have a table listing the height, age, and income of a number of
 individuals, but one person did not provide their income, then we need
 some way to represent this::
 
-  person | height | age | income
+  Person | Height | Age | Income
   ------------------------------
      1   |   63   | 25  | 15000
      2   |   58   | 32  | <missing>
@@ -132,7 +132,7 @@ for floats it's a special NaN value that's distinguishable from
 other NaNs, ...) Then, they arrange that in computations, this
 value has a special semantics that we will call "NA semantics".
 
-Na semantics
+NA semantics
 ------------
 
 The idea of NA semantics is that any computations involving NA

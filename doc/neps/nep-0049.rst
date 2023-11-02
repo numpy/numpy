@@ -120,7 +120,7 @@ The version, currently 1, allows for future enhancements to the
 ``PyDataMemAllocator``. If fields are added, they must be added to the end.
 
 
-NumPy c-API functions
+NumPy C-API functions
 =====================
 
 .. c:type:: PyDataMem_Handler
@@ -178,7 +178,7 @@ NumPy c-API functions
    Return the current policy that will be used to allocate data for the
    next ``PyArrayObject``. On failure, return ``NULL``.
 
-``pydatamem_handler`` thread safety and lifetime
+``PyDataMem_Handler`` thread safety and lifetime
 ================================================
 The active handler is stored in the current :py:class:`~contextvars.Context`
 via a :py:class:`~contextvars.ContextVar`. This ensures it can be configured both

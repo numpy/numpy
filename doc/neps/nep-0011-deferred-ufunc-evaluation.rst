@@ -232,7 +232,7 @@ only when the error state is set to ignore all, but allow user control with
 use deferred evaluation, False would mean never use it, and None would
 mean use it only when safe (i.e. the error state is set to ignore all).
 
-Interaction with updateifcopy
+Interaction with UPDATEIFCOPY
 =============================
 
 The ``NPY_UPDATEIFCOPY`` documentation states:

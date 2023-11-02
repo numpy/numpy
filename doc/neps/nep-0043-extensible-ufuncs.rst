@@ -419,7 +419,7 @@ and which are handled by NumPy:
 
 
 *****************************************************************************
-Arraymethod
+ArrayMethod
 *****************************************************************************
 
 A central proposal of this NEP is the creation of the ``ArrayMethod`` as an object
@@ -500,7 +500,7 @@ And ``flags`` stored properties, for whether:
 *Note: More information is expected to be added as necessary.*
 
 
-The call ``context``
+The call ``Context``
 ====================
 
 The "context" object is analogous to Python's ``self`` that is
@@ -584,7 +584,7 @@ fast C-functions and NumPy API creates the new ``ArrayMethod`` or
 
 .. _ArrayMethod_specs:
 
-Arraymethod specifications
+ArrayMethod specifications
 ==========================
 
 .. highlight:: c

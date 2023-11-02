@@ -1,7 +1,7 @@
 .. _NEP55:
 
 =========================================================
-NEP 55 — Add a utf-8 variable-width string dtype to NumPy
+NEP 55 — Add a UTF-8 variable-width string dtype to NumPy
 =========================================================
 
 :Author: Nathan Goldbaum <ngoldbaum@quansight.com>
@@ -306,7 +306,7 @@ discuss our plan for the string manipulation functions in ``np.char``. Finally
 we describe out plan to update the ``npy`` and ``npz`` file formats to support
 writing sidecar data.
 
-Python API for ``stringdtype``
+Python API for ``StringDType``
 ******************************
 
 The new DType will be accessible via the ``np.dtypes`` namespace:

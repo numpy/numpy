@@ -463,7 +463,7 @@ We review here the operations related to casting arrays:
 
 We show how casting arrays with ``astype(new_dtype)`` will be implemented.
 
-`common dtype` operations
+`Common dtype` operations
 ==============================================================================
 
 When input types are mixed, a first step is to find a DType that can hold
@@ -984,7 +984,7 @@ important enough to be handled by NumPy using the presented methods.
     ``np.float128`` base class.
 
 
-Dtype discovery during array coercion
+dtype discovery during array coercion
 ==============================================================================
 
 An important step in the use of NumPy arrays is creation of the array from
@@ -1211,10 +1211,10 @@ This is a general limitation, but round-tripping is always possible if
 .. _nep42_c-api:
 
 ******************************************************************************
-Public c-API
+Public C-API
 ******************************************************************************
 
-Dtype creation
+dtype creation
 ==============================================================================
 
 To create a new DType the user will need to define the methods and attributes
@@ -1290,7 +1290,7 @@ memory management but would allow ABI-compatible extension (the struct is
 freed again when the DType is created).
 
 
-Castingimpl
+CastingImpl
 ==============================================================================
 
 The external API for ``CastingImpl`` will be limited initially to defining:

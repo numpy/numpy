@@ -187,7 +187,7 @@ made to indicate when the behavior changed:
 
     def argsort(self, axis=np._NoValue, ...):
         """
-        parameters
+        Parameters
         ----------
         axis : int, optional
             Axis along which to sort. If None, the default, the flattened array

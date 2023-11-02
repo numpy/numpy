@@ -1983,7 +1983,7 @@ functions.::
         ...:        composite_over_it(image1, image2))
     Out[18]: True
 
-Image compositing with numexpr
+Image compositing with NumExpr
 ------------------------------
 
 As a test of the iterator, numexpr has been enhanced to allow use of

@@ -1,5 +1,5 @@
 =================================
-NEP x — Template and instructions
+NEP X — Template and instructions
 =================================
 
 :Author: <list of authors' real names and optionally, email addresses>

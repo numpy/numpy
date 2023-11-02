@@ -317,7 +317,7 @@ This function is used multiple places and should probably be part of
 a redesigned casting API.
 
 
-Dtype handling in universal functions
+dtype handling in universal functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Universal functions are implemented as instances of the ``numpy.UFunc`` class
@@ -436,7 +436,7 @@ As such this step may move from the dispatching step (described above) to
 the implementation-specific code described below.
 
 
-Dtype-specific implementation of the ufunc
+dtype-specific implementation of the ufunc
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Once the correct implementation/loop is found, UFuncs currently call

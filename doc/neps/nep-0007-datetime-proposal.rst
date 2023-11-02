@@ -505,7 +505,7 @@ With this, the above operation can be done as follows::
   Out[12]: array([366, 366, 366],  dtype="timedelta64[D]")
 
 
-Dtype vs time units conversions
+dtype vs time units conversions
 ===============================
 
 For changing the date/time dtype of an existing array, we propose to use
@@ -619,7 +619,7 @@ list of tuples describing a data-format can itself be a tuple of
 Final considerations
 ====================
 
-Why the fractional time and events: [3y/12]//50
+Why the fractional time and events: [3Y/12]//50
 -----------------------------------------------
 
 It is difficult to come up with enough units to satisfy every need.  For

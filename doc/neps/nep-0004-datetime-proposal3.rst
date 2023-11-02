@@ -462,7 +462,7 @@ With this, the above operation can be done as follows::
   Out[12]: array([366, 366, 366],  dtype="timedelta64[D]")
 
 
-Dtype vs time units conversions
+dtype vs time units conversions
 ===============================
 
 For changing the date/time dtype of an existing array, we propose to use
