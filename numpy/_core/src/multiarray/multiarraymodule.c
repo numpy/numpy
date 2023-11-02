@@ -692,7 +692,7 @@ PyArray_ConcatenateInto(PyObject *op,
         Py_DECREF(item);
     }
 
-    if (axis >= NPY_MAXDIMS) {
+    if (axis == NPY_RAVEL_AXIS) {
         ret = PyArray_ConcatenateFlattenedArrays(
                 narrays, arrays, NPY_CORDER, ret, dtype,
                 casting, casting_not_passed);

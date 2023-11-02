@@ -3411,7 +3411,10 @@ Other constants
 
 .. c:macro:: NPY_MAXDIMS
 
-    The maximum number of dimensions allowed in arrays.
+    .. note::
+        NumPy used to have a maximum number of dimensions set to 32 and now 64.
+        This was/is mostly useful for stack allocations.  We now ask you to
+        define (and test) such a limit in your own project if needed.
 
 .. c:macro:: NPY_MAXARGS
 

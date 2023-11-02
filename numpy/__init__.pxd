@@ -181,11 +181,6 @@ cdef extern from "numpy/arrayobject.h":
 
         NPY_ARRAY_UPDATE_ALL
 
-    cdef enum:
-        NPY_MAXDIMS
-
-    npy_intp NPY_MAX_ELSIZE
-
     ctypedef void (*PyArray_VectorUnaryFunc)(void *, void *, npy_intp, void *,  void *)
 
     ctypedef struct PyArray_ArrayDescr:

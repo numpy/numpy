@@ -35,10 +35,17 @@
  * The array creation itself could have arbitrary dimensions but all
  * the places where static allocation is used would need to be changed
  * to dynamic (including inside of several structures)
+ *
+ * As of NumPy 2.0, we strongly discourage the downstream use of NPY_MAXDIMS,
+ * but since auditing everything seems a big ask, define it as 64.
+ * A future version could:
+ * - Increase or remove the limit and require recompilation (like 2.0 did)
+ * - Deprecate or remove the macro but keep the limit (at basically any time)
  */
-
-#define NPY_MAXDIMS 32
-#define NPY_MAXARGS 32
+#define NPY_MAXDIMS 64
+/* We cannot change this as it would break ABI: */
+#define NPY_MAXDIMS_LEGACY_ITERS 32
+#define NPY_MAXARGS 64
 
 /* Used for Converter Functions "O&" code in ParseTuple */
 #define NPY_FAIL 0
@@ -1095,18 +1102,18 @@ struct PyArrayIterObject_tag {
         PyObject_HEAD
         int               nd_m1;            /* number of dimensions - 1 */
         npy_intp          index, size;
-        npy_intp          coordinates[NPY_MAXDIMS];/* N-dimensional loop */
-        npy_intp          dims_m1[NPY_MAXDIMS];    /* ao->dimensions - 1 */
-        npy_intp          strides[NPY_MAXDIMS];    /* ao->strides or fake */
-        npy_intp          backstrides[NPY_MAXDIMS];/* how far to jump back */
-        npy_intp          factors[NPY_MAXDIMS];     /* shape factors */
+        npy_intp          coordinates[NPY_MAXDIMS_LEGACY_ITERS];/* N-dimensional loop */
+        npy_intp          dims_m1[NPY_MAXDIMS_LEGACY_ITERS];    /* ao->dimensions - 1 */
+        npy_intp          strides[NPY_MAXDIMS_LEGACY_ITERS];    /* ao->strides or fake */
+        npy_intp          backstrides[NPY_MAXDIMS_LEGACY_ITERS];/* how far to jump back */
+        npy_intp          factors[NPY_MAXDIMS_LEGACY_ITERS];     /* shape factors */
         PyArrayObject     *ao;
         char              *dataptr;        /* pointer to current item*/
         npy_bool          contiguous;
 
-        npy_intp          bounds[NPY_MAXDIMS][2];
-        npy_intp          limits[NPY_MAXDIMS][2];
-        npy_intp          limits_sizes[NPY_MAXDIMS];
+        npy_intp          bounds[NPY_MAXDIMS_LEGACY_ITERS][2];
+        npy_intp          limits[NPY_MAXDIMS_LEGACY_ITERS][2];
+        npy_intp          limits_sizes[NPY_MAXDIMS_LEGACY_ITERS];
         npy_iter_get_dataptr_t translate;
 } ;
 
@@ -1230,7 +1237,7 @@ typedef struct {
         npy_intp             size;                    /* broadcasted size */
         npy_intp             index;                   /* current index */
         int                  nd;                      /* number of dims */
-        npy_intp             dimensions[NPY_MAXDIMS]; /* dimensions */
+        npy_intp             dimensions[NPY_MAXDIMS_LEGACY_ITERS]; /* dimensions */
         PyArrayIterObject    *iters[NPY_MAXARGS];     /* iterators */
 } PyArrayMultiIterObject;
 
@@ -1335,18 +1342,18 @@ typedef struct {
      */
     int               nd_m1;            /* number of dimensions - 1 */
     npy_intp          index, size;
-    npy_intp          coordinates[NPY_MAXDIMS];/* N-dimensional loop */
-    npy_intp          dims_m1[NPY_MAXDIMS];    /* ao->dimensions - 1 */
-    npy_intp          strides[NPY_MAXDIMS];    /* ao->strides or fake */
-    npy_intp          backstrides[NPY_MAXDIMS];/* how far to jump back */
-    npy_intp          factors[NPY_MAXDIMS];     /* shape factors */
+    npy_intp          coordinates[NPY_MAXDIMS_LEGACY_ITERS];/* N-dimensional loop */
+    npy_intp          dims_m1[NPY_MAXDIMS_LEGACY_ITERS];    /* ao->dimensions - 1 */
+    npy_intp          strides[NPY_MAXDIMS_LEGACY_ITERS];    /* ao->strides or fake */
+    npy_intp          backstrides[NPY_MAXDIMS_LEGACY_ITERS];/* how far to jump back */
+    npy_intp          factors[NPY_MAXDIMS_LEGACY_ITERS];     /* shape factors */
     PyArrayObject     *ao;
     char              *dataptr;        /* pointer to current item*/
     npy_bool          contiguous;
 
-    npy_intp          bounds[NPY_MAXDIMS][2];
-    npy_intp          limits[NPY_MAXDIMS][2];
-    npy_intp          limits_sizes[NPY_MAXDIMS];
+    npy_intp          bounds[NPY_MAXDIMS_LEGACY_ITERS][2];
+    npy_intp          limits[NPY_MAXDIMS_LEGACY_ITERS][2];
+    npy_intp          limits_sizes[NPY_MAXDIMS_LEGACY_ITERS];
     npy_iter_get_dataptr_t translate;
 
     /*
@@ -1355,7 +1362,7 @@ typedef struct {
     npy_intp nd;
 
     /* Dimensions is the dimension of the array */
-    npy_intp dimensions[NPY_MAXDIMS];
+    npy_intp dimensions[NPY_MAXDIMS_LEGACY_ITERS];
 
     /*
      * Neighborhood points coordinates are computed relatively to the
