@@ -2966,10 +2966,12 @@ class TestMethods:
                     # all after are larger
                     assert_array_less(p[i], p[i + 1:])
                     self.assert_partitioned(p, [i])
-                    self.assert_partitioned(d[np.argpartition(d, i, kind=k)], [i])
+                    self.assert_partitioned(
+                            d[np.argpartition(d, i, kind=k)], [i])
 
                     p = np.partition(d1, i, axis=1, kind=k)
-                    parg = d1[np.arange(d1.shape[0])[:, None], np.argpartition(d1, i, axis=1, kind=k)]
+                    parg = d1[np.arange(d1.shape[0])[:, None],
+                            np.argpartition(d1, i, axis=1, kind=k)]
                     aae(p[:, i], np.array([i] * d1.shape[0], dtype=dt))
                     # array_less does not seem to work right
                     at((p[:, :i].T <= p[:, i]).all(),
@@ -2981,7 +2983,8 @@ class TestMethods:
                         self.assert_partitioned(parg[row], [i])
 
                     p = np.partition(d0, i, axis=0, kind=k)
-                    parg = d0[np.argpartition(d0, i, axis=0, kind=k), np.arange(d0.shape[1])[None, :]]
+                    parg = d0[np.argpartition(d0, i, axis=0, kind=k),
+                            np.arange(d0.shape[1])[None, :]]
                     aae(p[i, :], np.array([i] * d1.shape[0], dtype=dt))
                     # array_less does not seem to work right
                     at((p[:i, :] <= p[i, :]).all(),
@@ -2989,8 +2992,8 @@ class TestMethods:
                     at((p[i + 1:, :] > p[i, :]).all(),
                        msg="%d: %r < %r" % (i, p[i, :], p[:, i + 1:]))
                     for col in range(p.shape[1]):
-                        self.assert_partitioned(p[:,col], [i])
-                        self.assert_partitioned(parg[:,col], [i])
+                        self.assert_partitioned(p[:, col], [i])
+                        self.assert_partitioned(parg[:, col], [i])
 
                     # check inplace
                     dc = d.copy()
@@ -3006,7 +3009,8 @@ class TestMethods:
     def assert_partitioned(self, d, kth):
         prev = 0
         for k in np.sort(kth):
-            assert_array_compare(operator.__le__, d[prev:k], d[k], err_msg='kth %d' % k)
+            assert_array_compare(operator.__le__, d[prev:k], d[k],
+                    err_msg='kth %d' % k)
             assert_((d[k:] >= d[k]).all(),
                     msg="kth %d, %r not greater equal %r" % (k, d[k:], d[k]))
             prev = k + 1
