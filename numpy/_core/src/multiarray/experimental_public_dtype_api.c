@@ -164,6 +164,8 @@ PyArrayInitDTypeMeta_FromSpec(
     NPY_DT_SLOTS(DType)->setitem = NULL;
     NPY_DT_SLOTS(DType)->getitem = NULL;
     NPY_DT_SLOTS(DType)->get_clear_loop = NULL;
+    NPY_DT_SLOTS(DType)->get_fill_zero_loop = NULL;
+    NPY_DT_SLOTS(DType)->finalize_descr = NULL;
     NPY_DT_SLOTS(DType)->f = default_funcs;
 
     PyType_Slot *spec_slot = spec->slots;

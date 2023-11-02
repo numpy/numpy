@@ -59,6 +59,12 @@ typedef struct {
     */
     get_traverse_loop_function *get_fill_zero_loop;
     /*
+     * Either NULL or a function that performs finalization on a dtype, either
+     * returning that dtype or a newly created instance that has the same
+     * parameters, if any, as the operand dtype.
+     */
+    finalize_descr_function *finalize_descr;
+    /*
      * The casting implementation (ArrayMethod) to convert between two
      * instances of this DType, stored explicitly for fast access:
      */
@@ -80,7 +86,7 @@ typedef struct {
 
 // This must be updated if new slots before within_dtype_castingimpl
 // are added
-#define NPY_NUM_DTYPE_SLOTS 10
+#define NPY_NUM_DTYPE_SLOTS 11
 #define NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS 22
 #define NPY_DT_MAX_ARRFUNCS_SLOT \
   NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS + _NPY_DT_ARRFUNCS_OFFSET
