@@ -127,7 +127,7 @@ freebsd_test_task:
     memory: 4G
 
   install_devtools_script: |
-    pkg install -y git bash ninja ccache
+    pkg install -y git bash ninja ccache blas cblas lapack pkgconf
 
   <<: *MODIFIED_CLONE
 
@@ -149,7 +149,7 @@ freebsd_test_task:
   build_script: |
     chsh -s /usr/local/bin/bash
     source .venv/bin/activate
-    python -m pip install . --no-build-isolation -v -Csetup-args="-Dallow-noblas=true"
+    python -m pip install . --no-build-isolation -v -Csetup-args="-Dallow-noblas=false"
 
   test_script: |
     chsh -s /usr/local/bin/bash
@@ -157,3 +157,7 @@ freebsd_test_task:
     cd tools
     python -m pytest --pyargs numpy -m "not slow"
     ccache -s
+
+  on_failure:
+    debug_script: |
+      cat build/meson-logs/meson-log.txt
