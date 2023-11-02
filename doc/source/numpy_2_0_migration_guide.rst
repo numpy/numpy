@@ -1,5 +1,5 @@
 *************************
-NumPy 2.0 Migration Guide
+NumPy 2.0 migration guide
 *************************
 
 This document contains a set of instructions on how to update your code to
@@ -175,7 +175,7 @@ then you should either use the existing API or, in case it's infeasible, reach o
 with a request to restore the removed entry.
 
 
-NDArray and scalar namespace
+ndarray and scalar namespace
 ----------------------------
 
 A few methods from ``np.ndarray`` and ``np.generic`` scalar classes have been removed.

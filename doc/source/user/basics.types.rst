@@ -211,7 +211,7 @@ properties of the type, such as whether it is an integer::
     False
 
 
-Array Scalars
+Array scalars
 =============
 
 NumPy generally returns elements of arrays as array scalars (a scalar
@@ -234,7 +234,7 @@ methods arrays do.
 
 .. _overflow-errors:
 
-Overflow Errors
+Overflow errors
 ===============
 
 The fixed size of NumPy numeric types may cause overflow errors when a value
@@ -273,7 +273,7 @@ range of possible values.
     >>> np.power(100, 100, dtype=np.float64)
     1e+200
 
-Extended Precision
+Extended precision
 ==================
 
 Python's floating-point numbers are usually 64-bit floating-point numbers,

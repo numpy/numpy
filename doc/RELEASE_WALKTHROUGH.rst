@@ -40,7 +40,7 @@ cibuildwheel support it. For Python 3.11 we were able to release within a week
 of the rc1 announcement.
 
 
-Backport Pull Requests
+Backport pull requests
 ----------------------
 
 Changes that have been marked for this release must be backported to the
@@ -232,7 +232,7 @@ wheel. PyPI only allows a single source distribution, here we have
 chosen the zip archive.
 
 
-6. Upload files to github
+6. Upload files to GitHub
 -------------------------
 
 Go to `<https://github.com/numpy/numpy/releases>`_, there should be a ``v1.21.0

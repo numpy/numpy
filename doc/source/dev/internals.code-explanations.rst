@@ -90,7 +90,7 @@ arbitrary numbers. Therefore, the possibility of encountering misaligned
 data must be recognized and taken into account if necessary.
 
 
-N-D Iterators
+N-D iterators
 =============
 
 .. seealso:: :ref:`arrays.nditer`
@@ -181,7 +181,7 @@ and the :c:func:`PyArray_Broadcast` call implements the
 :ref:`general-broadcasting-rules`.
 
 
-Array Scalars
+Array scalars
 =============
 
 .. seealso:: :ref:`arrays.scalars`

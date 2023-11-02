@@ -47,7 +47,7 @@ swamped by the remaining streams in most applications.
 
 .. _upgrading-pcg64-details:
 
-Technical Details
+Technical details
 -----------------
 
 Like many PRNG algorithms, `PCG64` is constructed from a transition function,

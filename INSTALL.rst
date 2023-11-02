@@ -47,7 +47,7 @@ Hypothesis__ https://hypothesis.readthedocs.io/en/latest/
    https://numpy.org/devdocs/user/building.html#building-from-source
 
 
-Basic Installation
+Basic installation
 ==================
 
 To install NumPy, run::

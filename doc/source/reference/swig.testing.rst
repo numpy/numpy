@@ -1,4 +1,4 @@
-Testing the numpy.i Typemaps
+Testing the numpy.i typemaps
 ============================
 
 Introduction
@@ -19,7 +19,7 @@ as well as Python inheritance.  The purpose of this document is to describe
 the testing infrastructure employed to verify that the ``numpy.i``
 typemaps are working as expected.
 
-Testing Organization
+Testing organization
 --------------------
 
 There are three independent testing frameworks supported, for one-,
@@ -66,7 +66,7 @@ For the descriptions that follow, we will reference the
 The command ``make test`` will ensure that all of the test software is
 built and then run all three test scripts.
 
-Testing Header Files
+Testing header files
 --------------------
 
 ``Vector.h`` is a C++ header file that defines a C macro called
@@ -94,7 +94,7 @@ supported by ``numpy.i``:
 * ``float``
 * ``double``
 
-Testing Source Files
+Testing source files
 --------------------
 
 ``Vector.cxx`` is a C++ source file that implements compilable code
@@ -103,7 +103,7 @@ defines a C macro ``TEST_FUNCS`` that has the same arguments and works
 in the same way as ``TEST_FUNC_PROTOS`` does in ``Vector.h``.
 ``TEST_FUNCS`` is implemented for each of the 12 data types as above.
 
-Testing SWIG Interface Files
+Testing SWIG interface files
 ----------------------------
 
 ``Vector.i`` is a `SWIG`_ interface file that defines python module
@@ -117,7 +117,7 @@ is then implemented for all of the data types supported by
 the function prototypes in ``Vector.h`` using the typemaps in
 ``numpy.i``.
 
-Testing Python Scripts
+Testing Python scripts
 ----------------------
 
 After ``make`` is used to build the testing extension modules,

@@ -743,7 +743,7 @@ For example::
 
 .. _flat-iterator-indexing:
 
-Flat Iterator indexing
+Flat iterator indexing
 ----------------------
 
 :attr:`x.flat <ndarray.flat>` returns an iterator that will iterate

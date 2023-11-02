@@ -118,7 +118,7 @@ Configuration class
 
     .. automethod:: get_info
 
-Building Installable C libraries
+Building installable C libraries
 ================================
 
 Conventional C libraries (installed through `add_library`) are not installed, and

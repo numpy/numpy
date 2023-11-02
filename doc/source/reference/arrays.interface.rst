@@ -314,7 +314,7 @@ more information which may be important for various applications::
 It should be clear that any structured type could be described using this
 interface.
 
-Differences with Array interface (Version 2)
+Differences with array interface (version 2)
 ============================================
 
 The version 2 interface was very similar.  The differences were

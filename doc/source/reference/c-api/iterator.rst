@@ -1,4 +1,4 @@
-Array Iterator API
+Array iterator API
 ==================
 
 .. sectionauthor:: Mark Wiebe
@@ -9,7 +9,7 @@ Array Iterator API
 
 .. versionadded:: 1.6
 
-Array Iterator
+Array iterator
 --------------
 
 The array iterator encapsulates many of the key features in ufuncs,
@@ -28,7 +28,7 @@ before writing the C iteration code.
 
 .. _iteration-example:
 
-Iteration Example
+Iteration example
 -----------------
 
 The best way to become familiar with the iterator is to look at its
@@ -117,7 +117,7 @@ number of non-zero elements in an array.
         return nonzero_count;
     }
 
-Multi-Iteration Example
+Multi-iteration example
 ------------------------------
 
 Here is a copy function using the iterator.  The ``order`` parameter
@@ -205,7 +205,7 @@ is used to control the memory layout of the allocated result, typically
     }
 
 
-Multi Index Tracking Example
+Multi index tracking example
 ----------------------------
 
 This example shows you how to work with the :c:data:`NPY_ITER_MULTI_INDEX` flag. For simplicity, we assume the argument is a two-dimensional array.
@@ -265,7 +265,7 @@ When called with a 2x3 array, the above example prints:
    multi_index is [1, 2]
 
 
-Iterator Data Types
+Iterator data types
 ---------------------
 
 The iterator layout is an internal detail, and user code only sees
@@ -293,7 +293,7 @@ an incomplete struct.
    This is a function pointer for getting the current iterator multi-index,
    returned by :c:func:`NpyIter_GetGetMultiIndex`.
 
-Construction and Destruction
+Construction and destruction
 ----------------------------
 
 .. c:function:: NpyIter* NpyIter_New( \
@@ -1149,7 +1149,7 @@ Construction and Destruction
     checks are the responsibility of the caller, and should be done
     outside of any inner loops.
 
-Functions For Iteration
+Functions for iteration
 -----------------------
 
 .. c:function:: NpyIter_IterNextFunc* NpyIter_GetIterNext( \
@@ -1342,7 +1342,7 @@ functions provide that information.
 .. index::
     pair: iterator; C-API
 
-Converting from Previous NumPy Iterators
+Converting from previous NumPy iterators
 ----------------------------------------
 
 The old iterator API includes functions like PyArrayIter_Check,
