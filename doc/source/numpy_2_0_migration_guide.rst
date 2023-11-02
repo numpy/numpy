@@ -32,6 +32,17 @@ NumPy version.
 
 Note that the NumPy random API is not affected by this change.
 
+C-API Changes
+=============
+Some definitions where removed or replaced due to being outdated or
+unmaintaibale.  Some new API definition will evaluate differently at
+runtime between NumPy 2.0 and NumPy 1.x.
+Some are defined in ``numpy/_core/include/numpy/npy_2_compat.h``
+(for example ``NPY_DEFAULT_INT``) which can be vendored in full or part
+to have the definitions available when compiling against NumPy 1.x.
+
+Please let us know if you require additional workarounds here.
+
 Namespace changes
 =================
 

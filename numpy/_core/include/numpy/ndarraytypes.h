@@ -1486,13 +1486,7 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 
 /* The default array type */
 #define NPY_DEFAULT_TYPE NPY_DOUBLE
-/* default integer type */
-#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
-    #define NPY_DEFAULT_INT NPY_INTP
-#else
-    #define NPY_DEFAULT_INT  \
-        (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? NPY_INTP : NPY_LONG)
-#endif
+/* default integer type defined in npy_2_compat header */
 
 /*
  * All sorts of useful ways to look into a PyArrayObject. It is recommended
