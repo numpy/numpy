@@ -33,24 +33,6 @@ def _get_numpy_tools(filename):
     return module
 
 
-def _get_numpy_version():
-    cwd = pathlib.Path.cwd()
-    try:
-        site_packages = meson._set_pythonpath()
-    except FileNotFoundError:
-        return None
-
-    p = util.run(
-        ['python', '-c', 'import numpy as np; print(np.__version__)'],
-        cwd=site_packages,
-        echo=False,
-        output=False
-    )
-
-    os.chdir(cwd)
-
-    return p.stdout.strip().decode('ascii')
-
 @click.command()
 @click.option(
     "-t", "--token",
@@ -590,19 +572,19 @@ def _config_openblas(blas_variant):
 
 @click.command()
 @click.option(
-    "-v", "--version",
+    "-v", "--version-override",
     help="NumPy version of release",
     required=False
 )
 @click.pass_context
-def notes(ctx, version):
+def notes(ctx, version_override):
     """🎉 Generate release notes and validate
 
     \b
     Example:
 
     \b
-    $ spin notes --version 2.0
+    $ spin notes --version-override 2.0
 
     \b
     To automatically pick the version
@@ -610,11 +592,10 @@ def notes(ctx, version):
     \b
     $ spin notes
     """
-    if not version:
-        if not (version := _get_numpy_version()):
-            raise click.ClickException(
-                "Unable to determine NumPy version automatically"
-            )
+    if not version_override:
+        version = util.get_config()['project']['version']
+    else:
+        version = version_override
 
     click.secho(
         f"Generating release notes for NumPy {version}",
