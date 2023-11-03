@@ -27,7 +27,7 @@ array_function_dispatch = functools.partial(
 
 __all__ = [
     'ediff1d', 'intersect1d', 'setxor1d', 'union1d', 'setdiff1d', 'unique',
-    'in1d', 'isin'
+    'in1d', 'isin', 'intersect2d', 'union2D'
     ]
 
 
@@ -968,3 +968,107 @@ def setdiff1d(ar1, ar2, assume_unique=False):
         ar1 = unique(ar1)
         ar2 = unique(ar2)
     return ar1[_in1d(ar1, ar2, assume_unique=True, invert=True)]
+
+
+def _intersect2d_dispatcher(ar1, ar2, axis=0):
+    return (ar1, ar2)
+
+
+@array_function_dispatch(_intersect2d_dispatcher)
+def intersect2D(ar1, ar2, axis=0):
+    """
+    Find the intersection of rows between two 2D numpy arrays, `ar1` and `ar2`.
+
+    Parameters:
+        ar1 (numpy.ndarray): First 2D array.
+        ar2 (numpy.ndarray): Second 2D array.
+        axis (int, optional): Axis along which to find the intersection. Default is 0.
+
+    Returns:
+        numpy.ndarray: A new numpy array with the shared rows between `ar1` and `ar2`.
+
+    Raises:
+        ValueError: If `axis` is not 0 or 1.
+        ValueError: If the shape of either `ar1` or `ar2` is 0.
+        ValueError: If the number of values along the specified axis in `ar1` and `ar2` are not the same.
+        ValueError: If the data type of `ar1` and `ar2` is not the same.
+
+    Note:
+        - The function finds the rows that are present in both `ar1` and `ar2`.
+        - Rows are considered to be the same if their values are exactly the same (case-sensitive).
+
+    Example:
+        >>> ar1 = np.array([[1, 2], [3, 4], [5, 6]])
+        >>> ar2 = np.array([[3, 4], [5, 6], [7, 8]])
+        >>> intersect2D(ar1, ar2)
+        array([[3, 4],
+            [5, 6]])
+    """
+    if ar1.ndim != 2 or ar2.ndim != 2:
+        raise ValueError("'ar1' and 'ar2' must be 2D arrays. The input arrays must have two dimensions.")
+    if ar1.size == 0 or ar2.size == 0:
+        raise ValueError("Shape of 'ar1' or 'ar2' is 0. Input arrays must have at least one row.")
+    if ar1.shape[1-axis] != ar2.shape[1-axis]:
+        raise ValueError("The number of values along axis {} in 'ar1' and 'ar2' must be the same.".format(1-axis))
+    if axis not in [0, 1]:
+        raise ValueError("Invalid value for 'axis'. The value of 'axis' must be either 0 or 1.")
+    if ar1.dtype != ar2.dtype:
+        raise ValueError("The data type of 'ar1' ({}) and 'ar2' ({}) must be the same.".format(ar1.dtype, ar2.dtype))
+
+    if axis == 0:
+        return np.array([x for x in set(tuple(x) for x in ar1) & set(tuple(x) for x in ar2)])
+    elif axis == 1:
+        return np.array([x for x in set(tuple(x) for x in ar1.T) & set(tuple(x) for x in ar2.T)])
+
+
+def _union2d_dispatcher(ar1, ar2, axis=0):
+    return (ar1, ar2)
+
+
+@array_function_dispatch(_union2d_dispatcher)
+def union2D(ar1, ar2, axis=0):
+    """
+    Find the union of rows between two 2D numpy arrays, `ar1` and `ar2`.
+
+    Parameters:
+        ar1 (numpy.ndarray): First 2D array.
+        ar2 (numpy.ndarray): Second 2D array.
+        axis (int, optional): Axis along which to find the union. Default is 0.
+
+    Returns:
+        numpy.ndarray: A new numpy array with all the rows from `ar1` and `ar2`, without repetition.
+
+    Raises:
+        ValueError: If `axis` is not 0 or 1.
+        ValueError: If the shape of either `ar1` or `ar2` is 0.
+        ValueError: If the number of values along the specified axis in `ar1` and `ar2` are not the same.
+        ValueError: If `ar1` and `ar2` are not the same data type.
+
+    Note:
+        - The function combines the rows of `ar1` and `ar2` without repeating any rows.
+        - Rows are considered to be the same if their values are exactly the same (case-sensitive).
+
+    Example:
+        >>> ar1 = np.array([[1, 2], [3, 4], [5, 6]])
+        >>> ar2 = np.array([[3, 4], [5, 6], [7, 8]])
+        >>> union2D(ar1, ar2)
+        array([[1, 2],
+            [3, 4],
+            [5, 6],
+            [7, 8]])
+    """
+    if ar1.ndim != 2 or ar2.ndim != 2:
+        raise ValueError("'ar1' and 'ar2' must be 2D arrays. The input arrays must have two dimensions.")
+    if ar1.size == 0 or ar2.size == 0:
+        raise ValueError("Shape of 'ar1' or 'ar2' is 0. Input arrays must have at least one row.")
+    if ar1.shape[1-axis] != ar2.shape[1-axis]:
+        raise ValueError("The number of values along axis {} in 'ar1' and 'ar2' must be the same.".format(1-axis))
+    if axis not in [0, 1]:
+        raise ValueError("Invalid value for 'axis'. The value of 'axis' must be either 0 or 1.")
+    if ar1.dtype != ar2.dtype:
+        raise ValueError("The data type of 'ar1' ({}) and 'ar2' ({}) must be the same.".format(ar1.dtype, ar2.dtype))
+
+    if axis == 0:
+        return np.array([x for x in set(tuple(x) for x in np.vstack([ar1, ar2]))])
+    elif axis == 1:
+        return np.array([x for x in set(tuple(x) for x in np.vstack([ar1.T, ar2.T]))])
