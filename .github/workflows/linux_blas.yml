@@ -89,7 +89,7 @@ jobs:
       env:
         TERM: xterm-256color
       run:
-        spin build -- --werror
+        spin build -- --werror -Dallow-noblas=false
 
     - name: Check build-internal dependencies
       run:
@@ -131,7 +131,7 @@ jobs:
         pip install pytest hypothesis typing_extensions
 
     - name: Build (LP64)
-      run: spin build -- -Dblas=openblas -Dlapack=openblas -Ddisable-optimization=true
+      run: spin build -- -Dblas=openblas -Dlapack=openblas -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
       run: spin test -- numpy/linalg
@@ -139,7 +139,7 @@ jobs:
     - name: Build (ILP64)
       run: |
         rm -rf build
-        spin build -- -Duse-ilp64=true -Ddisable-optimization=true
+        spin build -- -Duse-ilp64=true -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
       run: spin test -- numpy/linalg
@@ -166,7 +166,7 @@ jobs:
         pip install pytest hypothesis typing_extensions
 
     - name: Build
-      run: spin build -- -Ddisable-optimization=true
+      run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
       run: spin test -- numpy/linalg
@@ -174,7 +174,7 @@ jobs:
     - name: Build (ILP64)
       run: |
         rm -rf build
-        spin build -- -Ddisable-optimization=true -Duse-ilp64=true
+        spin build -- -Ddisable-optimization=true -Duse-ilp64=true -Dallow-noblas=false
 
     - name: Test (ILP64)
       run: spin test -- numpy/linalg
@@ -201,7 +201,7 @@ jobs:
         sudo apt-get remove pkg-config
 
     - name: Build
-      run: spin build -- -Ddisable-optimization=true
+      run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
       run: spin test -j auto -- numpy/linalg
@@ -227,7 +227,7 @@ jobs:
 
     - name: Build
       run: |
-        spin build -- -Ddisable-optimization=true
+        spin build -- -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
       run: |
@@ -303,7 +303,7 @@ jobs:
     - name: Build with defaults (LP64)
       run: |
         pkg-config --libs mkl-dynamic-lp64-seq  # check link flags
-        spin build -- -Ddisable-optimization=true
+        spin build -- -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
       run: spin test -- numpy/linalg
@@ -312,7 +312,7 @@ jobs:
       run: |
         git clean -xdf > /dev/null
         pkg-config --libs mkl-dynamic-ilp64-seq
-        spin build -- -Duse-ilp64=true -Ddisable-optimization=true
+        spin build -- -Duse-ilp64=true -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
       run: spin test -- numpy/linalg
@@ -324,7 +324,7 @@ jobs:
         rm mkl*.pc
         popd
         export MKLROOT=$Python3_ROOT_DIR
-        spin build -- -Ddisable-optimization=true
+        spin build -- -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
       run: spin test -- numpy/linalg
@@ -359,7 +359,7 @@ jobs:
         pkg-config --cflags blis
 
     - name: Build
-      run: spin build -- -Dblas=blis -Ddisable-optimization=true
+      run: spin build -- -Dblas=blis -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
       run: spin test -- numpy/linalg
@@ -384,7 +384,7 @@ jobs:
         sudo apt-get install libatlas-base-dev pkg-config
 
     - name: Build
-      run: spin build -- -Dblas=blas-atlas -Dlapack=lapack-atlas -Ddisable-optimization=true
+      run: spin build -- -Dblas=blas-atlas -Dlapack=lapack-atlas -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
       run: spin test -- numpy/linalg
