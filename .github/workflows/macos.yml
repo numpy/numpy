@@ -84,7 +84,7 @@ jobs:
       shell: bash -l {0}
       run: |
         conda activate numpy-dev
-        CC="ccache $CC" spin build -j2
+        CC="ccache $CC" spin build -j2 -- -Dallow-noblas=false
 
     - name: Run test suite (full)
       shell: bash -l {0}
@@ -123,14 +123,14 @@ jobs:
         pip install pytest pytest-xdist hypothesis
 
     - name: Build against Accelerate (LP64)
-      run: spin build -- -Ddisable-optimization=true
+      run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test (linalg only)
       run: spin test -j2 -- numpy/linalg
 
     - name: Build NumPy against Accelerate (ILP64)
       run: |
-        spin build -- -Duse-ilp64=true
+        spin build -- -Duse-ilp64=true -Dallow-noblas=false
 
     - name: Test (fast tests)
       run: spin test -j2
