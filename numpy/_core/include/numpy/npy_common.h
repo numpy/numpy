@@ -226,16 +226,7 @@ typedef size_t npy_uintp;
  *      functions use different formatting codes that are portably specified
  *      according to the Python documentation. See issue gh-2388.
  */
-#if NPY_SIZEOF_INTP == NPY_SIZEOF_INT
-        #define NPY_INTP NPY_INT
-        #define NPY_UINTP NPY_UINT
-        #define PyIntpArrType_Type PyIntArrType_Type
-        #define PyUIntpArrType_Type PyUIntArrType_Type
-        #define NPY_MAX_INTP NPY_MAX_INT
-        #define NPY_MIN_INTP NPY_MIN_INT
-        #define NPY_MAX_UINTP NPY_MAX_UINT
-        #define NPY_INTP_FMT "d"
-#elif NPY_SIZEOF_INTP == NPY_SIZEOF_LONG
+#if NPY_SIZEOF_INTP == NPY_SIZEOF_LONG
         #define NPY_INTP NPY_LONG
         #define NPY_UINTP NPY_ULONG
         #define PyIntpArrType_Type PyLongArrType_Type
@@ -244,6 +235,15 @@ typedef size_t npy_uintp;
         #define NPY_MIN_INTP NPY_MIN_LONG
         #define NPY_MAX_UINTP NPY_MAX_ULONG
         #define NPY_INTP_FMT "ld"
+#elif NPY_SIZEOF_INTP == NPY_SIZEOF_INT
+        #define NPY_INTP NPY_INT
+        #define NPY_UINTP NPY_UINT
+        #define PyIntpArrType_Type PyIntArrType_Type
+        #define PyUIntpArrType_Type PyUIntArrType_Type
+        #define NPY_MAX_INTP NPY_MAX_INT
+        #define NPY_MIN_INTP NPY_MIN_INT
+        #define NPY_MAX_UINTP NPY_MAX_UINT
+        #define NPY_INTP_FMT "d"
 #elif defined(PY_LONG_LONG) && (NPY_SIZEOF_INTP == NPY_SIZEOF_LONGLONG)
         #define NPY_INTP NPY_LONGLONG
         #define NPY_UINTP NPY_ULONGLONG
