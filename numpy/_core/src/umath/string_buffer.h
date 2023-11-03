@@ -47,16 +47,20 @@ struct Buffer {
     char *buf;
     char *after;
 
-    inline Buffer<enc>() {
+    inline Buffer<enc>()
+    {
         buf = after = NULL;
     }
 
-    inline Buffer<enc>(char *buf_, int elsize_) {
+    inline Buffer<enc>(char *buf_, int elsize_)
+    {
         buf = buf_;
         after = buf_ + elsize_;
     }
 
-    inline npy_int64 length() {
+    inline npy_int64
+    length()
+    {
         Buffer tmp(after, 0);
         tmp--;
         while (tmp >= *this && *tmp == '\0') {
@@ -65,7 +69,9 @@ struct Buffer {
         return (npy_int64) (tmp - *this + 1);
     }
 
-    inline Buffer<enc>& operator+=(npy_int64 rhs) {
+    inline Buffer<enc>&
+    operator+=(npy_int64 rhs)
+    {
         switch (enc) {
         case ENCODING::ASCII:
             buf += rhs;
@@ -77,7 +83,9 @@ struct Buffer {
         return *this;
     }
 
-    inline Buffer<enc>& operator-=(npy_int64 rhs) {
+    inline Buffer<enc>&
+    operator-=(npy_int64 rhs)
+    {
         switch (enc) {
         case ENCODING::ASCII:
             buf -= rhs;
@@ -89,34 +97,46 @@ struct Buffer {
         return *this;
     }
 
-    inline Buffer<enc>& operator++() {
+    inline Buffer<enc>&
+    operator++()
+    {
         *this += 1;
         return *this;
     }
 
-    inline Buffer<enc> operator++(int) {
+    inline Buffer<enc>
+    operator++(int)
+    {
         Buffer<enc> old = *this;
         operator++();
         return old; 
     }
 
-    inline Buffer<enc>& operator--() {
+    inline Buffer<enc>&
+    operator--()
+    {
         *this -= 1;
         return *this;
     }
 
-    inline Buffer<enc> operator--(int) {
+    inline Buffer<enc>
+    operator--(int)
+    {
         Buffer<enc> old = *this;
         operator--();
         return old; 
     }
 
-    inline npy_ucs4 operator*() {
+    inline npy_ucs4
+    operator*()
+    {
         int bytes;
         return getchar<enc>((unsigned char *) buf, &bytes);
     }
 
-    inline npy_ucs4 operator[](size_t index) {
+    inline npy_ucs4
+    operator[](size_t index)
+    {
         int bytes;
         switch (enc) {
         case ENCODING::ASCII:
@@ -128,7 +148,9 @@ struct Buffer {
         }
     }
 
-    inline Buffer<enc> fast_memchr(npy_ucs4 ch, int len) {
+    inline Buffer<enc>
+    buffer_memchr(npy_ucs4 ch, int len)
+    {
         switch (enc) {
         case ENCODING::ASCII:
             buf = (char *) memchr(buf, ch, len);
@@ -139,21 +161,54 @@ struct Buffer {
         }
     }
 
-    inline int fast_memcmp(Buffer<enc> other, int len) {
+    inline int
+    buffer_memcmp(Buffer<enc> other, int len)
+    {
         return memcmp(buf, other.buf, len);
+    }
+
+    inline void
+    buffer_memcpy(void *out, npy_int64 n_chars)
+    {
+        switch (enc) {
+        case ENCODING::ASCII:
+            memcpy(out, buf, n_chars);
+            break;
+        case ENCODING::UTF32:
+            memcpy(out, buf, n_chars * sizeof(npy_ucs4));
+            break;
+        }
+    }
+
+    inline void
+    buffer_memcpy_with_offset(void *out, npy_int64 offset, npy_int64 n_chars)
+    {
+        switch (enc) {
+        case ENCODING::ASCII:
+            buffer_memcpy((char *) out + offset, n_chars);
+            break;
+        case ENCODING::UTF32:
+            buffer_memcpy((char *) out + offset * sizeof(npy_ucs4), n_chars);
+            break;
+        }
+
     }
 };
 
 
 template <ENCODING enc>
-inline Buffer<enc> operator+(Buffer<enc> lhs, npy_int64 rhs) {
+inline Buffer<enc>
+operator+(Buffer<enc> lhs, npy_int64 rhs)
+{
     lhs += rhs;
     return lhs;
 }
 
 
 template <ENCODING enc>
-inline std::ptrdiff_t operator-(Buffer<enc> lhs, Buffer<enc> rhs) {
+inline std::ptrdiff_t
+operator-(Buffer<enc> lhs, Buffer<enc> rhs)
+{
     switch (enc) {
     case ENCODING::ASCII:
         return lhs.buf - rhs.buf;
@@ -164,44 +219,58 @@ inline std::ptrdiff_t operator-(Buffer<enc> lhs, Buffer<enc> rhs) {
 
 
 template <ENCODING enc>
-inline Buffer<enc> operator-(Buffer<enc> lhs, npy_int64 rhs) {
+inline Buffer<enc>
+operator-(Buffer<enc> lhs, npy_int64 rhs)
+{
     lhs -= rhs;
     return lhs;
 }
 
 
 template <ENCODING enc>
-inline bool operator==(Buffer<enc> lhs, Buffer<enc> rhs) {
+inline bool
+operator==(Buffer<enc> lhs, Buffer<enc> rhs)
+{
     return lhs.buf == rhs.buf;
 }
 
 
 template <ENCODING enc>
-inline bool operator!=(Buffer<enc> lhs, Buffer<enc> rhs) {
+inline bool
+operator!=(Buffer<enc> lhs, Buffer<enc> rhs)
+{
     return !(rhs == lhs);
 }
 
 
 template <ENCODING enc>
-inline bool operator<(Buffer<enc> lhs, Buffer<enc> rhs) {
+inline bool
+operator<(Buffer<enc> lhs, Buffer<enc> rhs)
+{
     return lhs.buf < rhs.buf;
 }
 
 
 template <ENCODING enc>
-inline bool operator>(Buffer<enc> lhs, Buffer<enc> rhs) {
+inline bool
+operator>(Buffer<enc> lhs, Buffer<enc> rhs)
+{
     return rhs < lhs;
 }
 
 
 template <ENCODING enc>
-inline bool operator<=(Buffer<enc> lhs, Buffer<enc> rhs) {
+inline bool
+operator<=(Buffer<enc> lhs, Buffer<enc> rhs)
+{
     return !(lhs > rhs);
 }
 
 
 template <ENCODING enc>
-inline bool operator>=(Buffer<enc> lhs, Buffer<enc> rhs) {
+inline bool
+operator>=(Buffer<enc> lhs, Buffer<enc> rhs)
+{
     return !(lhs < rhs);
 }
 
