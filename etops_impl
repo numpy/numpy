@@ -1,0 +1,2084 @@
+[1mdiff --git a/numpy/lib/_arraysetops_impl.py b/numpy/lib/_arraysetops_impl.py[m
+[1mindex af6bc6897..482a09574 100644[m
+[1m--- a/numpy/lib/_arraysetops_impl.py[m
+[1m+++ b/numpy/lib/_arraysetops_impl.py[m
+[36m@@ -22,1053 +22,1111 @@[m
+ [m
+ [m
+ array_function_dispatch = functools.partial([m
+[31m-    overrides.array_function_dispatch, module='numpy')[m
+[32m+[m	[32moverrides.array_function_dispatch, module="numpy"[m
+[32m+[m[32m)[m
+ [m
+ [m
+ __all__ = [[m
+[31m-    'ediff1d', 'intersect1d', 'setxor1d', 'union1d', 'setdiff1d', 'unique',[m
+[31m-    'in1d', 'isin', 'intersect2d', 'union2D'[m
+[31m-    ][m
+[32m+[m	[32m"ediff1d",[m
+[32m+[m	[32m"intersect1d",[m
+[32m+[m	[32m"setxor1d",[m
+[32m+[m	[32m"union1d",[m
+[32m+[m	[32m"setdiff1d",[m
+[32m+[m	[32m"unique",[m
+[32m+[m	[32m"in1d",[m
+[32m+[m	[32m"isin",[m
+[32m+[m	[32m"intersect2d",[m
+[32m+[m	[32m"union2D",[m
+[32m+[m[32m][m
+ [m
+ [m
+ def _ediff1d_dispatcher(ary, to_end=None, to_begin=None):[m
+[31m-    return (ary, to_end, to_begin)[m
+[32m+[m	[32mreturn (ary, to_end, to_begin)[m
+ [m
+ [m
+ @array_function_dispatch(_ediff1d_dispatcher)[m
+ def ediff1d(ary, to_end=None, to_begin=None):[m
+[31m-    """[m
+[31m-    The differences between consecutive elements of an array.[m
+[31m-[m
+[31m-    Parameters[m
+[31m-    ----------[m
+[31m-    ary : array_like[m
+[31m-        If necessary, will be flattened before the differences are taken.[m
+[31m-    to_end : array_like, optional[m
+[31m-        Number(s) to append at the end of the returned differences.[m
+[31m-    to_begin : array_like, optional[m
+[31m-        Number(s) to prepend at the beginning of the returned differences.[m
+[31m-[m
+[31m-    Returns[m
+[31m-    -------[m
+[31m-    ediff1d : ndarray[m
+[31m-        The differences. Loosely, this is ``ary.flat[1:] - ary.flat[:-1]``.[m
+[31m-[m
+[31m-    See Also[m
+[31m-    --------[m
+[31m-    diff, gradient[m
+[31m-[m
+[31m-    Notes[m
+[31m-    -----[m
+[31m-    When applied to masked arrays, this function drops the mask information[m
+[31m-    if the `to_begin` and/or `to_end` parameters are used.[m
+[31m-[m
+[31m-    Examples[m
+[31m-    --------[m
+[31m-    >>> x = np.array([1, 2, 4, 7, 0])[m
+[31m-    >>> np.ediff1d(x)[m
+[31m-    array([ 1,  2,  3, -7])[m
+[31m-[m
+[31m-    >>> np.ediff1d(x, to_begin=-99, to_end=np.array([88, 99]))[m
+[31m-    array([-99,   1,   2, ...,  -7,  88,  99])[m
+[31m-[m
+[31m-    The returned array is always 1D.[m
+[31m-[m
+[31m-    >>> y = [[1, 2, 4], [1, 6, 24]][m
+[31m-    >>> np.ediff1d(y)[m
+[31m-    array([ 1,  2, -3,  5, 18])[m
+[31m-[m
+[31m-    """[m
+[31m-    # force a 1d array[m
+[31m-    ary = np.asanyarray(ary).ravel()[m
+[31m-[m
+[31m-    # enforce that the dtype of `ary` is used for the output[m
+[31m-    dtype_req = ary.dtype[m
+[31m-[m
+[31m-    # fast track default case[m
+[31m-    if to_begin is None and to_end is None:[m
+[31m-        return ary[1:] - ary[:-1][m
+[31m-[m
+[31m-    if to_begin is None:[m
+[31m-        l_begin = 0[m
+[31m-    else:[m
+[31m-        to_begin = np.asanyarray(to_begin)[m
+[31m-        if not np.can_cast(to_begin, dtype_req, casting="same_kind"):[m
+[31m-            raise TypeError("dtype of `to_begin` must be compatible "[m
+[31m-                            "with input `ary` under the `same_kind` rule.")[m
+[31m-[m
+[31m-        to_begin = to_begin.ravel()[m
+[31m-        l_begin = len(to_begin)[m
+[31m-[m
+[31m-    if to_end is None:[m
+[31m-        l_end = 0[m
+[31m-    else:[m
+[31m-        to_end = np.asanyarray(to_end)[m
+[31m-        if not np.can_cast(to_end, dtype_req, casting="same_kind"):[m
+[31m-            raise TypeError("dtype of `to_end` must be compatible "[m
+[31m-                            "with input `ary` under the `same_kind` rule.")[m
+[31m-[m
+[31m-        to_end = to_end.ravel()[m
+[31m-        l_end = len(to_end)[m
+[31m-[m
+[31m-    # do the calculation in place and copy to_begin and to_end[m
+[31m-    l_diff = max(len(ary) - 1, 0)[m
+[31m-    result = np.empty(l_diff + l_begin + l_end, dtype=ary.dtype)[m
+[31m-    result = ary.__array_wrap__(result)[m
+[31m-    if l_begin > 0:[m
+[31m-        result[:l_begin] = to_begin[m
+[31m-    if l_end > 0:[m
+[31m-        result[l_begin + l_diff:] = to_end[m
+[31m-    np.subtract(ary[1:], ary[:-1], result[l_begin:l_begin + l_diff])[m
+[31m-    return result[m
+[32m+[m	[32m"""[m
+[32m+[m	[32mThe differences between consecutive elements of an array.[m
+[32m+[m
+[32m+[m	[32mParameters[m
+[32m+[m	[32m----------[m
+[32m+[m	[32mary : array_like[m
+[32m+[m	[32m    If necessary, will be flattened before the differences are taken.[m
+[32m+[m	[32mto_end : array_like, optional[m
+[32m+[m	[32m    Number(s) to append at the end of the returned differences.[m
+[32m+[m	[32mto_begin : array_like, optional[m
+[32m+[m	[32m    Number(s) to prepend at the beginning of the returned differences.[m
+[32m+[m
+[32m+[m	[32mReturns[m
+[32m+[m	[32m-------[m
+[32m+[m	[32mediff1d : ndarray[m
+[32m+[m	[32m    The differences. Loosely, this is ``ary.flat[1:] - ary.flat[:-1]``.[m
+[32m+[m
+[32m+[m	[32mSee Also[m
+[32m+[m	[32m--------[m
+[32m+[m	[32mdiff, gradient[m
+[32m+[m
+[32m+[m	[32mNotes[m
+[32m+[m	[32m-----[m
+[32m+[m	[32mWhen applied to masked arrays, this function drops the mask information[m
+[32m+[m	[32mif the `to_begin` and/or `to_end` parameters are used.[m
+[32m+[m
+[32m+[m	[32mExamples[m
+[32m+[m	[32m--------[m
+[32m+[m	[32m>>> x = np.array([1, 2, 4, 7, 0])[m
+[32m+[m	[32m>>> np.ediff1d(x)[m
+[32m+[m	[32marray([ 1,  2,  3, -7])[m
+[32m+[m
+[32m+[m	[32m>>> np.ediff1d(x, to_begin=-99, to_end=np.array([88, 99]))[m
+[32m+[m	[32marray([-99,   1,   2, ...,  -7,  88,  99])[m
+[32m+[m
+[32m+[m	[32mThe returned array is always 1D.[m
+[32m+[m
+[32m+[m	[32m>>> y = [[1, 2, 4], [1, 6, 24]][m
+[32m+[m	[32m>>> np.ediff1d(y)[m
+[32m+[m	[32marray([ 1,  2, -3,  5, 18])[m
+[32m+[m
+[32m+[m	[32m"""[m
+[32m+[m	[32m# force a 1d array[m
+[32m+[m	[32mary = np.asanyarray(ary).ravel()[m
+[32m+[m
+[32m+[m	[32m# enforce that the dtype of `ary` is used for the output[m
+[32m+[m	[32mdtype_req = ary.dtype[m
+[32m+[m
+[32m+[m	[32m# fast track default case[m
+[32m+[m	[32mif to_begin is None and to_end is None:[m
+[32m+[m		[32mreturn ary[1:] - ary[:-1][m
+[32m+[m
+[32m+[m	[32mif to_begin is None:[m
+[32m+[m		[32ml_begin = 0[m
+[32m+[m	[32melse:[m
+[32m+[m		[32mto_begin = np.asanyarray(to_begin)[m
+[32m+[m		[32mif not np.can_cast(to_begin, dtype_req, casting="same_kind"):[m
+[32m+[m			[32mraise TypeError([m
+[32m+[m				[32m"dtype of `to_begin` must be compatible "[m
+[32m+[m				[32m"with input `ary` under the `same_kind` rule."[m
+[32m+[m			[32m)[m
+[32m+[m
+[32m+[m		[32mto_begin = to_begin.ravel()[m
+[32m+[m		[32ml_begin = len(to_begin)[m
+[32m+[m
+[32m+[m	[32mif to_end is None:[m
+[32m+[m		[32ml_end = 0[m
+[32m+[m	[32melse:[m
+[32m+[m		[32mto_end = np.asanyarray(to_end)[m
+[32m+[m		[32mif not np.can_cast(to_end, dtype_req, casting="same_kind"):[m
+[32m+[m			[32mraise TypeError([m
+[32m+[m				[32m"dtype of `to_end` must be compatible "[m
+[32m+[m				[32m"with input `ary` under the `same_kind` rule."[m
+[32m+[m			[32m)[m
+[32m+[m
+[32m+[m		[32mto_end = to_end.ravel()[m
+[32m+[m		[32ml_end = len(to_end)[m
+[32m+[m
+[32m+[m	[32m# do the calculation in place and copy to_begin and to_end[m
+[32m+[m	[32ml_diff = max(len(ary) - 1, 0)[m
+[32m+[m	[32mresult = np.empty(l_diff + l_begin + l_end, dtype=ary.dtype)[m
+[32m+[m	[32mresult = ary.__array_wrap__(result)[m
+[32m+[m	[32mif l_begin > 0:[m
+[32m+[m		[32mresult[:l_begin] = to_begin[m
+[32m+[m	[32mif l_end > 0:[m
+[32m+[m		[32mresult[l_begin + l_diff :] = to_end[m
+[32m+[m	[32mnp.subtract(ary[1:], ary[:-1], result[l_begin : l_begin + l_diff])[m
+[32m+[m	[32mreturn result[m
+ [m
+ [m
+ def _unpack_tuple(x):[m
+[31m-    """ Unpacks one-element tuples for use as return values """[m
+[31m-    if len(x) == 1:[m
+[31m-        return x[0][m
+[31m-    else:[m
+[31m-        return x[m
+[32m+[m	[32m"""Unpacks one-element tuples for use as return values"""[m
+[32m+[m	[32mif len(x) == 1:[m
+[32m+[m		[32mreturn x[0][m
+[32m+[m	[32melse:[m
+[32m+[m		[32mreturn x[m
+ [m
+ [m
+[31m-def _unique_dispatcher(ar, return_index=None, return_inverse=None,[m
+[31m-                       return_counts=None, axis=None, *, equal_nan=None):[m
+[31m-    return (ar,)[m
+[32m+[m[32mdef _unique_dispatcher([m
+[32m+[m	[32mar,[m
+[32m+[m	[32mreturn_index=None,[m
+[32m+[m	[32mreturn_inverse=None,[m
+[32m+[m	[32mreturn_counts=None,[m
+[32m+[m	[32maxis=None,[m
+[32m+[m	[32m*,[m
+[32m+[m	[32mequal_nan=None,[m
+[32m+[m[32m):[m
+[32m+[m	[32mreturn (ar,)[m
+ [m
+ [m
+ @array_function_dispatch(_unique_dispatcher)[m
+[31m-def unique(ar, return_index=False, return_inverse=False,[m
+[31m-           return_counts=False, axis=None, *, equal_nan=True):[m
+[31m-    """[m
+[31m-    Find the unique elements of an array.[m
+[31m-[m
+[31m-    Returns the sorted unique elements of an array. There are three optional[m
+[31m-    outputs in addition to the unique elements:[m
+[31m-[m
+[31m-    * the indices of the input array that give the unique values[m
+[31m-    * the indices of the unique array that reconstruct the input array[m
+[31m-    * the number of times each unique value comes up in the input array[m
+[31m-[m
+[31m-    Parameters[m
+[31m-    ----------[m
+[31m-    ar : array_like[m
+[31m-        Input array. Unless `axis` is specified, this will be flattened if it[m
+[31m-        is not already 1-D.[m
+[31m-    return_index : bool, optional[m
+[31m-        If True, also return the indices of `ar` (along the specified axis,[m
+[31m-        if provided, or in the flattened array) that result in the unique array.[m
+[31m-    return_inverse : bool, optional[m
+[31m-        If True, also return the indices of the unique array (for the specified[m
+[31m-        axis, if provided) that can be used to reconstruct `ar`.[m
+[31m-    return_counts : bool, optional[m
+[31m-        If True, also return the number of times each unique item appears[m
+[31m-        in `ar`.[m
+[31m-    axis : int or None, optional[m
+[31m-        The axis to operate on. If None, `ar` will be flattened. If an integer,[m
+[31m-        the subarrays indexed by the given axis will be flattened and treated[m
+[31m-        as the elements of a 1-D array with the dimension of the given axis,[m
+[31m-        see the notes for more details.  Object arrays or structured arrays[m
+[31m-        that contain objects are not supported if the `axis` kwarg is used. The[m
+[31m-        default is None.[m
+[31m-[m
+[31m-        .. versionadded:: 1.13.0[m
+[31m-[m
+[31m-    equal_nan : bool, optional[m
+[31m-        If True, collapses multiple NaN values in the return array into one.[m
+[31m-[m
+[31m-        .. versionadded:: 1.24[m
+[31m-[m
+[31m-    Returns[m
+[31m-    -------[m
+[31m-    unique : ndarray[m
+[31m-        The sorted unique values.[m
+[31m-    unique_indices : ndarray, optional[m
+[31m-        The indices of the first occurrences of the unique values in the[m
+[31m-        original array. Only provided if `return_index` is True.[m
+[31m-    unique_inverse : ndarray, optional[m
+[31m-        The indices to reconstruct the original array from the[m
+[31m-        unique array. Only provided if `return_inverse` is True.[m
+[31m-    unique_counts : ndarray, optional[m
+[31m-        The number of times each of the unique values comes up in the[m
+[31m-        original array. Only provided if `return_counts` is True.[m
+[31m-[m
+[31m-        .. versionadded:: 1.9.0[m
+[31m-[m
+[31m-    See Also[m
+[31m-    --------[m
+[31m-    repeat : Repeat elements of an array.[m
+[31m-[m
+[31m-    Notes[m
+[31m-    -----[m
+[31m-    When an axis is specified the subarrays indexed by the axis are sorted.[m
+[31m-    This is done by making the specified axis the first dimension of the array[m
+[31m-    (move the axis to the first dimension to keep the order of the other axes)[m
+[31m-    and then flattening the subarrays in C order. The flattened subarrays are[m
+[31m-    then viewed as a structured type with each element given a label, with the[m
+[31m-    effect that we end up with a 1-D array of structured types that can be[m
+[31m-    treated in the same way as any other 1-D array. The result is that the[m
+[31m-    flattened subarrays are sorted in lexicographic order starting with the[m
+[31m-    first element.[m
+[31m-[m
+[31m-    .. versionchanged: NumPy 1.21[m
+[31m-        If nan values are in the input array, a single nan is put[m
+[31m-        to the end of the sorted unique values.[m
+[31m-[m
+[31m-        Also for complex arrays all NaN values are considered equivalent[m
+[31m-        (no matter whether the NaN is in the real or imaginary part).[m
+[31m-        As the representant for the returned array the smallest one in the[m
+[31m-        lexicographical order is chosen - see np.sort for how the lexicographical[m
+[31m-        order is defined for complex arrays.[m
+[31m-[m
+[31m-    Examples[m
+[31m-    --------[m
+[31m-    >>> np.unique([1, 1, 2, 2, 3, 3])[m
+[31m-    array([1, 2, 3])[m
+[31m-    >>> a = np.array([[1, 1], [2, 3]])[m
+[31m-    >>> np.unique(a)[m
+[31m-    array([1, 2, 3])[m
+[31m-[m
+[31m-    Return the unique rows of a 2D array[m
+[31m-[m
+[31m-    >>> a = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 4]])[m
+[31m-    >>> np.unique(a, axis=0)[m
+[31m-    array([[1, 0, 0], [2, 3, 4]])[m
+[31m-[m
+[31m-    Return the indices of the original array that give the unique values:[m
+[31m-[m
+[31m-    >>> a = np.array(['a', 'b', 'b', 'c', 'a'])[m
+[31m-    >>> u, indices = np.unique(a, return_index=True)[m
+[31m-    >>> u[m
+[31m-    array(['a', 'b', 'c'], dtype='<U1')[m
+[31m-    >>> indices[m
+[31m-    array([0, 1, 3])[m
+[31m-    >>> a[indices][m
+[31m-    array(['a', 'b', 'c'], dtype='<U1')[m
+[31m-[m
+[31m-    Reconstruct the input array from the unique values and inverse:[m
+[31m-[m
+[31m-    >>> a = np.array([1, 2, 6, 4, 2, 3, 2])[m
+[31m-    >>> u, indices = np.unique(a, return_inverse=True)[m
+[31m-    >>> u[m
+[31m-    array([1, 2, 3, 4, 6])[m
+[31m-    >>> indices[m
+[31m-    array([0, 1, 4, 3, 1, 2, 1])[m
+[31m-    >>> u[indices][m
+[31m-    array([1, 2, 6, 4, 2, 3, 2])[m
+[31m-[m
+[31m-    Reconstruct the input values from the unique values and counts:[m
+[31m-[m
+[31m-    >>> a = np.array([1, 2, 6, 4, 2, 3, 2])[m
+[31m-    >>> values, counts = np.unique(a, return_counts=True)[m
+[31m-    >>> values[m
+[31m-    array([1, 2, 3, 4, 6])[m
+[31m-    >>> counts[m
+[31m-    array([1, 3, 1, 1, 1])[m
+[31m-    >>> np.repeat(values, counts)[m
+[31m-    array([1, 2, 2, 2, 3, 4, 6])    # original order not preserved[m
+[31m-[m
+[31m-    """[m
+[31m-    ar = np.asanyarray(ar)[m
+[31m-    if axis is None:[m
+[31m-        ret = _unique1d(ar, return_index, return_inverse, return_counts, [m
+[31m-                        equal_nan=equal_nan)[m
+[31m-        return _unpack_tuple(ret)[m
+[31m-[m
+[31m-    # axis was specified and not None[m
+[31m-    try:[m
+[31m-        ar = np.moveaxis(ar, axis, 0)[m
+[31m-    except np.exceptions.AxisError:[m
+[31m-        # this removes the "axis1" or "axis2" prefix from the error message[m
+[31m-        raise np.exceptions.AxisError(axis, ar.ndim) from None[m
+[31m-[m
+[31m-    # Must reshape to a contiguous 2D array for this to work...[m
+[31m-    orig_shape, orig_dtype = ar.shape, ar.dtype[m
+[31m-    ar = ar.reshape(orig_shape[0], np.prod(orig_shape[1:], dtype=np.intp))[m
+[31m-    ar = np.ascontiguousarray(ar)[m
+[31m-    dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])][m
+[31m-[m
+[31m-    # At this point, `ar` has shape `(n, m)`, and `dtype` is a structured[m
+[31m-    # data type with `m` fields where each field has the data type of `ar`.[m
+[31m-    # In the following, we create the array `consolidated`, which has[m
+[31m-    # shape `(n,)` with data type `dtype`.[m
+[31m-    try:[m
+[31m-        if ar.shape[1] > 0:[m
+[31m-            consolidated = ar.view(dtype)[m
+[31m-        else:[m
+[31m-            # If ar.shape[1] == 0, then dtype will be `np.dtype([])`, which is[m
+[31m-            # a data type with itemsize 0, and the call `ar.view(dtype)` will[m
+[31m-            # fail.  Instead, we'll use `np.empty` to explicitly create the[m
+[31m-            # array with shape `(len(ar),)`.  Because `dtype` in this case has[m
+[31m-            # itemsize 0, the total size of the result is still 0 bytes.[m
+[31m-            consolidated = np.empty(len(ar), dtype=dtype)[m
+[31m-    except TypeError as e:[m
+[31m-        # There's no good way to do this for object arrays, etc...[m
+[31m-        msg = 'The axis argument to unique is not supported for dtype {dt}'[m
+[31m-        raise TypeError(msg.format(dt=ar.dtype)) from e[m
+[31m-[m
+[31m-    def reshape_uniq(uniq):[m
+[31m-        n = len(uniq)[m
+[31m-        uniq = uniq.view(orig_dtype)[m
+[31m-        uniq = uniq.reshape(n, *orig_shape[1:])[m
+[31m-        uniq = np.moveaxis(uniq, 0, axis)[m
+[31m-        return uniq[m
+[31m-[m
+[31m-    output = _unique1d(consolidated, return_index,[m
+[31m-                       return_inverse, return_counts, equal_nan=equal_nan)[m
+[31m-    output = (reshape_uniq(output[0]),) + output[1:][m
+[31m-    return _unpack_tuple(output)[m
+[31m-[m
+[31m-[m
+[31m-def _unique1d(ar, return_index=False, return_inverse=False,[m
+[31m-              return_counts=False, *, equal_nan=True):[m
+[31m-    """[m
+[31m-    Find the unique elements of an array, ignoring shape.[m
+[31m-    """[m
+[31m-    ar = np.asanyarray(ar).flatten()[m
+[31m-[m
+[31m-    optional_indices = return_index or return_inverse[m
+[31m-[m
+[31m-    if optional_indices:[m
+[31m-        perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')[m
+[31m-        aux = ar[perm][m
+[31m-    else:[m
+[31m-        ar.sort()[m
+[31m-        aux = ar[m
+[31m-    mask = np.empty(aux.shape, dtype=np.bool_)[m
+[31m-    mask[:1] = True[m
+[31m-    if (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and[m
+[31m-            np.isnan(aux[-1])):[m
+[31m-        if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent[m
+[31m-            aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')[m
+[31m-        else:[m
+[31m-            aux_firstnan = np.searchsorted(aux, aux[-1], side='left')[m
+[31m-        if aux_firstnan > 0:[m
+[31m-            mask[1:aux_firstnan] = ([m
+[31m-                aux[1:aux_firstnan] != aux[:aux_firstnan - 1])[m
+[31m-        mask[aux_firstnan] = True[m
+[31m-        mask[aux_firstnan + 1:] = False[m
+[31m-    else:[m
+[31m-        mask[1:] = aux[1:] != aux[:-1][m
+[31m-[m
+[31m-    ret = (aux[mask],)[m
+[31m-    if return_index:[m
+[31m-        ret += (perm[mask],)[m
+[31m-    if return_inverse:[m
+[31m-        imask = np.cumsum(mask) - 1[m
+[31m-        inv_idx = np.empty(mask.shape, dtype=np.intp)[m
+[31m-        inv_idx[perm] = imask[m
+[31m-        ret += (inv_idx,)[m
+[31m-    if return_counts:[m
+[31m-        idx = np.concatenate(np.nonzero(mask) + ([mask.size],))[m
+[31m-        ret += (np.diff(idx),)[m
+[31m-    return ret[m
+[31m-[m
+[31m-[m
+[31m-def _intersect1d_dispatcher([m
+[31m-        ar1, ar2, assume_unique=None, return_indices=None):[m
+[31m-    return (ar1, ar2)[m
+[32m+[m[32mdef unique([m
+[32m+[m	[32mar,[m
+[32m+[m	[32mreturn_index=False,[m
+[32m+[m	[32mreturn_inverse=False,[m
+[32m+[m	[32mreturn_counts=False,[m
+[32m+[m	[32maxis=None,[m
+[32m+[m	[32m*,[m
+[32m+[m	[32mequal_nan=True,[m
+[32m+[m[32m):[m
+[32m+[m	[32m"""[m
+[32m+[m	[32mFind the unique elements of an array.[m
+[32m+[m
+[32m+[m	[32mReturns the sorted unique elements of an array. There are three optional[m
+[32m+[m	[32moutputs in addition to the unique elements:[m
+[32m+[m
+[32m+[m	[32m* the indices of the input array that give the unique values[m
+[32m+[m	[32m* the indices of the unique array that reconstruct the input array[m
+[32m+[m	[32m* the number of times each unique value comes up in the input array[m
+[32m+[m
+[32m+[m	[32mParameters[m
+[32m+[m	[32m----------[m
+[32m+[m	[32mar : array_like[m
+[32m+[m	[32m    Input array. Unless `axis` is specified, this will be flattened if it[m
+[32m+[m	[32m    is not already 1-D.[m
+[32m+[m	[32mreturn_index : bool, optional[m
+[32m+[m	[32m    If True, also return the indices of `ar` (along the specified axis,[m
+[32m+[m	[32m    if provided, or in the flattened array) that result in the unique array.[m
+[32m+[m	[32mreturn_inverse : bool, optional[m
+[32m+[m	[32m    If True, also return the indices of the unique array (for the specified[m
+[32m+[m	[32m    axis, if provided) that can be used to reconstruct `ar`.[m
+[32m+[m	[32mreturn_counts : bool, optional[m
+[32m+[m	[32m    If True, also return the number of times each unique item appears[m
+[32m+[m	[32m    in `ar`.[m
+[32m+[m	[32maxis : int or None, optional[m
+[32m+[m	[32m    The axis to operate on. If None, `ar` will be flattened. If an integer,[m
+[32m+[m	[32m    the subarrays indexed by the given axis will be flattened and treated[m
+[32m+[m	[32m    as the elements of a 1-D array with the dimension of the given axis,[m
+[32m+[m	[32m    see the notes for more details.  Object arrays or structured arrays[m
+[32m+[m	[32m    that contain objects are not supported if the `axis` kwarg is used. The[m
+[32m+[m	[32m    default is None.[m
+[32m+[m
+[32m+[m	[32m    .. versionadded:: 1.13.0[m
+[32m+[m
+[32m+[m	[32mequal_nan : bool, optional[m
+[32m+[m	[32m    If True, collapses multiple NaN values in the return array into one.[m
+[32m+[m
+[32m+[m	[32m    .. versionadded:: 1.24[m
+[32m+[m
+[32m+[m	[32mReturns[m
+[32m+[m	[32m-------[m
+[32m+[m	[32munique : ndarray[m
+[32m+[m	[32m    The sorted unique values.[m
+[32m+[m	[32munique_indices : ndarray, optional[m
+[32m+[m	[32m    The indices of the first occurrences of the unique values in the[m
+[32m+[m	[32m    original array. Only provided if `return_index` is True.[m
+[32m+[m	[32munique_inverse : ndarray, optional[m
+[32m+[m	[32m    The indices to reconstruct the original array from the[m
+[32m+[m	[32m    unique array. Only provided if `return_inverse` is True.[m
+[32m+[m	[32munique_counts : ndarray, optional[m
+[32m+[m	[32m    The number of times each of the unique values comes up in the[m
+[32m+[m	[32m    original array. Only provided if `return_counts` is True.[m
+[32m+[m
+[32m+[m	[32m    .. versionadded:: 1.9.0[m
+[32m+[m
+[32m+[m	[32mSee Also[m
+[32m+[m	[32m--------[m
+[32m+[m	[32mrepeat : Repeat elements of an array.[m
+[32m+[m
+[32m+[m	[32mNotes[m
+[32m+[m	[32m-----[m
+[32m+[m	[32mWhen an axis is specified the subarrays indexed by the axis are sorted.[m
+[32m+[m	[32mThis is done by making the specified axis the first dimension of the array[m
+[32m+[m	[32m(move the axis to the first dimension to keep the order of the other axes)[m
+[32m+[m	[32mand then flattening the subarrays in C order. The flattened subarrays are[m
+[32m+[m	[32mthen viewed as a structured type with each element given a label, with the[m
+[32m+[m	[32meffect that we end up with a 1-D array of structured types that can be[m
+[32m+[m	[32mtreated in the same way as any other 1-D array. The result is that the[m
+[32m+[m	[32mflattened subarrays are sorted in lexicographic order starting with the[m
+[32m+[m	[32mfirst element.[m
+[32m+[m
+[32m+[m	[32m.. versionchanged: NumPy 1.21[m
+[32m+[m	[32m    If nan values are in the input array, a single nan is put[m
+[32m+[m	[32m    to the end of the sorted unique values.[m
+[32m+[m
+[32m+[m	[32m    Also for complex arrays all NaN values are considered equivalent[m
+[32m+[m	[32m    (no matter whether the NaN is in the real or imaginary part).[m
+[32m+[m	[32m    As the representant for the returned array the smallest one in the[m
+[32m+[m	[32m    lexicographical order is chosen - see np.sort for how the lexicographical[m
+[32m+[m	[32m    order is defined for complex arrays.[m
+[32m+[m
+[32m+[m	[32mExamples[m
+[32m+[m	[32m--------[m
+[32m+[m	[32m>>> np.unique([1, 1, 2, 2, 3, 3])[m
+[32m+[m	[32marray([1, 2, 3])[m
+[32m+[m	[32m>>> a = np.array([[1, 1], [2, 3]])[m
+[32m+[m	[32m>>> np.unique(a)[m
+[32m+[m	[32marray([1, 2, 3])[m
+[32m+[m
+[32m+[m	[32mReturn the unique rows of a 2D array[m
+[32m+[m
+[32m+[m	[32m>>> a = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 4]])[m
+[32m+[m	[32m>>> np.unique(a, axis=0)[m
+[32m+[m	[32marray([[1, 0, 0], [2, 3, 4]])[m
+[32m+[m
+[32m+[m	[32mReturn the indices of the original array that give the unique values:[m
+[32m+[m
+[32m+[m	[32m>>> a = np.array(['a', 'b', 'b', 'c', 'a'])[m
+[32m+[m	[32m>>> u, indices = np.unique(a, return_index=True)[m
+[32m+[m	[32m>>> u[m
+[32m+[m	[32marray(['a', 'b', 'c'], dtype='<U1')[m
+[32m+[m	[32m>>> indices[m
+[32m+[m	[32marray([0, 1, 3])[m
+[32m+[m	[32m>>> a[indices][m
+[32m+[m	[32marray(['a', 'b', 'c'], dtype='<U1')[m
+[32m+[m
+[32m+[m	[32mReconstruct the input array from the unique values and inverse:[m
+[32m+[m
+[32m+[m	[32m>>> a = np.array([1, 2, 6, 4, 2, 3, 2])[m
+[32m+[m	[32m>>> u, indices = np.unique(a, return_inverse=True)[m
+[32m+[m	[32m>>> u[m
+[32m+[m	[32marray([1, 2, 3, 4, 6])[m
+[32m+[m	[32m>>> indices[m
+[32m+[m	[32marray([0, 1, 4, 3, 1, 2, 1])[m
+[32m+[m	[32m>>> u[indices][m
+[32m+[m	[32marray([1, 2, 6, 4, 2, 3, 2])[m
+[32m+[m
+[32m+[m	[32mReconstruct the input values from the unique values and counts:[m
+[32m+[m
+[32m+[m	[32m>>> a = np.array([1, 2, 6, 4, 2, 3, 2])[m
+[32m+[m	[32m>>> values, counts = np.unique(a, return_counts=True)[m
+[32m+[m	[32m>>> values[m
+[32m+[m	[32marray([1, 2, 3, 4, 6])[m
+[32m+[m	[32m>>> counts[m
+[32m+[m	[32marray([1, 3, 1, 1, 1])[m
+[32m+[m	[32m>>> np.repeat(values, counts)[m
+[32m+[m	[32marray([1, 2, 2, 2, 3, 4, 6])    # original order not preserved[m
+[32m+[m
+[32m+[m	[32m"""[m
+[32m+[m	[32mar = np.asanyarray(ar)[m
+[32m+[m	[32mif axis is None:[m
+[32m+[m		[32mret = _unique1d([m
+[32m+[m			[32mar, return_index, return_inverse, return_counts, equal_nan=equal_nan[m
+[32m+[m		[32m)[m
+[32m+[m		[32mreturn _unpack_tuple(ret)[m
+[32m+[m
+[32m+[m	[32m# axis was specified and not None[m
+[32m+[m	[32mtry:[m
+[32m+[m		[32mar = np.moveaxis(ar, axis, 0)[m
+[32m+[m	[32mexcept np.exceptions.AxisError:[m
+[32m+[m		[32m# this removes the "axis1" or "axis2" prefix from the error message[m
+[32m+[m		[32mraise np.exceptions.AxisError(axis, ar.ndim) from None[m
+[32m+[m
+[32m+[m	[32m# Must reshape to a contiguous 2D array for this to work...[m
+[32m+[m	[32morig_shape, orig_dtype = ar.shape, ar.dtype[m
+[32m+[m	[32mar = ar.reshape(orig_shape[0], np.prod(orig_shape[1:], dtype=np.intp))[m
+[32m+[m	[32mar = np.ascontiguousarray(ar)[m
+[32m+[m	[32mdtype = [("f{i}".format(i=i), ar.dtype) for i in range(ar.shape[1])][m
+[32m+[m
+[32m+[m	[32m# At this point, `ar` has shape `(n, m)`, and `dtype` is a structured[m
+[32m+[m	[32m# data type with `m` fields where each field has the data type of `ar`.[m
+[32m+[m	[32m# In the following, we create the array `consolidated`, which has[m
+[32m+[m	[32m# shape `(n,)` with data type `dtype`.[m
+[32m+[m	[32mtry:[m
+[32m+[m		[32mif ar.shape[1] > 0:[m
+[32m+[m			[32mconsolidated = ar.view(dtype)[m
+[32m+[m		[32melse:[m
+[32m+[m			[32m# If ar.shape[1] == 0, then dtype will be `np.dtype([])`, which is[m
+[32m+[m			[32m# a data type with itemsize 0, and the call `ar.view(dtype)` will[m
+[32m+[m			[32m# fail.  Instead, we'll use `np.empty` to explicitly create the[m
+[32m+[m			[32m# array with shape `(len(ar),)`.  Because `dtype` in this case has[m
+[32m+[m			[32m# itemsize 0, the total size of the result is still 0 bytes.[m
+[32m+[m			[32mconsolidated = np.empty(len(ar), dtype=dtype)[m
+[32m+[m	[32mexcept TypeError as e:[m
+[32m+[m		[32m# There's no good way to do this for object arrays, etc...[m
+[32m+[m		[32mmsg = "The axis argument to unique is not supported for dtype {dt}"[m
+[32m+[m		[32mraise TypeError(msg.format(dt=ar.dtype)) from e[m
+[32m+[m
+[32m+[m	[32mdef reshape_uniq(uniq):[m
+[32m+[m		[32mn = len(uniq)[m
+[32m+[m		[32muniq = uniq.view(orig_dtype)[m
+[32m+[m		[32muniq = uniq.reshape(n, *orig_shape[1:])[m
+[32m+[m		[32muniq = np.moveaxis(uniq, 0, axis)[m
+[32m+[m		[32mreturn uniq[m
+[32m+[m
+[32m+[m	[32moutput = _unique1d([m
+[32m+[m		[32mconsolidated, return_index, return_inverse, return_counts, equal_nan=equal_nan[m
+[32m+[m	[32m)[m
+[32m+[m	[32moutput = (reshape_uniq(output[0]),) + output[1:][m
+[32m+[m	[32mreturn _unpack_tuple(output)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef _unique1d([m
+[32m+[m	[32mar, return_index=False, return_inverse=False, return_counts=False, *, equal_nan=True[m
+[32m+[m[32m):[m
+[32m+[m	[32m"""[m
+[32m+[m	[32mFind the unique elements of an array, ignoring shape.[m
+[32m+[m	[32m"""[m
+[32m+[m	[32mar = np.asanyarray(ar).flatten()[m
+[32m+[m
+[32m+[m	[32moptional_indices = return_index or return_inverse[m
+[32m+[m
+[32m+[m	[32mif optional_indices:[m
+[32m+[m		[32mperm = ar.argsort(kind="mergesort" if return_index else "quicksort")[m
+[32m+[m		[32maux = ar[perm][m
+[32m+[m	[32melse:[m
+[32m+[m		[32mar.sort()[m
+[32m+[m		[32maux = ar[m
+[32m+[m	[32mmask = np.empty(aux.shape, dtype=np.bool_)[m
+[32m+[m	[32mmask[:1] = True[m
+[32m+[m	[32mif ([m
+[32m+[m		[32mequal_nan[m
+[32m+[m		[32mand aux.shape[0] > 0[m
+[32m+[m		[32mand aux.dtype.kind in "cfmM"[m
+[32m+[m		[32mand np.isnan(aux[-1])[m
+[32m+[m	[32m):[m
+[32m+[m		[32mif aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent[m
+[32m+[m			[32maux_firstnan = np.searchsorted(np.isnan(aux), True, side="left")[m
+[32m+[m		[32melse:[m
+[32m+[m			[32maux_firstnan = np.searchsorted(aux, aux[-1], side="left")[m
+[32m+[m		[32mif aux_firstnan > 0:[m
+[32m+[m			[32mmask[1:aux_firstnan] = aux[1:aux_firstnan] != aux[: aux_firstnan - 1][m
+[32m+[m		[32mmask[aux_firstnan] = True[m
+[32m+[m		[32mmask[aux_firstnan + 1 :] = False[m
+[32m+[m	[32melse:[m
+[32m+[m		[32mmask[1:] = aux[1:] != aux[:-1][m
+[32m+[m
+[32m+[m	[32mret = (aux[mask],)[m
+[32m+[m	[32mif return_index:[m
+[32m+[m		[32mret += (perm[mask],)[m
+[32m+[m	[32mif return_inverse:[m
+[32m+[m		[32mimask = np.cumsum(mask) - 1[m
+[32m+[m		[32minv_idx = np.empty(mask.shape, dtype=np.intp)[m
+[32m+[m		[32minv_idx[perm] = imask[m
+[32m+[m		[32mret += (inv_idx,)[m
+[32m+[m	[32mif return_counts:[m
+[32m+[m		[32midx = np.concatenate(np.nonzero(mask) + ([mask.size],))[m
+[32m+[m		[32mret += (np.diff(idx),)[m
+[32m+[m	[32mreturn ret[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef _intersect1d_dispatcher(ar1, ar2, assume_unique=None, return_indices=None):[m
+[32m+[m	[32mreturn (ar1, ar2)[m
+ [m
+ [m
+ @array_function_dispatch(_intersect1d_dispatcher)[m
+ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):[m
+[31m-    """[m
+[31m-    Find the intersection of two arrays.[m
+[31m-[m
+[31m-    Return the sorted, unique values that are in both of the input arrays.[m
+[31m-[m
+[31m-    Parameters[m
+[31m-    ----------[m
+[31m-    ar1, ar2 : array_like[m
+[31m-        Input arrays. Will be flattened if not already 1D.[m
+[31m-    assume_unique : bool[m
+[31m-        If True, the input arrays are both assumed to be unique, which[m
+[31m-        can speed up the calculation.  If True but ``ar1`` or ``ar2`` are not[m
+[31m-        unique, incorrect results and out-of-bounds indices could result.[m
+[31m-        Default is False.[m
+[31m-    return_indices : bool[m
+[31m-        If True, the indices which correspond to the intersection of the two[m
+[31m-        arrays are returned. The first instance of a value is used if there are[m
+[31m-        multiple. Default is False.[m
+[31m-[m
+[31m-        .. versionadded:: 1.15.0[m
+[31m-[m
+[31m-    Returns[m
+[31m-    -------[m
+[31m-    intersect1d : ndarray[m
+[31m-        Sorted 1D array of common and unique elements.[m
+[31m-    comm1 : ndarray[m
+[31m-        The indices of the first occurrences of the common values in `ar1`.[m
+[31m-        Only provided if `return_indices` is True.[m
+[31m-    comm2 : ndarray[m
+[31m-        The indices of the first occurrences of the common values in `ar2`.[m
+[31m-        Only provided if `return_indices` is True.[m
+[31m-[m
+[31m-    Examples[m
+[31m-    --------[m
+[31m-    >>> np.intersect1d([1, 3, 4, 3], [3, 1, 2, 1])[m
+[31m-    array([1, 3])[m
+[31m-[m
+[31m-    To intersect more than two arrays, use functools.reduce:[m
+[31m-[m
+[31m-    >>> from functools import reduce[m
+[31m-    >>> reduce(np.intersect1d, ([1, 3, 4, 3], [3, 1, 2, 1], [6, 3, 4, 2]))[m
+[31m-    array([3])[m
+[31m-[m
+[31m-    To return the indices of the values common to the input arrays[m
+[31m-    along with the intersected values:[m
+[31m-[m
+[31m-    >>> x = np.array([1, 1, 2, 3, 4])[m
+[31m-    >>> y = np.array([2, 1, 4, 6])[m
+[31m-    >>> xy, x_ind, y_ind = np.intersect1d(x, y, return_indices=True)[m
+[31m-    >>> x_ind, y_ind[m
+[31m-    (array([0, 2, 4]), array([1, 0, 2]))[m
+[31m-    >>> xy, x[x_ind], y[y_ind][m
+[31m-    (array([1, 2, 4]), array([1, 2, 4]), array([1, 2, 4]))[m
+[31m-[m
+[31m-    """[m
+[31m-    ar1 = np.asanyarray(ar1)[m
+[31m-    ar2 = np.asanyarray(ar2)[m
+[31m-[m
+[31m-    if not assume_unique:[m
+[31m-        if return_indices:[m
+[31m-            ar1, ind1 = unique(ar1, return_index=True)[m
+[31m-            ar2, ind2 = unique(ar2, return_index=True)[m
+[31m-        else:[m
+[31m-            ar1 = unique(ar1)[m
+[31m-            ar2 = unique(ar2)[m
+[31m-    else:[m
+[31m-        ar1 = ar1.ravel()[m
+[31m-        ar2 = ar2.ravel()[m
+[31m-[m
+[31m-    aux = np.concatenate((ar1, ar2))[m
+[31m-    if return_indices:[m
+[31m-        aux_sort_indices = np.argsort(aux, kind='mergesort')[m
+[31m-        aux = aux[aux_sort_indices][m
+[31m-    else:[m
+[31m-        aux.sort()[m
+[31m-[m
+[31m-    mask = aux[1:] == aux[:-1][m
+[31m-    int1d = aux[:-1][mask][m
+[31m-[m
+[31m-    if return_indices:[m
+[31m-        ar1_indices = aux_sort_indices[:-1][mask][m
+[31m-        ar2_indices = aux_sort_indices[1:][mask] - ar1.size[m
+[31m-        if not assume_unique:[m
+[31m-            ar1_indices = ind1[ar1_indices][m
+[31m-            ar2_indices = ind2[ar2_indices][m
+[31m-[m
+[31m-        return int1d, ar1_indices, ar2_indices[m
+[31m-    else:[m
+[31m-        return int1d[m
+[32m+[m	[32m"""[m
+[32m+[m	[32mFind the intersection of two arrays.[m
+[32m+[m
+[32m+[m	[32mReturn the sorted, unique values that are in both of the input arrays.[m
+[32m+[m
+[32m+[m	[32mParameters[m
+[32m+[m	[32m----------[m
+[32m+[m	[32mar1, ar2 : array_like[m
+[32m+[m	[32m    Input arrays. Will be flattened if not already 1D.[m
+[32m+[m	[32massume_unique : bool[m
+[32m+[m	[32m    If True, the input arrays are both assumed to be unique, which[m
+[32m+[m	[32m    can speed up the calculation.  If True but ``ar1`` or ``ar2`` are not[m
+[32m+[m	[32m    unique, incorrect results and out-of-bounds indices could result.[m
+[32m+[m	[32m    Default is False.[m
+[32m+[m	[32mreturn_indices : bool[m
+[32m+[m	[32m    If True, the indices which correspond to the intersection of the two[m
+[32m+[m	[32m    arrays are returned. The first instance of a value is used if there are[m
+[32m+[m	[32m    multiple. Default is False.[m
+[32m+[m
+[32m+[m	[32m    .. versionadded:: 1.15.0[m
+[32m+[m
+[32m+[m	[32mReturns[m
+[32m+[m	[32m-------[m
+[32m+[m	[32mintersect1d : ndarray[m
+[32m+[m	[32m    Sorted 1D array of common and unique elements.[m
+[32m+[m	[32mcomm1 : ndarray[m
+[32m+[m	[32m    The indices of the first occurrences of the common values in `ar1`.[m
+[32m+[m	[32m    Only provided if `return_indices` is True.[m
+[32m+[m	[32mcomm2 : ndarray[m
+[32m+[m	[32m    The indices of the first occurrences of the common values in `ar2`.[m
+[32m+[m	[32m    Only provided if `return_indices` is True.[m
+[32m+[m
+[32m+[m	[32mExamples[m
+[32m+[m	[32m--------[m
+[32m+[m	[32m>>> np.intersect1d([1, 3, 4, 3], [3, 1, 2, 1])[m
+[32m+[m	[32marray([1, 3])[m
+[32m+[m
+[32m+[m	[32mTo intersect more than two arrays, use functools.reduce:[m
+[32m+[m
+[32m+[m	[32m>>> from functools import reduce[m
+[32m+[m	[32m>>> reduce(np.intersect1d, ([1, 3, 4, 3], [3, 1, 2, 1], [6, 3, 4, 2]))[m
+[32m+[m	[32marray([3])[m
+[32m+[m
+[32m+[m	[32mTo return the indices of the values common to the input arrays[m
+[32m+[m	[32malong with the intersected values:[m
+[32m+[m
+[32m+[m	[32m>>> x = np.array([1, 1, 2, 3, 4])[m
+[32m+[m	[32m>>> y = np.array([2, 1, 4, 6])[m
+[32m+[m	[32m>>> xy, x_ind, y_ind = np.intersect1d(x, y, return_indices=True)[m
+[32m+[m	[32m>>> x_ind, y_ind[m
+[32m+[m	[32m(array([0, 2, 4]), array([1, 0, 2]))[m
+[32m+[m	[32m>>> xy, x[x_ind], y[y_ind][m
+[32m+[m	[32m(array([1, 2, 4]), array([1, 2, 4]), array([1, 2, 4]))[m
+[32m+[m
+[32m+[m	[32m"""[m
+[32m+[m	[32mar1 = np.asanyarray(ar1)[m
+[32m+[m	[32mar2 = np.asanyarray(ar2)[m
+[32m+[m
+[32m+[m	[32mif not assume_unique:[m
+[32m+[m		[32mif return_indices:[m
+[32m+[m			[32mar1, ind1 = unique(ar1, return_index=True)[m
+[32m+[m			[32mar2, ind2 = unique(ar2, return_index=True)[m
+[32m+[m		[32melse:[m
+[32m+[m			[32mar1 = unique(ar1)[m
+[32m+[m			[32mar2 = unique(ar2)[m
+[32m+[m	[32melse:[m
+[32m+[m		[32mar1 = ar1.ravel()[m
+[32m+[m		[32mar2 = ar2.ravel()[m
+[32m+[m
+[32m+[m	[32maux = np.concatenate((ar1, ar2))[m
+[32m+[m	[32mif return_indices:[m
+[32m+[m		[32maux_sort_indices = np.argsort(aux, kind="mergesort")[m
+[32m+[m		[32maux = aux[aux_sort_indices][m
+[32m+[m	[32melse:[m
+[32m+[m		[32maux.sort()[m
+[32m+[m
+[32m+[m	[32mmask = aux[1:] == aux[:-1][m
+[32m+[m	[32mint1d = aux[:-1][mask][m
+[32m+[m
+[32m+[m	[32mif return_indices:[m
+[32m+[m		[32mar1_indices = aux_sort_indices[:-1][mask][m
+[32m+[m		[32mar2_indices = aux_sort_indices[1:][mask] - ar1.size[m
+[32m+[m		[32mif not assume_unique:[m
+[32m+[m			[32mar1_indices = ind1[ar1_indices][m
+[32m+[m			[32mar2_indices = ind2[ar2_indices][m
+[32m+[m
+[32m+[m		[32mreturn int1d, ar1_indices, ar2_indices[m
+[32m+[m	[32melse:[m
+[32m+[m		[32mreturn int1d[m
+ [m
+ [m
+ def _setxor1d_dispatcher(ar1, ar2, assume_unique=None):[m
+[31m-    return (ar1, ar2)[m
+[32m+[m	[32mreturn (ar1, ar2)[m
+ [m
+ [m
+ @array_function_dispatch(_setxor1d_dispatcher)[m
+ def setxor1d(ar1, ar2, assume_unique=False):[m
+[31m-    """[m
+[31m-    Find the set exclusive-or of two arrays.[m
+[32m+[m	[32m"""[m
+[32m+[m	[32mFind the set exclusive-or of two arrays.[m
+ [m
+[31m-    Return the sorted, unique values that are in only one (not both) of the[m
+[31m-    input arrays.[m
+[32m+[m	[32mReturn the sorted, unique values that are in only one (not both) of the[m
+[32m+[m	[32minput arrays.[m
+ [m
+[31m-    Parameters[m
+[31m-    ----------[m
+[31m-    ar1, ar2 : array_like[m
+[31m-        Input arrays.[m
+[31m-    assume_unique : bool[m
+[31m-        If True, the input arrays are both assumed to be unique, which[m
+[31m-        can speed up the calculation.  Default is False.[m
+[32m+[m	[32mParameters[m
+[32m+[m	[32m----------[m
+[32m+[m	[32mar1, ar2 : array_like[m
+[32m+[m	[32m    Input arrays.[m
+[32m+[m	[32massume_unique : bool[m
+[32m+[m	[32m    If True, the input arrays are both assumed to be unique, which[m
+[32m+[m	[32m    can speed up the calculation.  Default is False.[m
+ [m
+[31m-    Returns[m
+[31m-    -------[m
+[31m-    setxor1d : ndarray[m
+[31m-        Sorted 1D array of unique values that are in only one of the input[m
+[31m-        arrays.[m
+[32m+[m	[32mReturns[m
+[32m+[m	[32m-------[m
+[32m+[m	[32msetxor1d : ndarray[m
+[32m+[m	[32m    Sorted 1D array of unique values that are in only one of the input[m
+[32m+[m	[32m    arrays.[m
+ [m
+[31m-    Examples[m
+[31m-    --------[m
+[31m-    >>> a = np.array([1, 2, 3, 2, 4])[m
+[31m-    >>> b = np.array([2, 3, 5, 7, 5])[m
+[31m-    >>> np.setxor1d(a,b)[m
+[31m-    array([1, 4, 5, 7])[m
+[32m+[m	[32mExamples[m
+[32m+[m	[32m--------[m
+[32m+[m	[32m>>> a = np.array([1, 2, 3, 2, 4])[m
+[32m+[m	[32m>>> b = np.array([2, 3, 5, 7, 5])[m
+[32m+[m	[32m>>> np.setxor1d(a,b)[m
+[32m+[m	[32marray([1, 4, 5, 7])[m
+ [m
+[31m-    """[m
+[31m-    if not assume_unique:[m
+[31m-        ar1 = unique(ar1)[m
+[31m-        ar2 = unique(ar2)[m
+[32m+[m	[32m"""[m
+[32m+[m	[32mif not assume_unique:[m
+[32m+[m		[32mar1 = unique(ar1)[m
+[32m+[m		[32mar2 = unique(ar2)[m
+ [m
+[31m-    aux = np.concatenate((ar1, ar2))[m
+[31m-    if aux.size == 0:[m
+[31m-        return aux[m
+[32m+[m	[32maux = np.concatenate((ar1, ar2))[m
+[32m+[m	[32mif aux.size == 0:[m
+[32m+[m		[32mreturn aux[m
+ [m
+[31m-    aux.sort()[m
+[31m-    flag = np.concatenate(([True], aux[1:] != aux[:-1], [True]))[m
+[31m-    return aux[flag[1:] & flag[:-1]][m
+[32m+[m	[32maux.sort()[m
+[32m+[m	[32mflag = np.concatenate(([True], aux[1:] != aux[:-1], [True]))[m
+[32m+[m	[32mreturn aux[flag[1:] & flag[:-1]][m
+ [m
+ [m
+[31m-def _in1d_dispatcher(ar1, ar2, assume_unique=None, invert=None, *,[m
+[31m-                     kind=None):[m
+[31m-    return (ar1, ar2)[m
+[32m+[m[32mdef _in1d_dispatcher(ar1, ar2, assume_unique=None, invert=None, *, kind=None):[m
+[32m+[m	[32mreturn (ar1, ar2)[m
+ [m
+ [m
+ @array_function_dispatch(_in1d_dispatcher)[m
+ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):[m
+[31m-    """[m
+[31m-    Test whether each element of a 1-D array is also present in a second array.[m
+[31m-[m
+[31m-    .. deprecated:: 2.0[m
+[31m-        Use :func:`isin` instead of `in1d` for new code.[m
+[31m-[m
+[31m-    Returns a boolean array the same length as `ar1` that is True[m
+[31m-    where an element of `ar1` is in `ar2` and False otherwise.[m
+[31m-[m
+[31m-    Parameters[m
+[31m-    ----------[m
+[31m-    ar1 : (M,) array_like[m
+[31m-        Input array.[m
+[31m-    ar2 : array_like[m
+[31m-        The values against which to test each value of `ar1`.[m
+[31m-    assume_unique : bool, optional[m
+[31m-        If True, the input arrays are both assumed to be unique, which[m
+[31m-        can speed up the calculation.  Default is False.[m
+[31m-    invert : bool, optional[m
+[31m-        If True, the values in the returned array are inverted (that is,[m
+[31m-        False where an element of `ar1` is in `ar2` and True otherwise).[m
+[31m-        Default is False. ``np.in1d(a, b, invert=True)`` is equivalent[m
+[31m-        to (but is faster than) ``np.invert(in1d(a, b))``.[m
+[31m-    kind : {None, 'sort', 'table'}, optional[m
+[31m-        The algorithm to use. This will not affect the final result,[m
+[31m-        but will affect the speed and memory use. The default, None,[m
+[31m-        will select automatically based on memory considerations.[m
+[31m-[m
+[31m-        * If 'sort', will use a mergesort-based approach. This will have[m
+[31m-          a memory usage of roughly 6 times the sum of the sizes of[m
+[31m-          `ar1` and `ar2`, not accounting for size of dtypes.[m
+[31m-        * If 'table', will use a lookup table approach similar[m
+[31m-          to a counting sort. This is only available for boolean and[m
+[31m-          integer arrays. This will have a memory usage of the[m
+[31m-          size of `ar1` plus the max-min value of `ar2`. `assume_unique`[m
+[31m-          has no effect when the 'table' option is used.[m
+[31m-        * If None, will automatically choose 'table' if[m
+[31m-          the required memory allocation is less than or equal to[m
+[31m-          6 times the sum of the sizes of `ar1` and `ar2`,[m
+[31m-          otherwise will use 'sort'. This is done to not use[m
+[31m-          a large amount of memory by default, even though[m
+[31m-          'table' may be faster in most cases. If 'table' is chosen,[m
+[31m-          `assume_unique` will have no effect.[m
+[31m-[m
+[31m-        .. versionadded:: 1.8.0[m
+[31m-[m
+[31m-    Returns[m
+[31m-    -------[m
+[31m-    in1d : (M,) ndarray, bool[m
+[31m-        The values `ar1[in1d]` are in `ar2`.[m
+[31m-[m
+[31m-    See Also[m
+[31m-    --------[m
+[31m-    isin                  : Version of this function that preserves the[m
+[31m-                            shape of ar1.[m
+[31m-[m
+[31m-    Notes[m
+[31m-    -----[m
+[31m-    `in1d` can be considered as an element-wise function version of the[m
+[31m-    python keyword `in`, for 1-D sequences. ``in1d(a, b)`` is roughly[m
+[31m-    equivalent to ``np.array([item in b for item in a])``.[m
+[31m-    However, this idea fails if `ar2` is a set, or similar (non-sequence)[m
+[31m-    container:  As ``ar2`` is converted to an array, in those cases[m
+[31m-    ``asarray(ar2)`` is an object array rather than the expected array of[m
+[31m-    contained values.[m
+[31m-[m
+[31m-    Using ``kind='table'`` tends to be faster than `kind='sort'` if the[m
+[31m-    following relationship is true:[m
+[31m-    ``log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927``,[m
+[31m-    but may use greater memory. The default value for `kind` will[m
+[31m-    be automatically selected based only on memory usage, so one may[m
+[31m-    manually set ``kind='table'`` if memory constraints can be relaxed.[m
+[31m-[m
+[31m-    .. versionadded:: 1.4.0[m
+[31m-[m
+[31m-    Examples[m
+[31m-    --------[m
+[31m-    >>> test = np.array([0, 1, 2, 5, 0])[m
+[31m-    >>> states = [0, 2][m
+[31m-    >>> mask = np.in1d(test, states)[m
+[31m-    >>> mask[m
+[31m-    array([ True, False,  True, False,  True])[m
+[31m-    >>> test[mask][m
+[31m-    array([0, 2, 0])[m
+[31m-    >>> mask = np.in1d(test, states, invert=True)[m
+[31m-    >>> mask[m
+[31m-    array([False,  True, False,  True, False])[m
+[31m-    >>> test[mask][m
+[31m-    array([1, 5])[m
+[31m-    """[m
+[31m-[m
+[31m-    # Deprecated in NumPy 2.0, 2023-08-18[m
+[31m-    warnings.warn([m
+[31m-        "`in1d` is deprecated. Use `np.isin` instead.",[m
+[31m-        DeprecationWarning,[m
+[31m-        stacklevel=2[m
+[31m-    )[m
+[31m-[m
+[31m-    return _in1d(ar1, ar2, assume_unique, invert, kind=kind)[m
+[32m+[m	[32m"""[m
+[32m+[m	[32mTest whether each element of a 1-D array is also present in a second array.[m
+[32m+[m
+[32m+[m	[32m.. deprecated:: 2.0[m
+[32m+[m	[32m    Use :func:`isin` instead of `in1d` for new code.[m
+[32m+[m
+[32m+[m	[32mReturns a boolean array the same length as `ar1` that is True[m
+[32m+[m	[32mwhere an element of `ar1` is in `ar2` and False otherwise.[m
+[32m+[m
+[32m+[m	[32mParameters[m
+[32m+[m	[32m----------[m
+[32m+[m	[32mar1 : (M,) array_like[m
+[32m+[m	[32m    Input array.[m
+[32m+[m	[32mar2 : array_like[m
+[32m+[m	[32m    The values against which to test each value of `ar1`.[m
+[32m+[m	[32massume_unique : bool, optional[m
+[32m+[m	[32m    If True, the input arrays are both assumed to be unique, which[m
+[32m+[m	[32m    can speed up the calculation.  Default is False.[m
+[32m+[m	[32minvert : bool, optional[m
+[32m+[m	[32m    If True, the values in the returned array are inverted (that is,[m
+[32m+[m	[32m    False where an element of `ar1` is in `ar2` and True otherwise).[m
+[32m+[m	[32m    Default is False. ``np.in1d(a, b, invert=True)`` is equivalent[m
+[32m+[m	[32m    to (but is faster than) ``np.invert(in1d(a, b))``.[m
+[32m+[m	[32mkind : {None, 'sort', 'table'}, optional[m
+[32m+[m	[32m    The algorithm to use. This will not affect the final result,[m
+[32m+[m	[32m    but will affect the speed and memory use. The default, None,[m
+[32m+[m	[32m    will select automatically based on memory considerations.[m
+[32m+[m
+[32m+[m	[32m    * If 'sort', will use a mergesort-based approach. This will have[m
+[32m+[m	[32m      a memory usage of roughly 6 times the sum of the sizes of[m
+[32m+[m	[32m      `ar1` and `ar2`, not accounting for size of dtypes.[m
+[32m+[m	[32m    * If 'table', will use a lookup table approach similar[m
+[32m+[m	[32m      to a counting sort. This is only available for boolean and[m
+[32m+[m	[32m      integer arrays. This will have a memory usage of the[m
+[32m+[m	[32m      size of `ar1` plus the max-min value of `ar2`. `assume_unique`[m
+[32m+[m	[32m      has no effect when the 'table' option is used.[m
+[32m+[m	[32m    * If None, will automatically choose 'table' if[m
+[32m+[m	[32m      the required memory allocation is less than or equal to[m
+[32m+[m	[32m      6 times the sum of the sizes of `ar1` and `ar2`,[m
+[32m+[m	[32m      otherwise will use 'sort'. This is done to not use[m
+[32m+[m	[32m      a large amount of memory by default, even though[m
+[32m+[m	[32m      'table' may be faster in most cases. If 'table' is chosen,[m
+[32m+[m	[32m      `assume_unique` will have no effect.[m
+[32m+[m
+[32m+[m	[32m    .. versionadded:: 1.8.0[m
+[32m+[m
+[32m+[m	[32mReturns[m
+[32m+[m	[32m-------[m
+[32m+[m	[32min1d : (M,) ndarray, bool[m
+[32m+[m	[32m    The values `ar1[in1d]` are in `ar2`.[m
+[32m+[m
+[32m+[m	[32mSee Also[m
+[32m+[m	[32m--------[m
+[32m+[m	[32misin                  : Version of this function that preserves the[m
+[32m+[m	[32m                        shape of ar1.[m
+[32m+[m
+[32m+[m	[32mNotes[m
+[32m+[m	[32m-----[m
+[32m+[m	[32m`in1d` can be considered as an element-wise function version of the[m
+[32m+[m	[32mpython keyword `in`, for 1-D sequences. ``in1d(a, b)`` is roughly[m
+[32m+[m	[32mequivalent to ``np.array([item in b for item in a])``.[m
+[32m+[m	[32mHowever, this idea fails if `ar2` is a set, or similar (non-sequence)[m
+[32m+[m	[32mcontainer:  As ``ar2`` is converted to an array, in those cases[m
+[32m+[m	[32m``asarray(ar2)`` is an object array rather than the expected array of[m
+[32m+[m	[32mcontained values.[m
+[32m+[m
+[32m+[m	[32mUsing ``kind='table'`` tends to be faster than `kind='sort'` if the[m
+[32m+[m	[32mfollowing relationship is true:[m
+[32m+[m	[32m``log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927``,[m
+[32m+[m	[32mbut may use greater memory. The default value for `kind` will[m
+[32m+[m	[32mbe automatically selected based only on memory usage, so one may[m
+[32m+[m	[32mmanually set ``kind='table'`` if memory constraints can be relaxed.[m
+[32m+[m
+[32m+[m	[32m.. versionadded:: 1.4.0[m
+[32m+[m
+[32m+[m	[32mExamples[m
+[32m+[m	[32m--------[m
+[32m+[m	[32m>>> test = np.array([0, 1, 2, 5, 0])[m
+[32m+[m	[32m>>> states = [0, 2][m
+[32m+[m	[32m>>> mask = np.in1d(test, states)[m
+[32m+[m	[32m>>> mask[m
+[32m+[m	[32marray([ True, False,  True, False,  True])[m
+[32m+[m	[32m>>> test[mask][m
+[32m+[m	[32marray([0, 2, 0])[m
+[32m+[m	[32m>>> mask = np.in1d(test, states, invert=True)[m
+[32m+[m	[32m>>> mask[m
+[32m+[m	[32marray([False,  True, False,  True, False])[m
+[32m+[m	[32m>>> test[mask][m
+[32m+[m	[32marray([1, 5])[m
+[32m+[m	[32m"""[m
+[32m+[m
+[32m+[m	[32m# Deprecated in NumPy 2.0, 2023-08-18[m
+[32m+[m	[32mwarnings.warn([m
+[32m+[m		[32m"`in1d` is deprecated. Use `np.isin` instead.", DeprecationWarning, stacklevel=2[m
+[32m+[m	[32m)[m
+[32m+[m
+[32m+[m	[32mreturn _in1d(ar1, ar2, assume_unique, invert, kind=kind)[m
+ [m
+ [m
+ def _in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):[m
+[31m-    # Ravel both arrays, behavior for the first array could be different[m
+[31m-    ar1 = np.asarray(ar1).ravel()[m
+[31m-    ar2 = np.asarray(ar2).ravel()[m
+[31m-[m
+[31m-    # Ensure that iteration through object arrays yields size-1 arrays[m
+[31m-    if ar2.dtype == object:[m
+[31m-        ar2 = ar2.reshape(-1, 1)[m
+[31m-[m
+[31m-    if kind not in {None, 'sort', 'table'}:[m
+[31m-        raise ValueError([m
+[31m-            f"Invalid kind: '{kind}'. Please use None, 'sort' or 'table'.")[m
+[31m-[m
+[31m-    # Can use the table method if all arrays are integers or boolean:[m
+[31m-    is_int_arrays = all(ar.dtype.kind in ("u", "i", "b") for ar in (ar1, ar2))[m
+[31m-    use_table_method = is_int_arrays and kind in {None, 'table'}[m
+[31m-[m
+[31m-    if use_table_method:[m
+[31m-        if ar2.size == 0:[m
+[31m-            if invert:[m
+[31m-                return np.ones_like(ar1, dtype=bool)[m
+[31m-            else:[m
+[31m-                return np.zeros_like(ar1, dtype=bool)[m
+[31m-[m
+[31m-        # Convert booleans to uint8 so we can use the fast integer algorithm[m
+[31m-        if ar1.dtype == bool:[m
+[31m-            ar1 = ar1.astype(np.uint8)[m
+[31m-        if ar2.dtype == bool:[m
+[31m-            ar2 = ar2.astype(np.uint8)[m
+[31m-[m
+[31m-        ar2_min = np.min(ar2)[m
+[31m-        ar2_max = np.max(ar2)[m
+[31m-[m
+[31m-        ar2_range = int(ar2_max) - int(ar2_min)[m
+[31m-[m
+[31m-        # Constraints on whether we can actually use the table method:[m
+[31m-        #  1. Assert memory usage is not too large[m
+[31m-        below_memory_constraint = ar2_range <= 6 * (ar1.size + ar2.size)[m
+[31m-        #  2. Check overflows for (ar2 - ar2_min); dtype=ar2.dtype[m
+[31m-        range_safe_from_overflow = ar2_range <= np.iinfo(ar2.dtype).max[m
+[31m-        #  3. Check overflows for (ar1 - ar2_min); dtype=ar1.dtype[m
+[31m-        if ar1.size > 0:[m
+[31m-            ar1_min = np.min(ar1)[m
+[31m-            ar1_max = np.max(ar1)[m
+[31m-[m
+[31m-            # After masking, the range of ar1 is guaranteed to be[m
+[31m-            # within the range of ar2:[m
+[31m-            ar1_upper = min(int(ar1_max), int(ar2_max))[m
+[31m-            ar1_lower = max(int(ar1_min), int(ar2_min))[m
+[31m-[m
+[31m-            range_safe_from_overflow &= all(([m
+[31m-                ar1_upper - int(ar2_min) <= np.iinfo(ar1.dtype).max,[m
+[31m-                ar1_lower - int(ar2_min) >= np.iinfo(ar1.dtype).min[m
+[31m-            ))[m
+[31m-[m
+[31m-        # Optimal performance is for approximately[m
+[31m-        # log10(size) > (log10(range) - 2.27) / 0.927.[m
+[31m-        # However, here we set the requirement that by default[m
+[31m-        # the intermediate array can only be 6x[m
+[31m-        # the combined memory allocation of the original[m
+[31m-        # arrays. See discussion on [m
+[31m-        # https://github.com/numpy/numpy/pull/12065.[m
+[31m-[m
+[31m-        if ([m
+[31m-            range_safe_from_overflow and [m
+[31m-            (below_memory_constraint or kind == 'table')[m
+[31m-        ):[m
+[31m-[m
+[31m-            if invert:[m
+[31m-                outgoing_array = np.ones_like(ar1, dtype=bool)[m
+[31m-            else:[m
+[31m-                outgoing_array = np.zeros_like(ar1, dtype=bool)[m
+[31m-[m
+[31m-            # Make elements 1 where the integer exists in ar2[m
+[31m-            if invert:[m
+[31m-                isin_helper_ar = np.ones(ar2_range + 1, dtype=bool)[m
+[31m-                isin_helper_ar[ar2 - ar2_min] = 0[m
+[31m-            else:[m
+[31m-                isin_helper_ar = np.zeros(ar2_range + 1, dtype=bool)[m
+[31m-                isin_helper_ar[ar2 - ar2_min] = 1[m
+[31m-[m
+[31m-            # Mask out elements we know won't work[m
+[31m-            basic_mask = (ar1 <= ar2_max) & (ar1 >= ar2_min)[m
+[31m-            outgoing_array[basic_mask] = isin_helper_ar[ar1[basic_mask] -[m
+[31m-                                                        ar2_min][m
+[31m-[m
+[31m-            return outgoing_array[m
+[31m-        elif kind == 'table':  # not range_safe_from_overflow[m
+[31m-            raise RuntimeError([m
+[31m-                "You have specified kind='table', "[m
+[31m-                "but the range of values in `ar2` or `ar1` exceed the "[m
+[31m-                "maximum integer of the datatype. "[m
+[31m-                "Please set `kind` to None or 'sort'."[m
+[31m-            )[m
+[31m-    elif kind == 'table':[m
+[31m-        raise ValueError([m
+[31m-            "The 'table' method is only "[m
+[31m-            "supported for boolean or integer arrays. "[m
+[31m-            "Please select 'sort' or None for kind."[m
+[31m-        )[m
+[31m-[m
+[31m-[m
+[31m-    # Check if one of the arrays may contain arbitrary objects[m
+[31m-    contains_object = ar1.dtype.hasobject or ar2.dtype.hasobject[m
+[31m-[m
+[31m-    # This code is run when[m
+[31m-    # a) the first condition is true, making the code significantly faster[m
+[31m-    # b) the second condition is true (i.e. `ar1` or `ar2` may contain[m
+[31m-    #    arbitrary objects), since then sorting is not guaranteed to work[m
+[31m-    if len(ar2) < 10 * len(ar1) ** 0.145 or contains_object:[m
+[31m-        if invert:[m
+[31m-            mask = np.ones(len(ar1), dtype=bool)[m
+[31m-            for a in ar2:[m
+[31m-                mask &= (ar1 != a)[m
+[31m-        else:[m
+[31m-            mask = np.zeros(len(ar1), dtype=bool)[m
+[31m-            for a in ar2:[m
+[31m-                mask |= (ar1 == a)[m
+[31m-        return mask[m
+[31m-[m
+[31m-    # Otherwise use sorting[m
+[31m-    if not assume_unique:[m
+[31m-        ar1, rev_idx = np.unique(ar1, return_inverse=True)[m
+[31m-        ar2 = np.unique(ar2)[m
+[31m-[m
+[31m-    ar = np.concatenate((ar1, ar2))[m
+[31m-    # We need this to be a stable sort, so always use 'mergesort'[m
+[31m-    # here. The values from the first array should always come before[m
+[31m-    # the values from the second array.[m
+[31m-    order = ar.argsort(kind='mergesort')[m
+[31m-    sar = ar[order][m
+[31m-    if invert:[m
+[31m-        bool_ar = (sar[1:] != sar[:-1])[m
+[31m-    else:[m
+[31m-        bool_ar = (sar[1:] == sar[:-1])[m
+[31m-    flag = np.concatenate((bool_ar, [invert]))[m
+[31m-    ret = np.empty(ar.shape, dtype=bool)[m
+[31m-    ret[order] = flag[m
+[31m-[m
+[31m-    if assume_unique:[m
+[31m-        return ret[:len(ar1)][m
+[31m-    else:[m
+[31m-        return ret[rev_idx][m
+[31m-[m
+[31m-[m
+[31m-def _isin_dispatcher(element, test_elements, assume_unique=None, invert=None,[m
+[31m-                     *, kind=None):[m
+[31m-    return (element, test_elements)[m
+[32m+[m	[32m# Ravel both arrays, behavior for the first array could be different[m
+[32m+[m	[32mar1 = np.asarray(ar1).ravel()[m
+[32m+[m	[32mar2 = np.asarray(ar2).ravel()[m
+[32m+[m
+[32m+[m	[32m# Ensure that iteration through object arrays yields size-1 arrays[m
+[32m+[m	[32mif ar2.dtype == object:[m
+[32m+[m		[32mar2 = ar2.reshape(-1, 1)[m
+[32m+[m
+[32m+[m	[32mif kind not in {None, "sort", "table"}:[m
+[32m+[m		[32mraise ValueError(f"Invalid kind: '{kind}'. Please use None, 'sort' or 'table'.")[m
+[32m+[m
+[32m+[m	[32m# Can use the table method if all arrays are integers or boolean:[m
+[32m+[m	[32mis_int_arrays = all(ar.dtype.kind in ("u", "i", "b") for ar in (ar1, ar2))[m
+[32m+[m	[32muse_table_method = is_int_arrays and kind in {None, "table"}[m
+[32m+[m
+[32m+[m	[32mif use_table_method:[m
+[32m+[m		[32mif ar2.size == 0:[m
+[32m+[m			[32mif invert:[m
+[32m+[m				[32mreturn np.ones_like(ar1, dtype=bool)[m
+[32m+[m			[32melse:[m
+[32m+[m				[32mreturn np.zeros_like(ar1, dtype=bool)[m
+[32m+[m
+[32m+[m		[32m# Convert booleans to uint8 so we can use the fast integer algorithm[m
+[32m+[m		[32mif ar1.dtype == bool:[m
+[32m+[m			[32mar1 = ar1.astype(np.uint8)[m
+[32m+[m		[32mif ar2.dtype == bool:[m
+[32m+[m			[32mar2 = ar2.astype(np.uint8)[m
+[32m+[m
+[32m+[m		[32mar2_min = np.min(ar2)[m
+[32m+[m		[32mar2_max = np.max(ar2)[m
+[32m+[m
+[32m+[m		[32mar2_range = int(ar2_max) - int(ar2_min)[m
+[32m+[m
+[32m+[m		[32m# Constraints on whether we can actually use the table method:[m
+[32m+[m		[32m#  1. Assert memory usage is not too large[m
+[32m+[m		[32mbelow_memory_constraint = ar2_range <= 6 * (ar1.size + ar2.size)[m
+[32m+[m		[32m#  2. Check overflows for (ar2 - ar2_min); dtype=ar2.dtype[m
+[32m+[m		[32mrange_safe_from_overflow = ar2_range <= np.iinfo(ar2.dtype).max[m
+[32m+[m		[32m#  3. Check overflows for (ar1 - ar2_min); dtype=ar1.dtype[m
+[32m+[m		[32mif ar1.size > 0:[m
+[32m+[m			[32mar1_min = np.min(ar1)[m
+[32m+[m			[32mar1_max = np.max(ar1)[m
+[32m+[m
+[32m+[m			[32m# After masking, the range of ar1 is guaranteed to be[m
+[32m+[m			[32m# within the range of ar2:[m
+[32m+[m			[32mar1_upper = min(int(ar1_max), int(ar2_max))[m
+[32m+[m			[32mar1_lower = max(int(ar1_min), int(ar2_min))[m
+[32m+[m
+[32m+[m			[32mrange_safe_from_overflow &= all([m
+[32m+[m				[32m([m
+[32m+[m					[32mar1_upper - int(ar2_min) <= np.iinfo(ar1.dtype).max,[m
+[32m+[m					[32mar1_lower - int(ar2_min) >= np.iinfo(ar1.dtype).min,[m
+[32m+[m				[32m)[m
+[32m+[m			[32m)[m
+[32m+[m
+[32m+[m		[32m# Optimal performance is for approximately[m
+[32m+[m		[32m# log10(size) > (log10(range) - 2.27) / 0.927.[m
+[32m+[m		[32m# However, here we set the requirement that by default[m
+[32m+[m		[32m# the intermediate array can only be 6x[m
+[32m+[m		[32m# the combined memory allocation of the original[m
+[32m+[m		[32m# arrays. See discussion on[m
+[32m+[m		[32m# https://github.com/numpy/numpy/pull/12065.[m
+[32m+[m
+[32m+[m		[32mif range_safe_from_overflow and (below_memory_constraint or kind == "table"):[m
+[32m+[m
+[32m+[m			[32mif invert:[m
+[32m+[m				[32moutgoing_array = np.ones_like(ar1, dtype=bool)[m
+[32m+[m			[32melse:[m
+[32m+[m				[32moutgoing_array = np.zeros_like(ar1, dtype=bool)[m
+[32m+[m
+[32m+[m			[32m# Make elements 1 where the integer exists in ar2[m
+[32m+[m			[32mif invert:[m
+[32m+[m				[32misin_helper_ar = np.ones(ar2_range + 1, dtype=bool)[m
+[32m+[m				[32misin_helper_ar[ar2 - ar2_min] = 0[m
+[32m+[m			[32melse:[m
+[32m+[m				[32misin_helper_ar = np.zeros(ar2_range + 1, dtype=bool)[m
+[32m+[m				[32misin_helper_ar[ar2 - ar2_min] = 1[m
+[32m+[m
+[32m+[m			[32m# Mask out elements we know won't work[m
+[32m+[m			[32mbasic_mask = (ar1 <= ar2_max) & (ar1 >= ar2_min)[m
+[32m+[m			[32moutgoing_array[basic_mask] = isin_helper_ar[ar1[basic_mask] - ar2_min][m
+[32m+[m
+[32m+[m			[32mreturn outgoing_array[m
+[32m+[m		[32melif kind == "table":  # not range_safe_from_overflow[m
+[32m+[m			[32mraise RuntimeError([m
+[32m+[m				[32m"You have specified kind='table', "[m
+[32m+[m				[32m"but the range of values in `ar2` or `ar1` exceed the "[m
+[32m+[m				[32m"maximum integer of the datatype. "[m
+[32m+[m				[32m"Please set `kind` to None or 'sort'."[m
+[32m+[m			[32m)[m
+[32m+[m	[32melif kind == "table":[m
+[32m+[m		[32mraise ValueError([m
+[32m+[m			[32m"The 'table' method is only "[m
+[32m+[m			[32m"supported for boolean or integer arrays. "[m
+[32m+[m			[32m"Please select 'sort' or None for kind."[m
+[32m+[m		[32m)[m
+[32m+[m
+[32m+[m	[32m# Check if one of the arrays may contain arbitrary objects[m
+[32m+[m	[32mcontains_object = ar1.dtype.hasobject or ar2.dtype.hasobject[m
+[32m+[m
+[32m+[m	[32m# This code is run when[m
+[32m+[m	[32m# a) the first condition is true, making the code significantly faster[m
+[32m+[m	[32m# b) the second condition is true (i.e. `ar1` or `ar2` may contain[m
+[32m+[m	[32m#    arbitrary objects), since then sorting is not guaranteed to work[m
+[32m+[m	[32mif len(ar2) < 10 * len(ar1) ** 0.145 or contains_object:[m
+[32m+[m		[32mif invert:[m
+[32m+[m			[32mmask = np.ones(len(ar1), dtype=bool)[m
+[32m+[m			[32mfor a in ar2:[m
+[32m+[m				[32mmask &= ar1 != a[m
+[32m+[m		[32melse:[m
+[32m+[m			[32mmask = np.zeros(len(ar1), dtype=bool)[m
+[32m+[m			[32mfor a in ar2:[m
+[32m+[m				[32mmask |= ar1 == a[m
+[32m+[m		[32mreturn mask[m
+[32m+[m
+[32m+[m	[32m# Otherwise use sorting[m
+[32m+[m	[32mif not assume_unique:[m
+[32m+[m		[32mar1, rev_idx = np.unique(ar1, return_inverse=True)[m
+[32m+[m		[32mar2 = np.unique(ar2)[m
+[32m+[m
+[32m+[m	[32mar = np.concatenate((ar1, ar2))[m
+[32m+[m	[32m# We need this to be a stable sort, so always use 'mergesort'[m
+[32m+[m	[32m# here. The values from the first array should always come before[m
+[32m+[m	[32m# the values from the second array.[m
+[32m+[m	[32morder = ar.argsort(kind="mergesort")[m
+[32m+[m	[32msar = ar[order][m
+[32m+[m	[32mif invert:[m
+[32m+[m		[32mbool_ar = sar[1:] != sar[:-1][m
+[32m+[m	[32melse:[m
+[32m+[m		[32mbool_ar = sar[1:] == sar[:-1][m
+[32m+[m	[32mflag = np.concatenate((bool_ar, [invert]))[m
+[32m+[m	[32mret = np.empty(ar.shape, dtype=bool)[m
+[32m+[m	[32mret[order] = flag[m
+[32m+[m
+[32m+[m	[32mif assume_unique:[m
+[32m+[m		[32mreturn ret[: len(ar1)][m
+[32m+[m	[32melse:[m
+[32m+[m		[32mreturn ret[rev_idx][m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef _isin_dispatcher([m
+[32m+[m	[32melement, test_elements, assume_unique=None, invert=None, *, kind=None[m
+[32m+[m[32m):[m
+[32m+[m	[32mreturn (element, test_elements)[m
+ [m
+ [m
+ @array_function_dispatch(_isin_dispatcher)[m
+[31m-def isin(element, test_elements, assume_unique=False, invert=False, *,[m
+[31m-         kind=None):[m
+[31m-    """[m
+[31m-    Calculates ``element in test_elements``, broadcasting over `element` only.[m
+[31m-    Returns a boolean array of the same shape as `element` that is True[m
+[31m-    where an element of `element` is in `test_elements` and False otherwise.[m
+[31m-[m
+[31m-    Parameters[m
+[31m-    ----------[m
+[31m-    element : array_like[m
+[31m-        Input array.[m
+[31m-    test_elements : array_like[m
+[31m-        The values against which to test each value of `element`.[m
+[31m-        This argument is flattened if it is an array or array_like.[m
+[31m-        See notes for behavior with non-array-like parameters.[m
+[31m-    assume_unique : bool, optional[m
+[31m-        If True, the input arrays are both assumed to be unique, which[m
+[31m-        can speed up the calculation.  Default is False.[m
+[31m-    invert : bool, optional[m
+[31m-        If True, the values in the returned array are inverted, as if[m
+[31m-        calculating `element not in test_elements`. Default is False.[m
+[31m-        ``np.isin(a, b, invert=True)`` is equivalent to (but faster[m
+[31m-        than) ``np.invert(np.isin(a, b))``.[m
+[31m-    kind : {None, 'sort', 'table'}, optional[m
+[31m-        The algorithm to use. This will not affect the final result,[m
+[31m-        but will affect the speed and memory use. The default, None,[m
+[31m-        will select automatically based on memory considerations.[m
+[31m-[m
+[31m-        * If 'sort', will use a mergesort-based approach. This will have[m
+[31m-          a memory usage of roughly 6 times the sum of the sizes of[m
+[31m-          `element` and `test_elements`, not accounting for size of dtypes.[m
+[31m-        * If 'table', will use a lookup table approach similar[m
+[31m-          to a counting sort. This is only available for boolean and[m
+[31m-          integer arrays. This will have a memory usage of the[m
+[31m-          size of `element` plus the max-min value of `test_elements`.[m
+[31m-          `assume_unique` has no effect when the 'table' option is used.[m
+[31m-        * If None, will automatically choose 'table' if[m
+[31m-          the required memory allocation is less than or equal to[m
+[31m-          6 times the sum of the sizes of `element` and `test_elements`,[m
+[31m-          otherwise will use 'sort'. This is done to not use[m
+[31m-          a large amount of memory by default, even though[m
+[31m-          'table' may be faster in most cases. If 'table' is chosen,[m
+[31m-          `assume_unique` will have no effect.[m
+[31m-[m
+[31m-[m
+[31m-    Returns[m
+[31m-    -------[m
+[31m-    isin : ndarray, bool[m
+[31m-        Has the same shape as `element`. The values `element[isin]`[m
+[31m-        are in `test_elements`.[m
+[31m-[m
+[31m-    Notes[m
+[31m-    -----[m
+[31m-[m
+[31m-    `isin` is an element-wise function version of the python keyword `in`.[m
+[31m-    ``isin(a, b)`` is roughly equivalent to[m
+[31m-    ``np.array([item in b for item in a])`` if `a` and `b` are 1-D sequences.[m
+[31m-[m
+[31m-    `element` and `test_elements` are converted to arrays if they are not[m
+[31m-    already. If `test_elements` is a set (or other non-sequence collection)[m
+[31m-    it will be converted to an object array with one element, rather than an[m
+[31m-    array of the values contained in `test_elements`. This is a consequence[m
+[31m-    of the `array` constructor's way of handling non-sequence collections.[m
+[31m-    Converting the set to a list usually gives the desired behavior.[m
+[31m-[m
+[31m-    Using ``kind='table'`` tends to be faster than `kind='sort'` if the[m
+[31m-    following relationship is true:[m
+[31m-    ``log10(len(test_elements)) >[m
+[31m-    (log10(max(test_elements)-min(test_elements)) - 2.27) / 0.927``,[m
+[31m-    but may use greater memory. The default value for `kind` will[m
+[31m-    be automatically selected based only on memory usage, so one may[m
+[31m-    manually set ``kind='table'`` if memory constraints can be relaxed.[m
+[31m-[m
+[31m-    .. versionadded:: 1.13.0[m
+[31m-[m
+[31m-    Examples[m
+[31m-    --------[m
+[31m-    >>> element = 2*np.arange(4).reshape((2, 2))[m
+[31m-    >>> element[m
+[31m-    array([[0, 2],[m
+[31m-           [4, 6]])[m
+[31m-    >>> test_elements = [1, 2, 4, 8][m
+[31m-    >>> mask = np.isin(element, test_elements)[m
+[31m-    >>> mask[m
+[31m-    array([[False,  True],[m
+[31m-           [ True, False]])[m
+[31m-    >>> element[mask][m
+[31m-    array([2, 4])[m
+[31m-[m
+[31m-    The indices of the matched values can be obtained with `nonzero`:[m
+[31m-[m
+[31m-    >>> np.nonzero(mask)[m
+[31m-    (array([0, 1]), array([1, 0]))[m
+[31m-[m
+[31m-    The test can also be inverted:[m
+[31m-[m
+[31m-    >>> mask = np.isin(element, test_elements, invert=True)[m
+[31m-    >>> mask[m
+[31m-    array([[ True, False],[m
+[31m-           [False,  True]])[m
+[31m-    >>> element[mask][m
+[31m-    array([0, 6])[m
+[31m-[m
+[31m-    Because of how `array` handles sets, the following does not[m
+[31m-    work as expected:[m
+[31m-[m
+[31m-    >>> test_set = {1, 2, 4, 8}[m
+[31m-    >>> np.isin(element, test_set)[m
+[31m-    array([[False, False],[m
+[31m-           [False, False]])[m
+[31m-[m
+[31m-    Casting the set to a list gives the expected result:[m
+[31m-[m
+[31m-    >>> np.isin(element, list(test_set))[m
+[31m-    array([[False,  True],[m
+[31m-           [ True, False]])[m
+[31m-    """[m
+[31m-    element = np.asarray(element)[m
+[31m-    return _in1d(element, test_elements, assume_unique=assume_unique,[m
+[31m-                 invert=invert, kind=kind).reshape(element.shape)[m
+[32m+[m[32mdef isin(element, test_elements, assume_unique=False, invert=False, *, kind=None):[m
+[32m+[m	[32m"""[m
+[32m+[m	[32mCalculates ``element in test_elements``, broadcasting over `element` only.[m
+[32m+[m	[32mReturns a boolean array of the same shape as `element` that is True[m
+[32m+[m	[32mwhere an element of `element` is in `test_elements` and False otherwise.[m
+[32m+[m
+[32m+[m	[32mParameters[m
+[32m+[m	[32m----------[m
+[32m+[m	[32melement : array_like[m
+[32m+[m	[32m    Input array.[m
+[32m+[m	[32mtest_elements : array_like[m
+[32m+[m	[32m    The values against which to test each value of `element`.[m
+[32m+[m	[32m    This argument is flattened if it is an array or array_like.[m
+[32m+[m	[32m    See notes for behavior with non-array-like parameters.[m
+[32m+[m	[32massume_unique : bool, optional[m
+[32m+[m	[32m    If True, the input arrays are both assumed to be unique, which[m
+[32m+[m	[32m    can speed up the calculation.  Default is False.[m
+[32m+[m	[32minvert : bool, optional[m
+[32m+[m	[32m    If True, the values in the returned array are inverted, as if[m
+[32m+[m	[32m    calculating `element not in test_elements`. Default is False.[m
+[32m+[m	[32m    ``np.isin(a, b, invert=True)`` is equivalent to (but faster[m
+[32m+[m	[32m    than) ``np.invert(np.isin(a, b))``.[m
+[32m+[m	[32mkind : {None, 'sort', 'table'}, optional[m
+[32m+[m	[32m    The algorithm to use. This will not affect the final result,[m
+[32m+[m	[32m    but will affect the speed and memory use. The default, None,[m
+[32m+[m	[32m    will select automatically based on memory considerations.[m
+[32m+[m
+[32m+[m	[32m    * If 'sort', will use a mergesort-based approach. This will have[m
+[32m+[m	[32m      a memory usage of roughly 6 times the sum of the sizes of[m
+[32m+[m	[32m      `element` and `test_elements`, not accounting for size of dtypes.[m
+[32m+[m	[32m    * If 'table', will use a lookup table approach similar[m
+[32m+[m	[32m      to a counting sort. This is only available for boolean and[m
+[32m+[m	[32m      integer arrays. This will have a memory usage of the[m
+[32m+[m	[32m      size of `element` plus the max-min value of `test_elements`.[m
+[32m+[m	[32m      `assume_unique` has no effect when the 'table' option is used.[m
+[32m+[m	[32m    * If None, will automatically choose 'table' if[m
+[32m+[m	[32m      the required memory allocation is less than or equal to[m
+[32m+[m	[32m      6 times the sum of the sizes of `element` and `test_elements`,[m
+[32m+[m	[32m      otherwise will use 'sort'. This is done to not use[m
+[32m+[m	[32m      a large amount of memory by default, even though[m
+[32m+[m	[32m      'table' may be faster in most cases. If 'table' is chosen,[m
+[32m+[m	[32m      `assume_unique` will have no effect.[m
+[32m+[m
+[32m+[m
+[32m+[m	[32mReturns[m
+[32m+[m	[32m-------[m
+[32m+[m	[32misin : ndarray, bool[m
+[32m+[m	[32m    Has the same shape as `element`. The values `element[isin]`[m
+[32m+[m	[32m    are in `test_elements`.[m
+[32m+[m
+[32m+[m	[32mNotes[m
+[32m+[m	[32m-----[m
+[32m+[m
+[32m+[m	[32m`isin` is an element-wise function version of the python keyword `in`.[m
+[32m+[m	[32m``isin(a, b)`` is roughly equivalent to[m
+[32m+[m	[32m``np.array([item in b for item in a])`` if `a` and `b` are 1-D sequences.[m
+[32m+[m
+[32m+[m	[32m`element` and `test_elements` are converted to arrays if they are not[m
+[32m+[m	[32malready. If `test_elements` is a set (or other non-sequence collection)[m
+[32m+[m	[32mit will be converted to an object array with one element, rather than an[m
+[32m+[m	[32marray of the values contained in `test_elements`. This is a consequence[m
+[32m+[m	[32mof the `array` constructor's way of handling non-sequence collections.[m
+[32m+[m	[32mConverting the set to a list usually gives the desired behavior.[m
+[32m+[m
+[32m+[m	[32mUsing ``kind='table'`` tends to be faster than `kind='sort'` if the[m
+[32m+[m	[32mfollowing relationship is true:[m
+[32m+[m	[32m``log10(len(test_elements)) >[m
+[32m+[m	[32m(log10(max(test_elements)-min(test_elements)) - 2.27) / 0.927``,[m
+[32m+[m	[32mbut may use greater memory. The default value for `kind` will[m
+[32m+[m	[32mbe automatically selected based only on memory usage, so one may[m
+[32m+[m	[32mmanually set ``kind='table'`` if memory constraints can be relaxed.[m
+[32m+[m
+[32m+[m	[32m.. versionadded:: 1.13.0[m
+[32m+[m
+[32m+[m	[32mExamples[m
+[32m+[m	[32m--------[m
+[32m+[m	[32m>>> element = 2*np.arange(4).reshape((2, 2))[m
+[32m+[m	[32m>>> element[m
+[32m+[m	[32marray([[0, 2],[m
+[32m+[m	[32m       [4, 6]])[m
+[32m+[m	[32m>>> test_elements = [1, 2, 4, 8][m
+[32m+[m	[32m>>> mask = np.isin(element, test_elements)[m
+[32m+[m	[32m>>> mask[m
+[32m+[m	[32marray([[False,  True],[m
+[32m+[m	[32m       [ True, False]])[m
+[32m+[m	[32m>>> element[mask][m
+[32m+[m	[32marray([2, 4])[m
+[32m+[m
+[32m+[m	[32mThe indices of the matched values can be obtained with `nonzero`:[m
+[32m+[m
+[32m+[m	[32m>>> np.nonzero(mask)[m
+[32m+[m	[32m(array([0, 1]), array([1, 0]))[m
+[32m+[m
+[32m+[m	[32mThe test can also be inverted:[m
+[32m+[m
+[32m+[m	[32m>>> mask = np.isin(element, test_elements, invert=True)[m
+[32m+[m	[32m>>> mask[m
+[32m+[m	[32marray([[ True, False],[m
+[32m+[m	[32m       [False,  True]])[m
+[32m+[m	[32m>>> element[mask][m
+[32m+[m	[32marray([0, 6])[m
+[32m+[m
+[32m+[m	[32mBecause of how `array` handles sets, the following does not[m
+[32m+[m	[32mwork as expected:[m
+[32m+[m
+[32m+[m	[32m>>> test_set = {1, 2, 4, 8}[m
+[32m+[m	[32m>>> np.isin(element, test_set)[m
+[32m+[m	[32marray([[False, False],[m
+[32m+[m	[32m       [False, False]])[m
+[32m+[m
+[32m+[m	[32mCasting the set to a list gives the expected result:[m
+[32m+[m
+[32m+[m	[32m>>> np.isin(element, list(test_set))[m
+[32m+[m	[32marray([[False,  True],[m
+[32m+[m	[32m       [ True, False]])[m
+[32m+[m	[32m"""[m
+[32m+[m	[32melement = np.asarray(element)[m
+[32m+[m	[32mreturn _in1d([m
+[32m+[m		[32melement, test_elements, assume_unique=assume_unique, invert=invert, kind=kind[m
+[32m+[m	[32m).reshape(element.shape)[m
+ [m
+ [m
+ def _union1d_dispatcher(ar1, ar2):[m
+[31m-    return (ar1, ar2)[m
+[32m+[m	[32mreturn (ar1, ar2)[m
+ [m
+ [m
+ @array_function_dispatch(_union1d_dispatcher)[m
+ def union1d(ar1, ar2):[m
+[31m-    """[m
+[31m-    Find the union of two arrays.[m
+[32m+[m	[32m"""[m
+[32m+[m	[32mFind the union of two arrays.[m
+ [m
+[31m-    Return the unique, sorted array of values that are in either of the two[m
+[31m-    input arrays.[m
+[32m+[m	[32mReturn the unique, sorted array of values that are in either of the two[m
+[32m+[m	[32minput arrays.[m
+ [m
+[31m-    Parameters[m
+[31m-    ----------[m
+[31m-    ar1, ar2 : array_like[m
+[31m-        Input arrays. They are flattened if they are not already 1D.[m
+[32m+[m	[32mParameters[m
+[32m+[m	[32m----------[m
+[32m+[m	[32mar1, ar2 : array_like[m
+[32m+[m	[32m    Input arrays. They are flattened if they are not already 1D.[m
+ [m
+[31m-    Returns[m
+[31m-    -------[m
+[31m-    union1d : ndarray[m
+[31m-        Unique, sorted union of the input arrays.[m
+[32m+[m	[32mReturns[m
+[32m+[m	[32m-------[m
+[32m+[m	[32munion1d : ndarray[m
+[32m+[m	[32m    Unique, sorted union of the input arrays.[m
+ [m
+[31m-    Examples[m
+[31m-    --------[m
+[31m-    >>> np.union1d([-1, 0, 1], [-2, 0, 2])[m
+[31m-    array([-2, -1,  0,  1,  2])[m
+[32m+[m	[32mExamples[m
+[32m+[m	[32m--------[m
+[32m+[m	[32m>>> np.union1d([-1, 0, 1], [-2, 0, 2])[m
+[32m+[m	[32marray([-2, -1,  0,  1,  2])[m
+ [m
+[31m-    To find the union of more than two arrays, use functools.reduce:[m
+[32m+[m	[32mTo find the union of more than two arrays, use functools.reduce:[m
+ [m
+[31m-    >>> from functools import reduce[m
+[31m-    >>> reduce(np.union1d, ([1, 3, 4, 3], [3, 1, 2, 1], [6, 3, 4, 2]))[m
+[31m-    array([1, 2, 3, 4, 6])[m
+[31m-    """[m
+[31m-    return unique(np.concatenate((ar1, ar2), axis=None))[m
+[32m+[m	[32m>>> from functools import reduce[m
+[32m+[m	[32m>>> reduce(np.union1d, ([1, 3, 4, 3], [3, 1, 2, 1], [6, 3, 4, 2]))[m
+[32m+[m	[32marray([1, 2, 3, 4, 6])[m
+[32m+[m	[32m"""[m
+[32m+[m	[32mreturn unique(np.concatenate((ar1, ar2), axis=None))[m
+ [m
+ [m
+ def _setdiff1d_dispatcher(ar1, ar2, assume_unique=None):[m
+[31m-    return (ar1, ar2)[m
+[32m+[m	[32mreturn (ar1, ar2)[m
+ [m
+ [m
+ @array_function_dispatch(_setdiff1d_dispatcher)[m
+ def setdiff1d(ar1, ar2, assume_unique=False):[m
+[31m-    """[m
+[31m-    Find the set difference of two arrays.[m
+[31m-[m
+[31m-    Return the unique values in `ar1` that are not in `ar2`.[m
+[31m-[m
+[31m-    Parameters[m
+[31m-    ----------[m
+[31m-    ar1 : array_like[m
+[31m-        Input array.[m
+[31m-    ar2 : array_like[m
+[31m-        Input comparison array.[m
+[31m-    assume_unique : bool[m
+[31m-        If True, the input arrays are both assumed to be unique, which[m
+[31m-        can speed up the calculation.  Default is False.[m
+[31m-[m
+[31m-    Returns[m
+[31m-    -------[m
+[31m-    setdiff1d : ndarray[m
+[31m-        1D array of values in `ar1` that are not in `ar2`. The result[m
+[31m-        is sorted when `assume_unique=False`, but otherwise only sorted[m
+[31m-        if the input is sorted.[m
+[31m-[m
+[31m-    Examples[m
+[31m-    --------[m
+[31m-    >>> a = np.array([1, 2, 3, 2, 4, 1])[m
+[31m-    >>> b = np.array([3, 4, 5, 6])[m
+[31m-    >>> np.setdiff1d(a, b)[m
+[31m-    array([1, 2])[m
+[31m-[m
+[31m-    """[m
+[31m-    if assume_unique:[m
+[31m-        ar1 = np.asarray(ar1).ravel()[m
+[31m-    else:[m
+[31m-        ar1 = unique(ar1)[m
+[31m-        ar2 = unique(ar2)[m
+[31m-    return ar1[_in1d(ar1, ar2, assume_unique=True, invert=True)][m
+[32m+[m	[32m"""[m
+[32m+[m	[32mFind the set difference of two arrays.[m
+[32m+[m
+[32m+[m	[32mReturn the unique values in `ar1` that are not in `ar2`.[m
+[32m+[m
+[32m+[m	[32mParameters[m
+[32m+[m	[32m----------[m
+[32m+[m	[32mar1 : array_like[m
+[32m+[m	[32m    Input array.[m
+[32m+[m	[32mar2 : array_like[m
+[32m+[m	[32m    Input comparison array.[m
+[32m+[m	[32massume_unique : bool[m
+[32m+[m	[32m    If True, the input arrays are both assumed to be unique, which[m
+[32m+[m	[32m    can speed up the calculation.  Default is False.[m
+[32m+[m
+[32m+[m	[32mReturns[m
+[32m+[m	[32m-------[m
+[32m+[m	[32msetdiff1d : ndarray[m
+[32m+[m	[32m    1D array of values in `ar1` that are not in `ar2`. The result[m
+[32m+[m	[32m    is sorted when `assume_unique=False`, but otherwise only sorted[m
+[32m+[m	[32m    if the input is sorted.[m
+[32m+[m
+[32m+[m	[32mExamples[m
+[32m+[m	[32m--------[m
+[32m+[m	[32m>>> a = np.array([1, 2, 3, 2, 4, 1])[m
+[32m+[m	[32m>>> b = np.array([3, 4, 5, 6])[m
+[32m+[m	[32m>>> np.setdiff1d(a, b)[m
+[32m+[m	[32marray([1, 2])[m
+[32m+[m
+[32m+[m	[32m"""[m
+[32m+[m	[32mif assume_unique:[m
+[32m+[m		[32mar1 = np.asarray(ar1).ravel()[m
+[32m+[m	[32melse:[m
+[32m+[m		[32mar1 = unique(ar1)[m
+[32m+[m		[32mar2 = unique(ar2)[m
+[32m+[m	[32mreturn ar1[_in1d(ar1, ar2, assume_unique=True, invert=True)][m
+ [m
+ [m
+ def _intersect2d_dispatcher(ar1, ar2, axis=0):[m
+[31m-    return (ar1, ar2)[m
+[32m+[m	[32mreturn (ar1, ar2)[m
+ [m
+ [m
+ @array_function_dispatch(_intersect2d_dispatcher)[m
+ def intersect2D(ar1, ar2, axis=0):[m
+[31m-    """[m
+[31m-    Find the intersection of rows between two 2D numpy arrays, `ar1` and `ar2`.[m
+[31m-[m
+[31m-    Parameters:[m
+[31m-        ar1 (numpy.ndarray): First 2D array.[m
+[31m-        ar2 (numpy.ndarray): Second 2D array.[m
+[31m-        axis (int, optional): Axis along which to find the intersection. Default is 0.[m
+[31m-[m
+[31m-    Returns:[m
+[31m-        numpy.ndarray: A new numpy array with the shared rows between `ar1` and `ar2`.[m
+[31m-[m
+[31m-    Raises:[m
+[31m-        ValueError: If `axis` is not 0 or 1.[m
+[31m-        ValueError: If the shape of either `ar1` or `ar2` is 0.[m
+[31m-        ValueError: If the number of values along the specified axis in `ar1` and `ar2` are not the same.[m
+[31m-        ValueError: If the data type of `ar1` and `ar2` is not the same.[m
+[31m-[m
+[31m-    Note:[m
+[31m-        - The function finds the rows that are present in both `ar1` and `ar2`.[m
+[31m-        - Rows are considered to be the same if their values are exactly the same (case-sensitive).[m
+[31m-[m
+[31m-    Example:[m
+[31m-        >>> ar1 = np.array([[1, 2], [3, 4], [5, 6]])[m
+[31m-        >>> ar2 = np.array([[3, 4], [5, 6], [7, 8]])[m
+[31m-        >>> intersect2D(ar1, ar2)[m
+[31m-        array([[3, 4],[m
+[31m-            [5, 6]])[m
+[31m-    """[m
+[31m-    if ar1.ndim != 2 or ar2.ndim != 2:[m
+[31m-        raise ValueError("'ar1' and 'ar2' must be 2D arrays. The input arrays must have two dimensions.")[m
+[31m-    if ar1.size == 0 or ar2.size == 0:[m
+[31m-        raise ValueError("Shape of 'ar1' or 'ar2' is 0. Input arrays must have at least one row.")[m
+[31m-    if ar1.shape[1-axis] != ar2.shape[1-axis]:[m
+[31m-        raise ValueError("The number of values along axis {} in 'ar1' and 'ar2' must be the same.".format(1-axis))[m
+[31m-    if axis not in [0, 1]:[m
+[31m-        raise ValueError("Invalid value for 'axis'. The value of 'axis' must be either 0 or 1.")[m
+[31m-    if ar1.dtype != ar2.dtype:[m
+[31m-        raise ValueError("The data type of 'ar1' ({}) and 'ar2' ({}) must be the same.".format(ar1.dtype, ar2.dtype))[m
+[31m-[m
+[31m-    if axis == 0:[m
+[31m-        return np.array([x for x in set(tuple(x) for x in ar1) & set(tuple(x) for x in ar2)])[m
+[31m-    elif axis == 1:[m
+[31m-        return np.array([x for x in set(tuple(x) for x in ar1.T) & set(tuple(x) for x in ar2.T)])[m
+[32m+[m	[32m"""[m
+[32m+[m	[32mFind the intersection of rows between two 2D numpy arrays, `ar1` and `ar2`.[m
+[32m+[m
+[32m+[m	[32mParameters:[m
+[32m+[m	[32m    ar1 (numpy.ndarray): First 2D array.[m
+[32m+[m	[32m    ar2 (numpy.ndarray): Second 2D array.[m
+[32m+[m	[32m    axis (int, optional): Axis along which to find the intersection. Default is 0.[m
+[32m+[m
+[32m+[m	[32mReturns:[m
+[32m+[m	[32m    numpy.ndarray: A new numpy array with the shared rows between `ar1` and `ar2`.[m
+[32m+[m
+[32m+[m	[32mRaises:[m
+[32m+[m	[32m    ValueError: If `axis` is not 0 or 1.[m
+[32m+[m	[32m    ValueError: If the shape of either `ar1` or `ar2` is 0.[m
+[32m+[m	[32m    ValueError: If the number of values along the specified axis in `ar1` and `ar2` are not the same.[m
+[32m+[m	[32m    ValueError: If the data type of `ar1` and `ar2` is not the same.[m
+[32m+[m
+[32m+[m	[32mNote:[m
+[32m+[m	[32m    - The function finds the rows that are present in both `ar1` and `ar2`.[m
+[32m+[m	[32m    - Rows are considered to be the same if their values are exactly the same (case-sensitive).[m
+[32m+[m
+[32m+[m	[32mExample:[m
+[32m+[m	[32m    >>> ar1 = np.array([[1, 2], [3, 4], [5, 6]])[m
+[32m+[m	[32m    >>> ar2 = np.array([[3, 4], [5, 6], [7, 8]])[m
+[32m+[m	[32m    >>> intersect2D(ar1, ar2)[m
+[32m+[m	[32m    array([[3, 4],[m
+[32m+[m	[32m        [5, 6]])[m
+[32m+[m	[32m"""[m
+[32m+[m	[32mif ar1.ndim != 2 or ar2.ndim != 2:[m
+[32m+[m		[32mraise ValueError([m
+[32m+[m			[32m"'ar1' and 'ar2' must be 2D arrays. The input arrays must have two dimensions."[m
+[32m+[m		[32m)[m
+[32m+[m	[32mif ar1.size == 0 or ar2.size == 0:[m
+[32m+[m		[32mraise ValueError([m
+[32m+[m			[32m"Shape of 'ar1' or 'ar2' is 0. Input arrays must have at least one row."[m
+[32m+[m		[32m)[m
+[32m+[m	[32mif ar1.shape[1 - axis] != ar2.shape[1 - axis]:[m
+[32m+[m		[32mraise ValueError([m
+[32m+[m			[32m"The number of values along axis {} in 'ar1' and 'ar2' must be the same.".format([m
+[32m+[m				[32m1 - axis[m
+[32m+[m			[32m)[m
+[32m+[m		[32m)[m
+[32m+[m	[32mif axis not in [0, 1]:[m
+[32m+[m		[32mraise ValueError([m
+[32m+[m			[32m"Invalid value for 'axis'. The value of 'axis' must be either 0 or 1."[m
+[32m+[m		[32m)[m
+[32m+[m	[32mif ar1.dtype != ar2.dtype:[m
+[32m+[m		[32mraise ValueError([m
+[32m+[m			[32m"The data type of 'ar1' ({}) and 'ar2' ({}) must be the same.".format([m
+[32m+[m				[32mar1.dtype, ar2.dtype[m
+[32m+[m			[32m)[m
+[32m+[m		[32m)[m
+[32m+[m
+[32m+[m	[32mif axis == 0:[m
+[32m+[m		[32mreturn np.array([m
+[32m+[m			[32m[x for x in set(tuple(x) for x in ar1) & set(tuple(x) for x in ar2)][m
+[32m+[m		[32m)[m
+[32m+[m	[32melif axis == 1:[m
+[32m+[m		[32mreturn np.array([m
+[32m+[m			[32m[x for x in set(tuple(x) for x in ar1.T) & set(tuple(x) for x in ar2.T)][m
+[32m+[m		[32m)[m
+ [m
+ [m
+ def _union2d_dispatcher(ar1, ar2, axis=0):[m
+[31m-    return (ar1, ar2)[m
+[32m+[m	[32mreturn (ar1, ar2)[m
+ [m
+ [m
+ @array_function_dispatch(_union2d_dispatcher)[m
+ def union2D(ar1, ar2, axis=0):[m
+[31m-    """[m
+[31m-    Find the union of rows between two 2D numpy arrays, `ar1` and `ar2`.[m
+[31m-[m
+[31m-    Parameters:[m
+[31m-        ar1 (numpy.ndarray): First 2D array.[m
+[31m-        ar2 (numpy.ndarray): Second 2D array.[m
+[31m-        axis (int, optional): Axis along which to find the union. Default is 0.[m
+[31m-[m
+[31m-    Returns:[m
+[31m-        numpy.ndarray: A new numpy array with all the rows from `ar1` and `ar2`, without repetition.[m
+[31m-[m
+[31m-    Raises:[m
+[31m-        ValueError: If `axis` is not 0 or 1.[m
+[31m-        ValueError: If the shape of either `ar1` or `ar2` is 0.[m
+[31m-        ValueError: If the number of values along the specified axis in `ar1` and `ar2` are not the same.[m
+[31m-        ValueError: If `ar1` and `ar2` are not the same data type.[m
+[31m-[m
+[31m-    Note:[m
+[31m-        - The function combines the rows of `ar1` and `ar2` without repeating any rows.[m
+[31m-        - Rows are considered to be the same if their values are exactly the same (case-sensitive).[m
+[31m-[m
+[31m-    Example:[m
+[31m-        >>> ar1 = np.array([[1, 2], [3, 4], [5, 6]])[m
+[31m-        >>> ar2 = np.array([[3, 4], [5, 6], [7, 8]])[m
+[31m-        >>> union2D(ar1, ar2)[m
+[31m-        array([[1, 2],[m
+[31m-            [3, 4],[m
+[31m-            [5, 6],[m
+[31m-            [7, 8]])[m
+[31m-    """[m
+[31m-    if ar1.ndim != 2 or ar2.ndim != 2:[m
+[31m-        raise ValueError("'ar1' and 'ar2' must be 2D arrays. The input arrays must have two dimensions.")[m
+[31m-    if ar1.size == 0 or ar2.size == 0:[m
+[31m-        raise ValueError("Shape of 'ar1' or 'ar2' is 0. Input arrays must have at least one row.")[m
+[31m-    if ar1.shape[1-axis] != ar2.shape[1-axis]:[m
+[31m-        raise ValueError("The number of values along axis {} in 'ar1' and 'ar2' must be the same.".format(1-axis))[m
+[31m-    if axis not in [0, 1]:[m
+[31m-        raise ValueError("Invalid value for 'axis'. The value of 'axis' must be either 0 or 1.")[m
+[31m-    if ar1.dtype != ar2.dtype:[m
+[31m-        raise ValueError("The data type of 'ar1' ({}) and 'ar2' ({}) must be the same.".format(ar1.dtype, ar2.dtype))[m
+[31m-[m
+[31m-    if axis == 0:[m
+[31m-        return np.array([x for x in set(tuple(x) for x in np.vstack([ar1, ar2]))])[m
+[31m-    elif axis == 1:[m
+[31m-        return np.array([x for x in set(tuple(x) for x in np.vstack([ar1.T, ar2.T]))])[m
+[32m+[m	[32m"""[m
+[32m+[m	[32mFind the union of rows between two 2D numpy arrays, `ar1` and `ar2`.[m
+[32m+[m
+[32m+[m	[32mParameters:[m
+[32m+[m	[32m    ar1 (numpy.ndarray): First 2D array.[m
+[32m+[m	[32m    ar2 (numpy.ndarray): Second 2D array.[m
+[32m+[m	[32m    axis (int, optional): Axis along which to find the union. Default is 0.[m
+[32m+[m
+[32m+[m	[32mReturns:[m
+[32m+[m	[32m    numpy.ndarray: A new numpy array with all the rows from `ar1` and `ar2`, without repetition.[m
+[32m+[m
+[32m+[m	[32mRaises:[m
+[32m+[m	[32m    ValueError: If `axis` is not 0 or 1.[m
+[32m+[m	[32m    ValueError: If the shape of either `ar1` or `ar2` is 0.[m
+[32m+[m	[32m    ValueError: If the number of values along the specified axis in `ar1` and `ar2` are not the same.[m
+[32m+[m	[32m    ValueError: If `ar1` and `ar2` are not the same data type.[m
+[32m+[m
+[32m+[m	[32mNote:[m
+[32m+[m	[32m    - The function combines the rows of `ar1` and `ar2` without repeating any rows.[m
+[32m+[m	[32m    - Rows are considered to be the same if their values are exactly the same (case-sensitive).[m
+[32m+[m
+[32m+[m	[32mExample:[m
+[32m+[m	[32m    >>> ar1 = np.array([[1, 2], [3, 4], [5, 6]])[m
+[32m+[m	[32m    >>> ar2 = np.array([[3, 4], [5, 6], [7, 8]])[m
+[32m+[m	[32m    >>> union2D(ar1, ar2)[m
+[32m+[m	[32m    array([[1, 2],[m
+[32m+[m	[32m        [3, 4],[m
+[32m+[m	[32m        [5, 6],[m
+[32m+[m	[32m        [7, 8]])[m
+[32m+[m	[32m"""[m
+[32m+[m	[32mif ar1.ndim != 2 or ar2.ndim != 2:[m
+[32m+[m		[32mraise ValueError([m
+[32m+[m			[32m"'ar1' and 'ar2' must be 2D arrays. The input arrays must have two dimensions."[m
+[32m+[m		[32m)[m
+[32m+[m	[32mif ar1.size == 0 or ar2.size == 0:[m
+[32m+[m		[32mraise ValueError([m
+[32m+[m			[32m"Shape of 'ar1' or 'ar2' is 0. Input arrays must have at least one row."[m
+[32m+[m		[32m)[m
+[32m+[m	[32mif ar1.shape[1 - axis] != ar2.shape[1 - axis]:[m
+[32m+[m		[32mraise ValueError([m
+[32m+[m			[32m"The number of values along axis {} in 'ar1' and 'ar2' must be the same.".format([m
+[32m+[m				[32m1 - axis[m
+[32m+[m			[32m)[m
+[32m+[m		[32m)[m
+[32m+[m	[32mif axis not in [0, 1]:[m
+[32m+[m		[32mraise ValueError([m
+[32m+[m			[32m"Invalid value for 'axis'. The value of 'axis' must be either 0 or 1."[m
+[32m+[m		[32m)[m
+[32m+[m	[32mif ar1.dtype != ar2.dtype:[m
+[32m+[m		[32mraise ValueError([m
+[32m+[m			[32m"The data type of 'ar1' ({}) and 'ar2' ({}) must be the same.".format([m
+[32m+[m				[32mar1.dtype, ar2.dtype[m
+[32m+[m			[32m)[m
+[32m+[m		[32m)[m
+[32m+[m
+[32m+[m	[32mif axis == 0:[m
+[32m+[m		[32mreturn np.array([x for x in set(tuple(x) for x in np.vstack([ar1, ar2]))])[m
+[32m+[m	[32melif axis == 1:[m
+[32m+[m		[32mreturn np.array([x for x in set(tuple(x) for x in np.vstack([ar1.T, ar2.T]))])[m
