@@ -567,3 +567,34 @@ def _config_openblas(blas_variant):
         os.makedirs(openblas_dir, exist_ok=True)
         with open(pkg_config_fname, "wt", encoding="utf8") as fid:
             fid.write(openblas.get_pkg_config().replace("\\", "/"))
+
+
+@click.command()
+@click.argument("refguide_args", nargs=-1) # TODO: is this needed
+@click.option(
+    "--rst",
+    nargs='?', default=None
+)
+@click.option(
+    "--doctests",
+    is_flag=True, default=False,
+    help="Run also doctests on "
+)
+@click.option(
+    "--doctest-warnings",
+    is_flag=True, default=False,
+    help="Enforce warning checking for doctests"
+)
+@click.pass_context
+def refguide(ctx, refguide_args, doctests, doctest_warnings, rst):
+    """
+    🕵 TODO
+    """
+    meson._set_pythonpath()  # TODO: This does not solve the error below
+    try:
+        refguide = _get_numpy_tools(pathlib.Path('refguide_check.py'))  # TODO: Circular imports
+    except ModuleNotFoundError as e:
+        raise click.ClickException(
+            f"{e.msg}. Install the missing packages to use this command."
+        )
+    # TODO: Add logic
