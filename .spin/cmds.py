@@ -592,10 +592,7 @@ def notes(ctx, version_override):
     \b
     $ spin notes
     """
-    if not version_override:
-        version = util.get_config()['project']['version']
-    else:
-        version = version_override
+    version = version_override or util.get_config()['project.version']
 
     click.secho(
         f"Generating release notes for NumPy {version}",
@@ -611,12 +608,17 @@ def notes(ctx, version_override):
     # towncrier build --version 2.1 --yes
     cmd = ["towncrier", "build", "--version", version, "--yes"]
     try:
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8")
+        p = util.run(
+                cmd=cmd,
+                sys_exit=False,
+                output=True,
+                encoding="utf-8"
+            )
     except subprocess.SubprocessError as e:
         raise click.ClickException(
             f"`towncrier` failed returned {e.returncode} with error `{e.stderr}`"
         )
-    output, _ = p.communicate()
+    output = p.stdout
     click.secho(output)
 
     click.secho(
