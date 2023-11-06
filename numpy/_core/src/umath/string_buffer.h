@@ -59,7 +59,7 @@ struct Buffer {
     }
 
     inline npy_int64
-    length()
+    num_codepoints()
     {
         Buffer tmp(after, 0);
         tmp--;
@@ -162,13 +162,13 @@ struct Buffer {
     }
 
     inline int
-    buffer_memcmp(Buffer<enc> other, int len)
+    buffer_memcmp(Buffer<enc> other, size_t len)
     {
         return memcmp(buf, other.buf, len);
     }
 
     inline void
-    buffer_memcpy(void *out, npy_int64 n_chars)
+    buffer_memcpy(void *out, size_t n_chars)
     {
         switch (enc) {
         case ENCODING::ASCII:
@@ -181,7 +181,7 @@ struct Buffer {
     }
 
     inline void
-    buffer_memcpy_with_offset(void *out, npy_int64 offset, npy_int64 n_chars)
+    buffer_memcpy_with_offset(void *out, npy_int64 offset, size_t n_chars)
     {
         switch (enc) {
         case ENCODING::ASCII:

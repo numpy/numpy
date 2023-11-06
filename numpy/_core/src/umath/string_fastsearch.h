@@ -248,7 +248,7 @@ _preprocess(Buffer<enc> needle, Py_ssize_t len_needle,
     p->len_needle = len_needle;
     p->cut = _factorize(needle, len_needle, &(p->period));
     assert(p->period + p->cut <= len_needle);
-    p->is_periodic = (0 == needle.buffer_memcmp(needle + p->period, p->cut));
+    p->is_periodic = (0 == needle.buffer_memcmp(needle + p->period, (size_t) p->cut));
     if (p->is_periodic) {
         assert(p->cut <= len_needle/2);
         assert(p->cut < p->period);

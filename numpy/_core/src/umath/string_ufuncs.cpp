@@ -120,10 +120,10 @@ template <ENCODING enc>
 static inline void
 string_add(Buffer<enc> buf1, Buffer<enc> buf2, char *out)
 {
-    npy_int64 len1 = buf1.length();
-    npy_int64 len2 = buf2.length();
-    buf1.buffer_memcpy(out, len1);
-    buf2.buffer_memcpy_with_offset(out, len1, len2);
+    npy_int64 len1 = buf1.num_codepoints();
+    npy_int64 len2 = buf2.num_codepoints();
+    buf1.buffer_memcpy(out, (size_t) len1);
+    buf2.buffer_memcpy_with_offset(out, len1, (size_t) len2);
 }
 
 
@@ -131,13 +131,13 @@ template <ENCODING enc>
 static inline npy_bool
 string_isalpha(Buffer<enc> buf)
 {
-    npy_int64 len = buf.length();
+    npy_int64 len = buf.num_codepoints();
 
     if (len == 0) {
         return (npy_bool) 0;
     }
 
-    for (int i = 0; i < len; i++) {
+    for (npy_int64 i = 0; i < len; i++) {
         npy_bool isalpha = (npy_bool) NumPyOS_ascii_isalpha(*buf);
         if (!isalpha) {
             return isalpha;
@@ -174,8 +174,8 @@ template <ENCODING enc>
 static inline npy_intp
 string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
-    npy_int64 len1 = buf1.length();
-    npy_int64 len2 = buf2.length();
+    npy_int64 len1 = buf1.num_codepoints();
+    npy_int64 len2 = buf2.num_codepoints();
 
     adjust_offsets(&start, &end, len1);
     if (end - start < len2) {
@@ -207,8 +207,8 @@ template <ENCODING enc>
 static inline npy_intp
 string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
-    npy_int64 len1 = buf1.length();
-    npy_int64 len2 = buf2.length();
+    npy_int64 len1 = buf1.num_codepoints();
+    npy_int64 len2 = buf2.num_codepoints();
 
     adjust_offsets(&start, &end, len1);
     if (end - start < len2) {
