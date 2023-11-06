@@ -1,0 +1,212 @@
+name: Linux SIMD tests
+
+# This file is meant for testing different SIMD-related build options and
+# optimization levels. See `meson_options.txt` for the available build options.
+#
+# Jobs and their purposes:
+#
+# - baseline_only:
+#   Focuses on completing as quickly as possible and acts as a filter for other, more resource-intensive jobs.
+#   Utilizes only the default baseline targets (e.g., SSE3 on X86_64) without enabling any runtime dispatched features.
+#
+# - old_gcc:
+#   Tests the oldest supported GCC version with default CPU/baseline/dispatch settings.
+#
+# - without_optimizations:
+#   Completely disables all SIMD optimizations and other compiler optimizations such as loop unrolling.
+#
+# - native:
+#   Tests against the host CPU features set as the baseline without enabling any runtime dispatched features.
+#   Intended to assess the entire NumPy codebase against host flags, even for code sections lacking handwritten SIMD intrincis.
+#
+# - without_avx512/avx2/fma3:
+#   Uses runtime SIMD dispatching but disables AVX2, FMA3, and AVX512.
+#   Intended to evaluate 128-bit SIMD extensions without FMA support.
+#
+# - without_avx512:
+#   Uses runtime SIMD dispatching but disables AVX512.
+#   Intended to evaluate 128-bit/256-bit SIMD extensions.
+#
+# - intel_sde:
+#   Executes only the SIMD tests for various AVX512 SIMD extensions under the Intel Software Development Emulator (SDE).
+#
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+
+defaults:
+  run:
+    shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+
+env:
+  TERM: xterm-256color
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  baseline_only:
+    if: "github.repository == 'numpy/numpy'"
+    runs-on: ubuntu-latest
+    env:
+      MESON_ARGS: "-Dallow-noblas=true -Dcpu-dispatch=none"
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
+      with:
+        python-version: '3.9'
+    - uses: ./.github/meson_actions
+      name: Build/Test
+
+  old_gcc:
+    if: github.event_name != 'push'
+    needs: [baseline_only]
+    runs-on: ubuntu-latest
+    env:
+      MESON_ARGS: "-Dallow-noblas=true"
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
+      with:
+        python-version: '3.9'
+
+    - name: Install GCC/8/9
+      run: |
+        echo "deb http://archive.ubuntu.com/ubuntu focal main universe" | sudo tee /etc/apt/sources.list.d/focal.list
+        sudo apt update
+        sudo apt install -y g++-8 g++-9
+
+    - name: Enable gcc-8
+      run: |
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 1
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 1
+
+    - uses: ./.github/meson_actions
+      name: Build/Test against gcc-8
+
+    - name: Enable gcc-9
+      run: |
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 2
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 2
+
+    - uses: ./.github/meson_actions
+      name: Build/Test against gcc-9
+
+  specialize:
+    needs: [baseline_only]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push'
+    continue-on-error: true
+    strategy:
+      matrix:
+        BUILD_PROP:
+          #- [
+            #"without optimizations",
+            #"-Dallow-noblas=true -Ddisable-optimization=true",
+            #"3.12"
+          #]
+          - [
+            "native",
+            "-Dallow-noblas=true -Dcpu-baseline=native -Dcpu-dispatch=none",
+            "3.11"
+          ]
+          - [
+            "without avx512",
+            "-Dallow-noblas=true -Dcpu-dispatch=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C,AVX2,FMA3",
+            "3.10"
+          ]
+          - [
+            "without avx512/avx2/fma3",
+            "-Dallow-noblas=true -Dcpu-dispatch=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C",
+            "3.9"
+          ]
+
+    env:
+      MESON_ARGS: ${{ matrix.BUILD_PROP[1] }}
+
+    name: "${{ matrix.BUILD_PROP[0] }}"
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
+      with:
+        python-version: "${{ matrix.BUILD_PROP[2] }}"
+    - uses: ./.github/meson_actions
+      name: Build/Test
+
+  intel_sde:
+    needs: [baseline_only]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
+      with:
+        python-version: '3.11'
+
+    - name: Install Intel SDE
+      run: |
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/784319/sde-external-9.24.0-2023-07-13-lin.tar.xz
+        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
+        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y g++-13
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 1
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 1
+        python -m pip install -r build_requirements.txt
+        python -m pip install pytest pytest-xdist hypothesis typing_extensions
+
+    - name: Build
+      run: spin build -- -Dallow-noblas=true -Dcpu-baseline=avx512f -Dtest-simd='BASELINE,AVX512_KNL,AVX512_KNM,AVX512_SKX,AVX512_CLX,AVX512_CNL,AVX512_ICL,AVX512_SPR'
+
+    - name: Meson Log
+      if: always()
+      run: cat build/meson-logs/meson-log.txt
+
+    - name: SIMD tests (KNM)
+      run: |
+        export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
+        export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
+        cd build-install &&
+        sde -knm -- python -c "import numpy; numpy.show_config()" &&
+        sde -knm -- python -m pytest $NUMPY_SITE/numpy/core/tests/test_simd*
+
+    - name: SIMD tests (SPR)
+      run: |
+        export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
+        export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
+        cd build-install &&
+        sde -spr -- python -c "import numpy; numpy.show_config()" &&
+        sde -spr -- python -m pytest $NUMPY_SITE/numpy/core/tests/test_simd*
+
+    # Can't run on SDE just yet: see https://github.com/numpy/numpy/issues/23545#issuecomment-1659047365
+    #
+    #- name: linalg/ufunc/umath tests (SPR)
+    #  run: |
+    #    export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
+    #    export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
+    #    cd build-install &&
+    #    sde -spr -- python -c "import numpy; numpy.show_config()" &&
+    #    sde -spr -- python -m pytest $NUMPY_SITE/numpy/core/tests/test_umath* \
+    #                                 $NUMPY_SITE/numpy/core/tests/test_ufunc.py \
+    #                                 $NUMPY_SITE/numpy/linalg/tests/test_*
+

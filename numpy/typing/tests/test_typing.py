@@ -26,6 +26,20 @@ pytestmark = pytest.mark.skipif(
 )
 
 
+# Only trigger a full `mypy` run if this environment variable is set
+# Note that these tests tend to take over a minute even on a macOS M1 CPU,
+# and more than that in CI.
+RUN_MYPY = "NPY_RUN_MYPY_IN_TESTSUITE" in os.environ
+if RUN_MYPY and RUN_MYPY not in ('0', '', 'false'):
+    RUN_MYPY = True
+
+# Skips all functions in this file
+pytestmark = pytest.mark.skipif(
+    not RUN_MYPY,
+    reason="`NPY_RUN_MYPY_IN_TESTSUITE` not set"
+)
+
+
 try:
     from mypy import api
 except ImportError:
