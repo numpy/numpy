@@ -10,15 +10,20 @@ endif
 
 # Platform detection
 is_windows = host_machine.system() == 'windows'
-is_mingw = is_windows and cc.get_id() == 'gcc'
+is_mingw = is_windows and cc.get_define('__MINGW32__') != ''
 
 if is_mingw
-  # For mingw-w64, link statically against the UCRT.
-  gcc_link_args = ['-lucrt', '-static']
-  add_project_link_arguments(gcc_link_args, language: ['c', 'cpp'])
-  # Force gcc to float64 long doubles for compatibility with MSVC
-  # builds, for C only.
-  add_project_arguments('-mlong-double-64', language: 'c')
+  is_mingw_built_python = run_command(
+    py, ['-c', 'import sysconfig; print(sysconfig.get_platform())'],
+    check: true).stdout().strip().startswith('mingw')
+  if not is_mingw_built_python
+    # For mingw-w64, link statically against the UCRT.
+    gcc_link_args = ['-lucrt', '-static']
+    add_project_link_arguments(gcc_link_args, language: ['c', 'cpp'])
+    # Force gcc to float64 long doubles for compatibility with MSVC
+    # builds, for C only.
+    add_project_arguments('-mlong-double-64', language: 'c')
+  endif
   # Make fprintf("%zd") work (see https://github.com/rgommers/scipy/issues/118)
   add_project_arguments('-D__USE_MINGW_ANSI_STDIO=1', language: ['c', 'cpp'])
 endif
