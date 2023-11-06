@@ -126,7 +126,7 @@ else:
         arctan2, arctanh, argmax, argmin, argpartition, argsort, argwhere,
         around, array, array2string, array_equal, array_equiv, array_repr,
         array_str, asanyarray, asarray, ascontiguousarray, asfortranarray,
-        atleast_1d, atleast_2d, atleast_3d, base_repr, binary_repr,
+        astype, atleast_1d, atleast_2d, atleast_3d, base_repr, binary_repr,
         bitwise_and, bitwise_count, bitwise_not, bitwise_or, bitwise_xor,
         block, bool, bool_, broadcast, busday_count, busday_offset,
         busdaycalendar, byte, bytes_, can_cast, cbrt, cdouble, ceil,
