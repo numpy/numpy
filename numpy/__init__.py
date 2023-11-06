@@ -266,7 +266,6 @@ else:
 
     _type_info = [
         ("object", ""),  # The NumPy scalar only exists by name.
-        ("bool", _specific_msg.format("bool_")),
         ("float", _specific_msg.format("float64")),
         ("complex", _specific_msg.format("complex128")),
         ("str", _specific_msg.format("str_")),
@@ -283,7 +282,10 @@ else:
     # probably wait for NumPy 1.26 or 2.0.
     # When defined, these should possibly not be added to `__all__` to avoid
     # import with `from numpy import *`.
-    __future_scalars__ = {"bool", "str", "bytes", "object"}
+    __future_scalars__ = {"str", "bytes", "object"}
+
+    # Redefined in NumPy 2.0.
+    globals()["bool"] = bool_
 
     # now that numpy core module is imported, can initialize limits
     _core.getlimits._register_known_types()

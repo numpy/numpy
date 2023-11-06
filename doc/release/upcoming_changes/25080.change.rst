@@ -1,0 +1,1 @@
+* Redefine `numpy.bool` as an alias for `numpy.bool_` for Array API compatibility.

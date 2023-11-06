@@ -30,7 +30,7 @@ confusion with builtin python type names, such as `numpy.bool_`.
       - Actual C type
       - Description
 
-    * - `numpy.bool_`
+    * - `numpy.bool_` or `numpy.bool`
       - N/A
       - ``bool`` (defined in ``stdbool.h``)
       - Boolean (True or False) stored as a byte.
