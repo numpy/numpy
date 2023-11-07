@@ -7,7 +7,6 @@ import numbers
 import builtins
 
 import numpy as np
-import numpy.dtypes
 from . import multiarray
 from . import numerictypes as nt
 from .multiarray import (
@@ -2388,16 +2387,18 @@ def _array_equal_dispatcher(a1, a2, equal_nan=None):
 
 
 _no_nan_types = {
-    nt.bool,
-    nt.int8,
-    nt.int16,
-    nt.int32,
-    nt.int64,
+    # should use np.dtype.BoolDType, but as of writing
+    # that fails the reloading test.
+    type(np.dtype(nt.bool)),
+    type(np.dtype(nt.int8)),
+    type(np.dtype(nt.int16)),
+    type(np.dtype(nt.int32)),
+    type(np.dtype(nt.int64)),
 }
 
 
 def _dtype_cannot_hold_nan(dtype):
-    return dtype in _no_nan_types
+    return type(dtype) in _no_nan_types
 
 
 @array_function_dispatch(_array_equal_dispatcher)
