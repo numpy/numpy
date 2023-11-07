@@ -37,6 +37,29 @@ if not cy.version().version_compare('>=0.29.34')
   error('NumPy requires Cython >= 0.29.34')
 endif
 
+# Intel compilers default to fast-math, so disable it if we detect Intel
+# compilers. A word of warning: this may not work with the conda-forge
+# compilers, because those have the annoying habit of including lots of flags
+# that are gcc-specific in CFLAGS/CXXFLAGS/FFLAGS, which throws off the
+# detection logic below. You have to remove the wrong flags (only `-isystem`
+# is actually needed, everything else shouldn't be there).
+_intel_cflags = []
+if cc.get_id() == 'intel'
+  _intel_cflags += cc.get_supported_arguments('-fp-model=strict')
+elif cc.get_id() == 'intel-cl'
+  _intel_cflags += cc.get_supported_arguments('/fp:strict')
+elif cc.get_id() == 'intel-llvm-cl'
+  _intel_cflags += cc.get_supported_arguments('/fp:strict')
+  _intel_cflags += cc.get_supported_arguments('/source-charset:utf-8')
+endif
+add_project_arguments(_intel_cflags, language: ['c', 'cpp'])
+if cc.get_id() == 'intel-llvm-cl'
+  _intel_c99_flag = cc.get_supported_arguments('/Qstd=c99')
+  add_project_arguments(_intel_c99_flag, language: 'c')
+  _intel_c17 = cpp.get_supported_arguments('/Qstd=c++17')
+  add_project_arguments(_intel_c17, language: 'cpp')
+endif
+
 py = import('python').find_installation(pure: false)
 py_dep = py.dependency()
 
