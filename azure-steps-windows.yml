@@ -30,12 +30,12 @@ steps:
         python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Dblas=none" -Csetup-args="-Dlapack=none" -Csetup-args="-Dallow-noblas=true"
     }
     elseif ( Test-Path env:_USE_BLAS_ILP64 ) {
-        python -m pip install scipy-openblas64 spin
+        python -m pip install "scipy-openblas64<=0.3.23.293.2" spin
         spin config-openblas --with-scipy-openblas=64
         $env:PKG_CONFIG_PATH="$pwd/.openblas"
         python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Duse-ilp64=true"
     } else {
-        python -m pip install scipy-openblas32 spin
+        python -m pip install "scipy-openblas32<=0.3.23.293.2" spin
         spin config-openblas --with-scipy-openblas=32
         $env:PKG_CONFIG_PATH="$pwd/.openblas"
         python -m pip install . -v -Csetup-args="--vsenv" 
