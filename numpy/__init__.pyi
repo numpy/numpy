@@ -3248,6 +3248,19 @@ true_divide: _UFunc_Nin2_Nout1[L['true_divide'], L[11], None]
 trunc: _UFunc_Nin1_Nout1[L['trunc'], L[7], None]
 
 abs = absolute
+acos = arccos
+acosh = arccosh
+asin = arcsin
+asinh = arcsinh
+atan = arctan
+atanh = arctanh
+atan2 = arctan2
+concat = concatenate
+bitwise_left_shift = left_shift
+bitwise_invert = invert
+bitwise_right_shift = right_shift
+permute_dims = transpose
+pow = power
 
 class _CopyMode(enum.Enum):
     ALWAYS: L[True]
