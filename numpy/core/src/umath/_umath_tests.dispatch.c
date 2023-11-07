@@ -5,6 +5,7 @@
  * SSE2 SSE41 AVX2
  * VSX VSX2 VSX3
  * NEON ASIMD ASIMDHP
+ * VX VXE
  */
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
