@@ -36,7 +36,7 @@ character_cmp(character a, character b)
 }
 
 
-template<typename character>
+template <typename character>
 static inline int
 string_rstrip(const character *str, int elsize)
 {
@@ -54,63 +54,6 @@ string_rstrip(const character *str, int elsize)
     return elsize;
 }
 
-
-template<typename character>
-static inline int
-get_length(const character *str, int elsize)
-{
-    const character *d = str + elsize - 1;
-    while (d >= str && *d == '\0') {
-        d--;
-    }
-    return d - str + 1;
-}
-
-
-template <ENCODING enc>
-static inline Py_ssize_t
-findslice(Buffer<enc> str, Py_ssize_t str_len,
-          Buffer<enc> sub, Py_ssize_t sub_len,
-          Py_ssize_t offset)
-{
-    Py_ssize_t pos;
-
-    if (sub_len == 0) {
-        return offset;
-    }
-
-    pos = fastsearch<enc>(str, str_len, sub, sub_len, -1, FAST_SEARCH);
-
-    if (pos >= 0) {
-        pos += offset;
-    }
-
-    return pos;
-}
-
-
-template <ENCODING enc>
-static inline Py_ssize_t
-rfindslice(Buffer<enc> str, Py_ssize_t str_len,
-           Buffer<enc> sub, Py_ssize_t sub_len,
-           Py_ssize_t offset)
-{
-    Py_ssize_t pos;
-
-    if (sub_len == 0) {
-        // Note: This won't work for utf-8 and should be fixed before adding
-        // support for stringdtype.
-        return str_len + offset;
-    }
-
-    pos = fastsearch<enc>(str, str_len, sub, sub_len, -1, FAST_RSEARCH);
-
-    if (pos >= 0) {
-        pos += offset;
-    }
-
-    return pos;
-}
 
 /*
  * Compare two strings of different length.  Note that either string may be
@@ -173,38 +116,37 @@ string_cmp(const character *str1, int elsize1, const character *str2, int elsize
 }
 
 
-template <typename character>
+template <ENCODING enc>
 static inline void
-string_add(character *str1, int elsize1, character *str2, int elsize2, character *out, int outsize)
+string_add(Buffer<enc> buf1, Buffer<enc> buf2, char *out)
 {
-    int len1 = get_length(str1, elsize1);
-    int len2 = get_length(str2, elsize2);
-
-    memcpy(out, str1, len1 * sizeof(character));
-    memcpy(out + len1, str2, len2 * sizeof(character));
-    memset(out + len1 + len2, 0, outsize - len1 - len2);
+    npy_int64 len1 = buf1.num_codepoints();
+    npy_int64 len2 = buf2.num_codepoints();
+    buf1.buffer_memcpy(out, (size_t) len1);
+    buf2.buffer_memcpy_with_offset(out, len1, (size_t) len2);
 }
 
 
-template <typename character>
+template <ENCODING enc>
 static inline npy_bool
-string_isalpha(const character *str, int elsize)
+string_isalpha(Buffer<enc> buf)
 {
-    int len = get_length(str, elsize);
+    npy_int64 len = buf.num_codepoints();
 
     if (len == 0) {
         return (npy_bool) 0;
     }
 
-    for (int i = 0; i < len; i++) {
-        npy_bool isalpha = (npy_bool) NumPyOS_ascii_isalpha(*str);
+    for (npy_int64 i = 0; i < len; i++) {
+        npy_bool isalpha = (npy_bool) NumPyOS_ascii_isalpha(*buf);
         if (!isalpha) {
             return isalpha;
         }
-        str++;
+        buf++;
     }
     return (npy_bool) 1;
 }
+
 
 /* helper to fixup start/end slice values */
 static inline void
@@ -227,22 +169,22 @@ adjust_offsets(npy_int64 *start, npy_int64 *end, npy_int64 len)
     }
 }
 
+
 template <ENCODING enc>
 static inline npy_intp
-string_find(char *str1, int elsize1, char *str2, int elsize2,
-            npy_int64 start, npy_int64 end)
+string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
-    Buffer<enc> buf1(str1, elsize1);
-    Buffer<enc> buf2(str2, elsize2);
-
-    npy_int64 len1 = buf1.length();
-    npy_int64 len2 = buf2.length();
+    npy_int64 len1 = buf1.num_codepoints();
+    npy_int64 len2 = buf2.num_codepoints();
 
     adjust_offsets(&start, &end, len1);
     if (end - start < len2) {
         return (npy_intp) -1;
     }
 
+    if (len2 == 0) {
+        return (npy_intp) start;
+    }
     if (len2 == 1) {
         npy_ucs4 ch = *buf2;
         npy_intp result = (npy_intp) findchar<enc>(buf1 + start, end - start, ch);
@@ -253,29 +195,29 @@ string_find(char *str1, int elsize1, char *str2, int elsize2,
         }
     }
 
-    return (npy_intp) findslice<enc>(buf1 + start,
-                                     end - start,
-                                     buf2,
-                                     len2,
-                                     start);
+    npy_intp pos = fastsearch<enc>(buf1 + start, end - start, buf2, len2, -1, FAST_SEARCH);
+    if (pos >= 0) {
+        pos += start;
+    }
+    return pos;
 }
+
 
 template <ENCODING enc>
 static inline npy_intp
-string_rfind(char *str1, int elsize1, char *str2, int elsize2,
-             npy_int64 start, npy_int64 end)
+string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
-    Buffer<enc> buf1(str1, elsize1);
-    Buffer<enc> buf2(str2, elsize2);
-
-    npy_int64 len1 = buf1.length();
-    npy_int64 len2 = buf2.length();
+    npy_int64 len1 = buf1.num_codepoints();
+    npy_int64 len2 = buf2.num_codepoints();
 
     adjust_offsets(&start, &end, len1);
     if (end - start < len2) {
         return (npy_intp) -1;
     }
 
+    if (len2 == 0) {
+        return (npy_intp) end;
+    }
     if (len2 == 1) {
         npy_ucs4 ch = *buf2;
         npy_intp result = (npy_intp) rfindchar(buf1 + start, end - start, ch);
@@ -286,11 +228,12 @@ string_rfind(char *str1, int elsize1, char *str2, int elsize2,
         }
     }
 
-    return (npy_intp) rfindslice(buf1 + start,
-                                 end - start,
-                                 buf2,
-                                 len2,
-                                 start);
+
+    npy_intp pos = (npy_intp) fastsearch<enc>(buf1 + start, end - start, buf2, len2, -1, FAST_RSEARCH);
+    if (pos >= 0) {
+        pos += start;
+    }
+    return pos;
 }
 
 
@@ -371,15 +314,14 @@ string_comparison_loop(PyArrayMethod_Context *context,
 }
 
 
-template <typename character>
+template <ENCODING enc>
 static int
 string_add_loop(PyArrayMethod_Context *context,
                 char *const data[], npy_intp const dimensions[],
                 npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    int elsize1 = context->descriptors[0]->elsize / sizeof(character);
-    int elsize2 = context->descriptors[1]->elsize / sizeof(character);
-    int outsize = context->descriptors[2]->elsize / sizeof(character);
+    int elsize1 = context->descriptors[0]->elsize;
+    int elsize2 = context->descriptors[1]->elsize;
 
     char *in1 = data[0];
     char *in2 = data[1];
@@ -388,8 +330,9 @@ string_add_loop(PyArrayMethod_Context *context,
     npy_intp N = dimensions[0];
 
     while (N--) {
-        string_add<character>((character *) in1, elsize1, (character *) in2, elsize2,
-                                      (character *) out, outsize);
+        Buffer<enc> buf1(in1, elsize1);
+        Buffer<enc> buf2(in2, elsize2);
+        string_add<enc>(buf1, buf2, out);
 
         in1 += strides[0];
         in2 += strides[1];
@@ -400,18 +343,13 @@ string_add_loop(PyArrayMethod_Context *context,
 }
 
 
-template <typename character>
+template <ENCODING enc>
 static int
 string_isalpha_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    /*
-     * Note, fetching `elsize` from the descriptor is OK even without the GIL,
-     * however it may be that this should be moved into `auxdata` eventually,
-     * which may also be slightly faster/cleaner (but more involved).
-     */
-    int elsize = context->descriptors[0]->elsize / sizeof(character);
+    int elsize = context->descriptors[0]->elsize;
 
     char *in = data[0];
     char *out = data[1];
@@ -419,7 +357,8 @@ string_isalpha_loop(PyArrayMethod_Context *context,
     npy_intp N = dimensions[0];
 
     while (N--) {
-        npy_bool res = string_isalpha<character>((character *) in, elsize);
+        Buffer<enc> buf(in, elsize);
+        npy_bool res = string_isalpha<enc>(buf);
         *(npy_bool *)out = res;
 
         in += strides[0];
@@ -430,7 +369,7 @@ string_isalpha_loop(PyArrayMethod_Context *context,
 }
 
 
-template<ENCODING enc>
+template <ENCODING enc>
 static int
 string_find_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
@@ -448,8 +387,9 @@ string_find_loop(PyArrayMethod_Context *context,
     npy_intp N = dimensions[0];
 
     while (N--) {
-        npy_intp idx = string_find<enc>(in1, elsize1, in2, elsize2,
-                                         *(npy_int64 *)in3, *(npy_int64 *)in4);
+        Buffer<enc> buf1(in1, elsize1);
+        Buffer<enc> buf2(in2, elsize2);
+        npy_intp idx = string_find<enc>(buf1, buf2, *(npy_int64 *)in3, *(npy_int64 *)in4);
         *(npy_intp *)out = idx;
 
         in1 += strides[0];
@@ -462,7 +402,7 @@ string_find_loop(PyArrayMethod_Context *context,
 }
 
 
-template<ENCODING enc>
+template <ENCODING enc>
 static int
 string_rfind_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
@@ -480,8 +420,9 @@ string_rfind_loop(PyArrayMethod_Context *context,
     npy_intp N = dimensions[0];
 
     while (N--) {
-        npy_intp idx = string_rfind<enc>(in1, elsize1, in2, elsize2,
-                                          *(npy_int64 *)in3, *(npy_int64 *)in4);
+        Buffer<enc> buf1(in1, elsize1);
+        Buffer<enc> buf2(in2, elsize2);
+        npy_intp idx = string_rfind<enc>(buf1, buf2, *(npy_int64 *)in3, *(npy_int64 *)in4);
         *(npy_intp *)out = idx;
 
         in1 += strides[0];
@@ -665,11 +606,43 @@ init_comparison(PyObject *umath)
 
 
 static int
+init_promoter(PyObject *umath, const char *name, int nin, int nout,
+              promoter_function promoter)
+{
+    PyObject *promoter_obj = PyCapsule_New((void *) promoter, "numpy._ufunc_promoter", NULL);
+    if (promoter_obj == NULL) {
+        return -1;
+    }
+
+    PyObject *dtypes_tuple = PyTuple_New(nin + nout);
+    if (dtypes_tuple == NULL) {
+        Py_DECREF(promoter_obj);
+        return -1;
+    }
+    for (int i = 0; i < nin + nout; i++) {
+        PyTuple_SET_ITEM(dtypes_tuple, i, Py_None);
+    }
+
+    PyObject *info = PyTuple_Pack(2, dtypes_tuple, promoter_obj);
+    Py_DECREF(dtypes_tuple);
+    Py_DECREF(promoter_obj);
+    if (info == NULL) {
+        return -1;
+    }
+
+    if (install_promoter(umath, name, info) < 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
 init_ufunc(PyObject *umath, const char *name, const char *specname, int nin, int nout,
-           NPY_TYPES *typenums, PyArrayMethod_StridedLoop *stringmethod,
-           PyArrayMethod_StridedLoop unicodemethod,
-           resolve_descriptors_function resolve_descriptors,
-           promoter_function promoter)
+           NPY_TYPES *typenums, PyArrayMethod_StridedLoop loop,
+           resolve_descriptors_function resolve_descriptors)
 {
     int res = -1;
 
@@ -681,7 +654,13 @@ init_ufunc(PyObject *umath, const char *name, const char *specname, int nin, int
     }
 
     for (int i = 0; i < nin+nout; i++) {
-        dtypes[i] = PyArray_DTypeFromTypeNum(typenums[i]);
+        if (typenums[i] == NPY_OBJECT && enc == ENCODING::UTF32) {
+            dtypes[i] = PyArray_DTypeFromTypeNum(NPY_UNICODE);
+        } else if (typenums[i] == NPY_OBJECT && enc == ENCODING::ASCII) {
+            dtypes[i] = PyArray_DTypeFromTypeNum(NPY_STRING);
+        } else {
+            dtypes[i] = PyArray_DTypeFromTypeNum(typenums[i]);
+        }
     }
 
     PyType_Slot slots[3];
@@ -701,47 +680,8 @@ init_ufunc(PyObject *umath, const char *name, const char *specname, int nin, int
     spec.slots = slots;
     spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
-    /* All String loops */
-    if (add_loop(umath, name, &spec, stringmethod) < 0) {
+    if (add_loop(umath, name, &spec, loop) < 0) {
         goto finish;
-    }
-
-    /* All Unicode loops */
-    for (int i = 0; i < nin+nout; i++) {
-        if (typenums[i] == NPY_STRING) {
-            Py_DECREF(dtypes[i]);
-            dtypes[i] = PyArray_DTypeFromTypeNum(NPY_UNICODE);
-        }
-    }
-    if (add_loop(umath, name, &spec, unicodemethod) < 0) {
-        goto finish;
-    }
-
-    if (promoter != NULL) {
-        PyObject *promoter_obj = PyCapsule_New((void *) promoter, "numpy._ufunc_promoter", NULL);
-        if (promoter_obj == NULL) {
-            goto finish;
-        }
-
-        PyObject *dtypes_tuple = PyTuple_New(nin + nout);
-        if (dtypes_tuple == NULL) {
-            Py_DECREF(promoter_obj);
-            goto finish;
-        }
-        for (int i = 0; i < nin + nout; i++) {
-            PyTuple_SET_ITEM(dtypes_tuple, i, Py_None);
-        }
-
-        PyObject *info = PyTuple_Pack(2, dtypes_tuple, promoter_obj);
-        Py_DECREF(dtypes_tuple);
-        Py_DECREF(promoter_obj);
-        if (info == NULL) {
-            goto finish;
-        }
-
-        if (install_promoter(umath, name, info) < 0) {
-            goto finish;
-        }
     }
 
     res = 0;
@@ -763,35 +703,60 @@ init_string_ufuncs(PyObject *umath)
         return -1;
     }
 
-    if (init_ufunc(umath, "add", "templated_string_add", 2, 1, dtypes,
-                   string_add_loop<npy_byte>, string_add_loop<npy_ucs4>,
-                   string_addition_resolve_descriptors, NULL) < 0) {
+    // We use NPY_OBJECT as a sentinel value here, and this will be replaced by the
+    // corresponding string dtype (either NPY_STRING or NPY_UNICODE).
+    dtypes[0] = dtypes[1] = dtypes[2] = NPY_OBJECT;
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "add", "templated_string_add", 2, 1, dtypes,
+            string_add_loop<ENCODING::ASCII>, string_addition_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "add", "templated_string_add", 2, 1, dtypes,
+            string_add_loop<ENCODING::UTF32>, string_addition_resolve_descriptors) < 0) {
         return -1;
     }
 
-    dtypes[0] = NPY_STRING;
+    dtypes[0] = NPY_OBJECT;
     dtypes[1] = NPY_BOOL;
-    if (init_ufunc(umath, "isalpha", "templated_string_isalpha", 1, 1, dtypes,
-                   string_isalpha_loop<npy_byte>, string_isalpha_loop<npy_ucs4>,
-                   NULL, NULL) < 0) {
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "isalpha", "templated_string_isalpha", 1, 1, dtypes,
+            string_isalpha_loop<ENCODING::ASCII>, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "isalpha", "templated_string_isalpha", 1, 1, dtypes,
+            string_isalpha_loop<ENCODING::UTF32>, NULL) < 0) {
         return -1;
     }
 
-    dtypes[0] = dtypes[1] = NPY_STRING;
+    dtypes[0] = dtypes[1] = NPY_OBJECT;
     dtypes[2] = dtypes[3] = NPY_INT64;
     dtypes[4] = NPY_DEFAULT_INT;
-    if (init_ufunc(umath, "find", "templated_string_find", 4, 1, dtypes,
-                   string_find_loop<ENCODING::ASCII>, string_find_loop<ENCODING::UTF32>,
-                   NULL, string_find_rfind_promoter) < 0) {
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "find", "templated_string_find", 4, 1, dtypes,
+            string_find_loop<ENCODING::ASCII>, NULL) < 0) {
         return -1;
     }
-
-    dtypes[0] = dtypes[1] = NPY_STRING;
-    dtypes[2] = dtypes[3] = NPY_INT64;
-    dtypes[4] = NPY_DEFAULT_INT;
-    if (init_ufunc(umath, "rfind", "templated_string_rfind", 4, 1, dtypes,
-                   string_rfind_loop<ENCODING::ASCII>, string_rfind_loop<ENCODING::UTF32>,
-                   NULL, string_find_rfind_promoter) < 0) {
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "find", "templated_string_find", 4, 1, dtypes,
+            string_find_loop<ENCODING::UTF32>, NULL) < 0) {
+        return -1;
+    }
+    if (init_promoter(umath, "find", 4, 1, string_find_rfind_promoter) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "rfind", "templated_string_rfind", 4, 1, dtypes,
+            string_rfind_loop<ENCODING::ASCII>, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "rfind", "templated_string_rfind", 4, 1, dtypes,
+            string_rfind_loop<ENCODING::UTF32>, NULL) < 0) {
+        return -1;
+    }
+    if (init_promoter(umath, "rfind", 4, 1, string_find_rfind_promoter) < 0) {
         return -1;
     }
 

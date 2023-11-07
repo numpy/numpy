@@ -62,7 +62,7 @@ findchar(Buffer<enc> s, Py_ssize_t n, npy_ucs4 ch)
     Buffer<enc> p = s, e = s + n;
 
     if (n > MEMCHR_CUT_OFF) {
-        p = s.fast_memchr(ch, n);
+        p = s.buffer_memchr(ch, n);
         if (p.buf != NULL) {
             return (p - s);
         }
@@ -248,8 +248,7 @@ _preprocess(Buffer<enc> needle, Py_ssize_t len_needle,
     p->len_needle = len_needle;
     p->cut = _factorize(needle, len_needle, &(p->period));
     assert(p->period + p->cut <= len_needle);
-    p->is_periodic = (0 == needle.fast_memcmp(needle + p->period,
-                                              p->cut * sizeof(npy_ucs4)));
+    p->is_periodic = (0 == needle.buffer_memcmp(needle + p->period, (size_t) p->cut));
     if (p->is_periodic) {
         assert(p->cut <= len_needle/2);
         assert(p->cut < p->period);
