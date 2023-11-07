@@ -496,8 +496,8 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         supported for automated bin size selection.
 
         'auto'
-            Minimum of the 'sturges' and 'fd' estimators. Provides good
-            all-around performance.
+            Minimum bin width between the 'sturges' and 'fd' estimators. 
+            Provides good all-around performance.
 
         'fd' (Freedman Diaconis Estimator)
             Robust (resilient to outliers) estimator that takes into
@@ -567,7 +567,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     ``np.round(np.ceil(range / h))``. The final bin width is often less
     than what is returned by the estimators below.
 
-    'auto' (minimum of the 'sturges' and 'fd' estimators)
+    'auto' (minimum bin width of the 'sturges' and 'fd' estimators)
         A compromise to get a good value. For small datasets the Sturges
         value will usually be chosen, while larger datasets will usually
         default to FD.  Avoids the overly conservative behaviour of FD
