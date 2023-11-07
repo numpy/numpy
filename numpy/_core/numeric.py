@@ -2389,11 +2389,11 @@ def _array_equal_dispatcher(a1, a2, equal_nan=None):
 _no_nan_types = {
     # should use np.dtype.BoolDType, but as of writing
     # that fails the reloading test.
-    type(np.dtype(nt.bool)),
-    type(np.dtype(nt.int8)),
-    type(np.dtype(nt.int16)),
-    type(np.dtype(nt.int32)),
-    type(np.dtype(nt.int64)),
+    type(dtype(nt.bool)),
+    type(dtype(nt.int8)),
+    type(dtype(nt.int16)),
+    type(dtype(nt.int32)),
+    type(dtype(nt.int64)),
 }
 
 
