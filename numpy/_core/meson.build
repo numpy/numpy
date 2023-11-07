@@ -124,7 +124,7 @@ if not cc.has_header('complex.h')
   error('"complex.h" header not found')
 endif
 
-if cc.get_id() == 'msvc'
+if cc.get_id() == 'msvc' or cc.get_id() == 'clang-cl'
   complex_types_to_check = [
     ['NPY_SIZEOF_COMPLEX_FLOAT', '_Fcomplex'],
     ['NPY_SIZEOF_COMPLEX_DOUBLE', '_Dcomplex'],
