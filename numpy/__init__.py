@@ -208,7 +208,8 @@ else:
         real_if_close, typename, mintypecode, common_type
     )
     from .lib._arraysetops_impl import (
-        ediff1d, in1d, intersect1d, isin, setdiff1d, setxor1d, union1d, unique
+        ediff1d, in1d, intersect1d, isin, setdiff1d, setxor1d, union1d,
+        unique, unique_all, unique_counts, unique_inverse, unique_values
     )
     from .lib._ufunclike_impl import fix, isneginf, isposinf
     from .lib._arraypad_impl import pad

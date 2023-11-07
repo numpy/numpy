@@ -1,9 +1,11 @@
 from typing import (
-    Literal as L,
     Any,
-    TypeVar,
+    Generic,
+    Literal as L,
+    NamedTuple,
     overload,
     SupportsIndex,
+    TypeVar,
 )
 
 import numpy as np
@@ -84,6 +86,20 @@ _SCTNoCast = TypeVar(
     bytes_,
     void,
 )
+
+class UniqueAllResult(NamedTuple, Generic[_SCT]):
+    values: NDArray[_SCT]
+    indices: NDArray[intp]
+    inverse_indices: NDArray[intp]
+    counts: NDArray[intp]
+
+class UniqueCountsResult(NamedTuple, Generic[_SCT]):
+    values: NDArray[_SCT]
+    counts: NDArray[intp]
+
+class UniqueInverseResult(NamedTuple, Generic[_SCT]):
+    values: NDArray[_SCT]
+    inverse_indices: NDArray[intp]
 
 __all__: list[str]
 
@@ -278,6 +294,34 @@ def unique(
     *,
     equal_nan: bool = ...,
 ) -> tuple[NDArray[Any], NDArray[intp], NDArray[intp], NDArray[intp]]: ...
+
+@overload
+def unique_all(
+    x: _ArrayLike[_SCT], /
+) -> UniqueAllResult[_SCT]: ...
+@overload
+def unique_all(
+    x: ArrayLike, /
+) -> UniqueAllResult[Any]: ...
+
+@overload
+def unique_counts(
+    x: _ArrayLike[_SCT], /
+) -> UniqueCountsResult[_SCT]: ...
+@overload
+def unique_counts(
+    x: ArrayLike, /
+) -> UniqueCountsResult[Any]: ...
+
+@overload
+def unique_inverse(x: _ArrayLike[_SCT], /) -> UniqueInverseResult[_SCT]: ...
+@overload
+def unique_inverse(x: ArrayLike, /) -> UniqueInverseResult[Any]: ...
+
+@overload
+def unique_values(x: _ArrayLike[_SCT], /) -> NDArray[_SCT]: ...
+@overload
+def unique_values(x: ArrayLike, /) -> NDArray[Any]: ...
 
 @overload
 def intersect1d(
