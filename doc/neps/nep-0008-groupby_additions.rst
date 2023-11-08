@@ -1,7 +1,7 @@
 .. _NEP08:
 
 ============================================================
-NEP 8 — a proposal for adding groupby functionality to NumPy
+NEP 8 — A proposal for adding groupby functionality to NumPy
 ============================================================
 
 :Author: Travis Oliphant
