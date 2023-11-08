@@ -4253,7 +4253,7 @@ cdef class RandomState:
         x.shape = tuple(final_shape)
         return x
 
-    def multinomial(self, np.npy_intp n, object pvals, size=None):
+    def multinomial(self, long n, object pvals, size=None):
         """
         multinomial(n, pvals, size=None)
 
