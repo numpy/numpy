@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import builtins
 from collections.abc import Collection, Callable, Sequence
 from typing import Any, Protocol, Union, TypeVar, runtime_checkable
 
@@ -8,7 +9,7 @@ from numpy import (
     ndarray,
     dtype,
     generic,
-    bool_,
+    bool,
     unsignedinteger,
     integer,
     floating,
@@ -83,48 +84,48 @@ if sys.version_info >= (3, 12):
 
     ArrayLike = Buffer | _DualArrayLike[
         dtype[Any],
-        Union[bool, int, float, complex, str, bytes],
+        Union[builtins.bool, int, float, complex, str, bytes],
     ]
 else:
     ArrayLike = _DualArrayLike[
         dtype[Any],
-        Union[bool, int, float, complex, str, bytes],
+        Union[builtins.bool, int, float, complex, str, bytes],
     ]
 
 # `ArrayLike<X>_co`: array-like objects that can be coerced into `X`
 # given the casting rules `same_kind`
 _ArrayLikeBool_co = _DualArrayLike[
-    dtype[bool_],
-    bool,
+    dtype[bool],
+    builtins.bool,
 ]
 _ArrayLikeUInt_co = _DualArrayLike[
-    dtype[Union[bool_, unsignedinteger[Any]]],
-    bool,
+    dtype[Union[bool, unsignedinteger[Any]]],
+    builtins.bool,
 ]
 _ArrayLikeInt_co = _DualArrayLike[
-    dtype[Union[bool_, integer[Any]]],
-    Union[bool, int],
+    dtype[Union[bool, integer[Any]]],
+    Union[builtins.bool, int],
 ]
 _ArrayLikeFloat_co = _DualArrayLike[
-    dtype[Union[bool_, integer[Any], floating[Any]]],
-    Union[bool, int, float],
+    dtype[Union[bool, integer[Any], floating[Any]]],
+    Union[builtins.bool, int, float],
 ]
 _ArrayLikeComplex_co = _DualArrayLike[
     dtype[Union[
-        bool_,
+        bool,
         integer[Any],
         floating[Any],
         complexfloating[Any, Any],
     ]],
-    Union[bool, int, float, complex],
+    Union[builtins.bool, int, float, complex],
 ]
 _ArrayLikeNumber_co = _DualArrayLike[
-    dtype[Union[bool_, number[Any]]],
-    Union[bool, int, float, complex],
+    dtype[Union[bool, number[Any]]],
+    Union[builtins.bool, int, float, complex],
 ]
 _ArrayLikeTD64_co = _DualArrayLike[
-    dtype[Union[bool_, integer[Any], timedelta64]],
-    Union[bool, int],
+    dtype[Union[bool, integer[Any], timedelta64]],
+    Union[builtins.bool, int],
 ]
 _ArrayLikeDT64_co = Union[
     _SupportsArray[dtype[datetime64]],

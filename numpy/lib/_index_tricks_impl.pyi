@@ -1,3 +1,4 @@
+import builtins
 from collections.abc import Sequence
 from typing import (
     Any,
@@ -17,7 +18,7 @@ from numpy import (
     dtype,
     str_,
     bytes_,
-    bool_,
+    bool,
     int_,
     float64,
     complex128,
@@ -54,7 +55,7 @@ def ix_(*args: str | _NestedSequence[str]) -> tuple[NDArray[str_], ...]: ...
 @overload
 def ix_(*args: bytes | _NestedSequence[bytes]) -> tuple[NDArray[bytes_], ...]: ...
 @overload
-def ix_(*args: bool | _NestedSequence[bool]) -> tuple[NDArray[bool_], ...]: ...
+def ix_(*args: builtins.bool | _NestedSequence[builtins.bool]) -> tuple[NDArray[bool], ...]: ...
 @overload
 def ix_(*args: int | _NestedSequence[int]) -> tuple[NDArray[int_], ...]: ...
 @overload
@@ -88,13 +89,13 @@ ogrid: OGridClass
 
 class AxisConcatenator:
     axis: int
-    matrix: bool
+    matrix: builtins.bool
     ndmin: int
     trans1d: int
     def __init__(
         self,
         axis: int = ...,
-        matrix: bool = ...,
+        matrix: builtins.bool = ...,
         ndmin: int = ...,
         trans1d: int = ...,
     ) -> None: ...
@@ -110,7 +111,7 @@ class AxisConcatenator:
     ) -> _ArrayType: ...
     @staticmethod
     def makemat(
-        data: ArrayLike, dtype: DTypeLike = ..., copy: bool = ...
+        data: ArrayLike, dtype: DTypeLike = ..., copy: builtins.bool = ...
     ) -> _Matrix[Any, Any]: ...
 
     # TODO: Sort out this `__getitem__` method
@@ -147,7 +148,7 @@ class IndexExpression(Generic[_BoolType]):
 index_exp: IndexExpression[Literal[True]]
 s_: IndexExpression[Literal[False]]
 
-def fill_diagonal(a: NDArray[Any], val: Any, wrap: bool = ...) -> None: ...
+def fill_diagonal(a: NDArray[Any], val: Any, wrap: builtins.bool = ...) -> None: ...
 def diag_indices(n: int, ndim: int = ...) -> tuple[NDArray[int_], ...]: ...
 def diag_indices_from(arr: ArrayLike) -> tuple[NDArray[int_], ...]: ...
 

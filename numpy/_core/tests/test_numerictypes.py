@@ -451,7 +451,7 @@ class TestMaximumSctype:
     def test_complex(self, t):
         assert_equal(maximum_sctype(t), np._core.sctypes['complex'][-1])
 
-    @pytest.mark.parametrize('t', [np.bool_, np.object_, np.str_, np.bytes_,
+    @pytest.mark.parametrize('t', [np.bool, np.object_, np.str_, np.bytes_,
                                    np.void])
     def test_other(self, t):
         assert_equal(maximum_sctype(t), t)

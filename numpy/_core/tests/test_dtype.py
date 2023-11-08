@@ -1434,7 +1434,7 @@ class TestPromotion:
         assert res == expected
 
     @pytest.mark.parametrize(["other", "expected"],
-                 [(np.bool_, np.complex128),
+                 [(np.bool, np.complex128),
                   (np.int64, np.complex128),
                   (np.float16, np.complex64),
                   (np.float32, np.complex64),
@@ -1505,7 +1505,7 @@ class TestPromotion:
              ([1., 1., np.int64], np.float64),
              ([1., 1j, np.float64], np.complex128),
              ([1j, 1j, np.float64], np.complex128),
-             ([1, True, np.bool_], np.int_),
+             ([1, True, np.bool], np.int_),
             ])
     def test_permutations_do_not_influence_result(self, dtypes, expected):
         # Tests that most permutations do not influence the result.  In the

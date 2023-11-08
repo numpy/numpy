@@ -3167,7 +3167,7 @@ class TestMaskedArrayMethods:
                       [0.31, 0.87, 0.70]])
         m = np.array([[True, False, False],
                       [False, False, False],
-                      [True, True, False]], dtype=np.bool_)
+                      [True, True, False]], dtype=np.bool)
         mx = masked_array(x, mask=m)
         mxbig = (mx > 0.5)
         mxsmall = (mx < 0.5)
@@ -4043,7 +4043,7 @@ class TestMaskedArrayMathMethods:
         bar = array([1,2,3,4], dtype='f8')
         assert_equal(type(foo.mean()), np.float64)
         assert_equal(type(foo.var()), np.float64)
-        assert((foo.mean() == bar.mean()) is np.bool_(True))
+        assert((foo.mean() == bar.mean()) is np.bool(True))
 
         # check array type is preserved and out works
         foo = array(np.arange(16).reshape((4,4)), dtype='f8')
@@ -5671,7 +5671,7 @@ def test_gh_21022():
     axis = np.array(0)
     result = np.prod(source, axis=axis, keepdims=False)
     result = np.ma.masked_array(result,
-                                mask=np.ones(result.shape, dtype=np.bool_))
+                                mask=np.ones(result.shape, dtype=np.bool))
     array = np.ma.masked_array(data=-1, mask=True, dtype=np.float64)
     copy.deepcopy(array)
     copy.deepcopy(result)

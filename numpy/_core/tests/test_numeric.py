@@ -1001,7 +1001,7 @@ class TestFloatExceptions:
 class TestTypes:
     def check_promotion_cases(self, promote_func):
         # tests that the scalars get coerced correctly.
-        b = np.bool_(0)
+        b = np.bool(0)
         i8, i16, i32, i64 = np.int8(0), np.int16(0), np.int32(0), np.int64(0)
         u8, u16, u32, u64 = np.uint8(0), np.uint16(0), np.uint32(0), np.uint64(0)
         f32, f64, fld = np.float32(0), np.float64(0), np.longdouble(0)
@@ -3047,7 +3047,7 @@ class TestIsclose:
         # scalar
         assert_(np.isclose(np.inf, -np.inf) is np.False_)
         assert_(np.isclose(0, np.inf) is np.False_)
-        assert_(type(np.isclose(0, np.inf)) is np.bool_)
+        assert_(type(np.isclose(0, np.inf)) is np.bool)
 
     def test_timedelta(self):
         # Allclose currently works for timedelta64 as long as `atol` is

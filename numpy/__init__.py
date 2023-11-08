@@ -128,7 +128,7 @@ else:
         array_str, asanyarray, asarray, ascontiguousarray, asfortranarray,
         atleast_1d, atleast_2d, atleast_3d, base_repr, binary_repr,
         bitwise_and, bitwise_count, bitwise_not, bitwise_or, bitwise_xor,
-        block, bool_, broadcast, busday_count, busday_offset, busdaycalendar,
+        block, bool, bool_, broadcast, busday_count, busday_offset, busdaycalendar,
         byte, bytes_, can_cast, cbrt, cdouble, ceil, character, choose, clip,
         clongdouble, complex128, complex64, complexfloating, compress,
         concatenate, conj, conjugate, convolve, copysign, copyto, correlate,
@@ -283,9 +283,6 @@ else:
     # When defined, these should possibly not be added to `__all__` to avoid
     # import with `from numpy import *`.
     __future_scalars__ = {"str", "bytes", "object"}
-
-    # Redefined in NumPy 2.0.
-    globals()["bool"] = bool_
 
     # now that numpy core module is imported, can initialize limits
     _core.getlimits._register_known_types()

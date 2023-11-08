@@ -1650,11 +1650,11 @@ class TestStructured:
 
 class TestBool:
     def test_test_interning(self):
-        a0 = np.bool_(0)
-        b0 = np.bool_(False)
+        a0 = np.bool(0)
+        b0 = np.bool(False)
         assert_(a0 is b0)
-        a1 = np.bool_(1)
-        b1 = np.bool_(True)
+        a1 = np.bool(1)
+        b1 = np.bool(True)
         assert_(a1 is b1)
         assert_(np.array([True])[0] is a1)
         assert_(np.array(True)[()] is a1)
@@ -4169,8 +4169,8 @@ class TestTemporaryElide:
 
     def test_elide_scalar(self):
         # check inplace op does not create ndarray from scalars
-        a = np.bool_()
-        assert_(type(~(a & a)) is np.bool_)
+        a = np.bool()
+        assert_(type(~(a & a)) is np.bool)
 
     def test_elide_scalar_readonly(self):
         # The imaginary part of a real array is readonly. This needs to go
@@ -5303,8 +5303,8 @@ class TestIO:
         assert_raises(OSError, lambda x: x.tofile(b), d)
 
     def test_bool_fromstring(self):
-        v = np.array([True, False, True, False], dtype=np.bool_)
-        y = np.fromstring('1 0 -2.3 0.0', sep=' ', dtype=np.bool_)
+        v = np.array([True, False, True, False], dtype=np.bool)
+        y = np.fromstring('1 0 -2.3 0.0', sep=' ', dtype=np.bool)
         assert_array_equal(v, y)
 
     def test_uint64_fromstring(self):
@@ -5642,11 +5642,11 @@ class TestIO:
 
     def test_dtype_bool(self, tmp_filename):
         # can't use _check_from because fromstring can't handle True/False
-        v = np.array([True, False, True, False], dtype=np.bool_)
+        v = np.array([True, False, True, False], dtype=np.bool)
         s = b'1,0,-2.3,0'
         with open(tmp_filename, 'wb') as f:
             f.write(s)
-        y = np.fromfile(tmp_filename, sep=',', dtype=np.bool_)
+        y = np.fromfile(tmp_filename, sep=',', dtype=np.bool)
         assert_(y.dtype == '?')
         assert_array_equal(y, v)
 
@@ -7001,13 +7001,13 @@ class MatmulCommon:
             assert_equal(res, tgt12_21)
 
         # boolean type
-        m1 = np.array([[1, 1], [0, 0]], dtype=np.bool_)
-        m2 = np.array([[1, 0], [1, 1]], dtype=np.bool_)
+        m1 = np.array([[1, 1], [0, 0]], dtype=np.bool)
+        m2 = np.array([[1, 0], [1, 1]], dtype=np.bool)
         m12 = np.stack([m1, m2], axis=0)
         m21 = np.stack([m2, m1], axis=0)
         tgt11 = m1
         tgt12 = m1
-        tgt21 = np.array([[1, 1], [1, 1]], dtype=np.bool_)
+        tgt21 = np.array([[1, 1], [1, 1]], dtype=np.bool)
         tgt12_21 = np.stack([tgt12, tgt21], axis=0)
         tgt11_12 = np.stack((tgt11, tgt12), axis=0)
         tgt11_21 = np.stack((tgt11, tgt21), axis=0)

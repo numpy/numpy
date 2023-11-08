@@ -18,7 +18,7 @@ record: np.record
 file_obj: io.BufferedIOBase
 
 assert_type(np.rec.format_parser(
-    formats=[np.float64, np.int64, np.bool_],
+    formats=[np.float64, np.int64, np.bool],
     names=["f8", "i8", "?"],
     titles=None,
     aligned=True,
@@ -43,7 +43,7 @@ assert_type(REC_AR_V.__array_finalize__(object()), None)
 assert_type(
     np.recarray(
         shape=(10, 5),
-        formats=[np.float64, np.int64, np.bool_],
+        formats=[np.float64, np.int64, np.bool],
         order="K",
         byteorder="|",
     ),

@@ -231,7 +231,7 @@ class TestInformation:
         # assert_array_equal(self.B.count('\0'), [[0, 0], [0, 0], [1, 0]])
 
     def test_endswith(self):
-        assert_(issubclass(self.A.endswith('').dtype.type, np.bool_))
+        assert_(issubclass(self.A.endswith('').dtype.type, np.bool))
         assert_array_equal(self.A.endswith(' '), [[1, 0], [0, 0], [1, 0]])
         assert_array_equal(self.A.endswith('3', 0, 3), [[0, 0], [1, 0], [1, 0]])
 
@@ -257,31 +257,31 @@ class TestInformation:
         assert_(issubclass(np.char.index('abcba', 'b').dtype.type, np.integer))
 
     def test_isalnum(self):
-        assert_(issubclass(self.A.isalnum().dtype.type, np.bool_))
+        assert_(issubclass(self.A.isalnum().dtype.type, np.bool))
         assert_array_equal(self.A.isalnum(), [[False, False], [True, True], [False, True]])
 
     def test_isalpha(self):
-        assert_(issubclass(self.A.isalpha().dtype.type, np.bool_))
+        assert_(issubclass(self.A.isalpha().dtype.type, np.bool))
         assert_array_equal(self.A.isalpha(), [[False, False], [False, True], [False, True]])
 
     def test_isdigit(self):
-        assert_(issubclass(self.A.isdigit().dtype.type, np.bool_))
+        assert_(issubclass(self.A.isdigit().dtype.type, np.bool))
         assert_array_equal(self.A.isdigit(), [[False, False], [True, False], [False, False]])
 
     def test_islower(self):
-        assert_(issubclass(self.A.islower().dtype.type, np.bool_))
+        assert_(issubclass(self.A.islower().dtype.type, np.bool))
         assert_array_equal(self.A.islower(), [[True, False], [False, False], [False, False]])
 
     def test_isspace(self):
-        assert_(issubclass(self.A.isspace().dtype.type, np.bool_))
+        assert_(issubclass(self.A.isspace().dtype.type, np.bool))
         assert_array_equal(self.A.isspace(), [[False, False], [False, False], [False, False]])
 
     def test_istitle(self):
-        assert_(issubclass(self.A.istitle().dtype.type, np.bool_))
+        assert_(issubclass(self.A.istitle().dtype.type, np.bool))
         assert_array_equal(self.A.istitle(), [[False, False], [False, False], [False, False]])
 
     def test_isupper(self):
-        assert_(issubclass(self.A.isupper().dtype.type, np.bool_))
+        assert_(issubclass(self.A.isupper().dtype.type, np.bool))
         assert_array_equal(self.A.isupper(), [[False, False], [False, False], [False, True]])
 
     def test_rfind(self):
@@ -301,7 +301,7 @@ class TestInformation:
         assert_(issubclass(np.char.rindex('abcba', 'b').dtype.type, np.integer))
 
     def test_startswith(self):
-        assert_(issubclass(self.A.startswith('').dtype.type, np.bool_))
+        assert_(issubclass(self.A.startswith('').dtype.type, np.bool))
         assert_array_equal(self.A.startswith(' '), [[1, 0], [0, 0], [0, 0]])
         assert_array_equal(self.A.startswith('1', 0, 3), [[0, 0], [1, 0], [1, 0]])
 
@@ -570,7 +570,7 @@ class TestMethods:
             self.A.isnumeric()
 
         assert_raises(TypeError, fail)
-        assert_(issubclass(self.B.isnumeric().dtype.type, np.bool_))
+        assert_(issubclass(self.B.isnumeric().dtype.type, np.bool))
         assert_array_equal(self.B.isnumeric(), [
                 [False, False], [True, False], [False, False]])
 
@@ -580,7 +580,7 @@ class TestMethods:
             self.A.isdecimal()
 
         assert_raises(TypeError, fail)
-        assert_(issubclass(self.B.isdecimal().dtype.type, np.bool_))
+        assert_(issubclass(self.B.isdecimal().dtype.type, np.bool))
         assert_array_equal(self.B.isdecimal(), [
                 [False, False], [True, False], [False, False]])
 

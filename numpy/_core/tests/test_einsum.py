@@ -909,10 +909,10 @@ class TestEinsum:
     def test_small_boolean_arrays(self):
         # See gh-5946.
         # Use array of True embedded in False.
-        a = np.zeros((16, 1, 1), dtype=np.bool_)[:2]
+        a = np.zeros((16, 1, 1), dtype=np.bool)[:2]
         a[...] = True
-        out = np.zeros((16, 1, 1), dtype=np.bool_)[:2]
-        tgt = np.ones((2, 1, 1), dtype=np.bool_)
+        out = np.zeros((16, 1, 1), dtype=np.bool)[:2]
+        tgt = np.ones((2, 1, 1), dtype=np.bool)
         res = np.einsum('...ij,...jk->...ik', a, a, out=out)
         assert_equal(res, tgt)
 

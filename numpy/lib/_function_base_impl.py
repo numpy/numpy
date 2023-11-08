@@ -519,7 +519,7 @@ def average(a, axis=None, weights=None, returned=False, *,
     else:
         wgt = np.asanyarray(weights)
 
-        if issubclass(a.dtype.type, (np.integer, np.bool_)):
+        if issubclass(a.dtype.type, (np.integer, np.bool)):
             result_dtype = np.result_type(a.dtype, wgt.dtype, 'f8')
         else:
             result_dtype = np.result_type(a.dtype, wgt.dtype)
@@ -835,7 +835,7 @@ def select(condlist, choicelist, default=0):
 
     # If cond array is not an ndarray in boolean format or scalar bool, abort.
     for i, cond in enumerate(condlist):
-        if cond.dtype.type is not np.bool_:
+        if cond.dtype.type is not np.bool:
             raise TypeError(
                 'invalid entry {} in condlist: should be boolean ndarray'.format(i))
 
@@ -1436,7 +1436,7 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     slice1 = tuple(slice1)
     slice2 = tuple(slice2)
 
-    op = not_equal if a.dtype == np.bool_ else subtract
+    op = not_equal if a.dtype == np.bool else subtract
     for _ in range(n):
         a = op(a[slice1], a[slice2])
 

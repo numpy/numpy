@@ -24,7 +24,8 @@ if sys.version_info >= (3, 10):
 else:
     from typing_extensions import ParamSpec
 
-from numpy import number, object_, bool_, _FloatValue
+import numpy as np
+from numpy import number, object_, _FloatValue
 from numpy._typing import (
     NDArray,
     ArrayLike,
@@ -50,9 +51,9 @@ _ComparisonFunc = Callable[
     [NDArray[Any], NDArray[Any]],
     (
         bool
-        | bool_
+        | np.bool
         | number[Any]
-        | NDArray[bool_ | number[Any] | object_]
+        | NDArray[np.bool | number[Any] | object_]
     )
 ]
 
