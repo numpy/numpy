@@ -60,7 +60,14 @@ string_rstrip(const character *str, int elsize)
 }
 
 
-/* helper to fixup start/end slice values */
+/*
+ * Helper to fixup start/end slice values.
+ *
+ * This function is taken from CPython's unicode module
+ * (https://github.com/python/cpython/blob/0b718e6407da65b838576a2459d630824ca62155/Objects/bytes_methods.c#L495)
+ * in order to remain compatible with how CPython handles
+ * start/end arguments to str function like find/rfind etc.
+ */
 static inline void
 adjust_offsets(npy_int64 *start, npy_int64 *end, npy_int64 len)
 {
