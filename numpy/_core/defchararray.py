@@ -691,8 +691,8 @@ def endswith(a, suffix, start=0, end=None):
     array([False,  True])
 
     """
-    return _vec_string(
-        a, bool_, 'endswith', [suffix, start] + _clean_args(end))
+    end = end if end is not None else numpy.iinfo(numpy.int_).max
+    return numpy._core.umath.endswith(a, suffix, start, end)
 
 
 def _expandtabs_dispatcher(a, tabsize=None):
@@ -1600,8 +1600,8 @@ def startswith(a, prefix, start=0, end=None):
     str.startswith
 
     """
-    return _vec_string(
-        a, bool_, 'startswith', [prefix, start] + _clean_args(end))
+    end = end if end is not None else numpy.iinfo(numpy.int_).max
+    return numpy._core.umath.startswith(a, prefix, start, end)
 
 
 @array_function_dispatch(_strip_dispatcher)
