@@ -1,7 +1,7 @@
 .. _NEP13:
 
 ==========================================
-NEP 13 — A mechanism for overriding ufuncs
+NEP 13 — A mechanism for overriding Ufuncs
 ==========================================
 
 .. currentmodule:: numpy
@@ -415,7 +415,7 @@ with them in ufuncs.
 
 .. _neps.ufunc-overrides.turning-ufuncs-off:
 
-Turning ufuncs off
+Turning Ufuncs off
 ------------------
 
 For some classes, Ufuncs make no sense, and, like for some other special
@@ -622,7 +622,7 @@ or NumPy's dispatch rules, but not some mixture of both at the same time.
 
 .. _neps.ufunc-overrides.list-of-operators:
 
-List of operators and NumPy ufuncs
+List of operators and NumPy Ufuncs
 ----------------------------------
 
 Here is a full list of Python binary operators and the corresponding NumPy

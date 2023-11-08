@@ -1,7 +1,7 @@
 .. _NEP42:
 
 ==============================================================================
-NEP 42 — New and extensible dtypes
+NEP 42 — New and extensible DTypes
 ==============================================================================
 
 :title: New and extensible DTypes
@@ -262,7 +262,7 @@ dtype instances from DType classes.
 .. _nep42_DType class:
 
 ******************************************************************************
-The dtype class
+The DType class
 ******************************************************************************
 
 This section reviews the structure underlying the proposed DType class,
@@ -463,7 +463,7 @@ We review here the operations related to casting arrays:
 
 We show how casting arrays with ``astype(new_dtype)`` will be implemented.
 
-`Common dtype` operations
+`Common DType` operations
 ==============================================================================
 
 When input types are mixed, a first step is to find a DType that can hold
@@ -984,7 +984,7 @@ important enough to be handled by NumPy using the presented methods.
     ``np.float128`` base class.
 
 
-dtype discovery during array coercion
+DType discovery during array coercion
 ==============================================================================
 
 An important step in the use of NumPy arrays is creation of the array from
@@ -1214,7 +1214,7 @@ This is a general limitation, but round-tripping is always possible if
 Public C-API
 ******************************************************************************
 
-dtype creation
+DType creation
 ==============================================================================
 
 To create a new DType the user will need to define the methods and attributes

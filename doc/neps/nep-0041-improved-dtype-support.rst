@@ -737,7 +737,7 @@ a later step in the implementation to reduce the complexity of the initial
 implementation.
 
 
-C-API changes to the ufunc machinery (4)
+C-API changes to the UFunc machinery (4)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Proposed changes to the UFunc machinery will be part of NEP 43.

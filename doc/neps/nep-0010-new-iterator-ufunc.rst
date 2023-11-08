@@ -1,7 +1,7 @@
 .. _NEP10:
 
 ==============================================
-NEP 10 — Optimizing iterator/ufunc performance
+NEP 10 — Optimizing iterator/UFunc performance
 ==============================================
 
 :Author: Mark Wiebe <mwwiebe@gmail.com>
@@ -1680,7 +1680,7 @@ references, and add ``NPY_ITER_WRITEABLE_REFERENCES`` to the flags:
         return ret;
     }
 
-Python lambda ufunc example
+Python lambda UFunc example
 ---------------------------
 
 To show how the new iterator allows the definition of efficient UFunc-like

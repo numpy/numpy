@@ -1,7 +1,7 @@
 .. _NEP55:
 
 =========================================================
-NEP 55 — Add a UTF-8 variable-width string dtype to NumPy
+NEP 55 — Add a UTF-8 variable-width string DType to NumPy
 =========================================================
 
 :Author: Nathan Goldbaum <ngoldbaum@quansight.com>

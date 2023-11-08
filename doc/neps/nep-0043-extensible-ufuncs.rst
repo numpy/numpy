@@ -1,7 +1,7 @@
 .. _NEP43:
 
 ==============================================================================
-NEP 43 — Enhancing the extensibility of ufuncs
+NEP 43 — Enhancing the extensibility of UFuncs
 ==============================================================================
 
 :title: Enhancing the Extensibility of UFuncs
@@ -329,7 +329,7 @@ Where ``Integer`` is an abstract DType (compare NEP 42).
 .. _steps_of_a_ufunc_call:
 
 ****************************************************************************
-Steps involved in a ufunc call
+Steps involved in a UFunc call
 ****************************************************************************
 
 Before going into more detailed API choices, it is helpful to review the
