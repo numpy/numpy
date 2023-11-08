@@ -66,7 +66,8 @@ adjust_offsets(npy_int64 *start, npy_int64 *end, npy_int64 len)
 {
     if (*end > len) {
         *end = len;
-    } else if (*end < 0) {
+    }
+    else if (*end < 0) {
         *end += len;
         if (*end < 0) {
             *end = 0;
@@ -230,7 +231,8 @@ string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
         npy_intp result = (npy_intp) findchar<enc>(buf1 + start, end - start, ch);
         if (result == -1) {
             return (npy_intp) -1;
-        } else {
+        }
+        else {
             return result + (npy_intp) start;
         }
     }
@@ -263,7 +265,8 @@ string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
         npy_intp result = (npy_intp) rfindchar(buf1 + start, end - start, ch);
         if (result == -1) {
             return (npy_intp) -1;
-        } else {
+        }
+        else {
             return result + (npy_intp) start;
         }
     }
@@ -781,9 +784,11 @@ init_ufunc(PyObject *umath, const char *name, const char *specname, int nin, int
     for (int i = 0; i < nin+nout; i++) {
         if (typenums[i] == NPY_OBJECT && enc == ENCODING::UTF32) {
             dtypes[i] = PyArray_DTypeFromTypeNum(NPY_UNICODE);
-        } else if (typenums[i] == NPY_OBJECT && enc == ENCODING::ASCII) {
+        }
+        else if (typenums[i] == NPY_OBJECT && enc == ENCODING::ASCII) {
             dtypes[i] = PyArray_DTypeFromTypeNum(NPY_STRING);
-        } else {
+        }
+        else {
             dtypes[i] = PyArray_DTypeFromTypeNum(typenums[i]);
         }
     }
@@ -793,7 +798,8 @@ init_ufunc(PyObject *umath, const char *name, const char *specname, int nin, int
     slots[2] = {0, nullptr};
     if (resolve_descriptors != NULL) {
         slots[1] = {NPY_METH_resolve_descriptors, (void *) resolve_descriptors};
-    } else {
+    }
+    else {
         slots[1] = {0, nullptr};
     }
 
