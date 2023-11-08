@@ -1,4 +1,3 @@
-import builtins
 from typing import (
     Literal as L,
     Any,
@@ -127,7 +126,7 @@ def unique(
     return_counts: L[False] = ...,
     axis: None | SupportsIndex = ...,
     *,
-    equal_nan: builtins.bool = ...,
+    equal_nan: bool = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def unique(
@@ -137,7 +136,7 @@ def unique(
     return_counts: L[False] = ...,
     axis: None | SupportsIndex = ...,
     *,
-    equal_nan: builtins.bool = ...,
+    equal_nan: bool = ...,
 ) -> NDArray[Any]: ...
 @overload
 def unique(
@@ -147,7 +146,7 @@ def unique(
     return_counts: L[False] = ...,
     axis: None | SupportsIndex = ...,
     *,
-    equal_nan: builtins.bool = ...,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[_SCT], NDArray[intp]]: ...
 @overload
 def unique(
@@ -157,7 +156,7 @@ def unique(
     return_counts: L[False] = ...,
     axis: None | SupportsIndex = ...,
     *,
-    equal_nan: builtins.bool = ...,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[Any], NDArray[intp]]: ...
 @overload
 def unique(
@@ -167,7 +166,7 @@ def unique(
     return_counts: L[False] = ...,
     axis: None | SupportsIndex = ...,
     *,
-    equal_nan: builtins.bool = ...,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[_SCT], NDArray[intp]]: ...
 @overload
 def unique(
@@ -177,7 +176,7 @@ def unique(
     return_counts: L[False] = ...,
     axis: None | SupportsIndex = ...,
     *,
-    equal_nan: builtins.bool = ...,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[Any], NDArray[intp]]: ...
 @overload
 def unique(
@@ -187,7 +186,7 @@ def unique(
     return_counts: L[True] = ...,
     axis: None | SupportsIndex = ...,
     *,
-    equal_nan: builtins.bool = ...,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[_SCT], NDArray[intp]]: ...
 @overload
 def unique(
@@ -197,7 +196,7 @@ def unique(
     return_counts: L[True] = ...,
     axis: None | SupportsIndex = ...,
     *,
-    equal_nan: builtins.bool = ...,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[Any], NDArray[intp]]: ...
 @overload
 def unique(
@@ -207,7 +206,7 @@ def unique(
     return_counts: L[False] = ...,
     axis: None | SupportsIndex = ...,
     *,
-    equal_nan: builtins.bool = ...,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[_SCT], NDArray[intp], NDArray[intp]]: ...
 @overload
 def unique(
@@ -217,7 +216,7 @@ def unique(
     return_counts: L[False] = ...,
     axis: None | SupportsIndex = ...,
     *,
-    equal_nan: builtins.bool = ...,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[Any], NDArray[intp], NDArray[intp]]: ...
 @overload
 def unique(
@@ -227,7 +226,7 @@ def unique(
     return_counts: L[True] = ...,
     axis: None | SupportsIndex = ...,
     *,
-    equal_nan: builtins.bool = ...,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[_SCT], NDArray[intp], NDArray[intp]]: ...
 @overload
 def unique(
@@ -237,7 +236,7 @@ def unique(
     return_counts: L[True] = ...,
     axis: None | SupportsIndex = ...,
     *,
-    equal_nan: builtins.bool = ...,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[Any], NDArray[intp], NDArray[intp]]: ...
 @overload
 def unique(
@@ -247,7 +246,7 @@ def unique(
     return_counts: L[True] = ...,
     axis: None | SupportsIndex = ...,
     *,
-    equal_nan: builtins.bool = ...,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[_SCT], NDArray[intp], NDArray[intp]]: ...
 @overload
 def unique(
@@ -257,7 +256,7 @@ def unique(
     return_counts: L[True] = ...,
     axis: None | SupportsIndex = ...,
     *,
-    equal_nan: builtins.bool = ...,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[Any], NDArray[intp], NDArray[intp]]: ...
 @overload
 def unique(
@@ -267,7 +266,7 @@ def unique(
     return_counts: L[True] = ...,
     axis: None | SupportsIndex = ...,
     *,
-    equal_nan: builtins.bool = ...,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[_SCT], NDArray[intp], NDArray[intp], NDArray[intp]]: ...
 @overload
 def unique(
@@ -277,35 +276,35 @@ def unique(
     return_counts: L[True] = ...,
     axis: None | SupportsIndex = ...,
     *,
-    equal_nan: builtins.bool = ...,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[Any], NDArray[intp], NDArray[intp], NDArray[intp]]: ...
 
 @overload
 def intersect1d(
     ar1: _ArrayLike[_SCTNoCast],
     ar2: _ArrayLike[_SCTNoCast],
-    assume_unique: builtins.bool = ...,
+    assume_unique: bool = ...,
     return_indices: L[False] = ...,
 ) -> NDArray[_SCTNoCast]: ...
 @overload
 def intersect1d(
     ar1: ArrayLike,
     ar2: ArrayLike,
-    assume_unique: builtins.bool = ...,
+    assume_unique: bool = ...,
     return_indices: L[False] = ...,
 ) -> NDArray[Any]: ...
 @overload
 def intersect1d(
     ar1: _ArrayLike[_SCTNoCast],
     ar2: _ArrayLike[_SCTNoCast],
-    assume_unique: builtins.bool = ...,
+    assume_unique: bool = ...,
     return_indices: L[True] = ...,
 ) -> tuple[NDArray[_SCTNoCast], NDArray[intp], NDArray[intp]]: ...
 @overload
 def intersect1d(
     ar1: ArrayLike,
     ar2: ArrayLike,
-    assume_unique: builtins.bool = ...,
+    assume_unique: bool = ...,
     return_indices: L[True] = ...,
 ) -> tuple[NDArray[Any], NDArray[intp], NDArray[intp]]: ...
 
@@ -313,27 +312,27 @@ def intersect1d(
 def setxor1d(
     ar1: _ArrayLike[_SCTNoCast],
     ar2: _ArrayLike[_SCTNoCast],
-    assume_unique: builtins.bool = ...,
+    assume_unique: bool = ...,
 ) -> NDArray[_SCTNoCast]: ...
 @overload
 def setxor1d(
     ar1: ArrayLike,
     ar2: ArrayLike,
-    assume_unique: builtins.bool = ...,
+    assume_unique: bool = ...,
 ) -> NDArray[Any]: ...
 
 def in1d(
     ar1: ArrayLike,
     ar2: ArrayLike,
-    assume_unique: builtins.bool = ...,
-    invert: builtins.bool = ...,
+    assume_unique: bool = ...,
+    invert: bool = ...,
 ) -> NDArray[np.bool]: ...
 
 def isin(
     element: ArrayLike,
     test_elements: ArrayLike,
-    assume_unique: builtins.bool = ...,
-    invert: builtins.bool = ...,
+    assume_unique: bool = ...,
+    invert: bool = ...,
     *,
     kind: None | str = ...,
 ) -> NDArray[np.bool]: ...
@@ -353,11 +352,11 @@ def union1d(
 def setdiff1d(
     ar1: _ArrayLike[_SCTNoCast],
     ar2: _ArrayLike[_SCTNoCast],
-    assume_unique: builtins.bool = ...,
+    assume_unique: bool = ...,
 ) -> NDArray[_SCTNoCast]: ...
 @overload
 def setdiff1d(
     ar1: ArrayLike,
     ar2: ArrayLike,
-    assume_unique: builtins.bool = ...,
+    assume_unique: bool = ...,
 ) -> NDArray[Any]: ...

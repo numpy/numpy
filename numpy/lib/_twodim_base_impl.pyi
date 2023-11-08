@@ -1,3 +1,4 @@
+import builtins
 from collections.abc import Callable, Sequence
 from typing import (
     Any,
@@ -5,10 +6,10 @@ from typing import (
     TypeVar,
 )
 
+import numpy as np
 from numpy import (
     generic,
     number,
-    bool_,
     timedelta64,
     datetime64,
     int_,
@@ -40,7 +41,7 @@ _SCT = TypeVar("_SCT", bound=generic)
 # The returned arrays dtype must be compatible with `np.equal`
 _MaskFunc = Callable[
     [NDArray[int_], _T],
-    NDArray[number[Any] | bool_ | timedelta64 | datetime64 | object_],
+    NDArray[number[Any] | np.bool | timedelta64 | datetime64 | object_],
 ]
 
 __all__: list[str]

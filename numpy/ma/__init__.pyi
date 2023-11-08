@@ -39,7 +39,7 @@ from numpy.ma.core import (
     bitwise_and as bitwise_and,
     bitwise_or as bitwise_or,
     bitwise_xor as bitwise_xor,
-    bool_ as bool_,
+    bool as bool,
     ceil as ceil,
     choose as choose,
     clip as clip,

@@ -27,7 +27,6 @@ from . import shape_base
 from .overrides import set_array_function_like_doc, set_module
 from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
-from .numerictypes import bool
 from ..exceptions import AxisError
 from ._ufunc_config import errstate, _no_nep50_warning
 
@@ -2520,8 +2519,8 @@ def array_equiv(a1, a2):
 
 inf = PINF
 nan = NAN
-False_ = bool(False)
-True_ = bool(True)
+False_ = nt.bool(False)
+True_ = nt.bool(True)
 
 
 def extend_all(module):

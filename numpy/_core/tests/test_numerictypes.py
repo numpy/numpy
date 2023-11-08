@@ -3,6 +3,7 @@ import itertools
 
 import pytest
 import numpy as np
+import numpy._core.numerictypes as nt
 from numpy._core.numerictypes import issctype, sctype2char, maximum_sctype
 from numpy.testing import assert_, assert_equal, assert_raises, IS_PYPY
 
@@ -542,3 +543,8 @@ class TestScalarTypeNames:
     def test_names_are_undersood_by_dtype(self, t):
         """ Test the dtype constructor maps names back to the type """
         assert np.dtype(t.__name__).type is t
+
+
+class TestBoolDefinition:
+    def test_bool_definition(self):
+        assert nt.bool is np.bool
