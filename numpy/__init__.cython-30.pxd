@@ -20,12 +20,14 @@ cdef extern from *:
     """
 
 
-cdef extern from "Python.h":
-    ctypedef Py_ssize_t Py_intptr_t
-
 cdef extern from "numpy/arrayobject.h":
-    ctypedef Py_intptr_t npy_intp
-    ctypedef size_t npy_uintp
+    # It would be nice to use size_t and ssize_t, but ssize_t has special
+    # implicit conversion rules, so just use "long".
+    # Note: The actual type only matters for Cython promotion, so long
+    #       is closer than int, but could lead to incorrect promotion.
+    #       (Not to worrying, and always the status-quo.)
+    ctypedef signed long npy_intp
+    ctypedef unsigned long npy_uintp
 
     cdef enum NPY_TYPES:
         NPY_BOOL
