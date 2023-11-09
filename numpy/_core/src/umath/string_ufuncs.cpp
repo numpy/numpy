@@ -218,83 +218,83 @@ string_isalpha(Buffer<enc> buf)
 }
 
 
-template <typename character>
+template <ENCODING enc>
 static inline npy_bool
-string_isdigit(const character *str, int elsize)
+string_isdigit(Buffer<enc> buf)
 {
-    int len = get_length(str, elsize);
+    npy_int64 len = buf.num_codepoints();
 
     if (len == 0) {
         return (npy_bool) 0;
     }
 
-    for (int i = 0; i < len; i++) {
-        npy_bool isdigit = (npy_bool) Py_UNICODE_ISDIGIT(*str);
+    for (npy_int64 i = 0; i < len; i++) {
+        npy_bool isdigit = (npy_bool) Py_UNICODE_ISDIGIT(*buf);
         if (!isdigit) {
             return isdigit;
         }
-        str++;
+        buf++;
     }
     return (npy_bool) 1;
 }
 
 
-template <typename character>
+template <ENCODING enc>
 static inline npy_bool
-string_isspace(const character *str, int elsize)
+string_isspace(Buffer<enc> buf)
 {
-    int len = get_length(str, elsize);
+    npy_int64 len = buf.num_codepoints();
 
     if (len == 0) {
         return (npy_bool) 0;
     }
 
-    for (int i = 0; i < len; i++) {
-        npy_bool isspace = (npy_bool) Py_UNICODE_ISSPACE(*str);
+    for (npy_int64 i = 0; i < len; i++) {
+        npy_bool isspace = (npy_bool) Py_UNICODE_ISSPACE(*buf);
         if (!isspace) {
             return isspace;
         }
-        str++;
+        buf++;
     }
     return (npy_bool) 1;
 }
 
 
 static inline npy_bool
-string_isdecimal(const npy_ucs4 *str, int elsize)
+string_isdecimal(Buffer<ENCODING::UTF32> buf)
 {
-    int len = get_length<npy_ucs4>(str, elsize);
+    npy_int64 len = buf.num_codepoints();
 
     if (len == 0) {
         return (npy_bool) 0;
     }
 
-    for (int i = 0; i < len; i++) {
-        npy_bool isdecimal = (npy_bool) Py_UNICODE_ISDECIMAL(*str);
+    for (npy_int64 i = 0; i < len; i++) {
+        npy_bool isdecimal = (npy_bool) Py_UNICODE_ISDECIMAL(*buf);
         if (!isdecimal) {
             return isdecimal;
         }
-        str++;
+        buf++;
     }
     return (npy_bool) 1;
 }
 
 
 static inline npy_bool
-string_isnumeric(const npy_ucs4 *str, int elsize)
+string_isnumeric(Buffer<ENCODING::UTF32> buf)
 {
-    int len = get_length<npy_ucs4>(str, elsize);
+    npy_int64 len = buf.num_codepoints();
 
     if (len == 0) {
         return (npy_bool) 0;
     }
 
-    for (int i = 0; i < len; i++) {
-        npy_bool isnumeric = (npy_bool) Py_UNICODE_ISNUMERIC(*str);
+    for (npy_int64 i = 0; i < len; i++) {
+        npy_bool isnumeric = (npy_bool) Py_UNICODE_ISNUMERIC(*buf);
         if (!isnumeric) {
             return isnumeric;
         }
-        str++;
+        buf++;
     }
     return (npy_bool) 1;
 }
@@ -501,13 +501,13 @@ string_isalpha_loop(PyArrayMethod_Context *context,
 }
 
 
-template <typename character>
+template <ENCODING enc>
 static int
 string_isdigit_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    int elsize = context->descriptors[0]->elsize / sizeof(character);
+    int elsize = context->descriptors[0]->elsize;
 
     char *in = data[0];
     char *out = data[1];
@@ -515,7 +515,8 @@ string_isdigit_loop(PyArrayMethod_Context *context,
     npy_intp N = dimensions[0];
 
     while (N--) {
-        npy_bool res = string_isdigit<character>((character *) in, elsize);
+        Buffer<enc> buf(in, elsize);
+        npy_bool res = string_isdigit<enc>(buf);
         *(npy_bool *)out = res;
 
         in += strides[0];
@@ -526,13 +527,13 @@ string_isdigit_loop(PyArrayMethod_Context *context,
 }
 
 
-template <typename character>
+template <ENCODING enc>
 static int
 string_isspace_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    int elsize = context->descriptors[0]->elsize / sizeof(character);
+    int elsize = context->descriptors[0]->elsize;
 
     char *in = data[0];
     char *out = data[1];
@@ -540,7 +541,8 @@ string_isspace_loop(PyArrayMethod_Context *context,
     npy_intp N = dimensions[0];
 
     while (N--) {
-        npy_bool res = string_isspace<character>((character *) in, elsize);
+        Buffer<enc> buf(in, elsize);
+        npy_bool res = string_isspace<enc>(buf);
         *(npy_bool *)out = res;
 
         in += strides[0];
@@ -556,7 +558,7 @@ string_isdecimal_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    int elsize = context->descriptors[0]->elsize / sizeof(npy_ucs4);
+    int elsize = context->descriptors[0]->elsize;
 
     char *in = data[0];
     char *out = data[1];
@@ -564,7 +566,8 @@ string_isdecimal_loop(PyArrayMethod_Context *context,
     npy_intp N = dimensions[0];
 
     while (N--) {
-        npy_bool res = string_isdecimal((npy_ucs4 *) in, elsize);
+        Buffer<ENCODING::UTF32> buf(in, elsize);
+        npy_bool res = string_isdecimal(buf);
         *(npy_bool *)out = res;
 
         in += strides[0];
@@ -580,7 +583,7 @@ string_isnumeric_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    int elsize = context->descriptors[0]->elsize / sizeof(npy_ucs4);
+    int elsize = context->descriptors[0]->elsize;
 
     char *in = data[0];
     char *out = data[1];
@@ -588,7 +591,8 @@ string_isnumeric_loop(PyArrayMethod_Context *context,
     npy_intp N = dimensions[0];
 
     while (N--) {
-        npy_bool res = string_isnumeric((npy_ucs4 *) in, elsize);
+        Buffer<ENCODING::UTF32> buf(in, elsize);
+        npy_bool res = string_isnumeric(buf);
         *(npy_bool *)out = res;
 
         in += strides[0];
@@ -1134,13 +1138,13 @@ init_string_ufuncs(PyObject *umath)
 
     if (init_ufunc<ENCODING::UTF32>(
             umath, "isdecimal", "templated_string_isdecimal", 1, 1, dtypes,
-            string_isdecimal_loop<ENCODING::UTF32>, NULL) < 0) {
+            string_isdecimal_loop, NULL) < 0) {
         return -1;
     }
 
     if (init_ufunc<ENCODING::UTF32>(
             umath, "isnumeric", "templated_string_isnumeric", 1, 1, dtypes,
-            string_isnumeric_loop<ENCODING::UTF32>, NULL) < 0) {
+            string_isnumeric_loop, NULL) < 0) {
         return -1;
     }
 
