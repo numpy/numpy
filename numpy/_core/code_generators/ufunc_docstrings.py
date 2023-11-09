@@ -4275,6 +4275,7 @@ add_newdoc('numpy._core.umath', 'isalpha',
     See Also
     --------
     str.isalpha
+
     """)
 
 add_newdoc('numpy._core.umath', 'isdigit',
@@ -4302,11 +4303,12 @@ add_newdoc('numpy._core.umath', 'isdigit',
     Examples
     --------
     >>> a = np.array(['a', 'b', '0'])
-    >>> np._core.umath.isdigit(a)
+    >>> np.char.isdigit(a)
     array([False, False,  True])
     >>> a = np.array([['a', 'b', '0'], ['c', '1', '2']])
-    >>> np._core.umath.isdigit(a)
+    >>> np.char.isdigit(a)
     array([[False, False,  True], [False,  True,  True]])
+
     """)
 
 add_newdoc('numpy._core.umath', 'isspace',
@@ -4331,6 +4333,7 @@ add_newdoc('numpy._core.umath', 'isspace',
     See Also
     --------
     str.isspace
+
     """)
 
 add_newdoc('numpy._core.umath', 'isdecimal',
@@ -4359,7 +4362,7 @@ add_newdoc('numpy._core.umath', 'isdecimal',
 
     Examples
     --------
-    >>> np._core.umath.isdecimal(['12345', '4.99', '123ABC', ''])
+    >>> np.char.isdecimal(['12345', '4.99', '123ABC', ''])
     array([ True, False, False, False])
 
     """)
@@ -4390,7 +4393,7 @@ add_newdoc('numpy._core.umath', 'isnumeric',
 
     Examples
     --------
-    >>> np._core.umath.isnumeric(['123', '123abc', '9.0', '1/4', 'VIII'])
+    >>> np.char.isnumeric(['123', '123abc', '9.0', '1/4', 'VIII'])
     array([ True, False, False, False, False])
 
     """)
