@@ -1712,6 +1712,9 @@ class TestSpecialFloats:
                     assert_raises(FloatingPointError, np.arctanh,
                                   np.array(value, dtype=dt))
 
+        # Make sure glibc < 2.18 atanh is not used, issue 25087
+        assert np.signbit(np.arctanh(-1j).real)
+
     # See: https://github.com/numpy/numpy/issues/20448
     @pytest.mark.xfail(
         _glibc_older_than("2.17"),
