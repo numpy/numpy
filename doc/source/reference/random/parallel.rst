@@ -1,4 +1,4 @@
-Parallel Random Number Generation
+Parallel random number generation
 =================================
 
 There are four main strategies implemented that can be used to produce
@@ -126,7 +126,7 @@ territory ([2]_).
 
 .. _sequence-of-seeds:
 
-Sequence of Integer Seeds
+Sequence of integer seeds
 -------------------------
 
 As discussed in the previous section, `~SeedSequence` can not only take an
@@ -207,7 +207,7 @@ mechanisms are the same.
 
 .. _independent-streams:
 
-Independent Streams
+Independent streams
 -------------------
 
 `Philox` is a counter-based RNG based which generates values by

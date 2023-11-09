@@ -119,7 +119,7 @@ For an understanding of the key issues motivating the need for such a matrix
 excellent resource. An entertaining explanation of an application binary
 interface (ABI) can be found in this post by `JeanHeyd Meneide`_. 
 
-Powershell and MSVC
+PowerShell and MSVC
 ====================
 
 MSVC is installed either via the Visual Studio Bundle or the lighter (preferred)
@@ -169,8 +169,8 @@ It is also possible to check that the environment has been updated correctly
 with ``$ENV:PATH``.
 
 
-Windows Store Python Paths
-==========================
+Microsoft Store Python paths
+============================
 
 The MS Windows version of Python discussed here installs to a non-deterministic
 path using a hash. This needs to be added to the ``PATH`` variable.

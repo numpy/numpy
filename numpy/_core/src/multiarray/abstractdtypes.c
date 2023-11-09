@@ -16,7 +16,7 @@
 static inline PyArray_Descr *
 int_default_descriptor(PyArray_DTypeMeta* NPY_UNUSED(cls))
 {
-    return PyArray_DescrFromType(NPY_LONG);
+    return PyArray_DescrFromType(NPY_INTP);
 }
 
 static PyArray_Descr *
@@ -33,8 +33,8 @@ discover_descriptor_from_pyint(
         PyErr_Clear();
     }
     else {
-        if (NPY_MIN_LONG <= value && value <= NPY_MAX_LONG) {
-            return PyArray_DescrFromType(NPY_LONG);
+        if (NPY_MIN_INTP <= value && value <= NPY_MAX_INTP) {
+            return PyArray_DescrFromType(NPY_INTP);
         }
         return PyArray_DescrFromType(NPY_LONGLONG);
     }
@@ -153,7 +153,7 @@ int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
     if (NPY_DT_is_legacy(other) && other->type_num < NPY_NTYPES) {
         if (other->type_num == NPY_BOOL) {
             /* Use the default integer for bools: */
-            return PyArray_DTypeFromTypeNum(NPY_LONG);
+            return PyArray_DTypeFromTypeNum(NPY_INTP);
         }
     }
     else if (NPY_DT_is_legacy(other)) {
@@ -184,7 +184,7 @@ int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
             return res;
         }
         /* And finally, we will try the default integer, just for sports... */
-        PyArray_DTypeMeta *default_int = PyArray_DTypeFromTypeNum(NPY_LONG);
+        PyArray_DTypeMeta *default_int = PyArray_DTypeFromTypeNum(NPY_INTP);
         res = NPY_DT_CALL_common_dtype(other, default_int);
         Py_DECREF(default_int);
         if (res == NULL) {

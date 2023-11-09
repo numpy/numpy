@@ -691,8 +691,8 @@ def endswith(a, suffix, start=0, end=None):
     array([False,  True])
 
     """
-    return _vec_string(
-        a, bool_, 'endswith', [suffix, start] + _clean_args(end))
+    end = end if end is not None else numpy.iinfo(numpy.int_).max
+    return numpy._core.umath.endswith(a, suffix, start, end)
 
 
 def _expandtabs_dispatcher(a, tabsize=None):
@@ -773,9 +773,8 @@ def find(a, sub, start=0, end=None):
     array([11])
 
     """
-    return _vec_string(
-        a, int_, 'find', [sub, start] + _clean_args(end))
-
+    end = end if end is not None else numpy.iinfo(numpy.int64).max
+    return numpy._core.umath.find(a, sub, start, end)
 
 @array_function_dispatch(_count_dispatcher)
 def index(a, sub, start=0, end=None):
@@ -1303,8 +1302,8 @@ def rfind(a, sub, start=0, end=None):
     str.rfind
 
     """
-    return _vec_string(
-        a, int_, 'rfind', [sub, start] + _clean_args(end))
+    end = end if end is not None else numpy.iinfo(numpy.int64).max
+    return numpy._core.umath.rfind(a, sub, start, end)
 
 
 @array_function_dispatch(_count_dispatcher)
@@ -1601,8 +1600,8 @@ def startswith(a, prefix, start=0, end=None):
     str.startswith
 
     """
-    return _vec_string(
-        a, bool_, 'startswith', [prefix, start] + _clean_args(end))
+    end = end if end is not None else numpy.iinfo(numpy.int_).max
+    return numpy._core.umath.startswith(a, prefix, start, end)
 
 
 @array_function_dispatch(_strip_dispatcher)

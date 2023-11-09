@@ -7,6 +7,8 @@ import pathlib
 import shutil
 import json
 import pathlib
+import importlib
+import subprocess
 
 import click
 from spin import util
@@ -21,6 +23,61 @@ if not meson_import_dir.exists():
         'The `vendored-meson/meson` git submodule does not exist! ' +
         'Run `git submodule update --init` to fix this problem.'
     )
+
+
+def _get_numpy_tools(filename):
+    filepath = pathlib.Path('tools', filename)
+    spec = importlib.util.spec_from_file_location(filename.stem, filepath)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+@click.command()
+@click.option(
+    "-t", "--token",
+    help="GitHub access token",
+    required=True
+)
+@click.option(
+    "--revision-range",
+    help="<revision>..<revision>",
+    required=True
+)
+@click.pass_context
+def changelog(ctx, token, revision_range):
+    """👩 Get change log for provided revision range
+
+    \b
+    Example:
+
+    \b
+    $ spin authors -t $GH_TOKEN --revision-range v1.25.0..v1.26.0
+    """
+    try:
+        from github.GithubException import GithubException
+        from git.exc import GitError
+        changelog = _get_numpy_tools(pathlib.Path('changelog.py'))
+    except ModuleNotFoundError as e:
+        raise click.ClickException(
+            f"{e.msg}. Install the missing packages to use this command."
+        )
+    click.secho(
+        f"Generating change log for range {revision_range}",
+        bold=True, fg="bright_green",
+    )
+    try:
+        changelog.main(token, revision_range)
+    except GithubException as e:
+        raise click.ClickException(
+            f"GithubException raised with status: {e.status} "
+            f"and message: {e.data['message']}"
+        )
+    except GitError as e:
+        raise click.ClickException(
+            f"Git error in command `{' '.join(e.command)}` "
+            f"with error message: {e.stderr}"
+        )
 
 
 @click.command()
@@ -263,6 +320,47 @@ def _run_asv(cmd):
 
     util.run(cmd, cwd='benchmarks', env=env)
 
+@click.command()
+@click.option(
+    "-b", "--branch",
+    metavar='branch',
+    default="main",
+)
+@click.option(
+    '--uncommitted',
+    is_flag=True,
+    default=False,
+    required=False,
+)
+@click.pass_context
+def lint(ctx, branch, uncommitted):
+    """🔦 Run lint checks on diffs.
+    Provide target branch name or `uncommitted` to check changes before committing:
+
+    \b
+    Examples:
+
+    \b
+    For lint checks of your development brach with `main` or a custom branch:
+
+    \b
+    $ spin lint # defaults to main
+    $ spin lint --branch custom_branch
+
+    \b
+    To check just the uncommitted changes before committing
+
+    \b
+    $ spin lint --uncommitted
+    """
+    try:
+        linter = _get_numpy_tools(pathlib.Path('linter.py'))
+    except ModuleNotFoundError as e:
+        raise click.ClickException(
+            f"{e.msg}. Install using linter_requirements.txt"
+        )
+
+    linter.DiffLinter(branch).run_lint(uncommitted)
 
 @click.command()
 @click.option(
@@ -470,3 +568,69 @@ def _config_openblas(blas_variant):
         os.makedirs(openblas_dir, exist_ok=True)
         with open(pkg_config_fname, "wt", encoding="utf8") as fid:
             fid.write(openblas.get_pkg_config().replace("\\", "/"))
+
+
+@click.command()
+@click.option(
+    "-v", "--version-override",
+    help="NumPy version of release",
+    required=False
+)
+@click.pass_context
+def notes(ctx, version_override):
+    """🎉 Generate release notes and validate
+
+    \b
+    Example:
+
+    \b
+    $ spin notes --version-override 2.0
+
+    \b
+    To automatically pick the version
+
+    \b
+    $ spin notes
+    """
+    version = version_override or util.get_config()['project.version']
+
+    click.secho(
+        f"Generating release notes for NumPy {version}",
+        bold=True, fg="bright_green",
+    )
+
+    # Check if `towncrier` is installed
+    if not shutil.which("towncrier"):
+        raise click.ClickException(
+            f"please install `towncrier` to use this command"
+        )
+
+    # towncrier build --version 2.1 --yes
+    cmd = ["towncrier", "build", "--version", version, "--yes"]
+    try:
+        p = util.run(
+                cmd=cmd,
+                sys_exit=False,
+                output=True,
+                encoding="utf-8"
+            )
+    except subprocess.SubprocessError as e:
+        raise click.ClickException(
+            f"`towncrier` failed returned {e.returncode} with error `{e.stderr}`"
+        )
+    output = p.stdout
+    click.secho(output)
+
+    click.secho(
+        "Verifying consumption of all news fragments",
+        bold=True, fg="bright_green",
+    )
+
+    try:
+        test_notes = _get_numpy_tools(pathlib.Path('ci', 'test_all_newsfragments_used.py'))
+    except ModuleNotFoundError as e:
+        raise click.ClickException(
+            f"{e.msg}. Install the missing packages to use this command."
+        )
+
+    test_notes.main()

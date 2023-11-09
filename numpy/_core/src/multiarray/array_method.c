@@ -221,12 +221,6 @@ validate_spec(PyArrayMethod_Spec *spec)
                     "(method: %s)", spec->dtypes[i], spec->name);
             return -1;
         }
-        if (NPY_DT_is_abstract(spec->dtypes[i])) {
-            PyErr_Format(PyExc_TypeError,
-                    "abstract DType %S are currently not supported."
-                    "(method: %s)", spec->dtypes[i], spec->name);
-            return -1;
-        }
     }
     return 0;
 }
@@ -261,6 +255,16 @@ fill_arraymethod_from_slots(
      */
     for (PyType_Slot *slot = &spec->slots[0]; slot->slot != 0; slot++) {
         switch (slot->slot) {
+            case _NPY_METH_resolve_descriptors_with_scalars:
+                if (!private) {
+                    PyErr_SetString(PyExc_RuntimeError,
+                            "the _NPY_METH_resolve_descriptors_with_scalars "
+                            "slot private due to uncertainty about the best "
+                            "signature (see gh-24915)");
+                    return -1;
+                }
+                meth->resolve_descriptors_with_scalars = slot->pfunc;
+                continue;
             case NPY_METH_resolve_descriptors:
                 meth->resolve_descriptors = slot->pfunc;
                 continue;
@@ -272,7 +276,6 @@ fill_arraymethod_from_slots(
                  *       (as in: we should not worry about changing it, but of
                  *       course that would not break it immediately.)
                  */
-                /* Only allow override for private functions initially */
                 meth->get_strided_loop = slot->pfunc;
                 continue;
             /* "Typical" loops, supported used by the default `get_loop` */

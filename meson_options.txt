@@ -2,7 +2,7 @@ option('blas', type: 'string', value: 'auto',
         description: 'Option for BLAS library selection. By default, try to find any in the order given by `blas-order`')
 option('lapack', type: 'string', value: 'auto',
         description: 'Option for LAPACK library selection. By default, try to find any in the order given by `lapack-order`')
-option('allow-noblas', type: 'boolean', value: false,
+option('allow-noblas', type: 'boolean', value: true,
         description: 'If set to true, allow building with (slow!) internal fallback routines')
 option('blas-order', type: 'array',
         value: ['mkl', 'accelerate', 'openblas', 'flexiblas', 'blis', 'blas'])

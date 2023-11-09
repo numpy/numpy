@@ -495,7 +495,7 @@ reasons.
     ValueError: non-broadcastable output operand with shape (3,) doesn't
     match the broadcast shape (2,3)
 
-Outer Product Iteration
+Outer product iteration
 -----------------------
 
 Any binary operation can be extended to an array operation in an outer
@@ -545,7 +545,7 @@ Everything to do with the outer product is handled by the iterator setup.
 Note that once the iterator is closed we can not access :func:`operands <nditer.operands>`
 and must use a reference created inside the context manager.
 
-Reduction Iteration
+Reduction iteration
 -------------------
 
 Whenever a writeable operand has fewer elements than the full iteration space,

@@ -217,7 +217,7 @@ class Generator:
         low: int,
         high: None | int = ...,
         size: None = ...,
-        dtype: _DTypeLikeBool = ...,
+        dtype: type[bool] = ...,
         endpoint: bool = ...,
     ) -> bool: ...
     @overload
@@ -226,7 +226,7 @@ class Generator:
         low: int,
         high: None | int = ...,
         size: None = ...,
-        dtype: _DTypeLikeInt | _DTypeLikeUInt = ...,
+        dtype: type[int] = ...,
         endpoint: bool = ...,
     ) -> int: ...
     @overload

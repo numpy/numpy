@@ -142,7 +142,7 @@ Handling complex numbers
    conj
    conjugate
 
-Extrema Finding
+Extrema finding
 ---------------
 .. autosummary::
    :toctree: generated/

@@ -120,55 +120,50 @@ else:
 
     from . import _core
     from ._core import (
-        _no_nep50_warning, memmap, iinfo, finfo, recarray,
-        False_, ScalarType, True_, abs, absolute, add, all, allclose, alltrue,
+        False_, ScalarType, True_, _get_promotion_state, _no_nep50_warning,
+        _set_promotion_state, abs, absolute, add, all, allclose, alltrue,
         amax, amin, any, arange, arccos, arccosh, arcsin, arcsinh, arctan,
         arctan2, arctanh, argmax, argmin, argpartition, argsort, argwhere,
         around, array, array2string, array_equal, array_equiv, array_repr,
         array_str, asanyarray, asarray, ascontiguousarray, asfortranarray,
-        atleast_1d, atleast_2d, atleast_3d, base_repr, binary_repr, 
-        bitwise_and, bitwise_count, bitwise_not, bitwise_or, bitwise_xor, block,
-        bool_, broadcast, busday_count, busday_offset, busdaycalendar, byte, bytes_,
-        can_cast, cbrt, cdouble, ceil, character, choose, clip, clongdouble,
-        complexfloating, compress, concatenate, conj, conjugate, convolve,
-        copysign, copyto, correlate, cos, cosh, count_nonzero, cross, csingle,
-        cumprod, cumproduct, cumsum, datetime64, datetime_as_string, 
-        datetime_data, deg2rad, degrees, diagonal, divide, divmod, dot, 
-        double, dtype, e, einsum, einsum_path, empty, empty_like, equal,
-        errstate, euler_gamma, exp, exp2, expm1, fabs, 
-        flatiter, flatnonzero, flexible, sctypeDict,
-        float_power, floating, floor, floor_divide, fmax, fmin, fmod, 
-        format_float_positional, format_float_scientific, 
-        frexp, from_dlpack, frombuffer, fromfile, fromfunction, fromiter, 
-        frompyfunc, fromstring, full, full_like, gcd, generic, geomspace, 
-        get_printoptions, getbufsize, geterr, geterrcall, greater, 
-        greater_equal, half, heaviside, hstack, hypot, identity, iinfo, 
-        indices, inexact, inf, inner, int_,
-        intc, integer, invert, is_busday, isclose, isfinite, isfortran,
-        isinf, isnan, isnat, isscalar, issubdtype, lcm, ldexp,
-        left_shift, less, less_equal, lexsort, linspace, little_endian, log, 
-        log10, log1p, log2, logaddexp, logaddexp2, logical_and, logical_not, 
-        logical_or, logical_xor, logspace, longdouble, 
-        longlong, matmul, max, maximum, 
-        may_share_memory, mean, min, min_scalar_type, minimum, mod, 
-        modf, moveaxis, multiply, nan, ndarray, ndim, nditer, 
-        negative, nested_iters, newaxis, nextafter, nonzero, not_equal,
-        number, object_, ones, ones_like, outer, partition,
-        pi, positive, power, printoptions, prod, product, promote_types, 
-        ptp, put, putmask, rad2deg, radians, ravel, reciprocal,
-        record, remainder, repeat, require, reshape, resize, result_type, 
-        right_shift, rint, roll, rollaxis, round, 
-        searchsorted, set_printoptions, long, ulong,
-        setbufsize, seterr, seterrcall, shape,
-        shares_memory, short, sign, signbit, signedinteger, sin, single, 
-        sinh, size, sometrue, sort, spacing, sqrt, square, 
-        squeeze, stack, std, str_, subtract, sum, swapaxes, take,
-        tan, tanh, tensordot, timedelta64, trace, transpose, 
-        true_divide, trunc, typecodes, ubyte, ufunc, uint, uintc, ulonglong, 
-        unsignedinteger, ushort, var, vdot, void, vstack, where, 
-        zeros, zeros_like, _get_promotion_state, _set_promotion_state,
-        int8, int16, int32, int64, intp, uint8, uint16, uint32, uint64, uintp,
-        float16, float32, float64, complex64, complex128
+        atleast_1d, atleast_2d, atleast_3d, base_repr, binary_repr,
+        bitwise_and, bitwise_count, bitwise_not, bitwise_or, bitwise_xor,
+        block, bool_, broadcast, busday_count, busday_offset, busdaycalendar,
+        byte, bytes_, can_cast, cbrt, cdouble, ceil, character, choose, clip,
+        clongdouble, complex128, complex64, complexfloating, compress,
+        concatenate, conj, conjugate, convolve, copysign, copyto, correlate,
+        cos, cosh, count_nonzero, cross, csingle, cumprod, cumproduct, cumsum,
+        datetime64, datetime_as_string, datetime_data, deg2rad, degrees,
+        diagonal, divide, divmod, dot, double, dtype, e, einsum, einsum_path,
+        empty, empty_like, equal, errstate, euler_gamma, exp, exp2, expm1,
+        fabs, finfo, flatiter, flatnonzero, flexible, float16, float32,
+        float64, float_power, floating, floor, floor_divide, fmax, fmin, fmod,
+        format_float_positional, format_float_scientific, frexp, from_dlpack,
+        frombuffer, fromfile, fromfunction, fromiter, frompyfunc, fromstring,
+        full, full_like, gcd, generic, geomspace, get_printoptions,
+        getbufsize, geterr, geterrcall, greater, greater_equal, half,
+        heaviside, hstack, hypot, identity, iinfo, iinfo, indices, inexact,
+        inf, inner, int16, int32, int64, int8, int_, intc, integer, intp,
+        invert, is_busday, isclose, isfinite, isfortran, isinf, isnan, isnat,
+        isscalar, issubdtype, lcm, ldexp, left_shift, less, less_equal,
+        lexsort, linspace, little_endian, log, log10, log1p, log2, logaddexp,
+        logaddexp2, logical_and, logical_not, logical_or, logical_xor,
+        logspace, long, longdouble, longlong, matmul, max, maximum,
+        may_share_memory, mean, memmap, min, min_scalar_type, minimum, mod,
+        modf, moveaxis, multiply, nan, ndarray, ndim, nditer, negative,
+        nested_iters, newaxis, nextafter, nonzero, not_equal, number, object_,
+        ones, ones_like, outer, partition, pi, positive, power, printoptions,
+        prod, product, promote_types, ptp, put, putmask, rad2deg, radians,
+        ravel, recarray, reciprocal, record, remainder, repeat, require,
+        reshape, resize, result_type, right_shift, rint, roll, rollaxis,
+        round, sctypeDict, searchsorted, set_printoptions, setbufsize, seterr,
+        seterrcall, shape, shares_memory, short, sign, signbit, signedinteger,
+        sin, single, sinh, size, sometrue, sort, spacing, sqrt, square,
+        squeeze, stack, std, str_, subtract, sum, swapaxes, take, tan, tanh,
+        tensordot, timedelta64, trace, transpose, true_divide, trunc,
+        typecodes, ubyte, ufunc, uint, uint16, uint32, uint64, uint8, uintc,
+        uintp, ulong, ulonglong, unsignedinteger, ushort, var, vdot, void,
+        vstack, where, zeros, zeros_like
     )
 
     # NOTE: It's still under discussion whether these aliases 
@@ -181,7 +176,7 @@ else:
     del ta
 
     from . import lib
-    from .lib import emath
+    from .lib import scimath as emath
     from .lib._histograms_impl import (
         histogram, histogram_bin_edges, histogramdd
     )
@@ -294,8 +289,10 @@ else:
     _core.getlimits._register_known_types()
 
     __all__ = list(
-        __numpy_submodules__ | set(_core.__all__) | set(lib.__all__) | 
-        set(_mat.__all__) | set(lib._histograms_impl.__all__) | 
+        __numpy_submodules__ |
+        set(_core.__all__) |
+        set(_mat.__all__) |
+        set(lib._histograms_impl.__all__) |
         set(lib._nanfunctions_impl.__all__) |
         set(lib._function_base_impl.__all__) |
         set(lib._twodim_base_impl.__all__) |
@@ -309,7 +306,7 @@ else:
         set(lib._polynomial_impl.__all__) |
         set(lib._npyio_impl.__all__) |
         set(lib._index_tricks_impl.__all__) |
-        {"show_config", "__version__"}
+        {"emath", "show_config", "__version__"}
     )
 
     # Filter out Cython harmless warnings
@@ -405,17 +402,13 @@ else:
                              "{!r}".format(__name__, attr))
 
     def __dir__():
-        # TODO: move away from using `globals` to a statically defined 
-        # list. With `globals`, when running in a testing context 
-        # a bunch of random names fall into global scope, such as
-        # `conftest` or `distutils`.
         public_symbols = (
             globals().keys() | __numpy_submodules__
         )
         public_symbols -= {
             "matrixlib", "matlib", "tests", "conftest", "version", 
             "compat", "distutils", "array_api"
-            }
+        }
         return list(public_symbols)
 
     # Pytest testing
@@ -517,9 +510,9 @@ else:
     # it is tidier organized.
     _core.multiarray._multiarray_umath._reload_guard()
 
-    # TODO: Switch to defaulting to "weak".
+    # TODO: Remove the environment variable entirely now that it is "weak"
     _core._set_promotion_state(
-        os.environ.get("NPY_PROMOTION_STATE", "legacy"))
+        os.environ.get("NPY_PROMOTION_STATE", "weak"))
 
     # Tell PyInstaller where to find hook-numpy.py
     def _pyinstaller_hooks_dir():

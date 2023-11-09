@@ -1,13 +1,59 @@
 *************************
-NumPy 2.0 Migration Guide
+NumPy 2.0 migration guide
 *************************
 
-This document contains a set of instructions on how to update your code to work with
-the Numpy 2.0 Python API. Most of the changes are trivial, and require the end user
-to use a different name/module to access a given function/constant.
+This document contains a set of instructions on how to update your code to
+work with Numpy 2.0.
+
+
+.. _migration_windows_int64:
+
+Windows default integer
+=======================
+The default integer used by NumPy is now 64bit on all 64bit systems (and
+32bit on 32bit system).  For historic reasons related to Python 2 it was
+previously equivalent to the C ``long`` type.
+The default integer is now equivalent to ``np.intp``.
+
+Most end-users should not be affected by this change.  Some operations will
+use more memory, but some operations may actually become faster.
+If you experience issues due to calling a library written in a compiled
+language it may help to explicitly cast to a ``long``, for example with:
+``arr = arr.astype("long", copy=False)``.
+
+Libraries interfacing with compiled code that are written in C, Cython, or
+a similar language may require updating to accomodate user input if they
+are using the ``long`` or equivalent type on the C-side.
+In this case, you may wish to use ``intp`` and cast user input or support
+both ``long`` and ``intp`` (to better support NumPy 1.x as well).
+When creating a new integer array in C or Cython, the new ``NPY_DEFAULT_INT``
+macro will evaluate to either ``NPY_LONG`` or ``NPY_INTP`` depending on the
+NumPy version.
+
+Note that the NumPy random API is not affected by this change.
+
+C-API Changes
+=============
+Some definitions where removed or replaced due to being outdated or
+unmaintaibale.  Some new API definition will evaluate differently at
+runtime between NumPy 2.0 and NumPy 1.x.
+Some are defined in ``numpy/_core/include/numpy/npy_2_compat.h``
+(for example ``NPY_DEFAULT_INT``) which can be vendored in full or part
+to have the definitions available when compiling against NumPy 1.x.
+
+Please let us know if you require additional workarounds here.
+
+Namespace changes
+=================
+
+In NumPy 2.0 certain functions, modules, and constants were moved or removed
+to make the NumPy namespace more userfriendly by removing unnecessary or
+outdated functionality and clarifying which parts of NumPy are considered
+private.
+Please see the tables below for guidance on migration.  For most changes this
+means replacing it with a backwards compatible alternative. 
 
 Please refer to `NEP 52 <https://numpy.org/neps/nep-0052-python-api-cleanup.html>`_ for more details.
-
 
 Main namespace
 --------------
@@ -140,7 +186,7 @@ then you should either use the existing API or, in case it's infeasible, reach o
 with a request to restore the removed entry.
 
 
-NDArray and scalar namespace
+ndarray and scalar namespace
 ----------------------------
 
 A few methods from ``np.ndarray`` and ``np.generic`` scalar classes have been removed.

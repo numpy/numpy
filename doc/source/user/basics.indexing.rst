@@ -194,8 +194,8 @@ concepts to remember include:
 - If the selection tuple has all entries ``:`` except the
   *p*-th entry which is a slice object ``i:j:k``,
   then the returned array has dimension *N* formed by
-  concatenating the sub-arrays returned by integer indexing of
-  elements *i*, *i+k*, ..., *i + (m - 1) k < j*,
+  stacking, along the *p*-th axis, the sub-arrays returned by integer
+  indexing of elements *i*, *i+k*, ..., *i + (m - 1) k < j*.
 
 - Basic slicing with more than one non-``:`` entry in the slicing
   tuple, acts like repeated application of slicing using a single
@@ -743,7 +743,7 @@ For example::
 
 .. _flat-iterator-indexing:
 
-Flat Iterator indexing
+Flat iterator indexing
 ----------------------
 
 :attr:`x.flat <ndarray.flat>` returns an iterator that will iterate

@@ -5,6 +5,11 @@ from numpy._core import multiarray
 for item in ["_reconstruct", "scalar"]:
     globals()[item] = getattr(multiarray, item)
 
+# Pybind11 (in versions <= 2.11.1) imports _ARRAY_API from the multiarray
+# submodule as a part of NumPy initialization, therefore it must be importable
+# without a warning.
+_ARRAY_API = multiarray._ARRAY_API
+
 def __getattr__(attr_name):
     from numpy._core import multiarray
     from ._utils import _raise_warning

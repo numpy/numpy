@@ -812,22 +812,19 @@ def select(condlist, choicelist, default=0):
     if len(condlist) == 0:
         raise ValueError("select with an empty condition list is not possible")
 
-    choicelist = [np.asarray(choice) for choice in choicelist]
+    # TODO: This preserves the Python int, float, complex manually to get the
+    #       right `result_type` with NEP 50.  Most likely we will grow a better
+    #       way to spell this (and this can be replaced).
+    choicelist = [
+        choice if type(choice) in (int, float, complex) else np.asarray(choice)
+        for choice in choicelist]
+    choicelist.append(default if type(default) in (int, float, complex)
+                      else np.asarray(default))
 
     try:
-        intermediate_dtype = np.result_type(*choicelist)
+        dtype = np.result_type(*choicelist)
     except TypeError as e:
-        msg = f'Choicelist elements do not have a common dtype: {e}'
-        raise TypeError(msg) from None
-    default_array = np.asarray(default)
-    choicelist.append(default_array)
-
-    # need to get the result type before broadcasting for correct scalar
-    # behaviour
-    try:
-        dtype = np.result_type(intermediate_dtype, default_array)
-    except TypeError as e:
-        msg = f'Choicelists and default value do not have a common dtype: {e}'
+        msg = f'Choicelist and default value do not have a common dtype: {e}'
         raise TypeError(msg) from None
 
     # Convert conditions to arrays and broadcast conditions and choices
@@ -2275,7 +2272,7 @@ class vectorize:
            [0., 0., 0., 1., 2., 1.]])
 
     Decorator syntax is supported.  The decorator can be called as
-    a function to provide keyword arguments.
+    a function to provide keyword arguments:
 
     >>> @np.vectorize
     ... def identity(x):
@@ -4200,7 +4197,9 @@ def percentile(a,
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
-    q = np.true_divide(q, 100)
+    # Use dtype of array if possible (e.g., if q is a python int or float)
+    # by making the divisor have the dtype of the data array.
+    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100)
     q = asanyarray(q)  # undo any decay that the ufunc performed (see gh-13105)
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
@@ -4461,7 +4460,12 @@ def quantile(a,
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
-    q = np.asanyarray(q)
+    # Use dtype of array if possible (e.g., if q is a python int or float).
+    if isinstance(q, (int, float)) and a.dtype.kind == "f":
+        q = np.asanyarray(q, dtype=a.dtype)
+    else:
+        q = np.asanyarray(q)
+
     if not _quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
     return _quantile_unchecked(
@@ -4559,7 +4563,9 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
     """
     gamma = np.asanyarray(virtual_indexes - previous_indexes)
     gamma = method["fix_gamma"](gamma, virtual_indexes)
-    return np.asanyarray(gamma)
+    # Ensure both that we have an array, and that we keep the dtype
+    # (which may have been matched to the input array).
+    return np.asanyarray(gamma, dtype=virtual_indexes.dtype)
 
 
 def _lerp(a, b, t, out=None):

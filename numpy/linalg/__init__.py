@@ -76,10 +76,11 @@ Exceptions
 
 """
 # To get sub-modules
-from . import linalg
-from .linalg import *
+from . import linalg  # deprecated in NumPy 2.0
+from . import _linalg
+from ._linalg import *
 
-__all__ = linalg.__all__.copy()
+__all__ = _linalg.__all__.copy()
 
 from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)

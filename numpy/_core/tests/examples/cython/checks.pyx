@@ -77,3 +77,54 @@ def make_iso_8601_datetime(dt: "datetime"):
         cnp.NPY_NO_CASTING,
     )
     return result
+
+
+cdef cnp.broadcast multiiter_from_broadcast_obj(object bcast):
+    cdef dict iter_map = {
+        1: cnp.PyArray_MultiIterNew1,
+        2: cnp.PyArray_MultiIterNew2,
+        3: cnp.PyArray_MultiIterNew3,
+        4: cnp.PyArray_MultiIterNew4,
+        5: cnp.PyArray_MultiIterNew5,
+    }
+    arrays = [x.base for x in bcast.iters]
+    cdef cnp.broadcast result = iter_map[len(arrays)](*arrays)
+    return result
+
+
+def get_multiiter_size(bcast: "broadcast"):
+    cdef cnp.broadcast multi = multiiter_from_broadcast_obj(bcast)
+    return multi.size
+
+
+def get_multiiter_number_of_dims(bcast: "broadcast"):
+    cdef cnp.broadcast multi = multiiter_from_broadcast_obj(bcast)
+    return multi.nd
+
+
+def get_multiiter_current_index(bcast: "broadcast"):
+    cdef cnp.broadcast multi = multiiter_from_broadcast_obj(bcast)
+    return multi.index
+
+
+def get_multiiter_num_of_iterators(bcast: "broadcast"):
+    cdef cnp.broadcast multi = multiiter_from_broadcast_obj(bcast)
+    return multi.numiter
+
+
+def get_multiiter_shape(bcast: "broadcast"):
+    cdef cnp.broadcast multi = multiiter_from_broadcast_obj(bcast)
+    return tuple([multi.dimensions[i] for i in range(bcast.nd)])
+
+
+def get_multiiter_iters(bcast: "broadcast"):
+    cdef cnp.broadcast multi = multiiter_from_broadcast_obj(bcast)
+    return tuple([<cnp.flatiter>multi.iters[i] for i in range(bcast.numiter)])
+
+
+def get_default_integer():
+    if cnp.NPY_DEFAULT_INT == cnp.NPY_LONG:
+        return cnp.dtype("long")
+    if cnp.NPY_DEFAULT_INT == cnp.NPY_INTP:
+        return cnp.dtype("intp")
+    return None

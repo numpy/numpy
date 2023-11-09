@@ -120,9 +120,12 @@ add_newdoc_for_scalar_type('intc', [],
     Signed integer type, compatible with C ``int``.
     """)
 
+# TODO: These docs probably need an if to highlight the default rather than
+#       the C-types (and be correct).
 add_newdoc_for_scalar_type('int_', [],
     """
-    Signed integer type, compatible with Python :class:`int` and C ``long``.
+    Default signed integer type, 64bit on 64bit systems and 32bit on 32bit
+    systems.
     """)
 
 add_newdoc_for_scalar_type('longlong', [],
@@ -147,7 +150,8 @@ add_newdoc_for_scalar_type('uintc', [],
 
 add_newdoc_for_scalar_type('uint', [],
     """
-    Unsigned integer type, compatible with C ``unsigned long``.
+    Unsigned signed integer type, 64bit on 64bit systems and 32bit on 32bit
+    systems.
     """)
 
 add_newdoc_for_scalar_type('ulonglong', [],

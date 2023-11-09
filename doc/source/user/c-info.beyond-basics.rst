@@ -16,7 +16,7 @@ Iterating over elements in the array
 
 .. _`sec:array_iterator`:
 
-Basic Iteration
+Basic iteration
 ---------------
 
 One common algorithmic requirement is to be able to walk over all

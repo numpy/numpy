@@ -1039,19 +1039,25 @@ class TestTypes:
         assert_equal(promote_func(np.array([b]), u8), np.dtype(np.uint8))
         assert_equal(promote_func(np.array([b]), i32), np.dtype(np.int32))
         assert_equal(promote_func(np.array([b]), u32), np.dtype(np.uint32))
-        assert_equal(promote_func(np.array([i8]), i64), np.dtype(np.int8))
-        assert_equal(promote_func(u64, np.array([i32])), np.dtype(np.int32))
-        assert_equal(promote_func(i64, np.array([u32])), np.dtype(np.uint32))
+        assert_equal(promote_func(np.array([i8]), i64), np.dtype(np.int64))
+        # unsigned and signed unfortunately tend to promote to float64:
+        assert_equal(promote_func(u64, np.array([i32])), np.dtype(np.float64))
+        assert_equal(promote_func(i64, np.array([u32])), np.dtype(np.int64))
+        assert_equal(promote_func(np.array([u16]), i32), np.dtype(np.int32))
         assert_equal(promote_func(np.int32(-1), np.array([u64])),
                      np.dtype(np.float64))
-        assert_equal(promote_func(f64, np.array([f32])), np.dtype(np.float32))
-        assert_equal(promote_func(fld, np.array([f32])), np.dtype(np.float32))
-        assert_equal(promote_func(np.array([f64]), fld), np.dtype(np.float64))
+        assert_equal(promote_func(f64, np.array([f32])), np.dtype(np.float64))
+        assert_equal(promote_func(fld, np.array([f32])),
+                     np.dtype(np.longdouble))
+        assert_equal(promote_func(np.array([f64]), fld),
+                     np.dtype(np.longdouble))
         assert_equal(promote_func(fld, np.array([c64])),
-                     np.dtype(np.complex64))
+                     np.dtype(np.clongdouble))
         assert_equal(promote_func(c64, np.array([f64])),
                      np.dtype(np.complex128))
         assert_equal(promote_func(np.complex64(3j), np.array([f64])),
+                     np.dtype(np.complex128))
+        assert_equal(promote_func(np.array([f32]), c128),
                      np.dtype(np.complex128))
 
         # coercion between scalars and 1-D arrays, where
@@ -1062,16 +1068,6 @@ class TestTypes:
         assert_equal(promote_func(np.array([i8]), f64), np.dtype(np.float64))
         assert_equal(promote_func(np.array([u16]), f64), np.dtype(np.float64))
 
-        # uint and int are treated as the same "kind" for
-        # the purposes of array-scalar promotion.
-        assert_equal(promote_func(np.array([u16]), i32), np.dtype(np.uint16))
-
-        # float and complex are treated as the same "kind" for
-        # the purposes of array-scalar promotion, so that you can do
-        # (0j + float32array) to get a complex64 array instead of
-        # a complex128 array.
-        assert_equal(promote_func(np.array([f32]), c128),
-                     np.dtype(np.complex64))
 
     def test_coercion(self):
         def res_type(a, b):
@@ -1426,6 +1422,8 @@ class TestTypes:
         assert_(not np.can_cast([('f0', ('i4,i4'), (2,))], 'i4',
                                 casting='unsafe'))
 
+    @pytest.mark.xfail(np._get_promotion_state() != "legacy",
+            reason="NEP 50: no python int/float/complex support (yet)")
     def test_can_cast_values(self):
         # gh-5917
         for dt in sctypes['int'] + sctypes['uint']:
@@ -1970,57 +1968,152 @@ class TestBaseRepr:
             np.base_repr(1, 37)
 
 
+def _test_array_equal_parametrizations():
+    """
+    we pre-create arrays as we sometime want to pass the same instance
+    and sometime not. Passing the same instances may not mean the array are
+    equal, especially when containing None
+    """
+    # those are 0-d arrays, it used to be a special case
+    # where (e0 == e0).all() would raise
+    e0 = np.array(0, dtype="int")
+    e1 = np.array(1, dtype="float")
+    # x,y, nan_equal, expected_result
+    yield (e0, e0.copy(), None, True)
+    yield (e0, e0.copy(), False, True)
+    yield (e0, e0.copy(), True, True)
+
+    #
+    yield (e1, e1.copy(), None, True)
+    yield (e1, e1.copy(), False, True)
+    yield (e1, e1.copy(), True, True)
+
+    # Non-nanable – those cannot hold nans
+    a12 = np.array([1, 2])
+    a12b = a12.copy()
+    a123 = np.array([1, 2, 3])
+    a13 = np.array([1, 3])
+    a34 = np.array([3, 4])
+
+    aS1 = np.array(["a"], dtype="S1")
+    aS1b = aS1.copy()
+    aS1u4 = np.array([("a", 1)], dtype="S1,u4")
+    aS1u4b = aS1u4.copy()
+
+    yield (a12, a12b, None, True)
+    yield (a12, a12, None, True)
+    yield (a12, a123, None, False)
+    yield (a12, a34, None, False)
+    yield (a12, a13, None, False)
+    yield (aS1, aS1b, None, True)
+    yield (aS1, aS1, None, True)
+
+    # Non-float dtype - equal_nan should have no effect,
+    yield (a123, a123, None, True)
+    yield (a123, a123, False, True)
+    yield (a123, a123, True, True)
+    yield (a123, a123.copy(), None, True)
+    yield (a123, a123.copy(), False, True)
+    yield (a123, a123.copy(), True, True)
+    yield (a123.astype("float"), a123.astype("float"), None, True)
+    yield (a123.astype("float"), a123.astype("float"), False, True)
+    yield (a123.astype("float"), a123.astype("float"), True, True)
+
+    # these can hold None
+    b1 = np.array([1, 2, np.nan])
+    b2 = np.array([1, np.nan, 2])
+    b3 = np.array([1, 2, np.inf])
+    b4 = np.array(np.nan)
+
+    # instances are the same
+    yield (b1, b1, None, False)
+    yield (b1, b1, False, False)
+    yield (b1, b1, True, True)
+
+    # equal but not same instance
+    yield (b1, b1.copy(), None, False)
+    yield (b1, b1.copy(), False, False)
+    yield (b1, b1.copy(), True, True)
+
+    # same once stripped of Nan
+    yield (b1, b2, None, False)
+    yield (b1, b2, False, False)
+    yield (b1, b2, True, False)
+
+    # nan's not conflated with inf's
+    yield (b1, b3, None, False)
+    yield (b1, b3, False, False)
+    yield (b1, b3, True, False)
+
+    # all Nan
+    yield (b4, b4, None, False)
+    yield (b4, b4, False, False)
+    yield (b4, b4, True, True)
+    yield (b4, b4.copy(), None, False)
+    yield (b4, b4.copy(), False, False)
+    yield (b4, b4.copy(), True, True)
+
+    t1 = b1.astype("timedelta64")
+    t2 = b2.astype("timedelta64")
+
+    # Timedeltas are particular
+    yield (t1, t1, None, False)
+    yield (t1, t1, False, False)
+    yield (t1, t1, True, True)
+
+    yield (t1, t1.copy(), None, False)
+    yield (t1, t1.copy(), False, False)
+    yield (t1, t1.copy(), True, True)
+
+    yield (t1, t2, None, False)
+    yield (t1, t2, False, False)
+    yield (t1, t2, True, False)
+
+    # Multi-dimensional array
+    md1 = np.array([[0, 1], [np.nan, 1]])
+
+    yield (md1, md1, None, False)
+    yield (md1, md1, False, False)
+    yield (md1, md1, True, True)
+    yield (md1, md1.copy(), None, False)
+    yield (md1, md1.copy(), False, False)
+    yield (md1, md1.copy(), True, True)
+    # both complexes are nan+nan.j but the same instance
+    cplx1, cplx2 = [np.array([np.nan + np.nan * 1j])] * 2
+
+    # only real or img are nan.
+    cplx3, cplx4 = np.complex64(1, np.nan), np.complex64(np.nan, 1)
+
+    # Complex values
+    yield (cplx1, cplx2, None, False)
+    yield (cplx1, cplx2, False, False)
+    yield (cplx1, cplx2, True, True)
+
+    # Complex values, 1+nan, nan+1j
+    yield (cplx3, cplx4, None, False)
+    yield (cplx3, cplx4, False, False)
+    yield (cplx3, cplx4, True, True)
+
+
 class TestArrayComparisons:
-    def test_array_equal(self):
-        res = np.array_equal(np.array([1, 2]), np.array([1, 2]))
-        assert_(res)
-        assert_(type(res) is bool)
-        res = np.array_equal(np.array([1, 2]), np.array([1, 2, 3]))
-        assert_(not res)
-        assert_(type(res) is bool)
-        res = np.array_equal(np.array([1, 2]), np.array([3, 4]))
-        assert_(not res)
-        assert_(type(res) is bool)
-        res = np.array_equal(np.array([1, 2]), np.array([1, 3]))
-        assert_(not res)
-        assert_(type(res) is bool)
-        res = np.array_equal(np.array(['a'], dtype='S1'), np.array(['a'], dtype='S1'))
-        assert_(res)
-        assert_(type(res) is bool)
-        res = np.array_equal(np.array([('a', 1)], dtype='S1,u4'),
-                             np.array([('a', 1)], dtype='S1,u4'))
-        assert_(res)
-        assert_(type(res) is bool)
+    @pytest.mark.parametrize(
+        "bx,by,equal_nan,expected", _test_array_equal_parametrizations()
+    )
+    def test_array_equal_equal_nan(self, bx, by, equal_nan, expected):
+        """
+        This test array_equal for a few combinaison:
 
-    def test_array_equal_equal_nan(self):
-        # Test array_equal with equal_nan kwarg
-        a1 = np.array([1, 2, np.nan])
-        a2 = np.array([1, np.nan, 2])
-        a3 = np.array([1, 2, np.inf])
+        - are the two inputs the same object or not (same object many not
+          be equal if contains NaNs)
+        - Wether we should consider or not, NaNs, being equal.
 
-        # equal_nan=False by default
-        assert_(not np.array_equal(a1, a1))
-        assert_(np.array_equal(a1, a1, equal_nan=True))
-        assert_(not np.array_equal(a1, a2, equal_nan=True))
-        # nan's not conflated with inf's
-        assert_(not np.array_equal(a1, a3, equal_nan=True))
-        # 0-D arrays
-        a = np.array(np.nan)
-        assert_(not np.array_equal(a, a))
-        assert_(np.array_equal(a, a, equal_nan=True))
-        # Non-float dtype - equal_nan should have no effect
-        a = np.array([1, 2, 3], dtype=int)
-        assert_(np.array_equal(a, a))
-        assert_(np.array_equal(a, a, equal_nan=True))
-        # Multi-dimensional array
-        a = np.array([[0, 1], [np.nan, 1]])
-        assert_(not np.array_equal(a, a))
-        assert_(np.array_equal(a, a, equal_nan=True))
-        # Complex values
-        a, b = [np.array([1 + 1j])]*2
-        a.real, b.imag = np.nan, np.nan
-        assert_(not np.array_equal(a, b, equal_nan=False))
-        assert_(np.array_equal(a, b, equal_nan=True))
+        """
+        if equal_nan is None:
+            res = np.array_equal(bx, by)
+        else:
+            res = np.array_equal(bx, by, equal_nan=equal_nan)
+        assert_(res is expected)
+        assert_(type(res) is bool)
 
     def test_none_compares_elementwise(self):
         a = np.array([None, 1, None], dtype=object)
@@ -2600,7 +2693,7 @@ class TestClip:
     @pytest.mark.parametrize("arr, amin, amax, exp", [
         # for a bug in npy_ObjectClip, based on a
         # case produced by hypothesis
-        (np.zeros(10, dtype=np.int64),
+        (np.zeros(10, dtype=object),
          0,
          -2**64+1,
          np.full(10, -2**64+1, dtype=object)),
@@ -3575,6 +3668,9 @@ class TestMoveaxis:
 
 
 class TestCross:
+    @pytest.mark.filterwarnings(
+        "ignore:.*2-dimensional vectors.*:DeprecationWarning"
+    )
     def test_2x2(self):
         u = [1, 2]
         v = [3, 4]
@@ -3584,6 +3680,9 @@ class TestCross:
         cp = np.cross(v, u)
         assert_equal(cp, -z)
 
+    @pytest.mark.filterwarnings(
+        "ignore:.*2-dimensional vectors.*:DeprecationWarning"
+    )
     def test_2x3(self):
         u = [1, 2]
         v = [3, 4, 5]
@@ -3602,6 +3701,9 @@ class TestCross:
         cp = np.cross(v, u)
         assert_equal(cp, -z)
 
+    @pytest.mark.filterwarnings(
+        "ignore:.*2-dimensional vectors.*:DeprecationWarning"
+    )
     def test_broadcasting(self):
         # Ticket #2624 (Trac #2032)
         u = np.tile([1, 2], (11, 1))
@@ -3632,6 +3734,9 @@ class TestCross:
         assert_equal(np.cross(v.T, u), -z)
         assert_equal(np.cross(u, u), 0)
 
+    @pytest.mark.filterwarnings(
+        "ignore:.*2-dimensional vectors.*:DeprecationWarning"
+    )
     def test_broadcasting_shapes(self):
         u = np.ones((2, 1, 3))
         v = np.ones((5, 3))

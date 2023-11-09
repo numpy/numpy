@@ -2279,7 +2279,7 @@ Other functions
     1 if the lists are identical; otherwise, return 0.
 
 
-Auxiliary Data With Object Semantics
+Auxiliary data with object semantics
 ------------------------------------
 
 .. versionadded:: 1.7.0
@@ -2371,7 +2371,7 @@ an element copier function as a primitive.
     A macro which calls the auxdata's clone function appropriately,
     returning a deep copy of the auxiliary data.
 
-Array Iterators
+Array iterators
 ---------------
 
 As of NumPy 1.6.0, these array iterators are superseded by
@@ -2496,6 +2496,48 @@ Broadcasting (multi-iterators)
     Evaluates TRUE as long as the multi-iterator has not looped
     through all of the elements (of the broadcasted result), otherwise
     it evaluates FALSE.
+
+.. c:function:: npy_intp PyArray_MultiIter_SIZE(PyArrayMultiIterObject* multi)
+
+    .. versionadded:: 1.26.0
+
+    Returns the total broadcasted size of a multi-iterator object. 
+
+.. c:function:: int PyArray_MultiIter_NDIM(PyArrayMultiIterObject* multi)
+
+    .. versionadded:: 1.26.0
+
+    Returns the number of dimensions in the broadcasted result of
+    a multi-iterator object.
+
+.. c:function:: npy_intp PyArray_MultiIter_INDEX(PyArrayMultiIterObject* multi)
+
+    .. versionadded:: 1.26.0
+
+    Returns the current (1-d) index into the broadcasted result
+    of a multi-iterator object.
+
+.. c:function:: int PyArray_MultiIter_NUMITER(PyArrayMultiIterObject* multi)
+
+    .. versionadded:: 1.26.0
+
+    Returns the number of iterators that are represented by a
+    multi-iterator object.
+
+.. c:function:: void** PyArray_MultiIter_ITERS(PyArrayMultiIterObject* multi)
+
+    .. versionadded:: 1.26.0
+
+    Returns an array of iterator objects that holds the iterators for the
+    arrays to be broadcast together. On return, the iterators are adjusted
+    for broadcasting.
+
+.. c:function:: npy_intp* PyArray_MultiIter_DIMS(PyArrayMultiIterObject* multi)
+
+    .. versionadded:: 1.26.0
+
+    Returns a pointer to the dimensions/shape of the broadcasted result of a
+    multi-iterator object.
 
 .. c:function:: int PyArray_Broadcast(PyArrayMultiIterObject* mit)
 
@@ -2671,7 +2713,7 @@ Array mapping is the machinery behind advanced indexing.
     input is modified during the iteration. ``iter->array`` may contain a
     copied array (WRITEBACKIFCOPY set).
 
-Array Scalars
+Array scalars
 -------------
 
 .. c:function:: PyObject* PyArray_Return(PyArrayObject* arr)
@@ -2890,7 +2932,7 @@ Data-type descriptors
     as is stored in the names field of the :c:type:`PyArray_Descr` object.
 
 
-Conversion Utilities
+Conversion utilities
 --------------------
 
 

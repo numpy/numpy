@@ -1479,6 +1479,11 @@ PyArray_DTypeOrDescrConverterRequired(PyObject *obj, npy_dtype_info *dt_info)
     dt_info->descr = NULL;
 
     if (PyObject_TypeCheck(obj, &PyArrayDTypeMeta_Type)) {
+        if (obj == (PyObject *)&PyArrayDescr_Type) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Cannot convert np.dtype into a dtype.");
+            return NPY_FAIL;
+        }
         Py_INCREF(obj);
         dt_info->dtype = (PyArray_DTypeMeta *)obj;
         dt_info->descr = NULL;
@@ -1537,7 +1542,7 @@ _convert_from_type(PyObject *obj) {
         return PyArray_DescrFromTypeObject(obj);
     }
     else if (typ == &PyLong_Type) {
-        return PyArray_DescrFromType(NPY_LONG);
+        return PyArray_DescrFromType(NPY_INTP);
     }
     else if (typ == &PyFloat_Type) {
         return PyArray_DescrFromType(NPY_DOUBLE);

@@ -1465,13 +1465,12 @@ class TestPromotion:
 
     @pytest.mark.parametrize("val", [2, 2**32, 2**63, 2**64, 2*100])
     def test_python_integer_promotion(self, val):
-        # If we only path scalars (mainly python ones!), the result must take
-        # into account that the integer may be considered int32, int64, uint64,
-        # or object depending on the input value.  So test those paths!
-        expected_dtype = np.result_type(np.array(val).dtype, np.array(0).dtype)
+        # If we only pass scalars (mainly python ones!), NEP 50 means
+        # that we get the default integer
+        expected_dtype = np.dtype(int)  # the default integer
         assert np.result_type(val, 0) == expected_dtype
-        # For completeness sake, also check with a NumPy scalar as second arg:
-        assert np.result_type(val, np.int8(0)) == expected_dtype
+        # With NEP 50, the NumPy scalar wins though:
+        assert np.result_type(val, np.int8(0)) == np.int8
 
     @pytest.mark.parametrize(["other", "expected"],
             [(1, rational), (1., np.float64)])
@@ -1542,11 +1541,6 @@ def test_invalid_dtype_string():
 def test_keyword_argument():
     # test for https://github.com/numpy/numpy/pull/16574#issuecomment-642660971
     assert np.dtype(dtype=np.float64) == np.dtype(np.float64)
-
-
-def test_ulong_dtype():
-    # test for gh-21063
-    assert np.dtype("ulong") == np.dtype(np.uint)
 
 
 class TestFromDTypeAttribute:
@@ -1932,3 +1926,9 @@ def test_result_type_integers_and_unitless_timedelta64():
     td = np.timedelta64(4)
     result = np.result_type(0, td)
     assert_dtype_equal(result, td.dtype)
+
+
+def test_creating_dtype_with_dtype_class_errors():
+    # Regression test for #25031, calling `np.dtype` with itself segfaulted.
+    with pytest.raises(TypeError, match="Cannot convert np.dtype into a"):
+        np.array(np.ones(10), dtype=np.dtype)

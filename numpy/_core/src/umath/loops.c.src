@@ -1332,16 +1332,16 @@ NPY_NO_EXPORT void
 }
 
 NPY_NO_EXPORT void
-@TYPE@_ldexp_long(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+@TYPE@_ldexp_int64(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     /*
      * Additional loop to handle npy_long integer inputs (cf. #866, #1633).
      * npy_long != npy_int on many 64-bit platforms, so we need this second loop
-     * to handle the default integer type.
+     * to handle the default (and larger) integer types.
      */
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        const long in2 = *(long *)ip2;
+        const npy_int64 in2 = *(npy_int64 *)ip2;
         if (((int)in2) == in2) {
             /* Range OK */
             *((@type@ *)op1) = npy_ldexp@c@(in1, ((int)in2));
@@ -1889,7 +1889,7 @@ HALF_ldexp(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
 }
 
 NPY_NO_EXPORT void
-HALF_ldexp_long(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+HALF_ldexp_int64(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     /*
      * Additional loop to handle npy_long integer inputs (cf. #866, #1633).
@@ -1898,7 +1898,7 @@ HALF_ldexp_long(char **args, npy_intp const *dimensions, npy_intp const *steps, 
      */
     BINARY_LOOP {
         const float in1 = npy_half_to_float(*(npy_half *)ip1);
-        const long in2 = *(long *)ip2;
+        const npy_int64 in2 = *(npy_int64 *)ip2;
         if (((int)in2) == in2) {
             /* Range OK */
             *((npy_half *)op1) = npy_float_to_half(npy_ldexpf(in1, ((int)in2)));

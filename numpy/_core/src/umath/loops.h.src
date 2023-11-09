@@ -526,7 +526,7 @@ NPY_NO_EXPORT void
 @TYPE@_ldexp(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
-@TYPE@_ldexp_long(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+@TYPE@_ldexp_int64(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 /**end repeat**/
 
 /**begin repeat

@@ -217,7 +217,7 @@ shown in their :ref:`example <numpydoc:example>`.
 
 .. _doc_c_code:
 
-Documenting C/C++ Code
+Documenting C/C++ code
 ======================
 
 NumPy uses Doxygen_ to parse specially-formatted C/C++ comment blocks. This generates

@@ -97,14 +97,12 @@ from numpy._typing import (
     _ShortCodes,
     _IntCCodes,
     _IntPCodes,
-    _IntCodes,
     _LongCodes,
     _LongLongCodes,
     _UByteCodes,
     _UShortCodes,
     _UIntCCodes,
     _UIntPCodes,
-    _UIntCodes,
     _ULongCodes,
     _ULongLongCodes,
     _HalfCodes,
@@ -398,7 +396,7 @@ from numpy._core.shape_base import (
 )
 
 from numpy.lib import (
-    emath as emath,
+    scimath as emath,
 )
 
 from numpy.lib._arraypad_impl import (
@@ -692,7 +690,7 @@ class dtype(Generic[_DTypeScalar_co]):
     @overload
     def __new__(cls, dtype: _UIntPCodes | type[ct.c_void_p] | type[ct.c_size_t], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[uintp]: ...
     @overload
-    def __new__(cls, dtype: _UIntCodes | type[ct.c_ulong], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[uint]: ...
+    def __new__(cls, dtype: _ULongCodes | type[ct.c_ulong], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[ulong]: ...
     @overload
     def __new__(cls, dtype: _ULongLongCodes | type[ct.c_ulonglong], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[ulonglong]: ...
 
@@ -714,7 +712,7 @@ class dtype(Generic[_DTypeScalar_co]):
     @overload
     def __new__(cls, dtype: _IntPCodes | type[ct.c_ssize_t], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[intp]: ...
     @overload
-    def __new__(cls, dtype: _IntCodes | type[ct.c_long], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[int_]: ...
+    def __new__(cls, dtype: _LongCodes | type[ct.c_long], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[long]: ...
     @overload
     def __new__(cls, dtype: _LongLongCodes | type[ct.c_longlong], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[longlong]: ...
 
@@ -2860,7 +2858,7 @@ byte = signedinteger[_NBitByte]
 short = signedinteger[_NBitShort]
 intc = signedinteger[_NBitIntC]
 intp = signedinteger[_NBitIntP]
-int_ = signedinteger[_NBitInt]
+int_ = intp
 long = signedinteger[_NBitLong]
 longlong = signedinteger[_NBitLongLong]
 
@@ -2942,7 +2940,7 @@ ubyte = unsignedinteger[_NBitByte]
 ushort = unsignedinteger[_NBitShort]
 uintc = unsignedinteger[_NBitIntC]
 uintp = unsignedinteger[_NBitIntP]
-uint = unsignedinteger[_NBitInt]
+uint = uintp
 ulong = unsignedinteger[_NBitLong]
 ulonglong = unsignedinteger[_NBitLongLong]
 

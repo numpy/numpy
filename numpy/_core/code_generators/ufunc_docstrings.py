@@ -1893,7 +1893,7 @@ add_newdoc('numpy._core.umath', 'left_shift',
     result and can lead to unexpected results in some cases (see
     :ref:`Casting Rules <ufuncs.casting>`):
 
-    >>> a = np.left_shift(np.uint8(255), 1) # Expect 254
+    >>> a = np.left_shift(np.uint8(255), np.int64(1))  # Expect 254
     >>> print(a, type(a)) # Unexpected result due to upcasting
     510 <class 'numpy.int64'>
     >>> b = np.left_shift(np.uint8(255), np.uint8(1))
@@ -4392,5 +4392,143 @@ add_newdoc('numpy._core.umath', 'isnumeric',
     --------
     >>> np._core.umath.isnumeric(['123', '123abc', '9.0', '1/4', 'VIII'])
     array([ True, False, False, False, False])
+
+    """)
+
+add_newdoc('numpy.core.umath', 'find',
+    """
+    For each element, return the lowest index in the string where
+    substring `x2` is found, such that `sub` is contained in the
+    range [`x3`, `x4`].
+
+    Parameters
+    ----------
+    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+
+    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+
+    x3 : array_like, with ``int_`` dtype
+
+    x4 : array_like, with ``int_`` dtype
+        $PARAMS
+
+    `x3` and `x4` are interpreted as in slice notation.
+
+    Returns
+    -------
+    y : ndarray
+        Output array of ints
+        $OUT_SCALAR_2
+
+    See Also
+    --------
+    str.find
+
+    Examples
+    --------
+    >>> a = np.array(["NumPy is a Python library"])
+    >>> np.char.find(a, "Python", 0, None)
+    array([11])
+
+    """)
+
+add_newdoc('numpy.core.umath', 'rfind',
+    """
+    For each element, return the highest index in the string where
+    substring `x2` is found, such that `sub` is contained in the
+    range [`x3`, `x4`].
+
+    Parameters
+    ----------
+    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+
+    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+
+    x3 : array_like, with ``int_`` dtype
+
+    x4 : array_like, with ``int_`` dtype
+        $PARAMS
+
+    `x3` and `x4` are interpreted as in slice notation.
+
+    Returns
+    -------
+    y : ndarray
+        Output array of ints
+        $OUT_SCALAR_2
+
+    See Also
+    --------
+    str.rfind
+
+    """)
+
+add_newdoc('numpy._core.umath', 'startswith',
+    """
+    Returns a boolean array which is `True` where the string element
+    in `x1` starts with `x2`, otherwise `False`.
+
+    Parameters
+    ----------
+    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+
+    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+
+    x3 : array_like, with ``int_`` dtype
+
+    x4 : array_like, with ``int_`` dtype
+        $PARAMS
+        With `x3`, test beginning at that position. With `x4`,
+        stop comparing at that position.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of bools
+        $OUT_SCALAR_2
+
+    See Also
+    --------
+    str.startswith
+
+    """)
+
+add_newdoc('numpy._core.umath', 'endswith',
+    """
+    Returns a boolean array which is `True` where the string element
+    in `x1` ends with `x2`, otherwise `False`.
+
+    Parameters
+    ----------
+    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+
+    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+
+    x3 : array_like, with ``int_`` dtype
+
+    x4 : array_like, with ``int_`` dtype
+        $PARAMS
+        With `x3`, test beginning at that position. With `x4`,
+        stop comparing at that position.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of bools
+        $OUT_SCALAR_2
+
+    See Also
+    --------
+    str.endswith
+
+    Examples
+    --------
+    >>> s = np.array(['foo', 'bar'])
+    >>> s
+    array(['foo', 'bar'], dtype='<U3')
+    >>> np.char.endswith(s, 'ar')
+    array([False,  True])
+    >>> np.char.endswith(s, 'a', start=1, end=2)
+    array([False,  True])
 
     """)

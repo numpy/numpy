@@ -25,7 +25,7 @@ inplace_add(char **args, npy_intp const *dimensions, npy_intp const *steps, void
     npy_intp in2_step = steps[1];
 
     for (i = 0; i < n; i++) {
-        (*(long *)in1) = *(long*)in1 + *(long*)in2;
+        (*(npy_intp *)in1) = *(npy_intp*)in1 + *(npy_intp*)in2;
         in1 += in1_step;
         in2 += in2_step;
     }
@@ -36,7 +36,7 @@ inplace_add(char **args, npy_intp const *dimensions, npy_intp const *steps, void
 PyUFuncGenericFunction funcs[1] = {&inplace_add};
 
 /* These are the input and return dtypes of logit.*/
-static char types[2] = {NPY_LONG, NPY_LONG};
+static char types[2] = {NPY_INTP, NPY_INTP};
 
 static void *data[1] = {NULL};
 

@@ -26,16 +26,24 @@ extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 #else
 
 #if defined(PY_ARRAY_UNIQUE_SYMBOL)
-#define PyArray_API PY_ARRAY_UNIQUE_SYMBOL
+    #define PyArray_API PY_ARRAY_UNIQUE_SYMBOL
+    #define _NPY_VERSION_CONCAT_HELPER2(x, y) x ## y
+    #define _NPY_VERSION_CONCAT_HELPER(arg) \
+        _NPY_VERSION_CONCAT_HELPER2(arg, PyArray_RUNTIME_VERSION)
+    #define PyArray_RUNTIME_VERSION \
+        _NPY_VERSION_CONCAT_HELPER(PY_ARRAY_UNIQUE_SYMBOL)
 #endif
 
 #if defined(NO_IMPORT) || defined(NO_IMPORT_ARRAY)
 extern void **PyArray_API;
+extern int PyArray_RUNTIME_VERSION;
 #else
 #if defined(PY_ARRAY_UNIQUE_SYMBOL)
 void **PyArray_API;
+int PyArray_RUNTIME_VERSION;
 #else
-static void **PyArray_API=NULL;
+static void **PyArray_API = NULL;
+static int PyArray_RUNTIME_VERSION = 0;
 #endif
 #endif
 
@@ -53,15 +61,12 @@ _import_array(void)
   }
 
   if (numpy == NULL) {
-      PyErr_SetString(PyExc_ImportError,
-                      "_multiarray_umath failed to import");
       return -1;
   }
 
   PyObject *c_api = PyObject_GetAttrString(numpy, "_ARRAY_API");
   Py_DECREF(numpy);
   if (c_api == NULL) {
-      PyErr_SetString(PyExc_AttributeError, "_ARRAY_API not found");
       return -1;
   }
 
@@ -88,7 +93,8 @@ _import_array(void)
              (int) NPY_VERSION, (int) PyArray_GetNDArrayCVersion());
       return -1;
   }
-  if (NPY_FEATURE_VERSION > PyArray_GetNDArrayCFeatureVersion()) {
+  PyArray_RUNTIME_VERSION = (int)PyArray_GetNDArrayCFeatureVersion();
+  if (NPY_FEATURE_VERSION > PyArray_RUNTIME_VERSION) {
       PyErr_Format(PyExc_RuntimeError, "module compiled against "\
              "API version 0x%%x but this version of numpy is 0x%%x . "\
              "Check the section C-API incompatibility at the "\
@@ -96,7 +102,7 @@ _import_array(void)
              "https://numpy.org/devdocs/user/troubleshooting-importerror.html"\
              "#c-api-incompatibility "\
               "for indications on how to solve this problem .", \
-             (int) NPY_FEATURE_VERSION, (int) PyArray_GetNDArrayCFeatureVersion());
+             (int)NPY_FEATURE_VERSION, PyArray_RUNTIME_VERSION);
       return -1;
   }
 
@@ -183,12 +189,7 @@ def generate_api(output_dir, force=False):
     targets = (h_file, c_file)
 
     sources = numpy_api.multiarray_api
-
-    if (not force and not genapi.should_rebuild(targets, [numpy_api.__file__, __file__])):
-        return targets
-    else:
-        do_generate_api(targets, sources)
-
+    do_generate_api(targets, sources)
     return targets
 
 def do_generate_api(targets, sources):

@@ -1131,6 +1131,7 @@ def test_iter_object_arrays_conversions():
 
 def test_iter_common_dtype():
     # Check that the iterator finds a common data type correctly
+    # (some checks are somewhat duplicate after adopting NEP 50)
 
     i = nditer([array([3], dtype='f4'), array([0], dtype='f8')],
                     ['common_dtype'],
@@ -1148,14 +1149,14 @@ def test_iter_common_dtype():
                     ['common_dtype'],
                     [['readonly', 'copy']]*2,
                     casting='same_kind')
-    assert_equal(i.dtypes[0], np.dtype('f4'))
-    assert_equal(i.dtypes[1], np.dtype('f4'))
+    assert_equal(i.dtypes[0], np.dtype('f8'))
+    assert_equal(i.dtypes[1], np.dtype('f8'))
     i = nditer([array([3], dtype='u4'), array(0, dtype='i4')],
                     ['common_dtype'],
                     [['readonly', 'copy']]*2,
                     casting='safe')
-    assert_equal(i.dtypes[0], np.dtype('u4'))
-    assert_equal(i.dtypes[1], np.dtype('u4'))
+    assert_equal(i.dtypes[0], np.dtype('i8'))
+    assert_equal(i.dtypes[1], np.dtype('i8'))
     i = nditer([array([3], dtype='u4'), array(-12, dtype='i4')],
                     ['common_dtype'],
                     [['readonly', 'copy']]*2,
@@ -1554,7 +1555,8 @@ def test_iter_allocate_output_opaxes():
     assert_equal(i.operands[0].dtype, np.dtype('u4'))
 
 def test_iter_allocate_output_types_promotion():
-    # Check type promotion of automatic outputs
+    # Check type promotion of automatic outputs (this was more interesting
+    # before NEP 50...)
 
     i = nditer([array([3], dtype='f4'), array([0], dtype='f8'), None], [],
                     [['readonly']]*2+[['writeonly', 'allocate']])
@@ -1564,10 +1566,10 @@ def test_iter_allocate_output_types_promotion():
     assert_equal(i.dtypes[2], np.dtype('f8'))
     i = nditer([array([3], dtype='f4'), array(0, dtype='f8'), None], [],
                     [['readonly']]*2+[['writeonly', 'allocate']])
-    assert_equal(i.dtypes[2], np.dtype('f4'))
+    assert_equal(i.dtypes[2], np.dtype('f8'))
     i = nditer([array([3], dtype='u4'), array(0, dtype='i4'), None], [],
                     [['readonly']]*2+[['writeonly', 'allocate']])
-    assert_equal(i.dtypes[2], np.dtype('u4'))
+    assert_equal(i.dtypes[2], np.dtype('i8'))
     i = nditer([array([3], dtype='u4'), array(-12, dtype='i4'), None], [],
                     [['readonly']]*2+[['writeonly', 'allocate']])
     assert_equal(i.dtypes[2], np.dtype('i8'))

@@ -22,7 +22,7 @@ establishment of community consensus, for stewarding project resources,
 and -- in extreme cases -- for making project decisions if the normal
 community-based process breaks down.
 
-The Project
+The project
 ===========
 
 The NumPy Project (The Project) is an open source software project
@@ -137,7 +137,7 @@ an obstructive fashion to the detriment of the project, then they can be
 ejected from the project by consensus of the Steering Council -- see
 below.
 
-Steering Council
+Steering council
 ----------------
 
 The Project will have a Steering Council that consists of Project
@@ -310,7 +310,7 @@ The current membership of the NumFOCUS Subcommittee is listed at the
 page `About Us <https://numpy.org/about/>`_.
 
 
-Institutional Partners and Funding
+Institutional partners and funding
 ==================================
 
 The Steering Council are the primary leadership for the project. No

@@ -741,7 +741,7 @@ the original array is deleted, but not the views.  For an example of
 how this can work, have a look at the ``memmap`` class in
 ``numpy._core``.
 
-Subclassing and Downstream Compatibility
+Subclassing and downstream compatibility
 ========================================
 
 When sub-classing ``ndarray`` or creating duck-types that mimic the ``ndarray``

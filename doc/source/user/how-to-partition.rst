@@ -155,10 +155,10 @@ of ``start``) and ends with ``base ** stop``::
   >>> np.logspace(2, 3, num=5, base=2)
   array([4.        , 4.75682846, 5.65685425, 6.72717132, 8.        ])
 
-nD domains
-==========
+N-D domains
+===========
 
-nD domains can be partitioned into *grids*. This can be done using one of the
+N-D domains can be partitioned into *grids*. This can be done using one of the
 following functions.
 
 ``meshgrid``

@@ -145,9 +145,7 @@ jobs:
           NUMPY_STAGING_UPLOAD_TOKEN: ${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}
           NUMPY_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
         run: |
-          #conda install -y anaconda-client
-          # pin urllib3 until anaconda-client is fixed upstream
-          conda install -y anaconda-client 'urllib3<2.0.0'
+          conda install -y anaconda-client
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to
@@ -231,9 +229,7 @@ jobs:
           # commented out so the sdist doesn't upload to nightly
           # NUMPY_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
         run: |
-          #conda install -y anaconda-client
-          # pin urllib3 until anaconda-client is fixed upstream
-          conda install -y anaconda-client 'urllib3<2.0.0'
+          conda install -y anaconda-client
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to

@@ -1276,6 +1276,49 @@ typedef struct {
 #define PyArray_MultiIter_NOTDONE(multi)                \
         (_PyMIT(multi)->index < _PyMIT(multi)->size)
 
+
+static NPY_INLINE int
+PyArray_MultiIter_NUMITER(PyArrayMultiIterObject *multi)
+{
+    return multi->numiter;
+}
+
+
+static NPY_INLINE npy_intp 
+PyArray_MultiIter_SIZE(PyArrayMultiIterObject *multi)
+{
+    return multi->size;
+}
+
+
+static NPY_INLINE npy_intp
+PyArray_MultiIter_INDEX(PyArrayMultiIterObject *multi)
+{
+    return multi->index;
+}
+
+
+static NPY_INLINE int
+PyArray_MultiIter_NDIM(PyArrayMultiIterObject *multi)
+{
+    return multi->nd;
+}
+
+
+static NPY_INLINE npy_intp *
+PyArray_MultiIter_DIMS(PyArrayMultiIterObject *multi)
+{
+    return multi->dimensions;
+}
+
+
+static NPY_INLINE void **
+PyArray_MultiIter_ITERS(PyArrayMultiIterObject *multi)
+{
+    return (void**)multi->iters;
+}
+
+
 /*
  * Store the information needed for fancy-indexing over an array. The
  * fields are slightly unordered to keep consec, dataptr and subspace
@@ -1443,6 +1486,7 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 
 /* The default array type */
 #define NPY_DEFAULT_TYPE NPY_DOUBLE
+/* default integer type defined in npy_2_compat header */
 
 /*
  * All sorts of useful ways to look into a PyArrayObject. It is recommended

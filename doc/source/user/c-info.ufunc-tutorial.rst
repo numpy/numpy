@@ -64,7 +64,7 @@ manually propagate infs or nans.
 
 .. _`sec:Non-numpy-example`:
 
-Example Non-ufunc extension
+Example non-ufunc extension
 ===========================
 
 .. index::

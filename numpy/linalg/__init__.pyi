@@ -1,4 +1,4 @@
-from numpy.linalg.linalg import (
+from numpy.linalg._linalg import (
     matrix_power as matrix_power,
     solve as solve,
     tensorsolve as tensorsolve,

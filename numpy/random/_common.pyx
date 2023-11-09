@@ -9,6 +9,10 @@ cimport numpy.math as npmath
 
 from libc.stdint cimport uintptr_t
 
+cdef extern from "limits.h":
+    cdef long LONG_MAX  # NumPy has it, maybe `__init__.pyd` should expose it
+
+
 __all__ = ['interface']
 
 np.import_array()
@@ -411,6 +415,14 @@ cdef int check_array_constraint(np.ndarray val, object name, constraint_type con
             raise ValueError("{0} value too large".format(name))
         elif not np.all(np.greater_equal(val, 0.0)):
             raise ValueError("{0} < 0 or {0} contains NaNs".format(name))
+    elif cons == LEGACY_CONS_NON_NEGATVE_INBOUNDS_LONG:
+        # Note, we assume that array is integral:
+        if not np.all(val >= 0):
+            raise ValueError(name + " < 0")
+        elif not np.all(val <= int(LONG_MAX)):
+            raise ValueError(
+                    name + " is out of bounds for long, consider using "
+                    "the new generator API for 64bit integers.")
 
     return 0
 
@@ -450,6 +462,14 @@ cdef int check_constraint(double val, object name, constraint_type cons) except 
             raise ValueError("{0} < 0 or {0} is NaN".format(name))
         elif not (val <= LEGACY_POISSON_LAM_MAX):
             raise ValueError(name + " value too large")
+    elif cons == LEGACY_CONS_NON_NEGATVE_INBOUNDS_LONG:
+        # Note: Assume value is integral (double of LONG_MAX should work out)
+        if val < 0:
+            raise ValueError(name + " < 0")
+        elif val > LONG_MAX:
+            raise ValueError(
+                    name + " is out of bounds for long, consider using "
+                    "the new generator API for 64bit integers.")
 
     return 0
 

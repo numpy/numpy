@@ -5,7 +5,7 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 #define NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 
-#define __EXPERIMENTAL_DTYPE_API_VERSION 13
+#define __EXPERIMENTAL_DTYPE_API_VERSION 15
 
 struct PyArrayMethodObject_tag;
 
@@ -129,16 +129,17 @@ typedef struct {
  * SLOTS IDs For the ArrayMethod creation, once fully public, IDs are fixed
  * but can be deprecated and arbitrarily extended.
  */
-#define NPY_METH_resolve_descriptors 1
+#define _NPY_METH_resolve_descriptors_with_scalars 1
+#define NPY_METH_resolve_descriptors 2
 /* We may want to adapt the `get_loop` signature a bit: */
-#define _NPY_METH_get_loop 2
-#define NPY_METH_get_reduction_initial 3
+#define _NPY_METH_get_loop 3
+#define NPY_METH_get_reduction_initial 4
 /* specific loops for constructions/default get_loop: */
-#define NPY_METH_strided_loop 4
-#define NPY_METH_contiguous_loop 5
-#define NPY_METH_unaligned_strided_loop 6
-#define NPY_METH_unaligned_contiguous_loop 7
-#define NPY_METH_contiguous_indexed_loop 8
+#define NPY_METH_strided_loop 5
+#define NPY_METH_contiguous_loop 6
+#define NPY_METH_unaligned_strided_loop 7
+#define NPY_METH_unaligned_contiguous_loop 8
+#define NPY_METH_contiguous_indexed_loop 9
 
 /*
  * The resolve descriptors function, must be able to handle NULL values for
@@ -158,6 +159,30 @@ typedef NPY_CASTING (resolve_descriptors_function)(
         /* Input descriptors (instances).  Outputs may be NULL. */
         PyArray_Descr **given_descrs,
         /* Exact loop descriptors to use, must not hold references on error */
+        PyArray_Descr **loop_descrs,
+        npy_intp *view_offset);
+
+
+/*
+ * Rarely needed, slightly more powerful version of `resolve_descriptors`.
+ * See also `resolve_descriptors_function` for details on shared arguments.
+ *
+ * NOTE: This function is private now as it is unclear how and what to pass
+ *       exactly as additional information to allow dealing with the scalars.
+ *       See also gh-24915.
+ */
+typedef NPY_CASTING (resolve_descriptors_with_scalars_function)(
+        struct PyArrayMethodObject_tag *method,
+        PyArray_DTypeMeta **dtypes,
+        /* Unlike above, these can have any DType and we may allow NULL. */
+        PyArray_Descr **given_descrs,
+        /*
+         * Input scalars or NULL.  Only ever passed for python scalars.
+         * WARNING: In some cases, a loop may be explicitly selected and the
+         *     value passed is not available (NULL) or does not have the
+         *     expected type.
+         */
+        PyObject *const *input_scalars,
         PyArray_Descr **loop_descrs,
         npy_intp *view_offset);
 
@@ -319,6 +344,7 @@ typedef int (get_traverse_loop_function)(
 #define NPY_DT_getitem 8
 #define NPY_DT_get_clear_loop 9
 #define NPY_DT_get_fill_zero_loop 10
+#define NPY_DT_finalize_descr 11
 
 // These PyArray_ArrFunc slots will be deprecated and replaced eventually
 // getitem and setitem can be defined as a performance optimization;
@@ -393,6 +419,14 @@ typedef PyArray_DTypeMeta *(common_dtype_function)(
 typedef PyArray_Descr *(common_instance_function)(
         PyArray_Descr *dtype1, PyArray_Descr *dtype2);
 typedef PyArray_Descr *(ensure_canonical_function)(PyArray_Descr *dtype);
+/*
+ * Returns either a new reference to *dtype* or a new descriptor instance
+ * initialized with the same parameters as *dtype*. The caller cannot know
+ * which choice a dtype will make. This function is called just before the
+ * array buffer is created for a newly created array, it is not called for
+ * views and the descriptor returned by this function is attached to the array.
+ */
+typedef PyArray_Descr *(finalize_descr_function)(PyArray_Descr *dtype);
 
 /*
  * TODO: These two functions are currently only used for experimental DType

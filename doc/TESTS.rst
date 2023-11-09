@@ -1,4 +1,4 @@
-NumPy/SciPy Testing Guidelines
+NumPy/SciPy testing guidelines
 ==============================
 
 .. contents::
