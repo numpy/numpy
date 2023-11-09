@@ -17,7 +17,8 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
-    _gen_alignment_data, assert_array_almost_equal_nulp, IS_WASM, IS_PYPY
+    _gen_alignment_data, assert_array_almost_equal_nulp, IS_WASM, IS_MUSL, 
+    IS_PYPY
     )
 from numpy.testing._private.utils import _glibc_older_than
 
@@ -1888,6 +1889,7 @@ class TestFRExp:
     @pytest.mark.parametrize("dtype", ['f', 'd'])
     @pytest.mark.skipif(not sys.platform.startswith('linux'),
                         reason="np.frexp gives different answers for NAN/INF on windows and linux")
+    @pytest.mark.xfail(IS_MUSL, reason="gh23049")
     def test_frexp(self, dtype, stride):
         arr = np.array([np.nan, np.nan, np.inf, -np.inf, 0.0, -0.0, 1.0, -1.0], dtype=dtype)
         mant_true = np.array([np.nan, np.nan, np.inf, -np.inf, 0.0, -0.0, 0.5, -0.5], dtype=dtype)
