@@ -122,3 +122,14 @@ def test_abstract_scalars(install_temp):
     assert checks.is_integer(1)
     assert checks.is_integer(np.int8(1))
     assert checks.is_integer(np.uint64(1))
+
+def test_conv_intp(install_temp):
+    import checks
+
+    class myint:
+        def __int__(self):
+            return 3
+
+    # These conversion passes via `__int__`, not `__index__`:
+    assert checks.conv_intp(3.) == 3
+    assert checks.conv_intp(myint()) == 3
