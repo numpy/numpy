@@ -23,7 +23,9 @@ memory usage, and usability improvements for NumPy users, including:
 
 * Downstream libraries and users will be able to move away from object arrays
   currently used as a substitute for variable-length string arrays, unlocking
-  performance improvements by avoiding passes over the data outside of NumPy.
+  performance improvements by avoiding passes over the data outside of NumPy and
+  allowing use of fast GIL-releasing C casts and string ufuncs for string
+  operations.
 
 * A more intuitive user-facing API for working with arrays of Python strings,
   without a need to think about the in-memory array representation.
@@ -43,11 +45,12 @@ History of String Support in Numpy
 Support in NumPy for textual data evolved organically in response to early user
 needs and then changes in the Python ecosystem.
 
-Support for strings was added to numpy to support users of the NumArray
+Support for strings was added to NumPy to support users of the NumArray
 ``chararray`` type. Remnants of this are still visible in the NumPy API:
-string-related functionality lives in ``np.char``, to support the obsolete
-``np.char.chararray`` class, deprecated since NumPy 1.4 in favor of string
-DTypes.
+string-related functionality lives in ``np.char``, to support the
+``np.char.chararray`` class. This class is not formally deprecated, but has a
+had comment in its implementation suggesting string dtypes instead since NumPy
+1.4.
 
 NumPy's ``bytes_`` DType was originally used to represent the Python 2 ``str``
 type before Python 3 support was added to NumPy. The bytes DType makes the most
@@ -60,8 +63,8 @@ The ``unicode`` DType was added to support the Python 2 ``unicode`` type. It
 stores data in 32-bit UCS-4 codepoints (e.g. a UTF-32 encoding), which makes for
 a straightforward implementation, but is inefficient for storing text that can
 be represented well using a one-byte ASCII or Latin-1 encoding. This was not a
-problem in Python 2, where ASCII or mostly-ASCII text could use the Python 2
-``str`` DType (the current ``bytes_`` DType).
+problem in Python 2, where ASCII or mostly-ASCII text could use the ``str``
+DType.
 
 With the arrival of Python 3 support in NumPy, the string DTypes were largely
 left alone due to backward compatibility concerns, although the unicode DType
@@ -70,7 +73,8 @@ renamed the ``bytes_`` DType. This change left NumPy with the sub-optimal
 situation of shipping a data type originally intended for null-terminated
 bytestrings as the data type for *all* python ``bytes`` data, and a default
 string type with an in-memory representation that consumes four times as much
-memory as needed for ASCII or mostly-ASCII data.
+memory than what is needed for data that can be represented well by a one-byte
+ASCII or Latin-1 encoding.
 
 Problems with Fixed-Width Strings
 *********************************
@@ -87,33 +91,35 @@ array stores many short strings and a few very long strings are particularly bad
 for wasting memory.
 
 Downstream usage of string data in NumPy arrays has proven out the need for a
-variable-width string data type. In practice, most downstream users employ
-``object`` arrays for this purpose. In particular, Pandas has explicitly
-deprecated support for NumPy fixed-width strings, coerces NumPy fixed-width
-string arrays to ``object`` arrays, and in the future may switch to only
-supporting string data via PyArrow, which has native support for UTF-8
-encoded variable-width string arrays [1]_. This is unfortunate, since ``object``
-arrays have no type guarantees, necessitating expensive sanitization passes and
-operations using object arrays cannot release the GIL.
+variable-width string data type. In practice, many downstream libraries avoid
+using fixed-width strings due to usability issues and instead employ ``object``
+arrays for storing strings. In particular, Pandas has explicitly deprecated
+support for NumPy fixed-width strings, coerces NumPy fixed-width string arrays
+to ``object`` arrays, and in the future may switch to only supporting string
+data via PyArrow, which has native support for UTF-8 encoded variable-width
+string arrays [1]_. This is unfortunate, since ``object`` arrays have no type
+guarantees, necessitating expensive sanitization passes and operations using
+object arrays cannot release the GIL.
 
 Previous Discussions
 --------------------
 
-The project last discussed this topic in depth in 2017, when Julian Taylor
-proposed a fixed-width text data type parameterized by an encoding [2]_. This
-started a wide-ranging discussion about pain points for working with string data
-in NumPy and possible ways forward.
+The project last publicly discussed this topic in depth in 2017, when Julian
+Taylor proposed a fixed-width text data type parameterized by an encoding
+[2]_. This started a wide-ranging discussion about pain points for working with
+string data in NumPy and possible ways forward.
 
-In the end, the discussion identified two use-cases that the current support for
-strings does a poor job of handling:
+In the end, the discussion identified [3]_ [4]_ [5]_ two use-cases that the
+current support for strings does a poor job of handling:
 
 * Loading or memory-mapping scientific datasets with unknown encoding,
-* Working with string data in a manner that allows transparent conversion
-  between NumPy arrays and Python strings, including support for missing
-  strings.
+* Working with "a NumPy array of python strings" in a manner that allows
+  transparent conversion between NumPy arrays and Python strings, including
+  support for missing strings. The ``object`` DType partially satisfies this
+  need, albeit with a cost of slow performance and no type checking.
 
 As a result of this discussion, improving support for string data was added to
-the NumPy project roadmap [3]_, with an explicit call-out to add a DType better
+the NumPy project roadmap [6]_, with an explicit call-out to add a DType better
 suited to memory-mapping bytes with any or no encoding, and a variable-width
 string DType that supports missing data to replace usages of object string
 arrays.
@@ -135,7 +141,7 @@ we propose to:
 
 * Support for a user-provided missing data sentinel.
 
-* A cleanup of ``np.char``, with the ufunc-like functions moved to a new
+* A cleanup of ``np.char``, with new string ufuncs available in a new
   namespace for functions and types related to string support.
 
 * An update to the ``npy`` and ``npz`` file formats to allow storage of
@@ -151,24 +157,26 @@ The following is out of scope for this work:
 * Fully agreeing on the semantics of a missing data sentinels or adding a
   missing data sentinel to NumPy itself.
 
-* Implement fast ufuncs or SIMD optimizations for string operations.
+* Implement SIMD optimizations for string operations.
 
 While we're explicitly ruling out implementing these items as part of this work,
 adding a new string DType helps set up future work that does implement some of
 these items.
 
 If implemented this NEP will make it easier to add a new fixed-width text DType
-in the future by moving string operations into a long-term supported
-namespace. We are also proposing a memory layout that should be amenable to
-writing fast ufuncs and SIMD optimization in some cases, increasing the payoff
-for writing string operations as SIMD-optimized ufuncs in the future.
+in the future by moving string operations into a long-term supported namespace
+and improving the internal infrastructure in NumPy for handling strings. We are
+also proposing a memory layout that should be amenable to SIMD optimization in
+some cases, increasing the payoff for writing string operations as
+SIMD-optimized ufuncs in the future.
 
 While we are not proposing adding a missing data sentinel to NumPy, we are
 proposing adding support for an optional, user-provided missing data sentinel,
 so this does move NumPy a little closer to officially supporting missing
 data. We are attempting to avoid resolving the disagreement described in
 :ref:`NEP 26<NEP26>` and this proposal does not require or preclude adding a
-missing data sentinel or bitflag-based missing data support in the future.
+missing data sentinel or bitflag-based missing data support to ``ndarray`` in
+the future.
 
 Usage and Impact
 ----------------
@@ -179,7 +187,7 @@ arrays as possible, including all supported NumPy functionality. Pandas is the
 obvious first user, and substantial work has already occurred to add support in
 a fork of Pandas. ``scikit-learn`` also uses object string arrays and will be
 able to migrate to a DType with guarantees that the arrays contains only
-strings. Both h5py [4]_ and PyTables [5]_ will be able to add first-class
+strings. Both h5py [7]_ and PyTables [8]_ will be able to add first-class
 support for variable-width UTF-8 encoded string datasets in HDF5. String data
 are heavily used in machine-learning workflows and downstream machine learning
 libraries will be able to leverage this new DType.
@@ -194,6 +202,8 @@ string arrays.
 
 Performance
 ***********
+
+TODO TODO TODO update these numbers
 
 Here we briefly describe preliminary performance measurements of the prototype
 version of ``StringDType`` we have implemented outside of NumPy using the
@@ -287,7 +297,7 @@ Backward compatibility
 
 We are not proposing a change to DType inference for python strings and do not
 expect to see any impacts on existing usages of NumPy, besides warnings or
-errors related to new deprecations or expiring deprecations in ``np.char``.
+errors related to new deprecations in ``np.char``.
 
 Detailed description
 --------------------
@@ -337,8 +347,9 @@ length in a NumPy array:
   array(['this is a very long string', 'short string'], dtype=StringDType())
 
 Note that unlike fixed-width strings, ``StringDType`` is not parameterized by
-the maximum length of an array element, arbitrarily long strings can live in the
-array.
+the maximum length of an array element, arbitrarily long or short strings can
+live in the same array without needing to reserve storage for padding bytes in
+the short strings.
 
 The ``StringDType`` class will be a synonym for the default ``StringDType``
 instance when the class is passed as a ``dtype`` argument in the NumPy Python
@@ -358,10 +369,10 @@ We propose associating the python ``str`` builtin as the DType's scalar type:
 
 While this does create an API wart in that the mapping from builtin DType
 classes to scalars in NumPy will no longer be one-to-one (the ``unicode``
-DType's scalar type is ``str``), this avoids needing to define and optimize a
-``str`` subclass for this purpose or other hacks to maintain this one-to-one
-mapping. To maintain backward compatibility, the DType detected for a list of
-python strings will remain a fixed-width unicode string.
+DType's scalar type is ``str``), this avoids needing to define, optimize, or
+maintain a ``str`` subclass for this purpose or other hacks to maintain this
+one-to-one mapping. To maintain backward compatibility, the DType detected for a
+list of python strings will remain a fixed-width unicode string.
 
 As described below, ``StringDType`` supports two parameters that can adjust the
 runtime behavior of the DType. We will not attempt to support parameters for the
@@ -372,13 +383,13 @@ DType using the DType class.
 We will also extend the ``NPY_TYPES`` enum in the C API with an ``NPY_VSTRING``
 entry (there is already an ``NPY_STRING`` entry). This should not interfere with
 legacy user-defined DTypes since the integer type numbers for these data types
-begin at 256, so in principle there is still room for hundreds more builtin
+begin at 256. In principle there is still room for hundreds more builtin
 DTypes in the integer range available in the ``NPY_TYPES`` enum.
 
 .. _memory:
 
-Memory layout and Managing Heap Allocations
-*******************************************
+Managing Heap Allocations
+*************************
 
 Since NumPy has no first-class support for ragged arrays, there is no way for a
 variable-length string data type to store data in the array storage
@@ -394,117 +405,187 @@ existing concept of an array of references in NumPy beyond the ``object`` DType
 to include arrays that store data in sidecar heap-allocated buffers and use the
 array to store metadata for the heap allocation.
 
-Each array element would contain the contents of a C struct with the following
-layout:
+Memory Layout and Small String Optimization
++++++++++++++++++++++++++++++++++++++++++++
+
+TODO: Add a figure illustrating the memory layout of the various views, flags
+
+Each array element would contain the contents of an opaque but sized C struct
+with the following layout:
 
 .. code-block:: C
 
-   struct npy_static_string {
-    size_t len;
-    char *buf;
+   struct npy_packed_static_string {
+       char packed_buffer[2*sizeof(size_t)];
    };
 
-Where ``len`` is the length, in bytes, of the string and ``buf`` is a pointer to
-the beginning of a UTF-8 encoded bytestream containing the string data. We do
-not append a trailing null character to the byte stream, so users attempting to
-pass the ``buf`` field to an API expecting a C string must must create a copy
-with a trailing null. This choice also means that unlike the fixed-width strings
-in NumPy, ``StringDType`` array entries can contain arbitrary embedded or
-trailing null characters.
+So it is only guaranteed to be the same size in memory as two `size_t` fields,
+with no guarantees about data layout or precisely how the data are
+stored. The raw string data can only be accessed once the packed string data are
+loaded into an unpacked string with the following layout:
 
-We propose storing the string data for this data type in an external
-heap-allocated arena buffer whose bookkeeping is managed by the ``StringDType``
-instance associated with the array. Using a per-array arena allocator ensures
-that the string buffers for nearby array elements are usually nearby on the
-heap. We do not guarantee that neighboring array elements are contiguous on the
-heap to support missing data and allow mutation of array entries, see below for
-more discussion on how these topics affect the memory layout.
+.. code-block:: C
 
-In addition to making a typedef for ``npy_static_string`` public, we also plan
-to add an interface for allocating, copying, and freeing strings with this
-layout via the arena allocator to the public numpy C API to ease downstream
-integration.
+   struct npy_unpacked_static_string {
+       size_t size;
+       const char *buf;
+   };
+   
+Where ``size`` is the size, in bytes, of the string and ``buf`` is a const
+pointer to the beginning of a UTF-8 encoded bytestream containing string
+data. This is a *read-only* view onto the string, we will not expose a public
+interface for modifying these strings. We do not append a trailing null
+character to the byte stream, so users attempting to pass the ``buf`` field to
+an API expecting a C string must create a copy with a trailing null. This choice
+also means that unlike the fixed-width strings in NumPy, ``StringDType`` array
+entries can contain arbitrary embedded or trailing null characters.
 
-In the future we may decide to exploit the small string optimization [6]_ to
-encode strings smaller than the size of the ``npy_static_string`` struct
-directly in the array buffer, bypassing the need for a heap allocation for that
-entry. If this is implemented, we will reserve the most significant byte in the
-``len`` for flags, including a flag to indicate the array element is stored in
-the array buffer. For arrays consisting entirely of small strings this will
-bypass the need to do any sidecar heap allocations. This should be relatively
-straightforward to add but has not been completed yet to focus on other aspects
-of the proposal. While reserving a whole byte for flags may be unnecessary, we
-will still have 7 bytes of space in the ``len`` field, which is much more than
-is likely to be necessary to store the length of a single array element in
-real-world use, and having 256 possibilities for flags gives us flexibility for
-the future.
+Internally, we represent the string as a union, with the following definition on
+little-endian architectures:
 
-Besides the string data itself, each array element requires 16 bytes of storage
-for the ``npy_static_string`` instance in the array buffer. In principle we
-could use a 32 bit integer to store the ``len`` field, saving 4 bytes per array
-element, but if we only use a single bit for the small string optimization
-that will still leave us with an uncomfortably small 31 bits of space in the
-``len`` field. In addition, making use of the small string optimization will
-somewhat offset the memory cost of a 64 bit ``len`` field, since many real-world
-use-cases employ small strings.
+.. code-block:: c
 
-Missing Data
-++++++++++++
+   typedef struct _npy_static_vstring_t {
+      size_t offset;
+      size_t size_and_flags;
+   } _npy_static_string_t;
 
-By default, zeroed out entries in the array buffer represent empty
-strings. However, if the DType instance was created with an ``na_object`` field,
-zeroed-out entries represent missing data. By making this choice, a zero-filled
-newly allocated buffer returned by ``calloc`` does not need any additional
-post-processing to produce an empty array. This choice also means casts between
-different missing data representations are views.
+   typedef struct _short_string_buffer {
+      char buf[sizeof(_npy_static_string_t) - 1];
+      unsigned char size_and_flags;
+   } _short_string_buffer;
 
-Whether or not the ``na_object`` is set, empty strings are not stored in the
-sidecar buffer since they require no additional storage besides the entry in the
-array buffer itself. This means that adjacent entries in the sidecar buffer are
-not necessarily adjacent entries in the array buffer.
+   typedef union _npy_static_string_u {
+    _npy_static_string_t vstring;
+    _short_string_buffer direct_buffer;
+   } _npy_static_string_u;
+
+The `_npy_static_vstring_t` representation is most useful for representing
+strings living on the heap directly or in an arena allocation, with the
+``offset`` field either containing a ``size_t`` representation of the address
+directly, or an integer offset into an arena allocation. The
+``_short_string_buffer`` representation is most useful for the small string
+optimization, with the string data stored in the ``buf`` field and the size in
+the ``size_and_flags`` field. In both cases the ``size_and_flags`` field stores
+both the ``size`` of the string as well as bitflags. Small strings store the
+size in the final four bits of the buffer, reserving the first four bits of
+``size_and_flags`` for flags. Heap strings or strings in arena allocations use
+the most significant byte for flags, reserving the leading bytes for the string
+size. This limits the maximum size string allowed to be stored in the array,
+particularly on 32 bit systems where the limit is only 16 megabytes per string.
+
+On big-endian systems, the layout is reversed, with the ``size_and_flags`` field
+appearing first in the structs. This allows the implementation to always use the
+most significant bits of the ``size_and_flags`` field for flags. The
+endian-dependent layouts of these structs is an implementation detail and is not
+publicly exposed in the API.
+
+Whether or not a string is stored directly on the arena buffer or in the heap is
+signaled by setting the ``NPY_STRING_SHORT`` flag on the string data. Because
+the maximum size of a heap-allocated string is limited, this flag can never be
+set for a valid heap string.
+
+Arena Allocator
++++++++++++++++
+
+Strings longer than the small string limit (15 bytes on 64 bit systems and 7
+bytes on 32 bit systems) are stored on the heap. The bookkeeping for the
+allocations is managed by an arena allocator attached to the ``StringDType``
+instance associated with an array. The allocator will be exposed publicly as an
+opaque ``npy_string_arena`` struct.
+
+Internally, the ``npy_string_arena`` struct has the following layout:
+
+.. code-block:: c
+
+    struct npy_string_allocator {
+        npy_string_malloc_func malloc;
+        npy_string_free_func free;
+        npy_string_realloc_func realloc;
+        npy_string_arena arena;
+    };
+
+This allows us to group memory-allocation functions together and choose
+different allocation functions at runtime if we desire.  The
+``npy_string_arena`` struct has the following layout:
+
+.. code-block:: c
+
+    struct npy_string_arena {
+        size_t cursor;
+        size_t size;
+        char *buffer;
+    };
+
+Where ``buffer`` is a pointer to the beginning of a heap-allocated arena,
+``size`` is the size of that allocation, and ``cursor`` is the location in the
+arena where the last arena allocation ended. The arena is filled using an
+exponentially expanding buffer, allowing amortized O(1) insertion.
+
+We do not expose the ``npy_string_arena`` struct or the underlying heap memory
+allocations publicly.
+
+Using a per-array arena allocator ensures that the string buffers for nearby
+array elements are usually nearby on the heap. We do not guarantee that
+neighboring array elements are contiguous on the heap to support the small
+string optimization, missing data, and allow mutation of array entries. See
+below for more discussion on how these topics affect the memory layout. Use of
+the allocator is guarded by a mutex, see below for more discussion about thread
+safety.
+
+We plan to add an interface for packing, unpacking, allocating, freeing,
+comparing, and copying strings with this layout via the arena allocator to the
+public NumPy C API to ease downstream integration. All items in the API we
+propose to add are prepended with ``npy_string``, ``NpyString`` or
+``NPY_STRING`` for public typedefs, functions, or macros, respectively. This C
+API is used to implement the DType using the NumPY DType API. The header and
+implementation for the API only uses C standard library headers and does not
+depend on the CPython or NumPy C API. See the ``static_string.h`` header in the
+prototype for a full API listing and documentation.
+
+Empty Strings and Missing Data
+++++++++++++++++++++++++++++++
+
+The empty string will be defined to be a zero-filled
+``npy_packed_static_string``. This has the benefit that newly created array
+buffer returned by ``calloc`` will be an array filled with empty strings by
+construction. Missing strings will have an identical representation, except they
+will have a flag, ``NPY_STRING_MISSING`` set in the flags field. Users will need
+to check if a string is null before accessing an unpacked string buffer and we
+have set up the C API in such a way as to force null-checking whenever a string
+is unpacked.
+
+Both missing and empty strings are stored directly in the array buffer and do
+not need to reserve any space in the arena buffer.
 
 Mutation and Thread Safety
 ++++++++++++++++++++++++++
 
-If we mandate that the string storage must be contiguous with no
-over-allocation, enlarging a single array element requires re-allocating the
-entire string storage buffer. This is a pathological performance degradation
-compared with object string arrays. In addition to performance concerns,
-mutation introduces the possibility of data races and use-after-free errors when
-an array is accessed and mutated by multiple threads.
+Mutation introduces the possibility of data races and use-after-free errors when
+an array is accessed and mutated by multiple threads. Additionally, if we
+allocate mutated strings in the arena buffer and mandate contiguous storage
+where the old string is replaced by the new one, mutating a single string may
+trigger reallocating the arena buffer for the entire array. This is a
+pathological performance degradation compared with object string arrays.
 
 One solution would be to disable mutation, but inevitably there will be
 downstream uses of object string arrays that mutate array elements that we would
-like to support. Instead, we plan on implementing two modes for the arena
-allocator: one for newly created arrays with contiguous storage, and one for
-arrays that have been mutated.
+like to support.
 
-Newly created arrays will be stored with a flag indicating they have contiguous
-storage. The allocator will allow lock-free read access in this case, but writes
-will be guarded by a lock that will be released once all reading threads have
-completed reads. In cases when an array element is mutated into a smaller
-string, the storage remains contiguous and there is no need for a new heap
-allocation, so the storage will continue to be marked as contiguous. If an
-element is enlarged, the contiguous storage flag is first set to false and the
-array element will be re-allocated using a single heap allocation, with the
-original content of the array element and the rest of the contents of the array
-left alone in the sidecar buffer.
+Instead, we have opted to pair the ``npy_string_allocator`` instance attached to
+``StringDType`` instances with a ``PyThread_type_lock`` mutex. Any function in
+the static string C API that allows manipulating heap-allocated data accepts an
+``allocator`` argument. To use the C API correctly, a thread must acquire the
+allocator mutex before any usage of the ``allocator``. This prevents parallel
+access to the heap memory used by string arrays.
 
-Thereafter, accesses to array elements will first have to check if the address
-of the string data is inside the main sidecar storage buffer, and if not, access
-for the element will be guarded by a fine-grained lock for both reads and writes
-to avoid use-after-free errors or data races across thread boundaries. In
-pathological cases where an array is allocated and then every array element is
-individually enlarged, this will lead to bad performance and over-allocation of
-memory. We will attempt to describe these performance concerns in public-facing
-documentation for the DType and suggest copying to a newly allocated array after
-mutating many array elements to avoid subsequent performance problems.
-
-We plan to hide this complexity in the allocator implementation. When writing
-ufuncs or casts using this DType, it will be necessary to mediate accesses to
-array data via the allocator interface, but exactly how the data are stored will
-be opaque to C API users, who will only see pointers to ``npy_static_string``
-data in the array buffer.
+The ``PyThread_type_lock`` mutex is relatively heavyweight and does not provide
+more sophisticated locking primitives that allow multiple simultaneous
+readers. As part of the GIL-removal project, CPython is adding new
+synchronization primitives to the C API for projects like NumPy to make use
+of. When this happens, we can update the locking strategy to allow multiple
+simultaneous reading threads, along with other fixes for threading bugs in NumPy
+that will be needed once the GIL is removed.
 
 Cython Support and the Buffer Protocol
 ++++++++++++++++++++++++++++++++++++++
@@ -512,14 +593,17 @@ Cython Support and the Buffer Protocol
 It's impossible for ``StringDType`` to support the Python buffer protocol, so
 Cython will not support idiomatic typed memoryview syntax for ``StringDType``
 arrays unless special support is added in Cython in the future. We have some
-preliminary ideas for ways to either update the buffer protocol [7]_ or make use
-of the Arrow C data interface [8]_ to expose NumPy arrays for DTypes that don't
-make sense in the buffer protocol, but those efforts will likely not come to
-fruition in time for NumPy 2.0. This means adapting legacy Cython code that uses
-arrays of fixed-width strings to work with ``StringDType`` will be
+preliminary ideas for ways to either update the buffer protocol [10]_ or make
+use of the Arrow C data interface [11]_ to expose NumPy arrays for DTypes that
+don't make sense in the buffer protocol, but those efforts will likely not come
+to fruition in time for NumPy 2.0. This means adapting legacy Cython code that
+uses arrays of fixed-width strings to work with ``StringDType`` will be
 non-trivial. Adapting code that worked with object string arrays should be
 straightforward since object arrays aren't supported by the buffer protocol
 either and will likely have no types or have ``object`` type in Cython.
+
+We will add cython ``nogil`` wrappers for the C API functions added to work with
+packed strings to ease integration with downstream cython code.
 
 Missing data support
 ********************
@@ -729,7 +813,7 @@ Related Work
 
 The main comparable prior art in the Python ecosystem is PyArrow arrays, which
 support variable length strings via Apache Arrow's variable sized binary layout
-[9]_. In this approach, the array buffer contains integer offsets that index
+[12]_. In this approach, the array buffer contains integer offsets that index
 into a sidecar storage buffer. This allows a string array to be created using
 only two heap allocations, leaves adjacent strings in the array contiguous in
 memory, provides good cache locality, and enables straightforward SIMD
@@ -750,21 +834,21 @@ Implementation
 --------------
 
 A prototype version of ``StringDType`` using the experimental DType API is
-available in the ``numpy-user-dtypes`` repository [10]_. Currently, most of the
+available in the ``numpy-user-dtypes`` repository [13]_. Currently, most of the
 functionality proposed above for the version of the DType we would like to add
 to NumPy is already functioning. The major missing piece is the :ref:`arena
 allocator <memory>` described above; currently memory is allocated using
 ``malloc`` and ``free``. We have an implementation plan for adding the arena
-allocator [11]_.
+allocator [14]_.
 
 We are focusing on implementation so there is no documentation yet, but the
-tests illustrate what has been implemented [12]_. Note that if you are
+tests illustrate what has been implemented [15]_. Note that if you are
 interested in testing out the prototype, you will need to set the
 ``NUMPY_EXPERIMENTAL_DTYPE_API`` environment variable at runtime to enable the
 experimental DType API in NumPy.
 
 We have created a development branch of Pandas that supports creating Pandas
-data structures using ``StringDType`` [13]_. This illustrates the refactoring
+data structures using ``StringDType`` [16]_. This illustrates the refactoring
 necessary to support ``StringDType`` in downstream libraries that make
 substantial use of object string arrays.
 
@@ -815,8 +899,8 @@ Alternatives
 ------------
 
 The main alternative is to maintain the status quo and offer object arrays as
-the main solution for arrays of variable-length strings. While this will work,
-it means immediate memory usage and performance improvements, as well as future
+the solution for arrays of variable-length strings. While this will work, it
+means immediate memory usage and performance improvements, as well as future
 performance improvements, will not be implemented anytime soon and NumPy will
 lose relevance to other ecosystems with better support for arrays of textual
 data.
@@ -838,17 +922,20 @@ References and Footnotes
 
 .. [1] https://github.com/pandas-dev/pandas/pull/52711
 .. [2] https://mail.python.org/pipermail/numpy-discussion/2017-April/thread.html#76668
-.. [3] https://numpy.org/neps/roadmap.html#extensibility
-.. [4] https://github.com/h5py/h5py/issues/624#issuecomment-676633529
-.. [5] https://github.com/PyTables/PyTables/issues/499
-.. [6] https://github.com/elliotgoodrich/SSO-23#sso-23
-.. [7] https://discuss.python.org/t/buffer-protocol-and-arbitrary-data-types/26256
-.. [8] https://arrow.apache.org/docs/format/CDataInterface.html
-.. [9] https://arrow.apache.org/docs/format/Columnar.html#variable-size-binary-layout
-.. [10] https://github.com/numpy/numpy-user-dtypes/tree/main/stringdtype
-.. [11] https://github.com/numpy/numpy-user-dtypes/issues/76#issuecomment-1650367922
-.. [12] https://github.com/numpy/numpy-user-dtypes/tree/main/stringdtype/tests
-.. [13] https://github.com/ngoldbaum/pandas/tree/stringdtype
+.. [3] https://mail.python.org/archives/list/numpy-discussion@python.org/message/WXWS4STFDSWFY6D7GP5UK2QB2NFPO3WE/
+.. [4] https://mail.python.org/archives/list/numpy-discussion@python.org/message/DDYXJXRAAHVUGJGW47KNHZSESVBD5LKU/
+.. [5] https://mail.python.org/archives/list/numpy-discussion@python.org/message/6TNJWGNHZF5DMJ7WUCIWOGYVZD27GQ7L/
+.. [6] https://numpy.org/neps/roadmap.html#extensibility
+.. [7] https://github.com/h5py/h5py/issues/624#issuecomment-676633529
+.. [8] https://github.com/PyTables/PyTables/issues/499
+.. [9] https://github.com/elliotgoodrich/SSO-23#sso-23
+.. [10] https://discuss.python.org/t/buffer-protocol-and-arbitrary-data-types/26256
+.. [11] https://arrow.apache.org/docs/format/CDataInterface.html
+.. [12] https://arrow.apache.org/docs/format/Columnar.html#variable-size-binary-layout
+.. [13] https://github.com/numpy/numpy-user-dtypes/tree/main/stringdtype
+.. [14] https://github.com/numpy/numpy-user-dtypes/issues/76#issuecomment-1650367922
+.. [15] https://github.com/numpy/numpy-user-dtypes/tree/main/stringdtype/tests
+.. [16] https://github.com/ngoldbaum/pandas/tree/stringdtype
 
 Copyright
 ---------
