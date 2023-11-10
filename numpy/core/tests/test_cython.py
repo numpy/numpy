@@ -164,7 +164,7 @@ class TestDatetimeStrings:
         assert res == 48
 
 
-def test_npyiter_attributes(install_temp):
+def test_npyiter_api(install_temp):
     import checks
     arr = np.random.rand(3, 2)
 

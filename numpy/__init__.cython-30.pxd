@@ -1049,6 +1049,8 @@ cdef inline NPY_DATETIMEUNIT get_datetime64_unit(object obj) nogil:
 
 
 # Iterator API added in v1.6
+ctypedef int (*NpyIter_IterNextFunc)(NpyIter* it) noexcept nogil
+ctypedef void (*NpyIter_GetMultiIndexFunc)(NpyIter* it, npy_intp* outcoords) noexcept nogil
 
 cdef extern from "numpy/arrayobject.h":
 
@@ -1134,7 +1136,7 @@ cdef extern from "numpy/arrayobject.h":
     int NpyIter_RemoveAxis(NpyIter* it, int axis) except NPY_FAIL
     int NpyIter_RemoveMultiIndex(NpyIter* it) except NPY_FAIL
     int NpyIter_EnableExternalLoop(NpyIter* it) except NPY_FAIL
-    int NpyIter_Deallocate(NpyIter* it)
+    int NpyIter_Deallocate(NpyIter* it) except? NPY_FAIL
     int NpyIter_Reset(NpyIter* it, char** errmsg) except? NPY_FAIL
     int NpyIter_ResetToIterIndexRange(NpyIter* it, npy_intp istart,
                                       npy_intp iend, char** errmsg) except? NPY_FAIL
@@ -1167,11 +1169,9 @@ cdef extern from "numpy/arrayobject.h":
                                         npy_intp* outstrides) except NPY_FAIL
     npy_bool NpyIter_IsFirstVisit(NpyIter* it, int iop) nogil
     # functions for iterating an NpyIter object
-    ctypedef int (*NpyIter_IterNextFunc)(NpyIter* it)
-    ctypedef void (*NpyIter_GetMultiIndexFunc)(NpyIter* it, npy_intp* outcoords)
-    NpyIter_IterNextFunc* NpyIter_GetIterNext(NpyIter* it, char** errmsg) except? NULL
+    NpyIter_IterNextFunc* NpyIter_GetIterNext(NpyIter* it, char** errmsg) except NULL
     NpyIter_GetMultiIndexFunc* NpyIter_GetGetMultiIndex(NpyIter* it,
-                                                        char** errmsg) except? NULL
+                                                        char** errmsg) except NULL
     char** NpyIter_GetDataPtrArray(NpyIter* it) nogil
     char** NpyIter_GetInitialDataPtrArray(NpyIter* it) nogil
     npy_intp* NpyIter_GetIndexPtr(NpyIter* it)
