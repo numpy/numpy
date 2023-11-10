@@ -79,6 +79,7 @@ cdef extern from "numpy/arrayobject.h":
         NPY_COMPLEX512
 
         NPY_INTP
+        NPY_DEFAULT_INT
 
     ctypedef enum NPY_ORDER:
         NPY_ANYORDER
@@ -699,12 +700,7 @@ ctypedef npy_float64    float64_t
 ctypedef float complex  complex64_t
 ctypedef double complex complex128_t
 
-# The int types are mapped a bit surprising --
-# numpy.int corresponds to 'l' and numpy.long to 'q'
-ctypedef npy_long       int_t
 ctypedef npy_longlong   longlong_t
-
-ctypedef npy_ulong      uint_t
 ctypedef npy_ulonglong  ulonglong_t
 
 ctypedef npy_intp       intp_t
@@ -807,6 +803,7 @@ cdef extern from "numpy/arrayscalars.h":
         NPY_FR_ps
         NPY_FR_fs
         NPY_FR_as
+        NPY_FR_GENERIC
 
 
 cdef extern from "numpy/arrayobject.h":
@@ -938,19 +935,19 @@ cdef inline int import_array() except -1:
     try:
         __pyx_import_array()
     except Exception:
-        raise ImportError("numpy.core.multiarray failed to import")
+        raise ImportError("numpy._core.multiarray failed to import")
 
 cdef inline int import_umath() except -1:
     try:
         _import_umath()
     except Exception:
-        raise ImportError("numpy.core.umath failed to import")
+        raise ImportError("numpy._core.umath failed to import")
 
 cdef inline int import_ufunc() except -1:
     try:
         _import_umath()
     except Exception:
-        raise ImportError("numpy.core.umath failed to import")
+        raise ImportError("numpy._core.umath failed to import")
 
 cdef extern from *:
     # Leave a marker that the NumPy declarations came from this file

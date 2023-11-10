@@ -1,5 +1,5 @@
 """
-Tests for :mod:`numpy.core.numeric`.
+Tests for :mod:`numpy._core.numeric`.
 
 Does not include tests which fall under ``array_constructors``.
 

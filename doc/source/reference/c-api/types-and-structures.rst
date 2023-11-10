@@ -1,6 +1,6 @@
 
 *****************************
-Python Types and C-Structures
+Python types and C-structures
 *****************************
 
 .. sectionauthor:: Travis E. Oliphant
@@ -18,7 +18,7 @@ details after the :c:macro:`PyObject_HEAD` (but you have to cast to the
 correct type to access them --- or use accessor functions or macros).
 
 
-New Python Types Defined
+New Python types defined
 ========================
 
 Python types are the functional equivalent in C of classes in Python.
@@ -195,6 +195,14 @@ PyArray_Type and PyArrayObject
       NumPy version, you may add a constant, leaving room for changes in NumPy.
       A solution guaranteed to be compatible with any future NumPy version
       requires the use of a runtime calculate offset and allocation size.
+
+PyGenericArrType_Type
+---------------------
+
+.. c:var:: PyTypeObject PyGenericArrType_Type
+
+   The :c:data:`PyGenericArrType_Type` is the PyTypeObject definition which
+   create the `numpy.generic` python type.
 
 
 PyArrayDescr_Type and PyArray_Descr
@@ -382,8 +390,7 @@ PyArrayDescr_Type and PyArray_Descr
    .. c:type:: npy_hash_t
    .. c:member:: npy_hash_t *hash
 
-       Currently unused. Reserved for future use in caching
-       hash values.
+       Used for caching hash values.
 
 .. c:macro:: NPY_ITEM_REFCOUNT
 
@@ -1199,7 +1206,7 @@ value from the array scalar and the function :c:func:`PyArray_Scalar`
 (...) can be used to construct an array scalar from a C-value.
 
 
-Other C-Structures
+Other C-structures
 ==================
 
 A few new C-structures were found to be useful in the development of

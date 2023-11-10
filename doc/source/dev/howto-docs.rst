@@ -61,7 +61,7 @@ which raises the bar. Test the waters by first presenting the fix as an issue.
 
 Some functions/objects like numpy.ndarray.transpose, numpy.array etc. defined in
 C-extension modules have their docstrings defined separately in `_add_newdocs.py
-<https://github.com/numpy/numpy/blob/main/numpy/core/_add_newdocs.py>`__
+<https://github.com/numpy/numpy/blob/main/numpy/_core/_add_newdocs.py>`__
 
 **********************
 Contributing new pages
@@ -138,7 +138,7 @@ documentation, converts the rST into HTML and other formats. For more on
 rST, see the `Quick reStructuredText Guide
 <https://docutils.sourceforge.io/docs/user/rst/quickref.html>`__ or the
 `reStructuredText Primer
-<http://www.sphinx-doc.org/en/stable/usage/restructuredtext/basics.html>`__
+<https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`__
 
 
 ***********************
@@ -195,7 +195,7 @@ User documentation
 Docstrings
 ==========
 
-When using `Sphinx <http://www.sphinx-doc.org/>`_ in combination with the
+When using `Sphinx <https://www.sphinx-doc.org/>`_ in combination with the
 NumPy conventions, you should use the ``numpydoc`` extension so that your
 docstrings will be handled correctly. For example, Sphinx will extract the
 ``Parameters`` section from your docstring and convert it into a field
@@ -217,7 +217,7 @@ shown in their :ref:`example <numpydoc:example>`.
 
 .. _doc_c_code:
 
-Documenting C/C++ Code
+Documenting C/C++ code
 ======================
 
 NumPy uses Doxygen_ to parse specially-formatted C/C++ comment blocks. This generates

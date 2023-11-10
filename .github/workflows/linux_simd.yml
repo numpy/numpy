@@ -57,11 +57,11 @@ jobs:
     env:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-dispatch=none"
     steps:
-    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+    - uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
       with:
         python-version: '3.9'
     - uses: ./.github/meson_actions
@@ -74,11 +74,11 @@ jobs:
     env:
       MESON_ARGS: "-Dallow-noblas=true"
     steps:
-    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+    - uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
       with:
         python-version: '3.9'
 
@@ -138,11 +138,11 @@ jobs:
 
     name: "${{ matrix.BUILD_PROP[0] }}"
     steps:
-    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+    - uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
       with:
         python-version: "${{ matrix.BUILD_PROP[2] }}"
     - uses: ./.github/meson_actions
@@ -152,11 +152,11 @@ jobs:
     needs: [baseline_only]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+    - uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
       with:
         python-version: '3.11'
 
@@ -168,6 +168,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        sudo apt update
         sudo apt install -y g++-13
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 1
         sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 1
@@ -187,7 +188,7 @@ jobs:
         export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
         cd build-install &&
         sde -knm -- python -c "import numpy; numpy.show_config()" &&
-        sde -knm -- python -m pytest $NUMPY_SITE/numpy/core/tests/test_simd*
+        sde -knm -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_simd*
 
     - name: SIMD tests (SPR)
       run: |
@@ -195,7 +196,7 @@ jobs:
         export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
         cd build-install &&
         sde -spr -- python -c "import numpy; numpy.show_config()" &&
-        sde -spr -- python -m pytest $NUMPY_SITE/numpy/core/tests/test_simd*
+        sde -spr -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_simd*
 
     # Can't run on SDE just yet: see https://github.com/numpy/numpy/issues/23545#issuecomment-1659047365
     #
@@ -205,7 +206,7 @@ jobs:
     #    export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
     #    cd build-install &&
     #    sde -spr -- python -c "import numpy; numpy.show_config()" &&
-    #    sde -spr -- python -m pytest $NUMPY_SITE/numpy/core/tests/test_umath* \
-    #                                 $NUMPY_SITE/numpy/core/tests/test_ufunc.py \
+    #    sde -spr -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_umath* \
+    #                                 $NUMPY_SITE/numpy/_core/tests/test_ufunc.py \
     #                                 $NUMPY_SITE/numpy/linalg/tests/test_*
 

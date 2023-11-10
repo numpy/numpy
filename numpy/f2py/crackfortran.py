@@ -1425,45 +1425,61 @@ def analyzeline(m, case, line):
             if dl.startswith(','):
                 dl = dl[1:].strip()
             ll.append([dl, il])
-        vars = {}
-        if 'vars' in groupcache[groupcounter]:
-            vars = groupcache[groupcounter]['vars']
+        vars = groupcache[groupcounter].get('vars', {})
         last_name = None
         for l in ll:
-            l = [x.strip() for x in l]
-            if l[0][0] == ',':
+            l[0], l[1] = l[0].strip(), l[1].strip()
+            if l[0].startswith(','):
                 l[0] = l[0][1:]
-            if l[0][0] == '(':
-                outmess(
-                    'analyzeline: implied-DO list "%s" is not supported. Skipping.\n' % l[0])
+            if l[0].startswith('('):
+                outmess('analyzeline: implied-DO list "%s" is not supported. Skipping.\n' % l[0])
                 continue
-            i = 0
-            j = 0
-            llen = len(l[1])
-            for v in rmbadname([x.strip() for x in markoutercomma(l[0]).split('@,@')]):
-                if v[0] == '(':
-                    outmess(
-                        'analyzeline: implied-DO list "%s" is not supported. Skipping.\n' % v)
+            for idx, v in enumerate(rmbadname([x.strip() for x in markoutercomma(l[0]).split('@,@')])):
+                if v.startswith('('):
+                    outmess('analyzeline: implied-DO list "%s" is not supported. Skipping.\n' % v)
                     # XXX: subsequent init expressions may get wrong values.
                     # Ignoring since data statements are irrelevant for
                     # wrapping.
                     continue
-                fc = 0
-                while (i < llen) and (fc or not l[1][i] == ','):
-                    if l[1][i] == "'":
-                        fc = not fc
-                    i = i + 1
-                i = i + 1
-                if v not in vars:
-                    vars[v] = {}
-                if '=' in vars[v] and not vars[v]['='] == l[1][j:i - 1]:
-                    outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (
-                        v, vars[v]['='], l[1][j:i - 1]))
-                vars[v]['='] = l[1][j:i - 1]
-                j = i
+                if '!' in l[1]:
+                    # Fixes gh-24746 pyf generation
+                    # XXX: This essentially ignores the value for generating the pyf which is fine:
+                    # integer dimension(3) :: mytab
+                    # common /mycom/ mytab
+                    # Since in any case it is initialized in the Fortran code
+                    outmess('Comment line in declaration "%s" is not supported. Skipping.\n' % l[1])
+                    continue
+                vars.setdefault(v, {})
+                vtype = vars[v].get('typespec')
+                vdim = getdimension(vars[v])
+                matches = re.findall(r"\(.*?\)", l[1]) if vtype == 'complex' else l[1].split(',')
+                try:
+                    new_val = "(/{}/)".format(", ".join(matches)) if vdim else matches[idx]
+                except IndexError:
+                    # gh-24746
+                    # Runs only if above code fails. Fixes the line
+                    # DATA IVAR1, IVAR2, IVAR3, IVAR4, EVAR5 /4*0,0.0D0/
+                    # by expanding to ['0', '0', '0', '0', '0.0d0']
+                    if any("*" in m for m in matches):
+                        expanded_list = []
+                        for match in matches:
+                            if "*" in match:
+                                try:
+                                    multiplier, value = match.split("*")
+                                    expanded_list.extend([value.strip()] * int(multiplier))
+                                except ValueError: # if int(multiplier) fails
+                                    expanded_list.append(match.strip())
+                            else:
+                                expanded_list.append(match.strip())
+                        matches = expanded_list
+                    new_val = "(/{}/)".format(", ".join(matches)) if vdim else matches[idx]
+                current_val = vars[v].get('=')
+                if current_val and (current_val != new_val):
+                    outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (v, current_val, new_val))
+                vars[v]['='] = new_val
                 last_name = v
         groupcache[groupcounter]['vars'] = vars
-        if last_name is not None:
+        if last_name:
             previous_context = ('variable', last_name, groupcounter)
     elif case == 'common':
         line = m.group('after').strip()
@@ -2436,7 +2452,7 @@ def _selected_real_kind_func(p, r=0, radix=0):
     if p < 16:
         return 8
     machine = platform.machine().lower()
-    if machine.startswith(('aarch64', 'arm64', 'power', 'ppc', 'riscv', 's390x', 'sparc')):
+    if machine.startswith(('aarch64', 'arm64', 'loongarch', 'power', 'ppc', 'riscv', 's390x', 'sparc')):
         if p <= 33:
             return 16
     else:

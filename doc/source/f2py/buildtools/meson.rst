@@ -14,7 +14,7 @@ comfortable and amenable to extension for ``python`` users.
     Meson needs to be at-least ``0.46.0`` in order to resolve the ``python`` include directories.
 
 
-Fibonacci Walkthrough (F77)
+Fibonacci walkthrough (F77)
 ===========================
 
 
@@ -109,9 +109,6 @@ Salient points
 ===============
 
 It is worth keeping in mind the following:
-
-* ``meson`` will default to passing ``-fimplicit-none`` under ``gfortran`` by
-  default, which differs from that of the standard ``np.distutils`` behaviour
 
 * It is not possible to use SCREAMCASE in this context, so either the contents
   of the ``.f`` file or the generated wrapper ``.c`` needs to be lowered to

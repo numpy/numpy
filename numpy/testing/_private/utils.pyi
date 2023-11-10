@@ -167,6 +167,8 @@ def assert_equal(
     desired: object,
     err_msg: str = ...,
     verbose: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 
 def print_assert_equal(
@@ -229,6 +231,8 @@ def assert_array_less(
     y: _ArrayLikeNumber_co | _ArrayLikeObject_co,
     err_msg: str = ...,
     verbose: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 @overload
 def assert_array_less(
@@ -236,6 +240,8 @@ def assert_array_less(
     y: _ArrayLikeTD64_co,
     err_msg: str = ...,
     verbose: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 @overload
 def assert_array_less(
@@ -243,6 +249,8 @@ def assert_array_less(
     y: _ArrayLikeDT64_co,
     err_msg: str = ...,
     verbose: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 
 def runstring(
@@ -312,6 +320,8 @@ def assert_allclose(
     equal_nan: bool = ...,
     err_msg: str = ...,
     verbose: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 @overload
 def assert_allclose(
@@ -322,6 +332,8 @@ def assert_allclose(
     equal_nan: bool = ...,
     err_msg: str = ...,
     verbose: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 
 def assert_array_almost_equal_nulp(

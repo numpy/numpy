@@ -26,7 +26,7 @@ jobs:
         python-version: ["3.11"]
 
     steps:
-    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
@@ -84,7 +84,7 @@ jobs:
       shell: bash -l {0}
       run: |
         conda activate numpy-dev
-        CC="ccache $CC" spin build -j2
+        CC="ccache $CC" spin build -j2 -- -Dallow-noblas=false
 
     - name: Run test suite (full)
       shell: bash -l {0}
@@ -100,20 +100,20 @@ jobs:
         ccache -s
 
   accelerate:
-    name: Accelerate ILP64
+    name: Accelerate (LP64, ILP64)
     if: "github.repository == 'numpy/numpy'"
     runs-on: macos-13
     steps:
-    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
 
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+    - uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
       with:
         python-version: '3.10'
 
-    - uses: maxim-lobanov/setup-xcode@9a697e2b393340c3cacd97468baa318e4c883d98 # v1.5.1
+    - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # v1.6.0
       with:
         xcode-version: '14.3'
 
@@ -122,14 +122,15 @@ jobs:
         pip install -r build_requirements.txt
         pip install pytest pytest-xdist hypothesis
 
+    - name: Build against Accelerate (LP64)
+      run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
+
+    - name: Test (linalg only)
+      run: spin test -j2 -- numpy/linalg
+
     - name: Build NumPy against Accelerate (ILP64)
       run: |
-        spin build -- -Dblas=accelerate -Dlapack=accelerate -Duse-ilp64=true
+        spin build -- -Duse-ilp64=true -Dallow-noblas=false
 
-    - name: Show meson-log.txt
-      if: always()
-      run: 'cat build/meson-logs/meson-log.txt'
-
-    - name: Test
-      run: |
-        spin test -j2
+    - name: Test (fast tests)
+      run: spin test -j2

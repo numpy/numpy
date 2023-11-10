@@ -25,7 +25,7 @@ from numpy.testing import (
     )
 import numpy.lib._function_base_impl as nfb
 from numpy.random import rand
-from numpy.core.numeric import normalize_axis_tuple
+from numpy._core.numeric import normalize_axis_tuple
 
 
 def get_mat(n):
@@ -580,7 +580,7 @@ class TestInsert:
 
     def test_structured_array(self):
         a = np.array([(1, 'a'), (2, 'b'), (3, 'c')],
-                     dtype=[('foo', 'i'), ('bar', 'a1')])
+                     dtype=[('foo', 'i'), ('bar', 'S1')])
         val = (4, 'd')
         b = np.insert(a, 0, val)
         assert_array_equal(b[0], np.array(val, dtype=b.dtype))
@@ -628,15 +628,15 @@ class TestPtp:
 
     def test_basic(self):
         a = np.array([3, 4, 5, 10, -3, -5, 6.0])
-        assert_equal(a.ptp(axis=0), 15.0)
+        assert_equal(np.ptp(a, axis=0), 15.0)
         b = np.array([[3, 6.0, 9.0],
                       [4, 10.0, 5.0],
                       [8, 3.0, 2.0]])
-        assert_equal(b.ptp(axis=0), [5.0, 7.0, 7.0])
-        assert_equal(b.ptp(axis=-1), [6.0, 6.0, 6.0])
+        assert_equal(np.ptp(b, axis=0), [5.0, 7.0, 7.0])
+        assert_equal(np.ptp(b, axis=-1), [6.0, 6.0, 6.0])
 
-        assert_equal(b.ptp(axis=0, keepdims=True), [[5.0, 7.0, 7.0]])
-        assert_equal(b.ptp(axis=(0,1), keepdims=True), [[8.0]])
+        assert_equal(np.ptp(b, axis=0, keepdims=True), [[5.0, 7.0, 7.0]])
+        assert_equal(np.ptp(b, axis=(0, 1), keepdims=True), [[8.0]])
 
 
 class TestCumsum:
@@ -1968,7 +1968,7 @@ class TestDigitize:
         assert_equal(np.digitize(x, [x - 1, x + 1]), 1)
 
     @pytest.mark.xfail(
-        reason="gh-11022: np.core.multiarray._monoticity loses precision")
+        reason="gh-11022: np._core.multiarray._monoticity loses precision")
     def test_large_integers_decreasing(self):
         # gh-11022
         x = 2**54  # loses precision in a float
@@ -3063,6 +3063,9 @@ class TestPercentile:
                            (np.longdouble, np.longdouble),
                            (np.dtype("O"), np.float64)]
 
+    @pytest.mark.parametrize(["function", "quantile"],
+                             [(np.quantile, 0.4),
+                              (np.percentile, 40.0)])
     @pytest.mark.parametrize(["input_dtype", "expected_dtype"], H_F_TYPE_CODES)
     @pytest.mark.parametrize(["method", "expected"],
                              [("inverted_cdf", 20),
@@ -3076,6 +3079,8 @@ class TestPercentile:
                               ("normal_unbiased", 27.125),
                               ])
     def test_linear_interpolation(self,
+                                  function,
+                                  quantile,
                                   method,
                                   expected,
                                   input_dtype,
@@ -3085,10 +3090,19 @@ class TestPercentile:
             expected_dtype = np.promote_types(expected_dtype, np.float64)
 
         arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=input_dtype)
-        actual = np.percentile(arr, 40.0, method=method)
+        if input_dtype is np.longdouble:
+            if function is np.quantile:
+                # 0.4 is not exactly representable and it matters
+                # for "averaged_inverted_cdf", so we need to cheat.
+                quantile = input_dtype("0.4")
+            # We want to use nulp, but that does not work for longdouble
+            test_function = np.testing.assert_almost_equal
+        else:
+            test_function = np.testing.assert_array_almost_equal_nulp
 
-        np.testing.assert_almost_equal(
-            actual, expected_dtype.type(expected), 14)
+        actual = function(arr, quantile, method=method)
+
+        test_function(actual, expected_dtype.type(expected))
 
         if method in ["inverted_cdf", "closest_observation"]:
             if input_dtype == "O":

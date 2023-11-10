@@ -487,7 +487,7 @@ A typical implementation would convert any inputs or outputs that are
 instances of one's own class, pass everything on to a superclass using
 ``super()``, and finally return the results after possible
 back-conversion. An example, taken from the test case
-``test_ufunc_override_with_super`` in ``core/tests/test_umath.py``, is the
+``test_ufunc_override_with_super`` in ``_core/tests/test_umath.py``, is the
 following.
 
 .. testcode::
@@ -569,7 +569,7 @@ which inputs and outputs it converted. Hence, e.g.,
 Note that another approach would be to use ``getattr(ufunc,
 methods)(*inputs, **kwargs)`` instead of the ``super`` call. For this example,
 the result would be identical, but there is a difference if another operand
-also defines ``__array_ufunc__``. E.g., lets assume that we evalulate
+also defines ``__array_ufunc__``. E.g., lets assume that we evaluate
 ``np.add(a, b)``, where ``b`` is an instance of another class ``B`` that has
 an override.  If you use ``super`` as in the example,
 ``ndarray.__array_ufunc__`` will notice that ``b`` has an override, which
@@ -739,9 +739,9 @@ to know whether or not to do some specific cleanup when the subclassed
 array is deleted.  For example, we may only want to do the cleanup if
 the original array is deleted, but not the views.  For an example of
 how this can work, have a look at the ``memmap`` class in
-``numpy.core``.
+``numpy._core``.
 
-Subclassing and Downstream Compatibility
+Subclassing and downstream compatibility
 ========================================
 
 When sub-classing ``ndarray`` or creating duck-types that mimic the ``ndarray``

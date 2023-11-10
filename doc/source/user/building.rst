@@ -51,7 +51,7 @@ Building NumPy requires the following software installed:
    can be used, including optimized LAPACK libraries such as OpenBLAS or MKL.
    The choice and location of these libraries as well as include paths and
    other such build options can be specified in a ``.pc`` file, as documented in
-   :ref:`scipy:using-pkg-config-to-detect-libraries-in-a-nonstandard-location`.
+   :ref:`scipy:building-blas-and-lapack`.
 
 4) Cython
 
@@ -138,7 +138,7 @@ file.
 Cross compilation
 -----------------
 
-For cross compilation instructions, see :doc:`scipy:cross_compilation` and the
-`Meson documentation <meson>`_.
+For cross compilation instructions, see :doc:`scipy:building/cross_compilation`
+and the `Meson documentation <meson>`_.
 
 .. _meson: https://mesonbuild.com/Cross-compilation.html#cross-compilation

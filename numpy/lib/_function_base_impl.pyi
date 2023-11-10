@@ -48,7 +48,7 @@ from numpy._typing import (
     _ComplexLike_co,
 )
 
-from numpy.core.multiarray import (
+from numpy._core.multiarray import (
     bincount as bincount,
 )
 

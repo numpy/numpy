@@ -24,8 +24,7 @@ import warnings
 
 import numpy as np
 
-from numpy.core.multiarray import dragon4_positional, dragon4_scientific
-from numpy.core.umath import absolute
+from numpy._core.multiarray import dragon4_positional, dragon4_scientific
 from numpy.exceptions import RankWarning
 
 __all__ = [
@@ -735,7 +734,7 @@ def format_float(x, parens=False):
 
     exp_format = False
     if x != 0:
-        a = absolute(x)
+        a = np.abs(x)
         if a >= 1.e8 or a < 10**min(0, -(opts['precision']-1)//2):
             exp_format = True
 

@@ -146,7 +146,7 @@ coefficients in the unscaled data domain.
 
     p_fitted.convert()
 
-Documentation for the `~numpy.polynomial` Package
+Documentation for the `~numpy.polynomial` package
 -------------------------------------------------
 
 In addition to standard power series polynomials, the polynomial package
@@ -177,7 +177,7 @@ polynomial individually can be found in the corresponding module documentation:
    routines.polynomials.polyutils
 
 
-Documentation for Legacy Polynomials
+Documentation for legacy polynomials
 ------------------------------------
 
 .. toctree::

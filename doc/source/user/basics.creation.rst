@@ -22,7 +22,7 @@ There are 6 general mechanisms for creating arrays:
 You can use these methods to create ndarrays or :ref:`structured_arrays`.
 This document will cover general methods for ndarray creation. 
 
-1) Converting Python sequences to NumPy Arrays
+1) Converting Python sequences to NumPy arrays
 ==============================================
 
 NumPy arrays can be defined using Python sequences such as lists and
@@ -43,14 +43,14 @@ When you use :func:`numpy.array` to define a new array, you should
 consider the :doc:`dtype <basics.types>` of the elements in the array,
 which can be specified explicitly. This feature gives you
 more control over the underlying data structures and how the elements
-are handled in C/C++ functions. If you are not careful with ``dtype``
-assignments, you can get unwanted overflow, as such 
+are handled in C/C++ functions.
+When values do not fit and you are using a ``dtype``, NumPy may raise an
+error::
 
-::
-
-  >>> a = np.array([127, 128, 129], dtype=np.int8)
-  >>> a
-  array([ 127, -128, -127], dtype=int8)
+  >>> np.array([127, 128, 129], dtype=np.int8)
+  Traceback (most recent call last):
+  ...
+  OverflowError: Python integer 128 out of bounds for int8
 
 An 8-bit signed integer represents integers from -128 to 127.
 Assigning the ``int8`` array to integers outside of this range results
@@ -317,7 +317,7 @@ greatly on the format of data on disk. This section gives general pointers on
 how to handle various formats. For more detailed examples of IO look at
 :ref:`How to Read and Write files <how-to-io>`. 
 
-Standard Binary Formats
+Standard binary formats
 -----------------------
 
 Various fields have standard formats for array data. The following lists the
@@ -333,7 +333,7 @@ Examples of formats that cannot be read directly but for which it is not hard to
 convert are those formats supported by libraries like PIL (able to read and
 write many image formats such as jpg, png, etc).
 
-Common ASCII Formats
+Common ASCII formats
 --------------------
 
 Delimited files such as comma separated value (csv) and tab separated
@@ -375,7 +375,7 @@ read the data, one can wrap that library with a variety of techniques though
 that certainly is much more work and requires significantly more advanced
 knowledge to interface with C or C++.
 
-6) Use of special library functions (e.g., SciPy, Pandas, and OpenCV)
+6) Use of special library functions (e.g., SciPy, pandas, and OpenCV)
 =====================================================================
 
 NumPy is the fundamental library for array containers in the Python Scientific Computing

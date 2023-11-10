@@ -277,8 +277,9 @@ class TestRandint:
             assert_equal(sample.dtype, np.dtype(dt))
 
         for dt in (bool, int):
-            lbnd = 0 if dt is bool else np.iinfo(dt).min
-            ubnd = 2 if dt is bool else np.iinfo(dt).max + 1
+            # The legacy rng uses "long" as the default integer:
+            lbnd = 0 if dt is bool else np.iinfo("long").min
+            ubnd = 2 if dt is bool else np.iinfo("long").max + 1
 
             # gh-7284: Ensure that we get Python data types
             sample = self.rfunc(lbnd, ubnd, dtype=dt)

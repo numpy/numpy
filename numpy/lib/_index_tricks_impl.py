@@ -5,13 +5,13 @@ import warnings
 
 import numpy as np
 from .._utils import set_module
-import numpy.core.numeric as _nx
-from numpy.core.numeric import ScalarType, array
-from numpy.core.numerictypes import issubdtype
+import numpy._core.numeric as _nx
+from numpy._core.numeric import ScalarType, array
+from numpy._core.numerictypes import issubdtype
 
 import numpy.matrixlib as matrixlib
-from numpy.core.multiarray import ravel_multi_index, unravel_index
-from numpy.core import overrides, linspace
+from numpy._core.multiarray import ravel_multi_index, unravel_index
+from numpy._core import overrides, linspace
 from numpy.lib.stride_tricks import as_strided
 from numpy.lib._function_base_impl import diff
 
@@ -720,7 +720,7 @@ class IndexExpression:
     A nicer way to build up index tuples for arrays.
 
     .. note::
-       Use one of the two predefined instances `index_exp` or `s_`
+       Use one of the two predefined instances ``index_exp`` or `s_`
        rather than directly using `IndexExpression`.
 
     For any index combination, including slicing and axis insertion,
@@ -736,10 +736,11 @@ class IndexExpression:
 
     See Also
     --------
-    index_exp : Predefined instance that always returns a tuple:
-       `index_exp = IndexExpression(maketuple=True)`.
     s_ : Predefined instance without tuple conversion:
        `s_ = IndexExpression(maketuple=False)`.
+       The ``index_exp`` is another predefined instance that
+       always returns a tuple:
+       `index_exp = IndexExpression(maketuple=True)`.
 
     Notes
     -----

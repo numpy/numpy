@@ -98,21 +98,11 @@ A.min(axis=0)
 A.min(keepdims=True)
 A.min(out=B0)
 
-i4.newbyteorder()
-A.newbyteorder()
-B0.newbyteorder('|')
-
 i4.prod()
 A.prod()
 A.prod(axis=0)
 A.prod(keepdims=True)
 A.prod(out=B0)
-
-i4.ptp()
-A.ptp()
-A.ptp(axis=0)
-A.ptp(keepdims=True)
-A.astype(int).ptp(out=B0)
 
 i4.round()
 A.round()

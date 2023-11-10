@@ -1,4 +1,4 @@
-from numpy.linalg.linalg import (
+from numpy.linalg._linalg import (
     matrix_power as matrix_power,
     solve as solve,
     tensorsolve as tensorsolve,
@@ -19,6 +19,8 @@ from numpy.linalg.linalg import (
     cond as cond,
     matrix_rank as matrix_rank,
     multi_dot as multi_dot,
+    trace as trace,
+    diagonal as diagonal,
 )
 
 from numpy._pytesttester import PytestTester

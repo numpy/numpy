@@ -1,5 +1,5 @@
-from numpy.core import asarray
-from numpy.core.numeric import normalize_axis_tuple, normalize_axis_index
+from numpy._core import asarray
+from numpy._core.numeric import normalize_axis_tuple, normalize_axis_index
 from numpy._utils import set_module
 
 __all__ = ["byte_bounds", "normalize_axis_tuple", "normalize_axis_index"]
@@ -28,12 +28,12 @@ def byte_bounds(a):
     --------
     >>> I = np.eye(2, dtype='f'); I.dtype
     dtype('float32')
-    >>> low, high = np.byte_bounds(I)
+    >>> low, high = np.lib.array_utils.byte_bounds(I)
     >>> high - low == I.size*I.itemsize
     True
     >>> I = np.eye(2); I.dtype
     dtype('float64')
-    >>> low, high = np.byte_bounds(I)
+    >>> low, high = np.lib.array_utils.byte_bounds(I)
     >>> high - low == I.size*I.itemsize
     True
 

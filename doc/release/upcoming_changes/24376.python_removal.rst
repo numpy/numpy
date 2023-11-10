@@ -38,7 +38,7 @@
 * ``np.recfromcsv`` and ``recfromtxt`` are now only available from ``np.lib.npyio``.
 
 * ``np.issctype``, ``np.maximum_sctype``, ``np.obj2sctype``, ``np.sctype2char``,
-  ``np.sctypeDict``, ``np.sctypes``, ``np.issubsctype`` were all removed from the
+  ``np.sctypes``, ``np.issubsctype`` were all removed from the
   main namespace without replacement, as they where niche members.
 
 * Deprecated ``np.deprecate`` and ``np.deprecate_with_doc`` has been removed 

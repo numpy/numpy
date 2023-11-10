@@ -5,8 +5,8 @@ import warnings
 import ast
 
 from .._utils import set_module
-import numpy.core.numeric as N
-from numpy.core.numeric import concatenate, isscalar
+import numpy._core.numeric as N
+from numpy._core.numeric import concatenate, isscalar
 # While not in __all__, matrix_power used to be defined here, so we import
 # it for backward compatibility.
 from numpy.linalg import matrix_power
@@ -75,14 +75,15 @@ class matrix(N.ndarray):
     """
     matrix(data, dtype=None, copy=True)
 
-    .. note:: It is no longer recommended to use this class, even for linear
-              algebra. Instead use regular arrays. The class may be removed
-              in the future.
-
     Returns a matrix from an array-like object, or from a string of data.
+
     A matrix is a specialized 2-D array that retains its 2-D nature
     through operations.  It has certain special operators, such as ``*``
     (matrix multiplication) and ``**`` (matrix power).
+
+    .. note:: It is no longer recommended to use this class, even for linear
+              algebra. Instead use regular arrays. The class may be removed
+              in the future.
 
     Parameters
     ----------
@@ -788,7 +789,7 @@ class matrix(N.ndarray):
                 [3]])
 
         """
-        return N.ndarray.ptp(self, axis, out)._align(axis)
+        return N.ptp(self, axis, out)._align(axis)
 
     @property
     def I(self):

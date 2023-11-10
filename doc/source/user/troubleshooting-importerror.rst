@@ -60,22 +60,22 @@ See also the `conda user-guide <https://docs.conda.io/projects/conda/en/latest/u
 If you use an external editor/development environment it will have to be set
 up correctly.  See below for solutions for some common setups.
 
-Using PyCharm with Anaconda/conda Python
-----------------------------------------
+Using PyCharm with Anaconda Python
+----------------------------------
 
 There are fairly common issues when using PyCharm together with Anaconda,
 please see the `PyCharm support <https://www.jetbrains.com/help/pycharm/conda-support-creating-conda-virtual-environment.html>`_
 
-Using VSCode with Anaconda/conda Python (or environments)
----------------------------------------------------------
+Using VS Code with Anaconda Python (or environments)
+----------------------------------------------------
 
 A commonly reported issue is related to the environment activation within
 VSCode. Please see the `VSCode support <https://code.visualstudio.com/docs/python/environments>`_
 for information on how to correctly set up VSCode with virtual environments
 or conda.
 
-Using Eclipse/PyDev with Anaconda/conda Python (or environments)
-----------------------------------------------------------------
+Using Eclipse/PyDev with Anaconda Python (or environments)
+----------------------------------------------------------
 
 Please see the
 `Anaconda Documentation <https://docs.anaconda.com/anaconda/user-guide/tasks/integration/eclipse-pydev/>`_
@@ -116,7 +116,7 @@ need to recompile the entire stack of python modules you work with
 including NumPy
 
 
-All Setups
+All setups
 ----------
 
 Occasionally there may be simple issues with old or bad installations
@@ -124,7 +124,7 @@ of NumPy. In this case you may just try to uninstall and reinstall NumPy.
 Make sure that NumPy is not found after uninstalling.
 
 
-Development Setup
+Development setup
 -----------------
 
 If you are using a development setup, make sure to run ``git clean -xdf``
@@ -133,7 +133,7 @@ any modifications you made, e.g. ``site.cfg``).
 In many cases files from old builds may lead to incorrect builds.
 
 
-Check Environment Variables
+Check environment variables
 ---------------------------
 
 In general how to set and check your environment variables depends on

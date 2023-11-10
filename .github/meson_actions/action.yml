@@ -7,6 +7,7 @@ runs:
     shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
     env:
       TERM: xterm-256color
+      PKG_CONFIG_PATH: ./.openblas
     run: |
       echo "::group::Installing Build Dependencies"
       pip install -r build_requirements.txt
@@ -29,7 +30,7 @@ runs:
       TERM: xterm-256color
     run: |
       echo "::group::Installing Test Dependencies"
-      pip install pytest pytest-xdist hypothesis typing_extensions
+      pip install pytest pytest-xdist hypothesis typing_extensions setuptools
       echo "::endgroup::"
       echo "::group::Test NumPy"
       spin test

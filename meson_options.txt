@@ -1,13 +1,19 @@
-option('blas', type: 'string', value: 'openblas',
-        description: 'Option for BLAS library switching')
-option('lapack', type: 'string', value: 'openblas',
-        description: 'Option for LAPACK library switching')
-option('allow-noblas', type: 'boolean', value: false,
+option('blas', type: 'string', value: 'auto',
+        description: 'Option for BLAS library selection. By default, try to find any in the order given by `blas-order`')
+option('lapack', type: 'string', value: 'auto',
+        description: 'Option for LAPACK library selection. By default, try to find any in the order given by `lapack-order`')
+option('allow-noblas', type: 'boolean', value: true,
         description: 'If set to true, allow building with (slow!) internal fallback routines')
+option('blas-order', type: 'array',
+        value: ['mkl', 'accelerate', 'openblas', 'flexiblas', 'blis', 'blas'])
+option('lapack-order', type: 'array',
+        value: ['mkl', 'accelerate', 'openblas', 'flexiblas', 'lapack'])
 option('use-ilp64', type: 'boolean', value: false,
        description: 'Use ILP64 (64-bit integer) BLAS and LAPACK interfaces')
-option('blas-symbol-suffix', type: 'string', value: '',
-        description: 'BLAS and LAPACK symbol suffix to use, if any (often `64_` for ILP64)')
+option('blas-symbol-suffix', type: 'string', value: 'auto',
+        description: 'BLAS and LAPACK symbol suffix to use, if any')
+option('mkl-threading', type: 'string', value: 'auto',
+        description: 'MKL threading method, one of: `seq`, `iomp`, `gomp`, `tbb`')
 option('disable-svml', type: 'boolean', value: false,
         description: 'Disable building against SVML')
 option('disable-threading', type: 'boolean', value: false,
@@ -29,5 +35,3 @@ option('test-simd', type: 'array',
         description: 'Specify a list of CPU features to be tested against NumPy SIMD interface')
 option('test-simd-args', type: 'string', value: '',
         description: 'Extra args to be passed to the `_simd` module that is used for testing the NumPy SIMD interface')
-option('relaxed-strides-debug', type: 'boolean', value: false,
-        description: 'Enable relaxed strides debug mode (see `NPY_RELAXED_STRIDES_DEBUG` docs)')

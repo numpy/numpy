@@ -27,14 +27,15 @@ import warnings
 import textwrap
 import re
 from functools import reduce
+from typing import Dict
 
 import numpy as np
-import numpy.core.umath as umath
-import numpy.core.numerictypes as ntypes
-from numpy.core import multiarray as mu
+import numpy._core.umath as umath
+import numpy._core.numerictypes as ntypes
+from numpy._core import multiarray as mu
 from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue, angle
-from numpy import array as narray, expand_dims
-from numpy.core.numeric import normalize_axis_tuple
+from numpy import array as narray, expand_dims, iinfo, finfo
+from numpy._core.numeric import normalize_axis_tuple
 from numpy._utils._inspect import getargspec, formatargspec
 
 
@@ -182,11 +183,35 @@ for v in ["Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps",
 
 float_types_list = [np.half, np.single, np.double, np.longdouble,
                     np.csingle, np.cdouble, np.clongdouble]
-max_filler = ntypes._minvals
+
+_minvals: Dict[type, int] = {}
+_maxvals: Dict[type, int] = {}
+
+for sctype in ntypes.sctypeDict.values():
+    scalar_dtype = np.dtype(sctype)
+
+    if scalar_dtype.kind in "Mm":
+        info = np.iinfo(np.int64)
+        min_val, max_val = info.min, info.max
+    elif np.issubdtype(scalar_dtype, np.integer):
+        info = np.iinfo(sctype)
+        min_val, max_val = info.min, info.max
+    elif np.issubdtype(scalar_dtype, np.floating):
+        info = np.finfo(sctype)
+        min_val, max_val = info.min, info.max
+    elif scalar_dtype.kind == "b":
+        min_val, max_val = 0, 1
+    else:
+        min_val, max_val = None, None
+
+    _minvals[sctype] = min_val
+    _maxvals[sctype] = max_val
+
+max_filler = _minvals
 max_filler.update([(k, -np.inf) for k in float_types_list[:4]])
 max_filler.update([(k, complex(-np.inf, -np.inf)) for k in float_types_list[-3:]])
 
-min_filler = ntypes._maxvals
+min_filler = _maxvals
 min_filler.update([(k,  +np.inf) for k in float_types_list[:4]])
 min_filler.update([(k, complex(+np.inf, +np.inf)) for k in float_types_list[-3:]])
 
@@ -282,7 +307,7 @@ def _extremum_fill_value(obj, extremum, extremum_name):
 
     def _scalar_fill_value(dtype):
         try:
-            return extremum[dtype]
+            return extremum[dtype.type]
         except KeyError as e:
             raise TypeError(
                 f"Unsuitable type {dtype} for calculating {extremum_name}."
@@ -1848,7 +1873,7 @@ def masked_where(condition, a, copy=True):
     --------
     masked_values : Mask using floating point equality.
     masked_equal : Mask where equal to a given value.
-    masked_not_equal : Mask where `not` equal to a given value.
+    masked_not_equal : Mask where *not* equal to a given value.
     masked_less_equal : Mask where less than or equal to a given value.
     masked_greater_equal : Mask where greater than or equal to a given value.
     masked_less : Mask where less than a given value.
@@ -2049,7 +2074,7 @@ def masked_less_equal(x, value, copy=True):
 
 def masked_not_equal(x, value, copy=True):
     """
-    Mask an array where `not` equal to a given value.
+    Mask an array where *not* equal to a given value.
 
     This function is a shortcut to ``masked_where``, with
     `condition` = (x != value).
@@ -4004,7 +4029,7 @@ class MaskedArray(ndarray):
 
 
         # 2016-11-19: Demoted to legacy format
-        if np.core.arrayprint._get_legacy_print_mode() <= 113:
+        if np._core.arrayprint._get_legacy_print_mode() <= 113:
             is_long = self.ndim > 1
             parameters = dict(
                 name=name,
@@ -4024,7 +4049,7 @@ class MaskedArray(ndarray):
         prefix = f"masked_{name}("
 
         dtype_needed = (
-            not np.core.arrayprint.dtype_is_implied(self.dtype) or
+            not np._core.arrayprint.dtype_is_implied(self.dtype) or
             np.all(self.mask) or
             self.size == 0
         )
@@ -4082,7 +4107,7 @@ class MaskedArray(ndarray):
 
         reprs['fill_value'] = fill_repr
         if dtype_needed:
-            reprs['dtype'] = np.core.arrayprint.dtype_short_repr(self.dtype)
+            reprs['dtype'] = np._core.arrayprint.dtype_short_repr(self.dtype)
 
         # join keys with values and indentations
         result = ',\n'.join(

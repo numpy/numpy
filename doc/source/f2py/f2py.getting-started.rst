@@ -94,7 +94,7 @@ Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
   ----------
   a : input rank-1 array('d') with bounds (n)
 
-  Other Parameters
+  Other parameters
   ----------------
   n : input int, optional
       Default: len(a)

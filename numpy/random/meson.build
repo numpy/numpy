@@ -34,7 +34,8 @@ _cython_tree_random += custom_target('_bounded_integer_pxd',
   input: '_bounded_integers.pxd.in',
   command: [tempita_cli, '@INPUT@', '-o', '@OUTPUT@'],
   install: true,
-  install_dir: np_dir / 'random'
+  install_dir: np_dir / 'random',
+  install_tag: 'devel'
 )
 
 _bounded_integers_pyx = custom_target('_bounded_integer_pyx',

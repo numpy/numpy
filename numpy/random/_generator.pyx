@@ -11,7 +11,7 @@ from cpython.mem cimport PyMem_Malloc, PyMem_Free
 cimport cython
 import numpy as np
 cimport numpy as np
-from numpy.core.multiarray import normalize_axis_index
+from numpy.lib.array_utils import normalize_axis_index
 
 from .c_distributions cimport *
 from libc cimport string
@@ -63,7 +63,7 @@ cdef int64_t _safe_sum_nonneg_int64(size_t num_colors, int64_t *colors):
 cdef inline void _shuffle_raw_wrap(bitgen_t *bitgen, np.npy_intp n,
                                    np.npy_intp first, np.npy_intp itemsize,
                                    np.npy_intp stride,
-                                   char* data, char* buf) nogil:
+                                   char* data, char* buf) noexcept nogil:
     # We trick gcc into providing a specialized implementation for
     # the most common case, yielding a ~33% performance improvement.
     # Note that apparently, only one branch can ever be specialized.
@@ -76,7 +76,7 @@ cdef inline void _shuffle_raw_wrap(bitgen_t *bitgen, np.npy_intp n,
 cdef inline void _shuffle_raw(bitgen_t *bitgen, np.npy_intp n,
                               np.npy_intp first, np.npy_intp itemsize,
                               np.npy_intp stride,
-                              char* data, char* buf) nogil:
+                              char* data, char* buf) noexcept nogil:
     """
     Parameters
     ----------
@@ -107,7 +107,7 @@ cdef inline void _shuffle_raw(bitgen_t *bitgen, np.npy_intp n,
 
 
 cdef inline void _shuffle_int(bitgen_t *bitgen, np.npy_intp n,
-                              np.npy_intp first, int64_t* data) nogil:
+                              np.npy_intp first, int64_t* data) noexcept nogil:
     """
     Parameters
     ----------
@@ -604,7 +604,7 @@ cdef class Generator:
         ----------
         .. [1] Daniel Lemire., "Fast Random Integer Generation in an Interval",
                ACM Transactions on Modeling and Computer Simulation 29 (1), 2019,
-               http://arxiv.org/abs/1805.10941.
+               https://arxiv.org/abs/1805.10941.
 
         """
         if high is None:
@@ -645,7 +645,7 @@ cdef class Generator:
             raise TypeError('Unsupported dtype %r for integers' % _dtype)
 
 
-        if size is None and dtype in (bool, int):
+        if size is None and (dtype is bool or dtype is int):
             if np.array(ret).shape == ():
                 return dtype(ret)
         return ret
@@ -1276,7 +1276,7 @@ cdef class Generator:
         ----------
         .. [1] Weisstein, Eric W. "Gamma Distribution." From MathWorld--A
                Wolfram Web Resource.
-               http://mathworld.wolfram.com/GammaDistribution.html
+               https://mathworld.wolfram.com/GammaDistribution.html
         .. [2] Wikipedia, "Gamma distribution",
                https://en.wikipedia.org/wiki/Gamma_distribution
 
@@ -1364,7 +1364,7 @@ cdef class Generator:
         ----------
         .. [1] Weisstein, Eric W. "Gamma Distribution." From MathWorld--A
                Wolfram Web Resource.
-               http://mathworld.wolfram.com/GammaDistribution.html
+               https://mathworld.wolfram.com/GammaDistribution.html
         .. [2] Wikipedia, "Gamma distribution",
                https://en.wikipedia.org/wiki/Gamma_distribution
 
@@ -1527,7 +1527,7 @@ cdef class Generator:
         ----------
         .. [1] Weisstein, Eric W. "Noncentral F-Distribution."
                From MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/NoncentralF-Distribution.html
+               https://mathworld.wolfram.com/NoncentralF-Distribution.html
         .. [2] Wikipedia, "Noncentral F-distribution",
                https://en.wikipedia.org/wiki/Noncentral_F-distribution
 
@@ -1753,7 +1753,7 @@ cdef class Generator:
               https://www.itl.nist.gov/div898/handbook/eda/section3/eda3663.htm
         .. [2] Weisstein, Eric W. "Cauchy Distribution." From MathWorld--A
               Wolfram Web Resource.
-              http://mathworld.wolfram.com/CauchyDistribution.html
+              https://mathworld.wolfram.com/CauchyDistribution.html
         .. [3] Wikipedia, "Cauchy distribution"
               https://en.wikipedia.org/wiki/Cauchy_distribution
 
@@ -2311,7 +2311,7 @@ cdef class Generator:
                Generalizations, " Birkhauser, 2001.
         .. [3] Weisstein, Eric W. "Laplace Distribution."
                From MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/LaplaceDistribution.html
+               https://mathworld.wolfram.com/LaplaceDistribution.html
         .. [4] Wikipedia, "Laplace distribution",
                https://en.wikipedia.org/wiki/Laplace_distribution
 
@@ -2515,7 +2515,7 @@ cdef class Generator:
                Fields," Birkhauser Verlag, Basel, pp 132-133.
         .. [2] Weisstein, Eric W. "Logistic Distribution." From
                MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/LogisticDistribution.html
+               https://mathworld.wolfram.com/LogisticDistribution.html
         .. [3] Wikipedia, "Logistic-distribution",
                https://en.wikipedia.org/wiki/Logistic_distribution
 
@@ -2953,7 +2953,7 @@ cdef class Generator:
                and Quigley, 1972.
         .. [4] Weisstein, Eric W. "Binomial Distribution." From MathWorld--A
                Wolfram Web Resource.
-               http://mathworld.wolfram.com/BinomialDistribution.html
+               https://mathworld.wolfram.com/BinomialDistribution.html
         .. [5] Wikipedia, "Binomial distribution",
                https://en.wikipedia.org/wiki/Binomial_distribution
 
@@ -3102,7 +3102,7 @@ cdef class Generator:
         ----------
         .. [1] Weisstein, Eric W. "Negative Binomial Distribution." From
                MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/NegativeBinomialDistribution.html
+               https://mathworld.wolfram.com/NegativeBinomialDistribution.html
         .. [2] Wikipedia, "Negative binomial distribution",
                https://en.wikipedia.org/wiki/Negative_binomial_distribution
 
@@ -3204,7 +3204,7 @@ cdef class Generator:
         ----------
         .. [1] Weisstein, Eric W. "Poisson Distribution."
                From MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/PoissonDistribution.html
+               https://mathworld.wolfram.com/PoissonDistribution.html
         .. [2] Wikipedia, "Poisson distribution",
                https://en.wikipedia.org/wiki/Poisson_distribution
 
@@ -3449,7 +3449,7 @@ cdef class Generator:
                and Quigley, 1972.
         .. [2] Weisstein, Eric W. "Hypergeometric Distribution." From
                MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/HypergeometricDistribution.html
+               https://mathworld.wolfram.com/HypergeometricDistribution.html
         .. [3] Wikipedia, "Hypergeometric distribution",
                https://en.wikipedia.org/wiki/Hypergeometric_distribution
         .. [4] Stadlober, Ernst, "The ratio of uniforms approach for generating
@@ -4353,7 +4353,7 @@ cdef class Generator:
         ----------
         .. [1] David McKay, "Information Theory, Inference and Learning
                Algorithms," chapter 23,
-               http://www.inference.org.uk/mackay/itila/
+               https://www.inference.org.uk/mackay/itila/
         .. [2] Wikipedia, "Dirichlet distribution",
                https://en.wikipedia.org/wiki/Dirichlet_distribution
 
@@ -4875,8 +4875,8 @@ def default_rng(seed=None):
     seed : {None, int, array_like[ints], SeedSequence, BitGenerator, Generator}, optional
         A seed to initialize the `BitGenerator`. If None, then fresh,
         unpredictable entropy will be pulled from the OS. If an ``int`` or
-        ``array_like[ints]`` is passed, then it will be passed to
-        `SeedSequence` to derive the initial `BitGenerator` state. One may also
+        ``array_like[ints]`` is passed, then all values must be non-negative and will be
+        passed to `SeedSequence` to derive the initial `BitGenerator` state. One may also
         pass in a `SeedSequence` instance.
         Additionally, when passed a `BitGenerator`, it will be wrapped by
         `Generator`. If passed a `Generator`, it will be returned unaltered.

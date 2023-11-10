@@ -4,6 +4,10 @@ PROJECT_DIR="$1"
 PLATFORM=$(PYTHONPATH=tools python -c "import openblas_support; print(openblas_support.get_plat())")
 
 # Update license
+echo "" >> $PROJECT_DIR/LICENSE.txt
+echo "----" >> $PROJECT_DIR/LICENSE.txt
+echo "" >> $PROJECT_DIR/LICENSE.txt
+cat $PROJECT_DIR/LICENSES_bundled.txt >> $PROJECT_DIR/LICENSE.txt
 if [[ $RUNNER_OS == "Linux" ]] ; then
     cat $PROJECT_DIR/tools/wheels/LICENSE_linux.txt >> $PROJECT_DIR/LICENSE.txt
 elif [[ $RUNNER_OS == "macOS" ]]; then
@@ -14,7 +18,7 @@ fi
 
 # Install Openblas
 if [[ $RUNNER_OS == "Linux" || $RUNNER_OS == "macOS" ]] ; then
-    basedir=$(python tools/openblas_support.py)
+    basedir=$(python tools/openblas_support.py --use-ilp64)
     if [[ $RUNNER_OS == "macOS" && $PLATFORM == "macosx-arm64" ]]; then
         # /usr/local/lib doesn't exist on cirrus-ci runners
         sudo mkdir -p /usr/local/lib /usr/local/include /usr/local/lib/cmake/openblas
@@ -32,28 +36,14 @@ elif [[ $RUNNER_OS == "Windows" ]]; then
     # delvewheel is the equivalent of delocate/auditwheel for windows.
     python -m pip install delvewheel
 
-    # make the DLL available for tools/wheels/repair_windows.sh. If you change
-    # this location you need to alter that script.
-    mkdir -p /c/opt/openblas/openblas_dll
-
-    PYTHONPATH=tools python -c "import openblas_support; openblas_support.make_init('numpy')"
-    mkdir -p /c/opt/32/lib/pkgconfig
-    mkdir -p /c/opt/64/lib/pkgconfig
-    target=$(python -c "import tools.openblas_support as obs; plat=obs.get_plat(); ilp64=obs.get_ilp64(); target=f'openblas_{plat}.zip'; obs.download_openblas(target, plat, ilp64);print(target)")
     if [[ $PLATFORM == 'win-32' ]]; then
-        # 32-bit openBLAS
-        # Download 32 bit openBLAS and put it into c/opt/32/lib
-        unzip -o -d /c/opt/ $target
-        cp /c/opt/32/bin/*.dll /c/opt/openblas/openblas_dll
+        echo "No BLAS used for 32-bit wheels"
     else
-        # 64-bit openBLAS
+        # Note: DLLs are copied from /c/opt/64/bin by delvewheel, see
+        # tools/wheels/repair_windows.sh
+        mkdir -p /c/opt/64/lib/pkgconfig
+        target=$(python -c "import tools.openblas_support as obs; plat=obs.get_plat(); target=f'openblas_{plat}.zip'; obs.download_openblas(target, plat, libsuffix='64_');print(target)")
         unzip -o -d /c/opt/ $target
-        if [[ -f /c/opt/64/lib/pkgconfig/openblas64.pc ]]; then
-            # As of v0.3.23, the 64-bit interface has a openblas64.pc file,
-            # but this is wrong. It should be openblas.pc
-            cp /c/opt/64/lib/pkgconfig/openblas{64,}.pc
-        fi
-        cp /c/opt/64/bin/*.dll /c/opt/openblas/openblas_dll
     fi
 fi
 

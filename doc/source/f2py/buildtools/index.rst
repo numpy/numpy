@@ -17,7 +17,7 @@ with ``f2py``.
    in the future. Alternative methods are thus increasingly more important.
 
 
-Basic Concepts
+Basic concepts
 ===============
 
 Building an extension module which includes Python and Fortran consists of:
@@ -94,7 +94,7 @@ the more popular systems.
    ``make`` has no place in a modern multi-language setup, and so is not
    discussed further.
 
-Build Systems
+Build systems
 ==============
 
 .. toctree::

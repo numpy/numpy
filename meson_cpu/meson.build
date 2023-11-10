@@ -82,7 +82,7 @@ CPU_FEATURES += X86_FEATURES
 CPU_FEATURES += PPC64_FEATURES
 CPU_FEATURES += S390X_FEATURES
 
-# Parse the requsted baseline (CPU_CONF_BASELINE) and dispatch features
+# Parse the requested baseline (CPU_CONF_BASELINE) and dispatch features
 # (CPU_CONF_DISPATCH).
 cpu_family = host_machine.cpu_family()
 # Used by build option 'min'
@@ -98,7 +98,7 @@ if host_machine.endian() == 'little' and cpu_family == 'ppc64'
   min_features = [VSX2]
 endif
 
-# Used by build option 'max'
+# Used by build option 'max/native/detect'
 max_features_dict = {
   'x86': X86_FEATURES,
   'x86_64': X86_FEATURES,
@@ -111,6 +111,11 @@ max_features = []
 foreach fet_name, fet_obj : max_features_dict
   max_features += [fet_obj]
 endforeach
+if max_features.length() == 0
+  message('Disabling CPU feature detection due to unsupported architecture: "' + cpu_family + '"')
+  CPU_CONF_BASELINE = 'none'
+  CPU_CONF_DISPATCH = 'none'
+endif
 
 parse_options = {
   'cpu-baseline': CPU_CONF_BASELINE,
@@ -245,7 +250,7 @@ foreach fet_name, fet_obj : CPU_FEATURES
   if fet_obj in parse_result['cpu-dispatch'] or fet_name in CPU_BASELINE_NAMES
     continue
   endif
-  fet_obj.update(disable: 'Not part of the requsted features')
+  fet_obj.update(disable: 'Not part of the requested features')
 endforeach
 
 CPU_DISPATCH_NAMES = []

@@ -1,6 +1,6 @@
 build_and_store_wheels: &BUILD_AND_STORE_WHEELS
   install_cibuildwheel_script:
-    - python -m pip install cibuildwheel==2.15.0
+    - python -m pip install cibuildwheel
   cibuildwheel_script:
     - cibuildwheel
   wheels_artifacts:
@@ -11,12 +11,13 @@ build_and_store_wheels: &BUILD_AND_STORE_WHEELS
 ######################################################################
 
 linux_aarch64_task:
+  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   compute_engine_instance:
     image_project: cirrus-images
     image: family/docker-builder-arm64
     architecture: arm64
     platform: linux
-    cpu: 2
+    cpu: 1
     memory: 8G
   matrix:
     # build in a matrix because building and testing all four wheels in a
@@ -41,7 +42,7 @@ linux_aarch64_task:
     apt update
     apt install -y python3-venv python-is-python3 gfortran libatlas-base-dev libgfortran5 eatmydata
     git fetch origin
-    ./tools/travis-before-install.sh
+    bash ./tools/wheels/cibw_before_build.sh ${PWD}
     which python
     echo $CIRRUS_CHANGE_MESSAGE
   <<: *BUILD_AND_STORE_WHEELS
@@ -52,6 +53,7 @@ linux_aarch64_task:
 ######################################################################
 
 macosx_arm64_task:
+  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   macos_instance:
     image: ghcr.io/cirruslabs/macos-monterey-xcode:14
   matrix:
@@ -77,10 +79,6 @@ macosx_arm64_task:
       RUNNER_OS=macOS
       SDKROOT=/Applications/Xcode-14.0.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk
       LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-      CFLAGS="-fno-strict-aliasing -DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64"
-      CXXFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64"
-      OPENBLAS64_="/usr/local"
-      NPY_USE_BLAS_ILP64="1"
 
   build_script:
     - brew install python@3.10
@@ -101,6 +99,7 @@ macosx_arm64_task:
 ######################################################################
 
 wheels_upload_task:
+  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   # Artifacts don't seem to be persistent from task to task.
   # Rather than upload wheels at the end of each cibuildwheel run we do a
   # final upload here. This is because a run may be on different OS for
@@ -149,9 +148,7 @@ wheels_upload_task:
         bash miniconda.sh -b -p $HOME/miniconda3
         $HOME/miniconda3/bin/conda init bash
         source $HOME/miniconda3/bin/activate
-        #conda install -y anaconda-client
-        # pin urllib3 until anaconda-client is fixed upstream
-        conda install -y anaconda-client 'urllib3<2.0.0'
+        conda install -y anaconda-client
 
         # The name of the zip file is derived from the `wheels_artifact` line.
         # If you change the artifact line to `myfile_artifact` then it would be

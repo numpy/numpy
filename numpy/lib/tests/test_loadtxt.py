@@ -839,7 +839,7 @@ class TestCReaderUnitTests:
     # unless things go very very wrong somewhere.
     def test_not_an_filelike(self):
         with pytest.raises(AttributeError, match=".*read"):
-            np.core._multiarray_umath._load_from_filelike(
+            np._core._multiarray_umath._load_from_filelike(
                 object(), dtype=np.dtype("i"), filelike=True)
 
     def test_filelike_read_fails(self):
@@ -856,7 +856,7 @@ class TestCReaderUnitTests:
                 return "1,2,3\n"
 
         with pytest.raises(RuntimeError, match="Bad bad bad!"):
-            np.core._multiarray_umath._load_from_filelike(
+            np._core._multiarray_umath._load_from_filelike(
                 BadFileLike(), dtype=np.dtype("i"), filelike=True)
 
     def test_filelike_bad_read(self):
@@ -872,23 +872,23 @@ class TestCReaderUnitTests:
 
         with pytest.raises(TypeError,
                     match="non-string returned while reading data"):
-            np.core._multiarray_umath._load_from_filelike(
+            np._core._multiarray_umath._load_from_filelike(
                 BadFileLike(), dtype=np.dtype("i"), filelike=True)
 
     def test_not_an_iter(self):
         with pytest.raises(TypeError,
                     match="error reading from object, expected an iterable"):
-            np.core._multiarray_umath._load_from_filelike(
+            np._core._multiarray_umath._load_from_filelike(
                 object(), dtype=np.dtype("i"), filelike=False)
 
     def test_bad_type(self):
         with pytest.raises(TypeError, match="internal error: dtype must"):
-            np.core._multiarray_umath._load_from_filelike(
+            np._core._multiarray_umath._load_from_filelike(
                 object(), dtype="i", filelike=False)
 
     def test_bad_encoding(self):
         with pytest.raises(TypeError, match="encoding must be a unicode"):
-            np.core._multiarray_umath._load_from_filelike(
+            np._core._multiarray_umath._load_from_filelike(
                 object(), dtype=np.dtype("i"), filelike=False, encoding=123)
 
     @pytest.mark.parametrize("newline", ["\r", "\n", "\r\n"])
@@ -901,7 +901,7 @@ class TestCReaderUnitTests:
         data = StringIO('0\n1\n"2\n"\n3\n4 #\n'.replace("\n", newline),
                         newline="")
 
-        res = np.core._multiarray_umath._load_from_filelike(
+        res = np._core._multiarray_umath._load_from_filelike(
             data, dtype=np.dtype("U10"), filelike=True,
             quote='"', comment="#", skiplines=1)
         assert_array_equal(res[:, 0], ["1", f"2{newline}", "3", "4 "])
