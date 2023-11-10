@@ -208,7 +208,7 @@ struct Buffer {
 
         for (npy_int64 i = 0; i < len; i++) {
             bool isalpha = enc == ENCODING::UTF32 ? Py_UNICODE_ISALPHA((*this)[i])
-                                                  : Py_ISALPHA((*this)[i]);
+                                                  : NumPyOS_ascii_isalpha((*this)[i]);
             if (!isalpha) {
                 return isalpha;
             }
@@ -226,7 +226,7 @@ struct Buffer {
 
         for (npy_int64 i = 0; i < len; i++) {
             bool isspace = enc == ENCODING::UTF32 ? Py_UNICODE_ISSPACE((*this)[i])
-                                                  : Py_ISSPACE((*this)[i]);
+                                                  : NumPyOS_ascii_isspace((*this)[i]);
             if (!isspace) {
                 return isspace;
             }
@@ -244,7 +244,7 @@ struct Buffer {
 
         for (npy_int64 i = 0; i < len; i++) {
             bool isdigit = enc == ENCODING::UTF32 ? Py_UNICODE_ISDIGIT((*this)[i])
-                                                  : Py_ISDIGIT((*this)[i]);
+                                                  : NumPyOS_ascii_isdigit((*this)[i]);
             if (!isdigit) {
                 return isdigit;
             }
