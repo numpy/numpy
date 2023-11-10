@@ -53,7 +53,7 @@ jobs:
       env:
         BASE_REF: ${{ github.base_ref }}
       run:
-        python tools/linter.py
+        spin lint
     - name: Check Python.h is first file included
       run: |
         python tools/check_python_h_first.py
