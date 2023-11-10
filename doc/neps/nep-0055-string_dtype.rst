@@ -566,7 +566,7 @@ hopefully manageable complexity.
 NaN-like Sentinels
 ++++++++++++++++++
 
-A NaN-like sentinel returns itself as the result of comparison operations. This
+A NaN-like sentinel returns itself as the result of arithmetic operations. This
 includes the python ``nan`` float and the Pandas missing data sentinel
 ``pd.NA``. We choose to make NaN-like sentinels inherit these behaviors in
 operations, so the result of addition is the sentinel:
@@ -576,7 +576,8 @@ operations, so the result of addition is the sentinel:
   >>> arr + arr
   array(['hellohello', nan, 'worldworld'], dtype=StringDType(na_object=nan))
 
-And a NaN-like sentinel will be sorted to the end of the array:
+We also chose to make a NaN-like sentinel sort to the end of the array,
+following the behavior of sorting an array containing ``nan``.
 
   >>> np.sort(arr)
   array(['hello', 'world', nan], dtype=StringDType(na_object=nan))
