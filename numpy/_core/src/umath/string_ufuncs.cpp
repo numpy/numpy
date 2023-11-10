@@ -197,69 +197,6 @@ string_add(Buffer<enc> buf1, Buffer<enc> buf2, char *out)
 }
 
 
-template <ENCODING enc>
-static inline npy_bool
-string_isalpha(Buffer<enc> buf)
-{
-    npy_int64 len = buf.num_codepoints();
-
-    if (len == 0) {
-        return (npy_bool) 0;
-    }
-
-    for (npy_int64 i = 0; i < len; i++) {
-        npy_bool isalpha = (npy_bool) Py_UNICODE_ISALPHA(*buf);
-        if (!isalpha) {
-            return isalpha;
-        }
-        buf++;
-    }
-    return (npy_bool) 1;
-}
-
-
-template <ENCODING enc>
-static inline npy_bool
-string_isdigit(Buffer<enc> buf)
-{
-    npy_int64 len = buf.num_codepoints();
-
-    if (len == 0) {
-        return (npy_bool) 0;
-    }
-
-    for (npy_int64 i = 0; i < len; i++) {
-        npy_bool isdigit = (npy_bool) Py_UNICODE_ISDIGIT(*buf);
-        if (!isdigit) {
-            return isdigit;
-        }
-        buf++;
-    }
-    return (npy_bool) 1;
-}
-
-
-template <ENCODING enc>
-static inline npy_bool
-string_isspace(Buffer<enc> buf)
-{
-    npy_int64 len = buf.num_codepoints();
-
-    if (len == 0) {
-        return (npy_bool) 0;
-    }
-
-    for (npy_int64 i = 0; i < len; i++) {
-        npy_bool isspace = (npy_bool) Py_UNICODE_ISSPACE(*buf);
-        if (!isspace) {
-            return isspace;
-        }
-        buf++;
-    }
-    return (npy_bool) 1;
-}
-
-
 static inline npy_bool
 string_isdecimal(Buffer<ENCODING::UTF32> buf)
 {
@@ -490,8 +427,7 @@ string_isalpha_loop(PyArrayMethod_Context *context,
 
     while (N--) {
         Buffer<enc> buf(in, elsize);
-        npy_bool res = string_isalpha<enc>(buf);
-        *(npy_bool *)out = res;
+        *(npy_bool *)out = (npy_bool) buf.isalpha();
 
         in += strides[0];
         out += strides[1];
@@ -516,8 +452,7 @@ string_isdigit_loop(PyArrayMethod_Context *context,
 
     while (N--) {
         Buffer<enc> buf(in, elsize);
-        npy_bool res = string_isdigit<enc>(buf);
-        *(npy_bool *)out = res;
+        *(npy_bool *)out = (npy_bool) buf.isdigit();
 
         in += strides[0];
         out += strides[1];
@@ -542,8 +477,7 @@ string_isspace_loop(PyArrayMethod_Context *context,
 
     while (N--) {
         Buffer<enc> buf(in, elsize);
-        npy_bool res = string_isspace<enc>(buf);
-        *(npy_bool *)out = res;
+        *(npy_bool *)out = (npy_bool) buf.isspace();
 
         in += strides[0];
         out += strides[1];
