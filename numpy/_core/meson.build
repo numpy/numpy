@@ -1023,6 +1023,7 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/array_assign_array.c',
   'src/multiarray/arrayfunction_override.c',
   src_file.process('src/multiarray/arraytypes.c.src'),
+  'src/multiarray/arraywrap.c',
   'src/multiarray/buffer.c',
   'src/multiarray/calculation.c',
   'src/multiarray/compiled_base.c',
