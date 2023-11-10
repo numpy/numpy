@@ -18,6 +18,7 @@ AR_c16: npt.NDArray[np.complex128]
 AR_O: npt.NDArray[np.object_]
 AR_m: npt.NDArray[np.timedelta64]
 AR_S: npt.NDArray[np.str_]
+AR_b: npt.NDArray[np.bool]
 
 assert_type(np.linalg.tensorsolve(AR_i8, AR_i8), npt.NDArray[np.float64])
 assert_type(np.linalg.tensorsolve(AR_i8, AR_f8), npt.NDArray[np.floating[Any]])
@@ -43,6 +44,13 @@ assert_type(np.linalg.matrix_power(AR_O, 2), npt.NDArray[Any])
 assert_type(np.linalg.cholesky(AR_i8), npt.NDArray[np.float64])
 assert_type(np.linalg.cholesky(AR_f8), npt.NDArray[np.floating[Any]])
 assert_type(np.linalg.cholesky(AR_c16), npt.NDArray[np.complexfloating[Any, Any]])
+
+assert_type(np.linalg.outer(AR_i8, AR_i8), npt.NDArray[np.signedinteger[Any]])
+assert_type(np.linalg.outer(AR_f8, AR_f8), npt.NDArray[np.floating[Any]])
+assert_type(np.linalg.outer(AR_c16, AR_c16), npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(np.linalg.outer(AR_b, AR_b), npt.NDArray[np.bool])
+assert_type(np.linalg.outer(AR_O, AR_O), npt.NDArray[np.object_])
+assert_type(np.linalg.outer(AR_i8, AR_m), npt.NDArray[np.timedelta64])
 
 assert_type(np.linalg.qr(AR_i8), QRResult)
 assert_type(np.linalg.qr(AR_f8), QRResult)

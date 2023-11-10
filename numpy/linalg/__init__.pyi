@@ -5,6 +5,7 @@ from numpy.linalg._linalg import (
     tensorinv as tensorinv,
     inv as inv,
     cholesky as cholesky,
+    outer as outer,
     eigvals as eigvals,
     eigvalsh as eigvalsh,
     pinv as pinv,

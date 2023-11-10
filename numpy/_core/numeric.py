@@ -873,6 +873,8 @@ def outer(a, b, out=None):
     ufunc.outer : A generalization to dimensions other than 1D and other
                   operations. ``np.multiply.outer(a.ravel(), b.ravel())``
                   is the equivalent.
+    linalg.outer : An Array API compatible variation of ``np.outer``,
+                   which accepts 1-dimensional inputs only.
     tensordot : ``np.tensordot(a.ravel(), b.ravel(), axes=((), ()))``
                 is the equivalent.
 
