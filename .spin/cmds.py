@@ -592,7 +592,8 @@ def notes(ctx, version_override):
     \b
     $ spin notes
     """
-    version = version_override or util.get_config()['project.version']
+    project_config = util.get_config()
+    version = version_override or project_config['project.version']
 
     click.secho(
         f"Generating release notes for NumPy {version}",
@@ -605,6 +606,10 @@ def notes(ctx, version_override):
             f"please install `towncrier` to use this command"
         )
 
+    click.secho(
+        f"Reading upcoming changes from {project_config['tool.towncrier.directory']}",
+        bold=True, fg="bright_yellow"
+    )
     # towncrier build --version 2.1 --yes
     cmd = ["towncrier", "build", "--version", version, "--yes"]
     try:
@@ -618,8 +623,12 @@ def notes(ctx, version_override):
         raise click.ClickException(
             f"`towncrier` failed returned {e.returncode} with error `{e.stderr}`"
         )
-    output = p.stdout
-    click.secho(output)
+
+    output_path = project_config['tool.towncrier.filename'].format(version=version)
+    click.secho(
+        f"Release notes successfully written to {output_path}",
+        bold=True, fg="bright_yellow"
+    )
 
     click.secho(
         "Verifying consumption of all news fragments",
