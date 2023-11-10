@@ -1156,6 +1156,14 @@ prepare_ufunc_output(PyUFuncObject *ufunc,
         PyArrayObject *arr;
         PyObject *args_tup;
 
+        /* Use a deprecation warning, since end-users shouldn't worry. */
+        if (DEPRECATE(
+                "__array_prepare__ is deprecated and will not be called "
+                "in the future.  Transition to __array_ufunc__ if you need "
+                "such logic.") < 0) {
+            return -1;
+        }
+
         /* Call with the context argument */
         args_tup = _get_wrap_prepare_args(full_args);
         if (args_tup == NULL) {

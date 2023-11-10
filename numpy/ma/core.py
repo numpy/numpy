@@ -6662,9 +6662,6 @@ class MaskedConstant(MaskedArray):
             self.__class__ = MaskedArray
             MaskedArray.__array_finalize__(self, obj)
 
-    def __array_prepare__(self, obj, context=None):
-        return self.view(MaskedArray).__array_prepare__(obj, context)
-
     def __array_wrap__(self, obj, context=None):
         return self.view(MaskedArray).__array_wrap__(obj, context)
 

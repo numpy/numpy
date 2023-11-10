@@ -2989,12 +2989,15 @@ class TestSpecialMethods:
 
         def do_test(f_call, f_expected):
             a = StoreArrayPrepareWrap()
-            f_call(a)
+
+            with pytest.warns(DeprecationWarning, match=".*__array_prepare__"):
+                f_call(a)
+
             p, w = a.args
             expected = f_expected(a)
             try:
-                assert_equal(p, expected)
-                assert_equal(w, expected)
+                assert p == expected
+                assert w == expected
             except AssertionError as e:
                 # assert_equal produces truly useless error messages
                 raise AssertionError("\n".join([
@@ -3179,11 +3182,12 @@ class TestSpecialMethods:
                 return np.array(arr).view(type=with_prepare)
 
         a = np.array(1).view(type=with_prepare)
-        if use_where:
-            x = np.add(a, a, where=np.array(True))
-        else:
-            x = np.add(a, a)
-        assert_equal(x, np.array(2))
+        with pytest.warns(DeprecationWarning, match=".*__array_prepare__"):
+            if use_where:
+                x = np.add(a, a, where=np.array(True))
+            else:
+                x = np.add(a, a)
+        assert_equal(x.view(np.ndarray), np.array(2))
         assert_equal(type(x), with_prepare)
 
     @pytest.mark.parametrize("use_where", [True, False])
@@ -3196,14 +3200,16 @@ class TestSpecialMethods:
                 return np.array(arr).view(type=with_prepare)
 
         a = np.array([1]).view(type=with_prepare)
-        if use_where:
-            x = np.add(a, a, a, where=[True])
-        else:
-            x = np.add(a, a, a)
+
+        with pytest.warns(DeprecationWarning, match=".*__array_prepare__"):
+            if use_where:
+                x = np.add(a, a, a, where=[True])
+            else:
+                x = np.add(a, a, a)
         # Returned array is new, because of the strange
         # __array_prepare__ above
         assert_(not np.shares_memory(x, a))
-        assert_equal(x, np.array([2]))
+        assert_equal(x.view(np.ndarray), np.array([2]))
         assert_equal(type(x), with_prepare)
 
     def test_failing_prepare(self):
@@ -3216,8 +3222,9 @@ class TestSpecialMethods:
                 raise RuntimeError
 
         a = A()
-        assert_raises(RuntimeError, ncu.maximum, a, a)
-        assert_raises(RuntimeError, ncu.maximum, a, a, where=False)
+        with pytest.warns(DeprecationWarning, match=".*__array_prepare__"):
+            assert_raises(RuntimeError, ncu.maximum, a, a)
+            assert_raises(RuntimeError, ncu.maximum, a, a, where=False)
 
     def test_array_too_many_args(self):
 
@@ -4703,18 +4710,12 @@ def test_outer_bad_subclass():
             if self.ndim == 3:
                 self.shape = self.shape + (1,)
 
-        def __array_prepare__(self, obj, context=None):
-            return obj
-
     class BadArr2(np.ndarray):
         def __array_finalize__(self, obj):
             if isinstance(obj, BadArr2):
                 # outer inserts 1-sized dims. In that case disturb them.
                 if self.shape[-1] == 1:
                     self.shape = self.shape[::-1]
-
-        def __array_prepare__(self, obj, context=None):
-            return obj
 
     for cls in [BadArr1, BadArr2]:
         arr = np.ones((2, 3)).view(cls)

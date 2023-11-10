@@ -787,3 +787,17 @@ class TestDeprecatedDTypeAliases(_DeprecationTestCase):
     def test_a_dtype_alias(self):
         self._check_for_warning(lambda: np.dtype("a"))
         self._check_for_warning(lambda: np.dtype("a10"))
+
+
+class TestArrayPrepareDecration(_DeprecationTestCase):
+    message = ".*__array_prepare__"
+
+    def test(self):
+        class with_prepare(np.ndarray):
+            __array_priority__ = 10
+
+            def __array_prepare__(self, arr, context):
+                return np.array(arr).view(type=with_prepare)
+
+        a = np.arange(3).view(type=with_prepare)
+        self.assert_deprecated(lambda: np.add(a, a))

@@ -189,6 +189,12 @@ array_priority_get(PyArrayObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 }
 
 static PyObject *
+array_prepare_get(PyArrayObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
+{
+    Py_RETURN_NONE;
+}
+
+static PyObject *
 array_typestr_get(PyArrayObject *self)
 {
     return arraydescr_protocol_typestr_get(PyArray_DESCR(self), NULL);
@@ -1053,6 +1059,11 @@ NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
         NULL, NULL},
     {"__array_priority__",
         (getter)array_priority_get,
+        NULL,
+        NULL, NULL},
+    /* For backwards compatibility while deprecating array-prepare */
+    {"__array_prepare__",
+        (getter)array_prepare_get,
         NULL,
         NULL, NULL},
     {NULL, NULL, NULL, NULL, NULL},  /* Sentinel */
