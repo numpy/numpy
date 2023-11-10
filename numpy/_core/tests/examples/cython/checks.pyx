@@ -128,3 +128,6 @@ def get_default_integer():
     if cnp.NPY_DEFAULT_INT == cnp.NPY_INTP:
         return cnp.dtype("intp")
     return None
+
+def conv_intp(cnp.intp_t val):
+    return val

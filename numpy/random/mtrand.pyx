@@ -3501,7 +3501,7 @@ cdef class RandomState:
             return randoms
 
         _dp = PyFloat_AsDouble(p)
-        _in = int(n)
+        _in = n
         check_constraint(_dp, 'p', CONS_BOUNDED_0_1)
         check_constraint(<double>_in, 'n', LEGACY_CONS_NON_NEGATVE_INBOUNDS_LONG)
 
