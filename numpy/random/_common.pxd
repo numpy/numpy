@@ -1,4 +1,4 @@
-#cython: language_level=3
+# cython: language_level=3
 
 from libc.stdint cimport uint32_t, uint64_t, int32_t, int64_t
 
