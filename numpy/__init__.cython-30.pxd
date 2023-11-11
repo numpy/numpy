@@ -601,7 +601,7 @@ cdef extern from "numpy/arrayobject.h":
     npy_bool PyArray_CanCastTo (dtype, dtype)  # writes errors
     int PyArray_ObjectType (object, int) except 0
     dtype PyArray_DescrFromObject (object, dtype)
-    #ndarray* PyArray_ConvertToCommonType (object, int *)
+    # ndarray* PyArray_ConvertToCommonType (object, int *)
     dtype PyArray_DescrFromScalar (object)
     dtype PyArray_DescrFromTypeObject (object)
     npy_intp PyArray_Size (object)
@@ -637,7 +637,7 @@ cdef extern from "numpy/arrayobject.h":
     void PyArray_UpdateFlags (ndarray, int)
     object PyArray_New (type, int, npy_intp *, int, npy_intp *, void *, int, int, object)
     # object PyArray_NewFromDescr (type, dtype, int, npy_intp *, npy_intp *, void *, int, object)
-    #dtype PyArray_DescrNew (dtype)
+    # dtype PyArray_DescrNew (dtype)
     dtype PyArray_DescrNewFromType (int)
     double PyArray_GetPriority (object, double)  # clears errors as of 1.25
     object PyArray_IterNew (object)
