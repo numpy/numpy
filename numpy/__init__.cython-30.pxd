@@ -1157,32 +1157,32 @@ cdef extern from "numpy/arrayobject.h":
 
     # construction and destruction functions
     NpyIter* NpyIter_New(ndarray arr, npy_uint32 flags, NPY_ORDER order,
-                         NPY_CASTING casting, dtype datatype) except? NULL
+                         NPY_CASTING casting, dtype datatype) except NULL
     NpyIter* NpyIter_MultiNew(npy_intp nop, PyArrayObject** op, npy_uint32 flags,
                               NPY_ORDER order, NPY_CASTING casting, npy_uint32*
-                              op_flags, PyArray_Descr** op_dtypes) except? NULL
+                              op_flags, PyArray_Descr** op_dtypes) except NULL
     NpyIter* NpyIter_AdvancedNew(npy_intp nop, PyArrayObject** op,
                                  npy_uint32 flags, NPY_ORDER order,
                                  NPY_CASTING casting, npy_uint32* op_flags,
                                  PyArray_Descr** op_dtypes, int oa_ndim,
                                  int** op_axes, const npy_intp* itershape,
-                                 npy_intp buffersize) except? NULL
+                                 npy_intp buffersize) except NULL
     NpyIter* NpyIter_Copy(NpyIter* it) except NULL
     int NpyIter_RemoveAxis(NpyIter* it, int axis) except NPY_FAIL
     int NpyIter_RemoveMultiIndex(NpyIter* it) except NPY_FAIL
     int NpyIter_EnableExternalLoop(NpyIter* it) except NPY_FAIL
-    int NpyIter_Deallocate(NpyIter* it) except? NPY_FAIL
-    int NpyIter_Reset(NpyIter* it, char** errmsg) except? NPY_FAIL
+    int NpyIter_Deallocate(NpyIter* it) except NPY_FAIL
+    int NpyIter_Reset(NpyIter* it, char** errmsg) except NPY_FAIL
     int NpyIter_ResetToIterIndexRange(NpyIter* it, npy_intp istart,
-                                      npy_intp iend, char** errmsg) except? NPY_FAIL
-    int NpyIter_ResetBasePointers(NpyIter* it, char** baseptrs, char** errmsg) except? NPY_FAIL
+                                      npy_intp iend, char** errmsg) except NPY_FAIL
+    int NpyIter_ResetBasePointers(NpyIter* it, char** baseptrs, char** errmsg) except NPY_FAIL
     int NpyIter_GotoMultiIndex(NpyIter* it, const npy_intp* multi_index) except NPY_FAIL
     int NpyIter_GotoIndex(NpyIter* it, npy_intp index) except NPY_FAIL
     npy_intp NpyIter_GetIterSize(NpyIter* it) nogil
     npy_intp NpyIter_GetIterIndex(NpyIter* it) nogil
     void NpyIter_GetIterIndexRange(NpyIter* it, npy_intp* istart,
                                    npy_intp* iend) nogil
-    int NpyIter_GotoIterIndex(NpyIter* it, npy_intp iterindex) except? NPY_FAIL
+    int NpyIter_GotoIterIndex(NpyIter* it, npy_intp iterindex) except NPY_FAIL
     npy_bool NpyIter_HasDelayedBufAlloc(NpyIter* it) nogil
     npy_bool NpyIter_HasExternalLoop(NpyIter* it) nogil
     npy_bool NpyIter_HasMultiIndex(NpyIter* it) nogil

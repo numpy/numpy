@@ -134,7 +134,11 @@ def conv_intp(cnp.intp_t val):
 
 
 cdef cnp.NpyIter* npyiter_from_nditer_obj(object it):
-    # this function supports up to 3 iterator operands
+    """A function to create a NpyIter struct from a nditer object.
+
+    This function is only meant for testing purposes and onl extracts the
+    necessary info from nditer to test the functionality of NpyIter methods
+    """
     cdef:
         cnp.NpyIter* cit
         cnp.PyArray_Descr* op_dtypes[3]
@@ -164,36 +168,29 @@ cdef cnp.NpyIter* npyiter_from_nditer_obj(object it):
 
 
 def get_npyiter_size(it: "nditer"):
-    cdef cnp.NpyIter* cit
-    try:
-        cit = npyiter_from_nditer_obj(it)
-        return cnp.NpyIter_GetIterSize(cit)
-    finally:
-        cnp.NpyIter_Deallocate(cit)
+    cdef cnp.NpyIter* cit = npyiter_from_nditer_obj(it)
+    result = cnp.NpyIter_GetIterSize(cit)
+    cnp.NpyIter_Deallocate(cit)
+    return result
 
 
 def get_npyiter_ndim(it: "nditer"):
-    cdef cnp.NpyIter* cit
-    try:
-        cit = npyiter_from_nditer_obj(it)
-        return cnp.NpyIter_GetNDim(cit)
-    finally:
-        cnp.NpyIter_Deallocate(cit)
+    cdef cnp.NpyIter* cit = npyiter_from_nditer_obj(it)
+    result = cnp.NpyIter_GetNDim(cit)
+    cnp.NpyIter_Deallocate(cit)
+    return result
 
 
 def get_npyiter_nop(it: "nditer"):
-    cdef cnp.NpyIter* cit
-    try:
-        cit = npyiter_from_nditer_obj(it)
-        return cnp.NpyIter_GetNOp(cit)
-    finally:
-        cnp.NpyIter_Deallocate(cit)
+    cdef cnp.NpyIter* cit = npyiter_from_nditer_obj(it)
+    result = cnp.NpyIter_GetNOp(cit)
+    cnp.NpyIter_Deallocate(cit)
+    return result
 
 
 def get_npyiter_operands(it: "nditer"):
-    cdef cnp.NpyIter* cit
+    cdef cnp.NpyIter* cit = npyiter_from_nditer_obj(it)
     try:
-        cit = npyiter_from_nditer_obj(it)
         arr = cnp.NpyIter_GetOperandArray(cit)
         return tuple([<cnp.ndarray>arr[i] for i in range(it.nop)])
     finally:
@@ -201,20 +198,15 @@ def get_npyiter_operands(it: "nditer"):
 
 
 def get_npyiter_itviews(it: "nditer"):
-    cdef cnp.NpyIter* cit
-    try:
-        cit = npyiter_from_nditer_obj(it)
-        return tuple(
-            [cnp.NpyIter_GetIterView(cit, i) for i in range(it.nop)]
-        )
-    finally:
-        cnp.NpyIter_Deallocate(cit)
+    cdef cnp.NpyIter* cit = npyiter_from_nditer_obj(it)
+    result = tuple([cnp.NpyIter_GetIterView(cit, i) for i in range(it.nop)])
+    cnp.NpyIter_Deallocate(cit)
+    return result
 
 
 def get_npyiter_dtypes(it: "nditer"):
-    cdef cnp.NpyIter* cit
+    cdef cnp.NpyIter* cit = npyiter_from_nditer_obj(it)
     try:
-        cit = npyiter_from_nditer_obj(it)
         arr = cnp.NpyIter_GetDescrArray(cit)
         return tuple([<cnp.dtype>arr[i] for i in range(it.nop)])
     finally:
@@ -222,30 +214,24 @@ def get_npyiter_dtypes(it: "nditer"):
 
 
 def npyiter_has_delayed_bufalloc(it: "nditer"):
-    cdef cnp.NpyIter* cit
-    try:
-        cit = npyiter_from_nditer_obj(it)
-        return cnp.NpyIter_HasDelayedBufAlloc(cit)
-    finally:
-        cnp.NpyIter_Deallocate(cit)
+    cdef cnp.NpyIter* cit = npyiter_from_nditer_obj(it)
+    result = cnp.NpyIter_HasDelayedBufAlloc(cit)
+    cnp.NpyIter_Deallocate(cit)
+    return result
 
 
 def npyiter_has_index(it: "nditer"):
-    cdef cnp.NpyIter* cit
-    try:
-        cit = npyiter_from_nditer_obj(it)
-        return cnp.NpyIter_HasIndex(cit)
-    finally:
-        cnp.NpyIter_Deallocate(cit)
+    cdef cnp.NpyIter* cit = npyiter_from_nditer_obj(it)
+    result = cnp.NpyIter_HasIndex(cit)
+    cnp.NpyIter_Deallocate(cit)
+    return result
 
 
 def npyiter_has_multi_index(it: "nditer"):
-    cdef cnp.NpyIter* cit
-    try:
-        cit = npyiter_from_nditer_obj(it)
-        return cnp.NpyIter_HasMultiIndex(cit)
-    finally:
-        cnp.NpyIter_Deallocate(cit)
+    cdef cnp.NpyIter* cit = npyiter_from_nditer_obj(it)
+    result = cnp.NpyIter_HasMultiIndex(cit)
+    cnp.NpyIter_Deallocate(cit)
+    return result
 
 
 def npyiter_has_finished(it: "nditer"):
