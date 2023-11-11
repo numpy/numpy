@@ -31,19 +31,10 @@ def setup_module():
         pytest.skip("No C compiler available")
 
     if wrap is None:
-        config_code = """
-        config.add_extension('test_array_from_pyobj_ext',
-                             sources=['wrapmodule.c', 'fortranobject.c'],
-                             define_macros=[])
-        """
-        d = os.path.dirname(__file__)
         src = [
             util.getpath("tests", "src", "array_from_pyobj", "wrapmodule.c"),
-            util.getpath("src", "fortranobject.c"),
-            util.getpath("src", "fortranobject.h"),
         ]
-        wrap = util.build_module_distutils(src, config_code,
-                                           "test_array_from_pyobj_ext")
+        wrap = util.build_meson(src, module_name = "test_array_from_pyobj_ext")
 
 
 def flags_info(arr):
