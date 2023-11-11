@@ -160,8 +160,29 @@
 #undef HAVE_CACOSHL
 
 #endif  /* __GLIBC_PREREQ(2, 18) */
-#endif  /* defined(__GLIBC_PREREQ) */
+#else   /* defined(__GLIBC) */
+/* musl linux?, see issue #25092 */
 
+#undef HAVE_CASIN
+#undef HAVE_CASINF
+#undef HAVE_CASINL
+#undef HAVE_CASINH
+#undef HAVE_CASINHF
+#undef HAVE_CASINHL
+#undef HAVE_CATAN
+#undef HAVE_CATANF
+#undef HAVE_CATANL
+#undef HAVE_CATANH
+#undef HAVE_CATANHF
+#undef HAVE_CATANHL
+#undef HAVE_CACOS
+#undef HAVE_CACOSF
+#undef HAVE_CACOSL
+#undef HAVE_CACOSH
+#undef HAVE_CACOSHF
+#undef HAVE_CACOSHL
+
+#endif  /* defined(__GLIBC) */
 #endif  /* defined(HAVE_FEATURES_H) */
 
 #endif  /* NUMPY_CORE_SRC_COMMON_NPY_CONFIG_H_ */
