@@ -359,6 +359,7 @@ class SimplifiedMesonBackend(MesonBackend):
         self.write_meson_build(self.build_dir)
         self.run_meson(self.build_dir)
 
+
 def build_meson(source_files, module_name, **kwargs):
     """
     Build a module via Meson and import it.
@@ -373,20 +374,20 @@ def build_meson(source_files, module_name, **kwargs):
     backend = SimplifiedMesonBackend(
         modulename=module_name,
         sources=source_files,
-        extra_objects=kwargs.get('extra_objects', []),
+        extra_objects=kwargs.get("extra_objects", []),
         build_dir=build_dir,
-        include_dirs=kwargs.get('include_dirs', []),
-        library_dirs=kwargs.get('library_dirs', []),
-        libraries=kwargs.get('libraries', []),
-        define_macros=kwargs.get('define_macros', []),
-        undef_macros=kwargs.get('undef_macros', []),
-        f2py_flags=kwargs.get('f2py_flags', []),
-        sysinfo_flags=kwargs.get('sysinfo_flags', []),
-        fc_flags=kwargs.get('fc_flags', []),
-        flib_flags=kwargs.get('flib_flags', []),
-        setup_flags=kwargs.get('setup_flags', []),
-        remove_build_dir=kwargs.get('remove_build_dir', False),
-        extra_dat=kwargs.get('extra_dat', {}),
+        include_dirs=kwargs.get("include_dirs", []),
+        library_dirs=kwargs.get("library_dirs", []),
+        libraries=kwargs.get("libraries", []),
+        define_macros=kwargs.get("define_macros", []),
+        undef_macros=kwargs.get("undef_macros", []),
+        f2py_flags=kwargs.get("f2py_flags", []),
+        sysinfo_flags=kwargs.get("sysinfo_flags", []),
+        fc_flags=kwargs.get("fc_flags", []),
+        flib_flags=kwargs.get("flib_flags", []),
+        setup_flags=kwargs.get("setup_flags", []),
+        remove_build_dir=kwargs.get("remove_build_dir", False),
+        extra_dat=kwargs.get("extra_dat", {}),
     )
 
     # Compile the module
