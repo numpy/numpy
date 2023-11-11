@@ -47,7 +47,7 @@ class Half final {
     /// Default constructor. initialize nothing.
     Half() = default;
 
-    /// Constract from float
+    /// Construct from float
     /// If there are no hardware optimization available, rounding will always
     /// be set to ties to even.
     explicit Half(float f)
@@ -118,7 +118,7 @@ class Half final {
     #endif
     }
 
-    /// Returns a new Half constracted from the IEEE 754 binary16.
+    /// Returns a new Half constructed from the IEEE 754 binary16.
     static constexpr Half FromBits(uint16_t bits)
     {
         Half h{};
@@ -131,7 +131,7 @@ class Half final {
         return bits_;
     }
 
-    /// @name Comparison operators (orderd)
+    /// @name Comparison operators (ordered)
     /// @{
     constexpr bool operator==(Half r) const
     {
@@ -155,7 +155,7 @@ class Half final {
     }
     /// @}
 
-    /// @name Comparison operators (unorderd)
+    /// @name Comparison operators (unordered)
     /// @{
     constexpr bool operator!=(Half r) const
     {
