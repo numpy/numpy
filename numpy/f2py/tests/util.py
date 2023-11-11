@@ -23,6 +23,8 @@ from pathlib import Path
 from numpy._utils import asunicode
 from numpy.testing import temppath, IS_WASM
 from importlib import import_module
+from numpy.f2py._backends._backend import Backend
+from numpy.f2py._backends._meson import MesonTemplate
 
 #
 # Maintaining a temporary module directory
@@ -341,6 +343,109 @@ if __name__ == "__main__":
             os.unlink(fn)
 
     # Import
+    __import__(module_name)
+    return sys.modules[module_name]
+
+
+#
+# Building with meson
+#
+
+
+class SimplifiedMesonBackend(Backend):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dependencies = self.extra_dat.get("dependencies", [])
+        self.meson_build_dir = "bbdir"
+        self.build_type = (
+            "debug" if any("debug" in flag for flag in self.fc_flags) else "release"
+        )
+
+    def _move_exec_to_root(self, build_dir: Path):
+        walk_dir = Path(build_dir) / self.meson_build_dir
+        path_objects = walk_dir.glob(f"{self.modulename}*.so")
+        for path_object in path_objects:
+            shutil.move(path_object, Path.cwd())
+
+    def _get_build_command(self):
+        return [
+            "meson",
+            "setup",
+            self.meson_build_dir,
+        ]
+
+    def write_meson_build(self, build_dir: Path) -> None:
+        """Writes the meson build file at specified location"""
+        meson_template = MesonTemplate(
+            self.modulename,
+            self.sources,
+            self.dependencies,
+            self.extra_objects,
+            self.flib_flags,
+            self.fc_flags,
+            self.build_type,
+        )
+        src = meson_template.generate_meson_build()
+        Path(build_dir).mkdir(parents=True, exist_ok=True)
+        meson_build_file = Path(build_dir) / "meson.build"
+        meson_build_file.write_text(src)
+        return meson_build_file
+
+    def run_meson(self, build_dir: Path):
+        completed_process = subprocess.run(self._get_build_command(), cwd=build_dir)
+        if completed_process.returncode != 0:
+            raise subprocess.CalledProcessError(
+                completed_process.returncode, completed_process.args
+            )
+        completed_process = subprocess.run(
+            ["meson", "compile", "-C", self.meson_build_dir], cwd=build_dir
+        )
+        if completed_process.returncode != 0:
+            raise subprocess.CalledProcessError(
+                completed_process.returncode, completed_process.args
+            )
+
+    def compile(self) -> None:
+        self.write_meson_build(self.build_dir)
+        self.run_meson(self.build_dir)
+        self._move_exec_to_root(self.build_dir)
+
+
+def build_meson(source_files, module_name, **kwargs):
+    """
+    Build a module via Meson and import it.
+    """
+    build_dir = "build_dir"  # Define the build directory
+
+    # Ensure the build directory exists
+    if not os.path.exists(build_dir):
+        os.makedirs(build_dir)
+
+    # Initialize the MesonBackend
+    backend = SimplifiedMesonBackend(
+        modulename=module_name,
+        sources=source_files,
+        extra_objects=kwargs.get('extra_objects', []),
+        build_dir=build_dir,
+        include_dirs=kwargs.get('include_dirs', []),
+        library_dirs=kwargs.get('library_dirs', []),
+        libraries=kwargs.get('libraries', []),
+        define_macros=kwargs.get('define_macros', []),
+        undef_macros=kwargs.get('undef_macros', []),
+        f2py_flags=kwargs.get('f2py_flags', []),
+        sysinfo_flags=kwargs.get('sysinfo_flags', []),
+        fc_flags=kwargs.get('fc_flags', []),
+        flib_flags=kwargs.get('flib_flags', []),
+        setup_flags=kwargs.get('setup_flags', []),
+        remove_build_dir=kwargs.get('remove_build_dir', False),
+        extra_dat=kwargs.get('extra_dat', {}),
+    )
+
+    # Compile the module
+    backend.compile()
+
+    # Import the compiled module
+    sys.path.insert(0, build_dir)
     __import__(module_name)
     return sys.modules[module_name]
 
