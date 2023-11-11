@@ -248,14 +248,32 @@ program hello90
 end program hello90
 '''
 
+# Dummy class for caching relevant checks
+class CompilerChecker:
+    def __init__(self):
+        self.compilers_checked = False
+        self.has_c = False
+        self.has_f77 = False
+        self.has_f90 = False
+
+    def check_compilers(self):
+        if not self.compilers_checked:
+            self.has_c = check_language('c')
+            self.has_f77 = check_language('fortran', fortran77_code)
+            self.has_f90 = check_language('fortran', fortran90_code)
+            self.compilers_checked = True
+
+checker = CompilerChecker()
+checker.check_compilers()
+
 def has_c_compiler():
-    return check_language('c')
+    return checker.has_c
 
 def has_f77_compiler():
-    return check_language('fortran', fortran77_code)
+    return checker.has_f77
 
 def has_f90_compiler():
-    return check_language('fortran', fortran90_code)
+    return checker.has_f90
 
 #
 # Building with distutils
