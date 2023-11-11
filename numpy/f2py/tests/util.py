@@ -128,6 +128,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     if module_name is None:
         module_name = get_temp_module_name()
     f2py_opts = ["-c", "-m", module_name] + options + f2py_sources
+    f2py_opts += ["--backend", "meson"]
     if skip:
         f2py_opts += ["skip:"] + skip
     if only:
