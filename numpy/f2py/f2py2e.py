@@ -644,19 +644,28 @@ def run_compile():
             del sys.argv[i + 1], sys.argv[i]
             sources = sys.argv[1:]
 
-    pyf_files = []
+    m_flag_modulename = None
     if '-m' in sys.argv:
         i = sys.argv.index('-m')
-        modulename = sys.argv[i + 1]
+        m_flag_modulename = sys.argv[i + 1]
         del sys.argv[i + 1], sys.argv[i]
         sources = sys.argv[1:]
-    else:
-        pyf_files, _sources = filter_files('', '[.]pyf([.]src|)', sources)
-        sources = pyf_files + _sources
-        for f in pyf_files:
-            modulename = auxfuncs.get_f2py_modulename(f)
-            if modulename:
-                break
+
+    pyf_files, _sources = filter_files('', '[.]pyf([.]src|)', sources)
+    sources = pyf_files + _sources
+
+    for f in pyf_files:
+        pyf_modulename = auxfuncs.get_f2py_modulename(f)
+        if pyf_modulename:
+            modulename = pyf_modulename
+            if m_flag_modulename:
+                outmess(f"INFO: {m_flag_modulename} from -m ignored, "
+                        f"using {modulename} from .pyf file\n")
+            break
+
+    if not pyf_files or not modulename:
+        if m_flag_modulename:
+            modulename = m_flag_modulename
 
     extra_objects, sources = filter_files('', '[.](o|a|so|dylib)', sources)
     include_dirs, sources = filter_files('-I', '', sources, remove_prefix=1)
