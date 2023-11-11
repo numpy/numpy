@@ -3,26 +3,21 @@ import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_equal
 from . import util
-
+from pathlib import Path
 
 def get_docdir():
-    # assuming that documentation tests are run from a source
-    # directory
-    return os.path.abspath(os.path.join(
-        os.path.dirname(__file__),
-        '..', '..', '..',
-        'doc', 'source', 'f2py', 'code'))
-
+    # Assumes that spin is used to run tests
+    nproot = Path(__file__).resolve().parents[8]
+    return  nproot / "doc" / "source" / "f2py" / "code"
 
 pytestmark = pytest.mark.skipif(
-    not os.path.isdir(get_docdir()),
-    reason=('Could not find f2py documentation sources'
-            f' ({get_docdir()} does not exists)'))
+    not get_docdir().is_dir(),
+    reason=f"Could not find f2py documentation sources"
+    f"({get_docdir()} does not exist)",
+)
 
-
-def _path(*a):
-    return os.path.join(*((get_docdir(),) + a))
-
+def _path(*args):
+    return get_docdir().joinpath(*args)
 
 class TestDocAdvanced(util.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/build-f2py']
