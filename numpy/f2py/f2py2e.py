@@ -654,6 +654,9 @@ def run_compile():
     pyf_files, _sources = filter_files('', '[.]pyf([.]src|)', sources)
     sources = pyf_files + _sources
 
+    if len(pyf_files) > 1:
+        raise RuntimeError("Only one .pyf file is allowed per compilation.")
+
     for f in pyf_files:
         pyf_modulename = auxfuncs.get_f2py_modulename(f)
         if pyf_modulename:
