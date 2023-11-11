@@ -23,8 +23,7 @@ from pathlib import Path
 from numpy._utils import asunicode
 from numpy.testing import temppath, IS_WASM
 from importlib import import_module
-from numpy.f2py._backends._backend import Backend
-from numpy.f2py._backends._meson import MesonTemplate
+from numpy.f2py._backends._meson import MesonBackend
 
 #
 # Maintaining a temporary module directory
@@ -352,70 +351,19 @@ if __name__ == "__main__":
 #
 
 
-class SimplifiedMesonBackend(Backend):
+class SimplifiedMesonBackend(MesonBackend):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.dependencies = self.extra_dat.get("dependencies", [])
-        self.meson_build_dir = "bbdir"
-        self.build_type = (
-            "debug" if any("debug" in flag for flag in self.fc_flags) else "release"
-        )
 
-    def _move_exec_to_root(self, build_dir: Path):
-        walk_dir = Path(build_dir) / self.meson_build_dir
-        path_objects = walk_dir.glob(f"{self.modulename}*.so")
-        for path_object in path_objects:
-            shutil.move(path_object, Path.cwd())
-
-    def _get_build_command(self):
-        return [
-            "meson",
-            "setup",
-            self.meson_build_dir,
-        ]
-
-    def write_meson_build(self, build_dir: Path) -> None:
-        """Writes the meson build file at specified location"""
-        meson_template = MesonTemplate(
-            self.modulename,
-            self.sources,
-            self.dependencies,
-            self.extra_objects,
-            self.flib_flags,
-            self.fc_flags,
-            self.build_type,
-        )
-        src = meson_template.generate_meson_build()
-        Path(build_dir).mkdir(parents=True, exist_ok=True)
-        meson_build_file = Path(build_dir) / "meson.build"
-        meson_build_file.write_text(src)
-        return meson_build_file
-
-    def run_meson(self, build_dir: Path):
-        completed_process = subprocess.run(self._get_build_command(), cwd=build_dir)
-        if completed_process.returncode != 0:
-            raise subprocess.CalledProcessError(
-                completed_process.returncode, completed_process.args
-            )
-        completed_process = subprocess.run(
-            ["meson", "compile", "-C", self.meson_build_dir], cwd=build_dir
-        )
-        if completed_process.returncode != 0:
-            raise subprocess.CalledProcessError(
-                completed_process.returncode, completed_process.args
-            )
-
-    def compile(self) -> None:
+    def compile(self):
         self.write_meson_build(self.build_dir)
         self.run_meson(self.build_dir)
-        self._move_exec_to_root(self.build_dir)
-
 
 def build_meson(source_files, module_name, **kwargs):
     """
     Build a module via Meson and import it.
     """
-    build_dir = "build_dir"  # Define the build directory
+    build_dir = tempfile.mkdtemp()
 
     # Ensure the build directory exists
     if not os.path.exists(build_dir):
