@@ -1,7 +1,7 @@
 .. _NEP55:
 
 =========================================================
-NEP 55 — Add a UTF-8 Variable-Width String DType to NumPy
+NEP 55 — Add a UTF-8 variable-width string DType to NumPy
 =========================================================
 
 :Author: Nathan Goldbaum <ngoldbaum@quansight.com>
@@ -28,7 +28,7 @@ memory usage, and usability improvements for NumPy users, including:
 * A more intuitive user-facing API for working with arrays of Python strings,
   without a need to think about the in-memory array representation.
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 First, we will describe how the current state of support for string or
@@ -37,7 +37,7 @@ discussion about this topic. Finally, we will describe the scope of the proposed
 changes to NumPy as well as changes that are explicitly out of scope of this
 proposal.
 
-History of String Support in Numpy
+History of string support in Numpy
 **********************************
 
 Support in NumPy for textual data evolved organically in response to early user
@@ -72,7 +72,7 @@ bytestrings as the data type for *all* python ``bytes`` data, and a default
 string type with an in-memory representation that consumes four times as much
 memory as needed for ASCII or mostly-ASCII data.
 
-Problems with Fixed-Width Strings
+Problems with fixed-width strings
 *********************************
 
 Both existing string DTypes represent fixed-width sequences, allowing storage of
@@ -96,7 +96,7 @@ encoded variable-width string arrays [1]_. This is unfortunate, since ``object``
 arrays have no type guarantees, necessitating expensive sanitization passes and
 operations using object arrays cannot release the GIL.
 
-Previous Discussions
+Previous discussions
 --------------------
 
 The project last discussed this topic in depth in 2017, when Julian Taylor
@@ -170,7 +170,7 @@ data. We are attempting to avoid resolving the disagreement described in
 :ref:`NEP 26<NEP26>` and this proposal does not require or preclude adding a
 missing data sentinel or bitflag-based missing data support in the future.
 
-Usage and Impact
+Usage and impact
 ----------------
 
 The DType is intended as a drop-in replacement for object string arrays. This
@@ -377,7 +377,7 @@ DTypes in the integer range available in the ``NPY_TYPES`` enum.
 
 .. _memory:
 
-Memory layout and Managing Heap Allocations
+Memory layout and managing heap allocations
 *******************************************
 
 Since NumPy has no first-class support for ragged arrays, there is no way for a
@@ -723,7 +723,7 @@ variable-width string data from an untrusted source.
 For cases where pickle support is required, support for pickling and unpickling
 string arrays will also be implemented.
 
-Related Work
+Related work
 ------------
 
 The main comparable prior art in the Python ecosystem is PyArrow arrays, which
@@ -832,7 +832,7 @@ Discussion
 - https://mail.python.org/archives/list/numpy-discussion@python.org/thread/IHSVBZ7DWGMTOD6IEMURN23XM2BYM3RG/
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. [1] https://github.com/pandas-dev/pandas/pull/52711

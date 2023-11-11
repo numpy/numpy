@@ -20,7 +20,7 @@ processes for individual cases where breaking backwards compatibility
 is considered.
 
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 NumPy has a very large user base.  Those users rely on NumPy being stable
@@ -330,7 +330,7 @@ Discussion
 - `PR with review comments on the Dec 2020 update of this NEP <https://github.com/numpy/numpy/pull/18097>`__
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 - `Issue requesting semantic versioning <https://github.com/numpy/numpy/issues/10156>`__
