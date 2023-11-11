@@ -198,82 +198,64 @@ def build_code(source_code,
 # Check if compilers are available at all...
 #
 
-_compiler_status = None
-
-
-def _get_compiler_status():
-    global _compiler_status
-    if _compiler_status is not None:
-        return _compiler_status
-
-    _compiler_status = (False, False, False)
-    if IS_WASM:
-        # Can't run compiler from inside WASM.
-        return _compiler_status
-
-    # XXX: this is really ugly. But I don't know how to invoke Distutils
-    #      in a safer way...
-    code = textwrap.dedent(f"""\
-        import os
-        import sys
-        sys.path = {repr(sys.path)}
-
-        def configuration(parent_name='',top_path=None):
-            global config
-            from numpy.distutils.misc_util import Configuration
-            config = Configuration('', parent_name, top_path)
-            return config
-
-        from numpy.distutils.core import setup
-        setup(configuration=configuration)
-
-        config_cmd = config.get_config_cmd()
-        have_c = config_cmd.try_compile('void foo() {{}}')
-        print('COMPILERS:%%d,%%d,%%d' %% (have_c,
-                                          config.have_f77c(),
-                                          config.have_f90c()))
-        sys.exit(99)
-        """)
-    code = code % dict(syspath=repr(sys.path))
-
+def check_language(lang, code_snippet=None):
     tmpdir = tempfile.mkdtemp()
     try:
-        script = os.path.join(tmpdir, "setup.py")
-
-        with open(script, "w") as f:
-            f.write(code)
-
-        cmd = [sys.executable, "setup.py", "config"]
-        p = subprocess.Popen(cmd,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT,
-                             cwd=tmpdir)
-        out, err = p.communicate()
+        meson_file = os.path.join(tmpdir, "meson.build")
+        with open(meson_file, "w") as f:
+            f.write("project('check_compilers')\n")
+            f.write(f"add_languages('{lang}')\n")
+            if code_snippet:
+                f.write(f"{lang}_compiler = meson.get_compiler('{lang}')\n")
+                f.write(f"{lang}_code = '''{code_snippet}'''\n")
+                f.write(
+                    f"_have_{lang}_feature ="
+                    f"{lang}_compiler.compiles({lang}_code,"
+                    f" name: '{lang} feature check')\n"
+                )
+        runmeson = subprocess.run(
+            ["meson", "setup", "btmp"],
+            check=False,
+            cwd=tmpdir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if runmeson.returncode == 0:
+            return True
+        else:
+            return False
     finally:
         shutil.rmtree(tmpdir)
+    return False
 
-    m = re.search(br"COMPILERS:(\d+),(\d+),(\d+)", out)
-    if m:
-        _compiler_status = (
-            bool(int(m.group(1))),
-            bool(int(m.group(2))),
-            bool(int(m.group(3))),
-        )
-    # Finished
-    return _compiler_status
+fortran77_code = '''
+C Example Fortran 77 code
+      PROGRAM HELLO
+      PRINT *, 'Hello, Fortran 77!'
+      END
+'''
 
+fortran90_code = '''
+! Example Fortran 90 code
+program hello90
+  type :: greeting
+    character(len=20) :: text
+  end type greeting
+
+  type(greeting) :: greet
+  greet%text = 'hello, fortran 90!'
+  print *, greet%text
+end program hello90
+'''
 
 def has_c_compiler():
-    return _get_compiler_status()[0]
-
+    return check_language('c')
 
 def has_f77_compiler():
-    return _get_compiler_status()[1]
-
+    return check_language('fortran', fortran77_code)
 
 def has_f90_compiler():
-    return _get_compiler_status()[2]
-
+    return check_language('fortran', fortran90_code)
 
 #
 # Building with distutils
