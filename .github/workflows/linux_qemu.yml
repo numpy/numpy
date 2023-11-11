@@ -23,6 +23,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   linux_qemu:
     if: "github.repository == 'numpy/numpy'"
@@ -46,6 +49,13 @@ jobs:
               "powerpc64le-linux-gnu",
               "ppc64le/ubuntu:22.04",
               "-Dallow-noblas=true",
+              "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
+          ]
+          - [
+              "ppc64le - baseline(Power9)",
+              "powerpc64le-linux-gnu",
+              "ppc64le/ubuntu:22.04",
+              "-Dallow-noblas=true -Dcpu-baseline=vsx3",
               "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
           ]
           - [
@@ -74,7 +84,7 @@ jobs:
 
     name: "${{ matrix.BUILD_PROP[0] }}"
     steps:
-    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
