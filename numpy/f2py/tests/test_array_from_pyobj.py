@@ -38,7 +38,7 @@ def setup_module():
     if not util.has_f90_compiler():
         pytest.skip("No Fortran 90 compiler available")
 
-    if sys.platform.startswith('cygwin'):
+    if sys.platform == 'cygwin':
         pytest.skip("Meson too old for cygwin CI")
 
     if wrap is None:

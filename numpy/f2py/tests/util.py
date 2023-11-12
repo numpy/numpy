@@ -257,10 +257,10 @@ class CompilerChecker:
         self.has_f90 = False
 
     def check_compilers(self):
-        if not self.compilers_checked:
-            self.has_c = check_language('c')
-            self.has_f77 = check_language('fortran', fortran77_code)
-            self.has_f90 = check_language('fortran', fortran90_code)
+        if (not self.compilers_checked) and (not sys.platform == "cygwin"):
+            self.has_c = check_language("c")
+            self.has_f77 = check_language("fortran", fortran77_code)
+            self.has_f90 = check_language("fortran", fortran90_code)
             self.compilers_checked = True
 
 checker = CompilerChecker()
@@ -352,8 +352,8 @@ class F2PyTest:
     def setup_method(self):
         if sys.platform == "win32":
             pytest.skip("Fails with MinGW64 Gfortran (Issue #9673)")
-        if sys.platform.startswith('cygwin'):
-            pytest.skip("Meson too old for cygwin CI")
+        if sys.platform == 'cygwin':
+            pytest.skip("Cygwin doesn't find meson")
 
         if self.module is not None:
             return
