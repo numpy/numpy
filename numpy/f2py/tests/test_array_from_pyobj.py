@@ -3,6 +3,7 @@ import sys
 import copy
 import platform
 import pytest
+from pathlib import Path
 
 import numpy as np
 
@@ -19,6 +20,11 @@ c_names_dict = dict(
 )
 
 
+def get_testdir():
+    testroot = Path(__file__).resolve().parent / "src"
+    return  testroot / "array_from_pyobj"
+
+
 def setup_module():
     """
     Build the required testing extension module
@@ -32,7 +38,7 @@ def setup_module():
 
     if wrap is None:
         src = [
-            util.getpath("tests", "src", "array_from_pyobj", "wrapmodule.c"),
+            get_testdir() / "wrapmodule.c",
         ]
         wrap = util.build_meson(src, module_name = "test_array_from_pyobj_ext")
 
