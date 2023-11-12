@@ -79,7 +79,7 @@ def _atleast_2d_dispatcher(*arys):
 
 
 @array_function_dispatch(_atleast_2d_dispatcher)
-def atleast_2d(*arys):
+def atleast_2d(*arys, fill='left'):
     """
     View inputs as arrays with at least two dimensions.
 
@@ -89,6 +89,8 @@ def atleast_2d(*arys):
         One or more array-like sequences.  Non-array inputs are converted
         to arrays.  Arrays that already have two or more dimensions are
         preserved.
+    fill : {'left', 'right'}
+        Where to add the missing dimension(s) to the original shape.
 
     Returns
     -------
@@ -107,8 +109,10 @@ def atleast_2d(*arys):
     array([[3.]])
 
     >>> x = np.arange(3.0)
-    >>> np.atleast_2d(x)
-    array([[0., 1., 2.]])
+    >>> np.atleast_2d(x, fill='right')
+    array([[ 0.],
+           [ 1.],
+           [ 2.]])
     >>> np.atleast_2d(x).base is x
     True
 
@@ -122,7 +126,8 @@ def atleast_2d(*arys):
         if ary.ndim == 0:
             result = ary.reshape(1, 1)
         elif ary.ndim == 1:
-            result = ary[_nx.newaxis, :]
+            fill_right = fill == 'right'
+            result = ary[:, _nx.newaxis] if fill_right else ary[_nx.newaxis]
         else:
             result = ary
         res.append(result)
@@ -137,7 +142,7 @@ def _atleast_3d_dispatcher(*arys):
 
 
 @array_function_dispatch(_atleast_3d_dispatcher)
-def atleast_3d(*arys):
+def atleast_3d(*arys, fill='both'):
     """
     View inputs as arrays with at least three dimensions.
 
@@ -147,6 +152,10 @@ def atleast_3d(*arys):
         One or more array-like sequences.  Non-array inputs are converted to
         arrays.  Arrays that already have three or more dimensions are
         preserved.
+    fill : {'both', 'left', 'right'}
+        Where to add the missing dimension(s) to the original shape. When
+        ``'both'``, shape ``(N,)`` gives shape ``(1, N, 1)`` and shape
+        ``(M, N)`` gives shape ``(M, N, 1)``.
 
     Returns
     -------
@@ -171,8 +180,8 @@ def atleast_3d(*arys):
     (1, 3, 1)
 
     >>> x = np.arange(12.0).reshape(4,3)
-    >>> np.atleast_3d(x).shape
-    (4, 3, 1)
+    >>> np.atleast_3d(x, fill='left').shape
+    (1, 4, 3)
     >>> np.atleast_3d(x).base is x.base  # x is a reshape, so not base itself
     True
 
@@ -192,9 +201,15 @@ def atleast_3d(*arys):
         if ary.ndim == 0:
             result = ary.reshape(1, 1, 1)
         elif ary.ndim == 1:
-            result = ary[_nx.newaxis, :, _nx.newaxis]
+            if fill == 'left':
+                result = ary[_nx.newaxis, _nx.newaxis]
+            elif fill == 'right':
+                result = ary[:, _nx.newaxis, _nx.newaxis]
+            else:
+                result = ary[_nx.newaxis, :, _nx.newaxis]
         elif ary.ndim == 2:
-            result = ary[:, :, _nx.newaxis]
+            fill_left = fill == 'left'
+            result = ary[_nx.newaxis] if fill_left else ary[..., _nx.newaxis]
         else:
             result = ary
         res.append(result)
