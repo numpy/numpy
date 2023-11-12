@@ -74,7 +74,7 @@ def atleast_1d(*arys):
         return res
 
 
-def _atleast_2d_dispatcher(*arys):
+def _atleast_2d_dispatcher(*arys, fill=None):
     return arys
 
 
@@ -137,7 +137,7 @@ def atleast_2d(*arys, fill='left'):
         return res
 
 
-def _atleast_3d_dispatcher(*arys):
+def _atleast_3d_dispatcher(*arys, fill=None):
     return arys
 
 
