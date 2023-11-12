@@ -419,6 +419,8 @@ class F2PyTest:
     def setup_method(self):
         if sys.platform == "win32":
             pytest.skip("Fails with MinGW64 Gfortran (Issue #9673)")
+        if sys.platform.startswith('cygwin'):
+            pytest.skip("Meson too old for cygwin CI")
 
         if self.module is not None:
             return
