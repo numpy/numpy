@@ -123,20 +123,22 @@ Options:
   -v               Print f2py version ID and exit.
 
 
-build backend options (only effective with -c):
+build backend options (only effective with -c)
+[NO_MESON] is used to indicate an option not meant to be used
+with the meson backend or above Python 3.12:
 
-  --fcompiler=         Specify Fortran compiler type by vendor
-  --compiler=          Specify C compiler type (as defined by distutils)
+  --fcompiler=         Specify Fortran compiler type by vendor [NO_MESON]
+  --compiler=          Specify distutils C compiler type [NO_MESON]
 
-  --help-fcompiler     List available Fortran compilers and exit
-  --f77exec=           Specify the path to F77 compiler
-  --f90exec=           Specify the path to F90 compiler
+  --help-fcompiler     List available Fortran compilers and exit [NO_MESON]
+  --f77exec=           Specify the path to F77 compiler [NO_MESON]
+  --f90exec=           Specify the path to F90 compiler [NO_MESON]
   --f77flags=          Specify F77 compiler flags
   --f90flags=          Specify F90 compiler flags
-  --opt=               Specify optimization flags
-  --arch=              Specify architecture specific optimization flags
-  --noopt              Compile without optimization
-  --noarch             Compile without arch-dependent optimization
+  --opt=               Specify optimization flags [NO_MESON]
+  --arch=              Specify architecture specific optimization flags [NO_MESON]
+  --noopt              Compile without optimization [NO_MESON]
+  --noarch             Compile without arch-dependent optimization [NO_MESON]
   --debug              Compile with debugging information
 
   --dep                <dependency>
@@ -161,7 +163,7 @@ Extra options (only effective with -c):
                        by numpy.distutils/system_info.py. E.g. to link
                        with optimized LAPACK libraries (vecLib on MacOSX,
                        ATLAS elsewhere), use --link-lapack_opt.
-                       See also --help-link switch.
+                       See also --help-link switch. [NO_MESON]
 
   -L/path/to/lib/ -l<libname>
   -D<define> -U<name>
