@@ -31,6 +31,9 @@ To scan Fortran sources and generate a signature file, use
   either specify which routines should be wrapped (in the ``only: .. :`` part)
   or which routines F2PY should ignore (in the ``skip: .. :`` part).
 
+  F2PY has no concept of a "per-file" ``skip`` or ``only`` list, so if functions
+  are listed in ``only``, no other functions will be taken from any other files.
+
 If ``<filename.pyf>`` is specified as ``stdout``, then signatures are written to
 standard output instead of a file.
 
