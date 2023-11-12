@@ -184,7 +184,6 @@ Extra options (only effective with -c):
 
 Version:     {f2py_version}
 numpy Version: {numpy_version}
-Requires:    Python 3.5 or higher.
 License:     NumPy license (see LICENSE.txt in the NumPy source code)
 Copyright 1999 - 2011 Pearu Peterson all rights reserved.
 https://web.archive.org/web/20140822061353/http://cens.ioc.ee/projects/f2py2e"""
