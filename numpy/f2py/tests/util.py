@@ -386,7 +386,7 @@ def build_meson(source_files, module_name, **kwargs):
     backend.compile()
 
     # Import the compiled module
-    sys.path.insert(0, f"{build_dir}/bbdir")
+    sys.path.insert(0, f"{build_dir}/{backend.meson_build_dir}")
     return import_module(module_name)
 
 
