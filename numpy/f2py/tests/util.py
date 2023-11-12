@@ -356,11 +356,13 @@ class SimplifiedMesonBackend(MesonBackend):
         self.run_meson(self.build_dir)
 
 
-def build_meson(source_files, module_name, **kwargs):
+def build_meson(source_files, module_name=None, **kwargs):
     """
     Build a module via Meson and import it.
     """
-    build_dir = tempfile.mkdtemp()
+    build_dir = get_module_dir()
+    if module_name is None:
+        module_name = get_temp_module_name()
 
     # Initialize the MesonBackend
     backend = SimplifiedMesonBackend(
