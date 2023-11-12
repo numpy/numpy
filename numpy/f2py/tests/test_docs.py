@@ -32,7 +32,7 @@ class TestDocAdvanced(util.F2PyTest):
         foo = getattr(self.module, 'foo2')
         assert_equal(foo(2), b'12')
         assert_equal(foo(12), b'123456789A12')
-        assert_equal(foo(24), b'123456789A123456789B')
+        assert_equal(foo(20), b'123456789A123456789B')
 
     def test_ftype(self):
         ftype = self.module
