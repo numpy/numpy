@@ -24,7 +24,6 @@ def get_testdir():
     testroot = Path(__file__).resolve().parent / "src"
     return  testroot / "array_from_pyobj"
 
-
 def setup_module():
     """
     Build the required testing extension module
@@ -35,6 +34,9 @@ def setup_module():
     # Check compiler availability first
     if not util.has_c_compiler():
         pytest.skip("No C compiler available")
+
+    if not util.has_f90_compiler():
+        pytest.skip("No Fortran 90 compiler available")
 
     if wrap is None:
         src = [
