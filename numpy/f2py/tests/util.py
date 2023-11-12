@@ -167,8 +167,6 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
             + _module_list
         )
 
-
-
     # Import
     return import_module(module_name)
 
@@ -341,9 +339,7 @@ if __name__ == "__main__":
         for fn in dst_sources:
             os.unlink(fn)
 
-    # Import
-    __import__(module_name)
-    return sys.modules[module_name]
+    return import_module(module_name)
 
 
 #
@@ -365,10 +361,6 @@ def build_meson(source_files, module_name, **kwargs):
     Build a module via Meson and import it.
     """
     build_dir = tempfile.mkdtemp()
-
-    # Ensure the build directory exists
-    if not os.path.exists(build_dir):
-        os.makedirs(build_dir)
 
     # Initialize the MesonBackend
     backend = SimplifiedMesonBackend(
@@ -394,9 +386,8 @@ def build_meson(source_files, module_name, **kwargs):
     backend.compile()
 
     # Import the compiled module
-    sys.path.insert(0, build_dir)
-    __import__(module_name)
-    return sys.modules[module_name]
+    sys.path.insert(0, f"{build_dir}/bbdir")
+    return import_module(module_name)
 
 
 #
