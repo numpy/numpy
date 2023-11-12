@@ -63,12 +63,6 @@ Description: This program generates a Python C/API file (<modulename>module.c)
 
 Options:
 
-  --2d-numpy       Use numpy.f2py tool with NumPy support. [DEFAULT]
-  --2d-numeric     Use f2py2e tool with Numeric support.
-  --2d-numarray    Use f2py2e tool with Numarray support.
-  --g3-numpy       Use 3rd generation f2py from the separate f2py package.
-                   [NOT AVAILABLE YET]
-
   -h <filename>    Write signatures of the fortran routines to file <filename>
                    and exit. You can then edit <filename> and use it instead
                    of <fortran files>. If <filename>==stdout then the
@@ -710,23 +704,6 @@ def main():
         from numpy.distutils.system_info import show_all
         show_all()
         return
-
-    # Probably outdated options that were not working before 1.16
-    if '--g3-numpy' in sys.argv[1:]:
-        sys.stderr.write("G3 f2py support is not implemented, yet.\\n")
-        sys.exit(1)
-    elif '--2e-numeric' in sys.argv[1:]:
-        sys.argv.remove('--2e-numeric')
-    elif '--2e-numarray' in sys.argv[1:]:
-        # Note that this errors becaust the -DNUMARRAY argument is
-        # not recognized. Just here for back compatibility and the
-        # error message.
-        sys.argv.append("-DNUMARRAY")
-        sys.argv.remove('--2e-numarray')
-    elif '--2e-numpy' in sys.argv[1:]:
-        sys.argv.remove('--2e-numpy')
-    else:
-        pass
 
     if '-c' in sys.argv[1:]:
         run_compile()
