@@ -1620,8 +1620,9 @@ def angle(z, deg=False):
 
     Notes
     -----
-    Although the angle of the complex number 0 is undefined, ``numpy.angle(0)``
-    returns the value 0.
+    This function passes the imaginary and real parts of the argument to
+    `arctan2` to compute the result; consequently, it follows the convention
+    of `arctan2` when the magnitude of the argument is zero. See example.
 
     Examples
     --------
@@ -1629,6 +1630,8 @@ def angle(z, deg=False):
     array([ 0.        ,  1.57079633,  0.78539816]) # may vary
     >>> np.angle(1+1j, deg=True)                  # in degrees
     45.0
+    >>> np.angle([0., -0., complex(0., -0.), complex(-0., -0.)])  # convention
+    array([ 0.        ,  3.14159265, -0.        , -3.14159265])
 
     """
     z = asanyarray(z)
