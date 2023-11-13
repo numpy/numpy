@@ -93,8 +93,7 @@ typedef struct {
     int out_i;
 } _ufunc_context;
 
-/* Get the arg tuple to pass in the context argument to __array_wrap__ and
- * __array_prepare__.
+/* Get the arg tuple to pass in the context argument to __array_wrap__.
  *
  * Output arguments are only passed if at least one is non-None.
  */
@@ -146,12 +145,12 @@ PyUFunc_clearfperr()
 
 /*
  * This function analyzes the input arguments and determines an appropriate
- * method (__array_prepare__ or __array_wrap__) function to call, taking it
+ * method (__array_wrap__) function to call, taking it
  * from the input with the highest priority. Return NULL if no argument
  * defines the method.
  */
 static PyObject*
-_find_array_method(PyObject *args, PyObject *method_name)
+_find_inputs_array_wrap(PyObject *args)
 {
     int i, n_methods;
     PyObject *obj;
@@ -164,7 +163,7 @@ _find_array_method(PyObject *args, PyObject *method_name)
         if (PyArray_CheckExact(obj) || PyArray_IsAnyScalar(obj)) {
             continue;
         }
-        method = PyObject_GetAttr(obj, method_name);
+        method = PyObject_GetAttr(obj, npy_um_str_array_wrap);
         if (method) {
             if (PyCallable_Check(method)) {
                 with_method[n_methods] = obj;
@@ -204,13 +203,12 @@ _find_array_method(PyObject *args, PyObject *method_name)
 }
 
 /*
- * Returns an incref'ed pointer to the proper __array_prepare__/__array_wrap__
+ * Returns an incref'ed pointer to the proper __array_wrap__
  * method for a ufunc output argument, given the output argument `obj`, and the
  * method chosen from the inputs `input_method`.
  */
 static PyObject *
-_get_output_array_method(PyObject *obj, PyObject *method,
-                         PyObject *input_method) {
+_get_output_array_wrap(PyObject *obj, PyObject *input_method) {
     if (obj != Py_None) {
         PyObject *ometh;
 
@@ -222,7 +220,7 @@ _get_output_array_method(PyObject *obj, PyObject *method,
             Py_RETURN_NONE;
         }
 
-        ometh = PyObject_GetAttr(obj, method);
+        ometh = PyObject_GetAttr(obj, npy_um_str_array_wrap);
         if (ometh == NULL) {
             PyErr_Clear();
         }
@@ -240,61 +238,6 @@ _get_output_array_method(PyObject *obj, PyObject *method,
     return input_method;
 }
 
-/*
- * This function analyzes the input arguments
- * and determines an appropriate __array_prepare__ function to call
- * for the outputs.
- *
- * If an output argument is provided, then it is prepped
- * with its own __array_prepare__ not with the one determined by
- * the input arguments.
- *
- * if the provided output argument is already an ndarray,
- * the prepping function is None (which means no prepping will
- * be done --- not even PyArray_Return).
- *
- * A NULL is placed in output_prep for outputs that
- * should just have PyArray_Return called.
- */
-static void
-_find_array_prepare(ufunc_full_args args,
-                    PyObject **output_prep, int nout)
-{
-    int i;
-    PyObject *prep;
-
-    /*
-     * Determine the prepping function given by the input arrays
-     * (could be NULL).
-     */
-    prep = _find_array_method(args.in, npy_um_str_array_prepare);
-    /*
-     * For all the output arrays decide what to do.
-     *
-     * 1) Use the prep function determined from the input arrays
-     * This is the default if the output array is not
-     * passed in.
-     *
-     * 2) Use the __array_prepare__ method of the output object.
-     * This is special cased for
-     * exact ndarray so that no PyArray_Return is
-     * done in that case.
-     */
-    if (args.out == NULL) {
-        for (i = 0; i < nout; i++) {
-            Py_XINCREF(prep);
-            output_prep[i] = prep;
-        }
-    }
-    else {
-        for (i = 0; i < nout; i++) {
-            output_prep[i] = _get_output_array_method(
-                PyTuple_GET_ITEM(args.out, i), npy_um_str_array_prepare, prep);
-        }
-    }
-    Py_XDECREF(prep);
-    return;
-}
 
 #define NPY_UFUNC_DEFAULT_INPUT_FLAGS \
     NPY_ITER_READONLY | \
@@ -404,7 +347,7 @@ _find_array_wrap(ufunc_full_args args, npy_bool subok,
      * Determine the wrapping function given by the input arrays
      * (could be NULL).
      */
-    wrap = _find_array_method(args.in, npy_um_str_array_wrap);
+    wrap = _find_inputs_array_wrap(args.in);
 
     /*
      * For all the output arrays decide what to do.
@@ -427,8 +370,8 @@ handle_out:
     }
     else {
         for (i = 0; i < nout; i++) {
-            output_wrap[i] = _get_output_array_method(
-                PyTuple_GET_ITEM(args.out, i), npy_um_str_array_wrap, wrap);
+            output_wrap[i] = _get_output_array_wrap(
+                PyTuple_GET_ITEM(args.out, i), wrap);
         }
     }
 
@@ -1137,79 +1080,6 @@ check_for_trivial_loop(PyArrayMethodObject *ufuncimpl,
 
 
 /*
- * Calls the given __array_prepare__ function on the operand *op,
- * substituting it in place if a new array is returned and matches
- * the old one.
- *
- * This requires that the dimensions, strides and data type remain
- * exactly the same, which may be more strict than before.
- */
-static int
-prepare_ufunc_output(PyUFuncObject *ufunc,
-                    PyArrayObject **op,
-                    PyObject *arr_prep,
-                    ufunc_full_args full_args,
-                    int i)
-{
-    if (arr_prep != NULL && arr_prep != Py_None) {
-        PyObject *res;
-        PyArrayObject *arr;
-        PyObject *args_tup;
-
-        /* Call with the context argument */
-        args_tup = _get_wrap_prepare_args(full_args);
-        if (args_tup == NULL) {
-            return -1;
-        }
-        res = PyObject_CallFunction(
-            arr_prep, "O(OOi)", *op, ufunc, args_tup, i);
-        Py_DECREF(args_tup);
-
-        if (res == NULL) {
-            return -1;
-        }
-        else if (!PyArray_Check(res)) {
-            PyErr_SetString(PyExc_TypeError,
-                    "__array_prepare__ must return an "
-                    "ndarray or subclass thereof");
-            Py_DECREF(res);
-            return -1;
-        }
-        arr = (PyArrayObject *)res;
-
-        /* If the same object was returned, nothing to do */
-        if (arr == *op) {
-            Py_DECREF(arr);
-        }
-        /* If the result doesn't match, throw an error */
-        else if (PyArray_NDIM(arr) != PyArray_NDIM(*op) ||
-                !PyArray_CompareLists(PyArray_DIMS(arr),
-                                      PyArray_DIMS(*op),
-                                      PyArray_NDIM(arr)) ||
-                !PyArray_CompareLists(PyArray_STRIDES(arr),
-                                      PyArray_STRIDES(*op),
-                                      PyArray_NDIM(arr)) ||
-                !PyArray_EquivTypes(PyArray_DESCR(arr),
-                                    PyArray_DESCR(*op))) {
-            PyErr_SetString(PyExc_TypeError,
-                    "__array_prepare__ must return an "
-                    "ndarray or subclass thereof which is "
-                    "otherwise identical to its input");
-            Py_DECREF(arr);
-            return -1;
-        }
-        /* Replace the op value */
-        else {
-            Py_DECREF(*op);
-            *op = arr;
-        }
-    }
-
-    return 0;
-}
-
-
-/*
  * Check whether a trivial loop is possible and call the innerloop if it is.
  * A trivial loop is defined as one where a single strided inner-loop call
  * is possible.
@@ -1226,7 +1096,6 @@ prepare_ufunc_output(PyUFuncObject *ufunc,
 static int
 try_trivial_single_output_loop(PyArrayMethod_Context *context,
         PyArrayObject *op[], NPY_ORDER order,
-        PyObject *arr_prep[], ufunc_full_args full_args,
         int errormask)
 {
     int nin = context->method->nin;
@@ -1321,12 +1190,6 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
                 PyArray_STRIDES(op[nin])[0] != 0) {
             return -2;
         }
-    }
-
-    /* Call the __prepare_array__ if necessary */
-    if (prepare_ufunc_output((PyUFuncObject *)context->caller, &op[nin],
-            arr_prep[0], full_args, 0) < 0) {
-        return -1;
     }
 
     /*
@@ -1424,7 +1287,6 @@ static int
 execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
         PyArrayObject **op, NPY_ORDER order, npy_intp buffersize,
         NPY_CASTING casting,
-        PyObject **arr_prep, ufunc_full_args full_args,
         npy_uint32 *op_flags, int errormask)
 {
     PyUFuncObject *ufunc = (PyUFuncObject *)context->caller;
@@ -1444,7 +1306,6 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
          *       this gives a best-effort of preserving the input, but does
          *       not always work.  It could allow the operand to be copied
          *       due to copy-if-overlap, but only if it was passed in.
-         *       In that case `__array_prepare__` is called before it happens.
          */
         for (int i = nin; i < nop; ++i) {
             op_flags[i] |= (op[i] != NULL ? NPY_ITER_READWRITE : NPY_ITER_WRITEONLY);
@@ -1464,21 +1325,6 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
                  NPY_ITER_COPY_IF_OVERLAP;
 
     /*
-     * Call the __array_prepare__ functions for already existing output arrays.
-     * Do this before creating the iterator, as the iterator may UPDATEIFCOPY
-     * some of them.
-     */
-    for (int i = 0; i < nout; i++) {
-        if (op[nin+i] == NULL) {
-            continue;
-        }
-        if (prepare_ufunc_output(ufunc, &op[nin+i],
-                arr_prep[i], full_args, i) < 0) {
-            return -1;
-        }
-    }
-
-    /*
      * Allocate the iterator.  Because the types of the inputs
      * were already checked, we use the casting rule 'unsafe' which
      * is faster to calculate.
@@ -1494,38 +1340,15 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
 
     NPY_UF_DBG_PRINT("Made iterator\n");
 
-    /* Call the __array_prepare__ functions for newly allocated arrays */
+    /* Set newly allocated arrays as outputs */
     PyArrayObject **op_it = NpyIter_GetOperandArray(iter);
-    char *baseptrs[NPY_MAXARGS];
-
     for (int i = 0; i < nout; ++i) {
         if (op[nin + i] == NULL) {
             op[nin + i] = op_it[nin + i];
             Py_INCREF(op[nin + i]);
-
-            /* Call the __array_prepare__ functions for the new array */
-            if (prepare_ufunc_output(ufunc,
-                    &op[nin + i], arr_prep[i], full_args, i) < 0) {
-                NpyIter_Deallocate(iter);
-                return -1;
-            }
-
-            /*
-             * In case __array_prepare__ returned a different array, put the
-             * results directly there, ignoring the array allocated by the
-             * iterator.
-             *
-             * Here, we assume the user-provided __array_prepare__ behaves
-             * sensibly and doesn't return an array overlapping in memory
-             * with other operands --- the op[nin+i] array passed to it is newly
-             * allocated and doesn't have any overlap.
-             */
-            baseptrs[nin + i] = PyArray_BYTES(op[nin + i]);
-        }
-        else {
-            baseptrs[nin + i] = PyArray_BYTES(op_it[nin + i]);
         }
     }
+
     /* Only do the loop if the iteration size is non-zero */
     npy_intp full_size = NpyIter_GetIterSize(iter);
     if (full_size == 0) {
@@ -1533,17 +1356,6 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
             return -1;
         }
         return 0;
-    }
-
-    /*
-     * Reset the iterator with the base pointers possibly modified by
-     * `__array_prepare__`.
-     */
-    for (int i = 0; i < nin; i++) {
-        baseptrs[i] = PyArray_BYTES(op_it[i]);
-    }
-    if (masked) {
-        baseptrs[nop] = PyArray_BYTES(op_it[nop]);
     }
 
     /*
@@ -1594,7 +1406,7 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
     }
 
     /* The reset may copy the first buffer chunk, which could cause FPEs */
-    if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {
+    if (NpyIter_Reset(iter, NULL) != NPY_SUCCEED) {
         NPY_AUXDATA_FREE(auxdata);
         NpyIter_Deallocate(iter);
         return -1;
@@ -2612,7 +2424,6 @@ static int
 PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc,
         PyArrayMethodObject *ufuncimpl, PyArray_Descr *operation_descrs[],
         PyArrayObject *op[], NPY_CASTING casting, NPY_ORDER order,
-        PyObject *output_array_prepare[], ufunc_full_args full_args,
         PyArrayObject *wheremask)
 {
     int nin = ufunc->nin, nout = ufunc->nout, nop = nin + nout;
@@ -2667,8 +2478,7 @@ PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc,
 
         return execute_ufunc_loop(&context, 1,
                 op, order, buffersize, casting,
-                output_array_prepare, full_args, op_flags,
-                errormask);
+                op_flags, errormask);
     }
     else {
         NPY_UF_DBG_PRINT("Executing normal inner loop\n");
@@ -2685,17 +2495,14 @@ PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc,
         if (trivial_ok && context.method->nout == 1) {
             /* Try to handle everything without using the (heavy) iterator */
             int retval = try_trivial_single_output_loop(&context,
-                    op, order, output_array_prepare, full_args,
-                    errormask);
+                    op, order, errormask);
             if (retval != -2) {
                 return retval;
             }
         }
 
         return execute_ufunc_loop(&context, 0,
-                op, order, buffersize, casting,
-                output_array_prepare, full_args, op_flags,
-                errormask);
+                op, order, buffersize, casting, op_flags, errormask);
     }
 }
 
@@ -4703,13 +4510,11 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     PyArrayObject *operands[NPY_MAXARGS];
     PyArray_DTypeMeta *operand_DTypes[NPY_MAXARGS];
     PyArray_Descr *operation_descrs[NPY_MAXARGS];
-    PyObject *output_array_prepare[NPY_MAXARGS];
     /* Initialize all arrays (we usually only need a small part) */
     memset(signature, 0, nop * sizeof(*signature));
     memset(operands, 0, nop * sizeof(*operands));
     memset(operand_DTypes, 0, nop * sizeof(*operation_descrs));
     memset(operation_descrs, 0, nop * sizeof(*operation_descrs));
-    memset(output_array_prepare, 0, nout * sizeof(*output_array_prepare));
 
     /*
      * Note that the input (and possibly output) arguments are passed in as
@@ -4965,23 +4770,17 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         }
     }
 
-    if (subok) {
-        _find_array_prepare(full_args, output_array_prepare, nout);
-    }
-
     /*
      * Do the final preparations and call the inner-loop.
      */
     if (!ufunc->core_enabled) {
         errval = PyUFunc_GenericFunctionInternal(ufunc, ufuncimpl,
                 operation_descrs, operands, casting, order,
-                output_array_prepare, full_args,  /* for __array_prepare__ */
                 wheremask);
     }
     else {
         errval = PyUFunc_GeneralizedFunctionInternal(ufunc, ufuncimpl,
                 operation_descrs, operands, casting, order,
-                /* GUFuncs never (ever) called __array_prepare__! */
                 axis_obj, axes_obj, keepdims);
     }
     if (errval < 0) {
@@ -4999,9 +4798,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         Py_DECREF(operation_descrs[i]);
         if (i < nin) {
             Py_DECREF(operands[i]);
-        }
-        else {
-            Py_XDECREF(output_array_prepare[i-nin]);
         }
     }
     /* The following steals the references to the outputs: */
@@ -5021,9 +4817,6 @@ fail:
         Py_XDECREF(signature[i]);
         Py_XDECREF(operand_DTypes[i]);
         Py_XDECREF(operation_descrs[i]);
-        if (i < nout) {
-            Py_XDECREF(output_array_prepare[i]);
-        }
     }
     return NULL;
 }

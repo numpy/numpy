@@ -112,28 +112,19 @@ control will be passed completely to that function, i.e., the ufunc is
 :ref:`overridden <ufuncs.overrides>`.
 
 If none of the inputs overrides the ufunc, then
-all output arrays will be passed to the
-:obj:`~.class.__array_prepare__` and
-:obj:`~.class.__array_wrap__` methods of the input (besides
-:class:`ndarrays <.ndarray>`, and scalars) that defines it **and** has
-the highest :obj:`~.class.__array_priority__`
+all output arrays will be passed to the :obj:`~.class.__array_wrap__`
+method of the input (besides :class:`ndarrays <.ndarray>`, and scalars)
+that defines it **and** has the highest :obj:`~.class.__array_priority__`
 of any other input to the universal function. The default
 :obj:`~.class.__array_priority__` of the
 ndarray is 0.0, and the default :obj:`~.class.__array_priority__` of a subtype
 is 0.0. Matrices have :obj:`~.class.__array_priority__` equal to 10.0.
 
-All ufuncs can also take output arguments. If necessary, output will
-be cast to the data-type(s) of the provided output array(s). If a class
-with an :obj:`~.class.__array__` method is used for the output,
-results will be written to the object returned by :obj:`~.class.__array__`.
-Then, if the class also has an :obj:`~.class.__array_prepare__` method, it is
-called so metadata may be determined based on the context of the ufunc (the
-context consisting of the ufunc itself, the arguments passed to the ufunc, and
-the ufunc domain.) The array object returned by
-:obj:`~.class.__array_prepare__` is passed to the ufunc for computation.
-Finally, if the class also has an :obj:`~.class.__array_wrap__` method, the
-returned :class:`.ndarray` result will be passed to that method just before
-passing control back to the caller.
+All ufuncs can also take output arguments which must be arrays or subclasses.
+If necessary, the result will be cast to the data-type(s) of the provided
+output array(s).
+If the output has an :obj:`~.class.__array_wrap__` method it is called instead
+of the one found on the inputs.
 
 .. _ufuncs.broadcasting:
 

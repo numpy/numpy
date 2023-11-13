@@ -191,7 +191,6 @@ assert_type(complex(AR_f8), complex)
 
 assert_type(operator.index(AR_i8), int)
 
-assert_type(AR_f8.__array_prepare__(B), npt.NDArray[np.object_])
 assert_type(AR_f8.__array_wrap__(B), npt.NDArray[np.object_])
 
 assert_type(AR_V[0], Any)

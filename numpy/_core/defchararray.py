@@ -2056,8 +2056,6 @@ class chararray(ndarray):
     """
     def __new__(subtype, shape, itemsize=1, unicode=False, buffer=None,
                 offset=0, strides=None, order='C'):
-        global _globalvar
-
         if unicode:
             dtype = str_
         else:
@@ -2075,7 +2073,6 @@ class chararray(ndarray):
         else:
             filler = None
 
-        _globalvar = 1
         if buffer is None:
             self = ndarray.__new__(subtype, shape, (dtype, itemsize),
                                    order=order)
@@ -2086,24 +2083,20 @@ class chararray(ndarray):
                                    order=order)
         if filler is not None:
             self[...] = filler
-        _globalvar = 0
+
         return self
 
-    def __array_prepare__(self, arr, context=None):
-        # When calling a ufunc, we return a chararray if the ufunc output
-        # is a string-like array, or an ndarray otherwise
-        if arr.dtype.char in "SUbc":
-            return arr.view(type(self))
-        return arr
-
     def __array_wrap__(self, arr, context=None):
+        # When calling a ufunc (and some other functions), we return a
+        # chararray if the ufunc output is a string-like array,
+        # or an ndarray otherwise
         if arr.dtype.char in "SUbc":
             return arr.view(type(self))
         return arr
 
     def __array_finalize__(self, obj):
         # The b is a special case because it is used for reconstructing.
-        if not _globalvar and self.dtype.char not in 'SUbc':
+        if self.dtype.char not in 'SUbc':
             raise ValueError("Can only create a chararray from string data.")
 
     def __getitem__(self, obj):

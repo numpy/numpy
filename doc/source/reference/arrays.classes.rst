@@ -154,11 +154,6 @@ NumPy provides several hooks that classes can customize:
         to have a hierarchy of subclasses that extend the behaviour. See
         :ref:`Subclassing ndarray <basics.subclassing>` for details.
 
-   .. note:: If a class defines the :func:`__array_ufunc__` method,
-      this disables the :func:`__array_wrap__`,
-      :func:`__array_prepare__`, :data:`__array_priority__` mechanism
-      described below for ufuncs (which may eventually be deprecated).
-
 .. py:method:: class.__array_function__(func, types, args, kwargs)
 
    .. versionadded:: 1.16
@@ -274,21 +269,6 @@ NumPy provides several hooks that classes can customize:
    to update meta-information from the "parent." Subclasses inherit
    a default implementation of this method that does nothing.
 
-.. py:method:: class.__array_prepare__(array, context=None)
-
-   At the beginning of every :ref:`ufunc <ufuncs-output-type>`, this
-   method is called on the input object with the highest array
-   priority, or the output object if one was specified. The output
-   array is passed in and whatever is returned is passed to the ufunc.
-   Subclasses inherit a default implementation of this method which
-   simply returns the output array unmodified. Subclasses may opt to
-   use this method to transform the output array into an instance of
-   the subclass and update metadata before returning the array to the
-   ufunc for computation.
-
-   .. note:: For ufuncs, it is hoped to eventually deprecate this method in
-             favour of :func:`__array_ufunc__`.
-
 .. py:method:: class.__array_wrap__(array, context=None)
 
    At the end of every :ref:`ufunc <ufuncs-output-type>`, this method
@@ -301,8 +281,13 @@ NumPy provides several hooks that classes can customize:
    into an instance of the subclass and update metadata before
    returning the array to the user.
 
-   .. note:: For ufuncs, it is hoped to eventually deprecate this method in
-             favour of :func:`__array_ufunc__`.
+   NumPy may also call this function without a context from non-ufuncs to
+   allow preserving subclass information.
+
+   .. note::
+      It is hoped to eventually deprecate this method in favour of
+      func:`__array_ufunc__` for ufuncs (and :func:`__array_function__`
+      for a few other functions like :func:`np.squeeze`).
 
 .. py:attribute:: class.__array_priority__
 
