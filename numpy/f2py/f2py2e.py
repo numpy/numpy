@@ -63,12 +63,6 @@ Description: This program generates a Python C/API file (<modulename>module.c)
 
 Options:
 
-  --2d-numpy       Use numpy.f2py tool with NumPy support. [DEFAULT]
-  --2d-numeric     Use f2py2e tool with Numeric support.
-  --2d-numarray    Use f2py2e tool with Numarray support.
-  --g3-numpy       Use 3rd generation f2py from the separate f2py package.
-                   [NOT AVAILABLE YET]
-
   -h <filename>    Write signatures of the fortran routines to file <filename>
                    and exit. You can then edit <filename> and use it instead
                    of <fortran files>. If <filename>==stdout then the
@@ -129,20 +123,22 @@ Options:
   -v               Print f2py version ID and exit.
 
 
-build backend options (only effective with -c):
+build backend options (only effective with -c)
+[NO_MESON] is used to indicate an option not meant to be used
+with the meson backend or above Python 3.12:
 
-  --fcompiler=         Specify Fortran compiler type by vendor
-  --compiler=          Specify C compiler type (as defined by distutils)
+  --fcompiler=         Specify Fortran compiler type by vendor [NO_MESON]
+  --compiler=          Specify distutils C compiler type [NO_MESON]
 
-  --help-fcompiler     List available Fortran compilers and exit
-  --f77exec=           Specify the path to F77 compiler
-  --f90exec=           Specify the path to F90 compiler
+  --help-fcompiler     List available Fortran compilers and exit [NO_MESON]
+  --f77exec=           Specify the path to F77 compiler [NO_MESON]
+  --f90exec=           Specify the path to F90 compiler [NO_MESON]
   --f77flags=          Specify F77 compiler flags
   --f90flags=          Specify F90 compiler flags
-  --opt=               Specify optimization flags
-  --arch=              Specify architecture specific optimization flags
-  --noopt              Compile without optimization
-  --noarch             Compile without arch-dependent optimization
+  --opt=               Specify optimization flags [NO_MESON]
+  --arch=              Specify architecture specific optimization flags [NO_MESON]
+  --noopt              Compile without optimization [NO_MESON]
+  --noarch             Compile without arch-dependent optimization [NO_MESON]
   --debug              Compile with debugging information
 
   --dep                <dependency>
@@ -167,7 +163,7 @@ Extra options (only effective with -c):
                        by numpy.distutils/system_info.py. E.g. to link
                        with optimized LAPACK libraries (vecLib on MacOSX,
                        ATLAS elsewhere), use --link-lapack_opt.
-                       See also --help-link switch.
+                       See also --help-link switch. [NO_MESON]
 
   -L/path/to/lib/ -l<libname>
   -D<define> -U<name>
@@ -177,7 +173,6 @@ Extra options (only effective with -c):
   Using the following macros may be required with non-gcc Fortran
   compilers:
     -DPREPEND_FORTRAN -DNO_APPEND_FORTRAN -DUPPERCASE_FORTRAN
-    -DUNDERSCORE_G77
 
   When using -DF2PY_REPORT_ATEXIT, a performance report of F2PY
   interface is printed out at exit (platforms: Linux).
@@ -189,7 +184,6 @@ Extra options (only effective with -c):
 
 Version:     {f2py_version}
 numpy Version: {numpy_version}
-Requires:    Python 3.5 or higher.
 License:     NumPy license (see LICENSE.txt in the NumPy source code)
 Copyright 1999 - 2011 Pearu Peterson all rights reserved.
 https://web.archive.org/web/20140822061353/http://cens.ioc.ee/projects/f2py2e"""
@@ -710,23 +704,6 @@ def main():
         from numpy.distutils.system_info import show_all
         show_all()
         return
-
-    # Probably outdated options that were not working before 1.16
-    if '--g3-numpy' in sys.argv[1:]:
-        sys.stderr.write("G3 f2py support is not implemented, yet.\\n")
-        sys.exit(1)
-    elif '--2e-numeric' in sys.argv[1:]:
-        sys.argv.remove('--2e-numeric')
-    elif '--2e-numarray' in sys.argv[1:]:
-        # Note that this errors becaust the -DNUMARRAY argument is
-        # not recognized. Just here for back compatibility and the
-        # error message.
-        sys.argv.append("-DNUMARRAY")
-        sys.argv.remove('--2e-numarray')
-    elif '--2e-numpy' in sys.argv[1:]:
-        sys.argv.remove('--2e-numpy')
-    else:
-        pass
 
     if '-c' in sys.argv[1:]:
         run_compile()

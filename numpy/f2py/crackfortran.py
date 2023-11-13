@@ -2398,8 +2398,6 @@ def _calc_depend_dict(vars):
 
 
 def get_sorted_names(vars):
-    """
-    """
     depend_dict = _calc_depend_dict(vars)
     names = []
     for name in list(depend_dict.keys()):
@@ -3218,11 +3216,6 @@ def true_intent_list(var):
 
 
 def vars2fortran(block, vars, args, tab='', as_interface=False):
-    """
-    TODO:
-    public sub
-    ...
-    """
     setmesstext(block)
     ret = ''
     nout = []
