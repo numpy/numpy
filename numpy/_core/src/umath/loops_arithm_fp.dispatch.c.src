@@ -138,8 +138,10 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
                 npyv_store_@sfx@((@type@*)(dst + vstep), r1);
             }
             for (; len > 0; len -= hstep, src0 += vstep, dst += vstep) {
-            #if @is_div@ || @is_mul@
+            #if @is_mul@
                 npyv_@sfx@ a = npyv_load_till_@sfx@((const @type@*)src0, len, 1.0@c@);
+            #elif @is_div@
+                npyv_@sfx@ a = npyv_load_till_@sfx@((const @type@*)src0, len, NPY_NAN@C@);
             #else
                 npyv_@sfx@ a = npyv_load_tillz_@sfx@((const @type@*)src0, len);
             #endif
