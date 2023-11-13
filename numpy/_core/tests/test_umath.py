@@ -2964,7 +2964,7 @@ class TestSpecialMethods:
         assert_equal(args[1], a)
         assert_equal(i, 0)
 
-    def test_wrap_and_prepare_out(self):
+    def test_wrap_out(self):
         # Calling convention for out should not affect how special methods are
         # called
 
@@ -2976,34 +2976,28 @@ class TestSpecialMethods:
             def __array_wrap__(self, obj, context):
                 self._wrap_args = context[1]
                 return obj
-            def __array_prepare__(self, obj, context):
-                self._prepare_args = context[1]
-                return obj
             @property
             def args(self):
                 # We need to ensure these are fetched at the same time, before
                 # any other ufuncs are called by the assertions
-                return (self._prepare_args, self._wrap_args)
+                return self._wrap_args
             def __repr__(self):
                 return "a"  # for short test output
 
         def do_test(f_call, f_expected):
             a = StoreArrayPrepareWrap()
 
-            with pytest.warns(DeprecationWarning, match=".*__array_prepare__"):
-                f_call(a)
+            f_call(a)
 
-            p, w = a.args
+            w = a.args
             expected = f_expected(a)
             try:
-                assert p == expected
                 assert w == expected
             except AssertionError as e:
                 # assert_equal produces truly useless error messages
                 raise AssertionError("\n".join([
                     "Bad arguments passed in ufunc call",
                     " expected:              {}".format(expected),
-                    " __array_prepare__ got: {}".format(p),
                     " __array_wrap__ got:    {}".format(w)
                 ]))
 
@@ -3170,61 +3164,6 @@ class TestSpecialMethods:
         x = ncu.minimum(a, a)
         assert_equal(x, np.zeros(1))
         assert_equal(type(x), np.ndarray)
-
-    @pytest.mark.parametrize("use_where", [True, False])
-    def test_prepare(self, use_where):
-
-        class with_prepare(np.ndarray):
-            __array_priority__ = 10
-
-            def __array_prepare__(self, arr, context):
-                # make sure we can return a new
-                return np.array(arr).view(type=with_prepare)
-
-        a = np.array(1).view(type=with_prepare)
-        with pytest.warns(DeprecationWarning, match=".*__array_prepare__"):
-            if use_where:
-                x = np.add(a, a, where=np.array(True))
-            else:
-                x = np.add(a, a)
-        assert_equal(x.view(np.ndarray), np.array(2))
-        assert_equal(type(x), with_prepare)
-
-    @pytest.mark.parametrize("use_where", [True, False])
-    def test_prepare_out(self, use_where):
-
-        class with_prepare(np.ndarray):
-            __array_priority__ = 10
-
-            def __array_prepare__(self, arr, context):
-                return np.array(arr).view(type=with_prepare)
-
-        a = np.array([1]).view(type=with_prepare)
-
-        with pytest.warns(DeprecationWarning, match=".*__array_prepare__"):
-            if use_where:
-                x = np.add(a, a, a, where=[True])
-            else:
-                x = np.add(a, a, a)
-        # Returned array is new, because of the strange
-        # __array_prepare__ above
-        assert_(not np.shares_memory(x, a))
-        assert_equal(x.view(np.ndarray), np.array([2]))
-        assert_equal(type(x), with_prepare)
-
-    def test_failing_prepare(self):
-
-        class A:
-            def __array__(self):
-                return np.zeros(1)
-
-            def __array_prepare__(self, arr, context=None):
-                raise RuntimeError
-
-        a = A()
-        with pytest.warns(DeprecationWarning, match=".*__array_prepare__"):
-            assert_raises(RuntimeError, ncu.maximum, a, a)
-            assert_raises(RuntimeError, ncu.maximum, a, a, where=False)
 
     def test_array_too_many_args(self):
 
