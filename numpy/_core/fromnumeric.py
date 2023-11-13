@@ -3550,7 +3550,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     ddof : int, optional
         Means Delta Degrees of Freedom.  The divisor used in calculations
         is ``N - ddof``, where ``N`` represents the number of elements.
-        By default `ddof` is zero.
+        By default `ddof` is zero. See Notes for details about use of `ddof`.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -3588,24 +3588,45 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
     Notes
     -----
-    The standard deviation is the square root of the average of the squared
-    deviations from the mean, i.e., ``std = sqrt(mean(x))``, where
-    ``x = abs(a - a.mean())**2``.
+    The (sample) standard deviation is the square root of an average of the
+    squared deviations from the sample mean.
 
-    The average squared deviation is typically calculated as ``x.sum() / N``,
-    where ``N = len(x)``. If, however, `ddof` is specified, the divisor
-    ``N - ddof`` is used instead. In standard statistical practice, ``ddof=1``
-    provides an unbiased estimator of the variance of the infinite population.
-    ``ddof=0`` provides a maximum likelihood estimate of the variance for
-    normally distributed variables. The standard deviation computed in this
-    function is the square root of the estimated variance, so even with
-    ``ddof=1``, it will not be an unbiased estimate of the standard deviation
-    per se.
+    The squared deviations are calculated as ``x2 = abs(a - a.mean())**2``,
+    and the average is taken as ``x2.sum() / (N - ddof)``, where ``N`` is the
+    number of observations in the sample `a` and `ddof` is a keyword parameter.
+    The square root of this quantity is a "consistent" estimator of the
+    standard deviation of the population from which the sample was drawn: as
+    the number of observations tends toward infinity, it converges in
+    probability to the true population standard deviation.
+
+    With ``ddof=0`` (default), the resulting sample standard deviation is known
+    as the "uncorrected sample standard deviation" because it is not corrected
+    for "bias": the expected value of this sample standard deviation does not
+    equal the true population standard deviation. Nonetheless, it is a useful
+    estimator of the population standard deviation when the sample size is
+    large, and it is the maximumum likelihood estimate of the standard
+    deviation when the population is normally distributed.
+
+    Use of ``ddof=1`` is known as the "Bessel correction", and the resulting
+    average squared deviation is an unbiased estimator of the population
+    variance. The square root of this unbiased variance estimate is known as
+    the "corrected sample standard deviation" or simply *the* "sample standard
+    deviation", although it is still a biased estimate of the population
+    standard deviation.
+
+    Other values of `ddof` may have desirable properties for samples drawn from
+    certain distributions; for instance, if the population is normally
+    distributed, ``ddof=1.5`` nearly eliminates the bias. Unfortunately, there
+    is no simple, unbiased estimator of the population standard deviation that
+    is valid for all distributions, and reducing the bias often *increases* the
+    mean squared error between the sample standard deviation and population
+    standard deviation. Consequently, the "best" choice of `ddof` depends on
+    the use case and is often subjective.
 
     Note that, for complex numbers, `std` takes the absolute
     value before squaring, so that the result is always real and nonnegative.
 
-    For floating-point input, the *std* is computed using the same
+    For floating-point input, the standard deviation is computed using the same
     precision the input has. Depending on the input data, this can cause
     the results to be inaccurate, especially for float32 (see example below).
     Specifying a higher-accuracy accumulator using the `dtype` keyword can
@@ -3717,7 +3738,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     ddof : int, optional
         "Delta Degrees of Freedom": the divisor used in the calculation is
         ``N - ddof``, where ``N`` represents the number of elements. By
-        default `ddof` is zero.
+        default `ddof` is zero. See notes for details about use of `ddof`.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -3755,15 +3776,33 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
     Notes
     -----
-    The variance is the average of the squared deviations from the mean,
-    i.e.,  ``var = mean(x)``, where ``x = abs(a - a.mean())**2``.
+    The (sample) variance is an average of the squared deviations from the
+    sample mean.
 
-    The mean is typically calculated as ``x.sum() / N``, where ``N = len(x)``.
-    If, however, `ddof` is specified, the divisor ``N - ddof`` is used
-    instead.  In standard statistical practice, ``ddof=1`` provides an
-    unbiased estimator of the variance of a hypothetical infinite population.
-    ``ddof=0`` provides a maximum likelihood estimate of the variance for
-    normally distributed variables.
+    The squared deviations are calculated as ``x2 = abs(a - a.mean())**2``,
+    and the average is taken as ``x2.sum() / (N - ddof)``, where ``N`` is the
+    number of observations in the sample `a` and `ddof` is a keyword parameter.
+    This is a "consistent" estimator of the variance of the population from
+    which the sample was drawn: as the number of observations tends toward
+    infinity, it converges in probability to the true population variance.
+
+    With ``ddof=0`` (default), the resulting sample variance is known as the
+    "uncorrected sample variance" because it is not corrected for "bias": the
+    expected value of this sample variance does not equal the true population
+    variance. Nonetheless, it is a useful estimator of the population variance
+    when the sample size is large, and it is the maximumum likelihood estimate
+    of the variance when the population is normally distributed.
+
+    Use of ``ddof=1`` is known as the "Bessel correction", and the resulting
+    "corrected sample variance" (or simple *the* "sample variance") is an
+    unbiased estimator of the population variance. Other values of `ddof` may
+    have desirable properties for samples drawn from certain distributions;
+    for instance, if the population is normally distributed, ``ddof=1.5``
+    nearly eliminates the bias. Unfortunately, there is no simple, unbiased
+    estimator of the population variance that is valid for all distributions,
+    and reducing the bias often *increases* the mean squared error between the
+    sample variance and population variance. Consequently, the "best" choice of
+    `ddof` depends on the use case and is often subjective.
 
     Note that for complex numbers, the absolute value is taken before
     squaring, so that the result is always real and nonnegative.
