@@ -284,8 +284,10 @@ NumPy provides several hooks that classes can customize:
    NumPy may also call this function without a context from non-ufuncs to
    allow preserving subclass information.
 
-   .. note:: For ufuncs, it is hoped to eventually deprecate this method in
-             favour of :func:`__array_ufunc__` and :func:`__array_function__`.
+   .. note::
+      It is hoped to eventually deprecate this method in favour of
+      func:`__array_ufunc__` for ufuncs (and :func:`__array_function__`
+      for a few other functions like :func:`np.squeeze`).
 
 .. py:attribute:: class.__array_priority__
 
