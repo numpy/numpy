@@ -14,6 +14,15 @@ npy_include_path = run_command(py, [
     'import os; os.chdir(".."); import numpy; print(os.path.abspath(numpy.get_include()))'
     ], check: true).stdout().strip()
 
+npy_path = run_command(py, [
+    '-c',
+    'import os; os.chdir(".."); import numpy; print(os.path.dirname(numpy.__file__).removesuffix("numpy"))'
+    ], check: true).stdout().strip()
+
+# TODO: This is a hack due to gh-25135, where cython may not find the right
+#       __init__.pyd file.
+add_project_arguments('-I', npy_path, language : 'cython')
+
 py.extension_module(
     'checks',
     'checks.pyx',
