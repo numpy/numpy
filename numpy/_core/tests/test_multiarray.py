@@ -5828,6 +5828,15 @@ class TestFlat:
         # If the type was incorrect, this would show up on big-endian machines
         assert it.index == it.base.size
 
+    def test_maxdims(self):
+        # The flat iterator and thus attribute is currently unfortunately
+        # limited to only 32 dimensions (after bumping it to 64 for 2.0)
+        a = np.ones((1,) * 64)
+
+        with pytest.raises(RuntimeError,
+                match=".*32 dimensions but the array has 64"):
+            a.flat
+
 
 class TestResize:
 
@@ -7405,6 +7414,22 @@ class TestChoose:
     def test_output_dtype(self, ops):
         expected_dt = np.result_type(*ops)
         assert(np.choose([0], ops).dtype == expected_dt)
+
+    def test_dimension_and_args_limit(self):
+        # Maxdims for the legacy iterator is 32, but the maximum number
+        # of arguments is actually larger (a itself also counts here)
+        a = np.ones((1,) * 32, dtype=np.intp)
+        res = a.choose([0, a] + [2] * 61)
+        with pytest.raises(ValueError,
+                match="Need at least 0 and at most 64 array objects"):
+                a.choose([0, a] + [2] * 62)
+
+        assert_array_equal(res, a)
+        # Choose is unfortunately limited to 32 dims as of NumPy 2.0
+        a = np.ones((1,) * 60, dtype=np.intp)
+        with pytest.raises(RuntimeError,
+                match=".*32 dimensions but the array has 60"):
+            a.choose([a, a])
 
 
 class TestRepeat:
