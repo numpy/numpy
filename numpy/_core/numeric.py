@@ -1510,6 +1510,8 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     --------
     inner : Inner product
     outer : Outer product.
+    linalg.cross : An Array API compatible variation of ``np.cross``,
+                   which accepts (arrays of) 3-element vectors only.
     ix_ : Construct index arrays.
 
     Notes

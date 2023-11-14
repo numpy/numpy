@@ -12,7 +12,7 @@ zgetrf, dpotrf, zpotrf, dgeqrf, zgeqrf, zungqr, dorgqr.
 __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'slogdet', 'det',
            'svd', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
-           'LinAlgError', 'multi_dot', 'trace', 'diagonal']
+           'LinAlgError', 'multi_dot', 'trace', 'diagonal', 'cross']
 
 import functools
 import operator
@@ -26,7 +26,8 @@ from numpy._core import (
     add, multiply, sqrt, sum, isfinite, finfo, errstate, moveaxis, amin,
     amax, prod, abs, atleast_2d, intp, asanyarray, object_, matmul,
     swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
-    reciprocal, overrides, diagonal as _core_diagonal, trace as _core_trace
+    reciprocal, overrides, diagonal as _core_diagonal, trace as _core_trace,
+    cross as _core_cross,
 )
 from numpy.lib._twodim_base_impl import triu, eye
 from numpy.lib.array_utils import normalize_axis_index
@@ -2937,14 +2938,14 @@ def diagonal(x, /, *, offset=0):
     See Also
     --------
     numpy.diagonal
+
     """
     return _core_diagonal(x, offset, axis1=-2, axis2=-1)
 
 
 # trace
 
-def _trace_dispatcher(
-        x, /, *, offset=None, dtype=None):
+def _trace_dispatcher(x, /, *, offset=None, dtype=None):
     return (x,)
 
 
@@ -2990,5 +2991,57 @@ def trace(x, /, *, offset=0, dtype=None):
     See Also
     --------
     numpy.trace
+
     """
     return _core_trace(x, offset, axis1=-2, axis2=-1, dtype=dtype)
+
+
+# cross
+
+def _cross_dispatcher(x1, x2, /, *, axis=None):
+    return (x1, x2,)
+
+
+@array_function_dispatch(_cross_dispatcher)
+def cross(x1, x2, /, *, axis=-1):
+    """
+    Returns the cross product of 3-element vectors.
+
+    If ``x1`` and/or ``x2`` are multi-dimensional arrays, then
+    the cross-product of each pair of corresponding 3-element vectors
+    is independently computed.
+
+    This function is Array API compatible, contrary to
+    :func:`numpy.cross`.
+
+    Parameters
+    ----------
+    x1 : array_like
+        The first input array.
+    x2 : array_like
+        The second input array. Must be compatible with ``x1`` for all
+        non-compute axes. The size of the axis over which to compute
+        the cross-product must be the same size as the respective axis
+        in ``x1``.
+    axis : int, optional
+        The axis (dimension) of ``x1`` and ``x2`` containing the vectors for
+        which to compute the cross-product. Default: ``-1``.
+
+    Returns
+    -------
+    out : ndarray
+        An array containing the cross products.
+
+    See Also
+    --------
+    numpy.cross
+
+    """
+    if x1.shape[axis] != 3 or x2.shape[axis] != 3:
+        raise ValueError(
+            "Both input arrays must be (arrays of) 3-dimensional vectors, "
+            f"but they are {x1.shape[axis]} and {x2.shape[axis]} "
+            "dimensional instead."
+        )
+
+    return _core_cross(x1, x2, axis=axis)

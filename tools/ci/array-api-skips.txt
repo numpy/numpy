@@ -42,7 +42,6 @@ array_api_tests/test_data_type_functions.py::test_isdtype
 array_api_tests/test_data_type_functions.py::test_astype
 
 # missing names
-array_api_tests/test_has_names.py::test_has_names[linalg-cross]
 array_api_tests/test_has_names.py::test_has_names[linalg-matmul]
 array_api_tests/test_has_names.py::test_has_names[linalg-matrix_norm]
 array_api_tests/test_has_names.py::test_has_names[linalg-matrix_transpose]
@@ -76,7 +75,6 @@ array_api_tests/test_has_names.py::test_has_names[array_method-to_device]
 array_api_tests/test_has_names.py::test_has_names[array_attribute-device]
 
 # missing linalg names
-array_api_tests/test_linalg.py::test_cross
 array_api_tests/test_linalg.py::test_matrix_norm
 array_api_tests/test_linalg.py::test_matrix_transpose
 array_api_tests/test_linalg.py::test_outer
@@ -125,7 +123,6 @@ array_api_tests/test_signatures.py::test_func_signature[bitwise_right_shift]
 array_api_tests/test_signatures.py::test_func_signature[pow]
 array_api_tests/test_signatures.py::test_func_signature[matrix_transpose]
 array_api_tests/test_signatures.py::test_func_signature[vecdot]
-array_api_tests/test_signatures.py::test_extension_func_signature[linalg.cross]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.matmul]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.cholesky]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.matrix_norm]

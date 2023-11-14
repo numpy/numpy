@@ -64,6 +64,7 @@ Matrix and vector products
    einsum_path
    linalg.matrix_power
    kron
+   linalg.cross
 
 Decompositions
 --------------
