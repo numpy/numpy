@@ -60,6 +60,7 @@ Matrix and vector products
    outer
    matmul
    tensordot
+   linalg.tensordot (Array API compatible location)
    einsum
    einsum_path
    linalg.matrix_power

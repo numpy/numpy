@@ -26,6 +26,10 @@ from numpy.linalg._linalg import (
     cross as cross,
 )
 
+from numpy._core.numeric import (
+    tensordot as tensordot
+)
+
 from numpy._pytesttester import PytestTester
 
 __all__: list[str]

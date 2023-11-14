@@ -8,3 +8,5 @@ Array API compatible functions' aliases
 * Bitwise: ``bitwise_left_shift``, ``bitwise_invert``, ``bitwise_right_shift``.
 
 * Misc: ``concat``, ``permute_dims``, ``pow``.
+
+* linalg: ``tensordot``

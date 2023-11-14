@@ -13,7 +13,7 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'slogdet', 'det',
            'svd', 'svdvals', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond',
            'matrix_rank', 'LinAlgError', 'multi_dot', 'trace', 'diagonal',
-           'cross', 'outer']
+           'cross', 'outer', 'tensordot']
 
 import functools
 import operator
@@ -28,7 +28,7 @@ from numpy._core import (
     amax, prod, abs, atleast_2d, intp, asanyarray, object_, matmul,
     swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
     reciprocal, overrides, diagonal as _core_diagonal, trace as _core_trace,
-    cross as _core_cross, outer as _core_outer
+    cross as _core_cross, outer as _core_outer, tensordot as _core_tensordot,
 )
 from numpy.lib._twodim_base_impl import triu, eye
 from numpy.lib.array_utils import normalize_axis_index
@@ -3129,3 +3129,18 @@ def cross(x1, x2, /, *, axis=-1):
         )
 
     return _core_cross(x1, x2, axis=axis)
+
+
+# tensordot
+
+def _tensordot_dispatcher(
+        x1, x2, /, *, offset=None, dtype=None):
+    return (x1, x2)
+
+
+@array_function_dispatch(_tensordot_dispatcher)
+def tensordot(x1, x2, /, *, axes=2):
+    return _core_tensordot(x1, x2, axes=axes)
+
+
+tensordot.__doc__ = _core_tensordot.__doc__

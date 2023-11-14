@@ -4010,6 +4010,14 @@ class TestKeepdims:
 
 class TestTensordot:
 
+    @pytest.mark.parametrize(
+        "tensordot_func",
+        [np.tensordot, np.linalg.tensordot]
+    )
+    def test_tensordot(self, tensordot_func):
+        arr = np.arange(6).reshape((2, 3))
+        assert tensordot_func(arr, arr) == 55
+
     def test_zero_dimension(self):
         # Test resolution to issue #5663
         a = np.ndarray((3,0))

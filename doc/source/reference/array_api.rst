@@ -84,7 +84,6 @@ These functions are in the ``linalg`` sub-namespace in the array API, but are
 only in the top-level namespace in NumPy:
 
 - ``matmul`` (*)
-- ``tensordot`` (*)
 
 (*): These functions are also in the top-level namespace in the array API.
 
