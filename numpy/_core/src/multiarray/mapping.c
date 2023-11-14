@@ -703,8 +703,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
                     PyOS_snprintf(err_msg, sizeof(err_msg),
                         "boolean index did not match indexed array along "
-                        "dimension %d; dimension is %" NPY_INTP_FMT
-                        " but corresponding boolean dimension is %" NPY_INTP_FMT,
+                        "axis %d; size of axis is %" NPY_INTP_FMT
+                        " but size of corresponding boolean axis is %" NPY_INTP_FMT,
                         used_ndim, PyArray_DIM(self, used_ndim),
                         indices[i].value);
                     PyErr_SetString(PyExc_IndexError, err_msg);
