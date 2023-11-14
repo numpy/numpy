@@ -4666,7 +4666,7 @@ def test_outer_bad_subclass():
         assert type(np.add.outer([1, 2], arr)) is cls
 
 def test_outer_exceeds_maxdims():
-    deep = np.ones((1,) * 17)
+    deep = np.ones((1,) * 33)
     with assert_raises(ValueError):
         np.add.outer(deep, deep)
 

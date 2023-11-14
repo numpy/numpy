@@ -297,8 +297,8 @@ class TestIndexing:
 
     def test_too_many_fancy_indices_special_case(self):
         # Just documents behaviour, this is a small limitation.
-        a = np.ones((1,) * 32)  # 32 is NPY_MAXDIMS
-        assert_raises(IndexError, a.__getitem__, (np.array([0]),) * 32)
+        a = np.ones((1,) * 64)  # 64 is NPY_MAXDIMS
+        assert_raises(IndexError, a.__getitem__, (np.array([0]),) * 64)
 
     def test_scalar_array_bool(self):
         # NumPy bools can be used as boolean index (python ones as of yet not)
@@ -552,8 +552,8 @@ class TestIndexing:
 
     @pytest.mark.parametrize("index",
             [True, False, np.array([0])])
-    @pytest.mark.parametrize("num", [32, 40])
-    @pytest.mark.parametrize("original_ndim", [1, 32])
+    @pytest.mark.parametrize("num", [64, 80])
+    @pytest.mark.parametrize("original_ndim", [1, 64])
     def test_too_many_advanced_indices(self, index, num, original_ndim):
         # These are limitations based on the number of arguments we can process.
         # For `num=32` (and all boolean cases), the result is actually define;

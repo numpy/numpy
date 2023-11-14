@@ -744,7 +744,7 @@ class TestZeroRank:
             x[i]
 
         assert_raises(IndexError, subscript, a, (np.newaxis, 0))
-        assert_raises(IndexError, subscript, a, (np.newaxis,)*50)
+        assert_raises(IndexError, subscript, a, (np.newaxis,)*70)
 
     def test_constructor(self):
         x = np.ndarray(())
@@ -826,7 +826,7 @@ class TestScalarIndexing:
             x[i]
 
         assert_raises(IndexError, subscript, a, (np.newaxis, 0))
-        assert_raises(IndexError, subscript, a, (np.newaxis,)*50)
+        assert_raises(IndexError, subscript, a, (np.newaxis,)*70)
 
     def test_overlapping_assignment(self):
         # With positive strides
