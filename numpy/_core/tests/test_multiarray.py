@@ -8204,19 +8204,22 @@ class TestNewBufferProtocol:
                 t = dim * t
             return t
 
-        # construct a memoryview with 33 dimensions
-        c_u8_33d = make_ctype((1,)*33, ctypes.c_uint8)
-        m = memoryview(c_u8_33d())
-        assert_equal(m.ndim, 33)
+        # Try constructing a memory with too many dimensions:
+        c_u8_65d = make_ctype((1,)*65, ctypes.c_uint8)
+        try:
+            m = memoryview(c_u8_65d())
+        except ValueError:
+            pytest.skip("memoryview doesn't support more dimensions")
 
-        assert_raises_regex(
-            RuntimeError, "ndim",
-            np.array, m)
+        assert_equal(m.ndim, 65)
+
+        with pytest.raises(RuntimeError, match=".*ndim"):
+            np.array(m)
 
         # The above seems to create some deep cycles, clean them up for
         # easier reference count debugging:
-        del c_u8_33d, m
-        for i in range(33):
+        del c_u8_65d, m
+        for i in range(65):
             if gc.collect() == 0:
                 break
 
