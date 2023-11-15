@@ -35,7 +35,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r build_requirements.txt
-        pip install "scipy-openblas32<=0.3.23.293.2" spin
+        pip install scipy-openblas32 spin
     - name: Build
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       env:
