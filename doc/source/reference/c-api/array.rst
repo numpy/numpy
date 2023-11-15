@@ -3453,10 +3453,6 @@ Miscellaneous Macros
     Returns the minimum of *a* and *b*. If (*a*) or (*b*) are
     expressions they are evaluated twice.
 
-.. c:function:: npy_intp PyArray_REFCOUNT(PyObject* op)
-
-    Returns the reference count of any Python object.
-
 .. c:function:: void PyArray_DiscardWritebackIfCopy(PyArrayObject* obj)
 
     If ``obj->flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, this function
