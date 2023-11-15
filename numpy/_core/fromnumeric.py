@@ -925,10 +925,11 @@ def sort(a, axis=-1, kind=None, order=None):
        is actually used, even if 'mergesort' is specified. User selection
        at a finer scale is not currently available.
 
-    All the sort algorithms make temporary copies of the data when
-    sorting along any but the last axis.  Consequently, sorting along
-    the last axis is faster and uses less space than sorting along
-    any other axis.
+    For performance, ``sort`` makes a temporary copy if needed to make the data
+    `contiguous <https://numpy.org/doc/stable/glossary.html#term-contiguous>`_
+    in memory along the sort axis. For even better performance and reduced
+    memory consumption, ensure that the array is already contiguous along the
+    sort axis.
 
     The sort order for complex numbers is lexicographic. If both the real
     and imaginary parts are non-nan then the order is determined by the
