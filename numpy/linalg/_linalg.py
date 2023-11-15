@@ -13,7 +13,8 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'slogdet', 'det',
            'svd', 'svdvals', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond',
            'matrix_rank', 'LinAlgError', 'multi_dot', 'trace', 'diagonal',
-           'cross', 'outer', 'tensordot', 'matmul']
+           'cross', 'outer', 'tensordot', 'matmul', 'matrix_transpose',
+           'matrix_norm', 'vector_norm', 'vecdot']
 
 import functools
 import operator
@@ -29,10 +30,11 @@ from numpy._core import (
     swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
     reciprocal, overrides, diagonal as _core_diagonal, trace as _core_trace,
     cross as _core_cross, outer as _core_outer, tensordot as _core_tensordot,
-    matmul as _core_matmul,
+    matmul as _core_matmul, matrix_transpose as _core_matrix_transpose,
+    transpose as _core_transpose, vecdot as _core_vecdot,
 )
 from numpy.lib._twodim_base_impl import triu, eye
-from numpy.lib.array_utils import normalize_axis_index
+from numpy.lib.array_utils import normalize_axis_index, normalize_axis_tuple
 from numpy.linalg import _umath_linalg
 
 from numpy._typing import NDArray
@@ -850,8 +852,8 @@ def outer(x1, x2, /):
     outer
 
     """
-    x1 = asarray(x1)
-    x2 = asarray(x2)
+    x1 = asanyarray(x1)
+    x2 = asanyarray(x2)
     if x1.ndim != 1 or x2.ndim != 1:
         raise ValueError(
             "Input arrays must be one-dimensional, but they are "
@@ -3188,3 +3190,134 @@ def tensordot(x1, x2, /, *, axes=2):
 
 
 tensordot.__doc__ = _core_tensordot.__doc__
+
+
+# matrix_transpose
+
+def _matrix_transpose_dispatcher(x):
+    return (x,)
+
+@array_function_dispatch(_matrix_transpose_dispatcher)
+def matrix_transpose(x, /):
+    return _core_matrix_transpose(x)
+
+
+matrix_transpose.__doc__ = _core_matrix_transpose.__doc__
+
+
+# matrix_norm
+
+def _matrix_norm_dispatcher(x, /, *, keepdims=None, ord=None):
+    return (x,)
+
+@array_function_dispatch(_matrix_norm_dispatcher)
+def matrix_norm(x, /, *, keepdims=False, ord="fro"):
+    """
+    Computes the matrix norm of a matrix (or a stack of matrices) ``x``.
+
+    This function is Array API compatible.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array having shape (..., M, N) and whose two innermost
+        dimensions form ``MxN`` matrices.
+    keepdims : bool, optional
+        If this is set to True, the axes which are normed over are left in
+        the result as dimensions with size one. Default: False.
+    ord : {1, -1, 2, -2, inf, -inf, 'fro', 'nuc'}, optional
+        The order of the norm. For details see the table under ``Notes``
+        in `numpy.linalg.norm`.
+
+    See Also
+    --------
+    numpy.linalg.norm : Generic norm function
+
+    """
+    x = asanyarray(x)
+    return norm(x, axis=(-2, -1), keepdims=keepdims, ord=ord)
+
+
+# vector_norm
+
+def _vector_norm_dispatcher(x, /, *, axis=None, keepdims=None, ord=None):
+    return (x,)
+
+@array_function_dispatch(_vector_norm_dispatcher)
+def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
+    """
+    Computes the vector norm of a vector (or batch of vectors) ``x``.
+
+    This function is Array API compatible.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array.
+    axis : {None, int, 2-tuple of ints}, optional
+        If an integer, ``axis`` specifies the axis (dimension) along which
+        to compute vector norms. If an n-tuple, ``axis`` specifies the axes
+        (dimensions) along which to compute batched vector norms. If ``None``,
+        the vector norm must be computed over all array values (i.e.,
+        equivalent to computing the vector norm of a flattened array).
+        Default: ``None``.
+    keepdims : bool, optional
+        If this is set to True, the axes which are normed over are left in
+        the result as dimensions with size one. Default: False.
+    ord : {1, -1, 2, -2, inf, -inf, 'fro', 'nuc'}, optional
+        The order of the norm. For details see the table under ``Notes``
+        in `numpy.linalg.norm`.
+
+    See Also
+    --------
+    numpy.linalg.norm : Generic norm function
+
+    """
+    x = asanyarray(x)
+    if axis is None:
+        # Note: np.linalg.norm() doesn't handle 0-D arrays
+        x = x.ravel()
+        _axis = 0
+    elif isinstance(axis, tuple):
+        # Note: The axis argument supports any number of axes, whereas
+        # np.linalg.norm() only supports a single axis for vector norm.
+        normalized_axis = normalize_axis_tuple(axis, x.ndim)
+        rest = tuple(i for i in range(x.ndim) if i not in normalized_axis)
+        newshape = axis + rest
+        x = _core_transpose(x, newshape).reshape(
+            (
+                prod([x.shape[i] for i in axis], dtype=int),
+                *[x.shape[i] for i in rest]
+            )
+        )
+        _axis = 0
+    else:
+        _axis = axis
+
+    res = norm(x, axis=_axis, ord=ord)
+
+    if keepdims:
+        # We can't reuse np.linalg.norm(keepdims) because of the reshape hacks
+        # above to avoid matrix norm logic.
+        shape = list(x.shape)
+        _axis = normalize_axis_tuple(
+            range(x.ndim) if axis is None else axis, x.ndim
+        )
+        for i in _axis:
+            shape[i] = 1
+        res = res.reshape(tuple(shape))
+
+    return res
+
+
+# vecdot
+
+def _vecdot_dispatcher(x1, x2, /, *, axis=None):
+    return (x1, x2)
+
+@array_function_dispatch(_vecdot_dispatcher)
+def vecdot(x1, x2, /, *, axis=-1):
+    return _core_vecdot(x1, x2, axis=axis)
+
+
+vecdot.__doc__ = _core_vecdot.__doc__

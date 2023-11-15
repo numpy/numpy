@@ -2287,3 +2287,40 @@ def test_matmul():
     expected = np.array([[5, 14], [14, 50]])
 
     assert_equal(actual, expected)
+
+
+def test_matrix_transpose():
+    x = np.arange(6).reshape((2, 3))
+    actual = np.linalg.matrix_transpose(x)
+    expected = x.T
+
+    assert_equal(actual, expected)
+
+    with assert_raises_regex(
+        ValueError, "array must be at least 2-dimensional"
+    ):
+        np.linalg.matrix_transpose(x[:, 0])
+
+
+def test_matrix_norm():
+    x = np.arange(9).reshape((3, 3))
+    actual = np.linalg.matrix_norm(x)
+
+    assert_almost_equal(actual, np.float64(14.2828), double_decimal=3)
+
+    actual = np.linalg.matrix_norm(x, keepdims=True)
+
+    assert_almost_equal(actual, np.array([[14.2828]]), double_decimal=3)
+
+
+def test_vector_norm():
+    x = np.arange(9).reshape((3, 3))
+    actual = np.linalg.vector_norm(x)
+
+    assert_almost_equal(actual, np.float64(14.2828), double_decimal=3)
+
+    actual = np.linalg.vector_norm(x, axis=0)
+
+    assert_almost_equal(
+        actual, np.array([6.7082, 8.124, 9.6436]), double_decimal=3
+    )

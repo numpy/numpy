@@ -21,7 +21,7 @@ __all__ = [
     'all', 'alltrue', 'amax', 'amin', 'any', 'argmax',
     'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
     'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
-    'max', 'min',
+    'max', 'min', 'matrix_transpose',
     'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
     'ravel', 'repeat', 'reshape', 'resize', 'round',
     'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
@@ -653,6 +653,41 @@ def transpose(a, axes=None):
 
     """
     return _wrapfunc(a, 'transpose', axes)
+
+
+def _matrix_transpose_dispatcher(x):
+    return (x,)
+
+@array_function_dispatch(_matrix_transpose_dispatcher)
+def matrix_transpose(x, /):
+    """
+    Transposes a matrix (or a stack of matrices) ``x``.
+
+    This function is Array API compatible.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array having shape (..., M, N) and whose two innermost
+        dimensions form ``MxN`` matrices.
+
+    Returns
+    -------
+    out : ndarray
+        An array containing the transpose for each matrix and having shape
+        (..., N, M).
+
+    See Also
+    --------
+    transpose : Generic transpose method.
+
+    """
+    x = asanyarray(x)
+    if x.ndim < 2:
+        raise ValueError(
+            f"Input array must be at least 2-dimensional, but it is {x.ndim}"
+        )
+    return swapaxes(x, -1, -2)
 
 
 def _partition_dispatcher(a, kth, axis=None, kind=None, order=None):

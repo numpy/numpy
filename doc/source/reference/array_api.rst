@@ -60,22 +60,6 @@ otherwise noted.
 
 .. _array_api-name-changes:
 
-Function Name Changes
-~~~~~~~~~~~~~~~~~~~~~
-
-The following functions are named differently in the array API
-
-.. list-table::
-   :header-rows: 1
-
-   * - Array API name
-     - NumPy namespace name
-     - Notes
-   * - ``matrix_norm`` and ``vector_norm``
-     - ``norm``
-     - ``matrix_norm`` and ``vector_norm`` each do a limited subset of what
-       ``np.norm`` does.
-
 Keyword Argument Renames
 ~~~~~~~~~~~~~~~~~~~~~~~~
 

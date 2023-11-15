@@ -41,21 +41,12 @@ array_api_tests/test_data_type_functions.py::test_finfo[float32]
 array_api_tests/test_data_type_functions.py::test_isdtype
 
 # missing names
-array_api_tests/test_has_names.py::test_has_names[linalg-matrix_norm]
-array_api_tests/test_has_names.py::test_has_names[linalg-matrix_transpose]
-array_api_tests/test_has_names.py::test_has_names[linalg-vecdot]
-array_api_tests/test_has_names.py::test_has_names[linalg-vector_norm]
 array_api_tests/test_has_names.py::test_has_names[data_type-isdtype]
-array_api_tests/test_has_names.py::test_has_names[linear_algebra-matrix_transpose]
-array_api_tests/test_has_names.py::test_has_names[linear_algebra-vecdot]
 array_api_tests/test_has_names.py::test_has_names[array_method-to_device]
 array_api_tests/test_has_names.py::test_has_names[array_attribute-device]
 
 # missing linalg names
-array_api_tests/test_linalg.py::test_matrix_norm
-array_api_tests/test_linalg.py::test_matrix_transpose
 array_api_tests/test_linalg.py::test_pinv
-array_api_tests/test_linalg.py::test_vecdot
 
 # a few misalignments
 array_api_tests/test_operators_and_elementwise_functions.py
@@ -74,15 +65,9 @@ array_api_tests/test_signatures.py::test_func_signature[reshape]
 array_api_tests/test_signatures.py::test_func_signature[argsort]
 array_api_tests/test_signatures.py::test_func_signature[sort]
 array_api_tests/test_signatures.py::test_func_signature[isdtype]
-array_api_tests/test_signatures.py::test_func_signature[matrix_transpose]
-array_api_tests/test_signatures.py::test_func_signature[vecdot]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.cholesky]
-array_api_tests/test_signatures.py::test_extension_func_signature[linalg.matrix_norm]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.matrix_rank]
-array_api_tests/test_signatures.py::test_extension_func_signature[linalg.matrix_transpose]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.pinv]
-array_api_tests/test_signatures.py::test_extension_func_signature[linalg.vecdot]
-array_api_tests/test_signatures.py::test_extension_func_signature[linalg.vector_norm]
 array_api_tests/test_signatures.py::test_array_method_signature[__array_namespace__]
 array_api_tests/test_signatures.py::test_array_method_signature[to_device]
 
