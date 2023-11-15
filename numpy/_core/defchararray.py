@@ -292,10 +292,7 @@ def str_len(a):
     >>> np.char.str_len(a)
     array([[5, 5], [1, 1]])
     """
-    # Note: __len__, etc. currently return ints, which are not C-integers.
-    # Generally intp would be expected for lengths, although int is sufficient
-    # due to the dtype itemsize limitation.
-    return _vec_string(a, int_, '__len__')
+    return numpy._core.umath.str_len(a)
 
 
 @array_function_dispatch(_binary_op_dispatcher)
@@ -558,7 +555,8 @@ def count(a, sub, start=0, end=None):
     array([1, 0, 0])
 
     """
-    return _vec_string(a, int_, 'count', [sub, start] + _clean_args(end))
+    end = end if end is not None else numpy.iinfo(numpy.int64).max
+    return numpy._core.umath.count(a, sub, start, end)
 
 
 def _code_dispatcher(a, encoding=None, errors=None):
