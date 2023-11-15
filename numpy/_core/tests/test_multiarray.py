@@ -7422,7 +7422,7 @@ class TestChoose:
         res = a.choose([0, a] + [2] * 61)
         with pytest.raises(ValueError,
                 match="Need at least 0 and at most 64 array objects"):
-                a.choose([0, a] + [2] * 62)
+            a.choose([0, a] + [2] * 62)
 
         assert_array_equal(res, a)
         # Choose is unfortunately limited to 32 dims as of NumPy 2.0
