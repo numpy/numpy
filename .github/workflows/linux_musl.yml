@@ -55,12 +55,14 @@ jobs:
         python -m venv test_env
         source test_env/bin/activate
 
-        pip install "scipy-openblas64<=0.3.23.293.2"
+        pip install scipy-openblas64
 
         pip install -r build_requirements.txt -r test_requirements.txt
 
         # use meson to build and test 
-        spin build --with-scipy-openblas=64 -- -Duse-ilp64=true
+        # the Duse-ilp64 is not needed with scipy-openblas wheels > 0.3.24.95.0
+        # spin build --with-scipy-openblas=64 -- -Duse-ilp64=true
+        spin build --with-scipy-openblas=64
         spin test -j auto
 
     - name: Meson Log
