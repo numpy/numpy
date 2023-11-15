@@ -1,0 +1,5 @@
+``numpy.sort`` doc fix 
+----------------------
+
+Fixed the doc of ``np.sort``
+regarding the note on optimization over contiguous axis.
