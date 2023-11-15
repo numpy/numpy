@@ -99,7 +99,8 @@ multiarray_types_api = {
 
 multiarray_funcs_api = {
     '__unused_indices__': [
-        40, 41, 65, 67, 68, 163, 164, 171, 201, 202, 278, 291],
+        40, 41, 65, 67, 68, 163, 164, 171, 201, 202, 278, 291, 293, 294, 295,
+        301],
     'PyArray_GetNDArrayCVersion':           (0,),
     # Unused slot 40, was `PyArray_SetNumericOps`
     # Unused slot 41, was `PyArray_GetNumericOps`,
@@ -352,9 +353,9 @@ multiarray_funcs_api = {
     'PyDataMem_FREE':                       (289,),
     'PyDataMem_RENEW':                      (290,),
     # Unused slot 291, was `PyDataMem_SetEventHook`
-    'PyArray_MapIterSwapAxes':              (293,),
-    'PyArray_MapIterArray':                 (294,),
-    'PyArray_MapIterNext':                  (295,),
+    # Unused slot 293, was `PyArray_MapIterSwapAxes`
+    # Unused slot 294, was `PyArray_MapIterArray`
+    # Unused slot 295, was `PyArray_MapIterNext`
     # End 1.7 API
     'PyArray_Partition':                    (296,),
     'PyArray_ArgPartition':                 (297,),
@@ -364,7 +365,7 @@ multiarray_funcs_api = {
     # End 1.9 API
     'PyArray_CheckAnyScalarExact':          (300,),
     # End 1.10 API
-    'PyArray_MapIterArrayCopyIfOverlap':    (301,),
+    # Unused slot 301, was `PyArray_MapIterArrayCopyIfOverlap`
     # End 1.13 API
     'PyArray_ResolveWritebackIfCopy':       (302,),
     'PyArray_SetWritebackIfCopyBase':       (303,),

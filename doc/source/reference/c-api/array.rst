@@ -2674,44 +2674,6 @@ cost of a slight overhead.
     neighborhood. Calling this function after every point of the
     neighborhood has been visited is undefined.
 
-Array mapping
--------------
-
-Array mapping is the machinery behind advanced indexing.
-
-.. c:function:: PyObject* PyArray_MapIterArray(PyArrayObject *a, \
-                 PyObject *index)
-
-    Use advanced indexing to iterate an array.
-
-.. c:function:: void PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, \
-                PyArrayObject **ret, int getmap)
-
-    Swap the axes to or from their inserted form. ``MapIter`` always puts the
-    advanced (array) indices first in the iteration. But if they are
-    consecutive, it will insert/transpose them back before returning.
-    This is stored as ``mit->consec != 0`` (the place where they are inserted).
-    For assignments, the opposite happens: the values to be assigned are
-    transposed (``getmap=1`` instead of ``getmap=0``). ``getmap=0`` and
-    ``getmap=1`` undo the other operation.
-
-.. c:function:: void PyArray_MapIterNext(PyArrayMapIterObject *mit)
-
-    This function needs to update the state of the map iterator
-    and point ``mit->dataptr`` to the memory-location of the next object.
-
-    Note that this function never handles an extra operand but provides
-    compatibility for an old (exposed) API.
-
-.. c:function:: PyObject* PyArray_MapIterArrayCopyIfOverlap(PyArrayObject *a, \
-                PyObject *index, int copy_if_overlap, PyArrayObject *extra_op)
-
-    Similar to :c:func:`PyArray_MapIterArray` but with an additional
-    ``copy_if_overlap`` argument. If ``copy_if_overlap != 0``, checks if ``a``
-    has memory overlap with any of the arrays in ``index`` and with
-    ``extra_op``, and make copies as appropriate to avoid problems if the
-    input is modified during the iteration. ``iter->array`` may contain a
-    copied array (WRITEBACKIFCOPY set).
 
 Array scalars
 -------------
