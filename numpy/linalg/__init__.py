@@ -30,6 +30,7 @@ Matrix and vector products
    multi_dot
    matrix_power
    tensordot
+   matmul
 
 Decompositions
 --------------

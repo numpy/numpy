@@ -13,7 +13,7 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'slogdet', 'det',
            'svd', 'svdvals', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond',
            'matrix_rank', 'LinAlgError', 'multi_dot', 'trace', 'diagonal',
-           'cross', 'outer', 'tensordot']
+           'cross', 'outer', 'tensordot', 'matmul']
 
 import functools
 import operator
@@ -29,6 +29,7 @@ from numpy._core import (
     swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
     reciprocal, overrides, diagonal as _core_diagonal, trace as _core_trace,
     cross as _core_cross, outer as _core_outer, tensordot as _core_tensordot,
+    matmul as _core_matmul,
 )
 from numpy.lib._twodim_base_impl import triu, eye
 from numpy.lib.array_utils import normalize_axis_index
@@ -3129,6 +3130,49 @@ def cross(x1, x2, /, *, axis=-1):
         )
 
     return _core_cross(x1, x2, axis=axis)
+
+
+# matmul
+
+def _matmul_dispatcher(x1, x2, /):
+    return (x1, x2)
+
+
+@array_function_dispatch(_matmul_dispatcher)
+def matmul(x1, x2, /):
+    """
+    Computes the matrix product.
+
+    This function is Array API compatible, contrary to
+    :func:`numpy.matmul`.
+
+    Parameters
+    ----------
+    x1 : array_like
+        The first input array.
+    x2 : array_like
+        The second input array.
+
+    Returns
+    -------
+    out : ndarray
+        The matrix product of the inputs.
+        This is a scalar only when both ``x1``, ``x2`` are 1-d vectors.
+
+    Raises
+    ------
+    ValueError
+        If the last dimension of ``x1`` is not the same size as
+        the second-to-last dimension of ``x2``.
+
+        If a scalar value is passed in.
+
+    See Also
+    --------
+    numpy.matmul
+
+    """
+    return _core_matmul(x1, x2)
 
 
 # tensordot

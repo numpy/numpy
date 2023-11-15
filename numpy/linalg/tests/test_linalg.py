@@ -2254,7 +2254,6 @@ def test_trace():
 
 
 def test_cross():
-
     x = np.arange(9).reshape((3, 3))
     actual = np.linalg.cross(x, x + 1)
     expected = np.array([
@@ -2271,3 +2270,20 @@ def test_cross():
     ):
         x_2dim = x[:, 1:]
         np.linalg.cross(x_2dim, x_2dim)
+
+
+def test_tensordot():
+    # np.linalg.tensordot is just an alias for np.tensordot
+    x = np.arange(6).reshape((2, 3))
+
+    assert np.linalg.tensordot(x, x) == 55
+
+
+def test_matmul():
+    # np.linalg.matmul and np.matmul only differs in the number
+    # of arguments in the signature
+    x = np.arange(6).reshape((2, 3))
+    actual = np.linalg.matmul(x, x.T)
+    expected = np.array([[5, 14], [14, 50]])
+
+    assert_equal(actual, expected)

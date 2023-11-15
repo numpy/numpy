@@ -373,3 +373,24 @@ def cross(
     b: _ArrayLikeComplex_co,
     axis: int = ...,
 ) -> NDArray[complexfloating[Any, Any]]: ...
+
+@overload
+def matmul(
+    x1: _ArrayLikeInt_co,
+    x2: _ArrayLikeInt_co,
+) -> NDArray[signedinteger[Any]]: ...
+@overload
+def matmul(
+    x1: _ArrayLikeUInt_co,
+    x2: _ArrayLikeUInt_co,
+) -> NDArray[unsignedinteger[Any]]: ...
+@overload
+def matmul(
+    x1: _ArrayLikeFloat_co,
+    x2: _ArrayLikeFloat_co,
+) -> NDArray[floating[Any]]: ...
+@overload
+def matmul(
+    x1: _ArrayLikeComplex_co,
+    x2: _ArrayLikeComplex_co,
+) -> NDArray[complexfloating[Any, Any]]: ...

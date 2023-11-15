@@ -76,17 +76,6 @@ The following functions are named differently in the array API
      - ``matrix_norm`` and ``vector_norm`` each do a limited subset of what
        ``np.norm`` does.
 
-
-``linalg`` Namespace Differences
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-These functions are in the ``linalg`` sub-namespace in the array API, but are
-only in the top-level namespace in NumPy:
-
-- ``matmul`` (*)
-
-(*): These functions are also in the top-level namespace in the array API.
-
 Keyword Argument Renames
 ~~~~~~~~~~~~~~~~~~~~~~~~
 

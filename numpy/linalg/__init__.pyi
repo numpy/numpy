@@ -21,13 +21,14 @@ from numpy.linalg._linalg import (
     cond as cond,
     matrix_rank as matrix_rank,
     multi_dot as multi_dot,
+    matmul as matmul,
     trace as trace,
     diagonal as diagonal,
     cross as cross,
 )
 
 from numpy._core.numeric import (
-    tensordot as tensordot
+    tensordot as tensordot,
 )
 
 from numpy._pytesttester import PytestTester

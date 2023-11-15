@@ -59,6 +59,7 @@ Matrix and vector products
    inner
    outer
    matmul
+   linalg.matmul (Array API compatible location)
    tensordot
    linalg.tensordot (Array API compatible location)
    einsum

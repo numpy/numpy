@@ -9,4 +9,4 @@ Array API compatible functions' aliases
 
 * Misc: ``concat``, ``permute_dims``, ``pow``.
 
-* linalg: ``tensordot``
+* linalg: ``tensordot``, ``matmul``.
