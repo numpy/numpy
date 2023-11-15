@@ -815,7 +815,7 @@ _loadtxt_chunksize = 50000
 def _read(fname, *, delimiter=',', comment='#', quote='"',
           imaginary_unit='j', usecols=None, skiplines=0,
           max_rows=None, converters=None, ndmin=None, unpack=False,
-          dtype=np.float64, encoding="bytes"):
+          dtype=np.float64, encoding=None):
     r"""
     Read a NumPy array from a text file.
     This is a helper function for loadtxt.
@@ -1073,7 +1073,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
 @set_module('numpy')
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
-            ndmin=0, encoding='bytes', max_rows=None, *, quotechar=None,
+            ndmin=0, encoding=None, max_rows=None, *, quotechar=None,
             like=None):
     r"""
     Load data from a text file.
@@ -1145,6 +1145,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         the system default is used. The default value is 'bytes'.
 
         .. versionadded:: 1.14.0
+        .. versionchanged:: 2.0
+            Before NumPy 2, the default was ``'bytes'`` for Python 2
+            compatibility. The default is now ``None``.
+
     max_rows : int, optional
         Read `max_rows` rows of content after `skiprows` lines. The default is
         to read all the rows. Note that empty rows containing no data such as
@@ -1715,7 +1719,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                deletechars=''.join(sorted(NameValidator.defaultdeletechars)),
                replace_space='_', autostrip=False, case_sensitive=True,
                defaultfmt="f%i", unpack=None, usemask=False, loose=True,
-               invalid_raise=True, max_rows=None, encoding='bytes',
+               invalid_raise=True, max_rows=None, encoding=None,
                *, ndmin=0, like=None):
     """
     Load data from a text file, with missing values handled as specified.
@@ -1816,6 +1820,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         The default value is 'bytes'.
 
         .. versionadded:: 1.14.0
+        .. versionchanged:: 2.0
+            Before NumPy 2, the default was ``'bytes'`` for Python 2
+            compatibility. The default is now ``None``.
+
     ndmin : int, optional
         Same parameter as `loadtxt`
 
