@@ -41,7 +41,29 @@ Some are defined in ``numpy/_core/include/numpy/npy_2_compat.h``
 (for example ``NPY_DEFAULT_INT``) which can be vendored in full or part
 to have the definitions available when compiling against NumPy 1.x.
 
+If necessary, ``PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION`` can be
+used to explicitly implement different behavior on NumPy 1.x and 2.0.
+(The compat header defines it in a way compatible with such use.)
+
 Please let us know if you require additional workarounds here.
+
+.. _migration_maxdims:
+
+Increased maximum number of dimensions
+--------------------------------------
+The maximum number of dimensions (and arguments) was increased to 64, this
+affects the ``NPY_MAXDIMS`` and ``NPY_MAXARGS`` macros.
+It may be good to review their use, and we generally encourage you to
+not use this macros (especially ``NPY_MAXARGS``), so that a future version of
+NumPy can remove this limitation on the number of dimensions.
+
+``NPY_MAXDIMS`` was also used to signal ``axis=None`` in the C-API, including
+the ``PyArray_AxisConverter``.
+If you run into this problem, you will see ``-2147483648``
+(the minimum integer value) or ``64`` being used as an invalid axis.
+Wherever you do, you must replace ``NPY_MAXDIMS`` with ``NPY_RAVEL_AXIS``.
+This is defined in the ``npy_2_compat.h`` header and runtime dependent.
+
 
 Namespace changes
 =================
