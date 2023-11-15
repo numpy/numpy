@@ -4255,7 +4255,9 @@ add_newdoc('numpy._core.umath', 'bitwise_count',
 
 add_newdoc('numpy._core.umath', 'str_len',
     """
-    Return len(a) element-wise.
+    Returns the length of each element. For byte strings,
+    this is the number of bytes, while, for Unicode strings,
+    it is the number of Unicode code points.
 
     Parameters
     ----------
