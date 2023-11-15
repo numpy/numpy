@@ -140,7 +140,7 @@ deprecated member migration guideline
 ================= =======================================================================
 in1d              Use ``np.isin`` instead.
 row_stack         Use ``np.vstack`` instead (``row_stack`` was an alias for ``v_stack``).
-trapz             Use ``scipy.interpolate.trapezoid`` instead.
+trapz             Use ``scipy.integrate.trapezoid`` instead.
 ================= =======================================================================
 
 
