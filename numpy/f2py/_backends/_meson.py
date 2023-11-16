@@ -7,6 +7,7 @@ from pathlib import Path
 
 from ._backend import Backend
 from string import Template
+from itertools import chain
 
 import warnings
 
@@ -83,7 +84,10 @@ class MesonBackend(Backend):
 
     def _move_exec_to_root(self, build_dir: Path):
         walk_dir = Path(build_dir) / self.meson_build_dir
-        path_objects = walk_dir.glob(f"{self.modulename}*.so")
+        path_objects = chain(
+            walk_dir.glob(f"{self.modulename}*.so"),
+            walk_dir.glob(f"{self.modulename}*.pyd"),
+        )
         for path_object in path_objects:
             shutil.move(path_object, Path.cwd())
 
