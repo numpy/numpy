@@ -359,10 +359,11 @@ PyArray_CastToType(PyArrayObject *arr, PyArray_Descr *dtype, int is_f_order)
     return out;
 }
 
-/*NUMPY_API
- * Get a cast function to cast from the input descriptor to the
- * output type_number (must be a registered data-type).
- * Returns NULL if un-successful.
+/*
+ * Fetches the legacy cast function. Warning, this only makes sense for legacy
+ * dtypes.  Even most NumPy ones do NOT implement these anymore and the use
+ * should be fully phased out.
+ * The sole real purpose is supporting legacy style user dtypes.
  */
 NPY_NO_EXPORT PyArray_VectorUnaryFunc *
 PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
