@@ -208,6 +208,47 @@ jobs:
         cd tools
         pytest --pyargs numpy -m "not slow"
 
+  array_api_tests:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push'
+    steps:
+    - name: Checkout NumPy
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - name: Checkout array-api-tests
+      uses: actions/checkout@v3
+      with:
+        repository: data-apis/array-api-tests
+        ref: '83f0bcdcc5286250dbb26be5d37511702970b4dc'  # Latest commit as of 2023-11-15
+        submodules: 'true'
+        path: 'array-api-tests'
+    - name: Fix array-apis bug
+      # Temporary workaround for https://github.com/data-apis/array-api/issues/631 
+      run: |
+        sed -i -e 's/\\/\\\\/g' array-api-tests/array-api/spec/API_specification/signatures/*.py
+    - name: Set up Python
+      uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
+      with:
+        python-version: '3.11'
+    - name: Install build and test dependencies from PyPI
+      run: |
+        python -m pip install -r build_requirements.txt
+        python -m pip install -r test_requirements.txt
+        python -m pip install hypothesis!=6.88.4  # 6.88.4 leads to a strange error
+        python -m pip install -r array-api-tests/requirements.txt
+    - name: Build and install NumPy
+      run: |
+        python -m pip install . -v -Csetup-args=-Dallow-noblas=true -Csetup-args=-Dcpu-baseline=none -Csetup-args=-Dcpu-dispatch=none
+    - name: Run the test suite
+      env:
+        ARRAY_API_TESTS_MODULE: numpy
+      run: |
+        cd ${GITHUB_WORKSPACE}/array-api-tests
+        pytest array_api_tests -v -W ignore::pytest.PytestDeprecationWarning -W ignore::RuntimeWarning -W ignore::DeprecationWarning --ci --max-examples=2 --derandomize --disable-deadline --skips-file ${GITHUB_WORKSPACE}/array-api-skips.txt
+
   custom_checks:
     needs: [smoke_test]
     runs-on: ubuntu-latest

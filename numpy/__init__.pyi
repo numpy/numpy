@@ -622,6 +622,7 @@ __all__: list[str]
 __dir__: list[str]
 __version__: str
 __git_version__: str
+__array_api_version__: str
 test: PytestTester
 
 # TODO: Move placeholders to their respective module once
@@ -2461,6 +2462,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
 
     def __dlpack__(self: NDArray[number[Any]], *, stream: None = ...) -> _PyCapsule: ...
     def __dlpack_device__(self) -> tuple[int, L[0]]: ...
+
+    def __array_namespace__(self, *, api_version: str = ...) -> Any: ...
 
     def bitwise_count(
         self,

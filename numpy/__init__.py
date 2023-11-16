@@ -285,6 +285,8 @@ else:
     # import with `from numpy import *`.
     __future_scalars__ = {"str", "bytes", "object"}
 
+    __array_api_version__ = "2022.12"
+
     # now that numpy core module is imported, can initialize limits
     _core.getlimits._register_known_types()
 
