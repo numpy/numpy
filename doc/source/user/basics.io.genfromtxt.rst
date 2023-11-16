@@ -370,7 +370,7 @@ single element of the wanted type.
 In the following example, the second column is converted from as string
 representing a percentage to a float between 0 and 1::
 
-   >>> convertfunc = lambda x: float(x.strip(b"%"))/100.
+   >>> convertfunc = lambda x: float(x.strip("%"))/100.
    >>> data = u"1, 2.3%, 45.\n6, 78.9%, 0"
    >>> names = ("i", "p", "n")
    >>> # General case .....

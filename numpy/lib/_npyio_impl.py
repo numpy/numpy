@@ -1266,7 +1266,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     array([1.e+00, 2.7e+00, 1.e+05])
 
     This idea can be extended to automatically handle values specified in
-    many different formats:
+    many different formats, such as hex values:
 
     >>> def conv(val):
     ...     try:
@@ -1274,16 +1274,14 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     ...     except ValueError:
     ...         return float.fromhex(val)
     >>> s = StringIO("1, 2.5, 3_000, 0b4, 0x1.4000000000000p+2")
-    >>> np.loadtxt(s, delimiter=",", converters=conv, encoding=None)
+    >>> np.loadtxt(s, delimiter=",", converters=conv)
     array([1.0e+00, 2.5e+00, 3.0e+03, 1.8e+02, 5.0e+00])
 
-    Note that with the default ``encoding="bytes"``, the inputs to the
-    converter function are latin-1 encoded byte strings. To deactivate the
-    implicit encoding prior to conversion, use ``encoding=None``
+    Or a format where the ``-`` sign comes after the number:
 
     >>> s = StringIO('10.01 31.25-\n19.22 64.31\n17.57- 63.94')
     >>> conv = lambda x: -float(x[:-1]) if x.endswith('-') else float(x)
-    >>> np.loadtxt(s, converters=conv, encoding=None)
+    >>> np.loadtxt(s, converters=conv)
     array([[ 10.01, -31.25],
            [ 19.22,  64.31],
            [-17.57,  63.94]])
