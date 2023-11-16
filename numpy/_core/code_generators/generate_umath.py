@@ -1142,21 +1142,61 @@ defdict = {
           TD(O),
           signature='(n?,k),(k,m?)->(n?,m?)',
           ),
+'str_len':
+    Ufunc(1, 1, Zero,
+          docstrings.get('numpy._core.umath.str_len'),
+          None,
+          ),
 'isalpha':
     Ufunc(1, 1, False_,
           docstrings.get('numpy._core.umath.isalpha'),
           None,
           ),
+'isdigit':
+    Ufunc(1, 1, False_,
+          docstrings.get('numpy._core.umath.isdigit'),
+          None,
+          ),
+'isspace':
+    Ufunc(1, 1, False_,
+          docstrings.get('numpy._core.umath.isspace'),
+          None,
+          ),
+'isdecimal':
+    Ufunc(1, 1, False_,
+          docstrings.get('numpy._core.umath.isdecimal'),
+          None,
+          ),
+'isnumeric':
+    Ufunc(1, 1, False_,
+          docstrings.get('numpy._core.umath.isnumeric'),
+          None,
+          ),
 'find':
     Ufunc(4, 1, None,
-          docstrings.get('numpy.core.umath.find'),
+          docstrings.get('numpy._core.umath.find'),
           None,
           ),
 'rfind':
     Ufunc(4, 1, None,
-          docstrings.get('numpy.core.umath.rfind'),
+          docstrings.get('numpy._core.umath.rfind'),
           None,
-          )
+          ),
+'count':
+    Ufunc(4, 1, None,
+          docstrings.get('numpy._core.umath.count'),
+          None,
+          ),
+'startswith':
+    Ufunc(4, 1, False_,
+          docstrings.get('numpy._core.umath.startswith'),
+          None,
+          ),
+'endswith':
+    Ufunc(4, 1, False_,
+          docstrings.get('numpy._core.umath.endswith'),
+          None,
+          ),
 }
 
 def indent(st, spaces):

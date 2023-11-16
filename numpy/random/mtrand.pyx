@@ -3501,7 +3501,7 @@ cdef class RandomState:
             return randoms
 
         _dp = PyFloat_AsDouble(p)
-        _in = int(n)
+        _in = n
         check_constraint(_dp, 'p', CONS_BOUNDED_0_1)
         check_constraint(<double>_in, 'n', LEGACY_CONS_NON_NEGATVE_INBOUNDS_LONG)
 
@@ -4275,7 +4275,7 @@ cdef class RandomState:
         x.shape = tuple(final_shape)
         return x
 
-    def multinomial(self, np.npy_intp n, object pvals, size=None):
+    def multinomial(self, long n, object pvals, size=None):
         """
         multinomial(n, pvals, size=None)
 

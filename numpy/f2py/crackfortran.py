@@ -2398,8 +2398,6 @@ def _calc_depend_dict(vars):
 
 
 def get_sorted_names(vars):
-    """
-    """
     depend_dict = _calc_depend_dict(vars)
     names = []
     for name in list(depend_dict.keys()):
@@ -2452,7 +2450,7 @@ def _selected_real_kind_func(p, r=0, radix=0):
     if p < 16:
         return 8
     machine = platform.machine().lower()
-    if machine.startswith(('aarch64', 'arm64', 'loongarch', 'power', 'ppc', 'riscv', 's390x', 'sparc')):
+    if machine.startswith(('aarch64', 'alpha', 'arm64', 'loongarch', 'power', 'ppc', 'riscv', 's390x', 'sparc')):
         if p <= 33:
             return 16
     else:
@@ -3218,11 +3216,6 @@ def true_intent_list(var):
 
 
 def vars2fortran(block, vars, args, tab='', as_interface=False):
-    """
-    TODO:
-    public sub
-    ...
-    """
     setmesstext(block)
     ret = ''
     nout = []

@@ -292,10 +292,7 @@ def str_len(a):
     >>> np.char.str_len(a)
     array([[5, 5], [1, 1]])
     """
-    # Note: __len__, etc. currently return ints, which are not C-integers.
-    # Generally intp would be expected for lengths, although int is sufficient
-    # due to the dtype itemsize limitation.
-    return _vec_string(a, int_, '__len__')
+    return numpy._core.umath.str_len(a)
 
 
 @array_function_dispatch(_binary_op_dispatcher)
@@ -558,7 +555,8 @@ def count(a, sub, start=0, end=None):
     array([1, 0, 0])
 
     """
-    return _vec_string(a, int_, 'count', [sub, start] + _clean_args(end))
+    end = end if end is not None else numpy.iinfo(numpy.int64).max
+    return numpy._core.umath.count(a, sub, start, end)
 
 
 def _code_dispatcher(a, encoding=None, errors=None):
@@ -691,8 +689,8 @@ def endswith(a, suffix, start=0, end=None):
     array([False,  True])
 
     """
-    return _vec_string(
-        a, bool_, 'endswith', [suffix, start] + _clean_args(end))
+    end = end if end is not None else numpy.iinfo(numpy.int_).max
+    return numpy._core.umath.endswith(a, suffix, start, end)
 
 
 def _expandtabs_dispatcher(a, tabsize=None):
@@ -895,7 +893,7 @@ def isdigit(a):
     >>> np.char.isdigit(a)
     array([[False, False,  True], [False,  True,  True]])
     """
-    return _vec_string(a, bool_, 'isdigit')
+    return numpy._core.umath.isdigit(a)
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -949,7 +947,7 @@ def isspace(a):
     --------
     str.isspace
     """
-    return _vec_string(a, bool_, 'isspace')
+    return numpy._core.umath.isspace(a)
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -1600,8 +1598,8 @@ def startswith(a, prefix, start=0, end=None):
     str.startswith
 
     """
-    return _vec_string(
-        a, bool_, 'startswith', [prefix, start] + _clean_args(end))
+    end = end if end is not None else numpy.iinfo(numpy.int_).max
+    return numpy._core.umath.startswith(a, prefix, start, end)
 
 
 @array_function_dispatch(_strip_dispatcher)
@@ -1874,11 +1872,7 @@ def isnumeric(a):
     array([ True, False, False, False, False])
 
     """
-    if not _is_unicode(a):
-        raise TypeError(
-            "isnumeric is only available for Unicode strings and arrays"
-        )
-    return _vec_string(a, bool_, 'isnumeric')
+    return numpy._core.umath.isnumeric(a)
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -1913,10 +1907,7 @@ def isdecimal(a):
     array([ True, False, False, False])
 
     """ 
-    if not _is_unicode(a):
-        raise TypeError(
-            "isdecimal is only available for Unicode strings and arrays")
-    return _vec_string(a, bool_, 'isdecimal')
+    return numpy._core.umath.isdecimal(a)
 
 
 @set_module("numpy.char")
@@ -2063,8 +2054,6 @@ class chararray(ndarray):
     """
     def __new__(subtype, shape, itemsize=1, unicode=False, buffer=None,
                 offset=0, strides=None, order='C'):
-        global _globalvar
-
         if unicode:
             dtype = str_
         else:
@@ -2082,7 +2071,6 @@ class chararray(ndarray):
         else:
             filler = None
 
-        _globalvar = 1
         if buffer is None:
             self = ndarray.__new__(subtype, shape, (dtype, itemsize),
                                    order=order)
@@ -2093,24 +2081,20 @@ class chararray(ndarray):
                                    order=order)
         if filler is not None:
             self[...] = filler
-        _globalvar = 0
+
         return self
 
-    def __array_prepare__(self, arr, context=None):
-        # When calling a ufunc, we return a chararray if the ufunc output
-        # is a string-like array, or an ndarray otherwise
-        if arr.dtype.char in "SUbc":
-            return arr.view(type(self))
-        return arr
-
     def __array_wrap__(self, arr, context=None):
+        # When calling a ufunc (and some other functions), we return a
+        # chararray if the ufunc output is a string-like array,
+        # or an ndarray otherwise
         if arr.dtype.char in "SUbc":
             return arr.view(type(self))
         return arr
 
     def __array_finalize__(self, obj):
         # The b is a special case because it is used for reconstructing.
-        if not _globalvar and self.dtype.char not in 'SUbc':
+        if self.dtype.char not in 'SUbc':
             raise ValueError("Can only create a chararray from string data.")
 
     def __getitem__(self, obj):

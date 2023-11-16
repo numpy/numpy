@@ -918,47 +918,15 @@ array_wraparray(PyArrayObject *self, PyObject *args)
                 PyArray_DIMS(arr),
                 PyArray_STRIDES(arr), PyArray_DATA(arr),
                 PyArray_FLAGS(arr), (PyObject *)self, obj);
-    } else {
-        /*The type was set in __array_prepare__*/
+    }
+    else {
+        /*
+         * E.g. when called from Python, the type may already be correct.
+         * Typical ufunc paths previously got here through __array_prepare__.
+         */
         Py_INCREF(arr);
         return (PyObject *)arr;
     }
-}
-
-
-static PyObject *
-array_preparearray(PyArrayObject *self, PyObject *args)
-{
-    PyObject *obj;
-    PyArrayObject *arr;
-    PyArray_Descr *dtype;
-
-    if (PyTuple_Size(args) < 1) {
-        PyErr_SetString(PyExc_TypeError,
-                        "only accepts 1 argument");
-        return NULL;
-    }
-    obj = PyTuple_GET_ITEM(args, 0);
-    if (!PyArray_Check(obj)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "can only be called with ndarray object");
-        return NULL;
-    }
-    arr = (PyArrayObject *)obj;
-
-    if (Py_TYPE(self) == Py_TYPE(arr)) {
-        /* No need to create a new view */
-        Py_INCREF(arr);
-        return (PyObject *)arr;
-    }
-
-    dtype = PyArray_DESCR(arr);
-    Py_INCREF(dtype);
-    return PyArray_NewFromDescrAndBase(
-            Py_TYPE(self), dtype,
-            PyArray_NDIM(arr), PyArray_DIMS(arr), PyArray_STRIDES(arr),
-            PyArray_DATA(arr),
-            PyArray_FLAGS(arr), (PyObject *)self, (PyObject *)arr);
 }
 
 
@@ -2793,9 +2761,6 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     /* for subtypes */
     {"__array__",
         (PyCFunction)array_getarray,
-        METH_VARARGS, NULL},
-    {"__array_prepare__",
-        (PyCFunction)array_preparearray,
         METH_VARARGS, NULL},
     {"__array_finalize__",
         (PyCFunction)array_finalizearray,

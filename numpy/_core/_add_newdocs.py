@@ -2931,15 +2931,6 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_finalize__',
     """))
 
 
-add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_prepare__',
-    """
-    a.__array_prepare__(array[, context], /)
-
-    Returns a view of `array` with the same type as self.
-
-    """))
-
-
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_wrap__',
     """
     a.__array_wrap__(array[, context], /)

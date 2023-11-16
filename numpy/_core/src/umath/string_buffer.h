@@ -164,7 +164,12 @@ struct Buffer {
     inline int
     buffer_memcmp(Buffer<enc> other, size_t len)
     {
-        return memcmp(buf, other.buf, len);
+        switch (enc) {
+        case ENCODING::ASCII:
+            return memcmp(buf, other.buf, len);
+        case ENCODING::UTF32:
+            return memcmp(buf, other.buf, len * sizeof(npy_ucs4));
+        }
     }
 
     inline void
@@ -181,7 +186,7 @@ struct Buffer {
     }
 
     inline void
-    buffer_memcpy_with_offset(void *out, npy_int64 offset, size_t n_chars)
+    buffer_memcpy_with_offset(void *out, size_t offset, size_t n_chars)
     {
         switch (enc) {
         case ENCODING::ASCII:
@@ -191,7 +196,60 @@ struct Buffer {
             buffer_memcpy((char *) out + offset * sizeof(npy_ucs4), n_chars);
             break;
         }
+    }
 
+    inline bool
+    isalpha()
+    {
+        npy_int64 len = num_codepoints();
+        if (len == 0) {
+            return false;
+        }
+
+        for (npy_int64 i = 0; i < len; i++) {
+            bool isalpha = enc == ENCODING::UTF32 ? Py_UNICODE_ISALPHA((*this)[i])
+                                                  : NumPyOS_ascii_isalpha((*this)[i]);
+            if (!isalpha) {
+                return isalpha;
+            }
+        }
+        return true;
+    }
+
+    inline bool
+    isspace()
+    {
+        npy_int64 len = num_codepoints();
+        if (len == 0) {
+            return false;
+        }
+
+        for (npy_int64 i = 0; i < len; i++) {
+            bool isspace = enc == ENCODING::UTF32 ? Py_UNICODE_ISSPACE((*this)[i])
+                                                  : NumPyOS_ascii_isspace((*this)[i]);
+            if (!isspace) {
+                return isspace;
+            }
+        }
+        return true;
+    }
+
+    inline bool
+    isdigit()
+    {
+        npy_int64 len = num_codepoints();
+        if (len == 0) {
+            return false;
+        }
+
+        for (npy_int64 i = 0; i < len; i++) {
+            bool isdigit = enc == ENCODING::UTF32 ? Py_UNICODE_ISDIGIT((*this)[i])
+                                                  : NumPyOS_ascii_isdigit((*this)[i]);
+            if (!isdigit) {
+                return isdigit;
+            }
+        }
+        return true;
     }
 };
 

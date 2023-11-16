@@ -21,7 +21,7 @@ NEP 27 — Zero rank arrays
     Some of the information here is dated, for instance indexing of 0-D arrays
     now is now implemented and does not error.
 
-Zero-Rank Arrays
+Zero-rank arrays
 ----------------
 
 Zero-rank arrays are arrays with shape=().  For example:
@@ -31,7 +31,7 @@ Zero-rank arrays are arrays with shape=().  For example:
     ()
 
 
-Zero-Rank Arrays and Array Scalars
+Zero-rank arrays and array scalars
 ----------------------------------
 
 Array scalars are similar to zero-rank arrays in many aspects::
@@ -54,7 +54,7 @@ However there are some important differences:
 * Array scalars are immutable
 * Array scalars have different python type for different data types
 
-Motivation for Array Scalars
+Motivation for array scalars
 ----------------------------
 
 NumPy's design decision to provide 0-d arrays and array scalars in addition to
@@ -115,7 +115,7 @@ NumPy implements a solution that is designed to have all the pros and none of th
     inherit from the three that already exist. Define equivalent
     methods and attributes for these Python scalar types.
 
-The Need for Zero-Rank Arrays
+The need for zero-rank arrays
 -----------------------------
 
 Once the idea to use zero-rank arrays to represent scalars was rejected, it was
@@ -147,7 +147,7 @@ replaced by array scalars.  See also `A case for rank-0 arrays`_ from February
     >>> y
     array(20)
 
-Indexing of Zero-Rank Arrays
+Indexing of zero-rank arrays
 ----------------------------
 
 As of NumPy release 0.9.3, zero-rank arrays do not support any indexing::

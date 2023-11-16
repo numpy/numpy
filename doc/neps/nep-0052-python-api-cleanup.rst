@@ -23,7 +23,7 @@ and functions that have better alternatives. Furthermore, each function is meant
 to be accessible from only one place, so all duplicates also need to be dropped.
 
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 NumPy has a large API surface that evolved organically over many years:
@@ -97,7 +97,7 @@ Out of scope for this NEP are:
 - Introducing new functionality or performance enhancements.
 
 
-Usage and Impact
+Usage and impact
 ----------------
 
 A key principle of this API refactor is to ensure that, when code has been
@@ -299,7 +299,7 @@ actual gain. We arrived at this conclusion for such items:
 - Removing ``.repeat`` and ``.ctypes`` from ``ndarray`` object.
 
 
-Related Work
+Related work
 ------------
 
 A clear split between public and private API was recently established
@@ -351,7 +351,7 @@ Discussion
 
 - `gh-24507: Overhaul of the np.lib namespace <https://github.com/numpy/numpy/issues/24507>`__
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 

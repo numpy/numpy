@@ -30,7 +30,7 @@ policy to remove the obstacles that are in the way of accepting contributions
 to our random number generation capabilities.
 
 
-The Status Quo
+The status quo
 --------------
 
 Our current policy, in full:

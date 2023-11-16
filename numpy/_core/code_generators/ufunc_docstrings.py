@@ -4253,13 +4253,52 @@ add_newdoc('numpy._core.umath', 'bitwise_count',
 
     """)
 
+add_newdoc('numpy._core.umath', 'str_len',
+    """
+    Returns the length of each element. For byte strings,
+    this is the number of bytes, while, for Unicode strings,
+    it is the number of Unicode code points.
+
+    Parameters
+    ----------
+    x : array_like, with ``bytes_`` or ``unicode_`` dtype
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        Output array of ints
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    len
+
+    Examples
+    --------
+    >>> a = np.array(['Grace Hopper Conference', 'Open Source Day'])
+    >>> np.char.str_len(a)
+    array([23, 15])
+    >>> a = np.array([u'\u0420', u'\u043e'])
+    >>> np.char.str_len(a)
+    array([1, 1])
+    >>> a = np.array([['hello', 'world'], [u'\u0420', u'\u043e']])
+    >>> np.char.str_len(a)
+    array([[5, 5], [1, 1]])
+
+    """)
+
 add_newdoc('numpy._core.umath', 'isalpha',
     """
     Returns true for each element if all characters in the data
     interpreted as a string are alphabetic and there is at least
     one character, false otherwise.
 
-    For 8-bit strings (i.e. ``bytes``), this method is locale-dependent.
+    For byte strings (i.e. ``bytes``), alphabetic characters are
+    those byte values in the sequence
+    b'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'. For
+    Unicode strings, alphabetic characters are those characters
+    defined in the Unicode character database as “Letter”.
 
     Parameters
     ----------
@@ -4275,12 +4314,141 @@ add_newdoc('numpy._core.umath', 'isalpha',
     See Also
     --------
     str.isalpha
+
     """)
 
-add_newdoc('numpy.core.umath', 'find',
+add_newdoc('numpy._core.umath', 'isdigit',
+    """
+    Returns true for each element if all characters in the string are
+    digits and there is at least one character, false otherwise.
+
+    For byte strings, digits are the byte values in the sequence
+    b'0123456789'. For Unicode strings, digits include decimal
+    characters and digits that need special handling, such as the
+    compatibility superscript digits. This also covers digits which
+    cannot be used to form numbers in base 10, like the Kharosthi numbers.
+
+    Parameters
+    ----------
+    x : array_like, with ``bytes_`` or ``unicode_`` dtype
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        Output array of bools
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    str.isdigit
+
+    Examples
+    --------
+    >>> a = np.array(['a', 'b', '0'])
+    >>> np.char.isdigit(a)
+    array([False, False,  True])
+    >>> a = np.array([['a', 'b', '0'], ['c', '1', '2']])
+    >>> np.char.isdigit(a)
+    array([[False, False,  True], [False,  True,  True]])
+
+    """)
+
+add_newdoc('numpy._core.umath', 'isspace',
+    r"""
+    Returns true for each element if there are only whitespace
+    characters in the string and there is at least one character,
+    false otherwise.
+
+    For byte strings, whitespace characters are the ones in the
+    sequence b' \t\n\r\x0b\f'. For Unicode strings, a character is
+    whitespace, if, in the Unicode character database, its general
+    category is Zs (“Separator, space”), or its bidirectional class
+    is one of WS, B, or S.
+
+    Parameters
+    ----------
+    x : array_like, with ``bytes_`` or ``unicode_`` dtype
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        Output array of bools
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    str.isspace
+
+    """)
+
+add_newdoc('numpy._core.umath', 'isdecimal',
+    """
+    For each element, return True if there are only decimal
+    characters in the element.
+
+    Decimal characters include digit characters, and all characters
+    that can be used to form decimal-radix numbers,
+    e.g. ``U+0660, ARABIC-INDIC DIGIT ZERO``.
+
+    Parameters
+    ----------
+    x : array_like, with ``unicode_`` dtype
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        Output array of bools
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    str.isdecimal
+
+    Examples
+    --------
+    >>> np.char.isdecimal(['12345', '4.99', '123ABC', ''])
+    array([ True, False, False, False])
+
+    """)
+
+add_newdoc('numpy._core.umath', 'isnumeric',
+    """
+    For each element, return True if there are only numeric
+    characters in the element.
+
+    Numeric characters include digit characters, and all characters
+    that have the Unicode numeric value property, e.g. ``U+2155,
+    VULGAR FRACTION ONE FIFTH``.
+
+    Parameters
+    ----------
+    x : array_like, with ``unicode_`` dtype
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        Output array of bools
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    str.isnumeric
+
+    Examples
+    --------
+    >>> np.char.isnumeric(['123', '123abc', '9.0', '1/4', 'VIII'])
+    array([ True, False, False, False, False])
+
+    """)
+
+add_newdoc('numpy._core.umath', 'find',
     """
     For each element, return the lowest index in the string where
-    substring `x2` is found, such that `sub` is contained in the
+    substring `x2` is found, such that `x2` is contained in the
     range [`x3`, `x4`].
 
     Parameters
@@ -4314,10 +4482,10 @@ add_newdoc('numpy.core.umath', 'find',
 
     """)
 
-add_newdoc('numpy.core.umath', 'rfind',
+add_newdoc('numpy._core.umath', 'rfind',
     """
     For each element, return the highest index in the string where
-    substring `x2` is found, such that `sub` is contained in the
+    substring `x2` is found, such that `x2` is contained in the
     range [`x3`, `x4`].
 
     Parameters
@@ -4341,12 +4509,121 @@ add_newdoc('numpy.core.umath', 'rfind',
 
     See Also
     --------
-    str.find
+    str.rfind
+
+    """)
+
+add_newdoc('numpy._core.umath', 'count',
+    """
+    Returns an array with the number of non-overlapping occurrences of
+    substring `x2` in the range [`x3`, `x4`].
+
+    Parameters
+    ----------
+    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+
+    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+       The substring to search for.
+
+    x3 : array_like, with ``int_`` dtype
+
+    x4 : array_like, with ``int_`` dtype
+        $PARAMS
+
+    `x3` and `x4` are interpreted as in slice notation.
+
+    Returns
+    -------
+    y : ndarray
+        Output array of ints
+        $OUT_SCALAR_2
+
+    See Also
+    --------
+    str.count
 
     Examples
     --------
-    >>> a = np.array(["NumPy is a Python library"])
-    >>> np.char.find(a, "Python", 0, None)
-    array([11])
+    >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> c
+    array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
+    >>> np.char.count(c, 'A')
+    array([3, 1, 1])
+    >>> np.char.count(c, 'aA')
+    array([3, 1, 0])
+    >>> np.char.count(c, 'A', start=1, end=4)
+    array([2, 1, 1])
+    >>> np.char.count(c, 'A', start=1, end=3)
+    array([1, 0, 0])
+
+    """)
+
+add_newdoc('numpy._core.umath', 'startswith',
+    """
+    Returns a boolean array which is `True` where the string element
+    in `x1` starts with `x2`, otherwise `False`.
+
+    Parameters
+    ----------
+    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+
+    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+
+    x3 : array_like, with ``int_`` dtype
+
+    x4 : array_like, with ``int_`` dtype
+        $PARAMS
+        With `x3`, test beginning at that position. With `x4`,
+        stop comparing at that position.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of bools
+        $OUT_SCALAR_2
+
+    See Also
+    --------
+    str.startswith
+
+    """)
+
+add_newdoc('numpy._core.umath', 'endswith',
+    """
+    Returns a boolean array which is `True` where the string element
+    in `x1` ends with `x2`, otherwise `False`.
+
+    Parameters
+    ----------
+    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+
+    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+
+    x3 : array_like, with ``int_`` dtype
+
+    x4 : array_like, with ``int_`` dtype
+        $PARAMS
+        With `x3`, test beginning at that position. With `x4`,
+        stop comparing at that position.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of bools
+        $OUT_SCALAR_2
+
+    See Also
+    --------
+    str.endswith
+
+    Examples
+    --------
+    >>> s = np.array(['foo', 'bar'])
+    >>> s
+    array(['foo', 'bar'], dtype='<U3')
+    >>> np.char.endswith(s, 'ar')
+    array([False,  True])
+    >>> np.char.endswith(s, 'a', start=1, end=2)
+    array([False,  True])
 
     """)

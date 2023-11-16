@@ -112,8 +112,7 @@ _get_transpose(int fancy_ndim, int consec, int ndim, int getmap, npy_intp *dims)
 }
 
 
-/*NUMPY_API
- *
+/*
  * Swap the axes to or from their inserted form. MapIter always puts the
  * advanced (array) indices first in the iteration. But if they are
  * consecutive, will insert/transpose them back before returning.
@@ -703,8 +702,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
                     PyOS_snprintf(err_msg, sizeof(err_msg),
                         "boolean index did not match indexed array along "
-                        "dimension %d; dimension is %" NPY_INTP_FMT
-                        " but corresponding boolean dimension is %" NPY_INTP_FMT,
+                        "axis %d; size of axis is %" NPY_INTP_FMT
+                        " but size of corresponding boolean axis is %" NPY_INTP_FMT,
                         used_ndim, PyArray_DIM(self, used_ndim),
                         indices[i].value);
                     PyErr_SetString(PyExc_IndexError, err_msg);
@@ -2306,7 +2305,7 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
 }
 
 
-/*NUMPY_API
+/*
  * This function needs to update the state of the map iterator
  * and point mit->dataptr to the memory-location of the next object
  *
@@ -3112,13 +3111,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     if (!uses_subspace) {
         mit->outer_strides = NpyIter_GetInnerStrideArray(mit->outer);
     }
-    if (NpyIter_IterationNeedsAPI(mit->outer)) {
-        mit->needs_api = 1;
-        /* We may be doing a cast for the buffer, and that may have failed */
-        if (PyErr_Occurred()) {
-            goto fail;
-        }
-    }
 
     /* Get the allocated extra_op */
     if (extra_op_flags) {
@@ -3240,14 +3232,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     mit->subspace_ptrs = NpyIter_GetDataPtrArray(mit->subspace_iter);
     mit->subspace_strides = NpyIter_GetInnerStrideArray(mit->subspace_iter);
 
-    if (NpyIter_IterationNeedsAPI(mit->subspace_iter)) {
-        mit->needs_api = 1;
-        /*
-         * NOTE: In this case, need to call PyErr_Occurred() after
-         *       basepointer resetting (buffer allocation)
-         */
-    }
-
     Py_XDECREF(extra_op);
     Py_DECREF(intp_descr);
     return (PyObject *)mit;
@@ -3316,9 +3300,8 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 }
 
 
-/*NUMPY_API
- *
- * Same as PyArray_MapIterArray, but:
+/*
+ * Use advanced indexing to iterate an array.
  *
  * If copy_if_overlap != 0, check if `a` has memory overlap with any of the
  * arrays in `index` and with `extra_op`. If yes, make copies as appropriate
@@ -3381,12 +3364,6 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
         goto fail;
     }
 
-    /* Required for backward compatibility */
-    mit->ait = (PyArrayIterObject *)PyArray_IterNew((PyObject *)a);
-    if (mit->ait == NULL) {
-        goto fail;
-    }
-
     if (PyArray_MapIterCheckIndices(mit) < 0) {
         goto fail;
     }
@@ -3415,17 +3392,6 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
 }
 
 
-/*NUMPY_API
- *
- * Use advanced indexing to iterate an array.
- */
-NPY_NO_EXPORT PyObject *
-PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
-{
-    return PyArray_MapIterArrayCopyIfOverlap(a, index, 0, NULL);
-}
-
-
 #undef HAS_INTEGER
 #undef HAS_NEWAXIS
 #undef HAS_SLICE
@@ -3441,7 +3407,6 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
 {
     PyArray_ResolveWritebackIfCopy(mit->array);
     Py_XDECREF(mit->array);
-    Py_XDECREF(mit->ait);
     Py_XDECREF(mit->subspace);
     Py_XDECREF(mit->extra_op);
     Py_XDECREF(mit->extra_op_dtype);

@@ -1,8 +1,8 @@
 .. _NEP08:
 
-=============================================================
-NEP 8 —  A proposal for adding groupby functionality to NumPy
-=============================================================
+============================================================
+NEP 8 — A proposal for adding groupby functionality to NumPy
+============================================================
 
 :Author: Travis Oliphant
 :Contact: oliphant@enthought.com
@@ -21,7 +21,7 @@ describes two additional methods for ufuncs (reduceby and reducein) and
 two additional functions (segment and edges) which can help add this
 functionality.
 
-Example Use Case
+Example use case
 ================
 Suppose you have a NumPy structured array containing information about
 the number of purchases at several stores over multiple days.  To be clear, the

@@ -1489,13 +1489,6 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         /,
     ) -> ndarray[_ShapeType2, _DType]: ...
 
-    def __array_prepare__(
-        self,
-        array: ndarray[_ShapeType2, _DType],
-        context: None | tuple[ufunc, tuple[Any, ...], int] = ...,
-        /,
-    ) -> ndarray[_ShapeType2, _DType]: ...
-
     @overload
     def __getitem__(self, key: (
         NDArray[integer[Any]]

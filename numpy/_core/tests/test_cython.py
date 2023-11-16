@@ -30,14 +30,14 @@ else:
 pytestmark = pytest.mark.skipif(cython is None, reason="requires cython")
 
 
-@pytest.fixture
-def install_temp(tmp_path):
+@pytest.fixture(scope='module')
+def install_temp(tmpdir_factory):
     # Based in part on test_cython from random.tests.test_extending
     if IS_WASM:
         pytest.skip("No subprocess")
 
     srcdir = os.path.join(os.path.dirname(__file__), 'examples', 'cython')
-    build_dir = tmp_path / "build"
+    build_dir = tmpdir_factory.mktemp("cython_test") / "build"
     os.makedirs(build_dir, exist_ok=True)
     try:
         subprocess.check_call(["meson", "--version"])
@@ -190,5 +190,62 @@ def test_multiiter_fields(install_temp, arrays):
         [
             x.base is y.base
             for x, y in zip(bcast.iters, checks.get_multiiter_iters(bcast))
+        ]
+    )
+
+
+def test_conv_intp(install_temp):
+    import checks
+
+    class myint:
+        def __int__(self):
+            return 3
+
+    # These conversion passes via `__int__`, not `__index__`:
+    assert checks.conv_intp(3.) == 3
+    assert checks.conv_intp(myint()) == 3
+
+
+def test_npyiter_api(install_temp):
+    import checks
+    arr = np.random.rand(3, 2)
+
+    it = np.nditer(arr)
+    assert checks.get_npyiter_size(it) == it.itersize == np.prod(arr.shape)
+    assert checks.get_npyiter_ndim(it) == it.ndim == 1
+    assert checks.npyiter_has_index(it) == it.has_index == False
+
+    it = np.nditer(arr, flags=["c_index"])
+    assert checks.npyiter_has_index(it) == it.has_index == True
+    assert (
+        checks.npyiter_has_delayed_bufalloc(it)
+        == it.has_delayed_bufalloc
+        == False
+    )
+
+    it = np.nditer(arr, flags=["buffered", "delay_bufalloc"])
+    assert (
+        checks.npyiter_has_delayed_bufalloc(it)
+        == it.has_delayed_bufalloc
+        == True
+    )
+
+    it = np.nditer(arr, flags=["multi_index"])
+    assert checks.get_npyiter_size(it) == it.itersize == np.prod(arr.shape)
+    assert checks.npyiter_has_multi_index(it) == it.has_multi_index == True
+    assert checks.get_npyiter_ndim(it) == it.ndim == 2
+
+    arr2 = np.random.rand(2, 1, 2)
+    it = np.nditer([arr, arr2])
+    assert checks.get_npyiter_nop(it) == it.nop == 2
+    assert checks.get_npyiter_size(it) == it.itersize == 12
+    assert checks.get_npyiter_ndim(it) == it.ndim == 3
+    assert all(
+        x is y for x, y in zip(checks.get_npyiter_operands(it), it.operands)
+    )
+    assert all(
+        [
+            np.allclose(x, y)
+            for x, y in zip(checks.get_npyiter_itviews(it), it.itviews)
         ]
     )

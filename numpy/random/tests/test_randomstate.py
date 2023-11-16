@@ -183,6 +183,9 @@ class TestMultinomial:
         with pytest.raises(ValueError, match=match):
             random.multinomial(1, pvals)
 
+    def test_multinomial_n_float(self):
+        # Non-index integer types should gracefully truncate floats
+        random.multinomial(100.5, [0.2, 0.8])
 
 class TestSetState:
     def setup_method(self):

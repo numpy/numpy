@@ -92,27 +92,29 @@ geterrobj               Use the np.errstate context manager instead.
 Inf                     Use ``np.inf`` instead.
 Infinity                Use ``np.inf`` instead.
 infty                   Use ``np.inf`` instead.
-issctype
+issctype                Use ``issubclass(rep, np.generic)`` instead.
 issubclass\_            Use ``issubclass`` builtin instead.
 issubsctype             Use ``np.issubdtype`` instead.
 mat                     Use ``np.asmatrix`` instead.
-maximum_sctype
+maximum_sctype          Use a specific dtype instead. You should avoid relying
+                        on any implicit mechanism and select the largest dtype of
+                        a kind explicitly in the code.
 NaN                     Use ``np.nan`` instead.
 nbytes                  Use ``np.dtype(<dtype>).itemsize`` instead.
 NINF                    Use ``-np.inf`` instead.
 NZERO                   Use ``-0.0`` instead.
 longcomplex             Use ``np.clongdouble`` instead.
-longfloat               Use ``np.longdouble`` instead.      
+longfloat               Use ``np.longdouble`` instead.
 lookfor                 Search NumPy's documentation directly.
-obj2sctype
+obj2sctype              Use ``np.dtype(obj).type`` instead.
 PINF                    Use ``np.inf`` instead.
 PZERO                   Use ``0.0`` instead.
 recfromcsv              Use ``np.genfromtxt`` with comma delimiter instead.
 recfromtxt              Use ``np.genfromtxt`` instead.
 round\_                 Use ``np.round`` instead.
 safe_eval               Use ``ast.literal_eval`` instead.
-sctype2char
-sctypes
+sctype2char             Use ``np.dtype(obj).char`` instead.
+sctypes                 Access dtypes explicitly instead.
 seterrobj               Use the np.errstate context manager instead.
 set_numeric_ops         For the general case, use ``PyUFunc_ReplaceLoopBySignature``. 
                         For ndarray subclasses, define the ``__array_ufunc__`` method 
@@ -138,7 +140,7 @@ deprecated member migration guideline
 ================= =======================================================================
 in1d              Use ``np.isin`` instead.
 row_stack         Use ``np.vstack`` instead (``row_stack`` was an alias for ``v_stack``).
-trapz             Use ``scipy.interpolate.trapezoid`` instead.
+trapz             Use ``scipy.integrate.trapezoid`` instead.
 ================= =======================================================================
 
 

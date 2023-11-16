@@ -17,7 +17,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
-    _gen_alignment_data, assert_array_almost_equal_nulp, IS_WASM, IS_MUSL, 
+    _gen_alignment_data, assert_array_almost_equal_nulp, IS_WASM, IS_MUSL,
     IS_PYPY
     )
 from numpy.testing._private.utils import _glibc_older_than
@@ -1354,21 +1354,9 @@ class TestLog:
 
         # test log() of max for dtype does not raise
         for dt in ['f', 'd', 'g']:
-            try:
-                with np.errstate(all='raise'):
-                    x = np.finfo(dt).max
-                    np.log(x)
-            except FloatingPointError as exc:
-                if dt == 'g' and IS_MUSL:
-                    # FloatingPointError is known to occur on longdouble
-                    # for musllinux_x86_64 x is very large
-                    pytest.skip(
-                        "Overflow has occurred for"
-                        " np.log(np.finfo(np.longdouble).max)"
-                    )
-                else:
-                    raise exc
-
+            with np.errstate(all='raise'):
+                x = np.finfo(dt).max
+                np.log(x)
     def test_log_strides(self):
         np.random.seed(42)
         strides = np.array([-4,-3,-2,-1,1,2,3,4])
@@ -1712,6 +1700,9 @@ class TestSpecialFloats:
                     assert_raises(FloatingPointError, np.arctanh,
                                   np.array(value, dtype=dt))
 
+        # Make sure glibc < 2.18 atanh is not used, issue 25087
+        assert np.signbit(np.arctanh(-1j).real)
+
     # See: https://github.com/numpy/numpy/issues/20448
     @pytest.mark.xfail(
         _glibc_older_than("2.17"),
@@ -1818,6 +1809,18 @@ class TestSpecialFloats:
         with assert_no_warnings():
             ufunc(array)
 
+    @pytest.mark.parametrize("dtype", ('e', 'f', 'd'))
+    def test_divide_spurious_fpexception(self, dtype):
+        dt = np.dtype(dtype)
+        dt_info = np.finfo(dt)
+        subnorm = dt_info.smallest_subnormal
+        # Verify a bug fix caused due to filling the remaining lanes of the
+        # partially loaded dividend SIMD vector with ones, which leads to
+        # raising an overflow warning when the divisor is denormal.
+        # see https://github.com/numpy/numpy/issues/25097
+        with assert_no_warnings():
+            np.zeros(128 + 1, dtype=dt) / subnorm
+
 class TestFPClass:
     @pytest.mark.parametrize("stride", [-5, -4, -3, -2, -1, 1,
                                 2, 4, 5, 6, 7, 8, 9, 10])
@@ -1896,9 +1899,9 @@ class TestLDExp:
 class TestFRExp:
     @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
     @pytest.mark.parametrize("dtype", ['f', 'd'])
-    @pytest.mark.xfail(IS_MUSL, reason="gh23048")
     @pytest.mark.skipif(not sys.platform.startswith('linux'),
                         reason="np.frexp gives different answers for NAN/INF on windows and linux")
+    @pytest.mark.xfail(IS_MUSL, reason="gh23049")
     def test_frexp(self, dtype, stride):
         arr = np.array([np.nan, np.nan, np.inf, -np.inf, 0.0, -0.0, 1.0, -1.0], dtype=dtype)
         mant_true = np.array([np.nan, np.nan, np.inf, -np.inf, 0.0, -0.0, 0.5, -0.5], dtype=dtype)
@@ -2964,7 +2967,7 @@ class TestSpecialMethods:
         assert_equal(args[1], a)
         assert_equal(i, 0)
 
-    def test_wrap_and_prepare_out(self):
+    def test_wrap_out(self):
         # Calling convention for out should not affect how special methods are
         # called
 
@@ -2976,31 +2979,28 @@ class TestSpecialMethods:
             def __array_wrap__(self, obj, context):
                 self._wrap_args = context[1]
                 return obj
-            def __array_prepare__(self, obj, context):
-                self._prepare_args = context[1]
-                return obj
             @property
             def args(self):
                 # We need to ensure these are fetched at the same time, before
                 # any other ufuncs are called by the assertions
-                return (self._prepare_args, self._wrap_args)
+                return self._wrap_args
             def __repr__(self):
                 return "a"  # for short test output
 
         def do_test(f_call, f_expected):
             a = StoreArrayPrepareWrap()
+
             f_call(a)
-            p, w = a.args
+
+            w = a.args
             expected = f_expected(a)
             try:
-                assert_equal(p, expected)
-                assert_equal(w, expected)
+                assert w == expected
             except AssertionError as e:
                 # assert_equal produces truly useless error messages
                 raise AssertionError("\n".join([
                     "Bad arguments passed in ufunc call",
                     " expected:              {}".format(expected),
-                    " __array_prepare__ got: {}".format(p),
                     " __array_wrap__ got:    {}".format(w)
                 ]))
 
@@ -3167,57 +3167,6 @@ class TestSpecialMethods:
         x = ncu.minimum(a, a)
         assert_equal(x, np.zeros(1))
         assert_equal(type(x), np.ndarray)
-
-    @pytest.mark.parametrize("use_where", [True, False])
-    def test_prepare(self, use_where):
-
-        class with_prepare(np.ndarray):
-            __array_priority__ = 10
-
-            def __array_prepare__(self, arr, context):
-                # make sure we can return a new
-                return np.array(arr).view(type=with_prepare)
-
-        a = np.array(1).view(type=with_prepare)
-        if use_where:
-            x = np.add(a, a, where=np.array(True))
-        else:
-            x = np.add(a, a)
-        assert_equal(x, np.array(2))
-        assert_equal(type(x), with_prepare)
-
-    @pytest.mark.parametrize("use_where", [True, False])
-    def test_prepare_out(self, use_where):
-
-        class with_prepare(np.ndarray):
-            __array_priority__ = 10
-
-            def __array_prepare__(self, arr, context):
-                return np.array(arr).view(type=with_prepare)
-
-        a = np.array([1]).view(type=with_prepare)
-        if use_where:
-            x = np.add(a, a, a, where=[True])
-        else:
-            x = np.add(a, a, a)
-        # Returned array is new, because of the strange
-        # __array_prepare__ above
-        assert_(not np.shares_memory(x, a))
-        assert_equal(x, np.array([2]))
-        assert_equal(type(x), with_prepare)
-
-    def test_failing_prepare(self):
-
-        class A:
-            def __array__(self):
-                return np.zeros(1)
-
-            def __array_prepare__(self, arr, context=None):
-                raise RuntimeError
-
-        a = A()
-        assert_raises(RuntimeError, ncu.maximum, a, a)
-        assert_raises(RuntimeError, ncu.maximum, a, a, where=False)
 
     def test_array_too_many_args(self):
 
@@ -4135,7 +4084,6 @@ class TestComplexFunctions:
             assert_almost_equal(fz.real, fr, err_msg='real part %s' % f)
             assert_almost_equal(fz.imag, 0., err_msg='imag part %s' % f)
 
-    @pytest.mark.xfail(IS_MUSL, reason="gh23049")
     @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_precisions_consistent(self):
         z = 1 + 1j
@@ -4146,7 +4094,6 @@ class TestComplexFunctions:
             assert_almost_equal(fcf, fcd, decimal=6, err_msg='fch-fcd %s' % f)
             assert_almost_equal(fcl, fcd, decimal=15, err_msg='fch-fcl %s' % f)
 
-    @pytest.mark.xfail(IS_MUSL, reason="gh23049")
     @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_branch_cuts(self):
         # check branch cuts and continuity on them
@@ -4173,7 +4120,6 @@ class TestComplexFunctions:
         _check_branch_cut(np.arccosh, [0-2j, 2j, 2], [1,  1,  1j], 1, 1)
         _check_branch_cut(np.arctanh, [0-2j, 2j, 0], [1,  1,  1j], 1, 1)
 
-    @pytest.mark.xfail(IS_MUSL, reason="gh23049")
     @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_branch_cuts_complex64(self):
         # check branch cuts and continuity on them
@@ -4218,7 +4164,7 @@ class TestComplexFunctions:
                 a = complex(func(np.complex128(p)))
                 b = cfunc(p)
                 assert_(
-                    abs(a - b) < atol, 
+                    abs(a - b) < atol,
                     "%s %s: %s; cmath: %s" % (fname, p, a, b)
                 )
 
@@ -4227,7 +4173,6 @@ class TestComplexFunctions:
         _glibc_older_than("2.18"),
         reason="Older glibc versions are imprecise (maybe passes with SIMD?)"
     )
-    @pytest.mark.xfail(IS_MUSL, reason="gh23049")
     @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     @pytest.mark.parametrize('dtype', [
         np.complex64, np.complex128, np.clongdouble
@@ -4703,18 +4648,12 @@ def test_outer_bad_subclass():
             if self.ndim == 3:
                 self.shape = self.shape + (1,)
 
-        def __array_prepare__(self, obj, context=None):
-            return obj
-
     class BadArr2(np.ndarray):
         def __array_finalize__(self, obj):
             if isinstance(obj, BadArr2):
                 # outer inserts 1-sized dims. In that case disturb them.
                 if self.shape[-1] == 1:
                     self.shape = self.shape[::-1]
-
-        def __array_prepare__(self, obj, context=None):
-            return obj
 
     for cls in [BadArr1, BadArr2]:
         arr = np.ones((2, 3)).view(cls)
@@ -4788,7 +4727,7 @@ class TestAddDocstring:
         # test for attributes (which are C-level defined)
         with assert_raises(RuntimeError):
             ncu.add_docstring(np.ndarray.flat, "different docstring")
-            
+
         # And typical functions:
         def func():
             """docstring"""

@@ -8654,28 +8654,6 @@ def test_scalar_element_deletion():
     assert_raises(ValueError, a[0].__delitem__, 'x')
 
 
-class TestMapIter:
-    def test_mapiter(self):
-        # The actual tests are within the C code in
-        # multiarray/_multiarray_tests.c.src
-
-        a = np.arange(12).reshape((3, 4)).astype(float)
-        index = ([1, 1, 2, 0],
-                 [0, 0, 2, 3])
-        vals = [50, 50, 30, 16]
-
-        _multiarray_tests.test_inplace_increment(a, index, vals)
-        assert_equal(a, [[0.00, 1., 2.0, 19.],
-                         [104., 5., 6.0, 7.0],
-                         [8.00, 9., 40., 11.]])
-
-        b = np.arange(6).astype(float)
-        index = (np.array([1, 2, 0]),)
-        vals = [50, 4, 100.1]
-        _multiarray_tests.test_inplace_increment(b, index, vals)
-        assert_equal(b, [100.1,  51.,   6.,   3.,   4.,   5.])
-
-
 class TestAsCArray:
     def test_1darray(self):
         array = np.arange(24, dtype=np.double)

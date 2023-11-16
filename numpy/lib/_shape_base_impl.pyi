@@ -37,17 +37,8 @@ from numpy._core.shape_base import vstack
 _P = ParamSpec("_P")
 _SCT = TypeVar("_SCT", bound=generic)
 
-# The signatures of `__array_wrap__` and `__array_prepare__` are the same;
-# give them unique names for the sake of clarity
+# Signature of `__array_wrap__`
 class _ArrayWrap(Protocol):
-    def __call__(
-        self,
-        array: NDArray[Any],
-        context: None | tuple[ufunc, tuple[Any, ...], int] = ...,
-        /,
-    ) -> Any: ...
-
-class _ArrayPrepare(Protocol):
     def __call__(
         self,
         array: NDArray[Any],
@@ -59,9 +50,6 @@ class _SupportsArrayWrap(Protocol):
     @property
     def __array_wrap__(self) -> _ArrayWrap: ...
 
-class _SupportsArrayPrepare(Protocol):
-    @property
-    def __array_prepare__(self) -> _ArrayPrepare: ...
 
 __all__: list[str]
 

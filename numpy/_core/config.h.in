@@ -12,6 +12,7 @@
 #mesondefine HAVE___DECLSPEC_THREAD_
 
 /* Optional headers */
+#mesondefine HAVE_FEATURES_H
 #mesondefine HAVE_XLOCALE_H
 #mesondefine HAVE_DLFCN_H
 #mesondefine HAVE_EXECINFO_H
