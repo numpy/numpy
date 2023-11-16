@@ -4279,10 +4279,10 @@ add_newdoc('numpy._core.umath', 'str_len',
     >>> a = np.array(['Grace Hopper Conference', 'Open Source Day'])
     >>> np.char.str_len(a)
     array([23, 15])
-    >>> a = np.array([u'\u0420', u'\u043e'])
+    >>> a = np.array(['\u0420', '\u043e'])
     >>> np.char.str_len(a)
     array([1, 1])
-    >>> a = np.array([['hello', 'world'], [u'\u0420', u'\u043e']])
+    >>> a = np.array([['hello', 'world'], ['\u0420', '\u043e']])
     >>> np.char.str_len(a)
     array([[5, 5], [1, 1]])
 
