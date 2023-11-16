@@ -50,6 +50,11 @@ Hypothesis__ https://hypothesis.readthedocs.io/en/latest/
 Basic installation
 ==================
 
+If this is a clone of the NumPy git repository, then first initialize
+the ``git`` submodules::
+
+    git submodule update --init
+
 To install NumPy, run::
 
     pip install .
