@@ -1976,7 +1976,7 @@ def disp(mesg, device=None, linefeed=True):
 
     >>> from io import StringIO
     >>> buf = StringIO()
-    >>> np.disp(u'"Display" in a file', device=buf)
+    >>> np.disp('"Display" in a file', device=buf)
     >>> buf.getvalue()
     '"Display" in a file\\n'
 
