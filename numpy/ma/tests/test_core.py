@@ -4921,11 +4921,26 @@ class TestMaskedArrayFunctions:
     def test_convolve(self):
         a = masked_equal(np.arange(5), 2)
         b = np.array([1, 1])
-        test = np.ma.convolve(a, b)
-        assert_equal(test, masked_equal([0, 1, -1, -1, 7, 4], -1))
 
-        test = np.ma.convolve(a, b, propagate_mask=False)
-        assert_equal(test, masked_equal([0, 1, 1, 3, 7, 4], -1))
+        result = masked_equal([0, 1, -1, -1, 7, 4], -1)
+        test = np.ma.convolve(a, b, mode='full')
+        assert_equal(test, result)
+
+        test = np.ma.convolve(a, b, mode='same')
+        assert_equal(test, result[:-1])
+
+        test = np.ma.convolve(a, b, mode='valid')
+        assert_equal(test, result[1:-1])
+
+        result = masked_equal([0, 1, 1, 3, 7, 4], -1)
+        test = np.ma.convolve(a, b, mode='full', propagate_mask=False)
+        assert_equal(test, result)
+
+        test = np.ma.convolve(a, b, mode='same', propagate_mask=False)
+        assert_equal(test, result[:-1])
+
+        test = np.ma.convolve(a, b, mode='valid', propagate_mask=False)
+        assert_equal(test, result[1:-1])
 
         test = np.ma.convolve([1, 1], [1, 1, 1])
         assert_equal(test, masked_equal([1, 2, 2, 1], -1))

@@ -8053,7 +8053,7 @@ def _convolve_or_correlate(f, a, v, mode, propagate_mask):
         data = f(getdata(a), getdata(v), mode=mode)
     else:
         # results which are not contributed to by any pair of valid elements
-        mask = ~f(~getmaskarray(a), ~getmaskarray(v))
+        mask = ~f(~getmaskarray(a), ~getmaskarray(v), mode=mode)
         data = f(filled(a, 0), filled(v, 0), mode=mode)
 
     return masked_array(data, mask=mask)
