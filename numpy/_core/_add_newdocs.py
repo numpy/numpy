@@ -939,6 +939,13 @@ add_newdoc('numpy._core.multiarray', 'asarray',
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
+    copy : bool, optional
+        If true, then the object is copied. If false then the object is
+        copied only if needed, i.e. if ``__array__`` returns a copy, if obj
+        is a nested sequence, or if a copy is needed to satisfy any of
+        the other requirements (``dtype``, ``order``, etc.).
+        For ``np._CopyMode.NEVER`` it raises a ``ValueError`` if a copy
+        cannot be avoided. Default: false.
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0

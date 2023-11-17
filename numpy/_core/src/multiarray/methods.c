@@ -782,7 +782,7 @@ array_astype(PyArrayObject *self,
     npy_dtype_info dt_info = {NULL, NULL};
     NPY_CASTING casting = NPY_UNSAFE_CASTING;
     NPY_ORDER order = NPY_KEEPORDER;
-    _PyArray_CopyMode forcecopy = 1;
+    NPY_COPYMODE forcecopy = 1;
     int subok = 1;
 
     NPY_PREPARE_ARGPARSER;
