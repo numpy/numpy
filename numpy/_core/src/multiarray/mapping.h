@@ -5,74 +5,87 @@ extern NPY_NO_EXPORT PyMappingMethods array_as_mapping;
 
 
 /*
- * Store the information needed for fancy-indexing over an array. The
- * fields are slightly unordered to keep consec, dataptr and subspace
- * where they were originally.
+ * Object to store information needed for advanced (also fancy) indexing.
+ * Not public, so does not have to be a Python object in principle.
  */
 typedef struct {
         PyObject_HEAD
+        /* number of advanced indexing arrays ("fancy" indices) */
+        int                   num_fancy;
+        /* Total size of the result (see `nd` and `dimensions` below) */
+        npy_intp              size;
 
-        int                   numiter;                 /* number of index-array
-                                                          iterators */
-        npy_intp              size;                    /* size of broadcasted
-                                                          result */
-        int                   nd;                      /* number of dims */
-        npy_intp              dimensions[NPY_MAXDIMS]; /* dimensions */
-        NpyIter               *outer;                  /* index objects
-                                                          iterator */
+        /*
+         * Arrays used in the iteration:
+         * - The original array indexed (subscription or assignment)
+         * - extra-op: is used for the subscription result array or the
+         *   values being assigned.
+         *   (As of writing `ufunc.at` does not use this mechanism.)
+         * - "subspace": If not all dimensions are indexed using advanced
+         *   indices, the "subspace" is a view into `array` that omits all
+         *   dimensions indexed by advanced indices.
+         *   (The result of replacing all indexing arrays by a `0`.)
+         */
         PyArrayObject         *array;
-
-        /* Subspace array. */
+        PyArrayObject         *extra_op;
         PyArrayObject         *subspace;
 
         /*
-         * if subspace iteration, then this is the array of axes in
-         * the underlying array represented by the index objects
+         * Pointer into the array when all index arrays are 0, used as base
+         * for all calculations.
          */
-        int                   iteraxes[NPY_MAXDIMS];
-        npy_intp              fancy_strides[NPY_MAXDIMS];
-
-        /* pointer when all fancy indices are 0 */
         char                  *baseoffset;
 
         /*
-         * after binding consec denotes at which axis the fancy axes
-         * are inserted.
+         * Iterator and information for all indexing (fancy) arrays.
+         * When no "subspace" is needed it also iterates the `extra_op`.
          */
-        int                   consec;
-        char                  *dataptr;
-
-        int                   nd_fancy;
-        npy_intp              fancy_dims[NPY_MAXDIMS];
-
-        /*
-         * Extra op information.
-         */
-        PyArrayObject         *extra_op;
-        PyArray_Descr         *extra_op_dtype;         /* desired dtype */
-        npy_uint32            *extra_op_flags;         /* Iterator flags */
-
-        NpyIter               *extra_op_iter;
-        NpyIter_IterNextFunc  *extra_op_next;
-        char                  **extra_op_ptrs;
-
-        /*
-         * Information about the iteration state.
-         */
+        NpyIter               *outer;
         NpyIter_IterNextFunc  *outer_next;
         char                  **outer_ptrs;
         npy_intp              *outer_strides;
 
         /*
-         * Information about the subspace iterator.
+         * When a "subspace" is used, `extra_op` needs a dedicated iterator
+         * and we need yet another iterator for the original array.
          */
+        NpyIter               *extra_op_iter;
+        NpyIter_IterNextFunc  *extra_op_next;
+        char                  **extra_op_ptrs;
+
         NpyIter               *subspace_iter;
         NpyIter_IterNextFunc  *subspace_next;
         char                  **subspace_ptrs;
         npy_intp              *subspace_strides;
 
-        /* Count for the external loop (which ever it is) for API iteration */
+        /*
+         * Total number of total dims of the result and how many of those
+         * are created by the advanced indexing result.
+         * (This is not the same as `num_fancy` as advanced indices can add
+         * or remove dimensions.)
+         */
+        int                   nd;
+        int                   nd_fancy;
+        /*
+         * After binding "consec" denotes at which axis the fancy axes
+         * are inserted.  When all advanced indices are consecutive, NumPy
+         * preserves their position in the result (see advanced indexing docs).
+         */
+        int                   consec;
+        /* Result dimensions/shape */
+        npy_intp              dimensions[NPY_MAXDIMS];
+
+        /*
+         * The axes iterated by the advanced index and the length and strides
+         * for each of these axes. (The fast paths copy some of this.)
+         */
+        int                   iteraxes[NPY_MAXDIMS];
+        npy_intp              fancy_dims[NPY_MAXDIMS];
+        npy_intp              fancy_strides[NPY_MAXDIMS];
+
+        /* Count and pointer used as state by the slow `PyArray_MapIterNext` */
         npy_intp              iter_count;
+        char                  *dataptr;
 
 } PyArrayMapIterObject;
 
