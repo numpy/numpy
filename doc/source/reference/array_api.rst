@@ -99,10 +99,6 @@ functions to include additional keyword arguments from those required.
      - The definitions of ``rtol`` and ``rcond`` are the same, but their
        default values differ, making this **breaking**. See
        :ref:`array_api-linear-algebra-differences`.
-   * - ``std`` and ``var``
-     - ``correction``
-     - ``ddof``
-     -
    * - ``reshape``
      - ``shape``
      - ``newshape``

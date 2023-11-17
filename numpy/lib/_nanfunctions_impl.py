@@ -1614,13 +1614,14 @@ def _nanquantile_1d(arr1d, q, overwrite_input=False, method="linear"):
 
 
 def _nanvar_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
-                       keepdims=None, *, where=None, mean=None):
+                       keepdims=None, *, where=None, mean=None,
+                       correction=None):
     return (a, out)
 
 
 @array_function_dispatch(_nanvar_dispatcher)
 def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
-           *, where=np._NoValue, mean=np._NoValue):
+           *, where=np._NoValue, mean=np._NoValue, correction=np._NoValue):
     """
     Compute the variance along the specified axis, while ignoring NaNs.
 
@@ -1649,7 +1650,7 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
         Alternate output array in which to place the result.  It must have
         the same shape as the expected output, but the type is cast if
         necessary.
-    ddof : int, optional
+    ddof : {int, float}, optional
         "Delta Degrees of Freedom": the divisor used in the calculation is
         ``N - ddof``, where ``N`` represents the number of non-NaN
         elements. By default `ddof` is zero.
@@ -1663,13 +1664,19 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
 
         .. versionadded:: 1.22.0
 
-    mean : array like, optional
+    mean : array_like, optional
         Provide the mean to prevent its recalculation. The mean should have
         a shape as if it was calculated with ``keepdims=True``.
         The axis for the calculation of the mean should be the same as used in
         the call to this var function.
 
         .. versionadded:: 1.26.0
+
+    correction : {int, float}, optional
+        Array API compatible name for the ``ddof`` parameter. Only one of them
+        can be provided at the same time.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -1725,7 +1732,8 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
     arr, mask = _replace_nan(a, 0)
     if mask is None:
         return np.var(arr, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                      keepdims=keepdims, where=where, mean=mean)
+                      keepdims=keepdims, where=where, mean=mean,
+                      correction=correction)
 
     if dtype is not None:
         dtype = np.dtype(dtype)
@@ -1733,6 +1741,14 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
         raise TypeError("If a is inexact, then dtype must be inexact")
     if out is not None and not issubclass(out.dtype.type, np.inexact):
         raise TypeError("If a is inexact, then out must be inexact")
+
+    if correction != np._NoValue:
+        if ddof != 0:
+            raise ValueError(
+                "ddof and correction can't be provided simultaneously."
+            )
+        else:
+            ddof = correction
 
     # Compute mean
     if type(arr) is np.matrix:
@@ -1789,13 +1805,14 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
 
 
 def _nanstd_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
-                       keepdims=None, *, where=None, mean=None):
+                       keepdims=None, *, where=None, mean=None,
+                       correction=None):
     return (a, out)
 
 
 @array_function_dispatch(_nanstd_dispatcher)
 def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
-           *, where=np._NoValue, mean=np._NoValue):
+           *, where=np._NoValue, mean=np._NoValue, correction=np._NoValue):
     """
     Compute the standard deviation along the specified axis, while
     ignoring NaNs.
@@ -1825,7 +1842,7 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
         Alternative output array in which to place the result. It must have
         the same shape as the expected output but the type (of the
         calculated values) will be cast if necessary.
-    ddof : int, optional
+    ddof : {int, float}, optional
         Means Delta Degrees of Freedom.  The divisor used in calculations
         is ``N - ddof``, where ``N`` represents the number of non-NaN
         elements.  By default `ddof` is zero.
@@ -1845,13 +1862,19 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
 
         .. versionadded:: 1.22.0
 
-    mean : array like, optional
+    mean : array_like, optional
         Provide the mean to prevent its recalculation. The mean should have
         a shape as if it was calculated with ``keepdims=True``.
         The axis for the calculation of the mean should be the same as used in
         the call to this std function.
 
         .. versionadded:: 1.26.0
+
+    correction : {int, float}, optional
+        Array API compatible name for the ``ddof`` parameter. Only one of them
+        can be provided at the same time.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -1903,7 +1926,8 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
 
     """
     var = nanvar(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                 keepdims=keepdims, where=where, mean=mean)
+                 keepdims=keepdims, where=where, mean=mean,
+                 correction=correction)
     if isinstance(var, np.ndarray):
         std = np.sqrt(var, out=var)
     elif hasattr(var, 'dtype'):
