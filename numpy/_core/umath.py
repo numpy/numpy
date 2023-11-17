@@ -6,8 +6,10 @@ by importing from the extension module.
 
 """
 
+import numpy
 from . import _multiarray_umath
 from ._multiarray_umath import *  # noqa: F403
+from ._multiarray_umath import _replace_impl
 # These imports are needed for backward compatibility,
 # do not change them. issue gh-11862
 # _ones_like is semi-public, on purpose not added to __all__
@@ -31,3 +33,42 @@ __all__ = [
     'power', 'rad2deg', 'radians', 'reciprocal', 'remainder', 'right_shift',
     'rint', 'sign', 'signbit', 'sin', 'sinh', 'spacing', 'sqrt', 'square',
     'subtract', 'tan', 'tanh', 'true_divide', 'trunc']
+
+
+def replace(x1, x2, x3, x4):
+    """
+    For each element in `x1`, return a copy of the string with all
+    occurrences of substring `x2` replaced by `x3`.
+    Parameters
+    ----------
+    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x3 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x4 : array_like, with ``int_`` dtype
+        If the optional argument `x4` is given, only the first
+        `x4` occurrences are replaced.
+        $PARAMS
+    Returns
+    -------
+    y : ndarray
+        Output array of str or unicode, depending on input type
+        $OUT_SCALAR_2
+    See Also
+    --------
+    str.replace
+    
+    Examples
+    --------
+    >>> a = np.array(["That is a mango", "Monkeys eat mangos"])
+    >>> np.core.umath.replace(a, 'mango', 'banana')
+    array(['That is a banana', 'Monkeys eat bananas'], dtype='<U19')
+    >>> a = np.array(["The dish is fresh", "This is it"])
+    >>> np.core.umath.replace(a, 'is', 'was')
+    array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
+    """
+    counts = count(x1, x2, 0, numpy.iinfo(numpy.int_).max)
+    buffersizes = str_len(x1) + counts * (str_len(x3)-str_len(x2))
+    max_buffersize = numpy.max(buffersizes)
+    out = numpy.empty(x1.shape, dtype=f"{x1.dtype.char}{max_buffersize}")
+    _replace_impl(x1, x2, x3, x4, out=out)
+    return out

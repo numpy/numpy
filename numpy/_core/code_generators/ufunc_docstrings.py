@@ -4558,6 +4558,13 @@ add_newdoc('numpy._core.umath', 'count',
 
     """)
 
+add_newdoc('numpy.core.umath', '_replace_impl',
+    """
+    UFunc implementation of ``replace``. This internal function
+    is called by ``replace`` with ``out`` set, so that the
+    size of the resulting string buffer is known.
+    """)
+
 add_newdoc('numpy._core.umath', 'startswith',
     """
     Returns a boolean array which is `True` where the string element

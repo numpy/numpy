@@ -1267,8 +1267,8 @@ def replace(a, old, new, count=None):
     >>> np.char.replace(a, 'is', 'was')
     array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
     """
-    return _to_bytes_or_str_array(
-        _vec_string(a, object_, 'replace', [old, new] + _clean_args(count)), a)
+    count = count if count is not None else numpy.iinfo(numpy.int64).max
+    return numpy._core.umath.replace(a, old, new, count)
 
 
 @array_function_dispatch(_count_dispatcher)
@@ -2516,7 +2516,7 @@ class chararray(ndarray):
         char.replace
 
         """
-        return asarray(replace(self, old, new, count))
+        return replace(self, old, new, count)
 
     def rfind(self, sub, start=0, end=None):
         """
