@@ -3588,40 +3588,37 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
     Notes
     -----
-    The (sample) standard deviation is the square root of an average of the
-    squared deviations from the sample mean.
+    The definition of the standard deviation of an array is not unique.
+    Assuming the input `a` is a one dimensional NumPy array and `mean` is
+    either provided as an argument or computed as ``a.mean()``, NumPy
+    computes the standard deviation of an array as::
 
-    The squared deviations are calculated as ``x2 = abs(a - a.mean())**2``,
-    and the average is taken as ``x2.sum() / (N - ddof)``, where ``N`` is the
-    number of observations in the sample `a` and `ddof` is a keyword parameter.
-    The square root of this quantity is a "consistent" estimator of the
-    standard deviation of the population from which the sample was drawn: as
-    the number of observations tends toward infinity, it converges in
-    probability to the true population standard deviation.
+        N = len(a)
+        d2 = abs(a - mean)**2
+        var = d2.sum() / (N - ddof)  # note use of `ddof`
+        std = var**0.5
 
-    With ``ddof=0`` (default), the resulting sample standard deviation is known
-    as the "uncorrected sample standard deviation" because it is not corrected
-    for "bias": the expected value of this sample standard deviation does not
-    equal the true population standard deviation. Nonetheless, it is a useful
-    estimator of the population standard deviation when the sample size is
-    large, and it is the maximumum likelihood estimate of the standard
-    deviation when the population is normally distributed.
+    Different values of the argument `ddof` are useful in different
+    contexts. NumPy's default ``ddof=0`` corresponds with the expression::
 
-    Use of ``ddof=1`` is known as the "Bessel correction", and the resulting
-    average squared deviation is an unbiased estimator of the population
-    variance. The square root of this unbiased variance estimate is known as
-    the "corrected sample standard deviation" or simply *the* "sample standard
-    deviation", although it is still a biased estimate of the population
-    standard deviation.
+    .. math::
 
-    Other values of `ddof` may have desirable properties for samples drawn from
-    certain distributions; for instance, if the population is normally
-    distributed, ``ddof=1.5`` nearly eliminates the bias. Unfortunately, there
-    is no simple, unbiased estimator of the population standard deviation that
-    is valid for all distributions, and reducing the bias often *increases* the
-    mean squared error between the sample standard deviation and population
-    standard deviation. Consequently, the "best" choice of `ddof` depends on
-    the use case and is often subjective.
+        \sqrt{\frac{\sum_i{|a_i - \bar{a}|^2 }}{N}}
+
+    and is sometimes (for better or for worse) called "population
+    standard deviation" or "uncorrected sample standard deviation".
+
+    Many other libraries define the standard deviation of an array
+    differently, e.g.::
+
+    .. math::
+
+        \sqrt{\frac{\sum_i{|a_i - \bar{a}|^2 }}{N - 1}}
+
+    The use of :math:`N-1` in the denominator is often called "Bessel's
+    correction", and the resulting quantity is sometimed called the "sample
+    standard deviation" or "corrected sample standard deviation". For this
+    quantity, use ``ddof=1``.
 
     Note that, for complex numbers, `std` takes the absolute
     value before squaring, so that the result is always real and nonnegative.
@@ -3776,33 +3773,35 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
     Notes
     -----
-    The (sample) variance is an average of the squared deviations from the
-    sample mean.
+    The definition of the variance of an array is not unique.
+    Assuming the input `a` is a one dimensional NumPy array and `mean` is
+    either provided as an argument or computed as ``a.mean()``, NumPy
+    computes the variance of an array as::
 
-    The squared deviations are calculated as ``x2 = abs(a - a.mean())**2``,
-    and the average is taken as ``x2.sum() / (N - ddof)``, where ``N`` is the
-    number of observations in the sample `a` and `ddof` is a keyword parameter.
-    This is a "consistent" estimator of the variance of the population from
-    which the sample was drawn: as the number of observations tends toward
-    infinity, it converges in probability to the true population variance.
+        N = len(a)
+        d2 = abs(a - mean)**2
+        var = d2.sum() / (N - ddof)  # note use of `ddof`
 
-    With ``ddof=0`` (default), the resulting sample variance is known as the
-    "uncorrected sample variance" because it is not corrected for "bias": the
-    expected value of this sample variance does not equal the true population
-    variance. Nonetheless, it is a useful estimator of the population variance
-    when the sample size is large, and it is the maximumum likelihood estimate
-    of the variance when the population is normally distributed.
+    Different values of the argument `ddof` are useful in different
+    contexts. NumPy's default ``ddof=0`` corresponds with the expression::
 
-    Use of ``ddof=1`` is known as the "Bessel correction", and the resulting
-    "corrected sample variance" (or simple *the* "sample variance") is an
-    unbiased estimator of the population variance. Other values of `ddof` may
-    have desirable properties for samples drawn from certain distributions;
-    for instance, if the population is normally distributed, ``ddof=1.5``
-    nearly eliminates the bias. Unfortunately, there is no simple, unbiased
-    estimator of the population variance that is valid for all distributions,
-    and reducing the bias often *increases* the mean squared error between the
-    sample variance and population variance. Consequently, the "best" choice of
-    `ddof` depends on the use case and is often subjective.
+    .. math::
+
+        \frac{\sum_i{|a_i - \bar{a}|^2 }}{N}
+
+    and is sometimes (for better or for worse) called "population
+    variance", "uncorrected sample variance", or "biased sample variance".
+
+    Many other libraries define the variance of an array differently, e.g.::
+
+    .. math::
+
+        \frac{\sum_i{|a_i - \bar{a}|^2}}{N - 1}
+
+    The use of :math:`N-1` in the denominator is often called "Bessel's
+    correction", and the resulting quantity is sometimed called the "sample
+    variance", "corrected sample variance", or "unbiased sample variance".
+    For this quantity, use ``ddof=1``.
 
     Note that for complex numbers, the absolute value is taken before
     squaring, so that the result is always real and nonnegative.
