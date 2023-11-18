@@ -17,7 +17,7 @@ f2py_version = __version__.version
 import copy
 import re
 import os
-from .crackfortran import markoutercomma
+from .auxfuncs import markoutercomma
 from . import cb_rules
 from ._isocbind import iso_c_binding_map
 
@@ -55,6 +55,7 @@ c2py_map = {'double': 'float',
             'complex_long_double': 'complex',          # forced casting
             'string': 'string',
             'character': 'bytes',
+            'struct': 'struct',
             }
 
 c2capi_map = {'double': 'NPY_DOUBLE',
@@ -75,7 +76,9 @@ c2capi_map = {'double': 'NPY_DOUBLE',
                 'complex_double': 'NPY_CDOUBLE',
                 'complex_long_double': 'NPY_CDOUBLE',
                 'string': 'NPY_STRING',
-                'character': 'NPY_STRING'}
+                'character': 'NPY_STRING',
+                'struct': 'struct'
+              }
 
 c2pycode_map = {'double': 'd',
                 'float': 'f',
@@ -129,7 +132,10 @@ f2cmap_all = {'real': {'': 'float', '4': 'float', '8': 'double',
               'double complex': {'': 'complex_double'},
               'double precision': {'': 'double'},
               'byte': {'': 'char'},
+              'type': {'': 'struct'},
+              'character': {'': 'string'}
               }
+# TODO:Support ["iso_fortran_env", "ieee_exceptions", "ieee_arithmetic", "ieee_features"]
 
 f2cmap_all = deep_merge(f2cmap_all, iso_c_binding_map)
 f2cmap_default = copy.deepcopy(f2cmap_all)
@@ -198,6 +204,7 @@ cformat_map = {'double': '%g',
                'complex_long_double': '(%Lg,%Lg)',
                'string': '\\"%s\\"',
                'character': "'%c'",
+               'struct': '%s',
                }
 
 # Auxiliary functions
@@ -223,6 +230,9 @@ def getctype(var):
         return 'character'
     elif isstring_or_stringarray(var):
         return 'string'
+    elif isderivedtype(var):
+        ctype = var['typename']
+        return ctype
     elif 'typespec' in var and var['typespec'].lower() in f2cmap_all:
         typespec = var['typespec'].lower()
         f2cmap = f2cmap_all[typespec]
@@ -425,6 +435,9 @@ def getpydocsign(a, var):
             else:
                 ua = ''
         sig = '%s : call-back function%s' % (a, ua)
+        sigout = sig
+    elif isderivedtype(var):
+        sig = f"{a} : derived type {var['typename']} with intent {var['intent']}"
         sigout = sig
     else:
         errmess(

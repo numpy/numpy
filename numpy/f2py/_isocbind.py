@@ -1,3 +1,5 @@
+# Partially from:
+# https://gcc.gnu.org/onlinedocs/gfortran/ISO_005fC_005fBINDING.html
 iso_c_binding_map = {
     'integer': {
         'c_int': 'int',
@@ -44,3 +46,10 @@ isoc_kindmap = {}
 for fortran_type, c_type_dict in iso_c_binding_map.items():
     for c_type in c_type_dict.keys():
         isoc_kindmap[c_type] = fortran_type
+
+# For derived type maps
+flatisoc = {
+    c_type: ctype
+    for type_category in iso_c_binding_map.values()
+    for c_type, ctype in type_category.items()
+}
