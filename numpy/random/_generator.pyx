@@ -3757,7 +3757,7 @@ cdef class Generator:
 
         if size is None:
             shape = []
-        elif isinstance(size, (int, long, np.integer)):
+        elif isinstance(size, (int, np.integer)):
             shape = [size]
         else:
             shape = size
