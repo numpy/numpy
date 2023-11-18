@@ -3520,7 +3520,7 @@ def _std_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
 @array_function_dispatch(_std_dispatcher)
 def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         where=np._NoValue, mean=np._NoValue):
-    """
+    r"""
     Compute the standard deviation along the specified axis.
 
     Returns the standard deviation, a measure of the spread of a distribution,
@@ -3704,7 +3704,7 @@ def _var_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
 @array_function_dispatch(_var_dispatcher)
 def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         where=np._NoValue, mean=np._NoValue):
-    """
+    r"""
     Compute the variance along the specified axis.
 
     Returns the variance of the array elements, a measure of the spread of a
