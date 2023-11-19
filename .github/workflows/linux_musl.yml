@@ -55,7 +55,7 @@ jobs:
         python -m venv test_env
         source test_env/bin/activate
 
-        pip install scipy-openblas64
+        pip install "scipy-openblas64<=0.3.23.293.2"
 
         pip install -r build_requirements.txt -r test_requirements.txt
 
