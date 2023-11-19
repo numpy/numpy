@@ -126,6 +126,19 @@ def test_gh22819_cli(capfd, gh22819_cli, monkeypatch):
         assert "blah-f2pywrappers.f" not in gen_paths
         assert "test_22819-f2pywrappers.f" in gen_paths
         assert "test_22819module.c" in gen_paths
+        assert "Ignoring blah"
+
+
+def test_gh22819_many_pyf(capfd, gh22819_cli, monkeypatch):
+    """Only one .pyf file allowed
+    gh-22819
+    CLI :: .pyf files
+    """
+    ipath = Path(gh22819_cli)
+    monkeypatch.setattr(sys, "argv", f"f2py -m blah {ipath} hello.pyf".split())
+    with util.switchdir(ipath.parent):
+        with pytest.raises(ValueError, match="Only one .pyf file per call"):
+            f2pycli()
 
 
 def test_gh23598_warn(capfd, gh23598_warn, monkeypatch):
