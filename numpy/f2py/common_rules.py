@@ -78,6 +78,8 @@ def buildhooks(m):
             outmess('\t\tConstructing COMMON block support for "%s"...\n\t\t  %s\n' % (
                 name, ','.join(inames)))
         fadd('subroutine f2pyinit%s(setupfunc)' % name)
+        for usename in getuseblocks(m):
+            fadd(f'use {usename}')
         fadd('external setupfunc')
         for n in vnames:
             fadd(func2subr.var2fixfortran(vars, n))
