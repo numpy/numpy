@@ -3599,7 +3599,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         std = var**0.5
 
     Different values of the argument `ddof` are useful in different
-    contexts. NumPy's default ``ddof=0`` corresponds with the expression::
+    contexts. NumPy's default ``ddof=0`` corresponds with the expression:
 
     .. math::
 
@@ -3609,7 +3609,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     standard deviation" or "uncorrected sample standard deviation".
 
     Many other libraries define the standard deviation of an array
-    differently, e.g.::
+    differently, e.g.:
 
     .. math::
 
@@ -3783,7 +3783,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         var = d2.sum() / (N - ddof)  # note use of `ddof`
 
     Different values of the argument `ddof` are useful in different
-    contexts. NumPy's default ``ddof=0`` corresponds with the expression::
+    contexts. NumPy's default ``ddof=0`` corresponds with the expression:
 
     .. math::
 
@@ -3792,7 +3792,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     and is sometimes (for better or for worse) called "population
     variance", "uncorrected sample variance", or "biased sample variance".
 
-    Many other libraries define the variance of an array differently, e.g.::
+    Many other libraries define the variance of an array differently, e.g.:
 
     .. math::
 
