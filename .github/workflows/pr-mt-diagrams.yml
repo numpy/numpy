@@ -1,0 +1,18 @@
+name: MT-diagrams
+
+on:
+  - pull_request
+
+jobs:
+  upload-MT-diagrams:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v3
+      - id: mt-diagrams
+        continue-on-error: true
+        uses: Perlten/mt-gh-action@main
+        env:
+          MT_DEBUG: true
