@@ -561,6 +561,8 @@ def run_compile():
     # Collect dependency flags, preprocess sys.argv
     argy = preparse_sysargv()
     modulename = argy["modulename"]
+    if modulename is None:
+        modulename = 'untitled'
     dependencies = argy["dependencies"]
     backend_key = argy["backend"]
     build_backend = f2py_build_generator(backend_key)
