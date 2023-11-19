@@ -64,7 +64,7 @@ typedefs['unsigned_char'] = 'typedef unsigned char unsigned_char;'
 typedefs['unsigned_short'] = 'typedef unsigned short unsigned_short;'
 typedefs['unsigned_long'] = 'typedef unsigned long unsigned_long;'
 typedefs['signed_char'] = 'typedef signed char signed_char;'
-typedefs['long_long'] = """\
+typedefs['long_long'] = """
 #if defined(NPY_OS_WIN32)
 typedef __int64 long_long;
 #else
@@ -72,14 +72,14 @@ typedef long long long_long;
 typedef unsigned long long unsigned_long_long;
 #endif
 """
-typedefs['unsigned_long_long'] = """\
+typedefs['unsigned_long_long'] = """
 #if defined(NPY_OS_WIN32)
 typedef __uint64 long_long;
 #else
 typedef unsigned long long unsigned_long_long;
 #endif
 """
-typedefs['long_double'] = """\
+typedefs['long_double'] = """
 #ifndef _LONG_DOUBLE
 typedef long double long_double;
 #endif
@@ -93,7 +93,7 @@ typedefs['character'] = """typedef char character;"""
 
 
 ############### CPP macros ####################
-cppmacros['CFUNCSMESS'] = """\
+cppmacros['CFUNCSMESS'] = """
 #ifdef DEBUGCFUNCS
 #define CFUNCSMESS(mess) fprintf(stderr,\"debug-capi:\"mess);
 #define CFUNCSMESSPY(mess,obj) CFUNCSMESS(mess) \\
@@ -104,7 +104,7 @@ cppmacros['CFUNCSMESS'] = """\
 #define CFUNCSMESSPY(mess,obj)
 #endif
 """
-cppmacros['F_FUNC'] = """\
+cppmacros['F_FUNC'] = """
 #if defined(PREPEND_FORTRAN)
 #if defined(NO_APPEND_FORTRAN)
 #if defined(UPPERCASE_FORTRAN)
@@ -140,7 +140,7 @@ cppmacros['F_FUNC'] = """\
 #define F_FUNC_US(f,F) F_FUNC(f,F)
 #endif
 """
-cppmacros['F_WRAPPEDFUNC'] = """\
+cppmacros['F_WRAPPEDFUNC'] = """
 #if defined(PREPEND_FORTRAN)
 #if defined(NO_APPEND_FORTRAN)
 #if defined(UPPERCASE_FORTRAN)
@@ -176,7 +176,7 @@ cppmacros['F_WRAPPEDFUNC'] = """\
 #define F_WRAPPEDFUNC_US(f,F) F_WRAPPEDFUNC(f,F)
 #endif
 """
-cppmacros['F_MODFUNC'] = """\
+cppmacros['F_MODFUNC'] = """
 #if defined(F90MOD2CCONV1) /*E.g. Compaq Fortran */
 #if defined(NO_APPEND_FORTRAN)
 #define F_MODFUNCNAME(m,f) $ ## m ## $ ## f
@@ -210,12 +210,12 @@ cppmacros['F_MODFUNC'] = """\
 
 #define F_MODFUNC(m,f) (*(f2pymodstruct##m##.##f))
 """
-cppmacros['SWAPUNSAFE'] = """\
+cppmacros['SWAPUNSAFE'] = """
 #define SWAP(a,b) (size_t)(a) = ((size_t)(a) ^ (size_t)(b));\\
  (size_t)(b) = ((size_t)(a) ^ (size_t)(b));\\
  (size_t)(a) = ((size_t)(a) ^ (size_t)(b))
 """
-cppmacros['SWAP'] = """\
+cppmacros['SWAP'] = """
 #define SWAP(a,b,t) {\\
     t *c;\\
     c = a;\\
@@ -224,13 +224,13 @@ cppmacros['SWAP'] = """\
 """
 # cppmacros['ISCONTIGUOUS']='#define ISCONTIGUOUS(m) (PyArray_FLAGS(m) &
 # NPY_ARRAY_C_CONTIGUOUS)'
-cppmacros['PRINTPYOBJERR'] = """\
+cppmacros['PRINTPYOBJERR'] = """
 #define PRINTPYOBJERR(obj)\\
     fprintf(stderr,\"#modulename#.error is related to \");\\
     PyObject_Print((PyObject *)obj,stderr,Py_PRINT_RAW);\\
     fprintf(stderr,\"\\n\");
 """
-cppmacros['MINMAX'] = """\
+cppmacros['MINMAX'] = """
 #ifndef max
 #define max(a,b) ((a > b) ? (a) : (b))
 #endif
@@ -244,7 +244,7 @@ cppmacros['MINMAX'] = """\
 #define MIN(a,b) ((a < b) ? (a) : (b))
 #endif
 """
-cppmacros['len..'] = """\
+cppmacros['len..'] = """
 /* See fortranobject.h for definitions. The macros here are provided for BC. */
 #define rank f2py_rank
 #define shape f2py_shape
@@ -263,7 +263,7 @@ cppmacros['pyobj_from_int1'] = '#define pyobj_from_int1(v) (PyLong_FromLong(v))'
 cppmacros[
     'pyobj_from_long1'] = '#define pyobj_from_long1(v) (PyLong_FromLong(v))'
 needs['pyobj_from_long_long1'] = ['long_long']
-cppmacros['pyobj_from_long_long1'] = """\
+cppmacros['pyobj_from_long_long1'] = """
 #ifdef HAVE_LONG_LONG
 #define pyobj_from_long_long1(v) (PyLong_FromLongLong(v))
 #else
@@ -294,7 +294,7 @@ needs['pyobj_from_string1size'] = ['string']
 cppmacros[
     'pyobj_from_string1size'] = '#define pyobj_from_string1size(v,len) (PyUnicode_FromStringAndSize((char *)v, len))'
 needs['TRYPYARRAYTEMPLATE'] = ['PRINTPYOBJERR']
-cppmacros['TRYPYARRAYTEMPLATE'] = """\
+cppmacros['TRYPYARRAYTEMPLATE'] = """
 /* New SciPy */
 #define TRYPYARRAYTEMPLATECHAR case NPY_STRING: *(char *)(PyArray_DATA(arr))=*v; break;
 #define TRYPYARRAYTEMPLATELONG case NPY_LONG: *(long *)(PyArray_DATA(arr))=*v; break;
@@ -331,7 +331,7 @@ cppmacros['TRYPYARRAYTEMPLATE'] = """\
 """
 
 needs['TRYCOMPLEXPYARRAYTEMPLATE'] = ['PRINTPYOBJERR']
-cppmacros['TRYCOMPLEXPYARRAYTEMPLATE'] = """\
+cppmacros['TRYCOMPLEXPYARRAYTEMPLATE'] = """
 #define TRYCOMPLEXPYARRAYTEMPLATEOBJECT case NPY_OBJECT: PyArray_SETITEM(arr, PyArray_DATA(arr), pyobj_from_complex_ ## ctype ## 1((*v))); break;
 #define TRYCOMPLEXPYARRAYTEMPLATE(ctype,typecode)\\
         PyArrayObject *arr = NULL;\\
@@ -372,7 +372,7 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE'] = """\
         };\\
         return -1;
 """
-# cppmacros['NUMFROMARROBJ']="""\
+# cppmacros['NUMFROMARROBJ']="""
 # define NUMFROMARROBJ(typenum,ctype) \\
 #     if (PyArray_Check(obj)) arr = (PyArrayObject *)obj;\\
 #     else arr = (PyArrayObject *)PyArray_ContiguousFromObject(obj,typenum,0,0);\\
@@ -388,7 +388,7 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE'] = """\
 #     }
 # """
 # XXX: Note that CNUMFROMARROBJ is identical with NUMFROMARROBJ
-# cppmacros['CNUMFROMARROBJ']="""\
+# cppmacros['CNUMFROMARROBJ']="""
 # define CNUMFROMARROBJ(typenum,ctype) \\
 #     if (PyArray_Check(obj)) arr = (PyArrayObject *)obj;\\
 #     else arr = (PyArrayObject *)PyArray_ContiguousFromObject(obj,typenum,0,0);\\
@@ -406,7 +406,7 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE'] = """\
 
 
 needs['GETSTRFROMPYTUPLE'] = ['STRINGCOPYN', 'PRINTPYOBJERR']
-cppmacros['GETSTRFROMPYTUPLE'] = """\
+cppmacros['GETSTRFROMPYTUPLE'] = """
 #define GETSTRFROMPYTUPLE(tuple,index,str,len) {\\
         PyObject *rv_cb_str = PyTuple_GetItem((tuple),(index));\\
         if (rv_cb_str == NULL)\\
@@ -421,7 +421,7 @@ cppmacros['GETSTRFROMPYTUPLE'] = """\
         }\\
     }
 """
-cppmacros['GETSCALARFROMPYTUPLE'] = """\
+cppmacros['GETSCALARFROMPYTUPLE'] = """
 #define GETSCALARFROMPYTUPLE(tuple,index,var,ctype,mess) {\\
         if ((capi_tmp = PyTuple_GetItem((tuple),(index)))==NULL) goto capi_fail;\\
         if (!(ctype ## _from_pyobj((var),capi_tmp,mess)))\\
@@ -429,7 +429,7 @@ cppmacros['GETSCALARFROMPYTUPLE'] = """\
     }
 """
 
-cppmacros['FAILNULL'] = """\\
+cppmacros['FAILNULL'] = """\
 #define FAILNULL(p) do {                                            \\
     if ((p) == NULL) {                                              \\
         PyErr_SetString(PyExc_MemoryError, "NULL pointer found");   \\
@@ -438,11 +438,11 @@ cppmacros['FAILNULL'] = """\\
 } while (0)
 """
 needs['MEMCOPY'] = ['string.h', 'FAILNULL']
-cppmacros['MEMCOPY'] = """\
+cppmacros['MEMCOPY'] = """
 #define MEMCOPY(to,from,n)\\
     do { FAILNULL(to); FAILNULL(from); (void)memcpy(to,from,n); } while (0)
 """
-cppmacros['STRINGMALLOC'] = """\
+cppmacros['STRINGMALLOC'] = """
 #define STRINGMALLOC(str,len)\\
     if ((str = (string)malloc(len+1)) == NULL) {\\
         PyErr_SetString(PyExc_MemoryError, \"out of memory\");\\
@@ -451,11 +451,11 @@ cppmacros['STRINGMALLOC'] = """\
         (str)[len] = '\\0';\\
     }
 """
-cppmacros['STRINGFREE'] = """\
+cppmacros['STRINGFREE'] = """
 #define STRINGFREE(str) do {if (!(str == NULL)) free(str);} while (0)
 """
 needs['STRINGPADN'] = ['string.h']
-cppmacros['STRINGPADN'] = """\
+cppmacros['STRINGPADN'] = """
 /*
 STRINGPADN replaces null values with padding values from the right.
 
@@ -476,7 +476,7 @@ STRINGPADN(to, N, PADDING, NULLVALUE) is an inverse operation.
     } while (0)
 """
 needs['STRINGCOPYN'] = ['string.h', 'FAILNULL']
-cppmacros['STRINGCOPYN'] = """\
+cppmacros['STRINGCOPYN'] = """
 /*
 STRINGCOPYN copies N bytes.
 
@@ -492,23 +492,23 @@ STRINGCOPYN copies N bytes.
     } while (0)
 """
 needs['STRINGCOPY'] = ['string.h', 'FAILNULL']
-cppmacros['STRINGCOPY'] = """\
+cppmacros['STRINGCOPY'] = """
 #define STRINGCOPY(to,from)\\
     do { FAILNULL(to); FAILNULL(from); (void)strcpy(to,from); } while (0)
 """
-cppmacros['CHECKGENERIC'] = """\
+cppmacros['CHECKGENERIC'] = """
 #define CHECKGENERIC(check,tcheck,name) \\
     if (!(check)) {\\
         PyErr_SetString(#modulename#_error,\"(\"tcheck\") failed for \"name);\\
         /*goto capi_fail;*/\\
     } else """
-cppmacros['CHECKARRAY'] = """\
+cppmacros['CHECKARRAY'] = """
 #define CHECKARRAY(check,tcheck,name) \\
     if (!(check)) {\\
         PyErr_SetString(#modulename#_error,\"(\"tcheck\") failed for \"name);\\
         /*goto capi_fail;*/\\
     } else """
-cppmacros['CHECKSTRING'] = """\
+cppmacros['CHECKSTRING'] = """
 #define CHECKSTRING(check,tcheck,name,show,var)\\
     if (!(check)) {\\
         char errstring[256];\\
@@ -516,7 +516,7 @@ cppmacros['CHECKSTRING'] = """\
         PyErr_SetString(#modulename#_error, errstring);\\
         /*goto capi_fail;*/\\
     } else """
-cppmacros['CHECKSCALAR'] = """\
+cppmacros['CHECKSCALAR'] = """
 #define CHECKSCALAR(check,tcheck,name,show,var)\\
     if (!(check)) {\\
         char errstring[256];\\
@@ -524,7 +524,7 @@ cppmacros['CHECKSCALAR'] = """\
         PyErr_SetString(#modulename#_error,errstring);\\
         /*goto capi_fail;*/\\
     } else """
-# cppmacros['CHECKDIMS']="""\
+# cppmacros['CHECKDIMS']="""
 # define CHECKDIMS(dims,rank) \\
 #     for (int i=0;i<(rank);i++)\\
 #         if (dims[i]<0) {\\
@@ -534,12 +534,12 @@ cppmacros['CHECKSCALAR'] = """\
 # """
 cppmacros[
     'ARRSIZE'] = '#define ARRSIZE(dims,rank) (_PyArray_multiply_list(dims,rank))'
-cppmacros['OLDPYNUM'] = """\
+cppmacros['OLDPYNUM'] = """
 #ifdef OLDPYNUM
 #error You need to install NumPy version 0.13 or higher. See https://scipy.org/install.html
 #endif
 """
-cppmacros["F2PY_THREAD_LOCAL_DECL"] = """\
+cppmacros["F2PY_THREAD_LOCAL_DECL"] = """
 #ifndef F2PY_THREAD_LOCAL_DECL
 #if defined(_MSC_VER)
 #define F2PY_THREAD_LOCAL_DECL __declspec(thread)
@@ -565,21 +565,21 @@ cppmacros["F2PY_THREAD_LOCAL_DECL"] = """\
 """
 ################# C functions ###############
 
-cfuncs['calcarrindex'] = """\
+cfuncs['calcarrindex'] = """
 static int calcarrindex(int *i,PyArrayObject *arr) {
     int k,ii = i[0];
     for (k=1; k < PyArray_NDIM(arr); k++)
         ii += (ii*(PyArray_DIM(arr,k) - 1)+i[k]); /* assuming contiguous arr */
     return ii;
 }"""
-cfuncs['calcarrindextr'] = """\
+cfuncs['calcarrindextr'] = """
 static int calcarrindextr(int *i,PyArrayObject *arr) {
     int k,ii = i[PyArray_NDIM(arr)-1];
     for (k=1; k < PyArray_NDIM(arr); k++)
         ii += (ii*(PyArray_DIM(arr,PyArray_NDIM(arr)-k-1) - 1)+i[PyArray_NDIM(arr)-k-1]); /* assuming contiguous arr */
     return ii;
 }"""
-cfuncs['forcomb'] = """\
+cfuncs['forcomb'] = """
 static struct { int nd;npy_intp *d;int *i,*i_tr,tr; } forcombcache;
 static int initforcomb(npy_intp *dims,int nd,int tr) {
   int k;
@@ -620,7 +620,7 @@ static int *nextforcomb(void) {
   return i;
 }"""
 needs['try_pyarr_from_string'] = ['STRINGCOPYN', 'PRINTPYOBJERR', 'string']
-cfuncs['try_pyarr_from_string'] = """\
+cfuncs['try_pyarr_from_string'] = """
 /*
   try_pyarr_from_string copies str[:len(obj)] to the data of an `ndarray`.
 
@@ -656,7 +656,7 @@ capi_fail:
 }
 """
 needs['string_from_pyobj'] = ['string', 'STRINGMALLOC', 'STRINGCOPYN']
-cfuncs['string_from_pyobj'] = """\
+cfuncs['string_from_pyobj'] = """
 /*
   Create a new string buffer `str` of at most length `len` from a
   Python string-like object `obj`.
@@ -756,7 +756,7 @@ capi_fail:
 }
 """
 
-cfuncs['character_from_pyobj'] = """\
+cfuncs['character_from_pyobj'] = """
 static int
 character_from_pyobj(character* v, PyObject *obj, const char *errmess) {
     if (PyBytes_Check(obj)) {
@@ -824,7 +824,7 @@ character_from_pyobj(character* v, PyObject *obj, const char *errmess) {
 """
 
 needs['char_from_pyobj'] = ['int_from_pyobj']
-cfuncs['char_from_pyobj'] = """\
+cfuncs['char_from_pyobj'] = """
 static int
 char_from_pyobj(char* v, PyObject *obj, const char *errmess) {
     int i = 0;
@@ -838,7 +838,7 @@ char_from_pyobj(char* v, PyObject *obj, const char *errmess) {
 
 
 needs['signed_char_from_pyobj'] = ['int_from_pyobj', 'signed_char']
-cfuncs['signed_char_from_pyobj'] = """\
+cfuncs['signed_char_from_pyobj'] = """
 static int
 signed_char_from_pyobj(signed_char* v, PyObject *obj, const char *errmess) {
     int i = 0;
@@ -852,7 +852,7 @@ signed_char_from_pyobj(signed_char* v, PyObject *obj, const char *errmess) {
 
 
 needs['short_from_pyobj'] = ['int_from_pyobj']
-cfuncs['short_from_pyobj'] = """\
+cfuncs['short_from_pyobj'] = """
 static int
 short_from_pyobj(short* v, PyObject *obj, const char *errmess) {
     int i = 0;
@@ -865,7 +865,7 @@ short_from_pyobj(short* v, PyObject *obj, const char *errmess) {
 """
 
 
-cfuncs['int_from_pyobj'] = """\
+cfuncs['int_from_pyobj'] = """
 static int
 int_from_pyobj(int* v, PyObject *obj, const char *errmess)
 {
@@ -915,7 +915,7 @@ int_from_pyobj(int* v, PyObject *obj, const char *errmess)
 """
 
 
-cfuncs['long_from_pyobj'] = """\
+cfuncs['long_from_pyobj'] = """
 static int
 long_from_pyobj(long* v, PyObject *obj, const char *errmess) {
     PyObject* tmp = NULL;
@@ -964,7 +964,7 @@ long_from_pyobj(long* v, PyObject *obj, const char *errmess) {
 
 
 needs['long_long_from_pyobj'] = ['long_long']
-cfuncs['long_long_from_pyobj'] = """\
+cfuncs['long_long_from_pyobj'] = """
 static int
 long_long_from_pyobj(long_long* v, PyObject *obj, const char *errmess)
 {
@@ -1014,7 +1014,7 @@ long_long_from_pyobj(long_long* v, PyObject *obj, const char *errmess)
 
 
 needs['long_double_from_pyobj'] = ['double_from_pyobj', 'long_double']
-cfuncs['long_double_from_pyobj'] = """\
+cfuncs['long_double_from_pyobj'] = """
 static int
 long_double_from_pyobj(long_double* v, PyObject *obj, const char *errmess)
 {
@@ -1038,7 +1038,7 @@ long_double_from_pyobj(long_double* v, PyObject *obj, const char *errmess)
 """
 
 
-cfuncs['double_from_pyobj'] = """\
+cfuncs['double_from_pyobj'] = """
 static int
 double_from_pyobj(double* v, PyObject *obj, const char *errmess)
 {
@@ -1082,7 +1082,7 @@ double_from_pyobj(double* v, PyObject *obj, const char *errmess)
 
 
 needs['float_from_pyobj'] = ['double_from_pyobj']
-cfuncs['float_from_pyobj'] = """\
+cfuncs['float_from_pyobj'] = """
 static int
 float_from_pyobj(float* v, PyObject *obj, const char *errmess)
 {
@@ -1098,7 +1098,7 @@ float_from_pyobj(float* v, PyObject *obj, const char *errmess)
 
 needs['complex_long_double_from_pyobj'] = ['complex_long_double', 'long_double',
                                            'complex_double_from_pyobj', 'npy_math.h']
-cfuncs['complex_long_double_from_pyobj'] = """\
+cfuncs['complex_long_double_from_pyobj'] = """
 static int
 complex_long_double_from_pyobj(complex_long_double* v, PyObject *obj, const char *errmess)
 {
@@ -1125,7 +1125,7 @@ complex_long_double_from_pyobj(complex_long_double* v, PyObject *obj, const char
 
 
 needs['complex_double_from_pyobj'] = ['complex_double', 'npy_math.h']
-cfuncs['complex_double_from_pyobj'] = """\
+cfuncs['complex_double_from_pyobj'] = """
 static int
 complex_double_from_pyobj(complex_double* v, PyObject *obj, const char *errmess) {
     Py_complex c;
@@ -1202,7 +1202,7 @@ complex_double_from_pyobj(complex_double* v, PyObject *obj, const char *errmess)
 
 needs['complex_float_from_pyobj'] = [
     'complex_float', 'complex_double_from_pyobj']
-cfuncs['complex_float_from_pyobj'] = """\
+cfuncs['complex_float_from_pyobj'] = """
 static int
 complex_float_from_pyobj(complex_float* v,PyObject *obj,const char *errmess)
 {
@@ -1217,7 +1217,7 @@ complex_float_from_pyobj(complex_float* v,PyObject *obj,const char *errmess)
 """
 
 
-cfuncs['try_pyarr_from_character'] = """\
+cfuncs['try_pyarr_from_character'] = """
 static int try_pyarr_from_character(PyObject* obj, character* v) {
     PyArrayObject *arr = (PyArrayObject*)obj;
     if (!obj) return -2;
@@ -1282,7 +1282,7 @@ cfuncs[
 
 needs['create_cb_arglist'] = ['CFUNCSMESS', 'PRINTPYOBJERR', 'MINMAX']
 # create the list of arguments to be used when calling back to python
-cfuncs['create_cb_arglist'] = """\
+cfuncs['create_cb_arglist'] = """
 static int
 create_cb_arglist(PyObject* fun, PyTupleObject* xa , const int maxnofargs,
                   const int nofoptargs, int *nofargs, PyTupleObject **args,
