@@ -21,25 +21,29 @@
         {
           "path": "lib",
           "depth": 1
-        },{
-            "path": "linalg",
-            "depth": 1
-          },{
-            "path": "random",
-            "depth": 1
-          },{
-            "path": "matrixlib",
-            "depth": 1
-          },{
-            "path": "char",
-            "depth": 1
-          }
+        },
+        {
+          "path": "linalg",
+          "depth": 1
+        },
+        {
+          "path": "random",
+          "depth": 1
+        },
+        {
+          "path": "matrixlib",
+          "depth": 1
+        },
+        {
+          "path": "char",
+          "depth": 1
+        }
       ],
       "ignorePackages": ["testing", "tests"]
     },
     "completeView": {
-        "packages": [],
-        "ignorePackages": []
+      "packages": [],
+      "ignorePackages": []
     }
   }
 }
