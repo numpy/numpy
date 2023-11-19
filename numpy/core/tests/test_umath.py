@@ -17,7 +17,8 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
-    _gen_alignment_data, assert_array_almost_equal_nulp, IS_WASM, IS_MUSL
+    _gen_alignment_data, assert_array_almost_equal_nulp, IS_WASM, IS_MUSL,
+    IS_PYPY
     )
 from numpy.testing._private.utils import _glibc_older_than
 
@@ -1824,6 +1825,18 @@ class TestSpecialFloats:
         array = np.array(data, dtype=dtype)
         with assert_no_warnings():
             ufunc(array)
+
+    @pytest.mark.parametrize("dtype", ('e', 'f', 'd'))
+    def test_divide_spurious_fpexception(self, dtype):
+        dt = np.dtype(dtype)
+        dt_info = np.finfo(dt)
+        subnorm = dt_info.smallest_subnormal
+        # Verify a bug fix caused due to filling the remaining lanes of the
+        # partially loaded dividend SIMD vector with ones, which leads to
+        # raising an overflow warning when the divisor is denormal.
+        # see https://github.com/numpy/numpy/issues/25097
+        with assert_no_warnings():
+            np.zeros(128 + 1, dtype=dt) / subnorm
 
 class TestFPClass:
     @pytest.mark.parametrize("stride", [-5, -4, -3, -2, -1, 1,
@@ -4180,7 +4193,10 @@ class TestComplexFunctions:
             for p in points:
                 a = complex(func(np.complex_(p)))
                 b = cfunc(p)
-                assert_(abs(a - b) < atol, "%s %s: %s; cmath: %s" % (fname, p, a, b))
+                assert_(
+                    abs(a - b) < atol,
+                    "%s %s: %s; cmath: %s" % (fname, p, a, b)
+                )
 
     @pytest.mark.xfail(
         # manylinux2014 uses glibc2.17

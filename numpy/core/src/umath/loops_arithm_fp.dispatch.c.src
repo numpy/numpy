@@ -74,7 +74,29 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
     #endif
         return;
     }
-#if @VECTOR@
+#if @is_div@ && defined(NPY_HAVE_NEON) && !NPY_SIMD_F64
+    /**
+     * The SIMD branch is disabled on armhf(armv7) due to the absence of native SIMD
+     * support for single-precision floating-point division. Only scalar division is
+     * supported natively, and without hardware for performance and accuracy comparison,
+     * it's challenging to evaluate the benefits of emulated SIMD intrinsic versus
+     * native scalar division.
+     *
+     * The `npyv_div_f32` universal intrinsic emulates the division operation using an
+     * approximate reciprocal combined with 3 Newton-Raphson iterations for enhanced
+     * precision. However, this approach has limitations:
+     *
+     * - It can cause unexpected floating-point overflows in special cases, such as when
+     *   the divisor is subnormal (refer: https://github.com/numpy/numpy/issues/25097).
+     *
+     * - The precision may vary between the emulated SIMD and scalar division due to
+     *   non-uniform branches (non-contiguous) in the code, leading to precision
+     *   inconsistencies.
+     *
+     * - Considering the necessity of multiple Newton-Raphson iterations, the performance
+     *   gain may not sufficiently offset these drawbacks.
+     */
+#elif @VECTOR@
     if (len > npyv_nlanes_@sfx@*2 &&
         !is_mem_overlap(src0, ssrc0, dst, sdst, len) &&
         !is_mem_overlap(src1, ssrc1, dst, sdst, len)
@@ -138,8 +160,10 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
                 npyv_store_@sfx@((@type@*)(dst + vstep), r1);
             }
             for (; len > 0; len -= hstep, src0 += vstep, dst += vstep) {
-            #if @is_div@ || @is_mul@
+            #if @is_mul@
                 npyv_@sfx@ a = npyv_load_till_@sfx@((const @type@*)src0, len, 1.0@c@);
+            #elif @is_div@
+                npyv_@sfx@ a = npyv_load_till_@sfx@((const @type@*)src0, len, NPY_NAN@C@);
             #else
                 npyv_@sfx@ a = npyv_load_tillz_@sfx@((const @type@*)src0, len);
             #endif
