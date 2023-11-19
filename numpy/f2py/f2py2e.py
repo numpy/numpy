@@ -619,7 +619,7 @@ def run_compile():
     for s in flib_flags:
         v = '--fcompiler='
         if s[:len(v)] == v:
-            if sys.version_info >= (3, 12):
+            if MESON_ONLY_VER or backend_key == 'meson':
                 outmess(
                     "--fcompiler cannot be used with meson,"
                     "set compiler with the FC environment variable\n"

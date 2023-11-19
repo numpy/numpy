@@ -213,7 +213,7 @@ def test_untitled_cli(capfd, hello_world_f90, monkeypatch):
         assert "untitledmodule.c" in out
 
 
-@pytest.mark.skipif(platform.system() != 'Linux', reason='Compiler required')
+@pytest.mark.skipif((platform.system() != 'Linux') or (sys.version_info <= (3, 12)), reason='Compiler and 3.12 required')
 def test_no_py312_distutils_fcompiler(capfd, hello_world_f90, monkeypatch):
     """Check that no distutils imports are performed on 3.12
     CLI :: --fcompiler --help-link --backend distutils
@@ -222,7 +222,7 @@ def test_no_py312_distutils_fcompiler(capfd, hello_world_f90, monkeypatch):
     foutl = get_io_paths(hello_world_f90, mname=MNAME)
     ipath = foutl.f90inp
     monkeypatch.setattr(
-        sys, "argv", f"f2py {ipath} --backend meson -c --fcompiler=gfortran -m {MNAME}".split()
+        sys, "argv", f"f2py {ipath} -c --fcompiler=gfortran -m {MNAME}".split()
     )
     with util.switchdir(ipath.parent):
         f2pycli()
@@ -235,15 +235,14 @@ def test_no_py312_distutils_fcompiler(capfd, hello_world_f90, monkeypatch):
         f2pycli()
         out, _ = capfd.readouterr()
         assert "Use --dep for meson builds" in out
-    if (sys.version_info >= (3, 12)):
-        MNAME = "hi2" # Needs to be different for a new -c
-        monkeypatch.setattr(
-            sys, "argv", f"f2py {ipath} -c -m {MNAME} --backend distutils".split()
-        )
-        with util.switchdir(ipath.parent):
-            f2pycli()
-            out, _ = capfd.readouterr()
-            assert "Cannot use distutils backend with Python>=3.12" in out
+    MNAME = "hi2" # Needs to be different for a new -c
+    monkeypatch.setattr(
+        sys, "argv", f"f2py {ipath} -c -m {MNAME} --backend distutils".split()
+    )
+    with util.switchdir(ipath.parent):
+        f2pycli()
+        out, _ = capfd.readouterr()
+        assert "Cannot use distutils backend with Python>=3.12" in out
 
 
 @pytest.mark.xfail
