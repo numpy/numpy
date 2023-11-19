@@ -462,7 +462,7 @@ def run_main(comline_list):
     pyf_files, _ = filter_files("", "[.]pyf([.]src|)", comline_list)
     # Checks that no existing modulename is defined in a pyf file
     # TODO: Remove all this when scaninputline is replaced
-    if "-h" not in comline_list: # Can't check what doesn't exist yet, -h creates the pyf
+    if "-h" not in comline_list and args.module_name: # Can't check what doesn't exist yet, -h creates the pyf
         modname = validate_modulename(pyf_files, args.module_name)
         comline_list += ['-m', modname] # needed for the rest of scaninputline
     # gh-22819 -- end
