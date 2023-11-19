@@ -184,7 +184,7 @@ numpy Version: {numpy_version}
 License:     NumPy license (see LICENSE.txt in the NumPy source code)
 Copyright 1999 -- 2011 Pearu Peterson all rights reserved.
 Copyright 2011 -- present NumPy Developers.
-https://web.archive.org/web/20140822061353/http://cens.ioc.ee/projects/f2py2e"""
+https://numpy.org/doc/stable/f2py/index.html\n"""
 
 
 def scaninputline(inputline):
@@ -667,7 +667,7 @@ def run_compile():
 
     # Construct wrappers / signatures / things
     if backend_key == 'meson':
-        outmess('Using meson backend\nWill pass --lower to f2py\nSee https://numpy.org/doc/stable/f2py/buildtools/meson.html')
+        outmess('Using meson backend\nWill pass --lower to f2py\nSee https://numpy.org/doc/stable/f2py/buildtools/meson.html\n')
         f2py_flags.append('--lower')
         if pyf_files:
             run_main(f" {' '.join(f2py_flags)} {' '.join(pyf_files)}".split())
