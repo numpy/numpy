@@ -9,7 +9,7 @@ import numpy._core.numeric as N
 from numpy._core.numeric import concatenate, isscalar
 # While not in __all__, matrix_power used to be defined here, so we import
 # it for backward compatibility.
-from numpy.linalg import matrix_power
+# from numpy.linalg import matrix_power
 
 
 def _convert_from_string(data):

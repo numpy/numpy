@@ -1,0 +1,17 @@
+name: ArchLens render-diff on PR
+on:
+  - pull_request
+
+jobs:
+  render-diff-and-upload-comment:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - id: run_archlens
+        uses: archlens/render-diff-on-pr@main
+        with:
+          config-path: "archlens.json"
+          render-diff: "true"
+          BRANCH_NAME: "_archlens_diff"
