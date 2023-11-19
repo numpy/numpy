@@ -99,6 +99,8 @@ def buildhooks(pymod):
 
     def dadd(line, s=doc):
         s[0] = '%s\n%s' % (s[0], line)
+
+    usenames = getuseblocks(pymod)
     for m in findf90modules(pymod):
         sargs, fargs, efargs, modobjs, notvars, onlyvars = [], [], [], [], [
             m['name']], []
@@ -115,6 +117,9 @@ def buildhooks(pymod):
                 mfargs.append(n)
         outmess('\t\tConstructing F90 module support for "%s"...\n' %
                 (m['name']))
+        if m['name'] in usenames:
+            outmess(f"\t\t\tSkipping {m['name']} since it is in 'use'...\n")
+            continue
         if onlyvars:
             outmess('\t\t  Variables: %s\n' % (' '.join(onlyvars)))
         chooks = ['']
