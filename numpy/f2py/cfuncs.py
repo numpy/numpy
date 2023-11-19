@@ -634,6 +634,8 @@ static int try_pyarr_from_string(PyObject *obj,
 fprintf(stderr, "try_pyarr_from_string(str='%s', len=%d, obj=%p)\\n",
         (char*)str,len, obj);
 #endif
+    if (!obj) return -2; /* Object missing */
+    if (obj == Py_None) return -1; /* None */
     if (PyArray_Check(obj)) {
         PyArrayObject *arr = (PyArrayObject *)obj;
         assert(ISCONTIGUOUS(arr));
@@ -649,7 +651,6 @@ fprintf(stderr, "try_pyarr_from_string(str='%s', len=%d, obj=%p)\\n",
         STRINGCOPYN(buf, str, n);
         return 1;
     }
-    return -1;
 capi_fail:
     PRINTPYOBJERR(obj);
     PyErr_SetString(#modulename#_error, \"try_pyarr_from_string failed\");
