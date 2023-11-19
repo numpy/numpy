@@ -72,6 +72,15 @@ def gh23598_warn(tmpdir_factory):
 
 
 @pytest.fixture(scope="session")
+def gh22819_cli(tmpdir_factory):
+    """F90 file for testing disallowed CLI arguments in ghff819"""
+    fdat = util.getpath("tests", "src", "cli", "gh_22819.pyf").read_text()
+    fn = tmpdir_factory.getbasetemp() / "gh_22819.pyf"
+    fn.write_text(fdat, encoding="ascii")
+    return fn
+
+
+@pytest.fixture(scope="session")
 def hello_world_f77(tmpdir_factory):
     """Generates a single f77 file for testing"""
     fdat = util.getpath("tests", "src", "cli", "hi77.f").read_text()
@@ -98,6 +107,38 @@ def f2cmap_f90(tmpdir_factory):
     fn.write_text(fdat, encoding="ascii")
     fmap.write_text(f2cmap, encoding="ascii")
     return fn
+
+
+def test_gh22819_cli(capfd, gh22819_cli, monkeypatch):
+    """Check that module names are handled correctly
+    gh-22819
+    Essentially, the -m name cannot be used to import the module, so the module
+    named in the .pyf needs to be used instead
+
+    CLI :: -m and a .pyf file
+    """
+    ipath = Path(gh22819_cli)
+    monkeypatch.setattr(sys, "argv", f"f2py -m blah {ipath}".split())
+    with util.switchdir(ipath.parent):
+        f2pycli()
+        gen_paths = [item.name for item in ipath.parent.rglob("*") if item.is_file()]
+        assert "blahmodule.c" not in gen_paths # shouldn't be generated
+        assert "blah-f2pywrappers.f" not in gen_paths
+        assert "test_22819-f2pywrappers.f" in gen_paths
+        assert "test_22819module.c" in gen_paths
+        assert "Ignoring blah"
+
+
+def test_gh22819_many_pyf(capfd, gh22819_cli, monkeypatch):
+    """Only one .pyf file allowed
+    gh-22819
+    CLI :: .pyf files
+    """
+    ipath = Path(gh22819_cli)
+    monkeypatch.setattr(sys, "argv", f"f2py -m blah {ipath} hello.pyf".split())
+    with util.switchdir(ipath.parent):
+        with pytest.raises(ValueError, match="Only one .pyf file per call"):
+            f2pycli()
 
 
 def test_gh23598_warn(capfd, gh23598_warn, monkeypatch):

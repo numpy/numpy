@@ -450,6 +450,16 @@ def run_main(comline_list):
     f2pydir = os.path.dirname(os.path.abspath(cfuncs.__file__))
     fobjhsrc = os.path.join(f2pydir, 'src', 'fortranobject.h')
     fobjcsrc = os.path.join(f2pydir, 'src', 'fortranobject.c')
+    # gh-22819 -- begin
+    parser = make_f2py_parser()
+    args, comline_list = parser.parse_known_args(comline_list)
+    pyf_files, _ = filter_files("", "[.]pyf([.]src|)", comline_list)
+    # Checks that no existing modulename is defined in a pyf file
+    # TODO: Remove all this when scaninputline is replaced
+    if "-h" not in comline_list and args.module_name: # Can't check what doesn't exist yet, -h creates the pyf
+        modname = validate_modulename(pyf_files, args.module_name)
+        comline_list += ['-m', modname] # needed for the rest of scaninputline
+    # gh-22819 -- end
     files, options = scaninputline(comline_list)
     auxfuncs.options = options
     capi_maps.load_f2cmap_file(options['f2cmap_file'])
@@ -516,24 +526,30 @@ def get_prefix(module):
     p = os.path.dirname(os.path.dirname(module.__file__))
     return p
 
-def preparse_sysargv():
-    # To keep backwards bug compatibility, newer flags are handled by argparse,
-    # and `sys.argv` is passed to the rest of `f2py` as is.
+def make_f2py_parser():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--dep", action="append", dest="dependencies")
     parser.add_argument("--backend", choices=['meson', 'distutils'], default='distutils')
+    parser.add_argument("-m", dest="module_name")
+    return parser
+
+def preparse_sysargv():
+    # To keep backwards bug compatibility, newer flags are handled by argparse,
+    # and `sys.argv` is passed to the rest of `f2py` as is.
+    parser = make_f2py_parser()
 
     args, remaining_argv = parser.parse_known_args()
     sys.argv = [sys.argv[0]] + remaining_argv
 
     backend_key = args.backend
     if sys.version_info >= (3, 12) and backend_key == 'distutils':
-        outmess('Cannot use distutils backend with Python 3.12, using meson backend instead.')
+        outmess("Cannot use distutils backend with Python 3.12, using meson backend instead.\n")
         backend_key = 'meson'
 
     return {
         "dependencies": args.dependencies or [],
-        "backend": backend_key
+        "backend": backend_key,
+        "modulename": args.module_name,
     }
 
 def run_compile():
@@ -544,10 +560,10 @@ def run_compile():
 
     # Collect dependency flags, preprocess sys.argv
     argy = preparse_sysargv()
+    modulename = argy["modulename"]
     dependencies = argy["dependencies"]
     backend_key = argy["backend"]
     build_backend = f2py_build_generator(backend_key)
-
 
     i = sys.argv.index('-c')
     del sys.argv[i]
@@ -628,9 +644,7 @@ def run_compile():
     if '--quiet' in f2py_flags:
         setup_flags.append('--quiet')
 
-    modulename = 'untitled'
     sources = sys.argv[1:]
-
     for optname in ['--include_paths', '--include-paths', '--f2cmap']:
         if optname in sys.argv:
             i = sys.argv.index(optname)
@@ -638,20 +652,9 @@ def run_compile():
             del sys.argv[i + 1], sys.argv[i]
             sources = sys.argv[1:]
 
-    pyf_files = []
-    if '-m' in sys.argv:
-        i = sys.argv.index('-m')
-        modulename = sys.argv[i + 1]
-        del sys.argv[i + 1], sys.argv[i]
-        sources = sys.argv[1:]
-    else:
-        pyf_files, _sources = filter_files('', '[.]pyf([.]src|)', sources)
-        sources = pyf_files + _sources
-        for f in pyf_files:
-            modulename = auxfuncs.get_f2py_modulename(f)
-            if modulename:
-                break
-
+    pyf_files, _sources = filter_files("", "[.]pyf([.]src|)", sources)
+    sources = pyf_files + _sources
+    modulename = validate_modulename(pyf_files, modulename)
     extra_objects, sources = filter_files('', '[.](o|a|so|dylib)', sources)
     include_dirs, sources = filter_files('-I', '', sources, remove_prefix=1)
     library_dirs, sources = filter_files('-L', '', sources, remove_prefix=1)
@@ -697,6 +700,21 @@ def run_compile():
     )
 
     builder.compile()
+
+
+def validate_modulename(pyf_files, modulename='untitled'):
+    if len(pyf_files) > 1:
+        raise ValueError("Only one .pyf file per call")
+    if pyf_files:
+        pyff = pyf_files[0]
+        pyf_modname = auxfuncs.get_f2py_modulename(pyff)
+        if modulename != pyf_modname:
+            outmess(
+                f"Ignoring -m {modulename}.\n"
+                f"{pyff} defines {pyf_modname} to be the modulename.\n"
+            )
+            modulename = pyf_modname
+    return modulename
 
 def main():
     if '--help-link' in sys.argv[1:]:

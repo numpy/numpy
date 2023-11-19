@@ -239,10 +239,11 @@ Other options
 ``-m <modulename>``
   Name of an extension module. Default is ``untitled``.
 
-.. warning:: Don't use this option if a signature file (``*.pyf``) is used.
+.. warning::
+   Don't use this option if a signature file (``*.pyf``) is used.
 
-.. versionchanged:: 2.0.0
-   Will ignore ``-m`` if a ``pyf`` file is provided.
+   .. versionchanged:: 1.26.3
+      Will ignore ``-m`` if a ``pyf`` file is provided.
 
 ``--[no-]lower``
   Do [not] lower the cases in ``<fortran files>``. By default, ``--lower`` is
