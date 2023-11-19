@@ -17,7 +17,7 @@ from . import __version__
 f2py_version = __version__.version
 
 from .auxfuncs import (
-    hasbody, hascommon, hasnote, isintent_hide, outmess
+    hasbody, hascommon, hasnote, isintent_hide, outmess, getuseblocks
 )
 from . import capi_maps
 from . import func2subr

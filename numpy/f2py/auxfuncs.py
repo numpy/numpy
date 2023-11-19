@@ -50,7 +50,7 @@ __all__ = [
     'isunsigned_long_longarray', 'isunsigned_short',
     'isunsigned_shortarray', 'l_and', 'l_not', 'l_or', 'outmess',
     'replace', 'show', 'stripcomma', 'throw_error', 'isattr_value',
-    'deep_merge'
+    'deep_merge', 'getuseblocks'
 ]
 
 
@@ -937,3 +937,11 @@ def get_f2py_modulename(source):
                 name = m.group('name')
                 break
     return name
+
+def getuseblocks(pymod):
+    all_uses = []
+    for inner in pymod['body']:
+        for modblock in inner['body']:
+            if modblock.get('use'):
+                all_uses.extend([x for x in modblock.get('use').keys()])
+    return all_uses
