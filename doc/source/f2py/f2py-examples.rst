@@ -31,11 +31,6 @@ Python just like any other extension module.
 Creating a compiled extension module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. note::
-
-    This usage depends heavily on ``numpy.distutils``, see :ref:`f2py-bldsys`
-    for more details.
-
 You can also get f2py to both compile :file:`add.f` along with the produced
 extension module leaving only a shared-library extension file that can
 be imported from Python::
