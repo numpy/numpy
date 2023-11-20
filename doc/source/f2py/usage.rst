@@ -160,7 +160,79 @@ following options can be used in this mode:
     libraries (vecLib on MacOSX, ATLAS elsewhere), use ``--link-lapack_opt``.
     See also ``--help-link`` switch.
 
-.. note:: 
+.. warning::
+   From Python 3.12 onwards, ``distutils`` has been removed. Use environment
+   variables or native files to interact with ``meson`` instead. See its `FAQ
+   <https://mesonbuild.com/howtox.html>`__ for more information.
+
+Among other options (see below) and options described for previous modes, the following can be used.
+
+.. note::
+
+   .. versionchanged:: 1.26.0
+      There are now two separate build backends which can be used, ``distutils``
+      and ``meson``. Users are **strongly** recommended to switch to ``meson``
+      since it is the default above Python ``3.12``.
+
+Common build flags:
+
+``--backend <backend_type>``
+  Specify the build backend for the compilation process.  The supported backends
+  are ``meson`` and ``distutils``.  If not specified, defaults to ``distutils``.
+  On Python 3.12 or higher, the default is ``meson``.
+``--f77flags=<string>``
+  Specify F77 compiler flags
+``--f90flags=<string>``
+  Specify F90 compiler flags
+``--debug``
+  Compile with debugging information
+``-l<libname>``
+  Use the library ``<libname>`` when linking.
+``-D<macro>[=<defn=1>]``
+  Define macro ``<macro>`` as ``<defn>``.
+``-U<macro>``
+  Define macro ``<macro>``
+``-I<dir>``
+  Append directory ``<dir>`` to the list of directories searched for include
+  files.
+``-L<dir>``
+  Add directory ``<dir>`` to the list of directories to be searched for
+  ``-l``.
+
+The ``meson`` specific flags are:
+
+``--dep <dependency>`` **meson only**
+  Specify a meson dependency for the module. This may be passed multiple times
+  for multiple dependencies. Dependencies are stored in a list for further
+  processing. Example: ``--dep lapack --dep scalapack`` This will identify
+  "lapack" and "scalapack" as dependencies and remove them from argv, leaving a
+  dependencies list containing ["lapack", "scalapack"].
+
+The older ``distutils`` flags are:
+
+``--help-fcompiler`` **no meson**
+  List the available Fortran compilers.
+``--fcompiler=<Vendor>`` **no meson**
+  Specify a Fortran compiler type by vendor.
+``--f77exec=<path>`` **no meson**
+  Specify the path to a F77 compiler
+``--f90exec=<path>`` **no meson**
+  Specify the path to a F90 compiler
+``--opt=<string>`` **no meson**
+  Specify optimization flags
+``--arch=<string>`` **no meson**
+  Specify architecture specific optimization flags
+``--noopt`` **no meson**
+  Compile without optimization flags
+``--noarch`` **no meson**
+  Compile without arch-dependent optimization flags
+``link-<resource>`` **no meson**
+  Link the extension module with <resource> as defined by
+  ``numpy_distutils/system_info.py``. E.g. to link with optimized LAPACK
+  libraries (vecLib on MacOSX, ATLAS elsewhere), use ``--link-lapack_opt``.
+  See also ``--help-link`` switch.
+
+.. note::
   
   The ``f2py -c`` option must be applied either to an existing ``.pyf`` file
   (plus the source/object/library files) or one must specify the
