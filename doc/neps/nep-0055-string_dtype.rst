@@ -574,6 +574,15 @@ access the underlying string data like so:
    }
    NpyString_release_allocator(descr);
 
+We will also expose variants of these functions that take two or three
+descriptors for situations where several different allocators need to be
+simultaneously acquired. These variants simultaneously handle the case where the
+input descriptors are the same object or different objects. In the first case,
+only one allocator needs to be acquired, but in the latter case multiple
+allocators need to be acquired. The user will only need to think about choosing
+the function to acquire or release allocators based on the number of descriptors
+they need to work with.
+
 Similarly, we will also expose ``NpyString_pack`` to create a new
 packed string in an existing array from the contents of a ``char *`` buffer:
 
