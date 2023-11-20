@@ -69,17 +69,6 @@ struct Buffer {
         return (npy_int64) (tmp - *this + 1);
     }
 
-    inline npy_int64
-    rstrip()
-    {
-        Buffer tmp(after, 0);
-        tmp--;
-        while (tmp >= *this && (*tmp == '\0' || NumPyOS_ascii_isspace(*tmp))) {
-            tmp--;
-        }
-        return (npy_int64) (tmp - *this + 1);
-    }
-
     inline Buffer<enc>&
     operator+=(npy_int64 rhs)
     {
@@ -257,6 +246,63 @@ struct Buffer {
             }
         }
         return true;
+    }
+
+    inline Buffer<enc>
+    rstrip()
+    {
+        Buffer<enc> tmp(after, 0);
+        tmp--;
+        while (tmp >= *this && (*tmp == '\0' || NumPyOS_ascii_isspace(*tmp))) {
+            tmp--;
+        }
+        tmp++;
+
+        after = tmp.buf;
+        return *this;
+    }
+
+    inline int
+    strcmp(Buffer<enc> other, bool rstrip)
+    {
+        Buffer tmp1 = rstrip ? this->rstrip() : *this;
+        Buffer tmp2 = rstrip ? other.rstrip() : other;
+
+        while (tmp1.buf < tmp1.after && tmp2.buf < tmp2.after) {
+            if (*tmp1 < *tmp2) {
+                return -1;
+            }
+            if (*tmp1 > *tmp2) {
+                return 1;
+            }
+            tmp1++;
+            tmp2++;
+        }
+        while (tmp1.buf < tmp1.after) {
+            if (*tmp1 < 0) {
+                return -1;
+            }
+            if (*tmp1 > 0) {
+                return 1;
+            }
+            tmp1++;
+        }
+        while (tmp2.buf < tmp2.after) {
+            if (*tmp2 < 0) {
+                return -1;
+            }
+            if (*tmp2 > 0) {
+                return 1;
+            }
+            tmp2++;
+        }
+        return 0;
+    }
+
+    inline int
+    strcmp(Buffer<enc> other)
+    {
+        return strcmp(other, false);
     }
 };
 

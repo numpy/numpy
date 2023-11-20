@@ -90,32 +90,6 @@ tailmatch(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
 }
 
 
-/*
- * Compare two strings of different length.  Note that either string may be
- * zero padded (trailing zeros are ignored in other words, the shorter word
- * is always padded with zeros).
- */
-template <bool rstrip, ENCODING enc>
-static inline int
-string_cmp(Buffer<enc> buf1, Buffer<enc> buf2)
-{
-    npy_int64 len1, len2;
-    if (rstrip) {
-        len1 = buf1.rstrip();
-        len2 = buf2.rstrip();
-    }
-    else {
-        len1 = buf1.num_codepoints();
-        len2 = buf2.num_codepoints();
-    }
-
-    if (len1 != len2) {
-        return len1 < len2 ? -1 : 1;
-    }
-    return buf1.buffer_memcmp(buf2, len1);
-}
-
-
 template <ENCODING enc>
 static inline void
 string_add(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out)
@@ -291,7 +265,7 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
     if (len1 < len2
         || (len2 == 0 && len3 == 0)
         || count == 0
-        || string_cmp<false, enc>(buf2, buf3) == 0) {
+        || buf2.strcmp(buf3) == 0) {
         return;
     }
 
@@ -364,7 +338,7 @@ string_comparison_loop(PyArrayMethod_Context *context,
     while (N--) {
         Buffer<enc> buf1(in1, elsize1);
         Buffer<enc> buf2(in2, elsize2);
-        int cmp = string_cmp<rstrip, enc>(buf1, buf2);
+        int cmp = buf1.strcmp(buf2, rstrip);
         npy_bool res;
         switch (comp) {
             case COMP::EQ:
