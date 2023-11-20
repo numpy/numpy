@@ -28,14 +28,14 @@ else:
 pytestmark = pytest.mark.skipif(cython is None, reason="requires cython")
 
 
-@pytest.fixture
-def install_temp(tmp_path):
+@pytest.fixture(scope='module')
+def install_temp(tmpdir_factory):
     # Based in part on test_cython from random.tests.test_extending
     if IS_WASM:
         pytest.skip("No subprocess")
 
     srcdir = os.path.join(os.path.dirname(__file__), 'examples', 'cython')
-    build_dir = tmp_path / "build"
+    build_dir = tmpdir_factory.mktemp("cython_test") / "build"
     os.makedirs(build_dir, exist_ok=True)
     try:
         subprocess.check_call(["meson", "--version"])
