@@ -2889,7 +2889,7 @@ OBJECT_nonzero (PyObject **ip, PyArrayObject *ap)
     }
     else {
         PyObject *obj;
-        memcpy(&obj, ip, sizeof(obj));
+        memcpy(&obj, (void *)ip, sizeof(obj));
         if (obj == NULL) {
             return NPY_FALSE;
         }
