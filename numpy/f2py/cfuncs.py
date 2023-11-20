@@ -634,6 +634,9 @@ static int try_pyarr_from_string(PyObject *obj,
 fprintf(stderr, "try_pyarr_from_string(str='%s', len=%d, obj=%p)\\n",
         (char*)str,len, obj);
 #endif
+    if (!obj) return -2; /* Object missing */
+    if (obj == Py_None) return -1; /* None */
+    if (!PyArray_Check(obj)) goto capi_fail; /* not an ndarray */
     if (PyArray_Check(obj)) {
         PyArrayObject *arr = (PyArrayObject *)obj;
         assert(ISCONTIGUOUS(arr));

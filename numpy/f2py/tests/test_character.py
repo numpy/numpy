@@ -595,3 +595,15 @@ class TestStringAssumedLength(util.F2PyTest):
 
     def test_gh24008(self):
         self.module.greet("joe", "bob")
+
+class TestStringOptionalInOut(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "string", "gh24662.f90")]
+
+    def test_gh24662(self):
+        self.module.string_inout_optional()
+        a = np.array('hi', dtype='S32')
+        self.module.string_inout_optional(a)
+        assert "output string" in a.tobytes().decode()
+        with pytest.raises(Exception):
+            aa = "Hi"
+            self.module.string_inout_optional(aa)
