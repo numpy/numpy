@@ -7,15 +7,18 @@ F2PY and Build Systems
 In this section we will cover the various popular build systems and their usage
 with ``f2py``.
 
+.. versionchanged:: NumPy 1.26.x
+
+   The default build system for ``f2py`` has traditionally been through the
+   enhanced ``numpy.distutils`` module. This module is based on ``distutils``
+   which was removed in ``Python 3.12.0`` in **October 2023**. Like the rest of
+   NumPy and SciPy, ``f2py`` uses ``meson`` now, see
+   :ref:`distutils-status-migration` for some more details.
+
 .. note::
-   **As of November 2021**
 
-   The default build system for ``F2PY`` has traditionally been through the
-   enhanced ``numpy.distutils`` module. This module is based on ``distutils`` which
-   will be removed in ``Python 3.12.0`` in **October 2023**; ``setuptools`` does not
-   have support for Fortran or ``F2PY`` and it is unclear if it will be supported
-   in the future. Alternative methods are thus increasingly more important.
-
+   All changes to ``f2py`` are tested on SciPy, so their `CI configuration`_ is
+   always supported.
 
 Basic Concepts
 ===============
@@ -78,12 +81,12 @@ Signature files
    their contents; which shifts the burden of checking for generated files onto
    the build system.
 
-.. note::
+.. versionchanged:: NumPy ``1.22.4``
 
-   From NumPy ``1.22.4`` onwards, ``f2py`` will deterministically generate
-   wrapper files based on the input file Fortran standard (F77 or greater).
-   ``--skip-empty-wrappers`` can be passed to ``f2py`` to restore the previous
-   behaviour of only generating wrappers when needed by the input .
+   ``f2py`` will deterministically generate wrapper files based on the input
+   file Fortran standard (F77 or greater).  ``--skip-empty-wrappers`` can be
+   passed to ``f2py`` to restore the previous behaviour of only generating
+   wrappers when needed by the input .
 
 
 In theory keeping the above requirements in hand, any build system can be
@@ -106,3 +109,5 @@ Build Systems
    skbuild
 
 .. _`issue 20385`: https://github.com/numpy/numpy/issues/20385
+
+.. _`CI configuration`: https://docs.scipy.org/doc/scipy/dev/toolchain.html#official-builds
