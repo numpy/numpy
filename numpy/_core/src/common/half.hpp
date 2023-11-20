@@ -59,7 +59,11 @@ class Half final {
         __vector float vf32 = vec_splats(f);
         __vector unsigned short vf16;
         __asm__ __volatile__ ("xvcvsphp %x0,%x1" : "=wa" (vf16) : "wa" (vf32));
+        #ifdef __BIG_ENDIAN__
+        bits_ = vec_extract(vf16, 1);
+        #else
         bits_ = vec_extract(vf16, 0);
+        #endif
     #else
         bits_ = half_private::FromFloatBits(BitCast<uint32_t>(f));
     #endif
