@@ -2985,9 +2985,9 @@ class TestLowlevelAPIAccess:
             reason="`ctypes.pythonapi` required for capsule unpacking.")
     def test_loop_access(self):
         # This is a basic test for the full strided loop access
-        data_t = ct.ARRAY(ct.c_char_p, 2)
-        dim_t = ct.ARRAY(ct.c_ssize_t, 1)
-        strides_t = ct.ARRAY(ct.c_ssize_t, 2)
+        data_t = ct.c_char_p * 2
+        dim_t = ct.c_ssize_t * 1
+        strides_t = ct.c_ssize_t * 2
         strided_loop_t = ct.CFUNCTYPE(
                 ct.c_int, ct.c_void_p, data_t, dim_t, strides_t, ct.c_void_p)
 
