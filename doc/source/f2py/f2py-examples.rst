@@ -6,6 +6,11 @@ F2PY examples
 Below are some examples of F2PY usage. This list is not comprehensive, but can
 be used as a starting point when wrapping your own code.
 
+.. note::
+
+   The best place to look for examples is the `NumPy issue tracker`_, or the test
+   cases for ``f2py``
+
 F2PY walkthrough: a basic extension module
 ------------------------------------------
 
@@ -238,3 +243,6 @@ Read more
 * `F2py example: Interactive System for Ice sheet Simulation <http://websrv.cs.umt.edu/isis/index.php/F2py_example>`_
 * `"Interfacing With Other Languages" section on the SciPy Cookbook.
   <https://scipy-cookbook.readthedocs.io/items/idx_interfacing_with_other_languages.html>`_
+
+.. _`NumPy issue tracker`: https://github.com/numpy/numpy/issues?q=is%3Aissue+label%3A%22component%3A+numpy.f2py%22+is%3Aclosed
+.. _`test cases`: https://github.com/numpy/numpy/tree/main/doc/source/f2py/code
