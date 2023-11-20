@@ -53,6 +53,7 @@ replace all calls to ``f2py`` mentioned in this guide with the longer version.
    buildtools/index
    advanced
    windows/index
+   buildtools/distutils-to-meson
 
 .. _Python: https://www.python.org/
 .. _NumPy: https://www.numpy.org/
