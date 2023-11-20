@@ -15,6 +15,8 @@
 #include "convert_datatype.h"
 #include "common_dtype.h"
 #include "umathmodule.h"
+#include "abstractdtypes.h"
+
 
 static PyArray_DTypeMeta *
 dtype_does_not_promote(
@@ -443,7 +445,7 @@ _PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
 NPY_NO_EXPORT PyObject *
 _get_experimental_dtype_api(PyObject *NPY_UNUSED(mod), PyObject *arg)
 {
-    static void *experimental_api_table[44] = {
+    static void *experimental_api_table[47] = {
             &PyUFunc_AddLoopFromSpec,
             &PyUFunc_AddPromoter,
             &PyArrayDTypeMeta_Type,
@@ -498,6 +500,10 @@ _get_experimental_dtype_api(PyObject *NPY_UNUSED(mod), PyObject *arg)
         /* Object and Structured */
         experimental_api_table[42] = PyArray_DTypeFromTypeNum(NPY_OBJECT);
         experimental_api_table[43] = PyArray_DTypeFromTypeNum(NPY_VOID);
+        /* Abstract */
+        experimental_api_table[44] = &PyArray_PyIntAbstractDType;
+        experimental_api_table[45] = &PyArray_PyFloatAbstractDType;
+        experimental_api_table[46] = &PyArray_PyComplexAbstractDType;
     }
 
     char *env = getenv("NUMPY_EXPERIMENTAL_DTYPE_API");
