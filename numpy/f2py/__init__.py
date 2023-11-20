@@ -8,7 +8,7 @@ of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
-__all__ = ['run_main', 'compile', 'get_include']
+__all__ = ['run_main', 'get_include']
 
 import sys
 import subprocess
