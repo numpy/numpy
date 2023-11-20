@@ -6,7 +6,7 @@ F2PY and Windows
 
 .. warning::
 
-	F2PY support for Windows is not always at par with Linux support
+   F2PY support for Windows is not always at par with Linux support
 
 .. note::
    `ScPy's documentation`_ has some information on system-level dependencies
@@ -14,7 +14,7 @@ F2PY and Windows
 
 Broadly speaking, there are two issues working with F2PY on Windows:
 
--  the lack of actively developed FOSS Fortran compilers, and,
+- the lack of actively developed FOSS Fortran compilers, and,
 - the linking issues related to the C runtime library for building Python-C extensions.
 
 The focus of this section is to establish a guideline for developing and

@@ -120,9 +120,9 @@ module is constructed by scanning all Fortran source codes for routine
 signatures, before proceeding to build the extension module.
 
 .. warning::
-   From Python 3.12 onwards, ``distutils`` has been removed. Use
-   environment variables to interact with ``meson`` instead. See its
-   `FAQ <https://mesonbuild.com/howtox.html>`__ for more information.
+   From Python 3.12 onwards, ``distutils`` has been removed. Use environment
+   variables or native files to interact with ``meson`` instead. See its `FAQ
+   <https://mesonbuild.com/howtox.html>`__ for more information.
 
 Among other options (see below) and options described for previous modes, the following can be used.
 
