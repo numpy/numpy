@@ -25,6 +25,12 @@ following steps:
   * In building the extension modules, F2PY uses ``meson`` and used to use
     ``numpy.distutils`` For different build systems, see :ref:`f2py-bldsys`.
 
+
+.. note::
+
+   See :ref:`f2py-meson-distutils` for migration information.
+
+
   * Depending on your operating system, you may need to install the Python
     development headers (which provide the file ``Python.h``) separately. In
     Linux Debian-based distributions this package should be called ``python3-dev``,

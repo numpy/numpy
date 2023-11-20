@@ -15,10 +15,14 @@ with ``f2py``.
    NumPy and SciPy, ``f2py`` uses ``meson`` now, see
    :ref:`distutils-status-migration` for some more details.
 
+    All changes to ``f2py`` are tested on SciPy, so their `CI configuration`_ is
+    always supported.
+
+
 .. note::
 
-   All changes to ``f2py`` are tested on SciPy, so their `CI configuration`_ is
-   always supported.
+   See :ref:`f2py-meson-distutils` for migration information.
+
 
 Basic concepts
 ===============
@@ -107,6 +111,7 @@ Build systems
    meson
    cmake
    skbuild
+   distutils-to-meson
 
 .. _`issue 20385`: https://github.com/numpy/numpy/issues/20385
 
