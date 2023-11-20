@@ -6,7 +6,9 @@ import platform
 import pytest
 
 from . import util
+from numpy.testing import assert_warns
 from numpy.f2py.f2py2e import main as f2pycli
+from numpy.exceptions import VisibleDeprecationWarning
 
 #########################
 # CLI utils and classes #
@@ -198,14 +200,15 @@ def test_gen_pyf_no_overwrite(capfd, hello_world_f90, monkeypatch):
             assert "Use --overwrite-signature to overwrite" in err
 
 
-@pytest.mark.skipif((platform.system() != 'Linux') and (sys.version_info <= (3, 12)), reason='Compiler and 3.12 required')
+@pytest.mark.filterwarnings("ignore")
+@pytest.mark.skipif(platform.system() != 'Linux', reason = "Needs a compiler")
 def test_untitled_cli(capfd, hello_world_f90, monkeypatch):
     """Check that modules are named correctly
 
     CLI :: defaults
     """
     ipath = Path(hello_world_f90)
-    monkeypatch.setattr(sys, "argv", f"f2py --backend meson -c {ipath}".split())
+    monkeypatch.setattr(sys, "argv", f"f2py -c {ipath}".split())
     with util.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
