@@ -239,13 +239,13 @@ Overflow errors
 
 The fixed size of NumPy numeric types may cause overflow errors when a value
 requires more memory than available in the data type. For example, 
-`numpy.power` evaluates ``100 ** 8`` correctly for 64-bit integers,
-but gives 1874919424 (incorrect) for a 32-bit integer.
+`numpy.power` evaluates ``100 ** 9`` correctly for 64-bit integers,
+but gives -1486618624 (incorrect) for a 32-bit integer.
 
-    >>> np.power(100, 8, dtype=np.int64)
-    10000000000000000
-    >>> np.power(100, 8, dtype=np.int32)
-    1874919424
+    >>> np.power(100, 9, dtype=np.int64)
+    1000000000000000000
+    >>> np.power(100, 9, dtype=np.int32)
+    -1486618624
 
 The behaviour of NumPy and Python integer types differs significantly for
 integer overflows and may confuse users expecting NumPy integers to behave
