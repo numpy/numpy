@@ -140,8 +140,9 @@ we propose to:
 
 * Support for a user-provided missing data sentinel.
 
-* Deprecating ``np.char``, instead exposing string ufuncs in a new
-  ``np.strings`` namespace for functions and types related to string support.
+* Exposing string ufuncs in a new ``np.strings`` namespace for functions and
+  types related to string support, enabling a migration path for a future
+  deprecation of ``np.char``.
 
 * An update to the ``npy`` and ``npz`` file formats to allow storage of
   arbitrary-length sidecar data.
@@ -290,8 +291,8 @@ Backward compatibility
 ----------------------
 
 We are not proposing a change to DType inference for python strings and do not
-expect to see any impacts on existing usages of NumPy, besides warnings related
-to new deprecations in ``np.char``.
+expect to see any impacts on existing usages of NumPy.
+
 
 Detailed description
 --------------------
@@ -306,9 +307,10 @@ Second, we describe the in-memory representation, heap allocation strategy, and
 thread safety concerns. This is followed by a description of the missing data
 handling support and support for strict string type checking for array
 elements. We next discuss the cast and ufunc implementations we will define and
-discuss our plan for the string manipulation functions in ``np.char``. Finally
-we describe out plan to update the ``npy`` and ``npz`` file formats to support
-writing sidecar data.
+discuss our plan for a new ``np.strings`` namespace to directly expose string
+ufuncs in the Python API. Finally, we describe out plan to update the ``npy`` and
+``npz`` file formats to support writing sidecar data.
+
 
 Python API for ``StringDType``
 ******************************
@@ -380,291 +382,7 @@ legacy user-defined DTypes since the integer type numbers for these data types
 begin at 256. In principle there is still room for hundreds more builtin
 DTypes in the integer range available in the ``NPY_TYPES`` enum.
 
-.. _memory:
-
-Memory Layout and Managing Heap Allocations
-*******************************************
-
-Since NumPy has no first-class support for ragged arrays, there is no way for a
-variable-length string data type to store data in the array storage
-buffer. Moreover, the assumption that each element of a NumPy array is a
-constant number of bytes wide in the array buffer is deeply ingrained in NumPy
-and libraries in the wider PyData ecosystem. It would be a substantial amount
-of work to add support for ragged arrays in NumPy and downstream libraries, far
-beyond the scope of adding support for variable-length strings.
-
-Instead, we propose relaxing the requirement that all array data are stored in
-the array buffer or inside of python objects. This DType would extend the
-existing concept of an array of references in NumPy beyond the ``object`` DType
-to include arrays that store data in sidecar heap-allocated buffers and use the
-array to store metadata for the heap allocation.
-
-Memory Layout and Small String Optimization
-+++++++++++++++++++++++++++++++++++++++++++
-
-Each array element would contain the contents of an opaque but sized C struct
-with the following layout:
-
-.. code-block:: C
-
-   struct npy_packed_static_string {
-       char packed_buffer[2*sizeof(size_t)];
-   };
-
-So it is only guaranteed to be the same size in memory as two ``size_t`` fields,
-with no guarantees about data layout or precisely how the data are
-stored. The raw string data can only be accessed once the packed string data are
-loaded into an unpacked string with the following layout:
-
-.. code-block:: C
-
-   struct npy_unpacked_static_string {
-       size_t size;
-       const char *buf;
-   };
-
-Where ``size`` is the size, in bytes, of the string and ``buf`` is a const
-pointer to the beginning of a UTF-8 encoded bytestream containing string
-data. This is a *read-only* view onto the string, we will not expose a public
-interface for modifying these strings. We do not append a trailing null
-character to the byte stream, so users attempting to pass the ``buf`` field to
-an API expecting a C string must create a copy with a trailing null. As a
-positive consequence, ``StringDType`` array entries can contain arbitrary
-embedded or trailing null characters.
-
-Internally, we represent the string as a union, with the following definition on
-little-endian architectures:
-
-.. code-block:: c
-
-   typedef struct _npy_static_vstring_t {
-      size_t offset;
-      size_t size_and_flags;
-   } _npy_static_string_t;
-
-   typedef struct _short_string_buffer {
-      char buf[sizeof(_npy_static_string_t) - 1];
-      unsigned char size_and_flags;
-   } _short_string_buffer;
-
-   typedef union _npy_static_string_u {
-    _npy_static_string_t vstring;
-    _short_string_buffer direct_buffer;
-   } _npy_static_string_u;
-
-The ``_npy_static_vstring_t`` representation is most useful for representing
-strings living on the heap directly or in an arena allocation, with the
-``offset`` field either containing a ``size_t`` representation of the address
-directly, or an integer offset into an arena allocation. The
-``_short_string_buffer`` representation is most useful for the small string
-optimization, with the string data stored in the ``direct_buffer`` field and the
-size in the ``size_and_flags`` field. In both cases the ``size_and_flags`` field
-stores both the ``size`` of the string as well as bitflags. Small strings store
-the size in the final four bits of the buffer, reserving the first four bits of
-``size_and_flags`` for flags. Heap strings or strings in arena allocations use
-the most significant byte for flags, reserving the leading bytes for the string
-size. It's worth pointing out that this choice limits the maximum string sized
-allowed to be stored in an array, particularly on 32 bit systems where the limit
-is 16 megabytes per string - small enough to worry about impacting real-world
-workflows.
-
-On big-endian systems, the layout is reversed, with the ``size_and_flags`` field
-appearing first in the structs. This allows the implementation to always use the
-most significant bits of the ``size_and_flags`` field for flags. The
-endian-dependent layouts of these structs is an implementation detail and is not
-publicly exposed in the API.
-
-Whether or not a string is stored directly on the arena buffer or in the heap is
-signaled by setting the ``NPY_STRING_SHORT`` flag on the string data. Because
-the maximum size of a heap-allocated string is limited to the size of the
-largest 7-byte unsized integer, this flag can never be set for a valid heap
-string.
-
-Arena Allocator
-+++++++++++++++
-
-Strings longer than the small string limit (15 bytes on 64 bit systems and 7
-bytes on 32 bit systems) are stored on the heap. The bookkeeping for the
-allocations is managed by an arena allocator attached to the ``StringDType``
-instance associated with an array. The allocator will be exposed publicly as an
-opaque ``npy_string_arena`` struct.
-
-Internally, the ``npy_string_arena`` struct has the following layout:
-
-.. code-block:: c
-
-    struct npy_string_arena {
-        size_t cursor;
-        size_t size;
-        char *buffer;
-    };
-
-Where ``buffer`` is a pointer to the beginning of a heap-allocated arena,
-``size`` is the size of that allocation, and ``cursor`` is the location in the
-arena where the last arena allocation ended. The arena is filled using an
-exponentially expanding buffer, allowing amortized O(1) insertion.
-
-Each string entry in the arena is prepended by a size, stored either in a
-``char`` or a ``size_t``, depending on the length of the string. Strings with
-lengths between 16 or 8 (depending on architecture) and 255 are stored with a
-``char`` size. We refer to these as "medium" strings internally and strings
-stored this way have the ``NPY_STRING_MEDIUM`` flag set. This choice reduces the
-overhead for storing smaller strings on the heap by 7 bytes per medium-length string.
-
-Using a per-array arena allocator ensures that the string buffers for nearby
-array elements are usually nearby on the heap. We do not guarantee that
-neighboring array elements are contiguous on the heap to support the small
-string optimization, missing data, and allow mutation of array entries. See
-below for more discussion on how these topics affect the memory layout.
-
-We do not expose the ``npy_string_arena`` struct or the underlying heap memory
-allocations publicly. Instead, an opaque ``npy_string_allocator`` struct is
-exposed. Internally, it has the following layout:
-
-.. code-block:: c
-
-    struct npy_string_allocator {
-        npy_string_malloc_func malloc;
-        npy_string_free_func free;
-        npy_string_realloc_func realloc;
-        npy_string_arena arena;
-    };
-
-This allows us to group memory-allocation functions together and choose
-different allocation functions at runtime if we desire.  Use of
-the allocator is guarded by a mutex, see below for more discussion about thread
-safety.
-
-We plan to add an interface for packing, unpacking, allocating, freeing,
-comparing, and copying strings with this layout via the arena allocator to the
-public NumPy C API to ease downstream integration. All items in the API we
-propose to add are prepended with ``npy_string``, ``NpyString`` or
-``NPY_STRING`` for public typedefs, functions, or macros, respectively. This C
-API is used to implement the DType using the NumPY DType API. The header and
-implementation for the API only uses C standard library headers and does not
-depend on the CPython or NumPy C API. See the ``static_string.h`` header in the
-prototype for a full API listing and documentation.
-
-Mutation and Thread Safety
-++++++++++++++++++++++++++
-
-Mutation introduces the possibility of data races and use-after-free errors when
-an array is accessed and mutated by multiple threads. Additionally, if we
-allocate mutated strings in the arena buffer and mandate contiguous storage
-where the old string is replaced by the new one, mutating a single string may
-trigger reallocating the arena buffer for the entire array. This is a
-pathological performance degradation compared with object string arrays.
-
-One solution would be to disable mutation, but inevitably there will be
-downstream uses of object string arrays that mutate array elements that we would
-like to support.
-
-Instead, we have opted to pair the ``npy_string_allocator`` instance attached to
-``StringDType`` instances with a ``PyThread_type_lock`` mutex. Any function in
-the static string C API that allows manipulating heap-allocated data accepts an
-``allocator`` argument. To use the C API correctly, a thread must acquire the
-allocator mutex before any usage of the ``allocator``. This prevents parallel
-access to the heap memory used by string arrays.
-
-The ``PyThread_type_lock`` mutex is relatively heavyweight and does not provide
-more sophisticated locking primitives that allow multiple simultaneous
-readers. As part of the GIL-removal project, CPython is adding new
-synchronization primitives to the C API for projects like NumPy to make use
-of. When this happens, we can update the locking strategy to allow multiple
-simultaneous reading threads, along with other fixes for threading bugs in NumPy
-that will be needed once the GIL is removed.
-
-If a mutated string remains the same size or is shrunk, the existing short
-string or arena allocation is re-used, with padding zeros written to the end of
-the subset of the buffer reserved for the string. If the string is enlarged, the
-existing space in the arena buffer cannot be used, so instead we resort to
-allocating space directly on the heap via ``malloc`` and the
-``NPY_STRING_ON_HEAP`` flag is set. Any pre-existing flags are kept set to allow
-future use of the string to determine if there is space in the arena buffer
-allocated for the string for possible re-use.
-
-Freeing Strings
-+++++++++++++++
-
-Existing strings must be freed before discarding or re-using a packed
-string. The API is constructed to require this for all strings, even for short
-strings with no heap allocations. In all cases, all data in the packed string
-are zeroed out, except for the flags, which are preserved except as noted below.
-
-For strings with data living in the arena allocation, the data for the string in
-the arena buffer are zeroed out and the ``NPY_STRING_ARENA_FREED`` flag is set
-on the packed string to indicate there is space in the arena for a later re-use
-of the packed string. Heap strings have their heap allocation freed and the
-``NPY_STRING_ON_HEAP`` flag removed.
-
-Memory Layout Examples
-++++++++++++++++++++++
-
-We have created illustrative diagrams for the three possible string memory
-layouts. All diagrams assume a 64 bit little endian architecture.
-
-.. image:: _static/nep-0055-short-string-memory-layout.svg
-
-Short strings store string data directly in the array buffer. On little-endian
-architectures, the string data appear first, followed by a single byte that
-allows space for four flags and stores the size of the string as an
-unsigned integer in the final 4 bits. In this example, the string contents are
-"Hello world", with a size of 11. The only flag set indicates that this is a
-short string.
-
-.. image:: _static/nep-0055-arena-string-memory-layout.svg
-
-Arena strings store string data in a heap-allocated arena buffer that is managed
-by the ``StringDType`` instance attached to the array. In this example, the
-string contents are "Numpy is a very cool library", stored at offset ``0x94C``
-in the arena allocation. Note that the ``size`` is stored twice, once in the
-``size_and_flags`` field, and once in the arena allocation. Also note that
-because the length of the string is small enough to fit in an ``unsigned char``,
-the size only requires one byte in the arena allocation. The only flag set
-indicates that this is a "medium" string. Arena strings that are longer than 255
-bytes have no flags set.
-
-.. image:: _static/nep-0055-heap-string-memory-layout.svg
-
-Heap strings store string data in a buffer returned by ``PyMem_RawMalloc`` and
-instead of storing an offset into an arena buffer, directly store the address of
-the heap address returned by ``malloc``. In this example, the string contents
-are "Numpy is a very cool library" and are stored at heap address
-``0x4d3d3d3``. The string has one flag set, indicating that the allocation lives
-directly on the heap rather than in the arena buffer.
-
-Empty Strings and Missing Data
-++++++++++++++++++++++++++++++
-
-The empty string will be defined to be a zero-filled
-``npy_packed_static_string``. This has the benefit that newly created array
-buffer returned by ``calloc`` will be an array filled with empty strings by
-construction. Missing strings will have an identical representation, except they
-will have a flag, ``NPY_STRING_MISSING`` set in the flags field. Users will need
-to check if a string is null before accessing an unpacked string buffer and we
-have set up the C API in such a way as to force null-checking whenever a string
-is unpacked. Both missing and empty strings are stored directly in the array
-buffer and do not require additional heap storage.
-
-Cython Support and the Buffer Protocol
-++++++++++++++++++++++++++++++++++++++
-
-It's impossible for ``StringDType`` to support the Python buffer protocol, so
-Cython will not support idiomatic typed memoryview syntax for ``StringDType``
-arrays unless special support is added in Cython in the future. We have some
-preliminary ideas for ways to either update the buffer protocol [9]_ or make
-use of the Arrow C data interface [10]_ to expose NumPy arrays for DTypes that
-don't make sense in the buffer protocol, but those efforts will likely not come
-to fruition in time for NumPy 2.0. This means adapting legacy Cython code that
-uses arrays of fixed-width strings to work with ``StringDType`` will be
-non-trivial. Adapting code that worked with object string arrays should be
-straightforward since object arrays aren't supported by the buffer protocol
-either and will likely have no types or have ``object`` type in Cython.
-
-We will add cython ``nogil`` wrappers for the C API functions added as part of
-this work to ease integration with downstream cython code.
-
-Missing data support
+Missing Data Support
 ********************
 
 Missing data can be represented using a sentinel:
@@ -800,6 +518,368 @@ string validation in a separate, expensive, pass over the input array-like. We
 have chosen not to make this the default behavior to follow NumPy fixed-width
 strings, which coerce non-strings.
 
+C API for ``StringDType``
+*************************
+
+Each entry in a ``StringDType`` array will be defined to be an instance of an
+opaque ``npy_packed_static_string`` struct. Making the public definition opaque
+will allow us to in principle change the underlying C implementation or even the
+size of the struct in the future.
+
+To actually work with the string data, we will publicly expose a typedef for
+a struct with with the following definition:
+
+.. code-block:: C
+
+   struct npy_static_string {
+       size_t size;
+       const char *buf;
+   };
+
+Where ``size`` is the size, in bytes, of the string and ``buf`` is a const
+pointer to the beginning of a UTF-8 encoded bytestream containing string
+data. This is a *read-only* view onto the string, we will not expose a public
+interface for modifying these strings. We do not append a trailing null
+character to the byte stream, so users attempting to pass the ``buf`` field to
+an API expecting a C string must create a copy with a trailing null. As a
+positive consequence, ``StringDType`` array entries can contain arbitrary
+embedded or trailing null characters.
+
+Say we are writing a ufunc implementation for ``StringDType``. If we are given
+``const char *buf`` pointer to the beginning of a ``StringDType`` array entry, and a
+``PyArray_Descr *`` pointer to the array descriptor, one can
+access the underlying string data like so:
+
+.. code-block:: C
+
+   npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
+
+   npy_static_string sdata = {0, NULL};
+   npy_packed_static_string *packed_string = (npy_packed_static_string *)buf;
+   int is_null = 0;
+
+   if (NpyString_load(allocator, packed_string, &sdata) == -1) {
+       // failed to load string, set error
+       return -1;
+   }
+
+   if (is_null) {
+       // handle missing string
+       // sdata->buf is NULL
+       // sdata->size is 0
+   }
+   else {
+       // sdata->buf is a pointer to the beginning of a string
+       // sdata->size is the size of the string
+   }
+   NpyString_release_allocator(descr);
+
+Similarly, we will also expose ``NpyString_pack`` to create a new
+packed string in an existing array from the contents of a ``char *`` buffer:
+
+.. code-block:: C
+
+   char *str = "Hello world";
+   size_t size = 11;
+   npy_packed_static_string *packed_string = (npy_packed_static_string *)buf;
+
+   npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
+
+   // copy contents of str into packed_string
+   if (NpyString_pack(allocator, packed_string, str, size) == -1) {
+       // string packing failed, set error
+       return -1;
+   }
+
+   // packed_string contains a copy of "Hello world"
+
+   NpyString_release_allocator(descr);
+
+And finally, we will expose ``NpyString_pack_null`` to assign the null
+string value to a packed string:
+
+.. code-block:: c
+
+   npy_packed_static_string *packed_string = (npy_packed_static_string *)buf;
+
+   npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
+
+   if (NpyString_pack_null(allocator, packed_string) == -1) {
+       // string packing failed, set error
+       return -1;
+   }
+
+   NpyString_release_allocator(descr);
+
+If pre-existing string data exists in the buffer passed to ``NpyString_pack`` or
+``NpyString_pack_null``, that string data will be freed if it lives on the heap
+or cleared if it lives in the arena.
+
+For now we are only exposing this limited API to leave us flexibility to change
+implementation details in the future. In particular, the size and exact layout
+of the ``npy_packed_static_string`` struct are not stable and should not be
+relied on in downstream code. Instead, strings should be loaded and packed
+using the C API outlined above.
+
+.. _memory:
+
+Memory Layout and Managing Heap Allocations
+*******************************************
+
+Since NumPy has no first-class support for ragged arrays, there is no way for a
+variable-length string data type to store data in the array storage
+buffer. Moreover, the assumption that each element of a NumPy array is a
+constant number of bytes wide in the array buffer is deeply ingrained in NumPy
+and libraries in the wider PyData ecosystem. It would be a substantial amount
+of work to add support for ragged arrays in NumPy and downstream libraries, far
+beyond the scope of adding support for variable-length strings.
+
+Instead, we propose relaxing the requirement that all array data are stored in
+the array buffer or inside of python objects. This DType would extend the
+existing concept of an array of references in NumPy beyond the ``object`` DType
+to include arrays that store data in sidecar heap-allocated buffers and use the
+array to store metadata for the heap allocation.
+
+Memory Layout and Small String Optimization
++++++++++++++++++++++++++++++++++++++++++++
+
+In the prototype, each array element is represented as a union, with
+the following definition on little-endian architectures:
+
+.. code-block:: c
+
+   typedef struct _npy_static_vstring_t {
+      size_t offset;
+      size_t size_and_flags;
+   } _npy_static_string_t;
+
+   typedef struct _short_string_buffer {
+      char buf[sizeof(_npy_static_string_t) - 1];
+      unsigned char size_and_flags;
+   } _short_string_buffer;
+
+   typedef union _npy_static_string_u {
+    _npy_static_string_t vstring;
+    _short_string_buffer direct_buffer;
+   } _npy_static_string_u;
+
+The ``_npy_static_vstring_t`` representation is most useful for representing
+strings living on the heap directly or in an arena allocation, with the
+``offset`` field either containing a ``size_t`` representation of the address
+directly, or an integer offset into an arena allocation. The
+``_short_string_buffer`` representation is most useful for the small string
+optimization, with the string data stored in the ``direct_buffer`` field and the
+size in the ``size_and_flags`` field. In both cases the ``size_and_flags`` field
+stores both the ``size`` of the string as well as bitflags. Small strings store
+the size in the final four bits of the buffer, reserving the first four bits of
+``size_and_flags`` for flags. Heap strings or strings in arena allocations use
+the most significant byte for flags, reserving the leading bytes for the string
+size. It's worth pointing out that this choice limits the maximum string sized
+allowed to be stored in an array, particularly on 32 bit systems where the limit
+is 16 megabytes per string - small enough to worry about impacting real-world
+workflows.
+
+On big-endian systems, the layout is reversed, with the ``size_and_flags`` field
+appearing first in the structs. This allows the implementation to always use the
+most significant bits of the ``size_and_flags`` field for flags. The
+endian-dependent layouts of these structs is an implementation detail and is not
+publicly exposed in the API.
+
+Whether or not a string is stored directly on the arena buffer or in the heap is
+signaled by setting the ``NPY_STRING_SHORT`` flag on the string data. Because
+the maximum size of a heap-allocated string is limited to the size of the
+largest 7-byte unsized integer, this flag can never be set for a valid heap
+string.
+
+Arena Allocator
++++++++++++++++
+
+Strings longer than the small string limit (15 bytes on 64 bit systems and 7
+bytes on 32 bit systems) are stored on the heap. The bookkeeping for the
+allocations is managed by an arena allocator attached to the ``StringDType``
+instance associated with an array. The allocator will be exposed publicly as an
+opaque ``npy_string_allocator`` struct. Internally, it has the following layout:
+
+.. code-block:: c
+
+    struct npy_string_allocator {
+        npy_string_malloc_func malloc;
+        npy_string_free_func free;
+        npy_string_realloc_func realloc;
+        npy_string_arena arena;
+    };
+
+This allows us to group memory-allocation functions together and choose
+different allocation functions at runtime if we desire.  Use of
+the allocator is guarded by a mutex, see below for more discussion about thread
+safety.
+
+The memory allocations are handled bit the ``npy_string_arena`` struct member,
+which has the following layout:
+
+.. code-block:: c
+
+    struct npy_string_arena {
+        size_t cursor;
+        size_t size;
+        char *buffer;
+    };
+
+Where ``buffer`` is a pointer to the beginning of a heap-allocated arena,
+``size`` is the size of that allocation, and ``cursor`` is the location in the
+arena where the last arena allocation ended. The arena is filled using an
+exponentially expanding buffer, allowing amortized O(1) insertion.
+
+Each string entry in the arena is prepended by a size, stored either in a
+``char`` or a ``size_t``, depending on the length of the string. Strings with
+lengths between 16 or 8 (depending on architecture) and 255 are stored with a
+``char`` size. We refer to these as "medium" strings internally and strings
+stored this way have the ``NPY_STRING_MEDIUM`` flag set. This choice reduces the
+overhead for storing smaller strings on the heap by 7 bytes per medium-length
+string.
+
+The size of the allocation is stored in the arena to allow reuse of the arena
+allocation if a string is mutated. In principle we could disallow re-use of the
+arena buffer and not store the sizes in the arena. This may or may not save
+memory or be more performant depending on the exact usage pattern. For now we
+are erring on the side of avoiding unnecessary heap allocations when a string is
+mutated but in principle we could simplify the implementation by choosing to
+always store mutated arena strings as heap strings and ignore the arena
+allocation. See more details below on how we deal with the mutability of NumPy
+arrays in a multithreaded context.
+
+Using a per-array arena allocator ensures that the string buffers for nearby
+array elements are usually nearby on the heap. We do not guarantee that
+neighboring array elements are contiguous on the heap to support the small
+string optimization, missing data, and allow mutation of array entries. See
+below for more discussion on how these topics affect the memory layout.
+
+If the contents of a packed string are freed and then assigned to a new string
+with the same size or smaller than the string that was originally stored in the
+packed string, the existing short string or arena allocation is re-used, with
+padding zeros written to the end of the subset of the buffer reserved for the
+string. If the string is enlarged, the existing space in the arena buffer cannot
+be used, so instead we resort to allocating space directly on the heap via
+``malloc`` and the ``NPY_STRING_ON_HEAP`` flag is set. Any pre-existing flags
+are kept set to allow future use of the string to determine if there is space in
+the arena buffer allocated for the string for possible re-use.
+
+Mutation and Thread Safety
+++++++++++++++++++++++++++
+
+Mutation introduces the possibility of data races and use-after-free errors when
+an array is accessed and mutated by multiple threads. Additionally, if we
+allocate mutated strings in the arena buffer and mandate contiguous storage
+where the old string is replaced by the new one, mutating a single string may
+trigger reallocating the arena buffer for the entire array. This is a
+pathological performance degradation compared with object string arrays.
+
+One solution would be to disable mutation, but inevitably there will be
+downstream uses of object string arrays that mutate array elements that we would
+like to support.
+
+Instead, we have opted to pair the ``npy_string_allocator`` instance attached to
+``StringDType`` instances with a ``PyThread_type_lock`` mutex. Any function in
+the static string C API that allows manipulating heap-allocated data accepts an
+``allocator`` argument. To use the C API correctly, a thread must acquire the
+allocator mutex before any usage of the ``allocator``. This prevents parallel
+access to the heap memory used by string arrays.
+
+The ``PyThread_type_lock`` mutex is relatively heavyweight and does not provide
+more sophisticated locking primitives that allow multiple simultaneous
+readers. As part of the GIL-removal project, CPython is adding new
+synchronization primitives to the C API for projects like NumPy to make use
+of. When this happens, we can update the locking strategy to allow multiple
+simultaneous reading threads, along with other fixes for threading bugs in NumPy
+that will be needed once the GIL is removed.
+
+Freeing Strings
++++++++++++++++
+
+Existing strings must be freed before discarding or re-using a packed
+string. The API is constructed to require this for all strings, even for short
+strings with no heap allocations. In all cases, all data in the packed string
+are zeroed out, except for the flags, which are preserved except as noted below.
+
+For strings with data living in the arena allocation, the data for the string in
+the arena buffer are zeroed out and the ``NPY_STRING_ARENA_FREED`` flag is set
+on the packed string to indicate there is space in the arena for a later re-use
+of the packed string. Heap strings have their heap allocation freed and the
+``NPY_STRING_ON_HEAP`` flag removed.
+
+Memory Layout Examples
+++++++++++++++++++++++
+
+We have created illustrative diagrams for the three possible string memory
+layouts. All diagrams assume a 64 bit little endian architecture.
+
+.. image:: _static/nep-0055-short-string-memory-layout.svg
+
+Short strings store string data directly in the array buffer. On little-endian
+architectures, the string data appear first, followed by a single byte that
+allows space for four flags and stores the size of the string as an
+unsigned integer in the final 4 bits. In this example, the string contents are
+"Hello world", with a size of 11. The only flag set indicates that this is a
+short string.
+
+.. image:: _static/nep-0055-arena-string-memory-layout.svg
+
+Arena strings store string data in a heap-allocated arena buffer that is managed
+by the ``StringDType`` instance attached to the array. In this example, the
+string contents are "Numpy is a very cool library", stored at offset ``0x94C``
+in the arena allocation. Note that the ``size`` is stored twice, once in the
+``size_and_flags`` field, and once in the arena allocation. This facilitates
+re-use of the arena allocation if a string is mutated. Also note that because
+the length of the string is small enough to fit in an ``unsigned char``, this is
+a "medium"-length string and the size requires only one byte in the arena
+allocation. An arena string larger than 255 bytes would need 8 bytes in the
+arena to store the size in a ``size_t``. The only flag set indicates that this
+is a such "medium"-length string with a size that fits in a ``unsigned
+char``. Arena strings that are longer than 255 bytes have no flags set.
+
+.. image:: _static/nep-0055-heap-string-memory-layout.svg
+
+Heap strings store string data in a buffer returned by ``PyMem_RawMalloc`` and
+instead of storing an offset into an arena buffer, directly store the address of
+the heap address returned by ``malloc``. In this example, the string contents
+are "Numpy is a very cool library" and are stored at heap address
+``0x4d3d3d3``. The string has one flag set, indicating that the allocation lives
+directly on the heap rather than in the arena buffer.
+
+Empty Strings and Missing Data
+++++++++++++++++++++++++++++++
+
+The layout we have chosen has the benefit that newly created array buffer
+returned by ``calloc`` will be an array filled with empty strings by
+construction, since a string with no flags set is a heap string with size
+zero. This is not the only valid representation of an empty string, since other
+flags may be set to indicate that the missing string is associated with a
+pre-existing short string or arena string. Missing strings will have an
+identical representation, except they will always have a flag,
+``NPY_STRING_MISSING`` set in the flags field. Users will need to check if a
+string is null before accessing an unpacked string buffer and we have set up the
+C API in such a way as to force null-checking whenever a string is
+unpacked. Both missing and empty strings are stored directly in the array buffer
+and do not require additional heap storage.
+
+Cython Support and the Buffer Protocol
+++++++++++++++++++++++++++++++++++++++
+
+It's impossible for ``StringDType`` to support the Python buffer protocol, so
+Cython will not support idiomatic typed memoryview syntax for ``StringDType``
+arrays unless special support is added in Cython in the future. We have some
+preliminary ideas for ways to either update the buffer protocol [9]_ or make
+use of the Arrow C data interface [10]_ to expose NumPy arrays for DTypes that
+don't make sense in the buffer protocol, but those efforts will likely not come
+to fruition in time for NumPy 2.0. This means adapting legacy Cython code that
+uses arrays of fixed-width strings to work with ``StringDType`` will be
+non-trivial. Adapting code that worked with object string arrays should be
+straightforward since object arrays aren't supported by the buffer protocol
+either and will likely have no types or have ``object`` type in Cython.
+
+We will add cython ``nogil`` wrappers for the public C API functions added as
+part of this work to ease integration with downstream cython code.
+
 Casts, ufunc support, and string manipulation functions
 *******************************************************
 
@@ -832,15 +912,10 @@ be populated with string ufuncs:
   >>> isinstance(np.strings.upper, np.ufunc)
   True
 
-We feel ``np.strings`` is a more intuitive name and that NumPy 2.0 is as good a
-time as any to fully eject the legacy baggage of ``chararray``, so as part of
-this work we will formally deprecate the ``np.char`` namespace, including the
-``chararray`` type.
-
-This proposal is less for the sake of adding functionality and more
-window-dressing than the other proposals in this NEP. If there isn't an appetite
-for renaming the namespace, we could clean up ``np.char`` as planned for NumPy
-2.0 and expose string ufuncs there.
+We feel ``np.strings`` is a more intuitive name than ``np.char``, and eventually
+will replace ``np.char`` once downstream libraries that conform to SPEC-0 can
+safely switch to ``np.char`` without needing any logic conditional on the NumPy
+version.
 
 Serialization
 *************
@@ -914,8 +989,8 @@ for the DType, the work of adding the DType to NumPy itself, writing
 documentation for the new DType, and updating the existing NumPy documentation
 where appropriate. The steps will be as follows:
 
-* Create an ``np.strings`` namespace, move the ufunc-like functions in
-  ``np.char`` there, and deprecate ``np.char``.
+* Create an ``np.strings`` namespace and expose the string ufuncs directly in
+  that namespace.
 
 * Formalize the update to the ``npy`` and ``npz`` serialization formats.
 
@@ -940,9 +1015,9 @@ steps, but the process of adding the DType to NumPy will likely shake out more
 issues.
 
 We are hopeful that this work can be completed in time for NumPy 2.0 and we will
-certainly complete the ``np.char`` migration before then. However, if need be,
-the new DType and the addition to the ``npy`` file format can slip to NumPy 2.1
-and is not required for the API changes slated for NumPy 2.0.
+certainly finish exposing and documenting ``np.strings`` before then. However,
+if need be, the new DType and the addition to the ``npy`` file format can slip
+to NumPy 2.1 and is not required for the API changes slated for NumPy 2.0.
 
 Alternatives
 ------------
