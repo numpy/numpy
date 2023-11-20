@@ -31,7 +31,7 @@ def configuration(parent_package='', top_path=None):
     config.add_data_files(
         'src/fortranobject.c',
         'src/fortranobject.h',
-        'backends/meson.build.template',
+        '_backends/meson.build.template',
     )
     config.add_data_files('*.pyi')
     return config

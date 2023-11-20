@@ -208,29 +208,33 @@ Other options
   ``-m <modulename>``
     Name of an extension module. Default is ``untitled``.
 
-  .. warning:: Don't use this option if a signature file (``*.pyf``) is used.
+.. warning::
+   Don't use this option if a signature file (``*.pyf``) is used.
 
-  ``--[no-]lower``
-    Do [not] lower the cases in ``<fortran files>``. By default, ``--lower`` is
-    assumed with ``-h`` switch, and ``--no-lower`` without the ``-h`` switch.
-  ``-include<header>``
-    Writes additional headers in the C wrapper, can be passed multiple times,
-    generates #include <header> each time. Note that this is meant to be passed
-    in single quotes and without spaces, for example ``'-include<stdbool.h>'``
-  ``--build-dir <dirname>``
-    All F2PY generated files are created in ``<dirname>``. Default is
-    ``tempfile.mkdtemp()``.
-  ``--f2cmap <filename>``
-    Load Fortran-to-C ``KIND`` specifications from the given file.
-  ``--quiet``
-    Run quietly.
-  ``--verbose``
-    Run with extra verbosity.
-  ``--skip-empty-wrappers``
-    Do not generate wrapper files unless required by the inputs.
-    This is a backwards compatibility flag to restore pre 1.22.4 behavior.
-  ``-v``
-    Print the F2PY version and exit.
+   .. versionchanged:: 1.26.3
+      Will ignore ``-m`` if a ``pyf`` file is provided.
+
+``--[no-]lower``
+  Do [not] lower the cases in ``<fortran files>``. By default, ``--lower`` is
+  assumed with ``-h`` switch, and ``--no-lower`` without the ``-h`` switch.
+``-include<header>``
+  Writes additional headers in the C wrapper, can be passed multiple times,
+  generates #include <header> each time. Note that this is meant to be passed
+  in single quotes and without spaces, for example ``'-include<stdbool.h>'``
+``--build-dir <dirname>``
+  All F2PY generated files are created in ``<dirname>``. Default is
+  ``tempfile.mkdtemp()``.
+``--f2cmap <filename>``
+  Load Fortran-to-C ``KIND`` specifications from the given file.
+``--quiet``
+  Run quietly.
+``--verbose``
+  Run with extra verbosity.
+``--skip-empty-wrappers``
+  Do not generate wrapper files unless required by the inputs.
+  This is a backwards compatibility flag to restore pre 1.22.4 behavior.
+``-v``
+  Print the F2PY version and exit.
 
 Execute ``f2py`` without any options to get an up-to-date list of available
 options.
