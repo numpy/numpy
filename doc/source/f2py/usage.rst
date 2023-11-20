@@ -273,32 +273,15 @@ options.
 Python module ``numpy.f2py``
 ============================
 
-The f2py program is written in Python and can be run from inside your code
-to compile Fortran code at runtime, as follows:
-
-.. legacy::
-
-   The ``f2py.compile()`` function will be removed from 2.0.x onwards.
-   Write a custom ``subprocess.run`` wrapper over ``numpy.f2py`` instead.
-
-.. code-block:: python
-
-    from numpy import f2py
-    with open("add.f") as sourcefile:
-        sourcecode = sourcefile.read()
-    f2py.compile(sourcecode, modulename='add')
-    import add
-
-The source string can be any valid Fortran code. If you want to save
-the extension-module source code then a suitable file-name can be
-provided by the ``source_fn`` keyword to the compile function.
-
-When using ``numpy.f2py`` as a module, the following functions can be invoked.
-
 .. warning::
 
-  The current Python interface to the ``f2py`` module is not mature and may
-  change in the future.
+   .. versionchanged:: 2.0.0
+
+      There used to be a ``f2py.compile`` function, which was removed, users
+      may wrap ``python -m numpy.f2py`` via ``subprocess.run`` manually, and
+      set environment variables to interact with ``meson`` as required.
+
+When using ``numpy.f2py`` as a module, the following functions can be invoked.
 
 .. automodule:: numpy.f2py
     :members:
