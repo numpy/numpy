@@ -302,14 +302,15 @@ would like to include in NumPy. This is mostly identical to the prototype, but
 has a few differences that are impossible to implement in a DType that lives
 outside of NumPy.
 
-First, we describe the Python API for instantiating ``StringDType`` instances.
-Second, we describe the in-memory representation, heap allocation strategy, and
-thread safety concerns. This is followed by a description of the missing data
-handling support and support for strict string type checking for array
-elements. We next discuss the cast and ufunc implementations we will define and
-discuss our plan for a new ``np.strings`` namespace to directly expose string
-ufuncs in the Python API. Finally, we describe out plan to update the ``npy`` and
-``npz`` file formats to support writing sidecar data.
+First, we describe the Python API for instantiating ``StringDType``
+instances. Next, we will describe the missing data handling support and support
+for strict string type checking for array elements. We next discuss the cast and
+ufunc implementations we will define and discuss our plan for a new
+``np.strings`` namespace to directly expose string ufuncs in the Python
+API. After that, we describe out plan to update the ``npy`` and ``npz`` file
+formats to support writing sidecar data. Finally, we provide an overview of the
+C API we would like to expose and the details of the memory layout and heap
+allocation strategy we have chosen for the initial implementation.
 
 
 Python API for ``StringDType``
@@ -518,16 +519,99 @@ string validation in a separate, expensive, pass over the input array-like. We
 have chosen not to make this the default behavior to follow NumPy fixed-width
 strings, which coerce non-strings.
 
+Casts, ufunc support, and string manipulation functions
+*******************************************************
+
+A full set of round-trip casts to the builtin NumPy DTypes will be available. In
+addition, we will add implementations for the comparison operators as well as
+an ``add`` loop that accepts two string arrays, ``multiply`` loops that
+accept string and integer arrays, an ``isnan`` loop, and implementations for the
+string ufuncs that will be newly available in NumPy 2.0. The ``isnan`` ufunc
+will return ``True`` for entries that are NaN-like sentinels and ``False``
+otherwise. Comparisons will sort data in order of unicode code point, as is
+currently implemented for the fixed-width unicode DType. In the future NumPy or
+a downstream library may add locale-aware sorting, case folding, and
+normalization for NumPy unicode strings arrays, but we are not proposing adding
+these features at this time.
+
+Two ``StringDType`` instances are considered identical if they are created with
+the same ``na_object`` and ``coerce`` parameter. We propose checking for unequal
+``StringDType`` instances in the ``resolve_descriptors`` function of binary
+ufuncs that take two string arrays and raising an error if an operation is
+performed with unequal ``StringDType`` instances.
+
+``np.strings`` namespace
+************************
+
+String operations will be available in a ``np.strings`` namespace that will
+be populated with string ufuncs:
+
+  >>> np.strings.upper((np.array(["hello", "world"], dtype=StringDType())
+  array(['HELLO', 'WORLD'], dtype=StringDType())
+  >>> isinstance(np.strings.upper, np.ufunc)
+  True
+
+We feel ``np.strings`` is a more intuitive name than ``np.char``, and eventually
+will replace ``np.char`` once downstream libraries that conform to SPEC-0 can
+safely switch to ``np.char`` without needing any logic conditional on the NumPy
+version.
+
+Serialization
+*************
+
+Since string data are stored outside the array buffer, serialization requires an
+update to the ``npy`` file format, which currently can only include fixed-width
+data in the array buffer. We propose defining format version 4.0, which adds an
+additional optional ``sidecar_size`` header key that corresponds to the size, in
+bytes, of an optional sidecar field that is written to disk following the array
+data. If no sidecar storage is required, the writer will default to the current,
+more widely compatible, file format and will not write a ``sidecar_size`` field
+to the header. This also enables storage of arbitrary user-defined data types
+once API hooks are added that allow a DType to serialize to the sidecar data and
+deserialize from the loaded sidecar data.
+
+This is an improvement over the current situation with object string arrays,
+which can only be saved to an ``npy`` file using the ``allow_pickle=True``
+option. Serializing arbitrary python objects requires the use of ``pickle``, so
+there is no safe way to share untrusted ``npy`` files containing object string
+arrays. This means users of object string arrays adopting ``StringDType`` will
+also gain an officially supported way to safely share string data or load
+variable-width string data from an untrusted source.
+
+For cases where pickle support is required, support for pickling and unpickling
+string arrays will also be implemented.
+
 C API for ``StringDType``
 *************************
 
-Each entry in a ``StringDType`` array will be defined to be an instance of an
-opaque ``npy_packed_static_string`` struct. Making the public definition opaque
-will allow us to in principle change the underlying C implementation or even the
-size of the struct in the future.
+The goal of the C API is to hide details of how string data are stored on the
+heap from the user and provide a thread-safe interface for reading and writing
+strings stored in ``StringDType`` arrays. To accomplish this, we have decided to
+split strings into two different *packed* and *unpacked* representations. A
+packed string lives directly in the array buffer and may contain either the
+string data for a sufficiently short string or metadata for a heap allocation
+where the characters of the string are stored. An unpacked string exposes the
+size of the string in bytes and a ``char *`` pointer to the string data.
 
-To actually work with the string data, we will publicly expose a typedef for
-a struct with with the following definition:
+To access the unpacked string data for a string stored in a numpy array, a user
+must call a function to load the packed string into an unpacked string or call
+another function to pack an unpacked string into an array. These operation
+requires both a pointer to an array entry and a reference to an allocator
+struct. The allocator manages the bookkeeping needed to store the string data on
+the heap. Centralizing this bookkeeping in the allocator means we have the
+freedom to change the underlying allocation strategy. We also ensure thread
+safety by guarding access to the allocator with a fine-grained mutex.
+
+Below we describe this design in more detail, enumerating the types and
+functions we would like to add to the C API. In the :ref:`next section <memory>`
+we describe the memory layout and heap allocation strategy we plan to implement
+using this API.
+
+String and Allocator Types
+++++++++++++++++++++++++++
+
+Unpacked strings are represented in the C API with the ``npy_static_string``
+type, which will be publicly exposed with the following definition:
 
 .. code-block:: C
 
@@ -545,6 +629,117 @@ an API expecting a C string must create a copy with a trailing null. As a
 positive consequence, ``StringDType`` array entries can contain arbitrary
 embedded or trailing null characters.
 
+In the future we may decide to always write a trailing null byte to if the need
+to copy into a null-terminated buffer proves to be cost-prohibitive for downstream
+users of the C API.
+
+In addition, we will expose two opaque structs, ``npy_packed_static_string`` and
+``npy_string_allocator``. Each entry in ``StringDType`` NumPy array will store
+the contents of an ``npy_packed_static_string``; a packed representation of a
+string. The string data are stored either directly in the packed string or on
+the heap, in an allocation managed by a separate ``npy_string_allocator`` struct
+attached to the descriptor instance associated with the array. The precise
+layout of the packed string and the strategy used to allocate data on the heap
+will not be publicly exposed and users should not depend on these details.
+
+New C API Functions
++++++++++++++++++++
+
+The C API functions we plan to expose fall into two categories: functions for
+acquiring and releasing the allocator lock and functions for loading and packing
+strings.
+
+Acquiring and Releasing Allocators
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The main interface for acquiring and releasing the allocator is the following
+pair of static inline functions:
+
+.. code-block:: c
+
+   static inline npy_string_allocator *
+   NpyString_acquire_allocator(PyArray_Descr *descr)
+
+   static inline void
+   NpyString_release_allocator(PyArray_Descr *descr)
+
+The first function acquires the allocator lock attached to the descriptor
+instance and returns a pointer to the allocator associated with the
+descriptor. The allocator can then be used by that thread to load existing
+packed strings or pack new strings into the array. Once the operation requiring
+the allocator is finished, the allocator lock must then be released. Use of the
+allocator after calling ``NpyString_release_allocator`` may lead to data races
+or memory corruption.
+
+There are also cases when it is convenient to simultaneously work with several
+allocators. For example, the ``add`` ufunc takes two string arrays and produces
+a third string array. This means the ufunc loop needs three allocators to be
+able to load the strings for each operand and pack the result into the output
+array. This is also made more tricky by the fact that input and output operands
+need not be distinct objects and operands can share allocators by virtue of
+being the same array. In principle we could require users to acquire and release
+locks inside of a ufunc loop, but that would add a large performance overhead
+compared to acquiring all three allocators in the loop setup and releasing them
+simultaneously after the end of the loop.
+
+To handle these situations, we will also expose variants of both functions that
+take two or three descriptors simultaneously (``NpyString_acquire_allocator2``,
+``NpyString_release_allocator2``, etc). Exposing these functions makes it
+straightforward to write code that works simultaneously with more than one
+allocator. The naive approach that simply calls ``NpyString_acquire_allocator``
+and ``NpyString_release_allocator`` multiple times will cause undefined behavior
+by attempting to acquire the same lock more than once in the same thread when
+ufunc operands share descriptors. The two and three-descriptor variants check
+for identical descriptors before trying to acquire locks, avoiding the undefined
+behavior. To do the correct thing, the user will only need to choose the variant
+to acquire or release allocators that accepts the same number of descriptors as
+the number they need to work with.
+
+Packing and Loading Strings
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Accessing strings is mediated by the following function:
+
+.. code-block:: c
+
+   int NpyString_load(
+       npy_string_allocator *allocator,
+       const npy_packed_static_string *packed_string,
+       npy_static_string *unpacked_string)
+
+This function returns -1 on error, which can happen if there is a threading bug
+or corruption preventing access to a heap allocation. On success it can either
+return 1 or 0. If it returns 1, this indicates that the contents of the packed
+string are the null string, and special logic for handling null strings can
+happen in this case. If the function returns 0, this indicates the contents of
+the ``packed_string`` can be read from the ``unpacked_string``.
+
+Packing strings can happen via one of these functions:
+
+.. code-block:: c
+
+   int NpyString_pack(
+       npy_string_allocator *allocator,
+       npy_packed_static_string *packed_string,
+       const char *buf, size_t size)
+
+   int NpyString_pack_null(
+       npy_string_allocator *allocator,
+       npy_packed_static_string *packed_string)
+
+The first function packs the contents the first ``size`` elements of ``buf``
+into ``packed_string``. The second function packs the null string into
+``packed_string``. Both functions invalidate any previous heap allocation
+associated with the packed string and old unpacked representations that are
+still in scope are invalid after packing a string. Both functions return 0 on
+success and -1 on failure, for example if ``malloc`` fails.
+
+Example C API Usage
++++++++++++++++++++
+
+Loading a String
+^^^^^^^^^^^^^^^^
+
 Say we are writing a ufunc implementation for ``StringDType``. If we are given
 ``const char *buf`` pointer to the beginning of a ``StringDType`` array entry, and a
 ``PyArray_Descr *`` pointer to the array descriptor, one can
@@ -558,12 +753,13 @@ access the underlying string data like so:
    npy_packed_static_string *packed_string = (npy_packed_static_string *)buf;
    int is_null = 0;
 
-   if (NpyString_load(allocator, packed_string, &sdata) == -1) {
+   is_null = NpyString_load(allocator, packed_string, &sdata);
+
+   if (is_null == -1) {
        // failed to load string, set error
        return -1;
    }
-
-   if (is_null) {
+   else if (is_null) {
        // handle missing string
        // sdata->buf is NULL
        // sdata->size is 0
@@ -574,17 +770,10 @@ access the underlying string data like so:
    }
    NpyString_release_allocator(descr);
 
-We will also expose variants of these functions that take two or three
-descriptors for situations where several different allocators need to be
-simultaneously acquired. These variants simultaneously handle the case where the
-input descriptors are the same object or different objects. In the first case,
-only one allocator needs to be acquired, but in the latter case multiple
-allocators need to be acquired. The user will only need to think about choosing
-the function to acquire or release allocators based on the number of descriptors
-they need to work with.
+Packing a String
+^^^^^^^^^^^^^^^^
 
-Similarly, we will also expose ``NpyString_pack`` to create a new
-packed string in an existing array from the contents of a ``char *`` buffer:
+This example shows how to pack a new string into an array:
 
 .. code-block:: C
 
@@ -604,32 +793,6 @@ packed string in an existing array from the contents of a ``char *`` buffer:
 
    NpyString_release_allocator(descr);
 
-And finally, we will expose ``NpyString_pack_null`` to assign the null
-string value to a packed string:
-
-.. code-block:: c
-
-   npy_packed_static_string *packed_string = (npy_packed_static_string *)buf;
-
-   npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
-
-   if (NpyString_pack_null(allocator, packed_string) == -1) {
-       // string packing failed, set error
-       return -1;
-   }
-
-   NpyString_release_allocator(descr);
-
-If pre-existing string data exists in the buffer passed to ``NpyString_pack`` or
-``NpyString_pack_null``, that string data will be freed if it lives on the heap
-or cleared if it lives in the arena.
-
-For now we are only exposing this limited API to leave us flexibility to change
-implementation details in the future. In particular, the size and exact layout
-of the ``npy_packed_static_string`` struct are not stable and should not be
-relied on in downstream code. Instead, strings should be loaded and packed
-using the C API outlined above.
-
 .. _memory:
 
 Memory Layout and Managing Heap Allocations
@@ -644,16 +807,16 @@ of work to add support for ragged arrays in NumPy and downstream libraries, far
 beyond the scope of adding support for variable-length strings.
 
 Instead, we propose relaxing the requirement that all array data are stored in
-the array buffer or inside of python objects. This DType would extend the
-existing concept of an array of references in NumPy beyond the ``object`` DType
-to include arrays that store data in sidecar heap-allocated buffers and use the
+the array buffer or inside of python objects. This DType extends the existing
+concept of an array of references in NumPy beyond the ``object`` DType to
+include arrays that store data in sidecar heap-allocated buffers and use the
 array to store metadata for the heap allocation.
 
 Memory Layout and Small String Optimization
 +++++++++++++++++++++++++++++++++++++++++++
 
-In the prototype, each array element is represented as a union, with
-the following definition on little-endian architectures:
+Each array element is represented as a union, with the following definition on
+little-endian architectures:
 
 .. code-block:: c
 
@@ -700,11 +863,14 @@ the maximum size of a heap-allocated string is limited to the size of the
 largest 7-byte unsized integer, this flag can never be set for a valid heap
 string.
 
+See :ref:`memorylayoutexamples` for some visual examples of strings in each of these
+memory layouts.
+
 Arena Allocator
 +++++++++++++++
 
-Strings longer than the small string limit (15 bytes on 64 bit systems and 7
-bytes on 32 bit systems) are stored on the heap. The bookkeeping for the
+Strings longer than 15 bytes on 64 bit systems and 7 bytes on 32 bit systems are
+stored on the heap outside of the array buffer. The bookkeeping for the
 allocations is managed by an arena allocator attached to the ``StringDType``
 instance associated with an array. The allocator will be exposed publicly as an
 opaque ``npy_string_allocator`` struct. Internally, it has the following layout:
@@ -816,6 +982,8 @@ on the packed string to indicate there is space in the arena for a later re-use
 of the packed string. Heap strings have their heap allocation freed and the
 ``NPY_STRING_ON_HEAP`` flag removed.
 
+.. _memorylayoutexamples:
+
 Memory Layout Examples
 ++++++++++++++++++++++
 
@@ -888,68 +1056,6 @@ either and will likely have no types or have ``object`` type in Cython.
 
 We will add cython ``nogil`` wrappers for the public C API functions added as
 part of this work to ease integration with downstream cython code.
-
-Casts, ufunc support, and string manipulation functions
-*******************************************************
-
-A full set of round-trip casts to the builtin NumPy DTypes will be available. In
-addition, we will add implementations for the comparison operators as well as
-an ``add`` loop that accepts two string arrays, ``multiply`` loops that
-accept string and integer arrays, an ``isnan`` loop, and implementations for the
-string ufuncs that will be newly available in NumPy 2.0. The ``isnan`` ufunc
-will return ``True`` for entries that are NaN-like sentinels and ``False``
-otherwise. Comparisons will sort data in order of unicode code point, as is
-currently implemented for the fixed-width unicode DType. In the future NumPy or
-a downstream library may add locale-aware sorting, case folding, and
-normalization for NumPy unicode strings arrays, but we are not proposing adding
-these features at this time.
-
-Two ``StringDType`` instances are considered identical if they are created with
-the same ``na_object`` and ``coerce`` parameter. We propose checking for unequal
-``StringDType`` instances in the ``resolve_descriptors`` function of binary
-ufuncs that take two string arrays and raising an error if an operation is
-performed with unequal ``StringDType`` instances.
-
-``np.strings`` namespace
-************************
-
-String operations will be available in a ``np.strings`` namespace that will
-be populated with string ufuncs:
-
-  >>> np.strings.upper((np.array(["hello", "world"], dtype=StringDType())
-  array(['HELLO', 'WORLD'], dtype=StringDType())
-  >>> isinstance(np.strings.upper, np.ufunc)
-  True
-
-We feel ``np.strings`` is a more intuitive name than ``np.char``, and eventually
-will replace ``np.char`` once downstream libraries that conform to SPEC-0 can
-safely switch to ``np.char`` without needing any logic conditional on the NumPy
-version.
-
-Serialization
-*************
-
-Since string data are stored outside the array buffer, serialization requires an
-update to the ``npy`` file format, which currently can only include fixed-width
-data in the array buffer. We propose defining format version 4.0, which adds an
-additional optional ``sidecar_size`` header key that corresponds to the size, in
-bytes, of an optional sidecar field that is written to disk following the array
-data. If no sidecar storage is required, the writer will default to the current,
-more widely compatible, file format and will not write a ``sidecar_size`` field
-to the header. This also enables storage of arbitrary user-defined data types
-once API hooks are added that allow a DType to serialize to the sidecar data and
-deserialize from the loaded sidecar data.
-
-This is an improvement over the current situation with object string arrays,
-which can only be saved to an ``npy`` file using the ``allow_pickle=True``
-option. Serializing arbitrary python objects requires the use of ``pickle``, so
-there is no safe way to share untrusted ``npy`` files containing object string
-arrays. This means users of object string arrays adopting ``StringDType`` will
-also gain an officially supported way to safely share string data or load
-variable-width string data from an untrusted source.
-
-For cases where pickle support is required, support for pickling and unpickling
-string arrays will also be implemented.
 
 Related work
 ------------
