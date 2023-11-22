@@ -14,8 +14,8 @@ macosx_arm64_task:
   use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   macos_instance:
     matrix:
-      - image: ghcr.io/cirruslabs/macos-monterey-xcode:14
-      - image: ghcr.io/cirruslabs/macos-sonoma-xcode:15
+      - image: ghcr.io/cirruslabs/macos-monterey-xcode:latest
+      - image: ghcr.io/cirruslabs/macos-sonoma-xcode:latest
   matrix:
     - env:
         CIRRUS_CLONE_SUBMODULES: true
