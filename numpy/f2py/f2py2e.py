@@ -35,6 +35,7 @@ errmess = sys.stderr.write
 # outmess=sys.stdout.write
 show = pprint.pprint
 outmess = auxfuncs.outmess
+MESON_ONLY_VER = (sys.version_info >= (3, 12))
 
 __usage__ =\
 f"""Usage:
@@ -540,9 +541,10 @@ def preparse_sysargv():
     sys.argv = [sys.argv[0]] + remaining_argv
 
     backend_key = args.backend
-    if sys.version_info >= (3, 12) and backend_key == 'distutils':
-        outmess("Cannot use distutils backend with Python 3.12, using meson backend instead.\n")
-        backend_key = 'meson'
+    if MESON_ONLY_VER and backend_key == 'distutils':
+        outmess("Cannot use distutils backend with Python>=3.12,"
+                " using meson backend instead.\n")
+        backend_key = "meson"
 
     return {
         "dependencies": args.dependencies or [],
@@ -617,21 +619,27 @@ def run_compile():
     for s in flib_flags:
         v = '--fcompiler='
         if s[:len(v)] == v:
-            from numpy.distutils import fcompiler
-            fcompiler.load_all_fcompiler_classes()
-            allowed_keys = list(fcompiler.fcompiler_class.keys())
-            nv = ov = s[len(v):].lower()
-            if ov not in allowed_keys:
-                vmap = {}  # XXX
-                try:
-                    nv = vmap[ov]
-                except KeyError:
-                    if ov not in vmap.values():
-                        print('Unknown vendor: "%s"' % (s[len(v):]))
-                nv = ov
-            i = flib_flags.index(s)
-            flib_flags[i] = '--fcompiler=' + nv
-            continue
+            if MESON_ONLY_VER or backend_key == 'meson':
+                outmess(
+                    "--fcompiler cannot be used with meson,"
+                    "set compiler with the FC environment variable\n"
+                    )
+            else:
+                from numpy.distutils import fcompiler
+                fcompiler.load_all_fcompiler_classes()
+                allowed_keys = list(fcompiler.fcompiler_class.keys())
+                nv = ov = s[len(v):].lower()
+                if ov not in allowed_keys:
+                    vmap = {}  # XXX
+                    try:
+                        nv = vmap[ov]
+                    except KeyError:
+                        if ov not in vmap.values():
+                            print('Unknown vendor: "%s"' % (s[len(v):]))
+                    nv = ov
+                i = flib_flags.index(s)
+                flib_flags[i] = '--fcompiler=' + nv
+                continue
     for s in del_list:
         i = flib_flags.index(s)
         del flib_flags[i]
@@ -719,8 +727,11 @@ def validate_modulename(pyf_files, modulename='untitled'):
 def main():
     if '--help-link' in sys.argv[1:]:
         sys.argv.remove('--help-link')
-        from numpy.distutils.system_info import show_all
-        show_all()
+        if MESON_ONLY_VER:
+            outmess("Use --dep for meson builds\n")
+        else:
+            from numpy.distutils.system_info import show_all
+            show_all()
         return
 
     if '-c' in sys.argv[1:]:
