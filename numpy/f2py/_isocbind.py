@@ -72,37 +72,42 @@ isoc_c2pycode_map = {
     'char': 'c',   # char
 }
 
-iso_c2py_map = {
-    'int': 'int',
-    'short int': 'int',                 # forced casting
-    'long': 'int',
-    'long long': 'long',
-    'signed char': 'int',           # forced casting
-    'size_t': 'int',                # approx Python int
-    'int8_t': 'int',                # forced casting
-    'int16_t': 'int',               # forced casting
-    'int32_t': 'int',
-    'int64_t': 'long',
-    'int_least8_t': 'int',          # forced casting
-    'int_least16_t': 'int',         # forced casting
-    'int_least32_t': 'int',
-    'int_least64_t': 'long',
-    'int_fast8_t': 'int',           # forced casting
-    'int_fast16_t': 'int',          # forced casting
-    'int_fast32_t': 'int',
-    'int_fast64_t': 'long',
-    'intmax_t': 'long',
-    'intptr_t': 'long',
-    'ptrdiff_t': 'long',
-    'float': 'float',
-    'double': 'float',              # forced casting
-    'long double': 'float',         # forced casting
-    'float _Complex': 'complex',     # forced casting
-    'double _Complex': 'complex',
-    'long double _Complex': 'complex', # forced casting
-    '_Bool': 'bool',
-    'char': 'bytes',                  # approx Python bytes
-}
+# TODO: At some point these should be included, but then they'd need special
+# handling in cfuncs.py e.g. needs[int64_t_from_pyobj] These are not very hard
+# to add, since they all derive from the base `int_from_pyobj`, e.g. the way
+# `short_from_pyobj` and others do
+iso_c2py_map = {}
+# iso_c2py_map = {
+#     'int': 'int',
+#     'short int': 'int',                 # forced casting
+#     'long': 'int',
+#     'long long': 'long',
+#     'signed char': 'int',           # forced casting
+#     'size_t': 'int',                # approx Python int
+#     'int8_t': 'int',                # forced casting
+#     'int16_t': 'int',               # forced casting
+#     'int32_t': 'int',
+#     'int64_t': 'long',
+#     'int_least8_t': 'int',          # forced casting
+#     'int_least16_t': 'int',         # forced casting
+#     'int_least32_t': 'int',
+#     'int_least64_t': 'long',
+#     'int_fast8_t': 'int',           # forced casting
+#     'int_fast16_t': 'int',          # forced casting
+#     'int_fast32_t': 'int',
+#     'int_fast64_t': 'long',
+#     'intmax_t': 'long',
+#     'intptr_t': 'long',
+#     'ptrdiff_t': 'long',
+#     'float': 'float',
+#     'double': 'float',              # forced casting
+#     'long double': 'float',         # forced casting
+#     'float _Complex': 'complex',     # forced casting
+#     'double _Complex': 'complex',
+#     'long double _Complex': 'complex', # forced casting
+#     '_Bool': 'bool',
+#     'char': 'bytes',                  # approx Python bytes
+# }
 
 isoc_kindmap = {}
 for fortran_type, c_type_dict in iso_c_binding_map.items():

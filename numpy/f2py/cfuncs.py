@@ -826,6 +826,8 @@ character_from_pyobj(character* v, PyObject *obj, const char *errmess) {
 }
 """
 
+# TODO: These should be dynamically generated, too many mapped to int things,
+# see note in _isocbind.py
 needs['char_from_pyobj'] = ['int_from_pyobj']
 cfuncs['char_from_pyobj'] = """
 static int
