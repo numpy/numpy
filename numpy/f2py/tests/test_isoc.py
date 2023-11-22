@@ -23,3 +23,18 @@ class TestISOC(util.F2PyTest):
         out = self.module.coddity.c_add_int64(1, 20)
         exp_out = 21
         assert  out == exp_out
+
+
+def test_process_f2cmap_dict():
+    from numpy.f2py.auxfuncs import process_f2cmap_dict
+    f2cmap_all = {'integer': {'8': 'long_long'}}
+    new_map = {'INTEGER': {'4': 'int'}}
+    c2py_map = {'int': 'int', 'long_long': 'long'}
+
+    expected_result = {'integer': {'8': 'long_long', '4': 'int'}}
+
+    # Call the function
+    result = process_f2cmap_dict(f2cmap_all, new_map, c2py_map)
+
+    # Assert the result is as expected
+    assert result == expected_result
