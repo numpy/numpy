@@ -3778,9 +3778,15 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     a : array_like
         Input array or object that can be converted to an array.
     axis : {int, sequence of int, None}, optional
-        Axis or axes along which the medians are computed. The default
-        is to compute the median along a flattened version of the array.
-        A sequence of axes is supported since version 1.9.0.
+        Axis or axes along which the medians are computed. The default,
+        axis=None, will compute the median along a flattened version of
+        the array.
+        
+        .. versionadded:: 1.9.0
+
+        If a sequence of axes, the array is first flattened along the
+        given axes then the median is computed along the resulting
+        flattened axis.
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
