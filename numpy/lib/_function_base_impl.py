@@ -3838,6 +3838,8 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     array([6.5, 4.5, 2.5])
     >>> np.median(a, axis=1)
     array([7.,  2.])
+    >>> np.median(b, axis=(0,1), overwrite_input=True)
+    3.5
     >>> m = np.median(a, axis=0)
     >>> out = np.zeros_like(m)
     >>> np.median(a, axis=0, out=m)
