@@ -714,6 +714,9 @@ def _parse_einsum_input(operands):
 
     # Make sure output subscripts are in the input
     for char in output_subscript:
+        if output_subscript.count(char) != 1:
+            raise ValueError("Output character %s appeared more than once in "
+                             "the output." % char)
         if char not in input_subscripts:
             raise ValueError("Output character %s did not appear in the input"
                              % char)
