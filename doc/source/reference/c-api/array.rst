@@ -2732,6 +2732,8 @@ Array scalars
     *ctypeptr* (which must be large enough to handle the incoming
     memory).
 
+    Returns -1 on failure, and 0 on success.
+
 .. c:function:: PyObject* PyArray_TypeObjectFromType(int type)
 
     Returns a scalar type-object from a type-number, *type*
