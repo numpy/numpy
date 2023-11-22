@@ -44,7 +44,7 @@ __all__ = [
     'isunsigned_long_longarray', 'isunsigned_short',
     'isunsigned_shortarray', 'l_and', 'l_not', 'l_or', 'outmess',
     'replace', 'show', 'stripcomma', 'throw_error', 'isattr_value',
-    'deep_merge', 'getuseblocks'
+    'deep_merge', 'getuseblocks', 'process_f2cmap_dict'
 ]
 
 
@@ -939,3 +939,60 @@ def getuseblocks(pymod):
             if modblock.get('use'):
                 all_uses.extend([x for x in modblock.get("use").keys() if "__" not in x])
     return all_uses
+
+def process_f2cmap_dict(f2cmap_all, new_map, c2py_map):
+    """
+    Update the Fortran-to-C type mapping dictionary with new mappings.
+
+    This function integrates a new mapping dictionary into an existing
+    Fortran-to-C type mapping dictionary. It ensures that all keys are in
+    lowercase and validates new entries against a given C-to-Python mapping
+    dictionary. Redefinitions and invalid entries are reported with a warning.
+
+    Parameters
+    ----------
+    f2cmap_all : dict
+        The existing Fortran-to-C type mapping dictionary that will be updated.
+        It should be a dictionary of dictionaries where the main keys represent
+        Fortran types and the nested dictionaries map Fortran type specifiers
+        to corresponding C types.
+
+    new_map : dict
+        A dictionary containing new type mappings to be added to `f2cmap_all`.
+        The structure should be similar to `f2cmap_all`, with keys representing
+        Fortran types and values being dictionaries of type specifiers and their
+        C type equivalents.
+
+    c2py_map : dict
+        A dictionary used for validating the C types in `new_map`. It maps C
+        types to corresponding Python types and is used to ensure that the C
+        types specified in `new_map` are valid.
+
+    Returns
+    -------
+    dict
+        The updated Fortran-to-C type mapping dictionary.
+    """
+    for k, d1 in new_map.items():
+        for k1 in list(d1.keys()):
+            d1[k1.lower()] = d1.pop(k1)
+        k_lower = k.lower()
+
+        if k_lower not in f2cmap_all:
+            f2cmap_all[k_lower] = {}
+        for k1, v1 in d1.items():
+            if v1 in c2py_map:
+                if k1 in f2cmap_all[k_lower]:
+                    outmess(
+                        "\tWarning: redefinition of {'%s':{'%s':'%s'->'%s'}}\n"
+                        % (k_lower, k1, f2cmap_all[k_lower][k1], v1)
+                    )
+                f2cmap_all[k_lower][k1] = v1
+                outmess('\tMapping "%s(kind=%s)" to "%s"\n' % (k_lower, k1, v1))
+            else:
+                errmess(
+                    "\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n"
+                    % (k_lower, k1, v1, v1, list(c2py_map.keys()))
+                )
+
+    return f2cmap_all
