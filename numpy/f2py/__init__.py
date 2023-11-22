@@ -13,7 +13,9 @@ __all__ = ['run_main', 'compile', 'get_include']
 import sys
 import subprocess
 import os
+import warnings
 
+from numpy.exceptions import VisibleDeprecationWarning
 from . import f2py2e
 from . import diagnose
 
@@ -83,6 +85,13 @@ def compile(source,
     """
     import tempfile
     import shlex
+
+    warnings.warn(
+        "f2py.compile() will be removed in NumPy 2.0.x.\n"
+        "Write a custom subprocess.run wrapper to f2py instead",
+        VisibleDeprecationWarning,
+        stacklevel=2,
+    )
 
     if source_fn is None:
         f, fname = tempfile.mkstemp(suffix=extension)

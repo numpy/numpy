@@ -276,6 +276,11 @@ Python module ``numpy.f2py``
 The f2py program is written in Python and can be run from inside your code
 to compile Fortran code at runtime, as follows:
 
+.. legacy::
+
+   The ``f2py.compile()`` function will be removed from 2.0.x onwards.
+   Write a custom ``subprocess.run`` wrapper over ``numpy.f2py`` instead.
+
 .. code-block:: python
 
     from numpy import f2py

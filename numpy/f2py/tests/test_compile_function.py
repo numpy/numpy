@@ -6,6 +6,8 @@ import os
 import uuid
 from importlib import import_module
 import pytest
+from numpy.exceptions import VisibleDeprecationWarning
+from numpy.testing import assert_warns
 
 import numpy.f2py
 
@@ -52,14 +54,15 @@ def test_f2py_init_compile(extra_args):
         # util.py, but don't actually use build_module() because it has
         # its own invocation of subprocess that circumvents the
         # f2py.compile code block under test
-        with util.switchdir(moddir):
-            ret_val = numpy.f2py.compile(fsource,
-                                         modulename=modname,
-                                         extra_args=extra_args,
-                                         source_fn=source_fn)
+        with  assert_warns(VisibleDeprecationWarning):
+            with util.switchdir(moddir):
+                ret_val = numpy.f2py.compile(fsource,
+                                             modulename=modname,
+                                             extra_args=extra_args,
+                                             source_fn=source_fn)
 
-            # check for compile success return value
-            assert ret_val == 0
+                # check for compile success return value
+                assert ret_val == 0
 
     # we are not currently able to import the Python-Fortran
     # interface module on Windows / Appveyor, even though we do get
@@ -79,8 +82,9 @@ def test_f2py_init_compile(extra_args):
 def test_f2py_init_compile_failure():
     # verify an appropriate integer status value returned by
     # f2py.compile() when invalid Fortran is provided
-    ret_val = numpy.f2py.compile(b"invalid")
-    assert ret_val == 1
+    with  assert_warns(VisibleDeprecationWarning):
+        ret_val = numpy.f2py.compile(b"invalid")
+        assert ret_val == 1
 
 
 def test_f2py_init_compile_bad_cmd():
@@ -95,8 +99,9 @@ def test_f2py_init_compile_bad_cmd():
         sys.executable = "does not exist"
 
         # the OSError should take precedence over invalid Fortran
-        ret_val = numpy.f2py.compile(b"invalid")
-        assert ret_val == 127
+        with  assert_warns(VisibleDeprecationWarning):
+            ret_val = numpy.f2py.compile(b"invalid")
+            assert ret_val == 127
     finally:
         sys.executable = temp
 
@@ -110,8 +115,9 @@ def test_f2py_init_compile_bad_cmd():
 )
 def test_compile_from_strings(tmpdir, fsource):
     # Make sure we can compile str and bytes gh-12796
-    with util.switchdir(tmpdir):
-        ret_val = numpy.f2py.compile(fsource,
-                                     modulename="test_compile_from_strings",
-                                     extension=".f90")
-        assert ret_val == 0
+    with  assert_warns(VisibleDeprecationWarning):
+        with util.switchdir(tmpdir):
+            ret_val = numpy.f2py.compile(fsource,
+                                         modulename="test_compile_from_strings",
+                                         extension=".f90")
+            assert ret_val == 0
