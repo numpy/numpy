@@ -1,6 +1,6 @@
 build_and_store_wheels: &BUILD_AND_STORE_WHEELS
   install_cibuildwheel_script:
-    - python -m pip install cibuildwheel
+    - python3 -m pip install cibuildwheel
   cibuildwheel_script:
     - cibuildwheel
   wheels_artifacts:
@@ -27,13 +27,13 @@ macosx_arm64_task:
   build_script:
     - brew install python@3.10
     - ln -s python3 /opt/homebrew/opt/python@3.10/bin/python
-    - which python
+    - which python3
     # needed for submodules
     - git submodule update --init
     # need to obtain all the tags so setup.py can determine FULLVERSION
     - git fetch origin
     - uname -m
-    - python -c "import platform;print(platform.python_version());print(platform.system());print(platform.machine())"
+    - python3 -c "import platform; print(platform.python_version()); print(platform.system()); print(platform.machine())"
     - clang --version
   <<: *BUILD_AND_STORE_WHEELS
 
