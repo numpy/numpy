@@ -2724,13 +2724,15 @@ Array scalars
     is copied into the memory of *ctypeptr*, for all other types, the
     actual data is copied into the address pointed to by *ctypeptr*.
 
-.. c:function:: void PyArray_CastScalarToCtype( \
+.. c:function:: int PyArray_CastScalarToCtype( \
         PyObject* scalar, void* ctypeptr, PyArray_Descr* outcode)
 
     Return the data (cast to the data type indicated by *outcode*)
     from the array-scalar, *scalar*, into the memory pointed to by
     *ctypeptr* (which must be large enough to handle the incoming
     memory).
+
+    Returns -1 on failure, and 0 on success.
 
 .. c:function:: PyObject* PyArray_TypeObjectFromType(int type)
 
