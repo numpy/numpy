@@ -19,7 +19,7 @@ import re
 import os
 from .crackfortran import markoutercomma
 from . import cb_rules
-from ._isocbind import iso_c_binding_map
+from ._isocbind import iso_c_binding_map, isoc_c2pycode_map, iso_c2py_map
 
 # The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
@@ -131,13 +131,17 @@ f2cmap_all = {'real': {'': 'float', '4': 'float', '8': 'double',
               'byte': {'': 'char'},
               }
 
-f2cmap_all = process_f2cmap_dict(f2cmap_all, iso_c_binding_map, c2py_map)
+# Add ISO_C handling
+c2pycode_map.update(isoc_c2pycode_map)
+c2py_map.update(iso_c2py_map)
+f2cmap_all, _ = process_f2cmap_dict(f2cmap_all, iso_c_binding_map, c2py_map)
+# End ISO_C handling
 f2cmap_default = copy.deepcopy(f2cmap_all)
 
 f2cmap_mapped = []
 
 def load_f2cmap_file(f2cmap_file):
-    global f2cmap_all
+    global f2cmap_all, f2cmap_mapped
 
     f2cmap_all = copy.deepcopy(f2cmap_default)
 
@@ -156,7 +160,7 @@ def load_f2cmap_file(f2cmap_file):
         outmess('Reading f2cmap from {!r} ...\n'.format(f2cmap_file))
         with open(f2cmap_file) as f:
             d = eval(f.read().lower(), {}, {})
-        f2cmap_all = process_f2cmap_dict(f2cmap_all, d, c2py_map)
+        f2cmap_all, f2cmap_mapped = process_f2cmap_dict(f2cmap_all, d, c2py_map)
         outmess('Successfully applied user defined f2cmap changes\n')
     except Exception as msg:
         errmess('Failed to apply user defined f2cmap changes: %s. Skipping.\n' % (msg))
