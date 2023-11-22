@@ -4,15 +4,12 @@
 f2py2e - Fortran to Python C/API generator. 2nd Edition.
          See __usage__ below.
 
-Copyright 1999--2011 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@cens.ioc.ee>
+Copyright 1999 -- 2011 Pearu Peterson all rights reserved.
+Copyright 2011 -- present NumPy Developers.
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
-$Date: 2005/05/06 08:31:19 $
-Pearu Peterson
-
 """
 import sys
 import os
@@ -185,8 +182,9 @@ Extra options (only effective with -c):
 Version:     {f2py_version}
 numpy Version: {numpy_version}
 License:     NumPy license (see LICENSE.txt in the NumPy source code)
-Copyright 1999 - 2011 Pearu Peterson all rights reserved.
-https://web.archive.org/web/20140822061353/http://cens.ioc.ee/projects/f2py2e"""
+Copyright 1999 -- 2011 Pearu Peterson all rights reserved.
+Copyright 2011 -- present NumPy Developers.
+https://numpy.org/doc/stable/f2py/index.html\n"""
 
 
 def scaninputline(inputline):
@@ -674,7 +672,7 @@ def run_compile():
 
     # Construct wrappers / signatures / things
     if backend_key == 'meson':
-        outmess('Using meson backend\nWill pass --lower to f2py\nSee https://numpy.org/doc/stable/f2py/buildtools/meson.html')
+        outmess('Using meson backend\nWill pass --lower to f2py\nSee https://numpy.org/doc/stable/f2py/buildtools/meson.html\n')
         f2py_flags.append('--lower')
         if pyf_files:
             run_main(f" {' '.join(f2py_flags)} {' '.join(pyf_files)}".split())

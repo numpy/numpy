@@ -7,6 +7,8 @@ F2PY user guide and reference manual
 The purpose of the ``F2PY`` --*Fortran to Python interface generator*-- utility
 is to provide a connection between Python and Fortran. F2PY is a part of NumPy_
 (``numpy.f2py``) and also available as a standalone command line tool.
+Originally created by Pearu Peterson, and older changelogs are in the
+`historical reference`_.
 
 F2PY facilitates creating/building Python C/API extension modules that make it
 possible
@@ -44,3 +46,4 @@ replace all calls to ``f2py`` mentioned in this guide with the longer version.
 
 .. _Python: https://www.python.org/
 .. _NumPy: https://www.numpy.org/
+.. _`historical reference`: https://web.archive.org/web/20140822061353/http://cens.ioc.ee/projects/f2py2e
