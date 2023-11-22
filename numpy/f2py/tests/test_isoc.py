@@ -17,3 +17,9 @@ class TestISOC(util.F2PyTest):
         out = self.module.coddity.wat(1, 20)
         exp_out = 8
         assert  out == exp_out
+
+    # gh-25207
+    def test_bindc_kinds(self):
+        out = self.module.coddity.c_add_int64(1, 20)
+        exp_out = 21
+        assert  out == exp_out
