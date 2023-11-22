@@ -14,7 +14,7 @@ macosx_arm64_task:
   use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   macos_instance:
     matrix:
-      - image: ghcr.io/cirruslabs/macos-monterey-xcode:latest
+      # - image: ghcr.io/cirruslabs/macos-monterey-xcode:latest
       - image: ghcr.io/cirruslabs/macos-sonoma-xcode:latest
   matrix:
     - env:
