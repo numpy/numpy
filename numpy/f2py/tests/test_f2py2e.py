@@ -198,7 +198,8 @@ def test_gen_pyf_no_overwrite(capfd, hello_world_f90, monkeypatch):
             assert "Use --overwrite-signature to overwrite" in err
 
 
-@pytest.mark.skipif((platform.system() != 'Linux') and (sys.version_info <= (3, 12)), reason='Compiler and 3.12 required')
+@pytest.mark.skipif((platform.system() != 'Linux') or (sys.version_info <= (3, 12)),
+                    reason='Compiler and 3.12 required')
 def test_untitled_cli(capfd, hello_world_f90, monkeypatch):
     """Check that modules are named correctly
 
