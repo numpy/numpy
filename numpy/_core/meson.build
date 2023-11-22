@@ -109,6 +109,8 @@ types_to_check = [
   ['NPY_SIZEOF_FLOAT', 'float'],
   ['NPY_SIZEOF_DOUBLE', 'double'],
   ['NPY_SIZEOF_LONGDOUBLE', 'long double'],
+  ['NPY_SIZEOF_INTP', 'size_t'],
+  ['NPY_SIZEOF_UINTP', 'size_t'],
 ]
 foreach symbol_type: types_to_check
   cdata.set(symbol_type[0], cc.sizeof(symbol_type[1]))

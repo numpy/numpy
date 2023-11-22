@@ -1666,8 +1666,9 @@ class TestFromCTypes:
     @staticmethod
     def check(ctype, dtype):
         dtype = np.dtype(dtype)
-        assert_equal(np.dtype(ctype), dtype)
-        assert_equal(np.dtype(ctype()), dtype)
+        assert np.dtype(ctype) == dtype
+        assert np.dtype(ctype()) == dtype
+        assert ctypes.sizeof(ctype) == dtype.itemsize
 
     def test_array(self):
         c8 = ctypes.c_uint8
@@ -1702,8 +1703,12 @@ class TestFromCTypes:
         p_uint8 = ctypes.POINTER(ctypes.c_uint8)
         assert_raises(TypeError, np.dtype, p_uint8)
 
+    def test_size_t(self):
+        assert np.dtype(np.uintp) is np.dtype("N")
+        self.check(ctypes.c_size_t, np.uintp)
+
     def test_void_pointer(self):
-        self.check(ctypes.c_void_p, np.uintp)
+        self.check(ctypes.c_void_p, "P")
 
     def test_union(self):
         class Union(ctypes.Union):

@@ -497,14 +497,14 @@ for key in allTypes:
 del key
 
 typecodes = {'Character': 'c',
-             'Integer': 'bhilqp',
-             'UnsignedInteger': 'BHILQP',
+             'Integer': 'bhilqnp',
+             'UnsignedInteger': 'BHILQNP',
              'Float': 'efdg',
              'Complex': 'FDG',
-             'AllInteger': 'bBhHiIlLqQpP',
+             'AllInteger': 'bBhHiIlLqQnNpP',
              'AllFloat': 'efdgFDG',
              'Datetime': 'Mm',
-             'All': '?bhilqpBHILQPefdgFDGSUVOMm'}
+             'All': '?bhilqnpBHILQNPefdgFDGSUVOMm'}
 
 # backwards compatibility --- deprecated name
 # Formal deprecation: Numpy 1.20.0, 2020-10-19 (see numpy/__init__.py)
