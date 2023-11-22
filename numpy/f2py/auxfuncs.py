@@ -924,7 +924,7 @@ def getuseblocks(pymod):
                 all_uses.extend([x for x in modblock.get("use").keys() if "__" not in x])
     return all_uses
 
-def process_f2cmap_dict(f2cmap_all, new_map, c2py_map):
+def process_f2cmap_dict(f2cmap_all, new_map, c2py_map, verbose = False):
     """
     Update the Fortran-to-C type mapping dictionary with new mappings and
     return a list of successfully mapped C types.
@@ -953,6 +953,9 @@ def process_f2cmap_dict(f2cmap_all, new_map, c2py_map):
         types to corresponding Python types and is used to ensure that the C
         types specified in `new_map` are valid.
 
+    verbose : boolean
+        A flag used to provide information about the types mapped
+
     Returns
     -------
     tuple of (dict, list)
@@ -978,12 +981,14 @@ def process_f2cmap_dict(f2cmap_all, new_map, c2py_map):
                         % (k, k1, f2cmap_all[k][k1], v1)
                     )
                 f2cmap_all[k][k1] = v1
-                outmess('\tMapping "%s(kind=%s)" to "%s"\n' % (k, k1, v1))
+                if verbose:
+                    outmess('\tMapping "%s(kind=%s)" to "%s"\n' % (k, k1, v1))
                 f2cmap_mapped.append(v1)
             else:
-                errmess(
-                    "\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n"
-                    % (k, k1, v1, v1, list(c2py_map.keys()))
-                )
+                if verbose:
+                    errmess(
+                        "\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n"
+                        % (k, k1, v1, v1, list(c2py_map.keys()))
+                    )
 
     return f2cmap_all, f2cmap_mapped

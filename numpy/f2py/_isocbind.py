@@ -67,8 +67,8 @@ isoc_c2pycode_map = {
     'long double': 'g',  # long double
     'float _Complex': 'F',  # float  _Complex
     'double _Complex': 'D',  # double  _Complex
-    'long double _Complex': 'G',  # long double  _Complex
-    '_Bool': '?',  #  Bool
+    'long double _Complex': 'D',  # very approximate complex
+    '_Bool': 'i',  #  Bool but not really
     'char': 'c',   # char
 }
 
