@@ -23,6 +23,11 @@ macosx_arm64_task:
     - env:
         CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp310-*
+        # Specifying CIBW_ENVIRONMENT_MACOS overrides pyproject.toml, so include
+        # all the settings from there, otherwise they're lost.
+        CIBW_ENVIRONMENT_MACOS: >
+          RUNNER_OS=macOS
+          MACOSX_DEPLOYMENT_TARGET=14.0
   env:
     PATH: /opt/homebrew/opt/python@3.10/bin:/usr/local/lib:/usr/local/include:$PATH
     CIBW_ARCHS: arm64
