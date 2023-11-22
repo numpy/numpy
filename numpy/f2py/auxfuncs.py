@@ -926,7 +926,8 @@ def getuseblocks(pymod):
 
 def process_f2cmap_dict(f2cmap_all, new_map, c2py_map):
     """
-    Update the Fortran-to-C type mapping dictionary with new mappings.
+    Update the Fortran-to-C type mapping dictionary with new mappings and
+    return a list of successfully mapped C types.
 
     This function integrates a new mapping dictionary into an existing
     Fortran-to-C type mapping dictionary. It ensures that all keys are in
@@ -954,29 +955,35 @@ def process_f2cmap_dict(f2cmap_all, new_map, c2py_map):
 
     Returns
     -------
-    dict
-        The updated Fortran-to-C type mapping dictionary.
+    tuple of (dict, list)
+        The updated Fortran-to-C type mapping dictionary and a list of
+        successfully mapped C types.
     """
-    for k, d1 in new_map.items():
-        for k1 in list(d1.keys()):
-            d1[k1.lower()] = d1.pop(k1)
-        k_lower = k.lower()
+    f2cmap_mapped = []
 
-        if k_lower not in f2cmap_all:
-            f2cmap_all[k_lower] = {}
+    new_map_lower = {}
+    for k, d1 in new_map.items():
+        d1_lower = {k1.lower(): v1 for k1, v1 in d1.items()}
+        new_map_lower[k.lower()] = d1_lower
+
+    for k, d1 in new_map_lower.items():
+        if k not in f2cmap_all:
+            f2cmap_all[k] = {}
+
         for k1, v1 in d1.items():
             if v1 in c2py_map:
-                if k1 in f2cmap_all[k_lower]:
+                if k1 in f2cmap_all[k]:
                     outmess(
                         "\tWarning: redefinition of {'%s':{'%s':'%s'->'%s'}}\n"
-                        % (k_lower, k1, f2cmap_all[k_lower][k1], v1)
+                        % (k, k1, f2cmap_all[k][k1], v1)
                     )
-                f2cmap_all[k_lower][k1] = v1
-                outmess('\tMapping "%s(kind=%s)" to "%s"\n' % (k_lower, k1, v1))
+                f2cmap_all[k][k1] = v1
+                outmess('\tMapping "%s(kind=%s)" to "%s"\n' % (k, k1, v1))
+                f2cmap_mapped.append(v1)
             else:
                 errmess(
                     "\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n"
-                    % (k_lower, k1, v1, v1, list(c2py_map.keys()))
+                    % (k, k1, v1, v1, list(c2py_map.keys()))
                 )
 
-    return f2cmap_all
+    return f2cmap_all, f2cmap_mapped
