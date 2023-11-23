@@ -15,6 +15,7 @@ class TestF77Callback(util.F2PyTest):
     sources = [util.getpath("tests", "src", "callback", "foo.f")]
 
     @pytest.mark.parametrize("name", "t,t2".split(","))
+    @pytest.mark.slow
     def test_all(self, name):
         self.check_function(name)
 
@@ -205,6 +206,7 @@ class TestF77CallbackPythonTLS(TestF77Callback):
 class TestF90Callback(util.F2PyTest):
     sources = [util.getpath("tests", "src", "callback", "gh17797.f90")]
 
+    @pytest.mark.slow
     def test_gh17797(self):
         def incr(x):
             return x + 123
@@ -222,6 +224,7 @@ class TestGH18335(util.F2PyTest):
     """
     sources = [util.getpath("tests", "src", "callback", "gh18335.f90")]
 
+    @pytest.mark.slow
     def test_gh18335(self):
         def foo(x):
             x[0] += 1
@@ -235,7 +238,7 @@ class TestGH25211(util.F2PyTest):
                util.getpath("tests", "src", "callback", "gh25211.pyf")]
     module_name = "callback2"
 
-    def test_gh18335(self):
+    def test_gh25211(self):
         def bar(x):
             return x*x
 

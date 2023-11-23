@@ -19,6 +19,7 @@ pytestmark = pytest.mark.skipif(
 def _path(*args):
     return get_docdir().joinpath(*args)
 
+@pytest.mark.slow
 class TestDocAdvanced(util.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/build-f2py']
     sources = [_path('asterisk1.f90'), _path('asterisk2.f90'),
