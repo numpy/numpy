@@ -21,7 +21,8 @@ import numpy
 
 from pathlib import Path
 from numpy._utils import asunicode
-from numpy.testing import temppath, IS_WASM
+from numpy.exceptions import VisibleDeprecationWarning
+from numpy.testing import temppath, IS_WASM, suppress_warnings
 from importlib import import_module
 
 #
@@ -409,13 +410,16 @@ class F2PyTest:
             )
 
         if self.sources is not None:
-            self.module = build_module(
-                self.sources,
-                options=self.options,
-                skip=self.skip,
-                only=self.only,
-                module_name=self.module_name,
-            )
+            with suppress_warnings() as sup:
+                sup.filter(VisibleDeprecationWarning,
+                           "distutils has been deprecated since")
+                self.module = build_module(
+                    self.sources,
+                    options=self.options,
+                    skip=self.skip,
+                    only=self.only,
+                    module_name=self.module_name,
+                )
 
 
 #
