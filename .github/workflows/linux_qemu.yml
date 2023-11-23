@@ -75,6 +75,13 @@ jobs:
               "-Dallow-noblas=true -Dcpu-baseline=vx",
               "(test_kind or test_multiarray or test_simd or test_umath or test_ufunc) and not test_gcd_overflow"
           ]
+          - [
+              "riscv64",
+              "riscv64-linux-gnu",
+              "riscv64/ubuntu:22.04",
+              "-Dallow-noblas=true",
+              "(test_kind or test_multiarray or test_simd or test_umath or test_ufunc) and not (test_fpclass or test_fp_noncontiguous)"
+          ]
     env:
       TOOLCHAIN_NAME: ${{ matrix.BUILD_PROP[1] }}
       DOCKER_CONTAINER: ${{ matrix.BUILD_PROP[2] }}
