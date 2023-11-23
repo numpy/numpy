@@ -28,6 +28,8 @@ macosx_arm64_task:
         CIBW_ENVIRONMENT_MACOS: >
           RUNNER_OS=macOS
           MACOSX_DEPLOYMENT_TARGET=14.0
+          # SDKROOT needs to be set also here (see gfortran_utils.sh)
+          SDKROOT=/Applications/Xcode-15.0.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
   env:
     PATH: /opt/homebrew/opt/python@3.10/bin:/usr/local/lib:/usr/local/include:$PATH
     CIBW_ARCHS: arm64
