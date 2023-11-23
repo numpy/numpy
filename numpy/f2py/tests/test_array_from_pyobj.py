@@ -31,13 +31,6 @@ def setup_module():
     """
     global wrap
 
-    # Check compiler availability first
-    if not util.has_c_compiler():
-        pytest.skip("No C compiler available")
-
-    if not util.has_f90_compiler():
-        pytest.skip("No Fortran 90 compiler available")
-
     if wrap is None:
         src = [
             get_testdir() / "wrapmodule.c",
