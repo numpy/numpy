@@ -18,9 +18,8 @@ fi
 
 install_openblas=true
 if [[ $RUNNER_OS == "macOS" ]]; then
-    if [[ $(sw_vers --productVersion) == 14.* ]]; then
+    if [[ $MACOSX_DEPLOYMENT_VERSION == "14.0" ]]; then
         # This is the wheel build with Accelerate
-        export MACOSX_DEPLOYMENT_TARGET=14.0
         install_openblas=false
     else
         # Done in gfortran_utils.sh
@@ -64,9 +63,6 @@ if [[ $RUNNER_OS == "macOS" ]]; then
     if [[ $PLATFORM == "macosx-arm64" ]]; then
         PLAT="arm64"
     fi
-
-    # Needed for OpenBLAS and gfortran
-    export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
     source $PROJECT_DIR/tools/wheels/gfortran_utils.sh
     install_gfortran

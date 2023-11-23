@@ -17,7 +17,7 @@ macosx_arm64_task:
   use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   macos_instance:
     matrix:
-      - image: ghcr.io/cirruslabs/macos-monterey-xcode:latest
+      - image: ghcr.io/cirruslabs/macos-monterey-xcode:14
       #- image: ghcr.io/cirruslabs/macos-sonoma-xcode:latest
   matrix:
     - env:
@@ -25,16 +25,15 @@ macosx_arm64_task:
         CIBW_BUILD: cp310-*
         # Specifying CIBW_ENVIRONMENT_MACOS overrides pyproject.toml, so include
         # all the settings from there, otherwise they're lost.
-        CIBW_ENVIRONMENT_MACOS: >
-          RUNNER_OS=macOS
-          MACOSX_DEPLOYMENT_TARGET=11.0  # 14.0
-          # SDKROOT needs to be set also here (see gfortran_utils.sh)
-          #SDKROOT=/Applications/Xcode-15.0.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
-          SDKROOT=/Applications/Xcode-15.0.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk
-          LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
   env:
     PATH: /opt/homebrew/opt/python@3.10/bin:/usr/local/lib:/usr/local/include:$PATH
     CIBW_ARCHS: arm64
+    CIBW_ENVIRONMENT_MACOS: >
+      RUNNER_OS=macOS
+      MACOSX_DEPLOYMENT_TARGET=11.0  # 14.0
+      # SDKROOT needs to be set also here (see gfortran_utils.sh)
+      SDKROOT=/Applications/Xcode-14.0.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk
+      LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
   build_script:
     - brew install python@3.10
