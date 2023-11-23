@@ -82,6 +82,12 @@ PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind);
 NPY_NO_EXPORT int
 PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags);
 
+/*
+ * Device string converter.
+ */
+NPY_NO_EXPORT int
+PyArray_DeviceConverterOptional(PyObject *object, NPY_DEVICE *device);
+
 /**
  * WARNING: This flag is a bad idea, but was the only way to both
  *   1) Support unpickling legacy pickles with object types.

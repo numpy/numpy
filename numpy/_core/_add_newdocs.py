@@ -912,7 +912,7 @@ add_newdoc('numpy._core.multiarray', 'array',
 
 add_newdoc('numpy._core.multiarray', 'asarray',
     """
-    asarray(a, dtype=None, order=None, *, like=None)
+    asarray(a, dtype=None, order=None, *, device=None, like=None)
 
     Convert the input to an array.
 
@@ -931,6 +931,14 @@ add_newdoc('numpy._core.multiarray', 'asarray',
         'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
         'K' (keep) preserve input order
         Defaults to 'K'.
+    device : str, optional
+        The device on which to place the created array. Default: None.
+
+        .. note::
+
+            Only the ``"cpu"`` device is supported by NumPy.
+
+        .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -1184,7 +1192,7 @@ add_newdoc('numpy._core.multiarray', 'asfortranarray',
 
 add_newdoc('numpy._core.multiarray', 'empty',
     """
-    empty(shape, dtype=float, order='C', *, like=None)
+    empty(shape, dtype=float, order='C', *, device=None, like=None)
 
     Return a new array of given shape and type, without initializing entries.
 
@@ -1199,6 +1207,14 @@ add_newdoc('numpy._core.multiarray', 'empty',
         Whether to store multi-dimensional data in row-major
         (C-style) or column-major (Fortran-style) order in
         memory.
+    device : str, optional
+        The device on which to place the created array. Default: None.
+
+        .. note::
+
+            Only the ``"cpu"`` device is supported by NumPy.
+
+        .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -1676,7 +1692,7 @@ add_newdoc('numpy._core.multiarray', 'correlate',
 
 add_newdoc('numpy._core.multiarray', 'arange',
     """
-    arange([start,] stop[, step,], dtype=None, *, like=None)
+    arange([start,] stop[, step,], dtype=None, *, device=None, like=None)
 
     Return evenly spaced values within a given interval.
 
@@ -1717,6 +1733,14 @@ add_newdoc('numpy._core.multiarray', 'arange',
     dtype : dtype, optional
         The type of the output array.  If `dtype` is not given, infer the data
         type from the other input arguments.
+    device : str, optional
+        The device on which to place the created array. Default: None.
+
+        .. note::
+
+            Only the ``"cpu"`` device is supported by NumPy.
+
+        .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0

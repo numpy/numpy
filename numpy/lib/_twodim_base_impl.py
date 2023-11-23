@@ -157,7 +157,7 @@ def flipud(m):
 
 @set_array_function_like_doc
 @set_module('numpy')
-def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
+def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
     """
     Return a 2-D array with ones on the diagonal and zeros elsewhere.
 
@@ -178,6 +178,14 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
         column-major (Fortran-style) order in memory.
 
         .. versionadded:: 1.14.0
+    device : str, optional
+        The device on which to place the created array. Default: None.
+
+        .. note::
+
+            Only the ``"cpu"`` device is supported by NumPy.
+
+        .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -204,6 +212,11 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
            [0.,  0.,  0.]])
 
     """
+    if device not in ["cpu", None]:
+        raise ValueError(
+            f"Unsupported device: {device}. Only \"cpu\" is allowed."
+        )
+
     if like is not None:
         return _eye_with_like(like, N, M=M, k=k, dtype=dtype, order=order)
     if M is None:

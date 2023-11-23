@@ -2550,6 +2550,11 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
 
     def __array_namespace__(self, *, api_version: str = ...) -> Any: ...
 
+    def to_device(self, device: L["cpu"], /, *, stream: None | int | Any = ...) -> NDArray[Any]: ...
+
+    @property
+    def device(self) -> L["cpu"]: ...
+
     def bitwise_count(
         self,
         out: None | NDArray[Any] = ...,

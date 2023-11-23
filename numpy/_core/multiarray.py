@@ -81,9 +81,12 @@ array_function_from_c_func_and_dispatcher = functools.partial(
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.empty_like)
-def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
+def empty_like(
+    prototype, dtype=None, order=None, subok=None, shape=None, *, device=None
+):
     """
-    empty_like(prototype, dtype=None, order='K', subok=True, shape=None)
+    empty_like(prototype, dtype=None, order='K', subok=True, shape=None,
+               shape=None, *, device=None)
 
     Return a new array with the same shape and type as a given array.
 
@@ -113,6 +116,14 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
         order='C' is implied.
 
         .. versionadded:: 1.17.0
+    device : str, optional
+        The device on which to place the created array. Default: None.
+
+        .. note::
+
+            Only the ``"cpu"`` device is supported by NumPy.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------

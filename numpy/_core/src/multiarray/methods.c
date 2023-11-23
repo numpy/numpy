@@ -2783,6 +2783,36 @@ array_array_namespace(PyArrayObject *self, PyObject *args, PyObject *kwds)
     return numpy_module;
 }
 
+static PyObject *
+array_to_device(PyArrayObject *self, PyObject *args, PyObject *kwds)
+{
+    static char *kwlist[] = {"", "stream", NULL};
+    char *device = "";
+    PyObject *stream = Py_None;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|$O:to_device", kwlist,
+                                     &device,
+                                     &stream)) {
+        return NULL;
+    }
+
+    if (stream != Py_None) {
+        PyErr_SetString(PyExc_ValueError,
+                        "The stream argument in to_device() "
+                        "is not supported");
+        return NULL;
+    }
+
+    if (strcmp(device, "cpu") != 0) {
+        PyErr_Format(PyExc_ValueError,
+                     "Unsupported device: %s.", device);
+        return NULL;
+    }
+
+    Py_INCREF(self);
+    return (PyObject *)self;
+}
+
 NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     /* for subtypes */
@@ -3011,6 +3041,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     // For Array API compatibility
     {"__array_namespace__",
         (PyCFunction)array_array_namespace,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"to_device",
+        (PyCFunction)array_to_device,
         METH_VARARGS | METH_KEYWORDS, NULL},
 
     {NULL, NULL, 0, NULL}           /* sentinel */

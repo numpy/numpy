@@ -17,13 +17,13 @@ array_function_dispatch = functools.partial(
 
 
 def _linspace_dispatcher(start, stop, num=None, endpoint=None, retstep=None,
-                         dtype=None, axis=None):
+                         dtype=None, axis=None, *, device=None):
     return (start, stop)
 
 
 @array_function_dispatch(_linspace_dispatcher)
 def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
-             axis=0):
+             axis=0, *, device=None):
     """
     Return evenly spaced numbers over a specified interval.
 
@@ -64,13 +64,20 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         array of integers.
 
         .. versionadded:: 1.9.0
-
     axis : int, optional
         The axis in the result to store the samples.  Relevant only if start
         or stop are array-like.  By default (0), the samples will be along a
         new axis inserted at the beginning. Use -1 to get an axis at the end.
 
         .. versionadded:: 1.16.0
+    device : str, optional
+        The device on which to place the created array. Default: None.
+
+        .. note::
+
+            Only the ``"cpu"`` device is supported by NumPy.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -119,6 +126,11 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     >>> plt.show()
 
     """
+    if device not in ["cpu", None]:
+        raise ValueError(
+            f"Unsupported device: {device}. Only \"cpu\" is allowed."
+        )
+
     num = operator.index(num)
     if num < 0:
         raise ValueError(

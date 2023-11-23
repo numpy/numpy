@@ -300,6 +300,11 @@ typedef enum {
     NPY_BUSDAY_RAISE
 } NPY_BUSDAY_ROLL;
 
+/* Device enum for Array API compatibility */
+typedef enum {
+        NPY_DEVICE_CPU = 0,
+} NPY_DEVICE;
+
 /************************************************************
  * NumPy Auxiliary Data for inner loops, sort functions, etc.
  ************************************************************/

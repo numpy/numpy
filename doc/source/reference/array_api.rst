@@ -501,12 +501,6 @@ Creation functions differences
    * - ``copy`` keyword argument to ``asarray``
      - **Compatible**
      -
-   * - New ``device`` keyword argument to all array creation functions
-       (``asarray``, ``arange``, ``empty``, ``empty_like``, ``eye``, ``full``,
-       ``full_like``, ``linspace``, ``ones``, ``ones_like``, ``zeros``, and
-       ``zeros_like``).
-     - **Compatible**
-     - ``device`` would effectively do nothing, since NumPy is CPU only.
 
 Elementwise functions differences
 ---------------------------------
