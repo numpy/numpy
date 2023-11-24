@@ -94,6 +94,9 @@ if use_svml
     error('Missing the `SVML` git submodule! Run `git submodule update --init` to fix this.')
   endif
 endif
+if not fs.exists('src/highway/README.md')
+  error('Missing the `highway` git submodule! Run `git submodule update --init` to fix this.')
+endif
 if not fs.exists('src/npysort/x86-simd-sort/README.md')
   error('Missing the `x86-simd-sort` git submodule! Run `git submodule update --init` to fix this.')
 endif
@@ -763,12 +766,17 @@ foreach gen_mtargets : [
   [
     'simd_qsort.dispatch.h',
     'src/npysort/simd_qsort.dispatch.cpp',
-    [AVX512_SKX]
+    [AVX512_SKX, ASIMD]
   ],
   [
     'simd_qsort_16bit.dispatch.h',
     'src/npysort/simd_qsort_16bit.dispatch.cpp',
     [AVX512_SPR, AVX512_ICL]
+  ],
+  [
+    'simd_argsort.dispatch.h',
+    'src/npysort/simd_argsort.dispatch.cpp',
+    [AVX512_SKX]
   ],
 ]
   mtargets = mod_features.multi_targets(
@@ -784,7 +792,8 @@ foreach gen_mtargets : [
       'src/common',
       'src/multiarray',
       'src/npymath',
-      'src/umath'
+      'src/umath',
+      'src/highway',
     ]
   )
   if not is_variable('multiarray_umath_mtargets')
