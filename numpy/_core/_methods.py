@@ -111,7 +111,7 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
 
     # Cast bool, unsigned int, and int to float64 by default
     if dtype is None:
-        if issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
+        if issubclass(arr.dtype.type, (nt.integer, nt.bool)):
             dtype = mu.dtype('f8')
         elif issubclass(arr.dtype.type, nt.float16):
             dtype = mu.dtype('f4')
@@ -145,7 +145,7 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
                       stacklevel=2)
 
     # Cast bool, unsigned int, and int to float64 by default
-    if dtype is None and issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
+    if dtype is None and issubclass(arr.dtype.type, (nt.integer, nt.bool)):
         dtype = mu.dtype('f8')
 
     if mean is not None:

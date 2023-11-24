@@ -1,5 +1,5 @@
 # TODO: Sort out any and all missing functions in this namespace
-
+import builtins
 import os
 import datetime as dt
 from collections.abc import Sequence, Callable, Iterable
@@ -15,6 +15,7 @@ from typing import (
     ClassVar,
 )
 
+import numpy as np
 from numpy import (
     # Re-exports
     busdaycalendar as busdaycalendar,
@@ -26,7 +27,6 @@ from numpy import (
     # The rest
     ufunc,
     str_,
-    bool_,
     uint8,
     intp,
     int_,
@@ -396,7 +396,7 @@ def dot(a: ArrayLike, b: ArrayLike, out: None = ...) -> Any: ...
 def dot(a: ArrayLike, b: ArrayLike, out: _ArrayType) -> _ArrayType: ...
 
 @overload
-def vdot(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co, /) -> bool_: ...  # type: ignore[misc]
+def vdot(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co, /) -> np.bool: ...  # type: ignore[misc]
 @overload
 def vdot(a: _ArrayLikeUInt_co, b: _ArrayLikeUInt_co, /) -> unsignedinteger[Any]: ...  # type: ignore[misc]
 @overload
@@ -903,7 +903,7 @@ def is_busday(  # type: ignore[misc]
     holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
     out: None = ...,
-) -> bool_: ...
+) -> np.bool: ...
 @overload
 def is_busday(  # type: ignore[misc]
     dates: ArrayLike | _NestedSequence[dt.date],
@@ -911,7 +911,7 @@ def is_busday(  # type: ignore[misc]
     holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
     out: None = ...,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 @overload
 def is_busday(
     dates: ArrayLike | _NestedSequence[dt.date],
@@ -942,14 +942,14 @@ def compare_chararrays(
     a2: _ArrayLikeStr_co,
     cmp: L["<", "<=", "==", ">=", ">", "!="],
     rstrip: bool,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 @overload
 def compare_chararrays(
     a1: _ArrayLikeBytes_co,
     a2: _ArrayLikeBytes_co,
     cmp: L["<", "<=", "==", ">=", ">", "!="],
     rstrip: bool,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 
 def add_docstring(obj: Callable[..., Any], docstring: str, /) -> None: ...
 

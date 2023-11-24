@@ -13,6 +13,7 @@ if sys.version_info >= (3, 10):
 else:
     from typing_extensions import TypeGuard
 
+import numpy as np
 from numpy import (
     ComplexWarning as ComplexWarning,
     generic,
@@ -20,7 +21,6 @@ from numpy import (
     signedinteger,
     floating,
     complexfloating,
-    bool_,
     int_,
     intp,
     float64,
@@ -270,7 +270,7 @@ def correlate(
     a: _ArrayLikeBool_co,
     v: _ArrayLikeBool_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 @overload
 def correlate(
     a: _ArrayLikeUInt_co,
@@ -319,7 +319,7 @@ def convolve(
     a: _ArrayLikeBool_co,
     v: _ArrayLikeBool_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 @overload
 def convolve(
     a: _ArrayLikeUInt_co,
@@ -368,7 +368,7 @@ def outer(
     a: _ArrayLikeBool_co,
     b: _ArrayLikeBool_co,
     out: None = ...,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 @overload
 def outer(
     a: _ArrayLikeUInt_co,
@@ -423,7 +423,7 @@ def tensordot(
     a: _ArrayLikeBool_co,
     b: _ArrayLikeBool_co,
     axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 @overload
 def tensordot(
     a: _ArrayLikeUInt_co,
@@ -645,7 +645,7 @@ def isclose(
     rtol: float = ...,
     atol: float = ...,
     equal_nan: bool = ...,
-) -> bool_: ...
+) -> np.bool: ...
 @overload
 def isclose(
     a: ArrayLike,
@@ -653,7 +653,7 @@ def isclose(
     rtol: float = ...,
     atol: float = ...,
     equal_nan: bool = ...,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 
 def array_equal(a1: ArrayLike, a2: ArrayLike, equal_nan: bool = ...) -> bool: ...
 

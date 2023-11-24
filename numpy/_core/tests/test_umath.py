@@ -268,7 +268,7 @@ class TestComparisons:
     import operator
 
     @pytest.mark.parametrize('dtype', sctypes['uint'] + sctypes['int'] +
-                             sctypes['float'] + [np.bool_])
+                             sctypes['float'] + [np.bool])
     @pytest.mark.parametrize('py_comp,np_comp', [
         (operator.lt, np.less),
         (operator.le, np.less_equal),
@@ -279,7 +279,7 @@ class TestComparisons:
     ])
     def test_comparison_functions(self, dtype, py_comp, np_comp):
         # Initialize input arrays
-        if dtype == np.bool_:
+        if dtype == np.bool:
             a = np.random.choice(a=[False, True], size=1000)
             b = np.random.choice(a=[False, True], size=1000)
             scalar = True
@@ -2553,7 +2553,7 @@ class TestFmin(_FilterInvalids):
 
 class TestBool:
     def test_exceptions(self):
-        a = np.ones(1, dtype=np.bool_)
+        a = np.ones(1, dtype=np.bool)
         assert_raises(TypeError, np.negative, a)
         assert_raises(TypeError, np.positive, a)
         assert_raises(TypeError, np.subtract, a, a)

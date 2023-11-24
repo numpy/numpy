@@ -694,7 +694,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                          precision=6, equal_nan=True, equal_inf=True,
                          *, strict=False, names=('ACTUAL', 'DESIRED')):
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy._core import (array2string, isnan, inf, bool_, errstate,
+    from numpy._core import (array2string, isnan, inf, errstate,
                             all, max, object_)
 
     x = np.asanyarray(x)
@@ -725,13 +725,13 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         # (1) all() on `masked` array scalars can return masked arrays, so we
         #     use != True
         # (2) __eq__ on some ndarray subclasses returns Python booleans
-        #     instead of element-wise comparisons, so we cast to bool_() and
+        #     instead of element-wise comparisons, so we cast to np.bool() and
         #     use isinstance(..., bool) checks
         # (3) subclasses with bare-bones __array_function__ implementations may
         #     not implement np.all(), so favor using the .all() method
         # We are not committed to supporting such subclasses, but it's nice to
         # support them if possible.
-        if bool_(x_id == y_id).all() != True:
+        if np.bool(x_id == y_id).all() != True:
             msg = build_err_msg(
                 [x, y],
                 err_msg + '\n%s location mismatch:'
@@ -742,9 +742,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         # If there is a scalar, then here we know the array has the same
         # flag as it everywhere, so we should return the scalar flag.
         if isinstance(x_id, bool) or x_id.ndim == 0:
-            return bool_(x_id)
+            return np.bool(x_id)
         elif isinstance(y_id, bool) or y_id.ndim == 0:
-            return bool_(y_id)
+            return np.bool(y_id)
         else:
             return y_id
 
@@ -766,7 +766,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                                 precision=precision)
             raise AssertionError(msg)
 
-        flagged = bool_(False)
+        flagged = np.bool(False)
         if isnumber(x) and isnumber(y):
             if equal_nan:
                 flagged = func_assert_same_pos(x, y, func=isnan, hasval='nan')
@@ -837,7 +837,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                     # note: this definition of relative error matches that one
                     # used by assert_allclose (found in np.isclose)
                     # Filter values where the divisor would be zero
-                    nonzero = bool_(y != 0)
+                    nonzero = np.bool(y != 0)
                     nonzero_and_invalid = np.logical_and(invalids, nonzero)
                     
                     if all(~nonzero_and_invalid):

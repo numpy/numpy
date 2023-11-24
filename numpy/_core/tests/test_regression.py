@@ -101,7 +101,7 @@ class TestRegression:
 
     def test_bool(self):
         # Ticket #60
-        np.bool_(1)  # Should succeed
+        np.bool(1)  # Should succeed
 
     def test_indexing1(self):
         # Ticket #64
@@ -1508,7 +1508,7 @@ class TestRegression:
         dtypes = [x for x in np._core.sctypeDict.values()
                   if (issubclass(x, np.number)
                       and not issubclass(x, np.timedelta64))]
-        a = np.array([], np.bool_)  # not x[0] because it is unordered
+        a = np.array([], np.bool)  # not x[0] because it is unordered
         failures = []
 
         for x in dtypes:
@@ -2534,9 +2534,9 @@ class TestRegression:
         # create two arrays with bit patterns that do not overlap.
         # needs to be large enough to test both SIMD and scalar paths
         size = 100
-        a = np.frombuffer(b'\x01' * size, dtype=np.bool_)
-        b = np.frombuffer(b'\x80' * size, dtype=np.bool_)
-        expected = np.ones(size, dtype=np.bool_)
+        a = np.frombuffer(b'\x01' * size, dtype=np.bool)
+        b = np.frombuffer(b'\x80' * size, dtype=np.bool)
+        expected = np.ones(size, dtype=np.bool)
         assert_array_equal(np.logical_and(a, b), expected)
 
     @pytest.mark.skipif(IS_PYPY, reason="PyPy issue 2742")

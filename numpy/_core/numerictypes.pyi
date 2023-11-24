@@ -9,11 +9,11 @@ from typing import (
     TypedDict,
 )
 
+import numpy as np
 from numpy import (
     ndarray,
     dtype,
     generic,
-    bool_,
     ubyte,
     ushort,
     uintc,
@@ -122,7 +122,7 @@ ScalarType: tuple[
     type[bytes],
     type[str],
     type[memoryview],
-    type[bool_],
+    type[np.bool],
     type[csingle],
     type[cdouble],
     type[clongdouble],

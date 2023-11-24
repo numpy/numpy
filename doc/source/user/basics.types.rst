@@ -30,7 +30,7 @@ confusion with builtin python type names, such as `numpy.bool_`.
       - Actual C type
       - Description
 
-    * - `numpy.bool_`
+    * - `numpy.bool` or `numpy.bool_`
       - N/A
       - ``bool`` (defined in ``stdbool.h``)
       - Boolean (True or False) stored as a byte.
@@ -152,7 +152,7 @@ aliases are provided (See :ref:`sized-aliases`).
 NumPy numerical types are instances of ``dtype`` (data-type) objects, each
 having unique characteristics.  Once you have imported NumPy using
 ``>>> import numpy as np``
-the dtypes are available as ``np.bool_``, ``np.float32``, etc.
+the dtypes are available as ``np.bool``, ``np.float32``, etc.
 
 Advanced types, not listed above, are explored in
 section :ref:`structured_arrays`.
@@ -198,7 +198,7 @@ the type itself as a function. For example: ::
     array([0, 1, 2], dtype=int8)
 
 Note that, above, we use the *Python* float object as a dtype.  NumPy knows
-that ``int`` refers to ``np.int_``, ``bool`` means ``np.bool_``,
+that ``int`` refers to ``np.int_``, ``bool`` means ``np.bool``,
 that ``float`` is ``np.float64`` and ``complex`` is ``np.complex128``.
 The other data-types do not have Python equivalents.
 

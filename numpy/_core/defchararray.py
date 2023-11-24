@@ -19,7 +19,7 @@ import functools
 
 from .._utils import set_module
 from .numerictypes import (
-    bytes_, str_, integer, int_, object_, bool_, character)
+    bytes_, str_, integer, int_, object_, character)
 from .numeric import ndarray, array as narray
 from numpy._core.multiarray import _vec_string, compare_chararrays
 from numpy._core import overrides
@@ -832,7 +832,7 @@ def isalnum(a):
     --------
     str.isalnum
     """
-    return _vec_string(a, bool_, 'isalnum')
+    return _vec_string(a, numpy.bool, 'isalnum')
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -920,7 +920,7 @@ def islower(a):
     --------
     str.islower
     """
-    return _vec_string(a, bool_, 'islower')
+    return _vec_string(a, numpy.bool, 'islower')
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -973,7 +973,7 @@ def istitle(a):
     --------
     str.istitle
     """
-    return _vec_string(a, bool_, 'istitle')
+    return _vec_string(a, numpy.bool, 'istitle')
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -1010,7 +1010,7 @@ def isupper(a):
     array([False,  True, False]) 
 
     """
-    return _vec_string(a, bool_, 'isupper')
+    return _vec_string(a, numpy.bool, 'isupper')
 
 
 def _join_dispatcher(sep, seq):

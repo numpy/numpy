@@ -989,7 +989,7 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
 
     /*
      * Be a bit stricter and not allow bools.
-     * np.bool_ is also disallowed as Boolean arrays do not currently
+     * np.bool is also disallowed as Boolean arrays do not currently
      * support index.
      */
     if (!o || PyBool_Check(o) || PyArray_IsScalar(o, Bool)) {

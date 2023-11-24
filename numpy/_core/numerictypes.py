@@ -20,7 +20,7 @@ Exported symbols include:
 
     c-based names
 
-    bool_
+    bool
 
     object_
 
@@ -40,7 +40,7 @@ Exported symbols include:
    As part of the type-hierarchy:    xx -- is bit-width
 
    generic
-     +-> bool_                                  (kind=b)
+     +-> bool                                   (kind=b)
      +-> number
      |   +-> integer
      |   |   +-> signedinteger     (intxx)      (kind=i)

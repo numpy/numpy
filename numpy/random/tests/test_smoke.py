@@ -7,7 +7,7 @@ from numpy.testing import assert_equal, assert_, assert_array_equal
 from numpy.random import (Generator, MT19937, PCG64, PCG64DXSM, Philox, SFC64)
 
 @pytest.fixture(scope='module',
-                params=(np.bool_, np.int8, np.int16, np.int32, np.int64,
+                params=(np.bool, np.int8, np.int16, np.int32, np.int64,
                         np.uint8, np.uint16, np.uint32, np.uint64))
 def dtype(request):
     return request.param
@@ -653,7 +653,7 @@ class RNG:
             rg.standard_gamma(1.0, out=existing[::3])
 
     def test_integers_broadcast(self, dtype):
-        if dtype == np.bool_:
+        if dtype == np.bool:
             upper = 2
             lower = 0
         else:
@@ -699,7 +699,7 @@ class RNG:
         assert out.shape == (1,)
 
     def test_integers_broadcast_errors(self, dtype):
-        if dtype == np.bool_:
+        if dtype == np.bool:
             upper = 2
             lower = 0
         else:

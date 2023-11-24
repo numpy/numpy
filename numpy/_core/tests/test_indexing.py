@@ -303,8 +303,8 @@ class TestIndexing:
     def test_scalar_array_bool(self):
         # NumPy bools can be used as boolean index (python ones as of yet not)
         a = np.array(1)
-        assert_equal(a[np.bool_(True)], a[np.array(True)])
-        assert_equal(a[np.bool_(False)], a[np.array(False)])
+        assert_equal(a[np.bool(True)], a[np.array(True)])
+        assert_equal(a[np.bool(False)], a[np.array(False)])
 
         # After deprecating bools as integers:
         #a = np.array([0,1,2])
@@ -1289,7 +1289,7 @@ class TestBooleanIndexing:
         a = np.array([[[1]]])
 
         assert_raises(TypeError, np.reshape, a, (True, -1))
-        assert_raises(TypeError, np.reshape, a, (np.bool_(True), -1))
+        assert_raises(TypeError, np.reshape, a, (np.bool(True), -1))
         # Note that operator.index(np.array(True)) does not work, a boolean
         # array is thus also deprecated, but not with the same message:
         assert_raises(TypeError, operator.index, np.array(True))

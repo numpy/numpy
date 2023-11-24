@@ -128,16 +128,17 @@ else:
         array_str, asanyarray, asarray, ascontiguousarray, asfortranarray,
         atleast_1d, atleast_2d, atleast_3d, base_repr, binary_repr,
         bitwise_and, bitwise_count, bitwise_not, bitwise_or, bitwise_xor,
-        block, bool_, broadcast, busday_count, busday_offset, busdaycalendar,
-        byte, bytes_, can_cast, cbrt, cdouble, ceil, character, choose, clip,
-        clongdouble, complex128, complex64, complexfloating, compress,
-        concatenate, conj, conjugate, convolve, copysign, copyto, correlate,
-        cos, cosh, count_nonzero, cross, csingle, cumprod, cumproduct, cumsum,
-        datetime64, datetime_as_string, datetime_data, deg2rad, degrees,
-        diagonal, divide, divmod, dot, double, dtype, e, einsum, einsum_path,
-        empty, empty_like, equal, errstate, euler_gamma, exp, exp2, expm1,
-        fabs, finfo, flatiter, flatnonzero, flexible, float16, float32,
-        float64, float_power, floating, floor, floor_divide, fmax, fmin, fmod,
+        block, bool, bool_, broadcast, busday_count, busday_offset,
+        busdaycalendar, byte, bytes_, can_cast, cbrt, cdouble, ceil,
+        character, choose, clip, clongdouble, complex128, complex64,
+        complexfloating, compress, concatenate, conj, conjugate, convolve,
+        copysign, copyto, correlate, cos, cosh, count_nonzero, cross, csingle,
+        cumprod, cumproduct, cumsum, datetime64, datetime_as_string,
+        datetime_data, deg2rad, degrees, diagonal, divide, divmod, dot,
+        double, dtype, e, einsum, einsum_path, empty, empty_like, equal,
+        errstate, euler_gamma, exp, exp2, expm1, fabs, finfo, flatiter,
+        flatnonzero, flexible, float16, float32, float64, float_power,
+        floating, floor, floor_divide, fmax, fmin, fmod,
         format_float_positional, format_float_scientific, frexp, from_dlpack,
         frombuffer, fromfile, fromfunction, fromiter, frompyfunc, fromstring,
         full, full_like, gcd, generic, geomspace, get_printoptions,
@@ -266,7 +267,6 @@ else:
 
     _type_info = [
         ("object", ""),  # The NumPy scalar only exists by name.
-        ("bool", _specific_msg.format("bool_")),
         ("float", _specific_msg.format("float64")),
         ("complex", _specific_msg.format("complex128")),
         ("str", _specific_msg.format("str_")),
@@ -283,7 +283,7 @@ else:
     # probably wait for NumPy 1.26 or 2.0.
     # When defined, these should possibly not be added to `__all__` to avoid
     # import with `from numpy import *`.
-    __future_scalars__ = {"bool", "str", "bytes", "object"}
+    __future_scalars__ = {"str", "bytes", "object"}
 
     # now that numpy core module is imported, can initialize limits
     _core.getlimits._register_known_types()

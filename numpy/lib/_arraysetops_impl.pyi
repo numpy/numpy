@@ -6,10 +6,10 @@ from typing import (
     SupportsIndex,
 )
 
+import numpy as np
 from numpy import (
     generic,
     number,
-    bool_,
     ushort,
     ubyte,
     uintc,
@@ -59,7 +59,7 @@ _NumberType = TypeVar("_NumberType", bound=number[Any])
 # `number[_64Bit]` array
 _SCTNoCast = TypeVar(
     "_SCTNoCast",
-    bool_,
+    np.bool,
     ushort,
     ubyte,
     uintc,
@@ -326,7 +326,7 @@ def in1d(
     ar2: ArrayLike,
     assume_unique: bool = ...,
     invert: bool = ...,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 
 def isin(
     element: ArrayLike,
@@ -335,7 +335,7 @@ def isin(
     invert: bool = ...,
     *,
     kind: None | str = ...,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 
 @overload
 def union1d(
