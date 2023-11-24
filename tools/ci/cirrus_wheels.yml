@@ -31,8 +31,6 @@ macosx_arm64_task:
     CIBW_ENVIRONMENT_MACOS: >
       RUNNER_OS=macOS
       MACOSX_DEPLOYMENT_TARGET=11.0  # 14.0
-      # SDKROOT needs to be set also here (see gfortran_utils.sh)
-      SDKROOT=/Applications/Xcode-14.0.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk
       LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
   build_script:
