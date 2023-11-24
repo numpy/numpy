@@ -54,7 +54,7 @@ Increased maximum number of dimensions
 The maximum number of dimensions (and arguments) was increased to 64, this
 affects the ``NPY_MAXDIMS`` and ``NPY_MAXARGS`` macros.
 It may be good to review their use, and we generally encourage you to
-not use this macros (especially ``NPY_MAXARGS``), so that a future version of
+not use these macros (especially ``NPY_MAXARGS``), so that a future version of
 NumPy can remove this limitation on the number of dimensions.
 
 ``NPY_MAXDIMS`` was also used to signal ``axis=None`` in the C-API, including

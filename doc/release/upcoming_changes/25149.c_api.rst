@@ -2,7 +2,7 @@ Lager ``NPY_MAXDIMS`` and ``NPY_MAXARGS``, ``NPY_RAVEL_AXIS`` introduced
 ------------------------------------------------------------------------
 
 ``NPY_MAXDIMS`` is now 64, you may want to review its use.  This is usually
-used in stack allocation, where the increase should be safe.
+used in a stack allocation, where the increase should be safe.
 However, we do encourage generally to remove any use of ``NPY_MAXDIMS`` and
 ``NPY_MAXARGS`` to eventually allow removing the constraint completely.
 In some cases, ``NPY_MAXDIMS`` was passed (and returned) to mean ``axis=None``

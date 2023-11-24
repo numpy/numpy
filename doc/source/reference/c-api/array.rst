@@ -3417,15 +3417,15 @@ Other constants
     .. note::
         We encourage you to avoid ``NPY_MAXDIMS``.  A future version of NumPy
         may wish to remove any dimension limitation (and thus the constant).
-        The limitation was created mainly a simplification for the liberal use
-        of small stack allocations as scratch space.
+        The limitation was created so that NumPy can use stack allocations
+        internally for scratch space.
 
         If your algorithm has a reasonable maximum number of dimension you
         could check and use that locally.
 
 .. c:macro:: NPY_MAXARGS
 
-    The maximum number of array arguments that can be used in in some
+    The maximum number of array arguments that can be used in some
     functions.  This used to be 32 before NumPy 2 and is now 64.
 
     .. note::
@@ -3456,7 +3456,7 @@ Other constants
     have an ``axis`` argument.  This macro may be passed for ``axis=None``.
 
     .. note::
-        This macro is a NumPy version dependent at runtime.
+        This macro is NumPy version dependent at runtime.
 
 
 Miscellaneous Macros
