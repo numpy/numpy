@@ -2767,9 +2767,10 @@ array_array_namespace(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    if (strcmp(array_api_version, "2022.12") != 0) {
+    if (strcmp(array_api_version, "2021.12") != 0 &&
+            strcmp(array_api_version, "2022.12") != 0) {
         PyErr_Format(PyExc_ValueError,
-                     "Version \"%s\" of Array API is not supported.",
+                     "Version \"%s\" of the Array API Standard is not supported.",
                      array_api_version);
         return NULL;
     }

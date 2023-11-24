@@ -2556,3 +2556,20 @@ class TestRegression:
         test_data = b'\x80\x04\x95(\x00\x00\x00\x00\x00\x00\x00\x8c\x1cnumpy.core._multiarray_umath\x94\x8c\x03add\x94\x93\x94.'  # noqa
         result = pickle.loads(test_data, encoding='bytes')
         assert result is np.add
+
+    def test__array_namespace__(self):
+        arr = np.arange(2)
+
+        xp = arr.__array_namespace__()
+        assert xp is np
+        xp = arr.__array_namespace__(api_version="2021.12")
+        assert xp is np
+        xp = arr.__array_namespace__(api_version="2022.12")
+        assert xp is np
+
+        with pytest.raises(
+            ValueError,
+            match="Version \"2023.12\" of the Array API Standard "
+                  "is not supported."
+        ):
+            arr.__array_namespace__(api_version="2023.12")
