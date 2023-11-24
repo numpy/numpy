@@ -213,6 +213,7 @@ class TestDimSpec(util.F2PyTest):
         )
 
     @pytest.mark.parametrize("dimspec", all_dimspecs)
+    @pytest.mark.slow
     def test_array_size(self, dimspec):
 
         count = self.all_dimspecs.index(dimspec)
@@ -279,6 +280,7 @@ class TestFortranReader(util.F2PyTest):
         assert mod[0]['name'] == 'foo'
 
 
+@pytest.mark.slow
 class TestUnicodeComment(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "unicode_comment.f90")]
 
@@ -329,6 +331,7 @@ class TestNameArgsPatternBacktracking:
 class TestFunctionReturn(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "gh23598.f90")]
 
+    @pytest.mark.slow
     def test_function_rettype(self):
         # gh-23598
         assert self.module.intproduct(3, 4) == 12
