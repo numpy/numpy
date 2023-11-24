@@ -3456,7 +3456,9 @@ Other constants
     have an ``axis`` argument.  This macro may be passed for ``axis=None``.
 
     .. note::
-        This macro is NumPy version dependent at runtime.
+        This macro is NumPy version dependent at runtime. The value is now
+        the minimum integer. However, on NumPy 1.x ``NPY_MAXDIMS`` was used
+        (at the time set to 32).
 
 
 Miscellaneous Macros

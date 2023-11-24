@@ -120,10 +120,11 @@ PyArray_Type and PyArrayObject
        array. Such arrays have undefined dimensions and strides and
        cannot be accessed. Macro :c:data:`PyArray_NDIM` defined in
        ``ndarraytypes.h`` points to this data member.
-       Although most operations may be limited in dimensionality, we do not
-       advertise a maximum dimension.  Anyone explicitly relying on one
-       must check for it.  Before NumPy 2.0, NumPy used 32 dimensions at most
-       after it, the limit is currently 64.
+       ``NPY_MAXDIMS`` is defined as a compile time constant limiting the
+       number of dimensions.  This number is 64 since NumPy 2 and was 32
+       before. However, we may wish to remove this limitations in the future
+       so that it is best to explicitly check dimensionality for code
+       that relies on such an upper bound.
 
    .. c:member:: npy_intp *dimensions
 

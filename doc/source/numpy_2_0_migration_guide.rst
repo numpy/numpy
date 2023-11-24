@@ -59,10 +59,12 @@ NumPy can remove this limitation on the number of dimensions.
 
 ``NPY_MAXDIMS`` was also used to signal ``axis=None`` in the C-API, including
 the ``PyArray_AxisConverter``.
-If you run into this problem, you will see ``-2147483648``
-(the minimum integer value) or ``64`` being used as an invalid axis.
-Wherever you do, you must replace ``NPY_MAXDIMS`` with ``NPY_RAVEL_AXIS``.
-This is defined in the ``npy_2_compat.h`` header and runtime dependent.
+The latter will return ``-2147483648`` as an axis (the smallest integer value).
+Other functions may error with
+``AxisError: axis 64 is out of bounds for array of dimension`` in which
+case you need to pass ``NPY_RAVEL_AXIS`` instead of ``NPY_MAXDIMS``.
+``NPY_RAVEL_AXIS`` is defined in the ``npy_2_compat.h`` header and runtime
+dependent (mapping to 32 on NumPy 1.x and ``-2147483648`` on NumPy 2.x).
 
 
 Namespace changes
