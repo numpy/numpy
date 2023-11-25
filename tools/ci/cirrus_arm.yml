@@ -95,7 +95,6 @@ macos_arm64_test_task:
     python --version
 
     RUNNER_OS="macOS"
-    SDKROOT=/Applications/Xcode-14.0.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk
 
     # NOTE: OpenBLAS is not used in this job; if that's done in the future, ensure
     # PKG_CONFIG_PATH points to the directory containing the openblas.pc file

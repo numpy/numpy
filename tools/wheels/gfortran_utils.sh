@@ -147,6 +147,7 @@ if [ "$(uname)" == "Darwin" ]; then
         pushd /opt
             sudo tar -xvf gfortran-darwin-${arch}-${type}.tar.gz
             sudo rm gfortran-darwin-${arch}-${type}.tar.gz
+            find gfortran-darwin-${arch}-${type} -name "libgfortran.spec" -exec sed -i.bak "s@\-lm@-lm -isysroot ${SDKROOT}@g" {} +
         popd
 	if [[ "${type}" == "native" ]]; then
 	    # Link these into /usr/local so that there's no need to add rpath or -L
