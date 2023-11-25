@@ -7,6 +7,7 @@ import pytest
 from . import util
 
 
+@pytest.mark.usefixtures("build_module")
 class TestQuotedCharacter(util.F2PyTest):
     sources = [util.getpath("tests", "src", "quoted_character", "foo.f")]
 

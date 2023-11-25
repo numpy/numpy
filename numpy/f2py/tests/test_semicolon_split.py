@@ -14,6 +14,7 @@ from . import util
     np.dtype(np.intp).itemsize < 8,
     reason="32-bit builds are buggy"
 )
+@pytest.mark.usefixtures("build_module")
 class TestMultiline(util.F2PyTest):
     suffix = ".pyf"
     module_name = "multiline"
@@ -48,6 +49,7 @@ end python module {module_name}
     reason="32-bit builds are buggy"
 )
 @pytest.mark.slow
+@pytest.mark.usefixtures("build_module")
 class TestCallstatement(util.F2PyTest):
     suffix = ".pyf"
     module_name = "callstatement"

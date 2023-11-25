@@ -5,6 +5,7 @@ import numpy as np
 from . import util
 
 
+@pytest.mark.usefixtures("build_module")
 class TestSizeSumExample(util.F2PyTest):
     sources = [util.getpath("tests", "src", "size", "foo.f90")]
 

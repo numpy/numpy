@@ -6,6 +6,7 @@ from numpy.f2py.tests import util
 
 
 @pytest.mark.slow
+@pytest.mark.usefixtures("build_module")
 class TestCharacterString(util.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/test-build-f2py']
     suffix = '.f90'
@@ -132,6 +133,7 @@ class TestCharacterString(util.F2PyTest):
         assert_array_equal(f(a), expected)
 
 
+@pytest.mark.usefixtures("build_module")
 class TestCharacter(util.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/test-build-f2py']
     suffix = '.f90'
@@ -430,6 +432,7 @@ class TestCharacter(util.F2PyTest):
         assert_equal(f(b'B'), b"B")
 
 
+@pytest.mark.usefixtures("build_module")
 class TestMiscCharacter(util.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/test-build-f2py']
     suffix = '.f90'
@@ -573,6 +576,7 @@ class TestMiscCharacter(util.F2PyTest):
         assert_raises(Exception, lambda: f(b'c'))
 
 
+@pytest.mark.usefixtures("build_module")
 class TestStringScalarArr(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "scalar_string.f90")]
 
@@ -592,6 +596,7 @@ class TestStringScalarArr(util.F2PyTest):
             expected = '|S12'
             assert out.dtype == expected
 
+@pytest.mark.usefixtures("build_module")
 class TestStringAssumedLength(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "gh24008.f")]
 
@@ -599,6 +604,7 @@ class TestStringAssumedLength(util.F2PyTest):
         self.module.greet("joe", "bob")
 
 @pytest.mark.slow
+@pytest.mark.usefixtures("build_module")
 class TestStringOptionalInOut(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "gh24662.f90")]
 

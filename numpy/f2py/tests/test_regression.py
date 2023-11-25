@@ -6,6 +6,7 @@ import numpy as np
 from . import util
 
 
+@pytest.mark.usefixtures("build_module")
 class TestIntentInOut(util.F2PyTest):
     # Check that intent(in out) translates as intent(inout)
     sources = [util.getpath("tests", "src", "regression", "inout.f90")]
@@ -22,6 +23,7 @@ class TestIntentInOut(util.F2PyTest):
         assert np.allclose(x, [3, 1, 2])
 
 
+@pytest.mark.usefixtures("build_module")
 class TestNegativeBounds(util.F2PyTest):
     # Check that negative bounds work correctly
     sources = [util.getpath("tests", "src", "negative_bounds", "issue_20853.f90")]
@@ -41,6 +43,7 @@ class TestNegativeBounds(util.F2PyTest):
         assert np.allclose(rval, expval)
 
 
+@pytest.mark.usefixtures("build_module")
 class TestNumpyVersionAttribute(util.F2PyTest):
     # Check that th attribute __f2py_numpy_version__ is present
     # in the compiled module and that has the value np.__version__.

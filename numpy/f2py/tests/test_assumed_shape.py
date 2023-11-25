@@ -5,6 +5,27 @@ import tempfile
 from . import util
 
 
+@pytest.fixture(scope="function")
+def custom_f2cmap(request):
+    test_instance = request.instance
+    original_sources = test_instance.sources.copy()
+
+    f2cmap_src = original_sources.pop(-1)
+    f2cmap_file = tempfile.NamedTemporaryFile(delete=False)
+    with open(f2cmap_src, "rb") as f:
+        f2cmap_file.write(f.read())
+    f2cmap_file.close()
+
+    test_instance.sources = original_sources + [f2cmap_file.name]
+    test_instance.options = ["--f2cmap", f2cmap_file.name]
+
+    def cleanup_f2cmap_file():
+        os.unlink(f2cmap_file.name)
+
+    request.addfinalizer(cleanup_f2cmap_file)
+
+
+@pytest.mark.usefixtures("build_module")
 class TestAssumedShapeSumExample(util.F2PyTest):
     sources = [
         util.getpath("tests", "src", "assumed_shape", "foo_free.f90"),
@@ -30,20 +51,6 @@ class TestAssumedShapeSumExample(util.F2PyTest):
 
 
 class TestF2cmapOption(TestAssumedShapeSumExample):
-    def setup_method(self):
-        # Use a custom file name for .f2py_f2cmap
-        self.sources = list(self.sources)
-        f2cmap_src = self.sources.pop(-1)
-
-        self.f2cmap_file = tempfile.NamedTemporaryFile(delete=False)
-        with open(f2cmap_src, "rb") as f:
-            self.f2cmap_file.write(f.read())
-        self.f2cmap_file.close()
-
-        self.sources.append(self.f2cmap_file.name)
-        self.options = ["--f2cmap", self.f2cmap_file.name]
-
-        super().setup_method()
-
-    def teardown_method(self):
-        os.unlink(self.f2cmap_file.name)
+    @pytest.mark.usefixtures("custom_f2cmap")
+    def test_all(self):
+        super().test_all()

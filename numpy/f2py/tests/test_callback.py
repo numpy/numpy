@@ -11,6 +11,7 @@ from numpy.testing import IS_PYPY
 from . import util
 
 
+@pytest.mark.usefixtures("build_module")
 class TestF77Callback(util.F2PyTest):
     sources = [util.getpath("tests", "src", "callback", "foo.f")]
 
@@ -194,15 +195,7 @@ class TestF77Callback(util.F2PyTest):
         assert r == 3
 
 
-class TestF77CallbackPythonTLS(TestF77Callback):
-    """
-    Callback tests using Python thread-local storage instead of
-    compiler-provided
-    """
-
-    options = ["-DF2PY_USE_PYTHON_TLS"]
-
-
+@pytest.mark.usefixtures("build_module")
 class TestF90Callback(util.F2PyTest):
     sources = [util.getpath("tests", "src", "callback", "gh17797.f90")]
 
@@ -216,6 +209,7 @@ class TestF90Callback(util.F2PyTest):
         assert r == 123 + 1 + 2 + 3
 
 
+@pytest.mark.usefixtures("build_module")
 class TestGH18335(util.F2PyTest):
     """The reproduction of the reported issue requires specific input that
     extensions may break the issue conditions, so the reproducer is
@@ -233,6 +227,7 @@ class TestGH18335(util.F2PyTest):
         assert r == 123 + 1
 
 
+@pytest.mark.usefixtures("build_module")
 class TestGH25211(util.F2PyTest):
     sources = [util.getpath("tests", "src", "callback", "gh25211.f"),
                util.getpath("tests", "src", "callback", "gh25211.pyf")]

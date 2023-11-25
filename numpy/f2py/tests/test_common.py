@@ -3,6 +3,7 @@ import numpy as np
 from . import util
 
 @pytest.mark.slow
+@pytest.mark.usefixtures("build_module")
 class TestCommonBlock(util.F2PyTest):
     sources = [util.getpath("tests", "src", "common", "block.f")]
 
@@ -13,6 +14,7 @@ class TestCommonBlock(util.F2PyTest):
         assert self.module.block.ok == np.array(3, dtype=np.int32)
 
 
+@pytest.mark.usefixtures("build_module")
 class TestCommonWithUse(util.F2PyTest):
     sources = [util.getpath("tests", "src", "common", "gh19161.f90")]
 

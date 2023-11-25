@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
+@pytest.mark.usefixtures("build_module")
 class TestISOC(util.F2PyTest):
     sources = [
         util.getpath("tests", "src", "isocintrin", "isoCtests.f90"),

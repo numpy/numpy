@@ -5,6 +5,7 @@ from . import util
 
 
 @pytest.mark.slow
+@pytest.mark.usefixtures("build_module")
 class TestReturnInteger(util.F2PyTest):
     def check_function(self, t, tname):
         assert t(123) == 123

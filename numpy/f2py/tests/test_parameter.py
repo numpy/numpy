@@ -6,6 +6,7 @@ import numpy as np
 from . import util
 
 
+@pytest.mark.usefixtures("build_module")
 class TestParameters(util.F2PyTest):
     # Check that intent(in out) translates as intent(inout)
     sources = [

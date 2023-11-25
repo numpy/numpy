@@ -1,6 +1,8 @@
 from . import util
+import pytest
 import numpy as np
 
+@pytest.mark.usefixtures("build_module")
 class TestF2Cmap(util.F2PyTest):
     sources = [
         util.getpath("tests", "src", "f2cmap", "isoFortranEnvMap.f90"),

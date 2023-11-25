@@ -6,6 +6,7 @@ from numpy.testing import IS_PYPY
 from . import util
 
 
+@pytest.mark.usefixtures("build_module")
 class TestMixed(util.F2PyTest):
     sources = [
         util.getpath("tests", "src", "mixed", "foo.f"),

@@ -5,6 +5,7 @@ from . import util
 
 
 @pytest.mark.slow
+@pytest.mark.usefixtures("build_module")
 class TestReturnComplex(util.F2PyTest):
     def check_function(self, t, tname):
         if tname in ["t0", "t8", "s0", "s8"]:

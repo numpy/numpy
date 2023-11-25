@@ -7,6 +7,7 @@ from . import util
 from numpy.testing import IS_PYPY
 
 
+@pytest.mark.usefixtures("build_module")
 @pytest.mark.slow
 class TestModuleDocString(util.F2PyTest):
     sources = [

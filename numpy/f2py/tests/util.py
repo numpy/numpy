@@ -272,17 +272,6 @@ class CompilerChecker:
 
             self.compilers_checked = True
 
-checker = CompilerChecker()
-checker.check_compilers()
-
-def has_c_compiler():
-    return checker.has_c
-
-def has_f77_compiler():
-    return checker.has_f77
-
-def has_f90_compiler():
-    return checker.has_f90
 
 #
 # Building with meson
@@ -352,41 +341,19 @@ class F2PyTest:
     only = []
     suffix = ".f"
     module = None
-    _has_c_compiler = None
-    _has_f77_compiler = None
-    _has_f90_compiler = None
 
     @property
     def module_name(self):
         cls = type(self)
         return f'_{cls.__module__.rsplit(".",1)[-1]}_{cls.__name__}_ext_module'
 
-    @classmethod
-    def setup_class(cls):
-        if sys.platform == "win32":
-            pytest.skip("Fails with MinGW64 Gfortran (Issue #9673)")
-        F2PyTest._has_c_compiler = has_c_compiler()
-        F2PyTest._has_f77_compiler = has_f77_compiler()
-        F2PyTest._has_f90_compiler = has_f90_compiler()
-
-    def setup_method(self):
+    def build_mod(self):
         if self.module is not None:
             return
 
         codes = self.sources if self.sources else []
         if self.code:
             codes.append(self.suffix)
-
-        needs_f77 = any(str(fn).endswith(".f") for fn in codes)
-        needs_f90 = any(str(fn).endswith(".f90") for fn in codes)
-        needs_pyf = any(str(fn).endswith(".pyf") for fn in codes)
-
-        if needs_f77 and not self._has_f77_compiler:
-            pytest.skip("No Fortran 77 compiler available")
-        if needs_f90 and not self._has_f90_compiler:
-            pytest.skip("No Fortran 90 compiler available")
-        if needs_pyf and not (self._has_f90_compiler or self._has_f77_compiler):
-            pytest.skip("No Fortran compiler available")
 
         # Build the module
         if self.code is not None:

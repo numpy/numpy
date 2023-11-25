@@ -5,6 +5,7 @@ import numpy as np
 from . import util
 
 
+@pytest.mark.usefixtures("build_module")
 class TestString(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "char.f90")]
 
@@ -19,6 +20,7 @@ class TestString(util.F2PyTest):
         assert out == pytest.approx(expected)
 
 
+@pytest.mark.usefixtures("build_module")
 class TestDocStringArguments(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "string.f")]
 
@@ -36,6 +38,7 @@ class TestDocStringArguments(util.F2PyTest):
         assert d.tobytes() == b"D23"
 
 
+@pytest.mark.usefixtures("build_module")
 class TestFixedString(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "fixed_string.f90")]
 

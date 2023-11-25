@@ -8,9 +8,9 @@ from numpy.testing import IS_WASM
 
 @pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
 @pytest.mark.slow
+@pytest.mark.usefixtures("build_module")
 class TestAbstractInterface(util.F2PyTest):
     sources = [util.getpath("tests", "src", "abstract_interface", "foo.f90")]
-
     skip = ["add1", "add2"]
 
     def test_abstract_interface(self):

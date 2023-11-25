@@ -12,6 +12,7 @@ import contextlib
 import io
 
 
+@pytest.mark.usefixtures("build_module")
 class TestNoSpace(util.F2PyTest):
     # issue gh-15035: add handling for endsubroutine, endfunction with no space
     # between "end" and the block name
@@ -95,6 +96,7 @@ class TestModuleProcedure():
         assert mod['vars']['seta']['attrspec'] == ['public', ]
 
 
+@pytest.mark.usefixtures("build_module")
 class TestExternal(util.F2PyTest):
     # issue gh-17859: add external attribute support
     sources = [util.getpath("tests", "src", "crackfortran", "gh17859.f")]
@@ -114,6 +116,7 @@ class TestExternal(util.F2PyTest):
         assert r == 123
 
 
+@pytest.mark.usefixtures("build_module")
 class TestCrackFortran(util.F2PyTest):
     # gh-2848: commented lines between parameters in subroutine parameter lists
     sources = [util.getpath("tests", "src", "crackfortran", "gh2848.f90")]
@@ -144,6 +147,7 @@ class TestMarkinnerspaces:
         assert markinnerspaces(r'a "b c" "d e"') == r'a "b@_@c" "d@_@e"'
 
 
+@pytest.mark.usefixtures("build_module")
 class TestDimSpec(util.F2PyTest):
     """This test suite tests various expressions that are used as dimension
     specifications.
@@ -255,7 +259,7 @@ class TestModuleDeclaration:
         assert mod[0]["vars"]["abar"]["="] == "bar('abar')"
 
 
-class TestEval(util.F2PyTest):
+class TestEval():
     def test_eval_scalar(self):
         eval_scalar = crackfortran._eval_scalar
 
@@ -265,7 +269,7 @@ class TestEval(util.F2PyTest):
         assert eval_scalar('"123"', {}) == "'123'"
 
 
-class TestFortranReader(util.F2PyTest):
+class TestFortranReader():
     @pytest.mark.parametrize("encoding",
                              ['ascii', 'utf-8', 'utf-16', 'utf-32'])
     def test_input_encoding(self, tmp_path, encoding):
@@ -281,6 +285,7 @@ class TestFortranReader(util.F2PyTest):
 
 
 @pytest.mark.slow
+@pytest.mark.usefixtures("build_module")
 class TestUnicodeComment(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "unicode_comment.f90")]
 
@@ -328,6 +333,7 @@ class TestNameArgsPatternBacktracking:
             good_version_of_adversary = repeated_adversary + '@)@'
             assert nameargspattern.search(good_version_of_adversary)
 
+@pytest.mark.usefixtures("build_module")
 class TestFunctionReturn(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "gh23598.f90")]
 
@@ -337,7 +343,7 @@ class TestFunctionReturn(util.F2PyTest):
         assert self.module.intproduct(3, 4) == 12
 
 
-class TestFortranGroupCounters(util.F2PyTest):
+class TestFortranGroupCounters():
     def test_end_if_comment(self):
         # gh-23533
         fpath = util.getpath("tests", "src", "crackfortran", "gh23533.f")

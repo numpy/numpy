@@ -8,6 +8,7 @@ IS_S390X = platform.machine() == "s390x"
 
 
 @pytest.mark.slow
+@pytest.mark.usefixtures("build_module")
 class TestReturnCharacter(util.F2PyTest):
     def check_function(self, t, tname):
         if tname in ["t0", "t1", "s0", "s1"]:

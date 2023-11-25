@@ -24,7 +24,7 @@ def get_testdir():
     testroot = Path(__file__).resolve().parent / "src"
     return  testroot / "array_from_pyobj"
 
-def setup_module():
+def setup_module(check_compilers):
     """
     Build the required testing extension module
 
