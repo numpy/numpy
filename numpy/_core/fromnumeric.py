@@ -3588,13 +3588,13 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
     Notes
     -----
-    The definition of the standard deviation of an array is not unique.
-    Assuming the input `a` is a one dimensional NumPy array and `mean` is
-    either provided as an argument or computed as ``a.mean()``, NumPy
-    computes the standard deviation of an array as::
+    There are several common variants of the array standard deviation
+    calculation. Assuming the input `a` is a one dimensional NumPy array
+    and `mean` is either provided as an argument or computed as ``a.mean()``,
+    NumPy computes the standard deviation of an array as::
 
         N = len(a)
-        d2 = abs(a - mean)**2
+        d2 = abs(a - mean)**2  # abs is for complex `a`
         var = d2.sum() / (N - ddof)  # note use of `ddof`
         std = var**0.5
 
@@ -3605,8 +3605,9 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
         \sqrt{\frac{\sum_i{|a_i - \bar{a}|^2 }}{N}}
 
-    and is sometimes (for better or for worse) called "population
-    standard deviation" or "uncorrected sample standard deviation".
+    which is sometimes called the "population standard deviation" in the field
+    of statistics because it applies the definition of standard deviation to
+    `a` as if `a` were a complete population of possible observations.
 
     Many other libraries define the standard deviation of an array
     differently, e.g.:
@@ -3615,10 +3616,16 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
         \sqrt{\frac{\sum_i{|a_i - \bar{a}|^2 }}{N - 1}}
 
-    The use of :math:`N-1` in the denominator is often called "Bessel's
-    correction", and the resulting quantity is sometimed called the "sample
-    standard deviation" or "corrected sample standard deviation". For this
-    quantity, use ``ddof=1``.
+    In statistics, the resulting quantity is sometimed called the "sample
+    standard deviation" because it treats `a` as a random sample from a larger
+    population: it computes an unbiased estimate of the variance of this
+    population from the sample, then takes the square root. The use of
+    :math:`N-1` in the denominator is often called "Bessel's correction"
+    because it corrects for bias (toward lower values) in the variance
+    estimate introduced when the sample mean of `a` is used in place of the
+    true mean of the population. (The resulting estimate of the standard
+    deviation is still biased, but less than it would have been without the
+    correction.) For this quantity, use ``ddof=1``.
 
     Note that, for complex numbers, `std` takes the absolute
     value before squaring, so that the result is always real and nonnegative.
@@ -3773,13 +3780,13 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
     Notes
     -----
-    The definition of the variance of an array is not unique.
+    There are several common variants of the array variance calculation.
     Assuming the input `a` is a one dimensional NumPy array and `mean` is
     either provided as an argument or computed as ``a.mean()``, NumPy
     computes the variance of an array as::
 
         N = len(a)
-        d2 = abs(a - mean)**2
+        d2 = abs(a - mean)**2  # abs is for complex `a`
         var = d2.sum() / (N - ddof)  # note use of `ddof`
 
     Different values of the argument `ddof` are useful in different
@@ -3789,8 +3796,9 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
         \frac{\sum_i{|a_i - \bar{a}|^2 }}{N}
 
-    and is sometimes (for better or for worse) called "population
-    variance", "uncorrected sample variance", or "biased sample variance".
+    which is sometimes called the "population variance" in the field of
+    statistics because it applies the definition of variance to `a` as if `a`
+    were a complete population of possible observations.
 
     Many other libraries define the variance of an array differently, e.g.:
 
@@ -3798,10 +3806,14 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
         \frac{\sum_i{|a_i - \bar{a}|^2}}{N - 1}
 
-    The use of :math:`N-1` in the denominator is often called "Bessel's
-    correction", and the resulting quantity is sometimed called the "sample
-    variance", "corrected sample variance", or "unbiased sample variance".
-    For this quantity, use ``ddof=1``.
+    In statistics, the resulting quantity is sometimed called the "sample
+    variance" because it treats `a` as a random sample from a larger
+    population, and it computes an unbiased estimate of the variance of this
+    population from the sample. The use of :math:`N-1` in the denominator is
+    often called "Bessel's correction" because it corrects for bias (toward
+    lower values) in the variance estimate introduced when the sample mean of
+    `a` is used in place of the true mean of the population. For this
+    quantity, use ``ddof=1``.
 
     Note that for complex numbers, the absolute value is taken before
     squaring, so that the result is always real and nonnegative.
