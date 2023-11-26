@@ -1728,6 +1728,12 @@ M   33  21.99
                            dtype=[('', '|U11'), ('', float)])
         assert_equal(test, control)
 
+    def test_no_dtype_complex(self):
+        data = TextIO("(0.000000000000000000e+00+0.000000000000000000e+00j)\n(1.000000000000000000e+00+1.000000000000000000e+00j)")
+        loaded_data = np.genfromtxt(data)
+        control = np.array([0 + 0j, 1 + 1j])
+        assert_equal(loaded_data, control)
+
     def test_spacedelimiter(self):
         # Test space delimiter
         data = TextIO("1  2  3  4   5\n6  7  8  9  10")
