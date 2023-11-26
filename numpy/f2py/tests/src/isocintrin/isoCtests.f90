@@ -20,4 +20,15 @@
         integer(c_int64_t), intent(out) :: c
         c = a + b
       end subroutine c_add_int64
+      ! gh-25207
+      subroutine add_arr(A, B, C)
+         integer(c_int64_t), intent(in) :: A(3)
+         integer(c_int64_t), intent(in) :: B(3)
+         integer(c_int64_t), intent(out) :: C(3)
+         integer :: j
+
+         do j = 1, 3
+            C(j) = A(j)+B(j)
+         end do
+      end subroutine
   end module coddity
