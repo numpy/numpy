@@ -3589,9 +3589,9 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     Notes
     -----
     There are several common variants of the array standard deviation
-    calculation. Assuming the input `a` is a one dimensional NumPy array
-    and `mean` is either provided as an argument or computed as ``a.mean()``,
-    NumPy computes the standard deviation of an array as::
+    calculation. Assuming the input `a` is a one-dimensional NumPy array
+    and ``mean`` is either provided as an argument or computed as
+    ``a.mean()``, NumPy computes the standard deviation of an array as::
 
         N = len(a)
         d2 = abs(a - mean)**2  # abs is for complex `a`
@@ -3617,15 +3617,15 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         \sqrt{\frac{\sum_i{|a_i - \bar{a}|^2 }}{N - 1}}
 
     In statistics, the resulting quantity is sometimed called the "sample
-    standard deviation" because it treats `a` as a random sample from a larger
-    population: it computes an unbiased estimate of the variance of this
-    population from the sample, then takes the square root. The use of
-    :math:`N-1` in the denominator is often called "Bessel's correction"
-    because it corrects for bias (toward lower values) in the variance
-    estimate introduced when the sample mean of `a` is used in place of the
-    true mean of the population. (The resulting estimate of the standard
-    deviation is still biased, but less than it would have been without the
-    correction.) For this quantity, use ``ddof=1``.
+    standard deviation" because if `a` is a random sample from a larger
+    population, this calculation provides the square root of an unbiased
+    estimate of the variance of the population. The use of :math:`N-1` in the
+    denominator is often called "Bessel's correction" because it corrects for
+    bias (toward lower values) in the variance estimate introduced when the
+    sample mean of `a` is used in place of the true mean of the population.
+    The resulting estimate of the standard deviation is still biased, but less
+    than it would have been without the correction. For this quantity, use
+    ``ddof=1``.
 
     Note that, for complex numbers, `std` takes the absolute
     value before squaring, so that the result is always real and nonnegative.
@@ -3781,7 +3781,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     Notes
     -----
     There are several common variants of the array variance calculation.
-    Assuming the input `a` is a one dimensional NumPy array and `mean` is
+    Assuming the input `a` is a one-dimensional NumPy array and ``mean`` is
     either provided as an argument or computed as ``a.mean()``, NumPy
     computes the variance of an array as::
 
@@ -3807,13 +3807,13 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         \frac{\sum_i{|a_i - \bar{a}|^2}}{N - 1}
 
     In statistics, the resulting quantity is sometimed called the "sample
-    variance" because it treats `a` as a random sample from a larger
-    population, and it computes an unbiased estimate of the variance of this
-    population from the sample. The use of :math:`N-1` in the denominator is
-    often called "Bessel's correction" because it corrects for bias (toward
-    lower values) in the variance estimate introduced when the sample mean of
-    `a` is used in place of the true mean of the population. For this
-    quantity, use ``ddof=1``.
+    variance" because if `a` is a random sample from a larger population,
+    this calculation provides an unbiased estimate of the variance of the
+    population.  The use of :math:`N-1` in the denominator is often called
+    "Bessel's correction" because it corrects for bias (toward lower values)
+    in the variance estimate introduced when the sample mean of `a` is used
+    in place of the true mean of the population. For this quantity, use
+    ``ddof=1``.
 
     Note that for complex numbers, the absolute value is taken before
     squaring, so that the result is always real and nonnegative.
