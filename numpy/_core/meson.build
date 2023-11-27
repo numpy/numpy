@@ -781,11 +781,6 @@ foreach gen_mtargets : [
     'src/npysort/simd_qsort_16bit.dispatch.cpp',
     [AVX512_SPR, AVX512_ICL]
   ],
-  [
-    'simd_argsort.dispatch.h',
-    'src/npysort/simd_argsort.dispatch.cpp',
-    [AVX512_SKX]
-  ],
 ]
   mtargets = mod_features.multi_targets(
     gen_mtargets[0], multiarray_gen_headers + gen_mtargets[1],
