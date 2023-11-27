@@ -126,7 +126,7 @@ jobs:
           name: ${{ matrix.python }}-${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
           path: ./wheelhouse/*.whl
 
-      - uses: conda-incubator/setup-miniconda@3b0f2504dd76ef23b6d31f291f4913fb60ab5ff3 # v2.2.0
+      - uses: conda-incubator/setup-miniconda@2defc80cc6f4028b1780c50faf08dd505d698976 # v3.0.0
         with:
           # for installation of anaconda-client, required for upload to
           # anaconda.org
@@ -211,7 +211,7 @@ jobs:
           name: sdist
           path: ./dist/*
 
-      - uses: conda-incubator/setup-miniconda@3b0f2504dd76ef23b6d31f291f4913fb60ab5ff3 # v2.2.0
+      - uses: conda-incubator/setup-miniconda@2defc80cc6f4028b1780c50faf08dd505d698976 # v3.0.0
         with:
           # for installation of anaconda-client, required for upload to
           # anaconda.org
