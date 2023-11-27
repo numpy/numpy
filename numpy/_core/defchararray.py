@@ -607,7 +607,8 @@ def decode(a, encoding=None, errors=None):
 
     """
     return _to_bytes_or_str_array(
-        _vec_string(a, object_, 'decode', _clean_args(encoding, errors)), numpy.str_(''))
+        _vec_string(a, object_, 'decode', _clean_args(encoding, errors)),
+        numpy.str_(''))
 
 
 @array_function_dispatch(_code_dispatcher)
@@ -643,7 +644,8 @@ def encode(a, encoding=None, errors=None):
 
     """
     return _to_bytes_or_str_array(
-        _vec_string(a, object_, 'encode', _clean_args(encoding, errors)), numpy.bytes_(b''))
+        _vec_string(a, object_, 'encode', _clean_args(encoding, errors)),
+        numpy.bytes_(b''))
 
 
 def _endswith_dispatcher(a, suffix, start=None, end=None):
