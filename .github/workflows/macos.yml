@@ -51,7 +51,7 @@ jobs:
           ${{ github.workflow }}-${{ matrix.python-version }}-ccache-macos-
 
     - name: Setup Mambaforge
-      uses: conda-incubator/setup-miniconda@3b0f2504dd76ef23b6d31f291f4913fb60ab5ff3 # v2.2.0
+      uses: conda-incubator/setup-miniconda@2defc80cc6f4028b1780c50faf08dd505d698976 # v3.0.0
       with:
         python-version: ${{ matrix.python-version }}
         channels: conda-forge
