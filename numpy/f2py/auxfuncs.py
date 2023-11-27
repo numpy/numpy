@@ -974,9 +974,9 @@ def process_f2cmap_dict(f2cmap_all, new_map, c2py_map, verbose = False):
                         "\tWarning: redefinition of {'%s':{'%s':'%s'->'%s'}}\n"
                         % (k, k1, f2cmap_all[k][k1], v1)
                     )
-                f2cmap_all[k][k1] = v1
+                f2cmap_all[k][k1] = c2py_map[v1]
                 if verbose:
-                    outmess('\tMapping "%s(kind=%s)" to "%s"\n' % (k, k1, v1))
+                    outmess('\tMapping "%s(kind=%s)" to "%s"\n' % (k, k1, c2py_map[v1]))
                 f2cmap_mapped.append(v1)
             else:
                 if verbose:
