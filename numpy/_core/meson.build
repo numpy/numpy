@@ -764,22 +764,28 @@ endforeach
 # -----------------------------------
 foreach gen_mtargets : [
   [
-    'simd_argsort.dispatch.h',
-    'src/npysort/simd_argsort.dispatch.cpp',
+    'x86_simd_argsort.dispatch.h',
+    'src/npysort/x86_simd_argsort.dispatch.cpp',
     [AVX512_SKX]
   ],
   [
-    'simd_qsort.dispatch.h',
-    'src/npysort/simd_qsort.dispatch.cpp',
+    'x86_simd_qsort.dispatch.h',
+    'src/npysort/x86_simd_qsort.dispatch.cpp',
     [
       AVX512_SKX, AVX2,
-      ASIMD,
     ]
   ],
   [
-    'simd_qsort_16bit.dispatch.h',
-    'src/npysort/simd_qsort_16bit.dispatch.cpp',
+    'x86_simd_qsort_16bit.dispatch.h',
+    'src/npysort/x86_simd_qsort_16bit.dispatch.cpp',
     [AVX512_SPR, AVX512_ICL]
+  ],
+  [
+    'highway_qsort.dispatch.h',
+    'src/npysort/highway_qsort.dispatch.cpp',
+    [
+      ASIMD,
+    ]
   ],
 ]
   mtargets = mod_features.multi_targets(
