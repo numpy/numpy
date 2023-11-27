@@ -86,12 +86,12 @@ macos_arm64_test_task:
 
   test_script: |
     brew install micromamba ccache
-    /opt/homebrew/opt/micromamba/bin/micromamba shell init -s bash -p ~/micromamba
+    micromamba shell init -s bash -p ~/micromamba
     source ~/.bash_profile
     
     micromamba create -n numpydev
     micromamba activate numpydev
-    micromamba install -y -c conda-forge compilers python=3.11
+    micromamba install -y -c conda-forge compilers python=3.11 2>/dev/null
     
     export PATH=/opt/homebrew/opt/ccache/libexec:$PATH
     export CCACHE_DIR=$PWD/.ccache
