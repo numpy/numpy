@@ -870,6 +870,19 @@ short_from_pyobj(short* v, PyObject *obj, const char *errmess) {
 }
 """
 
+needs['int64_t_from_pyobj'] = ['long_from_pyobj']
+cfuncs['int64_t_from_pyobj'] = """
+static int
+int64_t_from_pyobj(int64_t* v, PyObject *obj, const char *errmess) {
+    long i = 0;
+    if (long_from_pyobj(&i, obj, errmess)) {
+        *v = (int64_t)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
 
 cfuncs['int_from_pyobj'] = """
 static int
