@@ -672,6 +672,27 @@ class TestOperations:
         assert_(arr[0, 0] == b'abc')
 
 
+class TestMethodsEmptyArray:
+    def setup_method(self):
+        self.U = np.array([], dtype='U')
+        self.S = np.array([], dtype='S')
+
+    def test_encode(self):
+        res = np.char.encode(self.U)
+        assert_array_equal(res, [])
+        assert_(res.dtype.char == 'S')
+
+    def test_decode(self):
+        res = np.char.decode(self.S)
+        assert_array_equal(res, [])
+        assert_(res.dtype.char == 'U')
+
+    def test_decode_with_reshape(self):
+        res = np.char.decode(self.S.reshape((1, 0, 1)))
+        print(res.dtype)
+        assert_(res.shape == (1, 0, 1))
+
+
 def test_empty_indexing():
     """Regression test for ticket 1948."""
     # Check that indexing a chararray with an empty list/array returns an
