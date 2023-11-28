@@ -1,0 +1,159 @@
+# copy not implemented
+array_api_tests/test_creation_functions.py::test_asarray_arrays
+
+# waiting on NumPy to allow/revert distinct NaNs for np.unique
+# https://github.com/numpy/numpy/issues/20326#issuecomment-1012380448
+array_api_tests/test_set_functions.py
+
+# https://github.com/numpy/numpy/issues/21213
+array_api_tests/test_special_cases.py::test_iop[__ipow__(x1_i is -infinity and x2_i > 0 and not (x2_i.is_integer() and x2_i % 2 == 1)) -> +infinity]
+array_api_tests/test_special_cases.py::test_iop[__ipow__(x1_i is -0 and x2_i > 0 and not (x2_i.is_integer() and x2_i % 2 == 1)) -> +0]
+# noted diversions from spec
+array_api_tests/test_special_cases.py::test_binary[floor_divide(x1_i is +infinity and isfinite(x2_i) and x2_i > 0) -> +infinity]
+array_api_tests/test_special_cases.py::test_binary[floor_divide(x1_i is +infinity and isfinite(x2_i) and x2_i < 0) -> -infinity]
+array_api_tests/test_special_cases.py::test_binary[floor_divide(x1_i is -infinity and isfinite(x2_i) and x2_i > 0) -> -infinity]
+array_api_tests/test_special_cases.py::test_binary[floor_divide(x1_i is -infinity and isfinite(x2_i) and x2_i < 0) -> +infinity]
+array_api_tests/test_special_cases.py::test_binary[floor_divide(isfinite(x1_i) and x1_i > 0 and x2_i is -infinity) -> -0]
+array_api_tests/test_special_cases.py::test_binary[floor_divide(isfinite(x1_i) and x1_i < 0 and x2_i is +infinity) -> -0]
+array_api_tests/test_special_cases.py::test_binary[__floordiv__(x1_i is +infinity and isfinite(x2_i) and x2_i > 0) -> +infinity]
+array_api_tests/test_special_cases.py::test_binary[__floordiv__(x1_i is +infinity and isfinite(x2_i) and x2_i < 0) -> -infinity]
+array_api_tests/test_special_cases.py::test_binary[__floordiv__(x1_i is -infinity and isfinite(x2_i) and x2_i > 0) -> -infinity]
+array_api_tests/test_special_cases.py::test_binary[__floordiv__(x1_i is -infinity and isfinite(x2_i) and x2_i < 0) -> +infinity]
+array_api_tests/test_special_cases.py::test_binary[__floordiv__(isfinite(x1_i) and x1_i > 0 and x2_i is -infinity) -> -0]
+array_api_tests/test_special_cases.py::test_binary[__floordiv__(isfinite(x1_i) and x1_i < 0 and x2_i is +infinity) -> -0]
+array_api_tests/test_special_cases.py::test_iop[__ifloordiv__(x1_i is +infinity and isfinite(x2_i) and x2_i > 0) -> +infinity]
+array_api_tests/test_special_cases.py::test_iop[__ifloordiv__(x1_i is +infinity and isfinite(x2_i) and x2_i < 0) -> -infinity]
+array_api_tests/test_special_cases.py::test_iop[__ifloordiv__(x1_i is -infinity and isfinite(x2_i) and x2_i > 0) -> -infinity]
+array_api_tests/test_special_cases.py::test_iop[__ifloordiv__(x1_i is -infinity and isfinite(x2_i) and x2_i < 0) -> +infinity]
+array_api_tests/test_special_cases.py::test_iop[__ifloordiv__(isfinite(x1_i) and x1_i > 0 and x2_i is -infinity) -> -0]
+array_api_tests/test_special_cases.py::test_iop[__ifloordiv__(isfinite(x1_i) and x1_i < 0 and x2_i is +infinity) -> -0]
+
+# asarray() got an unexpected keyword argument 'copy'
+array_api_tests/test_array_object.py::test_setitem
+# array_api_tests/test_array_object.py::test_setitem_masking
+array_api_tests/test_creation_functions.py::test_asarray_scalars
+
+# fft test suite is buggy as of 83f0bcdc
+array_api_tests/test_fft.py
+
+# missing isdtype, astype and finfo return type misalignment
+array_api_tests/test_data_type_functions.py::test_finfo[float32]
+array_api_tests/test_data_type_functions.py::test_isdtype
+array_api_tests/test_data_type_functions.py::test_astype
+
+# missing names
+array_api_tests/test_has_names.py::test_has_names[linalg-cross]
+array_api_tests/test_has_names.py::test_has_names[linalg-matmul]
+array_api_tests/test_has_names.py::test_has_names[linalg-matrix_norm]
+array_api_tests/test_has_names.py::test_has_names[linalg-matrix_transpose]
+array_api_tests/test_has_names.py::test_has_names[linalg-outer]
+array_api_tests/test_has_names.py::test_has_names[linalg-svdvals]
+array_api_tests/test_has_names.py::test_has_names[linalg-tensordot]
+array_api_tests/test_has_names.py::test_has_names[linalg-vecdot]
+array_api_tests/test_has_names.py::test_has_names[linalg-vector_norm]
+array_api_tests/test_has_names.py::test_has_names[set-unique_all]
+array_api_tests/test_has_names.py::test_has_names[set-unique_counts]
+array_api_tests/test_has_names.py::test_has_names[set-unique_inverse]
+array_api_tests/test_has_names.py::test_has_names[set-unique_values]
+array_api_tests/test_has_names.py::test_has_names[manipulation-concat]
+array_api_tests/test_has_names.py::test_has_names[manipulation-permute_dims]
+array_api_tests/test_has_names.py::test_has_names[data_type-astype]
+array_api_tests/test_has_names.py::test_has_names[data_type-isdtype]
+array_api_tests/test_has_names.py::test_has_names[elementwise-acos]
+array_api_tests/test_has_names.py::test_has_names[elementwise-acosh]
+array_api_tests/test_has_names.py::test_has_names[elementwise-asin]
+array_api_tests/test_has_names.py::test_has_names[elementwise-asinh]
+array_api_tests/test_has_names.py::test_has_names[elementwise-atan]
+array_api_tests/test_has_names.py::test_has_names[elementwise-atan2]
+array_api_tests/test_has_names.py::test_has_names[elementwise-atanh]
+array_api_tests/test_has_names.py::test_has_names[elementwise-bitwise_left_shift]
+array_api_tests/test_has_names.py::test_has_names[elementwise-bitwise_invert]
+array_api_tests/test_has_names.py::test_has_names[elementwise-bitwise_right_shift]
+array_api_tests/test_has_names.py::test_has_names[elementwise-pow]
+array_api_tests/test_has_names.py::test_has_names[linear_algebra-matrix_transpose]
+array_api_tests/test_has_names.py::test_has_names[linear_algebra-vecdot]
+array_api_tests/test_has_names.py::test_has_names[array_method-to_device]
+array_api_tests/test_has_names.py::test_has_names[array_attribute-device]
+
+# missing linalg names
+array_api_tests/test_linalg.py::test_cross
+array_api_tests/test_linalg.py::test_matrix_norm
+array_api_tests/test_linalg.py::test_matrix_transpose
+array_api_tests/test_linalg.py::test_outer
+array_api_tests/test_linalg.py::test_pinv
+array_api_tests/test_linalg.py::test_svdvals
+array_api_tests/test_linalg.py::test_vecdot
+
+# missing names
+array_api_tests/test_manipulation_functions.py::test_concat
+array_api_tests/test_manipulation_functions.py::test_permute_dims
+
+# a few misalignments
+array_api_tests/test_operators_and_elementwise_functions.py
+array_api_tests/test_signatures.py::test_func_signature[std]
+array_api_tests/test_signatures.py::test_func_signature[var]
+array_api_tests/test_signatures.py::test_func_signature[unique_all]
+array_api_tests/test_signatures.py::test_func_signature[unique_counts]
+array_api_tests/test_signatures.py::test_func_signature[unique_inverse]
+array_api_tests/test_signatures.py::test_func_signature[unique_values]
+array_api_tests/test_signatures.py::test_func_signature[asarray]
+array_api_tests/test_signatures.py::test_func_signature[empty_like]
+array_api_tests/test_signatures.py::test_func_signature[eye]
+array_api_tests/test_signatures.py::test_func_signature[full]
+array_api_tests/test_signatures.py::test_func_signature[full_like]
+array_api_tests/test_signatures.py::test_func_signature[linspace]
+array_api_tests/test_signatures.py::test_func_signature[ones]
+array_api_tests/test_signatures.py::test_func_signature[ones_like]
+array_api_tests/test_signatures.py::test_func_signature[zeros_like]
+array_api_tests/test_signatures.py::test_func_signature[concat]
+array_api_tests/test_signatures.py::test_func_signature[permute_dims]
+array_api_tests/test_signatures.py::test_func_signature[reshape]
+array_api_tests/test_signatures.py::test_func_signature[argsort]
+array_api_tests/test_signatures.py::test_func_signature[sort]
+array_api_tests/test_signatures.py::test_func_signature[astype]
+array_api_tests/test_signatures.py::test_func_signature[isdtype]
+array_api_tests/test_signatures.py::test_func_signature[acos]
+array_api_tests/test_signatures.py::test_func_signature[acosh]
+array_api_tests/test_signatures.py::test_func_signature[asin]
+array_api_tests/test_signatures.py::test_func_signature[asinh]
+array_api_tests/test_signatures.py::test_func_signature[atan]
+array_api_tests/test_signatures.py::test_func_signature[atan2]
+array_api_tests/test_signatures.py::test_func_signature[atanh]
+array_api_tests/test_signatures.py::test_func_signature[bitwise_left_shift]
+array_api_tests/test_signatures.py::test_func_signature[bitwise_invert]
+array_api_tests/test_signatures.py::test_func_signature[bitwise_right_shift]
+array_api_tests/test_signatures.py::test_func_signature[pow]
+array_api_tests/test_signatures.py::test_func_signature[matrix_transpose]
+array_api_tests/test_signatures.py::test_func_signature[vecdot]
+array_api_tests/test_signatures.py::test_extension_func_signature[linalg.cross]
+array_api_tests/test_signatures.py::test_extension_func_signature[linalg.matmul]
+array_api_tests/test_signatures.py::test_extension_func_signature[linalg.cholesky]
+array_api_tests/test_signatures.py::test_extension_func_signature[linalg.matrix_norm]
+array_api_tests/test_signatures.py::test_extension_func_signature[linalg.matrix_rank]
+array_api_tests/test_signatures.py::test_extension_func_signature[linalg.matrix_transpose]
+array_api_tests/test_signatures.py::test_extension_func_signature[linalg.outer]
+array_api_tests/test_signatures.py::test_extension_func_signature[linalg.pinv]
+array_api_tests/test_signatures.py::test_extension_func_signature[linalg.svdvals]
+array_api_tests/test_signatures.py::test_extension_func_signature[linalg.tensordot]
+array_api_tests/test_signatures.py::test_extension_func_signature[linalg.vecdot]
+array_api_tests/test_signatures.py::test_extension_func_signature[linalg.vector_norm]
+array_api_tests/test_signatures.py::test_array_method_signature[__array_namespace__]
+array_api_tests/test_signatures.py::test_array_method_signature[to_device]
+
+# unexpected argument 'stable'
+array_api_tests/test_sorting_functions.py::test_argsort
+array_api_tests/test_sorting_functions.py::test_sort
+
+# missing aliases
+array_api_tests/test_special_cases.py::test_unary
+array_api_tests/test_special_cases.py::test_binary
+
+# asarray() got an unexpected keyword argument 'copy'
+array_api_tests/test_special_cases.py::test_iop
+
+# got an unexpected keyword argument 'correction'
+array_api_tests/test_statistical_functions.py::test_std
+array_api_tests/test_statistical_functions.py::test_var
+
+# assertionError: out.dtype=float32, but should be float64 [sum(float32)]
+array_api_tests/test_statistical_functions.py::test_sum
