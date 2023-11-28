@@ -64,7 +64,7 @@ def _to_bytes_or_str_array(result, output_dtype_like):
     """
     if result.size == 0:
         # Calling asarray & tolist in an empty array would result
-        # in a float64 array
+        # in losing shape information
         return result.astype(output_dtype_like.dtype)
     ret = numpy.asarray(result.tolist())
     return ret.astype(type(output_dtype_like.dtype)(_get_num_chars(ret)))

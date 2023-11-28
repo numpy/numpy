@@ -689,7 +689,6 @@ class TestMethodsEmptyArray:
 
     def test_decode_with_reshape(self):
         res = np.char.decode(self.S.reshape((1, 0, 1)))
-        print(res.dtype)
         assert_(res.shape == (1, 0, 1))
 
 
