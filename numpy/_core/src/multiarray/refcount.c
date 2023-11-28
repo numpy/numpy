@@ -318,6 +318,13 @@ PyArray_XDECREF(PyArrayObject *mp)
         return 0;
     }
     if (PyArray_DESCR(mp)->type_num != NPY_OBJECT) {
+        if (PyArray_NDIM(mp) > NPY_MAXDIMS_LEGACY_ITERS) {
+            PyErr_Format(PyExc_RuntimeError,
+                    "this function only supports up to 32 dimensions but "
+                    "the array has %d.", PyArray_NDIM(mp));
+            return -1;
+        }
+
         PyArray_RawIterBaseInit(&it, mp);
         while(it.index < it.size) {
             PyArray_Item_XDECREF(it.dataptr, PyArray_DESCR(mp));
@@ -340,6 +347,13 @@ PyArray_XDECREF(PyArrayObject *mp)
         }
     }
     else { /* handles misaligned data too */
+        if (PyArray_NDIM(mp) > NPY_MAXDIMS_LEGACY_ITERS) {
+            PyErr_Format(PyExc_RuntimeError,
+                    "this function only supports up to 32 dimensions but "
+                    "the array has %d.", PyArray_NDIM(mp));
+            return -1;
+        }
+
         PyArray_RawIterBaseInit(&it, mp);
         while(it.index < it.size) {
             memcpy(&temp, it.dataptr, sizeof(temp));

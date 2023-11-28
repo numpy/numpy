@@ -1949,7 +1949,7 @@ Calculation
 
 .. tip::
 
-    Pass in :c:data:`NPY_MAXDIMS` for axis in order to achieve the same
+    Pass in :c:data:`NPY_RAVEL_AXIS` for axis in order to achieve the same
     effect that is obtained by passing in ``axis=None`` in Python
     (treating the array as a 1-d array).
 
@@ -2970,7 +2970,7 @@ to.
     Convert a Python object, *obj*, representing an axis argument to
     the proper value for passing to the functions that take an integer
     axis. Specifically, if *obj* is None, *axis* is set to
-    :c:data:`NPY_MAXDIMS` which is interpreted correctly by the C-API
+    :c:data:`NPY_RAVEL_AXIS` which is interpreted correctly by the C-API
     functions that take axis arguments.
 
 .. c:function:: int PyArray_BoolConverter(PyObject* obj, npy_bool* value)
@@ -3413,11 +3413,26 @@ Other constants
 
 .. c:macro:: NPY_MAXDIMS
 
-    The maximum number of dimensions allowed in arrays.
+    The maximum number of dimensions that may be used by NumPy.
+    This is set to 64 and was 32 before NumPy 2.
+
+    .. note::
+        We encourage you to avoid ``NPY_MAXDIMS``.  A future version of NumPy
+        may wish to remove any dimension limitation (and thus the constant).
+        The limitation was created so that NumPy can use stack allocations
+        internally for scratch space.
+
+        If your algorithm has a reasonable maximum number of dimension you
+        could check and use that locally.
 
 .. c:macro:: NPY_MAXARGS
 
-    The maximum number of array arguments that can be used in functions.
+    The maximum number of array arguments that can be used in some
+    functions.  This used to be 32 before NumPy 2 and is now 64.
+
+    .. note::
+        You should never use this.  We may remove it in future versions of
+        NumPy.
 
 .. c:macro:: NPY_FALSE
 
@@ -3436,6 +3451,16 @@ Other constants
 
     The return value of successful converter functions which are called
     using the "O&" syntax in :c:func:`PyArg_ParseTuple`-like functions.
+
+.. c:macro:: NPY_RAVEL_AXIS
+
+    Some NumPy functions (mainly the C-entrypoints for Python functions)
+    have an ``axis`` argument.  This macro may be passed for ``axis=None``.
+
+    .. note::
+        This macro is NumPy version dependent at runtime. The value is now
+        the minimum integer. However, on NumPy 1.x ``NPY_MAXDIMS`` was used
+        (at the time set to 32).
 
 
 Miscellaneous Macros

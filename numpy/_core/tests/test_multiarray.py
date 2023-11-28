@@ -744,7 +744,7 @@ class TestZeroRank:
             x[i]
 
         assert_raises(IndexError, subscript, a, (np.newaxis, 0))
-        assert_raises(IndexError, subscript, a, (np.newaxis,)*50)
+        assert_raises(IndexError, subscript, a, (np.newaxis,)*70)
 
     def test_constructor(self):
         x = np.ndarray(())
@@ -826,7 +826,7 @@ class TestScalarIndexing:
             x[i]
 
         assert_raises(IndexError, subscript, a, (np.newaxis, 0))
-        assert_raises(IndexError, subscript, a, (np.newaxis,)*50)
+        assert_raises(IndexError, subscript, a, (np.newaxis,)*70)
 
     def test_overlapping_assignment(self):
         # With positive strides
@@ -5828,6 +5828,15 @@ class TestFlat:
         # If the type was incorrect, this would show up on big-endian machines
         assert it.index == it.base.size
 
+    def test_maxdims(self):
+        # The flat iterator and thus attribute is currently unfortunately
+        # limited to only 32 dimensions (after bumping it to 64 for 2.0)
+        a = np.ones((1,) * 64)
+
+        with pytest.raises(RuntimeError,
+                match=".*32 dimensions but the array has 64"):
+            a.flat
+
 
 class TestResize:
 
@@ -7406,6 +7415,22 @@ class TestChoose:
         expected_dt = np.result_type(*ops)
         assert(np.choose([0], ops).dtype == expected_dt)
 
+    def test_dimension_and_args_limit(self):
+        # Maxdims for the legacy iterator is 32, but the maximum number
+        # of arguments is actually larger (a itself also counts here)
+        a = np.ones((1,) * 32, dtype=np.intp)
+        res = a.choose([0, a] + [2] * 61)
+        with pytest.raises(ValueError,
+                match="Need at least 0 and at most 64 array objects"):
+            a.choose([0, a] + [2] * 62)
+
+        assert_array_equal(res, a)
+        # Choose is unfortunately limited to 32 dims as of NumPy 2.0
+        a = np.ones((1,) * 60, dtype=np.intp)
+        with pytest.raises(RuntimeError,
+                match=".*32 dimensions but the array has 60"):
+            a.choose([a, a])
+
 
 class TestRepeat:
     def setup_method(self):
@@ -8179,19 +8204,22 @@ class TestNewBufferProtocol:
                 t = dim * t
             return t
 
-        # construct a memoryview with 33 dimensions
-        c_u8_33d = make_ctype((1,)*33, ctypes.c_uint8)
-        m = memoryview(c_u8_33d())
-        assert_equal(m.ndim, 33)
+        # Try constructing a memory with too many dimensions:
+        c_u8_65d = make_ctype((1,)*65, ctypes.c_uint8)
+        try:
+            m = memoryview(c_u8_65d())
+        except ValueError:
+            pytest.skip("memoryview doesn't support more dimensions")
 
-        assert_raises_regex(
-            RuntimeError, "ndim",
-            np.array, m)
+        assert_equal(m.ndim, 65)
+
+        with pytest.raises(RuntimeError, match=".*ndim"):
+            np.array(m)
 
         # The above seems to create some deep cycles, clean them up for
         # easier reference count debugging:
-        del c_u8_33d, m
-        for i in range(33):
+        del c_u8_65d, m
+        for i in range(65):
             if gc.collect() == 0:
                 break
 

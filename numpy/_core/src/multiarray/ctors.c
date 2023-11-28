@@ -2785,14 +2785,14 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
     PyObject *temp1, *temp2;
     int n = PyArray_NDIM(arr);
 
-    if (*axis == NPY_MAXDIMS || n == 0) {
+    if (*axis == NPY_RAVEL_AXIS || n == 0) {
         if (n != 1) {
             temp1 = PyArray_Ravel(arr,0);
             if (temp1 == NULL) {
                 *axis = 0;
                 return NULL;
             }
-            if (*axis == NPY_MAXDIMS) {
+            if (*axis == NPY_RAVEL_AXIS) {
                 *axis = PyArray_NDIM((PyArrayObject *)temp1)-1;
             }
         }

@@ -3969,9 +3969,9 @@ class TestBroadcast:
 
     def test_number_of_arguments(self):
         arr = np.empty((5,))
-        for j in range(35):
+        for j in range(70):
             arrs = [arr] * j
-            if j > 32:
+            if j > 64:
                 assert_raises(ValueError, np.broadcast, *arrs)
             else:
                 mit = np.broadcast(*arrs)
