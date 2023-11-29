@@ -3429,10 +3429,12 @@ Other constants
 
     The maximum number of array arguments that can be used in some
     functions.  This used to be 32 before NumPy 2 and is now 64.
+    To continue to allow using it as a check whether a number of arguments
+    is compatible ufuncs, this macro is now runtime dependent.
 
     .. note::
-        You should never use this.  We may remove it in future versions of
-        NumPy.
+        We discourage any use of ``NPY_MAXARGS`` that isn't explicitly tied
+        to checking for known NumPy limitations.
 
 .. c:macro:: NPY_FALSE
 
