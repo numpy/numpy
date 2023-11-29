@@ -53,7 +53,7 @@ ASIMDFHM = mod_features.new(
 )
 ## Scalable Vector Extensions (SVE)
 SVE = mod_features.new(
-  'SVE', 8,
+  'SVE', 8, implies: ASIMDHP,
   args: {'val': '-march=armv8.2-a+sve', 'match': '-march=.*', 'mfilter': '\+.*'},
   test_code: files(source_root + '/numpy/distutils/checks/cpu_sve.c')[0]
 )
