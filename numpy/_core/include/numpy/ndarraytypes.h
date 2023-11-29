@@ -45,7 +45,7 @@
 #define NPY_MAXDIMS 64
 /* We cannot change this as it would break ABI: */
 #define NPY_MAXDIMS_LEGACY_ITERS 32
-#define NPY_MAXARGS 64
+/* NPY_MAXARGS is version dependent and defined in npy_2_compat.h */
 
 /* Used for Converter Functions "O&" code in ParseTuple */
 #define NPY_FAIL 0
@@ -1239,7 +1239,18 @@ typedef struct {
         npy_intp             index;                   /* current index */
         int                  nd;                      /* number of dims */
         npy_intp             dimensions[NPY_MAXDIMS_LEGACY_ITERS]; /* dimensions */
-        PyArrayIterObject    *iters[NPY_MAXARGS];     /* iterators */
+        /*
+         * Space for the indivdual iterators, do not specify size publically
+         * to allow changing it more easily.
+         * One reason is that Cython uses this for checks and only allows
+         * growing structs (as of Cython 3.0.6).  It also allows NPY_MAXARGS
+         * to be runtime dependent.
+         */
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+        PyArrayIterObject    *iters[64];  /* 64 is NPY_MAXARGS */
+#else /* not internal build */
+        PyArrayIterObject    *iters[];
+#endif
 } PyArrayMultiIterObject;
 
 #define _PyMIT(m) ((PyArrayMultiIterObject *)(m))

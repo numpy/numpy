@@ -76,4 +76,14 @@
 #endif
 
 
+#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
+    #define NPY_MAXARGS 64
+#elif NPY_ABI_VERSION < 0x02000000
+    #define NPY_MAXARGS 32
+#else
+    #define NPY_MAXARGS  \
+        (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? 64 : 32)
+#endif
+
+
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_2_COMPAT_H_ */
