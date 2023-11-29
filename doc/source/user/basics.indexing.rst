@@ -383,8 +383,8 @@ with y::
 
     >>> y[np.array([0, 2, 4])]
     array([[ 0,  1,  2,  3,  4,  5,  6],
-          [14, 15, 16, 17, 18, 19, 20],
-          [28, 29, 30, 31, 32, 33, 34]])
+           [14, 15, 16, 17, 18, 19, 20],
+           [28, 29, 30, 31, 32, 33, 34]])
 
 It results in the construction of a new array where each value of the
 index array selects one row from the array being indexed and the resultant
