@@ -219,7 +219,7 @@ jobs:
         submodules: recursive
         fetch-depth: 0
     - name: Checkout array-api-tests
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: data-apis/array-api-tests
         ref: '9afe8c709d81f005c98d383c82ad5e1c2cd8166c'  # Latest commit as of 2023-11-24
