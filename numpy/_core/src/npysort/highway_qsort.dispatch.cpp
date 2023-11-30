@@ -2,7 +2,7 @@
  * $maxopt $keep_baseline
  * asimd
  */
-// policy $keep_baseline is used to avoid skip building avx512_skx
+// policy $keep_baseline is used to avoid skip building asimd
 // when its part of baseline features (--cpu-baseline), since
 // 'baseline' option isn't specified within targets.
 
@@ -43,6 +43,6 @@ template<> void NPY_CPU_DISPATCH_CURFX(QSort)(double *arr, intptr_t size)
 }
 #endif // NPY_HAVE_ASIMD
 
-}} // namespace np::simd
+}} // namespace np::qsort_simd
 
 #endif // __CYGWIN__

@@ -119,6 +119,6 @@ template<> void NPY_CPU_DISPATCH_CURFX(QSort)(double *arr, npy_intp num)
 }
 #endif // NPY_HAVE_AVX512_SKX || NPY_HAVE_AVX2
 
-}} // namespace np::simd
+}} // namespace np::qsort_simd
 
 #endif // __CYGWIN__

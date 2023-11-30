@@ -87,16 +87,13 @@ inline bool quicksort_dispatch(T *start, npy_intp num)
     }
     else if (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
         #ifndef NPY_DISABLE_OPTIMIZATION
-            #include "x86_simd_qsort.dispatch.h"
-        #endif
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
-        // If not dispatched for avx-512 or avx2:
-        if (dispfunc == nullptr) {
-            #ifndef NPY_DISABLE_OPTIMIZATION
+            #if defined(NPY_CPU_AMD64) || defined(NPY_CPU_X86) // x86 32-bit and 64-bit
+                #include "x86_simd_qsort.dispatch.h"
+            #else
                 #include "highway_qsort.dispatch.h"
             #endif
-            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
-        }
+        #endif
+        NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
     }
     if (dispfunc) {
         (*dispfunc)(reinterpret_cast<TF*>(start), static_cast<intptr_t>(num));
