@@ -50,6 +50,12 @@ jobs:
               texlive-latex-extra latexmk texlive-xetex texlive-lang-chinese doxygen
 
       - run:
+          name: build with Meson
+          command: |
+            meson setup build
+            ninja -C build
+
+      - run:
           name: build NumPy
           command: |
             python3.11 -m venv venv
