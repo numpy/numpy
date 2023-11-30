@@ -166,6 +166,7 @@ Extra options (only effective with -c):
   -L/path/to/lib/ -l<libname>
   -D<define> -U<name>
   -I/path/to/include/
+  -J--arbitrary-linker-flags
   <filename>.o <filename>.so <filename>.a
 
   Using the following macros may be required with non-gcc Fortran
@@ -671,6 +672,7 @@ def run_compile():
     pyf_files, _sources = filter_files("", "[.]pyf([.]src|)", sources)
     sources = pyf_files + _sources
     modulename = validate_modulename(pyf_files, modulename)
+    linker_flags, sources = filter_files('-J', '', sources, remove_prefix=1)
     extra_objects, sources = filter_files('', '[.](o|a|so|dylib)', sources)
     include_dirs, sources = filter_files('-I', '', sources, remove_prefix=1)
     library_dirs, sources = filter_files('-L', '', sources, remove_prefix=1)
@@ -699,7 +701,7 @@ def run_compile():
     builder = build_backend(
         modulename,
         sources,
-        extra_objects,
+        linker_flags + extra_objects,
         build_dir,
         include_dirs,
         library_dirs,
