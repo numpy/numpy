@@ -2228,3 +2228,15 @@ def test_trace():
     expected = np.array([36, 116, 196])
 
     assert_equal(actual, expected)
+
+
+@pytest.mark.skipif(np.finfo(np.clongdouble).bits == 128,
+                    reason="complex256 not supported by linalg")
+def test_linalg_complex128_pass_through():
+    # on some platforms (i.e., ARM Mac)
+    # clongdouble is the same size as cdouble
+    # and NumPy was incorrectly rejecting
+    # linalg computations under NEP50 per
+    # https://github.com/scipy/scipy/issues/19605
+    x = np.array([[1.-0.j]], dtype=np.clongdouble)
+    linalg.eigvals(x)

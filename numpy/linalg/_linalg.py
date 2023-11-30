@@ -23,6 +23,7 @@ from numpy._utils import set_module
 from numpy._core import (
     array, asarray, zeros, empty, empty_like, intc, single, double,
     csingle, cdouble, inexact, complexfloating, newaxis, all, inf, dot,
+    clongdouble,
     add, multiply, sqrt, sum, isfinite, finfo, errstate, moveaxis, amin,
     amax, prod, abs, atleast_2d, intp, asanyarray, object_, matmul,
     swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
@@ -134,6 +135,8 @@ _complex_types_map = {single: csingle,
                       cdouble: cdouble}
 
 def _realType(t, default=double):
+    if finfo(clongdouble).bits == finfo(cdouble).bits:
+        _real_types_map[clongdouble] = cdouble
     return _real_types_map.get(t, default)
 
 def _complexType(t, default=cdouble):

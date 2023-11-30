@@ -82,7 +82,7 @@ class TestAsIntegerRatio:
             [0, -7400, 14266, -7822, -8721],
             marks=[
                 pytest.mark.skipif(
-                    np.finfo(np.double) == np.finfo(np.longdouble),
+                    np.finfo(np.double).bits == np.finfo(np.longdouble).bits,
                     reason="long double is same as double"),
                 pytest.mark.skipif(
                     platform.machine().startswith("ppc"),
