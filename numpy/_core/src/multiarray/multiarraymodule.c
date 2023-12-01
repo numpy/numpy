@@ -117,10 +117,6 @@ set_legacy_print_mode(PyObject *NPY_UNUSED(self), PyObject *args)
 }
 
 
-/* Only here for API compatibility */
-NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
-
-
 /*NUMPY_API
  * Get Priority from object
  */

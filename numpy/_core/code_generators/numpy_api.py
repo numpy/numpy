@@ -45,7 +45,8 @@ multiarray_scalar_bool_values = {
 # index, annotations
 # please mark functions that have been checked to not need any annotations
 multiarray_types_api = {
-    'PyBigArray_Type':                  (1,),
+    '__unused_indices__': [1],
+    # Slot 1 was never meaningfully used by NumPy
     'PyArray_Type':                     (2,),
     # Internally, PyArrayDescr_Type is a PyArray_DTypeMeta,
     # the following also defines PyArrayDescr_TypeFull (Full appended)
