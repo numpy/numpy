@@ -45,7 +45,6 @@ multiarray_scalar_bool_values = {
 # index, annotations
 # please mark functions that have been checked to not need any annotations
 multiarray_types_api = {
-    '__unused_indices__': [1],
     # Slot 1 was never meaningfully used by NumPy
     'PyArray_Type':                     (2,),
     # Internally, PyArrayDescr_Type is a PyArray_DTypeMeta,
@@ -99,9 +98,10 @@ multiarray_types_api = {
 # define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[8])
 
 multiarray_funcs_api = {
-    '__unused_indices__': [
-        40, 41, 65, 66, 67, 68, 81, 82, 83, 117, 163, 164, 171, 173, 197,
-        201, 202, 208, 278, 291, 293, 294, 295,
+    '__unused_indices__': [1,
+        40, 41, 65, 66, 67, 68, 81, 82, 83,
+        103, 117, 122, 163, 164, 171, 173, 197,
+        201, 202, 208, 219, 278, 291, 293, 294, 295,
         301],
     'PyArray_GetNDArrayCVersion':           (0,),
     # Unused slot 40, was `PyArray_SetNumericOps`
@@ -186,7 +186,7 @@ multiarray_funcs_api = {
     'PyArray_ElementStrides':               (119,),
     'PyArray_Item_INCREF':                  (120,),
     'PyArray_Item_XDECREF':                 (121,),
-    'PyArray_FieldNames':                   (122,),
+    # Unused slot 122, was `PyArray_FieldNames`
     'PyArray_Transpose':                    (123,),
     'PyArray_TakeFrom':                     (124,),
     'PyArray_PutTo':                        (125,),

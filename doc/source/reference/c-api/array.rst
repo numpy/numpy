@@ -2855,12 +2855,6 @@ Data-type descriptors
     Like :c:func:`PyArray_DescrConverter2` except it aligns C-struct-like
     objects on word-boundaries as the compiler would.
 
-.. c:function:: PyObject *PyArray_FieldNames(PyObject* dict)
-
-    Take the fields dictionary, *dict*, such as the one attached to a
-    data-type object and construct an ordered-list of field names such
-    as is stored in the names field of the :c:type:`PyArray_Descr` object.
-
 
 Conversion utilities
 --------------------

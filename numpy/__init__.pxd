@@ -576,7 +576,6 @@ cdef extern from "numpy/arrayobject.h":
     int PyArray_ElementStrides (object)
     void PyArray_Item_INCREF (char *, dtype) except *
     void PyArray_Item_XDECREF (char *, dtype) except *
-    object PyArray_FieldNames (object)
     object PyArray_Transpose (ndarray, PyArray_Dims *)
     object PyArray_TakeFrom (ndarray, object, int, ndarray, NPY_CLIPMODE)
     object PyArray_PutTo (ndarray, object, object, NPY_CLIPMODE)
