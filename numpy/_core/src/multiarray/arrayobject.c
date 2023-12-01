@@ -516,17 +516,6 @@ PyArray_DebugPrint(PyArrayObject *obj)
 }
 
 
-/*NUMPY_API
- * This function is scheduled to be removed
- *
- * TO BE REMOVED - NOT USED INTERNALLY.
- */
-NPY_NO_EXPORT void
-PyArray_SetDatetimeParseFunction(PyObject *NPY_UNUSED(op))
-{
-}
-
-
 /* Call this from contexts where an array might be written to, but we have no
  * way to tell. (E.g., when converting to a read-write buffer.)
  */

@@ -279,7 +279,7 @@ multiarray_funcs_api = {
     'PyArray_Correlate2':                   (212,),
     'PyArray_NeighborhoodIterNew':          (213,),
     # End 1.5 API
-    'PyArray_SetDatetimeParseFunction':     (219,),
+    # Unused slot 219, was `PyArray_SetDatetimeParseFunction`
     'PyArray_DatetimeToDatetimeStruct':     (220,),
     'PyArray_TimedeltaToTimedeltaStruct':   (221,),
     'PyArray_DatetimeStructToDatetime':     (222,),
