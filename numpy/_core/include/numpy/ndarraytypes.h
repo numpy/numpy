@@ -1642,12 +1642,6 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 #define PyTypeNum_ISCOMPLEX(type) (((type) >= NPY_CFLOAT) &&   \
                                 ((type) <= NPY_CLONGDOUBLE))
 
-#define PyTypeNum_ISPYTHON(type) (((type) == NPY_LONG) ||      \
-                                  ((type) == NPY_DOUBLE) ||    \
-                                  ((type) == NPY_CDOUBLE) ||   \
-                                  ((type) == NPY_BOOL) ||      \
-                                  ((type) == NPY_OBJECT ))
-
 #define PyTypeNum_ISFLEXIBLE(type) (((type) >=NPY_STRING) &&  \
                                     ((type) <=NPY_VOID))
 
@@ -1672,7 +1666,6 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 #define PyDataType_ISNUMBER(obj) PyTypeNum_ISNUMBER(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISSTRING(obj) PyTypeNum_ISSTRING(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISPYTHON(obj) PyTypeNum_ISPYTHON(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISDATETIME(obj) PyTypeNum_ISDATETIME(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(((PyArray_Descr*)(obj))->type_num)
@@ -1692,7 +1685,6 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 #define PyArray_ISNUMBER(obj) PyTypeNum_ISNUMBER(PyArray_TYPE(obj))
 #define PyArray_ISSTRING(obj) PyTypeNum_ISSTRING(PyArray_TYPE(obj))
 #define PyArray_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(PyArray_TYPE(obj))
-#define PyArray_ISPYTHON(obj) PyTypeNum_ISPYTHON(PyArray_TYPE(obj))
 #define PyArray_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(PyArray_TYPE(obj))
 #define PyArray_ISDATETIME(obj) PyTypeNum_ISDATETIME(PyArray_TYPE(obj))
 #define PyArray_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(PyArray_TYPE(obj))

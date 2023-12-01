@@ -825,15 +825,6 @@ argument must be a :c:expr:`PyObject *` that can be directly interpreted as a
 
     Type represents a string data type.
 
-.. c:function:: int PyTypeNum_ISPYTHON(int num)
-
-.. c:function:: int PyDataType_ISPYTHON(PyArray_Descr* descr)
-
-.. c:function:: int PyArray_ISPYTHON(PyArrayObject *obj)
-
-    Type represents an enumerated type corresponding to one of the
-    standard Python scalar (bool, int, float, or complex).
-
 .. c:function:: int PyTypeNum_ISFLEXIBLE(int num)
 
 .. c:function:: int PyDataType_ISFLEXIBLE(PyArray_Descr* descr)

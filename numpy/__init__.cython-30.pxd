@@ -443,7 +443,6 @@ cdef extern from "numpy/arrayobject.h":
     bint PyTypeNum_ISNUMBER(int) nogil
     bint PyTypeNum_ISSTRING(int) nogil
     bint PyTypeNum_ISCOMPLEX(int) nogil
-    bint PyTypeNum_ISPYTHON(int) nogil
     bint PyTypeNum_ISFLEXIBLE(int) nogil
     bint PyTypeNum_ISUSERDEF(int) nogil
     bint PyTypeNum_ISEXTENDED(int) nogil
@@ -457,7 +456,6 @@ cdef extern from "numpy/arrayobject.h":
     bint PyDataType_ISNUMBER(dtype) nogil
     bint PyDataType_ISSTRING(dtype) nogil
     bint PyDataType_ISCOMPLEX(dtype) nogil
-    bint PyDataType_ISPYTHON(dtype) nogil
     bint PyDataType_ISFLEXIBLE(dtype) nogil
     bint PyDataType_ISUSERDEF(dtype) nogil
     bint PyDataType_ISEXTENDED(dtype) nogil
@@ -473,7 +471,6 @@ cdef extern from "numpy/arrayobject.h":
     bint PyArray_ISNUMBER(ndarray) nogil
     bint PyArray_ISSTRING(ndarray) nogil
     bint PyArray_ISCOMPLEX(ndarray) nogil
-    bint PyArray_ISPYTHON(ndarray) nogil
     bint PyArray_ISFLEXIBLE(ndarray) nogil
     bint PyArray_ISUSERDEF(ndarray) nogil
     bint PyArray_ISEXTENDED(ndarray) nogil
