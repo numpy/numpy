@@ -3,7 +3,7 @@
 
 #include "common.hpp"
 
-namespace np { namespace qsort_simd {
+namespace np { namespace highway { namespace qsort_simd {
 
 #ifndef NPY_DISABLE_OPTIMIZATION
     #include "highway_qsort.dispatch.h"
@@ -11,6 +11,6 @@ namespace np { namespace qsort_simd {
 NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSort, (T *arr, npy_intp size))
 NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSelect, (T* arr, npy_intp num, npy_intp kth))
 
-} } // np::qsort_simd
+} } } // np::highway::qsort_simd
 
 #endif // NUMPY_SRC_COMMON_NPYSORT_HWY_SIMD_QSORT_HPP

@@ -89,11 +89,12 @@ inline bool quicksort_dispatch(T *start, npy_intp num)
         #ifndef NPY_DISABLE_OPTIMIZATION
             #if defined(NPY_CPU_AMD64) || defined(NPY_CPU_X86) // x86 32-bit and 64-bit
                 #include "x86_simd_qsort.dispatch.h"
+                NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
             #else
                 #include "highway_qsort.dispatch.h"
+                NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::highway::qsort_simd::template QSort, <TF>);
             #endif
         #endif
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
     }
     if (dispfunc) {
         (*dispfunc)(reinterpret_cast<TF*>(start), static_cast<intptr_t>(num));

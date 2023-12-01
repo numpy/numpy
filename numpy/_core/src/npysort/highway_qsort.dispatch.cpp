@@ -1,22 +1,9 @@
-/*@targets
- * $maxopt $keep_baseline
- * asimd
- */
-// policy $keep_baseline is used to avoid skip building asimd
-// when its part of baseline features (--cpu-baseline), since
-// 'baseline' option isn't specified within targets.
-
 #include "highway_qsort.hpp"
-#ifndef __CYGWIN__
+#define VQSORT_ONLY_STATIC 1
+#include "hwy/contrib/sort/vqsort-inl.h"
 
-#if NPY_HAVE_ASIMD
-    #define VQSORT_ONLY_STATIC 1
-    #include "hwy/contrib/sort/vqsort-inl.h"
-#endif
+namespace np { namespace highway { namespace qsort_simd {
 
-namespace np { namespace qsort_simd {
-
-#if NPY_HAVE_ASIMD
 template<> void NPY_CPU_DISPATCH_CURFX(QSort)(int32_t *arr, intptr_t size)
 {
     hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortAscending());
@@ -41,8 +28,5 @@ template<> void NPY_CPU_DISPATCH_CURFX(QSort)(double *arr, intptr_t size)
 {
     hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortAscending());
 }
-#endif // NPY_HAVE_ASIMD
 
-}} // namespace np::qsort_simd
-
-#endif // __CYGWIN__
+} } } // np::highway::qsort_simd
