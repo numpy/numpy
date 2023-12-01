@@ -510,8 +510,6 @@ cdef extern from "numpy/arrayobject.h":
     char * PyArray_Zero (ndarray)
     char * PyArray_One (ndarray)
     #object PyArray_CastToType (ndarray, dtype, int)
-    int PyArray_CastTo (ndarray, ndarray) except -1
-    int PyArray_CastAnyTo (ndarray, ndarray) except -1
     int PyArray_CanCastSafely (int, int)  # writes errors
     npy_bool PyArray_CanCastTo (dtype, dtype)  # writes errors
     int PyArray_ObjectType (object, int) except 0

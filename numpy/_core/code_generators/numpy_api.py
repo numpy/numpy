@@ -100,7 +100,7 @@ multiarray_types_api = {
 
 multiarray_funcs_api = {
     '__unused_indices__': [
-        40, 41, 65, 66, 67, 68, 81, 163, 164, 171,
+        40, 41, 65, 66, 67, 68, 81, 82, 83, 163, 164, 171,
         201, 202, 278, 291, 293, 294, 295,
         301],
     'PyArray_GetNDArrayCVersion':           (0,),
@@ -114,8 +114,8 @@ multiarray_funcs_api = {
     'PyArray_Zero':                         (47,),
     'PyArray_One':                          (48,),
     'PyArray_CastToType':                   (49, StealRef(2)),
-    'PyArray_CastTo':                       (50,),
-    'PyArray_CastAnyTo':                    (51,),
+    'PyArray_CopyInto':                     (50,),
+    'PyArray_CopyAnyInto':                  (51,),
     'PyArray_CanCastSafely':                (52,),
     'PyArray_CanCastTo':                    (53,),
     'PyArray_ObjectType':                   (54,),
@@ -146,8 +146,8 @@ multiarray_funcs_api = {
     'PyArray_Byteswap':                     (79,),
     'PyArray_Resize':                       (80,),
     # Unused slot 81, was `PyArray_MoveInto``
-    'PyArray_CopyInto':                     (82,),
-    'PyArray_CopyAnyInto':                  (83,),
+    # Unused slot 82 was `PyArray_CopyInto` (which replaces `..._CastTo`)
+    # Unused slot 82 was `PyArray_CopyAnyInto` (which replaces `..._CastAnyTo`)
     'PyArray_CopyObject':                   (84,),
     'PyArray_NewCopy':                      (85,),
     'PyArray_ToList':                       (86,),
