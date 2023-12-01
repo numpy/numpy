@@ -250,14 +250,19 @@ cppmacros['len..'] = """
 #define slen f2py_slen
 #define size f2py_size
 """
-cppmacros[
-    'pyobj_from_char1'] = '#define pyobj_from_char1(v) (PyLong_FromLong(v))'
-cppmacros[
-    'pyobj_from_short1'] = '#define pyobj_from_short1(v) (PyLong_FromLong(v))'
+cppmacros['pyobj_from_char1'] = r"""
+#define pyobj_from_char1(v) (PyLong_FromLong(v))
+"""
+cppmacros['pyobj_from_short1'] = r"""
+#define pyobj_from_short1(v) (PyLong_FromLong(v))
+"""
 needs['pyobj_from_int1'] = ['signed_char']
-cppmacros['pyobj_from_int1'] = '#define pyobj_from_int1(v) (PyLong_FromLong(v))'
-cppmacros[
-    'pyobj_from_long1'] = '#define pyobj_from_long1(v) (PyLong_FromLong(v))'
+cppmacros['pyobj_from_int1'] = r"""
+#define pyobj_from_int1(v) (PyLong_FromLong(v))
+"""
+cppmacros['pyobj_from_long1'] = r"""
+#define pyobj_from_long1(v) (PyLong_FromLong(v))
+"""
 needs['pyobj_from_long_long1'] = ['long_long']
 cppmacros['pyobj_from_long_long1'] = """
 #ifdef HAVE_LONG_LONG
@@ -268,27 +273,27 @@ cppmacros['pyobj_from_long_long1'] = """
 #endif
 """
 needs['pyobj_from_long_double1'] = ['long_double']
-cppmacros[
-    'pyobj_from_long_double1'] = '#define pyobj_from_long_double1(v) (PyFloat_FromDouble(v))'
-cppmacros[
-    'pyobj_from_double1'] = '#define pyobj_from_double1(v) (PyFloat_FromDouble(v))'
-cppmacros[
-    'pyobj_from_float1'] = '#define pyobj_from_float1(v) (PyFloat_FromDouble(v))'
+cppmacros['pyobj_from_long_double1'] = """
+#define pyobj_from_long_double1(v) (PyFloat_FromDouble(v))"""
+cppmacros['pyobj_from_double1'] = """
+#define pyobj_from_double1(v) (PyFloat_FromDouble(v))"""
+cppmacros['pyobj_from_float1'] = """
+#define pyobj_from_float1(v) (PyFloat_FromDouble(v))"""
 needs['pyobj_from_complex_long_double1'] = ['complex_long_double']
-cppmacros[
-    'pyobj_from_complex_long_double1'] = '#define pyobj_from_complex_long_double1(v) (PyComplex_FromDoubles(v.r,v.i))'
+cppmacros['pyobj_from_complex_long_double1'] = """
+#define pyobj_from_complex_long_double1(v) (PyComplex_FromDoubles(v.r,v.i))"""
 needs['pyobj_from_complex_double1'] = ['complex_double']
-cppmacros[
-    'pyobj_from_complex_double1'] = '#define pyobj_from_complex_double1(v) (PyComplex_FromDoubles(v.r,v.i))'
+cppmacros['pyobj_from_complex_double1'] = """
+#define pyobj_from_complex_double1(v) (PyComplex_FromDoubles(v.r,v.i))"""
 needs['pyobj_from_complex_float1'] = ['complex_float']
-cppmacros[
-    'pyobj_from_complex_float1'] = '#define pyobj_from_complex_float1(v) (PyComplex_FromDoubles(v.r,v.i))'
+cppmacros['pyobj_from_complex_float1'] = """
+#define pyobj_from_complex_float1(v) (PyComplex_FromDoubles(v.r,v.i))"""
 needs['pyobj_from_string1'] = ['string']
-cppmacros[
-    'pyobj_from_string1'] = '#define pyobj_from_string1(v) (PyUnicode_FromString((char *)v))'
+cppmacros['pyobj_from_string1'] = """
+#define pyobj_from_string1(v) (PyUnicode_FromString((char *)v))"""
 needs['pyobj_from_string1size'] = ['string']
-cppmacros[
-    'pyobj_from_string1size'] = '#define pyobj_from_string1size(v,len) (PyUnicode_FromStringAndSize((char *)v, len))'
+cppmacros['pyobj_from_string1size'] = """
+#define pyobj_from_string1size(v,len) (PyUnicode_FromStringAndSize((char *)v, len))"""
 needs['TRYPYARRAYTEMPLATE'] = ['PRINTPYOBJERR']
 cppmacros['TRYPYARRAYTEMPLATE'] = """
 /* New SciPy */
