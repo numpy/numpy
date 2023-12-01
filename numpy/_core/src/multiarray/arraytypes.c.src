@@ -1272,6 +1272,10 @@ TIMEDELTA_setitem(PyObject *op, void *ov, void *vap)
  *****************************************************************************
  **                       TYPE TO TYPE CONVERSIONS                          **
  *****************************************************************************
+ *
+ * WARNING: Most of type conversion does NOT happen here, only few of these
+ *          have never been ported to the new system!
+ *          Most type conversion functions are thus just NULL.
  */
 
 
@@ -1280,105 +1284,98 @@ TIMEDELTA_setitem(PyObject *op, void *ov, void *vap)
 
 /**begin repeat
  *
- * #TOTYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *           LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, DATETIME,
- *           TIMEDELTA#
- * #totype = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *           npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *           npy_float, npy_double, npy_longdouble,
- *           npy_datetime, npy_timedelta#
- * #supports_nat = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1#
+ * #TYPE1 = DATETIME, TIMEDELTA#
+ * #type1 = npy_datetime, npy_timedelta#
  */
 
 /**begin repeat1
- *
- * #FROMTYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, DATETIME,
- *             TIMEDELTA#
- * #fromtype = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *             npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *             npy_float, npy_double, npy_longdouble,
- *             npy_datetime, npy_timedelta#
- * #floatingpoint = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0#
+ * #TYPE2 = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *          LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #type2 = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
+ *          npy_long, npy_ulong, npy_longlong, npy_ulonglong,
+ *          npy_float, npy_double, npy_longdouble,
+ *          npy_float, npy_double, npy_longdouble#
+ * #floatingpoint = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1#
+ * #steps = 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2#
  */
 static void
-@FROMTYPE@_to_@TOTYPE@(void *input, void *output, npy_intp n,
+@TYPE2@_to_@TYPE1@(void *input, void *output, npy_intp n,
         void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
 {
-    const @fromtype@ *ip = input;
-    @totype@ *op = output;
+    const @type2@ *ip = input;
+    @type1@ *op = output;
 
     while (n--) {
-#if @supports_nat@ && @floatingpoint@
+#if @floatingpoint@
         /*
          * volatile works around clang (and gcc sometimes) not branching
          * correctly, leading to floating point errors in the test suite.
          */
-        volatile @fromtype@ f = *ip++;
-        @totype@ t;
+        volatile @type2@ f = *ip;
+        @type1@ t;
         /* Avoid undefined behaviour and warning for NaN -> NaT */
         if (npy_isnan(f)) {
-            t = (@totype@)NPY_DATETIME_NAT;
+            t = (@type1@)NPY_DATETIME_NAT;
         }
         else {
-            t = (@totype@)f;
+            t = (@type1@)f;
         }
 #else
-        @totype@ t = (@totype@)*ip++;
+        @type1@ t = (@type1@)*ip;
 #endif
         *op++ = t;
+        ip += @steps@;
     }
 }
+
+
+static void
+@TYPE1@_to_@TYPE2@(void *input, void *output, npy_intp n,
+        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
+{
+    const @type1@ *ip = input;
+    @type2@ *op = output;
+
+    while (n--) {
+        @type1@ t = (@type1@)*ip++;
+
+        *op++ = t;
+#if @steps@ == 2  /* complex type */
+        *op++ = 0;
+#endif
+    }
+}
+
 /**end repeat1**/
 
 /**begin repeat1
- *
- * #FROMTYPE = CFLOAT, CDOUBLE, CLONGDOUBLE#
- * #fromtype = npy_float, npy_double, npy_longdouble#
+ * #TYPE2 = TIMEDELTA, DATETIME#
+ * #type2 = npy_timedelta, npy_datetime#
  */
+
 static void
-@FROMTYPE@_to_@TOTYPE@(void *input, void *output, npy_intp n,
+@TYPE1@_to_@TYPE2@(void *input, void *output, npy_intp n,
         void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
 {
-    const @fromtype@ *ip = input;
-    @totype@ *op = output;
+    const @type1@ *ip = input;
+    @type2@ *op = output;
 
     while (n--) {
-#if @supports_nat@
-        /*
-         * volatile works around clang (and gcc sometimes) not branching
-         * correctly, leading to floating point errors in the test suite.
-         */
-        volatile @fromtype@ f = *ip;
-        @totype@ t;
-        /* Avoid undefined behaviour and warning for NaN -> NaT */
-        if (npy_isnan(f)) {
-            t = (@totype@)NPY_DATETIME_NAT;
-        }
-        else {
-            t = (@totype@)f;
-        }
-#else
-        @totype@ t = (@totype@)*ip;
-#endif
+        @type2@ t = (@type2@)*ip++;
         *op++ = t;
-        ip += 2;
     }
 }
-/**end repeat1**/
+
 
 /**end repeat**/
 
+#define DATETIME_TO_DATETIME NULL
 
 /**begin repeat
  *
- * #TYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *         LONGLONG, ULONGLONG, LONGDOUBLE, DATETIME,
- *         TIMEDELTA#
- * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *         npy_longdouble,
- *         npy_datetime, npy_timedelta#
+ * #TYPE = DATETIME, TIMEDELTA#
+ * #type = npy_datetime, npy_timedelta#
  */
 
 static void
@@ -1406,92 +1403,12 @@ HALF_to_@TYPE@(void *input, void *output, npy_intp n,
 }
 
 /**end repeat**/
-#if NPY_SIZEOF_SHORT == 2
-#define HALF_to_HALF SHORT_to_SHORT
-#elif NPY_SIZEOF_INT == 2
-#define HALF_to_HALF INT_to_INT
-#endif
+
 
 /**begin repeat
  *
- * #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
- * #name = float, double, float, double#
- * #itype = npy_uint32, npy_uint64, npy_uint32, npy_uint64#
- * #iscomplex = 0, 0, 1, 1#
- */
-
-static void
-@TYPE@_to_HALF(void *input, void *output, npy_intp n,
-        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
-{
-    const @itype@ *ip = input;
-    npy_half *op = output;
-
-    while (n--) {
-        *op++ = npy_@name@bits_to_halfbits(*ip);
-#if @iscomplex@
-        ip += 2;
-#else
-        ip++;
-#endif
-    }
-}
-
-static void
-HALF_to_@TYPE@(void *input, void *output, npy_intp n,
-        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
-{
-    const npy_half *ip = input;
-    @itype@ *op = output;
-
-    while (n--) {
-        *op++ = npy_halfbits_to_@name@bits(*ip++);
-#if @iscomplex@
-        *op++ = 0;
-#endif
-    }
-}
-
-/**end repeat**/
-
-static void
-CLONGDOUBLE_to_HALF(void *input, void *output, npy_intp n,
-        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
-{
-    const npy_longdouble *ip = input;
-    npy_half *op = output;
-
-    while (n--) {
-        *op++ = npy_double_to_half((double) (*ip++));
-        ip += 2;
-    }
-}
-
-static void
-HALF_to_CLONGDOUBLE(void *input, void *output, npy_intp n,
-        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
-{
-    const npy_half *ip = input;
-    npy_longdouble *op = output;
-
-    while (n--) {
-        *op++ = npy_half_to_double(*ip++);
-        *op++ = 0;
-    }
-}
-
-/**begin repeat
- *
- * #FROMTYPE = BOOL,
- *             BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *             LONG, ULONG, LONGLONG, ULONGLONG,
- *             FLOAT, DOUBLE, LONGDOUBLE,
- *             DATETIME, TIMEDELTA#
- * #fromtype = npy_bool,
- *             npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *             npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *             npy_float, npy_double, npy_longdouble,
- *             npy_datetime, npy_timedelta#
+ * #FROMTYPE = DATETIME, TIMEDELTA#
+ * #fromtype = npy_datetime, npy_timedelta#
  */
 static void
 @FROMTYPE@_to_BOOL(void *input, void *output, npy_intp n,
@@ -1506,51 +1423,10 @@ static void
 }
 /**end repeat**/
 
-static void
-HALF_to_BOOL(void *input, void *output, npy_intp n,
-        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
-{
-    const npy_half *ip = input;
-    npy_bool *op = output;
-
-    while (n--) {
-        *op++ = (npy_bool)(!npy_half_iszero(*ip++));
-    }
-}
 
 /**begin repeat
- *
- * #FROMTYPE = CFLOAT, CDOUBLE, CLONGDOUBLE#
- * #fromtype = npy_cfloat, npy_cdouble, npy_clongdouble#
- * #ft = f, , l#
- */
-static void
-@FROMTYPE@_to_BOOL(void *input, void *output, npy_intp n,
-        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
-{
-    const @fromtype@ *ip = input;
-    npy_bool *op = output;
-
-    while (n--) {
-        *op = (npy_bool)((npy_creal@ft@(*ip) != NPY_FALSE) ||
-                (npy_cimag@ft@(*ip) != NPY_FALSE));
-        op++;
-        ip++;
-    }
-}
-/**end repeat**/
-
-/**begin repeat
- * #TOTYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *           LONG, ULONG, LONGLONG, ULONGLONG,
- *           HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *           DATETIME, TIMEDELTA#
- * #totype = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *           npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *           npy_half, npy_float, npy_double, npy_longdouble,
- *           npy_datetime, npy_timedelta#
- * #one = 1*10, NPY_HALF_ONE, 1*5#
- * #zero = 0*10, NPY_HALF_ZERO, 0*5#
+ * #TOTYPE = DATETIME, TIMEDELTA#
+ * #totype = npy_datetime, npy_timedelta#
  */
 static void
 BOOL_to_@TOTYPE@(void *input, void *output, npy_intp n,
@@ -1560,174 +1436,40 @@ BOOL_to_@TOTYPE@(void *input, void *output, npy_intp n,
     @totype@ *op = output;
 
     while (n--) {
-        *op++ = (@totype@)((*ip++ != NPY_FALSE) ? @one@ : @zero@);
+        *op++ = (@totype@)((*ip++ != NPY_FALSE) ? 1 : 0);
     }
 }
 /**end repeat**/
 
-/**begin repeat
- *
- * #TOTYPE = CFLOAT, CDOUBLE,CLONGDOUBLE#
- * #totype = npy_float, npy_double, npy_longdouble#
- */
-
-/**begin repeat1
- * #FROMTYPE = BOOL,
- *             BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *             LONG, ULONG, LONGLONG, ULONGLONG,
- *             FLOAT, DOUBLE, LONGDOUBLE,
- *             DATETIME, TIMEDELTA#
- * #fromtype = npy_bool,
- *             npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *             npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *             npy_float, npy_double, npy_longdouble,
- *             npy_datetime, npy_timedelta#
- */
-static void
-@FROMTYPE@_to_@TOTYPE@(void *input, void *output, npy_intp n,
-        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
-{
-    const @fromtype@ *ip = input;
-    @totype@ *op = output;
-
-    while (n--) {
-        *op++ = (@totype@)*ip++;
-        *op++ = 0.0;
-    }
-
-}
-/**end repeat1**/
-/**end repeat**/
 
 /**begin repeat
- *
- * #TOTYPE = CFLOAT,CDOUBLE,CLONGDOUBLE#
- * #totype = npy_float, npy_double, npy_longdouble#
- */
-
-/**begin repeat1
- * #FROMTYPE = CFLOAT,CDOUBLE,CLONGDOUBLE#
- * #fromtype = npy_float, npy_double, npy_longdouble#
- */
-static void
-@FROMTYPE@_to_@TOTYPE@(void *input, void *output, npy_intp n,
-        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
-{
-    const @fromtype@ *ip = input;
-    @totype@ *op = output;
-
-    n <<= 1;
-    while (n--) {
-        *op++ = (@totype@)*ip++;
-    }
-}
-
-/**end repeat1**/
-/**end repeat**/
-
-/**begin repeat
- *
- * #FROMTYPE = BOOL,
- *             BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *             LONG, ULONG, LONGLONG, ULONGLONG,
- *             HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *             CFLOAT, CDOUBLE, CLONGDOUBLE,
- *             STRING, UNICODE, VOID, OBJECT,
- *             DATETIME, TIMEDELTA#
- * #fromtype = npy_bool,
- *             npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *             npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *             npy_half, npy_float, npy_double, npy_longdouble,
- *             npy_cfloat, npy_cdouble, npy_clongdouble,
- *             npy_char, npy_char, npy_char, PyObject *,
- *             npy_datetime, npy_timedelta#
- * #skip = 1*18, PyArray_DESCR(aip)->elsize*3, 1*3#
- */
-static void
-@FROMTYPE@_to_OBJECT(void *input, void *output, npy_intp n,
-        void *vaip, void *NPY_UNUSED(aop))
-{
-    @fromtype@ *ip = input;
-    PyObject **op = output;
-    PyArrayObject *aip = vaip;
-
-    npy_intp i;
-    int skip = @skip@;
-    PyObject *tmp;
-    for (i = 0; i < n; i++, ip +=skip, op++) {
-        tmp = *op;
-        *op = @FROMTYPE@_getitem(ip, aip);
-        Py_XDECREF(tmp);
-    }
-}
-/**end repeat**/
-
-#define _NPY_UNUSEDBOOL  NPY_UNUSED
-#define _NPY_UNUSEDBYTE  NPY_UNUSED
-#define _NPY_UNUSEDUBYTE  NPY_UNUSED
-#define _NPY_UNUSEDSHORT  NPY_UNUSED
-#define _NPY_UNUSEDUSHORT  NPY_UNUSED
-#define _NPY_UNUSEDINT  NPY_UNUSED
-#define _NPY_UNUSEDUINT  NPY_UNUSED
-#define _NPY_UNUSEDLONG  NPY_UNUSED
-#define _NPY_UNUSEDULONG  NPY_UNUSED
-#define _NPY_UNUSEDLONGLONG  NPY_UNUSED
-#define _NPY_UNUSEDULONGLONG  NPY_UNUSED
-#define _NPY_UNUSEDHALF NPY_UNUSED
-#define _NPY_UNUSEDFLOAT  NPY_UNUSED
-#define _NPY_UNUSEDDOUBLE  NPY_UNUSED
-#define _NPY_UNUSEDLONGDOUBLE  NPY_UNUSED
-#define _NPY_UNUSEDCFLOAT  NPY_UNUSED
-#define _NPY_UNUSEDCDOUBLE  NPY_UNUSED
-#define _NPY_UNUSEDCLONGDOUBLE  NPY_UNUSED
-#define _NPY_UNUSEDDATETIME  NPY_UNUSED
-#define _NPY_UNUSEDTIMEDELTA  NPY_UNUSED
-#define _NPY_UNUSEDHALF NPY_UNUSED
-#define _NPY_UNUSEDSTRING
-#define _NPY_UNUSEDVOID
-#define _NPY_UNUSEDUNICODE
-
-/**begin repeat
- *
  * #TOTYPE = BOOL,
  *           BYTE, UBYTE, SHORT, USHORT, INT, UINT,
  *           LONG, ULONG, LONGLONG, ULONGLONG,
  *           HALF, FLOAT, DOUBLE, LONGDOUBLE,
  *           CFLOAT, CDOUBLE, CLONGDOUBLE,
- *           STRING, UNICODE, VOID,
- *           DATETIME, TIMEDELTA#
- * #totype = npy_bool,
- *           npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *           npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *           npy_half, npy_float, npy_double, npy_longdouble,
- *           npy_cfloat, npy_cdouble, npy_clongdouble,
- *           npy_char, npy_char, npy_char,
- *           npy_datetime, npy_timedelta#
- * #skip = 1*18, PyArray_DESCR(aop)->elsize*3, 1*2#
+ *           OBJECT#
  */
-static void
-OBJECT_to_@TOTYPE@(void *input, void *output, npy_intp n,
-        void *NPY_UNUSED(aip), void *aop)
-{
-    PyObject **ip = input;
-    @totype@ *op = output;
+/**begin repeat1
+ * #FROMTYPE = BOOL,
+ *             BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *             LONG, ULONG, LONGLONG, ULONGLONG,
+ *             HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *             CFLOAT, CDOUBLE, CLONGDOUBLE,
+ *             OBJECT#
+ */
 
-    npy_intp i;
-    int skip = @skip@;
+#define @FROMTYPE@_to_@TOTYPE@ NULL
 
-    for (i = 0; i < n; i++, ip++, op += skip) {
-        if (*ip == NULL) {
-            if (@TOTYPE@_setitem(Py_False, op, aop) < 0) {
-                return;
-            }
-        }
-        else {
-            if (@TOTYPE@_setitem(*ip, op, aop) < 0) {
-                return;
-            }
-        }
-    }
-}
+/**end repeat1**/
+/**end repeat**/
+
+/**begin repeat
+ * #OTHER = VOID, STRING, UNICODE, DATETIME, TIMEDELTA#
+ */
+#define OBJECT_to_@OTHER@ NULL
+#define @OTHER@_to_OBJECT NULL
+
 /**end repeat**/
 
 
@@ -4671,22 +4413,24 @@ set_typeinfo(PyObject *dict)
             return -1;
         }
     }
-    key = PyLong_FromLong(NPY_@name2@);
-    if (key == NULL) {
-        return -1;
-    }
-    cobj = NpyCapsule_FromVoidPtr((void *)@name1@_to_@name2@, NULL);
-    if (cobj == NULL) {
-        Py_DECREF(key);
-        return -1;
-    }
-    if (PyDict_SetItem(dtype->f->castdict, key, cobj) < 0) {
+    if ((void *)@name1@_to_@name2@ != NULL) {
+        key = PyLong_FromLong(NPY_@name2@);
+        if (key == NULL) {
+            return -1;
+        }
+        cobj = NpyCapsule_FromVoidPtr((void *)@name1@_to_@name2@, NULL);
+        if (cobj == NULL) {
+            Py_DECREF(key);
+            return -1;
+        }
+        if (PyDict_SetItem(dtype->f->castdict, key, cobj) < 0) {
+            Py_DECREF(key);
+            Py_DECREF(cobj);
+            return -1;
+        }
         Py_DECREF(key);
         Py_DECREF(cobj);
-        return -1;
     }
-    Py_DECREF(key);
-    Py_DECREF(cobj);
 
     /**end repeat1**/
 

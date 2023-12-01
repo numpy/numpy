@@ -959,16 +959,6 @@ Converting data types
     placed in out), and have a data type that is one of the builtin
     types.  Returns 0 on success and -1 if an error occurs.
 
-.. c:function:: PyArray_VectorUnaryFunc* PyArray_GetCastFunc( \
-        PyArray_Descr* from, int totype)
-
-    Return the low-level casting function to cast from the given
-    descriptor to the builtin type number. If no casting function
-    exists return ``NULL`` and set an error. Using this function
-    instead of direct access to *from* ->f->cast will allow support of
-    any user-defined casting functions added to a descriptors casting
-    dictionary.
-
 .. c:function:: int PyArray_CanCastSafely(int fromtype, int totype)
 
     Returns non-zero if an array of data type *fromtype* can be cast
