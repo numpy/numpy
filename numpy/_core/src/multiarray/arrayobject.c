@@ -1154,8 +1154,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         /* Logic shared by `empty`, `empty_like`, and `ndarray.__new__` */
         if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
             /* place Py_None in object positions */
-            PyArray_FillObjectArray(ret, Py_None);
-            if (PyErr_Occurred()) {
+            if (PyArray_SetObjectsToNone(ret) < 0) {
                 descr = NULL;
                 goto fail;
             }

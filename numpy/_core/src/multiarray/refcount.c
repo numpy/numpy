@@ -365,8 +365,8 @@ PyArray_XDECREF(PyArrayObject *mp)
 }
 
 
-static void
-_fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype);
+static int
+_fill_with_none(char *optr, PyArray_Descr *dtype);
 
 
 /*
@@ -376,16 +376,19 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype);
  * does now and we never strictly guaranteed this).
  *
  * Assumes contiguous
+ *
+ * TODO: This function is utterly ridiculous for structures, should use
+ *       a dtype_traversal function instead...
  */
-NPY_NO_EXPORT void
-PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
+NPY_NO_EXPORT int
+PyArray_SetObjectsToNone(PyArrayObject *arr)
 {
     PyArray_Descr* descr = PyArray_DESCR(arr);
 
     // non-legacy dtypes are responsible for initializing
     // their own internal references
     if (!NPY_DT_is_legacy(NPY_DTYPE(descr))) {
-        return;
+        return 0;
     }
 
     npy_intp i,n;
@@ -394,52 +397,35 @@ PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
         PyObject **optr;
         optr = (PyObject **)(PyArray_DATA(arr));
         n = PyArray_SIZE(arr);
-        if (obj == NULL) {
-            for (i = 0; i < n; i++) {
-                *optr++ = NULL;
-            }
-        }
-        else {
-            for (i = 0; i < n; i++) {
-                Py_INCREF(obj);
-                *optr++ = obj;
-            }
+        for (i = 0; i < n; i++) {
+            Py_INCREF(Py_None);
+            *optr++ = Py_None;
         }
     }
     else {
         char *optr;
         optr = PyArray_DATA(arr);
         for (i = 0; i < n; i++) {
-            _fillobject(optr, obj, descr);
+            if (_fill_with_none(optr, descr) < 0) {
+                return -1;
+            }
             optr += descr->elsize;
         }
     }
+    return 0;
 }
 
-static void
-_fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
+
+static int
+_fill_with_none(char *optr, PyArray_Descr *dtype)
 {
     if (!PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)) {
-        PyObject *arr;
-
-        if ((obj == Py_None) ||
-                (PyLong_Check(obj) && PyLong_AsLong(obj) == 0)) {
-            return;
-        }
-        /* Clear possible long conversion error */
-        PyErr_Clear();
-        Py_INCREF(dtype);
-        arr = PyArray_NewFromDescr(&PyArray_Type, dtype,
-                                   0, NULL, NULL, NULL,
-                                   0, NULL);
-        if (arr!=NULL) {
-            dtype->f->setitem(obj, optr, arr);
-        }
-        Py_XDECREF(arr);
+        return 0;
     }
+    PyObject *None = Py_None;
     if (dtype->type_num == NPY_OBJECT) {
-        Py_XINCREF(obj);
-        memcpy(optr, &obj, sizeof(obj));
+        Py_XINCREF(Py_None);
+        memcpy(optr, &None, sizeof(PyObject *));
     }
     else if (PyDataType_HASFIELDS(dtype)) {
         PyObject *key, *value, *title = NULL;
@@ -452,9 +438,11 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
                 continue;
             }
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
-                return;
+                return -1;
             }
-            _fillobject(optr + offset, obj, new);
+            if (_fill_with_none(optr + offset, new) < 0) {
+                return -1;
+            }
         }
     }
     else if (PyDataType_HASSUBARRAY(dtype)) {
@@ -463,14 +451,16 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
         inner_elsize = dtype->subarray->base->elsize;
         if (inner_elsize == 0) {
             /* There cannot be any elements, so return */
-            return;
+            return 0;
         }
         /* Subarrays are always contiguous in memory */
         size = dtype->elsize / inner_elsize;
 
         /* Call _fillobject on each item recursively. */
-        for (i = 0; i < size; i++){
-            _fillobject(optr, obj, dtype->subarray->base);
+        for (i = 0; i < size; i++) {
+            if (_fill_with_none(optr, dtype->subarray->base) < 0) {
+                return -1;
+            }
             optr += inner_elsize;
         }
     }
@@ -478,5 +468,5 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
         /* This path should not be reachable. */
         assert(0);
     }
-    return;
+    return 0;
 }

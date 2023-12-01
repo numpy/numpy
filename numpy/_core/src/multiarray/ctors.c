@@ -22,6 +22,7 @@
 #include "convert_datatype.h"
 #include "descriptor.h"
 #include "dtypemeta.h"
+#include "refcount.h"  /* for PyArray_SetObjectsToNone */
 #include "shape.h"
 #include "npy_buffer.h"
 #include "lowlevel_strided_loops.h"
@@ -1162,8 +1163,7 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
 
     /* Logic shared by `empty`, `empty_like`, and `ndarray.__new__` */
     if (PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)ret))) {
-        PyArray_FillObjectArray((PyArrayObject *)ret, Py_None);
-        if (PyErr_Occurred()) {
+        if (PyArray_SetObjectsToNone((PyArrayObject *)ret) < 0) {
             Py_DECREF(ret);
             return NULL;
         }
@@ -2946,8 +2946,7 @@ PyArray_Empty_int(int nd, npy_intp const *dims, PyArray_Descr *descr,
 
     /* Logic shared by `empty`, `empty_like`, and `ndarray.__new__` */
     if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
-        PyArray_FillObjectArray(ret, Py_None);
-        if (PyErr_Occurred()) {
+        if (PyArray_SetObjectsToNone(ret) < 0) {
             Py_DECREF(ret);
             return NULL;
         }
