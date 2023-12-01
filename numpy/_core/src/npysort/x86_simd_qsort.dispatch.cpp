@@ -14,9 +14,9 @@ template<typename T>
 void x86_qsort(T* arr, npy_intp num)
 {
 #if defined(NPY_HAVE_AVX512_SKX)
-    avx512_qsort(arr, num);
+    avx512_qsort(arr, num, true);
 #elif defined(NPY_HAVE_AVX2)
-    avx2_qsort(arr, num);
+    avx2_qsort(arr, num, true);
 #endif
 }
 
@@ -24,9 +24,9 @@ template<typename T>
 void x86_qselect(T* arr, npy_intp num, npy_intp kth)
 {
 #if defined(NPY_HAVE_AVX512_SKX)
-    avx512_qselect(arr, kth, num);
+    avx512_qselect(arr, kth, num, true);
 #elif defined(NPY_HAVE_AVX2)
-    avx2_qselect(arr, kth, num);
+    avx2_qselect(arr, kth, num, true);
 #endif
 }
 
