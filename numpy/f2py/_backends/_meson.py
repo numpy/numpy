@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import errno
 import shutil
 import subprocess
@@ -88,8 +89,14 @@ class MesonBackend(Backend):
             walk_dir.glob(f"{self.modulename}*.so"),
             walk_dir.glob(f"{self.modulename}*.pyd"),
         )
+        # Same behavior as distutils
+        # https://github.com/numpy/numpy/issues/24874#issuecomment-1835632293
         for path_object in path_objects:
-            shutil.move(path_object, Path.cwd())
+            dest_path = Path.cwd() / path_object.name
+            if dest_path.exists():
+                dest_path.unlink()
+            shutil.copy2(path_object, dest_path)
+            os.remove(path_object)
 
     def write_meson_build(self, build_dir: Path) -> None:
         """Writes the meson build file at specified location"""

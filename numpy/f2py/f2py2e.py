@@ -455,7 +455,6 @@ def run_main(comline_list):
     pyf_files, _ = filter_files("", "[.]pyf([.]src|)", comline_list)
     # Checks that no existing modulename is defined in a pyf file
     # TODO: Remove all this when scaninputline is replaced
-    modname = "untitled"  # Default
     if args.module_name:
         if "-h" in comline_list:
             modname = (
@@ -465,7 +464,7 @@ def run_main(comline_list):
             modname = validate_modulename(
                 pyf_files, args.module_name
             )  # Validate modname when -h is not present
-    comline_list += ['-m', modname]  # needed for the rest of scaninputline
+        comline_list += ['-m', modname]  # needed for the rest of scaninputline
     # gh-22819 -- end
     files, options = scaninputline(comline_list)
     auxfuncs.options = options
@@ -688,12 +687,12 @@ def run_compile():
 
     # Construct wrappers / signatures / things
     if backend_key == 'meson':
-        outmess('Using meson backend\nWill pass --lower to f2py\nSee https://numpy.org/doc/stable/f2py/buildtools/meson.html\n')
-        f2py_flags.append('--lower')
-        if pyf_files:
-            run_main(f" {' '.join(f2py_flags)} {' '.join(pyf_files)}".split())
-        else:
+        if not pyf_files:
+            outmess('Using meson backend\nWill pass --lower to f2py\nSee https://numpy.org/doc/stable/f2py/buildtools/meson.html\n')
+            f2py_flags.append('--lower')
             run_main(f" {' '.join(f2py_flags)} -m {modulename} {' '.join(sources)}".split())
+        else:
+            run_main(f" {' '.join(f2py_flags)} {' '.join(pyf_files)}".split())
 
     # Now use the builder
     builder = build_backend(
