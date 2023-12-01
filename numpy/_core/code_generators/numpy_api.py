@@ -100,7 +100,7 @@ multiarray_types_api = {
 
 multiarray_funcs_api = {
     '__unused_indices__': [
-        40, 41, 65, 66, 67, 68, 81, 82, 83, 117, 163, 164, 171, 197,
+        40, 41, 65, 66, 67, 68, 81, 82, 83, 117, 163, 164, 171, 173, 197,
         201, 202, 208, 278, 291, 293, 294, 295,
         301],
     'PyArray_GetNDArrayCVersion':           (0,),
@@ -237,7 +237,7 @@ multiarray_funcs_api = {
     'PyArray_MatrixProduct':                (170,),
     # Unused slot 171, was `PyArray_CopyAndTranspose`
     'PyArray_Correlate':                    (172,),
-    'PyArray_TypestrConvert':               (173,),
+    # Unused slot 173, was `PyArray_TypestrConvert`
     'PyArray_DescrConverter':               (174,),
     'PyArray_DescrConverter2':              (175,),
     'PyArray_IntpConverter':                (176,),

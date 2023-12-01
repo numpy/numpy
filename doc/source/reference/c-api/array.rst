@@ -3021,15 +3021,6 @@ Other conversions
     in the *vals* array. The sequence can be smaller then *maxvals* as
     the number of converted objects is returned.
 
-.. c:function:: int PyArray_TypestrConvert(int itemsize, int gentype)
-
-    Convert typestring characters (with *itemsize*) to basic
-    enumerated data types. The typestring character corresponding to
-    signed and unsigned integers, floating point numbers, and
-    complex-floating point numbers are recognized and converted. Other
-    values of gentype are returned. This function can be used to
-    convert, for example, the string 'f4' to :c:data:`NPY_FLOAT32`.
-
 
 Miscellaneous
 -------------

@@ -624,7 +624,6 @@ cdef extern from "numpy/arrayobject.h":
     object PyArray_InnerProduct (object, object)
     object PyArray_MatrixProduct (object, object)
     object PyArray_Correlate (object, object, int)
-    int PyArray_TypestrConvert (int, int)
     #int PyArray_DescrConverter (object, dtype*) except 0
     #int PyArray_DescrConverter2 (object, dtype*) except 0
     int PyArray_IntpConverter (object, PyArray_Dims *) except 0
