@@ -688,12 +688,12 @@ def run_compile():
 
     # Construct wrappers / signatures / things
     if backend_key == 'meson':
-        outmess('Using meson backend\nWill pass --lower to f2py\nSee https://numpy.org/doc/stable/f2py/buildtools/meson.html\n')
-        f2py_flags.append('--lower')
-        if pyf_files:
-            run_main(f" {' '.join(f2py_flags)} {' '.join(pyf_files)}".split())
-        else:
+        if not pyf_files:
+            outmess('Using meson backend\nWill pass --lower to f2py\nSee https://numpy.org/doc/stable/f2py/buildtools/meson.html\n')
+            f2py_flags.append('--lower')
             run_main(f" {' '.join(f2py_flags)} -m {modulename} {' '.join(sources)}".split())
+        else:
+            run_main(f" {' '.join(f2py_flags)} {' '.join(pyf_files)}".split())
 
     # Now use the builder
     builder = build_backend(
