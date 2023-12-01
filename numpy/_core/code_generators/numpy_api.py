@@ -100,8 +100,8 @@ multiarray_types_api = {
 
 multiarray_funcs_api = {
     '__unused_indices__': [
-        40, 41, 65, 66, 67, 68, 81, 82, 83, 163, 164, 171, 197,
-        201, 202, 278, 291, 293, 294, 295,
+        40, 41, 65, 66, 67, 68, 81, 82, 83, 117, 163, 164, 171, 197,
+        201, 202, 208, 278, 291, 293, 294, 295,
         301],
     'PyArray_GetNDArrayCVersion':           (0,),
     # Unused slot 40, was `PyArray_SetNumericOps`
@@ -181,7 +181,7 @@ multiarray_funcs_api = {
     'PyArray_CanCoerceScalar':              (114,),
     'PyArray_NewFlagsObject':               (115,),
     'PyArray_CanCastScalar':                (116,),
-    'PyArray_CompareUCS4':                  (117,),
+    # Unused slot 117, was `PyArray_CompareUCS4`
     'PyArray_RemoveSmallest':               (118,),
     'PyArray_ElementStrides':               (119,),
     'PyArray_Item_INCREF':                  (120,),
@@ -272,7 +272,7 @@ multiarray_funcs_api = {
     'PyArray_SearchsideConverter':          (205,),
     'PyArray_CheckAxis':                    (206,),
     'PyArray_OverflowMultiplyList':         (207,),
-    'PyArray_CompareString':                (208,),
+    # Unused slot 208, was `PyArray_CompareString`
     'PyArray_MultiIterFromObjects':         (209,),
     'PyArray_GetEndianness':                (210,),
     'PyArray_GetNDArrayCFeatureVersion':    (211,),

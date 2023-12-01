@@ -653,7 +653,6 @@ cdef extern from "numpy/arrayobject.h":
     int PyArray_CanCoerceScalar (int, int, NPY_SCALARKIND)
     object PyArray_NewFlagsObject (object)
     npy_bool PyArray_CanCastScalar (type, type)
-    #int PyArray_CompareUCS4 (npy_ucs4 *, npy_ucs4 *, register size_t)
     int PyArray_RemoveSmallest (broadcast) except -1
     int PyArray_ElementStrides (object)
     void PyArray_Item_INCREF (char *, dtype) except *
@@ -738,7 +737,6 @@ cdef extern from "numpy/arrayobject.h":
     int PyArray_SearchsideConverter (object, void *) except 0
     object PyArray_CheckAxis (ndarray, int *, int)
     npy_intp PyArray_OverflowMultiplyList (npy_intp *, int)
-    int PyArray_CompareString (char *, char *, size_t)
     int PyArray_SetBaseObject(ndarray, base) except -1 # NOTE: steals a reference to base! Use "set_array_base()" instead.
 
     # additional datetime related functions are defined below

@@ -526,39 +526,6 @@ PyArray_SetDatetimeParseFunction(PyObject *NPY_UNUSED(op))
 {
 }
 
-/*NUMPY_API
- */
-NPY_NO_EXPORT int
-PyArray_CompareUCS4(npy_ucs4 const *s1, npy_ucs4 const *s2, size_t len)
-{
-    npy_ucs4 c1, c2;
-    while(len-- > 0) {
-        c1 = *s1++;
-        c2 = *s2++;
-        if (c1 != c2) {
-            return (c1 < c2) ? -1 : 1;
-        }
-    }
-    return 0;
-}
-
-/*NUMPY_API
- */
-NPY_NO_EXPORT int
-PyArray_CompareString(const char *s1, const char *s2, size_t len)
-{
-    const unsigned char *c1 = (unsigned char *)s1;
-    const unsigned char *c2 = (unsigned char *)s2;
-    size_t i;
-
-    for(i = 0; i < len; ++i) {
-        if (c1[i] != c2[i]) {
-            return (c1[i] > c2[i]) ? 1 : -1;
-        }
-    }
-    return 0;
-}
-
 
 /* Call this from contexts where an array might be written to, but we have no
  * way to tell. (E.g., when converting to a read-write buffer.)
