@@ -169,10 +169,13 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
     }
     void *src = scalar_value(scalar, descr);
     if (src == NULL) {
+        Py_DECREF(descr);
         return -1;
     }
 
-    return npy_cast_raw_scalar_item(descr, src, outcode, ctypeptr);
+    int res = npy_cast_raw_scalar_item(descr, src, outcode, ctypeptr);
+    Py_DECREF(descr);
+    return res;
 }
 
 /*NUMPY_API
@@ -188,6 +191,7 @@ PyArray_CastScalarDirect(PyObject *scalar, PyArray_Descr *indescr,
     }
     void *src = scalar_value(scalar, indescr);
     if (src == NULL) {
+        Py_DECREF(out_dt);
         return -1;
     }
 
