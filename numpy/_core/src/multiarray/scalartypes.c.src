@@ -23,6 +23,7 @@
 #include "numpyos.h"
 #include "can_cast_table.h"
 #include "common.h"
+#include "flagsobject.h"
 #include "scalartypes.h"
 #include "_datetime.h"
 #include "datetime_strings.h"

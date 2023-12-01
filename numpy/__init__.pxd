@@ -569,7 +569,6 @@ cdef extern from "numpy/arrayobject.h":
     #object PyArray_FromArrayAttr (object, dtype, object)
     #NPY_SCALARKIND PyArray_ScalarKind (int, ndarray*)
     int PyArray_CanCoerceScalar (int, int, NPY_SCALARKIND)
-    object PyArray_NewFlagsObject (object)
     npy_bool PyArray_CanCastScalar (type, type)
     int PyArray_RemoveSmallest (broadcast) except -1
     int PyArray_ElementStrides (object)

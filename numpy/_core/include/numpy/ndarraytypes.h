@@ -745,14 +745,6 @@ typedef struct tagPyArrayObject {
  * compatible with multiple NumPy versions.
  */
 
-
-/* Array Flags Object */
-typedef struct PyArrayFlagsObject {
-        PyObject_HEAD
-        PyObject *arr;
-        int flags;
-} PyArrayFlagsObject;
-
 /* Mirrors buffer object to ptr */
 
 typedef struct {

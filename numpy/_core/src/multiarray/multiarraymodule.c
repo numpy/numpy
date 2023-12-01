@@ -43,6 +43,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "hashdescr.h"
 #include "descriptor.h"
 #include "dragon4.h"
+#include "flagsobject.h"
 #include "calculation.h"
 #include "number.h"
 #include "scalartypes.h"

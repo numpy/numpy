@@ -50,7 +50,7 @@ multiarray_types_api = {
     # Internally, PyArrayDescr_Type is a PyArray_DTypeMeta,
     # the following also defines PyArrayDescr_TypeFull (Full appended)
     'PyArrayDescr_Type':                (3, "PyArray_DTypeMeta"),
-    'PyArrayFlags_Type':                (4,),
+    # Unused slot 4, was `PyArrayFlags_Type`
     'PyArrayIter_Type':                 (5,),
     'PyArrayMultiIter_Type':            (6,),
     'PyBoolArrType_Type':               (8,),
@@ -98,9 +98,9 @@ multiarray_types_api = {
 # define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[8])
 
 multiarray_funcs_api = {
-    '__unused_indices__': [1,
-        40, 41, 65, 66, 67, 68, 81, 82, 83,
-        103, 117, 122, 163, 164, 171, 173, 197,
+    '__unused_indices__': [
+        1, 4, 40, 41, 65, 66, 67, 68, 81, 82, 83,
+        103, 115, 117, 122, 163, 164, 171, 173, 197,
         201, 202, 208, 219, 278, 291, 293, 294, 295,
         301],
     'PyArray_GetNDArrayCVersion':           (0,),
@@ -179,7 +179,7 @@ multiarray_funcs_api = {
     'PyArray_FromArrayAttr':                (112,),
     'PyArray_ScalarKind':                   (113,),
     'PyArray_CanCoerceScalar':              (114,),
-    'PyArray_NewFlagsObject':               (115,),
+    # Unused slot 115, was `PyArray_NewFlagsObject`
     'PyArray_CanCastScalar':                (116,),
     # Unused slot 117, was `PyArray_CompareUCS4`
     'PyArray_RemoveSmallest':               (118,),

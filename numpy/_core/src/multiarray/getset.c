@@ -17,6 +17,7 @@
 #include "ctors.h"
 #include "scalartypes.h"
 #include "descriptor.h"
+#include "flagsobject.h"
 #include "getset.h"
 #include "arrayobject.h"
 #include "mem_overlap.h"
