@@ -10,7 +10,7 @@ typedef struct PyArrayFlagsObject {
 } PyArrayFlagsObject;
 
 
-NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type;
+extern NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type;
 
 NPY_NO_EXPORT PyObject *
 PyArray_NewFlagsObject(PyObject *obj);
