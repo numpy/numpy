@@ -10,6 +10,7 @@
     #include "x86-simd-sort/src/avx2-64bit-qsort.hpp"
 #endif
 
+namespace {
 template<typename T>
 void x86_qsort(T* arr, npy_intp num)
 {
@@ -29,6 +30,7 @@ void x86_qselect(T* arr, npy_intp num, npy_intp kth)
     avx2_qselect(arr, kth, num, true);
 #endif
 }
+} // anonymous
 
 namespace np { namespace qsort_simd {
 #if defined(NPY_HAVE_AVX512_SKX) || defined(NPY_HAVE_AVX2)
