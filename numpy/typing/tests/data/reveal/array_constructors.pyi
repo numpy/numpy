@@ -211,3 +211,11 @@ assert_type(np.stack([A, A], out=B), SubClass[np.float64])
 
 assert_type(np.block([[A, A], [A, A]]), npt.NDArray[Any])
 assert_type(np.block(C), npt.NDArray[Any])
+
+if sys.version_info >= (3, 12):
+    from collections.abc import Buffer
+
+    def create_array(obj: npt.ArrayLike) -> npt.NDArray[Any]: ...
+
+    buffer: Buffer
+    assert_type(create_array(buffer), npt.NDArray[Any])

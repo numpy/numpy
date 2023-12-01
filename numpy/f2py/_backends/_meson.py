@@ -7,6 +7,7 @@ from pathlib import Path
 
 from ._backend import Backend
 from string import Template
+from itertools import chain
 
 import warnings
 
@@ -83,16 +84,12 @@ class MesonBackend(Backend):
 
     def _move_exec_to_root(self, build_dir: Path):
         walk_dir = Path(build_dir) / self.meson_build_dir
-        path_objects = walk_dir.glob(f"{self.modulename}*.so")
+        path_objects = chain(
+            walk_dir.glob(f"{self.modulename}*.so"),
+            walk_dir.glob(f"{self.modulename}*.pyd"),
+        )
         for path_object in path_objects:
             shutil.move(path_object, Path.cwd())
-
-    def _get_build_command(self):
-        return [
-            "meson",
-            "setup",
-            self.meson_build_dir,
-        ]
 
     def write_meson_build(self, build_dir: Path) -> None:
         """Writes the meson build file at specified location"""
@@ -111,19 +108,14 @@ class MesonBackend(Backend):
         meson_build_file.write_text(src)
         return meson_build_file
 
+    def _run_subprocess_command(self, command, cwd):
+        subprocess.run(command, cwd=cwd, check=True)
+
     def run_meson(self, build_dir: Path):
-        completed_process = subprocess.run(self._get_build_command(), cwd=build_dir)
-        if completed_process.returncode != 0:
-            raise subprocess.CalledProcessError(
-                completed_process.returncode, completed_process.args
-            )
-        completed_process = subprocess.run(
-            ["meson", "compile", "-C", self.meson_build_dir], cwd=build_dir
-        )
-        if completed_process.returncode != 0:
-            raise subprocess.CalledProcessError(
-                completed_process.returncode, completed_process.args
-            )
+        setup_command = ["meson", "setup", self.meson_build_dir]
+        self._run_subprocess_command(setup_command, build_dir)
+        compile_command = ["meson", "compile", "-C", self.meson_build_dir]
+        self._run_subprocess_command(compile_command, build_dir)
 
     def compile(self) -> None:
         self.sources = _prepare_sources(self.modulename, self.sources, self.build_dir)

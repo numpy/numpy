@@ -13,10 +13,10 @@ import pickle
 import numpy as np
 from . import format
 from ._datasource import DataSource
-from numpy.core import overrides
-from numpy.core.multiarray import packbits, unpackbits
-from numpy.core._multiarray_umath import _load_from_filelike
-from numpy.core.overrides import set_array_function_like_doc, set_module
+from numpy._core import overrides
+from numpy._core.multiarray import packbits, unpackbits
+from numpy._core._multiarray_umath import _load_from_filelike
+from numpy._core.overrides import set_array_function_like_doc, set_module
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
     ConverterLockError, ConversionWarning, _is_string_like,
@@ -404,7 +404,7 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         # The 'encoding' value for pickle also affects what encoding
         # the serialized binary data of NumPy arrays is loaded
         # in. Pickle does not pass on the encoding information to
-        # NumPy. The unpickling code in numpy.core.multiarray is
+        # NumPy. The unpickling code in numpy._core.multiarray is
         # written to assume that unicode data appearing where binary
         # should be is in 'latin1'. 'bytes' is also safe, as is 'ASCII'.
         #
@@ -815,7 +815,7 @@ _loadtxt_chunksize = 50000
 def _read(fname, *, delimiter=',', comment='#', quote='"',
           imaginary_unit='j', usecols=None, skiplines=0,
           max_rows=None, converters=None, ndmin=None, unpack=False,
-          dtype=np.float64, encoding="bytes"):
+          dtype=np.float64, encoding=None):
     r"""
     Read a NumPy array from a text file.
     This is a helper function for loadtxt.
@@ -838,7 +838,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
         Character that is used to quote string fields. Default is '"'
         (a double quote). Use None to disable quote support.
     imaginary_unit : str, optional
-        Character that represent the imaginay unit `sqrt(-1)`.
+        Character that represent the imaginary unit `sqrt(-1)`.
         Default is 'j'.
     usecols : array_like, optional
         A one-dimensional array of integer column numbers.  These are the
@@ -1073,7 +1073,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
 @set_module('numpy')
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
-            ndmin=0, encoding='bytes', max_rows=None, *, quotechar=None,
+            ndmin=0, encoding=None, max_rows=None, *, quotechar=None,
             like=None):
     r"""
     Load data from a text file.
@@ -1145,6 +1145,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         the system default is used. The default value is 'bytes'.
 
         .. versionadded:: 1.14.0
+        .. versionchanged:: 2.0
+            Before NumPy 2, the default was ``'bytes'`` for Python 2
+            compatibility. The default is now ``None``.
+
     max_rows : int, optional
         Read `max_rows` rows of content after `skiprows` lines. The default is
         to read all the rows. Note that empty rows containing no data such as
@@ -1262,7 +1266,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     array([1.e+00, 2.7e+00, 1.e+05])
 
     This idea can be extended to automatically handle values specified in
-    many different formats:
+    many different formats, such as hex values:
 
     >>> def conv(val):
     ...     try:
@@ -1270,16 +1274,14 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     ...     except ValueError:
     ...         return float.fromhex(val)
     >>> s = StringIO("1, 2.5, 3_000, 0b4, 0x1.4000000000000p+2")
-    >>> np.loadtxt(s, delimiter=",", converters=conv, encoding=None)
+    >>> np.loadtxt(s, delimiter=",", converters=conv)
     array([1.0e+00, 2.5e+00, 3.0e+03, 1.8e+02, 5.0e+00])
 
-    Note that with the default ``encoding="bytes"``, the inputs to the
-    converter function are latin-1 encoded byte strings. To deactivate the
-    implicit encoding prior to conversion, use ``encoding=None``
+    Or a format where the ``-`` sign comes after the number:
 
     >>> s = StringIO('10.01 31.25-\n19.22 64.31\n17.57- 63.94')
     >>> conv = lambda x: -float(x[:-1]) if x.endswith('-') else float(x)
-    >>> np.loadtxt(s, converters=conv, encoding=None)
+    >>> np.loadtxt(s, converters=conv)
     array([[ 10.01, -31.25],
            [ 19.22,  64.31],
            [-17.57,  63.94]])
@@ -1715,7 +1717,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                deletechars=''.join(sorted(NameValidator.defaultdeletechars)),
                replace_space='_', autostrip=False, case_sensitive=True,
                defaultfmt="f%i", unpack=None, usemask=False, loose=True,
-               invalid_raise=True, max_rows=None, encoding='bytes',
+               invalid_raise=True, max_rows=None, encoding=None,
                *, ndmin=0, like=None):
     """
     Load data from a text file, with missing values handled as specified.
@@ -1816,6 +1818,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         The default value is 'bytes'.
 
         .. versionadded:: 1.14.0
+        .. versionchanged:: 2.0
+            Before NumPy 2, the default was ``'bytes'`` for Python 2
+            compatibility. The default is now ``None``.
+
     ndmin : int, optional
         Same parameter as `loadtxt`
 
@@ -1858,7 +1864,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     Comma delimited file with mixed dtype
 
-    >>> s = StringIO(u"1,1.3,abcde")
+    >>> s = StringIO("1,1.3,abcde")
     >>> data = np.genfromtxt(s, dtype=[('myint','i8'),('myfloat','f8'),
     ... ('mystring','S5')], delimiter=",")
     >>> data
@@ -1885,7 +1891,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     An example with fixed-width columns
 
-    >>> s = StringIO(u"11.3abcde")
+    >>> s = StringIO("11.3abcde")
     >>> data = np.genfromtxt(s, dtype=None, names=['intvar','fltvar','strvar'],
     ...     delimiter=[1,3,5])
     >>> data

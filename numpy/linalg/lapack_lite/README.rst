@@ -29,11 +29,11 @@ This will grab the right routines, with dependencies, put them into the
 appropriate ``f2c_*.f`` files, run ``f2c`` over them, then do some scrubbing
 similar to that done to generate the CLAPACK_ distribution.
 
-.. _CLAPACK: http://netlib.org/clapack/index.html
+.. _CLAPACK: https://netlib.org/clapack/index.html
 
 The output C files in git use the LAPACK source from the LAPACK_ page, using
 version 3.2.2. Unfortunately, newer versions use newer FORTRAN features, which
 are increasingly not supported by ``f2c``. As these are found, the patch files
 will need to be changed to re-express new constructs with legacy constructs.
 
-.. _LAPACK: http://netlib.org/lapack/index.html
+.. _LAPACK: https://netlib.org/lapack/index.html

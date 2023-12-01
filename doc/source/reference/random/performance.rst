@@ -85,7 +85,7 @@ performance was computed using a geometric mean.
 
    All timings were taken using Linux on an AMD Ryzen 9 3900X processor.
 
-Performance on different Operating Systems
+Performance on different operating systems
 ------------------------------------------
 Performance differs across platforms due to compiler and hardware availability
 (e.g., register width) differences. The default bit generator has been chosen

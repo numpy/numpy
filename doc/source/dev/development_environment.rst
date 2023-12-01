@@ -66,6 +66,10 @@ Now, whenever you want to switch to the virtual environment, you can use the
 command ``source numpy-dev/bin/activate``, and ``deactivate`` to exit from the
 virtual environment and back to your previous shell.
 
+Building from source
+--------------------
+
+See :ref:`building-from-source`.
 
 .. _testing-builds:
 
@@ -84,7 +88,7 @@ one of::
 
     $ spin test -v
     $ spin test numpy/random  # to run the tests in a specific module
-    $ spin test -v -t numpy/core/tests/test_nditer.py::test_iter_c_order
+    $ spin test -v -t numpy/_core/tests/test_nditer.py::test_iter_c_order
 
 This builds NumPy first, so the first time it may take a few minutes.
 
@@ -105,7 +109,7 @@ arguments after a bare ``--``. For example, to run a test method with the
 You can also  `match test names using python operators`_ by passing the ``-k``
 argument to pytest::
 
-    $ spin test -v -t numpy/core/tests/test_multiarray.py -- -k "MatMul and not vector"
+    $ spin test -v -t numpy/_core/tests/test_multiarray.py -- -k "MatMul and not vector"
 
 .. note::
 
@@ -169,7 +173,7 @@ For more extensive information, see :ref:`testing-guidelines`.
 Note: do not run the tests from the root directory of your numpy git repo without ``spin``,
 that will result in strange test errors.
 
-Running Linting
+Running linting
 ---------------
 Lint checks can be performed on newly added lines of Python code.
 
@@ -189,7 +193,7 @@ If there are no errors, the script exits with no message. In case of errors,
 check the error message for details::
 
     $ python tools/linter.py --branch main
-    ./numpy/core/tests/test_scalarmath.py:34:5: E303 too many blank lines (3)
+    ./numpy/_core/tests/test_scalarmath.py:34:5: E303 too many blank lines (3)
     1       E303 too many blank lines (3)
 
 It is advisable to run lint checks before pushing commits to a remote branch
@@ -238,6 +242,25 @@ Most python builds do not include debug symbols and are built with compiler
 optimizations enabled. To get the best debugging experience using a debug build
 of Python is encouraged, see :ref:`advanced_debugging`.
 
+In terms of debugging, NumPy also needs to be built in a debug mode. You need to use
+``debug`` build type and disable optimizations to make sure ``-O0`` flag is used
+during object building. To generate source-level debug information within the build process run::
+
+    $ spin build --clean -- -Dbuildtype=debug -Ddisable-optimization=true
+
+.. note::
+
+    In case you are using conda environment be aware that conda sets ``CFLAGS``
+    and ``CXXFLAGS`` automatically, and they will include the ``-O2`` flag by default.
+    You can safely use ``unset CFLAGS && unset CXXFLAGS`` to avoid them or provide them
+    at the beginning of the ``spin`` command: ``CFLAGS="-O0 -g" CXXFLAGS="-O0 -g"``.
+    Alternatively, to take control of these variables more permanently, you can create
+    ``env_vars.sh`` file in the ``<path-to-conda-envs>/numpy-dev/etc/conda/activate.d``
+    directory. In this file you can export ``CFLAGS`` and ``CXXFLAGS`` variables.
+    For complete instructions please refer to
+    https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#saving-environment-variables.
+
+
 Next you need to write a Python script that invokes the C code whose execution
 you want to debug. For instance ``mytest.py``::
 
@@ -249,10 +272,19 @@ Now, you can run::
 
     $ spin gdb mytest.py
 
+In case you are using clang toolchain::
+
+    $ lldb python mytest.py
+
 And then in the debugger::
 
     (gdb) break array_empty_like
     (gdb) run
+
+lldb counterpart::
+
+    (lldb) breakpoint set --name array_empty_like
+    (lldb) run
 
 The execution will now stop at the corresponding C function and you can step
 through it as usual. A number of useful Python-specific commands are available.
@@ -260,10 +292,10 @@ For example to see where in the Python code you are, use ``py-list``, to see the
 python traceback, use ``py-bt``.  For more details, see
 `DebuggingWithGdb`_. Here are some commonly used commands:
 
-   - ``list``: List specified function or line.
-   - ``next``: Step program, proceeding through subroutine calls.
-   - ``step``: Continue program being debugged, after signal or breakpoint.
-   - ``print``: Print value of expression EXP.
+- ``list``: List specified function or line.
+- ``next``: Step program, proceeding through subroutine calls.
+- ``step``: Continue program being debugged, after signal or breakpoint.
+- ``print``: Print value of expression EXP.
 
 Rich support for Python debugging requires that the ``python-gdb.py`` script
 distributed with Python is installed in a path where gdb can find it. If you
@@ -283,8 +315,8 @@ typically packaged as ``python-dbg``) is highly recommended.
 
 .. _DebuggingWithGdb: https://wiki.python.org/moin/DebuggingWithGdb
 .. _tox: https://tox.readthedocs.io/
-.. _virtualenv: http://www.virtualenv.org/
-.. _virtualenvwrapper: http://www.doughellmann.com/projects/virtualenvwrapper/
+.. _virtualenv: https://virtualenv.pypa.io/
+.. _virtualenvwrapper: https://doughellmann.com/projects/virtualenvwrapper/
 .. _Waf: https://code.google.com/p/waf/
 .. _`match test names using python operators`: https://docs.pytest.org/en/latest/usage.html#specifying-tests-selecting-tests
 .. _`Python Style Guide`: https://www.python.org/dev/peps/pep-0008/

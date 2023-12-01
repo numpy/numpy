@@ -31,7 +31,7 @@ NumPy API. It is intended as a comprehensive resolution to NEP-22 [3]_, and
 obviates the need to add an ever-growing list of new protocols for each new
 type of function or object that needs to become overridable.
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 The primary end-goal of this NEP is to make the following possible:
@@ -96,7 +96,7 @@ such as CuPy needing to coerce to a CuPy array, for example, instead of
 a NumPy array. In simpler words, one needs things like ``np.asarray(...)`` or
 an alternative to "just work" and return duck-arrays.
 
-Usage and Impact
+Usage and impact
 ----------------
 
 This NEP allows for global and context-local overrides, as well as
@@ -381,7 +381,7 @@ The benefits to end-users extend beyond just writing new code. Old code
 by a simple import switch and a line adding the preferred backend. This way,
 users may find it easier to port existing code to GPU or distributed computing.
 
-Related Work
+Related work
 ------------
 
 Other override mechanisms
@@ -629,7 +629,7 @@ Discussion
 * Discussion PR 3: https://github.com/numpy/numpy/pull/14389
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. [1] uarray, A general dispatch mechanism for Python: https://uarray.readthedocs.io

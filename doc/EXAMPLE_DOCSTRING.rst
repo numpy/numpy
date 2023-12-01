@@ -39,7 +39,7 @@ out : ndarray
     In other words, each entry ``out[i, j, ... , :]`` is an N-dimensional
     value drawn from the distribution.
 
-See Also
+See also
 --------
 normal
 scipy.stats.norm : Provides random variates, as well as probability density

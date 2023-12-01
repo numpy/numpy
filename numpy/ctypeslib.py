@@ -56,7 +56,7 @@ import os
 from numpy import (
     integer, ndarray, dtype as _dtype, asarray, frombuffer
 )
-from numpy.core.multiarray import _flagdict, flagsobj
+from numpy._core.multiarray import _flagdict, flagsobj
 
 try:
     import ctypes
@@ -81,7 +81,7 @@ if ctypes is None:
     from numpy import intp as c_intp
     _ndptr_base = object
 else:
-    import numpy.core._internal as nic
+    import numpy._core._internal as nic
     c_intp = nic._getintp_ctype()
     del nic
     _ndptr_base = ctypes.c_void_p

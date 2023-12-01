@@ -7,11 +7,11 @@ if sys.version_info >= (3, 10):
 else:
     from typing_extensions import ParamSpec, Concatenate
 
+import numpy as np
 from numpy import (
     generic,
     integer,
     ufunc,
-    bool_,
     unsignedinteger,
     signedinteger,
     floating,
@@ -32,22 +32,13 @@ from numpy._typing import (
     _ArrayLikeObject_co,
 )
 
-from numpy.core.shape_base import vstack
+from numpy._core.shape_base import vstack
 
 _P = ParamSpec("_P")
 _SCT = TypeVar("_SCT", bound=generic)
 
-# The signatures of `__array_wrap__` and `__array_prepare__` are the same;
-# give them unique names for the sake of clarity
+# Signature of `__array_wrap__`
 class _ArrayWrap(Protocol):
-    def __call__(
-        self,
-        array: NDArray[Any],
-        context: None | tuple[ufunc, tuple[Any, ...], int] = ...,
-        /,
-    ) -> Any: ...
-
-class _ArrayPrepare(Protocol):
     def __call__(
         self,
         array: NDArray[Any],
@@ -59,9 +50,6 @@ class _SupportsArrayWrap(Protocol):
     @property
     def __array_wrap__(self) -> _ArrayWrap: ...
 
-class _SupportsArrayPrepare(Protocol):
-    @property
-    def __array_prepare__(self) -> _ArrayPrepare: ...
 
 __all__: list[str]
 
@@ -189,7 +177,7 @@ def get_array_wrap(*args: _SupportsArrayWrap) -> _ArrayWrap: ...
 def get_array_wrap(*args: object) -> None | _ArrayWrap: ...
 
 @overload
-def kron(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co) -> NDArray[bool_]: ...  # type: ignore[misc]
+def kron(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co) -> NDArray[np.bool]: ...  # type: ignore[misc]
 @overload
 def kron(a: _ArrayLikeUInt_co, b: _ArrayLikeUInt_co) -> NDArray[unsignedinteger[Any]]: ...  # type: ignore[misc]
 @overload

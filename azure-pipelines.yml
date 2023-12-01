@@ -68,20 +68,7 @@ stages:
             # yum does not have a ninja package, so use the PyPI one
             docker run -v $(pwd):/numpy -e CFLAGS="-msse2 -std=c99 -UNDEBUG" \
             -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2014_i686 \
-            /bin/bash -xc " \
-            git config --global --add safe.directory /numpy && \
-            cd /numpy && \
-            /opt/python/cp39-cp39/bin/python -mvenv venv && \
-            source venv/bin/activate && \
-            target=\$(python3 tools/openblas_support.py) && \
-            cp -r \$target/lib/* /usr/lib && \
-            cp \$target/include/* /usr/include && \
-            python3 -m pip install ninja && \
-            python3 -m pip install -r test_requirements.txt && \
-            echo CFLAGS \$CFLAGS && \
-            python3 -m pip install -v . && \
-            cd tools && \
-            python3 -m pytest --pyargs numpy"
+            /bin/bash -xc "source /numpy/tools/ci/run_32_bit_linux_docker.sh"
       displayName: 'Run 32-bit manylinux2014 Docker Build / Tests'
 
   - job: Windows
@@ -100,15 +87,13 @@ stages:
             PYTHON_ARCH: 'x64'
             TEST_MODE: full
             BITS: 64
-            NPY_USE_BLAS_ILP64: '1'
+            _USE_BLAS_ILP64: '1'
           PyPy39-64bit-fast:
             PYTHON_VERSION: 'pypy3.9'
             PYTHON_ARCH: 'x64'
             TEST_MODE: fast
             BITS: 64
-            NPY_USE_BLAS_ILP64: '1'
-            # Broken - it builds but _multiarray_umath doesn't import - needs investigating
-            DISABLE_BLAS: '1'
+            _USE_BLAS_ILP64: '1'
 
     steps:
     - template: azure-steps-windows.yml

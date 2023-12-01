@@ -80,7 +80,7 @@ additional parts required for building the documentation::
 
     git submodule update --init
 
-.. _Sphinx: http://www.sphinx-doc.org/
+.. _Sphinx: https://www.sphinx-doc.org/
 .. _numpydoc: https://numpydoc.readthedocs.io/en/latest/index.html
 .. _Doxygen: https://www.doxygen.nl/index.html
 

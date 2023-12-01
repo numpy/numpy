@@ -40,12 +40,14 @@ __expired_attributes__ = {
     "Infinity": "Use `np.inf` instead.",
     "NaN": "Use `np.nan` instead.",
     "infty": "Use `np.inf` instead.",
-    "issctype": "",
-    "maximum_sctype": "",
-    "obj2sctype": "",
-    "sctype2char": "",
-    "sctypeDict": "",
-    "sctypes": "",
+    "issctype": "Use `issubclass(rep, np.generic)` instead.",
+    "maximum_sctype":
+        "Use a specific dtype instead. You should avoid relying "
+        "on any implicit mechanism and select the largest dtype of "
+        "a kind explicitly in the code.",
+    "obj2sctype": "Use `np.dtype(obj).type` instead.",
+    "sctype2char": "Use `np.dtype(obj).char` instead.",
+    "sctypes": "Access dtypes explicitly instead.",
     "issubsctype": "Use `np.issubdtype` instead.",
     "set_string_function": 
         "Use `np.set_printoptions` instead with a formatter for "
@@ -56,16 +58,21 @@ __expired_attributes__ = {
     "mat": "Use `np.asmatrix` instead.",
     "recfromcsv": "Use `np.genfromtxt` with comma delimiter instead.",
     "recfromtxt": "Use `np.genfromtxt` instead.",
-    "deprecate": "Raise `DeprecationWarning` instead.",
-    "deprecate_with_doc": "Raise `DeprecationWarning` instead.",
+    "deprecate": "Emit `DeprecationWarning` with `warnings.warn` directly, "
+        "or use `typing.deprecated`.",
+    "deprecate_with_doc": "Emit `DeprecationWarning` with `warnings.warn` "
+        "directly, or use `typing.deprecated`.",
     "disp": "Use your own printing function instead.",
     "find_common_type": 
-        "This function is deprecated, use `numpy.promote_types` or "
-        "`numpy.result_type` instead.  To achieve semantics for the "
-        "`scalar_types` argument, use `numpy.result_type` and pass the "
-        "Python values `0`, `0.0`, or `0j`.",
+        "Use `numpy.promote_types` or `numpy.result_type` instead. "
+        "To achieve semantics for the `scalar_types` argument, use "
+        "`numpy.result_type` and pass the Python values `0`, `0.0`, or `0j`.",
     "round_": "Use `np.round` instead.",
-    "nbytes": "Use `np.dtype(<dtype>).itemsize` instead.",
     "get_array_wrap": "",
     "DataSource": "It's still available as `np.lib.npyio.DataSource`.", 
+    "nbytes": "Use `np.dtype(<dtype>).itemsize` instead.",  
+    "byte_bounds": "Now it's available under `np.lib.array_utils.byte_bounds`",
+    "compare_chararrays": 
+        "It's still available as `np.char.compare_chararrays`.",
+    "format_parser": "It's still available as `np.rec.format_parser`.",
 }

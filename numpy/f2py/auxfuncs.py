@@ -1,18 +1,12 @@
-#!/usr/bin/env python3
 """
-
 Auxiliary functions for f2py2e.
 
-Copyright 1999,2000 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>
+Copyright 1999 -- 2011 Pearu Peterson all rights reserved.
+Copyright 2011 -- present NumPy Developers.
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy (BSD style) LICENSE.
 
-
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
-$Date: 2005/07/24 19:01:55 $
-Pearu Peterson
-
 """
 import pprint
 import sys
@@ -28,7 +22,7 @@ __all__ = [
     'applyrules', 'debugcapi', 'dictappend', 'errmess', 'gentitle',
     'getargs2', 'getcallprotoargument', 'getcallstatement',
     'getfortranname', 'getpymethoddef', 'getrestdoc', 'getusercode',
-    'getusercode1', 'hasbody', 'hascallstatement', 'hascommon',
+    'getusercode1', 'getdimension', 'hasbody', 'hascallstatement', 'hascommon',
     'hasexternals', 'hasinitvalue', 'hasnote', 'hasresultnote',
     'isallocatable', 'isarray', 'isarrayofstrings',
     'ischaracter', 'ischaracterarray', 'ischaracter_or_characterarray',
@@ -50,7 +44,7 @@ __all__ = [
     'isunsigned_long_longarray', 'isunsigned_short',
     'isunsigned_shortarray', 'l_and', 'l_not', 'l_or', 'outmess',
     'replace', 'show', 'stripcomma', 'throw_error', 'isattr_value',
-    'deep_merge'
+    'deep_merge', 'getuseblocks'
 ]
 
 
@@ -418,6 +412,13 @@ def isoptional(var):
 
 def isexternal(var):
     return 'attrspec' in var and 'external' in var['attrspec']
+
+
+def getdimension(var):
+    dimpattern = r"\((.*?)\)"
+    if 'attrspec' in var.keys():
+        if any('dimension' in s for s in var['attrspec']):
+            return [re.findall(dimpattern, v) for v in var['attrspec']][0]
 
 
 def isrequired(var):
@@ -930,3 +931,11 @@ def get_f2py_modulename(source):
                 name = m.group('name')
                 break
     return name
+
+def getuseblocks(pymod):
+    all_uses = []
+    for inner in pymod['body']:
+        for modblock in inner['body']:
+            if modblock.get('use'):
+                all_uses.extend([x for x in modblock.get("use").keys() if "__" not in x])
+    return all_uses

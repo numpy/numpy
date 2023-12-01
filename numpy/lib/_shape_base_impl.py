@@ -1,14 +1,15 @@
 import functools
 import warnings
 
-import numpy.core.numeric as _nx
-from numpy.core.numeric import asarray, zeros, array, asanyarray
-from numpy.core.fromnumeric import reshape, transpose
-from numpy.core.multiarray import normalize_axis_index
-from numpy.core import overrides
-from numpy.core import vstack, atleast_3d
-from numpy.core.numeric import normalize_axis_tuple
-from numpy.core.shape_base import _arrays_for_stack_dispatcher
+import numpy._core.numeric as _nx
+from numpy._core.numeric import asarray, zeros, zeros_like, array, asanyarray
+from numpy._core.fromnumeric import reshape, transpose
+from numpy._core.multiarray import normalize_axis_index
+from numpy._core import overrides
+from numpy._core import vstack, atleast_3d
+from numpy._core.numeric import normalize_axis_tuple
+from numpy._core.overrides import set_module
+from numpy._core.shape_base import _arrays_for_stack_dispatcher
 from numpy.lib._index_tricks_impl import ndindex
 from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
 
@@ -383,7 +384,11 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     # remove the requested axis, and add the new ones on the end.
     # laid out so that each write is contiguous.
     # for a tuple index inds, buff[inds] = func1d(inarr_view[inds])
-    buff = zeros(inarr_view.shape[:-1] + res.shape, res.dtype)
+    if not isinstance(res, matrix):
+        buff = zeros_like(res, shape=inarr_view.shape[:-1] + res.shape)
+    else:
+        # Matrices are nasty with reshaping, so do not preserve them here.
+        buff = zeros(inarr_view.shape[:-1] + res.shape, dtype=res.dtype)
 
     # permutation of axes such that out = buff.transpose(buff_permute)
     buff_dims = list(range(buff.ndim))
@@ -392,10 +397,6 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         buff_dims[buff.ndim-res.ndim : buff.ndim] +
         buff_dims[axis : buff.ndim-res.ndim]
     )
-
-    # matrices have a nasty __array_prepare__ and __array_wrap__
-    if not isinstance(res, matrix):
-        buff = res.__array_prepare__(buff)
 
     # save the first result, then compute and save all remaining results
     buff[ind0] = res
@@ -544,7 +545,7 @@ def expand_dims(a, axis):
     --------
     squeeze : The inverse operation, removing singleton dimensions
     reshape : Insert, remove, and combine dimensions, and resize existing ones
-    doc.indexing, atleast_1d, atleast_2d, atleast_3d
+    atleast_1d, atleast_2d, atleast_3d
 
     Examples
     --------
@@ -604,7 +605,8 @@ def expand_dims(a, axis):
     return a.reshape(shape)
 
 
-# TODO: Remove once deprecation period passes
+# NOTE: Remove once deprecation period passes
+@set_module("numpy")
 def row_stack(tup, *, dtype=None, casting="same_kind"):
     # Deprecated in NumPy 2.0, 2023-08-18
     warnings.warn(
@@ -1208,7 +1210,7 @@ def tile(A, reps):
     behavior, promote `A` to d-dimensions manually before calling this
     function.
 
-    If ``A.ndim > d``, `reps` is promoted to `A`.ndim by pre-pending 1's to it.
+    If ``A.ndim > d``, `reps` is promoted to `A`.ndim by prepending 1's to it.
     Thus for an `A` of shape (2, 3, 4, 5), a `reps` of (2, 2) is treated as
     (1, 1, 2, 2).
 

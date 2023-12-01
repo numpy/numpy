@@ -2,7 +2,7 @@
  * Generate testing csv files
  *
  * cl mt19937-test-data-gen.c randomkit.c
- *   -IC:\Anaconda\Lib\site-packages\numpy\core\include -IC:\Anaconda\include
+ *   -IC:\Anaconda\Lib\site-packages\numpy\_core\include -IC:\Anaconda\include
  *   Advapi32.lib Kernel32.lib C:\Anaconda\libs\python36.lib  -DRK_NO_WINCRYPT=1
  *
  */

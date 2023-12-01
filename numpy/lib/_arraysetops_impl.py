@@ -18,7 +18,7 @@ import functools
 import warnings
 
 import numpy as np
-from numpy.core import overrides
+from numpy._core import overrides
 
 
 array_function_dispatch = functools.partial(
@@ -334,7 +334,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     else:
         ar.sort()
         aux = ar
-    mask = np.empty(aux.shape, dtype=np.bool_)
+    mask = np.empty(aux.shape, dtype=np.bool)
     mask[:1] = True
     if (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and
             np.isnan(aux[-1])):

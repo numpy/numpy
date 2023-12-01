@@ -160,8 +160,8 @@ The Print statement changed to a builtin function in Py3.
 
 Also this is taken care of by 2to3.
 
-types module
-------------
+``types`` module
+----------------
 
 The following items were removed from `types` module in Py3:
 
@@ -179,7 +179,7 @@ In ``numerictypes.py``, the "common" types were replaced by their
 plain equivalents, and `IntType` was dropped.
 
 
-numpy.core.numerictypes
+numpy._core.numerictypes
 -----------------------
 
 In numerictypes, types on Python 3 were changed so that:
@@ -211,7 +211,7 @@ Python 3 is less forgiving about cyclic imports than Python 2.  Cycles
 need to be broken to have the same code work both on Python 2 and 3.
 
 
-C Code
+C code
 ======
 
 

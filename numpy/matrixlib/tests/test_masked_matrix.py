@@ -125,7 +125,7 @@ class TestMaskedMatrix:
         X = np.matrix(x)
         m = np.array([[True, False, False],
                       [False, False, False],
-                      [True, True, False]], dtype=np.bool_)
+                      [True, True, False]], dtype=np.bool)
         mX = masked_array(X, mask=m)
         mXbig = (mX > 0.5)
         mXsmall = (mX < 0.5)

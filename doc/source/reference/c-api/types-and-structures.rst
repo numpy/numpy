@@ -1,6 +1,6 @@
 
 *****************************
-Python Types and C-Structures
+Python types and C-structures
 *****************************
 
 .. sectionauthor:: Travis E. Oliphant
@@ -18,7 +18,7 @@ details after the :c:macro:`PyObject_HEAD` (but you have to cast to the
 correct type to access them --- or use accessor functions or macros).
 
 
-New Python Types Defined
+New Python types defined
 ========================
 
 Python types are the functional equivalent in C of classes in Python.
@@ -119,8 +119,12 @@ PyArray_Type and PyArrayObject
        array. When nd is 0, the array is sometimes called a rank-0
        array. Such arrays have undefined dimensions and strides and
        cannot be accessed. Macro :c:data:`PyArray_NDIM` defined in
-       ``ndarraytypes.h`` points to this data member. :c:data:`NPY_MAXDIMS`
-       is the largest number of dimensions for any array.
+       ``ndarraytypes.h`` points to this data member.
+       ``NPY_MAXDIMS`` is defined as a compile time constant limiting the
+       number of dimensions.  This number is 64 since NumPy 2 and was 32
+       before. However, we may wish to remove this limitations in the future
+       so that it is best to explicitly check dimensionality for code
+       that relies on such an upper bound.
 
    .. c:member:: npy_intp *dimensions
 
@@ -195,6 +199,14 @@ PyArray_Type and PyArrayObject
       NumPy version, you may add a constant, leaving room for changes in NumPy.
       A solution guaranteed to be compatible with any future NumPy version
       requires the use of a runtime calculate offset and allocation size.
+
+PyGenericArrType_Type
+---------------------
+
+.. c:var:: PyTypeObject PyGenericArrType_Type
+
+   The :c:data:`PyGenericArrType_Type` is the PyTypeObject definition which
+   create the `numpy.generic` python type.
 
 
 PyArrayDescr_Type and PyArray_Descr
@@ -382,8 +394,7 @@ PyArrayDescr_Type and PyArray_Descr
    .. c:type:: npy_hash_t
    .. c:member:: npy_hash_t *hash
 
-       Currently unused. Reserved for future use in caching
-       hash values.
+       Used for caching hash values.
 
 .. c:macro:: NPY_ITEM_REFCOUNT
 
@@ -979,11 +990,11 @@ PyArrayIter_Type and PyArrayIterObject
           int   nd_m1;
           npy_intp  index;
           npy_intp  size;
-          npy_intp  coordinates[NPY_MAXDIMS];
-          npy_intp  dims_m1[NPY_MAXDIMS];
-          npy_intp  strides[NPY_MAXDIMS];
-          npy_intp  backstrides[NPY_MAXDIMS];
-          npy_intp  factors[NPY_MAXDIMS];
+          npy_intp  coordinates[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp  dims_m1[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp  strides[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp  backstrides[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp  factors[NPY_MAXDIMS_LEGACY_ITERS];
           PyArrayObject *ao;
           char  *dataptr;
           npy_bool  contiguous;
@@ -1079,8 +1090,8 @@ PyArrayMultiIter_Type and PyArrayMultiIterObject
           npy_intp size;
           npy_intp index;
           int nd;
-          npy_intp dimensions[NPY_MAXDIMS];
-          PyArrayIterObject *iters[NPY_MAXDIMS];
+          npy_intp dimensions[NPY_MAXDIMS_LEGACY_ITERS];
+          PyArrayIterObject *iters[NPY_MAXDIMS_LEGACY_ITERS];
       } PyArrayMultiIterObject;
 
    .. c:macro: PyObject_HEAD
@@ -1134,20 +1145,20 @@ PyArrayNeighborhoodIter_Type and PyArrayNeighborhoodIterObject
           PyObject_HEAD
           int nd_m1;
           npy_intp index, size;
-          npy_intp coordinates[NPY_MAXDIMS]
-          npy_intp dims_m1[NPY_MAXDIMS];
-          npy_intp strides[NPY_MAXDIMS];
-          npy_intp backstrides[NPY_MAXDIMS];
-          npy_intp factors[NPY_MAXDIMS];
+          npy_intp coordinates[NPY_MAXDIMS_LEGACY_ITERS]
+          npy_intp dims_m1[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp strides[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp backstrides[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp factors[NPY_MAXDIMS_LEGACY_ITERS];
           PyArrayObject *ao;
           char *dataptr;
           npy_bool contiguous;
-          npy_intp bounds[NPY_MAXDIMS][2];
-          npy_intp limits[NPY_MAXDIMS][2];
-          npy_intp limits_sizes[NPY_MAXDIMS];
+          npy_intp bounds[NPY_MAXDIMS_LEGACY_ITERS][2];
+          npy_intp limits[NPY_MAXDIMS_LEGACY_ITERS][2];
+          npy_intp limits_sizes[NPY_MAXDIMS_LEGACY_ITERS];
           npy_iter_get_dataptr_t translate;
           npy_intp nd;
-          npy_intp dimensions[NPY_MAXDIMS];
+          npy_intp dimensions[NPY_MAXDIMS_LEGACY_ITERS];
           PyArrayIterObject* _internal_iter;
           char* constant;
           int mode;
@@ -1199,7 +1210,7 @@ value from the array scalar and the function :c:func:`PyArray_Scalar`
 (...) can be used to construct an array scalar from a C-value.
 
 
-Other C-Structures
+Other C-structures
 ==================
 
 A few new C-structures were found to be useful in the development of

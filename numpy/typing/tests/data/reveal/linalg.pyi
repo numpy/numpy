@@ -3,7 +3,9 @@ from typing import Any
 
 import numpy as np
 import numpy.typing as npt
-from numpy.linalg.linalg import QRResult, EigResult, EighResult, SVDResult, SlogdetResult
+from numpy.linalg._linalg import (
+    QRResult, EigResult, EighResult, SVDResult, SlogdetResult
+)
 
 if sys.version_info >= (3, 11):
     from typing import assert_type

@@ -5,6 +5,7 @@ import numpy as np
 from numpy.f2py.tests import util
 
 
+@pytest.mark.slow
 class TestCharacterString(util.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/test-build-f2py']
     suffix = '.f90'
@@ -512,6 +513,7 @@ class TestMiscCharacter(util.F2PyTest):
        end subroutine {fprefix}_character_bc_old
     """)
 
+    @pytest.mark.slow
     def test_gh18684(self):
         # Test character(len=5) and character*5 usages
         f = getattr(self.module, self.fprefix + '_gh18684')
@@ -595,3 +597,16 @@ class TestStringAssumedLength(util.F2PyTest):
 
     def test_gh24008(self):
         self.module.greet("joe", "bob")
+
+@pytest.mark.slow
+class TestStringOptionalInOut(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "string", "gh24662.f90")]
+
+    def test_gh24662(self):
+        self.module.string_inout_optional()
+        a = np.array('hi', dtype='S32')
+        self.module.string_inout_optional(a)
+        assert "output string" in a.tobytes().decode()
+        with pytest.raises(Exception):
+            aa = "Hi"
+            self.module.string_inout_optional(aa)

@@ -1,0 +1,717 @@
+/*@targets
+ ** $maxopt baseline
+ ** sse2 (avx2 fma3)
+ ** neon asimd
+ ** vsx2 vsx3
+ ** vx vxe
+ **/
+#define _UMATHMODULE
+#define _MULTIARRAYMODULE
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include "simd/simd.h"
+#include "loops_utils.h"
+#include "loops.h"
+#include "lowlevel_strided_loops.h"
+// Provides the various *_LOOP macros
+#include "fast_loop_macros.h"
+
+/**
+ * TODO:
+ *  - Improve the implementation of SIMD complex absolute,
+ *    current one kinda slow and it can be optimized by
+ *    at least avoiding the division and keep sqrt.
+ *  - Vectorize reductions
+ *  - Add support for ASIMD/VCMLA through universal intrinics.
+ */
+
+//###############################################################################
+//## Real Single/Double precision
+//###############################################################################
+/********************************************************************************
+ ** Defining ufunc inner functions
+ ********************************************************************************/
+/**begin repeat
+ * Float types
+ *  #type = npy_float, npy_double#
+ *  #TYPE = FLOAT, DOUBLE#
+ *  #sfx  = f32, f64#
+ *  #c = f, #
+ *  #C = F, #
+ *  #VECTOR = NPY_SIMD_F32, NPY_SIMD_F64#
+ */
+/**begin repeat1
+ * Arithmetic
+ * # kind = add, subtract, multiply, divide#
+ * # intrin = add, sub, mul, div#
+ * # OP = +, -, *, /#
+ * # PW = 1, 0, 0, 0#
+ * # is_div = 0*3, 1#
+ * # is_mul = 0*2, 1, 0#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    npy_intp len = dimensions[0];
+    char *src0 = args[0], *src1 = args[1], *dst = args[2];
+    npy_intp ssrc0 = steps[0], ssrc1 = steps[1], sdst = steps[2];
+    // reduce
+    if (ssrc0 == 0 && ssrc0 == sdst && src0 == dst) {
+    #if @PW@
+        *((@type@*)src0) @OP@= @TYPE@_pairwise_sum(src1, len, ssrc1);
+    #else
+        @type@ acc = *((@type@*)src0);
+        if (ssrc1 == sizeof(@type@)) {
+            for (; len > 0; --len, src1 += sizeof(@type@)) {
+                acc @OP@= *(@type@ *)src1;
+            }
+        } else {
+            for (; len > 0; --len, src1 += ssrc1) {
+                acc @OP@= *(@type@ *)src1;
+            }
+        }
+        *((@type@*)src0) = acc;
+    #endif
+        return;
+    }
+#if @is_div@ && defined(NPY_HAVE_NEON) && !NPY_SIMD_F64
+    /**
+     * The SIMD branch is disabled on armhf(armv7) due to the absence of native SIMD
+     * support for single-precision floating-point division. Only scalar division is
+     * supported natively, and without hardware for performance and accuracy comparison,
+     * it's challenging to evaluate the benefits of emulated SIMD intrinsic versus
+     * native scalar division.
+     *
+     * The `npyv_div_f32` universal intrinsic emulates the division operation using an
+     * approximate reciprocal combined with 3 Newton-Raphson iterations for enhanced
+     * precision. However, this approach has limitations:
+     *
+     * - It can cause unexpected floating-point overflows in special cases, such as when
+     *   the divisor is subnormal (refer: https://github.com/numpy/numpy/issues/25097).
+     *
+     * - The precision may vary between the emulated SIMD and scalar division due to
+     *   non-uniform branches (non-contiguous) in the code, leading to precision
+     *   inconsistencies.
+     *
+     * - Considering the necessity of multiple Newton-Raphson iterations, the performance
+     *   gain may not sufficiently offset these drawbacks.
+     */
+#elif @VECTOR@
+    if (len > npyv_nlanes_@sfx@*2 &&
+        !is_mem_overlap(src0, ssrc0, dst, sdst, len) &&
+        !is_mem_overlap(src1, ssrc1, dst, sdst, len)
+    ) {
+        const int vstep = npyv_nlanes_u8;
+        const int wstep = vstep * 2;
+        const int hstep = npyv_nlanes_@sfx@;
+        const int lstep = hstep * 2;
+        // lots of specializations, to squeeze out max performance
+        if (ssrc0 == sizeof(@type@) && ssrc0 == ssrc1 && ssrc0 == sdst) {
+            for (; len >= lstep; len -= lstep, src0 += wstep, src1 += wstep, dst += wstep) {
+                npyv_@sfx@ a0 = npyv_load_@sfx@((const @type@*)src0);
+                npyv_@sfx@ a1 = npyv_load_@sfx@((const @type@*)(src0 + vstep));
+                npyv_@sfx@ b0 = npyv_load_@sfx@((const @type@*)src1);
+                npyv_@sfx@ b1 = npyv_load_@sfx@((const @type@*)(src1 + vstep));
+                npyv_@sfx@ r0 = npyv_@intrin@_@sfx@(a0, b0);
+                npyv_@sfx@ r1 = npyv_@intrin@_@sfx@(a1, b1);
+                npyv_store_@sfx@((@type@*)dst, r0);
+                npyv_store_@sfx@((@type@*)(dst + vstep), r1);
+            }
+            for (; len > 0; len -= hstep, src0 += vstep, src1 += vstep, dst += vstep) {
+            #if @is_div@
+                npyv_@sfx@ a = npyv_load_till_@sfx@((const @type@*)src0, len, 1.0@c@);
+                npyv_@sfx@ b = npyv_load_till_@sfx@((const @type@*)src1, len, 1.0@c@);
+            #else
+                npyv_@sfx@ a = npyv_load_tillz_@sfx@((const @type@*)src0, len);
+                npyv_@sfx@ b = npyv_load_tillz_@sfx@((const @type@*)src1, len);
+            #endif
+                npyv_@sfx@ r = npyv_@intrin@_@sfx@(a, b);
+                npyv_store_till_@sfx@((@type@*)dst, len, r);
+            }
+        }
+        else if (ssrc0 == 0 && ssrc1 == sizeof(@type@) && sdst == ssrc1) {
+            npyv_@sfx@ a = npyv_setall_@sfx@(*((@type@*)src0));
+            for (; len >= lstep; len -= lstep, src1 += wstep, dst += wstep) {
+                npyv_@sfx@ b0 = npyv_load_@sfx@((const @type@*)src1);
+                npyv_@sfx@ b1 = npyv_load_@sfx@((const @type@*)(src1 + vstep));
+                npyv_@sfx@ r0 = npyv_@intrin@_@sfx@(a, b0);
+                npyv_@sfx@ r1 = npyv_@intrin@_@sfx@(a, b1);
+                npyv_store_@sfx@((@type@*)dst, r0);
+                npyv_store_@sfx@((@type@*)(dst + vstep), r1);
+            }
+            for (; len > 0; len -= hstep, src1 += vstep, dst += vstep) {
+            #if @is_div@ || @is_mul@
+                npyv_@sfx@ b = npyv_load_till_@sfx@((const @type@*)src1, len, 1.0@c@);
+            #else
+                npyv_@sfx@ b = npyv_load_tillz_@sfx@((const @type@*)src1, len);
+            #endif
+                npyv_@sfx@ r = npyv_@intrin@_@sfx@(a, b);
+                npyv_store_till_@sfx@((@type@*)dst, len, r);
+            }
+        }
+        else if (ssrc1 == 0 && ssrc0 == sizeof(@type@) && sdst == ssrc0) {
+            npyv_@sfx@ b = npyv_setall_@sfx@(*((@type@*)src1));
+            for (; len >= lstep; len -= lstep, src0 += wstep, dst += wstep) {
+                npyv_@sfx@ a0 = npyv_load_@sfx@((const @type@*)src0);
+                npyv_@sfx@ a1 = npyv_load_@sfx@((const @type@*)(src0 + vstep));
+                npyv_@sfx@ r0 = npyv_@intrin@_@sfx@(a0, b);
+                npyv_@sfx@ r1 = npyv_@intrin@_@sfx@(a1, b);
+                npyv_store_@sfx@((@type@*)dst, r0);
+                npyv_store_@sfx@((@type@*)(dst + vstep), r1);
+            }
+            for (; len > 0; len -= hstep, src0 += vstep, dst += vstep) {
+            #if @is_mul@
+                npyv_@sfx@ a = npyv_load_till_@sfx@((const @type@*)src0, len, 1.0@c@);
+            #elif @is_div@
+                npyv_@sfx@ a = npyv_load_till_@sfx@((const @type@*)src0, len, NPY_NAN@C@);
+            #else
+                npyv_@sfx@ a = npyv_load_tillz_@sfx@((const @type@*)src0, len);
+            #endif
+                npyv_@sfx@ r = npyv_@intrin@_@sfx@(a, b);
+                npyv_store_till_@sfx@((@type@*)dst, len, r);
+            }
+        } else {
+            goto loop_scalar;
+        }
+        npyv_cleanup();
+        return;
+    }
+loop_scalar:
+#endif
+    for (; len > 0; --len, src0 += ssrc0, src1 += ssrc1, dst += sdst) {
+        const @type@ a = *((@type@*)src0);
+        const @type@ b = *((@type@*)src1);
+        *((@type@*)dst) = a @OP@ b;
+    }
+}
+
+NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@_indexed)
+(PyArrayMethod_Context *NPY_UNUSED(context), char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indxp = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp shape = steps[3];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    @type@ *indexed;
+    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
+        npy_intp indx = *(npy_intp *)indxp;
+        if (indx < 0) {
+            indx += shape;
+        }
+        indexed = (@type@ *)(ip1 + is1 * indx);
+        *indexed = *indexed @OP@ *(@type@ *)value;
+    }
+    return 0;
+}
+
+/**end repeat1**/
+/**end repeat**/
+
+//###############################################################################
+//## Complex Single/Double precision
+//###############################################################################
+
+/********************************************************************************
+ ** op intrinics
+ ********************************************************************************/
+
+#if NPY_SIMD_F32
+NPY_FINLINE npyv_f32x2 simd_set2_f32(const float *a)
+{
+    npyv_f32 fill = npyv_reinterpret_f32_u64(npyv_setall_u64(*(npy_uint64*)a));
+    npyv_f32x2 r;
+    r.val[0] = fill;
+    r.val[1] = fill;
+    return r;
+}
+
+NPY_FINLINE npyv_f32
+simd_cconjugate_f32(npyv_f32 x)
+{
+#if NPY_SIMD_BIGENDIAN
+    const npyv_f32 mask = npyv_reinterpret_f32_u64(npyv_setall_u64(0x80000000));
+#else
+    const npyv_f32 mask = npyv_reinterpret_f32_u64(npyv_setall_u64(0x8000000000000000ULL));
+#endif
+    return npyv_xor_f32(x, mask);
+}
+
+NPY_FINLINE npyv_f32
+simd_cmul_f32(npyv_f32 a, npyv_f32 b)
+{
+    npyv_f32 b_rev = npyv_permi128_f32(b, 1, 0, 3, 2);
+    npyv_f32 a_re = npyv_permi128_f32(a, 0, 0, 2, 2);
+    npyv_f32 a_im = npyv_permi128_f32(a, 1, 1, 3, 3);
+    // a_im * b_im, a_im * b_re
+    npyv_f32 ab_iiir = npyv_mul_f32(a_im, b_rev);
+    return npyv_muladdsub_f32(a_re, b, ab_iiir);
+}
+
+NPY_FINLINE npyv_f32
+simd_csquare_f32(npyv_f32 x)
+{ return simd_cmul_f32(x, x); }
+#endif
+
+#if NPY_SIMD_F64
+
+NPY_FINLINE npyv_f64x2 simd_set2_f64(const double *a)
+{
+    npyv_f64 r = npyv_setall_f64(a[0]);
+    npyv_f64 i = npyv_setall_f64(a[1]);
+    return npyv_zip_f64(r, i);
+}
+
+NPY_FINLINE npyv_f64
+simd_cconjugate_f64(npyv_f64 x)
+{
+    const npyv_f64 mask = npyv_reinterpret_f64_u64(npyv_set_u64(
+       0, 0x8000000000000000ULL, 0, 0x8000000000000000ULL,
+       0, 0x8000000000000000ULL, 0, 0x8000000000000000ULL,
+       0, 0x8000000000000000ULL, 0, 0x8000000000000000ULL,
+       0, 0x8000000000000000ULL, 0, 0x8000000000000000ULL,
+       0, 0x8000000000000000ULL, 0, 0x8000000000000000ULL,
+       0, 0x8000000000000000ULL, 0, 0x8000000000000000ULL,
+       0, 0x8000000000000000ULL, 0, 0x8000000000000000ULL,
+       0, 0x8000000000000000ULL, 0, 0x8000000000000000ULL
+    ));
+    return npyv_xor_f64(x, mask);
+}
+
+NPY_FINLINE npyv_f64
+simd_cmul_f64(npyv_f64 a, npyv_f64 b)
+{
+    npyv_f64 b_rev = npyv_permi128_f64(b, 1, 0);
+    npyv_f64 a_re = npyv_permi128_f64(a, 0, 0);
+    npyv_f64 a_im = npyv_permi128_f64(a, 1, 1);
+    // a_im * b_im, a_im * b_re
+    npyv_f64 ab_iiir = npyv_mul_f64(a_im, b_rev);
+    return npyv_muladdsub_f64(a_re, b, ab_iiir);
+}
+
+NPY_FINLINE npyv_f64
+simd_csquare_f64(npyv_f64 x)
+{ return simd_cmul_f64(x, x); }
+#endif
+
+/**begin repeat
+ * #type = npy_float, npy_double#
+ * #sfx = f32, f64#
+ * #bsfx = b32, b64#
+ * #usfx = b32, u64#
+ * #VECTOR = NPY_SIMD_F32, NPY_SIMD_F64#
+ * #is_double = 0, 1#
+ * #c = f, #
+ * #INF = NPY_INFINITYF, NPY_INFINITY#
+ * #NAN = NPY_NANF, NPY_NAN#
+ */
+#if @VECTOR@
+NPY_FINLINE npyv_@sfx@
+simd_cabsolute_@sfx@(npyv_@sfx@ re, npyv_@sfx@ im)
+{
+    const npyv_@sfx@ inf = npyv_setall_@sfx@(@INF@);
+    const npyv_@sfx@ nan = npyv_setall_@sfx@(@NAN@);
+
+    re = npyv_abs_@sfx@(re);
+    im = npyv_abs_@sfx@(im);
+    /*
+     * If real or imag = INF, then convert it to inf + j*inf
+     * Handles: inf + j*nan, nan + j*inf
+     */
+    npyv_@bsfx@ re_infmask = npyv_cmpeq_@sfx@(re, inf);
+    npyv_@bsfx@ im_infmask = npyv_cmpeq_@sfx@(im, inf);
+    im = npyv_select_@sfx@(re_infmask, inf, im);
+    re = npyv_select_@sfx@(im_infmask, inf, re);
+    /*
+     * If real or imag = NAN, then convert it to nan + j*nan
+     * Handles: x + j*nan, nan + j*x
+     */
+    npyv_@bsfx@ re_nnanmask = npyv_notnan_@sfx@(re);
+    npyv_@bsfx@ im_nnanmask = npyv_notnan_@sfx@(im);
+    im = npyv_select_@sfx@(re_nnanmask, im, nan);
+    re = npyv_select_@sfx@(im_nnanmask, re, nan);
+
+    npyv_@sfx@ larger  = npyv_max_@sfx@(re, im);
+    npyv_@sfx@ smaller = npyv_min_@sfx@(im, re);
+    /*
+     * Calculate div_mask to prevent 0./0. and inf/inf operations in div
+     */
+    npyv_@bsfx@ zeromask = npyv_cmpeq_@sfx@(larger, npyv_zero_@sfx@());
+    npyv_@bsfx@ infmask = npyv_cmpeq_@sfx@(smaller, inf);
+    npyv_@bsfx@ div_mask = npyv_not_@bsfx@(npyv_or_@bsfx@(zeromask, infmask));
+
+    npyv_@sfx@ ratio = npyv_ifdivz_@sfx@(div_mask, smaller, larger);
+    npyv_@sfx@ hypot = npyv_sqrt_@sfx@(
+        npyv_muladd_@sfx@(ratio, ratio, npyv_setall_@sfx@(1.0@c@)
+    ));
+    return npyv_mul_@sfx@(hypot, larger);
+}
+#endif // VECTOR
+/**end repeat**/
+
+/********************************************************************************
+ ** Defining ufunc inner functions
+ ********************************************************************************/
+/**begin repeat
+ * complex types
+ * #TYPE = CFLOAT, CDOUBLE#
+ * #ftype = npy_float, npy_double#
+ * #VECTOR = NPY_SIMD_F32, NPY_SIMD_F64#
+ * #sfx = f32, f64#
+ * #c = f, #
+ * #C = F, #
+ */
+/**begin repeat1
+ * arithmetic
+ * #kind = add, subtract, multiply#
+ * #vectorf = npyv_add, npyv_sub, simd_cmul#
+ * #OP = +, -, *#
+ * #PW = 1, 0, 0#
+ * #is_mul = 0*2, 1#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    npy_intp len = dimensions[0];
+    char *b_src0 = args[0], *b_src1 = args[1], *b_dst = args[2];
+    npy_intp b_ssrc0 = steps[0], b_ssrc1 = steps[1], b_sdst = steps[2];
+#if @PW@
+    // reduce
+    if (b_ssrc0 == 0 && b_ssrc0 == b_sdst && b_src0 == b_dst &&
+        b_ssrc1 % (sizeof(@ftype@)*2) == 0
+    ) {
+        @ftype@ *rl_im = (@ftype@ *)b_src0;
+        @ftype@ rr, ri;
+        @TYPE@_pairwise_sum(&rr, &ri, b_src1, len * 2, b_ssrc1 / 2);
+        rl_im[0] @OP@= rr;
+        rl_im[1] @OP@= ri;
+        return;
+    }
+#endif
+#if @VECTOR@
+    // Certain versions of Apple clang (commonly used in CI images) produce
+    // non-deterministic output in the mul path with AVX2 enabled on x86_64.
+    // Work around by scalarising.
+    #if @is_mul@ \
+            && defined(NPY_CPU_AMD64) && defined(__clang__) \
+            && defined(__apple_build_version__) \
+            && __apple_build_version__ >= 14000000 \
+            && __apple_build_version__ < 14030000
+        goto loop_scalar;
+    #endif  // end affected Apple clang.
+    if (is_mem_overlap(b_src0, b_ssrc0, b_dst, b_sdst, len) ||
+        is_mem_overlap(b_src1, b_ssrc1, b_dst, b_sdst, len) ||
+        b_sdst  % sizeof(@ftype@) != 0 || b_sdst == 0 ||
+        b_ssrc0 % sizeof(@ftype@) != 0 ||
+        b_ssrc1 % sizeof(@ftype@) != 0
+    ) {
+        goto loop_scalar;
+    }
+    const @ftype@ *src0 = (@ftype@*)b_src0;
+    const @ftype@ *src1 = (@ftype@*)b_src1;
+          @ftype@ *dst  = (@ftype@*)b_dst;
+
+    const npy_intp ssrc0 = b_ssrc0 / sizeof(@ftype@);
+    const npy_intp ssrc1 = b_ssrc1 / sizeof(@ftype@);
+    const npy_intp sdst  = b_sdst / sizeof(@ftype@);
+
+    const int vstep = npyv_nlanes_@sfx@;
+    const int wstep = vstep * 2;
+    const int hstep = vstep / 2;
+
+    const int loadable0 = npyv_loadable_stride_s64(ssrc0);
+    const int loadable1 = npyv_loadable_stride_s64(ssrc1);
+    const int storable = npyv_storable_stride_s64(sdst);
+
+    // lots**lots of specializations, to squeeze out max performance
+    // contig
+    if (ssrc0 == 2 && ssrc0 == ssrc1 && ssrc0 == sdst) {
+        for (; len >= vstep; len -= vstep, src0 += wstep, src1 += wstep, dst += wstep) {
+            npyv_@sfx@ a0 = npyv_load_@sfx@(src0);
+            npyv_@sfx@ a1 = npyv_load_@sfx@(src0 + vstep);
+            npyv_@sfx@ b0 = npyv_load_@sfx@(src1);
+            npyv_@sfx@ b1 = npyv_load_@sfx@(src1 + vstep);
+            npyv_@sfx@ r0 = @vectorf@_@sfx@(a0, b0);
+            npyv_@sfx@ r1 = @vectorf@_@sfx@(a1, b1);
+            npyv_store_@sfx@(dst, r0);
+            npyv_store_@sfx@(dst + vstep, r1);
+        }
+        for (; len > 0; len -= hstep, src0 += vstep, src1 += vstep, dst += vstep) {
+            npyv_@sfx@ a = npyv_load2_tillz_@sfx@(src0, len);
+            npyv_@sfx@ b = npyv_load2_tillz_@sfx@(src1, len);
+            npyv_@sfx@ r = @vectorf@_@sfx@(a, b);
+            npyv_store2_till_@sfx@(dst, len, r);
+        }
+    }
+    // scalar 0
+    else if (ssrc0 == 0) {
+        npyv_@sfx@x2 a = simd_set2_@sfx@(src0);
+        // contig
+        if (ssrc1 == 2 && sdst == ssrc1) {
+            for (; len >= vstep; len -= vstep, src1 += wstep, dst += wstep) {
+                npyv_@sfx@ b0 = npyv_load_@sfx@(src1);
+                npyv_@sfx@ b1 = npyv_load_@sfx@(src1 + vstep);
+                npyv_@sfx@ r0 = @vectorf@_@sfx@(a.val[0], b0);
+                npyv_@sfx@ r1 = @vectorf@_@sfx@(a.val[1], b1);
+                npyv_store_@sfx@(dst, r0);
+                npyv_store_@sfx@(dst + vstep, r1);
+            }
+            for (; len > 0; len -= hstep, src1 += vstep, dst += vstep) {
+            #if @is_mul@
+                npyv_@sfx@ b = npyv_load2_till_@sfx@(src1, len, 1.0@c@, 1.0@c@);
+            #else
+                npyv_@sfx@ b = npyv_load2_tillz_@sfx@(src1, len);
+            #endif
+                npyv_@sfx@ r = @vectorf@_@sfx@(a.val[0], b);
+                npyv_store2_till_@sfx@(dst, len, r);
+            }
+        }
+        // non-contig
+        else if (loadable1 && storable) {
+            for (; len >= vstep; len -= vstep, src1 += ssrc1*vstep, dst += sdst*vstep) {
+                npyv_@sfx@ b0 = npyv_loadn2_@sfx@(src1, ssrc1);
+                npyv_@sfx@ b1 = npyv_loadn2_@sfx@(src1 + ssrc1*hstep, ssrc1);
+                npyv_@sfx@ r0 = @vectorf@_@sfx@(a.val[0], b0);
+                npyv_@sfx@ r1 = @vectorf@_@sfx@(a.val[1], b1);
+                npyv_storen2_@sfx@(dst, sdst, r0);
+                npyv_storen2_@sfx@(dst + sdst*hstep, sdst, r1);
+            }
+            for (; len > 0; len -= hstep, src1 += ssrc1*hstep, dst += sdst*hstep) {
+            #if @is_mul@
+                npyv_@sfx@ b = npyv_loadn2_till_@sfx@(src1, ssrc1, len, 1.0@c@, 1.0@c@);
+            #else
+                npyv_@sfx@ b = npyv_loadn2_tillz_@sfx@(src1, ssrc1, len);
+            #endif
+                npyv_@sfx@ r = @vectorf@_@sfx@(a.val[0], b);
+                npyv_storen2_till_@sfx@(dst, sdst, len, r);
+            }
+        }
+        else {
+            goto loop_scalar;
+        }
+    }
+    // scalar 1
+    else if (ssrc1 == 0) {
+        npyv_@sfx@x2 b = simd_set2_@sfx@(src1);
+        if (ssrc0 == 2 && sdst == ssrc0) {
+            for (; len >= vstep; len -= vstep, src0 += wstep, dst += wstep) {
+                npyv_@sfx@ a0 = npyv_load_@sfx@(src0);
+                npyv_@sfx@ a1 = npyv_load_@sfx@(src0 + vstep);
+                npyv_@sfx@ r0 = @vectorf@_@sfx@(a0, b.val[0]);
+                npyv_@sfx@ r1 = @vectorf@_@sfx@(a1, b.val[1]);
+                npyv_store_@sfx@(dst, r0);
+                npyv_store_@sfx@(dst + vstep, r1);
+            }
+            for (; len > 0; len -= hstep, src0 += vstep, dst += vstep) {
+            #if @is_mul@
+                npyv_@sfx@ a = npyv_load2_till_@sfx@(src0, len, 1.0@c@, 1.0@c@);
+            #else
+                npyv_@sfx@ a = npyv_load2_tillz_@sfx@(src0, len);
+            #endif
+                npyv_@sfx@ r = @vectorf@_@sfx@(a, b.val[0]);
+                npyv_store2_till_@sfx@(dst, len, r);
+            }
+        }
+        // non-contig
+        else if (loadable0 && storable) {
+            for (; len >= vstep; len -= vstep, src0 += ssrc0*vstep, dst += sdst*vstep) {
+                npyv_@sfx@ a0 = npyv_loadn2_@sfx@(src0, ssrc0);
+                npyv_@sfx@ a1 = npyv_loadn2_@sfx@(src0 + ssrc0*hstep, ssrc0);
+                npyv_@sfx@ r0 = @vectorf@_@sfx@(a0, b.val[0]);
+                npyv_@sfx@ r1 = @vectorf@_@sfx@(a1, b.val[1]);
+                npyv_storen2_@sfx@(dst, sdst, r0);
+                npyv_storen2_@sfx@(dst + sdst*hstep, sdst, r1);
+            }
+            for (; len > 0; len -= hstep, src0 += ssrc0*hstep, dst += sdst*hstep) {
+            #if @is_mul@
+                npyv_@sfx@ a = npyv_loadn2_till_@sfx@(src0, ssrc0, len, 1.0@c@, 1.0@c@);
+            #else
+                npyv_@sfx@ a = npyv_loadn2_tillz_@sfx@(src0, ssrc0, len);
+            #endif
+                npyv_@sfx@ r = @vectorf@_@sfx@(a, b.val[0]);
+                npyv_storen2_till_@sfx@(dst, sdst, len, r);
+            }
+        }
+        else {
+            goto loop_scalar;
+        }
+    }
+    #if @is_mul@
+    // non-contig
+    else if (loadable0 && loadable1 && storable) {
+        for (; len >= vstep; len -= vstep, src0 += ssrc0*vstep,
+                            src1 += ssrc1*vstep, dst += sdst*vstep
+        ) {
+            npyv_@sfx@ a0 = npyv_loadn2_@sfx@(src0, ssrc0);
+            npyv_@sfx@ a1 = npyv_loadn2_@sfx@(src0 + ssrc0*hstep, ssrc0);
+            npyv_@sfx@ b0 = npyv_loadn2_@sfx@(src1, ssrc1);
+            npyv_@sfx@ b1 = npyv_loadn2_@sfx@(src1 + ssrc1*hstep, ssrc1);
+            npyv_@sfx@ r0 = @vectorf@_@sfx@(a0, b0);
+            npyv_@sfx@ r1 = @vectorf@_@sfx@(a1, b1);
+            npyv_storen2_@sfx@(dst, sdst, r0);
+            npyv_storen2_@sfx@(dst + sdst*hstep, sdst, r1);
+        }
+        for (; len > 0; len -= hstep, src0 += ssrc0*hstep,
+                       src1 += ssrc1*hstep, dst += sdst*hstep
+        ) {
+        #if @is_mul@
+            npyv_@sfx@ a = npyv_loadn2_till_@sfx@(src0, ssrc0, len, 1.0@c@, 1.0@c@);
+            npyv_@sfx@ b = npyv_loadn2_till_@sfx@(src1, ssrc1, len, 1.0@c@, 1.0@c@);
+        #else
+            npyv_@sfx@ a = npyv_loadn2_tillz_@sfx@(src0, ssrc0, len);
+            npyv_@sfx@ b = npyv_loadn2_tillz_@sfx@(src1, ssrc1, len);
+        #endif
+            npyv_@sfx@ r = @vectorf@_@sfx@(a, b);
+            npyv_storen2_till_@sfx@(dst, sdst, len, r);
+        }
+    }
+    #endif
+    else {
+        goto loop_scalar;
+    }
+    npyv_cleanup();
+    return;
+loop_scalar:
+#endif
+    for (; len > 0; --len, b_src0 += b_ssrc0, b_src1 += b_ssrc1, b_dst += b_sdst) {
+        const @ftype@ a_r = ((@ftype@ *)b_src0)[0];
+        const @ftype@ a_i = ((@ftype@ *)b_src0)[1];
+        const @ftype@ b_r = ((@ftype@ *)b_src1)[0];
+        const @ftype@ b_i = ((@ftype@ *)b_src1)[1];
+    #if @is_mul@
+        ((@ftype@ *)b_dst)[0] = a_r*b_r - a_i*b_i;
+        ((@ftype@ *)b_dst)[1] = a_r*b_i + a_i*b_r;
+    #else
+        ((@ftype@ *)b_dst)[0] = a_r @OP@ b_r;
+        ((@ftype@ *)b_dst)[1] = a_i @OP@ b_i;
+    #endif
+    }
+}
+
+NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@_indexed)
+(PyArrayMethod_Context *NPY_UNUSED(context), char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indxp = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp shape = steps[3];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    @ftype@ *indexed;
+    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
+        npy_intp indx = *(npy_intp *)indxp;
+        if (indx < 0) {
+            indx += shape;
+        }
+        indexed = (@ftype@ *)(ip1 + is1 * indx);
+        const @ftype@ b_r = ((@ftype@ *)value)[0];
+        const @ftype@ b_i = ((@ftype@ *)value)[1];
+    #if @is_mul@
+        const @ftype@ a_r = indexed[0];
+        const @ftype@ a_i = indexed[1];
+        indexed[0] = a_r*b_r - a_i*b_i;
+        indexed[1] = a_r*b_i + a_i*b_r;
+    #else
+        indexed[0] @OP@= b_r;
+        indexed[1] @OP@= b_i;
+    #endif
+    }
+    return 0;
+}
+/**end repeat1**/
+
+/**begin repeat1
+ *  #kind = conjugate, square#
+ *  #is_square = 0, 1#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    npy_intp len = dimensions[0];
+    char *b_src = args[0], *b_dst = args[1];
+    npy_intp b_ssrc = steps[0], b_sdst = steps[1];
+#if @VECTOR@
+    if (is_mem_overlap(b_src, b_ssrc, b_dst, b_sdst, len) ||
+        b_sdst % sizeof(@ftype@) != 0 ||
+        b_ssrc % sizeof(@ftype@) != 0
+    ) {
+        goto loop_scalar;
+    }
+    const @ftype@ *src  = (@ftype@*)b_src;
+          @ftype@ *dst  = (@ftype@*)b_dst;
+    const npy_intp ssrc = b_ssrc / sizeof(@ftype@);
+    const npy_intp sdst = b_sdst / sizeof(@ftype@);
+
+    const int vstep = npyv_nlanes_@sfx@;
+    const int wstep = vstep * 2;
+    const int hstep = vstep / 2;
+
+    if (ssrc == 2 && ssrc == sdst) {
+        for (; len >= vstep; len -= vstep, src += wstep, dst += wstep) {
+            npyv_@sfx@ a0 = npyv_load_@sfx@(src);
+            npyv_@sfx@ a1 = npyv_load_@sfx@(src + vstep);
+            npyv_@sfx@ r0 = simd_c@kind@_@sfx@(a0);
+            npyv_@sfx@ r1 = simd_c@kind@_@sfx@(a1);
+            npyv_store_@sfx@(dst, r0);
+            npyv_store_@sfx@(dst + vstep, r1);
+        }
+        for (; len > 0; len -= hstep, src += vstep, dst += vstep) {
+            npyv_@sfx@ a = npyv_load2_tillz_@sfx@(src, len);
+            npyv_@sfx@ r = simd_c@kind@_@sfx@(a);
+            npyv_store2_till_@sfx@(dst, len, r);
+        }
+    }
+    else if (ssrc == 2 && npyv_storable_stride_s64(sdst)) {
+        for (; len >= vstep; len -= vstep, src += wstep, dst += sdst*vstep) {
+            npyv_@sfx@ a0 = npyv_load_@sfx@(src);
+            npyv_@sfx@ a1 = npyv_load_@sfx@(src + vstep);
+            npyv_@sfx@ r0 = simd_c@kind@_@sfx@(a0);
+            npyv_@sfx@ r1 = simd_c@kind@_@sfx@(a1);
+            npyv_storen2_@sfx@(dst, sdst, r0);
+            npyv_storen2_@sfx@(dst + sdst*hstep, sdst, r1);
+        }
+        for (; len > 0; len -= hstep, src += vstep, dst += sdst*hstep) {
+            npyv_@sfx@ a = npyv_load2_tillz_@sfx@(src, len);
+            npyv_@sfx@ r = simd_c@kind@_@sfx@(a);
+            npyv_storen2_till_@sfx@(dst, sdst, len, r);
+        }
+    }
+    else if (sdst == 2 && npyv_loadable_stride_s64(ssrc)) {
+        for (; len >= vstep; len -= vstep, src += ssrc*vstep, dst += wstep) {
+            npyv_@sfx@ a0 = npyv_loadn2_@sfx@(src, ssrc);
+            npyv_@sfx@ a1 = npyv_loadn2_@sfx@(src + ssrc*hstep, ssrc);
+            npyv_@sfx@ r0 = simd_c@kind@_@sfx@(a0);
+            npyv_@sfx@ r1 = simd_c@kind@_@sfx@(a1);
+            npyv_store_@sfx@(dst, r0);
+            npyv_store_@sfx@(dst + vstep, r1);
+        }
+        for (; len > 0; len -= hstep, src += ssrc*hstep, dst += vstep) {
+            npyv_@sfx@ a = npyv_loadn2_tillz_@sfx@((@ftype@*)src, ssrc, len);
+            npyv_@sfx@ r = simd_c@kind@_@sfx@(a);
+            npyv_store2_till_@sfx@(dst, len, r);
+        }
+    }
+    else {
+        goto loop_scalar;
+    }
+    npyv_cleanup();
+    return;
+loop_scalar:
+#endif
+    for (; len > 0; --len, b_src += b_ssrc, b_dst += b_sdst) {
+        const @ftype@ rl = ((@ftype@ *)b_src)[0];
+        const @ftype@ im = ((@ftype@ *)b_src)[1];
+    #if @is_square@
+        ((@ftype@ *)b_dst)[0] = rl*rl - im*im;
+        ((@ftype@ *)b_dst)[1] = rl*im + im*rl;
+    #else
+        ((@ftype@ *)b_dst)[0] = rl;
+        ((@ftype@ *)b_dst)[1] = -im;
+    #endif
+    }
+}
+/**end repeat1**/
+/**end repeat**/

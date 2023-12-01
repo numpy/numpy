@@ -45,7 +45,7 @@ This website serves a couple of roles:
   can find their way
 
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 The current numpy.org website has almost no content and its design is poor.
@@ -328,7 +328,7 @@ Discussion
 - Proposal to accept this NEP: https://mail.python.org/pipermail/numpy-discussion/2019-August/079889.html
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 .. _Crowdin: https://crowdin.com/pricing#annual
 

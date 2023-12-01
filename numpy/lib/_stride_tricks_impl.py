@@ -5,8 +5,8 @@ An explanation of strides can be found in the :ref:`arrays.ndarray`.
 
 """
 import numpy as np
-from numpy.core.numeric import normalize_axis_tuple
-from numpy.core.overrides import array_function_dispatch, set_module
+from numpy._core.numeric import normalize_axis_tuple
+from numpy._core.overrides import array_function_dispatch, set_module
 
 __all__ = ['broadcast_to', 'broadcast_arrays', 'broadcast_shapes']
 

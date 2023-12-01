@@ -95,6 +95,7 @@ Norms and other numbers
    linalg.matrix_rank
    linalg.slogdet
    trace
+   linalg.trace (Array API compatible)
 
 Solving equations and inverting matrices
 ----------------------------------------
@@ -107,6 +108,12 @@ Solving equations and inverting matrices
    linalg.inv
    linalg.pinv
    linalg.tensorinv
+
+Other matrix operations
+-----------------------
+
+   diagonal
+   linalg.diagonal (Array API compatible)
 
 Exceptions
 ----------

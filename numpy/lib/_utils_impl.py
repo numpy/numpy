@@ -7,12 +7,12 @@ import warnings
 import functools
 import platform
 
-from numpy.core import ndarray, asarray
+from numpy._core import ndarray
 from numpy._utils import set_module
 import numpy as np
 
 __all__ = [
-    'get_include', 'info', 'byte_bounds', 'show_runtime'
+    'get_include', 'info', 'show_runtime'
 ]
 
 
@@ -37,7 +37,7 @@ def show_runtime():
        ``__cpu_baseline__`` and ``__cpu_dispatch__``
 
     """
-    from numpy.core._multiarray_umath import (
+    from numpy._core._multiarray_umath import (
         __cpu_features__, __cpu_baseline__, __cpu_dispatch__
     )
     from pprint import pprint
@@ -92,11 +92,11 @@ def get_include():
     import numpy
     if numpy.show_config is None:
         # running from numpy source directory
-        d = os.path.join(os.path.dirname(numpy.__file__), 'core', 'include')
+        d = os.path.join(os.path.dirname(numpy.__file__), '_core', 'include')
     else:
         # using installed numpy core headers
-        import numpy.core as core
-        d = os.path.join(os.path.dirname(core.__file__), 'include')
+        import numpy._core as _core
+        d = os.path.join(os.path.dirname(_core.__file__), 'include')
     return d
 
 
@@ -285,64 +285,6 @@ def deprecate_with_doc(msg):
     )
 
     return _Deprecate(message=msg)
-
-
-#--------------------------------------------
-# Determine if two arrays can share memory
-#--------------------------------------------
-
-
-@set_module('numpy')
-def byte_bounds(a):
-    """
-    Returns pointers to the end-points of an array.
-
-    Parameters
-    ----------
-    a : ndarray
-        Input array. It must conform to the Python-side of the array
-        interface.
-
-    Returns
-    -------
-    (low, high) : tuple of 2 integers
-        The first integer is the first byte of the array, the second
-        integer is just past the last byte of the array.  If `a` is not
-        contiguous it will not use every byte between the (`low`, `high`)
-        values.
-
-    Examples
-    --------
-    >>> I = np.eye(2, dtype='f'); I.dtype
-    dtype('float32')
-    >>> low, high = np.byte_bounds(I)
-    >>> high - low == I.size*I.itemsize
-    True
-    >>> I = np.eye(2); I.dtype
-    dtype('float64')
-    >>> low, high = np.byte_bounds(I)
-    >>> high - low == I.size*I.itemsize
-    True
-
-    """
-    ai = a.__array_interface__
-    a_data = ai['data'][0]
-    astrides = ai['strides']
-    ashape = ai['shape']
-    bytes_a = asarray(a).dtype.itemsize
-
-    a_low = a_high = a_data
-    if astrides is None:
-        # contiguous case
-        a_high += a.size * bytes_a
-    else:
-        for shape, stride in zip(ashape, astrides):
-            if stride < 0:
-                a_low += (shape-1)*stride
-            else:
-                a_high += (shape-1)*stride
-        a_high += bytes_a
-    return a_low, a_high
 
 
 #-----------------------------------------------------------------------------
@@ -738,7 +680,7 @@ def _opt_info():
     Returns:
         str: A formatted string indicating the supported CPU features.
     """
-    from numpy.core._multiarray_umath import (
+    from numpy._core._multiarray_umath import (
         __cpu_features__, __cpu_baseline__, __cpu_dispatch__
     )
 

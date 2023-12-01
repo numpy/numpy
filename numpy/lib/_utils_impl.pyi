@@ -7,9 +7,7 @@ from typing import (
     Protocol,
 )
 
-from numpy import generic
-from numpy.typing import NDArray
-from numpy.core.numerictypes import (
+from numpy._core.numerictypes import (
     issubdtype as issubdtype,
 )
 
@@ -55,12 +53,6 @@ def deprecate(
 ) -> _FuncType: ...
 
 def deprecate_with_doc(msg: None | str) -> _Deprecate: ...
-
-# NOTE: In practice `byte_bounds` can (potentially) take any object
-# implementing the `__array_interface__` protocol. The caveat is
-# that certain keys, marked as optional in the spec, must be present for
-#  `byte_bounds`. This concerns `"strides"` and `"data"`.
-def byte_bounds(a: generic | NDArray[Any]) -> tuple[int, int]: ...
 
 def info(
     object: object = ...,

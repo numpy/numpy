@@ -44,7 +44,7 @@ jobs:
       message: ${{ steps.commit_message.outputs.message }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         # Gets the correct commit message for pull request
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -76,7 +76,8 @@ jobs:
           - [ubuntu-20.04, musllinux_x86_64]
           - [macos-12, macosx_x86_64]
           - [windows-2019, win_amd64]
-        python: ["cp39", "cp310", "cp311", "cp312"]  # "pp39"
+          - [windows-2019, win32]
+        python: ["cp39", "cp310", "cp311", "cp312", "pp39"]
         exclude:
           # Don't build PyPy 32-bit windows
           - buildplat: [windows-2019, win32]
@@ -89,7 +90,7 @@ jobs:
       IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: true
           # versioneer.py requires the latest tag to be reachable. Here we
@@ -98,28 +99,34 @@ jobs:
           # https://github.com/actions/checkout/issues/338
           fetch-depth: 0
 
+      - name: Setup MSVC (32-bit)
+        if: ${{ matrix.buildplat[1] == 'win32' }}
+        uses: bus1/cabuild/action/msdevshell@e22aba57d6e74891d059d66501b6b5aed8123c4d  # v1
+        with:
+          architecture: 'x86'
+
       - name: pkg-config-for-win
         run: |
           choco install -y --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
         if: runner.os == 'windows'
 
       # Used to push the built wheels
-      - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+      - uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
         with:
           python-version: "3.x"
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@39a63b5912f086dd459cf6fcb13dcdd3fe3bc24d # v2.15.0
+        uses: pypa/cibuildwheel@7da7df1efc530f07d1945c00934b8cfd34be0d50 # v2.16.1
         env:
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
-      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+      - uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
         with:
           name: ${{ matrix.python }}-${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
           path: ./wheelhouse/*.whl
 
-      - uses: conda-incubator/setup-miniconda@3b0f2504dd76ef23b6d31f291f4913fb60ab5ff3 # v2.2.0
+      - uses: conda-incubator/setup-miniconda@11b562958363ec5770fef326fe8ef0366f8cbf8a # v3.0.1
         with:
           # for installation of anaconda-client, required for upload to
           # anaconda.org
@@ -138,9 +145,7 @@ jobs:
           NUMPY_STAGING_UPLOAD_TOKEN: ${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}
           NUMPY_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
         run: |
-          #conda install -y anaconda-client
-          # pin urllib3 until anaconda-client is fixed upstream
-          conda install -y anaconda-client 'urllib3<2.0.0'
+          conda install -y anaconda-client
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to
@@ -169,7 +174,7 @@ jobs:
       # IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: true
           # versioneer.py requires the latest tag to be reachable. Here we
@@ -178,7 +183,7 @@ jobs:
           # https://github.com/actions/checkout/issues/338
           fetch-depth: 0
       # Used to push the built wheels
-      - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+      - uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
         with:
           # Build sdist on lowest supported Python
           python-version: "3.9"
@@ -201,12 +206,12 @@ jobs:
           python -mpip install twine
           twine check dist/*
 
-      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+      - uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
         with:
           name: sdist
           path: ./dist/*
 
-      - uses: conda-incubator/setup-miniconda@3b0f2504dd76ef23b6d31f291f4913fb60ab5ff3 # v2.2.0
+      - uses: conda-incubator/setup-miniconda@11b562958363ec5770fef326fe8ef0366f8cbf8a # v3.0.1
         with:
           # for installation of anaconda-client, required for upload to
           # anaconda.org
@@ -224,9 +229,7 @@ jobs:
           # commented out so the sdist doesn't upload to nightly
           # NUMPY_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
         run: |
-          #conda install -y anaconda-client
-          # pin urllib3 until anaconda-client is fixed upstream
-          conda install -y anaconda-client 'urllib3<2.0.0'
+          conda install -y anaconda-client
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to

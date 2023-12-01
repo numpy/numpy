@@ -11,7 +11,7 @@ from ._dtypes import (
 from ._manipulation_functions import reshape
 from ._array_object import Array
 
-from ..core.numeric import normalize_axis_tuple
+from .._core.numeric import normalize_axis_tuple
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -297,9 +297,10 @@ def slogdet(x: Array, /) -> SlogdetResult:
 # To workaround this, the below is the code from np.linalg.solve except
 # only calling solve1 in the exactly 1D case.
 def _solve(a, b):
-    from ..linalg.linalg import (_makearray, _assert_stacked_2d,
-                                 _assert_stacked_square, _commonType,
-                                 isComplexType, _raise_linalgerror_singular)
+    from ..linalg._linalg import (
+        _makearray, _assert_stacked_2d, _assert_stacked_square,
+        _commonType, isComplexType, _raise_linalgerror_singular
+    )
     from ..linalg import _umath_linalg
 
     a, _ = _makearray(a)
@@ -317,9 +318,9 @@ def _solve(a, b):
     # This does nothing currently but is left in because it will be relevant
     # when complex dtype support is added to the spec in 2022.
     signature = 'DD->D' if isComplexType(t) else 'dd->d'
-    with errstate(call=_raise_linalgerror_singular, invalid='call',
-                  over='ignore', divide='ignore', under='ignore'):
-        r = gufunc(a, b, signature=signature, extobj=extobj)
+    with np.errstate(call=_raise_linalgerror_singular, invalid='call',
+                     over='ignore', divide='ignore', under='ignore'):
+        r = gufunc(a, b, signature=signature)
 
     return wrap(r.astype(result_t, copy=False))
 

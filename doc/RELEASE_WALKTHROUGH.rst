@@ -20,8 +20,8 @@ documentation. There are a few ways to streamline things:
   online twine documentation for details.
 
 
-Release preparation
-===================
+Prior to release
+================
 
 Add/drop Python versions
 ------------------------
@@ -39,28 +39,43 @@ wheels for new Python versions after the first Python rc once manylinux and
 cibuildwheel support it. For Python 3.11 we were able to release within a week
 of the rc1 announcement.
 
-Backport Pull Requests
+
+Backport pull requests
 ----------------------
 
 Changes that have been marked for this release must be backported to the
 maintenance/1.21.x branch.
 
-Update release documentation
-----------------------------
 
-Four documents usually need to be updated or created before making a release:
+Make a release PR
+=================
+
+Five documents usually need to be updated or created for the release PR:
 
 - The changelog
 - The release-notes
 - The ``.mailmap`` file
-- The ``doc/source/release.rst`` file
+- The ``pyproject.toml`` file
+- The ``pyproject.toml.setuppy`` file # 1.26.x only
 
-These changes should be made as an ordinary PR against the maintenance branch.
-After release all files except ``doc/source/release.rst``  will need to be
-forward ported to the main branch.
+These changes should be made in an ordinary PR against the maintenance branch.
+The commit message should contain a ``[wheel build]`` directive to test if the
+wheels build. Other small, miscellaneous fixes may be part of this PR. The
+commit message might be something like::
+
+    REL: Prepare for the NumPy 1.20.0 release
+
+    - Create 1.20.0-changelog.rst.
+    - Update 1.20.0-notes.rst.
+    - Update .mailmap.
+    - Update pyproject.toml
+    - Update pyproject.toml.setuppy
+
+    [wheel build]
+
 
 Generate the changelog
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 The changelog is generated using the changelog tool::
 
@@ -75,8 +90,9 @@ file, which is a lot of work. It is best to make several trial runs before
 reaching this point and ping the malefactors using a GitHub issue to get the
 needed information.
 
+
 Finish the release notes
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 If this is the first release in a series the release note is generated, see
 the release note in ``doc/release/upcoming_changes/README.rst`` to see how to
@@ -91,13 +107,24 @@ done. Note that the ``:orphan:`` markup at the top, if present, will need
 changing to ``.. currentmodule:: numpy`` and the ``doc/source/release.rst``
 index file will need updating.
 
-Check the ``pavement.py`` file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Check that the pavement.py file points to the correct release notes. It should
-have been updated after the last release, but if not, fix it now::
+Set the release version
+-----------------------
 
-    $ gvim pavement.py
+Check the ``pyproject.toml`` and ``pyproject.toml.setuppy`` files and set the
+release version if needed::
+
+    $ gvim pyproject.toml pyproject.toml.setuppy
+
+
+Check the ``pavement.py`` and ``doc/source/release.rst`` files
+--------------------------------------------------------------
+
+Check that the ``pavement.py`` file points to the correct release notes. It should
+have been updated after the last release, but if not, fix it now. Also make
+sure that the notes have an entry in the ``release.rst`` file::
+
+    $ gvim pavement.py doc/source/release.rst
 
 
 Release walkthrough
@@ -108,6 +135,7 @@ GitHub and ``origin`` to its fork in your personal GitHub repositories. You may
 need to make adjustments if you have not forked the repository but simply
 cloned it locally. You can also edit ``.git/config`` and add ``upstream`` if it
 isn't already present.
+
 
 1. Prepare the release commit
 -----------------------------
@@ -135,25 +163,23 @@ If you need to delete the tag due to error::
    $ git tag -d v1.21.0
    $ git push --delete upstream v1.21.0
 
+
 2. Build wheels
 ---------------
-
-Build wheels via cibuildwheel (preferred)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Tagging the build at the beginning of this process will trigger a wheel build
 via cibuildwheel and upload wheels and an sdist to the staging repo. The CI run
 on github actions (for all x86-based and macOS arm64 wheels) takes about 1 1/4
-hours. The CI run on travis (for aarch64) takes less time. You can check for
-uploaded files at the `staging repository`_, but note that it is not closely
-synched with what you see of the running jobs.
+hours. The CI runs on cirrus (for aarch64 and M1) take less time. You can check
+for uploaded files at the `staging repository`_, but note that it is not
+closely synched with what you see of the running jobs.
 
 If you wish to manually trigger a wheel build, you can do so:
 
 - On github actions -> `Wheel builder`_ there is a "Run workflow" button, click
   on it and choose the tag to build
-- On travis_ there is a "More Options" button, click on it and choose a branch
-  to build. There does not appear to be an option to build a tag.
+- On Cirrus we don't currently have an easy way to manually trigger builds and
+  uploads.
 
 If a wheel build fails for unrelated reasons, you can rerun it individually:
 
@@ -161,16 +187,10 @@ If a wheel build fails for unrelated reasons, you can rerun it individually:
   the build you want to rerun. On the left there is a list of wheel builds,
   select the one you want to rerun and on the resulting page hit the
   counterclockwise arrows button.
-- On travis_ select the failing build, which will take you to the travis job for
-  that build. Hit the restart job button.
-
-Note that if you do need to rerun jobs, you will need to delete the uploaded
-file, if any, in the anaconda `staging repository`_, The old files will not be
-overwritten.
+- On cirrus we haven't figured it out.
 
 .. _`staging repository`: https://anaconda.org/multibuild-wheels-staging/numpy/files
 .. _`Wheel builder`: https://github.com/numpy/numpy/actions/workflows/wheels.yml
-.. _travis : https://app.travis-ci.com/github/numpy/numpy
 
 
 3. Download wheels
@@ -193,28 +213,7 @@ file is updated for continued development::
     $ paver write_release
 
 
-5. Reset the maintenance branch into a development state (skip for prereleases)
--------------------------------------------------------------------------------
-
-Create release notes for next release and edit them to set the version. These
-notes will be a skeleton and have little content::
-
-    $ cp doc/source/release/template.rst doc/source/release/1.21.1-notes.rst
-    $ gvim doc/source/release/1.21.1-notes.rst
-    $ git add doc/source/release/1.21.1-notes.rst
-
-Add new release notes to the documentation release list and update the
-``RELEASE_NOTES`` variable in ``pavement.py``::
-
-    $ gvim doc/source/release.rst pavement.py
-
-Commit the result::
-
-    $ git commit -a -m"REL: prepare 1.21.x for further development"
-    $ git push upstream HEAD
-
-
-6. Upload to PyPI
+5. Upload to PyPI
 -----------------
 
 Upload to PyPI using ``twine``. A recent version of ``twine`` of is needed
@@ -233,7 +232,7 @@ wheel. PyPI only allows a single source distribution, here we have
 chosen the zip archive.
 
 
-7. Upload files to github
+6. Upload files to GitHub
 -------------------------
 
 Go to `<https://github.com/numpy/numpy/releases>`_, there should be a ``v1.21.0
@@ -252,7 +251,7 @@ may take several tries to get it look right. Then
 - Hit the ``{Publish,Update} release`` button at the bottom.
 
 
-8. Upload documents to numpy.org (skip for prereleases)
+7. Upload documents to numpy.org (skip for prereleases)
 -------------------------------------------------------
 
 .. note:: You will need a GitHub personal access token to push the update.
@@ -263,10 +262,9 @@ and most patch releases. ``make merge-doc`` clones the ``numpy/doc`` repo into
 
     $ git clean -xdfq
     $ git co v1.21.0
-    $ pushd doc
-    $ make docenv && source docenv/bin/activate
-    $ make merge-doc
-    $ pushd build/merge
+    $ rm -rf doc/build  # want version to be current
+    $ python -m spin docs merge-doc --build
+    $ pushd doc/build/merge
 
 If the release series is a new one, you will need to add a new section to the
 ``doc/build/merge/index.html`` front page just after the "insert here" comment::
@@ -299,9 +297,34 @@ Once everything seems satisfactory, update, commit and upload the changes::
     $ python3 update.py
     $ git commit -a -m"Add documentation for v1.21.0"
     $ git push
-    $ deactivate
     $ popd
-    $ popd
+
+
+8. Reset the maintenance branch into a development state (skip for prereleases)
+-------------------------------------------------------------------------------
+
+Create release notes for next release and edit them to set the version. These
+notes will be a skeleton and have little content::
+
+    $ cp doc/source/release/template.rst doc/source/release/1.21.1-notes.rst
+    $ gvim doc/source/release/1.21.1-notes.rst
+    $ git add doc/source/release/1.21.1-notes.rst
+
+Add new release notes to the documentation release list and update the
+``RELEASE_NOTES`` variable in ``pavement.py``::
+
+    $ gvim doc/source/release.rst pavement.py
+
+Update the ``version`` in ``pyproject.toml`` and ``pyproject.toml.setuppy``::
+
+    $ gvim pyproject.toml pyproject.toml.setuppy
+
+Commit the result::
+
+    $ git commit -a -m"MAINT: prepare 1.21.x for further development"
+    $ git push origin HEAD
+
+Go to GitHub and make a PR. It should be merged quickly.
 
 
 9. Announce the release on numpy.org (skip for prereleases)
@@ -325,20 +348,21 @@ commit and push::
     $ git commit -a -m"announce the NumPy 1.21.0 release"
     $ git push origin HEAD
 
-Go to your Github fork and make a pull request.
+Go to GitHub and make a PR.
+
 
 10. Announce to mailing lists
 -----------------------------
 
-The release should be announced on the numpy-discussion, scipy-devel,
-scipy-user, and python-announce-list mailing lists. Look at previous
-announcements for the basic template. The contributor and PR lists are the same
-as generated for the release notes above. If you crosspost, make sure that
-python-announce-list is BCC so that replies will not be sent to that list.
+The release should be announced on the numpy-discussion, scipy-devel, and
+python-announce-list mailing lists. Look at previous announcements for the
+basic template. The contributor and PR lists are the same as generated for the
+release notes above. If you crosspost, make sure that python-announce-list is
+BCC so that replies will not be sent to that list.
 
 
-11. Post-release tasks (skip for prereleases)
----------------------------------------------
+11. Post-release update main (skip for prereleases)
+---------------------------------------------------
 
 Checkout main and forward port the documentation changes::
 
@@ -352,6 +376,7 @@ Checkout main and forward port the documentation changes::
     $ git push origin HEAD
 
 Go to GitHub and make a PR.
+
 
 12. Update oldest-supported-numpy
 ---------------------------------

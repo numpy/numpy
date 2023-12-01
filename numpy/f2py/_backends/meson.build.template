@@ -6,6 +6,7 @@ project('${modulename}',
                             'warning_level=1',
                             'buildtype=${buildtype}'
                           ])
+fc = meson.get_compiler('fortran')
 
 py = import('python').find_installation(pure: false)
 py_dep = py.dependency()
@@ -28,6 +29,8 @@ inc_f2py = include_directories(incdir_f2py)
 fortranobject_c = incdir_f2py / 'fortranobject.c'
 
 inc_np = include_directories(incdir_numpy, incdir_f2py)
+# gh-25000
+quadmath_dep = fc.find_library('quadmath', required: false)
 
 py.extension_module('${modulename}',
                      [
@@ -37,6 +40,7 @@ ${source_list},
                      include_directories: [inc_np],
                      dependencies : [
                      py_dep,
+                     quadmath_dep,
 ${dep_list}
                      ],
                      install : true)
