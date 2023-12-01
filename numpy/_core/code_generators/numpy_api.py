@@ -100,7 +100,7 @@ multiarray_types_api = {
 
 multiarray_funcs_api = {
     '__unused_indices__': [
-        40, 41, 65, 66, 67, 68, 81, 82, 83, 163, 164, 171,
+        40, 41, 65, 66, 67, 68, 81, 82, 83, 163, 164, 171, 197,
         201, 202, 278, 291, 293, 294, 295,
         301],
     'PyArray_GetNDArrayCVersion':           (0,),
@@ -261,7 +261,7 @@ multiarray_funcs_api = {
     'PyArray_RegisterCanCast':              (194,),
     'PyArray_InitArrFuncs':                 (195,),
     'PyArray_IntTupleFromIntp':             (196,),
-    'PyArray_TypeNumFromName':              (197,),
+    # Unused slot 197, was `PyArray_TypeNumFromName`
     'PyArray_ClipmodeConverter':            (198,),
     'PyArray_OutputConverter':              (199,),
     'PyArray_BroadcastToShape':             (200,),

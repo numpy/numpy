@@ -318,41 +318,6 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 }
 
 
-/* returns an Array-Scalar Object of the type of arr
-   from the given pointer to memory -- main Scalar creation function
-   default new method calls this.
-*/
-
-/* Ideally, here the descriptor would contain all the information needed.
-   So, that we simply need the data and the descriptor, and perhaps
-   a flag
-*/
-
-
-/*
-  Given a string return the type-number for
-  the data-type with that string as the type-object name.
-  Returns NPY_NOTYPE without setting an error if no type can be
-  found.  Only works for user-defined data-types.
-*/
-
-/*NUMPY_API
- */
-NPY_NO_EXPORT int
-PyArray_TypeNumFromName(char const *str)
-{
-    int i;
-    PyArray_Descr *descr;
-
-    for (i = 0; i < NPY_NUMUSERTYPES; i++) {
-        descr = userdescrs[i];
-        if (strcmp(descr->typeobj->tp_name, str) == 0) {
-            return descr->type_num;
-        }
-    }
-    return NPY_NOTYPE;
-}
-
 /*NUMPY_API
  *
  * If WRITEBACKIFCOPY and self has data, reset the base WRITEABLE flag,

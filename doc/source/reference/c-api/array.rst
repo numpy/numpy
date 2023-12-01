@@ -1142,13 +1142,6 @@ User-defined data types
     *descr* can be cast safely to a data-type whose type_number is
     *totype*. The return value is 0 on success or -1 on failure.
 
-.. c:function:: int PyArray_TypeNumFromName( \
-        char const *str)
-
-   Given a string return the type-number for the data-type with that string as
-   the type-object name.
-   Returns ``NPY_NOTYPE`` without setting an error if no type can be found.
-   Only works for user-defined data-types.
 
 Special functions for NPY_OBJECT
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
