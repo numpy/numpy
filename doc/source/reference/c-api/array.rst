@@ -1199,16 +1199,6 @@ Special functions for NPY_OBJECT
     that contain object-like items, all the object-like fields will be
     XDECREF ``'d``.
 
-.. c:function:: void PyArray_FillObjectArray(PyArrayObject* arr, PyObject* obj)
-
-    Fill a newly created array with a single value obj at all
-    locations in the structure with object data-types. No checking is
-    performed but *arr* must be of data-type :c:type:`NPY_OBJECT` and be
-    single-segment and uninitialized (no previous objects in
-    position). Use :c:func:`PyArray_XDECREF` (*arr*) if you need to
-    decrement all the items in the object array prior to calling this
-    function.
-
 .. c:function:: int PyArray_SetWritebackIfCopyBase(PyArrayObject* arr, PyArrayObject* base)
 
     Precondition: ``arr`` is a copy of ``base`` (though possibly with different

@@ -167,7 +167,7 @@ multiarray_funcs_api = {
     'PyArray_PyIntAsInt':                   (100,),
     'PyArray_PyIntAsIntp':                  (101,),
     'PyArray_Broadcast':                    (102,),
-    'PyArray_FillObjectArray':              (103,),
+    # Unused slot 103, was `PyArray_FillObjectArray`
     'PyArray_FillWithScalar':               (104,),
     'PyArray_CheckStrides':                 (105,),
     'PyArray_DescrNewByteorder':            (106,),

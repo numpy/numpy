@@ -369,7 +369,12 @@ static void
 _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype);
 
 
-/*NUMPY_API
+/*
+ * This function is solely used as an entry point to ensure that `np.empty()`
+ * fills dtype=object (including fields) with `None` rather than leaving it
+ * NULL, because it is easy to not explicitly support NULL (although cython
+ * does now and we never strictly guaranteed this).
+ *
  * Assumes contiguous
  */
 NPY_NO_EXPORT void
