@@ -605,8 +605,8 @@ From other objects
     Copy from the source array, ``src``, into the destination array,
     ``dest``, performing a data-type conversion if necessary. If an
     error occurs return -1 (otherwise 0). The shape of ``src`` must be
-    broadcastable to the shape of ``dest``. The data areas of dest
-    and src must not overlap.
+    broadcastable to the shape of ``dest``.
+    NumPy checks for overlapping memory when copying two arrays.
 
 .. c:function:: int PyArray_CopyObject(PyArrayObject* dest, PyObject* src)
 
@@ -614,14 +614,6 @@ From other objects
     array-coercion rules. This is basically identical to
     :c:func:`PyArray_FromAny`, but assigns directly to the output array.
     Returns 0 on success and -1 on failures.
-
-.. c:function:: int PyArray_MoveInto(PyArrayObject* dest, PyArrayObject* src)
-
-    Move data from the source array, ``src``, into the destination
-    array, ``dest``, performing a data-type conversion if
-    necessary. If an error occurs return -1 (otherwise 0). The shape
-    of ``src`` must be broadcastable to the shape of ``dest``. The
-    data areas of dest and src may overlap.
 
 .. c:function:: PyArrayObject* PyArray_GETCONTIGUOUS(PyObject* op)
 

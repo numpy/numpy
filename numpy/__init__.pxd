@@ -538,7 +538,6 @@ cdef extern from "numpy/arrayobject.h":
     #int PyArray_SetField (ndarray, dtype, int, object) except -1
     object PyArray_Byteswap (ndarray, npy_bool)
     object PyArray_Resize (ndarray, PyArray_Dims *, int, NPY_ORDER)
-    int PyArray_MoveInto (ndarray, ndarray) except -1
     int PyArray_CopyInto (ndarray, ndarray) except -1
     int PyArray_CopyAnyInto (ndarray, ndarray) except -1
     int PyArray_CopyObject (ndarray, object) except -1

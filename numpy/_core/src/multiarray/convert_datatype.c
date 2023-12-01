@@ -418,7 +418,7 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
 
 /*
  * Must be broadcastable.
- * This code is very similar to PyArray_CopyInto/PyArray_MoveInto
+ * This code is very similar to PyArray_CopyInto
  * except casting is done --- NPY_BUFSIZE is used
  * as the size of the casting buffer.
  */

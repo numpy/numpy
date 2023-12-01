@@ -777,7 +777,7 @@ array_real_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
         Py_DECREF(ret);
         return -1;
     }
-    retcode = PyArray_MoveInto(ret, new);
+    retcode = PyArray_CopyInto(ret, new);
     Py_DECREF(ret);
     Py_DECREF(new);
     return retcode;
@@ -836,7 +836,7 @@ array_imag_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
             Py_DECREF(ret);
             return -1;
         }
-        retcode = PyArray_MoveInto(ret, new);
+        retcode = PyArray_CopyInto(ret, new);
         Py_DECREF(ret);
         Py_DECREF(new);
         return retcode;

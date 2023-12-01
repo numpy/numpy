@@ -100,8 +100,9 @@ multiarray_types_api = {
 
 multiarray_funcs_api = {
     '__unused_indices__': [
-        40, 41, 65, 66, 67, 68, 163, 164, 171,
-        201, 202, 278, 291, 293, 294, 295, 301],
+        40, 41, 65, 66, 67, 68, 81, 163, 164, 171,
+        201, 202, 278, 291, 293, 294, 295,
+        301],
     'PyArray_GetNDArrayCVersion':           (0,),
     # Unused slot 40, was `PyArray_SetNumericOps`
     # Unused slot 41, was `PyArray_GetNumericOps`,
@@ -144,7 +145,7 @@ multiarray_funcs_api = {
     'PyArray_SetField':                     (78, StealRef(2)),
     'PyArray_Byteswap':                     (79,),
     'PyArray_Resize':                       (80,),
-    'PyArray_MoveInto':                     (81,),
+    # Unused slot 81, was `PyArray_MoveInto``
     'PyArray_CopyInto':                     (82,),
     'PyArray_CopyAnyInto':                  (83,),
     'PyArray_CopyObject':                   (84,),
