@@ -32,6 +32,9 @@ inc_np = include_directories(incdir_numpy, incdir_f2py)
 # gh-25000
 quadmath_dep = fc.find_library('quadmath', required: false)
 
+${lib_declarations}
+${lib_dir_declarations}
+
 py.extension_module('${modulename}',
                      [
 ${source_list},
@@ -42,5 +45,7 @@ ${source_list},
                      py_dep,
                      quadmath_dep,
 ${dep_list}
+${lib_list}
+${lib_dir_list}
                      ],
                      install : true)
