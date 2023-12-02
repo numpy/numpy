@@ -39,7 +39,7 @@ def get_msvcr_replacement():
 
 # Useful to generate table of symbols from a dll
 _START = re.compile(r'\[Ordinal/Name Pointer\] Table')
-_TABLE = re.compile(r'^\s+\[([\s*[0-9]*)\] ([a-zA-Z0-9_]*)')
+_TABLE = re.compile(r'^\s+\[([\s*\d*)\] (\w*)')
 
 # the same as cygwin plus some additional parameters
 class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
