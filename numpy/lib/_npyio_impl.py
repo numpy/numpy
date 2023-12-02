@@ -1710,7 +1710,7 @@ def fromregex(file, regexp, dtype, encoding=None):
 
 @set_array_function_like_doc
 @set_module('numpy')
-def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
+def genfromtxt(fname, dtype=None, comments='#', delimiter=None,
                skip_header=0, skip_footer=0, converters=None,
                missing_values=None, filling_values=None, usecols=None,
                names=None, excludelist=None,
