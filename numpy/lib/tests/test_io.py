@@ -1640,7 +1640,7 @@ M   33  21.99
         # Test some corner cases
         s = TextIO('q1,2\nq3,4')
         cnv = lambda s: float(s[1:])
-        test = np.genfromtxt(s, delimiter=',', converters={0: cnv})
+        test = np.genfromtxt(s, delimiter=',', converters={0: cnv}, dtype=float)
         control = np.array([[1., 2.], [3., 4.]])
         assert_equal(test, control)
 
@@ -1760,7 +1760,7 @@ M   33  21.99
         # Test w/ a delimiter tab
         txt = "1\t2\t3\n\t2\t\n1\t\t3"
         test = np.genfromtxt(TextIO(txt), delimiter="\t",
-                             usemask=True,)
+                             usemask=True, dtype=float)
         ctrl_d = np.array([(1, 2, 3), (np.nan, 2, np.nan), (1, np.nan, 3)],)
         ctrl_m = np.array([(0, 0, 0), (1, 0, 1), (0, 1, 0)], dtype=bool)
         assert_equal(test.data, ctrl_d)
@@ -1827,11 +1827,11 @@ M   33  21.99
             sup.filter(message="genfromtxt: Empty input file:")
             data = TextIO()
             test = np.genfromtxt(data)
-            assert_equal(test, np.array([]))
+            assert_equal(test.size, 0)
 
             # when skip_header > 0
             test = np.genfromtxt(data, skip_header=1)
-            assert_equal(test, np.array([]))
+            assert_equal(test.size, 0)
 
     def test_fancy_dtype_alt(self):
         # Check that a nested dtype isn't MIA
