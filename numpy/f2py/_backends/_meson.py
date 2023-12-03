@@ -21,6 +21,8 @@ class MesonTemplate:
         modulename: str,
         sources: list[Path],
         deps: list[str],
+        libraries: list[str],
+        library_dirs: list[Path],
         object_files: list[Path],
         linker_args: list[str],
         c_args: list[str],
@@ -32,12 +34,15 @@ class MesonTemplate:
         )
         self.sources = sources
         self.deps = deps
+        self.libraries = libraries
+        self.library_dirs = library_dirs
         self.substitutions = {}
         self.objects = object_files
         self.pipeline = [
             self.initialize_template,
             self.sources_substitution,
             self.deps_substitution,
+            self.libraries_substitution,
         ]
         self.build_type = build_type
 
@@ -65,6 +70,29 @@ class MesonTemplate:
         indent = " " * 21
         self.substitutions["dep_list"] = f",\n{indent}".join(
             [f"dependency('{dep}')" for dep in self.deps]
+        )
+
+    def libraries_substitution(self) -> None:
+        self.substitutions["lib_dir_declarations"] = "\n".join(
+            [
+                f"lib_dir_{i} = declare_dependency(link_args : ['-L{lib_dir}'])"
+                for i, lib_dir in enumerate(self.library_dirs)
+            ]
+        )
+
+        self.substitutions["lib_declarations"] = "\n".join(
+            [
+                f"{lib} = declare_dependency(link_args : ['-l{lib}'])"
+                for lib in self.libraries
+            ]
+        )
+
+        indent = " " * 21
+        self.substitutions["lib_list"] = f"\n{indent}".join(
+            [f"{lib}," for lib in self.libraries]
+        )
+        self.substitutions["lib_dir_list"] = f"\n{indent}".join(
+            [f"lib_dir_{i}," for i in range(len(self.library_dirs))]
         )
 
     def generate_meson_build(self):
@@ -104,6 +132,8 @@ class MesonBackend(Backend):
             self.modulename,
             self.sources,
             self.dependencies,
+            self.libraries,
+            self.library_dirs,
             self.extra_objects,
             self.flib_flags,
             self.fc_flags,
