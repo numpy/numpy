@@ -1197,20 +1197,35 @@ defdict = {
           docstrings.get('numpy._core.umath.endswith'),
           None,
           ),
-'strip':
+'_strip_chars':
     Ufunc(2, 1, None,
-          docstrings.get('numpy._core.umath.strip'),
-          "PyUFunc_StripTypeResolver",
+          docstrings.get('numpy._core.umath._strip_chars'),
+          None,
           ),
-'lstrip':
+'_lstrip_chars':
     Ufunc(2, 1, None,
-          docstrings.get('numpy._core.umath.lstrip'),
-          "PyUFunc_StripTypeResolver",
+          docstrings.get('numpy._core.umath._lstrip_chars'),
+          None,
           ),
-'rstrip':
+'_rstrip_chars':
     Ufunc(2, 1, None,
-          docstrings.get('numpy._core.umath.rstrip'),
-          "PyUFunc_StripTypeResolver",
+          docstrings.get('numpy._core.umath._rstrip_chars'),
+          None,
+          ),
+'_strip_whitespace':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy._core.umath._strip_whitespace'),
+          None,
+          ),
+'_lstrip_whitespace':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy._core.umath._lstrip_whitespace'),
+          None,
+          ),
+'_rstrip_whitespace':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy._core.umath._rstrip_whitespace'),
+          None,
           ),
 }
 
