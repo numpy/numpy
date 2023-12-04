@@ -240,8 +240,8 @@ else:
 
 html_theme_options = {
   "logo": {
-      "image_light": "numpylogo.svg",
-      "image_dark": "numpylogo_dark.svg",
+      "image_light": "_static/numpylogo.svg",
+      "image_dark": "_static/numpylogo_dark.svg",
   },
   "github_url": "https://github.com/numpy/numpy",
   "collapse_navigation": True,
