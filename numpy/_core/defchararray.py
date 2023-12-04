@@ -56,17 +56,18 @@ def _is_unicode(arr):
     return False
 
 
-def _to_bytes_or_str_array(result, output_dtype_like=None):
+def _to_bytes_or_str_array(result, output_dtype_like):
     """
     Helper function to cast a result back into an array
     with the appropriate dtype if an object array must be used
     as an intermediary.
     """
+    if result.size == 0:
+        # Calling asarray & tolist in an empty array would result
+        # in losing shape information
+        return result.astype(output_dtype_like.dtype)
     ret = numpy.asarray(result.tolist())
-    dtype = getattr(output_dtype_like, 'dtype', None)
-    if dtype is not None:
-        return ret.astype(type(dtype)(_get_num_chars(ret)), copy=False)
-    return ret
+    return ret.astype(type(output_dtype_like.dtype)(_get_num_chars(ret)))
 
 
 def _clean_args(*args):
@@ -606,7 +607,8 @@ def decode(a, encoding=None, errors=None):
 
     """
     return _to_bytes_or_str_array(
-        _vec_string(a, object_, 'decode', _clean_args(encoding, errors)))
+        _vec_string(a, object_, 'decode', _clean_args(encoding, errors)),
+        numpy.str_(''))
 
 
 @array_function_dispatch(_code_dispatcher)
@@ -642,7 +644,8 @@ def encode(a, encoding=None, errors=None):
 
     """
     return _to_bytes_or_str_array(
-        _vec_string(a, object_, 'encode', _clean_args(encoding, errors)))
+        _vec_string(a, object_, 'encode', _clean_args(encoding, errors)),
+        numpy.bytes_(b''))
 
 
 def _endswith_dispatcher(a, suffix, start=None, end=None):
