@@ -792,7 +792,7 @@ def fill_diagonal(a, val, wrap=False):
     consists of the values ``[(i, ..., i) for i in range(min(a.shape))]``,
     otherwise the diagonal consists of values with indices
     ``[(i % a.shape[0], ..., i % a.shape[-1]) for i in range(max(a.shape))]``.
-    This function modifies the input array in-place, it does not return a value.
+    This function modifies the input array in-place, without returning a value.
 
     Parameters
     ----------
