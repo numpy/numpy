@@ -27,7 +27,6 @@ from . import shape_base
 from .overrides import set_array_function_like_doc, set_module
 from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
-from .numerictypes import bool_
 from ..exceptions import AxisError
 from ._ufunc_config import errstate, _no_nep50_warning
 
@@ -480,7 +479,7 @@ def count_nonzero(a, axis=None, *, keepdims=False):
     if np.issubdtype(a.dtype, np.character):
         a_bool = a != a.dtype.type()
     else:
-        a_bool = a.astype(np.bool_, copy=False)
+        a_bool = a.astype(np.bool, copy=False)
 
     return a_bool.sum(axis=axis, dtype=np.intp, keepdims=keepdims)
 
@@ -2250,7 +2249,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
     """
     res = all(isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan))
-    return bool(res)
+    return builtins.bool(res)
 
 
 def _isclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None):
@@ -2446,13 +2445,13 @@ def array_equal(a1, a2, equal_nan=False):
     if a1.shape != a2.shape:
         return False
     if not equal_nan:
-        return bool((a1 == a2).all())
+        return builtins.bool((a1 == a2).all())
     cannot_have_nan = (_dtype_cannot_hold_nan(a1.dtype)
                        and _dtype_cannot_hold_nan(a2.dtype))
     if cannot_have_nan:
         if a1 is a2:
             return True
-        return bool((a1 == a2).all())
+        return builtins.bool((a1 == a2).all())
 
     if a1 is a2:
         # nan will compare equal so an array will compare equal to itself.
@@ -2463,7 +2462,7 @@ def array_equal(a1, a2, equal_nan=False):
     if not (a1nan == a2nan).all():
         return False
     # Shapes of a1, a2 and masks are guaranteed to be consistent by this point
-    return bool((a1[~a1nan] == a2[~a1nan]).all())
+    return builtins.bool((a1[~a1nan] == a2[~a1nan]).all())
 
 
 def _array_equiv_dispatcher(a1, a2):
@@ -2515,13 +2514,13 @@ def array_equiv(a1, a2):
     except Exception:
         return False
 
-    return bool((a1 == a2).all())
+    return builtins.bool((a1 == a2).all())
 
 
 inf = PINF
 nan = NAN
-False_ = bool_(False)
-True_ = bool_(True)
+False_ = nt.bool(False)
+True_ = nt.bool(True)
 
 
 def extend_all(module):

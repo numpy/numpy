@@ -14,6 +14,6 @@ assert_type(np.nan, float)
 assert_type(np.pi, float)
 
 assert_type(np.little_endian, bool)
-assert_type(np.True_, np.bool_)
-assert_type(np.False_, np.bool_)
+assert_type(np.True_, np.bool)
+assert_type(np.False_, np.bool)
 

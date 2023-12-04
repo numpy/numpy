@@ -5,8 +5,8 @@ from typing import Any, Literal, TypedDict, SupportsIndex
 # of a `contextlib.context` returning an instance of aforementioned class
 from contextlib import _GeneratorContextManager
 
+import numpy as np
 from numpy import (
-    bool_,
     integer,
     timedelta64,
     datetime64,
@@ -21,7 +21,7 @@ from numpy._typing import NDArray, _CharLike_co, _FloatLike_co
 _FloatMode = Literal["fixed", "unique", "maxprec", "maxprec_equal"]
 
 class _FormatDict(TypedDict, total=False):
-    bool: Callable[[bool_], str]
+    bool: Callable[[np.bool], str]
     int: Callable[[integer[Any]], str]
     timedelta: Callable[[timedelta64], str]
     datetime: Callable[[datetime64], str]

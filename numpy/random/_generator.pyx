@@ -634,7 +634,7 @@ cdef class Generator:
             ret = _rand_uint16(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
         elif _dtype == np.uint8:
             ret = _rand_uint8(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
-        elif _dtype == np.bool_:
+        elif _dtype == np.bool:
             ret = _rand_bool(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
         elif not _dtype.isnative:
             raise ValueError('Providing a dtype with a non-native byteorder '
@@ -3757,7 +3757,7 @@ cdef class Generator:
 
         if size is None:
             shape = []
-        elif isinstance(size, (int, long, np.integer)):
+        elif isinstance(size, (int, np.integer)):
             shape = [size]
         else:
             shape = size

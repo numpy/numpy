@@ -959,16 +959,6 @@ Converting data types
     placed in out), and have a data type that is one of the builtin
     types.  Returns 0 on success and -1 if an error occurs.
 
-.. c:function:: PyArray_VectorUnaryFunc* PyArray_GetCastFunc( \
-        PyArray_Descr* from, int totype)
-
-    Return the low-level casting function to cast from the given
-    descriptor to the builtin type number. If no casting function
-    exists return ``NULL`` and set an error. Using this function
-    instead of direct access to *from* ->f->cast will allow support of
-    any user-defined casting functions added to a descriptors casting
-    dictionary.
-
 .. c:function:: int PyArray_CanCastSafely(int fromtype, int totype)
 
     Returns non-zero if an array of data type *fromtype* can be cast
@@ -1949,7 +1939,7 @@ Calculation
 
 .. tip::
 
-    Pass in :c:data:`NPY_MAXDIMS` for axis in order to achieve the same
+    Pass in :c:data:`NPY_RAVEL_AXIS` for axis in order to achieve the same
     effect that is obtained by passing in ``axis=None`` in Python
     (treating the array as a 1-d array).
 
@@ -2674,44 +2664,6 @@ cost of a slight overhead.
     neighborhood. Calling this function after every point of the
     neighborhood has been visited is undefined.
 
-Array mapping
--------------
-
-Array mapping is the machinery behind advanced indexing.
-
-.. c:function:: PyObject* PyArray_MapIterArray(PyArrayObject *a, \
-                 PyObject *index)
-
-    Use advanced indexing to iterate an array.
-
-.. c:function:: void PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, \
-                PyArrayObject **ret, int getmap)
-
-    Swap the axes to or from their inserted form. ``MapIter`` always puts the
-    advanced (array) indices first in the iteration. But if they are
-    consecutive, it will insert/transpose them back before returning.
-    This is stored as ``mit->consec != 0`` (the place where they are inserted).
-    For assignments, the opposite happens: the values to be assigned are
-    transposed (``getmap=1`` instead of ``getmap=0``). ``getmap=0`` and
-    ``getmap=1`` undo the other operation.
-
-.. c:function:: void PyArray_MapIterNext(PyArrayMapIterObject *mit)
-
-    This function needs to update the state of the map iterator
-    and point ``mit->dataptr`` to the memory-location of the next object.
-
-    Note that this function never handles an extra operand but provides
-    compatibility for an old (exposed) API.
-
-.. c:function:: PyObject* PyArray_MapIterArrayCopyIfOverlap(PyArrayObject *a, \
-                PyObject *index, int copy_if_overlap, PyArrayObject *extra_op)
-
-    Similar to :c:func:`PyArray_MapIterArray` but with an additional
-    ``copy_if_overlap`` argument. If ``copy_if_overlap != 0``, checks if ``a``
-    has memory overlap with any of the arrays in ``index`` and with
-    ``extra_op``, and make copies as appropriate to avoid problems if the
-    input is modified during the iteration. ``iter->array`` may contain a
-    copied array (WRITEBACKIFCOPY set).
 
 Array scalars
 -------------
@@ -2762,13 +2714,15 @@ Array scalars
     is copied into the memory of *ctypeptr*, for all other types, the
     actual data is copied into the address pointed to by *ctypeptr*.
 
-.. c:function:: void PyArray_CastScalarToCtype( \
+.. c:function:: int PyArray_CastScalarToCtype( \
         PyObject* scalar, void* ctypeptr, PyArray_Descr* outcode)
 
     Return the data (cast to the data type indicated by *outcode*)
     from the array-scalar, *scalar*, into the memory pointed to by
     *ctypeptr* (which must be large enough to handle the incoming
     memory).
+
+    Returns -1 on failure, and 0 on success.
 
 .. c:function:: PyObject* PyArray_TypeObjectFromType(int type)
 
@@ -3006,7 +2960,7 @@ to.
     Convert a Python object, *obj*, representing an axis argument to
     the proper value for passing to the functions that take an integer
     axis. Specifically, if *obj* is None, *axis* is set to
-    :c:data:`NPY_MAXDIMS` which is interpreted correctly by the C-API
+    :c:data:`NPY_RAVEL_AXIS` which is interpreted correctly by the C-API
     functions that take axis arguments.
 
 .. c:function:: int PyArray_BoolConverter(PyObject* obj, npy_bool* value)
@@ -3449,11 +3403,28 @@ Other constants
 
 .. c:macro:: NPY_MAXDIMS
 
-    The maximum number of dimensions allowed in arrays.
+    The maximum number of dimensions that may be used by NumPy.
+    This is set to 64 and was 32 before NumPy 2.
+
+    .. note::
+        We encourage you to avoid ``NPY_MAXDIMS``.  A future version of NumPy
+        may wish to remove any dimension limitation (and thus the constant).
+        The limitation was created so that NumPy can use stack allocations
+        internally for scratch space.
+
+        If your algorithm has a reasonable maximum number of dimension you
+        could check and use that locally.
 
 .. c:macro:: NPY_MAXARGS
 
-    The maximum number of array arguments that can be used in functions.
+    The maximum number of array arguments that can be used in some
+    functions.  This used to be 32 before NumPy 2 and is now 64.
+    To continue to allow using it as a check whether a number of arguments
+    is compatible ufuncs, this macro is now runtime dependent.
+
+    .. note::
+        We discourage any use of ``NPY_MAXARGS`` that isn't explicitly tied
+        to checking for known NumPy limitations.
 
 .. c:macro:: NPY_FALSE
 
@@ -3473,6 +3444,16 @@ Other constants
     The return value of successful converter functions which are called
     using the "O&" syntax in :c:func:`PyArg_ParseTuple`-like functions.
 
+.. c:macro:: NPY_RAVEL_AXIS
+
+    Some NumPy functions (mainly the C-entrypoints for Python functions)
+    have an ``axis`` argument.  This macro may be passed for ``axis=None``.
+
+    .. note::
+        This macro is NumPy version dependent at runtime. The value is now
+        the minimum integer. However, on NumPy 1.x ``NPY_MAXDIMS`` was used
+        (at the time set to 32).
+
 
 Miscellaneous Macros
 ~~~~~~~~~~~~~~~~~~~~
@@ -3490,10 +3471,6 @@ Miscellaneous Macros
 
     Returns the minimum of *a* and *b*. If (*a*) or (*b*) are
     expressions they are evaluated twice.
-
-.. c:function:: npy_intp PyArray_REFCOUNT(PyObject* op)
-
-    Returns the reference count of any Python object.
 
 .. c:function:: void PyArray_DiscardWritebackIfCopy(PyArrayObject* obj)
 

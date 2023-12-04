@@ -1161,7 +1161,7 @@ def test_scalar_repr_numbers(dtype, value):
         assert repr(scalar) == string
 
 
-@pytest.mark.parametrize("scalar, legacy_repr,representation", [
+@pytest.mark.parametrize("scalar, legacy_repr, representation", [
         (np.True_, "True", "np.True_"),
         (np.bytes_(b'a'), "b'a'", "np.bytes_(b'a')"),
         (np.str_('a'), "'a'", "np.str_('a')"),

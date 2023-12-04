@@ -1,0 +1,8 @@
+``loadtxt`` and ``genfromtxt`` default to ``encoding=None``
+-----------------------------------------------------------
+``loadtxt`` and ``genfromtxt`` now both default to ``encoding=None``
+which may mainly modifies how ``converters`` work.
+These will now be passed ``str`` rather than ``bytes``, pass the
+encoding explicitly to always get the new or old behavior.
+For ``genfromtxt`` the change also means that returned values will now be
+unicode strings rather than bytes.

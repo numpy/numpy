@@ -120,9 +120,9 @@ module is constructed by scanning all Fortran source codes for routine
 signatures, before proceeding to build the extension module.
 
 .. warning::
-   From Python 3.12 onwards, ``distutils`` has been removed. Use
-   environment variables to interact with ``meson`` instead. See its
-   `FAQ <https://mesonbuild.com/howtox.html>`__ for more information.
+   From Python 3.12 onwards, ``distutils`` has been removed. Use environment
+   variables or native files to interact with ``meson`` instead. See its `FAQ
+   <https://mesonbuild.com/howtox.html>`__ for more information.
 
 Among other options (see below) and options described for previous modes, the following can be used.
 
@@ -239,10 +239,11 @@ Other options
 ``-m <modulename>``
   Name of an extension module. Default is ``untitled``.
 
-.. warning:: Don't use this option if a signature file (``*.pyf``) is used.
+.. warning::
+   Don't use this option if a signature file (``*.pyf``) is used.
 
-.. versionchanged:: 2.0.0
-   Will ignore ``-m`` if a ``pyf`` file is provided.
+   .. versionchanged:: 1.26.3
+      Will ignore ``-m`` if a ``pyf`` file is provided.
 
 ``--[no-]lower``
   Do [not] lower the cases in ``<fortran files>``. By default, ``--lower`` is
@@ -272,27 +273,15 @@ options.
 Python module ``numpy.f2py``
 ============================
 
-The f2py program is written in Python and can be run from inside your code
-to compile Fortran code at runtime, as follows:
-
-.. code-block:: python
-
-    from numpy import f2py
-    with open("add.f") as sourcefile:
-        sourcecode = sourcefile.read()
-    f2py.compile(sourcecode, modulename='add')
-    import add
-
-The source string can be any valid Fortran code. If you want to save
-the extension-module source code then a suitable file-name can be
-provided by the ``source_fn`` keyword to the compile function.
-
-When using ``numpy.f2py`` as a module, the following functions can be invoked.
-
 .. warning::
 
-  The current Python interface to the ``f2py`` module is not mature and may
-  change in the future.
+   .. versionchanged:: 2.0.0
+
+      There used to be a ``f2py.compile`` function, which was removed, users
+      may wrap ``python -m numpy.f2py`` via ``subprocess.run`` manually, and
+      set environment variables to interact with ``meson`` as required.
+
+When using ``numpy.f2py`` as a module, the following functions can be invoked.
 
 .. automodule:: numpy.f2py
     :members:

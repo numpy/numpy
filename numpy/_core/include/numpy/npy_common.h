@@ -195,11 +195,11 @@ enum {
 };
 
 /*
- * This is to typedef npy_intp to the appropriate pointer size for this
- * platform.  Py_intptr_t, Py_uintptr_t are defined in pyport.h.
+ * This is to typedef npy_intp to the appropriate size for Py_ssize_t.
+ * (Before NumPy 2.0 we used Py_intptr_t and Py_uintptr_t from `pyport.h`.)
  */
-typedef Py_intptr_t npy_intp;
-typedef Py_uintptr_t npy_uintp;
+typedef Py_ssize_t npy_intp;
+typedef size_t npy_uintp;
 
 /*
  * Define sizes that were not defined in numpyconfig.h.
@@ -208,8 +208,6 @@ typedef Py_uintptr_t npy_uintp;
 #define NPY_SIZEOF_BYTE 1
 #define NPY_SIZEOF_DATETIME 8
 #define NPY_SIZEOF_TIMEDELTA 8
-#define NPY_SIZEOF_INTP NPY_SIZEOF_PY_INTPTR_T
-#define NPY_SIZEOF_UINTP NPY_SIZEOF_PY_INTPTR_T
 #define NPY_SIZEOF_HALF 2
 #define NPY_SIZEOF_CFLOAT NPY_SIZEOF_COMPLEX_FLOAT
 #define NPY_SIZEOF_CDOUBLE NPY_SIZEOF_COMPLEX_DOUBLE
@@ -228,7 +226,7 @@ typedef Py_uintptr_t npy_uintp;
  *      functions use different formatting codes that are portably specified
  *      according to the Python documentation. See issue gh-2388.
  */
-#if NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_LONG
+#if NPY_SIZEOF_INTP == NPY_SIZEOF_LONG
         #define NPY_INTP NPY_LONG
         #define NPY_UINTP NPY_ULONG
         #define PyIntpArrType_Type PyLongArrType_Type
@@ -237,8 +235,7 @@ typedef Py_uintptr_t npy_uintp;
         #define NPY_MIN_INTP NPY_MIN_LONG
         #define NPY_MAX_UINTP NPY_MAX_ULONG
         #define NPY_INTP_FMT "ld"
-#elif NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_INT
-        /* NumPy always prefers long over int if the size is identical! */
+#elif NPY_SIZEOF_INTP == NPY_SIZEOF_INT
         #define NPY_INTP NPY_INT
         #define NPY_UINTP NPY_UINT
         #define PyIntpArrType_Type PyIntArrType_Type
@@ -247,7 +244,7 @@ typedef Py_uintptr_t npy_uintp;
         #define NPY_MIN_INTP NPY_MIN_INT
         #define NPY_MAX_UINTP NPY_MAX_UINT
         #define NPY_INTP_FMT "d"
-#elif defined(PY_LONG_LONG) && (NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_LONGLONG)
+#elif defined(PY_LONG_LONG) && (NPY_SIZEOF_INTP == NPY_SIZEOF_LONGLONG)
         #define NPY_INTP NPY_LONGLONG
         #define NPY_UINTP NPY_ULONGLONG
         #define PyIntpArrType_Type PyLongLongArrType_Type
@@ -256,18 +253,8 @@ typedef Py_uintptr_t npy_uintp;
         #define NPY_MIN_INTP NPY_MIN_LONGLONG
         #define NPY_MAX_UINTP NPY_MAX_ULONGLONG
         #define NPY_INTP_FMT "lld"
-#endif
-
-/*
- * We can only use C99 formats for npy_int_p if it is the same as
- * intp_t, hence the condition on HAVE_UNITPTR_T
- */
-#if (NPY_USE_C99_FORMATS) == 1 \
-        && (defined HAVE_UINTPTR_T) \
-        && (defined HAVE_INTTYPES_H)
-        #include <inttypes.h>
-        #undef NPY_INTP_FMT
-        #define NPY_INTP_FMT PRIdPTR
+#else
+    #error "Failed to correctly define NPY_INTP and NPY_UINTP"
 #endif
 
 

@@ -7,10 +7,10 @@ from typing import (
     Protocol,
 )
 
+import numpy as np
 from numpy import (
     dtype,
     generic,
-    bool_,
     floating,
     float64,
     complexfloating,
@@ -62,14 +62,14 @@ def imag(val: _SupportsImag[_T]) -> _T: ...
 def imag(val: ArrayLike) -> NDArray[Any]: ...
 
 @overload
-def iscomplex(x: _ScalarLike_co) -> bool_: ...  # type: ignore[misc]
+def iscomplex(x: _ScalarLike_co) -> np.bool: ...  # type: ignore[misc]
 @overload
-def iscomplex(x: ArrayLike) -> NDArray[bool_]: ...
+def iscomplex(x: ArrayLike) -> NDArray[np.bool]: ...
 
 @overload
-def isreal(x: _ScalarLike_co) -> bool_: ...  # type: ignore[misc]
+def isreal(x: _ScalarLike_co) -> np.bool: ...  # type: ignore[misc]
 @overload
-def isreal(x: ArrayLike) -> NDArray[bool_]: ...
+def isreal(x: ArrayLike) -> NDArray[np.bool]: ...
 
 def iscomplexobj(x: _SupportsDType[dtype[Any]] | ArrayLike) -> bool: ...
 

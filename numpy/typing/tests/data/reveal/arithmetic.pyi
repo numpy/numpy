@@ -26,14 +26,14 @@ u4 = np.uint32()
 dt = np.datetime64(0, "D")
 td = np.timedelta64(0, "D")
 
-b_ = np.bool_()
+b_ = np.bool()
 
 b = bool()
 c = complex()
 f = float()
 i = int()
 
-AR_b: npt.NDArray[np.bool_]
+AR_b: npt.NDArray[np.bool]
 AR_u: npt.NDArray[np.uint32]
 AR_i: npt.NDArray[np.int64]
 AR_f: npt.NDArray[np.float64]
@@ -288,7 +288,7 @@ assert_type(abs(i4), np.int32)
 assert_type(abs(u8), np.uint64)
 assert_type(abs(u4), np.uint32)
 assert_type(abs(td), np.timedelta64)
-assert_type(abs(b_), np.bool_)
+assert_type(abs(b_), np.bool)
 
 # Time structures
 

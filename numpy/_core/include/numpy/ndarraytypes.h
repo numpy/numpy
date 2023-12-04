@@ -35,10 +35,17 @@
  * The array creation itself could have arbitrary dimensions but all
  * the places where static allocation is used would need to be changed
  * to dynamic (including inside of several structures)
+ *
+ * As of NumPy 2.0, we strongly discourage the downstream use of NPY_MAXDIMS,
+ * but since auditing everything seems a big ask, define it as 64.
+ * A future version could:
+ * - Increase or remove the limit and require recompilation (like 2.0 did)
+ * - Deprecate or remove the macro but keep the limit (at basically any time)
  */
-
-#define NPY_MAXDIMS 32
-#define NPY_MAXARGS 32
+#define NPY_MAXDIMS 64
+/* We cannot change this as it would break ABI: */
+#define NPY_MAXDIMS_LEGACY_ITERS 32
+/* NPY_MAXARGS is version dependent and defined in npy_2_compat.h */
 
 /* Used for Converter Functions "O&" code in ParseTuple */
 #define NPY_FAIL 0
@@ -120,13 +127,14 @@ enum NPY_TYPECHAR {
         NPY_CHARLTR = 'c',
 
         /*
-         * No Descriptor, just a define -- this let's
-         * Python users specify an array of integers
-         * large enough to hold a pointer on the
-         * platform
+         * Note, we removed `NPY_INTPLTR` due to changing its definition
+         * to 'n', rather than 'p'.  On any typical platform this is the
+         * same integer.  'n' should be used for the `np.intp` with the same
+         * size as `size_t` while 'p' remains pointer sized.
+         *
+         * 'p', 'P', 'n', and 'N' are valid and defined explicitly
+         * in `arraytypes.c.src`.
          */
-        NPY_INTPLTR = 'p',
-        NPY_UINTPLTR = 'P',
 
         /*
          * These are for dtype 'kinds', not dtype 'typecodes'
@@ -1095,18 +1103,18 @@ struct PyArrayIterObject_tag {
         PyObject_HEAD
         int               nd_m1;            /* number of dimensions - 1 */
         npy_intp          index, size;
-        npy_intp          coordinates[NPY_MAXDIMS];/* N-dimensional loop */
-        npy_intp          dims_m1[NPY_MAXDIMS];    /* ao->dimensions - 1 */
-        npy_intp          strides[NPY_MAXDIMS];    /* ao->strides or fake */
-        npy_intp          backstrides[NPY_MAXDIMS];/* how far to jump back */
-        npy_intp          factors[NPY_MAXDIMS];     /* shape factors */
+        npy_intp          coordinates[NPY_MAXDIMS_LEGACY_ITERS];/* N-dimensional loop */
+        npy_intp          dims_m1[NPY_MAXDIMS_LEGACY_ITERS];    /* ao->dimensions - 1 */
+        npy_intp          strides[NPY_MAXDIMS_LEGACY_ITERS];    /* ao->strides or fake */
+        npy_intp          backstrides[NPY_MAXDIMS_LEGACY_ITERS];/* how far to jump back */
+        npy_intp          factors[NPY_MAXDIMS_LEGACY_ITERS];     /* shape factors */
         PyArrayObject     *ao;
         char              *dataptr;        /* pointer to current item*/
         npy_bool          contiguous;
 
-        npy_intp          bounds[NPY_MAXDIMS][2];
-        npy_intp          limits[NPY_MAXDIMS][2];
-        npy_intp          limits_sizes[NPY_MAXDIMS];
+        npy_intp          bounds[NPY_MAXDIMS_LEGACY_ITERS][2];
+        npy_intp          limits[NPY_MAXDIMS_LEGACY_ITERS][2];
+        npy_intp          limits_sizes[NPY_MAXDIMS_LEGACY_ITERS];
         npy_iter_get_dataptr_t translate;
 } ;
 
@@ -1230,8 +1238,19 @@ typedef struct {
         npy_intp             size;                    /* broadcasted size */
         npy_intp             index;                   /* current index */
         int                  nd;                      /* number of dims */
-        npy_intp             dimensions[NPY_MAXDIMS]; /* dimensions */
-        PyArrayIterObject    *iters[NPY_MAXARGS];     /* iterators */
+        npy_intp             dimensions[NPY_MAXDIMS_LEGACY_ITERS]; /* dimensions */
+        /*
+         * Space for the indivdual iterators, do not specify size publically
+         * to allow changing it more easily.
+         * One reason is that Cython uses this for checks and only allows
+         * growing structs (as of Cython 3.0.6).  It also allows NPY_MAXARGS
+         * to be runtime dependent.
+         */
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+        PyArrayIterObject    *iters[64];  /* 64 is NPY_MAXARGS */
+#else /* not internal build */
+        PyArrayIterObject    *iters[];
+#endif
 } PyArrayMultiIterObject;
 
 #define _PyMIT(m) ((PyArrayMultiIterObject *)(m))
@@ -1319,95 +1338,6 @@ PyArray_MultiIter_ITERS(PyArrayMultiIterObject *multi)
 }
 
 
-/*
- * Store the information needed for fancy-indexing over an array. The
- * fields are slightly unordered to keep consec, dataptr and subspace
- * where they were originally.
- */
-typedef struct {
-        PyObject_HEAD
-        /*
-         * Multi-iterator portion --- needs to be present in this
-         * order to work with PyArray_Broadcast
-         */
-
-        int                   numiter;                 /* number of index-array
-                                                          iterators */
-        npy_intp              size;                    /* size of broadcasted
-                                                          result */
-        npy_intp              index;                   /* current index */
-        int                   nd;                      /* number of dims */
-        npy_intp              dimensions[NPY_MAXDIMS]; /* dimensions */
-        NpyIter               *outer;                  /* index objects
-                                                          iterator */
-        void                  *unused[NPY_MAXDIMS - 2];
-        PyArrayObject         *array;
-        /* Flat iterator for the indexed array. For compatibility solely. */
-        PyArrayIterObject     *ait;
-
-        /*
-         * Subspace array. For binary compatibility (was an iterator,
-         * but only the check for NULL should be used).
-         */
-        PyArrayObject         *subspace;
-
-        /*
-         * if subspace iteration, then this is the array of axes in
-         * the underlying array represented by the index objects
-         */
-        int                   iteraxes[NPY_MAXDIMS];
-        npy_intp              fancy_strides[NPY_MAXDIMS];
-
-        /* pointer when all fancy indices are 0 */
-        char                  *baseoffset;
-
-        /*
-         * after binding consec denotes at which axis the fancy axes
-         * are inserted.
-         */
-        int                   consec;
-        char                  *dataptr;
-
-        int                   nd_fancy;
-        npy_intp              fancy_dims[NPY_MAXDIMS];
-
-        /*
-         * Whether the iterator (any of the iterators) requires API.  This is
-         * unused by NumPy itself; ArrayMethod flags are more precise.
-         */
-        int                   needs_api;
-
-        /*
-         * Extra op information.
-         */
-        PyArrayObject         *extra_op;
-        PyArray_Descr         *extra_op_dtype;         /* desired dtype */
-        npy_uint32            *extra_op_flags;         /* Iterator flags */
-
-        NpyIter               *extra_op_iter;
-        NpyIter_IterNextFunc  *extra_op_next;
-        char                  **extra_op_ptrs;
-
-        /*
-         * Information about the iteration state.
-         */
-        NpyIter_IterNextFunc  *outer_next;
-        char                  **outer_ptrs;
-        npy_intp              *outer_strides;
-
-        /*
-         * Information about the subspace iterator.
-         */
-        NpyIter               *subspace_iter;
-        NpyIter_IterNextFunc  *subspace_next;
-        char                  **subspace_ptrs;
-        npy_intp              *subspace_strides;
-
-        /* Count for the external loop (which ever it is) for API iteration */
-        npy_intp              iter_count;
-
-} PyArrayMapIterObject;
-
 enum {
     NPY_NEIGHBORHOOD_ITER_ZERO_PADDING,
     NPY_NEIGHBORHOOD_ITER_ONE_PADDING,
@@ -1424,18 +1354,18 @@ typedef struct {
      */
     int               nd_m1;            /* number of dimensions - 1 */
     npy_intp          index, size;
-    npy_intp          coordinates[NPY_MAXDIMS];/* N-dimensional loop */
-    npy_intp          dims_m1[NPY_MAXDIMS];    /* ao->dimensions - 1 */
-    npy_intp          strides[NPY_MAXDIMS];    /* ao->strides or fake */
-    npy_intp          backstrides[NPY_MAXDIMS];/* how far to jump back */
-    npy_intp          factors[NPY_MAXDIMS];     /* shape factors */
+    npy_intp          coordinates[NPY_MAXDIMS_LEGACY_ITERS];/* N-dimensional loop */
+    npy_intp          dims_m1[NPY_MAXDIMS_LEGACY_ITERS];    /* ao->dimensions - 1 */
+    npy_intp          strides[NPY_MAXDIMS_LEGACY_ITERS];    /* ao->strides or fake */
+    npy_intp          backstrides[NPY_MAXDIMS_LEGACY_ITERS];/* how far to jump back */
+    npy_intp          factors[NPY_MAXDIMS_LEGACY_ITERS];     /* shape factors */
     PyArrayObject     *ao;
     char              *dataptr;        /* pointer to current item*/
     npy_bool          contiguous;
 
-    npy_intp          bounds[NPY_MAXDIMS][2];
-    npy_intp          limits[NPY_MAXDIMS][2];
-    npy_intp          limits_sizes[NPY_MAXDIMS];
+    npy_intp          bounds[NPY_MAXDIMS_LEGACY_ITERS][2];
+    npy_intp          limits[NPY_MAXDIMS_LEGACY_ITERS][2];
+    npy_intp          limits_sizes[NPY_MAXDIMS_LEGACY_ITERS];
     npy_iter_get_dataptr_t translate;
 
     /*
@@ -1444,7 +1374,7 @@ typedef struct {
     npy_intp nd;
 
     /* Dimensions is the dimension of the array */
-    npy_intp dimensions[NPY_MAXDIMS];
+    npy_intp dimensions[NPY_MAXDIMS_LEGACY_ITERS];
 
     /*
      * Neighborhood points coordinates are computed relatively to the

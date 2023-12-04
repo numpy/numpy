@@ -2,8 +2,8 @@ import builtins
 from collections.abc import Callable
 from typing import Any, overload, Literal
 
+import numpy as np
 from numpy import (
-    bool_,
     dtype,
     float32,
     float64,
@@ -34,7 +34,7 @@ from numpy._typing import (
     _Int16Codes,
     _Int32Codes,
     _Int64Codes,
-    _IntCodes,
+    _LongCodes,
     _ShapeLike,
     _SingleCodes,
     _SupportsDType,
@@ -42,7 +42,7 @@ from numpy._typing import (
     _UInt16Codes,
     _UInt32Codes,
     _UInt64Codes,
-    _UIntCodes,
+    _ULongCodes,
 )
 
 _DTypeLikeFloat32 = (
@@ -145,7 +145,7 @@ class RandomState:
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
         dtype: _DTypeLikeBool = ...,
-    ) -> NDArray[bool_]: ...
+    ) -> NDArray[np.bool]: ...
     @overload
     def randint(  # type: ignore[misc]
         self,

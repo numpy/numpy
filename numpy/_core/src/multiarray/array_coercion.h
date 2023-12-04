@@ -23,6 +23,11 @@ NPY_NO_EXPORT PyObject *
 PyArray_DiscoverDTypeFromScalarType(PyTypeObject *pytype);
 
 NPY_NO_EXPORT int
+npy_cast_raw_scalar_item(
+        PyArray_Descr *from_descr, char *from_item,
+        PyArray_Descr *to_descr, char *to_item);
+
+NPY_NO_EXPORT int
 PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value);
 
 NPY_NO_EXPORT PyArray_Descr *

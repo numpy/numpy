@@ -139,9 +139,9 @@ DTypeLike = Union[
 # Note that the precision of `np.number` subclasses is ignored herein.
 _DTypeLikeBool = Union[
     type[bool],
-    type[np.bool_],
-    np.dtype[np.bool_],
-    _SupportsDType[np.dtype[np.bool_]],
+    type[np.bool],
+    np.dtype[np.bool],
+    _SupportsDType[np.dtype[np.bool]],
     _BoolCodes,
 ]
 _DTypeLikeUInt = Union[

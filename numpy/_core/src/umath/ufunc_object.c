@@ -59,6 +59,7 @@
 #include "convert_datatype.h"
 #include "legacy_array_method.h"
 #include "abstractdtypes.h"
+#include "mapping.h"
 
 /* TODO: Only for `NpyIter_GetTransferFlags` until it is public */
 #define NPY_ITERATOR_IMPLEMENTATION_CODE
@@ -6182,7 +6183,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         if ((ufuncimpl->contiguous_indexed_loop != NULL) &&
                 (PyArray_NDIM(op1_array) == 1)  &&
                 (op2_array == NULL || PyArray_NDIM(op2_array) <= 1) &&
-                (iter->subspace_iter == NULL) && (iter->numiter == 1)) {
+                (iter->subspace_iter == NULL) && (iter->num_fancy == 1)) {
             res = trivial_at_loop(ufuncimpl, flags, iter, op1_array,
                         op2_array, &context);
 

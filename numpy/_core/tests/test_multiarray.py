@@ -744,7 +744,7 @@ class TestZeroRank:
             x[i]
 
         assert_raises(IndexError, subscript, a, (np.newaxis, 0))
-        assert_raises(IndexError, subscript, a, (np.newaxis,)*50)
+        assert_raises(IndexError, subscript, a, (np.newaxis,)*70)
 
     def test_constructor(self):
         x = np.ndarray(())
@@ -826,7 +826,7 @@ class TestScalarIndexing:
             x[i]
 
         assert_raises(IndexError, subscript, a, (np.newaxis, 0))
-        assert_raises(IndexError, subscript, a, (np.newaxis,)*50)
+        assert_raises(IndexError, subscript, a, (np.newaxis,)*70)
 
     def test_overlapping_assignment(self):
         # With positive strides
@@ -1650,11 +1650,11 @@ class TestStructured:
 
 class TestBool:
     def test_test_interning(self):
-        a0 = np.bool_(0)
-        b0 = np.bool_(False)
+        a0 = np.bool(0)
+        b0 = np.bool(False)
         assert_(a0 is b0)
-        a1 = np.bool_(1)
-        b1 = np.bool_(True)
+        a1 = np.bool(1)
+        b1 = np.bool(True)
         assert_(a1 is b1)
         assert_(np.array([True])[0] is a1)
         assert_(np.array(True)[()] is a1)
@@ -4169,8 +4169,8 @@ class TestTemporaryElide:
 
     def test_elide_scalar(self):
         # check inplace op does not create ndarray from scalars
-        a = np.bool_()
-        assert_(type(~(a & a)) is np.bool_)
+        a = np.bool()
+        assert_(type(~(a & a)) is np.bool)
 
     def test_elide_scalar_readonly(self):
         # The imaginary part of a real array is readonly. This needs to go
@@ -5303,8 +5303,8 @@ class TestIO:
         assert_raises(OSError, lambda x: x.tofile(b), d)
 
     def test_bool_fromstring(self):
-        v = np.array([True, False, True, False], dtype=np.bool_)
-        y = np.fromstring('1 0 -2.3 0.0', sep=' ', dtype=np.bool_)
+        v = np.array([True, False, True, False], dtype=np.bool)
+        y = np.fromstring('1 0 -2.3 0.0', sep=' ', dtype=np.bool)
         assert_array_equal(v, y)
 
     def test_uint64_fromstring(self):
@@ -5642,11 +5642,11 @@ class TestIO:
 
     def test_dtype_bool(self, tmp_filename):
         # can't use _check_from because fromstring can't handle True/False
-        v = np.array([True, False, True, False], dtype=np.bool_)
+        v = np.array([True, False, True, False], dtype=np.bool)
         s = b'1,0,-2.3,0'
         with open(tmp_filename, 'wb') as f:
             f.write(s)
-        y = np.fromfile(tmp_filename, sep=',', dtype=np.bool_)
+        y = np.fromfile(tmp_filename, sep=',', dtype=np.bool)
         assert_(y.dtype == '?')
         assert_array_equal(y, v)
 
@@ -5827,6 +5827,15 @@ class TestFlat:
         # Check the value of `.index` is updated correctly (see also gh-19153)
         # If the type was incorrect, this would show up on big-endian machines
         assert it.index == it.base.size
+
+    def test_maxdims(self):
+        # The flat iterator and thus attribute is currently unfortunately
+        # limited to only 32 dimensions (after bumping it to 64 for 2.0)
+        a = np.ones((1,) * 64)
+
+        with pytest.raises(RuntimeError,
+                match=".*32 dimensions but the array has 64"):
+            a.flat
 
 
 class TestResize:
@@ -7001,13 +7010,13 @@ class MatmulCommon:
             assert_equal(res, tgt12_21)
 
         # boolean type
-        m1 = np.array([[1, 1], [0, 0]], dtype=np.bool_)
-        m2 = np.array([[1, 0], [1, 1]], dtype=np.bool_)
+        m1 = np.array([[1, 1], [0, 0]], dtype=np.bool)
+        m2 = np.array([[1, 0], [1, 1]], dtype=np.bool)
         m12 = np.stack([m1, m2], axis=0)
         m21 = np.stack([m2, m1], axis=0)
         tgt11 = m1
         tgt12 = m1
-        tgt21 = np.array([[1, 1], [1, 1]], dtype=np.bool_)
+        tgt21 = np.array([[1, 1], [1, 1]], dtype=np.bool)
         tgt12_21 = np.stack([tgt12, tgt21], axis=0)
         tgt11_12 = np.stack((tgt11, tgt12), axis=0)
         tgt11_21 = np.stack((tgt11, tgt21), axis=0)
@@ -7405,6 +7414,22 @@ class TestChoose:
     def test_output_dtype(self, ops):
         expected_dt = np.result_type(*ops)
         assert(np.choose([0], ops).dtype == expected_dt)
+
+    def test_dimension_and_args_limit(self):
+        # Maxdims for the legacy iterator is 32, but the maximum number
+        # of arguments is actually larger (a itself also counts here)
+        a = np.ones((1,) * 32, dtype=np.intp)
+        res = a.choose([0, a] + [2] * 61)
+        with pytest.raises(ValueError,
+                match="Need at least 0 and at most 64 array objects"):
+            a.choose([0, a] + [2] * 62)
+
+        assert_array_equal(res, a)
+        # Choose is unfortunately limited to 32 dims as of NumPy 2.0
+        a = np.ones((1,) * 60, dtype=np.intp)
+        with pytest.raises(RuntimeError,
+                match=".*32 dimensions but the array has 60"):
+            a.choose([a, a])
 
 
 class TestRepeat:
@@ -8179,19 +8204,22 @@ class TestNewBufferProtocol:
                 t = dim * t
             return t
 
-        # construct a memoryview with 33 dimensions
-        c_u8_33d = make_ctype((1,)*33, ctypes.c_uint8)
-        m = memoryview(c_u8_33d())
-        assert_equal(m.ndim, 33)
+        # Try constructing a memory with too many dimensions:
+        c_u8_65d = make_ctype((1,)*65, ctypes.c_uint8)
+        try:
+            m = memoryview(c_u8_65d())
+        except ValueError:
+            pytest.skip("memoryview doesn't support more dimensions")
 
-        assert_raises_regex(
-            RuntimeError, "ndim",
-            np.array, m)
+        assert_equal(m.ndim, 65)
+
+        with pytest.raises(RuntimeError, match=".*ndim"):
+            np.array(m)
 
         # The above seems to create some deep cycles, clean them up for
         # easier reference count debugging:
-        del c_u8_33d, m
-        for i in range(33):
+        del c_u8_65d, m
+        for i in range(65):
             if gc.collect() == 0:
                 break
 
@@ -8652,28 +8680,6 @@ def test_flat_element_deletion():
 def test_scalar_element_deletion():
     a = np.zeros(2, dtype=[('x', 'int'), ('y', 'int')])
     assert_raises(ValueError, a[0].__delitem__, 'x')
-
-
-class TestMapIter:
-    def test_mapiter(self):
-        # The actual tests are within the C code in
-        # multiarray/_multiarray_tests.c.src
-
-        a = np.arange(12).reshape((3, 4)).astype(float)
-        index = ([1, 1, 2, 0],
-                 [0, 0, 2, 3])
-        vals = [50, 50, 30, 16]
-
-        _multiarray_tests.test_inplace_increment(a, index, vals)
-        assert_equal(a, [[0.00, 1., 2.0, 19.],
-                         [104., 5., 6.0, 7.0],
-                         [8.00, 9., 40., 11.]])
-
-        b = np.arange(6).astype(float)
-        index = (np.array([1, 2, 0]),)
-        vals = [50, 4, 100.1]
-        _multiarray_tests.test_inplace_increment(b, index, vals)
-        assert_equal(b, [100.1,  51.,   6.,   3.,   4.,   5.])
 
 
 class TestAsCArray:

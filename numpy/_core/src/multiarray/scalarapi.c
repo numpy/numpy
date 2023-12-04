@@ -14,6 +14,7 @@
 
 #include "npy_pycompat.h"
 
+#include "array_coercion.h"
 #include "ctors.h"
 #include "descriptor.h"
 #include "scalartypes.h"
@@ -152,57 +153,29 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 /*NUMPY_API
  * Cast Scalar to c-type
  *
- * The output buffer must be large-enough to receive the value
- *  Even for flexible types which is different from ScalarAsCtype
- *  where only a reference for flexible types is returned
- *
- * This may not work right on narrow builds for NumPy unicode scalars.
+ * The output buffer must be large-enough to receive the value, this function
+ * should only be used for subclasses of `np.generic`, we can only guarantee
+ * it works for NumPy builtins.
  */
 NPY_NO_EXPORT int
 PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
                           PyArray_Descr *outcode)
 {
     PyArray_Descr* descr;
-    PyArray_VectorUnaryFunc* castfunc;
 
     descr = PyArray_DescrFromScalar(scalar);
     if (descr == NULL) {
         return -1;
     }
-    castfunc = PyArray_GetCastFunc(descr, outcode->type_num);
-    if (castfunc == NULL) {
+    void *src = scalar_value(scalar, descr);
+    if (src == NULL) {
         Py_DECREF(descr);
         return -1;
     }
-    if (PyTypeNum_ISEXTENDED(descr->type_num) ||
-            PyTypeNum_ISEXTENDED(outcode->type_num)) {
-        PyArrayObject *ain, *aout;
 
-        ain = (PyArrayObject *)PyArray_FromScalar(scalar, NULL);
-        if (ain == NULL) {
-            Py_DECREF(descr);
-            return -1;
-        }
-        aout = (PyArrayObject *)
-            PyArray_NewFromDescr(&PyArray_Type,
-                    outcode,
-                    0, NULL,
-                    NULL, ctypeptr,
-                    NPY_ARRAY_CARRAY, NULL);
-        if (aout == NULL) {
-            Py_DECREF(ain);
-            Py_DECREF(descr);
-            return -1;
-        }
-        castfunc(PyArray_DATA(ain), PyArray_DATA(aout), 1, ain, aout);
-        Py_DECREF(ain);
-        Py_DECREF(aout);
-    }
-    else {
-        castfunc(scalar_value(scalar, descr), ctypeptr, 1, NULL, NULL);
-    }
+    int res = npy_cast_raw_scalar_item(descr, src, outcode, ctypeptr);
     Py_DECREF(descr);
-    return 0;
+    return res;
 }
 
 /*NUMPY_API
@@ -212,15 +185,19 @@ NPY_NO_EXPORT int
 PyArray_CastScalarDirect(PyObject *scalar, PyArray_Descr *indescr,
                          void *ctypeptr, int outtype)
 {
-    PyArray_VectorUnaryFunc* castfunc;
-    void *ptr;
-    castfunc = PyArray_GetCastFunc(indescr, outtype);
-    if (castfunc == NULL) {
+    PyArray_Descr *out_dt = PyArray_DescrFromType(outtype);
+    if (out_dt == NULL) {
         return -1;
     }
-    ptr = scalar_value(scalar, indescr);
-    castfunc(ptr, ctypeptr, 1, NULL, NULL);
-    return 0;
+    void *src = scalar_value(scalar, indescr);
+    if (src == NULL) {
+        Py_DECREF(out_dt);
+        return -1;
+    }
+
+    int res = npy_cast_raw_scalar_item(indescr, src, out_dt, ctypeptr);
+    Py_DECREF(out_dt);
+    return res;
 }
 
 /*NUMPY_API

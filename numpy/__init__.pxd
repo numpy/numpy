@@ -182,9 +182,8 @@ cdef extern from "numpy/arrayobject.h":
         NPY_ARRAY_UPDATE_ALL
 
     cdef enum:
-        NPY_MAXDIMS
-
-    npy_intp NPY_MAX_ELSIZE
+        NPY_MAXDIMS  # 64 on NumPy 2.x and 32 on NumPy 1.x
+        NPY_RAVEL_AXIS  # Used for functions like PyArray_Mean
 
     ctypedef void (*PyArray_VectorUnaryFunc)(void *, void *, npy_intp, void *,  void *)
 
@@ -460,7 +459,6 @@ cdef extern from "numpy/arrayobject.h":
     object PyArray_ZEROS(int nd, npy_intp* dims, int type, int fortran)
     object PyArray_EMPTY(int nd, npy_intp* dims, int type, int fortran)
     void PyArray_FILLWBYTE(object, int val)
-    npy_intp PyArray_REFCOUNT(object)
     object PyArray_ContiguousFromAny(op, int, int min_depth, int max_depth)
     unsigned char PyArray_EquivArrTypes(ndarray a1, ndarray a2)
     bint PyArray_EquivByteorders(int b1, int b2) nogil

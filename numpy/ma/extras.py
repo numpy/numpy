@@ -617,7 +617,7 @@ def average(a, axis=None, weights=None, returned=False, *,
     else:
         wgt = asarray(weights)
 
-        if issubclass(a.dtype.type, (np.integer, np.bool_)):
+        if issubclass(a.dtype.type, (np.integer, np.bool)):
             result_dtype = np.result_type(a.dtype, wgt.dtype, 'f8')
         else:
             result_dtype = np.result_type(a.dtype, wgt.dtype)

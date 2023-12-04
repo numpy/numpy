@@ -19,7 +19,7 @@ import functools
 
 from .._utils import set_module
 from .numerictypes import (
-    bytes_, str_, integer, int_, object_, bool_, character)
+    bytes_, str_, integer, int_, object_, character)
 from .numeric import ndarray, array as narray
 from numpy._core.multiarray import _vec_string, compare_chararrays
 from numpy._core import overrides
@@ -285,17 +285,14 @@ def str_len(a):
     >>> a = np.array(['Grace Hopper Conference', 'Open Source Day'])
     >>> np.char.str_len(a)
     array([23, 15])
-    >>> a = np.array([u'\u0420', u'\u043e'])
+    >>> a = np.array(['\u0420', '\u043e'])
     >>> np.char.str_len(a)
     array([1, 1])
-    >>> a = np.array([['hello', 'world'], [u'\u0420', u'\u043e']])
+    >>> a = np.array([['hello', 'world'], ['\u0420', '\u043e']])
     >>> np.char.str_len(a)
     array([[5, 5], [1, 1]])
     """
-    # Note: __len__, etc. currently return ints, which are not C-integers.
-    # Generally intp would be expected for lengths, although int is sufficient
-    # due to the dtype itemsize limitation.
-    return _vec_string(a, int_, '__len__')
+    return numpy._core.umath.str_len(a)
 
 
 @array_function_dispatch(_binary_op_dispatcher)
@@ -558,7 +555,8 @@ def count(a, sub, start=0, end=None):
     array([1, 0, 0])
 
     """
-    return _vec_string(a, int_, 'count', [sub, start] + _clean_args(end))
+    end = end if end is not None else numpy.iinfo(numpy.int64).max
+    return numpy._core.umath.count(a, sub, start, end)
 
 
 def _code_dispatcher(a, encoding=None, errors=None):
@@ -834,7 +832,7 @@ def isalnum(a):
     --------
     str.isalnum
     """
-    return _vec_string(a, bool_, 'isalnum')
+    return _vec_string(a, numpy.bool, 'isalnum')
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -922,7 +920,7 @@ def islower(a):
     --------
     str.islower
     """
-    return _vec_string(a, bool_, 'islower')
+    return _vec_string(a, numpy.bool, 'islower')
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -975,7 +973,7 @@ def istitle(a):
     --------
     str.istitle
     """
-    return _vec_string(a, bool_, 'istitle')
+    return _vec_string(a, numpy.bool, 'istitle')
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -1012,7 +1010,7 @@ def isupper(a):
     array([False,  True, False]) 
 
     """
-    return _vec_string(a, bool_, 'isupper')
+    return _vec_string(a, numpy.bool, 'isupper')
 
 
 def _join_dispatcher(sep, seq):

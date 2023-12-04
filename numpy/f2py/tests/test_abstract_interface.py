@@ -7,6 +7,7 @@ from numpy.testing import IS_WASM
 
 
 @pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
+@pytest.mark.slow
 class TestAbstractInterface(util.F2PyTest):
     sources = [util.getpath("tests", "src", "abstract_interface", "foo.f90")]
 

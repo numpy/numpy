@@ -217,33 +217,35 @@ a different table.
 ...         print()
 ...
 >>> print_table(np.typecodes['All'])
-X ? b h i l q p B H I L Q P e f d g F D G S U V O M m
-? Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y - Y
-b - Y Y Y Y Y Y - - - - - - Y Y Y Y Y Y Y Y Y Y Y - Y
-h - - Y Y Y Y Y - - - - - - - Y Y Y Y Y Y Y Y Y Y - Y
-i - - - Y Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
-l - - - - Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
-q - - - - Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
-p - - - - Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
-B - - Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y - Y
-H - - - Y Y Y Y - Y Y Y Y Y - Y Y Y Y Y Y Y Y Y Y - Y
-I - - - - Y Y Y - - Y Y Y Y - - Y Y - Y Y Y Y Y Y - Y
-L - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
-Q - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
-P - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
-e - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y Y - -
-f - - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y - -
-d - - - - - - - - - - - - - - - Y Y - Y Y Y Y Y Y - -
-g - - - - - - - - - - - - - - - - Y - - Y Y Y Y Y - -
-F - - - - - - - - - - - - - - - - - Y Y Y Y Y Y Y - -
-D - - - - - - - - - - - - - - - - - - Y Y Y Y Y Y - -
-G - - - - - - - - - - - - - - - - - - - Y Y Y Y Y - -
-S - - - - - - - - - - - - - - - - - - - - Y Y Y Y - -
-U - - - - - - - - - - - - - - - - - - - - - Y Y Y - -
-V - - - - - - - - - - - - - - - - - - - - - - Y Y - -
-O - - - - - - - - - - - - - - - - - - - - - - - Y - -
-M - - - - - - - - - - - - - - - - - - - - - - Y Y Y -
-m - - - - - - - - - - - - - - - - - - - - - - Y Y - Y
+X ? b h i l q n p B H I L Q N P e f d g F D G S U V O M m
+? Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y - Y
+b - Y Y Y Y Y Y Y - - - - - - - Y Y Y Y Y Y Y Y Y Y Y - Y
+h - - Y Y Y Y Y Y - - - - - - - - Y Y Y Y Y Y Y Y Y Y - Y
+i - - - Y Y Y Y Y - - - - - - - - - Y Y - Y Y Y Y Y Y - Y
+l - - - - Y Y Y Y - - - - - - - - - Y Y - Y Y Y Y Y Y - Y
+q - - - - Y Y Y Y - - - - - - - - - Y Y - Y Y Y Y Y Y - Y
+n - - - - Y Y Y Y - - - - - - - - - Y Y - Y Y Y Y Y Y - Y
+p - - - - Y Y Y Y - - - - - - - - - Y Y - Y Y Y Y Y Y - Y
+B - - Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y - Y
+H - - - Y Y Y Y Y - Y Y Y Y Y Y - Y Y Y Y Y Y Y Y Y Y - Y
+I - - - - Y Y Y Y - - Y Y Y Y Y - - Y Y - Y Y Y Y Y Y - Y
+L - - - - - - - - - - - Y Y Y Y - - Y Y - Y Y Y Y Y Y - -
+Q - - - - - - - - - - - Y Y Y Y - - Y Y - Y Y Y Y Y Y - -
+N - - - - - - - - - - - Y Y Y Y - - Y Y - Y Y Y Y Y Y - -
+P - - - - - - - - - - - Y Y Y Y - - Y Y - Y Y Y Y Y Y - -
+e - - - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y Y - -
+f - - - - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y - -
+d - - - - - - - - - - - - - - - - - Y Y - Y Y Y Y Y Y - -
+g - - - - - - - - - - - - - - - - - - Y - - Y Y Y Y Y - -
+F - - - - - - - - - - - - - - - - - - - Y Y Y Y Y Y Y - -
+D - - - - - - - - - - - - - - - - - - - - Y Y Y Y Y Y - -
+G - - - - - - - - - - - - - - - - - - - - - Y Y Y Y Y - -
+S - - - - - - - - - - - - - - - - - - - - - - Y Y Y Y - -
+U - - - - - - - - - - - - - - - - - - - - - - - Y Y Y - -
+V - - - - - - - - - - - - - - - - - - - - - - - - Y Y - -
+O - - - - - - - - - - - - - - - - - - - - - - - - - Y - -
+M - - - - - - - - - - - - - - - - - - - - - - - - Y Y Y -
+m - - - - - - - - - - - - - - - - - - - - - - - - Y Y - Y
 
 You should note that, while included in the table for completeness,
 the 'S', 'U', and 'V' types cannot be operated on by ufuncs. Also,

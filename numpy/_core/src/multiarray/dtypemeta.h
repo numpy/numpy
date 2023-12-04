@@ -139,6 +139,12 @@ PyArray_DTypeFromTypeNum(int typenum)
     return dtype;
 }
 
+NPY_NO_EXPORT PyArray_Descr *
+dtypemeta_discover_as_default(
+        PyArray_DTypeMeta *cls, PyObject* obj);
+
+NPY_NO_EXPORT int
+dtypemeta_initialize_struct_from_spec(PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *spec);
 
 NPY_NO_EXPORT int
 python_builtins_are_known_scalar_types(

@@ -804,7 +804,7 @@ cdef class RandomState:
             ret = _rand_uint16(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
         elif _dtype == np.uint8:
             ret = _rand_uint8(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif _dtype == np.bool_:
+        elif _dtype == np.bool:
             ret = _rand_bool(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
         else:
             raise TypeError('Unsupported dtype %r for randint' % _dtype)

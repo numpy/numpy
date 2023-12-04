@@ -31,6 +31,20 @@
 #define NUMPY_CORE_INCLUDE_NUMPY_NPY_2_COMPAT_H_
 
 /*
+ * Allow users to use `PyArray_RUNTIME_VERSION` when vendoring the file for
+ * compilation with NumPy 1.x.
+ * Simply do not define when compiling with 2.x.  It must be defined later
+ * as it is set during `import_array()`.
+ */
+#if !defined(PyArray_RUNTIME_VERSION) && NPY_ABI_VERSION < 0x02000000
+  /*
+   * If we are compiling with NumPy 1.x, PyArray_RUNTIME_VERSION so we
+   * pretend the `PyArray_RUNTIME_VERSION` is `NPY_FEATURE_VERSION`.
+   */
+  #define PyArray_RUNTIME_VERSION NPY_FEATURE_VERSION
+#endif
+
+/*
  * New macros for accessing real and complex part of a complex number can be
  * found in "npy_2_complexcompat.h".
  */
@@ -49,6 +63,26 @@
 #else
     #define NPY_DEFAULT_INT  \
         (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? NPY_INTP : NPY_LONG)
+#endif
+
+
+#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
+    #define NPY_RAVEL_AXIS NPY_MIN_INT
+#elif NPY_ABI_VERSION < 0x02000000
+    #define NPY_RAVEL_AXIS 32
+#else
+    #define NPY_RAVEL_AXIS  \
+        (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? -1 : 32)
+#endif
+
+
+#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
+    #define NPY_MAXARGS 64
+#elif NPY_ABI_VERSION < 0x02000000
+    #define NPY_MAXARGS 32
+#else
+    #define NPY_MAXARGS  \
+        (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? 64 : 32)
 #endif
 
 

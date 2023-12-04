@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from typing import Any, overload, TypeVar, Literal, SupportsIndex
 
+import numpy as np
 from numpy import (
     number,
     uint64,
@@ -8,7 +9,6 @@ from numpy import (
     int64,
     intp,
     float16,
-    bool_,
     floating,
     complexfloating,
     object_,
@@ -503,7 +503,7 @@ def all(
     keepdims: Literal[False] = ...,
     *,
     where: _ArrayLikeBool_co = ...,
-) -> bool_: ...
+) -> np.bool: ...
 @overload
 def all(
     a: ArrayLike,
@@ -531,7 +531,7 @@ def any(
     keepdims: Literal[False] = ...,
     *,
     where: _ArrayLikeBool_co = ...,
-) -> bool_: ...
+) -> np.bool: ...
 @overload
 def any(
     a: ArrayLike,

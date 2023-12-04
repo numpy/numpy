@@ -65,7 +65,7 @@ class TestExtraArgs:
 
     def test_bool(self):
         with pytest.raises(TypeError):
-            np.bool_(False, garbage=True)
+            np.bool(False, garbage=True)
 
     def test_void(self):
         with pytest.raises(TypeError):

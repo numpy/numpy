@@ -285,7 +285,7 @@ def _ravel_and_check_weights(a, weights):
     a = np.asarray(a)
 
     # Ensure that the array is a "subtractable" dtype
-    if a.dtype == np.bool_:
+    if a.dtype == np.bool:
         warnings.warn("Converting input from {} to {} for compatibility."
                       .format(a.dtype, np.uint8),
                       RuntimeWarning, stacklevel=3)
