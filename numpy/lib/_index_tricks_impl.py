@@ -788,9 +788,11 @@ def _fill_diagonal_dispatcher(a, val, wrap=None):
 def fill_diagonal(a, val, wrap=False):
     """Fill the main diagonal of the given array of any dimensionality.
 
-    For an array `a` with ``a.ndim >= 2``, the diagonal is the list of
-    locations with indices ``a[i, ..., i]`` all identical. This function
-    modifies the input array in-place, it does not return a value.
+    For an array `a` with ``a.ndim >= 2`` when ``wrap == False`` the diagonal
+    consists of the values ``[(i, ..., i) for i in range(max(a.shape))]``,
+    otherwise the diagonal consists of values with indices
+    ``[(i % a.shape[0], ..., i % a.shape[-1]) for i in range(max(a.shape))]``.
+    This function modifies the input array in-place, it does not return a value.
 
     Parameters
     ----------
