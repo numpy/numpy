@@ -43,6 +43,7 @@ classifiers = [
 
 [project.scripts]
 f2py = 'numpy.f2py.f2py2e:main'
+crackfortran = 'numpy.f2py.crackfortran:main'
 
 [project.entry-points.array_api]
 numpy = 'numpy.array_api'

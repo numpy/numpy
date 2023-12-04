@@ -3691,13 +3691,21 @@ def character_backward_compatibility_hook(item, parents, result,
 post_processing_hooks.append(character_backward_compatibility_hook)
 
 
-if __name__ == "__main__":
+def main():
+    if len(sys.argv) < 2:
+        print(__doc__)
+        sys.exit(1)
+
     files = []
     funcs = []
     f = 1
     f2 = 0
     f3 = 0
+    strictf77 = 0
+    f77modulename = 0
+    skipemptyends = 0
     showblocklist = 0
+    pyffilename = None
     for l in sys.argv[1:]:
         if l == '':
             pass
@@ -3757,6 +3765,10 @@ if __name__ == "__main__":
   statement).
 """, 0)
 
+    if len(files) == 0:
+        print('No input files specified, nothing to do')
+        sys.exit(0)
+
     postlist = crackfortran(files)
     if pyffilename:
         outmess('Writing fortran code to file %s\n' % repr(pyffilename), 0)
@@ -3765,3 +3777,6 @@ if __name__ == "__main__":
             f.write(pyf)
     if showblocklist:
         show(postlist)
+
+if __name__ == "__main__":
+    main()
