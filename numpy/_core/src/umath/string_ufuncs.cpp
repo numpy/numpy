@@ -1297,10 +1297,10 @@ init_ufunc(PyObject *umath, const char *name, const char *specname, int nin, int
     }
 
     for (int i = 0; i < nin+nout; i++) {
-        if (typenums[i] == NPY_VOID && enc == ENCODING::UTF32) {
+        if (typenums[i] == NPY_OBJECT && enc == ENCODING::UTF32) {
             dtypes[i] = PyArray_DTypeFromTypeNum(NPY_UNICODE);
         }
-        else if (typenums[i] == NPY_VOID && enc == ENCODING::ASCII) {
+        else if (typenums[i] == NPY_OBJECT && enc == ENCODING::ASCII) {
             dtypes[i] = PyArray_DTypeFromTypeNum(NPY_STRING);
         }
         else {
@@ -1349,9 +1349,9 @@ init_string_ufuncs(PyObject *umath)
         return -1;
     }
 
-    // We use NPY_VOID as a sentinel value here, and this will be replaced by the
+    // We use NPY_OBJECT as a sentinel value here, and this will be replaced by the
     // corresponding string dtype (either NPY_STRING or NPY_UNICODE).
-    dtypes[0] = dtypes[1] = dtypes[2] = NPY_VOID;
+    dtypes[0] = dtypes[1] = dtypes[2] = NPY_OBJECT;
     if (init_ufunc<ENCODING::ASCII>(
             umath, "add", "templated_string_add", 2, 1, dtypes,
             string_add_loop<ENCODING::ASCII>, string_addition_resolve_descriptors) < 0) {
@@ -1363,7 +1363,7 @@ init_string_ufuncs(PyObject *umath)
         return -1;
     }
 
-    dtypes[0] = NPY_VOID;
+    dtypes[0] = NPY_OBJECT;
     dtypes[1] = NPY_DEFAULT_INT;
     if (init_ufunc<ENCODING::ASCII>(
             umath, "str_len", "templated_string_len", 1, 1, dtypes,
@@ -1376,7 +1376,7 @@ init_string_ufuncs(PyObject *umath)
         return -1;
     }
 
-    dtypes[0] = NPY_VOID;
+    dtypes[0] = NPY_OBJECT;
     dtypes[1] = NPY_BOOL;
     if (init_ufunc<ENCODING::ASCII>(
             umath, "isalpha", "templated_string_isalpha", 1, 1, dtypes,
@@ -1389,7 +1389,7 @@ init_string_ufuncs(PyObject *umath)
         return -1;
     }
 
-    dtypes[0] = dtypes[1] = NPY_VOID;
+    dtypes[0] = dtypes[1] = NPY_OBJECT;
     dtypes[2] = dtypes[3] = NPY_INT64;
     dtypes[4] = NPY_DEFAULT_INT;
     if (init_ufunc<ENCODING::ASCII>(
@@ -1432,7 +1432,7 @@ init_string_ufuncs(PyObject *umath)
         return -1;
     }
 
-    dtypes[0] = dtypes[1] = NPY_VOID;
+    dtypes[0] = dtypes[1] = NPY_OBJECT;
     dtypes[2] = dtypes[3] = NPY_INT64;
     dtypes[4] = NPY_BOOL;
     if (init_ufunc<ENCODING::ASCII>(
@@ -1462,7 +1462,7 @@ init_string_ufuncs(PyObject *umath)
         return -1;
     }
 
-    dtypes[0] = NPY_VOID;
+    dtypes[0] = NPY_OBJECT;
     dtypes[1] = NPY_BOOL;
     if (init_ufunc<ENCODING::ASCII>(
             umath, "isdigit", "templated_string_isdigit", 1, 1, dtypes,
@@ -1498,7 +1498,7 @@ init_string_ufuncs(PyObject *umath)
         return -1;
     }
 
-    dtypes[0] = dtypes[1] = NPY_VOID;
+    dtypes[0] = dtypes[1] = NPY_OBJECT;
     if (init_ufunc<ENCODING::ASCII>(
             umath, "_lstrip_whitespace", "templated_string_lstrip", 1, 1, dtypes,
             string_lstrip_whitespace_loop<ENCODING::ASCII>,
@@ -1536,7 +1536,7 @@ init_string_ufuncs(PyObject *umath)
         return -1;
     }
 
-    dtypes[0] = dtypes[1] = dtypes[2] = NPY_VOID;
+    dtypes[0] = dtypes[1] = dtypes[2] = NPY_OBJECT;
     if (init_ufunc<ENCODING::ASCII>(
             umath, "_lstrip_chars", "templated_string_lstrip", 2, 1, dtypes,
             string_lstrip_chars_loop<ENCODING::ASCII>,
