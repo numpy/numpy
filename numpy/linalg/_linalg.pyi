@@ -218,6 +218,10 @@ def svd(
     hermitian: bool = ...,
 ) -> NDArray[floating[Any]]: ...
 
+def svdvals(
+    x: _ArrayLikeInt_co | _ArrayLikeFloat_co | _ArrayLikeComplex_co
+) -> NDArray[floating[Any]]: ...
+
 # TODO: Returns a scalar for 2D arrays and
 # a `(x.ndim - 2)`` dimensionl array otherwise
 def cond(x: _ArrayLikeComplex_co, p: None | float | L["fro", "nuc"] = ...) -> Any: ...

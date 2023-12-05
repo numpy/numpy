@@ -682,6 +682,12 @@ class TestSVD(SVDCases, SVDBaseTests):
         assert_equal(vh.shape, (4, 4))
         assert_equal(vh, np.eye(4))
 
+    def test_svdvals(self):
+        x = np.array([[1, 0.5], [0.5, 1]])
+        s_from_svd = linalg.svd(x, compute_uv=False, hermitian=self.hermitian)
+        s_from_svdvals = linalg.svdvals(x)
+        assert_almost_equal(s_from_svd, s_from_svdvals)
+
 
 class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
 

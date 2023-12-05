@@ -11,8 +11,9 @@ zgetrf, dpotrf, zpotrf, dgeqrf, zgeqrf, zungqr, dorgqr.
 
 __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'slogdet', 'det',
-           'svd', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
-           'LinAlgError', 'multi_dot', 'trace', 'diagonal', 'cross']
+           'svd', 'svdvals', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond',
+           'matrix_rank', 'LinAlgError', 'multi_dot', 'trace', 'diagonal',
+           'cross']
 
 import functools
 import operator
@@ -1742,6 +1743,43 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
         return s
 
 
+def _svdvals_dispatcher(x):
+    return (x,)
+
+
+@array_function_dispatch(_svdvals_dispatcher)
+def svdvals(x, /):
+    """
+    Returns the singular values of a matrix (or a stack of matrices) ``x``.
+    When x is a stack of matrices, the function will compute the singular
+    values for each matrix in the stack.
+
+    This function is Array API compatible.
+
+    Calling ``np.svdvals(x)`` to get singular values is the same as
+    ``np.svd(x, compute_uv=False, hermitian=False)``.
+
+    Parameters
+    ----------
+    x : (..., M, N) array_like
+        Input array having shape (..., M, N) and whose last two
+        dimensions form matrices on which to perform singular value
+        decomposition. Should have a floating-point data type.
+
+    Returns
+    -------
+    out : ndarray
+        An array with shape (..., K) that contains the vector(s)
+        of singular values of length K, where K = min(M, N).
+
+    See Also
+    --------
+    scipy.linalg.svdvals : Compute singular values of a matrix.
+
+    """
+    return svd(x, compute_uv=False, hermitian=False)
+
+
 def _cond_dispatcher(x, p=None):
     return (x,)
 
@@ -2912,7 +2950,8 @@ def diagonal(x, /, *, offset=0):
     Returns specified diagonals of a matrix (or a stack of matrices) ``x``.
 
     This function is Array API compatible, contrary to
-    :py:func:`numpy.diagonal`.
+    :py:func:`numpy.diagonal`, the matrix is assumed
+    to be defined by the last two dimensions.
 
     Parameters
     ----------
