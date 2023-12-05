@@ -37,6 +37,7 @@ Decompositions
    outer
    qr
    svd
+   svdvals
 
 Matrix eigenvalues
 ------------------

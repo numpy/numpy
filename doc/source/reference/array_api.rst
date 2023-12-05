@@ -680,9 +680,6 @@ Linear algebra differences
        specification issue
        <https://github.com/data-apis/array-api/issues/285>`__ for more
        details.
-   * - New function ``svdvals``.
-     - **Compatible**
-     - Equivalent to ``np.linalg.svd(compute_uv=False)``.
    * - The ``axis`` keyword to ``tensordot`` must be a tuple.
      - **Compatible**
      - In ``np.tensordot``, it can also be an array or array-like.

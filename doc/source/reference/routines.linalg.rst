@@ -75,6 +75,7 @@ Decompositions
    linalg.outer
    linalg.qr
    linalg.svd
+   linalg.svdvals
 
 Matrix eigenvalues
 ------------------
