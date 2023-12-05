@@ -119,10 +119,6 @@ The following functions are named differently in the array API
    * - ``pow``
      - ``power``
      -
-   * - ``unique_all``, ``unique_counts``, ``unique_inverse``, and
-       ``unique_values``
-     - ``unique``
-     - Each is equivalent to ``np.unique`` with certain flags set.
 
 
 Function instead of method
