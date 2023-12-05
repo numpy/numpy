@@ -796,8 +796,8 @@ string_find_rfind_count_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
     new_op_dtypes[0] = op_dtypes[0];
     Py_INCREF(op_dtypes[1]);
     new_op_dtypes[1] = op_dtypes[1];
-    new_op_dtypes[2] = PyArray_DTypeFromTypeNum(NPY_INT64);
-    new_op_dtypes[3] = PyArray_DTypeFromTypeNum(NPY_INT64);
+    new_op_dtypes[2] = &PyArray_Int64DType;
+    new_op_dtypes[3] = &PyArray_Int64DType;
     new_op_dtypes[4] = PyArray_DTypeFromTypeNum(NPY_DEFAULT_INT);
     return 0;
 }
@@ -812,9 +812,9 @@ string_startswith_endswith_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
     new_op_dtypes[0] = op_dtypes[0];
     Py_INCREF(op_dtypes[1]);
     new_op_dtypes[1] = op_dtypes[1];
-    new_op_dtypes[2] = PyArray_DTypeFromTypeNum(NPY_INT64);
-    new_op_dtypes[3] = PyArray_DTypeFromTypeNum(NPY_INT64);
-    new_op_dtypes[4] = PyArray_DTypeFromTypeNum(NPY_BOOL);
+    new_op_dtypes[2] = &PyArray_Int64DType;
+    new_op_dtypes[3] = &PyArray_Int64DType;
+    new_op_dtypes[4] = &PyArray_BoolDType;
     return 0;
 }
 
@@ -897,10 +897,9 @@ static int
 init_comparison(PyObject *umath)
 {
     int res = -1;
-    /* NOTE: This should receive global symbols? */
-    PyArray_DTypeMeta *String = PyArray_DTypeFromTypeNum(NPY_STRING);
-    PyArray_DTypeMeta *Unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
-    PyArray_DTypeMeta *Bool = PyArray_DTypeFromTypeNum(NPY_BOOL);
+    PyArray_DTypeMeta *String = &PyArray_BytesDType;
+    PyArray_DTypeMeta *Unicode = &PyArray_UnicodeDType;
+    PyArray_DTypeMeta *Bool = &PyArray_BoolDType;
 
     /* We start with the string loops: */
     PyArray_DTypeMeta *dtypes[] = {String, String, Bool};
@@ -994,10 +993,10 @@ init_ufunc(PyObject *umath, const char *name, const char *specname, int nin, int
 
     for (int i = 0; i < nin+nout; i++) {
         if (typenums[i] == NPY_OBJECT && enc == ENCODING::UTF32) {
-            dtypes[i] = PyArray_DTypeFromTypeNum(NPY_UNICODE);
+            dtypes[i] = &PyArray_UnicodeDType;
         }
         else if (typenums[i] == NPY_OBJECT && enc == ENCODING::ASCII) {
-            dtypes[i] = PyArray_DTypeFromTypeNum(NPY_STRING);
+            dtypes[i] = &PyArray_BytesDType;
         }
         else {
             dtypes[i] = PyArray_DTypeFromTypeNum(typenums[i]);

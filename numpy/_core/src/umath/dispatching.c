@@ -1143,7 +1143,7 @@ object_only_ufunc_promoter(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    PyArray_DTypeMeta *object_DType = PyArray_DTypeFromTypeNum(NPY_OBJECT);
+    PyArray_DTypeMeta *object_DType = &PyArray_ObjectDType;
 
     for (int i = 0; i < ufunc->nargs; i++) {
         if (signature[i] == NULL) {
@@ -1195,7 +1195,7 @@ logical_ufunc_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
         }
         else {
             /* Always override to boolean */
-            item = PyArray_DTypeFromTypeNum(NPY_BOOL);
+            item = &PyArray_BoolDType;
             if (op_dtypes[i] != NULL && op_dtypes[i]->type_num == NPY_OBJECT) {
                 force_object = 1;
             }
@@ -1219,7 +1219,7 @@ logical_ufunc_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
         if (signature[i] != NULL) {
             continue;
         }
-        Py_SETREF(new_op_dtypes[i], PyArray_DTypeFromTypeNum(NPY_OBJECT));
+        Py_SETREF(new_op_dtypes[i], &PyArray_ObjectDType);
     }
     return 0;
 }
