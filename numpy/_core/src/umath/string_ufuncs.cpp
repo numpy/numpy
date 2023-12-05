@@ -199,7 +199,7 @@ string_add(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out)
     npy_int64 len2 = buf2.num_codepoints();
     buf1.buffer_memcpy(out, (size_t) len1);
     buf2.buffer_memcpy(out + len1, (size_t) len2);
-    out.buffer_fill_with_zeros(len1 + len2);
+    out.buffer_fill_with_zeros_after_index(len1 + len2);
 }
 
 
@@ -317,7 +317,7 @@ string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE striptype)
 {
     npy_int64 len = buf.num_codepoints();
     if (len == 0) {
-        out.buffer_fill_with_zeros(0);
+        out.buffer_fill_with_zeros_after_index(0);
         return;
     }
 
@@ -342,7 +342,7 @@ string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE striptype)
     }
 
     (buf + i).buffer_memcpy(out, j - i + 1);
-    out.buffer_fill_with_zeros(j - i + 1);
+    out.buffer_fill_with_zeros_after_index(j - i + 1);
 }
 
 
@@ -352,14 +352,14 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
 {
     npy_int64 len1 = buf1.num_codepoints();
     if (len1 == 0) {
-        out.buffer_fill_with_zeros(0);
+        out.buffer_fill_with_zeros_after_index(0);
         return;
     }
 
     npy_int64 len2 = buf2.num_codepoints();
     if (len2 == 0) {
         buf1.buffer_memcpy(out, len1);
-        out.buffer_fill_with_zeros(len1);
+        out.buffer_fill_with_zeros_after_index(len1);
         return;
     }
 
@@ -384,7 +384,7 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
     }
 
     (buf1 + i).buffer_memcpy(out, j - i + 1);
-    out.buffer_fill_with_zeros(j - i + 1);
+    out.buffer_fill_with_zeros_after_index(j - i + 1);
 }
 
 

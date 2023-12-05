@@ -186,7 +186,7 @@ struct Buffer {
     }
 
     inline void
-    buffer_fill_with_zeros(size_t start_index)
+    buffer_fill_with_zeros_after_index(size_t start_index)
     {
         Buffer<enc> offset = *this + start_index;
         for (char *tmp = offset.buf; tmp < after; tmp++) {
@@ -232,7 +232,7 @@ struct Buffer {
         }
 
         for (npy_int64 i = 0; i < len; i++) {
-            if (!isspace(i)) {
+            if (!this->isspace(i)) {
                 return false;
             }
         }
