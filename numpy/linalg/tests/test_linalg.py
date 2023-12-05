@@ -2228,3 +2228,23 @@ def test_trace():
     expected = np.array([36, 116, 196])
 
     assert_equal(actual, expected)
+
+
+def test_cross():
+
+    x = np.arange(9).reshape((3, 3))
+    actual = np.linalg.cross(x, x + 1)
+    expected = np.array([
+        [-1, 2, -1],
+        [-1, 2, -1],
+        [-1, 2, -1],
+    ])
+
+    assert_equal(actual, expected)
+
+    with assert_raises_regex(
+        ValueError,
+        r"input arrays must be \(arrays of\) 3-dimensional vectors"
+    ):
+        x_2dim = x[:, 1:]
+        np.linalg.cross(x_2dim, x_2dim)

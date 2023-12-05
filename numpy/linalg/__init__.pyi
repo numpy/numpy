@@ -21,6 +21,7 @@ from numpy.linalg._linalg import (
     multi_dot as multi_dot,
     trace as trace,
     diagonal as diagonal,
+    cross as cross,
 )
 
 from numpy._pytesttester import PytestTester

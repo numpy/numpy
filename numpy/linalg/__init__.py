@@ -26,6 +26,7 @@ Functions present in numpy.linalg are listed below.
 Matrix and vector products
 --------------------------
 
+   cross
    multi_dot
    matrix_power
 

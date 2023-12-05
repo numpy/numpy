@@ -138,7 +138,6 @@ Function instead of method
 These functions are in the ``linalg`` sub-namespace in the array API, but are
 only in the top-level namespace in NumPy:
 
-- ``cross``
 - ``diagonal``
 - ``matmul`` (*)
 - ``outer``
