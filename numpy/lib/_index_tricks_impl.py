@@ -796,7 +796,6 @@ def fill_diagonal(a, val, wrap=False):
     ----------
     a : array, at least 2-D.
       Array whose diagonal is to be filled in-place.
-      
     val : scalar or array_like
       Value(s) to write on the diagonal. If `val` is scalar, the value is
       written along the diagonal. If array-like, the flattened `val` is
