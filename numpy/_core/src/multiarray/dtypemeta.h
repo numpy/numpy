@@ -157,10 +157,6 @@ dtypemeta_wrap_legacy_descriptor(
 NPY_NO_EXPORT void
 initialize_legacy_dtypemeta_aliases(PyArray_Descr **_builtin_descrs);
 
-#ifdef __cplusplus
-}
-#endif
-
 /*
  * NumPy's builtin DTypes:
  */
@@ -240,5 +236,9 @@ extern PyArray_DTypeMeta *_Void_dtype;
 /* Object/Void */
 #define PyArray_ObjectDType (*(_Object_dtype))
 #define PyArray_VoidDType (*(_Void_dtype))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_ */
