@@ -51,7 +51,7 @@ jobs:
       env:
         PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
-        python -m pip install "scipy-openblas32<=0.3.23.293.2"
+        python -m pip install scipy-openblas32
         spin build --with-scipy-openblas=32 -j2 -- --vsenv
 
     - name: Install NumPy (Clang-cl)
@@ -60,7 +60,7 @@ jobs:
         PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
         "[binaries]","c = 'clang-cl'","cpp = 'clang-cl'","ar = 'llvm-lib'","c_ld = 'lld-link'","cpp_ld = 'lld-link'" | Out-File $PWD/clang-cl-build.ini -Encoding ascii
-        python -m pip install "scipy-openblas32<=0.3.23.293.2"
+        python -m pip install scipy-openblas32
         spin build --with-scipy-openblas=32 -j2 -- --vsenv --native-file=$PWD/clang-cl-build.ini
 
     - name: Meson Log
