@@ -789,7 +789,7 @@ def fill_diagonal(a, val, wrap=False):
     """Fill the main diagonal of the given array of any dimensionality.
 
     For an array `a` with ``a.ndim >= 2``, the diagonal is the list of
-    values ``a[i, ..., i]`` with indices `i` all identical.  This function 
+    values ``a[i, ..., i]`` with indices ``i`` all identical.  This function
     modifies the input array in-place without returning a value.
 
     Parameters
