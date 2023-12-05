@@ -13,7 +13,7 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'slogdet', 'det',
            'svd', 'svdvals', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond',
            'matrix_rank', 'LinAlgError', 'multi_dot', 'trace', 'diagonal',
-           'cross']
+           'cross', 'outer']
 
 import functools
 import operator
@@ -28,7 +28,7 @@ from numpy._core import (
     amax, prod, abs, atleast_2d, intp, asanyarray, object_, matmul,
     swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
     reciprocal, overrides, diagonal as _core_diagonal, trace as _core_trace,
-    cross as _core_cross,
+    cross as _core_cross, outer as _core_outer
 )
 from numpy.lib._twodim_base_impl import triu, eye
 from numpy.lib.array_utils import normalize_axis_index
@@ -815,7 +815,52 @@ def cholesky(a):
     return wrap(r.astype(result_t, copy=False))
 
 
+# outer product
+
+
+def _outer_dispatcher(x1, x2):
+    return (x1, x2)
+
+
+@array_function_dispatch(_outer_dispatcher)
+def outer(x1, x2, /):
+    """
+    Compute the outer product of two vectors.
+
+    This function is Array API compatible. Compared to ``np.outer``
+    it accepts 1-dimensional inputs only.
+
+    Parameters
+    ----------
+    x1 : (M,) array_like
+        One-dimensional input array of size ``N``.
+        Must have a numeric data type.
+    x2 : (N,) array_like
+        One-dimensional input array of size ``M``.
+        Must have a numeric data type.
+
+    Returns
+    -------
+    out : (M, N) ndarray
+        ``out[i, j] = a[i] * b[j]``
+
+    See also
+    --------
+    outer
+
+    """
+    x1 = asarray(x1)
+    x2 = asarray(x2)
+    if x1.ndim != 1 or x2.ndim != 1:
+        raise ValueError(
+            "Input arrays must be one-dimensional, but they are "
+            f"{x1.ndim=} and {x2.ndim=}."
+        )
+    return _core_outer(x1, x2, out=None)
+
+
 # QR decomposition
+
 
 def _qr_dispatcher(a, mode=None):
     return (a,)

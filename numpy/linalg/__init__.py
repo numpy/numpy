@@ -34,6 +34,7 @@ Decompositions
 --------------
 
    cholesky
+   outer
    qr
    svd
    svdvals

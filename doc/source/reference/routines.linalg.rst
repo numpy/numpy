@@ -72,6 +72,7 @@ Decompositions
    :toctree: generated/
 
    linalg.cholesky
+   linalg.outer
    linalg.qr
    linalg.svd
    linalg.svdvals

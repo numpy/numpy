@@ -1848,6 +1848,23 @@ class TestCholesky:
         assert_(isinstance(res, np.ndarray))
 
 
+class TestOuter:
+    arr1 = np.arange(3)
+    arr2 = np.arange(3)
+    expected = np.array(
+        [[0, 0, 0],
+         [0, 1, 2],
+         [0, 2, 4]]
+    )
+
+    assert_array_equal(np.linalg.outer(arr1, arr2), expected)
+
+    with assert_raises_regex(
+        ValueError, "Input arrays must be one-dimensional"
+    ):
+        np.linalg.outer(arr1[:, np.newaxis], arr2)
+
+
 def test_byteorder_check():
     # Byte order check should pass for native order
     if sys.byteorder == 'little':

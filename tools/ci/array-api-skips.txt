@@ -45,7 +45,6 @@ array_api_tests/test_data_type_functions.py::test_astype
 array_api_tests/test_has_names.py::test_has_names[linalg-matmul]
 array_api_tests/test_has_names.py::test_has_names[linalg-matrix_norm]
 array_api_tests/test_has_names.py::test_has_names[linalg-matrix_transpose]
-array_api_tests/test_has_names.py::test_has_names[linalg-outer]
 array_api_tests/test_has_names.py::test_has_names[linalg-tensordot]
 array_api_tests/test_has_names.py::test_has_names[linalg-vecdot]
 array_api_tests/test_has_names.py::test_has_names[linalg-vector_norm]
@@ -72,7 +71,6 @@ array_api_tests/test_has_names.py::test_has_names[array_attribute-device]
 # missing linalg names
 array_api_tests/test_linalg.py::test_matrix_norm
 array_api_tests/test_linalg.py::test_matrix_transpose
-array_api_tests/test_linalg.py::test_outer
 array_api_tests/test_linalg.py::test_pinv
 array_api_tests/test_linalg.py::test_vecdot
 
@@ -118,7 +116,6 @@ array_api_tests/test_signatures.py::test_extension_func_signature[linalg.cholesk
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.matrix_norm]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.matrix_rank]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.matrix_transpose]
-array_api_tests/test_signatures.py::test_extension_func_signature[linalg.outer]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.pinv]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.tensordot]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.vecdot]

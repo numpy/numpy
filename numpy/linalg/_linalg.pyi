@@ -10,12 +10,15 @@ from typing import (
     Generic,
 )
 
+import numpy as np
 from numpy import (
     generic,
     floating,
     complexfloating,
     signedinteger,
     unsignedinteger,
+    timedelta64,
+    object_,
     int32,
     float64,
     complex128,
@@ -26,6 +29,8 @@ from numpy.linalg import LinAlgError as LinAlgError
 from numpy._typing import (
     NDArray,
     ArrayLike,
+    _ArrayLikeUnknown,
+    _ArrayLikeBool_co,
     _ArrayLikeInt_co,
     _ArrayLikeUInt_co,
     _ArrayLikeFloat_co,
@@ -139,6 +144,35 @@ def cholesky(a: _ArrayLikeInt_co) -> NDArray[float64]: ...
 def cholesky(a: _ArrayLikeFloat_co) -> NDArray[floating[Any]]: ...
 @overload
 def cholesky(a: _ArrayLikeComplex_co) -> NDArray[complexfloating[Any, Any]]: ...
+
+@overload
+def outer(x1: _ArrayLikeUnknown, x2: _ArrayLikeUnknown) -> NDArray[Any]: ...
+@overload
+def outer(x1: _ArrayLikeBool_co, x2: _ArrayLikeBool_co) -> NDArray[np.bool]: ...
+@overload
+def outer(x1: _ArrayLikeUInt_co, x2: _ArrayLikeUInt_co) -> NDArray[unsignedinteger[Any]]: ...
+@overload
+def outer(x1: _ArrayLikeInt_co, x2: _ArrayLikeInt_co) -> NDArray[signedinteger[Any]]: ...
+@overload
+def outer(x1: _ArrayLikeFloat_co, x2: _ArrayLikeFloat_co) -> NDArray[floating[Any]]: ...
+@overload
+def outer(
+    x1: _ArrayLikeComplex_co,
+    x2: _ArrayLikeComplex_co,
+) -> NDArray[complexfloating[Any, Any]]: ...
+@overload
+def outer(
+    x1: _ArrayLikeTD64_co,
+    x2: _ArrayLikeTD64_co,
+    out: None = ...,
+) -> NDArray[timedelta64]: ...
+@overload
+def outer(x1: _ArrayLikeObject_co, x2: _ArrayLikeObject_co) -> NDArray[object_]: ...
+@overload
+def outer(
+    x1: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    x2: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+) -> _ArrayType: ...
 
 @overload
 def qr(a: _ArrayLikeInt_co, mode: _ModeKind = ...) -> QRResult: ...
