@@ -1197,6 +1197,36 @@ defdict = {
           docstrings.get('numpy._core.umath.endswith'),
           None,
           ),
+'_strip_chars':
+    Ufunc(2, 1, None,
+          docstrings.get('numpy._core.umath._strip_chars'),
+          None,
+          ),
+'_lstrip_chars':
+    Ufunc(2, 1, None,
+          docstrings.get('numpy._core.umath._lstrip_chars'),
+          None,
+          ),
+'_rstrip_chars':
+    Ufunc(2, 1, None,
+          docstrings.get('numpy._core.umath._rstrip_chars'),
+          None,
+          ),
+'_strip_whitespace':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy._core.umath._strip_whitespace'),
+          None,
+          ),
+'_lstrip_whitespace':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy._core.umath._lstrip_whitespace'),
+          None,
+          ),
+'_rstrip_whitespace':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy._core.umath._rstrip_whitespace'),
+          None,
+          ),
 }
 
 def indent(st, spaces):
