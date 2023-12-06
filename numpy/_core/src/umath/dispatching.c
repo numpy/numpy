@@ -1151,7 +1151,7 @@ object_only_ufunc_promoter(PyUFuncObject *ufunc,
             new_op_dtypes[i] = object_DType;
         }
     }
-    Py_DECREF(object_DType);
+
     return 0;
 }
 
@@ -1196,6 +1196,7 @@ logical_ufunc_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
         else {
             /* Always override to boolean */
             item = &PyArray_BoolDType;
+            Py_INCREF(item);
             if (op_dtypes[i] != NULL && op_dtypes[i]->type_num == NPY_OBJECT) {
                 force_object = 1;
             }
@@ -1219,7 +1220,7 @@ logical_ufunc_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
         if (signature[i] != NULL) {
             continue;
         }
-        Py_SETREF(new_op_dtypes[i], &PyArray_ObjectDType);
+        Py_SETREF(new_op_dtypes[i], NPY_DT_NewRef(&PyArray_ObjectDType));
     }
     return 0;
 }

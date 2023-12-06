@@ -3049,8 +3049,6 @@ PyArray_InitializeStringCasts(void)
 
     result = 0;
   finish:
-    Py_DECREF(string);
-    Py_DECREF(unicode);
     Py_XDECREF(other_dt);
     return result;
 }
@@ -3733,7 +3731,6 @@ PyArray_InitializeVoidToVoidCast(void)
     };
 
     int res = PyArray_AddCastingImplementation_FromSpec(&spec, 1);
-    Py_DECREF(Void);
     return res;
 }
 
@@ -3915,7 +3912,6 @@ PyArray_InitializeObjectToObjectCast(void)
     };
 
     int res = PyArray_AddCastingImplementation_FromSpec(&spec, 1);
-    Py_DECREF(Object);
     return res;
 }
 

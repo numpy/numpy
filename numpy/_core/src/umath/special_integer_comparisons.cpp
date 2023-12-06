@@ -310,9 +310,9 @@ pyint_comparison_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    new_op_dtypes[0] = &PyArray_ObjectDType;
-    new_op_dtypes[1] = &PyArray_ObjectDType;
-    new_op_dtypes[2] = &PyArray_BoolDType;
+    new_op_dtypes[0] = NPY_DT_NewRef(&PyArray_ObjectDType);
+    new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_ObjectDType);
+    new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_BoolDType);
     return 0;
 }
 
@@ -468,6 +468,5 @@ init_special_int_comparisons(PyObject *umath)
   finish:
 
     Py_XDECREF(info);
-    Py_DECREF(Bool);
     return res;
 }

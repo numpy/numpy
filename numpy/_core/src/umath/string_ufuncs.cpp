@@ -1100,8 +1100,8 @@ string_find_rfind_count_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
     new_op_dtypes[0] = op_dtypes[0];
     Py_INCREF(op_dtypes[1]);
     new_op_dtypes[1] = op_dtypes[1];
-    new_op_dtypes[2] = &PyArray_Int64DType;
-    new_op_dtypes[3] = &PyArray_Int64DType;
+    new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_Int64DType);
+    new_op_dtypes[3] = NPY_DT_NewRef(&PyArray_Int64DType);
     new_op_dtypes[4] = PyArray_DTypeFromTypeNum(NPY_DEFAULT_INT);
     return 0;
 }
@@ -1116,9 +1116,9 @@ string_startswith_endswith_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
     new_op_dtypes[0] = op_dtypes[0];
     Py_INCREF(op_dtypes[1]);
     new_op_dtypes[1] = op_dtypes[1];
-    new_op_dtypes[2] = &PyArray_Int64DType;
-    new_op_dtypes[3] = &PyArray_Int64DType;
-    new_op_dtypes[4] = &PyArray_BoolDType;
+    new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_Int64DType);
+    new_op_dtypes[3] = NPY_DT_NewRef(&PyArray_Int64DType);
+    new_op_dtypes[4] = NPY_DT_NewRef(&PyArray_BoolDType);
     return 0;
 }
 
@@ -1240,9 +1240,6 @@ init_comparison(PyObject *umath)
 
     res = 0;
   finish:
-    Py_DECREF(String);
-    Py_DECREF(Unicode);
-    Py_DECREF(Bool);
     return res;
 }
 
@@ -1297,10 +1294,10 @@ init_ufunc(PyObject *umath, const char *name, const char *specname, int nin, int
 
     for (int i = 0; i < nin+nout; i++) {
         if (typenums[i] == NPY_OBJECT && enc == ENCODING::UTF32) {
-            dtypes[i] = &PyArray_UnicodeDType;
+            dtypes[i] = NPY_DT_NewRef(&PyArray_UnicodeDType);
         }
         else if (typenums[i] == NPY_OBJECT && enc == ENCODING::ASCII) {
-            dtypes[i] = &PyArray_BytesDType;
+            dtypes[i] = NPY_DT_NewRef(&PyArray_BytesDType);
         }
         else {
             dtypes[i] = PyArray_DTypeFromTypeNum(typenums[i]);
