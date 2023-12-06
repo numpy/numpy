@@ -4,6 +4,7 @@ import os
 import errno
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 from ._backend import Backend
@@ -25,6 +26,7 @@ class MesonTemplate:
         linker_args: list[str],
         c_args: list[str],
         build_type: str,
+        python_exe: str,
     ):
         self.modulename = modulename
         self.build_template_path = (
@@ -40,6 +42,7 @@ class MesonTemplate:
             self.deps_substitution,
         ]
         self.build_type = build_type
+        self.python_exe = python_exe
 
     def meson_build_template(self) -> str:
         if not self.build_template_path.is_file():
@@ -54,6 +57,7 @@ class MesonTemplate:
     def initialize_template(self) -> None:
         self.substitutions["modulename"] = self.modulename
         self.substitutions["buildtype"] = self.build_type
+        self.substitutions["python"] = self.python_exe
 
     def sources_substitution(self) -> None:
         indent = " " * 21
@@ -115,6 +119,7 @@ class MesonBackend(Backend):
             self.flib_flags,
             self.fc_flags,
             self.build_type,
+            sys.executable,
         )
         src = meson_template.generate_meson_build()
         Path(build_dir).mkdir(parents=True, exist_ok=True)
