@@ -11,8 +11,9 @@ zgetrf, dpotrf, zpotrf, dgeqrf, zgeqrf, zungqr, dorgqr.
 
 __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'slogdet', 'det',
-           'svd', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
-           'LinAlgError', 'multi_dot', 'trace', 'diagonal']
+           'svd', 'svdvals', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond',
+           'matrix_rank', 'LinAlgError', 'multi_dot', 'trace', 'diagonal',
+           'cross', 'outer']
 
 import functools
 import operator
@@ -26,7 +27,8 @@ from numpy._core import (
     add, multiply, sqrt, sum, isfinite, finfo, errstate, moveaxis, amin,
     amax, prod, abs, atleast_2d, intp, asanyarray, object_, matmul,
     swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
-    reciprocal, overrides, diagonal as _core_diagonal, trace as _core_trace
+    reciprocal, overrides, diagonal as _core_diagonal, trace as _core_trace,
+    cross as _core_cross, outer as _core_outer
 )
 from numpy.lib._twodim_base_impl import triu, eye
 from numpy.lib.array_utils import normalize_axis_index
@@ -813,7 +815,52 @@ def cholesky(a):
     return wrap(r.astype(result_t, copy=False))
 
 
+# outer product
+
+
+def _outer_dispatcher(x1, x2):
+    return (x1, x2)
+
+
+@array_function_dispatch(_outer_dispatcher)
+def outer(x1, x2, /):
+    """
+    Compute the outer product of two vectors.
+
+    This function is Array API compatible. Compared to ``np.outer``
+    it accepts 1-dimensional inputs only.
+
+    Parameters
+    ----------
+    x1 : (M,) array_like
+        One-dimensional input array of size ``N``.
+        Must have a numeric data type.
+    x2 : (N,) array_like
+        One-dimensional input array of size ``M``.
+        Must have a numeric data type.
+
+    Returns
+    -------
+    out : (M, N) ndarray
+        ``out[i, j] = a[i] * b[j]``
+
+    See also
+    --------
+    outer
+
+    """
+    x1 = asarray(x1)
+    x2 = asarray(x2)
+    if x1.ndim != 1 or x2.ndim != 1:
+        raise ValueError(
+            "Input arrays must be one-dimensional, but they are "
+            f"{x1.ndim=} and {x2.ndim=}."
+        )
+    return _core_outer(x1, x2, out=None)
+
+
 # QR decomposition
+
 
 def _qr_dispatcher(a, mode=None):
     return (a,)
@@ -1739,6 +1786,43 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
             s = gufunc(a, signature=signature)
         s = s.astype(_realType(result_t), copy=False)
         return s
+
+
+def _svdvals_dispatcher(x):
+    return (x,)
+
+
+@array_function_dispatch(_svdvals_dispatcher)
+def svdvals(x, /):
+    """
+    Returns the singular values of a matrix (or a stack of matrices) ``x``.
+    When x is a stack of matrices, the function will compute the singular
+    values for each matrix in the stack.
+
+    This function is Array API compatible.
+
+    Calling ``np.svdvals(x)`` to get singular values is the same as
+    ``np.svd(x, compute_uv=False, hermitian=False)``.
+
+    Parameters
+    ----------
+    x : (..., M, N) array_like
+        Input array having shape (..., M, N) and whose last two
+        dimensions form matrices on which to perform singular value
+        decomposition. Should have a floating-point data type.
+
+    Returns
+    -------
+    out : ndarray
+        An array with shape (..., K) that contains the vector(s)
+        of singular values of length K, where K = min(M, N).
+
+    See Also
+    --------
+    scipy.linalg.svdvals : Compute singular values of a matrix.
+
+    """
+    return svd(x, compute_uv=False, hermitian=False)
 
 
 def _cond_dispatcher(x, p=None):
@@ -2911,7 +2995,8 @@ def diagonal(x, /, *, offset=0):
     Returns specified diagonals of a matrix (or a stack of matrices) ``x``.
 
     This function is Array API compatible, contrary to
-    :py:func:`numpy.diagonal`.
+    :py:func:`numpy.diagonal`, the matrix is assumed
+    to be defined by the last two dimensions.
 
     Parameters
     ----------
@@ -2937,14 +3022,14 @@ def diagonal(x, /, *, offset=0):
     See Also
     --------
     numpy.diagonal
+
     """
     return _core_diagonal(x, offset, axis1=-2, axis2=-1)
 
 
 # trace
 
-def _trace_dispatcher(
-        x, /, *, offset=None, dtype=None):
+def _trace_dispatcher(x, /, *, offset=None, dtype=None):
     return (x,)
 
 
@@ -2990,5 +3075,57 @@ def trace(x, /, *, offset=0, dtype=None):
     See Also
     --------
     numpy.trace
+
     """
     return _core_trace(x, offset, axis1=-2, axis2=-1, dtype=dtype)
+
+
+# cross
+
+def _cross_dispatcher(x1, x2, /, *, axis=None):
+    return (x1, x2,)
+
+
+@array_function_dispatch(_cross_dispatcher)
+def cross(x1, x2, /, *, axis=-1):
+    """
+    Returns the cross product of 3-element vectors.
+
+    If ``x1`` and/or ``x2`` are multi-dimensional arrays, then
+    the cross-product of each pair of corresponding 3-element vectors
+    is independently computed.
+
+    This function is Array API compatible, contrary to
+    :func:`numpy.cross`.
+
+    Parameters
+    ----------
+    x1 : array_like
+        The first input array.
+    x2 : array_like
+        The second input array. Must be compatible with ``x1`` for all
+        non-compute axes. The size of the axis over which to compute
+        the cross-product must be the same size as the respective axis
+        in ``x1``.
+    axis : int, optional
+        The axis (dimension) of ``x1`` and ``x2`` containing the vectors for
+        which to compute the cross-product. Default: ``-1``.
+
+    Returns
+    -------
+    out : ndarray
+        An array containing the cross products.
+
+    See Also
+    --------
+    numpy.cross
+
+    """
+    if x1.shape[axis] != 3 or x2.shape[axis] != 3:
+        raise ValueError(
+            "Both input arrays must be (arrays of) 3-dimensional vectors, "
+            f"but they are {x1.shape[axis]} and {x2.shape[axis]} "
+            "dimensional instead."
+        )
+
+    return _core_cross(x1, x2, axis=axis)

@@ -56,17 +56,18 @@ def _is_unicode(arr):
     return False
 
 
-def _to_bytes_or_str_array(result, output_dtype_like=None):
+def _to_bytes_or_str_array(result, output_dtype_like):
     """
     Helper function to cast a result back into an array
     with the appropriate dtype if an object array must be used
     as an intermediary.
     """
+    if result.size == 0:
+        # Calling asarray & tolist in an empty array would result
+        # in losing shape information
+        return result.astype(output_dtype_like.dtype)
     ret = numpy.asarray(result.tolist())
-    dtype = getattr(output_dtype_like, 'dtype', None)
-    if dtype is not None:
-        return ret.astype(type(dtype)(_get_num_chars(ret)), copy=False)
-    return ret
+    return ret.astype(type(output_dtype_like.dtype)(_get_num_chars(ret)))
 
 
 def _clean_args(*args):
@@ -606,7 +607,8 @@ def decode(a, encoding=None, errors=None):
 
     """
     return _to_bytes_or_str_array(
-        _vec_string(a, object_, 'decode', _clean_args(encoding, errors)))
+        _vec_string(a, object_, 'decode', _clean_args(encoding, errors)),
+        numpy.str_(''))
 
 
 @array_function_dispatch(_code_dispatcher)
@@ -642,7 +644,8 @@ def encode(a, encoding=None, errors=None):
 
     """
     return _to_bytes_or_str_array(
-        _vec_string(a, object_, 'encode', _clean_args(encoding, errors)))
+        _vec_string(a, object_, 'encode', _clean_args(encoding, errors)),
+        numpy.bytes_(b''))
 
 
 def _endswith_dispatcher(a, suffix, start=None, end=None):
@@ -1137,24 +1140,20 @@ def lstrip(a, chars=None):
     For each element in `a`, return a copy with the leading characters
     removed.
 
-    Calls :meth:`str.lstrip` element-wise.
-
     Parameters
     ----------
-    a : array-like, {str, unicode}
-        Input array.
-
-    chars : {str, unicode}, optional
-        The `chars` argument is a string specifying the set of
-        characters to be removed. If omitted or None, the `chars`
-        argument defaults to removing whitespace. The `chars` argument
-        is not a prefix; rather, all combinations of its values are
-        stripped.
+    a : array_like, with ``bytes_`` or ``unicode_`` dtype
+    chars : scalar with the same dtype as ``a``, optional
+       The `chars` argument is a string specifying the set of
+       characters to be removed. If None, the `chars`
+       argument defaults to removing whitespace. The `chars` argument
+       is not a prefix or suffix; rather, all combinations of its
+       values are stripped.
 
     Returns
     -------
-    out : ndarray, {str, unicode}
-        Output array of str or unicode, depending on input type
+    out : ndarray
+        Output array of ``bytes_`` or ``unicode_`` dtype
 
     See Also
     --------
@@ -1165,25 +1164,20 @@ def lstrip(a, chars=None):
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
-
-    The 'a' variable is unstripped from c[1] because whitespace leading.
-
+    The 'a' variable is unstripped from c[1] because of leading whitespace.
     >>> np.char.lstrip(c, 'a')
     array(['AaAaA', '  aA  ', 'bBABba'], dtype='<U7')
-
-
     >>> np.char.lstrip(c, 'A') # leaves c unchanged
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
     >>> (np.char.lstrip(c, ' ') == np.char.lstrip(c, '')).all()
-    ... # XXX: is this a regression? This used to return True
-    ... # np.char.lstrip(c,'') does not modify c at all.
     False
-    >>> (np.char.lstrip(c, ' ') == np.char.lstrip(c, None)).all()
+    >>> (np.char.lstrip(c, ' ') == np.char.lstrip(c)).all()
     True
 
     """
-    a_arr = numpy.asarray(a)
-    return _vec_string(a_arr, a_arr.dtype, 'lstrip', (chars,))
+    if chars is None:
+        return numpy._core.umath._lstrip_whitespace(a)
+    return numpy._core.umath._lstrip_chars(a, chars)
 
 
 def _partition_dispatcher(a, sep):
@@ -1455,26 +1449,23 @@ def _strip_dispatcher(a, chars=None):
 @array_function_dispatch(_strip_dispatcher)
 def rstrip(a, chars=None):
     """
-    For each element in `a`, return a copy with the trailing
-    characters removed.
-
-    Calls :meth:`str.rstrip` element-wise.
+    For each element in `a`, return a copy with the trailing characters
+    removed.
 
     Parameters
     ----------
-    a : array-like of str or unicode
-
-    chars : str or unicode, optional
-       The `chars` argument is a string specifying the set of
-       characters to be removed. If omitted or None, the `chars`
-       argument defaults to removing whitespace. The `chars` argument
-       is not a suffix; rather, all combinations of its values are
-       stripped.
+    a : array_like, with ``bytes_`` or ``unicode_`` dtype
+    chars : scalar with the same dtype as ``a``, optional
+       The ``chars`` argument is a string specifying the set of
+       characters to be removed. If ``None``, the ``chars``
+       argument defaults to removing whitespace. The ``chars`` argument
+       is not a prefix or suffix; rather, all combinations of its
+       values are stripped.
 
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input type
+        Output array of ``bytes_`` or ``unicode_`` dtype
 
     See Also
     --------
@@ -1482,19 +1473,18 @@ def rstrip(a, chars=None):
 
     Examples
     --------
-    >>> c = np.array(['aAaAaA', 'abBABba'], dtype='S7'); c
-    array(['aAaAaA', 'abBABba'],
-        dtype='|S7')
-    >>> np.char.rstrip(c, b'a')
-    array(['aAaAaA', 'abBABb'],
-        dtype='|S7')
-    >>> np.char.rstrip(c, b'A')
-    array(['aAaAa', 'abBABba'],
-        dtype='|S7')
+    >>> c = np.array(['aAaAaA', 'abBABba'])
+    >>> c
+    array(['aAaAaA', 'abBABba'], dtype='<U7')
+    >>> np.char.rstrip(c, 'a')
+    array(['aAaAaA', 'abBABb'], dtype='<U7')
+    >>> np.char.rstrip(c, 'A')
+    array(['aAaAa', 'abBABba'], dtype='<U7')
 
     """
-    a_arr = numpy.asarray(a)
-    return _vec_string(a_arr, a_arr.dtype, 'rstrip', (chars,))
+    if chars is None:
+        return numpy._core.umath._rstrip_whitespace(a)
+    return numpy._core.umath._rstrip_chars(a, chars)
 
 
 @array_function_dispatch(_split_dispatcher)
@@ -1608,23 +1598,20 @@ def strip(a, chars=None):
     For each element in `a`, return a copy with the leading and
     trailing characters removed.
 
-    Calls :meth:`str.strip` element-wise.
-
     Parameters
     ----------
-    a : array-like of str or unicode
-
-    chars : str or unicode, optional
-       The `chars` argument is a string specifying the set of
-       characters to be removed. If omitted or None, the `chars`
-       argument defaults to removing whitespace. The `chars` argument
+    a : array_like, with ``bytes_`` or ``unicode_`` dtype
+    chars : scalar with the same dtype as ``a``, optional
+       The ``chars`` argument is a string specifying the set of
+       characters to be removed. If None, the ``chars``
+       argument defaults to removing whitespace. The ``chars`` argument
        is not a prefix or suffix; rather, all combinations of its
        values are stripped.
 
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input type
+        Output array of ``bytes_`` or ``unicode_`` dtype
 
     See Also
     --------
@@ -1637,14 +1624,17 @@ def strip(a, chars=None):
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
     >>> np.char.strip(c)
     array(['aAaAaA', 'aA', 'abBABba'], dtype='<U7')
-    >>> np.char.strip(c, 'a') # 'a' unstripped from c[1] because ws leads
+    'a' unstripped from c[1] because of leading whitespace.
+    >>> np.char.strip(c, 'a')
     array(['AaAaA', '  aA  ', 'bBABb'], dtype='<U7')
-    >>> np.char.strip(c, 'A') # 'A' unstripped from c[1] because ws trails
+    # 'A' unstripped from c[1] because of trailing whitespace.
+    >>> np.char.strip(c, 'A')
     array(['aAaAa', '  aA  ', 'abBABba'], dtype='<U7')
 
     """
-    a_arr = numpy.asarray(a)
-    return _vec_string(a_arr, a_arr.dtype, 'strip', _clean_args(chars))
+    if chars is None:
+        return numpy._core.umath._strip_whitespace(a)
+    return numpy._core.umath._strip_chars(a, chars)
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -2494,7 +2484,7 @@ class chararray(ndarray):
         char.lstrip
 
         """
-        return asarray(lstrip(self, chars))
+        return lstrip(self, chars)
 
     def partition(self, sep):
         """
@@ -2587,7 +2577,7 @@ class chararray(ndarray):
         char.rstrip
 
         """
-        return asarray(rstrip(self, chars))
+        return rstrip(self, chars)
 
     def split(self, sep=None, maxsplit=None):
         """
@@ -2635,7 +2625,7 @@ class chararray(ndarray):
         char.strip
 
         """
-        return asarray(strip(self, chars))
+        return strip(self, chars)
 
     def swapcase(self):
         """

@@ -919,3 +919,34 @@ class TestUnique:
         not_unq = np.unique(a, equal_nan=False)
         assert_array_equal(unq, np.array([1, np.nan]))
         assert_array_equal(not_unq, np.array([1, np.nan, np.nan, np.nan]))
+
+    def test_unique_array_api_functions(self):
+        arr = np.array([np.nan, 1, 4, 1, 3, 4, np.nan, 5, 1])
+
+        for res_unique_array_api, res_unique in [
+            (
+                np.unique_values(arr),
+                np.unique(arr, equal_nan=False)
+            ),
+            (
+                np.unique_counts(arr),
+                np.unique(arr, return_counts=True, equal_nan=False)
+            ),
+            (
+                np.unique_inverse(arr),
+                np.unique(arr, return_inverse=True, equal_nan=False)
+            ),
+            (
+                np.unique_all(arr),
+                np.unique(
+                    arr,
+                    return_index=True,
+                    return_inverse=True,
+                    return_counts=True,
+                    equal_nan=False
+                )
+            )
+        ]:
+            assert len(res_unique_array_api) == len(res_unique)
+            for actual, expected in zip(res_unique_array_api, res_unique):
+                assert_array_equal(actual, expected)

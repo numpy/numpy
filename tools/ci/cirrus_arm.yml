@@ -102,7 +102,7 @@ macos_arm64_test_task:
     pip install -r build_requirements.txt
     pip install pytest pytest-xdist hypothesis typing_extensions
 
-    spin build -- -Dallow-noblas=true
+    spin build
     spin test -j auto
 
     ccache -s
