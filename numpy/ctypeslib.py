@@ -123,7 +123,7 @@ else:
         Examples
         --------
         >>> np.ctypeslib.load_library('_multiarray_umath', np.core._multiarray_umath.__file__)
-        <CDLL '/python3.11/site-packages/numpy/core/_multiarray_umath.cpython-311-darwin.so', handle 7ff9062ef010 at 0x108414c50>
+        <CDLL '/Users/linussommer/miniconda3/lib/python3.11/site-packages/numpy/core/_multiarray_umath.cpython-311-darwin.so', handle 7ff9062ef010 at 0x108414c50>
         """
         # Convert path-like objects into strings
         libname = os.fsdecode(libname)
