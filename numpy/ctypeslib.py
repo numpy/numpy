@@ -119,6 +119,11 @@ else:
         OSError
             If there is no library with the expected extension, or the
             library is defective and cannot be loaded.
+
+        Examples
+        --------
+        >>> np.ctypeslib.load_library('_multiarray_umath', np.core._multiarray_umath.__file__)
+        <CDLL '/Users/linussommer/miniconda3/lib/python3.11/site-packages/numpy/core/_multiarray_umath.cpython-311-darwin.so', handle 7ff9062ef010 at 0x108414c50>
         """
         # Convert path-like objects into strings
         libname = os.fsdecode(libname)
@@ -499,6 +504,14 @@ if ctypes is not None:
           `ctypes.Structure`\ s
         - insert padding fields
 
+        Examples
+        --------
+        >>> np.ctypeslib.as_ctypes_type(np.int32)
+        <class 'ctypes.c_int'>
+        >>> np.ctypeslib.as_ctypes_type(np.float32)
+        <class 'ctypes.c_float'>
+        >>> np.ctypeslib.as_ctypes_type(np.float64)
+        <class 'ctypes.c_double'>
         """
         return _ctype_from_dtype(_dtype(dtype))
 
