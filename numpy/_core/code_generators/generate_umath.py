@@ -1187,9 +1187,9 @@ defdict = {
           docstrings.get('numpy._core.umath.count'),
           None,
           ),
-'_replace_impl':
+'_replace':
     Ufunc(4, 1, None,
-          docstrings.get('numpy.core.umath._replace_impl'),
+          docstrings.get('numpy.core.umath._replace'),
           None,
           ),
 'startswith':

@@ -1488,18 +1488,18 @@ init_string_ufuncs(PyObject *umath)
     dtypes[3] = NPY_INT64;
     dtypes[4] = NPY_OBJECT;
     if (init_ufunc<ENCODING::ASCII>(
-            umath, "_replace_impl", "templated_string_replace", 4, 1, dtypes,
+            umath, "_replace", "templated_string_replace", 4, 1, dtypes,
             string_replace_loop<ENCODING::ASCII>,
             string_replace_resolve_descriptors) < 0) {
         return -1;
     }
     if (init_ufunc<ENCODING::UTF32>(
-            umath, "_replace_impl", "templated_string_replace", 4, 1, dtypes,
+            umath, "_replace", "templated_string_replace", 4, 1, dtypes,
             string_replace_loop<ENCODING::UTF32>,
             string_replace_resolve_descriptors) < 0) {
         return -1;
     }
-    if (init_promoter(umath, "_replace_impl", 4, 1, string_replace_promoter) < 0) {
+    if (init_promoter(umath, "_replace", 4, 1, string_replace_promoter) < 0) {
         return -1;
     }
 

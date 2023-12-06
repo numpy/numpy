@@ -1261,8 +1261,18 @@ def replace(a, old, new, count=None):
     >>> np.char.replace(a, 'is', 'was')
     array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
     """
-    count = count if count is not None else numpy.iinfo(numpy.int64).max
-    return numpy._core.umath.replace(a, old, new, count)
+    max_int64 = numpy.iinfo(numpy.int64).max
+    count = count if count is not None else max_int64
+
+    counts = numpy._core.umath.count(a, old, 0, max_int64)
+    buffersizes = (
+        numpy._core.umath.str_len(a)
+        + counts * (numpy._core.umath.str_len(new)-numpy._core.umath.str_len(old))
+    )
+    max_buffersize = numpy.max(buffersizes)
+    out = numpy.empty(a.shape, dtype=f"{a.dtype.char}{max_buffersize}")
+    numpy._core.umath._replace(a, old, new, count, out=out)
+    return out
 
 
 @array_function_dispatch(_count_dispatcher)

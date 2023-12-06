@@ -4558,7 +4558,7 @@ add_newdoc('numpy._core.umath', 'count',
 
     """)
 
-add_newdoc('numpy.core.umath', '_replace_impl',
+add_newdoc('numpy.core.umath', '_replace',
     """
     UFunc implementation of ``replace``. This internal function
     is called by ``replace`` with ``out`` set, so that the
