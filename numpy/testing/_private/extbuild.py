@@ -50,7 +50,7 @@ def build_and_import_extension(
         Py_RETURN_TRUE;
     \"\"\")]
     >>> mod = build_and_import_extension("testme", functions)
-    >>> assert not mod.test_bytes(u'abc')
+    >>> assert not mod.test_bytes('abc')
     >>> assert mod.test_bytes(b'abc')
     """
     body = prologue + _make_methods(functions, modname)

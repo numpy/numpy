@@ -136,3 +136,22 @@ html[data-theme=dark] h1 {
 html[data-theme=dark] h3 {
   color: #0a6774;
 }
+
+/* Legacy admonition */
+
+div.admonition-legacy {
+  border-color: var(--pst-color-warning);
+}
+
+.admonition-legacy.admonition>.admonition-title::before,
+div.admonition>.admonition-title::before {
+  color: var(--pst-color-warning);
+  content: var(--pst-icon-admonition-attention);
+  background-color: var(--pst-color-warning);
+}
+
+.admonition-legacy.admonition>.admonition-title::after,
+div.admonition>.admonition-title::after {
+  color: var(--pst-color-warning);
+  content: var(--pst-icon-admonition-default);
+}

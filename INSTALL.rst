@@ -47,8 +47,13 @@ Hypothesis__ https://hypothesis.readthedocs.io/en/latest/
    https://numpy.org/devdocs/user/building.html#building-from-source
 
 
-Basic Installation
+Basic installation
 ==================
+
+If this is a clone of the NumPy git repository, then first initialize
+the ``git`` submodules::
+
+    git submodule update --init
 
 To install NumPy, run::
 

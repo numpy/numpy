@@ -925,10 +925,11 @@ def sort(a, axis=-1, kind=None, order=None):
        is actually used, even if 'mergesort' is specified. User selection
        at a finer scale is not currently available.
 
-    All the sort algorithms make temporary copies of the data when
-    sorting along any but the last axis.  Consequently, sorting along
-    the last axis is faster and uses less space than sorting along
-    any other axis.
+    For performance, ``sort`` makes a temporary copy if needed to make the data
+    `contiguous <https://numpy.org/doc/stable/glossary.html#term-contiguous>`_
+    in memory along the sort axis. For even better performance and reduced
+    memory consumption, ensure that the array is already contiguous along the
+    sort axis.
 
     The sort order for complex numbers is lexicographic. If both the real
     and imaginary parts are non-nan then the order is determined by the
@@ -3520,7 +3521,7 @@ def _std_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
 @array_function_dispatch(_std_dispatcher)
 def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         where=np._NoValue, mean=np._NoValue):
-    """
+    r"""
     Compute the standard deviation along the specified axis.
 
     Returns the standard deviation, a measure of the spread of a distribution,
@@ -3550,7 +3551,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     ddof : int, optional
         Means Delta Degrees of Freedom.  The divisor used in calculations
         is ``N - ddof``, where ``N`` represents the number of elements.
-        By default `ddof` is zero.
+        By default `ddof` is zero. See Notes for details about use of `ddof`.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -3588,24 +3589,49 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
     Notes
     -----
-    The standard deviation is the square root of the average of the squared
-    deviations from the mean, i.e., ``std = sqrt(mean(x))``, where
-    ``x = abs(a - a.mean())**2``.
+    There are several common variants of the array standard deviation
+    calculation. Assuming the input `a` is a one-dimensional NumPy array
+    and ``mean`` is either provided as an argument or computed as
+    ``a.mean()``, NumPy computes the standard deviation of an array as::
 
-    The average squared deviation is typically calculated as ``x.sum() / N``,
-    where ``N = len(x)``. If, however, `ddof` is specified, the divisor
-    ``N - ddof`` is used instead. In standard statistical practice, ``ddof=1``
-    provides an unbiased estimator of the variance of the infinite population.
-    ``ddof=0`` provides a maximum likelihood estimate of the variance for
-    normally distributed variables. The standard deviation computed in this
-    function is the square root of the estimated variance, so even with
-    ``ddof=1``, it will not be an unbiased estimate of the standard deviation
-    per se.
+        N = len(a)
+        d2 = abs(a - mean)**2  # abs is for complex `a`
+        var = d2.sum() / (N - ddof)  # note use of `ddof`
+        std = var**0.5
+
+    Different values of the argument `ddof` are useful in different
+    contexts. NumPy's default ``ddof=0`` corresponds with the expression:
+
+    .. math::
+
+        \sqrt{\frac{\sum_i{|a_i - \bar{a}|^2 }}{N}}
+
+    which is sometimes called the "population standard deviation" in the field
+    of statistics because it applies the definition of standard deviation to
+    `a` as if `a` were a complete population of possible observations.
+
+    Many other libraries define the standard deviation of an array
+    differently, e.g.:
+
+    .. math::
+
+        \sqrt{\frac{\sum_i{|a_i - \bar{a}|^2 }}{N - 1}}
+
+    In statistics, the resulting quantity is sometimed called the "sample
+    standard deviation" because if `a` is a random sample from a larger
+    population, this calculation provides the square root of an unbiased
+    estimate of the variance of the population. The use of :math:`N-1` in the
+    denominator is often called "Bessel's correction" because it corrects for
+    bias (toward lower values) in the variance estimate introduced when the
+    sample mean of `a` is used in place of the true mean of the population.
+    The resulting estimate of the standard deviation is still biased, but less
+    than it would have been without the correction. For this quantity, use
+    ``ddof=1``.
 
     Note that, for complex numbers, `std` takes the absolute
     value before squaring, so that the result is always real and nonnegative.
 
-    For floating-point input, the *std* is computed using the same
+    For floating-point input, the standard deviation is computed using the same
     precision the input has. Depending on the input data, this can cause
     the results to be inaccurate, especially for float32 (see example below).
     Specifying a higher-accuracy accumulator using the `dtype` keyword can
@@ -3686,7 +3712,7 @@ def _var_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
 @array_function_dispatch(_var_dispatcher)
 def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         where=np._NoValue, mean=np._NoValue):
-    """
+    r"""
     Compute the variance along the specified axis.
 
     Returns the variance of the array elements, a measure of the spread of a
@@ -3717,7 +3743,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     ddof : int, optional
         "Delta Degrees of Freedom": the divisor used in the calculation is
         ``N - ddof``, where ``N`` represents the number of elements. By
-        default `ddof` is zero.
+        default `ddof` is zero. See notes for details about use of `ddof`.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -3755,15 +3781,40 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
     Notes
     -----
-    The variance is the average of the squared deviations from the mean,
-    i.e.,  ``var = mean(x)``, where ``x = abs(a - a.mean())**2``.
+    There are several common variants of the array variance calculation.
+    Assuming the input `a` is a one-dimensional NumPy array and ``mean`` is
+    either provided as an argument or computed as ``a.mean()``, NumPy
+    computes the variance of an array as::
 
-    The mean is typically calculated as ``x.sum() / N``, where ``N = len(x)``.
-    If, however, `ddof` is specified, the divisor ``N - ddof`` is used
-    instead.  In standard statistical practice, ``ddof=1`` provides an
-    unbiased estimator of the variance of a hypothetical infinite population.
-    ``ddof=0`` provides a maximum likelihood estimate of the variance for
-    normally distributed variables.
+        N = len(a)
+        d2 = abs(a - mean)**2  # abs is for complex `a`
+        var = d2.sum() / (N - ddof)  # note use of `ddof`
+
+    Different values of the argument `ddof` are useful in different
+    contexts. NumPy's default ``ddof=0`` corresponds with the expression:
+
+    .. math::
+
+        \frac{\sum_i{|a_i - \bar{a}|^2 }}{N}
+
+    which is sometimes called the "population variance" in the field of
+    statistics because it applies the definition of variance to `a` as if `a`
+    were a complete population of possible observations.
+
+    Many other libraries define the variance of an array differently, e.g.:
+
+    .. math::
+
+        \frac{\sum_i{|a_i - \bar{a}|^2}}{N - 1}
+
+    In statistics, the resulting quantity is sometimed called the "sample
+    variance" because if `a` is a random sample from a larger population,
+    this calculation provides an unbiased estimate of the variance of the
+    population.  The use of :math:`N-1` in the denominator is often called
+    "Bessel's correction" because it corrects for bias (toward lower values)
+    in the variance estimate introduced when the sample mean of `a` is used
+    in place of the true mean of the population. For this quantity, use
+    ``ddof=1``.
 
     Note that for complex numbers, the absolute value is taken before
     squaring, so that the result is always real and nonnegative.

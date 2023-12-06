@@ -310,8 +310,8 @@ def test_array_astype_warning(t):
     assert_warns(np.exceptions.ComplexWarning, a.astype, t)
 
 @pytest.mark.parametrize(["dtype", "out_dtype"],
-        [(np.bytes_, np.bool_),
-         (np.str_, np.bool_),
+        [(np.bytes_, np.bool),
+         (np.str_, np.bool),
          (np.dtype("S10,S9"), np.dtype("?,?")),
          # The following also checks unaligned unicode access:
          (np.dtype("S7,U9"), np.dtype("?,?"))])

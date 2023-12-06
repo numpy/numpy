@@ -2,7 +2,7 @@
 
 .. _random-bit-generators:
 
-Bit Generators
+Bit generators
 ==============
 
 The random values produced by :class:`~Generator`
@@ -54,7 +54,7 @@ The included BitGenerators are:
 
 .. _seeding_and_entropy:
 
-Seeding and Entropy
+Seeding and entropy
 ===================
 
 A BitGenerator provides a stream of random values. In order to generate

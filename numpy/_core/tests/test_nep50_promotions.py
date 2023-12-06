@@ -12,7 +12,7 @@ import pytest
 import hypothesis
 from hypothesis import strategies
 
-from numpy.testing import IS_WASM
+from numpy.testing import assert_array_equal, IS_WASM
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -132,7 +132,7 @@ def test_nep50_weak_integers_with_inexact(dtype):
         assert res == np.inf
 
 
-@pytest.mark.parametrize("op", [operator.add, operator.pow, operator.eq])
+@pytest.mark.parametrize("op", [operator.add, operator.pow])
 def test_weak_promotion_scalar_path(op):
     # Some additional paths exercising the weak scalars.
     np._set_promotion_state("weak")
@@ -257,7 +257,7 @@ def test_nep50_in_concat_and_choose():
         (np.float32, [np.int16, np.uint16, np.float16],
             [np.int8, np.uint8, np.float32, 0., 0]),
         (np.int32, [np.int16, np.uint16],
-            [np.int8, np.uint8, 0, np.bool_]),
+            [np.int8, np.uint8, 0, np.bool]),
         ])
 @hypothesis.given(data=strategies.data())
 def test_expected_promotion(expected, dtypes, optional_dtypes, data):
@@ -271,3 +271,41 @@ def test_expected_promotion(expected, dtypes, optional_dtypes, data):
 
     res = np.result_type(*dtypes_sample)
     assert res == expected
+
+
+@pytest.mark.parametrize("sctype",
+        [np.int8, np.int16, np.int32, np.int64,
+         np.uint8, np.uint16, np.uint32, np.uint64])
+@pytest.mark.parametrize("other_val",
+        [-2*100, -1, 0, 9, 10, 11, 2**63, 2*100])
+@pytest.mark.parametrize("comp",
+        [operator.eq, operator.ne, operator.le, operator.lt,
+         operator.ge, operator.gt])
+def test_integer_comparison(sctype, other_val, comp):
+    np._set_promotion_state("weak")
+
+    # Test that comparisons with integers (especially out-of-bound) ones
+    # works correctly.
+    val_obj = 10
+    val = sctype(val_obj)
+    # Check that the scalar behaves the same as the python int:
+    assert comp(10, other_val) == comp(val, other_val)
+    assert comp(val, other_val) == comp(10, other_val)
+    # Except for the result type:
+    assert type(comp(val, other_val)) is np.bool
+
+    # Check that the integer array and object array behave the same:
+    val_obj = np.array([10, 10], dtype=object)
+    val = val_obj.astype(sctype)
+    assert_array_equal(comp(val_obj, other_val), comp(val, other_val))
+    assert_array_equal(comp(other_val, val_obj), comp(other_val, val))
+
+
+@pytest.mark.parametrize("comp",
+        [np.equal, np.not_equal, np.less_equal, np.less,
+         np.greater_equal, np.greater])
+def test_integer_integer_comparison(comp):
+    np._set_promotion_state("weak")
+
+    # Test that the NumPy comparison ufuncs work with large Python integers
+    assert comp(2**200, -2**200) == comp(2**200, -2**200, dtype=object)

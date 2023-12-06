@@ -319,7 +319,8 @@ class TestAttributes:
     def test_dtypeattr(self):
         assert_equal(self.one.dtype, np.dtype(np.int_))
         assert_equal(self.three.dtype, np.dtype(np.float64))
-        assert_equal(self.one.dtype.char, 'l')
+        assert_equal(self.one.dtype.char, np.dtype(int).char)
+        assert self.one.dtype.char in "lq"
         assert_equal(self.three.dtype.char, 'd')
         assert_(self.three.dtype.str[0] in '<>')
         assert_equal(self.one.dtype.str[1], 'i')
@@ -743,7 +744,7 @@ class TestZeroRank:
             x[i]
 
         assert_raises(IndexError, subscript, a, (np.newaxis, 0))
-        assert_raises(IndexError, subscript, a, (np.newaxis,)*50)
+        assert_raises(IndexError, subscript, a, (np.newaxis,)*70)
 
     def test_constructor(self):
         x = np.ndarray(())
@@ -825,7 +826,7 @@ class TestScalarIndexing:
             x[i]
 
         assert_raises(IndexError, subscript, a, (np.newaxis, 0))
-        assert_raises(IndexError, subscript, a, (np.newaxis,)*50)
+        assert_raises(IndexError, subscript, a, (np.newaxis,)*70)
 
     def test_overlapping_assignment(self):
         # With positive strides
@@ -1649,11 +1650,11 @@ class TestStructured:
 
 class TestBool:
     def test_test_interning(self):
-        a0 = np.bool_(0)
-        b0 = np.bool_(False)
+        a0 = np.bool(0)
+        b0 = np.bool(False)
         assert_(a0 is b0)
-        a1 = np.bool_(1)
-        b1 = np.bool_(True)
+        a1 = np.bool(1)
+        b1 = np.bool(True)
         assert_(a1 is b1)
         assert_(np.array([True])[0] is a1)
         assert_(np.array(True)[()] is a1)
@@ -2816,10 +2817,10 @@ class TestMethods:
                 tgt = np.sort(d)
                 assert_array_equal(np.partition(d, 0, kind=k)[0], tgt[0])
                 assert_array_equal(np.partition(d, 1, kind=k)[1], tgt[1])
-                assert_array_equal(d[np.argpartition(d, 0, kind=k)],
-                                   np.partition(d, 0, kind=k))
-                assert_array_equal(d[np.argpartition(d, 1, kind=k)],
-                                   np.partition(d, 1, kind=k))
+                self.assert_partitioned(np.partition(d, 0, kind=k), [0])
+                self.assert_partitioned(d[np.argpartition(d, 0, kind=k)], [0])
+                self.assert_partitioned(np.partition(d, 1, kind=k), [1])
+                self.assert_partitioned(d[np.argpartition(d, 1, kind=k)], [1])
                 for i in range(d.size):
                     d[i:].partition(0, kind=k)
                 assert_array_equal(d, tgt)
@@ -2831,12 +2832,12 @@ class TestMethods:
                 assert_array_equal(np.partition(d, 0, kind=k)[0], tgt[0])
                 assert_array_equal(np.partition(d, 1, kind=k)[1], tgt[1])
                 assert_array_equal(np.partition(d, 2, kind=k)[2], tgt[2])
-                assert_array_equal(d[np.argpartition(d, 0, kind=k)],
-                                   np.partition(d, 0, kind=k))
-                assert_array_equal(d[np.argpartition(d, 1, kind=k)],
-                                   np.partition(d, 1, kind=k))
-                assert_array_equal(d[np.argpartition(d, 2, kind=k)],
-                                   np.partition(d, 2, kind=k))
+                self.assert_partitioned(np.partition(d, 0, kind=k), [0])
+                self.assert_partitioned(d[np.argpartition(d, 0, kind=k)], [0])
+                self.assert_partitioned(np.partition(d, 1, kind=k), [1])
+                self.assert_partitioned(d[np.argpartition(d, 1, kind=k)], [1])
+                self.assert_partitioned(np.partition(d, 2, kind=k), [2])
+                self.assert_partitioned(d[np.argpartition(d, 2, kind=k)], [2])
                 for i in range(d.size):
                     d[i:].partition(0, kind=k)
                 assert_array_equal(d, tgt)
@@ -2850,26 +2851,26 @@ class TestMethods:
             d = np.arange(49)
             assert_equal(np.partition(d, 5, kind=k)[5], 5)
             assert_equal(np.partition(d, 15, kind=k)[15], 15)
-            assert_array_equal(d[np.argpartition(d, 5, kind=k)],
-                               np.partition(d, 5, kind=k))
-            assert_array_equal(d[np.argpartition(d, 15, kind=k)],
-                               np.partition(d, 15, kind=k))
+            self.assert_partitioned(np.partition(d, 5, kind=k), [5])
+            self.assert_partitioned(d[np.argpartition(d, 5, kind=k)], [5])
+            self.assert_partitioned(np.partition(d, 15, kind=k), [15])
+            self.assert_partitioned(d[np.argpartition(d, 15, kind=k)], [15])
 
             # rsorted
             d = np.arange(47)[::-1]
             assert_equal(np.partition(d, 6, kind=k)[6], 6)
             assert_equal(np.partition(d, 16, kind=k)[16], 16)
-            assert_array_equal(d[np.argpartition(d, 6, kind=k)],
-                               np.partition(d, 6, kind=k))
-            assert_array_equal(d[np.argpartition(d, 16, kind=k)],
-                               np.partition(d, 16, kind=k))
+            self.assert_partitioned(np.partition(d, 6, kind=k), [6])
+            self.assert_partitioned(d[np.argpartition(d, 6, kind=k)], [6])
+            self.assert_partitioned(np.partition(d, 16, kind=k), [16])
+            self.assert_partitioned(d[np.argpartition(d, 16, kind=k)], [16])
 
             assert_array_equal(np.partition(d, -6, kind=k),
                                np.partition(d, 41, kind=k))
             assert_array_equal(np.partition(d, -16, kind=k),
                                np.partition(d, 31, kind=k))
-            assert_array_equal(d[np.argpartition(d, -6, kind=k)],
-                               np.partition(d, 41, kind=k))
+            self.assert_partitioned(np.partition(d, 41, kind=k), [41])
+            self.assert_partitioned(d[np.argpartition(d, -6, kind=k)], [41])
 
             # median of 3 killer, O(n^2) on pure median 3 pivot quickselect
             # exercises the median of median of 5 code used to keep O(n)
@@ -2899,10 +2900,10 @@ class TestMethods:
             np.random.shuffle(d)
             for i in range(d.size):
                 assert_equal(np.partition(d, i, kind=k)[i], tgt[i])
-            assert_array_equal(d[np.argpartition(d, 6, kind=k)],
-                               np.partition(d, 6, kind=k))
-            assert_array_equal(d[np.argpartition(d, 16, kind=k)],
-                               np.partition(d, 16, kind=k))
+            self.assert_partitioned(np.partition(d, 6, kind=k), [6])
+            self.assert_partitioned(d[np.argpartition(d, 6, kind=k)], [6])
+            self.assert_partitioned(np.partition(d, 16, kind=k), [16])
+            self.assert_partitioned(d[np.argpartition(d, 16, kind=k)], [16])
             for i in range(d.size):
                 d[i:].partition(0, kind=k)
             assert_array_equal(d, tgt)
@@ -2964,27 +2965,35 @@ class TestMethods:
                     assert_array_less(p[:i], p[i])
                     # all after are larger
                     assert_array_less(p[i], p[i + 1:])
-                    aae(p, d[np.argpartition(d, i, kind=k)])
+                    self.assert_partitioned(p, [i])
+                    self.assert_partitioned(
+                            d[np.argpartition(d, i, kind=k)], [i])
 
                     p = np.partition(d1, i, axis=1, kind=k)
+                    parg = d1[np.arange(d1.shape[0])[:, None],
+                            np.argpartition(d1, i, axis=1, kind=k)]
                     aae(p[:, i], np.array([i] * d1.shape[0], dtype=dt))
                     # array_less does not seem to work right
                     at((p[:, :i].T <= p[:, i]).all(),
                        msg="%d: %r <= %r" % (i, p[:, i], p[:, :i].T))
                     at((p[:, i + 1:].T > p[:, i]).all(),
                        msg="%d: %r < %r" % (i, p[:, i], p[:, i + 1:].T))
-                    aae(p, d1[np.arange(d1.shape[0])[:, None],
-                        np.argpartition(d1, i, axis=1, kind=k)])
+                    for row in range(p.shape[0]):
+                        self.assert_partitioned(p[row], [i])
+                        self.assert_partitioned(parg[row], [i])
 
                     p = np.partition(d0, i, axis=0, kind=k)
+                    parg = d0[np.argpartition(d0, i, axis=0, kind=k),
+                            np.arange(d0.shape[1])[None, :]]
                     aae(p[i, :], np.array([i] * d1.shape[0], dtype=dt))
                     # array_less does not seem to work right
                     at((p[:i, :] <= p[i, :]).all(),
                        msg="%d: %r <= %r" % (i, p[i, :], p[:i, :]))
                     at((p[i + 1:, :] > p[i, :]).all(),
                        msg="%d: %r < %r" % (i, p[i, :], p[:, i + 1:]))
-                    aae(p, d0[np.argpartition(d0, i, axis=0, kind=k),
-                        np.arange(d0.shape[1])[None, :]])
+                    for col in range(p.shape[1]):
+                        self.assert_partitioned(p[:, col], [i])
+                        self.assert_partitioned(parg[:, col], [i])
 
                     # check inplace
                     dc = d.copy()
@@ -3000,9 +3009,10 @@ class TestMethods:
     def assert_partitioned(self, d, kth):
         prev = 0
         for k in np.sort(kth):
-            assert_array_less(d[prev:k], d[k], err_msg='kth %d' % k)
+            assert_array_compare(operator.__le__, d[prev:k], d[k],
+                    err_msg='kth %d' % k)
             assert_((d[k:] >= d[k]).all(),
-                    msg="kth %d, %r not greater equal %d" % (k, d[k:], d[k]))
+                    msg="kth %d, %r not greater equal %r" % (k, d[k:], d[k]))
             prev = k + 1
 
     def test_partition_iterative(self):
@@ -4125,7 +4135,8 @@ class TestTemporaryElide:
     def test_temporary_with_cast(self):
         # check that we don't elide into a temporary which would need casting
         d = np.ones(200000, dtype=np.int64)
-        assert_equal(((d + d) + 2**222).dtype, np.dtype('O'))
+        r = ((d + d) + np.array(2**222, dtype='O'))
+        assert_equal(r.dtype, np.dtype('O'))
 
         r = ((d + d) / 2)
         assert_equal(r.dtype, np.dtype('f8'))
@@ -4167,8 +4178,8 @@ class TestTemporaryElide:
 
     def test_elide_scalar(self):
         # check inplace op does not create ndarray from scalars
-        a = np.bool_()
-        assert_(type(~(a & a)) is np.bool_)
+        a = np.bool()
+        assert_(type(~(a & a)) is np.bool)
 
     def test_elide_scalar_readonly(self):
         # The imaginary part of a real array is readonly. This needs to go
@@ -5012,7 +5023,19 @@ class TestClip:
             self._clip_type(
                 'uint', 1024, 0, 0, inplace=inplace)
             self._clip_type(
-                'uint', 1024, -120, 100, inplace=inplace, expected_min=0)
+                'uint', 1024, 10, 100, inplace=inplace)
+
+    @pytest.mark.parametrize("inplace", [False, True])
+    def test_int_range_error(self, inplace):
+        # E.g. clipping uint with negative integers fails to promote
+        # (changed with NEP 50 and may be adaptable)
+        # Similar to last check in `test_basic`
+        x = (np.random.random(1000) * 255).astype("uint8")
+        with pytest.raises(OverflowError):
+            x.clip(-1, 10, out=x if inplace else None)
+
+        with pytest.raises(OverflowError):
+            x.clip(0, 256, out=x if inplace else None)
 
     def test_record_array(self):
         rec = np.array([(-5, 2.0, 3.0), (5.0, 4.0, 3.0)],
@@ -5289,8 +5312,8 @@ class TestIO:
         assert_raises(OSError, lambda x: x.tofile(b), d)
 
     def test_bool_fromstring(self):
-        v = np.array([True, False, True, False], dtype=np.bool_)
-        y = np.fromstring('1 0 -2.3 0.0', sep=' ', dtype=np.bool_)
+        v = np.array([True, False, True, False], dtype=np.bool)
+        y = np.fromstring('1 0 -2.3 0.0', sep=' ', dtype=np.bool)
         assert_array_equal(v, y)
 
     def test_uint64_fromstring(self):
@@ -5628,11 +5651,11 @@ class TestIO:
 
     def test_dtype_bool(self, tmp_filename):
         # can't use _check_from because fromstring can't handle True/False
-        v = np.array([True, False, True, False], dtype=np.bool_)
+        v = np.array([True, False, True, False], dtype=np.bool)
         s = b'1,0,-2.3,0'
         with open(tmp_filename, 'wb') as f:
             f.write(s)
-        y = np.fromfile(tmp_filename, sep=',', dtype=np.bool_)
+        y = np.fromfile(tmp_filename, sep=',', dtype=np.bool)
         assert_(y.dtype == '?')
         assert_array_equal(y, v)
 
@@ -5813,6 +5836,15 @@ class TestFlat:
         # Check the value of `.index` is updated correctly (see also gh-19153)
         # If the type was incorrect, this would show up on big-endian machines
         assert it.index == it.base.size
+
+    def test_maxdims(self):
+        # The flat iterator and thus attribute is currently unfortunately
+        # limited to only 32 dimensions (after bumping it to 64 for 2.0)
+        a = np.ones((1,) * 64)
+
+        with pytest.raises(RuntimeError,
+                match=".*32 dimensions but the array has 64"):
+            a.flat
 
 
 class TestResize:
@@ -6987,13 +7019,13 @@ class MatmulCommon:
             assert_equal(res, tgt12_21)
 
         # boolean type
-        m1 = np.array([[1, 1], [0, 0]], dtype=np.bool_)
-        m2 = np.array([[1, 0], [1, 1]], dtype=np.bool_)
+        m1 = np.array([[1, 1], [0, 0]], dtype=np.bool)
+        m2 = np.array([[1, 0], [1, 1]], dtype=np.bool)
         m12 = np.stack([m1, m2], axis=0)
         m21 = np.stack([m2, m1], axis=0)
         tgt11 = m1
         tgt12 = m1
-        tgt21 = np.array([[1, 1], [1, 1]], dtype=np.bool_)
+        tgt21 = np.array([[1, 1], [1, 1]], dtype=np.bool)
         tgt12_21 = np.stack([tgt12, tgt21], axis=0)
         tgt11_12 = np.stack((tgt11, tgt12), axis=0)
         tgt11_21 = np.stack((tgt11, tgt21), axis=0)
@@ -7391,6 +7423,22 @@ class TestChoose:
     def test_output_dtype(self, ops):
         expected_dt = np.result_type(*ops)
         assert(np.choose([0], ops).dtype == expected_dt)
+
+    def test_dimension_and_args_limit(self):
+        # Maxdims for the legacy iterator is 32, but the maximum number
+        # of arguments is actually larger (a itself also counts here)
+        a = np.ones((1,) * 32, dtype=np.intp)
+        res = a.choose([0, a] + [2] * 61)
+        with pytest.raises(ValueError,
+                match="Need at least 0 and at most 64 array objects"):
+            a.choose([0, a] + [2] * 62)
+
+        assert_array_equal(res, a)
+        # Choose is unfortunately limited to 32 dims as of NumPy 2.0
+        a = np.ones((1,) * 60, dtype=np.intp)
+        with pytest.raises(RuntimeError,
+                match=".*32 dimensions but the array has 60"):
+            a.choose([a, a])
 
 
 class TestRepeat:
@@ -8165,19 +8213,22 @@ class TestNewBufferProtocol:
                 t = dim * t
             return t
 
-        # construct a memoryview with 33 dimensions
-        c_u8_33d = make_ctype((1,)*33, ctypes.c_uint8)
-        m = memoryview(c_u8_33d())
-        assert_equal(m.ndim, 33)
+        # Try constructing a memory with too many dimensions:
+        c_u8_65d = make_ctype((1,)*65, ctypes.c_uint8)
+        try:
+            m = memoryview(c_u8_65d())
+        except ValueError:
+            pytest.skip("memoryview doesn't support more dimensions")
 
-        assert_raises_regex(
-            RuntimeError, "ndim",
-            np.array, m)
+        assert_equal(m.ndim, 65)
+
+        with pytest.raises(RuntimeError, match=".*ndim"):
+            np.array(m)
 
         # The above seems to create some deep cycles, clean them up for
         # easier reference count debugging:
-        del c_u8_33d, m
-        for i in range(33):
+        del c_u8_65d, m
+        for i in range(65):
             if gc.collect() == 0:
                 break
 
@@ -8640,28 +8691,6 @@ def test_scalar_element_deletion():
     assert_raises(ValueError, a[0].__delitem__, 'x')
 
 
-class TestMapIter:
-    def test_mapiter(self):
-        # The actual tests are within the C code in
-        # multiarray/_multiarray_tests.c.src
-
-        a = np.arange(12).reshape((3, 4)).astype(float)
-        index = ([1, 1, 2, 0],
-                 [0, 0, 2, 3])
-        vals = [50, 50, 30, 16]
-
-        _multiarray_tests.test_inplace_increment(a, index, vals)
-        assert_equal(a, [[0.00, 1., 2.0, 19.],
-                         [104., 5., 6.0, 7.0],
-                         [8.00, 9., 40., 11.]])
-
-        b = np.arange(6).astype(float)
-        index = (np.array([1, 2, 0]),)
-        vals = [50, 4, 100.1]
-        _multiarray_tests.test_inplace_increment(b, index, vals)
-        assert_equal(b, [100.1,  51.,   6.,   3.,   4.,   5.])
-
-
 class TestAsCArray:
     def test_1darray(self):
         array = np.arange(24, dtype=np.double)
@@ -8846,9 +8875,11 @@ class TestWhere:
         assert_equal(np.where(True, d, e).dtype, np.float32)
         e = float('-Infinity')
         assert_equal(np.where(True, d, e).dtype, np.float32)
-        # also check upcast
+        # With NEP 50 adopted, the float will overflow here:
         e = float(1e150)
-        assert_equal(np.where(True, d, e).dtype, np.float64)
+        with pytest.warns(RuntimeWarning, match="overflow"):
+            res = np.where(True, d, e)
+        assert res.dtype == np.float32
 
     def test_ndim(self):
         c = [True, False]

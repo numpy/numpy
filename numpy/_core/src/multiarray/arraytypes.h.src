@@ -77,7 +77,7 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT int BOOL_argmax,
  *         CFLOAT, CDOUBLE, CLONGDOUBLE,
  *         STRING, UNICODE, VOID, OBJECT,
  *         DATETIME, TIMEDELTA#
- * #name = bool_,
+ * #name = bool,
  *         float16, float32, float64, longdouble,
  *         complex64, complex128, clongdouble,
  *         bytes_, str_, void, object_,

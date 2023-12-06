@@ -1,0 +1,7 @@
+``svdvals`` for `numpy.linalg`
+------------------------------
+
+`numpy.linalg.svdvals` has been added. It computes singular values for
+(stack of) matrices. Executing ``np.svdvals(x)`` is the same as calling
+``np.svd(x, compute_uv=False, hermitian=False)``.
+This function is compatible with Array API.

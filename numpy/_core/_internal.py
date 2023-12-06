@@ -219,7 +219,7 @@ def _getintp_ctype():
         import numpy as np
         val = dummy_ctype(np.intp)
     else:
-        char = dtype('p').char
+        char = dtype('n').char
         if char == 'i':
             val = ctypes.c_int
         elif char == 'l':

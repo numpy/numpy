@@ -1,4 +1,4 @@
-Multithreaded Generation
+Multithreaded generation
 ========================
 
 The four core distributions (:meth:`~.Generator.random`,

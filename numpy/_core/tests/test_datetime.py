@@ -329,7 +329,7 @@ class TestDateTime:
 
         # find "supertype" for non-dates and dates
 
-        b = np.bool_(True)
+        b = np.bool(True)
         dm = np.datetime64('1970-01-01', 'M')
         d = datetime.date(1970, 1, 1)
         dt = datetime.datetime(1970, 1, 1, 12, 30, 40)

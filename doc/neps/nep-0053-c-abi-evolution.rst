@@ -43,7 +43,7 @@ The implementation of this NEP consists would consist of two steps:
    * require some downstream code changes to adapt to changed API.
 
 
-Motivation and Scope
+Motivation and scope
 ====================
 
 The NumPy API conists of more than 300 functions and numerous macros.
@@ -85,7 +85,7 @@ we expect that this is unnecessary and that the provisions introduced here:
 should allow to add such an API also in a minor release.
 
 
-Usage and Impact
+Usage and impact
 ================
 
 Backwards compatible builds
@@ -299,7 +299,7 @@ Discussion
 
 
 
-References and Footnotes
+References and footnotes
 ========================
 
 .. [1] Each NEP must either be explicitly labeled as placed in the public domain (see

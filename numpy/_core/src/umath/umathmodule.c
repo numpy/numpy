@@ -27,6 +27,7 @@
 #include "number.h"
 #include "dispatching.h"
 #include "string_ufuncs.h"
+#include "special_integer_comparisons.h"
 #include "extobj.h"  /* for _extobject_contextvar exposure */
 
 /* Automatically generated code to define all ufuncs: */
@@ -206,7 +207,6 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
  */
 
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_ufunc = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_prepare = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_wrap = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_pyvals_name = NULL;
 
@@ -216,10 +216,6 @@ intern_strings(void)
 {
     npy_um_str_array_ufunc = PyUnicode_InternFromString("__array_ufunc__");
     if (npy_um_str_array_ufunc == NULL) {
-        return -1;
-    }
-    npy_um_str_array_prepare = PyUnicode_InternFromString("__array_prepare__");
-    if (npy_um_str_array_prepare == NULL) {
         return -1;
     }
     npy_um_str_array_wrap = PyUnicode_InternFromString("__array_wrap__");
@@ -331,6 +327,10 @@ int initumath(PyObject *m)
     }
 
     if (init_string_ufuncs(d) < 0) {
+        return -1;
+    }
+
+    if (init_special_int_comparisons(d) < 0) {
         return -1;
     }
 

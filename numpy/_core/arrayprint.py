@@ -39,7 +39,7 @@ from .multiarray import (array, dragon4_positional, dragon4_scientific,
                          set_legacy_print_mode)
 from .fromnumeric import any
 from .numeric import concatenate, asarray, errstate
-from .numerictypes import (longlong, intc, int_, float64, complex128, bool_,
+from .numerictypes import (longlong, intc, int_, float64, complex128,
                            flexible)
 from .overrides import array_function_dispatch, set_module
 import operator
@@ -474,7 +474,7 @@ def _get_format_function(data, **options):
     formatdict = _get_formatdict(data, **options)
     if dtypeobj is None:
         return formatdict["numpystr"]()
-    elif issubclass(dtypeobj, _nt.bool_):
+    elif issubclass(dtypeobj, _nt.bool):
         return formatdict['bool']()
     elif issubclass(dtypeobj, _nt.integer):
         if issubclass(dtypeobj, _nt.timedelta64):
@@ -1460,7 +1460,7 @@ def _void_scalar_to_string(x, is_repr=True):
     return f"{cls_fqn}({val_repr}, dtype={void_dtype!s})"
 
 
-_typelessdata = [int_, float64, complex128, bool_]
+_typelessdata = [int_, float64, complex128, _nt.bool]
 
 
 def dtype_is_implied(dtype):
@@ -1490,7 +1490,7 @@ def dtype_is_implied(dtype):
     array([1, 2, 3], dtype=int8)
     """
     dtype = np.dtype(dtype)
-    if _format_options['legacy'] <= 113 and dtype.type == bool_:
+    if _format_options['legacy'] <= 113 and dtype.type == np.bool:
         return False
 
     # not just void types can be structured, and names are not part of the repr

@@ -98,7 +98,7 @@ Building matrices
    triu
    vander
 
-The Matrix class
+The matrix class
 ----------------
 .. autosummary::
    :toctree: generated/

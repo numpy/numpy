@@ -19,7 +19,7 @@ This document proposes a restructuring of the NumPy Documentation, both in form
 and content, with the goal of making it more organized and discoverable for
 beginners and experienced users.
 
-Motivation and Scope
+Motivation and scope
 ====================
 
 See `here <https://numpy.org/devdocs/>`_ for the front page of the latest docs.
@@ -32,7 +32,7 @@ are mixed). We propose the following:
 - Adding an Explanations section for key concepts and techniques that require
   deeper descriptions, some of which will be rearranged from the Reference Guide.
 
-Usage and Impact
+Usage and impact
 ================
 
 The documentation is a fundamental part of any software project, especially
@@ -168,7 +168,7 @@ So we'll aim for a new (pure Python) package, named ``numpy-datasets`` or
 how, e.g., scikit-learn ships data sets. Small data sets can be included in the
 repo, large data sets can be accessed via a downloader class or function.
 
-Related Work
+Related work
 ============
 
 Some examples of documentation organization in other projects:
@@ -230,7 +230,7 @@ Discussion around this NEP can be found on the NumPy mailing list:
 
 - https://mail.python.org/pipermail/numpy-discussion/2020-February/080419.html
 
-References and Footnotes
+References and footnotes
 ========================
 
 .. [1] `Diátaxis - A systematic framework for technical documentation authoring <https://diataxis.fr/>`_

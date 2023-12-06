@@ -96,7 +96,7 @@ def scalar_instances(times=True, extended_precision=True, user_dtype=True):
     # Bool:
     # XFAIL: Bool should be added, but has some bad properties when it
     # comes to strings, see also gh-9875
-    # yield param(np.bool_(0), id="bool")
+    # yield param(np.bool(0), id="bool")
 
     # Integers:
     yield param(np.int8(2), id="int8")

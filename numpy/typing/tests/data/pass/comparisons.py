@@ -16,7 +16,7 @@ u4 = np.uint32()
 dt = np.datetime64(0, "D")
 td = np.timedelta64(0, "D")
 
-b_ = np.bool_()
+b_ = np.bool()
 
 b = bool()
 c = complex()
@@ -25,7 +25,7 @@ i = int()
 
 SEQ = (0, 1, 2, 3, 4)
 
-AR_b: np.ndarray[Any, np.dtype[np.bool_]] = np.array([True])
+AR_b: np.ndarray[Any, np.dtype[np.bool]] = np.array([True])
 AR_u: np.ndarray[Any, np.dtype[np.uint32]] = np.array([1], dtype=np.uint32)
 AR_i: np.ndarray[Any, np.dtype[np.int_]] = np.array([1])
 AR_f: np.ndarray[Any, np.dtype[np.float64]] = np.array([1.0])

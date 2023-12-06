@@ -94,6 +94,9 @@ if use_svml
     error('Missing the `SVML` git submodule! Run `git submodule update --init` to fix this.')
   endif
 endif
+if not fs.exists('src/highway/README.md')
+  error('Missing the `highway` git submodule! Run `git submodule update --init` to fix this.')
+endif
 if not fs.exists('src/npysort/x86-simd-sort/README.md')
   error('Missing the `x86-simd-sort` git submodule! Run `git submodule update --init` to fix this.')
 endif
@@ -109,6 +112,8 @@ types_to_check = [
   ['NPY_SIZEOF_FLOAT', 'float'],
   ['NPY_SIZEOF_DOUBLE', 'double'],
   ['NPY_SIZEOF_LONGDOUBLE', 'long double'],
+  ['NPY_SIZEOF_INTP', 'size_t'],
+  ['NPY_SIZEOF_UINTP', 'size_t'],
 ]
 foreach symbol_type: types_to_check
   cdata.set(symbol_type[0], cc.sizeof(symbol_type[1]))
@@ -255,37 +260,6 @@ foreach filefunc_maybe: optional_file_funcs
   endif
 endforeach
 
-# Optional locale function
-have_strtold_l = cc.has_function('strtold_l', include_directories: inc_curdir,
-  prefix:'''
-  #include <stdlib.h>
-  #include <xlocale.h>
-  #include "feature_detection_locale.h"
-''')
-if not have_strtold_l
-  # Retry with locale.h, seems to vary across Linux distros
-  have_strtold_l = cc.has_function('strtold_l', include_directories: inc_curdir,
-    prefix:'''
-    #include <stdlib.h>
-    #include <locale.h>
-    #include "feature_detection_locale.h"
-  ''')
-endif
-if have_strtold_l
-  cdata.set10('HAVE_STRTOLD_L', true)
-else
-  # FIXME: this is wrong! the HAVE_ define should not exist, or it'll be
-  # interpreted as the function being available (true/false does nothing, see
-  # note on HAVE_ defines higher up). This is necessary though in order to make
-  # the Linux CI job pass. So either the check is wrong somehow, or this
-  # function is not available in CI. For the latter there is a fallback path,
-  # but that is broken because we don't have the exact long double
-  # representation checks.
-  if cc.get_argument_syntax() != 'msvc'
-    cdata.set10('HAVE_STRTOLD_L', false)
-  endif
-endif
-
 # Other optional functions
 optional_misc_funcs = [
   'backtrace',
@@ -303,7 +277,7 @@ endforeach
 # SSE headers only enabled automatically on amd64/x32 builds
 optional_headers = [
   'features.h',   # for glibc version linux
-  'xlocale.h',    # see GH#8367
+  'xlocale.h',    # removed in glibc 2.26, but may still be useful - see gh-8367
   'dlfcn.h',      # dladdr
   'execinfo.h',   # backtrace
   'libunwind.h',  # backtrace for LLVM/Clang using libunwind
@@ -314,6 +288,19 @@ foreach header: optional_headers
     cdata.set10('HAVE_' + header.to_upper().replace('.', '_').replace('/', '_'), true)
   endif
 endforeach
+
+# Optional locale function - GNU-specific
+_strtold_prefix = '''
+#define _GNU_SOURCE
+#include <locale.h>
+#include <stdlib.h>
+'''
+if cdata.get('HAVE_XLOCALE_H', 0) == 1
+  _strtold_prefix += '#include <xlocale.h>'
+endif
+if cc.has_function('strtold_l', include_directories: inc_curdir, prefix: _strtold_prefix)
+  cdata.set10('HAVE_STRTOLD_L', true)
+endif
 
 # Optional compiler attributes
 # TODO: this doesn't work with cc.has_function_attribute, see
@@ -777,14 +764,28 @@ endforeach
 # -----------------------------------
 foreach gen_mtargets : [
   [
-    'simd_qsort.dispatch.h',
-    'src/npysort/simd_qsort.dispatch.cpp',
+    'x86_simd_argsort.dispatch.h',
+    'src/npysort/x86_simd_argsort.dispatch.cpp',
     [AVX512_SKX]
   ],
   [
-    'simd_qsort_16bit.dispatch.h',
-    'src/npysort/simd_qsort_16bit.dispatch.cpp',
+    'x86_simd_qsort.dispatch.h',
+    'src/npysort/x86_simd_qsort.dispatch.cpp',
+    [
+      AVX512_SKX, AVX2,
+    ]
+  ],
+  [
+    'x86_simd_qsort_16bit.dispatch.h',
+    'src/npysort/x86_simd_qsort_16bit.dispatch.cpp',
     [AVX512_SPR, AVX512_ICL]
+  ],
+  [
+    'highway_qsort.dispatch.h',
+    'src/npysort/highway_qsort.dispatch.cpp',
+    [
+      ASIMD,
+    ]
   ],
 ]
   mtargets = mod_features.multi_targets(
@@ -800,7 +801,8 @@ foreach gen_mtargets : [
       'src/common',
       'src/multiarray',
       'src/npymath',
-      'src/umath'
+      'src/umath',
+      'src/highway',
     ]
   )
   if not is_variable('multiarray_umath_mtargets')
@@ -1097,6 +1099,7 @@ src_umath = umath_gen_headers + [
   src_file.process('src/umath/scalarmath.c.src'),
   'src/umath/ufunc_object.c',
   'src/umath/umathmodule.c',
+  'src/umath/special_integer_comparisons.cpp',
   'src/umath/string_ufuncs.cpp',
   'src/umath/wrapping_array_method.c',
   # For testing. Eventually, should use public API and be separate:

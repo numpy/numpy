@@ -1,5 +1,5 @@
 =====================================
-Roadmap & NumPy Enhancement Proposals
+Roadmap & NumPy enhancement proposals
 =====================================
 
 This page provides an overview of development priorities for NumPy.

@@ -134,11 +134,11 @@ class TestGetImplementingArgs:
 
     def test_too_many_duck_arrays(self):
         namespace = dict(__array_function__=_return_not_implemented)
-        types = [type('A' + str(i), (object,), namespace) for i in range(33)]
+        types = [type('A' + str(i), (object,), namespace) for i in range(65)]
         relevant_args = [t() for t in types]
 
-        actual = _get_implementing_args(relevant_args[:32])
-        assert_equal(actual, relevant_args[:32])
+        actual = _get_implementing_args(relevant_args[:64])
+        assert_equal(actual, relevant_args[:64])
 
         with assert_raises_regex(TypeError, 'distinct argument types'):
             _get_implementing_args(relevant_args)
@@ -448,7 +448,7 @@ class TestArrayFunctionImplementation:
     def test_too_many_args(self):
         # Mainly a unit-test to increase coverage
         objs = []
-        for i in range(40):
+        for i in range(80):
             class MyArr:
                 def __array_function__(self, *args, **kwargs):
                     return NotImplemented

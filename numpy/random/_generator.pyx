@@ -63,7 +63,7 @@ cdef int64_t _safe_sum_nonneg_int64(size_t num_colors, int64_t *colors):
 cdef inline void _shuffle_raw_wrap(bitgen_t *bitgen, np.npy_intp n,
                                    np.npy_intp first, np.npy_intp itemsize,
                                    np.npy_intp stride,
-                                   char* data, char* buf) nogil:
+                                   char* data, char* buf) noexcept nogil:
     # We trick gcc into providing a specialized implementation for
     # the most common case, yielding a ~33% performance improvement.
     # Note that apparently, only one branch can ever be specialized.
@@ -76,7 +76,7 @@ cdef inline void _shuffle_raw_wrap(bitgen_t *bitgen, np.npy_intp n,
 cdef inline void _shuffle_raw(bitgen_t *bitgen, np.npy_intp n,
                               np.npy_intp first, np.npy_intp itemsize,
                               np.npy_intp stride,
-                              char* data, char* buf) nogil:
+                              char* data, char* buf) noexcept nogil:
     """
     Parameters
     ----------
@@ -107,7 +107,7 @@ cdef inline void _shuffle_raw(bitgen_t *bitgen, np.npy_intp n,
 
 
 cdef inline void _shuffle_int(bitgen_t *bitgen, np.npy_intp n,
-                              np.npy_intp first, int64_t* data) nogil:
+                              np.npy_intp first, int64_t* data) noexcept nogil:
     """
     Parameters
     ----------
@@ -634,7 +634,7 @@ cdef class Generator:
             ret = _rand_uint16(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
         elif _dtype == np.uint8:
             ret = _rand_uint8(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
-        elif _dtype == np.bool_:
+        elif _dtype == np.bool:
             ret = _rand_bool(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
         elif not _dtype.isnative:
             raise ValueError('Providing a dtype with a non-native byteorder '
@@ -645,7 +645,7 @@ cdef class Generator:
             raise TypeError('Unsupported dtype %r for integers' % _dtype)
 
 
-        if size is None and dtype in (bool, int):
+        if size is None and (dtype is bool or dtype is int):
             if np.array(ret).shape == ():
                 return dtype(ret)
         return ret
@@ -3757,7 +3757,7 @@ cdef class Generator:
 
         if size is None:
             shape = []
-        elif isinstance(size, (int, long, np.integer)):
+        elif isinstance(size, (int, np.integer)):
             shape = [size]
         else:
             shape = size
@@ -4875,8 +4875,8 @@ def default_rng(seed=None):
     seed : {None, int, array_like[ints], SeedSequence, BitGenerator, Generator}, optional
         A seed to initialize the `BitGenerator`. If None, then fresh,
         unpredictable entropy will be pulled from the OS. If an ``int`` or
-        ``array_like[ints]`` is passed, then it will be passed to
-        `SeedSequence` to derive the initial `BitGenerator` state. One may also
+        ``array_like[ints]`` is passed, then all values must be non-negative and will be
+        passed to `SeedSequence` to derive the initial `BitGenerator` state. One may also
         pass in a `SeedSequence` instance.
         Additionally, when passed a `BitGenerator`, it will be wrapped by
         `Generator`. If passed a `Generator`, it will be returned unaltered.

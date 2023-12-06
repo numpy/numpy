@@ -69,7 +69,7 @@ virtual environment and back to your previous shell.
 Building from source
 --------------------
 
-See building-from-source_
+See :ref:`building-from-source`.
 
 .. _testing-builds:
 
@@ -173,7 +173,7 @@ For more extensive information, see :ref:`testing-guidelines`.
 Note: do not run the tests from the root directory of your numpy git repo without ``spin``,
 that will result in strange test errors.
 
-Running Linting
+Running linting
 ---------------
 Lint checks can be performed on newly added lines of Python code.
 

@@ -1,4 +1,4 @@
-Padding Arrays
+Padding arrays
 ==============
 
 .. currentmodule:: numpy

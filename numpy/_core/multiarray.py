@@ -511,14 +511,12 @@ def can_cast(from_, to, casting=None):
     can_cast(from_, to, casting='safe')
 
     Returns True if cast between data types can occur according to the
-    casting rule.  If from is a scalar or array scalar, also returns
-    True if the scalar value can be cast without overflow or truncation
-    to an integer.
+    casting rule.
 
     Parameters
     ----------
-    from_ : dtype, dtype specifier, scalar, or array
-        Data type, scalar, or array to cast from.
+    from_ : dtype, dtype specifier, NumPy scalar, or array
+        Data type, NumPy scalar, or array to cast from.
     to : dtype or dtype specifier
         Data type to cast to.
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
@@ -548,6 +546,10 @@ def can_cast(from_, to, casting=None):
        that the string dtype length is long enough to store the maximum
        integer/float value converted.
 
+    .. versionchanged:: 2.0
+       This function does not support Python scalars anymore and does not
+       apply any value-based logic for 0-D arrays and NumPy scalars.
+
     See also
     --------
     dtype, result_type
@@ -569,52 +571,6 @@ def can_cast(from_, to, casting=None):
     False
     >>> np.can_cast('i4', 'S4')
     False
-
-    Casting scalars
-
-    >>> np.can_cast(100, 'i1')
-    True
-    >>> np.can_cast(150, 'i1')
-    False
-    >>> np.can_cast(150, 'u1')
-    True
-
-    >>> np.can_cast(3.5e100, np.float32)
-    False
-    >>> np.can_cast(1000.0, np.float32)
-    True
-
-    Array scalar checks the value, array does not
-
-    >>> np.can_cast(np.array(1000.0), np.float32)
-    True
-    >>> np.can_cast(np.array([1000.0]), np.float32)
-    False
-
-    Using the casting rules
-
-    >>> np.can_cast('i8', 'i8', 'no')
-    True
-    >>> np.can_cast('<i8', '>i8', 'no')
-    False
-
-    >>> np.can_cast('<i8', '>i8', 'equiv')
-    True
-    >>> np.can_cast('<i4', '>i8', 'equiv')
-    False
-
-    >>> np.can_cast('<i4', '>i8', 'safe')
-    True
-    >>> np.can_cast('<i8', '>i4', 'safe')
-    False
-
-    >>> np.can_cast('<i8', '>i4', 'same_kind')
-    True
-    >>> np.can_cast('<i8', '>u4', 'same_kind')
-    False
-
-    >>> np.can_cast('<i8', '>u4', 'unsafe')
-    True
 
     """
     return (from_,)
@@ -1524,8 +1480,8 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
         The array of dates to process.
     offsets : array_like of int
         The array of offsets, which is broadcast with ``dates``.
-    roll : {'raise', 'nat', 'forward', 'following', 'backward', 'preceding',
-            'modifiedfollowing', 'modifiedpreceding'}, optional
+    roll : {'raise', 'nat', 'forward', 'following', 'backward', 'preceding', \
+        'modifiedfollowing', 'modifiedpreceding'}, optional
         How to treat dates that do not fall on a valid day. The default
         is 'raise'.
 

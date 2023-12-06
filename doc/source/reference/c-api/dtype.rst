@@ -1,4 +1,4 @@
-Data Type API
+Data type API
 =============
 
 .. sectionauthor:: Travis E. Oliphant
@@ -22,7 +22,7 @@ select the precision desired.
     clarity.
 
 
-Enumerated Types
+Enumerated types
 ----------------
 
 .. c:enum:: NPY_TYPES
@@ -363,13 +363,20 @@ to the front of the integer name.
 
 .. c:type:: npy_intp
 
-    Py_intptr_t (an integer that is the size of a pointer on
-    the platform).
+    ``Py_ssize_t`` (a signed integer with the same size as the C ``size_t``).
+    This is the correct integer for lengths or indexing.  In practice this is
+    normally the size of a pointer, but this is not guaranteed.
+
+    ..note::
+        Before NumPy 2.0, this was the same as ``Py_intptr_t``.
+        While a better match, this did not match actual usage in practice.
+        On the Python side, we still support ``np.dtype('p')`` to fetch a dtype
+        compatible with storing pointers, while ``n`` is the correct character
+        for the ``ssize_t``.
 
 .. c:type:: npy_uintp
 
-    unsigned Py_intptr_t (an integer that is the size of a pointer on
-    the platform).
+    The C ``size_t``/``Py_size_t``.
 
 
 (Complex) Floating point
@@ -425,7 +432,7 @@ bit-widths are available is platform dependent. The bolded bit-widths
 are usually available on all platforms.
 
 
-Printf Formatting
+Printf formatting
 -----------------
 
 For help in printing, the following strings are defined as the correct

@@ -112,8 +112,7 @@ _get_transpose(int fancy_ndim, int consec, int ndim, int getmap, npy_intp *dims)
 }
 
 
-/*NUMPY_API
- *
+/*
  * Swap the axes to or from their inserted form. MapIter always puts the
  * advanced (array) indices first in the iteration. But if they are
  * consecutive, will insert/transpose them back before returning.
@@ -703,8 +702,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
                     PyOS_snprintf(err_msg, sizeof(err_msg),
                         "boolean index did not match indexed array along "
-                        "dimension %d; dimension is %" NPY_INTP_FMT
-                        " but corresponding boolean dimension is %" NPY_INTP_FMT,
+                        "axis %d; size of axis is %" NPY_INTP_FMT
+                        " but size of corresponding boolean axis is %" NPY_INTP_FMT,
                         used_ndim, PyArray_DIM(self, used_ndim),
                         indices[i].value);
                     PyErr_SetString(PyExc_IndexError, err_msg);
@@ -925,6 +924,7 @@ array_boolean_subscript(PyArrayObject *self,
     npy_intp size, itemsize;
     char *ret_data;
     PyArray_Descr *dtype;
+    PyArray_Descr *ret_dtype;
     PyArrayObject *ret;
 
     size = count_boolean_trues(PyArray_NDIM(bmask), PyArray_DATA(bmask),
@@ -935,6 +935,8 @@ array_boolean_subscript(PyArrayObject *self,
     Py_INCREF(dtype);
     ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1, &size,
                                 NULL, NULL, 0, NULL);
+    /* not same as *dtype* if the DType class replaces dtypes */
+    ret_dtype = PyArray_DESCR(ret);
     if (ret == NULL) {
         return NULL;
     }
@@ -981,7 +983,7 @@ array_boolean_subscript(PyArrayObject *self,
         if (PyArray_GetDTypeTransferFunction(
                         IsUintAligned(self) && IsAligned(self),
                         fixed_strides[0], itemsize,
-                        dtype, dtype,
+                        dtype, ret_dtype,
                         0,
                         &cast_info,
                         &cast_flags) != NPY_SUCCEED) {
@@ -1051,9 +1053,9 @@ array_boolean_subscript(PyArrayObject *self,
     if (!PyArray_CheckExact(self)) {
         PyArrayObject *tmp = ret;
 
-        Py_INCREF(dtype);
+        Py_INCREF(ret_dtype);
         ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
-                Py_TYPE(self), dtype,
+                Py_TYPE(self), ret_dtype,
                 1, &size, PyArray_STRIDES(ret), PyArray_BYTES(ret),
                 PyArray_FLAGS(self), (PyObject *)self, (PyObject *)tmp);
 
@@ -1604,7 +1606,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
         goto finish;
     }
 
-    if (mit->numiter > 1 || mit->size == 0) {
+    if (mit->num_fancy > 1 || mit->size == 0) {
         /*
          * If it is one, the inner loop checks indices, otherwise
          * check indices beforehand, because it is much faster if
@@ -2280,7 +2282,7 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
 
     baseptrs[0] = mit->baseoffset;
 
-    for (i = 0; i < mit->numiter; i++) {
+    for (i = 0; i < mit->num_fancy; i++) {
         indval = *((npy_intp*)mit->outer_ptrs[i]);
         if (indval < 0) {
             indval += mit->fancy_dims[i];
@@ -2303,7 +2305,7 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
 }
 
 
-/*NUMPY_API
+/*
  * This function needs to update the state of the map iterator
  * and point mit->dataptr to the memory-location of the next object
  *
@@ -2334,7 +2336,7 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
 
             baseptr = mit->baseoffset;
 
-            for (i = 0; i < mit->numiter; i++) {
+            for (i = 0; i < mit->num_fancy; i++) {
                 indval = *((npy_intp*)mit->outer_ptrs[i]);
                 if (indval < 0) {
                     indval += mit->fancy_dims[i];
@@ -2351,7 +2353,7 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
         if (--mit->iter_count > 0) {
             baseptr = mit->baseoffset;
 
-            for (i = 0; i < mit->numiter; i++) {
+            for (i = 0; i < mit->num_fancy; i++) {
                 mit->outer_ptrs[i] += mit->outer_strides[i];
 
                 indval = *((npy_intp*)mit->outer_ptrs[i]);
@@ -2371,7 +2373,7 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
             mit->iter_count = *NpyIter_GetInnerLoopSizePtr(mit->outer);
             baseptr = mit->baseoffset;
 
-            for (i = 0; i < mit->numiter; i++) {
+            for (i = 0; i < mit->num_fancy; i++) {
                 indval = *((npy_intp*)mit->outer_ptrs[i]);
                 if (indval < 0) {
                     indval += mit->fancy_dims[i];
@@ -2588,7 +2590,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
 
     NPY_BEGIN_THREADS;
 
-    for (i=0; i < mit->numiter; i++) {
+    for (i=0; i < mit->num_fancy; i++) {
         op = NpyIter_GetOperandArray(mit->outer)[i];
 
         outer_dim = mit->fancy_dims[i];
@@ -2807,17 +2809,17 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
      */
     for (i=0; i < index_num; i++) {
         if (indices[i].type & HAS_FANCY) {
-            index_arrays[mit->numiter] = (PyArrayObject *)indices[i].object;
-            dtypes[mit->numiter] = intp_descr;
+            index_arrays[mit->num_fancy] = (PyArrayObject *)indices[i].object;
+            dtypes[mit->num_fancy] = intp_descr;
 
-            op_flags[mit->numiter] = (NPY_ITER_NBO |
+            op_flags[mit->num_fancy] = (NPY_ITER_NBO |
                                       NPY_ITER_ALIGNED |
                                       NPY_ITER_READONLY);
-            mit->numiter += 1;
+            mit->num_fancy += 1;
         }
     }
 
-    if (mit->numiter == 0) {
+    if (mit->num_fancy == 0) {
         /*
          * For MapIterArray, it is possible that there is no fancy index.
          * to support this case, add a dummy iterator.
@@ -2838,7 +2840,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         op_flags[0] = NPY_ITER_NBO | NPY_ITER_ALIGNED | NPY_ITER_READONLY;
 
         mit->fancy_dims[0] = 1;
-        mit->numiter = 1;
+        mit->num_fancy = 1;
     }
 
     /*
@@ -2942,16 +2944,13 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         npy_intp strides[NPY_MAXDIMS];
         npy_stride_sort_item strideperm[NPY_MAXDIMS];
 
-        for (i=0; i < mit->numiter; i++) {
+        for (i=0; i < mit->num_fancy; i++) {
             tmp_op_flags[i] = NPY_ITER_READONLY;
         }
 
-        Py_INCREF(extra_op_dtype);
-        mit->extra_op_dtype = extra_op_dtype;
-
         if (PyArray_SIZE(subspace) == 1) {
             /* Create an iterator, just to broadcast the arrays?! */
-            tmp_iter = NpyIter_MultiNew(mit->numiter, index_arrays,
+            tmp_iter = NpyIter_MultiNew(mit->num_fancy, index_arrays,
                                         NPY_ITER_ZEROSIZE_OK |
                                         NPY_ITER_REFS_OK |
                                         NPY_ITER_MULTI_INDEX |
@@ -3042,12 +3041,12 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
      * For a single 1-d operand, guarantee iteration order
      * (scipy used this). Note that subspace may be used.
      */
-    if ((mit->numiter == 1) && (PyArray_NDIM(index_arrays[0]) == 1)) {
+    if ((mit->num_fancy == 1) && (PyArray_NDIM(index_arrays[0]) == 1)) {
         outer_flags |= NPY_ITER_DONT_NEGATE_STRIDES;
     }
 
     /* If external array is iterated, and no subspace is needed */
-    nops = mit->numiter;
+    nops = mit->num_fancy;
 
     if (!uses_subspace) {
         outer_flags |= NPY_ITER_EXTERNAL_LOOP;
@@ -3058,25 +3057,25 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
          * NOTE: This small limitation should practically not matter.
          *       (replaces npyiter error)
          */
-        if (mit->numiter > NPY_MAXDIMS - 1) {
+        if (mit->num_fancy > NPY_MAXDIMS - 1) {
             PyErr_Format(PyExc_IndexError,
                          "when no subspace is given, the number of index "
                          "arrays cannot be above %d, but %d index arrays found",
-                         NPY_MAXDIMS - 1, mit->numiter);
+                         NPY_MAXDIMS - 1, mit->num_fancy);
             goto fail;
         }
 
         nops += 1;
-        index_arrays[mit->numiter] = extra_op;
+        index_arrays[mit->num_fancy] = extra_op;
 
-        dtypes[mit->numiter] = extra_op_dtype;
-        op_flags[mit->numiter] = (extra_op_flags |
+        dtypes[mit->num_fancy] = extra_op_dtype;
+        op_flags[mit->num_fancy] = (extra_op_flags |
                                   NPY_ITER_ALLOCATE |
                                   NPY_ITER_NO_SUBTYPE);
 
         if (extra_op) {
             /* Use the axis remapping */
-            op_axes[mit->numiter] = single_op_axis;
+            op_axes[mit->num_fancy] = single_op_axis;
             mit->outer = NpyIter_AdvancedNew(nops, index_arrays, outer_flags,
                              NPY_KEEPORDER, NPY_UNSAFE_CASTING, op_flags, dtypes,
                              mit->nd_fancy, op_axes, mit->dimensions, 0);
@@ -3109,18 +3108,11 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     if (!uses_subspace) {
         mit->outer_strides = NpyIter_GetInnerStrideArray(mit->outer);
     }
-    if (NpyIter_IterationNeedsAPI(mit->outer)) {
-        mit->needs_api = 1;
-        /* We may be doing a cast for the buffer, and that may have failed */
-        if (PyErr_Occurred()) {
-            goto fail;
-        }
-    }
 
     /* Get the allocated extra_op */
     if (extra_op_flags) {
         if (extra_op == NULL) {
-            mit->extra_op = NpyIter_GetOperandArray(mit->outer)[mit->numiter];
+            mit->extra_op = NpyIter_GetOperandArray(mit->outer)[mit->num_fancy];
         }
         else {
             mit->extra_op = extra_op;
@@ -3237,14 +3229,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     mit->subspace_ptrs = NpyIter_GetDataPtrArray(mit->subspace_iter);
     mit->subspace_strides = NpyIter_GetInnerStrideArray(mit->subspace_iter);
 
-    if (NpyIter_IterationNeedsAPI(mit->subspace_iter)) {
-        mit->needs_api = 1;
-        /*
-         * NOTE: In this case, need to call PyErr_Occurred() after
-         *       basepointer resetting (buffer allocation)
-         */
-    }
-
     Py_XDECREF(extra_op);
     Py_DECREF(intp_descr);
     return (PyObject *)mit;
@@ -3313,9 +3297,8 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 }
 
 
-/*NUMPY_API
- *
- * Same as PyArray_MapIterArray, but:
+/*
+ * Use advanced indexing to iterate an array.
  *
  * If copy_if_overlap != 0, check if `a` has memory overlap with any of the
  * arrays in `index` and with `extra_op`. If yes, make copies as appropriate
@@ -3378,12 +3361,6 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
         goto fail;
     }
 
-    /* Required for backward compatibility */
-    mit->ait = (PyArrayIterObject *)PyArray_IterNew((PyObject *)a);
-    if (mit->ait == NULL) {
-        goto fail;
-    }
-
     if (PyArray_MapIterCheckIndices(mit) < 0) {
         goto fail;
     }
@@ -3412,17 +3389,6 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
 }
 
 
-/*NUMPY_API
- *
- * Use advanced indexing to iterate an array.
- */
-NPY_NO_EXPORT PyObject *
-PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
-{
-    return PyArray_MapIterArrayCopyIfOverlap(a, index, 0, NULL);
-}
-
-
 #undef HAS_INTEGER
 #undef HAS_NEWAXIS
 #undef HAS_SLICE
@@ -3438,10 +3404,8 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
 {
     PyArray_ResolveWritebackIfCopy(mit->array);
     Py_XDECREF(mit->array);
-    Py_XDECREF(mit->ait);
     Py_XDECREF(mit->subspace);
     Py_XDECREF(mit->extra_op);
-    Py_XDECREF(mit->extra_op_dtype);
     if (mit->outer != NULL) {
         NpyIter_Deallocate(mit->outer);
     }

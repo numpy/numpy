@@ -111,10 +111,10 @@ distributed with NumPy and allows easy integration with Fortran and
 next section.
 
 
-f2py
+F2PY
 ====
 
-F2py allows you to automatically construct an extension module that
+F2PY allows you to automatically construct an extension module that
 interfaces to routines in Fortran 77/90/95 code. It has the ability to
 parse Fortran 77/90/95 code and automatically generate Python
 signatures for the subroutines it encounters, or you can guide how the
@@ -333,7 +333,7 @@ C or Fortran code.
 ctypes
 ======
 
-`Ctypes <https://docs.python.org/3/library/ctypes.html>`_
+`ctypes <https://docs.python.org/3/library/ctypes.html>`_
 is a Python extension module, included in the stdlib, that
 allows you to call an arbitrary function in a shared library directly
 from Python. This approach allows you to interface with C-code directly
@@ -884,10 +884,10 @@ need to be integrated cleanly into Python, consider learning about and using
 Boost.Python.
 
 
-PyFort
+Pyfort
 ------
 
-PyFort is a nice tool for wrapping Fortran and Fortran-like C-code
+Pyfort is a nice tool for wrapping Fortran and Fortran-like C-code
 into Python with support for Numeric arrays. It was written by Paul
 Dubois, a distinguished computer scientist and the very first
 maintainer of Numeric (now retired). It is worth mentioning in the

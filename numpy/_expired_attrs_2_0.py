@@ -40,11 +40,14 @@ __expired_attributes__ = {
     "Infinity": "Use `np.inf` instead.",
     "NaN": "Use `np.nan` instead.",
     "infty": "Use `np.inf` instead.",
-    "issctype": "",
-    "maximum_sctype": "",
-    "obj2sctype": "",
-    "sctype2char": "",
-    "sctypes": "",
+    "issctype": "Use `issubclass(rep, np.generic)` instead.",
+    "maximum_sctype":
+        "Use a specific dtype instead. You should avoid relying "
+        "on any implicit mechanism and select the largest dtype of "
+        "a kind explicitly in the code.",
+    "obj2sctype": "Use `np.dtype(obj).type` instead.",
+    "sctype2char": "Use `np.dtype(obj).char` instead.",
+    "sctypes": "Access dtypes explicitly instead.",
     "issubsctype": "Use `np.issubdtype` instead.",
     "set_string_function": 
         "Use `np.set_printoptions` instead with a formatter for "

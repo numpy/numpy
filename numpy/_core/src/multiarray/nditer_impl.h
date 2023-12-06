@@ -68,11 +68,11 @@
 #endif
 /**********************************************/
 
-/* Rounds up a number of bytes to be divisible by sizeof intp */
-#if NPY_SIZEOF_INTP == 4
-#define NPY_INTP_ALIGNED(size) ((size + 0x3)&(-0x4))
+/* Rounds up a number of bytes to be divisible by sizeof intptr_t */
+#if NPY_SIZEOF_PY_INTPTR_T == 4
+#define NPY_PTR_ALIGNED(size) ((size + 0x3)&(-0x4))
 #else
-#define NPY_INTP_ALIGNED(size) ((size + 0x7)&(-0x8))
+#define NPY_PTR_ALIGNED(size) ((size + 0x7)&(-0x8))
 #endif
 
 /* Internal iterator flags */
@@ -165,20 +165,20 @@ typedef npy_int16 npyiter_opitflags;
 
 /* Byte sizes of the iterator members */
 #define NIT_PERM_SIZEOF(itflags, ndim, nop) \
-        NPY_INTP_ALIGNED(NPY_MAXDIMS)
+        NPY_PTR_ALIGNED(NPY_MAXDIMS)
 #define NIT_DTYPES_SIZEOF(itflags, ndim, nop) \
-        ((NPY_SIZEOF_INTP)*(nop))
+        ((NPY_SIZEOF_PY_INTPTR_T)*(nop))
 #define NIT_RESETDATAPTR_SIZEOF(itflags, ndim, nop) \
-        ((NPY_SIZEOF_INTP)*(nop+1))
+        ((NPY_SIZEOF_PY_INTPTR_T)*(nop+1))
 #define NIT_BASEOFFSETS_SIZEOF(itflags, ndim, nop) \
-        ((NPY_SIZEOF_INTP)*(nop+1))
+        ((NPY_SIZEOF_PY_INTPTR_T)*(nop+1))  /* Could be sizeof intp */
 #define NIT_OPERANDS_SIZEOF(itflags, ndim, nop) \
-        ((NPY_SIZEOF_INTP)*(nop))
+        ((NPY_SIZEOF_PY_INTPTR_T)*(nop))
 #define NIT_OPITFLAGS_SIZEOF(itflags, ndim, nop) \
-        (NPY_INTP_ALIGNED(sizeof(npyiter_opitflags) * nop))
+        (NPY_PTR_ALIGNED(sizeof(npyiter_opitflags) * nop))
 #define NIT_BUFFERDATA_SIZEOF(itflags, ndim, nop) \
         ((itflags&NPY_ITFLAG_BUFFER) ? ( \
-            (NPY_SIZEOF_INTP)*(6 + 5*nop) + sizeof(NpyIter_TransferInfo) * nop) : 0)
+            (NPY_SIZEOF_PY_INTPTR_T)*(6 + 5*nop) + sizeof(NpyIter_TransferInfo) * nop) : 0)
 
 /* Byte offsets of the iterator members starting from iter->iter_flexdata */
 #define NIT_PERM_OFFSET() \
@@ -245,14 +245,14 @@ struct NpyIter_TransferInfo_tag {
     NPY_cast_info read;
     NPY_cast_info write;
     NPY_traverse_info clear;
-    /* Probably unnecessary, but make sure what follows is intp aligned: */
-    npy_intp _unused_ensure_alignment[];
+    /* Probably unnecessary, but make sure what follows is intptr aligned: */
+    Py_intptr_t _unused_ensure_alignment[];
 };
 
 struct NpyIter_BufferData_tag {
     npy_intp buffersize, size, bufiterend,
              reduce_pos, reduce_outersize, reduce_outerdim;
-    npy_intp bd_flexdata;
+    Py_intptr_t bd_flexdata;
 };
 
 #define NBF_BUFFERSIZE(bufferdata) ((bufferdata)->buffersize)
@@ -277,7 +277,7 @@ struct NpyIter_BufferData_tag {
 /* Internal-only AXISDATA MEMBER ACCESS. */
 struct NpyIter_AxisData_tag {
     npy_intp shape, index;
-    npy_intp ad_flexdata;
+    Py_intptr_t ad_flexdata;
 };
 #define NAD_SHAPE(axisdata) ((axisdata)->shape)
 #define NAD_INDEX(axisdata) ((axisdata)->index)
@@ -297,7 +297,7 @@ struct NpyIter_AxisData_tag {
         1 + \
         /* intp stride[nop+1] AND char* ptr[nop+1] */ \
         2*((nop)+1) \
-        )*(size_t)NPY_SIZEOF_INTP)
+        )*(size_t)NPY_SIZEOF_PY_INTPTR_T)
 
 /*
  * Macro to advance an AXISDATA pointer by a specified count.

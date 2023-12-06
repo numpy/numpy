@@ -8,6 +8,7 @@ import builtins
 
 import numpy as np
 from . import multiarray
+from . import numerictypes as nt
 from .multiarray import (
     ALLOW_THREADS,
     BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
@@ -26,7 +27,6 @@ from . import shape_base
 from .overrides import set_array_function_like_doc, set_module
 from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
-from .numerictypes import bool_
 from ..exceptions import AxisError
 from ._ufunc_config import errstate, _no_nep50_warning
 
@@ -51,7 +51,7 @@ __all__ = [
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
     'identity', 'allclose', 'putmask',
-    'flatnonzero', 'inf', 'nan', 'False_', 'True_', 'bitwise_not', 
+    'flatnonzero', 'inf', 'nan', 'False_', 'True_', 'bitwise_not',
     'full', 'full_like', 'matmul', 'shares_memory', 'may_share_memory',
     '_get_promotion_state', '_set_promotion_state']
 
@@ -479,7 +479,7 @@ def count_nonzero(a, axis=None, *, keepdims=False):
     if np.issubdtype(a.dtype, np.character):
         a_bool = a != a.dtype.type()
     else:
-        a_bool = a.astype(np.bool_, copy=False)
+        a_bool = a.astype(np.bool, copy=False)
 
     return a_bool.sum(axis=axis, dtype=np.intp, keepdims=keepdims)
 
@@ -682,22 +682,22 @@ def correlate(a, v, mode='valid'):
     See Also
     --------
     convolve : Discrete, linear convolution of two one-dimensional sequences.
-    scipy.signal.correlate : uses FFT which has superior performance 
+    scipy.signal.correlate : uses FFT which has superior performance
         on large arrays.
 
     Notes
     -----
-    The definition of correlation above is not unique and sometimes 
+    The definition of correlation above is not unique and sometimes
     correlation may be defined differently. Another common definition is [1]_:
 
     .. math:: c'_k = \sum_n a_{n} \cdot \overline{v_{n+k}}
 
     which is related to :math:`c_k` by :math:`c'_k = c_{-k}`.
 
-    `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5) 
+    `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5)
     because it does not use the FFT to compute the convolution; in that case,
     `scipy.signal.correlate` might be preferable.
-    
+
     References
     ----------
     .. [1] Wikipedia, "Cross-correlation",
@@ -873,6 +873,8 @@ def outer(a, b, out=None):
     ufunc.outer : A generalization to dimensions other than 1D and other
                   operations. ``np.multiply.outer(a.ravel(), b.ravel())``
                   is the equivalent.
+    linalg.outer : An Array API compatible variation of ``np.outer``,
+                   which accepts 1-dimensional inputs only.
     tensordot : ``np.tensordot(a.ravel(), b.ravel(), axes=((), ()))``
                 is the equivalent.
 
@@ -1510,6 +1512,8 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     --------
     inner : Inner product
     outer : Outer product.
+    linalg.cross : An Array API compatible variation of ``np.cross``,
+                   which accepts (arrays of) 3-element vectors only.
     ix_ : Construct index arrays.
 
     Notes
@@ -1585,7 +1589,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
 
     if (a.ndim < 1) or (b.ndim < 1):
         raise ValueError("At least one array has zero dimension")
-    
+
     # Check axisa and axisb are within bounds
     axisa = normalize_axis_index(axisa, a.ndim, msg_prefix='axisa')
     axisb = normalize_axis_index(axisb, b.ndim, msg_prefix='axisb')
@@ -1597,6 +1601,13 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
            "(dimension must be 2 or 3)")
     if a.shape[-1] not in (2, 3) or b.shape[-1] not in (2, 3):
         raise ValueError(msg)
+    if a.shape[-1] == 2 or b.shape[-1] == 2:
+        # Deprecated in NumPy 2.0, 2023-09-26
+        warnings.warn(
+            "Arrays of 2-dimensional vectors are deprecated. Use arrays of "
+            "3-dimensional vectors instead. (deprecated in NumPy 2.0)",
+            DeprecationWarning, stacklevel=2
+        )
 
     # Create the output array
     shape = broadcast(a[..., 0], b[..., 0]).shape
@@ -1882,7 +1893,7 @@ def isscalar(element):
 
     In most cases ``np.ndim(x) == 0`` should be used instead of this function,
     as that will also return true for 0d arrays. This is how numpy overloads
-    functions in the style of the ``dx`` arguments to `gradient` and 
+    functions in the style of the ``dx`` arguments to `gradient` and
     the ``bins`` argument to `histogram`. Some key differences:
 
     +------------------------------------+---------------+-------------------+
@@ -1958,12 +1969,12 @@ def binary_repr(num, width=None):
     width : int, optional
         The length of the returned string if `num` is positive, or the length
         of the two's complement if `num` is negative, provided that `width` is
-        at least a sufficient number of bits for `num` to be represented in 
+        at least a sufficient number of bits for `num` to be represented in
         the designated form.
 
         If the `width` value is insufficient, it will be ignored, and `num`
         will be returned in binary (`num` > 0) or two's complement (`num` < 0)
-        form with its width equal to the minimum number of bits needed to 
+        form with its width equal to the minimum number of bits needed to
         represent the number in the designated form. This behavior is
         deprecated and will later raise an error.
 
@@ -2167,7 +2178,7 @@ _identity_with_like = array_function_dispatch()(identity)
 
 
 def _allclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None):
-    return (a, b)
+    return (a, b, rtol, atol)
 
 
 @array_function_dispatch(_allclose_dispatcher)
@@ -2188,9 +2199,9 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     ----------
     a, b : array_like
         Input arrays to compare.
-    rtol : float
+    rtol : array_like
         The relative tolerance parameter (see Notes).
-    atol : float
+    atol : array_like
         The absolute tolerance parameter (see Notes).
     equal_nan : bool
         Whether to compare NaN's as equal.  If True, NaN's in `a` will be
@@ -2242,11 +2253,11 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
     """
     res = all(isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan))
-    return bool(res)
+    return builtins.bool(res)
 
 
 def _isclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None):
-    return (a, b)
+    return (a, b, rtol, atol)
 
 
 @array_function_dispatch(_isclose_dispatcher)
@@ -2267,9 +2278,9 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     ----------
     a, b : array_like
         Input arrays to compare.
-    rtol : float
+    rtol : array_like
         The relative tolerance parameter (see Notes).
-    atol : float
+    atol : array_like
         The absolute tolerance parameter (see Notes).
     equal_nan : bool
         Whether to compare NaN's as equal.  If True, NaN's in `a` will be
@@ -2330,12 +2341,10 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     >>> np.isclose([1e-10, 1e-10], [1e-20, 0.999999e-10], atol=0.0)
     array([False,  True])
     """
-    def within_tol(x, y, atol, rtol):
-        with errstate(invalid='ignore'), _no_nep50_warning():
-            return less_equal(abs(x-y), atol + rtol * abs(y))
-
-    x = asanyarray(a)
-    y = asanyarray(b)
+    # Turn all but python scalars into arrays.
+    x, y, atol, rtol = (
+        a if isinstance(a, (int, float, complex)) else asanyarray(a)
+        for a in (a, b, atol, rtol))
 
     # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
     # This will cause casting of x later. Also, make sure to allow subclasses
@@ -2344,38 +2353,39 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     #       possibly be deprecated. See also gh-18286.
     #       timedelta works if `atol` is an integer or also a timedelta.
     #       Although, the default tolerances are unlikely to be useful
-    if y.dtype.kind != "m":
+    if (dtype := getattr(y, "dtype", None)) is not None and dtype.kind != "m":
         dt = multiarray.result_type(y, 1.)
         y = asanyarray(y, dtype=dt)
+    elif isinstance(y, int):
+        y = float(y)
 
-    xfin = isfinite(x)
-    yfin = isfinite(y)
-    if all(xfin) and all(yfin):
-        return within_tol(x, y, atol, rtol)
-    else:
-        finite = xfin & yfin
-        cond = zeros_like(finite, subok=True)
-        # Because we're using boolean indexing, x & y must be the same shape.
-        # Ideally, we'd just do x, y = broadcast_arrays(x, y). It's in
-        # lib.stride_tricks, though, so we can't import it here.
-        x = x * ones_like(cond)
-        y = y * ones_like(cond)
-        # Avoid subtraction with infinite/nan values...
-        cond[finite] = within_tol(x[finite], y[finite], atol, rtol)
-        # Check for equality of infinite values...
-        cond[~finite] = (x[~finite] == y[~finite])
+    with errstate(invalid='ignore'), _no_nep50_warning():
+        result = (less_equal(abs(x-y), atol + rtol * abs(y))
+                  & isfinite(y)
+                  | (x == y))
         if equal_nan:
-            # Make NaN == NaN
-            both_nan = isnan(x) & isnan(y)
+            result |= isnan(x) & isnan(y)
 
-            # Needed to treat masked arrays correctly. = True would not work.
-            cond[both_nan] = both_nan[both_nan]
-
-        return cond[()]  # Flatten 0d arrays to scalars
+    return result[()]  # Flatten 0d arrays to scalars
 
 
 def _array_equal_dispatcher(a1, a2, equal_nan=None):
     return (a1, a2)
+
+
+_no_nan_types = {
+    # should use np.dtype.BoolDType, but as of writing
+    # that fails the reloading test.
+    type(dtype(nt.bool)),
+    type(dtype(nt.int8)),
+    type(dtype(nt.int16)),
+    type(dtype(nt.int32)),
+    type(dtype(nt.int64)),
+}
+
+
+def _dtype_cannot_hold_nan(dtype):
+    return type(dtype) in _no_nan_types
 
 
 @array_function_dispatch(_array_equal_dispatcher)
@@ -2439,14 +2449,24 @@ def array_equal(a1, a2, equal_nan=False):
     if a1.shape != a2.shape:
         return False
     if not equal_nan:
-        return bool(asarray(a1 == a2).all())
+        return builtins.bool((a1 == a2).all())
+    cannot_have_nan = (_dtype_cannot_hold_nan(a1.dtype)
+                       and _dtype_cannot_hold_nan(a2.dtype))
+    if cannot_have_nan:
+        if a1 is a2:
+            return True
+        return builtins.bool((a1 == a2).all())
+
+    if a1 is a2:
+        # nan will compare equal so an array will compare equal to itself.
+        return True
     # Handling NaN values if equal_nan is True
     a1nan, a2nan = isnan(a1), isnan(a2)
     # NaN's occur at different locations
     if not (a1nan == a2nan).all():
         return False
     # Shapes of a1, a2 and masks are guaranteed to be consistent by this point
-    return bool(asarray(a1[~a1nan] == a2[~a1nan]).all())
+    return builtins.bool((a1[~a1nan] == a2[~a1nan]).all())
 
 
 def _array_equiv_dispatcher(a1, a2):
@@ -2498,13 +2518,13 @@ def array_equiv(a1, a2):
     except Exception:
         return False
 
-    return bool(asarray(a1 == a2).all())
+    return builtins.bool((a1 == a2).all())
 
 
 inf = PINF
 nan = NAN
-False_ = bool_(False)
-True_ = bool_(True)
+False_ = nt.bool(False)
+True_ = nt.bool(True)
 
 
 def extend_all(module):

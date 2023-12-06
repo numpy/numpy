@@ -5,12 +5,13 @@
 #include "numpy/ufuncobject.h"
 #include "array_method.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 NPY_NO_EXPORT PyArrayMethodObject *
 PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *signature[]);
-
-
 
 /*
  * The following two symbols are in the header so that other places can use
@@ -29,5 +30,8 @@ NPY_NO_EXPORT NPY_CASTING
 wrapped_legacy_resolve_descriptors(PyArrayMethodObject *,
         PyArray_DTypeMeta **, PyArray_Descr **, PyArray_Descr **, npy_intp *);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /*_NPY_LEGACY_ARRAY_METHOD_H */

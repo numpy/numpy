@@ -5,6 +5,10 @@
 #include "dtypemeta.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * These are mainly needed for value based promotion in ufuncs.  It
  * may be necessary to make them (partially) public, to allow user-defined
@@ -69,5 +73,9 @@ npy_mark_tmp_array_if_pyscalar(
     }
     return 0;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_ABSTRACTDTYPES_H_ */

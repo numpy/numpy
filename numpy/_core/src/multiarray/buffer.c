@@ -1081,6 +1081,8 @@ _pep3118_letter_to_type(char letter, int native, int is_complex)
     case 'L': return native ? NPY_ULONG : NPY_UINT32;
     case 'q': return native ? NPY_LONGLONG : NPY_INT64;
     case 'Q': return native ? NPY_ULONGLONG : NPY_UINT64;
+    case 'n': return native ? NPY_INTP : -1;
+    case 'N': return native ? NPY_UINTP : -1;
     case 'e': return NPY_HALF;
     case 'f': return is_complex ? NPY_CFLOAT : NPY_FLOAT;
     case 'd': return is_complex ? NPY_CDOUBLE : NPY_DOUBLE;

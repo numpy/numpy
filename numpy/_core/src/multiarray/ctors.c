@@ -658,6 +658,16 @@ PyArray_NewFromDescr_int(
         return NULL;
     }
 
+    /* finalize the descriptor if the DType defines a finalization function */
+    finalize_descr_function *finalize =
+            NPY_DT_SLOTS(NPY_DTYPE(descr))->finalize_descr;
+    if (finalize != NULL && data == NULL) {
+        Py_SETREF(descr, finalize(descr));
+        if (descr == NULL) {
+            return NULL;
+        }
+    }
+
     nbytes = descr->elsize;
     /*
      * Unless explicitly asked not to, we do replace dtypes in some cases.
@@ -2775,14 +2785,14 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
     PyObject *temp1, *temp2;
     int n = PyArray_NDIM(arr);
 
-    if (*axis == NPY_MAXDIMS || n == 0) {
+    if (*axis == NPY_RAVEL_AXIS || n == 0) {
         if (n != 1) {
             temp1 = PyArray_Ravel(arr,0);
             if (temp1 == NULL) {
                 *axis = 0;
                 return NULL;
             }
-            if (*axis == NPY_MAXDIMS) {
+            if (*axis == NPY_RAVEL_AXIS) {
                 *axis = PyArray_NDIM((PyArrayObject *)temp1)-1;
             }
         }
@@ -3213,7 +3223,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
 
     if (!dtype) {
         /* intentionally made to be at least NPY_LONG */
-        dtype = PyArray_DescrFromType(NPY_LONG);
+        dtype = PyArray_DescrFromType(NPY_INTP);
         Py_SETREF(dtype, PyArray_DescrFromObject(start, dtype));
         if (dtype == NULL) {
             goto fail;

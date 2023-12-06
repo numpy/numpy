@@ -65,7 +65,7 @@ class TestExtraArgs:
 
     def test_bool(self):
         with pytest.raises(TypeError):
-            np.bool_(False, garbage=True)
+            np.bool(False, garbage=True)
 
     def test_void(self):
         with pytest.raises(TypeError):
@@ -78,8 +78,8 @@ class TestFromInt:
         assert_equal(1024, np.intp(1024))
 
     def test_uint64_from_negative(self):
-        with pytest.warns(DeprecationWarning):
-            assert_equal(np.uint64(-2), np.uint64(18446744073709551614))
+        with pytest.raises(OverflowError):
+            np.uint64(-2)
 
 
 int_types = [np.byte, np.short, np.intc, np.long, np.longlong]

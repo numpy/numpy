@@ -183,7 +183,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         if (len > NPY_MAXDIMS) {
             PyErr_Format(PyExc_ValueError,
                     "maximum supported dimension for an ndarray "
-                    "is %d, found %d", NPY_MAXDIMS, len);
+                    "is currently %d, found %d", NPY_MAXDIMS, len);
             Py_DECREF(seq_obj);
             return NPY_FAIL;
         }
@@ -325,22 +325,13 @@ NPY_NO_EXPORT int
 PyArray_AxisConverter(PyObject *obj, int *axis)
 {
     if (obj == Py_None) {
-        *axis = NPY_MAXDIMS;
+        *axis = NPY_RAVEL_AXIS;
     }
     else {
         *axis = PyArray_PyIntAsInt_ErrMsg(obj,
                                "an integer is required for the axis");
         if (error_converting(*axis)) {
             return NPY_FAIL;
-        }
-        if (*axis == NPY_MAXDIMS){
-            /* NumPy 1.23, 2022-05-19 */
-            if (DEPRECATE("Using `axis=32` (MAXDIMS) is deprecated. "
-                          "32/MAXDIMS had the same meaning as `axis=None` which "
-                          "should be used instead.  "
-                          "(Deprecated NumPy 1.23)") < 0) {
-                return NPY_FAIL;
-            }
         }
     }
     return NPY_SUCCEED;
@@ -989,7 +980,7 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
 
     /*
      * Be a bit stricter and not allow bools.
-     * np.bool_ is also disallowed as Boolean arrays do not currently
+     * np.bool is also disallowed as Boolean arrays do not currently
      * support index.
      */
     if (!o || PyBool_Check(o) || PyArray_IsScalar(o, Bool)) {

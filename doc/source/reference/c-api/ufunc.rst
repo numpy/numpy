@@ -1,4 +1,4 @@
-UFunc API
+ufunc API
 =========
 
 .. sectionauthor:: Travis E. Oliphant

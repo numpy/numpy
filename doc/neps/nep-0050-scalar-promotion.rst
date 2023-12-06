@@ -267,7 +267,7 @@ arrays that are not 0-D, such as ``array([2])``.
          precision, which is ``complex128``.
 
 
-Motivation and Scope
+Motivation and scope
 ====================
 
 The motivation for changing the behaviour with respect to inspecting the value
@@ -311,7 +311,7 @@ overflow in the result,
 we believe that the proposal follows the "principle of least surprise".
 
 
-Usage and Impact
+Usage and impact
 ================
 
 This NEP is expected to be implemented with **no** transition period that warns
@@ -589,7 +589,7 @@ result will be different::
     np.add(uint8_arr, np.array([4], dtype=np.int64)).dtype == np.int64
 
 
-Proposed Weak Promotion
+Proposed weak promotion
 -----------------------
 
 This proposal uses a "weak scalar" logic.  This means that Python ``int``, ``float``,
@@ -611,7 +611,7 @@ At no time is the value used to decide the result of this promotion.  The value 
 considered when it is converted to the new dtype; this may raise an error.
 
 
-Related Work
+Related work
 ============
 
 Different Python projects that fill a similar space to NumPy prefer the weakly
@@ -796,7 +796,7 @@ Discussion
 * https://mail.python.org/archives/list/numpy-discussion@python.org/thread/NA3UBE3XAUTXFYBX6HPIOCNCTNF3PWSZ/#T5WAYQPRMI5UCK7PKPCE3LGK7AQ5WNGH
 * Poll about the desired future behavior: https://discuss.scientific-python.org/t/poll-future-numpy-behavior-when-mixing-arrays-numpy-scalars-and-python-scalars/202
 
-References and Footnotes
+References and footnotes
 ========================
 
 .. [1] Each NEP must either be explicitly labeled as placed in the public domain (see

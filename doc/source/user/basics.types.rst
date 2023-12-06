@@ -30,7 +30,7 @@ confusion with builtin python type names, such as `numpy.bool_`.
       - Actual C type
       - Description
 
-    * - `numpy.bool_`
+    * - `numpy.bool` or `numpy.bool_`
       - N/A
       - ``bool`` (defined in ``stdbool.h``)
       - Boolean (True or False) stored as a byte.
@@ -67,13 +67,24 @@ confusion with builtin python type names, such as `numpy.bool_`.
 
     * - `numpy.intp`
       - N/A
-      - ``intptr_t`` (defined in ``stdint.h``)
-      - Platform-defined integer type capable of holding a pointer.
+      - ``ssize_t``/``Py_ssize_t``
+      - Platform-defined integer of size ``size_t``; used e.g. for sizes.
 
     * - `numpy.uintp`
       - N/A
-      - ``uintptr_t`` (defined in ``stdint.h``)
-      - Platform-defined integer type capable of holding a pointer without sign.
+      - ``size_t``
+      - Platform-defined integer type capable of storing the maximum
+        allocation size.
+
+    * - N/A
+      - ``'p'``
+      - ``intptr_t``
+      - Guaranteed to hold pointers. Character code only (Python and C).
+
+    * - N/A
+      - ``'P'``
+      - ``uintptr_t``
+      - Guaranteed to hold pointers. Character code only (Python and C).
 
     * - `numpy.int32` or `numpy.int64`
       - `numpy.long`
@@ -141,7 +152,7 @@ aliases are provided (See :ref:`sized-aliases`).
 NumPy numerical types are instances of ``dtype`` (data-type) objects, each
 having unique characteristics.  Once you have imported NumPy using
 ``>>> import numpy as np``
-the dtypes are available as ``np.bool_``, ``np.float32``, etc.
+the dtypes are available as ``np.bool``, ``np.float32``, etc.
 
 Advanced types, not listed above, are explored in
 section :ref:`structured_arrays`.
@@ -187,7 +198,7 @@ the type itself as a function. For example: ::
     array([0, 1, 2], dtype=int8)
 
 Note that, above, we use the *Python* float object as a dtype.  NumPy knows
-that ``int`` refers to ``np.int_``, ``bool`` means ``np.bool_``,
+that ``int`` refers to ``np.int_``, ``bool`` means ``np.bool``,
 that ``float`` is ``np.float64`` and ``complex`` is ``np.complex128``.
 The other data-types do not have Python equivalents.
 
@@ -211,7 +222,7 @@ properties of the type, such as whether it is an integer::
     False
 
 
-Array Scalars
+Array scalars
 =============
 
 NumPy generally returns elements of arrays as array scalars (a scalar
@@ -234,18 +245,18 @@ methods arrays do.
 
 .. _overflow-errors:
 
-Overflow Errors
+Overflow errors
 ===============
 
 The fixed size of NumPy numeric types may cause overflow errors when a value
 requires more memory than available in the data type. For example, 
-`numpy.power` evaluates ``100 ** 8`` correctly for 64-bit integers,
-but gives 1874919424 (incorrect) for a 32-bit integer.
+`numpy.power` evaluates ``100 ** 9`` correctly for 64-bit integers,
+but gives -1486618624 (incorrect) for a 32-bit integer.
 
-    >>> np.power(100, 8, dtype=np.int64)
-    10000000000000000
-    >>> np.power(100, 8, dtype=np.int32)
-    1874919424
+    >>> np.power(100, 9, dtype=np.int64)
+    1000000000000000000
+    >>> np.power(100, 9, dtype=np.int32)
+    -1486618624
 
 The behaviour of NumPy and Python integer types differs significantly for
 integer overflows and may confuse users expecting NumPy integers to behave
@@ -273,7 +284,7 @@ range of possible values.
     >>> np.power(100, 100, dtype=np.float64)
     1e+200
 
-Extended Precision
+Extended precision
 ==================
 
 Python's floating-point numbers are usually 64-bit floating-point numbers,

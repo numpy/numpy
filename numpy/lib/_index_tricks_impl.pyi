@@ -8,6 +8,7 @@ from typing import (
     SupportsIndex,
 )
 
+import numpy as np
 from numpy import (
     # Circumvent a naming conflict with `AxisConcatenator.matrix`
     matrix as _Matrix,
@@ -17,7 +18,6 @@ from numpy import (
     dtype,
     str_,
     bytes_,
-    bool_,
     int_,
     float64,
     complex128,
@@ -54,7 +54,7 @@ def ix_(*args: str | _NestedSequence[str]) -> tuple[NDArray[str_], ...]: ...
 @overload
 def ix_(*args: bytes | _NestedSequence[bytes]) -> tuple[NDArray[bytes_], ...]: ...
 @overload
-def ix_(*args: bool | _NestedSequence[bool]) -> tuple[NDArray[bool_], ...]: ...
+def ix_(*args: bool | _NestedSequence[bool]) -> tuple[NDArray[np.bool], ...]: ...
 @overload
 def ix_(*args: int | _NestedSequence[int]) -> tuple[NDArray[int_], ...]: ...
 @overload

@@ -811,7 +811,7 @@ class TestUFunc:
             assert_array_equal(c1, c2)
 
             # Trigger "fancy ufunc loop" code path
-            mask = view_element_first_byte(b).view(np.bool_)
+            mask = view_element_first_byte(b).view(np.bool)
 
             a[...] = a_orig
             b[...] = b_orig
@@ -876,7 +876,7 @@ class TestUFunc:
             assert_array_equal(c1, c2)
 
         # Check behavior with same input and output arrays
-        x = np.arange(100).astype(np.bool_)
+        x = np.arange(100).astype(np.bool)
         check(x, x, x)
         check(x, x.copy(), x)
         check(x, x, x.copy())

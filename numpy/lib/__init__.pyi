@@ -22,7 +22,7 @@ from numpy.lib._version import (
     NumpyVersion as NumpyVersion,
 )
 
-from numpy.lib.arrayterator import (
+from numpy.lib._arrayterator_impl import (
     Arrayterator as Arrayterator,
 )
 
@@ -39,4 +39,3 @@ __all__: list[str]
 test: PytestTester
 
 __version__ = version
-emath = scimath

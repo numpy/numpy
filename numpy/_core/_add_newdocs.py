@@ -2931,15 +2931,6 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_finalize__',
     """))
 
 
-add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_prepare__',
-    """
-    a.__array_prepare__(array[, context], /)
-
-    Returns a view of `array` with the same type as self.
-
-    """))
-
-
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_wrap__',
     """
     a.__array_wrap__(array[, context], /)
@@ -3636,6 +3627,12 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('item',
     >>> x.item((2, 2))
     1
 
+    For an array with object dtype, elements are returned as-is.
+
+    >>> a = np.array([np.int64(1)], dtype=object)
+    >>> a.item() #return np.int64
+    np.int64(1)
+
     """))
 
 
@@ -3764,7 +3761,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('repeat',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('reshape',
     """
-    a.reshape(shape, order='C')
+    a.reshape(shape, /, order='C')
 
     Returns an array containing the same data with a new shape.
 

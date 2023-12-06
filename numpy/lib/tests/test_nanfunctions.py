@@ -246,7 +246,7 @@ class TestNanFunctions_MinMax:
 
         ar = np.arange(9).reshape(3, 3).astype(dtype)
         ar[0, :] = np.nan
-        where = np.ones_like(ar, dtype=np.bool_)
+        where = np.ones_like(ar, dtype=np.bool)
         where[:, 0] = False
 
         for f in self.nanfuncs:
@@ -594,7 +594,7 @@ class TestNanFunctions_SumProd(SharedNanFunctionsTestsMixin):
     def test_where(self, dtype):
         ar = np.arange(9).reshape(3, 3).astype(dtype)
         ar[0, :] = np.nan
-        where = np.ones_like(ar, dtype=np.bool_)
+        where = np.ones_like(ar, dtype=np.bool)
         where[:, 0] = False
 
         for f in self.nanfuncs:
@@ -684,12 +684,12 @@ class TestNanFunctions_MeanVarStd(SharedNanFunctionsTestsMixin):
 
     def test_dtype_error(self):
         for f in self.nanfuncs:
-            for dtype in [np.bool_, np.int_, np.object_]:
+            for dtype in [np.bool, np.int_, np.object_]:
                 assert_raises(TypeError, f, _ndat, axis=1, dtype=dtype)
 
     def test_out_dtype_error(self):
         for f in self.nanfuncs:
-            for dtype in [np.bool_, np.int_, np.object_]:
+            for dtype in [np.bool, np.int_, np.object_]:
                 out = np.empty(_ndat.shape[0], dtype=dtype)
                 assert_raises(TypeError, f, _ndat, axis=1, out=out)
 
@@ -762,7 +762,7 @@ class TestNanFunctions_MeanVarStd(SharedNanFunctionsTestsMixin):
     def test_where(self, dtype):
         ar = np.arange(9).reshape(3, 3).astype(dtype)
         ar[0, :] = np.nan
-        where = np.ones_like(ar, dtype=np.bool_)
+        where = np.ones_like(ar, dtype=np.bool)
         where[:, 0] = False
 
         for f, f_std in zip(self.nanfuncs, self.stdfuncs):
@@ -1270,7 +1270,7 @@ class TestNanFunctions_Quantile:
                [False, True]])),
     ])
 def test__nan_mask(arr, expected):
-    for out in [None, np.empty(arr.shape, dtype=np.bool_)]:
+    for out in [None, np.empty(arr.shape, dtype=np.bool)]:
         actual = _nan_mask(arr, out=out)
         assert_equal(actual, expected)
         # the above won't distinguish between True proper
@@ -1284,7 +1284,7 @@ def test__replace_nan():
     """ Test that _replace_nan returns the original array if there are no
     NaNs, not a copy.
     """
-    for dtype in [np.bool_, np.int32, np.int64]:
+    for dtype in [np.bool, np.int32, np.int64]:
         arr = np.array([0, 1], dtype=dtype)
         result, mask = _replace_nan(arr, 0)
         assert mask is None

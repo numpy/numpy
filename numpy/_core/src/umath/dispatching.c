@@ -153,13 +153,20 @@ PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
 NPY_NO_EXPORT int
 PyUFunc_AddLoopFromSpec(PyObject *ufunc, PyArrayMethod_Spec *spec)
 {
+    return PyUFunc_AddLoopFromSpec_int(ufunc, spec, 0);
+}
+
+
+NPY_NO_EXPORT int
+PyUFunc_AddLoopFromSpec_int(PyObject *ufunc, PyArrayMethod_Spec *spec, int priv)
+{
     if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
         PyErr_SetString(PyExc_TypeError,
                 "ufunc object passed is not a ufunc!");
         return -1;
     }
     PyBoundArrayMethodObject *bmeth =
-            (PyBoundArrayMethodObject *)PyArrayMethod_FromSpec(spec);
+            (PyBoundArrayMethodObject *)PyArrayMethod_FromSpec_int(spec, priv);
     if (bmeth == NULL) {
         return -1;
     }
@@ -275,6 +282,12 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                         == PyTuple_GET_ITEM(curr_dtypes, 2)) {
                     continue;
                 }
+                /*
+                 * This should be a reduce, but doesn't follow the reduce
+                 * pattern.  So (for now?) consider this not a match.
+                 */
+                matches = NPY_FALSE;
+                continue;
             }
 
             if (resolver_dtype == (PyArray_DTypeMeta *)Py_None) {
@@ -939,7 +952,8 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
     }
 
     if (force_legacy_promotion
-            && npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+            && npy_promotion_state == NPY_USE_LEGACY_PROMOTION
+            && (ufunc->ntypes != 0 || ufunc->userloops != NULL)) {
         /*
          * We must use legacy promotion for value-based logic. Call the old
          * resolver once up-front to get the "actual" loop dtypes.
@@ -1129,7 +1143,7 @@ object_only_ufunc_promoter(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    PyArray_DTypeMeta *object_DType = PyArray_DTypeFromTypeNum(NPY_OBJECT);
+    PyArray_DTypeMeta *object_DType = &PyArray_ObjectDType;
 
     for (int i = 0; i < ufunc->nargs; i++) {
         if (signature[i] == NULL) {
@@ -1181,7 +1195,7 @@ logical_ufunc_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
         }
         else {
             /* Always override to boolean */
-            item = PyArray_DTypeFromTypeNum(NPY_BOOL);
+            item = &PyArray_BoolDType;
             if (op_dtypes[i] != NULL && op_dtypes[i]->type_num == NPY_OBJECT) {
                 force_object = 1;
             }
@@ -1205,7 +1219,7 @@ logical_ufunc_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
         if (signature[i] != NULL) {
             continue;
         }
-        Py_SETREF(new_op_dtypes[i], PyArray_DTypeFromTypeNum(NPY_OBJECT));
+        Py_SETREF(new_op_dtypes[i], &PyArray_ObjectDType);
     }
     return 0;
 }

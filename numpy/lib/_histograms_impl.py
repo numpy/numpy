@@ -285,7 +285,7 @@ def _ravel_and_check_weights(a, weights):
     a = np.asarray(a)
 
     # Ensure that the array is a "subtractable" dtype
-    if a.dtype == np.bool_:
+    if a.dtype == np.bool:
         warnings.warn("Converting input from {} to {} for compatibility."
                       .format(a.dtype, np.uint8),
                       RuntimeWarning, stacklevel=3)
@@ -348,13 +348,15 @@ def _unsigned_subtract(a, b):
     }
     dt = np.result_type(a, b)
     try:
-        dt = signed_to_unsigned[dt.type]
+        unsigned_dt = signed_to_unsigned[dt.type]
     except KeyError:
         return np.subtract(a, b, dtype=dt)
     else:
         # we know the inputs are integers, and we are deliberately casting
-        # signed to unsigned
-        return np.subtract(a, b, casting='unsafe', dtype=dt)
+        # signed to unsigned.  The input may be negative python integers so
+        # ensure we pass in arrays with the initial dtype (related to NEP 50).
+        return np.subtract(np.asarray(a, dtype=dt), np.asarray(b, dtype=dt),
+                           casting='unsafe', dtype=unsigned_dt)
 
 
 def _get_bin_edges(a, bins, range, weights):
