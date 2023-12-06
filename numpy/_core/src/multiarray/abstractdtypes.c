@@ -154,7 +154,7 @@ int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
     if (NPY_DT_is_legacy(other) && other->type_num < NPY_NTYPES) {
         if (other->type_num == NPY_BOOL) {
             /* Use the default integer for bools: */
-            return &PyArray_IntpDType;
+            return NPY_DT_NewRef(&PyArray_IntpDType);
         }
     }
     else if (NPY_DT_is_legacy(other)) {
@@ -174,7 +174,6 @@ int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
         /* Try again with `int8`, an error may have been set, though */
         PyArray_DTypeMeta *int8_dt = &PyArray_Int8DType;
         res = NPY_DT_CALL_common_dtype(other, int8_dt);
-        Py_DECREF(int8_dt);
         if (res == NULL) {
             PyErr_Clear();
         }
@@ -187,7 +186,6 @@ int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
         /* And finally, we will try the default integer, just for sports... */
         PyArray_DTypeMeta *default_int = &PyArray_IntpDType;
         res = NPY_DT_CALL_common_dtype(other, default_int);
-        Py_DECREF(default_int);
         if (res == NULL) {
             PyErr_Clear();
         }
@@ -204,7 +202,7 @@ float_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
     if (NPY_DT_is_legacy(other) && other->type_num < NPY_NTYPES) {
         if (other->type_num == NPY_BOOL || PyTypeNum_ISINTEGER(other->type_num)) {
             /* Use the default integer for bools and ints: */
-            return &PyArray_DoubleDType;
+            return NPY_DT_NewRef(&PyArray_DoubleDType);
         }
     }
     else if (other == &PyArray_PyIntAbstractDType) {
@@ -215,7 +213,6 @@ float_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
         /* This is a back-compat fallback to usually do the right thing... */
         PyArray_DTypeMeta *half_dt = &PyArray_HalfDType;
         PyArray_DTypeMeta *res = NPY_DT_CALL_common_dtype(other, half_dt);
-        Py_DECREF(half_dt);
         if (res == NULL) {
             PyErr_Clear();
         }
@@ -228,7 +225,6 @@ float_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
         /* Retry with double (the default float) */
         PyArray_DTypeMeta *double_dt = &PyArray_DoubleDType;
         res = NPY_DT_CALL_common_dtype(other, double_dt);
-        Py_DECREF(double_dt);
         return res;
     }
     Py_INCREF(Py_NotImplemented);
@@ -243,14 +239,13 @@ complex_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
         if (other->type_num == NPY_BOOL ||
                 PyTypeNum_ISINTEGER(other->type_num)) {
             /* Use the default integer for bools and ints: */
-            return &PyArray_CDoubleDType;
+            return NPY_DT_NewRef(&PyArray_CDoubleDType);
         }
     }
     else if (NPY_DT_is_legacy(other)) {
         /* This is a back-compat fallback to usually do the right thing... */
         PyArray_DTypeMeta *cfloat_dt = &PyArray_CFloatDType;
         PyArray_DTypeMeta *res = NPY_DT_CALL_common_dtype(other, cfloat_dt);
-        Py_DECREF(cfloat_dt);
         if (res == NULL) {
             PyErr_Clear();
         }
@@ -263,7 +258,6 @@ complex_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
         /* Retry with cdouble (the default complex) */
         PyArray_DTypeMeta *cdouble_dt = &PyArray_CDoubleDType;
         res = NPY_DT_CALL_common_dtype(other, cdouble_dt);
-        Py_DECREF(cdouble_dt);
         return res;
 
     }

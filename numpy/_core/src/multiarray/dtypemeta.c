@@ -919,13 +919,13 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
                 return cls;
             }
             else if (cls->type_num == NPY_HALF || cls->type_num == NPY_FLOAT) {
-                    return &PyArray_CFloatDType;
+                return NPY_DT_NewRef(&PyArray_CFloatDType);
             }
             else if (cls->type_num == NPY_DOUBLE) {
-                return &PyArray_CDoubleDType;
+                return NPY_DT_NewRef(&PyArray_CDoubleDType);
             }
             else if (cls->type_num == NPY_LONGDOUBLE) {
-                return &PyArray_CLongDoubleDType;
+                return NPY_DT_NewRef(&PyArray_CLongDoubleDType);
             }
         }
         else if (other == &PyArray_PyFloatAbstractDType) {

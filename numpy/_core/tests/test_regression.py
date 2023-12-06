@@ -2573,3 +2573,8 @@ class TestRegression:
                   "is not supported."
         ):
             arr.__array_namespace__(api_version="2023.12")
+
+    def test_isin_refcnt_bug(self):
+        # gh-25295
+        for _ in range(1000):
+            np.isclose(np.int64(2), np.int64(2), atol=1e-15, rtol=1e-300)

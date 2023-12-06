@@ -4281,10 +4281,6 @@ PyArray_InitializeDatetimeCasts()
 
     result = 0;
   fail:
-    Py_DECREF(datetime);
-    Py_DECREF(timedelta);
-    Py_DECREF(string);
-    Py_DECREF(unicode);
     Py_XDECREF(tmp);
     return result;
 }

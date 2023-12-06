@@ -444,5 +444,10 @@ typedef PyObject *(getitemfunction)(PyArray_Descr *, char *);
  */
 #define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))
 
+static inline PyArray_DTypeMeta *
+NPY_DT_NewRef(PyArray_DTypeMeta *o) {
+    Py_INCREF(o);
+    return o;
+}
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */
