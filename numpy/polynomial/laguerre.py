@@ -939,10 +939,11 @@ def lagval2d(x, y, c):
 
     Examples
     --------
-    >>> from numpy.polynomial.laguerre import lagval2d
+    >>> from numpy.polynomial.laguerre import lagval2
     >>> c = [[1, 2],[3, 4]]
     >>> lagval2d(1, 1, c)
     1.0
+    
     """
     return pu._valnd(lagval, c, x, y)
 
@@ -1061,7 +1062,7 @@ def lagval3d(x, y, z, c):
     >>> c = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
     >>> lagval3d(1, 1, 2, c)
     -1.0
-    
+ 
     """
     return pu._valnd(lagval, c, x, y, z)
 
@@ -1479,7 +1480,7 @@ def lagcompanion(c):
     >>> lagcompanion([1, 2, 3])
     array([[ 1.        , -0.33333333],
            [-1.        ,  4.33333333]])
-           
+
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
@@ -1662,7 +1663,7 @@ def lagweight(x):
     >>> x = np.array([0, 1, 2])
     >>> lagweight(x)
     array([1.        , 0.36787944, 0.13533528])
-
+    
     """
     w = np.exp(-x)
     return w
