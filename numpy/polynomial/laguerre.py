@@ -938,6 +938,12 @@ def lagval2d(x, y, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.laguerre import lagval2d
+    >>> c = [[1,2],[3,4]]
+    >>> lagval2d(1, 1, c)
+    1.0
     """
     return pu._valnd(lagval, c, x, y)
 
@@ -991,6 +997,13 @@ def laggrid2d(x, y, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.laguerre import laggrid2d
+    >>> c = [[1,2],[3,4]]
+    >>> laggrid2d([0, 1], [0, 1], c)
+    array([[10.,  4.],
+           [ 3.,  1.]])
     """
     return pu._gridnd(lagval, c, x, y)
 
@@ -1041,6 +1054,13 @@ def lagval3d(x, y, z, c):
     -----
 
     .. versionadded:: 1.7.0
+
+    Examples
+    --------
+    >>> from numpy.polynomial.laguerre import lagval3d
+    >>> c = [[[1,2],[3,4]],[[5,6],[7,8]]]
+    >>> lagval3d(1, 2, 3, c)
+    2.0
 
     """
     return pu._valnd(lagval, c, x, y, z)
@@ -1098,6 +1118,16 @@ def laggrid3d(x, y, z, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.laguerre import laggrid3d
+    >>> c = [[[1,2],[3,4]],[[5,6],[7,8]]]
+    >>> laggrid3d([0, 1], [0, 1], [0, 1], c)
+    array([[[36., 16.],
+            [14.,  6.]],
+
+           [[10.,  4.],
+            [ 3.,  1.]]])
     """
     return pu._gridnd(lagval, c, x, y, z)
 
@@ -1425,6 +1455,12 @@ def lagcompanion(c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.laguerre import lagcompanion
+    >>> lagcompanion([1, 2, 3])
+        array([[ 1.        , -0.33333333],
+               [-1.        ,  4.33333333]])
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
@@ -1544,6 +1580,12 @@ def laggauss(deg):
     is the k'th root of :math:`L_n`, and then scaling the results to get
     the right value when integrating 1.
 
+    Examples
+    --------
+    >>> from numpy.polynomial.laguerre import laggauss
+    >>> laggauss(2)
+    (array([0.58578644, 3.41421356]), array([0.85355339, 0.14644661]))
+    
     """
     ideg = pu._as_int(deg, "deg")
     if ideg <= 0:
@@ -1595,6 +1637,12 @@ def lagweight(x):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.laguerre import lagweight
+    >>> x = np.array([0, 1, 2])
+    >>> lagweight(x)
+    array([1.        , 0.36787944, 0.13533528])
     """
     w = np.exp(-x)
     return w
