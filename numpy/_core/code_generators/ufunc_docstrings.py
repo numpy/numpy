@@ -4639,8 +4639,6 @@ add_newdoc('numpy._core.umath', 'lower',
     """
     Return an array with the elements converted to lowercase.
 
-    For byte strings, this method is locale-dependent.
-
     Parameters
     ----------
     x : array_like, with ``bytes_`` or ``unicode_`` dtype
@@ -4668,8 +4666,6 @@ add_newdoc('numpy._core.umath', 'lower',
 add_newdoc('numpy._core.umath', 'upper',
     """
     Return an array with the elements converted to uppercase.
-
-    For byte strings, this method is locale-dependent.
 
     Parameters
     ----------

@@ -262,6 +262,28 @@ struct Buffer {
         }
         return true;
     }
+
+    inline npy_ucs4
+    tolower(size_t index)
+    {
+        switch (enc) {
+        case ENCODING::ASCII:
+            return Py_TOLOWER((*this)[index]);
+        case ENCODING::UTF32:
+            return Py_UNICODE_TOLOWER((*this)[index]);
+        }
+    }
+
+    inline npy_ucs4
+    toupper(size_t index)
+    {
+        switch (enc) {
+        case ENCODING::ASCII:
+            return Py_TOUPPER((*this)[index]);
+        case ENCODING::UTF32:
+            return Py_UNICODE_TOUPPER((*this)[index]);
+        }
+    }
 };
 
 

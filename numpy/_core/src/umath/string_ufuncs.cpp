@@ -435,9 +435,11 @@ string_change_capitalization(Buffer<enc> buf, Buffer<enc> out, CAPITALIZATION ca
     for (i = 0; i < len; i++) {
         switch (cap) {
         case CAPITALIZATION::TOLOWER:
-            *out.buf = Py_UNICODE_TOLOWER(buf[i]);
+            *out.buf = buf.tolower(i);
+            break;
         case CAPITALIZATION::TOUPPER:
-            *out.buf = Py_UNICODE_TOUPPER(buf[i]);
+            *out.buf = buf.toupper(i);
+            break;
         }
         out++;
     }
@@ -1437,122 +1439,6 @@ init_ufunc(PyObject *umath, const char *name, const char *specname, int nin, int
         Py_DECREF(dtypes[i]);
     }
     PyMem_Free((void *) dtypes);
-    return res;
-}
-
-
-static NPY_CASTING
-string_lower_upper_resolve_descriptors(
-        PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
-        PyArray_Descr *given_descrs[3],
-        PyArray_Descr *loop_descrs[3],
-        npy_intp *NPY_UNUSED(view_offset))
-{
-    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
-    if (loop_descrs[0] == NULL) {
-        return _NPY_ERROR_OCCURRED_IN_CAST;
-    }
-
-    Py_INCREF(loop_descrs[0]);
-    loop_descrs[1] = loop_descrs[0];
-
-    return NPY_NO_CASTING;
-}
-
-
-static int
-init_lower(PyObject *umath)
-{
-    int res = -1;
-    /* NOTE: This should receive global symbols? */
-    PyArray_DTypeMeta *String = PyArray_DTypeFromTypeNum(NPY_STRING);
-    PyArray_DTypeMeta *Unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
-
-    /* We start with the string loops: */
-    PyArray_DTypeMeta *dtypes[] = {String, String};
-    /*
-     * We only have one loop right now, the strided one.  The default type
-     * resolver ensures native byte order/canonical representation.
-     */
-    PyType_Slot slots[] = {
-        {NPY_METH_strided_loop, nullptr},
-        {NPY_METH_resolve_descriptors, (void *) &string_lower_upper_resolve_descriptors},
-        {0, nullptr}
-    };
-
-    PyArrayMethod_Spec spec = {};
-    spec.name = "templated_string_lower";
-    spec.nin = 1;
-    spec.nout = 1;
-    spec.dtypes = dtypes;
-    spec.slots = slots;
-    spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
-
-    /* All String loops */
-    if (add_loop(umath, "lower", &spec, string_lower_loop<npy_byte>) < 0) {
-        goto finish;
-    }
-
-    /* All Unicode loops */
-    dtypes[0] = Unicode;
-    dtypes[1] = Unicode;
-    if (add_loop(umath, "lower", &spec, string_lower_loop<npy_ucs4>) < 0) {
-        goto finish;
-    }
-
-    res = 0;
-  finish:
-    Py_DECREF(String);
-    Py_DECREF(Unicode);
-    return res;
-}
-
-
-static int
-init_upper(PyObject *umath)
-{
-    int res = -1;
-    /* NOTE: This should receive global symbols? */
-    PyArray_DTypeMeta *String = PyArray_DTypeFromTypeNum(NPY_STRING);
-    PyArray_DTypeMeta *Unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
-
-    /* We start with the string loops: */
-    PyArray_DTypeMeta *dtypes[] = {String, String};
-    /*
-     * We only have one loop right now, the strided one.  The default type
-     * resolver ensures native byte order/canonical representation.
-     */
-    PyType_Slot slots[] = {
-        {NPY_METH_strided_loop, nullptr},
-        {NPY_METH_resolve_descriptors, (void *) &string_lower_upper_resolve_descriptors},
-        {0, nullptr}
-    };
-
-    PyArrayMethod_Spec spec = {};
-    spec.name = "templated_string_upper";
-    spec.nin = 1;
-    spec.nout = 1;
-    spec.dtypes = dtypes;
-    spec.slots = slots;
-    spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
-
-    /* All String loops */
-    if (add_loop(umath, "upper", &spec, string_upper_loop<npy_byte>) < 0) {
-        goto finish;
-    }
-
-    /* All Unicode loops */
-    dtypes[0] = Unicode;
-    dtypes[1] = Unicode;
-    if (add_loop(umath, "upper", &spec, string_upper_loop<npy_ucs4>) < 0) {
-        goto finish;
-    }
-
-    res = 0;
-  finish:
-    Py_DECREF(String);
-    Py_DECREF(Unicode);
     return res;
 }
 
