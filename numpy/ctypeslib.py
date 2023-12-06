@@ -524,6 +524,30 @@ if ctypes is not None:
 
         The shape parameter must be given if converting from a ctypes POINTER.
         The shape parameter is ignored if converting from a ctypes array
+
+        Parameters
+        ----------
+        obj : ctypes array or ctypes POINTER
+            The ctypes object to convert
+
+        shape : tuple of int, optional
+
+        Returns
+        -------
+        arr : ndarray
+            The numpy array sharing the memory with the ctypes object
+
+        Raises
+        ------
+        TypeError
+            If the conversion is not possible
+
+        Examples
+        --------
+        >>> x = np.arange(5, dtype=np.int32)
+        >>> x_p = x.ctypes.data_as(ctypes.POINTER(ctypes.c_int32))
+        >>> np.ctypeslib.as_array(x_p, shape=(5,))
+        array([0, 1, 2, 3, 4], dtype=int32)
         """
         if isinstance(obj, ctypes._Pointer):
             # convert pointers to an array of the desired shape
@@ -538,8 +562,31 @@ if ctypes is not None:
 
 
     def as_ctypes(obj):
-        """Create and return a ctypes object from a numpy array.  Actually
-        anything that exposes the __array_interface__ is accepted."""
+        """Create and return a ctypes object from a numpy array.  
+        Any object implementing the __array_interface__ is accepted too.
+        Essentially, converts a dtype into a ctypes type.
+        
+        Parameters
+        ----------
+        obj : array_like
+            The array to convert to a ctypes object.
+
+        Returns
+        -------
+        ctypes object
+            The ctypes object containing the array data.    
+
+        Raises
+        ------
+        TypeError
+            If the conversion is not possible
+                            
+        Examples
+        --------
+        >>> np.ctypeslib.as_ctypes(np.zeros(3, 'int'))
+        <c_long_Array_3 object at 0x10808dc70>
+        """
+
         ai = obj.__array_interface__
         if ai["strides"]:
             raise TypeError("strided arrays not supported")
