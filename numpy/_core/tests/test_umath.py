@@ -268,7 +268,7 @@ class TestComparisons:
     import operator
 
     @pytest.mark.parametrize('dtype', sctypes['uint'] + sctypes['int'] +
-                             sctypes['float'] + [np.bool_])
+                             sctypes['float'] + [np.bool])
     @pytest.mark.parametrize('py_comp,np_comp', [
         (operator.lt, np.less),
         (operator.le, np.less_equal),
@@ -279,7 +279,7 @@ class TestComparisons:
     ])
     def test_comparison_functions(self, dtype, py_comp, np_comp):
         # Initialize input arrays
-        if dtype == np.bool_:
+        if dtype == np.bool:
             a = np.random.choice(a=[False, True], size=1000)
             b = np.random.choice(a=[False, True], size=1000)
             scalar = True
@@ -1835,8 +1835,22 @@ class TestFPClass:
         assert_equal(np.isnan(arr_f64[::stride]), nan[::stride])
         assert_equal(np.isinf(arr_f32[::stride]), inf[::stride])
         assert_equal(np.isinf(arr_f64[::stride]), inf[::stride])
-        assert_equal(np.signbit(arr_f32[::stride]), sign[::stride])
-        assert_equal(np.signbit(arr_f64[::stride]), sign[::stride])
+        if platform.processor() == 'riscv64':
+            # On RISC-V, many operations that produce NaNs, such as converting
+            # a -NaN from f64 to f32, return a canonical NaN.  The canonical
+            # NaNs are always positive.  See section 11.3 NaN Generation and
+            # Propagation of the RISC-V Unprivileged ISA for more details.
+            # We disable the sign test on riscv64 for -np.nan as we
+            # cannot assume that its sign will be honoured in these tests.
+            arr_f64_rv = np.copy(arr_f64)
+            arr_f32_rv = np.copy(arr_f32)
+            arr_f64_rv[1] = -1.0
+            arr_f32_rv[1] = -1.0
+            assert_equal(np.signbit(arr_f32_rv[::stride]), sign[::stride])
+            assert_equal(np.signbit(arr_f64_rv[::stride]), sign[::stride])
+        else:
+            assert_equal(np.signbit(arr_f32[::stride]), sign[::stride])
+            assert_equal(np.signbit(arr_f64[::stride]), sign[::stride])
         assert_equal(np.isfinite(arr_f32[::stride]), finite[::stride])
         assert_equal(np.isfinite(arr_f64[::stride]), finite[::stride])
 
@@ -1857,23 +1871,37 @@ class TestFPClass:
         ncontig_in = data[1::3]
         ncontig_out = out[1::3]
         contig_in = np.array(ncontig_in)
+
+        if platform.processor() == 'riscv64':
+            # Disable the -np.nan signbit tests on riscv64.  See comments in
+            # test_fpclass for more details.
+            data_rv = np.copy(data)
+            data_rv[1] = -1.0
+            ncontig_sign_in = data_rv[1::3]
+            contig_sign_in = np.array(ncontig_sign_in)
+        else:
+            ncontig_sign_in = ncontig_in
+            contig_sign_in = contig_in
+
         assert_equal(ncontig_in.flags.c_contiguous, False)
         assert_equal(ncontig_out.flags.c_contiguous, False)
         assert_equal(contig_in.flags.c_contiguous, True)
+        assert_equal(ncontig_sign_in.flags.c_contiguous, False)
+        assert_equal(contig_sign_in.flags.c_contiguous, True)
         # ncontig in, ncontig out
         assert_equal(np.isnan(ncontig_in, out=ncontig_out), nan[1::3])
         assert_equal(np.isinf(ncontig_in, out=ncontig_out), inf[1::3])
-        assert_equal(np.signbit(ncontig_in, out=ncontig_out), sign[1::3])
+        assert_equal(np.signbit(ncontig_sign_in, out=ncontig_out), sign[1::3])
         assert_equal(np.isfinite(ncontig_in, out=ncontig_out), finite[1::3])
         # contig in, ncontig out
         assert_equal(np.isnan(contig_in, out=ncontig_out), nan[1::3])
         assert_equal(np.isinf(contig_in, out=ncontig_out), inf[1::3])
-        assert_equal(np.signbit(contig_in, out=ncontig_out), sign[1::3])
+        assert_equal(np.signbit(contig_sign_in, out=ncontig_out), sign[1::3])
         assert_equal(np.isfinite(contig_in, out=ncontig_out), finite[1::3])
         # ncontig in, contig out
         assert_equal(np.isnan(ncontig_in), nan[1::3])
         assert_equal(np.isinf(ncontig_in), inf[1::3])
-        assert_equal(np.signbit(ncontig_in), sign[1::3])
+        assert_equal(np.signbit(ncontig_sign_in), sign[1::3])
         assert_equal(np.isfinite(ncontig_in), finite[1::3])
         # contig in, contig out, nd stride
         data_split = np.array(np.array_split(data, 2))
@@ -1883,7 +1911,11 @@ class TestFPClass:
         finite_split = np.array(np.array_split(finite, 2))
         assert_equal(np.isnan(data_split), nan_split)
         assert_equal(np.isinf(data_split), inf_split)
-        assert_equal(np.signbit(data_split), sign_split)
+        if platform.processor() == 'riscv64':
+            data_split_rv = np.array(np.array_split(data_rv, 2))
+            assert_equal(np.signbit(data_split_rv), sign_split)
+        else:
+            assert_equal(np.signbit(data_split), sign_split)
         assert_equal(np.isfinite(data_split), finite_split)
 
 class TestLDExp:
@@ -2553,7 +2585,7 @@ class TestFmin(_FilterInvalids):
 
 class TestBool:
     def test_exceptions(self):
-        a = np.ones(1, dtype=np.bool_)
+        a = np.ones(1, dtype=np.bool)
         assert_raises(TypeError, np.negative, a)
         assert_raises(TypeError, np.positive, a)
         assert_raises(TypeError, np.subtract, a, a)
@@ -4666,7 +4698,7 @@ def test_outer_bad_subclass():
         assert type(np.add.outer([1, 2], arr)) is cls
 
 def test_outer_exceeds_maxdims():
-    deep = np.ones((1,) * 17)
+    deep = np.ones((1,) * 33)
     with assert_raises(ValueError):
         np.add.outer(deep, deep)
 

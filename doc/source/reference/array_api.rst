@@ -119,10 +119,6 @@ The following functions are named differently in the array API
    * - ``pow``
      - ``power``
      -
-   * - ``unique_all``, ``unique_counts``, ``unique_inverse``, and
-       ``unique_values``
-     - ``unique``
-     - Each is equivalent to ``np.unique`` with certain flags set.
 
 
 Function instead of method
@@ -138,12 +134,8 @@ Function instead of method
 These functions are in the ``linalg`` sub-namespace in the array API, but are
 only in the top-level namespace in NumPy:
 
-- ``cross``
-- ``diagonal``
 - ``matmul`` (*)
-- ``outer``
 - ``tensordot`` (*)
-- ``trace``
 
 (*): These functions are also in the top-level namespace in the array API.
 
@@ -688,9 +680,6 @@ Linear algebra differences
        specification issue
        <https://github.com/data-apis/array-api/issues/285>`__ for more
        details.
-   * - New function ``svdvals``.
-     - **Compatible**
-     - Equivalent to ``np.linalg.svd(compute_uv=False)``.
    * - The ``axis`` keyword to ``tensordot`` must be a tuple.
      - **Compatible**
      - In ``np.tensordot``, it can also be an array or array-like.

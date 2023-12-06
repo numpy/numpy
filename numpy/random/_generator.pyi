@@ -1,8 +1,8 @@
 from collections.abc import Callable
 from typing import Any, overload, TypeVar, Literal
 
+import numpy as np
 from numpy import (
-    bool_,
     dtype,
     float32,
     float64,
@@ -244,7 +244,7 @@ class Generator:
         size: None | _ShapeLike = ...,
         dtype: _DTypeLikeBool = ...,
         endpoint: bool = ...,
-    ) -> NDArray[bool_]: ...
+    ) -> NDArray[np.bool]: ...
     @overload
     def integers(  # type: ignore[misc]
         self,

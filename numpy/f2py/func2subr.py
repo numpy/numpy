@@ -1,17 +1,13 @@
-#!/usr/bin/env python3
 """
 
 Rules for building C/API module with f2py2e.
 
-Copyright 1999,2000 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>
+Copyright 1999 -- 2011 Pearu Peterson all rights reserved.
+Copyright 2011 -- present NumPy Developers.
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
-$Date: 2004/11/26 11:13:06 $
-Pearu Peterson
-
 """
 import copy
 

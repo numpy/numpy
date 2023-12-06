@@ -1,11 +1,8 @@
 from collections.abc import Sequence
 from typing import TypeVar, Any, overload, Literal
 
-from numpy import (
-    bool_,
-    number,
-    _OrderKACF,
-)
+import numpy as np
+from numpy import number, _OrderKACF
 from numpy._typing import (
     NDArray,
     _ArrayLikeBool_co,
@@ -25,7 +22,7 @@ from numpy._typing import (
 
 _ArrayType = TypeVar(
     "_ArrayType",
-    bound=NDArray[bool_ | number[Any]],
+    bound=NDArray[np.bool | number[Any]],
 )
 
 _OptimizeKind = None | bool | Literal["greedy", "optimal"] | Sequence[Any]

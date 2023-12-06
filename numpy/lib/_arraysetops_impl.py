@@ -16,6 +16,7 @@ Original author: Robert Cimrman
 """
 import functools
 import warnings
+from typing import NamedTuple
 
 import numpy as np
 from numpy._core import overrides
@@ -26,9 +27,10 @@ array_function_dispatch = functools.partial(
 
 
 __all__ = [
-    'ediff1d', 'intersect1d', 'setxor1d', 'union1d', 'setdiff1d', 'unique',
-    'in1d', 'isin'
-    ]
+    "ediff1d", "in1d", "intersect1d", "isin", "setdiff1d", "setxor1d",
+    "union1d", "unique", "unique_all", "unique_counts", "unique_inverse",
+    "unique_values"
+]
 
 
 def _ediff1d_dispatcher(ary, to_end=None, to_begin=None):
@@ -334,7 +336,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     else:
         ar.sort()
         aux = ar
-    mask = np.empty(aux.shape, dtype=np.bool_)
+    mask = np.empty(aux.shape, dtype=np.bool)
     mask[:1] = True
     if (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and
             np.isnan(aux[-1])):
@@ -362,6 +364,188 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         idx = np.concatenate(np.nonzero(mask) + ([mask.size],))
         ret += (np.diff(idx),)
     return ret
+
+
+# Array API set functions
+
+class UniqueAllResult(NamedTuple):
+    values: np.ndarray
+    indices: np.ndarray
+    inverse_indices: np.ndarray
+    counts: np.ndarray
+
+
+class UniqueCountsResult(NamedTuple):
+    values: np.ndarray
+    counts: np.ndarray
+
+
+class UniqueInverseResult(NamedTuple):
+    values: np.ndarray
+    inverse_indices: np.ndarray
+
+
+def _unique_all_dispatcher(x, /):
+    return (x,)
+
+
+@array_function_dispatch(_unique_all_dispatcher)
+def unique_all(x):
+    """
+    Returns the unique elements of an input array `x`, the first occurring
+    indices for each unique element in `x`, the indices from the set of unique
+    elements that reconstruct `x`, and the corresponding counts for each
+    unique element in `x`.
+
+    This function is Array API compatible alternative to:
+    ``np.unique(x, return_index=True, return_inverse=True, return_counts=True,
+    equal_nan=False)``
+
+    Parameters
+    ----------
+    x : array_like
+        Input array. It will be flattened if it is not already 1-D.
+
+    Returns
+    -------
+    out : namedtuple
+        The result containing:
+        * values - The unique elements of an input array.
+        * indices - The first occurring indices for each unique element.
+        * inverse_indices - The indices from the set of unique elements
+          that reconstruct `x`.
+        * counts - The corresponding counts for each unique element.
+
+    See Also
+    --------
+    unique : Find the unique elements of an array.
+
+    """
+    result = unique(
+        x,
+        return_index=True,
+        return_inverse=True,
+        return_counts=True,
+        equal_nan=False
+    )
+    return UniqueAllResult(*result)
+
+
+def _unique_counts_dispatcher(x, /):
+    return (x,)
+
+
+@array_function_dispatch(_unique_counts_dispatcher)
+def unique_counts(x):
+    """
+    Returns the unique elements of an input array `x`, and the corresponding
+    counts for each unique element in `x`.
+
+    This function is Array API compatible alternative to:
+    ``np.unique(x, return_counts=True, equal_nan=False)``
+
+    Parameters
+    ----------
+    x : array_like
+        Input array. It will be flattened if it is not already 1-D.
+
+    Returns
+    -------
+    out : namedtuple
+        The result containing:
+        * values - The unique elements of an input array.
+        * counts - The corresponding counts for each unique element.
+
+    See Also
+    --------
+    unique : Find the unique elements of an array.
+
+    """
+    result = unique(
+        x,
+        return_index=False,
+        return_inverse=False,
+        return_counts=True,
+        equal_nan=False
+    )
+    return UniqueCountsResult(*result)
+
+
+def _unique_inverse_dispatcher(x, /):
+    return (x,)
+
+
+@array_function_dispatch(_unique_inverse_dispatcher)
+def unique_inverse(x):
+    """
+    Returns the unique elements of an input array `x` and the indices
+    from the set of unique elements that reconstruct `x`.
+
+    This function is Array API compatible alternative to:
+    ``np.unique(x, return_inverse=True, equal_nan=False)``
+
+    Parameters
+    ----------
+    x : array_like
+        Input array. It will be flattened if it is not already 1-D.
+
+    Returns
+    -------
+    out : namedtuple
+        The result containing:
+        * values - The unique elements of an input array.
+        * inverse_indices - The indices from the set of unique elements
+          that reconstruct `x`.
+
+    See Also
+    --------
+    unique : Find the unique elements of an array.
+
+    """
+    result = unique(
+        x,
+        return_index=False,
+        return_inverse=True,
+        return_counts=False,
+        equal_nan=False
+    )
+    return UniqueInverseResult(*result)
+
+
+def _unique_values_dispatcher(x, /):
+    return (x,)
+
+
+@array_function_dispatch(_unique_values_dispatcher)
+def unique_values(x):
+    """
+    Returns the unique elements of an input array `x`.
+
+    This function is Array API compatible alternative to:
+    ``np.unique(x, equal_nan=False)``
+
+    Parameters
+    ----------
+    x : array_like
+        Input array. It will be flattened if it is not already 1-D.
+
+    Returns
+    -------
+    out : ndarray
+        The unique elements of an input array.
+
+    See Also
+    --------
+    unique : Find the unique elements of an array.
+
+    """
+    return unique(
+        x,
+        return_index=False,
+        return_inverse=False,
+        return_counts=False,
+        equal_nan=False
+    )
 
 
 def _intersect1d_dispatcher(

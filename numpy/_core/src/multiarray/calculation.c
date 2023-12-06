@@ -107,7 +107,7 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
     }
     else {
         out_shape = _shape_buf;
-        if (axis_copy == NPY_MAXDIMS) {
+        if (axis_copy == NPY_RAVEL_AXIS) {
             for (int i = 0; i < out_ndim; i++) {
                 out_shape[i] = 1;
             }

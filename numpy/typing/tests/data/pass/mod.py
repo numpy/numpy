@@ -9,13 +9,13 @@ i4 = np.int32(1)
 u4 = np.uint32(1)
 
 td = np.timedelta64(1, "D")
-b_ = np.bool_(1)
+b_ = np.bool(1)
 
 b = bool(1)
 f = float(1)
 i = int(1)
 
-AR = np.array([1], dtype=np.bool_)
+AR = np.array([1], dtype=np.bool)
 AR.setflags(write=False)
 
 AR2 = np.array([1], dtype=np.timedelta64)

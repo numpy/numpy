@@ -133,10 +133,10 @@ class TestUfuncGenericLoops:
     # class to use in testing object method loops
     class foo:
         def conjugate(self):
-            return np.bool_(1)
+            return np.bool(1)
 
         def logical_xor(self, obj):
-            return np.bool_(1)
+            return np.bool(1)
 
     def test_unary_PyUFunc_O_O(self):
         x = np.ones(10, dtype=object)
@@ -705,7 +705,7 @@ class TestUfunc:
                     assert_(res.dtype.name == dtout.name)
 
         # Check booleans
-        a = np.ones((), dtype=np.bool_)
+        a = np.ones((), dtype=np.bool)
         res = np.true_divide(a, a)
         assert_(res == 1.0)
         assert_(res.dtype.name == 'float64')
@@ -1518,7 +1518,7 @@ class TestUfunc:
         assert_(type(np.min(np.float32(2.5), axis=0)) is np.float32)
 
         # check if scalars/0-d arrays get cast
-        assert_(type(np.any(0, axis=0)) is np.bool_)
+        assert_(type(np.any(0, axis=0)) is np.bool)
 
         # assert that 0-d arrays get wrapped
         class MyArray(np.ndarray):
@@ -2985,9 +2985,9 @@ class TestLowlevelAPIAccess:
             reason="`ctypes.pythonapi` required for capsule unpacking.")
     def test_loop_access(self):
         # This is a basic test for the full strided loop access
-        data_t = ct.ARRAY(ct.c_char_p, 2)
-        dim_t = ct.ARRAY(ct.c_ssize_t, 1)
-        strides_t = ct.ARRAY(ct.c_ssize_t, 2)
+        data_t = ct.c_char_p * 2
+        dim_t = ct.c_ssize_t * 1
+        strides_t = ct.c_ssize_t * 2
         strided_loop_t = ct.CFUNCTYPE(
                 ct.c_int, ct.c_void_p, data_t, dim_t, strides_t, ct.c_void_p)
 

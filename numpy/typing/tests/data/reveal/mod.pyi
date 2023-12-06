@@ -19,13 +19,13 @@ i4 = np.int32()
 u4 = np.uint32()
 
 td = np.timedelta64(0, "D")
-b_ = np.bool_()
+b_ = np.bool()
 
 b = bool()
 f = float()
 i = int()
 
-AR_b: npt.NDArray[np.bool_]
+AR_b: npt.NDArray[np.bool]
 AR_m: npt.NDArray[np.timedelta64]
 
 # Time structures

@@ -182,9 +182,8 @@ cdef extern from "numpy/arrayobject.h":
         NPY_ARRAY_UPDATE_ALL
 
     cdef enum:
-        NPY_MAXDIMS
-
-    npy_intp NPY_MAX_ELSIZE
+        NPY_MAXDIMS  # 64 on NumPy 2.x and 32 on NumPy 1.x
+        NPY_RAVEL_AXIS  # Used for functions like PyArray_Mean
 
     ctypedef void (*PyArray_VectorUnaryFunc)(void *, void *, npy_intp, void *,  void *)
 

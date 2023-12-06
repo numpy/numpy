@@ -84,7 +84,7 @@ static int copy_@name@(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
 {
     npy_intp i, j;
     @type@ *ptr;
-    npy_intp odims[NPY_MAXDIMS];
+    npy_intp odims[NPY_MAXDIMS_LEGACY_ITERS];
     PyArrayObject *aout;
 
     /*
@@ -125,7 +125,7 @@ static int copy_object(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
         PyObject **out)
 {
     npy_intp i, j;
-    npy_intp odims[NPY_MAXDIMS];
+    npy_intp odims[NPY_MAXDIMS_LEGACY_ITERS];
     PyArrayObject *aout;
     PyArray_CopySwapFunc *copyswap = PyArray_DESCR(itx->ao)->f->copyswap;
     npy_int itemsize = PyArray_ITEMSIZE(itx->ao);
@@ -166,7 +166,7 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
     PyArrayIterObject *itx;
     int i, typenum, mode, st;
     Py_ssize_t idxstart = 0;
-    npy_intp bounds[NPY_MAXDIMS*2];
+    npy_intp bounds[NPY_MAXDIMS_LEGACY_ITERS*2];
     PyArrayNeighborhoodIterObject *niterx;
 
     if (!PyArg_ParseTuple(args, "OOOi|n", &x, &b, &fill, &mode, &idxstart)) {
@@ -298,7 +298,7 @@ copy_double_double(PyArrayNeighborhoodIterObject *itx,
 {
     npy_intp i, j;
     double *ptr;
-    npy_intp odims[NPY_MAXDIMS];
+    npy_intp odims[NPY_MAXDIMS_LEGACY_ITERS];
     PyArrayObject *aout;
 
     /*
@@ -338,7 +338,7 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
     PyArrayObject *ax;
     PyArrayIterObject *itx;
     int i, typenum, mode1, mode2, st;
-    npy_intp bounds[NPY_MAXDIMS*2];
+    npy_intp bounds[NPY_MAXDIMS_LEGACY_ITERS*2];
     PyArrayNeighborhoodIterObject *niterx1, *niterx2;
 
     if (!PyArg_ParseTuple(args, "OOiOi", &x, &b1, &mode1, &b2, &mode2)) {
@@ -357,6 +357,10 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
     ax = (PyArrayObject*)PyArray_FromObject(x, typenum, 1, 10);
     if (ax == NULL) {
         return NULL;
+    }
+    if (PyArray_NDIM(ax) > NPY_MAXDIMS_LEGACY_ITERS) {
+        PyErr_SetString(PyExc_TypeError, "too many dimensions.");
+        goto clean_ax;
     }
     if (PySequence_Size(b1) != 2 * PyArray_NDIM(ax)) {
         PyErr_SetString(PyExc_ValueError,

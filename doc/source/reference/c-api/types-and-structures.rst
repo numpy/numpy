@@ -119,8 +119,12 @@ PyArray_Type and PyArrayObject
        array. When nd is 0, the array is sometimes called a rank-0
        array. Such arrays have undefined dimensions and strides and
        cannot be accessed. Macro :c:data:`PyArray_NDIM` defined in
-       ``ndarraytypes.h`` points to this data member. :c:data:`NPY_MAXDIMS`
-       is the largest number of dimensions for any array.
+       ``ndarraytypes.h`` points to this data member.
+       ``NPY_MAXDIMS`` is defined as a compile time constant limiting the
+       number of dimensions.  This number is 64 since NumPy 2 and was 32
+       before. However, we may wish to remove this limitations in the future
+       so that it is best to explicitly check dimensionality for code
+       that relies on such an upper bound.
 
    .. c:member:: npy_intp *dimensions
 
@@ -986,11 +990,11 @@ PyArrayIter_Type and PyArrayIterObject
           int   nd_m1;
           npy_intp  index;
           npy_intp  size;
-          npy_intp  coordinates[NPY_MAXDIMS];
-          npy_intp  dims_m1[NPY_MAXDIMS];
-          npy_intp  strides[NPY_MAXDIMS];
-          npy_intp  backstrides[NPY_MAXDIMS];
-          npy_intp  factors[NPY_MAXDIMS];
+          npy_intp  coordinates[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp  dims_m1[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp  strides[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp  backstrides[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp  factors[NPY_MAXDIMS_LEGACY_ITERS];
           PyArrayObject *ao;
           char  *dataptr;
           npy_bool  contiguous;
@@ -1086,8 +1090,8 @@ PyArrayMultiIter_Type and PyArrayMultiIterObject
           npy_intp size;
           npy_intp index;
           int nd;
-          npy_intp dimensions[NPY_MAXDIMS];
-          PyArrayIterObject *iters[NPY_MAXDIMS];
+          npy_intp dimensions[NPY_MAXDIMS_LEGACY_ITERS];
+          PyArrayIterObject *iters[NPY_MAXDIMS_LEGACY_ITERS];
       } PyArrayMultiIterObject;
 
    .. c:macro: PyObject_HEAD
@@ -1141,20 +1145,20 @@ PyArrayNeighborhoodIter_Type and PyArrayNeighborhoodIterObject
           PyObject_HEAD
           int nd_m1;
           npy_intp index, size;
-          npy_intp coordinates[NPY_MAXDIMS]
-          npy_intp dims_m1[NPY_MAXDIMS];
-          npy_intp strides[NPY_MAXDIMS];
-          npy_intp backstrides[NPY_MAXDIMS];
-          npy_intp factors[NPY_MAXDIMS];
+          npy_intp coordinates[NPY_MAXDIMS_LEGACY_ITERS]
+          npy_intp dims_m1[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp strides[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp backstrides[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp factors[NPY_MAXDIMS_LEGACY_ITERS];
           PyArrayObject *ao;
           char *dataptr;
           npy_bool contiguous;
-          npy_intp bounds[NPY_MAXDIMS][2];
-          npy_intp limits[NPY_MAXDIMS][2];
-          npy_intp limits_sizes[NPY_MAXDIMS];
+          npy_intp bounds[NPY_MAXDIMS_LEGACY_ITERS][2];
+          npy_intp limits[NPY_MAXDIMS_LEGACY_ITERS][2];
+          npy_intp limits_sizes[NPY_MAXDIMS_LEGACY_ITERS];
           npy_iter_get_dataptr_t translate;
           npy_intp nd;
-          npy_intp dimensions[NPY_MAXDIMS];
+          npy_intp dimensions[NPY_MAXDIMS_LEGACY_ITERS];
           PyArrayIterObject* _internal_iter;
           char* constant;
           int mode;

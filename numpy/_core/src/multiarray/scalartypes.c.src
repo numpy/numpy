@@ -3398,7 +3398,7 @@ static PyObject *
 bool_index(PyObject *a)
 {
     if (DEPRECATE(
-            "In future, it will be an error for 'np.bool_' scalars to be "
+            "In future, it will be an error for 'np.bool' scalars to be "
             "interpreted as an index") < 0) {
         return NULL;
     }

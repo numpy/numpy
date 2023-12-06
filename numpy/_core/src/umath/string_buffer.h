@@ -186,7 +186,7 @@ struct Buffer {
     }
 
     inline void
-    buffer_fill_with_zeros(size_t start_index)
+    buffer_fill_with_zeros_after_index(size_t start_index)
     {
         Buffer<enc> offset = *this + start_index;
         for (char *tmp = offset.buf; tmp < after; tmp++) {
@@ -213,6 +213,17 @@ struct Buffer {
     }
 
     inline bool
+    isspace(npy_int64 index)
+    {
+        switch (enc) {
+        case ENCODING::ASCII:
+            return NumPyOS_ascii_isspace((*this)[index]);
+        case ENCODING::UTF32:
+            return Py_UNICODE_ISSPACE((*this)[index]);
+        }
+    }
+
+    inline bool
     isspace()
     {
         npy_int64 len = num_codepoints();
@@ -221,10 +232,8 @@ struct Buffer {
         }
 
         for (npy_int64 i = 0; i < len; i++) {
-            bool isspace = enc == ENCODING::UTF32 ? Py_UNICODE_ISSPACE((*this)[i])
-                                                  : NumPyOS_ascii_isspace((*this)[i]);
-            if (!isspace) {
-                return isspace;
+            if (!this->isspace(i)) {
+                return false;
             }
         }
         return true;

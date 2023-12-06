@@ -133,6 +133,8 @@ PyArray_RawIterBaseInit(PyArrayIterObject *it, PyArrayObject *ao)
     int nd, i;
 
     nd = PyArray_NDIM(ao);
+    /* The legacy iterator only supports 32 dimensions */
+    assert(nd <= NPY_MAXDIMS_LEGACY_ITERS);
     PyArray_UpdateFlags(ao, NPY_ARRAY_C_CONTIGUOUS);
     if (PyArray_ISCONTIGUOUS(ao)) {
         it->contiguous = 1;
@@ -190,6 +192,12 @@ PyArray_IterNew(PyObject *obj)
         return NULL;
     }
     ao = (PyArrayObject *)obj;
+    if (PyArray_NDIM(ao) > NPY_MAXDIMS_LEGACY_ITERS) {
+        PyErr_Format(PyExc_RuntimeError,
+                "this function only supports up to 32 dimensions but "
+                "the array has %d.", PyArray_NDIM(ao));
+        return NULL;
+    }
 
     it = (PyArrayIterObject *)PyArray_malloc(sizeof(PyArrayIterObject));
     PyObject_Init((PyObject *)it, &PyArrayIter_Type);

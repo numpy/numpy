@@ -5,7 +5,7 @@ from numpy import ndarray, dtype, float64
 from numpy import (
     amax as amax,
     amin as amin,
-    bool_ as bool_,
+    bool as bool,
     expand_dims as expand_dims,
     clip as clip,
     indices as indices,
@@ -22,8 +22,8 @@ _DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
 
 __all__: list[str]
 
-MaskType = bool_
-nomask: bool_
+MaskType = bool
+nomask: bool
 
 class MaskedArrayFutureWarning(FutureWarning): ...
 class MAError(Exception): ...

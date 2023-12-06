@@ -75,7 +75,7 @@ __all__ = [
     'var', 'where', 'zeros', 'zeros_like',
     ]
 
-MaskType = np.bool_
+MaskType = np.bool
 nomask = MaskType(0)
 
 class MaskedArrayFutureWarning(FutureWarning):
@@ -1651,7 +1651,7 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
     dtype = make_mask_descr(dtype)
 
     # legacy boolean special case: "existence of fields implies true"
-    if isinstance(m, ndarray) and m.dtype.fields and dtype == np.bool_:
+    if isinstance(m, ndarray) and m.dtype.fields and dtype == np.bool:
         return np.ones(m.shape, dtype=dtype)
 
     # Fill the mask in case there are missing data; turn it into an ndarray.
@@ -3488,7 +3488,7 @@ class MaskedArray(ndarray):
             # Softmask: set everything to False
             # If it's obviously a compatible scalar, use a quick update
             # method.
-            elif isinstance(mask, (int, float, np.bool_, np.number)):
+            elif isinstance(mask, (int, float, np.bool, np.number)):
                 current_mask[...] = mask
             # Otherwise fall back to the slower, general purpose way.
             else:
@@ -3522,7 +3522,7 @@ class MaskedArray(ndarray):
             # Softmask: set everything to False
             # If it's obviously a compatible scalar, use a quick update
             # method.
-            elif isinstance(mask, (int, float, np.bool_, np.number)):
+            elif isinstance(mask, (int, float, np.bool, np.number)):
                 current_mask[...] = mask
             # Otherwise fall back to the slower, general purpose way.
             else:
@@ -4173,7 +4173,7 @@ class MaskedArray(ndarray):
 
         check = compare(sdata, odata)
 
-        if isinstance(check, (np.bool_, bool)):
+        if isinstance(check, (np.bool, bool)):
             return masked if mask else check
 
         if mask is not nomask:
@@ -4193,13 +4193,13 @@ class MaskedArray(ndarray):
         check._update_from(self)
         check._mask = mask
 
-        # Cast fill value to bool_ if needed. If it cannot be cast, the
+        # Cast fill value to np.bool if needed. If it cannot be cast, the
         # default boolean fill value is used.
         if check._fill_value is not None:
             try:
-                fill = _check_fill_value(check._fill_value, np.bool_)
+                fill = _check_fill_value(check._fill_value, np.bool)
             except (TypeError, ValueError):
-                fill = _check_fill_value(None, np.bool_)
+                fill = _check_fill_value(None, np.bool)
             check._fill_value = fill
 
         return check
@@ -4621,7 +4621,7 @@ class MaskedArray(ndarray):
         # their dimensions)
         if isinstance(self.data, np.matrix):
             if m is nomask:
-                m = np.zeros(self.shape, dtype=np.bool_)
+                m = np.zeros(self.shape, dtype=np.bool)
             m = m.view(type(self.data))
 
         if m is nomask:
@@ -5371,7 +5371,7 @@ class MaskedArray(ndarray):
         else:
             is_float16_result = False
             if dtype is None:
-                if issubclass(self.dtype.type, (ntypes.integer, ntypes.bool_)):
+                if issubclass(self.dtype.type, (ntypes.integer, ntypes.bool)):
                     dtype = mu.dtype('f8')
                 elif issubclass(self.dtype.type, ntypes.float16):
                     dtype = mu.dtype('f4')
@@ -6711,7 +6711,7 @@ class MaskedConstant(MaskedArray):
     def copy(self, *args, **kwargs):
         """ Copy is a no-op on the maskedconstant, as it is a scalar """
         # maskedconstant is a scalar, so copy doesn't need to copy. There's
-        # precedent for this with `np.bool_` scalars.
+        # precedent for this with `np.bool` scalars.
         return self
 
     def __copy__(self):

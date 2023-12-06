@@ -64,6 +64,7 @@ Matrix and vector products
    einsum_path
    linalg.matrix_power
    kron
+   linalg.cross
 
 Decompositions
 --------------
@@ -71,8 +72,10 @@ Decompositions
    :toctree: generated/
 
    linalg.cholesky
+   linalg.outer
    linalg.qr
    linalg.svd
+   linalg.svdvals
 
 Matrix eigenvalues
 ------------------

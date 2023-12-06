@@ -13,7 +13,7 @@ import warnings
 class DistutilsBackend(Backend):
     def __init__(sef, *args, **kwargs):
         warnings.warn(
-            "distutils has been deprecated since NumPy 1.26."
+            "distutils has been deprecated since NumPy 1.26.x"
             "Use the Meson backend instead, or generate wrappers"
             "without -c and use a custom build script",
             VisibleDeprecationWarning,

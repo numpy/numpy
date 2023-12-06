@@ -24,6 +24,10 @@ enum class STARTPOSITION {
     FRONT, BACK
 };
 
+enum class STRIPTYPE {
+    LEFTSTRIP, RIGHTSTRIP, BOTHSTRIP
+};
+
 
 /*
  * Helper to fixup start/end slice values.
@@ -96,9 +100,9 @@ string_add(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out)
 {
     npy_int64 len1 = buf1.num_codepoints();
     npy_int64 len2 = buf2.num_codepoints();
-    buf1.buffer_memcpy(out, len1);
-    buf2.buffer_memcpy(out + len1, len2);
-    out.buffer_fill_with_zeros(len1 + len2);
+    buf1.buffer_memcpy(out, (size_t) len1);
+    buf2.buffer_memcpy(out + len1, (size_t) len2);
+    out.buffer_fill_with_zeros_after_index(len1 + len2);
 }
 
 
@@ -210,6 +214,83 @@ string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 }
 
 
+template <ENCODING enc>
+static inline void
+string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE striptype)
+{
+    npy_int64 len = buf.num_codepoints();
+    if (len == 0) {
+        out.buffer_fill_with_zeros_after_index(0);
+        return;
+    }
+
+    npy_int64 i = 0;
+    if (striptype != STRIPTYPE::RIGHTSTRIP) {
+        while (i < len) {
+            if (!buf.isspace(i)) {
+                break;
+            }
+            i++;
+        }
+    }
+
+    npy_int64 j = len - 1;
+    if (striptype != STRIPTYPE::LEFTSTRIP) {
+        while (j >= i) {
+            if (!buf.isspace(j)) {
+                break;
+            }
+            j--;
+        }
+    }
+
+    (buf + i).buffer_memcpy(out, j - i + 1);
+    out.buffer_fill_with_zeros_after_index(j - i + 1);
+}
+
+
+template <ENCODING enc>
+static inline void
+string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPTYPE striptype)
+{
+    npy_int64 len1 = buf1.num_codepoints();
+    if (len1 == 0) {
+        out.buffer_fill_with_zeros_after_index(0);
+        return;
+    }
+
+    npy_int64 len2 = buf2.num_codepoints();
+    if (len2 == 0) {
+        buf1.buffer_memcpy(out, len1);
+        out.buffer_fill_with_zeros_after_index(len1);
+        return;
+    }
+
+    npy_int64 i = 0;
+    if (striptype != STRIPTYPE::RIGHTSTRIP) {
+        while (i < len1) {
+            if (findchar(buf2, len2, buf1[i]) < 0) {
+                break;
+            }
+            i++;
+        }
+    }
+
+    npy_int64 j = len1 - 1;
+    if (striptype != STRIPTYPE::LEFTSTRIP) {
+        while (j >= i) {
+            if (findchar(buf2, len2, buf1[j]) < 0) {
+                break;
+            }
+            j--;
+        }
+    }
+
+    (buf1 + i).buffer_memcpy(out, j - i + 1);
+    out.buffer_fill_with_zeros_after_index(j - i + 1);
+}
+
+
 /*
  * Count the number of occurences of buf2 in buf1 between
  * start (inclusive) and end (exclusive)
@@ -287,7 +368,7 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
     }
 
     buf1.buffer_memcpy(out, end1 - buf1);
-    out.buffer_fill_with_zeros(end1 - buf1);
+    out.buffer_fill_with_zeros_after_index(end1 - buf1);
     return;
 }
 
@@ -754,6 +835,180 @@ string_endswith_loop(PyArrayMethod_Context *context,
 }
 
 
+template <ENCODING enc>
+static int
+string_strip_whitespace_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize;
+    int outsize = context->descriptors[1]->elsize;
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf(in, elsize);
+        Buffer<enc> outbuf(out, outsize);
+        string_lrstrip_whitespace(buf, outbuf, STRIPTYPE::BOTHSTRIP);
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_lstrip_whitespace_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize;
+    int outsize = context->descriptors[1]->elsize;
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf(in, elsize);
+        Buffer<enc> outbuf(out, outsize);
+        string_lrstrip_whitespace(buf, outbuf, STRIPTYPE::LEFTSTRIP);
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_rstrip_whitespace_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize;
+    int outsize = context->descriptors[1]->elsize;
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf(in, elsize);
+        Buffer<enc> outbuf(out, outsize);
+        string_lrstrip_whitespace(buf, outbuf, STRIPTYPE::RIGHTSTRIP);
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_strip_chars_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize1 = context->descriptors[0]->elsize;
+    int elsize2 = context->descriptors[1]->elsize;
+    int outsize = context->descriptors[2]->elsize;
+
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *out = data[2];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf1(in1, elsize1);
+        Buffer<enc> buf2(in2, elsize2);
+        Buffer<enc> outbuf(out, outsize);
+        string_lrstrip_chars(buf1, buf2, outbuf, STRIPTYPE::BOTHSTRIP);
+
+        in1 += strides[0];
+        in2 += strides[1];
+        out += strides[2];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_lstrip_chars_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize1 = context->descriptors[0]->elsize;
+    int elsize2 = context->descriptors[1]->elsize;
+    int outsize = context->descriptors[2]->elsize;
+
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *out = data[2];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf1(in1, elsize1);
+        Buffer<enc> buf2(in2, elsize2);
+        Buffer<enc> outbuf(out, outsize);
+        string_lrstrip_chars(buf1, buf2, outbuf, STRIPTYPE::LEFTSTRIP);
+
+        in1 += strides[0];
+        in2 += strides[1];
+        out += strides[2];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_rstrip_chars_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize1 = context->descriptors[0]->elsize;
+    int elsize2 = context->descriptors[1]->elsize;
+    int outsize = context->descriptors[2]->elsize;
+
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *out = data[2];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf1(in1, elsize1);
+        Buffer<enc> buf2(in2, elsize2);
+        Buffer<enc> outbuf(out, outsize);
+        string_lrstrip_chars(buf1, buf2, outbuf, STRIPTYPE::RIGHTSTRIP);
+
+        in1 += strides[0];
+        in2 += strides[1];
+        out += strides[2];
+    }
+
+    return 0;
+}
+
+
 /* Resolve descriptors & promoter functions */
 
 static NPY_CASTING
@@ -784,6 +1039,51 @@ string_addition_resolve_descriptors(
 }
 
 
+static NPY_CASTING
+string_strip_whitespace_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
+        PyArray_Descr *given_descrs[3],
+        PyArray_Descr *loop_descrs[3],
+        npy_intp *NPY_UNUSED(view_offset))
+{
+    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
+    if (loop_descrs[0] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    Py_INCREF(loop_descrs[0]);
+    loop_descrs[1] = loop_descrs[0];
+
+    return NPY_NO_CASTING;
+}
+
+
+static NPY_CASTING
+string_strip_chars_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
+        PyArray_Descr *given_descrs[3],
+        PyArray_Descr *loop_descrs[3],
+        npy_intp *NPY_UNUSED(view_offset))
+{
+    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
+    if (loop_descrs[0] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
+    if (loop_descrs[1] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    Py_INCREF(loop_descrs[0]);
+    loop_descrs[2] = loop_descrs[0];
+
+    return NPY_NO_CASTING;
+}
+
+
 static int
 string_find_rfind_count_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
@@ -793,8 +1093,8 @@ string_find_rfind_count_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
     new_op_dtypes[0] = op_dtypes[0];
     Py_INCREF(op_dtypes[1]);
     new_op_dtypes[1] = op_dtypes[1];
-    new_op_dtypes[2] = PyArray_DTypeFromTypeNum(NPY_INT64);
-    new_op_dtypes[3] = PyArray_DTypeFromTypeNum(NPY_INT64);
+    new_op_dtypes[2] = &PyArray_Int64DType;
+    new_op_dtypes[3] = &PyArray_Int64DType;
     new_op_dtypes[4] = PyArray_DTypeFromTypeNum(NPY_DEFAULT_INT);
     return 0;
 }
@@ -869,9 +1169,9 @@ string_startswith_endswith_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
     new_op_dtypes[0] = op_dtypes[0];
     Py_INCREF(op_dtypes[1]);
     new_op_dtypes[1] = op_dtypes[1];
-    new_op_dtypes[2] = PyArray_DTypeFromTypeNum(NPY_INT64);
-    new_op_dtypes[3] = PyArray_DTypeFromTypeNum(NPY_INT64);
-    new_op_dtypes[4] = PyArray_DTypeFromTypeNum(NPY_BOOL);
+    new_op_dtypes[2] = &PyArray_Int64DType;
+    new_op_dtypes[3] = &PyArray_Int64DType;
+    new_op_dtypes[4] = &PyArray_BoolDType;
     return 0;
 }
 
@@ -954,10 +1254,9 @@ static int
 init_comparison(PyObject *umath)
 {
     int res = -1;
-    /* NOTE: This should receive global symbols? */
-    PyArray_DTypeMeta *String = PyArray_DTypeFromTypeNum(NPY_STRING);
-    PyArray_DTypeMeta *Unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
-    PyArray_DTypeMeta *Bool = PyArray_DTypeFromTypeNum(NPY_BOOL);
+    PyArray_DTypeMeta *String = &PyArray_BytesDType;
+    PyArray_DTypeMeta *Unicode = &PyArray_UnicodeDType;
+    PyArray_DTypeMeta *Bool = &PyArray_BoolDType;
 
     /* We start with the string loops: */
     PyArray_DTypeMeta *dtypes[] = {String, String, Bool};
@@ -1051,10 +1350,10 @@ init_ufunc(PyObject *umath, const char *name, const char *specname, int nin, int
 
     for (int i = 0; i < nin+nout; i++) {
         if (typenums[i] == NPY_OBJECT && enc == ENCODING::UTF32) {
-            dtypes[i] = PyArray_DTypeFromTypeNum(NPY_UNICODE);
+            dtypes[i] = &PyArray_UnicodeDType;
         }
         else if (typenums[i] == NPY_OBJECT && enc == ENCODING::ASCII) {
-            dtypes[i] = PyArray_DTypeFromTypeNum(NPY_STRING);
+            dtypes[i] = &PyArray_BytesDType;
         }
         else {
             dtypes[i] = PyArray_DTypeFromTypeNum(typenums[i]);
@@ -1267,6 +1566,82 @@ init_string_ufuncs(PyObject *umath)
     if (init_ufunc<ENCODING::UTF32>(
             umath, "isnumeric", "templated_string_isnumeric", 1, 1, dtypes,
             string_isnumeric_loop, NULL) < 0) {
+        return -1;
+    }
+
+    dtypes[0] = dtypes[1] = NPY_OBJECT;
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "_lstrip_whitespace", "templated_string_lstrip", 1, 1, dtypes,
+            string_lstrip_whitespace_loop<ENCODING::ASCII>,
+            string_strip_whitespace_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "_lstrip_whitespace", "templated_string_lstrip", 1, 1, dtypes,
+            string_lstrip_whitespace_loop<ENCODING::UTF32>,
+            string_strip_whitespace_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "_rstrip_whitespace", "templated_string_rstrip", 1, 1, dtypes,
+            string_rstrip_whitespace_loop<ENCODING::ASCII>,
+            string_strip_whitespace_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "_rstrip_whitespace", "templated_string_rstrip", 1, 1, dtypes,
+            string_rstrip_whitespace_loop<ENCODING::UTF32>,
+            string_strip_whitespace_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "_strip_whitespace", "templated_string_strip", 1, 1, dtypes,
+            string_strip_whitespace_loop<ENCODING::ASCII>,
+            string_strip_whitespace_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "_strip_whitespace", "templated_string_strip", 1, 1, dtypes,
+            string_strip_whitespace_loop<ENCODING::UTF32>,
+            string_strip_whitespace_resolve_descriptors) < 0) {
+        return -1;
+    }
+
+    dtypes[0] = dtypes[1] = dtypes[2] = NPY_OBJECT;
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "_lstrip_chars", "templated_string_lstrip", 2, 1, dtypes,
+            string_lstrip_chars_loop<ENCODING::ASCII>,
+            string_strip_chars_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "_lstrip_chars", "templated_string_lstrip", 2, 1, dtypes,
+            string_lstrip_chars_loop<ENCODING::UTF32>,
+            string_strip_chars_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "_rstrip_chars", "templated_string_rstrip", 2, 1, dtypes,
+            string_rstrip_chars_loop<ENCODING::ASCII>,
+            string_strip_chars_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "_rstrip_chars", "templated_string_rstrip", 2, 1, dtypes,
+            string_rstrip_chars_loop<ENCODING::UTF32>,
+            string_strip_chars_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "_strip_chars", "templated_string_strip", 2, 1, dtypes,
+            string_strip_chars_loop<ENCODING::ASCII>,
+            string_strip_chars_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "_strip_chars", "templated_string_strip", 2, 1, dtypes,
+            string_strip_chars_loop<ENCODING::UTF32>,
+            string_strip_chars_resolve_descriptors) < 0) {
         return -1;
     }
 

@@ -99,8 +99,8 @@ multiarray_types_api = {
 
 multiarray_funcs_api = {
     '__unused_indices__': [
-        40, 41, 65, 67, 68, 163, 164, 171, 201, 202, 278, 291, 293, 294, 295,
-        301],
+        40, 41, 65, 66, 67, 68, 163, 164, 171,
+        201, 202, 278, 291, 293, 294, 295, 301],
     'PyArray_GetNDArrayCVersion':           (0,),
     # Unused slot 40, was `PyArray_SetNumericOps`
     # Unused slot 41, was `PyArray_GetNumericOps`,
@@ -128,7 +128,7 @@ multiarray_funcs_api = {
     'PyArray_CastScalarToCtype':            (63,),
     'PyArray_CastScalarDirect':             (64,),
     # Unused slot 65, was `PyArray_ScalarFromObject`
-    'PyArray_GetCastFunc':                  (66,),
+    # Unused slot 66, was `PyArray_GetCastFunc`
     # Unused slot 67, was `PyArray_FromDims`
     # Unused slot 68, was `PyArray_FromDimsAndDataAndDescr`
     'PyArray_FromAny':                      (69, StealRef(2)),

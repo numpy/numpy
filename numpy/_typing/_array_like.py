@@ -4,11 +4,11 @@ import sys
 from collections.abc import Collection, Callable, Sequence
 from typing import Any, Protocol, Union, TypeVar, runtime_checkable
 
+import numpy as np
 from numpy import (
     ndarray,
     dtype,
     generic,
-    bool_,
     unsignedinteger,
     integer,
     floating,
@@ -94,24 +94,24 @@ else:
 # `ArrayLike<X>_co`: array-like objects that can be coerced into `X`
 # given the casting rules `same_kind`
 _ArrayLikeBool_co = _DualArrayLike[
-    dtype[bool_],
+    dtype[np.bool],
     bool,
 ]
 _ArrayLikeUInt_co = _DualArrayLike[
-    dtype[Union[bool_, unsignedinteger[Any]]],
+    dtype[Union[np.bool, unsignedinteger[Any]]],
     bool,
 ]
 _ArrayLikeInt_co = _DualArrayLike[
-    dtype[Union[bool_, integer[Any]]],
+    dtype[Union[np.bool, integer[Any]]],
     Union[bool, int],
 ]
 _ArrayLikeFloat_co = _DualArrayLike[
-    dtype[Union[bool_, integer[Any], floating[Any]]],
+    dtype[Union[np.bool, integer[Any], floating[Any]]],
     Union[bool, int, float],
 ]
 _ArrayLikeComplex_co = _DualArrayLike[
     dtype[Union[
-        bool_,
+        np.bool,
         integer[Any],
         floating[Any],
         complexfloating[Any, Any],
@@ -119,11 +119,11 @@ _ArrayLikeComplex_co = _DualArrayLike[
     Union[bool, int, float, complex],
 ]
 _ArrayLikeNumber_co = _DualArrayLike[
-    dtype[Union[bool_, number[Any]]],
+    dtype[Union[np.bool, number[Any]]],
     Union[bool, int, float, complex],
 ]
 _ArrayLikeTD64_co = _DualArrayLike[
-    dtype[Union[bool_, integer[Any], timedelta64]],
+    dtype[Union[np.bool, integer[Any], timedelta64]],
     Union[bool, int],
 ]
 _ArrayLikeDT64_co = Union[

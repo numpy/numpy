@@ -18,7 +18,7 @@ assert_type(
         type[bytes],
         type[str],
         type[memoryview],
-        type[np.bool_],
+        type[np.bool],
         type[np.csingle],
         type[np.cdouble],
         type[np.clongdouble],

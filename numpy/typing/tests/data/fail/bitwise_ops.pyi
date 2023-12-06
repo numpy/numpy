@@ -3,7 +3,7 @@ import numpy as np
 i8 = np.int64()
 i4 = np.int32()
 u8 = np.uint64()
-b_ = np.bool_()
+b_ = np.bool()
 i = int()
 
 f8 = np.float64()

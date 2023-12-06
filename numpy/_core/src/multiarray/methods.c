@@ -123,7 +123,7 @@ static PyObject *
 array_take(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    int dimension = NPY_MAXDIMS;
+    int dimension = NPY_RAVEL_AXIS;
     PyObject *indices;
     PyArrayObject *out = NULL;
     NPY_CLIPMODE mode = NPY_RAISE;
@@ -298,7 +298,7 @@ static PyObject *
 array_argmax(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    int axis = NPY_MAXDIMS;
+    int axis = NPY_RAVEL_AXIS;
     PyArrayObject *out = NULL;
     npy_bool keepdims = NPY_FALSE;
     NPY_PREPARE_ARGPARSER;
@@ -326,7 +326,7 @@ static PyObject *
 array_argmin(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    int axis = NPY_MAXDIMS;
+    int axis = NPY_RAVEL_AXIS;
     PyArrayObject *out = NULL;
     npy_bool keepdims = NPY_FALSE;
     NPY_PREPARE_ARGPARSER;
@@ -1185,7 +1185,7 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_repeat(PyArrayObject *self, PyObject *args, PyObject *kwds) {
     PyObject *repeats;
-    int axis = NPY_MAXDIMS;
+    int axis = NPY_RAVEL_AXIS;
     static char *kwlist[] = {"repeats", "axis", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&:repeat", kwlist,
@@ -2315,7 +2315,7 @@ array_sum(PyArrayObject *self,
 static PyObject *
 array_cumsum(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int axis = NPY_MAXDIMS;
+    int axis = NPY_RAVEL_AXIS;
     PyArray_Descr *dtype = NULL;
     PyArrayObject *out = NULL;
     int rtype;
@@ -2344,7 +2344,7 @@ array_prod(PyArrayObject *self,
 static PyObject *
 array_cumprod(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int axis = NPY_MAXDIMS;
+    int axis = NPY_RAVEL_AXIS;
     PyArray_Descr *dtype = NULL;
     PyArrayObject *out = NULL;
     int rtype;
@@ -2426,7 +2426,7 @@ array_variance(PyArrayObject *self,
 static PyObject *
 array_compress(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int axis = NPY_MAXDIMS;
+    int axis = NPY_RAVEL_AXIS;
     PyObject *condition;
     PyArrayObject *out = NULL;
     static char *kwlist[] = {"condition", "axis", "out", NULL};
@@ -2756,6 +2756,33 @@ array_class_getitem(PyObject *cls, PyObject *args)
     return Py_GenericAlias(cls, args);
 }
 
+static PyObject *
+array_array_namespace(PyArrayObject *self, PyObject *args, PyObject *kwds)
+{
+    static char *kwlist[] = {"api_version", NULL};
+    char *array_api_version = "2022.12";
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|$s:__array_namespace__", kwlist,
+                                     &array_api_version)) {
+        return NULL;
+    }
+
+    if (strcmp(array_api_version, "2021.12") != 0 &&
+            strcmp(array_api_version, "2022.12") != 0) {
+        PyErr_Format(PyExc_ValueError,
+                     "Version \"%s\" of the Array API Standard is not supported.",
+                     array_api_version);
+        return NULL;
+    }
+
+    PyObject *numpy_module = PyImport_ImportModule("numpy");
+    if (numpy_module == NULL){
+        return NULL;
+    }
+
+    return numpy_module;
+}
+
 NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     /* for subtypes */
@@ -2980,5 +3007,11 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"__dlpack_device__",
         (PyCFunction)array_dlpack_device,
         METH_NOARGS, NULL},
+
+    // For Array API compatibility
+    {"__array_namespace__",
+        (PyCFunction)array_array_namespace,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+
     {NULL, NULL, 0, NULL}           /* sentinel */
 };

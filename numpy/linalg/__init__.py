@@ -26,6 +26,7 @@ Functions present in numpy.linalg are listed below.
 Matrix and vector products
 --------------------------
 
+   cross
    multi_dot
    matrix_power
 
@@ -33,8 +34,10 @@ Decompositions
 --------------
 
    cholesky
+   outer
    qr
    svd
+   svdvals
 
 Matrix eigenvalues
 ------------------
