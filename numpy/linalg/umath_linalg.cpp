@@ -465,35 +465,19 @@ constexpr double numeric_limits<double>::minus_one;
 const double numeric_limits<double>::ninf = -NPY_INFINITY;
 const double numeric_limits<double>::nan = NPY_NAN;
 
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 template<>
 struct numeric_limits<npy_cfloat> {
-static constexpr npy_cfloat one = {1.0f, 0.0f};
-static constexpr npy_cfloat zero = {0.0f, 0.0f};
-static constexpr npy_cfloat minus_one = {-1.0f, 0.0f};
+static constexpr npy_cfloat one = {1.0f};
+static constexpr npy_cfloat zero = {0.0f};
+static constexpr npy_cfloat minus_one = {-1.0f};
 static const npy_cfloat ninf;
 static const npy_cfloat nan;
 };
 constexpr npy_cfloat numeric_limits<npy_cfloat>::one;
 constexpr npy_cfloat numeric_limits<npy_cfloat>::zero;
 constexpr npy_cfloat numeric_limits<npy_cfloat>::minus_one;
-const npy_cfloat numeric_limits<npy_cfloat>::ninf = {-NPY_INFINITYF, 0.0f};
+const npy_cfloat numeric_limits<npy_cfloat>::ninf = {-NPY_INFINITYF};
 const npy_cfloat numeric_limits<npy_cfloat>::nan = {NPY_NANF, NPY_NANF};
-#else
-template<>
-struct numeric_limits<npy_cfloat> {
-static constexpr npy_cfloat one = 1.0f;
-static constexpr npy_cfloat zero = 0.0f;
-static constexpr npy_cfloat minus_one = -1.0f;
-static const npy_cfloat ninf;
-static const npy_cfloat nan;
-};
-constexpr npy_cfloat numeric_limits<npy_cfloat>::one;
-constexpr npy_cfloat numeric_limits<npy_cfloat>::zero;
-constexpr npy_cfloat numeric_limits<npy_cfloat>::minus_one;
-const npy_cfloat numeric_limits<npy_cfloat>::ninf = -NPY_INFINITYF;
-const npy_cfloat numeric_limits<npy_cfloat>::nan = NPY_NANF;
-#endif
 
 template<>
 struct numeric_limits<f2c_complex> {
@@ -509,48 +493,32 @@ constexpr f2c_complex numeric_limits<f2c_complex>::minus_one;
 const f2c_complex numeric_limits<f2c_complex>::ninf = {-NPY_INFINITYF, 0.0f};
 const f2c_complex numeric_limits<f2c_complex>::nan = {NPY_NANF, NPY_NANF};
 
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 template<>
 struct numeric_limits<npy_cdouble> {
-static constexpr npy_cdouble one = {1.0, 0.0};
-static constexpr npy_cdouble zero = {0.0, 0.0};
-static constexpr npy_cdouble minus_one = {-1.0, 0.0};
+static constexpr npy_cdouble one = {1.0};
+static constexpr npy_cdouble zero = {0.0};
+static constexpr npy_cdouble minus_one = {-1.0};
 static const npy_cdouble ninf;
 static const npy_cdouble nan;
 };
 constexpr npy_cdouble numeric_limits<npy_cdouble>::one;
 constexpr npy_cdouble numeric_limits<npy_cdouble>::zero;
 constexpr npy_cdouble numeric_limits<npy_cdouble>::minus_one;
-const npy_cdouble numeric_limits<npy_cdouble>::ninf = {-NPY_INFINITY, 0.0};
+const npy_cdouble numeric_limits<npy_cdouble>::ninf = {-NPY_INFINITY};
 const npy_cdouble numeric_limits<npy_cdouble>::nan = {NPY_NAN, NPY_NAN};
-#else
-template<>
-struct numeric_limits<npy_cdouble> {
-static constexpr npy_cdouble one = 1.0;
-static constexpr npy_cdouble zero = 0.0;
-static constexpr npy_cdouble minus_one = -1.0;
-static const npy_cdouble ninf;
-static const npy_cdouble nan;
-};
-constexpr npy_cdouble numeric_limits<npy_cdouble>::one;
-constexpr npy_cdouble numeric_limits<npy_cdouble>::zero;
-constexpr npy_cdouble numeric_limits<npy_cdouble>::minus_one;
-const npy_cdouble numeric_limits<npy_cdouble>::ninf = -NPY_INFINITY;
-const npy_cdouble numeric_limits<npy_cdouble>::nan = NPY_NAN;
-#endif
 
 template<>
 struct numeric_limits<f2c_doublecomplex> {
-static constexpr f2c_doublecomplex one = {1.0, 0.0};
-static constexpr f2c_doublecomplex zero = {0.0, 0.0};
-static constexpr f2c_doublecomplex minus_one = {-1.0, 0.0};
+static constexpr f2c_doublecomplex one = {1.0};
+static constexpr f2c_doublecomplex zero = {0.0};
+static constexpr f2c_doublecomplex minus_one = {-1.0};
 static const f2c_doublecomplex ninf;
 static const f2c_doublecomplex nan;
 };
 constexpr f2c_doublecomplex numeric_limits<f2c_doublecomplex>::one;
 constexpr f2c_doublecomplex numeric_limits<f2c_doublecomplex>::zero;
 constexpr f2c_doublecomplex numeric_limits<f2c_doublecomplex>::minus_one;
-const f2c_doublecomplex numeric_limits<f2c_doublecomplex>::ninf = {-NPY_INFINITY, 0.0};
+const f2c_doublecomplex numeric_limits<f2c_doublecomplex>::ninf = {-NPY_INFINITY};
 const f2c_doublecomplex numeric_limits<f2c_doublecomplex>::nan = {NPY_NAN, NPY_NAN};
 
 /*
