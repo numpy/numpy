@@ -10,16 +10,15 @@ import numpy as np
 from . import multiarray
 from . import numerictypes as nt
 from .multiarray import (
-    ALLOW_THREADS,
-    BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
-    WRAP, arange, array, asarray, asanyarray, ascontiguousarray,
-    asfortranarray, broadcast, can_cast,
-    concatenate, copyto, dot, dtype, empty,
-    empty_like, flatiter, frombuffer, from_dlpack, fromfile, fromiter,
-    fromstring, inner, lexsort, matmul, may_share_memory,
-    min_scalar_type, ndarray, nditer, nested_iters, promote_types,
-    putmask, result_type, shares_memory, vdot, where,
-    zeros, normalize_axis_index, _get_promotion_state, _set_promotion_state)
+    ALLOW_THREADS, BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT,
+    RAISE, WRAP, arange, array, asarray, asanyarray, ascontiguousarray,
+    asfortranarray, broadcast, can_cast, concatenate, copyto, dot, dtype,
+    empty, empty_like, flatiter, frombuffer, from_dlpack, fromfile, fromiter,
+    fromstring, inner, lexsort, matmul, may_share_memory, min_scalar_type,
+    ndarray, nditer, nested_iters, promote_types, putmask, result_type,
+    shares_memory, vdot, where, zeros, normalize_axis_index,
+    _get_promotion_state, _set_promotion_state
+)
 
 from . import overrides
 from . import umath
@@ -43,7 +42,7 @@ __all__ = [
     'arange', 'array', 'asarray', 'asanyarray', 'ascontiguousarray',
     'asfortranarray', 'zeros', 'count_nonzero', 'empty', 'broadcast', 'dtype',
     'fromstring', 'fromfile', 'frombuffer', 'from_dlpack', 'where',
-    'argwhere', 'copyto', 'concatenate', 'lexsort',
+    'argwhere', 'copyto', 'concatenate', 'lexsort', 'astype',
     'can_cast', 'promote_types', 'min_scalar_type',
     'result_type', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
     'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
@@ -2519,6 +2518,64 @@ def array_equiv(a1, a2):
         return False
 
     return builtins.bool((a1 == a2).all())
+
+
+def _astype_dispatcher(x, dtype, /, *, copy=None):
+    return (x, dtype)
+
+
+@array_function_dispatch(_astype_dispatcher)
+def astype(x, dtype, /, *, copy = True):
+    """
+    Copies an array to a specified data type.
+
+    This function is an Array API compatible alternative to
+    `numpy.ndarray.astype`.
+
+    Parameters
+    ----------
+    x : ndarray
+        Input NumPy array to cast. ``array_likes`` are explicitly not
+        supported here.
+    dtype : dtype
+        Data type of the result.
+    copy : bool, optional
+        Specifies whether to copy an array when the specified dtype matches
+        the data type of the input array ``x``. If ``True``, a newly allocated
+        array must always be returned. If ``False`` and the specified dtype
+        matches the data type of the input array, the input array must be
+        returned; otherwise, a newly allocated array must be returned.
+        Defaults to ``True``.
+
+    Returns
+    -------
+    out : ndarray
+        An array having the specified data type.
+
+    See Also
+    --------
+    ndarray.astype
+
+    Examples
+    --------
+    >>> arr = np.array([1, 2, 3]); arr
+    array([1, 2, 3])
+    >>> np.astype(arr, np.float64)
+    array([1., 2., 3.])
+
+    Non-copy case:
+
+    >>> arr = np.array([1, 2, 3])
+    >>> arr_noncpy = np.astype(arr, arr.dtype, copy=False)
+    >>> np.shares_memory(arr, arr_noncpy)
+    True
+
+    """
+    if not isinstance(x, np.ndarray):
+        raise TypeError(
+            f"Input should be a NumPy array. It is a {type(x)} instead."
+        )
+    return x.astype(dtype, copy=copy)
 
 
 inf = PINF

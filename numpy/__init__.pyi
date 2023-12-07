@@ -377,6 +377,7 @@ from numpy._core.numeric import (
     isclose as isclose,
     array_equal as array_equal,
     array_equiv as array_equiv,
+    astype as astype,
 )
 
 from numpy._core.numerictypes import (
