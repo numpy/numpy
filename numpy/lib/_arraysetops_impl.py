@@ -392,14 +392,12 @@ def _unique_all_dispatcher(x, /):
 @array_function_dispatch(_unique_all_dispatcher)
 def unique_all(x):
     """
-    Returns the unique elements of an input array `x`, the first occurring
-    indices for each unique element in `x`, the indices from the set of unique
-    elements that reconstruct `x`, and the corresponding counts for each
-    unique element in `x`.
+    Find the unique elements of an array, and counts, inverse and indices.
 
-    This function is Array API compatible alternative to:
-    ``np.unique(x, return_index=True, return_inverse=True, return_counts=True,
-    equal_nan=False)``
+    This function is an Array API compatible alternative to:
+
+    >>> np.unique(x, return_index=True, return_inverse=True,
+    ...           return_counts=True, equal_nan=False)
 
     Parameters
     ----------
@@ -410,6 +408,7 @@ def unique_all(x):
     -------
     out : namedtuple
         The result containing:
+
         * values - The unique elements of an input array.
         * indices - The first occurring indices for each unique element.
         * inverse_indices - The indices from the set of unique elements
@@ -438,11 +437,11 @@ def _unique_counts_dispatcher(x, /):
 @array_function_dispatch(_unique_counts_dispatcher)
 def unique_counts(x):
     """
-    Returns the unique elements of an input array `x`, and the corresponding
-    counts for each unique element in `x`.
+    Find the unique elements and counts of an input array `x`.
 
-    This function is Array API compatible alternative to:
-    ``np.unique(x, return_counts=True, equal_nan=False)``
+    This function is an Array API compatible alternative to:
+
+    >>> np.unique(x, return_counts=True, equal_nan=False)
 
     Parameters
     ----------
@@ -453,6 +452,7 @@ def unique_counts(x):
     -------
     out : namedtuple
         The result containing:
+
         * values - The unique elements of an input array.
         * counts - The corresponding counts for each unique element.
 
@@ -478,11 +478,11 @@ def _unique_inverse_dispatcher(x, /):
 @array_function_dispatch(_unique_inverse_dispatcher)
 def unique_inverse(x):
     """
-    Returns the unique elements of an input array `x` and the indices
-    from the set of unique elements that reconstruct `x`.
+    Find the unique elements of `x` and indices to reconstruct `x`.
 
     This function is Array API compatible alternative to:
-    ``np.unique(x, return_inverse=True, equal_nan=False)``
+
+    >>> np.unique(x, return_inverse=True, equal_nan=False)
 
     Parameters
     ----------
@@ -493,6 +493,7 @@ def unique_inverse(x):
     -------
     out : namedtuple
         The result containing:
+
         * values - The unique elements of an input array.
         * inverse_indices - The indices from the set of unique elements
           that reconstruct `x`.
@@ -522,7 +523,8 @@ def unique_values(x):
     Returns the unique elements of an input array `x`.
 
     This function is Array API compatible alternative to:
-    ``np.unique(x, equal_nan=False)``
+
+    >>> np.unique(x, equal_nan=False)
 
     Parameters
     ----------
