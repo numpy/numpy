@@ -62,6 +62,7 @@ def _to_bytes_or_str_array(result, output_dtype_like):
     with the appropriate dtype if an object array must be used
     as an intermediary.
     """
+    output_dtype_like = numpy.asarray(output_dtype_like)
     if result.size == 0:
         # Calling asarray & tolist in an empty array would result
         # in losing shape information
