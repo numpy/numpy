@@ -1267,7 +1267,8 @@ def replace(a, old, new, count=None):
     counts = numpy._core.umath.count(a, old, 0, max_int64)
     buffersizes = (
         numpy._core.umath.str_len(a)
-        + counts * (numpy._core.umath.str_len(new)-numpy._core.umath.str_len(old))
+        + counts * (numpy._core.umath.str_len(new) -
+                    numpy._core.umath.str_len(old))
     )
     max_buffersize = numpy.max(buffersizes)
     out = numpy.empty(a.shape, dtype=f"{a.dtype.char}{max_buffersize}")
