@@ -1303,9 +1303,10 @@ gentype_ndim_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 }
 
 static PyObject *
-gentype_flags_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
+gentype_flags_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
-    return PyArray_NewFlagsObject(NULL);
+    PyObject *mod = PyType_GetModule(Py_TYPE(self));
+    return PyArray_NewFlagsObject(mod, NULL);
 }
 
 static PyObject *

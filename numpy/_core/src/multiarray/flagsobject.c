@@ -25,7 +25,7 @@ _UpdateContiguousFlags(PyArrayObject *ap);
  * Get New ArrayFlagsObject
  */
 NPY_NO_EXPORT PyObject *
-PyArray_NewFlagsObject(PyObject *obj)
+PyArray_NewFlagsObject(PyObject* mod, PyObject *obj)
 {
     PyObject *flagobj;
     int flags;
@@ -45,7 +45,9 @@ PyArray_NewFlagsObject(PyObject *obj)
 
         flags = PyArray_FLAGS((PyArrayObject *)obj);
     }
-    flagobj = PyArrayFlags_Type.tp_alloc(&PyArrayFlags_Type, 0);
+
+    PyTypeObject* array_flags_type = &PyArrayFlags_Type;
+    flagobj = array_flags_type->tp_alloc(array_flags_type, 0);
     if (flagobj == NULL) {
         return NULL;
     }
@@ -680,17 +682,20 @@ static PyMappingMethods arrayflags_as_mapping = {
 
 
 static PyObject *
-arrayflags_new(PyTypeObject *NPY_UNUSED(self), PyObject *args, PyObject *NPY_UNUSED(kwds))
+arrayflags_new(PyTypeObject *self, PyObject *args, PyObject *NPY_UNUSED(kwds))
 {
     PyObject *arg=NULL;
     if (!PyArg_UnpackTuple(args, "flagsobj", 0, 1, &arg)) {
         return NULL;
     }
+    PyObject *mod = PyType_GetModule(Py_TYPE(self));
+    assert(mod != NULL);
+
     if ((arg != NULL) && PyArray_Check(arg)) {
-        return PyArray_NewFlagsObject(arg);
+        return PyArray_NewFlagsObject(mod, arg);
     }
     else {
-        return PyArray_NewFlagsObject(NULL);
+        return PyArray_NewFlagsObject(mod, NULL);
     }
 }
 

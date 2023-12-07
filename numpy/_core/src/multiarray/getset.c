@@ -35,7 +35,8 @@ array_ndim_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 static PyObject *
 array_flags_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 {
-    return PyArray_NewFlagsObject((PyObject *)self);
+    PyObject *mod = PyType_GetModule(Py_TYPE(self));
+    return PyArray_NewFlagsObject(mod, (PyObject *)self);
 }
 
 static PyObject *
