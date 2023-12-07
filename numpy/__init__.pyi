@@ -377,6 +377,7 @@ from numpy._core.numeric import (
     isclose as isclose,
     array_equal as array_equal,
     array_equiv as array_equiv,
+    astype as astype,
 )
 
 from numpy._core.numerictypes import (
@@ -406,13 +407,17 @@ from numpy.lib._arraypad_impl import (
 
 from numpy.lib._arraysetops_impl import (
     ediff1d as ediff1d,
+    in1d as in1d,
     intersect1d as intersect1d,
+    isin as isin,
+    setdiff1d as setdiff1d,
     setxor1d as setxor1d,
     union1d as union1d,
-    setdiff1d as setdiff1d,
     unique as unique,
-    in1d as in1d,
-    isin as isin,
+    unique_all as unique_all,
+    unique_counts as unique_counts,
+    unique_inverse as unique_inverse,
+    unique_values as unique_values,
 )
 
 from numpy.lib._function_base_impl import (

@@ -36,28 +36,19 @@ array_api_tests/test_creation_functions.py::test_asarray_scalars
 # fft test suite is buggy as of 83f0bcdc
 array_api_tests/test_fft.py
 
-# missing isdtype, astype and finfo return type misalignment
+# missing isdtype and finfo return type misalignment
 array_api_tests/test_data_type_functions.py::test_finfo[float32]
 array_api_tests/test_data_type_functions.py::test_isdtype
-array_api_tests/test_data_type_functions.py::test_astype
 
 # missing names
-array_api_tests/test_has_names.py::test_has_names[linalg-cross]
 array_api_tests/test_has_names.py::test_has_names[linalg-matmul]
 array_api_tests/test_has_names.py::test_has_names[linalg-matrix_norm]
 array_api_tests/test_has_names.py::test_has_names[linalg-matrix_transpose]
-array_api_tests/test_has_names.py::test_has_names[linalg-outer]
-array_api_tests/test_has_names.py::test_has_names[linalg-svdvals]
 array_api_tests/test_has_names.py::test_has_names[linalg-tensordot]
 array_api_tests/test_has_names.py::test_has_names[linalg-vecdot]
 array_api_tests/test_has_names.py::test_has_names[linalg-vector_norm]
-array_api_tests/test_has_names.py::test_has_names[set-unique_all]
-array_api_tests/test_has_names.py::test_has_names[set-unique_counts]
-array_api_tests/test_has_names.py::test_has_names[set-unique_inverse]
-array_api_tests/test_has_names.py::test_has_names[set-unique_values]
 array_api_tests/test_has_names.py::test_has_names[manipulation-concat]
 array_api_tests/test_has_names.py::test_has_names[manipulation-permute_dims]
-array_api_tests/test_has_names.py::test_has_names[data_type-astype]
 array_api_tests/test_has_names.py::test_has_names[data_type-isdtype]
 array_api_tests/test_has_names.py::test_has_names[elementwise-acos]
 array_api_tests/test_has_names.py::test_has_names[elementwise-acosh]
@@ -76,12 +67,9 @@ array_api_tests/test_has_names.py::test_has_names[array_method-to_device]
 array_api_tests/test_has_names.py::test_has_names[array_attribute-device]
 
 # missing linalg names
-array_api_tests/test_linalg.py::test_cross
 array_api_tests/test_linalg.py::test_matrix_norm
 array_api_tests/test_linalg.py::test_matrix_transpose
-array_api_tests/test_linalg.py::test_outer
 array_api_tests/test_linalg.py::test_pinv
-array_api_tests/test_linalg.py::test_svdvals
 array_api_tests/test_linalg.py::test_vecdot
 
 # missing names
@@ -92,10 +80,6 @@ array_api_tests/test_manipulation_functions.py::test_permute_dims
 array_api_tests/test_operators_and_elementwise_functions.py
 array_api_tests/test_signatures.py::test_func_signature[std]
 array_api_tests/test_signatures.py::test_func_signature[var]
-array_api_tests/test_signatures.py::test_func_signature[unique_all]
-array_api_tests/test_signatures.py::test_func_signature[unique_counts]
-array_api_tests/test_signatures.py::test_func_signature[unique_inverse]
-array_api_tests/test_signatures.py::test_func_signature[unique_values]
 array_api_tests/test_signatures.py::test_func_signature[asarray]
 array_api_tests/test_signatures.py::test_func_signature[empty_like]
 array_api_tests/test_signatures.py::test_func_signature[eye]
@@ -110,7 +94,6 @@ array_api_tests/test_signatures.py::test_func_signature[permute_dims]
 array_api_tests/test_signatures.py::test_func_signature[reshape]
 array_api_tests/test_signatures.py::test_func_signature[argsort]
 array_api_tests/test_signatures.py::test_func_signature[sort]
-array_api_tests/test_signatures.py::test_func_signature[astype]
 array_api_tests/test_signatures.py::test_func_signature[isdtype]
 array_api_tests/test_signatures.py::test_func_signature[acos]
 array_api_tests/test_signatures.py::test_func_signature[acosh]
@@ -125,15 +108,12 @@ array_api_tests/test_signatures.py::test_func_signature[bitwise_right_shift]
 array_api_tests/test_signatures.py::test_func_signature[pow]
 array_api_tests/test_signatures.py::test_func_signature[matrix_transpose]
 array_api_tests/test_signatures.py::test_func_signature[vecdot]
-array_api_tests/test_signatures.py::test_extension_func_signature[linalg.cross]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.matmul]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.cholesky]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.matrix_norm]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.matrix_rank]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.matrix_transpose]
-array_api_tests/test_signatures.py::test_extension_func_signature[linalg.outer]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.pinv]
-array_api_tests/test_signatures.py::test_extension_func_signature[linalg.svdvals]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.tensordot]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.vecdot]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.vector_norm]

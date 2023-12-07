@@ -16,7 +16,7 @@
 #include "common_dtype.h"
 #include "umathmodule.h"
 #include "abstractdtypes.h"
-
+#include "dispatching.h"
 
 int
 PyArrayInitDTypeMeta_FromSpec(
@@ -116,9 +116,6 @@ PyArrayInitDTypeMeta_FromSpec(
 NPY_NO_EXPORT int
 PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate);
 
-NPY_NO_EXPORT int
-PyUFunc_AddLoopFromSpec(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate);
-
 
 /*
  * Function is defined in umath/wrapping_array_method.c
@@ -129,31 +126,6 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
         PyArray_DTypeMeta *new_dtypes[], PyArray_DTypeMeta *wrapped_dtypes[],
         translate_given_descrs_func *translate_given_descrs,
         translate_loop_descrs_func *translate_loop_descrs);
-
-
-static int
-PyUFunc_AddPromoter(
-        PyObject *ufunc, PyObject *DType_tuple, PyObject *promoter)
-{
-    if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
-        PyErr_SetString(PyExc_TypeError,
-                "ufunc object passed is not a ufunc!");
-        return -1;
-    }
-    if (!PyCapsule_CheckExact(promoter)) {
-        PyErr_SetString(PyExc_TypeError,
-                "promoter must (currently) be a PyCapsule.");
-        return -1;
-    }
-    if (PyCapsule_GetPointer(promoter, "numpy._ufunc_promoter") == NULL) {
-        return -1;
-    }
-    PyObject *info = PyTuple_Pack(2, DType_tuple, promoter);
-    if (info == NULL) {
-        return -1;
-    }
-    return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
-}
 
 
 /*
@@ -186,47 +158,47 @@ _get_experimental_dtype_api(PyObject *NPY_UNUSED(mod), PyObject *arg)
             /* NumPy's builtin DTypes (starting at offset 10 going to 41) */
     };
     if (experimental_api_table[10] == NULL) {
-        experimental_api_table[10] = PyArray_DTypeFromTypeNum(NPY_BOOL);
+        experimental_api_table[10] = &PyArray_BoolDType;
         /* Integers */
-        experimental_api_table[11] = PyArray_DTypeFromTypeNum(NPY_BYTE);
-        experimental_api_table[12] = PyArray_DTypeFromTypeNum(NPY_UBYTE);
-        experimental_api_table[13] = PyArray_DTypeFromTypeNum(NPY_SHORT);
-        experimental_api_table[14] = PyArray_DTypeFromTypeNum(NPY_USHORT);
-        experimental_api_table[15] = PyArray_DTypeFromTypeNum(NPY_INT);
-        experimental_api_table[16] = PyArray_DTypeFromTypeNum(NPY_UINT);
-        experimental_api_table[17] = PyArray_DTypeFromTypeNum(NPY_LONG);
-        experimental_api_table[18] = PyArray_DTypeFromTypeNum(NPY_ULONG);
-        experimental_api_table[19] = PyArray_DTypeFromTypeNum(NPY_LONGLONG);
-        experimental_api_table[20] = PyArray_DTypeFromTypeNum(NPY_ULONGLONG);
+        experimental_api_table[11] = &PyArray_ByteDType;
+        experimental_api_table[12] = &PyArray_UByteDType;
+        experimental_api_table[13] = &PyArray_ShortDType;
+        experimental_api_table[14] = &PyArray_UShortDType;
+        experimental_api_table[15] = &PyArray_IntDType;
+        experimental_api_table[16] = &PyArray_UIntDType;
+        experimental_api_table[17] = &PyArray_LongDType;
+        experimental_api_table[18] = &PyArray_ULongDType;
+        experimental_api_table[19] = &PyArray_LongLongDType;
+        experimental_api_table[20] = &PyArray_ULongLongDType;
         /* Integer aliases */
-        experimental_api_table[21] = PyArray_DTypeFromTypeNum(NPY_INT8);
-        experimental_api_table[22] = PyArray_DTypeFromTypeNum(NPY_UINT8);
-        experimental_api_table[23] = PyArray_DTypeFromTypeNum(NPY_INT16);
-        experimental_api_table[24] = PyArray_DTypeFromTypeNum(NPY_UINT16);
-        experimental_api_table[25] = PyArray_DTypeFromTypeNum(NPY_INT32);
-        experimental_api_table[26] = PyArray_DTypeFromTypeNum(NPY_UINT32);
-        experimental_api_table[27] = PyArray_DTypeFromTypeNum(NPY_INT64);
-        experimental_api_table[28] = PyArray_DTypeFromTypeNum(NPY_UINT64);
-        experimental_api_table[29] = PyArray_DTypeFromTypeNum(NPY_INTP);
-        experimental_api_table[30] = PyArray_DTypeFromTypeNum(NPY_UINTP);
+        experimental_api_table[21] = &PyArray_Int8DType;
+        experimental_api_table[22] = &PyArray_UInt8DType;
+        experimental_api_table[23] = &PyArray_Int16DType;
+        experimental_api_table[24] = &PyArray_UInt16DType;
+        experimental_api_table[25] = &PyArray_Int32DType;
+        experimental_api_table[26] = &PyArray_UInt32DType;
+        experimental_api_table[27] = &PyArray_Int64DType;
+        experimental_api_table[28] = &PyArray_UInt64DType;
+        experimental_api_table[29] = &PyArray_IntpDType;
+        experimental_api_table[30] = &PyArray_UIntpDType;
         /* Floats */
-        experimental_api_table[31] = PyArray_DTypeFromTypeNum(NPY_HALF);
-        experimental_api_table[32] = PyArray_DTypeFromTypeNum(NPY_FLOAT);
-        experimental_api_table[33] = PyArray_DTypeFromTypeNum(NPY_DOUBLE);
-        experimental_api_table[34] = PyArray_DTypeFromTypeNum(NPY_LONGDOUBLE);
+        experimental_api_table[31] = &PyArray_HalfDType;
+        experimental_api_table[32] = &PyArray_FloatDType;
+        experimental_api_table[33] = &PyArray_DoubleDType;
+        experimental_api_table[34] = &PyArray_LongDoubleDType;
         /* Complex */
-        experimental_api_table[35] = PyArray_DTypeFromTypeNum(NPY_CFLOAT);
-        experimental_api_table[36] = PyArray_DTypeFromTypeNum(NPY_CDOUBLE);
-        experimental_api_table[37] = PyArray_DTypeFromTypeNum(NPY_CLONGDOUBLE);
+        experimental_api_table[35] = &PyArray_CFloatDType;
+        experimental_api_table[36] = &PyArray_CDoubleDType;
+        experimental_api_table[37] = &PyArray_CLongDoubleDType;
         /* String/Bytes */
-        experimental_api_table[38] = PyArray_DTypeFromTypeNum(NPY_STRING);
-        experimental_api_table[39] = PyArray_DTypeFromTypeNum(NPY_UNICODE);
+        experimental_api_table[38] = &PyArray_BytesDType;
+        experimental_api_table[39] = &PyArray_UnicodeDType;
         /* Datetime/Timedelta */
-        experimental_api_table[40] = PyArray_DTypeFromTypeNum(NPY_DATETIME);
-        experimental_api_table[41] = PyArray_DTypeFromTypeNum(NPY_TIMEDELTA);
+        experimental_api_table[40] = &PyArray_DatetimeDType;
+        experimental_api_table[41] = &PyArray_TimedeltaDType;
         /* Object and Structured */
-        experimental_api_table[42] = PyArray_DTypeFromTypeNum(NPY_OBJECT);
-        experimental_api_table[43] = PyArray_DTypeFromTypeNum(NPY_VOID);
+        experimental_api_table[42] = &PyArray_ObjectDType;
+        experimental_api_table[43] = &PyArray_VoidDType;
         /* Abstract */
         experimental_api_table[44] = &PyArray_PyIntAbstractDType;
         experimental_api_table[45] = &PyArray_PyFloatAbstractDType;

@@ -682,6 +682,12 @@ class TestSVD(SVDCases, SVDBaseTests):
         assert_equal(vh.shape, (4, 4))
         assert_equal(vh, np.eye(4))
 
+    def test_svdvals(self):
+        x = np.array([[1, 0.5], [0.5, 1]])
+        s_from_svd = linalg.svd(x, compute_uv=False, hermitian=self.hermitian)
+        s_from_svdvals = linalg.svdvals(x)
+        assert_almost_equal(s_from_svd, s_from_svdvals)
+
 
 class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
 
@@ -1842,6 +1848,23 @@ class TestCholesky:
         assert_(isinstance(res, np.ndarray))
 
 
+class TestOuter:
+    arr1 = np.arange(3)
+    arr2 = np.arange(3)
+    expected = np.array(
+        [[0, 0, 0],
+         [0, 1, 2],
+         [0, 2, 4]]
+    )
+
+    assert_array_equal(np.linalg.outer(arr1, arr2), expected)
+
+    with assert_raises_regex(
+        ValueError, "Input arrays must be one-dimensional"
+    ):
+        np.linalg.outer(arr1[:, np.newaxis], arr2)
+
+
 def test_byteorder_check():
     # Byte order check should pass for native order
     if sys.byteorder == 'little':
@@ -2228,3 +2251,23 @@ def test_trace():
     expected = np.array([36, 116, 196])
 
     assert_equal(actual, expected)
+
+
+def test_cross():
+
+    x = np.arange(9).reshape((3, 3))
+    actual = np.linalg.cross(x, x + 1)
+    expected = np.array([
+        [-1, 2, -1],
+        [-1, 2, -1],
+        [-1, 2, -1],
+    ])
+
+    assert_equal(actual, expected)
+
+    with assert_raises_regex(
+        ValueError,
+        r"input arrays must be \(arrays of\) 3-dimensional vectors"
+    ):
+        x_2dim = x[:, 1:]
+        np.linalg.cross(x_2dim, x_2dim)

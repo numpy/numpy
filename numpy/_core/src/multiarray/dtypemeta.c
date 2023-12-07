@@ -29,6 +29,8 @@
 
 #include <assert.h>
 
+
+
 static void
 dtypemeta_dealloc(PyArray_DTypeMeta *self) {
     /* Do not accidentally delete a statically defined DType: */
@@ -917,13 +919,13 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
                 return cls;
             }
             else if (cls->type_num == NPY_HALF || cls->type_num == NPY_FLOAT) {
-                    return PyArray_DTypeFromTypeNum(NPY_CFLOAT);
+                return NPY_DT_NewRef(&PyArray_CFloatDType);
             }
             else if (cls->type_num == NPY_DOUBLE) {
-                return PyArray_DTypeFromTypeNum(NPY_CDOUBLE);
+                return NPY_DT_NewRef(&PyArray_CDoubleDType);
             }
             else if (cls->type_num == NPY_LONGDOUBLE) {
-                return PyArray_DTypeFromTypeNum(NPY_CLONGDOUBLE);
+                return NPY_DT_NewRef(&PyArray_CLongDoubleDType);
             }
         }
         else if (other == &PyArray_PyFloatAbstractDType) {
@@ -1195,7 +1197,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr,
                     void_discover_descr_from_pyobject);
             dt_slots->common_instance = void_common_instance;
             dt_slots->ensure_canonical = void_ensure_canonical;
-            dt_slots->get_fill_zero_loop = 
+            dt_slots->get_fill_zero_loop =
                     npy_get_zerofill_void_and_legacy_user_dtype_loop;
             dt_slots->get_clear_loop =
                     npy_get_clear_void_and_legacy_user_dtype_loop;
@@ -1281,6 +1283,44 @@ static PyMemberDef dtypemeta_members[] = {
     {NULL, 0, 0, 0, NULL},
 };
 
+NPY_NO_EXPORT void
+initialize_legacy_dtypemeta_aliases(PyArray_Descr **_builtin_descrs) {
+    _Bool_dtype = NPY_DTYPE(_builtin_descrs[NPY_BOOL]);
+    _Byte_dtype = NPY_DTYPE(_builtin_descrs[NPY_BYTE]);
+    _UByte_dtype = NPY_DTYPE(_builtin_descrs[NPY_UBYTE]);
+    _Short_dtype = NPY_DTYPE(_builtin_descrs[NPY_SHORT]);
+    _UShort_dtype = NPY_DTYPE(_builtin_descrs[NPY_USHORT]);
+    _Int_dtype = NPY_DTYPE(_builtin_descrs[NPY_INT]);
+    _UInt_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINT]);
+    _Long_dtype = NPY_DTYPE(_builtin_descrs[NPY_LONG]);
+    _ULong_dtype = NPY_DTYPE(_builtin_descrs[NPY_ULONG]);
+    _LongLong_dtype = NPY_DTYPE(_builtin_descrs[NPY_LONGLONG]);
+    _ULongLong_dtype = NPY_DTYPE(_builtin_descrs[NPY_ULONGLONG]);
+    _Int8_dtype = NPY_DTYPE(_builtin_descrs[NPY_INT8]);
+    _UInt8_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINT8]);
+    _Int16_dtype = NPY_DTYPE(_builtin_descrs[NPY_INT16]);
+    _UInt16_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINT16]);
+    _Int32_dtype = NPY_DTYPE(_builtin_descrs[NPY_INT32]);
+    _UInt32_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINT32]);
+    _Int64_dtype = NPY_DTYPE(_builtin_descrs[NPY_INT64]);
+    _UInt64_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINT64]);
+    _Intp_dtype = NPY_DTYPE(_builtin_descrs[NPY_INTP]);
+    _UIntp_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINTP]);
+    _Half_dtype = NPY_DTYPE(_builtin_descrs[NPY_HALF]);
+    _Float_dtype = NPY_DTYPE(_builtin_descrs[NPY_FLOAT]);
+    _Double_dtype = NPY_DTYPE(_builtin_descrs[NPY_DOUBLE]);
+    _LongDouble_dtype = NPY_DTYPE(_builtin_descrs[NPY_LONGDOUBLE]);
+    _CFloat_dtype = NPY_DTYPE(_builtin_descrs[NPY_CFLOAT]);
+    _CDouble_dtype = NPY_DTYPE(_builtin_descrs[NPY_CDOUBLE]);
+    _CLongDouble_dtype = NPY_DTYPE(_builtin_descrs[NPY_CLONGDOUBLE]);
+    // NPY_STRING is the legacy python2 name
+    _Bytes_dtype = NPY_DTYPE(_builtin_descrs[NPY_STRING]);
+    _Unicode_dtype = NPY_DTYPE(_builtin_descrs[NPY_UNICODE]);
+    _Datetime_dtype = NPY_DTYPE(_builtin_descrs[NPY_DATETIME]);
+    _Timedelta_dtype = NPY_DTYPE(_builtin_descrs[NPY_TIMEDELTA]);
+    _Object_dtype = NPY_DTYPE(_builtin_descrs[NPY_OBJECT]);
+    _Void_dtype = NPY_DTYPE(_builtin_descrs[NPY_VOID]);
+}
 
 NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
@@ -1299,3 +1339,38 @@ NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
     .tp_new = dtypemeta_new,
     .tp_is_gc = dtypemeta_is_gc,
 };
+
+PyArray_DTypeMeta *_Bool_dtype = NULL;
+PyArray_DTypeMeta *_Byte_dtype = NULL;
+PyArray_DTypeMeta *_UByte_dtype = NULL;
+PyArray_DTypeMeta *_Short_dtype = NULL;
+PyArray_DTypeMeta *_UShort_dtype = NULL;
+PyArray_DTypeMeta *_Int_dtype = NULL;
+PyArray_DTypeMeta *_UInt_dtype = NULL;
+PyArray_DTypeMeta *_Long_dtype = NULL;
+PyArray_DTypeMeta *_ULong_dtype = NULL;
+PyArray_DTypeMeta *_LongLong_dtype = NULL;
+PyArray_DTypeMeta *_ULongLong_dtype = NULL;
+PyArray_DTypeMeta *_Int8_dtype = NULL;
+PyArray_DTypeMeta *_UInt8_dtype = NULL;
+PyArray_DTypeMeta *_Int16_dtype = NULL;
+PyArray_DTypeMeta *_UInt16_dtype = NULL;
+PyArray_DTypeMeta *_Int32_dtype = NULL;
+PyArray_DTypeMeta *_UInt32_dtype = NULL;
+PyArray_DTypeMeta *_Int64_dtype = NULL;
+PyArray_DTypeMeta *_UInt64_dtype = NULL;
+PyArray_DTypeMeta *_Intp_dtype = NULL;
+PyArray_DTypeMeta *_UIntp_dtype = NULL;
+PyArray_DTypeMeta *_Half_dtype = NULL;
+PyArray_DTypeMeta *_Float_dtype = NULL;
+PyArray_DTypeMeta *_Double_dtype = NULL;
+PyArray_DTypeMeta *_LongDouble_dtype = NULL;
+PyArray_DTypeMeta *_CFloat_dtype = NULL;
+PyArray_DTypeMeta *_CDouble_dtype = NULL;
+PyArray_DTypeMeta *_CLongDouble_dtype = NULL;
+PyArray_DTypeMeta *_Bytes_dtype = NULL;
+PyArray_DTypeMeta *_Unicode_dtype = NULL;
+PyArray_DTypeMeta *_Datetime_dtype = NULL;
+PyArray_DTypeMeta *_Timedelta_dtype = NULL;
+PyArray_DTypeMeta *_Object_dtype = NULL;
+PyArray_DTypeMeta *_Void_dtype = NULL;
