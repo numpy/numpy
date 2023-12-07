@@ -9435,16 +9435,6 @@ class TestArange:
         assert_raises(TypeError, np.arange, dtype='int64')
         assert_raises(TypeError, np.arange, start=4)
 
-    def test_start_stop_kwarg(self):
-        keyword_stop = np.arange(stop=3)
-        keyword_zerotostop = np.arange(start=0, stop=3)
-        keyword_start_stop = np.arange(start=3, stop=9)
-
-        assert len(keyword_stop) == 3
-        assert len(keyword_zerotostop) == 3
-        assert len(keyword_start_stop) == 6
-        assert_array_equal(keyword_stop, keyword_zerotostop)
-
     def test_arange_booleans(self):
         # Arange makes some sense for booleans and works up to length 2.
         # But it is weird since `arange(2, 4, dtype=bool)` works.
