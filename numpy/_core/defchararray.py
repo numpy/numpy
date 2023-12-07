@@ -150,6 +150,12 @@ def not_equal(x1, x2):
     See Also
     --------
     equal, greater_equal, less_equal, greater, less
+
+    Examples
+    --------
+    >>> x1 = np.array(['a', 'b', 'c'])
+    >>> np.char.not_equal(x1, 'b')
+    array([ True, False,  True])
     """
     return compare_chararrays(x1, x2, '!=', True)
 
@@ -177,6 +183,12 @@ def greater_equal(x1, x2):
     See Also
     --------
     equal, not_equal, less_equal, greater, less
+
+    Examples
+    --------
+    >>> x1 = np.array(['a', 'b', 'c'])
+    >>> np.char.greater_equal(x1, 'b')
+    array([False,  True,  True])
     """
     return compare_chararrays(x1, x2, '>=', True)
 
@@ -203,6 +215,12 @@ def less_equal(x1, x2):
     See Also
     --------
     equal, not_equal, greater_equal, greater, less
+
+    Examples
+    --------
+    >>> x1 = np.array(['a', 'b', 'c'])
+    >>> np.char.less_equal(x1, 'b')
+    array([ True,  True, False])
     """
     return compare_chararrays(x1, x2, '<=', True)
 
@@ -229,6 +247,12 @@ def greater(x1, x2):
     See Also
     --------
     equal, not_equal, greater_equal, less_equal, less
+    
+    Examples
+    --------
+    >>> x1 = np.array(['a', 'b', 'c'])
+    >>> np.char.greater(x1, 'b')
+    array([False, False,  True])
     """
     return compare_chararrays(x1, x2, '>', True)
 
@@ -255,6 +279,12 @@ def less(x1, x2):
     See Also
     --------
     equal, not_equal, greater_equal, less_equal, greater
+
+    Examples
+    --------
+    >>> x1 = np.array(['a', 'b', 'c'])
+    >>> np.char.less(x1, 'b')
+    array([ True, False, False])
     """
     return compare_chararrays(x1, x2, '<', True)
 
@@ -316,6 +346,10 @@ def add(x1, x2):
         Output array of `bytes_` or `str_`, depending on input types
         of the same shape as `x1` and `x2`.
 
+    Examples
+    --------
+    >>> np.char.add(['hello', 'hi'], [' abc', ' xyz'])
+    array(['hello abc', 'hi xyz'], dtype='<U9')
     """
     arr1 = numpy.asarray(x1)
     arr2 = numpy.asarray(x2)
@@ -406,8 +440,6 @@ def mod(a, values):
     -------
     out : ndarray
         Output array of str or unicode, depending on input types
-
-
     """
     return _to_bytes_or_str_array(
         _vec_string(a, object_, '__mod__', (values,)), a)
@@ -690,7 +722,6 @@ def endswith(a, suffix, start=0, end=None):
     array([False,  True])
     >>> np.char.endswith(s, 'a', start=1, end=2)
     array([False,  True])
-
     """
     end = end if end is not None else numpy.iinfo(numpy.int_).max
     return numpy._core.umath.endswith(a, suffix, start, end)
@@ -731,6 +762,11 @@ def expandtabs(a, tabsize=8):
     --------
     str.expandtabs
 
+    Examples
+    --------
+    >>> a = np.array(['\tHello\t\tworld\t'])
+    >>> np.char.expandtabs(a, tabsize=8)
+    array(['        Hello           world   '], dtype='<U32')
     """
     return _to_bytes_or_str_array(
         _vec_string(a, object_, 'expandtabs', (tabsize,)), a)
@@ -834,6 +870,12 @@ def isalnum(a):
     See Also
     --------
     str.isalnum
+
+    Examples
+    --------
+    >>> a = np.array(['a', '1', 'a1', ''])
+    >>> np.char.isalnum(a)
+    array([ True,  True,  True,  False])
     """
     return _vec_string(a, numpy.bool, 'isalnum')
 
@@ -860,6 +902,13 @@ def isalpha(a):
     See Also
     --------
     str.isalpha
+
+    Examples
+    --------
+    >>> a = np.array(['a', '1', 'a1', ''])
+    >>> np.char.isalpha(a)
+    array([ True,  False,  False,  False])
+
     """
     return numpy._core.umath.isalpha(a)
 
@@ -922,6 +971,12 @@ def islower(a):
     See Also
     --------
     str.islower
+
+    Examples
+    --------
+    >>> str = "GHC"
+    >>> np.char.islower(str)
+    array(False)
     """
     return _vec_string(a, numpy.bool, 'islower')
 
@@ -949,6 +1004,16 @@ def isspace(a):
     See Also
     --------
     str.isspace
+
+    Examples
+    --------
+    >>> str = "GHC"
+    >>> np.char.isspace(str)
+    array(False)
+
+    >>> a = np.array([' ', '\t', '\n'])
+    >>> np.char.isspace(a)
+    array([True, True, True])
     """
     return numpy._core.umath.isspace(a)
 
@@ -975,6 +1040,16 @@ def istitle(a):
     See Also
     --------
     str.istitle
+
+    Examples
+    --------
+    >>> str = "GHC"
+    >>> np.char.istitle(str)
+    array(False)
+
+    >>> str = "Ghc"
+    >>> np.char.istitle(str)
+    array(True)
     """
     return _vec_string(a, numpy.bool, 'istitle')
 
@@ -1085,6 +1160,11 @@ def ljust(a, width, fillchar=' '):
     --------
     str.ljust
 
+    Examples
+    --------
+    >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> np.char.ljust(c, width=3)
+    array(['aAa', '  a', 'abB'], dtype='<U3')
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
@@ -1293,6 +1373,11 @@ def rfind(a, sub, start=0, end=None):
     --------
     str.rfind
 
+    Examples
+    --------
+    >>> a = np.array(["NumPy is a Python library"])
+    >>> np.char.rfind(a, "Python", start=0, end=None)
+    array([11])
     """
     end = end if end is not None else numpy.iinfo(numpy.int64).max
     return numpy._core.umath.rfind(a, sub, start, end)
@@ -1323,6 +1408,11 @@ def rindex(a, sub, start=0, end=None):
     --------
     rfind, str.rindex
 
+    Examples
+    --------
+    >>> a = np.array(["Computer Science"])
+    >>> np.char.rindex(a, "Science", start=0, end=None)
+    array([9])
     """
     return _vec_string(
         a, int_, 'rindex', [sub, start] + _clean_args(end))
@@ -1354,6 +1444,11 @@ def rjust(a, width, fillchar=' '):
     --------
     str.rjust
 
+    Examples
+    --------
+    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> np.char.rjust(a, width=3)
+    array(['aAa', '  a', 'abB'], dtype='<U3')
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
