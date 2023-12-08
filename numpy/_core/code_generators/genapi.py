@@ -248,6 +248,7 @@ def find_functions(filename, tag='API'):
     SCANNING, STATE_DOC, STATE_RETTYPE, STATE_NAME, STATE_ARGS = list(range(5))
     state = SCANNING
     tagcomment = '/*' + tag
+    doprint = 0
     for lineno, line in enumerate(fo):
         try:
             line = line.strip()

@@ -680,7 +680,6 @@ static PyMappingMethods arrayflags_as_mapping = {
     (objobjargproc)arrayflags_setitem,   /*mp_ass_subscript*/
 };
 
-
 static PyObject *
 arrayflags_new(PyTypeObject *self, PyObject *args, PyObject *NPY_UNUSED(kwds))
 {
@@ -699,6 +698,26 @@ arrayflags_new(PyTypeObject *self, PyObject *args, PyObject *NPY_UNUSED(kwds))
     }
 }
 
+
+static PyType_Slot arrayflags_type_slots[] = {
+    {Py_tp_dealloc, arrayflags_dealloc},
+    {Py_tp_repr, arrayflags_print},
+    {Py_mp_subscript, arrayflags_getitem},
+    {Py_mp_ass_subscript, arrayflags_setitem},
+    {Py_tp_str, arrayflags_print},
+    {Py_tp_richcompare, arrayflags_richcompare},
+    {Py_tp_getset, arrayflags_getsets},
+    {Py_tp_new, arrayflags_new},
+    {0, NULL}
+};
+
+static PyType_Spec array_flags_type_spec = {
+    .name = "numpy._core.multiarray.flagsobj",
+    .basicsize = sizeof(PyArrayFlagsObject),
+    .flags = Py_TPFLAGS_DEFAULT,
+    .slots = arrayflags_type_slots,
+};
+
 NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy._core.multiarray.flagsobj",
@@ -712,3 +731,15 @@ NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type = {
     .tp_getset = arrayflags_getsets,
     .tp_new = arrayflags_new,
 };
+
+/*NUMPY_API
+ * Given an instance of the multiarray module
+ * Return the PyTypeObject of PyFlagsType.
+ *
+ * Returns NULL if an error occurs.
+ */
+NPY_NO_EXPORT PyTypeObject *
+PyArray_GetFlagsType(PyObject *NPY_UNUSED(module))
+{
+    return &PyArrayFlags_Type;
+}

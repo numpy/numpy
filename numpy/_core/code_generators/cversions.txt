@@ -74,3 +74,6 @@
 
 # Version 18 (NumPy 2.0.0)
 0x00000012 = 082b496f5b37251cd9a404087915c1dc
+
+# Version 19 (NumPy 2.1.0)
+0x00000013 = 0e39fa8a8e46979e7a88ee6ef5b7a619
