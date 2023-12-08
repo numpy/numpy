@@ -839,6 +839,16 @@ def compress_nd(x, axis=None):
     -------
     compress_array : ndarray
         The compressed array.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> x = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
+    ...                                                   [1, 0, 0],
+    ...                                                   [0, 0, 0]])
+    >>> ma.compress_nd(x)
+    array([[7, 8]])
+
     """
     x = asarray(x)
     m = getmask(x)
@@ -928,6 +938,16 @@ def compress_rows(a):
     --------
     compress_rowcols
 
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
+    ...                                                [1, 0, 0],
+    ...                                                [0, 0, 0]])
+    >>> ma.compress_rows(a)
+    array([[6, 7, 8]])
+
+    
     """
     a = asarray(a)
     if a.ndim != 2:
@@ -945,6 +965,17 @@ def compress_cols(a):
     See Also
     --------
     compress_rowcols
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
+    ...                                                [1, 0, 0],
+    ...                                                [0, 0, 0]])
+    >>> ma.compress_cols(a)
+    array([[1, 2],
+           [4, 5],
+           [7, 8]])
 
     """
     a = asarray(a)
@@ -1158,6 +1189,15 @@ def ediff1d(arr, to_end=None, to_begin=None):
     --------
     numpy.ediff1d : Equivalent function for ndarrays.
 
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> arr = ma.array([1, 2, 4, 7, 0])
+    >>> ma.ediff1d(arr)
+    masked_array(data=[ 1,  2,  3, -7],
+                 mask=False,
+           fill_value=999999)
+
     """
     arr = ma.asanyarray(arr).flat
     ed = arr[1:] - arr[:-1]
@@ -1268,6 +1308,16 @@ def setxor1d(ar1, ar2, assume_unique=False):
     --------
     numpy.setxor1d : Equivalent function for ndarrays.
 
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> ar1 = np.ma.array([1, 2, 3, 2, 4])
+    >>> ar2 = np.ma.array([2, 3, 5, 7, 5])
+    >>> np.ma.setxor1d(ar1, ar2)
+    masked_array(data=[1, 4, 5, 7],
+                 mask=False,    
+           fill_value=999999)
+
     """
     if not assume_unique:
         ar1 = unique(ar1)
@@ -1303,6 +1353,14 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     -----
     .. versionadded:: 1.4.0
 
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> ar1 = np.ma.array([0, 1, 2, 5, 0])
+    >>> ar2 = [0, 2]
+    >>> np.in1d(ar1, ar2)
+    array([ True, False,  True, False,  True])
+
     """
     if not assume_unique:
         ar1, rev_idx = unique(ar1, return_inverse=True)
@@ -1327,7 +1385,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         return flag[indx][rev_idx]
 
 
-def isin(element, test_elements, assume_unique=False, invert=False):
+def isin(ar1, ar2, assume_unique=False, invert=False):
     """
     Calculates `element in test_elements`, broadcasting over
     `element` only.
@@ -1344,9 +1402,19 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     -----
     .. versionadded:: 1.13.0
 
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> ar1 = np.ma.array([1, 2, 3, 4, 5, 6])
+    >>> ar2 = [0, 2]
+    >>> np.ma.isin(ar1, ar2)
+    masked_array(data=[False,  True, False, False, False, False],
+                 mask=False,
+           fill_value=True)
+
     """
-    element = ma.asarray(element)
-    return in1d(element, test_elements, assume_unique=assume_unique,
+    element = ma.asarray(ar1)
+    return in1d(ar1, ar2, assume_unique=assume_unique,
                 invert=invert).reshape(element.shape)
 
 
@@ -1359,6 +1427,16 @@ def union1d(ar1, ar2):
     See Also
     --------
     numpy.union1d : Equivalent function for ndarrays.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> ar1 = np.ma.array([1, 2, 3, 4])
+    >>> ar2 = np.ma.array([3, 4, 5, 6])
+    >>> np.ma.union1d(ar1, ar2)
+    masked_array(data=[1, 2, 3, 4, 5, 6],
+             mask=False,
+       fill_value=999999)
 
     """
     return unique(ma.concatenate((ar1, ar2), axis=None))
@@ -1377,8 +1455,9 @@ def setdiff1d(ar1, ar2, assume_unique=False):
 
     Examples
     --------
-    >>> x = np.ma.array([1, 2, 3, 4], mask=[0, 1, 0, 1])
-    >>> np.ma.setdiff1d(x, [1, 2])
+    >>> import numpy.ma as ma
+    >>> x = ma.array([1, 2, 3, 4], mask=[0, 1, 0, 1])
+    >>> ma.setdiff1d(x, [1, 2])
     masked_array(data=[3, --],
                  mask=[False,  True],
            fill_value=999999)
@@ -1492,6 +1571,24 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
     --------
     numpy.cov
 
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> x = ma.array([[0, 1], [1, 1]], mask=[0, 1, 0, 1])
+    >>> y = ma.array([[1, 0], [0, 1]], mask=[0, 0, 1, 1])
+    >>> ma.cov(x, y)
+    masked_array(
+    data=[[--, --, --, --],
+          [--, --, --, --],
+          [--, --, --, --],
+          [--, --, --, --]],
+    mask=[[ True,  True,  True,  True],
+          [ True,  True,  True,  True],
+          [ True,  True,  True,  True],
+          [ True,  True,  True,  True]],
+    fill_value=1e+20,
+    dtype=float64)
+
     """
     # Check inputs
     if ddof is not None and ddof != int(ddof):
@@ -1560,6 +1657,20 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
     for backwards compatibility with previous versions of this function.  These
     arguments had no effect on the return values of the function and can be
     safely ignored in this and previous versions of numpy.
+    
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> x = ma.array([[0, 1], [1, 1]], mask=[0, 1, 0, 1])
+    >>> ma.corrcoef(x)
+    masked_array(
+      data=[[--, --],
+            [--, --]],
+      mask=[[ True,  True],
+            [ True,  True]],
+      fill_value=1e+20,
+      dtype=float64)
+
     """
     msg = 'bias and ddof have no effect and are deprecated'
     if bias is not np._NoValue or ddof is not np._NoValue:
@@ -1701,6 +1812,7 @@ def ndenumerate(a, compressed=True):
             [ True, False,  True],
             [False,  True, False]],
       fill_value=999999)
+
     >>> for index, x in np.ma.ndenumerate(a):
     ...     print(index, x)
     (0, 0) 0
@@ -1721,6 +1833,7 @@ def ndenumerate(a, compressed=True):
     (2, 0) 6
     (2, 1) --
     (2, 2) 8
+    
     """
     for it, mask in zip(np.ndenumerate(a), getmaskarray(a).flat):
         if not mask:
