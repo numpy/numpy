@@ -40,7 +40,7 @@ py.extension_module('${modulename}',
 ${source_list},
                      fortranobject_c
                      ],
-                     include_directories: [inc_np],
+                     include_directories: [inc_np, '${original_source_dir}'],
                      dependencies : [
                      py_dep,
                      quadmath_dep,
