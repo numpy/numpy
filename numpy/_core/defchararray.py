@@ -1496,6 +1496,14 @@ def rpartition(a, sep):
     --------
     str.rpartition
 
+    Examples
+    --------
+    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> np.char.rpartition(a, 'A')
+    array([['aAaAa', 'A', ''],
+       ['  a', 'A', '  '],
+       ['abB', 'A', 'Bba']], dtype='<U5')
+
     """
     return _to_bytes_or_str_array(
         _vec_string(a, object_, 'rpartition', (sep,)), a)
@@ -1536,6 +1544,11 @@ def rsplit(a, sep=None, maxsplit=None):
     --------
     str.rsplit, split
 
+    Examples
+    --------
+    >>> a = np.array(['aAaAaA', 'abBABba'])
+    >>> np.char.rsplit(a, 'A')
+    array([list(['a', 'a', 'a', '']), list(['abB', 'Bba'])], dtype=object)
     """
     # This will return an array of lists of different sizes, so we
     # leave it as an object array
@@ -1651,6 +1664,12 @@ def splitlines(a, keepends=None):
     See Also
     --------
     str.splitlines
+
+    Examples
+    --------
+    >>> a = np.array(['hello world', 'hello\nworld'])
+    >>> np.char.splitlines(a)
+    array([list(['hello world']), list(['hello', 'world'])], dtype=object)
 
     """
     return _vec_string(
@@ -1847,6 +1866,13 @@ def translate(a, table, deletechars=None):
     --------
     str.translate
 
+    Examples
+    --------
+    >>> a = np.array(['a1b c', '1bca', 'bca1'])
+    >>> table = a[0].maketrans('abc', '123')
+    >>> deletechars = ' '
+    >>> np.char.translate(a, table, deletechars)
+    array(['112 3', '1231', '2311'], dtype='<U5')
     """
     a_arr = numpy.asarray(a)
     if issubclass(a_arr.dtype.type, str_):
@@ -1922,6 +1948,11 @@ def zfill(a, width):
     See Also
     --------
     str.zfill
+
+    Examples
+    --------
+    >>> np.char.zfill('1', 3)
+    array('001', dtype='<U3')
 
     """
     a_arr = numpy.asarray(a)
