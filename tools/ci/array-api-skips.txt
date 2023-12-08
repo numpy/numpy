@@ -36,10 +36,9 @@ array_api_tests/test_creation_functions.py::test_asarray_scalars
 # fft test suite is buggy as of 83f0bcdc
 array_api_tests/test_fft.py
 
-# missing isdtype, astype and finfo return type misalignment
+# missing isdtype and finfo return type misalignment
 array_api_tests/test_data_type_functions.py::test_finfo[float32]
 array_api_tests/test_data_type_functions.py::test_isdtype
-array_api_tests/test_data_type_functions.py::test_astype
 
 # missing names
 array_api_tests/test_has_names.py::test_has_names[linalg-matmul]
@@ -50,7 +49,6 @@ array_api_tests/test_has_names.py::test_has_names[linalg-vecdot]
 array_api_tests/test_has_names.py::test_has_names[linalg-vector_norm]
 array_api_tests/test_has_names.py::test_has_names[manipulation-concat]
 array_api_tests/test_has_names.py::test_has_names[manipulation-permute_dims]
-array_api_tests/test_has_names.py::test_has_names[data_type-astype]
 array_api_tests/test_has_names.py::test_has_names[data_type-isdtype]
 array_api_tests/test_has_names.py::test_has_names[elementwise-acos]
 array_api_tests/test_has_names.py::test_has_names[elementwise-acosh]
@@ -96,7 +94,6 @@ array_api_tests/test_signatures.py::test_func_signature[permute_dims]
 array_api_tests/test_signatures.py::test_func_signature[reshape]
 array_api_tests/test_signatures.py::test_func_signature[argsort]
 array_api_tests/test_signatures.py::test_func_signature[sort]
-array_api_tests/test_signatures.py::test_func_signature[astype]
 array_api_tests/test_signatures.py::test_func_signature[isdtype]
 array_api_tests/test_signatures.py::test_func_signature[acos]
 array_api_tests/test_signatures.py::test_func_signature[acosh]

@@ -62,6 +62,7 @@ def _to_bytes_or_str_array(result, output_dtype_like):
     with the appropriate dtype if an object array must be used
     as an intermediary.
     """
+    output_dtype_like = numpy.asarray(output_dtype_like)
     if result.size == 0:
         # Calling asarray & tolist in an empty array would result
         # in losing shape information
@@ -120,6 +121,13 @@ def equal(x1, x2):
     -------
     out : ndarray
         Output array of bools.
+
+    Examples
+    --------
+    >>> y = "aa "
+    >>> x = "aa"
+    >>> np.char.equal(x, y)
+    array(True)    
 
     See Also
     --------
@@ -315,6 +323,18 @@ def add(x1, x2):
     add : ndarray
         Output array of `bytes_` or `str_`, depending on input types
         of the same shape as `x1` and `x2`.
+
+    Examples
+    --------
+    >>> x = np.array(['1'])
+    >>> y = np.array(['a'])
+    >>> np.char.add(x, y)
+    array(['1a'], dtype='<U2')
+
+    >>> x = np.array(['1', '2'])
+    >>> y = np.array(['a', 'b'])
+    >>> np.char.add(x, y)
+    array(['1a', '2b'], dtype='<U2')
 
     """
     arr1 = numpy.asarray(x1)
@@ -1211,6 +1231,12 @@ def partition(a, sep):
         The output array will have an extra dimension with 3
         elements per input element.
 
+    Examples
+    --------
+    >>> x = np.array(["Numpy is nice!"])
+    >>> np.char.partition(x, " ")
+    array([['Numpy', ' ', 'is nice!']], dtype='<U8')
+    
     See Also
     --------
     str.partition
@@ -1510,6 +1536,15 @@ def split(a, sep=None, maxsplit=None):
     -------
     out : ndarray
         Array of list objects
+
+    Examples
+    --------
+    >>> x = np.array("Numpy is nice!")
+    >>> np.char.split(x, " ")
+    array([list(['Numpy', 'is', 'nice!'])], dtype=object)
+
+    >>> np.char.split(x, " ", 1)
+    array([list(['Numpy', 'is nice!'])], dtype=object)
 
     See Also
     --------

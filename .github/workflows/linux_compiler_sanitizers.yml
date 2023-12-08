@@ -29,7 +29,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@b64ffcaf5b410884ad320a9cfac8866006a109aa # v4.8.0
+    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install dependencies

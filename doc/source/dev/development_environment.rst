@@ -58,9 +58,12 @@ once)::
 
 If you installed Python some other way than conda, first install
 `virtualenv`_ (optionally use `virtualenvwrapper`_), then create your
-virtualenv (named ``numpy-dev`` here) with::
+virtualenv (named ``numpy-dev`` here), activate it, and install all project 
+dependencies with::
 
     $ virtualenv numpy-dev
+    $ source numpy-dev/bin/activate # activate virtual environment
+    $ python -m pip install -r all_requirements.txt
 
 Now, whenever you want to switch to the virtual environment, you can use the
 command ``source numpy-dev/bin/activate``, and ``deactivate`` to exit from the

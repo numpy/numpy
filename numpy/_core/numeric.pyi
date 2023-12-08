@@ -658,3 +658,16 @@ def isclose(
 def array_equal(a1: ArrayLike, a2: ArrayLike, equal_nan: bool = ...) -> bool: ...
 
 def array_equiv(a1: ArrayLike, a2: ArrayLike) -> bool: ...
+
+@overload
+def astype(
+    x: ArrayLike,
+    dtype: _DTypeLike[_SCT],
+    copy: bool = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def astype(
+    x: ArrayLike,
+    dtype: DTypeLike,
+    copy: bool = ...,
+) -> NDArray[Any]: ...
