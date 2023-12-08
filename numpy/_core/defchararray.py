@@ -674,6 +674,12 @@ def encode(a, encoding=None, errors=None):
     -----
     The type of the result will depend on the encoding specified.
 
+    Examples
+    --------
+    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> np.char.encode(a, encoding='cp037')
+    array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
+       b'\x81\x82\xc2\xc1\xc2\x82\x81'], dtype='|S7')
     """
     return _to_bytes_or_str_array(
         _vec_string(a, object_, 'encode', _clean_args(encoding, errors)),
