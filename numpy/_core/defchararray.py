@@ -2993,6 +2993,11 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
         fastest).  If order is 'F', then the returned array
         will be in Fortran-contiguous order (first-index varies the
         fastest).
+
+    Examples
+    --------
+    >>> np.char.asarray(['hello', 'world'])
+    chararray(['hello', 'world'], dtype='<U5')
     """
     return array(obj, itemsize, copy=False,
                  unicode=unicode, order=order)
