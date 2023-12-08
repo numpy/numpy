@@ -564,7 +564,7 @@ def get_fill_value(a):
     """
     Return the filling value of a, if any.  Otherwise, returns the
     default filling value for that type.
-
+    
     """
     if isinstance(a, MaskedArray):
         result = a.fill_value
@@ -667,7 +667,6 @@ def get_masked_subclass(*arrays):
     Return the youngest subclass of MaskedArray from a list of (masked) arrays.
 
     In case of siblings, the first listed takes over.
-
     """
     if len(arrays) == 1:
         arr = arrays[0]
@@ -5541,6 +5540,22 @@ class MaskedArray(ndarray):
         --------
         numpy.ndarray.round : corresponding function for ndarrays
         numpy.around : equivalent function
+        
+        Notes
+        -----
+        DeprecationWarning: `round_` is deprecated as of NumPy 1.25.0, 
+        and will be removed in NumPy 2.0. Please use `round` instead.
+
+        Examples
+        --------
+        >>> import numpy.ma as ma
+        >>> x = np.ma.array([1.35, 2.5, 1.5, 1.75, 2.25, 2.75],
+        ...                 mask=[0, 0, 0, 1, 0, 0])
+        >>> ma.round(x)
+        masked_array(data=[1.0, 2.0, 2.0, --, 2.0, 3.0],
+                     mask=[False, False, False,  True, False, False],
+                fill_value=1e+20)
+
         """
         result = self._data.round(decimals=decimals, out=out).view(type(self))
         if result.ndim > 0:
