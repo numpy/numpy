@@ -46,7 +46,7 @@ PyArray_NewFlagsObject(PyObject* mod, PyObject *obj)
         flags = PyArray_FLAGS((PyArrayObject *)obj);
     }
 
-    PyTypeObject* array_flags_type = &PyArrayFlags_Type;
+    PyTypeObject* array_flags_type = PyArray_GetFlagsType(NULL);
     flagobj = array_flags_type->tp_alloc(array_flags_type, 0);
     if (flagobj == NULL) {
         return NULL;
@@ -656,7 +656,8 @@ arrayflags_print(PyArrayFlagsObject *self)
 static PyObject*
 arrayflags_richcompare(PyObject *self, PyObject *other, int cmp_op)
 {
-    if (!PyObject_TypeCheck(other, &PyArrayFlags_Type)) {
+    PyTypeObject* array_flags_type = PyArray_GetFlagsType(NULL);
+    if (!PyObject_TypeCheck(other, array_flags_type)) {
         Py_RETURN_NOTIMPLEMENTED;
     }
 
