@@ -402,7 +402,7 @@ cdef class Generator:
         distribution on `[0, 1]`, it is known that the distribution of the 
         `k`-th smallest value is `Beta(k, n+1-k)`.
 
-        In the case of `n = 100` and `k = 3`, we can simulate this distribution
+        In the case of `n = 100` and `k = 5`, we can simulate this distribution
         as follows:
 
         >>> rng = np.random.default_rng()
