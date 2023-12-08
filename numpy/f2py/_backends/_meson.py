@@ -59,7 +59,7 @@ class MesonTemplate:
     def initialize_template(self) -> None:
         self.substitutions["modulename"] = self.modulename
         self.substitutions["buildtype"] = self.build_type
-        self.subsitutions["original_source_dir"] = os.getcwd()
+        self.substitutions["original_source_dir"] = os.getcwd()
 
     def sources_substitution(self) -> None:
         indent = " " * 21
