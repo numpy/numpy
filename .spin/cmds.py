@@ -8,6 +8,7 @@ import shutil
 import json
 import pathlib
 import importlib
+import subprocess
 
 import click
 from spin import util
@@ -567,3 +568,78 @@ def _config_openblas(blas_variant):
         os.makedirs(openblas_dir, exist_ok=True)
         with open(pkg_config_fname, "wt", encoding="utf8") as fid:
             fid.write(openblas.get_pkg_config().replace("\\", "/"))
+
+
+@click.command()
+@click.option(
+    "-v", "--version-override",
+    help="NumPy version of release",
+    required=False
+)
+@click.pass_context
+def notes(ctx, version_override):
+    """🎉 Generate release notes and validate
+
+    \b
+    Example:
+
+    \b
+    $ spin notes --version-override 2.0
+
+    \b
+    To automatically pick the version
+
+    \b
+    $ spin notes
+    """
+    project_config = util.get_config()
+    version = version_override or project_config['project.version']
+
+    click.secho(
+        f"Generating release notes for NumPy {version}",
+        bold=True, fg="bright_green",
+    )
+
+    # Check if `towncrier` is installed
+    if not shutil.which("towncrier"):
+        raise click.ClickException(
+            f"please install `towncrier` to use this command"
+        )
+
+    click.secho(
+        f"Reading upcoming changes from {project_config['tool.towncrier.directory']}",
+        bold=True, fg="bright_yellow"
+    )
+    # towncrier build --version 2.1 --yes
+    cmd = ["towncrier", "build", "--version", version, "--yes"]
+    try:
+        p = util.run(
+                cmd=cmd,
+                sys_exit=False,
+                output=True,
+                encoding="utf-8"
+            )
+    except subprocess.SubprocessError as e:
+        raise click.ClickException(
+            f"`towncrier` failed returned {e.returncode} with error `{e.stderr}`"
+        )
+
+    output_path = project_config['tool.towncrier.filename'].format(version=version)
+    click.secho(
+        f"Release notes successfully written to {output_path}",
+        bold=True, fg="bright_yellow"
+    )
+
+    click.secho(
+        "Verifying consumption of all news fragments",
+        bold=True, fg="bright_green",
+    )
+
+    try:
+        test_notes = _get_numpy_tools(pathlib.Path('ci', 'test_all_newsfragments_used.py'))
+    except ModuleNotFoundError as e:
+        raise click.ClickException(
+            f"{e.msg}. Install the missing packages to use this command."
+        )
+
+    test_notes.main()

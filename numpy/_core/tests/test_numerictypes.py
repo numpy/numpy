@@ -3,6 +3,7 @@ import itertools
 
 import pytest
 import numpy as np
+import numpy._core.numerictypes as nt
 from numpy._core.numerictypes import issctype, sctype2char, maximum_sctype
 from numpy.testing import assert_, assert_equal, assert_raises, IS_PYPY
 
@@ -451,7 +452,7 @@ class TestMaximumSctype:
     def test_complex(self, t):
         assert_equal(maximum_sctype(t), np._core.sctypes['complex'][-1])
 
-    @pytest.mark.parametrize('t', [np.bool_, np.object_, np.str_, np.bytes_,
+    @pytest.mark.parametrize('t', [np.bool, np.object_, np.str_, np.bytes_,
                                    np.void])
     def test_other(self, t):
         assert_equal(maximum_sctype(t), t)
@@ -463,7 +464,8 @@ class Test_sctype2char:
 
     def test_scalar_type(self):
         assert_equal(sctype2char(np.double), 'd')
-        assert_equal(sctype2char(np.int_), 'l')
+        assert_equal(sctype2char(np.long), 'l')
+        assert_equal(sctype2char(np.int_), np.array(0).dtype.char)
         assert_equal(sctype2char(np.str_), 'U')
         assert_equal(sctype2char(np.bytes_), 'S')
 
@@ -541,3 +543,8 @@ class TestScalarTypeNames:
     def test_names_are_undersood_by_dtype(self, t):
         """ Test the dtype constructor maps names back to the type """
         assert np.dtype(t.__name__).type is t
+
+
+class TestBoolDefinition:
+    def test_bool_definition(self):
+        assert nt.bool is np.bool

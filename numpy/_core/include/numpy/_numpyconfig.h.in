@@ -10,6 +10,8 @@
 #mesondefine NPY_SIZEOF_LONGDOUBLE
 #mesondefine NPY_SIZEOF_COMPLEX_LONGDOUBLE
 #mesondefine NPY_SIZEOF_PY_INTPTR_T
+#mesondefine NPY_SIZEOF_INTP
+#mesondefine NPY_SIZEOF_UINTP
 #mesondefine NPY_SIZEOF_OFF_T
 #mesondefine NPY_SIZEOF_PY_LONG_LONG
 #mesondefine NPY_SIZEOF_LONGLONG

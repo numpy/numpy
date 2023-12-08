@@ -692,7 +692,7 @@ PyArray_ConcatenateInto(PyObject *op,
         Py_DECREF(item);
     }
 
-    if (axis >= NPY_MAXDIMS) {
+    if (axis == NPY_RAVEL_AXIS) {
         ret = PyArray_ConcatenateFlattenedArrays(
                 narrays, arrays, NPY_CORDER, ret, dtype,
                 casting, casting_not_passed);
@@ -3106,13 +3106,7 @@ array_arange(PyObject *NPY_UNUSED(ignored),
 NPY_NO_EXPORT unsigned int
 PyArray_GetNDArrayCVersion(void)
 {
-    // return (unsigned int)NPY_ABI_VERSION;
-    /*
-     * TODO: Preliminary returning the 1.x API version, that is a lie but
-     *       allows (for the moment) downstream modules to mix and match
-     *       and us to import old matplotlib versions in our doc builds...
-     */
-    return (unsigned int)0x01000009;
+    return (unsigned int)NPY_ABI_VERSION;
 }
 
 /*NUMPY_API

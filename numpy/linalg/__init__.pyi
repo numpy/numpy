@@ -5,12 +5,14 @@ from numpy.linalg._linalg import (
     tensorinv as tensorinv,
     inv as inv,
     cholesky as cholesky,
+    outer as outer,
     eigvals as eigvals,
     eigvalsh as eigvalsh,
     pinv as pinv,
     slogdet as slogdet,
     det as det,
     svd as svd,
+    svdvals as svdvals,
     eig as eig,
     eigh as eigh,
     lstsq as lstsq,
@@ -21,6 +23,7 @@ from numpy.linalg._linalg import (
     multi_dot as multi_dot,
     trace as trace,
     diagonal as diagonal,
+    cross as cross,
 )
 
 from numpy._pytesttester import PytestTester

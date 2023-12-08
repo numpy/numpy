@@ -51,8 +51,10 @@ _aliases = {
     "single": "float32",
     "csingle": "complex64",
     "half": "float16",
-    "int_": "long",
-    "uint": "ulong",
+    "bool_": "bool",
+    # Default integer:
+    "int_": "intp",
+    "uint": "uintp",
 }
 
 for k, v in _aliases.items():
@@ -62,7 +64,6 @@ for k, v in _aliases.items():
 # extra aliases are added only to `sctypeDict`
 # to support dtype name access, such as`np.dtype("float")`
 _extra_aliases = {  
-    "bool": "bool_",
     "float": "float64",
     "complex": "complex128",
     "object": "object_",

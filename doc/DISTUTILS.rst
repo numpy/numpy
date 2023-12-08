@@ -1,6 +1,6 @@
 .. -*- rest -*-
 
-NumPy Distutils - Users Guide
+NumPy distutils - users guide
 =============================
 
 .. contents::
@@ -300,7 +300,7 @@ in writing setup scripts:
 
 .. _templating:
 
-Conversion of ``.src`` files using Templates
+Conversion of ``.src`` files using templates
 --------------------------------------------
 
 NumPy distutils supports automatic conversion of source files named

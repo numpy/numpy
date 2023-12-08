@@ -16,6 +16,18 @@
 #include "convert_datatype.h"
 
 #include "string_ufuncs.h"
+#include "string_fastsearch.h"
+#include "string_buffer.h"
+
+
+enum class STARTPOSITION {
+    FRONT, BACK
+};
+
+
+enum class STRIPTYPE {
+    LEFTSTRIP, RIGHTSTRIP, BOTHSTRIP
+};
 
 
 template <typename character>
@@ -34,7 +46,7 @@ character_cmp(character a, character b)
 }
 
 
-template<typename character>
+template <typename character>
 static inline int
 string_rstrip(const character *str, int elsize)
 {
@@ -53,15 +65,68 @@ string_rstrip(const character *str, int elsize)
 }
 
 
-template<typename character>
-static inline int
-get_length(const character *str, int elsize)
+/*
+ * Helper to fixup start/end slice values.
+ *
+ * This function is taken from CPython's unicode module
+ * (https://github.com/python/cpython/blob/0b718e6407da65b838576a2459d630824ca62155/Objects/bytes_methods.c#L495)
+ * in order to remain compatible with how CPython handles
+ * start/end arguments to str function like find/rfind etc.
+ */
+static inline void
+adjust_offsets(npy_int64 *start, npy_int64 *end, npy_int64 len)
 {
-    const character *d = str + elsize - 1;
-    while (d >= str && *d == '\0') {
-        d--;
+    if (*end > len) {
+        *end = len;
     }
-    return d - str + 1;
+    else if (*end < 0) {
+        *end += len;
+        if (*end < 0) {
+            *end = 0;
+        }
+    }
+
+    if (*start < 0) {
+        *start += len;
+        if (*start < 0) {
+            *start = 0;
+        }
+    }
+}
+
+
+template <ENCODING enc>
+static inline npy_bool
+tailmatch(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
+          STARTPOSITION direction)
+{
+    npy_int64 len1 = buf1.num_codepoints();
+    npy_int64 len2 = buf2.num_codepoints();
+
+    adjust_offsets(&start, &end, len1);
+    end -= len2;
+    if (end < start) {
+        return 0;
+    }
+
+    if (len2 == 0) {
+        return 1;
+    }
+
+    npy_int64 offset;
+    npy_int64 end_sub = len2 - 1;
+    if (direction == STARTPOSITION::BACK) {
+        offset = end;
+    }
+    else {
+        offset = start;
+    }
+
+    if (buf1[offset] == buf2[0] && buf1[offset+end_sub] == buf2[end_sub]) {
+        return !(buf1 + offset).buffer_memcmp(buf2, len2);
+    }
+
+    return 0;
 }
 
 
@@ -126,37 +191,229 @@ string_cmp(const character *str1, int elsize1, const character *str2, int elsize
 }
 
 
-template <typename character>
+template <ENCODING enc>
 static inline void
-string_add(character *str1, int elsize1, character *str2, int elsize2, character *out, int outsize)
+string_add(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out)
 {
-    int len1 = get_length(str1, elsize1);
-    int len2 = get_length(str2, elsize2);
-
-    memcpy(out, str1, len1 * sizeof(character));
-    memcpy(out + len1, str2, len2 * sizeof(character));
-    memset(out + len1 + len2, 0, outsize - len1 - len2);
+    npy_int64 len1 = buf1.num_codepoints();
+    npy_int64 len2 = buf2.num_codepoints();
+    buf1.buffer_memcpy(out, (size_t) len1);
+    buf2.buffer_memcpy(out + len1, (size_t) len2);
+    out.buffer_fill_with_zeros_after_index(len1 + len2);
 }
 
 
-template <typename character>
 static inline npy_bool
-string_isalpha(const character *str, int elsize)
+string_isdecimal(Buffer<ENCODING::UTF32> buf)
 {
-    int len = get_length(str, elsize);
+    npy_int64 len = buf.num_codepoints();
 
     if (len == 0) {
         return (npy_bool) 0;
     }
 
-    for (int i = 0; i < len; i++) {
-        npy_bool isalpha = (npy_bool) NumPyOS_ascii_isalpha(*str);
-        if (!isalpha) {
-            return isalpha;
+    for (npy_int64 i = 0; i < len; i++) {
+        npy_bool isdecimal = (npy_bool) Py_UNICODE_ISDECIMAL(*buf);
+        if (!isdecimal) {
+            return isdecimal;
         }
-        str++;
+        buf++;
     }
     return (npy_bool) 1;
+}
+
+
+static inline npy_bool
+string_isnumeric(Buffer<ENCODING::UTF32> buf)
+{
+    npy_int64 len = buf.num_codepoints();
+
+    if (len == 0) {
+        return (npy_bool) 0;
+    }
+
+    for (npy_int64 i = 0; i < len; i++) {
+        npy_bool isnumeric = (npy_bool) Py_UNICODE_ISNUMERIC(*buf);
+        if (!isnumeric) {
+            return isnumeric;
+        }
+        buf++;
+    }
+    return (npy_bool) 1;
+}
+
+
+template <ENCODING enc>
+static inline npy_intp
+string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
+{
+    npy_int64 len1 = buf1.num_codepoints();
+    npy_int64 len2 = buf2.num_codepoints();
+
+    adjust_offsets(&start, &end, len1);
+    if (end - start < len2) {
+        return (npy_intp) -1;
+    }
+
+    if (len2 == 0) {
+        return (npy_intp) start;
+    }
+    if (len2 == 1) {
+        npy_ucs4 ch = *buf2;
+        npy_intp result = (npy_intp) findchar<enc>(buf1 + start, end - start, ch);
+        if (result == -1) {
+            return (npy_intp) -1;
+        }
+        else {
+            return result + (npy_intp) start;
+        }
+    }
+
+    npy_intp pos = fastsearch<enc>(buf1 + start, end - start, buf2, len2, -1, FAST_SEARCH);
+    if (pos >= 0) {
+        pos += start;
+    }
+    return pos;
+}
+
+
+template <ENCODING enc>
+static inline npy_intp
+string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
+{
+    npy_int64 len1 = buf1.num_codepoints();
+    npy_int64 len2 = buf2.num_codepoints();
+
+    adjust_offsets(&start, &end, len1);
+    if (end - start < len2) {
+        return (npy_intp) -1;
+    }
+
+    if (len2 == 0) {
+        return (npy_intp) end;
+    }
+    if (len2 == 1) {
+        npy_ucs4 ch = *buf2;
+        npy_intp result = (npy_intp) rfindchar(buf1 + start, end - start, ch);
+        if (result == -1) {
+            return (npy_intp) -1;
+        }
+        else {
+            return result + (npy_intp) start;
+        }
+    }
+
+    npy_intp pos = (npy_intp) fastsearch<enc>(buf1 + start, end - start, buf2, len2, -1, FAST_RSEARCH);
+    if (pos >= 0) {
+        pos += start;
+    }
+    return pos;
+}
+
+
+template <ENCODING enc>
+static inline void
+string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE striptype)
+{
+    npy_int64 len = buf.num_codepoints();
+    if (len == 0) {
+        out.buffer_fill_with_zeros_after_index(0);
+        return;
+    }
+
+    npy_int64 i = 0;
+    if (striptype != STRIPTYPE::RIGHTSTRIP) {
+        while (i < len) {
+            if (!buf.isspace(i)) {
+                break;
+            }
+            i++;
+        }
+    }
+
+    npy_int64 j = len - 1;
+    if (striptype != STRIPTYPE::LEFTSTRIP) {
+        while (j >= i) {
+            if (!buf.isspace(j)) {
+                break;
+            }
+            j--;
+        }
+    }
+
+    (buf + i).buffer_memcpy(out, j - i + 1);
+    out.buffer_fill_with_zeros_after_index(j - i + 1);
+}
+
+
+template <ENCODING enc>
+static inline void
+string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPTYPE striptype)
+{
+    npy_int64 len1 = buf1.num_codepoints();
+    if (len1 == 0) {
+        out.buffer_fill_with_zeros_after_index(0);
+        return;
+    }
+
+    npy_int64 len2 = buf2.num_codepoints();
+    if (len2 == 0) {
+        buf1.buffer_memcpy(out, len1);
+        out.buffer_fill_with_zeros_after_index(len1);
+        return;
+    }
+
+    npy_int64 i = 0;
+    if (striptype != STRIPTYPE::RIGHTSTRIP) {
+        while (i < len1) {
+            if (findchar(buf2, len2, buf1[i]) < 0) {
+                break;
+            }
+            i++;
+        }
+    }
+
+    npy_int64 j = len1 - 1;
+    if (striptype != STRIPTYPE::LEFTSTRIP) {
+        while (j >= i) {
+            if (findchar(buf2, len2, buf1[j]) < 0) {
+                break;
+            }
+            j--;
+        }
+    }
+
+    (buf1 + i).buffer_memcpy(out, j - i + 1);
+    out.buffer_fill_with_zeros_after_index(j - i + 1);
+}
+
+
+/*
+ * Count the number of occurences of buf2 in buf1 between
+ * start (inclusive) and end (exclusive)
+ */
+template <ENCODING enc>
+static inline npy_intp
+string_count(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
+{
+    npy_int64 len1 = buf1.num_codepoints();
+    npy_int64 len2 = buf2.num_codepoints();
+
+    adjust_offsets(&start, &end, len1);
+    if (end < start || end - start < len2) {
+        return (npy_intp) 0;
+    }
+
+    if (len2 == 0) {
+        return (end - start) < PY_SSIZE_T_MAX ? end - start + 1 : PY_SSIZE_T_MAX;
+    }
+
+    npy_intp count = (npy_intp) fastsearch<enc>(buf1 + start, end - start, buf2, len2,
+                                                PY_SSIZE_T_MAX, FAST_COUNT);
+    if (count < 0) {
+        return 0;
+    }
+    return count;
 }
 
 
@@ -237,15 +494,15 @@ string_comparison_loop(PyArrayMethod_Context *context,
 }
 
 
-template <typename character>
+template <ENCODING enc>
 static int
 string_add_loop(PyArrayMethod_Context *context,
                 char *const data[], npy_intp const dimensions[],
                 npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    int elsize1 = context->descriptors[0]->elsize / sizeof(character);
-    int elsize2 = context->descriptors[1]->elsize / sizeof(character);
-    int outsize = context->descriptors[2]->elsize / sizeof(character);
+    int elsize1 = context->descriptors[0]->elsize;
+    int elsize2 = context->descriptors[1]->elsize;
+    int outsize = context->descriptors[2]->elsize;
 
     char *in1 = data[0];
     char *in2 = data[1];
@@ -254,8 +511,10 @@ string_add_loop(PyArrayMethod_Context *context,
     npy_intp N = dimensions[0];
 
     while (N--) {
-        string_add<character>((character *) in1, elsize1, (character *) in2, elsize2,
-                                      (character *) out, outsize);
+        Buffer<enc> buf1(in1, elsize1);
+        Buffer<enc> buf2(in2, elsize2);
+        Buffer<enc> outbuf(out, outsize);
+        string_add<enc>(buf1, buf2, outbuf);
 
         in1 += strides[0];
         in2 += strides[1];
@@ -266,18 +525,13 @@ string_add_loop(PyArrayMethod_Context *context,
 }
 
 
-template <typename character>
+template <ENCODING enc>
 static int
-string_isalpha_loop(PyArrayMethod_Context *context,
+string_len_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    /*
-     * Note, fetching `elsize` from the descriptor is OK even without the GIL,
-     * however it may be that this should be moved into `auxdata` eventually,
-     * which may also be slightly faster/cleaner (but more involved).
-     */
-    int elsize = context->descriptors[0]->elsize / sizeof(character);
+    int elsize = context->descriptors[0]->elsize;
 
     char *in = data[0];
     char *out = data[1];
@@ -285,7 +539,107 @@ string_isalpha_loop(PyArrayMethod_Context *context,
     npy_intp N = dimensions[0];
 
     while (N--) {
-        npy_bool res = string_isalpha<character>((character *) in, elsize);
+        Buffer<enc> buf(in, elsize);
+        *(npy_intp *)out = buf.num_codepoints();
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_isalpha_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize;
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf(in, elsize);
+        *(npy_bool *)out = (npy_bool) buf.isalpha();
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_isdigit_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize;
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf(in, elsize);
+        *(npy_bool *)out = (npy_bool) buf.isdigit();
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_isspace_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize;
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf(in, elsize);
+        *(npy_bool *)out = (npy_bool) buf.isspace();
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+static int
+string_isdecimal_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize;
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<ENCODING::UTF32> buf(in, elsize);
+        npy_bool res = string_isdecimal(buf);
         *(npy_bool *)out = res;
 
         in += strides[0];
@@ -296,9 +650,502 @@ string_isalpha_loop(PyArrayMethod_Context *context,
 }
 
 
+static int
+string_isnumeric_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize;
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<ENCODING::UTF32> buf(in, elsize);
+        npy_bool res = string_isnumeric(buf);
+        *(npy_bool *)out = res;
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_find_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize1 = context->descriptors[0]->elsize;
+    int elsize2 = context->descriptors[1]->elsize;
+
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *in3 = data[2];
+    char *in4 = data[3];
+    char *out = data[4];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf1(in1, elsize1);
+        Buffer<enc> buf2(in2, elsize2);
+        npy_intp idx = string_find<enc>(buf1, buf2, *(npy_int64 *)in3, *(npy_int64 *)in4);
+        *(npy_intp *)out = idx;
+
+        in1 += strides[0];
+        in2 += strides[1];
+        in3 += strides[2];
+        in4 += strides[3];
+        out += strides[4];
+    }
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_rfind_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize1 = context->descriptors[0]->elsize;
+    int elsize2 = context->descriptors[1]->elsize;
+
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *in3 = data[2];
+    char *in4 = data[3];
+    char *out = data[4];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf1(in1, elsize1);
+        Buffer<enc> buf2(in2, elsize2);
+        npy_intp idx = string_rfind<enc>(buf1, buf2, *(npy_int64 *)in3, *(npy_int64 *)in4);
+        *(npy_intp *)out = idx;
+
+        in1 += strides[0];
+        in2 += strides[1];
+        in3 += strides[2];
+        in4 += strides[3];
+        out += strides[4];
+    }
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_count_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize1 = context->descriptors[0]->elsize;
+    int elsize2 = context->descriptors[1]->elsize;
+
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *in3 = data[2];
+    char *in4 = data[3];
+    char *out = data[4];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf1(in1, elsize1);
+        Buffer<enc> buf2(in2, elsize2);
+        npy_intp count = string_count<enc>(buf1, buf2, *(npy_int64 *)in3, *(npy_int64 *)in4);
+        *(npy_intp *)out = count;
+
+        in1 += strides[0];
+        in2 += strides[1];
+        in3 += strides[2];
+        in4 += strides[3];
+        out += strides[4];
+    }
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_startswith_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize1 = context->descriptors[0]->elsize;
+    int elsize2 = context->descriptors[1]->elsize;
+
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *in3 = data[2];
+    char *in4 = data[3];
+    char *out = data[4];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf1(in1, elsize1);
+        Buffer<enc> buf2(in2, elsize2);
+        npy_bool match = tailmatch<enc>(buf1, buf2, *(npy_int64 *)in3, *(npy_int64 *)in4,
+                                  STARTPOSITION::FRONT);
+        *(npy_bool *)out = match;
+
+        in1 += strides[0];
+        in2 += strides[1];
+        in3 += strides[2];
+        in4 += strides[3];
+        out += strides[4];
+    }
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_endswith_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize1 = context->descriptors[0]->elsize;
+    int elsize2 = context->descriptors[1]->elsize;
+
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *in3 = data[2];
+    char *in4 = data[3];
+    char *out = data[4];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf1(in1, elsize1);
+        Buffer<enc> buf2(in2, elsize2);
+        npy_bool match = tailmatch<enc>(buf1, buf2, *(npy_int64 *)in3, *(npy_int64 *)in4,
+                                  STARTPOSITION::BACK);
+        *(npy_bool *)out = match;
+
+        in1 += strides[0];
+        in2 += strides[1];
+        in3 += strides[2];
+        in4 += strides[3];
+        out += strides[4];
+    }
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_strip_whitespace_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize;
+    int outsize = context->descriptors[1]->elsize;
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf(in, elsize);
+        Buffer<enc> outbuf(out, outsize);
+        string_lrstrip_whitespace(buf, outbuf, STRIPTYPE::BOTHSTRIP);
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_lstrip_whitespace_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize;
+    int outsize = context->descriptors[1]->elsize;
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf(in, elsize);
+        Buffer<enc> outbuf(out, outsize);
+        string_lrstrip_whitespace(buf, outbuf, STRIPTYPE::LEFTSTRIP);
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_rstrip_whitespace_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize;
+    int outsize = context->descriptors[1]->elsize;
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf(in, elsize);
+        Buffer<enc> outbuf(out, outsize);
+        string_lrstrip_whitespace(buf, outbuf, STRIPTYPE::RIGHTSTRIP);
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_strip_chars_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize1 = context->descriptors[0]->elsize;
+    int elsize2 = context->descriptors[1]->elsize;
+    int outsize = context->descriptors[2]->elsize;
+
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *out = data[2];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf1(in1, elsize1);
+        Buffer<enc> buf2(in2, elsize2);
+        Buffer<enc> outbuf(out, outsize);
+        string_lrstrip_chars(buf1, buf2, outbuf, STRIPTYPE::BOTHSTRIP);
+
+        in1 += strides[0];
+        in2 += strides[1];
+        out += strides[2];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_lstrip_chars_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize1 = context->descriptors[0]->elsize;
+    int elsize2 = context->descriptors[1]->elsize;
+    int outsize = context->descriptors[2]->elsize;
+
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *out = data[2];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf1(in1, elsize1);
+        Buffer<enc> buf2(in2, elsize2);
+        Buffer<enc> outbuf(out, outsize);
+        string_lrstrip_chars(buf1, buf2, outbuf, STRIPTYPE::LEFTSTRIP);
+
+        in1 += strides[0];
+        in2 += strides[1];
+        out += strides[2];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_rstrip_chars_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize1 = context->descriptors[0]->elsize;
+    int elsize2 = context->descriptors[1]->elsize;
+    int outsize = context->descriptors[2]->elsize;
+
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *out = data[2];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf1(in1, elsize1);
+        Buffer<enc> buf2(in2, elsize2);
+        Buffer<enc> outbuf(out, outsize);
+        string_lrstrip_chars(buf1, buf2, outbuf, STRIPTYPE::RIGHTSTRIP);
+
+        in1 += strides[0];
+        in2 += strides[1];
+        out += strides[2];
+    }
+
+    return 0;
+}
+
+
+/* Resolve descriptors & promoter functions */
+
+static NPY_CASTING
+string_addition_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
+        PyArray_Descr *given_descrs[3],
+        PyArray_Descr *loop_descrs[3],
+        npy_intp *NPY_UNUSED(view_offset))
+{
+    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
+    if (loop_descrs[0] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
+    if (loop_descrs[1] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    loop_descrs[2] = PyArray_DescrNew(loop_descrs[0]);
+    if (loop_descrs[2] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+    loop_descrs[2]->elsize += loop_descrs[1]->elsize;
+
+    return NPY_NO_CASTING;
+}
+
+
+static NPY_CASTING
+string_strip_whitespace_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
+        PyArray_Descr *given_descrs[3],
+        PyArray_Descr *loop_descrs[3],
+        npy_intp *NPY_UNUSED(view_offset))
+{
+    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
+    if (loop_descrs[0] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    Py_INCREF(loop_descrs[0]);
+    loop_descrs[1] = loop_descrs[0];
+
+    return NPY_NO_CASTING;
+}
+
+
+static NPY_CASTING
+string_strip_chars_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
+        PyArray_Descr *given_descrs[3],
+        PyArray_Descr *loop_descrs[3],
+        npy_intp *NPY_UNUSED(view_offset))
+{
+    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
+    if (loop_descrs[0] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
+    if (loop_descrs[1] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    Py_INCREF(loop_descrs[0]);
+    loop_descrs[2] = loop_descrs[0];
+
+    return NPY_NO_CASTING;
+}
+
+
+static int
+string_find_rfind_count_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
+        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *new_op_dtypes[])
+{
+    Py_INCREF(op_dtypes[0]);
+    new_op_dtypes[0] = op_dtypes[0];
+    Py_INCREF(op_dtypes[1]);
+    new_op_dtypes[1] = op_dtypes[1];
+    new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_Int64DType);
+    new_op_dtypes[3] = NPY_DT_NewRef(&PyArray_Int64DType);
+    new_op_dtypes[4] = PyArray_DTypeFromTypeNum(NPY_DEFAULT_INT);
+    return 0;
+}
+
+
+static int
+string_startswith_endswith_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
+        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *new_op_dtypes[])
+{
+    Py_INCREF(op_dtypes[0]);
+    new_op_dtypes[0] = op_dtypes[0];
+    Py_INCREF(op_dtypes[1]);
+    new_op_dtypes[1] = op_dtypes[1];
+    new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_Int64DType);
+    new_op_dtypes[3] = NPY_DT_NewRef(&PyArray_Int64DType);
+    new_op_dtypes[4] = NPY_DT_NewRef(&PyArray_BoolDType);
+    return 0;
+}
+
+
 /*
  * Machinery to add the string loops to the existing ufuncs.
  */
+
+static int
+install_promoter(PyObject *umath, const char *ufunc_name,
+                 PyObject *promoterinfo)
+{
+    PyObject *name = PyUnicode_FromString(ufunc_name);
+    if (name == nullptr) {
+        return -1;
+    }
+    PyObject *ufunc = PyObject_GetItem(umath, name);
+    Py_DECREF(name);
+    if (ufunc == nullptr) {
+        return -1;
+    }
+
+    int res = PyUFunc_AddLoop((PyUFuncObject *)ufunc, promoterinfo, 0);
+    Py_DECREF(ufunc);
+    return res;
+}
+
 
 /*
  * This function replaces the strided loop with the passed in one,
@@ -319,7 +1166,7 @@ add_loop(PyObject *umath, const char *ufunc_name,
     }
     spec->slots[0].pfunc = (void *)loop;
 
-    int res = PyUFunc_AddLoopFromSpec(ufunc, spec);
+    int res = PyUFunc_AddLoopFromSpec_int(ufunc, spec, 1);
     Py_DECREF(ufunc);
     return res;
 }
@@ -354,10 +1201,9 @@ static int
 init_comparison(PyObject *umath)
 {
     int res = -1;
-    /* NOTE: This should receive global symbols? */
-    PyArray_DTypeMeta *String = PyArray_DTypeFromTypeNum(NPY_STRING);
-    PyArray_DTypeMeta *Unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
-    PyArray_DTypeMeta *Bool = PyArray_DTypeFromTypeNum(NPY_BOOL);
+    PyArray_DTypeMeta *String = &PyArray_BytesDType;
+    PyArray_DTypeMeta *Unicode = &PyArray_UnicodeDType;
+    PyArray_DTypeMeta *Bool = &PyArray_BoolDType;
 
     /* We start with the string loops: */
     PyArray_DTypeMeta *dtypes[] = {String, String, Bool};
@@ -394,134 +1240,98 @@ init_comparison(PyObject *umath)
 
     res = 0;
   finish:
-    Py_DECREF(String);
-    Py_DECREF(Unicode);
-    Py_DECREF(Bool);
-    return res;
-}
-
-
-static NPY_CASTING
-string_addition_resolve_descriptors(
-        PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
-        PyArray_Descr *given_descrs[3],
-        PyArray_Descr *loop_descrs[3],
-        npy_intp *NPY_UNUSED(view_offset))
-{
-    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
-    if (loop_descrs[0] == NULL) {
-        return _NPY_ERROR_OCCURRED_IN_CAST;
-    }
-
-    loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
-    if (loop_descrs[1] == NULL) {
-        return _NPY_ERROR_OCCURRED_IN_CAST;
-    }
-
-    loop_descrs[2] = PyArray_DescrNew(loop_descrs[0]);
-    if (loop_descrs[2] == NULL) {
-        return _NPY_ERROR_OCCURRED_IN_CAST;
-    }
-    loop_descrs[2]->elsize += loop_descrs[1]->elsize;
-
-    return NPY_NO_CASTING;
-}
-
-
-static int
-init_add(PyObject *umath)
-{
-    int res = -1;
-
-    PyArray_DTypeMeta *String = PyArray_DTypeFromTypeNum(NPY_STRING);
-    PyArray_DTypeMeta *Unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
-
-    /* We start with the string loops: */
-    PyArray_DTypeMeta *dtypes[] = {String, String, String};
-    /*
-     * We only have one loop right now, the strided one.  The default type
-     * resolver ensures native byte order/canonical representation.
-     */
-    PyType_Slot slots[] = {
-        {NPY_METH_strided_loop, nullptr},
-        {NPY_METH_resolve_descriptors, (void *) &string_addition_resolve_descriptors},
-        {0, nullptr}
-    };
-
-    PyArrayMethod_Spec spec = {};
-    spec.name = "templated_add";
-    spec.nin = 2;
-    spec.nout = 1;
-    spec.dtypes = dtypes;
-    spec.slots = slots;
-    spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
-
-    /* All String loops */
-    if (add_loop(umath, "add", &spec, string_add_loop<npy_byte>) < 0) {
-        goto finish;
-    }
-
-    /* All Unicode loops */
-    dtypes[0] = Unicode;
-    dtypes[1] = Unicode;
-    dtypes[2] = Unicode;
-    if (add_loop(umath, "add", &spec, string_add_loop<npy_ucs4>) < 0) {
-        goto finish;
-    }
-
-    res = 0;
-  finish:
-    Py_DECREF(String);
-    Py_DECREF(Unicode);
     return res;
 }
 
 
 static int
-init_isalpha(PyObject *umath)
+init_promoter(PyObject *umath, const char *name, int nin, int nout,
+              promoter_function promoter)
+{
+    PyObject *promoter_obj = PyCapsule_New((void *) promoter, "numpy._ufunc_promoter", NULL);
+    if (promoter_obj == NULL) {
+        return -1;
+    }
+
+    PyObject *dtypes_tuple = PyTuple_New(nin + nout);
+    if (dtypes_tuple == NULL) {
+        Py_DECREF(promoter_obj);
+        return -1;
+    }
+    for (int i = 0; i < nin + nout; i++) {
+        PyTuple_SET_ITEM(dtypes_tuple, i, Py_None);
+    }
+
+    PyObject *info = PyTuple_Pack(2, dtypes_tuple, promoter_obj);
+    Py_DECREF(dtypes_tuple);
+    Py_DECREF(promoter_obj);
+    if (info == NULL) {
+        return -1;
+    }
+
+    if (install_promoter(umath, name, info) < 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+init_ufunc(PyObject *umath, const char *name, const char *specname, int nin, int nout,
+           NPY_TYPES *typenums, PyArrayMethod_StridedLoop loop,
+           resolve_descriptors_function resolve_descriptors)
 {
     int res = -1;
-    /* NOTE: This should receive global symbols? */
-    PyArray_DTypeMeta *String = PyArray_DTypeFromTypeNum(NPY_STRING);
-    PyArray_DTypeMeta *Unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
-    PyArray_DTypeMeta *Bool = PyArray_DTypeFromTypeNum(NPY_BOOL);
 
-    /* We start with the string loops: */
-    PyArray_DTypeMeta *dtypes[] = {String, Bool};
-    /*
-     * We only have one loop right now, the strided one.  The default type
-     * resolver ensures native byte order/canonical representation.
-     */
-    PyType_Slot slots[] = {
-        {NPY_METH_strided_loop, nullptr},
-        {0, nullptr}
-    };
+    PyArray_DTypeMeta **dtypes = (PyArray_DTypeMeta **) PyMem_Malloc(
+        (nin + nout) * sizeof(PyArray_DTypeMeta *));
+    if (dtypes == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    for (int i = 0; i < nin+nout; i++) {
+        if (typenums[i] == NPY_OBJECT && enc == ENCODING::UTF32) {
+            dtypes[i] = NPY_DT_NewRef(&PyArray_UnicodeDType);
+        }
+        else if (typenums[i] == NPY_OBJECT && enc == ENCODING::ASCII) {
+            dtypes[i] = NPY_DT_NewRef(&PyArray_BytesDType);
+        }
+        else {
+            dtypes[i] = PyArray_DTypeFromTypeNum(typenums[i]);
+        }
+    }
+
+    PyType_Slot slots[3];
+    slots[0] = {NPY_METH_strided_loop, nullptr};
+    slots[2] = {0, nullptr};
+    if (resolve_descriptors != NULL) {
+        slots[1] = {NPY_METH_resolve_descriptors, (void *) resolve_descriptors};
+    }
+    else {
+        slots[1] = {0, nullptr};
+    }
 
     PyArrayMethod_Spec spec = {};
-    spec.name = "templated_string_isalpha";
-    spec.nin = 1;
-    spec.nout = 1;
+    spec.name = specname;
+    spec.nin = nin;
+    spec.nout = nout;
     spec.dtypes = dtypes;
     spec.slots = slots;
     spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
-    /* All String loops */
-    if (add_loop(umath, "isalpha", &spec, string_isalpha_loop<npy_byte>) < 0) {
-        goto finish;
-    }
-
-    /* All Unicode loops */
-    dtypes[0] = Unicode;
-    if (add_loop(umath, "isalpha", &spec, string_isalpha_loop<npy_ucs4>) < 0) {
+    if (add_loop(umath, name, &spec, loop) < 0) {
         goto finish;
     }
 
     res = 0;
   finish:
-    Py_DECREF(String);
-    Py_DECREF(Unicode);
-    Py_DECREF(Bool);
+    for (int i = 0; i < nin+nout; i++) {
+        Py_DECREF(dtypes[i]);
+    }
+    PyMem_Free((void *) dtypes);
     return res;
 }
 
@@ -529,15 +1339,234 @@ init_isalpha(PyObject *umath)
 NPY_NO_EXPORT int
 init_string_ufuncs(PyObject *umath)
 {
+    NPY_TYPES dtypes[] = {NPY_STRING, NPY_STRING, NPY_STRING, NPY_STRING, NPY_STRING};
+
     if (init_comparison(umath) < 0) {
         return -1;
     }
 
-    if (init_add(umath) < 0) {
+    // We use NPY_OBJECT as a sentinel value here, and this will be replaced by the
+    // corresponding string dtype (either NPY_STRING or NPY_UNICODE).
+    dtypes[0] = dtypes[1] = dtypes[2] = NPY_OBJECT;
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "add", "templated_string_add", 2, 1, dtypes,
+            string_add_loop<ENCODING::ASCII>, string_addition_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "add", "templated_string_add", 2, 1, dtypes,
+            string_add_loop<ENCODING::UTF32>, string_addition_resolve_descriptors) < 0) {
         return -1;
     }
 
-    if (init_isalpha(umath) < 0) {
+    dtypes[0] = NPY_OBJECT;
+    dtypes[1] = NPY_DEFAULT_INT;
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "str_len", "templated_string_len", 1, 1, dtypes,
+            string_len_loop<ENCODING::ASCII>, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "str_len", "templated_string_len", 1, 1, dtypes,
+            string_len_loop<ENCODING::UTF32>, NULL) < 0) {
+        return -1;
+    }
+
+    dtypes[0] = NPY_OBJECT;
+    dtypes[1] = NPY_BOOL;
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "isalpha", "templated_string_isalpha", 1, 1, dtypes,
+            string_isalpha_loop<ENCODING::ASCII>, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "isalpha", "templated_string_isalpha", 1, 1, dtypes,
+            string_isalpha_loop<ENCODING::UTF32>, NULL) < 0) {
+        return -1;
+    }
+
+    dtypes[0] = dtypes[1] = NPY_OBJECT;
+    dtypes[2] = dtypes[3] = NPY_INT64;
+    dtypes[4] = NPY_DEFAULT_INT;
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "find", "templated_string_find", 4, 1, dtypes,
+            string_find_loop<ENCODING::ASCII>, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "find", "templated_string_find", 4, 1, dtypes,
+            string_find_loop<ENCODING::UTF32>, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "rfind", "templated_string_rfind", 4, 1, dtypes,
+            string_rfind_loop<ENCODING::ASCII>, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "rfind", "templated_string_rfind", 4, 1, dtypes,
+            string_rfind_loop<ENCODING::UTF32>, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "count", "templated_string_count", 4, 1, dtypes,
+            string_count_loop<ENCODING::ASCII>, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "count", "templated_string_count", 4, 1, dtypes,
+            string_count_loop<ENCODING::UTF32>, NULL) < 0) {
+        return -1;
+    }
+    if (init_promoter(umath, "find", 4, 1, string_find_rfind_count_promoter) < 0) {
+        return -1;
+    }
+    if (init_promoter(umath, "rfind", 4, 1, string_find_rfind_count_promoter) < 0) {
+        return -1;
+    }
+    if (init_promoter(umath, "count", 4, 1, string_find_rfind_count_promoter) < 0) {
+        return -1;
+    }
+
+    dtypes[0] = dtypes[1] = NPY_OBJECT;
+    dtypes[2] = dtypes[3] = NPY_INT64;
+    dtypes[4] = NPY_BOOL;
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "startswith", "templated_string_startswith", 4, 1, dtypes,
+            string_startswith_loop<ENCODING::ASCII>, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "startswith", "templated_string_startswith", 4, 1, dtypes,
+            string_startswith_loop<ENCODING::UTF32>, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "endswith", "templated_string_endswith", 4, 1, dtypes,
+            string_endswith_loop<ENCODING::ASCII>, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "endswith", "templated_string_endswith", 4, 1, dtypes,
+            string_endswith_loop<ENCODING::UTF32>, NULL) < 0) {
+        return -1;
+    }
+    if (init_promoter(umath, "startswith", 4, 1, string_startswith_endswith_promoter) < 0) {
+        return -1;
+    }
+    if (init_promoter(umath, "endswith", 4, 1, string_startswith_endswith_promoter) < 0) {
+        return -1;
+    }
+
+    dtypes[0] = NPY_OBJECT;
+    dtypes[1] = NPY_BOOL;
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "isdigit", "templated_string_isdigit", 1, 1, dtypes,
+            string_isdigit_loop<ENCODING::ASCII>, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "isdigit", "templated_string_isdigit", 1, 1, dtypes,
+            string_isdigit_loop<ENCODING::UTF32>, NULL) < 0) {
+        return -1;
+    }
+
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "isspace", "templated_string_isspace", 1, 1, dtypes,
+            string_isspace_loop<ENCODING::ASCII>, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "isspace", "templated_string_isspace", 1, 1, dtypes,
+            string_isspace_loop<ENCODING::UTF32>, NULL) < 0) {
+        return -1;
+    }
+
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "isdecimal", "templated_string_isdecimal", 1, 1, dtypes,
+            string_isdecimal_loop, NULL) < 0) {
+        return -1;
+    }
+
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "isnumeric", "templated_string_isnumeric", 1, 1, dtypes,
+            string_isnumeric_loop, NULL) < 0) {
+        return -1;
+    }
+
+    dtypes[0] = dtypes[1] = NPY_OBJECT;
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "_lstrip_whitespace", "templated_string_lstrip", 1, 1, dtypes,
+            string_lstrip_whitespace_loop<ENCODING::ASCII>,
+            string_strip_whitespace_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "_lstrip_whitespace", "templated_string_lstrip", 1, 1, dtypes,
+            string_lstrip_whitespace_loop<ENCODING::UTF32>,
+            string_strip_whitespace_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "_rstrip_whitespace", "templated_string_rstrip", 1, 1, dtypes,
+            string_rstrip_whitespace_loop<ENCODING::ASCII>,
+            string_strip_whitespace_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "_rstrip_whitespace", "templated_string_rstrip", 1, 1, dtypes,
+            string_rstrip_whitespace_loop<ENCODING::UTF32>,
+            string_strip_whitespace_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "_strip_whitespace", "templated_string_strip", 1, 1, dtypes,
+            string_strip_whitespace_loop<ENCODING::ASCII>,
+            string_strip_whitespace_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "_strip_whitespace", "templated_string_strip", 1, 1, dtypes,
+            string_strip_whitespace_loop<ENCODING::UTF32>,
+            string_strip_whitespace_resolve_descriptors) < 0) {
+        return -1;
+    }
+
+    dtypes[0] = dtypes[1] = dtypes[2] = NPY_OBJECT;
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "_lstrip_chars", "templated_string_lstrip", 2, 1, dtypes,
+            string_lstrip_chars_loop<ENCODING::ASCII>,
+            string_strip_chars_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "_lstrip_chars", "templated_string_lstrip", 2, 1, dtypes,
+            string_lstrip_chars_loop<ENCODING::UTF32>,
+            string_strip_chars_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "_rstrip_chars", "templated_string_rstrip", 2, 1, dtypes,
+            string_rstrip_chars_loop<ENCODING::ASCII>,
+            string_strip_chars_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "_rstrip_chars", "templated_string_rstrip", 2, 1, dtypes,
+            string_rstrip_chars_loop<ENCODING::UTF32>,
+            string_strip_chars_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "_strip_chars", "templated_string_strip", 2, 1, dtypes,
+            string_strip_chars_loop<ENCODING::ASCII>,
+            string_strip_chars_resolve_descriptors) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "_strip_chars", "templated_string_strip", 2, 1, dtypes,
+            string_strip_chars_loop<ENCODING::UTF32>,
+            string_strip_chars_resolve_descriptors) < 0) {
         return -1;
     }
 

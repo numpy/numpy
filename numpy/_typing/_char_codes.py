@@ -22,17 +22,17 @@ _Complex128Codes = Literal["complex128", "c16", "=c16", "<c16", ">c16"]
 _ByteCodes = Literal["byte", "b", "=b", "<b", ">b"]
 _ShortCodes = Literal["short", "h", "=h", "<h", ">h"]
 _IntCCodes = Literal["intc", "i", "=i", "<i", ">i"]
-_IntPCodes = Literal["intp", "p", "=p", "<p", ">p"]
-_LongCodes = Literal["long", "int", "int_", "l", "=l", "<l", ">l"]
-_IntCodes = _LongCodes
+_IntPCodes = Literal["intp", "int", "int_", "n", "=n", "<n", ">n"]
+_LongCodes = Literal["long", "l", "=l", "<l", ">l"]
+_IntCodes = _IntPCodes
 _LongLongCodes = Literal["longlong", "q", "=q", "<q", ">q"]
 
 _UByteCodes = Literal["ubyte", "B", "=B", "<B", ">B"]
 _UShortCodes = Literal["ushort", "H", "=H", "<H", ">H"]
 _UIntCCodes = Literal["uintc", "I", "=I", "<I", ">I"]
-_UIntPCodes = Literal["uintp", "P", "=P", "<P", ">P"]
-_ULongCodes = Literal["ulong", "uint", "L", "=L", "<L", ">L"]
-_UIntCodes = _ULongCodes
+_UIntPCodes = Literal["uintp", "uint", "N", "=N", "<N", ">N"]
+_ULongCodes = Literal["ulong", "L", "=L", "<L", ">L"]
+_UIntCodes = _UIntPCodes
 _ULongLongCodes = Literal["ulonglong", "Q", "=Q", "<Q", ">Q"]
 
 _HalfCodes = Literal["half", "e", "=e", "<e", ">e"]

@@ -21,7 +21,7 @@ AR_c16: npt.NDArray[np.complex128]
 AR_m: npt.NDArray[np.timedelta64]
 AR_M: npt.NDArray[np.datetime64]
 AR_O: npt.NDArray[np.object_]
-AR_b: npt.NDArray[np.bool_]
+AR_b: npt.NDArray[np.bool]
 AR_U: npt.NDArray[np.str_]
 CHAR_AR_U: np.char.chararray[Any, np.dtype[np.str_]]
 

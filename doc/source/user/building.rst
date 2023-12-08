@@ -70,6 +70,11 @@ Building NumPy requires the following software installed:
 Basic installation
 ------------------
 
+If you have a clone of the NumPy ``git`` repository rather than a release source
+distribution, you will first need to initialize the ``git`` submodules::
+
+    git submodule update --init
+
 To build and install NumPy from a local copy of the source code, run::
 
     pip install .

@@ -33,6 +33,7 @@ From existing data
    asanyarray
    ascontiguousarray
    asmatrix
+   astype
    copy
    frombuffer
    from_dlpack
@@ -98,7 +99,7 @@ Building matrices
    triu
    vander
 
-The Matrix class
+The matrix class
 ----------------
 .. autosummary::
    :toctree: generated/

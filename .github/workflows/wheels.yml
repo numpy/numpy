@@ -111,7 +111,7 @@ jobs:
         if: runner.os == 'windows'
 
       # Used to push the built wheels
-      - uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: "3.x"
 
@@ -126,7 +126,7 @@ jobs:
           name: ${{ matrix.python }}-${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
           path: ./wheelhouse/*.whl
 
-      - uses: conda-incubator/setup-miniconda@3b0f2504dd76ef23b6d31f291f4913fb60ab5ff3 # v2.2.0
+      - uses: conda-incubator/setup-miniconda@11b562958363ec5770fef326fe8ef0366f8cbf8a # v3.0.1
         with:
           # for installation of anaconda-client, required for upload to
           # anaconda.org
@@ -145,9 +145,7 @@ jobs:
           NUMPY_STAGING_UPLOAD_TOKEN: ${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}
           NUMPY_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
         run: |
-          #conda install -y anaconda-client
-          # pin urllib3 until anaconda-client is fixed upstream
-          conda install -y anaconda-client 'urllib3<2.0.0'
+          conda install -y anaconda-client
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to
@@ -185,7 +183,7 @@ jobs:
           # https://github.com/actions/checkout/issues/338
           fetch-depth: 0
       # Used to push the built wheels
-      - uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           # Build sdist on lowest supported Python
           python-version: "3.9"
@@ -213,7 +211,7 @@ jobs:
           name: sdist
           path: ./dist/*
 
-      - uses: conda-incubator/setup-miniconda@3b0f2504dd76ef23b6d31f291f4913fb60ab5ff3 # v2.2.0
+      - uses: conda-incubator/setup-miniconda@11b562958363ec5770fef326fe8ef0366f8cbf8a # v3.0.1
         with:
           # for installation of anaconda-client, required for upload to
           # anaconda.org
@@ -231,9 +229,7 @@ jobs:
           # commented out so the sdist doesn't upload to nightly
           # NUMPY_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
         run: |
-          #conda install -y anaconda-client
-          # pin urllib3 until anaconda-client is fixed upstream
-          conda install -y anaconda-client 'urllib3<2.0.0'
+          conda install -y anaconda-client
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to

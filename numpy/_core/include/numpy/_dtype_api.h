@@ -5,7 +5,7 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 #define NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 
-#define __EXPERIMENTAL_DTYPE_API_VERSION 14
+#define __EXPERIMENTAL_DTYPE_API_VERSION 15
 
 struct PyArrayMethodObject_tag;
 
@@ -344,6 +344,7 @@ typedef int (get_traverse_loop_function)(
 #define NPY_DT_getitem 8
 #define NPY_DT_get_clear_loop 9
 #define NPY_DT_get_fill_zero_loop 10
+#define NPY_DT_finalize_descr 11
 
 // These PyArray_ArrFunc slots will be deprecated and replaced eventually
 // getitem and setitem can be defined as a performance optimization;
@@ -418,6 +419,14 @@ typedef PyArray_DTypeMeta *(common_dtype_function)(
 typedef PyArray_Descr *(common_instance_function)(
         PyArray_Descr *dtype1, PyArray_Descr *dtype2);
 typedef PyArray_Descr *(ensure_canonical_function)(PyArray_Descr *dtype);
+/*
+ * Returns either a new reference to *dtype* or a new descriptor instance
+ * initialized with the same parameters as *dtype*. The caller cannot know
+ * which choice a dtype will make. This function is called just before the
+ * array buffer is created for a newly created array, it is not called for
+ * views and the descriptor returned by this function is attached to the array.
+ */
+typedef PyArray_Descr *(finalize_descr_function)(PyArray_Descr *dtype);
 
 /*
  * TODO: These two functions are currently only used for experimental DType
@@ -435,5 +444,10 @@ typedef PyObject *(getitemfunction)(PyArray_Descr *, char *);
  */
 #define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))
 
+static inline PyArray_DTypeMeta *
+NPY_DT_NewRef(PyArray_DTypeMeta *o) {
+    Py_INCREF(o);
+    return o;
+}
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */

@@ -40,7 +40,7 @@ array_contains(PyArrayObject *self, PyObject *el)
         return -1;
     }
 
-    any = PyArray_Any((PyArrayObject *)res, NPY_MAXDIMS, NULL);
+    any = PyArray_Any((PyArrayObject *)res, NPY_RAVEL_AXIS, NULL);
     Py_DECREF(res);
     if (any == NULL) {
         return -1;

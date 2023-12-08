@@ -133,10 +133,10 @@ class TestUfuncGenericLoops:
     # class to use in testing object method loops
     class foo:
         def conjugate(self):
-            return np.bool_(1)
+            return np.bool(1)
 
         def logical_xor(self, obj):
-            return np.bool_(1)
+            return np.bool(1)
 
     def test_unary_PyUFunc_O_O(self):
         x = np.ones(10, dtype=object)
@@ -705,7 +705,7 @@ class TestUfunc:
                     assert_(res.dtype.name == dtout.name)
 
         # Check booleans
-        a = np.ones((), dtype=np.bool_)
+        a = np.ones((), dtype=np.bool)
         res = np.true_divide(a, a)
         assert_(res == 1.0)
         assert_(res.dtype.name == 'float64')
@@ -1518,7 +1518,7 @@ class TestUfunc:
         assert_(type(np.min(np.float32(2.5), axis=0)) is np.float32)
 
         # check if scalars/0-d arrays get cast
-        assert_(type(np.any(0, axis=0)) is np.bool_)
+        assert_(type(np.any(0, axis=0)) is np.bool)
 
         # assert that 0-d arrays get wrapped
         class MyArray(np.ndarray):
@@ -1635,6 +1635,8 @@ class TestUfunc:
         assert_equal(np.minimum.reduce(a, axis=()), a)
 
     @requires_memory(6 * 1024**3)
+    @pytest.mark.skipif(sys.maxsize < 2**32,
+            reason="test array too large for 32bit platform")
     def test_identityless_reduction_huge_array(self):
         # Regression test for gh-20921 (copying identity incorrectly failed)
         arr = np.zeros((2, 2**31), 'uint8')
@@ -1896,11 +1898,11 @@ class TestUfunc:
         assert_equal(result, target)
 
     def test_operand_flags(self):
-        a = np.arange(16, dtype='l').reshape(4, 4)
-        b = np.arange(9, dtype='l').reshape(3, 3)
+        a = np.arange(16, dtype=int).reshape(4, 4)
+        b = np.arange(9, dtype=int).reshape(3, 3)
         opflag_tests.inplace_add(a[:-1, :-1], b)
         assert_equal(a, np.array([[0, 2, 4, 3], [7, 9, 11, 7],
-            [14, 16, 18, 11], [12, 13, 14, 15]], dtype='l'))
+            [14, 16, 18, 11], [12, 13, 14, 15]]))
 
         a = np.array(0)
         opflag_tests.inplace_add(a, 3)
@@ -2892,6 +2894,27 @@ def test_addition_unicode_inverse_byte_order(order1, order2):
     assert result == 2*element
 
 
+@pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64])
+def test_find_non_long_args(dtype):
+    element = 'abcd'
+    start = dtype(0)
+    end = dtype(len(element))
+    arr = np.array([element])
+    result = np._core.umath.find(arr, "a", start, end)
+    assert result.dtype == np.dtype("intp")
+    assert result == 0
+
+
+def test_find_access_past_buffer():
+    # This checks that no read past the string buffer occurs in
+    # string_fastsearch.h. The buffer class makes sure this is checked.
+    # To see it in action, you can remove the checks in the buffer and
+    # this test will produce an 'Invalid read' if run under valgrind.
+    arr = np.array([b'abcd', b'ebcd'])
+    result = np._core.umath.find(arr, b'cde', 0, np.iinfo(np.int64).max)
+    assert np.all(result == -1)
+
+
 class TestLowlevelAPIAccess:
     def test_resolve_dtypes_basic(self):
         # Basic test for dtype resolution:
@@ -2928,8 +2951,16 @@ class TestLowlevelAPIAccess:
             np.equal.resolve_dtypes((dts, dts, None))
 
     def test_resolve_dtypes_reduction(self):
+        i2 = np.dtype("i2")
+        default_int_ = np.dtype(np.int_)
+        # Check special addition resolution:
+        res = np.add.resolve_dtypes((None, i2, None), reduction=True)
+        assert res == (default_int_, default_int_, default_int_)
+
+    def test_resolve_dtypes_reduction_no_output(self):
         i4 = np.dtype("i4")
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(TypeError):
+            # May be allowable at some point?
             np.add.resolve_dtypes((i4, i4, i4), reduction=True)
 
     @pytest.mark.parametrize("dtypes", [
@@ -2940,13 +2971,6 @@ class TestLowlevelAPIAccess:
     def test_resolve_dtypes_errors(self, dtypes):
         with pytest.raises(TypeError):
             np.add.resolve_dtypes(dtypes)
-
-    def test_resolve_dtypes_reduction(self):
-        i2 = np.dtype("i2")
-        long_ = np.dtype("long")
-        # Check special addition resolution:
-        res = np.add.resolve_dtypes((None, i2, None), reduction=True)
-        assert res == (long_, long_, long_)
 
     def test_resolve_dtypes_reduction_errors(self):
         i2 = np.dtype("i2")
@@ -2961,9 +2985,9 @@ class TestLowlevelAPIAccess:
             reason="`ctypes.pythonapi` required for capsule unpacking.")
     def test_loop_access(self):
         # This is a basic test for the full strided loop access
-        data_t = ct.ARRAY(ct.c_char_p, 2)
-        dim_t = ct.ARRAY(ct.c_ssize_t, 1)
-        strides_t = ct.ARRAY(ct.c_ssize_t, 2)
+        data_t = ct.c_char_p * 2
+        dim_t = ct.c_ssize_t * 1
+        strides_t = ct.c_ssize_t * 2
         strided_loop_t = ct.CFUNCTYPE(
                 ct.c_int, ct.c_void_p, data_t, dim_t, strides_t, ct.c_void_p)
 

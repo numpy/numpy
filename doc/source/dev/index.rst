@@ -26,11 +26,9 @@ You can do this via
 the `numpy-discussion mailing list <https://mail.python.org/mailman/listinfo/numpy-discussion>`__,
 or on `GitHub <https://github.com/numpy/numpy>`__ (open an issue or comment on a
 relevant issue). These are our preferred communication channels (open source is open
-by nature!), however if you prefer to discuss in private first, please reach out to
-our community coordinators at `numpy-team@googlegroups.com
-<mailto://numpy-team@googlegroups.com>`_ or `numpy-team.slack.com
-<https://numpy-team.slack.com>`__ (send an email to `numpy-team@googlegroups.com`_ for an
-invite the first time).
+by nature!), however if you prefer to discuss in a more private space first,
+you can do so on Slack (see `numpy.org/contribute
+<https://numpy.org/contribute/>`__ for details).
 
 Development process - summary
 =============================
@@ -91,8 +89,7 @@ Here's the short summary, complete TOC links are below:
       git push origin linspace-speedups
 
    * Enter your GitHub username and password (repeat contributors or advanced
-     users can remove this step by connecting to GitHub with
-     :ref:`SSH<set-up-and-configure-a-github-account>`).
+     users can remove this step by connecting to GitHub with SSH).
 
    * Go to GitHub. The new branch will show up with a green Pull Request
      button. Make sure the title and message are clear, concise, and self-
@@ -163,14 +160,6 @@ Here's the short summary, complete TOC links are below:
 For a more detailed discussion, read on and follow the links at the bottom of
 this page.
 
-Divergence between ``upstream/main`` and your feature branch
-------------------------------------------------------------
-
-If GitHub indicates that the branch of your Pull Request can no longer
-be merged automatically, you have to incorporate changes that have been made
-since you started into your branch. Our recommended way to do this is to
-:ref:`rebase on main <rebasing-on-main>`.
-
 .. _guidelines:
 
 Guidelines
@@ -185,7 +174,7 @@ Guidelines
 
 .. _stylistic-guidelines:
 
-Stylistic Guidelines
+Stylistic guidelines
 --------------------
 
 * Set up your editor to follow `PEP 8 <https://www.python.org/dev/peps/
@@ -243,16 +232,6 @@ all targets.
 To get the appropriate dependencies and other requirements,
 see :ref:`howto-build-docs`.
 
-Fixing Warnings
-~~~~~~~~~~~~~~~
-
--  "citation not found: R###" There is probably an underscore after a
-   reference in the first line of a docstring (e.g. [1]\_). Use this
-   method to find the source file: $ cd doc/build; grep -rin R####
-
--  "Duplicate citation R###, other instance in..."" There is probably a
-   [2] without a [1] in one of the docstrings
-
 Development process - details
 =============================
 
@@ -261,7 +240,6 @@ The rest of the story
 .. toctree::
    :maxdepth: 2
 
-   Git for development <gitwash/index>
    development_environment
    howto_build_docs
    development_workflow

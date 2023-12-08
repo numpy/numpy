@@ -486,8 +486,7 @@ sfloat_init_casts(void)
     spec.name = "float_to_sfloat_cast";
     /* Technically, it is just a copy currently so this is fine: */
     spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
-    PyArray_DTypeMeta *double_DType = PyArray_DTypeFromTypeNum(NPY_DOUBLE);
-    Py_DECREF(double_DType);  /* immortal anyway */
+    PyArray_DTypeMeta *double_DType = &PyArray_DoubleDType;
     dtypes[0] = double_DType;
 
     slots[0].slot = NPY_METH_resolve_descriptors;
@@ -518,8 +517,7 @@ sfloat_init_casts(void)
 
     spec.name = "sfloat_to_bool_cast";
     dtypes[0] = &PyArray_SFloatDType;
-    dtypes[1] = PyArray_DTypeFromTypeNum(NPY_BOOL);
-    Py_DECREF(dtypes[1]);  /* immortal anyway */
+    dtypes[1] = &PyArray_BoolDType;
 
     if (PyArray_AddCastingImplementation_FromSpec(&spec, 0)) {
         return -1;
@@ -756,13 +754,12 @@ sfloat_add_wrapping_loop(const char *ufunc_name, PyArray_DTypeMeta *dtypes[3])
     if (ufunc == NULL) {
         return -1;
     }
-    PyArray_DTypeMeta *double_dt = PyArray_DTypeFromTypeNum(NPY_DOUBLE);
+    PyArray_DTypeMeta *double_dt = &PyArray_DoubleDType;
     PyArray_DTypeMeta *wrapped_dtypes[3] = {double_dt, double_dt, double_dt};
     int res = PyUFunc_AddWrappingLoop(
         ufunc, dtypes, wrapped_dtypes, &translate_given_descrs_to_double,
         &translate_loop_descrs);
     Py_DECREF(ufunc);
-    Py_DECREF(double_dt);
 
     return res;
 }
@@ -848,8 +845,7 @@ sfloat_init_ufuncs(void) {
     /*
      * Add a promoter for both directions of multiply with double.
      */
-    PyArray_DTypeMeta *double_DType = PyArray_DTypeFromTypeNum(NPY_DOUBLE);
-    Py_DECREF(double_DType);  /* immortal anyway */
+    PyArray_DTypeMeta *double_DType = &PyArray_DoubleDType;
 
     PyArray_DTypeMeta *promoter_dtypes[3] = {
             &PyArray_SFloatDType, double_DType, NULL};

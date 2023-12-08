@@ -31,15 +31,17 @@ from ._char_codes import (
     _ByteCodes,
     _ShortCodes,
     _IntCCodes,
+    _LongCodes,
+    _LongLongCodes,
     _IntPCodes,
     _IntCodes,
-    _LongLongCodes,
     _UByteCodes,
     _UShortCodes,
     _UIntCCodes,
+    _ULongCodes,
+    _ULongLongCodes,
     _UIntPCodes,
     _UIntCodes,
-    _ULongLongCodes,
     _HalfCodes,
     _SingleCodes,
     _DoubleCodes,
@@ -137,9 +139,9 @@ DTypeLike = Union[
 # Note that the precision of `np.number` subclasses is ignored herein.
 _DTypeLikeBool = Union[
     type[bool],
-    type[np.bool_],
-    np.dtype[np.bool_],
-    _SupportsDType[np.dtype[np.bool_]],
+    type[np.bool],
+    np.dtype[np.bool],
+    _SupportsDType[np.dtype[np.bool]],
     _BoolCodes,
 ]
 _DTypeLikeUInt = Union[
@@ -153,9 +155,10 @@ _DTypeLikeUInt = Union[
     _UByteCodes,
     _UShortCodes,
     _UIntCCodes,
+    _LongCodes,
+    _ULongLongCodes,
     _UIntPCodes,
     _UIntCodes,
-    _ULongLongCodes,
 ]
 _DTypeLikeInt = Union[
     type[int],
@@ -169,9 +172,10 @@ _DTypeLikeInt = Union[
     _ByteCodes,
     _ShortCodes,
     _IntCCodes,
+    _LongCodes,
+    _LongLongCodes,
     _IntPCodes,
     _IntCodes,
-    _LongLongCodes,
 ]
 _DTypeLikeFloat = Union[
     type[float],

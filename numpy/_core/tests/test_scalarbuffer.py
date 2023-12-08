@@ -10,16 +10,16 @@ from numpy.testing import assert_, assert_equal, assert_raises
 
 # PEP3118 format strings for native (standard alignment and byteorder) types
 scalars_and_codes = [
-    (np.bool_, '?'),
+    (np.bool, '?'),
     (np.byte, 'b'),
     (np.short, 'h'),
     (np.intc, 'i'),
-    (np.int_, 'l'),
+    (np.long, 'l'),
     (np.longlong, 'q'),
     (np.ubyte, 'B'),
     (np.ushort, 'H'),
     (np.uintc, 'I'),
-    (np.uint, 'L'),
+    (np.ulong, 'L'),
     (np.ulonglong, 'Q'),
     (np.half, 'e'),
     (np.single, 'f'),

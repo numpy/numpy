@@ -126,18 +126,19 @@ else:
         arctan2, arctanh, argmax, argmin, argpartition, argsort, argwhere,
         around, array, array2string, array_equal, array_equiv, array_repr,
         array_str, asanyarray, asarray, ascontiguousarray, asfortranarray,
-        atleast_1d, atleast_2d, atleast_3d, base_repr, binary_repr,
+        astype, atleast_1d, atleast_2d, atleast_3d, base_repr, binary_repr,
         bitwise_and, bitwise_count, bitwise_not, bitwise_or, bitwise_xor,
-        block, bool_, broadcast, busday_count, busday_offset, busdaycalendar,
-        byte, bytes_, can_cast, cbrt, cdouble, ceil, character, choose, clip,
-        clongdouble, complex128, complex64, complexfloating, compress,
-        concatenate, conj, conjugate, convolve, copysign, copyto, correlate,
-        cos, cosh, count_nonzero, cross, csingle, cumprod, cumproduct, cumsum,
-        datetime64, datetime_as_string, datetime_data, deg2rad, degrees,
-        diagonal, divide, divmod, dot, double, dtype, e, einsum, einsum_path,
-        empty, empty_like, equal, errstate, euler_gamma, exp, exp2, expm1,
-        fabs, finfo, flatiter, flatnonzero, flexible, float16, float32,
-        float64, float_power, floating, floor, floor_divide, fmax, fmin, fmod,
+        block, bool, bool_, broadcast, busday_count, busday_offset,
+        busdaycalendar, byte, bytes_, can_cast, cbrt, cdouble, ceil,
+        character, choose, clip, clongdouble, complex128, complex64,
+        complexfloating, compress, concatenate, conj, conjugate, convolve,
+        copysign, copyto, correlate, cos, cosh, count_nonzero, cross, csingle,
+        cumprod, cumproduct, cumsum, datetime64, datetime_as_string,
+        datetime_data, deg2rad, degrees, diagonal, divide, divmod, dot,
+        double, dtype, e, einsum, einsum_path, empty, empty_like, equal,
+        errstate, euler_gamma, exp, exp2, expm1, fabs, finfo, flatiter,
+        flatnonzero, flexible, float16, float32, float64, float_power,
+        floating, floor, floor_divide, fmax, fmin, fmod,
         format_float_positional, format_float_scientific, frexp, from_dlpack,
         frombuffer, fromfile, fromfunction, fromiter, frompyfunc, fromstring,
         full, full_like, gcd, generic, geomspace, get_printoptions,
@@ -207,7 +208,8 @@ else:
         real_if_close, typename, mintypecode, common_type
     )
     from .lib._arraysetops_impl import (
-        ediff1d, in1d, intersect1d, isin, setdiff1d, setxor1d, union1d, unique
+        ediff1d, in1d, intersect1d, isin, setdiff1d, setxor1d, union1d,
+        unique, unique_all, unique_counts, unique_inverse, unique_values
     )
     from .lib._ufunclike_impl import fix, isneginf, isposinf
     from .lib._arraypad_impl import pad
@@ -266,7 +268,6 @@ else:
 
     _type_info = [
         ("object", ""),  # The NumPy scalar only exists by name.
-        ("bool", _specific_msg.format("bool_")),
         ("float", _specific_msg.format("float64")),
         ("complex", _specific_msg.format("complex128")),
         ("str", _specific_msg.format("str_")),
@@ -283,7 +284,9 @@ else:
     # probably wait for NumPy 1.26 or 2.0.
     # When defined, these should possibly not be added to `__all__` to avoid
     # import with `from numpy import *`.
-    __future_scalars__ = {"bool", "str", "bytes", "object"}
+    __future_scalars__ = {"str", "bytes", "object"}
+
+    __array_api_version__ = "2022.12"
 
     # now that numpy core module is imported, can initialize limits
     _core.getlimits._register_known_types()

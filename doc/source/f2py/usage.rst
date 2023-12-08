@@ -31,6 +31,9 @@ To scan Fortran sources and generate a signature file, use
   either specify which routines should be wrapped (in the ``only: .. :`` part)
   or which routines F2PY should ignore (in the ``skip: .. :`` part).
 
+  F2PY has no concept of a "per-file" ``skip`` or ``only`` list, so if functions
+  are listed in ``only``, no other functions will be taken from any other files.
+
 If ``<filename.pyf>`` is specified as ``stdout``, then signatures are written to
 standard output instead of a file.
 
@@ -115,36 +118,31 @@ finally all object and library files are linked to the extension module
 If ``<fortran files>`` does not contain a signature file, then an extension
 module is constructed by scanning all Fortran source codes for routine
 signatures, before proceeding to build the extension module.
- 
-Among other options (see below) and options described for previous modes, the
-following options can be used in this mode:
- 
-``--help-fcompiler``
-  List the available Fortran compilers.
-``--help-compiler`` **[depreciated]**
-  List the available Fortran compilers.
-``--fcompiler=<Vendor>``
-  Specify a Fortran compiler type by vendor.
-``--f77exec=<path>``
-  Specify the path to a F77 compiler
-``--fcompiler-exec=<path>`` **[depreciated]**
-  Specify the path to a F77 compiler
-``--f90exec=<path>``
-  Specify the path to a F90 compiler
-``--f90compiler-exec=<path>`` **[depreciated]**
-  Specify the path to a F90 compiler
+
+.. warning::
+   From Python 3.12 onwards, ``distutils`` has been removed. Use environment
+   variables or native files to interact with ``meson`` instead. See its `FAQ
+   <https://mesonbuild.com/howtox.html>`__ for more information.
+
+Among other options (see below) and options described for previous modes, the following can be used.
+
+.. note::
+
+   .. versionchanged:: 1.26.0
+      There are now two separate build backends which can be used, ``distutils``
+      and ``meson``. Users are **strongly** recommended to switch to ``meson``
+      since it is the default above Python ``3.12``.
+
+Common build flags:
+
+``--backend <backend_type>``
+  Specify the build backend for the compilation process.  The supported backends
+  are ``meson`` and ``distutils``.  If not specified, defaults to ``distutils``.
+  On Python 3.12 or higher, the default is ``meson``.
 ``--f77flags=<string>``
   Specify F77 compiler flags
 ``--f90flags=<string>``
   Specify F90 compiler flags
-``--opt=<string>``
-  Specify optimization flags
-``--arch=<string>``
-  Specify architecture specific optimization flags
-``--noopt``
-  Compile without optimization flags
-``--noarch``
-  Compile without arch-dependent optimization flags
 ``--debug``
   Compile with debugging information
 ``-l<libname>``
@@ -159,13 +157,41 @@ following options can be used in this mode:
 ``-L<dir>``
   Add directory ``<dir>`` to the list of directories to be searched for
   ``-l``.
-``link-<resource>``
+
+The ``meson`` specific flags are:
+
+``--dep <dependency>`` **meson only**
+  Specify a meson dependency for the module. This may be passed multiple times
+  for multiple dependencies. Dependencies are stored in a list for further
+  processing. Example: ``--dep lapack --dep scalapack`` This will identify
+  "lapack" and "scalapack" as dependencies and remove them from argv, leaving a
+  dependencies list containing ["lapack", "scalapack"].
+
+The older ``distutils`` flags are:
+
+``--help-fcompiler`` **no meson**
+  List the available Fortran compilers.
+``--fcompiler=<Vendor>`` **no meson**
+  Specify a Fortran compiler type by vendor.
+``--f77exec=<path>`` **no meson**
+  Specify the path to a F77 compiler
+``--f90exec=<path>`` **no meson**
+  Specify the path to a F90 compiler
+``--opt=<string>`` **no meson**
+  Specify optimization flags
+``--arch=<string>`` **no meson**
+  Specify architecture specific optimization flags
+``--noopt`` **no meson**
+  Compile without optimization flags
+``--noarch`` **no meson**
+  Compile without arch-dependent optimization flags
+``link-<resource>`` **no meson**
   Link the extension module with <resource> as defined by
   ``numpy_distutils/system_info.py``. E.g. to link with optimized LAPACK
   libraries (vecLib on MacOSX, ATLAS elsewhere), use ``--link-lapack_opt``.
   See also ``--help-link`` switch.
 
-.. note:: 
+.. note::
   
   The ``f2py -c`` option must be applied either to an existing ``.pyf`` file
   (plus the source/object/library files) or one must specify the
@@ -213,7 +239,11 @@ Other options
 ``-m <modulename>``
   Name of an extension module. Default is ``untitled``.
 
-.. warning:: Don't use this option if a signature file (``*.pyf``) is used.
+.. warning::
+   Don't use this option if a signature file (``*.pyf``) is used.
+
+   .. versionchanged:: 1.26.3
+      Will ignore ``-m`` if a ``pyf`` file is provided.
 
 ``--[no-]lower``
   Do [not] lower the cases in ``<fortran files>``. By default, ``--lower`` is
@@ -243,27 +273,15 @@ options.
 Python module ``numpy.f2py``
 ============================
 
-The f2py program is written in Python and can be run from inside your code
-to compile Fortran code at runtime, as follows:
-
-.. code-block:: python
-
-    from numpy import f2py
-    with open("add.f") as sourcefile:
-        sourcecode = sourcefile.read()
-    f2py.compile(sourcecode, modulename='add')
-    import add
-
-The source string can be any valid Fortran code. If you want to save
-the extension-module source code then a suitable file-name can be
-provided by the ``source_fn`` keyword to the compile function.
-
-When using ``numpy.f2py`` as a module, the following functions can be invoked.
-
 .. warning::
 
-  The current Python interface to the ``f2py`` module is not mature and may
-  change in the future.
+   .. versionchanged:: 2.0.0
+
+      There used to be a ``f2py.compile`` function, which was removed, users
+      may wrap ``python -m numpy.f2py`` via ``subprocess.run`` manually, and
+      set environment variables to interact with ``meson`` as required.
+
+When using ``numpy.f2py`` as a module, the following functions can be invoked.
 
 .. automodule:: numpy.f2py
     :members:

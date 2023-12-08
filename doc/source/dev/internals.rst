@@ -49,7 +49,7 @@ strides, etc) but shares the same data bytes. Many operations in NumPy do just
 this such as :term:`slicing <python:slice>`. Other operations, such as
 transpose, don't move data elements around in the array, but rather change the
 information about the shape and strides so that the indexing of the array
-changes, but the data in the doesn't move.
+changes, but the data in the array doesn't move.
 
 Typically these new versions of the array metadata but the same data buffer are
 new views into the data buffer. There is a different :class:`ndarray` object,

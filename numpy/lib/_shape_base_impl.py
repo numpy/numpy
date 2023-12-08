@@ -2,7 +2,7 @@ import functools
 import warnings
 
 import numpy._core.numeric as _nx
-from numpy._core.numeric import asarray, zeros, array, asanyarray
+from numpy._core.numeric import asarray, zeros, zeros_like, array, asanyarray
 from numpy._core.fromnumeric import reshape, transpose
 from numpy._core.multiarray import normalize_axis_index
 from numpy._core import overrides
@@ -384,7 +384,11 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     # remove the requested axis, and add the new ones on the end.
     # laid out so that each write is contiguous.
     # for a tuple index inds, buff[inds] = func1d(inarr_view[inds])
-    buff = zeros(inarr_view.shape[:-1] + res.shape, res.dtype)
+    if not isinstance(res, matrix):
+        buff = zeros_like(res, shape=inarr_view.shape[:-1] + res.shape)
+    else:
+        # Matrices are nasty with reshaping, so do not preserve them here.
+        buff = zeros(inarr_view.shape[:-1] + res.shape, dtype=res.dtype)
 
     # permutation of axes such that out = buff.transpose(buff_permute)
     buff_dims = list(range(buff.ndim))
@@ -393,10 +397,6 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         buff_dims[buff.ndim-res.ndim : buff.ndim] +
         buff_dims[axis : buff.ndim-res.ndim]
     )
-
-    # matrices have a nasty __array_prepare__ and __array_wrap__
-    if not isinstance(res, matrix):
-        buff = res.__array_prepare__(buff)
 
     # save the first result, then compute and save all remaining results
     buff[ind0] = res

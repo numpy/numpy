@@ -3,7 +3,7 @@
 .. _arrays.datetime:
 
 ************************
-Datetimes and Timedeltas
+Datetimes and timedeltas
 ************************
 
 .. versionadded:: 1.7.0
@@ -12,7 +12,7 @@ Starting in NumPy 1.7, there are core array data types which natively
 support datetime functionality. The data type is called :class:`datetime64`,
 so named because :class:`~datetime.datetime` is already taken by the Python standard library.
 
-Datetime64 Conventions and Assumptions
+Datetime64 conventions and assumptions
 ======================================
 
 Similar to the Python `~datetime.date` class, dates are expressed in the current
@@ -42,7 +42,7 @@ etc.). [#]_
        yet implemented. See also the `shortcomings`_ section below.
 
 
-Basic Datetimes
+Basic datetimes
 ===============
 
 The most basic way to create datetimes is from strings in ISO 8601 date
@@ -154,7 +154,7 @@ because the moment of time is still being represented exactly.
   future.
 
 
-Datetime and Timedelta Arithmetic
+Datetime and timedelta arithmetic
 =================================
 
 NumPy allows the subtraction of two datetime values, an operation which
@@ -220,7 +220,7 @@ different months have different numbers of days.
       File "<stdin>", line 1, in <module>
     TypeError: Cannot cast NumPy timedelta64 scalar from metadata [Y] to [D] according to the rule 'same_kind'
 
-Datetime Units
+Datetime units
 ==============
 
 The Datetime and Timedelta data types support a large number of time
@@ -268,7 +268,7 @@ us / μs    microsecond      +/- 2.9e5 years         [290301 BC, 294241 AD]
    as      attosecond       +/- 9.2 seconds         [  1969 AD,   1970 AD]
 ======== ================ ======================= ==========================
 
-Business Day Functionality
+Business day functionality
 ==========================
 
 To allow the datetime to be used in contexts where only certain days of
@@ -392,7 +392,7 @@ how many of them are valid dates, you can do this:
 
 
 
-Custom Weekmasks
+Custom weekmasks
 ----------------
 
 Here are several examples of custom weekmask values.  These examples

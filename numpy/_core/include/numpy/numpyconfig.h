@@ -16,14 +16,11 @@
  */
 #ifdef __APPLE__
     #undef NPY_SIZEOF_LONG
-    #undef NPY_SIZEOF_PY_INTPTR_T
 
     #ifdef __LP64__
         #define NPY_SIZEOF_LONG         8
-        #define NPY_SIZEOF_PY_INTPTR_T  8
     #else
         #define NPY_SIZEOF_LONG         4
-        #define NPY_SIZEOF_PY_INTPTR_T  4
     #endif
 
     #undef NPY_SIZEOF_LONGDOUBLE

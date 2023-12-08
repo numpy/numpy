@@ -359,10 +359,11 @@ PyArray_CastToType(PyArrayObject *arr, PyArray_Descr *dtype, int is_f_order)
     return out;
 }
 
-/*NUMPY_API
- * Get a cast function to cast from the input descriptor to the
- * output type_number (must be a registered data-type).
- * Returns NULL if un-successful.
+/*
+ * Fetches the legacy cast function. Warning, this only makes sense for legacy
+ * dtypes.  Even most NumPy ones do NOT implement these anymore and the use
+ * should be fully phased out.
+ * The sole real purpose is supporting legacy style user dtypes.
  */
 NPY_NO_EXPORT PyArray_VectorUnaryFunc *
 PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
@@ -2993,8 +2994,8 @@ static int
 PyArray_InitializeStringCasts(void)
 {
     int result = -1;
-    PyArray_DTypeMeta *string = PyArray_DTypeFromTypeNum(NPY_STRING);
-    PyArray_DTypeMeta *unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
+    PyArray_DTypeMeta *string = &PyArray_BytesDType;
+    PyArray_DTypeMeta *unicode = &PyArray_UnicodeDType;
     PyArray_DTypeMeta *other_dt = NULL;
 
     /* Add most casts as legacy ones */
@@ -3048,8 +3049,6 @@ PyArray_InitializeStringCasts(void)
 
     result = 0;
   finish:
-    Py_DECREF(string);
-    Py_DECREF(unicode);
     Py_XDECREF(other_dt);
     return result;
 }
@@ -3715,7 +3714,7 @@ void_to_void_get_loop(
 static int
 PyArray_InitializeVoidToVoidCast(void)
 {
-    PyArray_DTypeMeta *Void = PyArray_DTypeFromTypeNum(NPY_VOID);
+    PyArray_DTypeMeta *Void = &PyArray_VoidDType;
     PyArray_DTypeMeta *dtypes[2] = {Void, Void};
     PyType_Slot slots[] = {
             {_NPY_METH_get_loop, &void_to_void_get_loop},
@@ -3732,7 +3731,6 @@ PyArray_InitializeVoidToVoidCast(void)
     };
 
     int res = PyArray_AddCastingImplementation_FromSpec(&spec, 1);
-    Py_DECREF(Void);
     return res;
 }
 
@@ -3898,7 +3896,7 @@ object_to_object_get_loop(
 static int
 PyArray_InitializeObjectToObjectCast(void)
 {
-    PyArray_DTypeMeta *Object = PyArray_DTypeFromTypeNum(NPY_OBJECT);
+    PyArray_DTypeMeta *Object = &PyArray_ObjectDType;
     PyArray_DTypeMeta *dtypes[2] = {Object, Object};
     PyType_Slot slots[] = {
             {_NPY_METH_get_loop, &object_to_object_get_loop},
@@ -3914,7 +3912,6 @@ PyArray_InitializeObjectToObjectCast(void)
     };
 
     int res = PyArray_AddCastingImplementation_FromSpec(&spec, 1);
-    Py_DECREF(Object);
     return res;
 }
 

@@ -94,6 +94,9 @@ if use_svml
     error('Missing the `SVML` git submodule! Run `git submodule update --init` to fix this.')
   endif
 endif
+if not fs.exists('src/highway/README.md')
+  error('Missing the `highway` git submodule! Run `git submodule update --init` to fix this.')
+endif
 if not fs.exists('src/npysort/x86-simd-sort/README.md')
   error('Missing the `x86-simd-sort` git submodule! Run `git submodule update --init` to fix this.')
 endif
@@ -109,6 +112,8 @@ types_to_check = [
   ['NPY_SIZEOF_FLOAT', 'float'],
   ['NPY_SIZEOF_DOUBLE', 'double'],
   ['NPY_SIZEOF_LONGDOUBLE', 'long double'],
+  ['NPY_SIZEOF_INTP', 'size_t'],
+  ['NPY_SIZEOF_UINTP', 'size_t'],
 ]
 foreach symbol_type: types_to_check
   cdata.set(symbol_type[0], cc.sizeof(symbol_type[1]))
@@ -759,14 +764,28 @@ endforeach
 # -----------------------------------
 foreach gen_mtargets : [
   [
-    'simd_qsort.dispatch.h',
-    'src/npysort/simd_qsort.dispatch.cpp',
+    'x86_simd_argsort.dispatch.h',
+    'src/npysort/x86_simd_argsort.dispatch.cpp',
     [AVX512_SKX]
   ],
   [
-    'simd_qsort_16bit.dispatch.h',
-    'src/npysort/simd_qsort_16bit.dispatch.cpp',
+    'x86_simd_qsort.dispatch.h',
+    'src/npysort/x86_simd_qsort.dispatch.cpp',
+    [
+      AVX512_SKX, AVX2,
+    ]
+  ],
+  [
+    'x86_simd_qsort_16bit.dispatch.h',
+    'src/npysort/x86_simd_qsort_16bit.dispatch.cpp',
     [AVX512_SPR, AVX512_ICL]
+  ],
+  [
+    'highway_qsort.dispatch.h',
+    'src/npysort/highway_qsort.dispatch.cpp',
+    [
+      ASIMD,
+    ]
   ],
 ]
   mtargets = mod_features.multi_targets(
@@ -782,7 +801,8 @@ foreach gen_mtargets : [
       'src/common',
       'src/multiarray',
       'src/npymath',
-      'src/umath'
+      'src/umath',
+      'src/highway',
     ]
   )
   if not is_variable('multiarray_umath_mtargets')

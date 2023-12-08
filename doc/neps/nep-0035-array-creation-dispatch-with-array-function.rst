@@ -20,7 +20,7 @@ as described by NEP 18 [1]_. The ``like=`` keyword argument will create an
 instance of the argument's type, enabling direct creation of non-NumPy arrays.
 The target array type must implement the ``__array_function__`` protocol.
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 Many libraries implement the NumPy API, such as Dask for graph
@@ -86,7 +86,7 @@ of the keyword-only argument standard described in PEP-3102 [2]_ to implement
 
 .. _neps.like-kwarg.usage-and-impact:
 
-Usage and Impact
+Usage and impact
 ----------------
 
 NumPy users who don't use other arrays from downstream libraries can continue
@@ -192,7 +192,7 @@ alone. Combining Dask's internal handling of meta arrays and the proposed
 of non-NumPy arrays, which is likely the heaviest limitation Dask currently
 faces from the ``__array_function__`` protocol.
 
-Backward Compatibility
+Backward compatibility
 ----------------------
 
 This proposal does not raise any backward compatibility issues within NumPy,

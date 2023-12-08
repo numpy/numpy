@@ -952,7 +952,8 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
     }
 
     if (force_legacy_promotion
-            && npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+            && npy_promotion_state == NPY_USE_LEGACY_PROMOTION
+            && (ufunc->ntypes != 0 || ufunc->userloops != NULL)) {
         /*
          * We must use legacy promotion for value-based logic. Call the old
          * resolver once up-front to get the "actual" loop dtypes.
@@ -1142,7 +1143,7 @@ object_only_ufunc_promoter(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    PyArray_DTypeMeta *object_DType = PyArray_DTypeFromTypeNum(NPY_OBJECT);
+    PyArray_DTypeMeta *object_DType = &PyArray_ObjectDType;
 
     for (int i = 0; i < ufunc->nargs; i++) {
         if (signature[i] == NULL) {
@@ -1150,7 +1151,7 @@ object_only_ufunc_promoter(PyUFuncObject *ufunc,
             new_op_dtypes[i] = object_DType;
         }
     }
-    Py_DECREF(object_DType);
+
     return 0;
 }
 
@@ -1194,7 +1195,8 @@ logical_ufunc_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
         }
         else {
             /* Always override to boolean */
-            item = PyArray_DTypeFromTypeNum(NPY_BOOL);
+            item = &PyArray_BoolDType;
+            Py_INCREF(item);
             if (op_dtypes[i] != NULL && op_dtypes[i]->type_num == NPY_OBJECT) {
                 force_object = 1;
             }
@@ -1218,7 +1220,7 @@ logical_ufunc_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
         if (signature[i] != NULL) {
             continue;
         }
-        Py_SETREF(new_op_dtypes[i], PyArray_DTypeFromTypeNum(NPY_OBJECT));
+        Py_SETREF(new_op_dtypes[i], NPY_DT_NewRef(&PyArray_ObjectDType));
     }
     return 0;
 }
@@ -1289,4 +1291,28 @@ get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
     }
     Py_DECREF(t_dtypes);
     Py_RETURN_NONE;
+}
+
+NPY_NO_EXPORT int
+PyUFunc_AddPromoter(
+        PyObject *ufunc, PyObject *DType_tuple, PyObject *promoter)
+{
+    if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
+        PyErr_SetString(PyExc_TypeError,
+                "ufunc object passed is not a ufunc!");
+        return -1;
+    }
+    if (!PyCapsule_CheckExact(promoter)) {
+        PyErr_SetString(PyExc_TypeError,
+                "promoter must (currently) be a PyCapsule.");
+        return -1;
+    }
+    if (PyCapsule_GetPointer(promoter, "numpy._ufunc_promoter") == NULL) {
+        return -1;
+    }
+    PyObject *info = PyTuple_Pack(2, DType_tuple, promoter);
+    if (info == NULL) {
+        return -1;
+    }
+    return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
 }

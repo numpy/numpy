@@ -17,7 +17,6 @@ typedef struct {
         npy_bool obval;
 } PyBoolScalarObject;
 
-extern NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type;
 extern NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type;
 extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 
@@ -26,16 +25,24 @@ extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 #else
 
 #if defined(PY_ARRAY_UNIQUE_SYMBOL)
-#define PyArray_API PY_ARRAY_UNIQUE_SYMBOL
+    #define PyArray_API PY_ARRAY_UNIQUE_SYMBOL
+    #define _NPY_VERSION_CONCAT_HELPER2(x, y) x ## y
+    #define _NPY_VERSION_CONCAT_HELPER(arg) \
+        _NPY_VERSION_CONCAT_HELPER2(arg, PyArray_RUNTIME_VERSION)
+    #define PyArray_RUNTIME_VERSION \
+        _NPY_VERSION_CONCAT_HELPER(PY_ARRAY_UNIQUE_SYMBOL)
 #endif
 
 #if defined(NO_IMPORT) || defined(NO_IMPORT_ARRAY)
 extern void **PyArray_API;
+extern int PyArray_RUNTIME_VERSION;
 #else
 #if defined(PY_ARRAY_UNIQUE_SYMBOL)
 void **PyArray_API;
+int PyArray_RUNTIME_VERSION;
 #else
-static void **PyArray_API=NULL;
+static void **PyArray_API = NULL;
+static int PyArray_RUNTIME_VERSION = 0;
 #endif
 #endif
 
@@ -75,6 +82,17 @@ _import_array(void)
   }
 
   /*
+   * On exceedingly few platforms these sizes may not match, in which case
+   * We do not support older NumPy versions at all.
+   */
+  if (sizeof(Py_ssize_t) != sizeof(Py_intptr_t) &&
+        PyArray_GetNDArrayCFeatureVersion() < NPY_2_0_API_VERSION) {
+    PyErr_Format(PyExc_RuntimeError,
+        "module compiled against NumPy 2.0 but running on NumPy 1.x. "
+        "Unfortunately, this is not supported on niche platforms where "
+        "`sizeof(size_t) != sizeof(inptr_t)`.");
+  }
+  /*
    * Perform runtime check of C API version.  As of now NumPy 2.0 is ABI
    * backwards compatible (in the exposed feature subset!) for all practical
    * purposes.
@@ -85,7 +103,8 @@ _import_array(void)
              (int) NPY_VERSION, (int) PyArray_GetNDArrayCVersion());
       return -1;
   }
-  if (NPY_FEATURE_VERSION > PyArray_GetNDArrayCFeatureVersion()) {
+  PyArray_RUNTIME_VERSION = (int)PyArray_GetNDArrayCFeatureVersion();
+  if (NPY_FEATURE_VERSION > PyArray_RUNTIME_VERSION) {
       PyErr_Format(PyExc_RuntimeError, "module compiled against "\
              "API version 0x%%x but this version of numpy is 0x%%x . "\
              "Check the section C-API incompatibility at the "\
@@ -93,7 +112,7 @@ _import_array(void)
              "https://numpy.org/devdocs/user/troubleshooting-importerror.html"\
              "#c-api-incompatibility "\
               "for indications on how to solve this problem .", \
-             (int) NPY_FEATURE_VERSION, (int) PyArray_GetNDArrayCFeatureVersion());
+             (int)NPY_FEATURE_VERSION, PyArray_RUNTIME_VERSION);
       return -1;
   }
 

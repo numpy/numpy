@@ -1001,7 +1001,7 @@ class TestFloatExceptions:
 class TestTypes:
     def check_promotion_cases(self, promote_func):
         # tests that the scalars get coerced correctly.
-        b = np.bool_(0)
+        b = np.bool(0)
         i8, i16, i32, i64 = np.int8(0), np.int16(0), np.int32(0), np.int64(0)
         u8, u16, u32, u64 = np.uint8(0), np.uint16(0), np.uint32(0), np.uint64(0)
         f32, f64, fld = np.float32(0), np.float64(0), np.longdouble(0)
@@ -2926,6 +2926,37 @@ class TestIsclose:
         for (x, y), result in zip(tests, results):
             assert_array_equal(np.isclose(x, y), result)
 
+        x = np.array([2.1, 2.1, 2.1, 2.1, 5, np.nan])
+        y = np.array([2, 2, 2, 2, np.nan, 5])
+        atol = [0.11, 0.09, 1e-8, 1e-8, 1, 1]
+        rtol = [1e-8, 1e-8, 0.06, 0.04, 1, 1]
+        expected = np.array([True, False, True, False, False, False])
+        assert_array_equal(np.isclose(x, y, rtol=rtol, atol=atol), expected)
+
+        message = "operands could not be broadcast together..."
+        atol = np.array([1e-8, 1e-8])
+        with assert_raises(ValueError, msg=message):
+            np.isclose(x, y, atol=atol)
+
+        rtol = np.array([1e-5, 1e-5])
+        with assert_raises(ValueError, msg=message):
+            np.isclose(x, y, rtol=rtol)
+
+    def test_nep50_isclose(self):
+        below_one = float(1.-np.finfo('f8').eps)
+        f32 = np.array(below_one, 'f4')  # This is just 1 at float32 precision
+        assert f32 > np.array(below_one)
+        # NEP 50 broadcasting of python scalars
+        assert f32 == below_one
+        # Test that it works for isclose arguments too (and that those fail if
+        # one uses a numpy float64).
+        assert np.isclose(f32, below_one, atol=0, rtol=0)
+        assert np.isclose(f32, np.float32(0), atol=below_one)
+        assert np.isclose(f32, 2, atol=0, rtol=below_one/2)
+        assert not np.isclose(f32, np.float64(below_one), atol=0, rtol=0)
+        assert not np.isclose(f32, np.float32(0), atol=np.float64(below_one))
+        assert not np.isclose(f32, 2, atol=0, rtol=np.float64(below_one/2))
+
     def tst_all_isclose(self, x, y):
         assert_(np.all(np.isclose(x, y)), "%s and %s not close" % (x, y))
 
@@ -2945,6 +2976,17 @@ class TestIsclose:
         self._setup()
         for (x, y) in self.all_close_tests:
             self.tst_all_isclose(x, y)
+
+        x = np.array([2.3, 3.6, 4.4, np.nan])
+        y = np.array([2, 3, 4, np.nan])
+        atol = [0.31, 0, 0, 1]
+        rtol = [0, 0.21, 0.11, 1]
+        assert np.allclose(x, y, atol=atol, rtol=rtol, equal_nan=True)
+        assert not np.allclose(x, y, atol=0.1, rtol=0.1, equal_nan=True)
+
+        # Show that gh-14330 is resolved
+        assert np.allclose([1, 2, float('nan')], [1, 2, float('nan')],
+                           atol=[1, 1, 1], equal_nan=True)
 
     def test_ip_none_isclose(self):
         self._setup()
@@ -3005,7 +3047,7 @@ class TestIsclose:
         # scalar
         assert_(np.isclose(np.inf, -np.inf) is np.False_)
         assert_(np.isclose(0, np.inf) is np.False_)
-        assert_(type(np.isclose(0, np.inf)) is np.bool_)
+        assert_(type(np.isclose(0, np.inf)) is np.bool)
 
     def test_timedelta(self):
         # Allclose currently works for timedelta64 as long as `atol` is
@@ -3927,9 +3969,9 @@ class TestBroadcast:
 
     def test_number_of_arguments(self):
         arr = np.empty((5,))
-        for j in range(35):
+        for j in range(70):
             arrs = [arr] * j
-            if j > 32:
+            if j > 64:
                 assert_raises(ValueError, np.broadcast, *arrs)
             else:
                 mit = np.broadcast(*arrs)
@@ -3981,3 +4023,23 @@ class TestTensordot:
         arr_0d = np.array(1)
         ret = np.tensordot(arr_0d, arr_0d, ([], []))  # contracting no axes is well defined
         assert_array_equal(ret, arr_0d)
+
+
+class TestAsType:
+
+    def test_astype(self):
+        data = [[1, 2], [3, 4]]
+        actual = np.astype(
+            np.array(data, dtype=np.int64), np.uint32
+        )
+        expected = np.array(data, dtype=np.uint32)
+
+        assert_array_equal(actual, expected)
+        assert_equal(actual.dtype, expected.dtype)
+
+        assert np.shares_memory(
+            actual, np.astype(actual, actual.dtype, copy=False)
+        )
+
+        with pytest.raises(TypeError, match="Input should be a NumPy array"):
+            np.astype(data, np.float64)

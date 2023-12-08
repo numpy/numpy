@@ -51,7 +51,7 @@ jobs:
           ${{ github.workflow }}-${{ matrix.python-version }}-ccache-macos-
 
     - name: Setup Mambaforge
-      uses: conda-incubator/setup-miniconda@3b0f2504dd76ef23b6d31f291f4913fb60ab5ff3 # v2.2.0
+      uses: conda-incubator/setup-miniconda@11b562958363ec5770fef326fe8ef0366f8cbf8a # v3.0.1
       with:
         python-version: ${{ matrix.python-version }}
         channels: conda-forge
@@ -84,7 +84,7 @@ jobs:
       shell: bash -l {0}
       run: |
         conda activate numpy-dev
-        CC="ccache $CC" spin build -j2
+        CC="ccache $CC" spin build -j2 -- -Dallow-noblas=false
 
     - name: Run test suite (full)
       shell: bash -l {0}
@@ -109,7 +109,7 @@ jobs:
         submodules: recursive
         fetch-depth: 0
 
-    - uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
+    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.10'
 
@@ -123,14 +123,14 @@ jobs:
         pip install pytest pytest-xdist hypothesis
 
     - name: Build against Accelerate (LP64)
-      run: spin build -- -Ddisable-optimization=true
+      run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test (linalg only)
       run: spin test -j2 -- numpy/linalg
 
     - name: Build NumPy against Accelerate (ILP64)
       run: |
-        spin build -- -Duse-ilp64=true
+        spin build -- -Duse-ilp64=true -Dallow-noblas=false
 
     - name: Test (fast tests)
       run: spin test -j2

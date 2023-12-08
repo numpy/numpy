@@ -84,8 +84,8 @@ char *inner1d_signature = "(i),(i)->()";
 
 /**begin repeat
 
-   #TYPE=LONG,DOUBLE#
-   #typ=npy_long,npy_double#
+   #TYPE=INTP,DOUBLE#
+   #typ=npy_intp,npy_double#
 */
 
 /*
@@ -118,8 +118,8 @@ char *innerwt_signature = "(i),(i),(i)->()";
 
 /**begin repeat
 
-   #TYPE=LONG,DOUBLE#
-   #typ=npy_long,npy_double#
+   #TYPE=INTP,DOUBLE#
+   #typ=npy_intp,npy_double#
 */
 
 
@@ -156,8 +156,8 @@ char *matmul_signature = "(m?,n),(n,p?)->(m?,p?)";
 
 /**begin repeat
 
-   #TYPE=FLOAT,DOUBLE,LONG#
-   #typ=npy_float,npy_double,npy_long#
+   #TYPE=FLOAT,DOUBLE,INTP#
+   #typ=npy_float,npy_double,npy_intp#
 */
 
 /*
@@ -224,8 +224,8 @@ char *cross1d_signature = "(3),(3)->(3)";
 
 /**begin repeat
 
-   #TYPE=LONG,DOUBLE#
-   #typ=npy_long, npy_double#
+   #TYPE=INTP,DOUBLE#
+   #typ=npy_intp, npy_double#
 */
 
 /*
@@ -326,8 +326,8 @@ char *cumsum_signature = "(i)->(i)";
 
 /**begin repeat
 
-   #TYPE=LONG,DOUBLE#
-   #typ=npy_long,npy_double#
+   #TYPE=INTP,DOUBLE#
+   #typ=npy_intp,npy_double#
 */
 
 static void
@@ -422,27 +422,27 @@ defdict = {
 static PyUFuncGenericFunction always_error_functions[] = { always_error_loop };
 static void *always_error_data[] = { (void *)NULL };
 static char always_error_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
-static PyUFuncGenericFunction inner1d_functions[] = { LONG_inner1d, DOUBLE_inner1d };
+static PyUFuncGenericFunction inner1d_functions[] = { INTP_inner1d, DOUBLE_inner1d };
 static void *inner1d_data[] = { (void *)NULL, (void *)NULL };
-static char inner1d_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
-static PyUFuncGenericFunction innerwt_functions[] = { LONG_innerwt, DOUBLE_innerwt };
+static char inner1d_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static PyUFuncGenericFunction innerwt_functions[] = { INTP_innerwt, DOUBLE_innerwt };
 static void *innerwt_data[] = { (void *)NULL, (void *)NULL };
-static char innerwt_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
-static PyUFuncGenericFunction matrix_multiply_functions[] = { LONG_matrix_multiply, FLOAT_matrix_multiply, DOUBLE_matrix_multiply };
+static char innerwt_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static PyUFuncGenericFunction matrix_multiply_functions[] = { INTP_matrix_multiply, FLOAT_matrix_multiply, DOUBLE_matrix_multiply };
 static void *matrix_multiply_data[] = { (void *)NULL, (void *)NULL, (void *)NULL };
-static char matrix_multiply_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG,  NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,  NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
-static PyUFuncGenericFunction cross1d_functions[] = { LONG_cross1d, DOUBLE_cross1d };
+static char matrix_multiply_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP,  NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,  NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static PyUFuncGenericFunction cross1d_functions[] = { INTP_cross1d, DOUBLE_cross1d };
 static void *cross1d_data[] = { (void *)NULL, (void *)NULL };
-static char cross1d_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static char cross1d_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 static PyUFuncGenericFunction euclidean_pdist_functions[] =
                             { FLOAT_euclidean_pdist, DOUBLE_euclidean_pdist };
 static void *eucldiean_pdist_data[] = { (void *)NULL, (void *)NULL };
 static char euclidean_pdist_signatures[] = { NPY_FLOAT, NPY_FLOAT,
                                              NPY_DOUBLE, NPY_DOUBLE };
 
-static PyUFuncGenericFunction cumsum_functions[] = { LONG_cumsum, DOUBLE_cumsum };
+static PyUFuncGenericFunction cumsum_functions[] = { INTP_cumsum, DOUBLE_cumsum };
 static void *cumsum_data[] = { (void *)NULL, (void *)NULL };
-static char cumsum_signatures[] = { NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE };
+static char cumsum_signatures[] = { NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE };
 
 
 static int

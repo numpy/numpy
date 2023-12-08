@@ -3,6 +3,7 @@ import sys
 import copy
 import platform
 import pytest
+from pathlib import Path
 
 import numpy as np
 
@@ -19,6 +20,10 @@ c_names_dict = dict(
 )
 
 
+def get_testdir():
+    testroot = Path(__file__).resolve().parent / "src"
+    return  testroot / "array_from_pyobj"
+
 def setup_module():
     """
     Build the required testing extension module
@@ -26,24 +31,11 @@ def setup_module():
     """
     global wrap
 
-    # Check compiler availability first
-    if not util.has_c_compiler():
-        pytest.skip("No C compiler available")
-
     if wrap is None:
-        config_code = """
-        config.add_extension('test_array_from_pyobj_ext',
-                             sources=['wrapmodule.c', 'fortranobject.c'],
-                             define_macros=[])
-        """
-        d = os.path.dirname(__file__)
         src = [
-            util.getpath("tests", "src", "array_from_pyobj", "wrapmodule.c"),
-            util.getpath("src", "fortranobject.c"),
-            util.getpath("src", "fortranobject.h"),
+            get_testdir() / "wrapmodule.c",
         ]
-        wrap = util.build_module_distutils(src, config_code,
-                                           "test_array_from_pyobj_ext")
+        wrap = util.build_meson(src, module_name = "test_array_from_pyobj_ext")
 
 
 def flags_info(arr):

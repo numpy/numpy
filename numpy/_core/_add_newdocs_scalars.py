@@ -93,17 +93,22 @@ def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
     add_newdoc('numpy._core.numerictypes', obj, docstring)
 
 
-add_newdoc_for_scalar_type('bool_', [],
+_bool_docstring = (
     """
     Boolean type (True or False), stored as a byte.
 
     .. warning::
 
-       The :class:`bool_` type is not a subclass of the :class:`int_` type
-       (the :class:`bool_` is not even a number type). This is different
+       The :class:`bool` type is not a subclass of the :class:`int_` type
+       (the :class:`bool` is not even a number type). This is different
        than Python's default implementation of :class:`bool` as a
        sub-class of :class:`int`.
-    """)
+    """
+)
+
+add_newdoc_for_scalar_type('bool', [], _bool_docstring)
+
+add_newdoc_for_scalar_type('bool_', [], _bool_docstring)
 
 add_newdoc_for_scalar_type('byte', [],
     """
@@ -120,9 +125,12 @@ add_newdoc_for_scalar_type('intc', [],
     Signed integer type, compatible with C ``int``.
     """)
 
+# TODO: These docs probably need an if to highlight the default rather than
+#       the C-types (and be correct).
 add_newdoc_for_scalar_type('int_', [],
     """
-    Signed integer type, compatible with Python :class:`int` and C ``long``.
+    Default signed integer type, 64bit on 64bit systems and 32bit on 32bit
+    systems.
     """)
 
 add_newdoc_for_scalar_type('longlong', [],
@@ -147,7 +155,8 @@ add_newdoc_for_scalar_type('uintc', [],
 
 add_newdoc_for_scalar_type('uint', [],
     """
-    Unsigned integer type, compatible with C ``unsigned long``.
+    Unsigned signed integer type, 64bit on 64bit systems and 32bit on 32bit
+    systems.
     """)
 
 add_newdoc_for_scalar_type('ulonglong', [],

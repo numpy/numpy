@@ -220,8 +220,8 @@ as::
     int itemsize;         /* size of each element */
     int flags;            /* flags indicating how the data should be interpreted */
                           /*   must set ARR_HAS_DESCR bit to validate descr */
-    Py_intptr_t *shape;   /* A length-nd array of shape information */
-    Py_intptr_t *strides; /* A length-nd array of stride information */
+    Py_ssize_t *shape;    /* A length-nd array of shape information */
+    Py_ssize_t *strides;  /* A length-nd array of stride information */
     void *data;           /* A pointer to the first element of the array */
     PyObject *descr;      /* NULL or data-description (same as descr key
                                   of __array_interface__) -- must set ARR_HAS_DESCR
@@ -314,7 +314,7 @@ more information which may be important for various applications::
 It should be clear that any structured type could be described using this
 interface.
 
-Differences with Array interface (Version 2)
+Differences with array interface (version 2)
 ============================================
 
 The version 2 interface was very similar.  The differences were

@@ -269,7 +269,7 @@ Discussion
 ----------
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 Code to generate support and drop schedule tables ::

@@ -58,9 +58,12 @@ once)::
 
 If you installed Python some other way than conda, first install
 `virtualenv`_ (optionally use `virtualenvwrapper`_), then create your
-virtualenv (named ``numpy-dev`` here) with::
+virtualenv (named ``numpy-dev`` here), activate it, and install all project 
+dependencies with::
 
     $ virtualenv numpy-dev
+    $ source numpy-dev/bin/activate # activate virtual environment
+    $ python -m pip install -r all_requirements.txt
 
 Now, whenever you want to switch to the virtual environment, you can use the
 command ``source numpy-dev/bin/activate``, and ``deactivate`` to exit from the
@@ -69,7 +72,7 @@ virtual environment and back to your previous shell.
 Building from source
 --------------------
 
-See building-from-source_
+See :ref:`building-from-source`.
 
 .. _testing-builds:
 
@@ -173,7 +176,7 @@ For more extensive information, see :ref:`testing-guidelines`.
 Note: do not run the tests from the root directory of your numpy git repo without ``spin``,
 that will result in strange test errors.
 
-Running Linting
+Running linting
 ---------------
 Lint checks can be performed on newly added lines of Python code.
 

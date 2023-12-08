@@ -1,13 +1,83 @@
 *************************
-NumPy 2.0 Migration Guide
+NumPy 2.0 migration guide
 *************************
 
-This document contains a set of instructions on how to update your code to work with
-the Numpy 2.0 Python API. Most of the changes are trivial, and require the end user
-to use a different name/module to access a given function/constant.
+This document contains a set of instructions on how to update your code to
+work with Numpy 2.0.
+
+
+.. _migration_windows_int64:
+
+Windows default integer
+=======================
+The default integer used by NumPy is now 64bit on all 64bit systems (and
+32bit on 32bit system).  For historic reasons related to Python 2 it was
+previously equivalent to the C ``long`` type.
+The default integer is now equivalent to ``np.intp``.
+
+Most end-users should not be affected by this change.  Some operations will
+use more memory, but some operations may actually become faster.
+If you experience issues due to calling a library written in a compiled
+language it may help to explicitly cast to a ``long``, for example with:
+``arr = arr.astype("long", copy=False)``.
+
+Libraries interfacing with compiled code that are written in C, Cython, or
+a similar language may require updating to accomodate user input if they
+are using the ``long`` or equivalent type on the C-side.
+In this case, you may wish to use ``intp`` and cast user input or support
+both ``long`` and ``intp`` (to better support NumPy 1.x as well).
+When creating a new integer array in C or Cython, the new ``NPY_DEFAULT_INT``
+macro will evaluate to either ``NPY_LONG`` or ``NPY_INTP`` depending on the
+NumPy version.
+
+Note that the NumPy random API is not affected by this change.
+
+C-API Changes
+=============
+Some definitions where removed or replaced due to being outdated or
+unmaintaibale.  Some new API definition will evaluate differently at
+runtime between NumPy 2.0 and NumPy 1.x.
+Some are defined in ``numpy/_core/include/numpy/npy_2_compat.h``
+(for example ``NPY_DEFAULT_INT``) which can be vendored in full or part
+to have the definitions available when compiling against NumPy 1.x.
+
+If necessary, ``PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION`` can be
+used to explicitly implement different behavior on NumPy 1.x and 2.0.
+(The compat header defines it in a way compatible with such use.)
+
+Please let us know if you require additional workarounds here.
+
+.. _migration_maxdims:
+
+Increased maximum number of dimensions
+--------------------------------------
+The maximum number of dimensions (and arguments) was increased to 64, this
+affects the ``NPY_MAXDIMS`` and ``NPY_MAXARGS`` macros.
+It may be good to review their use, and we generally encourage you to
+not use these macros (especially ``NPY_MAXARGS``), so that a future version of
+NumPy can remove this limitation on the number of dimensions.
+
+``NPY_MAXDIMS`` was also used to signal ``axis=None`` in the C-API, including
+the ``PyArray_AxisConverter``.
+The latter will return ``-2147483648`` as an axis (the smallest integer value).
+Other functions may error with
+``AxisError: axis 64 is out of bounds for array of dimension`` in which
+case you need to pass ``NPY_RAVEL_AXIS`` instead of ``NPY_MAXDIMS``.
+``NPY_RAVEL_AXIS`` is defined in the ``npy_2_compat.h`` header and runtime
+dependent (mapping to 32 on NumPy 1.x and ``-2147483648`` on NumPy 2.x).
+
+
+Namespace changes
+=================
+
+In NumPy 2.0 certain functions, modules, and constants were moved or removed
+to make the NumPy namespace more userfriendly by removing unnecessary or
+outdated functionality and clarifying which parts of NumPy are considered
+private.
+Please see the tables below for guidance on migration.  For most changes this
+means replacing it with a backwards compatible alternative. 
 
 Please refer to `NEP 52 <https://numpy.org/neps/nep-0052-python-api-cleanup.html>`_ for more details.
-
 
 Main namespace
 --------------
@@ -46,27 +116,29 @@ geterrobj               Use the np.errstate context manager instead.
 Inf                     Use ``np.inf`` instead.
 Infinity                Use ``np.inf`` instead.
 infty                   Use ``np.inf`` instead.
-issctype
+issctype                Use ``issubclass(rep, np.generic)`` instead.
 issubclass\_            Use ``issubclass`` builtin instead.
 issubsctype             Use ``np.issubdtype`` instead.
 mat                     Use ``np.asmatrix`` instead.
-maximum_sctype
+maximum_sctype          Use a specific dtype instead. You should avoid relying
+                        on any implicit mechanism and select the largest dtype of
+                        a kind explicitly in the code.
 NaN                     Use ``np.nan`` instead.
 nbytes                  Use ``np.dtype(<dtype>).itemsize`` instead.
 NINF                    Use ``-np.inf`` instead.
 NZERO                   Use ``-0.0`` instead.
 longcomplex             Use ``np.clongdouble`` instead.
-longfloat               Use ``np.longdouble`` instead.      
+longfloat               Use ``np.longdouble`` instead.
 lookfor                 Search NumPy's documentation directly.
-obj2sctype
+obj2sctype              Use ``np.dtype(obj).type`` instead.
 PINF                    Use ``np.inf`` instead.
 PZERO                   Use ``0.0`` instead.
 recfromcsv              Use ``np.genfromtxt`` with comma delimiter instead.
 recfromtxt              Use ``np.genfromtxt`` instead.
 round\_                 Use ``np.round`` instead.
 safe_eval               Use ``ast.literal_eval`` instead.
-sctype2char
-sctypes
+sctype2char             Use ``np.dtype(obj).char`` instead.
+sctypes                 Access dtypes explicitly instead.
 seterrobj               Use the np.errstate context manager instead.
 set_numeric_ops         For the general case, use ``PyUFunc_ReplaceLoopBySignature``. 
                         For ndarray subclasses, define the ``__array_ufunc__`` method 
@@ -92,7 +164,7 @@ deprecated member migration guideline
 ================= =======================================================================
 in1d              Use ``np.isin`` instead.
 row_stack         Use ``np.vstack`` instead (``row_stack`` was an alias for ``v_stack``).
-trapz             Use ``scipy.interpolate.trapezoid`` instead.
+trapz             Use ``scipy.integrate.trapezoid`` instead.
 ================= =======================================================================
 
 
@@ -140,7 +212,7 @@ then you should either use the existing API or, in case it's infeasible, reach o
 with a request to restore the removed entry.
 
 
-NDArray and scalar namespace
+ndarray and scalar namespace
 ----------------------------
 
 A few methods from ``np.ndarray`` and ``np.generic`` scalar classes have been removed.
