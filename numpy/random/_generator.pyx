@@ -366,7 +366,7 @@ cdef class Generator:
         Draw samples from a Beta distribution.
 
         The Beta distribution is a special case of the Dirichlet distribution,
-        and is related to the Gamma distribution.  It has the probability
+        and is related to the Gamma distribution. It has the probability
         distribution function
 
         .. math:: f(x; a,b) = \\frac{1}{B(\\alpha, \\beta)} x^{\\alpha - 1}
@@ -398,10 +398,18 @@ cdef class Generator:
 
         Examples
         --------
+        Given a sample of `n` i.i.d. random variables drawn from a uniform 
+        distribution on `[0, 1]`, it is known that the distribution of the 
+        `k`-th smallest value is `Beta(k, n+1-k)`.
+
+        In the case of `n = 100` and `k = 3`, we can simulate this distribution
+        as follows:
+
         >>> rng = np.random.default_rng()
-        >>> rng.beta(2, 2, 10)
-        array([0.59550044, 0.75229547, 0.76730802, 0.56570646, 0.05481579,
-                0.47503983, 0.72108605, 0.23535788, 0.79257758, 0.25037942])
+        >>> n, k = 100, 5
+        >>> size = 3
+        >>> rng.beta(k, n+1-k, size)
+        array([0.0600246 , 0.02885269, 0.06709855])
 
         """
         return cont(&random_beta, &self._bitgen, size, self.lock, 2,
