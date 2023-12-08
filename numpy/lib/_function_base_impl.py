@@ -4034,28 +4034,33 @@ def percentile(a,
     Notes
     -----
     In general, the percentile at percentage level math:`q` of a cumulative
-    probability distribution :math:`P` is defined as any number :math:`x`
-    that fulfills the *coverage conditions*
-    
+    distribution function :math:`F(y)=P(Y \\leq y)` with probability measure
+    math:`P` is defined as any number :math:`x` that fulfills the
+    *coverage conditions*
+
     .. math:: P(Y < x) \\leq q/100 \\quad\\text{and}
               \\quad P(Y \\leq x) \\geq q/100
-    
+
     with random variable :math:`Y\\sim P`.
-    For empirical percentiles as considered here, :math:`P` is the empirical
-    distribution function of the given data vector ``a`` of length ``n``,
-    i.e. :math:`P(Y \\leq t) = \\frac{1}{n} \\sum_i 1_{a_i \\leq t}`.
-    Then, the different methods correspond to different choices of :math:`x`
-    that fulfil the above inequalities.
-    
-    To be more concrete, given a vector ``V`` of length ``n``, the empirical
-    q-th percentile of ``V`` is
-    the value ``q/100`` of the way from the minimum to the maximum in a
-    sorted copy of ``V``. The values and distances of the two nearest
-    neighbors as well as the `method` parameter will determine the
-    percentile if the normalized ranking does not match the location of
-    ``q`` exactly. This function is the same as the median if ``q=50``, the
-    same as the minimum if ``q=0`` and the same as the maximum if
-    ``q=100``.
+    Sample percentiles, the result of ``percentile``, provide nonparametric
+    estimation of the underlying population, represented by the unknown
+    :math:`F`, given a data vector ``a`` of length ``n``.
+
+    One type of estimators arises when one considers :math:`F` as the empirical
+    distribution function of the data, i.e.
+    :math:`F(y) = \\frac{1}{n} \\sum_i 1_{a_i \\leq y}`.
+    Then, different methods correspond to different choices of :math:`x` that
+    fulfil the above inequalities. Methods that follow this approach are
+    ``inverted_cdf`` and ``averaged_inverted_cdf``.
+
+    A more general way to define sample percentile estomators is as follows.
+    The empirical q-percentile of ``a`` is the ``n * q/100``-th value of the
+    way from the minimum to the maximum in a sorted copy of ``a``. The values
+    and distances of the two nearest neighbors as well as the `method`
+    parameter will determine the percentile if the normalized ranking does not
+    match the location of ``n * q/100`` exactly. This function is the same as
+    the median if ``q=50``, the same as the minimum if ``q=0`` and the same
+    as the maximum if ``q=100``.
 
     The optional `method` parameter specifies the method to use when the
     desired percentile lies between two indexes ``i`` and ``j = i + 1``.
@@ -4376,27 +4381,32 @@ def quantile(a,
     Notes
     -----
     In general, the quantile at probability level math:`q` of a cumulative
-    probability distribution :math:`P` is defined as any number :math:`x`
-    that fulfills the *coverage conditions*
-    
-    .. math:: P(Y < x) \\leq q \\quad\\text{and}\\quad P(Y \\leq x) \\geq q
-    
-    with random variable :math:`Y\\sim P`.
-    For empirical quantiles as considered here, :math:`P` is the empirical
-    distribution function of the given data vector ``a`` of length ``n``,
-    i.e. :math:`P(Y \\leq t) = \\frac{1}{n} \\sum_i 1_{a_i \\leq t}`.
-    Then, the different methods correspond to different choices of :math:`x`
-    that fulfil the above inequalities.
+    distribution function :math:`F(y)=P(Y \\leq y)` with probability measure
+    math:`P` is defined as any number :math:`x` that fulfills the
+    *coverage conditions*
 
-    To be more concrete, given a vector ``V`` of length ``n``, the empirical
-    q-th quantile of ``V`` is
-    the value ``q`` of the way from the minimum to the maximum in a
-    sorted copy of ``V``. The values and distances of the two nearest
-    neighbors as well as the `method` parameter will determine the
-    quantile if the normalized ranking does not match the location of
-    ``q`` exactly. This function is the same as the median if ``q=0.5``, the
-    same as the minimum if ``q=0.0`` and the same as the maximum if
-    ``q=1.0``.
+    .. math:: P(Y < x) \\leq q \\quad\\text{and}\\quad P(Y \\leq x) \\geq q
+
+    with random variable :math:`Y\\sim P`.
+    Sample quantiles, the result of ``quantile``, provide nonparametric
+    estimation of the underlying population, represented by the unknown
+    :math:`F`, given a data vector ``a`` of length ``n``.
+
+    One type of estimators arises when one considers :math:`F` as the empirical
+    distribution function of the data, i.e.
+    :math:`F(y) = \\frac{1}{n} \\sum_i 1_{a_i \\leq y}`.
+    Then, different methods correspond to different choices of :math:`x` that
+    fulfil the above inequalities. Methods that follow this approach are
+    ``inverted_cdf`` and ``averaged_inverted_cdf``.
+
+    A more general way to define sample quantile estomators is as follows.
+    The empirical q-quantile of ``a`` is the ``n * q``-th value of the
+    way from the minimum to the maximum in a sorted copy of ``a``. The values
+    and distances of the two nearest neighbors as well as the `method`
+    parameter will determine the quantile if the normalized ranking does not
+    match the location of ``n * q`` exactly. This function is the same as
+    the median if ``q=0.5``, the same as the minimum if ``q=0.0`` and the same
+    as the maximumif ``q=1.0``.
 
     The optional `method` parameter specifies the method to use when the
     desired quantile lies between two indexes ``i`` and ``j = i + 1``.
