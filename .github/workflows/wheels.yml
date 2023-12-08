@@ -111,7 +111,7 @@ jobs:
         if: runner.os == 'windows'
 
       # Used to push the built wheels
-      - uses: actions/setup-python@b64ffcaf5b410884ad320a9cfac8866006a109aa # v4.8.0
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: "3.x"
 
@@ -183,7 +183,7 @@ jobs:
           # https://github.com/actions/checkout/issues/338
           fetch-depth: 0
       # Used to push the built wheels
-      - uses: actions/setup-python@b64ffcaf5b410884ad320a9cfac8866006a109aa # v4.8.0
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           # Build sdist on lowest supported Python
           python-version: "3.9"

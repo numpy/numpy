@@ -692,6 +692,51 @@ class TestMethodsEmptyArray:
         assert_(res.shape == (1, 0, 1))
 
 
+class TestMethodsScalarValues:
+    def test_mod(self):
+        A = np.array([[' abc ', ''],
+                      ['12345', 'MixedCase'],
+                      ['123 \t 345 \0 ', 'UPPER']], dtype='S')
+        tgt = [[b'123 abc ', b'123'],
+               [b'12312345', b'123MixedCase'],
+               [b'123123 \t 345 \0 ', b'123UPPER']]
+        assert_array_equal(np.char.mod(b"123%s", A), tgt)
+
+    def test_decode(self):
+        bytestring = b'\x81\xc1\x81\xc1\x81\xc1'
+        assert_equal(np.char.decode(bytestring, encoding='cp037'),
+                     'aAaAaA')
+
+    def test_encode(self):
+        unicode = 'aAaAaA'
+        assert_equal(np.char.encode(unicode, encoding='cp037'),
+                     b'\x81\xc1\x81\xc1\x81\xc1')
+
+    def test_expandtabs(self):
+        s = "\tone level of indentation\n\t\ttwo levels of indentation"
+        assert_equal(
+            np.char.expandtabs(s, tabsize=2),
+            "  one level of indentation\n    two levels of indentation"
+        )
+
+    def test_join(self):
+        seps = np.array(['-', '_'])
+        assert_array_equal(np.char.join(seps, 'hello'),
+                           ['h-e-l-l-o', 'h_e_l_l_o'])
+
+    def test_partition(self):
+        assert_equal(np.char.partition('This string', ' '),
+                     ['This', ' ', 'string'])
+
+    def test_rpartition(self):
+        assert_equal(np.char.rpartition('This string here', ' '),
+                     ['This string', ' ', 'here'])
+
+    def test_replace(self):
+        assert_equal(np.char.replace('Python is good', 'good', 'great'),
+                     'Python is great')
+
+
 def test_empty_indexing():
     """Regression test for ticket 1948."""
     # Check that indexing a chararray with an empty list/array returns an

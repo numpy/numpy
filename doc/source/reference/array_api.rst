@@ -121,13 +121,6 @@ The following functions are named differently in the array API
      -
 
 
-Function instead of method
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-- ``astype`` is a function in the array API, whereas it is a method on
-  ``ndarray`` in ``numpy``.
-
-
 ``linalg`` Namespace Differences
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
