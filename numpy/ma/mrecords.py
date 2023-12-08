@@ -318,8 +318,8 @@ class MaskedRecords(MaskedArray):
             return obj
         # We want some elements.
         # First, the data.
-        obj = np.array(_data[indx], copy=False).view(mrecarray)
-        obj._mask = np.array(_mask[indx], copy=False).view(recarray)
+        obj = np.array(_data[indx], copy=None).view(mrecarray)
+        obj._mask = np.array(_mask[indx], copy=None).view(recarray)
         return obj
 
     def __setitem__(self, indx, value):
@@ -595,7 +595,7 @@ def fromrecords(reclist, dtype=None, shape=None, formats=None, names=None,
         mrec.fill_value = fill_value
     # Now, let's deal w/ the mask
     if mask is not nomask:
-        mask = np.array(mask, copy=False)
+        mask = np.array(mask, copy=None)
         maskrecordlength = len(mask.dtype)
         if maskrecordlength:
             mrec._mask.flat = mask

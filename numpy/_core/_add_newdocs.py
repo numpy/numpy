@@ -807,12 +807,14 @@ add_newdoc('numpy._core.multiarray', 'array',
         a default ``dtype`` that can represent the values (by applying promotion
         rules when necessary.)
     copy : bool, optional
-        If true (default), then the array data is copied. Otherwise, a copy
-        will only be made if ``__array__`` returns a copy, if obj is a nested
-        sequence, or if a copy is needed to satisfy any of the other
+        If ``True`` (default), then the array data is copied. If ``None``,
+        a copy will only be made if ``__array__`` returns a copy, if obj is
+        a nested sequence, or if a copy is needed to satisfy any of the other
         requirements (``dtype``, ``order``, etc.). Note that any copy of
         the data is shallow, i.e., for arrays with object dtype, the new
         array will point to the same objects. See Examples for `ndarray.copy`.
+        For ``False`` it raises a ``ValueError`` if a copy cannot be avoided.
+        Default: ``True``.
     order : {'K', 'A', 'C', 'F'}, optional
         Specify the memory layout of the array. If object is not an array, the
         newly created array will be in C order (row major) unless 'F' is
@@ -828,7 +830,7 @@ add_newdoc('numpy._core.multiarray', 'array',
         'F'   F order   F order
         ===== ========= ===================================================
 
-        When ``copy=False`` and a copy is made for other reasons, the result is
+        When ``copy=None`` and a copy is made for other reasons, the result is
         the same as if ``copy=True``, with some exceptions for 'A', see the
         Notes section. The default order is 'K'.
     subok : bool, optional
@@ -915,7 +917,7 @@ add_newdoc('numpy._core.multiarray', 'array',
 
 add_newdoc('numpy._core.multiarray', 'asarray',
     """
-    asarray(a, dtype=None, order=None, *, device=None, like=None)
+    asarray(a, dtype=None, order=None, *, device=None, copy=None, like=None)
 
     Convert the input to an array.
 
@@ -940,12 +942,12 @@ add_newdoc('numpy._core.multiarray', 'asarray',
 
         .. versionadded:: 2.0.0
     copy : bool, optional
-        If true, then the object is copied. If false then the object is
+        If ``True``, then the object is copied. If ``None`` then the object is
         copied only if needed, i.e. if ``__array__`` returns a copy, if obj
         is a nested sequence, or if a copy is needed to satisfy any of
         the other requirements (``dtype``, ``order``, etc.).
-        For ``np._CopyMode.NEVER`` it raises a ``ValueError`` if a copy
-        cannot be avoided. Default: false.
+        For ``False`` it raises a ``ValueError`` if a copy cannot be avoided.
+        Default: ``None``.
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0

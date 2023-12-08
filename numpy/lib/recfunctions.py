@@ -692,7 +692,7 @@ def append_fields(base, names, data, dtypes=None,
         data = [data, ]
     #
     if dtypes is None:
-        data = [np.array(a, copy=False, subok=True) for a in data]
+        data = [np.array(a, copy=None, subok=True) for a in data]
         data = [a.view([(name, a.dtype)]) for (name, a) in zip(names, data)]
     else:
         if not isinstance(dtypes, (tuple, list)):
@@ -703,7 +703,7 @@ def append_fields(base, names, data, dtypes=None,
             else:
                 msg = "The dtypes argument must be None, a dtype, or a list."
                 raise ValueError(msg)
-        data = [np.array(a, copy=False, subok=True, dtype=d).view([(n, d)])
+        data = [np.array(a, copy=None, subok=True, dtype=d).view([(n, d)])
                 for (a, n, d) in zip(data, names, dtypes)]
     #
     base = merge_arrays(base, usemask=usemask, fill_value=fill_value)
@@ -828,7 +828,7 @@ def repack_fields(a, align=False, recurse=False):
     """
     if not isinstance(a, np.dtype):
         dt = repack_fields(a.dtype, align=align, recurse=recurse)
-        return a.astype(dt, copy=False)
+        return a.astype(dt, copy=None)
 
     if a.names is None:
         return a
@@ -936,7 +936,7 @@ def _structured_to_unstructured_dispatcher(arr, dtype=None, copy=None,
     return (arr,)
 
 @array_function_dispatch(_structured_to_unstructured_dispatcher)
-def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
+def structured_to_unstructured(arr, dtype=None, copy=None, casting='unsafe'):
     """
     Converts an n-D structured array into an (n+1)-D unstructured array.
 
@@ -955,10 +955,11 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     dtype : dtype, optional
        The dtype of the output unstructured array.
     copy : bool, optional
-        If true, always return a copy. If false, a view is returned if
+        If True, always return a copy. If None, a view is returned if
         possible, such as when the `dtype` and strides of the fields are
         suitable and the array subtype is one of `numpy.ndarray`,
-        `numpy.recarray` or `numpy.memmap`.
+        `numpy.recarray` or `numpy.memmap`. For False it raises a ValueError
+        if a copy cannot be avoided.
 
         .. versionchanged:: 1.25.0
             A view can now be returned if the fields are separated by a
@@ -1071,7 +1072,7 @@ def _unstructured_to_structured_dispatcher(arr, dtype=None, names=None,
 
 @array_function_dispatch(_unstructured_to_structured_dispatcher)
 def unstructured_to_structured(arr, dtype=None, names=None, align=False,
-                               copy=False, casting='unsafe'):
+                               copy=None, casting='unsafe'):
     """
     Converts an n-D unstructured array into an (n-1)-D structured array.
 

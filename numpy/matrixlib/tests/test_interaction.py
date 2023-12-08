@@ -127,16 +127,16 @@ def test_array_astype():
     # 2018-04-29: copied here from core.tests.test_api
     # subok=True passes through a matrix
     a = np.matrix([[0, 1, 2], [3, 4, 5]], dtype='f4')
-    b = a.astype('f4', subok=True, copy=False)
+    b = a.astype('f4', subok=True, copy=None)
     assert_(a is b)
 
     # subok=True is default, and creates a subtype on a cast
-    b = a.astype('i4', copy=False)
+    b = a.astype('i4', copy=None)
     assert_equal(a, b)
     assert_equal(type(b), np.matrix)
 
     # subok=False never returns a matrix
-    b = a.astype('f4', subok=False, copy=False)
+    b = a.astype('f4', subok=False, copy=None)
     assert_equal(a, b)
     assert_(not (a is b))
     assert_(type(b) is not np.matrix)

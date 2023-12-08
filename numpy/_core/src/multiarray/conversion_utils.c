@@ -229,9 +229,8 @@ PyArray_OptionalIntpConverter(PyObject *obj, PyArray_Dims *seq)
 NPY_NO_EXPORT int
 PyArray_CopyConverter(PyObject *obj, NPY_COPYMODE *copymode) {
     if (obj == Py_None) {
-        PyErr_SetString(PyExc_ValueError,
-                        "NoneType copy mode not allowed.");
-        return NPY_FAIL;
+        *copymode = NPY_COPY_IF_NEEDED;
+        return NPY_SUCCEED;
     }
 
     int int_copymode;

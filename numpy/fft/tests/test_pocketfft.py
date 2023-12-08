@@ -460,7 +460,7 @@ def test_fft_with_order(dtype, order, fft):
     # Check that FFT/IFFT produces identical results for C, Fortran and
     # non contiguous arrays
     rng = np.random.RandomState(42)
-    X = rng.rand(8, 7, 13).astype(dtype, copy=False)
+    X = rng.rand(8, 7, 13).astype(dtype, copy=None)
     # See discussion in pull/14178
     _tol = 8.0 * np.sqrt(np.log2(X.size)) * np.finfo(X.dtype).eps
     if order == 'F':

@@ -526,7 +526,7 @@ def count_nonzero(a, axis=None, *, keepdims=False):
     if np.issubdtype(a.dtype, np.character):
         a_bool = a != a.dtype.type()
     else:
-        a_bool = a.astype(np.bool, copy=False)
+        a_bool = a.astype(np.bool, copy=None)
 
     return a_bool.sum(axis=axis, dtype=np.intp, keepdims=keepdims)
 
@@ -868,7 +868,7 @@ def convolve(a, v, mode='full'):
     array([2.5])
 
     """
-    a, v = array(a, copy=False, ndmin=1), array(v, copy=False, ndmin=1)
+    a, v = array(a, copy=None, ndmin=1), array(v, copy=None, ndmin=1)
     if (len(v) > len(a)):
         a, v = v, a
     if len(a) == 0:

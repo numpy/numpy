@@ -13,9 +13,9 @@ NPY_NO_EXPORT int
 PyArray_OptionalIntpConverter(PyObject *obj, PyArray_Dims *seq);
 
 typedef enum {
-    NPY_COPY_IF_NEEDED = 0,
+    NPY_COPY_NEVER = 0,
     NPY_COPY_ALWAYS = 1,
-    NPY_COPY_NEVER = 2,
+    NPY_COPY_IF_NEEDED = 2,
 } NPY_COPYMODE;
 
 NPY_NO_EXPORT int

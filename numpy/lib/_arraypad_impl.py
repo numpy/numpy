@@ -490,7 +490,7 @@ def _as_pairs(x, ndim, as_index=False):
 
     x = np.array(x)
     if as_index:
-        x = np.round(x).astype(np.intp, copy=False)
+        x = np.round(x).astype(np.intp, copy=None)
 
     if x.ndim < 3:
         # Optimization: Possibly use faster paths for cases where `x` has

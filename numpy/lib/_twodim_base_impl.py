@@ -420,7 +420,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
                             arange(-k, M-k, dtype=_min_int(-k, M - k)))
 
     # Avoid making a copy if the requested type is already bool
-    m = m.astype(dtype, copy=False)
+    m = m.astype(dtype, copy=None)
 
     return m
 

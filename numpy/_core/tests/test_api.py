@@ -177,18 +177,18 @@ def test_array_astype():
     assert_equal(a, b)
     assert_(not (a is b))
 
-    # copy=False parameter can sometimes skip a copy
+    # copy=False parameter skips a copy
     b = a.astype('f4', copy=False)
     assert_(a is b)
 
     # order parameter allows overriding of the memory layout,
     # forcing a copy if the layout is wrong
-    b = a.astype('f4', order='F', copy=False)
+    b = a.astype('f4', order='F', copy=None)
     assert_equal(a, b)
     assert_(not (a is b))
     assert_(b.flags.f_contiguous)
 
-    b = a.astype('f4', order='C', copy=False)
+    b = a.astype('f4', order='C', copy=None)
     assert_equal(a, b)
     assert_(a is b)
     assert_(b.flags.c_contiguous)
@@ -214,12 +214,12 @@ def test_array_astype():
     assert_(a is b)
 
     # subok=True is default, and creates a subtype on a cast
-    b = a.astype('i4', copy=False)
+    b = a.astype('i4', copy=None)
     assert_equal(a, b)
     assert_equal(type(b), MyNDArray)
 
     # subok=False never returns a subclass
-    b = a.astype('f4', subok=False, copy=False)
+    b = a.astype('f4', subok=False, copy=None)
     assert_equal(a, b)
     assert_(not (a is b))
     assert_(type(b) is not MyNDArray)
@@ -536,9 +536,9 @@ def test_contiguous_flags():
     check_contig(np.empty((2, 2), order='F'), False, True)
 
     # Check that np.array creates correct contiguous flags:
-    check_contig(np.array(a, copy=False), False, False)
-    check_contig(np.array(a, copy=False, order='C'), True, False)
-    check_contig(np.array(a, ndmin=4, copy=False, order='F'), False, True)
+    check_contig(np.array(a, copy=None), False, False)
+    check_contig(np.array(a, copy=None, order='C'), True, False)
+    check_contig(np.array(a, ndmin=4, copy=None, order='F'), False, True)
 
     # Check slicing update of flags and :
     check_contig(a[0], True, True)
@@ -577,7 +577,7 @@ def test_astype_copyflag():
     res_false = arr.astype(np.intp, copy=False)
     # `res_false is arr` currently, but check `may_share_memory`.
     assert np.may_share_memory(arr, res_false)
-    res_if_needed = arr.astype(np.intp, copy=np._CopyMode.IF_NEEDED)
+    res_if_needed = arr.astype(np.intp, copy=None)
     # `res_if_needed is arr` currently, but check `may_share_memory`.
     assert np.may_share_memory(arr, res_if_needed)
 
@@ -585,10 +585,7 @@ def test_astype_copyflag():
     assert np.may_share_memory(arr, res_never)
 
     # Simple tests for when a copy is necessary:
-    res_false = arr.astype(np.float64, copy=False)
-    assert_array_equal(res_false, arr)
-    res_if_needed = arr.astype(np.float64, 
-                               copy=np._CopyMode.IF_NEEDED)
+    res_if_needed = arr.astype(np.float64, copy=None)
     assert_array_equal(res_if_needed, arr)
     assert_raises(ValueError, arr.astype, np.float64,
-                  copy=np._CopyMode.NEVER)
+                  copy=False)

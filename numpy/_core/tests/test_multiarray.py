@@ -477,7 +477,14 @@ class TestArrayConstruction:
         e = np.array(d, copy=False)
         d[1] = 3
         assert_array_equal(e, [1, 3, 3])
-        e = np.array(d, copy=False, order='F')
+        np.array(d, copy=False, order='F')
+
+    def test_array_copy_if_needed(self):
+        d = np.array([1, 2, 3])
+        e = np.array(d, copy=None)
+        d[1] = 3
+        assert_array_equal(e, [1, 3, 3])
+        e = np.array(d, copy=None, order='F')
         d[1] = 4
         assert_array_equal(e, [1, 4, 3])
         e[2] = 7
@@ -8325,7 +8332,8 @@ class TestArrayCreationCopyArgument(object):
             raise ValueError
 
     true_vals = [True, np._CopyMode.ALWAYS, np.True_]
-    false_vals = [False, np._CopyMode.IF_NEEDED, np.False_]
+    if_needed_vals = [None, np._CopyMode.IF_NEEDED]
+    false_vals = [False, np._CopyMode.NEVER, np.False_]
 
     def test_scalars(self):
         # Test both numpy and python scalars
@@ -8335,17 +8343,16 @@ class TestArrayCreationCopyArgument(object):
             pyscalar = arr.item(0)
 
             # Test never-copy raises error:
-            assert_raises(ValueError, np.array, scalar,
-                            copy=np._CopyMode.NEVER)
-            assert_raises(ValueError, np.array, pyscalar,
-                            copy=np._CopyMode.NEVER)
             assert_raises(ValueError, np.array, pyscalar,
                             copy=self.RaiseOnBool())
             assert_raises(ValueError, _multiarray_tests.npy_ensurenocopy,
                             [1])
-            # Casting with a dtype (to unsigned integers) can be special:
-            with pytest.raises(ValueError):
-                np.array(pyscalar, dtype=np.int64, copy=np._CopyMode.NEVER)
+            for copy in self.false_vals:
+                assert_raises(ValueError, np.array, scalar, copy=copy)
+                assert_raises(ValueError, np.array, pyscalar, copy=copy)
+                # Casting with a dtype (to unsigned integers) can be special:
+                with pytest.raises(ValueError):
+                    np.array(pyscalar, dtype=np.int64, copy=copy)
 
     def test_compatible_cast(self):
 
@@ -8370,27 +8377,23 @@ class TestArrayCreationCopyArgument(object):
 
                 if int1 == int2:
                     # Casting is not necessary, base check is sufficient here
+                    for copy in self.if_needed_vals:
+                        res = np.array(arr, copy=copy, dtype=int2)
+                        assert res is arr or res.base is arr
+
                     for copy in self.false_vals:
                         res = np.array(arr, copy=copy, dtype=int2)
                         assert res is arr or res.base is arr
 
-                    res = np.array(arr,
-                                   copy=np._CopyMode.NEVER,
-                                   dtype=int2)
-                    assert res is arr or res.base is arr
-
                 else:
                     # Casting is necessary, assert copy works:
-                    for copy in self.false_vals:
+                    for copy in self.if_needed_vals:
                         res = np.array(arr, copy=copy, dtype=int2)
                         assert res is not arr and res.flags.owndata
                         assert_array_equal(res, arr)
 
                     assert_raises(ValueError, np.array,
-                                  arr, copy=np._CopyMode.NEVER,
-                                  dtype=int2)
-                    assert_raises(ValueError, np.array,
-                                  arr, copy=None,
+                                  arr, copy=False,
                                   dtype=int2)
 
     def test_buffer_interface(self):
@@ -8444,13 +8447,14 @@ class TestArrayCreationCopyArgument(object):
             # may be open for change:
             assert res is not base_arr
 
-        for copy in self.false_vals:
-            res = np.array(arr, copy=False)
+        for copy in self.if_needed_vals:
+            res = np.array(arr, copy=copy)
             assert_array_equal(res, base_arr)
             assert res is base_arr  # numpy trusts the ArrayLike
 
-        with pytest.raises(ValueError):
-            np.array(arr, copy=np._CopyMode.NEVER)
+        for copy in self.false_vals:
+            with pytest.raises(ValueError):
+                np.array(arr, copy=copy)
 
     @pytest.mark.parametrize(
             "arr", [np.ones(()), np.arange(81).reshape((9, 9))])
@@ -8490,26 +8494,18 @@ class TestArrayCreationCopyArgument(object):
                 assert_array_equal(arr, res)
 
             if no_copy_necessary:
-                for copy in self.false_vals:
+                for copy in self.if_needed_vals + self.false_vals:
                     res = np.array(view, copy=copy, order=order2)
                     # res.base.obj refers to the memoryview
                     if not IS_PYPY:
                         assert res is arr or res.base.obj is arr
-
-                res = np.array(view, copy=np._CopyMode.NEVER,
-                               order=order2)
-                if not IS_PYPY:
-                    assert res is arr or res.base.obj is arr
             else:
-                for copy in self.false_vals:
+                for copy in self.if_needed_vals:
                     res = np.array(arr, copy=copy, order=order2)
                     assert_array_equal(arr, res)
-                assert_raises(ValueError, np.array,
-                              view, copy=np._CopyMode.NEVER,
-                              order=order2)
-                assert_raises(ValueError, np.array,
-                              view, copy=None,
-                              order=order2)
+                for copy in self.false_vals:
+                    assert_raises(ValueError, np.array,
+                                  view, copy=copy, order=order2)
 
     def test_striding_not_ok(self):
         arr = np.array([[1, 2, 4], [3, 4, 5]])
