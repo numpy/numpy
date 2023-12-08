@@ -396,6 +396,13 @@ cdef class Generator:
         out : ndarray or scalar
             Drawn samples from the parameterized beta distribution.
 
+        Examples
+        --------
+        >>> rng = np.random.default_rng()
+        >>> rng.beta(2, 2, 10)
+        array([0.59550044, 0.75229547, 0.76730802, 0.56570646, 0.05481579,
+                0.47503983, 0.72108605, 0.23535788, 0.79257758, 0.25037942])
+
         """
         return cont(&random_beta, &self._bitgen, size, self.lock, 2,
                     a, 'a', CONS_POSITIVE,
