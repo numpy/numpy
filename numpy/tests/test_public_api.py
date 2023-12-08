@@ -613,10 +613,22 @@ def test_functions_single_location():
                     if (
                         member.__name__ in [
                             "absolute",  # np.abs
+                            "arccos",  # np.acos
+                            "arccosh",  # np.acosh
+                            "arcsin",  # np.asin
+                            "arcsinh",  # np.asinh
+                            "arctan",  # np.atan
+                            "arctan2",  # np.atan2
+                            "arctanh",  # np.atanh
+                            "left_shift",  # np.bitwise_left_shift
+                            "right_shift",  # np.bitwise_right_shift
                             "conjugate",  # np.conj
-                            "invert",  # np.bitwise_not
+                            "invert",  # np.bitwise_not & np.bitwise_invert
                             "remainder",  # np.mod
                             "divide",  # np.true_divide
+                            "concatenate",  # np.concat
+                            "power",  # np.pow
+                            "transpose",  # np.permute_dims
                         ] and
                         module.__name__ == "numpy"
                     ):

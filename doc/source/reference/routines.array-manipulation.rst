@@ -32,6 +32,7 @@ Transpose-like operations
    swapaxes
    ndarray.T
    transpose
+   permute_dims
 
 Changing number of dimensions
 =============================
@@ -66,6 +67,7 @@ Joining arrays
    :toctree: generated/
 
    concatenate
+   concat
    stack
    block
    vstack

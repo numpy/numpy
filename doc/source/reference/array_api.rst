@@ -71,66 +71,10 @@ The following functions are named differently in the array API
    * - Array API name
      - NumPy namespace name
      - Notes
-   * - ``acos``
-     - ``arccos``
-     -
-   * - ``acosh``
-     - ``arccosh``
-     -
-   * - ``asin``
-     - ``arcsin``
-     -
-   * - ``asinh``
-     - ``arcsinh``
-     -
-   * - ``atan``
-     - ``arctan``
-     -
-   * - ``atan2``
-     - ``arctan2``
-     -
-   * - ``atanh``
-     - ``arctanh``
-     -
-   * - ``bitwise_left_shift``
-     - ``left_shift``
-     -
-   * - ``bitwise_invert``
-     - ``invert``
-     -
-   * - ``bitwise_right_shift``
-     - ``right_shift``
-     -
-   * - ``bool``
-     - ``bool_``
-     - This is **breaking** because ``np.bool`` is currently a deprecated
-       alias for the built-in ``bool``.
-   * - ``concat``
-     - ``concatenate``
-     -
    * - ``matrix_norm`` and ``vector_norm``
      - ``norm``
      - ``matrix_norm`` and ``vector_norm`` each do a limited subset of what
        ``np.norm`` does.
-   * - ``permute_dims``
-     - ``transpose``
-     - Unlike ``np.transpose``, the ``axis`` keyword-argument to
-       ``permute_dims`` is required.
-   * - ``pow``
-     - ``power``
-     -
-
-
-``linalg`` Namespace Differences
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-These functions are in the ``linalg`` sub-namespace in the array API, but are
-only in the top-level namespace in NumPy:
-
-- ``matmul`` (*)
-- ``tensordot`` (*)
-
-(*): These functions are also in the top-level namespace in the array API.
 
 Keyword Argument Renames
 ~~~~~~~~~~~~~~~~~~~~~~~~

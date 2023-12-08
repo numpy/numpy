@@ -29,6 +29,8 @@ Matrix and vector products
    cross
    multi_dot
    matrix_power
+   tensordot
+   matmul
 
 Decompositions
 --------------
