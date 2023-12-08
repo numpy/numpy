@@ -468,7 +468,7 @@ else:
                     "Polyfit sanity test emitted a warning, most likely due "
                     "to using a buggy Accelerate backend."
                     "\nIf you compiled yourself, more information is available at:"
-                    "\nhttps://numpy.org/doc/stable/user/building.html#accelerated-blas-lapack-libraries"
+                    "\nhttps://numpy.org/devdocs/building/index.html"
                     "\nOtherwise report this to the vendor "
                     "that provided NumPy.\n{}\n".format(error_message))
                 raise RuntimeError(msg)
