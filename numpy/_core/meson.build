@@ -787,6 +787,13 @@ foreach gen_mtargets : [
       ASIMD,
     ]
   ],
+  [
+    'highway_qsort_16bit.dispatch.h',
+    'src/npysort/highway_qsort_16bit.dispatch.cpp',
+    [
+      ASIMDHP,
+    ]
+  ],
 ]
   mtargets = mod_features.multi_targets(
     gen_mtargets[0], multiarray_gen_headers + gen_mtargets[1],
