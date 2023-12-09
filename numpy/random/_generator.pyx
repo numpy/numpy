@@ -420,7 +420,7 @@ cdef class Generator:
         ...         (bins**(k-1) * (1-bins)**(n-k))/
         ...         (math.gamma(k)*math.gamma(n+1-k)/
         ...          math.gamma(n+1)),
-        ...          linewidth=2, color='r')
+        ...         linewidth=2, color='r')
         >>> plt.xlim([0, .2])
         >>> plt.show()
 
@@ -436,7 +436,7 @@ cdef class Generator:
         ...         (bins**(k-1) * (1-bins)**(n-k))/
         ...         (math.gamma(k)*math.gamma(n+1-k)/
         ...          math.gamma(n+1)),
-        ...          linewidth=2, color='r')
+        ...         linewidth=2, color='r')
         >>> plt.xlim([0, .2])
         >>> plt.show()
 
@@ -447,6 +447,24 @@ cdef class Generator:
         >>> sample = rng.beta(a, b, size=size)
         >>> np.mean(sample)
         0.5047328775385895  # may vary
+
+        Otherwise the distribution is skewed left or right according to
+        whether ``a`` or ``b`` is greater. The distribution is mirror
+        symmetric.
+
+        >>> a, b = 2, 7
+        >>> x = np.linspace(0 ,1)
+        >>> plt.plot(x, 
+        ...         (x**(a-1) * (1-x)**(b-1))/
+        ...         (math.gamma(a)*math.gamma(b)/
+        ...          math.gamma(a+b)),
+        ...        linewidth=2, color='r')
+        >>> plt.plot(x, 
+        ...         (x**(b-1) * (1-x)**(a-1))/
+        ...         (math.gamma(b)*math.gamma(a)/
+        ...          math.gamma(a+b)),
+        ...         linewidth=2, color='g')
+        >>> plt.show()
 
         """
         return cont(&random_beta, &self._bitgen, size, self.lock, 2,
