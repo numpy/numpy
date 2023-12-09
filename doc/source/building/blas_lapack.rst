@@ -10,7 +10,7 @@ Default behavior for BLAS and LAPACK selection
 
 When a NumPy build is invoked, BLAS and LAPACK library detection happens
 automatically. The build system will attempt to locate a suitable library,
-and try a number of known library in a certain order - most to least
+and try a number of known libraries in a certain order - most to least
 performant. A typical order is: MKL, Accelerate, OpenBLAS, FlexiBLAS, BLIS,
 plain ``libblas``/``liblapack``. This may vary per platform or over releases.
 That order, and which libraries are tried, can be changed through the
@@ -49,7 +49,7 @@ be dynamically switched between implementations on conda-forge), use::
 
     $ # to build and install a wheel
     $ python -m build -Csetup-args=-Dblas=blas -Csetup-args=-Dlapack=lapack
-    $ pip install dist/scipy*.whl
+    $ pip install dist/numpy*.whl
 
     $ # Or, with pip>=23.1, this works too:
     $ python -m pip install . -Csetup-args=-Dblas=blas -Csetup-args=-Dlapack=lapack

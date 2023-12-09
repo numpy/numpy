@@ -52,7 +52,8 @@ your system.
     * BLAS and LAPACK libraries. `OpenBLAS <https://github.com/OpenMathLib/OpenBLAS/>`__
       is the NumPy default; other variants include Apple Accelerate,
       `MKL <https://software.intel.com/en-us/intel-mkl>`__,
-      `ATLAS <http://math-atlas.sourceforge.net/>`__ and Netlib (reference)
+      `ATLAS <http://math-atlas.sourceforge.net/>`__ and
+      `Netlib <https://www.netlib.org/lapack/index.html>`__ (or "Reference")
       BLAS and LAPACK.
 
     * ``pkg-config`` for dependency detection.
@@ -362,6 +363,7 @@ like build the html documentation or running benchmarks. The ``spin``
 interface is self-documenting, so please see ``spin --help`` and
 ``spin <subcommand> --help`` for detailed guidance.
 
+.. _meson-editable-installs:
 
 .. admonition:: IDE support & editable installs
 
@@ -382,20 +384,21 @@ interface is self-documenting, so please see ``spin --help`` and
     dependencies set up correctly as described higher up on this page. Then
     do::
 
-        # Note: the --no-build-isolation is important! meson-python will
-        # auto-rebuild each time NumPy is imported by the Python interpreter.
+        # Note: the --no-build-isolation is important!
         pip install -e . --no-build-isolation
 
         # To run the tests for, e.g., the `numpy.linalg` module:
         pytest numpy/linalg
 
     When making changes to NumPy code, including to compiled code, there is no
-    need to manually rebuild or reinstall. When you run ``git clean -xdf``,
-    which removes the built extension modules, remember to also uninstall NumPy
-    with ``pip uninstall numpy``.
+    need to manually rebuild or reinstall. NumPy is automatically rebuilt each
+    time NumPy is imported by the Python interpreter; see the meson-python_
+    documentation on editable installs for more details on how that works under
+    the hood.
 
-    See the meson-python_ documentation on editable installs for more details
-    on how things work under the hood.
+    When you run ``git clean -xdf``, which removes the built extension modules,
+    remember to also uninstall NumPy with ``pip uninstall numpy``.
+
 
     .. warning::
 

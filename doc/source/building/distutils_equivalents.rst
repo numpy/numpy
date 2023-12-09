@@ -21,7 +21,9 @@ Meson and ``distutils`` ways of doing things
 *New workflows (Meson and meson-python based):*
 
 1. ``spin test``
-2. ``pip install -e . --no-build-isolation`` (see the ``meson-python`` docs)
+2. ``pip install -e . --no-build-isolation`` (note: only for working on NumPy
+   itself - for more details, see
+   :ref:`IDE support & editable installs <meson-editable-installs>`)
 3. the same as (2)
 4. ``python -m build --no-isolation`` + ``pip install dist/numpy*.whl`` - see
    `pypa/build <https://pypa-build.readthedocs.io/en/latest/>`_.
