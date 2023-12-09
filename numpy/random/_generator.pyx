@@ -440,19 +440,31 @@ cdef class Generator:
 
         Examples
         --------
-        A real world example: Assume a company has 10000 customer support 
-        agents and the average time between customer calls is 4 minutes.
+        Assume a company has 10000 customer support agents and the time 
+        between customer calls is exponentially distributed and that the 
+        average time between customer calls is 4 minutes.
 
-        >>> n = 10000
-        >>> time_between_calls = np.random.default_rng().exponential(scale=4, size=n)
+        >>> scale, size = 4, 10000
+        >>> rng = np.random.default_rng()
+        >>> time_between_calls = rng.exponential(scale=scale, size=size)
 
         What is the probability that a customer will call in the next 
         4 to 5 minutes? 
         
-        >>> x = ((time_between_calls < 5).sum())/n 
-        >>> y = ((time_between_calls < 4).sum())/n
-        >>> x-y
-        0.08 # may vary
+        >>> x = ((time_between_calls < 5).sum())/size
+        >>> y = ((time_between_calls < 4).sum())/size
+        >>> x - y
+        0.08  # may vary
+
+        The corresponding distribution can be visualized as follows:
+
+        >>> import matplotlib.pyplot as plt
+        >>> scale, size = 4, 10000
+        >>> rng = np.random.default_rng()
+        >>> sample = rng.exponential(scale=scale, size=size)
+        >>> count, bins, _ = plt.hist(sample, 30, density=True)
+        >>> plt.plot(bins, scale**-1*np.exp(-scale**-1*bins), linewidth=2, color='r')
+        >>> plt.show()
 
         References
         ----------
