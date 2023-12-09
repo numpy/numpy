@@ -723,20 +723,6 @@ PyType_Spec arrayflags_type_spec = {
     .slots = arrayflags_type_slots,
 };
 
-NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy._core.multiarray.flagsobj",
-    .tp_basicsize = sizeof(PyArrayFlagsObject),
-    .tp_dealloc = (destructor)arrayflags_dealloc,
-    .tp_repr = (reprfunc)arrayflags_print,
-    .tp_as_mapping = &arrayflags_as_mapping,
-    .tp_str = (reprfunc)arrayflags_print,
-    .tp_flags =Py_TPFLAGS_DEFAULT,
-    .tp_richcompare = arrayflags_richcompare,
-    .tp_getset = arrayflags_getsets,
-    .tp_new = arrayflags_new,
-};
-
 /*NUMPY_API
  * Given an instance of the multiarray module
  * Return the PyTypeObject of PyFlagsType.
