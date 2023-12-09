@@ -408,7 +408,7 @@ cdef class Generator:
         >>> rng = np.random.default_rng()
         >>> n, k = 100, 5
         >>> size = 3
-        >>> rng.beta(k, n+1-k, size)
+        >>> rng.beta(k, n+1-k, size=size)
         array([0.0600246 , 0.02885269, 0.06709855])
 
         """
