@@ -415,11 +415,11 @@ cdef class Generator:
 
         >>> import math
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(sample, 30, density=True)
+        >>> count, bins, ignored = plt.hist(sample, 50, density=True)
         >>> plt.plot(bins, 
-                     (bins**(k-1) * (1-bins)**(n-k))/
-                     (math.gamma(k)*math.gamma(n+1-k)/
-                      math.gamma(n+1)),
+        ...         (bins**(k-1) * (1-bins)**(n-k))/
+        ...         (math.gamma(k)*math.gamma(n+1-k)/
+        ...          math.gamma(n+1)),
         ...          linewidth=2, color='r')
         >>> plt.xlim([0, .2])
         >>> plt.show()
@@ -432,14 +432,15 @@ cdef class Generator:
         >>> sample.sort(axis=1)
         >>> sample = sample[:, k-1]
         >>> count, bins, ignored = plt.hist(sample, 50, density=True)
-        >>> plt.plot(bins,
-                    (bins**(k-1) * (1-bins)**(n-k))/
-                    (math.gamma(k)*math.gamma(n+1-k)/
-                     math.gamma(n+1)),
+        >>> plt.plot(bins, 
+        ...         (bins**(k-1) * (1-bins)**(n-k))/
+        ...         (math.gamma(k)*math.gamma(n+1-k)/
+        ...          math.gamma(n+1)),
         ...          linewidth=2, color='r')
         >>> plt.xlim([0, .2])
         >>> plt.show()
 
+        If ``a == b``
         """
         return cont(&random_beta, &self._bitgen, size, self.lock, 2,
                     a, 'a', CONS_POSITIVE,
