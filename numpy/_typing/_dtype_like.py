@@ -5,10 +5,9 @@ from typing import (
     Union,
     TypeVar,
     Protocol,
-    TypedDict,
     runtime_checkable,
 )
-
+from typing_extensions import TypedDict
 import numpy as np
 
 from ._shape import _ShapeLike

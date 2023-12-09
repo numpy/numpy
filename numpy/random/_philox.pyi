@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing_extensions import TypedDict
 
 from numpy import uint64
 from numpy.typing import NDArray

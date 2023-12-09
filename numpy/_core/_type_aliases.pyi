@@ -1,5 +1,5 @@
-from typing import Any, TypedDict
-
+from typing_extensions import TypedDict
+from typing import Any
 from numpy import generic, signedinteger, unsignedinteger, floating, complexfloating
 
 class _SCTypes(TypedDict):

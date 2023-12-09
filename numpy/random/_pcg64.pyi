@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing_extensions import TypedDict
 
 from numpy.random.bit_generator import BitGenerator, SeedSequence
 from numpy._typing import _ArrayLikeInt_co

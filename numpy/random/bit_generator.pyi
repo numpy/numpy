@@ -4,12 +4,11 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import (
     Any,
     NamedTuple,
-    TypedDict,
     TypeVar,
     overload,
     Literal,
 )
-
+from typing_extensions import TypedDict
 from numpy import dtype, uint32, uint64
 from numpy._typing import (
     NDArray,

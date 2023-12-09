@@ -1,6 +1,6 @@
 from collections.abc import Callable
-from typing import Any, Literal, TypedDict, SupportsIndex
-
+from typing import Any, Literal, SupportsIndex
+from typing_extensions import TypedDict
 # Using a private class is by no means ideal, but it is simply a consequence
 # of a `contextlib.context` returning an instance of aforementioned class
 from contextlib import _GeneratorContextManager
