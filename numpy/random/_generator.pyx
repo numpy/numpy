@@ -2524,7 +2524,7 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> loc, scale = 10, 1
-        >>> rng = np.random.default_rng().
+        >>> rng = np.random.default_rng()
         >>> s = rng.logistic(loc, scale, 10000)
         >>> import matplotlib.pyplot as plt
         >>> count, bins, ignored = plt.hist(s, bins=50)
