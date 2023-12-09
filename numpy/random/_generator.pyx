@@ -407,9 +407,38 @@ cdef class Generator:
 
         >>> rng = np.random.default_rng()
         >>> n, k = 100, 5
-        >>> size = 3
-        >>> rng.beta(k, n+1-k, size=size)
-        array([0.0600246 , 0.02885269, 0.06709855])
+        >>> size = 1000
+        >>> sample = rng.beta(k, n+1-k, size=size) 
+
+        We can display the histogram of the samples, along with
+        the probability density function:
+
+        >>> import math
+        >>> import matplotlib.pyplot as plt
+        >>> count, bins, ignored = plt.hist(sample, 30, density=True)
+        >>> plt.plot(bins, 
+                     (bins**(k-1) * (1-bins)**(n-k))/
+                     (math.gamma(k)*math.gamma(n+1-k)/
+                      math.gamma(n+1)),
+        ...          linewidth=2, color='r')
+        >>> plt.xlim([0, .2])
+        >>> plt.show()
+
+        To compare it to the distribution of the `k`-th smallest value of a
+        sample of `n` i.i.d. random variables drawn from a uniform distribution
+        on `[0, 1]`, we can use the following:
+
+        >>> sample = rng.uniform(0, 1, size=(size, n))
+        >>> sample.sort(axis=1)
+        >>> sample = sample[:, k-1]
+        >>> count, bins, ignored = plt.hist(sample, 50, density=True)
+        >>> plt.plot(bins,
+                    (bins**(k-1) * (1-bins)**(n-k))/
+                    (math.gamma(k)*math.gamma(n+1-k)/
+                     math.gamma(n+1)),
+        ...          linewidth=2, color='r')
+        >>> plt.xlim([0, .2])
+        >>> plt.show()
 
         """
         return cont(&random_beta, &self._bitgen, size, self.lock, 2,
