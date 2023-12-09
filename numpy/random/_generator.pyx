@@ -440,7 +440,14 @@ cdef class Generator:
         >>> plt.xlim([0, .2])
         >>> plt.show()
 
-        If ``a == b``
+        If ``a == b`` and both are > 1, the distribution is symmetric with 
+        mean 1/2.
+
+        >>> a, b = 2.0, 2.0
+        >>> sample = rng.beta(a, b, size=size)
+        >>> np.mean(sample)
+        0.5047328775385895  # may vary
+
         """
         return cont(&random_beta, &self._bitgen, size, self.lock, 2,
                     a, 'a', CONS_POSITIVE,
