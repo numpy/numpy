@@ -50,7 +50,7 @@ multiarray_types_api = {
     # Internally, PyArrayDescr_Type is a PyArray_DTypeMeta,
     # the following also defines PyArrayDescr_TypeFull (Full appended)
     'PyArrayDescr_Type':                (3, "PyArray_DTypeMeta"),
-    'PyArrayFlags_Type':                (4,),
+    # Unused slot 4, was `PyArrayFlags_Type`
     'PyArrayIter_Type':                 (5,),
     'PyArrayMultiIter_Type':            (6,),
     'PyBoolArrType_Type':               (8,),
@@ -99,7 +99,7 @@ multiarray_types_api = {
 
 multiarray_funcs_api = {
     '__unused_indices__': [
-        40, 41, 65, 66, 67, 68, 163, 164, 171,
+        4, 40, 41, 65, 66, 67, 68, 163, 164, 171,
         201, 202, 278, 291, 293, 294, 295, 301],
     'PyArray_GetNDArrayCVersion':           (0,),
     # Unused slot 40, was `PyArray_SetNumericOps`

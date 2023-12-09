@@ -48,6 +48,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "scalartypes.h"
 #include "convert_datatype.h"
 #include "conversion_utils.h"
+#include "moduletypes.h"
 #include "nditer_pywrap.h"
 #define NPY_ITERATOR_IMPLEMENTATION_CODE
 #include "nditer_impl.h"
@@ -4879,29 +4880,37 @@ initialize_static_globals(void)
     return 0;
 }
 
+multiarray_umath_state *
+multiarray_umath_get_state(PyObject *module) {
+    void *state = PyModule_GetState(module);
+    assert(state != NULL);
+    return (multiarray_umath_state *)state;
+}
+ 
+NPY_NO_EXPORT static int
+multiarray_umath_traverse(PyObject *module, visitproc visit, void *arg) {
+    multiarray_umath_state *state = multiarray_umath_get_state(module);
+    Py_VISIT(state->arrayflags_type);
+    return 0;
+}
 
-static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "_multiarray_umath",
-        NULL,
-        -1,
-        array_module_methods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-};
+NPY_NO_EXPORT static int
+multiarray_umath_clear(PyObject *module) {
+    multiarray_umath_state *state = multiarray_umath_get_state(module);
+    Py_CLEAR(state->arrayflags_type);
+    return 0;
+}
 
-/* Initialization function for the module */
-PyMODINIT_FUNC PyInit__multiarray_umath(void) {
-    PyObject *m, *d, *s;
+NPY_NO_EXPORT static void
+multiarray_umath_free(void *module) {
+    multiarray_umath_clear((PyObject *)module);
+}
+
+/* Initialization function for an instance of the module */
+static int
+multiarray_umath_exec(PyObject *m) {
+    PyObject *d, *s;
     PyObject *c_api;
-
-    /* Create the module and add the functions */
-    m = PyModule_Create(&moduledef);
-    if (!m) {
-        return NULL;
-    }
 
     /* Initialize CPU features */
     if (npy_cpu_init() < 0) {
@@ -4911,6 +4920,8 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (npy_cpu_dispatch_tracer_init(m) < 0) {
         goto err;
     }
+
+    multiarray_umath_state *state = multiarray_umath_get_state(m);
 
 #if defined(MS_WIN64) && defined(__GNUC__)
   PyErr_WarnEx(PyExc_Warning,
@@ -4996,7 +5007,10 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
-    if (PyType_Ready(&PyArrayFlags_Type) < 0) {
+    state->arrayflags_type = (PyTypeObject *)PyType_FromModuleAndSpec(
+        m, &arrayflags_type_spec, NULL);
+
+    if (state->arrayflags_type  == NULL) {
         goto err;
     }
     NpyBusDayCalendar_Type.tp_new = PyType_GenericNew;
@@ -5106,7 +5120,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     PyDict_SetItemString(d, "broadcast",
                          (PyObject *)&PyArrayMultiIter_Type);
     PyDict_SetItemString(d, "dtype", (PyObject *)&PyArrayDescr_Type);
-    PyDict_SetItemString(d, "flagsobj", (PyObject *)&PyArrayFlags_Type);
+    PyDict_SetItemString(d, "flagsobj", (PyObject *)state->arrayflags_type);
 
     /* Business day calendar object */
     PyDict_SetItemString(d, "busdaycalendar",
@@ -5161,13 +5175,36 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
-    return m;
+    return 0;
 
  err:
     if (!PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load multiarray module.");
     }
-    Py_DECREF(m);
-    return NULL;
+
+    return -1;
+}
+
+static PyModuleDef_Slot multiarray_umath_slots[] = {
+    {Py_mod_exec, multiarray_umath_exec},
+    {0, NULL}
+};
+
+static struct PyModuleDef multiarray_moduledef = {
+    PyModuleDef_HEAD_INIT,
+    .m_name = "_multiarray_umath",
+    .m_doc = NULL,
+    .m_size = sizeof(multiarray_umath_state),
+    .m_methods = array_module_methods,
+    .m_slots = multiarray_umath_slots,
+    .m_traverse = multiarray_umath_traverse,
+    .m_clear = multiarray_umath_clear,
+    .m_free = multiarray_umath_free
+};
+
+PyMODINIT_FUNC
+PyInit__multiarray_umath(void)
+{
+    return PyModuleDef_Init(&multiarray_moduledef);
 }

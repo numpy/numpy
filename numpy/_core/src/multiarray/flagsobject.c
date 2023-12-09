@@ -12,6 +12,9 @@
 
 #include "npy_config.h"
 
+#include "moduletypes.h"
+#include "scalartypes.h"
+
 #include "npy_pycompat.h"
 #include "array_assign.h"
 
@@ -46,8 +49,8 @@ PyArray_NewFlagsObject(PyObject* mod, PyObject *obj)
         flags = PyArray_FLAGS((PyArrayObject *)obj);
     }
 
-    PyTypeObject* array_flags_type = PyArray_GetFlagsType(NULL);
-    flagobj = array_flags_type->tp_alloc(array_flags_type, 0);
+    PyTypeObject* arrayflags_type = PyArray_GetFlagsType(mod);
+    flagobj = arrayflags_type->tp_alloc(arrayflags_type, 0);
     if (flagobj == NULL) {
         return NULL;
     }
@@ -656,8 +659,9 @@ arrayflags_print(PyArrayFlagsObject *self)
 static PyObject*
 arrayflags_richcompare(PyObject *self, PyObject *other, int cmp_op)
 {
-    PyTypeObject* array_flags_type = PyArray_GetFlagsType(NULL);
-    if (!PyObject_TypeCheck(other, array_flags_type)) {
+    PyObject *mod = PyType_GetModule(Py_TYPE(self));
+    PyTypeObject* arrayflags_type = PyArray_GetFlagsType(mod);
+    if (!PyObject_TypeCheck(other, arrayflags_type)) {
         Py_RETURN_NOTIMPLEMENTED;
     }
 
@@ -712,7 +716,7 @@ static PyType_Slot arrayflags_type_slots[] = {
     {0, NULL}
 };
 
-static PyType_Spec array_flags_type_spec = {
+PyType_Spec arrayflags_type_spec = {
     .name = "numpy._core.multiarray.flagsobj",
     .basicsize = sizeof(PyArrayFlagsObject),
     .flags = Py_TPFLAGS_DEFAULT,
@@ -740,7 +744,9 @@ NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type = {
  * Returns NULL if an error occurs.
  */
 NPY_NO_EXPORT PyTypeObject *
-PyArray_GetFlagsType(PyObject *NPY_UNUSED(module))
+PyArray_GetFlagsType(PyObject *module)
 {
-    return &PyArrayFlags_Type;
+    multiarray_umath_state *state = multiarray_umath_get_state(module);
+    assert(state != NULL);
+    return state->arrayflags_type;
 }

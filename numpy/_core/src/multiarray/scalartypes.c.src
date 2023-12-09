@@ -1312,9 +1312,9 @@ gentype_flags_get(PyObject *self, void *NPY_UNUSED(ignored))
 static PyObject *
 voidtype_flags_get(PyVoidScalarObject *self, void *NPY_UNUSED(ignored))
 {
-    PyObject *flagobj;
-    PyTypeObject* array_flags_type = PyArray_GetFlagsType(NULL);
-    flagobj = array_flags_type->tp_alloc(array_flags_type, 0);
+    PyObject *mod = PyType_GetModule(Py_TYPE(self));
+    PyTypeObject* arrayflags_type = PyArray_GetFlagsType(mod);
+    PyObject *flagobj = arrayflags_type->tp_alloc(arrayflags_type, 0);
     if (flagobj == NULL) {
         return NULL;
     }
