@@ -234,7 +234,8 @@ class _Config:
         ppc64le = "VSX VSX2",
         s390x = '',
         armhf = '', # play it safe
-        aarch64 = "NEON NEON_FP16 NEON_VFPV4 ASIMD"
+        aarch64 = "NEON NEON_FP16 NEON_VFPV4 ASIMD",
+        loongarch64 = "LSX"
     )
     conf_features = dict(
         # X86
@@ -326,6 +327,8 @@ class _Config:
         ASIMDDP = dict(interest=6, implies="ASIMD"),
         ## ARMv8.2 Single & half-precision Multiply
         ASIMDFHM = dict(interest=7, implies="ASIMDHP"),
+        ## LOONGSON/LSX
+        LSX = dict(interest=1, headers="lsxintrin.h")
     )
     def conf_features_partial(self):
         """Return a dictionary of supported CPU features by the platform,
@@ -514,6 +517,16 @@ class _Config:
                 VXE2 = dict(
                     flags="-march=arch13", implies_detect=False
                 )
+            )
+
+            return partial
+
+        on_loongarch = self.cc_on_loongarch64
+        if on_loongarch:
+            partial = dict(
+                LSX = dict(
+                    implies="LSX", flags="-mlsx", autovec=True
+                ),
             )
 
             return partial
@@ -976,6 +989,7 @@ class _CCompiler:
             ("cc_on_armhf",    ".*arm.*", "defined(__ARM_ARCH_7__) || "
                                           "defined(__ARM_ARCH_7A__)"),
             ("cc_on_s390x",    ".*s390x.*", ""),
+            ("cc_on_loongarch64",    ".*loongarch64.*", ""),
             # undefined platform
             ("cc_on_noarch",   "", ""),
         )
@@ -1048,7 +1062,7 @@ class _CCompiler:
 
         self.cc_march = "unknown"
         for arch in ("x86", "x64", "ppc64", "ppc64le",
-                     "armhf", "aarch64", "s390x"):
+                     "armhf", "aarch64", "s390x", "loongarch64"):
             if getattr(self, "cc_on_" + arch):
                 self.cc_march = arch
                 break

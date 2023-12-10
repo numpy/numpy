@@ -96,6 +96,9 @@ enum npy_cpu_features
     // Vector-Enhancements Facility 2
     NPY_CPU_FEATURE_VXE2              = 352,
 
+    // LOONGARCH
+    NPY_CPU_FEATURE_LSX              = 400,
+
     NPY_CPU_FEATURE_MAX
 };
 
