@@ -164,6 +164,7 @@ def not_equal(x1, x2):
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.not_equal(x1, 'b')
     array([True, False,  True])
+    
     """
     return compare_chararrays(x1, x2, '!=', True)
 
@@ -197,6 +198,7 @@ def greater_equal(x1, x2):
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.greater_equal(x1, 'b')
     array([False,  True,  True])
+    
     """
     return compare_chararrays(x1, x2, '>=', True)
 
@@ -229,6 +231,7 @@ def less_equal(x1, x2):
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.less_equal(x1, 'b')
     array([True,  True, False])
+    
     """
     return compare_chararrays(x1, x2, '<=', True)
 
@@ -261,6 +264,7 @@ def greater(x1, x2):
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.greater(x1, 'b')
     array([False, False,  True])
+    
     """
     return compare_chararrays(x1, x2, '>', True)
 
@@ -293,6 +297,7 @@ def less(x1, x2):
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.less(x1, 'b')
     array([True, False, False])
+    
     """
     return compare_chararrays(x1, x2, '<', True)
 
@@ -330,6 +335,7 @@ def str_len(a):
     >>> a = np.array([['hello', 'world'], ['\u0420', '\u043e']])
     >>> np.char.str_len(a)
     array([[5, 5], [1, 1]])
+    
     """
     return numpy._core.umath.str_len(a)
 
@@ -424,6 +430,7 @@ def multiply(a, i):
     >>> np.char.multiply(a, i)
     array([['a', 'bb', 'ccc'],
            ['d', 'ee', 'fff']], dtype='<U3')
+           
     """
     a_arr = numpy.asarray(a)
     i_arr = numpy.asarray(i)
@@ -696,6 +703,7 @@ def encode(a, encoding=None, errors=None):
     >>> np.char.encode(a, encoding='cp037')
     array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
        b'\x81\x82\xc2\xc1\xc2\x82\x81'], dtype='|S7')
+       
     """
     return _to_bytes_or_str_array(
         _vec_string(a, object_, 'encode', _clean_args(encoding, errors)),
@@ -744,6 +752,7 @@ def endswith(a, suffix, start=0, end=None):
     array([False,  True])
     >>> np.char.endswith(s, 'a', start=1, end=2)
     array([False,  True])
+    
     """
     end = end if end is not None else numpy.iinfo(numpy.int_).max
     return numpy._core.umath.endswith(a, suffix, start, end)
@@ -789,6 +798,7 @@ def expandtabs(a, tabsize=8):
     >>> a = np.array(['\tHello\t\tworld\t'])
     >>> np.char.expandtabs(a, tabsize=8)
     array(['        Hello           world   '], dtype='<U32')
+    
     """
     return _to_bytes_or_str_array(
         _vec_string(a, object_, 'expandtabs', (tabsize,)), a)
@@ -967,6 +977,7 @@ def isdigit(a):
     >>> a = np.array([['a', 'b', '0'], ['c', '1', '2']])
     >>> np.char.isdigit(a)
     array([[False, False,  True], [False,  True,  True]])
+    
     """
     return numpy._core.umath.isdigit(a)
 
@@ -1038,6 +1049,7 @@ def isspace(a):
     >>> a = np.array([' ', '\t', '\n'])
     >>> np.char.isspace(a)
     array([True, True, True])
+    
     """
     return numpy._core.umath.isspace(a)
 
@@ -1072,6 +1084,7 @@ def istitle(a):
 
     >>> np.char.istitle("GHC")
     array(False)
+    
     """
     return _vec_string(a, numpy.bool, 'istitle')
 
@@ -1186,6 +1199,7 @@ def ljust(a, width, fillchar=' '):
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.char.ljust(c, width=3)
     array(['aAa', '  a', 'abB'], dtype='<U3')
+    
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
@@ -1367,6 +1381,7 @@ def replace(a, old, new, count=None):
     >>> a = np.array(["The dish is fresh", "This is it"])
     >>> np.char.replace(a, 'is', 'was')
     array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
+    
     """
     return _to_bytes_or_str_array(
         _vec_string(a, object_, 'replace', [old, new] + _clean_args(count)), a)
@@ -1405,6 +1420,7 @@ def rfind(a, sub, start=0, end=None):
     >>> a = np.array(["NumPy is a Python library"])
     >>> np.char.rfind(a, "Python", start=0, end=None)
     array([11])
+    
     """
     end = end if end is not None else numpy.iinfo(numpy.int64).max
     return numpy._core.umath.rfind(a, sub, start, end)
@@ -1440,6 +1456,7 @@ def rindex(a, sub, start=0, end=None):
     >>> a = np.array(["Computer Science"])
     >>> np.char.rindex(a, "Science", start=0, end=None)
     array([9])
+    
     """
     return _vec_string(
         a, int_, 'rindex', [sub, start] + _clean_args(end))
@@ -1476,6 +1493,7 @@ def rjust(a, width, fillchar=' '):
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.char.rjust(a, width=3)
     array(['aAa', '  a', 'abB'], dtype='<U3')
+    
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
@@ -1570,6 +1588,7 @@ def rsplit(a, sep=None, maxsplit=None):
     >>> a = np.array(['aAaAaA', 'abBABba'])
     >>> np.char.rsplit(a, 'A')
     array([list(['a', 'a', 'a', '']), list(['abB', 'Bba'])], dtype=object)
+    
     """
     # This will return an array of lists of different sizes, so we
     # leave it as an object array
@@ -1903,6 +1922,7 @@ def translate(a, table, deletechars=None):
     >>> deletechars = ' '
     >>> np.char.translate(a, table, deletechars)
     array(['112 3', '1231', '2311'], dtype='<U5')
+    
     """
     a_arr = numpy.asarray(a)
     if issubclass(a_arr.dtype.type, str_):
@@ -3065,6 +3085,7 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
     --------
     >>> np.char.asarray(['hello', 'world'])
     chararray(['hello', 'world'], dtype='<U5')
+    
     """
     return array(obj, itemsize, copy=False,
                  unicode=unicode, order=order)
