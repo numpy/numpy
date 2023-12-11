@@ -75,3 +75,15 @@ class TestModuleAndSubroutine(util.F2PyTest):
     def test_gh25337(self):
         self.module.data.set_shift(3)
         assert "data" in dir(self.module)
+
+
+class TestIncludeFiles(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "regression", "incfile.f90")]
+    options = [f"-I{util.getpath('tests', 'src', 'regression')}",
+               f"--include-paths {util.getpath('tests', 'src', 'regression')}"]
+
+    @pytest.mark.slow
+    def test_gh25344(self):
+        exp = 7.0
+        res = self.module.add(3.0, 4.0)
+        assert  exp == res
