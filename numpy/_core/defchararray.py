@@ -897,7 +897,8 @@ def isalnum(a):
     --------
     >>> a = np.array(['a', '1', 'a1', '(', ''])
     >>> np.char.isalnum(a)
-    array([ True,  True,  True,  False])
+    array([ True,  True,  True, False, False])
+    
     """
     return _vec_string(a, numpy.bool, 'isalnum')
 
