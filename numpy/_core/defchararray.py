@@ -463,6 +463,7 @@ def mod(a, values):
     -------
     out : ndarray
         Output array of str or unicode, depending on input types
+        
     """
     return _to_bytes_or_str_array(
         _vec_string(a, object_, '__mod__', (values,)), a)
