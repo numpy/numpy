@@ -292,7 +292,7 @@ def less(x1, x2):
     --------
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.less(x1, 'b')
-    array([ True, False, False])
+    array([True, False, False])
     """
     return compare_chararrays(x1, x2, '<', True)
 
