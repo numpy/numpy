@@ -12,20 +12,15 @@ if TYPE_CHECKING:
         SupportsBufferProtocol,
     )
     from collections.abc import Sequence
-from ._dtypes import _all_dtypes
+from ._dtypes import _DType, _all_dtypes
 
 import numpy as np
 
 
 def _check_valid_dtype(dtype):
     # Note: Only spelling dtypes as the dtype objects is supported.
-
-    # We use this instead of "dtype in _all_dtypes" because the dtype objects
-    # define equality with the sorts of things we want to disallow.
-    for d in (None,) + _all_dtypes:
-        if dtype is d:
-            return
-    raise ValueError("dtype must be one of the supported dtypes")
+    if not dtype in (None,) + _all_dtypes:
+        raise ValueError("dtype must be one of the supported dtypes")
 
 
 def asarray(
@@ -68,6 +63,8 @@ def asarray(
         # Give a better error message in this case. NumPy would convert this
         # to an object array. TODO: This won't handle large integers in lists.
         raise OverflowError("Integer out of bounds for array dtypes")
+    if dtype is not None:
+        dtype = dtype._np_dtype
     res = np.asarray(obj, dtype=dtype)
     return Array._new(res)
 
@@ -91,6 +88,8 @@ def arange(
     _check_valid_dtype(dtype)
     if device not in [CPU_DEVICE, None]:
         raise ValueError(f"Unsupported device {device!r}")
+    if dtype is not None:
+        dtype = dtype._np_dtype
     return Array._new(np.arange(start, stop=stop, step=step, dtype=dtype))
 
 
@@ -110,6 +109,8 @@ def empty(
     _check_valid_dtype(dtype)
     if device not in [CPU_DEVICE, None]:
         raise ValueError(f"Unsupported device {device!r}")
+    if dtype is not None:
+        dtype = dtype._np_dtype
     return Array._new(np.empty(shape, dtype=dtype))
 
 
@@ -126,6 +127,8 @@ def empty_like(
     _check_valid_dtype(dtype)
     if device not in [CPU_DEVICE, None]:
         raise ValueError(f"Unsupported device {device!r}")
+    if dtype is not None:
+        dtype = dtype._np_dtype
     return Array._new(np.empty_like(x._array, dtype=dtype))
 
 
@@ -148,6 +151,8 @@ def eye(
     _check_valid_dtype(dtype)
     if device not in [CPU_DEVICE, None]:
         raise ValueError(f"Unsupported device {device!r}")
+    if dtype is not None:
+        dtype = dtype._np_dtype
     return Array._new(np.eye(n_rows, M=n_cols, k=k, dtype=dtype))
 
 
@@ -176,8 +181,10 @@ def full(
         raise ValueError(f"Unsupported device {device!r}")
     if isinstance(fill_value, Array) and fill_value.ndim == 0:
         fill_value = fill_value._array
+    if dtype is not None:
+        dtype = dtype._np_dtype
     res = np.full(shape, fill_value, dtype=dtype)
-    if res.dtype not in _all_dtypes:
+    if _DType(res.dtype) not in _all_dtypes:
         # This will happen if the fill value is not something that NumPy
         # coerces to one of the acceptable dtypes.
         raise TypeError("Invalid input to full")
@@ -202,8 +209,10 @@ def full_like(
     _check_valid_dtype(dtype)
     if device not in [CPU_DEVICE, None]:
         raise ValueError(f"Unsupported device {device!r}")
+    if dtype is not None:
+        dtype = dtype._np_dtype
     res = np.full_like(x._array, fill_value, dtype=dtype)
-    if res.dtype not in _all_dtypes:
+    if _DType(res.dtype) not in _all_dtypes:
         # This will happen if the fill value is not something that NumPy
         # coerces to one of the acceptable dtypes.
         raise TypeError("Invalid input to full_like")
@@ -230,6 +239,8 @@ def linspace(
     _check_valid_dtype(dtype)
     if device not in [CPU_DEVICE, None]:
         raise ValueError(f"Unsupported device {device!r}")
+    if dtype is not None:
+        dtype = dtype._np_dtype
     return Array._new(np.linspace(start, stop, num, dtype=dtype, endpoint=endpoint))
 
 
@@ -269,6 +280,8 @@ def ones(
     _check_valid_dtype(dtype)
     if device not in [CPU_DEVICE, None]:
         raise ValueError(f"Unsupported device {device!r}")
+    if dtype is not None:
+        dtype = dtype._np_dtype
     return Array._new(np.ones(shape, dtype=dtype))
 
 
@@ -285,6 +298,8 @@ def ones_like(
     _check_valid_dtype(dtype)
     if device not in [CPU_DEVICE, None]:
         raise ValueError(f"Unsupported device {device!r}")
+    if dtype is not None:
+        dtype = dtype._np_dtype
     return Array._new(np.ones_like(x._array, dtype=dtype))
 
 
@@ -332,6 +347,8 @@ def zeros(
     _check_valid_dtype(dtype)
     if device not in [CPU_DEVICE, None]:
         raise ValueError(f"Unsupported device {device!r}")
+    if dtype is not None:
+        dtype = dtype._np_dtype
     return Array._new(np.zeros(shape, dtype=dtype))
 
 
@@ -348,4 +365,6 @@ def zeros_like(
     _check_valid_dtype(dtype)
     if device not in [CPU_DEVICE, None]:
         raise ValueError(f"Unsupported device {device!r}")
+    if dtype is not None:
+        dtype = dtype._np_dtype
     return Array._new(np.zeros_like(x._array, dtype=dtype))

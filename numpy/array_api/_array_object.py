@@ -19,6 +19,7 @@ import operator
 from enum import IntEnum
 from ._creation_functions import asarray
 from ._dtypes import (
+    _DType,
     _all_dtypes,
     _boolean_dtypes,
     _integer_dtypes,
@@ -81,11 +82,13 @@ class Array:
         if isinstance(x, np.generic):
             # Convert the array scalar to a 0-D array
             x = np.asarray(x)
-        if x.dtype not in _all_dtypes:
+        _dtype = _DType(x.dtype)
+        if _dtype not in _all_dtypes:
             raise TypeError(
                 f"The array_api namespace does not support the dtype '{x.dtype}'"
             )
         obj._array = x
+        obj._dtype = _dtype
         return obj
 
     # Prevent Array() from working
@@ -107,7 +110,7 @@ class Array:
         """
         Performs the operation __repr__.
         """
-        suffix = f", dtype={self.dtype.name})"
+        suffix = f", dtype={self.dtype})"
         if 0 in self.shape:
             prefix = "empty("
             mid = str(self.shape)
@@ -182,6 +185,7 @@ class Array:
         integer that is too large to fit in a NumPy integer dtype, or
         TypeError when the scalar type is incompatible with the dtype of self.
         """
+        from ._data_type_functions import iinfo
         # Note: Only Python scalar types that match the array dtype are
         # allowed.
         if isinstance(scalar, bool):
@@ -195,7 +199,7 @@ class Array:
                     "Python int scalars cannot be promoted with bool arrays"
                 )
             if self.dtype in _integer_dtypes:
-                info = np.iinfo(self.dtype)
+                info = iinfo(self.dtype)
                 if not (info.min <= scalar <= info.max):
                     raise OverflowError(
                         "Python int scalars must be within the bounds of the dtype for integer arrays"
@@ -221,7 +225,7 @@ class Array:
         # behavior for integers within the bounds of the integer dtype.
         # Outside of those bounds we use the default NumPy behavior (either
         # cast or raise OverflowError).
-        return Array._new(np.array(scalar, self.dtype))
+        return Array._new(np.array(scalar, dtype=self.dtype._np_dtype))
 
     @staticmethod
     def _normalize_two_args(x1, x2) -> Tuple[Array, Array]:
@@ -331,7 +335,9 @@ class Array:
         for i in _key:
             if i is not None:
                 nonexpanding_key.append(i)
-                if isinstance(i, Array) or isinstance(i, np.ndarray):
+                if isinstance(i, np.ndarray):
+                    raise IndexError("Index arrays for np.array_api must be np.array_api arrays")
+                if isinstance(i, Array):
                     if i.dtype in _boolean_dtypes:
                         key_has_mask = True
                     single_axes.append(i)
@@ -1084,7 +1090,7 @@ class Array:
 
         See its docstring for more information.
         """
-        return self._array.dtype
+        return self._dtype
 
     @property
     def device(self) -> Device:

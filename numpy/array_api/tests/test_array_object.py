@@ -73,6 +73,9 @@ def test_validate_index():
     assert_raises(IndexError, lambda: a[[0, 1]])
     assert_raises(IndexError, lambda: a[(0, 1), (0, 1)])
     assert_raises(IndexError, lambda: a[[0, 1]])
+
+    # NumPy arrays are not allowed
+    assert_raises(IndexError, lambda: a[np.ones((3, 4), dtype=bool)])
     assert_raises(IndexError, lambda: a[np.array([[0, 1]])])
 
     # Multiaxis indices must contain exactly as many indices as dimensions

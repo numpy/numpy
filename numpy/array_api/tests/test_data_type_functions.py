@@ -26,6 +26,5 @@ def test_isdtype_strictness():
     assert_raises(TypeError, lambda: xp.isdtype(xp.float64, (('integral',),)))
     assert_raises(TypeError, lambda: xp.isdtype(xp.float64, np.object_))
 
-    # TODO: These will require https://github.com/numpy/numpy/issues/23883
-    # assert_raises(TypeError, lambda: xp.isdtype(xp.float64, None))
-    # assert_raises(TypeError, lambda: xp.isdtype(xp.float64, np.float64))
+    assert_raises(TypeError, lambda: xp.isdtype(xp.float64, None))
+    assert_raises(TypeError, lambda: xp.isdtype(xp.float64, np.float64))
