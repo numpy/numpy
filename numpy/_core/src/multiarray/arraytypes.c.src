@@ -28,6 +28,7 @@
 #include "_datetime.h"
 #include "arrayobject.h"
 #include "alloc.h"
+#include "gil_utils.h"
 
 #include "npy_longdouble.h"
 #include "numpyos.h"
@@ -3637,12 +3638,9 @@ OBJECT_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp 
 static int
 BOOL_fill(PyObject **buffer, npy_intp length, void *NPY_UNUSED(ignored))
 {
-    NPY_ALLOW_C_API_DEF;
-    NPY_ALLOW_C_API;
-    PyErr_SetString(PyExc_TypeError,
-            "arange() is only supported for booleans when the result has at "
-            "most length 2.");
-    NPY_DISABLE_C_API;
+    npy_gil_error(PyExc_TypeError,
+                  "arange() is only supported for booleans when the result has at "
+                  "most length 2.");
     return -1;
 }
 
