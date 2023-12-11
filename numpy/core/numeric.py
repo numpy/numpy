@@ -983,7 +983,7 @@ def tensordot(a, b, axes=2):
     (first) axes of `a` (`b`) - the argument `axes` should consist of
     two sequences of the same length, with the first axis to sum over given
     first in both sequences, the second axis second, and so forth.
-    The calculation can be referred to enisum().
+    The calculation can be referred to einsum().
 
     The shape of the result consists of the non-contracted axes of the
     first tensor, followed by the non-contracted axes of the second.
@@ -1006,7 +1006,8 @@ def tensordot(a, b, axes=2):
              [21, 24]],
             [[20, 24],
              [28, 32]]]])
-    >>> # An example on array_like
+    
+    An example on array_like
     >>> a = np.arange(60.).reshape(3,4,5)
     >>> b = np.arange(24.).reshape(4,3,2)
     >>> c = np.tensordot(a,b, axes=([1,0],[0,1]))
@@ -1019,7 +1020,7 @@ def tensordot(a, b, axes=2):
            [4796., 5162.],
            [4928., 5306.]])
 
-    >>> # A slower but equivalent way of computing the same...
+    A slower but equivalent way of computing the same...
     >>> d = np.zeros((5,2))
     >>> for i in range(5):
     ...   for j in range(2):
