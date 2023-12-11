@@ -1595,6 +1595,13 @@ def lagweight(x):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.laguerre import lagweight
+    >>> x = np.array([0, 1, 2])
+    >>> lagweight(x)
+    array([1.        , 0.36787944, 0.13533528])
+
     """
     w = np.exp(-x)
     return w

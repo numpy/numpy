@@ -1,3 +1,6 @@
+"""
+IO related functions.
+"""
 import os
 import re
 import functools
@@ -165,7 +168,7 @@ class NpzFile(Mapping):
     >>> isinstance(npz, np.lib.npyio.NpzFile)
     True
     >>> npz
-    NpzFile 'object' with keys x, y
+    NpzFile 'object' with keys: x, y
     >>> sorted(npz.files)
     ['x', 'y']
     >>> npz['x']  # getitem access
@@ -1249,9 +1252,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     This example shows how `converters` can be used to convert a field
     with a trailing minus sign into a negative number.
 
-    >>> s = StringIO('10.01 31.25-\n19.22 64.31\n17.57- 63.94')
+    >>> s = StringIO("10.01 31.25-\n19.22 64.31\n17.57- 63.94")
     >>> def conv(fld):
-    ...     return -float(fld[:-1]) if fld.endswith(b'-') else float(fld)
+    ...     return -float(fld[:-1]) if fld.endswith("-") else float(fld)
     ...
     >>> np.loadtxt(s, converters=conv)
     array([[ 10.01, -31.25],
@@ -1279,8 +1282,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     Or a format where the ``-`` sign comes after the number:
 
-    >>> s = StringIO('10.01 31.25-\n19.22 64.31\n17.57- 63.94')
-    >>> conv = lambda x: -float(x[:-1]) if x.endswith('-') else float(x)
+    >>> s = StringIO("10.01 31.25-\n19.22 64.31\n17.57- 63.94")
+    >>> conv = lambda x: -float(x[:-1]) if x.endswith("-") else float(x)
     >>> np.loadtxt(s, converters=conv)
     array([[ 10.01, -31.25],
            [ 19.22,  64.31],
@@ -1877,8 +1880,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> data = np.genfromtxt(s, dtype=None,
     ... names = ['myint','myfloat','mystring'], delimiter=",")
     >>> data
-    array((1, 1.3, b'abcde'),
-          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', 'S5')])
+    array((1, 1.3, 'abcde'),
+          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', '<U5')])
 
     Specifying dtype and names
 
@@ -1895,8 +1898,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> data = np.genfromtxt(s, dtype=None, names=['intvar','fltvar','strvar'],
     ...     delimiter=[1,3,5])
     >>> data
-    array((1, 1.3, b'abcde'),
-          dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', 'S5')])
+    array((1, 1.3, 'abcde'),
+          dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', '<U5')])
 
     An example to show comments
 

@@ -195,6 +195,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
 
     Examples
     --------
+    >>> from numpy.lib.stride_tricks import sliding_window_view
     >>> x = np.arange(6)
     >>> x.shape
     (6,)
