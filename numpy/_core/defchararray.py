@@ -996,9 +996,11 @@ def islower(a):
 
     Examples
     --------
-    >>> str = "GHC"
-    >>> np.char.islower(str)
+    >>> np.char.islower("GHC")
     array(False)
+    >>> np.char.islower("ghc")
+    array(True)
+
     """
     return _vec_string(a, numpy.bool, 'islower')
 
@@ -1029,8 +1031,7 @@ def isspace(a):
 
     Examples
     --------
-    >>> str = "GHC"
-    >>> np.char.isspace(str)
+    >>> np.char.isspace("GHC")
     array(False)
 
     >>> a = np.array([' ', '\t', '\n'])
@@ -1065,13 +1066,11 @@ def istitle(a):
 
     Examples
     --------
-    >>> str = "GHC"
-    >>> np.char.istitle(str)
-    array(False)
-
-    >>> str = "Ghc"
-    >>> np.char.istitle(str)
+    >>> np.char.istitle("Ghc")
     array(True)
+
+    >>> np.char.istitle("GHC")
+    array(False)
     """
     return _vec_string(a, numpy.bool, 'istitle')
 
@@ -1102,8 +1101,7 @@ def isupper(a):
 
     Examples
     --------
-    >>> str = "GHC"
-    >>> np.char.isupper(str)
+    >>> np.char.isupper("GHC")
     array(True)     
     >>> a = np.array(["hello", "HELLO", "Hello"])
     >>> np.char.isupper(a)
