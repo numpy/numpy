@@ -784,7 +784,7 @@ foreach gen_mtargets : [
     'highway_qsort.dispatch.h',
     'src/npysort/highway_qsort.dispatch.cpp',
     [
-      ASIMD,
+      SVE, ASIMD,
     ]
   ],
 ]
