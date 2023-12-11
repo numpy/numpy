@@ -24,6 +24,7 @@ class MesonTemplate:
         deps: list[str],
         libraries: list[str],
         library_dirs: list[Path],
+        include_dirs: list[Path],
         object_files: list[Path],
         linker_args: list[str],
         c_args: list[str],
@@ -38,12 +39,14 @@ class MesonTemplate:
         self.deps = deps
         self.libraries = libraries
         self.library_dirs = library_dirs
+        self.include_dirs = include_dirs
         self.substitutions = {}
         self.objects = object_files
         self.pipeline = [
             self.initialize_template,
             self.sources_substitution,
             self.deps_substitution,
+            self.include_substitution,
             self.libraries_substitution,
         ]
         self.build_type = build_type
@@ -67,13 +70,13 @@ class MesonTemplate:
     def sources_substitution(self) -> None:
         indent = " " * 21
         self.substitutions["source_list"] = f",\n{indent}".join(
-            [f"'{source}'" for source in self.sources]
+            [f"{indent}'{source}'" for source in self.sources]
         )
 
     def deps_substitution(self) -> None:
         indent = " " * 21
         self.substitutions["dep_list"] = f",\n{indent}".join(
-            [f"dependency('{dep}')" for dep in self.deps]
+            [f"{indent}dependency('{dep}')" for dep in self.deps]
         )
 
     def libraries_substitution(self) -> None:
@@ -93,10 +96,16 @@ class MesonTemplate:
 
         indent = " " * 21
         self.substitutions["lib_list"] = f"\n{indent}".join(
-            [f"{lib}," for lib in self.libraries]
+            [f"{indent}{lib}," for lib in self.libraries]
         )
         self.substitutions["lib_dir_list"] = f"\n{indent}".join(
-            [f"lib_dir_{i}," for i in range(len(self.library_dirs))]
+            [f"{indent}lib_dir_{i}," for i in range(len(self.library_dirs))]
+        )
+
+    def include_substitution(self) -> None:
+        indent = " " * 21
+        self.substitutions["inc_list"] = f",\n{indent}".join(
+            [f"{indent}'{inc}'" for inc in self.include_dirs]
         )
 
     def generate_meson_build(self):
@@ -138,6 +147,7 @@ class MesonBackend(Backend):
             self.dependencies,
             self.libraries,
             self.library_dirs,
+            self.include_dirs,
             self.extra_objects,
             self.flib_flags,
             self.fc_flags,
