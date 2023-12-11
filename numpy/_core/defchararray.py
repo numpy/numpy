@@ -163,7 +163,7 @@ def not_equal(x1, x2):
     --------
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.not_equal(x1, 'b')
-    array([ True, False,  True])
+    array([True, False,  True])
     """
     return compare_chararrays(x1, x2, '!=', True)
 
@@ -228,7 +228,7 @@ def less_equal(x1, x2):
     --------
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.less_equal(x1, 'b')
-    array([ True,  True, False])
+    array([True,  True, False])
     """
     return compare_chararrays(x1, x2, '<=', True)
 
@@ -292,7 +292,7 @@ def less(x1, x2):
     --------
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.less(x1, 'b')
-    array([ True, False, False])
+    array([True, False, False])
     """
     return compare_chararrays(x1, x2, '<', True)
 
