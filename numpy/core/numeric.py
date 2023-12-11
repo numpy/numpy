@@ -977,13 +977,13 @@ def tensordot(a, b, axes=2):
     For example, ``axes = 2`` is the equal to
     ``axes = [[-2, -1], [0, 1]]``.
     When N-1 is smaller than 0, or when -N is larger than -1,
-    the element of 'a' and 'b' are defined as the 'axes'.
+    the element of `a` and `b` are defined as the `axes`.
 
     When there is more than one axis to sum over - and they are not the last
     (first) axes of `a` (`b`) - the argument `axes` should consist of
     two sequences of the same length, with the first axis to sum over given
     first in both sequences, the second axis second, and so forth.
-    The calculation can be referred to ``einsum()``.
+    The calculation can be referred to ``numpy.einsum``.
 
     The shape of the result consists of the non-contracted axes of the
     first tensor, followed by the non-contracted axes of the second.
@@ -991,7 +991,7 @@ def tensordot(a, b, axes=2):
     Examples
     -------- 
     An example on integer_like
-    
+
     >>> a_0 = np.array([[1, 2], [3, 4]])
     >>> b_0 = np.array([[5, 6], [7, 8]])
     >>> c_0 = np.tensordot(a_0, b_0, axes=0)
@@ -1006,9 +1006,9 @@ def tensordot(a, b, axes=2):
              [21, 24]],
             [[20, 24],
              [28, 32]]]])
-    
+
     An example on array_like
-    
+
     >>> a = np.arange(60.).reshape(3,4,5)
     >>> b = np.arange(24.).reshape(4,3,2)
     >>> c = np.tensordot(a,b, axes=([1,0],[0,1]))
@@ -1022,7 +1022,7 @@ def tensordot(a, b, axes=2):
            [4928., 5306.]])
 
     A slower but equivalent way of computing the same...
-    
+
     >>> d = np.zeros((5,2))
     >>> for i in range(5):
     ...   for j in range(2):
