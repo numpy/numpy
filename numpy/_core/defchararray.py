@@ -895,7 +895,7 @@ def isalnum(a):
 
     Examples
     --------
-    >>> a = np.array(['a', '1', 'a1', ''])
+    >>> a = np.array(['a', '1', 'a1', '(', ''])
     >>> np.char.isalnum(a)
     array([ True,  True,  True,  False])
     """
