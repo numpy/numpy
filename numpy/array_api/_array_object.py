@@ -39,6 +39,12 @@ if TYPE_CHECKING:
 
 import numpy as np
 
+# Placeholder object to represent the "cpu" device (the only device NumPy
+# supports).
+class _cpu_device:
+    def __repr__(self):
+        return "CPU_DEVICE"
+CPU_DEVICE = _cpu_device()
 
 class Array:
     """
@@ -1067,7 +1073,7 @@ class Array:
     def to_device(self: Array, device: Device, /, stream: None = None) -> Array:
         if stream is not None:
             raise ValueError("The stream argument to to_device() is not supported")
-        if device == 'cpu':
+        if device == CPU_DEVICE:
             return self
         raise ValueError(f"Unsupported device {device!r}")
 
@@ -1082,7 +1088,7 @@ class Array:
 
     @property
     def device(self) -> Device:
-        return "cpu"
+        return CPU_DEVICE
 
     # Note: mT is new in array API spec (see matrix_transpose)
     @property

@@ -29,7 +29,7 @@ from typing import (
     Protocol,
 )
 
-from ._array_object import Array
+from ._array_object import Array, CPU_DEVICE
 from numpy import (
     dtype,
     int8,
@@ -50,7 +50,7 @@ class NestedSequence(Protocol[_T_co]):
     def __getitem__(self, key: int, /) -> _T_co | NestedSequence[_T_co]: ...
     def __len__(self, /) -> int: ...
 
-Device = Literal["cpu"]
+Device = type(CPU_DEVICE)
 
 Dtype = dtype[Union[
     int8,
