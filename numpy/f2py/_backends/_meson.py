@@ -39,7 +39,10 @@ class MesonTemplate:
         self.deps = deps
         self.libraries = libraries
         self.library_dirs = library_dirs
-        self.include_dirs = include_dirs
+        if include_dirs is not None:
+            self.include_dirs = include_dirs
+        else:
+            self.include_dirs = []
         self.substitutions = {}
         self.objects = object_files
         self.pipeline = [
@@ -181,7 +184,8 @@ def _prepare_sources(mname, sources, bdir):
     Path(bdir).mkdir(parents=True, exist_ok=True)
     # Copy sources
     for source in sources:
-        shutil.copy(source, bdir)
+        if Path(source).exists() and Path(source).is_file():
+            shutil.copy(source, bdir)
     generated_sources = [
         Path(f"{mname}module.c"),
         Path(f"{mname}-f2pywrappers2.f90"),
