@@ -989,8 +989,7 @@ def tensordot(a, b, axes=2):
     first tensor, followed by the non-contracted axes of the second.
 
     Examples
-    --------
-    
+    -------- 
     An example on integer_like
     
     >>> a_0 = np.array([[1, 2], [3, 4]])
