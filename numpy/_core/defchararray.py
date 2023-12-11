@@ -228,7 +228,7 @@ def less_equal(x1, x2):
     --------
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.less_equal(x1, 'b')
-    array([ True,  True, False])
+    array([True,  True, False])
     """
     return compare_chararrays(x1, x2, '<=', True)
 
