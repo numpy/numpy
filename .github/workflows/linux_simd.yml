@@ -162,7 +162,7 @@ jobs:
 
     - name: Install Intel SDE
       run: |
-        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/788820/sde-external-9.27.0-2023-09-13-lin.tar.xz.sig
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/788820/sde-external-9.27.0-2023-09-13-lin.tar.xz
         mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
         sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
 
@@ -176,7 +176,7 @@ jobs:
         python -m pip install pytest pytest-xdist hypothesis typing_extensions
 
     - name: Build
-      run: spin build -- -Dallow-noblas=true -Dcpu-baseline=avx512f -Dtest-simd='BASELINE,AVX512_KNL,AVX512_KNM,AVX512_SKX,AVX512_CLX,AVX512_CNL,AVX512_ICL,AVX512_SPR'
+      run: spin build -- -Dallow-noblas=true -Dcpu-baseline=avx512_spr -Dtest-simd='BASELINE,AVX512_KNL,AVX512_KNM,AVX512_SKX,AVX512_CLX,AVX512_CNL,AVX512_ICL,AVX512_SPR'
 
     - name: Meson Log
       if: always()
