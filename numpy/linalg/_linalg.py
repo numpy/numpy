@@ -560,7 +560,7 @@ def inv(a):
        [-1.12589991e+15, -5.62949953e+14,  5.62949953e+14],
        [ 1.12589991e+15,  5.62949953e+14, -5.62949953e+14]])
     >>> a @ inv(a)
-    array([[ 0.   , -0.5  ,  0.   ],
+    array([[ 0.   , -0.5  ,  0.   ],  # may vary
            [-0.5  ,  0.625,  0.25 ],
            [ 0.   ,  0.   ,  1.   ]])
 
@@ -573,7 +573,7 @@ def inv(a):
 
     >>> from numpy.linalg import cond
     >>> cond(a)
-    np.float64(8.659885634118668e+17)
+    np.float64(8.659885634118668e+17)  # may vary
 
     It is also possible to detect ill-conditioning by inspecting the matrix's
     singular values directly. The ratio between the largest and the smallest
@@ -582,7 +582,7 @@ def inv(a):
     >>> from numpy.linalg import svd
     >>> sigma = svd(a, compute_uv=False)  # Do not compute singular vectors
     >>> sigma.max()/sigma.min()
-    8.659885634118668e+17
+    8.659885634118668e+17  # may vary
 
     """
     a, wrap = _makearray(a)

@@ -313,6 +313,12 @@ def polymulx(c):
 
     .. versionadded:: 1.5.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial import polynomial as P
+    >>> c = (1, 2, 3)
+    >>> P.polymulx(c)
+    array([0., 1., 2., 3.])
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
@@ -892,6 +898,12 @@ def polyval2d(x, y, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial import polynomial as P
+    >>> c = ((1, 2, 3), (4, 5, 6))
+    >>> P.polyval2d(1, 1, c) 
+    21.0
     """
     return pu._valnd(polyval, c, x, y)
 
@@ -945,6 +957,13 @@ def polygrid2d(x, y, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial import polynomial as P
+    >>> c = ((1, 2, 3), (4, 5, 6))
+    >>> P.polygrid2d([0, 1], [0, 1], c)
+    array([[ 1.,  6.],
+           [ 5., 21.]])
     """
     return pu._gridnd(polyval, c, x, y)
 
@@ -995,6 +1014,13 @@ def polyval3d(x, y, z, c):
     -----
 
     .. versionadded:: 1.7.0
+
+    Examples
+    --------
+    >>> from numpy.polynomial import polynomial as P
+    >>> c = ((1, 2, 3), (4, 5, 6), (7, 8, 9))
+    >>> P.polyval3d(1, 1, 1, c)
+    45.0
 
     """
     return pu._valnd(polyval, c, x, y, z)
@@ -1052,6 +1078,13 @@ def polygrid3d(x, y, z, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial import polynomial as P
+    >>> c = ((1, 2, 3), (4, 5, 6), (7, 8, 9))
+    >>> P.polygrid3d([0, 1], [0, 1], [0, 1], c)
+    array([[ 1., 13.],
+           [ 6., 51.]])
     """
     return pu._gridnd(polyval, c, x, y, z)
 
@@ -1387,6 +1420,13 @@ def polycompanion(c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial import polynomial as P
+    >>> c = (1, 2, 3)
+    >>> P.polycompanion(c)
+    array([[ 0.        , -0.33333333],
+           [ 1.        , -0.66666667]])
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
