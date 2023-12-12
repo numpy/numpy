@@ -396,8 +396,10 @@ def unique_all(x):
 
     This function is an Array API compatible alternative to:
 
+    >>> x = np.array([1, 1, 2])
     >>> np.unique(x, return_index=True, return_inverse=True,
     ...           return_counts=True, equal_nan=False)
+    (array([1, 2]), array([0, 2]), array([0, 0, 1]), array([2, 1]))
 
     Parameters
     ----------
@@ -441,7 +443,9 @@ def unique_counts(x):
 
     This function is an Array API compatible alternative to:
 
+    >>> x = np.array([1, 1, 2])
     >>> np.unique(x, return_counts=True, equal_nan=False)
+    (array([1, 2]), array([2, 1]))
 
     Parameters
     ----------
@@ -482,7 +486,9 @@ def unique_inverse(x):
 
     This function is Array API compatible alternative to:
 
+    >>> x = np.array([1, 1, 2])
     >>> np.unique(x, return_inverse=True, equal_nan=False)
+    (array([1, 2]), array([0, 0, 1]))
 
     Parameters
     ----------
@@ -524,7 +530,9 @@ def unique_values(x):
 
     This function is Array API compatible alternative to:
 
+    >>> x = np.array([1, 1, 2])
     >>> np.unique(x, equal_nan=False)
+    array([1, 2])
 
     Parameters
     ----------

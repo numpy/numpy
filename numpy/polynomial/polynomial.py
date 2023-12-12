@@ -77,7 +77,8 @@ __all__ = [
     'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow', 'polyval',
     'polyvalfromroots', 'polyder', 'polyint', 'polyfromroots', 'polyvander',
     'polyfit', 'polytrim', 'polyroots', 'Polynomial', 'polyval2d', 'polyval3d',
-    'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d']
+    'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d',
+    'polycompanion']
 
 import numpy as np
 import numpy.linalg as la

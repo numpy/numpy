@@ -1125,7 +1125,6 @@ def laggrid3d(x, y, z, c):
     >>> laggrid3d([0, 1], [0, 1], [2, 4], c)
     array([[[ -4., -44.],
             [ -2., -18.]],
-
            [[ -2., -14.],
             [ -1.,  -5.]]])
     
@@ -1663,7 +1662,7 @@ def lagweight(x):
     >>> x = np.array([0, 1, 2])
     >>> lagweight(x)
     array([1.        , 0.36787944, 0.13533528])
-    
+
     """
     w = np.exp(-x)
     return w
