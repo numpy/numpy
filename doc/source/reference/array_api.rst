@@ -714,6 +714,20 @@ Manipulation functions differences
      - **Compatible**
      - See https://github.com/numpy/numpy/issues/9818.
 
+Searching functions differences
+-------------------------------
+
+.. list-table::
+   :header-rows: 1
+
+   * - Feature
+     - Type
+     - Notes
+   * - ``nonzero`` disallows 0-dimensional inputs
+     - **Breaking**
+     - This behavior is already deprecated for ``np.nonzero``. See
+       https://github.com/numpy/numpy/pull/13708.
+
 Set functions differences
 -------------------------
 
@@ -737,8 +751,8 @@ Set functions differences
 
 .. _array_api-set-functions-differences:
 
-Set functions differences
--------------------------
+Sorting functions differences
+-----------------------------
 
 .. list-table::
    :header-rows: 1
@@ -790,6 +804,16 @@ Other differences
      - **Strictness**
      - For example, ``numpy.array_api.asarray([0], dtype='int32')`` is not
        allowed.
+   * - Dtype objects are wrapped so that they only implement the required
+       ``__eq__`` method, which only compares against dtype objects.
+     - **Strictness**
+     - For example, ``float32 == 'float32'`` is not allowed.
+   * - ``arr.device`` always returns a ``CPU_DEVICE`` object (which is not
+       part of the namespace). This is the only valid non-default value for
+       ``device`` keyword arguments to creation functions like ``asarray()``.
+     - **Compatible**
+     - CPU is the only device supported by NumPy. The standard does not
+       require device objects to be accessible other than via ``arr.device``.
    * - ``asarray`` is not implicitly called in any function.
      - **Strictness**
      - The exception is Python operators, which accept Python scalars in
