@@ -162,7 +162,7 @@ jobs:
 
     - name: Install Intel SDE
       run: |
-        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/784319/sde-external-9.24.0-2023-07-13-lin.tar.xz
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/788820/sde-external-9.27.0-2023-09-13-lin.tar.xz.sig
         mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
         sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
 
@@ -198,15 +198,13 @@ jobs:
         sde -spr -- python -c "import numpy; numpy.show_config()" &&
         sde -spr -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_simd*
 
-    # Can't run on SDE just yet: see https://github.com/numpy/numpy/issues/23545#issuecomment-1659047365
-    #
-    #- name: linalg/ufunc/umath tests (SPR)
-    #  run: |
-    #    export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
-    #    export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
-    #    cd build-install &&
-    #    sde -spr -- python -c "import numpy; numpy.show_config()" &&
-    #    sde -spr -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_umath* \
-    #                                 $NUMPY_SITE/numpy/_core/tests/test_ufunc.py \
-    #                                 $NUMPY_SITE/numpy/linalg/tests/test_*
+    - name: linalg/ufunc/umath tests (SPR)
+      run: |
+        export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
+        export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
+        cd build-install &&
+        sde -spr -- python -c "import numpy; numpy.show_config()" &&
+        sde -spr -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_umath* \
+                                     $NUMPY_SITE/numpy/_core/tests/test_ufunc.py \
+                                     $NUMPY_SITE/numpy/linalg/tests/test_*
 
