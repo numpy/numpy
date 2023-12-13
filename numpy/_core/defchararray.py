@@ -710,7 +710,6 @@ def encode(a, encoding=None, errors=None):
         _vec_string(a, object_, 'encode', _clean_args(encoding, errors)),
         numpy.bytes_(b''))
 
-
 def _endswith_dispatcher(a, suffix, start=None, end=None):
     return (a,)
 
