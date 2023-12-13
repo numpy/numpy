@@ -939,7 +939,7 @@ def lagval2d(x, y, c):
 
     Examples
     --------
-    >>> from numpy.polynomial.laguerre import lagval2
+    >>> from numpy.polynomial.laguerre import lagval2d
     >>> c = [[1, 2],[3, 4]]
     >>> lagval2d(1, 1, c)
     1.0
