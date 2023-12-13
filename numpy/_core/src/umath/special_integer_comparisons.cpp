@@ -99,6 +99,7 @@ get_min_max(int typenum, long long *min, unsigned long long *max)
             *max = NPY_MAX_ULONGLONG;
             break;
         default:
+            *max = 0;
             assert(0);
     }
 }

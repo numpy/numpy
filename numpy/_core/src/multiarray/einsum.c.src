@@ -402,11 +402,6 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
         }
         /* A repeated label, find the original one and merge them. */
         else {
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wuninitialized"
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#endif
             int i = icombinemap[idim + label];
 
             icombinemap[idim] = -1;
@@ -419,9 +414,6 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
                 return NULL;
             }
             new_strides[i] += stride;
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif
         }
     }
 

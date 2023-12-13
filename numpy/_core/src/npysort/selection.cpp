@@ -518,7 +518,7 @@ _get_partition_func(int type, NPY_SELECTKIND which)
     npy_intp i;
     npy_intp ntypes = partition_t::map.size();
 
-    if (which >= NPY_NSELECTS) {
+    if ((int)which < 0 || (int)which >= NPY_NSELECTS) {
         return NULL;
     }
     for (i = 0; i < ntypes; i++) {
