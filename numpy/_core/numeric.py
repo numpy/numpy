@@ -1862,6 +1862,13 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
            [1, 2, 3],
            [2, 3, 4]])
 
+    >>> def my_func(i, j):
+    >>>    return i + j
+    >>> np.fromfunction(np.vectorize(my_func), (3, 3), dtype=float)
+    array([[0., 1., 2.],
+        [1., 2., 3.],
+        [2., 3., 4.]])
+
     """
     if like is not None:
         return _fromfunction_with_like(
