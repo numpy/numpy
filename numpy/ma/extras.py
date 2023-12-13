@@ -1385,7 +1385,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         return flag[indx][rev_idx]
 
 
-def isin(ar1, ar2, assume_unique=False, invert=False):
+def isin(element, test_elements, assume_unique=False, invert=False):
     """
     Calculates `element in test_elements`, broadcasting over
     `element` only.
@@ -1405,16 +1405,16 @@ def isin(ar1, ar2, assume_unique=False, invert=False):
     Examples
     --------
     >>> import numpy.ma as ma
-    >>> ar1 = np.ma.array([1, 2, 3, 4, 5, 6])
-    >>> ar2 = [0, 2]
-    >>> np.ma.isin(ar1, ar2)
+    >>> element = np.ma.array([1, 2, 3, 4, 5, 6])
+    >>> test_elements = [0, 2]
+    >>> np.ma.isin(element, test_elements)
     masked_array(data=[False,  True, False, False, False, False],
                  mask=False,
            fill_value=True)
 
     """
-    element = ma.asarray(ar1)
-    return in1d(ar1, ar2, assume_unique=assume_unique,
+    element = ma.asarray(element)
+    return in1d(element, test_elements, assume_unique=assume_unique,
                 invert=invert).reshape(element.shape)
 
 

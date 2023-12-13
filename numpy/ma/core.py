@@ -564,7 +564,6 @@ def get_fill_value(a):
     """
     Return the filling value of a, if any.  Otherwise, returns the
     default filling value for that type.
-    
     """
     if isinstance(a, MaskedArray):
         result = a.fill_value
@@ -5540,11 +5539,6 @@ class MaskedArray(ndarray):
         --------
         numpy.ndarray.round : corresponding function for ndarrays
         numpy.around : equivalent function
-        
-        Notes
-        -----
-        DeprecationWarning: `round_` is deprecated as of NumPy 1.25.0, 
-        and will be removed in NumPy 2.0. Please use `round` instead.
 
         Examples
         --------
@@ -7870,6 +7864,11 @@ def round_(a, decimals=0, out=None):
     complex numbers are rounded separately. Nothing is done if the
     array is not of float type and 'decimals' is greater than or equal
     to 0.
+
+    Notes
+    -----
+    DeprecationWarning: `round_` is deprecated as of NumPy 1.25.0, 
+    and will be removed in NumPy 2.0. Please use `round` instead.
 
     Parameters
     ----------
