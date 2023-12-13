@@ -1,7 +1,6 @@
 #ifndef _RANDOMDGEN__SFC64_H_
 #define _RANDOMDGEN__SFC64_H_
 
-#include "numpy/npy_common.h"
 #include <inttypes.h>
 #ifdef _WIN32
 #include <stdlib.h>

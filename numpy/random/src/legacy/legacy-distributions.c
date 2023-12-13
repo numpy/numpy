@@ -113,7 +113,7 @@ double legacy_chisquare(aug_bitgen_t *aug_state, double df) {
 }
 
 double legacy_rayleigh(bitgen_t *bitgen_state, double mode) {
-  return mode * sqrt(-2.0 * npy_log1p(-next_double(bitgen_state)));
+  return mode * sqrt(-2.0 * log1p(-next_double(bitgen_state)));
 }
 
 double legacy_noncentral_chisquare(aug_bitgen_t *aug_state, double df,
@@ -130,8 +130,8 @@ double legacy_noncentral_chisquare(aug_bitgen_t *aug_state, double df,
     const long i = random_poisson(aug_state->bit_generator, nonc / 2.0);
     out = legacy_chisquare(aug_state, df + 2 * i);
     /* Insert nan guard here to avoid changing the stream */
-    if (npy_isnan(nonc)){
-      return NPY_NAN;
+    if (isnan(nonc)){
+      return NAN;
     } else {
     return out;
     }
@@ -393,7 +393,7 @@ int64_t legacy_random_zipf(bitgen_t *bitgen_state, double a) {
 
 
 static long legacy_geometric_inversion(bitgen_t *bitgen_state, double p) {
-  return (long)ceil(npy_log1p(-next_double(bitgen_state)) / log(1 - p));
+  return (long)ceil(log1p(-next_double(bitgen_state)) / log(1 - p));
 }
 
 int64_t legacy_random_geometric(bitgen_t *bitgen_state, double p) {
@@ -405,7 +405,7 @@ int64_t legacy_random_geometric(bitgen_t *bitgen_state, double p) {
 }
 
 void legacy_random_multinomial(bitgen_t *bitgen_state, RAND_INT_TYPE n,
-                               RAND_INT_TYPE *mnix, double *pix, npy_intp d,
+                               RAND_INT_TYPE *mnix, double *pix, Py_ssize_t d,
                                binomial_t *binomial) {
   return random_multinomial(bitgen_state, n, mnix, pix, d, binomial);
 }
@@ -415,8 +415,8 @@ double legacy_vonmises(bitgen_t *bitgen_state, double mu, double kappa) {
   double U, V, W, Y, Z;
   double result, mod;
   int neg;
-  if (npy_isnan(kappa)) {
-    return NPY_NAN;
+  if (isnan(kappa)) {
+    return NAN;
   }
   if (kappa < 1e-8) {
     return M_PI * (2 * next_double(bitgen_state) - 1);

@@ -14,32 +14,30 @@ _numpy_abs = run_command(py3, ['-c',
                'import os; os.chdir(".."); import numpy; print(os.path.abspath(numpy.get_include() + "../../.."))'],
                          check: true).stdout().strip()
 
-npymath_path = _numpy_abs / '_core' / 'lib'
 npy_include_path = _numpy_abs / '_core' / 'include'
-npyrandom_path = _numpy_abs / 'random' / 'lib'
-npymath_lib = cc.find_library('npymath', dirs: npymath_path)
-npyrandom_lib = cc.find_library('npyrandom', dirs: npyrandom_path)
+libnpyrandom_sources = [
+  _numpy_abs / 'random/src/distributions/logfactorial.c',
+  _numpy_abs / 'random/src/distributions/distributions.c',
+  _numpy_abs / 'random/src/distributions/random_mvhg_count.c',
+  _numpy_abs / 'random/src/distributions/random_mvhg_marginals.c',
+  _numpy_abs / 'random/src/distributions/random_hypergeometric.c',
+]
+libnpyrandom_dep = declare_dependency(sources: libnpyrandom_sources, include_directories: npy_include_path)
 
 py3.extension_module(
     'extending_distributions',
     'extending_distributions.pyx',
-    install: false,
-    include_directories: [npy_include_path],
-    dependencies: [npyrandom_lib, npymath_lib],
+    dependencies: [libnpyrandom_dep],
 )
 py3.extension_module(
     'extending',
     'extending.pyx',
-    install: false,
-    include_directories: [npy_include_path],
-    dependencies: [npyrandom_lib, npymath_lib],
+    dependencies: [libnpyrandom_dep],
 )
 py3.extension_module(
     'extending_cpp',
     'extending_distributions.pyx',
-    install: false,
     override_options : ['cython_language=cpp'],
     cython_args: ['--module-name', 'extending_cpp'],
-    include_directories: [npy_include_path],
-    dependencies: [npyrandom_lib, npymath_lib],
+    dependencies: [libnpyrandom_dep],
 )

@@ -126,6 +126,8 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 #ifndef RK_DEV_URANDOM
 #define RK_DEV_URANDOM "/dev/urandom"
@@ -247,27 +249,27 @@ unsigned long rk_random(rk_state *state) {
 /*
  * Returns an unsigned 64 bit random integer.
  */
-static inline npy_uint64 rk_uint64(rk_state *state) {
-  npy_uint64 upper = (npy_uint64)rk_random(state) << 32;
-  npy_uint64 lower = (npy_uint64)rk_random(state);
+static inline uint64_t rk_uint64(rk_state *state) {
+  uint64_t upper = (uint64_t)rk_random(state) << 32;
+  uint64_t lower = (uint64_t)rk_random(state);
   return upper | lower;
 }
 
 /*
  * Returns an unsigned 32 bit random integer.
  */
-static inline npy_uint32 rk_uint32(rk_state *state) {
-  return (npy_uint32)rk_random(state);
+static inline uint32_t rk_uint32(rk_state *state) {
+  return (uint32_t)rk_random(state);
 }
 
 /*
- * Fills an array with cnt random npy_uint64 between off and off + rng
+ * Fills an array with cnt random uint64_t between off and off + rng
  * inclusive. The numbers wrap if rng is sufficiently large.
  */
-void rk_random_uint64(npy_uint64 off, npy_uint64 rng, npy_intp cnt,
-                      npy_uint64 *out, rk_state *state) {
-  npy_uint64 val, mask = rng;
-  npy_intp i;
+void rk_random_uint64(uint64_t off, uint64_t rng, Py_ssize_t cnt,
+                      uint64_t *out, rk_state *state) {
+  uint64_t val, mask = rng;
+  Py_ssize_t i;
 
   if (rng == 0) {
     for (i = 0; i < cnt; i++) {
@@ -297,13 +299,13 @@ void rk_random_uint64(npy_uint64 off, npy_uint64 rng, npy_intp cnt,
 }
 
 /*
- * Fills an array with cnt random npy_uint32 between off and off + rng
+ * Fills an array with cnt random uint32_t between off and off + rng
  * inclusive. The numbers wrap if rng is sufficiently large.
  */
-void rk_random_uint32(npy_uint32 off, npy_uint32 rng, npy_intp cnt,
-                      npy_uint32 *out, rk_state *state) {
-  npy_uint32 val, mask = rng;
-  npy_intp i;
+void rk_random_uint32(uint32_t off, uint32_t rng, Py_ssize_t cnt,
+                      uint32_t *out, rk_state *state) {
+  uint32_t val, mask = rng;
+  Py_ssize_t i;
 
   if (rng == 0) {
     for (i = 0; i < cnt; i++) {
@@ -327,14 +329,14 @@ void rk_random_uint32(npy_uint32 off, npy_uint32 rng, npy_intp cnt,
 }
 
 /*
- * Fills an array with cnt random npy_uint16 between off and off + rng
+ * Fills an array with cnt random uint16_t between off and off + rng
  * inclusive. The numbers wrap if rng is sufficiently large.
  */
-void rk_random_uint16(npy_uint16 off, npy_uint16 rng, npy_intp cnt,
-                      npy_uint16 *out, rk_state *state) {
-  npy_uint16 val, mask = rng;
-  npy_intp i;
-  npy_uint32 buf;
+void rk_random_uint16(uint16_t off, uint16_t rng, Py_ssize_t cnt,
+                      uint16_t *out, rk_state *state) {
+  uint16_t val, mask = rng;
+  Py_ssize_t i;
+  uint32_t buf;
   int bcnt = 0;
 
   if (rng == 0) {
@@ -359,21 +361,21 @@ void rk_random_uint16(npy_uint16 off, npy_uint16 rng, npy_intp cnt,
         buf >>= 16;
         bcnt--;
       }
-      val = (npy_uint16)buf & mask;
+      val = (uint16_t)buf & mask;
     } while (val > rng);
     out[i] = off + val;
   }
 }
 
 /*
- * Fills an array with cnt random npy_uint8 between off and off + rng
+ * Fills an array with cnt random uint8_t between off and off + rng
  * inclusive. The numbers wrap if rng is sufficiently large.
  */
-void rk_random_uint8(npy_uint8 off, npy_uint8 rng, npy_intp cnt, npy_uint8 *out,
+void rk_random_uint8(uint8_t off, uint8_t rng, Py_ssize_t cnt, uint8_t *out,
                      rk_state *state) {
-  npy_uint8 val, mask = rng;
-  npy_intp i;
-  npy_uint32 buf;
+  uint8_t val, mask = rng;
+  Py_ssize_t i;
+  uint32_t buf;
   int bcnt = 0;
 
   if (rng == 0) {
@@ -397,20 +399,20 @@ void rk_random_uint8(npy_uint8 off, npy_uint8 rng, npy_intp cnt, npy_uint8 *out,
         buf >>= 8;
         bcnt--;
       }
-      val = (npy_uint8)buf & mask;
+      val = (uint8_t)buf & mask;
     } while (val > rng);
     out[i] = off + val;
   }
 }
 
 /*
- * Fills an array with cnt random npy_bool between off and off + rng
+ * Fills an array with cnt random bool between off and off + rng
  * inclusive.
  */
-void rk_random_bool(npy_bool off, npy_bool rng, npy_intp cnt, npy_bool *out,
+void rk_random_bool(bool off, bool rng, Py_ssize_t cnt, bool *out,
                     rk_state *state) {
-  npy_intp i;
-  npy_uint32 buf;
+  Py_ssize_t i;
+  uint32_t buf;
   int bcnt = 0;
 
   if (rng == 0) {

@@ -59,8 +59,10 @@
 #ifndef _RANDOMKIT_
 #define _RANDOMKIT_
 
-#include <numpy/npy_common.h>
+#include <Python.h>
 #include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 #define RK_STATE_LEN 624
 
@@ -148,39 +150,39 @@ extern unsigned long rk_ulong(rk_state *state);
 extern unsigned long rk_interval(unsigned long max, rk_state *state);
 
 /*
- * Fills an array with cnt random npy_uint64 between off and off + rng
+ * Fills an array with cnt random uint64_t between off and off + rng
  * inclusive. The numbers wrap if rng is sufficiently large.
  */
-extern void rk_random_uint64(npy_uint64 off, npy_uint64 rng, npy_intp cnt,
-                             npy_uint64 *out, rk_state *state);
+extern void rk_random_uint64(uint64_t off, uint64_t rng, Py_ssize_t cnt,
+                             uint64_t *out, rk_state *state);
 
 /*
- * Fills an array with cnt random npy_uint32 between off and off + rng
+ * Fills an array with cnt random uint32_t between off and off + rng
  * inclusive. The numbers wrap if rng is sufficiently large.
  */
-extern void rk_random_uint32(npy_uint32 off, npy_uint32 rng, npy_intp cnt,
-                             npy_uint32 *out, rk_state *state);
+extern void rk_random_uint32(uint32_t off, uint32_t rng, Py_ssize_t cnt,
+                             uint32_t *out, rk_state *state);
 
 /*
- * Fills an array with cnt random npy_uint16 between off and off + rng
+ * Fills an array with cnt random int16_t between off and off + rng
  * inclusive. The numbers wrap if rng is sufficiently large.
  */
-extern void rk_random_uint16(npy_uint16 off, npy_uint16 rng, npy_intp cnt,
-                             npy_uint16 *out, rk_state *state);
+extern void rk_random_uint16(int16_t off, int16_t rng, Py_ssize_t cnt,
+                             int16_t *out, rk_state *state);
 
 /*
- * Fills an array with cnt random npy_uint8 between off and off + rng
+ * Fills an array with cnt random uint8_t between off and off + rng
  * inclusive. The numbers wrap if rng is sufficiently large.
  */
-extern void rk_random_uint8(npy_uint8 off, npy_uint8 rng, npy_intp cnt,
-                            npy_uint8 *out, rk_state *state);
+extern void rk_random_uint8(uint8_t off, uint8_t rng, Py_ssize_t cnt,
+                            uint8_t *out, rk_state *state);
 
 /*
- * Fills an array with cnt random npy_bool between off and off + rng
- * inclusive. It is assumed that npy_bool is the same size as npy_uint8.
+ * Fills an array with cnt random bool between off and off + rng
+ * inclusive. It is assumed that bool is the same size as uint8_t.
  */
-extern void rk_random_bool(npy_bool off, npy_bool rng, npy_intp cnt,
-                           npy_bool *out, rk_state *state);
+extern void rk_random_bool(bool off, bool rng, Py_ssize_t cnt,
+                           bool *out, rk_state *state);
 
 /*
  * Returns a random double between 0.0 and 1.0, 1.0 excluded.

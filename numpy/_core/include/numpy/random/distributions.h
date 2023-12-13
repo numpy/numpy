@@ -6,12 +6,11 @@ extern "C" {
 #endif
 
 #include <Python.h>
-#include "numpy/npy_common.h"
+#include <math.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "numpy/npy_math.h"
 #include "numpy/random/bitgen.h"
 
 /*
@@ -65,8 +64,8 @@ typedef struct s_binomial_t {
 
 DECLDIR float random_standard_uniform_f(bitgen_t *bitgen_state);
 DECLDIR double random_standard_uniform(bitgen_t *bitgen_state);
-DECLDIR void random_standard_uniform_fill(bitgen_t *, npy_intp, double *);
-DECLDIR void random_standard_uniform_fill_f(bitgen_t *, npy_intp, float *);
+DECLDIR void random_standard_uniform_fill(bitgen_t *, Py_ssize_t, double *);
+DECLDIR void random_standard_uniform_fill_f(bitgen_t *, Py_ssize_t, float *);
 
 DECLDIR int64_t random_positive_int64(bitgen_t *bitgen_state);
 DECLDIR int32_t random_positive_int32(bitgen_t *bitgen_state);
@@ -75,15 +74,15 @@ DECLDIR uint64_t random_uint(bitgen_t *bitgen_state);
 
 DECLDIR double random_standard_exponential(bitgen_t *bitgen_state);
 DECLDIR float random_standard_exponential_f(bitgen_t *bitgen_state);
-DECLDIR void random_standard_exponential_fill(bitgen_t *, npy_intp, double *);
-DECLDIR void random_standard_exponential_fill_f(bitgen_t *, npy_intp, float *);
-DECLDIR void random_standard_exponential_inv_fill(bitgen_t *, npy_intp, double *);
-DECLDIR void random_standard_exponential_inv_fill_f(bitgen_t *, npy_intp, float *);
+DECLDIR void random_standard_exponential_fill(bitgen_t *, Py_ssize_t, double *);
+DECLDIR void random_standard_exponential_fill_f(bitgen_t *, Py_ssize_t, float *);
+DECLDIR void random_standard_exponential_inv_fill(bitgen_t *, Py_ssize_t, double *);
+DECLDIR void random_standard_exponential_inv_fill_f(bitgen_t *, Py_ssize_t, float *);
 
 DECLDIR double random_standard_normal(bitgen_t *bitgen_state);
 DECLDIR float random_standard_normal_f(bitgen_t *bitgen_state);
-DECLDIR void random_standard_normal_fill(bitgen_t *, npy_intp, double *);
-DECLDIR void random_standard_normal_fill_f(bitgen_t *, npy_intp, float *);
+DECLDIR void random_standard_normal_fill(bitgen_t *, Py_ssize_t, double *);
+DECLDIR void random_standard_normal_fill_f(bitgen_t *, Py_ssize_t, float *);
 DECLDIR double random_standard_gamma(bitgen_t *bitgen_state, double shape);
 DECLDIR float random_standard_gamma_f(bitgen_t *bitgen_state, float shape);
 
@@ -149,29 +148,29 @@ DECLDIR uint8_t random_buffered_bounded_uint8(bitgen_t *bitgen_state, uint8_t of
                                               uint8_t rng, uint8_t mask,
                                               bool use_masked, int *bcnt,
                                               uint32_t *buf);
-DECLDIR npy_bool random_buffered_bounded_bool(bitgen_t *bitgen_state, npy_bool off,
-                                              npy_bool rng, npy_bool mask,
+DECLDIR bool random_buffered_bounded_bool(bitgen_t *bitgen_state, bool off,
+                                              bool rng, bool mask,
                                               bool use_masked, int *bcnt,
                                               uint32_t *buf);
 
 DECLDIR void random_bounded_uint64_fill(bitgen_t *bitgen_state, uint64_t off,
-                                        uint64_t rng, npy_intp cnt,
+                                        uint64_t rng, Py_ssize_t cnt,
                                         bool use_masked, uint64_t *out);
 DECLDIR void random_bounded_uint32_fill(bitgen_t *bitgen_state, uint32_t off,
-                                        uint32_t rng, npy_intp cnt,
+                                        uint32_t rng, Py_ssize_t cnt,
                                         bool use_masked, uint32_t *out);
 DECLDIR void random_bounded_uint16_fill(bitgen_t *bitgen_state, uint16_t off,
-                                        uint16_t rng, npy_intp cnt,
+                                        uint16_t rng, Py_ssize_t cnt,
                                         bool use_masked, uint16_t *out);
 DECLDIR void random_bounded_uint8_fill(bitgen_t *bitgen_state, uint8_t off,
-                                       uint8_t rng, npy_intp cnt,
+                                       uint8_t rng, Py_ssize_t cnt,
                                        bool use_masked, uint8_t *out);
-DECLDIR void random_bounded_bool_fill(bitgen_t *bitgen_state, npy_bool off,
-                                      npy_bool rng, npy_intp cnt,
-                                      bool use_masked, npy_bool *out);
+DECLDIR void random_bounded_bool_fill(bitgen_t *bitgen_state, bool off,
+                                      bool rng, Py_ssize_t cnt,
+                                      bool use_masked, bool *out);
 
 DECLDIR void random_multinomial(bitgen_t *bitgen_state, RAND_INT_TYPE n, RAND_INT_TYPE *mnix,
-                                double *pix, npy_intp d, binomial_t *binomial);
+                                double *pix, Py_ssize_t d, binomial_t *binomial);
 
 /* multivariate hypergeometric, "count" method */
 DECLDIR int random_multivariate_hypergeometric_count(bitgen_t *bitgen_state,

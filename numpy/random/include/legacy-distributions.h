@@ -45,7 +45,7 @@ extern int64_t legacy_random_poisson(bitgen_t *bitgen_state, double lam);
 extern int64_t legacy_random_zipf(bitgen_t *bitgen_state, double a);
 extern int64_t legacy_random_geometric(bitgen_t *bitgen_state, double p);
 void legacy_random_multinomial(bitgen_t *bitgen_state, RAND_INT_TYPE n,
-                               RAND_INT_TYPE *mnix, double *pix, npy_intp d,
+                               RAND_INT_TYPE *mnix, double *pix, Py_ssize_t d,
                                binomial_t *binomial);
 
 #endif
