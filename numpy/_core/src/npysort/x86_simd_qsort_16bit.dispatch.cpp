@@ -25,12 +25,12 @@ template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(Half *arr, npy_intp num, npy_int
 
 template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(uint16_t *arr, npy_intp num, npy_intp kth)
 {
-    avx512_qselect(arr, num, kth);
+    avx512_qselect(arr, kth, num);
 }
 
 template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(int16_t *arr, npy_intp num, npy_intp kth)
 {
-    avx512_qselect(arr, num, kth);
+    avx512_qselect(arr, kth, num);
 }
 
 /*
