@@ -1079,10 +1079,10 @@ def istitle(a):
 
     Examples
     --------
-    >>> np.char.istitle("Ghc")
+    >>> np.char.istitle("Numpy Is Great")
     array(True)
 
-    >>> np.char.istitle("GHC")
+    >>> np.char.istitle("Numpy is great")
     array(False)
     
     """
