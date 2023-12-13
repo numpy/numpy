@@ -1799,10 +1799,23 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     ----------
     function : callable
         The function is called with N parameters, where N is the rank of
-        `shape`.  Each parameter represents the coordinates of the array
-        varying along a specific axis.  For example, if `shape`
-        were ``(2, 2)``, then the parameters would be
-        ``array([[0, 0], [1, 1]])`` and ``array([[0, 1], [0, 1]])``
+        `shape`. Each parameter represents the coordinates of the array
+        varying along a specific axis. For example, if `shape` were
+        ``(2, 2)``, then the parameters would be arrays representing
+        coordinates along each axis, like ``array([[0, 0], [1, 1]])``
+        and ``array([[0, 1], [0, 1]])``.
+
+        In the provided examples, `i` and `j` represent coordinates along
+        the first and second axes, respectively.
+
+        If your function expects integer coordinates and you find the array
+        input format frustrating, you can use `numpy.vectorize` to create a
+        vectorized version of your function. For example:
+        ```python
+        g = numpy.vectorize(your_function)
+        result = numpy.fromfunction(g, shape)
+        ```
+
     shape : (N,) tuple of ints
         Shape of the output array, which also determines the shape of
         the coordinate arrays passed to `function`.
@@ -1818,7 +1831,7 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     fromfunction : any
         The result of the call to `function` is passed back directly.
         Therefore the shape of `fromfunction` is completely determined by
-        `function`.  If `function` returns a scalar value, the shape of
+        `function`. If `function` returns a scalar value, the shape of
         `fromfunction` would not match the `shape` parameter.
 
     See Also
