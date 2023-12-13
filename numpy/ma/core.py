@@ -7865,11 +7865,6 @@ def round_(a, decimals=0, out=None):
     array is not of float type and 'decimals' is greater than or equal
     to 0.
 
-    Notes
-    -----
-    DeprecationWarning: `round_` is deprecated as of NumPy 1.25.0, 
-    and will be removed in NumPy 2.0. Please use `round` instead.
-
     Parameters
     ----------
     decimals : int
