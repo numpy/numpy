@@ -163,7 +163,7 @@ def not_equal(x1, x2):
     --------
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.not_equal(x1, 'b')
-    array([True, False,  True])
+    array([ True, False,  True])
     
     """
     return compare_chararrays(x1, x2, '!=', True)
