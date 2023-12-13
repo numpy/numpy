@@ -380,7 +380,7 @@ def multiply(a, i):
     Examples
     --------
     >>> a = np.array(["a", "b", "c"])
-    >>> np.char.multiply(x, 3)
+    >>> np.char.multiply(a, 3)
     array(['aaa', 'bbb', 'ccc'], dtype='<U3')
     >>> i = np.array([1, 2, 3])
     >>> np.char.multiply(a, i)
@@ -621,7 +621,7 @@ def decode(a, encoding=None, errors=None):
     ...               b'\x81\x82\xc2\xc1\xc2\x82\x81'])
     >>> c
     array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
-    ...    b'\x81\x82\xc2\xc1\xc2\x82\x81'], dtype='|S7')
+           b'\x81\x82\xc2\xc1\xc2\x82\x81'], dtype='|S7')
     >>> np.char.decode(c, encoding='cp037')
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
 
@@ -1184,15 +1184,15 @@ def lstrip(a, chars=None):
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
-    The 'a' variable is unstripped from c[1] because of leading whitespace.
+    # The 'a' variable is unstripped from c[1] because of leading whitespace.
     >>> np.char.lstrip(c, 'a')
     array(['AaAaA', '  aA  ', 'bBABba'], dtype='<U7')
     >>> np.char.lstrip(c, 'A') # leaves c unchanged
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
     >>> (np.char.lstrip(c, ' ') == np.char.lstrip(c, '')).all()
-    False
+    np.False_
     >>> (np.char.lstrip(c, ' ') == np.char.lstrip(c)).all()
-    True
+    np.True_
 
     """
     if chars is None:
@@ -1541,10 +1541,10 @@ def split(a, sep=None, maxsplit=None):
     --------
     >>> x = np.array("Numpy is nice!")
     >>> np.char.split(x, " ")
-    array([list(['Numpy', 'is', 'nice!'])], dtype=object)
+    array(list(['Numpy', 'is', 'nice!']), dtype=object)
 
     >>> np.char.split(x, " ", 1)
-    array([list(['Numpy', 'is nice!'])], dtype=object)
+    array(list(['Numpy', 'is nice!']), dtype=object)
 
     See Also
     --------
@@ -1659,7 +1659,7 @@ def strip(a, chars=None):
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
     >>> np.char.strip(c)
     array(['aAaAaA', 'aA', 'abBABba'], dtype='<U7')
-    'a' unstripped from c[1] because of leading whitespace.
+    # 'a' unstripped from c[1] because of leading whitespace.
     >>> np.char.strip(c, 'a')
     array(['AaAaA', '  aA  ', 'bBABb'], dtype='<U7')
     # 'A' unstripped from c[1] because of trailing whitespace.

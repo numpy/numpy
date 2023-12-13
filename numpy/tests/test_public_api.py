@@ -319,8 +319,6 @@ def test_all_modules_are_expected():
 # Stuff that clearly shouldn't be in the API and is detected by the next test
 # below
 SKIP_LIST_2 = [
-    'numpy.math',
-    'numpy.lib.emath',
     'numpy.lib.math',
     'numpy.matlib.char',
     'numpy.matlib.rec',
