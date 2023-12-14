@@ -230,7 +230,7 @@ def less_equal(x1, x2):
     --------
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.less_equal(x1, 'b')
-    array([True,  True, False])
+    array([ True,  True, False])
     
     """
     return compare_chararrays(x1, x2, '<=', True)
@@ -1048,7 +1048,7 @@ def isspace(a):
 
     >>> a = np.array([' ', '\t', '\n'])
     >>> np.char.isspace(a)
-    array([True, True, True])
+    array([ True, True, True])
     
     """
     return numpy._core.umath.isspace(a)
