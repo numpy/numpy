@@ -796,8 +796,8 @@ def expandtabs(a, tabsize=8):
     Examples
     --------
     >>> a = np.array(['\tHello\t\tworld\t'])
-    >>> np.char.expandtabs(a, tabsize=8)
-    array(['        Hello           world   '], dtype='<U32')
+    >>> np.char.expandtabs(a, tabsize=1)
+    array([' Hello  world '], dtype='<U14')
     
     """
     return _to_bytes_or_str_array(
