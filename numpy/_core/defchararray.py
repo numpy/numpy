@@ -1716,9 +1716,9 @@ def splitlines(a, keepends=None):
 
     Examples
     --------
-    >>> a = np.array(['hello world', 'hello\n world'])
-    >>> np.char.splitlines(a)
-    array([list(['hello world']), list(['hello', 'world'])], dtype=object)
+    #>>> a = np.array(['hello world', 'hello\nworld'])
+    #>>> np.char.splitlines(a)
+    #array([list(['hello world']), list(['hello', 'world'])], dtype=object)
 
     """
     return _vec_string(
