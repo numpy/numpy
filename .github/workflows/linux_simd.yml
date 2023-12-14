@@ -190,14 +190,6 @@ jobs:
         sde -knm -- python -c "import numpy; numpy.show_config()" &&
         sde -knm -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_simd*
 
-    - name: SIMD tests (SPR)
-      run: |
-        export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
-        export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
-        cd build-install &&
-        sde -spr -- python -c "import numpy; numpy.show_config()" &&
-        sde -spr -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_simd*
-
     - name: linalg/ufunc/umath tests (TGL)
       run: |
         export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
@@ -243,6 +235,14 @@ jobs:
     - name: Meson Log
       if: always()
       run: cat build/meson-logs/meson-log.txt
+
+    - name: SIMD tests (SPR)
+      run: |
+        export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
+        export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
+        cd build-install &&
+        sde -spr -- python -c "import numpy; numpy.show_config()" &&
+        sde -spr -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_simd*
 
     - name: linalg/ufunc/umath tests on Intel SPR
       run: |
