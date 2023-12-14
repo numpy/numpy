@@ -331,6 +331,34 @@ def norm(
     keepdims: bool = ...,
 ) -> Any: ...
 
+@overload
+def matrix_norm(
+    x: ArrayLike,
+    ord: None | float | L["fro", "nuc"] = ...,
+    keepdims: bool = ...,
+) -> floating[Any]: ...
+@overload
+def matrix_norm(
+    x: ArrayLike,
+    ord: None | float | L["fro", "nuc"] = ...,
+    keepdims: bool = ...,
+) -> Any: ...
+
+@overload
+def vector_norm(
+    x: ArrayLike,
+    axis: None = ...,
+    ord: None | float = ...,
+    keepdims: bool = ...,
+) -> floating[Any]: ...
+@overload
+def vector_norm(
+    x: ArrayLike,
+    axis: SupportsInt | SupportsIndex | tuple[int, ...] = ...,
+    ord: None | float = ...,
+    keepdims: bool = ...,
+) -> Any: ...
+
 # TODO: Returns a scalar or array
 def multi_dot(
     arrays: Iterable[_ArrayLikeComplex_co | _ArrayLikeObject_co | _ArrayLikeTD64_co],
