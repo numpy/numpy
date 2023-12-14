@@ -2143,7 +2143,7 @@ cdef class Generator:
         >>> import matplotlib.pyplot as plt
         >>> def weibull(x, n, a):
         ...     return (a / n) * (x / n)**(a - 1) * np.exp(-(x / n)**a)
-        >>> count, bins, ignored = plt.hist(rng.weibull(5.,1000))
+        >>> count, bins, ignored = plt.hist(rng.weibull(5., 1000))
         >>> x = np.linspace(0, 2, 1000)
         >>> bin_spacing = np.mean(np.diff(bins))
         >>> plt.plot(x, weibull(x, 1., 5.) * bin_spacing * s.size, label='Weibull PDF')
@@ -3580,15 +3580,15 @@ cdef class Generator:
         >>> a = .6
         >>> s = np.random.default_rng().logseries(a, 10000)
         >>> import matplotlib.pyplot as plt
-        >>> bins = np.arange(-.5, max(s)+.5 )
+        >>> bins = np.arange(-.5, max(s) + .5 )
         >>> count, bins, ignored = plt.hist(s, bins=bins, label='Sample count')
 
         #   plot against distribution
 
         >>> def logseries(k, p):
         ...     return -p**k/(k*np.log(1-p))
-        >>> centres = np.arange(0)
-        >>> plt.plot(bins, logseries(bins, a) * s.size, 'r', label='logseries PMF')
+        >>> centres = np.arange(1, max(s) + 1)
+        >>> plt.plot(centres, logseries(centres, a) * s.size, 'r', label='logseries PMF')
         >>> plt.legend()
         >>> plt.show()
 
