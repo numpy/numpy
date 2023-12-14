@@ -11,7 +11,6 @@ inc_dir = os.path.join(np.get_include(), 'numpy')
 
 # Basic numpy types
 ffi.cdef('''
-    typedef intptr_t npy_intp;
     typedef unsigned char npy_bool;
 
 ''')

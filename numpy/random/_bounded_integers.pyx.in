@@ -31,23 +31,23 @@ cdef extern from "numpy/random/distributions.h":
                                              np.npy_bool mask, bint use_masked,
                                              int *bcnt, uint32_t *buf) nogil
     void random_bounded_uint64_fill(bitgen_t *bitgen_state,
-                                    uint64_t off, uint64_t rng, np.npy_intp cnt,
+                                    uint64_t off, uint64_t rng, Py_ssize_t cnt,
                                     bint use_masked,
                                     uint64_t *out) nogil
     void random_bounded_uint32_fill(bitgen_t *bitgen_state,
-                                    uint32_t off, uint32_t rng, np.npy_intp cnt,
+                                    uint32_t off, uint32_t rng, Py_ssize_t cnt,
                                     bint use_masked,
                                     uint32_t *out) nogil
     void random_bounded_uint16_fill(bitgen_t *bitgen_state,
-                                    uint16_t off, uint16_t rng, np.npy_intp cnt,
+                                    uint16_t off, uint16_t rng, Py_ssize_t cnt,
                                     bint use_masked,
                                     uint16_t *out) nogil
     void random_bounded_uint8_fill(bitgen_t *bitgen_state,
-                                   uint8_t off, uint8_t rng, np.npy_intp cnt,
+                                   uint8_t off, uint8_t rng, Py_ssize_t cnt,
                                    bint use_masked,
                                    uint8_t *out) nogil
     void random_bounded_bool_fill(bitgen_t *bitgen_state,
-                                  np.npy_bool off, np.npy_bool rng, np.npy_intp cnt,
+                                  np.npy_bool off, np.npy_bool rng, Py_ssize_t cnt,
                                   bint use_masked,
                                   np.npy_bool *out) nogil
 

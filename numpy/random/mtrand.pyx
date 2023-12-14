@@ -49,7 +49,7 @@ cdef extern from "numpy/random/distributions.h":
 
     ctypedef s_binomial_t binomial_t
 
-    void random_standard_uniform_fill(bitgen_t* bitgen_state, np.npy_intp cnt, double *out) nogil
+    void random_standard_uniform_fill(bitgen_t* bitgen_state, Py_ssize_t cnt, double *out) nogil
     int64_t random_positive_int(bitgen_t *bitgen_state) nogil
     double random_uniform(bitgen_t *bitgen_state, double lower, double range) nogil
     double random_laplace(bitgen_t *bitgen_state, double loc, double scale) nogil
@@ -95,7 +95,7 @@ cdef extern from "include/legacy-distributions.h":
     int64_t legacy_random_poisson(bitgen_t *bitgen_state, double lam) nogil
     int64_t legacy_random_zipf(bitgen_t *bitgen_state, double a) nogil
     int64_t legacy_random_geometric(bitgen_t *bitgen_state, double p) nogil
-    void legacy_random_multinomial(bitgen_t *bitgen_state, long n, long *mnix, double *pix, np.npy_intp d, binomial_t *binomial) nogil
+    void legacy_random_multinomial(bitgen_t *bitgen_state, long n, long *mnix, double *pix, Py_ssize_t d, binomial_t *binomial) nogil
     double legacy_standard_cauchy(aug_bitgen_t *state) nogil
     double legacy_beta(aug_bitgen_t *aug_state, double a, double b) nogil
     double legacy_f(aug_bitgen_t *aug_state, double dfnum, double dfden) nogil
