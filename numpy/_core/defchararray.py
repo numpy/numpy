@@ -1043,12 +1043,12 @@ def isspace(a):
 
     Examples
     --------
-    >>> np.char.isspace("GHC")
-    array(False)
+    >>> np.char.isspace(["GHC", "GHC "])
+    array([False, False])
 
-    >>> a = np.array([' ', '\t', '\n'])
+    >>> a = np.array([' ', '\t'])
     >>> np.char.isspace(a)
-    array([ True, True, True])
+    array([ True,  True])
     
     """
     return numpy._core.umath.isspace(a)
@@ -1713,12 +1713,6 @@ def splitlines(a, keepends=None):
     See Also
     --------
     str.splitlines
-
-    Examples
-    --------
-    #>>> a = np.array(['hello world', 'hello\nworld'])
-    #>>> np.char.splitlines(a)
-    #array([list(['hello world']), list(['hello', 'world'])], dtype=object)
 
     """
     return _vec_string(
