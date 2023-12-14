@@ -793,6 +793,12 @@ def expandtabs(a, tabsize=8):
     --------
     str.expandtabs
 
+    Examples
+    --------
+    >>> a = np.array(['\t\tHello\n\tworld'], dtype='|S11')  
+    >>> np.char.expandtabs(a, tabsize=8)  # doctest: +SKIP
+    array([b'                Hello\n        wo'], dtype='|S32')
+
     """
     return _to_bytes_or_str_array(
         _vec_string(a, object_, 'expandtabs', (tabsize,)), a)
