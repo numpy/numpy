@@ -2498,7 +2498,7 @@ cdef class Generator:
         -----
         The probability density for the Logistic distribution is
 
-        .. math:: P(x) = P(x) = \\frac{e^{-(x-\\mu)/s}}{s(1+e^{-(x-\\mu)/s})^2},
+        .. math:: P(x) = \\frac{e^{-(x-\\mu)/s}}{s(1+e^{-(x-\\mu)/s})^2},
 
         where :math:`\\mu` = location and :math:`s` = scale.
 
@@ -2524,7 +2524,8 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> loc, scale = 10, 1
-        >>> s = np.random.default_rng().logistic(loc, scale, 10000)
+        >>> rng = np.random.default_rng()
+        >>> s = rng.logistic(loc, scale, 10000)
         >>> import matplotlib.pyplot as plt
         >>> count, bins, ignored = plt.hist(s, bins=50)
 
