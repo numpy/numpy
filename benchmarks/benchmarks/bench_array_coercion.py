@@ -23,33 +23,32 @@ class ArrayCoercionSmall(Benchmark):
         np.array(array_like, self.int64)
 
     def time_array_no_copy(self, array_like):
-        np.array(array_like, copy=False)
+        np.array(array_like, copy=None)
 
     def time_array_subok(self, array_like):
         np.array(array_like, subok=True)
 
     def time_array_all_kwargs(self, array_like):
-        np.array(array_like, dtype=self.int64, copy=False, order="F",
+        np.array(array_like, dtype=self.int64, copy=None, order="F",
                  subok=False, ndmin=2)
 
     def time_asarray(self, array_like):
         np.asarray(array_like)
 
     def time_asarray_dtype(self, array_like):
-        np.array(array_like, dtype=self.int64)
+        np.asarray(array_like, dtype=self.int64)
 
     def time_asarray_dtype(self, array_like):
-        np.array(array_like, dtype=self.int64, order="F")
+        np.asarray(array_like, dtype=self.int64, order="F")
 
     def time_asanyarray(self, array_like):
-        np.asarray(array_like)
+        np.asanyarray(array_like)
 
     def time_asanyarray_dtype(self, array_like):
-        np.array(array_like, dtype=self.int64)
+        np.asanyarray(array_like, dtype=self.int64)
 
     def time_asanyarray_dtype(self, array_like):
-        np.array(array_like, dtype=self.int64, order="F")
+        np.asanyarray(array_like, dtype=self.int64, order="F")
 
     def time_ascontiguousarray(self, array_like):
         np.ascontiguousarray(array_like)
-

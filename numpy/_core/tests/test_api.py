@@ -183,12 +183,12 @@ def test_array_astype():
 
     # order parameter allows overriding of the memory layout,
     # forcing a copy if the layout is wrong
-    b = a.astype('f4', order='F', copy=None)
+    b = a.astype('f4', order='F', copy=False)
     assert_equal(a, b)
     assert_(not (a is b))
     assert_(b.flags.f_contiguous)
 
-    b = a.astype('f4', order='C', copy=None)
+    b = a.astype('f4', order='C', copy=False)
     assert_equal(a, b)
     assert_(a is b)
     assert_(b.flags.c_contiguous)
@@ -214,12 +214,12 @@ def test_array_astype():
     assert_(a is b)
 
     # subok=True is default, and creates a subtype on a cast
-    b = a.astype('i4', copy=None)
+    b = a.astype('i4', copy=False)
     assert_equal(a, b)
     assert_equal(type(b), MyNDArray)
 
     # subok=False never returns a subclass
-    b = a.astype('f4', subok=False, copy=None)
+    b = a.astype('f4', subok=False, copy=False)
     assert_equal(a, b)
     assert_(not (a is b))
     assert_(type(b) is not MyNDArray)
@@ -570,22 +570,14 @@ def test_astype_copyflag():
     arr = np.arange(10, dtype=np.intp)
 
     res_true = arr.astype(np.intp, copy=True)
-    assert not np.may_share_memory(arr, res_true)
-    res_always = arr.astype(np.intp, copy=np._CopyMode.ALWAYS)
-    assert not np.may_share_memory(arr, res_always)
+    assert not np.shares_memory(arr, res_true)
 
     res_false = arr.astype(np.intp, copy=False)
-    # `res_false is arr` currently, but check `may_share_memory`.
-    assert np.may_share_memory(arr, res_false)
-    res_if_needed = arr.astype(np.intp, copy=None)
-    # `res_if_needed is arr` currently, but check `may_share_memory`.
-    assert np.may_share_memory(arr, res_if_needed)
+    assert np.shares_memory(arr, res_false)
 
-    res_never = arr.astype(np.intp, copy=np._CopyMode.NEVER)
-    assert np.may_share_memory(arr, res_never)
+    res_false_float = arr.astype(np.float64, copy=False)
+    assert not np.shares_memory(arr, res_false_float)
 
-    # Simple tests for when a copy is necessary:
-    res_if_needed = arr.astype(np.float64, copy=None)
-    assert_array_equal(res_if_needed, arr)
+    # _CopyMode enum isn't allowed
     assert_raises(ValueError, arr.astype, np.float64,
-                  copy=False)
+                  copy=np._CopyMode.NEVER)

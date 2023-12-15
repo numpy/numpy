@@ -468,7 +468,7 @@ def _check_fill_value(fill_value, ndtype):
     elif ndtype.names is not None:
         if isinstance(fill_value, (ndarray, np.void)):
             try:
-                fill_value = np.array(fill_value, copy=None, dtype=ndtype)
+                fill_value = np.asarray(fill_value, dtype=ndtype)
             except ValueError as e:
                 err_msg = "Unable to transform %s to dtype %s"
                 raise ValueError(err_msg % (fill_value, ndtype)) from e
@@ -485,7 +485,7 @@ def _check_fill_value(fill_value, ndtype):
             # In case we want to convert 1e20 to int.
             # Also in case of converting string arrays.
             try:
-                fill_value = np.array(fill_value, copy=None, dtype=ndtype)
+                fill_value = np.asarray(fill_value, dtype=ndtype)
             except (OverflowError, ValueError) as e:
                 # Raise TypeError instead of OverflowError or ValueError.
                 # OverflowError is seldom used, and the real problem here is
@@ -1574,7 +1574,7 @@ def _shrink_mask(m):
         return m
 
 
-def make_mask(m, copy=None, shrink=True, dtype=MaskType):
+def make_mask(m, copy=False, shrink=True, dtype=MaskType):
     """
     Create a boolean mask from an array.
 
@@ -1588,8 +1588,7 @@ def make_mask(m, copy=None, shrink=True, dtype=MaskType):
     m : array_like
         Potential mask.
     copy : bool, optional
-        Whether to return a copy of `m` (True), or return a copy only if
-        needed (None) or always return `m` itself (False). Default: None
+        Whether to return a copy of `m` (True) or `m` itself (False).
     shrink : bool, optional
         Whether to shrink `m` to ``nomask`` if all its values are False.
     dtype : dtype, optional
@@ -1657,6 +1656,7 @@ def make_mask(m, copy=None, shrink=True, dtype=MaskType):
         return np.ones(m.shape, dtype=dtype)
 
     # Fill the mask in case there are missing data; turn it into an ndarray.
+    copy = None if not copy else True
     result = np.array(filled(m, True), copy=copy, dtype=dtype, subok=True)
     # Bas les masques !
     if shrink:
@@ -1724,7 +1724,7 @@ def _recursive_mask_or(m1, m2, newmask):
             umath.logical_or(current1, m2[name], newmask[name])
 
 
-def mask_or(m1, m2, copy=None, shrink=True):
+def mask_or(m1, m2, copy=False, shrink=True):
     """
     Combine two masks with the ``logical_or`` operator.
 
@@ -1736,9 +1736,8 @@ def mask_or(m1, m2, copy=None, shrink=True):
     m1, m2 : array_like
         Input masks.
     copy : bool, optional
-        If copy is None and one of the inputs is `nomask`, if possible
-        return a view of the other input mask, For ``False`` never make
-        a copy. Defaults to None.
+        If copy is False and one of the inputs is `nomask`, return a view
+        of the other input mask. Defaults to False.
     shrink : bool, optional
         Whether to shrink the output to `nomask` if all its values are
         False. Defaults to True.
@@ -1919,7 +1918,7 @@ def masked_where(condition, a, copy=True):
            fill_value=999999)
     >>> a
     array([0, 1, 2, 3])
-    >>> c = ma.masked_where(a <= 2, a, copy=None)
+    >>> c = ma.masked_where(a <= 2, a, copy=False)
     >>> c[0] = 99
     >>> c
     masked_array(data=[99, --, --, 3],
@@ -2727,7 +2726,7 @@ class MaskedArray(ndarray):
 
     Construction::
 
-      x = MaskedArray(data, mask=nomask, dtype=None, copy=None, subok=True,
+      x = MaskedArray(data, mask=nomask, dtype=None, copy=False, subok=True,
                       ndmin=0, fill_value=None, keep_mask=True, hard_mask=None,
                       shrink=True, order=None)
 
@@ -2744,10 +2743,8 @@ class MaskedArray(ndarray):
         is used. If `dtype` is not None and different from ``data.dtype``,
         a copy is performed.
     copy : bool, optional
-        If ``True`` (default), then the object is copied. If ``False``, a copy
-        will only be made if ``__array__`` returns a copy, if obj is a nested
-        requirements (``dtype``, ``order``, etc.). For ``False`` it raises
-        a ``ValueError`` if a copy cannot be avoided.
+        Whether to copy the input data (True), or to use a reference instead.
+        Default is False.
     subok : bool, optional
         Whether to return a subclass of `MaskedArray` if possible (True) or a
         plain `MaskedArray`. Default is True.
@@ -2831,7 +2828,7 @@ class MaskedArray(ndarray):
     _print_width = 100
     _print_width_1d = 1500
 
-    def __new__(cls, data=None, mask=nomask, dtype=None, copy=None,
+    def __new__(cls, data=None, mask=nomask, dtype=None, copy=False,
                 subok=True, ndmin=0, fill_value=None, keep_mask=True,
                 hard_mask=None, shrink=True, order=None):
         """
@@ -2843,6 +2840,7 @@ class MaskedArray(ndarray):
 
         """
         # Process data.
+        copy = None if not copy else True
         _data = np.array(data, dtype=dtype, copy=copy,
                          order=order, subok=True, ndmin=ndmin)
         _baseclass = getattr(data, '_baseclass', type(_data))
@@ -3468,7 +3466,7 @@ class MaskedArray(ndarray):
         if getmask(self) is not nomask:
             self._mask.shape = self.shape
 
-    def __setmask__(self, mask, copy=None):
+    def __setmask__(self, mask, copy=False):
         """
         Set the mask.
 
@@ -3501,7 +3499,7 @@ class MaskedArray(ndarray):
         else:
             # Named fields w/
             mdtype = current_mask.dtype
-            mask = np.array(mask, copy=None)
+            mask = np.asarray(mask)
             # Mask is a singleton
             if not mask.ndim:
                 # It's a boolean : make a record
@@ -3515,6 +3513,7 @@ class MaskedArray(ndarray):
             else:
                 # Make sure the new mask is a ndarray with the proper dtype
                 try:
+                    copy = None if not copy else True
                     mask = np.array(mask, copy=copy, dtype=mdtype)
                 # Or assume it's a sequence of bool/int
                 except TypeError:
@@ -4897,7 +4896,7 @@ class MaskedArray(ndarray):
             m.put(indices, False, mode=mode)
         else:
             m.put(indices, values._mask, mode=mode)
-        m = make_mask(m, copy=None, shrink=True)
+        m = make_mask(m, copy=False, shrink=True)
         self._mask = m
         return
 
@@ -5120,7 +5119,7 @@ class MaskedArray(ndarray):
         (array([1, 1, 1, 2, 2, 2]), array([0, 1, 2, 0, 1, 2]))
 
         """
-        return narray(self.filled(0), copy=None).nonzero()
+        return np.asarray(self.filled(0)).nonzero()
 
     def trace(self, offset=0, axis1=0, axis2=1, dtype=None, out=None):
         """
@@ -6468,7 +6467,8 @@ class mvoid(MaskedArray):
     """
 
     def __new__(self, data, mask=nomask, dtype=None, fill_value=None,
-                hardmask=False, copy=None, subok=True):
+                hardmask=False, copy=False, subok=True):
+        copy = None if not copy else True
         _data = np.array(data, copy=copy, subok=subok, dtype=dtype)
         _data = _data.view(self)
         _data._hardmask = hardmask
@@ -6774,7 +6774,7 @@ masked = masked_singleton = MaskedConstant()
 masked_array = MaskedArray
 
 
-def array(data, dtype=None, copy=None, order=None,
+def array(data, dtype=None, copy=False, order=None,
           mask=nomask, fill_value=None, keep_mask=True,
           hard_mask=False, shrink=True, subok=True, ndmin=0):
     """
@@ -7394,7 +7394,7 @@ def put(a, indices, values, mode='raise'):
     try:
         return a.put(indices, values, mode=mode)
     except AttributeError:
-        return narray(a, copy=None).put(indices, values, mode=mode)
+        return np.asarray(a).put(indices, values, mode=mode)
 
 
 def putmask(a, mask, values):  # , mode='raise'):
@@ -7488,7 +7488,7 @@ def transpose(a, axes=None):
     try:
         return a.transpose(axes)
     except AttributeError:
-        return narray(a, copy=None).transpose(axes).view(MaskedArray)
+        return np.asarray(a).transpose(axes).view(MaskedArray)
 
 
 def reshape(a, new_shape, order='C'):
@@ -7506,7 +7506,7 @@ def reshape(a, new_shape, order='C'):
     try:
         return a.reshape(new_shape, order=order)
     except AttributeError:
-        _tmp = narray(a, copy=None).reshape(new_shape, order=order)
+        _tmp = np.asarray(a).reshape(new_shape, order=order)
         return _tmp.view(MaskedArray)
 
 
@@ -7891,7 +7891,7 @@ def choose(indices, choices, out=None, mode='raise'):
     # Construct the mask
     outputmask = np.choose(c, masks, mode=mode)
     outputmask = make_mask(mask_or(outputmask, getmask(indices)),
-                           copy=None, shrink=True)
+                           copy=False, shrink=True)
     # Get the choices.
     d = np.choose(c, data, mode=mode, out=out).view(MaskedArray)
     if out is not None:
@@ -8089,7 +8089,7 @@ def outer(a, b):
         return masked_array(d)
     ma = getmaskarray(a)
     mb = getmaskarray(b)
-    m = make_mask(1 - np.outer(1 - ma, 1 - mb), copy=None)
+    m = make_mask(1 - np.outer(1 - ma, 1 - mb), copy=False)
     return masked_array(d, mask=m)
 outer.__doc__ = doc_note(np.outer.__doc__,
                          "Masked values are replaced by 0.")
@@ -8223,7 +8223,7 @@ def allequal(a, b, fill_value=True):
         x = getdata(a)
         y = getdata(b)
         d = umath.equal(x, y)
-        dm = array(d, mask=m, copy=None)
+        dm = array(d, mask=m, copy=False)
         return dm.filled(True).all(None)
     else:
         return False
@@ -8301,8 +8301,8 @@ def allclose(a, b, masked_equal=True, rtol=1e-5, atol=1e-8):
     False
 
     """
-    x = masked_array(a, copy=None)
-    y = masked_array(b, copy=None)
+    x = masked_array(a, copy=False)
+    y = masked_array(b, copy=False)
 
     # make sure y is an inexact type to avoid abs(MIN_INT); will cause
     # casting of x later.
@@ -8313,10 +8313,10 @@ def allclose(a, b, masked_equal=True, rtol=1e-5, atol=1e-8):
     if y.dtype.kind != "m":
         dtype = np.result_type(y, 1.)
         if y.dtype != dtype:
-            y = masked_array(y, dtype=dtype, copy=None)
+            y = masked_array(y, dtype=dtype, copy=False)
 
     m = mask_or(getmask(x), getmask(y))
-    xinf = np.isinf(masked_array(x, copy=None, mask=m)).filled(False)
+    xinf = np.isinf(masked_array(x, copy=False, mask=m)).filled(False)
     # If we have some infs, they should fall at the same place.
     if not np.all(xinf == filled(np.isinf(y), False)):
         return False
@@ -8382,7 +8382,7 @@ def asarray(a, dtype=None, order=None):
 
     """
     order = order or 'C'
-    return masked_array(a, dtype=dtype, copy=None, keep_mask=True,
+    return masked_array(a, dtype=dtype, copy=False, keep_mask=True,
                         subok=False, order=order)
 
 
@@ -8432,7 +8432,7 @@ def asanyarray(a, dtype=None):
     # would handle this for us.
     if isinstance(a, MaskedArray) and (dtype is None or dtype == a.dtype):
         return a
-    return masked_array(a, dtype=dtype, copy=None, keep_mask=True, subok=True)
+    return masked_array(a, dtype=dtype, copy=False, keep_mask=True, subok=True)
 
 
 ##############################################################################

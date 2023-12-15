@@ -206,8 +206,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     """
     # Allocate a common mask and refill
     m = mask_or(getmask(x), getmask(y))
-    x = masked_array(x, copy=None, mask=m, keep_mask=False, subok=False)
-    y = masked_array(y, copy=None, mask=m, keep_mask=False, subok=False)
+    x = masked_array(x, copy=False, mask=m, keep_mask=False, subok=False)
+    y = masked_array(y, copy=False, mask=m, keep_mask=False, subok=False)
     if ((x is masked) and not (y is masked)) or \
             ((y is masked) and not (x is masked)):
         msg = build_err_msg([x, y], err_msg=err_msg, verbose=verbose,

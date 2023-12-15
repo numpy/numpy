@@ -261,6 +261,31 @@ PyArray_CopyConverter(PyObject *obj, NPY_COPYMODE *copymode) {
     return NPY_SUCCEED;
 }
 
+NPY_NO_EXPORT int
+PyArray_AsTypeCopyConverter(PyObject *obj, NPY_ASTYPECOPYMODE *copymode)
+{
+    int int_copymode;
+    static PyObject* numpy_CopyMode = NULL;
+    npy_cache_import("numpy", "_CopyMode", &numpy_CopyMode);
+
+    if (numpy_CopyMode != NULL && (PyObject *)Py_TYPE(obj) == numpy_CopyMode) {
+        PyErr_SetString(PyExc_ValueError,
+                        "_CopyMode enum is not allowed for astype function. "
+                        "Use true/false instead.");
+        return NPY_FAIL;
+    }
+    else {
+        npy_bool bool_copymode;
+        if (!PyArray_BoolConverter(obj, &bool_copymode)) {
+            return NPY_FAIL;
+        }
+        int_copymode = (int)bool_copymode;
+    }
+
+    *copymode = (NPY_ASTYPECOPYMODE)int_copymode;
+    return NPY_SUCCEED;
+}
+
 /*NUMPY_API
  * Get buffer chunk from object
  *

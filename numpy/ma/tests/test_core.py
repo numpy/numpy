@@ -212,7 +212,7 @@ class TestMaskedArray:
         assert_equal(x._mask, [True, True, True])
         x = array([1, 2, 3], mask=False)
         assert_equal(x._mask, [False, False, False])
-        y = array([1, 2, 3], mask=x._mask, copy=None)
+        y = array([1, 2, 3], mask=x._mask, copy=False)
         assert_(np.may_share_memory(x.mask, y.mask))
         y = array([1, 2, 3], mask=x._mask, copy=True)
         assert_(not np.may_share_memory(x.mask, y.mask))
@@ -5468,15 +5468,15 @@ def test_masked_array():
 def test_masked_array_no_copy():
     # check nomask array is updated in place
     a = np.ma.array([1, 2, 3, 4])
-    _ = np.ma.masked_where(a == 3, a, copy=None)
+    _ = np.ma.masked_where(a == 3, a, copy=False)
     assert_array_equal(a.mask, [False, False, True, False])
     # check masked array is updated in place
     a = np.ma.array([1, 2, 3, 4], mask=[1, 0, 0, 0])
-    _ = np.ma.masked_where(a == 3, a, copy=None)
+    _ = np.ma.masked_where(a == 3, a, copy=False)
     assert_array_equal(a.mask, [True, False, True, False])
     # check masked array with masked_invalid is updated in place
     a = np.ma.array([np.inf, 1, 2, 3, 4])
-    _ = np.ma.masked_invalid(a, copy=None)
+    _ = np.ma.masked_invalid(a, copy=False)
     assert_array_equal(a.mask, [True, False, False, False, False])
 
 def test_append_masked_array():
@@ -5567,7 +5567,7 @@ def test_astype_mask_ordering():
     assert x_a.mask.dtype.names == np.dtype(descr).names
     assert_equal(x, x_a)
 
-    assert_(x is x.astype(x.dtype, copy=None))
+    assert_(x is x.astype(x.dtype, copy=False))
     assert_equal(type(x.astype(x.dtype, subok=False)), np.ndarray)
 
     x_f = x.astype(x.dtype, order='F')

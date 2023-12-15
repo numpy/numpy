@@ -842,7 +842,7 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
             # This cast ensures no type promotions occur below, which gh-10322
             # make unpredictable. Getting it wrong leads to precision errors
             # like gh-8123.
-            tmp_a = tmp_a.astype(bin_edges.dtype, copy=None)
+            tmp_a = tmp_a.astype(bin_edges.dtype, copy=False)
 
             # Compute the bin indices, and for values that lie exactly on
             # last_edge we need to subtract one

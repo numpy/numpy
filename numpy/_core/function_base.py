@@ -307,7 +307,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     base = np.expand_dims(base, axis=axis)
     if dtype is None:
         return _nx.power(base, y)
-    return _nx.power(base, y).astype(dtype, copy=None)
+    return _nx.power(base, y).astype(dtype, copy=False)
 
 
 def _geomspace_dispatcher(start, stop, num=None, endpoint=None, dtype=None,
@@ -461,7 +461,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     if axis != 0:
         result = _nx.moveaxis(result, 0, axis)
 
-    return result.astype(dtype, copy=None)
+    return result.astype(dtype, copy=False)
 
 
 def _needs_add_docstring(obj):

@@ -526,7 +526,7 @@ def count_nonzero(a, axis=None, *, keepdims=False):
     if np.issubdtype(a.dtype, np.character):
         a_bool = a != a.dtype.type()
     else:
-        a_bool = a.astype(np.bool, copy=None)
+        a_bool = a.astype(np.bool, copy=False)
 
     return a_bool.sum(axis=axis, dtype=np.intp, keepdims=keepdims)
 

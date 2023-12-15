@@ -400,7 +400,7 @@ def solve(a, b):
                   over='ignore', divide='ignore', under='ignore'):
         r = gufunc(a, b, signature=signature)
 
-    return wrap(r.astype(result_t, copy=None))
+    return wrap(r.astype(result_t, copy=False))
 
 
 def _tensorinv_dispatcher(a, ind=None):
@@ -597,7 +597,7 @@ def inv(a):
     with errstate(call=_raise_linalgerror_singular, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
         ainv = _umath_linalg.inv(a, signature=signature)
-    return wrap(ainv.astype(result_t, copy=None))
+    return wrap(ainv.astype(result_t, copy=False))
 
 
 def _matrix_power_dispatcher(a, n):
@@ -1051,17 +1051,17 @@ def qr(a, mode='reduced'):
     # handle modes that don't return q
     if mode == 'r':
         r = triu(a[..., :mn, :])
-        r = r.astype(result_t, copy=None)
+        r = r.astype(result_t, copy=False)
         return wrap(r)
 
     if mode == 'raw':
         q = transpose(a)
-        q = q.astype(result_t, copy=None)
-        tau = tau.astype(result_t, copy=None)
+        q = q.astype(result_t, copy=False)
+        tau = tau.astype(result_t, copy=False)
         return wrap(q), tau
 
     if mode == 'economic':
-        a = a.astype(result_t, copy=None)
+        a = a.astype(result_t, copy=False)
         return wrap(a)
 
     # mc is the number of columns in the resulting q
@@ -1081,8 +1081,8 @@ def qr(a, mode='reduced'):
         q = gufunc(a, tau, signature=signature)
     r = triu(a[..., :mc, :])
 
-    q = q.astype(result_t, copy=None)
-    r = r.astype(result_t, copy=None)
+    q = q.astype(result_t, copy=False)
+    r = r.astype(result_t, copy=False)
 
     return QRResult(wrap(q), wrap(r))
 
@@ -1180,7 +1180,7 @@ def eigvals(a):
         else:
             result_t = _complexType(result_t)
 
-    return w.astype(result_t, copy=None)
+    return w.astype(result_t, copy=False)
 
 
 def _eigvalsh_dispatcher(a, UPLO=None):
@@ -1280,7 +1280,7 @@ def eigvalsh(a, UPLO='L'):
                   invalid='call', over='ignore', divide='ignore',
                   under='ignore'):
         w = gufunc(a, signature=signature)
-    return w.astype(_realType(result_t), copy=None)
+    return w.astype(_realType(result_t), copy=False)
 
 def _convertarray(a):
     t, result_t = _commonType(a)
@@ -1443,8 +1443,8 @@ def eig(a):
     else:
         result_t = _complexType(result_t)
 
-    vt = vt.astype(result_t, copy=None)
-    return EigResult(w.astype(result_t, copy=None), wrap(vt))
+    vt = vt.astype(result_t, copy=False)
+    return EigResult(w.astype(result_t, copy=False), wrap(vt))
 
 
 @array_function_dispatch(_eigvalsh_dispatcher)
@@ -1590,8 +1590,8 @@ def eigh(a, UPLO='L'):
                   invalid='call', over='ignore', divide='ignore',
                   under='ignore'):
         w, vt = gufunc(a, signature=signature)
-    w = w.astype(_realType(result_t), copy=None)
-    vt = vt.astype(result_t, copy=None)
+    w = w.astype(_realType(result_t), copy=False)
+    vt = vt.astype(result_t, copy=False)
     return EighResult(w, wrap(vt))
 
 
@@ -1785,9 +1785,9 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
                       invalid='call', over='ignore', divide='ignore',
                       under='ignore'):
             u, s, vh = gufunc(a, signature=signature)
-        u = u.astype(result_t, copy=None)
-        s = s.astype(_realType(result_t), copy=None)
-        vh = vh.astype(result_t, copy=None)
+        u = u.astype(result_t, copy=False)
+        s = s.astype(_realType(result_t), copy=False)
+        vh = vh.astype(result_t, copy=False)
         return SVDResult(wrap(u), s, wrap(vh))
     else:
         if m < n:
@@ -1800,7 +1800,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
                       invalid='call', over='ignore', divide='ignore',
                       under='ignore'):
             s = gufunc(a, signature=signature)
-        s = s.astype(_realType(result_t), copy=None)
+        s = s.astype(_realType(result_t), copy=False)
         return s
 
 
@@ -1946,7 +1946,7 @@ def cond(x, p=None):
         with errstate(all='ignore'):
             invx = _umath_linalg.inv(x, signature=signature)
             r = norm(x, p, axis=(-2, -1)) * norm(invx, p, axis=(-2, -1))
-        r = r.astype(result_t, copy=None)
+        r = r.astype(result_t, copy=False)
 
     # Convert nans to infs unless the original array had nan entries
     r = asarray(r)
@@ -2300,8 +2300,8 @@ def slogdet(a):
     real_t = _realType(result_t)
     signature = 'D->Dd' if isComplexType(t) else 'd->dd'
     sign, logdet = _umath_linalg.slogdet(a, signature=signature)
-    sign = sign.astype(result_t, copy=None)
-    logdet = logdet.astype(real_t, copy=None)
+    sign = sign.astype(result_t, copy=False)
+    logdet = logdet.astype(real_t, copy=False)
     return SlogdetResult(sign, logdet)
 
 
@@ -2360,7 +2360,7 @@ def det(a):
     t, result_t = _commonType(a)
     signature = 'D->D' if isComplexType(t) else 'd->d'
     r = _umath_linalg.det(a, signature=signature)
-    r = r.astype(result_t, copy=None)
+    r = r.astype(result_t, copy=False)
     return r
 
 
@@ -2515,8 +2515,8 @@ def lstsq(a, b, rcond=None):
         resids = array([], result_real_t)
 
     # coerce output arrays
-    s = s.astype(result_real_t, copy=None)
-    resids = resids.astype(result_real_t, copy=None)
+    s = s.astype(result_real_t, copy=False)
+    resids = resids.astype(result_real_t, copy=False)
     # Copying lets the memory in r_parts be freed
     x = x.astype(result_t, copy=True)
     return wrap(x), wrap(resids), rank, s

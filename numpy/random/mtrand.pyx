@@ -954,7 +954,7 @@ cdef class RandomState:
         """
 
         # Format and Verify input
-        a = np.array(a, copy=None)
+        a = np.asarray(a)
         if a.ndim == 0:
             try:
                 # __index__ must return an integer by python rules.
@@ -1013,7 +1013,7 @@ cdef class RandomState:
                 idx = cdf.searchsorted(uniform_samples, side='right')
                 # searchsorted returns a scalar
                 # force cast to int for LLP64
-                idx = np.array(idx, copy=None).astype(np.long, casting='unsafe')
+                idx = np.asarray(idx).astype(np.long, casting='unsafe')
             else:
                 idx = self.randint(0, pop_size, size=shape)
         else:
