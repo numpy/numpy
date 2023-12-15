@@ -402,7 +402,7 @@ cdef class Generator:
         mean 1/2.
 
         >>> rng = np.random.default_rng()
-        >>> a, b, size = 2.0, 2.0, 1000
+        >>> a, b, size = 2.0, 2.0, 10000
         >>> sample = rng.beta(a, b, size=size)
         >>> np.mean(sample)
         0.5047328775385895  # may vary
