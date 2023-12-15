@@ -399,7 +399,7 @@ cdef class Generator:
         Examples
         -------- 
         If ``a == b`` and both are > 1, the distribution is symmetric with 
-        mean 1/2.
+        mean 0.5.
 
         >>> rng = np.random.default_rng()
         >>> a, b, size = 2.0, 2.0, 10000
