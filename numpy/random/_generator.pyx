@@ -397,31 +397,12 @@ cdef class Generator:
             Drawn samples from the parameterized beta distribution.
 
         Examples
-        --------
-        Draw samples from the distribution:
-
-        >>> rng = np.random.default_rng()
-        >>> n, k, size = 100, 5, 1000
-        >>> sample = rng.beta(k, n+1-k, size=size) 
-
-        Display the histogram of the samples, along with
-        the probability mass function:
-
-        >>> import math
-        >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(sample, 50, density=True)
-        >>> plt.plot(bins, 
-        ...         (bins**(k-1) * (1-bins)**(n-k))/
-        ...         (math.gamma(k)*math.gamma(n+1-k)/
-        ...          math.gamma(n+1)),
-        ...         linewidth=2, color='r')
-        >>> plt.xlim([0, .2])
-        >>> plt.show()
-
+        -------- 
         If ``a == b`` and both are > 1, the distribution is symmetric with 
         mean 1/2.
 
-        >>> a, b = 2.0, 2.0
+        >>> rng = np.random.default_rng()
+        >>> a, b, size = 2.0, 2.0, 1000
         >>> sample = rng.beta(a, b, size=size)
         >>> np.mean(sample)
         0.5047328775385895  # may vary
@@ -438,6 +419,20 @@ cdef class Generator:
         (0.22334081861904062, 0.7749320166133927)  # may vary
         >>> m_left + m_right  
         0.9982728352324334  # may vary
+
+        Display the histogram of the samples, along with
+        the probability mass function:
+
+        >>> import math
+        >>> import matplotlib.pyplot as plt
+        >>> count, bins, ignored = plt.hist(sample_left, 50, density=True)
+        >>> plt.plot(bins, 
+        ...         (bins**(k-1) * (1-bins)**(n-k))/
+        ...         (math.gamma(k)*math.gamma(n+1-k)/
+        ...          math.gamma(n+1)),
+        ...         linewidth=2, color='r')
+        >>> plt.xlim([0, .2])
+        >>> plt.show()
         
         """
         return cont(&random_beta, &self._bitgen, size, self.lock, 2,
