@@ -398,39 +398,17 @@ cdef class Generator:
 
         Examples
         --------
-        Given a sample of `n` i.i.d. random variables drawn from a uniform 
-        distribution on `[0, 1]`, it is known that the distribution of the 
-        `k`-th smallest value is `Beta(k, n+1-k)`.
-
-        In the case of `n = 100` and `k = 5`, we can simulate this distribution
-        as follows:
+        Draw samples from the distribution:
 
         >>> rng = np.random.default_rng()
-        >>> n, k = 100, 5
-        >>> size = 1000
+        >>> n, k, size = 100, 5, 1000
         >>> sample = rng.beta(k, n+1-k, size=size) 
 
-        We can display the histogram of the samples, along with
-        the probability density function:
+        Display the histogram of the samples, along with
+        the probability mass function:
 
         >>> import math
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(sample, 50, density=True)
-        >>> plt.plot(bins, 
-        ...         (bins**(k-1) * (1-bins)**(n-k))/
-        ...         (math.gamma(k)*math.gamma(n+1-k)/
-        ...          math.gamma(n+1)),
-        ...         linewidth=2, color='r')
-        >>> plt.xlim([0, .2])
-        >>> plt.show()
-
-        To compare it to the distribution of the `k`-th smallest value of a
-        sample of `n` i.i.d. random variables drawn from a uniform distribution
-        on `[0, 1]`, we can use the following:
-
-        >>> sample = rng.uniform(0, 1, size=(size, n))
-        >>> sample.sort(axis=1)
-        >>> sample = sample[:, k-1]
         >>> count, bins, ignored = plt.hist(sample, 50, density=True)
         >>> plt.plot(bins, 
         ...         (bins**(k-1) * (1-bins)**(n-k))/
@@ -450,22 +428,17 @@ cdef class Generator:
 
         Otherwise the distribution is skewed left or right according to
         whether ``a`` or ``b`` is greater. The distribution is mirror
-        symmetric.
+        symmetric. See for example:
 
-        >>> a, b = 2, 7
-        >>> x = np.linspace(0 ,1)
-        >>> plt.plot(x, 
-        ...         (x**(a-1) * (1-x)**(b-1))/
-        ...         (math.gamma(a)*math.gamma(b)/
-        ...          math.gamma(a+b)),
-        ...        linewidth=2, color='r')
-        >>> plt.plot(x, 
-        ...         (x**(b-1) * (1-x)**(a-1))/
-        ...         (math.gamma(b)*math.gamma(a)/
-        ...          math.gamma(a+b)),
-        ...         linewidth=2, color='g')
-        >>> plt.show()
-
+        >>> a, b, size = 2, 7, 1000
+        >>> sample_left = rng.beta(a, b, size=size)
+        >>> sample_right = rng.beta(b, a, size=size)
+        >>> m_left, m_right = np.mean(sample_left), np.mean(sample_right)
+        >>> m_left, m_right
+        (0.22334081861904062, 0.7749320166133927)  # may vary
+        >>> m_left + m_right  
+        0.9982728352324334  # may vary
+        
         """
         return cont(&random_beta, &self._bitgen, size, self.lock, 2,
                     a, 'a', CONS_POSITIVE,
