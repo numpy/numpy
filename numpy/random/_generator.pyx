@@ -2141,14 +2141,13 @@ cdef class Generator:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> x = np.arange(1,100.)/50.
-        >>> def weib(x,n,a):
+        >>> def weibull(x, n, a):
         ...     return (a / n) * (x / n)**(a - 1) * np.exp(-(x / n)**a)
-
-        >>> count, bins, ignored = plt.hist(rng.weibull(5.,1000))
-        >>> x = np.arange(1,100.)/50.
-        >>> scale = count.max()/weib(x, 1., 5.).max()
-        >>> plt.plot(x, weib(x, 1., 5.)*scale)
+        >>> count, bins, ignored = plt.hist(rng.weibull(5., 1000))
+        >>> x = np.linspace(0, 2, 1000)
+        >>> bin_spacing = np.mean(np.diff(bins))
+        >>> plt.plot(x, weibull(x, 1., 5.) * bin_spacing * s.size, label='Weibull PDF')
+        >>> plt.legend()
         >>> plt.show()
 
         """
@@ -2527,14 +2526,16 @@ cdef class Generator:
         >>> rng = np.random.default_rng()
         >>> s = rng.logistic(loc, scale, 10000)
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, bins=50)
+        >>> count, bins, ignored = plt.hist(s, bins=50, label='Sampled data')
 
-        #   plot against distribution
+        #   plot sampled data against the exact distribution
 
-        >>> def logist(x, loc, scale):
+        >>> def logistic(x, loc, scale):
         ...     return np.exp((loc-x)/scale)/(scale*(1+np.exp((loc-x)/scale))**2)
-        >>> lgst_val = logist(bins, loc, scale)
-        >>> plt.plot(bins, lgst_val * count.max() / lgst_val.max())
+        >>> logistic_values  = logistic(bins, loc, scale)
+        >>> bin_spacing = np.mean(np.diff(bins))
+        >>> plt.plot(bins, logistic_values  * bin_spacing * s.size, label='Logistic PDF')
+        >>> plt.legend()
         >>> plt.show()
 
         """
@@ -3579,14 +3580,16 @@ cdef class Generator:
         >>> a = .6
         >>> s = np.random.default_rng().logseries(a, 10000)
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s)
+        >>> bins = np.arange(-.5, max(s) + .5 )
+        >>> count, bins, ignored = plt.hist(s, bins=bins, label='Sample count')
 
         #   plot against distribution
 
         >>> def logseries(k, p):
         ...     return -p**k/(k*np.log(1-p))
-        >>> plt.plot(bins, logseries(bins, a) * count.max()/
-        ...          logseries(bins, a).max(), 'r')
+        >>> centres = np.arange(1, max(s) + 1)
+        >>> plt.plot(centres, logseries(centres, a) * s.size, 'r', label='logseries PMF')
+        >>> plt.legend()
         >>> plt.show()
 
         """
