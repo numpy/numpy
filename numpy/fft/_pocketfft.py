@@ -33,7 +33,7 @@ __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
 import functools
 
 from numpy.lib.array_utils import normalize_axis_index
-from numpy._core import asarray, zeros, swapaxes, conjugate, take, sqrt
+from numpy._core import asarray, zeros, swapaxes, conjugate, take, sqrt, copyto
 from . import _pocketfft_internal as pfi
 from numpy._core import overrides
 
@@ -46,7 +46,7 @@ array_function_dispatch = functools.partial(
 # divided. This replaces the original, more intuitive 'fct` parameter to avoid
 # divisions by zero (or alternatively additional checks) in the case of
 # zero-length axes during its computation.
-def _raw_fft(a, n, axis, is_real, is_forward, inv_norm):
+def _raw_fft(a, n, axis, is_real, is_forward, inv_norm, out=None):
     axis = normalize_axis_index(axis, a.ndim)
     if n is None:
         n = a.shape[axis]
@@ -67,11 +67,19 @@ def _raw_fft(a, n, axis, is_real, is_forward, inv_norm):
             a = z
 
     if axis == a.ndim-1:
-        r = pfi.execute(a, is_real, is_forward, fct)
+        r = pfi.execute(a, is_real, is_forward, fct, out)
     else:
         a = swapaxes(a, axis, -1)
-        r = pfi.execute(a, is_real, is_forward, fct)
+        if out is not None:
+            out.resize(a.shape)
+        r = pfi.execute(a, is_real, is_forward, fct, out)
         r = swapaxes(r, axis, -1)
+        if out is not None:
+            out.resize(r.shape)
+            # This extra copy is unfortunately needed if we want `out`
+            # to retain its original shape while having the correct values.
+            copyto(out, r)
+            r = out
     return r
 
 
@@ -119,8 +127,12 @@ def _fft_dispatcher(a, n=None, axis=None, norm=None):
     return (a,)
 
 
-@array_function_dispatch(_fft_dispatcher)
-def fft(a, n=None, axis=-1, norm=None):
+def _fft_dispatcher_out(a, n=None, axis=None, norm=None, out=None):
+    return (a,)
+
+
+@array_function_dispatch(_fft_dispatcher_out)
+def fft(a, n=None, axis=-1, norm=None, out=None):
     """
     Compute the one-dimensional discrete Fourier Transform.
 
@@ -150,6 +162,11 @@ def fft(a, n=None, axis=-1, norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        contiguous and of the appropriate shape and dtype.
+
+        .. versionadded:: 1.27.0
 
     Returns
     -------
@@ -212,7 +229,7 @@ def fft(a, n=None, axis=-1, norm=None):
     if n is None:
         n = a.shape[axis]
     inv_norm = _get_forward_norm(n, norm)
-    output = _raw_fft(a, n, axis, False, True, inv_norm)
+    output = _raw_fft(a, n, axis, False, True, inv_norm, out)
     return output
 
 

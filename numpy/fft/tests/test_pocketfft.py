@@ -42,6 +42,41 @@ class TestFFT1D:
         assert_allclose(fft1(x) / 30.,
                         np.fft.fft(x, norm="forward"), atol=1e-6)
 
+        # tests below only test the out parameter
+        y = random((30, 20)) + 1j*random((30, 20))
+
+        out = np.zeros_like(x, dtype=complex)
+        assert_allclose(fft1(x), np.fft.fft(x, out=out), atol=1e-6)
+        assert_allclose(fft1(x), np.fft.fft(list(x), out=out), atol=1e-6)
+        assert_allclose(fft1(x), np.fft.fft(x, norm="backward", out=out),
+                        atol=1e-6)
+        assert_allclose(fft1(x), np.fft.fft(x, norm="backward", out=out),
+                        atol=1e-6)
+
+        out0 = np.zeros_like(y, dtype=complex)
+        assert_allclose(np.fft.fft(y, axis=0, out=out0), np.fft.fft(y, axis=0))
+        assert_allclose(out0, np.fft.fft(y, axis=0))
+
+        out1 = np.zeros_like(y, dtype=complex)
+        assert_allclose(np.fft.fft(y, axis=1, out=out1), np.fft.fft(y, axis=1))
+        assert_allclose(out1, np.fft.fft(y, axis=1))
+
+        type_error = "'out' must be an array"
+        shape_error = "Output array has wrong dimensionality"
+        cast_error = "Output array is the wrong dtype"
+        contiguous_error = "Output array is not a C contiguous array"
+        for kwargs in ({"norm": "forward"}, {"norm": "backward"}):
+            with pytest.raises(TypeError, match=type_error):
+                np.fft.fft(x, out="", **kwargs)
+            with pytest.raises(ValueError, match=shape_error):
+                np.fft.fft(x, out=np.zeros_like(x).reshape(5, -1), **kwargs)
+            with pytest.raises(ValueError, match=cast_error):
+                np.fft.fft(x, out=np.zeros_like(x, dtype=float), **kwargs)
+            with pytest.raises(ValueError, match=contiguous_error):
+                np.fft.fft(x, out=np.zeros(len(x) * 2, dtype=complex)[::2],
+                           **kwargs)
+
+
     @pytest.mark.parametrize('norm', (None, 'backward', 'ortho', 'forward'))
     def test_ifft(self, norm):
         x = random(30) + 1j*random(30)

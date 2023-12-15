@@ -13,6 +13,7 @@ def fft(
     n: None | int = ...,
     axis: int = ...,
     norm: _NormKind = ...,
+    out: None | NDArray[complex128] = ...,
 ) -> NDArray[complex128]: ...
 
 def ifft(

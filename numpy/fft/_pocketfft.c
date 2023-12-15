@@ -2193,14 +2193,49 @@ WARN_UNUSED_RESULT static int rfft_forward(rfft_plan plan, double c[], double fc
   }
 
 static PyObject *
-execute_complex(PyObject *a1, int is_forward, double fct)
+execute_complex(PyObject *a1, int is_forward, double fct, PyObject *out)
 {
-    PyArrayObject *data = (PyArrayObject *)PyArray_FromAny(a1,
-            PyArray_DescrFromType(NPY_CDOUBLE), 1, 0,
-            NPY_ARRAY_ENSURECOPY | NPY_ARRAY_DEFAULT |
-            NPY_ARRAY_ENSUREARRAY | NPY_ARRAY_FORCECAST,
-            NULL);
-    if (!data) return NULL;
+    PyArrayObject *data;
+    if(out == Py_None) {
+        data = (PyArrayObject *)PyArray_FromAny(a1,
+              PyArray_DescrFromType(NPY_CDOUBLE), 1, 0,
+              NPY_ARRAY_ENSURECOPY | NPY_ARRAY_DEFAULT |
+              NPY_ARRAY_ENSUREARRAY | NPY_ARRAY_FORCECAST,
+              NULL);
+        if (!data) return NULL;
+    }
+    else if (!PyArray_Check(out)) {
+      PyErr_SetString(PyExc_TypeError, "'out' must be an array");
+      return NULL;
+    }
+    else {
+      data = (PyArrayObject*)out;
+      int ndim = PyArray_NDIM((PyArrayObject*)a1);
+      if (PyArray_NDIM(data) != ndim) {
+          PyErr_SetString(PyExc_ValueError,
+                          "Output array has wrong dimensionality");
+          return NULL;
+      }
+      else if (!PyArray_CompareLists(PyArray_SHAPE(data), PyArray_SHAPE((PyArrayObject*)a1), ndim)) {
+          PyErr_SetString(PyExc_ValueError,
+                          "Output array has the wrong shape");
+          return NULL;
+      }
+      else if (PyArray_TYPE(data) != NPY_CDOUBLE) {
+          PyErr_SetString(PyExc_ValueError,
+                          "Output array is the wrong dtype");
+          return NULL;
+      }
+      else if (!PyArray_IS_C_CONTIGUOUS(data)) {
+          PyErr_SetString(PyExc_ValueError,
+                          "Output array is not a C contiguous array");
+          return NULL;
+      }
+      else {
+        if(PyArray_CopyObject(data, a1) == -1) return NULL;
+        Py_INCREF(data);
+      }
+    }
 
     int npts = PyArray_DIM(data, PyArray_NDIM(data) - 1);
     cfft_plan plan=NULL;
@@ -2228,7 +2263,7 @@ execute_complex(PyObject *a1, int is_forward, double fct)
 }
 
 static PyObject *
-execute_real_forward(PyObject *a1, double fct)
+execute_real_forward(PyObject *a1, double fct, PyObject *out)
 {
     rfft_plan plan=NULL;
     int fail = 0;
@@ -2246,8 +2281,42 @@ execute_real_forward(PyObject *a1, double fct)
     for (int d=0; d<ndim-1; ++d)
       tdim[d] = odim[d];
     tdim[ndim-1] = npts/2 + 1;
-    PyArrayObject *ret = (PyArrayObject *)PyArray_Empty(ndim,
-            tdim, PyArray_DescrFromType(NPY_CDOUBLE), 0);
+    PyArrayObject *ret;
+    if(out == Py_None) {
+      ret = (PyArrayObject *)PyArray_Empty(ndim,
+              tdim, PyArray_DescrFromType(NPY_CDOUBLE), 0);
+    }
+    else if (!PyArray_Check(out)) {
+      PyErr_SetString(PyExc_TypeError, "'out' must be an array");
+      ret = NULL;
+    }
+    else {
+      ret = (PyArrayObject*)out;
+      if (PyArray_NDIM(ret) != ndim) {
+          PyErr_SetString(PyExc_ValueError,
+                          "Output array has wrong dimensionality");
+          ret = NULL;
+      }
+      else if (!PyArray_CompareLists(tdim, PyArray_SHAPE(ret), ndim)) {
+          PyErr_SetString(PyExc_ValueError,
+                          "Output array has the wrong shape");
+          ret = NULL;
+      }
+      else if (PyArray_TYPE(ret) != NPY_CDOUBLE) {
+          PyErr_SetString(PyExc_ValueError,
+                          "Output array is the wrong dtype");
+          ret = NULL;
+      }
+      else if (!PyArray_IS_C_CONTIGUOUS(ret)) {
+          PyErr_SetString(PyExc_ValueError,
+                          "Output array is not a C contiguous array");
+          ret = NULL;
+      }
+      else {
+        Py_INCREF(ret);
+      }
+    }
+
     if (!ret) fail=1;
     if (!fail) {
       int rstep = PyArray_DIM(ret, PyArray_NDIM(ret) - 1)*2;
@@ -2281,7 +2350,7 @@ execute_real_forward(PyObject *a1, double fct)
     return (PyObject *)ret;
 }
 static PyObject *
-execute_real_backward(PyObject *a1, double fct)
+execute_real_backward(PyObject *a1, double fct, PyObject *out)
 {
     rfft_plan plan=NULL;
     PyArrayObject *data = (PyArrayObject *)PyArray_FromAny(a1,
@@ -2290,8 +2359,41 @@ execute_real_backward(PyObject *a1, double fct)
             NULL);
     if (!data) return NULL;
     int npts = PyArray_DIM(data, PyArray_NDIM(data) - 1);
-    PyArrayObject *ret = (PyArrayObject *)PyArray_Empty(PyArray_NDIM(data),
+    PyArrayObject *ret;
+    if(out == Py_None)
+      ret = (PyArrayObject *)PyArray_Empty(PyArray_NDIM(data),
             PyArray_DIMS(data), PyArray_DescrFromType(NPY_DOUBLE), 0);
+    else if (!PyArray_Check(out)) {
+      PyErr_SetString(PyExc_TypeError, "'out' must be an array");
+      ret = NULL;
+    }
+    else {
+      ret = (PyArrayObject*)PyArray_EnsureArray(out);
+      if (PyArray_NDIM(ret) != PyArray_NDIM(data)) {
+          PyErr_SetString(PyExc_ValueError,
+                          "Output array has wrong dimensionality");
+          ret = NULL;
+      }
+      else if (!PyArray_CompareLists(PyArray_SHAPE(ret), PyArray_SHAPE(data), PyArray_NDIM(data))) {
+          PyErr_SetString(PyExc_ValueError,
+                          "Output array has the wrong shape");
+          ret = NULL;
+      }
+      else if (PyArray_TYPE(ret) != NPY_CDOUBLE) {
+          PyErr_SetString(PyExc_ValueError,
+                          "Output array is the wrong dtype");
+          ret = NULL;
+      }
+      else if (!PyArray_IS_C_CONTIGUOUS(ret)) {
+          PyErr_SetString(PyExc_ValueError,
+                          "Output array is not a C contiguous array");
+          ret = NULL;
+      }
+      else {
+        Py_INCREF(ret);
+      }
+    }
+
     int fail = 0;
     if (!ret) fail=1;
     if (!fail) {
@@ -2324,10 +2426,10 @@ execute_real_backward(PyObject *a1, double fct)
 }
 
 static PyObject *
-execute_real(PyObject *a1, int is_forward, double fct)
+execute_real(PyObject *a1, int is_forward, double fct, PyObject *out)
 {
-    return is_forward ? execute_real_forward(a1, fct)
-                      : execute_real_backward(a1, fct);
+    return is_forward ? execute_real_forward(a1, fct, out)
+                      : execute_real_backward(a1, fct, out);
 }
 
 static const char execute__doc__[] = "";
@@ -2335,16 +2437,16 @@ static const char execute__doc__[] = "";
 static PyObject *
 execute(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    PyObject *a1;
+    PyObject *a1, *out;
     int is_real, is_forward;
     double fct;
 
-    if(!PyArg_ParseTuple(args, "Oiid:execute", &a1, &is_real, &is_forward, &fct)) {
+    if(!PyArg_ParseTuple(args, "OiidO:execute", &a1, &is_real, &is_forward, &fct, &out)) {
         return NULL;
     }
 
-    return is_real ? execute_real(a1, is_forward, fct)
-                   : execute_complex(a1, is_forward, fct);
+    return is_real ? execute_real(a1, is_forward, fct, out)
+                   : execute_complex(a1, is_forward, fct, out);
 }
 
 /* List of methods defined in the module */
