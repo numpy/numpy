@@ -752,7 +752,7 @@ def endswith(a, suffix, start=0, end=None):
     array([False,  True])
     >>> np.char.endswith(s, 'a', start=1, end=2)
     array([False,  True])
-    
+
     """
     end = end if end is not None else numpy.iinfo(numpy.int_).max
     return numpy._core.umath.endswith(a, suffix, start, end)
