@@ -411,7 +411,7 @@ cdef class Generator:
         whether ``a`` or ``b`` is greater. The distribution is mirror
         symmetric. See for example:
 
-        >>> a, b, size = 2, 7, 1000
+        >>> a, b, size = 2, 7, 10000
         >>> sample_left = rng.beta(a, b, size=size)
         >>> sample_right = rng.beta(b, a, size=size)
         >>> m_left, m_right = np.mean(sample_left), np.mean(sample_right)
@@ -420,18 +420,11 @@ cdef class Generator:
         >>> m_left + m_right  
         0.9982728352324334  # may vary
 
-        Display the histogram of the samples, along with
-        the probability mass function:
+        Display the histogram of the two samples:
 
-        >>> import math
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(sample_left, 50, density=True)
-        >>> plt.plot(bins, 
-        ...         (bins**(k-1) * (1-bins)**(n-k))/
-        ...         (math.gamma(k)*math.gamma(n+1-k)/
-        ...          math.gamma(n+1)),
-        ...         linewidth=2, color='r')
-        >>> plt.xlim([0, .2])
+        >>> plt.hist([sample_left, sample_right], 
+        ...          50, density=True, histtype='bar')
         >>> plt.show()
         
         """
