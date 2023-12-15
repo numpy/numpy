@@ -427,6 +427,11 @@ cdef class Generator:
         ...          50, density=True, histtype='bar')
         >>> plt.show()
         
+        References
+        ----------
+        .. [1] Wikipedia, "Beta distribution",
+               https://en.wikipedia.org/wiki/Beta_distribution
+    
         """
         return cont(&random_beta, &self._bitgen, size, self.lock, 2,
                     a, 'a', CONS_POSITIVE,
