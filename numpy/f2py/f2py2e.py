@@ -18,6 +18,7 @@ import re
 from pathlib import Path
 from itertools import dropwhile
 import argparse
+import copy
 
 from . import crackfortran
 from . import rules
@@ -198,12 +199,7 @@ def scaninputline(inputline):
     dorestdoc = 0
     wrapfuncs = 1
     buildpath = '.'
-    parser = include_parser()
-    args, inputline = parser.parse_known_args(inputline)
-    if args.include_paths is not None:
-        include_paths = args.include_paths
-    else:
-        include_paths = []
+    include_paths, inputline = get_includes(inputline)
     signsfile, modulename = None, None
     options = {'buildpath': buildpath,
                'coutput': None,
@@ -530,7 +526,9 @@ def get_prefix(module):
 class CombineIncludePaths(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         include_paths_set = set(getattr(namespace, 'include_paths', []) or [])
-        if option_string == "--include-paths":
+        if option_string == "--include_paths":
+            outmess("Use --include-paths or -I instead of --include_paths which will be removed")
+        if option_string == "--include-paths" or option_string == "--include_paths":
             include_paths_set.update(values.split(':'))
         else:
             include_paths_set.add(values)
@@ -543,8 +541,17 @@ def include_parser():
     parser.add_argument("--include_paths", dest="include_paths", action=CombineIncludePaths)
     return parser
 
+def get_includes(iline):
+    iline = (' '.join(iline)).split()
+    parser = include_parser()
+    args, remain = parser.parse_known_args(iline)
+    ipaths = args.include_paths
+    if args.include_paths is None:
+        ipaths = []
+    return ipaths, remain
+
 def make_f2py_compile_parser():
-    parser = argparse.ArgumentParser(parents=[include_parser()], add_help=False)
+    parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--dep", action="append", dest="dependencies")
     parser.add_argument("--backend", choices=['meson', 'distutils'], default='distutils')
     parser.add_argument("-m", dest="module_name")
@@ -568,7 +575,6 @@ def preparse_sysargv():
         "dependencies": args.dependencies or [],
         "backend": backend_key,
         "modulename": args.module_name,
-        "include_paths": args.include_paths,
     }
 
 def run_compile():
@@ -583,7 +589,6 @@ def run_compile():
     if modulename is None:
         modulename = 'untitled'
     dependencies = argy["dependencies"]
-    include_dirs = argy["include_paths"]
     backend_key = argy["backend"]
     build_backend = f2py_build_generator(backend_key)
 
@@ -672,9 +677,11 @@ def run_compile():
     if '--quiet' in f2py_flags:
         setup_flags.append('--quiet')
 
+    # Ugly filter to remove everything but sources
     sources = sys.argv[1:]
-    if '--f2cmap' in sys.argv:
-        i = sys.argv.index(optname)
+    f2cmapopt = '--f2cmap'
+    if f2cmapopt in sys.argv:
+        i = sys.argv.index(f2cmapopt)
         f2py_flags.extend(sys.argv[i:i + 2])
         del sys.argv[i + 1], sys.argv[i]
         sources = sys.argv[1:]
@@ -705,6 +712,8 @@ def run_compile():
         else:
             run_main(f" {' '.join(f2py_flags)} {' '.join(pyf_files)}".split())
 
+    # Order matters here, includes are needed for run_main above
+    include_dirs, sources = get_includes(sources)
     # Now use the builder
     builder = build_backend(
         modulename,
