@@ -711,6 +711,8 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
         (instead of 1). If `density` is True, the weights are
         normalized, so that the integral of the density over the range
         remains 1.
+        Please note that the ``dtype`` of ``weights`` will dictate the
+        ``dtype`` of the returned accumulator (``hist``).
     density : bool, optional
         If ``False``, the result will contain the number of samples in
         each bin. If ``True``, the result is the value of the
