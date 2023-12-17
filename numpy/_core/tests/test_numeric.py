@@ -4057,6 +4057,9 @@ class TestVecdot:
 
         assert_array_equal(actual, expected)
 
+        actual2 = np.vecdot(arr1.T, arr2.T, axis=-2)
+        assert_array_equal(actual2, expected)
+
     def test_vecdot_complex(self):
         arr1 = np.array([1, 2j, 3])
         arr2 = np.array([1, 2, 3])

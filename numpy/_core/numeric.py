@@ -1167,24 +1167,16 @@ def vecdot(x1, x2, /, *, axis=-1):
     dot
 
     """
-    ndim = builtins.max(x1.ndim, x2.ndim)
-    x1_shape = (1,)*(ndim - x1.ndim) + tuple(x1.shape)
-    x2_shape = (1,)*(ndim - x2.ndim) + tuple(x2.shape)
-    if x1_shape[axis] != x2_shape[axis]:
-        raise ValueError(
-            "x1 and x2 must have the same size along the dot-compute axis "
-            f"but they are: {x1_shape[axis]} and {x2_shape[axis]}."
-        )
-
-    x1_, x2_ = np.broadcast_arrays(x1, x2, subok=True)
-    x1_ = np.moveaxis(x1_, axis, -1)
-    x2_ = np.moveaxis(x2_, axis, -1)
-
-    if np.iscomplexobj(x1_):
-        x1_ = x1_.conj()
-
-    res = x1_[..., None, :] @ x2_[..., None]
-    return res[..., 0, 0]
+    x1_ = np.asanyarray(x1)
+    x2_ = np.asanyarray(x2)
+    axis1 = normalize_axis_index(axis, x1_.ndim)
+    axis2 = normalize_axis_index(axis, x2_.ndim)
+    # TODO: write a proper gufunc for vector inner product.
+    # Note: .conj() just returns the array itself for non-complex data,
+    # and is thus much faster than trying to avoid it with an
+    # ``if np.iscomplexobj(x1)`` statement.
+    return np.matmul(x1_[..., np.newaxis].conj(), x2_[..., np.newaxis],
+                     axes=[(-1, axis1), (axis2, -1), (-2, -1)])[..., 0, 0]
 
 
 def _roll_dispatcher(a, shift, axis=None):
