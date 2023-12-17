@@ -2023,12 +2023,20 @@ cdef class Generator:
         -----
         The probability density for the Pareto distribution is
 
-        .. math:: p(x) = \\frac{a}{(x+1)^{a+1}}
+        .. math:: p(x) = \\frac{am^a}{x^{a+1}}
 
-        where :math:`a>0`. This corresponds to the Pareto II distribution 
-        and can be seen as Pareto I distribution with shape `a` and
-        scale 1 shifted by -1.
-
+        where :math:`a` is the shape and :math:`m` the scale.
+        
+        The Pareto distribution, named after the Italian economist
+        Vilfredo Pareto, is a power law probability distribution
+        useful in many real world problems.  Outside the field of
+        economics it is generally referred to as the Bradford
+        distribution. Pareto developed the distribution to describe
+        the distribution of wealth in an economy.  It has also found
+        use in insurance, web page access statistics, oil field sizes,
+        and many other problems, including the download frequency for
+        projects in Sourceforge [1]_.  It is one of the so-called
+        "fat-tailed" distributions.
 
         References
         ----------
