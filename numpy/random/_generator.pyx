@@ -1194,7 +1194,7 @@ cdef class Generator:
 
         >>> mu, sigma = 0, 0.1 # mean and standard deviation
         >>> rng = np.random.default_rng()
-        >>> rng.normal(mu, sigma, 1000)
+        >>> s = rng.normal(mu, sigma, 1000)
 
         Verify the mean and the variance:
 
