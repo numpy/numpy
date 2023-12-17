@@ -1154,7 +1154,7 @@ cdef class RandomState:
         probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, _ = plt.hist(s, 15, density=True)
+        >>> count, bins, ignored = plt.hist(s, 15, density=True)
         >>> plt.plot(bins, np.ones_like(bins), linewidth=2, color='r')
         >>> plt.show()
 
@@ -1381,7 +1381,7 @@ cdef class RandomState:
         Display results as a histogram:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, _ = plt.hist(dsums, 11, density=True)
+        >>> count, bins, ignored = plt.hist(dsums, 11, density=True)
         >>> plt.show()
 
         """
@@ -1559,7 +1559,7 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, _ = plt.hist(s, 30, density=True)
+        >>> count, bins, ignored = plt.hist(s, 30, density=True)
         >>> plt.plot(bins, 1/(sigma * np.sqrt(2 * np.pi)) *
         ...                np.exp( - (bins - mu)**2 / (2 * sigma**2) ),
         ...          linewidth=2, color='r')
@@ -1648,7 +1648,7 @@ cdef class RandomState:
 
         >>> import matplotlib.pyplot as plt
         >>> import scipy.special as sps  # doctest: +SKIP
-        >>> count, bins, _ = plt.hist(s, 50, density=True)
+        >>> count, bins, ignored = plt.hist(s, 50, density=True)
         >>> y = bins**(shape-1) * ((np.exp(-bins/scale))/  # doctest: +SKIP
         ...                       (sps.gamma(shape) * scale**shape))
         >>> plt.plot(bins, y, linewidth=2, color='r')  # doctest: +SKIP
@@ -1733,7 +1733,7 @@ cdef class RandomState:
 
         >>> import matplotlib.pyplot as plt
         >>> import scipy.special as sps  # doctest: +SKIP
-        >>> count, bins, _ = plt.hist(s, 50, density=True)
+        >>> count, bins, ignored = plt.hist(s, 50, density=True)
         >>> y = bins**(shape-1)*(np.exp(-bins/scale) /  # doctest: +SKIP
         ...                      (sps.gamma(shape)*scale**shape))
         >>> plt.plot(bins, y, linewidth=2, color='r')  # doctest: +SKIP
@@ -2462,7 +2462,7 @@ cdef class RandomState:
         density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, _ = plt.hist(s, 100, density=True)
+        >>> count, bins, ignored = plt.hist(s, 100, density=True)
         >>> fit = a*m**a / bins**(a+1)
         >>> plt.plot(bins, max(count)*fit/max(fit), linewidth=2, color='r')
         >>> plt.show()
@@ -2565,7 +2565,7 @@ cdef class RandomState:
         >>> def weib(x,n,a):
         ...     return (a / n) * (x / n)**(a - 1) * np.exp(-(x / n)**a)
 
-        >>> count, bins, _ = plt.hist(np.random.weibull(5.,1000))
+        >>> count, bins, ignored = plt.hist(np.random.weibull(5.,1000))
         >>> x = np.arange(1,100.)/50.
         >>> scale = count.max()/weib(x, 1., 5.).max()
         >>> plt.plot(x, weib(x, 1., 5.)*scale)
@@ -2650,7 +2650,7 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, _ = plt.hist(s, bins=30)
+        >>> count, bins, ignored = plt.hist(s, bins=30)
         >>> x = np.linspace(0, 1, 100)
         >>> y = a*x**(a-1.)
         >>> normed_y = samples*np.diff(bins)[0]*y
@@ -2763,7 +2763,7 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, _ = plt.hist(s, 30, density=True)
+        >>> count, bins, ignored = plt.hist(s, 30, density=True)
         >>> x = np.arange(-8., 8., .01)
         >>> pdf = np.exp(-abs(x-loc)/scale)/(2.*scale)
         >>> plt.plot(x, pdf)
@@ -2872,7 +2872,7 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, _ = plt.hist(s, 30, density=True)
+        >>> count, bins, ignored = plt.hist(s, 30, density=True)
         >>> plt.plot(bins, (1/beta)*np.exp(-(bins - mu)/beta)
         ...          * np.exp( -np.exp( -(bins - mu) /beta) ),
         ...          linewidth=2, color='r')
@@ -2887,7 +2887,7 @@ cdef class RandomState:
         ...    a = np.random.normal(mu, beta, 1000)
         ...    means.append(a.mean())
         ...    maxima.append(a.max())
-        >>> count, bins, _ = plt.hist(maxima, 30, density=True)
+        >>> count, bins, ignored = plt.hist(maxima, 30, density=True)
         >>> beta = np.std(maxima) * np.sqrt(6) / np.pi
         >>> mu = np.mean(maxima) - 0.57721*beta
         >>> plt.plot(bins, (1/beta)*np.exp(-(bins - mu)/beta)
@@ -2974,7 +2974,7 @@ cdef class RandomState:
         >>> loc, scale = 10, 1
         >>> s = np.random.logistic(loc, scale, 10000)
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, _ = plt.hist(s, bins=50)
+        >>> count, bins, ignored = plt.hist(s, bins=50)
 
         #   plot against distribution
 
@@ -3067,7 +3067,7 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, _ = plt.hist(s, 100, density=True, align='mid')
+        >>> count, bins, ignored = plt.hist(s, 100, density=True, align='mid')
 
         >>> x = np.linspace(min(bins), max(bins), 10000)
         >>> pdf = (np.exp(-(np.log(x) - mu)**2 / (2 * sigma**2))
@@ -3089,7 +3089,7 @@ cdef class RandomState:
         ...    b.append(np.prod(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
-        >>> count, bins, _ = plt.hist(b, 100, density=True, align='mid')
+        >>> count, bins, ignored = plt.hist(b, 100, density=True, align='mid')
         >>> sigma = np.std(np.log(b))
         >>> mu = np.mean(np.log(b))
 
@@ -3683,7 +3683,7 @@ cdef class RandomState:
         Display histogram of the sample:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, _ = plt.hist(s, 14, density=True)
+        >>> count, bins, ignored = plt.hist(s, 14, density=True)
         >>> plt.show()
 
         Draw each 100 values for lambda 100 and 500:
@@ -4057,7 +4057,7 @@ cdef class RandomState:
         >>> a = .6
         >>> s = np.random.logseries(a, 10000)
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, _ = plt.hist(s)
+        >>> count, bins, ignored = plt.hist(s)
 
         #   plot against distribution
 
