@@ -327,7 +327,7 @@ class memmap(ndarray):
         if self.base is not None and hasattr(self.base, 'flush'):
             self.base.flush()
 
-    def __array_wrap__(self, arr, context=None):
+    def __array_wrap__(self, arr, context=None, return_scalar=False):
         arr = super().__array_wrap__(arr, context)
 
         # Return a memmap if a memmap was given as the output of the
@@ -337,7 +337,7 @@ class memmap(ndarray):
             return arr
         # Return scalar instead of 0d memmap, e.g. for np.sum with
         # axis=None
-        if arr.shape == ():
+        if arr.shape == () and return_scalar:
             return arr[()]
         # Return ndarray otherwise
         return arr.view(np.ndarray)

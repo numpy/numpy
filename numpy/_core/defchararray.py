@@ -2109,7 +2109,7 @@ class chararray(ndarray):
 
         return self
 
-    def __array_wrap__(self, arr, context=None):
+    def __array_wrap__(self, arr, context=None, return_scalar=False):
         # When calling a ufunc (and some other functions), we return a
         # chararray if the ufunc output is a string-like array,
         # or an ndarray otherwise

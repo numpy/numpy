@@ -195,7 +195,7 @@ class TestOut:
             def __new__(cls, arr):
                 return np.asarray(arr).view(cls).copy()
 
-            def __array_wrap__(self, arr, context):
+            def __array_wrap__(self, arr, context=None, return_scalar=False):
                 return arr.view(type(self))
 
         for subok in (True, False):
@@ -2983,7 +2983,7 @@ class TestSpecialMethods:
             def __array__(self):
                 return np.zeros(1)
 
-            def __array_wrap__(self, arr, context):
+            def __array_wrap__(self, arr, context, return_scalar):
                 r = with_wrap()
                 r.arr = arr
                 r.context = context
@@ -3008,7 +3008,7 @@ class TestSpecialMethods:
             _prepare_args = None
             def __new__(cls):
                 return np.zeros(()).view(cls)
-            def __array_wrap__(self, obj, context):
+            def __array_wrap__(self, obj, context, return_scalar):
                 self._wrap_args = context[1]
                 return obj
             @property
@@ -3060,7 +3060,7 @@ class TestSpecialMethods:
             def __new__(cls):
                 return np.asarray(1).view(cls).copy()
 
-            def __array_wrap__(self, arr, context):
+            def __array_wrap__(self, arr, context, return_scalar):
                 return arr.view(type(self))
 
         a = with_wrap()
@@ -3082,28 +3082,13 @@ class TestSpecialMethods:
         assert_(isinstance(x, A))
         assert_array_equal(x, np.array(1))
 
-    def test_old_wrap(self):
-
-        class with_wrap:
-            def __array__(self):
-                return np.zeros(1)
-
-            def __array_wrap__(self, arr):
-                r = with_wrap()
-                r.arr = arr
-                return r
-
-        a = with_wrap()
-        x = ncu.minimum(a, a)
-        assert_equal(x.arr, np.zeros(1))
-
     def test_priority(self):
 
         class A:
             def __array__(self):
                 return np.zeros(1)
 
-            def __array_wrap__(self, arr, context):
+            def __array_wrap__(self, arr, context, return_scalar):
                 r = type(self)()
                 r.arr = arr
                 r.context = context
@@ -3146,7 +3131,7 @@ class TestSpecialMethods:
             def __array__(self):
                 return np.zeros(2)
 
-            def __array_wrap__(self, arr, context):
+            def __array_wrap__(self, arr, context, return_scalar):
                 raise RuntimeError
 
         a = A()
@@ -3158,11 +3143,11 @@ class TestSpecialMethods:
         singleton = np.array([1.0])
 
         class Ok(np.ndarray):
-            def __array_wrap__(self, obj):
+            def __array_wrap__(self, obj, context, return_scalar):
                 return singleton
 
         class Bad(np.ndarray):
-            def __array_wrap__(self, obj):
+            def __array_wrap__(self, obj, context, return_scalar):
                 raise RuntimeError
 
         ok = np.empty(1).view(Ok)
@@ -3178,7 +3163,7 @@ class TestSpecialMethods:
             def __array__(self):
                 return np.zeros(1)
 
-            def __array_wrap__(self, arr, context=None):
+            def __array_wrap__(self, arr, context=None, return_scalar=False):
                 return None
 
         a = A()
@@ -3192,7 +3177,7 @@ class TestSpecialMethods:
             def __array__(self):
                 return np.zeros(1)
 
-            def __array_wrap__(self, arr, context):
+            def __array_wrap__(self, arr, context, return_scalar):
                 return arr
 
         a = with_wrap()

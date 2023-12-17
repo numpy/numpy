@@ -787,3 +787,25 @@ class TestDeprecatedDTypeAliases(_DeprecationTestCase):
     def test_a_dtype_alias(self):
         self._check_for_warning(lambda: np.dtype("a"))
         self._check_for_warning(lambda: np.dtype("a10"))
+
+
+class TestDeprecatedArrayWrap(_DeprecationTestCase):
+    message = "__array_wrap__.*"
+
+    def test_deprecated(self):
+        class Test1:
+            def __array__(self,):
+                return np.arange(4)
+
+            def __array_wrap__(self, arr, context=None):
+                return 'pass'
+
+        class Test2:
+            def __array__(self):
+                return np.arange(4)
+
+            def __array_wrap__(self, arr):
+                return 'pass'
+
+        self.assert_deprecated(lambda: np.negative(Test1()))
+        self.assert_deprecated(lambda: np.negative(Test2()))
