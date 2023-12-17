@@ -14,7 +14,7 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'svd', 'svdvals', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond',
            'matrix_rank', 'LinAlgError', 'multi_dot', 'trace', 'diagonal',
            'cross', 'outer', 'tensordot', 'matmul', 'matrix_transpose',
-           'matrix_norm', 'vector_norm', 'vecdot']
+           'matrix_norm', 'vector_norm']
 
 import functools
 import operator
@@ -31,7 +31,7 @@ from numpy._core import (
     reciprocal, overrides, diagonal as _core_diagonal, trace as _core_trace,
     cross as _core_cross, outer as _core_outer, tensordot as _core_tensordot,
     matmul as _core_matmul, matrix_transpose as _core_matrix_transpose,
-    transpose as _core_transpose, vecdot as _core_vecdot,
+    transpose as _core_transpose
 )
 from numpy.lib._twodim_base_impl import triu, eye
 from numpy.lib.array_utils import normalize_axis_index, normalize_axis_tuple
@@ -1518,10 +1518,10 @@ def eigh(a, UPLO='L'):
     array([[-0.92387953+0.j        , -0.38268343+0.j        ], # may vary
            [ 0.        +0.38268343j,  0.        -0.92387953j]])
 
-    >>> (np.dot(a, eigenvectors[:, 0]) - 
+    >>> (np.dot(a, eigenvectors[:, 0]) -
     ... eigenvalues[0] * eigenvectors[:, 0])  # verify 1st eigenval/vec pair
     array([5.55111512e-17+0.0000000e+00j, 0.00000000e+00+1.2490009e-16j])
-    >>> (np.dot(a, eigenvectors[:, 1]) - 
+    >>> (np.dot(a, eigenvectors[:, 1]) -
     ... eigenvalues[1] * eigenvectors[:, 1])  # verify 2nd eigenval/vec pair
     array([0.+0.j, 0.+0.j])
 
@@ -2056,8 +2056,8 @@ def matrix_rank(A, tol=None, hermitian=False):
     S = svd(A, compute_uv=False, hermitian=hermitian)
     if tol is None:
         tol = (
-            S.max(axis=-1, keepdims=True) * 
-            max(A.shape[-2:]) * 
+            S.max(axis=-1, keepdims=True) *
+            max(A.shape[-2:]) *
             finfo(S.dtype).eps
         )
     else:
@@ -2198,8 +2198,8 @@ def slogdet(a):
     logabsdet : (...) array_like
         The natural log of the absolute value of the determinant.
 
-    If the determinant is zero, then `sign` will be 0 and `logabsdet` 
-    will be -inf. In all cases, the determinant is equal to 
+    If the determinant is zero, then `sign` will be 0 and `logabsdet`
+    will be -inf. In all cases, the determinant is equal to
     ``sign * np.exp(logabsdet)``.
 
     See Also
@@ -3308,16 +3308,3 @@ def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
         res = res.reshape(tuple(shape))
 
     return res
-
-
-# vecdot
-
-def _vecdot_dispatcher(x1, x2, /, *, axis=None):
-    return (x1, x2)
-
-@array_function_dispatch(_vecdot_dispatcher)
-def vecdot(x1, x2, /, *, axis=-1):
-    return _core_vecdot(x1, x2, axis=axis)
-
-
-vecdot.__doc__ = _core_vecdot.__doc__
