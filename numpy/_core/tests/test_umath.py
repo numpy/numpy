@@ -3006,16 +3006,20 @@ class TestSpecialMethods:
         class StoreArrayPrepareWrap(np.ndarray):
             _wrap_args = None
             _prepare_args = None
+
             def __new__(cls):
                 return np.zeros(()).view(cls)
+
             def __array_wrap__(self, obj, context, return_scalar):
                 self._wrap_args = context[1]
                 return obj
+
             @property
             def args(self):
                 # We need to ensure these are fetched at the same time, before
                 # any other ufuncs are called by the assertions
                 return self._wrap_args
+
             def __repr__(self):
                 return "a"  # for short test output
 
