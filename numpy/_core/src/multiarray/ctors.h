@@ -124,13 +124,6 @@ copy_and_swap(void *dst, void *src, int itemsize, npy_intp numitems,
 NPY_NO_EXPORT void
 byte_swap_vector(void *p, npy_intp n, int size);
 
-/*
- * Calls arr_of_subclass.__array_wrap__(towrap), in order to make 'towrap'
- * have the same ndarray subclass as 'arr_of_subclass'.
- */
-NPY_NO_EXPORT PyArrayObject *
-PyArray_SubclassWrap(PyArrayObject *arr_of_subclass, PyArrayObject *towrap);
-
 NPY_NO_EXPORT PyObject *
 PyArray_Zeros_int(int nd, npy_intp const *dims, PyArray_Descr *descr,
                   PyArray_DTypeMeta *dtype, int is_f_order);

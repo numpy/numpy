@@ -118,9 +118,9 @@ _get_wrap_prepare_args(NpyUFuncContext *context) {
  * Apply the array wrapping to a result array.
  * 
  * @param obj The object (should be an array) to wrap.
- * @param original_out NULL/None (both valid) or the original object passed
- *        in via `out=` (expected to be an array).
- *        If given, its wrapping method is always preferred.
+ * @param original_out NULL/None (both valid) or an object who's wrapping
+ *        method is always used/preferred.  The naming comes because for an
+ *        `out=` argument we always trigger its own wrapping method.
  * @param wrap The array wrap function to call
  * @param wrap_type The type belonging to the wrap function, when it matches
  *        wrapping may be short-cut.
@@ -255,4 +255,22 @@ npy_apply_wrap(
     Py_XDECREF(arr);
     Py_XDECREF(new_wrap);
     return res;
+}
+
+
+/*
+ * Calls arr_of_subclass.__array_wrap__(towrap), in order to make 'towrap'
+ * have the same ndarray subclass as 'arr_of_subclass'.
+ * `towrap` should be a base-class ndarray.
+ */
+NPY_NO_EXPORT PyObject *
+npy_apply_wrap_simple(PyArrayObject *arr_of_subclass, PyArrayObject *towrap)
+{
+    /*
+     * Same as apply-wrap, but when there is only a single other array we
+     * can  `original_out` and not worry about passing a useful wrap.
+     */
+    return npy_apply_wrap(
+            (PyObject *)towrap, (PyObject *)arr_of_subclass, Py_None, NULL,
+            NULL, NPY_FALSE, NPY_TRUE);
 }
