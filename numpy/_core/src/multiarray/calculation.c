@@ -700,7 +700,7 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
  finish:
     Py_DECREF(f);
     Py_DECREF(out);
-    if (ret_int) {
+    if (ret_int && ret != NULL) {
         Py_INCREF(PyArray_DESCR(a));
         tmp = PyArray_CastToType((PyArrayObject *)ret,
                                  PyArray_DESCR(a), PyArray_ISFORTRAN(a));
