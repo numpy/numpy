@@ -4392,7 +4392,7 @@ cdef class Generator:
         the pieces.
 
         >>> rng = np.random.default_rng() 
-        >>> s = rng().dirichlet((10, 5, 3), 20).transpose()
+        >>> s = rng.dirichlet((10, 5, 3), 20).transpose()
 
         >>> import matplotlib.pyplot as plt
         >>> plt.barh(range(20), s[0])
