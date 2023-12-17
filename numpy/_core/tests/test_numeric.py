@@ -4070,3 +4070,12 @@ class TestVecdot:
             np.vecdot(arr2, arr1),
             np.array([10+4j])
         )
+
+    def test_vecdot_subclass(self):
+        class MySubclass(np.ndarray):
+            pass
+
+        arr1 = np.arange(6).reshape((2, 3)).view(MySubclass)
+        arr2 = np.arange(3).reshape((1, 3)).view(MySubclass)
+        result = np.vecdot(arr1, arr2)
+        assert isinstance(result, MySubclass)

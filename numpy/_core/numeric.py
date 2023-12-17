@@ -1176,7 +1176,7 @@ def vecdot(x1, x2, /, *, axis=-1):
             f"but they are: {x1_shape[axis]} and {x2_shape[axis]}."
         )
 
-    x1_, x2_ = np.broadcast_arrays(x1, x2)
+    x1_, x2_ = np.broadcast_arrays(x1, x2, subok=True)
     x1_ = np.moveaxis(x1_, axis, -1)
     x2_ = np.moveaxis(x2_, axis, -1)
 
