@@ -507,7 +507,7 @@ cdef class Generator:
         Output a 3x8000 array:
 
         >>> rng = np.random.default_rng()
-        >>> n = rng().standard_exponential((3, 8000))
+        >>> n = rng.standard_exponential((3, 8000))
 
         """
         _dtype = np.dtype(dtype)
