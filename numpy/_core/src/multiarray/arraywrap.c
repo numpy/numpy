@@ -40,7 +40,7 @@ npy_find_array_wrap(
     PyObject *wrap = NULL;
     PyObject *wrap_type = NULL;
 
-    double priority;
+    double priority = 0;  /* silence uninitialized warning */
 
     for (int i = 0; i < nin; i++) {
         PyObject *obj = inputs[i];
