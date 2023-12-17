@@ -12,7 +12,7 @@ class install_headers (old_install_headers):
         for header in headers:
             if isinstance(header, tuple):
                 # Kind of a hack, but I don't know where else to change this...
-                if header[0] == 'numpy.core':
+                if header[0] == 'numpy._core':
                     header = ('numpy', header[1])
                     if os.path.splitext(header[1])[1] == '.inc':
                         continue

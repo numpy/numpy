@@ -508,8 +508,7 @@ class ABCPolyBase(abc.ABC):
     # Call
 
     def __call__(self, arg):
-        off, scl = pu.mapparms(self.domain, self.window)
-        arg = off + scl*arg
+        arg = pu.mapdomain(arg, self.domain, self.window)
         return self._val(arg, self.coef)
 
     def __iter__(self):
@@ -681,6 +680,28 @@ class ABCPolyBase(abc.ABC):
         -------
         degree : int
             Degree of the series, one less than the number of coefficients.
+
+        Examples
+        --------
+
+        Create a polynomial object for ``1 + 7*x + 4*x**2``:
+
+        >>> poly = np.polynomial.Polynomial([1, 7, 4])
+        >>> print(poly)
+        1.0 + 7.0·x + 4.0·x²
+        >>> poly.degree()
+        2
+
+        Note that this method does not check for non-zero coefficients.
+        You must trim the polynomial to remove any trailing zeroes:
+
+        >>> poly = np.polynomial.Polynomial([1, 7, 0])
+        >>> print(poly)
+        1.0 + 7.0·x + 0.0·x²
+        >>> poly.degree()
+        2
+        >>> poly.trim().degree()
+        1
 
         """
         return len(self) - 1
@@ -887,7 +908,7 @@ class ABCPolyBase(abc.ABC):
         """Return the roots of the series polynomial.
 
         Compute the roots for the series. Note that the accuracy of the
-        roots decrease the further outside the domain they lie.
+        roots decreases the further outside the `domain` they lie.
 
         Returns
         -------

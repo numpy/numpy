@@ -6,13 +6,13 @@ function-based counterpart in `../from_numeric.py`.
 
 """
 
-from typing import Any
 import numpy as np
+import numpy.typing as npt
 
 f8: np.float64
-AR_f8: np.ndarray[Any, np.dtype[np.float64]]
-AR_M: np.ndarray[Any, np.dtype[np.datetime64]]
-AR_b: np.ndarray[Any, np.dtype[np.bool_]]
+AR_f8: npt.NDArray[np.float64]
+AR_M: npt.NDArray[np.datetime64]
+AR_b: npt.NDArray[np.bool]
 
 ctypes_obj = AR_f8.ctypes
 

@@ -13,7 +13,7 @@ operations for arrays of type `numpy.str_` or `numpy.bytes_`. For example
       >>> np.char.add(["num", "doc"], ["py", "umentation"])
       array(['numpy', 'documentation'], dtype='<U13')
 
-The methods in this module are based on the methods in :py:mod:`String`
+The methods in this module are based on the methods in :py:mod:`string`
 
 String operations
 -----------------

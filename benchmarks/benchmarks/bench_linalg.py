@@ -72,37 +72,39 @@ class Eindot(Benchmark):
 
 
 class Linalg(Benchmark):
-    params = [['svd', 'pinv', 'det', 'norm'],
-              TYPES1]
-    param_names = ['op', 'type']
+    params = set(TYPES1) - set(['float16'])
+    param_names = ['dtype']
 
-    def setup(self, op, typename):
+    def setup(self, typename):
         np.seterr(all='ignore')
+        self.a = get_squares_()[typename]
 
-        self.func = getattr(np.linalg, op)
+    def time_svd(self, typename):
+        np.linalg.svd(self.a)
 
-        if op == 'cholesky':
-            # we need a positive definite
-            self.a = np.dot(get_squares_()[typename],
-                            get_squares_()[typename].T)
-        else:
-            self.a = get_squares_()[typename]
+    def time_pinv(self, typename):
+        np.linalg.pinv(self.a)
 
-        # check that dtype is supported at all
-        try:
-            self.func(self.a[:2, :2])
-        except TypeError as e:
-            raise NotImplementedError() from e
+    def time_det(self, typename):
+        np.linalg.det(self.a)
 
-    def time_op(self, op, typename):
-        self.func(self.a)
+
+class LinalgNorm(Benchmark):
+    params = TYPES1
+    param_names = ['dtype']
+
+    def setup(self, typename):
+        self.a = get_squares_()[typename]
+
+    def time_norm(self, typename):
+        np.linalg.norm(self.a)
 
 
 class LinalgSmallArrays(Benchmark):
     """ Test overhead of linalg methods for small arrays """
     def setup(self):
         self.array_5 = np.arange(5.)
-        self.array_5_5 = np.arange(5.)
+        self.array_5_5 = np.reshape(np.arange(25.), (5, 5))
 
     def time_norm_small_array(self):
         np.linalg.norm(self.array_5)
@@ -190,3 +192,27 @@ class Einsum(Benchmark):
     # sum_of_products_contig_outstride0_one：non_contiguous arrays
     def time_einsum_noncon_contig_outstride0(self, dtype):
         np.einsum("i->", self.non_contiguous_dim1, optimize=True)
+
+
+class LinAlgTransposeVdot(Benchmark):
+    # Smaller for speed
+    # , (128, 128), (256, 256), (512, 512),
+    # (1024, 1024)
+    params = [[(16, 16), (32, 32),
+               (64, 64)], TYPES1]
+    param_names = ['shape', 'npdtypes']
+
+    def setup(self, shape, npdtypes):
+        self.xarg = np.random.uniform(-1, 1, np.dot(*shape)).reshape(shape)
+        self.xarg = self.xarg.astype(npdtypes)
+        self.x2arg = np.random.uniform(-1, 1, np.dot(*shape)).reshape(shape)
+        self.x2arg = self.x2arg.astype(npdtypes)
+        if npdtypes.startswith('complex'):
+            self.xarg += self.xarg.T*1j
+            self.x2arg += self.x2arg.T*1j
+
+    def time_transpose(self, shape, npdtypes):
+        np.transpose(self.xarg)
+
+    def time_vdot(self, shape, npdtypes):
+        np.vdot(self.xarg, self.x2arg)

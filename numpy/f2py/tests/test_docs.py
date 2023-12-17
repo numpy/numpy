@@ -3,27 +3,23 @@ import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_equal
 from . import util
-
+from pathlib import Path
 
 def get_docdir():
-    # assuming that documentation tests are run from a source
-    # directory
-    return os.path.abspath(os.path.join(
-        os.path.dirname(__file__),
-        '..', '..', '..',
-        'doc', 'source', 'f2py', 'code'))
-
+    # Assumes that spin is used to run tests
+    nproot = Path(__file__).resolve().parents[8]
+    return  nproot / "doc" / "source" / "f2py" / "code"
 
 pytestmark = pytest.mark.skipif(
-    not os.path.isdir(get_docdir()),
-    reason=('Could not find f2py documentation sources'
-            f' ({get_docdir()} does not exists)'))
+    not get_docdir().is_dir(),
+    reason=f"Could not find f2py documentation sources"
+    f"({get_docdir()} does not exist)",
+)
 
+def _path(*args):
+    return get_docdir().joinpath(*args)
 
-def _path(*a):
-    return os.path.join(*((get_docdir(),) + a))
-
-
+@pytest.mark.slow
 class TestDocAdvanced(util.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/build-f2py']
     sources = [_path('asterisk1.f90'), _path('asterisk2.f90'),
@@ -37,7 +33,7 @@ class TestDocAdvanced(util.F2PyTest):
         foo = getattr(self.module, 'foo2')
         assert_equal(foo(2), b'12')
         assert_equal(foo(12), b'123456789A12')
-        assert_equal(foo(24), b'123456789A123456789B')
+        assert_equal(foo(20), b'123456789A123456789B')
 
     def test_ftype(self):
         ftype = self.module

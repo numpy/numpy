@@ -38,7 +38,7 @@ A total of 20 pull requests were merged for this release.
 * `#18488 <https://github.com/numpy/numpy/pull/18488>`__: BUG: check if PyArray_malloc succeeded
 * `#18546 <https://github.com/numpy/numpy/pull/18546>`__: BUG: incorrect error fallthrough in nditer
 * `#18559 <https://github.com/numpy/numpy/pull/18559>`__: CI: Backport CI fixes from main.
-* `#18599 <https://github.com/numpy/numpy/pull/18599>`__: MAINT: Add annotations for `dtype.__getitem__`, `__mul__` and...
+* `#18599 <https://github.com/numpy/numpy/pull/18599>`__: MAINT: Add annotations for ``dtype.__getitem__``, `__mul__` and...
 * `#18611 <https://github.com/numpy/numpy/pull/18611>`__: BUG: NameError in numpy.distutils.fcompiler.compaq
 * `#18612 <https://github.com/numpy/numpy/pull/18612>`__: BUG: Fixed ``where`` keyword for ``np.mean`` & ``np.var`` methods
 * `#18617 <https://github.com/numpy/numpy/pull/18617>`__: CI: Update apt package list before Python install

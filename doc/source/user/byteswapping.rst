@@ -79,7 +79,7 @@ underlying memory it is looking at:
 
 * Change the byte-ordering information in the array dtype so that it
   interprets the underlying data as being in a different byte order.
-  This is the role of ``arr.newbyteorder()``
+  This is the role of ``arr.view(arr.dtype.newbyteorder())``
 * Change the byte-ordering of the underlying data, leaving the dtype
   interpretation as it was.  This is what ``arr.byteswap()`` does.
 
@@ -104,7 +104,7 @@ We make something where they don't match:
 The obvious fix for this situation is to change the dtype so it gives
 the correct endianness:
 
->>> fixed_end_dtype_arr = wrong_end_dtype_arr.newbyteorder()
+>>> fixed_end_dtype_arr = wrong_end_dtype_arr.view(np.dtype('<i2').newbyteorder())
 >>> fixed_end_dtype_arr[0]
 1
 
@@ -137,7 +137,8 @@ to have the opposite byte order in memory, and you want the dtype to
 match so the array values make sense.  In this case you just do both of
 the previous operations:
 
->>> swapped_end_arr = big_end_arr.byteswap().newbyteorder()
+>>> swapped_end_arr = big_end_arr.byteswap()
+>>> swapped_end_arr = swapped_end_arr.view(swapped_end_arr.dtype.newbyteorder())
 >>> swapped_end_arr[0]
 1
 >>> swapped_end_arr.tobytes() == big_end_buffer

@@ -57,14 +57,14 @@ New deprecations
 
 * The type dictionaries `numpy.core.typeNA` and `numpy.core.sctypeNA` are
   deprecated. They were buggy and not documented and will be removed in the
-  1.18 release. Use`numpy.sctypeDict` instead.
+  1.18 release. Use ``numpy.sctypeDict`` instead.
 
 * The `numpy.asscalar` function is deprecated. It is an alias to the more
   powerful `numpy.ndarray.item`, not tested, and fails for scalars.
 
 * The `numpy.set_array_ops` and `numpy.get_array_ops` functions are deprecated.
   As part of `NEP 15`, they have been deprecated along with the C-API functions
-  :c:func:`PyArray_SetNumericOps` and :c:func:`PyArray_GetNumericOps`. Users
+  ``PyArray_SetNumericOps`` and ``PyArray_GetNumericOps``. Users
   who wish to override the inner loop functions in built-in ufuncs should use
   :c:func:`PyUFunc_ReplaceLoopBySignature`.
 

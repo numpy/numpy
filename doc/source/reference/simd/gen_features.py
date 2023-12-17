@@ -168,7 +168,7 @@ if __name__ == '__main__':
     gen_path = path.join(
         path.dirname(path.realpath(__file__)), "generated_tables"
     )
-    with open(path.join(gen_path, 'cpu_features.inc'), 'wt') as fd:
+    with open(path.join(gen_path, 'cpu_features.inc'), 'w') as fd:
         fd.write(f'.. generated via {__file__}\n\n')
         for arch in (
             ("x86", "PPC64", "PPC64LE", "ARMHF", "AARCH64", "S390X")
@@ -177,7 +177,7 @@ if __name__ == '__main__':
             table = Features(arch, 'gcc').table()
             fd.write(wrapper_section(title, table))
 
-    with open(path.join(gen_path, 'compilers-diff.inc'), 'wt') as fd:
+    with open(path.join(gen_path, 'compilers-diff.inc'), 'w') as fd:
         fd.write(f'.. generated via {__file__}\n\n')
         for arch, cc_names in (
             ("x86", ("clang", "ICC", "MSVC")),

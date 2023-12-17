@@ -35,7 +35,6 @@ Example::
 
 """
 import os
-import io
 
 from .._utils import set_module
 
@@ -98,7 +97,7 @@ class _FileOpeners:
 
     def __init__(self):
         self._loaded = False
-        self._file_openers = {None: io.open}
+        self._file_openers = {None: open}
 
     def _load(self):
         if self._loaded:
@@ -161,7 +160,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
 
     Parameters
     ----------
-    path : str
+    path : str or pathlib.Path
         Local file path or URL to open.
     mode : str, optional
         Mode to open `path`. Mode 'r' for reading, 'w' for writing, 'a' to
@@ -173,7 +172,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
         The default path is the current directory.
     encoding : {None, str}, optional
         Open text file with given encoding. The default encoding will be
-        what `io.open` uses.
+        what `open` uses.
     newline : {None, str}, optional
         Newline to use when reading text file.
 
@@ -193,7 +192,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
     return ds.open(path, mode, encoding=encoding, newline=newline)
 
 
-@set_module('numpy')
+@set_module('numpy.lib.npyio')
 class DataSource:
     """
     DataSource(destpath='.')
@@ -217,7 +216,7 @@ class DataSource:
     URLs require a scheme string (``http://``) to be used, without it they
     will fail::
 
-        >>> repos = np.DataSource()
+        >>> repos = np.lib.npyio.DataSource()
         >>> repos.exists('www.google.com/index.html')
         False
         >>> repos.exists('http://www.google.com/index.html')
@@ -229,13 +228,13 @@ class DataSource:
     --------
     ::
 
-        >>> ds = np.DataSource('/home/guido')
+        >>> ds = np.lib.npyio.DataSource('/home/guido')
         >>> urlname = 'http://www.google.com/'
         >>> gfile = ds.open('http://www.google.com/')
         >>> ds.abspath(urlname)
         '/home/guido/www.google.com/index.html'
 
-        >>> ds = np.DataSource(None)  # use with temporary file
+        >>> ds = np.lib.npyio.DataSource(None)  # use with temporary file
         >>> ds.open('/home/guido/foobar.txt')
         <open file '/home/guido.foobar.txt', mode 'r' at 0x91d4430>
         >>> ds.abspath('/home/guido/foobar.txt')
@@ -382,7 +381,7 @@ class DataSource:
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL.
 
         Returns
@@ -442,7 +441,7 @@ class DataSource:
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL.
 
         Returns
@@ -493,7 +492,7 @@ class DataSource:
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Local file path or URL to open.
         mode : {'r', 'w', 'a'}, optional
             Mode to open `path`.  Mode 'r' for reading, 'w' for writing,
@@ -501,7 +500,7 @@ class DataSource:
             specified by `path`. Default is 'r'.
         encoding : {None, str}, optional
             Open text file with given encoding. The default encoding will be
-            what `io.open` uses.
+            what `open` uses.
         newline : {None, str}, optional
             Newline to use when reading text file.
 
@@ -604,7 +603,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL. This may, but does not
             have to, include the `baseurl` with which the `Repository` was
             initialized.
@@ -631,7 +630,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL. This may, but does not
             have to, include the `baseurl` with which the `Repository` was
             initialized.
@@ -660,7 +659,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Local file path or URL to open. This may, but does not have to,
             include the `baseurl` with which the `Repository` was
             initialized.
@@ -670,7 +669,7 @@ class Repository (DataSource):
             specified by `path`. Default is 'r'.
         encoding : {None, str}, optional
             Open text file with given encoding. The default encoding will be
-            what `io.open` uses.
+            what `open` uses.
         newline : {None, str}, optional
             Newline to use when reading text file.
 
@@ -689,7 +688,7 @@ class Repository (DataSource):
 
         Returns
         -------
-        files : list of str
+        files : list of str or pathlib.Path
             List of file names (not containing a directory part).
 
         Notes

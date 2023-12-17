@@ -1,4 +1,4 @@
-Permuted Congruential Generator (64-bit, PCG64 DXSM)
+Permuted congruential generator (64-bit, PCG64 DXSM)
 ====================================================
 
 .. currentmodule:: numpy.random

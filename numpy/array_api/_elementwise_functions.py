@@ -3,8 +3,11 @@ from __future__ import annotations
 from ._dtypes import (
     _boolean_dtypes,
     _floating_dtypes,
+    _real_floating_dtypes,
+    _complex_floating_dtypes,
     _integer_dtypes,
     _integer_or_boolean_dtypes,
+    _real_numeric_dtypes,
     _numeric_dtypes,
     _result_type,
 )
@@ -105,8 +108,8 @@ def atan2(x1: Array, x2: Array, /) -> Array:
 
     See its docstring for more information.
     """
-    if x1.dtype not in _floating_dtypes or x2.dtype not in _floating_dtypes:
-        raise TypeError("Only floating-point dtypes are allowed in atan2")
+    if x1.dtype not in _real_floating_dtypes or x2.dtype not in _real_floating_dtypes:
+        raise TypeError("Only real floating-point dtypes are allowed in atan2")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
@@ -230,12 +233,23 @@ def ceil(x: Array, /) -> Array:
 
     See its docstring for more information.
     """
-    if x.dtype not in _numeric_dtypes:
-        raise TypeError("Only numeric dtypes are allowed in ceil")
+    if x.dtype not in _real_numeric_dtypes:
+        raise TypeError("Only real numeric dtypes are allowed in ceil")
     if x.dtype in _integer_dtypes:
         # Note: The return dtype of ceil is the same as the input
         return x
     return Array._new(np.ceil(x._array))
+
+
+def conj(x: Array, /) -> Array:
+    """
+    Array API compatible wrapper for :py:func:`np.conj <numpy.conj>`.
+
+    See its docstring for more information.
+    """
+    if x.dtype not in _complex_floating_dtypes:
+        raise TypeError("Only complex floating-point dtypes are allowed in conj")
+    return Array._new(np.conj(x))
 
 
 def cos(x: Array, /) -> Array:
@@ -314,8 +328,8 @@ def floor(x: Array, /) -> Array:
 
     See its docstring for more information.
     """
-    if x.dtype not in _numeric_dtypes:
-        raise TypeError("Only numeric dtypes are allowed in floor")
+    if x.dtype not in _real_numeric_dtypes:
+        raise TypeError("Only real numeric dtypes are allowed in floor")
     if x.dtype in _integer_dtypes:
         # Note: The return dtype of floor is the same as the input
         return x
@@ -328,8 +342,8 @@ def floor_divide(x1: Array, x2: Array, /) -> Array:
 
     See its docstring for more information.
     """
-    if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
-        raise TypeError("Only numeric dtypes are allowed in floor_divide")
+    if x1.dtype not in _real_numeric_dtypes or x2.dtype not in _real_numeric_dtypes:
+        raise TypeError("Only real numeric dtypes are allowed in floor_divide")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
@@ -342,8 +356,8 @@ def greater(x1: Array, x2: Array, /) -> Array:
 
     See its docstring for more information.
     """
-    if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
-        raise TypeError("Only numeric dtypes are allowed in greater")
+    if x1.dtype not in _real_numeric_dtypes or x2.dtype not in _real_numeric_dtypes:
+        raise TypeError("Only real numeric dtypes are allowed in greater")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
@@ -356,12 +370,23 @@ def greater_equal(x1: Array, x2: Array, /) -> Array:
 
     See its docstring for more information.
     """
-    if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
-        raise TypeError("Only numeric dtypes are allowed in greater_equal")
+    if x1.dtype not in _real_numeric_dtypes or x2.dtype not in _real_numeric_dtypes:
+        raise TypeError("Only real numeric dtypes are allowed in greater_equal")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.greater_equal(x1._array, x2._array))
+
+
+def imag(x: Array, /) -> Array:
+    """
+    Array API compatible wrapper for :py:func:`np.imag <numpy.imag>`.
+
+    See its docstring for more information.
+    """
+    if x.dtype not in _complex_floating_dtypes:
+        raise TypeError("Only complex floating-point dtypes are allowed in imag")
+    return Array._new(np.imag(x))
 
 
 def isfinite(x: Array, /) -> Array:
@@ -403,8 +428,8 @@ def less(x1: Array, x2: Array, /) -> Array:
 
     See its docstring for more information.
     """
-    if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
-        raise TypeError("Only numeric dtypes are allowed in less")
+    if x1.dtype not in _real_numeric_dtypes or x2.dtype not in _real_numeric_dtypes:
+        raise TypeError("Only real numeric dtypes are allowed in less")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
@@ -417,8 +442,8 @@ def less_equal(x1: Array, x2: Array, /) -> Array:
 
     See its docstring for more information.
     """
-    if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
-        raise TypeError("Only numeric dtypes are allowed in less_equal")
+    if x1.dtype not in _real_numeric_dtypes or x2.dtype not in _real_numeric_dtypes:
+        raise TypeError("Only real numeric dtypes are allowed in less_equal")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
@@ -475,8 +500,8 @@ def logaddexp(x1: Array, x2: Array) -> Array:
 
     See its docstring for more information.
     """
-    if x1.dtype not in _floating_dtypes or x2.dtype not in _floating_dtypes:
-        raise TypeError("Only floating-point dtypes are allowed in logaddexp")
+    if x1.dtype not in _real_floating_dtypes or x2.dtype not in _real_floating_dtypes:
+        raise TypeError("Only real floating-point dtypes are allowed in logaddexp")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
@@ -599,14 +624,25 @@ def pow(x1: Array, x2: Array, /) -> Array:
     return Array._new(np.power(x1._array, x2._array))
 
 
+def real(x: Array, /) -> Array:
+    """
+    Array API compatible wrapper for :py:func:`np.real <numpy.real>`.
+
+    See its docstring for more information.
+    """
+    if x.dtype not in _complex_floating_dtypes:
+        raise TypeError("Only complex floating-point dtypes are allowed in real")
+    return Array._new(np.real(x))
+
+
 def remainder(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.remainder <numpy.remainder>`.
 
     See its docstring for more information.
     """
-    if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
-        raise TypeError("Only numeric dtypes are allowed in remainder")
+    if x1.dtype not in _real_numeric_dtypes or x2.dtype not in _real_numeric_dtypes:
+        raise TypeError("Only real numeric dtypes are allowed in remainder")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
@@ -721,8 +757,8 @@ def trunc(x: Array, /) -> Array:
 
     See its docstring for more information.
     """
-    if x.dtype not in _numeric_dtypes:
-        raise TypeError("Only numeric dtypes are allowed in trunc")
+    if x.dtype not in _real_numeric_dtypes:
+        raise TypeError("Only real numeric dtypes are allowed in trunc")
     if x.dtype in _integer_dtypes:
         # Note: The return dtype of trunc is the same as the input
         return x

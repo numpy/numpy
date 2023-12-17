@@ -1,0 +1,1315 @@
+/*
+ * This file provides optimized sum of product implementations used internally
+ * by einsum.
+ *
+ * Copyright (c) 2011 by Mark Wiebe (mwwiebe@gmail.com)
+ * The University of British Columbia
+ *
+ * See LICENSE.txt for the license.
+ */
+
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+
+#include <numpy/npy_common.h>
+#include <numpy/ndarraytypes.h>  /* for NPY_NTYPES */
+#include <numpy/halffloat.h>
+
+#include "einsum_sumprod.h"
+#include "einsum_debug.h"
+#include "simd/simd.h"
+#include "common.h"
+
+// ARM/Neon don't have instructions for aligned memory access
+#ifdef NPY_HAVE_NEON
+    #define EINSUM_IS_ALIGNED(x) 0
+#else
+    #define EINSUM_IS_ALIGNED(x) npy_is_aligned(x, NPY_SIMD_WIDTH)
+#endif
+
+/**********************************************/
+
+/**begin repeat
+ * #name = byte, short, int, long, longlong,
+ *         ubyte, ushort, uint, ulong, ulonglong,
+ *         half, float, double, longdouble,
+ *         cfloat, cdouble, clongdouble#
+ * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
+ *         npy_half, npy_float, npy_double, npy_longdouble,
+ *         npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #temptype = npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *             npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
+ *             npy_float, npy_float, npy_double, npy_longdouble,
+ *             npy_float, npy_double, npy_longdouble#
+ * #sfx  = s8, s16, s32, long, s64,
+ *        u8, u16, u32, ulong, u64,
+ *        half, f32, f64, longdouble,
+ *        f32, f64, clongdouble#
+ * #to = ,,,,,
+ *       ,,,,,
+ *       npy_float_to_half,,,,
+ *       ,,#
+ * #from = ,,,,,
+ *         ,,,,,
+ *         npy_half_to_float,,,,
+ *         ,,#
+ * #complex = 0*5,
+ *            0*5,
+ *            0*4,
+ *            1*3#
+ * #float32 = 0*5,
+ *            0*5,
+ *            0,1,0,0,
+ *            0*3#
+ * #float64 = 0*5,
+ *            0*5,
+ *            0,0,1,0,
+ *            0*3#
+ * #NPYV_CHK = 0*5,
+ *             0*5,
+ *             0, NPY_SIMD_F32, NPY_SIMD_F64, 0,
+ *             0*3#
+ */
+
+#if !@complex@
+static NPY_GCC_OPT_3 @temptype@ @name@_sum_of_arr(@type@ *data, npy_intp count)
+{
+    @temptype@ accum = 0;
+#if @NPYV_CHK@ // NPYV check for @type@
+    /* Use aligned instructions if possible */
+    const int is_aligned = EINSUM_IS_ALIGNED(data);
+    const int vstep = npyv_nlanes_@sfx@;
+    npyv_@sfx@ v_accum = npyv_zero_@sfx@();
+    const npy_intp vstepx4 = vstep * 4;
+
+    /**begin repeat1
+     * #cond = if(is_aligned), else#
+     * #ld = loada, load#
+     * #st = storea, store#
+     */
+    @cond@ {
+        for (; count >= vstepx4; count -= vstepx4, data += vstepx4) {
+            /**begin repeat2
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@sfx@ a@i@ = npyv_@ld@_@sfx@(data + vstep * @i@);
+            /**end repeat2**/
+            npyv_@sfx@ a01   = npyv_add_@sfx@(a0, a1);
+            npyv_@sfx@ a23   = npyv_add_@sfx@(a2, a3);
+            npyv_@sfx@ a0123 = npyv_add_@sfx@(a01, a23);
+                     v_accum = npyv_add_@sfx@(a0123, v_accum);
+        }
+    }
+    /**end repeat1**/
+    for (; count > 0; count -= vstep, data += vstep) {
+        npyv_@sfx@ a = npyv_load_tillz_@sfx@(data, count);
+        v_accum = npyv_add_@sfx@(a, v_accum);
+    }
+    accum = npyv_sum_@sfx@(v_accum);
+    npyv_cleanup();
+#else
+#ifndef NPY_DISABLE_OPTIMIZATION
+    for (; count > 4; count -= 4, data += 4) {
+        const @temptype@ a01 = @from@(*data) + @from@(data[1]);
+        const @temptype@ a23 = @from@(data[2]) + @from@(data[3]);
+        accum +=  a01 + a23;
+    }
+#endif // !NPY_DISABLE_OPTIMIZATION
+    for (; count > 0; --count, data++) {
+        accum += @from@(*data);
+    }
+#endif // NPYV check for @type@
+    return accum;
+}
+#endif
+
+/**begin repeat1
+ * #nop = 1, 2, 3, 1000#
+ * #noplabel = one, two, three, any#
+ */
+static void
+@name@_sum_of_products_@noplabel@(int nop, char **dataptr,
+                                npy_intp const *strides, npy_intp count)
+{
+#if (@nop@ == 1) || (@nop@ <= 3 && !@complex@)
+    char *data0 = dataptr[0];
+    npy_intp stride0 = strides[0];
+#endif
+#if (@nop@ == 2 || @nop@ == 3) && !@complex@
+    char *data1 = dataptr[1];
+    npy_intp stride1 = strides[1];
+#endif
+#if (@nop@ == 3) && !@complex@
+    char *data2 = dataptr[2];
+    npy_intp stride2 = strides[2];
+#endif
+#if (@nop@ == 1) || (@nop@ <= 3 && !@complex@)
+    char *data_out = dataptr[@nop@];
+    npy_intp stride_out = strides[@nop@];
+#endif
+
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_@noplabel@ (%d)\n", (int)count);
+
+    while (count--) {
+#if !@complex@
+#  if @nop@ == 1
+        *(@type@ *)data_out = @to@(@from@(*(@type@ *)data0) +
+                                         @from@(*(@type@ *)data_out));
+        data0 += stride0;
+        data_out += stride_out;
+#  elif @nop@ == 2
+        *(@type@ *)data_out = @to@(@from@(*(@type@ *)data0) *
+                                         @from@(*(@type@ *)data1) +
+                                         @from@(*(@type@ *)data_out));
+        data0 += stride0;
+        data1 += stride1;
+        data_out += stride_out;
+#  elif @nop@ == 3
+        *(@type@ *)data_out = @to@(@from@(*(@type@ *)data0) *
+                                         @from@(*(@type@ *)data1) *
+                                         @from@(*(@type@ *)data2) +
+                                         @from@(*(@type@ *)data_out));
+        data0 += stride0;
+        data1 += stride1;
+        data2 += stride2;
+        data_out += stride_out;
+#  else
+        @temptype@ temp = @from@(*(@type@ *)dataptr[0]);
+        int i;
+        for (i = 1; i < nop; ++i) {
+            temp *= @from@(*(@type@ *)dataptr[i]);
+        }
+        *(@type@ *)dataptr[nop] = @to@(temp +
+                                           @from@(*(@type@ *)dataptr[i]));
+        for (i = 0; i <= nop; ++i) {
+            dataptr[i] += strides[i];
+        }
+#  endif
+#else /* complex */
+#  if @nop@ == 1
+        ((@temptype@ *)data_out)[0] = ((@temptype@ *)data0)[0] +
+                                         ((@temptype@ *)data_out)[0];
+        ((@temptype@ *)data_out)[1] = ((@temptype@ *)data0)[1] +
+                                         ((@temptype@ *)data_out)[1];
+        data0 += stride0;
+        data_out += stride_out;
+#  else
+#    if @nop@ <= 3
+#define _SUMPROD_NOP @nop@
+#    else
+#define _SUMPROD_NOP nop
+#    endif
+        @temptype@ re, im, tmp;
+        int i;
+        re = ((@temptype@ *)dataptr[0])[0];
+        im = ((@temptype@ *)dataptr[0])[1];
+        for (i = 1; i < _SUMPROD_NOP; ++i) {
+            tmp = re * ((@temptype@ *)dataptr[i])[0] -
+                  im * ((@temptype@ *)dataptr[i])[1];
+            im = re * ((@temptype@ *)dataptr[i])[1] +
+                 im * ((@temptype@ *)dataptr[i])[0];
+            re = tmp;
+        }
+        ((@temptype@ *)dataptr[_SUMPROD_NOP])[0] = re +
+                                     ((@temptype@ *)dataptr[_SUMPROD_NOP])[0];
+        ((@temptype@ *)dataptr[_SUMPROD_NOP])[1] = im +
+                                     ((@temptype@ *)dataptr[_SUMPROD_NOP])[1];
+
+        for (i = 0; i <= _SUMPROD_NOP; ++i) {
+            dataptr[i] += strides[i];
+        }
+#undef _SUMPROD_NOP
+#  endif
+#endif
+    }
+}
+
+#if @nop@ == 1
+
+static void
+@name@_sum_of_products_contig_one(int nop, char **dataptr,
+                                npy_intp const *NPY_UNUSED(strides), npy_intp count)
+{
+    @type@ *data0 = (@type@ *)dataptr[0];
+    @type@ *data_out = (@type@ *)dataptr[1];
+
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_one (%d)\n",
+                                                            (int)count);
+
+/* This is placed before the main loop to make small counts faster */
+finish_after_unrolled_loop:
+    switch (count) {
+/**begin repeat2
+ * #i = 6, 5, 4, 3, 2, 1, 0#
+ */
+        case @i@+1:
+#if !@complex@
+            data_out[@i@] = @to@(@from@(data0[@i@]) +
+                                 @from@(data_out[@i@]));
+#else
+            ((@temptype@ *)data_out + 2*@i@)[0] =
+                                    ((@temptype@ *)data0 + 2*@i@)[0] +
+                                    ((@temptype@ *)data_out + 2*@i@)[0];
+            ((@temptype@ *)data_out + 2*@i@)[1] =
+                                    ((@temptype@ *)data0 + 2*@i@)[1] +
+                                    ((@temptype@ *)data_out + 2*@i@)[1];
+#endif
+/**end repeat2**/
+        case 0:
+            return;
+    }
+
+    /* Unroll the loop by 8 */
+    while (count >= 8) {
+        count -= 8;
+
+/**begin repeat2
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7#
+ */
+#if !@complex@
+        data_out[@i@] = @to@(@from@(data0[@i@]) +
+                             @from@(data_out[@i@]));
+#else /* complex */
+        ((@temptype@ *)data_out + 2*@i@)[0] =
+                                ((@temptype@ *)data0 + 2*@i@)[0] +
+                                ((@temptype@ *)data_out + 2*@i@)[0];
+        ((@temptype@ *)data_out + 2*@i@)[1] =
+                                ((@temptype@ *)data0 + 2*@i@)[1] +
+                                ((@temptype@ *)data_out + 2*@i@)[1];
+#endif
+/**end repeat2**/
+        data0 += 8;
+        data_out += 8;
+    }
+
+    /* Finish off the loop */
+    goto finish_after_unrolled_loop;
+}
+
+#elif @nop@ == 2 && !@complex@
+
+// calculate the multiply and add operation such as dataout = data*scalar+dataout
+static NPY_GCC_OPT_3 void
+@name@_sum_of_products_muladd(@type@ *data, @type@ *data_out, @temptype@ scalar, npy_intp count)
+{
+#if @NPYV_CHK@ // NPYV check for @type@
+    /* Use aligned instructions if possible */
+    const int is_aligned = EINSUM_IS_ALIGNED(data) && EINSUM_IS_ALIGNED(data_out);
+    const int vstep = npyv_nlanes_@sfx@;
+    const npyv_@sfx@ v_scalar = npyv_setall_@sfx@(scalar);
+    /**begin repeat2
+     * #cond = if(is_aligned), else#
+     * #ld = loada, load#
+     * #st = storea, store#
+     */
+    @cond@ {
+        const npy_intp vstepx4 = vstep * 4;
+        for (; count >= vstepx4; count -= vstepx4, data += vstepx4, data_out += vstepx4) {
+            /**begin repeat3
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@sfx@ b@i@ = npyv_@ld@_@sfx@(data + vstep * @i@);
+            npyv_@sfx@ c@i@ = npyv_@ld@_@sfx@(data_out + vstep * @i@);
+            /**end repeat3**/
+            /**begin repeat3
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@sfx@ abc@i@ = npyv_muladd_@sfx@(v_scalar, b@i@, c@i@);
+            /**end repeat3**/
+            /**begin repeat3
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@st@_@sfx@(data_out + vstep * @i@, abc@i@);
+            /**end repeat3**/
+        }
+    }
+    /**end repeat2**/
+    for (; count > 0; count -= vstep, data += vstep, data_out += vstep) {
+        npyv_@sfx@ a = npyv_load_tillz_@sfx@(data, count);
+        npyv_@sfx@ b = npyv_load_tillz_@sfx@(data_out, count);
+        npyv_store_till_@sfx@(data_out, count, npyv_muladd_@sfx@(a, v_scalar, b));
+    }
+    npyv_cleanup();
+#else
+#ifndef NPY_DISABLE_OPTIMIZATION
+    for (; count >= 4; count -= 4, data += 4, data_out += 4) {
+        /**begin repeat2
+         * #i = 0, 1, 2, 3#
+         */
+        const @temptype@ b@i@ = @from@(data[@i@]);
+        const @temptype@ c@i@ = @from@(data_out[@i@]);
+        /**end repeat2**/
+        /**begin repeat2
+         * #i = 0, 1, 2, 3#
+         */
+        const @temptype@ abc@i@ = scalar * b@i@ + c@i@;
+        /**end repeat2**/
+        /**begin repeat2
+         * #i = 0, 1, 2, 3#
+         */
+        data_out[@i@] = @to@(abc@i@);
+        /**end repeat2**/
+    }
+#endif // !NPY_DISABLE_OPTIMIZATION
+    for (; count > 0; --count, ++data, ++data_out) {
+        const @temptype@ b = @from@(*data);
+        const @temptype@ c = @from@(*data_out);
+        *data_out = @to@(scalar * b + c);
+    }
+#endif // NPYV check for @type@
+}
+
+static void
+@name@_sum_of_products_contig_two(int nop, char **dataptr,
+                                npy_intp const *NPY_UNUSED(strides), npy_intp count)
+{
+    @type@ *data0 = (@type@ *)dataptr[0];
+    @type@ *data1 = (@type@ *)dataptr[1];
+    @type@ *data_out = (@type@ *)dataptr[2];
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_two (%d)\n",
+                                                            (int)count);
+    // NPYV check for @type@
+#if @NPYV_CHK@
+    /* Use aligned instructions if possible */
+    const int is_aligned = EINSUM_IS_ALIGNED(data0) && EINSUM_IS_ALIGNED(data1) &&
+                        EINSUM_IS_ALIGNED(data_out);
+    const int vstep = npyv_nlanes_@sfx@;
+
+    /**begin repeat2
+     * #cond = if(is_aligned), else#
+     * #ld = loada, load#
+     * #st = storea, store#
+     */
+    @cond@ {
+        const npy_intp vstepx4 = vstep * 4;
+        for (; count >= vstepx4; count -= vstepx4, data0 += vstepx4, data1 += vstepx4, data_out += vstepx4) {
+            /**begin repeat3
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@sfx@ a@i@ = npyv_@ld@_@sfx@(data0 + vstep * @i@);
+            npyv_@sfx@ b@i@ = npyv_@ld@_@sfx@(data1 + vstep * @i@);
+            npyv_@sfx@ c@i@ = npyv_@ld@_@sfx@(data_out + vstep * @i@);
+            /**end repeat3**/
+            /**begin repeat3
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@sfx@ abc@i@ = npyv_muladd_@sfx@(a@i@, b@i@, c@i@);
+            /**end repeat3**/
+            /**begin repeat3
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@st@_@sfx@(data_out + vstep * @i@, abc@i@);
+            /**end repeat3**/
+        }
+    }
+    /**end repeat2**/
+    for (; count > 0; count -= vstep, data0 += vstep, data1 += vstep, data_out += vstep) {
+        npyv_@sfx@ a = npyv_load_tillz_@sfx@(data0, count);
+        npyv_@sfx@ b = npyv_load_tillz_@sfx@(data1, count);
+        npyv_@sfx@ c = npyv_load_tillz_@sfx@(data_out, count);
+        npyv_store_till_@sfx@(data_out, count, npyv_muladd_@sfx@(a, b, c));
+    }
+    npyv_cleanup();
+#else
+#ifndef NPY_DISABLE_OPTIMIZATION
+    for (; count >= 4; count -= 4, data0 += 4, data1 += 4, data_out += 4) {
+        /**begin repeat2
+         * #i = 0, 1, 2, 3#
+         */
+        const @temptype@ a@i@ = @from@(data0[@i@]);
+        const @temptype@ b@i@ = @from@(data1[@i@]);
+        const @temptype@ c@i@ = @from@(data_out[@i@]);
+        /**end repeat2**/
+        /**begin repeat2
+         * #i = 0, 1, 2, 3#
+         */
+        const @temptype@ abc@i@ = a@i@ * b@i@ + c@i@;
+        /**end repeat2**/
+        /**begin repeat2
+         * #i = 0, 1, 2, 3#
+         */
+        data_out[@i@] = @to@(abc@i@);
+        /**end repeat2**/
+    }
+#endif // !NPY_DISABLE_OPTIMIZATION
+    for (; count > 0; --count, ++data0, ++data1, ++data_out) {
+        const @temptype@ a = @from@(*data0);
+        const @temptype@ b = @from@(*data1);
+        const @temptype@ c = @from@(*data_out);
+        *data_out = @to@(a * b + c);
+    }
+#endif // NPYV check for @type@
+
+}
+
+/* Some extra specializations for the two operand case */
+static void
+@name@_sum_of_products_stride0_contig_outcontig_two(int nop, char **dataptr,
+                                npy_intp const *NPY_UNUSED(strides), npy_intp count)
+{
+    @temptype@ value0 = @from@(*(@type@ *)dataptr[0]);
+    @type@ *data1 = (@type@ *)dataptr[1];
+    @type@ *data_out = (@type@ *)dataptr[2];
+
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_stride0_contig_outcontig_two (%d)\n",
+                                                    (int)count);
+    @name@_sum_of_products_muladd(data1, data_out, value0, count);
+    
+}
+
+static void
+@name@_sum_of_products_contig_stride0_outcontig_two(int nop, char **dataptr,
+                                npy_intp const *NPY_UNUSED(strides), npy_intp count)
+{
+    @temptype@ value1 = @from@(*(@type@ *)dataptr[1]);
+    @type@ *data0 = (@type@ *)dataptr[0];
+    @type@ *data_out = (@type@ *)dataptr[2];
+
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_stride0_outcontig_two (%d)\n",
+                                                    (int)count);
+    @name@_sum_of_products_muladd(data0, data_out, value1, count);
+}
+
+static NPY_GCC_OPT_3 void
+@name@_sum_of_products_contig_contig_outstride0_two(int nop, char **dataptr,
+                                npy_intp const *NPY_UNUSED(strides), npy_intp count)
+{
+    @type@ *data0 = (@type@ *)dataptr[0];
+    @type@ *data1 = (@type@ *)dataptr[1];
+    @temptype@ accum = 0;
+
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_contig_outstride0_two (%d)\n",
+                                                    (int)count);
+#if @NPYV_CHK@ // NPYV check for @type@
+    /* Use aligned instructions if possible */
+    const int is_aligned = EINSUM_IS_ALIGNED(data0) && EINSUM_IS_ALIGNED(data1);
+    const int vstep = npyv_nlanes_@sfx@;
+    npyv_@sfx@ v_accum = npyv_zero_@sfx@();
+
+    /**begin repeat2
+     * #cond = if(is_aligned), else#
+     * #ld = loada, load#
+     * #st = storea, store#
+     */
+    @cond@ {
+        const npy_intp vstepx4 = vstep * 4;
+        for (; count >= vstepx4; count -= vstepx4, data0 += vstepx4, data1 += vstepx4) {
+            /**begin repeat3
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@sfx@ a@i@ = npyv_@ld@_@sfx@(data0 + vstep * @i@);
+            npyv_@sfx@ b@i@ = npyv_@ld@_@sfx@(data1 + vstep * @i@);
+            /**end repeat3**/
+            npyv_@sfx@ ab3 = npyv_muladd_@sfx@(a3, b3, v_accum);
+            npyv_@sfx@ ab2 = npyv_muladd_@sfx@(a2, b2, ab3);
+            npyv_@sfx@ ab1 = npyv_muladd_@sfx@(a1, b1, ab2);
+                   v_accum = npyv_muladd_@sfx@(a0, b0, ab1);
+        }
+    }
+    /**end repeat2**/
+    for (; count > 0; count -= vstep, data0 += vstep, data1 += vstep) {
+        npyv_@sfx@ a = npyv_load_tillz_@sfx@(data0, count);
+        npyv_@sfx@ b = npyv_load_tillz_@sfx@(data1, count);
+        v_accum = npyv_muladd_@sfx@(a, b, v_accum);
+    }
+    accum = npyv_sum_@sfx@(v_accum);
+    npyv_cleanup();
+#else
+#ifndef NPY_DISABLE_OPTIMIZATION
+    for (; count >= 4; count -= 4, data0 += 4, data1 += 4) {
+        /**begin repeat2
+         * #i = 0, 1, 2, 3#
+         */
+        const @temptype@ ab@i@ = @from@(data0[@i@]) * @from@(data1[@i@]);
+        /**end repeat2**/
+        accum += ab0 + ab1 + ab2 + ab3;
+    }
+#endif // !NPY_DISABLE_OPTIMIZATION
+    for (; count > 0; --count, ++data0, ++data1) {
+        const @temptype@ a = @from@(*data0);
+        const @temptype@ b = @from@(*data1);
+        accum += a * b;
+    }
+#endif // NPYV check for @type@
+    *(@type@ *)dataptr[2] = @to@(@from@(*(@type@ *)dataptr[2]) + accum);
+}
+
+static NPY_GCC_OPT_3 void
+@name@_sum_of_products_stride0_contig_outstride0_two(int nop, char **dataptr,
+                                npy_intp const *NPY_UNUSED(strides), npy_intp count)
+{
+    @type@ *data1 = (@type@ *)dataptr[1];
+    @temptype@ value0 = @from@(*(@type@ *)dataptr[0]);
+    @temptype@ accum = @name@_sum_of_arr(data1, count);
+    *(@type@ *)dataptr[2] = @to@(@from@(*(@type@ *)dataptr[2]) + value0 * accum);
+}
+
+static NPY_GCC_OPT_3 void
+@name@_sum_of_products_contig_stride0_outstride0_two(int nop, char **dataptr,
+                                npy_intp const *NPY_UNUSED(strides), npy_intp count)
+{
+    @type@ *data0 = (@type@ *)dataptr[0];
+    @temptype@ value1 = @from@(*(@type@ *)dataptr[1]);
+    @temptype@ accum = @name@_sum_of_arr(data0, count);
+    *(@type@ *)dataptr[2] = @to@(@from@(*(@type@ *)dataptr[2]) + value1 * accum);
+}
+
+#elif @nop@ == 3 && !@complex@
+
+static void
+@name@_sum_of_products_contig_three(int nop, char **dataptr,
+                                npy_intp const *NPY_UNUSED(strides), npy_intp count)
+{
+    @type@ *data0 = (@type@ *)dataptr[0];
+    @type@ *data1 = (@type@ *)dataptr[1];
+    @type@ *data2 = (@type@ *)dataptr[2];
+    @type@ *data_out = (@type@ *)dataptr[3];
+
+    /* Unroll the loop by 8 */
+    while (count >= 8) {
+        count -= 8;
+
+/**begin repeat2
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7#
+ */
+        data_out[@i@] = @to@(@from@(data0[@i@]) *
+                             @from@(data1[@i@]) *
+                             @from@(data2[@i@]) +
+                             @from@(data_out[@i@]));
+/**end repeat2**/
+        data0 += 8;
+        data1 += 8;
+        data2 += 8;
+        data_out += 8;
+    }
+
+    /* Finish off the loop */
+
+/**begin repeat2
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7#
+ */
+    if (count-- == 0) {
+        return;
+    }
+    data_out[@i@] = @to@(@from@(data0[@i@]) *
+                         @from@(data1[@i@]) *
+                         @from@(data2[@i@]) +
+                         @from@(data_out[@i@]));
+/**end repeat2**/
+}
+
+#else /* @nop@ > 3 || @complex */
+
+static void
+@name@_sum_of_products_contig_@noplabel@(int nop, char **dataptr,
+                                npy_intp const *NPY_UNUSED(strides), npy_intp count)
+{
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_@noplabel@ (%d)\n",
+                                                    (int)count);
+
+    while (count--) {
+#if !@complex@
+        @temptype@ temp = @from@(*(@type@ *)dataptr[0]);
+        int i;
+        for (i = 1; i < nop; ++i) {
+            temp *= @from@(*(@type@ *)dataptr[i]);
+        }
+        *(@type@ *)dataptr[nop] = @to@(temp +
+                                           @from@(*(@type@ *)dataptr[i]));
+        for (i = 0; i <= nop; ++i) {
+            dataptr[i] += sizeof(@type@);
+        }
+#else /* complex */
+#  if @nop@ <= 3
+#    define _SUMPROD_NOP @nop@
+#  else
+#    define _SUMPROD_NOP nop
+#  endif
+        @temptype@ re, im, tmp;
+        int i;
+        re = ((@temptype@ *)dataptr[0])[0];
+        im = ((@temptype@ *)dataptr[0])[1];
+        for (i = 1; i < _SUMPROD_NOP; ++i) {
+            tmp = re * ((@temptype@ *)dataptr[i])[0] -
+                  im * ((@temptype@ *)dataptr[i])[1];
+            im = re * ((@temptype@ *)dataptr[i])[1] +
+                 im * ((@temptype@ *)dataptr[i])[0];
+            re = tmp;
+        }
+        ((@temptype@ *)dataptr[_SUMPROD_NOP])[0] = re +
+                                     ((@temptype@ *)dataptr[_SUMPROD_NOP])[0];
+        ((@temptype@ *)dataptr[_SUMPROD_NOP])[1] = im +
+                                     ((@temptype@ *)dataptr[_SUMPROD_NOP])[1];
+
+        for (i = 0; i <= _SUMPROD_NOP; ++i) {
+            dataptr[i] += sizeof(@type@);
+        }
+#  undef _SUMPROD_NOP
+#endif
+    }
+}
+
+#endif /* functions for various @nop@ */
+
+#if @nop@ == 1
+
+static NPY_GCC_OPT_3 void
+@name@_sum_of_products_contig_outstride0_one(int nop, char **dataptr,
+                                npy_intp const *strides, npy_intp count)
+{
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_outstride0_one (%d)\n", (int)count);
+#if !@complex@
+    @type@ *data = (@type@ *)dataptr[0];
+    @temptype@ accum = @name@_sum_of_arr(data, count);
+    *((@type@ *)dataptr[1]) = @to@(accum + @from@(*((@type@ *)dataptr[1])));
+#else
+    @temptype@ accum_re = 0, accum_im = 0;
+    @temptype@ *data0 = (@temptype@ *)dataptr[0];
+#ifndef NPY_DISABLE_OPTIMIZATION
+    for (; count > 4; count -= 4, data0 += 4*2) {
+        const @temptype@ re01 = data0[0] + data0[2];
+        const @temptype@ re23 = data0[4] + data0[6];
+        const @temptype@ im13 = data0[1] + data0[3];
+        const @temptype@ im57 = data0[5] + data0[7];
+        accum_re += re01 + re23;
+        accum_im += im13 + im57;
+    }
+#endif // !NPY_DISABLE_OPTIMIZATION
+    for (; count > 0; --count, data0 += 2) {
+        accum_re += data0[0];
+        accum_im += data0[1];
+    }
+    ((@temptype@ *)dataptr[1])[0] += accum_re;
+    ((@temptype@ *)dataptr[1])[1] += accum_im;
+#endif // !@complex@
+}
+
+#endif /* @nop@ == 1 */
+
+static void
+@name@_sum_of_products_outstride0_@noplabel@(int nop, char **dataptr,
+                                npy_intp const *strides, npy_intp count)
+{
+#if @complex@
+    @temptype@ accum_re = 0, accum_im = 0;
+#else
+    @temptype@ accum = 0;
+#endif
+
+#if (@nop@ == 1) || (@nop@ <= 3 && !@complex@)
+    char *data0 = dataptr[0];
+    npy_intp stride0 = strides[0];
+#endif
+#if (@nop@ == 2 || @nop@ == 3) && !@complex@
+    char *data1 = dataptr[1];
+    npy_intp stride1 = strides[1];
+#endif
+#if (@nop@ == 3) && !@complex@
+    char *data2 = dataptr[2];
+    npy_intp stride2 = strides[2];
+#endif
+
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_outstride0_@noplabel@ (%d)\n",
+                                                    (int)count);
+
+    while (count--) {
+#if !@complex@
+#  if @nop@ == 1
+        accum += @from@(*(@type@ *)data0);
+        data0 += stride0;
+#  elif @nop@ == 2
+        accum += @from@(*(@type@ *)data0) *
+                 @from@(*(@type@ *)data1);
+        data0 += stride0;
+        data1 += stride1;
+#  elif @nop@ == 3
+        accum += @from@(*(@type@ *)data0) *
+                 @from@(*(@type@ *)data1) *
+                 @from@(*(@type@ *)data2);
+        data0 += stride0;
+        data1 += stride1;
+        data2 += stride2;
+#  else
+        @temptype@ temp = @from@(*(@type@ *)dataptr[0]);
+        int i;
+        for (i = 1; i < nop; ++i) {
+            temp *= @from@(*(@type@ *)dataptr[i]);
+        }
+        accum += temp;
+        for (i = 0; i < nop; ++i) {
+            dataptr[i] += strides[i];
+        }
+#  endif
+#else /* complex */
+#  if @nop@ == 1
+        accum_re += ((@temptype@ *)data0)[0];
+        accum_im += ((@temptype@ *)data0)[1];
+        data0 += stride0;
+#  else
+#    if @nop@ <= 3
+#define _SUMPROD_NOP @nop@
+#    else
+#define _SUMPROD_NOP nop
+#    endif
+        @temptype@ re, im, tmp;
+        int i;
+        re = ((@temptype@ *)dataptr[0])[0];
+        im = ((@temptype@ *)dataptr[0])[1];
+        for (i = 1; i < _SUMPROD_NOP; ++i) {
+            tmp = re * ((@temptype@ *)dataptr[i])[0] -
+                  im * ((@temptype@ *)dataptr[i])[1];
+            im = re * ((@temptype@ *)dataptr[i])[1] +
+                 im * ((@temptype@ *)dataptr[i])[0];
+            re = tmp;
+        }
+        accum_re += re;
+        accum_im += im;
+        for (i = 0; i < _SUMPROD_NOP; ++i) {
+            dataptr[i] += strides[i];
+        }
+#undef _SUMPROD_NOP
+#  endif
+#endif
+    }
+
+#if @complex@
+#  if @nop@ <= 3
+    ((@temptype@ *)dataptr[@nop@])[0] += accum_re;
+    ((@temptype@ *)dataptr[@nop@])[1] += accum_im;
+#  else
+    ((@temptype@ *)dataptr[nop])[0] += accum_re;
+    ((@temptype@ *)dataptr[nop])[1] += accum_im;
+#  endif
+#else
+#  if @nop@ <= 3
+    *((@type@ *)dataptr[@nop@]) = @to@(accum +
+                                    @from@(*((@type@ *)dataptr[@nop@])));
+#  else
+    *((@type@ *)dataptr[nop]) = @to@(accum +
+                                    @from@(*((@type@ *)dataptr[nop])));
+#  endif
+#endif
+
+}
+
+/**end repeat1**/
+
+/**end repeat**/
+
+
+/* Do OR of ANDs for the boolean type */
+
+/**begin repeat
+ * #nop = 1, 2, 3, 1000#
+ * #noplabel = one, two, three, any#
+ */
+
+static void
+bool_sum_of_products_@noplabel@(int nop, char **dataptr,
+                                npy_intp const *strides, npy_intp count)
+{
+#if (@nop@ <= 3)
+    char *data0 = dataptr[0];
+    npy_intp stride0 = strides[0];
+#endif
+#if (@nop@ == 2 || @nop@ == 3)
+    char *data1 = dataptr[1];
+    npy_intp stride1 = strides[1];
+#endif
+#if (@nop@ == 3)
+    char *data2 = dataptr[2];
+    npy_intp stride2 = strides[2];
+#endif
+#if (@nop@ <= 3)
+    char *data_out = dataptr[@nop@];
+    npy_intp stride_out = strides[@nop@];
+#endif
+
+    while (count--) {
+#if @nop@ == 1
+        *(npy_bool *)data_out = *(npy_bool *)data0 ||
+                                  *(npy_bool *)data_out;
+        data0 += stride0;
+        data_out += stride_out;
+#elif @nop@ == 2
+        *(npy_bool *)data_out = (*(npy_bool *)data0 &&
+                                   *(npy_bool *)data1) ||
+                                   *(npy_bool *)data_out;
+        data0 += stride0;
+        data1 += stride1;
+        data_out += stride_out;
+#elif @nop@ == 3
+        *(npy_bool *)data_out = (*(npy_bool *)data0 &&
+                                   *(npy_bool *)data1 &&
+                                   *(npy_bool *)data2) ||
+                                   *(npy_bool *)data_out;
+        data0 += stride0;
+        data1 += stride1;
+        data2 += stride2;
+        data_out += stride_out;
+#else
+        npy_bool temp = *(npy_bool *)dataptr[0];
+        int i;
+        for (i = 1; i < nop; ++i) {
+            temp = temp && *(npy_bool *)dataptr[i];
+        }
+        *(npy_bool *)dataptr[nop] = temp || *(npy_bool *)dataptr[i];
+        for (i = 0; i <= nop; ++i) {
+            dataptr[i] += strides[i];
+        }
+#endif
+    }
+}
+
+static void
+bool_sum_of_products_contig_@noplabel@(int nop, char **dataptr,
+                                npy_intp const *strides, npy_intp count)
+{
+#if (@nop@ <= 3)
+    char *data0 = dataptr[0];
+#endif
+#if (@nop@ == 2 || @nop@ == 3)
+    char *data1 = dataptr[1];
+#endif
+#if (@nop@ == 3)
+    char *data2 = dataptr[2];
+#endif
+#if (@nop@ <= 3)
+    char *data_out = dataptr[@nop@];
+#endif
+
+#if (@nop@ <= 3)
+/* This is placed before the main loop to make small counts faster */
+finish_after_unrolled_loop:
+    switch (count) {
+/**begin repeat1
+ * #i = 6, 5, 4, 3, 2, 1, 0#
+ */
+        case @i@+1:
+#  if @nop@ == 1
+            ((npy_bool *)data_out)[@i@] = ((npy_bool *)data0)[@i@] ||
+                                            ((npy_bool *)data_out)[@i@];
+#  elif @nop@ == 2
+            ((npy_bool *)data_out)[@i@] =
+                            (((npy_bool *)data0)[@i@] &&
+                             ((npy_bool *)data1)[@i@]) ||
+                                ((npy_bool *)data_out)[@i@];
+#  elif @nop@ == 3
+            ((npy_bool *)data_out)[@i@] =
+                           (((npy_bool *)data0)[@i@] &&
+                            ((npy_bool *)data1)[@i@] &&
+                            ((npy_bool *)data2)[@i@]) ||
+                                ((npy_bool *)data_out)[@i@];
+#  endif
+/**end repeat1**/
+        case 0:
+            return;
+    }
+#endif
+
+/* Unroll the loop by 8 for fixed-size nop */
+#if (@nop@ <= 3)
+    while (count >= 8) {
+        count -= 8;
+#else
+    while (count--) {
+#endif
+
+#  if @nop@ == 1
+/**begin repeat1
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7#
+ */
+        *((npy_bool *)data_out + @i@) = (*((npy_bool *)data0 + @i@)) ||
+                                        (*((npy_bool *)data_out + @i@));
+/**end repeat1**/
+        data0 += 8*sizeof(npy_bool);
+        data_out += 8*sizeof(npy_bool);
+#  elif @nop@ == 2
+/**begin repeat1
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7#
+ */
+        *((npy_bool *)data_out + @i@) =
+                        ((*((npy_bool *)data0 + @i@)) &&
+                         (*((npy_bool *)data1 + @i@))) ||
+                            (*((npy_bool *)data_out + @i@));
+/**end repeat1**/
+        data0 += 8*sizeof(npy_bool);
+        data1 += 8*sizeof(npy_bool);
+        data_out += 8*sizeof(npy_bool);
+#  elif @nop@ == 3
+/**begin repeat1
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7#
+ */
+        *((npy_bool *)data_out + @i@) =
+                       ((*((npy_bool *)data0 + @i@)) &&
+                        (*((npy_bool *)data1 + @i@)) &&
+                        (*((npy_bool *)data2 + @i@))) ||
+                            (*((npy_bool *)data_out + @i@));
+/**end repeat1**/
+        data0 += 8*sizeof(npy_bool);
+        data1 += 8*sizeof(npy_bool);
+        data2 += 8*sizeof(npy_bool);
+        data_out += 8*sizeof(npy_bool);
+#  else
+        npy_bool temp = *(npy_bool *)dataptr[0];
+        int i;
+        for (i = 1; i < nop; ++i) {
+            temp = temp && *(npy_bool *)dataptr[i];
+        }
+        *(npy_bool *)dataptr[nop] = temp || *(npy_bool *)dataptr[i];
+        for (i = 0; i <= nop; ++i) {
+            dataptr[i] += sizeof(npy_bool);
+        }
+#  endif
+    }
+
+    /* If the loop was unrolled, we need to finish it off */
+#if (@nop@ <= 3)
+    goto finish_after_unrolled_loop;
+#endif
+}
+
+static void
+bool_sum_of_products_outstride0_@noplabel@(int nop, char **dataptr,
+                                npy_intp const *strides, npy_intp count)
+{
+    npy_bool accum = 0;
+
+#if (@nop@ <= 3)
+    char *data0 = dataptr[0];
+    npy_intp stride0 = strides[0];
+#endif
+#if (@nop@ == 2 || @nop@ == 3)
+    char *data1 = dataptr[1];
+    npy_intp stride1 = strides[1];
+#endif
+#if (@nop@ == 3)
+    char *data2 = dataptr[2];
+    npy_intp stride2 = strides[2];
+#endif
+
+    while (count--) {
+#if @nop@ == 1
+        accum = *(npy_bool *)data0 || accum;
+        data0 += stride0;
+#elif @nop@ == 2
+        accum = (*(npy_bool *)data0 && *(npy_bool *)data1) || accum;
+        data0 += stride0;
+        data1 += stride1;
+#elif @nop@ == 3
+        accum = (*(npy_bool *)data0 &&
+                 *(npy_bool *)data1 &&
+                 *(npy_bool *)data2) || accum;
+        data0 += stride0;
+        data1 += stride1;
+        data2 += stride2;
+#else
+        npy_bool temp = *(npy_bool *)dataptr[0];
+        int i;
+        for (i = 1; i < nop; ++i) {
+            temp = temp && *(npy_bool *)dataptr[i];
+        }
+        accum = temp || accum;
+        for (i = 0; i <= nop; ++i) {
+            dataptr[i] += strides[i];
+        }
+#endif
+    }
+
+#  if @nop@ <= 3
+    *((npy_bool *)dataptr[@nop@]) = accum || *((npy_bool *)dataptr[@nop@]);
+#  else
+    *((npy_bool *)dataptr[nop]) = accum || *((npy_bool *)dataptr[nop]);
+#  endif
+}
+
+/**end repeat**/
+
+/**begin repeat
+ * #fn_name = 
+ *  object_sum_of_products_any,
+ *  object_sum_of_products_one,
+ *  object_sum_of_products_two,
+ *  object_sum_of_products_three,
+ *  object_sum_of_products_contig_any,
+ *  object_sum_of_products_contig_one,
+ *  object_sum_of_products_contig_two,
+ *  object_sum_of_products_contig_three,
+ *  object_sum_of_products_outstride0_any,
+ *  object_sum_of_products_outstride0_one,
+ *  object_sum_of_products_outstride0_two,
+ *  object_sum_of_products_outstride0_three#
+ */
+static void
+@fn_name@(int nop, char **dataptr,
+                                npy_intp const *strides, npy_intp count)
+{
+    while(count--){
+        PyObject *prod = *(PyObject **)dataptr[0];
+        if (!prod) {
+            prod = Py_None;  // convention is to treat nulls as None
+        }
+        Py_INCREF(prod);
+        for (int i = 1; i < nop; ++i){
+            PyObject *curr = *(PyObject **)dataptr[i];
+            if (!curr) {
+                curr = Py_None;  // convention is to treat nulls as None
+            }
+            Py_SETREF(prod, PyNumber_Multiply(prod, curr));
+            if (!prod) {
+                return;
+            }
+        }
+
+        PyObject *sum = PyNumber_Add(*(PyObject **)dataptr[nop], prod);
+        Py_DECREF(prod);
+        if (!sum) {
+            return;
+        }
+        
+        Py_XDECREF(*(PyObject **)dataptr[nop]);
+        *(PyObject **)dataptr[nop] = sum;
+        for (int i = 0; i <= nop; ++i) {
+            dataptr[i] += strides[i];
+        }
+    }
+}
+/**end repeat**/
+
+/* These tables need to match up with the type enum */
+static sum_of_products_fn
+_contig_outstride0_unary_specialization_table[NPY_NTYPES] = {
+/**begin repeat
+ * #name = bool,
+ *         byte, ubyte,
+ *         short, ushort,
+ *         int, uint,
+ *         long, ulong,
+ *         longlong, ulonglong,
+ *         float, double, longdouble,
+ *         cfloat, cdouble, clongdouble,
+ *         object, string, unicode, void,
+ *         datetime, timedelta, half#
+ * #use = 0,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1, 1,
+ *        1, 1, 1,
+ *        0, 0, 0, 0,
+ *        0, 0, 1#
+ */
+#if @use@
+    &@name@_sum_of_products_contig_outstride0_one,
+#else
+    NULL,
+#endif
+/**end repeat**/
+}; /* End of _contig_outstride0_unary_specialization_table */
+
+static sum_of_products_fn _binary_specialization_table[NPY_NTYPES][5] = {
+/**begin repeat
+ * #name = bool,
+ *         byte, ubyte,
+ *         short, ushort,
+ *         int, uint,
+ *         long, ulong,
+ *         longlong, ulonglong,
+ *         float, double, longdouble,
+ *         cfloat, cdouble, clongdouble,
+ *         object, string, unicode, void,
+ *         datetime, timedelta, half#
+ * #use = 0,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1, 1,
+ *        0, 0, 0,
+ *        0, 0, 0, 0,
+ *        0, 0, 1#
+ */
+#if @use@
+{
+    &@name@_sum_of_products_stride0_contig_outstride0_two,
+    &@name@_sum_of_products_stride0_contig_outcontig_two,
+    &@name@_sum_of_products_contig_stride0_outstride0_two,
+    &@name@_sum_of_products_contig_stride0_outcontig_two,
+    &@name@_sum_of_products_contig_contig_outstride0_two,
+},
+#else
+    {NULL, NULL, NULL, NULL, NULL},
+#endif
+/**end repeat**/
+}; /* End of _binary_specialization_table */
+
+static sum_of_products_fn _outstride0_specialized_table[NPY_NTYPES][4] = {
+/**begin repeat
+ * #name = bool,
+ *         byte, ubyte,
+ *         short, ushort,
+ *         int, uint,
+ *         long, ulong,
+ *         longlong, ulonglong,
+ *         float, double, longdouble,
+ *         cfloat, cdouble, clongdouble,
+ *         object, string, unicode, void,
+ *         datetime, timedelta, half#
+ * #use = 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1, 1,
+ *        1, 1, 1,
+ *        1, 0, 0, 0,
+ *        0, 0, 1#
+ */
+#if @use@
+{
+    &@name@_sum_of_products_outstride0_any,
+    &@name@_sum_of_products_outstride0_one,
+    &@name@_sum_of_products_outstride0_two,
+    &@name@_sum_of_products_outstride0_three
+},
+#else
+    {NULL, NULL, NULL, NULL},
+#endif
+/**end repeat**/
+}; /* End of _outstride0_specialized_table */
+
+static sum_of_products_fn _allcontig_specialized_table[NPY_NTYPES][4] = {
+/**begin repeat
+ * #name = bool,
+ *         byte, ubyte,
+ *         short, ushort,
+ *         int, uint,
+ *         long, ulong,
+ *         longlong, ulonglong,
+ *         float, double, longdouble,
+ *         cfloat, cdouble, clongdouble,
+ *         object, string, unicode, void,
+ *         datetime, timedelta, half#
+ * #use = 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1, 1,
+ *        1, 1, 1,
+ *        1, 0, 0, 0,
+ *        0, 0, 1#
+ */
+#if @use@
+{
+    &@name@_sum_of_products_contig_any,
+    &@name@_sum_of_products_contig_one,
+    &@name@_sum_of_products_contig_two,
+    &@name@_sum_of_products_contig_three
+},
+#else
+    {NULL, NULL, NULL, NULL},
+#endif
+/**end repeat**/
+}; /* End of _allcontig_specialized_table */
+
+static sum_of_products_fn _unspecialized_table[NPY_NTYPES][4] = {
+/**begin repeat
+ * #name = bool,
+ *         byte, ubyte,
+ *         short, ushort,
+ *         int, uint,
+ *         long, ulong,
+ *         longlong, ulonglong,
+ *         float, double, longdouble,
+ *         cfloat, cdouble, clongdouble,
+ *         object, string, unicode, void,
+ *         datetime, timedelta, half#
+ * #use = 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1, 1,
+ *        1, 1, 1,
+ *        1, 0, 0, 0,
+ *        0, 0, 1#
+ */
+#if @use@
+{
+    &@name@_sum_of_products_any,
+    &@name@_sum_of_products_one,
+    &@name@_sum_of_products_two,
+    &@name@_sum_of_products_three
+},
+#else
+    {NULL, NULL, NULL, NULL},
+#endif
+/**end repeat**/
+}; /* End of _unnspecialized_table */
+
+NPY_VISIBILITY_HIDDEN sum_of_products_fn
+get_sum_of_products_function(int nop, int type_num,
+                             npy_intp itemsize, npy_intp const *fixed_strides)
+{
+    int iop;
+
+    if (type_num >= NPY_NTYPES) {
+        return NULL;
+    }
+
+    /* contiguous reduction */
+    if (nop == 1 && fixed_strides[0] == itemsize && fixed_strides[1] == 0) {
+        sum_of_products_fn ret =
+            _contig_outstride0_unary_specialization_table[type_num];
+        if (ret != NULL) {
+            return ret;
+        }
+    }
+
+    /* nop of 2 has more specializations */
+    if (nop == 2) {
+        /* Encode the zero/contiguous strides */
+        int code;
+        code = (fixed_strides[0] == 0) ? 0 :
+                    (fixed_strides[0] == itemsize) ? 2*2*1 : 8;
+        code += (fixed_strides[1] == 0) ? 0 :
+                    (fixed_strides[1] == itemsize) ? 2*1 : 8;
+        code += (fixed_strides[2] == 0) ? 0 :
+                    (fixed_strides[2] == itemsize) ? 1 : 8;
+        if (code >= 2 && code < 7) {
+            sum_of_products_fn ret =
+                        _binary_specialization_table[type_num][code-2];
+            if (ret != NULL) {
+                return ret;
+            }
+        }
+    }
+
+    /* Inner loop with an output stride of 0 */
+    if (fixed_strides[nop] == 0) {
+        return _outstride0_specialized_table[type_num][nop <= 3 ? nop : 0];
+    }
+
+    /* Check for all contiguous */
+    for (iop = 0; iop < nop + 1; ++iop) {
+        if (fixed_strides[iop] != itemsize) {
+            break;
+        }
+    }
+
+    /* Contiguous loop */
+    if (iop == nop + 1) {
+        return _allcontig_specialized_table[type_num][nop <= 3 ? nop : 0];
+    }
+
+    /* None of the above specializations caught it, general loops */
+    return _unspecialized_table[type_num][nop <= 3 ? nop : 0];
+}

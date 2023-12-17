@@ -31,7 +31,7 @@ arch_compilers = dict(
     ppc64 = ("gcc", "clang"),
     ppc64le = ("gcc", "clang"),
     armhf = ("gcc", "clang"),
-    aarch64 = ("gcc", "clang"),
+    aarch64 = ("gcc", "clang", "fcc"),
     s390x = ("gcc", "clang"),
     noarch = ("gcc",)
 )
@@ -422,8 +422,8 @@ class _Test_CCompilerOpt:
         # when option "native" is activated through the args
         try:
             self.expect("native",
-                trap_flags=".*(-march=native|-xHost|/QxHost).*",
-                x86=".*", ppc64=".*", armhf=".*", s390x=".*"
+                trap_flags=".*(-march=native|-xHost|/QxHost|-mcpu=a64fx).*",
+                x86=".*", ppc64=".*", armhf=".*", s390x=".*", aarch64=".*",
             )
             if self.march() != "unknown":
                 raise AssertionError(
@@ -440,7 +440,7 @@ class _Test_CCompilerOpt:
             x86_iccw="/arch:SSE2",
             x86_msvc="/arch:SSE2" if self.march() == "x86" else "",
             ppc64_gcc= "-mcpu=power8",
-            ppc64_clang="-maltivec -mvsx -mpower8-vector",
+            ppc64_clang="-mcpu=power8",
             armhf_gcc="-mfpu=neon-fp16 -mfp16-format=ieee",
             aarch64="",
             s390x="-mzvector -march=arch12"

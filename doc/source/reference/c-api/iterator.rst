@@ -1,4 +1,4 @@
-Array Iterator API
+Array iterator API
 ==================
 
 .. sectionauthor:: Mark Wiebe
@@ -9,7 +9,7 @@ Array Iterator API
 
 .. versionadded:: 1.6
 
-Array Iterator
+Array iterator
 --------------
 
 The array iterator encapsulates many of the key features in ufuncs,
@@ -28,7 +28,7 @@ before writing the C iteration code.
 
 .. _iteration-example:
 
-Iteration Example
+Iteration example
 -----------------
 
 The best way to become familiar with the iterator is to look at its
@@ -117,7 +117,7 @@ number of non-zero elements in an array.
         return nonzero_count;
     }
 
-Multi-Iteration Example
+Multi-iteration example
 ------------------------------
 
 Here is a copy function using the iterator.  The ``order`` parameter
@@ -205,7 +205,7 @@ is used to control the memory layout of the allocated result, typically
     }
 
 
-Multi Index Tracking Example
+Multi index tracking example
 ----------------------------
 
 This example shows you how to work with the :c:data:`NPY_ITER_MULTI_INDEX` flag. For simplicity, we assume the argument is a two-dimensional array.
@@ -265,7 +265,7 @@ When called with a 2x3 array, the above example prints:
    multi_index is [1, 2]
 
 
-Iterator Data Types
+Iterator data types
 ---------------------
 
 The iterator layout is an internal detail, and user code only sees
@@ -293,7 +293,7 @@ an incomplete struct.
    This is a function pointer for getting the current iterator multi-index,
    returned by :c:func:`NpyIter_GetGetMultiIndex`.
 
-Construction and Destruction
+Construction and destruction
 ----------------------------
 
 .. c:function:: NpyIter* NpyIter_New( \
@@ -392,7 +392,7 @@ Construction and Destruction
     Causes the iterator to track a multi-index.
     This prevents the iterator from coalescing axes to
     produce bigger inner loops. If the loop is also not buffered
-    and no index is being tracked (`NpyIter_RemoveAxis` can be called),
+    and no index is being tracked (:c:func:`NpyIter_RemoveAxis` can be called),
     then the iterator size can be ``-1`` to indicate that the iterator
     is too large. This can happen due to complex broadcasting and
     will result in errors being created when the setting the iterator
@@ -557,7 +557,7 @@ Construction and Destruction
     Indicate how the user of the iterator will read or write
     to ``op[i]``.  Exactly one of these flags must be specified
     per operand. Using ``NPY_ITER_READWRITE`` or ``NPY_ITER_WRITEONLY``
-    for a user-provided operand may trigger `WRITEBACKIFCOPY``
+    for a user-provided operand may trigger ``WRITEBACKIFCOPY``
     semantics. The data will be written back to the original array
     when ``NpyIter_Deallocate`` is called.
 
@@ -956,9 +956,9 @@ Construction and Destruction
 
     Returns the number of elements being iterated.  This is the product
     of all the dimensions in the shape.  When a multi index is being tracked
-    (and `NpyIter_RemoveAxis` may be called) the size may be ``-1`` to
+    (and :c:func:`NpyIter_RemoveAxis` may be called) the size may be ``-1`` to
     indicate an iterator is too large.  Such an iterator is invalid, but
-    may become valid after `NpyIter_RemoveAxis` is called. It is not
+    may become valid after :c:func:`NpyIter_RemoveAxis` is called. It is not
     necessary to check for this case.
 
 .. c:function:: npy_intp NpyIter_GetIterIndex(NpyIter* iter)
@@ -1149,7 +1149,7 @@ Construction and Destruction
     checks are the responsibility of the caller, and should be done
     outside of any inner loops.
 
-Functions For Iteration
+Functions for iteration
 -----------------------
 
 .. c:function:: NpyIter_IterNextFunc* NpyIter_GetIterNext( \
@@ -1342,7 +1342,7 @@ functions provide that information.
 .. index::
     pair: iterator; C-API
 
-Converting from Previous NumPy Iterators
+Converting from previous NumPy iterators
 ----------------------------------------
 
 The old iterator API includes functions like PyArrayIter_Check,

@@ -1,7 +1,7 @@
 .. _array_api:
 
 ********************************
-Array API Standard Compatibility
+Array API standard compatibility
 ********************************
 
 .. note::
@@ -32,7 +32,7 @@ standard is implemented.
 
 .. _array_api-differences:
 
-Table of Differences between ``numpy.array_api`` and ``numpy``
+Table of differences between ``numpy.array_api`` and ``numpy``
 ==============================================================
 
 This table outlines the primary differences between ``numpy.array_api`` from
@@ -51,7 +51,7 @@ the main ``numpy`` namespace. There are three types of differences:
 3. **Breaking**. Things that would break backwards compatibility if
    implemented in the main ``numpy`` namespace.
 
-Name Differences
+Name differences
 ----------------
 
 Many functions have been renamed in the spec from NumPy. These are otherwise
@@ -59,93 +59,6 @@ identical in behavior, and are thus all **compatible** changes, unless
 otherwise noted.
 
 .. _array_api-name-changes:
-
-Function Name Changes
-~~~~~~~~~~~~~~~~~~~~~
-
-The following functions are named differently in the array API
-
-.. list-table::
-   :header-rows: 1
-
-   * - Array API name
-     - NumPy namespace name
-     - Notes
-   * - ``acos``
-     - ``arccos``
-     -
-   * - ``acosh``
-     - ``arccosh``
-     -
-   * - ``asin``
-     - ``arcsin``
-     -
-   * - ``asinh``
-     - ``arcsinh``
-     -
-   * - ``atan``
-     - ``arctan``
-     -
-   * - ``atan2``
-     - ``arctan2``
-     -
-   * - ``atanh``
-     - ``arctanh``
-     -
-   * - ``bitwise_left_shift``
-     - ``left_shift``
-     -
-   * - ``bitwise_invert``
-     - ``invert``
-     -
-   * - ``bitwise_right_shift``
-     - ``right_shift``
-     -
-   * - ``bool``
-     - ``bool_``
-     - This is **breaking** because ``np.bool`` is currently a deprecated
-       alias for the built-in ``bool``.
-   * - ``concat``
-     - ``concatenate``
-     -
-   * - ``matrix_norm`` and ``vector_norm``
-     - ``norm``
-     - ``matrix_norm`` and ``vector_norm`` each do a limited subset of what
-       ``np.norm`` does.
-   * - ``permute_dims``
-     - ``transpose``
-     - Unlike ``np.transpose``, the ``axis`` keyword-argument to
-       ``permute_dims`` is required.
-   * - ``pow``
-     - ``power``
-     -
-   * - ``unique_all``, ``unique_counts``, ``unique_inverse``, and
-       ``unique_values``
-     - ``unique``
-     - Each is equivalent to ``np.unique`` with certain flags set.
-
-
-Function instead of method
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-- ``astype`` is a function in the array API, whereas it is a method on
-  ``ndarray`` in ``numpy``.
-
-
-``linalg`` Namespace Differences
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-These functions are in the ``linalg`` sub-namespace in the array API, but are
-only in the top-level namespace in NumPy:
-
-- ``cross``
-- ``diagonal``
-- ``matmul`` (*)
-- ``outer``
-- ``tensordot`` (*)
-- ``trace``
-
-(*): These functions are also in the top-level namespace in the array API.
 
 Keyword Argument Renames
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -198,7 +111,7 @@ functions to include additional keyword arguments from those required.
 
 .. _array_api-type-promotion-differences:
 
-Type Promotion Differences
+Type promotion differences
 --------------------------
 
 Type promotion is the biggest area where NumPy deviates from the spec. The
@@ -267,7 +180,7 @@ independently of values or shapes.
      - **Breaking**
      -
 
-Indexing Differences
+Indexing differences
 --------------------
 
 The spec requires only a subset of indexing, but all indexing rules in the
@@ -299,7 +212,7 @@ spec are compatible with NumPy's more broad indexing rules.
 
 .. _array_api-type-strictness:
 
-Type Strictness
+Type strictness
 ---------------
 
 Functions in ``numpy.array_api`` restrict their inputs to only those dtypes
@@ -538,7 +451,7 @@ outlined in the spec
 (see :ref:`array_api-type-promotion-differences`).
 
 
-Array Object Differences
+Array object differences
 ------------------------
 
 .. list-table::
@@ -576,7 +489,7 @@ Array Object Differences
      - **Compatible**
      - The methods would effectively not do anything since NumPy is CPU only
 
-Creation Functions Differences
+Creation functions differences
 ------------------------------
 
 .. list-table::
@@ -595,7 +508,7 @@ Creation Functions Differences
      - **Compatible**
      - ``device`` would effectively do nothing, since NumPy is CPU only.
 
-Elementwise Functions Differences
+Elementwise functions differences
 ---------------------------------
 
 .. list-table::
@@ -623,7 +536,7 @@ Elementwise Functions Differences
 
 .. _array_api-linear-algebra-differences:
 
-Linear Algebra Differences
+Linear algebra differences
 --------------------------
 
 .. list-table::
@@ -688,9 +601,6 @@ Linear Algebra Differences
        specification issue
        <https://github.com/data-apis/array-api/issues/285>`__ for more
        details.
-   * - New function ``svdvals``.
-     - **Compatible**
-     - Equivalent to ``np.linalg.svd(compute_uv=False)``.
    * - The ``axis`` keyword to ``tensordot`` must be a tuple.
      - **Compatible**
      - In ``np.tensordot``, it can also be an array or array-like.
@@ -699,7 +609,7 @@ Linear Algebra Differences
      - ``np.trace`` operates on the first two axes by default. Note that the
        array API ``trace`` does not allow specifying which axes to operate on.
 
-Manipulation Functions Differences
+Manipulation functions differences
 ----------------------------------
 
 .. list-table::
@@ -725,7 +635,7 @@ Manipulation Functions Differences
      - **Compatible**
      - See https://github.com/numpy/numpy/issues/9818.
 
-Set Functions Differences
+Set functions differences
 -------------------------
 
 .. list-table::
@@ -748,7 +658,7 @@ Set Functions Differences
 
 .. _array_api-set-functions-differences:
 
-Set Functions Differences
+Set functions differences
 -------------------------
 
 .. list-table::
@@ -770,7 +680,7 @@ Set Functions Differences
      - **Compatible**
      -
 
-Statistical Functions Differences
+Statistical functions differences
 ---------------------------------
 
 .. list-table::
@@ -788,7 +698,7 @@ Statistical Functions Differences
      - **Compatible**
      -
 
-Other Differences
+Other differences
 -----------------
 
 .. list-table::

@@ -3,41 +3,41 @@
 from ctypes import c_int64 as _c_intp
 
 import os
-import sys
 import ctypes
 from collections.abc import Iterable, Sequence
 from typing import (
     Literal as L,
     Any,
-    Union,
     TypeVar,
     Generic,
     overload,
     ClassVar,
 )
 
+import numpy as np
 from numpy import (
     ndarray,
     dtype,
     generic,
-    bool_,
     byte,
     short,
     intc,
-    int_,
+    long,
     longlong,
+    intp,
     ubyte,
     ushort,
     uintc,
-    uint,
+    ulong,
     ulonglong,
+    uintp,
     single,
     double,
     longdouble,
     void,
 )
-from numpy.core._internal import _ctypes
-from numpy.core.multiarray import flagsobj
+from numpy._core._internal import _ctypes
+from numpy._core.multiarray import flagsobj
 from numpy._typing import (
     # Arrays
     NDArray,
@@ -54,12 +54,12 @@ from numpy._typing import (
     _UByteCodes,
     _UShortCodes,
     _UIntCCodes,
-    _UIntCodes,
+    _ULongCodes,
     _ULongLongCodes,
     _ByteCodes,
     _ShortCodes,
     _IntCCodes,
-    _IntCodes,
+    _LongCodes,
     _LongLongCodes,
     _SingleCodes,
     _DoubleCodes,
@@ -91,7 +91,7 @@ class _ndptr(ctypes.c_void_p, Generic[_DTypeOptional]):
 
     @overload
     @classmethod
-    def from_param(cls: type[_ndptr[None]], obj: ndarray[Any, Any]) -> _ctypes[Any]: ...
+    def from_param(cls: type[_ndptr[None]], obj: NDArray[Any]) -> _ctypes[Any]: ...
     @overload
     @classmethod
     def from_param(cls: type[_ndptr[_DType]], obj: ndarray[Any, _DType]) -> _ctypes[Any]: ...
@@ -150,7 +150,7 @@ def ndpointer(
 ) -> type[_ndptr[dtype[Any]]]: ...
 
 @overload
-def as_ctypes_type(dtype: _BoolCodes | _DTypeLike[bool_] | type[ctypes.c_bool]) -> type[ctypes.c_bool]: ...
+def as_ctypes_type(dtype: _BoolCodes | _DTypeLike[np.bool] | type[ctypes.c_bool]) -> type[ctypes.c_bool]: ...
 @overload
 def as_ctypes_type(dtype: _ByteCodes | _DTypeLike[byte] | type[ctypes.c_byte]) -> type[ctypes.c_byte]: ...
 @overload
@@ -158,7 +158,9 @@ def as_ctypes_type(dtype: _ShortCodes | _DTypeLike[short] | type[ctypes.c_short]
 @overload
 def as_ctypes_type(dtype: _IntCCodes | _DTypeLike[intc] | type[ctypes.c_int]) -> type[ctypes.c_int]: ...
 @overload
-def as_ctypes_type(dtype: _IntCodes | _DTypeLike[int_] | type[int | ctypes.c_long]) -> type[ctypes.c_long]: ...
+def as_ctypes_type(dtype: _LongCodes | _DTypeLike[long] | type[ctypes.c_long]) -> type[ctypes.c_long]: ...
+@overload
+def as_ctypes_type(dtype: type[int]) -> type[c_intp]: ...
 @overload
 def as_ctypes_type(dtype: _LongLongCodes | _DTypeLike[longlong] | type[ctypes.c_longlong]) -> type[ctypes.c_longlong]: ...
 @overload
@@ -168,7 +170,7 @@ def as_ctypes_type(dtype: _UShortCodes | _DTypeLike[ushort] | type[ctypes.c_usho
 @overload
 def as_ctypes_type(dtype: _UIntCCodes | _DTypeLike[uintc] | type[ctypes.c_uint]) -> type[ctypes.c_uint]: ...
 @overload
-def as_ctypes_type(dtype: _UIntCodes | _DTypeLike[uint] | type[ctypes.c_ulong]) -> type[ctypes.c_ulong]: ...
+def as_ctypes_type(dtype: _ULongCodes | _DTypeLike[ulong] | type[ctypes.c_ulong]) -> type[ctypes.c_ulong]: ...
 @overload
 def as_ctypes_type(dtype: _ULongLongCodes | _DTypeLike[ulonglong] | type[ctypes.c_ulonglong]) -> type[ctypes.c_ulonglong]: ...
 @overload
@@ -190,7 +192,7 @@ def as_array(obj: _ArrayLike[_SCT], shape: None | _ShapeLike = ...) -> NDArray[_
 def as_array(obj: object, shape: None | _ShapeLike = ...) -> NDArray[Any]: ...
 
 @overload
-def as_ctypes(obj: bool_) -> ctypes.c_bool: ...
+def as_ctypes(obj: np.bool) -> ctypes.c_bool: ...
 @overload
 def as_ctypes(obj: byte) -> ctypes.c_byte: ...
 @overload
@@ -198,7 +200,7 @@ def as_ctypes(obj: short) -> ctypes.c_short: ...
 @overload
 def as_ctypes(obj: intc) -> ctypes.c_int: ...
 @overload
-def as_ctypes(obj: int_) -> ctypes.c_long: ...
+def as_ctypes(obj: long) -> ctypes.c_long: ...
 @overload
 def as_ctypes(obj: longlong) -> ctypes.c_longlong: ...
 @overload
@@ -208,7 +210,7 @@ def as_ctypes(obj: ushort) -> ctypes.c_ushort: ...
 @overload
 def as_ctypes(obj: uintc) -> ctypes.c_uint: ...
 @overload
-def as_ctypes(obj: uint) -> ctypes.c_ulong: ...
+def as_ctypes(obj: ulong) -> ctypes.c_ulong: ...
 @overload
 def as_ctypes(obj: ulonglong) -> ctypes.c_ulonglong: ...
 @overload
@@ -220,7 +222,7 @@ def as_ctypes(obj: longdouble) -> ctypes.c_longdouble: ...
 @overload
 def as_ctypes(obj: void) -> Any: ...  # `ctypes.Union` or `ctypes.Structure`
 @overload
-def as_ctypes(obj: NDArray[bool_]) -> ctypes.Array[ctypes.c_bool]: ...
+def as_ctypes(obj: NDArray[np.bool]) -> ctypes.Array[ctypes.c_bool]: ...
 @overload
 def as_ctypes(obj: NDArray[byte]) -> ctypes.Array[ctypes.c_byte]: ...
 @overload
@@ -228,7 +230,7 @@ def as_ctypes(obj: NDArray[short]) -> ctypes.Array[ctypes.c_short]: ...
 @overload
 def as_ctypes(obj: NDArray[intc]) -> ctypes.Array[ctypes.c_int]: ...
 @overload
-def as_ctypes(obj: NDArray[int_]) -> ctypes.Array[ctypes.c_long]: ...
+def as_ctypes(obj: NDArray[long]) -> ctypes.Array[ctypes.c_long]: ...
 @overload
 def as_ctypes(obj: NDArray[longlong]) -> ctypes.Array[ctypes.c_longlong]: ...
 @overload
@@ -238,7 +240,7 @@ def as_ctypes(obj: NDArray[ushort]) -> ctypes.Array[ctypes.c_ushort]: ...
 @overload
 def as_ctypes(obj: NDArray[uintc]) -> ctypes.Array[ctypes.c_uint]: ...
 @overload
-def as_ctypes(obj: NDArray[uint]) -> ctypes.Array[ctypes.c_ulong]: ...
+def as_ctypes(obj: NDArray[ulong]) -> ctypes.Array[ctypes.c_ulong]: ...
 @overload
 def as_ctypes(obj: NDArray[ulonglong]) -> ctypes.Array[ctypes.c_ulonglong]: ...
 @overload

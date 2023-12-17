@@ -3,7 +3,7 @@
 .. _arrays.nditer:
 
 *********************
-Iterating Over Arrays
+Iterating over arrays
 *********************
 
 .. note::
@@ -23,7 +23,7 @@ can accelerate the inner loop in Cython. Since the Python exposure of
 iterator API, these ideas will also provide help working with array
 iteration from C or C++.
 
-Single Array Iteration
+Single array iteration
 ======================
 
 The most basic task that can be done with the :class:`nditer` is to
@@ -64,7 +64,7 @@ namely the order they are stored in memory, whereas the elements of
 `a.T.copy(order='C')` get visited in a different order because they
 have been put into a different memory layout.
 
-Controlling Iteration Order
+Controlling iteration order
 ---------------------------
 
 There are times when it is important to visit the elements of an array
@@ -88,7 +88,7 @@ order='C' for C order and order='F' for Fortran order.
 
 .. _nditer-context-manager:
 
-Modifying Array Values
+Modifying array values
 ----------------------
 
 By default, the :class:`nditer` treats the input operand as a read-only
@@ -101,12 +101,12 @@ because  the nditer must copy this buffer data back to the original array once
 iteration is finished, you must signal when the iteration is ended, by one of two
 methods. You may either:
 
- - used the nditer as a context manager using the `with` statement, and
-   the temporary data will be written back when the context is exited.
- - call the iterator's `close` method once finished iterating, which will trigger
-   the write-back.
+- used the nditer as a context manager using the :keyword:`with` statement, and
+  the temporary data will be written back when the context is exited.
+- call the iterator's `~nditer.close` method once finished iterating, which will trigger
+  the write-back.
 
-The nditer can no longer be iterated once either `close` is called or its
+The nditer can no longer be iterated once either `~nditer.close` is called or its
 context is exited.
 
 .. admonition:: Example
@@ -125,10 +125,10 @@ context is exited.
 
 If you are writing code that needs to support older versions of numpy,
 note that prior to 1.15, :class:`nditer` was not a context manager and
-did not have a `close` method. Instead it relied on the destructor to
+did not have a `~nditer.close` method. Instead it relied on the destructor to
 initiate the writeback of the buffer.
 
-Using an External Loop
+Using an external loop
 ----------------------
 
 In all the examples so far, the elements of `a` are provided by the
@@ -161,7 +161,7 @@ elements each.
     ...
     [0 3] [1 4] [2 5]
 
-Tracking an Index or Multi-Index
+Tracking an index or multi-index
 --------------------------------
 
 During iteration, you may want to use the index of the current
@@ -210,7 +210,7 @@ raise an exception.
       File "<stdin>", line 1, in <module>
     ValueError: Iterator flag EXTERNAL_LOOP cannot be used if an index or multi-index is being tracked
 
-Alternative Looping and Element Access
+Alternative looping and element access
 --------------------------------------
 
 To make its properties more readily accessible during iteration,
@@ -246,7 +246,7 @@ produce identical results to the ones in the previous section.
     array([[ 0,  1,  2],
            [-1,  0,  1]])
 
-Buffering the Array Elements
+Buffering the array elements
 ----------------------------
 
 When forcing an iteration order, we observed that the external loop
@@ -274,7 +274,7 @@ is enabled.
     ...
     [0 3 1 4 2 5]
 
-Iterating as a Specific Data Type
+Iterating as a specific data type
 ---------------------------------
 
 There are times when it is necessary to treat an array as a different
@@ -382,7 +382,7 @@ would violate the casting rule.
       File "<stdin>", line 2, in <module>
     TypeError: Iterator requested dtype could not be cast from dtype('float64') to dtype('int64'), the operand 0 dtype, according to the rule 'same_kind'
 
-Broadcasting Array Iteration
+Broadcasting array iteration
 ============================
 
 NumPy has a set of rules for dealing with arrays that have differing
@@ -417,7 +417,7 @@ which includes the input shapes to help diagnose the problem.
     ...
     ValueError: operands could not be broadcast together with shapes (2,) (2,3)
 
-Iterator-Allocated Output Arrays
+Iterator-allocated output arrays
 --------------------------------
 
 A common case in NumPy functions is to have outputs allocated based
@@ -495,7 +495,7 @@ reasons.
     ValueError: non-broadcastable output operand with shape (3,) doesn't
     match the broadcast shape (2,3)
 
-Outer Product Iteration
+Outer product iteration
 -----------------------
 
 Any binary operation can be extended to an array operation in an outer
@@ -545,7 +545,7 @@ Everything to do with the outer product is handled by the iterator setup.
 Note that once the iterator is closed we can not access :func:`operands <nditer.operands>`
 and must use a reference created inside the context manager.
 
-Reduction Iteration
+Reduction iteration
 -------------------
 
 Whenever a writeable operand has fewer elements than the full iteration space,

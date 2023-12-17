@@ -4,19 +4,13 @@
 from numpy.testing import (
     assert_equal, assert_array_equal, assert_array_max_ulp,
     assert_array_almost_equal, assert_raises, assert_
-    )
-
+)
 from numpy import (
     arange, add, fliplr, flipud, zeros, ones, eye, array, diag, histogram2d,
     tri, mask_indices, triu_indices, triu_indices_from, tril_indices,
     tril_indices_from, vander,
-    )
-
+)
 import numpy as np
-
-
-from numpy.core.tests.test_overrides import requires_array_function
-
 
 import pytest
 
@@ -283,7 +277,6 @@ class TestHistogram2d:
         assert_array_equal(H, answer)
         assert_array_equal(xe, array([0., 0.25, 0.5, 0.75, 1]))
 
-    @requires_array_function
     def test_dispatch(self):
         class ShouldDispatch:
             def __array_function__(self, function, types, args, kwargs):

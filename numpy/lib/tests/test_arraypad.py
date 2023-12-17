@@ -5,14 +5,14 @@ import pytest
 
 import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose, assert_equal
-from numpy.lib.arraypad import _as_pairs
+from numpy.lib._arraypad_impl import _as_pairs
 
 
 _numeric_dtypes = (
-    np.sctypes["uint"]
-    + np.sctypes["int"]
-    + np.sctypes["float"]
-    + np.sctypes["complex"]
+    np._core.sctypes["uint"]
+    + np._core.sctypes["int"]
+    + np._core.sctypes["float"]
+    + np._core.sctypes["complex"]
 )
 _all_modes = {
     'constant': {'constant_values': 0},
@@ -628,7 +628,7 @@ class TestConstant:
 
     def test_check_constant_pad_2d(self):
         arr = np.arange(4).reshape(2, 2)
-        test = np.lib.pad(arr, ((1, 2), (1, 3)), mode='constant',
+        test = np.pad(arr, ((1, 2), (1, 3)), mode='constant',
                           constant_values=((1, 2), (3, 4)))
         expected = np.array(
             [[3, 1, 1, 4, 4, 4],

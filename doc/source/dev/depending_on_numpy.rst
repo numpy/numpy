@@ -37,9 +37,9 @@ Testing against the NumPy main branch or pre-releases
 For large, actively maintained packages that depend on NumPy, we recommend
 testing against the development version of NumPy in CI. To make this easy,
 nightly builds are provided as wheels at
-https://anaconda.org/scipy-wheels-nightly/. Example install command::
+https://anaconda.org/scientific-python-nightly-wheels/. Example install command::
 
-    pip install -U --pre --only-binary :all: -i https://pypi.anaconda.org/scipy-wheels-nightly/simple numpy
+    pip install -U --pre --only-binary :all: -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
 This helps detect regressions in NumPy that need fixing before the next NumPy
 release.  Furthermore, we recommend to raise errors on warnings in CI for this
@@ -48,37 +48,68 @@ job, either all warnings or otherwise at least ``DeprecationWarning`` and
 adapt your code.
 
 
+.. _depending_on_numpy:
+
 Adding a dependency on NumPy
 ----------------------------
 
 Build-time dependency
 ~~~~~~~~~~~~~~~~~~~~~
 
+.. note::
+
+    Before NumPy 1.25, the NumPy C-API was *not* backwards compatible.  This
+    means that when compiling with a NumPy version earlier than 1.25 you
+    have to compile with the oldest version you wish to support.
+    This can be done by using
+    `oldest-supported-numpy <https://github.com/scipy/oldest-supported-numpy/>`__.
+    Please see the `NumPy 1.24 documentation
+    <https://numpy.org/doc/1.24/dev/depending_on_numpy.html>`__.
+
+
 If a package either uses the NumPy C API directly or it uses some other tool
 that depends on it like Cython or Pythran, NumPy is a *build-time* dependency
-of the package. Because the NumPy ABI is only forward compatible, you must
-build your own binaries (wheels or other package formats) against the lowest
-NumPy version that you support (or an even older version).
+of the package. 
 
-Picking the correct NumPy version to build against for each Python version and
-platform can get complicated. There are a couple of ways to do this.
-Build-time dependencies are specified in ``pyproject.toml`` (see PEP 517),
-which is the file used to build wheels by PEP 517 compliant tools (e.g.,
-when using ``pip wheel``).
+By default, NumPy will expose an API that is backwards compatible with the
+oldest NumPy version that supports the currently oldest compatible Python
+version.  NumPy 1.25.0 supports Python 3.9 and higher and NumPy 1.19 is the
+first version to support Python 3.9.  Thus, we guarantee that, when using
+defaults, NumPy 1.25 will expose a C-API compatible with NumPy 1.19.
+(the exact version is set within NumPy-internal header files).
 
-You can specify everything manually in ``pyproject.toml``, or you can instead
-rely on the `oldest-supported-numpy <https://github.com/scipy/oldest-supported-numpy/>`__
-metapackage. ``oldest-supported-numpy`` will specify the correct NumPy version
-at build time for wheels, taking into account Python version, Python
-implementation (CPython or PyPy), operating system and hardware platform. It
-will specify the oldest NumPy version that supports that combination of
-characteristics.  Note: for platforms for which NumPy provides wheels on PyPI,
-it will be the first version with wheels (even if some older NumPy version
-happens to build).
+NumPy is also forward compatible for all minor releases, but a major release
+will require recompilation.
 
-For conda-forge it's a little less complicated: there's dedicated handling for
-NumPy in build-time and runtime dependencies, so typically this is enough
-(see `here <https://conda-forge.org/docs/maintainer/knowledge_base.html#building-against-numpy>`__ for docs)::
+The default behavior can be customized for example by adding::
+
+    #define NPY_TARGET_VERSION NPY_1_22_API_VERSION
+
+before including any NumPy headers (or the equivalent ``-D`` compiler flag) in
+every extension module that requires the NumPy C-API.
+This is mainly useful if you need to use newly added API at the cost of not
+being compatible with older versions.
+
+If for some reason you wish to compile for the currently installed NumPy
+version by default you can add::
+
+    #ifndef NPY_TARGET_VERSION
+        #define NPY_TARGET_VERSION NPY_API_VERSION
+    #endif
+
+Which allows a user to override the default via ``-DNPY_TARGET_VERSION``.
+This define must be consistent for each extension module (use of
+``import_array()``) and also applies to the umath module.
+
+When you compile against NumPy, you should add the proper version restrictions
+to your ``pyproject.toml`` (see PEP 517).  Since your extension will not be
+compatible with a new major release of NumPy and may not be compatible with
+very old versions.
+
+For conda-forge packages, please see
+`here <https://conda-forge.org/docs/maintainer/knowledge_base.html#building-against-numpy>`__.
+
+as of now, it is usually as easy as including::
 
     host:
       - numpy
@@ -87,31 +118,10 @@ NumPy in build-time and runtime dependencies, so typically this is enough
 
 .. note::
 
-    ``pip`` has ``--no-use-pep517`` and ``--no-build-isolation`` flags that may
-    ignore ``pyproject.toml`` or treat it differently - if users use those
-    flags, they are responsible for installing the correct build dependencies
-    themselves.
-
-    ``conda`` will always use ``-no-build-isolation``; dependencies for conda
-    builds are given in the conda recipe (``meta.yaml``), the ones in
-    ``pyproject.toml`` have no effect.
-
-    Please do not use ``setup_requires`` (it is deprecated and may invoke
-    ``easy_install``).
-
-Because for NumPy you have to care about ABI compatibility, you
-specify the version with ``==`` to the lowest supported version. For your other
-build dependencies you can probably be looser, however it's still important to
-set lower and upper bounds for each dependency. It's fine to specify either a
-range or a specific version for a dependency like ``wheel`` or ``setuptools``.
-
-.. warning::
-
-    Note that ``setuptools`` does major releases often and those may contain
-    changes that break ``numpy.distutils``, which will *not* be updated anymore
-    for new ``setuptools`` versions. It is therefore recommended to set an
-    upper version bound in your build configuration for the last known version
-    of ``setuptools`` that works with your build.
+    At the time of NumPy 1.25, NumPy 2.0 is expected to be the next release
+    of NumPy.  The NumPy 2.0 release is expected to require a different pin,
+    since NumPy 2+ will be needed in order to be compatible with both NumPy
+    1.x and 2.x.
 
 
 Runtime dependency & version ranges

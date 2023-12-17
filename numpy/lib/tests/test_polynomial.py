@@ -6,7 +6,7 @@ from numpy.testing import (
 
 import pytest
 
-# `poly1d` has some support for `bool_` and `timedelta64`,
+# `poly1d` has some support for `np.bool` and `np.timedelta64`,
 # but it is limited and they are therefore excluded here
 TYPE_CODES = np.typecodes["AllInteger"] + np.typecodes["AllFloat"] + "O"
 

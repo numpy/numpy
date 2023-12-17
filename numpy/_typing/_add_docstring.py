@@ -120,8 +120,8 @@ add_newdoc('DTypeLike', 'typing.Union[...]',
 
 add_newdoc('NDArray', repr(NDArray),
     """
-    A :term:`generic <generic type>` version of
-    `np.ndarray[Any, np.dtype[+ScalarType]] <numpy.ndarray>`.
+    A `np.ndarray[Any, np.dtype[+ScalarType]] <numpy.ndarray>` type alias 
+    :term:`generic <generic type>` w.r.t. its `dtype.type <numpy.dtype.type>`.
 
     Can be used during runtime for typing arrays with a given dtype
     and unspecified shape.
