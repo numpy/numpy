@@ -356,20 +356,24 @@ typedef Py_hash_t npy_hash_t;
 
 #if defined(__cplusplus)
 
-typedef struct
+struct _npy_cdouble
 {
     double _Val[2];
-} npy_cdouble;
+};
 
-typedef struct
+struct _npy_cfloat
 {
     float _Val[2];
-} npy_cfloat;
+};
 
-typedef struct
+struct _npy_clongdouble
 {
     long double _Val[2];
-} npy_clongdouble;
+};
+
+typedef struct _npy_cdouble npy_cdouble;
+typedef struct _npy_cfloat npy_cfloat;
+typedef struct _npy_clongdouble npy_clongdouble;
 
 #else
 

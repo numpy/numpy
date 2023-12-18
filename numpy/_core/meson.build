@@ -518,31 +518,6 @@ if cc.get_id() == 'msvc'
   endif
 endif
 
-npy_math_internal_h = custom_target(
-  output: 'npy_math_internal.h',
-  input: 'src/npymath/npy_math_internal.h.src',
-  command: [src_file_cli, '@INPUT@', '-o', '@OUTPUT@'],
-)
-
-npymath_sources = [
-  src_file.process('src/npymath/ieee754.c.src'),
-  src_file.process('src/npymath/npy_math_complex.c.src'),
-  npy_math_internal_h,
-  'src/npymath/halffloat.cpp',
-  'src/npymath/npy_math.c',
-]
-npymath_lib = static_library('npymath',
-  npymath_sources,
-  c_args: staticlib_cflags,
-  cpp_args: staticlib_cppflags,
-  include_directories: ['include', 'src/npymath', 'src/common'],
-  dependencies: py_dep,
-  install: true,
-  install_dir: np_dir / '_core/lib',
-  name_prefix: name_prefix_staticlib,
-  name_suffix: name_suffix_staticlib,
-)
-
 dir_separator = '/'
 if build_machine.system() == 'windows'
   dir_separator = '\\'
@@ -569,24 +544,6 @@ configure_file(
   install_dir: np_dir / '_core/lib/npy-pkg-config',
   install_tag: 'devel'
 )
-
-if false
-  # This doesn't quite work (yet), it assumes we'll install headers under
-  # include/, and trying to add the correct path with `extra_cflags` runs into
-  # not being able to get a path relative to the prefix.
-  # Note that installing numpy headers under include/ would be a good idea, but
-  # that needs work (and may run into trouble with wheels perhaps, not quite
-  # clear if they allow this).
-  pkg = import('pkgconfig')
-  pkg.generate(npymath_lib,
-    name: 'npymath',
-    description: 'Portable, core math library implementing C99 standard',
-    url: 'https://github.com/numpy/numpy',
-    requires: 'numpy',
-    install_dir: np_dir / '_core/lib/npy-pkg-config',
-    extra_cflags: '-I${includedir}' + np_dir / '_core' / 'include',
-  )
-endif
 
 # Generate NumPy C API sources
 # ----------------------------
@@ -652,7 +609,6 @@ endif
 np_core_dep = declare_dependency(
   sources: [
     _numpyconfig_h,
-    npy_math_internal_h,
     src_numpy_api[1],  # __multiarray_api.h
     src_ufunc_api[1],  # __ufunc_api.h
   ],
@@ -674,9 +630,8 @@ py.extension_module('_multiarray_tests',
     src_file.process('src/common/templ_common.h.src')
   ],
   c_args: c_args_common,
-  include_directories: ['src/multiarray', 'src/npymath'],
-  dependencies: np_core_dep,
-  link_with: npymath_lib,
+  include_directories: ['src/multiarray'],
+  dependencies: [np_core_dep, libnpymath_dep],
   gnu_symbol_visibility: 'default',
   install: true,
   subdir: 'numpy/_core',
@@ -711,8 +666,8 @@ foreach gen: test_modules_src
   py.extension_module(gen[0],
     gen[1],
     c_args: c_args_common,
-    include_directories: ['src/multiarray', 'src/npymath'],
-    dependencies: np_core_dep,
+    include_directories: ['src/multiarray'],
+    dependencies: [np_core_dep, libnpymath_dep],
     install: true,
     subdir: 'numpy/_core',
     link_with: gen[2],
@@ -742,14 +697,13 @@ foreach gen_mtargets : [
     dispatch: gen_mtargets[2],
     baseline: CPU_BASELINE,
     prefix: 'NPY_',
-    dependencies: [py_dep, np_core_dep],
+    dependencies: [py_dep, np_core_dep, libnpymath_dep],
     c_args: c_args_common + max_opt,
     cpp_args: cpp_args_common + max_opt,
     include_directories: [
       'include',
       'src/common',
       'src/multiarray',
-      'src/npymath',
       'src/umath'
     ]
   )
@@ -800,14 +754,13 @@ foreach gen_mtargets : [
     dispatch: gen_mtargets[2],
     # baseline: CPU_BASELINE, it doesn't provide baseline fallback
     prefix: 'NPY_',
-    dependencies: [py_dep, np_core_dep],
+    dependencies: [py_dep, np_core_dep, libnpymath_dep],
     c_args: c_args_common + max_opt,
     cpp_args: cpp_args_common + max_opt,
     include_directories: [
       'include',
       'src/common',
       'src/multiarray',
-      'src/npymath',
       'src/umath',
       'src/highway',
     ]
@@ -972,14 +925,13 @@ foreach gen_mtargets : [
     dispatch: gen_mtargets[2],
     baseline: CPU_BASELINE,
     prefix: 'NPY_',
-    dependencies: [py_dep, np_core_dep],
+    dependencies: [py_dep, np_core_dep, libnpymath_dep],
     c_args: c_args_common + max_opt,
     cpp_args: cpp_args_common + max_opt,
     include_directories: [
       'include',
       'src/common',
       'src/multiarray',
-      'src/npymath',
       'src/umath'
     ]
   )
@@ -1086,9 +1038,6 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/textreading/stream_pyobject.c',
   'src/multiarray/textreading/str_to_int.c',
   'src/multiarray/textreading/tokenize.cpp',
-  # Remove this `arm64_exports.c` file once scipy macos arm64 build correctly
-  # links to the arm64 npymath library, see gh-22673
-  'src/npymath/arm64_exports.c',
 ]
 
 src_umath = umath_gen_headers + [
@@ -1151,7 +1100,6 @@ py.extension_module('_multiarray_umath',
     src_ufunc_api[1],  # __ufunc_api.h
     src_numpy_api[1],  # __multiarray_api.h
     src_umath_doc_h,
-    npy_math_internal_h,
   ],
   objects: svml_objects,
   c_args: c_args_common,
@@ -1160,11 +1108,10 @@ py.extension_module('_multiarray_umath',
     'include',
     'src/common',
     'src/multiarray',
-    'src/npymath',
     'src/umath',
   ],
-  dependencies: blas_dep,
-  link_with: [npymath_lib, multiarray_umath_mtargets.static_lib('_multiarray_umath_mtargets')],
+  dependencies: [blas_dep, libnpymath_dep],
+  link_with: [multiarray_umath_mtargets.static_lib('_multiarray_umath_mtargets')],
   install: true,
   subdir: 'numpy/_core',
 )
@@ -1203,8 +1150,8 @@ _simd_mtargets = mod_features.multi_targets(
   dispatch: _simd_dispatch,
   baseline: _simd_baseline,
   prefix: 'NPY_',
-  dependencies: [py_dep, np_core_dep],
-  include_directories: ['src/_simd', 'src/npymath'],
+  dependencies: [py_dep, np_core_dep, libnpymath_dep],
+  include_directories: ['src/_simd'],
   c_args: c_args_common,
   cpp_args: cpp_args_common,
 )
@@ -1215,9 +1162,9 @@ py.extension_module('_simd',
     'src/_simd/_simd.c',
   ],
   c_args: c_args_common,
-  include_directories: ['src/_simd', 'src/npymath'],
-  dependencies: np_core_dep,
-  link_with: [npymath_lib, _simd_mtargets.static_lib('_simd_mtargets')],
+  include_directories: ['src/_simd'],
+  dependencies: [np_core_dep, libnpymath_dep],
+  link_with: [_simd_mtargets.static_lib('_simd_mtargets')],
   install: true,
   subdir: 'numpy/_core',
 )

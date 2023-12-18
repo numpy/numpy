@@ -8,10 +8,10 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include "numpy/halffloat.h"
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_common.h"
 #include "numpy/npy_math.h"
+#include "numpy/halffloat.h"
 #include "numpy/utils.h"
 
 #include "fast_loop_macros.h"

@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <numpy/ndarraytypes.h>
+#include <numpy/npy_common.h>
 #include <numpy/npy_math.h>
 
 #ifdef __cplusplus

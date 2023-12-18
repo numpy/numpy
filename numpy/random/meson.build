@@ -17,6 +17,18 @@ install_data(
   install_dir: np_dir / 'random' / 'src' / 'distributions'
 )
 
+# We install libnpymath and libnpyrandom; ensure they're using a `.lib` rather
+# than a `.a` file extension in order not to break including them in a
+# distutils-based build (see gh-23981 and
+# https://mesonbuild.com/FAQ.html#why-does-building-my-project-with-msvc-output-static-libraries-called-libfooa)
+if is_windows and cc.get_id() == 'msvc'
+  name_prefix_staticlib = ''
+  name_suffix_staticlib = 'lib'
+else
+  name_prefix_staticlib = []
+  name_suffix_staticlib = []
+endif
+
 # Not used anymore, shipped for backwards-compatibility
 npyrandom_lib = static_library('npyrandom',
   libnpyrandom_sources,
@@ -65,24 +77,24 @@ endif
 
 # name, sources, extra c_args, extra static libs to link
 random_pyx_sources = [
-  ['_bounded_integers', _bounded_integers_pyx, [], libnpyrandom_dep],
-  ['_common', '_common.pyx', [], libnpyrandom_dep],
+  ['_bounded_integers', _bounded_integers_pyx, [], [libnpymath_dep, libnpyrandom_dep]],
+  ['_common', '_common.pyx', [], [libnpymath_dep, libnpyrandom_dep]],
   ['_mt19937', ['_mt19937.pyx', 'src/mt19937/mt19937.c', 'src/mt19937/mt19937-jump.c'],
-    [], libnpyrandom_dep
+    [], [libnpymath_dep, libnpyrandom_dep]
   ],
-  ['_philox', ['_philox.pyx', 'src/philox/philox.c'], [], libnpyrandom_dep],
-  ['_pcg64', ['_pcg64.pyx', 'src/pcg64/pcg64.c'], ['-U__GNUC_GNU_INLINE__'], libnpyrandom_dep],
-  ['_sfc64', ['_sfc64.pyx', 'src/sfc64/sfc64.c'], [], libnpyrandom_dep],
-  ['bit_generator', 'bit_generator.pyx', [], libnpyrandom_dep],
+  ['_philox', ['_philox.pyx', 'src/philox/philox.c'], [], [libnpymath_dep, libnpyrandom_dep]],
+  ['_pcg64', ['_pcg64.pyx', 'src/pcg64/pcg64.c'], ['-U__GNUC_GNU_INLINE__'], [libnpymath_dep, libnpyrandom_dep]],
+  ['_sfc64', ['_sfc64.pyx', 'src/sfc64/sfc64.c'], [], [libnpymath_dep, libnpyrandom_dep]],
+  ['bit_generator', 'bit_generator.pyx', [], [libnpymath_dep, libnpyrandom_dep]],
   # The `fs.copyfile` usage here is needed because these two .pyx files import
   # from _bounded_integers,and its pxd file is only present in the build directory
-  ['_generator', fs.copyfile('_generator.pyx'), [], libnpyrandom_dep],
+  ['_generator', fs.copyfile('_generator.pyx'), [], [libnpymath_dep, libnpyrandom_dep]],
   ['mtrand', [
       fs.copyfile('mtrand.pyx'),
       'src/distributions/distributions.c',
       'src/legacy/legacy-distributions.c'
     ],
-    ['-DNP_RANDOM_LEGACY=1'], [],
+    ['-DNP_RANDOM_LEGACY=1'], [libnpymath_dep],
   ],
 ]
 foreach gen: random_pyx_sources

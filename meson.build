@@ -88,5 +88,16 @@ if host_machine.system() == 'darwin' and cc.has_link_argument('-Wl,-ld_classic')
   add_project_link_arguments('-Wl,-ld_classic', language : ['c', 'cpp'])
 endif
 
+libnpymath_dep = dependency(
+  'libnpymath',
+  fallback : ['libnpymath', 'libnpymath_dep'],
+  default_options: [
+    'numpy_build=true',
+    'install_lib=true',
+    'lib_dir=numpy/_core/lib',
+    'headers_dir=numpy/_core/include/numpy',
+  ],
+)
+
 subdir('meson_cpu')
 subdir('numpy')

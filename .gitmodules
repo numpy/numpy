@@ -13,3 +13,6 @@
 [submodule "numpy/_core/src/highway"]
 	path = numpy/_core/src/highway
 	url = https://github.com/google/highway.git
+[submodule "subprojects/libnpymath"]
+	path = subprojects/libnpymath
+	url = https://github.com/lysnikolaou/libnpymath.git

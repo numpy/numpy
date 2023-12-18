@@ -28,18 +28,6 @@ if is_mingw
   add_project_arguments('-D__USE_MINGW_ANSI_STDIO=1', language: ['c', 'cpp'])
 endif
 
-# We install libnpymath and libnpyrandom; ensure they're using a `.lib` rather
-# than a `.a` file extension in order not to break including them in a
-# distutils-based build (see gh-23981 and
-# https://mesonbuild.com/FAQ.html#why-does-building-my-project-with-msvc-output-static-libraries-called-libfooa)
-if is_windows and cc.get_id() == 'msvc'
-  name_prefix_staticlib = ''
-  name_suffix_staticlib = 'lib'
-else
-  name_prefix_staticlib = []
-  name_suffix_staticlib = []
-endif
-
 # Enable UNIX large file support on 32-bit systems (64 bit off_t,
 # lseek -> lseek64, etc.)
 cflags_large_file_support = []

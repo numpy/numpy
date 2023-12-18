@@ -15,8 +15,6 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
-#include "numpy/npy_math.h"
-
 #include "npy_partition.h"
 #include "npy_sort.h"
 #include "npysort_common.h"

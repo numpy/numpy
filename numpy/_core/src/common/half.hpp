@@ -4,7 +4,7 @@
 #include "npstd.hpp"
 
 #include "npy_cpu_dispatch.h" // NPY_HAVE_CPU_FEATURES
-#include "half_private.hpp"
+#include "numpy/halffloat.h"
 
 // TODO(@seiko2plus):
 // - covers half-precision operations that being supported by numpy/halffloat.h
@@ -52,21 +52,7 @@ class Half final {
     /// be set to ties to even.
     explicit Half(float f)
     {
-    #if defined(NPY_HAVE_FP16)
-        __m128 mf = _mm_load_ss(&f);
-        bits_ = static_cast<uint16_t>(_mm_cvtsi128_si32(_mm_cvtps_ph(mf, _MM_FROUND_TO_NEAREST_INT)));
-    #elif defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX_ASM)
-        __vector float vf32 = vec_splats(f);
-        __vector unsigned short vf16;
-        __asm__ __volatile__ ("xvcvsphp %x0,%x1" : "=wa" (vf16) : "wa" (vf32));
-        #ifdef __BIG_ENDIAN__
-        bits_ = vec_extract(vf16, 1);
-        #else
-        bits_ = vec_extract(vf16, 0);
-        #endif
-    #else
-        bits_ = half_private::FromFloatBits(BitCast<uint32_t>(f));
-    #endif
+        bits_ = npy_float_to_half(f);
     }
 
     /// Construct from double.
@@ -74,52 +60,19 @@ class Half final {
     /// be set to ties to even.
     explicit Half(double f)
     {
-    #if defined(NPY_HAVE_AVX512FP16)
-        __m128d md = _mm_load_sd(&f);
-        bits_ = static_cast<uint16_t>(_mm_cvtsi128_si32(_mm_castph_si128(_mm_cvtpd_ph(md))));
-    #elif defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX3_HALF_DOUBLE)
-        __asm__ __volatile__ ("xscvdphp %x0,%x1" : "=wa" (bits_) : "wa" (f));
-    #else
-        bits_ = half_private::FromDoubleBits(BitCast<uint64_t>(f));
-    #endif
+        bits_ = npy_double_to_half(f);
     }
 
     /// Cast to float
     explicit operator float() const
     {
-    #if defined(NPY_HAVE_FP16)
-        float ret;
-        _mm_store_ss(&ret, _mm_cvtph_ps(_mm_cvtsi32_si128(bits_)));
-        return ret;
-    #elif defined(NPY_HAVE_VSX3) && defined(vec_extract_fp_from_shorth)
-        return vec_extract(vec_extract_fp_from_shorth(vec_splats(bits_)), 0);
-    #elif defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX_ASM)
-        __vector float vf32;
-        __asm__ __volatile__("xvcvhpsp %x0,%x1"
-                             : "=wa"(vf32)
-                             : "wa"(vec_splats(bits_)));
-        return vec_extract(vf32, 0);
-    #else
-        return BitCast<float>(half_private::ToFloatBits(bits_));
-    #endif
+        return npy_half_to_float(bits_);
     }
 
     /// Cast to double
     explicit operator double() const
     {
-    #if defined(NPY_HAVE_AVX512FP16)
-        double ret;
-        _mm_store_sd(&ret, _mm_cvtph_pd(_mm_castsi128_ph(_mm_cvtsi32_si128(bits_))));
-        return ret;
-    #elif defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX3_HALF_DOUBLE)
-        double f64;
-        __asm__ __volatile__("xscvhpdp %x0,%x1"
-                             : "=wa"(f64)
-                             : "wa"(bits_));
-        return f64;
-    #else
-        return BitCast<double>(half_private::ToDoubleBits(bits_));
-    #endif
+        return npy_half_to_double(bits_);
     }
 
     /// Returns a new Half constructed from the IEEE 754 binary16.
