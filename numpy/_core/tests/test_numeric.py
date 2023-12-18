@@ -286,6 +286,7 @@ class TestNonarrayArgs:
         arr = [[1, 2], [3, 4], [5, 6]]
         tgt = [[1, 3, 5], [2, 4, 6]]
         assert_equal(np.transpose(arr, (1, 0)), tgt)
+        assert_equal(np.matrix_transpose(arr), tgt)
 
     def test_var(self):
         A = [[1, 2, 3], [4, 5, 6]]
@@ -4043,3 +4044,29 @@ class TestAsType:
 
         with pytest.raises(TypeError, match="Input should be a NumPy array"):
             np.astype(data, np.float64)
+
+
+class TestVecdot:
+
+    def test_vecdot(self):
+        arr1 = np.arange(6).reshape((2, 3))
+        arr2 = np.arange(3).reshape((1, 3))
+
+        actual = np.vecdot(arr1, arr2)
+        expected = np.array([5, 14])
+
+        assert_array_equal(actual, expected)
+
+    def test_vecdot_complex(self):
+        arr1 = np.array([1, 2j, 3])
+        arr2 = np.array([1, 2, 3])
+
+        assert_array_equal(
+            np.vecdot(arr1, arr2),
+            np.array([10-4j])
+        )
+
+        assert_array_equal(
+            np.vecdot(arr2, arr1),
+            np.array([10+4j])
+        )

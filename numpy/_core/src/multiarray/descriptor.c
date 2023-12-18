@@ -16,6 +16,7 @@
 
 #include "_datetime.h"
 #include "common.h"
+#include "conversion_utils.h"  /* for PyArray_TypestrConvert */
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "descriptor.h"
 #include "alloc.h"
