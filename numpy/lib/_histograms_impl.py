@@ -687,32 +687,32 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
     a : array_like
         Input data. The histogram is computed over the flattened array.
     bins : int or sequence of scalars or str, optional
-        If ``bins`` is an int, it defines the number of equal-width
-        bins in the given range (10, by default). If ``bins`` is a
+        If `bins` is an int, it defines the number of equal-width
+        bins in the given range (10, by default). If `bins` is a
         sequence, it defines a monotonically increasing array of bin edges,
         including the rightmost edge, allowing for non-uniform bin widths.
 
         .. versionadded:: 1.11.0
 
-        If ``bins`` is a string, it defines the method used to calculate the
-        optimal bin width, as defined by ``histogram_bin_edges``.
+        If `bins` is a string, it defines the method used to calculate the
+        optimal bin width, as defined by `histogram_bin_edges`.
 
     range : (float, float), optional
         The lower and upper range of the bins.  If not provided, range
         is simply ``(a.min(), a.max())``.  Values outside the range are
         ignored. The first element of the range must be less than or
-        equal to the second. ``range`` affects the automatic bin
+        equal to the second. `range` affects the automatic bin
         computation as well. While bin width is computed to be optimal
-        based on the actual data within ``range``, the bin count will fill
+        based on the actual data within `range`, the bin count will fill
         the entire range including portions containing no data.
     weights : array_like, optional
-        An array of weights, of the same shape as ``a``.  Each value in
-        ``a`` only contributes its associated weight towards the bin count
-        (instead of 1). If ``density`` is True, the weights are
+        An array of weights, of the same shape as `a`.  Each value in
+        `a` only contributes its associated weight towards the bin count
+        (instead of 1). If `density` is True, the weights are
         normalized, so that the integral of the density over the range
         remains 1.
-        Please note that the ``dtype`` of ``weights`` will dictate the
-        ``dtype`` of the returned accumulator (``hist``).
+        Please note that the ``dtype`` of `weights` will dictate the
+        ``dtype`` of the returned accumulator (`hist`).
     density : bool, optional
         If ``False``, the result will contain the number of samples in
         each bin. If ``True``, the result is the value of the
