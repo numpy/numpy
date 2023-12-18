@@ -68,6 +68,7 @@ npy_find_array_wrap(
             }
             double curr_priority = PyArray_GetPriority(obj, 0);
             if (wrap == NULL || priority < curr_priority
+                    /* Prefer subclasses `__array_wrap__`: */
                     || (curr_priority == 0 && wrap == Py_None)) {
                 Py_XSETREF(wrap, new_wrap);
                 Py_INCREF(Py_TYPE(obj));
