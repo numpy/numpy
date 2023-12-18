@@ -714,8 +714,8 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
         Please note that the ``dtype`` of `weights` will dictate the
         ``dtype`` of the returned accumulator (`hist`).
     density : bool, optional
-        If `False`, the result will contain the number of samples in
-        each bin. If `True`, the result is the value of the
+        If ``False``, the result will contain the number of samples in
+        each bin. If ``True``, the result is the value of the
         probability *density* function at the bin, normalized such that
         the *integral* over the range is 1. Note that the sum of the
         histogram values will not be equal to 1 unless bins of unity
