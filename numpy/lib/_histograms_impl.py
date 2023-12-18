@@ -714,8 +714,8 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
         Please note that the ``dtype`` of `weights` will dictate the
         ``dtype`` of the returned accumulator (`hist`).
     density : bool, optional
-        If ``False``, the result will contain the number of samples in
-        each bin. If ``True``, the result is the value of the
+        If `False`, the result will contain the number of samples in
+        each bin. If `True`, the result is the value of the
         probability *density* function at the bin, normalized such that
         the *integral* over the range is 1. Note that the sum of the
         histogram values will not be equal to 1 unless bins of unity
@@ -724,7 +724,7 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
     Returns
     -------
     hist : array
-        The values of the histogram. See ``density`` and ``weights`` for a
+        The values of the histogram. See `density` and `weights` for a
         description of the possible semantics.
     bin_edges : array of dtype float
         Return the bin edges ``(length(hist)+1)``.
@@ -737,7 +737,7 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
     Notes
     -----
     All but the last (righthand-most) bin is half-open.  In other words,
-    if ``bins`` is::
+    if `bins` is::
 
       [1, 2, 3, 4]
 
