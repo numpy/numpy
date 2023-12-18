@@ -14,7 +14,7 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'svd', 'svdvals', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond',
            'matrix_rank', 'LinAlgError', 'multi_dot', 'trace', 'diagonal',
            'cross', 'outer', 'tensordot', 'matmul', 'matrix_transpose',
-           'matrix_norm', 'vector_norm']
+           'matrix_norm', 'vector_norm', 'vecdot']
 
 import functools
 import operator
@@ -31,7 +31,7 @@ from numpy._core import (
     reciprocal, overrides, diagonal as _core_diagonal, trace as _core_trace,
     cross as _core_cross, outer as _core_outer, tensordot as _core_tensordot,
     matmul as _core_matmul, matrix_transpose as _core_matrix_transpose,
-    transpose as _core_transpose
+    transpose as _core_transpose, vecdot as _core_vecdot,
 )
 from numpy.lib._twodim_base_impl import triu, eye
 from numpy.lib.array_utils import normalize_axis_index, normalize_axis_tuple
@@ -3308,3 +3308,48 @@ def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
         res = res.reshape(tuple(shape))
 
     return res
+
+
+# vecdot
+
+def _vecdot_dispatcher(x1, x2, /, *, axis=None):
+    return (x1, x2)
+
+@array_function_dispatch(_vecdot_dispatcher)
+def vecdot(x1, x2, /, *, axis=-1):
+    """
+    Computes the vector dot product.
+
+    This function is restricted to arguments compatible with the Array API,
+    contrary to :func:`numpy.vecdot`.
+
+    Let :math:`\\mathbf{a}` be a vector in ``x1`` and :math:`\\mathbf{b}` be
+    a corresponding vector in ``x2``. The dot product is defined as:
+
+    .. math::
+       \\mathbf{a} \\cdot \\mathbf{b} = \\sum_{i=0}^{n-1} \\overline{a_i}b_i
+
+    over the dimension specified by ``axis`` and where :math:`\\overline{a_i}`
+    denotes the complex conjugate if :math:`a_i` is complex and the identity
+    otherwise.
+
+    Parameters
+    ----------
+    x1 : array_like
+        First input array.
+    x2 : array_like
+        Second input array.
+    axis : int, optional
+        Axis over which to compute the dot product. Default: ``-1``.
+
+    Returns
+    -------
+    output : ndarray
+        The vector dot product of the input.
+
+    See Also
+    --------
+    numpy.vecdot
+
+    """
+    return _core_vecdot(x1, x2, axis=axis)
