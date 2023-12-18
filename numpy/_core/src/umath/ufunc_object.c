@@ -4186,7 +4186,7 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
         ufunc_full_args full_args, npy_bool subok,
         PyArrayObject *result_arrays[])
 {
-    PyObject *ret_tuple = NULL;
+    PyObject *result = NULL;
     PyObject *wrap, *wrap_type;
 
     if (!subok) {
@@ -4208,9 +4208,9 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
             .in = full_args.in, .out = full_args.out};
 
     if (ufunc->nout != 1) {
-        ret_tuple = PyTuple_New(ufunc->nout);
-        if (ret_tuple == NULL) {
-            return NULL;
+        result = PyTuple_New(ufunc->nout);
+        if (result == NULL) {
+            goto finish;
         }
     }
 
@@ -4226,17 +4226,21 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
                 /* Always try to return a scalar right now: */
                 &context, PyArray_NDIM(result_arrays[out_i]) == 0, NPY_TRUE);
         if (ret_i == NULL) {
-            Py_XDECREF(ret_tuple);
-            return NULL;
+            Py_CLEAR(result);
+            goto finish;
         }
         /* When we are not returning a tuple, this is the result: */
-        if (ret_tuple == NULL) {
-            return ret_i;
+        if (result == NULL) {
+            result = ret_i;
+            goto finish;
         }
-        PyTuple_SET_ITEM(ret_tuple, out_i, ret_i);
+        PyTuple_SET_ITEM(result, out_i, ret_i);
     }
 
-    return ret_tuple;
+  finish:
+    Py_DECREF(wrap);
+    Py_DECREF(wrap_type);
+    return result;
 }
 
 
