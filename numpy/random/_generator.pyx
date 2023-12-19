@@ -398,8 +398,8 @@ cdef class Generator:
 
         Examples
         -------- 
-        If ``a == b`` and both are > 1, the distribution is symmetric with 
-        mean 0.5.
+        The beta distribution has mean a/(a+b). If ``a == b`` and both 
+        are > 1, the distribution is symmetric with mean 0.5.
 
         >>> rng = np.random.default_rng()
         >>> a, b, size = 2.0, 2.0, 10000
@@ -415,10 +415,12 @@ cdef class Generator:
         >>> sample_left = rng.beta(a=a, b=b, size=size)
         >>> sample_right = rng.beta(a=b, b=a, size=size)
         >>> m_left, m_right = np.mean(sample_left), np.mean(sample_right)
-        >>> m_left, m_right
-        (0.22334081861904062, 0.7749320166133927)  # may vary
-        >>> m_left + m_right  
-        0.9982728352324334  # may vary
+        >>> print(m_left, m_right)
+        0.2238596793678923 0.7774613834041182  # may vary
+        >>> print(m_left - a/(a+b))
+        0.001637457145670096  # may vary
+        >>> print(m_right - b/(a+b))
+        -0.0003163943736596009  # may vary
 
         Display the histogram of the two samples:
         >>> import matplotlib.pyplot as plt
