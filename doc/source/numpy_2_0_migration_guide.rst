@@ -228,6 +228,22 @@ setitem                 Use ``arr[index] = value`` instead.
 ======================  ========================================================
 
 
+Ruff plugin
+-----------
+
+All the changes that we covered in the previous sections can be automatically applied
+to the codebase with the dedicated Ruff rule,
+`NPY201 <https://docs.astral.sh/ruff/rules/numpy2-deprecation/>`_.
+
+You should install Ruff, version ``0.1.8`` or above, and add to your ``pyproject.toml``::
+
+    [tool.ruff.lint]
+    extend-select = ["NPY201"]
+    preview = true
+
+To learn more about preview mode see `Ruff docs <https://docs.astral.sh/ruff/preview/>`_.
+
+
 Note about pickled files
 ------------------------
 
