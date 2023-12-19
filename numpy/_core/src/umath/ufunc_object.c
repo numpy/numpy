@@ -4199,7 +4199,7 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
     else if (npy_find_array_wrap(
             ufunc->nin, PySequence_Fast_ITEMS(full_args.in),
             &wrap, &wrap_type) < 0) {
-        return NULL;
+        goto fail;
     }
 
     /* wrap outputs */
@@ -4210,7 +4210,7 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
     if (ufunc->nout != 1) {
         result = PyTuple_New(ufunc->nout);
         if (result == NULL) {
-            goto finish;
+            goto fail;
         }
     }
 
@@ -4225,9 +4225,9 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
                 (PyObject *)result_arrays[out_i], original_out, wrap, wrap_type,
                 /* Always try to return a scalar right now: */
                 &context, PyArray_NDIM(result_arrays[out_i]) == 0, NPY_TRUE);
+        Py_CLEAR(result_arrays[out_i]);
         if (ret_i == NULL) {
-            Py_CLEAR(result);
-            goto finish;
+            goto fail;
         }
         /* When we are not returning a tuple, this is the result: */
         if (result == NULL) {
@@ -4241,6 +4241,15 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
     Py_DECREF(wrap);
     Py_DECREF(wrap_type);
     return result;
+  fail:
+    /* Fail path ensures result_arrays are fully cleared */
+    Py_XDECREF(result);
+    Py_DECREF(wrap);
+    Py_DECREF(wrap_type);
+    for (int i = 0; i < ufunc->nout; i++) {
+        Py_CLEAR(result_arrays[i]);
+    }
+    return NULL;
 }
 
 
