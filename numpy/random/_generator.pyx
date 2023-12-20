@@ -423,6 +423,7 @@ cdef class Generator:
         -0.0003163943736596009  # may vary
 
         Display the histogram of the two samples:
+        
         >>> import matplotlib.pyplot as plt
         >>> plt.hist([sample_left, sample_right], 
         ...          50, density=True, histtype='bar')
