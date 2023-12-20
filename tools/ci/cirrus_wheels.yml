@@ -3,6 +3,8 @@ build_and_store_wheels: &BUILD_AND_STORE_WHEELS
     - python -m pip install cibuildwheel
   cibuildwheel_script:
     - cibuildwheel
+  always:
+    show_meson_log_script: cat build/meson-logs/meson-log.txt
   wheels_artifacts:
     path: "wheelhouse/*"
 
