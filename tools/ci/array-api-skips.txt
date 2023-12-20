@@ -36,12 +36,10 @@ array_api_tests/test_creation_functions.py::test_asarray_scalars
 # fft test suite is buggy as of 83f0bcdc
 array_api_tests/test_fft.py
 
-# missing isdtype and finfo return type misalignment
+# finfo return type misalignment
 array_api_tests/test_data_type_functions.py::test_finfo[float32]
-array_api_tests/test_data_type_functions.py::test_isdtype
 
 # missing names
-array_api_tests/test_has_names.py::test_has_names[data_type-isdtype]
 array_api_tests/test_has_names.py::test_has_names[array_method-to_device]
 array_api_tests/test_has_names.py::test_has_names[array_attribute-device]
 
@@ -64,7 +62,6 @@ array_api_tests/test_signatures.py::test_func_signature[zeros_like]
 array_api_tests/test_signatures.py::test_func_signature[reshape]
 array_api_tests/test_signatures.py::test_func_signature[argsort]
 array_api_tests/test_signatures.py::test_func_signature[sort]
-array_api_tests/test_signatures.py::test_func_signature[isdtype]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.cholesky]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.matrix_rank]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.pinv]

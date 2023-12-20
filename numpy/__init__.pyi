@@ -383,6 +383,7 @@ from numpy._core.numeric import (
 )
 
 from numpy._core.numerictypes import (
+    isdtype as isdtype,
     issubdtype as issubdtype,
     cast as cast,
     ScalarType as ScalarType,
