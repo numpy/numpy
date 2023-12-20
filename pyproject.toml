@@ -144,12 +144,8 @@ skip = "cp36-* cp37-* cp-38* pp37-* *-manylinux_i686 *_ppc64le *_s390x"
 build-verbosity = "3"
 before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
 config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dblas=openblas setup-args=-Dlapack=openblas setup-args=-Dblas-symbol-suffix=64_ setup-args=-Dallow-noblas=false"
-# meson has a hard dependency on ninja, and we need meson to build
-# c-extensions in tests. There is a ninja PyPI package used in
-# build_requirements.txt for macOS, windows, linux but it cannot be in
-# test_requirements.txt since pyodide, which uses test_requirements.txt, does
 # not have it.
-before-test = "pip install ninja && pip install -r {project}/test_requirements.txt"
+before-test = "pip install -r {project}/test_requirements.txt"
 test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 
 [tool.cibuildwheel.linux]
