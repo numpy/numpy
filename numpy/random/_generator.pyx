@@ -366,7 +366,7 @@ cdef class Generator:
         Draw samples from a Beta distribution.
 
         The Beta distribution is a special case of the Dirichlet distribution,
-        and is related to the Gamma distribution.  It has the probability
+        and is related to the Gamma distribution. It has the probability
         distribution function
 
         .. math:: f(x; a,b) = \\frac{1}{B(\\alpha, \\beta)} x^{\\alpha - 1}
@@ -395,6 +395,44 @@ cdef class Generator:
         -------
         out : ndarray or scalar
             Drawn samples from the parameterized beta distribution.
+
+        Examples
+        -------- 
+        The beta distribution has mean a/(a+b). If ``a == b`` and both 
+        are > 1, the distribution is symmetric with mean 0.5.
+
+        >>> rng = np.random.default_rng()
+        >>> a, b, size = 2.0, 2.0, 10000
+        >>> sample = rng.beta(a=a, b=b, size=size)
+        >>> np.mean(sample)
+        0.5047328775385895  # may vary
+        
+        Otherwise the distribution is skewed left or right according to
+        whether ``a`` or ``b`` is greater. The distribution is mirror
+        symmetric. See for example:
+        
+        >>> a, b, size = 2, 7, 10000
+        >>> sample_left = rng.beta(a=a, b=b, size=size)
+        >>> sample_right = rng.beta(a=b, b=a, size=size)
+        >>> m_left, m_right = np.mean(sample_left), np.mean(sample_right)
+        >>> print(m_left, m_right)
+        0.2238596793678923 0.7774613834041182  # may vary
+        >>> print(m_left - a/(a+b))
+        0.001637457145670096  # may vary
+        >>> print(m_right - b/(a+b))
+        -0.0003163943736596009  # may vary
+
+        Display the histogram of the two samples:
+        
+        >>> import matplotlib.pyplot as plt
+        >>> plt.hist([sample_left, sample_right], 
+        ...          50, density=True, histtype='bar')
+        >>> plt.show()
+        
+        References
+        ----------
+        .. [1] Wikipedia, "Beta distribution",
+               https://en.wikipedia.org/wiki/Beta_distribution
 
         """
         return cont(&random_beta, &self._bitgen, size, self.lock, 2,
