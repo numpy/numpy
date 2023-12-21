@@ -694,13 +694,13 @@ def array_equiv(a1: ArrayLike, a2: ArrayLike) -> bool: ...
 
 @overload
 def astype(
-    x: ArrayLike,
+    x: NDArray[Any],
     dtype: _DTypeLike[_SCT],
     copy: bool = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def astype(
-    x: ArrayLike,
+    x: NDArray[Any],
     dtype: DTypeLike,
     copy: bool = ...,
 ) -> NDArray[Any]: ...
