@@ -1,0 +1,10 @@
+`numpy.linalg.cholesky` and `numpy.linalg.pinv` new parameters
+--------------------------------------------------------------
+
+The ``upper`` and ``rtol`` keyword parameters were added to
+`numpy.linalg.cholesky` and `numpy.lingalg.pinv`, respectively, to
+improve array API compatibility.
+
+For `numpy.linalg.pinv` if neither ``rcond`` nor ``rtol`` is specified,
+the ``rcond``'s default is used. It's planned to deprecate and remove
+``rcond`` in the future.
