@@ -278,7 +278,6 @@ from numpy._core._asarray import (
 )
 
 from numpy._core._type_aliases import (
-    sctypes as sctypes,
     sctypeDict as sctypeDict,
 )
 
@@ -410,7 +409,6 @@ from numpy.lib._arraypad_impl import (
 
 from numpy.lib._arraysetops_impl import (
     ediff1d as ediff1d,
-    in1d as in1d,
     intersect1d as intersect1d,
     isin as isin,
     setdiff1d as setdiff1d,
@@ -453,7 +451,6 @@ from numpy.lib._function_base_impl import (
     bartlett as bartlett,
     blackman as blackman,
     kaiser as kaiser,
-    trapz as trapz,
     i0 as i0,
     meshgrid as meshgrid,
     delete as delete,
@@ -505,8 +502,6 @@ from numpy.lib._npyio_impl import (
     savetxt as savetxt,
     loadtxt as loadtxt,
     genfromtxt as genfromtxt,
-    recfromtxt as recfromtxt,
-    recfromcsv as recfromcsv,
     load as load,
     save as save,
     savez as savez,
@@ -531,7 +526,6 @@ from numpy.lib._polynomial_impl import (
 
 from numpy.lib._shape_base_impl import (
     column_stack as column_stack,
-    row_stack as row_stack,
     dstack as dstack,
     array_split as array_split,
     split as split,
