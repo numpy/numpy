@@ -127,9 +127,7 @@ Development effort and long-term maintainability
 Moving to Highway is likely to be a significant development effort.
 Longer-term, this will hopefully be offset by Highway itself having more
 maintainer bandwidth to deal with ongoing issues in compiler support and adding
-new platforms. It should increase the bus factor of SIMD support in NumPy to
-some extent. That said - the Highway repository also seems to show that its bus
-factor is low - it was 1 until the start of 2023, and now it's perhaps 2.
+new platforms. 
 
 Highway being used by other projects, like Chromium and `JPEG XL`_ (see
 `this more complete list <https://google.github.io/highway/en/master/README.html#examples>`__
@@ -224,7 +222,12 @@ approach is more robust and in particular avoids the linker pulling in
 functions with too-new instructions into the final binary. Sayed thinks that
 the current NumPy approach (also used by OpenCV) is more robust, and in
 particular is less likely to run into compiler-specific bugs or catch them
-earlier.
+earlier. Both agree the meson build system allows specifying object link order,
+which produces more consistent builds. However that does tie NumPy to meson.
+
+Matti thinks the current build strategy is working well for NumPy and the
+advantages of changing the build and runtime dispatch, with possible unknown
+instabilities outweighs the advantages that fully adopting Highway may bring.
 
 Our experience of the past four years says that bugs with "invalid instruction"
 type crashes are invariably due to issues with feature detection - most often
@@ -263,8 +266,8 @@ In addition, we see the following considerations:
 - A second concern was whether it's possible with Highway to allow the user at
   runtime to select or disable dispatching to certain instruction sets. This is
   possible.
-- Use of tags in the C++ implementation (Sayed's concern). TODO: describe in
-  more detail.
+- Use of tags in Highway's C++ implementation reduces code duplication but the
+  added templating makes C-level testing and tracing more complicated.
 
 
 The ``_simd`` unit testing module
@@ -303,22 +306,7 @@ much.
 Supported and missing intrinsics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Some specific intrinsics that NumPy needs may be missing from Highway, e.g.:
-
-- Supporting partial operations on both contiguous and non-contiguous memory
-  access, with both single and pair offsets. Pair offsets is crucial for
-  complex kernels that require 64-bit/32-bit stride alignment. Identified
-  intrinsics related to this:
-
-  - Highway's ``LoadInterleaved2`` would have to be extended with ``*Till``
-    support (only load partial vectors) - that seems doable.
-  - ``Loadn``/``LoadnPair`` can mostly be implemented on top of ``Gather*``,
-    with some specializations.
-
-- ``Lookup128``: the main purpose of this intrinsic is to provide a mapping to
-  the ``_mm512_permutex2var_*`` functions, so it performs 32/bit elements on
-  32-bit data types and 16 elements on 64-bit datatypes; it was need during the
-  replacement of intel SVML with universal intrinsics.
+Some specific intrinsics that NumPy needs may be missing from Highway.
 
 On the other hand, Highway has more instructions that NumPy's universal
 intrinsics, so it's possible that some future needs for NumPy kernels may
