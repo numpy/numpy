@@ -1197,7 +1197,7 @@ class TestCreation:
         a = np.array([1, Decimal(1)])
         a = np.array([[1], [Decimal(1)]])
 
-    @pytest.mark.parametrize("dtype", [object, "O,O", "O,(3)O", "(2,3)O"])
+    @pytest.mark.parametrize("dtype", [object, "O,O", "O,(3,)O", "(2,3)O"])
     @pytest.mark.parametrize("function", [
             np.ndarray, np.empty,
             lambda shape, dtype: np.empty_like(np.empty(shape, dtype=dtype))])
@@ -1552,7 +1552,7 @@ class TestStructured:
 
     def test_structuredscalar_indexing(self):
         # test gh-7262
-        x = np.empty(shape=1, dtype="(2)3S,(2)3U")
+        x = np.empty(shape=1, dtype="(2,)3S,(2,)3U")
         assert_equal(x[["f0","f1"]][0], x[0][["f0","f1"]])
         assert_equal(x[0], x[0][()])
 
