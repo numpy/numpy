@@ -278,7 +278,6 @@ from numpy._core._asarray import (
 )
 
 from numpy._core._type_aliases import (
-    sctypes as sctypes,
     sctypeDict as sctypeDict,
 )
 
@@ -503,8 +502,6 @@ from numpy.lib._npyio_impl import (
     savetxt as savetxt,
     loadtxt as loadtxt,
     genfromtxt as genfromtxt,
-    recfromtxt as recfromtxt,
-    recfromcsv as recfromcsv,
     load as load,
     save as save,
     savez as savez,
