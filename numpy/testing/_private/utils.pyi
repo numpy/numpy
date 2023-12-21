@@ -212,6 +212,7 @@ def assert_array_compare(
 def assert_array_equal(
     x: ArrayLike,
     y: ArrayLike,
+    /,
     err_msg: object = ...,
     verbose: bool = ...,
     *,
@@ -221,6 +222,7 @@ def assert_array_equal(
 def assert_array_almost_equal(
     x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
     y: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    /,
     decimal: float = ...,
     err_msg: object = ...,
     verbose: bool = ...,
