@@ -211,6 +211,9 @@ def sort(
     axis: None | SupportsIndex = ...,
     kind: None | _SortKind = ...,
     order: None | str | Sequence[str] = ...,
+    *,
+    descending: bool = ...,
+    stable: bool = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def sort(
@@ -218,6 +221,9 @@ def sort(
     axis: None | SupportsIndex = ...,
     kind: None | _SortKind = ...,
     order: None | str | Sequence[str] = ...,
+    *,
+    descending: bool = ...,
+    stable: bool = ...,
 ) -> NDArray[Any]: ...
 
 def argsort(
@@ -225,6 +231,9 @@ def argsort(
     axis: None | SupportsIndex = ...,
     kind: None | _SortKind = ...,
     order: None | str | Sequence[str] = ...,
+    *,
+    descending: bool = ...,
+    stable: bool = ...,
 ) -> NDArray[intp]: ...
 
 @overload

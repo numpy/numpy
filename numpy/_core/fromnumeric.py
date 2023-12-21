@@ -894,12 +894,14 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     return _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
 
 
-def _sort_dispatcher(a, axis=None, kind=None, order=None):
+def _sort_dispatcher(a, axis=None, kind=None, order=None, *, descending=None,
+                     stable=None):
     return (a,)
 
 
 @array_function_dispatch(_sort_dispatcher)
-def sort(a, axis=-1, kind=None, order=None):
+def sort(a, axis=-1, kind=None, order=None, *, descending=False,
+         stable=False):
     """
     Return a sorted copy of an array.
 
@@ -925,6 +927,18 @@ def sort(a, axis=-1, kind=None, order=None):
         be specified as a string, and not all fields need be specified,
         but unspecified fields will still be used, in the order in which
         they come up in the dtype, to break ties.
+    descending : bool, optional
+        Sort order. If ``False``, the array must be sorted in ascending order
+        (by value). ``True`` is not supported.
+        Default: ``False``.
+    stable : bool, optional
+        Sort stability. If ``True``, the returned array must maintain
+        the relative order of ``a`` values which compare as equal.
+        If ``False``, the returned array may or may not maintain the relative
+        order of ``a`` values which compare as equal (i.e., the relative order
+        of ``a`` values which compare as equal is implementation-dependent).
+        Default: ``False``.
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -1053,16 +1067,19 @@ def sort(a, axis=-1, kind=None, order=None):
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
-    a.sort(axis=axis, kind=kind, order=order)
+    a.sort(axis=axis, kind=kind, order=order, descending=descending,
+        stable=stable)
     return a
 
 
-def _argsort_dispatcher(a, axis=None, kind=None, order=None):
+def _argsort_dispatcher(a, axis=None, kind=None, order=None, *,
+                        descending=None, stable=None):
     return (a,)
 
 
 @array_function_dispatch(_argsort_dispatcher)
-def argsort(a, axis=-1, kind=None, order=None):
+def argsort(a, axis=-1, kind=None, order=None, *, descending=False,
+            stable=False):
     """
     Returns the indices that would sort an array.
 
@@ -1091,6 +1108,19 @@ def argsort(a, axis=-1, kind=None, order=None):
         be specified as a string, and not all fields need be specified,
         but unspecified fields will still be used, in the order in which
         they come up in the dtype, to break ties.
+    descending : bool, optional
+        Sort order. If ``False``, the array must be sorted in ascending order
+        (by value). ``True`` is not supported.
+        Default: ``False``.
+    stable : bool, optional
+        Sort stability. If ``True``, the returned array must maintain
+        the relative order of ``a`` values which compare as equal.
+        If ``False``, the returned array may or may not maintain the relative
+        order of ``a`` values which compare as equal (i.e., the relative order
+        of ``a`` values which compare as equal is implementation-dependent).
+        Default: ``False``.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -1169,8 +1199,10 @@ def argsort(a, axis=-1, kind=None, order=None):
     array([0, 1])
 
     """
-    return _wrapfunc(a, 'argsort', axis=axis, kind=kind, order=order)
-
+    return _wrapfunc(
+        a, 'argsort', axis=axis, kind=kind, order=order,
+        descending=descending, stable=stable
+    )
 
 def _argmax_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue):
     return (a, out)

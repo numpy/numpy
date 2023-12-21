@@ -5576,8 +5576,8 @@ class MaskedArray(ndarray):
             out.__setmask__(self._mask)
         return out
 
-    def argsort(self, axis=np._NoValue, kind=None, order=None,
-                endwith=True, fill_value=None):
+    def argsort(self, axis=np._NoValue, kind=None, order=None, endwith=True,
+                fill_value=None, *, descending=False, stable=False):
         """
         Return an ndarray of indices that sort the array along the
         specified axis.  Masked values are filled beforehand to
@@ -5610,6 +5610,10 @@ class MaskedArray(ndarray):
         fill_value : scalar or None, optional
             Value used internally for the masked values.
             If ``fill_value`` is not None, it supersedes ``endwith``.
+        descending : bool, optional
+            Only for compatibility with ``np.argsort``. Ignored.
+        stable : bool, optional
+            Only for compatibility with ``np.argsort``. Ignored.
 
         Returns
         -------
@@ -5638,6 +5642,10 @@ class MaskedArray(ndarray):
         array([1, 0, 2])
 
         """
+        if descending or stable:
+            raise ValueError(
+                "`descending` and `stable` parameters are not supported"
+            )
 
         # 2017-04-11, Numpy 1.13.0, gh-8701: warn on axis default
         if axis is np._NoValue:
@@ -5742,8 +5750,8 @@ class MaskedArray(ndarray):
         keepdims = False if keepdims is np._NoValue else bool(keepdims)
         return d.argmax(axis, out=out, keepdims=keepdims)
 
-    def sort(self, axis=-1, kind=None, order=None,
-             endwith=True, fill_value=None):
+    def sort(self, axis=-1, kind=None, order=None, endwith=True,
+             fill_value=None, *, descending=False, stable=False):
         """
         Sort the array, in-place
 
@@ -5769,6 +5777,10 @@ class MaskedArray(ndarray):
         fill_value : scalar or None, optional
             Value used internally for the masked values.
             If ``fill_value`` is not None, it supersedes ``endwith``.
+        descending : bool, optional
+            Only for compatibility with ``np.sort``. Ignored.
+        stable : bool, optional
+            Only for compatibility with ``np.sort``. Ignored.
 
         Returns
         -------
@@ -5813,6 +5825,11 @@ class MaskedArray(ndarray):
                fill_value=999999)
 
         """
+        if descending or stable:
+            raise ValueError(
+                "`descending` and `stable` parameters are not supported"
+            )
+
         if self._mask is nomask:
             ndarray.sort(self, axis=axis, kind=kind, order=order)
             return
@@ -7098,7 +7115,8 @@ def power(a, b, third=None):
 argmin = _frommethod('argmin')
 argmax = _frommethod('argmax')
 
-def argsort(a, axis=np._NoValue, kind=None, order=None, endwith=True, fill_value=None):
+def argsort(a, axis=np._NoValue, kind=None, order=None, endwith=True,
+            fill_value=None, *, descending=None, stable=None):
     "Function version of the eponymous method."
     a = np.asanyarray(a)
 
@@ -7107,13 +7125,15 @@ def argsort(a, axis=np._NoValue, kind=None, order=None, endwith=True, fill_value
         axis = _deprecate_argsort_axis(a)
 
     if isinstance(a, MaskedArray):
-        return a.argsort(axis=axis, kind=kind, order=order,
-                         endwith=endwith, fill_value=fill_value)
+        return a.argsort(axis=axis, kind=kind, order=order, endwith=endwith,
+                         fill_value=fill_value, descending=None, stable=None)
     else:
-        return a.argsort(axis=axis, kind=kind, order=order)
+        return a.argsort(axis=axis, kind=kind, order=order, descending=None,
+                         stable=None)
 argsort.__doc__ = MaskedArray.argsort.__doc__
 
-def sort(a, axis=-1, kind=None, order=None, endwith=True, fill_value=None):
+def sort(a, axis=-1, kind=None, order=None, endwith=True, fill_value=None, *,
+         descending=None, stable=None):
     """
     Return a sorted copy of the masked array.
 
@@ -7147,10 +7167,11 @@ def sort(a, axis=-1, kind=None, order=None, endwith=True, fill_value=None):
         axis = 0
 
     if isinstance(a, MaskedArray):
-        a.sort(axis=axis, kind=kind, order=order,
-               endwith=endwith, fill_value=fill_value)
+        a.sort(axis=axis, kind=kind, order=order, endwith=endwith,
+               fill_value=fill_value, descending=descending, stable=stable)
     else:
-        a.sort(axis=axis, kind=kind, order=order)
+        a.sort(axis=axis, kind=kind, order=order, descending=descending,
+               stable=stable)
     return a
 
 

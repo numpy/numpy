@@ -2043,6 +2043,19 @@ class TestMethods:
         b = np.sort(a)
         assert_equal(b, a[::-1], msg)
 
+        with assert_raises_regex(
+            ValueError,
+            "`descending=True` is not allowed. Use `np.flip` instead",
+        ):
+            np.sort(a, descending=True)
+
+        with assert_raises_regex(
+            UserWarning,
+            "`kind` parameter has been overwritten to the `stable` "
+            "algorithm, as `stable=True` was passed."
+        ):
+            np.sort(a, stable=True)
+
     # all c scalar sorts use the same code with different types
     # so it suffices to run a quick check with one type. The number
     # of sorted items must be greater than ~50 to check the actual

@@ -1965,12 +1965,12 @@ def cond(x, p=None):
     return r
 
 
-def _matrix_rank_dispatcher(A, tol=None, hermitian=None):
+def _matrix_rank_dispatcher(A, tol=None, hermitian=None, *, rtol=None):
     return (A,)
 
 
 @array_function_dispatch(_matrix_rank_dispatcher)
-def matrix_rank(A, tol=None, hermitian=False):
+def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     """
     Return matrix rank of array using SVD method
 
@@ -1998,6 +1998,12 @@ def matrix_rank(A, tol=None, hermitian=False):
         Defaults to False.
 
         .. versionadded:: 1.14
+    rtol : (...) array_like, float, optional
+        Array API compatible parameter for the relative tolerance component.
+        Only ``tol`` or ``rtol`` can be set at a time.
+        Defaults to ``max(M, N) * eps``.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -2067,12 +2073,12 @@ def matrix_rank(A, tol=None, hermitian=False):
     if A.ndim < 2:
         return int(not all(A == 0))
     S = svd(A, compute_uv=False, hermitian=hermitian)
+    if rtol is not None and tol is not None:
+        raise ValueError("`tol` and `rtol` can't be both set.")
+    if rtol is None:
+        rtol = max(A.shape[-2:]) * finfo(S.dtype).eps
     if tol is None:
-        tol = (
-            S.max(axis=-1, keepdims=True) *
-            max(A.shape[-2:]) *
-            finfo(S.dtype).eps
-        )
+        tol = S.max(axis=-1, keepdims=True) * rtol
     else:
         tol = asarray(tol)[..., newaxis]
     return count_nonzero(S > tol, axis=-1)

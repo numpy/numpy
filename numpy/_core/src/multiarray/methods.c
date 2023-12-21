@@ -1241,12 +1241,16 @@ array_sort(PyArrayObject *self,
     PyObject *order = NULL;
     PyArray_Descr *saved = NULL;
     PyArray_Descr *newd;
+    npy_bool descending = NPY_FALSE;
+    npy_bool stable = NPY_FALSE;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("sort", args, len_args, kwnames,
             "|axis", &PyArray_PythonPyIntFromInt, &axis,
             "|kind", &PyArray_SortkindConverter, &sortkind,
             "|order", NULL, &order,
+            "$descending", &PyArray_BoolConverter, &descending,
+            "$stable", &PyArray_BoolConverter, &stable,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
@@ -1280,6 +1284,21 @@ array_sort(PyArrayObject *self,
         Py_DECREF(newd->names);
         newd->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
+    }
+    if (descending) {
+        PyErr_SetString(PyExc_ValueError,
+            "`descending=True` is not allowed. Use `np.flip` instead");
+        return NULL;
+    }
+    if (stable) {
+        if (sortkind != NPY_STABLESORT) {
+            if (PyErr_WarnEx(PyExc_UserWarning,
+                    "`kind` parameter has been overwritten to the `stable` "
+                    "algorithm, as `stable=True` was passed.", 2) < 0) {
+                return NULL;
+            }
+            sortkind = NPY_STABLESORT;
+        }
     }
 
     val = PyArray_Sort(self, axis, sortkind);
@@ -1374,12 +1393,16 @@ array_argsort(PyArrayObject *self,
     NPY_SORTKIND sortkind = NPY_QUICKSORT;
     PyObject *order = NULL, *res;
     PyArray_Descr *newd, *saved=NULL;
+    npy_bool descending = NPY_FALSE;
+    npy_bool stable = NPY_FALSE;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("argsort", args, len_args, kwnames,
             "|axis", &PyArray_AxisConverter, &axis,
             "|kind", &PyArray_SortkindConverter, &sortkind,
             "|order", NULL, &order,
+            "$descending", &PyArray_BoolConverter, &descending,
+            "$stable", &PyArray_BoolConverter, &stable,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
@@ -1413,6 +1436,21 @@ array_argsort(PyArrayObject *self,
         Py_DECREF(newd->names);
         newd->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
+    }
+    if (descending) {
+        PyErr_SetString(PyExc_ValueError,
+            "`descending=True` is not allowed. Use `np.flip` instead");
+        return NULL;
+    }
+    if (stable) {
+        if (sortkind != NPY_STABLESORT) {
+            if (PyErr_WarnEx(PyExc_UserWarning,
+                    "`kind` parameter has been overwritten to the `stable` "
+                    "algorithm, as `stable=True` was passed.", 2) < 0) {
+                return NULL;
+            }
+            sortkind = NPY_STABLESORT;
+        }
     }
 
     res = PyArray_ArgSort(self, axis, sortkind);
