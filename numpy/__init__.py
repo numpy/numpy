@@ -461,20 +461,25 @@ else:
             pass
 
     if sys.platform == "darwin":
+        from . import exceptions
         with warnings.catch_warnings(record=True) as w:
             _mac_os_check()
             # Throw runtime error, if the test failed Check for warning and error_message
             if len(w) > 0:
-                error_message = "{}: {}".format(w[-1].category.__name__, str(w[-1].message))
-                msg = (
-                    "Polyfit sanity test emitted a warning, most likely due "
-                    "to using a buggy Accelerate backend."
-                    "\nIf you compiled yourself, more information is available at:"
-                    "\nhttps://numpy.org/devdocs/building/index.html"
-                    "\nOtherwise report this to the vendor "
-                    "that provided NumPy.\n{}\n".format(error_message))
-                raise RuntimeError(msg)
-        del w
+                for _wn in w:
+                    if _wn.category is exceptions.RankWarning:
+                        # Ignore other warnings, they may not be relevant (see gh-25433).
+                        error_message = f"{_wn.category.__name__}: {str(_wn.message)}"
+                        msg = (
+                            "Polyfit sanity test emitted a warning, most likely due "
+                            "to using a buggy Accelerate backend."
+                            "\nIf you compiled yourself, more information is available at:"
+                            "\nhttps://numpy.org/devdocs/building/index.html"
+                            "\nOtherwise report this to the vendor "
+                            "that provided NumPy.\n\n{}\n".format(error_message))
+                        raise RuntimeError(msg)
+                del _wn
+            del w
     del _mac_os_check
 
     def hugepage_setup():
