@@ -365,13 +365,6 @@ def setxor1d(
     assume_unique: bool = ...,
 ) -> NDArray[Any]: ...
 
-def in1d(
-    ar1: ArrayLike,
-    ar2: ArrayLike,
-    assume_unique: bool = ...,
-    invert: bool = ...,
-) -> NDArray[np.bool]: ...
-
 def isin(
     element: ArrayLike,
     test_elements: ArrayLike,
