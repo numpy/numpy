@@ -15,20 +15,18 @@ Abstract
 --------
 
 We are moving the SIMD intrinsic framework, Universal Intrinsics, from C to
-C++. We are also moving to Meson as the build system. The Google Highway
+C++. We have also moved to Meson as the build system. The Google Highway
 intrinsics project is proposing we use Highway instead of our Universal
 Intrinsics as described in `NEP 38`_. This is a complex and multi-faceted
 decision - this NEP is an attempt to describe the trade-offs involved and
 what would need to be done.
 
-
 Motivation and Scope
 --------------------
 
-In addition to moving to the meson build system, we want to refactor the
-C-based Universal Intrinsics (see :ref:`NEP 38 <NEP38>`) to C++. Along the way,
-the `Google Highway`_ devs proposed using Highway rather than our Universal
-Intrinsics.
+We want to refactor the C-based Universal Intrinsics (see :ref:`NEP 38
+<NEP38>`) to C++. Along the way, the `Google Highway`_ devs proposed using
+Highway rather than our Universal Intrinsics.
     
 The move from C to C++ is motivated by (a) code readability and ease of
 development, (b) the need to add support for sizeless SIMD instructions (e.g.,
@@ -58,7 +56,7 @@ Explicit use of bitsize-encoded types like this won't work for sizeless SIMD
 instruction sets. With C++ this is easier to handle; PR `gh-21057`_ shows how
 and contains more complete examples of what the C++ code will look like.
 
-The scope of this NEP includes discussing all relevant aspects of adopting
+The scope of this NEP includes discussing most relevant aspects of adopting
 Google Highway to replace our current Universal Intrinsics framework, including
 but not limited to:
 
@@ -66,8 +64,7 @@ but not limited to:
   contributor, and other social aspects,
 - Key technical differences and constraints that may impact NumPy's internal
   design or performance,
-- Build system related aspects and impact on our plans for upstreaming CPU and
-  compiler feature detection and multi-target library building into Meson,
+- Build system related aspects,
 - Release timing related aspects.
 
 Out of scope (at least for now) is revisiting other aspects of our current SIMD
@@ -90,7 +87,7 @@ Backward compatibility
 
 There will be no changes in user-facing Python or C APIs: all the methods to
 control compilation and runtime CPU feature selection should remain, although
-there may be some changes due to moving to Meson and C++ without regards to the
+there may be some changes due to moving to C++ without regards to the
 Highway/Universal Intrinsics choice.
 
 The naming of the CPU features in Highway is different from that of the
@@ -148,7 +145,7 @@ Documentation-wise, Highway would be a clear win. NumPy's
 Migration strategy - can it be gradual?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     
-This is a story of two halves. Moving to Highway's equivalent to Universal
+This is a story of two halves. Moving to Highway's statically dispatched
 intrinsics could be done gradually, as already seen in PR `gh-24018`_. However,
 adopting Highway's way of performing runtime dispatching has to be done in one
 go - we can't (or shouldn't) have two ways of doing that.
@@ -190,10 +187,6 @@ as well as generic scalar/fallback versions. The main differences right now are:
 
   - The groundwork for sizeless SIMD support in NumPy has been done in
     `gh-21057`_, however SVE/SVE2 and RISC-V are not yet implemented there.
-
-Either of the above is "just work" - completing Highway will be less work than
-completing NumPy, but both are doable - and hence this should probably not be a
-deciding factor in the decision.
 
 There is also a difference in the granularity of instruction set groups: NumPy
 supports a more granular set of architectures than Highway. See the list of
@@ -313,79 +306,6 @@ intrinsics, so it's possible that some future needs for NumPy kernels may
 already be met there.
 
 
-Meson changes to be upstreamed (if no Highway runtime dispatching)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Build time detection needs a new module in Meson to detect all the CPU features
-at build time. For the current draft PR implementing that as a new ``feature``
-Meson module, see `meson#11307`_. This is still a decent amount of work -
-probably 2 weeks worth of effort - to complete. It is likely that it will only
-be merged after we prove its robustness inside NumPy. However, it is worth
-pointing out that the initial proposal for SIMD improvements was well-received
-(`meson#11033`), and we expect this to land once it's been proven to work for
-NumPy's needs.
-
-If we'd use Highway including its runtime dispatch features, then we need far
-less from the build system. We only need to know the CPU family, the
-baseline, and the extended features. Meson already has what we need for this
-purpose, e.g. using ``host_machine.cpu_family()`` (see
-`here <https://mesonbuild.com/Reference-tables.html#cpu-families>`__)).
-
-However, given the timelines involved (see the next section) it's not unlikely
-that we'd have to complete the Meson SIMD support for the 1.26.0 release even
-if we choose Highway for 2.0 and beyond.
-
-
-1.26 and 2.0 releases - timing and integration plans
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The plans for our next releases are related, because for Python 3.12 support we
-must use Meson as the build system (because of the removal of ``distutils``),
-and the currently remaining task for completing the migration to Meson is SIMD
-support. The timeline for upcoming releases is:
-
-- Aug 4th, 2023: Python 3.12.0rc1 release date - we need to release NumPy
-  ``1.26.0b1`` (or ``rc1``) around this date, to ensure we don't block
-  downstream projects from using Python 3.12. This pre-release doesn't need
-  SIMD support (performance doesn't matter yet for a beta/rc), although it
-  would be nice to have included already.
-- Oct 4th, 2023: Python 3.12.0 release date - we need a NumPy 1.26.0 release
-  including SIMD support before this date.
-- Dec 31, 2023: NumPy 2.0.0 (could run into January, not a hard deadline)
-
-The current plan is to branch ``maintenance/1.26.x`` off of
-``maintenance/1.25.x``. Meson build system changes need to be backported to
-that branch. On ``main`` we already changed C API/ABI, hence we want to avoid
-branching a new 1.X release off of it if we can avoid that - backporting build
-system-only changes is easier.
-    
-**If we go with Universal Intrinsics translated to C++**
-
-The plan is roughly:
-
-- Finish the Meson ``feature`` module implementation in `meson#11307`_,
-- Finish the NumPy runtime dispatching implementation based on that ``feature``
-  module (see PR `gh-23096`_)
-- Decide whether to release a forked Meson including the ``feature`` module as
-  a separate Python package, or vendor it temporarily inside NumPy
-- Port the NumPy SIMD CI jobs to use Meson
-- Backport all that to ``maintenance/1.26.x``
-
-**If we go the Highway route**
-
-If we choose to go the Highway route, ideally we'd finish that move in ~2
-months and find a way to either backport those C/C++ changes or branch
-``maintenance/1.26.x`` off of ``main`` and restore C API/ABI compatibility and
-undo other breaking changes for 2.0 that were already made in ``main``.
-
-However, the timeline for that seems too tight to be realistic. Hence, we
-likely have to do the Meson work and related integration strategy as outlined
-above anyway. The alternatives are to ship a NumPy 1.26 without SIMD
-optimizations for Python 3.12, or to delay 1.26 and hence not support Python
-3.12 at all for some time. Both of those options would result in a lot of
-unhappy users - so both aren't great ideas.
-
-
 Related Work
 ------------
 
@@ -407,11 +327,11 @@ Alternatives
 ------------
 
 It's probably one or the other - move our universal intrinsics to C++, or use
-Google Highway. Other alternatives include: do nothing and stay with C
-universal intrinsics, use `Xsimd`_ as the SIMD framework (less comprehensive
-than Highway - no SVE or PowerPC support for example), or use/vendor `SLEEF`_
-(a good library, but unmaintained since 2021). Neither of these alternatives
-seems appealing.
+Google Highway for dynamic dispatch. Other alternatives include: do nothing and
+stay with C universal intrinsics, use `Xsimd`_ as the SIMD framework (less
+comprehensive than Highway - no SVE or PowerPC support for example), or
+use/vendor `SLEEF`_ (a good library, but unmaintained since 2021). Neither of
+these alternatives seems appealing.
 
 
 Discussion
@@ -436,8 +356,6 @@ References and Footnotes
 .. _JPEG XL: https://github.com/libjxl/libjxl
 .. _CPU/SIMD Optimizations: https://numpy.org/doc/1.25/reference/simd/
 .. _the Highway docs: https://google.github.io/highway/
-.. _meson#11307: https://github.com/mesonbuild/meson/pull/11307
-.. _meson#11033: https://github.com/mesonbuild/meson/discussions/11033
 .. _Google Highway: https://github.com/google/highway/
 .. _Xsimd: https://github.com/xtensor-stack/xsimd
 .. _SLEEF: https://sleef.org/
