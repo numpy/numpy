@@ -784,7 +784,14 @@ foreach gen_mtargets : [
     'highway_qsort.dispatch.h',
     'src/npysort/highway_qsort.dispatch.cpp',
     [
-      ASIMD,
+      SVE, ASIMD,
+    ]
+  ],
+  [
+    'highway_qsort_16bit.dispatch.h',
+    'src/npysort/highway_qsort_16bit.dispatch.cpp',
+    [
+      ASIMDHP,
     ]
   ],
 ]
@@ -987,6 +994,7 @@ endforeach
 # ------------------------------
 src_multiarray_umath_common = [
   'src/common/array_assign.c',
+  'src/common/gil_utils.c',
   'src/common/mem_overlap.c',
   'src/common/npy_argparse.c',
   'src/common/npy_hashtable.c',

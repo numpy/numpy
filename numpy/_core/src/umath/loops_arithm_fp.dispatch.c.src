@@ -215,7 +215,7 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@_indexed)
 //###############################################################################
 
 /********************************************************************************
- ** op intrinics
+ ** op intrinsics
  ********************************************************************************/
 
 #if NPY_SIMD_F32
@@ -295,61 +295,6 @@ NPY_FINLINE npyv_f64
 simd_csquare_f64(npyv_f64 x)
 { return simd_cmul_f64(x, x); }
 #endif
-
-/**begin repeat
- * #type = npy_float, npy_double#
- * #sfx = f32, f64#
- * #bsfx = b32, b64#
- * #usfx = b32, u64#
- * #VECTOR = NPY_SIMD_F32, NPY_SIMD_F64#
- * #is_double = 0, 1#
- * #c = f, #
- * #INF = NPY_INFINITYF, NPY_INFINITY#
- * #NAN = NPY_NANF, NPY_NAN#
- */
-#if @VECTOR@
-NPY_FINLINE npyv_@sfx@
-simd_cabsolute_@sfx@(npyv_@sfx@ re, npyv_@sfx@ im)
-{
-    const npyv_@sfx@ inf = npyv_setall_@sfx@(@INF@);
-    const npyv_@sfx@ nan = npyv_setall_@sfx@(@NAN@);
-
-    re = npyv_abs_@sfx@(re);
-    im = npyv_abs_@sfx@(im);
-    /*
-     * If real or imag = INF, then convert it to inf + j*inf
-     * Handles: inf + j*nan, nan + j*inf
-     */
-    npyv_@bsfx@ re_infmask = npyv_cmpeq_@sfx@(re, inf);
-    npyv_@bsfx@ im_infmask = npyv_cmpeq_@sfx@(im, inf);
-    im = npyv_select_@sfx@(re_infmask, inf, im);
-    re = npyv_select_@sfx@(im_infmask, inf, re);
-    /*
-     * If real or imag = NAN, then convert it to nan + j*nan
-     * Handles: x + j*nan, nan + j*x
-     */
-    npyv_@bsfx@ re_nnanmask = npyv_notnan_@sfx@(re);
-    npyv_@bsfx@ im_nnanmask = npyv_notnan_@sfx@(im);
-    im = npyv_select_@sfx@(re_nnanmask, im, nan);
-    re = npyv_select_@sfx@(im_nnanmask, re, nan);
-
-    npyv_@sfx@ larger  = npyv_max_@sfx@(re, im);
-    npyv_@sfx@ smaller = npyv_min_@sfx@(im, re);
-    /*
-     * Calculate div_mask to prevent 0./0. and inf/inf operations in div
-     */
-    npyv_@bsfx@ zeromask = npyv_cmpeq_@sfx@(larger, npyv_zero_@sfx@());
-    npyv_@bsfx@ infmask = npyv_cmpeq_@sfx@(smaller, inf);
-    npyv_@bsfx@ div_mask = npyv_not_@bsfx@(npyv_or_@bsfx@(zeromask, infmask));
-
-    npyv_@sfx@ ratio = npyv_ifdivz_@sfx@(div_mask, smaller, larger);
-    npyv_@sfx@ hypot = npyv_sqrt_@sfx@(
-        npyv_muladd_@sfx@(ratio, ratio, npyv_setall_@sfx@(1.0@c@)
-    ));
-    return npyv_mul_@sfx@(hypot, larger);
-}
-#endif // VECTOR
-/**end repeat**/
 
 /********************************************************************************
  ** Defining ufunc inner functions

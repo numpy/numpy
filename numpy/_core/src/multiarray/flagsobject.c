@@ -16,12 +16,13 @@
 #include "array_assign.h"
 
 #include "common.h"
+#include "flagsobject.h"
+
 
 static void
 _UpdateContiguousFlags(PyArrayObject *ap);
 
-/*NUMPY_API
- *
+/*
  * Get New ArrayFlagsObject
  */
 NPY_NO_EXPORT PyObject *
