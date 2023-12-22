@@ -117,7 +117,7 @@ def buildhooks(pymod):
                 mfargs.append(n)
         outmess('\t\tConstructing F90 module support for "%s"...\n' %
                 (m['name']))
-        if m['name'] in usenames:
+        if m['name'] in usenames and not onlyvars:
             outmess(f"\t\t\tSkipping {m['name']} since it is in 'use'...\n")
             continue
         if onlyvars:
