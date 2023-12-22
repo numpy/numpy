@@ -32,6 +32,16 @@ typedef int (PyArray_ReduceLoopFunc)(PyArrayMethod_Context *context,
         int needs_api, npy_intp skip_first_count);
 
 /*
+ * Get the initial value (if it exists), and store it in initial_buf.
+ * Exposed here only so that it can be used for reduceat in ufunc_object.c
+ *
+ * TODO: move reduceat implementation to reduce.c
+ */
+NPY_NO_EXPORT int
+get_initial_buf(PyArrayMethod_Context *context, npy_bool empty_iteration,
+                PyArray_Descr *dtype, PyObject *initial, char **initial_buf);
+
+/*
  * This function executes all the standard NumPy reduction function
  * boilerplate code, just calling the appropriate inner loop function where
  * necessary.
