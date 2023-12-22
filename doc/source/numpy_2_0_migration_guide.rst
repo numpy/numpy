@@ -163,7 +163,7 @@ The next table presents deprecated members, which will be removed in a release a
 deprecated member migration guideline
 ================= =======================================================================
 in1d              Use ``np.isin`` instead.
-row_stack         Use ``np.vstack`` instead (``row_stack`` was an alias for ``v_stack``).
+row_stack         Use ``np.vstack`` instead (``row_stack`` was an alias for ``vstack``).
 trapz             Use ``scipy.integrate.trapezoid`` instead.
 ================= =======================================================================
 
