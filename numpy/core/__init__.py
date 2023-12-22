@@ -24,7 +24,8 @@ def _ufunc_reconstruct(module, name):
 __all__ = ["arrayprint", "defchararray", "_dtype_ctypes", "_dtype",
            "einsumfunc", "fromnumeric", "function_base", "getlimits",
            "_internal", "multiarray", "_multiarray_umath", "numeric",
-           "numerictypes", "overrides", "records", "shape_base", "umath"]
+           "numerictypes", "overrides", "records", "shape_base",
+           "strings", "umath"]
 
 def __getattr__(attr_name):
     attr = getattr(_core, attr_name)

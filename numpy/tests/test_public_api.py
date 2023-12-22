@@ -181,6 +181,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "core.overrides",
     "core.records",
     "core.shape_base",
+    "core.strings",
     "f2py.auxfuncs",
     "f2py.capi_maps",
     "f2py.cb_rules",

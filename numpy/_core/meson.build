@@ -1267,6 +1267,8 @@ python_sources = [
   'records.pyi',
   'shape_base.py',
   'shape_base.pyi',
+  'strings.py',
+  'strings.pyi',
   'umath.py',
 ]
 
