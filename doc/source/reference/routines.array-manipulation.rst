@@ -33,6 +33,7 @@ Transpose-like operations
    ndarray.T
    transpose
    permute_dims
+   matrix_transpose (Array API compatible)
 
 Changing number of dimensions
 =============================

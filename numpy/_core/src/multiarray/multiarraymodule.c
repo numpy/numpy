@@ -43,6 +43,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "hashdescr.h"
 #include "descriptor.h"
 #include "dragon4.h"
+#include "flagsobject.h"
 #include "calculation.h"
 #include "number.h"
 #include "scalartypes.h"
@@ -115,10 +116,6 @@ set_legacy_print_mode(PyObject *NPY_UNUSED(self), PyObject *args)
     }
     Py_RETURN_NONE;
 }
-
-
-/* Only here for API compatibility */
-NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
 
 
 /*NUMPY_API

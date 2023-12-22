@@ -391,35 +391,6 @@ PyArray_DescrFromTypeObject(PyObject *type)
     return _descr_from_subtype(type);
 }
 
-/*NUMPY_API
- * Return the tuple of ordered field names from a dictionary.
- */
-NPY_NO_EXPORT PyObject *
-PyArray_FieldNames(PyObject *fields)
-{
-    PyObject *tup;
-    PyObject *ret;
-    PyObject *_numpy_internal;
-
-    if (!PyDict_Check(fields)) {
-        PyErr_SetString(PyExc_TypeError,
-                "Fields must be a dictionary");
-        return NULL;
-    }
-    _numpy_internal = PyImport_ImportModule("numpy._core._internal");
-    if (_numpy_internal == NULL) {
-        return NULL;
-    }
-    tup = PyObject_CallMethod(_numpy_internal, "_makenames_list", "OO", fields, Py_False);
-    Py_DECREF(_numpy_internal);
-    if (tup == NULL) {
-        return NULL;
-    }
-    ret = PyTuple_GET_ITEM(tup, 0);
-    ret = PySequence_Tuple(ret);
-    Py_DECREF(tup);
-    return ret;
-}
 
 /*NUMPY_API
  * Return descr object from array scalar.

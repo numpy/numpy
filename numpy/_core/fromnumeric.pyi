@@ -176,6 +176,11 @@ def transpose(
 ) -> NDArray[Any]: ...
 
 @overload
+def matrix_transpose(x: _ArrayLike[_SCT]) -> NDArray[_SCT]: ...
+@overload
+def matrix_transpose(x: ArrayLike) -> NDArray[Any]: ...
+
+@overload
 def partition(
     a: _ArrayLike[_SCT],
     kth: _ArrayLikeInt_co,

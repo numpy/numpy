@@ -34,6 +34,8 @@ static const char* umath_linalg_version_string = "0.1.5";
  *                        Debugging support                                 *
  ****************************************************************************
  */
+#define _UMATH_LINALG_DEBUG 0
+
 #define TRACE_TXT(...) do { fprintf (stderr, __VA_ARGS__); } while (0)
 #define STACK_TRACE do {} while (0)
 #define TRACE\
@@ -46,7 +48,7 @@ static const char* umath_linalg_version_string = "0.1.5";
         STACK_TRACE;                            \
     } while (0)
 
-#if 0
+#if _UMATH_LINALG_DEBUG
 #if defined HAVE_EXECINFO_H
 #include <execinfo.h>
 #elif defined HAVE_LIBUNWIND_H
@@ -574,6 +576,7 @@ init_linearize_data(LINEARIZE_DATA_t *lin_data,
         lin_data, rows, columns, row_strides, column_strides, columns);
 }
 
+#if _UMATH_LINALG_DEBUG
 static inline void
 dump_ufunc_object(PyUFuncObject* ufunc)
 {
@@ -651,7 +654,7 @@ dump_matrix(const char* name,
         TRACE_TXT(" |\n");
     }
 }
-
+#endif
 
 /*
  *****************************************************************************
@@ -760,12 +763,6 @@ update_pointers(npy_uint8** bases, ptrdiff_t* offsets, size_t count)
     }
 }
 
-
-/* disable -Wmaybe-uninitialized as there is some code that generate false
-   positives with this warning
-*/
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 
 /*
  *****************************************************************************
@@ -2926,7 +2923,7 @@ using basetyp = basetype_t<typ>;
                    (fortran_int)dimensions[0],
                    (fortran_int)dimensions[1],
 dispatch_scalar<typ>())) {
-        LINEARIZE_DATA_t a_in, u_out, s_out, v_out;
+        LINEARIZE_DATA_t a_in, u_out = {}, s_out = {}, v_out = {};
         fortran_int min_m_n = params.M < params.N ? params.M : params.N;
 
         init_linearize_data(&a_in, params.N, params.M, steps[1], steps[0]);
@@ -4081,8 +4078,6 @@ dispatch_scalar<typ>{});
     set_fp_invalid_or_clear(error_occurred);
 }
 
-#pragma GCC diagnostic pop
-
 /* -------------------------------------------------------------------------- */
               /* gufunc registration  */
 
@@ -4548,7 +4543,7 @@ addUfuncs(PyObject *dictionary) {
         if (f == NULL) {
             return -1;
         }
-#if 0
+#if _UMATH_LINALG_DEBUG
         dump_ufunc_object((PyUFuncObject*) f);
 #endif
         int ret = PyDict_SetItemString(dictionary, d->name, f);

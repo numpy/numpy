@@ -605,8 +605,8 @@ From other objects
     Copy from the source array, ``src``, into the destination array,
     ``dest``, performing a data-type conversion if necessary. If an
     error occurs return -1 (otherwise 0). The shape of ``src`` must be
-    broadcastable to the shape of ``dest``. The data areas of dest
-    and src must not overlap.
+    broadcastable to the shape of ``dest``.
+    NumPy checks for overlapping memory when copying two arrays.
 
 .. c:function:: int PyArray_CopyObject(PyArrayObject* dest, PyObject* src)
 
@@ -614,14 +614,6 @@ From other objects
     array-coercion rules. This is basically identical to
     :c:func:`PyArray_FromAny`, but assigns directly to the output array.
     Returns 0 on success and -1 on failures.
-
-.. c:function:: int PyArray_MoveInto(PyArrayObject* dest, PyArrayObject* src)
-
-    Move data from the source array, ``src``, into the destination
-    array, ``dest``, performing a data-type conversion if
-    necessary. If an error occurs return -1 (otherwise 0). The shape
-    of ``src`` must be broadcastable to the shape of ``dest``. The
-    data areas of dest and src may overlap.
 
 .. c:function:: PyArrayObject* PyArray_GETCONTIGUOUS(PyObject* op)
 
@@ -824,15 +816,6 @@ argument must be a :c:expr:`PyObject *` that can be directly interpreted as a
 .. c:function:: int PyArray_ISSTRING(PyArrayObject *obj)
 
     Type represents a string data type.
-
-.. c:function:: int PyTypeNum_ISPYTHON(int num)
-
-.. c:function:: int PyDataType_ISPYTHON(PyArray_Descr* descr)
-
-.. c:function:: int PyArray_ISPYTHON(PyArrayObject *obj)
-
-    Type represents an enumerated type corresponding to one of the
-    standard Python scalar (bool, int, float, or complex).
 
 .. c:function:: int PyTypeNum_ISFLEXIBLE(int num)
 
@@ -1159,13 +1142,6 @@ User-defined data types
     *descr* can be cast safely to a data-type whose type_number is
     *totype*. The return value is 0 on success or -1 on failure.
 
-.. c:function:: int PyArray_TypeNumFromName( \
-        char const *str)
-
-   Given a string return the type-number for the data-type with that string as
-   the type-object name.
-   Returns ``NPY_NOTYPE`` without setting an error if no type can be found.
-   Only works for user-defined data-types.
 
 Special functions for NPY_OBJECT
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1222,16 +1198,6 @@ Special functions for NPY_OBJECT
     recursively so that if ``dtype`` itself has fields with data-types
     that contain object-like items, all the object-like fields will be
     XDECREF ``'d``.
-
-.. c:function:: void PyArray_FillObjectArray(PyArrayObject* arr, PyObject* obj)
-
-    Fill a newly created array with a single value obj at all
-    locations in the structure with object data-types. No checking is
-    performed but *arr* must be of data-type :c:type:`NPY_OBJECT` and be
-    single-segment and uninitialized (no previous objects in
-    position). Use :c:func:`PyArray_XDECREF` (*arr*) if you need to
-    decrement all the items in the object array prior to calling this
-    function.
 
 .. c:function:: int PyArray_SetWritebackIfCopyBase(PyArrayObject* arr, PyArrayObject* base)
 
@@ -2879,12 +2845,6 @@ Data-type descriptors
     Like :c:func:`PyArray_DescrConverter2` except it aligns C-struct-like
     objects on word-boundaries as the compiler would.
 
-.. c:function:: PyObject *PyArray_FieldNames(PyObject* dict)
-
-    Take the fields dictionary, *dict*, such as the one attached to a
-    data-type object and construct an ordered-list of field names such
-    as is stored in the names field of the :c:type:`PyArray_Descr` object.
-
 
 Conversion utilities
 --------------------
@@ -3044,15 +3004,6 @@ Other conversions
     *seq* to (up to) *maxvals* pointer-sized integers and place them
     in the *vals* array. The sequence can be smaller then *maxvals* as
     the number of converted objects is returned.
-
-.. c:function:: int PyArray_TypestrConvert(int itemsize, int gentype)
-
-    Convert typestring characters (with *itemsize*) to basic
-    enumerated data types. The typestring character corresponding to
-    signed and unsigned integers, floating point numbers, and
-    complex-floating point numbers are recognized and converted. Other
-    values of gentype are returned. This function can be used to
-    convert, for example, the string 'f4' to :c:data:`NPY_FLOAT32`.
 
 
 Miscellaneous

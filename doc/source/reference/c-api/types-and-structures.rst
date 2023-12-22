@@ -1164,27 +1164,6 @@ PyArrayNeighborhoodIter_Type and PyArrayNeighborhoodIterObject
           int mode;
       } PyArrayNeighborhoodIterObject;
 
-PyArrayFlags_Type and PyArrayFlagsObject
-----------------------------------------
-
-.. c:var:: PyTypeObject PyArrayFlags_Type
-
-   When the flags attribute is retrieved from Python, a special
-   builtin object of this type is constructed. This special type makes
-   it easier to work with the different flags by accessing them as
-   attributes or by accessing them as if the object were a dictionary
-   with the flag names as entries.
-
-.. c:type:: PyArrayFlagsObject
-
-   .. code-block:: c
-
-      typedef struct PyArrayFlagsObject {
-              PyObject_HEAD
-              PyObject *arr;
-              int flags;
-      } PyArrayFlagsObject;
-
 
 ScalarArrayTypes
 ----------------

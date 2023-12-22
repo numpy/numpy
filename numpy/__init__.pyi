@@ -236,6 +236,7 @@ from numpy._core.fromnumeric import (
     put as put,
     swapaxes as swapaxes,
     transpose as transpose,
+    matrix_transpose as matrix_transpose,
     partition as partition,
     argpartition as argpartition,
     sort as sort,
@@ -277,7 +278,6 @@ from numpy._core._asarray import (
 )
 
 from numpy._core._type_aliases import (
-    sctypes as sctypes,
     sctypeDict as sctypeDict,
 )
 
@@ -363,6 +363,7 @@ from numpy._core.numeric import (
     convolve as convolve,
     outer as outer,
     tensordot as tensordot,
+    vecdot as vecdot,
     roll as roll,
     rollaxis as rollaxis,
     moveaxis as moveaxis,
@@ -381,6 +382,7 @@ from numpy._core.numeric import (
 )
 
 from numpy._core.numerictypes import (
+    isdtype as isdtype,
     issubdtype as issubdtype,
     cast as cast,
     ScalarType as ScalarType,
@@ -407,7 +409,6 @@ from numpy.lib._arraypad_impl import (
 
 from numpy.lib._arraysetops_impl import (
     ediff1d as ediff1d,
-    in1d as in1d,
     intersect1d as intersect1d,
     isin as isin,
     setdiff1d as setdiff1d,
@@ -450,7 +451,6 @@ from numpy.lib._function_base_impl import (
     bartlett as bartlett,
     blackman as blackman,
     kaiser as kaiser,
-    trapz as trapz,
     i0 as i0,
     meshgrid as meshgrid,
     delete as delete,
@@ -502,8 +502,6 @@ from numpy.lib._npyio_impl import (
     savetxt as savetxt,
     loadtxt as loadtxt,
     genfromtxt as genfromtxt,
-    recfromtxt as recfromtxt,
-    recfromcsv as recfromcsv,
     load as load,
     save as save,
     savez as savez,
@@ -528,7 +526,6 @@ from numpy.lib._polynomial_impl import (
 
 from numpy.lib._shape_base_impl import (
     column_stack as column_stack,
-    row_stack as row_stack,
     dstack as dstack,
     array_split as array_split,
     split as split,
@@ -3246,6 +3243,7 @@ tan: _UFunc_Nin1_Nout1[L['tan'], L[8], None]
 tanh: _UFunc_Nin1_Nout1[L['tanh'], L[8], None]
 true_divide: _UFunc_Nin2_Nout1[L['true_divide'], L[11], None]
 trunc: _UFunc_Nin1_Nout1[L['trunc'], L[7], None]
+vecdot: _GUFunc_Nin2_Nout1[L['vecdot'], L[19], None]
 
 abs = absolute
 acos = arccos

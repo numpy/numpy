@@ -215,7 +215,8 @@ python_sources = [
   'dtypes.py',
   'dtypes.pyi',
   'matlib.py',
-  'py.typed'
+  'py.typed',
+  'version.pyi',
 ]
 
 if blas_name == 'scipy-openblas'
