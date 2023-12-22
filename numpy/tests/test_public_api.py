@@ -160,6 +160,7 @@ PUBLIC_ALIASED_MODULES = [
     "numpy.char",
     "numpy.emath",
     "numpy.rec",
+    "numpy.strings",
 ]
 
 
@@ -181,7 +182,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "core.overrides",
     "core.records",
     "core.shape_base",
-    "core.strings",
     "f2py.auxfuncs",
     "f2py.capi_maps",
     "f2py.cb_rules",
@@ -525,8 +525,13 @@ def test_core_shims_coherence():
     import numpy.core as core
 
     for member_name in dir(np._core):
-        # skip private and test members
-        if member_name.startswith("_") or member_name == "tests":
+        # Skip private and test members. Also if a module is aliased,
+        # no need to add it to np.core
+        if (
+            member_name.startswith("_")
+            or member_name == "tests"
+            or f"numpy.{member_name}" in PUBLIC_ALIASED_MODULES 
+        ):
             continue
 
         member = getattr(np._core, member_name)
@@ -638,6 +643,18 @@ def test_functions_single_location():
                         member.__name__ == "trimcoef" and
                         module.__name__.startswith("numpy.polynomial")
                     ):
+                        continue
+
+                    # skip ufuncs that are exported in np.strings as well
+                    if member.__name__ in (
+                        "add",
+                        "equal",
+                        "not_equal",
+                        "greater",
+                        "greater_equal",
+                        "less",
+                        "less_equal",
+                    ) and module.__name__ == "numpy.strings":
                         continue
 
                     # function is present in more than one location!

@@ -3,9 +3,12 @@ This module contains a set of functions for vectorized string
 operations.
 """
 
-from numpy._core.umath import (
+from numpy import (
     equal, not_equal, less, less_equal, greater, greater_equal,
-    add, isalpha, isdigit, isspace, isdecimal, isnumeric,
+    add
+)
+from numpy._core.umath import (
+    isalpha, isdigit, isspace, isdecimal, isnumeric,
     str_len, find, rfind, count, startswith, endswith,
     _lstrip_whitespace, _lstrip_chars, _rstrip_whitespace,
     _rstrip_chars, _strip_whitespace, _strip_chars,
