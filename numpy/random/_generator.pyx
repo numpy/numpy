@@ -3376,7 +3376,8 @@ cdef class Generator:
         The geometric distribution with ``p=0.35`` looks as follows:
 
         >>> import matplotlib.pyplot as plt
-        >>> plt.hist(sample, bins=30, density=True)
+        >>> count, bins, _ = plt.hist(sample, bins=30, density=True)
+        >>> plt.plot(bins, (1-p)**(bins-1)*p)
         >>> plt.xlim([0, 25])
         >>> plt.show()
         
