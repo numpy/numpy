@@ -501,7 +501,7 @@ cdef class Generator:
         >>> rng = np.random.default_rng()
         >>> sample = rng.exponential(scale=scale, size=size)
         >>> count, bins, _ = plt.hist(sample, 30, density=True)
-        >>> plt.plot(bins, scale**-1*np.exp(-scale**-1*bins), linewidth=2, color='r')
+        >>> plt.plot(bins, scale**(-1)*np.exp(-scale**-1*bins), linewidth=2, color='r')
         >>> plt.show()
 
         References
