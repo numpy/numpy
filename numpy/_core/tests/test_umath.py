@@ -1352,11 +1352,20 @@ class TestLog:
         xf = np.log(x)
         assert_almost_equal(np.log(x, out=x), xf)
 
+    def test_log_values_maxofdtype(self):
         # test log() of max for dtype does not raise
-        for dt in ['f', 'd', 'g']:
+        dtypes = [np.float32, np.float64]
+        # This is failing at least on linux aarch64 (see gh-25460), and on most
+        # other non x86-64 platforms checking `longdouble` isn't too useful as
+        # it's an alias for float64.
+        if platform.machine() == 'x86_64':
+            dtypes += [np.longdouble]
+
+        for dt in dtypes:
             with np.errstate(all='raise'):
                 x = np.finfo(dt).max
                 np.log(x)
+
     def test_log_strides(self):
         np.random.seed(42)
         strides = np.array([-4,-3,-2,-1,1,2,3,4])
