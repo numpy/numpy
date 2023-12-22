@@ -24,7 +24,7 @@
 #include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "dispatching.h"
-
+#include "gil_utils.h"
 
 /* TODO: from wrapping_array_method.c, use proper public header eventually  */
 NPY_NO_EXPORT int
@@ -274,11 +274,8 @@ check_factor(double factor) {
     if (npy_isfinite(factor) && factor != 0.) {
         return 0;
     }
-    NPY_ALLOW_C_API_DEF;
-    NPY_ALLOW_C_API;
-    PyErr_SetString(PyExc_TypeError,
-            "error raised inside the core-loop: non-finite factor!");
-    NPY_DISABLE_C_API;
+    npy_gil_error(PyExc_TypeError,
+                  "error raised inside the core-loop: non-finite factor!");
     return -1;
 }
 

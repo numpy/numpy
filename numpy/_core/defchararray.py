@@ -158,6 +158,13 @@ def not_equal(x1, x2):
     See Also
     --------
     equal, greater_equal, less_equal, greater, less
+
+    Examples
+    --------
+    >>> x1 = np.array(['a', 'b', 'c'])
+    >>> np.char.not_equal(x1, 'b')
+    array([ True, False,  True])
+    
     """
     return compare_chararrays(x1, x2, '!=', True)
 
@@ -185,6 +192,13 @@ def greater_equal(x1, x2):
     See Also
     --------
     equal, not_equal, less_equal, greater, less
+
+    Examples
+    --------
+    >>> x1 = np.array(['a', 'b', 'c'])
+    >>> np.char.greater_equal(x1, 'b')
+    array([False,  True,  True])
+    
     """
     return compare_chararrays(x1, x2, '>=', True)
 
@@ -211,6 +225,13 @@ def less_equal(x1, x2):
     See Also
     --------
     equal, not_equal, greater_equal, greater, less
+
+    Examples
+    --------
+    >>> x1 = np.array(['a', 'b', 'c'])
+    >>> np.char.less_equal(x1, 'b')
+    array([ True,  True, False])
+    
     """
     return compare_chararrays(x1, x2, '<=', True)
 
@@ -237,6 +258,13 @@ def greater(x1, x2):
     See Also
     --------
     equal, not_equal, greater_equal, less_equal, less
+    
+    Examples
+    --------
+    >>> x1 = np.array(['a', 'b', 'c'])
+    >>> np.char.greater(x1, 'b')
+    array([False, False,  True])
+    
     """
     return compare_chararrays(x1, x2, '>', True)
 
@@ -263,6 +291,13 @@ def less(x1, x2):
     See Also
     --------
     equal, not_equal, greater_equal, less_equal, greater
+
+    Examples
+    --------
+    >>> x1 = np.array(['a', 'b', 'c'])
+    >>> np.char.less(x1, 'b')
+    array([True, False, False])
+    
     """
     return compare_chararrays(x1, x2, '<', True)
 
@@ -300,6 +335,7 @@ def str_len(a):
     >>> a = np.array([['hello', 'world'], ['\u0420', '\u043e']])
     >>> np.char.str_len(a)
     array([[5, 5], [1, 1]])
+    
     """
     return numpy._core.umath.str_len(a)
 
@@ -380,7 +416,7 @@ def multiply(a, i):
     Examples
     --------
     >>> a = np.array(["a", "b", "c"])
-    >>> np.char.multiply(x, 3)
+    >>> np.char.multiply(a, 3)
     array(['aaa', 'bbb', 'ccc'], dtype='<U3')
     >>> i = np.array([1, 2, 3])
     >>> np.char.multiply(a, i)
@@ -394,6 +430,7 @@ def multiply(a, i):
     >>> np.char.multiply(a, i)
     array([['a', 'bb', 'ccc'],
            ['d', 'ee', 'fff']], dtype='<U3')
+           
     """
     a_arr = numpy.asarray(a)
     i_arr = numpy.asarray(i)
@@ -426,8 +463,7 @@ def mod(a, values):
     -------
     out : ndarray
         Output array of str or unicode, depending on input types
-
-
+        
     """
     return _to_bytes_or_str_array(
         _vec_string(a, object_, '__mod__', (values,)), a)
@@ -621,7 +657,7 @@ def decode(a, encoding=None, errors=None):
     ...               b'\x81\x82\xc2\xc1\xc2\x82\x81'])
     >>> c
     array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
-    ...    b'\x81\x82\xc2\xc1\xc2\x82\x81'], dtype='|S7')
+           b'\x81\x82\xc2\xc1\xc2\x82\x81'], dtype='|S7')
     >>> np.char.decode(c, encoding='cp037')
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
 
@@ -662,11 +698,17 @@ def encode(a, encoding=None, errors=None):
     -----
     The type of the result will depend on the encoding specified.
 
+    Examples
+    --------
+    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> np.char.encode(a, encoding='cp037')
+    array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
+       b'\x81\x82\xc2\xc1\xc2\x82\x81'], dtype='|S7')
+       
     """
     return _to_bytes_or_str_array(
         _vec_string(a, object_, 'encode', _clean_args(encoding, errors)),
         numpy.bytes_(b''))
-
 
 def _endswith_dispatcher(a, suffix, start=None, end=None):
     return (a,)
@@ -750,6 +792,12 @@ def expandtabs(a, tabsize=8):
     See Also
     --------
     str.expandtabs
+
+    Examples
+    --------
+    >>> a = np.array(['\t\tHello\tworld'])  
+    >>> np.char.expandtabs(a, tabsize=4)  # doctest: +SKIP
+    array(['        Hello   world'], dtype='<U21')  # doctest: +SKIP
 
     """
     return _to_bytes_or_str_array(
@@ -854,6 +902,13 @@ def isalnum(a):
     See Also
     --------
     str.isalnum
+
+    Examples
+    --------
+    >>> a = np.array(['a', '1', 'a1', '(', ''])
+    >>> np.char.isalnum(a)
+    array([ True,  True,  True, False, False])
+    
     """
     return _vec_string(a, numpy.bool, 'isalnum')
 
@@ -880,6 +935,13 @@ def isalpha(a):
     See Also
     --------
     str.isalpha
+
+    Examples
+    --------
+    >>> a = np.array(['a', '1', 'a1', ''])
+    >>> np.char.isalpha(a)
+    array([ True,  False,  False,  False])
+
     """
     return numpy._core.umath.isalpha(a)
 
@@ -915,6 +977,7 @@ def isdigit(a):
     >>> a = np.array([['a', 'b', '0'], ['c', '1', '2']])
     >>> np.char.isdigit(a)
     array([[False, False,  True], [False,  True,  True]])
+    
     """
     return numpy._core.umath.isdigit(a)
 
@@ -942,6 +1005,14 @@ def islower(a):
     See Also
     --------
     str.islower
+
+    Examples
+    --------
+    >>> np.char.islower("GHC")
+    array(False)
+    >>> np.char.islower("ghc")
+    array(True)
+
     """
     return _vec_string(a, numpy.bool, 'islower')
 
@@ -969,6 +1040,16 @@ def isspace(a):
     See Also
     --------
     str.isspace
+
+    Examples
+    --------
+    >>> np.char.isspace(["GHC", "GHC "])
+    array([False, False])
+
+    >>> a = np.array([' ', '\t'])
+    >>> np.char.isspace(a)
+    array([ True,  True])
+    
     """
     return numpy._core.umath.isspace(a)
 
@@ -995,6 +1076,15 @@ def istitle(a):
     See Also
     --------
     str.istitle
+
+    Examples
+    --------
+    >>> np.char.istitle("Numpy Is Great")
+    array(True)
+
+    >>> np.char.istitle("Numpy is great")
+    array(False)
+    
     """
     return _vec_string(a, numpy.bool, 'istitle')
 
@@ -1025,8 +1115,7 @@ def isupper(a):
 
     Examples
     --------
-    >>> str = "GHC"
-    >>> np.char.isupper(str)
+    >>> np.char.isupper("GHC")
     array(True)     
     >>> a = np.array(["hello", "HELLO", "Hello"])
     >>> np.char.isupper(a)
@@ -1105,6 +1194,12 @@ def ljust(a, width, fillchar=' '):
     --------
     str.ljust
 
+    Examples
+    --------
+    >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> np.char.ljust(c, width=3)
+    array(['aAa', '  a', 'abB'], dtype='<U3')
+    
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
@@ -1184,15 +1279,15 @@ def lstrip(a, chars=None):
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
-    The 'a' variable is unstripped from c[1] because of leading whitespace.
+    # The 'a' variable is unstripped from c[1] because of leading whitespace.
     >>> np.char.lstrip(c, 'a')
     array(['AaAaA', '  aA  ', 'bBABba'], dtype='<U7')
     >>> np.char.lstrip(c, 'A') # leaves c unchanged
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
     >>> (np.char.lstrip(c, ' ') == np.char.lstrip(c, '')).all()
-    False
+    np.False_
     >>> (np.char.lstrip(c, ' ') == np.char.lstrip(c)).all()
-    True
+    np.True_
 
     """
     if chars is None:
@@ -1286,6 +1381,7 @@ def replace(a, old, new, count=None):
     >>> a = np.array(["The dish is fresh", "This is it"])
     >>> np.char.replace(a, 'is', 'was')
     array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
+    
     """
     return _to_bytes_or_str_array(
         _vec_string(a, object_, 'replace', [old, new] + _clean_args(count)), a)
@@ -1319,6 +1415,12 @@ def rfind(a, sub, start=0, end=None):
     --------
     str.rfind
 
+    Examples
+    --------
+    >>> a = np.array(["NumPy is a Python library"])
+    >>> np.char.rfind(a, "Python", start=0, end=None)
+    array([11])
+    
     """
     end = end if end is not None else numpy.iinfo(numpy.int64).max
     return numpy._core.umath.rfind(a, sub, start, end)
@@ -1349,6 +1451,12 @@ def rindex(a, sub, start=0, end=None):
     --------
     rfind, str.rindex
 
+    Examples
+    --------
+    >>> a = np.array(["Computer Science"])
+    >>> np.char.rindex(a, "Science", start=0, end=None)
+    array([9])
+    
     """
     return _vec_string(
         a, int_, 'rindex', [sub, start] + _clean_args(end))
@@ -1380,6 +1488,12 @@ def rjust(a, width, fillchar=' '):
     --------
     str.rjust
 
+    Examples
+    --------
+    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> np.char.rjust(a, width=3)
+    array(['aAa', '  a', 'abB'], dtype='<U3')
+    
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
@@ -1421,6 +1535,14 @@ def rpartition(a, sep):
     --------
     str.rpartition
 
+    Examples
+    --------
+    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> np.char.rpartition(a, 'A')
+    array([['aAaAa', 'A', ''],
+       ['  a', 'A', '  '],
+       ['abB', 'A', 'Bba']], dtype='<U5')
+
     """
     return _to_bytes_or_str_array(
         _vec_string(a, object_, 'rpartition', (sep,)), a)
@@ -1461,6 +1583,12 @@ def rsplit(a, sep=None, maxsplit=None):
     --------
     str.rsplit, split
 
+    Examples
+    --------
+    >>> a = np.array(['aAaAaA', 'abBABba'])
+    >>> np.char.rsplit(a, 'A')
+    array([list(['a', 'a', 'a', '']), list(['abB', 'Bba'])], dtype=object)
+    
     """
     # This will return an array of lists of different sizes, so we
     # leave it as an object array
@@ -1541,10 +1669,10 @@ def split(a, sep=None, maxsplit=None):
     --------
     >>> x = np.array("Numpy is nice!")
     >>> np.char.split(x, " ")
-    array([list(['Numpy', 'is', 'nice!'])], dtype=object)
+    array(list(['Numpy', 'is', 'nice!']), dtype=object)
 
     >>> np.char.split(x, " ", 1)
-    array([list(['Numpy', 'is nice!'])], dtype=object)
+    array(list(['Numpy', 'is nice!']), dtype=object)
 
     See Also
     --------
@@ -1659,7 +1787,7 @@ def strip(a, chars=None):
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
     >>> np.char.strip(c)
     array(['aAaAaA', 'aA', 'abBABba'], dtype='<U7')
-    'a' unstripped from c[1] because of leading whitespace.
+    # 'a' unstripped from c[1] because of leading whitespace.
     >>> np.char.strip(c, 'a')
     array(['AaAaA', '  aA  ', 'bBABb'], dtype='<U7')
     # 'A' unstripped from c[1] because of trailing whitespace.
@@ -1781,6 +1909,14 @@ def translate(a, table, deletechars=None):
     --------
     str.translate
 
+    Examples
+    --------
+    >>> a = np.array(['a1b c', '1bca', 'bca1'])
+    >>> table = a[0].maketrans('abc', '123')
+    >>> deletechars = ' '
+    >>> np.char.translate(a, table, deletechars)
+    array(['112 3', '1231', '2311'], dtype='<U5')
+    
     """
     a_arr = numpy.asarray(a)
     if issubclass(a_arr.dtype.type, str_):
@@ -1856,6 +1992,11 @@ def zfill(a, width):
     See Also
     --------
     str.zfill
+
+    Examples
+    --------
+    >>> np.char.zfill('1', 3)
+    array('001', dtype='<U3')
 
     """
     a_arr = numpy.asarray(a)
@@ -2933,6 +3074,12 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
         fastest).  If order is 'F', then the returned array
         will be in Fortran-contiguous order (first-index varies the
         fastest).
+
+    Examples
+    --------
+    >>> np.char.asarray(['hello', 'world'])
+    chararray(['hello', 'world'], dtype='<U5')
+    
     """
     return array(obj, itemsize, copy=False,
                  unicode=unicode, order=order)

@@ -35,6 +35,7 @@ Data type testing
 .. autosummary::
    :toctree: generated/
 
+   isdtype
    issubdtype
 
 Miscellaneous

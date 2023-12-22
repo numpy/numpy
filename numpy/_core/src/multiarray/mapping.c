@@ -935,11 +935,11 @@ array_boolean_subscript(PyArrayObject *self,
     Py_INCREF(dtype);
     ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1, &size,
                                 NULL, NULL, 0, NULL);
-    /* not same as *dtype* if the DType class replaces dtypes */
-    ret_dtype = PyArray_DESCR(ret);
     if (ret == NULL) {
         return NULL;
     }
+    /* not same as *dtype* if the DType class replaces dtypes */
+    ret_dtype = PyArray_DESCR(ret);
 
     itemsize = dtype->elsize;
     ret_data = PyArray_DATA(ret);

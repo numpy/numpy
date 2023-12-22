@@ -1197,7 +1197,7 @@ class TestCreation:
         a = np.array([1, Decimal(1)])
         a = np.array([[1], [Decimal(1)]])
 
-    @pytest.mark.parametrize("dtype", [object, "O,O", "O,(3)O", "(2,3)O"])
+    @pytest.mark.parametrize("dtype", [object, "O,O", "O,(3,)O", "(2,3)O"])
     @pytest.mark.parametrize("function", [
             np.ndarray, np.empty,
             lambda shape, dtype: np.empty_like(np.empty(shape, dtype=dtype))])
@@ -1552,7 +1552,7 @@ class TestStructured:
 
     def test_structuredscalar_indexing(self):
         # test gh-7262
-        x = np.empty(shape=1, dtype="(2)3S,(2)3U")
+        x = np.empty(shape=1, dtype="(2,)3S,(2,)3U")
         assert_equal(x[["f0","f1"]][0], x[0][["f0","f1"]])
         assert_equal(x[0], x[0][()])
 
@@ -8204,33 +8204,6 @@ class TestNewBufferProtocol:
     def test_max_dims(self):
         a = np.ones((1,) * 32)
         self._check_roundtrip(a)
-
-    @pytest.mark.slow
-    def test_error_too_many_dims(self):
-        def make_ctype(shape, scalar_type):
-            t = scalar_type
-            for dim in shape[::-1]:
-                t = dim * t
-            return t
-
-        # Try constructing a memory with too many dimensions:
-        c_u8_65d = make_ctype((1,)*65, ctypes.c_uint8)
-        try:
-            m = memoryview(c_u8_65d())
-        except ValueError:
-            pytest.skip("memoryview doesn't support more dimensions")
-
-        assert_equal(m.ndim, 65)
-
-        with pytest.raises(RuntimeError, match=".*ndim"):
-            np.array(m)
-
-        # The above seems to create some deep cycles, clean them up for
-        # easier reference count debugging:
-        del c_u8_65d, m
-        for i in range(65):
-            if gc.collect() == 0:
-                break
 
     def test_error_pointer_type(self):
         # gh-6741

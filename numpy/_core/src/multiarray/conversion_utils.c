@@ -1152,8 +1152,10 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
  */
 NPY_NO_EXPORT int evil_global_disable_warn_O4O8_flag = 0;
 
-/*NUMPY_API
- * Typestr converter
+/*
+ * Convert a gentype (that is actually a generic kind character) and
+ * it's itemsize to a NUmPy typenumber, i.e. `itemsize=4` and `gentype='f'`
+ * becomes `NPY_FLOAT32`.
  */
 NPY_NO_EXPORT int
 PyArray_TypestrConvert(int itemsize, int gentype)

@@ -1967,19 +1967,21 @@ class TestAVXUfuncs:
             # various array sizes to ensure masking in AVX is tested
             for size in range(1,32):
                 myfunc = getattr(np, func)
-                x_f32 = np.float32(np.random.uniform(low=minval, high=maxval,
-                    size=size))
-                x_f64 = np.float64(x_f32)
-                x_f128 = np.longdouble(x_f32)
+                x_f32 = np.random.uniform(low=minval, high=maxval,
+                                          size=size).astype(np.float32)
+                x_f64 = x_f32.astype(np.float64)
+                x_f128 = x_f32.astype(np.longdouble)
                 y_true128 = myfunc(x_f128)
                 if maxulperr == 0:
-                    assert_equal(myfunc(x_f32), np.float32(y_true128))
-                    assert_equal(myfunc(x_f64), np.float64(y_true128))
+                    assert_equal(myfunc(x_f32), y_true128.astype(np.float32))
+                    assert_equal(myfunc(x_f64), y_true128.astype(np.float64))
                 else:
-                    assert_array_max_ulp(myfunc(x_f32), np.float32(y_true128),
-                            maxulp=maxulperr)
-                    assert_array_max_ulp(myfunc(x_f64), np.float64(y_true128),
-                            maxulp=maxulperr)
+                    assert_array_max_ulp(myfunc(x_f32),
+                                         y_true128.astype(np.float32),
+                                         maxulp=maxulperr)
+                    assert_array_max_ulp(myfunc(x_f64),
+                                         y_true128.astype(np.float64),
+                                         maxulp=maxulperr)
                 # various strides to test gather instruction
                 if size > 1:
                     y_true32 = myfunc(x_f32)
