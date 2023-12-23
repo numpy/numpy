@@ -9,6 +9,7 @@
 
 #if defined(NPY_HAVE_AVX512_SPR) && !defined(_MSC_VER)
     #include "x86-simd-sort/src/avx512fp16-16bit-qsort.hpp"
+    #include "x86-simd-sort/src/avx512-16bit-qsort.hpp"
 #elif defined(NPY_HAVE_AVX512_ICL) && !defined(_MSC_VER)
     #include "x86-simd-sort/src/avx512-16bit-qsort.hpp"
 #endif
