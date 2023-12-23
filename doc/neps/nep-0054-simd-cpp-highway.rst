@@ -181,7 +181,7 @@ Supported features/targets
 Both frameworks support a large set of platforms and SIMD instruction sets,
 as well as generic scalar/fallback versions. The main differences right now are:
 
-- NumPy supports IBM Z-system (s390x, VX/VXE/VXE2) while Highway does not,
+- NumPy supports IBM Z-system (s390x, VX/VXE/VXE2) while Highway supports Z14, Z15.
 - Highway supports ARM SVE/SVE2 and RISC-V RVV (sizeless instructions), while
   NumPy does not.
 
