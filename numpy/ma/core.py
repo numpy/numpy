@@ -633,9 +633,10 @@ def filled(a, fill_value=None):
 
     Examples
     --------
-    >>> x = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
-    ...                                                   [1, 0, 0],
-    ...                                                   [0, 0, 0]])
+    >>> import numpy.ma as ma
+    >>> x = ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
+    ...                                                [1, 0, 0],
+    ...                                                [0, 0, 0]])
     >>> x.filled()
     array([[999999,      1,      2],
            [999999,      4,      5],
@@ -5541,6 +5542,17 @@ class MaskedArray(ndarray):
         --------
         numpy.ndarray.round : corresponding function for ndarrays
         numpy.around : equivalent function
+
+        Examples
+        --------
+        >>> import numpy.ma as ma
+        >>> x = ma.array([1.35, 2.5, 1.5, 1.75, 2.25, 2.75],
+        ...              mask=[0, 0, 0, 1, 0, 0])
+        >>> ma.round(x)
+        masked_array(data=[1.0, 2.0, 2.0, --, 2.0, 3.0],
+                     mask=[False, False, False,  True, False, False],
+                fill_value=1e+20)
+
         """
         result = self._data.round(decimals=decimals, out=out).view(type(self))
         if result.ndim > 0:

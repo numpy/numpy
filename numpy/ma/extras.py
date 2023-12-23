@@ -69,12 +69,11 @@ def count_masked(arr, axis=None):
 
     Examples
     --------
-    >>> import numpy.ma as ma
     >>> a = np.arange(9).reshape((3,3))
-    >>> a = ma.array(a)
-    >>> a[1, 0] = ma.masked
-    >>> a[1, 2] = ma.masked
-    >>> a[2, 1] = ma.masked
+    >>> a = np.ma.array(a)
+    >>> a[1, 0] = np.ma.masked
+    >>> a[1, 2] = np.ma.masked
+    >>> a[2, 1] = np.ma.masked
     >>> a
     masked_array(
       data=[[0, 1, 2],
@@ -84,14 +83,14 @@ def count_masked(arr, axis=None):
             [ True, False,  True],
             [False,  True, False]],
       fill_value=999999)
-    >>> ma.count_masked(a)
+    >>> np.ma.count_masked(a)
     3
 
     When the `axis` keyword is used an array is returned.
 
-    >>> ma.count_masked(a, axis=0)
+    >>> np.ma.count_masked(a, axis=0)
     array([1, 1, 1])
-    >>> ma.count_masked(a, axis=1)
+    >>> np.ma.count_masked(a, axis=1)
     array([0, 2, 1])
 
     """
@@ -124,8 +123,7 @@ def masked_all(shape, dtype=float):
 
     Examples
     --------
-    >>> import numpy.ma as ma
-    >>> ma.masked_all((3, 3))
+    >>> np.ma.masked_all((3, 3))
     masked_array(
       data=[[--, --, --],
             [--, --, --],
@@ -138,10 +136,10 @@ def masked_all(shape, dtype=float):
 
     The `dtype` parameter defines the underlying data type.
 
-    >>> a = ma.masked_all((3, 3))
+    >>> a = np.ma.masked_all((3, 3))
     >>> a.dtype
     dtype('float64')
-    >>> a = ma.masked_all((3, 3), dtype=np.int32)
+    >>> a = np.ma.masked_all((3, 3), dtype=np.int32)
     >>> a.dtype
     dtype('int32')
 
@@ -179,12 +177,11 @@ def masked_all_like(arr):
 
     Examples
     --------
-    >>> import numpy.ma as ma
     >>> arr = np.zeros((2, 3), dtype=np.float32)
     >>> arr
     array([[0., 0., 0.],
            [0., 0., 0.]], dtype=float32)
-    >>> ma.masked_all_like(arr)
+    >>> np.ma.masked_all_like(arr)
     masked_array(
       data=[[--, --, --],
             [--, --, --]],
@@ -197,7 +194,7 @@ def masked_all_like(arr):
 
     >>> arr.dtype
     dtype('float32')
-    >>> ma.masked_all_like(arr).dtype
+    >>> np.ma.masked_all_like(arr).dtype
     dtype('float32')
 
     """
@@ -839,6 +836,15 @@ def compress_nd(x, axis=None):
     -------
     compress_array : ndarray
         The compressed array.
+
+    Examples
+    --------
+    >>> x = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
+    ...                                                   [1, 0, 0],
+    ...                                                   [0, 0, 0]])
+    >>> np.ma.compress_nd(x)
+    array([[7, 8]])
+
     """
     x = asarray(x)
     m = getmask(x)
@@ -928,6 +934,14 @@ def compress_rows(a):
     --------
     compress_rowcols
 
+    Examples
+    --------
+    >>> a = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
+    ...                                                   [1, 0, 0],
+    ...                                                   [0, 0, 0]])
+    >>> np.ma.compress_rows(a)
+    array([[6, 7, 8]])
+    
     """
     a = asarray(a)
     if a.ndim != 2:
@@ -945,6 +959,16 @@ def compress_cols(a):
     See Also
     --------
     compress_rowcols
+
+    Examples
+    --------
+    >>> a = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
+    ...                                                   [1, 0, 0],
+    ...                                                   [0, 0, 0]])
+    >>> np.ma.compress_cols(a)
+    array([[1, 2],
+           [4, 5],
+           [7, 8]])
 
     """
     a = asarray(a)
@@ -998,14 +1022,13 @@ def mask_rowcols(a, axis=None):
 
     Examples
     --------
-    >>> import numpy.ma as ma
     >>> a = np.zeros((3, 3), dtype=int)
     >>> a[1, 1] = 1
     >>> a
     array([[0, 0, 0],
            [0, 1, 0],
            [0, 0, 0]])
-    >>> a = ma.masked_equal(a, 1)
+    >>> a = np.ma.masked_equal(a, 1)
     >>> a
     masked_array(
       data=[[0, 0, 0],
@@ -1015,7 +1038,7 @@ def mask_rowcols(a, axis=None):
             [False,  True, False],
             [False, False, False]],
       fill_value=1)
-    >>> ma.mask_rowcols(a)
+    >>> np.ma.mask_rowcols(a)
     masked_array(
       data=[[0, --, 0],
             [--, --, --],
@@ -1055,14 +1078,13 @@ def mask_rows(a, axis=np._NoValue):
 
     Examples
     --------
-    >>> import numpy.ma as ma
     >>> a = np.zeros((3, 3), dtype=int)
     >>> a[1, 1] = 1
     >>> a
     array([[0, 0, 0],
            [0, 1, 0],
            [0, 0, 0]])
-    >>> a = ma.masked_equal(a, 1)
+    >>> a = np.ma.masked_equal(a, 1)
     >>> a
     masked_array(
       data=[[0, 0, 0],
@@ -1073,7 +1095,7 @@ def mask_rows(a, axis=np._NoValue):
             [False, False, False]],
       fill_value=1)
 
-    >>> ma.mask_rows(a)
+    >>> np.ma.mask_rows(a)
     masked_array(
       data=[[0, 0, 0],
             [--, --, --],
@@ -1106,14 +1128,13 @@ def mask_cols(a, axis=np._NoValue):
 
     Examples
     --------
-    >>> import numpy.ma as ma
     >>> a = np.zeros((3, 3), dtype=int)
     >>> a[1, 1] = 1
     >>> a
     array([[0, 0, 0],
            [0, 1, 0],
            [0, 0, 0]])
-    >>> a = ma.masked_equal(a, 1)
+    >>> a = np.ma.masked_equal(a, 1)
     >>> a
     masked_array(
       data=[[0, 0, 0],
@@ -1123,7 +1144,7 @@ def mask_cols(a, axis=np._NoValue):
             [False,  True, False],
             [False, False, False]],
       fill_value=1)
-    >>> ma.mask_cols(a)
+    >>> np.ma.mask_cols(a)
     masked_array(
       data=[[0, --, 0],
             [0, --, 0],
@@ -1158,6 +1179,14 @@ def ediff1d(arr, to_end=None, to_begin=None):
     --------
     numpy.ediff1d : Equivalent function for ndarrays.
 
+    Examples
+    --------
+    >>> arr = np.ma.array([1, 2, 4, 7, 0])
+    >>> np.ma.ediff1d(arr)
+    masked_array(data=[ 1,  2,  3, -7],
+                 mask=False,
+           fill_value=999999)
+
     """
     arr = ma.asanyarray(arr).flat
     ed = arr[1:] - arr[:-1]
@@ -1189,27 +1218,26 @@ def unique(ar1, return_index=False, return_inverse=False):
 
     Examples
     --------
-    >>> import numpy.ma as ma
     >>> a = [1, 2, 1000, 2, 3]
     >>> mask = [0, 0, 1, 0, 0]
-    >>> masked_a = ma.masked_array(a, mask)
+    >>> masked_a = np.ma.masked_array(a, mask)
     >>> masked_a
     masked_array(data=[1, 2, --, 2, 3],
                 mask=[False, False,  True, False, False],
         fill_value=999999)
-    >>> ma.unique(masked_a)
+    >>> np.ma.unique(masked_a)
     masked_array(data=[1, 2, 3, --],
                 mask=[False, False, False,  True],
         fill_value=999999)
-    >>> ma.unique(masked_a, return_index=True)
+    >>> np.ma.unique(masked_a, return_index=True)
     (masked_array(data=[1, 2, 3, --],
                 mask=[False, False, False,  True],
         fill_value=999999), array([0, 1, 4, 2]))
-    >>> ma.unique(masked_a, return_inverse=True)
+    >>> np.ma.unique(masked_a, return_inverse=True)
     (masked_array(data=[1, 2, 3, --],
                 mask=[False, False, False,  True],
         fill_value=999999), array([0, 1, 3, 1, 2]))
-    >>> ma.unique(masked_a, return_index=True, return_inverse=True)
+    >>> np.ma.unique(masked_a, return_index=True, return_inverse=True)
     (masked_array(data=[1, 2, 3, --],
                 mask=[False, False, False,  True],
         fill_value=999999), array([0, 1, 4, 2]), array([0, 1, 3, 1, 2]))
@@ -1268,6 +1296,15 @@ def setxor1d(ar1, ar2, assume_unique=False):
     --------
     numpy.setxor1d : Equivalent function for ndarrays.
 
+    Examples
+    --------
+    >>> ar1 = np.ma.array([1, 2, 3, 2, 4])
+    >>> ar2 = np.ma.array([2, 3, 5, 7, 5])
+    >>> np.ma.setxor1d(ar1, ar2)
+    masked_array(data=[1, 4, 5, 7],
+                 mask=False,    
+           fill_value=999999)
+
     """
     if not assume_unique:
         ar1 = unique(ar1)
@@ -1302,6 +1339,15 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     Notes
     -----
     .. versionadded:: 1.4.0
+
+    Examples
+    --------
+    >>> ar1 = np.ma.array([0, 1, 2, 5, 0])
+    >>> ar2 = [0, 2]
+    >>> np.ma.in1d(ar1, ar2)
+    masked_array(data=[ True, False,  True, False,  True],
+                 mask=False,
+           fill_value=True)
 
     """
     if not assume_unique:
@@ -1344,6 +1390,15 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     -----
     .. versionadded:: 1.13.0
 
+    Examples
+    --------
+    >>> element = np.ma.array([1, 2, 3, 4, 5, 6])
+    >>> test_elements = [0, 2]
+    >>> np.ma.isin(element, test_elements)
+    masked_array(data=[False,  True, False, False, False, False],
+                 mask=False,
+           fill_value=True)
+
     """
     element = ma.asarray(element)
     return in1d(element, test_elements, assume_unique=assume_unique,
@@ -1359,6 +1414,15 @@ def union1d(ar1, ar2):
     See Also
     --------
     numpy.union1d : Equivalent function for ndarrays.
+
+    Examples
+    --------
+    >>> ar1 = np.ma.array([1, 2, 3, 4])
+    >>> ar2 = np.ma.array([3, 4, 5, 6])
+    >>> np.ma.union1d(ar1, ar2)
+    masked_array(data=[1, 2, 3, 4, 5, 6],
+             mask=False,
+       fill_value=999999)
 
     """
     return unique(ma.concatenate((ar1, ar2), axis=None))
@@ -1492,6 +1556,23 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
     --------
     numpy.cov
 
+    Examples
+    --------
+    >>> x = np.ma.array([[0, 1], [1, 1]], mask=[0, 1, 0, 1])
+    >>> y = np.ma.array([[1, 0], [0, 1]], mask=[0, 0, 1, 1])
+    >>> np.ma.cov(x, y)
+    masked_array(
+    data=[[--, --, --, --],
+          [--, --, --, --],
+          [--, --, --, --],
+          [--, --, --, --]],
+    mask=[[ True,  True,  True,  True],
+          [ True,  True,  True,  True],
+          [ True,  True,  True,  True],
+          [ True,  True,  True,  True]],
+    fill_value=1e+20,
+    dtype=float64)
+    
     """
     # Check inputs
     if ddof is not None and ddof != int(ddof):
@@ -1560,6 +1641,19 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
     for backwards compatibility with previous versions of this function.  These
     arguments had no effect on the return values of the function and can be
     safely ignored in this and previous versions of numpy.
+
+    Examples
+    --------
+    >>> x = np.ma.array([[0, 1], [1, 1]], mask=[0, 1, 0, 1])
+    >>> np.ma.corrcoef(x)
+    masked_array(
+      data=[[--, --],
+            [--, --]],
+      mask=[[ True,  True],
+            [ True,  True]],
+      fill_value=1e+20,
+      dtype=float64)
+
     """
     msg = 'bias and ddof have no effect and are deprecated'
     if bias is not np._NoValue or ddof is not np._NoValue:
