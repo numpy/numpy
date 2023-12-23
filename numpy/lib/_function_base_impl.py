@@ -20,6 +20,7 @@ from numpy._core.fromnumeric import (
     ravel, nonzero, partition, mean, any, sum
     )
 from numpy._core.numerictypes import typecodes
+from numpy.lib._nanfunctions_impl import _replace_nan, _copyto, nanmean
 from numpy.lib._twodim_base_impl import diag
 from numpy._core.multiarray import (
     _place, bincount, normalize_axis_index, _monotonicity,
@@ -387,13 +388,13 @@ def iterable(y):
 
 
 def _average_dispatcher(a, axis=None, weights=None, returned=None, *,
-                        keepdims=None):
+                        keepdims=None, ignore_nan=None):
     return (a, weights)
 
 
 @array_function_dispatch(_average_dispatcher)
 def average(a, axis=None, weights=None, returned=False, *,
-            keepdims=np._NoValue):
+            keepdims=np._NoValue, ignore_nan=False):
     """
     Compute the weighted average along the specified axis.
 
@@ -434,6 +435,12 @@ def average(a, axis=None, weights=None, returned=False, *,
         the result will broadcast correctly against the original `a`.
         *Note:* `keepdims` will not work with instances of `numpy.matrix`
         or other classes whose methods do not support `keepdims`.
+    ignore_nan : bool, optional
+        Default is `False`. If `True`, nan values are ignored
+        from either the input array `a`, or both the `a` and `weights`
+        if weights are provided. In the case where weights are
+        provided, an nan in either `a` or `weights` will result
+        in the corresponding weight being set to 0.
 
         .. versionadded:: 1.23.0
 
@@ -513,7 +520,10 @@ def average(a, axis=None, weights=None, returned=False, *,
         keepdims_kw = {'keepdims': keepdims}
 
     if weights is None:
-        avg = a.mean(axis, **keepdims_kw)
+        if ignore_nan:
+            avg = nanmean(a, axis, **keepdims_kw)
+        else:
+            avg = a.mean(axis, **keepdims_kw)
         avg_as_array = np.asanyarray(avg)
         scl = avg_as_array.dtype.type(a.size/avg_as_array.size)
     else:
@@ -538,8 +548,18 @@ def average(a, axis=None, weights=None, returned=False, *,
                     "Length of weights not compatible with specified axis.")
 
             # setup wgt to broadcast along axis
-            wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape)
+            if ignore_nan:
+                wgt = np.broadcast_to(wgt, a.shape)
+            else:
+                wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape)
             wgt = wgt.swapaxes(-1, axis)
+
+        if ignore_nan:
+            if not wgt.flags.writeable:
+                wgt = np.copy(wgt)
+            a, a_mask = _replace_nan(a, 0)
+            wgt, _ = _replace_nan(wgt, 0)
+            wgt = _copyto(wgt, 0, a_mask)
 
         scl = wgt.sum(axis=axis, dtype=result_dtype, **keepdims_kw)
         if np.any(scl == 0.0):

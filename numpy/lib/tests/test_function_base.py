@@ -427,6 +427,33 @@ class TestAverage:
         a = np.array([Fraction(1, 5), Fraction(3, 5)])
         assert_equal(np.average(a), Fraction(2, 5))
 
+    def test_ignore_nan(self):
+        y, y_nan_removed = [1, 2, 3, 4, np.nan, 6], [1, 2, 3, 4, 6]
+        w, w_nan_removed = [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 6]
+        actual = average(y, weights=w, ignore_nan=True)
+        desired = average(y_nan_removed, weights=w_nan_removed)
+        assert_almost_equal(actual, desired)
+
+        y, y_nan_removed = [1, 2, 3, 4, np.nan], [1, 2, 3, 4]
+        actual = average(y, ignore_nan=True)
+        desired = average(y_nan_removed)
+        assert_almost_equal(actual, desired)
+
+        y, y_nan_removed = [1, 2, 3, 4, np.nan, 6], [1, 2, 4, 6]
+        w, w_nan_removed = [1, 2, np.nan, 4, 5, 6], [1, 2, 4, 6]
+        actual = average(y, weights=w, ignore_nan=True)
+        desired = average(y_nan_removed, weights=w_nan_removed)
+        assert_almost_equal(actual, desired)
+
+        y, y_nan_removed = ([[1, 2, 3, 4, np.nan, 6], [1, 2, 3, 4, 5, 6]],
+                            [[1, 2, 3, 4, 0, 6], [1, 2, 3, 4, 5, 6]])
+        w, w_nan_removed = ([1, 2, 3, 4, 5, 6],
+                            [[1, 2, 3, 4, 0, 6], [1, 2, 3, 4, 5, 6]])
+        actual = average(y, weights=w, axis=1, ignore_nan=True)
+        desired = average(y_nan_removed, weights=w_nan_removed, axis=1)
+        assert_almost_equal(actual, desired)
+
+
 class TestSelect:
     choices = [np.array([1, 2, 3]),
                np.array([4, 5, 6]),
