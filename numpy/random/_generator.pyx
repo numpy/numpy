@@ -2767,7 +2767,7 @@ cdef class Generator:
         >>> modevalue = np.sqrt(2 / np.pi) * meanvalue
         >>> s = rng.rayleigh(modevalue, 1000000)
 
-        The proportion of waves larger than 3 meters is:
+        The percentage of waves larger than 3 meters is:
 
         >>> 100.*sum(s>3)/1000000.
         0.087300000000000003 # random
@@ -3427,7 +3427,7 @@ cdef class Generator:
         >>> rng = np.random.default_rng()
         >>> sample = rng.geometric(p=p, size=size)
 
-        What percentage of trials succeeded after a single run?
+        What proportion of trials succeeded after a single run?
 
         >>> (sample == 1).sum()/size
         0.34889999999999999  # may vary
