@@ -11,6 +11,7 @@ from numpy.testing import IS_WASM
 @pytest.mark.usefixtures("build_module")
 class TestAbstractInterface:
     spec = util.F2PyModuleSpec(
+        test_class_name="TestAbstractInterface",
         sources=[util.getpath("tests", "src", "abstract_interface", "foo.f90")],
         skip=["add1", "add2"]
     )

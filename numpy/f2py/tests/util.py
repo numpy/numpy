@@ -19,6 +19,7 @@ import pytest
 import contextlib
 import numpy
 import concurrent.futures
+from dataclasses import dataclass, field
 
 from pathlib import Path
 from numpy._utils import asunicode
@@ -334,6 +335,7 @@ def build_meson(source_files, module_name=None, **kwargs):
 
 @dataclass
 class F2PyModuleSpec:
+    test_class_name: str
     code: str = None
     sources: list = field(default_factory=list)
     options: list = field(default_factory=list)
@@ -341,23 +343,18 @@ class F2PyModuleSpec:
     only: list = field(default_factory=list)
     suffix: str = ".f"
     module_name: str = field(init=False)
-    test_class: type = field(init=False, default=None)
 
-    # TODO(rg): Fun, but definitely overly complicated, simplify
     def __post_init__(self):
-        # Set test_class based on the calling context
-        frame = inspect.currentframe()
-        try:
-            self.test_class = inspect.getouterframes(frame)[1].frame.f_locals["self"].__class__
-        finally:
-            del frame  # Avoid reference cycles
+        # Obtain the module path from the current module's __name__
+        # Mimicks this:
+        # cls = type(self)
+        # f'_{cls.__module__.rsplit(".",1)[-1]}_{cls.__name__}_ext_module'
+        module_part = __name__.rsplit(".", 1)[-1]
+        self.module_name = f"_{module_part}_{self.test_class_name}_ext_module"
 
-        # Generate the module name
-        if self.test_class:
-            self.module_name = f'_{self.test_class.__module__.rsplit(".",1)[-1]}_{self.test_class.__name__}_ext_module'
-        else:
-            # Fallback module name generation if test_class is not set
-            self.module_name = "default_module_name"
+
+def create_module_spec(test_class, **kwargs):
+    return F2PyModuleSpec(test_class=test_class, **kwargs)
 
 
 def build_module_from_spec(spec):
