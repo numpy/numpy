@@ -12,8 +12,8 @@ def check_compilers():
 
 @pytest.fixture(scope="class")
 def build_module(request, check_compilers):
-    test_instance = request.cls()
-    codes = test_instance.sources if test_instance.sources else []
+    spec = request.cls.spec
+    codes = spec.sources if spec.sources else []
     needs_f77 = any(str(fn).endswith(".f") for fn in codes)
     needs_f90 = any(str(fn).endswith(".f90") for fn in codes)
     needs_pyf = any(str(fn).endswith(".pyf") for fn in codes)
@@ -26,7 +26,8 @@ def build_module(request, check_compilers):
         pytest.skip("No Fortran compiler available")
 
     try:
-        test_instance.build_mod()
+        request.cls.module = util.build_module_from_spec(spec)
     except:
         pytest.skip("Module build failed")
-    request.cls.module = test_instance.module
+
+    yield request.cls.module
