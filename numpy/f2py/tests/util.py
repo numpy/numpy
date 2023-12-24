@@ -332,6 +332,34 @@ def build_meson(source_files, module_name=None, **kwargs):
 # Unittest convenience
 #
 
+@dataclass
+class F2PyModuleSpec:
+    code: str = None
+    sources: list = field(default_factory=list)
+    options: list = field(default_factory=list)
+    skip: list = field(default_factory=list)
+    only: list = field(default_factory=list)
+    suffix: str = ".f"
+    module_name: str = field(init=False)
+    test_class: type = field(init=False, default=None)
+
+    # TODO(rg): Fun, but definitely overly complicated, simplify
+    def __post_init__(self):
+        # Set test_class based on the calling context
+        frame = inspect.currentframe()
+        try:
+            self.test_class = inspect.getouterframes(frame)[1].frame.f_locals["self"].__class__
+        finally:
+            del frame  # Avoid reference cycles
+
+        # Generate the module name
+        if self.test_class:
+            self.module_name = f'_{self.test_class.__module__.rsplit(".",1)[-1]}_{self.test_class.__name__}_ext_module'
+        else:
+            # Fallback module name generation if test_class is not set
+            self.module_name = "default_module_name"
+
+
 def build_module_from_spec(spec):
     codes = spec.sources if spec.sources else []
     if spec.code:
