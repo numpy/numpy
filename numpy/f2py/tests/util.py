@@ -332,6 +332,32 @@ def build_meson(source_files, module_name=None, **kwargs):
 # Unittest convenience
 #
 
+def build_module_from_spec(spec):
+    codes = spec.sources if spec.sources else []
+    if spec.code:
+        codes.append(spec.suffix)
+
+    # Build the module based on the spec
+    if spec.code is not None:
+        module = build_code(
+            spec.code,
+            options=spec.options,
+            skip=spec.skip,
+            only=spec.only,
+            suffix=spec.suffix,
+            module_name=spec.module_name,
+        )
+    elif spec.sources is not None:
+        module = build_module(
+            spec.sources,
+            options=spec.options,
+            skip=spec.skip,
+            only=spec.only,
+            module_name=spec.module_name,
+        )
+    return module
+
+
 
 class F2PyTest:
     code = None
@@ -346,35 +372,6 @@ class F2PyTest:
     def module_name(self):
         cls = type(self)
         return f'_{cls.__module__.rsplit(".",1)[-1]}_{cls.__name__}_ext_module'
-
-    def build_mod(self):
-        if self.module is not None:
-            return
-
-        codes = self.sources if self.sources else []
-        if self.code:
-            codes.append(self.suffix)
-
-        # Build the module
-        if self.code is not None:
-            self.module = build_code(
-                self.code,
-                options=self.options,
-                skip=self.skip,
-                only=self.only,
-                suffix=self.suffix,
-                module_name=self.module_name,
-            )
-
-        if self.sources is not None:
-            self.module = build_module(
-                self.sources,
-                options=self.options,
-                skip=self.skip,
-                only=self.only,
-                module_name=self.module_name,
-            )
-
 
 #
 # Helper functions
