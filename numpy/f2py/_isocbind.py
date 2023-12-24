@@ -111,7 +111,7 @@ iso_c2py_map = {
     'intptr_t': 'long',
     'ptrdiff_t': 'long',
     'float': 'float',
-    'double': 'float',              # forced casting
+    'double': 'double',
     'long double': 'float',         # forced casting
     'float _Complex': 'complex',     # forced casting
     'double _Complex': 'complex',
