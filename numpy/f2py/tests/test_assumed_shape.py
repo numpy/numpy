@@ -27,13 +27,16 @@ def custom_f2cmap(request):
 
 @pytest.mark.usefixtures("build_module")
 class TestAssumedShapeSumExample(util.F2PyTest):
-    sources = [
-        util.getpath("tests", "src", "assumed_shape", "foo_free.f90"),
-        util.getpath("tests", "src", "assumed_shape", "foo_use.f90"),
-        util.getpath("tests", "src", "assumed_shape", "precision.f90"),
-        util.getpath("tests", "src", "assumed_shape", "foo_mod.f90"),
-        util.getpath("tests", "src", "assumed_shape", ".f2py_f2cmap"),
-    ]
+    spec = util.F2PyModuleSpec(
+        test_class_name="TestAssumedShapeSumExample",
+        sources = [
+            util.getpath("tests", "src", "assumed_shape", "foo_free.f90"),
+            util.getpath("tests", "src", "assumed_shape", "foo_use.f90"),
+            util.getpath("tests", "src", "assumed_shape", "precision.f90"),
+            util.getpath("tests", "src", "assumed_shape", "foo_mod.f90"),
+            util.getpath("tests", "src", "assumed_shape", ".f2py_f2cmap"),
+        ]
+    )
 
     @pytest.mark.slow
     def test_all(self):

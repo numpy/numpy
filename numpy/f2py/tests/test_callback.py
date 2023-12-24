@@ -13,7 +13,10 @@ from . import util
 
 @pytest.mark.usefixtures("build_module")
 class TestF77Callback(util.F2PyTest):
-    sources = [util.getpath("tests", "src", "callback", "foo.f")]
+    spec = util.F2PyModuleSpec(
+        test_class_name="TestF77Callback",
+        sources = [util.getpath("tests", "src", "callback", "foo.f")]
+    )
 
     @pytest.mark.parametrize("name", "t,t2".split(","))
     @pytest.mark.slow

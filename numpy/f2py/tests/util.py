@@ -385,18 +385,7 @@ def build_module_from_spec(spec):
 
 
 class F2PyTest:
-    code = None
-    sources = None
-    options = []
-    skip = []
-    only = []
-    suffix = ".f"
-    module = None
-
-    @property
-    def module_name(self):
-        cls = type(self)
-        return f'_{cls.__module__.rsplit(".",1)[-1]}_{cls.__name__}_ext_module'
+    spec = None
 
 #
 # Helper functions
