@@ -218,9 +218,10 @@ particular is less likely to run into compiler-specific bugs or catch them
 earlier. Both agree the meson build system allows specifying object link order,
 which produces more consistent builds. However that does tie NumPy to meson.
 
-Matti thinks the current build strategy is working well for NumPy and the
-advantages of changing the build and runtime dispatch, with possible unknown
-instabilities outweighs the advantages that fully adopting Highway may bring.
+Matti and Ralf think the current build strategy is working well for NumPy and
+the advantages of changing the build and runtime dispatch, with possible
+unknown instabilities outweighs the advantages that adopting Highway's dynamic
+dispatch may bring.
 
 Our experience of the past four years says that bugs with "invalid instruction"
 type crashes are invariably due to issues with feature detection - most often
