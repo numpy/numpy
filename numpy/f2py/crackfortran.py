@@ -2,14 +2,12 @@
 """
 crackfortran --- read fortran (77,90) code and extract declaration information.
 
-Copyright 1999-2004 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>
+Copyright 1999 -- 2011 Pearu Peterson all rights reserved.
+Copyright 2011 -- present NumPy Developers.
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
-$Date: 2005/09/27 07:13:49 $
-Pearu Peterson
 
 
 Usage of crackfortran:

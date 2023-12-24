@@ -4,15 +4,12 @@
 f2py2e - Fortran to Python C/API generator. 2nd Edition.
          See __usage__ below.
 
-Copyright 1999--2011 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@cens.ioc.ee>
+Copyright 1999 -- 2011 Pearu Peterson all rights reserved.
+Copyright 2011 -- present NumPy Developers.
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
-$Date: 2005/05/06 08:31:19 $
-Pearu Peterson
-
 """
 import sys
 import os
@@ -21,6 +18,7 @@ import re
 from pathlib import Path
 from itertools import dropwhile
 import argparse
+import copy
 
 from . import crackfortran
 from . import rules
@@ -190,10 +188,10 @@ Extra options (only effective with -c):
 
 Version:     {f2py_version}
 numpy Version: {numpy_version}
-Requires:    Python 3.5 or higher.
 License:     NumPy license (see LICENSE.txt in the NumPy source code)
-Copyright 1999 - 2011 Pearu Peterson all rights reserved.
-https://web.archive.org/web/20140822061353/http://cens.ioc.ee/projects/f2py2e"""
+Copyright 1999 -- 2011 Pearu Peterson all rights reserved.
+Copyright 2011 -- present NumPy Developers.
+https://numpy.org/doc/stable/f2py/index.html\n"""
 
 
 def scaninputline(inputline):
