@@ -3423,19 +3423,34 @@ cdef class Generator:
         out : ndarray or scalar
             Drawn samples from the parameterized geometric distribution.
 
+        References
+        ----------
+
+        .. [1] Wikipedia, "Geometric distribution",
+               https://en.wikipedia.org/wiki/Geometric_distribution
+
         Examples
         --------
-        Draw ten thousand values from the geometric distribution,
-        with the probability of an individual success equal to 0.35:
+        Draw 10.000 values from the geometric distribution, with the 
+        probability of an individual success equal to ``p = 0.35``:
 
+        >>> p, size = 0.35, 10000
         >>> rng = np.random.default_rng()
-        >>> z = rng.geometric(p=0.35, size=10000)
+        >>> sample = rng.geometric(p=p, size=size)
 
-        How many trials succeeded after a single run?
+        What proportion of trials succeeded after a single run?
 
-        >>> (z == 1).sum() / 10000.
-        0.34889999999999999  # random
+        >>> (sample == 1).sum()/size
+        0.34889999999999999  # may vary
 
+        The geometric distribution with ``p=0.35`` looks as follows:
+
+        >>> import matplotlib.pyplot as plt
+        >>> count, bins, _ = plt.hist(sample, bins=30, density=True)
+        >>> plt.plot(bins, (1-p)**(bins-1)*p)
+        >>> plt.xlim([0, 25])
+        >>> plt.show()
+        
         """
         return disc(&random_geometric, &self._bitgen, size, self.lock, 1, 0,
                     p, 'p', CONS_BOUNDED_GT_0_1,
