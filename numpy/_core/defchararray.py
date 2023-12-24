@@ -1383,18 +1383,19 @@ def replace(a, old, new, count=None):
     array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
     
     """
+    a_arr = numpy.asarray(a)
     max_int64 = numpy.iinfo(numpy.int64).max
     count = count if count is not None else max_int64
 
-    counts = numpy._core.umath.count(a, old, 0, max_int64)
+    counts = numpy._core.umath.count(a_arr, old, 0, max_int64)
     buffersizes = (
-        numpy._core.umath.str_len(a)
+        numpy._core.umath.str_len(a_arr)
         + counts * (numpy._core.umath.str_len(new) -
                     numpy._core.umath.str_len(old))
     )
     max_buffersize = numpy.max(buffersizes)
-    out = numpy.empty(a.shape, dtype=f"{a.dtype.char}{max_buffersize}")
-    numpy._core.umath._replace(a, old, new, count, out=out)
+    out = numpy.empty(a_arr.shape, dtype=f"{a_arr.dtype.char}{max_buffersize}")
+    numpy._core.umath._replace(a_arr, old, new, count, out=out)
     return out
 
 
