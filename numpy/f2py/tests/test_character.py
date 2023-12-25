@@ -4,21 +4,19 @@ from numpy.testing import assert_array_equal, assert_equal, assert_raises
 import numpy as np
 from numpy.f2py.tests import util
 
+CHAR_STRING_LEN = ["1", "3", "star"]
 
-@pytest.mark.slow
-@pytest.mark.usefixtures("build_module")
-class TestCharacterString(util.F2PyTest):
-    # options = ['--debug-capi', '--build-dir', '/tmp/test-build-f2py']
-    suffix = '.f90'
-    fprefix = 'test_character_string'
-    length_list = ['1', '3', 'star']
 
-    code = ''
-    for length in length_list:
+@pytest.fixture(scope="module")
+def character_string_spec():
+    code = ""
+
+    for length in CHAR_STRING_LEN:
+        fprefix = "test_character_string"
         fsuffix = length
-        clength = dict(star='(*)').get(length, length)
-
-        code += textwrap.dedent(f"""
+        clength = dict(star="(*)").get(length, length)
+        code += textwrap.dedent(
+            f"""
 
         subroutine {fprefix}_input_{fsuffix}(c, o, n)
           character*{clength}, intent(in) :: c
@@ -73,73 +71,106 @@ class TestCharacterString(util.F2PyTest):
             end do
           end do
         end subroutine {fprefix}_2d_array_input_{fsuffix}
-        """)
+        """
+        )
 
-    @pytest.mark.parametrize("length", length_list)
-    def test_input(self, length):
-        fsuffix = {'(*)': 'star'}.get(length, length)
-        f = getattr(self.module, self.fprefix + '_input_' + fsuffix)
-
-        a = {'1': 'a', '3': 'abc', 'star': 'abcde' * 3}[length]
-
-        assert_array_equal(f(a), np.array(list(map(ord, a)), dtype='u1'))
-
-    @pytest.mark.parametrize("length", length_list[:-1])
-    def test_output(self, length):
-        fsuffix = length
-        f = getattr(self.module, self.fprefix + '_output_' + fsuffix)
-
-        a = {'1': 'a', '3': 'abc'}[length]
-
-        assert_array_equal(f(np.array(list(map(ord, a)), dtype='u1')),
-                           a.encode())
-
-    @pytest.mark.parametrize("length", length_list)
-    def test_array_input(self, length):
-        fsuffix = length
-        f = getattr(self.module, self.fprefix + '_array_input_' + fsuffix)
-
-        a = np.array([{'1': 'a', '3': 'abc', 'star': 'abcde' * 3}[length],
-                      {'1': 'A', '3': 'ABC', 'star': 'ABCDE' * 3}[length],
-                      ], dtype='S')
-
-        expected = np.array([[c for c in s] for s in a], dtype='u1')
-        assert_array_equal(f(a), expected)
-
-    @pytest.mark.parametrize("length", length_list)
-    def test_array_output(self, length):
-        fsuffix = length
-        f = getattr(self.module, self.fprefix + '_array_output_' + fsuffix)
-
-        expected = np.array(
-            [{'1': 'a', '3': 'abc', 'star': 'abcde' * 3}[length],
-             {'1': 'A', '3': 'ABC', 'star': 'ABCDE' * 3}[length]], dtype='S')
-
-        a = np.array([[c for c in s] for s in expected], dtype='u1')
-        assert_array_equal(f(a), expected)
-
-    @pytest.mark.parametrize("length", length_list)
-    def test_2d_array_input(self, length):
-        fsuffix = length
-        f = getattr(self.module, self.fprefix + '_2d_array_input_' + fsuffix)
-
-        a = np.array([[{'1': 'a', '3': 'abc', 'star': 'abcde' * 3}[length],
-                       {'1': 'A', '3': 'ABC', 'star': 'ABCDE' * 3}[length]],
-                      [{'1': 'f', '3': 'fgh', 'star': 'fghij' * 3}[length],
-                       {'1': 'F', '3': 'FGH', 'star': 'FGHIJ' * 3}[length]]],
-                     dtype='S')
-        expected = np.array([[[c for c in item] for item in row] for row in a],
-                            dtype='u1', order='F')
-        assert_array_equal(f(a), expected)
+    spec = util.F2PyModuleSpec(
+        test_class_name="TestCharacterString",
+        code=code,
+        suffix=".f90",
+        # options = ['--debug-capi', '--build-dir', '/tmp/test-build-f2py']
+    )
+    return spec
 
 
-@pytest.mark.usefixtures("build_module")
-class TestCharacter(util.F2PyTest):
-    # options = ['--debug-capi', '--build-dir', '/tmp/test-build-f2py']
-    suffix = '.f90'
-    fprefix = 'test_character'
+@pytest.mark.parametrize("length", CHAR_STRING_LEN)
+@pytest.mark.parametrize("_mod", ["character_string_spec"], indirect=True)
+def test_input(_mod, length):
+    fsuffix = {"(*)": "star"}.get(length, length)
+    f = getattr(_mod, "test_character_string" + "_input_" + fsuffix)
 
-    code = textwrap.dedent(f"""
+    a = {"1": "a", "3": "abc", "star": "abcde" * 3}[length]
+
+    assert_array_equal(f(a), np.array(list(map(ord, a)), dtype="u1"))
+
+
+@pytest.mark.parametrize("length", CHAR_STRING_LEN[:-1])
+@pytest.mark.parametrize("_mod", ["character_string_spec"], indirect=True)
+def test_output(_mod, length):
+    fsuffix = length
+    f = getattr(_mod, "test_character_string" + "_output_" + fsuffix)
+
+    a = {"1": "a", "3": "abc"}[length]
+
+    assert_array_equal(f(np.array(list(map(ord, a)), dtype="u1")), a.encode())
+
+
+@pytest.mark.parametrize("length", CHAR_STRING_LEN)
+@pytest.mark.parametrize("_mod", ["character_string_spec"], indirect=True)
+def test_array_input(_mod, length):
+    fsuffix = length
+    f = getattr(_mod, "test_character_string" + "_array_input_" + fsuffix)
+
+    a = np.array(
+        [
+            {"1": "a", "3": "abc", "star": "abcde" * 3}[length],
+            {"1": "A", "3": "ABC", "star": "ABCDE" * 3}[length],
+        ],
+        dtype="S",
+    )
+
+    expected = np.array([[c for c in s] for s in a], dtype="u1")
+    assert_array_equal(f(a), expected)
+
+
+@pytest.mark.parametrize("length", CHAR_STRING_LEN)
+@pytest.mark.parametrize("_mod", ["character_string_spec"], indirect=True)
+def test_array_output(_mod, length):
+    fsuffix = length
+    f = getattr(_mod, "test_character_string" + "_array_output_" + fsuffix)
+
+    expected = np.array(
+        [
+            {"1": "a", "3": "abc", "star": "abcde" * 3}[length],
+            {"1": "A", "3": "ABC", "star": "ABCDE" * 3}[length],
+        ],
+        dtype="S",
+    )
+
+    a = np.array([[c for c in s] for s in expected], dtype="u1")
+    assert_array_equal(f(a), expected)
+
+
+@pytest.mark.parametrize("length", CHAR_STRING_LEN)
+@pytest.mark.parametrize("_mod", ["character_string_spec"], indirect=True)
+def test_2d_array_input(_mod, length):
+    fsuffix = length
+    f = getattr(_mod, "test_character_string" + "_2d_array_input_" + fsuffix)
+
+    a = np.array(
+        [
+            [
+                {"1": "a", "3": "abc", "star": "abcde" * 3}[length],
+                {"1": "A", "3": "ABC", "star": "ABCDE" * 3}[length],
+            ],
+            [
+                {"1": "f", "3": "fgh", "star": "fghij" * 3}[length],
+                {"1": "F", "3": "FGH", "star": "FGHIJ" * 3}[length],
+            ],
+        ],
+        dtype="S",
+    )
+    expected = np.array(
+        [[[c for c in item] for item in row] for row in a], dtype="u1", order="F"
+    )
+    assert_array_equal(f(a), expected)
+
+
+@pytest.fixture(scope="module")
+def character_spec():
+    fprefix = "test_character"
+    code = textwrap.dedent(
+        f"""
        subroutine {fprefix}_input(c, o)
           character, intent(in) :: c
           integer*1 o
@@ -240,205 +271,233 @@ class TestCharacter(util.F2PyTest):
           character :: c
           c = o
        end function {fprefix}_optional
-    """)
+    """
+    )
 
-    @pytest.mark.parametrize("dtype", ['c', 'S1'])
-    def test_input(self, dtype):
-        f = getattr(self.module, self.fprefix + '_input')
+    spec = util.F2PyModuleSpec(
+        test_class_name="TestCharacter", code=code, suffix=".f90"
+    )
+    return spec
 
-        assert_equal(f(np.array('a', dtype=dtype)), ord('a'))
-        assert_equal(f(np.array(b'a', dtype=dtype)), ord('a'))
-        assert_equal(f(np.array(['a'], dtype=dtype)), ord('a'))
-        assert_equal(f(np.array('abc', dtype=dtype)), ord('a'))
-        assert_equal(f(np.array([['a']], dtype=dtype)), ord('a'))
 
-    def test_input_varia(self):
-        f = getattr(self.module, self.fprefix + '_input')
+@pytest.mark.parametrize("dtype", ["c", "S1"])
+@pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
+def test_input(_mod, dtype):
+    f = getattr(_mod, "test_character" + "_input")
 
-        assert_equal(f('a'), ord('a'))
-        assert_equal(f(b'a'), ord(b'a'))
-        assert_equal(f(''), 0)
-        assert_equal(f(b''), 0)
-        assert_equal(f(b'\0'), 0)
-        assert_equal(f('ab'), ord('a'))
-        assert_equal(f(b'ab'), ord('a'))
-        assert_equal(f(['a']), ord('a'))
+    assert_equal(f(np.array("a", dtype=dtype)), ord("a"))
+    assert_equal(f(np.array(b"a", dtype=dtype)), ord("a"))
+    assert_equal(f(np.array(["a"], dtype=dtype)), ord("a"))
+    assert_equal(f(np.array("abc", dtype=dtype)), ord("a"))
+    assert_equal(f(np.array([["a"]], dtype=dtype)), ord("a"))
 
-        assert_equal(f(np.array(b'a')), ord('a'))
-        assert_equal(f(np.array([b'a'])), ord('a'))
-        a = np.array('a')
-        assert_equal(f(a), ord('a'))
-        a = np.array(['a'])
-        assert_equal(f(a), ord('a'))
 
-        try:
-            f([])
-        except IndexError as msg:
-            if not str(msg).endswith(' got 0-list'):
-                raise
-        else:
-            raise SystemError(f'{f.__name__} should have failed on empty list')
+@pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
+def test_input_varia(_mod):
+    f = getattr(_mod, "test_character" + "_input")
 
-        try:
-            f(97)
-        except TypeError as msg:
-            if not str(msg).endswith(' got int instance'):
-                raise
-        else:
-            raise SystemError(f'{f.__name__} should have failed on int value')
+    assert_equal(f("a"), ord("a"))
+    assert_equal(f(b"a"), ord(b"a"))
+    assert_equal(f(""), 0)
+    assert_equal(f(b""), 0)
+    assert_equal(f(b"\0"), 0)
+    assert_equal(f("ab"), ord("a"))
+    assert_equal(f(b"ab"), ord("a"))
+    assert_equal(f(["a"]), ord("a"))
 
-    @pytest.mark.parametrize("dtype", ['c', 'S1', 'U1'])
-    def test_array_input(self, dtype):
-        f = getattr(self.module, self.fprefix + '_array_input')
+    assert_equal(f(np.array(b"a")), ord("a"))
+    assert_equal(f(np.array([b"a"])), ord("a"))
+    a = np.array("a")
+    assert_equal(f(a), ord("a"))
+    a = np.array(["a"])
+    assert_equal(f(a), ord("a"))
 
-        assert_array_equal(f(np.array(['a', 'b', 'c'], dtype=dtype)),
-                           np.array(list(map(ord, 'abc')), dtype='i1'))
-        assert_array_equal(f(np.array([b'a', b'b', b'c'], dtype=dtype)),
-                           np.array(list(map(ord, 'abc')), dtype='i1'))
+    try:
+        f([])
+    except IndexError as msg:
+        if not str(msg).endswith(" got 0-list"):
+            raise
+    else:
+        raise SystemError(f"{f.__name__} should have failed on empty list")
 
-    def test_array_input_varia(self):
-        f = getattr(self.module, self.fprefix + '_array_input')
-        assert_array_equal(f(['a', 'b', 'c']),
-                           np.array(list(map(ord, 'abc')), dtype='i1'))
-        assert_array_equal(f([b'a', b'b', b'c']),
-                           np.array(list(map(ord, 'abc')), dtype='i1'))
+    try:
+        f(97)
+    except TypeError as msg:
+        if not str(msg).endswith(" got int instance"):
+            raise
+    else:
+        raise SystemError(f"{f.__name__} should have failed on int value")
 
-        try:
-            f(['a', 'b', 'c', 'd'])
-        except ValueError as msg:
-            if not str(msg).endswith(
-                    'th dimension must be fixed to 3 but got 4'):
-                raise
-        else:
-            raise SystemError(
-                f'{f.__name__} should have failed on wrong input')
 
-    @pytest.mark.parametrize("dtype", ['c', 'S1', 'U1'])
-    def test_2d_array_input(self, dtype):
-        f = getattr(self.module, self.fprefix + '_2d_array_input')
+@pytest.mark.parametrize("dtype", ["c", "S1", "U1"])
+@pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
+def test_array_input(_mod, dtype):
+    f = getattr(_mod, "test_character" + "_array_input")
 
-        a = np.array([['a', 'b', 'c'],
-                      ['d', 'e', 'f']], dtype=dtype, order='F')
-        expected = a.view(np.uint32 if dtype == 'U1' else np.uint8)
-        assert_array_equal(f(a), expected)
+    assert_array_equal(
+        f(np.array(["a", "b", "c"], dtype=dtype)),
+        np.array(list(map(ord, "abc")), dtype="i1"),
+    )
+    assert_array_equal(
+        f(np.array([b"a", b"b", b"c"], dtype=dtype)),
+        np.array(list(map(ord, "abc")), dtype="i1"),
+    )
 
-    def test_output(self):
-        f = getattr(self.module, self.fprefix + '_output')
 
-        assert_equal(f(ord(b'a')), b'a')
-        assert_equal(f(0), b'\0')
+@pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
+def test_array_input_varia(_mod):
+    f = getattr(_mod, "test_character" + "_array_input")
+    assert_array_equal(f(["a", "b", "c"]), np.array(list(map(ord, "abc")), dtype="i1"))
+    assert_array_equal(
+        f([b"a", b"b", b"c"]), np.array(list(map(ord, "abc")), dtype="i1")
+    )
 
-    def test_array_output(self):
-        f = getattr(self.module, self.fprefix + '_array_output')
+    try:
+        f(["a", "b", "c", "d"])
+    except ValueError as msg:
+        if not str(msg).endswith("th dimension must be fixed to 3 but got 4"):
+            raise
+    else:
+        raise SystemError(f"{f.__name__} should have failed on wrong input")
 
-        assert_array_equal(f(list(map(ord, 'abc'))),
-                           np.array(list('abc'), dtype='S1'))
 
-    def test_input_output(self):
-        f = getattr(self.module, self.fprefix + '_input_output')
+@pytest.mark.parametrize("dtype", ["c", "S1", "U1"])
+@pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
+def test_2d_array_input(_mod, dtype):
+    f = getattr(_mod, "test_character" + "_2d_array_input")
 
-        assert_equal(f(b'a'), b'a')
-        assert_equal(f('a'), b'a')
-        assert_equal(f(''), b'\0')
+    a = np.array([["a", "b", "c"], ["d", "e", "f"]], dtype=dtype, order="F")
+    expected = a.view(np.uint32 if dtype == "U1" else np.uint8)
+    assert_array_equal(f(a), expected)
 
-    @pytest.mark.parametrize("dtype", ['c', 'S1'])
-    def test_inout(self, dtype):
-        f = getattr(self.module, self.fprefix + '_inout')
 
-        a = np.array(list('abc'), dtype=dtype)
-        f(a, 'A')
-        assert_array_equal(a, np.array(list('Abc'), dtype=a.dtype))
-        f(a[1:], 'B')
-        assert_array_equal(a, np.array(list('ABc'), dtype=a.dtype))
+@pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
+def test_output(_mod):
+    f = getattr(_mod, "test_character" + "_output")
 
-        a = np.array(['abc'], dtype=dtype)
-        f(a, 'A')
-        assert_array_equal(a, np.array(['Abc'], dtype=a.dtype))
+    assert_equal(f(ord(b"a")), b"a")
+    assert_equal(f(0), b"\0")
 
-    def test_inout_varia(self):
-        f = getattr(self.module, self.fprefix + '_inout')
-        a = np.array('abc', dtype='S3')
-        f(a, 'A')
-        assert_array_equal(a, np.array('Abc', dtype=a.dtype))
 
-        a = np.array(['abc'], dtype='S3')
-        f(a, 'A')
-        assert_array_equal(a, np.array(['Abc'], dtype=a.dtype))
+@pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
+def test_array_output(_mod):
+    f = getattr(_mod, "test_character" + "_array_output")
 
-        try:
-            f('abc', 'A')
-        except ValueError as msg:
-            if not str(msg).endswith(' got 3-str'):
-                raise
-        else:
-            raise SystemError(f'{f.__name__} should have failed on str value')
+    assert_array_equal(f(list(map(ord, "abc"))), np.array(list("abc"), dtype="S1"))
 
-    @pytest.mark.parametrize("dtype", ['c', 'S1'])
-    def test_array_inout(self, dtype):
-        f = getattr(self.module, self.fprefix + '_array_inout')
-        n = np.array(['A', 'B', 'C'], dtype=dtype, order='F')
 
-        a = np.array(['a', 'b', 'c'], dtype=dtype, order='F')
+@pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
+def test_input_output(_mod):
+    f = getattr(_mod, "test_character" + "_input_output")
+
+    assert_equal(f(b"a"), b"a")
+    assert_equal(f("a"), b"a")
+    assert_equal(f(""), b"\0")
+
+
+@pytest.mark.parametrize("dtype", ["c", "S1"])
+@pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
+def test_inout(_mod, dtype):
+    f = getattr(_mod, "test_character" + "_inout")
+
+    a = np.array(list("abc"), dtype=dtype)
+    f(a, "A")
+    assert_array_equal(a, np.array(list("Abc"), dtype=a.dtype))
+    f(a[1:], "B")
+    assert_array_equal(a, np.array(list("ABc"), dtype=a.dtype))
+
+    a = np.array(["abc"], dtype=dtype)
+    f(a, "A")
+    assert_array_equal(a, np.array(["Abc"], dtype=a.dtype))
+
+
+@pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
+def test_inout_varia(_mod):
+    f = getattr(_mod, "test_character" + "_inout")
+    a = np.array("abc", dtype="S3")
+    f(a, "A")
+    assert_array_equal(a, np.array("Abc", dtype=a.dtype))
+
+    a = np.array(["abc"], dtype="S3")
+    f(a, "A")
+    assert_array_equal(a, np.array(["Abc"], dtype=a.dtype))
+
+    try:
+        f("abc", "A")
+    except ValueError as msg:
+        if not str(msg).endswith(" got 3-str"):
+            raise
+    else:
+        raise SystemError(f"{f.__name__} should have failed on str value")
+
+
+@pytest.mark.parametrize("dtype", ["c", "S1"])
+@pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
+def test_array_inout(_mod, dtype):
+    f = getattr(_mod, "test_character" + "_array_inout")
+    n = np.array(["A", "B", "C"], dtype=dtype, order="F")
+
+    a = np.array(["a", "b", "c"], dtype=dtype, order="F")
+    f(a, n)
+    assert_array_equal(a, n)
+
+    a = np.array(["a", "b", "c", "d"], dtype=dtype)
+    f(a[1:], n)
+    assert_array_equal(a, np.array(["a", "A", "B", "C"], dtype=dtype))
+
+    a = np.array([["a", "b", "c"]], dtype=dtype, order="F")
+    f(a, n)
+    assert_array_equal(a, np.array([["A", "B", "C"]], dtype=dtype))
+
+    a = np.array(["a", "b", "c", "d"], dtype=dtype, order="F")
+    try:
         f(a, n)
-        assert_array_equal(a, n)
-
-        a = np.array(['a', 'b', 'c', 'd'], dtype=dtype)
-        f(a[1:], n)
-        assert_array_equal(a, np.array(['a', 'A', 'B', 'C'], dtype=dtype))
-
-        a = np.array([['a', 'b', 'c']], dtype=dtype, order='F')
-        f(a, n)
-        assert_array_equal(a, np.array([['A', 'B', 'C']], dtype=dtype))
-
-        a = np.array(['a', 'b', 'c', 'd'], dtype=dtype, order='F')
-        try:
-            f(a, n)
-        except ValueError as msg:
-            if not str(msg).endswith(
-                    'th dimension must be fixed to 3 but got 4'):
-                raise
-        else:
-            raise SystemError(
-                f'{f.__name__} should have failed on wrong input')
-
-    @pytest.mark.parametrize("dtype", ['c', 'S1'])
-    def test_2d_array_inout(self, dtype):
-        f = getattr(self.module, self.fprefix + '_2d_array_inout')
-        n = np.array([['A', 'B', 'C'],
-                      ['D', 'E', 'F']],
-                     dtype=dtype, order='F')
-        a = np.array([['a', 'b', 'c'],
-                      ['d', 'e', 'f']],
-                     dtype=dtype, order='F')
-        f(a, n)
-        assert_array_equal(a, n)
-
-    def test_return(self):
-        f = getattr(self.module, self.fprefix + '_return')
-
-        assert_equal(f('a'), b'a')
-
-    @pytest.mark.skip('fortran function returning array segfaults')
-    def test_array_return(self):
-        f = getattr(self.module, self.fprefix + '_array_return')
-
-        a = np.array(list('abc'), dtype='S1')
-        assert_array_equal(f(a), a)
-
-    def test_optional(self):
-        f = getattr(self.module, self.fprefix + '_optional')
-
-        assert_equal(f(), b"a")
-        assert_equal(f(b'B'), b"B")
+    except ValueError as msg:
+        if not str(msg).endswith("th dimension must be fixed to 3 but got 4"):
+            raise
+    else:
+        raise SystemError(f"{f.__name__} should have failed on wrong input")
 
 
-@pytest.mark.usefixtures("build_module")
-class TestMiscCharacter(util.F2PyTest):
-    # options = ['--debug-capi', '--build-dir', '/tmp/test-build-f2py']
-    suffix = '.f90'
-    fprefix = 'test_misc_character'
+@pytest.mark.parametrize("dtype", ["c", "S1"])
+@pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
+def test_2d_array_inout(_mod, dtype):
+    f = getattr(_mod, "test_character" + "_2d_array_inout")
+    n = np.array([["A", "B", "C"], ["D", "E", "F"]], dtype=dtype, order="F")
+    a = np.array([["a", "b", "c"], ["d", "e", "f"]], dtype=dtype, order="F")
+    f(a, n)
+    assert_array_equal(a, n)
 
-    code = textwrap.dedent(f"""
+
+@pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
+def test_return(_mod):
+    f = getattr(_mod, "test_character" + "_return")
+
+    assert_equal(f("a"), b"a")
+
+
+@pytest.mark.skip("fortran function returning array segfaults")
+@pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
+def test_array_return(_mod):
+    f = getattr(_mod, "test_character" + "_array_return")
+
+    a = np.array(list("abc"), dtype="S1")
+    assert_array_equal(f(a), a)
+
+
+@pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
+def test_optional(_mod):
+    f = getattr(_mod, "test_character" + "_optional")
+
+    assert_equal(f(), b"a")
+    assert_equal(f(b"B"), b"B")
+
+
+@pytest.fixture(scope="module")
+def misc_character_spec():
+    fprefix = "test_misc_character"
+    code = textwrap.dedent(
+        f"""
        subroutine {fprefix}_gh18684(x, y, m)
          character(len=5), dimension(m), intent(in) :: x
          character*5, dimension(m), intent(out) :: y
@@ -514,132 +573,174 @@ class TestMiscCharacter(util.F2PyTest):
          endif
          z(1) = 'c'
        end subroutine {fprefix}_character_bc_old
-    """)
+    """
+    )
 
-    @pytest.mark.slow
-    def test_gh18684(self):
-        # Test character(len=5) and character*5 usages
-        f = getattr(self.module, self.fprefix + '_gh18684')
-        x = np.array(["abcde", "fghij"], dtype='S5')
-        y = f(x)
-
-        assert_array_equal(x, y)
-
-    def test_gh6308(self):
-        # Test character string array in a common block
-        f = getattr(self.module, self.fprefix + '_gh6308')
-
-        assert_equal(self.module._BLNK_.name.dtype, np.dtype('S5'))
-        assert_equal(len(self.module._BLNK_.name), 12)
-        f("abcde", 0)
-        assert_equal(self.module._BLNK_.name[0], b"abcde")
-        f("12345", 5)
-        assert_equal(self.module._BLNK_.name[5], b"12345")
-
-    def test_gh4519(self):
-        # Test array of assumed length strings
-        f = getattr(self.module, self.fprefix + '_gh4519')
-
-        for x, expected in [
-                ('a', dict(shape=(), dtype=np.dtype('S1'))),
-                ('text', dict(shape=(), dtype=np.dtype('S4'))),
-                (np.array(['1', '2', '3'], dtype='S1'),
-                 dict(shape=(3,), dtype=np.dtype('S1'))),
-                (['1', '2', '34'],
-                 dict(shape=(3,), dtype=np.dtype('S2'))),
-                (['', ''], dict(shape=(2,), dtype=np.dtype('S1')))]:
-            r = f(x)
-            for k, v in expected.items():
-                assert_equal(getattr(r, k), v)
-
-    def test_gh3425(self):
-        # Test returning a copy of assumed length string
-        f = getattr(self.module, self.fprefix + '_gh3425')
-        # f is equivalent to bytes.upper
-
-        assert_equal(f('abC'), b'ABC')
-        assert_equal(f(''), b'')
-        assert_equal(f('abC12d'), b'ABC12D')
-
-    @pytest.mark.parametrize("state", ['new', 'old'])
-    def test_character_bc(self, state):
-        f = getattr(self.module, self.fprefix + '_character_bc_' + state)
-
-        c, a = f()
-        assert_equal(c, b'a')
-        assert_equal(len(a), 1)
-
-        c, a = f(b'b')
-        assert_equal(c, b'b')
-        assert_equal(len(a), 2)
-
-        assert_raises(Exception, lambda: f(b'c'))
+    spec = util.F2PyModuleSpec(
+        test_class_name="TestMiscCharacter", code=code, suffix=".f90"
+    )
+    return spec
 
 
-@pytest.mark.usefixtures("build_module")
-class TestStringScalarArr(util.F2PyTest):
-    sources = [util.getpath("tests", "src", "string", "scalar_string.f90")]
+@pytest.mark.parametrize("_mod", ["misc_character_spec"], indirect=True)
+def test_gh18684(_mod):
+    # Test character(len=5) and character*5 usages
+    f = getattr(_mod, "test_misc_character" + "_gh18684")
+    x = np.array(["abcde", "fghij"], dtype="S5")
+    y = f(x)
 
-    def test_char(self):
-        for out in (self.module.string_test.string,
-                    self.module.string_test.string77):
-            expected = ()
-            assert out.shape == expected
-            expected = '|S8'
-            assert out.dtype == expected
-
-    def test_char_arr(self):
-        for out in (self.module.string_test.strarr,
-                    self.module.string_test.strarr77):
-            expected = (5,7)
-            assert out.shape == expected
-            expected = '|S12'
-            assert out.dtype == expected
-
-@pytest.mark.usefixtures("build_module")
-class TestStringAssumedLength(util.F2PyTest):
-    sources = [util.getpath("tests", "src", "string", "gh24008.f")]
-
-    def test_gh24008(self):
-        self.module.greet("joe", "bob")
-
-@pytest.mark.slow
-@pytest.mark.usefixtures("build_module")
-class TestStringOptionalInOut(util.F2PyTest):
-    sources = [util.getpath("tests", "src", "string", "gh24662.f90")]
-
-    def test_gh24662(self):
-        self.module.string_inout_optional()
-        a = np.array('hi', dtype='S32')
-        self.module.string_inout_optional(a)
-        assert "output string" in a.tobytes().decode()
-        with pytest.raises(Exception):
-            aa = "Hi"
-            self.module.string_inout_optional(aa)
+    assert_array_equal(x, y)
 
 
-@pytest.mark.slow
-class TestNewCharHandling(util.F2PyTest):
-    # from v1.24 onwards, gh-19388
-    sources = [
-        util.getpath("tests", "src", "string", "gh25286.pyf"),
-        util.getpath("tests", "src", "string", "gh25286.f90")
-    ]
-    module_name = "_char_handling_test"
+@pytest.mark.parametrize("_mod", ["misc_character_spec"], indirect=True)
+def test_gh6308(_mod):
+    # Test character string array in a common block
+    f = getattr(_mod, "test_misc_character" + "_gh6308")
 
-    def test_gh25286(self):
-        info = self.module.charint('T')
-        assert info == 2
+    assert_equal(_mod._BLNK_.name.dtype, np.dtype("S5"))
+    assert_equal(len(_mod._BLNK_.name), 12)
+    f("abcde", 0)
+    assert_equal(_mod._BLNK_.name[0], b"abcde")
+    f("12345", 5)
+    assert_equal(_mod._BLNK_.name[5], b"12345")
 
-@pytest.mark.slow
-class TestBCCharHandling(util.F2PyTest):
-    # SciPy style, "incorrect" bindings with a hook
-    sources = [
-        util.getpath("tests", "src", "string", "gh25286_bc.pyf"),
-        util.getpath("tests", "src", "string", "gh25286.f90")
-    ]
-    module_name = "_char_handling_test"
 
-    def test_gh25286(self):
-        info = self.module.charint('T')
-        assert info == 2
+@pytest.mark.parametrize("_mod", ["misc_character_spec"], indirect=True)
+def test_gh4519(_mod):
+    # Test array of assumed length strings
+    f = getattr(_mod, "test_misc_character" + "_gh4519")
+
+    for x, expected in [
+        ("a", dict(shape=(), dtype=np.dtype("S1"))),
+        ("text", dict(shape=(), dtype=np.dtype("S4"))),
+        (np.array(["1", "2", "3"], dtype="S1"), dict(shape=(3,), dtype=np.dtype("S1"))),
+        (["1", "2", "34"], dict(shape=(3,), dtype=np.dtype("S2"))),
+        (["", ""], dict(shape=(2,), dtype=np.dtype("S1"))),
+    ]:
+        r = f(x)
+        for k, v in expected.items():
+            assert_equal(getattr(r, k), v)
+
+
+@pytest.mark.parametrize("_mod", ["misc_character_spec"], indirect=True)
+def test_gh3425(_mod):
+    # Test returning a copy of assumed length string
+    f = getattr(_mod, "test_misc_character" + "_gh3425")
+    # f is equivalent to bytes.upper
+
+    assert_equal(f("abC"), b"ABC")
+    assert_equal(f(""), b"")
+    assert_equal(f("abC12d"), b"ABC12D")
+
+
+@pytest.mark.parametrize("state", ["new", "old"])
+@pytest.mark.parametrize("_mod", ["misc_character_spec"], indirect=True)
+def test_character_bc(_mod, state):
+    f = getattr(_mod, "test_misc_character" + "_character_bc_" + state)
+
+    c, a = f()
+    assert_equal(c, b"a")
+    assert_equal(len(a), 1)
+
+    c, a = f(b"b")
+    assert_equal(c, b"b")
+    assert_equal(len(a), 2)
+
+    assert_raises(Exception, lambda: f(b"c"))
+
+
+@pytest.fixture(scope="module")
+def string_scalar_arr_spec():
+    spec = util.F2PyModuleSpec(
+        test_class_name="TestStringScalarArr",
+        sources=[util.getpath("tests", "src", "string", "scalar_string.f90")],
+    )
+    return spec
+
+
+@pytest.mark.parametrize("_mod", ["string_scalar_arr_spec"], indirect=True)
+def test_char(_mod):
+    for out in (_mod.string_test.string, _mod.string_test.string77):
+        expected = ()
+        assert out.shape == expected
+        expected = "|S8"
+        assert out.dtype == expected
+
+
+@pytest.mark.parametrize("_mod", ["string_scalar_arr_spec"], indirect=True)
+def test_char_arr(_mod):
+    for out in (_mod.string_test.strarr, _mod.string_test.strarr77):
+        expected = (5, 7)
+        assert out.shape == expected
+        expected = "|S12"
+        assert out.dtype == expected
+
+
+@pytest.fixture(scope="module")
+def string_assumed_length_spec():
+    spec = util.F2PyModuleSpec(
+        test_class_name="TestStringAssumedLength",
+        sources=[util.getpath("tests", "src", "string", "gh24008.f")],
+    )
+    return spec
+
+
+@pytest.mark.parametrize("_mod", ["string_assumed_length_spec"], indirect=True)
+def test_gh24008(_mod):
+    _mod.greet("joe", "bob")
+
+
+@pytest.fixture(scope="module")
+def string_optional_inout_spec():
+    spec = util.F2PyModuleSpec(
+        test_class_name="TestStringOptionalInOut",
+        sources=[util.getpath("tests", "src", "string", "gh24662.f90")],
+    )
+    return spec
+
+
+@pytest.mark.parametrize("_mod", ["string_optional_inout_spec"], indirect=True)
+def test_gh24662(_mod):
+    _mod.string_inout_optional()
+    a = np.array("hi", dtype="S32")
+    _mod.string_inout_optional(a)
+    assert "output string" in a.tobytes().decode()
+    with pytest.raises(Exception):
+        aa = "Hi"
+        _mod.string_inout_optional(aa)
+
+
+@pytest.fixture(scope="module")
+def string_newchar_spec():
+    spec = util.F2PyModuleSpec(
+        test_class_name="TestNewCharHandling",
+        # from v1.24 onwards, gh-19388
+        sources=[
+            util.getpath("tests", "src", "string", "gh25286.pyf"),
+            util.getpath("tests", "src", "string", "gh25286.f90"),
+        ],
+        module_name="_char_handling_test",
+    )
+    return spec
+
+
+@pytest.fixture(scope="module")
+def string_bc_char_spec():
+    spec = util.F2PyModuleSpec(
+        test_class_name="TestBCCharHandling",
+        # SciPy style, "incorrect" bindings with a hook
+        sources=[
+            util.getpath("tests", "src", "string", "gh25286_bc.pyf"),
+            util.getpath("tests", "src", "string", "gh25286.f90"),
+        ],
+        module_name="_char_handling_test",
+    )
+    return spec
+
+
+@pytest.mark.parametrize(
+    "_mod", ["string_newchar_spec", "string_bc_char_spec"], indirect=True
+)
+def test_gh25286(_mod):
+    info = _mod.charint("T")
+    assert info == 2
