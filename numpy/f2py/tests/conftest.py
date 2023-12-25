@@ -10,24 +10,25 @@ def check_compilers():
         pytest.skip("No C compiler available")
     return checker
 
-@pytest.fixture(scope="class")
-def build_module(request, check_compilers):
-    spec = request.cls.spec
-    codes = spec.sources if spec.sources else []
-    needs_f77 = any(str(fn).endswith(".f") for fn in codes)
-    needs_f90 = any(str(fn).endswith(".f90") for fn in codes)
-    needs_pyf = any(str(fn).endswith(".pyf") for fn in codes)
 
-    if needs_f77 and not check_compilers.has_f77:
-        pytest.skip("No Fortran 77 compiler available")
-    if needs_f90 and not check_compilers.has_f90:
-        pytest.skip("No Fortran 90 compilers available")
-    if needs_pyf and not (check_compilers.has_f90 or check_compilers.has_f77):
-        pytest.skip("No Fortran compiler available")
+@pytest.fixture(scope="module")
+def module_builder_factory(check_compilers):
+    def build_module(spec):
+        codes = spec.sources if spec.sources else []
+        needs_f77 = any(str(fn).endswith(".f") for fn in codes)
+        needs_f90 = any(str(fn).endswith(".f90") for fn in codes)
+        needs_pyf = any(str(fn).endswith(".pyf") for fn in codes)
 
-    try:
-        request.cls.module = util.build_module_from_spec(spec)
-    except:
-        pytest.skip("Module build failed")
+        if needs_f77 and not check_compilers.has_f77:
+            pytest.skip("No Fortran 77 compiler available")
+        if needs_f90 and not check_compilers.has_f90:
+            pytest.skip("No Fortran 90 compilers available")
+        if needs_pyf and not (check_compilers.has_f90 or check_compilers.has_f77):
+            pytest.skip("No Fortran compiler available")
 
-    yield request.cls.module
+        try:
+            return util.build_module_from_spec(spec)
+        except Exception as e:
+            pytest.skip(f"Module build failed: {e}")
+
+    return build_module
