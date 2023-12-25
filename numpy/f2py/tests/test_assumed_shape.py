@@ -5,9 +5,9 @@ import tempfile
 from . import util
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def base_assumed_shape_spec():
-    return util.F2PyModuleSpec(
+    spec = util.F2PyModuleSpec(
         test_class_name="TestAssumedShapeSumExample",
         sources=[
             util.getpath("tests", "src", "assumed_shape", "foo_free.f90"),
@@ -17,9 +17,10 @@ def base_assumed_shape_spec():
             util.getpath("tests", "src", "assumed_shape", ".f2py_f2cmap"),
         ],
     )
+    return spec
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def f2cmap_assumed_shape_spec(base_assumed_shape_spec):
     original_sources = base_assumed_shape_spec.sources.copy()
     f2cmap_src = original_sources.pop(-1)
@@ -39,13 +40,6 @@ def f2cmap_assumed_shape_spec(base_assumed_shape_spec):
 
     # Cleanup
     os.unlink(f2cmap_file.name)
-
-
-@pytest.mark.slow
-@pytest.fixture(scope="function")
-def _mod(module_builder_factory, request):
-    spec = request.getfixturevalue(request.param)
-    return module_builder_factory(spec)
 
 
 @pytest.mark.parametrize(

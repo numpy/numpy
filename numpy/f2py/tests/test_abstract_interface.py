@@ -3,21 +3,19 @@ import pytest
 import textwrap
 from . import util
 from numpy.f2py import crackfortran
-from numpy.testing import IS_WASM
 
 
-@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
-@pytest.mark.slow
 @pytest.fixture(scope="module")
-def _mod(module_builder_factory):
+def abstract_interface_spec():
     spec = util.F2PyModuleSpec(
         test_class_name="TestAbstractInterface",
         sources=[util.getpath("tests", "src", "abstract_interface", "foo.f90")],
         skip=["add1", "add2"],
     )
-    return module_builder_factory(spec)
+    return spec
 
 
+@pytest.mark.parametrize("_mod", ["abstract_interface_spec"], indirect=True)
 def test_abstract_interface(_mod):
     assert _mod.ops_module.foo(3, 5) == (8, 13)
 

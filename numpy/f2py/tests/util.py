@@ -100,7 +100,7 @@ def _memoize(func):
 #
 
 
-@_memoize
+# @_memoize
 def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     """
     Compile and import a f2py module, built from the given files.
@@ -173,7 +173,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     return import_module(module_name)
 
 
-@_memoize
+# @_memoize
 def build_code(source_code,
                options=[],
                skip=[],
@@ -342,16 +342,16 @@ class F2PyModuleSpec:
     skip: list = field(default_factory=list)
     only: list = field(default_factory=list)
     suffix: str = ".f"
-    module_name: str = field(init=False)
+    module_name: str = None
 
     def __post_init__(self):
         # Obtain the module path from the current module's __name__
         # Mimicks this:
         # cls = type(self)
         # f'_{cls.__module__.rsplit(".",1)[-1]}_{cls.__name__}_ext_module'
-        module_part = __name__.rsplit(".", 1)[-1]
-        self.module_name = f"_{module_part}_{self.test_class_name}_ext_module"
-
+        if not self.module_name:
+            module_part = __name__.rsplit(".", 1)[-1]
+            self.module_name = f"_{module_part}_{self.test_class_name}_ext_module"
 
 def create_module_spec(test_class, **kwargs):
     return F2PyModuleSpec(test_class=test_class, **kwargs)
