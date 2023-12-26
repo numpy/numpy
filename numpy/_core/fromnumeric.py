@@ -1201,10 +1201,10 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     Returns
     -------
     index_array : ndarray of ints
-        Array of indices into the array. It has the same shape as `a.shape`
+        Array of indices into the array. It has the same shape as ``a.shape``
         with the dimension along `axis` removed. If `keepdims` is set to True,
         then the size of `axis` will be 1 with the resulting array having same
-        shape as `a.shape`.
+        shape as ``a.shape``.
 
     See Also
     --------
@@ -1254,7 +1254,7 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     array([[4],
            [3]])
     >>> # Same as np.amax(x, axis=-1)
-    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), 
+    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1),
     ...     axis=-1).squeeze(axis=-1)
     array([4, 3])
 
