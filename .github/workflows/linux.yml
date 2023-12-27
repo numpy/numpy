@@ -186,15 +186,21 @@ jobs:
     - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.11'
-    - name: Install gfortran and setup OpenBLAS (MacPython build)
+    - name: Install gfortran and setup OpenBLAS (sdist build)
+      env:
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
         set -xe
         sudo apt update
         sudo apt install gfortran libgfortran5
-        target=$(python tools/openblas_support.py)
-        sudo cp -r $target/lib/* /usr/lib
-        sudo cp $target/include/* /usr/include
+        mkdir -p $PKG_CONFIG_PATH
+        python -m pip install scipy-openblas64
+        pkg_config=$(python -c "import scipy_openblas64; print(scipy_openblas64.get_pkg_config())")
+        echo writing to $PKG_CONFIG_PATH/scipy-openblas.pc
+        echo $pkg_config > $PKG_CONFIG_PATH/scipy-openblas.pc
     - name: Build a wheel via an sdist
+      env:
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
         pip install build
         python -m build

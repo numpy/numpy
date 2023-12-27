@@ -72,26 +72,32 @@ jobs:
         python-version: '3.11'
 
     - name: Install dependencies
+      env:
+        # Need to do this in every step since setup-python overrides PKG_CONFIG_PATH
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
         pip install -r requirements/build_requirements.txt
         # Install OpenBLAS
-        set -xe
+        mkdir -p $PKG_CONFIG_PATH
         if [[ $USE_NIGHTLY_OPENBLAS == "true" ]]; then
-          target=$(python tools/openblas_support.py --nightly)
+            python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scipy-openblas32
         else
-          target=$(python tools/openblas_support.py)
+            python -m pip install scipy-openblas32
         fi
-        sudo cp -r $target/lib/* /usr/lib
-        sudo cp $target/include/* /usr/include
+        pkg_config=$(python -c "import scipy_openblas32; print(scipy_openblas32.get_pkg_config())")
+        echo $pkg_config > $PKG_CONFIG_PATH/scipy-openblas.pc
 
     - name: Build
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       env:
         TERM: xterm-256color
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run:
         spin build -- --werror -Dallow-noblas=false
 
     - name: Check build-internal dependencies
+      env:
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run:
         ninja -C build -t missingdeps
 
