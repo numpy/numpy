@@ -327,8 +327,7 @@ TODO
 Alternatives
 ------------
 
-It's probably one or the other - move our universal intrinsics to C++, or use
-Google Highway for dynamic dispatch. Other alternatives include: do nothing and
+Use Google Highway for dynamic dispatch. Other alternatives include: do nothing and
 stay with C universal intrinsics, use `Xsimd`_ as the SIMD framework (less
 comprehensive than Highway - no SVE or PowerPC support for example), or
 use/vendor `SLEEF`_ (a good library, but unmaintained since 2021). Neither of
