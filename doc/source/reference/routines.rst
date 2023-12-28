@@ -24,6 +24,7 @@ indentation.
    routines.ctypeslib
    routines.datetime
    routines.dtype
+   routines.dtypes
    routines.emath
    routines.err
    routines.exceptions

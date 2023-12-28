@@ -32,11 +32,3 @@ Utility
    show_config
    show_runtime
    broadcast_shapes
-
-DType classes and utility (:mod:`numpy.dtypes`)
-===============================================
-
-.. autosummary::
-   :toctree: generated/
-
-   dtypes

@@ -12,45 +12,36 @@ Array types and conversions between types
 NumPy supports a much greater variety of numerical types than Python does.
 This section shows which are available, and how to modify an array's data-type.
 
-NumPy numerical types are instances of `numpy.dtype` (data-type) objects,
-each having unique characteristics.  Once you have imported NumPy using ``import
-numpy as np`` the dtypes are available as e.g. `numpy.bool`,
-`numpy.float32`, etc.
+NumPy numerical types are instances of `numpy.dtype` (data-type) objects, each
+having unique characteristics.  Once you have imported NumPy using ``import
+numpy as np`` you can create arrays with a specified dtype using the scalar
+types in the numpy top-level API, e.g. `numpy.bool`, `numpy.float32`, etc.
 
-Data-types can be used as functions to convert python numbers to array scalars
-(see the array scalar section for an explanation), python sequences of numbers
-to arrays of that type, or as arguments to the dtype keyword that many numpy
-functions or methods accept. Some examples::
+These scalar types as arguments to the dtype keyword that many numpy functions
+or methods accept. For example::
 
-    >>> x = np.float32(1.0)
-    >>> x
-    1.0
-    >>> y = np.int_([1,2,4])
-    >>> y
-    array([1, 2, 4])
     >>> z = np.arange(3, dtype=np.uint8)
     >>> z
     array([0, 1, 2], dtype=uint8)
 
-Array types can also be referred to by character codes, mostly to retain
-backward compatibility with older packages such as Numeric, but also for
-defining :ref:`structured data types <structured_arrays>`.  Some
-documentation may refer to these character codes, for example::
+Array types can also be referred to by character codes, for example::
 
   >>> np.array([1, 2, 3], dtype='f')
   array([1.,  2.,  3.], dtype=float32)
+  >>> np.array([1, 2, 3], dtype='d')
+  array([1.,  2.,  3.], dtype=float64)
 
-We recommend using dtype objects instead.
+See :ref:`arrays.dtypes.constructing` for more information about specifying and
+constructing data type objects, including how to specify parameters like the
+byte order.
 
-To convert the type of an array, use the .astype() method (preferred) or
-the type itself as a function. For example: ::
+To convert the type of an array, use the .astype() method. For example: ::
 
-    >>> z.astype(float)                 #doctest: +NORMALIZE_WHITESPACE
+    >>> z.astype(np.float64)                 #doctest: +NORMALIZE_WHITESPACE
     array([0.,  1.,  2.])
-    >>> np.int8(z)
-    array([0, 1, 2], dtype=int8)
 
-Note that, above, we use the *Python* float object as a dtype.  NumPy knows that
+Note that, above, we could have used the *Python* float object as a dtype
+instead of `numpy.float64`.  NumPy knows that
 :class:`int` refers to `numpy.int_`, :class:`bool` means
 `numpy.bool`, that :class:`float` is `numpy.float64` and
 :class:`complex` is `numpy.complex128`.  The other data-types do not have
@@ -65,9 +56,9 @@ dtype objects also contain information about the type, such as its bit-width
 and its byte-order.  The data type can also be used indirectly to query
 properties of the type, such as whether it is an integer::
 
-    >>> d = np.dtype(int)
-    >>> d #doctest: +SKIP
-    dtype('int32')
+    >>> d = np.dtype(int64)
+    >>> d
+    dtype('int64')
 
     >>> np.issubdtype(d, np.integer)
     True
@@ -93,15 +84,15 @@ Data Types for Strings and Bytes
 --------------------------------
 
 In addition to numerical types, NumPy also supports storing unicode strings, via
-`numpy.dtypes.StrDType` (``U`` character code), null-terminated byte sequences via
-`numpy.dtypes.BytesDType` (``S`` character code), and arbitrary byte sequences, via
-`numpy.dtypes.VoidDType` (``V`` character code).
+the `numpy.str_` dtype (``U`` character code), null-terminated byte sequences via
+`numpy.bytes_` (``S`` character code), and arbitrary byte sequences, via
+`numpy.void` (``V`` character code).
 
-The ``StrDType``, ``BytesDType``, and ``VoidDType`` are *fixed-width* data
-types. They are parameterized by a width, in either bytes or unicode points,
-that a single data element in the array must fit inside. This means that storing
-an array of byte sequences or strings using this dtype requires knowing or
-calculating the sizes of the longest text or byte sequence in advance.
+All of the above are *fixed-width* data types. They are parameterized by a
+width, in either bytes or unicode points, that a single data element in the
+array must fit inside. This means that storing an array of byte sequences or
+strings using this dtype requires knowing or calculating the sizes of the
+longest text or byte sequence in advance.
 
 As an example, we can create an array storing the words ``"hello"`` and
 ``"world!"``::
