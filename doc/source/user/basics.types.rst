@@ -12,10 +12,10 @@ Array types and conversions between types
 NumPy supports a much greater variety of numerical types than Python does.
 This section shows which are available, and how to modify an array's data-type.
 
-NumPy numerical types are instances of ``dtype`` (data-type) objects, each
-having unique characteristics.  Once you have imported NumPy using
-``>>> import numpy as np``
-the dtypes are available as ``np.bool``, ``np.float32``, etc.
+NumPy numerical types are instances of `numpy.dtype` (data-type) objects,
+each having unique characteristics.  Once you have imported NumPy using ``import
+numpy as np`` the dtypes are available as e.g. `numpy.bool`,
+`numpy.float32`, etc.
 
 Data-types can be used as functions to convert python numbers to array scalars
 (see the array scalar section for an explanation), python sequences of numbers
@@ -33,8 +33,9 @@ functions or methods accept. Some examples::
     array([0, 1, 2], dtype=uint8)
 
 Array types can also be referred to by character codes, mostly to retain
-backward compatibility with older packages such as Numeric.  Some
-documentation may still refer to these, for example::
+backward compatibility with older packages such as Numeric, but also for
+defining :ref:`structured data types <structured_arrays>`.  Some
+documentation may refer to these character codes, for example::
 
   >>> np.array([1, 2, 3], dtype='f')
   array([1.,  2.,  3.], dtype=float32)
@@ -49,10 +50,11 @@ the type itself as a function. For example: ::
     >>> np.int8(z)
     array([0, 1, 2], dtype=int8)
 
-Note that, above, we use the *Python* float object as a dtype.  NumPy knows
-that ``int`` refers to ``np.int_``, ``bool`` means ``np.bool``,
-that ``float`` is ``np.float64`` and ``complex`` is ``np.complex128``.
-The other data-types do not have Python equivalents.
+Note that, above, we use the *Python* float object as a dtype.  NumPy knows that
+:class:`int` refers to `numpy.int_`, :class:`bool` means
+`numpy.bool`, that :class:`float` is `numpy.float64` and
+:class:`complex` is `numpy.complex128`.  The other data-types do not have
+Python equivalents.
 
 To determine the type of an array, look at the dtype attribute::
 
@@ -76,21 +78,24 @@ properties of the type, such as whether it is an integer::
 Numerical Data Types
 --------------------
 
-There are 5 basic numerical types representing booleans (bool), integers (int),
-unsigned integers (uint) floating point (float) and complex. Those with numbers
-in their name indicate the bitsize of the type (i.e. how many bits are needed
-to represent a single value in memory).  Some types, such as ``int`` and
-``intp``, have differing bitsizes, dependent on the platforms (e.g. 32-bit
-vs. 64-bit machines).  This should be taken into account when interfacing
-with low-level code (such as C or Fortran) where the raw memory is addressed.
+There are 5 basic numerical types representing booleans (``bool``), integers
+(``int``), unsigned integers (``uint``) floating point (``float``) and
+``complex``. A basic numerical type name combined with a numeric bitsize defines
+a concrete type.  The bitsize is the number of bits that are needed to represent
+a single value in memory. For example, `numpy.float64` is a 64 bit
+floating point data type. Some types, such as `numpy.int` and
+`numpy.intp`, have differing bitsizes, dependent on the platforms
+(e.g. 32-bit vs. 64-bit CPU architectures).  This should be taken into account
+when interfacing with low-level code (such as C or Fortran) where the raw memory
+is addressed.
 
 Data Types for Strings and Bytes
 --------------------------------
 
 In addition to numerical types, NumPy also supports storing unicode strings, via
-`np.dtypes.StrDtype` (``U`` character code), null-terminated byte sequences via
-`np.dtypes.BytesDType` (``S`` character code), and arbitrary byte sequences, via
-`np.dtypes.VoidDType` (``V`` character code).
+`numpy.dtypes.StrDType` (``U`` character code), null-terminated byte sequences via
+`numpy.dtypes.BytesDType` (``S`` character code), and arbitrary byte sequences, via
+`numpy.dtypes.VoidDType` (``V`` character code).
 
 The ``StrDType``, ``BytesDType``, and ``VoidDType`` are *fixed-width* data
 types. They are parameterized by a width, in either bytes or unicode points,
@@ -294,7 +299,8 @@ exceptions, such as when code requires very specific attributes of a scalar
 or when it checks specifically whether a value is a Python scalar. Generally,
 problems are easily fixed by explicitly converting array scalars
 to Python scalars, using the corresponding Python type function
-(e.g., ``int``, ``float``, ``complex``, ``str``, ``unicode``).
+(e.g., :class:`int`, :class:`float`, :class:`complex`, :class:`str`,
+:class:`unicode`).
 
 The primary advantage of using array scalars is that
 they preserve the array type (Python may not have a matching scalar type
@@ -320,9 +326,9 @@ but gives -1486618624 (incorrect) for a 32-bit integer.
 
 The behaviour of NumPy and Python integer types differs significantly for
 integer overflows and may confuse users expecting NumPy integers to behave
-similar to Python's ``int``. Unlike NumPy, the size of Python's ``int`` is
-flexible. This means Python integers may expand to accommodate any integer and
-will not overflow.
+similar to Python's :class:`int`. Unlike NumPy, the size of Python's
+:class:`int` is flexible. This means Python integers may expand to accommodate
+any integer and will not overflow.
 
 NumPy provides `numpy.iinfo` and `numpy.finfo` to verify the
 minimum or maximum values of NumPy integer and floating point values
@@ -348,14 +354,14 @@ Extended precision
 ==================
 
 Python's floating-point numbers are usually 64-bit floating-point numbers,
-nearly equivalent to ``np.float64``. In some unusual situations it may be
+nearly equivalent to `numpy.float64`. In some unusual situations it may be
 useful to use floating-point numbers with more precision. Whether this
 is possible in numpy depends on the hardware and on the development
 environment: specifically, x86 machines provide hardware floating-point
 with 80-bit precision, and while most C compilers provide this as their
 ``long double`` type, MSVC (standard for Windows builds) makes
 ``long double`` identical to ``double`` (64 bits). NumPy makes the
-compiler's ``long double`` available as ``np.longdouble`` (and
+compiler's ``long double`` available as `numpy.longdouble` (and
 ``np.clongdouble`` for the complex numbers). You can find out what your
 numpy provides with ``np.finfo(np.longdouble)``.
 
@@ -363,7 +369,7 @@ NumPy does not provide a dtype with more precision than C's
 ``long double``; in particular, the 128-bit IEEE quad precision
 data type (FORTRAN's ``REAL*16``) is not available.
 
-For efficient memory alignment, ``np.longdouble`` is usually stored
+For efficient memory alignment, `numpy.longdouble` is usually stored
 padded with zero bits, either to 96 or 128 bits. Which is more efficient
 depends on hardware and development environment; typically on 32-bit
 systems they are padded to 96 bits, while on 64-bit systems they are
@@ -374,8 +380,8 @@ want specific padding. In spite of the names, ``np.float96`` and
 that is, 80 bits on most x86 machines and 64 bits in standard
 Windows builds.
 
-Be warned that even if ``np.longdouble`` offers more precision than
-python ``float``, it is easy to lose that extra precision, since
+Be warned that even if `numpy.longdouble` offers more precision than
+python :class:`float`, it is easy to lose that extra precision, since
 python often forces values to pass through ``float``. For example,
 the ``%`` formatting operator requires its arguments to be converted
 to standard python types, and it is therefore impossible to preserve
