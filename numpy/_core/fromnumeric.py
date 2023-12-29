@@ -2441,8 +2441,9 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     >>> np.any([-1, 0, 5])
     True
 
-    >>> np.any(np.nan)
-    True
+    >>> np.any([[np.nan], [np.inf]], axis=1, keepdims=True)
+    array([[ True],
+           [ True]])
 
     >>> np.any([[True, False], [False, False]], where=[[False], [True]])
     False
