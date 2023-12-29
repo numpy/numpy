@@ -3785,7 +3785,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
         .. versionadded:: 1.9.0
 
         If a sequence of axes, the array is first flattened along the
-        given axes then the median is computed along the resulting
+        given axes, then the median is computed along the resulting
         flattened axis.
     out : ndarray, optional
         Alternative output array in which to place the result. It must
@@ -3833,13 +3833,13 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     array([[10,  7,  4],
            [ 3,  2,  1]])
     >>> np.median(a)
-    3.5
+    np.float64(3.5)
     >>> np.median(a, axis=0)
     array([6.5, 4.5, 2.5])
     >>> np.median(a, axis=1)
     array([7.,  2.])
-    >>> np.median(b, axis=(0,1), overwrite_input=True)
-    3.5
+    >>> np.median(a, axis=(0, 1))
+    np.float64(3.5)
     >>> m = np.median(a, axis=0)
     >>> out = np.zeros_like(m)
     >>> np.median(a, axis=0, out=m)
@@ -3852,7 +3852,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     >>> assert not np.all(a==b)
     >>> b = a.copy()
     >>> np.median(b, axis=None, overwrite_input=True)
-    3.5
+    np.float64(3.5)
     >>> assert not np.all(a==b)
 
     """
