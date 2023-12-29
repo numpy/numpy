@@ -7,7 +7,7 @@ Support for testing overrides (:mod:`numpy.testing.overrides`)
 
 Support for testing custom array container implementations.
 
-Utility Functions
+Utility functions
 -----------------
 .. autosummary::
    :toctree: generated/

@@ -11,11 +11,11 @@ import re
 import warnings
 
 from .._utils import set_module
-import numpy.core.numeric as NX
+import numpy._core.numeric as NX
 
-from numpy.core import (isscalar, abs, finfo, atleast_1d, hstack, dot, array,
+from numpy._core import (isscalar, abs, finfo, atleast_1d, hstack, dot, array,
                         ones)
-from numpy.core import overrides
+from numpy._core import overrides
 from numpy.exceptions import RankWarning
 from numpy.lib._twodim_base_impl import diag, vander
 from numpy.lib._function_base_impl import trim_zeros
@@ -511,7 +511,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
         For more details, see `numpy.linalg.lstsq`.
 
-    V : ndarray, shape (M,M) or (M,M,K)
+    V : ndarray, shape (deg + 1, deg + 1) or (deg + 1, deg + 1, K)
         Present only if ``full == False`` and ``cov == True``.  The covariance
         matrix of the polynomial coefficient estimates.  The diagonal of
         this matrix are the variance estimates for each coefficient.  If y

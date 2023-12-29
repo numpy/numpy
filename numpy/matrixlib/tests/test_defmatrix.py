@@ -286,7 +286,7 @@ class TestMatrixReturn:
             'partition', 'argpartition', 'newbyteorder',
             'take', 'tofile', 'tolist', 'tostring', 'tobytes', 'all', 'any',
             'sum', 'argmax', 'argmin', 'min', 'max', 'mean', 'var', 'ptp',
-            'prod', 'std', 'ctypes', 'itemset',
+            'prod', 'std', 'ctypes', 'itemset', 'bitwise_count',
             ]
         for attrib in dir(a):
             if attrib.startswith('_') or attrib in excluded_methods:

@@ -1,0 +1,6 @@
+Array API set functions
+-----------------------
+
+`numpy.unique_all`, `numpy.unique_counts`, `numpy.unique_inverse`,
+and `numpy.unique_values` functions have been added for Array API compatiblity.
+They provide functionality of `numpy.unique` with different sets of flags.

@@ -7,6 +7,7 @@ from . import util
 from numpy.testing import IS_PYPY
 
 
+@pytest.mark.slow
 class TestModuleDocString(util.F2PyTest):
     sources = [
         util.getpath("tests", "src", "module_data",

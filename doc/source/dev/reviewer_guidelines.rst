@@ -19,7 +19,7 @@ permission to merge a PR) to review.
 If we do not know you yet, consider introducing yourself in `the mailing list or
 Slack <https://numpy.org/community/>`_ before you start reviewing pull requests.
 
-Communication Guidelines
+Communication guidelines
 ========================
 
 - Every PR, good or bad, is an act of generosity. Opening with a positive
@@ -40,7 +40,7 @@ Communication Guidelines
 - If you need help writing replies in reviews, check out some
   :ref:`standard replies for reviewing<saved-replies>`.
 
-Reviewer Checklist
+Reviewer checklist
 ==================
 
 - Is the intended behavior clear under all conditions? Some things to watch:
@@ -102,7 +102,7 @@ For maintainers
   Remember, a PR is a collaboration between a contributor and a reviewer/s, 
   sometimes a direct push is the best way to finish it.
 
-API Changes
+API changes
 -----------
 As mentioned most public API changes should be discussed ahead of time and
 often with a wider audience (on the mailing list, or even through a NEP).
@@ -120,7 +120,7 @@ For example ``PyUnicodeScalarObject`` struct contains the following::
 Because the ``buffer_fmt`` field was added to its end in NumPy 1.20 (all
 previous fields remained ABI compatible).
 Similarly, any function added to the API table in
-``numpy/core/code_generators/numpy_api.py`` must use the ``MinVersion``
+``numpy/_core/code_generators/numpy_api.py`` must use the ``MinVersion``
 annotation.
 For example::
 
@@ -129,7 +129,7 @@ For example::
 Header only functionality (such as a new macro) typically does not need to be
 guarded.
 
-GitHub Workflow
+GitHub workflow
 ---------------
 
 When reviewing pull requests, please use workflow tracking features on GitHub as
@@ -215,4 +215,3 @@ replies <https://github.com/settings/replies/>`_ for reviewing:
 
         Please do not change unrelated lines. It makes your contribution harder to review and may introduce merge conflicts to other pull requests.
 
-.. include:: gitwash/git_links.inc

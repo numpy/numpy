@@ -14,8 +14,8 @@ _numpy_abs = run_command(py3, ['-c',
                'import os; os.chdir(".."); import numpy; print(os.path.abspath(numpy.get_include() + "../../.."))'],
                          check: true).stdout().strip()
 
-npymath_path = _numpy_abs / 'core' / 'lib'
-npy_include_path = _numpy_abs / 'core' / 'include'
+npymath_path = _numpy_abs / '_core' / 'lib'
+npy_include_path = _numpy_abs / '_core' / 'include'
 npyrandom_path = _numpy_abs / 'random' / 'lib'
 npymath_lib = cc.find_library('npymath', dirs: npymath_path)
 npyrandom_lib = cc.find_library('npyrandom', dirs: npyrandom_path)

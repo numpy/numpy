@@ -10,10 +10,8 @@ project(
   default_options: [
     'buildtype=debugoptimized',
     'b_ndebug=if-release',
-    'c_std=c99',
+    'c_std=c11',
     'cpp_std=c++17',
-    'blas=openblas',
-    'lapack=openblas',
     'pkgconfig.relocatable=true',
   ],
 )
@@ -35,8 +33,8 @@ elif cc.get_id() == 'msvc'
           'when building with MSVC')
   endif
 endif
-if not cy.version().version_compare('>=0.29.34')
-  error('NumPy requires Cython >= 0.29.34')
+if not cy.version().version_compare('>=3.0.6')
+  error('NumPy requires Cython >= 3.0.6')
 endif
 
 py = import('python').find_installation(pure: false)
@@ -82,6 +80,12 @@ if cc_id.startswith('clang')
     endif
     add_project_arguments(trapping_math, language: ['c', 'cpp'])
   endif
+endif
+
+if host_machine.system() == 'darwin' and cc.has_link_argument('-Wl,-ld_classic')
+  # New linker introduced in macOS 14 not working yet with at least OpenBLAS in Spack,
+  # see gh-24964 (and linked scipy issue from there).
+  add_project_link_arguments('-Wl,-ld_classic', language : ['c', 'cpp'])
 endif
 
 subdir('meson_cpu')

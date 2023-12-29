@@ -1,5 +1,4 @@
 import math as math
-from typing import Any
 
 from numpy._pytesttester import PytestTester
 
@@ -16,22 +15,23 @@ from numpy.lib import (
     scimath as scimath,
     stride_tricks as stride_tricks,
     npyio as npyio,
+    array_utils as array_utils,
 )
 
 from numpy.lib._version import (
     NumpyVersion as NumpyVersion,
 )
 
-from numpy.lib.arrayterator import (
+from numpy.lib._arrayterator_impl import (
     Arrayterator as Arrayterator,
 )
 
-from numpy.core.multiarray import (
+from numpy._core.multiarray import (
     add_docstring as add_docstring,
     tracemalloc_domain as tracemalloc_domain,
 )
 
-from numpy.core.function_base import (
+from numpy._core.function_base import (
     add_newdoc as add_newdoc,
 )
 
@@ -39,4 +39,3 @@ __all__: list[str]
 test: PytestTester
 
 __version__ = version
-emath = scimath

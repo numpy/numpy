@@ -1,3 +1,6 @@
+"""
+Introspection helper functions.
+"""
 import re
 
 __all__ = ['opt_func_info']
@@ -27,38 +30,42 @@ def opt_func_info(func_name=None, signature=None):
     Retrieve dispatch information for functions named 'add' or 'sub' and
     data types 'float64' or 'float32':
 
-    >>> dict = opt_func_info(
-        func_name='add|abs', signature='float64|complex64'
-    )
-    >> print(json.dumps(dict, indent=2))
-    {
-      "absolute": {
-        "dd": {
-          "current": "SSE41",
-          "available": "SSE41 baseline(SSE SSE2 SSE3)"
-        },
-        "Ff": {
-          "current": "FMA3__AVX2",
-          "available": "AVX512F FMA3__AVX2 baseline(SSE SSE2 SSE3)"
-        },
-        "Dd": {
-          "current": "FMA3__AVX2",
-          "available": "AVX512F FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+    >>> dict = np.lib.introspect.opt_func_info(
+    ...     func_name="add|abs", signature="float64|complex64"
+    ... )
+    >>> import json
+    >>> print(json.dumps(dict, indent=2))
+        {
+          "absolute": {
+            "dd": {
+              "current": "SSE41",
+              "available": "SSE41 baseline(SSE SSE2 SSE3)"
+            },
+            "Ff": {
+              "current": "FMA3__AVX2",
+              "available": "AVX512F FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+            },
+            "Dd": {
+              "current": "FMA3__AVX2",
+              "available": "AVX512F FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+            }
+          },
+          "add": {
+            "ddd": {
+              "current": "FMA3__AVX2",
+              "available": "FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+            },
+            "FFF": {
+              "current": "FMA3__AVX2",
+              "available": "FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+            }
+          }
         }
-      },
-      "add": {
-        "ddd": {
-          "current": "FMA3__AVX2",
-          "available": "FMA3__AVX2 baseline(SSE SSE2 SSE3)"
-        },
-        "FFF": {
-          "current": "FMA3__AVX2",
-          "available": "FMA3__AVX2 baseline(SSE SSE2 SSE3)"
-        }
-     }
-    }
+
     """
-    from numpy.core._multiarray_umath import __cpu_targets_info__ as targets
+    from numpy._core._multiarray_umath import (
+        __cpu_targets_info__ as targets, dtype
+    )
 
     if func_name is not None:
         func_pattern = re.compile(func_name)
@@ -77,7 +84,7 @@ def opt_func_info(func_name=None, signature=None):
             for chars, targets in v.items():
                 if any([
                     sig_pattern.search(c) or
-                    sig_pattern.search(np.dtype(c).name)
+                    sig_pattern.search(dtype(c).name)
                     for c in chars
                 ]):
                     matching_chars[chars] = targets

@@ -3,7 +3,7 @@
 
 """
 import numpy as np
-from numpy.core.numerictypes import obj2sctype
+from numpy._core.numerictypes import obj2sctype
 from collections import namedtuple
 
 # Generic object that can be added, but doesn't do anything else
@@ -85,7 +85,7 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
     """Prints new casts, the values given are default "can-cast" values, not
     actual ones.
     """
-    from numpy.core._multiarray_tests import get_all_cast_information
+    from numpy._core._multiarray_tests import get_all_cast_information
 
     cast_table = {
         -1: " ",

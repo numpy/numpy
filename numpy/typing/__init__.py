@@ -70,7 +70,7 @@ the following code is valid:
 .. code-block:: python
 
     >>> x = np.array([1, 2])
-    >>> x.dtype = np.bool_
+    >>> x.dtype = np.bool
 
 This sort of mutation is not allowed by the types. Users who want to
 write statically typed code should instead use the `numpy.ndarray.view`
@@ -93,7 +93,7 @@ Please see : :ref:`Data type objects <arrays.dtypes>`
 Number precision
 ~~~~~~~~~~~~~~~~
 
-The precision of `numpy.number` subclasses is treated as a covariant generic
+The precision of `numpy.number` subclasses is treated as a invariant generic
 parameter (see :class:`~NBitBase`), simplifying the annotating of processes
 involving precision-based casting.
 
@@ -128,7 +128,7 @@ necessary distinction between 0D and >0D arrays. While thus not strictly
 correct, all operations are that can potentially perform a 0D-array -> scalar
 cast are currently annotated as exclusively returning an `~numpy.ndarray`.
 
-If it is known in advance that an operation _will_ perform a
+If it is known in advance that an operation *will* perform a
 0D-array -> scalar cast, then one can consider manually remedying the
 situation with either `typing.cast` or a ``# type: ignore`` comment.
 

@@ -24,7 +24,7 @@ import functools
 import warnings
 import numpy as np
 from numpy.lib import _function_base_impl as fnb
-from numpy.core import overrides
+from numpy._core import overrides
 
 
 array_function_dispatch = functools.partial(
@@ -1375,7 +1375,7 @@ def nanpercentile(
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
-    q = np.true_divide(q, 100.0)
+    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100)
     # undo any decay that the ufunc performed (see gh-13105)
     q = np.asanyarray(q)
     if not fnb._quantile_is_valid(q):
@@ -1538,7 +1538,12 @@ def nanquantile(
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
-    q = np.asanyarray(q)
+    # Use dtype of array if possible (e.g., if q is a python int or float).
+    if isinstance(q, (int, float)) and a.dtype.kind == "f":
+        q = np.asanyarray(q, dtype=a.dtype)
+    else:
+        q = np.asanyarray(q)
+
     if not fnb._quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
     return _nanquantile_unchecked(

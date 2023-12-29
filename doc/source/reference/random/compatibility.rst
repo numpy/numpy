@@ -2,7 +2,7 @@
 
 .. currentmodule:: numpy.random
 
-Compatibility Policy
+Compatibility policy
 ====================
 
 `numpy.random` has a somewhat stricter compatibility policy than the rest of

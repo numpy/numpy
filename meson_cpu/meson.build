@@ -82,7 +82,7 @@ CPU_FEATURES += X86_FEATURES
 CPU_FEATURES += PPC64_FEATURES
 CPU_FEATURES += S390X_FEATURES
 
-# Parse the requsted baseline (CPU_CONF_BASELINE) and dispatch features
+# Parse the requested baseline (CPU_CONF_BASELINE) and dispatch features
 # (CPU_CONF_DISPATCH).
 cpu_family = host_machine.cpu_family()
 # Used by build option 'min'
@@ -250,7 +250,7 @@ foreach fet_name, fet_obj : CPU_FEATURES
   if fet_obj in parse_result['cpu-dispatch'] or fet_name in CPU_BASELINE_NAMES
     continue
   endif
-  fet_obj.update(disable: 'Not part of the requsted features')
+  fet_obj.update(disable: 'Not part of the requested features')
 endforeach
 
 CPU_DISPATCH_NAMES = []

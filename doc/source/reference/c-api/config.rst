@@ -58,9 +58,11 @@ information is available to the pre-processor.
 
 .. c:macro:: NPY_SIZEOF_PY_INTPTR_T
 
+    Size of a pointer ``void *`` and ``intptr_t``/``Py_intptr_t``.
+
 .. c:macro:: NPY_SIZEOF_INTP
 
-    Size of a pointer on this platform (sizeof(void \*))
+    Size of a ``size_t`` on this platform (``sizeof(size_t)``)
 
 
 Platform information

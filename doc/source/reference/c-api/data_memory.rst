@@ -91,7 +91,7 @@ will be used to reallocate or free the data memory of the instance.
    next ``PyArrayObject``. On failure, return ``NULL``.
 
 For an example of setting up and using the PyDataMem_Handler, see the test in
-:file:`numpy/core/tests/test_mem_policy.py`
+:file:`numpy/_core/tests/test_mem_policy.py`
 
 
 What happens when deallocating if there is no policy set

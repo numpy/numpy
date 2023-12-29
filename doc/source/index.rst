@@ -10,6 +10,7 @@ NumPy documentation
 
    User Guide <user/index>
    API reference <reference/index>
+   Building from source <building/index>
    Development <dev/index>
    release
 
@@ -40,7 +41,7 @@ basic statistical operations, random simulation and much more.
     .. grid-item-card::
         :img-top: ../source/_static/index-images/getting_started.svg
 
-        Getting Started
+        Getting started
         ^^^^^^^^^^^^^^^
 
         New to NumPy? Check out the Absolute Beginner's Guide. It contains an
@@ -58,7 +59,7 @@ basic statistical operations, random simulation and much more.
     .. grid-item-card::
         :img-top: ../source/_static/index-images/user_guide.svg
 
-        User Guide
+        User guide
         ^^^^^^^^^^
 
         The user guide provides in-depth information on the
@@ -76,7 +77,7 @@ basic statistical operations, random simulation and much more.
     .. grid-item-card::
         :img-top: ../source/_static/index-images/api.svg
 
-        API Reference
+        API reference
         ^^^^^^^^^^^^^
 
         The reference guide contains a detailed description of the functions,
@@ -96,7 +97,7 @@ basic statistical operations, random simulation and much more.
     .. grid-item-card::
         :img-top: ../source/_static/index-images/contributor.svg
 
-        Contributor's Guide
+        Contributor's guide
         ^^^^^^^^^^^^^^^^^^^
 
         Want to add to the codebase? Can help add translation or a flowchart to the

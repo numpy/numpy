@@ -4,6 +4,7 @@ from numpy import array
 from . import util
 
 
+@pytest.mark.slow
 class TestReturnInteger(util.F2PyTest):
     def check_function(self, t, tname):
         assert t(123) == 123

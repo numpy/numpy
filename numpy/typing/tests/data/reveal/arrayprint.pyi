@@ -5,7 +5,7 @@ from typing import Any
 
 import numpy as np
 import numpy.typing as npt
-from numpy.core.arrayprint import _FormatOptions
+from numpy._core.arrayprint import _FormatOptions
 
 if sys.version_info >= (3, 11):
     from typing import assert_type

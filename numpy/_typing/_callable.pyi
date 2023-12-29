@@ -18,11 +18,9 @@ from typing import (
     Protocol,
 )
 
+import numpy as np
 from numpy import (
-    ndarray,
-    dtype,
     generic,
-    bool_,
     timedelta64,
     number,
     integer,
@@ -82,7 +80,7 @@ class _BoolBitOp(Protocol[_GenericType_co]):
     def __call__(self, other: _IntType, /) -> _IntType: ...
 
 class _BoolSub(Protocol):
-    # Note that `other: bool_` is absent here
+    # Note that `other: bool` is absent here
     @overload
     def __call__(self, other: bool, /) -> NoReturn: ...
     @overload  # platform dependent
@@ -327,9 +325,9 @@ class _SupportsGT(Protocol):
 
 class _ComparisonOp(Protocol[_T1_contra, _T2_contra]):
     @overload
-    def __call__(self, other: _T1_contra, /) -> bool_: ...
+    def __call__(self, other: _T1_contra, /) -> np.bool: ...
     @overload
-    def __call__(self, other: _T2_contra, /) -> NDArray[bool_]: ...
+    def __call__(self, other: _T2_contra, /) -> NDArray[np.bool]: ...
     @overload
     def __call__(
         self,

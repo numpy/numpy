@@ -40,7 +40,7 @@ cibuildwheel support it. For Python 3.11 we were able to release within a week
 of the rc1 announcement.
 
 
-Backport Pull Requests
+Backport pull requests
 ----------------------
 
 Changes that have been marked for this release must be backported to the
@@ -111,8 +111,8 @@ index file will need updating.
 Set the release version
 -----------------------
 
-Edit the ``pyproject.toml`` and ``pyproject.toml.setuppy`` files and set the
-release version::
+Check the ``pyproject.toml`` and ``pyproject.toml.setuppy`` files and set the
+release version if needed::
 
     $ gvim pyproject.toml pyproject.toml.setuppy
 
@@ -232,7 +232,7 @@ wheel. PyPI only allows a single source distribution, here we have
 chosen the zip archive.
 
 
-6. Upload files to github
+6. Upload files to GitHub
 -------------------------
 
 Go to `<https://github.com/numpy/numpy/releases>`_, there should be a ``v1.21.0
@@ -315,10 +315,16 @@ Add new release notes to the documentation release list and update the
 
     $ gvim doc/source/release.rst pavement.py
 
+Update the ``version`` in ``pyproject.toml`` and ``pyproject.toml.setuppy``::
+
+    $ gvim pyproject.toml pyproject.toml.setuppy
+
 Commit the result::
 
-    $ git commit -a -m"REL: prepare 1.21.x for further development"
-    $ git push upstream HEAD
+    $ git commit -a -m"MAINT: prepare 1.21.x for further development"
+    $ git push origin HEAD
+
+Go to GitHub and make a PR. It should be merged quickly.
 
 
 9. Announce the release on numpy.org (skip for prereleases)
@@ -342,17 +348,17 @@ commit and push::
     $ git commit -a -m"announce the NumPy 1.21.0 release"
     $ git push origin HEAD
 
-Go to your Github fork and make a pull request.
+Go to GitHub and make a PR.
 
 
 10. Announce to mailing lists
 -----------------------------
 
-The release should be announced on the numpy-discussion, scipy-devel,
-scipy-user, and python-announce-list mailing lists. Look at previous
-announcements for the basic template. The contributor and PR lists are the same
-as generated for the release notes above. If you crosspost, make sure that
-python-announce-list is BCC so that replies will not be sent to that list.
+The release should be announced on the numpy-discussion, scipy-devel, and
+python-announce-list mailing lists. Look at previous announcements for the
+basic template. The contributor and PR lists are the same as generated for the
+release notes above. If you crosspost, make sure that python-announce-list is
+BCC so that replies will not be sent to that list.
 
 
 11. Post-release update main (skip for prereleases)

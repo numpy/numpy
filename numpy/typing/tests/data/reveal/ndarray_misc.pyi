@@ -42,14 +42,14 @@ assert_type(ctypes_obj.data_as(ct.c_void_p), ct.c_void_p)
 assert_type(ctypes_obj.shape_as(ct.c_longlong), ct.Array[ct.c_longlong])
 assert_type(ctypes_obj.strides_as(ct.c_ubyte), ct.Array[ct.c_ubyte])
 
-assert_type(f8.all(), np.bool_)
-assert_type(AR_f8.all(), np.bool_)
+assert_type(f8.all(), np.bool)
+assert_type(AR_f8.all(), np.bool)
 assert_type(AR_f8.all(axis=0), Any)
 assert_type(AR_f8.all(keepdims=True), Any)
 assert_type(AR_f8.all(out=B), SubClass)
 
-assert_type(f8.any(), np.bool_)
-assert_type(AR_f8.any(), np.bool_)
+assert_type(f8.any(), np.bool)
+assert_type(AR_f8.any(), np.bool)
 assert_type(AR_f8.any(axis=0), Any)
 assert_type(AR_f8.any(keepdims=True), Any)
 assert_type(AR_f8.any(out=B), SubClass)
@@ -191,7 +191,6 @@ assert_type(complex(AR_f8), complex)
 
 assert_type(operator.index(AR_i8), int)
 
-assert_type(AR_f8.__array_prepare__(B), npt.NDArray[np.object_])
 assert_type(AR_f8.__array_wrap__(B), npt.NDArray[np.object_])
 
 assert_type(AR_V[0], Any)

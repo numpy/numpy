@@ -9,7 +9,7 @@ refguide_check.py [OPTIONS] [-- ARGS]
 
 Example of usage::
 
-    $ python refguide_check.py optimize
+    $ python tools/refguide_check.py
 
 Note that this is a helper script to be able to check if things are missing;
 the output of this script does need to be checked manually.  In some cases
@@ -60,17 +60,33 @@ directives.register_directive('only', Only)
 BASE_MODULE = "numpy"
 
 PUBLIC_SUBMODULES = [
-    'core',
-    'f2py',
-    'linalg',
-    'lib',
-    'lib.recfunctions',
-    'fft',
-    'ma',
-    'polynomial',
-    'matrixlib',
-    'random',
-    'testing',
+    "f2py",
+    "linalg",
+    "lib",
+    "lib.format",
+    "lib.mixins",
+    "lib.recfunctions",
+    "lib.scimath",
+    "lib.stride_tricks",
+    "lib.npyio",
+    "lib.introspect",
+    "lib.array_utils",
+    "fft",
+    "char",
+    "rec",
+    "ma",
+    "ma.extras",
+    "ma.mrecords",
+    "polynomial",
+    "polynomial.chebyshev",
+    "polynomial.hermite",
+    "polynomial.hermite_e",
+    "polynomial.laguerre",
+    "polynomial.legendre",
+    "polynomial.polynomial",
+    "matrixlib",
+    "random",
+    "testing",
 ]
 
 # Docs for these modules are included in the parent module
@@ -94,7 +110,7 @@ DOCTEST_SKIPDICT = {
     'numpy.random.power': None,
     'numpy.random.zipf': None,
     # cases where NumPy docstrings import things from other 3'rd party libs:
-    'numpy.core.from_dlpack': None,
+    'numpy._core.from_dlpack': None,
     # remote / local file IO with DataSource is problematic in doctest:
     'numpy.lib.npyio.DataSource': None,
     'numpy.lib.Repository': None,
@@ -662,7 +678,7 @@ class Checker(doctest.OutputChecker):
     obj_pattern = re.compile('at 0x[0-9a-fA-F]+>')
     vanilla = doctest.OutputChecker()
     rndm_markers = {'# random', '# Random', '#random', '#Random', "# may vary",
-                    "# uninitialized", "#uninitialized"}
+                    "# uninitialized", "#uninitialized", "# uninit"}
     stopwords = {'plt.', '.hist', '.show', '.ylim', '.subplot(',
                  'set_title', 'imshow', 'plt.show', '.axis(', '.plot(',
                  '.bar(', '.title', '.ylabel', '.xlabel', 'set_ylim', 'set_xlim',
@@ -1130,7 +1146,7 @@ def main(argv):
     names_dict = {}
 
     if not args.module_names:
-        args.module_names = list(PUBLIC_SUBMODULES)
+        args.module_names = list(PUBLIC_SUBMODULES) + [BASE_MODULE]
 
     os.environ['SCIPY_PIL_IMAGE_VIEWER'] = 'true'
 
@@ -1152,7 +1168,10 @@ def main(argv):
 
     for submodule_name in module_names:
         prefix = BASE_MODULE + '.'
-        if not submodule_name.startswith(prefix):
+        if not (
+            submodule_name.startswith(prefix) or
+            submodule_name == BASE_MODULE
+        ):
             module_name = prefix + submodule_name
         else:
             module_name = submodule_name
@@ -1165,7 +1184,6 @@ def main(argv):
 
         if submodule_name in args.module_names:
             modules.append(module)
-
 
     if args.doctests or not args.rst:
         print("Running checks for %d modules:" % (len(modules),))

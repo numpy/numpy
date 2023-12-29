@@ -48,7 +48,7 @@ If the question is broad, narrow and redirect it
 
 **"I want to see the sights."**
 
-The `See the sights` how-to should link to a set of narrower how-tos:
+The *See the sights* how-to should link to a set of narrower how-tos:
 
 - Find historic buildings
 - Find scenic lookouts
@@ -94,15 +94,15 @@ distinction, following Daniele Procida's `taxonomy of documentation`_.
 
 .. _`taxonomy of documentation`: https://documentation.divio.com/
 
-Documentation needs to meet users where they are.  `How-tos` offer get-it-done
+Documentation needs to meet users where they are.  *How-tos* offer get-it-done
 information; the user wants steps to copy and doesn't necessarily want to
-understand NumPy. `Tutorials` are warm-fuzzy information; the user wants a
+understand NumPy. *Tutorials* are warm-fuzzy information; the user wants a
 feel for some aspect of NumPy (and again, may or may not care about deeper
 knowledge).
 
-We distinguish both tutorials and how-tos from `Explanations`, which are
+We distinguish both tutorials and how-tos from *Explanations*, which are
 deep dives intended to give understanding rather than immediate assistance,
-and `References`, which give complete, authoritative data on some concrete
+and *References*, which give complete, authoritative data on some concrete
 part of NumPy (like its API) but aren't obligated to paint a broader picture.
 
 For more on tutorials, see :doc:`numpy-tutorials:content/tutorial-style-guide`

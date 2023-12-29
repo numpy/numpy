@@ -48,20 +48,24 @@ jobs:
 
         ln -s /usr/local/bin/python3.10 /usr/local/bin/python
 
-    - name: test musllinux_x86_64
+    - name: test-musllinux_x86_64
+      env:
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
         python -m venv test_env
         source test_env/bin/activate
 
-        # required for figuring out the system tags in openblas_support
-        pip install packaging       
-        
-        # install openblas by co-opting the CIBW setup script
-        RUNNER_OS=Linux sh tools/wheels/cibw_before_build.sh .
+        pip install scipy-openblas64
 
-        pip install -r build_requirements.txt
-        pip install pytest pytest-xdist hypothesis typing_extensions
+        pip install -r build_requirements.txt -r test_requirements.txt
 
         # use meson to build and test 
-        spin build
+        # the Duse-ilp64 is not needed with scipy-openblas wheels > 0.3.24.95.0
+        # spin build --with-scipy-openblas=64 -- -Duse-ilp64=true
+        spin build --with-scipy-openblas=64
         spin test -j auto
+
+    - name: Meson Log
+      shell: bash
+      run: |
+        cat build/meson-logs/meson-log.txt

@@ -9,7 +9,7 @@ import operator
 
 import numpy as np
 from numpy import ndarray
-import numpy.core.umath as umath
+import numpy._core.umath as umath
 import numpy.testing
 from numpy.testing import (
     assert_, assert_allclose, assert_array_almost_equal_nulp,

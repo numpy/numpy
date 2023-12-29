@@ -136,6 +136,10 @@ Signed integer types
    :members: __init__
    :exclude-members: __init__
 
+.. autoclass:: numpy.long
+   :members: __init__
+   :exclude-members: __init__
+
 .. autoclass:: numpy.longlong
    :members: __init__
    :exclude-members: __init__
@@ -160,6 +164,10 @@ Unsigned integer types
    :exclude-members: __init__
 
 .. autoclass:: numpy.uint
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.ulong
    :members: __init__
    :exclude-members: __init__
 
@@ -257,6 +265,10 @@ Other types
    :members: __init__
    :exclude-members: __init__
 
+.. autoclass:: numpy.bool
+   :members: __init__
+   :exclude-members: __init__
+
 .. autoclass:: numpy.datetime64
    :members: __init__
    :exclude-members: __init__
@@ -343,8 +355,8 @@ are also provided.
                int64
 
    Aliases for the signed integer types (one of `numpy.byte`, `numpy.short`,
-   `numpy.intc`, `numpy.int_` and `numpy.longlong`) with the specified number
-   of bits.
+   `numpy.intc`, `numpy.int_`, `numpy.long` and `numpy.longlong`)
+   with the specified number of bits.
 
    Compatible with the C99 ``int8_t``, ``int16_t``, ``int32_t``, and
    ``int64_t``, respectively.
@@ -355,8 +367,8 @@ are also provided.
                uint64
 
    Alias for the unsigned integer types (one of `numpy.ubyte`, `numpy.ushort`,
-   `numpy.uintc`, `numpy.uint` and `numpy.ulonglong`) with the specified number
-   of bits.
+   `numpy.uintc`, `numpy.uint`, `numpy.ulong` and `numpy.ulonglong`)
+   with the specified number of bits.
 
    Compatible with the C99 ``uint8_t``, ``uint16_t``, ``uint32_t``, and
    ``uint64_t``, respectively.
@@ -364,8 +376,8 @@ are also provided.
 .. attribute:: intp
 
    Alias for the signed integer type (one of `numpy.byte`, `numpy.short`,
-   `numpy.intc`, `numpy.int_` and `numpy.longlong`) that is the same size as a
-   pointer.
+   `numpy.intc`, `numpy.int_`, `numpy.long` and `numpy.longlong`)
+   that is the same size as a pointer.
 
    Compatible with the C ``intptr_t``.
 
@@ -374,8 +386,8 @@ are also provided.
 .. attribute:: uintp
 
    Alias for the unsigned integer type (one of `numpy.ubyte`, `numpy.ushort`,
-   `numpy.uintc`, `numpy.uint` and `numpy.ulonglong`) that is the same size as a
-   pointer.
+   `numpy.uintc`, `numpy.uint`, `numpy.ulong` and `numpy.ulonglong`)
+   that is the same size as a pointer.
 
    Compatible with the C ``uintptr_t``.
 

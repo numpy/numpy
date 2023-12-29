@@ -1,4 +1,4 @@
-from numpy.core.records import (
+from numpy._core.records import (
     record as record,
     recarray as recarray,
     format_parser as format_parser,
