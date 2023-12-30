@@ -20,7 +20,7 @@ jobs:
     runs-on: windows-latest
     if: "github.repository == 'numpy/numpy'"
     steps:
-      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: recursive
           fetch-depth: 0
@@ -30,11 +30,8 @@ jobs:
           platform: x86_64
           install-dir: 'C:\tools\cygwin'
           packages: >-
-            python39-devel python39-zipp python39-importlib-metadata
-            python39-cython python39-pip python39-wheel python39-cffi
-            python39-pytz python39-setuptools python39-pytest
-            python39-hypothesis liblapack-devel
-            gcc-fortran gcc-g++ git dash
+            python39-devel python39-pip python-pip-wheel python-setuptools-wheel
+            liblapack-devel liblapack0 gcc-fortran gcc-g++ git dash cmake ninja
       - name: Set Windows PATH
         uses: egor-tensin/cleanup-path@8469525c8ee3eddabbd3487658621a6235b3c581 # v3
         with:
@@ -52,10 +49,9 @@ jobs:
           dash -c "which python3.9; /usr/bin/python3.9 --version -V"
       - name: Build NumPy wheel
         run: |
-          dash -c "/usr/bin/python3.9 -m pip install 'setuptools<49.2.0' pytest pytz cffi pickle5 importlib_metadata typing_extensions"
-          dash -c "/usr/bin/python3.9 -m pip install -r test_requirements.txt"
-          dash -c "/usr/bin/python3.9 setup.py bdist_wheel"
-      - name: Install new NumPy
+          dash -c "/usr/bin/python3.9 -m pip install build pytest hypothesis pytest-xdist Cython meson"
+          dash -c "/usr/bin/python3.9 -m build . --wheel -Csetup-args=-Dblas=blas -Csetup-args=-Dlapack=lapack -Csetup-args=-Dcpu-dispatch=none -Csetup-args=-Dcpu-baseline=native"
+      - name: Install NumPy from wheel
         run: |
           bash -c "/usr/bin/python3.9 -m pip install dist/numpy-*cp39*.whl"
       - name: Rebase NumPy compiled extensions
@@ -64,9 +60,10 @@ jobs:
       - name: Run NumPy test suite
         shell: "C:\\tools\\cygwin\\bin\\bash.exe -o igncr -eo pipefail {0}"
         run: |
-          /usr/bin/python3.9 runtests.py -n
+          cd tools
+          /usr/bin/python3.9 -m pytest --pyargs numpy -n2 -m "not slow"
       - name: Upload wheel if tests fail
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.0.0
         if: failure()
         with:
           name: numpy-cygwin-wheel

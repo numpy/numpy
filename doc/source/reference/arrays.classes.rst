@@ -154,11 +154,6 @@ NumPy provides several hooks that classes can customize:
         to have a hierarchy of subclasses that extend the behaviour. See
         :ref:`Subclassing ndarray <basics.subclassing>` for details.
 
-   .. note:: If a class defines the :func:`__array_ufunc__` method,
-      this disables the :func:`__array_wrap__`,
-      :func:`__array_prepare__`, :data:`__array_priority__` mechanism
-      described below for ufuncs (which may eventually be deprecated).
-
 .. py:method:: class.__array_function__(func, types, args, kwargs)
 
    .. versionadded:: 1.16
@@ -274,21 +269,6 @@ NumPy provides several hooks that classes can customize:
    to update meta-information from the "parent." Subclasses inherit
    a default implementation of this method that does nothing.
 
-.. py:method:: class.__array_prepare__(array, context=None)
-
-   At the beginning of every :ref:`ufunc <ufuncs-output-type>`, this
-   method is called on the input object with the highest array
-   priority, or the output object if one was specified. The output
-   array is passed in and whatever is returned is passed to the ufunc.
-   Subclasses inherit a default implementation of this method which
-   simply returns the output array unmodified. Subclasses may opt to
-   use this method to transform the output array into an instance of
-   the subclass and update metadata before returning the array to the
-   ufunc for computation.
-
-   .. note:: For ufuncs, it is hoped to eventually deprecate this method in
-             favour of :func:`__array_ufunc__`.
-
 .. py:method:: class.__array_wrap__(array, context=None)
 
    At the end of every :ref:`ufunc <ufuncs-output-type>`, this method
@@ -301,8 +281,13 @@ NumPy provides several hooks that classes can customize:
    into an instance of the subclass and update metadata before
    returning the array to the user.
 
-   .. note:: For ufuncs, it is hoped to eventually deprecate this method in
-             favour of :func:`__array_ufunc__`.
+   NumPy may also call this function without a context from non-ufuncs to
+   allow preserving subclass information.
+
+   .. note::
+      It is hoped to eventually deprecate this method in favour of
+      func:`__array_ufunc__` for ufuncs (and :func:`__array_function__`
+      for a few other functions like :func:`np.squeeze`).
 
 .. py:attribute:: class.__array_priority__
 
@@ -407,7 +392,7 @@ alias for "matrix "in NumPy.
 
 Example 1: Matrix creation from a string
 
->>> a = np.mat('1 2 3; 4 5 3')
+>>> a = np.asmatrix('1 2 3; 4 5 3')
 >>> print((a*a.T).I)
     [[ 0.29239766 -0.13450292]
      [-0.13450292  0.08187135]]
@@ -415,13 +400,13 @@ Example 1: Matrix creation from a string
 
 Example 2: Matrix creation from nested sequence
 
->>> np.mat([[1,5,10],[1.0,3,4j]])
+>>> np.asmatrix([[1,5,10],[1.0,3,4j]])
 matrix([[  1.+0.j,   5.+0.j,  10.+0.j],
         [  1.+0.j,   3.+0.j,   0.+4.j]])
 
 Example 3: Matrix creation from an array
 
->>> np.mat(np.random.rand(3,3)).T
+>>> np.asmatrix(np.random.rand(3,3)).T
 matrix([[4.17022005e-01, 3.02332573e-01, 1.86260211e-01],
         [7.20324493e-01, 1.46755891e-01, 3.45560727e-01],
         [1.14374817e-04, 9.23385948e-02, 3.96767474e-01]])
@@ -477,7 +462,7 @@ Character arrays (:mod:`numpy.char`)
    single: character arrays
 
 .. note::
-   The `chararray` class exists for backwards compatibility with
+   The `~numpy.char.chararray` class exists for backwards compatibility with
    Numarray, it is not recommended for new development. Starting from numpy
    1.4, if one needs arrays of strings, it is recommended to use arrays of
    `dtype` `object_`, `bytes_` or `str_`, and use the free functions
@@ -488,20 +473,20 @@ These are enhanced arrays of either :class:`str_` type or
 :class:`ndarray`, but specially-define the operations ``+``, ``*``,
 and ``%`` on a (broadcasting) element-by-element basis.  These
 operations are not available on the standard :class:`ndarray` of
-character type. In addition, the :class:`chararray` has all of the
+character type. In addition, the :class:`~numpy.char.chararray` has all of the
 standard :class:`str` (and :class:`bytes`) methods,
 executing them on an element-by-element basis. Perhaps the easiest
 way to create a chararray is to use :meth:`self.view(chararray)
 <ndarray.view>` where *self* is an ndarray of str or unicode
 data-type. However, a chararray can also be created using the
-:meth:`numpy.chararray` constructor, or via the
-:func:`numpy.char.array <core.defchararray.array>` function:
+:meth:`~numpy.char.chararray` constructor, or via the
+:func:`numpy.char.array <_core.defchararray.array>` function:
 
 .. autosummary::
    :toctree: generated/
 
-   chararray
-   core.defchararray.array
+   char.chararray
+   char.array
 
 Another difference with the standard ndarray of str data-type is
 that the chararray inherits the feature introduced by Numarray that
@@ -563,7 +548,7 @@ encouraged to use the ndarray class directly if you can.
    single: container class
 
 
-Array Iterators
+Array iterators
 ===============
 
 .. currentmodule:: numpy

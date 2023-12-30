@@ -23,6 +23,7 @@ cdef enum ConstraintType:
     CONS_GTE_1
     CONS_POISSON
     LEGACY_CONS_POISSON
+    LEGACY_CONS_NON_NEGATVE_INBOUNDS_LONG
 
 ctypedef ConstraintType constraint_type
 

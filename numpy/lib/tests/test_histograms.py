@@ -1,6 +1,6 @@
 import numpy as np
 
-from numpy.lib.histograms import histogram, histogramdd, histogram_bin_edges
+from numpy import histogram, histogramdd, histogram_bin_edges
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_raises, assert_allclose,
@@ -349,10 +349,8 @@ class TestHistogram:
 
         # previously crashed
         count, x_loc = np.histogram(arr, bins=1, range=range)
-        assert_equal(count, [1])
-
-        # gh-10322 means that the type comes from arr - this may change
-        assert_equal(x_loc.dtype, float_small)
+        assert_equal(count, [0])
+        assert_equal(x_loc.dtype, float_large)
 
     def do_precision_upper_bound(self, float_small, float_large):
         eps = np.finfo(float_large).eps
@@ -366,10 +364,9 @@ class TestHistogram:
 
         # previously crashed
         count, x_loc = np.histogram(arr, bins=1, range=range)
-        assert_equal(count, [1])
+        assert_equal(count, [0])
 
-        # gh-10322 means that the type comes from arr - this may change
-        assert_equal(x_loc.dtype, float_small)
+        assert_equal(x_loc.dtype, float_large)
 
     def do_precision(self, float_small, float_large):
         self.do_precision_lower_bound(float_small, float_large)
@@ -398,8 +395,9 @@ class TestHistogram:
         edges = histogram_bin_edges(arr, bins='auto', range=(0, 1))
         assert_array_equal(edges, e)
 
-    @requires_memory(free_bytes=1e10)
-    @pytest.mark.slow
+    # @requires_memory(free_bytes=1e10)
+    # @pytest.mark.slow
+    @pytest.mark.skip(reason="Bad memory reports lead to OOM in ci testing")
     def test_big_arrays(self):
         sample = np.zeros([100000000, 3])
         xbins = 400

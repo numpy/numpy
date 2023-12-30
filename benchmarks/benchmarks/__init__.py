@@ -3,7 +3,7 @@ import sys
 import os
 
 def show_cpu_features():
-    from numpy.lib.utils import _opt_info
+    from numpy.lib._utils_impl import _opt_info
     info = _opt_info()
     info = "NumPy CPU features: " + (info if info else 'nothing enabled')
     # ASV wrapping stdout & stderr, so we assume having a tty here

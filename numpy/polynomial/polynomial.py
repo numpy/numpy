@@ -77,11 +77,12 @@ __all__ = [
     'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow', 'polyval',
     'polyvalfromroots', 'polyder', 'polyint', 'polyfromroots', 'polyvander',
     'polyfit', 'polytrim', 'polyroots', 'Polynomial', 'polyval2d', 'polyval3d',
-    'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d']
+    'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d',
+    'polycompanion']
 
 import numpy as np
 import numpy.linalg as la
-from numpy.core.multiarray import normalize_axis_index
+from numpy.lib.array_utils import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -156,7 +157,7 @@ def polyfromroots(roots):
 
     .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
 
-    where the ``r_n`` are the roots specified in `roots`.  If a zero has
+    where the :math:`r_n` are the roots specified in `roots`.  If a zero has
     multiplicity n, then it must appear in `roots` n times. For instance,
     if 2 is a root of multiplicity three and 3 is a root of multiplicity 2,
     then `roots` looks something like [2, 2, 2, 3, 3]. The roots can appear
@@ -312,6 +313,12 @@ def polymulx(c):
 
     .. versionadded:: 1.5.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial import polynomial as P
+    >>> c = (1, 2, 3)
+    >>> P.polymulx(c)
+    array([0., 1., 2., 3.])
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
@@ -517,8 +524,8 @@ def polyder(c, m=1, scl=1, axis=0):
         # astype fails with NA
         c = c + 0.0
     cdt = c.dtype
-    cnt = pu._deprecate_as_int(m, "the order of derivation")
-    iaxis = pu._deprecate_as_int(axis, "the axis")
+    cnt = pu._as_int(m, "the order of derivation")
+    iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
     iaxis = normalize_axis_index(iaxis, c.ndim)
@@ -627,8 +634,8 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     cdt = c.dtype
     if not np.iterable(k):
         k = [k]
-    cnt = pu._deprecate_as_int(m, "the order of integration")
-    iaxis = pu._deprecate_as_int(axis, "the axis")
+    cnt = pu._as_int(m, "the order of integration")
+    iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt:
@@ -891,6 +898,12 @@ def polyval2d(x, y, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial import polynomial as P
+    >>> c = ((1, 2, 3), (4, 5, 6))
+    >>> P.polyval2d(1, 1, c) 
+    21.0
     """
     return pu._valnd(polyval, c, x, y)
 
@@ -944,6 +957,13 @@ def polygrid2d(x, y, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial import polynomial as P
+    >>> c = ((1, 2, 3), (4, 5, 6))
+    >>> P.polygrid2d([0, 1], [0, 1], c)
+    array([[ 1.,  6.],
+           [ 5., 21.]])
     """
     return pu._gridnd(polyval, c, x, y)
 
@@ -995,6 +1015,13 @@ def polyval3d(x, y, z, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial import polynomial as P
+    >>> c = ((1, 2, 3), (4, 5, 6), (7, 8, 9))
+    >>> P.polyval3d(1, 1, 1, c)
+    45.0
+
     """
     return pu._valnd(polyval, c, x, y, z)
 
@@ -1026,7 +1053,7 @@ def polygrid3d(x, y, z, c):
     ----------
     x, y, z : array_like, compatible objects
         The three dimensional series is evaluated at the points in the
-        Cartesian product of `x`, `y`, and `z`.  If `x`,`y`, or `z` is a
+        Cartesian product of `x`, `y`, and `z`.  If `x`, `y`, or `z` is a
         list or tuple, it is first converted to an ndarray, otherwise it is
         left unchanged and, if it isn't an ndarray, it is treated as a
         scalar.
@@ -1051,6 +1078,13 @@ def polygrid3d(x, y, z, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial import polynomial as P
+    >>> c = ((1, 2, 3), (4, 5, 6), (7, 8, 9))
+    >>> P.polygrid3d([0, 1], [0, 1], [0, 1], c)
+    array([[ 1., 13.],
+           [ 6., 51.]])
     """
     return pu._gridnd(polyval, c, x, y, z)
 
@@ -1093,7 +1127,7 @@ def polyvander(x, deg):
     polyvander2d, polyvander3d
 
     """
-    ideg = pu._deprecate_as_int(deg, "deg")
+    ideg = pu._as_int(deg, "deg")
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
@@ -1285,7 +1319,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         be turned off by:
 
         >>> import warnings
-        >>> warnings.simplefilter('ignore', np.RankWarning)
+        >>> warnings.simplefilter('ignore', np.exceptions.RankWarning)
 
     See Also
     --------
@@ -1386,6 +1420,13 @@ def polycompanion(c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial import polynomial as P
+    >>> c = (1, 2, 3)
+    >>> P.polycompanion(c)
+    array([[ 0.        , -0.33333333],
+           [ 1.        , -0.66666667]])
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])

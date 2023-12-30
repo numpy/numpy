@@ -20,7 +20,7 @@ Building NumPy requires the following installed software:
    e.g., on Debian/Ubuntu one needs to install both `python3` and
    `python3-dev`. On Windows and macOS this is normally not an issue.
 
-2) Cython >= 0.29.35
+2) Cython >= 3.0
 
 3) pytest__ (optional)
 
@@ -38,7 +38,7 @@ Hypothesis__ https://hypothesis.readthedocs.io/en/latest/
 .. note::
 
    If you want to build NumPy in order to work on NumPy itself, use
-   ``runtests.py``.  For more details, see
+   ``spin``.  For more details, see
    https://numpy.org/devdocs/dev/development_environment.html
 
 .. note::
@@ -47,42 +47,46 @@ Hypothesis__ https://hypothesis.readthedocs.io/en/latest/
    https://numpy.org/devdocs/user/building.html#building-from-source
 
 
-Basic Installation
+Basic installation
 ==================
+
+If this is a clone of the NumPy git repository, then first initialize
+the ``git`` submodules::
+
+    git submodule update --init
 
 To install NumPy, run::
 
-    python setup.py build -j 4 install --prefix $HOME/.local
+    pip install .
 
-This will compile numpy on 4 CPUs and install it into the specified prefix.
-To perform an inplace build that can be run from the source folder run::
+This will compile NumPy on all available CPUs and install it into the active
+environment.
 
-    python setup.py build_ext --inplace -j 4
+To run the build from the source folder for development purposes, use the
+``spin`` development CLI::
+
+    spin build    # installs in-tree under `build-install/`
+    spin ipython  # drop into an interpreter where `import numpy` picks up the local build
+
+Alternatively, use an editable install with::
+
+    pip install -e . --no-build-isolation
 
 See `Requirements for Installing Packages <https://packaging.python.org/tutorials/installing-packages/>`_
 for more details.
-
-The number of build jobs can also be specified via the environment variable
-NPY_NUM_BUILD_JOBS.
 
 
 Choosing compilers
 ==================
 
-NumPy needs a C compiler, and for development versions also needs Cython.  A Fortran
-compiler isn't needed to build NumPy itself; the ``numpy.f2py`` tests will be
-skipped when running the test suite if no Fortran compiler is available.  For
-building Scipy a Fortran compiler is needed though, so we include some details
-on Fortran compilers in the rest of this section.
+NumPy needs C and C++ compilers, and for development versions also needs
+Cython.  A Fortran compiler isn't needed to build NumPy itself; the
+``numpy.f2py`` tests will be skipped when running the test suite if no Fortran
+compiler is available. 
 
-On OS X and Linux, all common compilers will work. The minimum supported GCC
-version is 6.5.
-
-For Fortran, ``gfortran`` works, ``g77`` does not.  In case ``g77`` is
-installed then ``g77`` will be detected and used first.  To explicitly select
-``gfortran`` in that case, do::
-
-    python setup.py build --fcompiler=gnu95
+For more options including selecting compilers, setting custom compiler flags
+and controlling parallelism, see
+https://scipy.github.io/devdocs/building/compilers_and_options.html
 
 Windows
 -------
@@ -104,10 +108,11 @@ for more details.
 Building with optimized BLAS support
 ====================================
 
-Configuring which BLAS/LAPACK is used if you have multiple libraries installed,
-or you have only one installed but in a non-standard location, is done via a
-``site.cfg`` file.  See the ``site.cfg.example`` shipped with NumPy for more
-details.
+Configuring which BLAS/LAPACK is used if you have multiple libraries installed
+is done via a ``--config-settings`` CLI flag - if not given, the default choice
+is OpenBLAS. If your installed library is in a non-standard location, selecting
+that location is done via a pkg-config ``.pc`` file.
+See https://scipy.github.io/devdocs/building/blas_lapack.html for more details.
 
 Windows
 -------
@@ -120,9 +125,8 @@ For an overview of the state of BLAS/LAPACK libraries on Windows, see
 macOS
 -----
 
-You will need to install a BLAS/LAPACK library. We recommend using OpenBLAS or
-Intel MKL. Apple's Accelerate also still works, however it has bugs and we are
-likely to drop support for it in the near future.
+On macOS >= 13.3, you can use Apple's Accelerate library. On older macOS versions,
+Accelerate has bugs and we recommend using OpenBLAS or (on x86-64) Intel MKL.
 
 Ubuntu/Debian
 -------------

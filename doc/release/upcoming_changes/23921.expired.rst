@@ -1,3 +1,0 @@
-* The ``PyDataMem_SetEventHook`` deprecation has expired and it is
-  removed.  Use ``tracemalloc`` and the ``np.lib.tracemalloc_domain``
-  domain.  (Deprecated in NumPy 1.23)

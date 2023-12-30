@@ -5,17 +5,14 @@ from numpy import ndarray, dtype, float64
 from numpy import (
     amax as amax,
     amin as amin,
-    bool_ as bool_,
+    bool as bool,
     expand_dims as expand_dims,
     clip as clip,
     indices as indices,
     ones_like as ones_like,
     squeeze as squeeze,
     zeros_like as zeros_like,
-)
-
-from numpy.lib.function_base import (
-    angle as angle,
+    angle as angle
 )
 
 # TODO: Set the `bound` to something more suitable once we
@@ -25,8 +22,8 @@ _DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
 
 __all__: list[str]
 
-MaskType = bool_
-nomask: bool_
+MaskType = bool
+nomask: bool
 
 class MaskedArrayFutureWarning(FutureWarning): ...
 class MAError(Exception): ...
@@ -330,7 +327,6 @@ class MaskedConstant(MaskedArray[Any, dtype[float64]]):
     def __new__(cls): ...
     __class__: Any
     def __array_finalize__(self, obj): ...
-    def __array_prepare__(self, obj, context=...): ...
     def __array_wrap__(self, obj, context=...): ...
     def __format__(self, format_spec): ...
     def __reduce__(self): ...

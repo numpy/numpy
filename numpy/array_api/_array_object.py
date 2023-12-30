@@ -55,7 +55,7 @@ class Array:
     functions, such as asarray().
 
     """
-    _array: np.ndarray[Any, Any]
+    _array: npt.NDArray[Any]
 
     # Use a custom constructor instead of __init__, as manually initializing
     # this class is not supported API.
@@ -542,7 +542,11 @@ class Array:
     def __getitem__(
         self: Array,
         key: Union[
-            int, slice, ellipsis, Tuple[Union[int, slice, ellipsis], ...], Array
+            int,
+            slice,
+            ellipsis,
+            Tuple[Union[int, slice, ellipsis, None], ...],
+            Array,
         ],
         /,
     ) -> Array:

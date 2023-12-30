@@ -1,3 +1,4 @@
+import sys
 import os
 import pytest
 import platform
@@ -12,6 +13,8 @@ from . import util
 class TestKind(util.F2PyTest):
     sources = [util.getpath("tests", "src", "kind", "foo.f90")]
 
+    @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1,
+                        reason="Fails for 32 bit machines")
     def test_int(self):
         """Test `int` kind_func for integers up to 10**40."""
         selectedintkind = self.module.selectedintkind

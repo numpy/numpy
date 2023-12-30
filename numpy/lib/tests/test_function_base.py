@@ -11,22 +11,21 @@ import hypothesis.strategies as st
 from functools import partial
 
 import numpy as np
-from numpy import ma
+from numpy import (
+    ma, angle, average, bartlett, blackman, corrcoef, cov,
+    delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
+    i0, insert, interp, kaiser, meshgrid, piecewise, place, rot90,
+    select, setxor1d, sinc, trapz, trim_zeros, unwrap, unique, vectorize
+    )
 from numpy.exceptions import AxisError
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_raises, assert_allclose, IS_PYPY,
     assert_warns, assert_raises_regex, suppress_warnings, HAS_REFCOUNT, IS_WASM
     )
-import numpy.lib.function_base as nfb
+import numpy.lib._function_base_impl as nfb
 from numpy.random import rand
-from numpy.lib import (
-    angle, average, bartlett, blackman, corrcoef, cov,
-    delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
-    i0, insert, interp, kaiser, meshgrid, msort, piecewise, place, rot90,
-    select, setxor1d, sinc, trapz, trim_zeros, unwrap, unique, vectorize
-    )
-from numpy.core.numeric import normalize_axis_tuple
+from numpy._core.numeric import normalize_axis_tuple
 
 
 def get_mat(n):
@@ -40,7 +39,7 @@ def _make_complex(real, imag):
     Like real + 1j * imag, but behaves as expected when imag contains non-finite
     values
     """
-    ret = np.zeros(np.broadcast(real, imag).shape, np.complex_)
+    ret = np.zeros(np.broadcast(real, imag).shape, np.complex128)
     ret.real = real
     ret.imag = imag
     return ret
@@ -460,7 +459,7 @@ class TestSelect:
 
     def test_return_dtype(self):
         assert_equal(select(self.conditions, self.choices, 1j).dtype,
-                     np.complex_)
+                     np.complex128)
         # But the conditions need to be stronger then the scalar default
         # if it is scalar.
         choices = [choice.astype(np.int8) for choice in self.choices]
@@ -581,7 +580,7 @@ class TestInsert:
 
     def test_structured_array(self):
         a = np.array([(1, 'a'), (2, 'b'), (3, 'c')],
-                     dtype=[('foo', 'i'), ('bar', 'a1')])
+                     dtype=[('foo', 'i'), ('bar', 'S1')])
         val = (4, 'd')
         b = np.insert(a, 0, val)
         assert_array_equal(b[0], np.array(val, dtype=b.dtype))
@@ -629,15 +628,15 @@ class TestPtp:
 
     def test_basic(self):
         a = np.array([3, 4, 5, 10, -3, -5, 6.0])
-        assert_equal(a.ptp(axis=0), 15.0)
+        assert_equal(np.ptp(a, axis=0), 15.0)
         b = np.array([[3, 6.0, 9.0],
                       [4, 10.0, 5.0],
                       [8, 3.0, 2.0]])
-        assert_equal(b.ptp(axis=0), [5.0, 7.0, 7.0])
-        assert_equal(b.ptp(axis=-1), [6.0, 6.0, 6.0])
+        assert_equal(np.ptp(b, axis=0), [5.0, 7.0, 7.0])
+        assert_equal(np.ptp(b, axis=-1), [6.0, 6.0, 6.0])
 
-        assert_equal(b.ptp(axis=0, keepdims=True), [[5.0, 7.0, 7.0]])
-        assert_equal(b.ptp(axis=(0,1), keepdims=True), [[8.0]])
+        assert_equal(np.ptp(b, axis=0, keepdims=True), [[5.0, 7.0, 7.0]])
+        assert_equal(np.ptp(b, axis=(0, 1), keepdims=True), [[8.0]])
 
 
 class TestCumsum:
@@ -1969,7 +1968,7 @@ class TestDigitize:
         assert_equal(np.digitize(x, [x - 1, x + 1]), 1)
 
     @pytest.mark.xfail(
-        reason="gh-11022: np.core.multiarray._monoticity loses precision")
+        reason="gh-11022: np._core.multiarray._monoticity loses precision")
     def test_large_integers_decreasing(self):
         # gh-11022
         x = 2**54  # loses precision in a float
@@ -2115,6 +2114,7 @@ class TestFilterwindows:
             assert_almost_equal(np.sum(w, axis=0), 10, 15)
 
 
+@pytest.mark.filterwarnings('ignore:.*trapz.*:DeprecationWarning')
 class TestTrapz:
 
     def test_simple(self):
@@ -2212,14 +2212,14 @@ class TestCheckFinite:
         a = [1, 2, 3]
         b = [1, 2, np.inf]
         c = [1, 2, np.nan]
-        np.lib.asarray_chkfinite(a)
-        assert_raises(ValueError, np.lib.asarray_chkfinite, b)
-        assert_raises(ValueError, np.lib.asarray_chkfinite, c)
+        np.asarray_chkfinite(a)
+        assert_raises(ValueError, np.asarray_chkfinite, b)
+        assert_raises(ValueError, np.asarray_chkfinite, c)
 
     def test_dtype_order(self):
         # Regression test for missing dtype and order arguments
         a = [1, 2, 3]
-        a = np.lib.asarray_chkfinite(a, order='F', dtype=np.float64)
+        a = np.asarray_chkfinite(a, order='F', dtype=np.float64)
         assert_(a.dtype == np.float64)
 
 
@@ -2489,20 +2489,6 @@ class TestKaiser:
 
     def test_int_beta(self):
         kaiser(3, 4)
-
-
-class TestMsort:
-
-    def test_simple(self):
-        A = np.array([[0.44567325, 0.79115165, 0.54900530],
-                      [0.36844147, 0.37325583, 0.96098397],
-                      [0.64864341, 0.52929049, 0.39172155]])
-        with pytest.warns(DeprecationWarning, match="msort is deprecated"):
-            assert_almost_equal(
-                msort(A),
-                np.array([[0.36844147, 0.37325583, 0.39172155],
-                          [0.44567325, 0.52929049, 0.54900530],
-                          [0.64864341, 0.79115165, 0.96098397]]))
 
 
 class TestMeshgrid:
@@ -2887,7 +2873,7 @@ class TestInterp:
         assert_almost_equal(np.interp(x, xp, fp), [1, 2, np.nan, np.nan, 4])
 
     @pytest.fixture(params=[
-        lambda x: np.float_(x),
+        lambda x: np.float64(x),
         lambda x: _make_complex(x, 0),
         lambda x: _make_complex(0, x),
         lambda x: _make_complex(x, np.multiply(x, -2))
@@ -3077,6 +3063,9 @@ class TestPercentile:
                            (np.longdouble, np.longdouble),
                            (np.dtype("O"), np.float64)]
 
+    @pytest.mark.parametrize(["function", "quantile"],
+                             [(np.quantile, 0.4),
+                              (np.percentile, 40.0)])
     @pytest.mark.parametrize(["input_dtype", "expected_dtype"], H_F_TYPE_CODES)
     @pytest.mark.parametrize(["method", "expected"],
                              [("inverted_cdf", 20),
@@ -3090,6 +3079,8 @@ class TestPercentile:
                               ("normal_unbiased", 27.125),
                               ])
     def test_linear_interpolation(self,
+                                  function,
+                                  quantile,
                                   method,
                                   expected,
                                   input_dtype,
@@ -3099,10 +3090,19 @@ class TestPercentile:
             expected_dtype = np.promote_types(expected_dtype, np.float64)
 
         arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=input_dtype)
-        actual = np.percentile(arr, 40.0, method=method)
+        if input_dtype is np.longdouble:
+            if function is np.quantile:
+                # 0.4 is not exactly representable and it matters
+                # for "averaged_inverted_cdf", so we need to cheat.
+                quantile = input_dtype("0.4")
+            # We want to use nulp, but that does not work for longdouble
+            test_function = np.testing.assert_almost_equal
+        else:
+            test_function = np.testing.assert_array_almost_equal_nulp
 
-        np.testing.assert_almost_equal(
-            actual, expected_dtype.type(expected), 14)
+        actual = function(arr, quantile, method=method)
+
+        test_function(actual, expected_dtype.type(expected))
 
         if method in ["inverted_cdf", "closest_observation"]:
             if input_dtype == "O":

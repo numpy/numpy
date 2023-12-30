@@ -19,6 +19,8 @@ import numpy as np
 import numpy.ma as ma
 from numpy.exceptions import VisibleDeprecationWarning
 from numpy.lib._iotools import ConverterError, ConversionWarning
+from numpy.lib import _npyio_impl
+from numpy.lib._npyio_impl import recfromcsv, recfromtxt
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     assert_warns, assert_, assert_raises_regex, assert_raises,
@@ -691,7 +693,7 @@ class LoadTxtBase:
         c = TextIO()
         c.write(b'\xcf\x96')
         c.seek(0)
-        x = self.loadfunc(c, dtype=np.str_,
+        x = self.loadfunc(c, dtype=np.str_, encoding="bytes",
                           converters={0: lambda x: x.decode('UTF-8')})
         a = np.array([b'\xcf\x96'.decode('UTF-8')])
         assert_array_equal(x, a)
@@ -714,11 +716,11 @@ class TestLoadTxt(LoadTxtBase):
 
     def setup_method(self):
         # lower chunksize for testing
-        self.orig_chunk = np.lib.npyio._loadtxt_chunksize
-        np.lib.npyio._loadtxt_chunksize = 1
+        self.orig_chunk = _npyio_impl._loadtxt_chunksize
+        _npyio_impl._loadtxt_chunksize = 1
 
     def teardown_method(self):
-        np.lib.npyio._loadtxt_chunksize = self.orig_chunk
+        _npyio_impl._loadtxt_chunksize = self.orig_chunk
 
     def test_record(self):
         c = TextIO()
@@ -926,7 +928,7 @@ class TestLoadTxt(LoadTxtBase):
         with pytest.raises(TypeError,
                 match="If a structured dtype .*. But 1 usecols were given and "
                       "the number of fields is 3."):
-            np.loadtxt(["1,1\n"], dtype="i,(2)i", usecols=[0], delimiter=",")
+            np.loadtxt(["1,1\n"], dtype="i,2i", usecols=[0], delimiter=",")
 
     def test_fancy_dtype(self):
         c = TextIO()
@@ -1445,7 +1447,8 @@ class TestFromTxt(LoadTxtBase):
         data = TextIO('gender age weight\nM 64.0 75.0\nF 25.0 60.0')
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', VisibleDeprecationWarning)
-            test = np.genfromtxt(data, dtype=None, names=True)
+            test = np.genfromtxt(data, dtype=None, names=True,
+                                 encoding='bytes')
             assert_(w[0].category is VisibleDeprecationWarning)
         control = {'gender': np.array([b'M', b'F']),
                    'age': np.array([64.0, 25.0]),
@@ -1459,7 +1462,7 @@ class TestFromTxt(LoadTxtBase):
         data = TextIO('A 64 75.0 3+4j True\nBCD 25 60.0 5+6j False')
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', VisibleDeprecationWarning)
-            test = np.genfromtxt(data, dtype=None)
+            test = np.genfromtxt(data, dtype=None, encoding='bytes')
             assert_(w[0].category is VisibleDeprecationWarning)
         control = [np.array([b'A', b'BCD']),
                    np.array([64, 25]),
@@ -1512,7 +1515,8 @@ M   33  21.99
         # The # is part of the first name and should be deleted automatically.
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', VisibleDeprecationWarning)
-            test = np.genfromtxt(data, names=True, dtype=None)
+            test = np.genfromtxt(data, names=True, dtype=None,
+                                 encoding="bytes")
             assert_(w[0].category is VisibleDeprecationWarning)
         ctrl = np.array([('M', 21, 72.1), ('F', 35, 58.33), ('M', 33, 21.99)],
                         dtype=[('gender', '|S1'), ('age', int), ('weight', float)])
@@ -1526,7 +1530,8 @@ M   33  21.99
         """)
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', VisibleDeprecationWarning)
-            test = np.genfromtxt(data, names=True, dtype=None)
+            test = np.genfromtxt(data, names=True, dtype=None,
+                                 encoding="bytes")
             assert_(w[0].category is VisibleDeprecationWarning)
         assert_equal(test, ctrl)
 
@@ -1556,7 +1561,7 @@ M   33  21.99
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', VisibleDeprecationWarning)
             test = np.genfromtxt(data, usecols=('A', 'C', 'D'),
-                                names=True, dtype=None)
+                                names=True, dtype=None, encoding="bytes")
             assert_(w[0].category is VisibleDeprecationWarning)
         control = np.array(('aaaa', 45, 9.1),
                            dtype=[('A', '|S4'), ('C', int), ('D', float)])
@@ -1577,7 +1582,7 @@ M   33  21.99
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', VisibleDeprecationWarning)
             test = np.genfromtxt(data, usecols=('A', 'C', 'D'), names=True,
-                                dtype=None,
+                                dtype=None, encoding="bytes",
                                 converters={'C': lambda s: 2 * int(s)})
             assert_(w[0].category is VisibleDeprecationWarning)
         control = np.array(('aaaa', 90, 9.1),
@@ -1628,7 +1633,7 @@ M   33  21.99
                    "D02N03,10/10/2004,R 1,,7,145.55")
         kwargs = dict(
             converters={2: strip_per, 3: strip_rand}, delimiter=",",
-            dtype=None)
+            dtype=None, encoding="bytes")
         assert_raises(ConverterError, np.genfromtxt, s, **kwargs)
 
     def test_tricky_converter_bug1666(self):
@@ -1657,13 +1662,14 @@ M   33  21.99
         dmap = {'1:1':0, '1:n':1, 'm:1':2, 'm:n':3}
         dtyp = [('e1','i4'),('e2','i4'),('e3','i2'),('n', 'i1')]
         conv = {0: int, 1: int, 2: int, 3: lambda r: dmap[r.decode()]}
-        test = np.recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
-                             names=None, converters=conv)
+        test = recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
+                          names=None, converters=conv, encoding="bytes")
         control = np.rec.array([(1,5,-1,0), (2,8,-1,1), (3,3,-2,3)], dtype=dtyp)
         assert_equal(test, control)
-        dtyp = [('e1','i4'),('e2','i4'),('n', 'i1')]
-        test = np.recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
-                             usecols=(0,1,3), names=None, converters=conv)
+        dtyp = [('e1', 'i4'), ('e2', 'i4'), ('n', 'i1')]
+        test = recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
+                          usecols=(0, 1, 3), names=None, converters=conv,
+                          encoding="bytes")
         control = np.rec.array([(1,5,0), (2,8,1), (3,3,3)], dtype=dtyp)
         assert_equal(test, control)
 
@@ -1993,7 +1999,7 @@ M   33  21.99
 
         converters = {4: lambda x: "(%s)" % x.decode()}
         kwargs = dict(delimiter=",", converters=converters,
-                      dtype=[(_, int) for _ in 'abcde'],)
+                      dtype=[(_, int) for _ in 'abcde'], encoding="bytes")
         assert_raises(ValueError, np.genfromtxt, mdata, **kwargs)
 
     def test_default_field_format(self):
@@ -2043,7 +2049,7 @@ M   33  21.99
     def test_autostrip(self):
         # Test autostrip
         data = "01/01/2003  , 1.3,   abcde"
-        kwargs = dict(delimiter=",", dtype=None)
+        kwargs = dict(delimiter=",", dtype=None, encoding="bytes")
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', VisibleDeprecationWarning)
             mtest = np.genfromtxt(TextIO(data), **kwargs)
@@ -2177,13 +2183,15 @@ M   33  21.99
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', VisibleDeprecationWarning)
             test = np.genfromtxt(TextIO("test1,testNonetherestofthedata"),
-                                 dtype=None, comments=None, delimiter=',')
+                                 dtype=None, comments=None, delimiter=',',
+                                 encoding="bytes")
             assert_(w[0].category is VisibleDeprecationWarning)
         assert_equal(test[1], b'testNonetherestofthedata')
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', VisibleDeprecationWarning)
             test = np.genfromtxt(TextIO("test1, testNonetherestofthedata"),
-                                 dtype=None, comments=None, delimiter=',')
+                                 dtype=None, comments=None, delimiter=',',
+                                 encoding="bytes")
             assert_(w[0].category is VisibleDeprecationWarning)
         assert_equal(test[1], b' testNonetherestofthedata')
 
@@ -2195,7 +2203,8 @@ M   33  21.99
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', VisibleDeprecationWarning)
             test = np.genfromtxt(TextIO(s),
-                                 dtype=None, comments=None, delimiter=',')
+                                 dtype=None, comments=None, delimiter=',',
+                                 encoding="bytes")
             assert_(w[0].category is VisibleDeprecationWarning)
         assert_equal(test[1, 0], b"test1")
         assert_equal(test[1, 1], b"testNonethe" + latin1)
@@ -2210,7 +2219,8 @@ M   33  21.99
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', VisibleDeprecationWarning)
             test = np.genfromtxt(TextIO(b"0,testNonethe" + latin1),
-                                 dtype=None, comments=None, delimiter=',')
+                                 dtype=None, comments=None, delimiter=',',
+                                 encoding="bytes")
             assert_(w[0].category is VisibleDeprecationWarning)
         assert_equal(test['f0'], 0)
         assert_equal(test['f1'], b"testNonethe" + latin1)
@@ -2228,7 +2238,8 @@ M   33  21.99
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', VisibleDeprecationWarning)
             test = np.genfromtxt(TextIO(s),
-                                 dtype=None, comments=None, delimiter=',')
+                                 dtype=None, comments=None, delimiter=',',
+                                 encoding="bytes")
             assert_(w[0].category is VisibleDeprecationWarning)
         ctl = np.array([
                  [b'norm1', b'norm2', b'norm3'],
@@ -2282,7 +2293,7 @@ M   33  21.99
                 warnings.filterwarnings('always', '',
                                         VisibleDeprecationWarning)
                 test = np.genfromtxt(path, dtype=None, comments=None,
-                                     delimiter=',')
+                                     delimiter=',', encoding="bytes")
                 # Check for warning when encoding not specified.
                 assert_(w[0].category is VisibleDeprecationWarning)
             ctl = np.array([
@@ -2297,14 +2308,14 @@ M   33  21.99
         #
         data = TextIO('A,B\n0,1\n2,3')
         kwargs = dict(delimiter=",", missing_values="N/A", names=True)
-        test = np.recfromtxt(data, **kwargs)
+        test = recfromtxt(data, **kwargs)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('A', int), ('B', int)])
         assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
         data = TextIO('A,B\n0,1\n2,N/A')
-        test = np.recfromtxt(data, dtype=None, usemask=True, **kwargs)
+        test = recfromtxt(data, dtype=None, usemask=True, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
                            dtype=[('A', int), ('B', int)])
@@ -2316,15 +2327,16 @@ M   33  21.99
     def test_recfromcsv(self):
         #
         data = TextIO('A,B\n0,1\n2,3')
-        kwargs = dict(missing_values="N/A", names=True, case_sensitive=True)
-        test = np.recfromcsv(data, dtype=None, **kwargs)
+        kwargs = dict(missing_values="N/A", names=True, case_sensitive=True,
+                      encoding="bytes")
+        test = recfromcsv(data, dtype=None, **kwargs)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('A', int), ('B', int)])
         assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
         data = TextIO('A,B\n0,1\n2,N/A')
-        test = np.recfromcsv(data, dtype=None, usemask=True, **kwargs)
+        test = recfromcsv(data, dtype=None, usemask=True, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
                            dtype=[('A', int), ('B', int)])
@@ -2333,7 +2345,7 @@ M   33  21.99
         assert_equal(test.A, [0, 2])
         #
         data = TextIO('A,B\n0,1\n2,3')
-        test = np.recfromcsv(data, missing_values='N/A',)
+        test = recfromcsv(data, missing_values='N/A',)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('a', int), ('b', int)])
         assert_(isinstance(test, np.recarray))
@@ -2341,7 +2353,7 @@ M   33  21.99
         #
         data = TextIO('A,B\n0,1\n2,3')
         dtype = [('a', int), ('b', float)]
-        test = np.recfromcsv(data, missing_values='N/A', dtype=dtype)
+        test = recfromcsv(data, missing_values='N/A', dtype=dtype)
         control = np.array([(0, 1), (2, 3)],
                            dtype=dtype)
         assert_(isinstance(test, np.recarray))
@@ -2349,8 +2361,8 @@ M   33  21.99
 
         #gh-10394
         data = TextIO('color\n"red"\n"blue"')
-        test = np.recfromcsv(data, converters={0: lambda x: x.strip(b'\"')})
-        control = np.array([('red',), ('blue',)], dtype=[('color', (bytes, 4))])
+        test = recfromcsv(data, converters={0: lambda x: x.strip('\"')})
+        control = np.array([('red',), ('blue',)], dtype=[('color', (str, 4))])
         assert_equal(test.dtype, control.dtype)
         assert_equal(test, control)
 
@@ -2621,7 +2633,7 @@ class TestPathUsage:
                 f.write('A,B\n0,1\n2,3')
 
             kwargs = dict(delimiter=",", missing_values="N/A", names=True)
-            test = np.recfromtxt(path, **kwargs)
+            test = recfromtxt(path, **kwargs)
             control = np.array([(0, 1), (2, 3)],
                                dtype=[('A', int), ('B', int)])
             assert_(isinstance(test, np.recarray))
@@ -2635,8 +2647,10 @@ class TestPathUsage:
             with open(path, 'w') as f:
                 f.write('A,B\n0,1\n2,3')
 
-            kwargs = dict(missing_values="N/A", names=True, case_sensitive=True)
-            test = np.recfromcsv(path, dtype=None, **kwargs)
+            kwargs = dict(
+                missing_values="N/A", names=True, case_sensitive=True
+            )
+            test = recfromcsv(path, dtype=None, **kwargs)
             control = np.array([(0, 1), (2, 3)],
                                dtype=[('A', int), ('B', int)])
             assert_(isinstance(test, np.recarray))

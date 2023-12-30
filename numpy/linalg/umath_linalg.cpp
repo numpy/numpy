@@ -34,6 +34,8 @@ static const char* umath_linalg_version_string = "0.1.5";
  *                        Debugging support                                 *
  ****************************************************************************
  */
+#define _UMATH_LINALG_DEBUG 0
+
 #define TRACE_TXT(...) do { fprintf (stderr, __VA_ARGS__); } while (0)
 #define STACK_TRACE do {} while (0)
 #define TRACE\
@@ -46,7 +48,7 @@ static const char* umath_linalg_version_string = "0.1.5";
         STACK_TRACE;                            \
     } while (0)
 
-#if 0
+#if _UMATH_LINALG_DEBUG
 #if defined HAVE_EXECINFO_H
 #include <execinfo.h>
 #elif defined HAVE_LIBUNWIND_H
@@ -465,35 +467,19 @@ constexpr double numeric_limits<double>::minus_one;
 const double numeric_limits<double>::ninf = -NPY_INFINITY;
 const double numeric_limits<double>::nan = NPY_NAN;
 
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 template<>
 struct numeric_limits<npy_cfloat> {
-static constexpr npy_cfloat one = {1.0f, 0.0f};
-static constexpr npy_cfloat zero = {0.0f, 0.0f};
-static constexpr npy_cfloat minus_one = {-1.0f, 0.0f};
+static constexpr npy_cfloat one = {1.0f};
+static constexpr npy_cfloat zero = {0.0f};
+static constexpr npy_cfloat minus_one = {-1.0f};
 static const npy_cfloat ninf;
 static const npy_cfloat nan;
 };
 constexpr npy_cfloat numeric_limits<npy_cfloat>::one;
 constexpr npy_cfloat numeric_limits<npy_cfloat>::zero;
 constexpr npy_cfloat numeric_limits<npy_cfloat>::minus_one;
-const npy_cfloat numeric_limits<npy_cfloat>::ninf = {-NPY_INFINITYF, 0.0f};
+const npy_cfloat numeric_limits<npy_cfloat>::ninf = {-NPY_INFINITYF};
 const npy_cfloat numeric_limits<npy_cfloat>::nan = {NPY_NANF, NPY_NANF};
-#else
-template<>
-struct numeric_limits<npy_cfloat> {
-static constexpr npy_cfloat one = 1.0f;
-static constexpr npy_cfloat zero = 0.0f;
-static constexpr npy_cfloat minus_one = -1.0f;
-static const npy_cfloat ninf;
-static const npy_cfloat nan;
-};
-constexpr npy_cfloat numeric_limits<npy_cfloat>::one;
-constexpr npy_cfloat numeric_limits<npy_cfloat>::zero;
-constexpr npy_cfloat numeric_limits<npy_cfloat>::minus_one;
-const npy_cfloat numeric_limits<npy_cfloat>::ninf = -NPY_INFINITYF;
-const npy_cfloat numeric_limits<npy_cfloat>::nan = NPY_NANF;
-#endif
 
 template<>
 struct numeric_limits<f2c_complex> {
@@ -509,48 +495,32 @@ constexpr f2c_complex numeric_limits<f2c_complex>::minus_one;
 const f2c_complex numeric_limits<f2c_complex>::ninf = {-NPY_INFINITYF, 0.0f};
 const f2c_complex numeric_limits<f2c_complex>::nan = {NPY_NANF, NPY_NANF};
 
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 template<>
 struct numeric_limits<npy_cdouble> {
-static constexpr npy_cdouble one = {1.0, 0.0};
-static constexpr npy_cdouble zero = {0.0, 0.0};
-static constexpr npy_cdouble minus_one = {-1.0, 0.0};
+static constexpr npy_cdouble one = {1.0};
+static constexpr npy_cdouble zero = {0.0};
+static constexpr npy_cdouble minus_one = {-1.0};
 static const npy_cdouble ninf;
 static const npy_cdouble nan;
 };
 constexpr npy_cdouble numeric_limits<npy_cdouble>::one;
 constexpr npy_cdouble numeric_limits<npy_cdouble>::zero;
 constexpr npy_cdouble numeric_limits<npy_cdouble>::minus_one;
-const npy_cdouble numeric_limits<npy_cdouble>::ninf = {-NPY_INFINITY, 0.0};
+const npy_cdouble numeric_limits<npy_cdouble>::ninf = {-NPY_INFINITY};
 const npy_cdouble numeric_limits<npy_cdouble>::nan = {NPY_NAN, NPY_NAN};
-#else
-template<>
-struct numeric_limits<npy_cdouble> {
-static constexpr npy_cdouble one = 1.0;
-static constexpr npy_cdouble zero = 0.0;
-static constexpr npy_cdouble minus_one = -1.0;
-static const npy_cdouble ninf;
-static const npy_cdouble nan;
-};
-constexpr npy_cdouble numeric_limits<npy_cdouble>::one;
-constexpr npy_cdouble numeric_limits<npy_cdouble>::zero;
-constexpr npy_cdouble numeric_limits<npy_cdouble>::minus_one;
-const npy_cdouble numeric_limits<npy_cdouble>::ninf = -NPY_INFINITY;
-const npy_cdouble numeric_limits<npy_cdouble>::nan = NPY_NAN;
-#endif
 
 template<>
 struct numeric_limits<f2c_doublecomplex> {
-static constexpr f2c_doublecomplex one = {1.0, 0.0};
-static constexpr f2c_doublecomplex zero = {0.0, 0.0};
-static constexpr f2c_doublecomplex minus_one = {-1.0, 0.0};
+static constexpr f2c_doublecomplex one = {1.0};
+static constexpr f2c_doublecomplex zero = {0.0};
+static constexpr f2c_doublecomplex minus_one = {-1.0};
 static const f2c_doublecomplex ninf;
 static const f2c_doublecomplex nan;
 };
 constexpr f2c_doublecomplex numeric_limits<f2c_doublecomplex>::one;
 constexpr f2c_doublecomplex numeric_limits<f2c_doublecomplex>::zero;
 constexpr f2c_doublecomplex numeric_limits<f2c_doublecomplex>::minus_one;
-const f2c_doublecomplex numeric_limits<f2c_doublecomplex>::ninf = {-NPY_INFINITY, 0.0};
+const f2c_doublecomplex numeric_limits<f2c_doublecomplex>::ninf = {-NPY_INFINITY};
 const f2c_doublecomplex numeric_limits<f2c_doublecomplex>::nan = {NPY_NAN, NPY_NAN};
 
 /*
@@ -606,6 +576,7 @@ init_linearize_data(LINEARIZE_DATA_t *lin_data,
         lin_data, rows, columns, row_strides, column_strides, columns);
 }
 
+#if _UMATH_LINALG_DEBUG
 static inline void
 dump_ufunc_object(PyUFuncObject* ufunc)
 {
@@ -683,7 +654,7 @@ dump_matrix(const char* name,
         TRACE_TXT(" |\n");
     }
 }
-
+#endif
 
 /*
  *****************************************************************************
@@ -792,12 +763,6 @@ update_pointers(npy_uint8** bases, ptrdiff_t* offsets, size_t count)
     }
 }
 
-
-/* disable -Wmaybe-uninitialized as there is some code that generate false
-   positives with this warning
-*/
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 
 /*
  *****************************************************************************
@@ -2958,7 +2923,7 @@ using basetyp = basetype_t<typ>;
                    (fortran_int)dimensions[0],
                    (fortran_int)dimensions[1],
 dispatch_scalar<typ>())) {
-        LINEARIZE_DATA_t a_in, u_out, s_out, v_out;
+        LINEARIZE_DATA_t a_in, u_out = {}, s_out = {}, v_out = {};
         fortran_int min_m_n = params.M < params.N ? params.M : params.N;
 
         init_linearize_data(&a_in, params.N, params.M, steps[1], steps[0]);
@@ -4113,8 +4078,6 @@ dispatch_scalar<typ>{});
     set_fp_invalid_or_clear(error_occurred);
 }
 
-#pragma GCC diagnostic pop
-
 /* -------------------------------------------------------------------------- */
               /* gufunc registration  */
 
@@ -4580,7 +4543,7 @@ addUfuncs(PyObject *dictionary) {
         if (f == NULL) {
             return -1;
         }
-#if 0
+#if _UMATH_LINALG_DEBUG
         dump_ufunc_object((PyUFuncObject*) f);
 #endif
         int ret = PyDict_SetItemString(dictionary, d->name, f);

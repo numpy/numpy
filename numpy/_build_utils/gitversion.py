@@ -1,10 +1,12 @@
+#!/usr/bin/env python3
 import os
 import textwrap
 
 
 def init_version():
     init = os.path.join(os.path.dirname(__file__), '../../pyproject.toml')
-    data = open(init).readlines()
+    with open(init) as fid:
+        data = fid.readlines()
 
     version_line = next(
         line for line in data if line.startswith('version =')
@@ -23,6 +25,7 @@ def git_version(version):
     import subprocess
     import os.path
 
+    git_hash = ''
     try:
         p = subprocess.Popen(
             ['git', 'log', '-1', '--format="%H %aI"'],
@@ -47,8 +50,6 @@ def git_version(version):
             # Only attach git tag to development versions
             if 'dev' in version:
                 version += f'+git{git_date}.{git_hash[:7]}'
-        else:
-            git_hash = ''
 
     return version, git_hash
 

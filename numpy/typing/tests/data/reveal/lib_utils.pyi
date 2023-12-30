@@ -1,19 +1,22 @@
+import sys
 from io import StringIO
-from typing import Any
 
 import numpy as np
+import numpy.typing as npt
+import numpy.lib.array_utils as array_utils
 
-AR: np.ndarray[Any, np.dtype[np.float64]]
-AR_DICT: dict[str, np.ndarray[Any, np.dtype[np.float64]]]
+if sys.version_info >= (3, 11):
+    from typing import assert_type
+else:
+    from typing_extensions import assert_type
+
+AR: npt.NDArray[np.float64]
+AR_DICT: dict[str, npt.NDArray[np.float64]]
 FILE: StringIO
 
 def func(a: int) -> bool: ...
 
-reveal_type(np.byte_bounds(AR))  # E: Tuple[builtins.int, builtins.int]
-reveal_type(np.byte_bounds(np.float64()))  # E: Tuple[builtins.int, builtins.int]
+assert_type(array_utils.byte_bounds(AR), tuple[int, int])
+assert_type(array_utils.byte_bounds(np.float64()), tuple[int, int])
 
-reveal_type(np.info(1, output=FILE))  # E: None
-
-reveal_type(np.source(np.interp, output=FILE))  # E: None
-
-reveal_type(np.lookfor("binary representation", output=FILE))  # E: None
+assert_type(np.info(1, output=FILE), None)

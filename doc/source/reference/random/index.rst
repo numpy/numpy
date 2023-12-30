@@ -9,7 +9,7 @@ Random sampling (:mod:`numpy.random`)
 
 .. _random-quick-start:
 
-Quick Start
+Quick start
 -----------
 
 The :mod:`numpy.random` module implements pseudo-random number generators

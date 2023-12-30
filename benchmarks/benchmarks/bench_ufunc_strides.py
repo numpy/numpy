@@ -2,7 +2,7 @@ from .common import Benchmark, get_data
 
 import numpy as np
 
-UFUNCS = [obj for obj in np.core.umath.__dict__.values() if
+UFUNCS = [obj for obj in np._core.umath.__dict__.values() if
           isinstance(obj, np.ufunc)]
 UFUNCS_UNARY = [uf for uf in UFUNCS if "O->O" in uf.types]
 
@@ -100,7 +100,11 @@ class _AbstractUnary(Benchmark):
         ufunc(*self.ufunc_args)
 
 class UnaryFP(_AbstractUnary):
-    params = [UFUNCS_UNARY, [1, 2, 4], [1, 2, 4], ['e', 'f', 'd']]
+    params = [[uf for uf in UFUNCS_UNARY
+                   if uf not in (np.invert, np.bitwise_count)],
+              [1, 4],
+              [1, 2],
+              ['e', 'f', 'd']]
 
     def setup(self, ufunc, stride_in, stride_out, dtype):
         _AbstractUnary.setup(self, ufunc, stride_in, stride_out, dtype)
@@ -115,7 +119,7 @@ class UnaryFPSpecial(UnaryFP):
 class BinaryFP(_AbstractBinary):
     params = [
         [np.maximum, np.minimum, np.fmax, np.fmin, np.ldexp],
-        [1, 2, 4], [1, 2, 4], [1, 2, 4], ['f', 'd']
+        [1, 2], [1, 4], [1, 2, 4], ['f', 'd']
     ]
 
 class BinaryFPSpecial(BinaryFP):
@@ -161,7 +165,7 @@ class UnaryIntContig(_AbstractUnary):
         [getattr(np, uf) for uf in (
             'positive', 'square', 'reciprocal', 'conjugate', 'logical_not',
             'invert', 'isnan', 'isinf', 'isfinite',
-            'absolute', 'sign'
+            'absolute', 'sign', 'bitwise_count'
         )],
         [1], [1],
         ['b', 'B', 'h', 'H', 'i', 'I', 'l', 'L', 'q', 'Q']

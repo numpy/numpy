@@ -18,13 +18,15 @@ if [[ $RUNNER_OS == "macOS"  && $RUNNER_ARCH == "X64" ]]; then
   # Needed so gfortran (not clang) can find system libraries like libm (-lm)
   # in f2py tests
   export LIBRARY_PATH="$LIBRARY_PATH:/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib"
-else
-  # For some reason the macos-x86_64 runner does not work with threadpoolctl
-  # Skip this check there
-  python $PROJECT_DIR/tools/openblas_support.py --check_version
+elif [[ $RUNNER_OS == "Windows" && $IS_32_BIT == true ]] ; then
+  echo "Skip OpenBLAS version check for 32-bit Windows, no OpenBLAS used"
+  # Avoid this in GHA: "ERROR: Found GNU link.exe instead of MSVC link.exe"
+  rm /c/Program\ Files/Git/usr/bin/link.EXE
 fi
 # Set available memory value to avoid OOM problems on aarch64.
 # See gh-22418.
 export NPY_AVAILABLE_MEM="4 GB"
-python -c "import sys; import numpy; sys.exit(not numpy.test(label='full'))"
+# Run full tests with -n=auto. This makes pytest-xdist distribute tests across
+# the available N CPU cores: 2 by default for Linux instances and 4 for macOS arm64
+python -c "import sys; import numpy; sys.exit(not numpy.test(label='full', extra_argv=['-n=auto']))"
 python $PROJECT_DIR/tools/wheels/check_license.py

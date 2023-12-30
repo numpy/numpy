@@ -1,10 +1,10 @@
 import numpy as np
-from numpy.core._rational_tests import rational
+from numpy._core._rational_tests import rational
 from numpy.testing import (
     assert_equal, assert_array_equal, assert_raises, assert_,
     assert_raises_regex, assert_warns,
     )
-from numpy.lib.stride_tricks import (
+from numpy.lib._stride_tricks_impl import (
     as_strided, broadcast_arrays, _broadcast_shape, broadcast_to,
     broadcast_shapes, sliding_window_view,
     )

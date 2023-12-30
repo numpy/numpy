@@ -1,4 +1,4 @@
-UFunc API
+ufunc API
 =========
 
 .. sectionauthor:: Travis E. Oliphant
@@ -61,25 +61,21 @@ Types
     .. c:function:: void loopfunc(\
             char** args, npy_intp const *dimensions, npy_intp const *steps, void* data)
 
-        *args*
-
+        :param args:
             An array of pointers to the actual data for the input and output
             arrays. The input arguments are given first followed by the output
             arguments.
 
-        *dimensions*
-
+        :param dimensions:
             A pointer to the size of the dimension over which this function is
             looping.
 
-        *steps*
-
+        :param steps:
             A pointer to the number of bytes to jump to get to the
             next element in this dimension for each of the input and
             output arguments.
 
-        *data*
-
+        :param data:
             Arbitrary data (extra arguments, function names, *etc.* )
             that can be stored with the ufunc and will be passed in
             when it is called. May be ``NULL``.
@@ -217,7 +213,7 @@ Functions
         int nin, int nout, int identity, char *name, char *doc, int unused, \
         char *signature, PyObject *identity_value)
 
-   This function is very similar to `PyUFunc_FromFuncAndDataAndSignature` above,
+   This function is very similar to :c:func:`PyUFunc_FromFuncAndDataAndSignature` above,
    but has an extra *identity_value* argument, to define an arbitrary identity
    for the ufunc when ``identity`` is passed as ``PyUFunc_IdentityValue``.
 

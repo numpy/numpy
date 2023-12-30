@@ -18,17 +18,24 @@ else:
     test_cdll = None
     if hasattr(sys, 'gettotalrefcount'):
         try:
-            cdll = load_library('_multiarray_umath_d', np.core._multiarray_umath.__file__)
+            cdll = load_library(
+                '_multiarray_umath_d', np._core._multiarray_umath.__file__
+            )
         except OSError:
             pass
         try:
-            test_cdll = load_library('_multiarray_tests', np.core._multiarray_tests.__file__)
+            test_cdll = load_library(
+                '_multiarray_tests', np._core._multiarray_tests.__file__
+            )
         except OSError:
             pass
     if cdll is None:
-        cdll = load_library('_multiarray_umath', np.core._multiarray_umath.__file__)
+        cdll = load_library(
+            '_multiarray_umath', np._core._multiarray_umath.__file__)
     if test_cdll is None:
-        test_cdll = load_library('_multiarray_tests', np.core._multiarray_tests.__file__)
+        test_cdll = load_library(
+            '_multiarray_tests', np._core._multiarray_tests.__file__
+        )
 
     c_forward_pointer = test_cdll.forward_pointer
 
@@ -39,7 +46,7 @@ else:
                     reason="Known to fail on cygwin")
 class TestLoadLibrary:
     def test_basic(self):
-        loader_path = np.core._multiarray_umath.__file__
+        loader_path = np._core._multiarray_umath.__file__
 
         out1 = load_library('_multiarray_umath', loader_path)
         out2 = load_library(Path('_multiarray_umath'), loader_path)
@@ -55,7 +62,7 @@ class TestLoadLibrary:
         try:
             so_ext = sysconfig.get_config_var('EXT_SUFFIX')
             load_library('_multiarray_umath%s' % so_ext,
-                         np.core._multiarray_umath.__file__)
+                         np._core._multiarray_umath.__file__)
         except ImportError as e:
             msg = ("ctypes is not available on this python: skipping the test"
                    " (import error was: %s)" % str(e))
@@ -213,6 +220,10 @@ class TestAsArray:
         # shape argument is required
         assert_raises(TypeError, as_array, p)
 
+    @pytest.mark.skipif(
+            sys.version_info[:2] == (3, 12),
+            reason="Broken in 3.12.0rc1, see gh-24399",
+    )
     def test_struct_array_pointer(self):
         from ctypes import c_int16, Structure, pointer
 

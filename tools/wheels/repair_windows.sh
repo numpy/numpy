@@ -17,7 +17,7 @@ pushd numpy*
 # building with mingw.
 # We therefore find each PYD in the directory structure and strip them.
 
-for f in $(find ./scipy* -name '*.pyd'); do strip $f; done
+for f in $(find ./numpy* -name '*.pyd'); do strip $f; done
 
 
 # now repack the wheel and overwrite the original
@@ -29,4 +29,4 @@ rm -rf tmp
 
 # the libopenblas.dll is placed into this directory in the cibw_before_build
 # script.
-delvewheel repair --add-path /c/opt/openblas/openblas_dll -w $DEST_DIR $WHEEL
+delvewheel repair --add-path /c/opt/64/bin -w $DEST_DIR $WHEEL

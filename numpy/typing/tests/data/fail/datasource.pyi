@@ -2,7 +2,7 @@ from pathlib import Path
 import numpy as np
 
 path: Path
-d1: np.DataSource
+d1: np.lib.npyio.DataSource
 
 d1.abspath(path)  # E: incompatible type
 d1.abspath(b"...")  # E: incompatible type

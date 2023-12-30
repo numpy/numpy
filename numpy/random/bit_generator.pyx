@@ -7,7 +7,7 @@ SeedSequence is derived from Melissa E. O'Neill's C++11 `std::seed_seq`
 implementation, as it has a lot of nice properties that we want.
 
 https://gist.github.com/imneme/540829265469e673d045
-http://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html
+https://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html
 
 The MIT License (MIT)
 
@@ -192,7 +192,7 @@ class ISeedSequence(abc.ABC):
             The size of each word. This should only be either `uint32` or
             `uint64`. Strings (`'uint32'`, `'uint64'`) are fine. Note that
             requesting `uint64` will draw twice as many bits as `uint32` for
-            the same `n_words`. This is a convenience for `BitGenerator`s that
+            the same `n_words`. This is a convenience for `BitGenerator`\ s that
             express their states as `uint64` arrays.
 
         Returns
@@ -417,8 +417,8 @@ cdef class SeedSequence():
             The size of each word. This should only be either `uint32` or
             `uint64`. Strings (`'uint32'`, `'uint64'`) are fine. Note that
             requesting `uint64` will draw twice as many bits as `uint32` for
-            the same `n_words`. This is a convenience for `BitGenerator`s that
-            express their states as `uint64` arrays.
+            the same `n_words`. This is a convenience for `BitGenerator`\ s
+            that express their states as `uint64` arrays.
 
         Returns
         -------

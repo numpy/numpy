@@ -217,19 +217,13 @@ class Indices(Benchmark):
 
 
 class StatsMethods(Benchmark):
-    # Not testing, but in array_api (redundant)
-    # 8, 16, 32 bit variants, and 128 complexes
-    params = [['int64', 'uint64', 'float64', 'intp',
-               'complex64', 'bool', 'float', 'int',
-               'complex', 'complex256'],
-              [100**n for n in range(0, 2)]]
+    params = [['int64', 'uint64', 'float32', 'float64',
+               'complex64', 'bool_'],
+              [100, 10000]]
     param_names = ['dtype', 'size']
 
     def setup(self, dtype, size):
-        try:
-            self.data = np.ones(size, dtype=getattr(np, dtype))
-        except AttributeError:  # builtins throw AttributeError after 1.20
-            self.data = np.ones(size, dtype=dtype)
+        self.data = np.ones(size, dtype=dtype)
         if dtype.startswith('complex'):
             self.data = np.random.randn(size) + 1j * np.random.randn(size)
 
@@ -253,3 +247,36 @@ class StatsMethods(Benchmark):
 
     def time_sum(self, dtype, size):
         self.data.sum()
+
+
+class NumPyChar(Benchmark):
+    def setup(self):
+        self.A = np.array([100*'x', 100*'y'])
+        self.B = np.array(1000 * ['aa'])
+
+        self.C = np.array([100*'x' + 'z', 100*'y' + 'z' + 'y', 100*'x'])
+        self.D = np.array(1000 * ['ab'] + 1000 * ['ac'])
+
+    def time_isalpha_small_list_big_string(self):
+        np.char.isalpha(self.A)
+
+    def time_isalpha_big_list_small_string(self):
+        np.char.isalpha(self.B)
+
+    def time_add_small_list_big_string(self):
+        np.char.add(self.A, self.A)
+
+    def time_add_big_list_small_string(self):
+        np.char.add(self.B, self.B)
+
+    def time_find_small_list_big_string(self):
+        np.char.find(self.C, 'z')
+
+    def time_find_big_list_small_string(self):
+        np.char.find(self.D, 'b')
+
+    def time_startswith_small_list_big_string(self):
+        np.char.startswith(self.A, 'x')
+
+    def time_startswith_big_list_small_string(self):
+        np.char.startswith(self.B, 'a')

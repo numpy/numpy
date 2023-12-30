@@ -94,7 +94,7 @@ class _Config:
         "maxopt": str or None
             utilized for target's policy '$maxopt' and the value should
             contains the maximum acceptable optimization by the compiler.
-            e.g. in gcc `'-O3'`
+            e.g. in gcc ``'-O3'``
 
         **Notes**:
             * case-sensitive for compiler names and flags
@@ -104,8 +104,8 @@ class _Config:
 
     conf_min_features : dict
         A dictionary defines the used CPU features for
-        argument option `'min'`, the key represent the CPU architecture
-        name e.g. `'x86'`. Default values provide the best effort
+        argument option ``'min'``, the key represent the CPU architecture
+        name e.g. ``'x86'``. Default values provide the best effort
         on wide range of users platforms.
 
         **Note**: case-sensitive for architecture names.
@@ -301,7 +301,8 @@ class _Config:
         ## Power8/ISA 2.07
         VSX2 = dict(interest=2, implies="VSX", implies_detect=False),
         ## Power9/ISA 3.00
-        VSX3 = dict(interest=3, implies="VSX2", implies_detect=False),
+        VSX3 = dict(interest=3, implies="VSX2", implies_detect=False,
+                    extra_checks="VSX3_HALF_DOUBLE"),
         ## Power10/ISA 3.1
         VSX4 = dict(interest=4, implies="VSX3", implies_detect=False,
                     extra_checks="VSX4_MMA"),
@@ -1308,7 +1309,7 @@ class _Feature:
     def feature_is_exist(self, name):
         """
         Returns True if a certain feature is exist and covered within
-        `_Config.conf_features`.
+        ``_Config.conf_features``.
 
         Parameters
         ----------

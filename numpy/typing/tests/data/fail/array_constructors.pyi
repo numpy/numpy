@@ -1,6 +1,7 @@
 import numpy as np
+import numpy.typing as npt
 
-a: np.ndarray
+a: npt.NDArray[np.float64]
 generator = (i for i in range(10))
 
 np.require(a, requirements=1)  # E: No overload variant
