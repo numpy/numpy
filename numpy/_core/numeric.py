@@ -2236,7 +2236,9 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     `b` has magnitude smaller than one. For example, it is unlikely that
     ``a = 1e-9`` and ``b = 2e-9`` should be considered "close", yet
     ``allclose(1e-9, 2e-9)`` is ``True`` with default settings. Be sure
-    to select `atol` for the use case at hand.
+    to select `atol` for the use case at hand, especially for defining the
+    threshold below which a non-zero value in `a` will be considered "close"
+    to a very small or zero value in `b`.
 
     The comparison of `a` and `b` uses standard broadcasting, which
     means that `a` and `b` need not have the same shape in order for
@@ -2322,8 +2324,10 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     The default value of `atol` is not appropriate when the reference value
     `b` has magnitude smaller than one. For example, it is unlikely that
     ``a = 1e-9`` and ``b = 2e-9`` should be considered "close", yet
-    ``allclose(1e-9, 2e-9)`` is ``True`` with default settings. Be sure
-    to select `atol` for the use case at hand.
+    ``isclose(1e-9, 2e-9)`` is ``True`` with default settings. Be sure
+    to select `atol` for the use case at hand, especially for defining the
+    threshold below which a non-zero value in `a` will be considered "close"
+    to a very small or zero value in `b`.
 
     `isclose` is not defined for non-numeric data types.
     :class:`bool` is considered a numeric data-type for this purpose.
