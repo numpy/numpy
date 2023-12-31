@@ -330,7 +330,7 @@ def build_meson(source_files, module_name=None, **kwargs):
 
 
 #
-# Unittest convenience
+# Build helpers
 #
 
 @dataclass
@@ -352,10 +352,6 @@ class F2PyModuleSpec:
         if not self.module_name:
             module_part = __name__.rsplit(".", 1)[-1]
             self.module_name = f"_{module_part}_{self.test_class_name}_ext_module"
-
-def create_module_spec(test_class, **kwargs):
-    return F2PyModuleSpec(test_class=test_class, **kwargs)
-
 
 def build_module_from_spec(spec):
     codes = spec.sources if spec.sources else []
