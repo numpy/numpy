@@ -839,11 +839,16 @@ def compress_nd(x, axis=None):
 
     Examples
     --------
-    >>> x = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
-    ...                                                   [1, 0, 0],
-    ...                                                   [0, 0, 0]])
+    >>> arr = [[1, 2], [3, 4]]
+    >>> mask = [[0, 1], [0, 0]]
+    >>> x = np.ma.array(arr, mask=mask)
+    >>> np.ma.compress_nd(x, axis=0)
+    array([[3, 4]])
+    >>> np.ma.compress_nd(x, axis=1)
+    array([[1],
+           [3]])
     >>> np.ma.compress_nd(x)
-    array([[7, 8]])
+    array([[3]])
 
     """
     x = asarray(x)
@@ -933,25 +938,14 @@ def compress_rows(a):
     Parameters
     ----------
     x : array_like, MaskedArray
-        The array to operate on.  If not a MaskedArray instance (or if no array
+        The array to operate on. If not a MaskedArray instance (or if no array
         elements are masked), `x` is interpreted as a MaskedArray with
         `mask` set to `nomask`. Must be a 2D array.
-    
 
     Returns
     -------
     compressed_array : ndarray
         The compressed array.
-
-    Examples
-    --------
-    >>> x = np.ma.array(np.arange(6).reshape(3, 2), mask=[[1, 0], 
-                                                          [0, 0], 
-                                                          [0, 0]])
-
-    >>> np.ma.compress_rows(x)
-    array([[2, 3],
-       [4, 5]])
 
     Examples
     --------
@@ -982,23 +976,11 @@ def compress_cols(a):
         The array to operate on.  If not a MaskedArray instance (or if no array
         elements are masked), `x` is interpreted as a MaskedArray with
         `mask` set to `nomask`. Must be a 2D array.
-    
 
     Returns
     -------
     compressed_array : ndarray
-    The compressed array.
-
-    Examples
-    --------
-    >>> x = np.ma.array(np.arange(6).reshape(3, 2), mask=[[1, 0], 
-                                                          [0, 0], 
-                                                          [0, 0]])
-
-    >>> np.ma.compress_cols(x)
-    array([[1],
-       [3],
-       [5]])
+        The compressed array.
 
     Examples
     --------
@@ -1214,11 +1196,6 @@ def ediff1d(arr, to_end=None, to_begin=None):
 
     This function is the equivalent of `numpy.ediff1d` that takes masked
     values into account, see `numpy.ediff1d` for details.
-
-    to_end : [array_like, optional] Number to append at the end of 
-            the returned differences. 
-    to_begin : [array_like, optional] Number to prepend at the beginning of 
-            the returned differences. 
 
     See Also
     --------

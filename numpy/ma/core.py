@@ -3905,10 +3905,11 @@ class MaskedArray(ndarray):
         array([0, 1])
         >>> type(x.compressed())
         <class 'numpy.ndarray'>
-
-        >>> x = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],[1,0,0],[0,0,0]])
+        >>> arr = [[1, 2], [3, 4]]
+        >>> mask = [[1, 0], [0, 1]]
+        >>> x = np.ma.array(arr, mask=mask)
         >>> x.compressed()
-        array([1, 2, 4, 5, 6, 7, 8])
+        array([2, 3])
 
         """
         data = ndarray.ravel(self._data)
@@ -7393,21 +7394,17 @@ def putmask(a, mask, values):  # , mode='raise'):
 
     Examples
     --------
-    >>> x = np.arange(6).reshape(2, 3)
-    >>> np.putmask(x, x>2, x**2)
+    >>> arr = [[1, 2], [3, 4]]
+    >>> mask = [[1, 0], [0, 0]]
+    >>> x = np.ma.array(arr, mask=mask)
+    >>> np.putmask(x, x < 4, x**2)
     >>> x
-    array([[ 0,  1,  2],
-           [ 9, 16, 25]])
-
-
-    >>> x = np.array([[1, 2, 3],
-                [3, 2, 1],
-                [1, 2, 3]])
-    >>> np.putmask(x, x>2, 4)
-    >>> x
-    array([[1, 2, 4],
-        [4, 2, 1],
-        [1, 2, 4]])
+    masked_array(
+      data=[[--, 4],
+            [9, 4]],
+      mask=[[ True, False],
+            [False, False]],
+      fill_value=999999)
 
     """
     # We can't use 'frommethod', the order of arguments is different
