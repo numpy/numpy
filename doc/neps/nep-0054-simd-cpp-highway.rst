@@ -301,10 +301,13 @@ Supported and missing intrinsics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Some specific intrinsics that NumPy needs may be missing from Highway.
+Similarly, some intrinsics that NumPy needs to implement routines are already
+implemented in Highway and are missing from NumPy.
 
-On the other hand, Highway has more instructions that NumPy's universal
-intrinsics, so it's possible that some future needs for NumPy kernels may
-already be met there.
+Highway has more instructions that NumPy's universal intrinsics, so it's 
+possible that some future needs for NumPy kernels may already be met there.
+
+Either way, we will always have to implement intrinsics in either solution.
 
 
 Related Work
