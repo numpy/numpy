@@ -454,6 +454,16 @@ class TestMethods:
                [b'12########## \t ##########45 \x00 ', b'UPPER']]
         assert_(issubclass(R.dtype.type, np.bytes_))
         assert_array_equal(R, tgt)
+        # Test special cases that should just return the input array,
+        # since replacements are not possible or do nothing.
+        S1 = self.A.replace(b'A very long byte string, longer than A', b'')
+        assert_array_equal(S1, self.A)
+        S2 = self.A.replace(b'', b'')
+        assert_array_equal(S2, self.A)
+        S3 = self.A.replace(b'3', b'3')
+        assert_array_equal(S3, self.A)
+        S4 = self.A.replace(b'3', b'', count=0)
+        assert_array_equal(S4, self.A)
 
     def test_rjust(self):
         assert_(issubclass(self.A.rjust(10).dtype.type, np.bytes_))

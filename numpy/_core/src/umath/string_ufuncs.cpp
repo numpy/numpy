@@ -343,29 +343,25 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
     npy_int64 len2 = buf2.num_codepoints();
     npy_int64 len3 = buf3.num_codepoints();
 
-    if (len1 < len2
-        || (len2 == 0 && len3 == 0)
-        || count == 0
-        || buf2.strcmp(buf3) == 0) {
-        out.buffer_fill_with_zeros_after_index(0);
-        return;
-    }
-
     Buffer<enc> end1 = buf1 + len1;
-    npy_int64 time = count;
-    npy_intp pos = findslice_for_replace(buf1, len1, buf2, len2);
+    // Only try to replace if useful.
+    if (len1 >= len2  // Input is big enough to make a match possible.
+        && len2 > 0  // Match string is not empty (so output will be finite).
+        && !(len2 == len3 && buf2.strcmp(buf3) == 0)  // Match and replacement differ.
+        ) {
+        for (npy_int64 time = 0; time < count; time++) {
+            npy_intp pos = findslice_for_replace(buf1, end1 - buf1, buf2, len2);
+            if (pos < 0) {
+                break;
+            }
+            buf1.buffer_memcpy(out, pos);
+            out += pos;
+            buf1 += pos;
 
-    while (time > 0 && pos >= 0) {
-        buf1.buffer_memcpy(out, pos);
-        out += pos;
-        buf1 += pos;
-
-        buf3.buffer_memcpy(out, len3);
-        out += len3;
-        buf1 += len2;
-
-        time--;
-        pos = findslice_for_replace(buf1, end1 - buf1, buf2, len2);
+            buf3.buffer_memcpy(out, len3);
+            out += len3;
+            buf1 += len2;
+        }
     }
 
     buf1.buffer_memcpy(out, end1 - buf1);
