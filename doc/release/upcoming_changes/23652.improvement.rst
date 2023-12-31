@@ -1,7 +1,0 @@
-``numpy.lib.recfunctions.structured_to_unstructured`` returns views in more cases
----------------------------------------------------------------------------------
-``structured_to_unstructured`` now returns a view, if the stride between the
-fields is constant. Prior, padding between the fields or a reversed field
-would lead to a copy.
-This change only applies to ``ndarray``, ``memmap`` and ``recarray``. For all
-other array subclasses, the behavior remains unchanged.

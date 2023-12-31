@@ -1,6 +1,6 @@
 from typing import Literal
 
-_BoolCodes = Literal["?", "=?", "<?", ">?", "bool", "bool_", "bool8"]
+_BoolCodes = Literal["?", "=?", "<?", ">?", "bool", "bool_"]
 
 _UInt8Codes = Literal["uint8", "u1", "=u1", "<u1", ">u1"]
 _UInt16Codes = Literal["uint16", "u2", "=u2", "<u2", ">u2"]
@@ -22,29 +22,31 @@ _Complex128Codes = Literal["complex128", "c16", "=c16", "<c16", ">c16"]
 _ByteCodes = Literal["byte", "b", "=b", "<b", ">b"]
 _ShortCodes = Literal["short", "h", "=h", "<h", ">h"]
 _IntCCodes = Literal["intc", "i", "=i", "<i", ">i"]
-_IntPCodes = Literal["intp", "int0", "p", "=p", "<p", ">p"]
-_IntCodes = Literal["long", "int", "int_", "l", "=l", "<l", ">l"]
+_IntPCodes = Literal["intp", "int", "int_", "n", "=n", "<n", ">n"]
+_LongCodes = Literal["long", "l", "=l", "<l", ">l"]
+_IntCodes = _IntPCodes
 _LongLongCodes = Literal["longlong", "q", "=q", "<q", ">q"]
 
 _UByteCodes = Literal["ubyte", "B", "=B", "<B", ">B"]
 _UShortCodes = Literal["ushort", "H", "=H", "<H", ">H"]
 _UIntCCodes = Literal["uintc", "I", "=I", "<I", ">I"]
-_UIntPCodes = Literal["uintp", "uint0", "P", "=P", "<P", ">P"]
-_UIntCodes = Literal["ulong", "uint", "L", "=L", "<L", ">L"]
+_UIntPCodes = Literal["uintp", "uint", "N", "=N", "<N", ">N"]
+_ULongCodes = Literal["ulong", "L", "=L", "<L", ">L"]
+_UIntCodes = _UIntPCodes
 _ULongLongCodes = Literal["ulonglong", "Q", "=Q", "<Q", ">Q"]
 
 _HalfCodes = Literal["half", "e", "=e", "<e", ">e"]
 _SingleCodes = Literal["single", "f", "=f", "<f", ">f"]
-_DoubleCodes = Literal["double", "float", "float_", "d", "=d", "<d", ">d"]
-_LongDoubleCodes = Literal["longdouble", "longfloat", "g", "=g", "<g", ">g"]
+_DoubleCodes = Literal["double", "float", "d", "=d", "<d", ">d"]
+_LongDoubleCodes = Literal["longdouble", "g", "=g", "<g", ">g"]
 
-_CSingleCodes = Literal["csingle", "singlecomplex", "F", "=F", "<F", ">F"]
-_CDoubleCodes = Literal["cdouble", "complex", "complex_", "cfloat", "D", "=D", "<D", ">D"]
-_CLongDoubleCodes = Literal["clongdouble", "clongfloat", "longcomplex", "G", "=G", "<G", ">G"]
+_CSingleCodes = Literal["csingle", "F", "=F", "<F", ">F"]
+_CDoubleCodes = Literal["cdouble", "complex", "D", "=D", "<D", ">D"]
+_CLongDoubleCodes = Literal["clongdouble", "G", "=G", "<G", ">G"]
 
-_StrCodes = Literal["str", "str_", "str0", "unicode", "unicode_", "U", "=U", "<U", ">U"]
-_BytesCodes = Literal["bytes", "bytes_", "bytes0", "S", "=S", "<S", ">S"]
-_VoidCodes = Literal["void", "void0", "V", "=V", "<V", ">V"]
+_StrCodes = Literal["str", "str_", "unicode", "U", "=U", "<U", ">U"]
+_BytesCodes = Literal["bytes", "bytes_", "S", "=S", "<S", ">S"]
+_VoidCodes = Literal["void", "V", "=V", "<V", ">V"]
 _ObjectCodes = Literal["object", "object_", "O", "=O", "<O", ">O"]
 
 _DT64Codes = Literal[

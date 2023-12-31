@@ -8,6 +8,7 @@ _NBitShort = Any
 _NBitIntC = Any
 _NBitIntP = Any
 _NBitInt = Any
+_NBitLong = Any
 _NBitLongLong = Any
 
 _NBitHalf = Any

@@ -1,8 +1,0 @@
-Added `NPY_ENABLE_CPU_FEATURES` environment variable
-----------------------------------------------------
-
-Users may now choose to enable only a subset of the built CPU features at
-runtime by specifying the `NPY_ENABLE_CPU_FEATURES` environment variable.
-Note that these specified features must be outside the baseline, since those
-are always assumed. Errors will be raised if attempting to enable a feature
-that is either not supported by your CPU, or that NumPy was not built with.

@@ -527,6 +527,7 @@ def test_load_padded_dtype(tmpdir, dt):
     assert_array_equal(arr, arr1)
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 12), reason="see gh-23988")
 @pytest.mark.xfail(IS_WASM, reason="Emscripten NODEFS has a buggy dup")
 def test_python2_python3_interoperability():
     fname = 'win64python2.npy'
@@ -534,6 +535,7 @@ def test_python2_python3_interoperability():
     with pytest.warns(UserWarning, match="Reading.*this warning\\."):
         data = np.load(path)
     assert_array_equal(data, np.ones(2))
+
 
 def test_pickle_python2_python3():
     # Test that loading object arrays saved on Python 2 works both on
@@ -544,7 +546,7 @@ def test_pickle_python2_python3():
                          b'\xe4\xb8\x8d\xe8\x89\xaf'],
                         dtype=object)
 
-    for fname in ['py2-objarr.npy', 'py2-objarr.npz',
+    for fname in ['py2-np0-objarr.npy', 'py2-objarr.npy', 'py2-objarr.npz',
                   'py3-objarr.npy', 'py3-objarr.npz']:
         path = os.path.join(data_dir, fname)
 
@@ -1021,7 +1023,7 @@ def test_metadata_dtype(dt, fail):
     else:
         arr2 = np.load(buf)
         # BUG: assert_array_equal does not check metadata
-        from numpy.lib.utils import drop_metadata
+        from numpy.lib._utils_impl import drop_metadata
         assert_array_equal(arr, arr2)
         assert drop_metadata(arr.dtype) is not arr.dtype
         assert drop_metadata(arr2.dtype) is arr2.dtype

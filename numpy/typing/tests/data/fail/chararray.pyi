@@ -1,8 +1,8 @@
 import numpy as np
 from typing import Any
 
-AR_U: np.chararray[Any, np.dtype[np.str_]]
-AR_S: np.chararray[Any, np.dtype[np.bytes_]]
+AR_U: np.char.chararray[Any, np.dtype[np.str_]]
+AR_S: np.char.chararray[Any, np.dtype[np.bytes_]]
 
 AR_S.encode()  # E: Invalid self argument
 AR_U.decode()  # E: Invalid self argument

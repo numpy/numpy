@@ -1,5 +1,5 @@
 ==================================
-A Guide to Masked Arrays in NumPy
+A guide to masked arrays in NumPy
 ==================================
 
 .. Contents::
@@ -136,7 +136,7 @@ command-line option, e.g.::
 Masked records
 --------------
 
-Like *numpy.core.ma*, the *ndarray*-based implementation
+Like *numpy.ma.core*, the *ndarray*-based implementation
 of MaskedArray is limited when working with records: you can
 mask any record of the array, but not a field in a record. If you
 need this feature, you may want to give the *mrecords* package
@@ -167,8 +167,8 @@ For example, consider the division of two masked arrays::
 
   import numpy
   import maskedarray as ma
-  x = ma.array([1,2,3,4],mask=[1,0,0,0], dtype=numpy.float_)
-  y = ma.array([-1,0,1,2], mask=[0,0,0,1], dtype=numpy.float_)
+  x = ma.array([1,2,3,4],mask=[1,0,0,0], dtype=numpy.float64)
+  y = ma.array([-1,0,1,2], mask=[0,0,0,1], dtype=numpy.float64)
 
 The division of x by y is then computed as::
 

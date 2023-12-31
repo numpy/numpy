@@ -1,4 +1,0 @@
-``np.einsum`` now accepts arrays with ``object`` dtype
-------------------------------------------------------
-The code path will call python operators on object dtype arrays, much
-like ``np.dot`` and ``np.matmul``.

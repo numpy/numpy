@@ -1,5 +1,0 @@
-`np.show_config` uses information from Meson
---------------------------------------------
-Build and system information now contains information from Meson.
-`np.show_config` now has a new optional parameter ``mode`` to help
-customize the output.

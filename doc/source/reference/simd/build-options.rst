@@ -60,7 +60,7 @@ You can also customize CPU/build options through PIP command::
     --global-option="--cpu-baseline=avx2 fma3" \
     --global-option="--cpu-dispatch=max" ./
 
-Quick Start
+Quick start
 -----------
 
 In general, the default settings tend to not impose certain CPU features that
@@ -125,7 +125,7 @@ any other CPU feature and you want to exclude from the dispatched features::
 
 .. _opt-supported-features:
 
-Supported Features
+Supported features
 ------------------
 
 The names of the features can express one feature or a group of features,
@@ -142,7 +142,7 @@ as shown in the following tables supported depend on the lowest interest:
 
 .. _opt-special-options:
 
-Special Options
+Special options
 ---------------
 
 - ``NONE``: enable no features.
@@ -215,16 +215,16 @@ Behaviors
 - ``--cpu-baseline`` escapes any specified features that aren't supported
   by the target platform or compiler rather than raising fatal errors.
 
-   .. note::
+  .. note::
 
-        Since ``--cpu-baseline`` combines all implied features, the maximum
-        supported of implied features will be enabled rather than escape all of them.
-        For example::
+       Since ``--cpu-baseline`` combines all implied features, the maximum
+       supported of implied features will be enabled rather than escape all of them.
+       For example::
 
-           # Requesting `AVX2,FMA3` but the compiler only support **SSE** features
-           python setup.py build --cpu-baseline="avx2 fma3"
-           # is equivalent to
-           python setup.py build --cpu-baseline="sse sse2 sse3 ssse3 sse41 popcnt sse42"
+          # Requesting `AVX2,FMA3` but the compiler only support **SSE** features
+          python setup.py build --cpu-baseline="avx2 fma3"
+          # is equivalent to
+          python setup.py build --cpu-baseline="sse sse2 sse3 ssse3 sse41 popcnt sse42"
 
 - ``--cpu-dispatch`` does not combain any of implied CPU features,
   so you must add them unless you want to disable one or all of them::
@@ -385,3 +385,42 @@ this will disable ``AVX2`` and ``FMA3``::
     NPY_DISABLE_CPU_FEATURES="AVX2,FMA3"
 
 If the feature is not available, a warning will be emitted.
+
+Tracking dispatched functions
+-----------------------------
+Discovering which CPU targets are enabled for different optimized functions is achievable
+through the Python function ``numpy.lib.introspect.opt_func_info``.
+This function offers the flexibility of applying filters using two optional arguments:
+one for refining function names and the other for specifying data types in the signatures.
+
+For example::
+
+   >> func_info = numpy.lib.introspect.opt_func_info(func_name='add|abs', signature='float64|complex64')
+   >> print(json.dumps(func_info, indent=2))
+   {
+     "absolute": {
+       "dd": {
+         "current": "SSE41",
+         "available": "SSE41 baseline(SSE SSE2 SSE3)"
+       },
+       "Ff": {
+         "current": "FMA3__AVX2",
+         "available": "AVX512F FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+       },
+       "Dd": {
+         "current": "FMA3__AVX2",
+         "available": "AVX512F FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+       }
+     },
+     "add": {
+       "ddd": {
+         "current": "FMA3__AVX2",
+         "available": "FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+       },
+       "FFF": {
+         "current": "FMA3__AVX2",
+         "available": "FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+       }
+    }
+  }
+

@@ -1,4 +1,0 @@
-* When comparing datetimes and timedelta using ``np.equal`` or ``np.not_equal``
-  numpy previously allowed the comparison with ``casting="unsafe"``.
-  This operation now fails. Forcing the output dtype using the ``dtype``
-  kwarg can make the operation succeed, but we do not recommend it.

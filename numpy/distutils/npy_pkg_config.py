@@ -408,9 +408,13 @@ if __name__ == '__main__':
     pkg_name = args[1]
     d = os.environ.get('NPY_PKG_CONFIG_PATH')
     if d:
-        info = read_config(pkg_name, ['numpy/core/lib/npy-pkg-config', '.', d])
+        info = read_config(
+            pkg_name, ['numpy/_core/lib/npy-pkg-config', '.', d]
+        )
     else:
-        info = read_config(pkg_name, ['numpy/core/lib/npy-pkg-config', '.'])
+        info = read_config(
+            pkg_name, ['numpy/_core/lib/npy-pkg-config', '.']
+        )
 
     if options.section:
         section = options.section

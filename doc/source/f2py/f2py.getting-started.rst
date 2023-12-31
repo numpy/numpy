@@ -22,25 +22,34 @@ following steps:
 * F2PY compiles all sources and builds an extension module containing
   the wrappers.
 
-  * In building the extension modules, F2PY uses ``numpy_distutils`` which
-    supports a number of Fortran 77/90/95 compilers, including Gnu, Intel, Sun
-    Fortran, SGI MIPSpro, Absoft, NAG, Compaq etc. For different build systems,
-    see :ref:`f2py-bldsys`.
+  * In building the extension modules, F2PY uses ``meson`` and used to use
+    ``numpy.distutils`` For different build systems, see :ref:`f2py-bldsys`.
+
+
+.. note::
+
+   See :ref:`f2py-meson-distutils` for migration information.
+
 
   * Depending on your operating system, you may need to install the Python
     development headers (which provide the file ``Python.h``) separately. In
     Linux Debian-based distributions this package should be called ``python3-dev``,
     in Fedora-based distributions it is ``python3-devel``. For macOS, depending
     how Python was installed, your mileage may vary. In Windows, the headers are
-    typically installed already.
+    typically installed already, see :ref:`f2py-windows`.
+
+.. note::
+
+   F2PY supports all the operating systems SciPy is tested on so their
+   `system dependencies panel`_ is a good reference.
 
 Depending on the situation, these steps can be carried out in a single composite
 command or step-by-step; in which case some steps can be omitted or combined
 with others.
 
-Below, we describe three typical approaches of using F2PY. These can be read in
-order of increasing effort, but also cater to different access levels depending
-on whether the Fortran code can be freely modified.
+Below, we describe three typical approaches of using F2PY with Fortran 77. These
+can be read in order of increasing effort, but also cater to different access
+levels depending on whether the Fortran code can be freely modified.
 
 The following example Fortran 77 code will be used for
 illustration, save it as ``fib1.f``:
@@ -94,7 +103,7 @@ Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
   ----------
   a : input rank-1 array('d') with bounds (n)
 
-  Other Parameters
+  Other parameters
   ----------------
   n : input int, optional
       Default: len(a)
@@ -298,3 +307,5 @@ the previous case::
 
   >>> print(fib3.fib(8))
   [  0.   1.   1.   2.   3.   5.   8.  13.]
+
+.. _`system dependencies panel`: http://scipy.github.io/devdocs/building/index.html#system-level-dependencies

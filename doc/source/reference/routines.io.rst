@@ -5,7 +5,7 @@ Input and output
 
 .. currentmodule:: numpy
 
-NumPy binary files (NPY, NPZ)
+NumPy binary files (npy, npz)
 -----------------------------
 .. autosummary::
    :toctree: generated/
@@ -14,6 +14,7 @@ NumPy binary files (NPY, NPZ)
    save
    savez
    savez_compressed
+   lib.npyio.NpzFile
 
 The format of these binary file types is documented in
 :py:mod:`numpy.lib.format`
@@ -65,7 +66,6 @@ Text formatting options
 
    set_printoptions
    get_printoptions
-   set_string_function
    printoptions
 
 Base-n representations
@@ -81,7 +81,7 @@ Data sources
 .. autosummary::
    :toctree: generated/
 
-   DataSource
+   lib.npyio.DataSource
 
 Binary format description
 -------------------------

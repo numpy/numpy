@@ -1,4 +1,0 @@
-`np.ma.dot()` now supports for non-2d arrays
---------------------------------------------
-Previously `np.ma.dot()` only worked if `a` and `b` were both 2d.
-Now it works for non-2d arrays as well as `np.dot()`.

@@ -1,4 +1,0 @@
-Faster membership test on ``NpzFile``
--------------------------------------
-Membership test on ``NpzFile`` will no longer
-decompress the archive if it is successful.

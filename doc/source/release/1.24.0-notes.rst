@@ -168,7 +168,7 @@ Is now always false.  While previously it was true for the specific cast.
 
 Returned arrays respect uniqueness of dtype kwarg objects
 ---------------------------------------------------------
-When the ``dtype`` keyword argument is used with :py:func:`np.array()` or
+When the ``dtype`` keyword argument is used with :py:func:`array()` or
 :py:func:`asarray()`, the dtype of the returned array now always exactly
 matches the dtype provided by the caller.
 

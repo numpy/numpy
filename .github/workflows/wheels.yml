@@ -21,10 +21,11 @@ on:
     #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
     #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
     #        │  │ │ │ │
-    - cron: "42 1 * * 4"
-  push:
+    - cron: "42 2 * * SUN,WED"
   pull_request:
-    types: [labeled, opened, synchronize, reopened]
+    branches:
+      - main
+      - maintenance/**
   workflow_dispatch:
 
 concurrency:
@@ -43,7 +44,7 @@ jobs:
       message: ${{ steps.commit_message.outputs.message }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         # Gets the correct commit message for pull request
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -62,9 +63,6 @@ jobs:
       contains(needs.get_commit_message.outputs.message, '[wheel build]') ||
       github.event_name == 'schedule' ||
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-      (contains(github.event.pull_request.labels.*.name, '36 - Build') ||
-      contains(github.event.pull_request.labels.*.name, '14 - Release'))) ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && ( ! endsWith(github.ref, 'dev0')))
     runs-on: ${{ matrix.buildplat[0] }}
     strategy:
@@ -79,7 +77,7 @@ jobs:
           - [macos-12, macosx_x86_64]
           - [windows-2019, win_amd64]
           - [windows-2019, win32]
-        python: ["cp39", "cp310", "cp311", "pp39"]
+        python: ["cp39", "cp310", "cp311", "cp312", "pp39"]
         exclude:
           # Don't build PyPy 32-bit windows
           - buildplat: [windows-2019, win32]
@@ -92,7 +90,7 @@ jobs:
       IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: true
           # versioneer.py requires the latest tag to be reachable. Here we
@@ -101,33 +99,34 @@ jobs:
           # https://github.com/actions/checkout/issues/338
           fetch-depth: 0
 
+      - name: Setup MSVC (32-bit)
+        if: ${{ matrix.buildplat[1] == 'win32' }}
+        uses: bus1/cabuild/action/msdevshell@e22aba57d6e74891d059d66501b6b5aed8123c4d  # v1
+        with:
+          architecture: 'x86'
+
+      - name: pkg-config-for-win
+        run: |
+          choco install -y --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+        if: runner.os == 'windows'
+
       # Used to push the built wheels
-      - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: "3.x"
 
-      # We need rtools 4.0 to have 32 bit support on windows
-      - if: runner.os == 'windows'
-        uses: r-windows/install-rtools@13886bb4048f1b862d33869a18b73cdd446a3961 # main
-
-      - name: setup rtools for 32-bit
-        run: |
-          echo "PLAT=i686" >> $env:GITHUB_ENV
-          echo "PATH=c:\rtools40\mingw32\bin;$env:PATH" >> $env:GITHUB_ENV
-          gfortran --version
-        if: ${{ matrix.buildplat[1] == 'win32' }}
-
       - name: Build wheels
-        uses: pypa/cibuildwheel@5e15bb25b428e1bf2daf2215f173d2b40135f56f # v2.12.3
+        uses: pypa/cibuildwheel@7da7df1efc530f07d1945c00934b8cfd34be0d50 # v2.16.1
         env:
+          CIBW_PRERELEASE_PYTHONS: True
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
-      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+      - uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.0.0
         with:
           name: ${{ matrix.python }}-${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
           path: ./wheelhouse/*.whl
 
-      - uses: conda-incubator/setup-miniconda@3b0f2504dd76ef23b6d31f291f4913fb60ab5ff3 # v2.2.0
+      - uses: conda-incubator/setup-miniconda@11b562958363ec5770fef326fe8ef0366f8cbf8a # v3.0.1
         with:
           # for installation of anaconda-client, required for upload to
           # anaconda.org
@@ -150,7 +149,7 @@ jobs:
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to
-          # https://anaconda.org/scipy-wheels-nightly/numpy
+          # https://anaconda.org/scientific-python-nightly-wheels/numpy
           # for cron jobs or "Run workflow" (restricted to main branch).
           # Tags will upload to
           # https://anaconda.org/multibuild-wheels-staging/numpy
@@ -175,7 +174,7 @@ jobs:
       # IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: true
           # versioneer.py requires the latest tag to be reachable. Here we
@@ -184,18 +183,19 @@ jobs:
           # https://github.com/actions/checkout/issues/338
           fetch-depth: 0
       # Used to push the built wheels
-      - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           # Build sdist on lowest supported Python
           python-version: "3.9"
       - name: Build sdist
         run: |
-          python setup.py sdist
+          python -m pip install -U pip build
+          python -m build --sdist -Csetup-args=-Dallow-noblas=true
       - name: Test the sdist
         run: |
           # TODO: Don't run test suite, and instead build wheels from sdist
           # Depends on pypa/cibuildwheel#1020
-          python -m pip install dist/*.gz
+          python -m pip install dist/*.gz -Csetup-args=-Dallow-noblas=true
           pip install -r test_requirements.txt
           cd .. # Can't import numpy within numpy src directory
           python -c "import numpy, sys; print(numpy.__version__); sys.exit(numpy.test() is False)"
@@ -205,12 +205,12 @@ jobs:
           python -mpip install twine
           twine check dist/*
 
-      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+      - uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.0.0
         with:
           name: sdist
           path: ./dist/*
 
-      - uses: conda-incubator/setup-miniconda@3b0f2504dd76ef23b6d31f291f4913fb60ab5ff3 # v2.2.0
+      - uses: conda-incubator/setup-miniconda@11b562958363ec5770fef326fe8ef0366f8cbf8a # v3.0.1
         with:
           # for installation of anaconda-client, required for upload to
           # anaconda.org
@@ -232,7 +232,7 @@ jobs:
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to
-          # https://anaconda.org/scipy-wheels-nightly/numpy
+          # https://anaconda.org/scientific-python-nightly-wheels/numpy
           # for cron jobs or "Run workflow" (restricted to main branch).
           # Tags will upload to
           # https://anaconda.org/multibuild-wheels-staging/numpy

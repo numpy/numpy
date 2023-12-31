@@ -1,9 +1,0 @@
-Environment variable to disable dispatching removed
----------------------------------------------------
-Support for the ``NUMPY_EXPERIMENTAL_ARRAY_FUNCTION`` environment variable has
-been removed. This variable disabled dispatching with ``__array_function__``.
-
-Support for ``y=`` as an alias of ``out=`` removed
---------------------------------------------------
-The ``fix``, ``isposinf`` and ``isneginf`` functions allowed using ``y=`` as a
-(deprecated) alias for ``out=``. This is no longer supported.

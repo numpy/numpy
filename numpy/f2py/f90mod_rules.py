@@ -1,17 +1,12 @@
-#!/usr/bin/env python3
 """
-
 Build F90 module support for f2py2e.
 
-Copyright 2000 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>
+Copyright 1999 -- 2011 Pearu Peterson all rights reserved.
+Copyright 2011 -- present NumPy Developers.
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
-$Date: 2005/02/03 19:30:23 $
-Pearu Peterson
-
 """
 __version__ = "$Revision: 1.27 $"[10:-1]
 
@@ -99,6 +94,8 @@ def buildhooks(pymod):
 
     def dadd(line, s=doc):
         s[0] = '%s\n%s' % (s[0], line)
+
+    usenames = getuseblocks(pymod)
     for m in findf90modules(pymod):
         sargs, fargs, efargs, modobjs, notvars, onlyvars = [], [], [], [], [
             m['name']], []
@@ -115,6 +112,9 @@ def buildhooks(pymod):
                 mfargs.append(n)
         outmess('\t\tConstructing F90 module support for "%s"...\n' %
                 (m['name']))
+        if m['name'] in usenames and not onlyvars:
+            outmess(f"\t\t\tSkipping {m['name']} since it is in 'use'...\n")
+            continue
         if onlyvars:
             outmess('\t\t  Variables: %s\n' % (' '.join(onlyvars)))
         chooks = ['']
@@ -161,8 +161,8 @@ def buildhooks(pymod):
                 fargs.append('f2py_%s_getdims_%s' % (m['name'], n))
                 efargs.append(fargs[-1])
                 sargs.append(
-                    'void (*%s)(int*,int*,void(*)(char*,int*),int*)' % (n))
-                sargsp.append('void (*)(int*,int*,void(*)(char*,int*),int*)')
+                    'void (*%s)(int*,npy_intp*,void(*)(char*,npy_intp*),int*)' % (n))
+                sargsp.append('void (*)(int*,npy_intp*,void(*)(char*,npy_intp*),int*)')
                 iadd('\tf2py_%s_def[i_f2py++].func = %s;' % (m['name'], n))
                 fadd('subroutine %s(r,s,f2pysetdata,flag)' % (fargs[-1]))
                 fadd('use %s, only: d => %s\n' %

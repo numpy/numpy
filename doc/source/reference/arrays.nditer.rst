@@ -101,12 +101,12 @@ because  the nditer must copy this buffer data back to the original array once
 iteration is finished, you must signal when the iteration is ended, by one of two
 methods. You may either:
 
- - used the nditer as a context manager using the `with` statement, and
-   the temporary data will be written back when the context is exited.
- - call the iterator's `close` method once finished iterating, which will trigger
-   the write-back.
+- used the nditer as a context manager using the :keyword:`with` statement, and
+  the temporary data will be written back when the context is exited.
+- call the iterator's `~nditer.close` method once finished iterating, which will trigger
+  the write-back.
 
-The nditer can no longer be iterated once either `close` is called or its
+The nditer can no longer be iterated once either `~nditer.close` is called or its
 context is exited.
 
 .. admonition:: Example
@@ -125,7 +125,7 @@ context is exited.
 
 If you are writing code that needs to support older versions of numpy,
 note that prior to 1.15, :class:`nditer` was not a context manager and
-did not have a `close` method. Instead it relied on the destructor to
+did not have a `~nditer.close` method. Instead it relied on the destructor to
 initiate the writeback of the buffer.
 
 Using an external loop
@@ -495,7 +495,7 @@ reasons.
     ValueError: non-broadcastable output operand with shape (3,) doesn't
     match the broadcast shape (2,3)
 
-Outer Product Iteration
+Outer product iteration
 -----------------------
 
 Any binary operation can be extended to an array operation in an outer
@@ -545,7 +545,7 @@ Everything to do with the outer product is handled by the iterator setup.
 Note that once the iterator is closed we can not access :func:`operands <nditer.operands>`
 and must use a reference created inside the context manager.
 
-Reduction Iteration
+Reduction iteration
 -------------------
 
 Whenever a writeable operand has fewer elements than the full iteration space,

@@ -1,5 +1,0 @@
-Drop dtype metadata before saving in .npy or .npz files
--------------------------------------------------------
-Currently, a npy file containing a table with a dtype with
-metadata cannot be read back.
-Now, `np.save` and `np.savez` drop metadata before saving.

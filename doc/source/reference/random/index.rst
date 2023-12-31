@@ -9,7 +9,7 @@ Random sampling (:mod:`numpy.random`)
 
 .. _random-quick-start:
 
-Quick Start
+Quick start
 -----------
 
 The :mod:`numpy.random` module implements pseudo-random number generators
@@ -34,7 +34,7 @@ different distributions.
   array([8, 7, 6, 2, 0])  # may vary
 
 Our RNGs are deterministic sequences and can be reproduced by specifying a seed integer to
-derive its initial state. By default, with no seed provided, `default_rng` will create
+derive its initial state. By default, with no seed provided, `default_rng` will
 seed the RNG from nondeterministic data from the operating system and therefore
 generate different numbers each time. The pseudo-random sequences will be
 independent for all practical purposes, at least those purposes for which our

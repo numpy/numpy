@@ -1,4 +1,0 @@
-``numpy.logspace`` now supports a non-scalar ``base`` argument
---------------------------------------------------------------
-The ``base`` argument of ``numpy.logspace`` can now be array-like if it's
-broadcastable against the ``start`` and ``stop`` arguments.

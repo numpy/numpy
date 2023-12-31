@@ -1,10 +1,10 @@
-Testing the numpy.i Typemaps
+Testing the numpy.i typemaps
 ============================
 
 Introduction
 ------------
 
-Writing tests for the ``numpy.i`` `SWIG <http://www.swig.org>`_
+Writing tests for the ``numpy.i`` `SWIG <https://www.swig.org/>`_
 interface file is a combinatorial headache.  At present, 12 different
 data types are supported, each with 74 different argument signatures,
 for a total of 888 typemaps supported "out of the box".  Each of these
@@ -19,7 +19,7 @@ as well as Python inheritance.  The purpose of this document is to describe
 the testing infrastructure employed to verify that the ``numpy.i``
 typemaps are working as expected.
 
-Testing Organization
+Testing organization
 --------------------
 
 There are three independent testing frameworks supported, for one-,
@@ -66,7 +66,7 @@ For the descriptions that follow, we will reference the
 The command ``make test`` will ensure that all of the test software is
 built and then run all three test scripts.
 
-Testing Header Files
+Testing header files
 --------------------
 
 ``Vector.h`` is a C++ header file that defines a C macro called
@@ -81,20 +81,20 @@ macro defines several function prototypes that have the prefix
 ``TEST_FUNC_PROTOS`` is then implemented for all of the data types
 supported by ``numpy.i``:
 
-  * ``signed char``
-  * ``unsigned char``
-  * ``short``
-  * ``unsigned short``
-  * ``int``
-  * ``unsigned int``
-  * ``long``
-  * ``unsigned long``
-  * ``long long``
-  * ``unsigned long long``
-  * ``float``
-  * ``double``
+* ``signed char``
+* ``unsigned char``
+* ``short``
+* ``unsigned short``
+* ``int``
+* ``unsigned int``
+* ``long``
+* ``unsigned long``
+* ``long long``
+* ``unsigned long long``
+* ``float``
+* ``double``
 
-Testing Source Files
+Testing source files
 --------------------
 
 ``Vector.cxx`` is a C++ source file that implements compilable code
@@ -103,7 +103,7 @@ defines a C macro ``TEST_FUNCS`` that has the same arguments and works
 in the same way as ``TEST_FUNC_PROTOS`` does in ``Vector.h``.
 ``TEST_FUNCS`` is implemented for each of the 12 data types as above.
 
-Testing SWIG Interface Files
+Testing SWIG interface files
 ----------------------------
 
 ``Vector.i`` is a `SWIG`_ interface file that defines python module
@@ -117,7 +117,7 @@ is then implemented for all of the data types supported by
 the function prototypes in ``Vector.h`` using the typemaps in
 ``numpy.i``.
 
-Testing Python Scripts
+Testing Python scripts
 ----------------------
 
 After ``make`` is used to build the testing extension modules,
@@ -133,15 +133,15 @@ class to several other python classes, each one specific to a
 particular data type.  The ``VectorTestCase`` class stores two strings
 for typing information:
 
-    **self.typeStr**
-      A string that matches one of the ``SNAME`` prefixes used in
-      ``Vector.h`` and ``Vector.cxx``.  For example, ``"double"``.
+**self.typeStr**
+  A string that matches one of the ``SNAME`` prefixes used in
+  ``Vector.h`` and ``Vector.cxx``.  For example, ``"double"``.
 
-    **self.typeCode**
-      A short (typically single-character) string that represents a
-      data type in numpy and corresponds to ``self.typeStr``.  For
-      example, if ``self.typeStr`` is ``"double"``, then
-      ``self.typeCode`` should be ``"d"``.
+**self.typeCode**
+  A short (typically single-character) string that represents a
+  data type in numpy and corresponds to ``self.typeStr``.  For
+  example, if ``self.typeStr`` is ``"double"``, then
+  ``self.typeCode`` should be ``"d"``.
 
 Each test defined by the ``VectorTestCase`` class extracts the python
 function it is trying to test by accessing the ``Vector`` module's

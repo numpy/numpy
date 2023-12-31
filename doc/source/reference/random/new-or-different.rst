@@ -2,7 +2,7 @@
 
 .. currentmodule:: numpy.random
 
-What's New or Different
+What's new or different
 -----------------------
 
 NumPy 1.17.0 introduced `Generator` as an improved replacement for

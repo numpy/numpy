@@ -1,5 +1,0 @@
-NumPy now exposes DType classes in ``np.dtypes``
-------------------------------------------------
-The new `numpy.dtypes` module now exposes DType classes and
-will contain future dtype related functionality.
-Most users should have no need to use these classes directly.
