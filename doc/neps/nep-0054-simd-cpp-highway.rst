@@ -92,8 +92,7 @@ there may be some changes due to moving to C++ without regards to the
 Highway/Universal Intrinsics choice.
 
 The naming of the CPU features in Highway is different from that of the
-Universal Intrinsics. Highway uses clusters of features based on physical CPU
-releases, where Universal Intrinsics uses feature names.
+Universal Intrinsics (see "Supported features/targets" below)
 
 On Windows, MSVC may have to be avoided, as a result of Highway's use of
 pragmas which are less well supported by MSVC. This means that we likely have
