@@ -11,19 +11,19 @@ from . import util, conftest
 
 
 @pytest.fixture(scope="module")
-def kind_test_module(module_builder_factory):
+def kind_test_spec():
     spec = util.F2PyModuleSpec(
         test_class_name="TestKind",
         sources=[util.getpath("tests", "src", "kind", "foo.f90")],
     )
-    built_module = module_builder_factory(spec)
-    return built_module
+    return spec
 
 
 @pytest.mark.skipif(sys.maxsize < 2**31 + 1, reason="Fails for 32 bit machines")
-def test_int(kind_test_module):
+@pytest.mark.parametrize("_mod", ["kind_test_spec"], indirect=True)
+def test_int(_mod):
     """Test `int` kind_func for integers up to 10**40."""
-    selectedintkind = kind_test_module.selectedintkind
+    selectedintkind = _mod.selectedintkind
 
     for i in range(40):
         assert selectedintkind(i) == selected_int_kind(
@@ -31,9 +31,10 @@ def test_int(kind_test_module):
         ), f"selectedintkind({i}): expected {selected_int_kind(i)!r} but got {selectedintkind(i)!r}"
 
 
-def test_real(kind_test_module):
+@pytest.mark.parametrize("_mod", ["kind_test_spec"], indirect=True)
+def test_real(_mod):
     """Test (processor-dependent) `real` kind_func for real numbers of up to 31 digits precision (extended/quadruple)."""
-    selectedrealkind = kind_test_module.selectedrealkind
+    selectedrealkind = _mod.selectedrealkind
 
     for i in range(32):
         assert selectedrealkind(i) == selected_real_kind(
@@ -45,9 +46,10 @@ def test_real(kind_test_module):
     platform.machine().lower().startswith("ppc"),
     reason="Some PowerPC may not support full IEEE 754 precision",
 )
-def test_quad_precision(kind_test_module):
+@pytest.mark.parametrize("_mod", ["kind_test_spec"], indirect=True)
+def test_quad_precision(_mod):
     """Test kind_func for quadruple precision [`real(16)`] of 32+ digits."""
-    selectedrealkind = kind_test_module.selectedrealkind
+    selectedrealkind = _mod.selectedrealkind
 
     for i in range(32, 40):
         assert selectedrealkind(i) == selected_real_kind(
