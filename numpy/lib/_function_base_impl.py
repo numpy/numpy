@@ -791,22 +791,24 @@ def select(condlist, choicelist, default=0):
 
     Examples
     --------
+    Beginning with an array of integers from 0 to 5 (inclusive),
+    elements less than ``3`` are negated, elements greater than ``3``
+    are squared, and elements not meeting either of these conditions
+    (exactly ``3``) are replaced with a `default` value of ``42``.
+
     >>> x = np.arange(6)
     >>> condlist = [x<3, x>3]
     >>> choicelist = [x, x**2]
     >>> np.select(condlist, choicelist, 42)
     array([ 0,  1,  2, 42, 16, 25])
 
+    When multiple conditions are satisfied, the first one encountered in
+    `condlist` is used.
+
     >>> condlist = [x<=4, x>3]
     >>> choicelist = [x, x**2]
     >>> np.select(condlist, choicelist, 55)
     array([ 0,  1,  2,  3,  4, 25])
-
-    >>> # Test case below showing when the default value is used
-    >>> condlist = [x<=4, x<=0]
-    >>> choicelist = [x, x**2]
-    >>> np.select(condlist, choicelist, 70)
-    array([ 0,  1,  2,  3,  4, 70])
 
     """
     # Check the size of condlist and choicelist are the same, or abort.
