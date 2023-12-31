@@ -973,7 +973,6 @@ def compress_cols(a):
     This is equivalent to ``np.ma.compress_rowcols(a, 1)``, see
     `compress_rowcols` for details.
 
-
     Parameters
     ----------
     x : array_like, MaskedArray

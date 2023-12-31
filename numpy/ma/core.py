@@ -3905,6 +3905,9 @@ class MaskedArray(ndarray):
         array([0, 1])
         >>> type(x.compressed())
         <class 'numpy.ndarray'>
+
+        N-D arrays are compressed to 1-D.
+
         >>> arr = [[1, 2], [3, 4]]
         >>> mask = [[1, 0], [0, 1]]
         >>> x = np.ma.array(arr, mask=mask)
@@ -7396,7 +7399,7 @@ def putmask(a, mask, values):  # , mode='raise'):
     >>> arr = [[1, 2], [3, 4]]
     >>> mask = [[1, 0], [0, 0]]
     >>> x = np.ma.array(arr, mask=mask)
-    >>> np.putmask(x, x < 4, 10*x)
+    >>> np.ma.putmask(x, x < 4, 10*x)
     >>> x
     masked_array(
       data=[[--, 20],
