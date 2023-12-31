@@ -403,7 +403,7 @@ def log2(x):
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
        The log base 2 of the `x` value(s). If `x` was a scalar, so is `out`,
        otherwise an array is returned.
 
@@ -470,6 +470,9 @@ def power(x, p):
     --------
     >>> np.set_printoptions(precision=4)
 
+    >>> np.emath.power(2, 2)
+    4
+    
     >>> np.emath.power([2, 4], 2)
     array([ 4, 16])
 
@@ -479,11 +482,9 @@ def power(x, p):
     >>> np.emath.power([-2, 4], 2)
     array([ 4.-0.j, 16.+0.j])
 
-    >>> np.emath.power([2,4], [2,4])
+    >>> np.emath.power([2, 4], [2, 4])
     array([ 4, 256])
 
-    >>> np.emath.power(2, 2)
-    4
     """
     x = _fix_real_lt_zero(x)
     p = _fix_int_lt_zero(p)
@@ -599,7 +600,7 @@ def arctanh(x):
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
        The inverse hyperbolic tangent(s) of the `x` value(s). If `x` was
        a scalar so is `out`, otherwise an array is returned.
 
