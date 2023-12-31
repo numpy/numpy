@@ -168,7 +168,7 @@ Is now always false.  While previously it was true for the specific cast.
 
 Returned arrays respect uniqueness of dtype kwarg objects
 ---------------------------------------------------------
-When the ``dtype`` keyword argument is used with :py:func:`np.array()` or
+When the ``dtype`` keyword argument is used with :py:func:`array()` or
 :py:func:`asarray()`, the dtype of the returned array now always exactly
 matches the dtype provided by the caller.
 
@@ -389,7 +389,7 @@ Users can modify the behavior of these warnings using ``np.errstate``.
 Note that for float to int casts, the exact warnings that are given may
 be platform dependent.  For example::
 
-    arr = np.full(100, value=1000, dtype=np.float64)
+    arr = np.full(100, fill_value=1000, dtype=np.float64)
     arr.astype(np.int8)
 
 May give a result equivalent to (the intermediate cast means no warning is

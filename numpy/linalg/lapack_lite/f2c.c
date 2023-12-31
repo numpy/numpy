@@ -93,9 +93,9 @@ return(temp);
 
  VOID
 #ifdef KR_headers
-r_cnjg(r, z) complex *r, *z;
+r_cnjg(r, z) singlecomplex *r, *z;
 #else
-r_cnjg(complex *r, complex *z)
+r_cnjg(singlecomplex *r, singlecomplex *z)
 #endif
 {
 r->r = z->r;
@@ -115,9 +115,9 @@ r->i = - z->i;
 
 
 #ifdef KR_headers
-float r_imag(z) complex *z;
+float r_imag(z) singlecomplex *z;
 #else
-float r_imag(complex *z)
+float r_imag(singlecomplex *z)
 #endif
 {
 return(z->i);
@@ -343,10 +343,10 @@ void pow_zi(doublecomplex *p, doublecomplex *a, integer *b) 	/* p = a**b  */
 
 #ifdef KR_headers
 VOID pow_ci(p, a, b) 	/* p = a**b  */
- complex *p, *a; integer *b;
+ singlecomplex *p, *a; integer *b;
 #else
 extern void pow_zi(doublecomplex*, doublecomplex*, integer*);
-void pow_ci(complex *p, complex *a, integer *b) 	/* p = a**b  */
+void pow_ci(singlecomplex *p, singlecomplex *a, integer *b) 	/* p = a**b  */
 #endif
 {
 doublecomplex p1, a1;
@@ -536,10 +536,10 @@ int s_copy(register char *a, register char *b, ftnlen la, ftnlen lb)
 
 #ifdef KR_headers
 double f__cabsf();
-double c_abs(z) complex *z;
+double c_abs(z) singlecomplex *z;
 #else
 double f__cabsf(float, float);
-double c_abs(complex *z)
+double c_abs(singlecomplex *z)
 #endif
 {
 return( f__cabsf( z->r, z->i ) );
@@ -559,10 +559,10 @@ return( f__cabs( z->r, z->i ) );
 
 #ifdef KR_headers
 extern void sig_die();
-VOID c_div(c, a, b) complex *a, *b, *c;
+VOID c_div(c, a, b) singlecomplex *a, *b, *c;
 #else
 extern void sig_die(char*, int);
-void c_div(complex *c, complex *a, complex *b)
+void c_div(singlecomplex *c, singlecomplex *a, singlecomplex *b)
 #endif
 {
 float ratio, den;
@@ -632,12 +632,12 @@ else
 
 #ifdef KR_headers
 float sqrtf(), f__cabsf();
-VOID c_sqrt(r, z) complex *r, *z;
+VOID c_sqrt(r, z) singlecomplex *r, *z;
 #else
 #undef abs
 
 extern double f__cabsf(float, float);
-void c_sqrt(complex *r, complex *z)
+void c_sqrt(singlecomplex *r, singlecomplex *z)
 #endif
 {
 float mag;

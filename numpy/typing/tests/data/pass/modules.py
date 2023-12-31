@@ -19,6 +19,7 @@ np.lib.format
 np.lib.mixins
 np.lib.scimath
 np.lib.stride_tricks
+np.lib.array_utils
 np.ma.extras
 np.polynomial.chebyshev
 np.polynomial.hermite
@@ -29,7 +30,6 @@ np.polynomial.polynomial
 
 np.__path__
 np.__version__
-np.__git_version__
 
 np.__all__
 np.char.__all__

@@ -24,7 +24,7 @@ how decisions regarding spending funds get made, how funds get administered,
 and transparency around these topics.
 
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 NumPy is a fiscally sponsored project of NumFOCUS, a 501(c)(3) nonprofit
@@ -376,7 +376,7 @@ That leaves about $25,000 in available funds at the time of writing, and
 that amount is currently growing at a rate of about $3,000/month.
 
 
-Related Work
+Related work
 ------------
 
 See references.  We assume that other open source projects have also developed
@@ -398,7 +398,7 @@ Discussion
 
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. [1] Pauli Virtanen et al., "SciPy 1.0: fundamental algorithms for scientific

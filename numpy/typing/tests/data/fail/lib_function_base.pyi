@@ -19,7 +19,6 @@ np.unwrap(AR_c16)  # E: incompatible type
 np.trim_zeros(1)  # E: incompatible type
 np.place(1, [True], 1.5)  # E: incompatible type
 np.vectorize(1)  # E: incompatible type
-np.add_newdoc("__main__", 1.5, "docstring")  # E: incompatible type
 np.place(AR_f8, slice(None), 5)  # E: incompatible type
 
 np.interp(AR_f8, AR_c16, AR_f8)  # E: incompatible type
@@ -42,7 +41,6 @@ np.kaiser(1j, 1)  # E: incompatible type
 np.sinc(AR_O)  # E: incompatible type
 np.median(AR_M)  # E: incompatible type
 
-np.add_newdoc_ufunc(func, "docstring")  # E: incompatible type
 np.percentile(AR_f8, 50j)  # E: No overload variant
 np.percentile(AR_f8, 50, interpolation="bob")  # E: No overload variant
 np.quantile(AR_f8, 0.5j)  # E: No overload variant

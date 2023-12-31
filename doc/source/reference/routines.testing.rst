@@ -1,6 +1,6 @@
 .. module:: numpy.testing
 
-Test Support (:mod:`numpy.testing`)
+Test support (:mod:`numpy.testing`)
 ===================================
 
 .. currentmodule:: numpy.testing
@@ -53,7 +53,7 @@ Decorators
 
    decorate_methods
 
-Test Running
+Test running
 ------------
 .. autosummary::
    :toctree: generated/

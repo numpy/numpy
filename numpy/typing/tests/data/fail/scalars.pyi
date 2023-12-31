@@ -64,7 +64,7 @@ np.complex128(value=0.0j)  # E: Unexpected keyword argument
 np.str_(value='bob')  # E: No overload variant
 np.bytes_(value=b'test')  # E: No overload variant
 np.void(value=b'test')  # E: No overload variant
-np.bool_(value=True)  # E: Unexpected keyword argument
+np.bool(value=True)  # E: Unexpected keyword argument
 np.datetime64(value="2019")  # E: No overload variant
 np.timedelta64(value=0)  # E: Unexpected keyword argument
 

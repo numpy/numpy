@@ -27,7 +27,7 @@ typedef CBLAS_INT        fortran_int;
 #else
 #error No compatible 64-bit integer size. \
        Please contact NumPy maintainers and give detailed information about your \
-       compiler and platform, or set NPY_USE_BLAS64_=0
+       compiler and platform, or dont try to use ILP64 BLAS
 #endif
 
 #else

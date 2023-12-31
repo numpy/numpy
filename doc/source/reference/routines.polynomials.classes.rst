@@ -1,18 +1,18 @@
-Using the Convenience Classes
+Using the convenience classes
 =============================
 
 The convenience classes provided by the polynomial package are:
 
-         ============    ================
-         Name            Provides
-         ============    ================
-         Polynomial      Power series
-         Chebyshev       Chebyshev series
-         Legendre        Legendre series
-         Laguerre        Laguerre series
-         Hermite         Hermite series
-         HermiteE        HermiteE series
-         ============    ================
+============    ================
+Name            Provides
+============    ================
+Polynomial      Power series
+Chebyshev       Chebyshev series
+Legendre        Legendre series
+Laguerre        Laguerre series
+Hermite         Hermite series
+HermiteE        HermiteE series
+============    ================
 
 The series in this context are finite sums of the corresponding polynomial
 basis functions multiplied by coefficients. For instance, a power series
@@ -240,7 +240,7 @@ number of times the polynomial is differentiated::
     Polynomial([6.], domain=[-1.,  1.], window=[-1.,  1.], symbol='x')
 
 
-Other Polynomial Constructors
+Other polynomial constructors
 -----------------------------
 
 Constructing polynomials by specifying coefficients is just one way of

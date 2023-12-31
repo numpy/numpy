@@ -16,15 +16,6 @@ import re
 import subprocess
 import textwrap
 
-# These flags are used to compile any C++ source within Numpy.
-# They are chosen to have very few runtime dependencies.
-NPY_CXX_FLAGS = [
-    '-std=c++11',  # Minimal standard version
-    '-D__STDC_VERSION__=0',  # for compatibility with C headers
-    '-fno-exceptions',  # no exception support
-    '-fno-rtti']  # no runtime type information
-
-
 class _Config:
     """An abstract class holds all configurable attributes of `CCompilerOpt`,
     these class attributes can be used to change the default behavior
@@ -103,7 +94,7 @@ class _Config:
         "maxopt": str or None
             utilized for target's policy '$maxopt' and the value should
             contains the maximum acceptable optimization by the compiler.
-            e.g. in gcc `'-O3'`
+            e.g. in gcc ``'-O3'``
 
         **Notes**:
             * case-sensitive for compiler names and flags
@@ -113,8 +104,8 @@ class _Config:
 
     conf_min_features : dict
         A dictionary defines the used CPU features for
-        argument option `'min'`, the key represent the CPU architecture
-        name e.g. `'x86'`. Default values provide the best effort
+        argument option ``'min'``, the key represent the CPU architecture
+        name e.g. ``'x86'``. Default values provide the best effort
         on wide range of users platforms.
 
         **Note**: case-sensitive for architecture names.
@@ -310,7 +301,8 @@ class _Config:
         ## Power8/ISA 2.07
         VSX2 = dict(interest=2, implies="VSX", implies_detect=False),
         ## Power9/ISA 3.00
-        VSX3 = dict(interest=3, implies="VSX2", implies_detect=False),
+        VSX3 = dict(interest=3, implies="VSX2", implies_detect=False,
+                    extra_checks="VSX3_HALF_DOUBLE"),
         ## Power10/ISA 3.1
         VSX4 = dict(interest=4, implies="VSX3", implies_detect=False,
                     extra_checks="VSX4_MMA"),
@@ -504,9 +496,9 @@ class _Config:
             )
             if self.cc_is_clang:
                 partial["VSX"]["flags"]  = "-maltivec -mvsx"
-                partial["VSX2"]["flags"] = "-mpower8-vector"
-                partial["VSX3"]["flags"] = "-mpower9-vector"
-                partial["VSX4"]["flags"] = "-mpower10-vector"
+                partial["VSX2"]["flags"] = "-mcpu=power8"
+                partial["VSX3"]["flags"] = "-mcpu=power9"
+                partial["VSX4"]["flags"] = "-mcpu=power10"
 
             return partial
 
@@ -1000,7 +992,7 @@ class _CCompiler:
         )
         detect_args = (
            ("cc_has_debug",  ".*(O0|Od|ggdb|coverage|debug:full).*", ""),
-           ("cc_has_native", 
+           ("cc_has_native",
                 ".*(-march=native|-xHost|/QxHost|-mcpu=a64fx).*", ""),
            # in case if the class run with -DNPY_DISABLE_OPTIMIZATION
            ("cc_noopt", ".*DISABLE_OPT.*", ""),
@@ -1317,7 +1309,7 @@ class _Feature:
     def feature_is_exist(self, name):
         """
         Returns True if a certain feature is exist and covered within
-        `_Config.conf_features`.
+        ``_Config.conf_features``.
 
         Parameters
         ----------

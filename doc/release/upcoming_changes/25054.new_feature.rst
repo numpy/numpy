@@ -1,0 +1,5 @@
+`numpy.isdtype`
+---------------
+
+`numpy.isdtype` was added to provide a canonical way to classify NumPy's dtypes
+in compliance with Array API and using names standardized there.

@@ -1,0 +1,10 @@
+``PyArray_GetCastFunc`` was removed
+-----------------------------------
+Note that custom legacy user dtypes can still provide a castfunc
+as their implementation, but any access to them is now removed.
+The reason for this is that NumPy never used these internally
+for many years.
+If you use simple numeric types, please just use C casts directly.
+In case you require an alternative, please let us know so we can
+create new API such as ``PyArray_CastBuffer()`` which could
+use old or new cast functions depending on the NumPy version.

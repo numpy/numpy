@@ -26,7 +26,7 @@ changes made in one :class:`ndarray` may be visible in another. That
 is, an ndarray can be a *"view"* to another ndarray, and the data it
 is referring to is taken care of by the *"base"* ndarray. ndarrays can
 also be views to memory owned by Python :class:`strings <str>` or
-objects implementing the :class:`buffer` or :ref:`array
+objects implementing the :class:`memoryview` or :ref:`array
 <arrays.interface>` interfaces.
 
 
@@ -135,20 +135,20 @@ memory block can be accessed by some combination of the indices.
 
 .. note::
 
-    `Contiguous arrays` and `single-segment arrays` are synonymous
+    *Contiguous arrays* and *single-segment arrays* are synonymous
     and are used interchangeably throughout the documentation.
 
 While a C-style and Fortran-style contiguous array, which has the corresponding
 flags set, can be addressed with the above strides, the actual strides may be
 different. This can happen in two cases:
 
-    1. If ``self.shape[k] == 1`` then for any legal index ``index[k] == 0``.
-       This means that in the formula for the offset :math:`n_k = 0` and thus
-       :math:`s_k n_k = 0` and the value of :math:`s_k` `= self.strides[k]` is
-       arbitrary.
-    2. If an array has no elements (``self.size == 0``) there is no legal
-       index and the strides are never used. Any array with no elements may be
-       considered C-style and Fortran-style contiguous.
+1. If ``self.shape[k] == 1`` then for any legal index ``index[k] == 0``.
+   This means that in the formula for the offset :math:`n_k = 0` and thus
+   :math:`s_k n_k = 0` and the value of :math:`s_k` `= self.strides[k]` is
+   arbitrary.
+2. If an array has no elements (``self.size == 0``) there is no legal
+   index and the strides are never used. Any array with no elements may be
+   considered C-style and Fortran-style contiguous.
 
 Point 1. means that ``self`` and ``self.squeeze()`` always have the same
 contiguity and ``aligned`` flags value. This also means
@@ -159,16 +159,13 @@ contiguous at the same time.
 
 An array is considered aligned if the memory offsets for all elements and the
 base offset itself is a multiple of `self.itemsize`. Understanding
-`memory-alignment` leads to better performance on most hardware.
+*memory-alignment* leads to better performance on most hardware.
 
 .. warning::
 
     It does *not* generally hold that ``self.strides[-1] == self.itemsize``
     for C-style contiguous arrays or ``self.strides[0] == self.itemsize`` for
     Fortran-style contiguous arrays is true.
-
-    ``NPY_RELAXED_STRIDES_DEBUG=1`` can be used to help find errors when
-    incorrectly relying on the strides in C-extension code (see below warning).
 
 Data in new :class:`ndarrays <ndarray>` is in the :term:`row-major` (C)
 order, unless otherwise specified, but, for example, :ref:`basic
@@ -276,7 +273,7 @@ For the following methods there are also corresponding functions in
 :func:`clip`, :func:`compress`, :func:`copy`, :func:`cumprod`,
 :func:`cumsum`, :func:`diagonal`, :func:`imag`, :func:`max <amax>`,
 :func:`mean`, :func:`min <amin>`, :func:`nonzero`, :func:`partition`,
-:func:`prod`, :func:`ptp`, :func:`put`, :func:`ravel`, :func:`real`,
+:func:`prod`, :func:`put`, :func:`ravel`, :func:`real`,
 :func:`repeat`, :func:`reshape`, :func:`round <around>`,
 :func:`searchsorted`, :func:`sort`, :func:`squeeze`, :func:`std`,
 :func:`sum`, :func:`swapaxes`, :func:`take`, :func:`trace`,
@@ -290,7 +287,6 @@ Array conversion
 
    ndarray.item
    ndarray.tolist
-   ndarray.itemset
    ndarray.tostring
    ndarray.tobytes
    ndarray.tofile
@@ -413,7 +409,6 @@ be performed.
    ndarray.argmax
    ndarray.min
    ndarray.argmin
-   ndarray.ptp
    ndarray.clip
    ndarray.conj
    ndarray.round

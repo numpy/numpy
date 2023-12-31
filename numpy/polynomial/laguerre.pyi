@@ -1,6 +1,7 @@
 from typing import Any
 
-from numpy import ndarray, dtype, int_
+from numpy import int_
+from numpy.typing import NDArray
 from numpy.polynomial._polybase import ABCPolyBase
 from numpy.polynomial.polyutils import trimcoef
 
@@ -11,10 +12,10 @@ lagtrim = trimcoef
 def poly2lag(pol): ...
 def lag2poly(c): ...
 
-lagdomain: ndarray[Any, dtype[int_]]
-lagzero: ndarray[Any, dtype[int_]]
-lagone: ndarray[Any, dtype[int_]]
-lagx: ndarray[Any, dtype[int_]]
+lagdomain: NDArray[int_]
+lagzero: NDArray[int_]
+lagone: NDArray[int_]
+lagx: NDArray[int_]
 
 def lagline(off, scl): ...
 def lagfromroots(roots): ...

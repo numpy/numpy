@@ -121,11 +121,11 @@ warnings.warn(
     "The numpy.array_api submodule is still experimental. See NEP 47.", stacklevel=2
 )
 
-__array_api_version__ = "2021.12"
+__array_api_version__ = "2022.12"
 
 __all__ = ["__array_api_version__"]
 
-from ._constants import e, inf, nan, pi
+from ._constants import e, inf, nan, pi, newaxis
 
 __all__ += ["e", "inf", "nan", "pi"]
 
@@ -173,6 +173,7 @@ from ._data_type_functions import (
     broadcast_to,
     can_cast,
     finfo,
+    isdtype,
     iinfo,
     result_type,
 )
@@ -198,6 +199,8 @@ from ._dtypes import (
     uint64,
     float32,
     float64,
+    complex64,
+    complex128,
     bool,
 )
 
@@ -232,6 +235,7 @@ from ._elementwise_functions import (
     bitwise_right_shift,
     bitwise_xor,
     ceil,
+    conj,
     cos,
     cosh,
     divide,
@@ -242,6 +246,7 @@ from ._elementwise_functions import (
     floor_divide,
     greater,
     greater_equal,
+    imag,
     isfinite,
     isinf,
     isnan,
@@ -261,6 +266,7 @@ from ._elementwise_functions import (
     not_equal,
     positive,
     pow,
+    real,
     remainder,
     round,
     sign,

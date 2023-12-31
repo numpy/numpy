@@ -15,7 +15,6 @@ Functions that are also in the numpy namespace and return matrices
 
 .. autosummary::
 
-   mat
    matrix
    asmatrix
    bmat

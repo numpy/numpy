@@ -327,12 +327,12 @@ The method is to
    byte-order and single-segment) of the correct type and number of
    dimensions.
 
-    1. By converting it from some Python object using
-       :c:func:`PyArray_FromAny` or a macro built on it.
+   1. By converting it from some Python object using
+      :c:func:`PyArray_FromAny` or a macro built on it.
 
-    2. By constructing a new ndarray of your desired shape and type
-       using :c:func:`PyArray_NewFromDescr` or a simpler macro or function
-       based on it.
+   2. By constructing a new ndarray of your desired shape and type
+      using :c:func:`PyArray_NewFromDescr` or a simpler macro or function
+      based on it.
 
 
 2. Get the shape of the array and a pointer to its actual data.
@@ -439,7 +439,7 @@ writeable). The syntax is
         of the desired properties of the returned array object. All
         of the flags are explained in the detailed API chapter. The
         flags most commonly needed are :c:data:`NPY_ARRAY_IN_ARRAY`,
-        :c:data:`NPY_OUT_ARRAY`, and :c:data:`NPY_ARRAY_INOUT_ARRAY`:
+        :c:data:`NPY_ARRAY_OUT_ARRAY`, and :c:data:`NPY_ARRAY_INOUT_ARRAY`:
 
         :c:data:`NPY_ARRAY_IN_ARRAY`
             This flag is useful for arrays that must be in C-contiguous

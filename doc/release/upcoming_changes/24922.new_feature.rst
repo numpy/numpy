@@ -1,0 +1,6 @@
+`numpy.long` and `numpy.ulong`
+------------------------------
+
+`numpy.long` and `numpy.ulong` have been added as NumPy integers mapping
+to C's ``long`` and ``unsigned long``. Prior to NumPy 1.24 `numpy.long`
+was an alias to Python's ``int``.
