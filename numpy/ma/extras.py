@@ -839,11 +839,16 @@ def compress_nd(x, axis=None):
 
     Examples
     --------
-    >>> x = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
-    ...                                                   [1, 0, 0],
-    ...                                                   [0, 0, 0]])
+    >>> arr = [[1, 2], [3, 4]]
+    >>> mask = [[0, 1], [0, 0]]
+    >>> x = np.ma.array(arr, mask=mask)
+    >>> np.ma.compress_nd(x, axis=0)
+    array([[3, 4]])
+    >>> np.ma.compress_nd(x, axis=1)
+    array([[1],
+           [3]])
     >>> np.ma.compress_nd(x)
-    array([[7, 8]])
+    array([[3]])
 
     """
     x = asarray(x)
@@ -930,6 +935,18 @@ def compress_rows(a):
     This is equivalent to ``np.ma.compress_rowcols(a, 0)``, see
     `compress_rowcols` for details.
 
+    Parameters
+    ----------
+    x : array_like, MaskedArray
+        The array to operate on. If not a MaskedArray instance (or if no array
+        elements are masked), `x` is interpreted as a MaskedArray with
+        `mask` set to `nomask`. Must be a 2D array.
+
+    Returns
+    -------
+    compressed_array : ndarray
+        The compressed array.
+
     See Also
     --------
     compress_rowcols
@@ -955,6 +972,18 @@ def compress_cols(a):
 
     This is equivalent to ``np.ma.compress_rowcols(a, 1)``, see
     `compress_rowcols` for details.
+
+    Parameters
+    ----------
+    x : array_like, MaskedArray
+        The array to operate on.  If not a MaskedArray instance (or if no array
+        elements are masked), `x` is interpreted as a MaskedArray with
+        `mask` set to `nomask`. Must be a 2D array.
+
+    Returns
+    -------
+    compressed_array : ndarray
+        The compressed array.
 
     See Also
     --------
