@@ -109,7 +109,7 @@ struct Buffer {
     {
         Buffer<enc> old = *this;
         operator++();
-        return old; 
+        return old;
     }
 
     inline Buffer<enc>&
@@ -124,7 +124,7 @@ struct Buffer {
     {
         Buffer<enc> old = *this;
         operator--();
-        return old; 
+        return old;
     }
 
     inline npy_ucs4
@@ -151,14 +151,16 @@ struct Buffer {
     inline Buffer<enc>
     buffer_memchr(npy_ucs4 ch, int len)
     {
+        Buffer<enc> newbuf = *this;
         switch (enc) {
         case ENCODING::ASCII:
-            buf = (char *) memchr(buf, ch, len);
-            return *this;
+            newbuf.buf = (char *) memchr(buf, ch, len);
+            break;
         case ENCODING::UTF32:
-            buf = (char *) wmemchr((wchar_t *) buf, ch, len);
-            return *this;
+            newbuf.buf = (char *) wmemchr((wchar_t *) buf, ch, len);
+            break;
         }
+        return newbuf;
     }
 
     inline int
