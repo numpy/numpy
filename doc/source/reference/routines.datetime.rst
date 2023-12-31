@@ -1,6 +1,6 @@
 .. _routines.datetime:
 
-Datetime Support Functions
+Datetime support functions
 **************************
 
 .. currentmodule:: numpy
@@ -12,7 +12,7 @@ Datetime Support Functions
    datetime_data
 
 
-Business Day Functions
+Business day functions
 ======================
 
 .. currentmodule:: numpy

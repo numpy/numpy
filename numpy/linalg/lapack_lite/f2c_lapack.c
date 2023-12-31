@@ -183,7 +183,7 @@ integer ieeeck_(integer *ispec, real *zero, real *one)
     return ret_val;
 } /* ieeeck_ */
 
-integer ilaclc_(integer *m, integer *n, complex *a, integer *lda)
+integer ilaclc_(integer *m, integer *n, singlecomplex *a, integer *lda)
 {
     /* System generated locals */
     integer a_dim1, a_offset, ret_val, i__1, i__2;
@@ -256,7 +256,7 @@ integer ilaclc_(integer *m, integer *n, complex *a, integer *lda)
     return ret_val;
 } /* ilaclc_ */
 
-integer ilaclr_(integer *m, integer *n, complex *a, integer *lda)
+integer ilaclr_(integer *m, integer *n, singlecomplex *a, integer *lda)
 {
     /* System generated locals */
     integer a_dim1, a_offset, ret_val, i__1, i__2;

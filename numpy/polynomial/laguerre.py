@@ -77,7 +77,7 @@ See also
 """
 import numpy as np
 import numpy.linalg as la
-from numpy.core.multiarray import normalize_axis_index
+from numpy.lib.array_utils import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -256,7 +256,7 @@ def lagfromroots(roots):
 
     .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
 
-    in Laguerre form, where the `r_n` are the roots specified in `roots`.
+    in Laguerre form, where the :math:`r_n` are the roots specified in `roots`.
     If a zero has multiplicity n, then it must appear in `roots` n times.
     For instance, if 2 is a root of multiplicity three and 3 is a root of
     multiplicity 2, then `roots` looks something like [2, 2, 2, 3, 3]. The
@@ -339,7 +339,6 @@ def lagadd(c1, c2):
     >>> from numpy.polynomial.laguerre import lagadd
     >>> lagadd([1, 2, 3], [1, 2, 3, 4])
     array([2.,  4.,  6.,  4.])
-
 
     """
     return pu._add(c1, c2)
@@ -647,8 +646,8 @@ def lagder(c, m=1, scl=1, axis=0):
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
 
-    cnt = pu._deprecate_as_int(m, "the order of derivation")
-    iaxis = pu._deprecate_as_int(axis, "the axis")
+    cnt = pu._as_int(m, "the order of derivation")
+    iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
     iaxis = normalize_axis_index(iaxis, c.ndim)
@@ -763,8 +762,8 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         c = c.astype(np.double)
     if not np.iterable(k):
         k = [k]
-    cnt = pu._deprecate_as_int(m, "the order of integration")
-    iaxis = pu._deprecate_as_int(axis, "the axis")
+    cnt = pu._as_int(m, "the order of integration")
+    iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt:
@@ -859,10 +858,10 @@ def lagval(x, c, tensor=True):
     Examples
     --------
     >>> from numpy.polynomial.laguerre import lagval
-    >>> coef = [1,2,3]
+    >>> coef = [1, 2, 3]
     >>> lagval(1, coef)
     -0.5
-    >>> lagval([[1,2],[3,4]], coef)
+    >>> lagval([[1, 2],[3, 4]], coef)
     array([[-0.5, -4. ],
            [-4.5, -2. ]])
 
@@ -938,6 +937,12 @@ def lagval2d(x, y, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.laguerre import lagval2d
+    >>> c = [[1, 2],[3, 4]]
+    >>> lagval2d(1, 1, c)
+    1.0
     """
     return pu._valnd(lagval, c, x, y)
 
@@ -991,6 +996,14 @@ def laggrid2d(x, y, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.laguerre import laggrid2d
+    >>> c = [[1, 2], [3, 4]]
+    >>> laggrid2d([0, 1], [0, 1], c)
+    array([[10.,  4.],
+           [ 3.,  1.]])
+
     """
     return pu._gridnd(lagval, c, x, y)
 
@@ -1042,6 +1055,13 @@ def lagval3d(x, y, z, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.laguerre import lagval3d
+    >>> c = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
+    >>> lagval3d(1, 1, 2, c)
+    -1.0
+    
     """
     return pu._valnd(lagval, c, x, y, z)
 
@@ -1073,7 +1093,7 @@ def laggrid3d(x, y, z, c):
     ----------
     x, y, z : array_like, compatible objects
         The three dimensional series is evaluated at the points in the
-        Cartesian product of `x`, `y`, and `z`.  If `x`,`y`, or `z` is a
+        Cartesian product of `x`, `y`, and `z`.  If `x`, `y`, or `z` is a
         list or tuple, it is first converted to an ndarray, otherwise it is
         left unchanged and, if it isn't an ndarray, it is treated as a
         scalar.
@@ -1098,6 +1118,16 @@ def laggrid3d(x, y, z, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.laguerre import laggrid3d
+    >>> c = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
+    >>> laggrid3d([0, 1], [0, 1], [2, 4], c)
+    array([[[ -4., -44.],
+            [ -2., -18.]],
+           [[ -2., -14.],
+            [ -1.,  -5.]]])
+    
     """
     return pu._gridnd(lagval, c, x, y, z)
 
@@ -1146,7 +1176,7 @@ def lagvander(x, deg):
            [ 1.        , -1.        , -1.        , -0.33333333]])
 
     """
-    ideg = pu._deprecate_as_int(deg, "deg")
+    ideg = pu._as_int(deg, "deg")
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
@@ -1211,6 +1241,14 @@ def lagvander2d(x, y, deg):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.laguerre import lagvander2d
+    >>> x = np.array([0])
+    >>> y = np.array([2])
+    >>> lagvander2d(x, y, [2, 1])
+    array([[ 1., -1.,  1., -1.,  1., -1.]])
+    
     """
     return pu._vander_nd_flat((lagvander, lagvander), (x, y), deg)
 
@@ -1264,6 +1302,16 @@ def lagvander3d(x, y, z, deg):
     -----
 
     .. versionadded:: 1.7.0
+
+    Examples
+    --------
+    >>> from numpy.polynomial.laguerre import lagvander3d
+    >>> x = np.array([0])
+    >>> y = np.array([2])
+    >>> z = np.array([0])
+    >>> lagvander3d(x, y, z, [2, 1, 3])
+    array([[ 1.,  1.,  1.,  1., -1., -1., -1., -1.,  1.,  1.,  1.,  1., -1.,
+            -1., -1., -1.,  1.,  1.,  1.,  1., -1., -1., -1., -1.]])
 
     """
     return pu._vander_nd_flat((lagvander, lagvander, lagvander), (x, y, z), deg)
@@ -1338,7 +1386,7 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
         warnings can be turned off by
 
         >>> import warnings
-        >>> warnings.simplefilter('ignore', np.RankWarning)
+        >>> warnings.simplefilter('ignore', np.exceptions.RankWarning)
 
     See Also
     --------
@@ -1425,6 +1473,13 @@ def lagcompanion(c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.laguerre import lagcompanion
+    >>> lagcompanion([1, 2, 3])
+    array([[ 1.        , -0.33333333],
+           [-1.        ,  4.33333333]])
+           
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
@@ -1544,8 +1599,14 @@ def laggauss(deg):
     is the k'th root of :math:`L_n`, and then scaling the results to get
     the right value when integrating 1.
 
+    Examples
+    --------
+    >>> from numpy.polynomial.laguerre import laggauss
+    >>> laggauss(2)
+    (array([0.58578644, 3.41421356]), array([0.85355339, 0.14644661]))
+
     """
-    ideg = pu._deprecate_as_int(deg, "deg")
+    ideg = pu._as_int(deg, "deg")
     if ideg <= 0:
         raise ValueError("deg must be a positive integer")
 
@@ -1595,6 +1656,13 @@ def lagweight(x):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.laguerre import lagweight
+    >>> x = np.array([0, 1, 2])
+    >>> lagweight(x)
+    array([1.        , 0.36787944, 0.13533528])
+
     """
     w = np.exp(-x)
     return w
@@ -1608,7 +1676,7 @@ class Laguerre(ABCPolyBase):
 
     The Laguerre class provides the standard Python numerical methods
     '+', '-', '*', '//', '%', 'divmod', '**', and '()' as well as the
-    attributes and methods listed in the `ABCPolyBase` documentation.
+    attributes and methods listed below.
 
     Parameters
     ----------
@@ -1623,6 +1691,12 @@ class Laguerre(ABCPolyBase):
         Window, see `domain` for its use. The default value is [0, 1].
 
         .. versionadded:: 1.6.0
+    symbol : str, optional
+        Symbol used to represent the independent variable in string
+        representations of the polynomial expression, e.g. for printing.
+        The symbol must be a valid Python identifier. Default value is 'x'.
+
+        .. versionadded:: 1.24
 
     """
     # Virtual Functions

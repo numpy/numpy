@@ -8,7 +8,7 @@ import hypothesis
 import pytest
 import numpy
 
-from numpy.core._multiarray_tests import get_fpu_mode
+from numpy._core._multiarray_tests import get_fpu_mode
 
 
 _old_fpu_mode = None
@@ -30,7 +30,7 @@ hypothesis.settings.register_profile(
 hypothesis.settings.register_profile(
     name="np.test() profile",
     deadline=None, print_blob=True, database=None, derandomize=True,
-    suppress_health_check=hypothesis.HealthCheck.all(),
+    suppress_health_check=list(hypothesis.HealthCheck),
 )
 # Note that the default profile is chosen based on the presence 
 # of pytest.ini, but can be overridden by passing the 

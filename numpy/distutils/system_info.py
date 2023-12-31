@@ -47,6 +47,7 @@ Currently, the following classes are available, along with their section names:
     _numpy_info:Numeric
     _pkg_config_info:None
     accelerate_info:accelerate
+    accelerate_lapack_info:accelerate
     agg2_info:agg2
     amd_info:amd
     atlas_3_10_blas_info:atlas
@@ -534,6 +535,7 @@ def get_info(name, notfound_action=0):
           'lapack_ssl2': lapack_ssl2_info,      
           'blas_ssl2': blas_ssl2_info,          
           'accelerate': accelerate_info,      # use blas_opt instead
+          'accelerate_lapack': accelerate_lapack_info,
           'openblas64_': openblas64__info,
           'openblas64__lapack': openblas64__lapack_info,
           'openblas_ilp64': openblas_ilp64_info,
@@ -1266,7 +1268,7 @@ class mkl_info(system_info):
         paths = os.environ.get('LD_LIBRARY_PATH', '').split(os.pathsep)
         ld_so_conf = '/etc/ld.so.conf'
         if os.path.isfile(ld_so_conf):
-            with open(ld_so_conf, 'r') as f:
+            with open(ld_so_conf) as f:
                 for d in f:
                     d = d.strip()
                     if d:
@@ -1334,12 +1336,41 @@ class blas_mkl_info(mkl_info):
 class ssl2_info(system_info):
     section = 'ssl2'
     dir_env_var = 'SSL2_DIR'
-    _lib_ssl2 = ['fjlapacksve']
+    # Multi-threaded version. Python itself must be built by Fujitsu compiler.
+    _lib_ssl2 = ['fjlapackexsve']
+    # Single-threaded version
+    #_lib_ssl2 = ['fjlapacksve']
+
+    def get_tcsds_rootdir(self):
+        tcsdsroot = os.environ.get('TCSDS_PATH', None)
+        if tcsdsroot is not None:
+            return tcsdsroot
+        return None
+
+    def __init__(self):
+        tcsdsroot = self.get_tcsds_rootdir()
+        if tcsdsroot is None:
+            system_info.__init__(self)
+        else:
+            system_info.__init__(
+                self,
+                default_lib_dirs=[os.path.join(tcsdsroot, 'lib64')],
+                default_include_dirs=[os.path.join(tcsdsroot,
+                    'clang-comp/include')])
 
     def calc_info(self):
+        tcsdsroot = self.get_tcsds_rootdir()
+
         lib_dirs = self.get_lib_dirs()
+        if lib_dirs is None:
+            lib_dirs = os.path.join(tcsdsroot, 'lib64')
+
         incl_dirs = self.get_include_dirs()
+        if incl_dirs is None:
+            incl_dirs = os.path.join(tcsdsroot, 'clang-comp/include')
+
         ssl2_libs = self.get_libs('ssl2_libs', self._lib_ssl2)
+
         info = self.check_libs2(lib_dirs, ssl2_libs)
         if info is None:
             return
@@ -1986,14 +2017,17 @@ class _ilp64_opt_info_mixin:
 
 class lapack_ilp64_opt_info(lapack_opt_info, _ilp64_opt_info_mixin):
     notfounderror = LapackILP64NotFoundError
-    lapack_order = ['openblas64_', 'openblas_ilp64']
+    lapack_order = ['openblas64_', 'openblas_ilp64', 'accelerate']
     order_env_var_name = 'NPY_LAPACK_ILP64_ORDER'
 
     def _calc_info(self, name):
+        print('lapack_ilp64_opt_info._calc_info(name=%s)' % (name))
         info = get_info(name + '_lapack')
         if self._check_info(info):
             self.set_info(**info)
             return True
+        else:
+            print('%s_lapack does not exist' % (name))
         return False
 
 
@@ -2134,7 +2168,7 @@ class blas_opt_info(system_info):
 
 class blas_ilp64_opt_info(blas_opt_info, _ilp64_opt_info_mixin):
     notfounderror = BlasILP64NotFoundError
-    blas_order = ['openblas64_', 'openblas_ilp64']
+    blas_order = ['openblas64_', 'openblas_ilp64', 'accelerate']
     order_env_var_name = 'NPY_BLAS_ILP64_ORDER'
 
     def _calc_info(self, name):
@@ -2238,7 +2272,7 @@ class blas_info(system_info):
             }""")
         src = os.path.join(tmpdir, 'source.c')
         try:
-            with open(src, 'wt') as f:
+            with open(src, 'w') as f:
                 f.write(s)
 
             try:
@@ -2393,7 +2427,7 @@ class openblas_info(blas_info):
         except Exception:
             extra_args = []
         try:
-            with open(src, 'wt') as f:
+            with open(src, 'w') as f:
                 f.write(s)
             obj = c.compile([src], output_dir=tmpdir)
             try:
@@ -2504,7 +2538,7 @@ class flame_info(system_info):
         # Add the additional "extra" arguments
         extra_args = info.get('extra_link_args', [])
         try:
-            with open(src, 'wt') as f:
+            with open(src, 'w') as f:
                 f.write(s)
             obj = c.compile([src], output_dir=tmpdir)
             try:
@@ -2596,12 +2630,26 @@ class accelerate_info(system_info):
                 link_args.extend(['-Wl,-framework', '-Wl,vecLib'])
 
             if args:
+                macros = [
+                    ('NO_ATLAS_INFO', 3),
+                    ('HAVE_CBLAS', None),
+                    ('ACCELERATE_NEW_LAPACK', None),
+                ]
+                if(os.getenv('NPY_USE_BLAS_ILP64', None)):
+                    print('Setting HAVE_BLAS_ILP64')
+                    macros += [
+                        ('HAVE_BLAS_ILP64', None),
+                        ('ACCELERATE_LAPACK_ILP64', None),
+                    ]
                 self.set_info(extra_compile_args=args,
                               extra_link_args=link_args,
-                              define_macros=[('NO_ATLAS_INFO', 3),
-                                             ('HAVE_CBLAS', None)])
+                              define_macros=macros)
 
         return
+
+class accelerate_lapack_info(accelerate_info):
+    def _calc_info(self):
+        return super()._calc_info()
 
 class blas_src_info(system_info):
     # BLAS_SRC is deprecated, please do not use this!

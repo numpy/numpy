@@ -45,19 +45,33 @@ class AnyAll(Benchmark):
         self.zeros.any()
 
 
-class MinMax(Benchmark):
-    params = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32,
-              np.int64, np.uint64, np.float32, np.float64, np.intp]
+class StatsReductions(Benchmark):
+    params = ['int64', 'uint64', 'float32', 'float64', 'complex64', 'bool_'],
     param_names = ['dtype']
 
     def setup(self, dtype):
-        self.d = np.ones(20000, dtype=dtype)
+        self.data = np.ones(200, dtype=dtype)
+        if dtype.startswith('complex'):
+            self.data = self.data * self.data.T*1j
 
     def time_min(self, dtype):
-        np.min(self.d)
+        np.min(self.data)
 
     def time_max(self, dtype):
-        np.max(self.d)
+        np.max(self.data)
+
+    def time_mean(self, dtype):
+        np.mean(self.data)
+
+    def time_std(self, dtype):
+        np.std(self.data)
+
+    def time_prod(self, dtype):
+        np.prod(self.data)
+
+    def time_var(self, dtype):
+        np.var(self.data)
+
 
 class FMinMax(Benchmark):
     params = [np.float32, np.float64]
@@ -72,6 +86,7 @@ class FMinMax(Benchmark):
     def time_max(self, dtype):
         np.fmax.reduce(self.d)
 
+
 class ArgMax(Benchmark):
     params = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32,
               np.int64, np.uint64, np.float32, np.float64, bool]
@@ -83,6 +98,7 @@ class ArgMax(Benchmark):
     def time_argmax(self, dtype):
         np.argmax(self.d)
 
+
 class ArgMin(Benchmark):
     params = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32,
               np.int64, np.uint64, np.float32, np.float64, bool]
@@ -93,6 +109,7 @@ class ArgMin(Benchmark):
 
     def time_argmin(self, dtype):
         np.argmin(self.d)
+
 
 class SmallReduction(Benchmark):
     def setup(self):

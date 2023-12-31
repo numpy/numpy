@@ -87,6 +87,9 @@ class TestRegression:
                 assert_equal(np.linalg.matrix_rank(a), 1)
                 assert_array_less(1, np.linalg.norm(a, ord=2))
 
+                w_svdvals = linalg.svdvals(a)
+                assert_array_almost_equal(w, w_svdvals)
+
     def test_norm_object_array(self):
         # gh-7575
         testvector = np.array([np.array([0, 1]), 0, 0], dtype=object)

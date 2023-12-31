@@ -8,10 +8,11 @@ matplotlib.  They have been rewritten and extended for convenience.
 import itertools
 import numpy as np
 import numpy.ma as ma
-from numpy import ndarray, recarray
+from numpy import ndarray
 from numpy.ma import MaskedArray
 from numpy.ma.mrecords import MaskedRecords
-from numpy.core.overrides import array_function_dispatch
+from numpy._core.overrides import array_function_dispatch
+from numpy._core.records import recarray
 from numpy.lib._iotools import _is_string_like
 
 _check_fill_value = np.ma.core._check_fill_value
@@ -885,6 +886,50 @@ def _get_fields_and_offsets(dt, offset=0):
                     fields.extend([(d, c, o + i*size) for d, c, o in subfields])
     return fields
 
+def _common_stride(offsets, counts, itemsize):
+    """
+    Returns the stride between the fields, or None if the stride is not
+    constant. The values in "counts" designate the lengths of
+    subarrays. Subarrays are treated as many contiguous fields, with
+    always positive stride.
+    """
+    if len(offsets) <= 1:
+        return itemsize
+
+    negative = offsets[1] < offsets[0]  # negative stride
+    if negative:
+        # reverse, so offsets will be ascending
+        it = zip(reversed(offsets), reversed(counts))
+    else:
+        it = zip(offsets, counts)
+
+    prev_offset = None
+    stride = None
+    for offset, count in it:
+        if count != 1:  # subarray: always c-contiguous
+            if negative:
+                return None  # subarrays can never have a negative stride
+            if stride is None:
+                stride = itemsize
+            if stride != itemsize:
+                return None
+            end_offset = offset + (count - 1) * itemsize
+        else:
+            end_offset = offset
+
+        if prev_offset is not None:
+            new_stride = offset - prev_offset
+            if stride is None:
+                stride = new_stride
+            if stride != new_stride:
+                return None
+
+        prev_offset = end_offset
+
+    if negative:
+        return -stride
+    return stride
+
 
 def _structured_to_unstructured_dispatcher(arr, dtype=None, copy=None,
                                            casting=None):
@@ -910,9 +955,15 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     dtype : dtype, optional
        The dtype of the output unstructured array.
     copy : bool, optional
-        See copy argument to `numpy.ndarray.astype`. If true, always return a
-        copy. If false, and `dtype` requirements are satisfied, a view is
-        returned.
+        If true, always return a copy. If false, a view is returned if
+        possible, such as when the `dtype` and strides of the fields are
+        suitable and the array subtype is one of `numpy.ndarray`,
+        `numpy.recarray` or `numpy.memmap`.
+
+        .. versionchanged:: 1.25.0
+            A view can now be returned if the fields are separated by a
+            uniform stride.
+
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         See casting argument of `numpy.ndarray.astype`. Controls what kind of
         data casting may occur.
@@ -960,7 +1011,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     if dtype is None:
         out_dtype = np.result_type(*[dt.base for dt in dts])
     else:
-        out_dtype = dtype
+        out_dtype = np.dtype(dtype)
 
     # Use a series of views and casts to convert to an unstructured array:
 
@@ -971,6 +1022,39 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
                                  'offsets': offsets,
                                  'itemsize': arr.dtype.itemsize})
     arr = arr.view(flattened_fields)
+
+    # we only allow a few types to be unstructured by manipulating the
+    # strides, because we know it won't work with, for example, np.matrix nor
+    # np.ma.MaskedArray.
+    can_view = type(arr) in (np.ndarray, np.recarray, np.memmap)
+    if (not copy) and can_view and all(dt.base == out_dtype for dt in dts):
+        # all elements have the right dtype already; if they have a common
+        # stride, we can just return a view
+        common_stride = _common_stride(offsets, counts, out_dtype.itemsize)
+        if common_stride is not None:
+            wrap = arr.__array_wrap__
+
+            new_shape = arr.shape + (sum(counts), out_dtype.itemsize)
+            new_strides = arr.strides + (abs(common_stride), 1)
+
+            arr = arr[..., np.newaxis].view(np.uint8)  # view as bytes
+            arr = arr[..., min(offsets):]  # remove the leading unused data
+            arr = np.lib.stride_tricks.as_strided(arr,
+                                                  new_shape,
+                                                  new_strides,
+                                                  subok=True)
+
+            # cast and drop the last dimension again
+            arr = arr.view(out_dtype)[..., 0]
+
+            if common_stride < 0:
+                arr = arr[..., ::-1]  # reverse, if the stride was negative
+            if type(arr) is not type(wrap.__self__):
+                # Some types (e.g. recarray) turn into an ndarray along the
+                # way, so we have to wrap it again in order to match the
+                # behavior with copy=True.
+                arr = wrap(arr)
+            return arr
 
     # next cast to a packed format with all fields converted to new dtype
     packed_fields = np.dtype({'names': names,
@@ -1100,7 +1184,7 @@ def apply_along_fields(func, arr):
     """
     Apply function 'func' as a reduction across fields of a structured array.
 
-    This is similar to `apply_along_axis`, but treats the fields of a
+    This is similar to `numpy.apply_along_axis`, but treats the fields of a
     structured array as an extra axis. The fields are all first cast to a
     common type following the type-promotion rules from `numpy.result_type`
     applied to the field's dtypes.
@@ -1109,7 +1193,7 @@ def apply_along_fields(func, arr):
     ----------
     func : function
        Function to apply on the "field" dimension. This function must
-       support an `axis` argument, like np.mean, np.sum, etc.
+       support an `axis` argument, like `numpy.mean`, `numpy.sum`, etc.
     arr : ndarray
        Structured array for which to apply func.
 
@@ -1268,7 +1352,7 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
                  mask=[(False, False,  True), (False, False,  True),
                        (False, False, False), (False, False, False),
                        (False, False, False)],
-           fill_value=(b'N/A', 1.e+20, 1.e+20),
+           fill_value=(b'N/A', 1e+20, 1e+20),
                 dtype=[('A', 'S3'), ('B', '<f8'), ('C', '<f8')])
 
     """

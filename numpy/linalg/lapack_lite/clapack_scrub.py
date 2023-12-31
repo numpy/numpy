@@ -237,7 +237,7 @@ def removeSubroutinePrototypes(source):
     # While we could "fix" this function to do what the name implies
     # it should do, we have no hint of what it should really do.
     #
-    # Therefore we keep the existing (non-)functionaity, documenting
+    # Therefore we keep the existing (non-)functionality, documenting
     # this function as doing nothing at all.
     return source
 
@@ -297,7 +297,7 @@ def scrubSource(source, nsteps=None, verbose=False):
 if __name__ == '__main__':
     filename = sys.argv[1]
     outfilename = os.path.join(sys.argv[2], os.path.basename(filename))
-    with open(filename, 'r') as fo:
+    with open(filename) as fo:
         source = fo.read()
 
     if len(sys.argv) > 3:

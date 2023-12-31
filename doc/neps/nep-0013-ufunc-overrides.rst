@@ -20,6 +20,8 @@ NEP 13 — A mechanism for overriding Ufuncs
 :Date: 2017-03-31
 
 :Status: Final
+:Updated: 2023-02-19
+:Author: Roy Smart
 
 Executive summary
 =================
@@ -173,12 +175,12 @@ where in all current cases only a single output makes sense).
 
 The function dispatch proceeds as follows:
 
-- If one of the input or output arguments implements
+- If one of the input, output, or ``where`` arguments implements
   ``__array_ufunc__``, it is executed instead of the ufunc.
 
 - If more than one of the arguments implements ``__array_ufunc__``,
   they are tried in the following order: subclasses before superclasses,
-  inputs before outputs, otherwise left to right.
+  inputs before outputs, outputs before ``where``, otherwise left to right.
 
 - The first ``__array_ufunc__`` method returning something else than
   :obj:`NotImplemented` determines the return value of the Ufunc.
@@ -326,7 +328,10 @@ equivalent to::
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         # Cannot handle items that have __array_ufunc__ (other than our own).
         outputs = kwargs.get('out', ())
-        for item in inputs + outputs:
+        objs = inputs + outputs
+        if "where" in kwargs:
+            objs = objs + (kwargs["where"], )
+        for item in objs:
             if (hasattr(item, '__array_ufunc__') and
                     type(item).__array_ufunc__ is not ndarray.__array_ufunc__):
                 return NotImplemented

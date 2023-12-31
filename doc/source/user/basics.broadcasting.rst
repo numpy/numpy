@@ -63,7 +63,7 @@ because broadcasting moves less memory around during the multiplication
 
 .. _general-broadcasting-rules:
 
-General Broadcasting Rules
+General broadcasting rules
 ==========================
 When operating on two arrays, NumPy compares their shapes element-wise.
 It starts with the trailing (i.e. rightmost) dimension and works its
@@ -232,7 +232,7 @@ Here the ``newaxis`` index operator inserts a new axis into ``a``,
 making it a two-dimensional ``4x1`` array.  Combining the ``4x1`` array
 with ``b``, which has shape ``(3,)``, yields a ``4x3`` array.
 
-A Practical Example: Vector Quantization
+A practical example: vector quantization
 ========================================
 
 Broadcasting comes up quite often in real world problems. A typical example

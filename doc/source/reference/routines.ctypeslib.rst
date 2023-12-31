@@ -1,8 +1,8 @@
 .. module:: numpy.ctypeslib
 
-***********************************************************
-C-Types Foreign Function Interface (:mod:`numpy.ctypeslib`)
-***********************************************************
+**********************************************************
+ctypes foreign function interface (:mod:`numpy.ctypeslib`)
+**********************************************************
 
 .. currentmodule:: numpy.ctypeslib
 

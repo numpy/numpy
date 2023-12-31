@@ -1,7 +1,7 @@
 from typing import Any
 
 import numpy as np
-from numpy._typing import _SupportsArray
+import numpy._typing as npt
 
 
 class Index:
@@ -9,8 +9,8 @@ class Index:
         ...
 
 
-a: "np.flatiter[np.ndarray]"
-supports_array: _SupportsArray
+a: np.flatiter[npt.NDArray[np.float64]]
+supports_array: npt._SupportsArray[np.dtype[np.float64]]
 
 a.base = Any  # E: Property "base" defined in "flatiter" is read-only
 a.coords = Any  # E: Property "coords" defined in "flatiter" is read-only
@@ -20,6 +20,6 @@ a.copy(order='C')  # E: Unexpected keyword argument
 # NOTE: Contrary to `ndarray.__getitem__` its counterpart in `flatiter`
 # does not accept objects with the `__array__` or `__index__` protocols;
 # boolean indexing is just plain broken (gh-17175)
-a[np.bool_()]  # E: No overload variant of "__getitem__"
+a[np.bool()]  # E: No overload variant of "__getitem__"
 a[Index()]  # E: No overload variant of "__getitem__"
 a[supports_array]  # E: No overload variant of "__getitem__"

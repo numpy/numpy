@@ -12,7 +12,7 @@ import itertools
 import pytest
 
 import numpy as np
-from numpy.core.numeric import normalize_axis_tuple
+from numpy._core.numeric import normalize_axis_tuple
 from numpy.testing import (
     assert_warns, suppress_warnings
     )
@@ -188,10 +188,10 @@ class TestAverage:
         # More tests of average.
         w1 = [0, 1, 1, 1, 1, 0]
         w2 = [[0, 1, 1, 1, 1, 0], [1, 0, 0, 0, 0, 1]]
-        x = arange(6, dtype=np.float_)
+        x = arange(6, dtype=np.float64)
         assert_equal(average(x, axis=0), 2.5)
         assert_equal(average(x, axis=0, weights=w1), 2.5)
-        y = array([arange(6, dtype=np.float_), 2.0 * arange(6)])
+        y = array([arange(6, dtype=np.float64), 2.0 * arange(6)])
         assert_equal(average(y, None), np.add.reduce(np.arange(6)) * 3. / 12.)
         assert_equal(average(y, axis=0), np.arange(6) * 3. / 2.)
         assert_equal(average(y, axis=1),
@@ -730,6 +730,47 @@ class TestCompressFunctions:
         assert_equal(c.mask, [[0, 0, 1], [1, 1, 1], [0, 0, 1]])
         c = dot(b, a, strict=False)
         assert_equal(c, np.dot(b.filled(0), a.filled(0)))
+        #
+        a = masked_array(np.arange(8).reshape(2, 2, 2),
+                         mask=[[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        b = masked_array(np.arange(8).reshape(2, 2, 2),
+                         mask=[[[0, 0], [0, 0]], [[0, 0], [0, 1]]])
+        c = dot(a, b, strict=True)
+        assert_equal(c.mask,
+                     [[[[1, 1], [1, 1]], [[0, 0], [0, 1]]],
+                      [[[0, 0], [0, 1]], [[0, 0], [0, 1]]]])
+        c = dot(a, b, strict=False)
+        assert_equal(c.mask,
+                     [[[[0, 0], [0, 1]], [[0, 0], [0, 0]]],
+                      [[[0, 0], [0, 0]], [[0, 0], [0, 0]]]])
+        c = dot(b, a, strict=True)
+        assert_equal(c.mask,
+                     [[[[1, 0], [0, 0]], [[1, 0], [0, 0]]],
+                      [[[1, 0], [0, 0]], [[1, 1], [1, 1]]]])
+        c = dot(b, a, strict=False)
+        assert_equal(c.mask,
+                     [[[[0, 0], [0, 0]], [[0, 0], [0, 0]]],
+                      [[[0, 0], [0, 0]], [[1, 0], [0, 0]]]])
+        #
+        a = masked_array(np.arange(8).reshape(2, 2, 2),
+                         mask=[[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        b = 5.
+        c = dot(a, b, strict=True)
+        assert_equal(c.mask, [[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        c = dot(a, b, strict=False)
+        assert_equal(c.mask, [[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        c = dot(b, a, strict=True)
+        assert_equal(c.mask, [[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        c = dot(b, a, strict=False)
+        assert_equal(c.mask, [[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        #
+        a = masked_array(np.arange(8).reshape(2, 2, 2),
+                         mask=[[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        b = masked_array(np.arange(2), mask=[0, 1])
+        c = dot(a, b, strict=True)
+        assert_equal(c.mask, [[1, 1], [1, 1]])
+        c = dot(a, b, strict=False)
+        assert_equal(c.mask, [[1, 0], [0, 0]])
 
     def test_dot_returns_maskedarray(self):
         # See gh-6611
@@ -861,7 +902,7 @@ class TestMedian:
                 for axis, over in args:
                     try:
                         np.ma.median(x, axis=axis, overwrite_input=over)
-                    except np.AxisError:
+                    except np.exceptions.AxisError:
                         pass
                     else:
                         raise AssertionError(msg % (mask, ndmin, axis, over))

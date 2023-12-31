@@ -38,7 +38,7 @@ After reading, you should be able to:
 
 .. _quickstart.the-basics:
 
-The Basics
+The basics
 ==========
 
 NumPy's main object is the homogeneous multidimensional array. It is a
@@ -116,7 +116,7 @@ An example
 
 .. _quickstart.array-creation:
 
-Array Creation
+Array creation
 --------------
 
 There are several ways to create arrays.
@@ -230,12 +230,12 @@ of elements that we want, instead of the step::
     `empty_like`,
     `arange`,
     `linspace`,
-    `numpy.random.Generator.rand`,
-    `numpy.random.Generator.randn`,
+    `random.Generator.random`,
+    `random.Generator.normal`,
     `fromfunction`,
     `fromfile`
 
-Printing Arrays
+Printing arrays
 ---------------
 
 When you print an array, NumPy displays it in a similar way to nested
@@ -300,7 +300,7 @@ can change the printing options using ``set_printoptions``.
 
 .. _quickstart.basic-operations:
 
-Basic Operations
+Basic operations
 ----------------
 
 Arithmetic operators on arrays apply *elementwise*. A new array is
@@ -359,7 +359,7 @@ existing array rather than create a new one.
     >>> a += b  # b is not automatically converted to integer type
     Traceback (most recent call last):
         ...
-    numpy.core._exceptions._UFuncOutputCastingError: Cannot cast ufunc 'add' output from dtype('float64') to dtype('int64') with casting rule 'same_kind'
+    numpy._core._exceptions._UFuncOutputCastingError: Cannot cast ufunc 'add' output from dtype('float64') to dtype('int64') with casting rule 'same_kind'
 
 When operating with arrays of different types, the type of the resulting
 array corresponds to the more general or precise one (a behavior known
@@ -422,7 +422,7 @@ array::
            [ 8, 17, 27, 38]])
 
 
-Universal Functions
+Universal functions
 -------------------
 
 NumPy provides familiar mathematical functions such as sin, cos, and
@@ -490,7 +490,7 @@ operate elementwise on an array, producing an array as output.
 
 .. _quickstart.indexing-slicing-and-iterating:
 
-Indexing, Slicing and Iterating
+Indexing, slicing and iterating
 -------------------------------
 
 **One-dimensional** arrays can be indexed, sliced and iterated over,
@@ -517,7 +517,7 @@ and other Python sequences.
     >>> for i in a:
     ...     print(i**(1 / 3.))
     ...
-    9.999999999999998
+    9.999999999999998  # may vary
     1.0
     9.999999999999998
     3.0
@@ -639,7 +639,7 @@ over all the elements of the array::
 
 .. _quickstart.shape-manipulation:
 
-Shape Manipulation
+Shape manipulation
 ==================
 
 Changing the shape of an array
@@ -767,14 +767,6 @@ It is equivalent to `hstack` only for 2D arrays::
     array([[4., 3.],
            [2., 8.]])
 
-On the other hand, the function `row_stack` is equivalent to `vstack`
-for any input arrays. In fact, `row_stack` is an alias for `vstack`::
-
-    >>> np.column_stack is np.hstack
-    False
-    >>> np.row_stack is np.vstack
-    True
-
 In general, for arrays with more than two dimensions,
 `hstack` stacks along their second
 axes, `vstack` stacks along their
@@ -839,14 +831,14 @@ one to specify along which axis to split.
 
 .. _quickstart.copies-and-views:
 
-Copies and Views
+Copies and views
 ================
 
 When operating and manipulating arrays, their data is sometimes copied
 into a new array and sometimes not. This is often a source of confusion
 for beginners. There are three cases:
 
-No Copy at All
+No copy at all
 --------------
 
 Simple assignments make no copy of objects or their data.
@@ -873,7 +865,7 @@ copy.
     >>> f(a)   #doctest: +SKIP
     148293216  # may vary
 
-View or Shallow Copy
+View or shallow copy
 --------------------
 
 Different array objects can share the same data. The ``view`` method
@@ -907,7 +899,7 @@ Slicing an array returns a view of it::
            [1234,   10,   10,    7],
            [   8,   10,   10,   11]])
 
-Deep Copy
+Deep copy
 ---------
 
 The ``copy`` method makes a complete copy of the array and its data.
@@ -937,7 +929,7 @@ a small fraction of ``a``, a deep copy should be made when constructing ``b`` wi
 If ``b = a[:100]`` is used instead, ``a`` is referenced by ``b`` and will persist in memory
 even if ``del a`` is executed.
 
-Functions and Methods Overview
+Functions and methods overview
 ------------------------------
 
 Here is a list of some useful NumPy functions and methods names
@@ -1028,7 +1020,7 @@ Basic Linear Algebra
     `linalg.svd`,
     `vdot`
 
-Less Basic
+Less basic
 ==========
 
 .. _broadcasting-rules:
@@ -1060,7 +1052,7 @@ NumPy offers more indexing facilities than regular Python sequences. In
 addition to indexing by integers and slices, as we saw before, arrays
 can be indexed by arrays of integers and arrays of booleans.
 
-Indexing with Arrays of Indices
+Indexing with arrays of indices
 -------------------------------
 
 ::
@@ -1218,7 +1210,7 @@ Even though 0 occurs twice in the list of indices, the 0th element is
 only incremented once. This is because Python requires ``a += 1`` to be
 equivalent to ``a = a + 1``.
 
-Indexing with Boolean Arrays
+Indexing with boolean arrays
 ----------------------------
 
 When we index arrays with arrays of (integer) indices we are providing
@@ -1394,12 +1386,12 @@ Indexing with strings
 
 See :ref:`structured_arrays`.
 
-Tricks and Tips
+Tricks and tips
 ===============
 
 Here we give a list of short and useful tips.
 
-"Automatic" Reshaping
+"Automatic" reshaping
 ---------------------
 
 To change the dimensions of an array, you can omit one of the sizes
@@ -1422,7 +1414,7 @@ which will then be deduced automatically::
             [24, 25, 26],
             [27, 28, 29]]])
 
-Vector Stacking
+Vector stacking
 ---------------
 
 How do we construct a 2D array from a list of equally-sized row vectors?
@@ -1482,7 +1474,7 @@ Further reading
 
 -  The `Python tutorial <https://docs.python.org/tutorial/>`__
 -  :ref:`reference`
--  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/reference/tutorial/index.html>`__
+-  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/tutorial/index.html>`__
 -  `SciPy Lecture Notes <https://scipy-lectures.org>`__
--  A `matlab, R, IDL, NumPy/SciPy dictionary <http://mathesaurus.sf.net/>`__
+-  A `matlab, R, IDL, NumPy/SciPy dictionary <https://mathesaurus.sourceforge.net/>`__
 -  :doc:`tutorial-svd <numpy-tutorials:content/tutorial-svd>`
