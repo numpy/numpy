@@ -85,7 +85,7 @@ def character_string_spec():
 
 @pytest.mark.parametrize("length", CHAR_STRING_LEN)
 @pytest.mark.parametrize("_mod", ["character_string_spec"], indirect=True)
-def test_input(_mod, length):
+def test_input_char_string(_mod, length):
     fsuffix = {"(*)": "star"}.get(length, length)
     f = getattr(_mod, "test_character_string" + "_input_" + fsuffix)
 
@@ -96,7 +96,7 @@ def test_input(_mod, length):
 
 @pytest.mark.parametrize("length", CHAR_STRING_LEN[:-1])
 @pytest.mark.parametrize("_mod", ["character_string_spec"], indirect=True)
-def test_output(_mod, length):
+def test_output_char_string(_mod, length):
     fsuffix = length
     f = getattr(_mod, "test_character_string" + "_output_" + fsuffix)
 
@@ -107,7 +107,7 @@ def test_output(_mod, length):
 
 @pytest.mark.parametrize("length", CHAR_STRING_LEN)
 @pytest.mark.parametrize("_mod", ["character_string_spec"], indirect=True)
-def test_array_input(_mod, length):
+def test_array_input_char_string(_mod, length):
     fsuffix = length
     f = getattr(_mod, "test_character_string" + "_array_input_" + fsuffix)
 
@@ -125,7 +125,7 @@ def test_array_input(_mod, length):
 
 @pytest.mark.parametrize("length", CHAR_STRING_LEN)
 @pytest.mark.parametrize("_mod", ["character_string_spec"], indirect=True)
-def test_array_output(_mod, length):
+def test_array_output_char_string(_mod, length):
     fsuffix = length
     f = getattr(_mod, "test_character_string" + "_array_output_" + fsuffix)
 
@@ -143,7 +143,7 @@ def test_array_output(_mod, length):
 
 @pytest.mark.parametrize("length", CHAR_STRING_LEN)
 @pytest.mark.parametrize("_mod", ["character_string_spec"], indirect=True)
-def test_2d_array_input(_mod, length):
+def test_2d_array_input_char_string(_mod, length):
     fsuffix = length
     f = getattr(_mod, "test_character_string" + "_2d_array_input_" + fsuffix)
 
@@ -282,7 +282,7 @@ def character_spec():
 
 @pytest.mark.parametrize("dtype", ["c", "S1"])
 @pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
-def test_input(_mod, dtype):
+def test_input_char(_mod, dtype):
     f = getattr(_mod, "test_character" + "_input")
 
     assert_equal(f(np.array("a", dtype=dtype)), ord("a"))
@@ -293,7 +293,7 @@ def test_input(_mod, dtype):
 
 
 @pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
-def test_input_varia(_mod):
+def test_input_varia_char(_mod):
     f = getattr(_mod, "test_character" + "_input")
 
     assert_equal(f("a"), ord("a"))
@@ -331,7 +331,7 @@ def test_input_varia(_mod):
 
 @pytest.mark.parametrize("dtype", ["c", "S1", "U1"])
 @pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
-def test_array_input(_mod, dtype):
+def test_array_input_char(_mod, dtype):
     f = getattr(_mod, "test_character" + "_array_input")
 
     assert_array_equal(
@@ -345,7 +345,7 @@ def test_array_input(_mod, dtype):
 
 
 @pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
-def test_array_input_varia(_mod):
+def test_array_input_varia_char(_mod):
     f = getattr(_mod, "test_character" + "_array_input")
     assert_array_equal(f(["a", "b", "c"]), np.array(list(map(ord, "abc")), dtype="i1"))
     assert_array_equal(
@@ -363,7 +363,7 @@ def test_array_input_varia(_mod):
 
 @pytest.mark.parametrize("dtype", ["c", "S1", "U1"])
 @pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
-def test_2d_array_input(_mod, dtype):
+def test_2d_array_input_char(_mod, dtype):
     f = getattr(_mod, "test_character" + "_2d_array_input")
 
     a = np.array([["a", "b", "c"], ["d", "e", "f"]], dtype=dtype, order="F")
@@ -372,7 +372,7 @@ def test_2d_array_input(_mod, dtype):
 
 
 @pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
-def test_output(_mod):
+def test_output_char(_mod):
     f = getattr(_mod, "test_character" + "_output")
 
     assert_equal(f(ord(b"a")), b"a")
@@ -380,14 +380,14 @@ def test_output(_mod):
 
 
 @pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
-def test_array_output(_mod):
+def test_array_output_char(_mod):
     f = getattr(_mod, "test_character" + "_array_output")
 
     assert_array_equal(f(list(map(ord, "abc"))), np.array(list("abc"), dtype="S1"))
 
 
 @pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
-def test_input_output(_mod):
+def test_input_output_char(_mod):
     f = getattr(_mod, "test_character" + "_input_output")
 
     assert_equal(f(b"a"), b"a")
@@ -397,7 +397,7 @@ def test_input_output(_mod):
 
 @pytest.mark.parametrize("dtype", ["c", "S1"])
 @pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
-def test_inout(_mod, dtype):
+def test_inout_char(_mod, dtype):
     f = getattr(_mod, "test_character" + "_inout")
 
     a = np.array(list("abc"), dtype=dtype)
@@ -412,7 +412,7 @@ def test_inout(_mod, dtype):
 
 
 @pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
-def test_inout_varia(_mod):
+def test_inout_varia_char(_mod):
     f = getattr(_mod, "test_character" + "_inout")
     a = np.array("abc", dtype="S3")
     f(a, "A")
@@ -433,7 +433,7 @@ def test_inout_varia(_mod):
 
 @pytest.mark.parametrize("dtype", ["c", "S1"])
 @pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
-def test_array_inout(_mod, dtype):
+def test_array_inout_char(_mod, dtype):
     f = getattr(_mod, "test_character" + "_array_inout")
     n = np.array(["A", "B", "C"], dtype=dtype, order="F")
 
@@ -461,7 +461,7 @@ def test_array_inout(_mod, dtype):
 
 @pytest.mark.parametrize("dtype", ["c", "S1"])
 @pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
-def test_2d_array_inout(_mod, dtype):
+def test_2d_array_inout_char(_mod, dtype):
     f = getattr(_mod, "test_character" + "_2d_array_inout")
     n = np.array([["A", "B", "C"], ["D", "E", "F"]], dtype=dtype, order="F")
     a = np.array([["a", "b", "c"], ["d", "e", "f"]], dtype=dtype, order="F")
@@ -470,7 +470,7 @@ def test_2d_array_inout(_mod, dtype):
 
 
 @pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
-def test_return(_mod):
+def test_return_char(_mod):
     f = getattr(_mod, "test_character" + "_return")
 
     assert_equal(f("a"), b"a")
@@ -478,7 +478,7 @@ def test_return(_mod):
 
 @pytest.mark.skip("fortran function returning array segfaults")
 @pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
-def test_array_return(_mod):
+def test_array_return_char(_mod):
     f = getattr(_mod, "test_character" + "_array_return")
 
     a = np.array(list("abc"), dtype="S1")
@@ -486,7 +486,7 @@ def test_array_return(_mod):
 
 
 @pytest.mark.parametrize("_mod", ["character_spec"], indirect=True)
-def test_optional(_mod):
+def test_optional_char(_mod):
     f = getattr(_mod, "test_character" + "_optional")
 
     assert_equal(f(), b"a")
