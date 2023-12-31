@@ -24,8 +24,7 @@ import warnings
 
 import numpy as np
 
-from numpy.core.multiarray import dragon4_positional, dragon4_scientific
-from numpy.core.umath import absolute
+from numpy._core.multiarray import dragon4_positional, dragon4_scientific
 from numpy.exceptions import RankWarning
 
 __all__ = [
@@ -115,8 +114,9 @@ def as_series(alist, trim=True):
 
     """
     arrays = [np.array(a, ndmin=1, copy=False) for a in alist]
-    if min([a.size for a in arrays]) == 0:
-        raise ValueError("Coefficient array is empty")
+    for a in arrays:
+        if a.size == 0:
+            raise ValueError("Coefficient array is empty")
     if any(a.ndim != 1 for a in arrays):
         raise ValueError("Coefficient array is not 1-d")
     if trim:
@@ -735,7 +735,7 @@ def format_float(x, parens=False):
 
     exp_format = False
     if x != 0:
-        a = absolute(x)
+        a = np.abs(x)
         if a >= 1.e8 or a < 10**min(0, -(opts['precision']-1)//2):
             exp_format = True
 

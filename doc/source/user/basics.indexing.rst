@@ -194,8 +194,8 @@ concepts to remember include:
 - If the selection tuple has all entries ``:`` except the
   *p*-th entry which is a slice object ``i:j:k``,
   then the returned array has dimension *N* formed by
-  concatenating the sub-arrays returned by integer indexing of
-  elements *i*, *i+k*, ..., *i + (m - 1) k < j*,
+  stacking, along the *p*-th axis, the sub-arrays returned by integer
+  indexing of elements *i*, *i+k*, ..., *i + (m - 1) k < j*.
 
 - Basic slicing with more than one non-``:`` entry in the slicing
   tuple, acts like repeated application of slicing using a single
@@ -383,8 +383,8 @@ with y::
 
     >>> y[np.array([0, 2, 4])]
     array([[ 0,  1,  2,  3,  4,  5,  6],
-          [14, 15, 16, 17, 18, 19, 20],
-          [28, 29, 30, 31, 32, 33, 34]])
+           [14, 15, 16, 17, 18, 19, 20],
+           [28, 29, 30, 31, 32, 33, 34]])
 
 It results in the construction of a new array where each value of the
 index array selects one row from the array being indexed and the resultant
@@ -743,7 +743,7 @@ For example::
 
 .. _flat-iterator-indexing:
 
-Flat Iterator indexing
+Flat iterator indexing
 ----------------------
 
 :attr:`x.flat <ndarray.flat>` returns an iterator that will iterate

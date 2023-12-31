@@ -1,3 +1,3 @@
 from ._stride_tricks_impl import (
-    as_strided, sliding_window_view
+    __doc__, as_strided, sliding_window_view
 )

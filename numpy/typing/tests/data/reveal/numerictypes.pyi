@@ -8,10 +8,6 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import assert_type
 
-assert_type(np.cast[int], np.core.numerictypes._CastFunc)
-assert_type(np.cast["i8"], np.core.numerictypes._CastFunc)
-assert_type(np.cast[np.int64], np.core.numerictypes._CastFunc)
-
 assert_type(
     np.ScalarType,
     tuple[
@@ -22,7 +18,7 @@ assert_type(
         type[bytes],
         type[str],
         type[memoryview],
-        type[np.bool_],
+        type[np.bool],
         type[np.csingle],
         type[np.cdouble],
         type[np.clongdouble],
@@ -33,7 +29,7 @@ assert_type(
         type[np.byte],
         type[np.short],
         type[np.intc],
-        type[np.int_],
+        type[np.long],
         type[np.longlong],
         type[np.timedelta64],
         type[np.datetime64],
@@ -43,7 +39,7 @@ assert_type(
         type[np.ubyte],
         type[np.ushort],
         type[np.uintc],
-        type[np.uint],
+        type[np.ulong],
         type[np.ulonglong],
         type[np.void],
     ],

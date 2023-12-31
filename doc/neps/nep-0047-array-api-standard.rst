@@ -32,7 +32,7 @@ other array/tensor libraries that adopt this standard.
     itself.
 
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 Python users have a wealth of choice for libraries and frameworks for
@@ -81,7 +81,7 @@ Out of scope for this NEP are:
   subsequently updated.
 
 
-Usage and Impact
+Usage and impact
 ----------------
 
 *This section will be fleshed out later, for now we refer to the use cases given
@@ -610,7 +610,7 @@ TODO - this can only be done after trying out some use cases
 Leo Fang (CuPy): *"My impression is for CuPy we could simply take this new array object and s/numpy/cupy"*
 
 
-Related Work
+Related work
 ------------
 
 :ref:`NEP37` contains a similar mechanism to retrieve a NumPy-like namespace.
@@ -673,7 +673,7 @@ Discussion
 - `PR #18585 implementing numpy.array_api
   <https://github.com/numpy/numpy/pull/18585>`_
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. _Python array API standard: https://data-apis.github.io/array-api/latest

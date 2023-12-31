@@ -1,4 +1,4 @@
-NumPy/SciPy Testing Guidelines
+NumPy/SciPy testing guidelines
 ==============================
 
 .. contents::
@@ -56,9 +56,9 @@ messages about which modules don't have tests::
   >>> numpy.test(label='full', verbose=2)  # or numpy.test('full', 2)
 
 Finally, if you are only interested in testing a subset of NumPy, for
-example, the ``core`` module, use the following::
+example, the ``_core`` module, use the following::
 
-  >>> numpy.core.test()
+  >>> numpy._core.test()
 
 Running tests from the command line
 -----------------------------------
@@ -70,7 +70,7 @@ utility. To run NumPy's full test suite::
 
 Testing a subset of NumPy::
 
-  $ spin test -t numpy/core/tests
+  $ spin test -t numpy/_core/tests
 
 For detailed info on testing, see :ref:`testing-builds`
 
@@ -126,10 +126,12 @@ assertion fails, the test fails. Common assertion functions include:
 - :func:`numpy.testing.assert_array_less` for testing (strict) elementwise
   ordering between a result array and a reference.
 
-Note that these assertion functions only compare the numerical values of the
-arrays. Consider adding separate ``assert`` statements regarding the array
-dtype and shape (when the reference is a scalar). Note that
-``pytest`` internally rewrites the ``assert`` statement to give informative
+By default, these assertion functions only compare the numerical values in the
+arrays. Consider using the ``strict=True`` option to check the array dtype
+and shape, too.
+
+When you need custom assertions, use the Python ``assert`` statement. Note that
+``pytest`` internally rewrites ``assert`` statements to give informative
 output when it fails, so it should be preferred over the legacy variant
 ``numpy.testing.assert_``. Whereas plain ``assert`` statements are ignored
 when running Python in optimized mode with ``-O``, this is not an issue when

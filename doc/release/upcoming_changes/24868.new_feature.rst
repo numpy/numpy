@@ -1,0 +1,5 @@
+Add ``np.core.umath.find`` and ``np.core.umath.rfind`` UFuncs
+-------------------------------------------------------------
+Add two ``find`` and ``rfind`` UFuncs that operate on unicode or byte strings
+and are used in ``np.char``. They operate similar to ``str.find`` and
+``str.rfind``.

@@ -7,16 +7,33 @@ name: BLAS tests (Linux)
 #
 # Jobs and their purpose:
 #
-#   - openblas64_setuppy:
-#         This job uses the default 64-bit build of OpenBLAS with the
-#         `numpy.distutils`-based build. It can be removed once we remove
-#         support for those builds.
 #   - openblas32_stable_nightly:
-#         Uses the 32-bit OpenBLAS builds, both the latest stable release and a
-#         nightly build.
-#
-# TODO: coverage here is limited, we should add non-OpenBLAS libraries and
-#       exercise the BLAS-related build options (see `meson_options.txt`).
+#         Uses the 32-bit OpenBLAS builds, both the latest stable release
+#         and a nightly build.
+#   - openblas_no_pkgconfig_fedora:
+#         Test OpenBLAS on Fedora. Fedora doesn't ship .pc files for OpenBLAS,
+#         hence this exercises the "system dependency" detection method.
+#   - flexiblas_fedora:
+#         Tests FlexiBLAS (the default on Fedora for its own packages), via
+#         pkg-config. FlexiBLAS allows runtime switching of BLAS/LAPACK
+#         libraries, which is a useful capability (not tested in this job).
+#   - openblas_cmake:
+#         Tests whether OpenBLAS LP64 is detected correctly when only CMake
+#         and not pkg-config is installed.
+#   - netlib-debian:
+#         Installs libblas/liblapack, which in Debian contains libcblas within
+#         libblas.
+#   - netlib-split:
+#         Installs vanilla Netlib blas/lapack with separate libcblas, which is
+#         the last option tried in auto-detection.
+#   - mkl:
+#         Tests MKL installed from PyPI (because easiest/fastest, if broken) in
+#         3 ways: both LP64 and ILP64 via pkg-config, and then using the
+#         Single Dynamic Library (SDL, or `libmkl_rt`).
+#   - blis:
+#         Simple test for LP64 via pkg-config
+#   - atlas:
+#         Simple test for LP64 via pkg-config
 
 on:
   pull_request:
@@ -46,11 +63,11 @@ jobs:
       USE_NIGHTLY_OPENBLAS: ${{ matrix.USE_NIGHTLY_OPENBLAS }}
     name: "Test Linux (${{ matrix.USE_NIGHTLY_OPENBLAS && 'nightly' || 'stable' }} OpenBLAS)"
     steps:
-    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.11'
 
@@ -72,7 +89,7 @@ jobs:
       env:
         TERM: xterm-256color
       run:
-        spin build -- --werror
+        spin build -- --werror -Dallow-noblas=false
 
     - name: Check build-internal dependencies
       run:
@@ -91,3 +108,284 @@ jobs:
       run: |
         pip install pytest pytest-xdist hypothesis typing_extensions
         spin test -j auto
+
+
+  openblas_no_pkgconfig_fedora:
+    if: "github.repository == 'numpy/numpy'"
+    runs-on: ubuntu-latest
+    container: fedora:39
+    name: "OpenBLAS (Fedora, no pkg-config, LP64/ILP64)"
+    steps:
+    - name: Install system dependencies
+      run: |
+        dnf install git gcc-gfortran g++ python3-devel openblas-devel -y
+
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Install dependencies
+      run: |
+        pip install -r build_requirements.txt
+        pip install pytest hypothesis typing_extensions
+
+    - name: Build (LP64)
+      run: spin build -- -Dblas=openblas -Dlapack=openblas -Ddisable-optimization=true -Dallow-noblas=false
+
+    - name: Test
+      run: spin test -- numpy/linalg
+
+    - name: Build (ILP64)
+      run: |
+        rm -rf build
+        spin build -- -Duse-ilp64=true -Ddisable-optimization=true -Dallow-noblas=false
+
+    - name: Test
+      run: spin test -- numpy/linalg
+
+
+  flexiblas_fedora:
+    if: "github.repository == 'numpy/numpy'"
+    runs-on: ubuntu-latest
+    container: fedora:39
+    name: "FlexiBLAS (LP64, ILP64 on Fedora)"
+    steps:
+    - name: Install system dependencies
+      run: |
+        dnf install git gcc-gfortran g++ python3-devel flexiblas-devel -y
+
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Install dependencies
+      run: |
+        pip install -r build_requirements.txt
+        pip install pytest hypothesis typing_extensions
+
+    - name: Build
+      run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
+
+    - name: Test
+      run: spin test -- numpy/linalg
+
+    - name: Build (ILP64)
+      run: |
+        rm -rf build
+        spin build -- -Ddisable-optimization=true -Duse-ilp64=true -Dallow-noblas=false
+
+    - name: Test (ILP64)
+      run: spin test -- numpy/linalg
+
+
+  openblas_cmake:
+    if: "github.repository == 'numpy/numpy'"
+    runs-on: ubuntu-latest
+    name: "OpenBLAS with CMake"
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install -r build_requirements.txt
+        pip install pytest pytest-xdist hypothesis typing_extensions
+        sudo apt-get install libopenblas-dev cmake
+        sudo apt-get remove pkg-config
+
+    - name: Build
+      run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
+
+    - name: Test
+      run: spin test -j auto -- numpy/linalg
+
+ 
+  netlib-debian:
+    if: "github.repository == 'numpy/numpy'"
+    runs-on: ubuntu-latest
+    name: "Debian libblas/liblapack"
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install -r build_requirements.txt
+        sudo apt-get install liblapack-dev pkg-config
+
+    - name: Build
+      run: |
+        spin build -- -Ddisable-optimization=true -Dallow-noblas=false
+
+    - name: Test
+      run: |
+        pip install pytest pytest-xdist hypothesis typing_extensions
+        spin test -j auto -- numpy/linalg
+
+
+  netlib-split:
+    if: "github.repository == 'numpy/numpy'"
+    runs-on: ubuntu-latest
+    container: opensuse/tumbleweed
+    name: "OpenSUSE Netlib BLAS/LAPACK"
+    steps:
+    - name: Install system dependencies
+      run: |
+        # No blas.pc on OpenSUSE as of Nov 2023, so no need to install pkg-config.
+        # If it is needed in the future, use install name `pkgconf-pkg-config`
+        zypper install -y git gcc-c++ python3-pip python3-devel blas cblas lapack
+
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Install PyPI dependencies
+      run: |
+        pip install --break-system-packages -r build_requirements.txt
+
+    - name: Build
+      run: |
+        spin build -- -Dblas=blas -Dlapack=lapack -Ddisable-optimization=true -Dallow-noblas=false
+
+    - name: Test
+      run: |
+        pip install --break-system-packages pytest pytest-xdist hypothesis typing_extensions
+        spin test -j auto -- numpy/linalg
+
+
+  mkl:
+    if: "github.repository == 'numpy/numpy'"
+    runs-on: ubuntu-latest
+    name: "MKL (LP64, ILP64, SDL)"
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install -r build_requirements.txt
+        pip install pytest pytest-xdist hypothesis typing_extensions
+        pip install mkl mkl-devel
+
+    - name: Repair MKL pkg-config files and symlinks
+      run: |
+        # MKL 2023.2 works when installed from conda-forge (except for `-iomp`
+        # and `-tbb` pkg-config files), Spack, or with the standalone Intel
+        # installer. The standalone installer is the worst option, since it's
+        # large and clumsy to install and requires running a setvars.sh script
+        # before things work. The PyPI MKL packages are broken and need the
+        # fixes in this step. For details, see
+        # https://github.com/conda-forge/intel_repack-feedstock/issues/34
+        cd $Python3_ROOT_DIR/lib/pkgconfig
+        sed -i 's/\/intel64//g' mkl*.pc
+        # add the expected .so -> .so.2 symlinks to fix linking
+        cd ..
+        for i in $( ls libmkl*.so.2 ); do ln -s $i ${i%.*}; done
+
+    - name: Build with defaults (LP64)
+      run: |
+        pkg-config --libs mkl-dynamic-lp64-seq  # check link flags
+        spin build -- -Ddisable-optimization=true -Dallow-noblas=false
+
+    - name: Test
+      run: spin test -- numpy/linalg
+
+    - name: Build with ILP64
+      run: |
+        git clean -xdf > /dev/null
+        pkg-config --libs mkl-dynamic-ilp64-seq
+        spin build -- -Duse-ilp64=true -Ddisable-optimization=true -Dallow-noblas=false
+
+    - name: Test
+      run: spin test -- numpy/linalg
+
+    - name: Build without pkg-config (default options, SDL)
+      run: |
+        git clean -xdf > /dev/null
+        pushd $Python3_ROOT_DIR/lib/pkgconfig
+        rm mkl*.pc
+        popd
+        export MKLROOT=$Python3_ROOT_DIR
+        spin build -- -Ddisable-optimization=true -Dallow-noblas=false
+
+    - name: Test
+      run: spin test -- numpy/linalg
+
+  blis:
+    if: "github.repository == 'numpy/numpy'"
+    runs-on: ubuntu-latest
+    name: "BLIS"
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install -r build_requirements.txt
+        pip install pytest pytest-xdist hypothesis typing_extensions
+        sudo apt-get install libblis-dev libopenblas-dev pkg-config
+
+    - name: Add BLIS pkg-config file
+      run: |
+        # Needed because blis.pc missing in Debian:
+        # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=989076
+        # The alternative here would be to use another distro or Miniforge
+        sudo cp tools/ci/_blis_debian.pc /usr/lib/x86_64-linux-gnu/pkgconfig/blis.pc
+        # Check if the patch works:
+        pkg-config --libs blis
+        pkg-config --cflags blis
+
+    - name: Build
+      run: spin build -- -Dblas=blis -Ddisable-optimization=true -Dallow-noblas=false
+
+    - name: Test
+      run: spin test -- numpy/linalg
+
+  atlas:
+    if: "github.repository == 'numpy/numpy'"
+    runs-on: ubuntu-latest
+    name: "ATLAS"
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install -r build_requirements.txt
+        pip install pytest pytest-xdist hypothesis typing_extensions
+        sudo apt-get install libatlas-base-dev pkg-config
+
+    - name: Build
+      run: spin build -- -Dblas=blas-atlas -Dlapack=lapack-atlas -Ddisable-optimization=true -Dallow-noblas=false
+
+    - name: Test
+      run: spin test -- numpy/linalg
+

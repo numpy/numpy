@@ -60,7 +60,7 @@ You can also customize CPU/build options through PIP command::
     --global-option="--cpu-baseline=avx2 fma3" \
     --global-option="--cpu-dispatch=max" ./
 
-Quick Start
+Quick start
 -----------
 
 In general, the default settings tend to not impose certain CPU features that
@@ -125,7 +125,7 @@ any other CPU feature and you want to exclude from the dispatched features::
 
 .. _opt-supported-features:
 
-Supported Features
+Supported features
 ------------------
 
 The names of the features can express one feature or a group of features,
@@ -142,7 +142,7 @@ as shown in the following tables supported depend on the lowest interest:
 
 .. _opt-special-options:
 
-Special Options
+Special options
 ---------------
 
 - ``NONE``: enable no features.

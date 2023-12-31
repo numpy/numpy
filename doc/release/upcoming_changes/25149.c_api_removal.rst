@@ -1,0 +1,2 @@
+* ``NPY_MAX_ELSIZE`` macro has been removed as it only ever reflected
+  builtin numeric types and served no internal purpose.

@@ -58,7 +58,7 @@ Quite often, a single character marks the separation between columns.  For
 example, comma-separated files (CSV) use a comma (``,``) or a semicolon
 (``;``) as delimiter::
 
-   >>> data = u"1, 2, 3\n4, 5, 6"
+   >>> data = "1, 2, 3\n4, 5, 6"
    >>> np.genfromtxt(StringIO(data), delimiter=",")
    array([[1.,  2.,  3.],
           [4.,  5.,  6.]])
@@ -74,12 +74,12 @@ defined as a given number of characters.  In that case, we need to set
 ``delimiter`` to a single integer (if all the columns have the same
 size) or to a sequence of integers (if columns can have different sizes)::
 
-   >>> data = u"  1  2  3\n  4  5 67\n890123  4"
+   >>> data = "  1  2  3\n  4  5 67\n890123  4"
    >>> np.genfromtxt(StringIO(data), delimiter=3)
    array([[  1.,    2.,    3.],
           [  4.,    5.,   67.],
           [890.,  123.,    4.]])
-   >>> data = u"123456789\n   4  7 9\n   4567 9"
+   >>> data = "123456789\n   4  7 9\n   4567 9"
    >>> np.genfromtxt(StringIO(data), delimiter=(4, 3, 2))
    array([[1234.,   567.,    89.],
           [   4.,     7.,     9.],
@@ -94,7 +94,7 @@ individual entries are not stripped of leading nor trailing white spaces.
 This behavior can be overwritten by setting the optional argument
 ``autostrip`` to a value of ``True``::
 
-   >>> data = u"1, abc , 2\n 3, xxx, 4"
+   >>> data = "1, abc , 2\n 3, xxx, 4"
    >>> # Without autostrip
    >>> np.genfromtxt(StringIO(data), delimiter=",", dtype="|U5")
    array([['1', ' abc ', ' 2'],
@@ -114,7 +114,7 @@ string that marks the beginning of a comment.  By default,
 occur anywhere on the line.  Any character present after the comment
 marker(s) is simply ignored::
 
-   >>> data = u"""#
+   >>> data = """#
    ... # Skip me !
    ... # Skip me too !
    ... 1, 2
@@ -154,7 +154,7 @@ of lines to skip at the beginning of the file, before any other action is
 performed.  Similarly, we can skip the last ``n`` lines of the file by
 using the ``skip_footer`` attribute and giving it a value of ``n``::
 
-   >>> data = u"\n".join(str(i) for i in range(10))
+   >>> data = "\n".join(str(i) for i in range(10))
    >>> np.genfromtxt(StringIO(data),)
    array([0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9.])
    >>> np.genfromtxt(StringIO(data),
@@ -178,7 +178,7 @@ integers behave the same as regular Python negative indexes.
 For example, if we want to import only the first and the last columns, we
 can use ``usecols=(0, -1)``::
 
-   >>> data = u"1 2 3\n4 5 6"
+   >>> data = "1 2 3\n4 5 6"
    >>> np.genfromtxt(StringIO(data), usecols=(0, -1))
    array([[1.,  3.],
           [4.,  6.]])
@@ -187,7 +187,7 @@ If the columns have names, we can also select which columns to import by
 giving their name to the ``usecols`` argument, either as a sequence
 of strings or a comma-separated string::
 
-   >>> data = u"1 2 3\n4 5 6"
+   >>> data = "1 2 3\n4 5 6"
    >>> np.genfromtxt(StringIO(data),
    ...               names="a, b, c", usecols=("a", "c"))
    array([(1., 3.), (4., 6.)], dtype=[('a', '<f8'), ('c', '<f8')])
@@ -370,8 +370,8 @@ single element of the wanted type.
 In the following example, the second column is converted from as string
 representing a percentage to a float between 0 and 1::
 
-   >>> convertfunc = lambda x: float(x.strip(b"%"))/100.
-   >>> data = u"1, 2.3%, 45.\n6, 78.9%, 0"
+   >>> convertfunc = lambda x: float(x.strip("%"))/100.
+   >>> data = "1, 2.3%, 45.\n6, 78.9%, 0"
    >>> names = ("i", "p", "n")
    >>> # General case .....
    >>> np.genfromtxt(StringIO(data), delimiter=",", names=names)
@@ -405,7 +405,7 @@ string into the corresponding float or into -999 if the string is empty.
 We need to explicitly strip the string from white spaces as it is not done
 by default::
 
-   >>> data = u"1, , 3\n 4, 5, 6"
+   >>> data = "1, , 3\n 4, 5, 6"
    >>> convert = lambda x: float(x.strip() or -999)
    >>> np.genfromtxt(StringIO(data), delimiter=",",
    ...               converters={1: convert})
@@ -483,7 +483,7 @@ with ``"N/A"`` in the first column and by ``"???"`` in the third column.
 We wish to transform these missing values to 0 if they occur in the first
 and second column, and to -999 if they occur in the last column::
 
-    >>> data = u"N/A, 2, 3\n4, ,???"
+    >>> data = "N/A, 2, 3\n4, ,???"
     >>> kwargs = dict(delimiter=",",
     ...               dtype=int,
     ...               names="a,b,c",

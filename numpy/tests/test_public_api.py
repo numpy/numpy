@@ -4,12 +4,14 @@ import subprocess
 import pkgutil
 import types
 import importlib
+import inspect
 import warnings
 
 import numpy as np
 import numpy
-import pytest
 from numpy.testing import IS_WASM
+
+import pytest
 
 try:
     import ctypes
@@ -23,6 +25,8 @@ def check_dir(module, module_name=None):
         module_name = module.__name__
     results = {}
     for name in dir(module):
+        if name == "core":
+            continue
         item = getattr(module, name)
         if (hasattr(item, '__module__') and hasattr(item, '__name__')
                 and item.__module__ != module_name):
@@ -84,7 +88,7 @@ def test_numpy_fft():
 @pytest.mark.skipif(ctypes is None,
                     reason="ctypes not available in this python")
 def test_NPY_NO_EXPORT():
-    cdll = ctypes.CDLL(np.core._multiarray_tests.__file__)
+    cdll = ctypes.CDLL(np._core._multiarray_tests.__file__)
     # Make sure an arbitrary NPY_NO_EXPORT function is actually hidden
     f = getattr(cdll, 'test_not_exported', None)
     assert f is None, ("'test_not_exported' is mistakenly exported, "
@@ -164,20 +168,19 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "compat.py3k",
     "conftest",
     "core",
+    "core.multiarray",
+    "core.numeric",
+    "core.umath",
     "core.arrayprint",
     "core.defchararray",
     "core.einsumfunc",
     "core.fromnumeric",
     "core.function_base",
     "core.getlimits",
-    "core.memmap",
-    "core.multiarray",
-    "core.numeric",
     "core.numerictypes",
     "core.overrides",
     "core.records",
     "core.shape_base",
-    "core.umath",
     "f2py.auxfuncs",
     "f2py.capi_maps",
     "f2py.cb_rules",
@@ -192,7 +195,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "f2py.symbolic",
     "f2py.use_rules",
     "fft.helper",
-    "lib.arrayterator",
     "lib.user_array",  # note: not in np.lib, but probably should just be deleted
     "linalg.lapack_lite",
     "linalg.linalg",
@@ -286,23 +288,10 @@ def is_unexpected(name):
     return True
 
 
-# These are present in a directory with an __init__.py but cannot be imported
-# code_generators/ isn't installed, but present for an inplace build
-SKIP_LIST = [
-    "numpy.core.code_generators",
-    "numpy.core.code_generators.genapi",
-    "numpy.core.code_generators.generate_umath",
-    "numpy.core.code_generators.ufunc_docstrings",
-    "numpy.core.code_generators.generate_numpy_api",
-    "numpy.core.code_generators.generate_ufunc_api",
-    "numpy.core.code_generators.numpy_api",
-    "numpy.core.code_generators.generate_umath_doc",
-    "numpy.core.code_generators.verify_c_api_version",
-    "numpy.core.cversions",
-    "numpy.core.generate_numpy_api",
-]
 if sys.version_info < (3, 12):
-    SKIP_LIST += ["numpy.distutils.msvc9compiler"]
+    SKIP_LIST = ["numpy.distutils.msvc9compiler"]
+else:
+    SKIP_LIST = []
 
 
 # suppressing warnings from deprecated modules
@@ -330,8 +319,6 @@ def test_all_modules_are_expected():
 # Stuff that clearly shouldn't be in the API and is detected by the next test
 # below
 SKIP_LIST_2 = [
-    'numpy.math',
-    'numpy.lib.emath',
     'numpy.lib.math',
     'numpy.matlib.char',
     'numpy.matlib.rec',
@@ -503,16 +490,165 @@ def test_array_api_entry_point():
 
 def test_main_namespace_all_dir_coherence():
     """
-    Checks if `dir(np)` and `np.__all__` are consistent
-    and return same content, excluding private members.
+    Checks if `dir(np)` and `np.__all__` are consistent and return
+    the same content, excluding exceptions and private members.
     """
     def _remove_private_members(member_set):
         return {m for m in member_set if not m.startswith('_')}
 
+    def _remove_exceptions(member_set):
+        return member_set.difference({
+            "bool"  # included only in __dir__
+        })
+
     all_members = _remove_private_members(np.__all__)
+    all_members = _remove_exceptions(all_members)
+
     dir_members = _remove_private_members(np.__dir__())
+    dir_members = _remove_exceptions(dir_members)
 
     assert all_members == dir_members, (
         "Members that break symmetry: "
         f"{all_members.symmetric_difference(dir_members)}"
     )
+
+
+@pytest.mark.filterwarnings(
+    r"ignore:numpy.core(\.\w+)? is deprecated:DeprecationWarning"
+)
+def test_core_shims_coherence():
+    """
+    Check that all "semi-public" members of `numpy._core` are also accessible
+    from `numpy.core` shims.
+    """
+    import numpy.core as core
+
+    for member_name in dir(np._core):
+        # skip private and test members
+        if member_name.startswith("_") or member_name == "tests":
+            continue
+
+        member = getattr(np._core, member_name)
+
+        # np.core is a shim and all submodules of np.core are shims
+        # but we should be able to import everything in those shims
+        # that are available in the "real" modules in np._core
+        if inspect.ismodule(member):
+            submodule = member
+            submodule_name = member_name
+            for submodule_member_name in dir(submodule):
+                # ignore dunder names
+                if submodule_member_name.startswith("__"):
+                    continue
+                submodule_member = getattr(submodule, submodule_member_name)
+
+                core_submodule = __import__(
+                    f"numpy.core.{submodule_name}",
+                    fromlist=[submodule_member_name]
+                )
+
+                assert submodule_member is getattr(
+                    core_submodule, submodule_member_name
+                )
+
+        else:
+            assert member is getattr(core, member_name)
+
+
+def test_functions_single_location():
+    """
+    Check that each public function is available from one location only.
+
+    Test performs BFS search traversing NumPy's public API. It flags
+    any function-like object that is accessible from more that one place.
+    """
+    from typing import Any, Callable, Dict, List, Set, Tuple
+    from numpy._core._multiarray_umath import (
+        _ArrayFunctionDispatcher as dispatched_function
+    )
+
+    visited_modules: Set[types.ModuleType] = {np}
+    visited_functions: Set[Callable[..., Any]] = set()
+    # Functions often have `__name__` overridden, therefore we need
+    # to keep track of locations where functions have been found.
+    functions_original_paths: Dict[Callable[..., Any], str] = dict()
+
+    # Here we aggregate functions with more than one location.
+    # It must be empty for the test to pass.
+    duplicated_functions: List[Tuple] = []
+
+    modules_queue = [np]
+
+    while len(modules_queue) > 0:
+
+        module = modules_queue.pop()
+
+        for member_name in dir(module):
+            member = getattr(module, member_name)
+
+            # first check if we got a module
+            if (
+                inspect.ismodule(member) and  # it's a module
+                "numpy" in member.__name__ and  # inside NumPy
+                not member_name.startswith("_") and  # not private
+                "numpy._core" not in member.__name__ and  # outside _core
+                # not a legacy or testing module
+                member_name not in ["f2py", "ma", "testing", "tests"] and
+                member not in visited_modules  # not visited yet
+            ):
+                modules_queue.append(member)
+                visited_modules.add(member)
+
+            # else check if we got a function-like object
+            elif (
+                inspect.isfunction(member) or
+                isinstance(member, dispatched_function) or
+                isinstance(member, np.ufunc)
+            ):
+                if member in visited_functions:
+
+                    # skip main namespace functions with aliases
+                    if (
+                        member.__name__ in [
+                            "absolute",  # np.abs
+                            "arccos",  # np.acos
+                            "arccosh",  # np.acosh
+                            "arcsin",  # np.asin
+                            "arcsinh",  # np.asinh
+                            "arctan",  # np.atan
+                            "arctan2",  # np.atan2
+                            "arctanh",  # np.atanh
+                            "left_shift",  # np.bitwise_left_shift
+                            "right_shift",  # np.bitwise_right_shift
+                            "conjugate",  # np.conj
+                            "invert",  # np.bitwise_not & np.bitwise_invert
+                            "remainder",  # np.mod
+                            "divide",  # np.true_divide
+                            "concatenate",  # np.concat
+                            "power",  # np.pow
+                            "transpose",  # np.permute_dims
+                        ] and
+                        module.__name__ == "numpy"
+                    ):
+                        continue
+                    # skip trimcoef from numpy.polynomial as it is
+                    # duplicated by design.
+                    if (
+                        member.__name__ == "trimcoef" and
+                        module.__name__.startswith("numpy.polynomial")
+                    ):
+                        continue
+
+                    # function is present in more than one location!
+                    duplicated_functions.append(
+                        (member.__name__,
+                         module.__name__,
+                         functions_original_paths[member])
+                    )
+                else:
+                    visited_functions.add(member)
+                    functions_original_paths[member] = module.__name__
+
+    del visited_functions, visited_modules, functions_original_paths
+
+    assert len(duplicated_functions) == 0, duplicated_functions

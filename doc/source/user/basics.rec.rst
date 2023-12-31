@@ -51,7 +51,7 @@ structured arrays in numpy can lead to poor cache behavior in comparison.
 
 .. _defining-structured-types:
 
-Structured Datatypes
+Structured datatypes
 ====================
 
 A structured datatype can be thought of as a sequence of bytes of a certain
@@ -63,7 +63,7 @@ behaves like an ndarray of a specified shape. The offsets of the fields are
 arbitrary, and fields may even overlap. These offsets are usually determined
 automatically by numpy, but can also be specified.
 
-Structured Datatype Creation
+Structured datatype creation
 ----------------------------
 
 Structured datatypes may be created using the function :func:`numpy.dtype`.
@@ -156,7 +156,7 @@ summary they are:
      in Python versions before Python 3.6. :ref:`Field Titles <titles>` may be
      specified by using a 3-tuple, see below.
 
-Manipulating and Displaying Structured Datatypes
+Manipulating and displaying structured datatypes
 ------------------------------------------------
 
 The list of field names of a structured datatype can be found in the ``names``
@@ -192,7 +192,7 @@ dictionary form.
 
 .. _offsets-and-alignment:
 
-Automatic Byte Offsets and Alignment
+Automatic byte offsets and alignment
 ------------------------------------
 
 Numpy uses one of two methods to automatically determine the field byte offsets
@@ -245,7 +245,7 @@ with or without padding bytes.
 
 .. _titles:
 
-Field Titles
+Field titles
 ------------
 
 In addition to field names, fields may also have an associated :term:`title`,
@@ -295,10 +295,10 @@ specification described in
 the desired underlying dtype, and fields and flags will be copied from
 ``dtype``. This dtype is similar to a 'union' in C.
 
-Indexing and Assignment to Structured arrays
+Indexing and assignment to structured arrays
 ============================================
 
-Assigning data to a Structured Array
+Assigning data to a structured array
 ------------------------------------
 
 There are a number of ways to assign values to a structured array: Using python
@@ -372,7 +372,7 @@ Assignment involving subarrays
 When assigning to fields which are subarrays, the assigned value will first be
 broadcast to the shape of the subarray.
 
-Indexing Structured Arrays
+Indexing structured arrays
 --------------------------
 
 Accessing Individual Fields
@@ -546,7 +546,7 @@ calling `numpy.ndarray.item`::
  >>> scalar.item(), type(scalar.item())
  ((1, 4.0, 3.0), <class 'tuple'>)
 
-Viewing Structured Arrays Containing Objects
+Viewing structured arrays containing objects
 --------------------------------------------
 
 In order to prevent clobbering object pointers in fields of
@@ -555,7 +555,7 @@ arrays containing objects.
 
 .. _structured_dtype_comparison_and_promotion:
 
-Structure Comparison and Promotion
+Structure comparison and promotion
 ----------------------------------
 
 If the dtypes of two void structured arrays are equal, testing the equality of
@@ -626,7 +626,7 @@ structured arrays, and arithmetic and bitwise operations are not supported.
     Further, promotion was much more restrictive: It would reject the mixed
     float/integer comparison example above.
 
-Record Arrays
+Record arrays
 =============
 
 As an optional convenience numpy provides an ndarray subclass,
@@ -640,7 +640,7 @@ Additional helper functions for creating and manipulating structured arrays
 can be found in :mod:`numpy.lib.recfunctions`.
 
 The simplest way to create a record array is with
-:func:`numpy.rec.array <numpy.core.records.array>`::
+:func:`numpy.rec.array <numpy.rec.array>`::
 
  >>> recordarr = np.rec.array([(1, 2., 'Hello'), (2, 3., "World")],
  ...                    dtype=[('foo', 'i4'),('bar', 'f4'), ('baz', 'S10')])
@@ -656,7 +656,7 @@ The simplest way to create a record array is with
  >>> recordarr[1].baz
  b'World'
 
-:func:`numpy.rec.array <numpy.core.records.array>` can convert a wide variety
+:func:`numpy.rec.array <numpy.rec.array>` can convert a wide variety
 of arguments into record arrays, including structured arrays::
 
  >>> arr = np.array([(1, 2., 'Hello'), (2, 3., "World")],
@@ -668,10 +668,10 @@ creating record arrays, see :ref:`record array creation routines
 <routines.array-creation.rec>`.
 
 A record array representation of a structured array can be obtained using the
-appropriate `view <numpy-ndarray-view>`_::
+appropriate :meth:`view <numpy.ndarray.view>`::
 
  >>> arr = np.array([(1, 2., 'Hello'), (2, 3., "World")],
- ...                dtype=[('foo', 'i4'),('bar', 'f4'), ('baz', 'a10')])
+ ...                dtype=[('foo', 'i4'),('bar', 'f4'), ('baz', 'S10')])
  >>> recordarr = arr.view(dtype=np.dtype((np.record, arr.dtype)),
  ...                      type=np.recarray)
 
@@ -704,7 +704,7 @@ attribute takes precedence. Such fields will be inaccessible by attribute but
 will still be accessible by index.
 
 
-Recarray Helper Functions
+Recarray helper functions
 -------------------------
 
 .. automodule:: numpy.lib.recfunctions

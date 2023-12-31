@@ -8,13 +8,13 @@ from typing import (
     NoReturn,
 )
 
+import numpy as np
 from numpy import (
     poly1d as poly1d,
     unsignedinteger,
     signedinteger,
     floating,
     complexfloating,
-    bool_,
     int32,
     int64,
     float64,
@@ -204,7 +204,7 @@ def polyadd(
 def polyadd(
     a1: _ArrayLikeBool_co,
     a2: _ArrayLikeBool_co,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 @overload
 def polyadd(
     a1: _ArrayLikeUInt_co,

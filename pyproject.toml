@@ -1,18 +1,8 @@
 [build-system]
 build-backend = "mesonpy"
-backend-path = ['./vendored-meson/meson-python']
 requires = [
-    "Cython>=3.0",
-    # All dependencies of the vendored meson-python (except for meson, because
-    # we've got that vendored too - that's the point of this exercise).
-    'pyproject-metadata >= 0.7.1',
-    'tomli >= 1.0.0; python_version < "3.11"',
-    'setuptools >= 60.0; python_version >= "3.12"',
-    'colorama; os_name == "nt"',
-    # Note that `ninja` and (on Linux) `patchelf` are added dynamically by
-    # meson-python if those tools are not already present on the system. No
-    # need to worry about those unless one does a non-isolated build - in that
-    # case they must already be installed on the system.
+    "meson-python>=0.15.0",
+    "Cython>=3.0.6",  # keep in sync with version check in meson.build
 ]
 
 [project]
@@ -150,37 +140,31 @@ tracker = "https://github.com/numpy/numpy/issues"
 # Note: the below skip command doesn't do much currently, the platforms to
 # build wheels for in CI are controlled in `.github/workflows/wheels.yml` and
 # `tools/ci/cirrus_wheels.yml`.
-skip = "cp36-* cp37-* cp-38* pp37-* *-manylinux_i686 *_ppc64le *_s390x *-musllinux_aarch64"
+build-frontend = "build"
+skip = "cp36-* cp37-* cp-38* pp37-* *-manylinux_i686 *_ppc64le *_s390x"
 build-verbosity = "3"
 before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
-# meson has a hard dependency on ninja, and we need meson to build
-# c-extensions in tests. There is a ninja PyPI package used in
-# build_requirements.txt for macOS, windows, linux but it cannot be in
-# test_requirements.txt since pyodide, which uses test_requirements.txt, does
-# not have it.
-before-test = "pip install ninja && pip install -r {project}/test_requirements.txt"
+# The build will use openblas64 everywhere, except on arm64 macOS >=14.0 (uses Accelerate)
+config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dallow-noblas=false build-dir=build"
+before-test = "pip install -r {project}/test_requirements.txt"
 test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"
 musllinux-x86_64-image = "musllinux_1_1"
-environment = { CFLAGS="-fno-strict-aliasing -DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", LDFLAGS="-Wl,--strip-debug", CXXFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", NPY_USE_BLAS_ILP64="1", RUNNER_OS="Linux"}
+# RUNNER_OS is a GitHub Actions specific env var; define it here so it works on Cirrus CI too
+environment = {RUNNER_OS="Linux"}
 
 [tool.cibuildwheel.macos]
-# For universal2 wheels, we will need to fuse them manually
-# instead of going through cibuildwheel
-# This is because cibuildwheel tries to make a fat wheel
-# https://github.com/multi-build/multibuild/blame/devel/README.rst#L541-L565
-# for more info
+# universal2 wheels are not supported (see gh-21233), use `delocate-fuse` if you need them
 archs = "x86_64 arm64"
 test-skip = "*_universal2:arm64"
-# MACOS linker doesn't support stripping symbols
-environment = {CFLAGS="-fno-strict-aliasing -DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", CXXFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", NPY_USE_BLAS_ILP64="1", CC="clang", CXX = "clang++", RUNNER_OS="macOS"}
+environment = {RUNNER_OS="macOS"}
 
 [tool.cibuildwheel.windows]
-environment = {NPY_USE_BLAS_ILP64="1", CFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", CXXFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", LDFLAGS="", PKG_CONFIG_PATH="C:/opt/64/lib/pkgconfig"}
-config-settings = "setup-args=--vsenv"
+environment = {PKG_CONFIG_PATH="C:/opt/64/lib/pkgconfig"}
+config-settings = "setup-args=--vsenv setup-args=-Duse-ilp64=true setup-args=-Dblas=openblas setup-args=-Dlapack=openblas"
 repair-wheel-command = "bash ./tools/wheels/repair_windows.sh {wheel} {dest_dir}"
 
 [[tool.cibuildwheel.overrides]]
@@ -188,6 +172,9 @@ select = "*-win32"
 environment = {PKG_CONFIG_PATH="/opt/32/lib/pkgconfig"}
 config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=true"
 repair-wheel-command = ""
+
+[tool.meson-python]
+meson = 'vendored-meson/meson/meson.py'
 
 [tool.spin]
 package = 'numpy'
@@ -200,10 +187,17 @@ cli = 'vendored-meson/meson/meson.py'
   ".spin/cmds.py:build",
   ".spin/cmds.py:test",
   ".spin/cmds.py:mypy",
+  ".spin/cmds.py:config_openblas",
+  ".spin/cmds.py:lint",
 ]
 "Environments" = [
-  ".spin/cmds.py:run", ".spin/cmds.py:ipython",
-  ".spin/cmds.py:python", ".spin/cmds.py:gdb"
+  "spin.cmds.meson.run", ".spin/cmds.py:ipython",
+  ".spin/cmds.py:python", "spin.cmds.meson.gdb",
+  "spin.cmds.meson.lldb"
 ]
-"Documentation" = [".spin/cmds.py:docs"]
+"Documentation" = [
+  ".spin/cmds.py:docs",
+  ".spin/cmds.py:changelog",
+  ".spin/cmds.py:notes",
+]
 "Metrics" = [".spin/cmds.py:bench"]

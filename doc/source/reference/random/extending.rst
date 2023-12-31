@@ -79,8 +79,8 @@ directly from the ``_generator`` shared object, using the `BitGenerator.cffi` in
     :start-after: dlopen
 
 
-New Bit Generators
-------------------
+New BitGenerators
+-----------------
 `~Generator` can be used with user-provided `~BitGenerator`\ s. The simplest
 way to write a new BitGenerator is to examine the pyx file of one of the
 existing BitGenerators. The key structure that must be provided is the

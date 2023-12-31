@@ -12,23 +12,23 @@ else:
 AR_U: np.char.chararray[Any, np.dtype[np.str_]]
 AR_S: np.char.chararray[Any, np.dtype[np.bytes_]]
 
-assert_type(AR_U == AR_U, npt.NDArray[np.bool_])
-assert_type(AR_S == AR_S, npt.NDArray[np.bool_])
+assert_type(AR_U == AR_U, npt.NDArray[np.bool])
+assert_type(AR_S == AR_S, npt.NDArray[np.bool])
 
-assert_type(AR_U != AR_U, npt.NDArray[np.bool_])
-assert_type(AR_S != AR_S, npt.NDArray[np.bool_])
+assert_type(AR_U != AR_U, npt.NDArray[np.bool])
+assert_type(AR_S != AR_S, npt.NDArray[np.bool])
 
-assert_type(AR_U >= AR_U, npt.NDArray[np.bool_])
-assert_type(AR_S >= AR_S, npt.NDArray[np.bool_])
+assert_type(AR_U >= AR_U, npt.NDArray[np.bool])
+assert_type(AR_S >= AR_S, npt.NDArray[np.bool])
 
-assert_type(AR_U <= AR_U, npt.NDArray[np.bool_])
-assert_type(AR_S <= AR_S, npt.NDArray[np.bool_])
+assert_type(AR_U <= AR_U, npt.NDArray[np.bool])
+assert_type(AR_S <= AR_S, npt.NDArray[np.bool])
 
-assert_type(AR_U > AR_U, npt.NDArray[np.bool_])
-assert_type(AR_S > AR_S, npt.NDArray[np.bool_])
+assert_type(AR_U > AR_U, npt.NDArray[np.bool])
+assert_type(AR_S > AR_S, npt.NDArray[np.bool])
 
-assert_type(AR_U < AR_U, npt.NDArray[np.bool_])
-assert_type(AR_S < AR_S, npt.NDArray[np.bool_])
+assert_type(AR_U < AR_U, npt.NDArray[np.bool])
+assert_type(AR_S < AR_S, npt.NDArray[np.bool])
 
 assert_type(AR_U * 5, np.char.chararray[Any, np.dtype[np.str_]])
 assert_type(AR_S * [5], np.char.chararray[Any, np.dtype[np.bytes_]])
@@ -94,10 +94,10 @@ assert_type(AR_S.zfill([2, 3, 4]), np.char.chararray[Any, np.dtype[np.bytes_]])
 assert_type(AR_U.count("a", start=[1, 2, 3]), npt.NDArray[np.int_])
 assert_type(AR_S.count([b"a", b"b", b"c"], end=9), npt.NDArray[np.int_])
 
-assert_type(AR_U.endswith("a", start=[1, 2, 3]), npt.NDArray[np.bool_])
-assert_type(AR_S.endswith([b"a", b"b", b"c"], end=9), npt.NDArray[np.bool_])
-assert_type(AR_U.startswith("a", start=[1, 2, 3]), npt.NDArray[np.bool_])
-assert_type(AR_S.startswith([b"a", b"b", b"c"], end=9), npt.NDArray[np.bool_])
+assert_type(AR_U.endswith("a", start=[1, 2, 3]), npt.NDArray[np.bool])
+assert_type(AR_S.endswith([b"a", b"b", b"c"], end=9), npt.NDArray[np.bool])
+assert_type(AR_U.startswith("a", start=[1, 2, 3]), npt.NDArray[np.bool])
+assert_type(AR_S.startswith([b"a", b"b", b"c"], end=9), npt.NDArray[np.bool])
 
 assert_type(AR_U.find("a", start=[1, 2, 3]), npt.NDArray[np.int_])
 assert_type(AR_S.find([b"a", b"b", b"c"], end=9), npt.NDArray[np.int_])
@@ -109,32 +109,32 @@ assert_type(AR_S.index([b"a", b"b", b"c"], end=9), npt.NDArray[np.int_])
 assert_type(AR_U.rindex("a", start=[1, 2, 3]), npt.NDArray[np.int_])
 assert_type(AR_S.rindex([b"a", b"b", b"c"], end=9), npt.NDArray[np.int_])
 
-assert_type(AR_U.isalpha(), npt.NDArray[np.bool_])
-assert_type(AR_S.isalpha(), npt.NDArray[np.bool_])
+assert_type(AR_U.isalpha(), npt.NDArray[np.bool])
+assert_type(AR_S.isalpha(), npt.NDArray[np.bool])
 
-assert_type(AR_U.isalnum(), npt.NDArray[np.bool_])
-assert_type(AR_S.isalnum(), npt.NDArray[np.bool_])
+assert_type(AR_U.isalnum(), npt.NDArray[np.bool])
+assert_type(AR_S.isalnum(), npt.NDArray[np.bool])
 
-assert_type(AR_U.isdecimal(), npt.NDArray[np.bool_])
-assert_type(AR_S.isdecimal(), npt.NDArray[np.bool_])
+assert_type(AR_U.isdecimal(), npt.NDArray[np.bool])
+assert_type(AR_S.isdecimal(), npt.NDArray[np.bool])
 
-assert_type(AR_U.isdigit(), npt.NDArray[np.bool_])
-assert_type(AR_S.isdigit(), npt.NDArray[np.bool_])
+assert_type(AR_U.isdigit(), npt.NDArray[np.bool])
+assert_type(AR_S.isdigit(), npt.NDArray[np.bool])
 
-assert_type(AR_U.islower(), npt.NDArray[np.bool_])
-assert_type(AR_S.islower(), npt.NDArray[np.bool_])
+assert_type(AR_U.islower(), npt.NDArray[np.bool])
+assert_type(AR_S.islower(), npt.NDArray[np.bool])
 
-assert_type(AR_U.isnumeric(), npt.NDArray[np.bool_])
-assert_type(AR_S.isnumeric(), npt.NDArray[np.bool_])
+assert_type(AR_U.isnumeric(), npt.NDArray[np.bool])
+assert_type(AR_S.isnumeric(), npt.NDArray[np.bool])
 
-assert_type(AR_U.isspace(), npt.NDArray[np.bool_])
-assert_type(AR_S.isspace(), npt.NDArray[np.bool_])
+assert_type(AR_U.isspace(), npt.NDArray[np.bool])
+assert_type(AR_S.isspace(), npt.NDArray[np.bool])
 
-assert_type(AR_U.istitle(), npt.NDArray[np.bool_])
-assert_type(AR_S.istitle(), npt.NDArray[np.bool_])
+assert_type(AR_U.istitle(), npt.NDArray[np.bool])
+assert_type(AR_S.istitle(), npt.NDArray[np.bool])
 
-assert_type(AR_U.isupper(), npt.NDArray[np.bool_])
-assert_type(AR_S.isupper(), npt.NDArray[np.bool_])
+assert_type(AR_U.isupper(), npt.NDArray[np.bool])
+assert_type(AR_S.isupper(), npt.NDArray[np.bool])
 
 assert_type(AR_U.__array_finalize__(object()), None)
 assert_type(AR_S.__array_finalize__(object()), None)

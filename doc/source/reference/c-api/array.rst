@@ -605,8 +605,8 @@ From other objects
     Copy from the source array, ``src``, into the destination array,
     ``dest``, performing a data-type conversion if necessary. If an
     error occurs return -1 (otherwise 0). The shape of ``src`` must be
-    broadcastable to the shape of ``dest``. The data areas of dest
-    and src must not overlap.
+    broadcastable to the shape of ``dest``.
+    NumPy checks for overlapping memory when copying two arrays.
 
 .. c:function:: int PyArray_CopyObject(PyArrayObject* dest, PyObject* src)
 
@@ -614,14 +614,6 @@ From other objects
     array-coercion rules. This is basically identical to
     :c:func:`PyArray_FromAny`, but assigns directly to the output array.
     Returns 0 on success and -1 on failures.
-
-.. c:function:: int PyArray_MoveInto(PyArrayObject* dest, PyArrayObject* src)
-
-    Move data from the source array, ``src``, into the destination
-    array, ``dest``, performing a data-type conversion if
-    necessary. If an error occurs return -1 (otherwise 0). The shape
-    of ``src`` must be broadcastable to the shape of ``dest``. The
-    data areas of dest and src may overlap.
 
 .. c:function:: PyArrayObject* PyArray_GETCONTIGUOUS(PyObject* op)
 
@@ -825,15 +817,6 @@ argument must be a :c:expr:`PyObject *` that can be directly interpreted as a
 
     Type represents a string data type.
 
-.. c:function:: int PyTypeNum_ISPYTHON(int num)
-
-.. c:function:: int PyDataType_ISPYTHON(PyArray_Descr* descr)
-
-.. c:function:: int PyArray_ISPYTHON(PyArrayObject *obj)
-
-    Type represents an enumerated type corresponding to one of the
-    standard Python scalar (bool, int, float, or complex).
-
 .. c:function:: int PyTypeNum_ISFLEXIBLE(int num)
 
 .. c:function:: int PyDataType_ISFLEXIBLE(PyArray_Descr* descr)
@@ -958,16 +941,6 @@ Converting data types
     number of elements in the input array (more than one copy can be
     placed in out), and have a data type that is one of the builtin
     types.  Returns 0 on success and -1 if an error occurs.
-
-.. c:function:: PyArray_VectorUnaryFunc* PyArray_GetCastFunc( \
-        PyArray_Descr* from, int totype)
-
-    Return the low-level casting function to cast from the given
-    descriptor to the builtin type number. If no casting function
-    exists return ``NULL`` and set an error. Using this function
-    instead of direct access to *from* ->f->cast will allow support of
-    any user-defined casting functions added to a descriptors casting
-    dictionary.
 
 .. c:function:: int PyArray_CanCastSafely(int fromtype, int totype)
 
@@ -1169,13 +1142,6 @@ User-defined data types
     *descr* can be cast safely to a data-type whose type_number is
     *totype*. The return value is 0 on success or -1 on failure.
 
-.. c:function:: int PyArray_TypeNumFromName( \
-        char const *str)
-
-   Given a string return the type-number for the data-type with that string as
-   the type-object name.
-   Returns ``NPY_NOTYPE`` without setting an error if no type can be found.
-   Only works for user-defined data-types.
 
 Special functions for NPY_OBJECT
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1232,16 +1198,6 @@ Special functions for NPY_OBJECT
     recursively so that if ``dtype`` itself has fields with data-types
     that contain object-like items, all the object-like fields will be
     XDECREF ``'d``.
-
-.. c:function:: void PyArray_FillObjectArray(PyArrayObject* arr, PyObject* obj)
-
-    Fill a newly created array with a single value obj at all
-    locations in the structure with object data-types. No checking is
-    performed but *arr* must be of data-type :c:type:`NPY_OBJECT` and be
-    single-segment and uninitialized (no previous objects in
-    position). Use :c:func:`PyArray_XDECREF` (*arr*) if you need to
-    decrement all the items in the object array prior to calling this
-    function.
 
 .. c:function:: int PyArray_SetWritebackIfCopyBase(PyArrayObject* arr, PyArrayObject* base)
 
@@ -1949,7 +1905,7 @@ Calculation
 
 .. tip::
 
-    Pass in :c:data:`NPY_MAXDIMS` for axis in order to achieve the same
+    Pass in :c:data:`NPY_RAVEL_AXIS` for axis in order to achieve the same
     effect that is obtained by passing in ``axis=None`` in Python
     (treating the array as a 1-d array).
 
@@ -2036,11 +1992,18 @@ Calculation
     *self*, so that values larger than *max* are fixed to *max* and
     values less than *min* are fixed to *min*.
 
-.. c:function:: PyObject* PyArray_Conjugate(PyArrayObject* self)
+.. c:function:: PyObject* PyArray_Conjugate(PyArrayObject* self, PyArrayObject* out)
 
     Equivalent to :meth:`ndarray.conjugate<numpy.ndarray.conjugate>` (*self*).
     Return the complex conjugate of *self*. If *self* is not of
     complex data type, then return *self* with a reference.
+
+    :param self: Input array.
+    :param out:  Output array. If provided, the result is placed into this array.
+
+    :return: The complex conjugate of *self*.
+
+
 
 .. c:function:: PyObject* PyArray_Round( \
         PyArrayObject* self, int decimals, PyArrayObject* out)
@@ -2279,7 +2242,7 @@ Other functions
     1 if the lists are identical; otherwise, return 0.
 
 
-Auxiliary Data With Object Semantics
+Auxiliary data with object semantics
 ------------------------------------
 
 .. versionadded:: 1.7.0
@@ -2371,7 +2334,7 @@ an element copier function as a primitive.
     A macro which calls the auxdata's clone function appropriately,
     returning a deep copy of the auxiliary data.
 
-Array Iterators
+Array iterators
 ---------------
 
 As of NumPy 1.6.0, these array iterators are superseded by
@@ -2496,6 +2459,48 @@ Broadcasting (multi-iterators)
     Evaluates TRUE as long as the multi-iterator has not looped
     through all of the elements (of the broadcasted result), otherwise
     it evaluates FALSE.
+
+.. c:function:: npy_intp PyArray_MultiIter_SIZE(PyArrayMultiIterObject* multi)
+
+    .. versionadded:: 1.26.0
+
+    Returns the total broadcasted size of a multi-iterator object. 
+
+.. c:function:: int PyArray_MultiIter_NDIM(PyArrayMultiIterObject* multi)
+
+    .. versionadded:: 1.26.0
+
+    Returns the number of dimensions in the broadcasted result of
+    a multi-iterator object.
+
+.. c:function:: npy_intp PyArray_MultiIter_INDEX(PyArrayMultiIterObject* multi)
+
+    .. versionadded:: 1.26.0
+
+    Returns the current (1-d) index into the broadcasted result
+    of a multi-iterator object.
+
+.. c:function:: int PyArray_MultiIter_NUMITER(PyArrayMultiIterObject* multi)
+
+    .. versionadded:: 1.26.0
+
+    Returns the number of iterators that are represented by a
+    multi-iterator object.
+
+.. c:function:: void** PyArray_MultiIter_ITERS(PyArrayMultiIterObject* multi)
+
+    .. versionadded:: 1.26.0
+
+    Returns an array of iterator objects that holds the iterators for the
+    arrays to be broadcast together. On return, the iterators are adjusted
+    for broadcasting.
+
+.. c:function:: npy_intp* PyArray_MultiIter_DIMS(PyArrayMultiIterObject* multi)
+
+    .. versionadded:: 1.26.0
+
+    Returns a pointer to the dimensions/shape of the broadcasted result of a
+    multi-iterator object.
 
 .. c:function:: int PyArray_Broadcast(PyArrayMultiIterObject* mit)
 
@@ -2632,46 +2637,8 @@ cost of a slight overhead.
     neighborhood. Calling this function after every point of the
     neighborhood has been visited is undefined.
 
-Array mapping
--------------
 
-Array mapping is the machinery behind advanced indexing.
-
-.. c:function:: PyObject* PyArray_MapIterArray(PyArrayObject *a, \
-                 PyObject *index)
-
-    Use advanced indexing to iterate an array.
-
-.. c:function:: void PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, \
-                PyArrayObject **ret, int getmap)
-
-    Swap the axes to or from their inserted form. ``MapIter`` always puts the
-    advanced (array) indices first in the iteration. But if they are
-    consecutive, it will insert/transpose them back before returning.
-    This is stored as ``mit->consec != 0`` (the place where they are inserted).
-    For assignments, the opposite happens: the values to be assigned are
-    transposed (``getmap=1`` instead of ``getmap=0``). ``getmap=0`` and
-    ``getmap=1`` undo the other operation.
-
-.. c:function:: void PyArray_MapIterNext(PyArrayMapIterObject *mit)
-
-    This function needs to update the state of the map iterator
-    and point ``mit->dataptr`` to the memory-location of the next object.
-
-    Note that this function never handles an extra operand but provides
-    compatibility for an old (exposed) API.
-
-.. c:function:: PyObject* PyArray_MapIterArrayCopyIfOverlap(PyArrayObject *a, \
-                PyObject *index, int copy_if_overlap, PyArrayObject *extra_op)
-
-    Similar to :c:func:`PyArray_MapIterArray` but with an additional
-    ``copy_if_overlap`` argument. If ``copy_if_overlap != 0``, checks if ``a``
-    has memory overlap with any of the arrays in ``index`` and with
-    ``extra_op``, and make copies as appropriate to avoid problems if the
-    input is modified during the iteration. ``iter->array`` may contain a
-    copied array (WRITEBACKIFCOPY set).
-
-Array Scalars
+Array scalars
 -------------
 
 .. c:function:: PyObject* PyArray_Return(PyArrayObject* arr)
@@ -2720,13 +2687,15 @@ Array Scalars
     is copied into the memory of *ctypeptr*, for all other types, the
     actual data is copied into the address pointed to by *ctypeptr*.
 
-.. c:function:: void PyArray_CastScalarToCtype( \
+.. c:function:: int PyArray_CastScalarToCtype( \
         PyObject* scalar, void* ctypeptr, PyArray_Descr* outcode)
 
     Return the data (cast to the data type indicated by *outcode*)
     from the array-scalar, *scalar*, into the memory pointed to by
     *ctypeptr* (which must be large enough to handle the incoming
     memory).
+
+    Returns -1 on failure, and 0 on success.
 
 .. c:function:: PyObject* PyArray_TypeObjectFromType(int type)
 
@@ -2883,14 +2852,8 @@ Data-type descriptors
     Like :c:func:`PyArray_DescrConverter2` except it aligns C-struct-like
     objects on word-boundaries as the compiler would.
 
-.. c:function:: PyObject *PyArray_FieldNames(PyObject* dict)
 
-    Take the fields dictionary, *dict*, such as the one attached to a
-    data-type object and construct an ordered-list of field names such
-    as is stored in the names field of the :c:type:`PyArray_Descr` object.
-
-
-Conversion Utilities
+Conversion utilities
 --------------------
 
 
@@ -2964,7 +2927,7 @@ to.
     Convert a Python object, *obj*, representing an axis argument to
     the proper value for passing to the functions that take an integer
     axis. Specifically, if *obj* is None, *axis* is set to
-    :c:data:`NPY_MAXDIMS` which is interpreted correctly by the C-API
+    :c:data:`NPY_RAVEL_AXIS` which is interpreted correctly by the C-API
     functions that take axis arguments.
 
 .. c:function:: int PyArray_BoolConverter(PyObject* obj, npy_bool* value)
@@ -3048,15 +3011,6 @@ Other conversions
     *seq* to (up to) *maxvals* pointer-sized integers and place them
     in the *vals* array. The sequence can be smaller then *maxvals* as
     the number of converted objects is returned.
-
-.. c:function:: int PyArray_TypestrConvert(int itemsize, int gentype)
-
-    Convert typestring characters (with *itemsize*) to basic
-    enumerated data types. The typestring character corresponding to
-    signed and unsigned integers, floating point numbers, and
-    complex-floating point numbers are recognized and converted. Other
-    values of gentype are returned. This function can be used to
-    convert, for example, the string 'f4' to :c:data:`NPY_FLOAT32`.
 
 
 Miscellaneous
@@ -3407,11 +3361,28 @@ Other constants
 
 .. c:macro:: NPY_MAXDIMS
 
-    The maximum number of dimensions allowed in arrays.
+    The maximum number of dimensions that may be used by NumPy.
+    This is set to 64 and was 32 before NumPy 2.
+
+    .. note::
+        We encourage you to avoid ``NPY_MAXDIMS``.  A future version of NumPy
+        may wish to remove any dimension limitation (and thus the constant).
+        The limitation was created so that NumPy can use stack allocations
+        internally for scratch space.
+
+        If your algorithm has a reasonable maximum number of dimension you
+        could check and use that locally.
 
 .. c:macro:: NPY_MAXARGS
 
-    The maximum number of array arguments that can be used in functions.
+    The maximum number of array arguments that can be used in some
+    functions.  This used to be 32 before NumPy 2 and is now 64.
+    To continue to allow using it as a check whether a number of arguments
+    is compatible ufuncs, this macro is now runtime dependent.
+
+    .. note::
+        We discourage any use of ``NPY_MAXARGS`` that isn't explicitly tied
+        to checking for known NumPy limitations.
 
 .. c:macro:: NPY_FALSE
 
@@ -3431,6 +3402,16 @@ Other constants
     The return value of successful converter functions which are called
     using the "O&" syntax in :c:func:`PyArg_ParseTuple`-like functions.
 
+.. c:macro:: NPY_RAVEL_AXIS
+
+    Some NumPy functions (mainly the C-entrypoints for Python functions)
+    have an ``axis`` argument.  This macro may be passed for ``axis=None``.
+
+    .. note::
+        This macro is NumPy version dependent at runtime. The value is now
+        the minimum integer. However, on NumPy 1.x ``NPY_MAXDIMS`` was used
+        (at the time set to 32).
+
 
 Miscellaneous Macros
 ~~~~~~~~~~~~~~~~~~~~
@@ -3448,10 +3429,6 @@ Miscellaneous Macros
 
     Returns the minimum of *a* and *b*. If (*a*) or (*b*) are
     expressions they are evaluated twice.
-
-.. c:function:: npy_intp PyArray_REFCOUNT(PyObject* op)
-
-    Returns the reference count of any Python object.
 
 .. c:function:: void PyArray_DiscardWritebackIfCopy(PyArrayObject* obj)
 

@@ -303,8 +303,10 @@ NetCDF (see :ref:`how-to-io-large-arrays`).
 Write or read a JSON file
 =========================
 
-NumPy arrays are **not** directly
+NumPy arrays and most NumPy scalars are **not** directly
 `JSON serializable <https://github.com/numpy/numpy/issues/12481>`_.
+Instead, use a custom `json.JSONEncoder` for NumPy types, which can
+be found using your favorite search engine.
 
 
 .. _how-to-io-pickle-file:
@@ -318,6 +320,9 @@ against erroneous or maliciously constructed data.
 Use :func:`numpy.save` and :func:`numpy.load`.  Set ``allow_pickle=False``,
 unless the array dtype includes Python objects, in which case pickling is
 required.
+
+:func:`numpy.load` and `pickle` submodule also support unpickling files
+created with NumPy 1.26.
 
 Convert from a pandas DataFrame to a NumPy array
 ================================================

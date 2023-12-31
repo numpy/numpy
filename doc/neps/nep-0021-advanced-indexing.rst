@@ -198,7 +198,7 @@ motivational use-cases for the general ideas and is likely a good start for
 anyone not intimately familiar with advanced indexing.
 
 
-Detailed Description
+Detailed description
 --------------------
 
 Proposed rules
@@ -652,7 +652,7 @@ Copyright
 This document is placed under the CC0 1.0 Universell (CC0 1.0) Public Domain Dedication [1]_.
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. [1] To the extent possible under law, the person who associated CC0 

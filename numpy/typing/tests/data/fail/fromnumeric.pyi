@@ -1,4 +1,4 @@
-"""Tests for :mod:`numpy.core.fromnumeric`."""
+"""Tests for :mod:`numpy._core.fromnumeric`."""
 
 import numpy as np
 import numpy.typing as npt
@@ -7,7 +7,7 @@ A = np.array(True, ndmin=2, dtype=bool)
 A.setflags(write=False)
 AR_U: npt.NDArray[np.str_]
 
-a = np.bool_(True)
+a = np.bool(True)
 
 np.take(a, None)  # E: No overload variant
 np.take(a, axis=1.0)  # E: No overload variant

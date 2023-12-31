@@ -77,7 +77,7 @@ See also
 """
 import numpy as np
 import numpy.linalg as la
-from numpy.core.multiarray import normalize_axis_index
+from numpy.lib.array_utils import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -940,6 +940,15 @@ def hermval2d(x, y, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermval2d
+    >>> x = [1, 2]
+    >>> y = [4, 5]
+    >>> c = [[1, 2, 3], [4, 5, 6]]
+    >>> hermval2d(x, y, c)
+    array ([1035., 2883.])
+
     """
     return pu._valnd(hermval, c, x, y)
 
@@ -993,6 +1002,17 @@ def hermgrid2d(x, y, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermgrid2d
+    >>> x = [1, 2, 3]
+    >>> y = [4, 5]
+    >>> c = [[1, 2, 3], [4, 5, 6]]
+    >>> hermgrid2d(x, y, c)
+    array([[1035., 1599.],
+           [1867., 2883.],
+           [2699., 4167.]])
+
     """
     return pu._gridnd(hermval, c, x, y)
 
@@ -1044,6 +1064,16 @@ def hermval3d(x, y, z, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermval3d
+    >>> x = [1, 2]
+    >>> y = [4, 5]
+    >>> z = [6, 7]
+    >>> c = [[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]
+    >>> hermval3d(x, y, z, c)
+    array([ 40077., 120131.])
+    
     """
     return pu._valnd(hermval, c, x, y, z)
 
@@ -1099,6 +1129,19 @@ def hermgrid3d(x, y, z, c):
     -----
 
     .. versionadded:: 1.7.0
+
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermgrid3d
+    >>> x = [1, 2]
+    >>> y = [4, 5]
+    >>> z = [6, 7]
+    >>> c = [[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]
+    >>> hermgrid3d(x, y, z, c)
+    array([[[ 40077.,  54117.],
+            [ 49293.,  66561.]],
+           [[ 72375.,  97719.],
+            [ 88975., 120131.]]])
 
     """
     return pu._gridnd(hermval, c, x, y, z)
@@ -1214,6 +1257,16 @@ def hermvander2d(x, y, deg):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermvander2d
+    >>> x = np.array([-1, 0, 1])
+    >>> y = np.array([-1, 0, 1])
+    >>> hermvander2d(x, y, [2, 2])
+    array([[ 1., -2.,  2., -2.,  4., -4.,  2., -4.,  4.],
+           [ 1.,  0., -2.,  0.,  0., -0., -2., -0.,  4.],
+           [ 1.,  2.,  2.,  2.,  4.,  4.,  2.,  4.,  4.]])
+
     """
     return pu._vander_nd_flat((hermvander, hermvander), (x, y), deg)
 
@@ -1268,6 +1321,17 @@ def hermvander3d(x, y, z, deg):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermvander3d
+    >>> x = np.array([-1, 0, 1])
+    >>> y = np.array([-1, 0, 1])
+    >>> z = np.array([-1, 0, 1])
+    >>> hermvander3d(x, y, z, [0, 1, 2])
+    array([[ 1., -2.,  2., -2.,  4., -4.],
+           [ 1.,  0., -2.,  0.,  0., -0.],
+           [ 1.,  2.,  2.,  2.,  4.,  4.]])
+           
     """
     return pu._vander_nd_flat((hermvander, hermvander, hermvander), (x, y, z), deg)
 
@@ -1428,6 +1492,13 @@ def hermcompanion(c):
     -----
 
     .. versionadded:: 1.7.0
+
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermcompanion
+    >>> hermcompanion([1, 0, 1])
+    array([[0.        , 0.35355339],
+           [0.70710678, 0.        ]])
 
     """
     # c is a trimmed copy
@@ -1591,6 +1662,12 @@ def hermgauss(deg):
     is the k'th root of :math:`H_n`, and then scaling the results to get
     the right value when integrating 1.
 
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermgauss
+    >>> hermgauss(2)
+    (array([-0.70710678,  0.70710678]), array([0.88622693, 0.88622693]))
+
     """
     ideg = pu._as_int(deg, "deg")
     if ideg <= 0:
@@ -1645,6 +1722,13 @@ def hermweight(x):
     -----
 
     .. versionadded:: 1.7.0
+
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermweight
+    >>> x = np.arange(-2, 2)
+    >>> hermweight(x)
+    array([0.01831564, 0.36787944, 1.        , 0.36787944])
 
     """
     w = np.exp(-x**2)

@@ -1,4 +1,4 @@
-"""Typing tests for `core._ufunc_config`."""
+"""Typing tests for `_core._ufunc_config`."""
 
 import sys
 from typing import Any, Protocol
@@ -19,12 +19,12 @@ class Write:
 class SupportsWrite(Protocol):
     def write(self, s: str, /) -> object: ...
 
-assert_type(np.seterr(all=None), np.core._ufunc_config._ErrDict)
-assert_type(np.seterr(divide="ignore"), np.core._ufunc_config._ErrDict)
-assert_type(np.seterr(over="warn"), np.core._ufunc_config._ErrDict)
-assert_type(np.seterr(under="call"), np.core._ufunc_config._ErrDict)
-assert_type(np.seterr(invalid="raise"), np.core._ufunc_config._ErrDict)
-assert_type(np.geterr(), np.core._ufunc_config._ErrDict)
+assert_type(np.seterr(all=None), np._core._ufunc_config._ErrDict)
+assert_type(np.seterr(divide="ignore"), np._core._ufunc_config._ErrDict)
+assert_type(np.seterr(over="warn"), np._core._ufunc_config._ErrDict)
+assert_type(np.seterr(under="call"), np._core._ufunc_config._ErrDict)
+assert_type(np.seterr(invalid="raise"), np._core._ufunc_config._ErrDict)
+assert_type(np.geterr(), np._core._ufunc_config._ErrDict)
 
 assert_type(np.setbufsize(4096), int)
 assert_type(np.getbufsize(), int)

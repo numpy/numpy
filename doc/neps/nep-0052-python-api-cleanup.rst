@@ -23,7 +23,7 @@ and functions that have better alternatives. Furthermore, each function is meant
 to be accessible from only one place, so all duplicates also need to be dropped.
 
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 NumPy has a large API surface that evolved organically over many years:
@@ -97,7 +97,7 @@ Out of scope for this NEP are:
 - Introducing new functionality or performance enhancements.
 
 
-Usage and Impact
+Usage and impact
 ----------------
 
 A key principle of this API refactor is to ensure that, when code has been
@@ -279,11 +279,9 @@ The ``ndarray`` object has a lot of attributes and  methods, some of which are
 too niche to be that prominent, all that does is distract the average user.
 E.g.:
 
-- ``.ctypes``
 - ``.itemset`` (already discouraged)
 - ``.newbyteorder`` (too niche)
 - ``.ptp`` (niche, use ``np.ptp`` function instead)
-- ``.repeat`` (niche, use ``np.repeat`` function instead)
 
 
 API changes considered and rejected
@@ -293,14 +291,15 @@ For some functions and submodules it turned out that removing them would cause
 too much disruption or would require an amount of work disproportional to the
 actual gain. We arrived at this conclusion for such items:
 
-- Removing business day functions: `np.busday_count`, `np.busday_offset`, `np.busdaycalendar`.
-- Removing `np.nan*` functions and introducing new `nan_mode` argument to the related base functions.
-- Hiding histogram functions in the `np.histograms` submodule.
-- Hiding `c_`, `r_` and `s_` in the `np.lib.index_tricks` submodule.
-- Functions that looked niche but are present in the Array API (for example `np.can_cast`).
+- Removing business day functions: ``np.busday_count``, ``np.busday_offset``, ``np.busdaycalendar``.
+- Removing ``np.nan*`` functions and introducing new ``nan_mode`` argument to the related base functions.
+- Hiding histogram functions in the ``np.histograms`` submodule.
+- Hiding ``c_``, ``r_`` and ``s_`` in the ``np.lib.index_tricks`` submodule.
+- Functions that looked niche but are present in the Array API (for example ``np.can_cast``).
+- Removing ``.repeat`` and ``.ctypes`` from ``ndarray`` object.
 
 
-Related Work
+Related work
 ------------
 
 A clear split between public and private API was recently established
@@ -321,7 +320,7 @@ a single API or a set of related APIs. Here's a sample of the most impactful PRs
 
 The complete list of cleanup work done in the 2.0 release can be found by searching a dedicated label:
 
-- `Numpy 2.0 API Changes: <https://github.com/numpy/numpy/labels/Numpy%202.0%20API%20Changes>`
+- `Numpy 2.0 API Changes: <https://github.com/numpy/numpy/labels/Numpy%202.0%20API%20Changes>`__
 
 Some PRs has already been merged and shipped with the `1.25.0` release.
 For example, deprecating non-preferred aliases:
@@ -352,7 +351,7 @@ Discussion
 
 - `gh-24507: Overhaul of the np.lib namespace <https://github.com/numpy/numpy/issues/24507>`__
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 

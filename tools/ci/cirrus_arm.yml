@@ -71,7 +71,7 @@ macos_arm64_test_task:
   depends_on:
     - linux_aarch64_test
   macos_instance:
-    image: ghcr.io/cirruslabs/macos-monterey-xcode:14
+    image: ghcr.io/cirruslabs/macos-sonoma-xcode
 
   <<: *MODIFIED_CLONE
 
@@ -85,33 +85,70 @@ macos_arm64_test_task:
     folder: ~/.cache/pip
 
   test_script: |
-    brew install python@3.10 ccache
-
-    export PATH=/opt/homebrew/opt/python@3.10/libexec/bin:$PATH
+    brew install micromamba ccache
+    micromamba shell init -s bash -p ~/micromamba
+    source ~/.bash_profile
+    
+    micromamba create -n numpydev
+    micromamba activate numpydev
+    micromamba install -y -c conda-forge compilers python=3.11 2>/dev/null
+    
     export PATH=/opt/homebrew/opt/ccache/libexec:$PATH
     export CCACHE_DIR=$PWD/.ccache
     echo "PATH=$PATH" >> $CIRRUS_ENV
 
     python --version
-
-    RUNNER_OS="macOS"
-    SDKROOT=/Applications/Xcode-14.0.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk
     
-    # NOTE: OpenBLAS is not used in this job; if that's done in the future, ensure
-    # PKG_CONFIG_PATH points to the directory containing the openblas.pc file
-    # that's installed with the cibw_before_build.sh command.
-    # used for installing OpenBLAS/gfortran
-    bash tools/wheels/cibw_before_build.sh $PWD
-
-    pushd ~/
-    python -m venv numpy-dev
-    source numpy-dev/bin/activate
-    popd
-
     pip install -r build_requirements.txt
     pip install pytest pytest-xdist hypothesis typing_extensions
-    
-    spin build -- -Dallow-noblas=true
+
+    spin build
     spin test -j auto
 
     ccache -s
+
+
+freebsd_test_task:
+  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
+  compute_engine_instance:
+    image_project: freebsd-org-cloud-dev
+    image: family/freebsd-13-2
+    platform: freebsd
+    cpu: 1
+    memory: 4G
+
+  install_devtools_script: |
+    pkg install -y git bash ninja ccache blas cblas lapack pkgconf
+
+  <<: *MODIFIED_CLONE
+
+  ccache_cache:
+    folder: .ccache
+    populate_script:
+      - mkdir -p .ccache
+    fingerprint_key: ccache-freebsd
+
+  prepare_env_script: |
+    # Create a venv (the `source` command needs bash, not the default sh shell)
+    chsh -s /usr/local/bin/bash
+    python -m venv .venv
+    source .venv/bin/activate
+    # Minimal build and test requirements
+    python -m pip install -U pip
+    python -m pip install meson-python Cython pytest hypothesis
+
+  build_script: |
+    chsh -s /usr/local/bin/bash
+    source .venv/bin/activate
+    python -m pip install . --no-build-isolation -v -Csetup-args="-Dallow-noblas=false"
+
+  test_script: |
+    chsh -s /usr/local/bin/bash
+    source .venv/bin/activate
+    cd tools
+    python -m pytest --pyargs numpy -m "not slow"
+    ccache -s
+
+  on_failure:
+    debug_script: |
+      cat build/meson-logs/meson-log.txt

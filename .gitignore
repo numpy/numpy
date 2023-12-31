@@ -118,7 +118,6 @@ doc/source/**/generated/
 
 # Things specific to this project #
 ###################################
-# The line below should change to numpy/_version.py for NumPy 2.0
 benchmarks/results
 benchmarks/html
 benchmarks/env
@@ -139,3 +138,5 @@ tools/swig/test/Tensor.py
 tools/swig/test/Vector.py
 tools/swig/test/Vector_wrap.cxx
 tools/swig/test/Array.py
+.openblas
+numpy/_distributor_init_local.py

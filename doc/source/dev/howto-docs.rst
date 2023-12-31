@@ -61,7 +61,7 @@ which raises the bar. Test the waters by first presenting the fix as an issue.
 
 Some functions/objects like numpy.ndarray.transpose, numpy.array etc. defined in
 C-extension modules have their docstrings defined separately in `_add_newdocs.py
-<https://github.com/numpy/numpy/blob/main/numpy/core/_add_newdocs.py>`__
+<https://github.com/numpy/numpy/blob/main/numpy/_core/_add_newdocs.py>`__
 
 **********************
 Contributing new pages
@@ -217,7 +217,7 @@ shown in their :ref:`example <numpydoc:example>`.
 
 .. _doc_c_code:
 
-Documenting C/C++ Code
+Documenting C/C++ code
 ======================
 
 NumPy uses Doxygen_ to parse specially-formatted C/C++ comment blocks. This generates
@@ -428,6 +428,42 @@ for more details and to see it in action.
 .. _`Doxygen`: https://www.doxygen.nl/index.html
 .. _`Breathe`: https://breathe.readthedocs.io/en/latest/
 
+
+Legacy directive
+================
+
+If a function, module or API is in *legacy* mode, meaning that it is kept around
+for backwards compatibility reasons, but is not recommended to use in new code,
+you can use the ``.. legacy::`` directive.
+
+By default, if used with no arguments, the legacy directive will generate the
+following output:
+
+.. legacy::
+
+
+We strongly recommend that you also add a custom message, such as a new API to
+replace the old one::
+
+   .. legacy::
+
+      For more details, see :ref:`distutils-status-migration`.
+
+This message will be appended to the default message and will create the
+following output:
+
+.. legacy::
+
+   For more details, see :ref:`distutils-status-migration`.
+
+Finally, if you want to mention a function, method (or any custom object)
+instead of a *submodule*, you can use an optional argument::
+
+    .. legacy:: function
+
+This will create the following output:
+
+.. legacy:: function
 
 *********************
 Documentation reading

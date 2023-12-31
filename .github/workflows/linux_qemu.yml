@@ -52,6 +52,13 @@ jobs:
               "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
           ]
           - [
+              "ppc64le - baseline(Power9)",
+              "powerpc64le-linux-gnu",
+              "ppc64le/ubuntu:22.04",
+              "-Dallow-noblas=true -Dcpu-baseline=vsx3",
+              "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
+          ]
+          - [
               "s390x",
               "s390x-linux-gnu",
               "s390x/ubuntu:22.04",
@@ -68,6 +75,13 @@ jobs:
               "-Dallow-noblas=true -Dcpu-baseline=vx",
               "(test_kind or test_multiarray or test_simd or test_umath or test_ufunc) and not test_gcd_overflow"
           ]
+          - [
+              "riscv64",
+              "riscv64-linux-gnu",
+              "riscv64/ubuntu:22.04",
+              "-Dallow-noblas=true",
+              "test_kind or test_multiarray or test_simd or test_umath or test_ufunc"
+          ]
     env:
       TOOLCHAIN_NAME: ${{ matrix.BUILD_PROP[1] }}
       DOCKER_CONTAINER: ${{ matrix.BUILD_PROP[2] }}
@@ -77,7 +91,7 @@ jobs:
 
     name: "${{ matrix.BUILD_PROP[0] }}"
     steps:
-    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0

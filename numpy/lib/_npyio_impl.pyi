@@ -33,7 +33,7 @@ from numpy._typing import (
     _SupportsArrayFunc,
 )
 
-from numpy.core.multiarray import (
+from numpy._core.multiarray import (
     packbits as packbits,
     unpackbits as unpackbits,
 )

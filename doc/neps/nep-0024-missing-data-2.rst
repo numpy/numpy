@@ -1,7 +1,7 @@
 .. _NEP24:
 
 =============================================================
-NEP 24 — Missing data functionality - Alternative 1 to NEP 12
+NEP 24 — Missing data functionality - alternative 1 to NEP 12
 =============================================================
 
 :Author: Nathaniel J. Smith <njs@pobox.com>, Matthew Brett <matthew.brett@gmail.com>

@@ -57,11 +57,11 @@ jobs:
     env:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-dispatch=none"
     steps:
-    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.9'
     - uses: ./.github/meson_actions
@@ -74,11 +74,11 @@ jobs:
     env:
       MESON_ARGS: "-Dallow-noblas=true"
     steps:
-    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.9'
 
@@ -138,31 +138,31 @@ jobs:
 
     name: "${{ matrix.BUILD_PROP[0] }}"
     steps:
-    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: "${{ matrix.BUILD_PROP[2] }}"
     - uses: ./.github/meson_actions
       name: Build/Test
 
-  intel_sde:
+  intel_sde_avx512:
     needs: [baseline_only]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.11'
 
     - name: Install Intel SDE
       run: |
-        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/784319/sde-external-9.24.0-2023-07-13-lin.tar.xz
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/788820/sde-external-9.27.0-2023-09-13-lin.tar.xz
         mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
         sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
 
@@ -188,7 +188,53 @@ jobs:
         export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
         cd build-install &&
         sde -knm -- python -c "import numpy; numpy.show_config()" &&
-        sde -knm -- python -m pytest $NUMPY_SITE/numpy/core/tests/test_simd*
+        sde -knm -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_simd*
+
+    - name: linalg/ufunc/umath tests (TGL)
+      run: |
+        export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
+        export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
+        cd build-install &&
+        sde -tgl -- python -c "import numpy; numpy.show_config()" &&
+        sde -tgl -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_umath* \
+                                     $NUMPY_SITE/numpy/_core/tests/test_ufunc.py \
+                                     $NUMPY_SITE/numpy/_core/tests/test_multiarray.py \
+                                     $NUMPY_SITE/numpy/linalg/tests/test_*
+
+
+  intel_sde_spr:
+    needs: [baseline_only]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      with:
+        python-version: '3.11'
+
+    - name: Install Intel SDE
+      run: |
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/788820/sde-external-9.27.0-2023-09-13-lin.tar.xz
+        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
+        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y g++-13
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 1
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 1
+        python -m pip install -r build_requirements.txt
+        python -m pip install pytest pytest-xdist hypothesis typing_extensions
+
+    - name: Build
+      run: spin build -- -Dallow-noblas=true -Dcpu-baseline=avx512_spr
+
+    - name: Meson Log
+      if: always()
+      run: cat build/meson-logs/meson-log.txt
 
     - name: SIMD tests (SPR)
       run: |
@@ -196,17 +242,15 @@ jobs:
         export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
         cd build-install &&
         sde -spr -- python -c "import numpy; numpy.show_config()" &&
-        sde -spr -- python -m pytest $NUMPY_SITE/numpy/core/tests/test_simd*
+        sde -spr -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_simd*
 
-    # Can't run on SDE just yet: see https://github.com/numpy/numpy/issues/23545#issuecomment-1659047365
-    #
-    #- name: linalg/ufunc/umath tests (SPR)
-    #  run: |
-    #    export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
-    #    export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
-    #    cd build-install &&
-    #    sde -spr -- python -c "import numpy; numpy.show_config()" &&
-    #    sde -spr -- python -m pytest $NUMPY_SITE/numpy/core/tests/test_umath* \
-    #                                 $NUMPY_SITE/numpy/core/tests/test_ufunc.py \
-    #                                 $NUMPY_SITE/numpy/linalg/tests/test_*
-
+    - name: linalg/ufunc/umath tests on Intel SPR
+      run: |
+        export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
+        export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
+        cd build-install &&
+        sde -spr -- python -c "import numpy; numpy.show_config()" &&
+        sde -spr -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_umath* \
+                                     $NUMPY_SITE/numpy/_core/tests/test_ufunc.py \
+                                     $NUMPY_SITE/numpy/_core/tests/test_multiarray.py \
+                                     $NUMPY_SITE/numpy/linalg/tests/test_*

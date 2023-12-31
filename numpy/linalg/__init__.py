@@ -26,15 +26,20 @@ Functions present in numpy.linalg are listed below.
 Matrix and vector products
 --------------------------
 
+   cross
    multi_dot
    matrix_power
+   tensordot
+   matmul
 
 Decompositions
 --------------
 
    cholesky
+   outer
    qr
    svd
+   svdvals
 
 Matrix eigenvalues
 ------------------
@@ -48,10 +53,13 @@ Norms and other numbers
 -----------------------
 
    norm
+   matrix_norm
+   vector_norm
    cond
    det
    matrix_rank
    slogdet
+   trace (Array API compatible)
 
 Solving equations and inverting matrices
 ----------------------------------------
@@ -63,6 +71,12 @@ Solving equations and inverting matrices
    pinv
    tensorinv
 
+Other matrix operations
+-----------------------
+
+   diagonal (Array API compatible)
+   matrix_transpose (Array API compatible)
+
 Exceptions
 ----------
 
@@ -70,10 +84,11 @@ Exceptions
 
 """
 # To get sub-modules
-from . import linalg
-from .linalg import *
+from . import linalg  # deprecated in NumPy 2.0
+from . import _linalg
+from ._linalg import *
 
-__all__ = linalg.__all__.copy()
+__all__ = _linalg.__all__.copy()
 
 from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)

@@ -26,10 +26,12 @@ indentation.
    routines.dtype
    routines.emath
    routines.err
+   routines.exceptions
    routines.fft
    routines.functional
    routines.help
    routines.io
+   routines.lib
    routines.linalg
    routines.logic
    routines.ma

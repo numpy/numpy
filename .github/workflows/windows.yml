@@ -23,13 +23,13 @@ jobs:
         compiler: ["MSVC", "Clang-cl"]
     steps:
     - name: Checkout
-      uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
 
     - name: Setup Python
-      uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+      uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.11'
 
@@ -37,16 +37,9 @@ jobs:
       run: |
         python -m pip install spin Cython
 
-    - name: Install OpenBLAS (MacPython build)
+    - name: Install pkg-config
       run: |
-        # Download and install pre-built OpenBLAS library with 32-bit
-        # interfaces. Unpack it in the pkg-config hardcoded path
-        choco install unzip -y
-        choco install wget -y
         choco install -y --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
-        wget https://anaconda.org/multibuild-wheels-staging/openblas-libs/v0.3.21/download/openblas-v0.3.21-win_amd64-gcc_10_3_0.zip
-        unzip -d c:\opt openblas-v0.3.21-win_amd64-gcc_10_3_0.zip
-        echo "PKG_CONFIG_PATH=c:\opt\64\lib\pkgconfig;" >> $env:GITHUB_ENV
 
     - name: Install Clang-cl
       if: matrix.compiler == 'Clang-cl'
@@ -55,26 +48,26 @@ jobs:
 
     - name: Install NumPy (MSVC)
       if: matrix.compiler == 'MSVC'
+      env:
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
-        spin build -j2 -- --vsenv
+        python -m pip install scipy-openblas32
+        spin build --with-scipy-openblas=32 -j2 -- --vsenv
 
     - name: Install NumPy (Clang-cl)
       if: matrix.compiler == 'Clang-cl'
+      env:
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
         "[binaries]","c = 'clang-cl'","cpp = 'clang-cl'","ar = 'llvm-lib'","c_ld = 'lld-link'","cpp_ld = 'lld-link'" | Out-File $PWD/clang-cl-build.ini -Encoding ascii
-        spin build -j2 -- --vsenv --native-file=$PWD/clang-cl-build.ini
+        python -m pip install scipy-openblas32
+        spin build --with-scipy-openblas=32 -j2 -- --vsenv --native-file=$PWD/clang-cl-build.ini
 
-    - name: Copy OpenBLAS DLL, write _distributor_init.py
+    - name: Meson Log
+      shell: bash
+      if: ${{ failure()  }}
       run: |
-        # Getting the OpenBLAS DLL to the right place so it loads
-        $installed_path = "$PWD\build-install\usr\Lib\site-packages"
-        $numpy_path = "${installed_path}\numpy"
-        $libs_path = "${installed_path}\numpy.libs"
-        mkdir ${libs_path}
-        $ob_path = "C:/opt/64/bin/"
-        cp $ob_path/*.dll $libs_path
-        # Write _distributor_init.py to load .libs DLLs.
-        python -c "from tools import openblas_support; openblas_support.make_init(r'${numpy_path}')"
+        cat build/meson-logs/meson-log.txt
 
     - name: Install test dependencies
       run: |
@@ -85,19 +78,19 @@ jobs:
       run: |
         spin test
 
-  msvc_32bit_python_openblas:
+  msvc_32bit_python_no_openblas:
     name: MSVC, 32-bit Python, no BLAS
     runs-on: windows-2019
     if: "github.repository == 'numpy/numpy'"
     steps:
       - name: Checkout
-        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: recursive
           fetch-depth: 0
 
       - name: Setup Python (32-bit)
-        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: '3.10'
           architecture: 'x86'

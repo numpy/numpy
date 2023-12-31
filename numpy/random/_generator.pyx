@@ -11,7 +11,7 @@ from cpython.mem cimport PyMem_Malloc, PyMem_Free
 cimport cython
 import numpy as np
 cimport numpy as np
-from numpy.core.multiarray import normalize_axis_index
+from numpy.lib.array_utils import normalize_axis_index
 
 from .c_distributions cimport *
 from libc cimport string
@@ -63,7 +63,7 @@ cdef int64_t _safe_sum_nonneg_int64(size_t num_colors, int64_t *colors):
 cdef inline void _shuffle_raw_wrap(bitgen_t *bitgen, np.npy_intp n,
                                    np.npy_intp first, np.npy_intp itemsize,
                                    np.npy_intp stride,
-                                   char* data, char* buf) nogil:
+                                   char* data, char* buf) noexcept nogil:
     # We trick gcc into providing a specialized implementation for
     # the most common case, yielding a ~33% performance improvement.
     # Note that apparently, only one branch can ever be specialized.
@@ -76,7 +76,7 @@ cdef inline void _shuffle_raw_wrap(bitgen_t *bitgen, np.npy_intp n,
 cdef inline void _shuffle_raw(bitgen_t *bitgen, np.npy_intp n,
                               np.npy_intp first, np.npy_intp itemsize,
                               np.npy_intp stride,
-                              char* data, char* buf) nogil:
+                              char* data, char* buf) noexcept nogil:
     """
     Parameters
     ----------
@@ -107,7 +107,7 @@ cdef inline void _shuffle_raw(bitgen_t *bitgen, np.npy_intp n,
 
 
 cdef inline void _shuffle_int(bitgen_t *bitgen, np.npy_intp n,
-                              np.npy_intp first, int64_t* data) nogil:
+                              np.npy_intp first, int64_t* data) noexcept nogil:
     """
     Parameters
     ----------
@@ -366,7 +366,7 @@ cdef class Generator:
         Draw samples from a Beta distribution.
 
         The Beta distribution is a special case of the Dirichlet distribution,
-        and is related to the Gamma distribution.  It has the probability
+        and is related to the Gamma distribution. It has the probability
         distribution function
 
         .. math:: f(x; a,b) = \\frac{1}{B(\\alpha, \\beta)} x^{\\alpha - 1}
@@ -395,6 +395,44 @@ cdef class Generator:
         -------
         out : ndarray or scalar
             Drawn samples from the parameterized beta distribution.
+
+        Examples
+        -------- 
+        The beta distribution has mean a/(a+b). If ``a == b`` and both 
+        are > 1, the distribution is symmetric with mean 0.5.
+
+        >>> rng = np.random.default_rng()
+        >>> a, b, size = 2.0, 2.0, 10000
+        >>> sample = rng.beta(a=a, b=b, size=size)
+        >>> np.mean(sample)
+        0.5047328775385895  # may vary
+        
+        Otherwise the distribution is skewed left or right according to
+        whether ``a`` or ``b`` is greater. The distribution is mirror
+        symmetric. See for example:
+        
+        >>> a, b, size = 2, 7, 10000
+        >>> sample_left = rng.beta(a=a, b=b, size=size)
+        >>> sample_right = rng.beta(a=b, b=a, size=size)
+        >>> m_left, m_right = np.mean(sample_left), np.mean(sample_right)
+        >>> print(m_left, m_right)
+        0.2238596793678923 0.7774613834041182  # may vary
+        >>> print(m_left - a/(a+b))
+        0.001637457145670096  # may vary
+        >>> print(m_right - b/(a+b))
+        -0.0003163943736596009  # may vary
+
+        Display the histogram of the two samples:
+        
+        >>> import matplotlib.pyplot as plt
+        >>> plt.hist([sample_left, sample_right], 
+        ...          50, density=True, histtype='bar')
+        >>> plt.show()
+        
+        References
+        ----------
+        .. [1] Wikipedia, "Beta distribution",
+               https://en.wikipedia.org/wiki/Beta_distribution
 
         """
         return cont(&random_beta, &self._bitgen, size, self.lock, 2,
@@ -440,19 +478,31 @@ cdef class Generator:
 
         Examples
         --------
-        A real world example: Assume a company has 10000 customer support 
-        agents and the average time between customer calls is 4 minutes.
+        Assume a company has 10000 customer support agents and the time 
+        between customer calls is exponentially distributed and that the 
+        average time between customer calls is 4 minutes.
 
-        >>> n = 10000
-        >>> time_between_calls = np.random.default_rng().exponential(scale=4, size=n)
+        >>> scale, size = 4, 10000
+        >>> rng = np.random.default_rng()
+        >>> time_between_calls = rng.exponential(scale=scale, size=size)
 
         What is the probability that a customer will call in the next 
         4 to 5 minutes? 
         
-        >>> x = ((time_between_calls < 5).sum())/n 
-        >>> y = ((time_between_calls < 4).sum())/n
-        >>> x-y
-        0.08 # may vary
+        >>> x = ((time_between_calls < 5).sum())/size
+        >>> y = ((time_between_calls < 4).sum())/size
+        >>> x - y
+        0.08  # may vary
+
+        The corresponding distribution can be visualized as follows:
+
+        >>> import matplotlib.pyplot as plt
+        >>> scale, size = 4, 10000
+        >>> rng = np.random.default_rng()
+        >>> sample = rng.exponential(scale=scale, size=size)
+        >>> count, bins, _ = plt.hist(sample, 30, density=True)
+        >>> plt.plot(bins, scale**(-1)*np.exp(-scale**-1*bins), linewidth=2, color='r')
+        >>> plt.show()
 
         References
         ----------
@@ -505,7 +555,8 @@ cdef class Generator:
         --------
         Output a 3x8000 array:
 
-        >>> n = np.random.default_rng().standard_exponential((3, 8000))
+        >>> rng = np.random.default_rng()
+        >>> n = rng.standard_exponential((3, 8000))
 
         """
         _dtype = np.dtype(dtype)
@@ -634,7 +685,7 @@ cdef class Generator:
             ret = _rand_uint16(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
         elif _dtype == np.uint8:
             ret = _rand_uint8(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
-        elif _dtype == np.bool_:
+        elif _dtype == np.bool:
             ret = _rand_bool(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
         elif not _dtype.isnative:
             raise ValueError('Providing a dtype with a non-native byteorder '
@@ -645,7 +696,7 @@ cdef class Generator:
             raise TypeError('Unsupported dtype %r for integers' % _dtype)
 
 
-        if size is None and dtype in (bool, int):
+        if size is None and (dtype is bool or dtype is int):
             if np.array(ret).shape == ():
                 return dtype(ret)
         return ret
@@ -668,8 +719,9 @@ cdef class Generator:
 
         Examples
         --------
-        >>> np.random.default_rng().bytes(10)
-        b'\\xfeC\\x9b\\x86\\x17\\xf2\\xa1\\xafcp' # random
+        >>> rng = np.random.default_rng()
+        >>> rng.bytes(10)
+        b'\\xfeC\\x9b\\x86\\x17\\xf2\\xa1\\xafcp'  # random
 
         """
         cdef Py_ssize_t n_uint32 = ((length - 1) // 4 + 1)
@@ -994,7 +1046,8 @@ cdef class Generator:
         --------
         Draw samples from the distribution:
 
-        >>> s = np.random.default_rng().uniform(-1,0,1000)
+        >>> rng = np.random.default_rng()
+        >>> s = rng.uniform(-1,0,1000)
 
         All values are within the given interval:
 
@@ -1007,7 +1060,7 @@ cdef class Generator:
         probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 15, density=True)
+        >>> count, bins, _ = plt.hist(s, 15, density=True)
         >>> plt.plot(bins, np.ones_like(bins), linewidth=2, color='r')
         >>> plt.show()
 
@@ -1189,7 +1242,8 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> mu, sigma = 0, 0.1 # mean and standard deviation
-        >>> s = np.random.default_rng().normal(mu, sigma, 1000)
+        >>> rng = np.random.default_rng()
+        >>> s = rng.normal(mu, sigma, 1000)
 
         Verify the mean and the variance:
 
@@ -1203,7 +1257,7 @@ cdef class Generator:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 30, density=True)
+        >>> count, bins, _ = plt.hist(s, 30, density=True)
         >>> plt.plot(bins, 1/(sigma * np.sqrt(2 * np.pi)) *
         ...                np.exp( - (bins - mu)**2 / (2 * sigma**2) ),
         ...          linewidth=2, color='r')
@@ -1212,7 +1266,8 @@ cdef class Generator:
         Two-by-four array of samples from the normal distribution with
         mean 3 and standard deviation 2.5:
 
-        >>> np.random.default_rng().normal(3, 2.5, size=(2, 4))
+        >>> rng = np.random.default_rng()
+        >>> rng.normal(3, 2.5, size=(2, 4))
         array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
                [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
 
@@ -1285,14 +1340,15 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> shape, scale = 2., 1. # mean and width
-        >>> s = np.random.default_rng().standard_gamma(shape, 1000000)
+        >>> rng = np.random.default_rng()
+        >>> s = rng.standard_gamma(shape, 1000000)
 
         Display the histogram of the samples, along with
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
         >>> import scipy.special as sps  # doctest: +SKIP
-        >>> count, bins, ignored = plt.hist(s, 50, density=True)
+        >>> count, bins, _ = plt.hist(s, 50, density=True)
         >>> y = bins**(shape-1) * ((np.exp(-bins/scale))/  # doctest: +SKIP
         ...                       (sps.gamma(shape) * scale**shape))
         >>> plt.plot(bins, y, linewidth=2, color='r')  # doctest: +SKIP
@@ -1373,14 +1429,15 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> shape, scale = 2., 2.  # mean=4, std=2*sqrt(2)
-        >>> s = np.random.default_rng().gamma(shape, scale, 1000)
+        >>> rng = np.random.default_rng()
+        >>> s = rng.gamma(shape, scale, 1000)
 
         Display the histogram of the samples, along with
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
         >>> import scipy.special as sps  # doctest: +SKIP
-        >>> count, bins, ignored = plt.hist(s, 50, density=True)
+        >>> count, bins, _ = plt.hist(s, 50, density=True)
         >>> y = bins**(shape-1)*(np.exp(-bins/scale) /  # doctest: +SKIP
         ...                      (sps.gamma(shape)*scale**shape))
         >>> plt.plot(bins, y, linewidth=2, color='r')  # doctest: +SKIP
@@ -1463,7 +1520,8 @@ cdef class Generator:
 
         >>> dfnum = 1. # between group degrees of freedom
         >>> dfden = 48. # within groups degrees of freedom
-        >>> s = np.random.default_rng().f(dfnum, dfden, 1000)
+        >>> rng = np.random.default_rng()
+        >>> s = rng.f(dfnum, dfden, 1000)
 
         The lower bound for the top 1% of the samples is :
 
@@ -1617,7 +1675,8 @@ cdef class Generator:
 
         Examples
         --------
-        >>> np.random.default_rng().chisquare(2,4)
+        >>> rng = np.random.default_rng()
+        >>> rng.chisquare(2,4)
         array([ 1.89920014,  9.00867716,  3.13710533,  5.62318272]) # random
 
         """
@@ -1762,7 +1821,8 @@ cdef class Generator:
         Draw samples and plot the distribution:
 
         >>> import matplotlib.pyplot as plt
-        >>> s = np.random.default_rng().standard_cauchy(1000000)
+        >>> rng = np.random.default_rng()
+        >>> s = rng.standard_cauchy(1000000)
         >>> s = s[(s>-25) & (s<25)]  # truncate distribution so it plots well
         >>> plt.hist(s, bins=100)
         >>> plt.show()
@@ -1854,7 +1914,8 @@ cdef class Generator:
         degrees of freedom.
 
         >>> import matplotlib.pyplot as plt
-        >>> s = np.random.default_rng().standard_t(10, size=1000000)
+        >>> rng = np.random.default_rng()
+        >>> s = rng.standard_t(10, size=1000000)
         >>> h = plt.hist(s, bins=100, density=True)
 
         Does our t statistic land in one of the two critical regions found at 
@@ -1941,7 +2002,8 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> mu, kappa = 0.0, 4.0 # mean and dispersion
-        >>> s = np.random.default_rng().vonmises(mu, kappa, 1000)
+        >>> rng = np.random.default_rng()
+        >>> s = rng.vonmises(mu, kappa, 1000)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -2041,7 +2103,8 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> a, m = 3., 2.  # shape and mode
-        >>> s = (np.random.default_rng().pareto(a, 1000) + 1) * m
+        >>> rng = np.random.default_rng()
+        >>> s = (rng.pareto(a, 1000) + 1) * m
 
         Display the histogram of the samples, along with the probability
         density function:
@@ -2141,14 +2204,13 @@ cdef class Generator:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> x = np.arange(1,100.)/50.
-        >>> def weib(x,n,a):
+        >>> def weibull(x, n, a):
         ...     return (a / n) * (x / n)**(a - 1) * np.exp(-(x / n)**a)
-
-        >>> count, bins, ignored = plt.hist(rng.weibull(5.,1000))
-        >>> x = np.arange(1,100.)/50.
-        >>> scale = count.max()/weib(x, 1., 5.).max()
-        >>> plt.plot(x, weib(x, 1., 5.)*scale)
+        >>> count, bins, _ = plt.hist(rng.weibull(5., 1000))
+        >>> x = np.linspace(0, 2, 1000)
+        >>> bin_spacing = np.mean(np.diff(bins))
+        >>> plt.plot(x, weibull(x, 1., 5.) * bin_spacing * s.size, label='Weibull PDF')
+        >>> plt.legend()
         >>> plt.show()
 
         """
@@ -2222,7 +2284,7 @@ cdef class Generator:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, bins=30)
+        >>> count, bins, _ = plt.hist(s, bins=30)
         >>> x = np.linspace(0, 1, 100)
         >>> y = a*x**(a-1.)
         >>> normed_y = samples*np.diff(bins)[0]*y
@@ -2320,13 +2382,14 @@ cdef class Generator:
         Draw samples from the distribution
 
         >>> loc, scale = 0., 1.
-        >>> s = np.random.default_rng().laplace(loc, scale, 1000)
+        >>> rng = np.random.default_rng()
+        >>> s = rng.laplace(loc, scale, 1000)
 
         Display the histogram of the samples, along with
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 30, density=True)
+        >>> count, bins, _ = plt.hist(s, 30, density=True)
         >>> x = np.arange(-8., 8., .01)
         >>> pdf = np.exp(-abs(x-loc)/scale)/(2.*scale)
         >>> plt.plot(x, pdf)
@@ -2430,7 +2493,7 @@ cdef class Generator:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 30, density=True)
+        >>> count, bins, _ = plt.hist(s, 30, density=True)
         >>> plt.plot(bins, (1/beta)*np.exp(-(bins - mu)/beta)
         ...          * np.exp( -np.exp( -(bins - mu) /beta) ),
         ...          linewidth=2, color='r')
@@ -2445,7 +2508,7 @@ cdef class Generator:
         ...    a = rng.normal(mu, beta, 1000)
         ...    means.append(a.mean())
         ...    maxima.append(a.max())
-        >>> count, bins, ignored = plt.hist(maxima, 30, density=True)
+        >>> count, bins, _ = plt.hist(maxima, 30, density=True)
         >>> beta = np.std(maxima) * np.sqrt(6) / np.pi
         >>> mu = np.mean(maxima) - 0.57721*beta
         >>> plt.plot(bins, (1/beta)*np.exp(-(bins - mu)/beta)
@@ -2498,7 +2561,7 @@ cdef class Generator:
         -----
         The probability density for the Logistic distribution is
 
-        .. math:: P(x) = P(x) = \\frac{e^{-(x-\\mu)/s}}{s(1+e^{-(x-\\mu)/s})^2},
+        .. math:: P(x) = \\frac{e^{-(x-\\mu)/s}}{s(1+e^{-(x-\\mu)/s})^2},
 
         where :math:`\\mu` = location and :math:`s` = scale.
 
@@ -2524,16 +2587,19 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> loc, scale = 10, 1
-        >>> s = np.random.default_rng().logistic(loc, scale, 10000)
+        >>> rng = np.random.default_rng()
+        >>> s = rng.logistic(loc, scale, 10000)
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, bins=50)
+        >>> count, bins, _ = plt.hist(s, bins=50, label='Sampled data')
 
-        #   plot against distribution
+        #   plot sampled data against the exact distribution
 
-        >>> def logist(x, loc, scale):
+        >>> def logistic(x, loc, scale):
         ...     return np.exp((loc-x)/scale)/(scale*(1+np.exp((loc-x)/scale))**2)
-        >>> lgst_val = logist(bins, loc, scale)
-        >>> plt.plot(bins, lgst_val * count.max() / lgst_val.max())
+        >>> logistic_values  = logistic(bins, loc, scale)
+        >>> bin_spacing = np.mean(np.diff(bins))
+        >>> plt.plot(bins, logistic_values  * bin_spacing * s.size, label='Logistic PDF')
+        >>> plt.legend()
         >>> plt.show()
 
         """
@@ -2614,7 +2680,7 @@ cdef class Generator:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 100, density=True, align='mid')
+        >>> count, bins, _ = plt.hist(s, 100, density=True, align='mid')
 
         >>> x = np.linspace(min(bins), max(bins), 10000)
         >>> pdf = (np.exp(-(np.log(x) - mu)**2 / (2 * sigma**2))
@@ -2637,7 +2703,7 @@ cdef class Generator:
         ...    b.append(np.prod(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
-        >>> count, bins, ignored = plt.hist(b, 100, density=True, align='mid')
+        >>> count, bins, _ = plt.hist(b, 100, density=True, align='mid')
         >>> sigma = np.std(np.log(b))
         >>> mu = np.mean(np.log(b))
 
@@ -2782,7 +2848,8 @@ cdef class Generator:
         Draw values from the distribution and plot the histogram:
 
         >>> import matplotlib.pyplot as plt
-        >>> h = plt.hist(np.random.default_rng().wald(3, 2, 100000), bins=200, density=True)
+        >>> rng = np.random.default_rng()
+        >>> h = plt.hist(rng.wald(3, 2, 100000), bins=200, density=True)
         >>> plt.show()
 
         """
@@ -2849,7 +2916,8 @@ cdef class Generator:
         Draw values from the distribution and plot the histogram:
 
         >>> import matplotlib.pyplot as plt
-        >>> h = plt.hist(np.random.default_rng().triangular(-3, 0, 8, 100000), bins=200,
+        >>> rng = np.random.default_rng()
+        >>> h = plt.hist(rng.triangular(-3, 0, 8, 100000), bins=200,
         ...              density=True)
         >>> plt.show()
 
@@ -3116,7 +3184,8 @@ cdef class Generator:
         for each successive well, that is what is the probability of a
         single success after drilling 5 wells, after 6 wells, etc.?
 
-        >>> s = np.random.default_rng().negative_binomial(1, 0.1, 100000)
+        >>> rng = np.random.default_rng()
+        >>> s = rng.negative_binomial(1, 0.1, 100000)
         >>> for i in range(1, 11): # doctest: +SKIP
         ...    probability = sum(s<i) / 100000.
         ...    print(i, "wells drilled, probability of one success =", probability)
@@ -3219,7 +3288,7 @@ cdef class Generator:
         Display histogram of the sample:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 14, density=True)
+        >>> count, bins, _ = plt.hist(s, 14, density=True)
         >>> plt.show()
 
         Draw each 100 values for lambda 100 and 500:
@@ -3291,7 +3360,8 @@ cdef class Generator:
 
         >>> a = 4.0
         >>> n = 20000
-        >>> s = np.random.default_rng().zipf(a, size=n)
+        >>> rng = np.random.default_rng()
+        >>> s = rng.zipf(a, size=n)
 
         Display the histogram of the samples, along with
         the expected histogram based on the probability
@@ -3353,18 +3423,34 @@ cdef class Generator:
         out : ndarray or scalar
             Drawn samples from the parameterized geometric distribution.
 
+        References
+        ----------
+
+        .. [1] Wikipedia, "Geometric distribution",
+               https://en.wikipedia.org/wiki/Geometric_distribution
+
         Examples
         --------
-        Draw ten thousand values from the geometric distribution,
-        with the probability of an individual success equal to 0.35:
+        Draw 10.000 values from the geometric distribution, with the 
+        probability of an individual success equal to ``p = 0.35``:
 
-        >>> z = np.random.default_rng().geometric(p=0.35, size=10000)
+        >>> p, size = 0.35, 10000
+        >>> rng = np.random.default_rng()
+        >>> sample = rng.geometric(p=p, size=size)
 
-        How many trials succeeded after a single run?
+        What proportion of trials succeeded after a single run?
 
-        >>> (z == 1).sum() / 10000.
-        0.34889999999999999 # random
+        >>> (sample == 1).sum()/size
+        0.34889999999999999  # may vary
 
+        The geometric distribution with ``p=0.35`` looks as follows:
+
+        >>> import matplotlib.pyplot as plt
+        >>> count, bins, _ = plt.hist(sample, bins=30, density=True)
+        >>> plt.plot(bins, (1-p)**(bins-1)*p)
+        >>> plt.xlim([0, 25])
+        >>> plt.show()
+        
         """
         return disc(&random_geometric, &self._bitgen, size, self.lock, 1, 0,
                     p, 'p', CONS_BOUNDED_GT_0_1,
@@ -3576,16 +3662,19 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> a = .6
-        >>> s = np.random.default_rng().logseries(a, 10000)
+        >>> rng = np.random.default_rng()
+        >>> s = rng.logseries(a, 10000)
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s)
+        >>> bins = np.arange(-.5, max(s) + .5 )
+        >>> count, bins, _ = plt.hist(s, bins=bins, label='Sample count')
 
         #   plot against distribution
 
         >>> def logseries(k, p):
         ...     return -p**k/(k*np.log(1-p))
-        >>> plt.plot(bins, logseries(bins, a) * count.max()/
-        ...          logseries(bins, a).max(), 'r')
+        >>> centres = np.arange(1, max(s) + 1)
+        >>> plt.plot(centres, logseries(centres, a) * s.size, 'r', label='logseries PMF')
+        >>> plt.legend()
         >>> plt.show()
 
         """
@@ -3676,7 +3765,8 @@ cdef class Generator:
         Diagonal covariance means that points are oriented along x or y-axis:
 
         >>> import matplotlib.pyplot as plt
-        >>> x, y = np.random.default_rng().multivariate_normal(mean, cov, 5000).T
+        >>> rng = np.random.default_rng()
+        >>> x, y = rng.multivariate_normal(mean, cov, 5000).T
         >>> plt.plot(x, y, 'x')
         >>> plt.axis('equal')
         >>> plt.show()
@@ -3742,6 +3832,7 @@ cdef class Generator:
         >>> plt.axis('equal')
         >>> plt.grid()
         >>> plt.show()
+
         """
         if method not in {'eigh', 'svd', 'cholesky'}:
             raise ValueError(
@@ -3757,7 +3848,7 @@ cdef class Generator:
 
         if size is None:
             shape = []
-        elif isinstance(size, (int, long, np.integer)):
+        elif isinstance(size, (int, np.integer)):
             shape = [size]
         else:
             shape = size
@@ -3968,6 +4059,7 @@ cdef class Generator:
         >>> rng.multinomial(100, [1.0, 2.0])  # WRONG
         Traceback (most recent call last):
         ValueError: pvals < 0, pvals > 1 or pvals contains NaNs
+
         """
 
         cdef np.npy_intp d, i, sz, offset, pi
@@ -4196,6 +4288,7 @@ cdef class Generator:
                 [3, 2, 1]],
                [[4, 1, 1],
                 [3, 2, 1]]])
+
         """
         cdef int64_t nsamp
         cdef size_t num_colors
@@ -4365,7 +4458,8 @@ cdef class Generator:
         average length, but allowing some variation in the relative sizes of
         the pieces.
 
-        >>> s = np.random.default_rng().dirichlet((10, 5, 3), 20).transpose()
+        >>> rng = np.random.default_rng()
+        >>> s = rng.dirichlet((10, 5, 3), 20).transpose()
 
         >>> import matplotlib.pyplot as plt
         >>> plt.barh(range(20), s[0])
@@ -4584,6 +4678,7 @@ cdef class Generator:
 
         >>> y is x
         True
+
         """
 
         cdef int ax
@@ -4724,6 +4819,7 @@ cdef class Generator:
         array([[2, 0, 1], # random
                [5, 3, 4],
                [8, 6, 7]])
+
         """
         cdef:
             np.npy_intp i, j, n = len(x), stride, itemsize
@@ -4875,8 +4971,8 @@ def default_rng(seed=None):
     seed : {None, int, array_like[ints], SeedSequence, BitGenerator, Generator}, optional
         A seed to initialize the `BitGenerator`. If None, then fresh,
         unpredictable entropy will be pulled from the OS. If an ``int`` or
-        ``array_like[ints]`` is passed, then it will be passed to
-        `SeedSequence` to derive the initial `BitGenerator` state. One may also
+        ``array_like[ints]`` is passed, then all values must be non-negative and will be
+        passed to `SeedSequence` to derive the initial `BitGenerator` state. One may also
         pass in a `SeedSequence` instance.
         Additionally, when passed a `BitGenerator`, it will be wrapped by
         `Generator`. If passed a `Generator`, it will be returned unaltered.

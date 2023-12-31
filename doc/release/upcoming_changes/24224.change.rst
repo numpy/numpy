@@ -1,0 +1,7 @@
+Default integer now 64bit on 64bit windows
+------------------------------------------
+The default NumPy integer is now 64bit on all 64bit systems as the
+historic 32bit default on windows was a common source of issues.
+Most users should not notice this, the main issues may occur
+with code interfacing with libraries written in a compiled language
+like C.  For more information see :ref:`migration_windows_int64`.

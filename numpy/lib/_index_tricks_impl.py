@@ -5,13 +5,13 @@ import warnings
 
 import numpy as np
 from .._utils import set_module
-import numpy.core.numeric as _nx
-from numpy.core.numeric import ScalarType, array
-from numpy.core.numerictypes import issubdtype
+import numpy._core.numeric as _nx
+from numpy._core.numeric import ScalarType, array
+from numpy._core.numerictypes import issubdtype
 
 import numpy.matrixlib as matrixlib
-from numpy.core.multiarray import ravel_multi_index, unravel_index
-from numpy.core import overrides, linspace
+from numpy._core.multiarray import ravel_multi_index, unravel_index
+from numpy._core import overrides, linspace
 from numpy.lib.stride_tricks import as_strided
 from numpy.lib._function_base_impl import diff
 
@@ -99,7 +99,7 @@ def ix_(*args):
                 new = new.astype(_nx.intp)
         if new.ndim != 1:
             raise ValueError("Cross index must be 1 dimensional")
-        if issubdtype(new.dtype, _nx.bool_):
+        if issubdtype(new.dtype, _nx.bool):
             new, = new.nonzero()
         new = new.reshape((1,)*k + (new.size,) + (1,)*(nd-k-1))
         out.append(new)
@@ -720,7 +720,7 @@ class IndexExpression:
     A nicer way to build up index tuples for arrays.
 
     .. note::
-       Use one of the two predefined instances `index_exp` or `s_`
+       Use one of the two predefined instances ``index_exp`` or `s_`
        rather than directly using `IndexExpression`.
 
     For any index combination, including slicing and axis insertion,
@@ -736,10 +736,11 @@ class IndexExpression:
 
     See Also
     --------
-    index_exp : Predefined instance that always returns a tuple:
-       `index_exp = IndexExpression(maketuple=True)`.
     s_ : Predefined instance without tuple conversion:
        `s_ = IndexExpression(maketuple=False)`.
+       The ``index_exp`` is another predefined instance that
+       always returns a tuple:
+       `index_exp = IndexExpression(maketuple=True)`.
 
     Notes
     -----
@@ -788,14 +789,13 @@ def fill_diagonal(a, val, wrap=False):
     """Fill the main diagonal of the given array of any dimensionality.
 
     For an array `a` with ``a.ndim >= 2``, the diagonal is the list of
-    locations with indices ``a[i, ..., i]`` all identical. This function
-    modifies the input array in-place, it does not return a value.
+    values ``a[i, ..., i]`` with indices ``i`` all identical.  This function
+    modifies the input array in-place without returning a value.
 
     Parameters
     ----------
     a : array, at least 2-D.
-      Array whose diagonal is to be filled, it gets modified in-place.
-
+      Array whose diagonal is to be filled in-place.
     val : scalar or array_like
       Value(s) to write on the diagonal. If `val` is scalar, the value is
       written along the diagonal. If array-like, the flattened `val` is
