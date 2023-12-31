@@ -1257,13 +1257,11 @@ that can be present in the array Most of these are simple wrappers
 around the corresponding data type in C. The C-names for these types
 are ``Py{TYPE}ArrType_Type`` where ``{TYPE}`` can be
 
-    **Bool**, **Generic**, **Number**, **Integer**, **SignedInteger**,
-    **UnsignedInteger**, **Inexact**, **Floating**, **ComplexFloating**,
-    **Flexible**, **Character**, **Byte**, **Short**, **Int**, **Long**,
-    **LongLong**, **UByte**, **UShort**, **UInt**, **ULong**, **ULongLong**,
-    **Float**, **Double**, **LongDouble**, **CFloat**, **CDouble**,
-    **CLongDouble**, **Object**, **String**, **Unicode**, **Void**,
-    **TimeInteger**, **Datetime**, **Timedelta**, and **Half**.
+    **Bool**, **Byte**, **Short**, **Int**, **Long**, **LongLong**,
+    **UByte**, **UShort**, **UInt**, **ULong**, **ULongLong**,
+    **Half**, **Float**, **Double**, **LongDouble**, **CFloat**,
+    **CDouble**, **CLongDouble**, **String**, **Unicode**, **Void**, 
+    **Datetime**, **Timedelta**, and **Object**.
 
 These type names are part of the C-API and can therefore be created in
 extension C-code. There is also a ``PyIntpArrType_Type`` and a
