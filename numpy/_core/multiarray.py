@@ -484,7 +484,7 @@ def lexsort(keys, axis=None):
 
     Compare against `argsort`, which would sort each key independently.
 
-    >>> np.argsort((b, a))
+    >>> np.argsort((b, a), kind='stable')
     array([[2, 4, 6, 5, 1, 3, 0],
            [0, 2, 4, 3, 5, 6, 1]])
 
