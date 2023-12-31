@@ -947,6 +947,10 @@ def compress_rows(a):
     compressed_array : ndarray
         The compressed array.
 
+    See Also
+    --------
+    compress_rowcols
+
     Examples
     --------
     >>> a = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
@@ -981,6 +985,10 @@ def compress_cols(a):
     -------
     compressed_array : ndarray
         The compressed array.
+
+    See Also
+    --------
+    compress_rowcols
 
     Examples
     --------

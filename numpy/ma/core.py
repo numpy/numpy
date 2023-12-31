@@ -7010,7 +7010,6 @@ count = _frommethod('count')
 
 def take(a, indices, axis=None, out=None, mode='raise'):
     """
-
     """
     a = masked_array(a)
     return a.take(indices, axis=axis, out=out, mode=mode)
@@ -7397,14 +7396,17 @@ def putmask(a, mask, values):  # , mode='raise'):
     >>> arr = [[1, 2], [3, 4]]
     >>> mask = [[1, 0], [0, 0]]
     >>> x = np.ma.array(arr, mask=mask)
-    >>> np.putmask(x, x < 4, x**2)
+    >>> np.putmask(x, x < 4, 10*x)
     >>> x
     masked_array(
-      data=[[--, 4],
-            [9, 4]],
+      data=[[--, 20],
+            [30, 4]],
       mask=[[ True, False],
             [False, False]],
       fill_value=999999)
+    >>> x.data
+    array([[10, 20],
+           [30,  4]])
 
     """
     # We can't use 'frommethod', the order of arguments is different
