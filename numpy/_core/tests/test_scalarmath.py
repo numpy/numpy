@@ -24,7 +24,7 @@ try:
 except TypeError:
     USING_CLANG_CL = False
 
-types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
+types = [np.bool, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.int_, np.uint, np.longlong, np.ulonglong,
          np.single, np.double, np.longdouble, np.csingle,
          np.cdouble, np.clongdouble]
@@ -716,7 +716,7 @@ class TestMultiply:
 
 class TestNegative:
     def test_exceptions(self):
-        a = np.ones((), dtype=np.bool_)[()]
+        a = np.ones((), dtype=np.bool)[()]
         assert_raises(TypeError, operator.neg, a)
 
     def test_result(self):
@@ -734,7 +734,7 @@ class TestNegative:
 
 class TestSubtract:
     def test_exceptions(self):
-        a = np.ones((), dtype=np.bool_)[()]
+        a = np.ones((), dtype=np.bool)[()]
         assert_raises(TypeError, operator.sub, a, a)
 
     def test_result(self):
@@ -1047,7 +1047,7 @@ def test_subclass_deferral(sctype, __op__, __rop__, op, cmp):
 
     # inheritance has to override, or this is correctly lost:
     res = op(myf_simple1(1), myf_simple2(2))
-    assert type(res) == sctype or type(res) == np.bool_
+    assert type(res) == sctype or type(res) == np.bool
     assert op(myf_simple1(1), myf_simple2(2)) == op(1, 2)  # inherited
 
     # Two independent subclasses do not really define an order.  This could

@@ -23,6 +23,7 @@
 #include "numpyos.h"
 #include "can_cast_table.h"
 #include "common.h"
+#include "flagsobject.h"
 #include "scalartypes.h"
 #include "_datetime.h"
 #include "datetime_strings.h"
@@ -3398,7 +3399,7 @@ static PyObject *
 bool_index(PyObject *a)
 {
     if (DEPRECATE(
-            "In future, it will be an error for 'np.bool_' scalars to be "
+            "In future, it will be an error for 'np.bool' scalars to be "
             "interpreted as an index") < 0) {
         return NULL;
     }

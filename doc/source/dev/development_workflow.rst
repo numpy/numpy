@@ -4,12 +4,10 @@
 Development workflow
 ====================
 
-You already have your own forked copy of the NumPy_ repository, by
-following :ref:`forking`, :ref:`set-up-fork`, you have configured git_
-by following :ref:`configure-git`, and have linked the upstream
-repository as explained in :ref:`linking-to-upstream`.
-
-What is described below is a recommended workflow with Git.
+You already have your own forked copy of the NumPy repository, have configured
+Git, and have linked the upstream repository as explained in
+:ref:`linking-to-upstream`. What is described below is a recommended workflow
+with Git.
 
 Basic workflow
 ##############
@@ -31,12 +29,6 @@ In short:
 
 This way of working helps to keep work well organized and the history
 as clear as possible.
-
-.. seealso::
-
-   There are many online tutorials to help you `learn git`_. For discussions
-   of specific git workflows, see these discussions on `linux git workflow`_,
-   and `ipython git workflow`_.
 
 .. _making-a-new-feature-branch:
 
@@ -79,8 +71,8 @@ In more detail
 #. Make some changes. When you feel that you've made a complete, working set
    of related changes, move on to the next steps.
 
-#. Optional: Check which files have changed with ``git status`` (see `git
-   status`_).  You'll see a listing like this one::
+#. Optional: Check which files have changed with ``git status``. You'll see a
+   listing like this one::
 
      # On branch my-new-feature
      # Changed but not updated:
@@ -96,11 +88,11 @@ In more detail
      no changes added to commit (use "git add" and/or "git commit -a")
 
 #. Optional: Compare the changes with the previous version using with ``git
-   diff`` (`git diff`_). This brings up a simple text browser interface that
+   diff``. This brings up a simple text browser interface that
    highlights the difference between your files and the previous version.
 
-#. Add any relevant modified or new files using  ``git add modified_file``
-   (see `git add`_). This puts the files into a staging area, which is a queue
+#. Add any relevant modified or new files using  ``git add modified_file``.
+   This puts the files into a staging area, which is a queue
    of files that will be added to your next commit. Only add files that have
    related, complete changes. Leave files with unfinished changes for later
    commits.
@@ -118,26 +110,23 @@ In more detail
    -a``. The extra ``-a`` flag automatically commits all modified files and
    removes all deleted files. This can save you some typing of numerous ``git
    add`` commands; however, it can add unwanted changes to a commit if you're
-   not careful. For more information, see the helpful use-case description in
-   the `tangled working copy problem`_.
+   not careful. 
 
-#. Push the changes to your forked repo on github_::
+#. Push the changes to your fork on GitHub::
 
       git push origin my-new-feature
-
-   For more information, see `git push`_.
 
 .. note::
 
    Assuming you have followed the instructions in these pages, git will create
-   a default link to your github_ repo called ``origin``.  In git >= 1.7 you
+   a default link to your GitHb repo called ``origin``.  You
    can ensure that the link to origin is permanently set by using the
    ``--set-upstream`` option::
 
       git push --set-upstream origin my-new-feature
 
-   From now on git_ will know that ``my-new-feature`` is related to the
-   ``my-new-feature`` branch in your own github_ repo. Subsequent push calls
+   From now on, ``git`` will know that ``my-new-feature`` is related to the
+   ``my-new-feature`` branch in your own GitHub repo. Subsequent push calls
    are then simplified to the following::
 
       git push
@@ -212,12 +201,6 @@ these fragments in each commit message of a PR:
   settings.
   `See the configuration files for these checks. <https://github.com/numpy/numpy/tree/main/.github/workflows>`__
 
-* ``[skip travis]``: skip TravisCI jobs
-
-  `TravisCI <https://www.travis-ci.com/>`__ will test your changes against
-  Python 3.9 on the PowerPC and s390x architectures.
-  `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.travis.yml>`__
-
 * ``[skip azp]``: skip Azure jobs
 
   `Azure <https://azure.microsoft.com/en-us/products/devops/pipelines>`__ is
@@ -248,47 +231,42 @@ in order to build wheels through continuous integration services. To save resour
 cibuildwheel wheel builders are not run by default on every single PR or commit to main.
 
 If you would like to test that your pull request do not break the wheel builders,
-you may either append ``[wheel build]`` to the end of the commit message of the commit
-or add one of the following labels to the pull request(if you have the permissions to do so):
+you can do so by appending ``[wheel build]`` to the first line of the commit
+message of the newest commit in your PR. Please only do so for build-related
+PRs, because running all wheel builds is slow and expensive.
 
-- ``36 - Build``: for pull requests changing build processes/configurations
-- ``03 - Maintenance``: for pull requests upgrading dependencies
-- ``14 - Release``: for pull requests preparing for a release
-
-The wheels built via github actions (including 64-bit linux, macOS, and
-windows, arm64 macOS, and 32-bit windows) will be uploaded as artifacts in zip
-files. You can access them from the Summary page of the "Wheel builder"
-Action_. The aarch64 wheels built via travis_ CI are not available as artifacts.
+The wheels built via github actions (including 64-bit Linux, x86-64 macOS, and
+32/64-bit Windows) will be uploaded as artifacts in zip files. You can access
+them from the Summary page of the "Wheel builder" action. The aarch64 Linux and
+arm64 macOS wheels built via Cirrus CI are not available as artifacts.
 Additionally, the wheels will be uploaded to
 https://anaconda.org/scientific-python-nightly-wheels/ on the following conditions:
 
 - by a weekly cron job or
-- if the github action or travis build has been manually triggered, which requires appropriate permissions
+- if the GitHub Actions or Cirrus build has been manually triggered, which
+  requires appropriate permissions
 
 The wheels will be uploaded to https://anaconda.org/multibuild-wheels-staging/
 if the build was triggered by a tag to the repo that begins with ``v``
 
-.. _Action: https://github.com/numpy/numpy/actions
-.. _travis: https://app.travis-ci.com/github/numpy/numpy/builds
 
 .. _workflow_mailing_list:
 
 Get the mailing list's opinion
-=======================================================
+==============================
 
 If you plan a new feature or API change, it's wisest to first email the
 NumPy `mailing list <https://mail.python.org/mailman/listinfo/numpy-discussion>`_
 asking for comment. If you haven't heard back in a week, it's
 OK to ping the list again.
 
+
 .. _asking-for-merging:
 
 Asking for your changes to be merged with the main repo
 =======================================================
 
-When you feel your work is finished, you can create a pull request (PR). Github
-has a nice help page that outlines the process for `filing pull requests`_.
-
+When you feel your work is finished, you can create a pull request (PR). 
 If your changes involve modifications to the API or addition/modification of a
 function, add a release note to the ``doc/release/upcoming_changes/``
 directory, following the instructions and format in the
@@ -308,14 +286,13 @@ If your PR is large or complicated, asking for input on the numpy-discussion
 mailing list may also be useful.
 
 
-
 .. _rebasing-on-main:
 
 Rebasing on main
 ================
 
-This updates your feature branch with changes from the upstream `NumPy
-github`_ repo. If you do not absolutely need to do this, try to avoid doing
+This updates your feature branch with changes from the upstream NumPy
+GitHub repo. If you do not absolutely need to do this, try to avoid doing
 it, except perhaps when you are finished. The first step will be to update
 the remote repository with new commits from upstream::
 
@@ -376,8 +353,7 @@ If you forgot to make a backup branch::
    git reset --hard my-feature-branch@{2}
 
 If you didn't actually mess up but there are merge conflicts, you need to
-resolve those.  This can be one of the trickier things to get right.  For a
-good description of how to do this, see `this article on merging conflicts`_.
+resolve those.
 
 
 Additional things you might want to do
@@ -470,8 +446,8 @@ and the history looks now like this::
 If it went wrong, recovery is again possible as explained :ref:`above
 <recovering-from-mess-up>`.
 
-Deleting a branch on github_
-============================
+Deleting a branch on GitHub
+===========================
 
 ::
 
@@ -490,7 +466,7 @@ Several people sharing a single repository
 
 If you want to work on some stuff with other people, where you are all
 committing into the same repository, or even the same branch, then just
-share it via github_.
+share it via GitHub.
 
 First fork NumPy into your account, as from :ref:`forking`.
 
@@ -549,14 +525,12 @@ To see a linear list of commits for this branch::
 
    git log
 
-You can also look at the `network graph visualizer`_ for your github_
-repo.
 
 Backporting
 ===========
 
-Backporting is the process of copying new feature/fixes committed in
-`numpy/main`_ back to stable release branches. To do this you make a branch
+Backporting is the process of copying new feature/fixes committed in NumPy's
+``main`` branch back to stable release branches. To do this you make a branch
 off the branch you are backporting to, cherry pick the commits you want from
 ``numpy/main``, and then submit a pull request for the branch containing the
 backport.
@@ -569,7 +543,7 @@ backport.
     git checkout -b backport-3324 upstream/maintenance/1.8.x
 
 2. Now you need to apply the changes from main to this branch using
-   `git cherry-pick`_::
+   ``git cherry-pick``::
 
     # Update remote
     git fetch upstream
@@ -585,7 +559,7 @@ backport.
 
 3. You might run into some conflicts cherry picking here. These are
    resolved the same way as merge/rebase conflicts. Except here you can
-   use `git blame`_ to see the difference between main and the
+   use ``git blame`` to see the difference between main and the
    backported branch to make sure nothing gets screwed up.
 
 4. Push the new branch to your Github repository::
@@ -636,5 +610,3 @@ them to ``upstream`` as follows:
     first that you're about to push the changes you want to the place you
     want.
 
-
-.. include:: gitwash/git_links.inc

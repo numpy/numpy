@@ -7,11 +7,11 @@ if sys.version_info >= (3, 10):
 else:
     from typing_extensions import ParamSpec, Concatenate
 
+import numpy as np
 from numpy import (
     generic,
     integer,
     ufunc,
-    bool_,
     unsignedinteger,
     signedinteger,
     floating,
@@ -52,8 +52,6 @@ class _SupportsArrayWrap(Protocol):
 
 
 __all__: list[str]
-
-row_stack = vstack
 
 def take_along_axis(
     arr: _SCT | NDArray[_SCT],
@@ -177,7 +175,7 @@ def get_array_wrap(*args: _SupportsArrayWrap) -> _ArrayWrap: ...
 def get_array_wrap(*args: object) -> None | _ArrayWrap: ...
 
 @overload
-def kron(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co) -> NDArray[bool_]: ...  # type: ignore[misc]
+def kron(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co) -> NDArray[np.bool]: ...  # type: ignore[misc]
 @overload
 def kron(a: _ArrayLikeUInt_co, b: _ArrayLikeUInt_co) -> NDArray[unsignedinteger[Any]]: ...  # type: ignore[misc]
 @overload

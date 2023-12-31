@@ -11,8 +11,10 @@ zgetrf, dpotrf, zpotrf, dgeqrf, zgeqrf, zungqr, dorgqr.
 
 __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'slogdet', 'det',
-           'svd', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
-           'LinAlgError', 'multi_dot', 'trace', 'diagonal']
+           'svd', 'svdvals', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond',
+           'matrix_rank', 'LinAlgError', 'multi_dot', 'trace', 'diagonal',
+           'cross', 'outer', 'tensordot', 'matmul', 'matrix_transpose',
+           'matrix_norm', 'vector_norm', 'vecdot']
 
 import functools
 import operator
@@ -26,10 +28,14 @@ from numpy._core import (
     add, multiply, sqrt, sum, isfinite, finfo, errstate, moveaxis, amin,
     amax, prod, abs, atleast_2d, intp, asanyarray, object_, matmul,
     swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
-    reciprocal, overrides, diagonal as _core_diagonal, trace as _core_trace
+    reciprocal, overrides, diagonal as _core_diagonal, trace as _core_trace,
+    cross as _core_cross, outer as _core_outer, tensordot as _core_tensordot,
+    matmul as _core_matmul, matrix_transpose as _core_matrix_transpose,
+    transpose as _core_transpose, vecdot as _core_vecdot,
 )
+from numpy._globals import _NoValue
 from numpy.lib._twodim_base_impl import triu, eye
-from numpy.lib.array_utils import normalize_axis_index
+from numpy.lib.array_utils import normalize_axis_index, normalize_axis_tuple
 from numpy.linalg import _umath_linalg
 
 from numpy._typing import NDArray
@@ -557,7 +563,7 @@ def inv(a):
        [-1.12589991e+15, -5.62949953e+14,  5.62949953e+14],
        [ 1.12589991e+15,  5.62949953e+14, -5.62949953e+14]])
     >>> a @ inv(a)
-    array([[ 0.   , -0.5  ,  0.   ],
+    array([[ 0.   , -0.5  ,  0.   ],  # may vary
            [-0.5  ,  0.625,  0.25 ],
            [ 0.   ,  0.   ,  1.   ]])
 
@@ -570,7 +576,7 @@ def inv(a):
 
     >>> from numpy.linalg import cond
     >>> cond(a)
-    np.float64(8.659885634118668e+17)
+    np.float64(8.659885634118668e+17)  # may vary
 
     It is also possible to detect ill-conditioning by inspecting the matrix's
     singular values directly. The ratio between the largest and the smallest
@@ -579,7 +585,7 @@ def inv(a):
     >>> from numpy.linalg import svd
     >>> sigma = svd(a, compute_uv=False)  # Do not compute singular vectors
     >>> sigma.max()/sigma.min()
-    8.659885634118668e+17
+    8.659885634118668e+17  # may vary
 
     """
     a, wrap = _makearray(a)
@@ -716,31 +722,39 @@ def matrix_power(a, n):
 
 # Cholesky decomposition
 
+def _cholesky_dispatcher(a, /, *, upper=None):
+    return (a,)
 
-@array_function_dispatch(_unary_dispatcher)
-def cholesky(a):
+
+@array_function_dispatch(_cholesky_dispatcher)
+def cholesky(a, /, *, upper=False):
     """
     Cholesky decomposition.
 
-    Return the Cholesky decomposition, `L * L.H`, of the square matrix `a`,
-    where `L` is lower-triangular and .H is the conjugate transpose operator
-    (which is the ordinary transpose if `a` is real-valued).  `a` must be
-    Hermitian (symmetric if real-valued) and positive-definite. No
-    checking is performed to verify whether `a` is Hermitian or not.
-    In addition, only the lower-triangular and diagonal elements of `a`
-    are used. Only `L` is actually returned.
+    Return the lower or upper Cholesky decomposition, ``L * L.H`` or
+    ``U.H * U``, of the square matrix ``a``, where ``L`` is lower-triangular,
+    ``U`` is upper-triangular, and ``.H`` is the conjugate transpose operator
+    (which is the ordinary transpose if ``a`` is real-valued). ``a`` must be
+    Hermitian (symmetric if real-valued) and positive-definite. No checking is
+    performed to verify whether ``a`` is Hermitian or not. In addition, only
+    the lower or upper-triangular and diagonal elements of ``a`` are used.
+    Only ``L`` or ``U`` is actually returned.
 
     Parameters
     ----------
     a : (..., M, M) array_like
         Hermitian (symmetric if all elements are real), positive-definite
         input matrix.
+    upper : bool
+        If ``True``, the result must be the upper-triangular Cholesky factor.
+        If ``False``, the result must be the lower-triangular Cholesky factor.
+        Default: ``False``.
 
     Returns
     -------
     L : (..., M, M) array_like
-        Lower-triangular Cholesky factor of `a`.  Returns a matrix object if
-        `a` is a matrix object.
+        Lower or upper-triangular Cholesky factor of `a`. Returns a matrix
+        object if `a` is a matrix object.
 
     Raises
     ------
@@ -776,7 +790,7 @@ def cholesky(a):
 
     and then for :math:`\\mathbf{x}` in
 
-    .. math:: L.H \\mathbf{x} = \\mathbf{y}.
+    .. math:: L^{H} \\mathbf{x} = \\mathbf{y}.
 
     Examples
     --------
@@ -799,6 +813,10 @@ def cholesky(a):
     >>> np.linalg.cholesky(np.matrix(A))
     matrix([[ 1.+0.j,  0.+0.j],
             [ 0.+2.j,  1.+0.j]])
+    >>> # The upper-triangular Cholesky factor can also be obtained.
+    >>> np.linalg.cholesky(A, upper=True)
+    array([[1.-0.j, 0.-2.j],
+           [0.-0.j, 1.-0.j]])
 
     """
     gufunc = _umath_linalg.cholesky_lo
@@ -810,10 +828,57 @@ def cholesky(a):
     with errstate(call=_raise_linalgerror_nonposdef, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
         r = gufunc(a, signature=signature)
+    if upper:
+        r = matrix_transpose(r).conj()
     return wrap(r.astype(result_t, copy=False))
 
 
+# outer product
+
+
+def _outer_dispatcher(x1, x2):
+    return (x1, x2)
+
+
+@array_function_dispatch(_outer_dispatcher)
+def outer(x1, x2, /):
+    """
+    Compute the outer product of two vectors.
+
+    This function is Array API compatible. Compared to ``np.outer``
+    it accepts 1-dimensional inputs only.
+
+    Parameters
+    ----------
+    x1 : (M,) array_like
+        One-dimensional input array of size ``N``.
+        Must have a numeric data type.
+    x2 : (N,) array_like
+        One-dimensional input array of size ``M``.
+        Must have a numeric data type.
+
+    Returns
+    -------
+    out : (M, N) ndarray
+        ``out[i, j] = a[i] * b[j]``
+
+    See also
+    --------
+    outer
+
+    """
+    x1 = asanyarray(x1)
+    x2 = asanyarray(x2)
+    if x1.ndim != 1 or x2.ndim != 1:
+        raise ValueError(
+            "Input arrays must be one-dimensional, but they are "
+            f"{x1.ndim=} and {x2.ndim=}."
+        )
+    return _core_outer(x1, x2, out=None)
+
+
 # QR decomposition
+
 
 def _qr_dispatcher(a, mode=None):
     return (a,)
@@ -1468,10 +1533,10 @@ def eigh(a, UPLO='L'):
     array([[-0.92387953+0.j        , -0.38268343+0.j        ], # may vary
            [ 0.        +0.38268343j,  0.        -0.92387953j]])
 
-    >>> (np.dot(a, eigenvectors[:, 0]) - 
+    >>> (np.dot(a, eigenvectors[:, 0]) -
     ... eigenvalues[0] * eigenvectors[:, 0])  # verify 1st eigenval/vec pair
     array([5.55111512e-17+0.0000000e+00j, 0.00000000e+00+1.2490009e-16j])
-    >>> (np.dot(a, eigenvectors[:, 1]) - 
+    >>> (np.dot(a, eigenvectors[:, 1]) -
     ... eigenvalues[1] * eigenvectors[:, 1])  # verify 2nd eigenval/vec pair
     array([0.+0.j, 0.+0.j])
 
@@ -1741,6 +1806,43 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
         return s
 
 
+def _svdvals_dispatcher(x):
+    return (x,)
+
+
+@array_function_dispatch(_svdvals_dispatcher)
+def svdvals(x, /):
+    """
+    Returns the singular values of a matrix (or a stack of matrices) ``x``.
+    When x is a stack of matrices, the function will compute the singular
+    values for each matrix in the stack.
+
+    This function is Array API compatible.
+
+    Calling ``np.svdvals(x)`` to get singular values is the same as
+    ``np.svd(x, compute_uv=False, hermitian=False)``.
+
+    Parameters
+    ----------
+    x : (..., M, N) array_like
+        Input array having shape (..., M, N) and whose last two
+        dimensions form matrices on which to perform singular value
+        decomposition. Should have a floating-point data type.
+
+    Returns
+    -------
+    out : ndarray
+        An array with shape (..., K) that contains the vector(s)
+        of singular values of length K, where K = min(M, N).
+
+    See Also
+    --------
+    scipy.linalg.svdvals : Compute singular values of a matrix.
+
+    """
+    return svd(x, compute_uv=False, hermitian=False)
+
+
 def _cond_dispatcher(x, p=None):
     return (x,)
 
@@ -1969,8 +2071,8 @@ def matrix_rank(A, tol=None, hermitian=False):
     S = svd(A, compute_uv=False, hermitian=hermitian)
     if tol is None:
         tol = (
-            S.max(axis=-1, keepdims=True) * 
-            max(A.shape[-2:]) * 
+            S.max(axis=-1, keepdims=True) *
+            max(A.shape[-2:]) *
             finfo(S.dtype).eps
         )
     else:
@@ -1980,12 +2082,12 @@ def matrix_rank(A, tol=None, hermitian=False):
 
 # Generalized inverse
 
-def _pinv_dispatcher(a, rcond=None, hermitian=None):
+def _pinv_dispatcher(a, rcond=None, hermitian=None, *, rtol=None):
     return (a,)
 
 
 @array_function_dispatch(_pinv_dispatcher)
-def pinv(a, rcond=1e-15, hermitian=False):
+def pinv(a, rcond=None, hermitian=False, *, rtol=_NoValue):
     """
     Compute the (Moore-Penrose) pseudo-inverse of a matrix.
 
@@ -2000,17 +2102,24 @@ def pinv(a, rcond=1e-15, hermitian=False):
     ----------
     a : (..., M, N) array_like
         Matrix or stack of matrices to be pseudo-inverted.
-    rcond : (...) array_like of float
+    rcond : (...) array_like of float, optional
         Cutoff for small singular values.
         Singular values less than or equal to
         ``rcond * largest_singular_value`` are set to zero.
-        Broadcasts against the stack of matrices.
+        Broadcasts against the stack of matrices. Default: ``1e-15``.
     hermitian : bool, optional
         If True, `a` is assumed to be Hermitian (symmetric if real-valued),
         enabling a more efficient method for finding singular values.
         Defaults to False.
 
         .. versionadded:: 1.17.0
+    rtol : (...) array_like of float, optional
+        Same as `rcond`, but it's an Array API compatible parameter name.
+        Only `rcond` or `rtol` can be set at a time. If none of them are
+        provided then NumPy's ``1e-15`` default is used. If ``rtol=None``
+        is passed then the API standard default is used.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -2064,6 +2173,19 @@ def pinv(a, rcond=1e-15, hermitian=False):
 
     """
     a, wrap = _makearray(a)
+    if rcond is None:
+        if rtol is _NoValue:
+            rcond = 1e-15
+        elif rtol is None:
+            rcond = max(a.shape[-2:]) * finfo(a.dtype).eps
+        else:
+            rcond = rtol
+    elif rtol is not _NoValue:
+        raise ValueError("`rtol` and `rcond` can't be both set.")
+    else:
+        # NOTE: Deprecate `rcond` in a few versions.
+        pass
+
     rcond = asarray(rcond)
     if _is_empty_2d(a):
         m, n = a.shape[-2:]
@@ -2111,8 +2233,8 @@ def slogdet(a):
     logabsdet : (...) array_like
         The natural log of the absolute value of the determinant.
 
-    If the determinant is zero, then `sign` will be 0 and `logabsdet` 
-    will be -inf. In all cases, the determinant is equal to 
+    If the determinant is zero, then `sign` will be 0 and `logabsdet`
+    will be -inf. In all cases, the determinant is equal to
     ``sign * np.exp(logabsdet)``.
 
     See Also
@@ -2911,7 +3033,8 @@ def diagonal(x, /, *, offset=0):
     Returns specified diagonals of a matrix (or a stack of matrices) ``x``.
 
     This function is Array API compatible, contrary to
-    :py:func:`numpy.diagonal`.
+    :py:func:`numpy.diagonal`, the matrix is assumed
+    to be defined by the last two dimensions.
 
     Parameters
     ----------
@@ -2937,14 +3060,14 @@ def diagonal(x, /, *, offset=0):
     See Also
     --------
     numpy.diagonal
+
     """
     return _core_diagonal(x, offset, axis1=-2, axis2=-1)
 
 
 # trace
 
-def _trace_dispatcher(
-        x, /, *, offset=None, dtype=None):
+def _trace_dispatcher(x, /, *, offset=None, dtype=None):
     return (x,)
 
 
@@ -2990,5 +3113,278 @@ def trace(x, /, *, offset=0, dtype=None):
     See Also
     --------
     numpy.trace
+
     """
     return _core_trace(x, offset, axis1=-2, axis2=-1, dtype=dtype)
+
+
+# cross
+
+def _cross_dispatcher(x1, x2, /, *, axis=None):
+    return (x1, x2,)
+
+
+@array_function_dispatch(_cross_dispatcher)
+def cross(x1, x2, /, *, axis=-1):
+    """
+    Returns the cross product of 3-element vectors.
+
+    If ``x1`` and/or ``x2`` are multi-dimensional arrays, then
+    the cross-product of each pair of corresponding 3-element vectors
+    is independently computed.
+
+    This function is Array API compatible, contrary to
+    :func:`numpy.cross`.
+
+    Parameters
+    ----------
+    x1 : array_like
+        The first input array.
+    x2 : array_like
+        The second input array. Must be compatible with ``x1`` for all
+        non-compute axes. The size of the axis over which to compute
+        the cross-product must be the same size as the respective axis
+        in ``x1``.
+    axis : int, optional
+        The axis (dimension) of ``x1`` and ``x2`` containing the vectors for
+        which to compute the cross-product. Default: ``-1``.
+
+    Returns
+    -------
+    out : ndarray
+        An array containing the cross products.
+
+    See Also
+    --------
+    numpy.cross
+
+    """
+    if x1.shape[axis] != 3 or x2.shape[axis] != 3:
+        raise ValueError(
+            "Both input arrays must be (arrays of) 3-dimensional vectors, "
+            f"but they are {x1.shape[axis]} and {x2.shape[axis]} "
+            "dimensional instead."
+        )
+
+    return _core_cross(x1, x2, axis=axis)
+
+
+# matmul
+
+def _matmul_dispatcher(x1, x2, /):
+    return (x1, x2)
+
+
+@array_function_dispatch(_matmul_dispatcher)
+def matmul(x1, x2, /):
+    """
+    Computes the matrix product.
+
+    This function is Array API compatible, contrary to
+    :func:`numpy.matmul`.
+
+    Parameters
+    ----------
+    x1 : array_like
+        The first input array.
+    x2 : array_like
+        The second input array.
+
+    Returns
+    -------
+    out : ndarray
+        The matrix product of the inputs.
+        This is a scalar only when both ``x1``, ``x2`` are 1-d vectors.
+
+    Raises
+    ------
+    ValueError
+        If the last dimension of ``x1`` is not the same size as
+        the second-to-last dimension of ``x2``.
+
+        If a scalar value is passed in.
+
+    See Also
+    --------
+    numpy.matmul
+
+    """
+    return _core_matmul(x1, x2)
+
+
+# tensordot
+
+def _tensordot_dispatcher(
+        x1, x2, /, *, offset=None, dtype=None):
+    return (x1, x2)
+
+
+@array_function_dispatch(_tensordot_dispatcher)
+def tensordot(x1, x2, /, *, axes=2):
+    return _core_tensordot(x1, x2, axes=axes)
+
+
+tensordot.__doc__ = _core_tensordot.__doc__
+
+
+# matrix_transpose
+
+def _matrix_transpose_dispatcher(x):
+    return (x,)
+
+@array_function_dispatch(_matrix_transpose_dispatcher)
+def matrix_transpose(x, /):
+    return _core_matrix_transpose(x)
+
+
+matrix_transpose.__doc__ = _core_matrix_transpose.__doc__
+
+
+# matrix_norm
+
+def _matrix_norm_dispatcher(x, /, *, keepdims=None, ord=None):
+    return (x,)
+
+@array_function_dispatch(_matrix_norm_dispatcher)
+def matrix_norm(x, /, *, keepdims=False, ord="fro"):
+    """
+    Computes the matrix norm of a matrix (or a stack of matrices) ``x``.
+
+    This function is Array API compatible.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array having shape (..., M, N) and whose two innermost
+        dimensions form ``MxN`` matrices.
+    keepdims : bool, optional
+        If this is set to True, the axes which are normed over are left in
+        the result as dimensions with size one. Default: False.
+    ord : {1, -1, 2, -2, inf, -inf, 'fro', 'nuc'}, optional
+        The order of the norm. For details see the table under ``Notes``
+        in `numpy.linalg.norm`.
+
+    See Also
+    --------
+    numpy.linalg.norm : Generic norm function
+
+    """
+    x = asanyarray(x)
+    return norm(x, axis=(-2, -1), keepdims=keepdims, ord=ord)
+
+
+# vector_norm
+
+def _vector_norm_dispatcher(x, /, *, axis=None, keepdims=None, ord=None):
+    return (x,)
+
+@array_function_dispatch(_vector_norm_dispatcher)
+def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
+    """
+    Computes the vector norm of a vector (or batch of vectors) ``x``.
+
+    This function is Array API compatible.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array.
+    axis : {None, int, 2-tuple of ints}, optional
+        If an integer, ``axis`` specifies the axis (dimension) along which
+        to compute vector norms. If an n-tuple, ``axis`` specifies the axes
+        (dimensions) along which to compute batched vector norms. If ``None``,
+        the vector norm must be computed over all array values (i.e.,
+        equivalent to computing the vector norm of a flattened array).
+        Default: ``None``.
+    keepdims : bool, optional
+        If this is set to True, the axes which are normed over are left in
+        the result as dimensions with size one. Default: False.
+    ord : {1, -1, 2, -2, inf, -inf, 'fro', 'nuc'}, optional
+        The order of the norm. For details see the table under ``Notes``
+        in `numpy.linalg.norm`.
+
+    See Also
+    --------
+    numpy.linalg.norm : Generic norm function
+
+    """
+    x = asanyarray(x)
+    if axis is None:
+        # Note: np.linalg.norm() doesn't handle 0-D arrays
+        x = x.ravel()
+        _axis = 0
+    elif isinstance(axis, tuple):
+        # Note: The axis argument supports any number of axes, whereas
+        # np.linalg.norm() only supports a single axis for vector norm.
+        normalized_axis = normalize_axis_tuple(axis, x.ndim)
+        rest = tuple(i for i in range(x.ndim) if i not in normalized_axis)
+        newshape = axis + rest
+        x = _core_transpose(x, newshape).reshape(
+            (
+                prod([x.shape[i] for i in axis], dtype=int),
+                *[x.shape[i] for i in rest]
+            )
+        )
+        _axis = 0
+    else:
+        _axis = axis
+
+    res = norm(x, axis=_axis, ord=ord)
+
+    if keepdims:
+        # We can't reuse np.linalg.norm(keepdims) because of the reshape hacks
+        # above to avoid matrix norm logic.
+        shape = list(x.shape)
+        _axis = normalize_axis_tuple(
+            range(x.ndim) if axis is None else axis, x.ndim
+        )
+        for i in _axis:
+            shape[i] = 1
+        res = res.reshape(tuple(shape))
+
+    return res
+
+
+# vecdot
+
+def _vecdot_dispatcher(x1, x2, /, *, axis=None):
+    return (x1, x2)
+
+@array_function_dispatch(_vecdot_dispatcher)
+def vecdot(x1, x2, /, *, axis=-1):
+    """
+    Computes the vector dot product.
+
+    This function is restricted to arguments compatible with the Array API,
+    contrary to :func:`numpy.vecdot`.
+
+    Let :math:`\\mathbf{a}` be a vector in ``x1`` and :math:`\\mathbf{b}` be
+    a corresponding vector in ``x2``. The dot product is defined as:
+
+    .. math::
+       \\mathbf{a} \\cdot \\mathbf{b} = \\sum_{i=0}^{n-1} \\overline{a_i}b_i
+
+    over the dimension specified by ``axis`` and where :math:`\\overline{a_i}`
+    denotes the complex conjugate if :math:`a_i` is complex and the identity
+    otherwise.
+
+    Parameters
+    ----------
+    x1 : array_like
+        First input array.
+    x2 : array_like
+        Second input array.
+    axis : int, optional
+        Axis over which to compute the dot product. Default: ``-1``.
+
+    Returns
+    -------
+    output : ndarray
+        The vector dot product of the input.
+
+    See Also
+    --------
+    numpy.vecdot
+
+    """
+    return _core_vecdot(x1, x2, axis=axis)

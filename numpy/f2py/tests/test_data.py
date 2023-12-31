@@ -10,6 +10,7 @@ class TestData(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "data_stmts.f90")]
 
     # For gh-23276
+    @pytest.mark.slow
     def test_data_stmts(self):
         assert self.module.cmplxdat.i == 2
         assert self.module.cmplxdat.j == 3

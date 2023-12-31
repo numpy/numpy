@@ -60,93 +60,6 @@ otherwise noted.
 
 .. _array_api-name-changes:
 
-Function Name Changes
-~~~~~~~~~~~~~~~~~~~~~
-
-The following functions are named differently in the array API
-
-.. list-table::
-   :header-rows: 1
-
-   * - Array API name
-     - NumPy namespace name
-     - Notes
-   * - ``acos``
-     - ``arccos``
-     -
-   * - ``acosh``
-     - ``arccosh``
-     -
-   * - ``asin``
-     - ``arcsin``
-     -
-   * - ``asinh``
-     - ``arcsinh``
-     -
-   * - ``atan``
-     - ``arctan``
-     -
-   * - ``atan2``
-     - ``arctan2``
-     -
-   * - ``atanh``
-     - ``arctanh``
-     -
-   * - ``bitwise_left_shift``
-     - ``left_shift``
-     -
-   * - ``bitwise_invert``
-     - ``invert``
-     -
-   * - ``bitwise_right_shift``
-     - ``right_shift``
-     -
-   * - ``bool``
-     - ``bool_``
-     - This is **breaking** because ``np.bool`` is currently a deprecated
-       alias for the built-in ``bool``.
-   * - ``concat``
-     - ``concatenate``
-     -
-   * - ``matrix_norm`` and ``vector_norm``
-     - ``norm``
-     - ``matrix_norm`` and ``vector_norm`` each do a limited subset of what
-       ``np.norm`` does.
-   * - ``permute_dims``
-     - ``transpose``
-     - Unlike ``np.transpose``, the ``axis`` keyword-argument to
-       ``permute_dims`` is required.
-   * - ``pow``
-     - ``power``
-     -
-   * - ``unique_all``, ``unique_counts``, ``unique_inverse``, and
-       ``unique_values``
-     - ``unique``
-     - Each is equivalent to ``np.unique`` with certain flags set.
-
-
-Function instead of method
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-- ``astype`` is a function in the array API, whereas it is a method on
-  ``ndarray`` in ``numpy``.
-
-
-``linalg`` Namespace Differences
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-These functions are in the ``linalg`` sub-namespace in the array API, but are
-only in the top-level namespace in NumPy:
-
-- ``cross``
-- ``diagonal``
-- ``matmul`` (*)
-- ``outer``
-- ``tensordot`` (*)
-- ``trace``
-
-(*): These functions are also in the top-level namespace in the array API.
-
 Keyword Argument Renames
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -632,9 +545,6 @@ Linear algebra differences
    * - Feature
      - Type
      - Notes
-   * - ``cholesky`` includes an ``upper`` keyword argument.
-     - **Compatible**
-     -
    * - ``cross`` does not allow size 2 vectors (only size 3).
      - **Breaking**
      -
@@ -688,9 +598,6 @@ Linear algebra differences
        specification issue
        <https://github.com/data-apis/array-api/issues/285>`__ for more
        details.
-   * - New function ``svdvals``.
-     - **Compatible**
-     - Equivalent to ``np.linalg.svd(compute_uv=False)``.
    * - The ``axis`` keyword to ``tensordot`` must be a tuple.
      - **Compatible**
      - In ``np.tensordot``, it can also be an array or array-like.

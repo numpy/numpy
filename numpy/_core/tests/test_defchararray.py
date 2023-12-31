@@ -231,7 +231,7 @@ class TestInformation:
         # assert_array_equal(self.B.count('\0'), [[0, 0], [0, 0], [1, 0]])
 
     def test_endswith(self):
-        assert_(issubclass(self.A.endswith('').dtype.type, np.bool_))
+        assert_(issubclass(self.A.endswith('').dtype.type, np.bool))
         assert_array_equal(self.A.endswith(' '), [[1, 0], [0, 0], [1, 0]])
         assert_array_equal(self.A.endswith('3', 0, 3), [[0, 0], [1, 0], [1, 0]])
 
@@ -257,31 +257,31 @@ class TestInformation:
         assert_(issubclass(np.char.index('abcba', 'b').dtype.type, np.integer))
 
     def test_isalnum(self):
-        assert_(issubclass(self.A.isalnum().dtype.type, np.bool_))
+        assert_(issubclass(self.A.isalnum().dtype.type, np.bool))
         assert_array_equal(self.A.isalnum(), [[False, False], [True, True], [False, True]])
 
     def test_isalpha(self):
-        assert_(issubclass(self.A.isalpha().dtype.type, np.bool_))
+        assert_(issubclass(self.A.isalpha().dtype.type, np.bool))
         assert_array_equal(self.A.isalpha(), [[False, False], [False, True], [False, True]])
 
     def test_isdigit(self):
-        assert_(issubclass(self.A.isdigit().dtype.type, np.bool_))
+        assert_(issubclass(self.A.isdigit().dtype.type, np.bool))
         assert_array_equal(self.A.isdigit(), [[False, False], [True, False], [False, False]])
 
     def test_islower(self):
-        assert_(issubclass(self.A.islower().dtype.type, np.bool_))
+        assert_(issubclass(self.A.islower().dtype.type, np.bool))
         assert_array_equal(self.A.islower(), [[True, False], [False, False], [False, False]])
 
     def test_isspace(self):
-        assert_(issubclass(self.A.isspace().dtype.type, np.bool_))
+        assert_(issubclass(self.A.isspace().dtype.type, np.bool))
         assert_array_equal(self.A.isspace(), [[False, False], [False, False], [False, False]])
 
     def test_istitle(self):
-        assert_(issubclass(self.A.istitle().dtype.type, np.bool_))
+        assert_(issubclass(self.A.istitle().dtype.type, np.bool))
         assert_array_equal(self.A.istitle(), [[False, False], [False, False], [False, False]])
 
     def test_isupper(self):
-        assert_(issubclass(self.A.isupper().dtype.type, np.bool_))
+        assert_(issubclass(self.A.isupper().dtype.type, np.bool))
         assert_array_equal(self.A.isupper(), [[False, False], [False, False], [False, True]])
 
     def test_rfind(self):
@@ -301,7 +301,7 @@ class TestInformation:
         assert_(issubclass(np.char.rindex('abcba', 'b').dtype.type, np.integer))
 
     def test_startswith(self):
-        assert_(issubclass(self.A.startswith('').dtype.type, np.bool_))
+        assert_(issubclass(self.A.startswith('').dtype.type, np.bool))
         assert_array_equal(self.A.startswith(' '), [[1, 0], [0, 0], [0, 0]])
         assert_array_equal(self.A.startswith('1', 0, 3), [[0, 0], [1, 0], [1, 0]])
 
@@ -435,7 +435,7 @@ class TestMethods:
                            [b'##########', b'@'])
         tgt = [[b' abc ', b''],
                [b'12##########45', b'MixedC@se'],
-               [b'12########## \t ##########45 \x00', b'UPPER']]
+               [b'12########## \t ##########45 \x00 ', b'UPPER']]
         assert_(issubclass(R.dtype.type, np.bytes_))
         assert_array_equal(R, tgt)
 
@@ -570,7 +570,7 @@ class TestMethods:
             self.A.isnumeric()
 
         assert_raises(TypeError, fail)
-        assert_(issubclass(self.B.isnumeric().dtype.type, np.bool_))
+        assert_(issubclass(self.B.isnumeric().dtype.type, np.bool))
         assert_array_equal(self.B.isnumeric(), [
                 [False, False], [True, False], [False, False]])
 
@@ -580,7 +580,7 @@ class TestMethods:
             self.A.isdecimal()
 
         assert_raises(TypeError, fail)
-        assert_(issubclass(self.B.isdecimal().dtype.type, np.bool_))
+        assert_(issubclass(self.B.isdecimal().dtype.type, np.bool))
         assert_array_equal(self.B.isdecimal(), [
                 [False, False], [True, False], [False, False]])
 
@@ -670,6 +670,71 @@ class TestOperations:
         assert_(sl2.base.base is arr.base)
 
         assert_(arr[0, 0] == b'abc')
+
+
+class TestMethodsEmptyArray:
+    def setup_method(self):
+        self.U = np.array([], dtype='U')
+        self.S = np.array([], dtype='S')
+
+    def test_encode(self):
+        res = np.char.encode(self.U)
+        assert_array_equal(res, [])
+        assert_(res.dtype.char == 'S')
+
+    def test_decode(self):
+        res = np.char.decode(self.S)
+        assert_array_equal(res, [])
+        assert_(res.dtype.char == 'U')
+
+    def test_decode_with_reshape(self):
+        res = np.char.decode(self.S.reshape((1, 0, 1)))
+        assert_(res.shape == (1, 0, 1))
+
+
+class TestMethodsScalarValues:
+    def test_mod(self):
+        A = np.array([[' abc ', ''],
+                      ['12345', 'MixedCase'],
+                      ['123 \t 345 \0 ', 'UPPER']], dtype='S')
+        tgt = [[b'123 abc ', b'123'],
+               [b'12312345', b'123MixedCase'],
+               [b'123123 \t 345 \0 ', b'123UPPER']]
+        assert_array_equal(np.char.mod(b"123%s", A), tgt)
+
+    def test_decode(self):
+        bytestring = b'\x81\xc1\x81\xc1\x81\xc1'
+        assert_equal(np.char.decode(bytestring, encoding='cp037'),
+                     'aAaAaA')
+
+    def test_encode(self):
+        unicode = 'aAaAaA'
+        assert_equal(np.char.encode(unicode, encoding='cp037'),
+                     b'\x81\xc1\x81\xc1\x81\xc1')
+
+    def test_expandtabs(self):
+        s = "\tone level of indentation\n\t\ttwo levels of indentation"
+        assert_equal(
+            np.char.expandtabs(s, tabsize=2),
+            "  one level of indentation\n    two levels of indentation"
+        )
+
+    def test_join(self):
+        seps = np.array(['-', '_'])
+        assert_array_equal(np.char.join(seps, 'hello'),
+                           ['h-e-l-l-o', 'h_e_l_l_o'])
+
+    def test_partition(self):
+        assert_equal(np.char.partition('This string', ' '),
+                     ['This', ' ', 'string'])
+
+    def test_rpartition(self):
+        assert_equal(np.char.rpartition('This string here', ' '),
+                     ['This string', ' ', 'here'])
+
+    def test_replace(self):
+        assert_equal(np.char.replace('Python is good', 'good', 'great'),
+                     'Python is great')
 
 
 def test_empty_indexing():

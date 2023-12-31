@@ -103,7 +103,7 @@ def _construction_repr(dtype, include_align=False, short=False):
 def _scalar_str(dtype, short):
     byteorder = _byte_order_str(dtype)
 
-    if dtype.type == np.bool_:
+    if dtype.type == np.bool:
         if short:
             return "'?'"
         else:
@@ -334,7 +334,7 @@ def _name_includes_bit_suffix(dtype):
     if dtype.type == np.object_:
         # pointer size varies by system, best to omit it
         return False
-    elif dtype.type == np.bool_:
+    elif dtype.type == np.bool:
         # implied
         return False
     elif dtype.type is None:

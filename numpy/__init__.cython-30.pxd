@@ -187,9 +187,8 @@ cdef extern from "numpy/arrayobject.h":
         NPY_ARRAY_UPDATE_ALL
 
     cdef enum:
-        NPY_MAXDIMS
-
-    npy_intp NPY_MAX_ELSIZE
+        NPY_MAXDIMS  # 64 on NumPy 2.x and 32 on NumPy 1.x
+        NPY_RAVEL_AXIS  # Used for functions like PyArray_Mean
 
     ctypedef void (*PyArray_VectorUnaryFunc)(void *, void *, npy_intp, void *,  void *)
 
@@ -444,7 +443,6 @@ cdef extern from "numpy/arrayobject.h":
     bint PyTypeNum_ISNUMBER(int) nogil
     bint PyTypeNum_ISSTRING(int) nogil
     bint PyTypeNum_ISCOMPLEX(int) nogil
-    bint PyTypeNum_ISPYTHON(int) nogil
     bint PyTypeNum_ISFLEXIBLE(int) nogil
     bint PyTypeNum_ISUSERDEF(int) nogil
     bint PyTypeNum_ISEXTENDED(int) nogil
@@ -458,7 +456,6 @@ cdef extern from "numpy/arrayobject.h":
     bint PyDataType_ISNUMBER(dtype) nogil
     bint PyDataType_ISSTRING(dtype) nogil
     bint PyDataType_ISCOMPLEX(dtype) nogil
-    bint PyDataType_ISPYTHON(dtype) nogil
     bint PyDataType_ISFLEXIBLE(dtype) nogil
     bint PyDataType_ISUSERDEF(dtype) nogil
     bint PyDataType_ISEXTENDED(dtype) nogil
@@ -474,7 +471,6 @@ cdef extern from "numpy/arrayobject.h":
     bint PyArray_ISNUMBER(ndarray) nogil
     bint PyArray_ISSTRING(ndarray) nogil
     bint PyArray_ISCOMPLEX(ndarray) nogil
-    bint PyArray_ISPYTHON(ndarray) nogil
     bint PyArray_ISFLEXIBLE(ndarray) nogil
     bint PyArray_ISUSERDEF(ndarray) nogil
     bint PyArray_ISEXTENDED(ndarray) nogil
@@ -595,8 +591,6 @@ cdef extern from "numpy/arrayobject.h":
     char * PyArray_Zero (ndarray)
     char * PyArray_One (ndarray)
     #object PyArray_CastToType (ndarray, dtype, int)
-    int PyArray_CastTo (ndarray, ndarray) except -1
-    int PyArray_CastAnyTo (ndarray, ndarray) except -1
     int PyArray_CanCastSafely (int, int)  # writes errors
     npy_bool PyArray_CanCastTo (dtype, dtype)  # writes errors
     int PyArray_ObjectType (object, int) except 0
@@ -623,7 +617,6 @@ cdef extern from "numpy/arrayobject.h":
     #int PyArray_SetField (ndarray, dtype, int, object) except -1
     object PyArray_Byteswap (ndarray, npy_bool)
     object PyArray_Resize (ndarray, PyArray_Dims *, int, NPY_ORDER)
-    int PyArray_MoveInto (ndarray, ndarray) except -1
     int PyArray_CopyInto (ndarray, ndarray) except -1
     int PyArray_CopyAnyInto (ndarray, ndarray) except -1
     int PyArray_CopyObject (ndarray, object) except -1
@@ -646,7 +639,6 @@ cdef extern from "numpy/arrayobject.h":
     int PyArray_PyIntAsInt (object) except? -1
     npy_intp PyArray_PyIntAsIntp (object)
     int PyArray_Broadcast (broadcast) except -1
-    void PyArray_FillObjectArray (ndarray, object) except *
     int PyArray_FillWithScalar (ndarray, object) except -1
     npy_bool PyArray_CheckStrides (int, int, npy_intp, npy_intp, npy_intp *, npy_intp *)
     dtype PyArray_DescrNewByteorder (dtype, char)
@@ -658,14 +650,11 @@ cdef extern from "numpy/arrayobject.h":
     #object PyArray_FromArrayAttr (object, dtype, object)
     #NPY_SCALARKIND PyArray_ScalarKind (int, ndarray*)
     int PyArray_CanCoerceScalar (int, int, NPY_SCALARKIND)
-    object PyArray_NewFlagsObject (object)
     npy_bool PyArray_CanCastScalar (type, type)
-    #int PyArray_CompareUCS4 (npy_ucs4 *, npy_ucs4 *, register size_t)
     int PyArray_RemoveSmallest (broadcast) except -1
     int PyArray_ElementStrides (object)
     void PyArray_Item_INCREF (char *, dtype) except *
     void PyArray_Item_XDECREF (char *, dtype) except *
-    object PyArray_FieldNames (object)
     object PyArray_Transpose (ndarray, PyArray_Dims *)
     object PyArray_TakeFrom (ndarray, object, int, ndarray, NPY_CLIPMODE)
     object PyArray_PutTo (ndarray, object, object, NPY_CLIPMODE)
@@ -713,7 +702,6 @@ cdef extern from "numpy/arrayobject.h":
     object PyArray_InnerProduct (object, object)
     object PyArray_MatrixProduct (object, object)
     object PyArray_Correlate (object, object, int)
-    int PyArray_TypestrConvert (int, int)
     #int PyArray_DescrConverter (object, dtype*) except 0
     #int PyArray_DescrConverter2 (object, dtype*) except 0
     int PyArray_IntpConverter (object, PyArray_Dims *) except 0
@@ -737,7 +725,6 @@ cdef extern from "numpy/arrayobject.h":
     int PyArray_RegisterCanCast (dtype, int, NPY_SCALARKIND) except -1
     #void PyArray_InitArrFuncs (PyArray_ArrFuncs *)
     object PyArray_IntTupleFromIntp (int, npy_intp *)
-    int PyArray_TypeNumFromName (char *)
     int PyArray_ClipmodeConverter (object, NPY_CLIPMODE *) except 0
     #int PyArray_OutputConverter (object, ndarray*) except 0
     object PyArray_BroadcastToShape (object, npy_intp *, int)
@@ -746,7 +733,6 @@ cdef extern from "numpy/arrayobject.h":
     int PyArray_SearchsideConverter (object, void *) except 0
     object PyArray_CheckAxis (ndarray, int *, int)
     npy_intp PyArray_OverflowMultiplyList (npy_intp *, int)
-    int PyArray_CompareString (char *, char *, size_t)
     int PyArray_SetBaseObject(ndarray, base) except -1 # NOTE: steals a reference to base! Use "set_array_base()" instead.
 
     # additional datetime related functions are defined below

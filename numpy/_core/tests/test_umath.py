@@ -268,7 +268,7 @@ class TestComparisons:
     import operator
 
     @pytest.mark.parametrize('dtype', sctypes['uint'] + sctypes['int'] +
-                             sctypes['float'] + [np.bool_])
+                             sctypes['float'] + [np.bool])
     @pytest.mark.parametrize('py_comp,np_comp', [
         (operator.lt, np.less),
         (operator.le, np.less_equal),
@@ -279,7 +279,7 @@ class TestComparisons:
     ])
     def test_comparison_functions(self, dtype, py_comp, np_comp):
         # Initialize input arrays
-        if dtype == np.bool_:
+        if dtype == np.bool:
             a = np.random.choice(a=[False, True], size=1000)
             b = np.random.choice(a=[False, True], size=1000)
             scalar = True
@@ -1352,11 +1352,20 @@ class TestLog:
         xf = np.log(x)
         assert_almost_equal(np.log(x, out=x), xf)
 
+    def test_log_values_maxofdtype(self):
         # test log() of max for dtype does not raise
-        for dt in ['f', 'd', 'g']:
+        dtypes = [np.float32, np.float64]
+        # This is failing at least on linux aarch64 (see gh-25460), and on most
+        # other non x86-64 platforms checking `longdouble` isn't too useful as
+        # it's an alias for float64.
+        if platform.machine() == 'x86_64':
+            dtypes += [np.longdouble]
+
+        for dt in dtypes:
             with np.errstate(all='raise'):
                 x = np.finfo(dt).max
                 np.log(x)
+
     def test_log_strides(self):
         np.random.seed(42)
         strides = np.array([-4,-3,-2,-1,1,2,3,4])
@@ -1835,8 +1844,22 @@ class TestFPClass:
         assert_equal(np.isnan(arr_f64[::stride]), nan[::stride])
         assert_equal(np.isinf(arr_f32[::stride]), inf[::stride])
         assert_equal(np.isinf(arr_f64[::stride]), inf[::stride])
-        assert_equal(np.signbit(arr_f32[::stride]), sign[::stride])
-        assert_equal(np.signbit(arr_f64[::stride]), sign[::stride])
+        if platform.processor() == 'riscv64':
+            # On RISC-V, many operations that produce NaNs, such as converting
+            # a -NaN from f64 to f32, return a canonical NaN.  The canonical
+            # NaNs are always positive.  See section 11.3 NaN Generation and
+            # Propagation of the RISC-V Unprivileged ISA for more details.
+            # We disable the sign test on riscv64 for -np.nan as we
+            # cannot assume that its sign will be honoured in these tests.
+            arr_f64_rv = np.copy(arr_f64)
+            arr_f32_rv = np.copy(arr_f32)
+            arr_f64_rv[1] = -1.0
+            arr_f32_rv[1] = -1.0
+            assert_equal(np.signbit(arr_f32_rv[::stride]), sign[::stride])
+            assert_equal(np.signbit(arr_f64_rv[::stride]), sign[::stride])
+        else:
+            assert_equal(np.signbit(arr_f32[::stride]), sign[::stride])
+            assert_equal(np.signbit(arr_f64[::stride]), sign[::stride])
         assert_equal(np.isfinite(arr_f32[::stride]), finite[::stride])
         assert_equal(np.isfinite(arr_f64[::stride]), finite[::stride])
 
@@ -1857,23 +1880,37 @@ class TestFPClass:
         ncontig_in = data[1::3]
         ncontig_out = out[1::3]
         contig_in = np.array(ncontig_in)
+
+        if platform.processor() == 'riscv64':
+            # Disable the -np.nan signbit tests on riscv64.  See comments in
+            # test_fpclass for more details.
+            data_rv = np.copy(data)
+            data_rv[1] = -1.0
+            ncontig_sign_in = data_rv[1::3]
+            contig_sign_in = np.array(ncontig_sign_in)
+        else:
+            ncontig_sign_in = ncontig_in
+            contig_sign_in = contig_in
+
         assert_equal(ncontig_in.flags.c_contiguous, False)
         assert_equal(ncontig_out.flags.c_contiguous, False)
         assert_equal(contig_in.flags.c_contiguous, True)
+        assert_equal(ncontig_sign_in.flags.c_contiguous, False)
+        assert_equal(contig_sign_in.flags.c_contiguous, True)
         # ncontig in, ncontig out
         assert_equal(np.isnan(ncontig_in, out=ncontig_out), nan[1::3])
         assert_equal(np.isinf(ncontig_in, out=ncontig_out), inf[1::3])
-        assert_equal(np.signbit(ncontig_in, out=ncontig_out), sign[1::3])
+        assert_equal(np.signbit(ncontig_sign_in, out=ncontig_out), sign[1::3])
         assert_equal(np.isfinite(ncontig_in, out=ncontig_out), finite[1::3])
         # contig in, ncontig out
         assert_equal(np.isnan(contig_in, out=ncontig_out), nan[1::3])
         assert_equal(np.isinf(contig_in, out=ncontig_out), inf[1::3])
-        assert_equal(np.signbit(contig_in, out=ncontig_out), sign[1::3])
+        assert_equal(np.signbit(contig_sign_in, out=ncontig_out), sign[1::3])
         assert_equal(np.isfinite(contig_in, out=ncontig_out), finite[1::3])
         # ncontig in, contig out
         assert_equal(np.isnan(ncontig_in), nan[1::3])
         assert_equal(np.isinf(ncontig_in), inf[1::3])
-        assert_equal(np.signbit(ncontig_in), sign[1::3])
+        assert_equal(np.signbit(ncontig_sign_in), sign[1::3])
         assert_equal(np.isfinite(ncontig_in), finite[1::3])
         # contig in, contig out, nd stride
         data_split = np.array(np.array_split(data, 2))
@@ -1883,7 +1920,11 @@ class TestFPClass:
         finite_split = np.array(np.array_split(finite, 2))
         assert_equal(np.isnan(data_split), nan_split)
         assert_equal(np.isinf(data_split), inf_split)
-        assert_equal(np.signbit(data_split), sign_split)
+        if platform.processor() == 'riscv64':
+            data_split_rv = np.array(np.array_split(data_rv, 2))
+            assert_equal(np.signbit(data_split_rv), sign_split)
+        else:
+            assert_equal(np.signbit(data_split), sign_split)
         assert_equal(np.isfinite(data_split), finite_split)
 
 class TestLDExp:
@@ -1935,19 +1976,21 @@ class TestAVXUfuncs:
             # various array sizes to ensure masking in AVX is tested
             for size in range(1,32):
                 myfunc = getattr(np, func)
-                x_f32 = np.float32(np.random.uniform(low=minval, high=maxval,
-                    size=size))
-                x_f64 = np.float64(x_f32)
-                x_f128 = np.longdouble(x_f32)
+                x_f32 = np.random.uniform(low=minval, high=maxval,
+                                          size=size).astype(np.float32)
+                x_f64 = x_f32.astype(np.float64)
+                x_f128 = x_f32.astype(np.longdouble)
                 y_true128 = myfunc(x_f128)
                 if maxulperr == 0:
-                    assert_equal(myfunc(x_f32), np.float32(y_true128))
-                    assert_equal(myfunc(x_f64), np.float64(y_true128))
+                    assert_equal(myfunc(x_f32), y_true128.astype(np.float32))
+                    assert_equal(myfunc(x_f64), y_true128.astype(np.float64))
                 else:
-                    assert_array_max_ulp(myfunc(x_f32), np.float32(y_true128),
-                            maxulp=maxulperr)
-                    assert_array_max_ulp(myfunc(x_f64), np.float64(y_true128),
-                            maxulp=maxulperr)
+                    assert_array_max_ulp(myfunc(x_f32),
+                                         y_true128.astype(np.float32),
+                                         maxulp=maxulperr)
+                    assert_array_max_ulp(myfunc(x_f64),
+                                         y_true128.astype(np.float64),
+                                         maxulp=maxulperr)
                 # various strides to test gather instruction
                 if size > 1:
                     y_true32 = myfunc(x_f32)
@@ -2553,7 +2596,7 @@ class TestFmin(_FilterInvalids):
 
 class TestBool:
     def test_exceptions(self):
-        a = np.ones(1, dtype=np.bool_)
+        a = np.ones(1, dtype=np.bool)
         assert_raises(TypeError, np.negative, a)
         assert_raises(TypeError, np.positive, a)
         assert_raises(TypeError, np.subtract, a, a)
@@ -4179,6 +4222,9 @@ class TestComplexFunctions:
     ])
     def test_loss_of_precision(self, dtype):
         """Check loss of precision in complex arc* functions"""
+        if dtype is np.clongdouble and platform.machine() != 'x86_64':
+            # Failures on musllinux, aarch64, s390x, ppc64le (see gh-17554)
+            pytest.skip('Only works reliably for x86-64 and recent glibc')
 
         # Check against known-good functions
 
@@ -4666,7 +4712,7 @@ def test_outer_bad_subclass():
         assert type(np.add.outer([1, 2], arr)) is cls
 
 def test_outer_exceeds_maxdims():
-    deep = np.ones((1,) * 17)
+    deep = np.ones((1,) * 33)
     with assert_raises(ValueError):
         np.add.outer(deep, deep)
 

@@ -4,7 +4,7 @@ import numpy as np
 __all__: list[str]
 
 # Boolean:
-BoolDType = np.dtype[np.bool_]
+BoolDType = np.dtype[np.bool]
 # Sized integers:
 Int8DType = np.dtype[np.int8]
 UInt8DType = np.dtype[np.uint8]

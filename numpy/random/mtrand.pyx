@@ -368,15 +368,16 @@ cdef class RandomState:
         else:
             if not isinstance(state, (tuple, list)):
                 raise TypeError('state must be a dict or a tuple.')
-            if state[0] != 'MT19937':
-                raise ValueError('set_state can only be used with legacy MT19937'
-                                 'state instances.')
-            st = {'bit_generator': state[0],
-                  'state': {'key': state[1], 'pos': state[2]}}
-            if len(state) > 3:
-                st['has_gauss'] = state[3]
-                st['gauss'] = state[4]
-                value = st
+            with cython.boundscheck(True):
+                if state[0] != 'MT19937':
+                    raise ValueError('set_state can only be used with legacy '
+                                     'MT19937 state instances.')
+                st = {'bit_generator': state[0],
+                      'state': {'key': state[1], 'pos': state[2]}}
+                if len(state) > 3:
+                    st['has_gauss'] = state[3]
+                    st['gauss'] = state[4]
+                    value = st
 
         self._aug_state.gauss = st.get('gauss', 0.0)
         self._aug_state.has_gauss = st.get('has_gauss', 0)
@@ -804,7 +805,7 @@ cdef class RandomState:
             ret = _rand_uint16(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
         elif _dtype == np.uint8:
             ret = _rand_uint8(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif _dtype == np.bool_:
+        elif _dtype == np.bool:
             ret = _rand_bool(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
         else:
             raise TypeError('Unsupported dtype %r for randint' % _dtype)

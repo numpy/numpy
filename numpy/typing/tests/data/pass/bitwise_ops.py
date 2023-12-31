@@ -6,7 +6,7 @@ u8 = np.uint64(1)
 i4 = np.int32(1)
 u4 = np.uint32(1)
 
-b_ = np.bool_(1)
+b_ = np.bool(1)
 
 b = bool(1)
 i = int(1)

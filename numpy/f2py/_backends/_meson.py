@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import os
 import errno
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 from ._backend import Backend
 from string import Template
+from itertools import chain
 
 import warnings
 
@@ -19,10 +22,14 @@ class MesonTemplate:
         modulename: str,
         sources: list[Path],
         deps: list[str],
+        libraries: list[str],
+        library_dirs: list[Path],
+        include_dirs: list[Path],
         object_files: list[Path],
         linker_args: list[str],
         c_args: list[str],
         build_type: str,
+        python_exe: str,
     ):
         self.modulename = modulename
         self.build_template_path = (
@@ -30,14 +37,23 @@ class MesonTemplate:
         )
         self.sources = sources
         self.deps = deps
+        self.libraries = libraries
+        self.library_dirs = library_dirs
+        if include_dirs is not None:
+            self.include_dirs = include_dirs
+        else:
+            self.include_dirs = []
         self.substitutions = {}
         self.objects = object_files
         self.pipeline = [
             self.initialize_template,
             self.sources_substitution,
             self.deps_substitution,
+            self.include_substitution,
+            self.libraries_substitution,
         ]
         self.build_type = build_type
+        self.python_exe = python_exe
 
     def meson_build_template(self) -> str:
         if not self.build_template_path.is_file():
@@ -52,17 +68,47 @@ class MesonTemplate:
     def initialize_template(self) -> None:
         self.substitutions["modulename"] = self.modulename
         self.substitutions["buildtype"] = self.build_type
+        self.substitutions["python"] = self.python_exe
 
     def sources_substitution(self) -> None:
         indent = " " * 21
         self.substitutions["source_list"] = f",\n{indent}".join(
-            [f"'{source}'" for source in self.sources]
+            [f"{indent}'{source}'" for source in self.sources]
         )
 
     def deps_substitution(self) -> None:
         indent = " " * 21
         self.substitutions["dep_list"] = f",\n{indent}".join(
-            [f"dependency('{dep}')" for dep in self.deps]
+            [f"{indent}dependency('{dep}')" for dep in self.deps]
+        )
+
+    def libraries_substitution(self) -> None:
+        self.substitutions["lib_dir_declarations"] = "\n".join(
+            [
+                f"lib_dir_{i} = declare_dependency(link_args : ['-L{lib_dir}'])"
+                for i, lib_dir in enumerate(self.library_dirs)
+            ]
+        )
+
+        self.substitutions["lib_declarations"] = "\n".join(
+            [
+                f"{lib} = declare_dependency(link_args : ['-l{lib}'])"
+                for lib in self.libraries
+            ]
+        )
+
+        indent = " " * 21
+        self.substitutions["lib_list"] = f"\n{indent}".join(
+            [f"{indent}{lib}," for lib in self.libraries]
+        )
+        self.substitutions["lib_dir_list"] = f"\n{indent}".join(
+            [f"{indent}lib_dir_{i}," for i in range(len(self.library_dirs))]
+        )
+
+    def include_substitution(self) -> None:
+        indent = " " * 21
+        self.substitutions["inc_list"] = f",\n{indent}".join(
+            [f"{indent}'{inc}'" for inc in self.include_dirs]
         )
 
     def generate_meson_build(self):
@@ -83,16 +129,18 @@ class MesonBackend(Backend):
 
     def _move_exec_to_root(self, build_dir: Path):
         walk_dir = Path(build_dir) / self.meson_build_dir
-        path_objects = walk_dir.glob(f"{self.modulename}*.so")
+        path_objects = chain(
+            walk_dir.glob(f"{self.modulename}*.so"),
+            walk_dir.glob(f"{self.modulename}*.pyd"),
+        )
+        # Same behavior as distutils
+        # https://github.com/numpy/numpy/issues/24874#issuecomment-1835632293
         for path_object in path_objects:
-            shutil.move(path_object, Path.cwd())
-
-    def _get_build_command(self):
-        return [
-            "meson",
-            "setup",
-            self.meson_build_dir,
-        ]
+            dest_path = Path.cwd() / path_object.name
+            if dest_path.exists():
+                dest_path.unlink()
+            shutil.copy2(path_object, dest_path)
+            os.remove(path_object)
 
     def write_meson_build(self, build_dir: Path) -> None:
         """Writes the meson build file at specified location"""
@@ -100,10 +148,14 @@ class MesonBackend(Backend):
             self.modulename,
             self.sources,
             self.dependencies,
+            self.libraries,
+            self.library_dirs,
+            self.include_dirs,
             self.extra_objects,
             self.flib_flags,
             self.fc_flags,
             self.build_type,
+            sys.executable,
         )
         src = meson_template.generate_meson_build()
         Path(build_dir).mkdir(parents=True, exist_ok=True)
@@ -111,19 +163,14 @@ class MesonBackend(Backend):
         meson_build_file.write_text(src)
         return meson_build_file
 
+    def _run_subprocess_command(self, command, cwd):
+        subprocess.run(command, cwd=cwd, check=True)
+
     def run_meson(self, build_dir: Path):
-        completed_process = subprocess.run(self._get_build_command(), cwd=build_dir)
-        if completed_process.returncode != 0:
-            raise subprocess.CalledProcessError(
-                completed_process.returncode, completed_process.args
-            )
-        completed_process = subprocess.run(
-            ["meson", "compile", "-C", self.meson_build_dir], cwd=build_dir
-        )
-        if completed_process.returncode != 0:
-            raise subprocess.CalledProcessError(
-                completed_process.returncode, completed_process.args
-            )
+        setup_command = ["meson", "setup", self.meson_build_dir]
+        self._run_subprocess_command(setup_command, build_dir)
+        compile_command = ["meson", "compile", "-C", self.meson_build_dir]
+        self._run_subprocess_command(compile_command, build_dir)
 
     def compile(self) -> None:
         self.sources = _prepare_sources(self.modulename, self.sources, self.build_dir)
@@ -137,7 +184,8 @@ def _prepare_sources(mname, sources, bdir):
     Path(bdir).mkdir(parents=True, exist_ok=True)
     # Copy sources
     for source in sources:
-        shutil.copy(source, bdir)
+        if Path(source).exists() and Path(source).is_file():
+            shutil.copy(source, bdir)
     generated_sources = [
         Path(f"{mname}module.c"),
         Path(f"{mname}-f2pywrappers2.f90"),

@@ -682,6 +682,12 @@ class TestSVD(SVDCases, SVDBaseTests):
         assert_equal(vh.shape, (4, 4))
         assert_equal(vh, np.eye(4))
 
+    def test_svdvals(self):
+        x = np.array([[1, 0.5], [0.5, 1]])
+        s_from_svd = linalg.svd(x, compute_uv=False, hermitian=self.hermitian)
+        s_from_svdvals = linalg.svdvals(x)
+        assert_almost_equal(s_from_svd, s_from_svdvals)
+
 
 class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
 
@@ -848,6 +854,20 @@ class PinvHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
 
 class TestPinvHermitian(PinvHermitianCases):
     pass
+
+
+def test_pinv_rtol_arg():
+    a = np.array([[1, 2, 3], [4, 1, 1], [2, 3, 1]])
+
+    assert_almost_equal(
+        np.linalg.pinv(a, rcond=0.5),
+        np.linalg.pinv(a, rtol=0.5),
+    )
+
+    with pytest.raises(
+        ValueError, match=r"`rtol` and `rcond` can't be both set."
+    ):
+        np.linalg.pinv(a, rcond=0.5, rtol=0.5)
 
 
 class DetCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
@@ -1841,6 +1861,33 @@ class TestCholesky:
         assert_(res.dtype.type is np.complex64)
         assert_(isinstance(res, np.ndarray))
 
+    def test_upper_lower_arg(self):
+        a = np.array([[1+0j, 0-2j], [0+2j, 5+0j]])
+
+        assert_equal(linalg.cholesky(a), linalg.cholesky(a, upper=False))
+
+        assert_equal(
+            linalg.cholesky(a, upper=True),
+            linalg.cholesky(a).T.conj()
+        )
+
+
+class TestOuter:
+    arr1 = np.arange(3)
+    arr2 = np.arange(3)
+    expected = np.array(
+        [[0, 0, 0],
+         [0, 1, 2],
+         [0, 2, 4]]
+    )
+
+    assert_array_equal(np.linalg.outer(arr1, arr2), expected)
+
+    with assert_raises_regex(
+        ValueError, "Input arrays must be one-dimensional"
+    ):
+        np.linalg.outer(arr1[:, np.newaxis], arr2)
+
 
 def test_byteorder_check():
     # Byte order check should pass for native order
@@ -2228,3 +2275,76 @@ def test_trace():
     expected = np.array([36, 116, 196])
 
     assert_equal(actual, expected)
+
+
+def test_cross():
+    x = np.arange(9).reshape((3, 3))
+    actual = np.linalg.cross(x, x + 1)
+    expected = np.array([
+        [-1, 2, -1],
+        [-1, 2, -1],
+        [-1, 2, -1],
+    ])
+
+    assert_equal(actual, expected)
+
+    with assert_raises_regex(
+        ValueError,
+        r"input arrays must be \(arrays of\) 3-dimensional vectors"
+    ):
+        x_2dim = x[:, 1:]
+        np.linalg.cross(x_2dim, x_2dim)
+
+
+def test_tensordot():
+    # np.linalg.tensordot is just an alias for np.tensordot
+    x = np.arange(6).reshape((2, 3))
+
+    assert np.linalg.tensordot(x, x) == 55
+
+
+def test_matmul():
+    # np.linalg.matmul and np.matmul only differs in the number
+    # of arguments in the signature
+    x = np.arange(6).reshape((2, 3))
+    actual = np.linalg.matmul(x, x.T)
+    expected = np.array([[5, 14], [14, 50]])
+
+    assert_equal(actual, expected)
+
+
+def test_matrix_transpose():
+    x = np.arange(6).reshape((2, 3))
+    actual = np.linalg.matrix_transpose(x)
+    expected = x.T
+
+    assert_equal(actual, expected)
+
+    with assert_raises_regex(
+        ValueError, "array must be at least 2-dimensional"
+    ):
+        np.linalg.matrix_transpose(x[:, 0])
+
+
+def test_matrix_norm():
+    x = np.arange(9).reshape((3, 3))
+    actual = np.linalg.matrix_norm(x)
+
+    assert_almost_equal(actual, np.float64(14.2828), double_decimal=3)
+
+    actual = np.linalg.matrix_norm(x, keepdims=True)
+
+    assert_almost_equal(actual, np.array([[14.2828]]), double_decimal=3)
+
+
+def test_vector_norm():
+    x = np.arange(9).reshape((3, 3))
+    actual = np.linalg.vector_norm(x)
+
+    assert_almost_equal(actual, np.float64(14.2828), double_decimal=3)
+
+    actual = np.linalg.vector_norm(x, axis=0)
+
+    assert_almost_equal(
+        actual, np.array([6.7082, 8.124, 9.6436]), double_decimal=3
+    )

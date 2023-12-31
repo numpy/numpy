@@ -44,7 +44,7 @@ def add_newdoc(place, name, doc):
 
     skip = (
         # gufuncs do not use the OUT_SCALAR replacement strings
-        'matmul',
+        'matmul', 'vecdot',
         # clip has 3 inputs, which is not handled by this
         'clip',
     )
@@ -2860,6 +2860,63 @@ add_newdoc('numpy._core.umath', 'matmul',
     .. versionadded:: 1.10.0
     """)
 
+add_newdoc('numpy._core.umath', 'vecdot',
+    """
+    Vector dot product of two arrays.
+
+    Let :math:`\\mathbf{a}` be a vector in `x1` and :math:`\\mathbf{b}` be
+    a corresponding vector in `x2`. The dot product is defined as:
+
+    .. math::
+       \\mathbf{a} \\cdot \\mathbf{b} = \\sum_{i=0}^{n-1} \\overline{a_i}b_i
+
+    where the sum is over the last dimension (unless `axis` is specified) and
+    where :math:`\\overline{a_i}` denotes the complex conjugate if :math:`a_i`
+    is complex and the identity otherwise.
+
+    Parameters
+    ----------
+    x1, x2 : array_like
+        Input arrays, scalars not allowed.
+    out : ndarray, optional
+        A location into which the result is stored. If provided, it must have
+        a shape that the broadcasted shape of `x1` and `x2` with the last axis
+        removed. If not provided or None, a freshly-allocated array is used.
+    **kwargs
+        For other keyword-only arguments, see the
+        :ref:`ufunc docs <ufuncs.kwargs>`.
+
+    Returns
+    -------
+    y : ndarray
+        The vector dot product of the inputs.
+        This is a scalar only when both x1, x2 are 1-d vectors.
+
+    Raises
+    ------
+    ValueError
+        If the last dimension of `x1` is not the same size as
+        the last dimension of `x2`.
+
+        If a scalar value is passed in.
+
+    See Also
+    --------
+    vdot : same but flattens arguments first
+    einsum : Einstein summation convention.
+
+    Examples
+    --------
+    Get the projected size along a given normal for an array of vectors.
+
+    >>> v = np.array([[0., 5., 0.], [0., 0., 10.], [0., 6., 8.]])
+    >>> n = np.array([0., 0.6, 0.8])
+    >>> np.vecdot(v, n)
+    array([ 3.,  8., 10.])
+
+    .. versionadded:: 2.0.0
+    """)
+
 add_newdoc('numpy._core.umath', 'modf',
     """
     Return the fractional and integral parts of an array, element-wise.
@@ -4558,6 +4615,13 @@ add_newdoc('numpy._core.umath', 'count',
 
     """)
 
+add_newdoc('numpy.core.umath', '_replace',
+    """
+    UFunc implementation of ``replace``. This internal function
+    is called by ``replace`` with ``out`` set, so that the
+    size of the resulting string buffer is known.
+    """)
+
 add_newdoc('numpy._core.umath', 'startswith',
     """
     Returns a boolean array which is `True` where the string element
@@ -4627,3 +4691,10 @@ add_newdoc('numpy._core.umath', 'endswith',
     array([False,  True])
 
     """)
+
+add_newdoc('numpy._core.umath', '_strip_chars', '')
+add_newdoc('numpy._core.umath', '_lstrip_chars', '')
+add_newdoc('numpy._core.umath', '_rstrip_chars', '')
+add_newdoc('numpy._core.umath', '_strip_whitespace', '')
+add_newdoc('numpy._core.umath', '_lstrip_whitespace', '')
+add_newdoc('numpy._core.umath', '_rstrip_whitespace', '')

@@ -319,8 +319,6 @@ def test_all_modules_are_expected():
 # Stuff that clearly shouldn't be in the API and is detected by the next test
 # below
 SKIP_LIST_2 = [
-    'numpy.math',
-    'numpy.lib.emath',
     'numpy.lib.math',
     'numpy.matlib.char',
     'numpy.matlib.rec',
@@ -492,14 +490,22 @@ def test_array_api_entry_point():
 
 def test_main_namespace_all_dir_coherence():
     """
-    Checks if `dir(np)` and `np.__all__` are consistent
-    and return same content, excluding private members.
+    Checks if `dir(np)` and `np.__all__` are consistent and return
+    the same content, excluding exceptions and private members.
     """
     def _remove_private_members(member_set):
         return {m for m in member_set if not m.startswith('_')}
 
+    def _remove_exceptions(member_set):
+        return member_set.difference({
+            "bool"  # included only in __dir__
+        })
+
     all_members = _remove_private_members(np.__all__)
+    all_members = _remove_exceptions(all_members)
+
     dir_members = _remove_private_members(np.__dir__())
+    dir_members = _remove_exceptions(dir_members)
 
     assert all_members == dir_members, (
         "Members that break symmetry: "
@@ -605,10 +611,22 @@ def test_functions_single_location():
                     if (
                         member.__name__ in [
                             "absolute",  # np.abs
+                            "arccos",  # np.acos
+                            "arccosh",  # np.acosh
+                            "arcsin",  # np.asin
+                            "arcsinh",  # np.asinh
+                            "arctan",  # np.atan
+                            "arctan2",  # np.atan2
+                            "arctanh",  # np.atanh
+                            "left_shift",  # np.bitwise_left_shift
+                            "right_shift",  # np.bitwise_right_shift
                             "conjugate",  # np.conj
-                            "invert",  # np.bitwise_not
+                            "invert",  # np.bitwise_not & np.bitwise_invert
                             "remainder",  # np.mod
                             "divide",  # np.true_divide
+                            "concatenate",  # np.concat
+                            "power",  # np.pow
+                            "transpose",  # np.permute_dims
                         ] and
                         module.__name__ == "numpy"
                     ):

@@ -1584,7 +1584,7 @@ mapiter_@name@(
     int i;
 
     /* Cached mit info */
-    int numiter = mit->numiter;
+    int num_fancy = mit->num_fancy;
     int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
     /* Constant information */
     npy_intp fancy_dims[NPY_MAXDIMS];
@@ -1602,7 +1602,7 @@ mapiter_@name@(
 #if @isget@
     iteraxis = mit->iteraxes[0];
 #endif
-    for (i = 0; i < numiter; i++) {
+    for (i = 0; i < num_fancy; i++) {
         fancy_dims[i] = mit->fancy_dims[i];
         fancy_strides[i] = mit->fancy_strides[i];
     }
@@ -1629,11 +1629,11 @@ mapiter_@name@(
 
 /**begin repeat1
  * #one_iter = 1, 0#
- * #numiter = 1, numiter#
+ * #num_fancy = 1, num_fancy#
  */
 
 #if @one_iter@
-        if (numiter == 1) {
+        if (num_fancy == 1) {
 #else
         else {
 #endif
@@ -1669,7 +1669,7 @@ mapiter_@name@(
                     count = *counter;
                     while (count--) {
                         char * self_ptr = baseoffset;
-                        for (i=0; i < @numiter@; i++) {
+                        for (i=0; i < @num_fancy@; i++) {
                             npy_intp indval = *((npy_intp*)outer_ptrs[i]);
                             assert(npy_is_aligned(outer_ptrs[i],
                                                   NPY_ALIGNOF_UINT(npy_intp)));
@@ -1760,11 +1760,11 @@ mapiter_@name@(
         }
 /**begin repeat1
  * #one_iter = 1, 0#
- * #numiter = 1, numiter#
+ * #num_fancy = 1, num_fancy#
  */
 
 #if @one_iter@
-        if (numiter == 1) {
+        if (num_fancy == 1) {
 #else
         else {
 #endif
@@ -1776,7 +1776,7 @@ mapiter_@name@(
             /* Outer iteration (safe because mit->size != 0) */
             do {
                 char * self_ptr = baseoffset;
-                for (i=0; i < @numiter@; i++) {
+                for (i=0; i < @num_fancy@; i++) {
                     npy_intp indval = *((npy_intp*)outer_ptrs[i]);
 
 #if @isget@ && @one_iter@

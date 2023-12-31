@@ -93,17 +93,22 @@ def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
     add_newdoc('numpy._core.numerictypes', obj, docstring)
 
 
-add_newdoc_for_scalar_type('bool_', [],
+_bool_docstring = (
     """
     Boolean type (True or False), stored as a byte.
 
     .. warning::
 
-       The :class:`bool_` type is not a subclass of the :class:`int_` type
-       (the :class:`bool_` is not even a number type). This is different
+       The :class:`bool` type is not a subclass of the :class:`int_` type
+       (the :class:`bool` is not even a number type). This is different
        than Python's default implementation of :class:`bool` as a
        sub-class of :class:`int`.
-    """)
+    """
+)
+
+add_newdoc_for_scalar_type('bool', [], _bool_docstring)
+
+add_newdoc_for_scalar_type('bool_', [], _bool_docstring)
 
 add_newdoc_for_scalar_type('byte', [],
     """

@@ -297,14 +297,14 @@ class TestIndexing:
 
     def test_too_many_fancy_indices_special_case(self):
         # Just documents behaviour, this is a small limitation.
-        a = np.ones((1,) * 32)  # 32 is NPY_MAXDIMS
-        assert_raises(IndexError, a.__getitem__, (np.array([0]),) * 32)
+        a = np.ones((1,) * 64)  # 64 is NPY_MAXDIMS
+        assert_raises(IndexError, a.__getitem__, (np.array([0]),) * 64)
 
     def test_scalar_array_bool(self):
         # NumPy bools can be used as boolean index (python ones as of yet not)
         a = np.array(1)
-        assert_equal(a[np.bool_(True)], a[np.array(True)])
-        assert_equal(a[np.bool_(False)], a[np.array(False)])
+        assert_equal(a[np.bool(True)], a[np.array(True)])
+        assert_equal(a[np.bool(False)], a[np.array(False)])
 
         # After deprecating bools as integers:
         #a = np.array([0,1,2])
@@ -552,8 +552,8 @@ class TestIndexing:
 
     @pytest.mark.parametrize("index",
             [True, False, np.array([0])])
-    @pytest.mark.parametrize("num", [32, 40])
-    @pytest.mark.parametrize("original_ndim", [1, 32])
+    @pytest.mark.parametrize("num", [64, 80])
+    @pytest.mark.parametrize("original_ndim", [1, 64])
     def test_too_many_advanced_indices(self, index, num, original_ndim):
         # These are limitations based on the number of arguments we can process.
         # For `num=32` (and all boolean cases), the result is actually define;
@@ -1289,7 +1289,7 @@ class TestBooleanIndexing:
         a = np.array([[[1]]])
 
         assert_raises(TypeError, np.reshape, a, (True, -1))
-        assert_raises(TypeError, np.reshape, a, (np.bool_(True), -1))
+        assert_raises(TypeError, np.reshape, a, (np.bool(True), -1))
         # Note that operator.index(np.array(True)) does not work, a boolean
         # array is thus also deprecated, but not with the same message:
         assert_raises(TypeError, operator.index, np.array(True))

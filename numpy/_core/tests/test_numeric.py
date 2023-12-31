@@ -286,6 +286,7 @@ class TestNonarrayArgs:
         arr = [[1, 2], [3, 4], [5, 6]]
         tgt = [[1, 3, 5], [2, 4, 6]]
         assert_equal(np.transpose(arr, (1, 0)), tgt)
+        assert_equal(np.matrix_transpose(arr), tgt)
 
     def test_var(self):
         A = [[1, 2, 3], [4, 5, 6]]
@@ -1001,7 +1002,7 @@ class TestFloatExceptions:
 class TestTypes:
     def check_promotion_cases(self, promote_func):
         # tests that the scalars get coerced correctly.
-        b = np.bool_(0)
+        b = np.bool(0)
         i8, i16, i32, i64 = np.int8(0), np.int16(0), np.int32(0), np.int64(0)
         u8, u16, u32, u64 = np.uint8(0), np.uint16(0), np.uint32(0), np.uint64(0)
         f32, f64, fld = np.float32(0), np.float64(0), np.longdouble(0)
@@ -3047,7 +3048,7 @@ class TestIsclose:
         # scalar
         assert_(np.isclose(np.inf, -np.inf) is np.False_)
         assert_(np.isclose(0, np.inf) is np.False_)
-        assert_(type(np.isclose(0, np.inf)) is np.bool_)
+        assert_(type(np.isclose(0, np.inf)) is np.bool)
 
     def test_timedelta(self):
         # Allclose currently works for timedelta64 as long as `atol` is
@@ -3969,9 +3970,9 @@ class TestBroadcast:
 
     def test_number_of_arguments(self):
         arr = np.empty((5,))
-        for j in range(35):
+        for j in range(70):
             arrs = [arr] * j
-            if j > 32:
+            if j > 64:
                 assert_raises(ValueError, np.broadcast, *arrs)
             else:
                 mit = np.broadcast(*arrs)
@@ -4023,3 +4024,23 @@ class TestTensordot:
         arr_0d = np.array(1)
         ret = np.tensordot(arr_0d, arr_0d, ([], []))  # contracting no axes is well defined
         assert_array_equal(ret, arr_0d)
+
+
+class TestAsType:
+
+    def test_astype(self):
+        data = [[1, 2], [3, 4]]
+        actual = np.astype(
+            np.array(data, dtype=np.int64), np.uint32
+        )
+        expected = np.array(data, dtype=np.uint32)
+
+        assert_array_equal(actual, expected)
+        assert_equal(actual.dtype, expected.dtype)
+
+        assert np.shares_memory(
+            actual, np.astype(actual, actual.dtype, copy=False)
+        )
+
+        with pytest.raises(TypeError, match="Input should be a NumPy array"):
+            np.astype(data, np.float64)

@@ -1665,10 +1665,10 @@ add_newdoc('numpy._core.multiarray', 'from_dlpack',
 
     Examples
     --------
-    >>> import torch
-    >>> x = torch.arange(10)
+    >>> import torch  # doctest: +SKIP
+    >>> x = torch.arange(10)  # doctest: +SKIP
     >>> # create a view of the torch tensor "x" in NumPy
-    >>> y = np.from_dlpack(x)
+    >>> y = np.from_dlpack(x)  # doctest: +SKIP
     """)
 
 add_newdoc('numpy._core.multiarray', 'correlate',
@@ -6435,6 +6435,7 @@ add_newdoc('numpy._core.multiarray', 'normalize_axis_index',
 
     Examples
     --------
+    >>> from numpy.lib.array_utils import normalize_axis_index
     >>> normalize_axis_index(0, ndim=3)
     0
     >>> normalize_axis_index(1, ndim=3)
@@ -6445,11 +6446,11 @@ add_newdoc('numpy._core.multiarray', 'normalize_axis_index',
     >>> normalize_axis_index(3, ndim=3)
     Traceback (most recent call last):
     ...
-    AxisError: axis 3 is out of bounds for array of dimension 3
+    numpy.exceptions.AxisError: axis 3 is out of bounds for array ...
     >>> normalize_axis_index(-4, ndim=3, msg_prefix='axes_arg')
     Traceback (most recent call last):
     ...
-    AxisError: axes_arg: axis -4 is out of bounds for array of dimension 3
+    numpy.exceptions.AxisError: axes_arg: axis -4 is out of bounds ...
     """)
 
 add_newdoc('numpy._core.multiarray', 'datetime_data',

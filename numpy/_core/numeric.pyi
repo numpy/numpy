@@ -13,6 +13,7 @@ if sys.version_info >= (3, 10):
 else:
     from typing_extensions import TypeGuard
 
+import numpy as np
 from numpy import (
     ComplexWarning as ComplexWarning,
     generic,
@@ -20,7 +21,6 @@ from numpy import (
     signedinteger,
     floating,
     complexfloating,
-    bool_,
     int_,
     intp,
     float64,
@@ -270,7 +270,7 @@ def correlate(
     a: _ArrayLikeBool_co,
     v: _ArrayLikeBool_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 @overload
 def correlate(
     a: _ArrayLikeUInt_co,
@@ -319,7 +319,7 @@ def convolve(
     a: _ArrayLikeBool_co,
     v: _ArrayLikeBool_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 @overload
 def convolve(
     a: _ArrayLikeUInt_co,
@@ -368,7 +368,7 @@ def outer(
     a: _ArrayLikeBool_co,
     b: _ArrayLikeBool_co,
     out: None = ...,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 @overload
 def outer(
     a: _ArrayLikeUInt_co,
@@ -423,7 +423,7 @@ def tensordot(
     a: _ArrayLikeBool_co,
     b: _ArrayLikeBool_co,
     axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 @overload
 def tensordot(
     a: _ArrayLikeUInt_co,
@@ -462,6 +462,39 @@ def tensordot(
 ) -> NDArray[object_]: ...
 
 @overload
+def vecdot(
+    x1: _ArrayLikeUnknown, x2: _ArrayLikeUnknown, axis: int = ...
+) -> NDArray[Any]: ...
+@overload
+def vecdot(
+    x1: _ArrayLikeBool_co, x2: _ArrayLikeBool_co, axis: int = ...
+) -> NDArray[np.bool]: ...
+@overload
+def vecdot(
+    x1: _ArrayLikeUInt_co, x2: _ArrayLikeUInt_co, axis: int = ...
+) -> NDArray[unsignedinteger[Any]]: ...
+@overload
+def vecdot(
+    x1: _ArrayLikeInt_co, x2: _ArrayLikeInt_co, axis: int = ...
+) -> NDArray[signedinteger[Any]]: ...
+@overload
+def vecdot(
+    x1: _ArrayLikeFloat_co, x2: _ArrayLikeFloat_co, axis: int = ...
+) -> NDArray[floating[Any]]: ...
+@overload
+def vecdot(
+    x1: _ArrayLikeComplex_co, x2: _ArrayLikeComplex_co, axis: int = ...
+) -> NDArray[complexfloating[Any, Any]]: ...
+@overload
+def vecdot(
+    x1: _ArrayLikeTD64_co, x2: _ArrayLikeTD64_co, axis: int = ...
+) -> NDArray[timedelta64]: ...
+@overload
+def vecdot(
+    x1: _ArrayLikeObject_co, x2: _ArrayLikeObject_co, axis: int = ...
+) -> NDArray[object_]: ...
+
+@overload
 def roll(
     a: _ArrayLike[_SCT],
     shift: _ShapeLike,
@@ -488,8 +521,8 @@ def moveaxis(
 
 @overload
 def cross(
-    a: _ArrayLikeUnknown,
-    b: _ArrayLikeUnknown,
+    x1: _ArrayLikeUnknown,
+    x2: _ArrayLikeUnknown,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
@@ -497,8 +530,8 @@ def cross(
 ) -> NDArray[Any]: ...
 @overload
 def cross(
-    a: _ArrayLikeBool_co,
-    b: _ArrayLikeBool_co,
+    x1: _ArrayLikeBool_co,
+    x2: _ArrayLikeBool_co,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
@@ -506,8 +539,8 @@ def cross(
 ) -> NoReturn: ...
 @overload
 def cross(
-    a: _ArrayLikeUInt_co,
-    b: _ArrayLikeUInt_co,
+    x1: _ArrayLikeUInt_co,
+    x2: _ArrayLikeUInt_co,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
@@ -515,8 +548,8 @@ def cross(
 ) -> NDArray[unsignedinteger[Any]]: ...
 @overload
 def cross(
-    a: _ArrayLikeInt_co,
-    b: _ArrayLikeInt_co,
+    x1: _ArrayLikeInt_co,
+    x2: _ArrayLikeInt_co,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
@@ -524,8 +557,8 @@ def cross(
 ) -> NDArray[signedinteger[Any]]: ...
 @overload
 def cross(
-    a: _ArrayLikeFloat_co,
-    b: _ArrayLikeFloat_co,
+    x1: _ArrayLikeFloat_co,
+    x2: _ArrayLikeFloat_co,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
@@ -533,8 +566,8 @@ def cross(
 ) -> NDArray[floating[Any]]: ...
 @overload
 def cross(
-    a: _ArrayLikeComplex_co,
-    b: _ArrayLikeComplex_co,
+    x1: _ArrayLikeComplex_co,
+    x2: _ArrayLikeComplex_co,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
@@ -542,8 +575,8 @@ def cross(
 ) -> NDArray[complexfloating[Any, Any]]: ...
 @overload
 def cross(
-    a: _ArrayLikeObject_co,
-    b: _ArrayLikeObject_co,
+    x1: _ArrayLikeObject_co,
+    x2: _ArrayLikeObject_co,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
@@ -633,8 +666,8 @@ def identity(
 def allclose(
     a: ArrayLike,
     b: ArrayLike,
-    rtol: float = ...,
-    atol: float = ...,
+    rtol: ArrayLike = ...,
+    atol: ArrayLike = ...,
     equal_nan: bool = ...,
 ) -> bool: ...
 
@@ -642,19 +675,32 @@ def allclose(
 def isclose(
     a: _ScalarLike_co,
     b: _ScalarLike_co,
-    rtol: float = ...,
-    atol: float = ...,
+    rtol: ArrayLike = ...,
+    atol: ArrayLike = ...,
     equal_nan: bool = ...,
-) -> bool_: ...
+) -> np.bool: ...
 @overload
 def isclose(
     a: ArrayLike,
     b: ArrayLike,
-    rtol: float = ...,
-    atol: float = ...,
+    rtol: ArrayLike = ...,
+    atol: ArrayLike = ...,
     equal_nan: bool = ...,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 
 def array_equal(a1: ArrayLike, a2: ArrayLike, equal_nan: bool = ...) -> bool: ...
 
 def array_equiv(a1: ArrayLike, a2: ArrayLike) -> bool: ...
+
+@overload
+def astype(
+    x: NDArray[Any],
+    dtype: _DTypeLike[_SCT],
+    copy: bool = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def astype(
+    x: NDArray[Any],
+    dtype: DTypeLike,
+    copy: bool = ...,
+) -> NDArray[Any]: ...

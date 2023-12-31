@@ -70,7 +70,7 @@ the following code is valid:
 .. code-block:: python
 
     >>> x = np.array([1, 2])
-    >>> x.dtype = np.bool_
+    >>> x.dtype = np.bool
 
 This sort of mutation is not allowed by the types. Users who want to
 write statically typed code should instead use the `numpy.ndarray.view`

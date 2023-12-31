@@ -511,7 +511,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
         For more details, see `numpy.linalg.lstsq`.
 
-    V : ndarray, shape (M,M) or (M,M,K)
+    V : ndarray, shape (deg + 1, deg + 1) or (deg + 1, deg + 1, K)
         Present only if ``full == False`` and ``cov == True``.  The covariance
         matrix of the polynomial coefficient estimates.  The diagonal of
         this matrix are the variance estimates for each coefficient.  If y

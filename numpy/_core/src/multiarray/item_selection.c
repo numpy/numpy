@@ -2367,6 +2367,7 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis,
  * even though it uses 64 bit types its faster than the bytewise sum on 32 bit
  * but a 32 bit type version would make it even faster on these platforms
  */
+#if !NPY_SIMD
 static inline npy_intp
 count_nonzero_bytes_384(const npy_uint64 * w)
 {
@@ -2407,6 +2408,7 @@ count_nonzero_bytes_384(const npy_uint64 * w)
 
     return r;
 }
+#endif
 
 #if NPY_SIMD
 /* Count the zero bytes between `*d` and `end`, updating `*d` to point to where to keep counting from. */

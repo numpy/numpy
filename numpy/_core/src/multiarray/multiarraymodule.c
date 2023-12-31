@@ -43,6 +43,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "hashdescr.h"
 #include "descriptor.h"
 #include "dragon4.h"
+#include "flagsobject.h"
 #include "calculation.h"
 #include "number.h"
 #include "scalartypes.h"
@@ -115,10 +116,6 @@ set_legacy_print_mode(PyObject *NPY_UNUSED(self), PyObject *args)
     }
     Py_RETURN_NONE;
 }
-
-
-/* Only here for API compatibility */
-NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
 
 
 /*NUMPY_API
@@ -692,7 +689,7 @@ PyArray_ConcatenateInto(PyObject *op,
         Py_DECREF(item);
     }
 
-    if (axis >= NPY_MAXDIMS) {
+    if (axis == NPY_RAVEL_AXIS) {
         ret = PyArray_ConcatenateFlattenedArrays(
                 narrays, arrays, NPY_CORDER, ret, dtype,
                 casting, casting_not_passed);
@@ -3106,13 +3103,7 @@ array_arange(PyObject *NPY_UNUSED(ignored),
 NPY_NO_EXPORT unsigned int
 PyArray_GetNDArrayCVersion(void)
 {
-    // return (unsigned int)NPY_ABI_VERSION;
-    /*
-     * TODO: Preliminary returning the 1.x API version, that is a lie but
-     *       allows (for the moment) downstream modules to mix and match
-     *       and us to import old matplotlib versions in our doc builds...
-     */
-    return (unsigned int)0x01000009;
+    return (unsigned int)NPY_ABI_VERSION;
 }
 
 /*NUMPY_API
