@@ -198,7 +198,7 @@ motivational use-cases for the general ideas and is likely a good start for
 anyone not intimately familiar with advanced indexing.
 
 
-Detailed Description
+Detailed description
 --------------------
 
 Proposed rules
@@ -377,7 +377,7 @@ instead of ``arr.oindex[indices]``). Functionally, this would be equivalent,
 but indexing is such a common operation that we think it is important to
 minimize syntax and worth implementing it directly on `ndarray` objects
 themselves. Indexing attributes also define a clear interface that is easier
-for alternative array implementations to copy, nonwithstanding ongoing
+for alternative array implementations to copy, notwithstanding ongoing
 efforts to make it easier to override NumPy functions [2]_.
 
 Discussion
@@ -652,7 +652,7 @@ Copyright
 This document is placed under the CC0 1.0 Universell (CC0 1.0) Public Domain Dedication [1]_.
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. [1] To the extent possible under law, the person who associated CC0 

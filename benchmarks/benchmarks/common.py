@@ -22,10 +22,8 @@ TYPES1 = [
     'int16', 'float16',
     'int32', 'float32',
     'int64', 'float64',  'complex64',
-    'longdouble', 'complex128',
+    'complex128',
 ]
-if 'complex256' in np.sctypeDict:
-    TYPES1.append('clongdouble')
 
 DLPACK_TYPES = [
     'int16', 'float16',
@@ -49,25 +47,32 @@ def get_values():
 
 
 @lru_cache(typed=True)
-def get_squares():
+def get_square(dtype):
     values = get_values()
-    squares = {t: np.array(values,
-                              dtype=getattr(np, t)).reshape((nx, ny))
-               for t in TYPES1}
+    arr = values.astype(dtype=dtype).reshape((nx, ny))
 
     # adjust complex ones to have non-degenerated imagery part -- use
     # original data transposed for that
-    for t, v in squares.items():
-        if t.startswith('complex'):
-            v += v.T*1j
-    return squares
+    if arr.dtype.kind == 'c':
+        arr += arr.T*1j
+
+    return arr
+
+@lru_cache(typed=True)
+def get_squares():
+    return {t: get_square(t) for t in TYPES1}
+
+
+@lru_cache(typed=True)
+def get_square_(dtype):
+    arr = get_square(dtype)
+    return arr[:nxs, :nys]
 
 
 @lru_cache(typed=True)
 def get_squares_():
     # smaller squares
-    squares_ = {t: s[:nxs, :nys] for t, s in get_squares().items()}
-    return squares_
+    return {t: get_square_(t) for t in TYPES1}
 
 
 @lru_cache(typed=True)

@@ -1,0 +1,5 @@
+* ``np.trapz`` has been deprecated. Use ``scipy.interpolate.trapezoid`` instead.
+
+* ``np.in1d`` has been deprecated. Use ``np.isin`` instead.
+
+* Alias ``np.row_stack`` has been deprecated. Use ``np.vstack`` directly.

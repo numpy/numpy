@@ -64,7 +64,7 @@ manually propagate infs or nans.
 
 .. _`sec:Non-numpy-example`:
 
-Example Non-ufunc extension
+Example non-ufunc extension
 ===========================
 
 .. index::
@@ -306,7 +306,7 @@ the primary thing that must be changed to create your own ufunc.
         PyUFuncGenericFunction funcs[1] = {&double_logit};
 
         /* These are the input and return dtypes of logit.*/
-        static char types[2] = {NPY_DOUBLE, NPY_DOUBLE};
+        static const char types[2] = {NPY_DOUBLE, NPY_DOUBLE};
 
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
@@ -557,10 +557,10 @@ is the primary thing that must be changed to create your own ufunc.
                                            &double_logit,
                                            &long_double_logit};
 
-        static char types[8] = {NPY_HALF, NPY_HALF,
-                                NPY_FLOAT, NPY_FLOAT,
-                                NPY_DOUBLE, NPY_DOUBLE,
-                                NPY_LONGDOUBLE, NPY_LONGDOUBLE};
+        static const char types[8] = {NPY_HALF, NPY_HALF,
+                                      NPY_FLOAT, NPY_FLOAT,
+                                      NPY_DOUBLE, NPY_DOUBLE,
+                                      NPY_LONGDOUBLE, NPY_LONGDOUBLE};
 
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
@@ -751,8 +751,8 @@ as well as all other properties of a ufunc.
 
         /* These are the input and return dtypes of logit.*/
 
-        static char types[4] = {NPY_DOUBLE, NPY_DOUBLE,
-                                NPY_DOUBLE, NPY_DOUBLE};
+        static const char types[4] = {NPY_DOUBLE, NPY_DOUBLE,
+                                      NPY_DOUBLE, NPY_DOUBLE};
 
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
@@ -878,7 +878,7 @@ The C file is given below.
         PyUFuncGenericFunction funcs[1] = {&add_uint64_triplet};
 
         /* These are the input and return dtypes of add_uint64_triplet. */
-        static char types[3] = {NPY_UINT64, NPY_UINT64, NPY_UINT64};
+        static const char types[3] = {NPY_UINT64, NPY_UINT64, NPY_UINT64};
 
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
@@ -951,7 +951,7 @@ adapted from the umath module
         static void *atan2_data[] = {
                               (void *)atan2f, (void *)atan2,
                               (void *)atan2l, (void *)"arctan2"};
-        static char atan2_signatures[] = {
+        static const char atan2_signatures[] = {
                       NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
                       NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
                       NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_LONGDOUBLE

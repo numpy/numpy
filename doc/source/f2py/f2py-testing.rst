@@ -70,9 +70,9 @@ A test can be implemented as follows::
 	    def test_module(self):
 	        k = np.array([1, 2, 3], dtype=np.float64)
 	        w = np.array([1, 2, 3], dtype=np.float64)
-	        self.module.subb(k)
+	        self.module.addb(k)
 	        assert np.allclose(k, w + 1)
-	        self.module.subc([w, k])
+	        self.module.addc([w, k])
 	        assert np.allclose(k, w + 1)
 
 We override the ``sources`` data member to provide the source file. The source files

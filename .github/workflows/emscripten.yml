@@ -19,19 +19,20 @@ permissions:
 jobs:
   build-wasm-emscripten:
     runs-on: ubuntu-22.04
-    if: "github.repository == 'numpy/numpy'"
+    if: false  # NOTE: job disabled, it needs to be moved to Meson (see gh-24603)
+    # if: "github.repository == 'numpy/numpy'"
     env:
-      PYODIDE_VERSION: 0.22.1
+      PYODIDE_VERSION: 0.23.1
       # PYTHON_VERSION and EMSCRIPTEN_VERSION are determined by PYODIDE_VERSION.
       # The appropriate versions can be found in the Pyodide repodata.json
       # "info" field, or in Makefile.envs:
       # https://github.com/pyodide/pyodide/blob/main/Makefile.envs#L2
-      PYTHON_VERSION: 3.10.7
-      EMSCRIPTEN_VERSION: 3.1.27
+      PYTHON_VERSION: 3.11.2
+      EMSCRIPTEN_VERSION: 3.1.32
       NODE_VERSION: 18
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: true
           # versioneer.py requires the latest tag to be reachable. Here we
@@ -42,23 +43,27 @@ jobs:
 
       - name: set up python
         id: setup-python
-        uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - uses: mymindstorm/setup-emsdk@ab889da2abbcbb280f91ec4c215d3bb4f3a8f775 # v12
+      - uses: mymindstorm/setup-emsdk@d233ac12b0102f74ca199f5dad7a4e2c13a8a745 # v13
         with:
           version: ${{ env.EMSCRIPTEN_VERSION }}
           actions-cache-folder: emsdk-cache
 
       - name: Install pyodide-build
-        run: pip install pyodide-build==$PYODIDE_VERSION
+        run: pip install "pydantic<2" pyodide-build==$PYODIDE_VERSION
 
       - name: Build
-        run: CFLAGS=-g2 LDFLAGS=-g2 pyodide build
+        run: |
+          # Pyodide is still in the process of adding better/easier support for
+          # non-setup.py based builds.
+          cp pyproject.toml.setuppy pyproject.toml
+          CFLAGS=-g2 LDFLAGS=-g2 pyodide build
 
       - name: set up node
-        uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3.6.0
+        uses: actions/setup-node@b39b52d1213e96004bfcb1c61a8a6fa8ab84f3e8 # v4.0.1
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -67,6 +72,9 @@ jobs:
           pyodide venv .venv-pyodide
           source .venv-pyodide/bin/activate
           pip install dist/*.whl
+          python -c "import sys; print(sys.platform)"
+          # TODO: when re-enabled this workflow, install test deps differently
+          # since ninja isn't installable with pyodide
           pip install -r test_requirements.txt
       - name: Test
         run: |

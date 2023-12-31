@@ -1,4 +1,4 @@
-Parallel Random Number Generation
+Parallel random number generation
 =================================
 
 There are four main strategies implemented that can be used to produce
@@ -118,15 +118,15 @@ territory ([2]_).
        a collision internal to `SeedSequence` is the way a failure would be
        observed.
 
-.. _`implements an algorithm`: http://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html
-.. _`suffers if there are too many 0s`: http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html
+.. _`implements an algorithm`: https://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html
+.. _`suffers if there are too many 0s`: http://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/MT2002/emt19937ar.html
 .. _`avalanche properties`: https://en.wikipedia.org/wiki/Avalanche_effect
 .. _`not unique to numpy`: https://www.iro.umontreal.ca/~lecuyer/myftp/papers/parallel-rng-imacs.pdf
 
 
 .. _sequence-of-seeds:
 
-Sequence of Integer Seeds
+Sequence of integer seeds
 -------------------------
 
 As discussed in the previous section, `~SeedSequence` can not only take an
@@ -207,7 +207,7 @@ mechanisms are the same.
 
 .. _independent-streams:
 
-Independent Streams
+Independent streams
 -------------------
 
 `Philox` is a counter-based RNG based which generates values by

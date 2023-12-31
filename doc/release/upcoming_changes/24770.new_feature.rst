@@ -1,0 +1,5 @@
+``strict`` option for `testing.assert_equal`
+--------------------------------------------
+The ``strict`` option is now available for `testing.assert_equal`.
+Setting ``strict=True`` will disable the broadcasting behaviour for scalars
+and ensure that input arrays have the same data type.

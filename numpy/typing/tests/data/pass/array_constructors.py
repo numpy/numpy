@@ -1,14 +1,14 @@
-import sys
 from typing import Any
-import numpy as np
 
+import numpy as np
+import numpy.typing as npt
 
 class Index:
     def __index__(self) -> int:
         return 0
 
 
-class SubClass(np.ndarray):
+class SubClass(npt.NDArray[np.float64]):
     pass
 
 

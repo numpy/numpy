@@ -1,7 +1,7 @@
 .. _global_state:
 
 ************
-Global State
+Global state
 ************
 
 NumPy has a few import-time, compile-time, or runtime options
@@ -11,10 +11,10 @@ purposes and will not be interesting to the vast majority
 of users.
 
 
-Performance-Related Options
+Performance-related options
 ===========================
 
-Number of Threads used for Linear Algebra
+Number of threads used for linear algebra
 -----------------------------------------
 
 NumPy itself is normally intentionally limited to a single thread
@@ -28,7 +28,7 @@ One way to control the number of threads is the package
 `threadpoolctl <https://pypi.org/project/threadpoolctl/>`_
 
 
-Madvise Hugepage on Linux
+madvise hugepage on Linux
 -------------------------
 
 When working with very large arrays on modern Linux kernels,
@@ -56,22 +56,8 @@ Setting ``NPY_DISABLE_CPU_FEATURES`` will exclude simd features at runtime.
 See :ref:`runtime-simd-dispatch`.
 
 
-Debugging-Related Options
+Debugging-related options
 =========================
-
-Relaxed Strides Checking
-------------------------
-
-The *compile-time* environment variable::
-
-    NPY_RELAXED_STRIDES_DEBUG=0
-
-can be set to help debug code written in C which iteraters through arrays
-manually.  When an array is contiguous and iterated in a contiguous manner,
-its ``strides`` should not be queried.  This option can help find errors where
-the ``strides`` are incorrectly used.
-For details see the :ref:`memory layout <memory-layout>` documentation.
-
 
 Warn if no memory allocation policy when deallocating data
 ----------------------------------------------------------
@@ -83,16 +69,5 @@ memory allocation policy, the default will be to call ``free``. If
 be emitted. A better alternative is to use a ``PyCapsule`` with a deallocator
 and set the ``ndarray.base``.
 
-
-Testing planned future behavior
-===============================
-
-NumPy has some code paths which are planned to be activated in the future
-but are not yet the default behavior.
-You can try testing some of these which may be shipped with a new "major"
-release (NumPy 2.0) by setting an environment before importing NumPy:
-
-    NPY_NUMPY_2_BEHAVIOR=1
-
-By default this will also activate the :ref:`NEP 50 <NEP50>` related setting
-``NPY_PROMOTION_STATE`` (please see the NEP for details on this).
+.. versionchanged:: 1.25.2
+    This variable is only checked on the first import.

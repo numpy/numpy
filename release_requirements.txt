@@ -14,3 +14,6 @@ twine
 
 # building and notes
 Paver
+
+# uploading release documentation
+packaging

@@ -1,7 +1,0 @@
-Faster ``np.sort`` on AVX-512 enabled processors
-------------------------------------------------
-Quicksort for 16-bit and 64-bit dtypes gain up to 15x and 9x speed up on
-processors that support AVX-512 instruction set.
-
-Thanks to `Intel corporation <https://open.intel.com/>`_ for sponsoring this
-work.

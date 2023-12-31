@@ -85,7 +85,7 @@ Sub-arrays always have a C-contiguous memory layout.
    A structured data type containing a 16-character string (in field 'name')
    and a sub-array of two 64-bit floating-point number (in field 'grades'):
 
-   >>> dt = np.dtype([('name', np.unicode_, 16), ('grades', np.float64, (2,))])
+   >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
    >>> dt['name']
    dtype('<U16')
    >>> dt['grades']
@@ -131,7 +131,7 @@ None
    .. index::
       triple: dtype; construction; from None
 
-   The default data type: :class:`float_`.
+   The default data type: :class:`float64`.
 
 .. index::
    triple: dtype; construction; from type
@@ -155,14 +155,13 @@ Generic types
     The generic hierarchical type objects convert to corresponding
     type objects according to the associations:
 
-    =====================================================  ===============
-    :class:`number`, :class:`inexact`, :class:`floating`   :class:`float`
-    :class:`complexfloating`                               :class:`cfloat`
+    =====================================================  ===================
+    :class:`number`, :class:`inexact`, :class:`floating`   :class:`float64`
+    :class:`complexfloating`                               :class:`complex128`
     :class:`integer`, :class:`signedinteger`               :class:`int\_`
     :class:`unsignedinteger`                               :class:`uint`
-    :class:`character`                                     :class:`string`
     :class:`generic`, :class:`flexible`                    :class:`void`
-    =====================================================  ===============
+    =====================================================  ===================
 
     .. deprecated:: 1.19
 
@@ -177,21 +176,18 @@ Built-in Python types
     Several python types are equivalent to a corresponding
     array scalar when used to generate a :class:`dtype` object:
 
-    ================  ===============
-    :class:`int`      :class:`int\_`
-    :class:`bool`     :class:`bool\_`
-    :class:`float`    :class:`float\_`
-    :class:`complex`  :class:`cfloat`
-    :class:`bytes`    :class:`bytes\_`
-    :class:`str`      :class:`str\_`
-    :class:`buffer`   :class:`void`
-    (all others)      :class:`object_`
-    ================  ===============
+    ===================      ===============
+    :class:`int`             :class:`int\_`
+    :class:`bool`            :class:`bool\_`
+    :class:`float`           :class:`float64`
+    :class:`complex`         :class:`complex128`
+    :class:`bytes`           :class:`bytes\_`
+    :class:`str`             :class:`str\_`
+    :class:`memoryview`      :class:`void`
+    (all others)             :class:`object_`
+    ===================      ===============
 
-    Note that ``str`` corresponds to UCS4 encoded unicode strings, while
-    ``string`` is an alias to ``bytes_``. The name ``np.unicode_`` is also
-    available as an alias to ``np.str_``, see :ref:`Note on string
-    types<string-dtype-note>`.
+   Note that ``str_`` corresponds to UCS4 encoded unicode strings.
 
     .. admonition:: Example
 
@@ -256,7 +252,7 @@ Array-protocol type strings (see :ref:`arrays.interface`)
       >>> dt = np.dtype('i4')   # 32-bit signed integer
       >>> dt = np.dtype('f8')   # 64-bit floating-point number
       >>> dt = np.dtype('c16')  # 128-bit complex floating-point number
-      >>> dt = np.dtype('a25')  # 25-length zero-terminated bytes
+      >>> dt = np.dtype('S25')  # 25-length zero-terminated bytes
       >>> dt = np.dtype('U25')  # 25-character string
 
    .. _string-dtype-note:
@@ -264,9 +260,8 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    .. admonition:: Note on string types
 
     For backward compatibility with existing code originally written to support
-    Python 2, ``S`` and ``a`` typestrings are zero-terminated bytes and
-    `numpy.string_` continues to alias `numpy.bytes_`. For unicode strings,
-    use ``U``, `numpy.str_`, or `numpy.unicode_`.  For signed bytes that do not
+    Python 2, ``S`` and ``a`` typestrings are zero-terminated bytes. 
+    For unicode strings, use ``U``, `numpy.str_`.  For signed bytes that do not
     need zero-termination ``b`` or ``i1`` can be used.
 
 String with comma-separated fields
@@ -298,10 +293,10 @@ String with comma-separated fields
       - field named ``f2`` containing a 3 x 4 sub-array
         containing 10-character strings
 
-      >>> dt = np.dtype("a3, 3u8, (3,4)a10")
+      >>> dt = np.dtype("S3, 3u8, (3,4)S10")
 
 Type strings
-   Any string in :obj:`numpy.sctypeDict`.keys():
+   Any string name of a NumPy dtype, e.g.:
 
    .. admonition:: Example
 
@@ -473,6 +468,50 @@ Type strings
 
        >>> dt = np.dtype(('i4', [('r','u1'),('g','u1'),('b','u1'),('a','u1')]))
 
+
+Checking the data type
+======================
+When checking for a specific data type, use ``==`` comparison.
+
+.. admonition:: Example
+
+   >>> a = np.array([1, 2], dtype=np.float32)
+   >>> a.dtype == np.float32
+   True
+
+As opposed to python types, a comparison using ``is`` should not be used.
+
+First, NumPy treats data type specifications (everything that can be passed to
+the :class:`dtype` constructor) as equivalent to the data type object itself.
+This equivalence can only be handled through ``==``, not through ``is``.
+
+.. admonition:: Example
+
+   A :class:`dtype` object is equal to all data type specifications that are
+   equivalent to it.
+
+   >>> a = np.array([1, 2], dtype=float)
+   >>> a.dtype == np.dtype(np.float64)
+   True
+   >>> a.dtype == np.float64
+   True
+   >>> a.dtype == float
+   True
+   >>> a.dtype == "float64"
+   True
+   >>> a.dtype == "d"
+   True
+
+Second, there is no guarantee that data type objects are singletons.
+
+.. admonition:: Example
+
+   Do not use ``is`` because data type objects may or may not be singletons.
+
+   >>> np.dtype(float) is np.dtype(float)
+   True
+   >>> np.dtype([('a', float)]) is np.dtype([('a', float)])
+   False
 
 :class:`dtype`
 ==============

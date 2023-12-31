@@ -12,10 +12,14 @@ Trigonometric functions
    cos
    tan
    arcsin
+   asin
    arccos
+   acos
    arctan
+   atan
    hypot
    arctan2
+   atan2
    degrees
    radians
    unwrap
@@ -31,8 +35,11 @@ Hyperbolic functions
    cosh
    tanh
    arcsinh
+   asinh
    arccosh
+   acosh
    arctanh
+   atanh
 
 Rounding
 --------
@@ -64,7 +71,6 @@ Sums, products, differences
    ediff1d
    gradient
    cross
-   trapz
 
 Exponents and logarithms
 ------------------------
@@ -121,6 +127,7 @@ Arithmetic operations
    multiply
    divide
    power
+   pow
    subtract
    true_divide
    floor_divide
@@ -143,7 +150,7 @@ Handling complex numbers
    conj
    conjugate
 
-Extrema Finding
+Extrema finding
 ---------------
 .. autosummary::
    :toctree: generated/
@@ -182,3 +189,5 @@ Miscellaneous
    real_if_close
 
    interp
+
+   bitwise_count

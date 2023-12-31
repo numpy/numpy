@@ -32,6 +32,8 @@ Transpose-like operations
    swapaxes
    ndarray.T
    transpose
+   permute_dims
+   matrix_transpose (Array API compatible)
 
 Changing number of dimensions
 =============================
@@ -55,7 +57,6 @@ Changing kind of array
    asarray
    asanyarray
    asmatrix
-   asfarray
    asfortranarray
    ascontiguousarray
    asarray_chkfinite
@@ -67,13 +68,13 @@ Joining arrays
    :toctree: generated/
 
    concatenate
+   concat
    stack
    block
    vstack
    hstack
    dstack
    column_stack
-   row_stack
 
 Splitting arrays
 ================

@@ -77,7 +77,7 @@ See also
 """
 import numpy as np
 import numpy.linalg as la
-from numpy.core.multiarray import normalize_axis_index
+from numpy.lib.array_utils import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -262,7 +262,7 @@ def hermfromroots(roots):
 
     .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
 
-    in Hermite form, where the `r_n` are the roots specified in `roots`.
+    in Hermite form, where the :math:`r_n` are the roots specified in `roots`.
     If a zero has multiplicity n, then it must appear in `roots` n times.
     For instance, if 2 is a root of multiplicity three and 3 is a root of
     multiplicity 2, then `roots` looks something like [2, 2, 2, 3, 3]. The
@@ -652,8 +652,8 @@ def hermder(c, m=1, scl=1, axis=0):
     c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
-    cnt = pu._deprecate_as_int(m, "the order of derivation")
-    iaxis = pu._deprecate_as_int(axis, "the axis")
+    cnt = pu._as_int(m, "the order of derivation")
+    iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
     iaxis = normalize_axis_index(iaxis, c.ndim)
@@ -765,8 +765,8 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         c = c.astype(np.double)
     if not np.iterable(k):
         k = [k]
-    cnt = pu._deprecate_as_int(m, "the order of integration")
-    iaxis = pu._deprecate_as_int(axis, "the axis")
+    cnt = pu._as_int(m, "the order of integration")
+    iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt:
@@ -940,6 +940,15 @@ def hermval2d(x, y, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermval2d
+    >>> x = [1, 2]
+    >>> y = [4, 5]
+    >>> c = [[1, 2, 3], [4, 5, 6]]
+    >>> hermval2d(x, y, c)
+    array ([1035., 2883.])
+
     """
     return pu._valnd(hermval, c, x, y)
 
@@ -993,6 +1002,17 @@ def hermgrid2d(x, y, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermgrid2d
+    >>> x = [1, 2, 3]
+    >>> y = [4, 5]
+    >>> c = [[1, 2, 3], [4, 5, 6]]
+    >>> hermgrid2d(x, y, c)
+    array([[1035., 1599.],
+           [1867., 2883.],
+           [2699., 4167.]])
+
     """
     return pu._gridnd(hermval, c, x, y)
 
@@ -1044,6 +1064,16 @@ def hermval3d(x, y, z, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermval3d
+    >>> x = [1, 2]
+    >>> y = [4, 5]
+    >>> z = [6, 7]
+    >>> c = [[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]
+    >>> hermval3d(x, y, z, c)
+    array([ 40077., 120131.])
+    
     """
     return pu._valnd(hermval, c, x, y, z)
 
@@ -1075,7 +1105,7 @@ def hermgrid3d(x, y, z, c):
     ----------
     x, y, z : array_like, compatible objects
         The three dimensional series is evaluated at the points in the
-        Cartesian product of `x`, `y`, and `z`.  If `x`,`y`, or `z` is a
+        Cartesian product of `x`, `y`, and `z`.  If `x`, `y`, or `z` is a
         list or tuple, it is first converted to an ndarray, otherwise it is
         left unchanged and, if it isn't an ndarray, it is treated as a
         scalar.
@@ -1099,6 +1129,19 @@ def hermgrid3d(x, y, z, c):
     -----
 
     .. versionadded:: 1.7.0
+
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermgrid3d
+    >>> x = [1, 2]
+    >>> y = [4, 5]
+    >>> z = [6, 7]
+    >>> c = [[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]
+    >>> hermgrid3d(x, y, z, c)
+    array([[[ 40077.,  54117.],
+            [ 49293.,  66561.]],
+           [[ 72375.,  97719.],
+            [ 88975., 120131.]]])
 
     """
     return pu._gridnd(hermval, c, x, y, z)
@@ -1148,7 +1191,7 @@ def hermvander(x, deg):
            [ 1.,  2.,  2., -4.]])
 
     """
-    ideg = pu._deprecate_as_int(deg, "deg")
+    ideg = pu._as_int(deg, "deg")
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
@@ -1214,6 +1257,16 @@ def hermvander2d(x, y, deg):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermvander2d
+    >>> x = np.array([-1, 0, 1])
+    >>> y = np.array([-1, 0, 1])
+    >>> hermvander2d(x, y, [2, 2])
+    array([[ 1., -2.,  2., -2.,  4., -4.,  2., -4.,  4.],
+           [ 1.,  0., -2.,  0.,  0., -0., -2., -0.,  4.],
+           [ 1.,  2.,  2.,  2.,  4.,  4.,  2.,  4.,  4.]])
+
     """
     return pu._vander_nd_flat((hermvander, hermvander), (x, y), deg)
 
@@ -1268,6 +1321,17 @@ def hermvander3d(x, y, z, deg):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermvander3d
+    >>> x = np.array([-1, 0, 1])
+    >>> y = np.array([-1, 0, 1])
+    >>> z = np.array([-1, 0, 1])
+    >>> hermvander3d(x, y, z, [0, 1, 2])
+    array([[ 1., -2.,  2., -2.,  4., -4.],
+           [ 1.,  0., -2.,  0.,  0., -0.],
+           [ 1.,  2.,  2.,  2.,  4.,  4.]])
+           
     """
     return pu._vander_nd_flat((hermvander, hermvander, hermvander), (x, y, z), deg)
 
@@ -1341,7 +1405,7 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
         warnings can be turned off by
 
         >>> import warnings
-        >>> warnings.simplefilter('ignore', np.RankWarning)
+        >>> warnings.simplefilter('ignore', np.exceptions.RankWarning)
 
     See Also
     --------
@@ -1428,6 +1492,13 @@ def hermcompanion(c):
     -----
 
     .. versionadded:: 1.7.0
+
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermcompanion
+    >>> hermcompanion([1, 0, 1])
+    array([[0.        , 0.35355339],
+           [0.70710678, 0.        ]])
 
     """
     # c is a trimmed copy
@@ -1591,8 +1662,14 @@ def hermgauss(deg):
     is the k'th root of :math:`H_n`, and then scaling the results to get
     the right value when integrating 1.
 
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermgauss
+    >>> hermgauss(2)
+    (array([-0.70710678,  0.70710678]), array([0.88622693, 0.88622693]))
+
     """
-    ideg = pu._deprecate_as_int(deg, "deg")
+    ideg = pu._as_int(deg, "deg")
     if ideg <= 0:
         raise ValueError("deg must be a positive integer")
 
@@ -1646,6 +1723,13 @@ def hermweight(x):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermweight
+    >>> x = np.arange(-2, 2)
+    >>> hermweight(x)
+    array([0.01831564, 0.36787944, 1.        , 0.36787944])
+
     """
     w = np.exp(-x**2)
     return w
@@ -1660,7 +1744,7 @@ class Hermite(ABCPolyBase):
 
     The Hermite class provides the standard Python numerical methods
     '+', '-', '*', '//', '%', 'divmod', '**', and '()' as well as the
-    attributes and methods listed in the `ABCPolyBase` documentation.
+    attributes and methods listed below.
 
     Parameters
     ----------
@@ -1675,6 +1759,12 @@ class Hermite(ABCPolyBase):
         Window, see `domain` for its use. The default value is [-1, 1].
 
         .. versionadded:: 1.6.0
+    symbol : str, optional
+        Symbol used to represent the independent variable in string
+        representations of the polynomial expression, e.g. for printing.
+        The symbol must be a valid Python identifier. Default value is 'x'.
+
+        .. versionadded:: 1.24
 
     """
     # Virtual Functions
