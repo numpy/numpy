@@ -619,7 +619,7 @@ def arctanh(x):
     --------
     >>> np.set_printoptions(precision=4)
 
-    >>> np.emath.arctanh(0)
+    >>> np.emath.arctanh(0.5)
     0.5493061443340549
 
     >>> from numpy.testing import suppress_warnings
