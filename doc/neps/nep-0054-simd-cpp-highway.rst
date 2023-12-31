@@ -25,8 +25,9 @@ Motivation and Scope
 --------------------
 
 We want to refactor the C-based Universal Intrinsics (see :ref:`NEP 38
-<NEP38>`) to C++. Along the way, the `Google Highway`_ devs proposed using
-Highway rather than our Universal Intrinsics.
+<NEP38>`) to C++. This work was ongoing for some time, and Google's Highway
+was suggested as an alternative, which was already written in C++ and had 
+support for scalable SVE and other reusable components (such as VQSort).
     
 The move from C to C++ is motivated by (a) code readability and ease of
 development, (b) the need to add support for sizeless SIMD instructions (e.g.,
