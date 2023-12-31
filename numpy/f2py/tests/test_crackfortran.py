@@ -12,22 +12,6 @@ import contextlib
 import io
 
 
-@pytest.mark.usefixtures("build_module")
-class TestNoSpace(util.F2PyTest):
-    # issue gh-15035: add handling for endsubroutine, endfunction with no space
-    # between "end" and the block name
-    sources = [util.getpath("tests", "src", "crackfortran", "gh15035.f")]
-
-    def test_module(self):
-        k = np.array([1, 2, 3], dtype=np.float64)
-        w = np.array([1, 2, 3], dtype=np.float64)
-        self.module.subb(k)
-        assert np.allclose(k, w + 1)
-        self.module.subc([w, k])
-        assert np.allclose(k, w + 1)
-        assert self.module.t0("23") == b"2"
-
-
 class TestPublicPrivate:
     def test_defaultPrivate(self):
         fpath = util.getpath("tests", "src", "crackfortran", "privatemod.f90")
@@ -55,19 +39,20 @@ class TestPublicPrivate:
         fpath = util.getpath("tests", "src", "crackfortran", "accesstype.f90")
         mod = crackfortran.crackfortran([str(fpath)])
         assert len(mod) == 1
-        tt = mod[0]['vars']
-        assert set(tt['a']['attrspec']) == {'private', 'bind(c)'}
-        assert set(tt['b_']['attrspec']) == {'public', 'bind(c)'}
-        assert set(tt['c']['attrspec']) == {'public'}
+        tt = mod[0]["vars"]
+        assert set(tt["a"]["attrspec"]) == {"private", "bind(c)"}
+        assert set(tt["b_"]["attrspec"]) == {"public", "bind(c)"}
+        assert set(tt["c"]["attrspec"]) == {"public"}
 
     def test_nowrap_private_proceedures(self, tmp_path):
         fpath = util.getpath("tests", "src", "crackfortran", "gh23879.f90")
         mod = crackfortran.crackfortran([str(fpath)])
         assert len(mod) == 1
         pyf = crackfortran.crack2fortran(mod)
-        assert 'bar' not in pyf
+        assert "bar" not in pyf
 
-class TestModuleProcedure():
+
+class TestModuleProcedure:
     def test_moduleOperators(self, tmp_path):
         fpath = util.getpath("tests", "src", "crackfortran", "operators.f90")
         mod = crackfortran.crackfortran([str(fpath)])
@@ -76,54 +61,28 @@ class TestModuleProcedure():
         assert "body" in mod and len(mod["body"]) == 9
         assert mod["body"][1]["name"] == "operator(.item.)"
         assert "implementedby" in mod["body"][1]
-        assert mod["body"][1]["implementedby"] == \
-            ["item_int", "item_real"]
+        assert mod["body"][1]["implementedby"] == ["item_int", "item_real"]
         assert mod["body"][2]["name"] == "operator(==)"
         assert "implementedby" in mod["body"][2]
         assert mod["body"][2]["implementedby"] == ["items_are_equal"]
         assert mod["body"][3]["name"] == "assignment(=)"
         assert "implementedby" in mod["body"][3]
-        assert mod["body"][3]["implementedby"] == \
-            ["get_int", "get_real"]
+        assert mod["body"][3]["implementedby"] == ["get_int", "get_real"]
 
     def test_notPublicPrivate(self, tmp_path):
         fpath = util.getpath("tests", "src", "crackfortran", "pubprivmod.f90")
         mod = crackfortran.crackfortran([str(fpath)])
         assert len(mod) == 1
         mod = mod[0]
-        assert mod['vars']['a']['attrspec'] == ['private', ]
-        assert mod['vars']['b']['attrspec'] == ['public', ]
-        assert mod['vars']['seta']['attrspec'] == ['public', ]
-
-
-@pytest.mark.usefixtures("build_module")
-class TestExternal(util.F2PyTest):
-    # issue gh-17859: add external attribute support
-    sources = [util.getpath("tests", "src", "crackfortran", "gh17859.f")]
-
-    def test_external_as_statement(self):
-        def incr(x):
-            return x + 123
-
-        r = self.module.external_as_statement(incr)
-        assert r == 123
-
-    def test_external_as_attribute(self):
-        def incr(x):
-            return x + 123
-
-        r = self.module.external_as_attribute(incr)
-        assert r == 123
-
-
-@pytest.mark.usefixtures("build_module")
-class TestCrackFortran(util.F2PyTest):
-    # gh-2848: commented lines between parameters in subroutine parameter lists
-    sources = [util.getpath("tests", "src", "crackfortran", "gh2848.f90")]
-
-    def test_gh2848(self):
-        r = self.module.gh2848(1, 2)
-        assert r == (1, 2)
+        assert mod["vars"]["a"]["attrspec"] == [
+            "private",
+        ]
+        assert mod["vars"]["b"]["attrspec"] == [
+            "public",
+        ]
+        assert mod["vars"]["seta"]["attrspec"] == [
+            "public",
+        ]
 
 
 class TestMarkinnerspaces:
@@ -147,9 +106,228 @@ class TestMarkinnerspaces:
         assert markinnerspaces(r'a "b c" "d e"') == r'a "b@_@c" "d@_@e"'
 
 
-@pytest.mark.usefixtures("build_module")
-class TestDimSpec(util.F2PyTest):
-    """This test suite tests various expressions that are used as dimension
+class TestModuleDeclaration:
+    def test_dependencies(self, tmp_path):
+        fpath = util.getpath("tests", "src", "crackfortran", "foo_deps.f90")
+        mod = crackfortran.crackfortran([str(fpath)])
+        assert len(mod) == 1
+        assert mod[0]["vars"]["abar"]["="] == "bar('abar')"
+
+
+class TestEval:
+    def test_eval_scalar(self):
+        eval_scalar = crackfortran._eval_scalar
+
+        assert eval_scalar("123", {}) == "123"
+        assert eval_scalar("12 + 3", {}) == "15"
+        assert eval_scalar("a + b", dict(a=1, b=2)) == "3"
+        assert eval_scalar('"123"', {}) == "'123'"
+
+
+class TestFortranReader:
+    @pytest.mark.parametrize("encoding", ["ascii", "utf-8", "utf-16", "utf-32"])
+    def test_input_encoding(self, tmp_path, encoding):
+        # gh-635
+        f_path = tmp_path / f"input_with_{encoding}_encoding.f90"
+        with f_path.open("w", encoding=encoding) as ff:
+            ff.write(
+                """
+                     subroutine foo()
+                     end subroutine foo
+                     """
+            )
+        mod = crackfortran.crackfortran([str(f_path)])
+        assert mod[0]["name"] == "foo"
+
+
+class TestNameArgsPatternBacktracking:
+    @pytest.mark.parametrize(
+        ["adversary"],
+        [
+            ("@)@bind@(@",),
+            ("@)@bind                         @(@",),
+            ("@)@bind foo bar baz@(@",),
+        ],
+    )
+    def test_nameargspattern_backtracking(self, adversary):
+        """address ReDOS vulnerability:
+        https://github.com/numpy/numpy/issues/23338"""
+        trials_per_batch = 12
+        batches_per_regex = 4
+        start_reps, end_reps = 15, 25
+        for ii in range(start_reps, end_reps):
+            repeated_adversary = adversary * ii
+            # test times in small batches.
+            # this gives us more chances to catch a bad regex
+            # while still catching it before too long if it is bad
+            for _ in range(batches_per_regex):
+                times = []
+                for _ in range(trials_per_batch):
+                    t0 = time.perf_counter()
+                    mtch = nameargspattern.search(repeated_adversary)
+                    times.append(time.perf_counter() - t0)
+                # our pattern should be much faster than 0.2s per search
+                # it's unlikely that a bad regex will pass even on fast CPUs
+                assert np.median(times) < 0.2
+            assert not mtch
+            # if the adversary is capped with @)@, it becomes acceptable
+            # according to the old version of the regex.
+            # that should still be true.
+            good_version_of_adversary = repeated_adversary + "@)@"
+            assert nameargspattern.search(good_version_of_adversary)
+
+
+class TestFortranGroupCounters:
+    def test_end_if_comment(self):
+        # gh-23533
+        fpath = util.getpath("tests", "src", "crackfortran", "gh23533.f")
+        try:
+            crackfortran.crackfortran([str(fpath)])
+        except Exception as exc:
+            assert False, f"'crackfortran.crackfortran' raised an exception {exc}"
+
+
+class TestF77CommonBlockReader:
+    def test_gh22648(self, tmp_path):
+        fpath = util.getpath("tests", "src", "crackfortran", "gh22648.pyf")
+        with contextlib.redirect_stdout(io.StringIO()) as stdout_f2py:
+            mod = crackfortran.crackfortran([str(fpath)])
+        assert "Mismatch" not in stdout_f2py.getvalue()
+
+
+class TestParamEval:
+    # issue gh-11612, array parameter parsing
+    def test_param_eval_nested(self):
+        v = "(/3.14, 4./)"
+        g_params = dict(
+            kind=crackfortran._kind_func,
+            selected_int_kind=crackfortran._selected_int_kind_func,
+            selected_real_kind=crackfortran._selected_real_kind_func,
+        )
+        params = {"dp": 8, "intparamarray": {1: 3, 2: 5}, "nested": {1: 1, 2: 2, 3: 3}}
+        dimspec = "(2)"
+        ret = crackfortran.param_eval(v, g_params, params, dimspec=dimspec)
+        assert ret == {1: 3.14, 2: 4.0}
+
+    def test_param_eval_nonstandard_range(self):
+        v = "(/ 6, 3, 1 /)"
+        g_params = dict(
+            kind=crackfortran._kind_func,
+            selected_int_kind=crackfortran._selected_int_kind_func,
+            selected_real_kind=crackfortran._selected_real_kind_func,
+        )
+        params = {}
+        dimspec = "(-1:1)"
+        ret = crackfortran.param_eval(v, g_params, params, dimspec=dimspec)
+        assert ret == {-1: 6, 0: 3, 1: 1}
+
+    def test_param_eval_empty_range(self):
+        v = "6"
+        g_params = dict(
+            kind=crackfortran._kind_func,
+            selected_int_kind=crackfortran._selected_int_kind_func,
+            selected_real_kind=crackfortran._selected_real_kind_func,
+        )
+        params = {}
+        dimspec = ""
+        pytest.raises(
+            ValueError, crackfortran.param_eval, v, g_params, params, dimspec=dimspec
+        )
+
+    def test_param_eval_non_array_param(self):
+        v = "3.14_dp"
+        g_params = dict(
+            kind=crackfortran._kind_func,
+            selected_int_kind=crackfortran._selected_int_kind_func,
+            selected_real_kind=crackfortran._selected_real_kind_func,
+        )
+        params = {}
+        ret = crackfortran.param_eval(v, g_params, params, dimspec=None)
+        assert ret == "3.14_dp"
+
+    def test_param_eval_too_many_dims(self):
+        v = "reshape((/ (i, i=1, 250) /), (/5, 10, 5/))"
+        g_params = dict(
+            kind=crackfortran._kind_func,
+            selected_int_kind=crackfortran._selected_int_kind_func,
+            selected_real_kind=crackfortran._selected_real_kind_func,
+        )
+        params = {}
+        dimspec = "(0:4, 3:12, 5)"
+        pytest.raises(
+            ValueError, crackfortran.param_eval, v, g_params, params, dimspec=dimspec
+        )
+
+
+@pytest.fixture(scope="module")
+def no_space_spec():
+    # issue gh-15035: add handling for endsubroutine, endfunction with no space
+    # between "end" and the block name
+    spec = util.F2PyModuleSpec(
+        test_class_name="TestNoSpace",
+        sources=[util.getpath("tests", "src", "crackfortran", "gh15035.f")],
+    )
+    return spec
+
+
+@pytest.mark.parametrize("_mod", ["no_space_spec"], indirect=True)
+def test_module(_mod):
+    k = np.array([1, 2, 3], dtype=np.float64)
+    w = np.array([1, 2, 3], dtype=np.float64)
+    _mod.subb(k)
+    assert np.allclose(k, w + 1)
+    _mod.subc([w, k])
+    assert np.allclose(k, w + 1)
+    assert _mod.t0("23") == b"2"
+
+
+@pytest.fixture(scope="module")
+def external_attr_spec():
+    # issue gh-17859: add external attribute support
+    spec = util.F2PyModuleSpec(
+        test_class_name="TestExternal",
+        sources=[util.getpath("tests", "src", "crackfortran", "gh17859.f")],
+    )
+    return spec
+
+
+@pytest.mark.parametrize("_mod", ["external_attr_spec"], indirect=True)
+def test_external_as_statement(_mod):
+    def incr(x):
+        return x + 123
+
+    r = _mod.external_as_statement(incr)
+    assert r == 123
+
+
+@pytest.mark.parametrize("_mod", ["external_attr_spec"], indirect=True)
+def test_external_as_attribute(_mod):
+    def incr(x):
+        return x + 123
+
+    r = _mod.external_as_attribute(incr)
+    assert r == 123
+
+
+@pytest.fixture(scope="module")
+def commentline_params_spec():
+    # gh-2848: commented lines between parameters in subroutine parameter lists
+    spec = util.F2PyModuleSpec(
+        test_class_name="TestCrackFortranCommentLines",
+        sources=[util.getpath("tests", "src", "crackfortran", "gh2848.f90")],
+    )
+    return spec
+
+
+@pytest.mark.parametrize("_mod", ["commentline_params_spec"], indirect=True)
+def test_gh2848(_mod):
+    r = _mod.gh2848(1, 2)
+    assert r == (1, 2)
+
+
+@pytest.fixture(scope="module")
+def dim_expr_spec():
+    """This test spec tests various expressions that are used as dimension
     specifications.
 
     There exists two usage cases where analyzing dimensions
@@ -178,10 +356,8 @@ class TestDimSpec(util.F2PyTest):
     is linear with respect to unknown parameter.
 
     """
-
-    suffix = ".f90"
-
-    code_template = textwrap.dedent("""
+    code_template = textwrap.dedent(
+        """
       function get_arr_size_{count}(a, n) result (length)
         integer, intent(in) :: n
         integer, dimension({dimspec}), intent(out) :: a
@@ -198,216 +374,96 @@ class TestDimSpec(util.F2PyTest):
           ! print*, "a=", a
         endif
       end subroutine
-    """)
-
-    linear_dimspecs = [
-        "n", "2*n", "2:n", "n/2", "5 - n/2", "3*n:20", "n*(n+1):n*(n+5)",
-        "2*n, n"
-    ]
-    nonlinear_dimspecs = ["2*n:3*n*n+2*n"]
-    all_dimspecs = linear_dimspecs + nonlinear_dimspecs
+    """
+    )
 
     code = ""
     for count, dimspec in enumerate(all_dimspecs):
-        lst = [(d.split(":")[0] if ":" in d else "1") for d in dimspec.split(',')]
+        lst = [(d.split(":")[0] if ":" in d else "1") for d in dimspec.split(",")]
         code += code_template.format(
             count=count,
             dimspec=dimspec,
             first=", ".join(lst),
         )
-
-    @pytest.mark.parametrize("dimspec", all_dimspecs)
-    @pytest.mark.slow
-    def test_array_size(self, dimspec):
-
-        count = self.all_dimspecs.index(dimspec)
-        get_arr_size = getattr(self.module, f"get_arr_size_{count}")
-
-        for n in [1, 2, 3, 4, 5]:
-            sz, a = get_arr_size(n)
-            assert a.size == sz
-
-    @pytest.mark.parametrize("dimspec", all_dimspecs)
-    def test_inv_array_size(self, dimspec):
-
-        count = self.all_dimspecs.index(dimspec)
-        get_arr_size = getattr(self.module, f"get_arr_size_{count}")
-        get_inv_arr_size = getattr(self.module, f"get_inv_arr_size_{count}")
-
-        for n in [1, 2, 3, 4, 5]:
-            sz, a = get_arr_size(n)
-            if dimspec in self.nonlinear_dimspecs:
-                # one must specify n as input, the call we'll ensure
-                # that a and n are compatible:
-                n1 = get_inv_arr_size(a, n)
-            else:
-                # in case of linear dependence, n can be determined
-                # from the shape of a:
-                n1 = get_inv_arr_size(a)
-            # n1 may be different from n (for instance, when `a` size
-            # is a function of some `n` fraction) but it must produce
-            # the same sized array
-            sz1, _ = get_arr_size(n1)
-            assert sz == sz1, (n, n1, sz, sz1)
-
-
-class TestModuleDeclaration:
-    def test_dependencies(self, tmp_path):
-        fpath = util.getpath("tests", "src", "crackfortran", "foo_deps.f90")
-        mod = crackfortran.crackfortran([str(fpath)])
-        assert len(mod) == 1
-        assert mod[0]["vars"]["abar"]["="] == "bar('abar')"
-
-
-class TestEval():
-    def test_eval_scalar(self):
-        eval_scalar = crackfortran._eval_scalar
-
-        assert eval_scalar('123', {}) == '123'
-        assert eval_scalar('12 + 3', {}) == '15'
-        assert eval_scalar('a + b', dict(a=1, b=2)) == '3'
-        assert eval_scalar('"123"', {}) == "'123'"
-
-
-class TestFortranReader():
-    @pytest.mark.parametrize("encoding",
-                             ['ascii', 'utf-8', 'utf-16', 'utf-32'])
-    def test_input_encoding(self, tmp_path, encoding):
-        # gh-635
-        f_path = tmp_path / f"input_with_{encoding}_encoding.f90"
-        with f_path.open('w', encoding=encoding) as ff:
-            ff.write("""
-                     subroutine foo()
-                     end subroutine foo
-                     """)
-        mod = crackfortran.crackfortran([str(f_path)])
-        assert mod[0]['name'] == 'foo'
-
-
-@pytest.mark.slow
-@pytest.mark.usefixtures("build_module")
-class TestUnicodeComment(util.F2PyTest):
-    sources = [util.getpath("tests", "src", "crackfortran", "unicode_comment.f90")]
-
-    @pytest.mark.skipif(
-        (importlib.util.find_spec("charset_normalizer") is None),
-        reason="test requires charset_normalizer which is not installed",
+    spec = util.F2PyModuleSpec(
+        test_class_name="TestDimSpec",
+        suffix = ".f90",
+        code=code,
     )
-    def test_encoding_comment(self):
-        self.module.foo(3)
+    return spec
+
+linear_dimspecs = [
+    "n",
+    "2*n",
+    "2:n",
+    "n/2",
+    "5 - n/2",
+    "3*n:20",
+    "n*(n+1):n*(n+5)",
+    "2*n, n",
+]
+nonlinear_dimspecs = ["2*n:3*n*n+2*n"]
+all_dimspecs = linear_dimspecs + nonlinear_dimspecs
+
+@pytest.mark.parametrize("dimspec", all_dimspecs)
+@pytest.mark.parametrize("_mod", ["dim_expr_spec"], indirect=True)
+def test_array_size(_mod, dimspec):
+    count = all_dimspecs.index(dimspec)
+    get_arr_size = getattr(_mod, f"get_arr_size_{count}")
+
+    for n in [1, 2, 3, 4, 5]:
+        sz, a = get_arr_size(n)
+        assert a.size == sz
+
+@pytest.mark.parametrize("dimspec", all_dimspecs)
+@pytest.mark.parametrize("_mod", ["dim_expr_spec"], indirect=True)
+def test_inv_array_size(_mod, dimspec):
+    count = all_dimspecs.index(dimspec)
+    get_arr_size = getattr(_mod, f"get_arr_size_{count}")
+    get_inv_arr_size = getattr(_mod, f"get_inv_arr_size_{count}")
+
+    for n in [1, 2, 3, 4, 5]:
+        sz, a = get_arr_size(n)
+        if dimspec in nonlinear_dimspecs:
+            # one must specify n as input, the call we'll ensure
+            # that a and n are compatible:
+            n1 = get_inv_arr_size(a, n)
+        else:
+            # in case of linear dependence, n can be determined
+            # from the shape of a:
+            n1 = get_inv_arr_size(a)
+        # n1 may be different from n (for instance, when `a` size
+        # is a function of some `n` fraction) but it must produce
+        # the same sized array
+        sz1, _ = get_arr_size(n1)
+        assert sz == sz1, (n, n1, sz, sz1)
 
 
-class TestNameArgsPatternBacktracking:
-    @pytest.mark.parametrize(
-        ['adversary'],
-        [
-            ('@)@bind@(@',),
-            ('@)@bind                         @(@',),
-            ('@)@bind foo bar baz@(@',)
-        ]
+@pytest.fixture(scope="module")
+def unicode_comment_spec():
+    spec = util.F2PyModuleSpec(
+        test_class_name="TestUnicodeComment",
+        sources = [util.getpath("tests", "src", "crackfortran", "unicode_comment.f90")]
     )
-    def test_nameargspattern_backtracking(self, adversary):
-        '''address ReDOS vulnerability:
-        https://github.com/numpy/numpy/issues/23338'''
-        trials_per_batch = 12
-        batches_per_regex = 4
-        start_reps, end_reps = 15, 25
-        for ii in range(start_reps, end_reps):
-            repeated_adversary = adversary * ii
-            # test times in small batches.
-            # this gives us more chances to catch a bad regex
-            # while still catching it before too long if it is bad
-            for _ in range(batches_per_regex):
-                times = []
-                for _ in range(trials_per_batch):
-                    t0 = time.perf_counter()
-                    mtch = nameargspattern.search(repeated_adversary)
-                    times.append(time.perf_counter() - t0)
-                # our pattern should be much faster than 0.2s per search
-                # it's unlikely that a bad regex will pass even on fast CPUs
-                assert np.median(times) < 0.2
-            assert not mtch
-            # if the adversary is capped with @)@, it becomes acceptable
-            # according to the old version of the regex.
-            # that should still be true.
-            good_version_of_adversary = repeated_adversary + '@)@'
-            assert nameargspattern.search(good_version_of_adversary)
+    return spec
 
-@pytest.mark.usefixtures("build_module")
-class TestFunctionReturn(util.F2PyTest):
-    sources = [util.getpath("tests", "src", "crackfortran", "gh23598.f90")]
+@pytest.mark.skipif(
+    (importlib.util.find_spec("charset_normalizer") is None),
+    reason="test requires charset_normalizer which is not installed",
+)
+@pytest.mark.parametrize("_mod", ["unicode_comment_spec"], indirect=True)
+def test_encoding_comment(_mod):
+    _mod.foo(3)
 
-    @pytest.mark.slow
-    def test_function_rettype(self):
-        # gh-23598
-        assert self.module.intproduct(3, 4) == 12
+@pytest.fixture(scope="module")
+def func_ret_spec():
+    spec = util.F2PyModuleSpec(
+        test_class_name="TestFunctionReturn",
+        sources = [util.getpath("tests", "src", "crackfortran", "gh23598.f90")]
+    )
+    return spec
 
-
-class TestFortranGroupCounters():
-    def test_end_if_comment(self):
-        # gh-23533
-        fpath = util.getpath("tests", "src", "crackfortran", "gh23533.f")
-        try:
-            crackfortran.crackfortran([str(fpath)])
-        except Exception as exc:
-            assert False, f"'crackfortran.crackfortran' raised an exception {exc}"
-
-
-class TestF77CommonBlockReader():
-    def test_gh22648(self, tmp_path):
-        fpath = util.getpath("tests", "src", "crackfortran", "gh22648.pyf")
-        with contextlib.redirect_stdout(io.StringIO()) as stdout_f2py:
-            mod = crackfortran.crackfortran([str(fpath)])
-        assert "Mismatch" not in stdout_f2py.getvalue()
-
-class TestParamEval():
-    # issue gh-11612, array parameter parsing
-    def test_param_eval_nested(self):
-        v = '(/3.14, 4./)'
-        g_params = dict(kind=crackfortran._kind_func,
-                selected_int_kind=crackfortran._selected_int_kind_func,
-                selected_real_kind=crackfortran._selected_real_kind_func)
-        params = {'dp': 8, 'intparamarray': {1: 3, 2: 5},
-                  'nested': {1: 1, 2: 2, 3: 3}}
-        dimspec = '(2)'
-        ret = crackfortran.param_eval(v, g_params, params, dimspec=dimspec)
-        assert ret == {1: 3.14, 2: 4.0}
-
-    def test_param_eval_nonstandard_range(self):
-        v = '(/ 6, 3, 1 /)'
-        g_params = dict(kind=crackfortran._kind_func,
-                selected_int_kind=crackfortran._selected_int_kind_func,
-                selected_real_kind=crackfortran._selected_real_kind_func)
-        params = {}
-        dimspec = '(-1:1)'
-        ret = crackfortran.param_eval(v, g_params, params, dimspec=dimspec)
-        assert ret == {-1: 6, 0: 3, 1: 1}
-
-    def test_param_eval_empty_range(self):
-        v = '6'
-        g_params = dict(kind=crackfortran._kind_func,
-                selected_int_kind=crackfortran._selected_int_kind_func,
-                selected_real_kind=crackfortran._selected_real_kind_func)
-        params = {}
-        dimspec = ''
-        pytest.raises(ValueError, crackfortran.param_eval, v, g_params, params,
-                      dimspec=dimspec)
-
-    def test_param_eval_non_array_param(self):
-        v = '3.14_dp'
-        g_params = dict(kind=crackfortran._kind_func,
-                selected_int_kind=crackfortran._selected_int_kind_func,
-                selected_real_kind=crackfortran._selected_real_kind_func)
-        params = {}
-        ret = crackfortran.param_eval(v, g_params, params, dimspec=None)
-        assert ret == '3.14_dp'
-
-    def test_param_eval_too_many_dims(self):
-        v = 'reshape((/ (i, i=1, 250) /), (/5, 10, 5/))'
-        g_params = dict(kind=crackfortran._kind_func,
-                selected_int_kind=crackfortran._selected_int_kind_func,
-                selected_real_kind=crackfortran._selected_real_kind_func)
-        params = {}
-        dimspec = '(0:4, 3:12, 5)'
-        pytest.raises(ValueError, crackfortran.param_eval, v, g_params, params,
-                      dimspec=dimspec)
+@pytest.mark.parametrize("_mod", ["func_ret_spec"], indirect=True)
+def test_function_rettype(_mod):
+    # gh-23598
+    assert _mod.intproduct(3, 4) == 12
