@@ -33,6 +33,7 @@ from numpy._core import (
     matmul as _core_matmul, matrix_transpose as _core_matrix_transpose,
     transpose as _core_transpose, vecdot as _core_vecdot,
 )
+from numpy._globals import _NoValue
 from numpy.lib._twodim_base_impl import triu, eye
 from numpy.lib.array_utils import normalize_axis_index, normalize_axis_tuple
 from numpy.linalg import _umath_linalg
@@ -721,31 +722,39 @@ def matrix_power(a, n):
 
 # Cholesky decomposition
 
+def _cholesky_dispatcher(a, /, *, upper=None):
+    return (a,)
 
-@array_function_dispatch(_unary_dispatcher)
-def cholesky(a):
+
+@array_function_dispatch(_cholesky_dispatcher)
+def cholesky(a, /, *, upper=False):
     """
     Cholesky decomposition.
 
-    Return the Cholesky decomposition, `L * L.H`, of the square matrix `a`,
-    where `L` is lower-triangular and .H is the conjugate transpose operator
-    (which is the ordinary transpose if `a` is real-valued).  `a` must be
-    Hermitian (symmetric if real-valued) and positive-definite. No
-    checking is performed to verify whether `a` is Hermitian or not.
-    In addition, only the lower-triangular and diagonal elements of `a`
-    are used. Only `L` is actually returned.
+    Return the lower or upper Cholesky decomposition, ``L * L.H`` or
+    ``U.H * U``, of the square matrix ``a``, where ``L`` is lower-triangular,
+    ``U`` is upper-triangular, and ``.H`` is the conjugate transpose operator
+    (which is the ordinary transpose if ``a`` is real-valued). ``a`` must be
+    Hermitian (symmetric if real-valued) and positive-definite. No checking is
+    performed to verify whether ``a`` is Hermitian or not. In addition, only
+    the lower or upper-triangular and diagonal elements of ``a`` are used.
+    Only ``L`` or ``U`` is actually returned.
 
     Parameters
     ----------
     a : (..., M, M) array_like
         Hermitian (symmetric if all elements are real), positive-definite
         input matrix.
+    upper : bool
+        If ``True``, the result must be the upper-triangular Cholesky factor.
+        If ``False``, the result must be the lower-triangular Cholesky factor.
+        Default: ``False``.
 
     Returns
     -------
     L : (..., M, M) array_like
-        Lower-triangular Cholesky factor of `a`.  Returns a matrix object if
-        `a` is a matrix object.
+        Lower or upper-triangular Cholesky factor of `a`. Returns a matrix
+        object if `a` is a matrix object.
 
     Raises
     ------
@@ -781,7 +790,7 @@ def cholesky(a):
 
     and then for :math:`\\mathbf{x}` in
 
-    .. math:: L.H \\mathbf{x} = \\mathbf{y}.
+    .. math:: L^{H} \\mathbf{x} = \\mathbf{y}.
 
     Examples
     --------
@@ -804,6 +813,10 @@ def cholesky(a):
     >>> np.linalg.cholesky(np.matrix(A))
     matrix([[ 1.+0.j,  0.+0.j],
             [ 0.+2.j,  1.+0.j]])
+    >>> # The upper-triangular Cholesky factor can also be obtained.
+    >>> np.linalg.cholesky(A, upper=True)
+    array([[1.-0.j, 0.-2.j],
+           [0.-0.j, 1.-0.j]])
 
     """
     gufunc = _umath_linalg.cholesky_lo
@@ -815,6 +828,8 @@ def cholesky(a):
     with errstate(call=_raise_linalgerror_nonposdef, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
         r = gufunc(a, signature=signature)
+    if upper:
+        r = matrix_transpose(r).conj()
     return wrap(r.astype(result_t, copy=False))
 
 
@@ -1518,10 +1533,10 @@ def eigh(a, UPLO='L'):
     array([[-0.92387953+0.j        , -0.38268343+0.j        ], # may vary
            [ 0.        +0.38268343j,  0.        -0.92387953j]])
 
-    >>> (np.dot(a, eigenvectors[:, 0]) - 
+    >>> (np.dot(a, eigenvectors[:, 0]) -
     ... eigenvalues[0] * eigenvectors[:, 0])  # verify 1st eigenval/vec pair
     array([5.55111512e-17+0.0000000e+00j, 0.00000000e+00+1.2490009e-16j])
-    >>> (np.dot(a, eigenvectors[:, 1]) - 
+    >>> (np.dot(a, eigenvectors[:, 1]) -
     ... eigenvalues[1] * eigenvectors[:, 1])  # verify 2nd eigenval/vec pair
     array([0.+0.j, 0.+0.j])
 
@@ -2056,8 +2071,8 @@ def matrix_rank(A, tol=None, hermitian=False):
     S = svd(A, compute_uv=False, hermitian=hermitian)
     if tol is None:
         tol = (
-            S.max(axis=-1, keepdims=True) * 
-            max(A.shape[-2:]) * 
+            S.max(axis=-1, keepdims=True) *
+            max(A.shape[-2:]) *
             finfo(S.dtype).eps
         )
     else:
@@ -2067,12 +2082,12 @@ def matrix_rank(A, tol=None, hermitian=False):
 
 # Generalized inverse
 
-def _pinv_dispatcher(a, rcond=None, hermitian=None):
+def _pinv_dispatcher(a, rcond=None, hermitian=None, *, rtol=None):
     return (a,)
 
 
 @array_function_dispatch(_pinv_dispatcher)
-def pinv(a, rcond=1e-15, hermitian=False):
+def pinv(a, rcond=None, hermitian=False, *, rtol=_NoValue):
     """
     Compute the (Moore-Penrose) pseudo-inverse of a matrix.
 
@@ -2087,17 +2102,24 @@ def pinv(a, rcond=1e-15, hermitian=False):
     ----------
     a : (..., M, N) array_like
         Matrix or stack of matrices to be pseudo-inverted.
-    rcond : (...) array_like of float
+    rcond : (...) array_like of float, optional
         Cutoff for small singular values.
         Singular values less than or equal to
         ``rcond * largest_singular_value`` are set to zero.
-        Broadcasts against the stack of matrices.
+        Broadcasts against the stack of matrices. Default: ``1e-15``.
     hermitian : bool, optional
         If True, `a` is assumed to be Hermitian (symmetric if real-valued),
         enabling a more efficient method for finding singular values.
         Defaults to False.
 
         .. versionadded:: 1.17.0
+    rtol : (...) array_like of float, optional
+        Same as `rcond`, but it's an Array API compatible parameter name.
+        Only `rcond` or `rtol` can be set at a time. If none of them are
+        provided then NumPy's ``1e-15`` default is used. If ``rtol=None``
+        is passed then the API standard default is used.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -2151,6 +2173,19 @@ def pinv(a, rcond=1e-15, hermitian=False):
 
     """
     a, wrap = _makearray(a)
+    if rcond is None:
+        if rtol is _NoValue:
+            rcond = 1e-15
+        elif rtol is None:
+            rcond = max(a.shape[-2:]) * finfo(a.dtype).eps
+        else:
+            rcond = rtol
+    elif rtol is not _NoValue:
+        raise ValueError("`rtol` and `rcond` can't be both set.")
+    else:
+        # NOTE: Deprecate `rcond` in a few versions.
+        pass
+
     rcond = asarray(rcond)
     if _is_empty_2d(a):
         m, n = a.shape[-2:]
@@ -2198,8 +2233,8 @@ def slogdet(a):
     logabsdet : (...) array_like
         The natural log of the absolute value of the determinant.
 
-    If the determinant is zero, then `sign` will be 0 and `logabsdet` 
-    will be -inf. In all cases, the determinant is equal to 
+    If the determinant is zero, then `sign` will be 0 and `logabsdet`
+    will be -inf. In all cases, the determinant is equal to
     ``sign * np.exp(logabsdet)``.
 
     See Also
@@ -3317,7 +3352,39 @@ def _vecdot_dispatcher(x1, x2, /, *, axis=None):
 
 @array_function_dispatch(_vecdot_dispatcher)
 def vecdot(x1, x2, /, *, axis=-1):
+    """
+    Computes the vector dot product.
+
+    This function is restricted to arguments compatible with the Array API,
+    contrary to :func:`numpy.vecdot`.
+
+    Let :math:`\\mathbf{a}` be a vector in ``x1`` and :math:`\\mathbf{b}` be
+    a corresponding vector in ``x2``. The dot product is defined as:
+
+    .. math::
+       \\mathbf{a} \\cdot \\mathbf{b} = \\sum_{i=0}^{n-1} \\overline{a_i}b_i
+
+    over the dimension specified by ``axis`` and where :math:`\\overline{a_i}`
+    denotes the complex conjugate if :math:`a_i` is complex and the identity
+    otherwise.
+
+    Parameters
+    ----------
+    x1 : array_like
+        First input array.
+    x2 : array_like
+        Second input array.
+    axis : int, optional
+        Axis over which to compute the dot product. Default: ``-1``.
+
+    Returns
+    -------
+    output : ndarray
+        The vector dot product of the input.
+
+    See Also
+    --------
+    numpy.vecdot
+
+    """
     return _core_vecdot(x1, x2, axis=axis)
-
-
-vecdot.__doc__ = _core_vecdot.__doc__

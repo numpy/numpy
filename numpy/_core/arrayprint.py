@@ -207,12 +207,12 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
                 represented with an equal number of fewer digits, use that
                 many digits for all elements.
     legacy : string or `False`, optional
-        If set to the string `'1.13'` enables 1.13 legacy printing mode. This
+        If set to the string ``'1.13'`` enables 1.13 legacy printing mode. This
         approximates numpy 1.13 print output by including a space in the sign
         position of floats and different behavior for 0d arrays. This also
         enables 1.21 legacy printing mode (described below).
 
-        If set to the string `'1.21'` enables 1.21 legacy printing mode. This
+        If set to the string ``'1.21'`` enables 1.21 legacy printing mode. This
         approximates numpy 1.21 print output of complex structured dtypes
         by not inserting spaces after commas that separate fields and after
         colons.
@@ -681,7 +681,7 @@ def array2string(a, max_line_width=None, precision=None,
           represented with an equal number of fewer digits, use that
           many digits for all elements.
     legacy : string or `False`, optional
-        If set to the string `'1.13'` enables 1.13 legacy printing mode. This
+        If set to the string ``'1.13'`` enables 1.13 legacy printing mode. This
         approximates numpy 1.13 print output by including a space in the sign
         position of floats and different behavior for 0d arrays. If set to
         `False`, disables legacy mode. Unrecognized strings will be ignored

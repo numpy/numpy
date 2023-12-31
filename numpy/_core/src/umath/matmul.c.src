@@ -224,7 +224,7 @@ NPY_NO_EXPORT void
                            void *_ip2, npy_intp is2_n, npy_intp is2_p,
                            void *_op, npy_intp os_m, npy_intp os_p,
                            npy_intp dm, npy_intp dn, npy_intp dp)
-                           
+
 {
     npy_intp m, n, p;
     npy_intp ib1_n, ib2_n, ib2_p, ob_p;
@@ -282,7 +282,7 @@ BOOL_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
                            void *_ip2, npy_intp is2_n, npy_intp is2_p,
                            void *_op, npy_intp os_m, npy_intp os_p,
                            npy_intp dm, npy_intp dn, npy_intp dp)
-                           
+
 {
     npy_intp m, n, p;
     npy_intp ib2_p, ob_p;
@@ -320,7 +320,7 @@ NPY_NO_EXPORT void
 OBJECT_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
                            void *_ip2, npy_intp is2_n, npy_intp is2_p,
                            void *_op, npy_intp os_m, npy_intp os_p,
-                           npy_intp dm, npy_intp dn, npy_intp dp)                         
+                           npy_intp dm, npy_intp dn, npy_intp dp)
 {
     char *ip1 = (char *)_ip1, *ip2 = (char *)_ip2, *op = (char *)_op;
 
@@ -445,7 +445,7 @@ NPY_NO_EXPORT void
          * n, m, p and strides.
          */
         if (too_big_for_blas || any_zero_dim) {
-            @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n, 
+            @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n,
                                        ip2, is2_n, is2_p,
                                        op, os_m, os_p, dm, dn, dp);
         }
@@ -460,7 +460,7 @@ NPY_NO_EXPORT void
                  * could use cblas_Xaxy, but that requires 0ing output
                  * and would not be faster (XXX prove it)
                  */
-                @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n, 
+                @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n,
                                            ip2, is2_n, is2_p,
                                            op, os_m, os_p, dm, dn, dp);
             } else if (vector_matrix) {
@@ -474,7 +474,7 @@ NPY_NO_EXPORT void
                             op, os_m, os_p, dm, dn, dp);
             } else {
                 /* column @ row, 2d output, no blas needed or non-blas-able input */
-                @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n, 
+                @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n,
                                            ip2, is2_n, is2_p,
                                            op, os_m, os_p, dm, dn, dp);
             }
@@ -500,13 +500,13 @@ NPY_NO_EXPORT void
                  * non-blasable (or non-ccontiguous output)
                  * we could still use BLAS, see gh-12365.
                  */
-                @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n, 
+                @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n,
                                            ip2, is2_n, is2_p,
                                            op, os_m, os_p, dm, dn, dp);
             }
         }
 #else
-        @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n, 
+        @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n,
                                    ip2, is2_n, is2_p,
                                    op, os_m, os_p, dm, dn, dp);
 
@@ -514,4 +514,144 @@ NPY_NO_EXPORT void
     }
 }
 
+/**end repeat**/
+
+
+/*
+ * vecdot loops
+ * signature is (n),(n)->()
+ * We need to redefine complex and object dot from arraytypes.c.src to ensure
+ * we take the complex conjugate of the first argument (for cblas, this means
+ * using the dotc functions instead of dotu).
+ */
+
+/**begin repeat
+ *
+ * #name = CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #ctype = npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #type = npy_float, npy_double, npy_longdouble#
+ * #sumtype = npy_double, npy_double, npy_longdouble#
+ * #prefix = c, z, 0#
+ * #USE_BLAS = 1, 1, 0#
+ */
+NPY_NO_EXPORT void
+@name@_dotc(char *ip1, npy_intp is1, char *ip2, npy_intp is2,
+            char *op, npy_intp n, void *NPY_UNUSED(ignore))
+{
+#if defined(HAVE_CBLAS) && @USE_BLAS@
+    CBLAS_INT is1b = blas_stride(is1, sizeof(@ctype@));
+    CBLAS_INT is2b = blas_stride(is2, sizeof(@ctype@));
+
+    if (is1b && is2b) {
+        @sumtype@ sum[2] = {0., 0.};  /* at least double for stability */
+
+        while (n > 0) {
+            CBLAS_INT chunk = n < NPY_CBLAS_CHUNK ? n : NPY_CBLAS_CHUNK;
+            @type@ tmp[2];
+
+            CBLAS_FUNC(cblas_@prefix@dotc_sub)(
+                    (CBLAS_INT)chunk, ip1, is1b, ip2, is2b, tmp);
+            sum[0] += (@sumtype@)tmp[0];
+            sum[1] += (@sumtype@)tmp[1];
+            /* use char strides here */
+            ip1 += chunk * is1;
+            ip2 += chunk * is2;
+            n -= chunk;
+        }
+        ((@type@ *)op)[0] = (@type@)sum[0];
+        ((@type@ *)op)[1] = (@type@)sum[1];
+    }
+    else
+#endif
+    {
+        @sumtype@ sumr = 0., sumi = 0.;  /* at least double for stability */
+        for (npy_intp i = 0; i < n; i++, ip1 += is1, ip2 += is2) {
+            const @type@ ip1r = ((@type@ *)ip1)[0];
+            const @type@ ip1i = ((@type@ *)ip1)[1];
+            const @type@ ip2r = ((@type@ *)ip2)[0];
+            const @type@ ip2i = ((@type@ *)ip2)[1];
+            /* ip1.conj() * ip2 */
+            sumr += (@sumtype@)(ip1r * ip2r + ip1i * ip2i);
+            sumi += (@sumtype@)(ip1r * ip2i - ip1i * ip2r);
+        }
+        ((@type@ *)op)[0] = (@type@)sumr;
+        ((@type@ *)op)[1] = (@type@)sumi;
+    }
+}
+/**end repeat**/
+
+static void
+OBJECT_dotc(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp n,
+            void *NPY_UNUSED(ignore))
+{
+    npy_intp i;
+    PyObject *result = NULL;
+
+    for (i = 0; i < n; i++, ip1 += is1, ip2 += is2) {
+        PyObject *obj1 = *(PyObject**)ip1, *obj2 = *(PyObject**)ip2;
+        if (obj1 == NULL) {
+            obj1 = Py_None;  /* raise useful error message at conjugate */
+        }
+        if (obj2 == NULL) {
+            obj2 = Py_None;  /* raise at multiply (unless obj1 handles None) */
+        }
+        PyObject *obj1_conj = PyObject_CallMethod(obj1, "conjugate", NULL);
+        if (obj1_conj == NULL) {
+            goto fail;
+        }
+        PyObject *prod = PyNumber_Multiply(obj1_conj, obj2);
+        Py_DECREF(obj1_conj);
+        if (prod == NULL) {
+            goto fail;
+        }
+        if (i == 0) {
+            result = prod;
+        }
+        else {
+            Py_SETREF(result, PyNumber_Add(result, prod));
+            Py_DECREF(prod);
+            if (result == NULL) {
+                goto fail;
+            }
+        }
+    }
+    Py_XSETREF(*((PyObject **)op), result);
+    return;
+
+  fail:
+    Py_XDECREF(result);
+    return;
+}
+
+/**begin repeat
+ *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE, HALF,
+ *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG, BOOL,
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE, OBJECT#
+ *  #DOT = dot*15, dotc*4#
+ *  #CHECK_PYERR = 0*18, 1#
+ */
+NPY_NO_EXPORT void
+@TYPE@_vecdot(char **args, npy_intp const *dimensions, npy_intp const *steps,
+              void *NPY_UNUSED(func))
+{
+    npy_intp n_outer = dimensions[0];
+    npy_intp s0=steps[0], s1=steps[1], s2=steps[2];
+    npy_intp n_inner = dimensions[1];
+    npy_intp is1=steps[3], is2=steps[4];
+
+    for (npy_intp i = 0; i < n_outer; i++, args[0] += s0, args[1] += s1, args[2] += s2) {
+        /*
+         * TODO: use new API to select inner loop with get_loop and
+         * improve error treatment.
+         */
+        char *ip1=args[0], *ip2=args[1], *op=args[2];
+        @TYPE@_@DOT@(ip1, is1, ip2, is2, op, n_inner, NULL);
+#if @CHECK_PYERR@
+        if (PyErr_Occurred()) {
+            return;
+        }
+#endif
+    }
+}
 /**end repeat**/

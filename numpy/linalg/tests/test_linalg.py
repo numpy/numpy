@@ -856,6 +856,20 @@ class TestPinvHermitian(PinvHermitianCases):
     pass
 
 
+def test_pinv_rtol_arg():
+    a = np.array([[1, 2, 3], [4, 1, 1], [2, 3, 1]])
+
+    assert_almost_equal(
+        np.linalg.pinv(a, rcond=0.5),
+        np.linalg.pinv(a, rtol=0.5),
+    )
+
+    with pytest.raises(
+        ValueError, match=r"`rtol` and `rcond` can't be both set."
+    ):
+        np.linalg.pinv(a, rcond=0.5, rtol=0.5)
+
+
 class DetCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
     def do(self, a, b, tags):
@@ -1846,6 +1860,16 @@ class TestCholesky:
         assert_equal(a.shape, res.shape)
         assert_(res.dtype.type is np.complex64)
         assert_(isinstance(res, np.ndarray))
+
+    def test_upper_lower_arg(self):
+        a = np.array([[1+0j, 0-2j], [0+2j, 5+0j]])
+
+        assert_equal(linalg.cholesky(a), linalg.cholesky(a, upper=False))
+
+        assert_equal(
+            linalg.cholesky(a, upper=True),
+            linalg.cholesky(a).T.conj()
+        )
 
 
 class TestOuter:

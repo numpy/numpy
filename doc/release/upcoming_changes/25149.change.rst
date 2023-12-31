@@ -5,4 +5,3 @@ was the same as ``axis=None``.
 Except for ``concatenate`` this was deprecate.
 Any out of bound axis value will now error, make sure to use
 ``axis=None``.
-
