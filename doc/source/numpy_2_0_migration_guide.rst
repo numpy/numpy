@@ -1,3 +1,5 @@
+.. _numpy-2-migration-guide:
+
 *************************
 NumPy 2.0 migration guide
 *************************
