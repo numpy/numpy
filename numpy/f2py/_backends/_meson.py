@@ -5,6 +5,7 @@ import errno
 import shutil
 import subprocess
 import sys
+import re
 from pathlib import Path
 
 from ._backend import Backend
@@ -73,12 +74,12 @@ class MesonTemplate:
 
     def sources_substitution(self) -> None:
         self.substitutions["source_list"] = f",\n{self.indent}".join(
-            [f"{self.indent}'{source}'" for source in self.sources]
+            [f"{self.indent}'{source}'," for source in self.sources]
         )
 
     def deps_substitution(self) -> None:
         self.substitutions["dep_list"] = f",\n{self.indent}".join(
-            [f"{self.indent}dependency('{dep}')" for dep in self.deps]
+            [f"{self.indent}dependency('{dep}')," for dep in self.deps]
         )
 
     def libraries_substitution(self) -> None:
@@ -105,14 +106,16 @@ class MesonTemplate:
 
     def include_substitution(self) -> None:
         self.substitutions["inc_list"] = f",\n{self.indent}".join(
-            [f"{self.indent}'{inc}'" for inc in self.include_dirs]
+            [f"{self.indent}'{inc}'," for inc in self.include_dirs]
         )
 
     def generate_meson_build(self):
         for node in self.pipeline:
             node()
         template = Template(self.meson_build_template())
-        return template.substitute(self.substitutions)
+        meson_build = template.substitute(self.substitutions)
+        meson_build = re.sub(r',,', ',', meson_build)
+        return meson_build
 
 
 class MesonBackend(Backend):
