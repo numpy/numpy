@@ -2448,6 +2448,14 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     >>> np.any([[True, False], [False, False]], where=[[False], [True]])
     False
 
+    >>> a = np.array([[1, 0, 0],
+    ...               [0, 0, 1],
+    ...               [0, 0, 0]])
+    >>> np.any(a, axis=0)
+    array([ True, False,  True])
+    >>> np.any(a, axis=1)
+    array([ True,  True, False])
+
     >>> o=np.array(False)
     >>> z=np.any([-1, 4, 5], out=o)
     >>> z, o
