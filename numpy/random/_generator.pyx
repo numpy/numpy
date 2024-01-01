@@ -3030,19 +3030,31 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> rng = np.random.default_rng()
-        >>> n, p = 10, .5  # number of trials, probability of each trial
-        >>> s = rng.binomial(n, p, 1000)
-        # result of flipping a coin 10 times, tested 1000 times.
+        >>> n, p, size = 10, .5, 10000  
+        >>> s = rng.binomial(n, p, 10000)
 
-        A real world example. A company drills 9 wild-cat oil exploration
-        wells, each with an estimated probability of success of 0.1. All nine
-        wells fail. What is the probability of that happening?
+        Assume a company drills 9 wild-cat oil exploration wells, each with
+        an estimated probability of success of ``p=0.1``. All nine wells fail. 
+        What is the probability of that happening?
 
-        Let's do 20,000 trials of the model, and count the number that
-        generate zero positive results.
+        Over ``size = 20,000`` trials the probability of this happening 
+        is on average:
 
-        >>> sum(rng.binomial(9, 0.1, 20000) == 0)/20000.
-        # answer = 0.38885, or 39%.
+        >>> n, p, size = 9, 0.1, 20000
+        >>> np.sum(rng.binomial(n=n, p=p, size=size) == 0)/size
+        0.39015  # may vary
+
+        The following can be used to visualize a sample with ``n=100``, 
+        ``p=0.4`` and the corresponding probability density function:
+
+        >>> import matplotlib.pyplot as plt
+        >>> from scipy.stats import binom
+        >>> n, p, size = 100, 0.4, 10000
+        >>> sample = rng.binomial(n, p, size=size)
+        >>> count, bins, _ = plt.hist(sample, 30, density=True)
+        >>> x = np.arange(n)
+        >>> y = binom.pmf(x, n, p)
+        >>> plt.plot(x, y, linewidth=2, color='r')
 
         """
 
