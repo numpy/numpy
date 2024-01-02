@@ -873,11 +873,16 @@ cdef class Generator:
                 raise ValueError("a and p must have same size")
             p_sum = kahan_sum(pix, d)
             if np.isnan(p_sum):
-                raise ValueError("probabilities contain NaN")
+                raise ValueError("Probabilities contain NaN")
             if np.logical_or.reduce(p < 0):
-                raise ValueError("probabilities are not non-negative")
+                raise ValueError("Probabilities are not non-negative")
             if abs(p_sum - 1.) > atol:
-                raise ValueError("probabilities do not sum to 1")
+                raise ValueError("Probabilities do not sum to 1. "
+                                 "You can typically solve this issue with "
+                                 "`p = p / np.sum(p)`. "
+                                 "In rare cases this may not work due to round-off error, "
+                                 "in which case you can try "
+                                 "`p = p / np.sum(p); p[-1] = 1 - np.sum(p[:-1])`.")
 
         # `shape == None` means `shape == ()`, but with scalar unpacking at the
         # end
