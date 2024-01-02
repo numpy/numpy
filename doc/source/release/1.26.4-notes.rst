@@ -1,0 +1,18 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.26.4 Release Notes
+==========================
+
+NumPy 1.26.4 is a maintenance release that fixes bugs and regressions
+discovered after the 1.26.3 release. The most notable changes are the f2py bug
+fixes. The Python versions supported by this release are 3.9-3.12.
+
+
+Contributors
+============
+
+
+Pull requests merged
+====================
+
