@@ -365,7 +365,7 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
         buf1 += len2;
 
         time--;
-        pos = findslice_for_replace(buf1, len1, buf2, len2);
+        pos = findslice_for_replace(buf1, end1 - buf1, buf2, len2);
     }
 
     buf1.buffer_memcpy(out, end1 - buf1);
