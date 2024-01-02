@@ -38,3 +38,6 @@ np.strings.rfind(AR_S, "a", x4=9)  # E: incompatible type
 
 np.strings.isdecimal(AR_S)  # E: incompatible type
 np.strings.isnumeric(AR_S)  # E: incompatible type
+
+np.strings.replace(AR_U, b"_", b"-")  # E: incompatible type
+np.strings.replace(AR_S, "_", "-")  # E: incompatible type

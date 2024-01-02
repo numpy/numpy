@@ -345,28 +345,51 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
 
     Buffer<enc> end1 = buf1 + len1;
     // Only try to replace if useful.
-    if (len1 >= len2  // Input is big enough to make a match possible.
-        && len2 > 0  // Match string is not empty (so output will be finite).
-        && !(len2 == len3 && buf2.strcmp(buf3) == 0)  // Match and replacement differ.
-        ) {
-        for (npy_int64 time = 0; time < count; time++) {
-            npy_intp pos = findslice_for_replace(buf1, end1 - buf1, buf2, len2);
-            if (pos < 0) {
-                break;
-            }
-            buf1.buffer_memcpy(out, pos);
-            out += pos;
-            buf1 += pos;
+    if (count > 0        // There's something to replace
+        && len1 >= len2  // Input is big enough to make a match possible.
+        && (len2 > 0 || len3 > 0)  // Match or replacement string is not empty.
+        && !(len2 == len3 && buf2.strcmp(buf3) == 0)) {  // Match and replacement differ.
 
-            buf3.buffer_memcpy(out, len3);
-            out += len3;
-            buf1 += len2;
+        if (len2 == 0) {
+            while (count > 0) {  // Interleave
+                buf3.buffer_memcpy(out, len3);
+                out += len3;
+                buf1.buffer_memcpy(out, 1);
+
+                if (--count <= 0) {
+                    goto copy_rest;
+                }
+                buf1 += 1;
+                out += 1;
+            }
+        }
+        else {
+            for (npy_int64 time = 0; time < count; time++) {
+                npy_intp pos = findslice_for_replace(buf1, end1 - buf1, buf2, len2);
+                if (pos < 0) {
+                    goto copy_rest;
+                }
+
+                buf1.buffer_memcpy(out, pos);
+                out += pos;
+                buf1 += pos;
+
+                buf3.buffer_memcpy(out, len3);
+                out += len3;
+                buf1 += len2;
+            }
+
+            goto copy_rest;
         }
     }
+    else {
+        goto copy_rest;
+    }
+    return;
 
+copy_rest:
     buf1.buffer_memcpy(out, end1 - buf1);
     out.buffer_fill_with_zeros_after_index(end1 - buf1);
-    return;
 }
 
 

@@ -64,3 +64,6 @@ assert_type(np.strings.isspace(AR_S), npt.NDArray[np.bool])
 
 assert_type(np.strings.str_len(AR_U), npt.NDArray[np.int_])
 assert_type(np.strings.str_len(AR_S), npt.NDArray[np.int_])
+
+assert_type(np.strings.replace(AR_U, "_", "-"), npt.NDArray[np.str_])
+assert_type(np.strings.replace(AR_S, [b"_", b""], [b"a", b"b"]), npt.NDArray[np.bytes_])
