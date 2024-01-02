@@ -1,30 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 1.26.3 Release Notes
-==========================
-
-NumPy 1.26.3 is a maintenance release that fixes bugs and regressions
-discovered after the 1.26.2 release. The most notable changes are the f2py bug
-fixes. The Python versions supported by this release are 3.9-3.12.
-
-
-Compatibility
-=============
-
-``f2py`` will no longer accept ambiguous ``-m`` and ``.pyf`` CLI combinations.
-When more than one ``.pyf`` file is passed, an error is raised. When both ``-m``
-and a ``.pyf`` is passed, a warning is emitted and the ``-m`` provided name is
-ignored.
-
-
-Improvements
-============
-
-``f2py`` now handles ``common`` blocks which have ``kind`` specifications from
-modules. This further expands the usability of intrinsics like
-``iso_fortran_env`` and ``iso_c_binding``.
-
 
 Contributors
 ============
@@ -51,9 +24,9 @@ names contributed a patch for the first time.
 * Thomas A Caswell
 * matoro
 
-
 Pull requests merged
 ====================
+
 A total of 42 pull requests were merged for this release.
 
 * `#25130 <https://github.com/numpy/numpy/pull/25130>`__: MAINT: prepare 1.26.x for further development
@@ -98,4 +71,3 @@ A total of 42 pull requests were merged for this release.
 * `#25489 <https://github.com/numpy/numpy/pull/25489>`__: MAINT: Update ``numpy/f2py/_backends`` from main.
 * `#25490 <https://github.com/numpy/numpy/pull/25490>`__: MAINT: Easy updates of ``f2py/*.py`` from main.
 * `#25491 <https://github.com/numpy/numpy/pull/25491>`__: MAINT: Update crackfortran.py and f2py2e.py from main
-
