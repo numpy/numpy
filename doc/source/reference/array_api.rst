@@ -545,9 +545,6 @@ Linear algebra differences
    * - Feature
      - Type
      - Notes
-   * - ``cholesky`` includes an ``upper`` keyword argument.
-     - **Compatible**
-     -
    * - ``cross`` does not allow size 2 vectors (only size 3).
      - **Breaking**
      -

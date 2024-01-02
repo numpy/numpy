@@ -1481,7 +1481,7 @@ class TestRegression:
 
         x = np.array([1, 2, 3], dtype=np.dtype('<i4'))
         assert_equal(
-            sha256(x).hexdigest(), 
+            sha256(x).hexdigest(),
             '4636993d3e1da4e9d6b8f87b79e8f7c6d018580d52661950eabc3845c5897a4d'
         )
 
@@ -1941,7 +1941,7 @@ class TestRegression:
              'invalid'),
 
             # different 8-bit code point in KOI8-R vs latin1
-            (np.bytes_(b'\x9c'),  
+            (np.bytes_(b'\x9c'),
              b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'S1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'|'\np5\nNNNI1\nI1\nI0\ntp6\nbS'\\x9c'\np7\ntp8\nRp9\n.",  # noqa
              'different'),
         ]
@@ -2091,7 +2091,7 @@ class TestRegression:
         assert_array_equal(arr2, data_back)
 
     def test_structured_count_nonzero(self):
-        arr = np.array([0, 1]).astype('i4, (2)i4')[:1]
+        arr = np.array([0, 1]).astype('i4, 2i4')[:1]
         count = np.count_nonzero(arr)
         assert_equal(count, 0)
 

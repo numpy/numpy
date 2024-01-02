@@ -4,10 +4,10 @@ option('lapack', type: 'string', value: 'auto',
         description: 'Option for LAPACK library selection. By default, try to find any in the order given by `lapack-order`')
 option('allow-noblas', type: 'boolean', value: true,
         description: 'If set to true, allow building with (slow!) internal fallback routines')
-option('blas-order', type: 'array',
-        value: ['mkl', 'accelerate', 'openblas', 'flexiblas', 'blis', 'blas'])
-option('lapack-order', type: 'array',
-        value: ['mkl', 'accelerate', 'openblas', 'flexiblas', 'lapack'])
+option('blas-order', type: 'array', value: ['auto'],
+       description: 'Order of BLAS libraries to search for. E.g.: mkl,openblas,blis,blas')
+option('lapack-order', type: 'array', value: ['auto'],
+       description: 'Order of LAPACK libraries to search for. E.g.: mkl,openblas,lapack')
 option('use-ilp64', type: 'boolean', value: false,
        description: 'Use ILP64 (64-bit integer) BLAS and LAPACK interfaces')
 option('blas-symbol-suffix', type: 'string', value: 'auto',

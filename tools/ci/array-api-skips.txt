@@ -1,9 +1,9 @@
 # copy not implemented
 array_api_tests/test_creation_functions.py::test_asarray_arrays
 
-# waiting on NumPy to allow/revert distinct NaNs for np.unique
-# https://github.com/numpy/numpy/issues/20326#issuecomment-1012380448
-array_api_tests/test_set_functions.py
+# 'unique_inverse' output array is 1-D for 0-D input
+array_api_tests/test_set_functions.py::test_unique_all
+array_api_tests/test_set_functions.py::test_unique_inverse
 
 # https://github.com/numpy/numpy/issues/21213
 array_api_tests/test_special_cases.py::test_iop[__ipow__(x1_i is -infinity and x2_i > 0 and not (x2_i.is_integer() and x2_i % 2 == 1)) -> +infinity]
@@ -36,17 +36,12 @@ array_api_tests/test_creation_functions.py::test_asarray_scalars
 # fft test suite is buggy as of 83f0bcdc
 array_api_tests/test_fft.py
 
-# missing isdtype and finfo return type misalignment
+# finfo return type misalignment
 array_api_tests/test_data_type_functions.py::test_finfo[float32]
-array_api_tests/test_data_type_functions.py::test_isdtype
 
 # missing names
-array_api_tests/test_has_names.py::test_has_names[data_type-isdtype]
 array_api_tests/test_has_names.py::test_has_names[array_method-to_device]
 array_api_tests/test_has_names.py::test_has_names[array_attribute-device]
-
-# missing linalg names
-array_api_tests/test_linalg.py::test_pinv
 
 # a few misalignments
 array_api_tests/test_operators_and_elementwise_functions.py
@@ -64,20 +59,16 @@ array_api_tests/test_signatures.py::test_func_signature[zeros_like]
 array_api_tests/test_signatures.py::test_func_signature[reshape]
 array_api_tests/test_signatures.py::test_func_signature[argsort]
 array_api_tests/test_signatures.py::test_func_signature[sort]
-array_api_tests/test_signatures.py::test_func_signature[isdtype]
-array_api_tests/test_signatures.py::test_extension_func_signature[linalg.cholesky]
 array_api_tests/test_signatures.py::test_extension_func_signature[linalg.matrix_rank]
-array_api_tests/test_signatures.py::test_extension_func_signature[linalg.pinv]
 array_api_tests/test_signatures.py::test_array_method_signature[__array_namespace__]
 array_api_tests/test_signatures.py::test_array_method_signature[to_device]
 
-# unexpected argument 'stable'
-array_api_tests/test_sorting_functions.py::test_argsort
-array_api_tests/test_sorting_functions.py::test_sort
+# missing 'copy' keyword argument, 'newshape' should be named 'shape'
+array_api_tests/test_signatures.py::test_func_signature[reshape]
 
-# missing aliases
-array_api_tests/test_special_cases.py::test_unary
-array_api_tests/test_special_cases.py::test_binary
+# missing 'descending' and 'stable' keyword arguments
+array_api_tests/test_signatures.py::test_func_signature[argsort]
+array_api_tests/test_signatures.py::test_func_signature[sort]
 
 # asarray() got an unexpected keyword argument 'copy'
 array_api_tests/test_special_cases.py::test_iop

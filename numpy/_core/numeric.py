@@ -46,7 +46,7 @@ __all__ = [
     'can_cast', 'promote_types', 'min_scalar_type',
     'result_type', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
     'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
-    'rollaxis', 'moveaxis', 'cross', 'tensordot', 'vecdot', 'little_endian',
+    'rollaxis', 'moveaxis', 'cross', 'tensordot', 'little_endian',
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
     'identity', 'allclose', 'putmask',
@@ -1121,72 +1121,6 @@ def tensordot(a, b, axes=2):
     return res.reshape(olda + oldb)
 
 
-def _vecdot_dispatcher(x1, x2, /, *, axis=None):
-    return (x1, x2)
-
-
-@array_function_dispatch(_vecdot_dispatcher)
-def vecdot(x1, x2, /, *, axis=-1):
-    """
-    Computes the (vector) dot product of two arrays.
-
-    Let :math:`\\mathbf{a}` be a vector in `x1` and :math:`\\mathbf{b}` be
-    a corresponding vector in `x2`. The dot product is defined as:
-
-    .. math::
-       \\mathbf{a} \\cdot \\mathbf{b} = \\sum_{i=0}^{n-1} \\overline{a_i}b_i
-
-    over the dimension specified by `axis` and where :math:`n` is
-    the dimension size and :math:`\\overline{a_i}` denotes the complex
-    conjugate if :math:`a_i` is complex and the identity if :math:`a_i`
-    is real-valued.
-
-    .. note::
-
-        This function differs from :py:func:`np.vdot <numpy.vdot>` as
-        :py:func:`np.vdot <numpy.vdot>` additionally flattens input arguments.
-
-    This function is Array API compatible.
-
-    Parameters
-    ----------
-    x1 : array_like
-        First input array.
-    x2 : array_like
-        Second input array.
-    axis : int, optional
-        Axis over which to compute the dot product. Default: ``-1``.
-
-    Returns
-    -------
-    output : ndarray
-        The vector dot product of the input.
-
-    See Also
-    --------
-    dot
-
-    """
-    ndim = builtins.max(x1.ndim, x2.ndim)
-    x1_shape = (1,)*(ndim - x1.ndim) + tuple(x1.shape)
-    x2_shape = (1,)*(ndim - x2.ndim) + tuple(x2.shape)
-    if x1_shape[axis] != x2_shape[axis]:
-        raise ValueError(
-            "x1 and x2 must have the same size along the dot-compute axis "
-            f"but they are: {x1_shape[axis]} and {x2_shape[axis]}."
-        )
-
-    x1_, x2_ = np.broadcast_arrays(x1, x2)
-    x1_ = np.moveaxis(x1_, axis, -1)
-    x2_ = np.moveaxis(x2_, axis, -1)
-
-    if np.iscomplexobj(x1_):
-        x1_ = x1_.conj()
-
-    res = x1_[..., None, :] @ x2_[..., None]
-    return res[..., 0, 0]
-
-
 def _roll_dispatcher(a, shift, axis=None):
     return (a,)
 
@@ -2256,6 +2190,9 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     `atol` are added together to compare against the absolute difference
     between `a` and `b`.
 
+    .. warning:: The default `atol` is not appropriate for comparing numbers
+                 with magnitudes much smaller than one (see Notes).
+
     NaNs are treated as equal if they are in the same place and if
     ``equal_nan=True``.  Infs are treated as equal if they are in the same
     place and of the same sign in both arrays.
@@ -2294,6 +2231,14 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     The above equation is not symmetric in `a` and `b`, so that
     ``allclose(a, b)`` might be different from ``allclose(b, a)`` in
     some rare cases.
+
+    The default value of `atol` is not appropriate when the reference value
+    `b` has magnitude smaller than one. For example, it is unlikely that
+    ``a = 1e-9`` and ``b = 2e-9`` should be considered "close", yet
+    ``allclose(1e-9, 2e-9)`` is ``True`` with default settings. Be sure
+    to select `atol` for the use case at hand, especially for defining the
+    threshold below which a non-zero value in `a` will be considered "close"
+    to a very small or zero value in `b`.
 
     The comparison of `a` and `b` uses standard broadcasting, which
     means that `a` and `b` need not have the same shape in order for
@@ -2337,7 +2282,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     between `a` and `b`.
 
     .. warning:: The default `atol` is not appropriate for comparing numbers
-                 that are much smaller than one (see Notes).
+                 with magnitudes much smaller than one (see Notes).
 
     Parameters
     ----------
@@ -2374,13 +2319,15 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
     Unlike the built-in `math.isclose`, the above equation is not symmetric
     in `a` and `b` -- it assumes `b` is the reference value -- so that
-    `isclose(a, b)` might be different from `isclose(b, a)`. Furthermore,
-    the default value of atol is not zero, and is used to determine what
-    small values should be considered close to zero. The default value is
-    appropriate for expected values of order unity: if the expected values
-    are significantly smaller than one, it can result in false positives.
-    `atol` should be carefully selected for the use case at hand. A zero value
-    for `atol` will result in `False` if either `a` or `b` is zero.
+    `isclose(a, b)` might be different from `isclose(b, a)`.
+
+    The default value of `atol` is not appropriate when the reference value
+    `b` has magnitude smaller than one. For example, it is unlikely that
+    ``a = 1e-9`` and ``b = 2e-9`` should be considered "close", yet
+    ``isclose(1e-9, 2e-9)`` is ``True`` with default settings. Be sure
+    to select `atol` for the use case at hand, especially for defining the
+    threshold below which a non-zero value in `a` will be considered "close"
+    to a very small or zero value in `b`.
 
     `isclose` is not defined for non-numeric data types.
     :class:`bool` is considered a numeric data-type for this purpose.

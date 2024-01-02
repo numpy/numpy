@@ -666,8 +666,8 @@ def identity(
 def allclose(
     a: ArrayLike,
     b: ArrayLike,
-    rtol: float = ...,
-    atol: float = ...,
+    rtol: ArrayLike = ...,
+    atol: ArrayLike = ...,
     equal_nan: bool = ...,
 ) -> bool: ...
 
@@ -675,16 +675,16 @@ def allclose(
 def isclose(
     a: _ScalarLike_co,
     b: _ScalarLike_co,
-    rtol: float = ...,
-    atol: float = ...,
+    rtol: ArrayLike = ...,
+    atol: ArrayLike = ...,
     equal_nan: bool = ...,
 ) -> np.bool: ...
 @overload
 def isclose(
     a: ArrayLike,
     b: ArrayLike,
-    rtol: float = ...,
-    atol: float = ...,
+    rtol: ArrayLike = ...,
+    atol: ArrayLike = ...,
     equal_nan: bool = ...,
 ) -> NDArray[np.bool]: ...
 
@@ -694,13 +694,13 @@ def array_equiv(a1: ArrayLike, a2: ArrayLike) -> bool: ...
 
 @overload
 def astype(
-    x: ArrayLike,
+    x: NDArray[Any],
     dtype: _DTypeLike[_SCT],
     copy: bool = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def astype(
-    x: ArrayLike,
+    x: NDArray[Any],
     dtype: DTypeLike,
     copy: bool = ...,
 ) -> NDArray[Any]: ...

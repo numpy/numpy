@@ -780,7 +780,7 @@ class StringConverter:
             value.
         missing_values : {sequence of str, None}, optional
             Sequence of strings indicating a missing value. If ``None``, then
-            the existing `missing_values` are cleared. The default is `''`.
+            the existing `missing_values` are cleared. The default is ``''``.
         locked : bool, optional
             Whether the StringConverter should be locked to prevent
             automatic upgrade or not. Default is False.

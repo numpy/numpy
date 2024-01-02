@@ -1992,11 +1992,18 @@ Calculation
     *self*, so that values larger than *max* are fixed to *max* and
     values less than *min* are fixed to *min*.
 
-.. c:function:: PyObject* PyArray_Conjugate(PyArrayObject* self)
+.. c:function:: PyObject* PyArray_Conjugate(PyArrayObject* self, PyArrayObject* out)
 
     Equivalent to :meth:`ndarray.conjugate<numpy.ndarray.conjugate>` (*self*).
     Return the complex conjugate of *self*. If *self* is not of
     complex data type, then return *self* with a reference.
+
+    :param self: Input array.
+    :param out:  Output array. If provided, the result is placed into this array.
+
+    :return: The complex conjugate of *self*.
+
+
 
 .. c:function:: PyObject* PyArray_Round( \
         PyArrayObject* self, int decimals, PyArrayObject* out)

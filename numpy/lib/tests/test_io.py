@@ -928,7 +928,7 @@ class TestLoadTxt(LoadTxtBase):
         with pytest.raises(TypeError,
                 match="If a structured dtype .*. But 1 usecols were given and "
                       "the number of fields is 3."):
-            np.loadtxt(["1,1\n"], dtype="i,(2)i", usecols=[0], delimiter=",")
+            np.loadtxt(["1,1\n"], dtype="i,2i", usecols=[0], delimiter=",")
 
     def test_fancy_dtype(self):
         c = TextIO()
