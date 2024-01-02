@@ -211,6 +211,7 @@ from numpy import (
     dtypes as dtypes,
     rec as rec,
     char as char,
+    strings as strings,
 )
 
 from numpy._core.records import (

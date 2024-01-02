@@ -16,22 +16,25 @@ np.strings.greater(AR_U, AR_S)  # E: incompatible type
 
 np.strings.less(AR_U, AR_S)  # E: incompatible type
 
-np.strings.lstrip(AR_U, chars=b"a")  # E: incompatible type
-np.strings.lstrip(AR_S, chars="a")  # E: incompatible type
-np.strings.strip(AR_U, chars=b"a")  # E: incompatible type
-np.strings.strip(AR_S, chars="a")  # E: incompatible type
-np.strings.rstrip(AR_U, chars=b"a")  # E: incompatible type
-np.strings.rstrip(AR_S, chars="a")  # E: incompatible type
+np.strings.lstrip(AR_U, x2=b"a")  # E: incompatible type
+np.strings.lstrip(AR_S, x2="a")  # E: incompatible type
+np.strings.strip(AR_U, x2=b"a")  # E: incompatible type
+np.strings.strip(AR_S, x2="a")  # E: incompatible type
+np.strings.rstrip(AR_U, x2=b"a")  # E: incompatible type
+np.strings.rstrip(AR_S, x2="a")  # E: incompatible type
 
-np.strings.count(AR_U, b"a", start=[1, 2, 3])  # E: incompatible type
-np.strings.count(AR_S, "a", end=9)  # E: incompatible type
+np.strings.count(AR_U, b"a", x3=[1, 2, 3])  # E: incompatible type
+np.strings.count(AR_S, "a", x4=9)  # E: incompatible type
 
-np.strings.endswith(AR_U, b"a", start=[1, 2, 3])  # E: incompatible type
-np.strings.endswith(AR_S, "a", end=9)  # E: incompatible type
-np.strings.startswith(AR_U, b"a", start=[1, 2, 3])  # E: incompatible type
-np.strings.startswith(AR_S, "a", end=9)  # E: incompatible type
+np.strings.endswith(AR_U, b"a", x3=[1, 2, 3])  # E: incompatible type
+np.strings.endswith(AR_S, "a", x4=9)  # E: incompatible type
+np.strings.startswith(AR_U, b"a", x3=[1, 2, 3])  # E: incompatible type
+np.strings.startswith(AR_S, "a", x4=9)  # E: incompatible type
 
-np.strings.find(AR_U, b"a", start=[1, 2, 3])  # E: incompatible type
-np.strings.find(AR_S, "a", end=9)  # E: incompatible type
-np.strings.rfind(AR_U, b"a", start=[1, 2, 3])  # E: incompatible type
-np.strings.rfind(AR_S, "a", end=9)  # E: incompatible type
+np.strings.find(AR_U, b"a", x3=[1, 2, 3])  # E: incompatible type
+np.strings.find(AR_S, "a", x4=9)  # E: incompatible type
+np.strings.rfind(AR_U, b"a", x3=[1, 2, 3])  # E: incompatible type
+np.strings.rfind(AR_S, "a", x4=9)  # E: incompatible type
+
+np.strings.isdecimal(AR_S)  # E: incompatible type
+np.strings.isnumeric(AR_S)  # E: incompatible type
