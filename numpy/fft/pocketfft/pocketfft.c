@@ -12,11 +12,12 @@
 
 #include <math.h>
 #include <string.h>
+#include <assert.h>
 
 #include "pocketfft.h"
 
 #define RALLOC(type,num) \
-  ((type *)malloc((num)*sizeof(type)))
+  (assert(num != 0), ((type *)malloc((num)*sizeof(type))))
 #define DEALLOC(ptr) \
   do { free(ptr); (ptr)=NULL; } while(0)
 
@@ -1044,8 +1045,10 @@ static cfftp_plan make_cfftp_plan (size_t length)
   if (length==1) return plan;
   if (cfftp_factorize(plan)!=0) { DEALLOC(plan); return NULL; }
   size_t tws=cfftp_twsize(plan);
-  plan->mem=RALLOC(cmplx,tws);
-  if (!plan->mem) { DEALLOC(plan); return NULL; }
+  if (tws != 0) {
+    plan->mem=RALLOC(cmplx,tws);
+    if (!plan->mem) { DEALLOC(plan); return NULL; }
+  }
   if (cfftp_comp_twiddle(plan)!=0)
     { DEALLOC(plan->mem); DEALLOC(plan); return NULL; }
   return plan;
@@ -1808,7 +1811,6 @@ static size_t rfftp_twsize(rfftp_plan plan)
     l1*=ip;
     }
   return twsize;
-  return 0;
   }
 
 WARN_UNUSED_RESULT NOINLINE static int rfftp_comp_twiddle (rfftp_plan plan)
@@ -1864,8 +1866,10 @@ NOINLINE static rfftp_plan make_rfftp_plan (size_t length)
   if (length==1) return plan;
   if (rfftp_factorize(plan)!=0) { DEALLOC(plan); return NULL; }
   size_t tws=rfftp_twsize(plan);
-  plan->mem=RALLOC(double,tws);
-  if (!plan->mem) { DEALLOC(plan); return NULL; }
+  if (tws != 0) {
+    plan->mem=RALLOC(double,tws);
+    if (!plan->mem) { DEALLOC(plan); return NULL; }
+  }
   if (rfftp_comp_twiddle(plan)!=0)
     { DEALLOC(plan->mem); DEALLOC(plan); return NULL; }
   return plan;
