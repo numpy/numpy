@@ -3,6 +3,7 @@
 
 #include <Python.h>
 #include <cstddef>
+#include <wchar.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
