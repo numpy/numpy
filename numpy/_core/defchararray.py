@@ -1361,7 +1361,7 @@ def replace(a, old, new, count=None):
 
     count : int, optional
         If the optional argument `count` is given, only the first
-        `count` occurrences are replaced.
+        `count` occurrences are replaced. If negative, replace all.
 
     Returns
     -------
@@ -1385,9 +1385,10 @@ def replace(a, old, new, count=None):
     """
     a_arr = numpy.asarray(a)
     max_int64 = numpy.iinfo(numpy.int64).max
-    count = count if count is not None else max_int64
-
     counts = numpy._core.umath.count(a_arr, old, 0, max_int64)
+    if count is not None:
+        count = numpy.asarray(count)
+        counts = numpy.minimum(counts, count, where=count >= 0, out=counts)
     buffersizes = (
         numpy._core.umath.str_len(a_arr)
         + counts * (numpy._core.umath.str_len(new) -
@@ -1395,7 +1396,7 @@ def replace(a, old, new, count=None):
     )
     max_buffersize = numpy.max(buffersizes)
     out = numpy.empty(a_arr.shape, dtype=f"{a_arr.dtype.char}{max_buffersize}")
-    numpy._core.umath._replace(a_arr, old, new, count, out=out)
+    numpy._core.umath._replace(a_arr, old, new, counts, out=out)
     return out
 
 
