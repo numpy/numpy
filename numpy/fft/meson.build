@@ -4,7 +4,7 @@ if host_machine.system() == 'aix' or host_machine.system() == 'AIX'
 endif
 
 py.extension_module('_pocketfft_internal',
-  '_pocketfft.c',
+  ['_pocketfft_wrapper.c', 'pocketfft/pocketfft.c'],
   c_args: largefile_define,
   dependencies: np_core_dep,
   install: true,
