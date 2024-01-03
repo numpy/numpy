@@ -135,6 +135,7 @@ typedef struct {
 } PyScalarObject;
 
 #define PyStringScalarObject PyBytesObject
+#ifndef Py_LIMITED_API
 typedef struct {
         /* note that the PyObject_HEAD macro lives right here */
         PyUnicodeObject base;
@@ -143,6 +144,7 @@ typedef struct {
         char *buffer_fmt;
     #endif
 } PyUnicodeScalarObject;
+#endif
 
 
 typedef struct {
