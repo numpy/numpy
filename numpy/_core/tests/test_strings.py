@@ -248,6 +248,20 @@ class TestMethods:
         ("", "xx", 0, BIG_INT, -1),
         ("", "xx", 1, 1, -1),
         ("", "xx", BIG_INT, 0, -1),
+        pytest.param(99*"a" + "b", "b", 0, BIG_INT, 99,
+                     id='99*a+b-b-0-BIG_INT-99'),
+        pytest.param(98*"a" + "ba", "ba", 0, BIG_INT, 98,
+                     id='98*a+ba-ba-0-BIG_INT-98'),
+        pytest.param(100*"a", "b", 0, BIG_INT, -1,
+                     id='100*a-b-0-BIG_INT--1'),
+        pytest.param(30000*"a" + 100*"b", 100*"b", 0, BIG_INT, 30000,
+                     id='30000*a+100*b-100*b-0-BIG_INT-30000'),
+        pytest.param(30000*"a", 100*"b", 0, BIG_INT, -1,
+                     id='30000*a-100*b-0-BIG_INT--1'),
+        pytest.param(15000*"a" + 15000*"b", 15000*"b", 0, BIG_INT, 15000,
+                     id='15000*a+15000*b-15000*b-0-BIG_INT-15000'),
+        pytest.param(15000*"a" + 15000*"b", 15000*"c", 0, BIG_INT, -1,
+                     id='15000*a+15000*b-15000*c-0-BIG_INT--1'),
         (["abcdefghiabc", "rrarrrrrrrrra"], ["def", "arr"], [0, 3],
          [BIG_INT, BIG_INT], [3, -1]),
     ])
@@ -291,6 +305,19 @@ class TestMethods:
         ("aaa", "", 10, BIG_INT, 0),
         ("aaa", "", -1, BIG_INT, 2),
         ("aaa", "", -10, BIG_INT, 4),
+        ("aaa", "aaaa", 0, BIG_INT, 0),
+        pytest.param(98*"a" + "ba", "ba", 0, BIG_INT, 1,
+                     id='98*a+ba-ba-0-BIG_INT-1'),
+        pytest.param(30000*"a" + 100*"b", 100*"b", 0, BIG_INT, 1,
+                     id='30000*a+100*b-100*b-0-BIG_INT-1'),
+        pytest.param(30000*"a", 100*"b", 0, BIG_INT, 0,
+                     id='30000*a-100*b-0-BIG_INT-0'),
+        pytest.param(30000*"a" + 100*"ab", "ab", 0, BIG_INT, 100,
+                     id='30000*a+100*ab-ab-0-BIG_INT-100'),
+        pytest.param(15000*"a" + 15000*"b", 15000*"b", 0, BIG_INT, 1,
+                     id='15000*a+15000*b-15000*b-0-BIG_INT-1'),
+        pytest.param(15000*"a" + 15000*"b", 15000*"c", 0, BIG_INT, 0,
+                     id='15000*a+15000*b-15000*c-0-BIG_INT-0'),
         ("", "", 0, BIG_INT, 1),
         ("", "", 1, 1, 0),
         ("", "", BIG_INT, 0, 0),
@@ -378,6 +405,7 @@ class TestMethods:
         assert_array_equal(np.strings.endswith(in1, in2, in3, in4), out)
 
     @pytest.mark.parametrize("in_,out", [
+        ("", ""),
         ("   hello   ", "hello   "),
         ("hello", "hello"),
         (" \t\n\r\f\vabc \t\n\r\f\v", "abc \t\n\r\f\v"),
@@ -389,6 +417,9 @@ class TestMethods:
         assert_array_equal(np.strings.lstrip(in_), out)
 
     @pytest.mark.parametrize("in1,in2,out", [
+        ("", "", ""),
+        ("", "xyz", ""),
+        ("hello", "", "hello"),
         ("xyzzyhelloxyzzy", "xyz", "helloxyzzy"),
         ("hello", "xyz", "hello"),
         ("xyxz", "xyxz", ""),
@@ -403,6 +434,7 @@ class TestMethods:
         assert_array_equal(np.strings.lstrip(in1, in2), out)
 
     @pytest.mark.parametrize("in_,out", [
+        ("", ""),
         ("   hello   ", "   hello"),
         ("hello", "hello"),
         (" \t\n\r\f\vabc \t\n\r\f\v", " \t\n\r\f\vabc"),
@@ -414,6 +446,9 @@ class TestMethods:
         assert_array_equal(np.strings.rstrip(in_), out)
 
     @pytest.mark.parametrize("in1,in2,out", [
+        ("", "", ""),
+        ("", "xyz", ""),
+        ("hello", "", "hello"),
         ("xyzzyhelloxyzzy", "xyz", "xyzzyhello"),
         ("hello", "xyz", "hello"),
         ("xyxz", "xyxz", ""),
@@ -428,6 +463,7 @@ class TestMethods:
         assert_array_equal(np.strings.rstrip(in1, in2), out)
 
     @pytest.mark.parametrize("in_,out", [
+        ("", ""),
         ("   hello   ", "hello"),
         ("hello", "hello"),
         (" \t\n\r\f\vabc \t\n\r\f\v", "abc"),
@@ -439,6 +475,9 @@ class TestMethods:
         assert_array_equal(np.strings.strip(in_), out)
 
     @pytest.mark.parametrize("in1,in2,out", [
+        ("", "", ""),
+        ("", "xyz", ""),
+        ("hello", "", "hello"),
         ("xyzzyhelloxyzzy", "xyz", "hello"),
         ("hello", "xyz", "hello"),
         ("xyxz", "xyxz", ""),
