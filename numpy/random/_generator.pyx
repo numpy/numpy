@@ -1679,6 +1679,18 @@ cdef class Generator:
         >>> rng.chisquare(2,4)
         array([ 1.89920014,  9.00867716,  3.13710533,  5.62318272]) # random
 
+        The distribution of a chi-square random variable
+        with 20 degrees of freedom looks as follows:
+        
+        >>> import matplotlib.pyplot as plt
+        >>> import scipy.stats as stats
+        >>> s = rng.chisquare(20, 10000)
+        >>> count, bins, _ = plt.hist(s, 30, density=True)
+        >>> x = np.linspace(0, 60, 1000)
+        >>> plt.plot(x, stats.chi2.pdf(x, df=20))
+        >>> plt.xlim([0, 60])
+        >>> plt.show()
+
         """
         return cont(&random_chisquare, &self._bitgen, size, self.lock, 1,
                     df, 'df', CONS_POSITIVE,
