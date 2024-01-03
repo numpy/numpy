@@ -787,6 +787,9 @@ cdef class Generator:
         efficient sampler than the default. The general sampler produces a different sample
         than the optimized sampler even if each element of ``p`` is 1 / len(a).
 
+        ``p`` must sum to 1 when cast to ``float64``. To do this, you may wish
+        to normalize using ``p = p / np.sum(p, dtype=float)``.
+
         Examples
         --------
         Generate a uniform random sample from np.arange(5) of size 3:
@@ -877,12 +880,10 @@ cdef class Generator:
             if np.logical_or.reduce(p < 0):
                 raise ValueError("Probabilities are not non-negative")
             if abs(p_sum - 1.) > atol:
-                raise ValueError("Probabilities do not sum to 1. "
-                                 "You can typically solve this issue with "
-                                 "`p = p / np.sum(p)`. "
-                                 "In rare cases this may not work due to round-off error, "
-                                 "in which case you can try "
-                                 "`p = p / np.sum(p); p[-1] = 1 - np.sum(p[:-1])`.")
+                raise ValueError("Probabilities do not sum to 1. This is typically "
+                                 "due to lack of normalization but may also be "
+                                 "due to roundoff error. See the docstring for "
+                                 "further details, in particular, `Notes`.")
 
         # `shape == None` means `shape == ()`, but with scalar unpacking at the
         # end
