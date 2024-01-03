@@ -2578,3 +2578,14 @@ class TestRegression:
         # gh-25295
         for _ in range(1000):
             np.isclose(np.int64(2), np.int64(2), atol=1e-15, rtol=1e-300)
+
+    def test_replace_regression(self):
+        # gh-25513 segfault
+        carr = np.char.chararray((2,), itemsize=25)
+        test_strings = [b'  4.52173913043478315E+00',
+                        b'  4.95652173913043548E+00']
+        carr[:] = test_strings
+        out = carr.replace(b"E", b"D")
+        expected = np.char.chararray((2,), itemsize=25)
+        expected[:] = [s.replace(b"E", b"D") for s in test_strings]
+        assert_array_equal(out, expected)

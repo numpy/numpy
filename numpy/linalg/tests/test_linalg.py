@@ -1820,7 +1820,9 @@ class TestCholesky:
     @pytest.mark.parametrize(
         'dtype', (np.float32, np.float64, np.complex64, np.complex128)
     )
-    def test_basic_property(self, shape, dtype):
+    @pytest.mark.parametrize(
+        'upper', [False, True])
+    def test_basic_property(self, shape, dtype, upper):
         np.random.seed(1)
         a = np.random.randn(*shape)
         if np.issubdtype(dtype, np.complexfloating):
@@ -1832,15 +1834,18 @@ class TestCholesky:
         a = np.matmul(a.transpose(t).conj(), a)
         a = np.asarray(a, dtype=dtype)
 
-        c = np.linalg.cholesky(a)
+        c = np.linalg.cholesky(a, upper=upper)
 
-        # Check A = L L^H
-        b = np.matmul(c, c.transpose(t).conj())
+        # Check A = L L^H or A = U^H U
+        if upper:
+            b = np.matmul(c.transpose(t).conj(), c)
+        else:
+            b = np.matmul(c, c.transpose(t).conj())
         with np._no_nep50_warning():
             atol = 500 * a.shape[0] * np.finfo(dtype).eps
         assert_allclose(b, a, atol=atol, err_msg=f'{shape} {dtype}\n{a}\n{c}')
 
-        # Check diag(L) is real and positive
+        # Check diag(L or U) is real and positive
         d = np.diagonal(c, axis1=-2, axis2=-1)
         assert_(np.all(np.isreal(d)))
         assert_(np.all(d >= 0))
@@ -1862,6 +1867,7 @@ class TestCholesky:
         assert_(isinstance(res, np.ndarray))
 
     def test_upper_lower_arg(self):
+        # Explicit test of upper argument that also checks the default.
         a = np.array([[1+0j, 0-2j], [0+2j, 5+0j]])
 
         assert_equal(linalg.cholesky(a), linalg.cholesky(a, upper=False))

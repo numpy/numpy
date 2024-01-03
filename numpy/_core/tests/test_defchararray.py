@@ -213,6 +213,10 @@ class TestInformation:
                            ['12345', 'MixedCase'],
                            ['123 \t 345 \0 ', 'UPPER']]) \
                             .view(np.char.chararray)
+        # Array with longer strings, > MEMCHR_CUT_OFF in code.
+        self.C = (np.array(['ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+                            '01234567890123456789012345'])
+                  .view(np.char.chararray))
 
     def test_len(self):
         assert_(issubclass(np.char.str_len(self.A).dtype.type, np.integer))
@@ -240,12 +244,24 @@ class TestInformation:
 
         assert_raises(TypeError, fail)
 
-    def test_find(self):
-        assert_(issubclass(self.A.find('a').dtype.type, np.integer))
-        assert_array_equal(self.A.find('a'), [[1, -1], [-1, 6], [-1, -1]])
-        assert_array_equal(self.A.find('3'), [[-1, -1], [2, -1], [2, -1]])
-        assert_array_equal(self.A.find('a', 0, 2), [[1, -1], [-1, -1], [-1, -1]])
-        assert_array_equal(self.A.find(['1', 'P']), [[-1, -1], [0, -1], [0, 1]])
+    @pytest.mark.parametrize(
+        "dtype, encode",
+        [("U", str),
+         ("S", lambda x: x.encode('ascii')),
+         ])
+    def test_find(self, dtype, encode):
+        A = self.A.astype(dtype)
+        assert_(issubclass(A.find(encode('a')).dtype.type, np.integer))
+        assert_array_equal(A.find(encode('a')),
+                           [[1, -1], [-1, 6], [-1, -1]])
+        assert_array_equal(A.find(encode('3')),
+                           [[-1, -1], [2, -1], [2, -1]])
+        assert_array_equal(A.find(encode('a'), 0, 2),
+                           [[1, -1], [-1, -1], [-1, -1]])
+        assert_array_equal(A.find([encode('1'), encode('P')]),
+                           [[-1, -1], [0, -1], [0, 1]])
+        C = self.C.astype(dtype)
+        assert_array_equal(C.find(encode('M')), [12, -1])
 
     def test_index(self):
 
@@ -438,6 +454,16 @@ class TestMethods:
                [b'12########## \t ##########45 \x00 ', b'UPPER']]
         assert_(issubclass(R.dtype.type, np.bytes_))
         assert_array_equal(R, tgt)
+        # Test special cases that should just return the input array,
+        # since replacements are not possible or do nothing.
+        S1 = self.A.replace(b'A very long byte string, longer than A', b'')
+        assert_array_equal(S1, self.A)
+        S2 = self.A.replace(b'', b'')
+        assert_array_equal(S2, self.A)
+        S3 = self.A.replace(b'3', b'3')
+        assert_array_equal(S3, self.A)
+        S4 = self.A.replace(b'3', b'', count=0)
+        assert_array_equal(S4, self.A)
 
     def test_rjust(self):
         assert_(issubclass(self.A.rjust(10).dtype.type, np.bytes_))
