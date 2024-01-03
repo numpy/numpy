@@ -819,7 +819,7 @@ def cholesky(a, /, *, upper=False):
            [0.-0.j, 1.-0.j]])
 
     """
-    gufunc = _umath_linalg.cholesky_lo
+    gufunc = _umath_linalg.cholesky_up if upper else _umath_linalg.cholesky_lo
     a, wrap = _makearray(a)
     _assert_stacked_2d(a)
     _assert_stacked_square(a)
@@ -828,8 +828,6 @@ def cholesky(a, /, *, upper=False):
     with errstate(call=_raise_linalgerror_nonposdef, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
         r = gufunc(a, signature=signature)
-    if upper:
-        r = matrix_transpose(r).conj()
     return wrap(r.astype(result_t, copy=False))
 
 
