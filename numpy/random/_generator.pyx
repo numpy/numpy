@@ -3305,14 +3305,23 @@ cdef class Generator:
         --------
         Draw samples from the distribution:
 
-        >>> import numpy as np
         >>> rng = np.random.default_rng()
-        >>> s = rng.poisson(5, 10000)
+        >>> lam, size = 5, 10000
+        >>> s = rng.poisson(lam=lam, size=size)
 
-        Display histogram of the sample:
+        The mean and variance of the distribution are both ``lam``
+        
+        >>> s.mean(), s.var()
+        (4.9917 5.1088311)  # may vary
+
+        The sample with the corresponding pmf 
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, _ = plt.hist(s, 14, density=True)
+        >>> from scipy import stats  # doctest: +SKIP
+        >>> weights = np.ones_like(s)/len(s)
+        >>> count, bins, _ = plt.hist(s, 30, weights=weights)
+        >>> x = np.arange(0, 20)
+        >>> plt.stem(x, stats.poisson.pmf(x, mu=lam), linefmt='C1-')
         >>> plt.show()
 
         Draw each 100 values for lambda 100 and 500:
