@@ -34,8 +34,8 @@ import functools
 import warnings
 
 from numpy.lib.array_utils import normalize_axis_index
-from numpy._core import asarray, zeros, swapaxes, conjugate, take, sqrt
-from . import _pocketfft_internal as pfi
+from numpy._core import asarray, empty, zeros, swapaxes, conjugate, take, sqrt
+from . import _pocketfft_umath as pfu
 from numpy._core import overrides
 
 
@@ -47,33 +47,36 @@ array_function_dispatch = functools.partial(
 # divided. This replaces the original, more intuitive 'fct` parameter to avoid
 # divisions by zero (or alternatively additional checks) in the case of
 # zero-length axes during its computation.
-def _raw_fft(a, n, axis, is_real, is_forward, inv_norm):
+def _raw_fft(a, n, axis, is_real, is_forward, inv_norm, out=None):
     axis = normalize_axis_index(axis, a.ndim)
     if n is None:
         n = a.shape[axis]
 
     fct = 1/inv_norm
 
-    if a.shape[axis] != n:
-        s = list(a.shape)
-        index = [slice(None)]*len(s)
-        if s[axis] > n:
-            index[axis] = slice(0, n)
-            a = a[tuple(index)]
+    n_out = n
+    if is_real:
+        if is_forward:
+            ufunc = pfu.rfft_n_even if n % 2 == 0 else pfu.rfft_n_odd
+            n_out = n // 2 + 1
         else:
-            index[axis] = slice(0, s[axis])
-            s[axis] = n
-            z = zeros(s, a.dtype.char)
-            z[tuple(index)] = a
-            a = z
-
-    if axis == a.ndim-1:
-        r = pfi.execute(a, is_real, is_forward, fct)
+            ufunc = pfu.irfft
     else:
-        a = swapaxes(a, axis, -1)
-        r = pfi.execute(a, is_real, is_forward, fct)
-        r = swapaxes(r, axis, -1)
-    return r
+        ufunc = pfu.fft if is_forward else pfu.ifft
+
+    if out is None:
+        out = empty(a.shape[:axis] + (n_out,) + a.shape[axis+1:],
+                    dtype=complex if is_forward or not is_real else float)
+    elif ((shape := getattr(out, "shape", None)) is not None
+          and (len(shape) != a.ndim or shape[axis] != n_out)):
+        raise ValueError("output array has wrong shape.")
+    # Note: for backward compatibility, we want to accept longdouble as well,
+    # even though it is at reduced precision. To tell the promotor that we
+    # want to do that, we set the signature (to the only the ufunc has).
+    # Then, the default casting='same_kind' will take care of the rest.
+    # TODO: create separate float, double, and longdouble loops.
+    return ufunc(a, fct, axes=[(axis,), (), (axis,)], out=out,
+                 signature=ufunc.types[0])
 
 
 def _get_forward_norm(n, norm):
@@ -116,12 +119,12 @@ def _swap_direction(norm):
                          '"ortho" or "forward".') from None
 
 
-def _fft_dispatcher(a, n=None, axis=None, norm=None):
-    return (a,)
+def _fft_dispatcher(a, n=None, axis=None, norm=None, out=None):
+    return (a, out)
 
 
 @array_function_dispatch(_fft_dispatcher)
-def fft(a, n=None, axis=-1, norm=None):
+def fft(a, n=None, axis=-1, norm=None, out=None):
     """
     Compute the one-dimensional discrete Fourier Transform.
 
@@ -151,6 +154,11 @@ def fft(a, n=None, axis=-1, norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -213,12 +221,12 @@ def fft(a, n=None, axis=-1, norm=None):
     if n is None:
         n = a.shape[axis]
     inv_norm = _get_forward_norm(n, norm)
-    output = _raw_fft(a, n, axis, False, True, inv_norm)
+    output = _raw_fft(a, n, axis, False, True, inv_norm, out)
     return output
 
 
 @array_function_dispatch(_fft_dispatcher)
-def ifft(a, n=None, axis=-1, norm=None):
+def ifft(a, n=None, axis=-1, norm=None, out=None):
     """
     Compute the one-dimensional inverse discrete Fourier Transform.
 
@@ -263,6 +271,12 @@ def ifft(a, n=None, axis=-1, norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -314,12 +328,12 @@ def ifft(a, n=None, axis=-1, norm=None):
     if n is None:
         n = a.shape[axis]
     inv_norm = _get_backward_norm(n, norm)
-    output = _raw_fft(a, n, axis, False, False, inv_norm)
+    output = _raw_fft(a, n, axis, False, False, inv_norm, out=out)
     return output
 
 
 @array_function_dispatch(_fft_dispatcher)
-def rfft(a, n=None, axis=-1, norm=None):
+def rfft(a, n=None, axis=-1, norm=None, out=None):
     """
     Compute the one-dimensional discrete Fourier Transform for real input.
 
@@ -349,6 +363,12 @@ def rfft(a, n=None, axis=-1, norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -407,12 +427,12 @@ def rfft(a, n=None, axis=-1, norm=None):
     if n is None:
         n = a.shape[axis]
     inv_norm = _get_forward_norm(n, norm)
-    output = _raw_fft(a, n, axis, True, True, inv_norm)
+    output = _raw_fft(a, n, axis, True, True, inv_norm, out=out)
     return output
 
 
 @array_function_dispatch(_fft_dispatcher)
-def irfft(a, n=None, axis=-1, norm=None):
+def irfft(a, n=None, axis=-1, norm=None, out=None):
     """
     Computes the inverse of `rfft`.
 
@@ -451,6 +471,12 @@ def irfft(a, n=None, axis=-1, norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+
+    out : ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -511,12 +537,12 @@ def irfft(a, n=None, axis=-1, norm=None):
     if n is None:
         n = (a.shape[axis] - 1) * 2
     inv_norm = _get_backward_norm(n, norm)
-    output = _raw_fft(a, n, axis, True, False, inv_norm)
+    output = _raw_fft(a, n, axis, True, False, inv_norm, out=out)
     return output
 
 
 @array_function_dispatch(_fft_dispatcher)
-def hfft(a, n=None, axis=-1, norm=None):
+def hfft(a, n=None, axis=-1, norm=None, out=None):
     """
     Compute the FFT of a signal that has Hermitian symmetry, i.e., a real
     spectrum.
@@ -545,6 +571,12 @@ def hfft(a, n=None, axis=-1, norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+
+    out : ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -609,12 +641,12 @@ def hfft(a, n=None, axis=-1, norm=None):
     if n is None:
         n = (a.shape[axis] - 1) * 2
     new_norm = _swap_direction(norm)
-    output = irfft(conjugate(a), n, axis, norm=new_norm)
+    output = irfft(conjugate(a), n, axis, norm=new_norm, out=None)
     return output
 
 
 @array_function_dispatch(_fft_dispatcher)
-def ihfft(a, n=None, axis=-1, norm=None):
+def ihfft(a, n=None, axis=-1, norm=None, out=None):
     """
     Compute the inverse FFT of a signal that has Hermitian symmetry.
 
@@ -641,6 +673,12 @@ def ihfft(a, n=None, axis=-1, norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -676,8 +714,8 @@ def ihfft(a, n=None, axis=-1, norm=None):
     if n is None:
         n = a.shape[axis]
     new_norm = _swap_direction(norm)
-    output = conjugate(rfft(a, n, axis, norm=new_norm))
-    return output
+    out = rfft(a, n, axis, norm=new_norm, out=out)
+    return conjugate(out, out=out)
 
 
 def _cook_nd_args(a, s=None, axes=None, invreal=0):
@@ -717,22 +755,22 @@ def _cook_nd_args(a, s=None, axes=None, invreal=0):
     return s, axes
 
 
-def _raw_fftnd(a, s=None, axes=None, function=fft, norm=None):
+def _raw_fftnd(a, s=None, axes=None, function=fft, norm=None, out=None):
     a = asarray(a)
     s, axes = _cook_nd_args(a, s, axes)
     itl = list(range(len(axes)))
     itl.reverse()
     for ii in itl:
-        a = function(a, n=s[ii], axis=axes[ii], norm=norm)
+        a = function(a, n=s[ii], axis=axes[ii], norm=norm, out=out)
     return a
 
 
-def _fftn_dispatcher(a, s=None, axes=None, norm=None):
-    return (a,)
+def _fftn_dispatcher(a, s=None, axes=None, norm=None, out=None):
+    return (a, out)
 
 
 @array_function_dispatch(_fftn_dispatcher)
-def fftn(a, s=None, axes=None, norm=None):
+def fftn(a, s=None, axes=None, norm=None, out=None):
     """
     Compute the N-dimensional discrete Fourier Transform.
 
@@ -790,6 +828,13 @@ def fftn(a, s=None, axes=None, norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype for all axes (and hence is
+        imcompatible with passing in all but the trivial ``s``).
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -854,11 +899,11 @@ def fftn(a, s=None, axes=None, norm=None):
     >>> plt.show()
 
     """
-    return _raw_fftnd(a, s, axes, fft, norm)
+    return _raw_fftnd(a, s, axes, fft, norm, out=out)
 
 
 @array_function_dispatch(_fftn_dispatcher)
-def ifftn(a, s=None, axes=None, norm=None):
+def ifftn(a, s=None, axes=None, norm=None, out=None):
     """
     Compute the N-dimensional inverse discrete Fourier Transform.
 
@@ -926,6 +971,13 @@ def ifftn(a, s=None, axes=None, norm=None):
 
             The "backward", "forward" values were added.
 
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype for all axes (and hence is
+        imcompatible with passing in all but the trivial ``s``).
+
+        .. versionadded:: 2.0.0
+
     Returns
     -------
     out : complex ndarray
@@ -980,11 +1032,11 @@ def ifftn(a, s=None, axes=None, norm=None):
     >>> plt.show()
 
     """
-    return _raw_fftnd(a, s, axes, ifft, norm)
+    return _raw_fftnd(a, s, axes, ifft, norm, out=out)
 
 
 @array_function_dispatch(_fftn_dispatcher)
-def fft2(a, s=None, axes=(-2, -1), norm=None):
+def fft2(a, s=None, axes=(-2, -1), norm=None, out=None):
     """
     Compute the 2-dimensional discrete Fourier Transform.
 
@@ -1044,6 +1096,13 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
 
             The "backward", "forward" values were added.
 
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype for all axes (and hence only the
+        last axis can have ``s`` not equal to the shape at that axis).
+
+        .. versionadded:: 2.0.0
+
     Returns
     -------
     out : complex ndarray
@@ -1099,11 +1158,11 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
               0.  +0.j        ,   0.  +0.j        ]])
 
     """
-    return _raw_fftnd(a, s, axes, fft, norm)
+    return _raw_fftnd(a, s, axes, fft, norm, out=out)
 
 
 @array_function_dispatch(_fftn_dispatcher)
-def ifft2(a, s=None, axes=(-2, -1), norm=None):
+def ifft2(a, s=None, axes=(-2, -1), norm=None, out=None):
     """
     Compute the 2-dimensional inverse discrete Fourier Transform.
 
@@ -1170,6 +1229,13 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
 
             The "backward", "forward" values were added.
 
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype for all axes (and hence is
+        imcompatible with passing in all but the trivial ``s``).
+
+        .. versionadded:: 2.0.0
+
     Returns
     -------
     out : complex ndarray
@@ -1215,11 +1281,11 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
            [0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j]])
 
     """
-    return _raw_fftnd(a, s, axes, ifft, norm)
+    return _raw_fftnd(a, s, axes, ifft, norm, out=None)
 
 
 @array_function_dispatch(_fftn_dispatcher)
-def rfftn(a, s=None, axes=None, norm=None):
+def rfftn(a, s=None, axes=None, norm=None, out=None):
     """
     Compute the N-dimensional discrete Fourier Transform for real input.
 
@@ -1279,6 +1345,13 @@ def rfftn(a, s=None, axes=None, norm=None):
 
             The "backward", "forward" values were added.
 
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype for all axes (and hence is
+        imcompatible with passing in all but the trivial ``s``).
+
+        .. versionadded:: 2.0.0
+
     Returns
     -------
     out : complex ndarray
@@ -1333,14 +1406,14 @@ def rfftn(a, s=None, axes=None, norm=None):
     """
     a = asarray(a)
     s, axes = _cook_nd_args(a, s, axes)
-    a = rfft(a, s[-1], axes[-1], norm)
+    a = rfft(a, s[-1], axes[-1], norm, out=out)
     for ii in range(len(axes)-1):
-        a = fft(a, s[ii], axes[ii], norm)
+        a = fft(a, s[ii], axes[ii], norm, out=out)
     return a
 
 
 @array_function_dispatch(_fftn_dispatcher)
-def rfft2(a, s=None, axes=(-2, -1), norm=None):
+def rfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
     """
     Compute the 2-dimensional FFT of a real array.
 
@@ -1385,6 +1458,13 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
 
             The "backward", "forward" values were added.
 
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype for the last inverse transform.
+        imcompatible with passing in all but the trivial ``s``).
+
+        .. versionadded:: 2.0.0
+
     Returns
     -------
     out : ndarray
@@ -1410,11 +1490,11 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
            [-12.5 -4.0614962j ,   0.  +0.j        ,   0.  +0.j        ],
            [-12.5-17.20477401j,   0.  +0.j        ,   0.  +0.j        ]])
     """
-    return rfftn(a, s, axes, norm)
+    return rfftn(a, s, axes, norm, out=out)
 
 
 @array_function_dispatch(_fftn_dispatcher)
-def irfftn(a, s=None, axes=None, norm=None):
+def irfftn(a, s=None, axes=None, norm=None, out=None):
     """
     Computes the inverse of `rfftn`.
 
@@ -1483,6 +1563,12 @@ def irfftn(a, s=None, axes=None, norm=None):
 
             The "backward", "forward" values were added.
 
+    out : ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype for the last transformation.
+
+        .. versionadded:: 2.0.0
+
     Returns
     -------
     out : ndarray
@@ -1543,12 +1629,12 @@ def irfftn(a, s=None, axes=None, norm=None):
     s, axes = _cook_nd_args(a, s, axes, invreal=1)
     for ii in range(len(axes)-1):
         a = ifft(a, s[ii], axes[ii], norm)
-    a = irfft(a, s[-1], axes[-1], norm)
+    a = irfft(a, s[-1], axes[-1], norm, out=out)
     return a
 
 
 @array_function_dispatch(_fftn_dispatcher)
-def irfft2(a, s=None, axes=(-2, -1), norm=None):
+def irfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
     """
     Computes the inverse of `rfft2`.
 
@@ -1594,6 +1680,12 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
 
             The "backward", "forward" values were added.
 
+    out : ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype for the last transformation.
+
+        .. versionadded:: 2.0.0
+
     Returns
     -------
     out : ndarray
@@ -1623,4 +1715,4 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
            [3., 3., 3., 3., 3.],
            [4., 4., 4., 4., 4.]])
     """
-    return irfftn(a, s, axes, norm)
+    return irfftn(a, s, axes, norm, out=None)
