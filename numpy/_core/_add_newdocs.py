@@ -3761,7 +3761,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('repeat',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('reshape',
     """
-    a.reshape(shape, /, order='C')
+    a.reshape(shape, /, *, order='C')
 
     Returns an array containing the same data with a new shape.
 
