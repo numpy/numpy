@@ -45,7 +45,7 @@ py.extension_module(
       # Require 1.25+ to test datetime additions
       '-DNPY_TARGET_VERSION=NPY_2_0_API_VERSION',
       '-DCYTHON_LIMITED_API=1',
-      '-DPy_LIMITED_API=0x030700f0',
     ],
     include_directories: [npy_include_path],
+    limited_api: '3.7',
 )
