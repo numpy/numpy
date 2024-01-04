@@ -36,16 +36,19 @@ py.extension_module(
     include_directories: [npy_include_path],
 )
 
-py.extension_module(
-    'limited_api',
-    'limited_api.pyx',
-    install: false,
-    c_args: [
-      '-DNPY_NO_DEPRECATED_API=0',  # Cython still uses old NumPy C API
-      # Require 1.25+ to test datetime additions
-      '-DNPY_TARGET_VERSION=NPY_2_0_API_VERSION',
-      '-DCYTHON_LIMITED_API=1',
-    ],
-    include_directories: [npy_include_path],
-    limited_api: '3.7',
-)
+# py does not export the is_pypy method
+if not py.get_variable('SOABI').startswith('pypy')
+  py.extension_module(
+      'limited_api',
+      'limited_api.pyx',
+      install: false,
+      c_args: [
+        '-DNPY_NO_DEPRECATED_API=0',  # Cython still uses old NumPy C API
+        # Require 1.25+ to test datetime additions
+        '-DNPY_TARGET_VERSION=NPY_2_0_API_VERSION',
+        '-DCYTHON_LIMITED_API=1',
+      ],
+      include_directories: [npy_include_path],
+      limited_api: '3.7',
+  )
+endif
