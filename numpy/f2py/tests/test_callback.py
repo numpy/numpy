@@ -121,9 +121,6 @@ def test_docstring(_mod):
     assert _mod.t.__doc__ == expected
 
 
-@pytest.mark.skipif(
-    sys.platform == "win32", reason="Fails with MinGW64 Gfortran (Issue #9673)"
-)
 @pytest.mark.parametrize("_mod", ["f77_callback_spec", "f77_tls_spec"], indirect=True)
 def test_string_callback(_mod):
     def callback(code):
@@ -137,9 +134,6 @@ def test_string_callback(_mod):
     assert r == 0
 
 
-@pytest.mark.skipif(
-    sys.platform == "win32", reason="Fails with MinGW64 Gfortran (Issue #9673)"
-)
 @pytest.mark.parametrize("_mod", ["f77_callback_spec", "f77_tls_spec"], indirect=True)
 def test_string_callback_array(_mod):
     # See gh-10027

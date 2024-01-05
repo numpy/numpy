@@ -15,8 +15,6 @@ def quotedchar_spec():
     )
     return spec
 
-@pytest.mark.skipif(sys.platform == "win32",
-                    reason="Fails with MinGW64 Gfortran (Issue #9673)")
 @pytest.mark.parametrize("_mod", ["quotedchar_spec"], indirect=True)
 def test_quoted_character(_mod):
     assert _mod.foo() == (b"'", b'"', b";", b"!", b"(", b")")

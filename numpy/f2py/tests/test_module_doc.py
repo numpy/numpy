@@ -18,8 +18,6 @@ def modstring_spec():
     )
     return spec
 
-@pytest.mark.skipif(sys.platform == "win32",
-                    reason="Fails with MinGW64 Gfortran (Issue #9673)")
 @pytest.mark.xfail(IS_PYPY,
                    reason="PyPy cannot modify tp_doc after PyType_Ready")
 @pytest.mark.parametrize("_mod", ["modstring_spec"], indirect=True)
