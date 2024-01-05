@@ -488,6 +488,17 @@ class TestMethods:
             ['01234ABCDE6789' * i for i in range(3)]
             + ['01234ABCDE6789' + '0123456789' * 2]))
 
+    def test_replace_broadcasting(self):
+        a = np.array('0,0,0').view(np.char.chararray)
+        r1 = a.replace('0', '1', count=np.arange(3))
+        assert r1.dtype == a.dtype
+        assert_array_equal(r1, np.array(['0,0,0', '1,0,0', '1,1,0']))
+        r2 = a.replace('0', [['1'], ['2']], count=np.arange(1, 4))
+        assert_array_equal(r2, np.array([['1,0,0', '1,1,0', '1,1,1'],
+                                         ['2,0,0', '2,2,0', '2,2,2']]))
+        r3 = a.replace(['0', '0,0', '0,0,0'], 'X')
+        assert_array_equal(r3, np.array(['X,X,X', 'X,0', 'X']))
+
     def test_rjust(self):
         assert_(issubclass(self.A.rjust(10).dtype.type, np.bytes_))
 
