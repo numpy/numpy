@@ -3455,7 +3455,7 @@ cdef class Generator:
 
         Examples
         --------
-        Draw 10.000 values from the geometric distribution, with the 
+        Draw 10,000 values from the geometric distribution, with the 
         probability of an individual success equal to ``p = 0.35``:
 
         >>> p, size = 0.35, 10000
