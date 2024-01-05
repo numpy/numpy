@@ -6,16 +6,18 @@ import platform
 
 IS_S390X = platform.machine() == "s390x"
 
+
 @pytest.fixture(scope="module")
 def retchar_spec():
     spec = util.F2PyModuleSpec(
         test_class_name="TestF77ReturnCharacter",
-        sources = [
+        sources=[
             util.getpath("tests", "src", "return_character", "foo77.f"),
             util.getpath("tests", "src", "return_character", "foo90.f90"),
         ],
     )
     return spec
+
 
 def check_function(modcomp, tname):
     t = getattr(modcomp, tname)
@@ -34,11 +36,13 @@ def check_function(modcomp, tname):
     else:
         raise NotImplementedError
 
+
 @pytest.mark.xfail(IS_S390X, reason="callback returns ' '")
 @pytest.mark.parametrize("name", "t0,t1,t5,s0,s1,s5,ss".split(","))
 @pytest.mark.parametrize("_mod", ["retchar_spec"], indirect=True)
 def test_all_f77(_mod, name):
     check_function(_mod, name)
+
 
 @pytest.mark.xfail(IS_S390X, reason="callback returns ' '")
 @pytest.mark.parametrize("name", "t0,t1,t5,ts,s0,s1,s5,ss".split(","))

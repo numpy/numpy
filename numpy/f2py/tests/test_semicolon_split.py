@@ -5,38 +5,61 @@ import numpy as np
 from . import util
 
 
-@pytest.mark.skipif(
-    platform.system() == "Darwin",
-    reason="Prone to error when run with numpy/f2py/tests on mac os, "
-    "but not when run in isolation",
-)
-@pytest.mark.skipif(
-    np.dtype(np.intp).itemsize < 8,
-    reason="32-bit builds are buggy"
-)
-@pytest.mark.usefixtures("build_module")
-class TestMultiline(util.F2PyTest):
-    suffix = ".pyf"
+@pytest.fixture(scope="module")
+def multiline_spec():
     module_name = "multiline"
-    code = f"""
-python module {module_name}
-    usercode '''
-void foo(int* x) {{
-    char dummy = ';';
-    *x = 42;
-}}
-'''
-    interface
-        subroutine foo(x)
-            intent(c) foo
-            integer intent(out) :: x
-        end subroutine foo
-    end interface
-end python module {module_name}
-    """
+    spec = util.F2PyModuleSpec(
+        test_class_name="TestMultiline",
+        suffix=".pyf",
+        module_name=module_name,
+        code=f"""
+    python module {module_name}
+        usercode '''
+    void foo(int* x) {{
+        char dummy = ';';
+        *x = 42;
+    }}
+    '''
+        interface
+            subroutine foo(x)
+                intent(c) foo
+                integer intent(out) :: x
+            end subroutine foo
+        end interface
+    end python module {module_name}
+        """,
+    )
+    return spec
 
-    def test_multiline(self):
-        assert self.module.foo() == 42
+
+@pytest.fixture(scope="module")
+def callstatement_spec():
+    module_name = "callstatement"
+    spec = util.F2PyModuleSpec(
+        test_class_name="TestCallstatement",
+        module_name=module_name,
+        suffix=".pyf",
+        code=f"""
+    python module {module_name}
+        usercode '''
+    void foo(int* x) {{
+    }}
+    '''
+        interface
+            subroutine foo(x)
+                intent(c) foo
+                integer intent(out) :: x
+                callprotoargument int*
+                callstatement {{ &
+                    ; &
+                    x = 42; &
+                }}
+            end subroutine foo
+        end interface
+    end python module {module_name}
+        """,
+    )
+    return spec
 
 
 @pytest.mark.skipif(
@@ -44,34 +67,9 @@ end python module {module_name}
     reason="Prone to error when run with numpy/f2py/tests on mac os, "
     "but not when run in isolation",
 )
-@pytest.mark.skipif(
-    np.dtype(np.intp).itemsize < 8,
-    reason="32-bit builds are buggy"
+@pytest.mark.skipif(np.dtype(np.intp).itemsize < 8, reason="32-bit builds are buggy")
+@pytest.mark.parametrize(
+    "_mod", ["multiline_spec", "callstatement_spec"], indirect=True
 )
-@pytest.mark.slow
-@pytest.mark.usefixtures("build_module")
-class TestCallstatement(util.F2PyTest):
-    suffix = ".pyf"
-    module_name = "callstatement"
-    code = f"""
-python module {module_name}
-    usercode '''
-void foo(int* x) {{
-}}
-'''
-    interface
-        subroutine foo(x)
-            intent(c) foo
-            integer intent(out) :: x
-            callprotoargument int*
-            callstatement {{ &
-                ; &
-                x = 42; &
-            }}
-        end subroutine foo
-    end interface
-end python module {module_name}
-    """
-
-    def test_callstatement(self):
-        assert self.module.foo() == 42
+def test_multiline(_mod):
+    assert _mod.foo() == 42
