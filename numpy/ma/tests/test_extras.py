@@ -251,11 +251,12 @@ class TestAverage:
         desired = masked_array([[2.], [3.], [4.]], [[False], [False], [True]])
         assert_equal(actual, desired)
 
-
     def test_weight_and_input_dims_different(self):
-        # this test mirrors a test for np.average() in lib/test/test_function_base.py
+        # this test mirrors a test for np.average()
+        # in lib/test/test_function_base.py
         y = np.arange(12).reshape(2, 2, 3)
-        w = np.array([0., 0., 1., .5, .5, 0., 0., .5, .5, 1., 0., 0.]).reshape(2, 2, 3)
+        w = np.array([0., 0., 1., .5, .5, 0., 0., .5, .5, 1., 0., 0.])\
+            .reshape(2, 2, 3)
 
         m = np.full((2, 2, 3), False)
         yma = np.ma.array(y, mask=m)
@@ -284,13 +285,15 @@ class TestAverage:
         assert_almost_equal(actual, desired)
 
         # here the weights have the wrong dimensions for the specified axes
-        with np.testing.assert_raises_regex(ValueError,
-                                            "Weight dimensions should be consistent with specified axis"):
+        with np.testing.assert_raises_regex(
+                ValueError,
+                "Weight dimensions should be consistent with specified axis"):
             average(yma, axis=(0, 1, 2), weights=subw0)
 
         # here the weights have the wrong shape for the specified axes
-        with np.testing.assert_raises_regex(ValueError,
-                                            "Weight shape should be consistent with a along specified axis"):
+        with np.testing.assert_raises_regex(
+                ValueError,
+                "Weight shape should be consistent with a along specified axis"):
             average(yma, axis=(0, 1), weights=subw1)
 
         # swapping the axes should be same as transposing weights

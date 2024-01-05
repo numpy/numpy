@@ -659,14 +659,18 @@ def average(a, axis=None, weights=None, returned=False, *,
                     "differ.")
             if np.array(axis).shape[0] != wgt.ndim:
                 raise ValueError(
-                    "Weight dimensions should be consistent with specified axis.")
+                    "Weight dimensions should be "
+                    "consistent with specified axis.")
             if not (wgt.shape == np.array(a.shape)[np.array(axis)]).all():
                 raise ValueError(
-                    "Weight shape should be consistent with a along specified axis.")
+                    "Weight shape should be "
+                    "consistent with a along specified axis.")
 
             # setup wgt to broadcast along axis
             orig_wgt_ndim = wgt.ndim
-            wgt = np.broadcast_to(wgt, (a.ndim - orig_wgt_ndim) * (1,) + wgt.shape, subok=True)
+            wgt = np.broadcast_to(wgt,
+                                  (a.ndim - orig_wgt_ndim) * (1,) + wgt.shape,
+                                  subok=True)
             for i, _ax in enumerate(axis):
                 wgt = wgt.swapaxes(-orig_wgt_ndim + i, _ax)
 
