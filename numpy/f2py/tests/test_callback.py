@@ -21,19 +21,23 @@ def f77_callback_spec():
 
 
 @pytest.fixture(scope="module")
-def f90_callback_spec():
+def f77_tls_spec():
     spec = util.F2PyModuleSpec(
-        test_class_name="TestF90Callback",
-        sources=[util.getpath("tests", "src", "callback", "gh17797.f90")],
+        test_class_name="TestF77CallbackPythonTLS",
+        options=["-DF2PY_USE_PYTHON_TLS"],
+        sources=[util.getpath("tests", "src", "callback", "foo.f")],
     )
     return spec
 
 
 @pytest.fixture(scope="module")
-def gh18335_spec():
+def f90_callback_spec():
     spec = util.F2PyModuleSpec(
-        test_class_name="TestGH18335",
-        sources=[util.getpath("tests", "src", "callback", "gh18335.f90")],
+        test_class_name="TestF90Callback",
+        sources=[
+            util.getpath("tests", "src", "callback", "gh17797.f90"),
+            util.getpath("tests", "src", "callback", "gh18335.f90"),
+        ],
     )
     return spec
 
@@ -77,14 +81,14 @@ def check_function(mod, name):
     assert r == 11
 
 
-@pytest.mark.parametrize("_mod", ["f77_callback_spec"], indirect=True)
+@pytest.mark.parametrize("_mod", ["f77_callback_spec", "f77_tls_spec"], indirect=True)
 @pytest.mark.parametrize("name", ["t", "t2"])
 def test_all(_mod, name):
     check_function(_mod, name)
 
 
 @pytest.mark.xfail(IS_PYPY, reason="PyPy cannot modify tp_doc after PyType_Ready")
-@pytest.mark.parametrize("_mod", ["f77_callback_spec"], indirect=True)
+@pytest.mark.parametrize("_mod", ["f77_callback_spec", "f77_tls_spec"], indirect=True)
 def test_docstring(_mod):
     expected = textwrap.dedent(
         """\
@@ -120,7 +124,7 @@ def test_docstring(_mod):
 @pytest.mark.skipif(
     sys.platform == "win32", reason="Fails with MinGW64 Gfortran (Issue #9673)"
 )
-@pytest.mark.parametrize("_mod", ["f77_callback_spec"], indirect=True)
+@pytest.mark.parametrize("_mod", ["f77_callback_spec", "f77_tls_spec"], indirect=True)
 def test_string_callback(_mod):
     def callback(code):
         if code == "r":
@@ -136,7 +140,7 @@ def test_string_callback(_mod):
 @pytest.mark.skipif(
     sys.platform == "win32", reason="Fails with MinGW64 Gfortran (Issue #9673)"
 )
-@pytest.mark.parametrize("_mod", ["f77_callback_spec"], indirect=True)
+@pytest.mark.parametrize("_mod", ["f77_callback_spec", "f77_tls_spec"], indirect=True)
 def test_string_callback_array(_mod):
     # See gh-10027
     cu1 = np.zeros((1,), "S8")
@@ -158,7 +162,7 @@ def test_string_callback_array(_mod):
         assert res == 0
 
 
-@pytest.mark.parametrize("_mod", ["f77_callback_spec"], indirect=True)
+@pytest.mark.parametrize("_mod", ["f77_callback_spec", "f77_tls_spec"], indirect=True)
 def test_threadsafety(_mod):
     # Segfaults if the callback handling is not threadsafe
 
@@ -201,7 +205,7 @@ def test_threadsafety(_mod):
         raise AssertionError(errors)
 
 
-@pytest.mark.parametrize("_mod", ["f77_callback_spec"], indirect=True)
+@pytest.mark.parametrize("_mod", ["f77_callback_spec", "f77_tls_spec"], indirect=True)
 def test_hidden_callback(_mod):
     try:
         _mod.hidden_callback(2)
@@ -249,10 +253,7 @@ def test_gh17797(_mod):
     assert r == 123 + 1 + 2 + 3
 
 
-# TestGH18335
-
-
-@pytest.mark.parametrize("_mod", ["gh18335_spec"], indirect=True)
+@pytest.mark.parametrize("_mod", ["f90_callback_spec"], indirect=True)
 def test_gh18335(_mod):
     def foo(x):
         x[0] += 1
