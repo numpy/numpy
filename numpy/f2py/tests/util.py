@@ -75,32 +75,11 @@ def get_temp_module_name():
     return name
 
 
-def _memoize(func):
-    memo = {}
-
-    def wrapper(*a, **kw):
-        key = repr((a, kw))
-        if key not in memo:
-            try:
-                memo[key] = func(*a, **kw)
-            except Exception as e:
-                memo[key] = e
-                raise
-        ret = memo[key]
-        if isinstance(ret, Exception):
-            raise ret
-        return ret
-
-    wrapper.__name__ = func.__name__
-    return wrapper
-
-
 #
 # Building modules
 #
 
 
-# @_memoize
 def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     """
     Compile and import a f2py module, built from the given files.
@@ -142,13 +121,12 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     try:
         os.chdir(d)
         cmd = [sys.executable, "-c", code] + f2py_opts
-        p = subprocess.Popen(cmd,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         out, err = p.communicate()
         if p.returncode != 0:
-            raise RuntimeError("Running f2py failed: %s\n%s" %
-                               (cmd[4:], asunicode(out)))
+            raise RuntimeError(
+                "Running f2py failed: %s\n%s" % (cmd[4:], asunicode(out))
+            )
     finally:
         os.chdir(cwd)
 
@@ -161,12 +139,9 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
         # If someone starts deleting modules after import, this will
         # need to change to record how big each module is, rather than
         # relying on rebase being able to find that from the files.
-        _module_list.extend(
-            glob.glob(os.path.join(d, "{:s}*".format(module_name)))
-        )
+        _module_list.extend(glob.glob(os.path.join(d, "{:s}*".format(module_name))))
         subprocess.check_call(
-            ["/usr/bin/rebase", "--database", "--oblivious", "--verbose"]
-            + _module_list
+            ["/usr/bin/rebase", "--database", "--oblivious", "--verbose"] + _module_list
         )
 
     # Import
@@ -174,12 +149,9 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
 
 
 # @_memoize
-def build_code(source_code,
-               options=[],
-               skip=[],
-               only=[],
-               suffix=None,
-               module_name=None):
+def build_code(
+    source_code, options=[], skip=[], only=[], suffix=None, module_name=None
+):
     """
     Compile and import Fortran code using f2py.
 
@@ -189,16 +161,15 @@ def build_code(source_code,
     with temppath(suffix=suffix) as path:
         with open(path, "w") as f:
             f.write(source_code)
-        return build_module([path],
-                            options=options,
-                            skip=skip,
-                            only=only,
-                            module_name=module_name)
+        return build_module(
+            [path], options=options, skip=skip, only=only, module_name=module_name
+        )
 
 
 #
 # Check if compilers are available at all...
 #
+
 
 def check_language(lang, code_snippet=None):
     tmpdir = tempfile.mkdtemp()
@@ -230,14 +201,15 @@ def check_language(lang, code_snippet=None):
         shutil.rmtree(tmpdir)
     return False
 
-fortran77_code = '''
+
+fortran77_code = """
 C Example Fortran 77 code
       PROGRAM HELLO
       PRINT *, 'Hello, Fortran 77!'
       END
-'''
+"""
 
-fortran90_code = '''
+fortran90_code = """
 ! Example Fortran 90 code
 program hello90
   type :: greeting
@@ -248,7 +220,8 @@ program hello90
   greet%text = 'hello, fortran 90!'
   print *, greet%text
 end program hello90
-'''
+"""
+
 
 # Dummy class for caching relevant checks
 class CompilerChecker:
@@ -264,7 +237,7 @@ class CompilerChecker:
                 futures = [
                     executor.submit(check_language, "c"),
                     executor.submit(check_language, "fortran", fortran77_code),
-                    executor.submit(check_language, "fortran", fortran90_code)
+                    executor.submit(check_language, "fortran", fortran90_code),
                 ]
 
                 self.has_c = futures[0].result()
@@ -333,6 +306,7 @@ def build_meson(source_files, module_name=None, **kwargs):
 # Build helpers
 #
 
+
 @dataclass
 class F2PyModuleSpec:
     test_class_name: str
@@ -352,6 +326,7 @@ class F2PyModuleSpec:
         if not self.module_name:
             module_part = __name__.rsplit(".", 1)[-1]
             self.module_name = f"_{module_part}_{self.test_class_name}_ext_module"
+
 
 def build_module_from_spec(spec):
     codes = spec.sources if spec.sources else []
@@ -379,11 +354,6 @@ def build_module_from_spec(spec):
     return module
 
 
-
-class F2PyTest:
-    spec = None
-
-#
 # Helper functions
 #
 
