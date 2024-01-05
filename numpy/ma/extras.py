@@ -530,19 +530,22 @@ def average(a, axis=None, weights=None, returned=False, *,
     a : array_like
         Data to be averaged.
         Masked entries are not taken into account in the computation.
-    axis : int, optional
-        Axis along which to average `a`. If None, averaging is done over
-        the flattened array.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which to average `a`.  The default,
+        `axis=None`, will average over all of the elements of the input array.
+        If axis is a tuple of ints, averaging is performed on all of the axes
+        specified in the tuple instead of a single axis or all the axes as
+        before.
     weights : array_like, optional
-        The importance that each element has in the computation of the average.
-        The weights array can either be 1-D (in which case its length must be
-        the size of `a` along the given axis) or of the same shape as `a`.
-        If ``weights=None``, then all data in `a` are assumed to have a
-        weight equal to one.  The 1-D calculation is::
-
-            avg = sum(a * weights) / sum(weights)
-
-        The only constraint on `weights` is that `sum(weights)` must not be 0.
+        An array of weights associated with the values in `a`. Each value in
+        `a` contributes to the average according to its associated weight.
+        The array of weights must be the same shape as `a` if no axis is specified,
+        otherwise the weights must have dimensions and shape consistent with `a`
+        along the specified axis.
+        If `weights=None`, then all data in `a` are assumed to have a
+        weight equal to one.
+        The only constraint on the values of `weights` is that `sum(weights)`
+        must not be 0.
     returned : bool, optional
         Flag indicating whether a tuple ``(result, sum of weights)``
         should be returned as output (True), or just the result (False).
@@ -566,6 +569,17 @@ def average(a, axis=None, weights=None, returned=False, *,
         input data-type, otherwise. If returned, `sum_of_weights` is always
         `float64`.
 
+    Raises
+    ------
+    ZeroDivisionError
+        When all weights along axis are zero. See `numpy.ma.average` for a
+        version robust to this type of error.
+    TypeError
+        When `weights` does not have the same shape as `a`, and `axis=None`.
+    ValueError
+        When `weights` does not have dimensions and shape consistent with `a`
+        along specified `axis`.
+
     Examples
     --------
     >>> a = np.ma.array([1., 2., 3., 4.], mask=[False, False, True, True])
@@ -580,6 +594,22 @@ def average(a, axis=None, weights=None, returned=False, *,
             [4., 5.]],
       mask=False,
       fill_value=1e+20)
+    >>> data = np.arange(8).reshape((2, 2, 2))
+    >>> data
+    array([[[0, 1],
+            [2, 3]],
+
+           [[4, 5],
+            [6, 7]]])
+    >>> np.ma.average(data, axis=(0, 1), weights=[[1./4, 3./4], [1., 1./2]])
+    masked_array(data=[3.4, 4.4],
+             mask=[False, False],
+       fill_value=1e+20)
+    >>> np.ma.average(data, axis=0, weights=[[1./4, 3./4], [1., 1./2]])
+    Traceback (most recent call last):
+        ...
+    ValueError: Weight dimensions should be consistent with specified axis.
+
     >>> avg, sumweights = np.ma.average(x, axis=0, weights=[1, 2, 3],
     ...                                 returned=True)
     >>> avg
@@ -600,7 +630,9 @@ def average(a, axis=None, weights=None, returned=False, *,
     a = asarray(a)
     m = getmask(a)
 
-    # inspired by 'average' in numpy/lib/function_base.py
+    # cast axis to tuple if not already
+    if axis is not None and np.array(axis).ndim == 0:
+        axis = (axis,)
 
     if keepdims is np._NoValue:
         # Don't pass on the keepdims argument if one wasn't given.
@@ -625,16 +657,18 @@ def average(a, axis=None, weights=None, returned=False, *,
                 raise TypeError(
                     "Axis must be specified when shapes of a and weights "
                     "differ.")
-            if wgt.ndim != 1:
-                raise TypeError(
-                    "1D weights expected when shapes of a and weights differ.")
-            if wgt.shape[0] != a.shape[axis]:
+            if np.array(axis).shape[0] != wgt.ndim:
                 raise ValueError(
-                    "Length of weights not compatible with specified axis.")
+                    "Weight dimensions should be consistent with specified axis.")
+            if not (wgt.shape == np.array(a.shape)[np.array(axis)]).all():
+                raise ValueError(
+                    "Weight shape should be consistent with a along specified axis.")
 
             # setup wgt to broadcast along axis
-            wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape, subok=True)
-            wgt = wgt.swapaxes(-1, axis)
+            orig_wgt_ndim = wgt.ndim
+            wgt = np.broadcast_to(wgt, (a.ndim - orig_wgt_ndim) * (1,) + wgt.shape, subok=True)
+            for i, _ax in enumerate(axis):
+                wgt = wgt.swapaxes(-orig_wgt_ndim + i, _ax)
 
         if m is not nomask:
             wgt = wgt*(~a.mask)
