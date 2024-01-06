@@ -1299,7 +1299,6 @@ def polyvander3d(x, y, z, deg):
     
     >>> from numpy.polynomial import polynomial as P
     >>> x, y, z  = np.array([-1, 2, 1]), np.array([1, -2, -3]), np.array([2, 2, 5])
-    >>> deg = [2, 2, 1]
     >>> V = P.polyvander3d(x=x, y=y, z=z, deg=deg)
     >>> i, j, k = 0, 1, 1
     >>> V[:, (deg[1]+1)*(deg[1]+1)*i + (deg[2]+1)*j + k] == x**i * y**j * z**k
