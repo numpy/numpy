@@ -3906,6 +3906,14 @@ class MaskedArray(ndarray):
         >>> type(x.compressed())
         <class 'numpy.ndarray'>
 
+        N-D arrays are compressed to 1-D.
+
+        >>> arr = [[1, 2], [3, 4]]
+        >>> mask = [[1, 0], [0, 1]]
+        >>> x = np.ma.array(arr, mask=mask)
+        >>> x.compressed()
+        array([2, 3])
+
         """
         data = ndarray.ravel(self._data)
         if self._mask is not nomask:
@@ -7385,6 +7393,23 @@ def putmask(a, mask, values):  # , mode='raise'):
     -----
     Using a masked array as `values` will **not** transform a `ndarray` into
     a `MaskedArray`.
+
+    Examples
+    --------
+    >>> arr = [[1, 2], [3, 4]]
+    >>> mask = [[1, 0], [0, 0]]
+    >>> x = np.ma.array(arr, mask=mask)
+    >>> np.ma.putmask(x, x < 4, 10*x)
+    >>> x
+    masked_array(
+      data=[[--, 20],
+            [30, 4]],
+      mask=[[ True, False],
+            [False, False]],
+      fill_value=999999)
+    >>> x.data
+    array([[10, 20],
+           [30,  4]])
 
     """
     # We can't use 'frommethod', the order of arguments is different

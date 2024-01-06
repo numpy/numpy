@@ -470,12 +470,20 @@ def power(x, p):
     --------
     >>> np.set_printoptions(precision=4)
 
+    >>> np.emath.power(2, 2)
+    4
+
     >>> np.emath.power([2, 4], 2)
     array([ 4, 16])
+
     >>> np.emath.power([2, 4], -2)
     array([0.25  ,  0.0625])
+
     >>> np.emath.power([-2, 4], 2)
     array([ 4.-0.j, 16.+0.j])
+
+    >>> np.emath.power([2, 4], [2, 4])
+    array([ 4, 256])
 
     """
     x = _fix_real_lt_zero(x)
@@ -610,6 +618,9 @@ def arctanh(x):
     Examples
     --------
     >>> np.set_printoptions(precision=4)
+
+    >>> np.emath.arctanh(0.5)
+    0.5493061443340549
 
     >>> from numpy.testing import suppress_warnings
     >>> with suppress_warnings() as sup:

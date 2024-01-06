@@ -5,6 +5,7 @@ import errno
 import shutil
 import subprocess
 import sys
+import re
 from pathlib import Path
 
 from ._backend import Backend
@@ -54,6 +55,7 @@ class MesonTemplate:
         ]
         self.build_type = build_type
         self.python_exe = python_exe
+        self.indent = " " * 21
 
     def meson_build_template(self) -> str:
         if not self.build_template_path.is_file():
@@ -71,15 +73,13 @@ class MesonTemplate:
         self.substitutions["python"] = self.python_exe
 
     def sources_substitution(self) -> None:
-        indent = " " * 21
-        self.substitutions["source_list"] = f",\n{indent}".join(
-            [f"{indent}'{source}'" for source in self.sources]
+        self.substitutions["source_list"] = f",\n{self.indent}".join(
+            [f"{self.indent}'{source}'," for source in self.sources]
         )
 
     def deps_substitution(self) -> None:
-        indent = " " * 21
-        self.substitutions["dep_list"] = f",\n{indent}".join(
-            [f"{indent}dependency('{dep}')" for dep in self.deps]
+        self.substitutions["dep_list"] = f",\n{self.indent}".join(
+            [f"{self.indent}dependency('{dep}')," for dep in self.deps]
         )
 
     def libraries_substitution(self) -> None:
@@ -97,25 +97,25 @@ class MesonTemplate:
             ]
         )
 
-        indent = " " * 21
-        self.substitutions["lib_list"] = f"\n{indent}".join(
-            [f"{indent}{lib}," for lib in self.libraries]
+        self.substitutions["lib_list"] = f"\n{self.indent}".join(
+            [f"{self.indent}{lib}," for lib in self.libraries]
         )
-        self.substitutions["lib_dir_list"] = f"\n{indent}".join(
-            [f"{indent}lib_dir_{i}," for i in range(len(self.library_dirs))]
+        self.substitutions["lib_dir_list"] = f"\n{self.indent}".join(
+            [f"{self.indent}lib_dir_{i}," for i in range(len(self.library_dirs))]
         )
 
     def include_substitution(self) -> None:
-        indent = " " * 21
-        self.substitutions["inc_list"] = f",\n{indent}".join(
-            [f"{indent}'{inc}'" for inc in self.include_dirs]
+        self.substitutions["inc_list"] = f",\n{self.indent}".join(
+            [f"{self.indent}'{inc}'," for inc in self.include_dirs]
         )
 
     def generate_meson_build(self):
         for node in self.pipeline:
             node()
         template = Template(self.meson_build_template())
-        return template.substitute(self.substitutions)
+        meson_build = template.substitute(self.substitutions)
+        meson_build = re.sub(r',,', ',', meson_build)
+        return meson_build
 
 
 class MesonBackend(Backend):
