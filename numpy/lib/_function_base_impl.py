@@ -492,6 +492,13 @@ def average(a, axis=None, weights=None, returned=False, *,
         ...
     TypeError: Axis must be specified when shapes of a and weights differ.
 
+    With ``keepdims=True``, the following result has shape (3, 1).
+
+    >>> np.average(data, axis=1, keepdims=True)
+    array([[0.5],
+           [2.5],
+           [4.5]])
+
     >>> data = np.arange(8).reshape((2, 2, 2))
     >>> data
     array([[[0, 1],
@@ -510,13 +517,6 @@ def average(a, axis=None, weights=None, returned=False, *,
     >>> avg = np.average(a, weights=w)
     >>> print(avg.dtype)
     complex128
-
-    With ``keepdims=True``, the following result has shape (3, 1).
-
-    >>> np.average(data, axis=1, keepdims=True)
-    array([[0.5],
-           [2.5],
-           [4.5]])
     """
     a = np.asanyarray(a)
 
