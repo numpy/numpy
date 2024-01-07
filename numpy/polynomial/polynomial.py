@@ -1140,9 +1140,9 @@ def polyvander(x, deg):
     >>> from numpy.polynomial import polynomial as P
     >>> x, deg = [-1, 2, 3], 5
     >>> P.polyvander(x=x, deg=deg)
-    array([[  1.  -1.   1.  -1.   1.  -1.]
-           [  1.   2.   4.   8.  16.  32.]
-           [  1.   3.   9.  27.  81. 243.]])
+    array([[  1.,  -1.,   1.,  -1.,   1.,  -1.],
+           [  1.,   2.,   4.,   8.,  16.,  32.],
+           [  1.,   3.,   9.,  27.,  81., 243.]])
 
     """
     ideg = pu._as_int(deg, "deg")
@@ -1217,8 +1217,8 @@ def polyvander2d(x, y, deg):
     >>> deg = np.array([m, n])
     >>> V = P.polyvander2d(x=x, y=y, deg=deg)
     >>> V
-    array([[ 1.  1.  1. -1. -1. -1.]
-           [ 1.  3.  9.  2.  6. 18.]])
+    array([[ 1.,  1.,  1., -1., -1., -1.],
+           [ 1.,  3.,  9.,  2.,  6., 18.]])
 
     We can verify the columns for any ``0 <= i <= m`` and ``0 <= j <= n``:
 
@@ -1563,7 +1563,7 @@ def polyroots(c):
     >>> poly.polyroots(poly.polyfromroots((-j,0,j)))
     array([  0.00000000e+00+0.j,   0.00000000e+00+1.j,   2.77555756e-17-1.j])  # may vary
 
-    """
+    """  # noqa: E501
     # c is a trimmed copy
     [c] = pu.as_series([c])
     if len(c) < 2:
