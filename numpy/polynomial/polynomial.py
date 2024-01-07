@@ -1305,7 +1305,7 @@ def polyvander3d(x, y, z, deg):
            [  1.,   5.,  -3., -15.,   9.,  45.,   1.,   5.,  -3.,
             -15.,   9.,  45.,   1.,   5.,  -3., -15.,   9.,  45.]])
     
-    We can verify the columns for any ``0 <= i <= l``,``0 <= j <= m``,
+    We can verify the columns for any ``0 <= i <= l``, ``0 <= j <= m``,
     and ``0 <= k <= n``
 
     >>> i, j, k = 2, 1, 0
