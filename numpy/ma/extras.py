@@ -599,7 +599,6 @@ def average(a, axis=None, weights=None, returned=False, *,
     >>> data
     array([[[0, 1],
             [2, 3]],
-
            [[4, 5],
             [6, 7]]])
     >>> np.ma.average(data, axis=(0, 1), weights=[[1./4, 3./4], [1., 1./2]])
