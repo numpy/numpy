@@ -1133,9 +1133,9 @@ def polyvander(x, deg):
 
     Examples
     --------
-    The Vandermonde matrix of degree ``deg = 5`` and sample point 
+    The Vandermonde matrix of degree ``deg = 5`` and sample points
     ``x = [-1, 2, 3]`` contains the element-wise powers of `x` 
-    from 0 to 5, as its columns.
+    from 0 to 5 as its columns.
 
     >>> from numpy.polynomial import polynomial as P
     >>> x, deg = [-1, 2, 3], 5
@@ -1207,25 +1207,30 @@ def polyvander2d(x, y, deg):
 
     Examples
     --------
-    A 2-D Vandermonde matrix of degree ``[1, 2]`` and sample points
-    ``x = [-1, 2]`` and ``y = [1, 3]`` contains looks as follows:
+    The 2-D pseudo-Vandermonde matrix of degree ``[1, 2]`` and sample
+    points ``x = [-1, 2]`` and ``y = [1, 3]`` is as follows:
 
     >>> from numpy.polynomial import polynomial as P
-    >>> x, y, deg = np.array([-1, 2]), np.array([1, 3]), np.array([1, 2])
+    >>> x = np.array([-1, 2])
+    >>> y = np.array([1, 3])
+    >>> m, n = 1, 2
+    >>> deg = np.array([m, n])
     >>> V = P.polyvander2d(x=x, y=y, deg=deg)
+    >>> V
     array([[ 1.  1.  1. -1. -1. -1.]
            [ 1.  3.  9.  2.  6. 18.]])
 
-    To verify some values one can do the following computations:
+    We can verify the columns for any ``0 <= i <= m`` and ``0 <= j <= n``:
+
     >>> i, j = 0, 1
     >>> V[:, (deg[1]+1)*i + j] == x**i * y**j
     array([ True,  True])
 
-    If one sets ``y = [0, 0]`` and ``deg[1] = 0``, then the pseudo-Vandermonde
-    matrix is the same as the Vandermonde matrix, P.polyvander(x, deg[0]).
-    
-    >>> x, y, deg = [-1, 2], [0, 0], [1, 0]
-    >>> P.polyvander2d(x=x, y=y, deg=deg) == P.polyvander(x=x, deg=deg[0])
+    The (1D) Vandermonde matrix of sample points ``x`` and degree ``m`` is a
+    special case of the (2D) pseudo-Vandermonde matrix with ``y`` points all
+    zero and degree ``[m, 0]``.
+
+    >>> P.polyvander2d(x=x, y=0*x, deg=(m, 0)) == P.polyvander(x=x, deg=m)
     array([[ True,  True],
            [ True,  True]])
     
@@ -1286,23 +1291,27 @@ def polyvander3d(x, y, z, deg):
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
-    >>> x, y, z, deg  = [-1, 2, 1], [1, -2, -3], [2, 2, 5], [2, 2, 1]
+    >>> x = np.asarray([-1, 2, 1])
+    >>> y = np.asarray([1, -2, -3])
+    >>> z = np.asarray([2, 2, 5])
+    >>> l, m, n = [2, 2, 1]
+    >>> deg = [l, m, n]
     >>> V = P.polyvander3d(x=x, y=y, z=z, deg=deg)
-    array(array([[  1.,   2.,   1.,   2.,   1.,   2.,  -1.,  -2.,  -1.,  -2.,  -1.,
-                   -2.,   1.,   2.,   1.,   2.,   1.,   2.],
-                 [  1.,   2.,  -2.,  -4.,   4.,   8.,   2.,   4.,  -4.,  -8.,   8.,
-                   16.,   4.,   8.,  -8., -16.,  16.,  32.],
-                 [  1.,   5.,  -3., -15.,   9.,  45.,   1.,   5.,  -3., -15.,   9.,
-                   45.,   1.,   5.,  -3., -15.,   9.,  45.]])
+    >>> V
+    array([[  1.,   2.,   1.,   2.,   1.,   2.,  -1.,  -2.,  -1.,
+             -2.,  -1.,  -2.,   1.,   2.,   1.,   2.,   1.,   2.],
+           [  1.,   2.,  -2.,  -4.,   4.,   8.,   2.,   4.,  -4.,
+             -8.,   8.,  16.,   4.,   8.,  -8., -16.,  16.,  32.],
+           [  1.,   5.,  -3., -15.,   9.,  45.,   1.,   5.,  -3.,
+            -15.,   9.,  45.,   1.,   5.,  -3., -15.,   9.,  45.]])
     
-    To verify some values one can do the following computations:
-    
-    >>> from numpy.polynomial import polynomial as P
-    >>> x, y, z  = np.array([-1, 2, 1]), np.array([1, -2, -3]), np.array([2, 2, 5])
-    >>> V = P.polyvander3d(x=x, y=y, z=z, deg=deg)
-    >>> i, j, k = 0, 1, 1
-    >>> V[:, (deg[1]+1)*(deg[1]+1)*i + (deg[2]+1)*j + k] == x**i * y**j * z**k
+    We can verify the columns for any ``0 <= i <= l``,``0 <= j <= m``,
+    and ``0 <= k <= n``
+
+    >>> i, j, k = 2, 1, 0
+    >>> V[:, (m+1)*(n+1)*i + (n+1)*j + k] == x**i * y**j * z**k
     array([ True,  True,  True])
+
     """
     return pu._vander_nd_flat((polyvander, polyvander, polyvander), (x, y, z), deg)
 
