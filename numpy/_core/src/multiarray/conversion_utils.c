@@ -419,11 +419,15 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
 NPY_NO_EXPORT int
 PyArray_BoolConverter(PyObject *object, npy_bool *val)
 {
+    /* Leave the desired default from the caller for Py_None */
+    if (object == Py_None) {
+        return NPY_SUCCEED;
+    }
     if (PyObject_IsTrue(object)) {
-        *val = NPY_TRUE;
+        *val = NPY_STABLE_TRUE;
     }
     else {
-        *val = NPY_FALSE;
+        *val = NPY_STABLE_FALSE;
     }
     if (PyErr_Occurred()) {
         return NPY_FAIL;

@@ -1999,9 +1999,8 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
 
         .. versionadded:: 1.14
     rtol : (...) array_like, float, optional
-        Array API compatible parameter for the relative tolerance component.
-        Only ``tol`` or ``rtol`` can be set at a time.
-        Defaults to ``max(M, N) * eps``.
+        Parameter for the relative tolerance component. Only ``tol`` or
+        ``rtol`` can be set at a time. Defaults to ``max(M, N) * eps``.
 
         .. versionadded:: 2.0.0
 

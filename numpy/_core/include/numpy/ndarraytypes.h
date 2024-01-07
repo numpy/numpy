@@ -155,12 +155,20 @@ enum NPY_TYPECHAR {
  * depend on the data type.
  */
 typedef enum {
+        NPY_SORT_UNDEFINED=-1,
         NPY_QUICKSORT=0,
         NPY_HEAPSORT=1,
         NPY_MERGESORT=2,
         NPY_STABLESORT=2,
 } NPY_SORTKIND;
 #define NPY_NSORTS (NPY_STABLESORT + 1)
+
+
+typedef enum {
+        NPY_STABLE_UNDEFINED=-1,
+        NPY_STABLE_FALSE=0,
+        NPY_STABLE_TRUE=1,
+} NPY_STABLEFLAG;
 
 
 typedef enum {

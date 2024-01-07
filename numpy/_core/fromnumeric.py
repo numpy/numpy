@@ -901,7 +901,7 @@ def _sort_dispatcher(a, axis=None, kind=None, order=None, *, descending=None,
 
 @array_function_dispatch(_sort_dispatcher)
 def sort(a, axis=-1, kind=None, order=None, *, descending=False,
-         stable=False):
+         stable=None):
     """
     Return a sorted copy of an array.
 
@@ -934,10 +934,11 @@ def sort(a, axis=-1, kind=None, order=None, *, descending=False,
     stable : bool, optional
         Sort stability. If ``True``, the returned array must maintain
         the relative order of ``a`` values which compare as equal.
-        If ``False``, the returned array may or may not maintain the relative
-        order of ``a`` values which compare as equal (i.e., the relative order
-        of ``a`` values which compare as equal is implementation-dependent).
-        Default: ``False``.
+        If ``False`` or ``None``, the returned array may or may not maintain
+        the relative order of ``a`` values which compare as equal (i.e.,
+        the relative order of ``a`` values which compare as equal is
+        implementation-dependent). Default: ``None``.
+
         .. versionadded:: 2.0.0
 
     Returns
@@ -1079,7 +1080,7 @@ def _argsort_dispatcher(a, axis=None, kind=None, order=None, *,
 
 @array_function_dispatch(_argsort_dispatcher)
 def argsort(a, axis=-1, kind=None, order=None, *, descending=False,
-            stable=False):
+            stable=None):
     """
     Returns the indices that would sort an array.
 
@@ -1115,10 +1116,10 @@ def argsort(a, axis=-1, kind=None, order=None, *, descending=False,
     stable : bool, optional
         Sort stability. If ``True``, the returned array must maintain
         the relative order of ``a`` values which compare as equal.
-        If ``False``, the returned array may or may not maintain the relative
-        order of ``a`` values which compare as equal (i.e., the relative order
-        of ``a`` values which compare as equal is implementation-dependent).
-        Default: ``False``.
+        If ``False`` or ``None``, the returned array may or may not maintain
+        the relative order of ``a`` values which compare as equal (i.e.,
+        the relative order of ``a`` values which compare as equal is
+        implementation-dependent). Default: ``None``.
 
         .. versionadded:: 2.0.0
 

@@ -213,7 +213,7 @@ def sort(
     order: None | str | Sequence[str] = ...,
     *,
     descending: bool = ...,
-    stable: bool = ...,
+    stable: None | bool = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def sort(
@@ -223,7 +223,7 @@ def sort(
     order: None | str | Sequence[str] = ...,
     *,
     descending: bool = ...,
-    stable: bool = ...,
+    stable: None | bool = ...,
 ) -> NDArray[Any]: ...
 
 def argsort(
@@ -233,7 +233,7 @@ def argsort(
     order: None | str | Sequence[str] = ...,
     *,
     descending: bool = ...,
-    stable: bool = ...,
+    stable: None | bool = ...,
 ) -> NDArray[intp]: ...
 
 @overload

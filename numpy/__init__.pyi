@@ -1115,7 +1115,7 @@ class _ArrayOrScalarCommon:
         order: None | str | Sequence[str] = ...,
         *,
         descending: bool = ...,
-        stable: bool = ...,
+        stable: None | bool = ...,
     ) -> NDArray[Any]: ...
 
     @overload
@@ -1645,7 +1645,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         order: None | str | Sequence[str] = ...,
         *,
         descending: bool = ...,
-        stable: bool = ...,
+        stable: None | bool = ...,
     ) -> None: ...
 
     @overload

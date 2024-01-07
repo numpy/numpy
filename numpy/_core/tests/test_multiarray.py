@@ -2050,11 +2050,11 @@ class TestMethods:
             np.sort(a, descending=True)
 
         with assert_raises_regex(
-            UserWarning,
-            "`kind` parameter has been overwritten to the `stable` "
-            "algorithm, as `stable=True` was passed."
+            ValueError,
+            "`kind` and `stable` parameters can't be provided at "
+            "the same time. Use only one of them."
         ):
-            np.sort(a, stable=True)
+            np.sort(a, kind="stable", stable=True)
 
     # all c scalar sorts use the same code with different types
     # so it suffices to run a quick check with one type. The number

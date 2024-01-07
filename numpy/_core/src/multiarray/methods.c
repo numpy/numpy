@@ -1237,12 +1237,12 @@ array_sort(PyArrayObject *self,
 {
     int axis=-1;
     int val;
-    NPY_SORTKIND sortkind = NPY_QUICKSORT;
+    NPY_SORTKIND sortkind = NPY_SORT_UNDEFINED;
     PyObject *order = NULL;
     PyArray_Descr *saved = NULL;
     PyArray_Descr *newd;
     npy_bool descending = NPY_FALSE;
-    npy_bool stable = NPY_FALSE;
+    NPY_STABLEFLAG stable = NPY_STABLE_UNDEFINED;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("sort", args, len_args, kwnames,
@@ -1290,15 +1290,18 @@ array_sort(PyArrayObject *self,
             "`descending=True` is not allowed. Use `np.flip` instead");
         return NULL;
     }
-    if (stable) {
-        if (sortkind != NPY_STABLESORT) {
-            if (PyErr_WarnEx(PyExc_UserWarning,
-                    "`kind` parameter has been overwritten to the `stable` "
-                    "algorithm, as `stable=True` was passed.", 2) < 0) {
-                return NULL;
-            }
-            sortkind = NPY_STABLESORT;
-        }
+    if (sortkind != NPY_SORT_UNDEFINED && stable != NPY_STABLE_UNDEFINED) {
+        PyErr_SetString(PyExc_ValueError,
+            "`kind` and `stable` parameters can't be provided at "
+            "the same time. Use only one of them.");
+        return NULL;
+    }
+    else if ((sortkind == NPY_SORT_UNDEFINED && stable == NPY_STABLE_UNDEFINED) ||
+             (stable == NPY_STABLE_FALSE)) {
+        sortkind = NPY_QUICKSORT;
+    }
+    else if (stable == NPY_STABLE_TRUE) {
+        sortkind = NPY_STABLESORT;
     }
 
     val = PyArray_Sort(self, axis, sortkind);
