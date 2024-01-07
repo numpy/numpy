@@ -415,9 +415,9 @@ def average(a, axis=None, weights=None, returned=False, *,
     weights : array_like, optional
         An array of weights associated with the values in `a`. Each value in
         `a` contributes to the average according to its associated weight.
-        The array of weights must be the same shape as `a` if no axis is specified,
-        otherwise the weights must have dimensions and shape consistent with `a`
-        along the specified axis.
+        The array of weights must be the same shape as `a` if no axis is
+        specified, otherwise the weights must have dimensions and shape
+        consistent with `a` along the specified axis..
         If `weights=None`, then all data in `a` are assumed to have a
         weight equal to one.
         The only constraint on the values of `weights` is that `sum(weights)`
@@ -521,9 +521,8 @@ def average(a, axis=None, weights=None, returned=False, *,
     """
     a = np.asanyarray(a)
 
-    # cast axis to tuple if not already
-    if axis is not None and np.array(axis).ndim == 0:
-        axis = (axis,)
+    if axis is not None:
+        axis = _nx.normalize_axis_tuple(axis, a.ndim, argname="axis")
 
     if keepdims is np._NoValue:
         # Don't pass on the keepdims argument if one wasn't given.
@@ -549,21 +548,19 @@ def average(a, axis=None, weights=None, returned=False, *,
                 raise TypeError(
                     "Axis must be specified when shapes of a and weights "
                     "differ.")
-            if np.array(axis).shape[0] != wgt.ndim:
+            if wgt.ndim != len(axis):
                 raise ValueError(
                     "Weight dimensions should be "
                     "consistent with specified axis.")
-            if not (wgt.shape == np.array(a.shape)[np.array(axis)]).all():
+            if wgt.shape != tuple(a.shape[ax] for ax in axis):
                 raise ValueError(
                     "Weight shape should be "
                     "consistent with a along specified axis.")
 
             # setup wgt to broadcast along axis
-            orig_wgt_ndim = wgt.ndim
-            wgt = np.broadcast_to(wgt,
-                                  (a.ndim - orig_wgt_ndim) * (1,) + wgt.shape)
-            for i, _ax in enumerate(axis):
-                wgt = wgt.swapaxes(-orig_wgt_ndim + i, _ax)
+            wgt = wgt.transpose(np.argsort(axis))
+            wgt = wgt.reshape(tuple((s if ax in axis else 1)
+                                    for ax, s in enumerate(a.shape)))
 
         scl = wgt.sum(axis=axis, dtype=result_dtype, **keepdims_kw)
         if np.any(scl == 0.0):

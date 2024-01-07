@@ -287,13 +287,15 @@ class TestAverage:
         # here the weights have the wrong dimensions for the specified axes
         with np.testing.assert_raises_regex(
                 ValueError,
-                "Weight dimensions should be consistent with specified axis"):
+                "Weight dimensions should be "
+                "consistent with specified axis"):
             average(yma, axis=(0, 1, 2), weights=subw0)
 
         # here the weights have the wrong shape for the specified axes
         with np.testing.assert_raises_regex(
                 ValueError,
-                "Weight shape should be consistent with a along specified axis"):
+                "Weight shape should be "
+                "consistent with a along specified axis"):
             average(yma, axis=(0, 1), weights=subw1)
 
         # swapping the axes should be same as transposing weights
