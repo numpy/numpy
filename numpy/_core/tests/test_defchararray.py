@@ -472,6 +472,40 @@ class TestMethods:
         S4 = self.A.replace(b'3', b'', count=0)
         assert_array_equal(S4, self.A)
 
+    def test_replace_count_and_size(self):
+        a = np.array(['0123456789' * i for i in range(4)]
+                     ).view(np.char.chararray)
+        r1 = a.replace('5', 'ABCDE')
+        assert r1.dtype.itemsize == (3*10 + 3*4) * 4
+        assert_array_equal(r1, np.array(['01234ABCDE6789' * i
+                                         for i in range(4)]))
+        r2 = a.replace('5', 'ABCDE', count=1)
+        assert r2.dtype.itemsize == (3*10 + 4) * 4
+        r3 = a.replace('5', 'ABCDE', count=0)
+        assert r3.dtype.itemsize == a.dtype.itemsize
+        assert_array_equal(r3, a)
+        # Negative values mean to replace all.
+        r4 = a.replace('5', 'ABCDE', count=-1)
+        assert r4.dtype.itemsize == (3*10 + 3*4) * 4
+        assert_array_equal(r4, r1)
+        # We can do count on an element-by-element basis.
+        r5 = a.replace('5', 'ABCDE', count=[-1, -1, -1, 1])
+        assert r5.dtype.itemsize == (3*10 + 4) * 4
+        assert_array_equal(r5, np.array(
+            ['01234ABCDE6789' * i for i in range(3)]
+            + ['01234ABCDE6789' + '0123456789' * 2]))
+
+    def test_replace_broadcasting(self):
+        a = np.array('0,0,0').view(np.char.chararray)
+        r1 = a.replace('0', '1', count=np.arange(3))
+        assert r1.dtype == a.dtype
+        assert_array_equal(r1, np.array(['0,0,0', '1,0,0', '1,1,0']))
+        r2 = a.replace('0', [['1'], ['2']], count=np.arange(1, 4))
+        assert_array_equal(r2, np.array([['1,0,0', '1,1,0', '1,1,1'],
+                                         ['2,0,0', '2,2,0', '2,2,2']]))
+        r3 = a.replace(['0', '0,0', '0,0,0'], 'X')
+        assert_array_equal(r3, np.array(['X,X,X', 'X,0', 'X']))
+
     def test_rjust(self):
         assert_(issubclass(self.A.rjust(10).dtype.type, np.bytes_))
 
