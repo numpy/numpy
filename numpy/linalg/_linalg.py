@@ -3212,8 +3212,7 @@ def matmul(x1, x2, /):
 
 # tensordot
 
-def _tensordot_dispatcher(
-        x1, x2, /, *, offset=None, dtype=None):
+def _tensordot_dispatcher(x1, x2, /, *, axes=None):
     return (x1, x2)
 
 

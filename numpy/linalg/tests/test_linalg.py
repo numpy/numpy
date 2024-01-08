@@ -2307,6 +2307,7 @@ def test_tensordot():
     x = np.arange(6).reshape((2, 3))
 
     assert np.linalg.tensordot(x, x) == 55
+    assert np.linalg.tensordot(x, x, axes=[(0, 1), (0, 1)]) == 55
 
 
 def test_matmul():
