@@ -32,5 +32,3 @@ Utility
    show_config
    show_runtime
    broadcast_shapes
-
-.. automodule:: numpy.dtypes
