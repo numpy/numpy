@@ -960,3 +960,4 @@ class TestUnique:
             result = func(arr)
             assert_array_equal(expected_values, result.values)
             assert_array_equal(expected_inverse, result.inverse_indices)
+            assert_array_equal(arr, result.values[result.inverse_indices])
