@@ -286,9 +286,9 @@ class TestAverage:
 
         # here the weights have the wrong shape for the specified axes
         with pytest.raises(
-                    ValueError,
-                    match="Shape of weights must be consistent with "
-                          "shape of a along specified axis"):
+                ValueError,
+                match="Shape of weights must be consistent with "
+                      "shape of a along specified axis"):
             average(yma, axis=(0, 1, 2), weights=subw0)
 
         with pytest.raises(

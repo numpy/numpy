@@ -513,7 +513,8 @@ def average(a, axis=None, weights=None, returned=False, *,
     >>> np.average(data, axis=0, weights=[[1./4, 3./4], [1., 1./2]])
     Traceback (most recent call last):
         ...
-    ValueError: Weight dimensions should be consistent with specified axis.
+    ValueError: Shape of weights must be consistent
+    with shape of a along specified axis.
     """
     a = np.asanyarray(a)
 
