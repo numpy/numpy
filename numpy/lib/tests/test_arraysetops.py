@@ -950,3 +950,13 @@ class TestUnique:
             assert len(res_unique_array_api) == len(res_unique)
             for actual, expected in zip(res_unique_array_api, res_unique):
                 assert_array_equal(actual, expected)
+
+    def test_unique_inverse_shape(self):
+        # Regression test for https://github.com/numpy/numpy/issues/25552
+        arr = np.array([[1, 2, 3], [2, 3, 1]])
+        expected_values, expected_inverse = np.unique(arr, return_inverse=True)
+        expected_inverse = expected_inverse.reshape(arr.shape)
+        for func in np.unique_inverse, np.unique_all:
+            result = func(arr)
+            assert_array_equal(expected_values, result.values)
+            assert_array_equal(expected_inverse, result.inverse_indices)

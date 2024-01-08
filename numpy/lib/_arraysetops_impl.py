@@ -422,14 +422,17 @@ def unique_all(x):
     unique : Find the unique elements of an array.
 
     """
-    result = unique(
+    x = np.asanyarray(x)
+    values, indices, inverse_indices, counts = unique(
         x,
         return_index=True,
         return_inverse=True,
         return_counts=True,
         equal_nan=False
     )
-    return UniqueAllResult(*result)
+    inverse_indices = inverse_indices.reshape(x.shape)
+    return UniqueAllResult(values=values, indices=indices,
+                           inverse_indices=inverse_indices, counts=counts)
 
 
 def _unique_counts_dispatcher(x, /):
@@ -509,14 +512,16 @@ def unique_inverse(x):
     unique : Find the unique elements of an array.
 
     """
-    result = unique(
+    x = np.asanyarray(x)
+    values, inverse_indices = unique(
         x,
         return_index=False,
         return_inverse=True,
         return_counts=False,
         equal_nan=False
     )
-    return UniqueInverseResult(*result)
+    inverse_indices = inverse_indices.reshape(x.shape)
+    return UniqueInverseResult(values=values, inverse_indices=inverse_indices)
 
 
 def _unique_values_dispatcher(x, /):
