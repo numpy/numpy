@@ -15,7 +15,7 @@ python module adder ! in
 #:enddef
 
 #:for dtype_prefix, dtype in [('i', 'integer'), ('s', 'real'), ('d', 'real(kind=8)'), ('c', 'complex'), ('z', 'complex(kind=8)')]
-    @:add_function(${dtype_prefix}$, ${dtype}$)
+    @:add_subroutine(${dtype_prefix}$, ${dtype}$)
 #:endfor
         end module adder
     end interface

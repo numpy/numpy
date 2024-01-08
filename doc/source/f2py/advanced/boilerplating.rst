@@ -36,23 +36,23 @@ Basic example: Addition module
 Let us build on the example (from the user guide, :ref:`f2py-examples`) of a
 subroutine which takes in two arrays and returns its sum.
 
-.. literalinclude:: ./code/add.f
+.. literalinclude:: ./../code/add.f
     :language: fortran
 
 
 We will recast this into modern fortran:
 
-.. literalinclude:: ./code/advanced/boilerplating/src/adder_base.f90
+.. literalinclude:: ./../code/advanced/boilerplating/src/adder_base.f90
     :language: fortran
 
 We could go on as in the original example, adding intents by hand among other
 things, however in production often there are other concerns. For one, we can
 template via FYPP the construction of similar functions:
 
-.. literalinclude:: ./code/advanced/boilerplating/src/gen_adder.f90.fypp
+.. literalinclude:: ./../code/advanced/boilerplating/src/gen_adder.f90.fypp
     :language: fortran
 
-This can be pre-processed by a build tool to generate the full fortran code:
+This can be pre-processed to generate the full fortran code:
 
 .. code:: sh
 
@@ -63,30 +63,30 @@ As to be expected, this can be wrapped by ``f2py`` subsequently.
 Now we will consider maintaining the bindings in a separate file. Note the
 following basic ``.pyf`` which can be generated for a single subroutine via ``f2py -m adder adder_base.f90 -h adder.pyf``:
 
-.. literalinclude:: ./code/advanced/boilerplating/src/base_adder.pyf
+.. literalinclude:: ./../code/advanced/boilerplating/src/base_adder.pyf
     :language: fortran
 
 With the docstring:
 
-.. literalinclude:: ./code/advanced/boilerplating/res/base_docstring.dat
+.. literalinclude:: ./../code/advanced/boilerplating/res/base_docstring.dat
     :language: python
 
 Which is already pretty good. However, ``n`` should never be passed in the first
 place so we will make some minor adjustments.
 
-.. literalinclude:: ./code/advanced/boilerplating/src/improved_base_adder.pyf
+.. literalinclude:: ./../code/advanced/boilerplating/src/improved_base_adder.pyf
     :language: fortran
 
 Which corresponds to:
 
-.. literalinclude:: ./code/advanced/boilerplating/res/improved_docstring.dat
+.. literalinclude:: ./../code/advanced/boilerplating/res/improved_docstring.dat
     :language: python
 
 Finally, we can template over this in a similar manner, to attain the original
 goal of having bindings which make use of ``f2py`` directives and have minimal
 spurious repitition.
 
-.. literalinclude:: ./code/advanced/boilerplating/src/adder.pyf.fypp
+.. literalinclude:: ./../code/advanced/boilerplating/src/adder.pyf.fypp
     :language: fortran
 
 Usage boils down to:
