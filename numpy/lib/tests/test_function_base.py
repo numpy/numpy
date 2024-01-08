@@ -348,9 +348,9 @@ class TestAverage:
         assert_almost_equal(actual, desired)
 
         # weights and input have different shapes but no axis is specified
-        with assert_raises_regex(
+        with pytest.raises(
                 TypeError,
-                "Axis must be specified when shapes of a and weights differ"):
+                match="Axis must be specified when shapes of a and weights differ"):
             average(y1, weights=w1)
 
         # 2D Case
@@ -396,18 +396,17 @@ class TestAverage:
         desired = np.array([4.75, 7.75])
         assert_almost_equal(actual, desired)
 
-        # here the weights have the wrong dimensions for the specified axes
-        with np.testing.assert_raises_regex(
+        # here the weights have the wrong shape for the specified axes
+        with pytest.raises(
                 ValueError,
-                "Weight dimensions should be "
-                "consistent with specified axis"):
+                match="Shape of weights must be consistent with "
+                      "shape of a along specified axis"):
             average(y, axis=(0, 1, 2), weights=subw0)
 
-        # here the weights have the wrong shape for the specified axes
-        with np.testing.assert_raises_regex(
+        with pytest.raises(
                 ValueError,
-                "Weight shape should be "
-                "consistent with a along specified axis"):
+                match="Shape of weights must be consistent with "
+                      "shape of a along specified axis"):
             average(y, axis=(0, 1), weights=subw1)
 
         # swapping the axes should be same as transposing weights

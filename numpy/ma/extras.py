@@ -545,6 +545,9 @@ def average(a, axis=None, weights=None, returned=False, *,
         consistent with `a` along the specified axis.
         If `weights=None`, then all data in `a` are assumed to have a
         weight equal to one.
+        The calculation is::
+            avg = sum(a * weights) / sum(weights)
+        where the sum is over all included elements.
         The only constraint on the values of `weights` is that `sum(weights)`
         must not be 0.
     returned : bool, optional
@@ -656,14 +659,10 @@ def average(a, axis=None, weights=None, returned=False, *,
                 raise TypeError(
                     "Axis must be specified when shapes of a and weights "
                     "differ.")
-            if wgt.ndim != len(axis):
-                raise ValueError(
-                    "Weight dimensions should be "
-                    "consistent with specified axis.")
             if wgt.shape != tuple(a.shape[ax] for ax in axis):
                 raise ValueError(
-                    "Weight shape should be "
-                    "consistent with a along specified axis.")
+                    "Shape of weights must be consistent with "
+                    "shape of a along specified axis.")
 
             # setup wgt to broadcast along axis
             wgt = wgt.transpose(np.argsort(axis))
