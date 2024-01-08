@@ -421,7 +421,9 @@ def average(a, axis=None, weights=None, returned=False, *,
         If `weights=None`, then all data in `a` are assumed to have a
         weight equal to one.
         The calculation is::
+
             avg = sum(a * weights) / sum(weights)
+        
         where the sum is over all included elements.
         The only constraint on the values of `weights` is that `sum(weights)`
         must not be 0.
