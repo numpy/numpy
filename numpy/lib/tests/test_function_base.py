@@ -350,7 +350,8 @@ class TestAverage:
         # weights and input have different shapes but no axis is specified
         with pytest.raises(
                 TypeError,
-                match="Axis must be specified when shapes of a and weights differ"):
+                match="Axis must be specified when shapes of a "
+                      "and weights differ"):
             average(y1, weights=w1)
 
         # 2D Case
