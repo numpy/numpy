@@ -3306,6 +3306,7 @@ def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
 
     """
     x = asanyarray(x)
+    shape = list(x.shape)
     if axis is None:
         # Note: np.linalg.norm() doesn't handle 0-D arrays
         x = x.ravel()
@@ -3331,9 +3332,8 @@ def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
     if keepdims:
         # We can't reuse np.linalg.norm(keepdims) because of the reshape hacks
         # above to avoid matrix norm logic.
-        shape = list(x.shape)
         _axis = normalize_axis_tuple(
-            range(x.ndim) if axis is None else axis, x.ndim
+            range(len(shape)) if axis is None else axis, len(shape)
         )
         for i in _axis:
             shape[i] = 1
