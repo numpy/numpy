@@ -124,18 +124,6 @@ fma_blend(__m256 x, __m256 y, __m256 ymask)
 }
 
 NPY_FINLINE __m256
-fma_invert_mask_ps(__m256 ymask)
-{
-    return _mm256_andnot_ps(ymask, _mm256_set1_ps(-1.0));
-}
-
-NPY_FINLINE __m256i
-fma_invert_mask_pd(__m256i ymask)
-{
-    return _mm256_andnot_si256(ymask, _mm256_set1_epi32(0xFFFFFFFF));
-}
-
-NPY_FINLINE __m256
 fma_get_exponent(__m256 x)
 {
     /*
@@ -309,18 +297,6 @@ NPY_FINLINE __m512
 avx512_blend(__m512 x, __m512 y, __mmask16 ymask)
 {
     return _mm512_mask_mov_ps(x, ymask, y);
-}
-
-NPY_FINLINE __mmask16
-avx512_invert_mask_ps(__mmask16 ymask)
-{
-    return _mm512_knot(ymask);
-}
-
-NPY_FINLINE __mmask8
-avx512_invert_mask_pd(__mmask8 ymask)
-{
-    return _mm512_knot(ymask);
 }
 
 NPY_FINLINE __m512
