@@ -2298,7 +2298,7 @@ process_geev_results(GEEV_PARAMS_t<typ> *params, scalar_trait)
     }
 }
 
-
+#if 0
 static inline fortran_int
 call_geev(GEEV_PARAMS_t<fortran_complex>* params)
 {
@@ -2314,6 +2314,8 @@ call_geev(GEEV_PARAMS_t<fortran_complex>* params)
                           &rv);
     return rv;
 }
+#endif
+
 static inline fortran_int
 call_geev(GEEV_PARAMS_t<fortran_doublecomplex>* params)
 {
