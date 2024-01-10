@@ -373,12 +373,12 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
         while (count > 0) {
             buf3.buffer_memcpy(out, len3);
             out += len3;
-            buf1.buffer_memcpy(out, 1);
 
             if (--count <= 0) {
                 break;
             }
 
+            buf1.buffer_memcpy(out, 1);
             buf1 += 1;
             out += 1;
         }
