@@ -249,19 +249,19 @@ class TestMethods:
         ("", "xx", 1, 1, -1),
         ("", "xx", MAX, 0, -1),
         pytest.param(99*"a" + "b", "b", 0, MAX, 99,
-                     id='99*a+b-b-0-MAX-99'),
+                     id="99*a+b-b-0-MAX-99"),
         pytest.param(98*"a" + "ba", "ba", 0, MAX, 98,
-                     id='98*a+ba-ba-0-MAX-98'),
+                     id="98*a+ba-ba-0-MAX-98"),
         pytest.param(100*"a", "b", 0, MAX, -1,
-                     id='100*a-b-0-MAX--1'),
+                     id="100*a-b-0-MAX--1"),
         pytest.param(30000*"a" + 100*"b", 100*"b", 0, MAX, 30000,
-                     id='30000*a+100*b-100*b-0-MAX-30000'),
+                     id="30000*a+100*b-100*b-0-MAX-30000"),
         pytest.param(30000*"a", 100*"b", 0, MAX, -1,
-                     id='30000*a-100*b-0-MAX--1'),
+                     id="30000*a-100*b-0-MAX--1"),
         pytest.param(15000*"a" + 15000*"b", 15000*"b", 0, MAX, 15000,
-                     id='15000*a+15000*b-15000*b-0-MAX-15000'),
+                     id="15000*a+15000*b-15000*b-0-MAX-15000"),
         pytest.param(15000*"a" + 15000*"b", 15000*"c", 0, MAX, -1,
-                     id='15000*a+15000*b-15000*c-0-MAX--1'),
+                     id="15000*a+15000*b-15000*c-0-MAX--1"),
         (["abcdefghiabc", "rrarrrrrrrrra"], ["def", "arr"], [0, 3],
          [MAX, MAX], [3, -1]),
     ])
@@ -307,17 +307,17 @@ class TestMethods:
         ("aaa", "", -10, MAX, 4),
         ("aaa", "aaaa", 0, MAX, 0),
         pytest.param(98*"a" + "ba", "ba", 0, MAX, 1,
-                     id='98*a+ba-ba-0-MAX-1'),
+                     id="98*a+ba-ba-0-MAX-1"),
         pytest.param(30000*"a" + 100*"b", 100*"b", 0, MAX, 1,
-                     id='30000*a+100*b-100*b-0-MAX-1'),
+                     id="30000*a+100*b-100*b-0-MAX-1"),
         pytest.param(30000*"a", 100*"b", 0, MAX, 0,
-                     id='30000*a-100*b-0-MAX-0'),
+                     id="30000*a-100*b-0-MAX-0"),
         pytest.param(30000*"a" + 100*"ab", "ab", 0, MAX, 100,
-                     id='30000*a+100*ab-ab-0-MAX-100'),
+                     id="30000*a+100*ab-ab-0-MAX-100"),
         pytest.param(15000*"a" + 15000*"b", 15000*"b", 0, MAX, 1,
-                     id='15000*a+15000*b-15000*b-0-MAX-1'),
+                     id="15000*a+15000*b-15000*b-0-MAX-1"),
         pytest.param(15000*"a" + 15000*"b", 15000*"c", 0, MAX, 0,
-                     id='15000*a+15000*b-15000*c-0-MAX-0'),
+                     id="15000*a+15000*b-15000*c-0-MAX-0"),
         ("", "", 0, MAX, 1),
         ("", "", 1, 1, 0),
         ("", "", MAX, 0, 0),
@@ -621,47 +621,47 @@ class TestMethods:
         assert_array_equal(np.strings.replace(buf, old, new, count), res)
 
     def test_replace_count_and_size(self, dt):
-        if dt == "S":
+        if dt != "U":
             pytest.skip("test_replace_count_and_size does not test stuff "
                         "that are dtype-related")
 
-        a = np.array(['0123456789' * i for i in range(4)])
-        r1 = np.strings.replace(a, '5', 'ABCDE', MAX)
+        a = np.array(["0123456789" * i for i in range(4)])
+        r1 = np.strings.replace(a, "5", "ABCDE", MAX)
         assert r1.dtype.itemsize == (3*10 + 3*4) * 4
-        assert_array_equal(r1, np.array(['01234ABCDE6789' * i
+        assert_array_equal(r1, np.array(["01234ABCDE6789" * i
                                          for i in range(4)]))
-        r2 = np.strings.replace(a, '5', 'ABCDE', 1)
+        r2 = np.strings.replace(a, "5", "ABCDE", 1)
         assert r2.dtype.itemsize == (3*10 + 4) * 4
-        r3 = np.strings.replace(a, '5', 'ABCDE', 0)
+        r3 = np.strings.replace(a, "5", "ABCDE", 0)
         assert r3.dtype.itemsize == a.dtype.itemsize
         assert_array_equal(r3, a)
         # Negative values mean to replace all.
-        r4 = np.strings.replace(a, '5', 'ABCDE', -1)
+        r4 = np.strings.replace(a, "5", "ABCDE", -1)
         assert r4.dtype.itemsize == (3*10 + 3*4) * 4
         assert_array_equal(r4, r1)
         # We can do count on an element-by-element basis.
-        r5 = np.strings.replace(a, '5', 'ABCDE', [-1, -1, -1, 1])
+        r5 = np.strings.replace(a, "5", "ABCDE", [-1, -1, -1, 1])
         assert r5.dtype.itemsize == (3*10 + 4) * 4
         assert_array_equal(r5, np.array(
-            ['01234ABCDE6789' * i for i in range(3)]
-            + ['01234ABCDE6789' + '0123456789' * 2]))
+            ["01234ABCDE6789" * i for i in range(3)]
+            + ["01234ABCDE6789" + "0123456789" * 2]))
 
     def test_replace_broadcasting(self, dt):
-        if dt != 'S':
+        if dt != "U":
             pytest.skip("test_replace_broadcasting does not test "
                         "dtype-related stuff")
-        a = np.array('0,0,0', dtype=dt)
-        r1 = np.strings.replace(a, '0', '1', np.arange(3))
+        a = np.array("0,0,0", dtype=dt)
+        r1 = np.strings.replace(a, "0", "1", np.arange(3))
         assert r1.dtype == a.dtype
-        assert_array_equal(r1, np.array(['0,0,0', '1,0,0', '1,1,0']))
-        r2 = np.strings.replace(a, '0', [['1'], ['2']], np.arange(1, 4))
-        assert_array_equal(r2, np.array([['1,0,0', '1,1,0', '1,1,1'],
-                                         ['2,0,0', '2,2,0', '2,2,2']]))
-        r3 = np.strings.replace(a, ['0', '0,0', '0,0,0'], 'X', MAX)
-        assert_array_equal(r3, np.array(['X,X,X', 'X,0', 'X']))
+        assert_array_equal(r1, np.array(["0,0,0", "1,0,0", "1,1,0"]))
+        r2 = np.strings.replace(a, "0", [["1"], ["2"]], np.arange(1, 4))
+        assert_array_equal(r2, np.array([["1,0,0", "1,1,0", "1,1,1"],
+                                         ["2,0,0", "2,2,0", "2,2,2"]]))
+        r3 = np.strings.replace(a, ["0", "0,0", "0,0,0"], "X", MAX)
+        assert_array_equal(r3, np.array(["X,X,X", "X,0", "X"]))
 
     def test_replace_unicode(self, dt):
-        if dt != "S":
+        if dt != "U":
             pytest.skip("test_replace_unicode is only for unicode dtype")
         assert_array_equal(np.strings.replace(
-            "...\u043c......<", "<", "&lt;", MAX), '...\u043c......&lt;')
+            "...\u043c......<", "<", "&lt;", MAX), "...\u043c......&lt;")
