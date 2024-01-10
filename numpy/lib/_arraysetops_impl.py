@@ -222,6 +222,12 @@ def unique(ar, return_index=False, return_inverse=False,
         lexicographical order is chosen - see np.sort for how the lexicographical
         order is defined for complex arrays.
 
+    .. versionchanged: NumPy 2.0
+        For multi-dimensional inputs, ``unique_inverse`` is reshaped such that
+        the input can be reconstructed using ``np.take(unique, unique_inverse)``
+        when ``axis = None``, and
+        ``np.take_along_axis(unique, unique_inverse, axis=axis)`` otherwise.
+
     Examples
     --------
     >>> np.unique([1, 1, 2, 2, 3, 3])
@@ -273,7 +279,7 @@ def unique(ar, return_index=False, return_inverse=False,
     ar = np.asanyarray(ar)
     if axis is None:
         ret = _unique1d(ar, return_index, return_inverse, return_counts, 
-                        equal_nan=equal_nan)
+                        equal_nan=equal_nan, inverse_shape=ar.shape)
         return _unpack_tuple(ret)
 
     # axis was specified and not None
@@ -282,6 +288,8 @@ def unique(ar, return_index=False, return_inverse=False,
     except np.exceptions.AxisError:
         # this removes the "axis1" or "axis2" prefix from the error message
         raise np.exceptions.AxisError(axis, ar.ndim) from None
+    inverse_shape = [1] * ar.ndim
+    inverse_shape[axis] = ar.shape[0]
 
     # Must reshape to a contiguous 2D array for this to work...
     orig_shape, orig_dtype = ar.shape, ar.dtype
@@ -316,13 +324,14 @@ def unique(ar, return_index=False, return_inverse=False,
         return uniq
 
     output = _unique1d(consolidated, return_index,
-                       return_inverse, return_counts, equal_nan=equal_nan)
+                       return_inverse, return_counts,
+                       equal_nan=equal_nan, inverse_shape=inverse_shape)
     output = (reshape_uniq(output[0]),) + output[1:]
     return _unpack_tuple(output)
 
 
 def _unique1d(ar, return_index=False, return_inverse=False,
-              return_counts=False, *, equal_nan=True):
+              return_counts=False, *, equal_nan=True, inverse_shape=None):
     """
     Find the unique elements of an array, ignoring shape.
     """
@@ -359,7 +368,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         imask = np.cumsum(mask) - 1
         inv_idx = np.empty(mask.shape, dtype=np.intp)
         inv_idx[perm] = imask
-        ret += (inv_idx,)
+        ret += (inv_idx.reshape(inverse_shape),)
     if return_counts:
         idx = np.concatenate(np.nonzero(mask) + ([mask.size],))
         ret += (np.diff(idx),)
@@ -422,17 +431,14 @@ def unique_all(x):
     unique : Find the unique elements of an array.
 
     """
-    x = np.asanyarray(x)
-    values, indices, inverse_indices, counts = unique(
+    result = unique(
         x,
         return_index=True,
         return_inverse=True,
         return_counts=True,
         equal_nan=False
     )
-    inverse_indices = inverse_indices.reshape(x.shape)
-    return UniqueAllResult(values=values, indices=indices,
-                           inverse_indices=inverse_indices, counts=counts)
+    return UniqueAllResult(*result)
 
 
 def _unique_counts_dispatcher(x, /):
@@ -512,16 +518,14 @@ def unique_inverse(x):
     unique : Find the unique elements of an array.
 
     """
-    x = np.asanyarray(x)
-    values, inverse_indices = unique(
+    result = unique(
         x,
         return_index=False,
         return_inverse=True,
         return_counts=False,
         equal_nan=False
     )
-    inverse_indices = inverse_indices.reshape(x.shape)
-    return UniqueInverseResult(values=values, inverse_indices=inverse_indices)
+    return UniqueInverseResult(*result)
 
 
 def _unique_values_dispatcher(x, /):
