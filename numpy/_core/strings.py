@@ -25,18 +25,18 @@ __all__ = [
 ]
 
 
-def lstrip(x1, x2=None):
+def lstrip(a, chars=None):
     """
-    For each element in `x1`, return a copy with the leading characters
+    For each element in `a`, return a copy with the leading characters
     removed.
 
     Parameters
     ----------
-    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
-    x2 : scalar with the same dtype as ``x1``, optional
-       The ``x1`` argument is a string specifying the set of
-       characters to be removed. If ``None``, the ``x2``
-       argument defaults to removing whitespace. The ``x2`` argument
+    a : array_like, with ``bytes_`` or ``unicode_`` dtype
+    chars : scalar with the same dtype as ``a``, optional
+       The ``a`` argument is a string specifying the set of
+       characters to be removed. If ``None``, the ``chars``
+       argument defaults to removing whitespace. The ``chars`` argument
        is not a prefix or suffix; rather, all combinations of its
        values are stripped.
 
@@ -65,23 +65,23 @@ def lstrip(x1, x2=None):
     np.True_
 
     """
-    if x2 is None:
-        return _lstrip_whitespace(x1)
-    return _lstrip_chars(x1, x2)
+    if chars is None:
+        return _lstrip_whitespace(a)
+    return _lstrip_chars(a, chars)
 
 
-def rstrip(x1, x2=None):
+def rstrip(a, chars=None):
     """
-    For each element in `x1`, return a copy with the trailing characters
+    For each element in `a`, return a copy with the trailing characters
     removed.
 
     Parameters
     ----------
-    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
-    x2 : scalar with the same dtype as ``x1``, optional
-       The ``x1`` argument is a string specifying the set of
-       characters to be removed. If ``None``, the ``x2``
-       argument defaults to removing whitespace. The ``x2`` argument
+    a : array_like, with ``bytes_`` or ``unicode_`` dtype
+    chars : scalar with the same dtype as ``a``, optional
+       The ``a`` argument is a string specifying the set of
+       characters to be removed. If ``None``, the ``chars``
+       argument defaults to removing whitespace. The ``chars`` argument
        is not a prefix or suffix; rather, all combinations of its
        values are stripped.
 
@@ -105,23 +105,23 @@ def rstrip(x1, x2=None):
     array(['aAaAa', 'abBABba'], dtype='<U7')
 
     """
-    if x2 is None:
-        return _rstrip_whitespace(x1)
-    return _rstrip_chars(x1, x2)
+    if chars is None:
+        return _rstrip_whitespace(a)
+    return _rstrip_chars(a, chars)
 
 
-def strip(x1, x2=None):
+def strip(a, chars=None):
     """
-    For each element in `x1`, return a copy with the leading and
+    For each element in `a`, return a copy with the leading and
     trailing characters removed.
 
     Parameters
     ----------
-    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
-    x2 : scalar with the same dtype as ``x1``, optional
-       The ``x1`` argument is a string specifying the set of
-       characters to be removed. If ``None``, the ``x2``
-       argument defaults to removing whitespace. The ``x2`` argument
+    a : array_like, with ``bytes_`` or ``unicode_`` dtype
+    chars : scalar with the same dtype as ``a``, optional
+       The ``a`` argument is a string specifying the set of
+       characters to be removed. If ``None``, the ``chars``
+       argument defaults to removing whitespace. The ``chars`` argument
        is not a prefix or suffix; rather, all combinations of its
        values are stripped.
 
@@ -149,25 +149,25 @@ def strip(x1, x2=None):
     array(['aAaAa', '  aA  ', 'abBABba'], dtype='<U7')
 
     """
-    if x2 is None:
-        return _strip_whitespace(x1)
-    return _strip_chars(x1, x2)
+    if chars is None:
+        return _strip_whitespace(a)
+    return _strip_chars(a, chars)
 
 
-def replace(x1, x2, x3, x4):
+def replace(a, old, new, count=-1):
     """
-    For each element in ``x1``, return a copy of the string with all
-    occurrences of substring ``x2`` replaced by ``x3``.
+    For each element in ``a``, return a copy of the string with all
+    occurrences of substring ``old`` replaced by ``new``.
 
     Parameters
     ----------
-    x1 : array_like, with ``bytes_`` or ``str_`` dtype
+    a : array_like, with ``bytes_`` or ``str_`` dtype
 
-    x2, x3 : array_like, with ``bytes_`` or ``str_`` dtype
+    old, new : array_like, with ``bytes_`` or ``str_`` dtype
 
-    x4 : array_like, with ``int_`` dtype
-        If the optional argument ``x4`` is given, only the first
-        ``x4`` occurrences are replaced.
+    count : array_like, with ``int_`` dtype
+        If the optional argument ``count`` is given, only the first
+        ``count`` occurrences are replaced.
 
     Returns
     -------
@@ -189,18 +189,20 @@ def replace(x1, x2, x3, x4):
     array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
     
     """
-    x1_arr = np.asanyarray(x1)
-    x2 = np.asanyarray(x2)
-    x3 = np.asanyarray(x3)
+    from numpy._core.umath import count as count_occurences
+
+    arr = np.asanyarray(a)
+    old = np.asanyarray(old)
+    new = np.asanyarray(new)
 
     max_int64 = np.iinfo(np.int64).max
-    counts = count(x1_arr, x2, 0, max_int64)
-    x4 = np.asanyarray(x4)
-    counts = np.where(x4 < 0, counts, np.minimum(counts, x4))
+    counts = count_occurences(arr, old, 0, max_int64)
+    count = np.asanyarray(count)
+    counts = np.where(count < 0, counts, np.minimum(counts, count))
 
-    buffersizes = str_len(x1_arr) + counts * (str_len(x3) - str_len(x2))
+    buffersizes = str_len(arr) + counts * (str_len(new) - str_len(old))
 
     # buffersizes is properly broadcast along all inputs.
-    out = np.empty_like(x1_arr, shape=buffersizes.shape,
-                        dtype=f"{x1_arr.dtype.char}{buffersizes.max()}")
-    return _replace(x1_arr, x2, x3, counts, out=out)
+    out = np.empty_like(arr, shape=buffersizes.shape,
+                        dtype=f"{arr.dtype.char}{buffersizes.max()}")
+    return _replace(arr, old, new, counts, out=out)

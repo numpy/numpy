@@ -168,58 +168,6 @@ class TestMethods:
         assert_array_equal(np.strings.isspace(in_), out)
 
     @pytest.mark.parametrize("in_,out", [
-        ("", False),
-        ("a", False),
-        ("0", True),
-        ("\u2460", False),  # CIRCLED DIGIT 1
-        ("\xbc", False),  # VULGAR FRACTION ONE QUARTER
-        ("\u0660", True),  # ARABIC_INDIC DIGIT ZERO
-        ("012345", True),
-        ("012345a", False),
-        (["0", "a"], [True, False]),
-    ])
-    def test_isdecimal_unicode(self, in_, out, dt):
-        if dt == "S":
-            pytest.skip("np.strings.isdecimal only supports unicode")
-        in_ = np.array(in_)
-        assert_array_equal(np.strings.isdecimal(in_), out)
-
-    def test_isdecimal_bytes(self, dt):
-        if dt == "U":
-            pytest.skip("test_isdecimal_bytes only tests that "
-                        "np.strings.isdecimal raises when given a bytes "
-                        "object")
-        with assert_raises(TypeError):
-            in_ = np.array(b"1")
-            np.strings.isdecimal(in_)
-
-    @pytest.mark.parametrize("in_,out", [
-        ("", False),
-        ("a", False),
-        ("0", True),
-        ("\u2460", True),  # CIRCLED DIGIT 1
-        ("\xbc", True),  # VULGAR FRACTION ONE QUARTER
-        ("\u0660", True),  # ARABIC_INDIC DIGIT ZERO
-        ("012345", True),
-        ("012345a", False),
-        (["0", "a"], [True, False]),
-    ])
-    def test_isnumeric_unicode(self, in_, out, dt):
-        if dt == "S":
-            pytest.skip("np.strings.isnumeric only supports unicode")
-        in_ = np.array(in_)
-        assert_array_equal(np.strings.isnumeric(in_), out)
-
-    def test_isnumeric_bytes(self, dt):
-        if dt == "U":
-            pytest.skip("test_isnumeric_bytes only tests that "
-                        "np.strings.isnumeric raises when given a bytes "
-                        "object")
-        with assert_raises(TypeError):
-            in_ = np.array(b"1")
-            np.strings.isnumeric(in_)
-
-    @pytest.mark.parametrize("in_,out", [
         ("", 0),
         ("abc", 3),
         ("12345", 5),
@@ -232,7 +180,7 @@ class TestMethods:
         in_ = np.array(in_, dtype=dt)
         assert_array_equal(np.strings.str_len(in_), out)
 
-    @pytest.mark.parametrize("in1,in2,in3,in4,out", [
+    @pytest.mark.parametrize("a,sub,start,end,out", [
         ("abcdefghiabc", "abc", 0, MAX, 0),
         ("abcdefghiabc", "abc", 1, MAX, 9),
         ("abcdefghiabc", "def", 4, MAX, -1),
@@ -265,12 +213,12 @@ class TestMethods:
         (["abcdefghiabc", "rrarrrrrrrrra"], ["def", "arr"], [0, 3],
          [MAX, MAX], [3, -1]),
     ])
-    def test_find(self, in1, in2, in3, in4, out, dt):
-        in1 = np.array(in1, dtype=dt)
-        in2 = np.array(in2, dtype=dt)
-        assert_array_equal(np.strings.find(in1, in2, in3, in4), out)
+    def test_find(self, a, sub, start, end, out, dt):
+        a = np.array(a, dtype=dt)
+        sub = np.array(sub, dtype=dt)
+        assert_array_equal(np.strings.find(a, sub, start, end), out)
 
-    @pytest.mark.parametrize("in1,in2,in3,in4,out", [
+    @pytest.mark.parametrize("a,sub,start,end,out", [
         ("abcdefghiabc", "abc", 0, MAX, 9),
         ("abcdefghiabc", "", 0, MAX, 12),
         ("abcdefghiabc", "abcd", 0, MAX, 0),
@@ -284,12 +232,12 @@ class TestMethods:
         (["abcdefghiabc", "rrarrrrrrrrra"], ["abc", "a"], [0, 0],
          [MAX, MAX], [9, 12]),
     ])
-    def test_rfind(self, in1, in2, in3, in4, out, dt):
-        in1 = np.array(in1, dtype=dt)
-        in2 = np.array(in2, dtype=dt)
-        assert_array_equal(np.strings.rfind(in1, in2, in3, in4), out)
+    def test_rfind(self, a, sub, start, end, out, dt):
+        a = np.array(a, dtype=dt)
+        sub = np.array(sub, dtype=dt)
+        assert_array_equal(np.strings.rfind(a, sub, start, end), out)
 
-    @pytest.mark.parametrize("in1,in2,in3,in4,out", [
+    @pytest.mark.parametrize("a,sub,start,end,out", [
         ("aaa", "a", 0, MAX, 3),
         ("aaa", "b", 0, MAX, 0),
         ("aaa", "a", 1, MAX, 2),
@@ -326,12 +274,12 @@ class TestMethods:
         ("", "xx", MAX, 0, 0),
         (["aaa", ""], ["a", ""], [0, 0], [MAX, MAX], [3, 1])
     ])
-    def test_count(self, in1, in2, in3, in4, out, dt):
-        in1 = np.array(in1, dtype=dt)
-        in2 = np.array(in2, dtype=dt)
-        assert_array_equal(np.strings.count(in1, in2, in3, in4), out)
+    def test_count(self, a, sub, start, end, out, dt):
+        a = np.array(a, dtype=dt)
+        sub = np.array(sub, dtype=dt)
+        assert_array_equal(np.strings.count(a, sub, start, end), out)
 
-    @pytest.mark.parametrize("in1,in2,in3,in4,out", [
+    @pytest.mark.parametrize("a,prefix,start,end,out", [
         ("hello", "he", 0, MAX, True),
         ("hello", "hello", 0, MAX, True),
         ("hello", "hello world", 0, MAX, False),
@@ -360,12 +308,12 @@ class TestMethods:
         ("hello", "lo", -9, MAX, False),
         (["hello", ""], ["he", ""], [0, 0], [MAX, 1], [True, True]),
     ])
-    def test_startswith(self, in1, in2, in3, in4, out, dt):
-        in1 = np.array(in1, dtype=dt)
-        in2 = np.array(in2, dtype=dt)
-        assert_array_equal(np.strings.startswith(in1, in2, in3, in4), out)
+    def test_startswith(self, a, prefix, start, end, out, dt):
+        a = np.array(a, dtype=dt)
+        prefix = np.array(prefix, dtype=dt)
+        assert_array_equal(np.strings.startswith(a, prefix, start, end), out)
 
-    @pytest.mark.parametrize("in1,in2,in3,in4,out", [
+    @pytest.mark.parametrize("a,suffix,start,end,out", [
         ("hello", "lo", 0, MAX, True),
         ("hello", "he", 0, MAX, False),
         ("hello", "", 0, MAX, True),
@@ -399,24 +347,17 @@ class TestMethods:
         (["hello", "helloworld"], ["lo", "worl"], [0, -6], [MAX, MAX],
          [True, False]),
     ])
-    def test_endswith(self, in1, in2, in3, in4, out, dt):
-        in1 = np.array(in1, dtype=dt)
-        in2 = np.array(in2, dtype=dt)
-        assert_array_equal(np.strings.endswith(in1, in2, in3, in4), out)
+    def test_endswith(self, a, suffix, start, end, out, dt):
+        a = np.array(a, dtype=dt)
+        suffix = np.array(suffix, dtype=dt)
+        assert_array_equal(np.strings.endswith(a, suffix, start, end), out)
 
-    @pytest.mark.parametrize("in_,out", [
-        ("", ""),
-        ("   hello   ", "hello   "),
-        ("hello", "hello"),
-        (" \t\n\r\f\vabc \t\n\r\f\v", "abc \t\n\r\f\v"),
-        (["   hello   ", "hello"], ["hello   ", "hello"]),
-    ])
-    def test_lstrip_whitespace(self, in_, out, dt):
-        in_ = np.array(in_, dtype=dt)
-        out = np.array(out, dtype=dt)
-        assert_array_equal(np.strings.lstrip(in_), out)
-
-    @pytest.mark.parametrize("in1,in2,out", [
+    @pytest.mark.parametrize("a,chars,out", [
+        ("", None, ""),
+        ("   hello   ", None, "hello   "),
+        ("hello", None, "hello"),
+        (" \t\n\r\f\vabc \t\n\r\f\v", None, "abc \t\n\r\f\v"),
+        (["   hello   ", "hello"], None, ["hello   ", "hello"]),
         ("", "", ""),
         ("", "xyz", ""),
         ("hello", "", "hello"),
@@ -427,25 +368,19 @@ class TestMethods:
         (["xyzzyhelloxyzzy", "hello"], ["xyz", "xyz"],
          ["helloxyzzy", "hello"]),
     ])
-    def test_lstrip_args(self, in1, in2, out, dt):
-        in1 = np.array(in1, dtype=dt)
-        in2 = np.array(in2, dtype=dt)
+    def test_lstrip(self, a, chars, out, dt):
+        a = np.array(a, dtype=dt)
+        if chars is not None:
+            chars = np.array(chars, dtype=dt)
         out = np.array(out, dtype=dt)
-        assert_array_equal(np.strings.lstrip(in1, in2), out)
+        assert_array_equal(np.strings.lstrip(a, chars), out)
 
-    @pytest.mark.parametrize("in_,out", [
-        ("", ""),
-        ("   hello   ", "   hello"),
-        ("hello", "hello"),
-        (" \t\n\r\f\vabc \t\n\r\f\v", " \t\n\r\f\vabc"),
-        (["   hello   ", "hello"], ["   hello", "hello"]),
-    ])
-    def test_rstrip_whitespace(self, in_, out, dt):
-        in_ = np.array(in_, dtype=dt)
-        out = np.array(out, dtype=dt)
-        assert_array_equal(np.strings.rstrip(in_), out)
-
-    @pytest.mark.parametrize("in1,in2,out", [
+    @pytest.mark.parametrize("a,chars,out", [
+        ("", None, ""),
+        ("   hello   ", None, "   hello"),
+        ("hello", None, "hello"),
+        (" \t\n\r\f\vabc \t\n\r\f\v", None, " \t\n\r\f\vabc"),
+        (["   hello   ", "hello"], None, ["   hello", "hello"]),
         ("", "", ""),
         ("", "xyz", ""),
         ("hello", "", "hello"),
@@ -456,25 +391,19 @@ class TestMethods:
         (["xyzzyhelloxyzzy", "hello"], ["xyz", "xyz"],
          ["xyzzyhello", "hello"]),
     ])
-    def test_rstrip_args(self, in1, in2, out, dt):
-        in1 = np.array(in1, dtype=dt)
-        in2 = np.array(in2, dtype=dt)
+    def test_rstrip(self, a, chars, out, dt):
+        a = np.array(a, dtype=dt)
+        if chars is not None:
+            chars = np.array(chars, dtype=dt)
         out = np.array(out, dtype=dt)
-        assert_array_equal(np.strings.rstrip(in1, in2), out)
+        assert_array_equal(np.strings.rstrip(a, chars), out)
 
-    @pytest.mark.parametrize("in_,out", [
-        ("", ""),
-        ("   hello   ", "hello"),
-        ("hello", "hello"),
-        (" \t\n\r\f\vabc \t\n\r\f\v", "abc"),
-        (["   hello   ", "hello"], ["hello", "hello"]),
-    ])
-    def test_strip_whitespace(self, in_, out, dt):
-        in_ = np.array(in_, dtype=dt)
-        out = np.array(out, dtype=dt)
-        assert_array_equal(np.strings.strip(in_), out)
-
-    @pytest.mark.parametrize("in1,in2,out", [
+    @pytest.mark.parametrize("a,chars,out", [
+        ("", None, ""),
+        ("   hello   ", None, "hello"),
+        ("hello", None, "hello"),
+        (" \t\n\r\f\vabc \t\n\r\f\v", None, "abc"),
+        (["   hello   ", "hello"], None, ["hello", "hello"]),
         ("", "", ""),
         ("", "xyz", ""),
         ("hello", "", "hello"),
@@ -485,11 +414,12 @@ class TestMethods:
         (["xyzzyhelloxyzzy", "hello"], ["xyz", "xyz"],
          ["hello", "hello"]),
     ])
-    def test_strip_args(self, in1, in2, out, dt):
-        in1 = np.array(in1, dtype=dt)
-        in2 = np.array(in2, dtype=dt)
+    def test_strip(self, a, chars, out, dt):
+        a = np.array(a, dtype=dt)
+        if chars is not None:
+            chars = np.array(chars, dtype=dt)
         out = np.array(out, dtype=dt)
-        assert_array_equal(np.strings.strip(in1, in2), out)
+        assert_array_equal(np.strings.strip(a, chars), out)
 
     @pytest.mark.parametrize("buf,old,new,count,res", [
         ("", "", "", MAX, ""),
@@ -620,11 +550,54 @@ class TestMethods:
         res = np.array(res, dtype=dt)
         assert_array_equal(np.strings.replace(buf, old, new, count), res)
 
-    def test_replace_count_and_size(self, dt):
-        if dt != "U":
-            pytest.skip("test_replace_count_and_size does not test stuff "
-                        "that are dtype-related")
 
+class TestUnicodeOnlyMethods:
+    @pytest.mark.parametrize("in_,out", [
+        ("", False),
+        ("a", False),
+        ("0", True),
+        ("\u2460", False),  # CIRCLED DIGIT 1
+        ("\xbc", False),  # VULGAR FRACTION ONE QUARTER
+        ("\u0660", True),  # ARABIC_INDIC DIGIT ZERO
+        ("012345", True),
+        ("012345a", False),
+        (["0", "a"], [True, False]),
+    ])
+    def test_isdecimal_unicode(self, in_, out):
+        assert_array_equal(np.strings.isdecimal(in_), out)
+
+    def test_isdecimal_bytes(self):
+        in_ = np.array(b"1")
+        with assert_raises(TypeError):
+            np.strings.isdecimal(in_)
+
+    @pytest.mark.parametrize("in_,out", [
+        ("", False),
+        ("a", False),
+        ("0", True),
+        ("\u2460", True),  # CIRCLED DIGIT 1
+        ("\xbc", True),  # VULGAR FRACTION ONE QUARTER
+        ("\u0660", True),  # ARABIC_INDIC DIGIT ZERO
+        ("012345", True),
+        ("012345a", False),
+        (["0", "a"], [True, False]),
+    ])
+    def test_isnumeric_unicode(self, in_, out):
+        assert_array_equal(np.strings.isnumeric(in_), out)
+
+    def test_isnumeric_bytes(self):
+        in_ = np.array(b"1")
+        with assert_raises(TypeError):
+            np.strings.isnumeric(in_)
+
+    def test_replace_unicode(self):
+        assert_array_equal(np.strings.replace(
+            "...\u043c......<", "<", "&lt;", MAX), "...\u043c......&lt;")
+
+
+class TestReplaceOnArrays:
+
+    def test_replace_count_and_size(self):
         a = np.array(["0123456789" * i for i in range(4)])
         r1 = np.strings.replace(a, "5", "ABCDE", MAX)
         assert r1.dtype.itemsize == (3*10 + 3*4) * 4
@@ -646,11 +619,8 @@ class TestMethods:
             ["01234ABCDE6789" * i for i in range(3)]
             + ["01234ABCDE6789" + "0123456789" * 2]))
 
-    def test_replace_broadcasting(self, dt):
-        if dt != "U":
-            pytest.skip("test_replace_broadcasting does not test "
-                        "dtype-related stuff")
-        a = np.array("0,0,0", dtype=dt)
+    def test_replace_broadcasting(self):
+        a = np.array("0,0,0")
         r1 = np.strings.replace(a, "0", "1", np.arange(3))
         assert r1.dtype == a.dtype
         assert_array_equal(r1, np.array(["0,0,0", "1,0,0", "1,1,0"]))
@@ -659,9 +629,3 @@ class TestMethods:
                                          ["2,0,0", "2,2,0", "2,2,2"]]))
         r3 = np.strings.replace(a, ["0", "0,0", "0,0,0"], "X", MAX)
         assert_array_equal(r3, np.array(["X,X,X", "X,0", "X"]))
-
-    def test_replace_unicode(self, dt):
-        if dt != "U":
-            pytest.skip("test_replace_unicode is only for unicode dtype")
-        assert_array_equal(np.strings.replace(
-            "...\u043c......<", "<", "&lt;", MAX), "...\u043c......&lt;")

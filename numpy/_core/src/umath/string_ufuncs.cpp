@@ -344,11 +344,11 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
     npy_int64 len3 = buf3.num_codepoints();
     Buffer<enc> end1 = buf1 + len1;
 
-    // Only try to replace if useful, otherwise just copy over data.
-    if (count <= 0                      // There's something to replace
-        || len1 < len2                  // Input is big enough to make a match possible.
-        || (len2 <= 0 && len3 <= 0)     // Match or replacement string is not empty.
-        || (len2 == len3 && buf2.strcmp(buf3) == 0)) {  // Match and replacement differ.
+    // Only try to replace if replacements are possible.
+    if (count <= 0                      // There's nothing to replace.
+        || len1 < len2                  // Input is too small to have a match.
+        || (len2 <= 0 && len3 <= 0)     // Match and replacement strings both empty.
+        || (len2 == len3 && buf2.strcmp(buf3) == 0)) {  // Match and replacement are the same.
 
         goto copy_rest;
     }
