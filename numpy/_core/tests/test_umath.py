@@ -2836,6 +2836,28 @@ class TestSign:
             assert_equal(res, tgt)
             assert_equal(out, tgt)
 
+    def test_sign_complex(self):
+        a = np.array([
+            np.inf, -np.inf, complex(0, np.inf), complex(0, -np.inf),
+            complex(np.inf, np.inf), complex(np.inf, -np.inf),  # nan
+            np.nan, complex(0, np.nan), complex(np.nan, np.nan),  # nan
+            0.0,  # 0.
+            3.0, -3.0, -2j, 3.0+4.0j, -8.0+6.0j
+        ])
+        out = np.zeros(a.shape, a.dtype)
+        tgt = np.array([
+            1., -1., 1j, -1j,
+            ] + [complex(np.nan, np.nan)] * 5 + [
+            0.0,
+            1.0, -1.0, -1j, 0.6+0.8j, -0.8+0.6j])
+
+        with np.errstate(invalid='ignore'):
+            res = ncu.sign(a)
+            assert_equal(res, tgt)
+            res = ncu.sign(a, out)
+            assert_(res is out)
+            assert_equal(res, tgt)
+
     def test_sign_dtype_object(self):
         # In reference to github issue #6229
 

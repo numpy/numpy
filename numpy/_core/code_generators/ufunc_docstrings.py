@@ -3597,10 +3597,11 @@ add_newdoc('numpy._core.umath', 'sign',
     The `sign` function returns ``-1 if x < 0, 0 if x==0, 1 if x > 0``.  nan
     is returned for nan inputs.
 
-    For complex inputs, the `sign` function returns
-    ``sign(x.real) + 0j if x.real != 0 else sign(x.imag) + 0j``.
+    For complex inputs, the `sign` function returns ``x / abs(x)``, the
+    generalization of the above (and ``0 if x==0``).
 
-    complex(nan, 0) is returned for complex nan inputs.
+    .. versionchanged:: 2.0.0
+        Definition of complex sign changed to follow the Array API standard.
 
     Parameters
     ----------
@@ -3626,8 +3627,8 @@ add_newdoc('numpy._core.umath', 'sign',
     array([-1.,  1.])
     >>> np.sign(0)
     0
-    >>> np.sign(5-2j)
-    (1+0j)
+    >>> np.sign([3-4j, 8j])
+    array([0.6-0.8j, 0. +1.j ])
 
     """)
 
