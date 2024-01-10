@@ -82,9 +82,10 @@ cdata = configuration_data()
 cdata.set('NPY_ABI_VERSION', C_ABI_VERSION)
 cdata.set('NPY_API_VERSION', C_API_VERSION)
 
+cpu_family = host_machine.cpu_family()
 use_svml = (
   host_machine.system() == 'linux' and
-  host_machine.cpu_family() == 'x86_64' and
+  cpu_family == 'x86_64' and
   ('AVX512_SKX' in CPU_DISPATCH_NAMES or 'AVX512_SKX' in CPU_BASELINE_NAMES) and
   not get_option('disable-svml')
 )
@@ -94,10 +95,28 @@ if use_svml
     error('Missing the `SVML` git submodule! Run `git submodule update --init` to fix this.')
   endif
 endif
-if not fs.exists('src/highway/README.md')
+
+use_highway = not get_option('disable-highway')
+if use_highway and not fs.exists('src/highway/README.md')
   error('Missing the `highway` git submodule! Run `git submodule update --init` to fix this.')
 endif
-if not fs.exists('src/npysort/x86-simd-sort/README.md')
+
+if use_highway
+  highway_lib = static_library('highway',
+    [
+      # required for hwy::Abort symbol
+      'src/highway/hwy/targets.cc'
+    ],
+    cpp_args: '-DTOOLCHAIN_MISS_ASM_HWCAP_H',
+    include_directories: ['src/highway'],
+    install: false
+  )
+else
+  highway_lib = []
+endif
+
+use_intel_sort = not get_option('disable-intel-sort') and cpu_family in ['x86', 'x86_64']
+if use_intel_sort and not fs.exists('src/npysort/x86-simd-sort/README.md')
   error('Missing the `x86-simd-sort` git submodule! Run `git submodule update --init` to fix this.')
 endif
 
@@ -767,33 +786,31 @@ foreach gen_mtargets : [
   [
     'x86_simd_argsort.dispatch.h',
     'src/npysort/x86_simd_argsort.dispatch.cpp',
-    [AVX512_SKX]
+    use_intel_sort ? [AVX512_SKX] : []
   ],
   [
     'x86_simd_qsort.dispatch.h',
     'src/npysort/x86_simd_qsort.dispatch.cpp',
-    [
-      AVX512_SKX, AVX2,
-    ]
+    use_intel_sort ? [AVX512_SKX, AVX2] : []
   ],
   [
     'x86_simd_qsort_16bit.dispatch.h',
     'src/npysort/x86_simd_qsort_16bit.dispatch.cpp',
-    [AVX512_SPR, AVX512_ICL]
+    use_intel_sort ? [AVX512_SPR, AVX512_ICL] : []
   ],
   [
     'highway_qsort.dispatch.h',
     'src/npysort/highway_qsort.dispatch.cpp',
-    [
-      SVE, ASIMD,
-    ]
+    use_highway ? [
+      SVE, ASIMD, VSX2, VXE
+    ] : []
   ],
   [
     'highway_qsort_16bit.dispatch.h',
     'src/npysort/highway_qsort_16bit.dispatch.cpp',
-    [
-      ASIMDHP,
-    ]
+    use_highway ? [
+      ASIMDHP, VSX2, VXE
+    ] : []
   ],
 ]
   mtargets = mod_features.multi_targets(
@@ -1164,8 +1181,8 @@ py.extension_module('_multiarray_umath',
     'src/npymath',
     'src/umath',
   ],
-  dependencies: blas_dep,
-  link_with: [npymath_lib, multiarray_umath_mtargets.static_lib('_multiarray_umath_mtargets')],
+  dependencies: [blas_dep],
+  link_with: [npymath_lib, multiarray_umath_mtargets.static_lib('_multiarray_umath_mtargets')] + highway_lib,
   install: true,
   subdir: 'numpy/_core',
 )
