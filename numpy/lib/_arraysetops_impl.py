@@ -223,9 +223,9 @@ def unique(ar, return_index=False, return_inverse=False,
         order is defined for complex arrays.
 
     .. versionchanged: 2.0
-        For multi-dimensional inputs, ``unique_inverse`` is reshaped such that
-        the input can be reconstructed using ``np.take(unique, unique_inverse)``
-        when ``axis = None``, and
+        For multi-dimensional inputs, ``unique_inverse`` is reshaped
+        such that the input can be reconstructed using
+        ``np.take(unique, unique_inverse)`` when ``axis = None``, and
         ``np.take_along_axis(unique, unique_inverse, axis=axis)`` otherwise.
 
     Examples
