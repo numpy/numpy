@@ -491,7 +491,7 @@ class TestMethods:
         out = np.array(out, dtype=dt)
         assert_array_equal(np.strings.strip(in1, in2), out)
 
-    @pytest.mark.parametrize("in1,in2,in3,in4,out", [
+    @pytest.mark.parametrize("buf,old,new,count,res", [
         ("", "", "", MAX, ""),
         ("", "", "A", MAX, "A"),
         ("", "A", "", MAX, ""),
@@ -613,15 +613,55 @@ class TestMethods:
         ("abc", "ab", "--", 0, "abc"),
         ("abc", "xy", "--", MAX, "abc"),
     ])
-    def test_replace(self, in1, in2, in3, in4, out, dt):
-        in1 = np.array(in1, dtype=dt)
-        in2 = np.array(in2, dtype=dt)
-        in3 = np.array(in3, dtype=dt)
-        out = np.array(out, dtype=dt)
-        assert_array_equal(np.strings.replace(in1, in2, in3, in4), out)
+    def test_replace(self, buf, old, new, count, res, dt):
+        buf = np.array(buf, dtype=dt)
+        old = np.array(old, dtype=dt)
+        new = np.array(new, dtype=dt)
+        res = np.array(res, dtype=dt)
+        assert_array_equal(np.strings.replace(buf, old, new, count), res)
+
+    def test_replace_count_and_size(self, dt):
+        if dt == "S":
+            pytest.skip("test_replace_count_and_size does not test stuff "
+                        "that are dtype-related")
+
+        a = np.array(['0123456789' * i for i in range(4)])
+        r1 = np.strings.replace(a, '5', 'ABCDE', MAX)
+        assert r1.dtype.itemsize == (3*10 + 3*4) * 4
+        assert_array_equal(r1, np.array(['01234ABCDE6789' * i
+                                         for i in range(4)]))
+        r2 = np.strings.replace(a, '5', 'ABCDE', 1)
+        assert r2.dtype.itemsize == (3*10 + 4) * 4
+        r3 = np.strings.replace(a, '5', 'ABCDE', 0)
+        assert r3.dtype.itemsize == a.dtype.itemsize
+        assert_array_equal(r3, a)
+        # Negative values mean to replace all.
+        r4 = np.strings.replace(a, '5', 'ABCDE', -1)
+        assert r4.dtype.itemsize == (3*10 + 3*4) * 4
+        assert_array_equal(r4, r1)
+        # We can do count on an element-by-element basis.
+        r5 = np.strings.replace(a, '5', 'ABCDE', [-1, -1, -1, 1])
+        assert r5.dtype.itemsize == (3*10 + 4) * 4
+        assert_array_equal(r5, np.array(
+            ['01234ABCDE6789' * i for i in range(3)]
+            + ['01234ABCDE6789' + '0123456789' * 2]))
+
+    def test_replace_broadcasting(self, dt):
+        if dt != 'S':
+            pytest.skip("test_replace_broadcasting does not test "
+                        "dtype-related stuff")
+        a = np.array('0,0,0', dtype=dt)
+        r1 = np.strings.replace(a, '0', '1', np.arange(3))
+        assert r1.dtype == a.dtype
+        assert_array_equal(r1, np.array(['0,0,0', '1,0,0', '1,1,0']))
+        r2 = np.strings.replace(a, '0', [['1'], ['2']], np.arange(1, 4))
+        assert_array_equal(r2, np.array([['1,0,0', '1,1,0', '1,1,1'],
+                                         ['2,0,0', '2,2,0', '2,2,2']]))
+        r3 = np.strings.replace(a, ['0', '0,0', '0,0,0'], 'X', MAX)
+        assert_array_equal(r3, np.array(['X,X,X', 'X,0', 'X']))
 
     def test_replace_unicode(self, dt):
-        if dt == "S":
-            pytest.skip("test_replace_unicode is only for U dtype")
+        if dt != "S":
+            pytest.skip("test_replace_unicode is only for unicode dtype")
         assert_array_equal(np.strings.replace(
             "...\u043c......<", "<", "&lt;", MAX), '...\u043c......&lt;')

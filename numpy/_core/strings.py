@@ -161,11 +161,11 @@ def replace(x1, x2, x3, x4):
 
     Parameters
     ----------
-    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x1 : array_like, with ``bytes_`` or ``str_`` dtype
 
-    x2, x3 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x2, x3 : array_like, with ``bytes_`` or ``str_`` dtype
 
-    x4 : int
+    x4 : array_like, with ``int_`` dtype
         If the optional argument ``x4`` is given, only the first
         ``x4`` occurrences are replaced.
 
@@ -196,13 +196,11 @@ def replace(x1, x2, x3, x4):
     max_int64 = np.iinfo(np.int64).max
     counts = count(x1_arr, x2, 0, max_int64)
     x4 = np.asanyarray(x4)
-    counts = np.where(x4 < 0, counts,
-                            np.minimum(counts, x4))
+    counts = np.where(x4 < 0, counts, np.minimum(counts, x4))
 
     buffersizes = str_len(x1_arr) + counts * (str_len(x3) - str_len(x2))
 
     # buffersizes is properly broadcast along all inputs.
     out = np.empty_like(x1_arr, shape=buffersizes.shape,
-                           dtype=f"{x1_arr.dtype.char}{buffersizes.max()}")
-    _replace(x1_arr, x2, x3, counts, out=out)
-    return out
+                        dtype=f"{x1_arr.dtype.char}{buffersizes.max()}")
+    return _replace(x1_arr, x2, x3, counts, out=out)
