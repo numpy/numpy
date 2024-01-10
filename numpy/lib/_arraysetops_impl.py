@@ -212,7 +212,7 @@ def unique(ar, return_index=False, return_inverse=False,
     flattened subarrays are sorted in lexicographic order starting with the
     first element.
 
-    .. versionchanged: NumPy 1.21
+    .. versionchanged: 1.21
         If nan values are in the input array, a single nan is put
         to the end of the sorted unique values.
 
@@ -222,7 +222,7 @@ def unique(ar, return_index=False, return_inverse=False,
         lexicographical order is chosen - see np.sort for how the lexicographical
         order is defined for complex arrays.
 
-    .. versionchanged: NumPy 2.0
+    .. versionchanged: 2.0
         For multi-dimensional inputs, ``unique_inverse`` is reshaped such that
         the input can be reconstructed using ``np.take(unique, unique_inverse)``
         when ``axis = None``, and
