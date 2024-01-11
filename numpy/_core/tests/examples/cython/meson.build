@@ -36,8 +36,8 @@ py.extension_module(
     include_directories: [npy_include_path],
 )
 
-# py does not export the is_pypy method
-if not py.get_variable('SOABI').startswith('pypy')
+# py does not export the is_pypy method, so use this hack
+if not py.get_variable('SO').strip().startswith('.pypy')
   py.extension_module(
       'limited_api',
       'limited_api.pyx',
