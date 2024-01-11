@@ -115,59 +115,59 @@ def array_split(
     ary: _ArrayLike[_SCT],
     indices_or_sections: _ShapeLike,
     axis: SupportsIndex = ...,
-) -> list[NDArray[_SCT]]: ...
+) -> tuple[NDArray[_SCT]]: ...
 @overload
 def array_split(
     ary: ArrayLike,
     indices_or_sections: _ShapeLike,
     axis: SupportsIndex = ...,
-) -> list[NDArray[Any]]: ...
+) -> tuple[NDArray[Any]]: ...
 
 @overload
 def split(
     ary: _ArrayLike[_SCT],
     indices_or_sections: _ShapeLike,
     axis: SupportsIndex = ...,
-) -> list[NDArray[_SCT]]: ...
+) -> tuple[NDArray[_SCT]]: ...
 @overload
 def split(
     ary: ArrayLike,
     indices_or_sections: _ShapeLike,
     axis: SupportsIndex = ...,
-) -> list[NDArray[Any]]: ...
+) -> tuple[NDArray[Any]]: ...
 
 @overload
 def hsplit(
     ary: _ArrayLike[_SCT],
     indices_or_sections: _ShapeLike,
-) -> list[NDArray[_SCT]]: ...
+) -> tuple[NDArray[_SCT]]: ...
 @overload
 def hsplit(
     ary: ArrayLike,
     indices_or_sections: _ShapeLike,
-) -> list[NDArray[Any]]: ...
+) -> tuple[NDArray[Any]]: ...
 
 @overload
 def vsplit(
     ary: _ArrayLike[_SCT],
     indices_or_sections: _ShapeLike,
-) -> list[NDArray[_SCT]]: ...
+) -> tuple[NDArray[_SCT]]: ...
 @overload
 def vsplit(
     ary: ArrayLike,
     indices_or_sections: _ShapeLike,
-) -> list[NDArray[Any]]: ...
+) -> tuple[NDArray[Any]]: ...
 
 @overload
 def dsplit(
     ary: _ArrayLike[_SCT],
     indices_or_sections: _ShapeLike,
-) -> list[NDArray[_SCT]]: ...
+) -> tuple[NDArray[_SCT]]: ...
 @overload
 def dsplit(
     ary: ArrayLike,
     indices_or_sections: _ShapeLike,
-) -> list[NDArray[Any]]: ...
+) -> tuple[NDArray[Any]]: ...
 
 @overload
 def get_array_wrap(*args: _SupportsArrayWrap) -> _ArrayWrap: ...

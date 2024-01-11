@@ -502,7 +502,7 @@ def broadcast_arrays(*args, subok=False):
 
     Returns
     -------
-    broadcasted : list of arrays
+    broadcasted : tuple of arrays
         These arrays are views on the original arrays.  They are typically
         not contiguous.  Furthermore, more than one element of a
         broadcasted array may refer to a single memory location. If you need
@@ -526,17 +526,19 @@ def broadcast_arrays(*args, subok=False):
     >>> x = np.array([[1,2,3]])
     >>> y = np.array([[4],[5]])
     >>> np.broadcast_arrays(x, y)
-    [array([[1, 2, 3],
-           [1, 2, 3]]), array([[4, 4, 4],
-           [5, 5, 5]])]
+    (array([[1, 2, 3],
+            [1, 2, 3]]),
+     array([[4, 4, 4],
+            [5, 5, 5]]))
 
     Here is a useful idiom for getting contiguous copies instead of
     non-contiguous views.
 
     >>> [np.array(a) for a in np.broadcast_arrays(x, y)]
     [array([[1, 2, 3],
-           [1, 2, 3]]), array([[4, 4, 4],
-           [5, 5, 5]])]
+            [1, 2, 3]]),
+     array([[4, 4, 4],
+            [5, 5, 5]])]
 
     """
     # nditer is not used here to avoid the limit of 32 arrays.
@@ -552,5 +554,5 @@ def broadcast_arrays(*args, subok=False):
         # Common case where nothing needs to be broadcasted.
         return args
 
-    return [_broadcast_to(array, shape, subok=subok, readonly=False)
-            for array in args]
+    return tuple([_broadcast_to(array, shape, subok=subok, readonly=False)
+                  for array in args])
