@@ -4291,7 +4291,8 @@ def percentile(a,
 
     if weights is not None:
         if method != "inverted_cdf":
-            msg = f"Only method 'inverted_cdf' supports weights. Got: {method}."
+            msg = ("Only method 'inverted_cdf' supports weights. "
+                   f"Got: {method}.")
             raise ValueError(msg)
         weights = _weights_are_valid(weights=weights, a=a, axis=axis)
         if np.any(weights < 0):
@@ -4605,7 +4606,8 @@ def quantile(a,
 
     if weights is not None:
         if method != "inverted_cdf":
-            msg = f"Only method 'inverted_cdf' supports weights. Got: {method}."
+            msg = ("Only method 'inverted_cdf' supports weights. "
+                   "Got: {method}.")
             raise ValueError(msg)
         weights = _weights_are_valid(weights=weights, a=a, axis=axis)
         if np.any(weights < 0):
