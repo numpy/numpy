@@ -416,35 +416,6 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
 }
 
 
-/*
- * Must be broadcastable.
- * This code is very similar to PyArray_CopyInto/PyArray_MoveInto
- * except casting is done --- NPY_BUFSIZE is used
- * as the size of the casting buffer.
- */
-
-/*NUMPY_API
- * Cast to an already created array.
- */
-NPY_NO_EXPORT int
-PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
-{
-    /* CopyInto handles the casting now */
-    return PyArray_CopyInto(out, mp);
-}
-
-/*NUMPY_API
- * Cast to an already created array.  Arrays don't have to be "broadcastable"
- * Only requirement is they have the same number of elements.
- */
-NPY_NO_EXPORT int
-PyArray_CastAnyTo(PyArrayObject *out, PyArrayObject *mp)
-{
-    /* CopyAnyInto handles the casting now */
-    return PyArray_CopyAnyInto(out, mp);
-}
-
-
 static NPY_CASTING
 _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
         PyArray_DTypeMeta *dtypes[2], PyArray_Descr *from, PyArray_Descr *to,

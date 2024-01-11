@@ -200,6 +200,34 @@ class TestFFT1D:
             tr_op = np.transpose(op(x, axes=a), a)
             assert_allclose(op_tr, tr_op, atol=1e-6)
 
+    @pytest.mark.parametrize("op", [np.fft.fftn, np.fft.ifftn,
+                                    np.fft.fft2, np.fft.ifft2])
+    def test_s_negative_1(self, op):
+        x = np.arange(100).reshape(10, 10)
+        # should use the whole input array along the first axis
+        assert op(x, s=(-1, 5), axes=(0, 1)).shape == (10, 5)
+
+    @pytest.mark.parametrize("op", [np.fft.fftn, np.fft.ifftn,
+                                    np.fft.rfftn, np.fft.irfftn])
+    def test_s_axes_none(self, op):
+        x = np.arange(100).reshape(10, 10)
+        with pytest.warns(match='`axes` should not be `None` if `s`'):
+            op(x, s=(-1, 5))
+
+    @pytest.mark.parametrize("op", [np.fft.fft2, np.fft.ifft2])
+    def test_s_axes_none_2D(self, op):
+        x = np.arange(100).reshape(10, 10)
+        with pytest.warns(match='`axes` should not be `None` if `s`'):
+            op(x, s=(-1, 5), axes=None)
+
+    @pytest.mark.parametrize("op", [np.fft.fftn, np.fft.ifftn,
+                                    np.fft.rfftn, np.fft.irfftn,
+                                    np.fft.fft2, np.fft.ifft2])
+    def test_s_contains_none(self, op):
+        x = random((30, 20, 10))
+        with pytest.warns(match='array containing `None` values to `s`'):
+            op(x, s=(10, None, 10), axes=(0, 1, 2))
+
     def test_all_1d_norm_preserving(self):
         # verify that round-trip transforms are norm-preserving
         x = random(30)

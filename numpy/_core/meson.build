@@ -118,6 +118,7 @@ types_to_check = [
 foreach symbol_type: types_to_check
   cdata.set(symbol_type[0], cc.sizeof(symbol_type[1]))
 endforeach
+cdata.set('NPY_SIZEOF_WCHAR_T', cc.sizeof('wchar_t', prefix: '#include <wchar.h>'))
 cdata.set('NPY_SIZEOF_OFF_T', cc.sizeof('off_t', prefix: '#include <sys/types.h>'))
 cdata.set('NPY_SIZEOF_PY_INTPTR_T',
   cc.sizeof('Py_intptr_t', dependencies: py_dep, prefix: '#include <Python.h>'))
@@ -784,7 +785,14 @@ foreach gen_mtargets : [
     'highway_qsort.dispatch.h',
     'src/npysort/highway_qsort.dispatch.cpp',
     [
-      ASIMD,
+      SVE, ASIMD,
+    ]
+  ],
+  [
+    'highway_qsort_16bit.dispatch.h',
+    'src/npysort/highway_qsort_16bit.dispatch.cpp',
+    [
+      ASIMDHP,
     ]
   ],
 ]
@@ -987,6 +995,7 @@ endforeach
 # ------------------------------
 src_multiarray_umath_common = [
   'src/common/array_assign.c',
+  'src/common/gil_utils.c',
   'src/common/mem_overlap.c',
   'src/common/npy_argparse.c',
   'src/common/npy_hashtable.c',
@@ -1259,6 +1268,8 @@ python_sources = [
   'records.pyi',
   'shape_base.py',
   'shape_base.pyi',
+  'strings.py',
+  'strings.pyi',
   'umath.py',
 ]
 

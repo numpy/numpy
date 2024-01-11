@@ -17,13 +17,23 @@ from numpy.linalg._linalg import (
     eigh as eigh,
     lstsq as lstsq,
     norm as norm,
+    matrix_norm as matrix_norm,
+    vector_norm as vector_norm,
     qr as qr,
     cond as cond,
     matrix_rank as matrix_rank,
     multi_dot as multi_dot,
+    matmul as matmul,
     trace as trace,
     diagonal as diagonal,
     cross as cross,
+)
+
+from numpy._core.fromnumeric import (
+    matrix_transpose as matrix_transpose
+)
+from numpy._core.numeric import (
+    tensordot as tensordot, vecdot as vecdot
 )
 
 from numpy._pytesttester import PytestTester

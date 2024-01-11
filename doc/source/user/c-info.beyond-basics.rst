@@ -266,9 +266,7 @@ needed information and useful functions you call
 call is an integer providing you with a unique type_number that
 specifies your data-type. This type number should be stored and made
 available by your module so that other modules can use it to recognize
-your data-type (the other mechanism for finding a user-defined
-data-type number is to search based on the name of the type-object
-associated with the data-type using :c:func:`PyArray_TypeNumFromName` ).
+your data-type.
 
 
 Registering a casting function

@@ -834,7 +834,7 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
 
     >>> s = '\x01\x02\x03abc'
     >>> np._core.records.fromstring(s, dtype='u1,u1,u1,S3')
-    Traceback (most recent call last)
+    Traceback (most recent call last):
        ...
     TypeError: a bytes-like object is required, not 'str'
     """
@@ -908,7 +908,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     >>> r=np._core.records.fromfile(fd, formats='f8,i4,a5', shape=10,
     ... byteorder='<')
     >>> print(r[5])
-    (0.5, 10, 'abcde')
+    (0.5, 10, b'abcde')
     >>> r.shape
     (10,)
     """
@@ -1024,6 +1024,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     Examples
     --------
     >>> a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    >>> a
     array([[1, 2, 3],
            [4, 5, 6],
            [7, 8, 9]])
@@ -1032,19 +1033,19 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     rec.array([[1, 2, 3],
                [4, 5, 6],
                [7, 8, 9]],
-        dtype=int32)
+              dtype=int64)
 
     >>> b = [(1, 1), (2, 4), (3, 9)]
     >>> c = np.rec.array(b, formats = ['i2', 'f2'], names = ('x', 'y'))
     >>> c
-    rec.array([(1, 1.0), (2, 4.0), (3, 9.0)],
+    rec.array([(1, 1.), (2, 4.), (3, 9.)],
               dtype=[('x', '<i2'), ('y', '<f2')])
 
     >>> c.x
-    rec.array([1, 2, 3], dtype=int16)
+    array([1, 2, 3], dtype=int16)
 
     >>> c.y
-    rec.array([ 1.0,  4.0,  9.0], dtype=float16)
+    array([1.,  4.,  9.], dtype=float16)
 
     >>> r = np.rec.array(['abc','def'], names=['col1','col2'])
     >>> print(r.col1)

@@ -347,8 +347,12 @@ class TestAverage:
         desired = np.array([3., 6.])
         assert_almost_equal(actual, desired)
 
-        # This should raise an error. Can we test for that ?
-        # assert_equal(average(y1, weights=w1), 9./2.)
+        # weights and input have different shapes but no axis is specified
+        with pytest.raises(
+                TypeError,
+                match="Axis must be specified when shapes of a "
+                      "and weights differ"):
+            average(y1, weights=w1)
 
         # 2D Case
         w2 = [[0, 0, 1], [0, 0, 2]]
@@ -372,6 +376,48 @@ class TestAverage:
         actual = np.average(x, weights=w, axis=1, keepdims=True)
         desired = np.array([[2.], [3.], [4.]])
         assert_array_equal(actual, desired)
+
+    def test_weight_and_input_dims_different(self):
+        y = np.arange(12).reshape(2, 2, 3)
+        w = np.array([0., 0., 1., .5, .5, 0., 0., .5, .5, 1., 0., 0.])\
+            .reshape(2, 2, 3)
+
+        subw0 = w[:, :, 0]
+        actual = average(y, axis=(0, 1), weights=subw0)
+        desired = np.array([7., 8., 9.])
+        assert_almost_equal(actual, desired)
+
+        subw1 = w[1, :, :]
+        actual = average(y, axis=(1, 2), weights=subw1)
+        desired = np.array([2.25, 8.25])
+        assert_almost_equal(actual, desired)
+
+        subw2 = w[:, 0, :]
+        actual = average(y, axis=(0, 2), weights=subw2)
+        desired = np.array([4.75, 7.75])
+        assert_almost_equal(actual, desired)
+
+        # here the weights have the wrong shape for the specified axes
+        with pytest.raises(
+                ValueError,
+                match="Shape of weights must be consistent with "
+                      "shape of a along specified axis"):
+            average(y, axis=(0, 1, 2), weights=subw0)
+
+        with pytest.raises(
+                ValueError,
+                match="Shape of weights must be consistent with "
+                      "shape of a along specified axis"):
+            average(y, axis=(0, 1), weights=subw1)
+
+        # swapping the axes should be same as transposing weights
+        actual = average(y, axis=(1, 0), weights=subw0)
+        desired = average(y, axis=(0, 1), weights=subw0.T)
+        assert_almost_equal(actual, desired)
+
+        # if average over all axes, should have float output
+        actual = average(y, axis=(0, 1, 2), weights=w)
+        assert_(actual.ndim == 0)
 
     def test_returned(self):
         y = np.array([[1, 2, 3], [4, 5, 6]])

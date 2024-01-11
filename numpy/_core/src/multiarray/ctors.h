@@ -95,9 +95,6 @@ NPY_NO_EXPORT PyObject *
 PyArray_EnsureAnyArray(PyObject *op);
 
 NPY_NO_EXPORT int
-PyArray_MoveInto(PyArrayObject *dest, PyArrayObject *src);
-
-NPY_NO_EXPORT int
 PyArray_CopyAnyInto(PyArrayObject *dest, PyArrayObject *src);
 
 NPY_NO_EXPORT PyObject *

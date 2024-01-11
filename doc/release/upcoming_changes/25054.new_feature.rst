@@ -1,5 +1,5 @@
-`numpy.astype`
---------------
+`numpy.isdtype`
+---------------
 
-`numpy.astype` was added to provide an Array API compatible alternative to
-`numpy.ndarray.astype` method.
+`numpy.isdtype` was added to provide a canonical way to classify NumPy's dtypes
+in compliance with Array API and using names standardized there.

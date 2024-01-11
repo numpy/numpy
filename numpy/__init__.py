@@ -121,50 +121,52 @@ else:
     from . import _core
     from ._core import (
         False_, ScalarType, True_, _get_promotion_state, _no_nep50_warning,
-        _set_promotion_state, abs, absolute, add, all, allclose, alltrue,
-        amax, amin, any, arange, arccos, arccosh, arcsin, arcsinh, arctan,
-        arctan2, arctanh, argmax, argmin, argpartition, argsort, argwhere,
-        around, array, array2string, array_equal, array_equiv, array_repr,
-        array_str, asanyarray, asarray, ascontiguousarray, asfortranarray,
-        astype, atleast_1d, atleast_2d, atleast_3d, base_repr, binary_repr,
-        bitwise_and, bitwise_count, bitwise_not, bitwise_or, bitwise_xor,
-        block, bool, bool_, broadcast, busday_count, busday_offset,
-        busdaycalendar, byte, bytes_, can_cast, cbrt, cdouble, ceil,
-        character, choose, clip, clongdouble, complex128, complex64,
-        complexfloating, compress, concatenate, conj, conjugate, convolve,
-        copysign, copyto, correlate, cos, cosh, count_nonzero, cross, csingle,
-        cumprod, cumproduct, cumsum, datetime64, datetime_as_string,
-        datetime_data, deg2rad, degrees, diagonal, divide, divmod, dot,
-        double, dtype, e, einsum, einsum_path, empty, empty_like, equal,
-        errstate, euler_gamma, exp, exp2, expm1, fabs, finfo, flatiter,
-        flatnonzero, flexible, float16, float32, float64, float_power,
-        floating, floor, floor_divide, fmax, fmin, fmod,
+        _set_promotion_state, abs, absolute, acos, acosh, add, all, allclose,
+        alltrue, amax, amin, any, arange, arccos, arccosh, arcsin, arcsinh,
+        arctan, arctan2, arctanh, argmax, argmin, argpartition, argsort,
+        argwhere, around, array, array2string, array_equal, array_equiv,
+        array_repr, array_str, asanyarray, asarray, ascontiguousarray,
+        asfortranarray, asin, asinh, atan, atanh, atan2, astype, atleast_1d,
+        atleast_2d, atleast_3d, base_repr, binary_repr, bitwise_and,
+        bitwise_count, bitwise_invert, bitwise_left_shift, bitwise_not,
+        bitwise_or, bitwise_right_shift, bitwise_xor, block, bool, bool_,
+        broadcast, busday_count, busday_offset, busdaycalendar, byte, bytes_,
+        can_cast, cbrt, cdouble, ceil, character, choose, clip, clongdouble,
+        complex128, complex64, complexfloating, compress, concat, concatenate,
+        conj, conjugate, convolve, copysign, copyto, correlate, cos, cosh,
+        count_nonzero, cross, csingle, cumprod, cumproduct, cumsum,
+        datetime64, datetime_as_string, datetime_data, deg2rad, degrees,
+        diagonal, divide, divmod, dot, double, dtype, e, einsum, einsum_path,
+        empty, empty_like, equal, errstate, euler_gamma, exp, exp2, expm1,
+        fabs, finfo, flatiter, flatnonzero, flexible, float16, float32,
+        float64, float_power, floating, floor, floor_divide, fmax, fmin, fmod,
         format_float_positional, format_float_scientific, frexp, from_dlpack,
         frombuffer, fromfile, fromfunction, fromiter, frompyfunc, fromstring,
         full, full_like, gcd, generic, geomspace, get_printoptions,
         getbufsize, geterr, geterrcall, greater, greater_equal, half,
         heaviside, hstack, hypot, identity, iinfo, iinfo, indices, inexact,
         inf, inner, int16, int32, int64, int8, int_, intc, integer, intp,
-        invert, is_busday, isclose, isfinite, isfortran, isinf, isnan, isnat,
-        isscalar, issubdtype, lcm, ldexp, left_shift, less, less_equal,
-        lexsort, linspace, little_endian, log, log10, log1p, log2, logaddexp,
-        logaddexp2, logical_and, logical_not, logical_or, logical_xor,
-        logspace, long, longdouble, longlong, matmul, max, maximum,
-        may_share_memory, mean, memmap, min, min_scalar_type, minimum, mod,
-        modf, moveaxis, multiply, nan, ndarray, ndim, nditer, negative,
-        nested_iters, newaxis, nextafter, nonzero, not_equal, number, object_,
-        ones, ones_like, outer, partition, pi, positive, power, printoptions,
-        prod, product, promote_types, ptp, put, putmask, rad2deg, radians,
-        ravel, recarray, reciprocal, record, remainder, repeat, require,
-        reshape, resize, result_type, right_shift, rint, roll, rollaxis,
-        round, sctypeDict, searchsorted, set_printoptions, setbufsize, seterr,
-        seterrcall, shape, shares_memory, short, sign, signbit, signedinteger,
-        sin, single, sinh, size, sometrue, sort, spacing, sqrt, square,
-        squeeze, stack, std, str_, subtract, sum, swapaxes, take, tan, tanh,
-        tensordot, timedelta64, trace, transpose, true_divide, trunc,
-        typecodes, ubyte, ufunc, uint, uint16, uint32, uint64, uint8, uintc,
-        uintp, ulong, ulonglong, unsignedinteger, ushort, var, vdot, void,
-        vstack, where, zeros, zeros_like
+        invert, is_busday, isclose, isdtype, isfinite, isfortran, isinf,
+        isnan, isnat, isscalar, issubdtype, lcm, ldexp, left_shift, less,
+        less_equal, lexsort, linspace, little_endian, log, log10, log1p, log2,
+        logaddexp, logaddexp2, logical_and, logical_not, logical_or,
+        logical_xor, logspace, long, longdouble, longlong, matmul,
+        matrix_transpose, max, maximum, may_share_memory, mean, memmap, min,
+        min_scalar_type, minimum, mod, modf, moveaxis, multiply, nan, ndarray,
+        ndim, nditer, negative, nested_iters, newaxis, nextafter, nonzero,
+        not_equal, number, object_, ones, ones_like, outer, partition,
+        permute_dims, pi, positive, pow, power, printoptions, prod, product,
+        promote_types, ptp, put, putmask, rad2deg, radians, ravel, recarray,
+        reciprocal, record, remainder, repeat, require, reshape, resize,
+        result_type, right_shift, rint, roll, rollaxis, round, sctypeDict,
+        searchsorted, set_printoptions, setbufsize, seterr, seterrcall, shape,
+        shares_memory, short, sign, signbit, signedinteger, sin, single, sinh,
+        size, sometrue, sort, spacing, sqrt, square, squeeze, stack, std,
+        str_, subtract, sum, swapaxes, take, tan, tanh, tensordot,
+        timedelta64, trace, transpose, true_divide, trunc, typecodes, ubyte,
+        ufunc, uint, uint16, uint32, uint64, uint8, uintc, uintp, ulong,
+        ulonglong, unsignedinteger, ushort, var, vdot, vecdot, void, vstack,
+        where, zeros, zeros_like
     )
 
     # NOTE: It's still under discussion whether these aliases 
@@ -244,7 +246,7 @@ else:
     __numpy_submodules__ = {
         "linalg", "fft", "dtypes", "random", "polynomial", "ma", 
         "exceptions", "lib", "ctypeslib", "testing", "typing",
-        "f2py", "test", "rec", "char", "core"
+        "f2py", "test", "rec", "char", "core", "strings",
     }
 
     # We build warning messages for former attributes
@@ -369,6 +371,9 @@ else:
         elif attr == "core":
             import numpy.core as core
             return core
+        elif attr == "strings":
+            import numpy.strings as strings
+            return strings
         elif attr == "distutils":
             if 'distutils' in __numpy_submodules__:
                 import numpy.distutils as distutils
@@ -459,20 +464,25 @@ else:
             pass
 
     if sys.platform == "darwin":
+        from . import exceptions
         with warnings.catch_warnings(record=True) as w:
             _mac_os_check()
             # Throw runtime error, if the test failed Check for warning and error_message
             if len(w) > 0:
-                error_message = "{}: {}".format(w[-1].category.__name__, str(w[-1].message))
-                msg = (
-                    "Polyfit sanity test emitted a warning, most likely due "
-                    "to using a buggy Accelerate backend."
-                    "\nIf you compiled yourself, more information is available at:"
-                    "\nhttps://numpy.org/doc/stable/user/building.html#accelerated-blas-lapack-libraries"
-                    "\nOtherwise report this to the vendor "
-                    "that provided NumPy.\n{}\n".format(error_message))
-                raise RuntimeError(msg)
-        del w
+                for _wn in w:
+                    if _wn.category is exceptions.RankWarning:
+                        # Ignore other warnings, they may not be relevant (see gh-25433).
+                        error_message = f"{_wn.category.__name__}: {str(_wn.message)}"
+                        msg = (
+                            "Polyfit sanity test emitted a warning, most likely due "
+                            "to using a buggy Accelerate backend."
+                            "\nIf you compiled yourself, more information is available at:"
+                            "\nhttps://numpy.org/devdocs/building/index.html"
+                            "\nOtherwise report this to the vendor "
+                            "that provided NumPy.\n\n{}\n".format(error_message))
+                        raise RuntimeError(msg)
+                del _wn
+            del w
     del _mac_os_check
 
     def hugepage_setup():

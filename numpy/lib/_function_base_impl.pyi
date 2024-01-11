@@ -645,14 +645,6 @@ def percentile(
 # (that we can reuse)
 quantile = percentile
 
-# TODO: Returns a scalar for <= 1D array-likes; returns an ndarray otherwise
-def trapz(
-    y: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
-    x: None | _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co = ...,
-    dx: float = ...,
-    axis: SupportsIndex = ...,
-) -> Any: ...
-
 def meshgrid(
     *xi: ArrayLike,
     copy: bool = ...,

@@ -399,16 +399,15 @@ def _weights_are_valid(weights, a, axis):
             raise TypeError(
                 "Axis must be specified when shapes of a and weights "
                 "differ.")
-        if wgt.ndim != 1:
-            raise TypeError(
-                "1D weights expected when shapes of a and weights differ.")
-        if wgt.shape[0] != a.shape[axis]:
+        if wgt.shape != tuple(a.shape[ax] for ax in axis):
             raise ValueError(
-                "Length of weights not compatible with specified axis.")
+                "Shape of weights must be consistent with "
+                "shape of a along specified axis.")
 
         # setup wgt to broadcast along axis
-        wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape)
-        wgt = wgt.swapaxes(-1, axis)
+        wgt = wgt.transpose(np.argsort(axis))
+        wgt = wgt.reshape(tuple((s if ax in axis else 1)
+                                for ax, s in enumerate(a.shape)))
     return wgt
 
 
@@ -430,7 +429,7 @@ def average(a, axis=None, weights=None, returned=False, *,
         conversion is attempted.
     axis : None or int or tuple of ints, optional
         Axis or axes along which to average `a`.  The default,
-        axis=None, will average over all of the elements of the input array.
+        `axis=None`, will average over all of the elements of the input array.
         If axis is negative it counts from the last to the first axis.
 
         .. versionadded:: 1.7.0
@@ -441,14 +440,18 @@ def average(a, axis=None, weights=None, returned=False, *,
     weights : array_like, optional
         An array of weights associated with the values in `a`. Each value in
         `a` contributes to the average according to its associated weight.
-        The weights array can either be 1-D (in which case its length must be
-        the size of `a` along the given axis) or of the same shape as `a`.
+        The array of weights must be the same shape as `a` if no axis is
+        specified, otherwise the weights must have dimensions and shape
+        consistent with `a` along the specified axis.
         If `weights=None`, then all data in `a` are assumed to have a
-        weight equal to one.  The 1-D calculation is::
+        weight equal to one.
+        The calculation is::
 
             avg = sum(a * weights) / sum(weights)
-
-        The only constraint on `weights` is that `sum(weights)` must not be 0.
+        
+        where the sum is over all included elements.
+        The only constraint on the values of `weights` is that `sum(weights)`
+        must not be 0.
     returned : bool, optional
         Default is `False`. If `True`, the tuple (`average`, `sum_of_weights`)
         is returned, otherwise only the average is returned.
@@ -483,8 +486,10 @@ def average(a, axis=None, weights=None, returned=False, *,
         When all weights along axis are zero. See `numpy.ma.average` for a
         version robust to this type of error.
     TypeError
-        When the length of 1D `weights` is not the same as the shape of `a`
-        along axis.
+        When `weights` does not have the same shape as `a`, and `axis=None`.
+    ValueError
+        When `weights` does not have dimensions and shape consistent with `a`
+        along specified `axis`.
 
     See Also
     --------
@@ -517,20 +522,31 @@ def average(a, axis=None, weights=None, returned=False, *,
         ...
     TypeError: Axis must be specified when shapes of a and weights differ.
 
-    >>> a = np.ones(5, dtype=np.float64)
-    >>> w = np.ones(5, dtype=np.complex64)
-    >>> avg = np.average(a, weights=w)
-    >>> print(avg.dtype)
-    complex128
-
     With ``keepdims=True``, the following result has shape (3, 1).
 
     >>> np.average(data, axis=1, keepdims=True)
     array([[0.5],
            [2.5],
            [4.5]])
+
+    >>> data = np.arange(8).reshape((2, 2, 2))
+    >>> data
+    array([[[0, 1],
+            [2, 3]],
+           [[4, 5],
+            [6, 7]]])
+    >>> np.average(data, axis=(0, 1), weights=[[1./4, 3./4], [1., 1./2]])
+    array([3.4, 4.4])
+    >>> np.average(data, axis=0, weights=[[1./4, 3./4], [1., 1./2]])
+    Traceback (most recent call last):
+        ...
+    ValueError: Shape of weights must be consistent
+    with shape of a along specified axis.
     """
     a = np.asanyarray(a)
+
+    if axis is not None:
+        axis = _nx.normalize_axis_tuple(axis, a.ndim, argname="axis")
 
     if keepdims is np._NoValue:
         # Don't pass on the keepdims argument if one wasn't given.
@@ -800,11 +816,19 @@ def select(condlist, choicelist, default=0):
 
     Examples
     --------
+    Beginning with an array of integers from 0 to 5 (inclusive),
+    elements less than ``3`` are negated, elements greater than ``3``
+    are squared, and elements not meeting either of these conditions
+    (exactly ``3``) are replaced with a `default` value of ``42``.
+
     >>> x = np.arange(6)
     >>> condlist = [x<3, x>3]
     >>> choicelist = [x, x**2]
     >>> np.select(condlist, choicelist, 42)
     array([ 0,  1,  2, 42, 16, 25])
+
+    When multiple conditions are satisfied, the first one encountered in
+    `condlist` is used.
 
     >>> condlist = [x<=4, x>3]
     >>> choicelist = [x, x**2]
@@ -3787,9 +3811,15 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     a : array_like
         Input array or object that can be converted to an array.
     axis : {int, sequence of int, None}, optional
-        Axis or axes along which the medians are computed. The default
-        is to compute the median along a flattened version of the array.
-        A sequence of axes is supported since version 1.9.0.
+        Axis or axes along which the medians are computed. The default,
+        axis=None, will compute the median along a flattened version of
+        the array.
+        
+        .. versionadded:: 1.9.0
+
+        If a sequence of axes, the array is first flattened along the
+        given axes, then the median is computed along the resulting
+        flattened axis.
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
@@ -3836,11 +3866,13 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     array([[10,  7,  4],
            [ 3,  2,  1]])
     >>> np.median(a)
-    3.5
+    np.float64(3.5)
     >>> np.median(a, axis=0)
     array([6.5, 4.5, 2.5])
     >>> np.median(a, axis=1)
     array([7.,  2.])
+    >>> np.median(a, axis=(0, 1))
+    np.float64(3.5)
     >>> m = np.median(a, axis=0)
     >>> out = np.zeros_like(m)
     >>> np.median(a, axis=0, out=m)
@@ -3853,7 +3885,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     >>> assert not np.all(a==b)
     >>> b = a.copy()
     >>> np.median(b, axis=None, overwrite_input=True)
-    3.5
+    np.float64(3.5)
     >>> assert not np.all(a==b)
 
     """

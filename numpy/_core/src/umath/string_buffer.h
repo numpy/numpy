@@ -3,6 +3,7 @@
 
 #include <Python.h>
 #include <cstddef>
+#include <wchar.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
@@ -109,7 +110,7 @@ struct Buffer {
     {
         Buffer<enc> old = *this;
         operator++();
-        return old; 
+        return old;
     }
 
     inline Buffer<enc>&
@@ -124,7 +125,7 @@ struct Buffer {
     {
         Buffer<enc> old = *this;
         operator--();
-        return old; 
+        return old;
     }
 
     inline npy_ucs4
@@ -151,14 +152,16 @@ struct Buffer {
     inline Buffer<enc>
     buffer_memchr(npy_ucs4 ch, int len)
     {
+        Buffer<enc> newbuf = *this;
         switch (enc) {
         case ENCODING::ASCII:
-            buf = (char *) memchr(buf, ch, len);
-            return *this;
+            newbuf.buf = (char *) memchr(buf, ch, len);
+            break;
         case ENCODING::UTF32:
-            buf = (char *) wmemchr((wchar_t *) buf, ch, len);
-            return *this;
+            newbuf.buf = (char *) wmemchr((wchar_t *) buf, ch, len);
+            break;
         }
+        return newbuf;
     }
 
     inline int
@@ -255,6 +258,57 @@ struct Buffer {
             }
         }
         return true;
+    }
+
+    inline Buffer<enc>
+    rstrip()
+    {
+        Buffer<enc> tmp(after, 0);
+        tmp--;
+        while (tmp >= *this && (*tmp == '\0' || NumPyOS_ascii_isspace(*tmp))) {
+            tmp--;
+        }
+        tmp++;
+
+        after = tmp.buf;
+        return *this;
+    }
+
+    inline int
+    strcmp(Buffer<enc> other, bool rstrip)
+    {
+        Buffer tmp1 = rstrip ? this->rstrip() : *this;
+        Buffer tmp2 = rstrip ? other.rstrip() : other;
+
+        while (tmp1.buf < tmp1.after && tmp2.buf < tmp2.after) {
+            if (*tmp1 < *tmp2) {
+                return -1;
+            }
+            if (*tmp1 > *tmp2) {
+                return 1;
+            }
+            tmp1++;
+            tmp2++;
+        }
+        while (tmp1.buf < tmp1.after) {
+            if (*tmp1) {
+                return 1;
+            }
+            tmp1++;
+        }
+        while (tmp2.buf < tmp2.after) {
+            if (*tmp2) {
+                return -1;
+            }
+            tmp2++;
+        }
+        return 0;
+    }
+
+    inline int
+    strcmp(Buffer<enc> other)
+    {
+        return strcmp(other, false);
     }
 };
 

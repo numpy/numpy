@@ -77,7 +77,8 @@ __all__ = [
     'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow', 'polyval',
     'polyvalfromroots', 'polyder', 'polyint', 'polyfromroots', 'polyvander',
     'polyfit', 'polytrim', 'polyroots', 'Polynomial', 'polyval2d', 'polyval3d',
-    'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d']
+    'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d',
+    'polycompanion']
 
 import numpy as np
 import numpy.linalg as la
@@ -136,9 +137,9 @@ def polyline(off, scl):
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
-    >>> P.polyline(1,-1)
+    >>> P.polyline(1, -1)
     array([ 1, -1])
-    >>> P.polyval(1, P.polyline(1,-1)) # should be 0
+    >>> P.polyval(1, P.polyline(1, -1))  # should be 0
     0.0
 
     """
@@ -202,10 +203,10 @@ def polyfromroots(roots):
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
-    >>> P.polyfromroots((-1,0,1)) # x(x - 1)(x + 1) = x^3 - x
+    >>> P.polyfromroots((-1,0,1))  # x(x - 1)(x + 1) = x^3 - x
     array([ 0., -1.,  0.,  1.])
     >>> j = complex(0,1)
-    >>> P.polyfromroots((-j,j)) # complex returned, though values are real
+    >>> P.polyfromroots((-j,j))  # complex returned, though values are real
     array([1.+0.j,  0.+0.j,  1.+0.j])
 
     """
@@ -237,11 +238,11 @@ def polyadd(c1, c2):
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
-    >>> c1 = (1,2,3)
-    >>> c2 = (3,2,1)
+    >>> c1 = (1, 2, 3)
+    >>> c2 = (3, 2, 1)
     >>> sum = P.polyadd(c1,c2); sum
     array([4.,  4.,  4.])
-    >>> P.polyval(2, sum) # 4 + 4(2) + 4(2**2)
+    >>> P.polyval(2, sum)  # 4 + 4(2) + 4(2**2)
     28.0
 
     """
@@ -274,11 +275,11 @@ def polysub(c1, c2):
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
-    >>> c1 = (1,2,3)
-    >>> c2 = (3,2,1)
+    >>> c1 = (1, 2, 3)
+    >>> c2 = (3, 2, 1)
     >>> P.polysub(c1,c2)
     array([-2.,  0.,  2.])
-    >>> P.polysub(c2,c1) # -P.polysub(c1,c2)
+    >>> P.polysub(c2, c1)  # -P.polysub(c1,c2)
     array([ 2.,  0., -2.])
 
     """
@@ -311,6 +312,13 @@ def polymulx(c):
     -----
 
     .. versionadded:: 1.5.0
+
+    Examples
+    --------
+    >>> from numpy.polynomial import polynomial as P
+    >>> c = (1, 2, 3)
+    >>> P.polymulx(c)
+    array([0., 1., 2., 3.])
 
     """
     # c is a trimmed copy
@@ -351,9 +359,9 @@ def polymul(c1, c2):
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
-    >>> c1 = (1,2,3)
-    >>> c2 = (3,2,1)
-    >>> P.polymul(c1,c2)
+    >>> c1 = (1, 2, 3)
+    >>> c2 = (3, 2, 1)
+    >>> P.polymul(c1, c2)
     array([  3.,   8.,  14.,   8.,   3.])
 
     """
@@ -388,12 +396,12 @@ def polydiv(c1, c2):
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
-    >>> c1 = (1,2,3)
-    >>> c2 = (3,2,1)
-    >>> P.polydiv(c1,c2)
+    >>> c1 = (1, 2, 3)
+    >>> c2 = (3, 2, 1)
+    >>> P.polydiv(c1, c2)
     (array([3.]), array([-8., -4.]))
-    >>> P.polydiv(c2,c1)
-    (array([ 0.33333333]), array([ 2.66666667,  1.33333333])) # may vary
+    >>> P.polydiv(c2, c1)
+    (array([ 0.33333333]), array([ 2.66666667,  1.33333333]))  # may vary
 
     """
     # c1, c2 are trimmed copies
@@ -451,7 +459,7 @@ def polypow(c, pow, maxpower=None):
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
-    >>> P.polypow([1,2,3], 2)
+    >>> P.polypow([1, 2, 3], 2)
     array([ 1., 4., 10., 12., 9.])
 
     """
@@ -501,14 +509,14 @@ def polyder(c, m=1, scl=1, axis=0):
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
-    >>> c = (1,2,3,4) # 1 + 2x + 3x**2 + 4x**3
-    >>> P.polyder(c) # (d/dx)(c) = 2 + 6x + 12x**2
+    >>> c = (1, 2, 3, 4)
+    >>> P.polyder(c)  # (d/dx)(c)
     array([  2.,   6.,  12.])
-    >>> P.polyder(c,3) # (d**3/dx**3)(c) = 24
+    >>> P.polyder(c, 3)  # (d**3/dx**3)(c)
     array([24.])
-    >>> P.polyder(c,scl=-1) # (d/d(-x))(c) = -2 - 6x - 12x**2
+    >>> P.polyder(c, scl=-1)  # (d/d(-x))(c)
     array([ -2.,  -6., -12.])
-    >>> P.polyder(c,2,-1) # (d**2/d(-x)**2)(c) = 6 + 24x
+    >>> P.polyder(c, 2, -1)  # (d**2/d(-x)**2)(c)
     array([  6.,  24.])
 
     """
@@ -606,17 +614,17 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
-    >>> c = (1,2,3)
-    >>> P.polyint(c) # should return array([0, 1, 1, 1])
+    >>> c = (1, 2, 3)
+    >>> P.polyint(c)  # should return array([0, 1, 1, 1])
     array([0.,  1.,  1.,  1.])
-    >>> P.polyint(c,3) # should return array([0, 0, 0, 1/6, 1/12, 1/20])
+    >>> P.polyint(c, 3)  # should return array([0, 0, 0, 1/6, 1/12, 1/20])
      array([ 0.        ,  0.        ,  0.        ,  0.16666667,  0.08333333, # may vary
              0.05      ])
-    >>> P.polyint(c,k=3) # should return array([3, 1, 1, 1])
+    >>> P.polyint(c, k=3)  # should return array([3, 1, 1, 1])
     array([3.,  1.,  1.,  1.])
-    >>> P.polyint(c,lbnd=-2) # should return array([6, 1, 1, 1])
+    >>> P.polyint(c,lbnd=-2)  # should return array([6, 1, 1, 1])
     array([6.,  1.,  1.,  1.])
-    >>> P.polyint(c,scl=-2) # should return array([0, -2, -2, -2])
+    >>> P.polyint(c,scl=-2)  # should return array([0, -2, -2, -2])
     array([ 0., -2., -2., -2.])
 
     """
@@ -728,17 +736,17 @@ def polyval(x, c, tensor=True):
     >>> a
     array([[0, 1],
            [2, 3]])
-    >>> polyval(a, [1,2,3])
+    >>> polyval(a, [1, 2, 3])
     array([[ 1.,   6.],
            [17.,  34.]])
-    >>> coef = np.arange(4).reshape(2,2) # multidimensional coefficients
+    >>> coef = np.arange(4).reshape(2, 2)  # multidimensional coefficients
     >>> coef
     array([[0, 1],
            [2, 3]])
-    >>> polyval([1,2], coef, tensor=True)
+    >>> polyval([1, 2], coef, tensor=True)
     array([[2.,  4.],
            [4.,  7.]])
-    >>> polyval([1,2], coef, tensor=False)
+    >>> polyval([1, 2], coef, tensor=False)
     array([2.,  7.])
 
     """
@@ -812,16 +820,16 @@ def polyvalfromroots(x, r, tensor=True):
     Examples
     --------
     >>> from numpy.polynomial.polynomial import polyvalfromroots
-    >>> polyvalfromroots(1, [1,2,3])
+    >>> polyvalfromroots(1, [1, 2, 3])
     0.0
-    >>> a = np.arange(4).reshape(2,2)
+    >>> a = np.arange(4).reshape(2, 2)
     >>> a
     array([[0, 1],
            [2, 3]])
     >>> polyvalfromroots(a, [-1, 0, 1])
     array([[-0.,   0.],
            [ 6.,  24.]])
-    >>> r = np.arange(-2, 2).reshape(2,2) # multidimensional coefficients
+    >>> r = np.arange(-2, 2).reshape(2,2)  # multidimensional coefficients
     >>> r # each column of r defines one polynomial
     array([[-2, -1],
            [ 0,  1]])
@@ -831,6 +839,7 @@ def polyvalfromroots(x, r, tensor=True):
            [ 3., 0.]])
     >>> polyvalfromroots(b, r, tensor=False)
     array([-0.,  0.])
+
     """
     r = np.array(r, ndmin=1, copy=False)
     if r.dtype.char in '?bBhHiIlLqQpP':
@@ -891,6 +900,13 @@ def polyval2d(x, y, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial import polynomial as P
+    >>> c = ((1, 2, 3), (4, 5, 6))
+    >>> P.polyval2d(1, 1, c) 
+    21.0
+
     """
     return pu._valnd(polyval, c, x, y)
 
@@ -944,6 +960,14 @@ def polygrid2d(x, y, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial import polynomial as P
+    >>> c = ((1, 2, 3), (4, 5, 6))
+    >>> P.polygrid2d([0, 1], [0, 1], c)
+    array([[ 1.,  6.],
+           [ 5., 21.]])
+
     """
     return pu._gridnd(polyval, c, x, y)
 
@@ -994,6 +1018,13 @@ def polyval3d(x, y, z, c):
     -----
 
     .. versionadded:: 1.7.0
+
+    Examples
+    --------
+    >>> from numpy.polynomial import polynomial as P
+    >>> c = ((1, 2, 3), (4, 5, 6), (7, 8, 9))
+    >>> P.polyval3d(1, 1, 1, c)
+    45.0
 
     """
     return pu._valnd(polyval, c, x, y, z)
@@ -1051,6 +1082,14 @@ def polygrid3d(x, y, z, c):
 
     .. versionadded:: 1.7.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial import polynomial as P
+    >>> c = ((1, 2, 3), (4, 5, 6), (7, 8, 9))
+    >>> P.polygrid3d([0, 1], [0, 1], [0, 1], c)
+    array([[ 1., 13.],
+           [ 6., 51.]])
+
     """
     return pu._gridnd(polyval, c, x, y, z)
 
@@ -1091,6 +1130,19 @@ def polyvander(x, deg):
     See Also
     --------
     polyvander2d, polyvander3d
+
+    Examples
+    --------
+    The Vandermonde matrix of degree ``deg = 5`` and sample points
+    ``x = [-1, 2, 3]`` contains the element-wise powers of `x` 
+    from 0 to 5 as its columns.
+
+    >>> from numpy.polynomial import polynomial as P
+    >>> x, deg = [-1, 2, 3], 5
+    >>> P.polyvander(x=x, deg=deg)
+    array([[  1.,  -1.,   1.,  -1.,   1.,  -1.],
+           [  1.,   2.,   4.,   8.,  16.,  32.],
+           [  1.,   3.,   9.,  27.,  81., 243.]])
 
     """
     ideg = pu._as_int(deg, "deg")
@@ -1153,6 +1205,35 @@ def polyvander2d(x, y, deg):
     --------
     polyvander, polyvander3d, polyval2d, polyval3d
 
+    Examples
+    --------
+    The 2-D pseudo-Vandermonde matrix of degree ``[1, 2]`` and sample
+    points ``x = [-1, 2]`` and ``y = [1, 3]`` is as follows:
+
+    >>> from numpy.polynomial import polynomial as P
+    >>> x = np.array([-1, 2])
+    >>> y = np.array([1, 3])
+    >>> m, n = 1, 2
+    >>> deg = np.array([m, n])
+    >>> V = P.polyvander2d(x=x, y=y, deg=deg)
+    >>> V
+    array([[ 1.,  1.,  1., -1., -1., -1.],
+           [ 1.,  3.,  9.,  2.,  6., 18.]])
+
+    We can verify the columns for any ``0 <= i <= m`` and ``0 <= j <= n``:
+
+    >>> i, j = 0, 1
+    >>> V[:, (deg[1]+1)*i + j] == x**i * y**j
+    array([ True,  True])
+
+    The (1D) Vandermonde matrix of sample points ``x`` and degree ``m`` is a
+    special case of the (2D) pseudo-Vandermonde matrix with ``y`` points all
+    zero and degree ``[m, 0]``.
+
+    >>> P.polyvander2d(x=x, y=0*x, deg=(m, 0)) == P.polyvander(x=x, deg=m)
+    array([[ True,  True],
+           [ True,  True]])
+    
     """
     return pu._vander_nd_flat((polyvander, polyvander), (x, y), deg)
 
@@ -1206,6 +1287,30 @@ def polyvander3d(x, y, z, deg):
     -----
 
     .. versionadded:: 1.7.0
+
+    Examples
+    --------
+    >>> from numpy.polynomial import polynomial as P
+    >>> x = np.asarray([-1, 2, 1])
+    >>> y = np.asarray([1, -2, -3])
+    >>> z = np.asarray([2, 2, 5])
+    >>> l, m, n = [2, 2, 1]
+    >>> deg = [l, m, n]
+    >>> V = P.polyvander3d(x=x, y=y, z=z, deg=deg)
+    >>> V
+    array([[  1.,   2.,   1.,   2.,   1.,   2.,  -1.,  -2.,  -1.,
+             -2.,  -1.,  -2.,   1.,   2.,   1.,   2.,   1.,   2.],
+           [  1.,   2.,  -2.,  -4.,   4.,   8.,   2.,   4.,  -4.,
+             -8.,   8.,  16.,   4.,   8.,  -8., -16.,  16.,  32.],
+           [  1.,   5.,  -3., -15.,   9.,  45.,   1.,   5.,  -3.,
+            -15.,   9.,  45.,   1.,   5.,  -3., -15.,   9.,  45.]])
+    
+    We can verify the columns for any ``0 <= i <= l``, ``0 <= j <= m``,
+    and ``0 <= k <= n``
+
+    >>> i, j, k = 2, 1, 0
+    >>> V[:, (m+1)*(n+1)*i + (n+1)*j + k] == x**i * y**j * z**k
+    array([ True,  True,  True])
 
     """
     return pu._vander_nd_flat((polyvander, polyvander, polyvander), (x, y, z), deg)
@@ -1338,12 +1443,12 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     --------
     >>> np.random.seed(123)
     >>> from numpy.polynomial import polynomial as P
-    >>> x = np.linspace(-1,1,51) # x "data": [-1, -0.96, ..., 0.96, 1]
+    >>> x = np.linspace(-1,1,51)  # x "data": [-1, -0.96, ..., 0.96, 1]
     >>> y = x**3 - x + np.random.randn(len(x))  # x^3 - x + Gaussian noise
     >>> c, stats = P.polyfit(x,y,3,full=True)
     >>> np.random.seed(123)
     >>> c # c[0], c[2] should be approx. 0, c[1] approx. -1, c[3] approx. 1
-    array([ 0.01909725, -1.30598256, -0.00577963,  1.02644286]) # may vary
+    array([ 0.01909725, -1.30598256, -0.00577963,  1.02644286])  # may vary
     >>> stats # note the large SSR, explaining the rather poor results
      [array([ 38.06116253]), 4, array([ 1.38446749,  1.32119158,  0.50443316, # may vary
               0.28853036]), 1.1324274851176597e-014]
@@ -1385,6 +1490,14 @@ def polycompanion(c):
     -----
 
     .. versionadded:: 1.7.0
+
+    Examples
+    --------
+    >>> from numpy.polynomial import polynomial as P
+    >>> c = (1, 2, 3)
+    >>> P.polycompanion(c)
+    array([[ 0.        , -0.33333333],
+           [ 1.        , -0.66666667]])
 
     """
     # c is a trimmed copy
@@ -1448,9 +1561,9 @@ def polyroots(c):
     dtype('float64')
     >>> j = complex(0,1)
     >>> poly.polyroots(poly.polyfromroots((-j,0,j)))
-    array([  0.00000000e+00+0.j,   0.00000000e+00+1.j,   2.77555756e-17-1.j]) # may vary
+    array([  0.00000000e+00+0.j,   0.00000000e+00+1.j,   2.77555756e-17-1.j])  # may vary
 
-    """
+    """  # noqa: E501
     # c is a trimmed copy
     [c] = pu.as_series([c])
     if len(c) < 2:
