@@ -34,7 +34,7 @@ def lstrip(a, chars=None):
     ----------
     a : array_like, with ``bytes_`` or ``unicode_`` dtype
     chars : scalar with the same dtype as ``a``, optional
-       The ``a`` argument is a string specifying the set of
+       The ``chars`` argument is a string specifying the set of
        characters to be removed. If ``None``, the ``chars``
        argument defaults to removing whitespace. The ``chars`` argument
        is not a prefix or suffix; rather, all combinations of its
@@ -79,7 +79,7 @@ def rstrip(a, chars=None):
     ----------
     a : array_like, with ``bytes_`` or ``unicode_`` dtype
     chars : scalar with the same dtype as ``a``, optional
-       The ``a`` argument is a string specifying the set of
+       The ``chars`` argument is a string specifying the set of
        characters to be removed. If ``None``, the ``chars``
        argument defaults to removing whitespace. The ``chars`` argument
        is not a prefix or suffix; rather, all combinations of its
@@ -119,7 +119,7 @@ def strip(a, chars=None):
     ----------
     a : array_like, with ``bytes_`` or ``unicode_`` dtype
     chars : scalar with the same dtype as ``a``, optional
-       The ``a`` argument is a string specifying the set of
+       The ``chars`` argument is a string specifying the set of
        characters to be removed. If ``None``, the ``chars``
        argument defaults to removing whitespace. The ``chars`` argument
        is not a prefix or suffix; rather, all combinations of its
@@ -156,7 +156,7 @@ def strip(a, chars=None):
 
 def replace(a, old, new, count=-1):
     """
-    For each element in ``a``, return a copy of the string with all
+    For each element in ``a``, return a copy of the string with
     occurrences of substring ``old`` replaced by ``new``.
 
     Parameters
