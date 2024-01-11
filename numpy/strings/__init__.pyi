@@ -20,6 +20,7 @@ from numpy._core.strings import (
     strip as strip,
     isnumeric as isnumeric,
     isdecimal as isdecimal,
+    replace as replace,
 )
 
 __all__: list[str]
