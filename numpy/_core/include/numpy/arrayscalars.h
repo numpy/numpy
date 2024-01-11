@@ -180,9 +180,12 @@ typedef struct {
 
 #define PyArrayScalar_New(cls) \
         Py##cls##ArrType_Type.tp_alloc(&Py##cls##ArrType_Type, 0)
+#ifndef Py_LIMITED_API
+/* For the limited API, use PyArray_ScalarAsCtype instead */
 #define PyArrayScalar_VAL(obj, cls)             \
         ((Py##cls##ScalarObject *)obj)->obval
 #define PyArrayScalar_ASSIGN(obj, cls, val) \
         PyArrayScalar_VAL(obj, cls) = val
+#endif
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_ARRAYSCALARS_H_ */
