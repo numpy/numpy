@@ -4053,7 +4053,7 @@ def percentile(a,
     fulfil the above inequalities. Methods that follow this approach are
     ``inverted_cdf`` and ``averaged_inverted_cdf``.
 
-    A more general way to define sample percentile estomators is as follows.
+    A more general way to define sample percentile estimators is as follows.
     The empirical q-percentile of ``a`` is the ``n * q/100``-th value of the
     way from the minimum to the maximum in a sorted copy of ``a``. The values
     and distances of the two nearest neighbors as well as the `method`
@@ -4259,7 +4259,8 @@ def percentile(a,
 
     if weights is not None:
         if method != "inverted_cdf":
-            raise ValueError("Only method 'inverted_cdf' supports weights.")
+            msg = f"Only method 'inverted_cdf' supports weights. Got: {method}."
+            raise ValueError(msg)
         weights = _weights_are_valid(weights=weights, a=a, axis=axis)
         if np.any(weights < 0):
             raise ValueError("Weights must be non-negative.")
@@ -4399,14 +4400,14 @@ def quantile(a,
     fulfil the above inequalities. Methods that follow this approach are
     ``inverted_cdf`` and ``averaged_inverted_cdf``.
 
-    A more general way to define sample quantile estomators is as follows.
+    A more general way to define sample quantile estimators is as follows.
     The empirical q-quantile of ``a`` is the ``n * q``-th value of the
     way from the minimum to the maximum in a sorted copy of ``a``. The values
     and distances of the two nearest neighbors as well as the `method`
     parameter will determine the quantile if the normalized ranking does not
     match the location of ``n * q`` exactly. This function is the same as
     the median if ``q=0.5``, the same as the minimum if ``q=0.0`` and the same
-    as the maximumif ``q=1.0``.
+    as the maximum if ``q=1.0``.
 
     The optional `method` parameter specifies the method to use when the
     desired quantile lies between two indexes ``i`` and ``j = i + 1``.
@@ -4572,7 +4573,8 @@ def quantile(a,
 
     if weights is not None:
         if method != "inverted_cdf":
-            raise ValueError("Only method 'inverted_cdf' supports weights.")
+            msg = f"Only method 'inverted_cdf' supports weights. Got: {method}."
+            raise ValueError(msg)
         weights = _weights_are_valid(weights=weights, a=a, axis=axis)
         if np.any(weights < 0):
             raise ValueError("Weights must be non-negative.")
@@ -4924,7 +4926,7 @@ def _quantile(
             i = np.searchsorted(cdf, quantiles, side="left")
             # We might have reached the maximum with i = len(arr), e.g. for
             # quantiles == 1.
-            i = np.minimum(i, values_count - 1)
+            i = min(i, values_count - 1)
             result = take(arr, i, axis=0, out=out)
             return result
 
