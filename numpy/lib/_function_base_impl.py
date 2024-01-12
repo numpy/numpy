@@ -4977,7 +4977,7 @@ def _quantile(
         # always, so we remove it here.
         Nk = arr.shape[1:]
         for kk in np.ndindex(Nk):
-            result[kk + np.s_[..., ]] = find_cdf_1d(
+            result[kk + (...,)] = find_cdf_1d(
                 arr[np.s_[:, ] + kk], cdf[np.s_[:, ] + kk]
             )
 
