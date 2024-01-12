@@ -234,9 +234,9 @@ string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE striptype)
         }
     }
 
-    size_t j = len - 1;
+    npy_intp j = len - 1;  // Could also turn negative if we're stripping the whole string
     if (striptype != STRIPTYPE::LEFTSTRIP) {
-        while (j >= i) {
+        while (j >= static_cast<npy_intp>(i)) {
             if (!buf.isspace(j)) {
                 break;
             }
@@ -276,9 +276,9 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
         }
     }
 
-    size_t j = len1 - 1;
+    npy_intp j = len1 - 1;  // Could also turn negative if we're stripping the whole string
     if (striptype != STRIPTYPE::LEFTSTRIP) {
-        while (j >= i) {
+        while (j >= static_cast<npy_intp>(i)) {
             if (findchar(buf2, len2, buf1[j]) < 0) {
                 break;
             }
