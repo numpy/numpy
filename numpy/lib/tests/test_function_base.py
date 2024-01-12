@@ -3295,29 +3295,41 @@ class TestPercentile:
     def test_percentile_list(self):
         assert_equal(np.percentile([1, 2, 3], 0), 1)
 
-    def test_percentile_out(self):
+    @pytest.mark.parametrize(
+        "percentile, with_weights",
+        [
+            (np.percentile, False),
+            (partial(np.percentile, method="inverted_cdf"), True),
+        ]
+    )
+    def test_percentile_out(self, percentile, with_weights):
+        out_dtype = int if with_weights else float
         x = np.array([1, 2, 3])
-        y = np.zeros((3,))
+        y = np.zeros((3,), dtype=out_dtype)
         p = (1, 2, 3)
-        np.percentile(x, p, out=y)
-        assert_equal(np.percentile(x, p), y)
+        weights = np.ones_like(x) if with_weights else None
+        percentile(x, p, out=y, weights=weights)
+        assert_equal(percentile(x, p, weights=weights), y)
 
         x = np.array([[1, 2, 3],
                       [4, 5, 6]])
+        y = np.zeros((3, 3), dtype=out_dtype)
+        weights = np.ones_like(x) if with_weights else None
+        percentile(x, p, axis=0, out=y, weights=weights)
+        assert_equal(percentile(x, p, weights=weights, axis=0), y)
 
-        y = np.zeros((3, 3))
-        np.percentile(x, p, axis=0, out=y)
-        assert_equal(np.percentile(x, p, axis=0), y)
-
-        y = np.zeros((3, 2))
-        np.percentile(x, p, axis=1, out=y)
-        assert_equal(np.percentile(x, p, axis=1), y)
+        y = np.zeros((3, 2), dtype=out_dtype)
+        percentile(x, p, axis=1, out=y, weights=weights)
+        assert_equal(percentile(x, p, weights=weights, axis=1), y)
 
         x = np.arange(12).reshape(3, 4)
         # q.dim > 1, float
         r0 = np.array([[2.,  3.,  4., 5.], [4., 5., 6., 7.]])
-        out = np.empty((2, 4))
-        assert_equal(np.percentile(x, (25, 50), axis=0, out=out), r0)
+        out = np.empty((2, 4), dtype=out_dtype)
+        weights = np.ones_like(x) if with_weights else None
+        assert_equal(
+            percentile(x, (25, 50), axis=0, out=out, weights=weights), r0
+        )
         assert_equal(out, r0)
         r1 = np.array([[0.75,  4.75,  8.75], [1.5,  5.5,  9.5]])
         out = np.empty((2, 3))
