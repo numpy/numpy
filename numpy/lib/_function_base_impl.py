@@ -14,7 +14,7 @@ from numpy._core.numeric import (
     )
 from numpy._core.umath import (
     pi, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
-    mod, exp, not_equal, subtract
+    mod, exp, not_equal, subtract, minimum
     )
 from numpy._core.fromnumeric import (
     ravel, nonzero, partition, mean, any, sum
@@ -4609,8 +4609,10 @@ def quantile(a,
     if weights is not None:
         if method != "inverted_cdf":
             msg = ("Only method 'inverted_cdf' supports weights. "
-                   "Got: {method}.")
+                   f"Got: {method}.")
             raise ValueError(msg)
+        if axis is not None:
+            axis = _nx.normalize_axis_tuple(axis, a.ndim, argname="axis")
         weights = _weights_are_valid(weights=weights, a=a, axis=axis)
         if np.any(weights < 0):
             raise ValueError("Weights must be non-negative.")
@@ -4959,11 +4961,11 @@ def _quantile(
         # sum(weights[j], j=0..i-1) < quantile <= sum(weights[j], j=0..i)
 
         def find_cdf_1d(arr, cdf):
-            i = np.searchsorted(cdf, quantiles, side="left")
+            indices = np.searchsorted(cdf, quantiles, side="left")
             # We might have reached the maximum with i = len(arr), e.g. for
             # quantiles == 1.
-            i = min(i, values_count - 1)
-            result = take(arr, i, axis=0, out=out)
+            indices = minimum(indices, values_count - 1)
+            result = take(arr, indices, axis=0, out=out)
             return result
 
         r_shape = arr.shape[1:]
