@@ -802,14 +802,14 @@ foreach gen_mtargets : [
     'highway_qsort.dispatch.h',
     'src/npysort/highway_qsort.dispatch.cpp',
     use_highway ? [
-      SVE, ASIMD, VSX2, VXE
+      SVE, ASIMD, VSX2,  # FIXME: disable VXE due to runtime segfault
     ] : []
   ],
   [
     'highway_qsort_16bit.dispatch.h',
     'src/npysort/highway_qsort_16bit.dispatch.cpp',
     use_highway ? [
-      ASIMDHP, VSX2, VXE
+      ASIMDHP, VSX2,  # VXE FIXME: disable VXE due to runtime segfault
     ] : []
   ],
 ]
