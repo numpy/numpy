@@ -55,75 +55,75 @@ def str_len(x: U_co | S_co) -> NDArray[np.int_]: ...
 def find(
     x1: U_co,
     x2: U_co,
-    x3: i_co,
-    x4: i_co,
+    x3: i_co = ...,
+    x4: i_co | None = ...,
 ) -> NDArray[np.int_]: ...
 @overload
 def find(
     x1: S_co,
     x2: S_co,
-    x3: i_co,
-    x4: i_co,
+    x3: i_co = ...,
+    x4: i_co | None = ...,
 ) -> NDArray[np.int_]: ...
 
 @overload
 def rfind(
     x1: U_co,
     x2: U_co,
-    x3: i_co,
-    x4: i_co,
+    x3: i_co = ...,
+    x4: i_co | None = ...,
 ) -> NDArray[np.int_]: ...
 @overload
 def rfind(
     x1: S_co,
     x2: S_co,
-    x3: i_co,
-    x4: i_co,
+    x3: i_co = ...,
+    x4: i_co | None = ...,
 ) -> NDArray[np.int_]: ...
 
 @overload
 def count(
     x1: U_co,
     x2: U_co,
-    x3: i_co,
-    x4: i_co,
+    x3: i_co = ...,
+    x4: i_co | None = ...,
 ) -> NDArray[np.int_]: ...
 @overload
 def count(
     x1: S_co,
     x2: S_co,
-    x3: i_co,
-    x4: i_co,
+    x3: i_co = ...,
+    x4: i_co | None = ...,
 ) -> NDArray[np.int_]: ...
 
 @overload
 def startswith(
     x1: U_co,
     x2: U_co,
-    x3: i_co,
-    x4: i_co,
+    x3: i_co = ...,
+    x4: i_co | None = ...,
 ) -> NDArray[np.bool]: ...
 @overload
 def startswith(
     x1: S_co,
     x2: S_co,
-    x3: i_co,
-    x4: i_co,
+    x3: i_co = ...,
+    x4: i_co | None = ...,
 ) -> NDArray[np.bool]: ...
 
 @overload
 def endswith(
     x1: U_co,
     x2: U_co,
-    x3: i_co,
-    x4: i_co,
+    x3: i_co = ...,
+    x4: i_co | None = ...,
 ) -> NDArray[np.bool]: ...
 @overload
 def endswith(
     x1: S_co,
     x2: S_co,
-    x3: i_co,
-    x4: i_co,
+    x3: i_co = ...,
+    x4: i_co | None = ...,
 ) -> NDArray[np.bool]: ...
 
 @overload
@@ -146,13 +146,13 @@ def replace(
     x1: U_co,
     x2: U_co,
     x3: U_co,
-    x4: i_co,
+    x4: i_co = ...,
 ) -> NDArray[np.str_]: ...
 @overload
 def replace(
     a: S_co,
     x2: S_co,
     x3: S_co,
-    x4: i_co,
+    x4: i_co = ...,
 ) -> NDArray[np.bytes_]: ...
 
