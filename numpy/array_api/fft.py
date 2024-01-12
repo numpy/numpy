@@ -31,12 +31,12 @@ def fft(
 
     See its docstring for more information.
     """
-    if x.dtype not in _floating_dtypes:
-        raise TypeError("Only floating-point dtypes are allowed in fft")
+    if x.dtype not in _complex_floating_dtypes:
+        raise TypeError("Only complex floating-point dtypes are allowed in fft")
     res = Array._new(np.fft.fft(x._array, n=n, axis=axis, norm=norm))
     # Note: np.fft functions improperly upcast float32 and complex64 to
     # complex128
-    if x.dtype in [float32, complex64]:
+    if x.dtype == complex64:
         return astype(res, complex64)
     return res
 
@@ -53,12 +53,12 @@ def ifft(
 
     See its docstring for more information.
     """
-    if x.dtype not in _floating_dtypes:
-        raise TypeError("Only floating-point dtypes are allowed in ifft")
+    if x.dtype not in _complex_floating_dtypes:
+        raise TypeError("Only complex floating-point dtypes are allowed in ifft")
     res = Array._new(np.fft.ifft(x._array, n=n, axis=axis, norm=norm))
     # Note: np.fft functions improperly upcast float32 and complex64 to
     # complex128
-    if x.dtype in [float32, complex64]:
+    if x.dtype == complex64:
         return astype(res, complex64)
     return res
 
@@ -75,12 +75,12 @@ def fftn(
 
     See its docstring for more information.
     """
-    if x.dtype not in _floating_dtypes:
-        raise TypeError("Only floating-point dtypes are allowed in fftn")
+    if x.dtype not in _complex_floating_dtypes:
+        raise TypeError("Only complex floating-point dtypes are allowed in fftn")
     res = Array._new(np.fft.fftn(x._array, s=s, axes=axes, norm=norm))
     # Note: np.fft functions improperly upcast float32 and complex64 to
     # complex128
-    if x.dtype in [float32, complex64]:
+    if x.dtype == complex64:
         return astype(res, complex64)
     return res
 
@@ -97,12 +97,12 @@ def ifftn(
 
     See its docstring for more information.
     """
-    if x.dtype not in _floating_dtypes:
-        raise TypeError("Only floating-point dtypes are allowed in ifftn")
+    if x.dtype not in _complex_floating_dtypes:
+        raise TypeError("Only complex floating-point dtypes are allowed in ifftn")
     res = Array._new(np.fft.ifftn(x._array, s=s, axes=axes, norm=norm))
     # Note: np.fft functions improperly upcast float32 and complex64 to
     # complex128
-    if x.dtype in [float32, complex64]:
+    if x.dtype == complex64:
         return astype(res, complex64)
     return res
 
@@ -207,13 +207,13 @@ def hfft(
 
     See its docstring for more information.
     """
-    if x.dtype not in _floating_dtypes:
-        raise TypeError("Only floating-point dtypes are allowed in hfft")
+    if x.dtype not in _complex_floating_dtypes:
+        raise TypeError("Only complex floating-point dtypes are allowed in hfft")
     res = Array._new(np.fft.hfft(x._array, n=n, axis=axis, norm=norm))
     # Note: np.fft functions improperly upcast float32 and complex64 to
     # complex128
-    if x.dtype in [float32, complex64]:
-        return astype(res, complex64)
+    if x.dtype == complex64:
+        return astype(res, float32)
     return res
 
 def ihfft(
