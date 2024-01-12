@@ -4966,7 +4966,7 @@ def _quantile(
             # We might have reached the maximum with i = len(arr), e.g. for
             # quantiles == 1.
             indices = minimum(indices, values_count - 1)
-            result = take(arr, indices, axis=0, out=out)
+            result = take(arr, indices, axis=0)
             return result
 
         r_shape = arr.shape[1:]
@@ -4980,6 +4980,9 @@ def _quantile(
             result[kk + (...,)] = find_cdf_1d(
                 arr[np.s_[:, ] + kk], cdf[np.s_[:, ] + kk]
             )
+        # TODO: Make this more efficient!!!
+        if out is not None:
+            np.copyto(out, result)
 
     if np.any(slices_having_nans):
         if result.ndim == 0 and out is None:
