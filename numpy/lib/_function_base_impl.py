@@ -4294,6 +4294,8 @@ def percentile(a,
             msg = ("Only method 'inverted_cdf' supports weights. "
                    f"Got: {method}.")
             raise ValueError(msg)
+        if axis is not None:
+            axis = _nx.normalize_axis_tuple(axis, a.ndim, argname="axis")
         weights = _weights_are_valid(weights=weights, a=a, axis=axis)
         if np.any(weights < 0):
             raise ValueError("Weights must be non-negative.")
