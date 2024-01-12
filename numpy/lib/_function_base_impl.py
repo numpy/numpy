@@ -3950,8 +3950,9 @@ def _median(a, axis=None, out=None, overwrite_input=False):
 
 
 def _percentile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                           method=None, keepdims=None, *, interpolation=None):
-    return (a, q, out)
+                           method=None, keepdims=None, *, weights=None,
+                           interpolation=None):
+    return (a, q, out, weights)
 
 
 @array_function_dispatch(_percentile_dispatcher)
