@@ -85,6 +85,7 @@ stages:
       displayName: 'Run 32-bit manylinux2014 Docker Build / Tests'
 
   - job: Windows
+    timeoutInMinutes: 120
     pool:
       vmImage: 'windows-2019'
     strategy:
