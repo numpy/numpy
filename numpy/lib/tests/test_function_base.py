@@ -3898,20 +3898,20 @@ class TestQuantile:
         assert_allclose(q, q_res)
 
         # 1d weight and 1d alpha
-        alpha = [0.25, 0.5, 0.75, 1]  # shape (4,)
+        alpha = [0, 0.2, 0.4, 0.6, 0.8, 1]  # shape (6,)
         q = np.quantile(y, alpha, weights=w, method=method, axis=1)
-        q_res = np.zeros(shape=(2, 3, 4))
+        q_res = np.zeros(shape=(6, 2, 3))
         for i in range(2):
             for j in range(3):
-                q_res[i, j, :] = np.quantile(
+                q_res[:, i, j] = np.quantile(
                     y[i, :, j], alpha, method=method, weights=w
                 )
         assert_allclose(q, q_res)
 
         # 1d weight and 2d alpha
-        alpha = [[0.25, 0.5], [0.75, 1]]  # shape (2, 2)
+        alpha = [[0, 0.2], [0.4, 0.6], [0.8, 1]]  # shape (3, 2)
         q = np.quantile(y, alpha, weights=w, method=method, axis=1)
-        q_res = q_res.reshape((2, 3, 2, 2))
+        q_res = q_res.reshape((3, 2, 2, 3))
         assert_allclose(q, q_res)
 
         # shape of weights equals shape of y

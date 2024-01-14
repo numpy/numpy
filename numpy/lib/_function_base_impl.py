@@ -4971,13 +4971,13 @@ def _quantile(
 
         r_shape = arr.shape[1:]
         if quantiles.ndim > 0: 
-            r_shape += quantiles.shape
+            r_shape = quantiles.shape + r_shape
         result = np.empty_like(arr, shape=r_shape)
         # See apply_along_axis, which we do for axis=0. Note that Ni = (,)
         # always, so we remove it here.
         Nk = arr.shape[1:]
         for kk in np.ndindex(Nk):
-            result[kk + (...,)] = find_cdf_1d(
+            result[(...,) + kk] = find_cdf_1d(
                 arr[np.s_[:, ] + kk], cdf[np.s_[:, ] + kk]
             )
         # TODO: Make this more efficient!!!
