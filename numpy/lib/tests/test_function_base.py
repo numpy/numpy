@@ -3154,7 +3154,7 @@ class TestPercentile:
         test_function(actual, expected_dtype.type(expected))
 
         if method in ["inverted_cdf", "closest_observation"]:
-            if input_dtype == "O" :
+            if input_dtype == "O":
                 np.testing.assert_equal(np.asarray(actual).dtype, np.float64)
             else:
                 np.testing.assert_equal(np.asarray(actual).dtype,
