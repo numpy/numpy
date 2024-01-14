@@ -4986,7 +4986,15 @@ def _quantile(
         r_shape = arr.shape[1:]
         if quantiles.ndim > 0: 
             r_shape = quantiles.shape + r_shape
-        result = np.empty_like(arr, shape=r_shape)
+        if out is None:
+            result = np.empty_like(arr, shape=r_shape)
+        else:
+            if out.shape != r_shape:
+                msg = (f"Wrong shape of argument 'out', shape={r_shape} is "
+                       f"required; got shape={out.shape}.")
+                raise ValueError(msg)
+            result = out
+
         # See apply_along_axis, which we do for axis=0. Note that Ni = (,)
         # always, so we remove it here.
         Nk = arr.shape[1:]
@@ -4994,9 +5002,6 @@ def _quantile(
             result[(...,) + kk] = find_cdf_1d(
                 arr[np.s_[:, ] + kk], cdf[np.s_[:, ] + kk]
             )
-        # TODO: Make this more efficient!!!
-        if out is not None:
-            np.copyto(out, result)
 
         # Make result the same as in unweighted inverted_cdf.
         if result.shape == () and result.dtype == np.dtype("O"):
