@@ -4934,8 +4934,9 @@ def _quantile(
                         gamma,
                         out=out)
     else:
-        # Weighted case, we need to sort anyway.
-        # This implements method="inverted_cdf".
+        # Weighted case
+        # This implements method="inverted_cdf", the only supported weighted
+        # method, which needs to sort anyway.
         weights = np.asanyarray(weights)
         if axis != 0:
             weights = np.moveaxis(weights, axis, destination=0)
@@ -4954,17 +4955,30 @@ def _quantile(
         else:
             # weights is 1d
             weights = weights.reshape(-1)[index_array, ...]
-        # weights = np.take_along_axis(weights, index_array, axis=axis)
-        # We use the weights to calculate the empirical distribution function.
-        cdf = weights.cumsum(axis=0, dtype=float)
-        cdf /= cdf[-1, ...]  # normalization
-        # Only inverted_cdf is supported. Search index i such that
-        # sum(weights[j], j=0..i-1) < quantile <= sum(weights[j], j=0..i)
+        
+        # We use the weights to calculate the empirical cumulative
+        # distribution function cdf
+        cdf = weights.cumsum(axis=0, dtype=np.float64)
+        cdf /= cdf[-1, ...]  # normalization to 1
+        # Search index i such that
+        #   sum(weights[j], j=0..i-1) < quantile <= sum(weights[j], j=0..i)
+        # is then equivalent to
+        #   cdf[i-1] < quantile <= cdf[i]
+        # Unfortunately, searchsorted only accepts 1-d arrays as first
+        # argument, so we will need to iterate over dimensions.
+
+        # Without the following cast, searchsorted can return surprising
+        # results, e.g.
+        #   np.searchsorted(np.array([0.2, 0.4, 0.6, 0.8, 1.]),
+        #                   np.array(0.4, dtype=np.float32), side="left")
+        # returns 2 instead of 1 because 0.4 is not binary representable.
+        if quantiles.dtype.kind == "f":
+            cdf = cdf.astype(quantiles.dtype)
 
         def find_cdf_1d(arr, cdf):
             indices = np.searchsorted(cdf, quantiles, side="left")
             # We might have reached the maximum with i = len(arr), e.g. for
-            # quantiles == 1.
+            # quantiles = 1, and need to cut it to len(arr) - 1.
             indices = minimum(indices, values_count - 1)
             result = take(arr, indices, axis=0)
             return result
@@ -4983,6 +4997,10 @@ def _quantile(
         # TODO: Make this more efficient!!!
         if out is not None:
             np.copyto(out, result)
+
+        # Make result the same as in unweighted inverted_cdf.
+        if result.shape == () and result.dtype == np.dtype("O"):
+            result = result.item()
 
     if np.any(slices_having_nans):
         if result.ndim == 0 and out is None:

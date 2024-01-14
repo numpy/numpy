@@ -3113,21 +3113,23 @@ class TestPercentile:
                              [(np.quantile, 0.4),
                               (np.percentile, 40.0)])
     @pytest.mark.parametrize(["input_dtype", "expected_dtype"], H_F_TYPE_CODES)
-    @pytest.mark.parametrize(["method", "expected"],
-                             [("inverted_cdf", 20),
-                              ("averaged_inverted_cdf", 27.5),
-                              ("closest_observation", 20),
-                              ("interpolated_inverted_cdf", 20),
-                              ("hazen", 27.5),
-                              ("weibull", 26),
-                              ("linear", 29),
-                              ("median_unbiased", 27),
-                              ("normal_unbiased", 27.125),
+    @pytest.mark.parametrize(["method", "weighted", "expected"],
+                              [("inverted_cdf", False, 20),
+                              ("inverted_cdf", True, 20),
+                              ("averaged_inverted_cdf", False, 27.5),
+                              ("closest_observation", False, 20),
+                              ("interpolated_inverted_cdf", False, 20),
+                              ("hazen", False, 27.5),
+                              ("weibull", False, 26),
+                              ("linear", False, 29),
+                              ("median_unbiased", False, 27),
+                              ("normal_unbiased", False, 27.125),
                               ])
     def test_linear_interpolation(self,
                                   function,
                                   quantile,
                                   method,
+                                  weighted,
                                   expected,
                                   input_dtype,
                                   expected_dtype):
@@ -3136,6 +3138,7 @@ class TestPercentile:
             expected_dtype = np.promote_types(expected_dtype, np.float64)
 
         arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=input_dtype)
+        weights = np.ones_like(arr) if weighted else None
         if input_dtype is np.longdouble:
             if function is np.quantile:
                 # 0.4 is not exactly representable and it matters
@@ -3146,12 +3149,12 @@ class TestPercentile:
         else:
             test_function = np.testing.assert_array_almost_equal_nulp
 
-        actual = function(arr, quantile, method=method)
+        actual = function(arr, quantile, method=method, weights=weights)
 
         test_function(actual, expected_dtype.type(expected))
 
         if method in ["inverted_cdf", "closest_observation"]:
-            if input_dtype == "O":
+            if input_dtype == "O" :
                 np.testing.assert_equal(np.asarray(actual).dtype, np.float64)
             else:
                 np.testing.assert_equal(np.asarray(actual).dtype,
@@ -3308,14 +3311,16 @@ class TestPercentile:
         y = np.zeros((3,), dtype=out_dtype)
         p = (1, 2, 3)
         weights = np.ones_like(x) if with_weights else None
-        percentile(x, p, out=y, weights=weights)
+        r = percentile(x, p, out=y, weights=weights)
+        assert r is y
         assert_equal(percentile(x, p, weights=weights), y)
 
         x = np.array([[1, 2, 3],
                       [4, 5, 6]])
         y = np.zeros((3, 3), dtype=out_dtype)
         weights = np.ones_like(x) if with_weights else None
-        percentile(x, p, axis=0, out=y, weights=weights)
+        r = percentile(x, p, axis=0, out=y, weights=weights)
+        assert r is y
         assert_equal(percentile(x, p, weights=weights, axis=0), y)
 
         y = np.zeros((3, 2), dtype=out_dtype)
@@ -3324,7 +3329,10 @@ class TestPercentile:
 
         x = np.arange(12).reshape(3, 4)
         # q.dim > 1, float
-        r0 = np.array([[2.,  3.,  4., 5.], [4., 5., 6., 7.]])
+        if with_weights:
+            r0 = np.array([[0, 1, 2, 3], [4, 5, 6, 7]])
+        else:
+            r0 = np.array([[2., 3., 4., 5.], [4., 5., 6., 7.]])
         out = np.empty((2, 4), dtype=out_dtype)
         weights = np.ones_like(x) if with_weights else None
         assert_equal(
