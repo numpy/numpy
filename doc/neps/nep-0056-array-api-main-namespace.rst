@@ -395,6 +395,19 @@ the array API standard chose to follow C99 and other libraries in using
 also follows C99; it is not entirely clear why this naming choice was made many
 years ago.
 
+In total 13 aliases are added to the main namespace and 2 aliases to
+``numpy.linalg``:
+
+- trigonometry functions: ``acos``, ``acosh``, ``asin``, ``asinh``, ``atan``,
+  ``atanh``, ``atan2``
+- bit-wise functions: ``bitwise_left_shift``, ``bitwise_invert``,
+  ``bitwise_right_shift``
+- other functions: ``concat``, ``permute_dims``, ``pow``
+- in ``numpy.linalg``: ``tensordot``, ``matmul``
+
+In the future NumPy can choose to hide the original names from its ``__dir__``
+to nudge users to the preferred spelling for each function.
+
 
 New keywords with overlapping semantics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -503,8 +516,8 @@ The alternatives to implementing support for the array API standard in NumPy's
 main namespace include:
 
 - one or more of the superseded NEPs, or
-- making ``ndarray.__array_namespace__()`` return a hidden namespace with
-  compatible functions,
+- making ``ndarray.__array_namespace__()`` return a hidden namespace (or even
+  another new public namespace) with compatible functions,
 - not implementing support for the array API standard at all.
 
 The superseded NEPs all have some drawbacks compared to the array API standard,
