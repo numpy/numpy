@@ -727,8 +727,7 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
     hist : array
         The values of the histogram. See `density` and `weights` for a
         description of the possible semantics.  If `weights` are given,
-        ``hist.dtype`` will be taken from `weights`, otherwise it will
-        hold large integers.
+        ``hist.dtype`` will be taken from `weights`.
     bin_edges : array of dtype float
         Return the bin edges ``(length(hist)+1)``.
 
