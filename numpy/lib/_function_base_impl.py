@@ -4083,7 +4083,7 @@ def percentile(a,
     distribution function of the data, i.e.
     :math:`F(y) = \\frac{1}{n} \\sum_i 1_{a_i \\leq y}`.
     Then, different methods correspond to different choices of :math:`x` that
-    fulfil the above inequalities. Methods that follow this approach are
+    fulfill the above inequalities. Methods that follow this approach are
     ``inverted_cdf`` and ``averaged_inverted_cdf``.
 
     A more general way to define sample percentile estimators is as follows.
@@ -4433,7 +4433,7 @@ def quantile(a,
     distribution function of the data, i.e.
     :math:`F(y) = \\frac{1}{n} \\sum_i 1_{a_i \\leq y}`.
     Then, different methods correspond to different choices of :math:`x` that
-    fulfil the above inequalities. Methods that follow this approach are
+    fulfill the above inequalities. Methods that follow this approach are
     ``inverted_cdf`` and ``averaged_inverted_cdf``.
 
     A more general way to define sample quantile estimators is as follows.
