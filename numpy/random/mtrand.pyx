@@ -875,8 +875,8 @@ cdef class RandomState:
         Parameters
         ----------
         a : 1-D array-like or int
-            If an ndarray, a random sample is generated from its elements.
-            If an int, the random sample is generated as if it were ``np.arange(a)``
+            If a is an ndarray, the random sample is generated from its elements.
+            If a is an int, the random sample is generated as if it were ``np.arange(a)``
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
