@@ -92,7 +92,7 @@ set of proposed changes:
 Benefits:
 
 - It will remove the "having to make a choice between the NumPy API and the
-  Array API" issue for other libraries,
+  array API standard" issue for other libraries,
 - The array API standard tends to have more consistent behavior than NumPy
   itself has (in cases where there are differences between the two, see for
   example the `linear algebra design principles <https://data-apis.org/array-api/2022.12/extensions/linear_algebra_functions.html#design-principles>`__
@@ -112,19 +112,20 @@ Costs:
 - Expanding the size of the main namespace with about ~20 aliases (e.g.,
   ``acos`` & co. with C99 names aliasing ``arccos`` & co.).
 
-Overall we believe that the benefits significantly outweigh the gains - and are
+Overall we believe that the benefits significantly outweigh the costs - and are
 permanent, while the costs are largely temporary. In particular, the benefits
 to array libraries and compilers that want to achieve compatibility with NumPy
 are significant. And as a result, the long-term benefits for the PyData (or
 scientific Python) ecosystem as a whole - because of downstream libraries being
-able to support multiple array libraries as easily as possible - are
+able to support multiple array libraries much more easily - are
 significant too. The number of breaking changes needed is fairly limited, and
-the impact of those changes seems modest. Not painless, but smaller than the
-impact of other breaking changes in NumPy 2.0, and a price worth paying.
+the impact of those changes seems modest. Not painless, but we believe the
+impact is smaller than the impact of other breaking changes in NumPy 2.0, and a
+price worth paying.
 
 In scope for this NEP are:
 
-- Changes to NumPy's Python API needed to support the 2022.12 version of the array API standard,
+- Changes to NumPy's Python API needed to support the 2022.12 version of the array API standard, in the main namespace as well as ``numpy.linalg`` and ``numpy.fft``,
 - Changes in the behavior of existing NumPy functions not (or not yet) present in the array API standard, to align with key design principles of the standard.
 
 Out of scope for this NEP are:
@@ -216,7 +217,7 @@ categories:
 1. Raising errors for consistency/strictness in some places where NumPy now
    allows more flexible behavior,
 2. Dtypes of returned arrays for some element-wise functions and reductions,
-3. Numerical behavior for few tolerance keywords,
+3. Numerical behavior for a few tolerance keywords,
 4. Functions moved to ``numpy.linalg`` and supporting stacking/batching.
 
 Raising errors for consistency/strictness includes:
@@ -251,33 +252,35 @@ Changes in numerical behavior include:
 The ``diagonal`` and ``trace`` functions are part of the ``linalg`` submodule
 in the standard, rather than the main namespace. Hence they will be introduced
 in ``numpy.linalg``. They will operate on the last two rather than first two
-axes (for consistency, and to support stacking). Hence the ``linalg`` and main
-namespace functions of the same names will differ. This is technically not
-breaking, but potentially confusing because of the different behavior for
-functions with the same name. We may deprecate ``np.trace`` and ``np.diagonal``
-to resolve it, but preferably not immediately to avoid users having to write
-``if-2.0-else`` conditional code.
+axes. This is done for consistency, since this is now other NumPy functions
+work, and to support "stacking" (or "batching" in more commonly used
+terminology in other libraries). Hence the ``linalg`` and main namespace
+functions of the same names will differ. This is technically not breaking, but
+potentially confusing because of the different behavior for functions with the
+same name. We may deprecate ``np.trace`` and ``np.diagonal`` to resolve it, but
+preferably not immediately to avoid users having to write ``if-2.0-else``
+conditional code.
 
-A related note on terminology: "stacking" is a confusing and fairly
-NumPy-specific term, this is called "batching" in deep learning frameworks and
-elsewhere - we plan to change the terminology in NumPy to "batching".
-
-There may be other minor changes that don't quite fall in one of the categories
+There may be a few other changes that don't quite fall in one of the categories
 above. For example, ``numpy.fft`` functions need to preserve precision for
-32-bit input dtypes rather than upcast to ``float64``/``complex128``. And
-there's an issue with the ``s``/``axes`` argument in n-D transforms that needs
-solving (see `gh-25495 <https://github.com/numpy/numpy/pull/25495>`__).
+32-bit input dtypes rather than upcast to ``float64``/``complex128`` (desirable
+anyway, and can be supported with the new gufunc implementation in 
+(`gh-25336 <https://github.com/numpy/numpy/pull/25336>`__) . Also in
+``numpy.fft``, there's an issue with the ``s``/``axes`` argument in n-D
+transforms that needs solving
+(see `gh-25495 <https://github.com/numpy/numpy/pull/25495>`__).
 
 
-Adapting to the changes
-^^^^^^^^^^^^^^^^^^^^^^^
+Adapting to the changes & tooling support
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Some part of the Array API has already been implemented as part of the general
+Some parts of the array API have already been implemented as part of the general
 Python API cleanup for NumPy 2.0 (see NEP 52), such as:
 
 - establishing one and way for naming ``inf`` and ``nan`` that is array API
   compatible.
-- removing cryptic dtype names and establishing canonical names for each dtype.
+- removing cryptic dtype names and establishing (array API compatible)
+  canonical names for each dtype.
 
 All instructions for migrating to a NEP 52 compatible codebase are available in
 the `NumPy 2.0 Migration Guide
@@ -289,18 +292,18 @@ adhere to the NEP 52 changes, and does not cover using new functions that are
 part of the array API standard nor APIs with some types of backwards
 incompatible changes discussed above.
 
-For an automated migration to Array API compatible codebase, a new rule is
+For an automated migration to an array API compatible codebase, a new rule is
 being implemented (see issue `ruff#8615 <https://github.com/astral-sh/ruff/issues/8615>`__
 and PR `ruff#8910 <https://github.com/astral-sh/ruff/pull/8910>`__).
 
 With both rules in place a downstream user should be able to update their
-project, to the extent that that is possible with automation, to a library
+project, to the extent that is possible with automation, to a library
 agnostic codebase that can benefit from different array libraries and devices.
 
 Backwards incompatible changes that cannot be handled automatically (e.g., a
-change in ``rtol`` defaults for a linear algebra function), this will be
-handled the same way as any other backwards incompatible change in NumPy 2.0 -
-through documentation, release notes, and API migrations and deprecations over
+change in ``rtol`` defaults for a linear algebra function) will be handled the
+in same way as any other backwards incompatible change in NumPy 2.0 -
+through documentation, release notes, API migrations and deprecations over
 several releases.
 
 
@@ -308,8 +311,8 @@ Detailed description
 --------------------
 
 In this section we'll focus on specific API additions and functionality that we
-would not consider introducing into NumPy if the standard would not exist and
-we wouldn't have to think/worry about its main goal of writing code that is
+would not consider introducing into NumPy if the standard did not exist and
+we didn't have to think/worry about its main goal: writing code that is
 portable across multiple array libraries and their supported features like GPUs
 and other hardware accelerators or JIT compilers.
 
@@ -342,7 +345,7 @@ is ``np.issubdtype``, however that assumes a complex class hierarchy which
 other array libraries don't have, isn't the most ergonomic API, and required a
 larger API surface (``np.floating`` and friends). ``isdtype`` will be the new
 and canonical way to introspect dtypes. All it requires from a dtype is that
-``_eq__`` is implemented and has the expected behavior when compared with other
+``__eq__`` is implemented and has the expected behavior when compared with other
 dtypes from the same library.
 
 Note that as part of the effort on NEP 52, some dtype aliases were removed and
@@ -399,21 +402,22 @@ New ``unique_*`` functions
 
 The ``unique`` function, with ``return_index``, ``return_inverse``, and
 ``return_counts`` arguments that influence the cardinality of the returned
-tuple, is replaced in the Array API by four respective functions:
+tuple, is replaced in the array API by four respective functions:
 ``unique_all``, ``unique_counts``, ``unique_inverse``, and ``unique_values``.
-This new API helps to better anticipate the return object and support clearer
-typing.
+These new functions avoid polymorphism, which tends to be a problem for JIT
+compilers and static typing. Use of these functions therefore helps tools like
+Numba as well as users of static type checkers like Mypy.
 
 
 ``np.bool`` addition
 ^^^^^^^^^^^^^^^^^^^^
 
-One of the aliases that used to live in NumPy but got removed was ``np.bool``.
-To comply with the Array API it got reintroduced with a different meaning, as
+One of the aliases that used to live in NumPy but was removed is ``np.bool``.
+To comply with the array API it was reintroduced with a different meaning, as
 now it points to NumPy's bool instead of a Python builtin. This change is a
 good idea and we were planning to make it anyway, because ``bool`` is a nicer
 name than ``bool_``. However, we may not have scheduled that reintroduction of
-the name for 2.0 perhaps if it had not been part of the array API standard.
+the name for 2.0 if it had not been part of the array API standard.
 
 
 Related work
@@ -444,7 +448,7 @@ usually try to be as compatible to NumPy as possible). For example:
 - CuPy's `docs on array API support <https://docs.cupy.dev/en/stable/reference/array_api.html>`__
   and `PRs labelled with array-api <https://github.com/cupy/cupy/pulls?q=is%3Aopen+is%3Apr+label%3Aarray-api>`__.
 - JAX: enhancement proposal `Scope of JAX NumPy & SciPy Wrappers <https://jax.readthedocs.io/en/latest/jep/18137-numpy-scipy-scope.html#axis-2-array-api-alignment>`__
-  and `PR with initial implementation <https://github.com/google/jax/pull/16099>`__.
+  and `tracking issue <https://github.com/google/jax/issues/18353>`__.
 
 
 Implementation
@@ -461,8 +465,8 @@ and discussion also on its tracking issue (`gh-23999 <https://github.com/numpy/n
 
 The PR that was merged as one of the first contained a new CI job that adds the
 `array-api-tests <https://github.com/data-apis/array-api-tests>`__ test suite.
-This way we had a better control over which batch of functions/aliases is being
-added each time, and be sure that the implementation conforms with the Array
+This way we had a better control over which batch of functions/aliases were being
+added each time, and could be sure that the implementations conformed to the array
 API standard (see `gh-25167 <https://github.com/numpy/numpy/pull/25167>`__).
 
 Then, we continued to merge one batch at the time, adding a specific API
