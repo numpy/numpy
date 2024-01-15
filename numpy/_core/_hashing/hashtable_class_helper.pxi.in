@@ -83,7 +83,7 @@ cimported_types = ['complex64',
 }}
 
 {{for name in cimported_types}}
-from pandas._libs.khash cimport (
+from numpy._core._hashing.khash cimport (
     kh_destroy_{{name}},
     kh_exist_{{name}},
     kh_get_{{name}},
@@ -97,10 +97,6 @@ from pandas._libs.khash cimport (
 # ----------------------------------------------------------------------
 # VectorData
 # ----------------------------------------------------------------------
-
-from pandas._libs.tslibs.util cimport get_c_string
-from pandas._libs.missing cimport C_NA
-
 
 {{py:
 

@@ -2,6 +2,7 @@
 # at https://github.com/veorq/SipHash
 
 cimport cython
+
 from libc.stdlib cimport (
     free,
     malloc,

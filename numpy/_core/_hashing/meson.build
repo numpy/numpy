@@ -24,7 +24,7 @@ _khash_primitive_helper_dep = declare_dependency(sources: _khash_primitive_helpe
 libs_sources = {
     # Dict of extension name -> dict of {sources, include_dirs, and deps}
     # numpy include dir is implicitly included
-    'hashing': {'sources': ['hashing.pyx']},
+    'hashing': {'sources': ['hashing.pyx'], 'deps': _khash_primitive_helper_dep},
     'hashtable': {
         'sources': ['hashtable.pyx', _hashtable_class_helper, _hashtable_func_helper],
         'deps': _khash_primitive_helper_dep
@@ -32,8 +32,8 @@ libs_sources = {
 }
 
 cython_args = [
-#    '--include-dir',
-#    meson.current_build_dir(),
+    '--include-dir',
+    meson.current_build_dir(),
     '-X always_allow_keywords=true'
 ]
 if get_option('buildtype') == 'debug'
@@ -47,7 +47,7 @@ foreach ext_name, ext_dict : libs_sources
         cython_args: cython_args,
         # include_directories: 'src',
         # include_directories: [inc_np],
-        dependencies: np_core_dep,
+        dependencies: [np_core_dep, ext_dict.get('deps', '')],
         subdir: 'numpy/_core/_hashing',
         install: true
     )
