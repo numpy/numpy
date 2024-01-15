@@ -20,6 +20,7 @@ from typing import NamedTuple
 
 import numpy as np
 from numpy._core import overrides
+from numpy._core._hashing import hashtable as htable
 
 
 array_function_dispatch = functools.partial(
@@ -31,6 +32,24 @@ __all__ = [
     "union1d", "unique", "unique_all", "unique_counts", "unique_inverse",
     "unique_values"
 ]
+
+
+_hashtables = {
+    "complex128": htable.Complex128HashTable,
+    "complex64": htable.Complex64HashTable,
+    "float64": htable.Float64HashTable,
+    "float32": htable.Float32HashTable,
+    "uint64": htable.UInt64HashTable,
+    "uint32": htable.UInt32HashTable,
+    "uint16": htable.UInt16HashTable,
+    "uint8": htable.UInt8HashTable,
+    "int64": htable.Int64HashTable,
+    "int32": htable.Int32HashTable,
+    "int16": htable.Int16HashTable,
+    "int8": htable.Int8HashTable,
+    "string": htable.StringHashTable,
+    "object": htable.PyObjectHashTable,
+}
 
 
 def _ediff1d_dispatcher(ary, to_end=None, to_begin=None):
@@ -140,7 +159,7 @@ def _unique_dispatcher(ar, return_index=None, return_inverse=None,
 
 @array_function_dispatch(_unique_dispatcher)
 def unique(ar, return_index=False, return_inverse=False,
-           return_counts=False, axis=None, *, equal_nan=True):
+           return_counts=False, axis=None, *, equal_nan=True, sorted=True):
     """
     Find the unique elements of an array.
 
@@ -179,6 +198,10 @@ def unique(ar, return_index=False, return_inverse=False,
         If True, collapses multiple NaN values in the return array into one.
 
         .. versionadded:: 1.24
+    
+    sorted : bool, optional
+        If True, the array is sorted and sorted unique values are returned.
+        If False, sorting is avoided 
 
     Returns
     -------
@@ -273,7 +296,7 @@ def unique(ar, return_index=False, return_inverse=False,
     ar = np.asanyarray(ar)
     if axis is None:
         ret = _unique1d(ar, return_index, return_inverse, return_counts, 
-                        equal_nan=equal_nan)
+                        equal_nan=equal_nan, sorted=sorted)
         return _unpack_tuple(ret)
 
     # axis was specified and not None
@@ -316,19 +339,74 @@ def unique(ar, return_index=False, return_inverse=False,
         return uniq
 
     output = _unique1d(consolidated, return_index,
-                       return_inverse, return_counts, equal_nan=equal_nan)
+                       return_inverse, return_counts, equal_nan=equal_nan,
+                       sorted=sorted)
     output = (reshape_uniq(output[0]),) + output[1:]
     return _unpack_tuple(output)
 
 
+def _get_hashtable_algo(values: np.ndarray):
+    """
+    Parameters
+    ----------
+    values : np.ndarray
+
+    Returns
+    -------
+    htable : HashTable subclass
+    values : ndarray
+    """
+    # values = _ensure_data(values)
+
+    ndtype = _check_object_for_strings(values)
+    hashtable = _hashtables[ndtype]
+    return hashtable, values
+
+
+def _check_object_for_strings(values: np.ndarray) -> str:
+    """
+    Check if we can use string hashtable instead of object hashtable.
+
+    Parameters
+    ----------
+    values : ndarray
+
+    Returns
+    -------
+    str
+    """
+    ndtype = values.dtype.name
+    if ndtype.startswith("str"):
+        return "string"
+    return ndtype
+
+
+def _unique1d_unsorted(ar, equal_nan):
+    original = ar
+    hashtable, values = _get_hashtable_algo(ar)
+
+    table = hashtable(len(values))
+    uniques = table.unique(values).astype(original.dtype, copy=False)
+    return (uniques,)
+
+
 def _unique1d(ar, return_index=False, return_inverse=False,
-              return_counts=False, *, equal_nan=True):
+              return_counts=False, *, equal_nan=True, sorted=True):
     """
     Find the unique elements of an array, ignoring shape.
     """
     ar = np.asanyarray(ar).flatten()
 
     optional_indices = return_index or return_inverse
+
+    if (optional_indices or return_counts) and not sorted:
+        raise ValueError(
+            "`sorted` can only be False if `return_index`, `return_inverse`, "
+            "and `return_counts` are all False."
+        )
+
+    if not sorted:
+        return _unique1d_unsorted(ar, equal_nan=equal_nan)
 
     if optional_indices:
         perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')

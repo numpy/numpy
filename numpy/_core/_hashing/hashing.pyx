@@ -7,6 +7,21 @@ from libc.stdlib cimport (
     malloc,
 )
 
+from cpython.object cimport PyTypeObject
+
+cdef extern from "Python.h":
+    # Note: importing extern-style allows us to declare these as nogil
+    # functions, whereas `from cpython cimport` does not.
+    bint PyFloat_Check(object obj) nogil
+    bint PyComplex_Check(object obj) nogil
+    bint PyObject_TypeCheck(object obj, PyTypeObject* type) nogil
+
+cdef extern from "numpy/arrayobject.h":
+    PyTypeObject PyFloatingArrType_Type
+
+cdef extern from "numpy/ndarrayobject.h":
+    PyTypeObject PyComplexFloatingArrType_Type
+
 import numpy as np
 
 from numpy cimport (
@@ -14,11 +29,61 @@ from numpy cimport (
     ndarray,
     uint8_t,
     uint64_t,
+    float64_t,
 )
 
 import_array()
 
-from pandas._libs.util cimport is_nan
+cdef inline bint is_float_object(object obj) noexcept nogil:
+    """
+    Cython equivalent of `isinstance(val, (float, np.floating))`
+
+    Parameters
+    ----------
+    val : object
+
+    Returns
+    -------
+    is_float : bool
+    """
+    return (PyFloat_Check(obj) or
+            (PyObject_TypeCheck(obj, &PyFloatingArrType_Type)))
+
+
+cdef inline bint is_complex_object(object obj) noexcept nogil:
+    """
+    Cython equivalent of `isinstance(val, (complex, np.complexfloating))`
+
+    Parameters
+    ----------
+    val : object
+
+    Returns
+    -------
+    is_complex : bool
+    """
+    return (PyComplex_Check(obj) or
+            PyObject_TypeCheck(obj, &PyComplexFloatingArrType_Type))
+
+
+cdef inline bint is_nan(object val):
+    """
+    Check if val is a Not-A-Number float or complex, including
+    float('NaN') and np.nan.
+
+    Parameters
+    ----------
+    val : object
+
+    Returns
+    -------
+    is_nan : bool
+    """
+    cdef float64_t fval
+    if is_float_object(val):
+        fval = val
+        return fval != fval
+    return is_complex_object(val) and val != val
 
 
 @cython.boundscheck(False)

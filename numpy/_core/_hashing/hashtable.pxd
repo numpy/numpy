@@ -3,7 +3,7 @@ from numpy cimport (
     ndarray,
 )
 
-from pandas._libs.khash cimport (
+from numpy._core._hashing.khash cimport (
     complex64_t,
     complex128_t,
     float32_t,
