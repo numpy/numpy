@@ -4874,14 +4874,17 @@ def _quantile(
     values_count = arr.shape[axis]
     # The dimensions of `q` are prepended to the output shape, so we need the
     # axis being sampled from `arr` to be last.
-
     if axis != 0:  # But moveaxis is slow, so only call it if necessary.
         arr = np.moveaxis(arr, axis, destination=0)
-    # --- Computation of indexes
-    # Index where to find the value in the sorted array.
-    # Virtual because it is a floating point value, not an valid index.
-    # The nearest neighbours are used for interpolation
+    supports_nans = (
+        np.issubdtype(arr.dtype, np.inexact) or arr.dtype.kind in 'Mm'
+    )
+
     if weights is None:
+        # --- Computation of indexes
+        # Index where to find the value in the sorted array.
+        # Virtual because it is a floating point value, not an valid index.
+        # The nearest neighbours are used for interpolation
         try:
             method = _QuantileMethods[method]
         except KeyError:
@@ -4890,9 +4893,6 @@ def _quantile(
                 f"{_QuantileMethods.keys()}") from None
         virtual_indexes = method["get_virtual_index"](values_count, quantiles)
         virtual_indexes = np.asanyarray(virtual_indexes)
-
-        supports_nans = (
-                np.issubdtype(arr.dtype, np.inexact) or arr.dtype.kind in 'Mm')
 
         if np.issubdtype(virtual_indexes.dtype, np.integer):
             # No interpolation needed, take the points along axis
@@ -4941,11 +4941,6 @@ def _quantile(
         if axis != 0:
             weights = np.moveaxis(weights, axis, destination=0)
         index_array = np.argsort(arr, axis=0, kind="stable")
-        # TODO: Which value to set to slices_having_nans.
-        slices_having_nans = None
-        # TODO: Deal with nan values, e.g. np.isnan(arr(index_array[-1])) by
-        # be true.
-        # TODO: Special case quantiles == 0 and quantiles == 1?
 
         # arr = arr[index_array, ...]  # but this adds trailing dimensions of
         # 1.
@@ -4955,7 +4950,14 @@ def _quantile(
         else:
             # weights is 1d
             weights = weights.reshape(-1)[index_array, ...]
-        
+
+        if supports_nans:
+            # may contain nan, which would sort to the end
+            slices_having_nans = np.isnan(arr[-1, ...])
+        else:
+            # cannot contain nan
+            slices_having_nans = np.array(False, dtype=bool)
+
         # We use the weights to calculate the empirical cumulative
         # distribution function cdf
         cdf = weights.cumsum(axis=0, dtype=np.float64)

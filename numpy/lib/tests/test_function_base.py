@@ -3047,6 +3047,11 @@ class TestPercentile:
         x[1] = np.nan
         assert_equal(np.percentile(x, 0), np.nan)
         assert_equal(np.percentile(x, 0, method='nearest'), np.nan)
+        assert_equal(np.percentile(x, 0, method='inverted_cdf'), np.nan)
+        assert_equal(
+            np.percentile(x, 0, method='inverted_cdf', weights=np.ones_like(x)),
+            np.nan,
+        )
 
     def test_fraction(self):
         x = [Fraction(i, 2) for i in range(8)]
@@ -3124,7 +3129,7 @@ class TestPercentile:
                               ("linear", False, 29),
                               ("median_unbiased", False, 27),
                               ("normal_unbiased", False, 27.125),
-                              ])
+                               ])
     def test_linear_interpolation(self,
                                   function,
                                   quantile,
@@ -3511,23 +3516,29 @@ class TestPercentile:
         assert_equal(np.percentile(d, 2, out=o), o)
         assert_equal(np.percentile(d, 2, method='nearest', out=o), o)
 
-    def test_out_nan(self):
+    @pytest.mark.parametrize("method, weighted", [
+        ("linear", False),
+        ("nearest", False),
+        ("inverted_cdf", False),
+        ("inverted_cdf", True),
+    ])
+    def test_out_nan(self, method, weighted):
+        if weighted:
+            kwargs = {"weights": np.ones((3, 4)), "method": method}
+        else:
+            kwargs = {"method": method}
         with warnings.catch_warnings(record=True):
             warnings.filterwarnings('always', '', RuntimeWarning)
             o = np.zeros((4,))
             d = np.ones((3, 4))
             d[2, 1] = np.nan
-            assert_equal(np.percentile(d, 0, 0, out=o), o)
-            assert_equal(
-                np.percentile(d, 0, 0, method='nearest', out=o), o)
+            assert_equal(np.percentile(d, 0, 0, out=o, **kwargs), o)
+
             o = np.zeros((3,))
-            assert_equal(np.percentile(d, 1, 1, out=o), o)
-            assert_equal(
-                np.percentile(d, 1, 1, method='nearest', out=o), o)
+            assert_equal(np.percentile(d, 1, 1, out=o, **kwargs), o)
+
             o = np.zeros(())
-            assert_equal(np.percentile(d, 1, out=o), o)
-            assert_equal(
-                np.percentile(d, 1, method='nearest', out=o), o)
+            assert_equal(np.percentile(d, 1, out=o, **kwargs), o)
 
     def test_nan_behavior(self):
         a = np.arange(24, dtype=float)

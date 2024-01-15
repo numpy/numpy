@@ -1095,7 +1095,9 @@ class TestNanFunctions_Percentile:
         resout = np.zeros(3)
         if weighted:
             w_args = {"weights": np.ones_like(mat), "method": "inverted_cdf"}
-            nan_w_args = {"weights": np.ones_like(nan_mat), "method": "inverted_cdf"}
+            nan_w_args = {
+                "weights": np.ones_like(nan_mat), "method": "inverted_cdf"
+            }
         else:
             w_args = dict()
             nan_w_args = dict()
@@ -1106,10 +1108,14 @@ class TestNanFunctions_Percentile:
         # 0-d output:
         resout = np.zeros(())
         tgt = np.percentile(mat, 42, axis=None, **w_args)
-        res = np.nanpercentile(nan_mat, 42, axis=None, out=resout, **nan_w_args)
+        res = np.nanpercentile(
+            nan_mat, 42, axis=None, out=resout, **nan_w_args
+        )
         assert_almost_equal(res, resout)
         assert_almost_equal(res, tgt)
-        res = np.nanpercentile(nan_mat, 42, axis=(0, 1), out=resout, **nan_w_args)
+        res = np.nanpercentile(
+            nan_mat, 42, axis=(0, 1), out=resout, **nan_w_args
+        )
         assert_almost_equal(res, resout)
         assert_almost_equal(res, tgt)
 
@@ -1214,7 +1220,9 @@ class TestNanFunctions_Percentile:
                     assert_equal(nan_val, val)
 
         megamat = np.ones((3, 4, 5, 6))
-        assert_equal(np.nanpercentile(megamat, perc, axis=(1, 2)).shape, (2, 3, 6))
+        assert_equal(
+            np.nanpercentile(megamat, perc, axis=(1, 2)).shape, (2, 3, 6)
+        )
 
 
 class TestNanFunctions_Quantile:
