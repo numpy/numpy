@@ -1149,7 +1149,8 @@ class TestNanFunctions_Percentile:
         # Transpose the array to fit the output convention of numpy.percentile
         tgt = np.transpose([percentile(d, (28, 98), weights=gen_weights(d))
                             for d in _rdat])
-        res = nanpercentile(_ndat, (28, 98), axis=1, weights=gen_weights(_ndat))
+        res = nanpercentile(_ndat, (28, 98), axis=1,
+                            weights=gen_weights(_ndat))
         assert_almost_equal(res, tgt)
 
     @pytest.mark.parametrize("axis", [None, 0, 1])
