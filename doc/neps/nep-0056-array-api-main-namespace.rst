@@ -91,19 +91,29 @@ set of proposed changes:
 
 Benefits:
 
+- It will enable array-consuming libraries (the likes of SciPy and
+  scikit-learn, as well as smaller libraries higher up the stack) to implement
+  support for multiple array libraries,
 - It will remove the "having to make a choice between the NumPy API and the
-  array API standard" issue for other libraries,
+  array API standard" issue for other array libraries when choosing what API
+  to implement,
+- Easier for CuPy, JAX, PyTorch, Dask, Numba, and other such libraries and
+  compilers to match or support NumPy, through providing a more well-defined
+  and minimal API surface to target, as well as through resolving some
+  differences that were caused by Numpy semantics that were hard to support in
+  JIT compilers,
+- A few new features that have benefits independent of the standard: adding
+  ``matrix_transpose`` and ``ndarray.mT``, adding ``vecdot``, introducing
+  ``matrix_norm``/``vector_norm`` (they can be made gufuncs, vecdot already has
+  a PR making it one),
+- Closer correspondence between the APIs of NumPy and other array libraries
+  will lower the learning curve for end users when they switch from one array
+  library to another one,
 - The array API standard tends to have more consistent behavior than NumPy
   itself has (in cases where there are differences between the two, see for
   example the `linear algebra design principles <https://data-apis.org/array-api/2022.12/extensions/linear_algebra_functions.html#design-principles>`__
   and `data-dependent output shapes page <https://data-apis.org/array-api/2022.12/design_topics/data_dependent_output_shapes.html>`__
   in the standard),
-- Easier for CuPy, JAX, PyTorch, Dask, Numba, and other such libraries and
-  compilers to fully match or support NumPy,
-- A few new features that have benefits independent of the standard: adding
-  ``matrix_transpose`` and ``ndarray.mT``, adding ``vecdot``, introducing
-  ``matrix_norm``/``vector_norm`` (they can be made gufuncs, vecdot already has
-  a PR making it one),
 
 Costs:
 
@@ -125,8 +135,12 @@ price worth paying.
 
 In scope for this NEP are:
 
-- Changes to NumPy's Python API needed to support the 2022.12 version of the array API standard, in the main namespace as well as ``numpy.linalg`` and ``numpy.fft``,
-- Changes in the behavior of existing NumPy functions not (or not yet) present in the array API standard, to align with key design principles of the standard.
+- Changes to NumPy's Python API needed to support the 2022.12 version of the
+  array API standard, in the main namespace as well as ``numpy.linalg`` and
+  ``numpy.fft``,
+- Changes in the behavior of existing NumPy functions not (or not yet) present
+  in the array API standard, to align with key design principles of the
+  standard.
 
 Out of scope for this NEP are:
 
@@ -392,9 +406,10 @@ have overlap with existing ones:
 - ``stable`` keyword for ``sort`` and ``argsort`` (overlaps with ``kind``)
 
 The ``correction`` name is for clarity ("delta degrees of freedom" is not easy
-to understand) and ``stable`` is complementary to ``kind``, allowing a library
-to reserve the right to change/improve the stable and unstable sorting
-algorithms.
+to understand). ``stable`` is complementary to ``kind``, which already has
+``'stable'`` as an option (a separate keyword may be more discoverable though
+and hence nice to have anyway), allowing a library to reserve the right to
+change/improve the stable and unstable sorting algorithms.
 
 
 New ``unique_*`` functions
