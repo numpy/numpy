@@ -3049,7 +3049,8 @@ class TestPercentile:
         assert_equal(np.percentile(x, 0, method='nearest'), np.nan)
         assert_equal(np.percentile(x, 0, method='inverted_cdf'), np.nan)
         assert_equal(
-            np.percentile(x, 0, method='inverted_cdf', weights=np.ones_like(x)),
+            np.percentile(x, 0, method='inverted_cdf',
+                          weights=np.ones_like(x)),
             np.nan,
         )
 
