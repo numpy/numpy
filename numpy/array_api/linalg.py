@@ -10,6 +10,7 @@ from ._dtypes import (
 )
 from ._data_type_functions import finfo
 from ._manipulation_functions import reshape
+from ._elementwise_functions import conj
 from ._array_object import Array
 
 from .._core.numeric import normalize_axis_tuple
@@ -54,7 +55,10 @@ def cholesky(x: Array, /, *, upper: bool = False) -> Array:
         raise TypeError('Only floating-point dtypes are allowed in cholesky')
     L = np.linalg.cholesky(x._array)
     if upper:
-        return Array._new(L).mT
+        U = Array._new(L).mT
+        if U.dtype in [complex64, complex128]:
+            U = conj(U)
+        return U
     return Array._new(L)
 
 # Note: cross is the numpy top-level namespace, not np.linalg

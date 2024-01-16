@@ -29,6 +29,8 @@ Matrix and vector products
    cross
    multi_dot
    matrix_power
+   tensordot
+   matmul
 
 Decompositions
 --------------
@@ -51,6 +53,8 @@ Norms and other numbers
 -----------------------
 
    norm
+   matrix_norm
+   vector_norm
    cond
    det
    matrix_rank
@@ -71,6 +75,7 @@ Other matrix operations
 -----------------------
 
    diagonal (Array API compatible)
+   matrix_transpose (Array API compatible)
 
 Exceptions
 ----------

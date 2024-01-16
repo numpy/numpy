@@ -286,6 +286,7 @@ class TestNonarrayArgs:
         arr = [[1, 2], [3, 4], [5, 6]]
         tgt = [[1, 3, 5], [2, 4, 6]]
         assert_equal(np.transpose(arr, (1, 0)), tgt)
+        assert_equal(np.matrix_transpose(arr), tgt)
 
     def test_var(self):
         A = [[1, 2, 3], [4, 5, 6]]
@@ -4023,3 +4024,23 @@ class TestTensordot:
         arr_0d = np.array(1)
         ret = np.tensordot(arr_0d, arr_0d, ([], []))  # contracting no axes is well defined
         assert_array_equal(ret, arr_0d)
+
+
+class TestAsType:
+
+    def test_astype(self):
+        data = [[1, 2], [3, 4]]
+        actual = np.astype(
+            np.array(data, dtype=np.int64), np.uint32
+        )
+        expected = np.array(data, dtype=np.uint32)
+
+        assert_array_equal(actual, expected)
+        assert_equal(actual.dtype, expected.dtype)
+
+        assert np.shares_memory(
+            actual, np.astype(actual, actual.dtype, copy=False)
+        )
+
+        with pytest.raises(TypeError, match="Input should be a NumPy array"):
+            np.astype(data, np.float64)

@@ -10,16 +10,15 @@ import numpy as np
 from . import multiarray
 from . import numerictypes as nt
 from .multiarray import (
-    ALLOW_THREADS,
-    BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
-    WRAP, arange, array, asarray, asanyarray, ascontiguousarray,
-    asfortranarray, broadcast, can_cast,
-    concatenate, copyto, dot, dtype, empty,
-    empty_like, flatiter, frombuffer, from_dlpack, fromfile, fromiter,
-    fromstring, inner, lexsort, matmul, may_share_memory,
-    min_scalar_type, ndarray, nditer, nested_iters, promote_types,
-    putmask, result_type, shares_memory, vdot, where,
-    zeros, normalize_axis_index, _get_promotion_state, _set_promotion_state)
+    ALLOW_THREADS, BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT,
+    RAISE, WRAP, arange, array, asarray, asanyarray, ascontiguousarray,
+    asfortranarray, broadcast, can_cast, concatenate, copyto, dot, dtype,
+    empty, empty_like, flatiter, frombuffer, from_dlpack, fromfile, fromiter,
+    fromstring, inner, lexsort, matmul, may_share_memory, min_scalar_type,
+    ndarray, nditer, nested_iters, promote_types, putmask, result_type,
+    shares_memory, vdot, where, zeros, normalize_axis_index,
+    _get_promotion_state, _set_promotion_state
+)
 
 from . import overrides
 from . import umath
@@ -43,7 +42,7 @@ __all__ = [
     'arange', 'array', 'asarray', 'asanyarray', 'ascontiguousarray',
     'asfortranarray', 'zeros', 'count_nonzero', 'empty', 'broadcast', 'dtype',
     'fromstring', 'fromfile', 'frombuffer', 'from_dlpack', 'where',
-    'argwhere', 'copyto', 'concatenate', 'lexsort',
+    'argwhere', 'copyto', 'concatenate', 'lexsort', 'astype',
     'can_cast', 'promote_types', 'min_scalar_type',
     'result_type', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
     'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
@@ -2191,6 +2190,9 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     `atol` are added together to compare against the absolute difference
     between `a` and `b`.
 
+    .. warning:: The default `atol` is not appropriate for comparing numbers
+                 with magnitudes much smaller than one (see Notes).
+
     NaNs are treated as equal if they are in the same place and if
     ``equal_nan=True``.  Infs are treated as equal if they are in the same
     place and of the same sign in both arrays.
@@ -2229,6 +2231,14 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     The above equation is not symmetric in `a` and `b`, so that
     ``allclose(a, b)`` might be different from ``allclose(b, a)`` in
     some rare cases.
+
+    The default value of `atol` is not appropriate when the reference value
+    `b` has magnitude smaller than one. For example, it is unlikely that
+    ``a = 1e-9`` and ``b = 2e-9`` should be considered "close", yet
+    ``allclose(1e-9, 2e-9)`` is ``True`` with default settings. Be sure
+    to select `atol` for the use case at hand, especially for defining the
+    threshold below which a non-zero value in `a` will be considered "close"
+    to a very small or zero value in `b`.
 
     The comparison of `a` and `b` uses standard broadcasting, which
     means that `a` and `b` need not have the same shape in order for
@@ -2272,7 +2282,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     between `a` and `b`.
 
     .. warning:: The default `atol` is not appropriate for comparing numbers
-                 that are much smaller than one (see Notes).
+                 with magnitudes much smaller than one (see Notes).
 
     Parameters
     ----------
@@ -2309,13 +2319,15 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
     Unlike the built-in `math.isclose`, the above equation is not symmetric
     in `a` and `b` -- it assumes `b` is the reference value -- so that
-    `isclose(a, b)` might be different from `isclose(b, a)`. Furthermore,
-    the default value of atol is not zero, and is used to determine what
-    small values should be considered close to zero. The default value is
-    appropriate for expected values of order unity: if the expected values
-    are significantly smaller than one, it can result in false positives.
-    `atol` should be carefully selected for the use case at hand. A zero value
-    for `atol` will result in `False` if either `a` or `b` is zero.
+    `isclose(a, b)` might be different from `isclose(b, a)`.
+
+    The default value of `atol` is not appropriate when the reference value
+    `b` has magnitude smaller than one. For example, it is unlikely that
+    ``a = 1e-9`` and ``b = 2e-9`` should be considered "close", yet
+    ``isclose(1e-9, 2e-9)`` is ``True`` with default settings. Be sure
+    to select `atol` for the use case at hand, especially for defining the
+    threshold below which a non-zero value in `a` will be considered "close"
+    to a very small or zero value in `b`.
 
     `isclose` is not defined for non-numeric data types.
     :class:`bool` is considered a numeric data-type for this purpose.
@@ -2519,6 +2531,64 @@ def array_equiv(a1, a2):
         return False
 
     return builtins.bool((a1 == a2).all())
+
+
+def _astype_dispatcher(x, dtype, /, *, copy=None):
+    return (x, dtype)
+
+
+@array_function_dispatch(_astype_dispatcher)
+def astype(x, dtype, /, *, copy = True):
+    """
+    Copies an array to a specified data type.
+
+    This function is an Array API compatible alternative to
+    `numpy.ndarray.astype`.
+
+    Parameters
+    ----------
+    x : ndarray
+        Input NumPy array to cast. ``array_likes`` are explicitly not
+        supported here.
+    dtype : dtype
+        Data type of the result.
+    copy : bool, optional
+        Specifies whether to copy an array when the specified dtype matches
+        the data type of the input array ``x``. If ``True``, a newly allocated
+        array must always be returned. If ``False`` and the specified dtype
+        matches the data type of the input array, the input array must be
+        returned; otherwise, a newly allocated array must be returned.
+        Defaults to ``True``.
+
+    Returns
+    -------
+    out : ndarray
+        An array having the specified data type.
+
+    See Also
+    --------
+    ndarray.astype
+
+    Examples
+    --------
+    >>> arr = np.array([1, 2, 3]); arr
+    array([1, 2, 3])
+    >>> np.astype(arr, np.float64)
+    array([1., 2., 3.])
+
+    Non-copy case:
+
+    >>> arr = np.array([1, 2, 3])
+    >>> arr_noncpy = np.astype(arr, arr.dtype, copy=False)
+    >>> np.shares_memory(arr, arr_noncpy)
+    True
+
+    """
+    if not isinstance(x, np.ndarray):
+        raise TypeError(
+            f"Input should be a NumPy array. It is a {type(x)} instead."
+        )
+    return x.astype(dtype, copy=copy)
 
 
 inf = PINF

@@ -318,41 +318,6 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 }
 
 
-/* returns an Array-Scalar Object of the type of arr
-   from the given pointer to memory -- main Scalar creation function
-   default new method calls this.
-*/
-
-/* Ideally, here the descriptor would contain all the information needed.
-   So, that we simply need the data and the descriptor, and perhaps
-   a flag
-*/
-
-
-/*
-  Given a string return the type-number for
-  the data-type with that string as the type-object name.
-  Returns NPY_NOTYPE without setting an error if no type can be
-  found.  Only works for user-defined data-types.
-*/
-
-/*NUMPY_API
- */
-NPY_NO_EXPORT int
-PyArray_TypeNumFromName(char const *str)
-{
-    int i;
-    PyArray_Descr *descr;
-
-    for (i = 0; i < NPY_NUMUSERTYPES; i++) {
-        descr = userdescrs[i];
-        if (strcmp(descr->typeobj->tp_name, str) == 0) {
-            return descr->type_num;
-        }
-    }
-    return NPY_NOTYPE;
-}
-
 /*NUMPY_API
  *
  * If WRITEBACKIFCOPY and self has data, reset the base WRITEABLE flag,
@@ -548,50 +513,6 @@ PyArray_DebugPrint(PyArrayObject *obj)
     }
     printf("-------------------------------------------------------\n");
     fflush(stdout);
-}
-
-
-/*NUMPY_API
- * This function is scheduled to be removed
- *
- * TO BE REMOVED - NOT USED INTERNALLY.
- */
-NPY_NO_EXPORT void
-PyArray_SetDatetimeParseFunction(PyObject *NPY_UNUSED(op))
-{
-}
-
-/*NUMPY_API
- */
-NPY_NO_EXPORT int
-PyArray_CompareUCS4(npy_ucs4 const *s1, npy_ucs4 const *s2, size_t len)
-{
-    npy_ucs4 c1, c2;
-    while(len-- > 0) {
-        c1 = *s1++;
-        c2 = *s2++;
-        if (c1 != c2) {
-            return (c1 < c2) ? -1 : 1;
-        }
-    }
-    return 0;
-}
-
-/*NUMPY_API
- */
-NPY_NO_EXPORT int
-PyArray_CompareString(const char *s1, const char *s2, size_t len)
-{
-    const unsigned char *c1 = (unsigned char *)s1;
-    const unsigned char *c2 = (unsigned char *)s2;
-    size_t i;
-
-    for(i = 0; i < len; ++i) {
-        if (c1[i] != c2[i]) {
-            return (c1[i] > c2[i]) ? 1 : -1;
-        }
-    }
-    return 0;
 }
 
 
@@ -1233,8 +1154,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         /* Logic shared by `empty`, `empty_like`, and `ndarray.__new__` */
         if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
             /* place Py_None in object positions */
-            PyArray_FillObjectArray(ret, Py_None);
-            if (PyErr_Occurred()) {
+            if (PyArray_SetObjectsToNone(ret) < 0) {
                 descr = NULL;
                 goto fail;
             }

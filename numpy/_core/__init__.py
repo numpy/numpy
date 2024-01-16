@@ -101,7 +101,25 @@ from . import _internal
 from . import _dtype
 from . import _methods
 
-__all__ = ['memmap', 'sctypeDict', 'record', 'recarray', 'abs']
+acos = numeric.arccos
+acosh = numeric.arccosh
+asin = numeric.arcsin
+asinh = numeric.arcsinh
+atan = numeric.arctan
+atanh = numeric.arctanh
+atan2 = numeric.arctan2
+concat = numeric.concatenate
+bitwise_left_shift = numeric.left_shift
+bitwise_invert = numeric.invert
+bitwise_right_shift = numeric.right_shift
+permute_dims = numeric.transpose
+pow = numeric.power
+
+__all__ = [
+    "abs", "acos", "acosh", "asin", "asinh", "atan", "atanh", "atan2",
+    "bitwise_invert", "bitwise_left_shift", "bitwise_right_shift", "concat",
+    "pow", "permute_dims", "memmap", "sctypeDict", "record", "recarray"
+]
 __all__ += numeric.__all__
 __all__ += function_base.__all__
 __all__ += getlimits.__all__

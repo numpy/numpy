@@ -16,6 +16,7 @@
 #include "common_dtype.h"
 #include "umathmodule.h"
 #include "abstractdtypes.h"
+#include "dispatching.h"
 
 int
 PyArrayInitDTypeMeta_FromSpec(
@@ -115,9 +116,6 @@ PyArrayInitDTypeMeta_FromSpec(
 NPY_NO_EXPORT int
 PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate);
 
-NPY_NO_EXPORT int
-PyUFunc_AddLoopFromSpec(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate);
-
 
 /*
  * Function is defined in umath/wrapping_array_method.c
@@ -128,31 +126,6 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
         PyArray_DTypeMeta *new_dtypes[], PyArray_DTypeMeta *wrapped_dtypes[],
         translate_given_descrs_func *translate_given_descrs,
         translate_loop_descrs_func *translate_loop_descrs);
-
-
-static int
-PyUFunc_AddPromoter(
-        PyObject *ufunc, PyObject *DType_tuple, PyObject *promoter)
-{
-    if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
-        PyErr_SetString(PyExc_TypeError,
-                "ufunc object passed is not a ufunc!");
-        return -1;
-    }
-    if (!PyCapsule_CheckExact(promoter)) {
-        PyErr_SetString(PyExc_TypeError,
-                "promoter must (currently) be a PyCapsule.");
-        return -1;
-    }
-    if (PyCapsule_GetPointer(promoter, "numpy._ufunc_promoter") == NULL) {
-        return -1;
-    }
-    PyObject *info = PyTuple_Pack(2, DType_tuple, promoter);
-    if (info == NULL) {
-        return -1;
-    }
-    return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
-}
 
 
 /*
@@ -171,7 +144,7 @@ _PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
 NPY_NO_EXPORT PyObject *
 _get_experimental_dtype_api(PyObject *NPY_UNUSED(mod), PyObject *arg)
 {
-    static void *experimental_api_table[47] = {
+    static void *experimental_api_table[48] = {
             &PyUFunc_AddLoopFromSpec,
             &PyUFunc_AddPromoter,
             &PyArrayDTypeMeta_Type,
@@ -230,6 +203,7 @@ _get_experimental_dtype_api(PyObject *NPY_UNUSED(mod), PyObject *arg)
         experimental_api_table[44] = &PyArray_PyIntAbstractDType;
         experimental_api_table[45] = &PyArray_PyFloatAbstractDType;
         experimental_api_table[46] = &PyArray_PyComplexAbstractDType;
+        experimental_api_table[47] = &PyArray_DefaultIntDType;
     }
 
     char *env = getenv("NUMPY_EXPERIMENTAL_DTYPE_API");

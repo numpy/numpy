@@ -34,6 +34,8 @@ static const char* umath_linalg_version_string = "0.1.5";
  *                        Debugging support                                 *
  ****************************************************************************
  */
+#define _UMATH_LINALG_DEBUG 0
+
 #define TRACE_TXT(...) do { fprintf (stderr, __VA_ARGS__); } while (0)
 #define STACK_TRACE do {} while (0)
 #define TRACE\
@@ -46,7 +48,7 @@ static const char* umath_linalg_version_string = "0.1.5";
         STACK_TRACE;                            \
     } while (0)
 
-#if 0
+#if _UMATH_LINALG_DEBUG
 #if defined HAVE_EXECINFO_H
 #include <execinfo.h>
 #elif defined HAVE_LIBUNWIND_H
@@ -465,35 +467,19 @@ constexpr double numeric_limits<double>::minus_one;
 const double numeric_limits<double>::ninf = -NPY_INFINITY;
 const double numeric_limits<double>::nan = NPY_NAN;
 
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 template<>
 struct numeric_limits<npy_cfloat> {
-static constexpr npy_cfloat one = {1.0f, 0.0f};
-static constexpr npy_cfloat zero = {0.0f, 0.0f};
-static constexpr npy_cfloat minus_one = {-1.0f, 0.0f};
+static constexpr npy_cfloat one = {1.0f};
+static constexpr npy_cfloat zero = {0.0f};
+static constexpr npy_cfloat minus_one = {-1.0f};
 static const npy_cfloat ninf;
 static const npy_cfloat nan;
 };
 constexpr npy_cfloat numeric_limits<npy_cfloat>::one;
 constexpr npy_cfloat numeric_limits<npy_cfloat>::zero;
 constexpr npy_cfloat numeric_limits<npy_cfloat>::minus_one;
-const npy_cfloat numeric_limits<npy_cfloat>::ninf = {-NPY_INFINITYF, 0.0f};
+const npy_cfloat numeric_limits<npy_cfloat>::ninf = {-NPY_INFINITYF};
 const npy_cfloat numeric_limits<npy_cfloat>::nan = {NPY_NANF, NPY_NANF};
-#else
-template<>
-struct numeric_limits<npy_cfloat> {
-static constexpr npy_cfloat one = 1.0f;
-static constexpr npy_cfloat zero = 0.0f;
-static constexpr npy_cfloat minus_one = -1.0f;
-static const npy_cfloat ninf;
-static const npy_cfloat nan;
-};
-constexpr npy_cfloat numeric_limits<npy_cfloat>::one;
-constexpr npy_cfloat numeric_limits<npy_cfloat>::zero;
-constexpr npy_cfloat numeric_limits<npy_cfloat>::minus_one;
-const npy_cfloat numeric_limits<npy_cfloat>::ninf = -NPY_INFINITYF;
-const npy_cfloat numeric_limits<npy_cfloat>::nan = NPY_NANF;
-#endif
 
 template<>
 struct numeric_limits<f2c_complex> {
@@ -509,48 +495,32 @@ constexpr f2c_complex numeric_limits<f2c_complex>::minus_one;
 const f2c_complex numeric_limits<f2c_complex>::ninf = {-NPY_INFINITYF, 0.0f};
 const f2c_complex numeric_limits<f2c_complex>::nan = {NPY_NANF, NPY_NANF};
 
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 template<>
 struct numeric_limits<npy_cdouble> {
-static constexpr npy_cdouble one = {1.0, 0.0};
-static constexpr npy_cdouble zero = {0.0, 0.0};
-static constexpr npy_cdouble minus_one = {-1.0, 0.0};
+static constexpr npy_cdouble one = {1.0};
+static constexpr npy_cdouble zero = {0.0};
+static constexpr npy_cdouble minus_one = {-1.0};
 static const npy_cdouble ninf;
 static const npy_cdouble nan;
 };
 constexpr npy_cdouble numeric_limits<npy_cdouble>::one;
 constexpr npy_cdouble numeric_limits<npy_cdouble>::zero;
 constexpr npy_cdouble numeric_limits<npy_cdouble>::minus_one;
-const npy_cdouble numeric_limits<npy_cdouble>::ninf = {-NPY_INFINITY, 0.0};
+const npy_cdouble numeric_limits<npy_cdouble>::ninf = {-NPY_INFINITY};
 const npy_cdouble numeric_limits<npy_cdouble>::nan = {NPY_NAN, NPY_NAN};
-#else
-template<>
-struct numeric_limits<npy_cdouble> {
-static constexpr npy_cdouble one = 1.0;
-static constexpr npy_cdouble zero = 0.0;
-static constexpr npy_cdouble minus_one = -1.0;
-static const npy_cdouble ninf;
-static const npy_cdouble nan;
-};
-constexpr npy_cdouble numeric_limits<npy_cdouble>::one;
-constexpr npy_cdouble numeric_limits<npy_cdouble>::zero;
-constexpr npy_cdouble numeric_limits<npy_cdouble>::minus_one;
-const npy_cdouble numeric_limits<npy_cdouble>::ninf = -NPY_INFINITY;
-const npy_cdouble numeric_limits<npy_cdouble>::nan = NPY_NAN;
-#endif
 
 template<>
 struct numeric_limits<f2c_doublecomplex> {
-static constexpr f2c_doublecomplex one = {1.0, 0.0};
-static constexpr f2c_doublecomplex zero = {0.0, 0.0};
-static constexpr f2c_doublecomplex minus_one = {-1.0, 0.0};
+static constexpr f2c_doublecomplex one = {1.0};
+static constexpr f2c_doublecomplex zero = {0.0};
+static constexpr f2c_doublecomplex minus_one = {-1.0};
 static const f2c_doublecomplex ninf;
 static const f2c_doublecomplex nan;
 };
 constexpr f2c_doublecomplex numeric_limits<f2c_doublecomplex>::one;
 constexpr f2c_doublecomplex numeric_limits<f2c_doublecomplex>::zero;
 constexpr f2c_doublecomplex numeric_limits<f2c_doublecomplex>::minus_one;
-const f2c_doublecomplex numeric_limits<f2c_doublecomplex>::ninf = {-NPY_INFINITY, 0.0};
+const f2c_doublecomplex numeric_limits<f2c_doublecomplex>::ninf = {-NPY_INFINITY};
 const f2c_doublecomplex numeric_limits<f2c_doublecomplex>::nan = {NPY_NAN, NPY_NAN};
 
 /*
@@ -606,6 +576,7 @@ init_linearize_data(LINEARIZE_DATA_t *lin_data,
         lin_data, rows, columns, row_strides, column_strides, columns);
 }
 
+#if _UMATH_LINALG_DEBUG
 static inline void
 dump_ufunc_object(PyUFuncObject* ufunc)
 {
@@ -683,7 +654,7 @@ dump_matrix(const char* name,
         TRACE_TXT(" |\n");
     }
 }
-
+#endif
 
 /*
  *****************************************************************************
@@ -792,12 +763,6 @@ update_pointers(npy_uint8** bases, ptrdiff_t* offsets, size_t count)
     }
 }
 
-
-/* disable -Wmaybe-uninitialized as there is some code that generate false
-   positives with this warning
-*/
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 
 /*
  *****************************************************************************
@@ -1018,11 +983,25 @@ identity_matrix(typ *matrix, size_t n)
     }
 }
 
-         /* lower/upper triangular matrix using blas (in place) */
+         /* zero the undefined part in a upper/lower triangular matrix */
+          /* Note: matrix from fortran routine, so column-major order */
 
 template<typename typ>
 static inline void
 triu_matrix(typ *matrix, size_t n)
+{
+    size_t i, j;
+    for (i = 0; i < n-1; ++i) {
+        for (j = i+1; j < n; ++j) {
+            matrix[j] = numeric_limits<typ>::zero;
+        }
+        matrix += n;
+    }
+}
+
+template<typename typ>
+static inline void
+tril_matrix(typ *matrix, size_t n)
 {
     size_t i, j;
     matrix += n;
@@ -1033,7 +1012,6 @@ triu_matrix(typ *matrix, size_t n)
         matrix += n;
     }
 }
-
 
 /* -------------------------------------------------------------------------- */
                           /* Determinants */
@@ -1994,8 +1972,6 @@ cholesky(char uplo, char **args, npy_intp const *dimensions, npy_intp const *ste
     fortran_int n;
     INIT_OUTER_LOOP_2
 
-    assert(uplo == 'L');
-
     n = (fortran_int)dimensions[0];
     if (init_potrf(&params, uplo, n)) {
         LINEARIZE_DATA_t a_in, r_out;
@@ -2006,7 +1982,12 @@ cholesky(char uplo, char **args, npy_intp const *dimensions, npy_intp const *ste
             linearize_matrix(params.A, (ftyp*)args[0], &a_in);
             not_ok = call_potrf(&params);
             if (!not_ok) {
-                triu_matrix(params.A, params.N);
+                if (uplo == 'L') {
+                    tril_matrix(params.A, params.N);
+                }
+                else {
+                    triu_matrix(params.A, params.N);
+                }
                 delinearize_matrix((ftyp*)args[1], params.A, &r_out);
             } else {
                 error_occurred = 1;
@@ -2025,6 +2006,14 @@ cholesky_lo(char **args, npy_intp const *dimensions, npy_intp const *steps,
                 void *NPY_UNUSED(func))
 {
     cholesky<typ>('L', args, dimensions, steps);
+}
+
+template<typename typ>
+static void
+cholesky_up(char **args, npy_intp const *dimensions, npy_intp const *steps,
+                void *NPY_UNUSED(func))
+{
+    cholesky<typ>('U', args, dimensions, steps);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2309,7 +2298,7 @@ process_geev_results(GEEV_PARAMS_t<typ> *params, scalar_trait)
     }
 }
 
-
+#if 0
 static inline fortran_int
 call_geev(GEEV_PARAMS_t<fortran_complex>* params)
 {
@@ -2325,6 +2314,8 @@ call_geev(GEEV_PARAMS_t<fortran_complex>* params)
                           &rv);
     return rv;
 }
+#endif
+
 static inline fortran_int
 call_geev(GEEV_PARAMS_t<fortran_doublecomplex>* params)
 {
@@ -2958,7 +2949,7 @@ using basetyp = basetype_t<typ>;
                    (fortran_int)dimensions[0],
                    (fortran_int)dimensions[1],
 dispatch_scalar<typ>())) {
-        LINEARIZE_DATA_t a_in, u_out, s_out, v_out;
+        LINEARIZE_DATA_t a_in, u_out = {}, s_out = {}, v_out = {};
         fortran_int min_m_n = params.M < params.N ? params.M : params.N;
 
         init_linearize_data(&a_in, params.N, params.M, steps[1], steps[0]);
@@ -3327,7 +3318,7 @@ using ftyp = fortran_type_t<typ>;
 
 
 /* -------------------------------------------------------------------------- */
-                 /* qr common code (modes - reduced and complete) */ 
+                 /* qr common code (modes - reduced and complete) */
 
 template<typename typ>
 struct GQR_PARAMS_t
@@ -3564,7 +3555,7 @@ init_gqr(GQR_PARAMS_t<ftyp> *params,
                    fortran_int n)
 {
     return init_gqr_common(
-        params, m, n, 
+        params, m, n,
         fortran_int_min(m, n));
 }
 
@@ -4113,8 +4104,6 @@ dispatch_scalar<typ>{});
     set_fp_invalid_or_clear(error_occurred);
 }
 
-#pragma GCC diagnostic pop
-
 /* -------------------------------------------------------------------------- */
               /* gufunc registration  */
 
@@ -4213,6 +4202,7 @@ GUFUNC_FUNC_ARRAY_REAL_COMPLEX__(solve);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX__(solve1);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX__(inv);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX__(cholesky_lo);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX__(cholesky_up);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX__(svd_N);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX__(svd_S);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX__(svd_A);
@@ -4427,11 +4417,21 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "cholesky_lo",
         "(m,m)->(m,m)",
-        "cholesky decomposition of hermitian positive-definite matrices. \n"\
-        "Broadcast to all outer dimensions. \n"\
-        "    \"(m,m)->(m,m)\" \n",
+        "cholesky decomposition of hermitian positive-definite matrices,\n"\
+        "using lower triangle. Broadcast to all outer dimensions.\n"\
+        "    \"(m,m)->(m,m)\"\n",
         4, 1, 1,
         FUNC_ARRAY_NAME(cholesky_lo),
+        equal_2_types
+    },
+    {
+        "cholesky_up",
+        "(m,m)->(m,m)",
+        "cholesky decomposition of hermitian positive-definite matrices,\n"\
+        "using upper triangle. Broadcast to all outer dimensions.\n"\
+        "    \"(m,m)->(m,m)\"\n",
+        4, 1, 1,
+        FUNC_ARRAY_NAME(cholesky_up),
         equal_2_types
     },
     {
@@ -4580,7 +4580,7 @@ addUfuncs(PyObject *dictionary) {
         if (f == NULL) {
             return -1;
         }
-#if 0
+#if _UMATH_LINALG_DEBUG
         dump_ufunc_object((PyUFuncObject*) f);
 #endif
         int ret = PyDict_SetItemString(dictionary, d->name, f);

@@ -118,9 +118,6 @@ def array_str(
     precision: None | SupportsIndex = ...,
     suppress_small: None | bool = ...,
 ) -> str: ...
-def set_string_function(
-    f: None | Callable[[NDArray[Any]], str], repr: bool = ...
-) -> None: ...
 def printoptions(
     precision: None | SupportsIndex = ...,
     threshold: None | int = ...,

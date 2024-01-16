@@ -14,7 +14,7 @@ import re
 import os
 from .crackfortran import markoutercomma
 from . import cb_rules
-from ._isocbind import iso_c_binding_map
+from ._isocbind import iso_c_binding_map, isoc_c2pycode_map, iso_c2py_map
 
 # The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
@@ -24,7 +24,7 @@ from .auxfuncs import *
 __all__ = [
     'getctype', 'getstrlength', 'getarrdims', 'getpydocsign',
     'getarrdocsign', 'getinit', 'sign2map', 'routsign2map', 'modsign2map',
-    'cb_sign2map', 'cb_routsign2map', 'common_sign2map'
+    'cb_sign2map', 'cb_routsign2map', 'common_sign2map', 'process_f2cmap_dict'
 ]
 
 
@@ -126,13 +126,17 @@ f2cmap_all = {'real': {'': 'float', '4': 'float', '8': 'double',
               'byte': {'': 'char'},
               }
 
-f2cmap_all = deep_merge(f2cmap_all, iso_c_binding_map)
+# Add ISO_C handling
+c2pycode_map.update(isoc_c2pycode_map)
+c2py_map.update(iso_c2py_map)
+f2cmap_all, _ = process_f2cmap_dict(f2cmap_all, iso_c_binding_map, c2py_map)
+# End ISO_C handling
 f2cmap_default = copy.deepcopy(f2cmap_all)
 
 f2cmap_mapped = []
 
 def load_f2cmap_file(f2cmap_file):
-    global f2cmap_all
+    global f2cmap_all, f2cmap_mapped
 
     f2cmap_all = copy.deepcopy(f2cmap_default)
 
@@ -151,29 +155,11 @@ def load_f2cmap_file(f2cmap_file):
         outmess('Reading f2cmap from {!r} ...\n'.format(f2cmap_file))
         with open(f2cmap_file) as f:
             d = eval(f.read().lower(), {}, {})
-        for k, d1 in d.items():
-            for k1 in d1.keys():
-                d1[k1.lower()] = d1[k1]
-            d[k.lower()] = d[k]
-        for k in d.keys():
-            if k not in f2cmap_all:
-                f2cmap_all[k] = {}
-            for k1 in d[k].keys():
-                if d[k][k1] in c2py_map:
-                    if k1 in f2cmap_all[k]:
-                        outmess(
-                            "\tWarning: redefinition of {'%s':{'%s':'%s'->'%s'}}\n" % (k, k1, f2cmap_all[k][k1], d[k][k1]))
-                    f2cmap_all[k][k1] = d[k][k1]
-                    outmess('\tMapping "%s(kind=%s)" to "%s"\n' %
-                            (k, k1, d[k][k1]))
-                    f2cmap_mapped.append(d[k][k1])
-                else:
-                    errmess("\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n" % (
-                        k, k1, d[k][k1], d[k][k1], list(c2py_map.keys())))
+        f2cmap_all, f2cmap_mapped = process_f2cmap_dict(f2cmap_all, d, c2py_map, True)
         outmess('Successfully applied user defined f2cmap changes\n')
     except Exception as msg:
-        errmess(
-            'Failed to apply user defined f2cmap changes: %s. Skipping.\n' % (msg))
+        errmess('Failed to apply user defined f2cmap changes: %s. Skipping.\n' % (msg))
+
 
 cformat_map = {'double': '%g',
                'float': '%g',

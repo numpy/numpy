@@ -919,13 +919,13 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
                 return cls;
             }
             else if (cls->type_num == NPY_HALF || cls->type_num == NPY_FLOAT) {
-                    return &PyArray_CFloatDType;
+                return NPY_DT_NewRef(&PyArray_CFloatDType);
             }
             else if (cls->type_num == NPY_DOUBLE) {
-                return &PyArray_CDoubleDType;
+                return NPY_DT_NewRef(&PyArray_CDoubleDType);
             }
             else if (cls->type_num == NPY_LONGDOUBLE) {
-                return &PyArray_CLongDoubleDType;
+                return NPY_DT_NewRef(&PyArray_CLongDoubleDType);
             }
         }
         else if (other == &PyArray_PyFloatAbstractDType) {
@@ -1306,6 +1306,7 @@ initialize_legacy_dtypemeta_aliases(PyArray_Descr **_builtin_descrs) {
     _UInt64_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINT64]);
     _Intp_dtype = NPY_DTYPE(_builtin_descrs[NPY_INTP]);
     _UIntp_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINTP]);
+    _DefaultInt_dtype = NPY_DTYPE(_builtin_descrs[NPY_DEFAULT_INT]);
     _Half_dtype = NPY_DTYPE(_builtin_descrs[NPY_HALF]);
     _Float_dtype = NPY_DTYPE(_builtin_descrs[NPY_FLOAT]);
     _Double_dtype = NPY_DTYPE(_builtin_descrs[NPY_DOUBLE]);
@@ -1361,6 +1362,7 @@ PyArray_DTypeMeta *_Int64_dtype = NULL;
 PyArray_DTypeMeta *_UInt64_dtype = NULL;
 PyArray_DTypeMeta *_Intp_dtype = NULL;
 PyArray_DTypeMeta *_UIntp_dtype = NULL;
+PyArray_DTypeMeta *_DefaultInt_dtype = NULL;
 PyArray_DTypeMeta *_Half_dtype = NULL;
 PyArray_DTypeMeta *_Float_dtype = NULL;
 PyArray_DTypeMeta *_Double_dtype = NULL;

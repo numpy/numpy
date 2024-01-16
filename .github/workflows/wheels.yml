@@ -111,7 +111,7 @@ jobs:
         if: runner.os == 'windows'
 
       # Used to push the built wheels
-      - uses: actions/setup-python@b64ffcaf5b410884ad320a9cfac8866006a109aa # v4.8.0
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: "3.x"
 
@@ -121,7 +121,7 @@ jobs:
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
-      - uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+      - uses: actions/upload-artifact@1eb3cb2b3e0f29609092a73eb033bb759a334595 # v4.1.0
         with:
           name: ${{ matrix.python }}-${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
           path: ./wheelhouse/*.whl
@@ -183,7 +183,7 @@ jobs:
           # https://github.com/actions/checkout/issues/338
           fetch-depth: 0
       # Used to push the built wheels
-      - uses: actions/setup-python@b64ffcaf5b410884ad320a9cfac8866006a109aa # v4.8.0
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           # Build sdist on lowest supported Python
           python-version: "3.9"
@@ -196,7 +196,6 @@ jobs:
           # TODO: Don't run test suite, and instead build wheels from sdist
           # Depends on pypa/cibuildwheel#1020
           python -m pip install dist/*.gz -Csetup-args=-Dallow-noblas=true
-          pip install ninja
           pip install -r test_requirements.txt
           cd .. # Can't import numpy within numpy src directory
           python -c "import numpy, sys; print(numpy.__version__); sys.exit(numpy.test() is False)"
@@ -206,7 +205,7 @@ jobs:
           python -mpip install twine
           twine check dist/*
 
-      - uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+      - uses: actions/upload-artifact@1eb3cb2b3e0f29609092a73eb033bb759a334595 # v4.1.0
         with:
           name: sdist
           path: ./dist/*

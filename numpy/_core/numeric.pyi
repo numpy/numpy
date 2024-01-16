@@ -462,6 +462,39 @@ def tensordot(
 ) -> NDArray[object_]: ...
 
 @overload
+def vecdot(
+    x1: _ArrayLikeUnknown, x2: _ArrayLikeUnknown, axis: int = ...
+) -> NDArray[Any]: ...
+@overload
+def vecdot(
+    x1: _ArrayLikeBool_co, x2: _ArrayLikeBool_co, axis: int = ...
+) -> NDArray[np.bool]: ...
+@overload
+def vecdot(
+    x1: _ArrayLikeUInt_co, x2: _ArrayLikeUInt_co, axis: int = ...
+) -> NDArray[unsignedinteger[Any]]: ...
+@overload
+def vecdot(
+    x1: _ArrayLikeInt_co, x2: _ArrayLikeInt_co, axis: int = ...
+) -> NDArray[signedinteger[Any]]: ...
+@overload
+def vecdot(
+    x1: _ArrayLikeFloat_co, x2: _ArrayLikeFloat_co, axis: int = ...
+) -> NDArray[floating[Any]]: ...
+@overload
+def vecdot(
+    x1: _ArrayLikeComplex_co, x2: _ArrayLikeComplex_co, axis: int = ...
+) -> NDArray[complexfloating[Any, Any]]: ...
+@overload
+def vecdot(
+    x1: _ArrayLikeTD64_co, x2: _ArrayLikeTD64_co, axis: int = ...
+) -> NDArray[timedelta64]: ...
+@overload
+def vecdot(
+    x1: _ArrayLikeObject_co, x2: _ArrayLikeObject_co, axis: int = ...
+) -> NDArray[object_]: ...
+
+@overload
 def roll(
     a: _ArrayLike[_SCT],
     shift: _ShapeLike,
@@ -633,8 +666,8 @@ def identity(
 def allclose(
     a: ArrayLike,
     b: ArrayLike,
-    rtol: float = ...,
-    atol: float = ...,
+    rtol: ArrayLike = ...,
+    atol: ArrayLike = ...,
     equal_nan: bool = ...,
 ) -> bool: ...
 
@@ -642,19 +675,32 @@ def allclose(
 def isclose(
     a: _ScalarLike_co,
     b: _ScalarLike_co,
-    rtol: float = ...,
-    atol: float = ...,
+    rtol: ArrayLike = ...,
+    atol: ArrayLike = ...,
     equal_nan: bool = ...,
 ) -> np.bool: ...
 @overload
 def isclose(
     a: ArrayLike,
     b: ArrayLike,
-    rtol: float = ...,
-    atol: float = ...,
+    rtol: ArrayLike = ...,
+    atol: ArrayLike = ...,
     equal_nan: bool = ...,
 ) -> NDArray[np.bool]: ...
 
 def array_equal(a1: ArrayLike, a2: ArrayLike, equal_nan: bool = ...) -> bool: ...
 
 def array_equiv(a1: ArrayLike, a2: ArrayLike) -> bool: ...
+
+@overload
+def astype(
+    x: NDArray[Any],
+    dtype: _DTypeLike[_SCT],
+    copy: bool = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def astype(
+    x: NDArray[Any],
+    dtype: DTypeLike,
+    copy: bool = ...,
+) -> NDArray[Any]: ...

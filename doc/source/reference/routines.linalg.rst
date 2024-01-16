@@ -56,10 +56,13 @@ Matrix and vector products
    dot
    linalg.multi_dot
    vdot
+   vecdot
    inner
    outer
    matmul
+   linalg.matmul (Array API compatible location)
    tensordot
+   linalg.tensordot (Array API compatible location)
    einsum
    einsum_path
    linalg.matrix_power
@@ -93,6 +96,8 @@ Norms and other numbers
    :toctree: generated/
 
    linalg.norm
+   linalg.matrix_norm (Array API compatible)
+   linalg.vector_norm (Array API compatible)
    linalg.cond
    linalg.det
    linalg.matrix_rank
@@ -117,6 +122,7 @@ Other matrix operations
 
    diagonal
    linalg.diagonal (Array API compatible)
+   linalg.matrix_transpose (Array API compatible)
 
 Exceptions
 ----------

@@ -36,6 +36,8 @@ assert_type(nd.astype(np.float64, "K", "unsafe"), npt.NDArray[np.float64])
 assert_type(nd.astype(np.float64, "K", "unsafe", True), npt.NDArray[np.float64])
 assert_type(nd.astype(np.float64, "K", "unsafe", True, True), npt.NDArray[np.float64])
 
+assert_type(np.astype(nd, np.float64), npt.NDArray[np.float64])
+
 # byteswap
 assert_type(nd.byteswap(), npt.NDArray[np.int_])
 assert_type(nd.byteswap(True), npt.NDArray[np.int_])
