@@ -25,8 +25,8 @@ class _DType:
                 """You are comparing a numpy.array_api dtype against \
 a NumPy native dtype object, but you probably don't want to do this. \
 numpy.array_api dtype objects compare unequal to their NumPy equivalents. \
-Such cross-library comparison is not supported by the standard."""
-            )
+Such cross-library comparison is not supported by the standard.""",
+            stacklevel=2)
         if not isinstance(other, _DType):
             return NotImplemented
         return self._np_dtype == other._np_dtype
