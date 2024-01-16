@@ -1407,7 +1407,7 @@ HALF_to_@TYPE@(void *input, void *output, npy_intp n,
             t = (@type@)npy_half_to_float(*ip);
         }
 
-        *ip++;
+        ip++;
         *op++ = t;
     }
 }
