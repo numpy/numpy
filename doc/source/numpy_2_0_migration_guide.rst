@@ -24,7 +24,7 @@ language it may help to explicitly cast to a ``long``, for example with:
 ``arr = arr.astype("long", copy=False)``.
 
 Libraries interfacing with compiled code that are written in C, Cython, or
-a similar language may require updating to accomodate user input if they
+a similar language may require updating to accommodate user input if they
 are using the ``long`` or equivalent type on the C-side.
 In this case, you may wish to use ``intp`` and cast user input or support
 both ``long`` and ``intp`` (to better support NumPy 1.x as well).
@@ -36,8 +36,8 @@ Note that the NumPy random API is not affected by this change.
 
 C-API Changes
 =============
-Some definitions where removed or replaced due to being outdated or
-unmaintaibale.  Some new API definition will evaluate differently at
+Some definitions were removed or replaced due to being outdated or
+unmaintainable.  Some new API definition will evaluate differently at
 runtime between NumPy 2.0 and NumPy 1.x.
 Some are defined in ``numpy/_core/include/numpy/npy_2_compat.h``
 (for example ``NPY_DEFAULT_INT``) which can be vendored in full or part
@@ -73,7 +73,7 @@ Namespace changes
 =================
 
 In NumPy 2.0 certain functions, modules, and constants were moved or removed
-to make the NumPy namespace more userfriendly by removing unnecessary or
+to make the NumPy namespace more user-friendly by removing unnecessary or
 outdated functionality and clarifying which parts of NumPy are considered
 private.
 Please see the tables below for guidance on migration.  For most changes this
