@@ -1,0 +1,5 @@
+`numpy.astype`
+--------------
+
+`numpy.astype` was added to provide an Array API compatible alternative to
+`numpy.ndarray.astype` method.

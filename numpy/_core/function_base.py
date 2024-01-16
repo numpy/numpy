@@ -430,26 +430,17 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     start = start.astype(dt, copy=True)
     stop = stop.astype(dt, copy=True)
 
-    out_sign = _nx.ones(_nx.broadcast(start, stop).shape, dt)
-    # Avoid negligible real or imaginary parts in output by rotating to
-    # positive real, calculating, then undoing rotation
-    if _nx.issubdtype(dt, _nx.complexfloating):
-        all_imag = (start.real == 0.) & (stop.real == 0.)
-        if _nx.any(all_imag):
-            start[all_imag] = start[all_imag].imag
-            stop[all_imag] = stop[all_imag].imag
-            out_sign[all_imag] = 1j
-
-    both_negative = (_nx.sign(start) == -1) & (_nx.sign(stop) == -1)
-    if _nx.any(both_negative):
-        _nx.negative(start, out=start, where=both_negative)
-        _nx.negative(stop, out=stop, where=both_negative)
-        _nx.negative(out_sign, out=out_sign, where=both_negative)
+    # Allow negative real values and ensure a consistent result for complex
+    # (including avoiding negligible real or imaginary parts in output) by
+    # rotating start to positive real, calculating, then undoing rotation.
+    out_sign = _nx.sign(start)
+    start /= out_sign
+    stop = stop / out_sign
 
     log_start = _nx.log10(start)
     log_stop = _nx.log10(stop)
     result = logspace(log_start, log_stop, num=num,
-                      endpoint=endpoint, base=10.0, dtype=dtype)
+                      endpoint=endpoint, base=10.0, dtype=dt)
 
     # Make sure the endpoints match the start and stop arguments. This is
     # necessary because np.exp(np.log(x)) is not necessarily equal to x.
@@ -458,7 +449,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
         if num > 1 and endpoint:
             result[-1] = stop
 
-    result = out_sign * result
+    result *= out_sign
 
     if axis != 0:
         result = _nx.moveaxis(result, 0, axis)

@@ -1,0 +1,6 @@
+`numpy.fft` n-D transforms allow ``s[i] == -1``
+-----------------------------------------------
+
+`numpy.fft.fftn`, `numpy.fft.ifftn`, `numpy.fft.rfftn`, `numpy.fft.irfftn`,
+`numpy.fft.fft2`, and `numpy.fft.ifft2` now use the whole input array along
+the axis ``i`` if ``s[i] == -1``, in line with the array API specification.

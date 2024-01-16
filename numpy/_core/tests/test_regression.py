@@ -1189,9 +1189,10 @@ class TestRegression:
     def test_sign_for_complex_nan(self):
         # Ticket 794.
         with np.errstate(invalid='ignore'):
-            C = np.array([-np.inf, -2+1j, 0, 2-1j, np.inf, np.nan])
+            C = np.array([-np.inf, -3+4j, 0, 4-3j, np.inf, np.nan])
             have = np.sign(C)
-            want = np.array([-1+0j, -1+0j, 0+0j, 1+0j, 1+0j, np.nan])
+            want = np.array([-1+0j, -0.6+0.8j, 0+0j, 0.8-0.6j, 1+0j,
+                             complex(np.nan, np.nan)])
             assert_equal(have, want)
 
     def test_for_equal_names(self):
@@ -1481,7 +1482,7 @@ class TestRegression:
 
         x = np.array([1, 2, 3], dtype=np.dtype('<i4'))
         assert_equal(
-            sha256(x).hexdigest(), 
+            sha256(x).hexdigest(),
             '4636993d3e1da4e9d6b8f87b79e8f7c6d018580d52661950eabc3845c5897a4d'
         )
 
@@ -1941,7 +1942,7 @@ class TestRegression:
              'invalid'),
 
             # different 8-bit code point in KOI8-R vs latin1
-            (np.bytes_(b'\x9c'),  
+            (np.bytes_(b'\x9c'),
              b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'S1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'|'\np5\nNNNI1\nI1\nI0\ntp6\nbS'\\x9c'\np7\ntp8\nRp9\n.",  # noqa
              'different'),
         ]
@@ -2091,7 +2092,7 @@ class TestRegression:
         assert_array_equal(arr2, data_back)
 
     def test_structured_count_nonzero(self):
-        arr = np.array([0, 1]).astype('i4, (2)i4')[:1]
+        arr = np.array([0, 1]).astype('i4, 2i4')[:1]
         count = np.count_nonzero(arr)
         assert_equal(count, 0)
 
@@ -2578,3 +2579,14 @@ class TestRegression:
         # gh-25295
         for _ in range(1000):
             np.isclose(np.int64(2), np.int64(2), atol=1e-15, rtol=1e-300)
+
+    def test_replace_regression(self):
+        # gh-25513 segfault
+        carr = np.char.chararray((2,), itemsize=25)
+        test_strings = [b'  4.52173913043478315E+00',
+                        b'  4.95652173913043548E+00']
+        carr[:] = test_strings
+        out = carr.replace(b"E", b"D")
+        expected = np.char.chararray((2,), itemsize=25)
+        expected[:] = [s.replace(b"E", b"D") for s in test_strings]
+        assert_array_equal(out, expected)

@@ -130,7 +130,8 @@ jobs:
 
     - name: Build NumPy against Accelerate (ILP64)
       run: |
-        spin build -- -Duse-ilp64=true -Dallow-noblas=false
+        git clean -xdf
+        spin build -- -Duse-ilp64=true -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test (fast tests)
       run: spin test -j2

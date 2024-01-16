@@ -34,14 +34,12 @@ def _get_numpy_tools(filename):
 
 
 @click.command()
-@click.option(
-    "-t", "--token",
-    help="GitHub access token",
+@click.argument(
+    "token",
     required=True
 )
-@click.option(
-    "--revision-range",
-    help="<revision>..<revision>",
+@click.argument(
+    "revision-range",
     required=True
 )
 @click.pass_context

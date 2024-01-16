@@ -1164,27 +1164,6 @@ PyArrayNeighborhoodIter_Type and PyArrayNeighborhoodIterObject
           int mode;
       } PyArrayNeighborhoodIterObject;
 
-PyArrayFlags_Type and PyArrayFlagsObject
-----------------------------------------
-
-.. c:var:: PyTypeObject PyArrayFlags_Type
-
-   When the flags attribute is retrieved from Python, a special
-   builtin object of this type is constructed. This special type makes
-   it easier to work with the different flags by accessing them as
-   attributes or by accessing them as if the object were a dictionary
-   with the flag names as entries.
-
-.. c:type:: PyArrayFlagsObject
-
-   .. code-block:: c
-
-      typedef struct PyArrayFlagsObject {
-              PyObject_HEAD
-              PyObject *arr;
-              int flags;
-      } PyArrayFlagsObject;
-
 
 ScalarArrayTypes
 ----------------
@@ -1197,8 +1176,8 @@ are ``Py{TYPE}ArrType_Type`` where ``{TYPE}`` can be
     **Bool**, **Byte**, **Short**, **Int**, **Long**, **LongLong**,
     **UByte**, **UShort**, **UInt**, **ULong**, **ULongLong**,
     **Half**, **Float**, **Double**, **LongDouble**, **CFloat**,
-    **CDouble**, **CLongDouble**, **String**, **Unicode**, **Void**, and
-    **Object**.
+    **CDouble**, **CLongDouble**, **String**, **Unicode**, **Void**, 
+    **Datetime**, **Timedelta**, and **Object**.
 
 These type names are part of the C-API and can therefore be created in
 extension C-code. There is also a ``PyIntpArrType_Type`` and a
