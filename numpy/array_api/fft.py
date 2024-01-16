@@ -234,7 +234,7 @@ def ihfft(
     res = Array._new(np.fft.ihfft(x._array, n=n, axis=axis, norm=norm))
     # Note: np.fft functions improperly upcast float32 and complex64 to
     # complex128
-    if x.dtype in [float32, complex64]:
+    if x.dtype == float32:
         return astype(res, complex64)
     return res
 
