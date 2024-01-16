@@ -19,7 +19,7 @@ import numpy as np
 
 def _check_valid_dtype(dtype):
     # Note: Only spelling dtypes as the dtype objects is supported.
-    if not dtype in (None,) + _all_dtypes:
+    if dtype not in (None,) + _all_dtypes:
         raise ValueError("dtype must be one of the supported dtypes")
 
 

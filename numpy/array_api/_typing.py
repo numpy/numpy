@@ -38,9 +38,10 @@ class NestedSequence(Protocol[_T_co]):
     def __getitem__(self, key: int, /) -> _T_co | NestedSequence[_T_co]: ...
     def __len__(self, /) -> int: ...
 
+
 Device = _cpu_device
 
-Dtype =_DType
+Dtype = _DType
 
 if sys.version_info >= (3, 12):
     from collections.abc import Buffer as SupportsBufferProtocol

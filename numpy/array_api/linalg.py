@@ -6,7 +6,7 @@ from ._dtypes import (
     float32,
     float64,
     complex64,
-    complex128
+    complex128,
 )
 from ._data_type_functions import finfo
 from ._manipulation_functions import reshape

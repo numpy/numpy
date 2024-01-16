@@ -45,6 +45,7 @@ import numpy as np
 class _cpu_device:
     def __repr__(self):
         return "CPU_DEVICE"
+
 CPU_DEVICE = _cpu_device()
 
 class Array:
@@ -186,6 +187,7 @@ class Array:
         TypeError when the scalar type is incompatible with the dtype of self.
         """
         from ._data_type_functions import iinfo
+
         # Note: Only Python scalar types that match the array dtype are
         # allowed.
         if isinstance(scalar, bool):
