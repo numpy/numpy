@@ -786,7 +786,7 @@ foreach gen_mtargets : [
   [
     'x86_simd_argsort.dispatch.h',
     'src/npysort/x86_simd_argsort.dispatch.cpp',
-    use_intel_sort ? [AVX512_SKX] : []
+    use_intel_sort ? [AVX512_SKX, AVX2] : []
   ],
   [
     'x86_simd_qsort.dispatch.h',
