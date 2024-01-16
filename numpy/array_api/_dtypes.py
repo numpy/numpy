@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 
 # Note: we wrap the NumPy dtype objects in a bare class, so that none of the
@@ -12,6 +14,15 @@ class _DType:
         return f"np.array_api.{self._np_dtype.name}"
 
     def __eq__(self, other):
+        # See https://github.com/numpy/numpy/pull/25370/files#r1423259515.
+        # Avoid the user error of numpy.array_api.float32 == numpy.float32,
+        # which gives False. Making == error is probably too egregious, so
+        # warn instead.
+        if isinstance(other, np.dtype) or (isinstance(other, type) and issubclass(other, np.generic)):
+            warnings.warn("""You are comparing a numpy.array_api dtype against \
+a NumPy native dtype object, but you probably don't want to do this. \
+numpy.array_api dtype objects compare unequal to their NumPy equivalents. Such \
+cross-library comparison is not supported by the standard.""")
         if not isinstance(other, _DType):
             return NotImplemented
         return self._np_dtype == other._np_dtype

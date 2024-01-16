@@ -1,3 +1,5 @@
+import warnings
+
 from numpy.testing import assert_raises
 import numpy as np
 
@@ -25,7 +27,11 @@ def test_asarray_errors():
     # Test various protections against incorrect usage
     assert_raises(TypeError, lambda: Array([1]))
     assert_raises(TypeError, lambda: asarray(["a"]))
-    assert_raises(ValueError, lambda: asarray([1.0], dtype=np.float16))
+    with assert_raises(ValueError), warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        asarray([1.0], dtype=np.float16)
+        assert len(w) == 1
+        assert issubclass(w[-1].category, UserWarning)
     assert_raises(OverflowError, lambda: asarray(2**100))
     # Preferably this would be OverflowError
     # assert_raises(OverflowError, lambda: asarray([2**100]))
