@@ -53,106 +53,106 @@ def str_len(x: U_co | S_co) -> NDArray[np.int_]: ...
 
 @overload
 def find(
-    x1: U_co,
-    x2: U_co,
-    x3: i_co = ...,
-    x4: i_co | None = ...,
+    a: U_co,
+    sub: U_co,
+    start: i_co = ...,
+    end: i_co | None = ...,
 ) -> NDArray[np.int_]: ...
 @overload
 def find(
-    x1: S_co,
-    x2: S_co,
-    x3: i_co = ...,
-    x4: i_co | None = ...,
+    a: S_co,
+    sub: S_co,
+    start: i_co = ...,
+    end: i_co | None = ...,
 ) -> NDArray[np.int_]: ...
 
 @overload
 def rfind(
-    x1: U_co,
-    x2: U_co,
-    x3: i_co = ...,
-    x4: i_co | None = ...,
+    a: U_co,
+    sub: U_co,
+    start: i_co = ...,
+    end: i_co | None = ...,
 ) -> NDArray[np.int_]: ...
 @overload
 def rfind(
-    x1: S_co,
-    x2: S_co,
-    x3: i_co = ...,
-    x4: i_co | None = ...,
+    a: S_co,
+    sub: S_co,
+    start: i_co = ...,
+    end: i_co | None = ...,
 ) -> NDArray[np.int_]: ...
 
 @overload
 def count(
-    x1: U_co,
-    x2: U_co,
-    x3: i_co = ...,
-    x4: i_co | None = ...,
+    a: U_co,
+    sub: U_co,
+    start: i_co = ...,
+    end: i_co | None = ...,
 ) -> NDArray[np.int_]: ...
 @overload
 def count(
-    x1: S_co,
-    x2: S_co,
-    x3: i_co = ...,
-    x4: i_co | None = ...,
+    a: S_co,
+    sub: S_co,
+    start: i_co = ...,
+    end: i_co | None = ...,
 ) -> NDArray[np.int_]: ...
 
 @overload
 def startswith(
-    x1: U_co,
-    x2: U_co,
-    x3: i_co = ...,
-    x4: i_co | None = ...,
+    a: U_co,
+    prefix: U_co,
+    start: i_co = ...,
+    end: i_co | None = ...,
 ) -> NDArray[np.bool]: ...
 @overload
 def startswith(
-    x1: S_co,
-    x2: S_co,
-    x3: i_co = ...,
-    x4: i_co | None = ...,
+    a: S_co,
+    prefix: S_co,
+    start: i_co = ...,
+    end: i_co | None = ...,
 ) -> NDArray[np.bool]: ...
 
 @overload
 def endswith(
-    x1: U_co,
-    x2: U_co,
-    x3: i_co = ...,
-    x4: i_co | None = ...,
+    a: U_co,
+    suffix: U_co,
+    start: i_co = ...,
+    end: i_co | None = ...,
 ) -> NDArray[np.bool]: ...
 @overload
 def endswith(
-    x1: S_co,
-    x2: S_co,
-    x3: i_co = ...,
-    x4: i_co | None = ...,
+    a: S_co,
+    suffix: S_co,
+    start: i_co = ...,
+    end: i_co | None = ...,
 ) -> NDArray[np.bool]: ...
 
 @overload
-def lstrip(x1: U_co, x2: None | U_co = ...) -> NDArray[np.str_]: ...
+def lstrip(a: U_co, chars: None | U_co = ...) -> NDArray[np.str_]: ...
 @overload
-def lstrip(x1: S_co, x2: None | S_co = ...) -> NDArray[np.bytes_]: ...
+def lstrip(a: S_co, chars: None | S_co = ...) -> NDArray[np.bytes_]: ...
 
 @overload
-def rstrip(x1: U_co, x2: None | U_co = ...) -> NDArray[np.str_]: ...
+def rstrip(a: U_co, char: None | U_co = ...) -> NDArray[np.str_]: ...
 @overload
-def rstrip(x1: S_co, x2: None | S_co = ...) -> NDArray[np.bytes_]: ...
+def rstrip(a: S_co, char: None | S_co = ...) -> NDArray[np.bytes_]: ...
 
 @overload
-def strip(x1: U_co, x2: None | U_co = ...) -> NDArray[np.str_]: ...
+def strip(a: U_co, chars: None | U_co = ...) -> NDArray[np.str_]: ...
 @overload
-def strip(x1: S_co, x2: None | S_co = ...) -> NDArray[np.bytes_]: ...
+def strip(a: S_co, chars: None | S_co = ...) -> NDArray[np.bytes_]: ...
 
 @overload
 def replace(
-    x1: U_co,
-    x2: U_co,
-    x3: U_co,
-    x4: i_co = ...,
+    a: U_co,
+    old: U_co,
+    new: U_co,
+    count: i_co = ...,
 ) -> NDArray[np.str_]: ...
 @overload
 def replace(
     a: S_co,
-    x2: S_co,
-    x3: S_co,
-    x4: i_co = ...,
+    old: S_co,
+    new: S_co,
+    count: i_co = ...,
 ) -> NDArray[np.bytes_]: ...
 

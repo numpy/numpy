@@ -44,20 +44,18 @@ MAX = np.iinfo(np.int64).max
 def find(a, sub, start=0, end=None):
     """
     For each element, return the lowest index in the string where
-    substring ``sub`` is found, such that ``x2`` is contained in the
-    range [``x3``, ``x4``).
+    substring ``sub`` is found, such that ``sub`` is contained in the
+    range [``start``, ``end``).
 
     Parameters
     ----------
     a : array_like, with `np.bytes_` or `np.str_` dtype
 
     sub : array_like, with `np.bytes_` or `np.str_` dtype
+        The substring to search for.
 
-    start : array_like, with any integer dtype
-
-    end : array_like, with any integer dtype
-
-    ``start`` and ``end`` are interpreted as in slice notation.
+    start, end : array_like, with any integer dtype
+        The range to look in, interpreted as in slice notation.
 
     Returns
     -------
@@ -75,10 +73,7 @@ def find(a, sub, start=0, end=None):
     array([11])
 
     """
-    a = np.asanyarray(a)
-    sub = np.asanyarray(sub)
-    start = np.asanyarray(start)
-    end = np.asanyarray(end) if end is not None else MAX
+    end = end if end is not None else MAX
     return _find_ufunc(a, sub, start, end)
 
 
@@ -90,15 +85,13 @@ def rfind(a, sub, start=0, end=None):
 
     Parameters
     ----------
-    x1 : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array_like, with `np.bytes_` or `np.str_` dtype
 
     sub : array_like, with `np.bytes_` or `np.str_` dtype
+        The substring to search for.
 
-    start : array_like, with any integer dtype
-
-    end : array_like, with any integer dtype
-
-    ``start`` and ``end`` are interpreted as in slice notation.
+    start, end : array_like, with any integer dtype
+        The range to look in, interpreted as in slice notation.
 
     Returns
     -------
@@ -110,17 +103,14 @@ def rfind(a, sub, start=0, end=None):
     str.rfind
 
     """
-    a = np.asanyarray(a)
-    sub = np.asanyarray(sub)
-    start = np.asanyarray(start)
-    end = np.asanyarray(end) if end is not None else MAX
+    end = end if end is not None else MAX
     return _rfind_ufunc(a, sub, start, end)
 
 
 def count(a, sub, start=0, end=None):
     """
     Returns an array with the number of non-overlapping occurrences of
-    substring ``sub`` in the range [``start``, ``end``].
+    substring ``sub`` in the range [``start``, ``end``).
 
     Parameters
     ----------
@@ -129,11 +119,8 @@ def count(a, sub, start=0, end=None):
     sub : array_like, with `np.bytes_` or `np.str_` dtype
        The substring to search for.
 
-    start : array_like, with any integer dtype
-
-    end : array_like, with any integer dtype
-
-    ``start`` and ``end`` are interpreted as in slice notation.
+    start, end : array_like, with any integer dtype
+        The range to look in, interpreted as in slice notation.
 
     Returns
     -------
@@ -159,10 +146,7 @@ def count(a, sub, start=0, end=None):
     array([1, 0, 0])
 
     """
-    a = np.asanyarray(a)
-    sub = np.asanyarray(sub)
-    start = np.asanyarray(start)
-    end = np.asanyarray(end) if end is not None else MAX
+    end = end if end is not None else MAX
     return _count_ufunc(a, sub, start, end)
 
 
@@ -177,10 +161,7 @@ def startswith(a, prefix, start=0, end=None):
 
     prefix : array_like, with `np.bytes_` or `np.str_` dtype
 
-    start : array_like, with any integer dtype
-
-    end : array_like, with any integer dtype
-
+    start, end : array_like, with any integer dtype
         With ``start``, test beginning at that position. With ``end``,
         stop comparing at that position.
 
@@ -194,10 +175,7 @@ def startswith(a, prefix, start=0, end=None):
     str.startswith
 
     """
-    a = np.asanyarray(a)
-    prefix = np.asanyarray(prefix)
-    start = np.asanyarray(start)
-    end = np.asanyarray(end) if end is not None else MAX
+    end = end if end is not None else MAX
     return _startswith_ufunc(a, prefix, start, end)
 
 
@@ -212,10 +190,7 @@ def endswith(a, suffix, start=0, end=None):
 
     suffix : array_like, with `np.bytes_` or `np.str_` dtype
 
-    start : array_like, with ``int_`` dtype
-
-    end : array_like, with ``int_`` dtype
-
+    start, end : array_like, with any integer dtype
         With ``start``, test beginning at that position. With ``end``,
         stop comparing at that position.
 
@@ -239,10 +214,7 @@ def endswith(a, suffix, start=0, end=None):
     array([False,  True])
 
     """
-    a = np.asanyarray(a)
-    suffix = np.asanyarray(suffix)
-    start = np.asanyarray(start)
-    end = np.asanyarray(end) if end is not None else MAX
+    end = end if end is not None else MAX
     return _endswith_ufunc(a, suffix, start, end)
 
 
