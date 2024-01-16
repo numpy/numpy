@@ -353,6 +353,9 @@ from .linalg import matmul, tensordot, matrix_transpose, vecdot
 
 __all__ += ["matmul", "tensordot", "matrix_transpose", "vecdot"]
 
+from . import fft
+__all__ += ["fft"]
+
 from ._manipulation_functions import (
     concat,
     expand_dims,
