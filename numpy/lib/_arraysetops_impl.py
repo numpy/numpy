@@ -303,7 +303,8 @@ def unique(ar, return_index=False, return_inverse=False,
     ar = np.asanyarray(ar)
     if axis is None:
         ret = _unique1d(ar, return_index, return_inverse, return_counts, 
-                        equal_nan=equal_nan, inverse_shape=ar.shape, sorted=sorted)
+                        equal_nan=equal_nan, inverse_shape=ar.shape,
+                        sorted=sorted)
         return _unpack_tuple(ret)
 
     # axis was specified and not None
