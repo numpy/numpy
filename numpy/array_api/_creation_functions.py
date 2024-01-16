@@ -48,6 +48,9 @@ def asarray(
     from ._array_object import Array, CPU_DEVICE
 
     _check_valid_dtype(dtype)
+    _np_dtype = None
+    if dtype is not None:
+        _np_dtype = dtype._np_dtype
     if device not in [CPU_DEVICE, None]:
         raise ValueError(f"Unsupported device {device!r}")
     if copy in (False, np._CopyMode.IF_NEEDED):
@@ -57,15 +60,13 @@ def asarray(
         if dtype is not None and obj.dtype != dtype:
             copy = True
         if copy in (True, np._CopyMode.ALWAYS):
-            return Array._new(np.array(obj._array, copy=True, dtype=dtype))
+            return Array._new(np.array(obj._array, copy=True, dtype=_np_dtype))
         return obj
     if dtype is None and isinstance(obj, int) and (obj > 2 ** 64 or obj < -(2 ** 63)):
         # Give a better error message in this case. NumPy would convert this
         # to an object array. TODO: This won't handle large integers in lists.
         raise OverflowError("Integer out of bounds for array dtypes")
-    if dtype is not None:
-        dtype = dtype._np_dtype
-    res = np.asarray(obj, dtype=dtype)
+    res = np.asarray(obj, dtype=_np_dtype)
     return Array._new(res)
 
 
