@@ -579,7 +579,7 @@ class TestDateTime:
         assert_equal(np.datetime64(a, '[W]'), np.datetime64('NaT', '[W]'))
 
         # NaN -> NaT
-        nan = np.array([np.nan] * 8)
+        nan = np.array([np.nan] * 8 + [0])
         fnan = nan.astype('f')
         lnan = nan.astype('g')
         cnan = nan.astype('D')
@@ -587,7 +587,7 @@ class TestDateTime:
         clnan = nan.astype('G')
         hnan = nan.astype(np.half)
 
-        nat = np.array([np.datetime64('NaT')] * 8)
+        nat = np.array([np.datetime64('NaT')] * 8 + [np.datetime64(0, 'D')])
         assert_equal(nan.astype('M8[ns]'), nat)
         assert_equal(fnan.astype('M8[ns]'), nat)
         assert_equal(lnan.astype('M8[ns]'), nat)
@@ -596,7 +596,7 @@ class TestDateTime:
         assert_equal(clnan.astype('M8[ns]'), nat)
         assert_equal(hnan.astype('M8[ns]'), nat)
 
-        nat = np.array([np.timedelta64('NaT')] * 8)
+        nat = np.array([np.timedelta64('NaT')] * 8 + [np.timedelta64(0)])
         assert_equal(nan.astype('timedelta64[ns]'), nat)
         assert_equal(fnan.astype('timedelta64[ns]'), nat)
         assert_equal(lnan.astype('timedelta64[ns]'), nat)
