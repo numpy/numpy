@@ -926,12 +926,10 @@ def sort(a, axis=-1, kind=None, order=None, *, stable=None):
         but unspecified fields will still be used, in the order in which
         they come up in the dtype, to break ties.
     stable : bool, optional
-        Sort stability. If ``True``, the returned array must maintain
+        Sort stability. If ``True``, the returned array will maintain
         the relative order of ``a`` values which compare as equal.
-        If ``False`` or ``None``, the returned array may or may not maintain
-        the relative order of ``a`` values which compare as equal (i.e.,
-        the relative order of ``a`` values which compare as equal is
-        implementation-dependent). Default: ``None``.
+        If ``False`` or ``None``, this is not guaranteed. Internally,
+        this option selects ``kind='stable'``. Default: ``None``.
 
         .. versionadded:: 2.0.0
 
@@ -1101,12 +1099,10 @@ def argsort(a, axis=-1, kind=None, order=None, *, stable=None):
         but unspecified fields will still be used, in the order in which
         they come up in the dtype, to break ties.
     stable : bool, optional
-        Sort stability. If ``True``, the returned array must maintain
+        Sort stability. If ``True``, the returned array will maintain
         the relative order of ``a`` values which compare as equal.
-        If ``False`` or ``None``, the returned array may or may not maintain
-        the relative order of ``a`` values which compare as equal (i.e.,
-        the relative order of ``a`` values which compare as equal is
-        implementation-dependent). Default: ``None``.
+        If ``False`` or ``None``, this is not guaranteed. Internally,
+        this option selects ``kind='stable'``. Default: ``None``.
 
         .. versionadded:: 2.0.0
 

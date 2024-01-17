@@ -2045,8 +2045,7 @@ class TestMethods:
 
         with assert_raises_regex(
             ValueError,
-            "`kind` and `stable` parameters can't be provided at "
-            "the same time. Use only one of them."
+            "kind` and `stable` parameters can't be provided at the same time"
         ):
             np.sort(a, kind="stable", stable=True)
 
@@ -2487,6 +2486,12 @@ class TestMethods:
         # unicode
         a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.str_)
         assert_equal(a.argsort(kind='m'), r)
+
+        with assert_raises_regex(
+            ValueError,
+            "kind` and `stable` parameters can't be provided at the same time"
+        ):
+            np.argsort(a, kind="stable", stable=True)
 
     def test_sort_unicode_kind(self):
         d = np.arange(10)

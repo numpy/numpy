@@ -1235,20 +1235,20 @@ static PyObject *
 array_sort(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    int axis=-1;
+    int axis = -1;
     int val;
-    NPY_SORTKIND sortkind = NPY_SORT_UNDEFINED;
+    NPY_SORTKIND sortkind = _NPY_SORT_UNDEFINED;
     PyObject *order = NULL;
     PyArray_Descr *saved = NULL;
     PyArray_Descr *newd;
-    NPY_STABLEFLAG stable = NPY_STABLE_UNDEFINED;
+    int stable = -1;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("sort", args, len_args, kwnames,
             "|axis", &PyArray_PythonPyIntFromInt, &axis,
             "|kind", &PyArray_SortkindConverter, &sortkind,
             "|order", NULL, &order,
-            "$stable", &PyArray_BoolConverter, &stable,
+            "$stable", &PyArray_OptionalBoolConverter, &stable,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
@@ -1283,17 +1283,16 @@ array_sort(PyArrayObject *self,
         newd->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
-    if (sortkind != NPY_SORT_UNDEFINED && stable != NPY_STABLE_UNDEFINED) {
+    if (sortkind != _NPY_SORT_UNDEFINED && stable != -1) {
         PyErr_SetString(PyExc_ValueError,
             "`kind` and `stable` parameters can't be provided at "
             "the same time. Use only one of them.");
         return NULL;
     }
-    else if ((sortkind == NPY_SORT_UNDEFINED && stable == NPY_STABLE_UNDEFINED) ||
-             (stable == NPY_STABLE_FALSE)) {
+    else if ((sortkind == _NPY_SORT_UNDEFINED && stable == -1) || (stable == 0)) {
         sortkind = NPY_QUICKSORT;
     }
-    else if (stable == NPY_STABLE_TRUE) {
+    else if (stable == 1) {
         sortkind = NPY_STABLESORT;
     }
 
@@ -1386,17 +1385,17 @@ array_argsort(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     int axis = -1;
-    NPY_SORTKIND sortkind = NPY_QUICKSORT;
+    NPY_SORTKIND sortkind = _NPY_SORT_UNDEFINED;
     PyObject *order = NULL, *res;
     PyArray_Descr *newd, *saved=NULL;
-    npy_bool stable = NPY_FALSE;
+    int stable = -1;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("argsort", args, len_args, kwnames,
             "|axis", &PyArray_AxisConverter, &axis,
             "|kind", &PyArray_SortkindConverter, &sortkind,
             "|order", NULL, &order,
-            "$stable", &PyArray_BoolConverter, &stable,
+            "$stable", &PyArray_OptionalBoolConverter, &stable,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
@@ -1431,15 +1430,17 @@ array_argsort(PyArrayObject *self,
         newd->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
-    if (stable) {
-        if (sortkind != NPY_STABLESORT) {
-            if (PyErr_WarnEx(PyExc_UserWarning,
-                    "`kind` parameter has been overwritten to the `stable` "
-                    "algorithm, as `stable=True` was passed.", 2) < 0) {
-                return NULL;
-            }
-            sortkind = NPY_STABLESORT;
-        }
+    if (sortkind != _NPY_SORT_UNDEFINED && stable != -1) {
+        PyErr_SetString(PyExc_ValueError,
+            "`kind` and `stable` parameters can't be provided at "
+            "the same time. Use only one of them.");
+        return NULL;
+    }
+    else if ((sortkind == _NPY_SORT_UNDEFINED && stable == -1) || (stable == 0)) {
+        sortkind = NPY_QUICKSORT;
+    }
+    else if (stable == 1) {
+        sortkind = NPY_STABLESORT;
     }
 
     res = PyArray_ArgSort(self, axis, sortkind);
