@@ -1974,7 +1974,6 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
                        NPY_ITER_WRITEONLY |
                        NPY_UFUNC_DEFAULT_OUTPUT_FLAGS,
                        op_flags);
-
     /*
      * Set up the iterator per-op flags.  For generalized ufuncs, we
      * can't do buffering, so must COPY or UPDATEIFCOPY.
@@ -2598,8 +2597,10 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     npy_uint32 op_flags[2];
     int idim, ndim;
     int needs_api, need_outer_iterator;
-
     int res = 0;
+#if NPY_UF_DBG_TRACING
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
+#endif
 
     PyArrayMethod_StridedLoop *strided_loop;
     NpyAuxData *auxdata = NULL;
@@ -2659,7 +2660,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
 
 #if NPY_UF_DBG_TRACING
     printf("Found %s.accumulate inner loop with dtype :  ", ufunc_name);
-    PyObject_Print((PyObject *)op_dtypes[0], stdout, 0);
+    PyObject_Print((PyObject *)descrs[0], stdout, 0);
     printf("\n");
 #endif
 
@@ -3077,7 +3078,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
 #if NPY_UF_DBG_TRACING
     printf("Found %s.%s inner loop with dtype :  ", ufunc_name, opname);
-    PyObject_Print((PyObject *)op_dtypes[0], stdout, 0);
+    PyObject_Print((PyObject *)descrs[0], stdout, 0);
     printf("\n");
 #endif
 
@@ -5433,7 +5434,7 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
         npy_intp * indxP = (npy_intp *)iter->outer_ptrs[0];
         args[1] = (char *)indxP;
         steps[1] = iter->outer_strides[0];
-        /* 
+        /*
          * The value of iter->fancy_dims[0] is added to negative indexes
          * inside the inner loop
          */

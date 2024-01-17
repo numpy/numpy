@@ -1201,10 +1201,10 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     Returns
     -------
     index_array : ndarray of ints
-        Array of indices into the array. It has the same shape as `a.shape`
+        Array of indices into the array. It has the same shape as ``a.shape``
         with the dimension along `axis` removed. If `keepdims` is set to True,
         then the size of `axis` will be 1 with the resulting array having same
-        shape as `a.shape`.
+        shape as ``a.shape``.
 
     See Also
     --------
@@ -1254,7 +1254,7 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     array([[4],
            [3]])
     >>> # Same as np.amax(x, axis=-1)
-    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), 
+    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1),
     ...     axis=-1).squeeze(axis=-1)
     array([4, 3])
 
@@ -2441,11 +2441,20 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     >>> np.any([-1, 0, 5])
     True
 
-    >>> np.any(np.nan)
-    True
+    >>> np.any([[np.nan], [np.inf]], axis=1, keepdims=True)
+    array([[ True],
+           [ True]])
 
     >>> np.any([[True, False], [False, False]], where=[[False], [True]])
     False
+
+    >>> a = np.array([[1, 0, 0],
+    ...               [0, 0, 1],
+    ...               [0, 0, 0]])
+    >>> np.any(a, axis=0)
+    array([ True, False,  True])
+    >>> np.any(a, axis=1)
+    array([ True,  True, False])
 
     >>> o=np.array(False)
     >>> z=np.any([-1, 4, 5], out=o)

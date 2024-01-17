@@ -283,6 +283,13 @@ class TestRecord:
         assert_dtype_equal(a, b)
         assert_dtype_not_equal(a, c)
 
+    def test_init_simple_structured(self):
+        dt1 = np.dtype("i, i")
+        assert dt1.names == ("f0", "f1")
+
+        dt2 = np.dtype("i,")
+        assert dt2.names == ("f0",)
+
     def test_mutate_error(self):
         # NOTE: Mutating should be deprecated, but new API added to replace it.
         a = np.dtype("i,i")
@@ -419,11 +426,11 @@ class TestRecord:
                        'offsets':[np.dtype('intp').itemsize, 0]})
 
     @pytest.mark.parametrize(["obj", "dtype", "expected"],
-        [([], ("(2)f4,"), np.empty((0, 2), dtype="f4")),
-         (3, "(3)f4,", [3, 3, 3]),
-         (np.float64(2), "(2)f4,", [2, 2]),
+        [([], ("2f4"), np.empty((0, 2), dtype="f4")),
+         (3, "(3,)f4", [3, 3, 3]),
+         (np.float64(2), "(2,)f4", [2, 2]),
          ([((0, 1), (1, 2)), ((2,),)], '(2,2)f4', None),
-         (["1", "2"], "(2)i,", None)])
+         (["1", "2"], "2i", None)])
     def test_subarray_list(self, obj, dtype, expected):
         dtype = np.dtype(dtype)
         res = np.array(obj, dtype=dtype)
@@ -435,6 +442,17 @@ class TestRecord:
                 expected[i] = obj[i]
 
         assert_array_equal(res, expected)
+
+    def test_parenthesized_single_number(self):
+        with pytest.raises(TypeError, match="not understood"):
+            np.dtype("(2)f4")
+
+        # Deprecation also tested in
+        # test_deprecations.py::TestDeprecatedDTypeParenthesizedRepeatCount
+        # Left here to allow easy conversion to an exception check.
+        with pytest.warns(DeprecationWarning,
+                          match="parenthesized single number"):
+            np.dtype("(2)f4,")
 
     def test_comma_datetime(self):
         dt = np.dtype('M8[D],datetime64[Y],i8')

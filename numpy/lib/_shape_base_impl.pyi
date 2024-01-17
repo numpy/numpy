@@ -54,8 +54,6 @@ class _SupportsArrayWrap(Protocol):
 
 __all__: list[str]
 
-row_stack = vstack
-
 def take_along_axis(
     arr: _SCT | NDArray[_SCT],
     indices: NDArray[integer[Any]],

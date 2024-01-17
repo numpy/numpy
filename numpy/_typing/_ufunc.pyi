@@ -39,7 +39,7 @@ class _SupportsArrayUFunc(Protocol):
     def __array_ufunc__(
         self,
         ufunc: ufunc,
-        method: Literal["__call__", "reduce", "reduceat", "accumulate", "outer", "inner"],
+        method: Literal["__call__", "reduce", "reduceat", "accumulate", "outer", "at"],
         *inputs: Any,
         **kwargs: Any,
     ) -> Any: ...

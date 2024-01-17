@@ -755,7 +755,7 @@ class TestLibImports(_DeprecationTestCase):
         from numpy._core.numerictypes import maximum_sctype
         from numpy.lib.tests.test_io import TextIO
         from numpy import in1d, row_stack, trapz
-        
+
         self.assert_deprecated(lambda: safe_eval("None"))
 
         data_gen = lambda: TextIO('A,B\n0,1\n2,3')
@@ -812,3 +812,12 @@ class TestDeprecatedArrayWrap(_DeprecationTestCase):
         assert test1.called
         self.assert_deprecated(lambda: np.negative(test2))
         assert test2.called
+
+
+
+class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
+    messsage = "Passing in a parenthesized single number"
+
+    @pytest.mark.parametrize("string", ["(2)i,", "(3)3S,", "f,(2)f"])
+    def test_parenthesized_repeat_count(self, string):
+        self.assert_deprecated(np.dtype, args=(string,))

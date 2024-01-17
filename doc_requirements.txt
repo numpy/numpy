@@ -3,11 +3,14 @@ sphinx>=4.5.0
 numpydoc==1.4
 pydata-sphinx-theme==0.13.3
 sphinx-design
-ipython!=8.1.0
 scipy
 matplotlib
 pandas
 breathe>4.33.0
+ipython!=8.1.0
+# Needed for ipython>=8.17
+# https://github.com/ipython/ipython/issues/14237
+pickleshare
 
 # needed to build release notes
 towncrier

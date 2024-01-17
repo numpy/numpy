@@ -3,6 +3,12 @@ Utilities that manipulate strides to achieve desirable effects.
 
 An explanation of strides can be found in the :ref:`arrays.ndarray`.
 
+Functions
+---------
+
+.. autosummary::
+   :toctree: generated/
+
 """
 import numpy as np
 from numpy._core.numeric import normalize_axis_tuple
@@ -34,6 +40,7 @@ def _maybe_view_as_subclass(original_array, new_array):
     return new_array
 
 
+@set_module("numpy.lib.stride_tricks")
 def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     """
     Create a view into the array with the given shape and strides.
@@ -119,7 +126,9 @@ def _sliding_window_view_dispatcher(x, window_shape, axis=None, *,
     return (x,)
 
 
-@array_function_dispatch(_sliding_window_view_dispatcher)
+@array_function_dispatch(
+    _sliding_window_view_dispatcher, module="numpy.lib.stride_tricks"
+)
 def sliding_window_view(x, window_shape, axis=None, *,
                         subok=False, writeable=False):
     """
