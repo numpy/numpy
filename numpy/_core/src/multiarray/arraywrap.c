@@ -22,15 +22,7 @@
  * @param nin number of inputs
  * @param inputs Original input objects
  * @param out_wrap Set to the python callable or None (on success).
- * @param out_wrap_type If not NULL, set to the type belonging to the wrapper
- *        or set to NULL.
- *        The out_wrap_type should only be NULL (will not be set) if wrapping
- *        is always done.
- *
- * Wrapping is always done for ufuncs because the values stored will have been
- * mutated (guarantees calling array-wrap if any mutation may have occurred;
- * this is not true for Python calls, though).
- * UFuncs always call array-wrap with base-class arrays in any case.
+ * @param out_wrap_type Set to the type belonging to the wrapper.
  */
 NPY_NO_EXPORT int
 npy_find_array_wrap(
@@ -117,7 +109,7 @@ _get_wrap_prepare_args(NpyUFuncContext *context) {
 
 /*
  * Apply the array wrapping to a result array.
- * 
+ *
  * @param obj The object (should be an array) to wrap.
  * @param original_out NULL/None (both valid) or an object who's wrapping
  *        method is always used/preferred.  The naming comes because for an
