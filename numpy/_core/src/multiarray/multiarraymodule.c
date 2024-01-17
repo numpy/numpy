@@ -2181,6 +2181,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored),
     NPY_ORDER order = NPY_CORDER;
     npy_bool is_f_order = NPY_FALSE;
     PyArrayObject *ret = NULL;
+    NPY_DEVICE device = NPY_DEVICE_CPU;
     PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
@@ -2188,6 +2189,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored),
             "shape", &PyArray_IntpConverter, &shape,
             "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
             "|order", &PyArray_OrderConverter, &order,
+            "$device", &PyArray_DeviceConverterOptional, &device,
             "$like", NULL, &like,
             NULL, NULL, NULL) < 0) {
         goto finish;

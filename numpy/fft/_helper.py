@@ -142,9 +142,7 @@ def fftfreq(n, d=1.0, device=None):
         Sample spacing (inverse of the sampling rate). Defaults to 1.
     device : str, optional
         The device on which to place the created array. Default: ``None``.
-
-        .. note::
-            Only the ``"cpu"`` device is supported by NumPy.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
 
@@ -164,18 +162,14 @@ def fftfreq(n, d=1.0, device=None):
     array([ 0.  ,  1.25,  2.5 , ..., -3.75, -2.5 , -1.25])
 
     """
-    if device not in ["cpu", None]:
-        raise ValueError(
-            f"Unsupported device: {device}. Only \"cpu\" is allowed."
-        )
     if not isinstance(n, integer_types):
         raise ValueError("n should be an integer")
     val = 1.0 / (n * d)
-    results = empty(n, int)
+    results = empty(n, int, device=device)
     N = (n-1)//2 + 1
-    p1 = arange(0, N, dtype=int)
+    p1 = arange(0, N, dtype=int, device=device)
     results[:N] = p1
-    p2 = arange(-(n//2), 0, dtype=int)
+    p2 = arange(-(n//2), 0, dtype=int, device=device)
     results[N:] = p2
     return results * val
 
@@ -206,9 +200,7 @@ def rfftfreq(n, d=1.0, device=None):
         Sample spacing (inverse of the sampling rate). Defaults to 1.
     device : str, optional
         The device on which to place the created array. Default: ``None``.
-
-        .. note::
-            Only the ``"cpu"`` device is supported by NumPy.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
 
@@ -231,13 +223,9 @@ def rfftfreq(n, d=1.0, device=None):
     array([  0.,  10.,  20.,  30.,  40.,  50.])
 
     """
-    if device not in ["cpu", None]:
-        raise ValueError(
-            f"Unsupported device: {device}. Only \"cpu\" is allowed."
-        )
     if not isinstance(n, integer_types):
         raise ValueError("n should be an integer")
     val = 1.0/(n*d)
     N = n//2 + 1
-    results = arange(0, N, dtype=int)
+    results = arange(0, N, dtype=int, device=device)
     return results * val

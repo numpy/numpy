@@ -180,10 +180,7 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
         .. versionadded:: 1.14.0
     device : str, optional
         The device on which to place the created array. Default: None.
-
-        .. note::
-
-            Only the ``"cpu"`` device is supported by NumPy.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
@@ -212,16 +209,13 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
            [0.,  0.,  0.]])
 
     """
-    if device not in ["cpu", None]:
-        raise ValueError(
-            f"Unsupported device: {device}. Only \"cpu\" is allowed."
-        )
-
     if like is not None:
-        return _eye_with_like(like, N, M=M, k=k, dtype=dtype, order=order)
+        return _eye_with_like(
+            like, N, M=M, k=k, dtype=dtype, order=order, device=device
+        )
     if M is None:
         M = N
-    m = zeros((N, M), dtype=dtype, order=order)
+    m = zeros((N, M), dtype=dtype, order=order, device=device)
     if k >= M:
         return m
     # Ensure M and k are integers, so we don't get any surprise casting

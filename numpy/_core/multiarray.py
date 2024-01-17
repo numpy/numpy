@@ -118,10 +118,7 @@ def empty_like(
         .. versionadded:: 1.17.0
     device : str, optional
         The device on which to place the created array. Default: None.
-
-        .. note::
-
-            Only the ``"cpu"`` device is supported by NumPy.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
 

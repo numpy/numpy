@@ -96,10 +96,7 @@ def zeros_like(
         .. versionadded:: 1.17.0
     device : str, optional
         The device on which to place the created array. Default: None.
-
-        .. note::
-
-            Only the ``"cpu"`` device is supported by NumPy.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
 
@@ -161,10 +158,7 @@ def ones(shape, dtype=None, order='C', *, device=None, like=None):
         memory.
     device : str, optional
         The device on which to place the created array. Default: None.
-
-        .. note::
-
-            Only the ``"cpu"`` device is supported by NumPy.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
@@ -201,15 +195,12 @@ def ones(shape, dtype=None, order='C', *, device=None, like=None):
            [1.,  1.]])
 
     """
-    if device not in ["cpu", None]:
-        raise ValueError(
-            f"Unsupported device: {device}. Only \"cpu\" is allowed."
+    if like is not None:
+        return _ones_with_like(
+            like, shape, dtype=dtype, order=order, device=device
         )
 
-    if like is not None:
-        return _ones_with_like(like, shape, dtype=dtype, order=order)
-
-    a = empty(shape, dtype, order)
+    a = empty(shape, dtype, order, device=device)
     multiarray.copyto(a, 1, casting='unsafe')
     return a
 
@@ -258,10 +249,7 @@ def ones_like(
         .. versionadded:: 1.17.0
     device : str, optional
         The device on which to place the created array. Default: None.
-
-        .. note::
-
-            Only the ``"cpu"`` device is supported by NumPy.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
 
@@ -328,10 +316,7 @@ def full(shape, fill_value, dtype=None, order='C', *, device=None, like=None):
         (row- or column-wise) order in memory.
     device : str, optional
         The device on which to place the created array. Default: None.
-
-        .. note::
-
-            Only the ``"cpu"`` device is supported by NumPy.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
@@ -364,19 +349,15 @@ def full(shape, fill_value, dtype=None, order='C', *, device=None, like=None):
            [1, 2]])
 
     """
-    if device not in ["cpu", None]:
-        raise ValueError(
-            f"Unsupported device: {device}. Only \"cpu\" is allowed."
-        )
-
     if like is not None:
         return _full_with_like(
-                like, shape, fill_value, dtype=dtype, order=order)
+            like, shape, fill_value, dtype=dtype, order=order, device=device
+        )
 
     if dtype is None:
         fill_value = asarray(fill_value)
         dtype = fill_value.dtype
-    a = empty(shape, dtype, order)
+    a = empty(shape, dtype, order, device=device)
     multiarray.copyto(a, fill_value, casting='unsafe')
     return a
 
@@ -425,10 +406,7 @@ def full_like(
         .. versionadded:: 1.17.0
     device : str, optional
         The device on which to place the created array. Default: None.
-
-        .. note::
-
-            Only the ``"cpu"`` device is supported by NumPy.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
 
@@ -467,12 +445,9 @@ def full_like(
            [[  0,   0, 255],
             [  0,   0, 255]]])
     """
-    if device not in ["cpu", None]:
-        raise ValueError(
-            f"Unsupported device: {device}. Only \"cpu\" is allowed."
-        )
-
-    res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
+    res = empty_like(
+        a, dtype=dtype, order=order, subok=subok, shape=shape, device=device
+    )
     multiarray.copyto(res, fill_value, casting='unsafe')
     return res
 

@@ -1370,7 +1370,8 @@ PyArray_DeviceConverterOptional(PyObject *object, NPY_DEVICE *device)
         return NPY_SUCCEED;
     }
 
-    PyErr_SetString(PyExc_ValueError,
-            "Device not understood. Only \"cpu\" is allowed.");
+    PyErr_Format(PyExc_ValueError,
+            "Device not understood. Only \"cpu\" is allowed, "
+            "but received: %S", object);
     return NPY_FAIL;
 }

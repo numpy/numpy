@@ -72,10 +72,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         .. versionadded:: 1.16.0
     device : str, optional
         The device on which to place the created array. Default: None.
-
-        .. note::
-
-            Only the ``"cpu"`` device is supported by NumPy.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
 
@@ -126,11 +123,6 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     >>> plt.show()
 
     """
-    if device not in ["cpu", None]:
-        raise ValueError(
-            f"Unsupported device: {device}. Only \"cpu\" is allowed."
-        )
-
     num = operator.index(num)
     if num < 0:
         raise ValueError(
@@ -152,7 +144,9 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         integer_dtype = _nx.issubdtype(dtype, _nx.integer)
 
     delta = stop - start
-    y = _nx.arange(0, num, dtype=dt).reshape((-1,) + (1,) * ndim(delta))
+    y = _nx.arange(
+        0, num, dtype=dt, device=device
+    ).reshape((-1,) + (1,) * ndim(delta))
     # In-place multiplication y *= delta/div is faster, but prevents
     # the multiplicant from overriding what class is produced, and thus
     # prevents, e.g. use of Quantities, see gh-7142. Hence, we multiply

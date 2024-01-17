@@ -933,10 +933,7 @@ add_newdoc('numpy._core.multiarray', 'asarray',
         Defaults to 'K'.
     device : str, optional
         The device on which to place the created array. Default: None.
-
-        .. note::
-
-            Only the ``"cpu"`` device is supported by NumPy.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
@@ -946,8 +943,8 @@ add_newdoc('numpy._core.multiarray', 'asarray',
     Returns
     -------
     out : ndarray
-        Array interpretation of `a`.  No copy is performed if the input
-        is already an ndarray with matching dtype and order.  If `a` is a
+        Array interpretation of ``a``.  No copy is performed if the input
+        is already an ndarray with matching dtype and order.  If ``a`` is a
         subclass of ndarray, a base class ndarray is returned.
 
     See Also
@@ -1209,10 +1206,7 @@ add_newdoc('numpy._core.multiarray', 'empty',
         memory.
     device : str, optional
         The device on which to place the created array. Default: None.
-
-        .. note::
-
-            Only the ``"cpu"`` device is supported by NumPy.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
@@ -1735,10 +1729,7 @@ add_newdoc('numpy._core.multiarray', 'arange',
         type from the other input arguments.
     device : str, optional
         The device on which to place the created array. Default: None.
-
-        .. note::
-
-            Only the ``"cpu"`` device is supported by NumPy.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
