@@ -567,6 +567,55 @@ class TestMethods:
         res = np.array(res, dtype=dt)
         assert_array_equal(np.strings.replace(buf, old, new, count), res)
 
+    @pytest.mark.parametrize("buf,sub,start,end,res", [
+        ("abcdefghiabc", "", 0, MAX, 0),
+        ("abcdefghiabc", "def", 0, MAX, 3),
+        ("abcdefghiabc", "abc", 0, MAX, 0),
+        ("abcdefghiabc", "abc", 1, MAX, 9),
+    ])
+    def test_index(self, buf, sub, start, end, res, dt):
+        buf = np.array(buf, dtype=dt)
+        sub = np.array(sub, dtype=dt)
+        assert_array_equal(np.strings.index(buf, sub, start, end), res)
+
+    @pytest.mark.parametrize("buf,sub,start,end", [
+        ("abcdefghiabc", "hib", 0, MAX),
+        ("abcdefghiab", "abc", 1, MAX),
+        ("abcdefghi", "ghi", 8, MAX),
+        ("abcdefghi", "ghi", -1, MAX),
+        ("rrarrrrrrrrra", "a", 4, 6),
+    ])
+    def test_index_raises(self, buf, sub, start, end, dt):
+        buf = np.array(buf, dtype=dt)
+        sub = np.array(sub, dtype=dt)
+        with pytest.raises(ValueError, match="substring not found"):
+            np.strings.index(buf, sub, start, end)
+
+    @pytest.mark.parametrize("buf,sub,start,end,res", [
+        ("abcdefghiabc", "", 0, MAX, 12),
+        ("abcdefghiabc", "def", 0, MAX, 3),
+        ("abcdefghiabc", "abc", 0, MAX, 9),
+        ("abcdefghiabc", "abc", 0, -1, 0),
+    ])
+    def test_rindex(self, buf, sub, start, end, res, dt):
+        buf = np.array(buf, dtype=dt)
+        sub = np.array(sub, dtype=dt)
+        assert_array_equal(np.strings.rindex(buf, sub, start, end), res)
+
+    @pytest.mark.parametrize("buf,sub,start,end", [
+        ("abcdefghiabc", "hib", 0, MAX),
+        ("defghiabc", "def", 1, MAX),
+        ("defghiabc", "abc", 0, -1),
+        ("abcdefghi", "ghi", 0, 8),
+        ("abcdefghi", "ghi", 0, -1),
+        ("rrarrrrrrrrra", "a", 4, 6),
+    ])
+    def test_rindex_raises(self, buf, sub, start, end, dt):
+        buf = np.array(buf, dtype=dt)
+        sub = np.array(sub, dtype=dt)
+        with pytest.raises(ValueError, match="substring not found"):
+            np.strings.rindex(buf, sub, start, end)
+
 
 class TestUnicodeOnlyMethods:
     @pytest.mark.parametrize("dt", ["U", "T"])
