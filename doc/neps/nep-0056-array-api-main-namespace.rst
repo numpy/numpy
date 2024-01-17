@@ -8,7 +8,7 @@ NEP 56 — Array API standard support in NumPy's main namespace
 :Status: Draft
 :Type: Standards Track
 :Created: 2023-12-19
-:Resolution: TODO mailing list link
+:Resolution: TODO mailing list link (after acceptance)
 
 
 Abstract
@@ -16,6 +16,16 @@ Abstract
 
 This NEP proposes adding full support for the 2022.12 version of the array API
 standard in NumPy's main namespace for the 2.0 release.
+
+Adoption in the main namespace has a number of advantages; most importantly for
+libraries that depend on NumPy and want to start supporting other array
+libraries. SciPy and scikit-learn are two prominent libraries already moving
+along this path. The need to support the array API standard in the main
+namespace draws from lessons learned by those libraries and the experimental
+``numpy.array_api`` implementation with a different array object.
+There will also be benefits for other array libraries, JIT compilers like Numba,
+and for end users who may have an easier time switching between different array
+libraries.
 
 Motivation and scope
 --------------------
