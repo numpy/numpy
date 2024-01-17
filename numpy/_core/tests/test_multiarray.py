@@ -2045,12 +2045,6 @@ class TestMethods:
 
         with assert_raises_regex(
             ValueError,
-            "`descending=True` is not allowed. Use `np.flip` instead",
-        ):
-            np.sort(a, descending=True)
-
-        with assert_raises_regex(
-            ValueError,
             "`kind` and `stable` parameters can't be provided at "
             "the same time. Use only one of them."
         ):

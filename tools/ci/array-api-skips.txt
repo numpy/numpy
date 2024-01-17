@@ -63,6 +63,10 @@ array_api_tests/test_signatures.py::test_array_method_signature[to_device]
 # missing 'copy' keyword argument, 'newshape' should be named 'shape'
 array_api_tests/test_signatures.py::test_func_signature[reshape]
 
+# missing 'descending' keyword arguments
+array_api_tests/test_signatures.py::test_func_signature[argsort]
+array_api_tests/test_signatures.py::test_func_signature[sort]
+
 # asarray() got an unexpected keyword argument 'copy'
 array_api_tests/test_special_cases.py::test_iop
 

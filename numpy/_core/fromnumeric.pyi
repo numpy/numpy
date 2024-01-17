@@ -212,7 +212,6 @@ def sort(
     kind: None | _SortKind = ...,
     order: None | str | Sequence[str] = ...,
     *,
-    descending: bool = ...,
     stable: None | bool = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -222,7 +221,6 @@ def sort(
     kind: None | _SortKind = ...,
     order: None | str | Sequence[str] = ...,
     *,
-    descending: bool = ...,
     stable: None | bool = ...,
 ) -> NDArray[Any]: ...
 
@@ -232,7 +230,6 @@ def argsort(
     kind: None | _SortKind = ...,
     order: None | str | Sequence[str] = ...,
     *,
-    descending: bool = ...,
     stable: None | bool = ...,
 ) -> NDArray[intp]: ...
 
