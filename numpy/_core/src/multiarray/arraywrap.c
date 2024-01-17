@@ -219,7 +219,12 @@ npy_apply_wrap(
         arr = (PyArrayObject *)obj;
     }
     else {
-        /* TODO: This branch should ideally be NEVER taken! */
+        /*
+         * TODO: Ideally, we never end up in this branch!  But when we use
+         *       this from Python and NumPy's (current) habit of converting
+         *       0-d arrays to scalars means that it would be odd to convert
+         *       back to an array in python when we may not need to wrap.
+         */
         arr = (PyArrayObject *)PyArray_FromAny(obj, NULL, 0, 0, 0, NULL);
         if (arr == NULL) {
             goto finish;
@@ -240,15 +245,18 @@ npy_apply_wrap(
     /*
      * Retry without passing return_scalar.  If that succeeds give a
      * Deprecation warning.
+     * When context is None, there is no reason to try this, though.
      */
-    res = PyObject_CallFunctionObjArgs(wrap, arr, py_context, NULL);
-    if (res != NULL) {
-        goto deprecation_warning;
+    if (py_context != Py_None) {
+        res = PyObject_CallFunctionObjArgs(wrap, arr, py_context, NULL);
+        if (res != NULL) {
+            goto deprecation_warning;
+        }
+        else if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
+            goto finish;
+        }
+        PyErr_Clear();
     }
-    else if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
-        goto finish;
-    }
-    PyErr_Clear();
 
     /* 
      * Retry without passing context and return_scalar parameters.
