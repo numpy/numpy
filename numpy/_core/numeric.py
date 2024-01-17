@@ -974,10 +974,6 @@ def tensordot(a, b, axes=2):
     first start with the Nth position from the last (axis = -N) in `a` and 
     the first position (axis = 0) in `b` and continue until the last position
     (axis = -1) in `a` and Nth position (axis = N-1) in `b`.
-    
-    When `axes` is integer_like, the sequence for evaluation will be: first
-    the -Nth axis in `a` and 0th axis in `b`, and the -1th axis in `a` and
-    Nth axis in `b` last.
 
     When there is more than one axis to sum over - and they are not the last
     (first) axes of `a` (`b`) - the argument `axes` should consist of
