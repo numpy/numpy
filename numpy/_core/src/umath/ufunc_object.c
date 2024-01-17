@@ -3759,9 +3759,10 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         return NULL;
     }
 
+    /* TODO: Data is mutated, so force_wrap like a normal ufunc call does */
     PyObject *wrapped_result = npy_apply_wrap(
             (PyObject *)ret, out_obj, wrap, wrap_type, NULL,
-            PyArray_NDIM(ret) == 0, NPY_TRUE);
+            PyArray_NDIM(ret) == 0, NPY_FALSE);
     Py_DECREF(ret);
     Py_DECREF(wrap);
     Py_DECREF(wrap_type);
