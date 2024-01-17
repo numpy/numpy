@@ -195,7 +195,7 @@ npy_apply_wrap(
      * We have to call array-wrap.  In some branches, input might be non-array.
      * (We should try to phase all of these out, though!)
      */
-    PyObject *py_context;
+    PyObject *py_context = NULL;
     if (context == NULL) {
         Py_INCREF(Py_None);
         py_context = Py_None;
@@ -222,7 +222,6 @@ npy_apply_wrap(
         /* TODO: This branch should ideally be NEVER taken! */
         arr = (PyArrayObject *)PyArray_FromAny(obj, NULL, 0, 0, 0, NULL);
         if (arr == NULL) {
-            Py_DECREF(py_context);
             goto finish;
         }
     }
@@ -231,28 +230,45 @@ npy_apply_wrap(
             wrap, arr, py_context,
             (return_scalar && PyArray_NDIM(arr) == 0) ? Py_True : Py_False,
             NULL);
-    Py_DECREF(py_context);
-    if (res != NULL || !PyErr_ExceptionMatches(PyExc_TypeError)) {
+    if (res != NULL)
+        goto finish;
+    else if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
         goto finish;
     }
+    PyErr_Clear();
+
+    /*
+     * Retry without passing return_scalar.  If that succeeds give a
+     * Deprecation warning.
+     */
+    res = PyObject_CallFunctionObjArgs(wrap, arr, py_context, NULL);
+    if (res != NULL) {
+        goto deprecation_warning;
+    }
+    else if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
+        goto finish;
+    }
+    PyErr_Clear();
 
     /* 
      * Retry without passing context and return_scalar parameters.
      * If that succeeds, we give a DeprecationWarning.
      */
-    PyErr_Clear();
     res = PyObject_CallFunctionObjArgs(wrap, arr, NULL);
     if (res == NULL) {
         goto finish;
     }
+
+  deprecation_warning:
+    /* Deprecated 2024-01-17, NumPy 2.0 */
     if (DEPRECATE(
-            "__array_wrap__ must accept context and return_scalar "
-            "arguments (positionally) in the future.") < 0) {
+            "__array_wrap__ must accept context and return_scalar arguments "
+            "(positionally) in the future. (Deprecated NumPy 2.0)") < 0) {
         Py_CLEAR(res);
-        goto finish;
     }
 
   finish:
+    Py_XDECREF(py_context);
     Py_XDECREF(arr);
     Py_XDECREF(new_wrap);
     return res;

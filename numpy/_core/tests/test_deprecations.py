@@ -798,14 +798,17 @@ class TestDeprecatedArrayWrap(_DeprecationTestCase):
                 return np.arange(4)
 
             def __array_wrap__(self, arr, context=None):
-                return 'pass'
+                self.called = True
+                return 'pass context'
 
-        class Test2:
-            def __array__(self):
-                return np.arange(4)
-
+        class Test2(Test1):
             def __array_wrap__(self, arr):
+                self.called = True
                 return 'pass'
 
-        self.assert_deprecated(lambda: np.negative(Test1()))
-        self.assert_deprecated(lambda: np.negative(Test2()))
+        test1 = Test1()
+        test2 = Test2()
+        self.assert_deprecated(lambda: np.negative(test1))
+        assert test1.called
+        self.assert_deprecated(lambda: np.negative(test2))
+        assert test2.called
