@@ -255,10 +255,7 @@ Raising errors for consistency/strictness includes:
 Dtypes of returned arrays for some element-wise functions and reductions
 includes functions where dtypes need to be preserved: ``ceil``, ``floor``, and
 ``trunc`` will start returning arrays with the same integer dtypes if the input
-has an integer dtype. It also includes dtype changes: ``sum`` and ``prod``
-always upcast lower-precision floating-point dtypes to ``float64`` when
-``dtype=None`` (this upcasting is already done for inputs with lower-precision
-integer dtypes). 
+has an integer dtype.
 
 Changes in numerical behavior include:
 
@@ -456,6 +453,45 @@ now it points to NumPy's bool instead of a Python builtin. This change is a
 good idea and we were planning to make it anyway, because ``bool`` is a nicer
 name than ``bool_``. However, we may not have scheduled that reintroduction of
 the name for 2.0 if it had not been part of the array API standard.
+
+
+Parts of the standard that are not adopted
+------------------------------------------
+
+There are a couple of things that the standard prescribes which we propose *not*
+to follow (at least at this time). These are:
+
+1. The requirement that an indexing operation must result in an array of the
+   same dtype of the indexed array.
+
+   *Rationale: this does not hold when the result would be a 0-D array; NumPy
+   returns scalars (i.e., instances of dtype classes) here. Removing scalars
+   from NumPy would be a large amount of work with a nontrivial backwards
+   compatibility impact. It may be feasible to remove scalars in the future,
+   but not for 2.0 - and this requires experimentation and assessing impact.*
+
+2. The requirement for ``sum`` and ``prod`` to always upcast lower-precision
+   floating-point dtypes to ``float64`` when ``dtype=None``.
+
+   *Rationale: this is potentially disruptive (e.g.,* ``float32_arr - float32_arr.mean()``
+   *would yield a float64 array, and double memory use). While this upcasting
+   is already done for inputs with lower-precision integer dtypes and seems
+   useful there to prevent overflows, it seems less reasonable to require this
+   for floating-point dtypes.*
+
+   `array-api#731 <https://github.com/data-apis/array-api/issues/731>`__ was
+   opened to reconsider this design choice in the standard.
+
+3. Making function signatures positional-only and keyword-only in many places.
+
+   *Rationale: the 2022.12 version of the standard said "must", but this has
+   already been softened to "should" in the about-to-be-released 2023.12
+   version, to recognize that it's okay to not do this - it's still possible for
+   users of the array library to write their code using the recommended style
+   after all. For NumPy these changes would be useful, and it seems likely that
+   we may introduce many or all of them over time (and in fact ufuncs are
+   already compliant), however there is no need to rush this change - doing so
+   for 2.0 would be unnecessarily disruptive.*
 
 
 Related work
