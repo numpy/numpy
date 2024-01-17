@@ -335,10 +335,12 @@ class memmap(ndarray):
         # to keep original memmap subclasses behavior
         if self is arr or type(self) is not memmap:
             return arr
+
         # Return scalar instead of 0d memmap, e.g. for np.sum with
-        # axis=None
-        if arr.shape == () and return_scalar:
+        # axis=None (note that subclasses will not reach here)
+        if return_scalar:
             return arr[()]
+
         # Return ndarray otherwise
         return arr.view(np.ndarray)
 
