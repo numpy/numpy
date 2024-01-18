@@ -2760,19 +2760,28 @@ static PyObject *
 array_array_namespace(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"api_version", NULL};
-    char *array_api_version = "2022.12";
+    PyObject *array_api_version = Py_None;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|$s:__array_namespace__", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|$O:__array_namespace__", kwlist,
                                      &array_api_version)) {
         return NULL;
     }
 
-    if (strcmp(array_api_version, "2021.12") != 0 &&
-            strcmp(array_api_version, "2022.12") != 0) {
-        PyErr_Format(PyExc_ValueError,
-                     "Version \"%s\" of the Array API Standard is not supported.",
-                     array_api_version);
-        return NULL;
+    if (array_api_version != Py_None) {
+        if (!PyUnicode_Check(array_api_version))
+        {
+            PyErr_Format(PyExc_ValueError,
+                "Only None and strings are allowed as the Array API version, "
+                "but received: %S.", array_api_version);
+            return NULL;
+        } else if (PyUnicode_CompareWithASCIIString(array_api_version, "2021.12") != 0 &&
+            PyUnicode_CompareWithASCIIString(array_api_version, "2022.12") != 0)
+        {
+            PyErr_Format(PyExc_ValueError,
+                "Version \"%U\" of the Array API Standard is not supported.",
+                array_api_version);
+            return NULL;
+        }
     }
 
     PyObject *numpy_module = PyImport_ImportModule("numpy");
