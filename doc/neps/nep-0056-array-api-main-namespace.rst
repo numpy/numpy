@@ -14,8 +14,8 @@ NEP 56 — Array API standard support in NumPy's main namespace
 Abstract
 --------
 
-This NEP proposes adding full support for the 2022.12 version of the array API
-standard in NumPy's main namespace for the 2.0 release.
+This NEP proposes adding nearly full support for the 2022.12 version of the
+array API standard in NumPy's main namespace for the 2.0 release.
 
 Adoption in the main namespace has a number of advantages; most importantly for
 libraries that depend on NumPy and want to start supporting other array
@@ -227,9 +227,10 @@ their experience of using a stack of Python packages for scientific computing
 or data science more seamless.
 
 Finally, for authors of other array libraries as well as tools like Numba,
-array API standard support should save them time. The design rules ([3]_), and
-in some cases new APIs like the ``unique_*`` ones, are easier to implement on
-GPU and for JIT compilers as a result of more predictable behavior.
+API improvements which align NumPy with the array API standard will also save
+them time. The design rules ([3]_), and in some cases new APIs like the
+``unique_*`` ones, are easier to implement on GPU and for JIT compilers as a
+result of more predictable behavior.
 
 
 Backward compatibility
@@ -250,7 +251,6 @@ Raising errors for consistency/strictness includes:
 2. Making ``cross`` error on size-2 vectors (only size-3 vectors are supported),
 3. Making ``solve`` error on ambiguous input (only accept ``x2`` as vector if ``x2.ndim == 1``),
 4. ``outer`` raises rather than flattens on >1-D inputs,
-5. In-place operators are disallowed when the left-hand side would be promoted.
 
 Dtypes of returned arrays for some element-wise functions and reductions
 includes functions where dtypes need to be preserved: ``ceil``, ``floor``, and
@@ -492,6 +492,20 @@ to follow (at least at this time). These are:
    we may introduce many or all of them over time (and in fact ufuncs are
    already compliant), however there is no need to rush this change - doing so
    for 2.0 would be unnecessarily disruptive.*
+
+4. The requirement "An in-place operation must have the same behavior
+   (including special cases) as its respective binary (i.e., two operand,
+   non-assignment) operation" (excluding the effect on views).
+
+   *Rationale: the requirement is very reasonable and probably expected
+   behavior for most NumPy users. However, deprecating unsafe casts for
+   in-place operators is a change for which the impact is hard to predict.
+   Hence this needs to be investigated first, and then if the impact is low
+   enough it may be possible to deprecate the current behavior according to
+   NumPy's normal backwards compatibility guidelines.*
+
+   This topic is tracked in
+   `gh-25621 <https://github.com/numpy/numpy/issues/25621>`__.
 
 
 Related work
