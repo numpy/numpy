@@ -1151,7 +1151,7 @@ if use_svml
     'pow', 'sin', 'sinh', 'tan',
     'tanh'
   ]
-    foreach svml_sfx : ['d_la', 's_la', 'd_ha', 's_la']
+    foreach svml_sfx : ['d_la', 's_la', 'd_ha', 's_la', 'h_la']
       svml_objects += [
         'src/umath/svml/linux/avx512/svml_z0_'+svml_func+'_'+svml_sfx+'.s'
       ]
