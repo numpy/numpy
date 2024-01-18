@@ -246,7 +246,7 @@ else:
     __numpy_submodules__ = {
         "linalg", "fft", "dtypes", "random", "polynomial", "ma", 
         "exceptions", "lib", "ctypeslib", "testing", "typing",
-        "f2py", "test", "rec", "char", "core"
+        "f2py", "test", "rec", "char", "core", "strings",
     }
 
     # We build warning messages for former attributes
@@ -371,6 +371,9 @@ else:
         elif attr == "core":
             import numpy.core as core
             return core
+        elif attr == "strings":
+            import numpy.strings as strings
+            return strings
         elif attr == "distutils":
             if 'distutils' in __numpy_submodules__:
                 import numpy.distutils as distutils

@@ -1624,6 +1624,11 @@ class TestMatrixRank:
         # works on scalar
         assert_equal(matrix_rank(1), 1)
 
+        with assert_raises_regex(
+            ValueError, "`tol` and `rtol` can\'t be both set."
+        ):
+            matrix_rank(I, tol=0.01, rtol=0.01)
+
     def test_symmetric_rank(self):
         assert_equal(4, matrix_rank(np.eye(4), hermitian=True))
         assert_equal(1, matrix_rank(np.ones((4, 4)), hermitian=True))
@@ -2307,6 +2312,7 @@ def test_tensordot():
     x = np.arange(6).reshape((2, 3))
 
     assert np.linalg.tensordot(x, x) == 55
+    assert np.linalg.tensordot(x, x, axes=[(0, 1), (0, 1)]) == 55
 
 
 def test_matmul():
@@ -2354,3 +2360,8 @@ def test_vector_norm():
     assert_almost_equal(
         actual, np.array([6.7082, 8.124, 9.6436]), double_decimal=3
     )
+
+    actual = np.linalg.vector_norm(x, keepdims=True)
+    expected = np.full((1, 1), 14.2828, dtype='float64')
+    assert_equal(actual.shape, expected.shape)
+    assert_almost_equal(actual, expected, double_decimal=3)

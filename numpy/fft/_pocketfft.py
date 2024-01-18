@@ -31,6 +31,7 @@ __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
            'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn']
 
 import functools
+import warnings
 
 from numpy.lib.array_utils import normalize_axis_index
 from numpy._core import asarray, zeros, swapaxes, conjugate, take, sqrt
@@ -681,20 +682,38 @@ def ihfft(a, n=None, axis=-1, norm=None):
 
 def _cook_nd_args(a, s=None, axes=None, invreal=0):
     if s is None:
-        shapeless = 1
+        shapeless = True
         if axes is None:
             s = list(a.shape)
         else:
             s = take(a.shape, axes)
     else:
-        shapeless = 0
+        shapeless = False
     s = list(s)
     if axes is None:
+        if not shapeless:
+            msg = ("`axes` should not be `None` if `s` is not `None` "
+                   "(Deprecated in NumPy 2.0). In a future version of NumPy, "
+                   "this will raise an error and `s[i]` will correspond to "
+                   "the size along the transformed axis specified by "
+                   "`axes[i]`. To retain current behaviour, pass a sequence "
+                   "[0, ..., k-1] to `axes` for an array of dimension k.")
+            warnings.warn(msg, DeprecationWarning, stacklevel=3)
         axes = list(range(-len(s), 0))
     if len(s) != len(axes):
         raise ValueError("Shape and axes have different lengths.")
     if invreal and shapeless:
         s[-1] = (a.shape[axes[-1]] - 1) * 2
+    if None in s:
+        msg = ("Passing an array containing `None` values to `s` is "
+               "deprecated in NumPy 2.0 and will raise an error in "
+               "a future version of NumPy. To use the default behaviour "
+               "of the corresponding 1-D transform, pass the value matching "
+               "the default for its `n` parameter. To use the default "
+               "behaviour for every axis, the `s` argument can be omitted.")
+        warnings.warn(msg, DeprecationWarning, stacklevel=3)
+    # use the whole input array along axis `i` if `s[i] == -1`
+    s = [a.shape[_a] if _s == -1 else _s for _s, _a in zip(s, axes)]
     return s, axes
 
 
@@ -730,14 +749,37 @@ def fftn(a, s=None, axes=None, norm=None):
         (``s[0]`` refers to axis 0, ``s[1]`` to axis 1, etc.).
         This corresponds to ``n`` for ``fft(x, n)``.
         Along any axis, if the given shape is smaller than that of the input,
-        the input is cropped.  If it is larger, the input is padded with zeros.
-        if `s` is not given, the shape of the input along the axes specified
+        the input is cropped. If it is larger, the input is padded with zeros.
+
+        .. versionchanged:: 2.0
+
+            If it is ``-1``, the whole input is used (no padding/trimming).
+
+        If `s` is not given, the shape of the input along the axes specified
         by `axes` is used.
+
+        .. deprecated:: 2.0
+
+            If `s` is not ``None``, `axes` must not be ``None`` either.
+
+        .. deprecated:: 2.0
+
+            `s` must contain only ``int``s, not ``None`` values. ``None``
+            values currently mean that the default value for ``n`` is used
+            in the corresponding 1-D transform, but this behaviour is
+            deprecated.
+
     axes : sequence of ints, optional
         Axes over which to compute the FFT.  If not given, the last ``len(s)``
         axes are used, or all axes if `s` is also not specified.
         Repeated indices in `axes` means that the transform over that axis is
         performed multiple times.
+
+        .. deprecated:: 2.0
+
+            If `s` is specified, the corresponding `axes` to be transformed
+            must be explicitly specified too.
+
     norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
 
@@ -842,14 +884,37 @@ def ifftn(a, s=None, axes=None, norm=None):
         (``s[0]`` refers to axis 0, ``s[1]`` to axis 1, etc.).
         This corresponds to ``n`` for ``ifft(x, n)``.
         Along any axis, if the given shape is smaller than that of the input,
-        the input is cropped.  If it is larger, the input is padded with zeros.
-        if `s` is not given, the shape of the input along the axes specified
-        by `axes` is used.  See notes for issue on `ifft` zero padding.
+        the input is cropped. If it is larger, the input is padded with zeros.
+
+        .. versionchanged:: 2.0
+
+            If it is ``-1``, the whole input is used (no padding/trimming).
+
+        If `s` is not given, the shape of the input along the axes specified
+        by `axes` is used. See notes for issue on `ifft` zero padding.
+
+        .. deprecated:: 2.0
+
+            If `s` is not ``None``, `axes` must not be ``None`` either.
+
+        .. deprecated:: 2.0
+
+            `s` must contain only ``int``s, not ``None`` values. ``None``
+            values currently mean that the default value for ``n`` is used
+            in the corresponding 1-D transform, but this behaviour is
+            deprecated.
+
     axes : sequence of ints, optional
         Axes over which to compute the IFFT.  If not given, the last ``len(s)``
         axes are used, or all axes if `s` is also not specified.
         Repeated indices in `axes` means that the inverse transform over that
         axis is performed multiple times.
+
+        .. deprecated:: 2.0
+
+            If `s` is specified, the corresponding `axes` to be transformed
+            must be explicitly specified too.
+
     norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
 
@@ -937,14 +1002,37 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
         (``s[0]`` refers to axis 0, ``s[1]`` to axis 1, etc.).
         This corresponds to ``n`` for ``fft(x, n)``.
         Along each axis, if the given shape is smaller than that of the input,
-        the input is cropped.  If it is larger, the input is padded with zeros.
-        if `s` is not given, the shape of the input along the axes specified
+        the input is cropped. If it is larger, the input is padded with zeros.
+
+        .. versionchanged:: 2.0
+
+            If it is ``-1``, the whole input is used (no padding/trimming).
+
+        If `s` is not given, the shape of the input along the axes specified
         by `axes` is used.
+
+        .. deprecated:: 2.0
+
+            If `s` is not ``None``, `axes` must not be ``None`` either.
+
+        .. deprecated:: 2.0
+
+            `s` must contain only ``int``s, not ``None`` values. ``None``
+            values currently mean that the default value for ``n`` is used
+            in the corresponding 1-D transform, but this behaviour is
+            deprecated.
+
     axes : sequence of ints, optional
         Axes over which to compute the FFT.  If not given, the last two
         axes are used.  A repeated index in `axes` means the transform over
         that axis is performed multiple times.  A one-element sequence means
         that a one-dimensional FFT is performed.
+
+        .. deprecated:: 2.0
+
+            If `s` is specified, the corresponding `axes` to be transformed
+            must be explicitly specified too.
+
     norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
 
@@ -1040,14 +1128,37 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
         Shape (length of each axis) of the output (``s[0]`` refers to axis 0,
         ``s[1]`` to axis 1, etc.).  This corresponds to `n` for ``ifft(x, n)``.
         Along each axis, if the given shape is smaller than that of the input,
-        the input is cropped.  If it is larger, the input is padded with zeros.
-        if `s` is not given, the shape of the input along the axes specified
+        the input is cropped. If it is larger, the input is padded with zeros.
+
+        .. versionchanged:: 2.0
+
+            If it is ``-1``, the whole input is used (no padding/trimming).
+
+        If `s` is not given, the shape of the input along the axes specified
         by `axes` is used.  See notes for issue on `ifft` zero padding.
+
+        .. deprecated:: 2.0
+
+            If `s` is not ``None``, `axes` must not be ``None`` either.
+
+        .. deprecated:: 2.0
+
+            `s` must contain only ``int``s, not ``None`` values. ``None``
+            values currently mean that the default value for ``n`` is used
+            in the corresponding 1-D transform, but this behaviour is
+            deprecated.
+
     axes : sequence of ints, optional
         Axes over which to compute the FFT.  If not given, the last two
         axes are used.  A repeated index in `axes` means the transform over
         that axis is performed multiple times.  A one-element sequence means
         that a one-dimensional FFT is performed.
+
+        .. deprecated:: 2.0
+
+            If `s` is specified, the corresponding `axes` to be transformed
+            must be explicitly specified too.
+
     norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
 
@@ -1128,12 +1239,35 @@ def rfftn(a, s=None, axes=None, norm=None):
         The final element of `s` corresponds to `n` for ``rfft(x, n)``, while
         for the remaining axes, it corresponds to `n` for ``fft(x, n)``.
         Along any axis, if the given shape is smaller than that of the input,
-        the input is cropped.  If it is larger, the input is padded with zeros.
-        if `s` is not given, the shape of the input along the axes specified
+        the input is cropped. If it is larger, the input is padded with zeros.
+
+        .. versionchanged:: 2.0
+
+            If it is ``-1``, the whole input is used (no padding/trimming).
+
+        If `s` is not given, the shape of the input along the axes specified
         by `axes` is used.
+
+        .. deprecated:: 2.0
+
+            If `s` is not ``None``, `axes` must not be ``None`` either.
+
+        .. deprecated:: 2.0
+
+            `s` must contain only ``int``s, not ``None`` values. ``None``
+            values currently mean that the default value for ``n`` is used
+            in the corresponding 1-D transform, but this behaviour is
+            deprecated.
+
     axes : sequence of ints, optional
         Axes over which to compute the FFT.  If not given, the last ``len(s)``
         axes are used, or all axes if `s` is also not specified.
+
+        .. deprecated:: 2.0
+
+            If `s` is specified, the corresponding `axes` to be transformed
+            must be explicitly specified too.
+
     norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
 
@@ -1284,14 +1418,38 @@ def irfftn(a, s=None, axes=None, norm=None):
         where ``s[-1]//2+1`` points of the input are used.
         Along any axis, if the shape indicated by `s` is smaller than that of
         the input, the input is cropped.  If it is larger, the input is padded
-        with zeros. If `s` is not given, the shape of the input along the axes
+        with zeros.
+
+        .. versionchanged:: 2.0
+
+            If it is ``-1``, the whole input is used (no padding/trimming).
+
+        If `s` is not given, the shape of the input along the axes
         specified by axes is used. Except for the last axis which is taken to
         be ``2*(m-1)`` where ``m`` is the length of the input along that axis.
+
+        .. deprecated:: 2.0
+
+            If `s` is not ``None``, `axes` must not be ``None`` either.
+
+        .. deprecated:: 2.0
+
+            `s` must contain only ``int``s, not ``None`` values. ``None``
+            values currently mean that the default value for ``n`` is used
+            in the corresponding 1-D transform, but this behaviour is
+            deprecated.
+
     axes : sequence of ints, optional
         Axes over which to compute the inverse FFT. If not given, the last
         `len(s)` axes are used, or all axes if `s` is also not specified.
         Repeated indices in `axes` means that the inverse transform over that
         axis is performed multiple times.
+
+        .. deprecated:: 2.0
+
+            If `s` is specified, the corresponding `axes` to be transformed
+            must be explicitly specified too.
+
     norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
 

@@ -81,9 +81,12 @@ array_function_from_c_func_and_dispatcher = functools.partial(
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.empty_like)
-def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
+def empty_like(
+    prototype, dtype=None, order=None, subok=None, shape=None, *, device=None
+):
     """
-    empty_like(prototype, dtype=None, order='K', subok=True, shape=None)
+    empty_like(prototype, dtype=None, order='K', subok=True, shape=None,
+               shape=None, *, device=None)
 
     Return a new array with the same shape and type as a given array.
 
@@ -113,6 +116,11 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
         order='C' is implied.
 
         .. versionadded:: 1.17.0
+    device : str, optional
+        The device on which to place the created array. Default: None.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -430,26 +438,26 @@ def lexsort(keys, axis=None):
 
     Perform an indirect stable sort using a sequence of keys.
 
-    Given multiple sorting keys, which can be interpreted as columns in a
-    spreadsheet, lexsort returns an array of integer indices that describes
-    the sort order by multiple columns. The last key in the sequence is used
-    for the primary sort order, the second-to-last key for the secondary sort
-    order, and so on. The keys argument must be a sequence of objects that
-    can be converted to arrays of the same shape. If a 2D array is provided
-    for the keys argument, its rows are interpreted as the sorting keys and
-    sorting is according to the last row, second last row etc.
+    Given multiple sorting keys, lexsort returns an array of integer indices
+    that describes the sort order by multiple keys. The last key in the
+    sequence is used for the primary sort order, ties are broken by the
+    second-to-last key, and so on.
 
     Parameters
     ----------
-    keys : (k, N) array or tuple containing k (N,)-shaped sequences
-        The `k` different "columns" to be sorted.  The last column (or row if
-        `keys` is a 2D array) is the primary sort key.
+    keys : (k, m, n, ...) array-like
+        The `k` keys to be sorted. The *last* key (e.g, the last
+        row if `keys` is a 2D array) is the primary sort key.
+        Each element of `keys` along the zeroth axis must be
+        an array-like object of the same shape.
     axis : int, optional
-        Axis to be indirectly sorted.  By default, sort over the last axis.
+        Axis to be indirectly sorted. By default, sort over the last axis
+        of each sequence. Separate slices along `axis` sorted over
+        independently; see last example.
 
     Returns
     -------
-    indices : (N,) ndarray of ints
+    indices : (m, n, ...) ndarray of ints
         Array of indices that sort the keys along the specified axis.
 
     See Also
@@ -471,32 +479,70 @@ def lexsort(keys, axis=None):
     >>> [surnames[i] + ", " + first_names[i] for i in ind]
     ['Galilei, Galileo', 'Hertz, Gustav', 'Hertz, Heinrich']
 
-    Sort two columns of numbers:
+    Sort according to two numerical keys, first by elements
+    of ``a``, then breaking ties according to elements of ``b``:
 
-    >>> a = [1,5,1,4,3,4,4] # First column
-    >>> b = [9,4,0,4,0,2,1] # Second column
-    >>> ind = np.lexsort((b,a)) # Sort by a, then by b
+    >>> a = [1, 5, 1, 4, 3, 4, 4]  # First sequence
+    >>> b = [9, 4, 0, 4, 0, 2, 1]  # Second sequence
+    >>> ind = np.lexsort((b, a))  # Sort by `a`, then by `b`
     >>> ind
     array([2, 0, 4, 6, 5, 3, 1])
-
-    >>> [(a[i],b[i]) for i in ind]
+    >>> [(a[i], b[i]) for i in ind]
     [(1, 0), (1, 9), (3, 0), (4, 1), (4, 2), (4, 4), (5, 4)]
 
-    Note that sorting is first according to the elements of ``a``.
-    Secondary sorting is according to the elements of ``b``.
+    Compare against `argsort`, which would sort each key independently.
 
-    A normal ``argsort`` would have yielded:
+    >>> np.argsort((b, a), kind='stable')
+    array([[2, 4, 6, 5, 1, 3, 0],
+           [0, 2, 4, 3, 5, 6, 1]])
 
-    >>> [(a[i],b[i]) for i in np.argsort(a)]
-    [(1, 9), (1, 0), (3, 0), (4, 4), (4, 1), (4, 2), (5, 4)]
+    To sort lexicographically with `argsort`, we would need to provide a
+    structured array.
 
-    Structured arrays are sorted lexically by ``argsort``:
-
-    >>> x = np.array([(1,9), (5,4), (1,0), (4,4), (3,0), (4,2), (4,1)],
-    ...              dtype=np.dtype([('x', int), ('y', int)]))
-
-    >>> np.argsort(x) # or np.argsort(x, order=('x', 'y'))
+    >>> x = np.array([(ai, bi) for ai, bi in zip(a, b)],
+    ...              dtype = np.dtype([('x', int), ('y', int)]))
+    >>> np.argsort(x)  # or np.argsort(x, order=('x', 'y'))
     array([2, 0, 4, 6, 5, 3, 1])
+
+    The zeroth axis of `keys` always corresponds with the sequence of keys,
+    so 2D arrays are treated just like other sequences of keys.
+
+    >>> arr = np.asarray([b, a])
+    >>> ind2 = np.lexsort(arr)
+    >>> np.testing.assert_equal(ind2, ind)
+
+    Accordingly, the `axis` parameter refers to an axis of *each* key, not of
+    the `keys` argument itself. For instance, the array ``arr`` is treated as
+    a sequence of two 1-D keys, so specifying ``axis=0`` is equivalent to
+    using the default axis, ``axis=-1``.
+
+    >>> np.testing.assert_equal(np.lexsort(arr, axis=0),
+    ...                         np.lexsort(arr, axis=-1))
+
+    For higher-dimensional arrays, the axis parameter begins to matter. The
+    resulting array has the same shape as each key, and the values are what
+    we would expect if `lexsort` were performed on corresponding slices
+    of the keys independently. For instance,
+
+    >>> x = [[1, 2, 3, 4],
+    ...      [4, 3, 2, 1],
+    ...      [2, 1, 4, 3]]
+    >>> y = [[2, 2, 1, 1],
+    ...      [1, 2, 1, 2],
+    ...      [1, 1, 2, 1]]
+    >>> np.lexsort((x, y), axis=1)
+    array([[2, 3, 0, 1],
+           [2, 0, 3, 1],
+           [1, 0, 3, 2]])
+
+    Each row of the result is what we would expect if we were to perform
+    `lexsort` on the corresponding row of the keys:
+
+    >>> for i in range(3):
+    ...     print(np.lexsort((x[i], y[i])))
+    [2 3 0 1]
+    [2 0 3 1]
+    [1 0 3 2]
 
     """
     if isinstance(keys, tuple):

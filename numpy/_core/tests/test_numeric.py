@@ -3085,6 +3085,22 @@ class TestStdVar:
         assert_almost_equal(np.std(self.A, ddof=2)**2,
                             self.real_var * len(self.A) / (len(self.A) - 2))
 
+    def test_correction(self):
+        assert_almost_equal(
+            np.var(self.A, correction=1), np.var(self.A, ddof=1)
+        )
+        assert_almost_equal(
+            np.std(self.A, correction=1), np.std(self.A, ddof=1)
+        )
+
+        err_msg = "ddof and correction can't be provided simultaneously."
+
+        with assert_raises_regex(ValueError, err_msg):
+            np.var(self.A, ddof=1, correction=0)
+
+        with assert_raises_regex(ValueError, err_msg):
+            np.std(self.A, ddof=1, correction=1)
+
     def test_out_scalar(self):
         d = np.arange(10)
         out = np.array(0.)

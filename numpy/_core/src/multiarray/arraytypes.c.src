@@ -1399,7 +1399,16 @@ HALF_to_@TYPE@(void *input, void *output, npy_intp n,
     @type@ *op = output;
 
     while (n--) {
-        *op++ = (@type@)npy_half_to_float(*ip++);
+        @type@ t;
+        if (npy_half_isnan(*ip)) {
+            t = (@type@)NPY_DATETIME_NAT;
+        }
+        else {
+            t = (@type@)npy_half_to_float(*ip);
+        }
+
+        ip++;
+        *op++ = t;
     }
 }
 

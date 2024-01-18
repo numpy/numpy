@@ -211,6 +211,7 @@ from numpy import (
     dtypes as dtypes,
     rec as rec,
     char as char,
+    strings as strings,
 )
 
 from numpy._core.records import (
@@ -1112,6 +1113,8 @@ class _ArrayOrScalarCommon:
         axis: None | SupportsIndex = ...,
         kind: None | _SortKind = ...,
         order: None | str | Sequence[str] = ...,
+        *,
+        stable: None | bool = ...,
     ) -> NDArray[Any]: ...
 
     @overload
@@ -1468,7 +1471,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def __array_ufunc__(
         self,
         ufunc: ufunc,
-        method: L["__call__", "reduce", "reduceat", "accumulate", "outer", "inner"],
+        method: L["__call__", "reduce", "reduceat", "accumulate", "outer", "at"],
         *inputs: Any,
         **kwargs: Any,
     ) -> Any: ...
@@ -1639,6 +1642,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         axis: SupportsIndex = ...,
         kind: None | _SortKind = ...,
         order: None | str | Sequence[str] = ...,
+        *,
+        stable: None | bool = ...,
     ) -> None: ...
 
     @overload
@@ -2547,7 +2552,12 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def __dlpack__(self: NDArray[number[Any]], *, stream: None = ...) -> _PyCapsule: ...
     def __dlpack_device__(self) -> tuple[int, L[0]]: ...
 
-    def __array_namespace__(self, *, api_version: str = ...) -> Any: ...
+    def __array_namespace__(self, *, api_version: str | None = ...) -> Any: ...
+
+    def to_device(self, device: L["cpu"], /, *, stream: None | int | Any = ...) -> NDArray[Any]: ...
+
+    @property
+    def device(self) -> L["cpu"]: ...
 
     def bitwise_count(
         self,

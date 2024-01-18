@@ -3,6 +3,7 @@
 
 #include <Python.h>
 #include <cstddef>
+#include <wchar.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
@@ -58,7 +59,7 @@ struct Buffer {
         after = buf_ + elsize_;
     }
 
-    inline npy_int64
+    inline size_t
     num_codepoints()
     {
         Buffer tmp(after, 0);
@@ -66,7 +67,7 @@ struct Buffer {
         while (tmp >= *this && *tmp == '\0') {
             tmp--;
         }
-        return (npy_int64) (tmp - *this + 1);
+        return (size_t) (tmp - *this + 1);
     }
 
     inline Buffer<enc>&
@@ -199,12 +200,12 @@ struct Buffer {
     inline bool
     isalpha()
     {
-        npy_int64 len = num_codepoints();
+        size_t len = num_codepoints();
         if (len == 0) {
             return false;
         }
 
-        for (npy_int64 i = 0; i < len; i++) {
+        for (size_t i = 0; i < len; i++) {
             bool isalpha = enc == ENCODING::UTF32 ? Py_UNICODE_ISALPHA((*this)[i])
                                                   : NumPyOS_ascii_isalpha((*this)[i]);
             if (!isalpha) {
@@ -215,7 +216,7 @@ struct Buffer {
     }
 
     inline bool
-    isspace(npy_int64 index)
+    isspace(size_t index)
     {
         switch (enc) {
         case ENCODING::ASCII:
@@ -228,12 +229,12 @@ struct Buffer {
     inline bool
     isspace()
     {
-        npy_int64 len = num_codepoints();
+        size_t len = num_codepoints();
         if (len == 0) {
             return false;
         }
 
-        for (npy_int64 i = 0; i < len; i++) {
+        for (size_t i = 0; i < len; i++) {
             if (!this->isspace(i)) {
                 return false;
             }
@@ -244,12 +245,12 @@ struct Buffer {
     inline bool
     isdigit()
     {
-        npy_int64 len = num_codepoints();
+        size_t len = num_codepoints();
         if (len == 0) {
             return false;
         }
 
-        for (npy_int64 i = 0; i < len; i++) {
+        for (size_t i = 0; i < len; i++) {
             bool isdigit = enc == ENCODING::UTF32 ? Py_UNICODE_ISDIGIT((*this)[i])
                                                   : NumPyOS_ascii_isdigit((*this)[i]);
             if (!isdigit) {

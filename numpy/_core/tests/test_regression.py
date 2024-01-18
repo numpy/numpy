@@ -1189,9 +1189,10 @@ class TestRegression:
     def test_sign_for_complex_nan(self):
         # Ticket 794.
         with np.errstate(invalid='ignore'):
-            C = np.array([-np.inf, -2+1j, 0, 2-1j, np.inf, np.nan])
+            C = np.array([-np.inf, -3+4j, 0, 4-3j, np.inf, np.nan])
             have = np.sign(C)
-            want = np.array([-1+0j, -1+0j, 0+0j, 1+0j, 1+0j, np.nan])
+            want = np.array([-1+0j, -0.6+0.8j, 0+0j, 0.8-0.6j, 1+0j,
+                             complex(np.nan, np.nan)])
             assert_equal(have, want)
 
     def test_for_equal_names(self):
@@ -2566,6 +2567,8 @@ class TestRegression:
         assert xp is np
         xp = arr.__array_namespace__(api_version="2022.12")
         assert xp is np
+        xp = arr.__array_namespace__(api_version=None)
+        assert xp is np
 
         with pytest.raises(
             ValueError,
@@ -2573,6 +2576,12 @@ class TestRegression:
                   "is not supported."
         ):
             arr.__array_namespace__(api_version="2023.12")
+
+        with pytest.raises(
+            ValueError,
+            match="Only None and strings are allowed as the Array API version"
+        ):
+            arr.__array_namespace__(api_version=2023)
 
     def test_isin_refcnt_bug(self):
         # gh-25295

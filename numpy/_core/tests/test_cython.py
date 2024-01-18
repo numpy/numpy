@@ -18,11 +18,8 @@ except ImportError:
 else:
     from numpy._utils import _pep440
 
-    # Cython 0.29.30 is required for Python 3.11 and there are
-    # other fixes in the 0.29 series that are needed even for earlier
-    # Python versions.
     # Note: keep in sync with the one in pyproject.toml
-    required_version = "0.29.30"
+    required_version = "3.0.6"
     if _pep440.parse(cython_version) < _pep440.Version(required_version):
         # too old or wrong cython, skip the test
         cython = None
@@ -53,7 +50,12 @@ def install_temp(tmpdir_factory):
         subprocess.check_call(["meson", "setup", str(srcdir)],
                               cwd=build_dir
                               )
-    subprocess.check_call(["meson", "compile", "-vv"], cwd=build_dir)
+    try:
+        subprocess.check_call(["meson", "compile", "-vv"], cwd=build_dir)
+    except subprocess.CalledProcessError as p:
+        print(f"{p.stdout=}")
+        print(f"{p.stderr=}")
+        raise
 
     sys.path.append(str(build_dir))
 

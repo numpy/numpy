@@ -439,6 +439,22 @@ class TestNanFunctions_NumberTypes:
         else:
             assert out.dtype == tgt.dtype
 
+    @pytest.mark.parametrize(
+        "nanfunc", [np.nanvar, np.nanstd]
+    )
+    def test_nanfunc_correction(self, mat, dtype, nanfunc):
+        mat = mat.astype(dtype)
+        assert_almost_equal(
+            nanfunc(mat, correction=0.5), nanfunc(mat, ddof=0.5)
+        )
+
+        err_msg = "ddof and correction can't be provided simultaneously."
+        with assert_raises_regex(ValueError, err_msg):
+            nanfunc(mat, ddof=0.5, correction=0.5)
+
+        with assert_raises_regex(ValueError, err_msg):
+            nanfunc(mat, ddof=1, correction=0)
+
 
 class SharedNanFunctionsTestsMixin:
     def test_mutation(self):

@@ -1,5 +1,5 @@
-Lager ``NPY_MAXDIMS`` and ``NPY_MAXARGS``, ``NPY_RAVEL_AXIS`` introduced
-------------------------------------------------------------------------
+Larger ``NPY_MAXDIMS`` and ``NPY_MAXARGS``, ``NPY_RAVEL_AXIS`` introduced
+-------------------------------------------------------------------------
 
 ``NPY_MAXDIMS`` is now 64, you may want to review its use.  This is usually
 used in a stack allocation, where the increase should be safe.
