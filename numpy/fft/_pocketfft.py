@@ -764,7 +764,7 @@ def fftn(a, s=None, axes=None, norm=None):
 
         .. deprecated:: 2.0
 
-            `s` must contain only ``int``s, not ``None`` values. ``None``
+            `s` must contain only ``int`` s, not ``None`` values. ``None``
             values currently mean that the default value for ``n`` is used
             in the corresponding 1-D transform, but this behaviour is
             deprecated.
@@ -899,7 +899,7 @@ def ifftn(a, s=None, axes=None, norm=None):
 
         .. deprecated:: 2.0
 
-            `s` must contain only ``int``s, not ``None`` values. ``None``
+            `s` must contain only ``int`` s, not ``None`` values. ``None``
             values currently mean that the default value for ``n`` is used
             in the corresponding 1-D transform, but this behaviour is
             deprecated.
@@ -1017,7 +1017,7 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
 
         .. deprecated:: 2.0
 
-            `s` must contain only ``int``s, not ``None`` values. ``None``
+            `s` must contain only ``int`` s, not ``None`` values. ``None``
             values currently mean that the default value for ``n`` is used
             in the corresponding 1-D transform, but this behaviour is
             deprecated.
@@ -1026,12 +1026,12 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
         Axes over which to compute the FFT.  If not given, the last two
         axes are used.  A repeated index in `axes` means the transform over
         that axis is performed multiple times.  A one-element sequence means
-        that a one-dimensional FFT is performed.
+        that a one-dimensional FFT is performed. Default: ``(-2, -1)``.
 
         .. deprecated:: 2.0
 
             If `s` is specified, the corresponding `axes` to be transformed
-            must be explicitly specified too.
+            must not be ``None``.
 
     norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
@@ -1143,7 +1143,7 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
 
         .. deprecated:: 2.0
 
-            `s` must contain only ``int``s, not ``None`` values. ``None``
+            `s` must contain only ``int`` s, not ``None`` values. ``None``
             values currently mean that the default value for ``n`` is used
             in the corresponding 1-D transform, but this behaviour is
             deprecated.
@@ -1152,12 +1152,12 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
         Axes over which to compute the FFT.  If not given, the last two
         axes are used.  A repeated index in `axes` means the transform over
         that axis is performed multiple times.  A one-element sequence means
-        that a one-dimensional FFT is performed.
+        that a one-dimensional FFT is performed. Default: ``(-2, -1)``.
 
         .. deprecated:: 2.0
 
             If `s` is specified, the corresponding `axes` to be transformed
-            must be explicitly specified too.
+            must not be ``None``.
 
     norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
@@ -1254,7 +1254,7 @@ def rfftn(a, s=None, axes=None, norm=None):
 
         .. deprecated:: 2.0
 
-            `s` must contain only ``int``s, not ``None`` values. ``None``
+            `s` must contain only ``int`` s, not ``None`` values. ``None``
             values currently mean that the default value for ``n`` is used
             in the corresponding 1-D transform, but this behaviour is
             deprecated.
@@ -1350,8 +1350,30 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
         Input array, taken to be real.
     s : sequence of ints, optional
         Shape of the FFT.
+
+        .. versionchanged:: 2.0
+
+            If it is ``-1``, the whole input is used (no padding/trimming).
+
+        .. deprecated:: 2.0
+
+            If `s` is not ``None``, `axes` must not be ``None`` either.
+
+        .. deprecated:: 2.0
+
+            `s` must contain only ``int`` s, not ``None`` values. ``None``
+            values currently mean that the default value for ``n`` is used
+            in the corresponding 1-D transform, but this behaviour is
+            deprecated.
+
     axes : sequence of ints, optional
-        Axes over which to compute the FFT.
+        Axes over which to compute the FFT. Default: ``(-2, -1)``.
+
+        .. deprecated:: 2.0
+
+            If `s` is specified, the corresponding `axes` to be transformed
+            must not be ``None``.
+
     norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
 
@@ -1434,7 +1456,7 @@ def irfftn(a, s=None, axes=None, norm=None):
 
         .. deprecated:: 2.0
 
-            `s` must contain only ``int``s, not ``None`` values. ``None``
+            `s` must contain only ``int`` s, not ``None`` values. ``None``
             values currently mean that the default value for ``n`` is used
             in the corresponding 1-D transform, but this behaviour is
             deprecated.
@@ -1536,9 +1558,31 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
         The input array
     s : sequence of ints, optional
         Shape of the real output to the inverse FFT.
+
+        .. versionchanged:: 2.0
+
+            If it is ``-1``, the whole input is used (no padding/trimming).
+
+        .. deprecated:: 2.0
+
+            If `s` is not ``None``, `axes` must not be ``None`` either.
+
+        .. deprecated:: 2.0
+
+            `s` must contain only ``int`` s, not ``None`` values. ``None``
+            values currently mean that the default value for ``n`` is used
+            in the corresponding 1-D transform, but this behaviour is
+            deprecated.
+
     axes : sequence of ints, optional
         The axes over which to compute the inverse fft.
-        Default is the last two axes.
+        Default: ``(-2, -1)``, the last two axes.
+
+        .. deprecated:: 2.0
+
+            If `s` is specified, the corresponding `axes` to be transformed
+            must not be ``None``.
+
     norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
 
