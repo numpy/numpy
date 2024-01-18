@@ -45,15 +45,12 @@ array_api_tests/test_signatures.py::test_func_signature[std]
 array_api_tests/test_signatures.py::test_func_signature[var]
 array_api_tests/test_signatures.py::test_func_signature[asarray]
 array_api_tests/test_signatures.py::test_func_signature[reshape]
-array_api_tests/test_signatures.py::test_func_signature[argsort]
-array_api_tests/test_signatures.py::test_func_signature[sort]
-array_api_tests/test_signatures.py::test_extension_func_signature[linalg.matrix_rank]
 array_api_tests/test_signatures.py::test_array_method_signature[__array_namespace__]
 
 # missing 'copy' keyword argument, 'newshape' should be named 'shape'
 array_api_tests/test_signatures.py::test_func_signature[reshape]
 
-# missing 'descending' and 'stable' keyword arguments
+# missing 'descending' keyword arguments
 array_api_tests/test_signatures.py::test_func_signature[argsort]
 array_api_tests/test_signatures.py::test_func_signature[sort]
 

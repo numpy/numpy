@@ -265,6 +265,8 @@ def matrix_rank(
     A: _ArrayLikeComplex_co,
     tol: None | _ArrayLikeFloat_co = ...,
     hermitian: bool = ...,
+    *,
+    rtol: None | _ArrayLikeFloat_co = ...,
 ) -> Any: ...
 
 @overload

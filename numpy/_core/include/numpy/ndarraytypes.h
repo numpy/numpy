@@ -155,6 +155,7 @@ enum NPY_TYPECHAR {
  * depend on the data type.
  */
 typedef enum {
+        _NPY_SORT_UNDEFINED=-1,
         NPY_QUICKSORT=0,
         NPY_HEAPSORT=1,
         NPY_MERGESORT=2,

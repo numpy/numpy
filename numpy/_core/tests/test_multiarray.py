@@ -2043,6 +2043,12 @@ class TestMethods:
         b = np.sort(a)
         assert_equal(b, a[::-1], msg)
 
+        with assert_raises_regex(
+            ValueError,
+            "kind` and `stable` parameters can't be provided at the same time"
+        ):
+            np.sort(a, kind="stable", stable=True)
+
     # all c scalar sorts use the same code with different types
     # so it suffices to run a quick check with one type. The number
     # of sorted items must be greater than ~50 to check the actual
@@ -2480,6 +2486,12 @@ class TestMethods:
         # unicode
         a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.str_)
         assert_equal(a.argsort(kind='m'), r)
+
+        with assert_raises_regex(
+            ValueError,
+            "kind` and `stable` parameters can't be provided at the same time"
+        ):
+            np.argsort(a, kind="stable", stable=True)
 
     def test_sort_unicode_kind(self):
         d = np.arange(10)

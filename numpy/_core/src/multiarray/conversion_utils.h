@@ -28,6 +28,9 @@ NPY_NO_EXPORT int
 PyArray_BoolConverter(PyObject *object, npy_bool *val);
 
 NPY_NO_EXPORT int
+PyArray_OptionalBoolConverter(PyObject *object, int *val);
+
+NPY_NO_EXPORT int
 PyArray_ByteorderConverter(PyObject *obj, char *endian);
 
 NPY_NO_EXPORT int

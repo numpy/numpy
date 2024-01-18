@@ -432,6 +432,28 @@ PyArray_BoolConverter(PyObject *object, npy_bool *val)
     return NPY_SUCCEED;
 }
 
+/*
+ * Optionally convert an object to true / false
+ */
+NPY_NO_EXPORT int
+PyArray_OptionalBoolConverter(PyObject *object, int *val)
+{
+    /* Leave the desired default from the caller for Py_None */
+    if (object == Py_None) {
+        return NPY_SUCCEED;
+    }
+    if (PyObject_IsTrue(object)) {
+        *val = 1;
+    }
+    else {
+        *val = 0;
+    }
+    if (PyErr_Occurred()) {
+        return NPY_FAIL;
+    }
+    return NPY_SUCCEED;
+}
+
 static int
 string_converter_helper(
     PyObject *object,

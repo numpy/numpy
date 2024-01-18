@@ -1113,6 +1113,8 @@ class _ArrayOrScalarCommon:
         axis: None | SupportsIndex = ...,
         kind: None | _SortKind = ...,
         order: None | str | Sequence[str] = ...,
+        *,
+        stable: None | bool = ...,
     ) -> NDArray[Any]: ...
 
     @overload
@@ -1640,6 +1642,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         axis: SupportsIndex = ...,
         kind: None | _SortKind = ...,
         order: None | str | Sequence[str] = ...,
+        *,
+        stable: None | bool = ...,
     ) -> None: ...
 
     @overload
