@@ -17,13 +17,13 @@ array_function_dispatch = functools.partial(
 
 
 def _linspace_dispatcher(start, stop, num=None, endpoint=None, retstep=None,
-                         dtype=None, axis=None):
+                         dtype=None, axis=None, *, device=None):
     return (start, stop)
 
 
 @array_function_dispatch(_linspace_dispatcher)
 def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
-             axis=0):
+             axis=0, *, device=None):
     """
     Return evenly spaced numbers over a specified interval.
 
@@ -64,13 +64,17 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         array of integers.
 
         .. versionadded:: 1.9.0
-
     axis : int, optional
         The axis in the result to store the samples.  Relevant only if start
         or stop are array-like.  By default (0), the samples will be along a
         new axis inserted at the beginning. Use -1 to get an axis at the end.
 
         .. versionadded:: 1.16.0
+    device : str, optional
+        The device on which to place the created array. Default: None.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -140,7 +144,9 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         integer_dtype = _nx.issubdtype(dtype, _nx.integer)
 
     delta = stop - start
-    y = _nx.arange(0, num, dtype=dt).reshape((-1,) + (1,) * ndim(delta))
+    y = _nx.arange(
+        0, num, dtype=dt, device=device
+    ).reshape((-1,) + (1,) * ndim(delta))
     # In-place multiplication y *= delta/div is faster, but prevents
     # the multiplicant from overriding what class is produced, and thus
     # prevents, e.g. use of Quantities, see gh-7142. Hence, we multiply

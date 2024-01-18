@@ -18,6 +18,7 @@
 #include "conversion_utils.h"
 #include "alloc.h"
 #include "npy_buffer.h"
+#include "multiarraymodule.h"
 
 static int
 PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char * msg) NPY_GCC_NONNULL(2);
@@ -1351,4 +1352,26 @@ PyArray_IntTupleFromIntp(int len, npy_intp const *vals)
 
  fail:
     return intTuple;
+}
+
+/*
+ * Device string converter.
+ */
+NPY_NO_EXPORT int
+PyArray_DeviceConverterOptional(PyObject *object, NPY_DEVICE *device)
+{
+    if (object == Py_None) {
+        return NPY_SUCCEED;
+    }
+
+    if (PyUnicode_Check(object) &&
+        PyUnicode_Compare(object, npy_ma_str_cpu) == 0) {
+        *device = NPY_DEVICE_CPU;
+        return NPY_SUCCEED;
+    }
+
+    PyErr_Format(PyExc_ValueError,
+            "Device not understood. Only \"cpu\" is allowed, "
+            "but received: %S", object);
+    return NPY_FAIL;
 }
