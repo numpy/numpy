@@ -1554,7 +1554,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     if _is_string_like(fname):
         # datasource doesn't support creating a new file ...
         open(fname, 'wt').close()
-        fh = np.lib._datasource.open(fname, 'wt', encoding=encoding)
+        fh = np.lib._datasource.open(fname, 'wt', encoding=encoding, newline=newline)
         own_fh = True
     elif hasattr(fname, 'write'):
         # wrap to handle byte output streams
