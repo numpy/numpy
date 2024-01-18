@@ -127,7 +127,7 @@ __all__ = ["__array_api_version__"]
 
 from ._constants import e, inf, nan, pi, newaxis
 
-__all__ += ["e", "inf", "nan", "pi"]
+__all__ += ["e", "inf", "nan", "pi", "newaxis"]
 
 from ._creation_functions import (
     asarray,
