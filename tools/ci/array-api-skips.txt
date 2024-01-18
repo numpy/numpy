@@ -73,9 +73,5 @@ array_api_tests/test_signatures.py::test_func_signature[sort]
 # asarray() got an unexpected keyword argument 'copy'
 array_api_tests/test_special_cases.py::test_iop
 
-# got an unexpected keyword argument 'correction'
-array_api_tests/test_statistical_functions.py::test_std
-array_api_tests/test_statistical_functions.py::test_var
-
 # assertionError: out.dtype=float32, but should be float64 [sum(float32)]
 array_api_tests/test_statistical_functions.py::test_sum
