@@ -656,7 +656,7 @@ npy__cpu_init_features(void)
 
 /***************** ARM ******************/
 
-#elif defined(__arm__) || defined(__aarch64__)
+#elif defined(__arm__) || defined(__aarch64__) || defined(_M_ARM64)
 
 static inline void
 npy__cpu_init_features_arm8(void)
@@ -781,7 +781,7 @@ npy__cpu_init_features(void)
         return;
 #endif
     // We have nothing else todo
-#if defined(NPY_HAVE_ASIMD) || defined(__aarch64__) || (defined(__ARM_ARCH) && __ARM_ARCH >= 8)
+#if defined(NPY_HAVE_ASIMD) || defined(__aarch64__) || (defined(__ARM_ARCH) && __ARM_ARCH >= 8) || defined(_M_ARM64)
     #if defined(NPY_HAVE_FPHP) || defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
     npy__cpu_have[NPY_CPU_FEATURE_FPHP] = 1;
     #endif
