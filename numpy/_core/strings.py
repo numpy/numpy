@@ -69,7 +69,7 @@ def find(a, sub, start=0, end=None):
     Examples
     --------
     >>> a = np.array(["NumPy is a Python library"])
-    >>> np.strings.find(a, "Python", 0, None)
+    >>> np.strings.find(a, "Python")
     array([11])
 
     """
