@@ -159,8 +159,8 @@ assert_type(np.quantile(AR_f8, [0.5], keepdims=True), Any)
 assert_type(np.quantile(AR_f8, [0.5], axis=[1]), Any)
 assert_type(np.quantile(AR_f8, [0.5], out=AR_c16), npt.NDArray[np.complex128])
 
-assert_type(np.meshgrid(AR_f8, AR_i8, copy=False), list[npt.NDArray[Any]])
-assert_type(np.meshgrid(AR_f8, AR_i8, AR_c16, indexing="ij"), list[npt.NDArray[Any]])
+assert_type(np.meshgrid(AR_f8, AR_i8, copy=False), tuple[npt.NDArray[Any]])
+assert_type(np.meshgrid(AR_f8, AR_i8, AR_c16, indexing="ij"), tuple[npt.NDArray[Any]])
 
 assert_type(np.delete(AR_f8, np.s_[:5]), npt.NDArray[np.float64])
 assert_type(np.delete(AR_LIKE_f8, [0, 4, 9], axis=0), npt.NDArray[Any])
