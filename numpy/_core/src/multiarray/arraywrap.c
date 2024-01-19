@@ -35,10 +35,15 @@ npy_find_array_wrap(
 
     double priority = 0;  /* silence uninitialized warning */
 
+    /*
+     * Iterate through all inputs taking the first one with an __array_wrap__
+     * and replace it if a later one has a higher priority.
+     * (Currently even priority=-inf can be picked if it is the only argument.)
+     */
     for (int i = 0; i < nin; i++) {
         PyObject *obj = inputs[i];
         if (PyArray_CheckExact(obj)) {
-            if (wrap == NULL || priority < 0) {
+            if (wrap == NULL || priority < NPY_PRIORITY) {
                 Py_INCREF(Py_None);
                 Py_XSETREF(wrap, Py_None);
                 priority = 0;
@@ -67,6 +72,9 @@ npy_find_array_wrap(
                 Py_INCREF(Py_TYPE(obj));
                 Py_XSETREF(wrap_type, (PyObject *)Py_TYPE(obj));
                 priority = curr_priority;
+            }
+            else {
+                Py_DECREF(new_wrap);
             }
         }
     }
@@ -140,15 +148,17 @@ npy_apply_wrap(
         /* 
          * If an original output object was passed, wrapping shouldn't
          * change it.  In particular, it doesn't make sense to convert to
-         * scalar.
+         * scalar.  So replace the passed in wrap and wrap_type.
          */
         return_scalar = NPY_FALSE;
 
         if (PyArray_CheckExact(original_out)) {
+            /* Replace passed wrap/wrap_type (borrowed refs) with default. */
             wrap = Py_None;
             wrap_type = (PyObject *)&PyArray_Type;
         }
         else {
+            /* Replace passed wrap/wrap_type (borrowed refs) with new_wrap/type. */
             PyObject *new_wrap = PyArray_LookupSpecial_OnInstance(
                     original_out, npy_ma_str_array_wrap);
             if (new_wrap != NULL) {
