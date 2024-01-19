@@ -727,7 +727,7 @@ def dstack(tup):
     """
     arrs = atleast_3d(*tup)
     if not isinstance(arrs, tuple):
-        arrs = [arrs]
+        arrs = (arrs,)
     return _nx.concatenate(arrs, 2)
 
 
@@ -983,8 +983,10 @@ def vsplit(ary, indices_or_sections):
            [12., 13., 14., 15.]]))
     >>> np.vsplit(x, np.array([3, 6]))
     (array([[ 0.,  1.,  2.,  3.],
-           [ 4.,  5.,  6.,  7.],
-           [ 8.,  9., 10., 11.]]), array([[12., 13., 14., 15.]]), array([], shape=(0, 4), dtype=float64))
+            [ 4.,  5.,  6.,  7.],
+            [ 8.,  9., 10., 11.]]),
+     array([[12., 13., 14., 15.]]),
+     array([], shape=(0, 4), dtype=float64))
 
     With a higher dimensional array the split is still along the first axis.
 

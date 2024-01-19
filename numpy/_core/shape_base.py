@@ -283,7 +283,7 @@ def vstack(tup, *, dtype=None, casting="same_kind"):
     """
     arrs = atleast_2d(*tup)
     if not isinstance(arrs, tuple):
-        arrs = [arrs]
+        arrs = (arrs,)
     return _nx.concatenate(arrs, 0, dtype=dtype, casting=casting)
 
 
@@ -350,7 +350,7 @@ def hstack(tup, *, dtype=None, casting="same_kind"):
     """
     arrs = atleast_1d(*tup)
     if not isinstance(arrs, tuple):
-        arrs = [arrs]
+        arrs = (arrs,)
     # As a special case, dimension 0 of 1-dimensional arrays is "horizontal"
     if arrs and arrs[0].ndim == 1:
         return _nx.concatenate(arrs, 0, dtype=dtype, casting=casting)

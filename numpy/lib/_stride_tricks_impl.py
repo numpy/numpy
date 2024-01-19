@@ -546,7 +546,7 @@ def broadcast_arrays(*args, subok=False):
     # return np.nditer(args, flags=['multi_index', 'zerosize_ok'],
     #                  order='C').itviews
 
-    args = [np.array(_m, copy=False, subok=subok) for _m in args]
+    args = tuple(np.array(_m, copy=False, subok=subok) for _m in args)
 
     shape = _broadcast_shape(*args)
 
@@ -554,5 +554,5 @@ def broadcast_arrays(*args, subok=False):
         # Common case where nothing needs to be broadcasted.
         return args
 
-    return tuple([_broadcast_to(array, shape, subok=subok, readonly=False)
-                  for array in args])
+    return tuple(_broadcast_to(array, shape, subok=subok, readonly=False)
+                 for array in args)
