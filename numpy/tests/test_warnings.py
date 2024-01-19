@@ -5,7 +5,6 @@ all of these occurrences but should catch almost all.
 import pytest
 
 from pathlib import Path
-import sys
 import ast
 import tokenize
 import numpy
@@ -33,7 +32,7 @@ class FindFuncs(ast.NodeVisitor):
         ast.NodeVisitor.generic_visit(self, node)
 
         if p.ls[-1] == 'simplefilter' or p.ls[-1] == 'filterwarnings':
-            if node.args[0].s == "ignore":
+            if node.args[0].value == "ignore":
                 raise AssertionError(
                     "warnings should have an appropriate stacklevel; found in "
                     "{} on line {}".format(self.__filename, node.lineno))
@@ -57,8 +56,6 @@ class FindFuncs(ast.NodeVisitor):
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(sys.version_info >= (3, 12),
-                    reason="Deprecation warning in ast")
 def test_warning_calls():
     # combined "ignore" and stacklevel error
     base = Path(numpy.__file__).parent
