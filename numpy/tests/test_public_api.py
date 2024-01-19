@@ -658,6 +658,11 @@ def test_functions_single_location():
                     ) and module.__name__ == "numpy.strings":
                         continue
 
+                    # numpy.char reexports all numpy.strings functions for
+                    # backwards-compatibility
+                    if module.__name__ == "numpy.char":
+                        continue
+
                     # function is present in more than one location!
                     duplicated_functions.append(
                         (member.__name__,
