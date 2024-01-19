@@ -1388,7 +1388,7 @@ def _savetxt_dispatcher(fname, X, fmt=None, delimiter=None, newline=None,
 
 
 @array_function_dispatch(_savetxt_dispatcher)
-def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
+def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline=None, header='',
             footer='', comments='# ', encoding=None):
     """
     Save an array to a text file.
@@ -1417,7 +1417,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     delimiter : str, optional
         String or character separating columns.
     newline : str, optional
-        String or character separating lines.
+        String or character separating lines.  Default is universal newline.
 
         .. versionadded:: 1.5.0
     header : str, optional
