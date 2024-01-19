@@ -1565,7 +1565,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline=None, header='',
         fh = np.lib._datasource.open(fname, 
                                      'wt',
                                      encoding=encoding,
-                                     open_newline=newline)
+                                     newline=open_newline)
         own_fh = True
     elif hasattr(fname, 'write'):
         # wrap to handle byte output streams
