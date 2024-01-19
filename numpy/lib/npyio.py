@@ -1548,6 +1548,14 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline=None, header='',
                 self.write_bytes(v)
                 self.write = self.write_bytes
 
+    # _datasource.open() needs to be passed None to enable universal
+    # newlines, and this function needs to write newlines.
+    if newline is None:
+        open_newline = None
+        newline = '\n'
+    else:
+        open_newline = newline
+                
     own_fh = False
     if isinstance(fname, os_PathLike):
         fname = os_fspath(fname)
@@ -1557,7 +1565,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline=None, header='',
         fh = np.lib._datasource.open(fname, 
                                      'wt',
                                      encoding=encoding,
-                                     newline=newline)
+                                     open_newline=newline)
         own_fh = True
     elif hasattr(fname, 'write'):
         # wrap to handle byte output streams
