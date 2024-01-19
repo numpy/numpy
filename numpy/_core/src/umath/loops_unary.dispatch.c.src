@@ -195,6 +195,8 @@ simd_unary_nc_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip, npy_intp istride,
 #undef UNROLL
 #define UNROLL 2
 #endif
+// X86 does better with unrolled scalar for heavy non-contiguous
+#ifndef NPY_HAVE_SSE2
 static NPY_INLINE void
 simd_unary_nn_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip, npy_intp istride,
                              npyv_lanetype_@sfx@ *op, npy_intp ostride,
@@ -226,6 +228,7 @@ simd_unary_nn_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip, npy_intp istride,
         *op = scalar_@intrin@(*ip);
     }
 }
+#endif // NPY_HAVE_SSE2
 #endif // @supports_ncontig@
 #undef UNROLL
 #endif // @simd_chk@
@@ -314,8 +317,8 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
                 );
                 goto clear;
             }
-        // SSE2 does better with unrolled scalar for heavy non-contiguous
-        #if !defined(NPY_HAVE_SSE2)
+        // X86 does better with unrolled scalar for heavy non-contiguous
+        #ifndef NPY_HAVE_SSE2
             else if (istride != 1 && ostride != 1) {
                 // non-contiguous input and output
                 TO_SIMD_SFX(simd_unary_nn_@intrin@)(

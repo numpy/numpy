@@ -1,0 +1,17 @@
+In [3]: ?adder.adder.zadd
+Call signature: adder.adder.zadd(*args, **kwargs)
+Type:           fortran
+String form:    <fortran function zadd>
+Docstring:
+c = zadd(a,b)
+
+Wrapper for ``zadd``.
+
+Parameters
+----------
+a : input rank-1 array('D') with bounds (n)
+b : input rank-1 array('D') with bounds (n)
+
+Returns
+-------
+c : rank-1 array('D') with bounds (n)

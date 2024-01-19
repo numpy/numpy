@@ -1399,7 +1399,16 @@ HALF_to_@TYPE@(void *input, void *output, npy_intp n,
     @type@ *op = output;
 
     while (n--) {
-        *op++ = (@type@)npy_half_to_float(*ip++);
+        @type@ t;
+        if (npy_half_isnan(*ip)) {
+            t = (@type@)NPY_DATETIME_NAT;
+        }
+        else {
+            t = (@type@)npy_half_to_float(*ip);
+        }
+
+        ip++;
+        *op++ = t;
     }
 }
 
@@ -3499,7 +3508,7 @@ NPY_NO_EXPORT void
 
 /**************************** NO CBLAS VERSIONS *****************************/
 
-static void
+NPY_NO_EXPORT void
 BOOL_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp n,
          void *NPY_UNUSED(ignore))
 {
@@ -3533,7 +3542,7 @@ BOOL_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp n,
  *        npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *        npy_longdouble, npy_timedelta#
  */
-static void
+NPY_NO_EXPORT void
 @name@_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp n,
            void *NPY_UNUSED(ignore))
 {
@@ -3548,7 +3557,7 @@ static void
 }
 /**end repeat**/
 
-static void
+NPY_NO_EXPORT void
 HALF_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op,
          npy_intp n, void *NPY_UNUSED(ignore))
 {
@@ -3562,7 +3571,7 @@ HALF_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op,
     *((npy_half *)op) = npy_float_to_half(tmp);
 }
 
-static void
+NPY_NO_EXPORT void
 CLONGDOUBLE_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2,
                             char *op, npy_intp n, void *NPY_UNUSED(ignore))
 {
@@ -3583,7 +3592,7 @@ CLONGDOUBLE_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2,
     ((npy_longdouble *)op)[1] = tmpi;
 }
 
-static void
+NPY_NO_EXPORT void
 OBJECT_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp n,
            void *NPY_UNUSED(ignore))
 {

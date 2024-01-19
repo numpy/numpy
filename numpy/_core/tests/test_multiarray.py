@@ -1197,7 +1197,7 @@ class TestCreation:
         a = np.array([1, Decimal(1)])
         a = np.array([[1], [Decimal(1)]])
 
-    @pytest.mark.parametrize("dtype", [object, "O,O", "O,(3)O", "(2,3)O"])
+    @pytest.mark.parametrize("dtype", [object, "O,O", "O,(3,)O", "(2,3)O"])
     @pytest.mark.parametrize("function", [
             np.ndarray, np.empty,
             lambda shape, dtype: np.empty_like(np.empty(shape, dtype=dtype))])
@@ -1552,7 +1552,7 @@ class TestStructured:
 
     def test_structuredscalar_indexing(self):
         # test gh-7262
-        x = np.empty(shape=1, dtype="(2)3S,(2)3U")
+        x = np.empty(shape=1, dtype="(2,)3S,(2,)3U")
         assert_equal(x[["f0","f1"]][0], x[0][["f0","f1"]])
         assert_equal(x[0], x[0][()])
 
@@ -2043,6 +2043,12 @@ class TestMethods:
         b = np.sort(a)
         assert_equal(b, a[::-1], msg)
 
+        with assert_raises_regex(
+            ValueError,
+            "kind` and `stable` parameters can't be provided at the same time"
+        ):
+            np.sort(a, kind="stable", stable=True)
+
     # all c scalar sorts use the same code with different types
     # so it suffices to run a quick check with one type. The number
     # of sorted items must be greater than ~50 to check the actual
@@ -2480,6 +2486,12 @@ class TestMethods:
         # unicode
         a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.str_)
         assert_equal(a.argsort(kind='m'), r)
+
+        with assert_raises_regex(
+            ValueError,
+            "kind` and `stable` parameters can't be provided at the same time"
+        ):
+            np.argsort(a, kind="stable", stable=True)
 
     def test_sort_unicode_kind(self):
         d = np.arange(10)
@@ -8205,33 +8217,6 @@ class TestNewBufferProtocol:
         a = np.ones((1,) * 32)
         self._check_roundtrip(a)
 
-    @pytest.mark.slow
-    def test_error_too_many_dims(self):
-        def make_ctype(shape, scalar_type):
-            t = scalar_type
-            for dim in shape[::-1]:
-                t = dim * t
-            return t
-
-        # Try constructing a memory with too many dimensions:
-        c_u8_65d = make_ctype((1,)*65, ctypes.c_uint8)
-        try:
-            m = memoryview(c_u8_65d())
-        except ValueError:
-            pytest.skip("memoryview doesn't support more dimensions")
-
-        assert_equal(m.ndim, 65)
-
-        with pytest.raises(RuntimeError, match=".*ndim"):
-            np.array(m)
-
-        # The above seems to create some deep cycles, clean them up for
-        # easier reference count debugging:
-        del c_u8_65d, m
-        for i in range(65):
-            if gc.collect() == 0:
-                break
-
     def test_error_pointer_type(self):
         # gh-6741
         m = memoryview(ctypes.pointer(ctypes.c_uint8()))
@@ -9451,9 +9436,14 @@ class TestArange:
         assert_raises(TypeError, np.arange, start=4)
 
     def test_start_stop_kwarg(self):
+        with pytest.raises(TypeError):
+            # Start cannot be passed as a kwarg anymore, because on it's own
+            # it would be strange.
+            np.arange(start=0, stop=3)
+
         keyword_stop = np.arange(stop=3)
-        keyword_zerotostop = np.arange(start=0, stop=3)
-        keyword_start_stop = np.arange(start=3, stop=9)
+        keyword_zerotostop = np.arange(0, stop=3)
+        keyword_start_stop = np.arange(3, stop=9)
 
         assert len(keyword_stop) == 3
         assert len(keyword_zerotostop) == 3
@@ -10106,3 +10096,29 @@ def test_partition_fp(N, dtype):
             np.partition(arr, k, kind='introselect'))
     assert_arr_partitioned(np.sort(arr)[k], k,
             arr[np.argpartition(arr, k, kind='introselect')])
+
+
+class TestDevice:
+    """
+    Test arr.device attribute and arr.to_device() method.
+    """
+    def test_device(self):
+        arr = np.arange(5)
+
+        assert arr.device == "cpu"
+        with assert_raises_regex(
+            AttributeError,
+            r"attribute 'device' of '(numpy.|)ndarray' objects is "
+            r"not writable"
+        ):
+            arr.device = "other"
+
+    def test_to_device(self):
+        arr = np.arange(5)
+
+        assert arr.to_device("cpu") is arr
+        with assert_raises_regex(
+            ValueError,
+            r"The stream argument in to_device\(\) is not supported"
+        ):
+            arr.to_device("cpu", stream=1)

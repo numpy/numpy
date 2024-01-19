@@ -496,8 +496,8 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         supported for automated bin size selection.
 
         'auto'
-            Maximum of the 'sturges' and 'fd' estimators. Provides good
-            all around performance.
+            Minimum bin width between the 'sturges' and 'fd' estimators. 
+            Provides good all-around performance.
 
         'fd' (Freedman Diaconis Estimator)
             Robust (resilient to outliers) estimator that takes into
@@ -567,7 +567,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     ``np.round(np.ceil(range / h))``. The final bin width is often less
     than what is returned by the estimators below.
 
-    'auto' (maximum of the 'sturges' and 'fd' estimators)
+    'auto' (minimum bin width of the 'sturges' and 'fd' estimators)
         A compromise to get a good value. For small datasets the Sturges
         value will usually be chosen, while larger datasets will usually
         default to FD.  Avoids the overly conservative behaviour of FD
@@ -711,6 +711,9 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
         (instead of 1). If `density` is True, the weights are
         normalized, so that the integral of the density over the range
         remains 1.
+        Please note that the ``dtype`` of `weights` will also become the
+        ``dtype`` of the returned accumulator (`hist`), so it must be
+        large enough to hold accumulated values as well.
     density : bool, optional
         If ``False``, the result will contain the number of samples in
         each bin. If ``True``, the result is the value of the
@@ -723,7 +726,8 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
     -------
     hist : array
         The values of the histogram. See `density` and `weights` for a
-        description of the possible semantics.
+        description of the possible semantics.  If `weights` are given,
+        ``hist.dtype`` will be taken from `weights`.
     bin_edges : array of dtype float
         Return the bin edges ``(length(hist)+1)``.
 

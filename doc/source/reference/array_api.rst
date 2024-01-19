@@ -99,10 +99,6 @@ functions to include additional keyword arguments from those required.
      - The definitions of ``rtol`` and ``rcond`` are the same, but their
        default values differ, making this **breaking**. See
        :ref:`array_api-linear-algebra-differences`.
-   * - ``std`` and ``var``
-     - ``correction``
-     - ``ddof``
-     -
    * - ``reshape``
      - ``shape``
      - ``newshape``
@@ -501,12 +497,6 @@ Creation functions differences
    * - ``copy`` keyword argument to ``asarray``
      - **Compatible**
      -
-   * - New ``device`` keyword argument to all array creation functions
-       (``asarray``, ``arange``, ``empty``, ``empty_like``, ``eye``, ``full``,
-       ``full_like``, ``linspace``, ``ones``, ``ones_like``, ``zeros``, and
-       ``zeros_like``).
-     - **Compatible**
-     - ``device`` would effectively do nothing, since NumPy is CPU only.
 
 Elementwise functions differences
 ---------------------------------
@@ -545,9 +535,6 @@ Linear algebra differences
    * - Feature
      - Type
      - Notes
-   * - ``cholesky`` includes an ``upper`` keyword argument.
-     - **Compatible**
-     -
    * - ``cross`` does not allow size 2 vectors (only size 3).
      - **Breaking**
      -

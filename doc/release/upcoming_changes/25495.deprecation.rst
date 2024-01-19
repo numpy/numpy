@@ -1,0 +1,16 @@
+`numpy.fft` deprecations for n-D transforms with ``None`` values in arguments
+-----------------------------------------------------------------------------
+
+Using `numpy.fft.fftn`, `numpy.fft.ifftn`, `numpy.fft.rfftn`,
+`numpy.fft.irfftn`, `numpy.fft.fft2`, `numpy.fft.ifft2`, `numpy.fft.rfft2` or
+`numpy.fft.irfft2` with the ``s`` parameter set to a value that is not
+``None`` and the ``axes`` parameter set to ``None`` has been deprecated, in
+line with the array API standard. To retain current behaviour, pass a sequence
+[0, ..., k-1] to ``axes`` for an array of dimension k.
+
+Furthermore, passing an array to ``s`` which contains ``None`` values is
+deprecated as the parameter is documented to accept a sequence of integers
+in both the NumPy docs and the array API specification. To use the default
+behaviour of the corresponding 1-D transform, pass the value matching
+the default for its ``n`` parameter. To use the default behaviour for every
+axis, the ``s`` argument can be omitted.

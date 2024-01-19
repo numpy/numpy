@@ -157,28 +157,34 @@ class TestChar:
 
 class TestComparisons:
     def setup_method(self):
-        self.A = np.array([['abc', '123'],
-                           ['789', 'xyz']]).view(np.char.chararray)
-        self.B = np.array([['efg', '123  '],
-                           ['051', 'tuv']]).view(np.char.chararray)
+        self.A = np.array([['abc', 'abcc', '123'],
+                           ['789', 'abc', 'xyz']]).view(np.char.chararray)
+        self.B = np.array([['efg', 'efg', '123  '],
+                           ['051', 'efgg', 'tuv']]).view(np.char.chararray)
 
     def test_not_equal(self):
-        assert_array_equal((self.A != self.B), [[True, False], [True, True]])
+        assert_array_equal((self.A != self.B),
+                           [[True, True, False], [True, True, True]])
 
     def test_equal(self):
-        assert_array_equal((self.A == self.B), [[False, True], [False, False]])
+        assert_array_equal((self.A == self.B),
+                           [[False, False, True], [False, False, False]])
 
     def test_greater_equal(self):
-        assert_array_equal((self.A >= self.B), [[False, True], [True, True]])
+        assert_array_equal((self.A >= self.B),
+                           [[False, False, True], [True, False, True]])
 
     def test_less_equal(self):
-        assert_array_equal((self.A <= self.B), [[True, True], [False, False]])
+        assert_array_equal((self.A <= self.B),
+                           [[True, True, True], [False, True, False]])
 
     def test_greater(self):
-        assert_array_equal((self.A > self.B), [[False, False], [True, True]])
+        assert_array_equal((self.A > self.B),
+                           [[False, False, False], [True, False, True]])
 
     def test_less(self):
-        assert_array_equal((self.A < self.B), [[True, False], [False, False]])
+        assert_array_equal((self.A < self.B),
+                           [[True, True, False], [False, True, False]])
 
     def test_type(self):
         out1 = np.char.equal(self.A, self.B)
@@ -191,17 +197,18 @@ class TestComparisonsMixed1(TestComparisons):
 
     def setup_method(self):
         TestComparisons.setup_method(self)
-        self.B = np.array([['efg', '123  '],
-                           ['051', 'tuv']], np.str_).view(np.char.chararray)
+        self.B = np.array(
+            [['efg', 'efg', '123  '],
+             ['051', 'efgg', 'tuv']], np.str_).view(np.char.chararray)
 
 class TestComparisonsMixed2(TestComparisons):
     """Ticket #1276"""
 
     def setup_method(self):
         TestComparisons.setup_method(self)
-        self.A = np.array([['abc', '123'],
-                           ['789', 'xyz']], np.str_) \
-                            .view(np.char.chararray)
+        self.A = np.array(
+            [['abc', 'abcc', '123'],
+             ['789', 'abc', 'xyz']], np.str_).view(np.char.chararray)
 
 class TestInformation:
     def setup_method(self):
@@ -213,6 +220,10 @@ class TestInformation:
                            ['12345', 'MixedCase'],
                            ['123 \t 345 \0 ', 'UPPER']]) \
                             .view(np.char.chararray)
+        # Array with longer strings, > MEMCHR_CUT_OFF in code.
+        self.C = (np.array(['ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+                            '01234567890123456789012345'])
+                  .view(np.char.chararray))
 
     def test_len(self):
         assert_(issubclass(np.char.str_len(self.A).dtype.type, np.integer))
@@ -240,12 +251,24 @@ class TestInformation:
 
         assert_raises(TypeError, fail)
 
-    def test_find(self):
-        assert_(issubclass(self.A.find('a').dtype.type, np.integer))
-        assert_array_equal(self.A.find('a'), [[1, -1], [-1, 6], [-1, -1]])
-        assert_array_equal(self.A.find('3'), [[-1, -1], [2, -1], [2, -1]])
-        assert_array_equal(self.A.find('a', 0, 2), [[1, -1], [-1, -1], [-1, -1]])
-        assert_array_equal(self.A.find(['1', 'P']), [[-1, -1], [0, -1], [0, 1]])
+    @pytest.mark.parametrize(
+        "dtype, encode",
+        [("U", str),
+         ("S", lambda x: x.encode('ascii')),
+         ])
+    def test_find(self, dtype, encode):
+        A = self.A.astype(dtype)
+        assert_(issubclass(A.find(encode('a')).dtype.type, np.integer))
+        assert_array_equal(A.find(encode('a')),
+                           [[1, -1], [-1, 6], [-1, -1]])
+        assert_array_equal(A.find(encode('3')),
+                           [[-1, -1], [2, -1], [2, -1]])
+        assert_array_equal(A.find(encode('a'), 0, 2),
+                           [[1, -1], [-1, -1], [-1, -1]])
+        assert_array_equal(A.find([encode('1'), encode('P')]),
+                           [[-1, -1], [0, -1], [0, 1]])
+        C = self.C.astype(dtype)
+        assert_array_equal(C.find(encode('M')), [12, -1])
 
     def test_index(self):
 
@@ -435,9 +458,53 @@ class TestMethods:
                            [b'##########', b'@'])
         tgt = [[b' abc ', b''],
                [b'12##########45', b'MixedC@se'],
-               [b'12########## \t ##########45 \x00', b'UPPER']]
+               [b'12########## \t ##########45 \x00 ', b'UPPER']]
         assert_(issubclass(R.dtype.type, np.bytes_))
         assert_array_equal(R, tgt)
+        # Test special cases that should just return the input array,
+        # since replacements are not possible or do nothing.
+        S1 = self.A.replace(b'A very long byte string, longer than A', b'')
+        assert_array_equal(S1, self.A)
+        S2 = self.A.replace(b'', b'')
+        assert_array_equal(S2, self.A)
+        S3 = self.A.replace(b'3', b'3')
+        assert_array_equal(S3, self.A)
+        S4 = self.A.replace(b'3', b'', count=0)
+        assert_array_equal(S4, self.A)
+
+    def test_replace_count_and_size(self):
+        a = np.array(['0123456789' * i for i in range(4)]
+                     ).view(np.char.chararray)
+        r1 = a.replace('5', 'ABCDE')
+        assert r1.dtype.itemsize == (3*10 + 3*4) * 4
+        assert_array_equal(r1, np.array(['01234ABCDE6789' * i
+                                         for i in range(4)]))
+        r2 = a.replace('5', 'ABCDE', count=1)
+        assert r2.dtype.itemsize == (3*10 + 4) * 4
+        r3 = a.replace('5', 'ABCDE', count=0)
+        assert r3.dtype.itemsize == a.dtype.itemsize
+        assert_array_equal(r3, a)
+        # Negative values mean to replace all.
+        r4 = a.replace('5', 'ABCDE', count=-1)
+        assert r4.dtype.itemsize == (3*10 + 3*4) * 4
+        assert_array_equal(r4, r1)
+        # We can do count on an element-by-element basis.
+        r5 = a.replace('5', 'ABCDE', count=[-1, -1, -1, 1])
+        assert r5.dtype.itemsize == (3*10 + 4) * 4
+        assert_array_equal(r5, np.array(
+            ['01234ABCDE6789' * i for i in range(3)]
+            + ['01234ABCDE6789' + '0123456789' * 2]))
+
+    def test_replace_broadcasting(self):
+        a = np.array('0,0,0').view(np.char.chararray)
+        r1 = a.replace('0', '1', count=np.arange(3))
+        assert r1.dtype == a.dtype
+        assert_array_equal(r1, np.array(['0,0,0', '1,0,0', '1,1,0']))
+        r2 = a.replace('0', [['1'], ['2']], count=np.arange(1, 4))
+        assert_array_equal(r2, np.array([['1,0,0', '1,1,0', '1,1,1'],
+                                         ['2,0,0', '2,2,0', '2,2,2']]))
+        r3 = a.replace(['0', '0,0', '0,0,0'], 'X')
+        assert_array_equal(r3, np.array(['X,X,X', 'X,0', 'X']))
 
     def test_rjust(self):
         assert_(issubclass(self.A.rjust(10).dtype.type, np.bytes_))

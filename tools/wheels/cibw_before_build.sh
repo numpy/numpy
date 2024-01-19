@@ -16,8 +16,13 @@ elif [[ $RUNNER_OS == "Windows" ]]; then
     cat $PROJECT_DIR/tools/wheels/LICENSE_win32.txt >> $PROJECT_DIR/LICENSE.txt
 fi
 
+# the macos_arm64 build might set this variable
+if [ -z $INSTALL_OPENBLAS ]; then
+    export INSTALL_OPENBLAS=true
+fi
+
 # Install Openblas
-if [[ $RUNNER_OS == "Linux" || $RUNNER_OS == "macOS" ]] ; then
+if [[ $RUNNER_OS == "Linux" || ($RUNNER_OS == "macOS" && $INSTALL_OPENBLAS) ]] ; then
     basedir=$(python tools/openblas_support.py --use-ilp64)
     if [[ $RUNNER_OS == "macOS" && $PLATFORM == "macosx-arm64" ]]; then
         # /usr/local/lib doesn't exist on cirrus-ci runners
@@ -47,11 +52,17 @@ elif [[ $RUNNER_OS == "Windows" ]]; then
     fi
 fi
 
-if [[ $RUNNER_OS == "macOS" ]]; then
+# the macos_arm64 build might set this variable
+if [ -z $INSTALL_GFORTRAN ]; then
+    export INSTALL_GFORTRAN=true
+fi
+
+if [[ $RUNNER_OS == "macOS" && $INSTALL_GFORTRAN ]]; then
     # Install same version of gfortran as the openblas-libs builds
     if [[ $PLATFORM == "macosx-arm64" ]]; then
         PLAT="arm64"
     fi
+
     source $PROJECT_DIR/tools/wheels/gfortran_utils.sh
     install_gfortran
     pip install "delocate==0.10.4"

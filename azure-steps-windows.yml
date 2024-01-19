@@ -14,9 +14,6 @@ steps:
   displayName: 'Install dependencies; some are optional to avoid test skips'
 
 - powershell: |
-    # Note that rtools 42+ does not support 32 bits builds. We dropped testing
-    # those, but if there's a need to go back on that, use version 4.0.0.20220206
-    choco install --confirm --no-progress --allow-downgrade rtools --version=4.3.5550
     choco install unzip -y
     choco install -y --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
     choco install ninja
