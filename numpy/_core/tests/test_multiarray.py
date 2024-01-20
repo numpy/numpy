@@ -9630,7 +9630,7 @@ def test_equal_subclass_no_override(op, dt1, dt2):
     class MyArr(np.ndarray):
         called_wrap = 0
 
-        def __array_wrap__(self, new):
+        def __array_wrap__(self, new, context=None, return_scalar=False):
             type(self).called_wrap += 1
             return super().__array_wrap__(new)
 

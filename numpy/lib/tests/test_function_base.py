@@ -2502,7 +2502,7 @@ class Test_I0:
         class array_like:
             __array_interface__ = a.__array_interface__
 
-            def __array_wrap__(self, arr):
+            def __array_wrap__(self, arr, context, return_scalar):
                 return self
 
         # E.g. pandas series survive ufunc calls through array-wrap:

@@ -43,6 +43,7 @@ class _ArrayWrap(Protocol):
         self,
         array: NDArray[Any],
         context: None | tuple[ufunc, tuple[Any, ...], int] = ...,
+        return_scalar: bool = ...,
         /,
     ) -> Any: ...
 
