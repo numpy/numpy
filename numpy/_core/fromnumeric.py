@@ -12,6 +12,7 @@ from . import overrides
 from . import umath as um
 from . import numerictypes as nt
 from .multiarray import asarray, array, asanyarray, concatenate
+from ._multiarray_umath import _array_converter
 from . import _methods
 
 _dt_ = nt.sctype2char
@@ -38,16 +39,12 @@ array_function_dispatch = functools.partial(
 
 # functions that are now methods
 def _wrapit(obj, method, *args, **kwds):
-    try:
-        wrap = obj.__array_wrap__
-    except AttributeError:
-        wrap = None
-    result = getattr(asarray(obj), method)(*args, **kwds)
-    if wrap:
-        if not isinstance(result, mu.ndarray):
-            result = asarray(result)
-        result = wrap(result)
-    return result
+    conv = _array_converter(obj)
+    # As this already tried the method, subok is maybe quite reasonable here:
+    arr, = conv.as_arrays(subok=False)
+    result = getattr(arr, method)(*args, **kwds)
+
+    return conv.wrap(result, to_scalar=False)
 
 
 def _wrapfunc(obj, method, *args, **kwds):

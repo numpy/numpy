@@ -25,6 +25,7 @@ from numpy._core.multiarray import (
     _place, bincount, normalize_axis_index, _monotonicity,
     interp as compiled_interp, interp_complex as compiled_interp_complex
     )
+from numpy._core._multiarray_umath import _array_converter
 from numpy._utils import set_module
 
 # needed in this module for compatibility
@@ -5210,14 +5211,9 @@ def delete(arr, obj, axis=None):
     array([ 1,  3,  5,  7,  8,  9, 10, 11, 12])
 
     """
-    wrap = None
-    if type(arr) is not ndarray:
-        try:
-            wrap = arr.__array_wrap__
-        except AttributeError:
-            pass
+    conv = _array_converter(arr)
+    arr, = conv.as_arrays(subok=False)
 
-    arr = asarray(arr)
     ndim = arr.ndim
     arrorder = 'F' if arr.flags.fnc else 'C'
     if axis is None:
@@ -5239,10 +5235,7 @@ def delete(arr, obj, axis=None):
         numtodel = len(xr)
 
         if numtodel <= 0:
-            if wrap:
-                return wrap(arr.copy(order=arrorder))
-            else:
-                return arr.copy(order=arrorder)
+            return conv.wrap(arr.copy(order=arrorder), to_scalar=False)
 
         # Invert if step is negative:
         if step < 0:
@@ -5278,10 +5271,8 @@ def delete(arr, obj, axis=None):
             arr = arr[tuple(slobj2)]
             slobj2[axis] = keep
             new[tuple(slobj)] = arr[tuple(slobj2)]
-        if wrap:
-            return wrap(new)
-        else:
-            return new
+
+        return conv.wrap(new, to_scalar=False)
 
     if isinstance(obj, (int, integer)) and not isinstance(obj, bool):
         single_value = True
@@ -5331,10 +5322,7 @@ def delete(arr, obj, axis=None):
         slobj[axis] = keep
         new = arr[tuple(slobj)]
 
-    if wrap:
-        return wrap(new)
-    else:
-        return new
+    return conv.wrap(new, to_scalar=False)
 
 
 def _insert_dispatcher(arr, obj, values, axis=None):
@@ -5430,14 +5418,9 @@ def insert(arr, obj, values, axis=None):
            [  4, 999,   5,   6, 999,   7]])
 
     """
-    wrap = None
-    if type(arr) is not ndarray:
-        try:
-            wrap = arr.__array_wrap__
-        except AttributeError:
-            pass
+    conv = _array_converter(arr)
+    arr, = conv.as_arrays(subok=False)
 
-    arr = asarray(arr)
     ndim = arr.ndim
     arrorder = 'F' if arr.flags.fnc else 'C'
     if axis is None:
@@ -5502,9 +5485,9 @@ def insert(arr, obj, values, axis=None):
         slobj2 = [slice(None)] * ndim
         slobj2[axis] = slice(index, None)
         new[tuple(slobj)] = arr[tuple(slobj2)]
-        if wrap:
-            return wrap(new)
-        return new
+
+        return conv.wrap(new, to_scalar=False)
+
     elif indices.size == 0 and not isinstance(obj, np.ndarray):
         # Can safely cast the empty list to intp
         indices = indices.astype(intp)
@@ -5526,9 +5509,7 @@ def insert(arr, obj, values, axis=None):
     new[tuple(slobj)] = values
     new[tuple(slobj2)] = arr
 
-    if wrap:
-        return wrap(new)
-    return new
+    return conv.wrap(new, to_scalar=False)
 
 
 def _append_dispatcher(arr, values, axis=None):
