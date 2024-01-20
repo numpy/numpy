@@ -4728,6 +4728,81 @@ add_newdoc('numpy._core.multiarray', 'get_handler_version',
     its memory, in which case you can traverse ``a.base`` for a memory handler.
     """)
 
+add_newdoc('numpy._core._multiarray_umath', '_array_converter',
+    """
+    _array_converter(*array_likes)
+
+    Helper to convert one or more objects to arrays.  Integrates machinery
+    to deal with the ``result_type`` and ``__array_wrap__``.
+
+    The reason for this is that e.g. ``result_type`` needs to convert to arrays
+    to find the ``dtype``.  But converting to an array before calling
+    ``result_type`` would incorrectly "forget" whether it was a Python int,
+    float, or complex.
+    """)
+
+add_newdoc('numpy._core._multiarray_umath', '_array_converter', ('scalar_input',
+    """
+    A tuple which indicates for each input whether it was a scalar that
+    was coerced to a 0-D array (and was not already an array or something
+    converted via a protocol like ``__array__()``).
+    """))
+
+add_newdoc('numpy._core._multiarray_umath', '_array_converter', ('as_arrays',
+    """
+    as_arrays(/, subok=True, pyscalars="convert_if_no_array")
+
+    Return the inputs as arrays or scalars.
+
+    Parameters
+    ----------
+    subok : True or False, optional
+        Whether array subclasses are preserved.
+    pyscalars : {"convert", "preserve", "convert_if_no_array"}, optional
+        To allow NEP 50 weak promotion later, it may be desireable to preserve
+        Python scalars.  As default, these are preserved unless all inputs
+        are Python scalars.  "convert" enforces an array return.
+    """))
+
+add_newdoc('numpy._core._multiarray_umath', '_array_converter', ('result_type',
+    """result_type(/, extra_dtype=None, ensure_inexact=False)
+
+    Find the ``result_type`` just as ``np.result_type`` would, but taking
+    into account that the original inputs (before converting to an array) may
+    have been Python scalars with weak promotion.
+
+    Parameters
+    ----------
+    extra_dtype : dtype instance or class
+        An additional DType or dtype instance to promote (e.g. could be used
+        to ensure the result precision is at least float32).
+    ensure_inexact : True or False
+        When ``True``, ensures a floating point (or complex) result replacing
+        the ``arr * 1.`` or ``result_type(..., 0.0)`` pattern.
+    """))
+
+add_newdoc('numpy._core._multiarray_umath', '_array_converter', ('wrap',
+    """
+    wrap(arr, /, to_scalar=None)
+
+    Call ``__array_wrap__`` on ``arr`` if ``arr`` is not the same subclass
+    as the input the ``__array_wrap__`` method was retrieved from.
+
+    Parameters
+    ----------
+    arr : ndarray
+        The object to be wrapped. Normally an ndarray or subclass,
+        although for backward compatibility NumPy scalars are also accepted
+        (these will be converted to a NumPy array before being passed on to
+        the ``__array_wrap__`` method).
+    to_scalar : {True, False, None}, optional
+        When ``True`` will convert a 0-d array to a scalar via ``result[()]``
+        (with a fast-path for non-subclasses).  If ``False`` the result should
+        be an array-like (as ``__array_wrap__`` is free to return a non-array).
+        By default (``None``), a scalar is returned if all inputs were scalar.
+    """))
+
+
 add_newdoc('numpy._core.multiarray', '_get_madvise_hugepage',
     """
     _get_madvise_hugepage() -> bool
