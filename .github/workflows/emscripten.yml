@@ -43,7 +43,7 @@ jobs:
 
       - name: set up python
         id: setup-python
-        uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -63,7 +63,7 @@ jobs:
           CFLAGS=-g2 LDFLAGS=-g2 pyodide build
 
       - name: set up node
-        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
+        uses: actions/setup-node@b39b52d1213e96004bfcb1c61a8a6fa8ab84f3e8 # v4.0.1
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -73,6 +73,8 @@ jobs:
           source .venv-pyodide/bin/activate
           pip install dist/*.whl
           python -c "import sys; print(sys.platform)"
+          # TODO: when re-enabled this workflow, install test deps differently
+          # since ninja isn't installable with pyodide
           pip install -r test_requirements.txt
       - name: Test
         run: |

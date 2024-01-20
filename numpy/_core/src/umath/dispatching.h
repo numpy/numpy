@@ -51,6 +51,11 @@ object_only_ufunc_promoter(PyUFuncObject *ufunc,
 NPY_NO_EXPORT int
 install_logical_ufunc_promoter(PyObject *ufunc);
 
+NPY_NO_EXPORT int
+PyUFunc_AddPromoter(
+        PyObject *ufunc, PyObject *DType_tuple, PyObject *promoter);
+
+
 #ifdef __cplusplus
 }
 #endif

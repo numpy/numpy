@@ -5,8 +5,9 @@ py = import('python').find_installation(pure: false)
 cc = meson.get_compiler('c')
 cy = meson.get_compiler('cython')
 
-if not cy.version().version_compare('>=0.29.35')
-  error('tests requires Cython >= 0.29.35')
+# Keep synced with pyproject.toml
+if not cy.version().version_compare('>=3.0.6')
+  error('tests requires Cython >= 3.0.6')
 endif
 
 npy_include_path = run_command(py, [

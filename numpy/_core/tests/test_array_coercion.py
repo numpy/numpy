@@ -851,14 +851,14 @@ def test_subarray_from_array_construction():
     # Arrays are more complex, since they "broadcast" on success:
     arr = np.array([1, 2])
 
-    res = arr.astype("(2)i,")
+    res = arr.astype("2i")
     assert_array_equal(res, [[1, 1], [2, 2]])
 
-    res = np.array(arr, dtype="(2)i,")
+    res = np.array(arr, dtype="(2,)i")
 
     assert_array_equal(res, [[1, 1], [2, 2]])
 
-    res = np.array([[(1,), (2,)], arr], dtype="(2)i,")
+    res = np.array([[(1,), (2,)], arr], dtype="2i")
     assert_array_equal(res, [[[1, 1], [2, 2]], [[1, 1], [2, 2]]])
 
     # Also try a multi-dimensional example:

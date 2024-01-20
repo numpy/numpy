@@ -1,3 +1,5 @@
+.. _numpy-2-migration-guide:
+
 *************************
 NumPy 2.0 migration guide
 *************************
@@ -22,7 +24,7 @@ language it may help to explicitly cast to a ``long``, for example with:
 ``arr = arr.astype("long", copy=False)``.
 
 Libraries interfacing with compiled code that are written in C, Cython, or
-a similar language may require updating to accomodate user input if they
+a similar language may require updating to accommodate user input if they
 are using the ``long`` or equivalent type on the C-side.
 In this case, you may wish to use ``intp`` and cast user input or support
 both ``long`` and ``intp`` (to better support NumPy 1.x as well).
@@ -34,20 +36,44 @@ Note that the NumPy random API is not affected by this change.
 
 C-API Changes
 =============
-Some definitions where removed or replaced due to being outdated or
-unmaintaibale.  Some new API definition will evaluate differently at
+Some definitions were removed or replaced due to being outdated or
+unmaintainable.  Some new API definition will evaluate differently at
 runtime between NumPy 2.0 and NumPy 1.x.
 Some are defined in ``numpy/_core/include/numpy/npy_2_compat.h``
 (for example ``NPY_DEFAULT_INT``) which can be vendored in full or part
 to have the definitions available when compiling against NumPy 1.x.
 
+If necessary, ``PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION`` can be
+used to explicitly implement different behavior on NumPy 1.x and 2.0.
+(The compat header defines it in a way compatible with such use.)
+
 Please let us know if you require additional workarounds here.
+
+.. _migration_maxdims:
+
+Increased maximum number of dimensions
+--------------------------------------
+The maximum number of dimensions (and arguments) was increased to 64, this
+affects the ``NPY_MAXDIMS`` and ``NPY_MAXARGS`` macros.
+It may be good to review their use, and we generally encourage you to
+not use these macros (especially ``NPY_MAXARGS``), so that a future version of
+NumPy can remove this limitation on the number of dimensions.
+
+``NPY_MAXDIMS`` was also used to signal ``axis=None`` in the C-API, including
+the ``PyArray_AxisConverter``.
+The latter will return ``-2147483648`` as an axis (the smallest integer value).
+Other functions may error with
+``AxisError: axis 64 is out of bounds for array of dimension`` in which
+case you need to pass ``NPY_RAVEL_AXIS`` instead of ``NPY_MAXDIMS``.
+``NPY_RAVEL_AXIS`` is defined in the ``npy_2_compat.h`` header and runtime
+dependent (mapping to 32 on NumPy 1.x and ``-2147483648`` on NumPy 2.x).
+
 
 Namespace changes
 =================
 
 In NumPy 2.0 certain functions, modules, and constants were moved or removed
-to make the NumPy namespace more userfriendly by removing unnecessary or
+to make the NumPy namespace more user-friendly by removing unnecessary or
 outdated functionality and clarifying which parts of NumPy are considered
 private.
 Please see the tables below for guidance on migration.  For most changes this
@@ -139,7 +165,7 @@ The next table presents deprecated members, which will be removed in a release a
 deprecated member migration guideline
 ================= =======================================================================
 in1d              Use ``np.isin`` instead.
-row_stack         Use ``np.vstack`` instead (``row_stack`` was an alias for ``v_stack``).
+row_stack         Use ``np.vstack`` instead (``row_stack`` was an alias for ``vstack``).
 trapz             Use ``scipy.integrate.trapezoid`` instead.
 ================= =======================================================================
 
@@ -202,6 +228,22 @@ ptp                     Use ``np.ptp(arr, ...)`` instead.
 setitem                 Use ``arr[index] = value`` instead.
 ...                     ...
 ======================  ========================================================
+
+
+Ruff plugin
+-----------
+
+All the changes that we covered in the previous sections can be automatically applied
+to the codebase with the dedicated Ruff rule,
+`NPY201 <https://docs.astral.sh/ruff/rules/numpy2-deprecation/>`_.
+
+You should install Ruff, version ``0.1.8`` or above, and add to your ``pyproject.toml``::
+
+    [tool.ruff.lint]
+    extend-select = ["NPY201"]
+    preview = true
+
+To learn more about preview mode see `Ruff docs <https://docs.astral.sh/ruff/preview/>`_.
 
 
 Note about pickled files

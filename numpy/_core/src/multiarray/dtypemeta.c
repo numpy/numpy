@@ -29,6 +29,8 @@
 
 #include <assert.h>
 
+
+
 static void
 dtypemeta_dealloc(PyArray_DTypeMeta *self) {
     /* Do not accidentally delete a statically defined DType: */
@@ -65,6 +67,288 @@ dtypemeta_init(PyTypeObject *NPY_UNUSED(type),
     PyErr_SetString(PyExc_TypeError,
             "Preliminary-API: Cannot __init__ DType class.");
     return -1;
+}
+
+static PyArray_DTypeMeta *
+dtype_does_not_promote(
+        PyArray_DTypeMeta *NPY_UNUSED(self), PyArray_DTypeMeta *NPY_UNUSED(other))
+{
+    /* `other` is guaranteed not to be `self`, so we don't have to do much... */
+    Py_INCREF(Py_NotImplemented);
+    return (PyArray_DTypeMeta *)Py_NotImplemented;
+}
+
+NPY_NO_EXPORT PyArray_Descr *
+dtypemeta_discover_as_default(
+        PyArray_DTypeMeta *cls, PyObject *NPY_UNUSED(obj))
+{
+    return NPY_DT_CALL_default_descr(cls);
+}
+
+
+static PyArray_Descr *
+use_new_as_default(PyArray_DTypeMeta *self)
+{
+    PyObject *res = PyObject_CallObject((PyObject *)self, NULL);
+    if (res == NULL) {
+        return NULL;
+    }
+    /*
+     * Lets not trust that the DType is implemented correctly
+     * TODO: Should probably do an exact type-check (at least unless this is
+     *       an abstract DType).
+     */
+    if (!PyArray_DescrCheck(res)) {
+        PyErr_Format(PyExc_RuntimeError,
+                "Instantiating %S did not return a dtype instance, this is "
+                "invalid (especially without a custom `default_descr()`).",
+                self);
+        Py_DECREF(res);
+        return NULL;
+    }
+    PyArray_Descr *descr = (PyArray_Descr *)res;
+    /*
+     * Should probably do some more sanity checks here on the descriptor
+     * to ensure the user is not being naughty. But in the end, we have
+     * only limited control anyway.
+     */
+    return descr;
+}
+
+
+static int
+legacy_setitem_using_DType(PyObject *obj, void *data, void *arr)
+{
+    if (arr == NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "Using legacy SETITEM with NULL array object is only "
+                "supported for basic NumPy DTypes.");
+        return -1;
+    }
+    setitemfunction *setitem;
+    setitem = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(arr)))->setitem;
+    return setitem(PyArray_DESCR(arr), obj, data);
+}
+
+
+static PyObject *
+legacy_getitem_using_DType(void *data, void *arr)
+{
+    if (arr == NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "Using legacy SETITEM with NULL array object is only "
+                "supported for basic NumPy DTypes.");
+        return NULL;
+    }
+    getitemfunction *getitem;
+    getitem = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(arr)))->getitem;
+    return getitem(PyArray_DESCR(arr), data);
+}
+
+/*
+ * The descr->f structure used user-DTypes.  Some functions may be filled
+ * from the user in the future and more could get defaults for compatibility.
+ */
+PyArray_ArrFuncs default_funcs = {
+        .getitem = &legacy_getitem_using_DType,
+        .setitem = &legacy_setitem_using_DType,
+};
+
+NPY_NO_EXPORT int
+dtypemeta_initialize_struct_from_spec(
+        PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *spec)
+{
+    if (DType->dt_slots != NULL) {
+        PyErr_Format(PyExc_RuntimeError,
+                "DType %R appears already registered?", DType);
+        return -1;
+    }
+
+    DType->flags = spec->flags;
+    DType->dt_slots = PyMem_Calloc(1, sizeof(NPY_DType_Slots));
+    if (DType->dt_slots == NULL) {
+        return -1;
+    }
+
+    /* Set default values (where applicable) */
+    NPY_DT_SLOTS(DType)->discover_descr_from_pyobject =
+            &dtypemeta_discover_as_default;
+    NPY_DT_SLOTS(DType)->is_known_scalar_type = (
+            &python_builtins_are_known_scalar_types);
+    NPY_DT_SLOTS(DType)->default_descr = use_new_as_default;
+    NPY_DT_SLOTS(DType)->common_dtype = dtype_does_not_promote;
+    /* May need a default for non-parametric? */
+    NPY_DT_SLOTS(DType)->common_instance = NULL;
+    NPY_DT_SLOTS(DType)->setitem = NULL;
+    NPY_DT_SLOTS(DType)->getitem = NULL;
+    NPY_DT_SLOTS(DType)->get_clear_loop = NULL;
+    NPY_DT_SLOTS(DType)->get_fill_zero_loop = NULL;
+    NPY_DT_SLOTS(DType)->finalize_descr = NULL;
+    NPY_DT_SLOTS(DType)->f = default_funcs;
+
+    PyType_Slot *spec_slot = spec->slots;
+    while (1) {
+        int slot = spec_slot->slot;
+        void *pfunc = spec_slot->pfunc;
+        spec_slot++;
+        if (slot == 0) {
+            break;
+        }
+        if ((slot < 0) ||
+            ((slot > NPY_NUM_DTYPE_SLOTS) &&
+             (slot <= _NPY_DT_ARRFUNCS_OFFSET)) ||
+            (slot > NPY_DT_MAX_ARRFUNCS_SLOT)) {
+            PyErr_Format(PyExc_RuntimeError,
+                    "Invalid slot with value %d passed in.", slot);
+            return -1;
+        }
+        /*
+         * It is up to the user to get this right, the slots in the public API
+         * are sorted exactly like they are stored in the NPY_DT_Slots struct
+         * right now:
+         */
+        if (slot <= NPY_NUM_DTYPE_SLOTS) {
+            // slot > NPY_NUM_DTYPE_SLOTS are PyArray_ArrFuncs
+            void **current = (void **)(&(
+                    NPY_DT_SLOTS(DType)->discover_descr_from_pyobject));
+            current += slot - 1;
+            *current = pfunc;
+        }
+        else {
+            int f_slot = slot - _NPY_DT_ARRFUNCS_OFFSET;
+            if (1 <= f_slot && f_slot <= NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS) {
+                switch (f_slot) {
+                    case 1:
+                        NPY_DT_SLOTS(DType)->f.getitem = pfunc;
+                        break;
+                    case 2:
+                        NPY_DT_SLOTS(DType)->f.setitem = pfunc;
+                        break;
+                    case 3:
+                        NPY_DT_SLOTS(DType)->f.copyswapn = pfunc;
+                        break;
+                    case 4:
+                        NPY_DT_SLOTS(DType)->f.copyswap = pfunc;
+                        break;
+                    case 5:
+                        NPY_DT_SLOTS(DType)->f.compare = pfunc;
+                        break;
+                    case 6:
+                        NPY_DT_SLOTS(DType)->f.argmax = pfunc;
+                        break;
+                    case 7:
+                        NPY_DT_SLOTS(DType)->f.dotfunc = pfunc;
+                        break;
+                    case 8:
+                        NPY_DT_SLOTS(DType)->f.scanfunc = pfunc;
+                        break;
+                    case 9:
+                        NPY_DT_SLOTS(DType)->f.fromstr = pfunc;
+                        break;
+                    case 10:
+                        NPY_DT_SLOTS(DType)->f.nonzero = pfunc;
+                        break;
+                    case 11:
+                        NPY_DT_SLOTS(DType)->f.fill = pfunc;
+                        break;
+                    case 12:
+                        NPY_DT_SLOTS(DType)->f.fillwithscalar = pfunc;
+                        break;
+                    case 13:
+                        *NPY_DT_SLOTS(DType)->f.sort = pfunc;
+                        break;
+                    case 14:
+                        *NPY_DT_SLOTS(DType)->f.argsort = pfunc;
+                        break;
+                    case 15:
+                    case 16:
+                    case 17:
+                    case 18:
+                    case 19:
+                    case 20:
+                    case 21:
+                        PyErr_Format(
+                            PyExc_RuntimeError,
+                            "PyArray_ArrFunc casting slot with value %d is disabled.",
+                            f_slot
+                        );
+                        return -1;
+                    case 22:
+                        NPY_DT_SLOTS(DType)->f.argmin = pfunc;
+                        break;
+                }
+            } else {
+                    PyErr_Format(
+                        PyExc_RuntimeError,
+                        "Invalid PyArray_ArrFunc slot with value %d passed in.",
+                        f_slot
+                    );
+                    return -1;
+            }
+        }
+    }
+
+    /* invalid type num. Ideally, we get away with it! */
+    DType->type_num = -1;
+
+    /*
+     * Handle the scalar type mapping.
+     */
+    Py_INCREF(spec->typeobj);
+    DType->scalar_type = spec->typeobj;
+    if (PyType_GetFlags(spec->typeobj) & Py_TPFLAGS_HEAPTYPE) {
+        if (PyObject_SetAttrString((PyObject *)DType->scalar_type,
+                "__associated_array_dtype__", (PyObject *)DType) < 0) {
+            Py_DECREF(DType);
+            return -1;
+        }
+    }
+    if (_PyArray_MapPyTypeToDType(DType, DType->scalar_type, 0) < 0) {
+        Py_DECREF(DType);
+        return -1;
+    }
+
+    /* Ensure cast dict is defined (not sure we have to do it here) */
+    NPY_DT_SLOTS(DType)->castingimpls = PyDict_New();
+    if (NPY_DT_SLOTS(DType)->castingimpls == NULL) {
+        return -1;
+    }
+
+    /*
+     * And now, register all the casts that are currently defined!
+     */
+    PyArrayMethod_Spec **next_meth_spec = spec->casts;
+    while (1) {
+        PyArrayMethod_Spec *meth_spec = *next_meth_spec;
+        next_meth_spec++;
+        if (meth_spec == NULL) {
+            break;
+        }
+        /*
+         * The user doesn't know the name of DType yet, so we have to fill it
+         * in for them!
+         */
+        for (int i=0; i < meth_spec->nin + meth_spec->nout; i++) {
+            if (meth_spec->dtypes[i] == NULL) {
+                meth_spec->dtypes[i] = DType;
+            }
+        }
+        /* Register the cast! */
+        int res = PyArray_AddCastingImplementation_FromSpec(meth_spec, 0);
+
+        /* Also clean up again, so nobody can get bad ideas... */
+        for (int i=0; i < meth_spec->nin + meth_spec->nout; i++) {
+            if (meth_spec->dtypes[i] == DType) {
+                meth_spec->dtypes[i] = NULL;
+            }
+        }
+
+        if (res < 0) {
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 /**
@@ -635,13 +919,13 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
                 return cls;
             }
             else if (cls->type_num == NPY_HALF || cls->type_num == NPY_FLOAT) {
-                    return PyArray_DTypeFromTypeNum(NPY_CFLOAT);
+                return NPY_DT_NewRef(&PyArray_CFloatDType);
             }
             else if (cls->type_num == NPY_DOUBLE) {
-                return PyArray_DTypeFromTypeNum(NPY_CDOUBLE);
+                return NPY_DT_NewRef(&PyArray_CDoubleDType);
             }
             else if (cls->type_num == NPY_LONGDOUBLE) {
-                return PyArray_DTypeFromTypeNum(NPY_CLONGDOUBLE);
+                return NPY_DT_NewRef(&PyArray_CLongDoubleDType);
             }
         }
         else if (other == &PyArray_PyFloatAbstractDType) {
@@ -913,7 +1197,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr,
                     void_discover_descr_from_pyobject);
             dt_slots->common_instance = void_common_instance;
             dt_slots->ensure_canonical = void_ensure_canonical;
-            dt_slots->get_fill_zero_loop = 
+            dt_slots->get_fill_zero_loop =
                     npy_get_zerofill_void_and_legacy_user_dtype_loop;
             dt_slots->get_clear_loop =
                     npy_get_clear_void_and_legacy_user_dtype_loop;
@@ -999,6 +1283,45 @@ static PyMemberDef dtypemeta_members[] = {
     {NULL, 0, 0, 0, NULL},
 };
 
+NPY_NO_EXPORT void
+initialize_legacy_dtypemeta_aliases(PyArray_Descr **_builtin_descrs) {
+    _Bool_dtype = NPY_DTYPE(_builtin_descrs[NPY_BOOL]);
+    _Byte_dtype = NPY_DTYPE(_builtin_descrs[NPY_BYTE]);
+    _UByte_dtype = NPY_DTYPE(_builtin_descrs[NPY_UBYTE]);
+    _Short_dtype = NPY_DTYPE(_builtin_descrs[NPY_SHORT]);
+    _UShort_dtype = NPY_DTYPE(_builtin_descrs[NPY_USHORT]);
+    _Int_dtype = NPY_DTYPE(_builtin_descrs[NPY_INT]);
+    _UInt_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINT]);
+    _Long_dtype = NPY_DTYPE(_builtin_descrs[NPY_LONG]);
+    _ULong_dtype = NPY_DTYPE(_builtin_descrs[NPY_ULONG]);
+    _LongLong_dtype = NPY_DTYPE(_builtin_descrs[NPY_LONGLONG]);
+    _ULongLong_dtype = NPY_DTYPE(_builtin_descrs[NPY_ULONGLONG]);
+    _Int8_dtype = NPY_DTYPE(_builtin_descrs[NPY_INT8]);
+    _UInt8_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINT8]);
+    _Int16_dtype = NPY_DTYPE(_builtin_descrs[NPY_INT16]);
+    _UInt16_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINT16]);
+    _Int32_dtype = NPY_DTYPE(_builtin_descrs[NPY_INT32]);
+    _UInt32_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINT32]);
+    _Int64_dtype = NPY_DTYPE(_builtin_descrs[NPY_INT64]);
+    _UInt64_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINT64]);
+    _Intp_dtype = NPY_DTYPE(_builtin_descrs[NPY_INTP]);
+    _UIntp_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINTP]);
+    _DefaultInt_dtype = NPY_DTYPE(_builtin_descrs[NPY_DEFAULT_INT]);
+    _Half_dtype = NPY_DTYPE(_builtin_descrs[NPY_HALF]);
+    _Float_dtype = NPY_DTYPE(_builtin_descrs[NPY_FLOAT]);
+    _Double_dtype = NPY_DTYPE(_builtin_descrs[NPY_DOUBLE]);
+    _LongDouble_dtype = NPY_DTYPE(_builtin_descrs[NPY_LONGDOUBLE]);
+    _CFloat_dtype = NPY_DTYPE(_builtin_descrs[NPY_CFLOAT]);
+    _CDouble_dtype = NPY_DTYPE(_builtin_descrs[NPY_CDOUBLE]);
+    _CLongDouble_dtype = NPY_DTYPE(_builtin_descrs[NPY_CLONGDOUBLE]);
+    // NPY_STRING is the legacy python2 name
+    _Bytes_dtype = NPY_DTYPE(_builtin_descrs[NPY_STRING]);
+    _Unicode_dtype = NPY_DTYPE(_builtin_descrs[NPY_UNICODE]);
+    _Datetime_dtype = NPY_DTYPE(_builtin_descrs[NPY_DATETIME]);
+    _Timedelta_dtype = NPY_DTYPE(_builtin_descrs[NPY_TIMEDELTA]);
+    _Object_dtype = NPY_DTYPE(_builtin_descrs[NPY_OBJECT]);
+    _Void_dtype = NPY_DTYPE(_builtin_descrs[NPY_VOID]);
+}
 
 NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
@@ -1017,3 +1340,39 @@ NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
     .tp_new = dtypemeta_new,
     .tp_is_gc = dtypemeta_is_gc,
 };
+
+PyArray_DTypeMeta *_Bool_dtype = NULL;
+PyArray_DTypeMeta *_Byte_dtype = NULL;
+PyArray_DTypeMeta *_UByte_dtype = NULL;
+PyArray_DTypeMeta *_Short_dtype = NULL;
+PyArray_DTypeMeta *_UShort_dtype = NULL;
+PyArray_DTypeMeta *_Int_dtype = NULL;
+PyArray_DTypeMeta *_UInt_dtype = NULL;
+PyArray_DTypeMeta *_Long_dtype = NULL;
+PyArray_DTypeMeta *_ULong_dtype = NULL;
+PyArray_DTypeMeta *_LongLong_dtype = NULL;
+PyArray_DTypeMeta *_ULongLong_dtype = NULL;
+PyArray_DTypeMeta *_Int8_dtype = NULL;
+PyArray_DTypeMeta *_UInt8_dtype = NULL;
+PyArray_DTypeMeta *_Int16_dtype = NULL;
+PyArray_DTypeMeta *_UInt16_dtype = NULL;
+PyArray_DTypeMeta *_Int32_dtype = NULL;
+PyArray_DTypeMeta *_UInt32_dtype = NULL;
+PyArray_DTypeMeta *_Int64_dtype = NULL;
+PyArray_DTypeMeta *_UInt64_dtype = NULL;
+PyArray_DTypeMeta *_Intp_dtype = NULL;
+PyArray_DTypeMeta *_UIntp_dtype = NULL;
+PyArray_DTypeMeta *_DefaultInt_dtype = NULL;
+PyArray_DTypeMeta *_Half_dtype = NULL;
+PyArray_DTypeMeta *_Float_dtype = NULL;
+PyArray_DTypeMeta *_Double_dtype = NULL;
+PyArray_DTypeMeta *_LongDouble_dtype = NULL;
+PyArray_DTypeMeta *_CFloat_dtype = NULL;
+PyArray_DTypeMeta *_CDouble_dtype = NULL;
+PyArray_DTypeMeta *_CLongDouble_dtype = NULL;
+PyArray_DTypeMeta *_Bytes_dtype = NULL;
+PyArray_DTypeMeta *_Unicode_dtype = NULL;
+PyArray_DTypeMeta *_Datetime_dtype = NULL;
+PyArray_DTypeMeta *_Timedelta_dtype = NULL;
+PyArray_DTypeMeta *_Object_dtype = NULL;
+PyArray_DTypeMeta *_Void_dtype = NULL;

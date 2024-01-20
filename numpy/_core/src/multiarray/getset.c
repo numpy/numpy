@@ -17,6 +17,7 @@
 #include "ctors.h"
 #include "scalartypes.h"
 #include "descriptor.h"
+#include "flagsobject.h"
 #include "getset.h"
 #include "arrayobject.h"
 #include "mem_overlap.h"
@@ -777,7 +778,7 @@ array_real_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
         Py_DECREF(ret);
         return -1;
     }
-    retcode = PyArray_MoveInto(ret, new);
+    retcode = PyArray_CopyInto(ret, new);
     Py_DECREF(ret);
     Py_DECREF(new);
     return retcode;
@@ -836,7 +837,7 @@ array_imag_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
             Py_DECREF(ret);
             return -1;
         }
-        retcode = PyArray_MoveInto(ret, new);
+        retcode = PyArray_CopyInto(ret, new);
         Py_DECREF(ret);
         Py_DECREF(new);
         return retcode;
@@ -966,6 +967,12 @@ array_itemset(PyArrayObject *self, PyObject *args)
     return NULL;
 }
 
+static PyObject *
+array_device(PyArrayObject *self, void *NPY_UNUSED(ignored))
+{
+    return PyUnicode_FromString("cpu");
+}
+
 NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
     {"ndim",
         (getter)array_ndim_get,
@@ -1041,6 +1048,10 @@ NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
         NULL, NULL},
     {"itemset",
         (getter)array_itemset,
+        NULL,
+        NULL, NULL},
+    {"device",
+        (getter)array_device,
         NULL,
         NULL, NULL},
     {"__array_interface__",

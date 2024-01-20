@@ -1,7 +1,4 @@
 """
-DType classes and utility (:mod:`numpy.dtypes`)
-===============================================
-
 This module is home to specific dtypes related functionality and their classes.
 For more general information about dtypes, also see `numpy.dtype` and
 :ref:`arrays.dtypes`.
@@ -49,8 +46,8 @@ like ``"float64"`` can be used.
     * - Complex
       - ``Complex64DType``, ``Complex128DType``, ``CLongDoubleDType``
 
-    * - Strings
-      - ``BytesDType``, ``BytesDType``
+    * - Strings and Bytestrings
+      - ``StrDType``, ``BytesDType``
 
     * - Times
       - ``DateTime64DType``, ``TimeDelta64DType``

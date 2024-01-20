@@ -633,9 +633,10 @@ def filled(a, fill_value=None):
 
     Examples
     --------
-    >>> x = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
-    ...                                                   [1, 0, 0],
-    ...                                                   [0, 0, 0]])
+    >>> import numpy.ma as ma
+    >>> x = ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
+    ...                                                [1, 0, 0],
+    ...                                                [0, 0, 0]])
     >>> x.filled()
     array([[999999,      1,      2],
            [999999,      4,      5],
@@ -3905,6 +3906,14 @@ class MaskedArray(ndarray):
         >>> type(x.compressed())
         <class 'numpy.ndarray'>
 
+        N-D arrays are compressed to 1-D.
+
+        >>> arr = [[1, 2], [3, 4]]
+        >>> mask = [[1, 0], [0, 1]]
+        >>> x = np.ma.array(arr, mask=mask)
+        >>> x.compressed()
+        array([2, 3])
+
         """
         data = ndarray.ravel(self._data)
         if self._mask is not nomask:
@@ -5541,6 +5550,17 @@ class MaskedArray(ndarray):
         --------
         numpy.ndarray.round : corresponding function for ndarrays
         numpy.around : equivalent function
+
+        Examples
+        --------
+        >>> import numpy.ma as ma
+        >>> x = ma.array([1.35, 2.5, 1.5, 1.75, 2.25, 2.75],
+        ...              mask=[0, 0, 0, 1, 0, 0])
+        >>> ma.round(x)
+        masked_array(data=[1.0, 2.0, 2.0, --, 2.0, 3.0],
+                     mask=[False, False, False,  True, False, False],
+                fill_value=1e+20)
+
         """
         result = self._data.round(decimals=decimals, out=out).view(type(self))
         if result.ndim > 0:
@@ -5556,8 +5576,8 @@ class MaskedArray(ndarray):
             out.__setmask__(self._mask)
         return out
 
-    def argsort(self, axis=np._NoValue, kind=None, order=None,
-                endwith=True, fill_value=None):
+    def argsort(self, axis=np._NoValue, kind=None, order=None, endwith=True,
+                fill_value=None, *, stable=False):
         """
         Return an ndarray of indices that sort the array along the
         specified axis.  Masked values are filled beforehand to
@@ -5590,6 +5610,8 @@ class MaskedArray(ndarray):
         fill_value : scalar or None, optional
             Value used internally for the masked values.
             If ``fill_value`` is not None, it supersedes ``endwith``.
+        stable : bool, optional
+            Only for compatibility with ``np.argsort``. Ignored.
 
         Returns
         -------
@@ -5618,6 +5640,10 @@ class MaskedArray(ndarray):
         array([1, 0, 2])
 
         """
+        if stable:
+            raise ValueError(
+                "`stable` parameter is not supported for masked arrays."
+            )
 
         # 2017-04-11, Numpy 1.13.0, gh-8701: warn on axis default
         if axis is np._NoValue:
@@ -5722,8 +5748,8 @@ class MaskedArray(ndarray):
         keepdims = False if keepdims is np._NoValue else bool(keepdims)
         return d.argmax(axis, out=out, keepdims=keepdims)
 
-    def sort(self, axis=-1, kind=None, order=None,
-             endwith=True, fill_value=None):
+    def sort(self, axis=-1, kind=None, order=None, endwith=True,
+             fill_value=None, *, stable=False):
         """
         Sort the array, in-place
 
@@ -5749,6 +5775,8 @@ class MaskedArray(ndarray):
         fill_value : scalar or None, optional
             Value used internally for the masked values.
             If ``fill_value`` is not None, it supersedes ``endwith``.
+        stable : bool, optional
+            Only for compatibility with ``np.sort``. Ignored.
 
         Returns
         -------
@@ -5793,6 +5821,11 @@ class MaskedArray(ndarray):
                fill_value=999999)
 
         """
+        if stable:
+            raise ValueError(
+                "`stable` parameter is not supported for masked arrays."
+            )
+
         if self._mask is nomask:
             ndarray.sort(self, axis=axis, kind=kind, order=order)
             return
@@ -7078,7 +7111,8 @@ def power(a, b, third=None):
 argmin = _frommethod('argmin')
 argmax = _frommethod('argmax')
 
-def argsort(a, axis=np._NoValue, kind=None, order=None, endwith=True, fill_value=None):
+def argsort(a, axis=np._NoValue, kind=None, order=None, endwith=True,
+            fill_value=None, *, stable=None):
     "Function version of the eponymous method."
     a = np.asanyarray(a)
 
@@ -7087,13 +7121,14 @@ def argsort(a, axis=np._NoValue, kind=None, order=None, endwith=True, fill_value
         axis = _deprecate_argsort_axis(a)
 
     if isinstance(a, MaskedArray):
-        return a.argsort(axis=axis, kind=kind, order=order,
-                         endwith=endwith, fill_value=fill_value)
+        return a.argsort(axis=axis, kind=kind, order=order, endwith=endwith,
+                         fill_value=fill_value, stable=None)
     else:
-        return a.argsort(axis=axis, kind=kind, order=order)
+        return a.argsort(axis=axis, kind=kind, order=order, stable=None)
 argsort.__doc__ = MaskedArray.argsort.__doc__
 
-def sort(a, axis=-1, kind=None, order=None, endwith=True, fill_value=None):
+def sort(a, axis=-1, kind=None, order=None, endwith=True, fill_value=None, *,
+         stable=None):
     """
     Return a sorted copy of the masked array.
 
@@ -7127,10 +7162,10 @@ def sort(a, axis=-1, kind=None, order=None, endwith=True, fill_value=None):
         axis = 0
 
     if isinstance(a, MaskedArray):
-        a.sort(axis=axis, kind=kind, order=order,
-               endwith=endwith, fill_value=fill_value)
+        a.sort(axis=axis, kind=kind, order=order, endwith=endwith,
+               fill_value=fill_value, stable=stable)
     else:
-        a.sort(axis=axis, kind=kind, order=order)
+        a.sort(axis=axis, kind=kind, order=order, stable=stable)
     return a
 
 
@@ -7373,6 +7408,23 @@ def putmask(a, mask, values):  # , mode='raise'):
     -----
     Using a masked array as `values` will **not** transform a `ndarray` into
     a `MaskedArray`.
+
+    Examples
+    --------
+    >>> arr = [[1, 2], [3, 4]]
+    >>> mask = [[1, 0], [0, 0]]
+    >>> x = np.ma.array(arr, mask=mask)
+    >>> np.ma.putmask(x, x < 4, 10*x)
+    >>> x
+    masked_array(
+      data=[[--, 20],
+            [30, 4]],
+      mask=[[ True, False],
+            [False, False]],
+      fill_value=999999)
+    >>> x.data
+    array([[10, 20],
+           [30,  4]])
 
     """
     # We can't use 'frommethod', the order of arguments is different

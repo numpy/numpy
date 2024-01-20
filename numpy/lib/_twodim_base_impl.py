@@ -157,7 +157,7 @@ def flipud(m):
 
 @set_array_function_like_doc
 @set_module('numpy')
-def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
+def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
     """
     Return a 2-D array with ones on the diagonal and zeros elsewhere.
 
@@ -178,6 +178,11 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
         column-major (Fortran-style) order in memory.
 
         .. versionadded:: 1.14.0
+    device : str, optional
+        The device on which to place the created array. Default: None.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
+
+        .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -205,10 +210,12 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
 
     """
     if like is not None:
-        return _eye_with_like(like, N, M=M, k=k, dtype=dtype, order=order)
+        return _eye_with_like(
+            like, N, M=M, k=k, dtype=dtype, order=order, device=device
+        )
     if M is None:
         M = N
-    m = zeros((N, M), dtype=dtype, order=order)
+    m = zeros((N, M), dtype=dtype, order=order, device=device)
     if k >= M:
         return m
     # Ensure M and k are integers, so we don't get any surprise casting

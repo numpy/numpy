@@ -10,7 +10,7 @@ extern "C" {
 
 #include "numpy/_dtype_api.h"
 
-/* DType flags, currently private, since we may just expose functions 
+/* DType flags, currently private, since we may just expose functions
    Other publicly visible flags are in _dtype_api.h                   */
 #define NPY_DT_LEGACY 1 << 0
 
@@ -139,6 +139,12 @@ PyArray_DTypeFromTypeNum(int typenum)
     return dtype;
 }
 
+NPY_NO_EXPORT PyArray_Descr *
+dtypemeta_discover_as_default(
+        PyArray_DTypeMeta *cls, PyObject* obj);
+
+NPY_NO_EXPORT int
+dtypemeta_initialize_struct_from_spec(PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *spec);
 
 NPY_NO_EXPORT int
 python_builtins_are_known_scalar_types(
@@ -147,6 +153,91 @@ python_builtins_are_known_scalar_types(
 NPY_NO_EXPORT int
 dtypemeta_wrap_legacy_descriptor(
         PyArray_Descr *dtypem, const char *name, const char *alias);
+
+NPY_NO_EXPORT void
+initialize_legacy_dtypemeta_aliases(PyArray_Descr **_builtin_descrs);
+
+/*
+ * NumPy's builtin DTypes:
+ */
+extern PyArray_DTypeMeta *_Bool_dtype;
+extern PyArray_DTypeMeta *_Byte_dtype;
+extern PyArray_DTypeMeta *_UByte_dtype;
+extern PyArray_DTypeMeta *_Short_dtype;
+extern PyArray_DTypeMeta *_UShort_dtype;
+extern PyArray_DTypeMeta *_Int_dtype;
+extern PyArray_DTypeMeta *_UInt_dtype;
+extern PyArray_DTypeMeta *_Long_dtype;
+extern PyArray_DTypeMeta *_ULong_dtype;
+extern PyArray_DTypeMeta *_LongLong_dtype;
+extern PyArray_DTypeMeta *_ULongLong_dtype;
+extern PyArray_DTypeMeta *_Int8_dtype;
+extern PyArray_DTypeMeta *_UInt8_dtype;
+extern PyArray_DTypeMeta *_Int16_dtype;
+extern PyArray_DTypeMeta *_UInt16_dtype;
+extern PyArray_DTypeMeta *_Int32_dtype;
+extern PyArray_DTypeMeta *_UInt32_dtype;
+extern PyArray_DTypeMeta *_Int64_dtype;
+extern PyArray_DTypeMeta *_UInt64_dtype;
+extern PyArray_DTypeMeta *_Intp_dtype;
+extern PyArray_DTypeMeta *_UIntp_dtype;
+extern PyArray_DTypeMeta *_DefaultInt_dtype;
+extern PyArray_DTypeMeta *_Half_dtype;
+extern PyArray_DTypeMeta *_Float_dtype;
+extern PyArray_DTypeMeta *_Double_dtype;
+extern PyArray_DTypeMeta *_LongDouble_dtype;
+extern PyArray_DTypeMeta *_CFloat_dtype;
+extern PyArray_DTypeMeta *_CDouble_dtype;
+extern PyArray_DTypeMeta *_CLongDouble_dtype;
+extern PyArray_DTypeMeta *_Bytes_dtype;
+extern PyArray_DTypeMeta *_Unicode_dtype;
+extern PyArray_DTypeMeta *_Datetime_dtype;
+extern PyArray_DTypeMeta *_Timedelta_dtype;
+extern PyArray_DTypeMeta *_Object_dtype;
+extern PyArray_DTypeMeta *_Void_dtype;
+
+#define PyArray_BoolDType (*(_Bool_dtype))
+/* Integers */
+#define PyArray_ByteDType (*(_Byte_dtype))
+#define PyArray_UByteDType (*(_UByte_dtype))
+#define PyArray_ShortDType (*(_Short_dtype))
+#define PyArray_UShortDType (*(_UShort_dtype))
+#define PyArray_IntDType (*(_Int_dtype))
+#define PyArray_UIntDType (*(_UInt_dtype))
+#define PyArray_LongDType (*(_Long_dtype))
+#define PyArray_ULongDType (*(_ULong_dtype))
+#define PyArray_LongLongDType (*(_LongLong_dtype))
+#define PyArray_ULongLongDType (*(_ULongLong_dtype))
+/* Integer aliases */
+#define PyArray_Int8DType (*(_Int8_dtype))
+#define PyArray_UInt8DType (*(_UInt8_dtype))
+#define PyArray_Int16DType (*(_Int16_dtype))
+#define PyArray_UInt16DType (*(_UInt16_dtype))
+#define PyArray_Int32DType (*(_Int32_dtype))
+#define PyArray_UInt32DType (*(_UInt32_dtype))
+#define PyArray_Int64DType (*(_Int64_dtype))
+#define PyArray_UInt64DType (*(_UInt64_dtype))
+#define PyArray_IntpDType (*(_Intp_dtype))
+#define PyArray_UIntpDType (*(_UIntp_dtype))
+#define PyArray_DefaultIntDType (*(_DefaultInt_dtype))
+/* Floats */
+#define PyArray_HalfDType (*(_Half_dtype))
+#define PyArray_FloatDType (*(_Float_dtype))
+#define PyArray_DoubleDType (*(_Double_dtype))
+#define PyArray_LongDoubleDType (*(_LongDouble_dtype))
+/* Complex */
+#define PyArray_CFloatDType (*(_CFloat_dtype))
+#define PyArray_CDoubleDType (*(_CDouble_dtype))
+#define PyArray_CLongDoubleDType (*(_CLongDouble_dtype))
+/* String/Bytes */
+#define PyArray_BytesDType (*(_Bytes_dtype))
+#define PyArray_UnicodeDType (*(_Unicode_dtype))
+/* Datetime/Timedelta */
+#define PyArray_DatetimeDType (*(_Datetime_dtype))
+#define PyArray_TimedeltaDType (*(_Timedelta_dtype))
+/* Object/Void */
+#define PyArray_ObjectDType (*(_Object_dtype))
+#define PyArray_VoidDType (*(_Void_dtype))
 
 #ifdef __cplusplus
 }

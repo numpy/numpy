@@ -43,6 +43,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "hashdescr.h"
 #include "descriptor.h"
 #include "dragon4.h"
+#include "flagsobject.h"
 #include "calculation.h"
 #include "number.h"
 #include "scalartypes.h"
@@ -115,10 +116,6 @@ set_legacy_print_mode(PyObject *NPY_UNUSED(self), PyObject *args)
     }
     Py_RETURN_NONE;
 }
-
-
-/* Only here for API compatibility */
-NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
 
 
 /*NUMPY_API
@@ -692,7 +689,7 @@ PyArray_ConcatenateInto(PyObject *op,
         Py_DECREF(item);
     }
 
-    if (axis >= NPY_MAXDIMS) {
+    if (axis == NPY_RAVEL_AXIS) {
         ret = PyArray_ConcatenateFlattenedArrays(
                 narrays, arrays, NPY_CORDER, ret, dtype,
                 casting, casting_not_passed);
@@ -1754,6 +1751,7 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
     PyObject *op;
     npy_dtype_info dt_info = {NULL, NULL};
     NPY_ORDER order = NPY_KEEPORDER;
+    NPY_DEVICE device = NPY_DEVICE_CPU;
     PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
@@ -1762,6 +1760,7 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
                 "a", NULL, &op,
                 "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
                 "|order", &PyArray_OrderConverter, &order,
+                "$device", &PyArray_DeviceConverterOptional, &device,
                 "$like", NULL, &like,
                 NULL, NULL, NULL) < 0) {
             Py_XDECREF(dt_info.descr);
@@ -1969,6 +1968,7 @@ array_empty(PyObject *NPY_UNUSED(ignored),
     NPY_ORDER order = NPY_CORDER;
     npy_bool is_f_order;
     PyArrayObject *ret = NULL;
+    NPY_DEVICE device = NPY_DEVICE_CPU;
     PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
@@ -1976,6 +1976,7 @@ array_empty(PyObject *NPY_UNUSED(ignored),
             "shape", &PyArray_IntpConverter, &shape,
             "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
             "|order", &PyArray_OrderConverter, &order,
+            "$device", &PyArray_DeviceConverterOptional, &device,
             "$like", NULL, &like,
             NULL, NULL, NULL) < 0) {
         goto fail;
@@ -2029,6 +2030,7 @@ array_empty_like(PyObject *NPY_UNUSED(ignored),
     int subok = 1;
     /* -1 is a special value meaning "not specified" */
     PyArray_Dims shape = {NULL, -1};
+    NPY_DEVICE device = NPY_DEVICE_CPU;
 
     NPY_PREPARE_ARGPARSER;
 
@@ -2038,6 +2040,7 @@ array_empty_like(PyObject *NPY_UNUSED(ignored),
             "|order", &PyArray_OrderConverter, &order,
             "|subok", &PyArray_PythonPyIntFromInt, &subok,
             "|shape", &PyArray_OptionalIntpConverter, &shape,
+            "$device", &PyArray_DeviceConverterOptional, &device,
             NULL, NULL, NULL) < 0) {
         goto fail;
     }
@@ -2178,6 +2181,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored),
     NPY_ORDER order = NPY_CORDER;
     npy_bool is_f_order = NPY_FALSE;
     PyArrayObject *ret = NULL;
+    NPY_DEVICE device = NPY_DEVICE_CPU;
     PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
@@ -2185,6 +2189,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored),
             "shape", &PyArray_IntpConverter, &shape,
             "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
             "|order", &PyArray_OrderConverter, &order,
+            "$device", &PyArray_DeviceConverterOptional, &device,
             "$like", NULL, &like,
             NULL, NULL, NULL) < 0) {
         goto finish;
@@ -3058,14 +3063,16 @@ array_arange(PyObject *NPY_UNUSED(ignored),
 {
     PyObject *o_start = NULL, *o_stop = NULL, *o_step = NULL, *range=NULL;
     PyArray_Descr *typecode = NULL;
+    NPY_DEVICE device = NPY_DEVICE_CPU;
     PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("arange", args, len_args, kwnames,
-            "|start", NULL, &o_start,
+            "|", NULL, &o_start,
             "|stop", NULL, &o_stop,
             "|step", NULL, &o_step,
             "|dtype", &PyArray_DescrConverter2, &typecode,
+            "$device", &PyArray_DeviceConverterOptional, &device,
             "$like", NULL, &like,
             NULL, NULL, NULL) < 0) {
         Py_XDECREF(typecode);
@@ -4777,6 +4784,7 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis2 = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_like = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_numpy = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_where = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_cpu = NULL;
 
 static int
 intern_strings(void)
@@ -4835,6 +4843,10 @@ intern_strings(void)
     }
     npy_ma_str_where = PyUnicode_InternFromString("where");
     if (npy_ma_str_where == NULL) {
+        return -1;
+    }
+    npy_ma_str_cpu = PyUnicode_InternFromString("cpu");
+    if (npy_ma_str_cpu == NULL) {
         return -1;
     }
     return 0;

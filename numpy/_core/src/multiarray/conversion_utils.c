@@ -18,6 +18,7 @@
 #include "conversion_utils.h"
 #include "alloc.h"
 #include "npy_buffer.h"
+#include "multiarraymodule.h"
 
 static int
 PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char * msg) NPY_GCC_NONNULL(2);
@@ -183,7 +184,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         if (len > NPY_MAXDIMS) {
             PyErr_Format(PyExc_ValueError,
                     "maximum supported dimension for an ndarray "
-                    "is %d, found %d", NPY_MAXDIMS, len);
+                    "is currently %d, found %d", NPY_MAXDIMS, len);
             Py_DECREF(seq_obj);
             return NPY_FAIL;
         }
@@ -325,22 +326,13 @@ NPY_NO_EXPORT int
 PyArray_AxisConverter(PyObject *obj, int *axis)
 {
     if (obj == Py_None) {
-        *axis = NPY_MAXDIMS;
+        *axis = NPY_RAVEL_AXIS;
     }
     else {
         *axis = PyArray_PyIntAsInt_ErrMsg(obj,
                                "an integer is required for the axis");
         if (error_converting(*axis)) {
             return NPY_FAIL;
-        }
-        if (*axis == NPY_MAXDIMS){
-            /* NumPy 1.23, 2022-05-19 */
-            if (DEPRECATE("Using `axis=32` (MAXDIMS) is deprecated. "
-                          "32/MAXDIMS had the same meaning as `axis=None` which "
-                          "should be used instead.  "
-                          "(Deprecated NumPy 1.23)") < 0) {
-                return NPY_FAIL;
-            }
         }
     }
     return NPY_SUCCEED;
@@ -433,6 +425,28 @@ PyArray_BoolConverter(PyObject *object, npy_bool *val)
     }
     else {
         *val = NPY_FALSE;
+    }
+    if (PyErr_Occurred()) {
+        return NPY_FAIL;
+    }
+    return NPY_SUCCEED;
+}
+
+/*
+ * Optionally convert an object to true / false
+ */
+NPY_NO_EXPORT int
+PyArray_OptionalBoolConverter(PyObject *object, int *val)
+{
+    /* Leave the desired default from the caller for Py_None */
+    if (object == Py_None) {
+        return NPY_SUCCEED;
+    }
+    if (PyObject_IsTrue(object)) {
+        *val = 1;
+    }
+    else {
+        *val = 0;
     }
     if (PyErr_Occurred()) {
         return NPY_FAIL;
@@ -1161,8 +1175,10 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
  */
 NPY_NO_EXPORT int evil_global_disable_warn_O4O8_flag = 0;
 
-/*NUMPY_API
- * Typestr converter
+/*
+ * Convert a gentype (that is actually a generic kind character) and
+ * it's itemsize to a NUmPy typenumber, i.e. `itemsize=4` and `gentype='f'`
+ * becomes `NPY_FLOAT32`.
  */
 NPY_NO_EXPORT int
 PyArray_TypestrConvert(int itemsize, int gentype)
@@ -1358,4 +1374,26 @@ PyArray_IntTupleFromIntp(int len, npy_intp const *vals)
 
  fail:
     return intTuple;
+}
+
+/*
+ * Device string converter.
+ */
+NPY_NO_EXPORT int
+PyArray_DeviceConverterOptional(PyObject *object, NPY_DEVICE *device)
+{
+    if (object == Py_None) {
+        return NPY_SUCCEED;
+    }
+
+    if (PyUnicode_Check(object) &&
+        PyUnicode_Compare(object, npy_ma_str_cpu) == 0) {
+        *device = NPY_DEVICE_CPU;
+        return NPY_SUCCEED;
+    }
+
+    PyErr_Format(PyExc_ValueError,
+            "Device not understood. Only \"cpu\" is allowed, "
+            "but received: %S", object);
+    return NPY_FAIL;
 }

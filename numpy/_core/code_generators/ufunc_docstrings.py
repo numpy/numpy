@@ -44,7 +44,7 @@ def add_newdoc(place, name, doc):
 
     skip = (
         # gufuncs do not use the OUT_SCALAR replacement strings
-        'matmul',
+        'matmul', 'vecdot',
         # clip has 3 inputs, which is not handled by this
         'clip',
     )
@@ -2860,6 +2860,63 @@ add_newdoc('numpy._core.umath', 'matmul',
     .. versionadded:: 1.10.0
     """)
 
+add_newdoc('numpy._core.umath', 'vecdot',
+    """
+    Vector dot product of two arrays.
+
+    Let :math:`\\mathbf{a}` be a vector in `x1` and :math:`\\mathbf{b}` be
+    a corresponding vector in `x2`. The dot product is defined as:
+
+    .. math::
+       \\mathbf{a} \\cdot \\mathbf{b} = \\sum_{i=0}^{n-1} \\overline{a_i}b_i
+
+    where the sum is over the last dimension (unless `axis` is specified) and
+    where :math:`\\overline{a_i}` denotes the complex conjugate if :math:`a_i`
+    is complex and the identity otherwise.
+
+    Parameters
+    ----------
+    x1, x2 : array_like
+        Input arrays, scalars not allowed.
+    out : ndarray, optional
+        A location into which the result is stored. If provided, it must have
+        a shape that the broadcasted shape of `x1` and `x2` with the last axis
+        removed. If not provided or None, a freshly-allocated array is used.
+    **kwargs
+        For other keyword-only arguments, see the
+        :ref:`ufunc docs <ufuncs.kwargs>`.
+
+    Returns
+    -------
+    y : ndarray
+        The vector dot product of the inputs.
+        This is a scalar only when both x1, x2 are 1-d vectors.
+
+    Raises
+    ------
+    ValueError
+        If the last dimension of `x1` is not the same size as
+        the last dimension of `x2`.
+
+        If a scalar value is passed in.
+
+    See Also
+    --------
+    vdot : same but flattens arguments first
+    einsum : Einstein summation convention.
+
+    Examples
+    --------
+    Get the projected size along a given normal for an array of vectors.
+
+    >>> v = np.array([[0., 5., 0.], [0., 0., 10.], [0., 6., 8.]])
+    >>> n = np.array([0., 0.6, 0.8])
+    >>> np.vecdot(v, n)
+    array([ 3.,  8., 10.])
+
+    .. versionadded:: 2.0.0
+    """)
+
 add_newdoc('numpy._core.umath', 'modf',
     """
     Return the fractional and integral parts of an array, element-wise.
@@ -3540,10 +3597,11 @@ add_newdoc('numpy._core.umath', 'sign',
     The `sign` function returns ``-1 if x < 0, 0 if x==0, 1 if x > 0``.  nan
     is returned for nan inputs.
 
-    For complex inputs, the `sign` function returns
-    ``sign(x.real) + 0j if x.real != 0 else sign(x.imag) + 0j``.
+    For complex inputs, the `sign` function returns ``x / abs(x)``, the
+    generalization of the above (and ``0 if x==0``).
 
-    complex(nan, 0) is returned for complex nan inputs.
+    .. versionchanged:: 2.0.0
+        Definition of complex sign changed to follow the Array API standard.
 
     Parameters
     ----------
@@ -3569,8 +3627,8 @@ add_newdoc('numpy._core.umath', 'sign',
     array([-1.,  1.])
     >>> np.sign(0)
     0
-    >>> np.sign(5-2j)
-    (1+0j)
+    >>> np.sign([3-4j, 8j])
+    array([0.6-0.8j, 0. +1.j ])
 
     """)
 
@@ -4277,13 +4335,13 @@ add_newdoc('numpy._core.umath', 'str_len',
     Examples
     --------
     >>> a = np.array(['Grace Hopper Conference', 'Open Source Day'])
-    >>> np.char.str_len(a)
+    >>> np.strings.str_len(a)
     array([23, 15])
     >>> a = np.array(['\u0420', '\u043e'])
-    >>> np.char.str_len(a)
+    >>> np.strings.str_len(a)
     array([1, 1])
     >>> a = np.array([['hello', 'world'], ['\u0420', '\u043e']])
-    >>> np.char.str_len(a)
+    >>> np.strings.str_len(a)
     array([[5, 5], [1, 1]])
 
     """)
@@ -4346,10 +4404,10 @@ add_newdoc('numpy._core.umath', 'isdigit',
     Examples
     --------
     >>> a = np.array(['a', 'b', '0'])
-    >>> np.char.isdigit(a)
+    >>> np.strings.isdigit(a)
     array([False, False,  True])
     >>> a = np.array([['a', 'b', '0'], ['c', '1', '2']])
-    >>> np.char.isdigit(a)
+    >>> np.strings.isdigit(a)
     array([[False, False,  True], [False,  True,  True]])
 
     """)
@@ -4409,7 +4467,7 @@ add_newdoc('numpy._core.umath', 'isdecimal',
 
     Examples
     --------
-    >>> np.char.isdecimal(['12345', '4.99', '123ABC', ''])
+    >>> np.strings.isdecimal(['12345', '4.99', '123ABC', ''])
     array([ True, False, False, False])
 
     """)
@@ -4440,7 +4498,7 @@ add_newdoc('numpy._core.umath', 'isnumeric',
 
     Examples
     --------
-    >>> np.char.isnumeric(['123', '123abc', '9.0', '1/4', 'VIII'])
+    >>> np.strings.isnumeric(['123', '123abc', '9.0', '1/4', 'VIII'])
     array([ True, False, False, False, False])
 
     """)
@@ -4477,7 +4535,7 @@ add_newdoc('numpy._core.umath', 'find',
     Examples
     --------
     >>> a = np.array(["NumPy is a Python library"])
-    >>> np.char.find(a, "Python", 0, None)
+    >>> np.strings.find(a, "Python", 0, None)
     array([11])
 
     """)
@@ -4547,15 +4605,22 @@ add_newdoc('numpy._core.umath', 'count',
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
-    >>> np.char.count(c, 'A')
+    >>> np.strings.count(c, 'A')
     array([3, 1, 1])
-    >>> np.char.count(c, 'aA')
+    >>> np.strings.count(c, 'aA')
     array([3, 1, 0])
-    >>> np.char.count(c, 'A', start=1, end=4)
+    >>> np.strings.count(c, 'A', start=1, end=4)
     array([2, 1, 1])
-    >>> np.char.count(c, 'A', start=1, end=3)
+    >>> np.strings.count(c, 'A', start=1, end=3)
     array([1, 0, 0])
 
+    """)
+
+add_newdoc('numpy.core.umath', '_replace',
+    """
+    UFunc implementation of ``replace``. This internal function
+    is called by ``replace`` with ``out`` set, so that the
+    size of the resulting string buffer is known.
     """)
 
 add_newdoc('numpy._core.umath', 'startswith',
@@ -4621,9 +4686,16 @@ add_newdoc('numpy._core.umath', 'endswith',
     >>> s = np.array(['foo', 'bar'])
     >>> s
     array(['foo', 'bar'], dtype='<U3')
-    >>> np.char.endswith(s, 'ar')
+    >>> np.strings.endswith(s, 'ar')
     array([False,  True])
-    >>> np.char.endswith(s, 'a', start=1, end=2)
+    >>> np.strings.endswith(s, 'a', start=1, end=2)
     array([False,  True])
 
     """)
+
+add_newdoc('numpy._core.umath', '_strip_chars', '')
+add_newdoc('numpy._core.umath', '_lstrip_chars', '')
+add_newdoc('numpy._core.umath', '_rstrip_chars', '')
+add_newdoc('numpy._core.umath', '_strip_whitespace', '')
+add_newdoc('numpy._core.umath', '_lstrip_whitespace', '')
+add_newdoc('numpy._core.umath', '_rstrip_whitespace', '')

@@ -45,12 +45,12 @@ multiarray_scalar_bool_values = {
 # index, annotations
 # please mark functions that have been checked to not need any annotations
 multiarray_types_api = {
-    'PyBigArray_Type':                  (1,),
+    # Slot 1 was never meaningfully used by NumPy
     'PyArray_Type':                     (2,),
     # Internally, PyArrayDescr_Type is a PyArray_DTypeMeta,
     # the following also defines PyArrayDescr_TypeFull (Full appended)
     'PyArrayDescr_Type':                (3, "PyArray_DTypeMeta"),
-    'PyArrayFlags_Type':                (4,),
+    # Unused slot 4, was `PyArrayFlags_Type`
     'PyArrayIter_Type':                 (5,),
     'PyArrayMultiIter_Type':            (6,),
     'PyBoolArrType_Type':               (8,),
@@ -99,7 +99,9 @@ multiarray_types_api = {
 
 multiarray_funcs_api = {
     '__unused_indices__': [
-        40, 41, 65, 67, 68, 163, 164, 171, 201, 202, 278, 291, 293, 294, 295,
+        1, 4, 40, 41, 65, 66, 67, 68, 81, 82, 83,
+        103, 115, 117, 122, 163, 164, 171, 173, 197,
+        201, 202, 208, 219, 278, 291, 293, 294, 295,
         301],
     'PyArray_GetNDArrayCVersion':           (0,),
     # Unused slot 40, was `PyArray_SetNumericOps`
@@ -112,8 +114,8 @@ multiarray_funcs_api = {
     'PyArray_Zero':                         (47,),
     'PyArray_One':                          (48,),
     'PyArray_CastToType':                   (49, StealRef(2)),
-    'PyArray_CastTo':                       (50,),
-    'PyArray_CastAnyTo':                    (51,),
+    'PyArray_CopyInto':                     (50,),
+    'PyArray_CopyAnyInto':                  (51,),
     'PyArray_CanCastSafely':                (52,),
     'PyArray_CanCastTo':                    (53,),
     'PyArray_ObjectType':                   (54,),
@@ -128,7 +130,7 @@ multiarray_funcs_api = {
     'PyArray_CastScalarToCtype':            (63,),
     'PyArray_CastScalarDirect':             (64,),
     # Unused slot 65, was `PyArray_ScalarFromObject`
-    'PyArray_GetCastFunc':                  (66,),
+    # Unused slot 66, was `PyArray_GetCastFunc`
     # Unused slot 67, was `PyArray_FromDims`
     # Unused slot 68, was `PyArray_FromDimsAndDataAndDescr`
     'PyArray_FromAny':                      (69, StealRef(2)),
@@ -143,9 +145,9 @@ multiarray_funcs_api = {
     'PyArray_SetField':                     (78, StealRef(2)),
     'PyArray_Byteswap':                     (79,),
     'PyArray_Resize':                       (80,),
-    'PyArray_MoveInto':                     (81,),
-    'PyArray_CopyInto':                     (82,),
-    'PyArray_CopyAnyInto':                  (83,),
+    # Unused slot 81, was `PyArray_MoveInto``
+    # Unused slot 82 was `PyArray_CopyInto` (which replaces `..._CastTo`)
+    # Unused slot 82 was `PyArray_CopyAnyInto` (which replaces `..._CastAnyTo`)
     'PyArray_CopyObject':                   (84,),
     'PyArray_NewCopy':                      (85,),
     'PyArray_ToList':                       (86,),
@@ -165,7 +167,7 @@ multiarray_funcs_api = {
     'PyArray_PyIntAsInt':                   (100,),
     'PyArray_PyIntAsIntp':                  (101,),
     'PyArray_Broadcast':                    (102,),
-    'PyArray_FillObjectArray':              (103,),
+    # Unused slot 103, was `PyArray_FillObjectArray`
     'PyArray_FillWithScalar':               (104,),
     'PyArray_CheckStrides':                 (105,),
     'PyArray_DescrNewByteorder':            (106,),
@@ -177,14 +179,14 @@ multiarray_funcs_api = {
     'PyArray_FromArrayAttr':                (112,),
     'PyArray_ScalarKind':                   (113,),
     'PyArray_CanCoerceScalar':              (114,),
-    'PyArray_NewFlagsObject':               (115,),
+    # Unused slot 115, was `PyArray_NewFlagsObject`
     'PyArray_CanCastScalar':                (116,),
-    'PyArray_CompareUCS4':                  (117,),
+    # Unused slot 117, was `PyArray_CompareUCS4`
     'PyArray_RemoveSmallest':               (118,),
     'PyArray_ElementStrides':               (119,),
     'PyArray_Item_INCREF':                  (120,),
     'PyArray_Item_XDECREF':                 (121,),
-    'PyArray_FieldNames':                   (122,),
+    # Unused slot 122, was `PyArray_FieldNames`
     'PyArray_Transpose':                    (123,),
     'PyArray_TakeFrom':                     (124,),
     'PyArray_PutTo':                        (125,),
@@ -235,7 +237,7 @@ multiarray_funcs_api = {
     'PyArray_MatrixProduct':                (170,),
     # Unused slot 171, was `PyArray_CopyAndTranspose`
     'PyArray_Correlate':                    (172,),
-    'PyArray_TypestrConvert':               (173,),
+    # Unused slot 173, was `PyArray_TypestrConvert`
     'PyArray_DescrConverter':               (174,),
     'PyArray_DescrConverter2':              (175,),
     'PyArray_IntpConverter':                (176,),
@@ -259,7 +261,7 @@ multiarray_funcs_api = {
     'PyArray_RegisterCanCast':              (194,),
     'PyArray_InitArrFuncs':                 (195,),
     'PyArray_IntTupleFromIntp':             (196,),
-    'PyArray_TypeNumFromName':              (197,),
+    # Unused slot 197, was `PyArray_TypeNumFromName`
     'PyArray_ClipmodeConverter':            (198,),
     'PyArray_OutputConverter':              (199,),
     'PyArray_BroadcastToShape':             (200,),
@@ -270,14 +272,14 @@ multiarray_funcs_api = {
     'PyArray_SearchsideConverter':          (205,),
     'PyArray_CheckAxis':                    (206,),
     'PyArray_OverflowMultiplyList':         (207,),
-    'PyArray_CompareString':                (208,),
+    # Unused slot 208, was `PyArray_CompareString`
     'PyArray_MultiIterFromObjects':         (209,),
     'PyArray_GetEndianness':                (210,),
     'PyArray_GetNDArrayCFeatureVersion':    (211,),
     'PyArray_Correlate2':                   (212,),
     'PyArray_NeighborhoodIterNew':          (213,),
     # End 1.5 API
-    'PyArray_SetDatetimeParseFunction':     (219,),
+    # Unused slot 219, was `PyArray_SetDatetimeParseFunction`
     'PyArray_DatetimeToDatetimeStruct':     (220,),
     'PyArray_TimedeltaToTimedeltaStruct':   (221,),
     'PyArray_DatetimeStructToDatetime':     (222,),

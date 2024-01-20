@@ -118,7 +118,8 @@ static struct {
                 {NPY_CPU_FEATURE_FPHP, "FPHP"},
                 {NPY_CPU_FEATURE_ASIMDHP, "ASIMDHP"},
                 {NPY_CPU_FEATURE_ASIMDDP, "ASIMDDP"},
-                {NPY_CPU_FEATURE_ASIMDFHM, "ASIMDFHM"}};
+                {NPY_CPU_FEATURE_ASIMDFHM, "ASIMDFHM"},
+                {NPY_CPU_FEATURE_SVE, "SVE"}};
 
 
 NPY_VISIBILITY_HIDDEN PyObject *
@@ -656,7 +657,7 @@ npy__cpu_init_features(void)
 
 /***************** ARM ******************/
 
-#elif defined(__arm__) || defined(__aarch64__)
+#elif defined(__arm__) || defined(__aarch64__) || defined(_M_ARM64)
 
 static inline void
 npy__cpu_init_features_arm8(void)
@@ -760,6 +761,7 @@ npy__cpu_init_features_linux(void)
         npy__cpu_have[NPY_CPU_FEATURE_ASIMDHP]    = (hwcap & NPY__HWCAP_ASIMDHP)  != 0;
         npy__cpu_have[NPY_CPU_FEATURE_ASIMDDP]    = (hwcap & NPY__HWCAP_ASIMDDP)  != 0;
         npy__cpu_have[NPY_CPU_FEATURE_ASIMDFHM]   = (hwcap & NPY__HWCAP_ASIMDFHM) != 0;
+        npy__cpu_have[NPY_CPU_FEATURE_SVE]        = (hwcap & NPY__HWCAP_SVE)      != 0;
         npy__cpu_init_features_arm8();
     } else {
         npy__cpu_have[NPY_CPU_FEATURE_NEON]       = (hwcap & NPY__HWCAP_NEON)   != 0;
@@ -781,7 +783,7 @@ npy__cpu_init_features(void)
         return;
 #endif
     // We have nothing else todo
-#if defined(NPY_HAVE_ASIMD) || defined(__aarch64__) || (defined(__ARM_ARCH) && __ARM_ARCH >= 8)
+#if defined(NPY_HAVE_ASIMD) || defined(__aarch64__) || (defined(__ARM_ARCH) && __ARM_ARCH >= 8) || defined(_M_ARM64)
     #if defined(NPY_HAVE_FPHP) || defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
     npy__cpu_have[NPY_CPU_FEATURE_FPHP] = 1;
     #endif
@@ -793,6 +795,9 @@ npy__cpu_init_features(void)
     #endif
     #if defined(NPY_HAVE_ASIMDFHM) || defined(__ARM_FEATURE_FP16FML)
     npy__cpu_have[NPY_CPU_FEATURE_ASIMDFHM] = 1;
+    #endif
+    #if defined(NPY_HAVE_SVE) || defined(__ARM_FEATURE_SVE)
+    npy__cpu_have[NPY_CPU_FEATURE_SVE] = 1;
     #endif
     npy__cpu_init_features_arm8();
 #else

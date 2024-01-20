@@ -163,6 +163,27 @@ Here, ``meson`` can actually be used to set dependencies more robustly.
     of dependencies. They can be `customized further <https://mesonbuild.com/Dependencies.html>`_
     to use CMake or other systems to resolve dependencies.
 
+1.2.5 Libraries
+^^^^^^^^^^^^^^^
+
+Both ``meson`` and ``distutils`` are capable of linking against libraries.
+
+.. tab-set::
+
+  .. tab-item:: Distutils
+    :sync: distutils
+
+    .. code-block:: bash
+
+      python -m numpy.f2py -c fib.f90 -m fib --backend distutils -lmylib -L/path/to/mylib
+
+  .. tab-item:: Meson
+    :sync: meson
+
+    .. code-block:: bash
+
+      python -m numpy.f2py -c fib.f90 -m fib --backend meson -lmylib -L/path/to/mylib
+
 1.3 Customizing builds
 ~~~~~~~~~~~~~~~~~~~~~~
 

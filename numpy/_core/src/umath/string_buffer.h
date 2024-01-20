@@ -3,6 +3,7 @@
 
 #include <Python.h>
 #include <cstddef>
+#include <wchar.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
@@ -58,7 +59,7 @@ struct Buffer {
         after = buf_ + elsize_;
     }
 
-    inline npy_int64
+    inline size_t
     num_codepoints()
     {
         Buffer tmp(after, 0);
@@ -66,7 +67,7 @@ struct Buffer {
         while (tmp >= *this && *tmp == '\0') {
             tmp--;
         }
-        return (npy_int64) (tmp - *this + 1);
+        return (size_t) (tmp - *this + 1);
     }
 
     inline Buffer<enc>&
@@ -109,7 +110,7 @@ struct Buffer {
     {
         Buffer<enc> old = *this;
         operator++();
-        return old; 
+        return old;
     }
 
     inline Buffer<enc>&
@@ -124,7 +125,7 @@ struct Buffer {
     {
         Buffer<enc> old = *this;
         operator--();
-        return old; 
+        return old;
     }
 
     inline npy_ucs4
@@ -151,14 +152,16 @@ struct Buffer {
     inline Buffer<enc>
     buffer_memchr(npy_ucs4 ch, int len)
     {
+        Buffer<enc> newbuf = *this;
         switch (enc) {
         case ENCODING::ASCII:
-            buf = (char *) memchr(buf, ch, len);
-            return *this;
+            newbuf.buf = (char *) memchr(buf, ch, len);
+            break;
         case ENCODING::UTF32:
-            buf = (char *) wmemchr((wchar_t *) buf, ch, len);
-            return *this;
+            newbuf.buf = (char *) wmemchr((wchar_t *) buf, ch, len);
+            break;
         }
+        return newbuf;
     }
 
     inline int
@@ -173,40 +176,36 @@ struct Buffer {
     }
 
     inline void
-    buffer_memcpy(void *out, size_t n_chars)
+    buffer_memcpy(Buffer<enc> out, size_t n_chars)
     {
         switch (enc) {
         case ENCODING::ASCII:
-            memcpy(out, buf, n_chars);
+            memcpy(out.buf, buf, n_chars);
             break;
         case ENCODING::UTF32:
-            memcpy(out, buf, n_chars * sizeof(npy_ucs4));
+            memcpy(out.buf, buf, n_chars * sizeof(npy_ucs4));
             break;
         }
     }
 
     inline void
-    buffer_memcpy_with_offset(void *out, size_t offset, size_t n_chars)
+    buffer_fill_with_zeros_after_index(size_t start_index)
     {
-        switch (enc) {
-        case ENCODING::ASCII:
-            buffer_memcpy((char *) out + offset, n_chars);
-            break;
-        case ENCODING::UTF32:
-            buffer_memcpy((char *) out + offset * sizeof(npy_ucs4), n_chars);
-            break;
+        Buffer<enc> offset = *this + start_index;
+        for (char *tmp = offset.buf; tmp < after; tmp++) {
+            *tmp = 0;
         }
     }
 
     inline bool
     isalpha()
     {
-        npy_int64 len = num_codepoints();
+        size_t len = num_codepoints();
         if (len == 0) {
             return false;
         }
 
-        for (npy_int64 i = 0; i < len; i++) {
+        for (size_t i = 0; i < len; i++) {
             bool isalpha = enc == ENCODING::UTF32 ? Py_UNICODE_ISALPHA((*this)[i])
                                                   : NumPyOS_ascii_isalpha((*this)[i]);
             if (!isalpha) {
@@ -217,18 +216,27 @@ struct Buffer {
     }
 
     inline bool
+    isspace(size_t index)
+    {
+        switch (enc) {
+        case ENCODING::ASCII:
+            return NumPyOS_ascii_isspace((*this)[index]);
+        case ENCODING::UTF32:
+            return Py_UNICODE_ISSPACE((*this)[index]);
+        }
+    }
+
+    inline bool
     isspace()
     {
-        npy_int64 len = num_codepoints();
+        size_t len = num_codepoints();
         if (len == 0) {
             return false;
         }
 
-        for (npy_int64 i = 0; i < len; i++) {
-            bool isspace = enc == ENCODING::UTF32 ? Py_UNICODE_ISSPACE((*this)[i])
-                                                  : NumPyOS_ascii_isspace((*this)[i]);
-            if (!isspace) {
-                return isspace;
+        for (size_t i = 0; i < len; i++) {
+            if (!this->isspace(i)) {
+                return false;
             }
         }
         return true;
@@ -237,12 +245,12 @@ struct Buffer {
     inline bool
     isdigit()
     {
-        npy_int64 len = num_codepoints();
+        size_t len = num_codepoints();
         if (len == 0) {
             return false;
         }
 
-        for (npy_int64 i = 0; i < len; i++) {
+        for (size_t i = 0; i < len; i++) {
             bool isdigit = enc == ENCODING::UTF32 ? Py_UNICODE_ISDIGIT((*this)[i])
                                                   : NumPyOS_ascii_isdigit((*this)[i]);
             if (!isdigit) {
@@ -250,6 +258,57 @@ struct Buffer {
             }
         }
         return true;
+    }
+
+    inline Buffer<enc>
+    rstrip()
+    {
+        Buffer<enc> tmp(after, 0);
+        tmp--;
+        while (tmp >= *this && (*tmp == '\0' || NumPyOS_ascii_isspace(*tmp))) {
+            tmp--;
+        }
+        tmp++;
+
+        after = tmp.buf;
+        return *this;
+    }
+
+    inline int
+    strcmp(Buffer<enc> other, bool rstrip)
+    {
+        Buffer tmp1 = rstrip ? this->rstrip() : *this;
+        Buffer tmp2 = rstrip ? other.rstrip() : other;
+
+        while (tmp1.buf < tmp1.after && tmp2.buf < tmp2.after) {
+            if (*tmp1 < *tmp2) {
+                return -1;
+            }
+            if (*tmp1 > *tmp2) {
+                return 1;
+            }
+            tmp1++;
+            tmp2++;
+        }
+        while (tmp1.buf < tmp1.after) {
+            if (*tmp1) {
+                return 1;
+            }
+            tmp1++;
+        }
+        while (tmp2.buf < tmp2.after) {
+            if (*tmp2) {
+                return -1;
+            }
+            tmp2++;
+        }
+        return 0;
+    }
+
+    inline int
+    strcmp(Buffer<enc> other)
+    {
+        return strcmp(other, false);
     }
 };
 

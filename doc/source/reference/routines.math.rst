@@ -12,10 +12,14 @@ Trigonometric functions
    cos
    tan
    arcsin
+   asin
    arccos
+   acos
    arctan
+   atan
    hypot
    arctan2
+   atan2
    degrees
    radians
    unwrap
@@ -31,8 +35,11 @@ Hyperbolic functions
    cosh
    tanh
    arcsinh
+   asinh
    arccosh
+   acosh
    arctanh
+   atanh
 
 Rounding
 --------
@@ -120,6 +127,7 @@ Arithmetic operations
    multiply
    divide
    power
+   pow
    subtract
    true_divide
    floor_divide

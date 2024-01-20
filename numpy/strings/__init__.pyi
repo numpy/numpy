@@ -1,0 +1,26 @@
+from numpy._core.strings import (
+    equal as equal,
+    not_equal as not_equal,
+    greater_equal as greater_equal,
+    less_equal as less_equal,
+    greater as greater,
+    less as less,
+    str_len as str_len,
+    add as add,
+    count as count,
+    endswith as endswith,
+    find as find,
+    isalpha as isalpha,
+    isdigit as isdigit,
+    isspace as isspace,
+    lstrip as lstrip,
+    rfind as rfind,
+    rstrip as rstrip,
+    startswith as startswith,
+    strip as strip,
+    isnumeric as isnumeric,
+    isdecimal as isdecimal,
+    replace as replace,
+)
+
+__all__: list[str]

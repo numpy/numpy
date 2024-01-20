@@ -286,6 +286,7 @@ class TestNonarrayArgs:
         arr = [[1, 2], [3, 4], [5, 6]]
         tgt = [[1, 3, 5], [2, 4, 6]]
         assert_equal(np.transpose(arr, (1, 0)), tgt)
+        assert_equal(np.matrix_transpose(arr), tgt)
 
     def test_var(self):
         A = [[1, 2, 3], [4, 5, 6]]
@@ -797,7 +798,14 @@ class TestBoolCmp:
         self.signd[self.ed] *= -1.
         self.signf[1::6][self.ef[1::6]] = -np.inf
         self.signd[1::6][self.ed[1::6]] = -np.inf
-        self.signf[3::6][self.ef[3::6]] = -np.nan
+        # On RISC-V, many operations that produce NaNs, such as converting
+        # a -NaN from f64 to f32, return a canonical NaN.  The canonical
+        # NaNs are always positive.  See section 11.3 NaN Generation and
+        # Propagation of the RISC-V Unprivileged ISA for more details.
+        # We disable the float32 sign test on riscv64 for -np.nan as the sign
+        # of the NaN will be lost when it's converted to a float32.
+        if platform.processor() != 'riscv64':
+            self.signf[3::6][self.ef[3::6]] = -np.nan
         self.signd[3::6][self.ed[3::6]] = -np.nan
         self.signf[4::6][self.ef[4::6]] = -0.
         self.signd[4::6][self.ed[4::6]] = -0.
@@ -3084,6 +3092,22 @@ class TestStdVar:
         assert_almost_equal(np.std(self.A, ddof=2)**2,
                             self.real_var * len(self.A) / (len(self.A) - 2))
 
+    def test_correction(self):
+        assert_almost_equal(
+            np.var(self.A, correction=1), np.var(self.A, ddof=1)
+        )
+        assert_almost_equal(
+            np.std(self.A, correction=1), np.std(self.A, ddof=1)
+        )
+
+        err_msg = "ddof and correction can't be provided simultaneously."
+
+        with assert_raises_regex(ValueError, err_msg):
+            np.var(self.A, ddof=1, correction=0)
+
+        with assert_raises_regex(ValueError, err_msg):
+            np.std(self.A, ddof=1, correction=1)
+
     def test_out_scalar(self):
         d = np.arange(10)
         out = np.array(0.)
@@ -3969,9 +3993,9 @@ class TestBroadcast:
 
     def test_number_of_arguments(self):
         arr = np.empty((5,))
-        for j in range(35):
+        for j in range(70):
             arrs = [arr] * j
-            if j > 32:
+            if j > 64:
                 assert_raises(ValueError, np.broadcast, *arrs)
             else:
                 mit = np.broadcast(*arrs)
@@ -4023,3 +4047,23 @@ class TestTensordot:
         arr_0d = np.array(1)
         ret = np.tensordot(arr_0d, arr_0d, ([], []))  # contracting no axes is well defined
         assert_array_equal(ret, arr_0d)
+
+
+class TestAsType:
+
+    def test_astype(self):
+        data = [[1, 2], [3, 4]]
+        actual = np.astype(
+            np.array(data, dtype=np.int64), np.uint32
+        )
+        expected = np.array(data, dtype=np.uint32)
+
+        assert_array_equal(actual, expected)
+        assert_equal(actual.dtype, expected.dtype)
+
+        assert np.shares_memory(
+            actual, np.astype(actual, actual.dtype, copy=False)
+        )
+
+        with pytest.raises(TypeError, match="Input should be a NumPy array"):
+            np.astype(data, np.float64)
