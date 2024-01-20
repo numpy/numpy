@@ -85,8 +85,8 @@ def empty_like(
     prototype, dtype=None, order=None, subok=None, shape=None, *, device=None
 ):
     """
-    empty_like(prototype, dtype=None, order='K', subok=True, shape=None,
-               shape=None, *, device=None)
+    empty_like(prototype, dtype=None, order='K', subok=True, shape=None, *,
+               device=None)
 
     Return a new array with the same shape and type as a given array.
 
