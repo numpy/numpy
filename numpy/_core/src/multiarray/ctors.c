@@ -1530,8 +1530,10 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         return NULL;
     }
 
-    PyObject* ret =  PyArray_FromAny_int(op, dt_info.descr, dt_info.dtype,
-                                         min_depth, max_depth, flags, context);
+    int was_scalar;
+    PyObject* ret =  PyArray_FromAny_int(
+            op, dt_info.descr, dt_info.dtype,
+            min_depth, max_depth, flags, context, &was_scalar);
 
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
@@ -1541,12 +1543,19 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 /*
  * Internal version of PyArray_FromAny that accepts a dtypemeta. Borrows
  * references to the descriptor and dtype.
+ *
+ * The `was_scalar` output returns 1 when the object was a "scalar".
+ * This means it was:
+ * - Recognized as a scalar by a/the dtype.  This can be DType specific,
+ *   for example a tuple may be a scalar, but only for structured dtypes.
+ * - Anything not recognized as an instance of a DType's scalar type but also not
+ *   convertable to an array.  (no __array__ protocol, etc.)
+ *   these must map to `dtype=object` (if a dtype wasn't specified).
  */
-
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
                     PyArray_DTypeMeta *in_DType, int min_depth, int max_depth,
-                    int flags, PyObject *context)
+                    int flags, PyObject *context, int *was_scalar)
 {
     /*
      * This is the main code to make a NumPy array from a Python
@@ -1570,6 +1579,9 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
     if (ndim < 0) {
         return NULL;
     }
+
+    /* If the cache is NULL, then the object is considered a scalar */
+    *was_scalar = (cache == NULL);
 
     if (dtype == NULL) {
         dtype = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
@@ -1827,8 +1839,9 @@ PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
         }
     }
 
+    int was_scalar;
     obj = PyArray_FromAny_int(op, in_descr, in_DType, min_depth,
-                              max_depth, requires, context);
+                              max_depth, requires, context, &was_scalar);
     if (obj == NULL) {
         return NULL;
     }
