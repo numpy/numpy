@@ -1,5 +1,5 @@
 /*
- * This file defines an _array_converter object used internally to NumPy
+ * This file defines an _array_converter object used internally in NumPy to
  * deal with `__array_wrap__` and `result_type()` for multiple arguments
  * where converting inputs to arrays would lose the necessary information.
  *
@@ -90,27 +90,34 @@ array_converter_new(
                 goto fail;
             }
         }
-        if (!item->scalar_input) {
-            self->flags &= ~(NPY_CH_ALL_PYSCALARS | NPY_CH_ALL_SCALARS);
-        }
+
         /* At this point, assume cleanup should happen for this item */
         self->narrs++;
         Py_INCREF(item->object);
         item->DType = NPY_DTYPE(PyArray_DESCR(item->array));
         Py_INCREF(item->DType);
 
-        if (npy_mark_tmp_array_if_pyscalar(
+        /*
+         * Check whether we were passed a an int/float/complex Python scalar.
+         * If not, set `descr` and clear pyscalar/scalar flags as needed.
+         */
+        if (item->scalar_input && npy_mark_tmp_array_if_pyscalar(
                 item->object, item->array, &item->DType)) {
-            /* just clear the flag again */
+            item->descr = NULL;
+            /* Do not mark the stored array: */
             ((PyArrayObject_fields *)(item->array))->flags &= (
                     ~NPY_ARRAY_WAS_PYTHON_LITERAL);
-            item->descr = NULL;
         }
         else {
-            self->flags &= ~NPY_CH_ALL_PYSCALARS;
-
             item->descr = PyArray_DESCR(item->array);
             Py_INCREF(item->descr);
+
+            if (item->scalar_input) {
+                self->flags &= ~NPY_CH_ALL_PYSCALARS;
+            }
+            else {
+                self->flags &= ~(NPY_CH_ALL_PYSCALARS | NPY_CH_ALL_SCALARS);
+            }
         }
     }
 
@@ -436,7 +443,7 @@ array_converter_item(PyArrayArrayConverterObject *self, Py_ssize_t item)
         return NULL;
     }
 
-    /* When we only have scalars, the default is to return an array: */
+    /* Follow the `as_arrays` default of `CONVERT_IF_NO_ARRAY`: */
     PyObject *res;
     if (self->items[item].descr == NULL
             && !(self->flags & NPY_CH_ALL_PYSCALARS)) {

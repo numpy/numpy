@@ -4741,7 +4741,8 @@ add_newdoc('numpy._core._multiarray_umath', '_array_converter',
     float, or complex.
     """)
 
-add_newdoc('numpy._core._multiarray_umath', '_array_converter', ('scalar_input',
+add_newdoc(
+    'numpy._core._multiarray_umath', '_array_converter', ('scalar_input',
     """
     A tuple which indicates for each input whether it was a scalar that
     was coerced to a 0-D array (and was not already an array or something
