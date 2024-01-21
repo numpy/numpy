@@ -1,8 +1,8 @@
 .. _routines:
 
-********
-Routines
-********
+*****************************
+Routines and objects by topic
+*****************************
 
 In this chapter routine docstrings are presented, grouped by functionality.
 Many docstrings contain example code, which demonstrates basic usage
@@ -15,8 +15,9 @@ IPython, which allows for pasting of multi-line examples and preserves
 indentation.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
+   constants
    routines.array-creation
    routines.array-manipulation
    routines.bitwise
@@ -31,8 +32,8 @@ indentation.
    routines.exceptions
    routines.fft
    routines.functional
-   routines.help
    routines.io
+   routines.indexing
    routines.lib
    routines.linalg
    routines.logic
@@ -40,7 +41,6 @@ indentation.
    routines.math
    routines.matlib
    routines.other
-   routines.padding
    routines.polynomials
    random/index
    routines.set
