@@ -62,6 +62,7 @@ from .multiarray import (  # noqa: F401
 )
 from .overrides import finalize_array_function_like, set_module
 from .umath import NAN, PINF, invert, multiply, sin
+from ._multiarray_umath import _array_converter
 
 bitwise_not = invert
 ufunc = type(sin)
@@ -2462,9 +2463,8 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
     """
     # Turn all but python scalars into arrays.
-    x, y, atol, rtol = (
-        a if isinstance(a, (int, float, complex)) else asanyarray(a)
-        for a in (a, b, atol, rtol))
+    conv = _array_converter(a, b, atol, rtol)
+    x, y, atol, rtol = conv.as_arrays(pyscalars="preserve")
 
     # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
     # This will cause casting of x later. Also, make sure to allow subclasses
@@ -2499,7 +2499,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         if equal_nan:
             result |= isnan(x) & isnan(y)
 
-    return result[()]  # Flatten 0d arrays to scalars
+    return conv.wrap(result)
 
 
 def _array_equal_dispatcher(a1, a2, equal_nan=None):

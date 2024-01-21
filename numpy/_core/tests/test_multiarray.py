@@ -7054,7 +7054,7 @@ class MatmulCommon:
             # vector vector returns scalars
             if dt != "O":
                 res = self.matmul(v, v)
-                assert_(type(res) is np.dtype(dt).type)
+                assert type(res) is np.dtype(dt).type
 
     def test_scalar_output(self):
         vec1 = np.array([2])

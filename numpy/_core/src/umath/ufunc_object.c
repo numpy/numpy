@@ -613,6 +613,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *out_op_DTypes[],
         npy_bool *force_legacy_promotion,
         npy_bool *promoting_pyscalars,
+        npy_bool *all_inputs_were_scalars,
         PyObject *order_obj, NPY_ORDER *out_order,
         PyObject *casting_obj, NPY_CASTING *out_casting,
         PyObject *subok_obj, npy_bool *out_subok,
@@ -626,25 +627,41 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
 
     /* Convert and fill in input arguments */
     npy_bool all_scalar = NPY_TRUE;
-    npy_bool any_scalar = NPY_FALSE;
+    npy_bool any_scalar = NPY_FALSE;  /* any 0-D object, legacy scalar */
     *force_legacy_promotion = NPY_FALSE;
     *promoting_pyscalars = NPY_FALSE;
+    *all_inputs_were_scalars = NPY_TRUE;
     for (int i = 0; i < nin; i++) {
         obj = PyTuple_GET_ITEM(full_args.in, i);
+        int was_pyscalar = NPY_FALSE;
 
         if (PyArray_Check(obj)) {
             out_op[i] = (PyArrayObject *)obj;
             Py_INCREF(out_op[i]);
         }
         else {
-            /* Convert the input to an array and check for special cases */
-            out_op[i] = (PyArrayObject *)PyArray_FromAny(obj, NULL, 0, 0, 0, NULL);
+            /*
+             * Convert the input to an array.  Note that we figure out if the
+             * input was a scalar here.  This is useful below, because we need
+             * to check for NumPy 2.0 style promotion and pass the information
+             * further through.
+             * Also we want to know if the object was anything NumPy considers
+             * a true scalar (not 0-D array).  This is used to decide if a
+             * 0-D result should be unpacked.
+             */
+            out_op[i] = (PyArrayObject *)PyArray_FromAny_int(
+                obj, NULL, NULL, 0, 0, 0, NULL,
+                &was_pyscalar);
             if (out_op[i] == NULL) {
                 goto fail;
             }
         }
         out_op_DTypes[i] = NPY_DTYPE(PyArray_DESCR(out_op[i]));
         Py_INCREF(out_op_DTypes[i]);
+
+        if (!was_pyscalar) {
+            *all_inputs_were_scalars = NPY_FALSE;
+        }
 
         if (nin == 1) {
             /*
@@ -677,7 +694,8 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
          * `np.can_cast(operand, dtype)`.  The flag is local to this use, but
          * necessary to propagate the information to the legacy type resolution.
          */
-        if (npy_mark_tmp_array_if_pyscalar(obj, out_op[i], &out_op_DTypes[i])) {
+        if (was_pyscalar &&
+                npy_mark_tmp_array_if_pyscalar(obj, out_op[i], &out_op_DTypes[i])) {
             if (PyArray_FLAGS(out_op[i]) & NPY_ARRAY_WAS_PYTHON_INT
                     && PyArray_TYPE(out_op[i]) != NPY_LONG) {
                 /*
@@ -3746,7 +3764,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     /* TODO: Data is mutated, so force_wrap like a normal ufunc call does */
     PyObject *wrapped_result = npy_apply_wrap(
             (PyObject *)ret, out_obj, wrap, wrap_type, NULL,
-            PyArray_NDIM(ret) == 0 && return_scalar, NPY_FALSE);
+            axes_obj == Py_None  && return_scalar, NPY_FALSE);
+
     Py_DECREF(ret);
     Py_DECREF(wrap);
     Py_DECREF(wrap_type);
@@ -4244,7 +4263,7 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
         PyObject *ret_i = npy_apply_wrap(
                 (PyObject *)result_arrays[out_i], original_out, wrap, wrap_type,
                 /* Always try to return a scalar right now: */
-                &context, PyArray_NDIM(result_arrays[out_i]) == 0 && return_scalar, NPY_TRUE);
+                &context, return_scalar, NPY_TRUE);
         Py_CLEAR(result_arrays[out_i]);
         if (ret_i == NULL) {
             goto fail;
@@ -4496,12 +4515,14 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     int keepdims = -1;  /* We need to know if it was passed */
     npy_bool force_legacy_promotion;
     npy_bool promoting_pyscalars;
+    npy_bool all_inputs_were_scalars;
     if (convert_ufunc_arguments(ufunc,
             /* extract operand related information: */
             full_args, operands,
             operand_DTypes,
             &force_legacy_promotion,
             &promoting_pyscalars,
+            &all_inputs_were_scalars,
             /* extract general information: */
             order_obj, &order,
             casting_obj, &casting,
@@ -4564,9 +4585,22 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             Py_DECREF(operands[i]);
         }
     }
+
+    /*
+     * all_inputs_were_scalars is used to decide if 0-D results should be
+     * unpacked to a scalar.  But, `np.matmul(vector, vector)` should do this.
+     * So for now we assume that if gufuncs return a 0-D result, we should
+     * unpack.  (unless keepdims=True, since that behave like a normal ufunc)
+     * So we pretend inputs were scalars...
+     *
+     * TODO: We may need a way to customize that at some point.
+     */
+    if (ufunc->core_enabled && keepdims != 1) {
+        all_inputs_were_scalars = NPY_TRUE;
+    }
     /* The following steals the references to the outputs: */
     PyObject *result = replace_with_wrapped_result_and_return(ufunc,
-            full_args, subok, operands+nin, return_scalar);
+            full_args, subok, operands+nin, all_inputs_were_scalars && return_scalar);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
 

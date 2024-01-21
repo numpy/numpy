@@ -4055,15 +4055,17 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         # make 0-D arrays work
         return part.item()
     if axis is None:
-        axis = 0
+        paxis = 0
+    else:
+        paxis = axis
 
     indexer = [slice(None)] * part.ndim
-    index = part.shape[axis] // 2
-    if part.shape[axis] % 2 == 1:
+    index = part.shape[paxis] // 2
+    if part.shape[paxis] % 2 == 1:
         # index with slice to allow mean (below) to work
-        indexer[axis] = slice(index, index + 1)
+        indexer[paxis] = slice(index, index + 1)
     else:
-        indexer[axis] = slice(index - 1, index + 1)
+        indexer[paxis] = slice(index - 1, index + 1)
     indexer = tuple(indexer)
 
     # Use mean in both odd and even case to coerce data type,
@@ -4071,7 +4073,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     rout = mean(part[indexer], axis=axis, out=out)
     if supports_nans and sz > 0:
         # If nans are possible, warn and replace by nans like mean would.
-        rout = np.lib._utils_impl._median_nancheck(part, rout, axis)
+        rout = np.lib._utils_impl._median_nancheck(part, rout, paxis)
 
     return rout
 
