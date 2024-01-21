@@ -907,8 +907,8 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
 
 def _in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     # Ravel both arrays, behavior for the first array could be different
-    ar1 = np.asarray(ar1).ravel()
-    ar2 = np.asarray(ar2).ravel()
+    ar1 = ar1.ravel()
+    ar2 = ar2.ravel()
 
     # Ensure that iteration through object arrays yields size-1 arrays
     if ar2.dtype == object:
@@ -1173,9 +1173,14 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
     array([[False,  True],
            [ True, False]])
     """
-    element = np.asarray(element)
-    return _in1d(element, test_elements, assume_unique=assume_unique,
-                 invert=invert, kind=kind).reshape(element.shape)
+    conv = _array_converter(element, test_elements)
+    element, test_elements = conv.as_arrays(subok=False, pyscalars="convert")
+
+    result = _in1d(element, test_elements, assume_unique=assume_unique,
+                   invert=invert, kind=kind).reshape(element.shape)
+    if conv.scalar_input[0]:
+        return result[()]
+    return result
 
 
 def _union1d_dispatcher(ar1, ar2):
