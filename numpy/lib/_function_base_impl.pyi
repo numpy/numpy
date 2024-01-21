@@ -626,7 +626,7 @@ def meshgrid(
     copy: bool = ...,
     sparse: bool = ...,
     indexing: L["xy", "ij"] = ...,
-) -> tuple[NDArray[Any]]: ...
+) -> tuple[NDArray[Any], ...]: ...
 
 @overload
 def delete(

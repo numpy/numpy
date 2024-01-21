@@ -51,8 +51,8 @@ assert_type(np.ravel_multi_index((3, 1, 4, 1), (6, 7, 8, 9)), np.intp)
 assert_type(np.mgrid[1:1:2], npt.NDArray[Any])
 assert_type(np.mgrid[1:1:2, None:10], npt.NDArray[Any])
 
-assert_type(np.ogrid[1:1:2], tuple[npt.NDArray[Any]])
-assert_type(np.ogrid[1:1:2, None:10], tuple[npt.NDArray[Any]])
+assert_type(np.ogrid[1:1:2], tuple[npt.NDArray[Any], ...])
+assert_type(np.ogrid[1:1:2, None:10], tuple[npt.NDArray[Any], ...])
 
 assert_type(np.index_exp[0:1], tuple[slice])
 assert_type(np.index_exp[0:1, None:3], tuple[slice, slice])
