@@ -4986,7 +4986,7 @@ def _meshgrid_dispatcher(*xi, copy=None, sparse=None, indexing=None):
 @array_function_dispatch(_meshgrid_dispatcher)
 def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     """
-    Return a list of coordinate matrices from coordinate vectors.
+    Return a tuple of coordinate matrices from coordinate vectors.
 
     Make N-D coordinate arrays for vectorized evaluations of
     N-D scalar/vector fields over N-D grids, given
@@ -5027,7 +5027,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
     Returns
     -------
-    X1, X2,..., XN : list of ndarrays
+    X1, X2,..., XN : tuple of ndarrays
         For vectors `x1`, `x2`,..., `xn` with lengths ``Ni=len(xi)``,
         returns ``(N1, N2, N3,..., Nn)`` shaped arrays if indexing='ij'
         or ``(N2, N1, N3,..., Nn)`` shaped arrays if indexing='xy'
@@ -5136,7 +5136,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
         output = np.broadcast_arrays(*output, subok=True)
 
     if copy:
-        output = [x.copy() for x in output]
+        output = tuple(x.copy() for x in output)
 
     return output
 

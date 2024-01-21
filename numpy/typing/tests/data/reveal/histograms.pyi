@@ -21,7 +21,11 @@ assert_type(np.histogram(AR_i8, bins="rice", range=(0, 3)), tuple[npt.NDArray[An
 assert_type(np.histogram(AR_i8, bins="scott", weights=AR_f8), tuple[npt.NDArray[Any], npt.NDArray[Any]])
 assert_type(np.histogram(AR_f8, bins=1, density=True), tuple[npt.NDArray[Any], npt.NDArray[Any]])
 
-assert_type(np.histogramdd(AR_i8, bins=[1]), tuple[npt.NDArray[Any], list[npt.NDArray[Any]]])
-assert_type(np.histogramdd(AR_i8, range=[(0, 3)]), tuple[npt.NDArray[Any], list[npt.NDArray[Any]]])
-assert_type(np.histogramdd(AR_i8, weights=AR_f8), tuple[npt.NDArray[Any], list[npt.NDArray[Any]]])
-assert_type(np.histogramdd(AR_f8, density=True), tuple[npt.NDArray[Any], list[npt.NDArray[Any]]])
+assert_type(np.histogramdd(AR_i8, bins=[1]),
+            tuple[npt.NDArray[Any], tuple[npt.NDArray[Any], ...]])
+assert_type(np.histogramdd(AR_i8, range=[(0, 3)]),
+            tuple[npt.NDArray[Any], tuple[npt.NDArray[Any], ...]])
+assert_type(np.histogramdd(AR_i8, weights=AR_f8),
+            tuple[npt.NDArray[Any], tuple[npt.NDArray[Any], ...]])
+assert_type(np.histogramdd(AR_f8, density=True),
+            tuple[npt.NDArray[Any], tuple[npt.NDArray[Any], ...]])
