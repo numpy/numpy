@@ -27,18 +27,14 @@
  */
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
-
 #include "npy_sort.h"
-#include "npysort_common.h"
-#include "numpy_tag.h"
 
-#include <cstdlib>
+#include "heapsort.hpp"
 
-#define NOT_USED NPY_UNUSED(unused)
-#define PYA_QS_STACK 100
-#define SMALL_QUICKSORT 15
-#define SMALL_MERGESORT 20
-#define SMALL_STRING 16
+namespace np::sort {
+
+constexpr size_t kMergeStack = 100;
+constexpr ptrdiff_t kMergeSmall = 20;
 
 /*
  *****************************************************************************
@@ -46,17 +42,16 @@
  *****************************************************************************
  */
 
-template <typename Tag, typename type>
-static void
-mergesort0_(type *pl, type *pr, type *pw)
+template <typename T>
+inline void Merge(T *pl, T *pr, T *pw)
 {
-    type vp, *pi, *pj, *pk, *pm;
+    T vp, *pi, *pj, *pk, *pm;
 
-    if (pr - pl > SMALL_MERGESORT) {
+    if (pr - pl > kMergeSmall) {
         /* merge sort */
         pm = pl + ((pr - pl) >> 1);
-        mergesort0_<Tag>(pl, pm, pw);
-        mergesort0_<Tag>(pm, pr, pw);
+        Merge(pl, pm, pw);
+        Merge(pm, pr, pw);
         for (pi = pw, pj = pl; pj < pm;) {
             *pi++ = *pj++;
         }
@@ -64,7 +59,7 @@ mergesort0_(type *pl, type *pr, type *pw)
         pj = pw;
         pk = pl;
         while (pj < pi && pm < pr) {
-            if (Tag::less(*pm, *pj)) {
+            if (LessThan(*pm, *pj)) {
                 *pk++ = *pm++;
             }
             else {
@@ -81,7 +76,7 @@ mergesort0_(type *pl, type *pr, type *pw)
             vp = *pi;
             pj = pi;
             pk = pi - 1;
-            while (pj > pl && Tag::less(vp, *pk)) {
+            while (pj > pl && LessThan(vp, *pk)) {
                 *pj-- = *pk--;
             }
             *pj = vp;
@@ -89,36 +84,31 @@ mergesort0_(type *pl, type *pr, type *pw)
     }
 }
 
-template <typename Tag, typename type>
-NPY_NO_EXPORT int
-mergesort_(type *start, npy_intp num)
+template <typename T>
+inline int Merge(T *start, SSize num)
 {
-    type *pl, *pr, *pw;
-
-    pl = start;
-    pr = pl + num;
-    pw = (type *)malloc((num / 2) * sizeof(type));
-    if (pw == NULL) {
+    T *pl = start;
+    T *pr = pl + num;
+    T *pw = (T *)malloc((num / 2) * sizeof(T));
+    if (pw == nullptr) {
         return -NPY_ENOMEM;
     }
-    mergesort0_<Tag>(pl, pr, pw);
-
+    Merge(pl, pr, pw);
     free(pw);
     return 0;
 }
 
-template <typename Tag, typename type>
-static void
-amergesort0_(npy_intp *pl, npy_intp *pr, type *v, npy_intp *pw)
+template <typename T>
+inline void MergeArg(SSize *pl, SSize *pr, T *v, SSize *pw)
 {
-    type vp;
-    npy_intp vi, *pi, *pj, *pk, *pm;
+    T vp;
+    SSize vi, *pi, *pj, *pk, *pm;
 
-    if (pr - pl > SMALL_MERGESORT) {
+    if (pr - pl > kMergeSmall) {
         /* merge sort */
         pm = pl + ((pr - pl) >> 1);
-        amergesort0_<Tag>(pl, pm, v, pw);
-        amergesort0_<Tag>(pm, pr, v, pw);
+        MergeArg(pl, pm, v, pw);
+        MergeArg(pm, pr, v, pw);
         for (pi = pw, pj = pl; pj < pm;) {
             *pi++ = *pj++;
         }
@@ -126,7 +116,7 @@ amergesort0_(npy_intp *pl, npy_intp *pr, type *v, npy_intp *pw)
         pj = pw;
         pk = pl;
         while (pj < pi && pm < pr) {
-            if (Tag::less(v[*pm], v[*pj])) {
+            if (LessThan(v[*pm], v[*pj])) {
                 *pk++ = *pm++;
             }
             else {
@@ -144,7 +134,7 @@ amergesort0_(npy_intp *pl, npy_intp *pr, type *v, npy_intp *pw)
             vp = v[vi];
             pj = pi;
             pk = pi - 1;
-            while (pj > pl && Tag::less(vp, v[*pk])) {
+            while (pj > pl && LessThan(vp, v[*pk])) {
                 *pj-- = *pk--;
             }
             *pj = vi;
@@ -152,124 +142,110 @@ amergesort0_(npy_intp *pl, npy_intp *pr, type *v, npy_intp *pw)
     }
 }
 
-template <typename Tag, typename type>
-NPY_NO_EXPORT int
-amergesort_(type *v, npy_intp *tosort, npy_intp num)
+template <typename T>
+inline int MergeArg(T *v, SSize *tosort, SSize num)
 {
-    npy_intp *pl, *pr, *pw;
-
-    pl = tosort;
-    pr = pl + num;
-    pw = (npy_intp *)malloc((num / 2) * sizeof(npy_intp));
-    if (pw == NULL) {
+    SSize *pl = tosort;
+    SSize *pr = pl + num;
+    SSize *pw = (SSize *)malloc((num / 2) * sizeof(SSize));
+    if (pw == nullptr) {
         return -NPY_ENOMEM;
     }
-    amergesort0_<Tag>(pl, pr, v, pw);
+    MergeArg(pl, pr, v, pw);
     free(pw);
-
     return 0;
 }
 
 /*
- 
+
  *****************************************************************************
  **                             STRING SORTS                                **
  *****************************************************************************
  */
 
-template <typename Tag, typename type>
-static void
-mergesort0_(type *pl, type *pr, type *pw, type *vp, size_t len)
+template <typename T>
+inline void Merge(T *pl, T *pr, T *pw, T *vp, SSize arr_len)
 {
-    type *pi, *pj, *pk, *pm;
-
-    if ((size_t)(pr - pl) > SMALL_MERGESORT * len) {
+    T *pi, *pj, *pk, *pm;
+    SSize len = arr_len / sizeof(T);
+    if (pr - pl > kMergeSmall * len) {
         /* merge sort */
         pm = pl + (((pr - pl) / len) >> 1) * len;
-        mergesort0_<Tag>(pl, pm, pw, vp, len);
-        mergesort0_<Tag>(pm, pr, pw, vp, len);
-        Tag::copy(pw, pl, pm - pl);
+        Merge(pl, pm, pw, vp, len);
+        Merge(pm, pr, pw, vp, len);
+        memcpy(pw, pl, pm - pl);
         pi = pw + (pm - pl);
         pj = pw;
         pk = pl;
         while (pj < pi && pm < pr) {
-            if (Tag::less(pm, pj, len)) {
-                Tag::copy(pk, pm, len);
+            if (LessThan(pm, pj, len)) {
+                memcpy(pk, pm, len);
                 pm += len;
                 pk += len;
             }
             else {
-                Tag::copy(pk, pj, len);
+                memcpy(pk, pj, len);
                 pj += len;
                 pk += len;
             }
         }
-        Tag::copy(pk, pj, pi - pj);
+        memcpy(pk, pj, pi - pj);
     }
     else {
         /* insertion sort */
         for (pi = pl + len; pi < pr; pi += len) {
-            Tag::copy(vp, pi, len);
+            memcpy(vp, pi, len);
             pj = pi;
             pk = pi - len;
-            while (pj > pl && Tag::less(vp, pk, len)) {
-                Tag::copy(pj, pk, len);
+            while (pj > pl && LessThan(vp, pk, len)) {
+                memcpy(pj, pk, len);
                 pj -= len;
                 pk -= len;
             }
-            Tag::copy(pj, vp, len);
+            memcpy(pj, vp, len);
         }
     }
 }
 
-template <typename Tag, typename type>
-static int
-string_mergesort_(type *start, npy_intp num, void *varr)
+template <typename T>
+inline int Merge(T *start, SSize num, PyArrayObject *arr)
 {
-    PyArrayObject *arr = (PyArrayObject *)varr;
-    size_t elsize = PyArray_ITEMSIZE(arr);
-    size_t len = elsize / sizeof(type);
-    type *pl, *pr, *pw, *vp;
-    int err = 0;
-
+    SSize arr_len = PyArray_ITEMSIZE(arr);
     /* Items that have zero size don't make sense to sort */
-    if (elsize == 0) {
+    if (arr_len == 0) {
         return 0;
     }
 
-    pl = start;
-    pr = pl + num * len;
-    pw = (type *)malloc((num / 2) * elsize);
-    if (pw == NULL) {
-        err = -NPY_ENOMEM;
-        goto fail_0;
-    }
-    vp = (type *)malloc(elsize);
-    if (vp == NULL) {
-        err = -NPY_ENOMEM;
-        goto fail_1;
-    }
-    mergesort0_<Tag>(pl, pr, pw, vp, len);
+    SSize len = arr_len / sizeof(T);
+    T *pl = start;
+    T *pr = pl + num * len;
+    T *pw = (T *)malloc((num / 2) * arr_len);
+    T *vp = (T *)malloc(arr_len);
 
+    if (pw == nullptr) {
+        return -NPY_ENOMEM;
+    }
+    if (vp == nullptr) {
+        free(pw);
+        return -NPY_ENOMEM;
+    }
+    Merge(pl, pr, pw, vp, arr_len);
     free(vp);
-fail_1:
     free(pw);
-fail_0:
-    return err;
+    return 0;
 }
 
-template <typename Tag, typename type>
-static void
-amergesort0_(npy_intp *pl, npy_intp *pr, type *v, npy_intp *pw, size_t len)
+template <typename T>
+inline void MergeArg(SSize *pl, SSize *pr, T *v, SSize *pw, size_t len)
 {
-    type *vp;
-    npy_intp vi, *pi, *pj, *pk, *pm;
+    T *vp;
+    SSize vi, *pi, *pj, *pk, *pm;
 
-    if (pr - pl > SMALL_MERGESORT) {
+    if (pr - pl > kMergeSmall) {
         /* merge sort */
         pm = pl + ((pr - pl) >> 1);
-        amergesort0_<Tag>(pl, pm, v, pw, len);
-        amergesort0_<Tag>(pm, pr, v, pw, len);
+        MergeArg(pl, pm, v, pw, len);
+        MergeArg(pm, pr, v, pw, len);
         for (pi = pw, pj = pl; pj < pm;) {
             *pi++ = *pj++;
         }
@@ -277,7 +253,7 @@ amergesort0_(npy_intp *pl, npy_intp *pr, type *v, npy_intp *pw, size_t len)
         pj = pw;
         pk = pl;
         while (pj < pi && pm < pr) {
-            if (Tag::less(v + (*pm) * len, v + (*pj) * len, len)) {
+            if (LessThan(v + (*pm) * len, v + (*pj) * len, len)) {
                 *pk++ = *pm++;
             }
             else {
@@ -295,7 +271,7 @@ amergesort0_(npy_intp *pl, npy_intp *pr, type *v, npy_intp *pw, size_t len)
             vp = v + vi * len;
             pj = pi;
             pk = pi - 1;
-            while (pj > pl && Tag::less(vp, v + (*pk) * len, len)) {
+            while (pj > pl && LessThan(vp, v + (*pk) * len, len)) {
                 *pj-- = *pk--;
             }
             *pj = vi;
@@ -303,32 +279,28 @@ amergesort0_(npy_intp *pl, npy_intp *pr, type *v, npy_intp *pw, size_t len)
     }
 }
 
-template <typename Tag, typename type>
-static int
-string_amergesort_(type *v, npy_intp *tosort, npy_intp num, void *varr)
+template <typename T>
+static int MergeArg(T *v, SSize *tosort, SSize num, PyArrayObject *arr)
 {
-    PyArrayObject *arr = (PyArrayObject *)varr;
-    size_t elsize = PyArray_ITEMSIZE(arr);
-    size_t len = elsize / sizeof(type);
-    npy_intp *pl, *pr, *pw;
+    SSize arr_len = PyArray_ITEMSIZE(arr);
 
     /* Items that have zero size don't make sense to sort */
-    if (elsize == 0) {
+    if (arr_len == 0) {
         return 0;
     }
 
-    pl = tosort;
-    pr = pl + num;
-    pw = (npy_intp *)malloc((num / 2) * sizeof(npy_intp));
+    SSize len = arr_len / sizeof(T);
+    SSize *pl = tosort;
+    SSize *pr = pl + num;
+    SSize *pw = (SSize *)malloc((num / 2) * sizeof(SSize));
     if (pw == NULL) {
         return -NPY_ENOMEM;
     }
-    amergesort0_<Tag>(pl, pr, v, pw, len);
+    MergeArg(pl, pr, v, pw, len);
     free(pw);
-
     return 0;
 }
-
+} // namespace np::sort
 /*
  *****************************************************************************
  **                             GENERIC SORT                                **
@@ -341,41 +313,41 @@ npy_mergesort0(char *pl, char *pr, char *pw, char *vp, npy_intp elsize,
 {
     char *pi, *pj, *pk, *pm;
 
-    if (pr - pl > SMALL_MERGESORT * elsize) {
+    if (pr - pl > np::sort::kMergeSmall * elsize) {
         /* merge sort */
         pm = pl + (((pr - pl) / elsize) >> 1) * elsize;
         npy_mergesort0(pl, pm, pw, vp, elsize, cmp, arr);
         npy_mergesort0(pm, pr, pw, vp, elsize, cmp, arr);
-        GENERIC_COPY(pw, pl, pm - pl);
+        memcpy(pw, pl, pm - pl);
         pi = pw + (pm - pl);
         pj = pw;
         pk = pl;
         while (pj < pi && pm < pr) {
             if (cmp(pm, pj, arr) < 0) {
-                GENERIC_COPY(pk, pm, elsize);
+                memcpy(pk, pm, elsize);
                 pm += elsize;
                 pk += elsize;
             }
             else {
-                GENERIC_COPY(pk, pj, elsize);
+                memcpy(pk, pj, elsize);
                 pj += elsize;
                 pk += elsize;
             }
         }
-        GENERIC_COPY(pk, pj, pi - pj);
+        memcpy(pk, pj, pi - pj);
     }
     else {
         /* insertion sort */
         for (pi = pl + elsize; pi < pr; pi += elsize) {
-            GENERIC_COPY(vp, pi, elsize);
+            memcpy(vp, pi, elsize);
             pj = pi;
             pk = pi - elsize;
             while (pj > pl && cmp(vp, pk, arr) < 0) {
-                GENERIC_COPY(pj, pk, elsize);
+                memcpy(pj, pk, elsize);
                 pj -= elsize;
                 pk -= elsize;
             }
-            GENERIC_COPY(pj, vp, elsize);
+            memcpy(pj, vp, elsize);
         }
     }
 }
@@ -418,7 +390,7 @@ npy_amergesort0(npy_intp *pl, npy_intp *pr, char *v, npy_intp *pw,
     char *vp;
     npy_intp vi, *pi, *pj, *pk, *pm;
 
-    if (pr - pl > SMALL_MERGESORT) {
+    if (pr - pl > np::sort::kMergeSmall) {
         /* merge sort */
         pm = pl + ((pr - pl) >> 1);
         npy_amergesort0(pl, pm, v, pw, elsize, cmp, arr);
@@ -462,16 +434,15 @@ npy_amergesort(void *v, npy_intp *tosort, npy_intp num, void *varr)
     PyArrayObject *arr = (PyArrayObject *)varr;
     npy_intp elsize = PyArray_ITEMSIZE(arr);
     PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
-    npy_intp *pl, *pr, *pw;
 
     /* Items that have zero size don't make sense to sort */
     if (elsize == 0) {
         return 0;
     }
 
-    pl = tosort;
-    pr = pl + num;
-    pw = (npy_intp *)malloc((num >> 1) * sizeof(npy_intp));
+    npy_intp *pl = tosort;
+    npy_intp *pr = pl + num;
+    npy_intp *pw = (npy_intp *)malloc((num >> 1) * sizeof(npy_intp));
     if (pw == NULL) {
         return -NPY_ENOMEM;
     }
@@ -487,248 +458,243 @@ npy_amergesort(void *v, npy_intp *tosort, npy_intp num, void *varr)
 NPY_NO_EXPORT int
 mergesort_bool(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::bool_tag>((npy_bool *)start, num);
+    return np::sort::Merge((np::Bool *)start, num);
 }
 NPY_NO_EXPORT int
 mergesort_byte(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::byte_tag>((npy_byte *)start, num);
+    return np::sort::Merge((np::Byte *)start, num);
 }
 NPY_NO_EXPORT int
 mergesort_ubyte(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::ubyte_tag>((npy_ubyte *)start, num);
+    return np::sort::Merge((np::UByte *)start, num);
 }
 NPY_NO_EXPORT int
 mergesort_short(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::short_tag>((npy_short *)start, num);
+    return np::sort::Merge((np::Short *)start, num);
 }
 NPY_NO_EXPORT int
 mergesort_ushort(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::ushort_tag>((npy_ushort *)start, num);
+    return np::sort::Merge((np::UShort *)start, num);
 }
 NPY_NO_EXPORT int
 mergesort_int(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::int_tag>((npy_int *)start, num);
+    return np::sort::Merge((np::Int *)start, num);
 }
 NPY_NO_EXPORT int
 mergesort_uint(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::uint_tag>((npy_uint *)start, num);
+    return np::sort::Merge((np::UInt *)start, num);
 }
 NPY_NO_EXPORT int
 mergesort_long(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::long_tag>((npy_long *)start, num);
+    return np::sort::Merge((np::Long *)start, num);
 }
 NPY_NO_EXPORT int
 mergesort_ulong(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::ulong_tag>((npy_ulong *)start, num);
+    return np::sort::Merge((np::ULong *)start, num);
 }
 NPY_NO_EXPORT int
 mergesort_longlong(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::longlong_tag>((npy_longlong *)start, num);
+    return np::sort::Merge((np::LongLong *)start, num);
 }
 NPY_NO_EXPORT int
 mergesort_ulonglong(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::ulonglong_tag>((npy_ulonglong *)start, num);
+    return np::sort::Merge((np::ULongLong *)start, num);
 }
 NPY_NO_EXPORT int
 mergesort_half(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::half_tag>((npy_half *)start, num);
+    return np::sort::Merge((np::Half *)start, num);
 }
 NPY_NO_EXPORT int
 mergesort_float(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::float_tag>((npy_float *)start, num);
+    return np::sort::Merge((np::Float *)start, num);
 }
 NPY_NO_EXPORT int
 mergesort_double(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::double_tag>((npy_double *)start, num);
+    return np::sort::Merge((np::Double *)start, num);
 }
 NPY_NO_EXPORT int
 mergesort_longdouble(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::longdouble_tag>((npy_longdouble *)start, num);
+    return np::sort::Merge((np::LongDouble *)start, num);
 }
 NPY_NO_EXPORT int
 mergesort_cfloat(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::cfloat_tag>((npy_cfloat *)start, num);
+    return np::sort::Merge((np::CFloat *)start, num);
 }
 NPY_NO_EXPORT int
 mergesort_cdouble(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::cdouble_tag>((npy_cdouble *)start, num);
+    return np::sort::Merge((np::CDouble *)start, num);
 }
 NPY_NO_EXPORT int
 mergesort_clongdouble(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::clongdouble_tag>((npy_clongdouble *)start, num);
+    return np::sort::Merge((np::CLongDouble *)start, num);
 }
 NPY_NO_EXPORT int
 mergesort_datetime(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::datetime_tag>((npy_datetime *)start, num);
+    return np::sort::Merge((np::DateTime *)start, num);
 }
 NPY_NO_EXPORT int
 mergesort_timedelta(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return mergesort_<npy::timedelta_tag>((npy_timedelta *)start, num);
+    return np::sort::Merge((np::TimeDelta *)start, num);
 }
 
 NPY_NO_EXPORT int
 amergesort_bool(void *start, npy_intp *tosort, npy_intp num,
                 void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::bool_tag>((npy_bool *)start, tosort, num);
+    return np::sort::MergeArg((np::Bool *)start, tosort, num);
 }
 NPY_NO_EXPORT int
 amergesort_byte(void *start, npy_intp *tosort, npy_intp num,
                 void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::byte_tag>((npy_byte *)start, tosort, num);
+    return np::sort::MergeArg((np::Byte *)start, tosort, num);
 }
 NPY_NO_EXPORT int
 amergesort_ubyte(void *start, npy_intp *tosort, npy_intp num,
                  void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::ubyte_tag>((npy_ubyte *)start, tosort, num);
+    return np::sort::MergeArg((np::UByte *)start, tosort, num);
 }
 NPY_NO_EXPORT int
 amergesort_short(void *start, npy_intp *tosort, npy_intp num,
                  void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::short_tag>((npy_short *)start, tosort, num);
+    return np::sort::MergeArg((np::Short *)start, tosort, num);
 }
 NPY_NO_EXPORT int
 amergesort_ushort(void *start, npy_intp *tosort, npy_intp num,
                   void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::ushort_tag>((npy_ushort *)start, tosort, num);
+    return np::sort::MergeArg((np::UShort *)start, tosort, num);
 }
 NPY_NO_EXPORT int
 amergesort_int(void *start, npy_intp *tosort, npy_intp num,
                void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::int_tag>((npy_int *)start, tosort, num);
+    return np::sort::MergeArg((np::Int *)start, tosort, num);
 }
 NPY_NO_EXPORT int
 amergesort_uint(void *start, npy_intp *tosort, npy_intp num,
                 void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::uint_tag>((npy_uint *)start, tosort, num);
+    return np::sort::MergeArg((np::UInt *)start, tosort, num);
 }
 NPY_NO_EXPORT int
 amergesort_long(void *start, npy_intp *tosort, npy_intp num,
                 void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::long_tag>((npy_long *)start, tosort, num);
+    return np::sort::MergeArg((np::Long *)start, tosort, num);
 }
 NPY_NO_EXPORT int
 amergesort_ulong(void *start, npy_intp *tosort, npy_intp num,
                  void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::ulong_tag>((npy_ulong *)start, tosort, num);
+    return np::sort::MergeArg((np::ULong *)start, tosort, num);
 }
 NPY_NO_EXPORT int
 amergesort_longlong(void *start, npy_intp *tosort, npy_intp num,
                     void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::longlong_tag>((npy_longlong *)start, tosort, num);
+    return np::sort::MergeArg((np::LongLong *)start, tosort, num);
 }
 NPY_NO_EXPORT int
 amergesort_ulonglong(void *start, npy_intp *tosort, npy_intp num,
                      void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::ulonglong_tag>((npy_ulonglong *)start, tosort,
+    return np::sort::MergeArg((np::ULongLong *)start, tosort,
                                            num);
 }
 NPY_NO_EXPORT int
 amergesort_half(void *start, npy_intp *tosort, npy_intp num,
                 void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::half_tag>((npy_half *)start, tosort, num);
+    return np::sort::MergeArg((np::Half *)start, tosort, num);
 }
 NPY_NO_EXPORT int
 amergesort_float(void *start, npy_intp *tosort, npy_intp num,
                  void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::float_tag>((npy_float *)start, tosort, num);
+    return np::sort::MergeArg((np::Float *)start, tosort, num);
 }
 NPY_NO_EXPORT int
 amergesort_double(void *start, npy_intp *tosort, npy_intp num,
                   void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::double_tag>((npy_double *)start, tosort, num);
+    return np::sort::MergeArg((np::Double *)start, tosort, num);
 }
 NPY_NO_EXPORT int
 amergesort_longdouble(void *start, npy_intp *tosort, npy_intp num,
                       void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::longdouble_tag>((npy_longdouble *)start, tosort,
-                                            num);
+    return np::sort::MergeArg((np::LongDouble *)start, tosort, num);
 }
 NPY_NO_EXPORT int
 amergesort_cfloat(void *start, npy_intp *tosort, npy_intp num,
                   void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::cfloat_tag>((npy_cfloat *)start, tosort, num);
+    return np::sort::MergeArg((np::CFloat *)start, tosort, num);
 }
 NPY_NO_EXPORT int
 amergesort_cdouble(void *start, npy_intp *tosort, npy_intp num,
                    void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::cdouble_tag>((npy_cdouble *)start, tosort, num);
+    return np::sort::MergeArg((np::CDouble *)start, tosort, num);
 }
 NPY_NO_EXPORT int
 amergesort_clongdouble(void *start, npy_intp *tosort, npy_intp num,
                        void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::clongdouble_tag>((npy_clongdouble *)start, tosort,
-                                             num);
+    return np::sort::MergeArg((np::CLongDouble *)start, tosort, num);
 }
 NPY_NO_EXPORT int
 amergesort_datetime(void *start, npy_intp *tosort, npy_intp num,
                     void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::datetime_tag>((npy_datetime *)start, tosort, num);
+    return np::sort::MergeArg((np::DateTime *)start, tosort, num);
 }
 NPY_NO_EXPORT int
 amergesort_timedelta(void *start, npy_intp *tosort, npy_intp num,
                      void *NPY_UNUSED(varr))
 {
-    return amergesort_<npy::timedelta_tag>((npy_timedelta *)start, tosort,
-                                           num);
+    return np::sort::MergeArg((np::TimeDelta *)start, tosort, num);
 }
 
 NPY_NO_EXPORT int
 mergesort_string(void *start, npy_intp num, void *varr)
 {
-    return string_mergesort_<npy::string_tag>((npy_char *)start, num, varr);
+    return np::sort::Merge((np::String*)start, num, (PyArrayObject *)varr);
 }
 NPY_NO_EXPORT int
 mergesort_unicode(void *start, npy_intp num, void *varr)
 {
-    return string_mergesort_<npy::unicode_tag>((npy_ucs4 *)start, num, varr);
+    return np::sort::Merge((np::Unicode*)start, num, (PyArrayObject *)varr);
 }
 NPY_NO_EXPORT int
 amergesort_string(void *v, npy_intp *tosort, npy_intp num, void *varr)
 {
-    return string_amergesort_<npy::string_tag>((npy_char *)v, tosort, num,
-                                               varr);
+    return np::sort::MergeArg((np::String*)v, tosort, num, (PyArrayObject *)varr);
 }
 NPY_NO_EXPORT int
 amergesort_unicode(void *v, npy_intp *tosort, npy_intp num, void *varr)
 {
-    return string_amergesort_<npy::unicode_tag>((npy_ucs4 *)v, tosort, num,
-                                                varr);
+    return np::sort::MergeArg((np::Unicode*)v, tosort, num, (PyArrayObject *)varr);
 }
