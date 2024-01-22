@@ -151,10 +151,10 @@ else:
         left_shift, less, less_equal, lexsort, linspace, little_endian, log,
         log10, log1p, log2, logaddexp, logaddexp2, logical_and, logical_not,
         logical_or, logical_xor, logspace, long, longdouble, longlong, matmul,
-        matrix_transpose, max, maximum, may_share_memory, mean, memmap, min,
-        min_scalar_type, minimum, mod, modf, moveaxis, multiply, nan, ndarray,
-        ndim, nditer, negative, nested_iters, newaxis, nextafter, nonzero,
-        not_equal, number, object_, ones, ones_like, outer, partition,
+        matvec, matrix_transpose, max, maximum, may_share_memory, mean, memmap,
+        min, min_scalar_type, minimum, mod, modf, moveaxis, multiply, nan,
+        ndarray, ndim, nditer, negative, nested_iters, newaxis, nextafter,
+        nonzero, not_equal, number, object_, ones, ones_like, outer, partition,
         permute_dims, pi, positive, pow, power, printoptions, prod,
         promote_types, ptp, put, putmask, rad2deg, radians, ravel, recarray,
         reciprocal, record, remainder, repeat, require, reshape, resize,
@@ -165,8 +165,8 @@ else:
         str_, subtract, sum, swapaxes, take, tan, tanh, tensordot,
         timedelta64, trace, transpose, true_divide, trunc, typecodes, ubyte,
         ufunc, uint, uint16, uint32, uint64, uint8, uintc, uintp, ulong,
-        ulonglong, unsignedinteger, unstack, ushort, var, vdot, vecdot, void,
-        vstack, where, zeros, zeros_like
+        ulonglong, unsignedinteger, unstack, ushort, var, vdot, vecdot,
+        vecmat, void, vstack, where, zeros, zeros_like
     )
 
     # NOTE: It's still under discussion whether these aliases
