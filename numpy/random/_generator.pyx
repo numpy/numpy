@@ -787,7 +787,7 @@ cdef class Generator:
         efficient sampler than the default. The general sampler produces a different sample
         than the optimized sampler even if each element of ``p`` is 1 / len(a).
 
-        ``p`` must sum to 1 when cast to ``float64``. To do this, you may wish
+        ``p`` must sum to 1 when cast to ``float64``. To ensure this, you may wish
         to normalize using ``p = p / np.sum(p, dtype=float)``.
 
         Examples
@@ -880,7 +880,7 @@ cdef class Generator:
             if np.logical_or.reduce(p < 0):
                 raise ValueError("Probabilities are not non-negative")
             if abs(p_sum - 1.) > atol:
-                raise ValueError("Probabilities do not sum to 1. See Notes"
+                raise ValueError("Probabilities do not sum to 1. See Notes "
                                  "section of docstring for more information.")
 
         # `shape == None` means `shape == ()`, but with scalar unpacking at the
