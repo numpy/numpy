@@ -1139,6 +1139,13 @@ src_umath = umath_gen_headers + [
 # here. Note that this migration is desirable; we then get the performance
 # benefits for all platforms rather than only for AVX512 on 64-bit Linux, and
 # may be able to avoid the accuracy regressions in SVML.
+#
+CPU_FEATURES_NAMES = CPU_BASELINE_NAMES + CPU_DISPATCH_NAMES
+svml_file_suffix = ['d_la', 's_la', 'd_ha', 's_la']
+if CPU_FEATURES_NAMES.contains('AVX512_SPR')
+  svml_file_suffix += ['h_la']
+endif
+
 svml_objects = []
 if use_svml
   foreach svml_func : [
@@ -1153,7 +1160,7 @@ if use_svml
     'pow', 'sin', 'sinh', 'tan',
     'tanh'
   ]
-    foreach svml_sfx : ['d_la', 's_la', 'd_ha', 's_la']
+    foreach svml_sfx : svml_file_suffix
       svml_objects += [
         'src/umath/svml/linux/avx512/svml_z0_'+svml_func+'_'+svml_sfx+'.s'
       ]
