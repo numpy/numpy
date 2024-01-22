@@ -5,6 +5,7 @@ import numpy._core.numeric as _nx
 from numpy._core.numeric import asarray, zeros, zeros_like, array, asanyarray
 from numpy._core.fromnumeric import reshape, transpose
 from numpy._core.multiarray import normalize_axis_index
+from numpy._core._multiarray_umath import _array_converter
 from numpy._core import overrides
 from numpy._core import vstack, atleast_3d
 from numpy._core.numeric import normalize_axis_tuple
@@ -358,7 +359,9 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
             [0, 0, 9]]])
     """
     # handle negative axes
-    arr = asanyarray(arr)
+    conv = _array_converter(arr)
+    arr = conv[0]
+
     nd = arr.ndim
     axis = normalize_axis_index(axis, nd)
 
@@ -403,17 +406,8 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     for ind in inds:
         buff[ind] = asanyarray(func1d(inarr_view[ind], *args, **kwargs))
 
-    if not isinstance(res, matrix):
-        # wrap the array, to preserve subclasses
-        buff = res.__array_wrap__(buff)
-
-        # finally, rotate the inserted axes back to where they belong
-        return transpose(buff, buff_permute)
-
-    else:
-        # matrices have to be transposed first, because they collapse dimensions!
-        out_arr = transpose(buff, buff_permute)
-        return res.__array_wrap__(out_arr)
+    res = transpose(buff, buff_permute)
+    return conv.wrap(res)
 
 
 def _apply_over_axes_dispatcher(func, a, axes):

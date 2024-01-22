@@ -20,6 +20,7 @@ from typing import NamedTuple
 
 import numpy as np
 from numpy._core import overrides
+from numpy._core._multiarray_umath import _array_converter
 
 
 array_function_dispatch = functools.partial(
@@ -81,8 +82,9 @@ def ediff1d(ary, to_end=None, to_begin=None):
     array([ 1,  2, -3,  5, 18])
 
     """
-    # force a 1d array
-    ary = np.asanyarray(ary).ravel()
+    conv = _array_converter(ary)
+    # Convert to (any) array and ravel:
+    ary = conv[0].ravel()
 
     # enforce that the dtype of `ary` is used for the output
     dtype_req = ary.dtype
@@ -115,14 +117,15 @@ def ediff1d(ary, to_end=None, to_begin=None):
 
     # do the calculation in place and copy to_begin and to_end
     l_diff = max(len(ary) - 1, 0)
-    result = np.empty(l_diff + l_begin + l_end, dtype=ary.dtype)
-    result = ary.__array_wrap__(result)
+    result = np.empty_like(ary, shape=l_diff + l_begin + l_end)
+
     if l_begin > 0:
         result[:l_begin] = to_begin
     if l_end > 0:
         result[l_begin + l_diff:] = to_end
     np.subtract(ary[1:], ary[:-1], result[l_begin:l_begin + l_diff])
-    return result
+
+    return conv.wrap(result)
 
 
 def _unpack_tuple(x):

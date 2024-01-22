@@ -7,6 +7,7 @@ import numpy as np
 from . import numeric as _nx
 from .numeric import result_type, nan, asanyarray, ndim
 from numpy._core.multiarray import add_docstring
+from numpy._core._multiarray_umath import _array_converter
 from numpy._core import overrides
 
 __all__ = ['logspace', 'linspace', 'geomspace']
@@ -130,23 +131,22 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         )
     div = (num - 1) if endpoint else num
 
-    # Convert float/complex array scalars to float (gh-3504),
-    # and make sure one can use variables that have
-    # an __array_interface__ (gh-6634).
-    start = asanyarray(start) * 1.0
-    stop = asanyarray(stop) * 1.0
+    conv = _array_converter(start, stop)
+    start, stop = conv.as_arrays()
+    dt = conv.result_type(ensure_inexact=True)
 
-    dt = result_type(start, stop, float(num))
     if dtype is None:
         dtype = dt
         integer_dtype = False
     else:
         integer_dtype = _nx.issubdtype(dtype, _nx.integer)
 
-    delta = stop - start
+    # Use `dtype=type(dt)` to enforce a floating point evaluation:
+    delta = np.subtract(stop, start, dtype=type(dt))
     y = _nx.arange(
         0, num, dtype=dt, device=device
     ).reshape((-1,) + (1,) * ndim(delta))
+
     # In-place multiplication y *= delta/div is faster, but prevents
     # the multiplicant from overriding what class is produced, and thus
     # prevents, e.g. use of Quantities, see gh-7142. Hence, we multiply
@@ -186,10 +186,11 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     if integer_dtype:
         _nx.floor(y, out=y)
 
+    y = conv.wrap(y.astype(dtype, copy=False))
     if retstep:
-        return y.astype(dtype, copy=False), step
+        return y, step
     else:
-        return y.astype(dtype, copy=False)
+        return y
 
 
 def _logspace_dispatcher(start, stop, num=None, endpoint=None, base=None,
