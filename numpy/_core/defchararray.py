@@ -1357,16 +1357,16 @@ def replace(a, old, new, count=None):
     ----------
     a : array-like of str or unicode
 
-    old, new : str or unicode
+    old, new : scalar or array-like str or unicode
 
-    count : int, optional
+    count : scalar or array-like int
         If the optional argument `count` is given, only the first
-        `count` occurrences are replaced.
+        `count` occurrences are replaced. If negative, replace all.
 
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input type
+        Output array of str or unicode, depending on input type.
 
     See Also
     --------
@@ -1383,19 +1383,25 @@ def replace(a, old, new, count=None):
     array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
     
     """
-    a_arr = numpy.asarray(a)
+    a_arr = numpy.asanyarray(a)
+    old = numpy.asanyarray(old)
+    new = numpy.asanyarray(new)
     max_int64 = numpy.iinfo(numpy.int64).max
-    count = count if count is not None else max_int64
-
     counts = numpy._core.umath.count(a_arr, old, 0, max_int64)
+    if count is not None:
+        count = numpy.asanyarray(count)
+        counts = numpy.where(count < 0, counts,
+                             numpy.minimum(counts, count))
+
     buffersizes = (
         numpy._core.umath.str_len(a_arr)
         + counts * (numpy._core.umath.str_len(new) -
                     numpy._core.umath.str_len(old))
     )
-    max_buffersize = numpy.max(buffersizes)
-    out = numpy.empty(a_arr.shape, dtype=f"{a_arr.dtype.char}{max_buffersize}")
-    numpy._core.umath._replace(a_arr, old, new, count, out=out)
+    # buffersizes is properly broadcast along all inputs.
+    out = numpy.empty_like(a_arr, shape=buffersizes.shape,
+                           dtype=f"{a_arr.dtype.char}{buffersizes.max()}")
+    numpy._core.umath._replace(a_arr, old, new, counts, out=out)
     return out
 
 
@@ -2262,7 +2268,7 @@ class chararray(ndarray):
 
         return self
 
-    def __array_wrap__(self, arr, context=None):
+    def __array_wrap__(self, arr, context=None, return_scalar=False):
         # When calling a ufunc (and some other functions), we return a
         # chararray if the ufunc output is a string-like array,
         # or an ndarray otherwise

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from ._array_object import Array
 from ._dtypes import (
+    _DType,
     _all_dtypes,
     _boolean_dtypes,
     _signed_integer_dtypes,
@@ -27,7 +28,7 @@ import numpy as np
 def astype(x: Array, dtype: Dtype, /, *, copy: bool = True) -> Array:
     if not copy and dtype == x.dtype:
         return x
-    return Array._new(x._array.astype(dtype=dtype, copy=copy))
+    return Array._new(x._array.astype(dtype=dtype._np_dtype, copy=copy))
 
 
 def broadcast_arrays(*arrays: Array) -> List[Array]:
@@ -107,6 +108,8 @@ def finfo(type: Union[Dtype, Array], /) -> finfo_object:
 
     See its docstring for more information.
     """
+    if isinstance(type, _DType):
+        type = type._np_dtype
     fi = np.finfo(type)
     # Note: The types of the float data here are float, whereas in NumPy they
     # are scalars of the corresponding float dtype.
@@ -126,6 +129,8 @@ def iinfo(type: Union[Dtype, Array], /) -> iinfo_object:
 
     See its docstring for more information.
     """
+    if isinstance(type, _DType):
+        type = type._np_dtype
     ii = np.iinfo(type)
     return iinfo_object(ii.bits, ii.max, ii.min, ii.dtype)
 

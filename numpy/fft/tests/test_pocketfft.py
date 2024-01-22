@@ -42,6 +42,106 @@ class TestFFT1D:
         assert_allclose(fft1(x) / 30.,
                         np.fft.fft(x, norm="forward"), atol=1e-6)
 
+    @pytest.mark.parametrize("axis", (0, 1))
+    @pytest.mark.parametrize("dtype", (complex, float))
+    @pytest.mark.parametrize("transpose", (True, False))
+    def test_fft_out_argument(self, dtype, transpose, axis):
+        def zeros_like(x):
+            if transpose:
+                return np.zeros_like(x.T).T
+            else:
+                return np.zeros_like(x)
+
+        # tests below only test the out parameter
+        if dtype is complex:
+            y = random((10, 20)) + 1j*random((10, 20))
+            fft, ifft = np.fft.fft, np.fft.ifft
+        else:
+            y = random((10, 20))
+            fft, ifft = np.fft.rfft, np.fft.irfft
+
+        expected = fft(y, axis=axis)
+        out = zeros_like(expected)
+        result = fft(y, out=out, axis=axis)
+        assert result is out
+        assert_array_equal(result, expected)
+
+        expected2 = ifft(expected, axis=axis)
+        out2 = out if dtype is complex else zeros_like(expected2)
+        result2 = ifft(out, out=out2, axis=axis)
+        assert result2 is out2
+        assert_array_equal(result2, expected2)
+
+    @pytest.mark.parametrize("axis", [0, 1])
+    def test_fft_inplace_out(self, axis):
+        # Test some weirder in-place combinations
+        y = random((20, 20)) + 1j*random((20, 20))
+        # Fully in-place.
+        y1 = y.copy()
+        expected1 = np.fft.fft(y1, axis=axis)
+        result1 = np.fft.fft(y1, axis=axis, out=y1)
+        assert result1 is y1
+        assert_array_equal(result1, expected1)
+        # In-place of part of the array; rest should be unchanged.
+        y2 = y.copy()
+        out2 = y2[:10] if axis == 0 else y2[:, :10]
+        expected2 = np.fft.fft(y2, n=10, axis=axis)
+        result2 = np.fft.fft(y2, n=10, axis=axis, out=out2)
+        assert result2 is out2
+        assert_array_equal(result2, expected2)
+        if axis == 0:
+            assert_array_equal(y2[10:], y[10:])
+        else:
+            assert_array_equal(y2[:, 10:], y[:, 10:])
+        # In-place of another part of the array.
+        y3 = y.copy()
+        y3_sel = y3[5:] if axis == 0 else y3[:, 5:]
+        out3 = y3[5:15] if axis == 0 else y3[:, 5:15]
+        expected3 = np.fft.fft(y3_sel, n=10, axis=axis)
+        result3 = np.fft.fft(y3_sel, n=10, axis=axis, out=out3)
+        assert result3 is out3
+        assert_array_equal(result3, expected3)
+        if axis == 0:
+            assert_array_equal(y3[:5], y[:5])
+            assert_array_equal(y3[15:], y[15:])
+        else:
+            assert_array_equal(y3[:, :5], y[:, :5])
+            assert_array_equal(y3[:, 15:], y[:, 15:])
+        # In-place with n > nin; rest should be unchanged.
+        y4 = y.copy()
+        y4_sel = y[:10] if axis == 0 else y4[:, :10]
+        out4 = y4[:15] if axis == 0 else y4[:, :15]
+        expected4 = np.fft.fft(y4_sel, n=15, axis=axis)
+        result4 = np.fft.fft(y4_sel, n=15, axis=axis, out=out4)
+        assert result4 is out4
+        assert_array_equal(result4, expected4)
+        if axis == 0:
+            assert_array_equal(y4[15:], y[15:])
+        else:
+            assert_array_equal(y4[:, 15:], y[:, 15:])
+        # Overwrite in a transpose.
+        y5 = y.copy()
+        out5 = y5.T
+        result5 = np.fft.fft(y5, axis=axis, out=out5)
+        assert result5 is out5
+        assert_array_equal(result5, expected1)
+        # Reverse strides.
+        y6 = y.copy()
+        out6 = y6[::-1] if axis == 0 else y6[:, ::-1]
+        result6 = np.fft.fft(y6, axis=axis, out=out6)
+        assert result6 is out6
+        assert_array_equal(result6, expected1)
+
+    def test_fft_bad_out(self):
+        x = np.arange(30.)
+        with pytest.raises(TypeError, match="must be of ArrayType"):
+            np.fft.fft(x, out="")
+        with pytest.raises(ValueError, match="has wrong shape"):
+            np.fft.fft(x, out=np.zeros_like(x).reshape(5, -1))
+        with pytest.raises(TypeError, match="Cannot cast"):
+            np.fft.fft(x, out=np.zeros_like(x, dtype=float))
+
+
     @pytest.mark.parametrize('norm', (None, 'backward', 'ortho', 'forward'))
     def test_ifft(self, norm):
         x = random(30) + 1j*random(30)
@@ -200,6 +300,34 @@ class TestFFT1D:
             tr_op = np.transpose(op(x, axes=a), a)
             assert_allclose(op_tr, tr_op, atol=1e-6)
 
+    @pytest.mark.parametrize("op", [np.fft.fftn, np.fft.ifftn,
+                                    np.fft.fft2, np.fft.ifft2])
+    def test_s_negative_1(self, op):
+        x = np.arange(100).reshape(10, 10)
+        # should use the whole input array along the first axis
+        assert op(x, s=(-1, 5), axes=(0, 1)).shape == (10, 5)
+
+    @pytest.mark.parametrize("op", [np.fft.fftn, np.fft.ifftn,
+                                    np.fft.rfftn, np.fft.irfftn])
+    def test_s_axes_none(self, op):
+        x = np.arange(100).reshape(10, 10)
+        with pytest.warns(match='`axes` should not be `None` if `s`'):
+            op(x, s=(-1, 5))
+
+    @pytest.mark.parametrize("op", [np.fft.fft2, np.fft.ifft2])
+    def test_s_axes_none_2D(self, op):
+        x = np.arange(100).reshape(10, 10)
+        with pytest.warns(match='`axes` should not be `None` if `s`'):
+            op(x, s=(-1, 5), axes=None)
+
+    @pytest.mark.parametrize("op", [np.fft.fftn, np.fft.ifftn,
+                                    np.fft.rfftn, np.fft.irfftn,
+                                    np.fft.fft2, np.fft.ifft2])
+    def test_s_contains_none(self, op):
+        x = random((30, 20, 10))
+        with pytest.warns(match='array containing `None` values to `s`'):
+            op(x, s=(10, None, 10), axes=(0, 1, 2))
+
     def test_all_1d_norm_preserving(self):
         # verify that round-trip transforms are norm-preserving
         x = random(30)
@@ -227,6 +355,64 @@ class TestFFT1D:
         x = random(30).astype(dtype)
         assert_allclose(np.fft.ifft(np.fft.fft(x)), x, atol=1e-6)
         assert_allclose(np.fft.irfft(np.fft.rfft(x)), x, atol=1e-6)
+
+    @pytest.mark.parametrize("axes", [(0, 1), (0, 2), None])
+    @pytest.mark.parametrize("dtype", (complex, float))
+    @pytest.mark.parametrize("transpose", (True, False))
+    def test_fftn_out_argument(self, dtype, transpose, axes):
+        def zeros_like(x):
+            if transpose:
+                return np.zeros_like(x.T).T
+            else:
+                return np.zeros_like(x)
+
+        # tests below only test the out parameter
+        if dtype is complex:
+            x = random((10, 5, 6)) + 1j*random((10, 5, 6))
+            fft, ifft = np.fft.fftn, np.fft.ifftn
+        else:
+            x = random((10, 5, 6))
+            fft, ifft = np.fft.rfftn, np.fft.irfftn
+
+        expected = fft(x, axes=axes)
+        out = zeros_like(expected)
+        result = fft(x, out=out, axes=axes)
+        assert result is out
+        assert_array_equal(result, expected)
+
+        expected2 = ifft(expected, axes=axes)
+        out2 = out if dtype is complex else zeros_like(expected2)
+        result2 = ifft(out, out=out2, axes=axes)
+        assert result2 is out2
+        assert_array_equal(result2, expected2)
+
+    @pytest.mark.parametrize("fft", [np.fft.fftn, np.fft.ifftn, np.fft.rfftn])
+    def test_fftn_out_and_s_interaction(self, fft):
+        # With s, shape varies, so generally one cannot pass in out.
+        if fft is np.fft.rfftn:
+            x = random((10, 5, 6))
+        else:
+            x = random((10, 5, 6)) + 1j*random((10, 5, 6))
+        with pytest.raises(ValueError, match="has wrong shape"):
+            fft(x, out=np.zeros_like(x), s=(3, 3, 3), axes=(0, 1, 2))
+        # Except on the first axis done (which is the last of axes).
+        s = (10, 5, 5)
+        expected = fft(x, s=s, axes=(0, 1, 2))
+        out = np.zeros_like(expected)
+        result = fft(x, s=s, axes=(0, 1, 2), out=out)
+        assert result is out
+        assert_array_equal(result, expected)
+
+    @pytest.mark.parametrize("s", [(9, 5, 5), (3, 3, 3)])
+    def test_irfftn_out_and_s_interaction(self, s):
+        # Since for irfftn, the output is real and thus cannot be used for
+        # intermediate steps, it should always work.
+        x = random((9, 5, 6, 2)) + 1j*random((9, 5, 6, 2))
+        expected = np.fft.irfftn(x, s=s, axes=(0, 1, 2))
+        out = np.zeros_like(expected)
+        result = np.fft.irfftn(x, s=s, axes=(0, 1, 2), out=out)
+        assert result is out
+        assert_array_equal(result, expected)
 
 
 @pytest.mark.parametrize(

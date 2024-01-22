@@ -1189,9 +1189,10 @@ class TestRegression:
     def test_sign_for_complex_nan(self):
         # Ticket 794.
         with np.errstate(invalid='ignore'):
-            C = np.array([-np.inf, -2+1j, 0, 2-1j, np.inf, np.nan])
+            C = np.array([-np.inf, -3+4j, 0, 4-3j, np.inf, np.nan])
             have = np.sign(C)
-            want = np.array([-1+0j, -1+0j, 0+0j, 1+0j, 1+0j, np.nan])
+            want = np.array([-1+0j, -0.6+0.8j, 0+0j, 0.8-0.6j, 1+0j,
+                             complex(np.nan, np.nan)])
             assert_equal(have, want)
 
     def test_for_equal_names(self):
@@ -2566,6 +2567,8 @@ class TestRegression:
         assert xp is np
         xp = arr.__array_namespace__(api_version="2022.12")
         assert xp is np
+        xp = arr.__array_namespace__(api_version=None)
+        assert xp is np
 
         with pytest.raises(
             ValueError,
@@ -2574,7 +2577,24 @@ class TestRegression:
         ):
             arr.__array_namespace__(api_version="2023.12")
 
+        with pytest.raises(
+            ValueError,
+            match="Only None and strings are allowed as the Array API version"
+        ):
+            arr.__array_namespace__(api_version=2023)
+
     def test_isin_refcnt_bug(self):
         # gh-25295
         for _ in range(1000):
             np.isclose(np.int64(2), np.int64(2), atol=1e-15, rtol=1e-300)
+
+    def test_replace_regression(self):
+        # gh-25513 segfault
+        carr = np.char.chararray((2,), itemsize=25)
+        test_strings = [b'  4.52173913043478315E+00',
+                        b'  4.95652173913043548E+00']
+        carr[:] = test_strings
+        out = carr.replace(b"E", b"D")
+        expected = np.char.chararray((2,), itemsize=25)
+        expected[:] = [s.replace(b"E", b"D") for s in test_strings]
+        assert_array_equal(out, expected)

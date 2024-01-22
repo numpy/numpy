@@ -155,6 +155,7 @@ enum NPY_TYPECHAR {
  * depend on the data type.
  */
 typedef enum {
+        _NPY_SORT_UNDEFINED=-1,
         NPY_QUICKSORT=0,
         NPY_HEAPSORT=1,
         NPY_MERGESORT=2,
@@ -299,6 +300,11 @@ typedef enum {
     /* Raise an exception for non-business days. */
     NPY_BUSDAY_RAISE
 } NPY_BUSDAY_ROLL;
+
+/* Device enum for Array API compatibility */
+typedef enum {
+        NPY_DEVICE_CPU = 0,
+} NPY_DEVICE;
 
 /************************************************************
  * NumPy Auxiliary Data for inner loops, sort functions, etc.

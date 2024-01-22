@@ -21,9 +21,11 @@ indentation.
    routines.array-manipulation
    routines.bitwise
    routines.char
+   routines.strings
    routines.ctypeslib
    routines.datetime
    routines.dtype
+   routines.dtypes
    routines.emath
    routines.err
    routines.exceptions

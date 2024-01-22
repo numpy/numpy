@@ -819,7 +819,7 @@ def cholesky(a, /, *, upper=False):
            [0.-0.j, 1.-0.j]])
 
     """
-    gufunc = _umath_linalg.cholesky_lo
+    gufunc = _umath_linalg.cholesky_up if upper else _umath_linalg.cholesky_lo
     a, wrap = _makearray(a)
     _assert_stacked_2d(a)
     _assert_stacked_square(a)
@@ -828,8 +828,6 @@ def cholesky(a, /, *, upper=False):
     with errstate(call=_raise_linalgerror_nonposdef, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
         r = gufunc(a, signature=signature)
-    if upper:
-        r = matrix_transpose(r).conj()
     return wrap(r.astype(result_t, copy=False))
 
 
@@ -1967,12 +1965,12 @@ def cond(x, p=None):
     return r
 
 
-def _matrix_rank_dispatcher(A, tol=None, hermitian=None):
+def _matrix_rank_dispatcher(A, tol=None, hermitian=None, *, rtol=None):
     return (A,)
 
 
 @array_function_dispatch(_matrix_rank_dispatcher)
-def matrix_rank(A, tol=None, hermitian=False):
+def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     """
     Return matrix rank of array using SVD method
 
@@ -2000,6 +1998,11 @@ def matrix_rank(A, tol=None, hermitian=False):
         Defaults to False.
 
         .. versionadded:: 1.14
+    rtol : (...) array_like, float, optional
+        Parameter for the relative tolerance component. Only ``tol`` or
+        ``rtol`` can be set at a time. Defaults to ``max(M, N) * eps``.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -2069,12 +2072,12 @@ def matrix_rank(A, tol=None, hermitian=False):
     if A.ndim < 2:
         return int(not all(A == 0))
     S = svd(A, compute_uv=False, hermitian=hermitian)
+    if rtol is not None and tol is not None:
+        raise ValueError("`tol` and `rtol` can't be both set.")
+    if rtol is None:
+        rtol = max(A.shape[-2:]) * finfo(S.dtype).eps
     if tol is None:
-        tol = (
-            S.max(axis=-1, keepdims=True) *
-            max(A.shape[-2:]) *
-            finfo(S.dtype).eps
-        )
+        tol = S.max(axis=-1, keepdims=True) * rtol
     else:
         tol = asarray(tol)[..., newaxis]
     return count_nonzero(S > tol, axis=-1)
@@ -3214,8 +3217,7 @@ def matmul(x1, x2, /):
 
 # tensordot
 
-def _tensordot_dispatcher(
-        x1, x2, /, *, offset=None, dtype=None):
+def _tensordot_dispatcher(x1, x2, /, *, axes=None):
     return (x1, x2)
 
 
@@ -3309,6 +3311,7 @@ def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
 
     """
     x = asanyarray(x)
+    shape = list(x.shape)
     if axis is None:
         # Note: np.linalg.norm() doesn't handle 0-D arrays
         x = x.ravel()
@@ -3334,9 +3337,8 @@ def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
     if keepdims:
         # We can't reuse np.linalg.norm(keepdims) because of the reshape hacks
         # above to avoid matrix norm logic.
-        shape = list(x.shape)
         _axis = normalize_axis_tuple(
-            range(x.ndim) if axis is None else axis, x.ndim
+            range(len(shape)) if axis is None else axis, len(shape)
         )
         for i in _axis:
             shape[i] = 1

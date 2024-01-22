@@ -55,12 +55,16 @@ __all__ = [
     '_get_promotion_state', '_set_promotion_state']
 
 
-def _zeros_like_dispatcher(a, dtype=None, order=None, subok=None, shape=None):
+def _zeros_like_dispatcher(
+    a, dtype=None, order=None, subok=None, shape=None, *, device=None
+):
     return (a,)
 
 
 @array_function_dispatch(_zeros_like_dispatcher)
-def zeros_like(a, dtype=None, order='K', subok=True, shape=None):
+def zeros_like(
+    a, dtype=None, order='K', subok=True, shape=None, *, device=None
+):
     """
     Return an array of zeros with the same shape and type as a given array.
 
@@ -90,6 +94,11 @@ def zeros_like(a, dtype=None, order='K', subok=True, shape=None):
         order='C' is implied.
 
         .. versionadded:: 1.17.0
+    device : str, optional
+        The device on which to place the created array. Default: None.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -121,7 +130,9 @@ def zeros_like(a, dtype=None, order='K', subok=True, shape=None):
     array([0.,  0.,  0.])
 
     """
-    res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
+    res = empty_like(
+        a, dtype=dtype, order=order, subok=subok, shape=shape, device=device
+    )
     # needed instead of a 0 to get same result as zeros for string dtypes
     z = zeros(1, dtype=res.dtype)
     multiarray.copyto(res, z, casting='unsafe')
@@ -130,7 +141,7 @@ def zeros_like(a, dtype=None, order='K', subok=True, shape=None):
 
 @set_array_function_like_doc
 @set_module('numpy')
-def ones(shape, dtype=None, order='C', *, like=None):
+def ones(shape, dtype=None, order='C', *, device=None, like=None):
     """
     Return a new array of given shape and type, filled with ones.
 
@@ -145,6 +156,11 @@ def ones(shape, dtype=None, order='C', *, like=None):
         Whether to store multi-dimensional data in row-major
         (C-style) or column-major (Fortran-style) order in
         memory.
+    device : str, optional
+        The device on which to place the created array. Default: None.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
+
+        .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -160,7 +176,6 @@ def ones(shape, dtype=None, order='C', *, like=None):
     empty : Return a new uninitialized array.
     zeros : Return a new array setting values to zero.
     full : Return a new array of given shape filled with value.
-
 
     Examples
     --------
@@ -181,9 +196,11 @@ def ones(shape, dtype=None, order='C', *, like=None):
 
     """
     if like is not None:
-        return _ones_with_like(like, shape, dtype=dtype, order=order)
+        return _ones_with_like(
+            like, shape, dtype=dtype, order=order, device=device
+        )
 
-    a = empty(shape, dtype, order)
+    a = empty(shape, dtype, order, device=device)
     multiarray.copyto(a, 1, casting='unsafe')
     return a
 
@@ -191,12 +208,16 @@ def ones(shape, dtype=None, order='C', *, like=None):
 _ones_with_like = array_function_dispatch()(ones)
 
 
-def _ones_like_dispatcher(a, dtype=None, order=None, subok=None, shape=None):
+def _ones_like_dispatcher(
+    a, dtype=None, order=None, subok=None, shape=None, *, device=None
+):
     return (a,)
 
 
 @array_function_dispatch(_ones_like_dispatcher)
-def ones_like(a, dtype=None, order='K', subok=True, shape=None):
+def ones_like(
+    a, dtype=None, order='K', subok=True, shape=None, *, device=None
+):
     """
     Return an array of ones with the same shape and type as a given array.
 
@@ -226,6 +247,11 @@ def ones_like(a, dtype=None, order='K', subok=True, shape=None):
         order='C' is implied.
 
         .. versionadded:: 1.17.0
+    device : str, optional
+        The device on which to place the created array. Default: None.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -257,18 +283,22 @@ def ones_like(a, dtype=None, order='K', subok=True, shape=None):
     array([1.,  1.,  1.])
 
     """
-    res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
+    res = empty_like(
+        a, dtype=dtype, order=order, subok=subok, shape=shape, device=device
+    )
     multiarray.copyto(res, 1, casting='unsafe')
     return res
 
 
-def _full_dispatcher(shape, fill_value, dtype=None, order=None, *, like=None):
+def _full_dispatcher(
+    shape, fill_value, dtype=None, order=None, *, device=None, like=None
+):
     return(like,)
 
 
 @set_array_function_like_doc
 @set_module('numpy')
-def full(shape, fill_value, dtype=None, order='C', *, like=None):
+def full(shape, fill_value, dtype=None, order='C', *, device=None, like=None):
     """
     Return a new array of given shape and type, filled with `fill_value`.
 
@@ -284,6 +314,11 @@ def full(shape, fill_value, dtype=None, order='C', *, like=None):
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- or Fortran-contiguous
         (row- or column-wise) order in memory.
+    device : str, optional
+        The device on which to place the created array. Default: None.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
+
+        .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -316,12 +351,13 @@ def full(shape, fill_value, dtype=None, order='C', *, like=None):
     """
     if like is not None:
         return _full_with_like(
-                like, shape, fill_value, dtype=dtype, order=order)
+            like, shape, fill_value, dtype=dtype, order=order, device=device
+        )
 
     if dtype is None:
         fill_value = asarray(fill_value)
         dtype = fill_value.dtype
-    a = empty(shape, dtype, order)
+    a = empty(shape, dtype, order, device=device)
     multiarray.copyto(a, fill_value, casting='unsafe')
     return a
 
@@ -330,13 +366,17 @@ _full_with_like = array_function_dispatch()(full)
 
 
 def _full_like_dispatcher(
-    a, fill_value, dtype=None, order=None, subok=None, shape=None
+    a, fill_value, dtype=None, order=None, subok=None, shape=None,
+    *, device=None
 ):
     return (a,)
 
 
 @array_function_dispatch(_full_like_dispatcher)
-def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
+def full_like(
+    a, fill_value, dtype=None, order='K', subok=True, shape=None,
+    *, device=None
+):
     """
     Return a full array with the same shape and type as a given array.
 
@@ -364,6 +404,11 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
         order='C' is implied.
 
         .. versionadded:: 1.17.0
+    device : str, optional
+        The device on which to place the created array. Default: None.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -400,7 +445,9 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
            [[  0,   0, 255],
             [  0,   0, 255]]])
     """
-    res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
+    res = empty_like(
+        a, dtype=dtype, order=order, subok=subok, shape=shape, device=device
+    )
     multiarray.copyto(res, fill_value, casting='unsafe')
     return res
 
