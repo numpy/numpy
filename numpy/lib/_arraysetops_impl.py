@@ -1176,6 +1176,10 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
     conv = _array_converter(element, test_elements)
     element, test_elements = conv.as_arrays(subok=False, pyscalars="convert")
 
+    dt = conv.result_type()
+    test_elements = test_elements.astype(dt, copy=False)
+    element = element.astype(dt, copy=False)
+
     result = _in1d(element, test_elements, assume_unique=assume_unique,
                    invert=invert, kind=kind).reshape(element.shape)
     if conv.scalar_input[0]:
