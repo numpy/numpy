@@ -917,9 +917,6 @@ cdef class RandomState:
         Sampling random rows from a 2-D array is not possible with this function,
         but is possible with `Generator.choice` through its ``axis`` keyword.
 
-        ``p`` must sum to 1 when cast to ``float64``. To do this, you may wish
-        to normalize using ``p = p / np.sum(p, dtype=float)``.
-
         Examples
         --------
         Generate a uniform random sample from np.arange(5) of size 3:
@@ -991,14 +988,11 @@ cdef class RandomState:
                 raise ValueError("'a' and 'p' must have same size")
             p_sum = kahan_sum(pix, d)
             if np.isnan(p_sum):
-                raise ValueError("Probabilities contain NaN")
+                raise ValueError("probabilities contain NaN")
             if np.logical_or.reduce(p < 0):
-                raise ValueError("Probabilities are not non-negative")
+                raise ValueError("probabilities are not non-negative")
             if abs(p_sum - 1.) > atol:
-                raise ValueError("Probabilities do not sum to 1. This is typically "
-                                 "due to lack of normalization but may also be "
-                                 "due to roundoff error. See the docstring for "
-                                 "further details, in particular, `Notes`.")
+                raise ValueError("probabilities do not sum to 1")
 
         # `shape == None` means `shape == ()`, but with scalar unpacking at the
         # end

@@ -880,10 +880,8 @@ cdef class Generator:
             if np.logical_or.reduce(p < 0):
                 raise ValueError("Probabilities are not non-negative")
             if abs(p_sum - 1.) > atol:
-                raise ValueError("Probabilities do not sum to 1. This is typically "
-                                 "due to lack of normalization but may also be "
-                                 "due to roundoff error. See the docstring for "
-                                 "further details, in particular, `Notes`.")
+                raise ValueError("Probabilities do not sum to 1. See Notes"
+                                 "section of docstring for more information.")
 
         # `shape == None` means `shape == ()`, but with scalar unpacking at the
         # end
