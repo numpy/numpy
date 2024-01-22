@@ -787,6 +787,9 @@ cdef class Generator:
         efficient sampler than the default. The general sampler produces a different sample
         than the optimized sampler even if each element of ``p`` is 1 / len(a).
 
+        ``p`` must sum to 1 when cast to ``float64``. To ensure this, you may wish
+        to normalize using ``p = p / np.sum(p, dtype=float)``.
+
         Examples
         --------
         Generate a uniform random sample from np.arange(5) of size 3:
@@ -873,11 +876,12 @@ cdef class Generator:
                 raise ValueError("a and p must have same size")
             p_sum = kahan_sum(pix, d)
             if np.isnan(p_sum):
-                raise ValueError("probabilities contain NaN")
+                raise ValueError("Probabilities contain NaN")
             if np.logical_or.reduce(p < 0):
-                raise ValueError("probabilities are not non-negative")
+                raise ValueError("Probabilities are not non-negative")
             if abs(p_sum - 1.) > atol:
-                raise ValueError("probabilities do not sum to 1")
+                raise ValueError("Probabilities do not sum to 1. See Notes "
+                                 "section of docstring for more information.")
 
         # `shape == None` means `shape == ()`, but with scalar unpacking at the
         # end
