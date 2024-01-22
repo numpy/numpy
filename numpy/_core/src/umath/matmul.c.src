@@ -81,9 +81,9 @@ static const npy_cfloat oneF = 1.0f, zeroF = 0.0f;
  */
 NPY_NO_EXPORT void
 @name@_gemv(void *ip1, npy_intp is1_m, npy_intp is1_n,
-            void *ip2, npy_intp is2_n, npy_intp NPY_UNUSED(is2_p),
-            void *op, npy_intp op_m, npy_intp NPY_UNUSED(op_p),
-            npy_intp m, npy_intp n, npy_intp NPY_UNUSED(p))
+            void *ip2, npy_intp is2_n,
+            void *op, npy_intp op_m,
+            npy_intp m, npy_intp n)
 {
     /*
      * Vector matrix multiplication -- Level 2 BLAS
@@ -465,13 +465,12 @@ NPY_NO_EXPORT void
                                            op, os_m, os_p, dm, dn, dp);
             } else if (vector_matrix) {
                 /* vector @ matrix, switch ip1, ip2, p and m */
-                @TYPE@_gemv(ip2, is2_p, is2_n, ip1, is1_n, is1_m,
-                            op, os_p, os_m, dp, dn, dm);
+                @TYPE@_gemv(ip2, is2_p, is2_n, ip1, is1_n,
+                            op, os_p, dp, dn);
             } else if  (matrix_vector) {
                 /* matrix @ vector */
-                @TYPE@_gemv(ip1, is1_m, is1_n, ip2, is2_n, is2_p,
-
-                            op, os_m, os_p, dm, dn, dp);
+                @TYPE@_gemv(ip1, is1_m, is1_n, ip2, is2_n,
+                            op, os_m, dm, dn);
             } else {
                 /* column @ row, 2d output, no blas needed or non-blas-able input */
                 @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n,
@@ -652,6 +651,177 @@ NPY_NO_EXPORT void
             return;
         }
 #endif
+    }
+}
+/**end repeat**/
+
+#if defined(HAVE_CBLAS)
+/*
+ * Blas complex vector-matrix product via gemm (gemv cannot conjugate the vector).
+ */
+/**begin repeat
+ *
+ * #name = CFLOAT, CDOUBLE#
+ * #typ = npy_cfloat, npy_cdouble#
+ * #prefix = c, z#
+ * #step1 = &oneF, &oneD#
+ * #step0 = &zeroF, &zeroD#
+ */
+NPY_NO_EXPORT void
+@name@_vecmat_via_gemm(void *ip1, npy_intp is1_n,
+                       void *ip2, npy_intp is2_n, npy_intp is2_m,
+                       void *op, npy_intp os_m,
+                       npy_intp n, npy_intp m)
+{
+    enum CBLAS_ORDER order = CblasRowMajor;
+    enum CBLAS_TRANSPOSE trans1, trans2;
+    CBLAS_INT N, M, lda, ldb, ldc;
+    assert(n <= BLAS_MAXSIZE && m <= BLAS_MAXSIZE);
+    N = (CBLAS_INT)n;
+    M = (CBLAS_INT)m;
+
+    assert(os_m == sizeof(@typ@));
+    ldc = (CBLAS_INT)m;
+
+    assert(is_blasable2d(is1_n, sizeof(@typ@), n, 1, sizeof(@typ@)));
+    trans1 = CblasConjTrans;
+    lda = (CBLAS_INT)(is1_n / sizeof(@typ@));
+
+    if (is_blasable2d(is2_n, is2_m, n, m, sizeof(@typ@))) {
+        trans2 = CblasNoTrans;
+        ldb = (CBLAS_INT)(is2_n / sizeof(@typ@));
+    }
+    else {
+        assert(is_blasable2d(is2_m, is2_n, m, n, sizeof(@typ@)));
+        trans2 = CblasTrans;
+        ldb = (CBLAS_INT)(is2_m / sizeof(@typ@));
+    }
+    CBLAS_FUNC(cblas_@prefix@gemm)(
+        order, trans1, trans2, 1, M, N, @step1@, ip1, lda,
+        ip2, ldb, @step0@, op, ldc);
+}
+/**end repeat**/
+#endif
+
+/*
+ * matvec loops, using blas gemv if possible, and TYPE_dot implementations otherwise.
+ * signature is (m,n),(n)->(m)
+ */
+/**begin repeat
+ *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE, HALF,
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE,
+ *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG,
+ *          BOOL, OBJECT#
+ *  #typ = npy_float,npy_double,npy_longdouble, npy_half,
+ *         npy_cfloat, npy_cdouble, npy_clongdouble,
+ *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
+ *         npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *         npy_bool, npy_object#
+ * #USEBLAS = 1, 1, 0, 0, 1, 1, 0*13#
+ * #CHECK_PYERR = 0*18, 1#
+ */
+NPY_NO_EXPORT void
+@TYPE@_matvec(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    npy_intp n_outer = dimensions[0];
+    npy_intp s0=steps[0], s1=steps[1], s2=steps[2];
+    npy_intp dm = dimensions[1], dn = dimensions[2];
+    npy_intp is1_m=steps[3], is1_n=steps[4], is2_n=steps[5], os_m=steps[6];
+#if @USEBLAS@ && defined(HAVE_CBLAS)
+    npy_bool too_big_for_blas = (dm > BLAS_MAXSIZE || dn > BLAS_MAXSIZE);
+    npy_bool i1_c_blasable = is_blasable2d(is1_m, is1_n, dm, dn, sizeof(@typ@));
+    npy_bool i1_f_blasable = is_blasable2d(is1_n, is1_m, dn, dm, sizeof(@typ@));
+    npy_bool i2_blasable = is_blasable2d(is2_n, sizeof(@typ@), dn, 1, sizeof(@typ@));
+    npy_bool blasable = ((i1_c_blasable || i1_f_blasable) && i2_blasable
+                         && !too_big_for_blas && dn > 1 && dm > 1);
+#endif
+    for (npy_intp i = 0; i < n_outer; i++,
+             args[0] += s0, args[1] += s1, args[2] += s2) {
+        char *ip1=args[0], *ip2=args[1], *op=args[2];
+#if @USEBLAS@ && defined(HAVE_CBLAS)
+        if (blasable) {
+            @TYPE@_gemv(ip1, is1_m, is1_n, ip2, is2_n, op, os_m, dm, dn);
+            continue;
+        }
+#endif
+        /*
+         * Dot the different matrix rows with the vector to get output elements.
+         * (no conjugation for complex, unlike vecdot and vecmat)
+         */
+        for (npy_intp j = 0; j < dm; j++, ip1 += is1_m, op += os_m) {
+            @TYPE@_dot(ip1, is1_n, ip2, is2_n, op, dn, NULL);
+#if @CHECK_PYERR@
+            if (PyErr_Occurred()) {
+                return;
+            }
+#endif
+        }
+    }
+}
+/**end repeat**/
+
+/*
+ * vecmat loops, using blas gemv for float and gemm for complex if possible,
+ * and TYPE_dot[c] implementations otherwise.
+ * Note that we cannot use gemv for complex, since we need to conjugate the vector.
+ * signature is (n),(n,m)->(m)
+ */
+/**begin repeat
+ *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE, HALF,
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE,
+ *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG,
+ *          BOOL, OBJECT#
+ *  #typ = npy_float,npy_double,npy_longdouble, npy_half,
+ *         npy_cfloat, npy_cdouble, npy_clongdouble,
+ *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
+ *         npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *         npy_bool, npy_object#
+ * #USEBLAS = 1, 1, 0, 0, 1, 1, 0*13#
+ * #COMPLEX = 0*4, 1*3, 0*11, 1#
+ * #DOT = dot*4, dotc*3, dot*11, dotc#
+ * #CHECK_PYERR = 0*18, 1#
+ */
+NPY_NO_EXPORT void
+@TYPE@_vecmat(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    npy_intp n_outer = dimensions[0];
+    npy_intp s0=steps[0], s1=steps[1], s2=steps[2];
+    npy_intp dn = dimensions[1], dm = dimensions[2];
+    npy_intp is1_n=steps[3], is2_n=steps[4], is2_m=steps[5], os_m=steps[6];
+#if @USEBLAS@ && defined(HAVE_CBLAS)
+    npy_bool too_big_for_blas = (dm > BLAS_MAXSIZE || dn > BLAS_MAXSIZE);
+    npy_bool i1_blasable = is_blasable2d(is1_n, sizeof(@typ@), dn, 1, sizeof(@typ@));
+    npy_bool i2_c_blasable = is_blasable2d(is2_n, is2_m, dn, dm, sizeof(@typ@));
+    npy_bool i2_f_blasable = is_blasable2d(is2_m, is2_n, dm, dn, sizeof(@typ@));
+    npy_bool blasable = (i1_blasable && (i2_c_blasable || i2_f_blasable)
+                         && !too_big_for_blas && dn > 1 && dm > 1);
+#endif
+    for (npy_intp i = 0; i < n_outer; i++,
+             args[0] += s0, args[1] += s1, args[2] += s2) {
+        char *ip1=args[0], *ip2=args[1], *op=args[2];
+#if @USEBLAS@ && defined(HAVE_CBLAS)
+        if (blasable) {
+#if @COMPLEX@
+            /* For complex, use gemm so we can conjugate the vector */
+            @TYPE@_vecmat_via_gemm(ip1, is1_n, ip2, is2_n, is2_m, op, os_m, dn, dm);
+#else
+            /* For float, use gemv (hence flipped order) */
+            @TYPE@_gemv(ip2, is2_m, is2_n, ip1, is1_n, op, os_m, dm, dn);
+#endif
+            continue;
+        }
+#endif
+        /* Dot the vector with different matrix columns to get output elements. */
+        for (npy_intp j = 0; j < dm; j++, ip2 += is2_m, op += os_m) {
+            @TYPE@_@DOT@(ip1, is1_n, ip2, is2_n, op, dn, NULL);
+#if @CHECK_PYERR@
+            if (PyErr_Occurred()) {
+                return;
+            }
+#endif
+        }
     }
 }
 /**end repeat**/
