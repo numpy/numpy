@@ -1109,3 +1109,30 @@ def test_pyscalar_subclasses(subtype, __op__, __rop__, op, cmp):
     res = op(np.float32(2), myt(1))
     expected = op(np.longdouble(2), subtype(1))
     assert res == expected
+
+
+def test_truediv_int():
+    # This should work, as the result is float:
+    assert np.uint8(3) / 123454 == np.float64(3) / 123454
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize("op", reasonable_operators_for_scalars)
+@pytest.mark.parametrize("sctype", types)
+@pytest.mark.parametrize("other_type", [float, int, complex])
+def test_ufunc_matches_pyscalar(op, sctype, other_type):
+    # Check that the ufunc path matches by coercing to an array explicitly
+    val = sctype(2)
+    other = other_type(2)
+
+    # Note that we only check dtype equivalency, as ufuncs may pick the lower
+    # dtype if they are equivalent.
+    res = op(val, other)
+    expected = op(np.asarray(val), other)[()]
+    assert res == expected
+    assert res.dtype == expected.dtype
+
+    res = op(other, val)
+    expected = op(other, np.asarray(val))[()]
+    assert res == expected
+    assert res.dtype == expected.dtype

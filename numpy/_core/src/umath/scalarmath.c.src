@@ -1292,6 +1292,14 @@ static PyObject *
 #if defined(IS_longdouble) || defined(IS_clongdouble)
             Py_RETURN_NOTIMPLEMENTED;
 #endif
+#ifdef IS_true_divide
+        case CONVERT_PYSCALAR:
+            /*
+             * Only for true-divide we promote (by using ufuncs), this is
+             * because `uint8(3) / 3` should work and return a float64.
+             * TODO: This is slow and also makes `float(64) / 10**200` slow.
+             */
+#endif
         case PROMOTION_REQUIRED:
             /*
              * Python scalar that is larger than the current one, or two
@@ -1302,11 +1310,13 @@ static PyObject *
              *       correctly.  (e.g. `uint8 * int8` cannot warn).
              */
             return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
+#ifndef IS_true_divide
         case CONVERT_PYSCALAR:
             if (@NAME@_setitem(other, (char *)&other_val, NULL) < 0) {
                 return NULL;
             }
             break;
+#endif
         default:
             assert(0);  /* error was checked already, impossible to reach */
             return NULL;
