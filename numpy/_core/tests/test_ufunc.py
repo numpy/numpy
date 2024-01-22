@@ -2472,20 +2472,20 @@ class TestUfunc:
 
     @pytest.mark.parametrize("ufunc",
             [np.logical_and, np.logical_or, np.logical_xor])
-    def test_logical_ufuncs_reject_string(self, ufunc):
-        """
-        Logical ufuncs are normally well defined by working with the boolean
-        equivalent, i.e. casting all inputs to bools should work.
+    @pytest.mark.parametrize("dtype", ["S", "U"])
+    @pytest.mark.parametrize("values", [["1", "hi", "0"], ["", ""]])
+    def test_logical_ufuncs_supports_string(self, ufunc, dtype, values):
+        # note that values are either all true or all false
+        arr = np.array(values, dtype=dtype)
+        obj_arr = np.array(values, dtype=object)
+        res = ufunc(arr, arr)
+        expected = ufunc(obj_arr, obj_arr, dtype=bool)
 
-        However, casting strings to bools is *currently* weird, because it
-        actually uses `bool(int(str))`.  Thus we explicitly reject strings.
-        This test should succeed (and can probably just be removed) as soon as
-        string to bool casts are well defined in NumPy.
-        """
-        with pytest.raises(TypeError, match="contain a loop with signature"):
-            ufunc(["1"], ["3"])
-        with pytest.raises(TypeError, match="contain a loop with signature"):
-            ufunc.reduce(["1", "2", "0"])
+        assert_array_equal(res, expected)
+
+        res = ufunc.reduce(arr)
+        expected = ufunc.reduce(obj_arr, dtype=bool)
+        assert_array_equal(res, expected)
 
     @pytest.mark.parametrize("ufunc",
              [np.logical_and, np.logical_or, np.logical_xor])
