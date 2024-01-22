@@ -505,6 +505,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> floating[Any]: ...
 @overload
 def percentile(
@@ -515,6 +517,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> complexfloating[Any, Any]: ...
 @overload
 def percentile(
@@ -525,6 +529,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> timedelta64: ...
 @overload
 def percentile(
@@ -535,6 +541,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> datetime64: ...
 @overload
 def percentile(
@@ -545,6 +553,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> Any: ...
 @overload
 def percentile(
@@ -555,6 +565,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
 def percentile(
@@ -565,6 +577,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> NDArray[complexfloating[Any, Any]]: ...
 @overload
 def percentile(
@@ -575,6 +589,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> NDArray[timedelta64]: ...
 @overload
 def percentile(
@@ -585,6 +601,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> NDArray[datetime64]: ...
 @overload
 def percentile(
@@ -595,6 +613,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> NDArray[object_]: ...
 @overload
 def percentile(
@@ -605,6 +625,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: bool = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> Any: ...
 @overload
 def percentile(
@@ -615,6 +637,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: bool = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> _ArrayType: ...
 
 # NOTE: Not an alias, but they do have identical signatures

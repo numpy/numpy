@@ -23,7 +23,9 @@ Functions
 import functools
 import warnings
 import numpy as np
+import numpy._core.numeric as _nx
 from numpy.lib import _function_base_impl as fnb
+from numpy.lib._function_base_impl import _weights_are_valid
 from numpy._core import overrides
 
 
@@ -1220,8 +1222,8 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
 
 def _nanpercentile_dispatcher(
         a, q, axis=None, out=None, overwrite_input=None,
-        method=None, keepdims=None, *, interpolation=None):
-    return (a, q, out)
+        method=None, keepdims=None, *, weights=None, interpolation=None):
+    return (a, q, out, weights)
 
 
 @array_function_dispatch(_nanpercentile_dispatcher)
@@ -1234,6 +1236,7 @@ def nanpercentile(
         method="linear",
         keepdims=np._NoValue,
         *,
+        weights=None,
         interpolation=None,
 ):
     """
@@ -1303,6 +1306,17 @@ def nanpercentile(
         `mean` function of the underlying array.  If the array is
         a sub-class and `mean` does not have the kwarg `keepdims` this
         will raise a RuntimeError.
+
+    weights : array_like, optional
+        An array of weights associated with the values in `a`. Each value in
+        `a` contributes to the percentile according to its associated weight.
+        The weights array can either be 1-D (in which case its length must be
+        the size of `a` along the given axis) or of the same shape as `a`.
+        If `weights=None`, then all data in `a` are assumed to have a
+        weight equal to one.
+        Only `method="inverted_cdf"` supports weights.
+
+        .. versionadded:: 2.0.0
 
     interpolation : str, optional
         Deprecated name for the method keyword argument.
@@ -1380,13 +1394,26 @@ def nanpercentile(
     q = np.asanyarray(q)
     if not fnb._quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
+
+    if weights is not None:
+        if method != "inverted_cdf":
+            msg = ("Only method 'inverted_cdf' supports weights. "
+                   f"Got: {method}.")
+            raise ValueError(msg)
+        if axis is not None:
+            axis = _nx.normalize_axis_tuple(axis, a.ndim, argname="axis")
+        weights = _weights_are_valid(weights=weights, a=a, axis=axis)
+        if np.any(weights < 0):
+            raise ValueError("Weights must be non-negative.")
+
     return _nanquantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims)
+        a, q, axis, out, overwrite_input, method, keepdims, weights)
 
 
 def _nanquantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                            method=None, keepdims=None, *, interpolation=None):
-    return (a, q, out)
+                            method=None, keepdims=None, *, weights=None,
+                            interpolation=None):
+    return (a, q, out, weights)
 
 
 @array_function_dispatch(_nanquantile_dispatcher)
@@ -1399,6 +1426,7 @@ def nanquantile(
         method="linear",
         keepdims=np._NoValue,
         *,
+        weights=None,
         interpolation=None,
 ):
     """
@@ -1466,6 +1494,17 @@ def nanquantile(
         `mean` function of the underlying array.  If the array is
         a sub-class and `mean` does not have the kwarg `keepdims` this
         will raise a RuntimeError.
+
+    weights : array_like, optional
+        An array of weights associated with the values in `a`. Each value in
+        `a` contributes to the quantile according to its associated weight.
+        The weights array can either be 1-D (in which case its length must be
+        the size of `a` along the given axis) or of the same shape as `a`.
+        If `weights=None`, then all data in `a` are assumed to have a
+        weight equal to one.
+        Only `method="inverted_cdf"` supports weights.
+
+        .. versionadded:: 2.0.0
 
     interpolation : str, optional
         Deprecated name for the method keyword argument.
@@ -1546,8 +1585,20 @@ def nanquantile(
 
     if not fnb._quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
+
+    if weights is not None:
+        if method != "inverted_cdf":
+            msg = ("Only method 'inverted_cdf' supports weights. "
+                   f"Got: {method}.")
+            raise ValueError(msg)
+        if axis is not None:
+            axis = _nx.normalize_axis_tuple(axis, a.ndim, argname="axis")
+        weights = _weights_are_valid(weights=weights, a=a, axis=axis)
+        if np.any(weights < 0):
+            raise ValueError("Weights must be non-negative.")
+
     return _nanquantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims)
+        a, q, axis, out, overwrite_input, method, keepdims, weights)
 
 
 def _nanquantile_unchecked(
@@ -1558,6 +1609,7 @@ def _nanquantile_unchecked(
         overwrite_input=False,
         method="linear",
         keepdims=np._NoValue,
+        weights=None,
 ):
     """Assumes that q is in [0, 1], and is an ndarray"""
     # apply_along_axis in _nanpercentile doesn't handle empty arrays well,
@@ -1567,6 +1619,7 @@ def _nanquantile_unchecked(
     return fnb._ureduce(a,
                         func=_nanquantile_ureduce_func,
                         q=q,
+                        weights=weights,
                         keepdims=keepdims,
                         axis=axis,
                         out=out,
@@ -1574,8 +1627,15 @@ def _nanquantile_unchecked(
                         method=method)
 
 
-def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
-                              method="linear"):
+def _nanquantile_ureduce_func(
+        a: np.array,
+        q: np.array,
+        weights: np.array,
+        axis: int = None,
+        out=None,
+        overwrite_input: bool = False,
+        method="linear",
+):
     """
     Private function that doesn't support extended axis or keepdims.
     These methods are extended to this function using _ureduce
@@ -1583,10 +1643,11 @@ def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
     """
     if axis is None or a.ndim == 1:
         part = a.ravel()
-        result = _nanquantile_1d(part, q, overwrite_input, method)
+        wgt = None if weights is None else weights.ravel()
+        result = _nanquantile_1d(part, q, overwrite_input, method, weights=wgt)
     else:
         result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
-                                     overwrite_input, method)
+                                     overwrite_input, method, weights)
         # apply_along_axis fills in collapsed axis with results.
         # Move that axis to the beginning to match percentile's
         # convention.
@@ -1598,7 +1659,9 @@ def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
     return result
 
 
-def _nanquantile_1d(arr1d, q, overwrite_input=False, method="linear"):
+def _nanquantile_1d(
+    arr1d, q, overwrite_input=False, method="linear", weights=None,
+):
     """
     Private function for rank 1 arrays. Compute quantile ignoring NaNs.
     See nanpercentile for parameter usage
@@ -1610,7 +1673,12 @@ def _nanquantile_1d(arr1d, q, overwrite_input=False, method="linear"):
         return np.full(q.shape, np.nan, dtype=arr1d.dtype)[()]
 
     return fnb._quantile_unchecked(
-        arr1d, q, overwrite_input=overwrite_input, method=method)
+        arr1d,
+        q,
+        overwrite_input=overwrite_input,
+        method=method,
+        weights=weights,
+    )
 
 
 def _nanvar_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
