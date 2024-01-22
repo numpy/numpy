@@ -143,8 +143,8 @@ if compiler_id in ['intel', 'intel-cl']
   # Intel compilers don't support the following features independently
   FMA3.update(implies: [F16C, AVX2])
   AVX2.update(implies: [F16C, FMA3])
-  AVX512F.update(implies: [AVX2, AVX512CD, AVX512_SKX])
-  AVX512CD.update(implies: [AVX512F, AVX512_SKX])
+  AVX512F.update(implies: [AVX2, AVX512CD])
+  AVX512CD.update(implies: [AVX512F])
   XOP.update(disable: 'Intel Compiler does not support it')
   FMA4.update(disable: 'Intel Compiler does not support it')
 endif
@@ -170,10 +170,10 @@ endif
 if compiler_id == 'intel'
   clear_m = '^(-mcpu=|-march=)'
   clear_any = '^(-mcpu=|-march=|-x[A-Z0-9\-])'
-  FMA3.update(args: {'val': '-march=core-avx2', 'match': clear_m})
-  AVX2.update(args: {'val': '-march=core-avx2', 'match': clear_m})
-  AVX512F.update(args: {'val': '-march=common-avx512', 'match': clear_m})
-  AVX512CD.update(args: {'val': '-march=common-avx512', 'match': clear_m})
+  FMA3.update(args: {'val': '-xCORE-AVX2', 'match': clear_m})
+  AVX2.update(args: {'val': '-xCORE-AVX2', 'match': clear_m})
+  AVX512F.update(args: {'val': '-xCOMMON-AVX512', 'match': clear_m})
+  AVX512CD.update(args: {'val': '-xCOMMON-AVX512', 'match': clear_m})
   AVX512_KNL.update(args: {'val': '-xKNL', 'match': clear_any})
   AVX512_KNM.update(args: {'val': '-xKNM', 'match': clear_any})
   AVX512_SKX.update(args: {'val': '-xSKYLAKE-AVX512', 'match': clear_any})
