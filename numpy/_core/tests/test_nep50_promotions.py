@@ -309,3 +309,24 @@ def test_integer_integer_comparison(comp):
 
     # Test that the NumPy comparison ufuncs work with large Python integers
     assert comp(2**200, -2**200) == comp(2**200, -2**200, dtype=object)
+
+@pytest.mark.parametrize("sctype",
+        [np.int8, np.int16, np.int32, np.int64,
+         np.uint8, np.uint16, np.uint32, np.uint64])
+def test_oob_scalar_creation(sctype):
+    iinfo = np.iinfo(sctype)
+
+    with pytest.raises(OverflowError):
+        sctype(iinfo.min - 1)
+
+    with pytest.raises(OverflowError):
+        sctype(iinfo.max + 1)
+
+    with pytest.raises(OverflowError):
+        sctype(str(iinfo.min - 1))
+
+    with pytest.raises(OverflowError):
+        sctype(str(iinfo.max + 1))
+
+    assert sctype(iinfo.min) == iinfo.min
+    assert sctype(iinfo.max) == iinfo.max
