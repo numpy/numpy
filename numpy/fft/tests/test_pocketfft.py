@@ -33,6 +33,40 @@ class TestFFT1D:
             assert_allclose(np.fft.irfft(np.fft.rfft(xr[0:i]), i),
                             xr[0:i], atol=1e-12)
 
+    def test_identity_long_short(self):
+        # Test with explicitly given number of points, both for n
+        # smaller and for n larger than the input size.
+        maxlen = 16
+        x = random(maxlen) + 1j*random(maxlen)
+        xx = np.concatenate([x, np.zeros_like(x)])
+        xr = random(maxlen)
+        xxr = np.concatenate([xr, np.zeros_like(xr)])
+        for i in range(1, maxlen*2):
+            assert_allclose(np.fft.ifft(np.fft.fft(x, n=i), n=i),
+                            xx[0:i], atol=1e-12)
+            assert_allclose(np.fft.irfft(np.fft.rfft(xr, n=i), n=i),
+                            xxr[0:i], atol=1e-12)
+
+    def test_identity_long_short_reversed(self):
+        # Also test explicitly given number of points in reversed order.
+        maxlen = 16
+        x = random(maxlen) + 1j*random(maxlen)
+        xx = np.concatenate([x, np.zeros_like(x)])
+        for i in range(1, maxlen*2):
+            assert_allclose(np.fft.fft(np.fft.ifft(x, n=i), n=i),
+                            xx[0:i], atol=1e-12)
+            # For irfft, we can neither recover the imaginary part of
+            # the first element, nor the imaginary part of the last
+            # element if npts is even.  So, set to 0 for the comparison.
+            y = x.copy()
+            n = i // 2 + 1
+            y.imag[0] = 0
+            if i % 2 == 0:
+                y.imag[n-1:] = 0
+            yy = np.concatenate([y, np.zeros_like(y)])
+            assert_allclose(np.fft.rfft(np.fft.irfft(x, n=i), n=i),
+                            yy[0:n], atol=1e-12)
+
     def test_fft(self):
         x = random(30) + 1j*random(30)
         assert_allclose(fft1(x), np.fft.fft(x), atol=1e-6)
@@ -492,3 +526,21 @@ class TestFFTThreadSafe:
     def test_irfft(self):
         a = np.ones(self.input_shape) * 1+0j
         self._test_mtsame(np.fft.irfft, a)
+
+
+def test_irfft_with_n_1_regression():
+    # Regression test for gh-25661
+    x = np.arange(10)
+    np.fft.irfft(x, n=1)
+    np.fft.hfft(x, n=1)
+    np.fft.irfft(np.array([0], complex), n=10)
+
+
+def test_irfft_with_n_large_regression():
+    # Regression test for gh-25679
+    x = np.arange(5) * (1 + 1j)
+    result = np.fft.hfft(x, n=10)
+    expected = np.array([20., 9.91628173, -11.8819096, 7.1048486,
+                         -6.62459848, 4., -3.37540152, -0.16057669,
+                         1.8819096, -20.86055364])
+    assert_allclose(result, expected)

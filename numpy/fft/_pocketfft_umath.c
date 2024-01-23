@@ -33,22 +33,27 @@ copy_data(char* in, npy_intp step_in, npy_intp nin,
           char* out, npy_intp step_out, npy_intp nout, npy_intp elsize)
 {
     npy_intp ncopy = nin <= nout? nin : nout;
-    if (step_in == elsize && step_out == elsize) {
-        memcpy(out, in, ncopy*elsize);
-    }
-    else {
-        char *ip = in, *op = out;
-        for (npy_intp i = 0; i < ncopy; i++, ip += step_in, op += step_out) {
-            memcpy(op, ip, elsize);
-        }
-    }
-    if (nin < nout) {
-        char *op = out + nin*elsize;
-        if (step_out == elsize) {
-            memset(op, 0, (nout-nin)*elsize);
+    if (ncopy > 0) {
+        if (step_in == elsize && step_out == elsize) {
+            memcpy(out, in, ncopy*elsize);
         }
         else {
-            for (npy_intp i = nin; i < nout; i++, op += step_out) {
+            char *ip = in, *op = out;
+            for (npy_intp i = 0; i < ncopy; i++, ip += step_in, op += step_out) {
+                memcpy(op, ip, elsize);
+            }
+        }
+    }
+    else {
+        ncopy = 0;  /* can be negative, from irfft */
+    }
+    if (nout > ncopy) {
+        char *op = out + ncopy*elsize;
+        if (step_out == elsize) {
+            memset(op, 0, (nout-ncopy)*elsize);
+        }
+        else {
+            for (npy_intp i = ncopy; i < nout; i++, op += step_out) {
                 memset(op, 0, elsize);
             }
         }
@@ -95,7 +100,11 @@ fft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void *f
     for (npy_intp i = 0; i < n_outer; i++, ip += si, fp += sf, op += so) {
         double fct = *(double *)fp;
         char *op_or_buff = buff == NULL ? op : buff;
-        if (ip != op_or_buff) {  /* no copy needed if in-place already */
+        /*
+         * pocketfft works in-place, so we need to copy the data
+         * (except if we want to be in-place)
+         */
+        if (ip != op_or_buff) {
             copy_data(ip, step_in, nin,
                       op_or_buff, sizeof(npy_cdouble), npts, sizeof(npy_cdouble));
         }
@@ -154,7 +163,17 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps, void *
         double fct = *(double *)fp;
         char *op_or_buff = buff == NULL ? op : buff;
         double *op_double = (double *)op_or_buff;
-        /* Copy dat to buffer in starting at position 1, as expected for FFTpack order */
+        /*
+         * Pocketfft works in-place and for real transforms the frequency data
+         * thus needs to be compressed, using that there will be no imaginary
+         * component for the zero-frequency item (which is the sum of all
+         * inputs and thus has to be real), nor one for the Nyquist frequency
+         * for even number of points. Pocketfft uses FFTpack order,
+         * R0,R1,I1,...Rn-1,In-1,Rn[,In] (last for npts odd only). To make
+         * unpacking easy, we place the real data offset by one in the buffer,
+         * so that we just have to move R0 and create I0=0. Note that
+         * copy_data will zero the In component for even number of points.
+         */
         copy_data(ip, step_in, nin,
                   (char *)&op_double[1], sizeof(npy_double), nout*2 - 1, sizeof(npy_double));
         if ((no_mem = rfft_forward(plan, &op_double[1], fct)) != 0) {
@@ -233,17 +252,29 @@ irfft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
         double fct = *(double *)fp;
         char *op_or_buff = buff == NULL ? op : buff;
         double *op_double = (double *)op_or_buff;
-        /* Copy complex input to buffer in FFTpack order */
-        op_double[0] = ((double *)ip)[0];
-        if (nin > 1) {
-            copy_data(ip + step_in, step_in, nin - 2,
-                      (char *)&op_double[1], sizeof(npy_cdouble), npts / 2 - 1,
+        /*
+         * Pocket_fft works in-place and for inverse real transforms the
+         * frequency data thus needs to be compressed, removing the imaginary
+         * component of the zero-frequency item (which is the sum of all
+         * inputs and thus has to be real), as well as the imaginary component
+         * of the Nyquist frequency for even number of points. We thus copy
+         * the data to the buffer in the following order (also used by
+         * FFTpack): R0,R1,I1,...Rn-1,In-1,Rn[,In] (last for npts odd only).
+         */
+        op_double[0] = ((double *)ip)[0];  /* copy R0 */
+        if (npts > 1) {
+            /*
+             * Copy R1,I1... up to Rn-1,In-1 if possible, stopping earlier
+             * if not all the input points are needed or if the input is short
+             * (in the latter case, zeroing after).
+             */
+            copy_data(ip + step_in, step_in, nin - 1,
+                      (char *)&op_double[1], sizeof(npy_cdouble), (npts - 1) / 2,
                       sizeof(npy_cdouble));
-            npy_intp ncopied = (npts / 2 - 1  < nin - 2 ? npts / 2 - 1 : nin - 2);
-            double *last = (double *)(ip + (ncopied + 1) * step_in);
-            op_double[ncopied * 2 + 1] = last[0];
-            if (npts % 2 == 1) {  /* For odd n, we still imag real of the last point */
-                op_double[ncopied * 2 + 2] = last[1];
+            /* For even npts, we still need to set Rn. */
+            if (npts % 2 == 0) {
+                op_double[npts - 1] = (npts / 2 >= nin) ? 0. :
+                    ((double *)(ip + (npts / 2) * step_in))[0];
             }
         }
         if ((no_mem = rfft_backward(plan, op_double, fct)) != 0) {
