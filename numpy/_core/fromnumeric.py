@@ -697,13 +697,13 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     """
     Return a partitioned copy of an array.
 
-    Creates a copy of the array with its elements rearranged in such a
-    way that the value of the element in k-th position is in the position
-    the value would be in a sorted array.  In the partitioned array, all
-    elements before the k-th element are less than or equal to that
-    element, and all the elements after the k-th element are greater than
-    or equal to that element.  The ordering of the elements in the two
-    partitions is undefined.
+    Creates a copy of the array and partially sorts it in such a way that
+    the value of the element in k-th position is in the position it would be
+    in a sorted array. In the output array, all elements smaller than the k-th
+    element are located to the left of this element and all equal or greater
+    are located to its right. The ordering of the elements in the two
+    partitions on the either side of the k-th element in the output array is
+    undefined.
 
     .. versionadded:: 1.8.0
 
@@ -884,7 +884,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     >>> x = np.array([[3, 4, 2], [1, 3, 1]])
     >>> index_array = np.argpartition(x, kth=1, axis=-1)
     >>> # below is the same as np.partition(x, kth=1)
-    >>> np.take_along_axis(x, index_array, axis=-1)  
+    >>> np.take_along_axis(x, index_array, axis=-1)
     array([[2, 3, 4],
            [1, 1, 3]])
 
@@ -1364,7 +1364,7 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     array([[2],
            [0]])
     >>> # Same as np.amax(x, axis=-1)
-    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), 
+    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1),
     ...     axis=-1).squeeze(axis=-1)
     array([2, 0])
 
@@ -1437,7 +1437,7 @@ def searchsorted(a, v, side='left', sorter=None):
     As of NumPy 1.4.0 `searchsorted` works with real/complex arrays containing
     `nan` values. The enhanced sort order is documented in `sort`.
 
-    This function uses the same algorithm as the builtin python 
+    This function uses the same algorithm as the builtin python
     `bisect.bisect_left` (``side='left'``) and `bisect.bisect_right`
     (``side='right'``) functions, which is also vectorized
     in the `v` argument.
@@ -2371,7 +2371,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         return res
 
     return _wrapreduction(
-        a, np.add, 'sum', axis, dtype, out, 
+        a, np.add, 'sum', axis, dtype, out,
         keepdims=keepdims, initial=initial, where=where
     )
 

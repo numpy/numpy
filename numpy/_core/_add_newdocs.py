@@ -2883,7 +2883,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('T',
 add_newdoc('numpy._core.multiarray', 'ndarray', ('mT',
     """
     View of the matrix transposed array.
-    
+
     The matrix transpose is the transpose of the last two dimensions, even
     if the array is of higher dimension.
 
@@ -2893,7 +2893,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('mT',
     ------
     ValueError
         If the array is of dimension less than 2.
-        
+
     Examples
     --------
     >>> a = np.array([[1, 2], [3, 4]])
@@ -2903,7 +2903,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('mT',
     >>> a.mT
     array([[1, 3],
            [2, 4]])
-           
+
     >>> a = np.arange(8).reshape((2, 2, 2))
     >>> a
     array([[[0, 1],
@@ -2917,7 +2917,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('mT',
     <BLANKLINE>
            [[4, 6],
             [5, 7]]])
-    
+
     """))
 ##############################################################################
 #
@@ -4112,11 +4112,12 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('partition',
     """
     a.partition(kth, axis=-1, kind='introselect', order=None)
 
-    Rearranges the elements in the array in such a way that the value of the
-    element in kth position is in the position it would be in a sorted array.
-    All elements smaller than the kth element are moved before this element and
-    all equal or greater are moved behind it. The ordering of the elements in
-    the two partitions is undefined.
+    Partially sorts the elements in the array in such a way that the value of
+    the element in k-th position is in the position it would be in a sorted
+    array. In the output array, all elements smaller than the k-th element
+    are located to the left of this element and all equal or greater are
+    located to its right. The ordering of the elements in the two partitions
+    on the either side of the k-th element in the output array is undefined.
 
     .. versionadded:: 1.8.0
 
@@ -4929,7 +4930,7 @@ add_newdoc('numpy._core', 'ufunc', ('identity',
     """
     The identity value.
 
-    Data attribute containing the identity element for the ufunc, 
+    Data attribute containing the identity element for the ufunc,
     if it has one. If it does not, the attribute value is None.
 
     Examples
@@ -4953,7 +4954,7 @@ add_newdoc('numpy._core', 'ufunc', ('nargs',
 
     Notes
     -----
-    Typically this value will be one more than what you might expect 
+    Typically this value will be one more than what you might expect
     because all ufuncs take  the optional "out" argument.
 
     Examples
@@ -5919,7 +5920,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('fields',
     If present, the optional title can be any object (if it is a string
     or unicode then it will also be a key in the fields dictionary,
     otherwise it's meta-data). Notice also that the first two elements
-    of the tuple can be passed directly as arguments to the 
+    of the tuple can be passed directly as arguments to the
     ``ndarray.getfield`` and ``ndarray.setfield`` methods.
 
     See Also
