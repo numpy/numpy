@@ -1,6 +1,6 @@
 .. _routines.dtypes:
 
-Data Type Classes
+Data type classes
 =================
 
 .. currentmodule:: numpy
