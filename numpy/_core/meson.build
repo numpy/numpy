@@ -623,8 +623,9 @@ src_umath_api_c = custom_target('__umath_generated',
 
 src_umath_doc_h = custom_target('_umath_doc_generated',
   output : '_umath_doc_generated.h',
-  input : 'code_generators/generate_umath_doc.py',
-  command: [py, '@INPUT@', '-o', '@OUTPUT@'],
+  input : ['code_generators/generate_umath_doc.py',
+           'code_generators/ufunc_docstrings.py'],
+  command: [py, '@INPUT0@', '-o', '@OUTPUT@'],
 )
 
 src_numpy_api = custom_target('__multiarray_api',
