@@ -868,6 +868,10 @@ class TestUfunc:
         expected1 = np.array(((arr1.conj() if conj else arr1) * arr2).sum(),
                              ndmin=min(len(shape1), len(shape2)))
         assert_array_equal(actual1, expected1)
+        # This would fail for conj=True, since matmul omits the conjugate.
+        if not conj:
+            assert_array_equal(arr1.reshape(shape1) @ arr2.reshape(shape2),
+                               expected1)
 
         actual2 = ufunc(arr2.reshape(shape1), arr1.reshape(shape2))
         expected2 = np.array(((arr2.conj() if conj else arr2) * arr1).sum(),
