@@ -17,6 +17,8 @@ struct PyArrayMethodObject_tag;
  */
 #if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
 
+#ifndef Py_LIMITED_API
+
     typedef struct PyArray_DTypeMeta_tag {
         PyHeapTypeObject super;
 
@@ -47,6 +49,12 @@ struct PyArrayMethodObject_tag;
         /* Allow growing (at the moment also beyond this) */
         void *reserved[3];
     } PyArray_DTypeMeta;
+
+#else
+
+typedef PyTypeObject PyArray_DTypeMeta;
+
+#endif /* Py_LIMITED_API */
 
 #endif  /* not internal build */
 
@@ -141,6 +149,7 @@ typedef struct {
 #define NPY_METH_unaligned_contiguous_loop 8
 #define NPY_METH_contiguous_indexed_loop 9
 
+
 /*
  * The resolve descriptors function, must be able to handle NULL values for
  * all output (but not input) `given_descrs` and fill `loop_descrs`.
@@ -187,6 +196,7 @@ typedef NPY_CASTING (resolve_descriptors_with_scalars_function)(
         npy_intp *view_offset);
 
 
+
 typedef int (PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context,
         char *const *data, const npy_intp *dimensions, const npy_intp *strides,
         NpyAuxData *transferdata);
@@ -228,6 +238,7 @@ typedef int (get_reduction_initial_function)(
  * The following functions are only used by the wrapping array method defined
  * in umath/wrapping_array_method.c
  */
+
 
 /*
  * The function to convert the given descriptors (passed in to
@@ -274,6 +285,7 @@ typedef int translate_given_descrs_func(int nin, int nout,
 typedef int translate_loop_descrs_func(int nin, int nout,
         PyArray_DTypeMeta *new_dtypes[], PyArray_Descr *given_descrs[],
         PyArray_Descr *original_descrs[], PyArray_Descr *loop_descrs[]);
+
 
 
 /*
@@ -389,6 +401,7 @@ typedef int (get_traverse_loop_function)(
 // #define NPY_DT_PyArray_ArrFuncs_fasttake 21 + _NPY_DT_ARRFUNCS_OFFSET
 #define NPY_DT_PyArray_ArrFuncs_argmin 22 + _NPY_DT_ARRFUNCS_OFFSET
 
+
 // TODO: These slots probably still need some thought, and/or a way to "grow"?
 typedef struct {
     PyTypeObject *typeobj;    /* type of python scalar or NULL */
@@ -416,6 +429,34 @@ typedef int (is_known_scalar_type_function)(
 typedef PyArray_Descr *(default_descr_function)(PyArray_DTypeMeta *cls);
 typedef PyArray_DTypeMeta *(common_dtype_function)(
         PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2);
+
+/*
+ * Type of the C promoter function, which must be wrapped into a
+ * PyCapsule with name "numpy._ufunc_promoter".
+ *
+ * Note that currently the output dtypes are always NULL unless they are
+ * also part of the signature.  This is an implementation detail and could
+ * change in the future.  However, in general promoters should not have a
+ * need for output dtypes.
+ * (There are potential use-cases, these are currently unsupported.)
+ */
+typedef int promoter_function(PyObject *ufunc,
+        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *new_op_dtypes[]);
+
+/*
+ * Convenience utility for getting a reference to the DType metaclass associated
+ * with a dtype instance.
+ */
+#define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))
+
+static inline PyArray_DTypeMeta *
+NPY_DT_NewRef(PyArray_DTypeMeta *o) {
+    Py_INCREF(o);
+    return o;
+}
+
+
 typedef PyArray_Descr *(common_instance_function)(
         PyArray_Descr *dtype1, PyArray_Descr *dtype2);
 typedef PyArray_Descr *(ensure_canonical_function)(PyArray_Descr *dtype);
@@ -437,17 +478,5 @@ typedef PyArray_Descr *(finalize_descr_function)(PyArray_Descr *dtype);
  */
 typedef int(setitemfunction)(PyArray_Descr *, PyObject *, char *);
 typedef PyObject *(getitemfunction)(PyArray_Descr *, char *);
-
-/*
- * Convenience utility for getting a reference to the DType metaclass associated
- * with a dtype instance.
- */
-#define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))
-
-static inline PyArray_DTypeMeta *
-NPY_DT_NewRef(PyArray_DTypeMeta *o) {
-    Py_INCREF(o);
-    return o;
-}
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */

@@ -20,7 +20,7 @@
 #include "ctors.h"
 #include "descriptor.h"
 #include "dtypemeta.h"
-#include "common_dtype.h"
+
 #include "scalartypes.h"
 #include "mapping.h"
 #include "legacy_dtype_implementation.h"

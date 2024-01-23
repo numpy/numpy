@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-#include "numpy/_dtype_api.h"
+#include "numpy/dtype_api.h"
 
 /* DType flags, currently private, since we may just expose functions
    Other publicly visible flags are in _dtype_api.h                   */

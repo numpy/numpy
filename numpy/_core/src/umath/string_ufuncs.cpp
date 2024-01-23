@@ -13,7 +13,6 @@
 #include "numpyos.h"
 #include "dispatching.h"
 #include "dtypemeta.h"
-#include "common_dtype.h"
 #include "convert_datatype.h"
 
 #include "string_ufuncs.h"
@@ -786,7 +785,7 @@ string_strip_chars_resolve_descriptors(
 
 
 static int
-string_find_rfind_count_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
+string_find_rfind_count_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
@@ -802,7 +801,7 @@ string_find_rfind_count_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
 
 
 static int
-string_replace_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
+string_replace_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
@@ -862,7 +861,7 @@ string_replace_resolve_descriptors(
 
 
 static int
-string_startswith_endswith_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
+string_startswith_endswith_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {

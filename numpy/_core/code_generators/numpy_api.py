@@ -388,6 +388,10 @@ multiarray_funcs_api = {
     'NpyString_acquire_allocators':                  (317, MinVersion("2.0")),
     'NpyString_release_allocator':                   (318, MinVersion("2.0")),
     'NpyString_release_allocators':                  (319, MinVersion("2.0")),
+    'PyArray_GetDefaultDescr':                       (320, MinVersion("2.0")),
+    'PyArrayInitDTypeMeta_FromSpec':                 (321, MinVersion("2.0")),
+    'PyArray_CommonDType':                           (322, MinVersion("2.0")),
+    'PyArray_PromoteDTypeSequence':                  (323, MinVersion("2.0")),
     # End 2.0 API
 }
 
@@ -444,6 +448,10 @@ ufunc_funcs_api = {
     # End 1.8 API
     'PyUFunc_FromFuncAndDataAndSignatureAndIdentity': (42, MinVersion("1.16")),
     # End 1.16 API
+    'PyUFunc_AddLoopFromSpec':                       (43, MinVersion("2.0")),
+    'PyUFunc_AddPromoter':                           (44, MinVersion("2.0")),
+    'PyUFunc_AddWrappingLoop':                       (45, MinVersion("2.0")),
+    'PyUFunc_GiveFloatingpointErrors':               (46, MinVersion("2.0")),
 }
 
 # List of all the dicts which define the C API

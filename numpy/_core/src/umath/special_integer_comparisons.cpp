@@ -11,7 +11,6 @@
 #include "abstractdtypes.h"
 #include "dispatching.h"
 #include "dtypemeta.h"
-#include "common_dtype.h"
 #include "convert_datatype.h"
 
 #include "legacy_array_method.h"  /* For `get_wrapped_legacy_ufunc_loop`. */

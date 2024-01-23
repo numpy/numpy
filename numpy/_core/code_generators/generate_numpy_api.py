@@ -31,22 +31,94 @@ extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
         _NPY_VERSION_CONCAT_HELPER2(arg, PyArray_RUNTIME_VERSION)
     #define PyArray_RUNTIME_VERSION \
         _NPY_VERSION_CONCAT_HELPER(PY_ARRAY_UNIQUE_SYMBOL)
+    #define __dtype_api_table \
+        _NPY_VERSION_CONCAT_HELPER2(PY_ARRAY_UNIQUE_SYMBOL, \
+                                    __dtype_api_table)
+#else
+#define __dtype_api_table __dtype_api_table
 #endif
 
 #if defined(NO_IMPORT) || defined(NO_IMPORT_ARRAY)
 extern void **PyArray_API;
 extern int PyArray_RUNTIME_VERSION;
+extern void **__dtype_api_table;
 #else
+
+static void *__uninitialized_table[] = {NULL};
+
 #if defined(PY_ARRAY_UNIQUE_SYMBOL)
 void **PyArray_API;
+void **__dtype_api_table = __uninitialized_table;
 int PyArray_RUNTIME_VERSION;
 #else
 static void **PyArray_API = NULL;
 static int PyArray_RUNTIME_VERSION = 0;
+static void **__dtype_api_table = __uninitialized_table;
 #endif
 #endif
 
 %s
+
+#ifndef NPY_INTERNAL_BUILD
+/*
+ * The type of the DType metaclass
+ */
+#define PyArrayDTypeMeta_Type (*(PyTypeObject *)__dtype_api_table[0])
+/*
+ * NumPy's builtin DTypes:
+ */
+#define PyArray_BoolDType (*(PyArray_DTypeMeta *)__dtype_api_table[1])
+/* Integers */
+#define PyArray_ByteDType (*(PyArray_DTypeMeta *)__dtype_api_table[2])
+#define PyArray_UByteDType (*(PyArray_DTypeMeta *)__dtype_api_table[3])
+#define PyArray_ShortDType (*(PyArray_DTypeMeta *)__dtype_api_table[4])
+#define PyArray_UShortDType (*(PyArray_DTypeMeta *)__dtype_api_table[5])
+#define PyArray_IntDType (*(PyArray_DTypeMeta *)__dtype_api_table[6])
+#define PyArray_UIntDType (*(PyArray_DTypeMeta *)__dtype_api_table[7])
+#define PyArray_LongDType (*(PyArray_DTypeMeta *)__dtype_api_table[8])
+#define PyArray_ULongDType (*(PyArray_DTypeMeta *)__dtype_api_table[9])
+#define PyArray_LongLongDType (*(PyArray_DTypeMeta *)__dtype_api_table[10])
+#define PyArray_ULongLongDType (*(PyArray_DTypeMeta *)__dtype_api_table[11])
+/* Integer aliases */
+#define PyArray_Int8DType (*(PyArray_DTypeMeta *)__dtype_api_table[12])
+#define PyArray_UInt8DType (*(PyArray_DTypeMeta *)__dtype_api_table[13])
+#define PyArray_Int16DType (*(PyArray_DTypeMeta *)__dtype_api_table[14])
+#define PyArray_UInt16DType (*(PyArray_DTypeMeta *)__dtype_api_table[15])
+#define PyArray_Int32DType (*(PyArray_DTypeMeta *)__dtype_api_table[16])
+#define PyArray_UInt32DType (*(PyArray_DTypeMeta *)__dtype_api_table[17])
+#define PyArray_Int64DType (*(PyArray_DTypeMeta *)__dtype_api_table[18])
+#define PyArray_UInt64DType (*(PyArray_DTypeMeta *)__dtype_api_table[19])
+#define PyArray_IntpDType (*(PyArray_DTypeMeta *)__dtype_api_table[20])
+#define PyArray_UIntpDType (*(PyArray_DTypeMeta *)__dtype_api_table[21])
+/* Floats */
+#define PyArray_HalfDType (*(PyArray_DTypeMeta *)__dtype_api_table[22])
+#define PyArray_FloatDType (*(PyArray_DTypeMeta *)__dtype_api_table[23])
+#define PyArray_DoubleDType (*(PyArray_DTypeMeta *)__dtype_api_table[24])
+#define PyArray_LongDoubleDType (*(PyArray_DTypeMeta *)__dtype_api_table[25])
+/* Complex */
+#define PyArray_CFloatDType (*(PyArray_DTypeMeta *)__dtype_api_table[26])
+#define PyArray_CDoubleDType (*(PyArray_DTypeMeta *)__dtype_api_table[27])
+#define PyArray_CLongDoubleDType (*(PyArray_DTypeMeta *)__dtype_api_table[28])
+/* String/Bytes */
+#define PyArray_BytesDType (*(PyArray_DTypeMeta *)__dtype_api_table[29])
+#define PyArray_UnicodeDType (*(PyArray_DTypeMeta *)__dtype_api_table[30])
+/* Datetime/Timedelta */
+#define PyArray_DatetimeDType (*(PyArray_DTypeMeta *)__dtype_api_table[31])
+#define PyArray_TimedeltaDType (*(PyArray_DTypeMeta *)__dtype_api_table[32])
+/* Object/Void */
+#define PyArray_ObjectDType (*(PyArray_DTypeMeta *)__dtype_api_table[33])
+#define PyArray_VoidDType (*(PyArray_DTypeMeta *)__dtype_api_table[34])
+/* Abstract */
+#define PyArray_PyIntAbstractDType \
+    (*(PyArray_DTypeMeta *)__dtype_api_table[35])
+#define PyArray_PyFloatAbstractDType \
+    (*(PyArray_DTypeMeta *)__dtype_api_table[36])
+#define PyArray_PyComplexAbstractDType \
+    (*(PyArray_DTypeMeta *)__dtype_api_table[37])
+#define PyArray_DefaultIntDType (*(PyArray_DTypeMeta *)__dtype_api_table[38])
+/* New non-legacy DTypes follow in the order they were added */
+#define PyArray_StringDType (*(PyArray_DTypeMeta *)__dtype_api_table[39])
+#endif /* NPY_INTERNAL_BUILD */
 
 #if !defined(NO_IMPORT_ARRAY) && !defined(NO_IMPORT)
 static int
@@ -64,10 +136,26 @@ _import_array(void)
   }
 
   PyObject *c_api = PyObject_GetAttrString(numpy, "_ARRAY_API");
-  Py_DECREF(numpy);
+
   if (c_api == NULL) {
+      Py_DECREF(numpy);
       return -1;
   }
+
+  PyObject *dtype_api = PyObject_CallMethod(numpy, "_get_dtype_api", NULL);
+
+  if (dtype_api == NULL) {
+      Py_DECREF(numpy);
+      return -1;
+  }
+  if (!PyCapsule_CheckExact(dtype_api)) {
+      PyErr_SetString(PyExc_RuntimeError, "dtype API is not PyCapsule "
+                      "object");
+      Py_DECREF(c_api);
+      return -1;
+  }
+
+  Py_DECREF(numpy);
 
   if (!PyCapsule_CheckExact(c_api)) {
       PyErr_SetString(PyExc_RuntimeError, "_ARRAY_API is not PyCapsule object");
@@ -81,12 +169,20 @@ _import_array(void)
       return -1;
   }
 
+  __dtype_api_table = (void **)PyCapsule_GetPointer(
+      dtype_api, "dtype_api_table");
+  Py_DECREF(dtype_api);
+  if (__dtype_api_table == NULL) {
+      __dtype_api_table = __uninitialized_table;
+      return -1;
+  }
+
   /*
    * On exceedingly few platforms these sizes may not match, in which case
    * We do not support older NumPy versions at all.
    */
   if (sizeof(Py_ssize_t) != sizeof(Py_intptr_t) &&
-        PyArray_GetNDArrayCFeatureVersion() < NPY_2_0_API_VERSION) {
+        PyArray_RUNTIME_VERSION < NPY_2_0_API_VERSION) {
     PyErr_Format(PyExc_RuntimeError,
         "module compiled against NumPy 2.0 but running on NumPy 1.x. "
         "Unfortunately, this is not supported on niche platforms where "

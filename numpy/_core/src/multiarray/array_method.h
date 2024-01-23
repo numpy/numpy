@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-#include "numpy/_dtype_api.h"
+#include "numpy/dtype_api.h"
 
 
 /*

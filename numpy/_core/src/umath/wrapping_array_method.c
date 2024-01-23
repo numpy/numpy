@@ -210,7 +210,7 @@ wrapping_method_get_identity_function(
 }
 
 
-/**
+/*UFUNC_API
  * Allows creating of a fairly lightweight wrapper around an existing ufunc
  * loop.  The idea is mainly for units, as this is currently slightly limited
  * in that it enforces that you cannot use a loop from another ufunc.

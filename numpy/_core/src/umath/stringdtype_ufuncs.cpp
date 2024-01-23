@@ -1235,7 +1235,7 @@ fail:
 }
 
 static int
-string_find_rfind_count_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
+string_find_rfind_count_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
@@ -1295,7 +1295,7 @@ string_find_rfind_count_resolve_descriptors(
 
 static int
 string_startswith_endswith_promoter(
-        PyUFuncObject *NPY_UNUSED(ufunc),
+        PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
@@ -1727,7 +1727,7 @@ fail:
 }
 
 static int
-strip_chars_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
+strip_chars_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
@@ -2246,7 +2246,7 @@ string_strip_whitespace_strided_loop(
 }
 
 static int
-string_replace_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
+string_replace_promoter(PyObject *NPY_UNUSED(ufunc),
                         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
                         PyArray_DTypeMeta *new_op_dtypes[])
 {
@@ -2430,12 +2430,13 @@ string_replace_strided_loop(
 
 NPY_NO_EXPORT int
 string_inputs_promoter(
-        PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtypes[],
+        PyObject *ufunc_obj, PyArray_DTypeMeta *op_dtypes[],
         PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[],
         PyArray_DTypeMeta *final_dtype,
         PyArray_DTypeMeta *result_dtype)
 {
+    PyUFuncObject *ufunc = (PyUFuncObject *)ufunc_obj;    
     /* set all input operands to final_dtype */
     for (int i = 0; i < ufunc->nin; i++) {
         PyArray_DTypeMeta *tmp = final_dtype;
@@ -2462,23 +2463,23 @@ string_inputs_promoter(
 
 static int
 string_object_bool_output_promoter(
-        PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtypes[],
+        PyObject *ufunc, PyArray_DTypeMeta *op_dtypes[],
         PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
     return string_inputs_promoter(
-            (PyUFuncObject *)ufunc, op_dtypes, signature,
+            ufunc, op_dtypes, signature,
             new_op_dtypes, &PyArray_ObjectDType, &PyArray_BoolDType);
 }
 
 static int
 string_unicode_bool_output_promoter(
-        PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtypes[],
+        PyObject *ufunc, PyArray_DTypeMeta *op_dtypes[],
         PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
     return string_inputs_promoter(
-            (PyUFuncObject *)ufunc, op_dtypes, signature,
+            ufunc, op_dtypes, signature,
             new_op_dtypes, &PyArray_StringDType, &PyArray_BoolDType);
 }
 
@@ -2555,7 +2556,7 @@ is_integer_dtype(PyArray_DTypeMeta *DType)
 
 
 static int
-string_multiply_promoter(PyUFuncObject *ufunc_obj, PyArray_DTypeMeta *op_dtypes[],
+string_multiply_promoter(PyObject *ufunc_obj, PyArray_DTypeMeta *op_dtypes[],
                          PyArray_DTypeMeta *signature[],
                          PyArray_DTypeMeta *new_op_dtypes[])
 {
