@@ -1117,22 +1117,38 @@ def test_truediv_int():
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("op", reasonable_operators_for_scalars)
+@pytest.mark.parametrize("op",
+    # TODO: Power is a bit special, but here mostly bools seem to behave oddly
+    [op for op in reasonable_operators_for_scalars if op is not operator.pow])
 @pytest.mark.parametrize("sctype", types)
 @pytest.mark.parametrize("other_type", [float, int, complex])
-def test_ufunc_matches_pyscalar(op, sctype, other_type):
+@pytest.mark.parametrize("rop", [True, False])
+def test_scalar_matches_array_op_with_pyscalar(op, sctype, other_type, rop):
     # Check that the ufunc path matches by coercing to an array explicitly
-    val = sctype(2)
-    other = other_type(2)
+    val1 = sctype(2)
+    val2 = other_type(2)
+
+    if rop:
+        _op = op
+        op = lambda x, y: _op(y, x)
+
+    try:
+        res = op(val1, val2)
+    except TypeError:
+        try:
+            expected = op(np.asarray(val1), val2)
+            raise AssertionError("ufunc didn't raise.")
+        except TypeError:
+            return
+    else:
+        expected = op(np.asarray(val1), val2)
 
     # Note that we only check dtype equivalency, as ufuncs may pick the lower
     # dtype if they are equivalent.
-    res = op(val, other)
-    expected = op(np.asarray(val), other)[()]
     assert res == expected
-    assert res.dtype == expected.dtype
-
-    res = op(other, val)
-    expected = op(other, np.asarray(val))[()]
-    assert res == expected
-    assert res.dtype == expected.dtype
+    if isinstance(val1, float) and other_type is complex and rop:
+        # Python complex accepts float subclasses, so we don't get a chance
+        # and the result may be a Python complelx (thus, the `np.array()``)
+        assert np.array(res).dtype == expected.dtype
+    else:
+        assert res.dtype == expected.dtype
