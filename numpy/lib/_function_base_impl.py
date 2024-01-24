@@ -4067,9 +4067,9 @@ def percentile(a,
 
     Notes
     -----
-    In general, the percentile at percentage level math:`q` of a cumulative
+    In general, the percentile at percentage level :math:`q` of a cumulative
     distribution function :math:`F(y)=P(Y \\leq y)` with probability measure
-    math:`P` is defined as any number :math:`x` that fulfills the
+    :math:`P` is defined as any number :math:`x` that fulfills the
     *coverage conditions*
 
     .. math:: P(Y < x) \\leq q/100 \\quad\\text{and}
@@ -4077,8 +4077,8 @@ def percentile(a,
 
     with random variable :math:`Y\\sim P`.
     Sample percentiles, the result of ``percentile``, provide nonparametric
-    estimation of the underlying population, represented by the unknown
-    :math:`F`, given a data vector ``a`` of length ``n``.
+    estimation of the underlying population counterparts, represented by the
+    unknown :math:`F`, given a data vector ``a`` of length ``n``.
 
     One type of estimators arises when one considers :math:`F` as the empirical
     distribution function of the data, i.e.
@@ -4418,17 +4418,17 @@ def quantile(a,
 
     Notes
     -----
-    In general, the quantile at probability level math:`q` of a cumulative
+    In general, the quantile at probability level :math:`q` of a cumulative
     distribution function :math:`F(y)=P(Y \\leq y)` with probability measure
-    math:`P` is defined as any number :math:`x` that fulfills the
+    :math:`P` is defined as any number :math:`x` that fulfills the
     *coverage conditions*
 
     .. math:: P(Y < x) \\leq q \\quad\\text{and}\\quad P(Y \\leq x) \\geq q
 
     with random variable :math:`Y\\sim P`.
     Sample quantiles, the result of ``quantile``, provide nonparametric
-    estimation of the underlying population, represented by the unknown
-    :math:`F`, given a data vector ``a`` of length ``n``.
+    estimation of the underlying population counterparts, represented by the
+    unknown :math:`F`, given a data vector ``a`` of length ``n``.
 
     One type of estimators arises when one considers :math:`F` as the empirical
     distribution function of the data, i.e.
