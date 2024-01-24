@@ -360,6 +360,9 @@ NPY_NO_EXPORT int
 
 #if @is_int@
     int is_pylong = PyLong_Check(op);
+    // array objects do not get checked for overflow after conversion to a
+    // pyint because the default fill value for integer masked arrays is
+    // array(999999), which overflows for (u)int8 and (u)int16.
     if (!(is_pylong || PyArray_Check(op))) {
         PyObject* ret = PyNumber_Long(op);
         if (ret == NULL) {
