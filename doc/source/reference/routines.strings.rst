@@ -1,3 +1,5 @@
+.. _routines.strings:
+
 String universal functions
 ==========================
 

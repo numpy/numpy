@@ -14,6 +14,13 @@ A convenient way to execute examples is the ``%doctest_mode`` mode of
 IPython, which allows for pasting of multi-line examples and preserves
 indentation.
 
+.. Note: this is a listing of functionality grouped by topic. By design this is
+   opinionated and incomplete. Please don't add niche/legacy/deprecated topics,
+   submodules or doc pages here. It is only meant to give the average user of
+   the Python API guidance when looking for functionality, not to cover every
+   last corner of NumPy. For that, we have per-module function/object listings
+   as well as a search box.
+
 .. toctree::
    :maxdepth: 1
 
@@ -23,10 +30,8 @@ indentation.
    routines.bitwise
    routines.char
    routines.strings
-   routines.ctypeslib
    routines.datetime
    routines.dtype
-   routines.dtypes
    routines.emath
    routines.err
    routines.exceptions
@@ -34,12 +39,10 @@ indentation.
    routines.functional
    routines.io
    routines.indexing
-   routines.lib
    routines.linalg
    routines.logic
    routines.ma
    routines.math
-   routines.matlib
    routines.other
    routines.polynomials
    random/index
@@ -47,5 +50,5 @@ indentation.
    routines.sort
    routines.statistics
    routines.testing
-   routines.testing.overrides
    routines.window
+

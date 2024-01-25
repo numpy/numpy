@@ -1,7 +1,7 @@
 .. _routines.dtypes:
 
-Data type classes
-=================
+Data type classes (:mod:`numpy.dtypes`)
+=======================================
 
 .. automodule:: numpy.dtypes
    :no-members:
@@ -69,3 +69,4 @@ Others
 
 .. attribute:: ObjectDType
                VoidDType
+

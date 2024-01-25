@@ -17,6 +17,11 @@ Python API
 ==========
 
 .. toctree::
+   :maxdepth: 1
+
+   module_structure
+
+.. toctree::
    :maxdepth: 2
 
    arrays

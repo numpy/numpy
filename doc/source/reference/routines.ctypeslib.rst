@@ -1,3 +1,4 @@
+.. _routines.ctypeslib:
 .. module:: numpy.ctypeslib
 
 **********************************************************

@@ -22,6 +22,8 @@ typical, since their scalar counterparts (e.g. ``np.float64``) or strings
 like ``"float64"`` can be used.
 """
 
+# See doc/source/reference/routines.dtypes.rst for module-level docs
+
 __all__ = []
 
 
