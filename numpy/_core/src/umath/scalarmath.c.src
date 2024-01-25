@@ -227,18 +227,6 @@ static inline int
 #undef DIVIDEBYZERO_CHECK
 /**end repeat**/
 
-/**begin repeat
- *
- * #name = byte, ubyte, short, ushort, int, uint, long,
- *         ulong, longlong, ulonglong#
- */
-
-static inline int
-@name@_ctype_true_divide(npy_double a, npy_double b, npy_double *out)
-{
-    *out = (npy_double)a / (npy_double)b;
-    return 0;
-}
 
 /**end repeat**/
 
@@ -1460,14 +1448,10 @@ static PyObject *
         arg2 = PyArrayScalar_VAL(b, @Name@);
     }
 
-    /*
-     * Prepare the actual calculation.
-     */
-    npy_float64 out;
+    /* Note that arguments are already float64, so we can just divide */
+    npy_float64 out = arg1 / arg2;
 
-    int retstatus = @name@_ctype_true_divide(arg1, arg2, &out);
-    retstatus |= npy_get_floatstatus_barrier((char*)&out);
-
+    int retstatus = npy_get_floatstatus_barrier((char*)&out);
     if (retstatus) {
         if (PyUFunc_GiveFloatingpointErrors("scalar divide", retstatus) < 0) {
             return NULL;
