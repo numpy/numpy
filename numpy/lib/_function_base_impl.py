@@ -4199,10 +4199,9 @@ def percentile(a,
         NumPy method kept for backwards compatibility.
         Uses ``(i + j) / 2``.
 
-     **Weighted percentiles:**
     For weighted percentiles, the above coverage conditions still hold. The
     empirical cumulative distribution is simply replaced by its weighted
-    version, i.e. 
+    version, i.e.
     :math:`P(Y \\leq t) = \\frac{1}{\\sum_i w_i} \\sum_i w_i 1_{x_i \\leq t}`.
     Only ``method="inverted_cdf"`` supports weights.
 

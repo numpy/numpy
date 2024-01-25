@@ -234,7 +234,7 @@ static inline int
  */
 
 static inline int
-@name@_ctype_true_divide(npy_@name@ a, npy_@name@ b, npy_double *out)
+@name@_ctype_true_divide(npy_double a, npy_double b, npy_double *out)
 {
     *out = (npy_double)a / (npy_double)b;
     return 0;
@@ -1175,49 +1175,37 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
 /**begin repeat
  *
  * #name = (byte, ubyte, short, ushort, int, uint,
- *             long, ulong, longlong, ulonglong)*12,
+ *             long, ulong, longlong, ulonglong)*11,
  *         (half, float, double, longdouble,
  *             cfloat, cdouble, clongdouble)*4,
  *         (half, float, double, longdouble)*3#
  * #Name = (Byte, UByte, Short, UShort, Int, UInt,
- *             Long, ULong,LongLong,ULongLong)*12,
+ *             Long, ULong,LongLong,ULongLong)*11,
  *         (Half, Float, Double, LongDouble,
  *             CFloat, CDouble, CLongDouble)*4,
  *         (Half, Float, Double, LongDouble)*3#
  * #NAME = (BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *              LONG, ULONG, LONGLONG, ULONGLONG)*12,
+ *              LONG, ULONG, LONGLONG, ULONGLONG)*11,
  *          (HALF, FLOAT, DOUBLE, LONGDOUBLE,
  *              CFLOAT, CDOUBLE, CLONGDOUBLE)*4,
  *          (HALF, FLOAT, DOUBLE, LONGDOUBLE)*3#
  * #type = (npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *             npy_long, npy_ulong, npy_longlong, npy_ulonglong)*12,
+ *             npy_long, npy_ulong, npy_longlong, npy_ulonglong)*11,
  *         (npy_half, npy_float, npy_double, npy_longdouble,
  *             npy_cfloat, npy_cdouble, npy_clongdouble)*4,
  *         (npy_half, npy_float, npy_double, npy_longdouble)*3#
  *
  * #oper = add*10, subtract*10, multiply*10, remainder*10,
  *         divmod*10, floor_divide*10, lshift*10, rshift*10, and*10,
- *         or*10, xor*10, true_divide*10,
+ *         or*10, xor*10,
  *         add*7, subtract*7, multiply*7, true_divide*7,
  *         floor_divide*4, divmod*4, remainder*4#
  *
- * #fperr = 0*110, 1*10,
+ * #fperr = 0*110,
  *          1*28, 1*12#
- * #twoout = 0*40,1*10,0*70,
+ * #twoout = 0*40,1*10,0*60,
  *           0*28,
  *           0*4,1*4,0*4#
- * #otype = (npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *             npy_long, npy_ulong, npy_longlong, npy_ulonglong)*11,
- *         npy_double*10,
- *         (npy_half, npy_float, npy_double, npy_longdouble,
- *             npy_cfloat, npy_cdouble, npy_clongdouble)*4,
- *         (npy_half, npy_float, npy_double, npy_longdouble)*3#
- * #OName = (Byte, UByte, Short, UShort, Int, UInt,
- *              Long, ULong, LongLong, ULongLong)*11,
- *          Double*10,
- *          (Half, Float, Double, LongDouble,
- *              CFloat, CDouble, CLongDouble)*4,
- *          (Half, Float, Double, LongDouble)*3#
  */
 #define IS_@name@
 /* drop the "true_" from "true_divide" for floating point warnings: */
@@ -1327,9 +1315,9 @@ static PyObject *
     /*
      * Prepare the actual calculation.
      */
-    @otype@ out;
+    @type@ out;
 #if @twoout@
-    @otype@ out2;
+    @type@ out2;
     PyObject *obj;
 #endif
 
@@ -1362,26 +1350,26 @@ static PyObject *
     if (ret == NULL) {
         return NULL;
     }
-    obj = PyArrayScalar_New(@OName@);
+    obj = PyArrayScalar_New(@Name@);
     if (obj == NULL) {
         Py_DECREF(ret);
         return NULL;
     }
-    PyArrayScalar_ASSIGN(obj, @OName@, out);
+    PyArrayScalar_ASSIGN(obj, @Name@, out);
     PyTuple_SET_ITEM(ret, 0, obj);
-    obj = PyArrayScalar_New(@OName@);
+    obj = PyArrayScalar_New(@Name@);
     if (obj == NULL) {
         Py_DECREF(ret);
         return NULL;
     }
-    PyArrayScalar_ASSIGN(obj, @OName@, out2);
+    PyArrayScalar_ASSIGN(obj, @Name@, out2);
     PyTuple_SET_ITEM(ret, 1, obj);
 #else
-    ret = PyArrayScalar_New(@OName@);
+    ret = PyArrayScalar_New(@Name@);
     if (ret == NULL) {
         return NULL;
     }
-    PyArrayScalar_ASSIGN(ret, @OName@, out);
+    PyArrayScalar_ASSIGN(ret, @Name@, out);
 #endif
     return ret;
 }
@@ -1392,6 +1380,109 @@ static PyObject *
 #undef IS_@name@
 
 /**end repeat**/
+
+
+/**begin repeat
+ *
+ * #name = byte, ubyte, short, ushort, int, uint,
+ *             long, ulong, longlong, ulonglong#
+ * #Name = Byte, UByte, Short, UShort, Int, UInt,
+ *             Long, ULong,LongLong,ULongLong#
+ * #NAME = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *              LONG, ULONG, LONGLONG, ULONGLONG#
+ * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
+ *             npy_long, npy_ulong, npy_longlong, npy_ulonglong#
+ */
+static PyObject *
+@name@_true_divide(PyObject *a, PyObject *b)
+{
+    /*
+     * See the more generic version above for additional comments, this
+     * differs in casting the arguments to double early on and in converting
+     * Python int and float directly to float.
+     */
+    PyObject *ret;
+    npy_float64 arg1, arg2, other_val;
+    @type@ other_val_conv;
+
+    int is_forward;
+    if (Py_TYPE(a) == &Py@Name@ArrType_Type) {
+        is_forward = 1;
+    }
+    else if (Py_TYPE(b) == &Py@Name@ArrType_Type) {
+        is_forward = 0;
+    }
+    else {
+        /* subclasses are involved */
+        is_forward = PyArray_IsScalar(a, @Name@);
+        assert(is_forward || PyArray_IsScalar(b, @Name@));
+    }
+
+    PyObject *other = is_forward ? b : a;
+
+    npy_bool may_need_deferring;
+    conversion_result res = convert_to_@name@(
+            other, &other_val_conv, &may_need_deferring);
+    other_val = other_val_conv;  /* Need a float value */
+    if (res == CONVERSION_ERROR) {
+        return NULL;  /* an error occurred (should never happen) */
+    }
+    if (may_need_deferring) {
+        BINOP_GIVE_UP_IF_NEEDED(a, b, nb_true_divide, @name@_true_divide);
+    }
+    switch (res) {
+        case DEFER_TO_OTHER_KNOWN_SCALAR:
+            Py_RETURN_NOTIMPLEMENTED;
+        case CONVERSION_SUCCESS:
+            break;  /* successfully extracted value we can proceed */
+        case OTHER_IS_UNKNOWN_OBJECT:
+        case PROMOTION_REQUIRED:
+            return PyGenericArrType_Type.tp_as_number->nb_true_divide(a,b);
+        case CONVERT_PYSCALAR:
+            /* This is the special behavior, convert to float64 directly */
+            if (DOUBLE_setitem(other, (char *)&other_val, NULL) < 0) {
+                return NULL;
+            }
+            break;
+        default:
+            assert(0);  /* error was checked already, impossible to reach */
+            return NULL;
+    }
+
+    npy_clear_floatstatus_barrier((char*)&arg1);
+
+    if (is_forward) {
+        arg1 = PyArrayScalar_VAL(a, @Name@);
+        arg2 = other_val;
+    }
+    else {
+        arg1 = other_val;
+        arg2 = PyArrayScalar_VAL(b, @Name@);
+    }
+
+    /*
+     * Prepare the actual calculation.
+     */
+    npy_float64 out;
+
+    int retstatus = @name@_ctype_true_divide(arg1, arg2, &out);
+    retstatus |= npy_get_floatstatus_barrier((char*)&out);
+
+    if (retstatus) {
+        if (PyUFunc_GiveFloatingpointErrors("scalar divide", retstatus) < 0) {
+            return NULL;
+        }
+    }
+
+    ret = PyArrayScalar_New(Double);
+    if (ret == NULL) {
+        return NULL;
+    }
+    PyArrayScalar_ASSIGN(ret, Double, out);
+    return ret;
+}
+/**end repeat**/
+
 
 #define _IS_ZERO(x) (x == 0)
 

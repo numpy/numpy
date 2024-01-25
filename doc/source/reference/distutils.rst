@@ -1,3 +1,5 @@
+.. _numpy-distutils-refguide:
+
 **********************************
 Packaging (:mod:`numpy.distutils`)
 **********************************

@@ -270,6 +270,8 @@ Other options
 Execute ``f2py`` without any options to get an up-to-date list of available
 options.
 
+.. _python-module-numpy.f2py:
+
 Python module ``numpy.f2py``
 ============================
 

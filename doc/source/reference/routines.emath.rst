@@ -1,3 +1,5 @@
+.. _routines.emath:
+
 Mathematical functions with automatic domain
 ********************************************
 
