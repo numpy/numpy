@@ -2020,11 +2020,10 @@ def binary_repr(num, width=None):
 
         If the `width` value is insufficient, it will be ignored, and `num`
         will be returned in binary (`num` > 0) or two's complement (`num` < 0)
-        form with its width equal to the minimum number of bits needed to
-        represent the number in the designated form. This behavior is
-        deprecated and will later raise an error.
-
-        .. deprecated:: 1.12.0
+        form with its width equal to the minimum number of bits represent the
+        number in the designated form. While the `width` parameter is 
+        available, this behavior is deprecated since version 1.12.0 and will
+        later raise an error.
 
     Returns
     -------
