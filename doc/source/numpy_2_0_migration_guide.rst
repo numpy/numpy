@@ -13,7 +13,7 @@ work with Numpy 2.0.
 Changes to NumPy data type promotion
 =====================================
 
-One of the larger changes in the NumPy 2.0 were the changes to promotion
+NumPy 2.0 changes promotion (the result of combining dissimilar data types)
 as per `NEP 50 <NEP50_>`.
 
 Please see the NEP for details on this change.  It includes a
@@ -29,18 +29,18 @@ Two examples are:
   array.  (The higher precision of the scalar is not ignored.)
 
 For floating point values, this can lead to lower precision results when
-working with scalars.  For integers errors or overflows are possible.
+working with scalars.  For integers, errors or overflows are possible.
 
 To solve this, you may cast explicitly.  Very often, it may also be a good
 solution to ensure you are working with Python scalars via ``int()``,
 ``float()``, or ``numpy_scalar.item()``.
 
-To track down changes, you can try to use for testing purposes only
+To track down changes, you can enable emitting warnings for changed behavior
 (use ``warnings.simplefilter`` to raise it as an error for a traceback)::
 
   np._set_promotion_state("weak_and_warn")
 
-which attempts to give warnings about changed behavior.  Unfortunately,
+which is useful during testing. Unfortunately,
 running this may flag many changes that are irrelevant in practice.
 
 .. _migration_windows_int64:
