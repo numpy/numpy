@@ -124,7 +124,7 @@ def masked_all(shape, dtype=float):
 
     Notes
     -----
-    Unliked other masked array creation functions (e.g. `numpy.ma.zeros`,
+    Unlike other masked array creation functions (e.g. `numpy.ma.zeros`,
     `numpy.ma.ones`, `numpy.ma.full`), `masked_all` does not initialize the
     values of the array, and may therefore be marginally faster. However,
     the values stored in the newly allocated array are arbitrary. For
@@ -188,7 +188,7 @@ def masked_all_like(arr):
 
     Notes
     -----
-    Unliked other masked array creation functions (e.g. `numpy.ma.zeros_like`,
+    Unlike other masked array creation functions (e.g. `numpy.ma.zeros_like`,
     `numpy.ma.ones_like`, `numpy.ma.full_like`), `masked_all_like` does not
     initialize the values of the array, and may therefore be marginally
     faster. However, the values stored in the newly allocated array are
