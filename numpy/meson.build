@@ -226,6 +226,7 @@ python_sources = [
   '__init__.pxd',
   '__init__.py',
   '__init__.pyi',
+  '_configtool.py',
   '_distributor_init.py',
   '_globals.py',
   '_pytesttester.py',
