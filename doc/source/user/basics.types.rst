@@ -290,8 +290,7 @@ exceptions, such as when code requires very specific attributes of a scalar
 or when it checks specifically whether a value is a Python scalar. Generally,
 problems are easily fixed by explicitly converting array scalars
 to Python scalars, using the corresponding Python type function
-(e.g., :class:`int`, :class:`float`, :class:`complex`, :class:`str`,
-``unicode`` (v2.x)).
+(e.g., :class:`int`, :class:`float`, :class:`complex`, :class:`str`).
 
 The primary advantage of using array scalars is that
 they preserve the array type (Python may not have a matching scalar type
