@@ -789,6 +789,32 @@ class TestDeprecatedDTypeAliases(_DeprecationTestCase):
         self._check_for_warning(lambda: np.dtype("a10"))
 
 
+class TestDeprecatedArrayWrap(_DeprecationTestCase):
+    message = "__array_wrap__.*"
+
+    def test_deprecated(self):
+        class Test1:
+            def __array__(self,):
+                return np.arange(4)
+
+            def __array_wrap__(self, arr, context=None):
+                self.called = True
+                return 'pass context'
+
+        class Test2(Test1):
+            def __array_wrap__(self, arr):
+                self.called = True
+                return 'pass'
+
+        test1 = Test1()
+        test2 = Test2()
+        self.assert_deprecated(lambda: np.negative(test1))
+        assert test1.called
+        self.assert_deprecated(lambda: np.negative(test2))
+        assert test2.called
+
+
+
 class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
     messsage = "Passing in a parenthesized single number"
 

@@ -9,11 +9,24 @@ from numpy import (
     add
 )
 from numpy._core.umath import (
-    isalpha, isdigit, isspace, isdecimal, isnumeric,
-    str_len, find, rfind, count, startswith, endswith,
-    _lstrip_whitespace, _lstrip_chars, _rstrip_whitespace,
-    _rstrip_chars, _strip_whitespace, _strip_chars,
-    _replace
+    isalpha,
+    isdigit,
+    isspace,
+    isdecimal,
+    isnumeric,
+    str_len,
+    find as _find_ufunc,
+    rfind as _rfind_ufunc,
+    count as _count_ufunc,
+    startswith as _startswith_ufunc,
+    endswith as _endswith_ufunc,
+    _lstrip_whitespace,
+    _lstrip_chars,
+    _rstrip_whitespace,
+    _rstrip_chars,
+    _strip_whitespace,
+    _strip_chars,
+    _replace,
 )
 
 
@@ -23,6 +36,186 @@ __all__ = [
     "str_len", "find", "rfind", "count", "startswith", "endswith",
     "lstrip", "rstrip", "strip", "replace"
 ]
+
+
+MAX = np.iinfo(np.int64).max
+
+
+def find(a, sub, start=0, end=None):
+    """
+    For each element, return the lowest index in the string where
+    substring ``sub`` is found, such that ``sub`` is contained in the
+    range [``start``, ``end``).
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    sub : array_like, with `np.bytes_` or `np.str_` dtype
+        The substring to search for.
+
+    start, end : array_like, with any integer dtype
+        The range to look in, interpreted as in slice notation.
+
+    Returns
+    -------
+    y : ndarray
+        Output array of ints
+
+    See Also
+    --------
+    str.find
+
+    Examples
+    --------
+    >>> a = np.array(["NumPy is a Python library"])
+    >>> np.strings.find(a, "Python")
+    array([11])
+
+    """
+    end = end if end is not None else MAX
+    return _find_ufunc(a, sub, start, end)
+
+
+def rfind(a, sub, start=0, end=None):
+    """
+    For each element, return the highest index in the string where
+    substring ``sub`` is found, such that ``sub`` is contained in the
+    range [``start``, ``end``).
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    sub : array_like, with `np.bytes_` or `np.str_` dtype
+        The substring to search for.
+
+    start, end : array_like, with any integer dtype
+        The range to look in, interpreted as in slice notation.
+
+    Returns
+    -------
+    y : ndarray
+        Output array of ints
+
+    See Also
+    --------
+    str.rfind
+
+    """
+    end = end if end is not None else MAX
+    return _rfind_ufunc(a, sub, start, end)
+
+
+def count(a, sub, start=0, end=None):
+    """
+    Returns an array with the number of non-overlapping occurrences of
+    substring ``sub`` in the range [``start``, ``end``).
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    sub : array_like, with `np.bytes_` or `np.str_` dtype
+       The substring to search for.
+
+    start, end : array_like, with any integer dtype
+        The range to look in, interpreted as in slice notation.
+
+    Returns
+    -------
+    y : ndarray
+        Output array of ints
+
+    See Also
+    --------
+    str.count
+
+    Examples
+    --------
+    >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> c
+    array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
+    >>> np.strings.count(c, 'A')
+    array([3, 1, 1])
+    >>> np.strings.count(c, 'aA')
+    array([3, 1, 0])
+    >>> np.strings.count(c, 'A', start=1, end=4)
+    array([2, 1, 1])
+    >>> np.strings.count(c, 'A', start=1, end=3)
+    array([1, 0, 0])
+
+    """
+    end = end if end is not None else MAX
+    return _count_ufunc(a, sub, start, end)
+
+
+def startswith(a, prefix, start=0, end=None):
+    """
+    Returns a boolean array which is `True` where the string element
+    in ``a`` starts with ``prefix``, otherwise `False`.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    prefix : array_like, with `np.bytes_` or `np.str_` dtype
+
+    start, end : array_like, with any integer dtype
+        With ``start``, test beginning at that position. With ``end``,
+        stop comparing at that position.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of bools
+
+    See Also
+    --------
+    str.startswith
+
+    """
+    end = end if end is not None else MAX
+    return _startswith_ufunc(a, prefix, start, end)
+
+
+def endswith(a, suffix, start=0, end=None):
+    """
+    Returns a boolean array which is `True` where the string element
+    in ``a`` ends with ``suffix``, otherwise `False`.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    suffix : array_like, with `np.bytes_` or `np.str_` dtype
+
+    start, end : array_like, with any integer dtype
+        With ``start``, test beginning at that position. With ``end``,
+        stop comparing at that position.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of bools
+
+    See Also
+    --------
+    str.endswith
+
+    Examples
+    --------
+    >>> s = np.array(['foo', 'bar'])
+    >>> s
+    array(['foo', 'bar'], dtype='<U3')
+    >>> np.strings.endswith(s, 'ar')
+    array([False,  True])
+    >>> np.strings.endswith(s, 'a', start=1, end=2)
+    array([False,  True])
+
+    """
+    end = end if end is not None else MAX
+    return _endswith_ufunc(a, suffix, start, end)
 
 
 def lstrip(a, chars=None):

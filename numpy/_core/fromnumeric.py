@@ -12,6 +12,7 @@ from . import overrides
 from . import umath as um
 from . import numerictypes as nt
 from .multiarray import asarray, array, asanyarray, concatenate
+from ._multiarray_umath import _array_converter
 from . import _methods
 
 _dt_ = nt.sctype2char
@@ -38,16 +39,13 @@ array_function_dispatch = functools.partial(
 
 # functions that are now methods
 def _wrapit(obj, method, *args, **kwds):
-    try:
-        wrap = obj.__array_wrap__
-    except AttributeError:
-        wrap = None
-    result = getattr(asarray(obj), method)(*args, **kwds)
-    if wrap:
-        if not isinstance(result, mu.ndarray):
-            result = asarray(result)
-        result = wrap(result)
-    return result
+    conv = _array_converter(obj)
+    # As this already tried the method, subok is maybe quite reasonable here
+    # but this follows what was done before. TODO: revisit this.
+    arr, = conv.as_arrays(subok=False)
+    result = getattr(arr, method)(*args, **kwds)
+
+    return conv.wrap(result, to_scalar=False)
 
 
 def _wrapfunc(obj, method, *args, **kwds):
@@ -699,13 +697,13 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     """
     Return a partitioned copy of an array.
 
-    Creates a copy of the array with its elements rearranged in such a
-    way that the value of the element in k-th position is in the position
-    the value would be in a sorted array.  In the partitioned array, all
-    elements before the k-th element are less than or equal to that
-    element, and all the elements after the k-th element are greater than
-    or equal to that element.  The ordering of the elements in the two
-    partitions is undefined.
+    Creates a copy of the array and partially sorts it in such a way that
+    the value of the element in k-th position is in the position it would be
+    in a sorted array. In the output array, all elements smaller than the k-th
+    element are located to the left of this element and all equal or greater
+    are located to its right. The ordering of the elements in the two
+    partitions on the either side of the k-th element in the output array is
+    undefined.
 
     .. versionadded:: 1.8.0
 
@@ -886,7 +884,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     >>> x = np.array([[3, 4, 2], [1, 3, 1]])
     >>> index_array = np.argpartition(x, kth=1, axis=-1)
     >>> # below is the same as np.partition(x, kth=1)
-    >>> np.take_along_axis(x, index_array, axis=-1)  
+    >>> np.take_along_axis(x, index_array, axis=-1)
     array([[2, 3, 4],
            [1, 1, 3]])
 
@@ -894,12 +892,12 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     return _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
 
 
-def _sort_dispatcher(a, axis=None, kind=None, order=None):
+def _sort_dispatcher(a, axis=None, kind=None, order=None, *, stable=None):
     return (a,)
 
 
 @array_function_dispatch(_sort_dispatcher)
-def sort(a, axis=-1, kind=None, order=None):
+def sort(a, axis=-1, kind=None, order=None, *, stable=None):
     """
     Return a sorted copy of an array.
 
@@ -925,6 +923,13 @@ def sort(a, axis=-1, kind=None, order=None):
         be specified as a string, and not all fields need be specified,
         but unspecified fields will still be used, in the order in which
         they come up in the dtype, to break ties.
+    stable : bool, optional
+        Sort stability. If ``True``, the returned array will maintain
+        the relative order of ``a`` values which compare as equal.
+        If ``False`` or ``None``, this is not guaranteed. Internally,
+        this option selects ``kind='stable'``. Default: ``None``.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -1053,16 +1058,16 @@ def sort(a, axis=-1, kind=None, order=None):
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
-    a.sort(axis=axis, kind=kind, order=order)
+    a.sort(axis=axis, kind=kind, order=order, stable=stable)
     return a
 
 
-def _argsort_dispatcher(a, axis=None, kind=None, order=None):
+def _argsort_dispatcher(a, axis=None, kind=None, order=None, *, stable=None):
     return (a,)
 
 
 @array_function_dispatch(_argsort_dispatcher)
-def argsort(a, axis=-1, kind=None, order=None):
+def argsort(a, axis=-1, kind=None, order=None, *, stable=None):
     """
     Returns the indices that would sort an array.
 
@@ -1091,6 +1096,13 @@ def argsort(a, axis=-1, kind=None, order=None):
         be specified as a string, and not all fields need be specified,
         but unspecified fields will still be used, in the order in which
         they come up in the dtype, to break ties.
+    stable : bool, optional
+        Sort stability. If ``True``, the returned array will maintain
+        the relative order of ``a`` values which compare as equal.
+        If ``False`` or ``None``, this is not guaranteed. Internally,
+        this option selects ``kind='stable'``. Default: ``None``.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -1169,8 +1181,9 @@ def argsort(a, axis=-1, kind=None, order=None):
     array([0, 1])
 
     """
-    return _wrapfunc(a, 'argsort', axis=axis, kind=kind, order=order)
-
+    return _wrapfunc(
+        a, 'argsort', axis=axis, kind=kind, order=order, stable=stable
+    )
 
 def _argmax_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue):
     return (a, out)
@@ -1351,7 +1364,7 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     array([[2],
            [0]])
     >>> # Same as np.amax(x, axis=-1)
-    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), 
+    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1),
     ...     axis=-1).squeeze(axis=-1)
     array([2, 0])
 
@@ -1424,7 +1437,7 @@ def searchsorted(a, v, side='left', sorter=None):
     As of NumPy 1.4.0 `searchsorted` works with real/complex arrays containing
     `nan` values. The enhanced sort order is documented in `sort`.
 
-    This function uses the same algorithm as the builtin python 
+    This function uses the same algorithm as the builtin python
     `bisect.bisect_left` (``side='left'``) and `bisect.bisect_right`
     (``side='right'``) functions, which is also vectorized
     in the `v` argument.
@@ -2358,7 +2371,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         return res
 
     return _wrapreduction(
-        a, np.add, 'sum', axis, dtype, out, 
+        a, np.add, 'sum', axis, dtype, out,
         keepdims=keepdims, initial=initial, where=where
     )
 
@@ -3558,13 +3571,13 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
 
 
 def _std_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
-                    keepdims=None, *, where=None, mean=None):
+                    keepdims=None, *, where=None, mean=None, correction=None):
     return (a, where, out, mean)
 
 
 @array_function_dispatch(_std_dispatcher)
 def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
-        where=np._NoValue, mean=np._NoValue):
+        where=np._NoValue, mean=np._NoValue, correction=np._NoValue):
     r"""
     Compute the standard deviation along the specified axis.
 
@@ -3592,7 +3605,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         Alternative output array in which to place the result. It must have
         the same shape as the expected output but the type (of the calculated
         values) will be cast if necessary.
-    ddof : int, optional
+    ddof : {int, float}, optional
         Means Delta Degrees of Freedom.  The divisor used in calculations
         is ``N - ddof``, where ``N`` represents the number of elements.
         By default `ddof` is zero. See Notes for details about use of `ddof`.
@@ -3612,13 +3625,19 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
         .. versionadded:: 1.20.0
 
-    mean : array like, optional
+    mean : array_like, optional
         Provide the mean to prevent its recalculation. The mean should have
         a shape as if it was calculated with ``keepdims=True``.
         The axis for the calculation of the mean should be the same as used in
         the call to this std function.
 
         .. versionadded:: 1.26.0
+
+    correction : {int, float}, optional
+        Array API compatible name for the ``ddof`` parameter. Only one of them
+        can be provided at the same time.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -3736,6 +3755,14 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     if mean is not np._NoValue:
         kwargs['mean'] = mean
 
+    if correction != np._NoValue:
+        if ddof != 0:
+            raise ValueError(
+                "ddof and correction can't be provided simultaneously."
+            )
+        else:
+            ddof = correction
+
     if type(a) is not mu.ndarray:
         try:
             std = a.std
@@ -3749,13 +3776,13 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
 
 def _var_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
-                    keepdims=None, *, where=None, mean=None):
+                    keepdims=None, *, where=None, mean=None, correction=None):
     return (a, where, out, mean)
 
 
 @array_function_dispatch(_var_dispatcher)
 def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
-        where=np._NoValue, mean=np._NoValue):
+        where=np._NoValue, mean=np._NoValue, correction=np._NoValue):
     r"""
     Compute the variance along the specified axis.
 
@@ -3784,7 +3811,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         Alternate output array in which to place the result.  It must have
         the same shape as the expected output, but the type is cast if
         necessary.
-    ddof : int, optional
+    ddof : {int, float}, optional
         "Delta Degrees of Freedom": the divisor used in the calculation is
         ``N - ddof``, where ``N`` represents the number of elements. By
         default `ddof` is zero. See notes for details about use of `ddof`.
@@ -3811,6 +3838,12 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         the call to this var function.
 
         .. versionadded:: 1.26.0
+
+    correction : {int, float}, optional
+        Array API compatible name for the ``ddof`` parameter. Only one of them
+        can be provided at the same time.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -3926,6 +3959,14 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         kwargs['where'] = where
     if mean is not np._NoValue:
         kwargs['mean'] = mean
+
+    if correction != np._NoValue:
+        if ddof != 0:
+            raise ValueError(
+                "ddof and correction can't be provided simultaneously."
+            )
+        else:
+            ddof = correction
 
     if type(a) is not mu.ndarray:
         try:

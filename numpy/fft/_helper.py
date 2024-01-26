@@ -121,7 +121,7 @@ def ifftshift(x, axes=None):
 
 
 @set_module('numpy.fft')
-def fftfreq(n, d=1.0):
+def fftfreq(n, d=1.0, device=None):
     """
     Return the Discrete Fourier Transform sample frequencies.
 
@@ -140,6 +140,11 @@ def fftfreq(n, d=1.0):
         Window length.
     d : scalar, optional
         Sample spacing (inverse of the sampling rate). Defaults to 1.
+    device : str, optional
+        The device on which to place the created array. Default: ``None``.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -160,17 +165,17 @@ def fftfreq(n, d=1.0):
     if not isinstance(n, integer_types):
         raise ValueError("n should be an integer")
     val = 1.0 / (n * d)
-    results = empty(n, int)
+    results = empty(n, int, device=device)
     N = (n-1)//2 + 1
-    p1 = arange(0, N, dtype=int)
+    p1 = arange(0, N, dtype=int, device=device)
     results[:N] = p1
-    p2 = arange(-(n//2), 0, dtype=int)
+    p2 = arange(-(n//2), 0, dtype=int, device=device)
     results[N:] = p2
     return results * val
 
 
 @set_module('numpy.fft')
-def rfftfreq(n, d=1.0):
+def rfftfreq(n, d=1.0, device=None):
     """
     Return the Discrete Fourier Transform sample frequencies
     (for usage with rfft, irfft).
@@ -193,6 +198,11 @@ def rfftfreq(n, d=1.0):
         Window length.
     d : scalar, optional
         Sample spacing (inverse of the sampling rate). Defaults to 1.
+    device : str, optional
+        The device on which to place the created array. Default: ``None``.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -217,5 +227,5 @@ def rfftfreq(n, d=1.0):
         raise ValueError("n should be an integer")
     val = 1.0/(n*d)
     N = n//2 + 1
-    results = arange(0, N, dtype=int)
+    results = arange(0, N, dtype=int, device=device)
     return results * val

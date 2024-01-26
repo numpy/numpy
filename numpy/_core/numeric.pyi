@@ -3,7 +3,7 @@ from typing import (
     Any,
     overload,
     TypeVar,
-    Literal,
+    Literal as L,
     SupportsAbs,
     SupportsIndex,
     NoReturn,
@@ -53,7 +53,7 @@ _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
-_CorrelateMode = Literal["valid", "same", "full"]
+_CorrelateMode = L["valid", "same", "full"]
 
 __all__: list[str]
 
@@ -62,8 +62,10 @@ def zeros_like(
     a: _ArrayType,
     dtype: None = ...,
     order: _OrderKACF = ...,
-    subok: Literal[True] = ...,
+    subok: L[True] = ...,
     shape: None = ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> _ArrayType: ...
 @overload
 def zeros_like(
@@ -72,6 +74,8 @@ def zeros_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike = ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def zeros_like(
@@ -80,6 +84,8 @@ def zeros_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike= ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[Any]: ...
 @overload
 def zeros_like(
@@ -88,6 +94,8 @@ def zeros_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike= ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def zeros_like(
@@ -96,6 +104,8 @@ def zeros_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike= ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -104,6 +114,7 @@ def ones(
     dtype: None = ...,
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
@@ -112,6 +123,7 @@ def ones(
     dtype: _DTypeLike[_SCT],
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -120,6 +132,7 @@ def ones(
     dtype: DTypeLike,
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
@@ -128,8 +141,10 @@ def ones_like(
     a: _ArrayType,
     dtype: None = ...,
     order: _OrderKACF = ...,
-    subok: Literal[True] = ...,
+    subok: L[True] = ...,
     shape: None = ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> _ArrayType: ...
 @overload
 def ones_like(
@@ -138,6 +153,8 @@ def ones_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike = ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def ones_like(
@@ -146,6 +163,8 @@ def ones_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike= ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[Any]: ...
 @overload
 def ones_like(
@@ -154,6 +173,8 @@ def ones_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike= ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def ones_like(
@@ -162,6 +183,8 @@ def ones_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike= ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -171,6 +194,7 @@ def full(
     dtype: None = ...,
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
@@ -180,6 +204,7 @@ def full(
     dtype: _DTypeLike[_SCT],
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -189,6 +214,7 @@ def full(
     dtype: DTypeLike,
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
@@ -198,8 +224,10 @@ def full_like(
     fill_value: Any,
     dtype: None = ...,
     order: _OrderKACF = ...,
-    subok: Literal[True] = ...,
+    subok: L[True] = ...,
     shape: None = ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> _ArrayType: ...
 @overload
 def full_like(
@@ -209,6 +237,8 @@ def full_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike = ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def full_like(
@@ -218,6 +248,8 @@ def full_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike= ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[Any]: ...
 @overload
 def full_like(
@@ -227,6 +259,8 @@ def full_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike= ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def full_like(
@@ -236,6 +270,8 @@ def full_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike= ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -243,7 +279,7 @@ def count_nonzero(
     a: ArrayLike,
     axis: None = ...,
     *,
-    keepdims: Literal[False] = ...,
+    keepdims: L[False] = ...,
 ) -> int: ...
 @overload
 def count_nonzero(
@@ -587,37 +623,37 @@ def cross(
 def indices(
     dimensions: Sequence[int],
     dtype: type[int] = ...,
-    sparse: Literal[False] = ...,
+    sparse: L[False] = ...,
 ) -> NDArray[int_]: ...
 @overload
 def indices(
     dimensions: Sequence[int],
     dtype: type[int] = ...,
-    sparse: Literal[True] = ...,
+    sparse: L[True] = ...,
 ) -> tuple[NDArray[int_], ...]: ...
 @overload
 def indices(
     dimensions: Sequence[int],
     dtype: _DTypeLike[_SCT],
-    sparse: Literal[False] = ...,
+    sparse: L[False] = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def indices(
     dimensions: Sequence[int],
     dtype: _DTypeLike[_SCT],
-    sparse: Literal[True],
+    sparse: L[True],
 ) -> tuple[NDArray[_SCT], ...]: ...
 @overload
 def indices(
     dimensions: Sequence[int],
     dtype: DTypeLike,
-    sparse: Literal[False] = ...,
+    sparse: L[False] = ...,
 ) -> NDArray[Any]: ...
 @overload
 def indices(
     dimensions: Sequence[int],
     dtype: DTypeLike,
-    sparse: Literal[True],
+    sparse: L[True],
 ) -> tuple[NDArray[Any], ...]: ...
 
 def fromfunction(

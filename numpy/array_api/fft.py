@@ -13,7 +13,7 @@ from ._dtypes import (
     float32,
     complex64,
 )
-from ._array_object import Array
+from ._array_object import Array, CPU_DEVICE
 from ._data_type_functions import astype
 
 import numpy as np
@@ -244,7 +244,7 @@ def fftfreq(n: int, /, *, d: float = 1.0, device: Optional[Device] = None) -> Ar
 
     See its docstring for more information.
     """
-    if device not in ["cpu", None]:
+    if device not in [CPU_DEVICE, None]:
         raise ValueError(f"Unsupported device {device!r}")
     return Array._new(np.fft.fftfreq(n, d=d))
 
@@ -254,7 +254,7 @@ def rfftfreq(n: int, /, *, d: float = 1.0, device: Optional[Device] = None) -> A
 
     See its docstring for more information.
     """
-    if device not in ["cpu", None]:
+    if device not in [CPU_DEVICE, None]:
         raise ValueError(f"Unsupported device {device!r}")
     return Array._new(np.fft.rfftfreq(n, d=d))
 

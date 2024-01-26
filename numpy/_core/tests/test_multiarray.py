@@ -2043,6 +2043,12 @@ class TestMethods:
         b = np.sort(a)
         assert_equal(b, a[::-1], msg)
 
+        with assert_raises_regex(
+            ValueError,
+            "kind` and `stable` parameters can't be provided at the same time"
+        ):
+            np.sort(a, kind="stable", stable=True)
+
     # all c scalar sorts use the same code with different types
     # so it suffices to run a quick check with one type. The number
     # of sorted items must be greater than ~50 to check the actual
@@ -2480,6 +2486,12 @@ class TestMethods:
         # unicode
         a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.str_)
         assert_equal(a.argsort(kind='m'), r)
+
+        with assert_raises_regex(
+            ValueError,
+            "kind` and `stable` parameters can't be provided at the same time"
+        ):
+            np.argsort(a, kind="stable", stable=True)
 
     def test_sort_unicode_kind(self):
         d = np.arange(10)
@@ -9424,9 +9436,14 @@ class TestArange:
         assert_raises(TypeError, np.arange, start=4)
 
     def test_start_stop_kwarg(self):
+        with pytest.raises(TypeError):
+            # Start cannot be passed as a kwarg anymore, because on it's own
+            # it would be strange.
+            np.arange(start=0, stop=3)
+
         keyword_stop = np.arange(stop=3)
-        keyword_zerotostop = np.arange(start=0, stop=3)
-        keyword_start_stop = np.arange(start=3, stop=9)
+        keyword_zerotostop = np.arange(0, stop=3)
+        keyword_start_stop = np.arange(3, stop=9)
 
         assert len(keyword_stop) == 3
         assert len(keyword_zerotostop) == 3
@@ -9613,7 +9630,7 @@ def test_equal_subclass_no_override(op, dt1, dt2):
     class MyArr(np.ndarray):
         called_wrap = 0
 
-        def __array_wrap__(self, new):
+        def __array_wrap__(self, new, context=None, return_scalar=False):
             type(self).called_wrap += 1
             return super().__array_wrap__(new)
 
@@ -10079,3 +10096,29 @@ def test_partition_fp(N, dtype):
             np.partition(arr, k, kind='introselect'))
     assert_arr_partitioned(np.sort(arr)[k], k,
             arr[np.argpartition(arr, k, kind='introselect')])
+
+
+class TestDevice:
+    """
+    Test arr.device attribute and arr.to_device() method.
+    """
+    def test_device(self):
+        arr = np.arange(5)
+
+        assert arr.device == "cpu"
+        with assert_raises_regex(
+            AttributeError,
+            r"attribute 'device' of '(numpy.|)ndarray' objects is "
+            r"not writable"
+        ):
+            arr.device = "other"
+
+    def test_to_device(self):
+        arr = np.arange(5)
+
+        assert arr.to_device("cpu") is arr
+        with assert_raises_regex(
+            ValueError,
+            r"The stream argument in to_device\(\) is not supported"
+        ):
+            arr.to_device("cpu", stream=1)

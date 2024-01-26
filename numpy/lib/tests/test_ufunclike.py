@@ -57,7 +57,7 @@ class TestUfunclike:
                 res.metadata = metadata
                 return res
 
-            def __array_wrap__(self, obj, context=None):
+            def __array_wrap__(self, obj, context=None, return_scalar=False):
                 if not isinstance(obj, MyArray):
                     obj = obj.view(MyArray)
                 if obj.metadata is None:

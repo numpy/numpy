@@ -14,7 +14,7 @@ from numpy._core.numeric import (
     )
 from numpy._core.umath import (
     pi, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
-    mod, exp, not_equal, subtract
+    mod, exp, not_equal, subtract, minimum
     )
 from numpy._core.fromnumeric import (
     ravel, nonzero, partition, mean, any, sum
@@ -25,6 +25,7 @@ from numpy._core.multiarray import (
     _place, bincount, normalize_axis_index, _monotonicity,
     interp as compiled_interp, interp_complex as compiled_interp_complex
     )
+from numpy._core._multiarray_umath import _array_converter
 from numpy._utils import set_module
 
 # needed in this module for compatibility
@@ -386,6 +387,31 @@ def iterable(y):
     return True
 
 
+def _weights_are_valid(weights, a, axis):
+    """Validate weights array.
+    
+    We assume, weights is not None.
+    """
+    wgt = np.asanyarray(weights)
+
+    # Sanity checks
+    if a.shape != wgt.shape:
+        if axis is None:
+            raise TypeError(
+                "Axis must be specified when shapes of a and weights "
+                "differ.")
+        if wgt.shape != tuple(a.shape[ax] for ax in axis):
+            raise ValueError(
+                "Shape of weights must be consistent with "
+                "shape of a along specified axis.")
+
+        # setup wgt to broadcast along axis
+        wgt = wgt.transpose(np.argsort(axis))
+        wgt = wgt.reshape(tuple((s if ax in axis else 1)
+                                for ax, s in enumerate(a.shape)))
+    return wgt
+
+
 def _average_dispatcher(a, axis=None, weights=None, returned=None, *,
                         keepdims=None):
     return (a, weights)
@@ -534,28 +560,12 @@ def average(a, axis=None, weights=None, returned=False, *,
         avg_as_array = np.asanyarray(avg)
         scl = avg_as_array.dtype.type(a.size/avg_as_array.size)
     else:
-        wgt = np.asanyarray(weights)
+        wgt = _weights_are_valid(weights=weights, a=a, axis=axis)
 
         if issubclass(a.dtype.type, (np.integer, np.bool)):
             result_dtype = np.result_type(a.dtype, wgt.dtype, 'f8')
         else:
             result_dtype = np.result_type(a.dtype, wgt.dtype)
-
-        # Sanity checks
-        if a.shape != wgt.shape:
-            if axis is None:
-                raise TypeError(
-                    "Axis must be specified when shapes of a and weights "
-                    "differ.")
-            if wgt.shape != tuple(a.shape[ax] for ax in axis):
-                raise ValueError(
-                    "Shape of weights must be consistent with "
-                    "shape of a along specified axis.")
-
-            # setup wgt to broadcast along axis
-            wgt = wgt.transpose(np.argsort(axis))
-            wgt = wgt.reshape(tuple((s if ax in axis else 1)
-                                    for ax, s in enumerate(a.shape)))
 
         scl = wgt.sum(axis=axis, dtype=result_dtype, **keepdims_kw)
         if np.any(scl == 0.0):
@@ -3941,8 +3951,9 @@ def _median(a, axis=None, out=None, overwrite_input=False):
 
 
 def _percentile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                           method=None, keepdims=None, *, interpolation=None):
-    return (a, q, out)
+                           method=None, keepdims=None, *, weights=None,
+                           interpolation=None):
+    return (a, q, out, weights)
 
 
 @array_function_dispatch(_percentile_dispatcher)
@@ -3954,6 +3965,7 @@ def percentile(a,
                method="linear",
                keepdims=False,
                *,
+               weights=None,
                interpolation=None):
     """
     Compute the q-th percentile of the data along the specified axis.
@@ -4017,6 +4029,18 @@ def percentile(a,
 
         .. versionadded:: 1.9.0
 
+     weights : array_like, optional
+        An array of weights associated with the values in `a`. Each value in
+        `a` contributes to the percentile according to its associated weight.
+        The weights array can either be 1-D (in which case its length must be
+        the size of `a` along the given axis) or of the same shape as `a`.
+        If `weights=None`, then all data in `a` are assumed to have a
+        weight equal to one.
+        Only `method="inverted_cdf"` supports weights.
+        See the notes for more details.
+
+        .. versionadded:: 2.0.0
+
     interpolation : str, optional
         Deprecated name for the method keyword argument.
 
@@ -4043,14 +4067,34 @@ def percentile(a,
 
     Notes
     -----
-    Given a vector ``V`` of length ``n``, the q-th percentile of ``V`` is
-    the value ``q/100`` of the way from the minimum to the maximum in a
-    sorted copy of ``V``. The values and distances of the two nearest
-    neighbors as well as the `method` parameter will determine the
-    percentile if the normalized ranking does not match the location of
-    ``q`` exactly. This function is the same as the median if ``q=50``, the
-    same as the minimum if ``q=0`` and the same as the maximum if
-    ``q=100``.
+    In general, the percentile at percentage level :math:`q` of a cumulative
+    distribution function :math:`F(y)=P(Y \\leq y)` with probability measure
+    :math:`P` is defined as any number :math:`x` that fulfills the
+    *coverage conditions*
+
+    .. math:: P(Y < x) \\leq q/100 \\quad\\text{and}
+              \\quad P(Y \\leq x) \\geq q/100
+
+    with random variable :math:`Y\\sim P`.
+    Sample percentiles, the result of ``percentile``, provide nonparametric
+    estimation of the underlying population counterparts, represented by the
+    unknown :math:`F`, given a data vector ``a`` of length ``n``.
+
+    One type of estimators arises when one considers :math:`F` as the empirical
+    distribution function of the data, i.e.
+    :math:`F(y) = \\frac{1}{n} \\sum_i 1_{a_i \\leq y}`.
+    Then, different methods correspond to different choices of :math:`x` that
+    fulfill the above inequalities. Methods that follow this approach are
+    ``inverted_cdf`` and ``averaged_inverted_cdf``.
+
+    A more general way to define sample percentile estimators is as follows.
+    The empirical q-percentile of ``a`` is the ``n * q/100``-th value of the
+    way from the minimum to the maximum in a sorted copy of ``a``. The values
+    and distances of the two nearest neighbors as well as the `method`
+    parameter will determine the percentile if the normalized ranking does not
+    match the location of ``n * q/100`` exactly. This function is the same as
+    the median if ``q=50``, the same as the minimum if ``q=0`` and the same
+    as the maximum if ``q=100``.
 
     The optional `method` parameter specifies the method to use when the
     desired percentile lies between two indexes ``i`` and ``j = i + 1``.
@@ -4155,6 +4199,13 @@ def percentile(a,
         NumPy method kept for backwards compatibility.
         Uses ``(i + j) / 2``.
 
+    For weighted percentiles, the above coverage conditions still hold. The
+    empirical cumulative distribution is simply replaced by its weighted
+    version, i.e.
+    :math:`P(Y \\leq t) = \\frac{1}{\\sum_i w_i} \\sum_i w_i 1_{x_i \\leq t}`.
+    Only ``method="inverted_cdf"`` supports weights.
+
+
     Examples
     --------
     >>> a = np.array([[10, 7, 4], [3, 2, 1]])
@@ -4238,13 +4289,26 @@ def percentile(a,
     q = asanyarray(q)  # undo any decay that the ufunc performed (see gh-13105)
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
+
+    if weights is not None:
+        if method != "inverted_cdf":
+            msg = ("Only method 'inverted_cdf' supports weights. "
+                   f"Got: {method}.")
+            raise ValueError(msg)
+        if axis is not None:
+            axis = _nx.normalize_axis_tuple(axis, a.ndim, argname="axis")
+        weights = _weights_are_valid(weights=weights, a=a, axis=axis)
+        if np.any(weights < 0):
+            raise ValueError("Weights must be non-negative.")
+
     return _quantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims)
+        a, q, axis, out, overwrite_input, method, keepdims, weights)
 
 
 def _quantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                         method=None, keepdims=None, *, interpolation=None):
-    return (a, q, out)
+                         method=None, keepdims=None, *, weights=None,
+                         interpolation=None):
+    return (a, q, out, weights)
 
 
 @array_function_dispatch(_quantile_dispatcher)
@@ -4256,6 +4320,7 @@ def quantile(a,
              method="linear",
              keepdims=False,
              *,
+             weights=None,
              interpolation=None):
     """
     Compute the q-th quantile of the data along the specified axis.
@@ -4314,6 +4379,18 @@ def quantile(a,
         the result as dimensions with size one. With this option, the
         result will broadcast correctly against the original array `a`.
 
+    weights : array_like, optional
+        An array of weights associated with the values in `a`. Each value in
+        `a` contributes to the quantile according to its associated weight.
+        The weights array can either be 1-D (in which case its length must be
+        the size of `a` along the given axis) or of the same shape as `a`.
+        If `weights=None`, then all data in `a` are assumed to have a
+        weight equal to one.
+        Only `method="inverted_cdf"` supports weights.
+        See the notes for more details.
+
+        .. versionadded:: 2.0.0
+
     interpolation : str, optional
         Deprecated name for the method keyword argument.
 
@@ -4340,14 +4417,33 @@ def quantile(a,
 
     Notes
     -----
-    Given a vector ``V`` of length ``n``, the q-th quantile of ``V`` is
-    the value ``q`` of the way from the minimum to the maximum in a
-    sorted copy of ``V``. The values and distances of the two nearest
-    neighbors as well as the `method` parameter will determine the
-    quantile if the normalized ranking does not match the location of
-    ``q`` exactly. This function is the same as the median if ``q=0.5``, the
-    same as the minimum if ``q=0.0`` and the same as the maximum if
-    ``q=1.0``.
+    In general, the quantile at probability level :math:`q` of a cumulative
+    distribution function :math:`F(y)=P(Y \\leq y)` with probability measure
+    :math:`P` is defined as any number :math:`x` that fulfills the
+    *coverage conditions*
+
+    .. math:: P(Y < x) \\leq q \\quad\\text{and}\\quad P(Y \\leq x) \\geq q
+
+    with random variable :math:`Y\\sim P`.
+    Sample quantiles, the result of ``quantile``, provide nonparametric
+    estimation of the underlying population counterparts, represented by the
+    unknown :math:`F`, given a data vector ``a`` of length ``n``.
+
+    One type of estimators arises when one considers :math:`F` as the empirical
+    distribution function of the data, i.e.
+    :math:`F(y) = \\frac{1}{n} \\sum_i 1_{a_i \\leq y}`.
+    Then, different methods correspond to different choices of :math:`x` that
+    fulfill the above inequalities. Methods that follow this approach are
+    ``inverted_cdf`` and ``averaged_inverted_cdf``.
+
+    A more general way to define sample quantile estimators is as follows.
+    The empirical q-quantile of ``a`` is the ``n * q``-th value of the
+    way from the minimum to the maximum in a sorted copy of ``a``. The values
+    and distances of the two nearest neighbors as well as the `method`
+    parameter will determine the quantile if the normalized ranking does not
+    match the location of ``n * q`` exactly. This function is the same as
+    the median if ``q=0.5``, the same as the minimum if ``q=0.0`` and the same
+    as the maximum if ``q=1.0``.
 
     The optional `method` parameter specifies the method to use when the
     desired quantile lies between two indexes ``i`` and ``j = i + 1``.
@@ -4452,6 +4548,13 @@ def quantile(a,
         NumPy method kept for backwards compatibility.
         Uses ``(i + j) / 2``.
 
+    **Weighted quantiles:**
+    For weighted quantiles, the above coverage conditions still hold. The
+    empirical cumulative distribution is simply replaced by its weighted
+    version, i.e. 
+    :math:`P(Y \\leq t) = \\frac{1}{\\sum_i w_i} \\sum_i w_i 1_{x_i \\leq t}`.
+    Only ``method="inverted_cdf"`` supports weights.
+
     Examples
     --------
     >>> a = np.array([[10, 7, 4], [3, 2, 1]])
@@ -4503,8 +4606,20 @@ def quantile(a,
 
     if not _quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
+
+    if weights is not None:
+        if method != "inverted_cdf":
+            msg = ("Only method 'inverted_cdf' supports weights. "
+                   f"Got: {method}.")
+            raise ValueError(msg)
+        if axis is not None:
+            axis = _nx.normalize_axis_tuple(axis, a.ndim, argname="axis")
+        weights = _weights_are_valid(weights=weights, a=a, axis=axis)
+        if np.any(weights < 0):
+            raise ValueError("Weights must be non-negative.")
+
     return _quantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims)
+        a, q, axis, out, overwrite_input, method, keepdims, weights)
 
 
 def _quantile_unchecked(a,
@@ -4513,11 +4628,13 @@ def _quantile_unchecked(a,
                         out=None,
                         overwrite_input=False,
                         method="linear",
-                        keepdims=False):
+                        keepdims=False,
+                        weights=None):
     """Assumes that q is in [0, 1], and is an ndarray"""
     return _ureduce(a,
                     func=_quantile_ureduce_func,
                     q=q,
+                    weights=weights,
                     keepdims=keepdims,
                     axis=axis,
                     out=out,
@@ -4661,6 +4778,7 @@ def _inverted_cdf(n, quantiles):
 def _quantile_ureduce_func(
         a: np.array,
         q: np.array,
+        weights: np.array,
         axis: int = None,
         out=None,
         overwrite_input: bool = False,
@@ -4675,19 +4793,24 @@ def _quantile_ureduce_func(
         if axis is None:
             axis = 0
             arr = a.ravel()
+            wgt = None if weights is None else weights.ravel()
         else:
             arr = a
+            wgt = weights
     else:
         if axis is None:
             axis = 0
             arr = a.flatten()
+            wgt = None if weights is None else weights.flatten()
         else:
             arr = a.copy()
+            wgt = weights
     result = _quantile(arr,
                        quantiles=q,
                        axis=axis,
                        method=method,
-                       out=out)
+                       out=out,
+                       weights=wgt)
     return result
 
 
@@ -4732,6 +4855,7 @@ def _quantile(
         axis: int = -1,
         method="linear",
         out=None,
+        weights=None,
 ):
     """
     Private function that doesn't support extended axis or keepdims.
@@ -4750,62 +4874,141 @@ def _quantile(
     values_count = arr.shape[axis]
     # The dimensions of `q` are prepended to the output shape, so we need the
     # axis being sampled from `arr` to be last.
-
     if axis != 0:  # But moveaxis is slow, so only call it if necessary.
         arr = np.moveaxis(arr, axis, destination=0)
-    # --- Computation of indexes
-    # Index where to find the value in the sorted array.
-    # Virtual because it is a floating point value, not an valid index.
-    # The nearest neighbours are used for interpolation
-    try:
-        method = _QuantileMethods[method]
-    except KeyError:
-        raise ValueError(
-            f"{method!r} is not a valid method. Use one of: "
-            f"{_QuantileMethods.keys()}") from None
-    virtual_indexes = method["get_virtual_index"](values_count, quantiles)
-    virtual_indexes = np.asanyarray(virtual_indexes)
-
     supports_nans = (
-            np.issubdtype(arr.dtype, np.inexact) or arr.dtype.kind in 'Mm')
+        np.issubdtype(arr.dtype, np.inexact) or arr.dtype.kind in 'Mm'
+    )
 
-    if np.issubdtype(virtual_indexes.dtype, np.integer):
-        # No interpolation needed, take the points along axis
+    if weights is None:
+        # --- Computation of indexes
+        # Index where to find the value in the sorted array.
+        # Virtual because it is a floating point value, not an valid index.
+        # The nearest neighbours are used for interpolation
+        try:
+            method = _QuantileMethods[method]
+        except KeyError:
+            raise ValueError(
+                f"{method!r} is not a valid method. Use one of: "
+                f"{_QuantileMethods.keys()}") from None
+        virtual_indexes = method["get_virtual_index"](values_count, quantiles)
+        virtual_indexes = np.asanyarray(virtual_indexes)
+
+        if np.issubdtype(virtual_indexes.dtype, np.integer):
+            # No interpolation needed, take the points along axis
+            if supports_nans:
+                # may contain nan, which would sort to the end
+                arr.partition(
+                    concatenate((virtual_indexes.ravel(), [-1])), axis=0,
+                )
+                slices_having_nans = np.isnan(arr[-1, ...])
+            else:
+                # cannot contain nan
+                arr.partition(virtual_indexes.ravel(), axis=0)
+                slices_having_nans = np.array(False, dtype=bool)
+            result = take(arr, virtual_indexes, axis=0, out=out)
+        else:
+            previous_indexes, next_indexes = _get_indexes(arr,
+                                                          virtual_indexes,
+                                                          values_count)
+            # --- Sorting
+            arr.partition(
+                np.unique(np.concatenate(([0, -1],
+                                          previous_indexes.ravel(),
+                                          next_indexes.ravel(),
+                                          ))),
+                axis=0)
+            if supports_nans:
+                slices_having_nans = np.isnan(arr[-1, ...])
+            else:
+                slices_having_nans = None
+            # --- Get values from indexes
+            previous = arr[previous_indexes]
+            next = arr[next_indexes]
+            # --- Linear interpolation
+            gamma = _get_gamma(virtual_indexes, previous_indexes, method)
+            result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
+            gamma = gamma.reshape(result_shape)
+            result = _lerp(previous,
+                        next,
+                        gamma,
+                        out=out)
+    else:
+        # Weighted case
+        # This implements method="inverted_cdf", the only supported weighted
+        # method, which needs to sort anyway.
+        weights = np.asanyarray(weights)
+        if axis != 0:
+            weights = np.moveaxis(weights, axis, destination=0)
+        index_array = np.argsort(arr, axis=0, kind="stable")
+
+        # arr = arr[index_array, ...]  # but this adds trailing dimensions of
+        # 1.
+        arr = np.take_along_axis(arr, index_array, axis=0)
+        if weights.shape == arr.shape:
+            weights = np.take_along_axis(weights, index_array, axis=0)
+        else:
+            # weights is 1d
+            weights = weights.reshape(-1)[index_array, ...]
+
         if supports_nans:
             # may contain nan, which would sort to the end
-            arr.partition(concatenate((virtual_indexes.ravel(), [-1])), axis=0)
             slices_having_nans = np.isnan(arr[-1, ...])
         else:
             # cannot contain nan
-            arr.partition(virtual_indexes.ravel(), axis=0)
             slices_having_nans = np.array(False, dtype=bool)
-        result = take(arr, virtual_indexes, axis=0, out=out)
-    else:
-        previous_indexes, next_indexes = _get_indexes(arr,
-                                                      virtual_indexes,
-                                                      values_count)
-        # --- Sorting
-        arr.partition(
-            np.unique(np.concatenate(([0, -1],
-                                      previous_indexes.ravel(),
-                                      next_indexes.ravel(),
-                                      ))),
-            axis=0)
-        if supports_nans:
-            slices_having_nans = np.isnan(arr[-1, ...])
+
+        # We use the weights to calculate the empirical cumulative
+        # distribution function cdf
+        cdf = weights.cumsum(axis=0, dtype=np.float64)
+        cdf /= cdf[-1, ...]  # normalization to 1
+        # Search index i such that
+        #   sum(weights[j], j=0..i-1) < quantile <= sum(weights[j], j=0..i)
+        # is then equivalent to
+        #   cdf[i-1] < quantile <= cdf[i]
+        # Unfortunately, searchsorted only accepts 1-d arrays as first
+        # argument, so we will need to iterate over dimensions.
+
+        # Without the following cast, searchsorted can return surprising
+        # results, e.g.
+        #   np.searchsorted(np.array([0.2, 0.4, 0.6, 0.8, 1.]),
+        #                   np.array(0.4, dtype=np.float32), side="left")
+        # returns 2 instead of 1 because 0.4 is not binary representable.
+        if quantiles.dtype.kind == "f":
+            cdf = cdf.astype(quantiles.dtype)
+
+        def find_cdf_1d(arr, cdf):
+            indices = np.searchsorted(cdf, quantiles, side="left")
+            # We might have reached the maximum with i = len(arr), e.g. for
+            # quantiles = 1, and need to cut it to len(arr) - 1.
+            indices = minimum(indices, values_count - 1)
+            result = take(arr, indices, axis=0)
+            return result
+
+        r_shape = arr.shape[1:]
+        if quantiles.ndim > 0: 
+            r_shape = quantiles.shape + r_shape
+        if out is None:
+            result = np.empty_like(arr, shape=r_shape)
         else:
-            slices_having_nans = None
-        # --- Get values from indexes
-        previous = arr[previous_indexes]
-        next = arr[next_indexes]
-        # --- Linear interpolation
-        gamma = _get_gamma(virtual_indexes, previous_indexes, method)
-        result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
-        gamma = gamma.reshape(result_shape)
-        result = _lerp(previous,
-                       next,
-                       gamma,
-                       out=out)
+            if out.shape != r_shape:
+                msg = (f"Wrong shape of argument 'out', shape={r_shape} is "
+                       f"required; got shape={out.shape}.")
+                raise ValueError(msg)
+            result = out
+
+        # See apply_along_axis, which we do for axis=0. Note that Ni = (,)
+        # always, so we remove it here.
+        Nk = arr.shape[1:]
+        for kk in np.ndindex(Nk):
+            result[(...,) + kk] = find_cdf_1d(
+                arr[np.s_[:, ] + kk], cdf[np.s_[:, ] + kk]
+            )
+
+        # Make result the same as in unweighted inverted_cdf.
+        if result.shape == () and result.dtype == np.dtype("O"):
+            result = result.item()
+
     if np.any(slices_having_nans):
         if result.ndim == 0 and out is None:
             # can't write to a scalar, but indexing will be correct
@@ -4986,7 +5189,7 @@ def _meshgrid_dispatcher(*xi, copy=None, sparse=None, indexing=None):
 @array_function_dispatch(_meshgrid_dispatcher)
 def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     """
-    Return a list of coordinate matrices from coordinate vectors.
+    Return a tuple of coordinate matrices from coordinate vectors.
 
     Make N-D coordinate arrays for vectorized evaluations of
     N-D scalar/vector fields over N-D grids, given
@@ -5027,7 +5230,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
     Returns
     -------
-    X1, X2,..., XN : list of ndarrays
+    X1, X2,..., XN : tuple of ndarrays
         For vectors `x1`, `x2`,..., `xn` with lengths ``Ni=len(xi)``,
         returns ``(N1, N2, N3,..., Nn)`` shaped arrays if indexing='ij'
         or ``(N2, N1, N3,..., Nn)`` shaped arrays if indexing='xy'
@@ -5136,7 +5339,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
         output = np.broadcast_arrays(*output, subok=True)
 
     if copy:
-        output = [x.copy() for x in output]
+        output = tuple(x.copy() for x in output)
 
     return output
 
@@ -5210,14 +5413,9 @@ def delete(arr, obj, axis=None):
     array([ 1,  3,  5,  7,  8,  9, 10, 11, 12])
 
     """
-    wrap = None
-    if type(arr) is not ndarray:
-        try:
-            wrap = arr.__array_wrap__
-        except AttributeError:
-            pass
+    conv = _array_converter(arr)
+    arr, = conv.as_arrays(subok=False)
 
-    arr = asarray(arr)
     ndim = arr.ndim
     arrorder = 'F' if arr.flags.fnc else 'C'
     if axis is None:
@@ -5239,10 +5437,7 @@ def delete(arr, obj, axis=None):
         numtodel = len(xr)
 
         if numtodel <= 0:
-            if wrap:
-                return wrap(arr.copy(order=arrorder))
-            else:
-                return arr.copy(order=arrorder)
+            return conv.wrap(arr.copy(order=arrorder), to_scalar=False)
 
         # Invert if step is negative:
         if step < 0:
@@ -5278,10 +5473,8 @@ def delete(arr, obj, axis=None):
             arr = arr[tuple(slobj2)]
             slobj2[axis] = keep
             new[tuple(slobj)] = arr[tuple(slobj2)]
-        if wrap:
-            return wrap(new)
-        else:
-            return new
+
+        return conv.wrap(new, to_scalar=False)
 
     if isinstance(obj, (int, integer)) and not isinstance(obj, bool):
         single_value = True
@@ -5331,10 +5524,7 @@ def delete(arr, obj, axis=None):
         slobj[axis] = keep
         new = arr[tuple(slobj)]
 
-    if wrap:
-        return wrap(new)
-    else:
-        return new
+    return conv.wrap(new, to_scalar=False)
 
 
 def _insert_dispatcher(arr, obj, values, axis=None):
@@ -5430,14 +5620,9 @@ def insert(arr, obj, values, axis=None):
            [  4, 999,   5,   6, 999,   7]])
 
     """
-    wrap = None
-    if type(arr) is not ndarray:
-        try:
-            wrap = arr.__array_wrap__
-        except AttributeError:
-            pass
+    conv = _array_converter(arr)
+    arr, = conv.as_arrays(subok=False)
 
-    arr = asarray(arr)
     ndim = arr.ndim
     arrorder = 'F' if arr.flags.fnc else 'C'
     if axis is None:
@@ -5502,9 +5687,9 @@ def insert(arr, obj, values, axis=None):
         slobj2 = [slice(None)] * ndim
         slobj2[axis] = slice(index, None)
         new[tuple(slobj)] = arr[tuple(slobj2)]
-        if wrap:
-            return wrap(new)
-        return new
+
+        return conv.wrap(new, to_scalar=False)
+
     elif indices.size == 0 and not isinstance(obj, np.ndarray):
         # Can safely cast the empty list to intp
         indices = indices.astype(intp)
@@ -5526,9 +5711,7 @@ def insert(arr, obj, values, axis=None):
     new[tuple(slobj)] = values
     new[tuple(slobj2)] = arr
 
-    if wrap:
-        return wrap(new)
-    return new
+    return conv.wrap(new, to_scalar=False)
 
 
 def _append_dispatcher(arr, values, axis=None):
