@@ -1,0 +1,3 @@
+spin
+scipy-openblas64<0.3.26
+scipy-openblas32<0.3.26

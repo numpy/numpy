@@ -55,8 +55,7 @@ jobs:
         python -m venv test_env
         source test_env/bin/activate
 
-        pip install scipy-openblas64
-
+        pip install -r ci_requirements.txt
         pip install -r build_requirements.txt -r test_requirements.txt
 
         # use meson to build and test 
