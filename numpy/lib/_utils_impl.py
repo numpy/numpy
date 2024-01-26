@@ -261,7 +261,8 @@ def deprecate_with_doc(msg):
 
     See Also
     --------
-    deprecate : Decorate a function such that it issues a :exc:`DeprecationWarning`
+    deprecate : Decorate a function such that it issues a
+                :exc:`DeprecationWarning`
 
     Parameters
     ----------
