@@ -1180,7 +1180,7 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     identifier '->' as well as the list of output subscript labels.
     This feature increases the flexibility of the function since
     summing can be disabled or forced when required. The call
-    ``np.einsum('i->', a)`` is like
+    ``np.einsum('...i->...', a)`` is like
     :py:func:`np.sum(a, axis=-1) <numpy.sum>`, and ``np.einsum('ii->i', a)``
     is like :py:func:`np.diag(a) <numpy.diag>`. The difference is that
     `einsum` does not allow broadcasting by default. Additionally
