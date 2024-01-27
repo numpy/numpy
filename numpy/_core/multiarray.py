@@ -137,9 +137,11 @@ def empty_like(
 
     Notes
     -----
-    This function does *not* initialize the returned array; to do that use
-    `zeros_like` or `ones_like` instead.  It may be marginally faster than
-    the functions that do set the array values.
+    Unlike other array creation functions (e.g. `zeros_like`, `ones_like`,
+    `full_like`), `empty_like` does not initialize the values of the array,
+    and may therefore be marginally faster. However, the values stored in the
+    newly allocated array are arbitrary. For reproducible behavior, be sure
+    to set each element of the array before reading.
 
     Examples
     --------

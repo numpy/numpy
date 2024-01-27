@@ -1226,13 +1226,13 @@ add_newdoc('numpy._core.multiarray', 'empty',
     zeros : Return a new array setting values to zero.
     full : Return a new array of given shape filled with value.
 
-
     Notes
     -----
-    `empty`, unlike `zeros`, does not set the array values to zero,
-    and may therefore be marginally faster.  On the other hand, it requires
-    the user to manually set all the values in the array, and should be
-    used with caution.
+    Unlike other array creation functions (e.g. `zeros`, `ones`, `full`),
+    `empty` does not initialize the values of the array, and may therefore be
+    marginally faster. However, the values stored in the newly allocated array
+    are arbitrary. For reproducible behavior, be sure to set each element of
+    the array before reading.
 
     Examples
     --------
