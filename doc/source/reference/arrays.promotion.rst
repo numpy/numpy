@@ -6,90 +6,104 @@
 Data type promotion in NumPy
 ****************************
 
-When mixing two different data types NumPy has to find the correct dtype for
-the result of the operation.  This step is referred *promotion* or finding
-the common dtype.
-In most you do not have to know much about the details of promotion since
-the promotion step generally ensures that the result of:
-1. Combining multiple arrays e.g. with ``np.concatenate``
-2. The evaluation of any mathematical operation
+When mixing two different data types, NumPy has to determine the appropriate
+dtype for the result of the operation. This step is referred to as *promotion*
+or *finding the common dtype*.
 
-will return in a result that either matches its input dtypes or has a higher
-precision.
-The ``dtype`` of the result can be found using the `result_type` and
-`promote_types` functions for most (but not all) operations.
+In typical cases, the user does not need to worry about the details of
+promotion, since the promotion step usually ensures that the result will
+either match or exceed the precision of the input.
 
-These are examples, for howNumPy behaves for both arrays and scalar
-operations.  Here the result matches the input:
+For example, when the inputs are of the same dtype, the dtype of the result
+matches the dtype of the inputs:
 
   >>> np.int8(1) + np.int8(1)
   np.int8(2)
 
-While mixing two different ``dtypes`` normally results in the larger of both:
+Mixing two different dtypes normally produces a result with the dtype of the
+higher precision input:
 
-  >>> np.int8(4) + np.int64(8)
+  >>> np.int8(4) + np.int64(8)  # 64 > 8
   np.int64(12)
-  >>> np.int16(3) + np.float64(3)
-  np.float64(6.0)
+  >>> np.float32(3) + np.float16(3)  # 32 > 16
+  np.float32(6.0)
 
-In the majority of cases, this should not lead to surprises.
-However, especially if you work with non-default datatypes like low
-precision integers or floats or unsigned integers there are some details
-of NumPy promotion rules which may be relevant to know.
-These detailed rules also do not always match those of many other languages.[#hist-reasons]_
+In typical cases, this does not lead to surprises. However, if you work with
+non-default dtypes like unsigned integers and low-precision floats, or if you
+mix NumPy integers, NumPy floats, and Python scalars, some
+details of NumPy promotion rules may be relevant. Note that these detailed
+rules do not always match those of other languages [#hist-reasons]_.
 
-For Numerical values, you can think of promotion happening in three kinds:
-``unsigned integers < signed integers < float < complex``,
-where the result will always be the highest kind of any of the inputs.
-Further, the result will always have a precision higher or equivalent than
-any of the inputs which leads to two some examples which may be unexpected:
-1. When mixing floating point numbers and integers, the integer ``dtype`` may
-   force the result to a higher precision floating point.
-2. When mixing unsigned and signed integers, the result will be a higher
-   precision than both inputs.  And an unfortunate surprise is that
-   ``int64`` and ``uint64`` can return floating point values.
+Numerical dtypes come in four "kinds" with a natural hierarchy.
+
+1. unsigned integers (``uint``)
+2. signed integers (``int``)
+3. float (``float``)
+4. complex (``complex``)
+
+In addition to kind, NumPy dtypes also have an associated precision, specified
+in bits. Together, the kind and precision specify the dtype. For example, a
+``uint8`` is an unsigned integer stored using 8 bits.
+
+The result of an operation will always be of an equal or higher kind of any of
+the inputs. Furthermore, the result will always have a precision greater than
+or equal to those of the inputs. Already, this can lead to some examples which
+may be unexpected:
+
+1. When mixing floating point numbers and integers, the precision of the
+   integer may force the result to a higher precision floating point. For
+   example, the result of an operation involving ``int64`` and ``float16``
+   is ``float64``.
+2. When mixing unsigned and signed integers with the same precision, the
+   result will have a *higher* precision than either inputs. For instance,
+   the result of an operation involving ``int64`` and ``uint64`` is
+   ``float64``.
 
 Please see the `Numerical promotion` section and image below for details
 on both.
 
 Detailed behavior of Python scalars
 -----------------------------------
-Since NumPy 2.0,[#NEP50]_ an important case in our promotion rules is that while
-NumPy usually never loses precision, it explicitly allows this for the Python
-numerical scalars of type ``int``, ``float``, and ``complex``.
+Since NumPy 2.0 [#NEP50]_, an important point in our promotion rules is
+that although operations involving two NumPy dtypes never lose precision,
+operations involving a NumPy dtype and a Python scalar (``int``, ``float``,
+or ``complex``) *can* lose precision. For instance, it is probably intuitive
+that the result of an operation between a Python integer and a NumPy integer
+should be a NumPy integer. However, Python integers have arbitrary precision
+whereas all NumPy dtypes have fixed precision, so the arbitrary precision
+of Python integers cannot be preserved.
 
-Python integers have arbitrary precision, and float and complex numbers
-have the same precision as NumPy's `float64` and `complex128`.
-However, unlike NumPy arrays and scalars, they do not have an explicit
-``dtype`` attached.  Because of this, NumPy assigns them the "kind" but
-ignores their actual precision when working with arrays of a lower precision
-dtype you do not expect this to change the result:
+More generally, NumPy considers the "kind" of Python scalars, but ignores
+their precision when determining the result dtype. This is often convenient.
+For instance, when working with arrays of a low precision dtype, it is usually
+desirable for simple operations with Python scalars to preserve the dtype.
 
   >>> arr_float32 = np.array([1, 2.5, 2.1], dtype="float32")
-  >>> arr_float32 + 10.0
+  >>> arr_float32 + 10.0  # undesirable to promote to float64
   array([11. , 12.5, 12.1], dtype=float32)
   >>> arr_int16 = np.array([3, 5, 7], dtype="int16")
-  >>> arr_int16 + 10
+  >>> arr_int16 + 10  # undesirable to promote to int64
   array([13, 15, 17], dtype=int16)
 
-In both cases the result precision is dictated only by the NumPy dtype.
-And because of that, the ``arr_float32 + 3.0`` behaves the same as
-``arr_float32 + np.float32(3.0)`` and ``arr_int16 + 10`` is found via
+In both cases, the result precision is dictated by the NumPy dtype.
+Because of this, ``arr_float32 + 3.0`` behaves the same as
+``arr_float32 + np.float32(3.0)``, and ``arr_int16 + 10`` behaves as
 ``arr_int16 + np.int16(10.)``.
-Although, when mixing NumPy integers and Python ``float`` or ``complex``
-the result always gives the default ``float64`` or ``complex128``:
+
+As another example, when mixing NumPy integers with a Python ``float``
+or ``complex``, the result always has type ``float64`` or ``complex128``:
 
   >> np.int16(1) + 1.0
   np.float64(2.0)
 
-Users should be aware that while the above is typically convenient, it can
-also lead to surprising behaviors when working with low precision data types.
+However, these rules can also lead to surprising behaviors when working with
+low precision dtypes.
 
-First, since the Python value is converted to a NumPy one, operations can
-fail with an error when the result seems obvious.
-``np.int8(1) + 1000`` cannot reasonably return an ``int8`` result when the
-``1000`` cannot be stored as an ``int8`` at all.
-In this case, an error is raised for integers:
+First, since the Python value is converted to a NumPy one before the operation
+can by performed, operations can fail with an error when the result seems
+obvious. For instance, ``np.int8(1) + 1000`` cannot continue because ``1000``
+exceeds the maximum value of an ``int8``. When the Python scalar
+cannot be coerced to the NumPy dtype, an error is raised:
 
   >>> np.int8(1) + 1000
   Traceback (most recent call last):
@@ -99,32 +113,29 @@ In this case, an error is raised for integers:
   Traceback (most recent call last):
   ...
   OverflowError: Python int too large to convert to C long
-
-And overflows are possible for floating points:
-
   >>> np.float32(1) + 1e300
   np.float32(inf)
   ... RuntimeWarning: overflow encountered in cast
 
 Second, since the Python float or integer precision is always ignored, a low
-precision NumPy scalar will keep using it's lower precision unless explicitly
-converted to a Python scalar via ``int()``, ``float()``, or ``scalar.item()``
-or to a higher precision NumPy dtype.
-This lower precision may be detrimental to some calculations or lead to
-incorrect results especially for integer overflows:
+precision NumPy scalar will keep using its lower precision unless explicitly
+converted to a higher precision NumPy dtype or Python scalar (e.g. via ``int()``,
+``float()``, or ``scalar.item()``). This lower precision may be detrimental to
+some calculations or lead to incorrect results, especially in the case of integer
+overflows:
 
-  >>> np.int8(100) + 100
+  >>> np.int8(100) + 100  # the result exceeds the capacity of int8
   np.int8(-56)
   ... RuntimeWarning: overflow encountered in scalar add
 
-Overflows and gives an unexpected result.  NumPy gives a warning for scalars
-but not for arrays: ``np.array(100, dtype="uint8") + 100`` will *not* warn.
+Note that NumPy warns when overflows occur for scalars, but not for arrays;
+e.g., ``np.array(100, dtype="uint8") + 100`` will *not* warn.
 
 Numerical promotion
 -------------------
 
 The following images shows the numerical promotion rules with the kinds
-on the vertical axes and the precision on the horizontal one.
+on the vertical axis and the precision on the horizontal axis.
 
 .. figure:: figures/nep-0050-promotion-no-fonts.svg
     :figclass: align-center
