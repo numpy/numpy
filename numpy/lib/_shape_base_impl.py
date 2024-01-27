@@ -1185,12 +1185,12 @@ def kron(a, b):
     return result if not is_any_mat else matrix(result, copy=False)
 
 
-def _tile_dispatcher(A, reps):
-    return (A, reps)
+def _tile_dispatcher(A, reps, axis=None):
+    return (A, reps, axis)
 
 
 @array_function_dispatch(_tile_dispatcher)
-def tile(A, reps):
+def tile(A, reps, axis=None):
     """
     Construct an array by repeating A the number of times given by reps.
 
@@ -1216,6 +1216,7 @@ def tile(A, reps):
         The input array.
     reps : array_like
         The number of repetitions of `A` along each axis.
+    axis : None or int or tuple of ints, optional
 
     Returns
     -------
@@ -1243,14 +1244,27 @@ def tile(A, reps):
     >>> np.tile(b, 2)
     array([[1, 2, 1, 2],
            [3, 4, 3, 4]])
+    >>> np.tile(b, 2, axis=-1)
+    array([[1, 2, 1, 2],
+           [3, 4, 3, 4]])
     >>> np.tile(b, (2, 1))
+    array([[1, 2],
+           [3, 4],
+           [1, 2],
+           [3, 4]])
+    >>> np.tile(b, 2, axis=0))
     array([[1, 2],
            [3, 4],
            [1, 2],
            [3, 4]])
 
     >>> c = np.array([1,2,3,4])
-    >>> np.tile(c,(4,1))
+    >>> np.tile(c, (4, 1))
+    array([[1, 2, 3, 4],
+           [1, 2, 3, 4],
+           [1, 2, 3, 4],
+           [1, 2, 3, 4]])
+    >>> np.tile(c, (4, 1), axis=(0, 1))
     array([[1, 2, 3, 4],
            [1, 2, 3, 4],
            [1, 2, 3, 4],
@@ -1260,17 +1274,30 @@ def tile(A, reps):
         tup = tuple(reps)
     except TypeError:
         tup = (reps,)
-    d = len(tup)
     if all(x == 1 for x in tup) and isinstance(A, _nx.ndarray):
         # Fixes the problem that the function does not make a copy if A is a
         # numpy array and the repetitions are 1 in all dimensions
-        return _nx.array(A, copy=True, subok=True, ndmin=d)
+        return _nx.array(A, copy=True, subok=True, ndmin=len(tup))
     else:
         # Note that no copy of zero-sized arrays is made. However since they
         # have no data there is no risk of an inadvertent overwrite.
-        c = _nx.array(A, copy=False, subok=True, ndmin=d)
-    if (d < c.ndim):
-        tup = (1,)*(c.ndim-d) + tup
+        c = _nx.array(A, copy=False, subok=True, ndmin=len(tup))
+
+    if isinstance(axis, int):
+        if not isinstance(reps, int):
+            raise ValueError("`reps` should be an integer")
+        axis, reps = (axis,), (reps,)
+
+    if isinstance(axis, tuple):
+        if len(reps) != len(axis):
+            raise ValueError("`reps` and `axis` should have the same length")
+        new_reps = [1] * c.ndim
+        for ax, r in zip(axis, reps):
+            new_reps[ax] = r
+        tup = tuple(new_reps)
+
+    if (len(tup) < c.ndim):
+        tup = (1,)*(c.ndim-len(tup)) + tup
     shape_out = tuple(s*t for s, t in zip(c.shape, tup))
     n = c.size
     if n > 0:
