@@ -1422,8 +1422,8 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     decomposition of `V`.
 
     If some of the singular values of `V` are so small that they are
-    neglected (and `full` == ``False``), a `RankWarning` will be raised.
-    This means that the coefficient values may be poorly determined.
+    neglected (and `full` == ``False``), a `~exceptions.RankWarning` will be
+    raised.  This means that the coefficient values may be poorly determined.
     Fitting to a lower order polynomial will usually get rid of the warning
     (but may not be what you want, of course; if you have independent
     reason(s) for choosing the degree which isn't working, you may have to:

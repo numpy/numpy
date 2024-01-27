@@ -293,7 +293,7 @@ NumPy provides several hooks that classes can customize:
    .. note::
       It is hoped to eventually deprecate this method in favour of
       func:`__array_ufunc__` for ufuncs (and :func:`__array_function__`
-      for a few other functions like :func:`np.squeeze`).
+      for a few other functions like :func:`numpy.squeeze`).
 
 .. py:attribute:: class.__array_priority__
 

@@ -594,9 +594,9 @@ def savez(file, *args, **kwds):
     in the archive contains one variable in ``.npy`` format. For a
     description of the ``.npy`` format, see :py:mod:`numpy.lib.format`.
 
-    When opening the saved ``.npz`` file with `load` a `NpzFile` object is
-    returned. This is a dictionary-like object which can be queried for
-    its list of arrays (with the ``.files`` attribute), and for the arrays
+    When opening the saved ``.npz`` file with `load` a `~lib.npyio.NpzFile`
+    object is returned. This is a dictionary-like object which can be queried
+    for its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
     Keys passed in `kwds` are used as filenames inside the ZIP archive.
@@ -690,9 +690,9 @@ def savez_compressed(file, *args, **kwds):
     :py:mod:`numpy.lib.format`.
 
 
-    When opening the saved ``.npz`` file with `load` a `NpzFile` object is
-    returned. This is a dictionary-like object which can be queried for
-    its list of arrays (with the ``.files`` attribute), and for the arrays
+    When opening the saved ``.npz`` file with `load` a `~lib.npyio.NpzFile`
+    object is returned. This is a dictionary-like object which can be queried
+    for its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
     Examples

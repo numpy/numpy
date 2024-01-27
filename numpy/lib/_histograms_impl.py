@@ -487,7 +487,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
 
         If `bins` is a string from the list below, `histogram_bin_edges` will use
         the method chosen to calculate the optimal bin width and
-        consequently the number of bins (see `Notes` for more detail on
+        consequently the number of bins (see `Notes`_ for more detail on
         the estimators) from the data that falls within the requested
         range. While the bin width will be optimal for the actual data
         in the range, the number of bins will be computed to fill the

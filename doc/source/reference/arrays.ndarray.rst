@@ -158,7 +158,7 @@ contiguous at the same time.
 .. index:: aligned
 
 An array is considered aligned if the memory offsets for all elements and the
-base offset itself is a multiple of `self.itemsize`. Understanding
+base offset itself is a multiple of `self.itemsize <ndarray.itemsize>`. Understanding
 *memory-alignment* leads to better performance on most hardware.
 
 .. warning::
