@@ -162,6 +162,7 @@ following hold::
     np.bool_(True) + 1 == np.int64(2)
     True + np.uint8(2) == np.uint8(3)
 
+.. _nep50_comparison_table::
 
 Note that while this NEP uses simple operators as example, the rules described
 generally apply to all of NumPy operations.
