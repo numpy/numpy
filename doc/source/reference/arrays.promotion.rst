@@ -67,7 +67,7 @@ dtype you do not expect this to change the result:
 
   >>> arr_float32 = np.array([1, 2.5, 2.1], dtype="float32")
   >>> arr_float32 + 10.0
-  array([4. , 5.5, 5.1], dtype=float32)
+  array([11. , 12.5, 12.1], dtype=float32)
   >>> arr_int16 = np.array([3, 5, 7], dtype="int16")
   >>> arr_int16 + 10
   array([13, 15, 17], dtype=int16)
@@ -103,8 +103,8 @@ In this case, an error is raised for integers:
 And overflows are possible for floating points:
 
   >>> np.float32(1) + 1e300
-  RuntimeWarning: overflow encountered in cast
   np.float32(inf)
+  ... RuntimeWarning: overflow encountered in cast
 
 Second, since the Python float or integer precision is always ignored, a low
 precision NumPy scalar will keep using it's lower precision unless explicitly
@@ -114,8 +114,8 @@ This lower precision may be detrimental to some calculations or lead to
 incorrect results especially for integer overflows:
 
   >>> np.int8(100) + 100
-  RuntimeWarning: overflow encountered in scalar add
   np.int8(-56)
+  ... RuntimeWarning: overflow encountered in scalar add
 
 Overflows and gives an unexpected result.  NumPy gives a warning for scalars
 but not for arrays: ``np.array(100, dtype="uint8") + 100`` will *not* warn.
@@ -130,11 +130,16 @@ on the vertical axes and the precision on the horizontal one.
     :figclass: align-center
 
 Promotion is always found along the lines in the schema from left to right
-and down to up.
-With the following specific rules or observations:
+and down to up.  The final result dtype will smallest kind and precision
+(i.e. down and left) which is still equal or higher in both kind and precision
+while following the (green) lines.
+
+Note the following specific rules and observations:
 1. When a Python ``float`` or ``complex`` interacts with a NumPy integer
    the result will be ``float64`` or ``complex128`` (yellow border).
    NumPy booleans will also be cast to the default integer.[#default-int]
+   This is not relevant when additionally NumPy floating point values are
+   involved.
 2. The precision is drawn such that ``float16 < int16 < uint16`` because
    large ``uint16`` do not fit ``int16`` and large ``int16`` will lose precision
    when stored in a ``float16``.
