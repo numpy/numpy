@@ -20,7 +20,13 @@
 
 #include "npy_config.h"
 
-#include "pocketfft/pocketfft.h"
+#include "pocketfft/pocketfft_hdronly.h"
+using pocketfft::detail::FORWARD;
+using pocketfft::detail::BACKWARD;
+using pocketfft::detail::get_plan;
+using pocketfft::detail::pocketfft_r;
+using pocketfft::detail::pocketfft_c;
+using pocketfft::detail::cmplx;
 
 /*
  * Copy all nin elements of input to the first nin of the output,
@@ -76,22 +82,18 @@ fft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void *f
     npy_intp si = steps[0], sf = steps[1], so = steps[2];
     npy_intp nin = dimensions[1], nout = dimensions[2];
     npy_intp step_in = steps[3], step_out = steps[4];
-    int (*cfft_function)(cfft_plan, double *, double) = func;
     npy_intp npts = nout;
-    cfft_plan plan;
     char *buff = NULL;
-    int no_mem = 1;
+    bool direction = *((bool *)func);
 
     if (nout == 0) {
         return;  /* no output to set */
     }
 
-    plan = make_cfft_plan(npts);
-    if (plan == NULL) {
-        goto fail;
-    }
+    auto plan = get_plan<pocketfft_c<double>>(npts);
+
     if (step_out != sizeof(npy_cdouble)) {
-        buff = malloc(npts * sizeof(npy_cdouble));
+      buff = (char *)malloc(npts * sizeof(npy_cdouble));
         if (buff == NULL) {
             goto fail;
         }
@@ -108,24 +110,21 @@ fft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void *f
             copy_data(ip, step_in, nin,
                       op_or_buff, sizeof(npy_cdouble), npts, sizeof(npy_cdouble));
         }
-        if ((no_mem = cfft_function(plan, (double *)op_or_buff, fct)) != 0) {
-            break;
-        }
+        plan->exec((cmplx<double> *)op_or_buff, fct, direction);
         if (op_or_buff == buff) {
             copy_data(op_or_buff, sizeof(npy_cdouble), npts,
                       op, step_out, npts, sizeof(npy_cdouble));
         }
     }
-  fail:
     free(buff);
-    destroy_cfft_plan(plan);  /* uses free so can be passed NULL */
-    if (no_mem) {
-        /* TODO: Requires use of new ufunc API to indicate error return */
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API;
-        PyErr_NoMemory();
-        NPY_DISABLE_C_API;
-    }
+    return;
+
+  fail:
+    /* TODO: Requires use of new ufunc API to indicate error return */
+    NPY_ALLOW_C_API_DEF
+    NPY_ALLOW_C_API;
+    PyErr_NoMemory();
+    NPY_DISABLE_C_API;
     return;
 }
 
@@ -140,25 +139,18 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps, void *
     npy_intp si = steps[0], sf = steps[1], so = steps[2];
     npy_intp nin = dimensions[1], nout = dimensions[2];
     npy_intp step_in = steps[3], step_out = steps[4];
-    rfft_plan plan;
     char *buff = NULL;
-    int no_mem = 1;
 
     if (nout == 0) {
         return;
     }
-
-    plan = make_rfft_plan(npts);
-    if (plan == NULL) {
-        goto fail;
-    }
+    auto plan = get_plan<pocketfft_r<double>>(npts);
     if (step_out != sizeof(npy_cdouble)){
-        buff = malloc(nout * sizeof(npy_cdouble));
+      buff = (char *)malloc(nout * sizeof(npy_cdouble));
         if (buff == NULL) {
             goto fail;
         }
     }
-
     for (npy_intp i = 0; i < n_outer; i++, ip += si, fp += sf, op += so) {
         double fct = *(double *)fp;
         char *op_or_buff = buff == NULL ? op : buff;
@@ -176,9 +168,7 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps, void *
          */
         copy_data(ip, step_in, nin,
                   (char *)&op_double[1], sizeof(npy_double), nout*2 - 1, sizeof(npy_double));
-        if ((no_mem = rfft_forward(plan, &op_double[1], fct)) != 0) {
-            break;
-        }
+        plan->exec(&op_double[1], fct, FORWARD);
         op_double[0] = op_double[1];
         op_double[1] = 0.;
         if (op_or_buff == buff) {
@@ -186,16 +176,15 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps, void *
                       op, step_out, nout, sizeof(npy_cdouble));
         }
     }
-  fail:
     free(buff);
-    destroy_rfft_plan(plan);
-    if (no_mem) {
-        /* TODO: Requires use of new ufunc API to indicate error return */
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API;
-        PyErr_NoMemory();
-        NPY_DISABLE_C_API;
-    }
+    return;
+
+  fail:
+    /* TODO: Requires use of new ufunc API to indicate error return */
+    NPY_ALLOW_C_API_DEF
+    NPY_ALLOW_C_API;
+    PyErr_NoMemory();
+    NPY_DISABLE_C_API;
     return;
 }
 
@@ -229,20 +218,15 @@ irfft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
     npy_intp nin = dimensions[1], nout = dimensions[2];
     npy_intp step_in = steps[3], step_out = steps[4];
     npy_intp npts = nout;
-    rfft_plan plan;
     char *buff = NULL;
-    int no_mem = 1;
 
     if (nout == 0) {
         return;
     }
+    auto plan = get_plan<pocketfft_r<double>>(npts);
 
-    plan = make_rfft_plan(npts);
-    if (plan == NULL) {
-        goto fail;
-    }
     if (step_out != sizeof(npy_double)) {
-        buff = malloc(npts * sizeof(npy_double));
+      buff = (char *)malloc(npts * sizeof(npy_double));
         if (buff == NULL) {
             goto fail;
         }
@@ -277,32 +261,28 @@ irfft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
                     ((double *)(ip + (npts / 2) * step_in))[0];
             }
         }
-        if ((no_mem = rfft_backward(plan, op_double, fct)) != 0) {
-            break;
-        }
+        plan->exec(op_double, fct, BACKWARD);
         if (op_or_buff == buff) {
             copy_data(op_or_buff, sizeof(npy_double), npts,
                       op, step_out, npts, sizeof(npy_double));
         }
     }
-  fail:
     free(buff);
-    destroy_rfft_plan(plan);
-    if (no_mem) {
-        /* TODO: Requires use of new ufunc API to indicate error return */
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API;
-        PyErr_NoMemory();
-        NPY_DISABLE_C_API;
-    }
+    return;
+
+  fail:
+    /* TODO: Requires use of new ufunc API to indicate error return */
+    NPY_ALLOW_C_API_DEF
+    NPY_ALLOW_C_API;
+    PyErr_NoMemory();
+    NPY_DISABLE_C_API;
     return;
 }
 
-
 static PyUFuncGenericFunction fft_functions[] = { fft_loop };
 static char fft_types[] = { NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE};
-static void *fft_data[] = { &cfft_forward };
-static void *ifft_data[] = { &cfft_backward };
+static void *fft_data[] = { (void*) &FORWARD };
+static void *ifft_data[] = { (void*) &BACKWARD };
 
 static PyUFuncGenericFunction rfft_n_even_functions[] = { rfft_n_even_loop };
 static PyUFuncGenericFunction rfft_n_odd_functions[] = { rfft_n_odd_loop };
@@ -362,8 +342,14 @@ add_gufuncs(PyObject *dictionary) {
 
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
-    .m_name = "_umath_pocketfft",
-    .m_size = -1,
+    "_multiarray_umath",
+    NULL,
+    -1,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
 };
 
 /* Initialization function for the module */
