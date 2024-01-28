@@ -41,7 +41,7 @@ Numerical dtypes come in four "kinds" with a natural hierarchy.
 3. float (``float``)
 4. complex (``complex``)
 
-In addition to kind, NumPy dtypes also have an associated precision, specified
+In addition to kind, NumPy numerical dtypes also have an associated precision, specified
 in bits. Together, the kind and precision specify the dtype. For example, a
 ``uint8`` is an unsigned integer stored using 8 bits.
 
@@ -55,9 +55,10 @@ may be unexpected:
    example, the result of an operation involving ``int64`` and ``float16``
    is ``float64``.
 2. When mixing unsigned and signed integers with the same precision, the
-   result will have a *higher* precision than either inputs. For instance,
-   the result of an operation involving ``int64`` and ``uint64`` is
-   ``float64``.
+   result will has *higher* precision than either inputs. Additionally,
+   if one of them has 64bit precision already, no higher precision integer
+   is available and for example an operation involving ``int64`` and ``uint64``
+   gives ``float64``.
 
 Please see the `Numerical promotion` section and image below for details
 on both.
