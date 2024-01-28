@@ -33,34 +33,34 @@ using pocketfft::detail::cmplx;
  * and any set any remaining nout-nin output elements to 0
  * (if nout < nin, copy only nout).
  */
-
+template <typename T>
 static inline void
 copy_data(char* in, npy_intp step_in, npy_intp nin,
-          char* out, npy_intp step_out, npy_intp nout, npy_intp elsize)
+          char* out, npy_intp step_out, npy_intp nout)
 {
     npy_intp ncopy = nin <= nout? nin : nout;
     if (ncopy > 0) {
-        if (step_in == elsize && step_out == elsize) {
-            memcpy(out, in, ncopy*elsize);
+        if (step_in == sizeof(T) && step_out == sizeof(T)) {
+            memcpy(out, in, ncopy*sizeof(T));
         }
         else {
             char *ip = in, *op = out;
             for (npy_intp i = 0; i < ncopy; i++, ip += step_in, op += step_out) {
-                memcpy(op, ip, elsize);
+                memcpy(op, ip, sizeof(T));
             }
         }
     }
     else {
-        ncopy = 0;  /* can be negative, from irfft */
+        assert(ncopy == 0);
     }
     if (nout > ncopy) {
-        char *op = out + ncopy*elsize;
-        if (step_out == elsize) {
-            memset(op, 0, (nout-ncopy)*elsize);
+        char *op = out + ncopy*sizeof(T);
+        if (step_out == sizeof(T)) {
+            memset(op, 0, (nout-ncopy)*sizeof(T));
         }
         else {
             for (npy_intp i = ncopy; i < nout; i++, op += step_out) {
-                memset(op, 0, elsize);
+                memset(op, 0, sizeof(T));
             }
         }
     }
@@ -74,6 +74,7 @@ copy_data(char* in, npy_intp step_in, npy_intp nin,
  * inner loop data, so we create a contiguous output buffer if needed
  * (input gets copied to output before processing, so can be non-contiguous).
  */
+template <typename T>
 static void
 fft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func)
 {
@@ -90,30 +91,30 @@ fft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void *f
         return;  /* no output to set */
     }
 
-    auto plan = get_plan<pocketfft_c<double>>(npts);
+    auto plan = get_plan<pocketfft_c<T>>(npts);
 
-    if (step_out != sizeof(npy_cdouble)) {
-      buff = (char *)malloc(npts * sizeof(npy_cdouble));
+    if (step_out != sizeof(cmplx<T>)) {
+        buff = (char *)malloc(npts * sizeof(cmplx<T>));
         if (buff == NULL) {
             goto fail;
         }
     }
 
     for (npy_intp i = 0; i < n_outer; i++, ip += si, fp += sf, op += so) {
-        double fct = *(double *)fp;
+        T fct = *(T *)fp;
         char *op_or_buff = buff == NULL ? op : buff;
         /*
          * pocketfft works in-place, so we need to copy the data
          * (except if we want to be in-place)
          */
         if (ip != op_or_buff) {
-            copy_data(ip, step_in, nin,
-                      op_or_buff, sizeof(npy_cdouble), npts, sizeof(npy_cdouble));
+            copy_data<cmplx<T>>(ip, step_in, nin,
+                                op_or_buff, sizeof(cmplx<T>), npts);
         }
-        plan->exec((cmplx<double> *)op_or_buff, fct, direction);
+        plan->exec((cmplx<T> *)op_or_buff, fct, direction);
         if (op_or_buff == buff) {
-            copy_data(op_or_buff, sizeof(npy_cdouble), npts,
-                      op, step_out, npts, sizeof(npy_cdouble));
+            copy_data<cmplx<T>>(op_or_buff, sizeof(cmplx<T>), npts,
+                                op, step_out, npts);
         }
     }
     free(buff);
@@ -130,6 +131,7 @@ fft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void *f
 
 
 
+template <typename T>
 static void
 rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func,
     npy_intp npts)
@@ -144,17 +146,17 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps, void *
     if (nout == 0) {
         return;
     }
-    auto plan = get_plan<pocketfft_r<double>>(npts);
-    if (step_out != sizeof(npy_cdouble)){
-      buff = (char *)malloc(nout * sizeof(npy_cdouble));
+    auto plan = get_plan<pocketfft_r<T>>(npts);
+    if (step_out != sizeof(cmplx<T>)){
+        buff = (char *)malloc(nout * sizeof(cmplx<T>));
         if (buff == NULL) {
             goto fail;
         }
     }
     for (npy_intp i = 0; i < n_outer; i++, ip += si, fp += sf, op += so) {
-        double fct = *(double *)fp;
+        T fct = *(T *)fp;
         char *op_or_buff = buff == NULL ? op : buff;
-        double *op_double = (double *)op_or_buff;
+        T *op_T = (T *)op_or_buff;
         /*
          * Pocketfft works in-place and for real transforms the frequency data
          * thus needs to be compressed, using that there will be no imaginary
@@ -166,14 +168,14 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps, void *
          * so that we just have to move R0 and create I0=0. Note that
          * copy_data will zero the In component for even number of points.
          */
-        copy_data(ip, step_in, nin,
-                  (char *)&op_double[1], sizeof(npy_double), nout*2 - 1, sizeof(npy_double));
-        plan->exec(&op_double[1], fct, FORWARD);
-        op_double[0] = op_double[1];
-        op_double[1] = 0.;
+        copy_data<T>(ip, step_in, nin,
+                     (char *)&op_T[1], sizeof(T), nout*2 - 1);
+        plan->exec(&op_T[1], fct, FORWARD);
+        op_T[0] = op_T[1];
+        op_T[1] = (T)0;
         if (op_or_buff == buff) {
-            copy_data(op_or_buff, sizeof(npy_cdouble), nout,
-                      op, step_out, nout, sizeof(npy_cdouble));
+            copy_data<cmplx<T>>(op_or_buff, sizeof(cmplx<T>), nout,
+                                op, step_out, nout);
         }
     }
     free(buff);
@@ -194,21 +196,23 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps, void *
  * and 11 real input points both lead to 6 complex output points), so we
  * define versions for both even and odd number of points.
  */
+template <typename T>
 static void
 rfft_n_even_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func)
 {
     npy_intp npts = 2 * dimensions[2] - 2;
-    rfft_impl(args, dimensions, steps, func, npts);
+    rfft_impl<T>(args, dimensions, steps, func, npts);
 }
 
+template <typename T>
 static void
 rfft_n_odd_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func)
 {
     npy_intp npts = 2 * dimensions[2] - 1;
-    rfft_impl(args, dimensions, steps, func, npts);
+    rfft_impl<T>(args, dimensions, steps, func, npts);
 }
 
-
+template <typename T>
 static void
 irfft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func)
 {
@@ -223,19 +227,19 @@ irfft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
     if (nout == 0) {
         return;
     }
-    auto plan = get_plan<pocketfft_r<double>>(npts);
+    auto plan = get_plan<pocketfft_r<T>>(npts);
 
-    if (step_out != sizeof(npy_double)) {
-      buff = (char *)malloc(npts * sizeof(npy_double));
+    if (step_out != sizeof(T)) {
+        buff = (char *)malloc(npts * sizeof(T));
         if (buff == NULL) {
             goto fail;
         }
     }
 
     for (npy_intp i = 0; i < n_outer; i++, ip += si, fp += sf, op += so) {
-        double fct = *(double *)fp;
+        T fct = *(T *)fp;
         char *op_or_buff = buff == NULL ? op : buff;
-        double *op_double = (double *)op_or_buff;
+        T *op_T = (T *)op_or_buff;
         /*
          * Pocket_fft works in-place and for inverse real transforms the
          * frequency data thus needs to be compressed, removing the imaginary
@@ -245,26 +249,25 @@ irfft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
          * the data to the buffer in the following order (also used by
          * FFTpack): R0,R1,I1,...Rn-1,In-1,Rn[,In] (last for npts odd only).
          */
-        op_double[0] = ((double *)ip)[0];  /* copy R0 */
+        op_T[0] = ((T *)ip)[0];  /* copy R0 */
         if (npts > 1) {
             /*
              * Copy R1,I1... up to Rn-1,In-1 if possible, stopping earlier
              * if not all the input points are needed or if the input is short
              * (in the latter case, zeroing after).
              */
-            copy_data(ip + step_in, step_in, nin - 1,
-                      (char *)&op_double[1], sizeof(npy_cdouble), (npts - 1) / 2,
-                      sizeof(npy_cdouble));
+            copy_data<cmplx<T>>(ip + step_in, step_in, nin - 1,
+                                (char *)&op_T[1], sizeof(cmplx<T>), (npts - 1) / 2);
             /* For even npts, we still need to set Rn. */
             if (npts % 2 == 0) {
-                op_double[npts - 1] = (npts / 2 >= nin) ? 0. :
-                    ((double *)(ip + (npts / 2) * step_in))[0];
+                op_T[npts - 1] = (npts / 2 >= nin) ? (T)0 :
+                    ((T *)(ip + (npts / 2) * step_in))[0];
             }
         }
-        plan->exec(op_double, fct, BACKWARD);
+        plan->exec(op_T, fct, BACKWARD);
         if (op_or_buff == buff) {
-            copy_data(op_or_buff, sizeof(npy_double), npts,
-                      op, step_out, npts, sizeof(npy_double));
+            copy_data<T>(op_or_buff, sizeof(T), npts,
+                         op, step_out, npts);
         }
     }
     free(buff);
@@ -279,26 +282,60 @@ irfft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
     return;
 }
 
-static PyUFuncGenericFunction fft_functions[] = { fft_loop };
-static char fft_types[] = { NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE};
-static void *fft_data[] = { (void*) &FORWARD };
-static void *ifft_data[] = { (void*) &BACKWARD };
+static PyUFuncGenericFunction fft_functions[] = {
+    fft_loop<npy_double>,
+    fft_loop<npy_float>,
+    fft_loop<npy_longdouble>
+};
+static char fft_types[] = {
+    NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE,
+    NPY_CFLOAT, NPY_FLOAT, NPY_CFLOAT,
+    NPY_CLONGDOUBLE, NPY_LONGDOUBLE, NPY_CLONGDOUBLE
+};
+static void *fft_data[] = {
+    (void*)&FORWARD,
+    (void*)&FORWARD,
+    (void*)&FORWARD
+};
+static void *ifft_data[] = {
+    (void*)&BACKWARD,
+    (void*)&BACKWARD,
+    (void*)&BACKWARD
+};
 
-static PyUFuncGenericFunction rfft_n_even_functions[] = { rfft_n_even_loop };
-static PyUFuncGenericFunction rfft_n_odd_functions[] = { rfft_n_odd_loop };
-static char rfft_types[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_CDOUBLE};
-static void *rfft_data[] = { (void *)NULL };
+static PyUFuncGenericFunction rfft_n_even_functions[] = {
+    rfft_n_even_loop<npy_double>,
+    rfft_n_even_loop<npy_float>,
+    rfft_n_even_loop<npy_longdouble>
+};
+static PyUFuncGenericFunction rfft_n_odd_functions[] = {
+    rfft_n_odd_loop<npy_double>,
+    rfft_n_odd_loop<npy_float>,
+    rfft_n_odd_loop<npy_longdouble>
+};
+static char rfft_types[] = {
+    NPY_DOUBLE, NPY_DOUBLE, NPY_CDOUBLE,
+    NPY_FLOAT, NPY_FLOAT, NPY_CFLOAT,
+    NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_CLONGDOUBLE
+};
 
-static PyUFuncGenericFunction irfft_functions[] = { irfft_loop };
-static char irfft_types[] = { NPY_CDOUBLE, NPY_DOUBLE, NPY_DOUBLE};
-static void *irfft_data[] = { (void *)NULL };
+static PyUFuncGenericFunction irfft_functions[] = {
+    irfft_loop<npy_double>,
+    irfft_loop<npy_float>,
+    irfft_loop<npy_longdouble>
+};
+static char irfft_types[] = {
+    NPY_CDOUBLE, NPY_DOUBLE, NPY_DOUBLE,
+    NPY_CFLOAT, NPY_FLOAT, NPY_FLOAT,
+    NPY_CLONGDOUBLE, NPY_LONGDOUBLE, NPY_LONGDOUBLE
+};
 
 static int
 add_gufuncs(PyObject *dictionary) {
     PyObject *f;
 
     f = PyUFunc_FromFuncAndDataAndSignature(
-        fft_functions, fft_data, fft_types, 1, 2, 1, PyUFunc_None,
+        fft_functions, fft_data, fft_types, 3, 2, 1, PyUFunc_None,
         "fft", "complex forward FFT\n", 0, "(n),()->(m)");
     if (f == NULL) {
         return -1;
@@ -306,7 +343,7 @@ add_gufuncs(PyObject *dictionary) {
     PyDict_SetItemString(dictionary, "fft", f);
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndDataAndSignature(
-        fft_functions, ifft_data, fft_types, 1, 2, 1, PyUFunc_None,
+        fft_functions, ifft_data, fft_types, 3, 2, 1, PyUFunc_None,
         "ifft", "complex backward FFT\n", 0, "(m),()->(n)");
     if (f == NULL) {
         return -1;
@@ -314,7 +351,7 @@ add_gufuncs(PyObject *dictionary) {
     PyDict_SetItemString(dictionary, "ifft", f);
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndDataAndSignature(
-        rfft_n_even_functions, rfft_data, rfft_types, 1, 2, 1, PyUFunc_None,
+        rfft_n_even_functions, NULL, rfft_types, 3, 2, 1, PyUFunc_None,
         "rfft_n_even", "real forward FFT for even n\n", 0, "(n),()->(m)");
     if (f == NULL) {
         return -1;
@@ -322,7 +359,7 @@ add_gufuncs(PyObject *dictionary) {
     PyDict_SetItemString(dictionary, "rfft_n_even", f);
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndDataAndSignature(
-        rfft_n_odd_functions, rfft_data, rfft_types, 1, 2, 1, PyUFunc_None,
+        rfft_n_odd_functions, NULL, rfft_types, 3, 2, 1, PyUFunc_None,
         "rfft_n_odd", "real forward FFT for odd n\n", 0, "(n),()->(m)");
     if (f == NULL) {
         return -1;
@@ -330,7 +367,7 @@ add_gufuncs(PyObject *dictionary) {
     PyDict_SetItemString(dictionary, "rfft_n_odd", f);
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndDataAndSignature(
-        irfft_functions, irfft_data, irfft_types, 1, 2, 1, PyUFunc_None,
+        irfft_functions, NULL, irfft_types, 3, 2, 1, PyUFunc_None,
         "irfft", "real backward FFT\n", 0, "(m),()->(n)");
     if (f == NULL) {
         return -1;
