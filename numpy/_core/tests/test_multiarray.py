@@ -1879,6 +1879,19 @@ class TestMethods:
         assert_equal(a.any(where=False), False)
         assert_equal(np.any(a, where=False), False)
 
+    @pytest.mark.parametrize("dtype", ["i8", "U10", "object", "datetime64[ms]"])
+    def test_any_and_all_result_dtype(self, dtype):
+        arr = np.ones(3, dtype=dtype)
+        assert arr.any().dtype == np.bool_
+        assert arr.all().dtype == np.bool_
+
+    def test_any_and_all_object_dtype(self):
+        # (seberg) Not sure we should even allow dtype here, but it is.
+        arr = np.ones(3, dtype=object)
+        # keepdims to prevent getting a scalar.
+        assert arr.any(dtype=object, keepdims=True).dtype == object
+        assert arr.all(dtype=object, keepdims=True).dtype == object
+
     def test_compress(self):
         tgt = [[5, 6, 7, 8, 9]]
         arr = np.arange(10).reshape(2, 5)
