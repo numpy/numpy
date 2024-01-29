@@ -30,7 +30,7 @@ jobs:
           platform: x86_64
           install-dir: 'C:\tools\cygwin'
           packages: >-
-            python39-devel=3.9.16-1 python39-pip python-pip-wheel
+            python39=3.9.16-1 python39-devel=3.9.16-1 python39-pip python-pip-wheel
             python-setuptools-wheel liblapack-devel liblapack0 gcc-fortran
             gcc-g++ git dash cmake ninja
       - name: Set Windows PATH
