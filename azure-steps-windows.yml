@@ -30,8 +30,6 @@ steps:
         pip install -r requirements/ci_requirements.txt
         spin config-openblas --with-scipy-openblas=64
         $env:PKG_CONFIG_PATH="$pwd/.openblas"
-        # use-ilp64 is no longer needed with scipy-openblas > 0.3.24.95.0
-        # python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Duse-ilp64=true"
         python -m pip install . -v -Csetup-args="--vsenv"
     } else {
         pip install -r requirements/ci_requirements.txt

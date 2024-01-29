@@ -4,7 +4,7 @@ git config --global --add safe.directory /numpy
 cd /numpy
 /opt/python/cp39-cp39/bin/python -mvenv venv
 source venv/bin/activate
-pip install -r requirements/ci_requirements.txt
+pip install -r requirements/ci32_requirements.txt
 python3 -m pip install -r requirements/test_requirements.txt
 echo CFLAGS \$CFLAGS
 spin config-openblas --with-scipy-openblas=32
