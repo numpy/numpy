@@ -49,7 +49,7 @@ jobs:
           dash -c "which python3.9; /usr/bin/python3.9 --version -V"
       - name: Build NumPy wheel
         run: |
-          dash -c "/usr/bin/python3.9 -m pip install build pytest hypothesis pytest-xdist Cython meson"
+          dash -c "/usr/bin/python3.9 -m pip install --progress-bar=off build pytest hypothesis pytest-xdist Cython meson"
           dash -c "/usr/bin/python3.9 -m build . --wheel -Csetup-args=-Dblas=blas -Csetup-args=-Dlapack=lapack -Csetup-args=-Dcpu-dispatch=none -Csetup-args=-Dcpu-baseline=native"
       - name: Install NumPy from wheel
         run: |
