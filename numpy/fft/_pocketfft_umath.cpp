@@ -20,101 +20,96 @@
 
 #include "npy_config.h"
 
+#define POCKETFFT_NO_MULTITHREADING
 #include "pocketfft/pocketfft_hdronly.h"
-using pocketfft::detail::FORWARD;
-using pocketfft::detail::BACKWARD;
-using pocketfft::detail::get_plan;
-using pocketfft::detail::pocketfft_r;
-using pocketfft::detail::pocketfft_c;
-using pocketfft::detail::cmplx;
 
 /*
- * Copy all nin elements of input to the first nin of the output,
- * and any set any remaining nout-nin output elements to 0
- * (if nout < nin, copy only nout).
+ * Transfer to and from a contiguous buffer.
+ * copy_input: copy min(nin, n) elements from input to buffer and zero rest.
+ * copy_output: copy n elements from buffer to output.
  */
 template <typename T>
 static inline void
-copy_data(char* in, npy_intp step_in, npy_intp nin,
-          char* out, npy_intp step_out, npy_intp nout)
+copy_input(char *in, npy_intp step_in, size_t nin,
+           T buff[], size_t n)
 {
-    npy_intp ncopy = nin <= nout? nin : nout;
-    if (ncopy > 0) {
-        if (step_in == sizeof(T) && step_out == sizeof(T)) {
-            memcpy(out, in, ncopy*sizeof(T));
-        }
-        else {
-            char *ip = in, *op = out;
-            for (npy_intp i = 0; i < ncopy; i++, ip += step_in, op += step_out) {
-                memcpy(op, ip, sizeof(T));
-            }
-        }
+    size_t ncopy = nin <= n ? nin : n;
+    char *ip = in;
+    size_t i;
+    for (i = 0; i < ncopy; i++, ip += step_in) {
+      buff[i] = *(T *)ip;
     }
-    else {
-        assert(ncopy == 0);
-    }
-    if (nout > ncopy) {
-        char *op = out + ncopy*sizeof(T);
-        if (step_out == sizeof(T)) {
-            memset(op, 0, (nout-ncopy)*sizeof(T));
-        }
-        else {
-            for (npy_intp i = ncopy; i < nout; i++, op += step_out) {
-                memset(op, 0, sizeof(T));
-            }
-        }
+    for (; i < n; i++) {
+      buff[i] = 0;
     }
 }
 
+template <typename T>
+static inline void
+copy_output(T buff[], char *out, npy_intp step_out, size_t n)
+{
+    char *op = out;
+    for (size_t i = 0; i < n; i++, op += step_out) {
+        *(T *)op = buff[i];
+    }
+}
 
 /*
- * Loops calling the pocketfft code.
- *
- * Unfortunately, the gufunc machinery does not (yet?) allow forcing contiguous
- * inner loop data, so we create a contiguous output buffer if needed
- * (input gets copied to output before processing, so can be non-contiguous).
+ * Gufunc loops calling the pocketfft code.
  */
 template <typename T>
 static void
-fft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func)
+fft_loop(char **args, npy_intp const *dimensions, ptrdiff_t const *steps,
+         void *func)
 {
     char *ip = args[0], *fp = args[1], *op = args[2];
-    npy_intp n_outer = dimensions[0];
-    npy_intp si = steps[0], sf = steps[1], so = steps[2];
-    npy_intp nin = dimensions[1], nout = dimensions[2];
-    npy_intp step_in = steps[3], step_out = steps[4];
-    npy_intp npts = nout;
-    char *buff = NULL;
-    bool direction = *((bool *)func);
+    size_t n_outer = (size_t)dimensions[0];
+    ptrdiff_t si = steps[0], sf = steps[1], so = steps[2];
+    size_t nin = (size_t)dimensions[1], nout = (size_t)dimensions[2];
+    ptrdiff_t step_in = steps[3], step_out = steps[4];
+    bool direction = *((bool *)func); /* pocketfft::FORWARD or BACKWARD */
 
-    if (nout == 0) {
-        return;  /* no output to set */
+    assert (nout > 0);
+
+#ifndef POCKETFFT_NO_VECTORS
+    /*
+     * For the common case of nin >= nout, fixed factor, and suitably sized
+     * outer loop, we call pocketfft directly to benefit from its vectorization.
+     * (For nin>nout, this just removes the extra input points, as required;
+     * the vlen constraint avoids compiling extra code for longdouble, which
+     * cannot be vectorized so does not benefit.)
+     */
+    constexpr auto vlen = pocketfft::detail::VLEN<T>::val;
+    if (vlen > 1 && n_outer >= vlen && nin >= nout && sf == 0) {
+        std::vector<size_t> shape = { n_outer, nout };
+        std::vector<ptrdiff_t> strides_in = { si, step_in };
+        std::vector<ptrdiff_t> strides_out = { so, step_out};
+        std::vector<size_t> axes = { 1 };
+        pocketfft::c2c(shape, strides_in, strides_out, axes, direction,
+                       (std::complex<T> *)ip, (std::complex<T> *)op, *(T *)fp);
+        return;
     }
-
-    auto plan = get_plan<pocketfft_c<T>>(npts);
-
-    if (step_out != sizeof(cmplx<T>)) {
-        buff = (char *)malloc(npts * sizeof(cmplx<T>));
+#endif
+    /*
+     * Otherwise, use a non-vectorized loop in which we try to minimize copies.
+     * We do still need a buffer if the output is not contiguous.
+     */
+    auto plan = pocketfft::detail::get_plan<pocketfft::detail::pocketfft_c<T>>(nout);
+    char *buff = NULL;
+    if (step_out != sizeof(std::complex<T>)) {
+        buff = (char *)malloc(nout * sizeof(std::complex<T>));
         if (buff == NULL) {
             goto fail;
         }
     }
-
-    for (npy_intp i = 0; i < n_outer; i++, ip += si, fp += sf, op += so) {
-        T fct = *(T *)fp;
-        char *op_or_buff = buff == NULL ? op : buff;
-        /*
-         * pocketfft works in-place, so we need to copy the data
-         * (except if we want to be in-place)
-         */
-        if (ip != op_or_buff) {
-            copy_data<cmplx<T>>(ip, step_in, nin,
-                                op_or_buff, sizeof(cmplx<T>), npts);
+    for (size_t i = 0; i < n_outer; i++, ip += si, fp += sf, op += so) {
+        std::complex<T> *op_or_buff = (std::complex<T> *)(buff == NULL ? op : buff);
+        if (ip != (char*)op_or_buff) {
+            copy_input(ip, step_in, nin, op_or_buff, nout);
         }
-        plan->exec((cmplx<T> *)op_or_buff, fct, direction);
-        if (op_or_buff == buff) {
-            copy_data<cmplx<T>>(op_or_buff, sizeof(cmplx<T>), npts,
-                                op, step_out, npts);
+        plan->exec((pocketfft::detail::cmplx<T> *)op_or_buff, *(T *)fp, direction);
+        if (buff != NULL) {
+            copy_output(op_or_buff, op, step_out, nout);
         }
     }
     free(buff);
@@ -129,53 +124,65 @@ fft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void *f
     return;
 }
 
-
-
 template <typename T>
 static void
-rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func,
-    npy_intp npts)
+rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps,
+          void *func, size_t npts)
 {
     char *ip = args[0], *fp = args[1], *op = args[2];
-    npy_intp n_outer = dimensions[0];
-    npy_intp si = steps[0], sf = steps[1], so = steps[2];
-    npy_intp nin = dimensions[1], nout = dimensions[2];
-    npy_intp step_in = steps[3], step_out = steps[4];
-    char *buff = NULL;
+    size_t n_outer = (size_t)dimensions[0];
+    ptrdiff_t si = steps[0], sf = steps[1], so = steps[2];
+    size_t nin = (size_t)dimensions[1], nout = (size_t)dimensions[2];
+    ptrdiff_t step_in = steps[3], step_out = steps[4];
 
-    if (nout == 0) {
+    assert (nout > 0 && nout == npts / 2 + 1);
+
+#ifndef POCKETFFT_NO_VECTORS
+    /*
+     * Call pocketfft directly if vectorization is possible.
+     */
+    constexpr auto vlen = pocketfft::detail::VLEN<T>::val;
+    if (vlen > 1 && n_outer >= vlen && nin >= npts && sf == 0) {
+        std::vector<size_t> shape_in = { n_outer, npts };
+        std::vector<ptrdiff_t> strides_in = { si, step_in };
+        std::vector<ptrdiff_t> strides_out = { so, step_out};
+        std::vector<size_t> axes = { 1 };
+        pocketfft::r2c(shape_in, strides_in, strides_out, axes, pocketfft::FORWARD,
+                       (T *)ip, (std::complex<T> *)op, *(T *)fp);
         return;
     }
-    auto plan = get_plan<pocketfft_r<T>>(npts);
-    if (step_out != sizeof(cmplx<T>)){
-        buff = (char *)malloc(nout * sizeof(cmplx<T>));
+#endif
+    /*
+     * Otherwise, use a non-vectorized loop in which we try to minimize copies.
+     * We do still need a buffer if the output is not contiguous.
+     */
+    auto plan = pocketfft::detail::get_plan<pocketfft::detail::pocketfft_r<T>>(npts);
+    char *buff = NULL;
+    if (step_out != sizeof(std::complex<T>)) {
+        buff = (char *)malloc(nout * sizeof(std::complex<T>));
         if (buff == NULL) {
             goto fail;
         }
     }
-    for (npy_intp i = 0; i < n_outer; i++, ip += si, fp += sf, op += so) {
-        T fct = *(T *)fp;
-        char *op_or_buff = buff == NULL ? op : buff;
-        T *op_T = (T *)op_or_buff;
+    for (size_t i = 0; i < n_outer; i++, ip += si, fp += sf, op += so) {
+        std::complex<T> *op_or_buff = (std::complex<T> *)(buff == NULL ? op : buff);
         /*
-         * Pocketfft works in-place and for real transforms the frequency data
-         * thus needs to be compressed, using that there will be no imaginary
-         * component for the zero-frequency item (which is the sum of all
-         * inputs and thus has to be real), nor one for the Nyquist frequency
-         * for even number of points. Pocketfft uses FFTpack order,
-         * R0,R1,I1,...Rn-1,In-1,Rn[,In] (last for npts odd only). To make
-         * unpacking easy, we place the real data offset by one in the buffer,
-         * so that we just have to move R0 and create I0=0. Note that
-         * copy_data will zero the In component for even number of points.
+         * The internal pocketfft routines work in-place and for real
+         * transforms the frequency data thus needs to be compressed, using
+         * that there will be no imaginary component for the zero-frequency
+         * item (which is the sum of all inputs and thus has to be real), nor
+         * one for the Nyquist frequency for even number of points.
+         * Pocketfft uses FFTpack order, R0,R1,I1,...Rn-1,In-1,Rn[,In] (last
+         * for npts odd only). To make unpacking easy, we place the real data
+         * offset by one in the buffer, so that we just have to move R0 and
+         * create I0=0. Note that copy_data will zero the In component for
+         * even number of points.
          */
-        copy_data<T>(ip, step_in, nin,
-                     (char *)&op_T[1], sizeof(T), nout*2 - 1);
-        plan->exec(&op_T[1], fct, FORWARD);
-        op_T[0] = op_T[1];
-        op_T[1] = (T)0;
-        if (op_or_buff == buff) {
-            copy_data<cmplx<T>>(op_or_buff, sizeof(cmplx<T>), nout,
-                                op, step_out, nout);
+        copy_input(ip, step_in, nin, &((T *)op_or_buff)[1], nout*2 - 1);
+        plan->exec(&((T *)op_or_buff)[1], *(T *)fp, pocketfft::FORWARD);
+        op_or_buff[0] = op_or_buff[0].imag();  // I0->R0, I0=0
+        if (buff != NULL) {
+            copy_output(op_or_buff, op, step_out, nout);
         }
     }
     free(buff);
@@ -200,7 +207,9 @@ template <typename T>
 static void
 rfft_n_even_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func)
 {
-    npy_intp npts = 2 * dimensions[2] - 2;
+    size_t nout = (size_t)dimensions[2];
+    assert (nout > 0);
+    size_t npts = 2 * nout - 2;
     rfft_impl<T>(args, dimensions, steps, func, npts);
 }
 
@@ -208,7 +217,9 @@ template <typename T>
 static void
 rfft_n_odd_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func)
 {
-    npy_intp npts = 2 * dimensions[2] - 1;
+    size_t nout = (size_t)dimensions[2];
+    assert (nout > 0);
+    size_t npts = 2 * nout - 1;
     rfft_impl<T>(args, dimensions, steps, func, npts);
 }
 
@@ -217,29 +228,44 @@ static void
 irfft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func)
 {
     char *ip = args[0], *fp = args[1], *op = args[2];
-    npy_intp n_outer = dimensions[0];
-    npy_intp si = steps[0], sf = steps[1], so = steps[2];
-    npy_intp nin = dimensions[1], nout = dimensions[2];
-    npy_intp step_in = steps[3], step_out = steps[4];
-    npy_intp npts = nout;
-    char *buff = NULL;
+    size_t n_outer = (size_t)dimensions[0];
+    ptrdiff_t si = steps[0], sf = steps[1], so = steps[2];
+    size_t nin = (size_t)dimensions[1], nout = (size_t)dimensions[2];
+    ptrdiff_t step_in = steps[3], step_out = steps[4];
 
-    if (nout == 0) {
+    size_t npts_in = nout / 2 + 1;
+
+    assert(nout > 0);
+
+#ifndef POCKETFFT_NO_VECTORS
+    /*
+     * Call pocketfft directly if vectorization is possible.
+     */
+    constexpr auto vlen = pocketfft::detail::VLEN<T>::val;
+    if (vlen > 1 && n_outer >= vlen && nin >= npts_in && sf == 0) {
+        std::vector<size_t> axes = { 1 };
+        std::vector<size_t> shape_out = { n_outer, nout };
+        std::vector<ptrdiff_t> strides_in = { si, step_in };
+        std::vector<ptrdiff_t> strides_out = { so, step_out};
+        pocketfft::c2r(shape_out, strides_in, strides_out, axes, pocketfft::BACKWARD,
+                       (std::complex<T> *)ip, (T *)op, *(T *)fp);
         return;
     }
-    auto plan = get_plan<pocketfft_r<T>>(npts);
-
+#endif
+    /*
+     * Otherwise, use a non-vectorized loop in which we try to minimize copies.
+     * We do still need a buffer if the output is not contiguous.
+     */
+    auto plan = pocketfft::detail::get_plan<pocketfft::detail::pocketfft_r<T>>(nout);
+    char *buff = NULL;
     if (step_out != sizeof(T)) {
-        buff = (char *)malloc(npts * sizeof(T));
+        buff = (char *)malloc(nout * sizeof(T));
         if (buff == NULL) {
             goto fail;
         }
     }
-
-    for (npy_intp i = 0; i < n_outer; i++, ip += si, fp += sf, op += so) {
-        T fct = *(T *)fp;
-        char *op_or_buff = buff == NULL ? op : buff;
-        T *op_T = (T *)op_or_buff;
+    for (size_t i = 0; i < n_outer; i++, ip += si, fp += sf, op += so) {
+        T *op_or_buff = (T *)(buff == NULL ? op : buff);
         /*
          * Pocket_fft works in-place and for inverse real transforms the
          * frequency data thus needs to be compressed, removing the imaginary
@@ -249,25 +275,24 @@ irfft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
          * the data to the buffer in the following order (also used by
          * FFTpack): R0,R1,I1,...Rn-1,In-1,Rn[,In] (last for npts odd only).
          */
-        op_T[0] = ((T *)ip)[0];  /* copy R0 */
-        if (npts > 1) {
+        op_or_buff[0] = ((T *)ip)[0];  /* copy R0 */
+        if (nout > 1) {
             /*
              * Copy R1,I1... up to Rn-1,In-1 if possible, stopping earlier
              * if not all the input points are needed or if the input is short
              * (in the latter case, zeroing after).
              */
-            copy_data<cmplx<T>>(ip + step_in, step_in, nin - 1,
-                                (char *)&op_T[1], sizeof(cmplx<T>), (npts - 1) / 2);
-            /* For even npts, we still need to set Rn. */
-            if (npts % 2 == 0) {
-                op_T[npts - 1] = (npts / 2 >= nin) ? (T)0 :
-                    ((T *)(ip + (npts / 2) * step_in))[0];
+            copy_input(ip + step_in, step_in, nin - 1,
+                       (std::complex<T> *)&op_or_buff[1], (nout - 1) / 2);
+            /* For even nout, we still need to set Rn. */
+            if (nout % 2 == 0) {
+                op_or_buff[nout - 1] = (nout / 2 >= nin) ? (T)0 :
+                    ((T *)(ip + (nout / 2) * step_in))[0];
             }
         }
-        plan->exec(op_T, fct, BACKWARD);
-        if (op_or_buff == buff) {
-            copy_data<T>(op_or_buff, sizeof(T), npts,
-                         op, step_out, npts);
+        plan->exec(op_or_buff, *(T *)fp, pocketfft::BACKWARD);
+        if (buff != NULL) {
+            copy_output(op_or_buff, op, step_out, nout);
         }
     }
     free(buff);
@@ -293,14 +318,14 @@ static char fft_types[] = {
     NPY_CLONGDOUBLE, NPY_LONGDOUBLE, NPY_CLONGDOUBLE
 };
 static void *fft_data[] = {
-    (void*)&FORWARD,
-    (void*)&FORWARD,
-    (void*)&FORWARD
+    (void*)&pocketfft::FORWARD,
+    (void*)&pocketfft::FORWARD,
+    (void*)&pocketfft::FORWARD
 };
 static void *ifft_data[] = {
-    (void*)&BACKWARD,
-    (void*)&BACKWARD,
-    (void*)&BACKWARD
+    (void*)&pocketfft::BACKWARD,
+    (void*)&pocketfft::BACKWARD,
+    (void*)&pocketfft::BACKWARD
 };
 
 static PyUFuncGenericFunction rfft_n_even_functions[] = {

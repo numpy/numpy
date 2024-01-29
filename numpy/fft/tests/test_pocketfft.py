@@ -151,7 +151,7 @@ class TestFFT1D:
             assert_array_equal(y3[:, 15:], y[:, 15:])
         # In-place with n > nin; rest should be unchanged.
         y4 = y.copy()
-        y4_sel = y[:10] if axis == 0 else y4[:, :10]
+        y4_sel = y4[:10] if axis == 0 else y4[:, :10]
         out4 = y4[:15] if axis == 0 else y4[:, :15]
         expected4 = np.fft.fft(y4_sel, n=15, axis=axis)
         result4 = np.fft.fft(y4_sel, n=15, axis=axis, out=out4)
