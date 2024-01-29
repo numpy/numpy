@@ -196,7 +196,7 @@ jobs:
           # TODO: Don't run test suite, and instead build wheels from sdist
           # Depends on pypa/cibuildwheel#1020
           python -m pip install dist/*.gz -Csetup-args=-Dallow-noblas=true
-          pip install -r test_requirements.txt
+          pip install -r requirements/test_requirements.txt
           cd .. # Can't import numpy within numpy src directory
           python -c "import numpy, sys; print(numpy.__version__); sys.exit(numpy.test() is False)"
 

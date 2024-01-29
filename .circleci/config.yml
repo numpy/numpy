@@ -54,9 +54,9 @@ jobs:
           command: |
             python3.11 -m venv venv
             . venv/bin/activate
-            pip install --progress-bar=off -r test_requirements.txt
+            pip install --progress-bar=off -r requirements/test_requirements.txt
             # get newer, pre-release versions of critical packages
-            pip install --progress-bar=off --pre --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple -r doc_requirements.txt
+            pip install --progress-bar=off --pre --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple -r requirements/doc_requirements.txt
             # then install numpy HEAD, which will override the version installed above
             pip install . --config-settings=setup-args="-Dallow-noblas=true"
 

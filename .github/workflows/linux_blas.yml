@@ -73,7 +73,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r build_requirements.txt
+        pip install -r requirements/build_requirements.txt
         # Install OpenBLAS
         set -xe
         if [[ $USE_NIGHTLY_OPENBLAS == "true" ]]; then
@@ -127,7 +127,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r build_requirements.txt
+        pip install -r requirements/build_requirements.txt
         pip install pytest hypothesis typing_extensions
 
     - name: Build (LP64)
@@ -162,7 +162,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r build_requirements.txt
+        pip install -r requirements/build_requirements.txt
         pip install pytest hypothesis typing_extensions
 
     - name: Build
@@ -195,7 +195,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r build_requirements.txt
+        pip install -r requirements/build_requirements.txt
         pip install pytest pytest-xdist hypothesis typing_extensions
         sudo apt-get install libopenblas-dev cmake
         sudo apt-get remove pkg-config
@@ -222,7 +222,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r build_requirements.txt
+        pip install -r requirements/build_requirements.txt
         sudo apt-get install liblapack-dev pkg-config
 
     - name: Build
@@ -254,7 +254,7 @@ jobs:
 
     - name: Install PyPI dependencies
       run: |
-        pip install --break-system-packages -r build_requirements.txt
+        pip install --break-system-packages -r requirements/build_requirements.txt
 
     - name: Build
       run: |
@@ -281,7 +281,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r build_requirements.txt
+        pip install -r requirements/build_requirements.txt
         pip install pytest pytest-xdist hypothesis typing_extensions
         pip install mkl mkl-devel
 
@@ -344,7 +344,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r build_requirements.txt
+        pip install -r requirements/build_requirements.txt
         pip install pytest pytest-xdist hypothesis typing_extensions
         sudo apt-get install libblis-dev libopenblas-dev pkg-config
 
@@ -379,7 +379,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r build_requirements.txt
+        pip install -r requirements/build_requirements.txt
         pip install pytest pytest-xdist hypothesis typing_extensions
         sudo apt-get install libatlas-base-dev pkg-config
 

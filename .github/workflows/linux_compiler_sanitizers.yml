@@ -34,8 +34,8 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install dependencies
       run: |
-        pip install -r build_requirements.txt
-        pip install -r ci_requirements.txt
+        pip install -r requirements/build_requirements.txt
+        pip install -r requirements/ci_requirements.txt
     - name: Build
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       env:

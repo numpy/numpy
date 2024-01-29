@@ -119,7 +119,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r build_requirements.txt
+        pip install -r requirements/build_requirements.txt
         pip install pytest pytest-xdist hypothesis
 
     - name: Build against Accelerate (LP64)
