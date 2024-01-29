@@ -227,9 +227,9 @@ class TestGeomspace:
         x = 1.2 + 3.4j
         y = np.exp(1j*(np.pi-.1)) * x
         z = np.geomspace(x, y, 5)
-        expected = np.array([ 1.2 + 3.4j, -1.47384 + 3.2905616j ,
-                             -3.33577588+1.36842949j, -3.36011056-1.30753855j,
-                             -1.53343861-3.26321406j])
+        expected = np.array([1.2 + 3.4j, -1.47384 + 3.2905616j,
+                             -3.33577588 + 1.36842949j, -3.36011056 - 1.30753855j,
+                             -1.53343861 - 3.26321406j])
         np.testing.assert_array_almost_equal(z, expected)
 
 
