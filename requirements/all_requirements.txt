@@ -3,3 +3,4 @@
 -r linter_requirements.txt
 -r release_requirements.txt
 -r test_requirements.txt
+-r ci_requirements.txt
