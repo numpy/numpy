@@ -110,7 +110,7 @@ jobs:
       id: container-cache
       with:
         path: ~/docker_${{ matrix.BUILD_PROP[1] }}
-        key: container-${{ runner.os }}-${{ matrix.BUILD_PROP[1] }}-${{ matrix.BUILD_PROP[2] }}-${{ hashFiles('build_requirements.txt') }}
+        key: container-${{ runner.os }}-${{ matrix.BUILD_PROP[1] }}-${{ matrix.BUILD_PROP[2] }}-${{ hashFiles('requirements/build_requirements.txt') }}
 
     - name: Creates new container
       if: steps.container-cache.outputs.cache-hit != 'true'
@@ -131,7 +131,7 @@ jobs:
           rm -f /usr/bin/ld.bfd && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-ld.bfd /usr/bin/ld.bfd &&
           rm -f /usr/bin/ninja && ln -s /host/usr/bin/ninja /usr/bin/ninja &&
           git config --global --add safe.directory /numpy &&
-          python -m pip install -r /numpy/build_requirements.txt &&
+          python -m pip install -r /numpy/requirements/build_requirements.txt &&
           python -m pip install pytest pytest-xdist hypothesis typing_extensions &&
           rm -f /usr/local/bin/ninja && mkdir -p /usr/local/bin && ln -s /host/usr/bin/ninja /usr/local/bin/ninja
         "

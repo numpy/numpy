@@ -11,7 +11,7 @@ into a problem._
 
 - `mamba env create -f environment.yml && mamba activate numpy-dev`
 
-- `python -m pip install -r build_requirements.txt`
+- `python -m pip install -r requirements/build_requirements.txt`
   *Note: also make sure you have `pkg-config` and the usual system dependencies
   for NumPy*
 

@@ -75,7 +75,7 @@ jobs:
           python -c "import sys; print(sys.platform)"
           # TODO: when re-enabled this workflow, install test deps differently
           # since ninja isn't installable with pyodide
-          pip install -r test_requirements.txt
+          pip install -r requirements/test_requirements.txt
       - name: Test
         run: |
           source .venv-pyodide/bin/activate
