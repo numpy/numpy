@@ -2071,6 +2071,8 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     A = asarray(A)
     if A.ndim < 2:
         return int(not all(A == 0))
+    if A.shape[-2] < A.shape[-1]:
+        A = swapaxes(A, -2, -1)
     S = svd(A, compute_uv=False, hermitian=hermitian)
     if rtol is not None and tol is not None:
         raise ValueError("`tol` and `rtol` can't be both set.")
