@@ -2009,9 +2009,9 @@ add_newdoc('numpy._core.multiarray', 'c_einsum',
     identifier '->' as well as the list of output subscript labels.
     This feature increases the flexibility of the function since
     summing can be disabled or forced when required. The call
-    ``np.einsum('...i->...', a)`` is like
-    :py:func:`np.sum(a, axis=-1) <numpy.sum>`, and ``np.einsum('ii->i', a)``
-    is like :py:func:`np.diag(a) <numpy.diag>`.
+    ``np.einsum('i->', a)`` is like :py:func:`np.sum(a) <numpy.sum>`
+    for 1-D arrays, and ``np.einsum('ii->i', a)``
+    is like :py:func:`np.diag(a) <numpy.diag>` for 2-D arrays.
     The difference is that `einsum` does not allow broadcasting by default.
     Additionally ``np.einsum('ij,jh->ih', a, b)`` directly specifies the
     order of the output subscript labels and therefore returns matrix
