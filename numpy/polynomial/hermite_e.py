@@ -796,7 +796,7 @@ def hermeval(x, c, tensor=True):
     """
     Evaluate an HermiteE series at points x.
 
-    If `c` is of length `n + 1`, this function returns the value:
+    If `c` is of length ``n + 1``, this function returns the value:
 
     .. math:: p(x) = c_0 * He_0(x) + c_1 * He_1(x) + ... + c_n * He_n(x)
 
@@ -805,7 +805,7 @@ def hermeval(x, c, tensor=True):
     or its elements must support multiplication and addition both with
     themselves and with the elements of `c`.
 
-    If `c` is a 1-D array, then `p(x)` will have the same shape as `x`.  If
+    If `c` is a 1-D array, then ``p(x)`` will have the same shape as `x`.  If
     `c` is multidimensional, then the shape of the result depends on the
     value of `tensor`. If `tensor` is true the shape will be c.shape[1:] +
     x.shape. If `tensor` is false the shape will be c.shape[1:]. Note that
@@ -907,7 +907,7 @@ def hermeval2d(x, y, c):
     Parameters
     ----------
     x, y : array_like, compatible objects
-        The two dimensional series is evaluated at the points `(x, y)`,
+        The two dimensional series is evaluated at the points ``(x, y)``,
         where `x` and `y` must have the same shape. If `x` or `y` is a list
         or tuple, it is first converted to an ndarray, otherwise it is left
         unchanged and if it isn't an ndarray it is treated as a scalar.
@@ -944,7 +944,7 @@ def hermegrid2d(x, y, c):
 
     .. math:: p(a,b) = \\sum_{i,j} c_{i,j} * H_i(a) * H_j(b)
 
-    where the points `(a, b)` consist of all pairs formed by taking
+    where the points ``(a, b)`` consist of all pairs formed by taking
     `a` from `x` and `b` from `y`. The resulting points form a grid with
     `x` in the first dimension and `y` in the second.
 
@@ -1048,7 +1048,7 @@ def hermegrid3d(x, y, z, c):
 
     .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} * He_i(a) * He_j(b) * He_k(c)
 
-    where the points `(a, b, c)` consist of all triples formed by taking
+    where the points ``(a, b, c)`` consist of all triples formed by taking
     `a` from `x`, `b` from `y`, and `c` from `z`. The resulting points form
     a grid with `x` in the first dimension, `y` in the second, and `z` in
     the third.
@@ -1104,10 +1104,10 @@ def hermevander(x, deg):
 
     .. math:: V[..., i] = He_i(x),
 
-    where `0 <= i <= deg`. The leading indices of `V` index the elements of
+    where ``0 <= i <= deg``. The leading indices of `V` index the elements of
     `x` and the last index is the degree of the HermiteE polynomial.
 
-    If `c` is a 1-D array of coefficients of length `n + 1` and `V` is the
+    If `c` is a 1-D array of coefficients of length ``n + 1`` and `V` is the
     array ``V = hermevander(x, n)``, then ``np.dot(V, c)`` and
     ``hermeval(x, c)`` are the same up to roundoff. This equivalence is
     useful both for least squares fitting and for the evaluation of a large
@@ -1160,12 +1160,12 @@ def hermevander2d(x, y, deg):
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
-    points `(x, y)`. The pseudo-Vandermonde matrix is defined by
+    points ``(x, y)``. The pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., (deg[1] + 1)*i + j] = He_i(x) * He_j(y),
 
-    where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
-    `V` index the points `(x, y)` and the last index encodes the degrees of
+    where ``0 <= i <= deg[0]`` and ``0 <= j <= deg[1]``. The leading indices of
+    `V` index the points ``(x, y)`` and the last index encodes the degrees of
     the HermiteE polynomials.
 
     If ``V = hermevander2d(x, y, [xdeg, ydeg])``, then the columns of `V`
@@ -1213,13 +1213,13 @@ def hermevander3d(x, y, z, deg):
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
-    points `(x, y, z)`. If `l, m, n` are the given degrees in `x, y, z`,
+    points ``(x, y, z)``. If `l`, `m`, `n` are the given degrees in `x`, `y`, `z`,
     then Hehe pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = He_i(x)*He_j(y)*He_k(z),
 
-    where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
-    indices of `V` index the points `(x, y, z)` and the last index encodes
+    where ``0 <= i <= l``, ``0 <= j <= m``, and ``0 <= j <= n``.  The leading
+    indices of `V` index the points ``(x, y, z)`` and the last index encodes
     the degrees of the HermiteE polynomials.
 
     If ``V = hermevander3d(x, y, z, [xdeg, ydeg, zdeg])``, then the columns
@@ -1372,7 +1372,7 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
     spurious and have large contributions from roundoff error.
 
     Fits using HermiteE series are probably most useful when the data can
-    be approximated by ``sqrt(w(x)) * p(x)``, where `w(x)` is the HermiteE
+    be approximated by ``sqrt(w(x)) * p(x)``, where ``w(x)`` is the HermiteE
     weight. In that case the weight ``sqrt(w(x[i]))`` should be used
     together with data values ``y[i]/sqrt(w(x[i]))``. The weight function is
     available as `hermeweight`.
