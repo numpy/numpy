@@ -2010,8 +2010,8 @@ add_newdoc('numpy._core.multiarray', 'c_einsum',
     This feature increases the flexibility of the function since
     summing can be disabled or forced when required. The call
     ``np.einsum('i->', a)`` is like :py:func:`np.sum(a) <numpy.sum>`
-    for 1-D arrays, and ``np.einsum('ii->i', a)``
-    is like :py:func:`np.diag(a) <numpy.diag>` for 2-D arrays.
+    if ``a`` is a 1-D array, and ``np.einsum('ii->i', a)``
+    is like :py:func:`np.diag(a) <numpy.diag>` if ``a`` is a square 2-D array.
     The difference is that `einsum` does not allow broadcasting by default.
     Additionally ``np.einsum('ij,jh->ih', a, b)`` directly specifies the
     order of the output subscript labels and therefore returns matrix
@@ -2020,6 +2020,8 @@ add_newdoc('numpy._core.multiarray', 'c_einsum',
     To enable and control broadcasting, use an ellipsis.  Default
     NumPy-style broadcasting is done by adding an ellipsis
     to the left of each term, like ``np.einsum('...ii->...i', a)``.
+    ``np.einsum('...i->...', a)`` is like 
+    :py:func:`np.sum(a, axis=-1) <numpy.sum>` for array ``a`` of any shape.
     To take the trace along the first and last axes,
     you can do ``np.einsum('i...i', a)``, or to do a matrix-matrix
     product with the left-most indices instead of rightmost, one can do
