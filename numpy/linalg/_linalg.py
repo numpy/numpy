@@ -2047,6 +2047,9 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     near that uncertainty may be preferable. The tolerance may be absolute
     if the uncertainties are absolute rather than relative.
 
+    To speed up the computation, `A` is transposed if the number of rows in
+    each matrix is greater than the number of columns. 
+
     References
     ----------
     .. [1] MATLAB reference documentation, "Rank"
