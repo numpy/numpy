@@ -265,10 +265,12 @@ class _fromnxfunction:
         npfunc = getattr(np, self.__name__, None)
         doc = getattr(npfunc, '__doc__', None)
         if doc:
-            sig = self.__name__ + ma.get_object_signature(npfunc)
+            sig = ma.get_object_signature(npfunc)
             doc = ma.doc_note(doc, "The function is applied to both the _data "
                                    "and the _mask, if any.")
-            return '\n\n'.join((sig, doc))
+            if sig:
+                sig = self.__name__ + sig + "\n\n"
+            return sig + doc
         return
 
     def __call__(self, *args, **params):
