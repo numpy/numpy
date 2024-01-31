@@ -1,4 +1,4 @@
 spin
 # Keep this in sync with ci_requirements.txt
-scipy-openblas32<0.3.26
+scipy-openblas32<=0.3.26.0
 
