@@ -24,6 +24,33 @@
 #include "pocketfft/pocketfft_hdronly.h"
 
 /*
+ * In order to ensure that C++ exceptions are converted to Python
+ * ones before crossing over to the C machinery, we must catch them.
+ * This template can be used to wrap a C++ written ufunc to do this via:
+ *      wrap_legacy_cpp_ufunc<cpp_ufunc>
+ */
+template<PyUFuncGenericFunction cpp_ufunc>
+static void
+wrap_legacy_cpp_ufunc(char **args, npy_intp const *dimensions,
+                      ptrdiff_t const *steps, void *func)
+{
+    NPY_ALLOW_C_API_DEF
+    try {
+        cpp_ufunc(args, dimensions, steps, func);
+    }
+    catch (std::bad_alloc& e) {
+        NPY_ALLOW_C_API;
+        PyErr_NoMemory();
+        NPY_DISABLE_C_API;
+    }
+    catch (const std::exception& e) {
+        NPY_ALLOW_C_API;
+        PyErr_SetString(PyExc_RuntimeError, e.what());
+        NPY_DISABLE_C_API;
+    }
+}
+
+/*
  * Transfer to and from a contiguous buffer.
  * copy_input: copy min(nin, n) elements from input to buffer and zero rest.
  * copy_output: copy n elements from buffer to output.
@@ -95,32 +122,18 @@ fft_loop(char **args, npy_intp const *dimensions, ptrdiff_t const *steps,
      * We do still need a buffer if the output is not contiguous.
      */
     auto plan = pocketfft::detail::get_plan<pocketfft::detail::pocketfft_c<T>>(nout);
-    char *buff = NULL;
-    if (step_out != sizeof(std::complex<T>)) {
-        buff = (char *)malloc(nout * sizeof(std::complex<T>));
-        if (buff == NULL) {
-            goto fail;
-        }
-    }
+    auto buffered = (step_out != sizeof(std::complex<T>));
+    pocketfft::detail::arr<std::complex<T>> buff(buffered ? nout : 0);
     for (size_t i = 0; i < n_outer; i++, ip += si, fp += sf, op += so) {
-        std::complex<T> *op_or_buff = (std::complex<T> *)(buff == NULL ? op : buff);
+        std::complex<T> *op_or_buff = buffered ? buff.data() : (std::complex<T> *)op;
         if (ip != (char*)op_or_buff) {
             copy_input(ip, step_in, nin, op_or_buff, nout);
         }
         plan->exec((pocketfft::detail::cmplx<T> *)op_or_buff, *(T *)fp, direction);
-        if (buff != NULL) {
+        if (buffered) {
             copy_output(op_or_buff, op, step_out, nout);
         }
     }
-    free(buff);
-    return;
-
-  fail:
-    /* TODO: Requires use of new ufunc API to indicate error return */
-    NPY_ALLOW_C_API_DEF
-    NPY_ALLOW_C_API;
-    PyErr_NoMemory();
-    NPY_DISABLE_C_API;
     return;
 }
 
@@ -157,15 +170,10 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps,
      * We do still need a buffer if the output is not contiguous.
      */
     auto plan = pocketfft::detail::get_plan<pocketfft::detail::pocketfft_r<T>>(npts);
-    char *buff = NULL;
-    if (step_out != sizeof(std::complex<T>)) {
-        buff = (char *)malloc(nout * sizeof(std::complex<T>));
-        if (buff == NULL) {
-            goto fail;
-        }
-    }
+    auto buffered = (step_out != sizeof(std::complex<T>));
+    pocketfft::detail::arr<std::complex<T>> buff(buffered ? nout : 0);
     for (size_t i = 0; i < n_outer; i++, ip += si, fp += sf, op += so) {
-        std::complex<T> *op_or_buff = (std::complex<T> *)(buff == NULL ? op : buff);
+        std::complex<T> *op_or_buff = buffered ? buff.data() : (std::complex<T> *)op;
         /*
          * The internal pocketfft routines work in-place and for real
          * transforms the frequency data thus needs to be compressed, using
@@ -181,19 +189,10 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps,
         copy_input(ip, step_in, nin, &((T *)op_or_buff)[1], nout*2 - 1);
         plan->exec(&((T *)op_or_buff)[1], *(T *)fp, pocketfft::FORWARD);
         op_or_buff[0] = op_or_buff[0].imag();  // I0->R0, I0=0
-        if (buff != NULL) {
+        if (buffered) {
             copy_output(op_or_buff, op, step_out, nout);
         }
     }
-    free(buff);
-    return;
-
-  fail:
-    /* TODO: Requires use of new ufunc API to indicate error return */
-    NPY_ALLOW_C_API_DEF
-    NPY_ALLOW_C_API;
-    PyErr_NoMemory();
-    NPY_DISABLE_C_API;
     return;
 }
 
@@ -257,15 +256,10 @@ irfft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
      * We do still need a buffer if the output is not contiguous.
      */
     auto plan = pocketfft::detail::get_plan<pocketfft::detail::pocketfft_r<T>>(nout);
-    char *buff = NULL;
-    if (step_out != sizeof(T)) {
-        buff = (char *)malloc(nout * sizeof(T));
-        if (buff == NULL) {
-            goto fail;
-        }
-    }
+    auto buffered = (step_out != sizeof(T));
+    pocketfft::detail::arr<T> buff(buffered ? nout : 0);
     for (size_t i = 0; i < n_outer; i++, ip += si, fp += sf, op += so) {
-        T *op_or_buff = (T *)(buff == NULL ? op : buff);
+        T *op_or_buff = buffered ? buff.data() : (T *)op;
         /*
          * Pocket_fft works in-place and for inverse real transforms the
          * frequency data thus needs to be compressed, removing the imaginary
@@ -291,26 +285,17 @@ irfft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
             }
         }
         plan->exec(op_or_buff, *(T *)fp, pocketfft::BACKWARD);
-        if (buff != NULL) {
+        if (buffered) {
             copy_output(op_or_buff, op, step_out, nout);
         }
     }
-    free(buff);
-    return;
-
-  fail:
-    /* TODO: Requires use of new ufunc API to indicate error return */
-    NPY_ALLOW_C_API_DEF
-    NPY_ALLOW_C_API;
-    PyErr_NoMemory();
-    NPY_DISABLE_C_API;
     return;
 }
 
 static PyUFuncGenericFunction fft_functions[] = {
-    fft_loop<npy_double>,
-    fft_loop<npy_float>,
-    fft_loop<npy_longdouble>
+    wrap_legacy_cpp_ufunc<fft_loop<npy_double>>,
+    wrap_legacy_cpp_ufunc<fft_loop<npy_float>>,
+    wrap_legacy_cpp_ufunc<fft_loop<npy_longdouble>>
 };
 static char fft_types[] = {
     NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE,
@@ -329,14 +314,14 @@ static void *ifft_data[] = {
 };
 
 static PyUFuncGenericFunction rfft_n_even_functions[] = {
-    rfft_n_even_loop<npy_double>,
-    rfft_n_even_loop<npy_float>,
-    rfft_n_even_loop<npy_longdouble>
+    wrap_legacy_cpp_ufunc<rfft_n_even_loop<npy_double>>,
+    wrap_legacy_cpp_ufunc<rfft_n_even_loop<npy_float>>,
+    wrap_legacy_cpp_ufunc<rfft_n_even_loop<npy_longdouble>>
 };
 static PyUFuncGenericFunction rfft_n_odd_functions[] = {
-    rfft_n_odd_loop<npy_double>,
-    rfft_n_odd_loop<npy_float>,
-    rfft_n_odd_loop<npy_longdouble>
+    wrap_legacy_cpp_ufunc<rfft_n_odd_loop<npy_double>>,
+    wrap_legacy_cpp_ufunc<rfft_n_odd_loop<npy_float>>,
+    wrap_legacy_cpp_ufunc<rfft_n_odd_loop<npy_longdouble>>
 };
 static char rfft_types[] = {
     NPY_DOUBLE, NPY_DOUBLE, NPY_CDOUBLE,
@@ -345,9 +330,9 @@ static char rfft_types[] = {
 };
 
 static PyUFuncGenericFunction irfft_functions[] = {
-    irfft_loop<npy_double>,
-    irfft_loop<npy_float>,
-    irfft_loop<npy_longdouble>
+    wrap_legacy_cpp_ufunc<irfft_loop<npy_double>>,
+    wrap_legacy_cpp_ufunc<irfft_loop<npy_float>>,
+    wrap_legacy_cpp_ufunc<irfft_loop<npy_longdouble>>
 };
 static char irfft_types[] = {
     NPY_CDOUBLE, NPY_DOUBLE, NPY_DOUBLE,
