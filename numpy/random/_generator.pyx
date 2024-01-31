@@ -1535,7 +1535,20 @@ cdef class Generator:
         So there is about a 1% chance that the F statistic will exceed 7.62,
         the measured value is 36, so the null hypothesis is rejected at the 1%
         level.
-
+        
+        The corresponding probability density function for ``n = 20`` 
+        and ``m = 20`` is:
+        
+        >>> import matplotlib.pyplot as plt
+        >>> from scipy import stats  # doctest: +SKIP
+        >>> dfnum, dfden, size = 20, 20, 10000
+        >>> s = rng.f(dfnum=dfnum, dfden=dfden, size=size)
+        >>> bins, density, _ = plt.hist(s, 30, density=True)
+        >>> x = np.linspace(0, 5, 1000)
+        >>> plt.plot(x, stats.f.pdf(x, dfnum, dfden))
+        >>> plt.xlim([0, 5])
+        >>> plt.show()
+        
         """
         return cont(&random_f, &self._bitgen, size, self.lock, 2,
                     dfnum, 'dfnum', CONS_POSITIVE,
