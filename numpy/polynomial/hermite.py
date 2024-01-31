@@ -196,13 +196,14 @@ def herm2poly(c):
             c1 = polyadd(tmp, polymulx(c1)*2)
         return polyadd(c0, polymulx(c1)*2)
 
+
 #
 # These are constant arrays are of integer type so as to be compatible
 # with the widest range of other types, such as Decimal.
 #
 
 # Hermite
-hermdomain = np.array([-1, 1])
+hermdomain = np.array([-1., 1.])
 
 # Hermite coefficients representing zero.
 hermzero = np.array([0])
