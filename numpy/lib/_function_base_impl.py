@@ -4893,9 +4893,11 @@ def _quantile(
         virtual_indexes = method_props["get_virtual_index"](values_count, quantiles)
         virtual_indexes = np.asanyarray(virtual_indexes)
 
-        int_virtual_indices = np.issubdtype(virtual_indexes.dtype, np.integer)
-        supports_integers = method_props["fix_gamma"] is None
-        supports_integers = supports_integers or (method == 'linear' and int_virtual_indices)
+        if method_props["fix_gamma"] is None:
+            supports_integers = True
+        else:
+            int_virtual_indices = np.issubdtype(virtual_indexes.dtype, np.integer)
+            supports_integers = method == 'linear' and int_virtual_indices
 
         if supports_integers:
             # No interpolation needed, take the points along axis
