@@ -15,7 +15,7 @@ from numpy import (
     ma, angle, average, bartlett, blackman, corrcoef, cov,
     delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
     i0, insert, interp, kaiser, meshgrid, piecewise, place, rot90,
-    select, setxor1d, sinc, trapz, trim_zeros, unwrap, unique, vectorize
+    select, setxor1d, sinc, trapezoid, trim_zeros, unwrap, unique, vectorize
     )
 from numpy.exceptions import AxisError
 from numpy.testing import (
@@ -2167,12 +2167,11 @@ class TestFilterwindows:
             assert_almost_equal(np.sum(w, axis=0), 10, 15)
 
 
-@pytest.mark.filterwarnings('ignore:.*trapz.*:DeprecationWarning')
-class TestTrapz:
+class TestTrapezoid:
 
     def test_simple(self):
         x = np.arange(-10, 10, .1)
-        r = trapz(np.exp(-.5 * x ** 2) / np.sqrt(2 * np.pi), dx=0.1)
+        r = trapezoid(np.exp(-.5 * x ** 2) / np.sqrt(2 * np.pi), dx=0.1)
         # check integral of normal equals 1
         assert_almost_equal(r, 1, 7)
 
@@ -2198,19 +2197,19 @@ class TestTrapz:
         qz = (q * wz[None, None, :]).sum(axis=2)
 
         # n-d `x`
-        r = trapz(q, x=x[:, None, None], axis=0)
+        r = trapezoid(q, x=x[:, None, None], axis=0)
         assert_almost_equal(r, qx)
-        r = trapz(q, x=y[None,:, None], axis=1)
+        r = trapezoid(q, x=y[None, :, None], axis=1)
         assert_almost_equal(r, qy)
-        r = trapz(q, x=z[None, None,:], axis=2)
+        r = trapezoid(q, x=z[None, None, :], axis=2)
         assert_almost_equal(r, qz)
 
         # 1-d `x`
-        r = trapz(q, x=x, axis=0)
+        r = trapezoid(q, x=x, axis=0)
         assert_almost_equal(r, qx)
-        r = trapz(q, x=y, axis=1)
+        r = trapezoid(q, x=y, axis=1)
         assert_almost_equal(r, qy)
-        r = trapz(q, x=z, axis=2)
+        r = trapezoid(q, x=z, axis=2)
         assert_almost_equal(r, qz)
 
     def test_masked(self):
@@ -2221,13 +2220,13 @@ class TestTrapz:
         mask = x == 2
         ym = np.ma.array(y, mask=mask)
         r = 13.0  # sum(0.5 * (0 + 1) * 1.0 + 0.5 * (9 + 16))
-        assert_almost_equal(trapz(ym, x), r)
+        assert_almost_equal(trapezoid(ym, x), r)
 
         xm = np.ma.array(x, mask=mask)
-        assert_almost_equal(trapz(ym, xm), r)
+        assert_almost_equal(trapezoid(ym, xm), r)
 
         xm = np.ma.array(x, mask=mask)
-        assert_almost_equal(trapz(y, xm), r)
+        assert_almost_equal(trapezoid(y, xm), r)
 
 
 class TestSinc:

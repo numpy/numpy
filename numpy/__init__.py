@@ -193,7 +193,8 @@ else:
         gradient, angle, unwrap, sort_complex, flip, rot90, extract, place,
         vectorize, asarray_chkfinite, average, bincount, digitize, cov,
         corrcoef, median, sinc, hamming, hanning, bartlett, blackman,
-        kaiser, trapz, i0, meshgrid, delete, insert, append, interp, quantile
+        kaiser, trapezoid, trapz, i0, meshgrid, delete, insert, append,
+        interp, quantile
     )
     from .lib._twodim_base_impl import (
         diag, diagflat, eye, fliplr, flipud, tri, triu, tril, vander, 
