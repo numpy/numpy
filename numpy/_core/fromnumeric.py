@@ -2459,6 +2459,11 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     Not a Number (NaN), positive infinity and negative infinity evaluate
     to `True` because these are not equal to zero.
 
+    .. versionchanged:: 2.0
+       Before NumPy 2.0, ``any`` did not return booleans for object dtype
+       input arrays.
+       This behavior is still available via ``np.logical_or.reduce``.
+
     Examples
     --------
     >>> np.any([[True, False], [True, True]])
@@ -2564,6 +2569,11 @@ def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     -----
     Not a Number (NaN), positive infinity and negative infinity
     evaluate to `True` because these are not equal to zero.
+
+    .. versionchanged:: 2.0
+       Before NumPy 2.0, ``all`` did not return booleans for object dtype
+       input arrays.
+       This behavior is still available via ``np.logical_and.reduce``.
 
     Examples
     --------
