@@ -646,6 +646,23 @@ src_ufunc_api = custom_target('__ufunc_api',
   install_tag: 'devel'
 )
 
+# Write out pkg-config file
+# -------------------------
+
+# Note: we can't use Meson's built-in pkgconfig module, because we have to
+# install numpy.pc within site-packages rather than in its normal location.
+cdata_numpy_pc = configuration_data()
+cdata_numpy_pc.set('version', meson.project_version())
+
+# Note: keep install path in sync with numpy/_configtool.py
+_numpy_pc = configure_file(
+  input: 'numpy.pc.in',
+  output: 'numpy.pc',
+  configuration: cdata_numpy_pc,
+  install: true,
+  install_dir: np_dir / '_core/lib/pkgconfig',
+  install_tag: 'devel'
+)
 
 # Set common build flags for C and C++ code
 # -----------------------------------------
