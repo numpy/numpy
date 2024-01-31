@@ -251,6 +251,13 @@ class TestAll:
         assert_array_equal(np.all(y1, axis=1), [0, 0, 1])
 
 
+@pytest.mark.parametrize("dtype", ["i8", "U10", "object", "datetime64[ms]"])
+def test_any_and_all_result_dtype(dtype):
+    arr = np.ones(3, dtype=dtype)
+    assert np.any(arr).dtype == np.bool_
+    assert np.all(arr).dtype == np.bool_
+
+
 class TestCopy:
 
     def test_basic(self):

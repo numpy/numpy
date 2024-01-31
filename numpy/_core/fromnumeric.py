@@ -86,6 +86,22 @@ def _wrapreduction(obj, ufunc, method, axis, dtype, out, **kwargs):
     return ufunc.reduce(obj, axis, dtype, out, **passkwargs)
 
 
+def _wrapreduction_any_all(obj, ufunc, method, axis, out, **kwargs):
+    # Same as above function, but dtype is always bool (but never passed on)
+    passkwargs = {k: v for k, v in kwargs.items()
+                  if v is not np._NoValue}
+
+    if type(obj) is not mu.ndarray:
+        try:
+            reduction = getattr(obj, method)
+        except AttributeError:
+            pass
+        else:
+            return reduction(axis=axis, out=out, **passkwargs)
+
+    return ufunc.reduce(obj, axis, bool, out, **passkwargs)
+
+
 def _take_dispatcher(a, indices, axis=None, out=None, mode=None):
     return (a, out)
 
@@ -2443,6 +2459,11 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     Not a Number (NaN), positive infinity and negative infinity evaluate
     to `True` because these are not equal to zero.
 
+    .. versionchanged:: 2.0
+       Before NumPy 2.0, ``any`` did not return booleans for object dtype
+       input arrays.
+       This behavior is still available via ``np.logical_or.reduce``.
+
     Examples
     --------
     >>> np.any([[True, False], [True, True]])
@@ -2480,8 +2501,8 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     (191614240, 191614240)
 
     """
-    return _wrapreduction(a, np.logical_or, 'any', axis, None, out,
-                          keepdims=keepdims, where=where)
+    return _wrapreduction_any_all(a, np.logical_or, 'any', axis, out,
+                                  keepdims=keepdims, where=where)
 
 
 def _all_dispatcher(a, axis=None, out=None, keepdims=None, *,
@@ -2549,6 +2570,11 @@ def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     Not a Number (NaN), positive infinity and negative infinity
     evaluate to `True` because these are not equal to zero.
 
+    .. versionchanged:: 2.0
+       Before NumPy 2.0, ``all`` did not return booleans for object dtype
+       input arrays.
+       This behavior is still available via ``np.logical_and.reduce``.
+
     Examples
     --------
     >>> np.all([[True,False],[True,True]])
@@ -2572,8 +2598,8 @@ def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     (28293632, 28293632, array(True)) # may vary
 
     """
-    return _wrapreduction(a, np.logical_and, 'all', axis, None, out,
-                          keepdims=keepdims, where=where)
+    return _wrapreduction_any_all(a, np.logical_and, 'all', axis, out,
+                                  keepdims=keepdims, where=where)
 
 
 def _cumsum_dispatcher(a, axis=None, dtype=None, out=None):
