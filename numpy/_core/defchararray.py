@@ -840,7 +840,7 @@ class chararray(ndarray):
         """
         return asarray(partition(self, sep))
 
-    def replace(self, old, new, count=-1):
+    def replace(self, old, new, count=None):
         """
         For each element in `self`, return a copy of the string with all
         occurrences of substring `old` replaced by `new`.
@@ -850,7 +850,7 @@ class chararray(ndarray):
         char.replace
 
         """
-        return replace(self, old, new, count)
+        return replace(self, old, new, count if count is not None else -1)
 
     def rfind(self, sub, start=0, end=None):
         """
