@@ -622,7 +622,7 @@ def intersect1d(*ars, assume_unique=False, return_indices=False):
     To intersect more than two arrays, use:
 
     >>> ars = ([1, 3, 4, 3], [3, 1, 2, 1], [6, 3, 4, 2])
-    >>> intersect1d(*ars, return_indices=True)
+    >>> np.intersect1d(*ars, return_indices=True)
     (array([3]), array([1]), array([0]), array([1]))
 
     To return the indices of the values common to the input arrays
