@@ -102,7 +102,11 @@ jobs:
   accelerate:
     name: Accelerate (LP64, ILP64)
     if: "github.repository == 'numpy/numpy'"
-    runs-on: macos-13
+    runs-on: ${{ matrix.buildplat }}
+    strategy:
+      matrix:
+        buildplat: [ macos-13, macos-14 ]
+
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
@@ -114,6 +118,7 @@ jobs:
         python-version: '3.10'
 
     - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # v1.6.0
+      if: ${{ matrix.buildplat == 'macos-13' }}
       with:
         xcode-version: '14.3'
 
