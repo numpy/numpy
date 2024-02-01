@@ -1,3 +1,5 @@
+.. _routines.char:
+
 String operations
 =================
 

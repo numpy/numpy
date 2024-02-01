@@ -106,6 +106,7 @@ Adding and removing elements
    resize
    trim_zeros
    unique
+   pad
 
 Rearranging elements
 ====================

@@ -97,8 +97,7 @@ PyArray_Type and PyArrayObject
           /* version dependent private members */
       } PyArrayObject;
 
-   .. c:macro:: PyObject_HEAD
-
+   :c:macro:`PyObject_HEAD`
        This is needed by all Python objects. It consists of (at least)
        a reference count member ( ``ob_refcnt`` ) and a pointer to the
        typeobject ( ``ob_type`` ). (Other elements may also be present

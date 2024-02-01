@@ -1,5 +1,10 @@
 :orphan:
 
+.. _numpy-polynomial:
+
+:mod:`numpy.polynomial`
+=======================
+
 .. automodule:: numpy.polynomial
    :no-members:
    :no-inherited-members:

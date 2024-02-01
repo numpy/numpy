@@ -50,7 +50,6 @@ things, however in production often there are other concerns. For one, we can
 template via FYPP the construction of similar functions:
 
 .. literalinclude:: ./../code/advanced/boilerplating/src/gen_adder.f90.fypp
-    :language: fortran
 
 This can be pre-processed to generate the full fortran code:
 
@@ -69,7 +68,7 @@ following basic ``.pyf`` which can be generated for a single subroutine via ``f2
 With the docstring:
 
 .. literalinclude:: ./../code/advanced/boilerplating/res/base_docstring.dat
-    :language: python
+    :language: reST
 
 Which is already pretty good. However, ``n`` should never be passed in the first
 place so we will make some minor adjustments.
@@ -80,14 +79,13 @@ place so we will make some minor adjustments.
 Which corresponds to:
 
 .. literalinclude:: ./../code/advanced/boilerplating/res/improved_docstring.dat
-    :language: python
+    :language: reST
 
 Finally, we can template over this in a similar manner, to attain the original
 goal of having bindings which make use of ``f2py`` directives and have minimal
 spurious repitition.
 
 .. literalinclude:: ./../code/advanced/boilerplating/src/adder.pyf.fypp
-    :language: fortran
 
 Usage boils down to:
 

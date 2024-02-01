@@ -74,7 +74,7 @@ There are 5 basic numerical types representing booleans (``bool``), integers
 ``complex``. A basic numerical type name combined with a numeric bitsize defines
 a concrete type.  The bitsize is the number of bits that are needed to represent
 a single value in memory. For example, `numpy.float64` is a 64 bit
-floating point data type. Some types, such as `numpy.int` and
+floating point data type. Some types, such as `numpy.int_` and
 `numpy.intp`, have differing bitsizes, dependent on the platforms
 (e.g. 32-bit vs. 64-bit CPU architectures).  This should be taken into account
 when interfacing with low-level code (such as C or Fortran) where the raw memory
@@ -290,8 +290,7 @@ exceptions, such as when code requires very specific attributes of a scalar
 or when it checks specifically whether a value is a Python scalar. Generally,
 problems are easily fixed by explicitly converting array scalars
 to Python scalars, using the corresponding Python type function
-(e.g., :class:`int`, :class:`float`, :class:`complex`, :class:`str`,
-:class:`unicode`).
+(e.g., :class:`int`, :class:`float`, :class:`complex`, :class:`str`).
 
 The primary advantage of using array scalars is that
 they preserve the array type (Python may not have a matching scalar type

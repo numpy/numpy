@@ -251,6 +251,13 @@ class TestAll:
         assert_array_equal(np.all(y1, axis=1), [0, 0, 1])
 
 
+@pytest.mark.parametrize("dtype", ["i8", "U10", "object", "datetime64[ms]"])
+def test_any_and_all_result_dtype(dtype):
+    arr = np.ones(3, dtype=dtype)
+    assert np.any(arr).dtype == np.bool_
+    assert np.all(arr).dtype == np.bool_
+
+
 class TestCopy:
 
     def test_basic(self):
@@ -2502,7 +2509,7 @@ class Test_I0:
         class array_like:
             __array_interface__ = a.__array_interface__
 
-            def __array_wrap__(self, arr):
+            def __array_wrap__(self, arr, context, return_scalar):
                 return self
 
         # E.g. pandas series survive ufunc calls through array-wrap:
@@ -3047,6 +3054,12 @@ class TestPercentile:
         x[1] = np.nan
         assert_equal(np.percentile(x, 0), np.nan)
         assert_equal(np.percentile(x, 0, method='nearest'), np.nan)
+        assert_equal(np.percentile(x, 0, method='inverted_cdf'), np.nan)
+        assert_equal(
+            np.percentile(x, 0, method='inverted_cdf',
+                          weights=np.ones_like(x)),
+            np.nan,
+        )
 
     def test_fraction(self):
         x = [Fraction(i, 2) for i in range(8)]
@@ -3113,21 +3126,23 @@ class TestPercentile:
                              [(np.quantile, 0.4),
                               (np.percentile, 40.0)])
     @pytest.mark.parametrize(["input_dtype", "expected_dtype"], H_F_TYPE_CODES)
-    @pytest.mark.parametrize(["method", "expected"],
-                             [("inverted_cdf", 20),
-                              ("averaged_inverted_cdf", 27.5),
-                              ("closest_observation", 20),
-                              ("interpolated_inverted_cdf", 20),
-                              ("hazen", 27.5),
-                              ("weibull", 26),
-                              ("linear", 29),
-                              ("median_unbiased", 27),
-                              ("normal_unbiased", 27.125),
-                              ])
+    @pytest.mark.parametrize(["method", "weighted", "expected"],
+                              [("inverted_cdf", False, 20),
+                              ("inverted_cdf", True, 20),
+                              ("averaged_inverted_cdf", False, 27.5),
+                              ("closest_observation", False, 20),
+                              ("interpolated_inverted_cdf", False, 20),
+                              ("hazen", False, 27.5),
+                              ("weibull", False, 26),
+                              ("linear", False, 29),
+                              ("median_unbiased", False, 27),
+                              ("normal_unbiased", False, 27.125),
+                               ])
     def test_linear_interpolation(self,
                                   function,
                                   quantile,
                                   method,
+                                  weighted,
                                   expected,
                                   input_dtype,
                                   expected_dtype):
@@ -3136,6 +3151,7 @@ class TestPercentile:
             expected_dtype = np.promote_types(expected_dtype, np.float64)
 
         arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=input_dtype)
+        weights = np.ones_like(arr) if weighted else None
         if input_dtype is np.longdouble:
             if function is np.quantile:
                 # 0.4 is not exactly representable and it matters
@@ -3146,7 +3162,7 @@ class TestPercentile:
         else:
             test_function = np.testing.assert_array_almost_equal_nulp
 
-        actual = function(arr, quantile, method=method)
+        actual = function(arr, quantile, method=method, weights=weights)
 
         test_function(actual, expected_dtype.type(expected))
 
@@ -3295,29 +3311,46 @@ class TestPercentile:
     def test_percentile_list(self):
         assert_equal(np.percentile([1, 2, 3], 0), 1)
 
-    def test_percentile_out(self):
+    @pytest.mark.parametrize(
+        "percentile, with_weights",
+        [
+            (np.percentile, False),
+            (partial(np.percentile, method="inverted_cdf"), True),
+        ]
+    )
+    def test_percentile_out(self, percentile, with_weights):
+        out_dtype = int if with_weights else float
         x = np.array([1, 2, 3])
-        y = np.zeros((3,))
+        y = np.zeros((3,), dtype=out_dtype)
         p = (1, 2, 3)
-        np.percentile(x, p, out=y)
-        assert_equal(np.percentile(x, p), y)
+        weights = np.ones_like(x) if with_weights else None
+        r = percentile(x, p, out=y, weights=weights)
+        assert r is y
+        assert_equal(percentile(x, p, weights=weights), y)
 
         x = np.array([[1, 2, 3],
                       [4, 5, 6]])
+        y = np.zeros((3, 3), dtype=out_dtype)
+        weights = np.ones_like(x) if with_weights else None
+        r = percentile(x, p, axis=0, out=y, weights=weights)
+        assert r is y
+        assert_equal(percentile(x, p, weights=weights, axis=0), y)
 
-        y = np.zeros((3, 3))
-        np.percentile(x, p, axis=0, out=y)
-        assert_equal(np.percentile(x, p, axis=0), y)
-
-        y = np.zeros((3, 2))
-        np.percentile(x, p, axis=1, out=y)
-        assert_equal(np.percentile(x, p, axis=1), y)
+        y = np.zeros((3, 2), dtype=out_dtype)
+        percentile(x, p, axis=1, out=y, weights=weights)
+        assert_equal(percentile(x, p, weights=weights, axis=1), y)
 
         x = np.arange(12).reshape(3, 4)
         # q.dim > 1, float
-        r0 = np.array([[2.,  3.,  4., 5.], [4., 5., 6., 7.]])
-        out = np.empty((2, 4))
-        assert_equal(np.percentile(x, (25, 50), axis=0, out=out), r0)
+        if with_weights:
+            r0 = np.array([[0, 1, 2, 3], [4, 5, 6, 7]])
+        else:
+            r0 = np.array([[2., 3., 4., 5.], [4., 5., 6., 7.]])
+        out = np.empty((2, 4), dtype=out_dtype)
+        weights = np.ones_like(x) if with_weights else None
+        assert_equal(
+            percentile(x, (25, 50), axis=0, out=out, weights=weights), r0
+        )
         assert_equal(out, r0)
         r1 = np.array([[0.75,  4.75,  8.75], [1.5,  5.5,  9.5]])
         out = np.empty((2, 3))
@@ -3491,23 +3524,29 @@ class TestPercentile:
         assert_equal(np.percentile(d, 2, out=o), o)
         assert_equal(np.percentile(d, 2, method='nearest', out=o), o)
 
-    def test_out_nan(self):
+    @pytest.mark.parametrize("method, weighted", [
+        ("linear", False),
+        ("nearest", False),
+        ("inverted_cdf", False),
+        ("inverted_cdf", True),
+    ])
+    def test_out_nan(self, method, weighted):
+        if weighted:
+            kwargs = {"weights": np.ones((3, 4)), "method": method}
+        else:
+            kwargs = {"method": method}
         with warnings.catch_warnings(record=True):
             warnings.filterwarnings('always', '', RuntimeWarning)
             o = np.zeros((4,))
             d = np.ones((3, 4))
             d[2, 1] = np.nan
-            assert_equal(np.percentile(d, 0, 0, out=o), o)
-            assert_equal(
-                np.percentile(d, 0, 0, method='nearest', out=o), o)
+            assert_equal(np.percentile(d, 0, 0, out=o, **kwargs), o)
+
             o = np.zeros((3,))
-            assert_equal(np.percentile(d, 1, 1, out=o), o)
-            assert_equal(
-                np.percentile(d, 1, 1, method='nearest', out=o), o)
+            assert_equal(np.percentile(d, 1, 1, out=o, **kwargs), o)
+
             o = np.zeros(())
-            assert_equal(np.percentile(d, 1, out=o), o)
-            assert_equal(
-                np.percentile(d, 1, method='nearest', out=o), o)
+            assert_equal(np.percentile(d, 1, out=o, **kwargs), o)
 
     def test_nan_behavior(self):
         a = np.arange(24, dtype=float)
@@ -3608,6 +3647,9 @@ quantile_methods = [
     'midpoint']
 
 
+methods_supporting_weights = ["inverted_cdf"]
+
+
 class TestQuantile:
     # most of this is already tested by TestPercentile
 
@@ -3649,6 +3691,10 @@ class TestQuantile:
         q = np.quantile(x, 1)
         assert_equal(q, Fraction(7, 2))
         assert_equal(type(q), Fraction)
+
+        q = np.quantile(x, .5)
+        assert_equal(q, 1.75)
+        assert_equal(type(q), np.float64)
 
         q = np.quantile(x, Fraction(1, 2))
         assert_equal(q, Fraction(7, 4))
@@ -3724,16 +3770,19 @@ class TestQuantile:
         assert np.isscalar(actual)
         assert_equal(np.quantile(a, 0.5), np.nan)
 
+    @pytest.mark.parametrize("weights", [False, True])
     @pytest.mark.parametrize("method", quantile_methods)
     @pytest.mark.parametrize("alpha", [0.2, 0.5, 0.9])
-    def test_quantile_identification_equation(self, method, alpha):
+    def test_quantile_identification_equation(self, weights, method, alpha):
         # Test that the identification equation holds for the empirical
         # CDF:
         #   E[V(x, Y)] = 0  <=>  x is quantile
         # with Y the random variable for which we have observed values and
         # V(x, y) the canonical identification function for the quantile (at
         # level alpha), see
-        # https://doi.org/10.48550/arXiv.0912.0902        
+        # https://doi.org/10.48550/arXiv.0912.0902
+        if weights and method not in methods_supporting_weights:
+            pytest.skip("Weights not supported by method.")
         rng = np.random.default_rng(4321)
         # We choose n and alpha such that we cover 3 cases:
         #  - n * alpha is an integer
@@ -3741,22 +3790,27 @@ class TestQuantile:
         #  - n * alpha is a float that gest rounded up
         n = 102  # n * alpha = 20.4, 51. , 91.8
         y = rng.random(n)
-        x = np.quantile(y, alpha, method=method)
+        w = rng.integers(low=0, high=10, size=n) if weights else None
+        x = np.quantile(y, alpha, method=method, weights=w)
+
         if method in ("higher",):
             # These methods do not fulfill the identification equation.
             assert np.abs(np.mean(self.V(x, y, alpha))) > 0.1 / n
-        elif int(n * alpha) == n * alpha:
+        elif int(n * alpha) == n * alpha and not weights:
             # We can expect exact results, up to machine precision.
-            assert_allclose(np.mean(self.V(x, y, alpha)), 0, atol=1e-14)
+            assert_allclose(
+                np.average(self.V(x, y, alpha), weights=w), 0, atol=1e-14,
+            )
         else:
             # V = (x >= y) - alpha cannot sum to zero exactly but within
             # "sample precision".
-            assert_allclose(np.mean(self.V(x, y, alpha)), 0,
+            assert_allclose(np.average(self.V(x, y, alpha), weights=w), 0,
                 atol=1 / n / np.amin([alpha, 1 - alpha]))
 
+    @pytest.mark.parametrize("weights", [False, True])
     @pytest.mark.parametrize("method", quantile_methods)
     @pytest.mark.parametrize("alpha", [0.2, 0.5, 0.9])
-    def test_quantile_add_and_multiply_constant(self, method, alpha):
+    def test_quantile_add_and_multiply_constant(self, weights, method, alpha):
         # Test that
         #  1. quantile(c + x) = c + quantile(x)
         #  2. quantile(c * x) = c * quantile(x)
@@ -3764,6 +3818,8 @@ class TestQuantile:
         #     On empirical quantiles, this equation does not hold exactly.
         # Koenker (2005) "Quantile Regression" Chapter 2.2.3 calls these
         # properties equivariance.
+        if weights and method not in methods_supporting_weights:
+            pytest.skip("Weights not supported by method.")
         rng = np.random.default_rng(4321)
         # We choose n and alpha such that we have cases for
         #  - n * alpha is an integer
@@ -3771,14 +3827,20 @@ class TestQuantile:
         #  - n * alpha is a float that gest rounded up
         n = 102  # n * alpha = 20.4, 51. , 91.8
         y = rng.random(n)
-        q = np.quantile(y, alpha, method=method)
+        w = rng.integers(low=0, high=10, size=n) if weights else None
+        q = np.quantile(y, alpha, method=method, weights=w)
         c = 13.5
 
         # 1
-        assert_allclose(np.quantile(c + y, alpha, method=method), c + q)
+        assert_allclose(np.quantile(c + y, alpha, method=method, weights=w),
+                        c + q)
         # 2
-        assert_allclose(np.quantile(c * y, alpha, method=method), c * q)
+        assert_allclose(np.quantile(c * y, alpha, method=method, weights=w),
+                        c * q)
         # 3
+        if weights:
+            # From here on, we would need more methods to support weights.
+            return
         q = -np.quantile(-y, 1 - alpha, method=method)
         if method == "inverted_cdf":
             if (
@@ -3811,6 +3873,106 @@ class TestQuantile:
             # "averaged_inverted_cdf", "hazen", "weibull", "linear",
             # "median_unbiased", "normal_unbiased", "midpoint"
             assert_allclose(q, np.quantile(y, alpha, method=method))
+
+    @pytest.mark.parametrize("method", methods_supporting_weights)
+    @pytest.mark.parametrize("alpha", [0.2, 0.5, 0.9])
+    def test_quantile_constant_weights(self, method, alpha):
+        rng = np.random.default_rng(4321)
+        # We choose n and alpha such that we have cases for
+        #  - n * alpha is an integer
+        #  - n * alpha is a float that gets rounded down
+        #  - n * alpha is a float that gest rounded up
+        n = 102  # n * alpha = 20.4, 51. , 91.8
+        y = rng.random(n)
+        q = np.quantile(y, alpha, method=method)
+
+        w = np.ones_like(y)
+        qw = np.quantile(y, alpha, method=method, weights=w)
+        assert_allclose(qw, q)
+
+        w = 8.125 * np.ones_like(y)
+        qw = np.quantile(y, alpha, method=method, weights=w)
+        assert_allclose(qw, q)
+
+    @pytest.mark.parametrize("method", methods_supporting_weights)
+    @pytest.mark.parametrize("alpha", [0, 0.2, 0.5, 0.9, 1])
+    def test_quantile_with_integer_weights(self, method, alpha):
+        # Integer weights can be interpreted as repeated observations.
+        rng = np.random.default_rng(4321)
+        # We choose n and alpha such that we have cases for
+        #  - n * alpha is an integer
+        #  - n * alpha is a float that gets rounded down
+        #  - n * alpha is a float that gest rounded up
+        n = 102  # n * alpha = 20.4, 51. , 91.8
+        y = rng.random(n)
+        w = rng.integers(low=0, high=10, size=n, dtype=np.int32)
+
+        qw = np.quantile(y, alpha, method=method, weights=w)
+        q = np.quantile(np.repeat(y, w), alpha, method=method)
+        assert_allclose(qw, q)
+
+    @pytest.mark.parametrize("method", methods_supporting_weights)
+    def test_quantile_with_weights_and_axis(self, method):
+        rng = np.random.default_rng(4321)
+
+        # 1d weight and single alpha
+        y = rng.random((2, 10, 3))
+        w = np.abs(rng.random(10))
+        alpha = 0.5
+        q = np.quantile(y, alpha, weights=w, method=method, axis=1)
+        q_res = np.zeros(shape=(2, 3))
+        for i in range(2):
+            for j in range(3):
+                q_res[i, j] = np.quantile(
+                    y[i, :, j], alpha, method=method, weights=w
+                )
+        assert_allclose(q, q_res)
+
+        # 1d weight and 1d alpha
+        alpha = [0, 0.2, 0.4, 0.6, 0.8, 1]  # shape (6,)
+        q = np.quantile(y, alpha, weights=w, method=method, axis=1)
+        q_res = np.zeros(shape=(6, 2, 3))
+        for i in range(2):
+            for j in range(3):
+                q_res[:, i, j] = np.quantile(
+                    y[i, :, j], alpha, method=method, weights=w
+                )
+        assert_allclose(q, q_res)
+
+        # 1d weight and 2d alpha
+        alpha = [[0, 0.2], [0.4, 0.6], [0.8, 1]]  # shape (3, 2)
+        q = np.quantile(y, alpha, weights=w, method=method, axis=1)
+        q_res = q_res.reshape((3, 2, 2, 3))
+        assert_allclose(q, q_res)
+
+        # shape of weights equals shape of y
+        w = np.abs(rng.random((2, 10, 3)))
+        alpha = 0.5
+        q = np.quantile(y, alpha, weights=w, method=method, axis=1)
+        q_res = np.zeros(shape=(2, 3))
+        for i in range(2):
+            for j in range(3):
+                q_res[i, j] = np.quantile(
+                    y[i, :, j], alpha, method=method, weights=w[i, :, j]
+                )
+        assert_allclose(q, q_res)
+
+    def test_quantile_weights_raises_negative_weights(self):
+        y = [1, 2]
+        w = [-0.5, 1]
+        with pytest.raises(ValueError, match="Weights must be non-negative"):
+            np.quantile(y, 0.5, weights=w, method="inverted_cdf")
+
+    @pytest.mark.parametrize(
+            "method",
+            sorted(set(quantile_methods) - set(methods_supporting_weights)),
+    )
+    def test_quantile_weights_raises_unsupported_methods(self, method):
+        y = [1, 2]
+        w = [0.5, 1]
+        msg = "Only method 'inverted_cdf' supports weights"
+        with pytest.raises(ValueError, match=msg):
+            np.quantile(y, 0.5, weights=w, method=method)
 
 
 class TestLerp:

@@ -25,15 +25,16 @@ jobs:
           submodules: recursive
           fetch-depth: 0
       - name: Install Cygwin
-        uses: cygwin/cygwin-install-action@006ad0b0946ca6d0a3ea2d4437677fa767392401 # v4
+        uses: egor-tensin/setup-cygwin@d2c752bab416d4b0662591bd366fc2686297c82d   #v4
         with:
           platform: x86_64
           install-dir: 'C:\tools\cygwin'
           packages: >-
-            python39-devel python39-pip python-pip-wheel python-setuptools-wheel
-            liblapack-devel liblapack0 gcc-fortran gcc-g++ git dash cmake ninja
+            python39=3.9.16-1 python39-devel=3.9.16-1 python39-pip python-pip-wheel
+            python-setuptools-wheel liblapack-devel liblapack0 gcc-fortran
+            gcc-g++ git dash cmake ninja
       - name: Set Windows PATH
-        uses: egor-tensin/cleanup-path@8469525c8ee3eddabbd3487658621a6235b3c581 # v3
+        uses: egor-tensin/cleanup-path@f04bc953e6823bf491cc0bdcff959c630db1b458 # v4.0.1
         with:
           dirs: 'C:\tools\cygwin\bin;C:\tools\cygwin\lib\lapack'
       - name: Verify that bash is Cygwin bash
@@ -63,7 +64,7 @@ jobs:
           cd tools
           /usr/bin/python3.9 -m pytest --pyargs numpy -n2 -m "not slow"
       - name: Upload wheel if tests fail
-        uses: actions/upload-artifact@1eb3cb2b3e0f29609092a73eb033bb759a334595 # v4.1.0
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         if: failure()
         with:
           name: numpy-cygwin-wheel

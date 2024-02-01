@@ -32,3 +32,11 @@ Utility
    show_config
    show_runtime
    broadcast_shapes
+
+NumPy-specific help function
+----------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   info
