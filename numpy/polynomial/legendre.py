@@ -131,7 +131,7 @@ def poly2leg(pol):
     >>> from numpy import polynomial as P
     >>> p = P.Polynomial(np.arange(4))
     >>> p
-    Polynomial([0.,  1.,  2.,  3.], domain=[-1,  1], window=[-1,  1], ...
+    Polynomial([0.,  1.,  2.,  3.], domain=[-1.,  1.], window=[-1.,  1.], ...
     >>> c = P.Legendre(P.legendre.poly2leg(p.coef))
     >>> c
     Legendre([ 1.  ,  3.25,  1.  ,  0.75], domain=[-1,  1], window=[-1,  1]) # may vary
@@ -181,7 +181,7 @@ def leg2poly(c):
     >>> from numpy import polynomial as P
     >>> c = P.Legendre(range(4))
     >>> c
-    Legendre([0., 1., 2., 3.], domain=[-1,  1], window=[-1,  1], symbol='x')
+    Legendre([0., 1., 2., 3.], domain=[-1.,  1.], window=[-1.,  1.], symbol='x')
     >>> p = c.convert(kind=P.Polynomial)
     >>> p
     Polynomial([-1. , -3.5,  3. ,  7.5], domain=[-1.,  1.], window=[-1., ...
