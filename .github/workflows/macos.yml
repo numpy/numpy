@@ -100,12 +100,14 @@ jobs:
         ccache -s
 
   accelerate:
-    name: Accelerate (LP64, ILP64)
+    name: Accelerate (LP64, ILP64) - ${{ matrix.build_runner[1] }}
     if: "github.repository == 'numpy/numpy'"
-    runs-on: ${{ matrix.buildplat }}
+    runs-on: ${{ matrix.build_runner[0] }}
     strategy:
       matrix:
-        buildplat: [ macos-13, macos-14 ]
+        build_runner:
+          - [ macos-13, "macos_x86_64" ]
+          - [ macos-14, "macos_arm64" ]
 
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -118,7 +120,7 @@ jobs:
         python-version: '3.10'
 
     - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # v1.6.0
-      if: ${{ matrix.buildplat == 'macos-13' }}
+      if: ${{ matrix.build_runner[0] == 'macos-13' }}
       with:
         xcode-version: '14.3'
 
