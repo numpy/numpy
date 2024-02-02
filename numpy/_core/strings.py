@@ -38,7 +38,7 @@ __all__ = [
     "str_len", "find", "rfind", "count", "startswith", "endswith",
     "lstrip", "rstrip", "strip", "replace",
 
-    # _vec_string
+    # _vec_string - Will gradually become ufuncs as well
     "isalnum", "islower", "istitle", "isupper", "multiply", "mod", "index",
     "rindex", "decode", "encode", "expandtabs", "center",
     "ljust", "rjust", "zfill", "upper", "lower", "swapcase", "capitalize",
