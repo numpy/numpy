@@ -122,6 +122,15 @@ def masked_all(shape, dtype=float):
     --------
     masked_all_like : Empty masked array modelled on an existing array.
 
+    Notes
+    -----
+    Unlike other masked array creation functions (e.g. `numpy.ma.zeros`,
+    `numpy.ma.ones`, `numpy.ma.full`), `masked_all` does not initialize the
+    values of the array, and may therefore be marginally faster. However,
+    the values stored in the newly allocated array are arbitrary. For
+    reproducible behavior, be sure to set each element of the array before
+    reading.
+
     Examples
     --------
     >>> np.ma.masked_all((3, 3))
@@ -175,6 +184,15 @@ def masked_all_like(arr):
     See Also
     --------
     masked_all : Empty masked array with all elements masked.
+
+    Notes
+    -----
+    Unlike other masked array creation functions (e.g. `numpy.ma.zeros_like`,
+    `numpy.ma.ones_like`, `numpy.ma.full_like`), `masked_all_like` does not
+    initialize the values of the array, and may therefore be marginally
+    faster. However, the values stored in the newly allocated array are
+    arbitrary. For reproducible behavior, be sure to set each element of the
+    array before reading.
 
     Examples
     --------
@@ -247,10 +265,12 @@ class _fromnxfunction:
         npfunc = getattr(np, self.__name__, None)
         doc = getattr(npfunc, '__doc__', None)
         if doc:
-            sig = self.__name__ + ma.get_object_signature(npfunc)
+            sig = ma.get_object_signature(npfunc)
             doc = ma.doc_note(doc, "The function is applied to both the _data "
                                    "and the _mask, if any.")
-            return '\n\n'.join((sig, doc))
+            if sig:
+                sig = self.__name__ + sig + "\n\n"
+            return sig + doc
         return
 
     def __call__(self, *args, **params):

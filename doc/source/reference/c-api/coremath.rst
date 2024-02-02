@@ -1,15 +1,5 @@
-NumPy core libraries
-====================
-
-.. sectionauthor:: David Cournapeau
-
-Starting from numpy 1.3.0, we are working on separating the pure C,
-"computational" code from the python dependent code. The goal is twofolds:
-making the code cleaner, and enabling code reuse by other extensions outside
-numpy (scipy, etc...).
-
 NumPy core math library
------------------------
+=======================
 
 The numpy core math library ('npymath') is a first step in this direction. This
 library contains most math-related C99 functionality, which can be used on

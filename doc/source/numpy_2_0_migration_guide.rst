@@ -8,6 +8,41 @@ This document contains a set of instructions on how to update your code to
 work with Numpy 2.0.
 
 
+.. _migration_promotion_changes:
+
+Changes to NumPy data type promotion
+=====================================
+
+NumPy 2.0 changes promotion (the result of combining dissimilar data types)
+as per `NEP 50 <NEP50_>`.
+
+Please see the NEP for details on this change.  It includes a
+:ref:`table of example changes <nep50_comparison_table>` and a backwards
+compatibility section.
+
+The largest backwards compatibility change of this is that it means that
+the precision of scalars is now preserved consistently.
+Two examples are:
+* ``np.float32(3) + 3.`` now returns a float32 when it previously returned
+  a float64.
+* ``np.array([3], dtype=np.float32) + np.float64(3)`` will now return a float64
+  array.  (The higher precision of the scalar is not ignored.)
+
+For floating point values, this can lead to lower precision results when
+working with scalars.  For integers, errors or overflows are possible.
+
+To solve this, you may cast explicitly.  Very often, it may also be a good
+solution to ensure you are working with Python scalars via ``int()``,
+``float()``, or ``numpy_scalar.item()``.
+
+To track down changes, you can enable emitting warnings for changed behavior
+(use ``warnings.simplefilter`` to raise it as an error for a traceback)::
+
+  np._set_promotion_state("weak_and_warn")
+
+which is useful during testing. Unfortunately,
+running this may flag many changes that are irrelevant in practice.
+
 .. _migration_windows_int64:
 
 Windows default integer
@@ -166,7 +201,7 @@ deprecated member migration guideline
 ================= =======================================================================
 in1d              Use ``np.isin`` instead.
 row_stack         Use ``np.vstack`` instead (``row_stack`` was an alias for ``vstack``).
-trapz             Use ``scipy.integrate.trapezoid`` instead.
+trapz             Use ``np.trapezoid`` or a ``scipy.integrate`` function instead.
 ================= =======================================================================
 
 

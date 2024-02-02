@@ -8,7 +8,7 @@ by the correct version. This should be read together with the
 Facility preparation
 ====================
 
-Before beginning to make a release, use the ``*_requirements.txt`` files to
+Before beginning to make a release, use the ``requirements/*_requirements.txt`` files to
 ensure that you have the needed software. Most software can be installed with
 pip, but some will require apt-get, dnf, or whatever your system uses for
 software. You will also need a GitHub personal access token (PAT) to push the

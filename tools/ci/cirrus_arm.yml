@@ -55,8 +55,8 @@ linux_aarch64_test_task:
     # required for figuring out the system tags in openblas_support
     pip install packaging
 
-    pip install -r build_requirements.txt
-    pip install -r test_requirements.txt
+    pip install -r requirements/build_requirements.txt
+    pip install -r requirements/test_requirements.txt
 
   build_script: |
     spin build -- -Dallow-noblas=true
@@ -99,7 +99,7 @@ macos_arm64_test_task:
 
     python --version
     
-    pip install -r build_requirements.txt
+    pip install -r requirements/build_requirements.txt
     pip install pytest pytest-xdist hypothesis typing_extensions
 
     spin build

@@ -200,10 +200,10 @@ tests to fail before the PR and pass afterwards. You should :ref:`run the tests
 
 Running NumPy's test suite locally requires some additional packages, such as
 ``pytest`` and ``hypothesis``. The additional testing dependencies are listed
-in ``test_requirements.txt`` in the top-level directory, and can conveniently
-be installed with::
+in ``requirements/test_requirements.txt`` in the top-level directory, and can
+conveniently be installed with::
 
-    $ python -m pip install -r test_requirements.txt
+    $ python -m pip install -r requirements/test_requirements.txt
 
 Tests for a module should ideally cover all code in that module,
 i.e., statement coverage should be at 100%.

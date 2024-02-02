@@ -4,6 +4,7 @@
 import functools
 import operator
 
+from numpy._core._multiarray_umath import _array_converter
 from numpy._core.numeric import (
     asanyarray, arange, zeros, greater_equal, multiply, ones,
     asarray, where, int8, int16, int32, int64, intp, empty, promote_types,
@@ -350,11 +351,9 @@ def diagflat(v, k=0):
            [0, 0, 0]])
 
     """
-    try:
-        wrap = v.__array_wrap__
-    except AttributeError:
-        wrap = None
-    v = asarray(v).ravel()
+    conv = _array_converter(v)
+    v, = conv.as_arrays(subok=False)
+    v = v.ravel()
     s = len(v)
     n = s + abs(k)
     res = zeros((n, n), v.dtype)
@@ -365,9 +364,8 @@ def diagflat(v, k=0):
         i = arange(0, n+k, dtype=intp)
         fi = i+(i-k)*n
     res.flat[fi] = v
-    if not wrap:
-        return res
-    return wrap(res)
+
+    return conv.wrap(res)
 
 
 @set_array_function_like_doc

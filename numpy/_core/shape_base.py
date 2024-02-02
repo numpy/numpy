@@ -36,7 +36,7 @@ def atleast_1d(*arys):
     Returns
     -------
     ret : ndarray
-        An array, or list of arrays, each with ``a.ndim >= 1``.
+        An array, or tuple of arrays, each with ``a.ndim >= 1``.
         Copies are made only if necessary.
 
     See Also
@@ -57,7 +57,7 @@ def atleast_1d(*arys):
     True
 
     >>> np.atleast_1d(1, [3, 4])
-    [array([1]), array([3, 4])]
+    (array([1]), array([3, 4]))
 
     """
     res = []
@@ -71,7 +71,7 @@ def atleast_1d(*arys):
     if len(res) == 1:
         return res[0]
     else:
-        return res
+        return tuple(res)
 
 
 def _atleast_2d_dispatcher(*arys):
@@ -93,7 +93,7 @@ def atleast_2d(*arys):
     Returns
     -------
     res, res2, ... : ndarray
-        An array, or list of arrays, each with ``a.ndim >= 2``.
+        An array, or tuple of arrays, each with ``a.ndim >= 2``.
         Copies are avoided where possible, and views with two or more
         dimensions are returned.
 
@@ -113,7 +113,7 @@ def atleast_2d(*arys):
     True
 
     >>> np.atleast_2d(1, [1, 2], [[1, 2]])
-    [array([[1]]), array([[1, 2]]), array([[1, 2]])]
+    (array([[1]]), array([[1, 2]]), array([[1, 2]]))
 
     """
     res = []
@@ -129,7 +129,7 @@ def atleast_2d(*arys):
     if len(res) == 1:
         return res[0]
     else:
-        return res
+        return tuple(res)
 
 
 def _atleast_3d_dispatcher(*arys):
@@ -151,7 +151,7 @@ def atleast_3d(*arys):
     Returns
     -------
     res1, res2, ... : ndarray
-        An array, or list of arrays, each with ``a.ndim >= 3``.  Copies are
+        An array, or tuple of arrays, each with ``a.ndim >= 3``.  Copies are
         avoided where possible, and views with three or more dimensions are
         returned.  For example, a 1-D array of shape ``(N,)`` becomes a view
         of shape ``(1, N, 1)``, and a 2-D array of shape ``(M, N)`` becomes a
@@ -201,7 +201,7 @@ def atleast_3d(*arys):
     if len(res) == 1:
         return res[0]
     else:
-        return res
+        return tuple(res)
 
 
 def _arrays_for_stack_dispatcher(arrays):
@@ -282,8 +282,8 @@ def vstack(tup, *, dtype=None, casting="same_kind"):
 
     """
     arrs = atleast_2d(*tup)
-    if not isinstance(arrs, list):
-        arrs = [arrs]
+    if not isinstance(arrs, tuple):
+        arrs = (arrs,)
     return _nx.concatenate(arrs, 0, dtype=dtype, casting=casting)
 
 
@@ -349,8 +349,8 @@ def hstack(tup, *, dtype=None, casting="same_kind"):
 
     """
     arrs = atleast_1d(*tup)
-    if not isinstance(arrs, list):
-        arrs = [arrs]
+    if not isinstance(arrs, tuple):
+        arrs = (arrs,)
     # As a special case, dimension 0 of 1-dimensional arrays is "horizontal"
     if arrs and arrs[0].ndim == 1:
         return _nx.concatenate(arrs, 0, dtype=dtype, casting=casting)

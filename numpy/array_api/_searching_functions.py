@@ -36,6 +36,9 @@ def nonzero(x: Array, /) -> Tuple[Array, ...]:
 
     See its docstring for more information.
     """
+    # Note: nonzero is disallowed on 0-dimensional arrays
+    if x.ndim == 0:
+        raise ValueError("nonzero is not allowed on 0-dimensional arrays")
     return tuple(Array._new(i) for i in np.nonzero(x._array))
 
 

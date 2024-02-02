@@ -40,6 +40,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "arrayfunction_override.h"
 #include "arraytypes.h"
 #include "arrayobject.h"
+#include "array_converter.h"
 #include "hashdescr.h"
 #include "descriptor.h"
 #include "dragon4.h"
@@ -4784,7 +4785,11 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis2 = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_like = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_numpy = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_where = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_convert = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_preserve = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_convert_if_no_array = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_cpu = NULL;
+
 
 static int
 intern_strings(void)
@@ -4843,6 +4848,19 @@ intern_strings(void)
     }
     npy_ma_str_where = PyUnicode_InternFromString("where");
     if (npy_ma_str_where == NULL) {
+        return -1;
+    }
+    /* scalar policies */
+    npy_ma_str_convert = PyUnicode_InternFromString("convert");
+    if (npy_ma_str_convert == NULL) {
+        return -1;
+    }
+    npy_ma_str_preserve = PyUnicode_InternFromString("preserve");
+    if (npy_ma_str_preserve == NULL) {
+        return -1;
+    }
+    npy_ma_str_convert_if_no_array = PyUnicode_InternFromString("convert_if_no_array");
+    if (npy_ma_str_convert_if_no_array == NULL) {
         return -1;
     }
     npy_ma_str_cpu = PyUnicode_InternFromString("cpu");
@@ -5135,6 +5153,14 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     PyDict_SetItemString(
             d, "_ArrayFunctionDispatcher",
             (PyObject *)&PyArrayFunctionDispatcher_Type);
+
+    if (PyType_Ready(&PyArrayArrayConverter_Type) < 0) {
+        goto err;
+    }
+    PyDict_SetItemString(
+            d, "_array_converter",
+            (PyObject *)&PyArrayArrayConverter_Type);
+
     if (PyType_Ready(&PyArrayMethod_Type) < 0) {
         goto err;
     }

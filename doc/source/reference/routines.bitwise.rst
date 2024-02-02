@@ -1,5 +1,5 @@
-Binary operations
-=================
+Bit-wise operations
+===================
 
 .. currentmodule:: numpy
 
