@@ -5151,9 +5151,9 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
         ufuncs do not currently raise an exception in this case, but will
         likely do so in the future.
     dtype : data-type code, optional
-        The type used to represent the intermediate results. Defaults
-        to the data-type of the output array if this is provided, or
-        the data-type of the input array if no output array is provided.
+        The type used to perform the intermediate operations. Defaults to the
+        data type of the output array if this is provided, or the result of
+        `ufunc`'s casting of the input array with `ufunc.identity`.
     out : ndarray, None, or tuple of ndarray and None, optional
         A location into which the result is stored. If not provided or None,
         a freshly-allocated array is returned. For consistency with
