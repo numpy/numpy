@@ -201,7 +201,7 @@ deprecated member migration guideline
 ================= =======================================================================
 in1d              Use ``np.isin`` instead.
 row_stack         Use ``np.vstack`` instead (``row_stack`` was an alias for ``vstack``).
-trapz             Use ``scipy.integrate.trapezoid`` instead.
+trapz             Use ``np.trapezoid`` or a ``scipy.integrate`` function instead.
 ================= =======================================================================
 
 
