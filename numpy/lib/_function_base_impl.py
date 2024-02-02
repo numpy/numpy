@@ -42,7 +42,7 @@ __all__ = [
     'rot90', 'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
     'bincount', 'digitize', 'cov', 'corrcoef',
     'median', 'sinc', 'hamming', 'hanning', 'bartlett',
-    'blackman', 'kaiser', 'trapz', 'i0',
+    'blackman', 'kaiser', 'trapezoid', 'trapz', 'i0',
     'meshgrid', 'delete', 'insert', 'append', 'interp',
     'quantile'
     ]
@@ -5019,17 +5019,14 @@ def _quantile(
     return result
 
 
-def _trapz_dispatcher(y, x=None, dx=None, axis=None):
+def _trapezoid_dispatcher(y, x=None, dx=None, axis=None):
     return (y, x)
 
 
-@array_function_dispatch(_trapz_dispatcher)
-def trapz(y, x=None, dx=1.0, axis=-1):
+@array_function_dispatch(_trapezoid_dispatcher)
+def trapezoid(y, x=None, dx=1.0, axis=-1):
     r"""
     Integrate along the given axis using the composite trapezoidal rule.
-
-    .. deprecated:: 2.0
-        Use `scipy.integrate.trapezoid` instead.
 
     If `x` is provided, the integration happens in sequence along its
     elements - they are not sorted.
@@ -5039,6 +5036,8 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     When `x` is specified, this integrates along the parametric curve,
     computing :math:`\int_t y(t) dt =
     \int_t y(t) \left.\frac{dx}{dt}\right|_{x=x(t)} dt`.
+
+    .. versionadded:: 2.0.0
 
     Parameters
     ----------
@@ -5055,7 +5054,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
     Returns
     -------
-    trapz : float or ndarray
+    trapezoid : float or ndarray
         Definite integral of `y` = n-dimensional array as approximated along
         a single axis by the trapezoidal rule. If `y` is a 1-dimensional array,
         then the result is a float. If `n` is greater than 1, then the result
@@ -5085,20 +5084,20 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     --------
     Use the trapezoidal rule on evenly spaced points:
 
-    >>> np.trapz([1, 2, 3])
+    >>> np.trapezoid([1, 2, 3])
     4.0
 
     The spacing between sample points can be selected by either the
     ``x`` or ``dx`` arguments:
 
-    >>> np.trapz([1, 2, 3], x=[4, 6, 8])
+    >>> np.trapezoid([1, 2, 3], x=[4, 6, 8])
     8.0
-    >>> np.trapz([1, 2, 3], dx=2)
+    >>> np.trapezoid([1, 2, 3], dx=2)
     8.0
 
     Using a decreasing ``x`` corresponds to integrating in reverse:
 
-    >>> np.trapz([1, 2, 3], x=[8, 6, 4])
+    >>> np.trapezoid([1, 2, 3], x=[8, 6, 4])
     -8.0
 
     More generally ``x`` is used to integrate along a parametric curve. We can
@@ -5106,35 +5105,28 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
     >>> x = np.linspace(0, 1, num=50)
     >>> y = x**2
-    >>> np.trapz(y, x)
+    >>> np.trapezoid(y, x)
     0.33340274885464394
 
     Or estimate the area of a circle, noting we repeat the sample which closes
     the curve:
 
     >>> theta = np.linspace(0, 2 * np.pi, num=1000, endpoint=True)
-    >>> np.trapz(np.cos(theta), x=np.sin(theta))
+    >>> np.trapezoid(np.cos(theta), x=np.sin(theta))
     3.141571941375841
 
-    ``np.trapz`` can be applied along a specified axis to do multiple
+    ``np.trapezoid`` can be applied along a specified axis to do multiple
     computations in one call:
 
     >>> a = np.arange(6).reshape(2, 3)
     >>> a
     array([[0, 1, 2],
            [3, 4, 5]])
-    >>> np.trapz(a, axis=0)
+    >>> np.trapezoid(a, axis=0)
     array([1.5, 2.5, 3.5])
-    >>> np.trapz(a, axis=1)
+    >>> np.trapezoid(a, axis=1)
     array([2.,  8.])
     """
-
-    # Deprecated in NumPy 2.0, 2023-08-18
-    warnings.warn(
-        "`trapz` is deprecated. Use `scipy.integrate.trapezoid` instead.",
-        DeprecationWarning,
-        stacklevel=2
-    )
 
     y = asanyarray(y)
     if x is None:
@@ -5164,22 +5156,22 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     return ret
 
 
-# __array_function__ has no __code__ or other attributes normal Python funcs we
-# wrap everything into a C callable. SciPy however, tries to "clone" `trapz`
-# into a new Python function which requires `__code__` and a few other
-# attributes. So we create a dummy clone and copy over its attributes allowing
-# SciPy <= 1.10 to work: https://github.com/scipy/scipy/issues/17811
-assert not hasattr(trapz, "__code__")
+@set_module('numpy')
+def trapz(y, x=None, dx=1.0, axis=-1):
+    """
+    `trapz` is deprecated in NumPy 2.0.
 
-def _fake_trapz(y, x=None, dx=1.0, axis=-1):
-    return trapz(y, x=x, dx=dx, axis=axis)
-
-
-trapz.__code__ = _fake_trapz.__code__
-trapz.__globals__ = _fake_trapz.__globals__
-trapz.__defaults__ = _fake_trapz.__defaults__
-trapz.__closure__ = _fake_trapz.__closure__
-trapz.__kwdefaults__ = _fake_trapz.__kwdefaults__
+    Please use `trapezoid` instead, or one of the numerical integration
+    functions in `scipy.integrate`.
+    """
+    # Deprecated in NumPy 2.0, 2023-08-18
+    warnings.warn(
+        "`trapz` is deprecated. Use `trapezoid` instead, or one of the "
+        "numerical integration functions in `scipy.integrate`.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+    return trapezoid(y, x=x, dx=dx, axis=axis)
 
 
 def _meshgrid_dispatcher(*xi, copy=None, sparse=None, indexing=None):
