@@ -549,6 +549,10 @@ class TestSharedMemory:
                 continue
             if t.elsize >= self.type.elsize:
                 continue
+            is_int = np.issubdtype(t.dtype, np.integer)
+            if is_int and int(self.num2seq[0]) > np.iinfo(t.dtype).max:
+                # skip test if num2seq would trigger an overflow error
+                continue
             obj = np.array(self.num2seq, dtype=t.dtype)
             shape = (len(self.num2seq), )
             try:
