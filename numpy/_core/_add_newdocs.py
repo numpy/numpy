@@ -5350,9 +5350,9 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
     axis : int, optional
         The axis along which to apply the reduceat.
     dtype : data-type code, optional
-        The type used to represent the intermediate results. Defaults
-        to the data type of the output array if this is provided, or
-        the data type of the input array if no output array is provided.
+        The type used to perform the intermediate operations. Defaults to the
+        data type of the output array if this is provided, or the result of
+        `ufunc`'s casting of the input array with `ufunc.identity`.
     out : ndarray, None, or tuple of ndarray and None, optional
         A location into which the result is stored. If not provided or None,
         a freshly-allocated array is returned. For consistency with
