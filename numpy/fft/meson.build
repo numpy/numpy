@@ -6,7 +6,7 @@ endif
 py.extension_module('_pocketfft_umath',
   ['_pocketfft_umath.c', 'pocketfft/pocketfft.c'],
   c_args: largefile_define,
-  dependencies: np_core_dep,
+  dependencies: [np_core_dep, libnpymath_dep],
   install: true,
   subdir: 'numpy/fft',
 )
