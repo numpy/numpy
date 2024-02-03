@@ -3456,8 +3456,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
         Alternate output array in which to place the result.  The default
         is ``None``; if provided, it must have the same shape as the
         expected output, but the type will be cast if necessary.
-        Note that the current implementation passes this argument to "reduce-like
-        methods", so the accumulated value should fit in it.
+        See :ref:`ufuncs-output-type` for more details.
         See :ref:`ufuncs-output-type` for more details.
 
     keepdims : bool, optional
@@ -3585,8 +3584,6 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         Alternative output array in which to place the result. It must have
         the same shape as the expected output but the type (of the calculated
         values) will be cast if necessary.
-        Note that the current implementation passes this argument to "reduce-like
-        methods", so the accumulated value should fit in it.
         See :ref:`ufuncs-output-type` for more details.
     ddof : int, optional
         Means Delta Degrees of Freedom.  The divisor used in calculations
