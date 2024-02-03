@@ -594,9 +594,9 @@ def savez(file, *args, **kwds):
     in the archive contains one variable in ``.npy`` format. For a
     description of the ``.npy`` format, see :py:mod:`numpy.lib.format`.
 
-    When opening the saved ``.npz`` file with `load` a `NpzFile` object is
-    returned. This is a dictionary-like object which can be queried for
-    its list of arrays (with the ``.files`` attribute), and for the arrays
+    When opening the saved ``.npz`` file with `load` a `~lib.npyio.NpzFile`
+    object is returned. This is a dictionary-like object which can be queried
+    for its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
     Keys passed in `kwds` are used as filenames inside the ZIP archive.
@@ -690,9 +690,9 @@ def savez_compressed(file, *args, **kwds):
     :py:mod:`numpy.lib.format`.
 
 
-    When opening the saved ``.npz`` file with `load` a `NpzFile` object is
-    returned. This is a dictionary-like object which can be queried for
-    its list of arrays (with the ``.files`` attribute), and for the arrays
+    When opening the saved ``.npz`` file with `load` a `~lib.npyio.NpzFile`
+    object is returned. This is a dictionary-like object which can be queried
+    for its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
     Examples
@@ -1386,13 +1386,13 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         case `delimiter` is ignored. For complex `X`, the legal options
         for `fmt` are:
 
-        * a single specifier, `fmt='%.4e'`, resulting in numbers formatted
-          like `' (%s+%sj)' % (fmt, fmt)`
+        * a single specifier, ``fmt='%.4e'``, resulting in numbers formatted
+          like ``' (%s+%sj)' % (fmt, fmt)``
         * a full string specifying every real and imaginary part, e.g.
-          `' %.4e %+.4ej %.4e %+.4ej %.4e %+.4ej'` for 3 columns
+          ``' %.4e %+.4ej %.4e %+.4ej %.4e %+.4ej'`` for 3 columns
         * a list of specifiers, one per column - in this case, the real
           and imaginary part must have separate specifiers,
-          e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns
+          e.g. ``['%.3e + %.3ej', '(%.15e%+.15ej)']`` for 2 columns
     delimiter : str, optional
         String or character separating columns.
     newline : str, optional

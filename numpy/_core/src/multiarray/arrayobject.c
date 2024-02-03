@@ -38,6 +38,7 @@ maintainer email:  oliphant.travis@ieee.org
 
 #include "number.h"
 #include "usertypes.h"
+#include "arraywrap.h"
 #include "arraytypes.h"
 #include "scalartypes.h"
 #include "arrayobject.h"
@@ -988,7 +989,9 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
              * already have deferred.  So use `self` for wrapping.  If users
              * need more, they need to override `==` and `!=`.
              */
-            Py_SETREF(res, PyArray_SubclassWrap(self, res));
+            PyObject *wrapped = npy_apply_wrap_simple(self, res);
+            Py_DECREF(res);
+            return wrapped;
         }
         return (PyObject *)res;
     }

@@ -17,6 +17,7 @@ from numpy._core._ufunc_config import _no_nep50_warning
 from numpy._globals import _NoValue
 
 # save those O(100) nanoseconds!
+bool_dt = mu.dtype("bool")
 umr_maximum = um.maximum.reduce
 umr_minimum = um.minimum.reduce
 umr_sum = um.add.reduce
@@ -55,12 +56,18 @@ def _prod(a, axis=None, dtype=None, out=None, keepdims=False,
     return umr_prod(a, axis, dtype, out, keepdims, initial, where)
 
 def _any(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
+    # By default, return a boolean for any and all
+    if dtype is None:
+        dtype = bool_dt
     # Parsing keyword arguments is currently fairly slow, so avoid it for now
     if where is True:
         return umr_any(a, axis, dtype, out, keepdims)
     return umr_any(a, axis, dtype, out, keepdims, where=where)
 
 def _all(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
+    # By default, return a boolean for any and all
+    if dtype is None:
+        dtype = bool_dt
     # Parsing keyword arguments is currently fairly slow, so avoid it for now
     if where is True:
         return umr_all(a, axis, dtype, out, keepdims)

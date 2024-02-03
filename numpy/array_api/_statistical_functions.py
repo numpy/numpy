@@ -67,9 +67,11 @@ def prod(
     # special-case it here
     if dtype is None:
         if x.dtype == float32:
-            dtype = float64
+            dtype = np.float64
         elif x.dtype == complex64:
-            dtype = complex128
+            dtype = np.complex128
+    else:
+        dtype = dtype._np_dtype
     return Array._new(np.prod(x._array, dtype=dtype, axis=axis, keepdims=keepdims))
 
 
@@ -102,9 +104,11 @@ def sum(
     # special-case it here
     if dtype is None:
         if x.dtype == float32:
-            dtype = float64
+            dtype = np.float64
         elif x.dtype == complex64:
-            dtype = complex128
+            dtype = np.complex128
+    else:
+        dtype = dtype._np_dtype
     return Array._new(np.sum(x._array, axis=axis, dtype=dtype, keepdims=keepdims))
 
 

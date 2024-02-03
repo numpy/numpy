@@ -59,6 +59,9 @@
  */
 
 #if defined HAVE_BACKTRACE && defined HAVE_DLFCN_H && ! defined PYPY_VERSION
+
+#include <feature_detection_misc.h>
+
 /* 1 prints elided operations, 2 prints stacktraces */
 #define NPY_ELIDE_DEBUG 0
 #define NPY_MAX_STACKSIZE 10

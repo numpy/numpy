@@ -967,6 +967,12 @@ array_itemset(PyArrayObject *self, PyObject *args)
     return NULL;
 }
 
+static PyObject *
+array_device(PyArrayObject *self, void *NPY_UNUSED(ignored))
+{
+    return PyUnicode_FromString("cpu");
+}
+
 NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
     {"ndim",
         (getter)array_ndim_get,
@@ -1042,6 +1048,10 @@ NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
         NULL, NULL},
     {"itemset",
         (getter)array_itemset,
+        NULL,
+        NULL, NULL},
+    {"device",
+        (getter)array_device,
         NULL,
         NULL, NULL},
     {"__array_interface__",

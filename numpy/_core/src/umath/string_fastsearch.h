@@ -10,6 +10,7 @@
 
 #include <type_traits>
 
+#include <numpy/npy_common.h>
 #include "string_buffer.h"
 
 
@@ -61,7 +62,7 @@ findchar(Buffer<enc> s, Py_ssize_t n, npy_ucs4 ch)
 {
     Buffer<enc> p = s, e = s + n;
 
-    if (n > MEMCHR_CUT_OFF) {
+    if (n > MEMCHR_CUT_OFF && (enc == ENCODING::ASCII || NPY_SIZEOF_WCHAR_T == 4)) {
         p = s.buffer_memchr(ch, n);
         if (p.buf != NULL) {
             return (p - s);

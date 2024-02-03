@@ -181,6 +181,7 @@ extern PyArray_DTypeMeta *_Int64_dtype;
 extern PyArray_DTypeMeta *_UInt64_dtype;
 extern PyArray_DTypeMeta *_Intp_dtype;
 extern PyArray_DTypeMeta *_UIntp_dtype;
+extern PyArray_DTypeMeta *_DefaultInt_dtype;
 extern PyArray_DTypeMeta *_Half_dtype;
 extern PyArray_DTypeMeta *_Float_dtype;
 extern PyArray_DTypeMeta *_Double_dtype;
@@ -218,6 +219,7 @@ extern PyArray_DTypeMeta *_Void_dtype;
 #define PyArray_UInt64DType (*(_UInt64_dtype))
 #define PyArray_IntpDType (*(_Intp_dtype))
 #define PyArray_UIntpDType (*(_UIntp_dtype))
+#define PyArray_DefaultIntDType (*(_DefaultInt_dtype))
 /* Floats */
 #define PyArray_HalfDType (*(_Half_dtype))
 #define PyArray_FloatDType (*(_Float_dtype))

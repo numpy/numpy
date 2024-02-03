@@ -56,7 +56,7 @@ _array_from_array_like(PyObject *op,
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
                     PyArray_DTypeMeta *in_DType, int min_depth, int max_depth,
-                    int flags, PyObject *context);
+                    int flags, PyObject *context, int *was_scalar);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
@@ -123,13 +123,6 @@ copy_and_swap(void *dst, void *src, int itemsize, npy_intp numitems,
 
 NPY_NO_EXPORT void
 byte_swap_vector(void *p, npy_intp n, int size);
-
-/*
- * Calls arr_of_subclass.__array_wrap__(towrap), in order to make 'towrap'
- * have the same ndarray subclass as 'arr_of_subclass'.
- */
-NPY_NO_EXPORT PyArrayObject *
-PyArray_SubclassWrap(PyArrayObject *arr_of_subclass, PyArrayObject *towrap);
 
 NPY_NO_EXPORT PyObject *
 PyArray_Zeros_int(int nd, npy_intp const *dims, PyArray_Descr *descr,

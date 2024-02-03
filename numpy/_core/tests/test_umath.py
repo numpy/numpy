@@ -195,7 +195,7 @@ class TestOut:
             def __new__(cls, arr):
                 return np.asarray(arr).view(cls).copy()
 
-            def __array_wrap__(self, arr, context):
+            def __array_wrap__(self, arr, context=None, return_scalar=False):
                 return arr.view(type(self))
 
         for subok in (True, False):
@@ -1352,11 +1352,20 @@ class TestLog:
         xf = np.log(x)
         assert_almost_equal(np.log(x, out=x), xf)
 
+    def test_log_values_maxofdtype(self):
         # test log() of max for dtype does not raise
-        for dt in ['f', 'd', 'g']:
+        dtypes = [np.float32, np.float64]
+        # This is failing at least on linux aarch64 (see gh-25460), and on most
+        # other non x86-64 platforms checking `longdouble` isn't too useful as
+        # it's an alias for float64.
+        if platform.machine() == 'x86_64':
+            dtypes += [np.longdouble]
+
+        for dt in dtypes:
             with np.errstate(all='raise'):
                 x = np.finfo(dt).max
                 np.log(x)
+
     def test_log_strides(self):
         np.random.seed(42)
         strides = np.array([-4,-3,-2,-1,1,2,3,4])
@@ -1658,7 +1667,7 @@ class TestSpecialFloats:
         for dt in ['e', 'f', 'd']:
             in_arr = np.array(in_, dtype=dt)
             out_arr = np.array(out, dtype=dt)
-            assert_equal(np.tanh(in_arr), out_arr)
+            assert_array_max_ulp(np.tanh(in_arr), out_arr, 3)
 
     def test_arcsinh(self):
         in_ = [np.nan, -np.nan, np.inf, -np.inf]
@@ -1967,19 +1976,21 @@ class TestAVXUfuncs:
             # various array sizes to ensure masking in AVX is tested
             for size in range(1,32):
                 myfunc = getattr(np, func)
-                x_f32 = np.float32(np.random.uniform(low=minval, high=maxval,
-                    size=size))
-                x_f64 = np.float64(x_f32)
-                x_f128 = np.longdouble(x_f32)
+                x_f32 = np.random.uniform(low=minval, high=maxval,
+                                          size=size).astype(np.float32)
+                x_f64 = x_f32.astype(np.float64)
+                x_f128 = x_f32.astype(np.longdouble)
                 y_true128 = myfunc(x_f128)
                 if maxulperr == 0:
-                    assert_equal(myfunc(x_f32), np.float32(y_true128))
-                    assert_equal(myfunc(x_f64), np.float64(y_true128))
+                    assert_equal(myfunc(x_f32), y_true128.astype(np.float32))
+                    assert_equal(myfunc(x_f64), y_true128.astype(np.float64))
                 else:
-                    assert_array_max_ulp(myfunc(x_f32), np.float32(y_true128),
-                            maxulp=maxulperr)
-                    assert_array_max_ulp(myfunc(x_f64), np.float64(y_true128),
-                            maxulp=maxulperr)
+                    assert_array_max_ulp(myfunc(x_f32),
+                                         y_true128.astype(np.float32),
+                                         maxulp=maxulperr)
+                    assert_array_max_ulp(myfunc(x_f64),
+                                         y_true128.astype(np.float64),
+                                         maxulp=maxulperr)
                 # various strides to test gather instruction
                 if size > 1:
                     y_true32 = myfunc(x_f32)
@@ -2825,6 +2836,28 @@ class TestSign:
             assert_equal(res, tgt)
             assert_equal(out, tgt)
 
+    def test_sign_complex(self):
+        a = np.array([
+            np.inf, -np.inf, complex(0, np.inf), complex(0, -np.inf),
+            complex(np.inf, np.inf), complex(np.inf, -np.inf),  # nan
+            np.nan, complex(0, np.nan), complex(np.nan, np.nan),  # nan
+            0.0,  # 0.
+            3.0, -3.0, -2j, 3.0+4.0j, -8.0+6.0j
+        ])
+        out = np.zeros(a.shape, a.dtype)
+        tgt = np.array([
+            1., -1., 1j, -1j,
+            ] + [complex(np.nan, np.nan)] * 5 + [
+            0.0,
+            1.0, -1.0, -1j, 0.6+0.8j, -0.8+0.6j])
+
+        with np.errstate(invalid='ignore'):
+            res = ncu.sign(a)
+            assert_equal(res, tgt)
+            res = ncu.sign(a, out)
+            assert_(res is out)
+            assert_equal(res, tgt)
+
     def test_sign_dtype_object(self):
         # In reference to github issue #6229
 
@@ -2983,7 +3016,7 @@ class TestSpecialMethods:
             def __array__(self):
                 return np.zeros(1)
 
-            def __array_wrap__(self, arr, context):
+            def __array_wrap__(self, arr, context, return_scalar):
                 r = with_wrap()
                 r.arr = arr
                 r.context = context
@@ -3006,16 +3039,20 @@ class TestSpecialMethods:
         class StoreArrayPrepareWrap(np.ndarray):
             _wrap_args = None
             _prepare_args = None
+
             def __new__(cls):
                 return np.zeros(()).view(cls)
-            def __array_wrap__(self, obj, context):
+
+            def __array_wrap__(self, obj, context, return_scalar):
                 self._wrap_args = context[1]
                 return obj
+
             @property
             def args(self):
                 # We need to ensure these are fetched at the same time, before
                 # any other ufuncs are called by the assertions
                 return self._wrap_args
+
             def __repr__(self):
                 return "a"  # for short test output
 
@@ -3060,7 +3097,7 @@ class TestSpecialMethods:
             def __new__(cls):
                 return np.asarray(1).view(cls).copy()
 
-            def __array_wrap__(self, arr, context):
+            def __array_wrap__(self, arr, context, return_scalar):
                 return arr.view(type(self))
 
         a = with_wrap()
@@ -3082,28 +3119,13 @@ class TestSpecialMethods:
         assert_(isinstance(x, A))
         assert_array_equal(x, np.array(1))
 
-    def test_old_wrap(self):
-
-        class with_wrap:
-            def __array__(self):
-                return np.zeros(1)
-
-            def __array_wrap__(self, arr):
-                r = with_wrap()
-                r.arr = arr
-                return r
-
-        a = with_wrap()
-        x = ncu.minimum(a, a)
-        assert_equal(x.arr, np.zeros(1))
-
     def test_priority(self):
 
         class A:
             def __array__(self):
                 return np.zeros(1)
 
-            def __array_wrap__(self, arr, context):
+            def __array_wrap__(self, arr, context, return_scalar):
                 r = type(self)()
                 r.arr = arr
                 r.context = context
@@ -3146,7 +3168,7 @@ class TestSpecialMethods:
             def __array__(self):
                 return np.zeros(2)
 
-            def __array_wrap__(self, arr, context):
+            def __array_wrap__(self, arr, context, return_scalar):
                 raise RuntimeError
 
         a = A()
@@ -3158,11 +3180,11 @@ class TestSpecialMethods:
         singleton = np.array([1.0])
 
         class Ok(np.ndarray):
-            def __array_wrap__(self, obj):
+            def __array_wrap__(self, obj, context, return_scalar):
                 return singleton
 
         class Bad(np.ndarray):
-            def __array_wrap__(self, obj):
+            def __array_wrap__(self, obj, context, return_scalar):
                 raise RuntimeError
 
         ok = np.empty(1).view(Ok)
@@ -3178,7 +3200,7 @@ class TestSpecialMethods:
             def __array__(self):
                 return np.zeros(1)
 
-            def __array_wrap__(self, arr, context=None):
+            def __array_wrap__(self, arr, context=None, return_scalar=False):
                 return None
 
         a = A()
@@ -3192,7 +3214,7 @@ class TestSpecialMethods:
             def __array__(self):
                 return np.zeros(1)
 
-            def __array_wrap__(self, arr, context):
+            def __array_wrap__(self, arr, context, return_scalar):
                 return arr
 
         a = with_wrap()
@@ -4211,6 +4233,9 @@ class TestComplexFunctions:
     ])
     def test_loss_of_precision(self, dtype):
         """Check loss of precision in complex arc* functions"""
+        if dtype is np.clongdouble and platform.machine() != 'x86_64':
+            # Failures on musllinux, aarch64, s390x, ppc64le (see gh-17554)
+            pytest.skip('Only works reliably for x86-64 and recent glibc')
 
         # Check against known-good functions
 

@@ -162,6 +162,10 @@ following hold::
     np.bool_(True) + 1 == np.int64(2)
     True + np.uint8(2) == np.uint8(3)
 
+.. _nep50_comparison_table::
+
+Note that while this NEP uses simple operators as example, the rules described
+generally apply to all of NumPy operations.
 
 Table comparing new and old behaviour
 -------------------------------------
@@ -401,6 +405,28 @@ It will then continue to do the calculation with ``inf`` as usual.
    set up to raise an error due to the overflow, however).
    It is also for example the behaviour of ``pytorch`` 1.10.
 
+Particular behavior of Python integers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The NEPs promotion rules stated in terms of the resulting dtype which is
+typically also the operation dtype (in terms of result precision).
+This leads to what may seem like exceptions for Python integers:
+While ``uint8(3) + 1000`` must be rejected because operating
+in ``uint8`` is not possible, ``uint8(3) / 1000`` returns a ``float64`` and
+can convert both inputs to ``float64`` to find the result.
+
+In practice this means that arbitrary Python integer values are accepted in
+the following cases:
+
+* All comparisons (``==``, ``<``, etc.) between NumPy and Python integers are
+  always well defined.
+* Unary functions like ``np.sqrt`` that give a floating point result can and
+  will convert the Python integer to a float.
+* Division of integers returns floating point by casting input to ``float64``.
+
+Note that there may be additional functions where these exceptions could be
+applied but are not.  In these cases it should be considered an improvement
+to allow them, but when the user impact is low we may not do so for simplicity.
 
 
 Backward compatibility
@@ -525,7 +551,7 @@ That is, it will try the following dtypes:
 Note that e.g. for the integer value of ``10``, the smallest dtype can be
 *either* ``uint8`` or ``int8``.
 
-NumPy never applied this rule when all arguments are scalar values:
+NumPy never applied this rule when all arguments are scalar values::
 
     np.int64(1) + np.int32(2) == np.int64(3)
 

@@ -43,8 +43,6 @@ Indexing-like operations
    diag
    diagonal
    select
-   lib.stride_tricks.sliding_window_view
-   lib.stride_tricks.as_strided
 
 Inserting data into arrays
 --------------------------
@@ -67,5 +65,4 @@ Iterating over arrays
    ndindex
    nested_iters
    flatiter
-   lib.Arrayterator
    iterable
