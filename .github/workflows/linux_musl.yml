@@ -55,9 +55,11 @@ jobs:
         python -m venv test_env
         source test_env/bin/activate
 
-        pip install scipy-openblas64
+        python -m pip install scipy-openblas64
 
-        pip install -r build_requirements.txt -r test_requirements.txt
+        python -m pip install pluggy==1.3.0
+        python -m pip install -r build_requirements.txt
+        python -m pip install -r test_requirements.txt
 
         # use meson to build and test 
         spin build --with-scipy-openblas=64 -- -Duse-ilp64=true
