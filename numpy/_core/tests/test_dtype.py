@@ -633,10 +633,8 @@ class TestSubarray:
     def test_shape_equal(self):
         """Test some data types that are equal"""
         assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', tuple())))
-        # FutureWarning during deprecation period; after it is passed this
-        # should instead check that "(1)f8" == "1f8" == ("f8", 1).
-        with pytest.warns(FutureWarning):
-            assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', 1)))
+        assert_dtype_equal(np.dtype('(1,)f8'), np.dtype(('f8', 1)))
+        assert np.dtype(('f8', 1)).shape == (1,)
         assert_dtype_equal(np.dtype((int, 2)), np.dtype((int, (2,))))
         assert_dtype_equal(np.dtype(('<f4', (3, 2))), np.dtype(('<f4', (3, 2))))
         d = ([('a', 'f4', (1, 2)), ('b', 'f8', (3, 1))], (3, 2))
