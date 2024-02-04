@@ -356,14 +356,6 @@ class TestFromStringAndFileInvalidData(_DeprecationTestCase):
             assert_array_equal(res, x)
 
 
-class TestShape1Fields(_DeprecationTestCase):
-    warning_cls = FutureWarning
-
-    # 2019-05-20, 1.17.0
-    def test_shape_1_fields(self):
-        self.assert_deprecated(np.dtype, args=([('a', int, 1)],))
-
-
 class TestNonZero(_DeprecationTestCase):
     # 2019-05-26, 1.17.0
     def test_zerod(self):
