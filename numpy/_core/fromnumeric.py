@@ -540,6 +540,10 @@ def put(a, ind, v, mode='raise'):
     except AttributeError as e:
         raise TypeError("argument 1 must be numpy.ndarray, "
                         "not {name}".format(name=type(a).__name__)) from e
+    if a.size == 0:
+        raise ValueError(
+            "Input array must not be empty, but it is empty"
+        )
 
     return put(ind, v, mode=mode)
 
