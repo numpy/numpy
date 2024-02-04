@@ -807,10 +807,12 @@ add_newdoc('numpy._core.multiarray', 'array',
         a default ``dtype`` that can represent the values (by applying promotion
         rules when necessary.)
     copy : bool, optional
-        If true (default), then the object is copied.  Otherwise, a copy will
-        only be made if ``__array__`` returns a copy, if obj is a nested
+        If true (default), then the array data is copied. Otherwise, a copy
+        will only be made if ``__array__`` returns a copy, if obj is a nested
         sequence, or if a copy is needed to satisfy any of the other
-        requirements (``dtype``, ``order``, etc.).
+        requirements (``dtype``, ``order``, etc.). Note that any copy of
+        the data is shallow, i.e., for arrays with object dtype, the new
+        array will point to the same objects. See Examples for `ndarray.copy`.
     order : {'K', 'A', 'C', 'F'}, optional
         Specify the memory layout of the array. If object is not an array, the
         newly created array will be in C order (row major) unless 'F' is
@@ -855,6 +857,7 @@ add_newdoc('numpy._core.multiarray', 'array',
     ones : Return a new array setting values to one.
     zeros : Return a new array setting values to zero.
     full : Return a new array of given shape filled with value.
+    copy: Return an array copy of the given object.
 
 
     Notes
@@ -3380,6 +3383,29 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('copy',
 
     >>> y.flags['C_CONTIGUOUS']
     True
+
+    For arrays containing Python objects (e.g. dtype=object),
+    the copy is a shallow one. The new array will contain the
+    same object which may lead to surprises if that object can
+    be modified (is mutable):
+
+    >>> a = np.array([1, 'm', [2, 3, 4]], dtype=object)
+    >>> b = a.copy()
+    >>> b[2][0] = 10
+    >>> a
+    array([1, 'm', list([10, 3, 4])], dtype=object)
+
+    To ensure all elements within an ``object`` array are copied,
+    use `copy.deepcopy`:
+
+    >>> import copy
+    >>> a = np.array([1, 'm', [2, 3, 4]], dtype=object)
+    >>> c = copy.deepcopy(a)
+    >>> c[2][0] = 10
+    >>> c
+    array([1, 'm', list([10, 3, 4])], dtype=object)
+    >>> a
+    array([1, 'm', list([2, 3, 4])], dtype=object)
 
     """))
 
