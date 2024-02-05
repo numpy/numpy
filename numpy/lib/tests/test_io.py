@@ -442,12 +442,13 @@ class TestSaveTxt:
         c = BytesIO()
         
         # Native
+        newline = os.linesep.encode()
         np.savetxt(c, a, newline=None, fmt='%1d')
         c.seek(0)
-        assert_equal(c.readlines(), [b'1 2'+os.linesep.encode(), b'3 4'+os.linesep.encode()])
+        assert_equal(c.readlines(), [b'1 2'+newline, b'3 4'+newline])
 
         # POSIX
-        newline=b'\n'
+        newline = b'\n'
         c = BytesIO()
         np.savetxt(c, a, fmt='%1d')
         c.seek(0)
@@ -455,7 +456,7 @@ class TestSaveTxt:
         assert_equal(lines, [b'1 2'+newline, b'3 4'+newline])
 
         # NT
-        newline=b'\r\n'
+        newline = b'\r\n'
         c = BytesIO()
         np.savetxt(c, a, fmt='%1d')
         c.seek(0)
