@@ -454,29 +454,32 @@ class TestSaveTxt:
                      err_msg='Universal newline, explicit')
 
         # POSIX newline
-        newline = b'\n'
+        newline = '\n'
         c = BytesIO()
         np.savetxt(c, a, fmt='%d', newline=newline)
         c.seek(0)
         lines = c.readlines()
+        newline = newline.encode()
         assert_equal(lines, [b'1 2'+newline, b'3 4'+newline],
                      err_msg='POSIX newline')
 
         # NT newline
-        newline = b'\r\n'
+        newline = '\r\n'
         c = BytesIO()
         np.savetxt(c, a, fmt='%d', newline=newline)
         c.seek(0)
         lines = c.readlines()
+        newline = newline.encode()
         assert_equal(lines, [b'1 2'+newline, b'3 4'+newline],
                      err_msg='NT newline')
 
         # Tab "newline"
-        newline = b'\t'
+        newline = '\t'
         c = BytesIO()
         np.savetxt(c, a, fmt='%d', newline=newline)
         c.seek(0)
         lines = c.readlines()
+        newline = newline.encode()
         assert_equal(lines, [b'1 2'+newline+b'3 4'+newline, ],
                      err_msg='Tab newline')
     
