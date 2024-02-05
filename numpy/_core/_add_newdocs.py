@@ -5151,9 +5151,10 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
         ufuncs do not currently raise an exception in this case, but will
         likely do so in the future.
     dtype : data-type code, optional
-        The type used to perform the intermediate operations. Defaults to the
-        data type of the output array if this is provided, or the result of
-        `ufunc`'s casting of the input array with `ufunc.identity`.
+        The data type used to perform the operation. Defaults to that of
+        ``out`` if given, and the data type of ``array`` otherwise (though
+        upcast to conserve precision for some cases, such as
+        ``numpy.add.reduce`` for integer or boolean input).
     out : ndarray, None, or tuple of ndarray and None, optional
         A location into which the result is stored. If not provided or None,
         a freshly-allocated array is returned. For consistency with
@@ -5350,9 +5351,10 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
     axis : int, optional
         The axis along which to apply the reduceat.
     dtype : data-type code, optional
-        The type used to perform the intermediate operations. Defaults to the
-        data type of the output array if this is provided, or the result of
-        `ufunc`'s casting of the input array with `ufunc.identity`.
+        The data type used to perform the operation. Defaults to that of
+        ``out`` if given, and the data type of ``array`` otherwise (though
+        upcast to conserve precision for some cases, such as
+        ``numpy.add.reduce`` for integer or boolean input).
     out : ndarray, None, or tuple of ndarray and None, optional
         A location into which the result is stored. If not provided or None,
         a freshly-allocated array is returned. For consistency with
