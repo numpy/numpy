@@ -22,7 +22,7 @@ if [ -z $INSTALL_OPENBLAS ]; then
 fi
 
 # Install Openblas
-  if [[ $RUNNER_OS == "Linux" || ($RUNNER_OS == "macOS" && ("$INSTALL_OPENBLAS" = true)) ]] ; then
+if [[ $RUNNER_OS == "Linux" || ($RUNNER_OS == "macOS" && ("$INSTALL_OPENBLAS" = true)) ]] ; then
       basedir=$(python tools/openblas_support.py --use-ilp64)
     if [[ $RUNNER_OS == "macOS" && $PLATFORM == "macosx-arm64" ]]; then
         # /usr/local/lib doesn't exist on cirrus-ci runners
