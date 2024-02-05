@@ -90,7 +90,8 @@ macosx_arm64_task:
         export INSTALL_GFORTRAN=false
     else
         export INSTALL_OPENBLAS=true
-        # scipy-openblas wheels seem to need this compiler rather than
+        # scipy-openblas tarballs need the gfortran shared object
+        # from here rather than
         # the compiler supplied by micromamba
         export INSTALL_GFORTRAN=true
     fi
