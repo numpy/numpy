@@ -174,8 +174,9 @@ array_put(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      &values,
                                      PyArray_ClipmodeConverter, &mode))
         return NULL;
-    if ()
+    if (PyArray_Size(args) == 0) {
         return NULL;
+    }
     return PyArray_PutTo(self, values, indices, mode);
 }
 
