@@ -165,17 +165,16 @@ array_fill(PyArrayObject *self, PyObject *args)
 static PyObject *
 array_put(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyObject *indices, *values, *array;
+    PyObject *indices, *values;
     NPY_CLIPMODE mode = NPY_RAISE;
     static char *kwlist[] = {"indices", "values", "mode", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O&:put", kwlist,
                                      &indices,
                                      &values,
-                                     &array,
                                      PyArray_ClipmodeConverter, &mode))
         return NULL;
-    if (PyArray_Size(array)) == 0) {
+    if (PyArray_Size(args)) == 0) {
         PyErr_SetString(PyExc_ValueError, "Input array must not be empty, but it is empty");
         return NULL;
     }
