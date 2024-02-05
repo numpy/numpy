@@ -666,7 +666,6 @@ typedef struct _PyArray_Descr {
  * Umodified PyArray_Descr struct identical to NumPy 1.x.  This struct is
  * used solely for registering a new legate DType.
  */
-/*
 typedef struct {
         PyObject_HEAD
         PyTypeObject *typeobj;
@@ -685,7 +684,7 @@ typedef struct {
         NpyAuxData *c_metadata;
         npy_hash_t hash;
 } PyArray_DescrProto;
-*/
+
 
 typedef struct _arr_descr {
         PyArray_Descr *base;
