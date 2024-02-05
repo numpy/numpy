@@ -437,6 +437,38 @@ class TestSaveTxt:
         c = BytesIO()
         assert_raises(ValueError, np.savetxt, c, a, fmt=99)
 
+    def test_newline(self):
+        a = np.array([(1, 2), (3, 4)])
+        c = BytesIO()
+        
+        # Native
+        np.savetxt(c, a, newline=None, fmt='%1d')
+        c.seek(0)
+        assert_equal(c.readlines(), [b'1 2'+os.linesep.encode(), b'3 4'+os.linesep.encode()])
+
+        # POSIX
+        newline=b'\n'
+        c = BytesIO()
+        np.savetxt(c, a, fmt='%1d')
+        c.seek(0)
+        lines = c.readlines()
+        assert_equal(lines, [b'1 2'+newline, b'3 4'+newline])
+
+        # NT
+        newline=b'\r\n'
+        c = BytesIO()
+        np.savetxt(c, a, fmt='%1d')
+        c.seek(0)
+        lines = c.readlines()
+        assert_equal(lines, [b'1 2'+newline, b'3 4'+newline])
+
+        # Tab
+        c = BytesIO()
+        np.savetxt(c, a, fmt='%1d')
+        c.seek(0)
+        lines = c.readlines()
+        assert_equal(lines, [b'1 2'+newline, b'3 4'+newline])
+    
     def test_header_footer(self):
         # Test the functionality of the header and footer keyword argument.
 
