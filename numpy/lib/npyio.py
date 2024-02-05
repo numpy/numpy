@@ -1552,7 +1552,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline=None, header='',
     # newlines, and this function needs to write newlines.
     if newline is None:
         open_newline = None
-        newline = '\n'
+        newline = os.linesep
     else:
         open_newline = newline
                 
@@ -1618,7 +1618,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline=None, header='',
             raise ValueError('invalid fmt: %r' % (fmt,))
 
         if len(header) > 0:
-            header = header.replace('\n', '\n' + comments)
+            header = header.replace(newline, newline + comments)
             fh.write(comments + header + newline)
         if iscomplex_X:
             for row in X:
@@ -1639,7 +1639,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline=None, header='',
                 fh.write(v)
 
         if len(footer) > 0:
-            footer = footer.replace('\n', '\n' + comments)
+            footer = footer.replace(newline, newline + comments)
             fh.write(comments + footer + newline)
     finally:
         if own_fh:
