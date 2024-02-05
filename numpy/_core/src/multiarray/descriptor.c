@@ -2740,7 +2740,14 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     }
     PyTuple_SET_ITEM(state, 5, PyLong_FromLong(elsize));
     PyTuple_SET_ITEM(state, 6, PyLong_FromLong(alignment));
-    PyTuple_SET_ITEM(state, 7, PyLong_FromLong(self->flags));
+    /* Old NumPy stored potentially negative values, so use char if possible */
+    if (self->flags <= 255) {
+        char char_flags = self->flags;
+        PyTuple_SET_ITEM(state, 7, PyLong_FromLong(char_flags));
+    }
+    else {
+        PyTuple_SET_ITEM(state, 7, PyLong_FromUnsignedLongLong(self->flags));
+    }
 
     PyTuple_SET_ITEM(ret, 2, state);
     return ret;
@@ -2795,7 +2802,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     PyObject *subarray, *fields, *names = NULL, *metadata=NULL;
     int incref_names = 1;
     int int_dtypeflags = 0;
-    char dtypeflags;
+    npy_uint64 dtypeflags;
 
     if (self->fields == Py_None) {
         Py_RETURN_NONE;
@@ -3089,6 +3096,10 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
      * flags as an int even though it actually was a char in the PyArray_Descr
      * structure
      */
+    if (int_dtypeflags < 0 && int_dtypeflags >= -128) {
+        /* NumPy used to use a signed char (byte) to store this, normalize */
+        int_dtypeflags += 128;
+    }
     dtypeflags = int_dtypeflags;
     if (dtypeflags != int_dtypeflags) {
         PyErr_Format(PyExc_ValueError,
