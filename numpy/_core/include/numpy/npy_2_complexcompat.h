@@ -6,6 +6,25 @@
 
 #include <numpy/npy_math.h>
 
+#ifndef NPY_CREALF
+#define NPY_CREALF(c) (c)->real
+#endif
+#ifndef NPY_CIMAGF
+#define NPY_CIMAGF(c) (c)->imag
+#endif
+#ifndef NPY_CREAL
+#define NPY_CREAL(c)  (c)->real
+#endif
+#ifndef NPY_CIMAG
+#define NPY_CIMAG(c)  (c)->imag
+#endif
+#ifndef NPY_CREALL
+#define NPY_CREALL(c) (c)->real
+#endif
+#ifndef NPY_CIMAGL
+#define NPY_CIMAGL(c) (c)->imag
+#endif
+
 #ifndef NPY_CSETREALF
 #define NPY_CSETREALF(c, r) (c)->real = (r)
 #endif

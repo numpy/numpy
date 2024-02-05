@@ -411,16 +411,16 @@ half_ctype_divmod(npy_half a, npy_half b, npy_half *out1, npy_half *out2)
 static inline int
 @name@_ctype_add(@type@ a, @type@ b, @type@ *out)
 {
-    npy_csetreal@c@(out, npy_creal@c@(a) + npy_creal@c@(b));
-    npy_csetimag@c@(out, npy_cimag@c@(a) + npy_cimag@c@(b));
+    npy_csetreal@c@(out, npy_creal@c@(&a) + npy_creal@c@(&b));
+    npy_csetimag@c@(out, npy_cimag@c@(&a) + npy_cimag@c@(&b));
     return 0;
 }
 
 static inline int
 @name@_ctype_subtract(@type@ a, @type@ b, @type@ *out)
 {
-    npy_csetreal@c@(out, npy_creal@c@(a) - npy_creal@c@(b));
-    npy_csetimag@c@(out, npy_cimag@c@(a) - npy_cimag@c@(b));
+    npy_csetreal@c@(out, npy_creal@c@(&a) - npy_creal@c@(&b));
+    npy_csetimag@c@(out, npy_cimag@c@(&a) - npy_cimag@c@(&b));
     return 0;
 }
 
@@ -432,8 +432,8 @@ static inline int
 static inline int
 @name@_ctype_multiply( @type@ a, @type@ b, @type@ *out)
 {
-    npy_csetreal@c@(out, npy_creal@c@(a) * npy_creal@c@(b) - npy_cimag@c@(a) * npy_cimag@c@(b));
-    npy_csetimag@c@(out, npy_creal@c@(a) * npy_cimag@c@(b) + npy_cimag@c@(a) * npy_creal@c@(b));
+    npy_csetreal@c@(out, npy_creal@c@(&a) * npy_creal@c@(&b) - npy_cimag@c@(&a) * npy_cimag@c@(&b));
+    npy_csetimag@c@(out, npy_creal@c@(&a) * npy_cimag@c@(&b) + npy_cimag@c@(&a) * npy_creal@c@(&b));
     return 0;
 }
 
@@ -547,8 +547,8 @@ half_ctype_negative(npy_half a, npy_half *out)
 static inline int
 @name@_ctype_negative(@type@ a, @type@ *out)
 {
-    npy_csetreal@c@(out, -npy_creal@c@(a));
-    npy_csetimag@c@(out, -npy_cimag@c@(a));
+    npy_csetreal@c@(out, -npy_creal@c@(&a));
+    npy_csetimag@c@(out, -npy_cimag@c@(&a));
     return 0;
 }
 /**end repeat**/
@@ -578,8 +578,8 @@ static inline int
 static inline int
 @name@_ctype_positive(@type@ a, @type@ *out)
 {
-    npy_csetreal@c@(out, +npy_creal@c@(a));
-    npy_csetimag@c@(out, +npy_cimag@c@(a));
+    npy_csetreal@c@(out, +npy_creal@c@(&a));
+    npy_csetimag@c@(out, +npy_cimag@c@(&a));
     return 0;
 }
 
@@ -877,12 +877,13 @@ typedef enum {
 
 #if defined(IS_CFLOAT) || defined(IS_CDOUBLE) || defined(IS_CLONGDOUBLE)
 
-#define GET_CVALUE_OR_DEFER(OTHER, Other, o, value)  \
+#define GET_CVALUE_OR_DEFER(OTHER, Other, other, o, value)  \
     case NPY_##OTHER:  \
         if (IS_SAFE(NPY_##OTHER, NPY_@TYPE@)) {  \
             assert(Py_TYPE(value) == &Py##Other##ArrType_Type);  \
-            npy_csetreal@c@(result, npy_creal##o(PyArrayScalar_VAL(value, Other)));  \
-            npy_csetimag@c@(result, npy_cimag##o(PyArrayScalar_VAL(value, Other)));  \
+            npy_##other cmplx = PyArrayScalar_VAL(value, Other);  \
+            npy_csetreal@c@(result, npy_creal##o(&cmplx));  \
+            npy_csetimag@c@(result, npy_cimag##o(&cmplx));  \
             ret = 1;  \
         }  \
         else if (IS_SAFE(NPY_@TYPE@, NPY_##OTHER)) {  \
@@ -896,7 +897,7 @@ typedef enum {
 #else
 
 /* Getting a complex value to real is never safe: */
-#define GET_CVALUE_OR_DEFER(OTHER, Other, o, value)  \
+#define GET_CVALUE_OR_DEFER(OTHER, Other, other, o, value)  \
     case NPY_##OTHER:  \
         if (IS_SAFE(NPY_@TYPE@, NPY_##OTHER)) {  \
             ret = DEFER_TO_OTHER_KNOWN_SCALAR;  \
@@ -1131,9 +1132,9 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
         GET_VALUE_OR_DEFER(DOUBLE, Double, value);
         GET_VALUE_OR_DEFER(LONGDOUBLE, LongDouble, value);
         /* Complex: We should still defer, but the code won't work... */
-        GET_CVALUE_OR_DEFER(CFLOAT, CFloat, f, value);
-        GET_CVALUE_OR_DEFER(CDOUBLE, CDouble,, value);
-        GET_CVALUE_OR_DEFER(CLONGDOUBLE, CLongDouble, l, value);
+        GET_CVALUE_OR_DEFER(CFLOAT, CFloat, cfloat, f, value);
+        GET_CVALUE_OR_DEFER(CDOUBLE, CDouble, cdouble,, value);
+        GET_CVALUE_OR_DEFER(CLONGDOUBLE, CLongDouble, clongdouble, l, value);
         default:
             /*
              * If there is no match, this is an unknown scalar object.  It
@@ -1776,7 +1777,7 @@ static int
 #if @simp@
     ret = @nonzero@(val);
 #else
-    ret = (@nonzero@(npy_creal@t@(val)) || @nonzero@(npy_cimag@t@(val)));
+    ret = (@nonzero@(npy_creal@t@(&val)) || @nonzero@(npy_cimag@t@(&val)));
 #endif
 
     return ret;
@@ -1830,7 +1831,8 @@ static PyObject *
     PyObject *long_result;
 
 #if @cmplx@
-    @sign@ @ctype@ x = @to_ctype@(npy_creal@n@(PyArrayScalar_VAL(obj, @Name@)));
+    npy_@name@ cval = PyArrayScalar_VAL(obj, @Name@);
+    @sign@ @ctype@ x = @to_ctype@(npy_creal@n@(&cval));
 #else
     @sign@ @ctype@ x = @to_ctype@(PyArrayScalar_VAL(obj, @Name@));
 #endif
@@ -1872,7 +1874,8 @@ static PyObject *
     if (emit_complexwarning() < 0) {
         return NULL;
     }
-    return @func@(@to_ctype@(npy_creal@n@(PyArrayScalar_VAL(obj, @Name@))));
+    npy_@name@ cval = PyArrayScalar_VAL(obj, @Name@);
+    return @func@(@to_ctype@(npy_creal@n@(&cval)));
 #else
     return @func@(@to_ctype@(PyArrayScalar_VAL(obj, @Name@)));
 #endif
@@ -1886,15 +1889,15 @@ static PyObject *
  *           npy_half_gt, npy_half_eq, npy_half_ne#
  */
 #define def_cmp_@oper@(arg1, arg2) (arg1 @op@ arg2)
-#define cmplx_cmp_@oper@(arg1, arg2) ((npy_creal(arg1) == npy_creal(arg2)) ?        \
-                                      npy_cimag(arg1) @op@ npy_cimag(arg2) :        \
-                                      npy_creal(arg1) @op@ npy_creal(arg2))
-#define fcmplx_cmp_@oper@(arg1, arg2) ((npy_crealf(arg1) == npy_crealf(arg2)) ?       \
-                                      npy_cimagf(arg1) @op@ npy_cimagf(arg2) :        \
-                                      npy_crealf(arg1) @op@ npy_crealf(arg2))
-#define lcmplx_cmp_@oper@(arg1, arg2) ((npy_creall(arg1) == npy_creall(arg2)) ?        \
-                                      npy_cimagl(arg1) @op@ npy_cimagl(arg2) :        \
-                                      npy_creall(arg1) @op@ npy_creall(arg2))
+#define cmplx_cmp_@oper@(arg1, arg2) ((npy_creal(&arg1) == npy_creal(&arg2)) ?        \
+                                      npy_cimag(&arg1) @op@ npy_cimag(&arg2) :        \
+                                      npy_creal(&arg1) @op@ npy_creal(&arg2))
+#define fcmplx_cmp_@oper@(arg1, arg2) ((npy_crealf(&arg1) == npy_crealf(&arg2)) ?       \
+                                      npy_cimagf(&arg1) @op@ npy_cimagf(&arg2) :        \
+                                      npy_crealf(&arg1) @op@ npy_crealf(&arg2))
+#define lcmplx_cmp_@oper@(arg1, arg2) ((npy_creall(&arg1) == npy_creall(&arg2)) ?        \
+                                      npy_cimagl(&arg1) @op@ npy_cimagl(&arg2) :        \
+                                      npy_creall(&arg1) @op@ npy_creall(&arg2))
 #define def_half_cmp_@oper@(arg1, arg2) @halfop@(arg1, arg2)
 /**end repeat**/
 

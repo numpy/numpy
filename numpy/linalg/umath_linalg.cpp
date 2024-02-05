@@ -1058,15 +1058,15 @@ det_from_slogdet(typ sign, typ logdet)
 npy_float npyabs(npy_cfloat z) { return npy_cabsf(z);}
 npy_double npyabs(npy_cdouble z) { return npy_cabs(z);}
 
-inline float RE(npy_cfloat *c) { return npy_crealf(*c); }
-inline double RE(npy_cdouble *c) { return npy_creal(*c); }
+inline float RE(npy_cfloat *c) { return npy_crealf(c); }
+inline double RE(npy_cdouble *c) { return npy_creal(c); }
 #if NPY_SIZEOF_COMPLEX_LONGDOUBLE != NPY_SIZEOF_COMPLEX_DOUBLE
-inline longdouble_t RE(npy_clongdouble *c) { return npy_creall(*c); }
+inline longdouble_t RE(npy_clongdouble *c) { return npy_creall(c); }
 #endif
-inline float IM(npy_cfloat *c) { return npy_cimagf(*c); }
-inline double IM(npy_cdouble *c) { return npy_cimag(*c); }
+inline float IM(npy_cfloat *c) { return npy_cimagf(c); }
+inline double IM(npy_cdouble *c) { return npy_cimag(c); }
 #if NPY_SIZEOF_COMPLEX_LONGDOUBLE != NPY_SIZEOF_COMPLEX_DOUBLE
-inline longdouble_t IM(npy_clongdouble *c) { return npy_cimagl(*c); }
+inline longdouble_t IM(npy_clongdouble *c) { return npy_cimagl(c); }
 #endif
 inline void SETRE(npy_cfloat *c, float real) { npy_csetrealf(c, real); }
 inline void SETRE(npy_cdouble *c, double real) { npy_csetreal(c, real); }

@@ -162,8 +162,8 @@ PyUFunc_F_F_As_D_D(char **args, npy_intp const *dimensions, npy_intp const *step
         npy_csetreal(&tmp, (double)((float *)ip1)[0]);
         npy_csetimag(&tmp, (double)((float *)ip1)[1]);
         f(&tmp, &out);
-        ((float *)op1)[0] = (float)npy_creal(out);
-        ((float *)op1)[1] = (float)npy_cimag(out);
+        ((float *)op1)[0] = (float)npy_creal(&out);
+        ((float *)op1)[1] = (float)npy_cimag(&out);
     }
 }
 
@@ -180,8 +180,8 @@ PyUFunc_FF_F_As_DD_D(char **args, npy_intp const *dimensions, npy_intp const *st
         npy_csetreal(&tmp2, (double)((float *)ip2)[0]);
         npy_csetimag(&tmp2, (double)((float *)ip2)[1]);
         f(&tmp1, &tmp2, &out);
-        ((float *)op1)[0] = (float)npy_creal(out);
-        ((float *)op1)[1] = (float)npy_cimag(out);
+        ((float *)op1)[0] = (float)npy_creal(&out);
+        ((float *)op1)[1] = (float)npy_cimag(&out);
     }
 }
 

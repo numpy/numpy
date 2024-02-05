@@ -506,8 +506,8 @@ NPY_NO_EXPORT int
 
 #if NPY_SIZEOF_@NAME@ < NPY_SIZEOF_CDOUBLE  /* really just float... */
         /* Overflow could have occurred converting double to float */
-        if (NPY_UNLIKELY((npy_isinf(npy_creal@suffix@(temp)) && !npy_isinf(oop.real)) ||
-                         (npy_isinf(npy_cimag@suffix@(temp)) && !npy_isinf(oop.imag)))) {
+        if (NPY_UNLIKELY((npy_isinf(npy_creal@suffix@(&temp)) && !npy_isinf(oop.real)) ||
+                         (npy_isinf(npy_cimag@suffix@(&temp)) && !npy_isinf(oop.imag)))) {
             if (PyUFunc_GiveFloatingpointErrors("cast", NPY_FPE_OVERFLOW) < 0) {
                 return -1;
             }
@@ -2539,13 +2539,13 @@ static npy_bool
 {
     if (ap == NULL || PyArray_ISBEHAVED_RO(ap)) {
         @type@ *ptmp = (@type@ *)ip;
-        return (npy_bool) ((npy_creal@suffix@(*ptmp) != 0) || (npy_cimag@suffix@(*ptmp) != 0));
+        return (npy_bool) ((npy_creal@suffix@(ptmp) != 0) || (npy_cimag@suffix@(ptmp) != 0));
     }
     else {
         @type@ tmp;
         PyArray_DESCR(ap)->f->copyswap(&tmp, ip, PyArray_ISBYTESWAPPED(ap),
                                        ap);
-        return (npy_bool) ((npy_creal@suffix@(tmp) != 0) || (npy_cimag@suffix@(tmp) != 0));
+        return (npy_bool) ((npy_creal@suffix@(&tmp) != 0) || (npy_cimag@suffix@(&tmp) != 0));
     }
 }
 /**end repeat**/
@@ -3745,15 +3745,15 @@ static int
     @type@ start;
     @type@ delta;
 
-    npy_csetreal@t@(&start, npy_creal@t@(*buffer));
-    npy_csetimag@t@(&start, npy_cimag@t@(*buffer));
-    npy_csetreal@t@(&delta, npy_creal@t@(buffer[1]) - npy_creal@t@(start));
-    npy_csetimag@t@(&delta, npy_cimag@t@(buffer[1]) - npy_cimag@t@(start));
+    npy_csetreal@t@(&start, npy_creal@t@(buffer));
+    npy_csetimag@t@(&start, npy_cimag@t@(buffer));
+    npy_csetreal@t@(&delta, npy_creal@t@(&buffer[1]) - npy_creal@t@(&start));
+    npy_csetimag@t@(&delta, npy_cimag@t@(&buffer[1]) - npy_cimag@t@(&start));
 
     buffer += 2;
     for (i = 2; i < length; i++, buffer++) {
-        npy_csetreal@t@(buffer, npy_creal@t@(start) + i*npy_creal@t@(delta));
-        npy_csetimag@t@(buffer, npy_cimag@t@(start) + i*npy_cimag@t@(delta));
+        npy_csetreal@t@(buffer, npy_creal@t@(&start) + i*npy_creal@t@(&delta));
+        npy_csetimag@t@(buffer, npy_cimag@t@(&start) + i*npy_cimag@t@(&delta));
     }
     return 0;
 }

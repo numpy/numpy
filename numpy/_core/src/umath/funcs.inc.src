@@ -292,16 +292,16 @@ npy_ObjectClip(PyObject *arr, PyObject *min, PyObject *max) {
 static void
 nc_neg@c@(@ctype@ *a, @ctype@ *r)
 {
-    npy_csetreal@c@(r, -npy_creal@c@(*a));
-    npy_csetimag@c@(r, -npy_cimag@c@(*a));
+    npy_csetreal@c@(r, -npy_creal@c@(a));
+    npy_csetimag@c@(r, -npy_cimag@c@(a));
     return;
 }
 
 static void
 nc_pos@c@(@ctype@ *a, @ctype@ *r)
 {
-    npy_csetreal@c@(r, +npy_creal@c@(*a));
-    npy_csetimag@c@(r, +npy_cimag@c@(*a));
+    npy_csetreal@c@(r, +npy_creal@c@(a));
+    npy_csetimag@c@(r, +npy_cimag@c@(a));
     return;
 }
 
@@ -315,8 +315,8 @@ nc_sqrt@c@(@ctype@ *x, @ctype@ *r)
 static void
 nc_rint@c@(@ctype@ *x, @ctype@ *r)
 {
-    npy_csetreal@c@(r, npy_rint@c@(npy_creal@c@(*x)));
-    npy_csetimag@c@(r, npy_rint@c@(npy_cimag@c@(*x)));
+    npy_csetreal@c@(r, npy_rint@c@(npy_creal@c@(x)));
+    npy_csetimag@c@(r, npy_rint@c@(npy_cimag@c@(x)));
 }
 
 static void
@@ -329,8 +329,8 @@ nc_log@c@(@ctype@ *x, @ctype@ *r)
 static void
 nc_log1p@c@(@ctype@ *x, @ctype@ *r)
 {
-    @ftype@ l = npy_hypot@c@(npy_creal@c@(*x) + 1,npy_cimag@c@(*x));
-    npy_csetimag@c@(r, npy_atan2@c@(npy_cimag@c@(*x), npy_creal@c@(*x) + 1));
+    @ftype@ l = npy_hypot@c@(npy_creal@c@(x) + 1,npy_cimag@c@(x));
+    npy_csetimag@c@(r, npy_atan2@c@(npy_cimag@c@(x), npy_creal@c@(x) + 1));
     npy_csetreal@c@(r, npy_log@c@(l));
     return;
 }
@@ -346,8 +346,8 @@ static void
 nc_exp2@c@(@ctype@ *x, @ctype@ *r)
 {
     @ctype@ a;
-    npy_csetreal@c@(&a, npy_creal@c@(*x)*NPY_LOGE2@c@);
-    npy_csetimag@c@(&a, npy_cimag@c@(*x)*NPY_LOGE2@c@);
+    npy_csetreal@c@(&a, npy_creal@c@(x)*NPY_LOGE2@c@);
+    npy_csetimag@c@(&a, npy_cimag@c@(x)*NPY_LOGE2@c@);
     nc_exp@c@(&a, r);
     return;
 }
@@ -355,9 +355,9 @@ nc_exp2@c@(@ctype@ *x, @ctype@ *r)
 static void
 nc_expm1@c@(@ctype@ *x, @ctype@ *r)
 {
-    @ftype@ a = npy_sin@c@(npy_cimag@c@(*x) / 2);
-    npy_csetreal@c@(r, npy_expm1@c@(npy_creal@c@(*x)) * npy_cos@c@(npy_cimag@c@(*x)) - 2 * a * a);
-    npy_csetimag@c@(r,npy_exp@c@(npy_creal@c@(*x)) * npy_sin@c@(npy_cimag@c@(*x)));
+    @ftype@ a = npy_sin@c@(npy_cimag@c@(x) / 2);
+    npy_csetreal@c@(r, npy_expm1@c@(npy_creal@c@(x)) * npy_cos@c@(npy_cimag@c@(x)) - 2 * a * a);
+    npy_csetimag@c@(r,npy_exp@c@(npy_creal@c@(x)) * npy_sin@c@(npy_cimag@c@(x)));
     return;
 }
 
@@ -429,8 +429,8 @@ static void
 nc_log10@c@(@ctype@ *x, @ctype@ *r)
 {
     nc_log@c@(x, r);
-    npy_csetreal@c@(r, npy_creal@c@(*r) * NPY_LOG10E@c@);
-    npy_csetimag@c@(r, npy_cimag@c@(*r) * NPY_LOG10E@c@);
+    npy_csetreal@c@(r, npy_creal@c@(r) * NPY_LOG10E@c@);
+    npy_csetimag@c@(r, npy_cimag@c@(r) * NPY_LOG10E@c@);
     return;
 }
 
@@ -438,8 +438,8 @@ static void
 nc_log2@c@(@ctype@ *x, @ctype@ *r)
 {
     nc_log@c@(x, r);
-    npy_csetreal@c@(r, npy_creal@c@(*r) * NPY_LOG2E@c@);
-    npy_csetimag@c@(r, npy_cimag@c@(*r) * NPY_LOG2E@c@);
+    npy_csetreal@c@(r, npy_creal@c@(r) * NPY_LOG2E@c@);
+    npy_csetimag@c@(r, npy_cimag@c@(r) * NPY_LOG2E@c@);
     return;
 }
 

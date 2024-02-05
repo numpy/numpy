@@ -251,10 +251,10 @@ NPY_NO_EXPORT void
 #if @IS_HALF@
                 sum += npy_half_to_float(val1) * npy_half_to_float(val2);
 #elif @IS_COMPLEX@ == 1
-                npy_csetreal@suff@((@typ@ *) op, npy_creal@suff@(*((@typ@ *) op)) + ((npy_creal@suff@(val1) * npy_creal@suff@(val2)) -
-                                       (npy_cimag@suff@(val1) * npy_cimag@suff@(val2))));
-                npy_csetimag@suff@((@typ@ *) op, npy_cimag@suff@(*((@typ@ *) op)) + ((npy_creal@suff@(val1) * npy_cimag@suff@(val2)) +
-                                       (npy_cimag@suff@(val1) * npy_creal@suff@(val2))));
+                npy_csetreal@suff@((@typ@ *) op, npy_creal@suff@((@typ@ *) op) + ((npy_creal@suff@(&val1) * npy_creal@suff@(&val2)) -
+                                       (npy_cimag@suff@(&val1) * npy_cimag@suff@(&val2))));
+                npy_csetimag@suff@((@typ@ *) op, npy_cimag@suff@((@typ@ *) op) + ((npy_creal@suff@(&val1) * npy_cimag@suff@(&val2)) +
+                                       (npy_cimag@suff@(&val1) * npy_creal@suff@(&val2))));
 #else
                 *(@typ@ *)op += val1 * val2;
 #endif

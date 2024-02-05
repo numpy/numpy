@@ -199,17 +199,17 @@ CFLOAT_LT(npy_cfloat a, npy_cfloat b)
 {
     int ret;
 
-    if (npy_crealf(a) < npy_crealf(b)) {
-        ret = npy_cimagf(a) == npy_cimagf(a) || npy_cimagf(b) != npy_cimagf(b);
+    if (npy_crealf(&a) < npy_crealf(&b)) {
+        ret = npy_cimagf(&a) == npy_cimagf(&a) || npy_cimagf(&b) != npy_cimagf(&b);
     }
-    else if (npy_crealf(a) > npy_crealf(b)) {
-        ret = npy_cimagf(b) != npy_cimagf(b) && npy_cimagf(a) == npy_cimagf(a);
+    else if (npy_crealf(&a) > npy_crealf(&b)) {
+        ret = npy_cimagf(&b) != npy_cimagf(&b) && npy_cimagf(&a) == npy_cimagf(&a);
     }
-    else if (npy_crealf(a) == npy_crealf(b) || (npy_crealf(a) != npy_crealf(a) && npy_crealf(b) != npy_crealf(b))) {
-        ret =  npy_cimagf(a) < npy_cimagf(b) || (npy_cimagf(b) != npy_cimagf(b) && npy_cimagf(a) == npy_cimagf(a));
+    else if (npy_crealf(&a) == npy_crealf(&b) || (npy_crealf(&a) != npy_crealf(&a) && npy_crealf(&b) != npy_crealf(&b))) {
+        ret =  npy_cimagf(&a) < npy_cimagf(&b) || (npy_cimagf(&b) != npy_cimagf(&b) && npy_cimagf(&a) == npy_cimagf(&a));
     }
     else {
-        ret = npy_crealf(b) != npy_crealf(b);
+        ret = npy_crealf(&b) != npy_crealf(&b);
     }
 
     return ret;
@@ -221,17 +221,17 @@ CDOUBLE_LT(npy_cdouble a, npy_cdouble b)
 {
     int ret;
 
-    if (npy_creal(a) < npy_creal(b)) {
-        ret = npy_cimag(a) == npy_cimag(a) || npy_cimag(b) != npy_cimag(b);
+    if (npy_creal(&a) < npy_creal(&b)) {
+        ret = npy_cimag(&a) == npy_cimag(&a) || npy_cimag(&b) != npy_cimag(&b);
     }
-    else if (npy_creal(a) > npy_creal(b)) {
-        ret = npy_cimag(b) != npy_cimag(b) && npy_cimag(a) == npy_cimag(a);
+    else if (npy_creal(&a) > npy_creal(&b)) {
+        ret = npy_cimag(&b) != npy_cimag(&b) && npy_cimag(&a) == npy_cimag(&a);
     }
-    else if (npy_creal(a) == npy_creal(b) || (npy_creal(a) != npy_creal(a) && npy_creal(b) != npy_creal(b))) {
-        ret =  npy_cimag(a) < npy_cimag(b) || (npy_cimag(b) != npy_cimag(b) && npy_cimag(a) == npy_cimag(a));
+    else if (npy_creal(&a) == npy_creal(&b) || (npy_creal(&a) != npy_creal(&a) && npy_creal(&b) != npy_creal(&b))) {
+        ret =  npy_cimag(&a) < npy_cimag(&b) || (npy_cimag(&b) != npy_cimag(&b) && npy_cimag(&a) == npy_cimag(&a));
     }
     else {
-        ret = npy_creal(b) != npy_creal(b);
+        ret = npy_creal(&b) != npy_creal(&b);
     }
 
     return ret;
@@ -243,17 +243,17 @@ CLONGDOUBLE_LT(npy_clongdouble a, npy_clongdouble b)
 {
     int ret;
 
-    if (npy_creall(a) < npy_creall(b)) {
-        ret = npy_cimagl(a) == npy_cimagl(a) || npy_cimagl(b) != npy_cimagl(b);
+    if (npy_creall(&a) < npy_creall(&b)) {
+        ret = npy_cimagl(&a) == npy_cimagl(&a) || npy_cimagl(&b) != npy_cimagl(&b);
     }
-    else if (npy_creall(a) > npy_creall(b)) {
-        ret = npy_cimagl(b) != npy_cimagl(b) && npy_cimagl(a) == npy_cimagl(a);
+    else if (npy_creall(&a) > npy_creall(&b)) {
+        ret = npy_cimagl(&b) != npy_cimagl(&b) && npy_cimagl(&a) == npy_cimagl(&a);
     }
-    else if (npy_creall(a) == npy_creall(b) || (npy_creall(a) != npy_creall(a) && npy_creall(b) != npy_creall(b))) {
-        ret =  npy_cimagl(a) < npy_cimagl(b) || (npy_cimagl(b) != npy_cimagl(b) && npy_cimagl(a) == npy_cimagl(a));
+    else if (npy_creall(&a) == npy_creall(&b) || (npy_creall(&a) != npy_creall(&a) && npy_creall(&b) != npy_creall(&b))) {
+        ret =  npy_cimagl(&a) < npy_cimagl(&b) || (npy_cimagl(&b) != npy_cimagl(&b) && npy_cimagl(&a) == npy_cimagl(&a));
     }
     else {
-        ret = npy_creall(b) != npy_creall(b);
+        ret = npy_creall(&b) != npy_creall(&b);
     }
 
     return ret;

@@ -906,14 +906,14 @@ legacy_@name@_format@kind@(@type@ val)
     /*
      * Ideally, we should handle this nan/inf stuff in NumpyOS_ascii_format*
      */
-    if (npy_creal@t@(val) == 0.0 && npy_signbit(npy_creal@t@(val)) == 0) {
+    if (npy_creal@t@(&val) == 0.0 && npy_signbit(npy_creal@t@(&val)) == 0) {
         PyOS_snprintf(format, sizeof(format), _FMT1, @NAME@PREC_@KIND@);
-        res = NumPyOS_ascii_format@suff@(buf, sizeof(buf) - 1, format, npy_cimag@t@(val), 0);
+        res = NumPyOS_ascii_format@suff@(buf, sizeof(buf) - 1, format, npy_cimag@t@(&val), 0);
         if (res == NULL) {
             PyErr_SetString(PyExc_RuntimeError, "Error while formatting");
             return NULL;
         }
-        if (!npy_isfinite(npy_cimag@t@(val))) {
+        if (!npy_isfinite(npy_cimag@t@(&val))) {
             strncat(buf, "*", sizeof(buf) - strlen(buf) - 1);
         }
         strncat(buf, "j", sizeof(buf) - strlen(buf) - 1);
@@ -921,20 +921,20 @@ legacy_@name@_format@kind@(@type@ val)
     else {
         char re[64], im[64];
 
-        if (npy_isfinite(npy_creal@t@(val))) {
+        if (npy_isfinite(npy_creal@t@(&val))) {
             PyOS_snprintf(format, sizeof(format), _FMT1, @NAME@PREC_@KIND@);
             res = NumPyOS_ascii_format@suff@(re, sizeof(re), format,
-                                             npy_creal@t@(val), 0);
+                                             npy_creal@t@(&val), 0);
             if (res == NULL) {
                 PyErr_SetString(PyExc_RuntimeError, "Error while formatting");
                 return NULL;
             }
         }
         else {
-            if (npy_isnan(npy_creal@t@(val))) {
+            if (npy_isnan(npy_creal@t@(&val))) {
                 strcpy(re, "nan");
             }
-            else if (npy_creal@t@(val) > 0){
+            else if (npy_creal@t@(&val) > 0){
                 strcpy(re, "inf");
             }
             else {
@@ -943,26 +943,26 @@ legacy_@name@_format@kind@(@type@ val)
         }
 
 
-        if (npy_isfinite(npy_cimag@t@(val))) {
+        if (npy_isfinite(npy_cimag@t@(&val))) {
             PyOS_snprintf(format, sizeof(format), _FMT2, @NAME@PREC_@KIND@);
             res = NumPyOS_ascii_format@suff@(im, sizeof(im), format,
-                                             npy_cimag@t@(val), 0);
+                                             npy_cimag@t@(&val), 0);
             if (res == NULL) {
                 PyErr_SetString(PyExc_RuntimeError, "Error while formatting");
                 return NULL;
             }
         }
         else {
-            if (npy_isnan(npy_cimag@t@(val))) {
+            if (npy_isnan(npy_cimag@t@(&val))) {
                 strcpy(im, "+nan");
             }
-            else if (npy_cimag@t@(val) > 0){
+            else if (npy_cimag@t@(&val) > 0){
                 strcpy(im, "+inf");
             }
             else {
                 strcpy(im, "-inf");
             }
-            if (!npy_isfinite(npy_cimag@t@(val))) {
+            if (!npy_isfinite(npy_cimag@t@(&val))) {
                 strncat(im, "*", sizeof(im) - strlen(im) - 1);
             }
         }
@@ -1099,8 +1099,8 @@ c@name@type_@kind@(PyObject *self)
         return legacy_c@name@_format@kind@(val);
     }
 
-    if (npy_creal@n@(val) == 0.0 && npy_signbit(npy_creal@n@(val)) == 0) {
-        istr = @name@type_@kind@_either(npy_cimag@n@(val), trim, trim, 0);
+    if (npy_creal@n@(&val) == 0.0 && npy_signbit(npy_creal@n@(&val)) == 0) {
+        istr = @name@type_@kind@_either(npy_cimag@n@(&val), trim, trim, 0);
         if (istr == NULL) {
             return NULL;
         }
@@ -1119,13 +1119,13 @@ c@name@type_@kind@(PyObject *self)
         return ret;
     }
 
-    if (npy_isfinite(npy_creal@n@(val))) {
-        rstr = @name@type_@kind@_either(npy_creal@n@(val), trim, trim, 0);
+    if (npy_isfinite(npy_creal@n@(&val))) {
+        rstr = @name@type_@kind@_either(npy_creal@n@(&val), trim, trim, 0);
     }
-    else if (npy_isnan(npy_creal@n@(val))) {
+    else if (npy_isnan(npy_creal@n@(&val))) {
         rstr = PyUnicode_FromString("nan");
     }
-    else if (npy_creal@n@(val) > 0){
+    else if (npy_creal@n@(&val) > 0){
         rstr = PyUnicode_FromString("inf");
     }
     else {
@@ -1135,13 +1135,13 @@ c@name@type_@kind@(PyObject *self)
         return NULL;
     }
 
-    if (npy_isfinite(npy_cimag@n@(val))) {
-        istr = @name@type_@kind@_either(npy_cimag@n@(val), trim, trim, 1);
+    if (npy_isfinite(npy_cimag@n@(&val))) {
+        istr = @name@type_@kind@_either(npy_cimag@n@(&val), trim, trim, 1);
     }
-    else if (npy_isnan(npy_cimag@n@(val))) {
+    else if (npy_isnan(npy_cimag@n@(&val))) {
         istr = PyUnicode_FromString("+nan");
     }
-    else if (npy_cimag@n@(val) > 0){
+    else if (npy_cimag@n@(&val) > 0){
         istr = PyUnicode_FromString("+inf");
     }
     else {
@@ -1224,14 +1224,16 @@ longdoubletype_long(PyObject *self)
 static PyObject *
 clongdoubletype_float(PyObject *self)
 {
-    npy_longdouble val = npy_creall(PyArrayScalar_VAL(self, CLongDouble));
+    npy_clongdouble cval = PyArrayScalar_VAL(self, CLongDouble);
+    npy_longdouble val = npy_creall(&cval);
     return PyFloat_FromDouble((double) val);
 }
 
 static PyObject *
 clongdoubletype_long(PyObject *self)
 {
-    npy_longdouble val = npy_creall(PyArrayScalar_VAL(self, CLongDouble));
+    npy_clongdouble cval = PyArrayScalar_VAL(self, CLongDouble);
+    npy_longdouble val = npy_creall(&cval);
     return npy_longdouble_to_PyLong(val);
 }
 
@@ -2135,8 +2137,8 @@ static PyObject *
 @name@_complex(PyObject *self, PyObject *NPY_UNUSED(args),
                PyObject *NPY_UNUSED(kwds))
 {
-    return PyComplex_FromDoubles(npy_creal@n@(PyArrayScalar_VAL(self, @Name@)),
-                                 npy_cimag@n@(PyArrayScalar_VAL(self, @Name@)));
+    npy_@name@ cmplx = PyArrayScalar_VAL(self, @Name@);
+    return PyComplex_FromDoubles(npy_creal@n@(&cmplx), npy_cimag@n@(&cmplx));
 }
 /**end repeat**/
 
@@ -3638,14 +3640,15 @@ static npy_hash_t
 c@lname@_arrtype_hash(PyObject *obj)
 {
     npy_hash_t hashreal, hashimag, combined;
+    npy_c@lname@ cmplx = PyArrayScalar_VAL(obj, C@name@);
     hashreal = Npy_HashDouble(
-            obj, (double)npy_creal@n@(PyArrayScalar_VAL(obj, C@name@)));
+            obj, (double)npy_creal@n@(&cmplx));
 
     if (hashreal == -1) {
         return -1;
     }
     hashimag = Npy_HashDouble(
-            obj, (double)npy_cimag@n@(PyArrayScalar_VAL(obj, C@name@)));
+            obj, (double)npy_cimag@n@(&cmplx));
     if (hashimag == -1) {
         return -1;
     }
