@@ -607,18 +607,32 @@ typedef struct _PyArray_Descr {
         /* unique-character representing this type */
         char type;
         /*
-         * '>' (big), '<' (little), '|'
-         * (not-applicable), or '=' (native).
+         * '>' (big), '<' (little), '|' (not-applicable), or '=' (native).
+         * Must be supported by all dtypes, only supporting '|' may break e.g.
+         * pickling.
          */
         char byteorder;
-        /* flags describing data type */
-        char flags;
+        /* Empty space, used to keep `type_num` aligned between 1.x and 2.x */
+        char _scratch1;
         /* number representing this type */
         int type_num;
+        /* flags describing data type */
+        npy_uint64 flags;
         /* element size (itemsize) for this type */
-        int elsize;
+        npy_intp elsize;
         /* alignment needed for this type */
-        int alignment;
+        npy_intp alignment;
+        /*
+         * Cached hash value (-1 if not yet computed).
+         */
+        npy_hash_t hash;
+
+        // TODO: The following need to be either moved into a "legacydescr"
+        //       struct.  This is to ensure that our `np.dtype` base-struct
+        //       is smaller or equal the old size.
+        //       They are assumed to be irrelevant to user DTypes.
+        // NOTE: Supporting fields may be relevant, but should have new API.
+        PyArray_ArrFuncs *f;
         /*
          * Non-NULL if this type is
          * is an array (C-contiguous)
@@ -636,11 +650,6 @@ typedef struct _PyArray_Descr {
          * if no fields are defined
          */
         PyObject *names;
-        /*
-         * a table of functions specific for each
-         * basic data descriptor
-         */
-        PyArray_ArrFuncs *f;
         /* Metadata about this dtype */
         PyObject *metadata;
         /*
@@ -649,11 +658,34 @@ typedef struct _PyArray_Descr {
          * for NumPy 1.7.0.
          */
         NpyAuxData *c_metadata;
-        /* Cached hash value (-1 if not yet computed).
-         * This was added for NumPy 2.0.0.
-         */
-        npy_hash_t hash;
+
 } PyArray_Descr;
+
+
+/*
+ * Umodified PyArray_Descr struct identical to NumPy 1.x.  This struct is
+ * used solely for registering a new legate DType.
+ */
+/*
+typedef struct {
+        PyObject_HEAD
+        PyTypeObject *typeobj;
+        char kind;
+        char type;
+        char byteorder;
+        char flags;
+        int type_num;
+        int elsize;
+        int alignment;
+        struct _arr_descr *subarray;
+        PyObject *fields;
+        PyObject *names;
+        PyArray_ArrFuncs *f;
+        PyObject *metadata;
+        NpyAuxData *c_metadata;
+        npy_hash_t hash;
+} PyArray_DescrProto;
+*/
 
 typedef struct _arr_descr {
         PyArray_Descr *base;

@@ -2020,11 +2020,15 @@ static PyMemberDef arraydescr_members[] = {
     {"byteorder",
         T_CHAR, offsetof(PyArray_Descr, byteorder), READONLY, NULL},
     {"itemsize",
-        T_INT, offsetof(PyArray_Descr, elsize), READONLY, NULL},
+        T_PYSSIZET, offsetof(PyArray_Descr, elsize), READONLY, NULL},
     {"alignment",
-        T_INT, offsetof(PyArray_Descr, alignment), READONLY, NULL},
+        T_PYSSIZET, offsetof(PyArray_Descr, alignment), READONLY, NULL},
     {"flags",
-        T_BYTE, offsetof(PyArray_Descr, flags), READONLY, NULL},
+#if NPY_LONGLONG == NPY_INT64
+        T_LONGLONG, offsetof(PyArray_Descr, flags), READONLY, NULL},
+#else
+  #error Assuming long long is 64bit
+#endif
     {NULL, 0, 0, 0, NULL},
 };
 

@@ -4048,36 +4048,23 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
  */
 static PyArray_Descr @from@_Descr = {
     PyObject_HEAD_INIT(&PyArrayDescr_Type)
-    /* typeobj */
-    &Py@NAME@ArrType_Type,
-    /* kind */
-    NPY_@from@LTR,
-    /* type */
-    NPY_@from@LTR,
-    /* byteorder */
-    '@endian@',
-    /* flags, unicode needs init as py3.3 does not like printing garbage  */
-    @flags@,
-    /* type_num */
-    NPY_@from@,
-    /* elsize */
-    0,
-    /* alignment */
-    NPY_ALIGNOF(@align@),
-    /* subarray */
-    NULL,
-    /* fields */
-    NULL,
-    /* names */
-    NULL,
-    /* f */
-    &_Py@NAME@_ArrFuncs,
-    /* metadata */
-    NULL,
-    /* c_metadata */
-    NULL,
-    /* hash */
-    -1,
+    .typeobj = &Py@NAME@ArrType_Type,
+    .kind = NPY_@from@LTR,
+    .type = NPY_@from@LTR,
+    .byteorder = '@endian@',
+    .flags = @flags@,
+    .type_num = NPY_@from@,
+    .elsize = 0,
+    .alignment = NPY_ALIGNOF(@align@),
+    .hash = -1,
+
+    /* fields relevant for legacy descriptors: */
+    .subarray = NULL,
+    .fields = NULL,
+    .names = NULL,
+    .f = &_Py@NAME@_ArrFuncs,
+    .metadata = NULL,
+    .c_metadata = NULL,
 };
 
 /**end repeat**/
@@ -4198,36 +4185,18 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
  */
 NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
     PyObject_HEAD_INIT(&PyArrayDescr_Type)
-    /* typeobj */
-    &Py@NAME@ArrType_Type,
-    /* kind */
-    NPY_@kind@LTR,
-    /* type */
-    NPY_@from@LTR,
-    /* byteorder */
-    '@endian@',
-    /* flags */
-    @isobject@,
-    /* type_num */
-    NPY_@from@,
-    /* elsize */
-    sizeof(@fromtype@),
-    /* alignment */
-    NPY_ALIGNOF(@fromtype@),
-    /* subarray */
-    NULL,
-    /* fields */
-    NULL,
-    /* names */
-    NULL,
-    /* f */
-    &_Py@NAME@_ArrFuncs,
-    /* metadata */
-    NULL,
-    /* c_metadata */
-    NULL,
-    /* hash */
-    -1,
+    .typeobj = &Py@NAME@ArrType_Type,
+    .kind = NPY_@kind@LTR,
+    .type = NPY_@from@LTR,
+    .byteorder = '@endian@',
+    .flags = @isobject@,
+    .type_num = NPY_@from@,
+    .elsize = sizeof(@fromtype@),
+    .alignment = NPY_ALIGNOF(@fromtype@),
+    .hash = -1,
+
+    /* fields relevant for legacy descriptors: */
+    .f = &_Py@NAME@_ArrFuncs,
 };
 
 /**end repeat**/

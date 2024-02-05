@@ -151,15 +151,19 @@ PyArray_InitArrFuncs(PyArray_ArrFuncs *f)
 NPY_NO_EXPORT int
 PyArray_RegisterDataType(PyArray_Descr *descr)
 {
+    // TODO: Need to use PyArray_DescrProto here, which requires wrapping it.
     PyArray_Descr *descr2;
     int typenum;
     int i;
     PyArray_ArrFuncs *f;
 
-    /* See if this type is already registered */
+    /* 
+     * See if this type is already registered (assumes type_num is initialized)
+     * to 0 or -1.
+     */
     for (i = 0; i < NPY_NUMUSERTYPES; i++) {
         descr2 = userdescrs[i];
-        if (descr2 == descr) {
+        if (descr2->type_num == descr->type_num) {
             return descr->type_num;
         }
     }
