@@ -74,7 +74,7 @@ macosx_arm64_task:
     PATH: /usr/local/lib:/usr/local/include:$PATH
     CIBW_ARCHS: arm64
 
-  initial_setup_script: |
+  build_script: |
     brew install micromamba
     micromamba shell init -s bash -p ~/micromamba
     source ~/.bash_profile
@@ -87,11 +87,15 @@ macosx_arm64_task:
     macos_target=$(python -c "print('14.0') if '$ver' >= '14.0' else print('11.0')")
     if [ $macos_target == '14.0' ]; then
         export INSTALL_OPENBLAS=false
+        export INSTALL_GFORTRAN=false
     else
         export INSTALL_OPENBLAS=true
+        # scipy-openblas wheels seem to need this compiler rather than
+        # the compiler supplied by micromamba
+        export INSTALL_GFORTRAN=true
     fi
 
-    export CIBW_ENVIRONMENT_MACOS="MACOSX_DEPLOYMENT_TARGET=$macos_target INSTALL_OPENBLAS=$INSTALL_OPENBLAS INSTALL_GFORTRAN=false RUNNER_OS=macOS"
+    export CIBW_ENVIRONMENT_MACOS="MACOSX_DEPLOYMENT_TARGET=$macos_target INSTALL_OPENBLAS=$INSTALL_OPENBLAS INSTALL_GFORTRAN=$INSTALL_GFORTRAN RUNNER_OS=macOS"
     
     # needed for submodules
     git submodule update --init
