@@ -174,7 +174,7 @@ array_put(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      &values,
                                      PyArray_ClipmodeConverter, &mode))
         return NULL;
-    if (PyArray_Size(args)) == 0) {
+    if (PyArray_Size(self)) == 0) {
         PyErr_SetString(PyExc_ValueError, "Input array must not be empty, but it is empty");
         return NULL;
     }
