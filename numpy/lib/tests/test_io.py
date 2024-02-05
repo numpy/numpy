@@ -441,12 +441,16 @@ class TestSaveTxt:
         a = np.array([(1, 2), (3, 4)])
         c = BytesIO()
         
-        # Native
+        # Universal newline, implicit and explicit
         newline = os.linesep.encode()
+        np.savetxt(c, a, fmt='%d')
+        c.seek(0)
+        assert_equal(c.readlines(), [b'1 2'+newline, b'3 4'+newline],
+                     err_msg='Universal newline, implicit')
         np.savetxt(c, a, fmt='%d', newline=None)
         c.seek(0)
         assert_equal(c.readlines(), [b'1 2'+newline, b'3 4'+newline],
-                     err_msg='Native newline')
+                     err_msg='Universal newline, explicit')
 
         # POSIX
         newline = b'\n'
@@ -508,7 +512,7 @@ class TestSaveTxt:
         c.seek(0)
         assert_equal(c.read(),
                      asbytes('1 2\n3 4\n' + commentstr + test_header_footer + '\n'))
-
+    
     def test_file_roundtrip(self):
         with temppath() as name:
             a = np.array([(1, 2), (3, 4)])
