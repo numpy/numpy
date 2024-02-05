@@ -443,32 +443,37 @@ class TestSaveTxt:
         
         # Native
         newline = os.linesep.encode()
-        np.savetxt(c, a, newline=None, fmt='%1d')
+        np.savetxt(c, a, fmt='%1d', newline=None)
         c.seek(0)
-        assert_equal(c.readlines(), [b'1 2'+newline, b'3 4'+newline])
+        assert_equal(c.readlines(), [b'1 2'+newline, b'3 4'+newline],
+                     err_msg='Native newline)
 
         # POSIX
         newline = b'\n'
         c = BytesIO()
-        np.savetxt(c, a, fmt='%1d')
+        np.savetxt(c, a, fmt='%1d', newline=newline)
         c.seek(0)
         lines = c.readlines()
-        assert_equal(lines, [b'1 2'+newline, b'3 4'+newline])
+        assert_equal(lines, [b'1 2'+newline, b'3 4'+newline],
+                     err_msg='POSIX newline)
 
         # NT
         newline = b'\r\n'
         c = BytesIO()
-        np.savetxt(c, a, fmt='%1d')
+        np.savetxt(c, a, fmt='%1d', newline=newline)
         c.seek(0)
         lines = c.readlines()
-        assert_equal(lines, [b'1 2'+newline, b'3 4'+newline])
+        assert_equal(lines, [b'1 2'+newline, b'3 4'+newline],
+                     err_msg='NT newline)
 
         # Tab
+        newline = b'\t'
         c = BytesIO()
-        np.savetxt(c, a, fmt='%1d')
+        np.savetxt(c, a, fmt='%1d', newline=newline)
         c.seek(0)
         lines = c.readlines()
-        assert_equal(lines, [b'1 2'+newline, b'3 4'+newline])
+        assert_equal(lines, [b'1 2'+newline+b'3 4'+newline, ],
+                     err_msg='Tab newline)
     
     def test_header_footer(self):
         # Test the functionality of the header and footer keyword argument.
