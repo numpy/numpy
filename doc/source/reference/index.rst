@@ -35,7 +35,6 @@ Python API
    :maxdepth: 2
 
    routines
-   legacy_routines
 
 .. toctree::
    :maxdepth: 1

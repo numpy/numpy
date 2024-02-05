@@ -1,7 +1,7 @@
 .. _routines.char:
 
-String operations
-=================
+Legacy fixed-width string functionality
+=======================================
 
 .. currentmodule:: numpy.char
 
