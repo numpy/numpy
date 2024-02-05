@@ -447,12 +447,13 @@ class TestSaveTxt:
         c.seek(0)
         assert_equal(c.readlines(), [b'1 2'+newline, b'3 4'+newline],
                      err_msg='Universal newline, implicit')
+        c = BytesIO()
         np.savetxt(c, a, fmt='%d', newline=None)
         c.seek(0)
         assert_equal(c.readlines(), [b'1 2'+newline, b'3 4'+newline],
                      err_msg='Universal newline, explicit')
 
-        # POSIX
+        # POSIX newline
         newline = b'\n'
         c = BytesIO()
         np.savetxt(c, a, fmt='%d', newline=newline)
@@ -461,7 +462,7 @@ class TestSaveTxt:
         assert_equal(lines, [b'1 2'+newline, b'3 4'+newline],
                      err_msg='POSIX newline')
 
-        # NT
+        # NT newline
         newline = b'\r\n'
         c = BytesIO()
         np.savetxt(c, a, fmt='%d', newline=newline)
@@ -470,7 +471,7 @@ class TestSaveTxt:
         assert_equal(lines, [b'1 2'+newline, b'3 4'+newline],
                      err_msg='NT newline')
 
-        # Tab
+        # Tab "newline"
         newline = b'\t'
         c = BytesIO()
         np.savetxt(c, a, fmt='%d', newline=newline)
