@@ -312,20 +312,6 @@ _convert_from_tuple(PyObject *obj, int align)
             npy_free_cache_dim_obj(shape);
             return type;
         }
-        /* (type, 1) use to be equivalent to type, but is deprecated */
-        if (shape.len == 1
-                && shape.ptr[0] == 1
-                && PyNumber_Check(val)) {
-            /* 2019-05-20, 1.17 */
-            if (DEPRECATE_FUTUREWARNING(
-                        "Passing (type, 1) or '1type' as a synonym of type is "
-                        "deprecated; in a future version of numpy, it will be "
-                        "understood as (type, (1,)) / '(1,)type'.") < 0) {
-                goto fail;
-            }
-            npy_free_cache_dim_obj(shape);
-            return type;
-        }
 
         /* validate and set shape */
         for (int i=0; i < shape.len; i++) {

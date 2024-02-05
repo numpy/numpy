@@ -933,6 +933,10 @@ def copy(a, order='K', subok=False):
 
     >>> np.array(a, copy=True)  #doctest: +SKIP
 
+    The copy made of the data is shallow, i.e., for arrays with object dtype,
+    the new array will point to the same objects.
+    See Examples from `ndarray.copy`.
+
     Examples
     --------
     Create an array x, with a reference y and a copy z:
@@ -959,31 +963,6 @@ def copy(a, order='K', subok=False):
     >>> b[0] = 3
     >>> b
     array([3, 2, 3])
-
-    Note that np.copy is a shallow copy and will not copy object
-    elements within arrays. This is mainly important for arrays
-    containing Python objects. The new array will contain the
-    same object which may lead to surprises if that object can
-    be modified (is mutable):
-
-    >>> a = np.array([1, 'm', [2, 3, 4]], dtype=object)
-    >>> b = np.copy(a)
-    >>> b[2][0] = 10
-    >>> a
-    array([1, 'm', list([10, 3, 4])], dtype=object)
-
-    To ensure all elements within an ``object`` array are copied,
-    use `copy.deepcopy`:
-
-    >>> import copy
-    >>> a = np.array([1, 'm', [2, 3, 4]], dtype=object)
-    >>> c = copy.deepcopy(a)
-    >>> c[2][0] = 10
-    >>> c
-    array([1, 'm', list([10, 3, 4])], dtype=object)
-    >>> a
-    array([1, 'm', list([2, 3, 4])], dtype=object)
-
     """
     return array(a, order=order, subok=subok, copy=True)
 
