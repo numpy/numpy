@@ -13,7 +13,7 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
                         NPY_SCALARKIND scalar);
 
 NPY_NO_EXPORT int
-PyArray_RegisterDataType(PyArray_Descr *descr);
+PyArray_RegisterDataType(PyArray_DescrProto *descr);
 
 NPY_NO_EXPORT int
 PyArray_RegisterCastFunc(PyArray_Descr *descr, int totype,

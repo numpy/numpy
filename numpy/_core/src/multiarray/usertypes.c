@@ -145,11 +145,22 @@ PyArray_InitArrFuncs(PyArray_ArrFuncs *f)
   defined in arraytypes.inc
 */
 /*NUMPY_API
-  Register Data type
-  Does not change the reference count of descr
+ * Register Data type
+ *
+ * Creates a new descriptor from a prototype one.
+ *
+ * The prototype is ABI compatible with NumPy 1.x and in 1.x would be used as
+ * the actual descriptor.  However, since ABI changed, this cannot work on
+ * 2.0 and we copy all fields into the new struct.
+ *
+ * Code must use `descr = PyArray_DescrFromType(num);` after successful
+ * registration.  This is compatible with use in 1.x.
+ *
+ * This function copies all internal references on 2.x only.  This should be
+ * irrelevant, since any internal reference is immortal.
 */
 NPY_NO_EXPORT int
-PyArray_RegisterDataType(PyArray_Descr *descr)
+PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
 {
     PyArray_Descr *descr2;
     int typenum;
@@ -159,8 +170,8 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
     /* See if this type is already registered */
     for (i = 0; i < NPY_NUMUSERTYPES; i++) {
         descr2 = userdescrs[i];
-        if (descr2 == descr) {
-            return descr->type_num;
+        if (descr2->type_num == descr_proto->type_num) {
+            return descr_proto->type_num;
         }
     }
     typenum = NPY_USERDEF + NPY_NUMUSERTYPES;
@@ -169,13 +180,13 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
                 "Too many user defined dtypes registered");
         return -1;
     }
-    descr->type_num = -1;
-    if (PyDataType_ISUNSIZED(descr)) {
+    descr_proto->type_num = -1;
+    if (PyDataType_ISUNSIZED(descr_proto)) {
         PyErr_SetString(PyExc_ValueError, "cannot register a" \
                         "flexible data-type");
         return -1;
     }
-    f = descr->f;
+    f = descr_proto->f;
     if (f->nonzero == NULL) {
         f->nonzero = _default_nonzero;
     }
@@ -188,13 +199,13 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
                         " is missing.");
         return -1;
     }
-    if (descr->typeobj == NULL) {
+    if (descr_proto->typeobj == NULL) {
         PyErr_SetString(PyExc_ValueError, "missing typeobject");
         return -1;
     }
 
     int use_void_clearimpl = 0;
-    if (descr->flags & (NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT)) {
+    if (descr_proto->flags & (NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT)) {
         /*
          * User dtype can't actually do reference counting, however, there
          * are existing hacks (e.g. xpress), which use a structured one:
@@ -204,8 +215,8 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
          */
         use_void_clearimpl = 1;
 
-        if (descr->names == NULL || descr->fields == NULL ||
-            !PyDict_CheckExact(descr->fields)) {
+        if (descr_proto->names == NULL || descr_proto->fields == NULL ||
+            !PyDict_CheckExact(descr_proto->fields)) {
             PyErr_Format(PyExc_ValueError,
                     "Failed to register dtype for %S: Legacy user dtypes "
                     "using `NPY_ITEM_IS_POINTER` or `NPY_ITEM_REFCOUNT` are "
@@ -213,13 +224,10 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
                     "if it is a structured dtype with names and fields "
                     "hardcoded at registration time.\n"
                     "Please contact the NumPy developers if this used to work "
-                    "but now fails.", descr->typeobj);
+                    "but now fails.", descr_proto->typeobj);
             return -1;
         }
     }
-
-    /* Invalidate cached hash value */
-    descr->hash = -1;
 
     userdescrs = realloc(userdescrs,
                          (NPY_NUMUSERTYPES+1)*sizeof(void *));
@@ -237,7 +245,7 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
      * behaves identically to static type definition.
      */
 
-    const char *scalar_name = descr->typeobj->tp_name;
+    const char *scalar_name = descr_proto->typeobj->tp_name;
     /*
      * We have to take only the name, and ignore the module to get
      * a reasonable __name__, since static types are limited in this regard
@@ -258,12 +266,55 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
 
     snprintf(name, name_length, "numpy.dtype[%s]", scalar_name);
 
+    /*
+     * Copy the user provided descriptor struct into a new one.  This is done
+     * in order to allow different layout between the two.
+     */
+    PyArray_Descr *descr = PyObject_Malloc(sizeof(PyArray_Descr));
+    if (descr == NULL) {
+        PyMem_FREE(name);
+        PyErr_NoMemory();
+        return -1;
+    }
+    PyObject_INIT(descr, Py_TYPE(descr_proto));
+
+    /* Simply copy all fields by name: */
+    Py_XINCREF(descr_proto->typeobj);
+    descr->typeobj = descr_proto->typeobj;
+    descr->kind = descr_proto->kind;
+    descr->type = descr_proto->type;
+    descr->byteorder = descr_proto->byteorder;
+    descr->flags = descr_proto->flags;
+    descr->elsize = descr_proto->elsize;
+    descr->alignment = descr_proto->alignment;
+    descr->subarray = descr_proto->subarray;
+    Py_XINCREF(descr_proto->fields);
+    descr->fields = descr_proto->fields;
+    Py_XINCREF(descr_proto->names);
+    descr->names = descr_proto->names;
+    descr->f = descr_proto->f;
+    Py_XINCREF(descr_proto->metadata);
+    descr->metadata = descr_proto->metadata;
+    if (descr_proto->c_metadata != NULL) {
+        descr->c_metadata = NPY_AUXDATA_CLONE(descr_proto->c_metadata);
+    }
+    else {
+        descr->c_metadata = NULL;
+    }
+    /* And invalidate cached hash value (field assumed to be not set) */
+    descr->hash = -1;
+
     userdescrs[NPY_NUMUSERTYPES++] = descr;
 
     descr->type_num = typenum;
+    /* update prototype to notice duplicate registration */
+    descr_proto->type_num = typenum;
     if (dtypemeta_wrap_legacy_descriptor(descr, name, NULL) < 0) {
         descr->type_num = -1;
         NPY_NUMUSERTYPES--;
+        /* Override the type, it might be wrong and then decref crashes */
+        Py_SET_TYPE(descr, &PyArrayDescr_Type);
+        Py_DECREF(descr);
         PyMem_Free(name);  /* free the name only on failure */
         return -1;
     }

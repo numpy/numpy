@@ -638,7 +638,35 @@ typedef struct _PyArray_Descr {
          * This was added for NumPy 2.0.0.
          */
         npy_hash_t hash;
+
 } PyArray_Descr;
+
+
+
+/*
+ * Umodified PyArray_Descr struct identical to NumPy 1.x.  This struct is
+ * used as a prototype for registering a new legacy DType.
+ * It is also used to access the fields in user code running on 1.x.
+ */
+typedef struct {
+        PyObject_HEAD
+        PyTypeObject *typeobj;
+        char kind;
+        char type;
+        char byteorder;
+        char flags;
+        int type_num;
+        int elsize;
+        int alignment;
+        struct _arr_descr *subarray;
+        PyObject *fields;
+        PyObject *names;
+        PyArray_ArrFuncs *f;
+        PyObject *metadata;
+        NpyAuxData *c_metadata;
+        npy_hash_t hash;
+} PyArray_DescrProto;
+
 
 typedef struct _arr_descr {
         PyArray_Descr *base;
