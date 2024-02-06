@@ -177,6 +177,7 @@ PKG_CONFIG_PATH="$PWD/.openblas"
 DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH:/$PWD/.openblas/lib"
 
 [tool.cibuildwheel.windows]
+# This does not work, use CIBW_ENVIRONMENT_WINDOWS
 environment = {PKG_CONFIG_PATH="./.openblas"}
 config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=false build-dir=build"
 repair-wheel-command = "bash ./tools/wheels/repair_windows.sh {wheel} {dest_dir}"
