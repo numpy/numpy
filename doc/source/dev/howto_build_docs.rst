@@ -55,6 +55,15 @@ Doxygen_ can be installed with::
 
     pip install -r requirements/doc_requirements.txt
 
+.. note::
+
+    It may be necessary to install development versions of the doc
+    dependencies to build the docs locally::
+
+        pip install --pre --force-reinstall --extra-index-url \
+        https://pypi.anaconda.org/scientific-python-nightly-wheels/simple \
+        -r requirements/doc_requirements.txt
+
 We currently use Sphinx_ along with Doxygen_ for generating the API and
 reference documentation for NumPy. In addition, building the documentation
 requires the Sphinx extension `plot_directive`, which is shipped with
