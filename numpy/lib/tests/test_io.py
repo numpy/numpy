@@ -527,6 +527,21 @@ class TestSaveTxt:
         assert_equal(c.read(),
                      asbytes(a_txt + commentstr + test_header_footer
                             + os.linesep))
+
+    @pytest.mark.parametrize("newline", ['\n', '\r\n'])
+    def test_newline_header_footer(self, newline):
+        c = BytesIO()
+        a = np.array([(1, 2), (3, 4)], dtype=int)
+        a_txt = '1 2' + newline + '3 4' + newline
+        test_header_footer = 'Test header / footer'
+        # Test the header and footer keyword argument
+        np.savetxt(c, a, fmt='%1d', newline=newline, header=test_header_footer,
+                   footer=test_header_footer)
+        c.seek(0)
+        assert_equal(c.read(),
+                     asbytes('# ' + test_header_footer + newline
+                             + a_txt
+                             + '# ' + test_header_footer + newline))
     
     def test_file_roundtrip(self):
         with temppath() as name:
