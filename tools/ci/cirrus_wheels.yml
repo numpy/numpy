@@ -86,12 +86,16 @@ macosx_arm64_task:
     ver=$(sw_vers -productVersion)
     macos_target=$(python -c "print('14.0') if '$ver' >= '14.0' else print('11.0')")
     if [ $macos_target == '14.0' ]; then
+        # Use native Accelerate
         export INSTALL_OPENBLAS=false
+        export CIBW_ENVIRONMENT_MACOS="MACOSX_DEPLOYMENT_TARGET=$macos_target INSTALL_OPENBLAS=false RUNNER_OS=macOS"
+        export CIBW_REPAIR_WHEEL_COMMAND_MACOS=""
     else
+        # Use scipy-openblas wheels
         export INSTALL_OPENBLAS=true
+        export CIBW_ENVIRONMENT_MACOS="MACOSX_DEPLOYMENT_TARGET=$macos_target INSTALL_OPENBLAS=true RUNNER_OS=macOS PKG_CONFIG_PATH=$PWD/.openblas"
     fi
 
-    export CIBW_ENVIRONMENT_MACOS="MACOSX_DEPLOYMENT_TARGET=$macos_target INSTALL_OPENBLAS=$INSTALL_OPENBLAS RUNNER_OS=macOS PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
     
     # needed for submodules
     git submodule update --init

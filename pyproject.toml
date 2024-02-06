@@ -145,7 +145,7 @@ build-frontend = "build"
 skip = "cp36-* cp37-* cp-38* pp37-* *-manylinux_i686 *_ppc64le *_s390x"
 before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
 # The build will use openblas64 everywhere, except on arm64 macOS >=14.0 (uses Accelerate)
-config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dallow-noblas=false build-dir=build"
+config-settings = "setup-args=-Dallow-noblas=false build-dir=build"
 before-test = "pip install -r {project}/requirements/test_requirements.txt"
 test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 
@@ -174,16 +174,16 @@ repair-wheel-command = [
 # In cibuildwheel, {project} is $PWD
 RUNNER_OS="macOS"
 PKG_CONFIG_PATH="$PWD/.openblas"
-# DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH:/$PWD/.openblas/lib"
+DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH:/$PWD/.openblas/lib"
 
 [tool.cibuildwheel.windows]
 environment = {PKG_CONFIG_PATH="./.openblas"}
-config-settings = "setup-args=--vsenv setup-args=-Duse-ilp64=true setup-args=-Dblas=openblas setup-args=-Dlapack=openblas"
+config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=false build-dir=build"
 repair-wheel-command = "bash ./tools/wheels/repair_windows.sh {wheel} {dest_dir}"
 
 [[tool.cibuildwheel.overrides]]
 select = "*-win32"
-config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=true"
+config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=true build-dir=build"
 repair-wheel-command = ""
 
 [tool.meson-python]
