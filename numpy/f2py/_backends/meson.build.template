@@ -6,6 +6,7 @@ project('${modulename}',
                             'warning_level=1',
                             'buildtype=${buildtype}'
                           ])
+cc = meson.get_compiler('c')
 fc = meson.get_compiler('fortran')
 
 py = import('python').find_installation('${python}', pure: false)
@@ -32,6 +33,9 @@ inc_np = include_directories(incdir_numpy, incdir_f2py)
 # gh-25000
 quadmath_dep = fc.find_library('quadmath', required: false)
 
+libnpymath_dir = incdir_numpy / '..' / 'lib'
+libnpymath = cc.find_library('npymath', dirs: libnpymath_dir)
+
 ${lib_declarations}
 ${lib_dir_declarations}
 
@@ -47,6 +51,7 @@ ${inc_list}
                      dependencies : [
                      py_dep,
                      quadmath_dep,
+                     libnpymath,
 ${dep_list}
 ${lib_list}
 ${lib_dir_list}
