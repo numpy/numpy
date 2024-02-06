@@ -551,10 +551,10 @@ class TestSaveTxt:
         lines = c.readlines()
         assert_equal(
             lines,
-            [b' ( +3.142e+00+ +2.718e+00j)  ( +3.142e+00+ +2.718e+00j)' \
+            [b' ( +3.142e+00+ +2.718e+00j)  ( +3.142e+00+ +2.718e+00j)'
              + newline,
-             b' ( +3.142e+00+ +2.718e+00j)  ( +3.142e+00+ +2.718e+00j)' \
-             + newline ])
+             b' ( +3.142e+00+ +2.718e+00j)  ( +3.142e+00+ +2.718e+00j)'
+             + newline])
 
         # One format for each real and imaginary part
         c = BytesIO()
@@ -563,9 +563,9 @@ class TestSaveTxt:
         lines = c.readlines()
         assert_equal(
             lines,
-            [b'  +3.142e+00  +2.718e+00  +3.142e+00  +2.718e+00' \
+            [b'  +3.142e+00  +2.718e+00  +3.142e+00  +2.718e+00'
              + newline,
-             b'  +3.142e+00  +2.718e+00  +3.142e+00  +2.718e+00' \
+             b'  +3.142e+00  +2.718e+00  +3.142e+00  +2.718e+00'
              + newline])
 
         # One format for each complex number
@@ -575,9 +575,9 @@ class TestSaveTxt:
         lines = c.readlines()
         assert_equal(
             lines,
-            [b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)' \ 
+            [b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)'
              + newline,
-             b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)' \
+             b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)'
              + newline])
 
     def test_complex_negative_exponent(self):
@@ -595,9 +595,9 @@ class TestSaveTxt:
         lines = c.readlines()
         assert_equal(
             lines,
-            [b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)' \
+            [b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)'
              + newline,
-             b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)' \
+             b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)'
              + newline])
 
 
