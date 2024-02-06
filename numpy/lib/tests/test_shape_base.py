@@ -739,6 +739,9 @@ class TestTile:
         assert_equal(tile(b, (2, 2), axis=(0, 1)),
                      [[1, 2, 1, 2], [3, 4, 3, 4],
                       [1, 2, 1, 2], [3, 4, 3, 4]])
+        assert_equal(tile(b, 2, axis=(0, 1)),
+                     [[1, 2, 1, 2], [3, 4, 3, 4],
+                      [1, 2, 1, 2], [3, 4, 3, 4]])
 
     def test_tile_one_repetition_on_array_gh4679(self):
         a = np.arange(5)

@@ -1214,9 +1214,11 @@ def tile(A, reps, axis=None):
     ----------
     A : array_like
         The input array.
-    reps : array_like
-        The number of repetitions of `A` along each axis.
+    reps : int or array_like
+        The number of repetitions of `A` along each axis.  If array-like,
+        length should match length of `axis` tuple
     axis : None or int or tuple of ints, optional
+        Axis or axes to tile.  Defaults to first axis
 
     Returns
     -------
@@ -1289,6 +1291,8 @@ def tile(A, reps, axis=None):
         axis, reps = (axis,), (reps,)
 
     if isinstance(axis, tuple):
+        if isinstance(reps, int):
+            reps = (reps,) * len(axis)
         if len(reps) != len(axis):
             raise ValueError("`reps` and `axis` should have the same length")
         new_reps = [1] * c.ndim
