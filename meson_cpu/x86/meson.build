@@ -60,7 +60,7 @@ FMA3 = mod_features.new(
   test_code: files(source_root + '/numpy/distutils/checks/cpu_fma3.c')[0]
 )
 AVX2 = mod_features.new(
-  'AVX2', 25, implies: F16C, args: '-mavx2',
+  'AVX2', 25, implies: F16C, args: '-march=skylake',
   test_code: files(source_root + '/numpy/distutils/checks/cpu_avx2.c')[0]
 )
 # 25-40 left as margin for any extra features
@@ -93,7 +93,7 @@ AVX512_KNM = mod_features.new(
 )
 AVX512_SKX = mod_features.new(
   'AVX512_SKX', 50, implies: AVX512CD,
-  args: ['-mavx512vl', '-mavx512bw', '-mavx512dq'],
+  args: ['-march=skylake-avx512'],
   group: ['AVX512VL', 'AVX512BW', 'AVX512DQ'],
   test_code: files(source_root + '/numpy/distutils/checks/cpu_avx512_skx.c')[0],
   extra_tests: {
