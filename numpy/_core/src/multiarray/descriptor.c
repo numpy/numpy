@@ -2740,14 +2740,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     }
     PyTuple_SET_ITEM(state, 5, PyLong_FromLong(elsize));
     PyTuple_SET_ITEM(state, 6, PyLong_FromLong(alignment));
-    /* Old NumPy stored potentially negative values, so use char if possible */
-    if (self->flags <= 255) {
-        char char_flags = self->flags;
-        PyTuple_SET_ITEM(state, 7, PyLong_FromLong(char_flags));
-    }
-    else {
-        PyTuple_SET_ITEM(state, 7, PyLong_FromUnsignedLongLong(self->flags));
-    }
+    PyTuple_SET_ITEM(state, 7, PyLong_FromUnsignedLongLong(self->flags));
 
     PyTuple_SET_ITEM(ret, 2, state);
     return ret;

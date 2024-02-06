@@ -406,7 +406,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             /* NumPy Unicode is always 4-byte */
             char buf[128];
             assert(descr->elsize % 4 == 0);
-            PyOS_snprintf(buf, sizeof(buf), "%" NPY_INTP_FMT"w", descr->elsize / 4);
+            PyOS_snprintf(buf, sizeof(buf), "%" NPY_INTP_FMT "w", descr->elsize / 4);
             if (_append_str(str, buf) < 0) return -1;
             break;
         }

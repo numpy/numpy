@@ -147,10 +147,14 @@ PyArray_InitArrFuncs(PyArray_ArrFuncs *f)
 /*NUMPY_API
  * Register Data type
  *
- * Creates a new descripto from a prototype one.  The prototype is not
- * a valid descriptor on 2.x, but is used as the prototype instance on 1.x.
+ * Creates a new descriptor from a prototype one.
+ *
+ * The prototype is ABI compatible with NumPy 1.x and in 1.x would be used as
+ * the actual descriptor.  However, since ABI changed, this cannot work on
+ * 2.0 and we copy all fields into the new struct.
+ *
  * Code must use `descr = PyArray_DescrFromType(num);` after successful
- * registration.
+ * registration.  This is compatible with use in 1.x.
  *
  * This function copies all internal references on 2.x only.  This should be
  * irrelevant, since any internal reference is immortal.
@@ -279,7 +283,6 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
     descr->type = descr_proto->type;
     descr->byteorder = descr_proto->byteorder;
     descr->flags = descr_proto->flags;
-    descr->type_num = descr_proto->type_num;
     descr->elsize = descr_proto->elsize;
     descr->alignment = descr_proto->alignment;
     descr->subarray = descr_proto->subarray;
@@ -302,6 +305,8 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
     userdescrs[NPY_NUMUSERTYPES++] = descr;
 
     descr->type_num = typenum;
+    /* update prototype to notice duplicate registration */
+    descr_proto->type_num = typenum;
     if (dtypemeta_wrap_legacy_descriptor(descr, name, NULL) < 0) {
         descr->type_num = -1;
         NPY_NUMUSERTYPES--;

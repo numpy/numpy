@@ -664,7 +664,8 @@ typedef struct _PyArray_Descr {
 
 /*
  * Umodified PyArray_Descr struct identical to NumPy 1.x.  This struct is
- * used solely for registering a new legate DType.
+ * used as a prototype for registering a new legacy DType.
+ * It is also used to access the fields in user code running on 1.x.
  */
 typedef struct {
         PyObject_HEAD
