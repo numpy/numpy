@@ -10,6 +10,7 @@ Basic operations
 
     copyto
     shape
+    size
 
 Changing array shape
 ====================
