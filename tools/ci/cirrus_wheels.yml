@@ -87,16 +87,11 @@ macosx_arm64_task:
     macos_target=$(python -c "print('14.0') if '$ver' >= '14.0' else print('11.0')")
     if [ $macos_target == '14.0' ]; then
         export INSTALL_OPENBLAS=false
-        export INSTALL_GFORTRAN=false
     else
         export INSTALL_OPENBLAS=true
-        # scipy-openblas tarballs need the gfortran shared object
-        # from here rather than
-        # the compiler supplied by micromamba
-        export INSTALL_GFORTRAN=true
     fi
 
-    export CIBW_ENVIRONMENT_MACOS="MACOSX_DEPLOYMENT_TARGET=$macos_target INSTALL_OPENBLAS=$INSTALL_OPENBLAS INSTALL_GFORTRAN=$INSTALL_GFORTRAN RUNNER_OS=macOS"
+    export CIBW_ENVIRONMENT_MACOS="MACOSX_DEPLOYMENT_TARGET=$macos_target INSTALL_OPENBLAS=$INSTALL_OPENBLAS RUNNER_OS=macOS PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
     
     # needed for submodules
     git submodule update --init

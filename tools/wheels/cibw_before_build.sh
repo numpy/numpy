@@ -47,17 +47,3 @@ if [[ $RUNNER_OS == "Windows" ]]; then
     # delvewheel is the equivalent of delocate/auditwheel for windows.
     python -m pip install delvewheel
 fi
-
-if [ -z $INSTALL_GFORTRAN ]; then
-    # the macos_arm64 build might set this variable
-    export INSTALL_GFORTRAN=true
-fi
-
-if [[ $RUNNER_OS == "macOS" && ("$INSTALL_GFORTRAN" = true) ]]; then
-    # Install same version of gfortran as the openblas-libs builds
-    PLAT=$(uname -m)
-
-    source $PROJECT_DIR/tools/wheels/gfortran_utils.sh
-    install_gfortran
-    pip install "delocate>=0.10.4"
-fi
