@@ -373,7 +373,8 @@ class TestSaveTxt:
         c.seek(0)
         lines = c.readlines()
         newline = os.linesep.encode()
-        assert_equal(lines, [b'1'+newline, b'2'+newline, b'3'+newline, b'4'+newline])
+        assert_equal(lines, [b'1'+newline, b'2'+newline, b'3'+newline,
+                             b'4'+newline])
 
     def test_0D_3D(self):
         c = BytesIO()
