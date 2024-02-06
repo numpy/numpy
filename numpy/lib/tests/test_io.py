@@ -488,18 +488,20 @@ class TestSaveTxt:
 
         c = BytesIO()
         a = np.array([(1, 2), (3, 4)], dtype=int)
+        a_txt = '1 2' + os.linesep + '3 4' + os.linesep
         test_header_footer = 'Test header / footer'
         # Test the header keyword argument
         np.savetxt(c, a, fmt='%1d', header=test_header_footer)
         c.seek(0)
         assert_equal(c.read(),
-                     asbytes('# ' + test_header_footer + '\n1 2\n3 4\n'))
+                     asbytes('# ' + test_header_footer + os.linesep
+                             + a_txt))
         # Test the footer keyword argument
         c = BytesIO()
         np.savetxt(c, a, fmt='%1d', footer=test_header_footer)
         c.seek(0)
         assert_equal(c.read(),
-                     asbytes('1 2\n3 4\n# ' + test_header_footer + '\n'))
+                     asbytes(a_txt + '# ' + test_header_footer + os.linesep))
         # Test the commentstr keyword argument used on the header
         c = BytesIO()
         commentstr = '% '
@@ -507,7 +509,8 @@ class TestSaveTxt:
                    header=test_header_footer, comments=commentstr)
         c.seek(0)
         assert_equal(c.read(),
-                     asbytes(commentstr + test_header_footer + '\n' + '1 2\n3 4\n'))
+                     asbytes(commentstr + test_header_footer + os.linesep
+                            + a_txt))
         # Test the commentstr keyword argument used on the footer
         c = BytesIO()
         commentstr = '% '
@@ -515,7 +518,8 @@ class TestSaveTxt:
                    footer=test_header_footer, comments=commentstr)
         c.seek(0)
         assert_equal(c.read(),
-                     asbytes('1 2\n3 4\n' + commentstr + test_header_footer + '\n'))
+                     asbytes(a_txt + commentstr + test_header_footer
+                            + os.linesep))
     
     def test_file_roundtrip(self):
         with temppath() as name:
@@ -623,7 +627,7 @@ class TestSaveTxt:
         s = BytesIO()
         np.savetxt(s, a, fmt=['%s'], encoding='UTF-8')
         s.seek(0)
-        assert_equal(s.read().decode('UTF-8'), utf8 + '\n')
+        assert_equal(s.read().decode('UTF-8'), utf8 + os.linesep)
 
     def test_unicode_stringstream(self):
         utf8 = b'\xcf\x96'.decode('UTF-8')
@@ -631,7 +635,7 @@ class TestSaveTxt:
         s = StringIO()
         np.savetxt(s, a, fmt=['%s'], encoding='UTF-8')
         s.seek(0)
-        assert_equal(s.read(), utf8 + '\n')
+        assert_equal(s.read(), utf8 + os.linesep)
 
     @pytest.mark.parametrize("fmt", ["%f", b"%f"])
     @pytest.mark.parametrize("iotype", [StringIO, BytesIO])
@@ -642,9 +646,9 @@ class TestSaveTxt:
         np.savetxt(s, a, fmt=fmt)
         s.seek(0)
         if iotype is StringIO:
-            assert_equal(s.read(), "%f\n" % 1.)
+            assert_equal(s.read(), "%f%s" % (1., os.linesep))
         else:
-            assert_equal(s.read(), b"%f\n" % 1.)
+            assert_equal(s.read(), b"%f%s" % (1., os.linesep))
 
     @pytest.mark.skipif(sys.platform=='win32', reason="files>4GB may not work")
     @pytest.mark.slow
