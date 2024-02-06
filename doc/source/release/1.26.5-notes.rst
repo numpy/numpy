@@ -1,0 +1,17 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.26.5 Release Notes
+==========================
+
+NumPy 1.26.5 is a maintenance release that fixes bugs and regressions
+discovered after the 1.26.4 release. The Python versions supported by this
+release are 3.9-3.12.
+
+
+Contributors
+============
+
+
+Pull requests merged
+====================
