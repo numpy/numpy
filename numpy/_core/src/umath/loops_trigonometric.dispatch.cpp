@@ -149,10 +149,8 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
             x_in = GatherIndexN(src, ssrc, len);
         }
         opmask_t nnan_mask = hn::Not(hn::IsNaN(x_in));
-    #if NPY_SIMD_CMPSIGNAL
         // Eliminate NaN to avoid FP invalid exception
-        x_in = hn::IfThenElse(nnan_mask, zerosf, x_in);
-    #endif
+        x_in = hn::IfThenElse(nnan_mask, x_in, zerosf);
         opmask_t simd_mask = hn::Le(hn::Abs(x_in), max_cody);
         npy_uint64 simd_maski;
         hn::StoreMaskBits(f32, simd_mask, (uint8_t*)&simd_maski);
