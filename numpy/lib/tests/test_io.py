@@ -356,14 +356,15 @@ class TestSaveTxt:
         np.savetxt(c, a, fmt=fmt)
         c.seek(0)
         assert_equal(c.readlines(),
-                     [asbytes((fmt + ' ' + fmt + '\n') % (1, 2)),
-                      asbytes((fmt + ' ' + fmt + '\n') % (3, 4))])
+                     [asbytes((fmt + ' ' + fmt + os.linesep) % (1, 2)),
+                      asbytes((fmt + ' ' + fmt + os.linesep) % (3, 4))])
 
         a = np.array([[1, 2], [3, 4]], int)
         c = BytesIO()
         np.savetxt(c, a, fmt='%d')
         c.seek(0)
-        assert_equal(c.readlines(), [b'1 2\n', b'3 4\n'])
+        assert_equal(c.readlines(), [b'1 2'+os.linesep.encode(),
+                                     b'3 4'+os.linesep.encode()])
 
     def test_1D(self):
         a = np.array([1, 2, 3, 4], int)
@@ -371,7 +372,8 @@ class TestSaveTxt:
         np.savetxt(c, a, fmt='%d')
         c.seek(0)
         lines = c.readlines()
-        assert_equal(lines, [b'1\n', b'2\n', b'3\n', b'4\n'])
+        newline = os.linesep.encode()
+        assert_equal(lines, [b'1'+newline, b'2'+newline, b'3'+newline, b'4'+newline])
 
     def test_0D_3D(self):
         c = BytesIO()
@@ -383,7 +385,8 @@ class TestSaveTxt:
         c = BytesIO()
         np.savetxt(c, a, fmt='%d')
         c.seek(0)
-        assert_equal(c.readlines(), [b'1 2\n', b'3 4\n'])
+        newline = os.linesep.encode()
+        assert_equal(c.readlines(), [b'1 2'+newline, b'3 4'+newline])
 
     def test_structured_padded(self):
         # gh-13297
@@ -393,7 +396,8 @@ class TestSaveTxt:
         c = BytesIO()
         np.savetxt(c, a[['foo', 'baz']], fmt='%d')
         c.seek(0)
-        assert_equal(c.readlines(), [b'1 3\n', b'4 6\n'])
+        newline = os.linesep.encode()
+        assert_equal(c.readlines(), [b'1 3'+newline, b'4 6'+newline])
 
     def test_multifield_view(self):
         a = np.ones(1, dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'f4')])
@@ -409,29 +413,31 @@ class TestSaveTxt:
         c = BytesIO()
         np.savetxt(c, a, delimiter=',', fmt='%d')
         c.seek(0)
-        assert_equal(c.readlines(), [b'1,2\n', b'3,4\n'])
+        newline = os.linesep.encode()
+        assert_equal(c.readlines(), [b'1,2'+newline, b'3,4'+newline])
 
     def test_format(self):
         a = np.array([(1, 2), (3, 4)])
+        newline = os.linesep.encode()
         c = BytesIO()
         # Sequence of formats
         np.savetxt(c, a, fmt=['%02d', '%3.1f'])
         c.seek(0)
-        assert_equal(c.readlines(), [b'01 2.0\n', b'03 4.0\n'])
+        assert_equal(c.readlines(), [b'01 2.0'+newline, b'03 4.0'+newline])
 
         # A single multiformat string
         c = BytesIO()
         np.savetxt(c, a, fmt='%02d : %3.1f')
         c.seek(0)
         lines = c.readlines()
-        assert_equal(lines, [b'01 : 2.0\n', b'03 : 4.0\n'])
+        assert_equal(lines, [b'01 : 2.0'+newline, b'03 : 4.0'+newline])
 
         # Specify delimiter, should be overridden
         c = BytesIO()
         np.savetxt(c, a, fmt='%02d : %3.1f', delimiter=',')
         c.seek(0)
         lines = c.readlines()
-        assert_equal(lines, [b'01 : 2.0\n', b'03 : 4.0\n'])
+        assert_equal(lines, [b'01 : 2.0'+newline, b'03 : 4.0'+newline])
 
         # Bad fmt, should raise a ValueError
         c = BytesIO()
