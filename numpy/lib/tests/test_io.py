@@ -648,7 +648,7 @@ class TestSaveTxt:
         if iotype is StringIO:
             assert_equal(s.read(), "%f%s" % (1., os.linesep))
         else:
-            assert_equal(s.read(), b"%f%s" % (1., os.linesep))
+            assert_equal(s.read(), b"%f%s" % (1., os.linesep.encode()))
 
     @pytest.mark.skipif(sys.platform=='win32', reason="files>4GB may not work")
     @pytest.mark.slow
