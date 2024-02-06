@@ -542,6 +542,7 @@ class TestSaveTxt:
         re = np.pi
         im = np.e
         a[:] = re + 1.0j * im
+        newline = os.linesep.encode()
 
         # One format only
         c = BytesIO()
@@ -550,8 +551,10 @@ class TestSaveTxt:
         lines = c.readlines()
         assert_equal(
             lines,
-            [b' ( +3.142e+00+ +2.718e+00j)  ( +3.142e+00+ +2.718e+00j)\n',
-             b' ( +3.142e+00+ +2.718e+00j)  ( +3.142e+00+ +2.718e+00j)\n'])
+            [b' ( +3.142e+00+ +2.718e+00j)  ( +3.142e+00+ +2.718e+00j)' \
+             + newline,
+             b' ( +3.142e+00+ +2.718e+00j)  ( +3.142e+00+ +2.718e+00j)' \
+             + newline ])
 
         # One format for each real and imaginary part
         c = BytesIO()
@@ -560,8 +563,10 @@ class TestSaveTxt:
         lines = c.readlines()
         assert_equal(
             lines,
-            [b'  +3.142e+00  +2.718e+00  +3.142e+00  +2.718e+00\n',
-             b'  +3.142e+00  +2.718e+00  +3.142e+00  +2.718e+00\n'])
+            [b'  +3.142e+00  +2.718e+00  +3.142e+00  +2.718e+00' \
+             + newline,
+             b'  +3.142e+00  +2.718e+00  +3.142e+00  +2.718e+00' \
+             + newline])
 
         # One format for each complex number
         c = BytesIO()
@@ -570,8 +575,10 @@ class TestSaveTxt:
         lines = c.readlines()
         assert_equal(
             lines,
-            [b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)\n',
-             b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)\n'])
+            [b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)' \ 
+             + newline,
+             b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)' \
+             + newline])
 
     def test_complex_negative_exponent(self):
         # Previous to 1.15, some formats generated x+-yj, gh 7895
@@ -581,14 +588,17 @@ class TestSaveTxt:
         re = np.pi
         im = np.e
         a[:] = re - 1.0j * im
+        newline = os.linesep.encode()
         c = BytesIO()
         np.savetxt(c, a, fmt='%.3e')
         c.seek(0)
         lines = c.readlines()
         assert_equal(
             lines,
-            [b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)\n',
-             b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)\n'])
+            [b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)' \
+             + newline,
+             b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)' \
+             + newline])
 
 
     def test_custom_writer(self):
