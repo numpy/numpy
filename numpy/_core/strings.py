@@ -270,6 +270,8 @@ def multiply(a, i):
     i_arr = np.asarray(i)
     if not issubclass(i_arr.dtype.type, np.integer):
         raise ValueError("Can only multiply by integers")
+    if a_arr.dtype.kind == "T":
+        return a_arr * i_arr
     out_size = _get_num_chars(a_arr) * max(int(i_arr.max()), 0)
     return _vec_string(
         a_arr, type(a_arr.dtype)(out_size), '__mul__', (i_arr,))
@@ -1192,19 +1194,22 @@ def replace(a, old, new, count=-1):
     from numpy._core.umath import count as count_occurences
 
     arr = np.asanyarray(a)
-    old = np.asanyarray(old)
-    new = np.asanyarray(new)
+    a_dt = arr.dtype
+    old = np.asanyarray(old, dtype=getattr(old, 'dtype', a_dt))
+    new = np.asanyarray(new, dtype=getattr(new, 'dtype', a_dt))
 
     max_int64 = np.iinfo(np.int64).max
     counts = count_occurences(arr, old, 0, max_int64)
     count = np.asanyarray(count)
     counts = np.where(count < 0, counts, np.minimum(counts, count))
 
-    buffersizes = str_len(arr) + counts * (str_len(new) - str_len(old))
-
-    # buffersizes is properly broadcast along all inputs.
-    out = np.empty_like(arr, shape=buffersizes.shape,
-                        dtype=f"{arr.dtype.char}{buffersizes.max()}")
+    if arr.dtype.char == "T":
+        shape = np.broadcast_shapes(counts.shape, new.shape, old.shape)
+        out = np.empty_like(arr, shape=shape)
+    else:
+        buffersizes = str_len(arr) + counts * (str_len(new) - str_len(old))
+        out_dtype = f"{arr.dtype.char}{buffersizes.max()}"
+        out = np.empty_like(arr, shape=buffersizes.shape, dtype=out_dtype)
     return _replace(arr, old, new, counts, out=out)
 
 

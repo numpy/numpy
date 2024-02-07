@@ -29,6 +29,7 @@
 #include "arrayobject.h"
 #include "alloc.h"
 #include "gil_utils.h"
+#include "stringdtype/dtype.h"
 
 #include "npy_longdouble.h"
 #include "numpyos.h"
@@ -4279,6 +4280,10 @@ PyArray_DescrFromType(int type)
          */
         ret = NULL;
     }
+    else if (type == NPY_VSTRING || type == NPY_VSTRINGLTR) {
+        ret = (PyArray_Descr *)new_stringdtype_instance(NULL, 1, NULL);
+    }
+    // builtin legacy dtypes
     else if (type < NPY_NTYPES) {
         ret = _builtin_descrs[type];
     }
@@ -4502,6 +4507,8 @@ set_typeinfo(PyObject *dict)
 #else
     #error "Did not find correct pointer sized integer."
 #endif
+
+    _letter_to_num['T'] = NPY_VSTRING;
 
     /**begin repeat
       * #name = BOOL,
