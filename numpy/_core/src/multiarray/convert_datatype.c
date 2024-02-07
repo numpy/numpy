@@ -24,6 +24,7 @@
 #include "scalartypes.h"
 #include "mapping.h"
 #include "legacy_dtype_implementation.h"
+#include "stringdtype/dtype.h"
 
 #include "abstractdtypes.h"
 #include "convert_datatype.h"
@@ -3726,8 +3727,11 @@ object_to_any_resolve_descriptors(
          * require inspecting the object array. Allow legacy ones, the path
          * here is that e.g. "M8" input is considered to be the DType class,
          * and by allowing it here, we go back to the "M8" instance.
+         *
+         * StringDType is excluded since using the parameters of that dtype
+         * requires creating an instance explicitly
          */
-        if (NPY_DT_is_parametric(dtypes[1])) {
+        if (NPY_DT_is_parametric(dtypes[1]) && dtypes[1] != &PyArray_StringDType) {
             PyErr_Format(PyExc_TypeError,
                     "casting from object to the parametric DType %S requires "
                     "the specified output dtype instance. "

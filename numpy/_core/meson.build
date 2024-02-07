@@ -787,6 +787,7 @@ foreach gen_mtargets : [
       'include',
       'src/common',
       'src/multiarray',
+      'src/multiarray/stringdtype',
       'src/npymath',
       'src/umath'
     ]
@@ -1101,9 +1102,13 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/refcount.c',
   src_file.process('src/multiarray/scalartypes.c.src'),
   'src/multiarray/sequence.c',
-  'src/multiarray/shape.c',
   'src/multiarray/scalarapi.c',
+  'src/multiarray/shape.c',
   'src/multiarray/strfuncs.c',
+  'src/multiarray/stringdtype/casts.c',
+  'src/multiarray/stringdtype/dtype.c',
+  'src/multiarray/stringdtype/utf8_utils.c',
+  'src/multiarray/stringdtype/static_string.c',
   'src/multiarray/temp_elide.c',
   'src/multiarray/usertypes.c',
   'src/multiarray/vdot.c',
@@ -1147,6 +1152,7 @@ src_umath = umath_gen_headers + [
   'src/umath/umathmodule.c',
   'src/umath/special_integer_comparisons.cpp',
   'src/umath/string_ufuncs.cpp',
+  'src/umath/stringdtype_ufuncs.cpp',
   'src/umath/wrapping_array_method.c',
   # For testing. Eventually, should use public API and be separate:
   'src/umath/_scaled_float_dtype.c',

@@ -103,4 +103,11 @@ PyArray_DeviceConverterOptional(PyObject *object, NPY_DEVICE *device);
  */
 extern NPY_NO_EXPORT int evil_global_disable_warn_O4O8_flag;
 
+/*
+ * Convert function which replaces np._NoValue with NULL.
+ * As a converter returns 0 on error and 1 on success.
+ */
+NPY_NO_EXPORT int
+_not_NoValue(PyObject *obj, PyObject **out);
+
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_CONVERSION_UTILS_H_ */
