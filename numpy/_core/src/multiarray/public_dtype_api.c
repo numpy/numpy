@@ -22,7 +22,7 @@
  * Initialize a new DType.  It must currently be a static Python C type that
  * is declared as `PyArray_DTypeMeta` and not `PyTypeObject`.  Further, it
  * must subclass `np.dtype` and set its type to `PyArrayDTypeMeta_Type`
- * (before calling `PyType_Read()`). The DTypeMeta object has additional
+ * (before calling `PyType_Ready()`). The DTypeMeta object has additional
  * fields compared to a normal PyTypeObject!
  */
 int

@@ -48,14 +48,17 @@ supportive role: the :c:data:`PyArrayIter_Type`, the
 . The :c:data:`PyArrayIter_Type` is the type for a flat iterator for an
 ndarray (the object that is returned when getting the flat
 attribute). The :c:data:`PyArrayMultiIter_Type` is the type of the
-object returned when calling ``broadcast`` (). It handles iteration
-and broadcasting over a collection of nested sequences. Also, the
+object returned when calling ``broadcast`` (). It handles iteration and
+broadcasting over a collection of nested sequences. Also, the
 :c:data:`PyArrayDescr_Type` is the data-type-descriptor type whose
-instances describe the data.  Finally, there are 21 new scalar-array
+instances describe the data and :c:data:`PyArray_DTypeMeta` is the
+metaclass for data-type descriptors.  There are also new scalar-array
 types which are new Python scalars corresponding to each of the
-fundamental data types available for arrays. An additional 10 other
-types are place holders that allow the array scalars to fit into a
-hierarchy of actual Python types.
+fundamental data types available for arrays. Additional types are
+placeholders that allow the array scalars to fit into a hierarchy of
+actual Python types. Finally, the :c:data:`PyArray_DTypeMeta` instances
+corresponding to the NumPy built-in data types are also publicly
+visible.
 
 
 PyArray_Type and PyArrayObject
@@ -714,6 +717,69 @@ The :c:data:`PyArray_Type` can also be sub-typed.
     :c:func:`PyUFunc_ReplaceLoopBySignature` The ``tp_str`` and ``tp_repr``
     methods can also be altered using :c:func:`PyArray_SetStringFunction`.
 
+PyArray_DTypeMeta and Related Types
+-----------------------------------
+
+.. c:type:: PyArray_DTypeMeta
+
+    A largely opaque struct representing DType classes. Each instance
+    defines a metaclass for a single NumPy data type. Data types can
+    either be non-parametric or parametric. For non-parametric types,
+    the DType class has a one-to-one correspondence with the descriptor
+    instance created from the DType class. Parametric types can
+    correspond to many different dtype instances depending on the chosen
+    parameters.
+
+    .. code-block:: c
+
+       typedef struct {
+            PyHeapTypeObject super;
+            PyArray_Descr *singleton;
+            int type_num;
+            PyTypeObject *scalar_type;
+            npy_uint64 flags;
+            void *dt_slots;
+            void *reserved[3];
+       } PyArray_DTypeMeta
+
+   .. c:member:: PyHeapTypeObject super
+
+          The superclass, providing hooks into the python object
+          API. Set members of this struct to fill in the functions
+          implementing the ``PyTypeObject`` API (e.g. ``tp_new``).
+
+   .. c:member:: PyArray_Descr *singleton
+
+          A descriptor instance suitable for use as a singleton
+          descriptor for the data type. This is useful for
+          non-parametric types representing simple plain old data type
+          where there is only one logical descriptor instance for all
+          data of the type. Can be NULL if a singleton instance is not
+          appropriate.
+
+   .. c:member:: int type_num
+
+          Corresponds to the type number for legacy data types. Data
+          types defined outside of NumPy and possibly future data types
+          shipped with NumPy will have ``type_num`` set to -1, so this
+          should be relied on to descriminate between data types.
+
+   .. c:member:: PyTypeObject *scalar_type
+
+          The type of scalar instances for this data type.
+
+   .. c:member:: npy_uint64 flags
+
+          Flags can be set to indicate to NumPy that this data type
+          has optional behavior. See <TODO TODO> for a listing of
+          allowed flag values.
+
+   .. c:member:: void* dt_slots
+
+          An opaque pointer to a private struct containing
+          implementations of functions in the DType API. This is filled
+          in from the ``slots`` member of the ``PyArrayDTypeMeta_Spec``
+          instance used to initialize the DType.
 
 PyUFunc_Type and PyUFuncObject
 ------------------------------

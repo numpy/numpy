@@ -2885,9 +2885,29 @@ Data-type descriptors
     objects on word-boundaries as the compiler would.
 
 
+Custom Data Types
+-----------------
+
+..versionadded:: 2.0
+
+These functions allow defining custom flexible data types outside of NumPy.  See
+:ref:`NEP 42 <NEP 42>` for more details about the rationale and design of the
+new DType system. See the :ref:`numpy-user-dtypes repository
+<https://github.com/numpy/numpy-user-dtypes>` for a number of example DTypes.
+
+.. c:function:: PyArrayInitDTypeMeta_FromSpec(PyArray_DTypeMeta *Dtype,
+                                              PyArrayDTypeMeta_Spec *spec)
+
+ Initialize a new DType.  It must currently be a static Python C type that is
+ declared as :c:type:`PyArray_DTypeMeta` and not c:type:`PyTypeObject`.
+ Further, it must subclass `np.dtype` and set its type to
+ :c:type:`PyArrayDTypeMeta_Type` (before calling
+ :c:function:`PyType_Ready()`), which has additional fields
+ compared to a normal :c:type:`PyTypeObject`.
+
+
 Conversion utilities
 --------------------
-
 
 For use with :c:func:`PyArg_ParseTuple`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
