@@ -4,7 +4,7 @@ PROJECT_DIR="${1:-$PWD}"
 
 
 # remove any cruft from a previous run
-git clean -C $PROJECT_DIR -xfdd
+git -C $PROJECT_DIR clean -xfdd
 
 # Update license
 echo "" >> $PROJECT_DIR/LICENSE.txt
