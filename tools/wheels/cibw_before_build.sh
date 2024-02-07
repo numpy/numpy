@@ -2,6 +2,10 @@ set -xe
 
 PROJECT_DIR="${1:-$PWD}"
 
+
+# remove any cruft from a previous run
+git clean -C $PROJECT_DIR -xfdd
+
 # Update license
 echo "" >> $PROJECT_DIR/LICENSE.txt
 echo "----" >> $PROJECT_DIR/LICENSE.txt
@@ -27,10 +31,9 @@ fi
 if [[ "$INSTALL_OPENBLAS" = "true" ]] ; then
     echo PKG_CONFIG_PATH $PKG_CONFIG_PATH
     PKG_CONFIG_PATH=$PROJECT_DIR/.openblas
-    rm -rf $PKG_CONFIG_PATH
     mkdir -p $PKG_CONFIG_PATH
     python -m pip install scipy-openblas64
-    python -c "import scipy_openblas64; print(scipy_openblas64.get_pkg_config().replace('\\\\', '/'))" > $PKG_CONFIG_PATH/scipy-openblas.pc
+    python -c "import scipy_openblas64; print(scipy_openblas64.get_pkg_config())" > $PKG_CONFIG_PATH/scipy-openblas.pc
     # Copy the shared objects to a path under $PKG_CONFIG_PATH, the build
     # will point $LD_LIBRARY_PATH there and then auditwheel/delocate-wheel will
     # pull these into the wheel. Use python to avoid windows/posix problems

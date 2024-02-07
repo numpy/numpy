@@ -65,10 +65,7 @@ macosx_arm64_task:
         CIBW_BUILD: cp39-*
     - env:
         CIRRUS_CLONE_SUBMODULES: true
-        CIBW_BUILD: cp310-*
-    - env:
-        CIRRUS_CLONE_SUBMODULES: true
-        CIBW_BUILD: cp311-*
+        CIBW_BUILD: cp310-* cp311-*
     - env:
         CIRRUS_CLONE_SUBMODULES: true
         CIBW_PRERELEASE_PYTHONS: True

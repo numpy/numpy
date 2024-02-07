@@ -107,7 +107,15 @@ jobs:
 
       - name: pkg-config-for-win
         run: |
-          choco install -y --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+          choco install -y --no-progress --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+          $CIBW = "${{ github.workspace }}/.openblas"
+          # pkgconfig needs a complete path, and not just "./openblas since the
+          # build is run in a tmp dir (?)
+          # But {project} on cibuildwheel is "." on windows.
+          # In any case, it seems somewhere in the env passing, `\` is not
+          # passed through, so convert it to '/'
+          $CIBW = $CIBW.replace("\","/")
+          echo "CIBW_ENVIRONMENT_WINDOWS=PKG_CONFIG_PATH=$CIBW" >> $env:GITHUB_ENV
         if: runner.os == 'windows'
 
       # Used to push the built wheels
@@ -120,8 +128,6 @@ jobs:
         env:
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
-          CIBW_ENVIRONMENT_WINDOWS: >
-            PKG_CONFIG_PATH=${{ github.workspace }}/.openblas
 
       - uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
