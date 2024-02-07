@@ -12,6 +12,7 @@ from . import overrides
 from . import umath as um
 from . import numerictypes as nt
 from .multiarray import asarray, array, asanyarray, concatenate
+from ._multiarray_umath import _array_converter
 from . import _methods
 
 _dt_ = nt.sctype2char
@@ -38,16 +39,13 @@ array_function_dispatch = functools.partial(
 
 # functions that are now methods
 def _wrapit(obj, method, *args, **kwds):
-    try:
-        wrap = obj.__array_wrap__
-    except AttributeError:
-        wrap = None
-    result = getattr(asarray(obj), method)(*args, **kwds)
-    if wrap:
-        if not isinstance(result, mu.ndarray):
-            result = asarray(result)
-        result = wrap(result)
-    return result
+    conv = _array_converter(obj)
+    # As this already tried the method, subok is maybe quite reasonable here
+    # but this follows what was done before. TODO: revisit this.
+    arr, = conv.as_arrays(subok=False)
+    result = getattr(arr, method)(*args, **kwds)
+
+    return conv.wrap(result, to_scalar=False)
 
 
 def _wrapfunc(obj, method, *args, **kwds):
@@ -86,6 +84,22 @@ def _wrapreduction(obj, ufunc, method, axis, dtype, out, **kwargs):
                 return reduction(axis=axis, out=out, **passkwargs)
 
     return ufunc.reduce(obj, axis, dtype, out, **passkwargs)
+
+
+def _wrapreduction_any_all(obj, ufunc, method, axis, out, **kwargs):
+    # Same as above function, but dtype is always bool (but never passed on)
+    passkwargs = {k: v for k, v in kwargs.items()
+                  if v is not np._NoValue}
+
+    if type(obj) is not mu.ndarray:
+        try:
+            reduction = getattr(obj, method)
+        except AttributeError:
+            pass
+        else:
+            return reduction(axis=axis, out=out, **passkwargs)
+
+    return ufunc.reduce(obj, axis, bool, out, **passkwargs)
 
 
 def _take_dispatcher(a, indices, axis=None, out=None, mode=None):
@@ -699,13 +713,13 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     """
     Return a partitioned copy of an array.
 
-    Creates a copy of the array with its elements rearranged in such a
-    way that the value of the element in k-th position is in the position
-    the value would be in a sorted array.  In the partitioned array, all
-    elements before the k-th element are less than or equal to that
-    element, and all the elements after the k-th element are greater than
-    or equal to that element.  The ordering of the elements in the two
-    partitions is undefined.
+    Creates a copy of the array and partially sorts it in such a way that
+    the value of the element in k-th position is in the position it would be
+    in a sorted array. In the output array, all elements smaller than the k-th
+    element are located to the left of this element and all equal or greater
+    are located to its right. The ordering of the elements in the two
+    partitions on the either side of the k-th element in the output array is
+    undefined.
 
     .. versionadded:: 1.8.0
 
@@ -886,7 +900,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     >>> x = np.array([[3, 4, 2], [1, 3, 1]])
     >>> index_array = np.argpartition(x, kth=1, axis=-1)
     >>> # below is the same as np.partition(x, kth=1)
-    >>> np.take_along_axis(x, index_array, axis=-1)  
+    >>> np.take_along_axis(x, index_array, axis=-1)
     array([[2, 3, 4],
            [1, 1, 3]])
 
@@ -1366,7 +1380,7 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     array([[2],
            [0]])
     >>> # Same as np.amax(x, axis=-1)
-    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), 
+    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1),
     ...     axis=-1).squeeze(axis=-1)
     array([2, 0])
 
@@ -1439,7 +1453,7 @@ def searchsorted(a, v, side='left', sorter=None):
     As of NumPy 1.4.0 `searchsorted` works with real/complex arrays containing
     `nan` values. The enhanced sort order is documented in `sort`.
 
-    This function uses the same algorithm as the builtin python 
+    This function uses the same algorithm as the builtin python
     `bisect.bisect_left` (``side='left'``) and `bisect.bisect_right`
     (``side='right'``) functions, which is also vectorized
     in the `v` argument.
@@ -2373,7 +2387,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         return res
 
     return _wrapreduction(
-        a, np.add, 'sum', axis, dtype, out, 
+        a, np.add, 'sum', axis, dtype, out,
         keepdims=keepdims, initial=initial, where=where
     )
 
@@ -2445,6 +2459,11 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     Not a Number (NaN), positive infinity and negative infinity evaluate
     to `True` because these are not equal to zero.
 
+    .. versionchanged:: 2.0
+       Before NumPy 2.0, ``any`` did not return booleans for object dtype
+       input arrays.
+       This behavior is still available via ``np.logical_or.reduce``.
+
     Examples
     --------
     >>> np.any([[True, False], [True, True]])
@@ -2482,8 +2501,8 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     (191614240, 191614240)
 
     """
-    return _wrapreduction(a, np.logical_or, 'any', axis, None, out,
-                          keepdims=keepdims, where=where)
+    return _wrapreduction_any_all(a, np.logical_or, 'any', axis, out,
+                                  keepdims=keepdims, where=where)
 
 
 def _all_dispatcher(a, axis=None, out=None, keepdims=None, *,
@@ -2551,6 +2570,11 @@ def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     Not a Number (NaN), positive infinity and negative infinity
     evaluate to `True` because these are not equal to zero.
 
+    .. versionchanged:: 2.0
+       Before NumPy 2.0, ``all`` did not return booleans for object dtype
+       input arrays.
+       This behavior is still available via ``np.logical_and.reduce``.
+
     Examples
     --------
     >>> np.all([[True,False],[True,True]])
@@ -2574,8 +2598,8 @@ def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     (28293632, 28293632, array(True)) # may vary
 
     """
-    return _wrapreduction(a, np.logical_and, 'all', axis, None, out,
-                          keepdims=keepdims, where=where)
+    return _wrapreduction_any_all(a, np.logical_and, 'all', axis, out,
+                                  keepdims=keepdims, where=where)
 
 
 def _cumsum_dispatcher(a, axis=None, dtype=None, out=None):
@@ -3481,6 +3505,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
         is ``None``; if provided, it must have the same shape as the
         expected output, but the type will be cast if necessary.
         See :ref:`ufuncs-output-type` for more details.
+        See :ref:`ufuncs-output-type` for more details.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
@@ -3607,6 +3632,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         Alternative output array in which to place the result. It must have
         the same shape as the expected output but the type (of the calculated
         values) will be cast if necessary.
+        See :ref:`ufuncs-output-type` for more details.
     ddof : {int, float}, optional
         Means Delta Degrees of Freedom.  The divisor used in calculations
         is ``N - ddof``, where ``N`` represents the number of elements.

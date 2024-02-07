@@ -86,6 +86,7 @@ PUBLIC_SUBMODULES = [
     "polynomial.polynomial",
     "matrixlib",
     "random",
+    "strings",
     "testing",
 ]
 

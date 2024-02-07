@@ -623,8 +623,9 @@ src_umath_api_c = custom_target('__umath_generated',
 
 src_umath_doc_h = custom_target('_umath_doc_generated',
   output : '_umath_doc_generated.h',
-  input : 'code_generators/generate_umath_doc.py',
-  command: [py, '@INPUT@', '-o', '@OUTPUT@'],
+  input : ['code_generators/generate_umath_doc.py',
+           'code_generators/ufunc_docstrings.py'],
+  command: [py, '@INPUT0@', '-o', '@OUTPUT@'],
 )
 
 src_numpy_api = custom_target('__multiarray_api',
@@ -645,6 +646,23 @@ src_ufunc_api = custom_target('__ufunc_api',
   install_tag: 'devel'
 )
 
+# Write out pkg-config file
+# -------------------------
+
+# Note: we can't use Meson's built-in pkgconfig module, because we have to
+# install numpy.pc within site-packages rather than in its normal location.
+cdata_numpy_pc = configuration_data()
+cdata_numpy_pc.set('version', meson.project_version())
+
+# Note: keep install path in sync with numpy/_configtool.py
+_numpy_pc = configure_file(
+  input: 'numpy.pc.in',
+  output: 'numpy.pc',
+  configuration: cdata_numpy_pc,
+  install: true,
+  install_dir: np_dir / '_core/lib/pkgconfig',
+  install_tag: 'devel'
+)
 
 # Set common build flags for C and C++ code
 # -----------------------------------------
@@ -786,7 +804,7 @@ foreach gen_mtargets : [
   [
     'x86_simd_argsort.dispatch.h',
     'src/npysort/x86_simd_argsort.dispatch.cpp',
-    use_intel_sort ? [AVX512_SKX] : []
+    use_intel_sort ? [AVX512_SKX, AVX2] : []
   ],
   [
     'x86_simd_qsort.dispatch.h',
@@ -1036,11 +1054,13 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/alloc.c',
   'src/multiarray/arrayobject.c',
   'src/multiarray/array_coercion.c',
+  'src/multiarray/array_converter.c',
   'src/multiarray/array_method.c',
   'src/multiarray/array_assign_scalar.c',
   'src/multiarray/array_assign_array.c',
   'src/multiarray/arrayfunction_override.c',
   src_file.process('src/multiarray/arraytypes.c.src'),
+  'src/multiarray/arraywrap.c',
   'src/multiarray/buffer.c',
   'src/multiarray/calculation.c',
   'src/multiarray/compiled_base.c',
@@ -1137,6 +1157,13 @@ src_umath = umath_gen_headers + [
 # here. Note that this migration is desirable; we then get the performance
 # benefits for all platforms rather than only for AVX512 on 64-bit Linux, and
 # may be able to avoid the accuracy regressions in SVML.
+#
+CPU_FEATURES_NAMES = CPU_BASELINE_NAMES + CPU_DISPATCH_NAMES
+svml_file_suffix = ['d_la', 's_la', 'd_ha', 's_la']
+if CPU_FEATURES_NAMES.contains('AVX512_SPR')
+  svml_file_suffix += ['h_la']
+endif
+
 svml_objects = []
 if use_svml
   foreach svml_func : [
@@ -1151,7 +1178,7 @@ if use_svml
     'pow', 'sin', 'sinh', 'tan',
     'tanh'
   ]
-    foreach svml_sfx : ['d_la', 's_la', 'd_ha', 's_la']
+    foreach svml_sfx : svml_file_suffix
       svml_objects += [
         'src/umath/svml/linux/avx512/svml_z0_'+svml_func+'_'+svml_sfx+'.s'
       ]

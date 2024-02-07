@@ -335,14 +335,6 @@ class TestFromStringAndFileInvalidData(_DeprecationTestCase):
             assert_array_equal(res, x)
 
 
-class TestShape1Fields(_DeprecationTestCase):
-    warning_cls = FutureWarning
-
-    # 2019-05-20, 1.17.0
-    def test_shape_1_fields(self):
-        self.assert_deprecated(np.dtype, args=([('a', int, 1)],))
-
-
 class TestNonZero(_DeprecationTestCase):
     # 2019-05-26, 1.17.0
     def test_zerod(self):
@@ -766,6 +758,32 @@ class TestDeprecatedDTypeAliases(_DeprecationTestCase):
     def test_a_dtype_alias(self):
         self._check_for_warning(lambda: np.dtype("a"))
         self._check_for_warning(lambda: np.dtype("a10"))
+
+
+class TestDeprecatedArrayWrap(_DeprecationTestCase):
+    message = "__array_wrap__.*"
+
+    def test_deprecated(self):
+        class Test1:
+            def __array__(self,):
+                return np.arange(4)
+
+            def __array_wrap__(self, arr, context=None):
+                self.called = True
+                return 'pass context'
+
+        class Test2(Test1):
+            def __array_wrap__(self, arr):
+                self.called = True
+                return 'pass'
+
+        test1 = Test1()
+        test2 = Test2()
+        self.assert_deprecated(lambda: np.negative(test1))
+        assert test1.called
+        self.assert_deprecated(lambda: np.negative(test2))
+        assert test2.called
+
 
 
 class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):

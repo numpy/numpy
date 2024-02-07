@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include "numpy/numpyconfig.h"  // for NPY_VISIBILITY_HIDDEN
 
-NPY_VISIBILITY_HIDDEN struct cfft_plan_i;
+struct cfft_plan_i;
 typedef struct cfft_plan_i * cfft_plan;
 NPY_VISIBILITY_HIDDEN cfft_plan make_cfft_plan (size_t length);
 NPY_VISIBILITY_HIDDEN void destroy_cfft_plan (cfft_plan plan);
@@ -24,7 +24,7 @@ NPY_VISIBILITY_HIDDEN int cfft_backward(cfft_plan plan, double c[], double fct);
 NPY_VISIBILITY_HIDDEN int cfft_forward(cfft_plan plan, double c[], double fct);
 NPY_VISIBILITY_HIDDEN size_t cfft_length(cfft_plan plan);
 
-NPY_VISIBILITY_HIDDEN struct rfft_plan_i;
+struct rfft_plan_i;
 typedef struct rfft_plan_i * rfft_plan;
 NPY_VISIBILITY_HIDDEN rfft_plan make_rfft_plan (size_t length);
 NPY_VISIBILITY_HIDDEN void destroy_rfft_plan (rfft_plan plan);

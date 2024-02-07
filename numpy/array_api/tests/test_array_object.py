@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from .. import ones, asarray, reshape, result_type, all, equal
-from .._array_object import Array
+from .._array_object import Array, CPU_DEVICE
 from .._dtypes import (
     _all_dtypes,
     _boolean_dtypes,
@@ -73,6 +73,9 @@ def test_validate_index():
     assert_raises(IndexError, lambda: a[[0, 1]])
     assert_raises(IndexError, lambda: a[(0, 1), (0, 1)])
     assert_raises(IndexError, lambda: a[[0, 1]])
+
+    # NumPy arrays are not allowed
+    assert_raises(IndexError, lambda: a[np.ones((3, 4), dtype=bool)])
     assert_raises(IndexError, lambda: a[np.array([[0, 1]])])
 
     # Multiaxis indices must contain exactly as many indices as dimensions
@@ -311,12 +314,15 @@ def test_python_scalar_construtors():
 
 def test_device_property():
     a = ones((3, 4))
-    assert a.device == 'cpu'
+    assert a.device == CPU_DEVICE
+    assert a.device != 'cpu'
 
-    assert all(equal(a.to_device('cpu'), a))
+    assert all(equal(a.to_device(CPU_DEVICE), a))
+    assert_raises(ValueError, lambda: a.to_device('cpu'))
     assert_raises(ValueError, lambda: a.to_device('gpu'))
 
-    assert all(equal(asarray(a, device='cpu'), a))
+    assert all(equal(asarray(a, device=CPU_DEVICE), a))
+    assert_raises(ValueError, lambda: asarray(a, device='cpu'))
     assert_raises(ValueError, lambda: asarray(a, device='gpu'))
 
 def test_array_properties():

@@ -23,8 +23,9 @@
 #include "array_coercion.h"
 #include "refcount.h"
 
-int
-fallocate(int fd, int mode, off_t offset, off_t len);
+#if defined(HAVE_FALLOCATE) && defined(__linux__)
+#include <fcntl.h>
+#endif
 
 /*
  * allocate nbytes of diskspace for file fp

@@ -1173,17 +1173,6 @@ logical_ufunc_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
      */
     int force_object = 0;
 
-    if (signature[0] == NULL && signature[1] == NULL
-            && signature[2] != NULL && signature[2]->type_num != NPY_BOOL) {
-        /* bail out, this is _only_ to give future/deprecation warning! */
-        return -1;
-    }
-    if ((op_dtypes[0] != NULL && PyTypeNum_ISSTRING(op_dtypes[0]->type_num))
-            || PyTypeNum_ISSTRING(op_dtypes[1]->type_num)) {
-        /* bail out on strings: currently casting them to bool is too weird */
-        return -1;
-    }
-
     for (int i = 0; i < 3; i++) {
         PyArray_DTypeMeta *item;
         if (signature[i] != NULL) {

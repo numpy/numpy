@@ -6,8 +6,9 @@ from ._dtypes import (
     float32,
     float64,
     complex64,
-    complex128
+    complex128,
 )
+from ._data_type_functions import finfo
 from ._manipulation_functions import reshape
 from ._elementwise_functions import conj
 from ._array_object import Array
@@ -208,7 +209,7 @@ def matrix_rank(x: Array, /, *, rtol: Optional[Union[float, Array]] = None) -> A
         raise np.linalg.LinAlgError("1-dimensional array given. Array must be at least two-dimensional")
     S = np.linalg.svd(x._array, compute_uv=False)
     if rtol is None:
-        tol = S.max(axis=-1, keepdims=True) * max(x.shape[-2:]) * np.finfo(S.dtype).eps
+        tol = S.max(axis=-1, keepdims=True) * max(x.shape[-2:]) * finfo(S.dtype).eps
     else:
         if isinstance(rtol, Array):
             rtol = rtol._array
@@ -258,7 +259,7 @@ def pinv(x: Array, /, *, rtol: Optional[Union[float, Array]] = None) -> Array:
     # Note: this is different from np.linalg.pinv, which does not multiply the
     # default tolerance by max(M, N).
     if rtol is None:
-        rtol = max(x.shape[-2:]) * np.finfo(x.dtype).eps
+        rtol = max(x.shape[-2:]) * finfo(x.dtype).eps
     return Array._new(np.linalg.pinv(x._array, rcond=rtol))
 
 def qr(x: Array, /, *, mode: Literal['reduced', 'complete'] = 'reduced') -> QRResult:
@@ -388,9 +389,11 @@ def trace(x: Array, /, *, offset: int = 0, dtype: Optional[Dtype] = None) -> Arr
     # _statistical_functions.py)
     if dtype is None:
         if x.dtype == float32:
-            dtype = float64
+            dtype = np.float64
         elif x.dtype == complex64:
-            dtype = complex128
+            dtype = np.complex128
+    else:
+        dtype = dtype._np_dtype
     # Note: trace always operates on the last two axes, whereas np.trace
     # operates on the first two axes by default
     return Array._new(np.asarray(np.trace(x._array, offset=offset, axis1=-2, axis2=-1, dtype=dtype)))
