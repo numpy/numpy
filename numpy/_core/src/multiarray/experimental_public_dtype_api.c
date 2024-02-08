@@ -64,7 +64,7 @@ PyArrayInitDTypeMeta_FromSpec(
         return -1;
     }
 
-    dtypemeta_initialize_struct_from_spec(DType, spec);
+    dtypemeta_initialize_struct_from_spec(DType, spec, 0);
 
     if (NPY_DT_SLOTS(DType)->setitem == NULL
             || NPY_DT_SLOTS(DType)->getitem == NULL) {

@@ -5180,9 +5180,10 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
         ufuncs do not currently raise an exception in this case, but will
         likely do so in the future.
     dtype : data-type code, optional
-        The type used to represent the intermediate results. Defaults
-        to the data-type of the output array if this is provided, or
-        the data-type of the input array if no output array is provided.
+        The data type used to perform the operation. Defaults to that of
+        ``out`` if given, and the data type of ``array`` otherwise (though
+        upcast to conserve precision for some cases, such as
+        ``numpy.add.reduce`` for integer or boolean input).
     out : ndarray, None, or tuple of ndarray and None, optional
         A location into which the result is stored. If not provided or None,
         a freshly-allocated array is returned. For consistency with
@@ -5379,9 +5380,10 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
     axis : int, optional
         The axis along which to apply the reduceat.
     dtype : data-type code, optional
-        The type used to represent the intermediate results. Defaults
-        to the data type of the output array if this is provided, or
-        the data type of the input array if no output array is provided.
+        The data type used to perform the operation. Defaults to that of
+        ``out`` if given, and the data type of ``array`` otherwise (though
+        upcast to conserve precision for some cases, such as
+        ``numpy.add.reduce`` for integer or boolean input).
     out : ndarray, None, or tuple of ndarray and None, optional
         A location into which the result is stored. If not provided or None,
         a freshly-allocated array is returned. For consistency with
@@ -6918,4 +6920,57 @@ add_newdoc('numpy._core.numerictypes', 'character',
     """
     Abstract base class of all character string scalar types.
 
+    """)
+
+add_newdoc('numpy._core.multiarray', 'StringDType',
+    """
+    StringDType(/, size, *, na_object=np._NoValue, coerce=True)
+
+    Create a StringDType instance.
+
+    StringDType can be used to store UTF-8 encoded variable-width strings in
+    a NumPy array.
+
+    Parameters
+    ----------
+    size: integer
+        An optional positional-only size parameter. This is ignored and
+        provided only so that code that creates fixed-width strings with a size
+        will also work correctly with StringDType.
+    na_object : object, optional
+        Object used to represent missing data. If unset, the array will not
+        use a missing data sentinel.
+    coerce : bool, optional
+        Whether or not items in an array-like passed to an array creation
+        function that are neither a str or str subtype should be coerced to
+        str. Defaults to True. If set to False, creating a StringDType
+        array from an array-like containing entries that are not already
+        strings will raise an error.
+
+    Examples
+    --------
+
+    >>> from numpy.dtypes import StringDType
+    >>> np.array(["hello", "world"], dtype=StringDType())
+    array(["hello", "world"], dtype=StringDType())
+
+    >>> arr = np.array(["hello", None, "world"],
+                       dtype=StringDType(na_object=None))
+    >>> arr
+    array(["hello", None, "world", dtype=StringDType(na_object=None))
+    >>> arr[1] is None
+    True
+
+    >>> arr = np.array(["hello", np.nan, "world"],
+                       dtype=StringDType(na_object=np.nan))
+    >>> np.isnan(arr)
+    array([False, True, False])
+
+    >>> np.array([1.2, object(), "hello world"],
+                 dtype=StringDType(coerce=True))
+    ValueError: StringDType only allows string data when string coercion
+    is disabled.
+
+    >>> np.array(["hello", "world"], dtype=StringDType(coerce=True))
+    array(["hello", "world"], dtype=StringDType(coerce=True))
     """)

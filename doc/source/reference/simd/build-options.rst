@@ -26,9 +26,9 @@ that target certain CPU features:
       During the runtime, NumPy modules will skip any specified features
       that are not available in the target CPU.
 
-These options are accessible through :py:mod:`distutils` commands
-`distutils.command.build`, `distutils.command.build_clib` and
-`distutils.command.build_ext`.
+These options are accessible through ``distutils`` commands
+``distutils.command.build``, ``distutils.command.build_clib`` and
+``distutils.command.build_ext``.
 They accept a set of :ref:`CPU features <opt-supported-features>`
 or groups of features that gather several features or
 :ref:`special options <opt-special-options>` that

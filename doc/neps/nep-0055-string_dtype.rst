@@ -624,13 +624,13 @@ following struct public:
        // The object representing a null value
        PyObject *na_object;
        // Flag indicating whether or not to coerce arbitrary objects to strings
-       int coerce;
+       char coerce;
        // Flag indicating the na object is NaN-like
-       int has_nan_na;
+       char has_nan_na;
        // Flag indicating the na object is a string
-       int has_string_na;
+       char has_string_na;
        // If nonzero, indicates that this instance is owned by an array already
-       int array_owned;
+       char array_owned;
        // The string data to use when a default string is needed
        npy_static_string default_string;
        // The name of the missing data object, if any
@@ -1003,7 +1003,7 @@ downstream uses of object string arrays that mutate array elements that we would
 like to support.
 
 Instead, we have opted to pair the ``npy_string_allocator`` instance attached to
-``StringDType`` instances with a ``PyThread_type_lock`` mutex. Any function in
+``PyArray_StringDType`` instances with a ``PyThread_type_lock`` mutex. Any function in
 the static string C API that allows manipulating heap-allocated data accepts an
 ``allocator`` argument. To use the C API correctly, a thread must acquire the
 allocator mutex before any usage of the ``allocator``.

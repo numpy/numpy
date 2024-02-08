@@ -28,7 +28,6 @@ indentation.
    routines.array-creation
    routines.array-manipulation
    routines.bitwise
-   routines.char
    routines.strings
    routines.datetime
    routines.dtype

@@ -24,6 +24,7 @@
 #include "assert.h"
 #include "npy_buffer.h"
 #include "dtypemeta.h"
+#include "stringdtype/dtype.h"
 
 #ifndef PyDictProxy_Check
 #define PyDictProxy_Check(obj) (Py_TYPE(obj) == &PyDictProxy_Type)
@@ -497,6 +498,11 @@ _convert_from_array_descr(PyObject *obj, int align)
         else {
             PyErr_Format(PyExc_TypeError,
                     "Field elements must be tuples with at most 3 elements, got '%R'", item);
+            goto fail;
+        }
+        if (PyObject_IsInstance((PyObject *)conv, (PyObject *)&PyArray_StringDType)) {
+            PyErr_Format(PyExc_TypeError,
+                         "StringDType is not currently supported for structured dtype fields.");
             goto fail;
         }
         if ((PyDict_GetItemWithError(fields, name) != NULL)

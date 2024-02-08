@@ -27,6 +27,7 @@
 #include "number.h"
 #include "dispatching.h"
 #include "string_ufuncs.h"
+#include "stringdtype_ufuncs.h"
 #include "special_integer_comparisons.h"
 #include "extobj.h"  /* for _extobject_contextvar exposure */
 
@@ -327,6 +328,10 @@ int initumath(PyObject *m)
     }
 
     if (init_string_ufuncs(d) < 0) {
+        return -1;
+    }
+
+    if (init_stringdtype_ufuncs(m) < 0) {
         return -1;
     }
 

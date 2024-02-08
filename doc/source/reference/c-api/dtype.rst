@@ -3,7 +3,7 @@ Data type API
 
 .. sectionauthor:: Travis E. Oliphant
 
-The standard array can have 24 different data types (and has some
+The standard array can have 25 different data types (and has some
 support for adding your own types). These data types all have an
 enumerated type, an enumerated type-character, and a corresponding
 array scalar Python type object (placed in a hierarchy). There are
@@ -27,7 +27,7 @@ Enumerated types
 
 .. c:enum:: NPY_TYPES
 
-    There is a list of enumerated types defined providing the basic 24
+    There is a list of enumerated types defined providing the basic 25
     data types plus some useful generic names. Whenever the code requires
     a type number, one of these enumerated types is requested. The types
     are all called ``NPY_{NAME}``:
@@ -139,13 +139,20 @@ Enumerated types
 
     .. c:enumerator:: NPY_STRING
 
-        The enumeration value for ASCII strings of a selectable size. The
-        strings have a fixed maximum size within a given array.
+        The enumeration value for null-padded byte strings of a selectable
+        size. The strings have a fixed maximum size within a given array.
 
     .. c:enumerator:: NPY_UNICODE
 
         The enumeration value for UCS4 strings of a selectable size. The
         strings have a fixed maximum size within a given array.
+
+    .. c:enumerator:: NPY_VSTRING
+
+        The enumeration value for UTF-8 variable-width strings. Note that this
+        dtype holds an array of references, with string data stored outside of
+        the array buffer. Use the C API for working with numpy variable-width
+        static strings to access the string data in each array entry.
 
     .. c:enumerator:: NPY_OBJECT
 
@@ -188,6 +195,15 @@ Other useful related constants are
     The total number of built-in NumPy types. The enumeration covers
     the range from 0 to NPY_NTYPES-1.
 
+.. c:macro:: NPY_NTYPES_LEGACY
+
+    The number of built-in NumPy types written using the legacy DType
+    system. New NumPy dtypes will be written using the new DType API and may not
+    function in the same manner as legacy DTypes. Use this macro if you want to
+    handle legacy DTypes using different code paths or if you do not want to
+    update code that uses ``NPY_NTYPES`` and does not work correctly with new
+    DTypes.
+
 .. c:macro:: NPY_NOTYPE
 
     A signal value guaranteed not to be a valid type enumeration number.
@@ -205,7 +221,7 @@ is ``NPY_{NAME}LTR`` where ``{NAME}`` can be
     **UINT**, **LONG**, **ULONG**, **LONGLONG**, **ULONGLONG**,
     **HALF**, **FLOAT**, **DOUBLE**, **LONGDOUBLE**, **CFLOAT**,
     **CDOUBLE**, **CLONGDOUBLE**, **DATETIME**, **TIMEDELTA**,
-    **OBJECT**, **STRING**, **VOID**
+    **OBJECT**, **STRING**, **UNICODE**, **VSTRING**, **VOID**
 
     **INTP**, **UINTP**
 

@@ -126,6 +126,9 @@ def _scalar_str(dtype, short):
         else:
             return "'%sU%d'" % (byteorder, dtype.itemsize / 4)
 
+    elif dtype.type == str:
+        return "'T'"
+
     elif not type(dtype)._legacy:
         return f"'{byteorder}{type(dtype).__name__}{dtype.itemsize * 8}'"
 
