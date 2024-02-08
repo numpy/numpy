@@ -666,6 +666,21 @@ class TestUnicodeOnlyMethods:
         assert_array_equal(np.strings.replace(buf,  "<", "&lt;", MAX),
                            "...\u043c......&lt;")
 
+    @pytest.mark.parametrize("dt", ["U", "T"])
+    @pytest.mark.parametrize("buf,sub,start,end,res", [
+        ("Ae¢☃€ 😊" * 2, "😊", 0, MAX, 6),
+        ("Ae¢☃€ 😊" * 2, "😊", 7, MAX, 13),
+    ])
+    def test_index_unicode(self, buf, sub, start, end, res, dt):
+        buf = np.array(buf, dtype=dt)
+        sub = np.array(sub, dtype=dt)
+        assert_array_equal(np.strings.index(buf, sub, start, end), res)
+
+    @pytest.mark.parametrize("dt", ["U", "T"])
+    def test_index_raises_unicode(self, dt):
+        with pytest.raises(ValueError, match="substring not found"):
+            np.strings.index("Ae¢☃€ 😊", "😀")
+
 
 def check_itemsize(n_elem, dt):
     if dt == "T":

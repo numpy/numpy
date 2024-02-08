@@ -333,7 +333,7 @@ string_isnumeric_loop(PyArrayMethod_Context *context,
 }
 
 
-template <ENCODING enc>
+template <ENCODING enc, bool raise_error>
 static int
 string_find_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
@@ -354,40 +354,7 @@ string_find_loop(PyArrayMethod_Context *context,
         Buffer<enc> buf1(in1, elsize1);
         Buffer<enc> buf2(in2, elsize2);
         npy_intp idx = string_find<enc>(buf1, buf2, *(npy_int64 *)in3, *(npy_int64 *)in4);
-        *(npy_intp *)out = idx;
-
-        in1 += strides[0];
-        in2 += strides[1];
-        in3 += strides[2];
-        in4 += strides[3];
-        out += strides[4];
-    }
-    return 0;
-}
-
-
-template <ENCODING enc>
-static int
-string_index_loop(PyArrayMethod_Context *context,
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
-{
-    int elsize1 = context->descriptors[0]->elsize;
-    int elsize2 = context->descriptors[1]->elsize;
-
-    char *in1 = data[0];
-    char *in2 = data[1];
-    char *in3 = data[2];
-    char *in4 = data[3];
-    char *out = data[4];
-
-    npy_intp N = dimensions[0];
-
-    while (N--) {
-        Buffer<enc> buf1(in1, elsize1);
-        Buffer<enc> buf2(in2, elsize2);
-        npy_intp idx = string_find<enc>(buf1, buf2, *(npy_int64 *)in3, *(npy_int64 *)in4);
-        if (idx == -1) {
+        if (raise_error && idx == -1) {
             PyErr_SetString(PyExc_ValueError, "substring not found");
             return -1;
         }
@@ -403,7 +370,7 @@ string_index_loop(PyArrayMethod_Context *context,
 }
 
 
-template <ENCODING enc>
+template <ENCODING enc, bool raise_error>
 static int
 string_rfind_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
@@ -424,40 +391,7 @@ string_rfind_loop(PyArrayMethod_Context *context,
         Buffer<enc> buf1(in1, elsize1);
         Buffer<enc> buf2(in2, elsize2);
         npy_intp idx = string_rfind<enc>(buf1, buf2, *(npy_int64 *)in3, *(npy_int64 *)in4);
-        *(npy_intp *)out = idx;
-
-        in1 += strides[0];
-        in2 += strides[1];
-        in3 += strides[2];
-        in4 += strides[3];
-        out += strides[4];
-    }
-    return 0;
-}
-
-
-template <ENCODING enc>
-static int
-string_rindex_loop(PyArrayMethod_Context *context,
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
-{
-    int elsize1 = context->descriptors[0]->elsize;
-    int elsize2 = context->descriptors[1]->elsize;
-
-    char *in1 = data[0];
-    char *in2 = data[1];
-    char *in3 = data[2];
-    char *in4 = data[3];
-    char *out = data[4];
-
-    npy_intp N = dimensions[0];
-
-    while (N--) {
-        Buffer<enc> buf1(in1, elsize1);
-        Buffer<enc> buf2(in2, elsize2);
-        npy_intp idx = string_rfind<enc>(buf1, buf2, *(npy_int64 *)in3, *(npy_int64 *)in4);
-        if (idx == -1) {
+        if (raise_error && idx == -1) {
             PyErr_SetString(PyExc_ValueError, "substring not found");
             return -1;
         }
@@ -860,7 +794,7 @@ string_strip_chars_resolve_descriptors(
 
 
 static int
-string_find_rfind_count_index_rindex_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
+string_findlike_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
@@ -1218,42 +1152,42 @@ init_string_ufuncs(PyObject *umath)
     dtypes[4] = NPY_DEFAULT_INT;
     if (init_ufunc<ENCODING::ASCII>(
             umath, "find", "templated_string_find", 4, 1, dtypes,
-            string_find_loop<ENCODING::ASCII>, NULL) < 0) {
+            string_find_loop<ENCODING::ASCII, false>, NULL) < 0) {
         return -1;
     }
     if (init_ufunc<ENCODING::UTF32>(
             umath, "find", "templated_string_find", 4, 1, dtypes,
-            string_find_loop<ENCODING::UTF32>, NULL) < 0) {
+            string_find_loop<ENCODING::UTF32, false>, NULL) < 0) {
         return -1;
     }
     if (init_ufunc<ENCODING::ASCII>(
             umath, "rfind", "templated_string_rfind", 4, 1, dtypes,
-            string_rfind_loop<ENCODING::ASCII>, NULL) < 0) {
+            string_rfind_loop<ENCODING::ASCII, false>, NULL) < 0) {
         return -1;
     }
     if (init_ufunc<ENCODING::UTF32>(
             umath, "rfind", "templated_string_rfind", 4, 1, dtypes,
-            string_rfind_loop<ENCODING::UTF32>, NULL) < 0) {
+            string_rfind_loop<ENCODING::UTF32, false>, NULL) < 0) {
         return -1;
     }
     if (init_ufunc<ENCODING::ASCII>(
             umath, "index", "templated_string_index", 4, 1, dtypes,
-            string_index_loop<ENCODING::ASCII>, NULL) < 0) {
+            string_find_loop<ENCODING::ASCII, true>, NULL) < 0) {
         return -1;
     }
     if (init_ufunc<ENCODING::UTF32>(
             umath, "index", "templated_string_index", 4, 1, dtypes,
-            string_index_loop<ENCODING::UTF32>, NULL) < 0) {
+            string_find_loop<ENCODING::UTF32, true>, NULL) < 0) {
         return -1;
     }
     if (init_ufunc<ENCODING::ASCII>(
             umath, "rindex", "templated_string_rindex", 4, 1, dtypes,
-            string_rindex_loop<ENCODING::ASCII>, NULL) < 0) {
+            string_rfind_loop<ENCODING::ASCII, true>, NULL) < 0) {
         return -1;
     }
     if (init_ufunc<ENCODING::UTF32>(
             umath, "rindex", "templated_string_rindex", 4, 1, dtypes,
-            string_rindex_loop<ENCODING::UTF32>, NULL) < 0) {
+            string_rfind_loop<ENCODING::UTF32, true>, NULL) < 0) {
         return -1;
     }
     if (init_ufunc<ENCODING::ASCII>(
@@ -1266,19 +1200,19 @@ init_string_ufuncs(PyObject *umath)
             string_count_loop<ENCODING::UTF32>, NULL) < 0) {
         return -1;
     }
-    if (init_promoter(umath, "find", 4, 1, string_find_rfind_count_index_rindex_promoter) < 0) {
+    if (init_promoter(umath, "find", 4, 1, string_findlike_promoter) < 0) {
         return -1;
     }
-    if (init_promoter(umath, "rfind", 4, 1, string_find_rfind_count_index_rindex_promoter) < 0) {
+    if (init_promoter(umath, "rfind", 4, 1, string_findlike_promoter) < 0) {
         return -1;
     }
-    if (init_promoter(umath, "index", 4, 1, string_find_rfind_count_index_rindex_promoter) < 0) {
+    if (init_promoter(umath, "index", 4, 1, string_findlike_promoter) < 0) {
         return -1;
     }
-    if (init_promoter(umath, "rindex", 4, 1, string_find_rfind_count_index_rindex_promoter) < 0) {
+    if (init_promoter(umath, "rindex", 4, 1, string_findlike_promoter) < 0) {
         return -1;
     }
-    if (init_promoter(umath, "count", 4, 1, string_find_rfind_count_index_rindex_promoter) < 0) {
+    if (init_promoter(umath, "count", 4, 1, string_findlike_promoter) < 0) {
         return -1;
     }
 
