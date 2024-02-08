@@ -593,7 +593,33 @@ typedef struct {
 #define PyDataType_REFCHK(dtype) \
         PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
 
+
+/*
+ * The public, stable PyArray_Descr struct.  When building for 2.x ABI only
+ * we can allow accessing the full flags (used internally also).
+ * (See below for notes.)
+ */
 typedef struct _PyArray_Descr {
+        PyObject_HEAD
+        PyTypeObject *typeobj;
+        char kind;
+        char type;
+        char byteorder;
+        char _undefined;
+        int type_num;
+#if NPY_FEATURE_VERSION >= NPY_NUMPY_2_0_API
+        npy_uint64 flags;
+        npy_intp elsize;
+        npy_intp alignment;
+        npy_hash_t hash;
+#endif
+} PyArray_Descr;
+
+/*
+ * This struct is public, but only correct to use on NumPy 2.x with legacy
+ * dtypes.
+ */
+typedef struct {
         PyObject_HEAD
         /*
          * the type object representing an
@@ -659,7 +685,7 @@ typedef struct _PyArray_Descr {
          */
         NpyAuxData *c_metadata;
 
-} PyArray_Descr;
+} _PyArray_LegacyDescr;
 
 
 /*

@@ -91,5 +91,53 @@
         (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? 25 : 24)
 #endif
 
+/*
+ * The descriptor struct layout was changed in 2.x and for some
+ * fields it is necessary to look up the values based on the runtime version.
+ * We do not list all possible access macros as most shouldn't be needed.
+ */
+#if 0
+#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
+    /* No backcompat necessary, direct access */
+    //#define PyDataType_ITEMSIZE(descr) (descr)->itemsize
+    #define PyDataType_SET_ITEMSIZE(descr, value) (descr)->itemsize = value
+    #define PyDataType_ITEMSIZE(descr) (descr)->alignment
+    #define PyDataType_FIELDS(descr)->fields
+
+#elif NPY_ABI_VERSION < 0x02000000
+    /* old version of NumPy, only the name changed */
+    //#define PyDataType_ITEMSIZE(descr) (descr)->elsize
+    #define PyDataType_SET_ITEMSIZE(descr, value) (descr)->elsize = value
+    #define PyDataType_ITEMSIZE(descr) (descr)->alignment
+    #define PyDataType_FIELDS(descr) (descr)->fields
+    #define PyDataType_NAMES(descr) (descr)->names
+    #define PyDataType_METADATA(descr) (descr)->metadata
+
+#else
+    #define PyDataType_ITEMSIZE(descr)                     \
+        (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ?  \
+            (((PyArray_DescrNew *)descr)->itemsize) :      \
+            (npy_intp)((PyArray_DescrBase *)(descr))->elsize )
+
+    #define PyDataType_SET_ITEMSIZE(descr, value)              \
+        (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ?      \
+            (((PyArray_DescrNew *)descr)->itemsize = value) :  \
+            (npy_intp)((PyArray_DescrBase *)(descr))->elsize = value )
+
+    #define PyDataType_ITEMSIZE(descr)                     \
+        (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ?  \
+            (((PyArray_DescrNew *)descr)->alignment) :     \
+            (npy_intp)((PyArray_DescrBase *)(descr))->alignment )
+
+    #define PyDataType_ITEMSIZE(descr)                     \
+        (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ?  \
+            _PyDataType_Itemsize(descr) : (npy_intp)(PyArray_DescrBase *)(descr)->elsize )
+
+    #define PyDataType_ITEMSIZE(descr)                     \
+        (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ?  \
+            _PyDataType_Itemsize(descr) : (npy_intp)(PyArray_DescrBase *)(descr)->elsize )
+
+#endif
+#endif
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_2_COMPAT_H_ */

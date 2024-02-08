@@ -497,7 +497,7 @@ static PyObject *
 create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
 {
     PyArray_DescrProto proto;
-    PyArray_Descr *dtype;
+    _PyArray_LegacyDescr *dtype;  // We enforce VOID dtype which is legatcy
     PyTypeObject *scalar_type;
     int error_path;
 
