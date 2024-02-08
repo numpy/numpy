@@ -7,7 +7,7 @@
 
 #include "numpy/arrayobject.h"
 #include "numpy/npy_3kcompat.h"
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 #include "npy_argparse.h"
 #include "npy_config.h"
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
@@ -610,7 +610,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
         for (i = 0; i < lenx; ++i) {
             const npy_double x_val = dz[i];
 
-            if (npy_isnan(x_val)) {
+            if (npymath_isnan(x_val)) {
                 dres[i] = x_val;
                 continue;
             }
@@ -636,9 +636,9 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
 
                 /* If we get nan in one direction, try the other */
                 dres[i] = slope*(x_val - dx[j]) + dy[j];
-                if (NPY_UNLIKELY(npy_isnan(dres[i]))) {
+                if (NPY_UNLIKELY(npymath_isnan(dres[i]))) {
                     dres[i] = slope*(x_val - dx[j+1]) + dy[j+1];
-                    if (NPY_UNLIKELY(npy_isnan(dres[i])) && dy[j] == dy[j+1]) {
+                    if (NPY_UNLIKELY(npymath_isnan(dres[i])) && dy[j] == dy[j+1]) {
                         dres[i] = dy[j];
                     }
                 }
@@ -734,12 +734,12 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         lval = dy[0];
     }
     else {
-        npy_csetreal(&lval, PyComplex_RealAsDouble(left));
-        if (error_converting(npy_creal(&lval))) {
+        npymath_csetreal(&lval, PyComplex_RealAsDouble(left));
+        if (error_converting(npymath_creal(&lval))) {
             goto fail;
         }
-        npy_csetimag(&lval, PyComplex_ImagAsDouble(left));
-        if (error_converting(npy_cimag(&lval))) {
+        npymath_csetimag(&lval, PyComplex_ImagAsDouble(left));
+        if (error_converting(npymath_cimag(&lval))) {
             goto fail;
         }
     }
@@ -748,12 +748,12 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         rval = dy[lenxp - 1];
     }
     else {
-        npy_csetreal(&rval, PyComplex_RealAsDouble(right));
-        if (error_converting(npy_creal(&rval))) {
+        npymath_csetreal(&rval, PyComplex_RealAsDouble(right));
+        if (error_converting(npymath_creal(&rval))) {
             goto fail;
         }
-        npy_csetimag(&rval, PyComplex_ImagAsDouble(right));
-        if (error_converting(npy_cimag(&rval))) {
+        npymath_csetimag(&rval, PyComplex_ImagAsDouble(right));
+        if (error_converting(npymath_cimag(&rval))) {
             goto fail;
         }
     }
@@ -788,17 +788,17 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         if (slopes != NULL) {
             for (i = 0; i < lenxp - 1; ++i) {
                 const double inv_dx = 1.0 / (dx[i+1] - dx[i]);
-                npy_csetreal(&slopes[i], (npy_creal(&dy[i+1]) - npy_creal(&dy[i])) * inv_dx);
-                npy_csetimag(&slopes[i], (npy_cimag(&dy[i+1]) - npy_cimag(&dy[i])) * inv_dx);
+                npymath_csetreal(&slopes[i], (npymath_creal(&dy[i+1]) - npymath_creal(&dy[i])) * inv_dx);
+                npymath_csetimag(&slopes[i], (npymath_cimag(&dy[i+1]) - npymath_cimag(&dy[i])) * inv_dx);
             }
         }
 
         for (i = 0; i < lenx; ++i) {
             const npy_double x_val = dz[i];
 
-            if (npy_isnan(x_val)) {
-                npy_csetreal(&dres[i], x_val);
-                npy_csetimag(&dres[i], 0.0);
+            if (npymath_isnan(x_val)) {
+                npymath_csetreal(&dres[i], x_val);
+                npymath_csetimag(&dres[i], 0.0);
                 continue;
             }
 
@@ -823,25 +823,25 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
                 }
                 else {
                     const npy_double inv_dx = 1.0 / (dx[j+1] - dx[j]);
-                    npy_csetreal(&slope, (npy_creal(&dy[j+1]) - npy_creal(&dy[j])) * inv_dx);
-                    npy_csetimag(&slope, (npy_cimag(&dy[j+1]) - npy_cimag(&dy[j])) * inv_dx);
+                    npymath_csetreal(&slope, (npymath_creal(&dy[j+1]) - npymath_creal(&dy[j])) * inv_dx);
+                    npymath_csetimag(&slope, (npymath_cimag(&dy[j+1]) - npymath_cimag(&dy[j])) * inv_dx);
                 }
 
                 /* If we get nan in one direction, try the other */
-                npy_csetreal(&dres[i], npy_creal(&slope)*(x_val - dx[j]) + npy_creal(&dy[j]));
-                if (NPY_UNLIKELY(npy_isnan(npy_creal(&dres[i])))) {
-                    npy_csetreal(&dres[i], npy_creal(&slope)*(x_val - dx[j+1]) + npy_creal(&dy[j+1]));
-                    if (NPY_UNLIKELY(npy_isnan(npy_creal(&dres[i]))) &&
-                            npy_creal(&dy[j]) == npy_creal(&dy[j+1])) {
-                        npy_csetreal(&dres[i], npy_creal(&dy[j]));
+                npymath_csetreal(&dres[i], npymath_creal(&slope)*(x_val - dx[j]) + npymath_creal(&dy[j]));
+                if (NPY_UNLIKELY(npymath_isnan(npymath_creal(&dres[i])))) {
+                    npymath_csetreal(&dres[i], npymath_creal(&slope)*(x_val - dx[j+1]) + npymath_creal(&dy[j+1]));
+                    if (NPY_UNLIKELY(npymath_isnan(npymath_creal(&dres[i]))) &&
+                            npymath_creal(&dy[j]) == npymath_creal(&dy[j+1])) {
+                        npymath_csetreal(&dres[i], npymath_creal(&dy[j]));
                     }
                 }
-                npy_csetimag(&dres[i], npy_cimag(&slope)*(x_val - dx[j]) + npy_cimag(&dy[j]));
-                if (NPY_UNLIKELY(npy_isnan(npy_cimag(&dres[i])))) {
-                    npy_csetimag(&dres[i], npy_cimag(&slope)*(x_val - dx[j+1]) + npy_cimag(&dy[j+1]));
-                    if (NPY_UNLIKELY(npy_isnan(npy_cimag(&dres[i]))) &&
-                            npy_cimag(&dy[j]) == npy_cimag(&dy[j+1])) {
-                        npy_csetimag(&dres[i], npy_cimag(&dy[j]));
+                npymath_csetimag(&dres[i], npymath_cimag(&slope)*(x_val - dx[j]) + npymath_cimag(&dy[j]));
+                if (NPY_UNLIKELY(npymath_isnan(npymath_cimag(&dres[i])))) {
+                    npymath_csetimag(&dres[i], npymath_cimag(&slope)*(x_val - dx[j+1]) + npymath_cimag(&dy[j+1]));
+                    if (NPY_UNLIKELY(npymath_isnan(npymath_cimag(&dres[i]))) &&
+                            npymath_cimag(&dy[j]) == npymath_cimag(&dy[j+1])) {
+                        npymath_csetimag(&dres[i], npymath_cimag(&dy[j]));
                     }
                 }
             }

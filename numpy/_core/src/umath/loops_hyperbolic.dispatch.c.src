@@ -5,7 +5,7 @@
  ** neon_vfpv4
  ** vx vxe
  **/
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 #include "simd/simd.h"
 #include "loops_utils.h"
 #include "loops.h"
@@ -282,7 +282,7 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
 #endif // defined(TANH_TRANSPOSED_LUT)
 
     const int nlanes = npyv_nlanes_f64;
-    const npyv_f64 qnan = npyv_setall_f64(NPY_NAN);
+    const npyv_f64 qnan = npyv_setall_f64(NPYMATH_NAN);
     for (; len > 0; len -= nlanes, src += ssrc*nlanes, dst += sdst*nlanes) {
         npyv_f64 x;
         if (ssrc == 1) {
@@ -493,7 +493,7 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
 #endif // defined(TANHF_TRANSPOSED_LUT)
 
     const int nlanes = npyv_nlanes_f32;
-    const npyv_f32 qnan = npyv_setall_f32(NPY_NANF);
+    const npyv_f32 qnan = npyv_setall_f32(NPYMATH_NANF);
     for (; len > 0; len -= nlanes, src += ssrc*nlanes, dst += sdst*nlanes) {
         npyv_f32 x;
         if (ssrc == 1) {
@@ -628,12 +628,12 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
     }
     npyv_cleanup();
     #if @simd_req_clear@
-        npy_clear_floatstatus_barrier((char*)dimensions);
+        npymath_clear_floatstatus_barrier((char*)dimensions);
     #endif
 #else
     for (; len > 0; --len, src += ssrc, dst += sdst) {
         const @type@ src0 = *src;
-        *dst = npy_@func@@ssfx@(src0);
+        *dst = npymath_@func@@ssfx@(src0);
     }
 #endif
 }

@@ -82,11 +82,11 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_left_shift)
 (char **args, npy_intp const *dimensions, npy_intp const *steps,
                   void *NPY_UNUSED(func))
 {
-    BINARY_LOOP_FAST(@type@, @type@, *out = npy_lshift@c@(in1, in2));
+    BINARY_LOOP_FAST(@type@, @type@, *out = npymath_lshift@c@(in1, in2));
 #ifdef @TYPE@_left_shift_needs_clear_floatstatus
     // For some reason, our macOS CI sets an "invalid" flag here, but only
     // for some types.
-    npy_clear_floatstatus_barrier((char*)dimensions);
+    npymath_clear_floatstatus_barrier((char*)dimensions);
 #endif
 }
 
@@ -94,12 +94,12 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_right_shift)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
 #ifndef NPY_DO_NOT_OPTIMIZE_@TYPE@_right_shift
-    BINARY_LOOP_FAST(@type@, @type@, *out = npy_rshift@c@(in1, in2));
+    BINARY_LOOP_FAST(@type@, @type@, *out = npymath_rshift@c@(in1, in2));
 #else
     BINARY_LOOP {
         @type@ in1 = *(@type@ *)ip1;
         @type@ in2 = *(@type@ *)ip2;
-        *(@type@ *)op1 = npy_rshift@c@(in1, in2);
+        *(@type@ *)op1 = npymath_rshift@c@(in1, in2);
     }
 #endif
 }
@@ -107,7 +107,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_right_shift)
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_bitwise_count)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    UNARY_LOOP_FAST(@type@, npy_ubyte, *out = npy_popcount@c@(in));
+    UNARY_LOOP_FAST(@type@, npy_ubyte, *out = npymath_popcount@c@(in));
 }
 
 /**end repeat**/
@@ -177,7 +177,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_logical_xor)
 
 /**begin repeat1
  * #kind = isnan, isinf, isfinite#
- * #func = npy_isnan, npy_isinf, npy_isfinite#
+ * #func = npymath_isnan, npymath_isinf, npymath_isfinite#
  * #val = NPY_FALSE, NPY_FALSE, NPY_TRUE#
  **/
 NPY_NO_EXPORT void  NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
@@ -254,7 +254,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
  */
 /**begin repeat
  * #kind = isnan, isinf, isfinite#
- * #func = npy_isnan, npy_isinf, npy_isfinite#
+ * #func = npymath_isnan, npymath_isinf, npymath_isfinite#
  * #val = NPY_FALSE, NPY_FALSE, NPY_TRUE#
  **/
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(BOOL_@kind@)

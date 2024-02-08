@@ -10,8 +10,8 @@
 #include "numpy/npy_common.h"
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
-#include "numpy/npy_math.h"
-#include "numpy/halffloat.h"
+#include "libnpymath/npy_math.h"
+#include "libnpymath/halffloat.h"
 #include "lowlevel_strided_loops.h"
 
 #include "npy_pycompat.h"
@@ -238,8 +238,8 @@ NPY_NO_EXPORT void
     for (m = 0; m < dm; m++) {
         for (p = 0; p < dp; p++) {
 #if @IS_COMPLEX@ == 1
-            npy_csetreal@suff@((@typ@ *)op, 0.0);
-            npy_csetimag@suff@((@typ@ *)op, 0.0);
+            npymath_csetreal@suff@((@typ@ *)op, 0.0);
+            npymath_csetimag@suff@((@typ@ *)op, 0.0);
 #elif @IS_HALF@
             float sum = 0;
 #else
@@ -249,12 +249,12 @@ NPY_NO_EXPORT void
                 @typ@ val1 = (*(@typ@ *)ip1);
                 @typ@ val2 = (*(@typ@ *)ip2);
 #if @IS_HALF@
-                sum += npy_half_to_float(val1) * npy_half_to_float(val2);
+                sum += npymath_half_to_float(val1) * npymath_half_to_float(val2);
 #elif @IS_COMPLEX@ == 1
-                npy_csetreal@suff@((@typ@ *) op, npy_creal@suff@((@typ@ *) op) + ((npy_creal@suff@(&val1) * npy_creal@suff@(&val2)) -
-                                       (npy_cimag@suff@(&val1) * npy_cimag@suff@(&val2))));
-                npy_csetimag@suff@((@typ@ *) op, npy_cimag@suff@((@typ@ *) op) + ((npy_creal@suff@(&val1) * npy_cimag@suff@(&val2)) +
-                                       (npy_cimag@suff@(&val1) * npy_creal@suff@(&val2))));
+                npymath_csetreal@suff@((@typ@ *) op, npymath_creal@suff@((@typ@ *) op) + ((npymath_creal@suff@(&val1) * npymath_creal@suff@(&val2)) -
+                                       (npymath_cimag@suff@(&val1) * npymath_cimag@suff@(&val2))));
+                npymath_csetimag@suff@((@typ@ *) op, npymath_cimag@suff@((@typ@ *) op) + ((npymath_creal@suff@(&val1) * npymath_cimag@suff@(&val2)) +
+                                       (npymath_cimag@suff@(&val1) * npymath_creal@suff@(&val2))));
 #else
                 *(@typ@ *)op += val1 * val2;
 #endif
@@ -262,7 +262,7 @@ NPY_NO_EXPORT void
                 ip1 += is1_n;
             }
 #if @IS_HALF@
-            *(@typ@ *)op = npy_float_to_half(sum);
+            *(@typ@ *)op = npymath_float_to_half(sum);
 #endif
             ip1 -= ib1_n;
             ip2 -= ib2_n;

@@ -10,7 +10,7 @@
 #define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 #include "simd/simd.h"
 #include "loops_utils.h"
 #include "loops.h"
@@ -359,7 +359,7 @@ clear:
     npyv_cleanup();
 #endif
 #if @is_fp@
-    npy_clear_floatstatus_barrier((char*)dimensions);
+    npymath_clear_floatstatus_barrier((char*)dimensions);
 #endif
 }
 /**end repeat**/

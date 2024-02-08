@@ -5,7 +5,7 @@
 #include <Python.h>
 
 #include "numpy/arrayobject.h"
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 
 #include "npy_config.h"
 

@@ -12,7 +12,7 @@
 #include "lowlevel_strided_loops.h"
 
 #include "npy_pycompat.h"
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 
 #include "array_coercion.h"
 #include "can_cast_table.h"
@@ -1461,14 +1461,14 @@ static int min_scalar_type_num(char *valueptr, int type_num,
         }
         case NPY_FLOAT: {
             float value = *(float *)valueptr;
-            if ((value > -65000 && value < 65000) || !npy_isfinite(value)) {
+            if ((value > -65000 && value < 65000) || !npymath_isfinite(value)) {
                 return NPY_HALF;
             }
             break;
         }
         case NPY_DOUBLE: {
             double value = *(double *)valueptr;
-            if ((value > -65000 && value < 65000) || !npy_isfinite(value)) {
+            if ((value > -65000 && value < 65000) || !npymath_isfinite(value)) {
                 return NPY_HALF;
             }
             else if (value > -3.4e38 && value < 3.4e38) {
@@ -1478,7 +1478,7 @@ static int min_scalar_type_num(char *valueptr, int type_num,
         }
         case NPY_LONGDOUBLE: {
             npy_longdouble value = *(npy_longdouble *)valueptr;
-            if ((value > -65000 && value < 65000) || !npy_isfinite(value)) {
+            if ((value > -65000 && value < 65000) || !npymath_isfinite(value)) {
                 return NPY_HALF;
             }
             else if (value > -3.4e38 && value < 3.4e38) {
@@ -1511,8 +1511,8 @@ static int min_scalar_type_num(char *valueptr, int type_num,
                                             NPY_DOUBLE, is_small_unsigned);
             }
             */
-            if (npy_creal(&value) > -3.4e38 && npy_creal(&value) < 3.4e38 &&
-                     npy_cimag(&value) > -3.4e38 && npy_cimag(&value) < 3.4e38) {
+            if (npymath_creal(&value) > -3.4e38 && npymath_creal(&value) < 3.4e38 &&
+                     npymath_cimag(&value) > -3.4e38 && npymath_cimag(&value) < 3.4e38) {
                 return NPY_CFLOAT;
             }
             break;
@@ -1525,12 +1525,12 @@ static int min_scalar_type_num(char *valueptr, int type_num,
                                             NPY_LONGDOUBLE, is_small_unsigned);
             }
             */
-            if (npy_creall(&value) > -3.4e38 && npy_creall(&value) < 3.4e38 &&
-                     npy_cimagl(&value) > -3.4e38 && npy_cimagl(&value) < 3.4e38) {
+            if (npymath_creall(&value) > -3.4e38 && npymath_creall(&value) < 3.4e38 &&
+                     npymath_cimagl(&value) > -3.4e38 && npymath_cimagl(&value) < 3.4e38) {
                 return NPY_CFLOAT;
             }
-            else if (npy_creall(&value) > -1.7e308 && npy_creall(&value) < 1.7e308 &&
-                     npy_cimagl(&value) > -1.7e308 && npy_cimagl(&value) < 1.7e308) {
+            else if (npymath_creall(&value) > -1.7e308 && npymath_creall(&value) < 1.7e308 &&
+                     npymath_cimagl(&value) > -1.7e308 && npymath_cimagl(&value) < 1.7e308) {
                 return NPY_CDOUBLE;
             }
             break;

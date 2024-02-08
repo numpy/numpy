@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <numpy/ndarraytypes.h>
 #include <numpy/npy_common.h>
-#include <numpy/npy_math.h>
+#include <libnpymath/npy_math.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -145,14 +145,14 @@ LONGDOUBLE_LT(npy_longdouble a, npy_longdouble b)
 
 
 static inline int
-_npy_half_isnan(npy_half h)
+_npymath_half_isnan(npy_half h)
 {
     return ((h&0x7c00u) == 0x7c00u) && ((h&0x03ffu) != 0x0000u);
 }
 
 
 static inline int
-_npy_half_lt_nonan(npy_half h1, npy_half h2)
+_npymath_half_lt_nonan(npy_half h1, npy_half h2)
 {
     if (h1&0x8000u) {
         if (h2&0x8000u) {
@@ -179,11 +179,11 @@ HALF_LT(npy_half a, npy_half b)
 {
     int ret;
 
-    if (_npy_half_isnan(b)) {
-        ret = !_npy_half_isnan(a);
+    if (_npymath_half_isnan(b)) {
+        ret = !_npymath_half_isnan(a);
     }
     else {
-        ret = !_npy_half_isnan(a) && _npy_half_lt_nonan(a, b);
+        ret = !_npymath_half_isnan(a) && _npymath_half_lt_nonan(a, b);
     }
 
     return ret;
@@ -199,17 +199,17 @@ CFLOAT_LT(npy_cfloat a, npy_cfloat b)
 {
     int ret;
 
-    if (npy_crealf(&a) < npy_crealf(&b)) {
-        ret = npy_cimagf(&a) == npy_cimagf(&a) || npy_cimagf(&b) != npy_cimagf(&b);
+    if (npymath_crealf(&a) < npymath_crealf(&b)) {
+        ret = npymath_cimagf(&a) == npymath_cimagf(&a) || npymath_cimagf(&b) != npymath_cimagf(&b);
     }
-    else if (npy_crealf(&a) > npy_crealf(&b)) {
-        ret = npy_cimagf(&b) != npy_cimagf(&b) && npy_cimagf(&a) == npy_cimagf(&a);
+    else if (npymath_crealf(&a) > npymath_crealf(&b)) {
+        ret = npymath_cimagf(&b) != npymath_cimagf(&b) && npymath_cimagf(&a) == npymath_cimagf(&a);
     }
-    else if (npy_crealf(&a) == npy_crealf(&b) || (npy_crealf(&a) != npy_crealf(&a) && npy_crealf(&b) != npy_crealf(&b))) {
-        ret =  npy_cimagf(&a) < npy_cimagf(&b) || (npy_cimagf(&b) != npy_cimagf(&b) && npy_cimagf(&a) == npy_cimagf(&a));
+    else if (npymath_crealf(&a) == npymath_crealf(&b) || (npymath_crealf(&a) != npymath_crealf(&a) && npymath_crealf(&b) != npymath_crealf(&b))) {
+        ret =  npymath_cimagf(&a) < npymath_cimagf(&b) || (npymath_cimagf(&b) != npymath_cimagf(&b) && npymath_cimagf(&a) == npymath_cimagf(&a));
     }
     else {
-        ret = npy_crealf(&b) != npy_crealf(&b);
+        ret = npymath_crealf(&b) != npymath_crealf(&b);
     }
 
     return ret;
@@ -221,17 +221,17 @@ CDOUBLE_LT(npy_cdouble a, npy_cdouble b)
 {
     int ret;
 
-    if (npy_creal(&a) < npy_creal(&b)) {
-        ret = npy_cimag(&a) == npy_cimag(&a) || npy_cimag(&b) != npy_cimag(&b);
+    if (npymath_creal(&a) < npymath_creal(&b)) {
+        ret = npymath_cimag(&a) == npymath_cimag(&a) || npymath_cimag(&b) != npymath_cimag(&b);
     }
-    else if (npy_creal(&a) > npy_creal(&b)) {
-        ret = npy_cimag(&b) != npy_cimag(&b) && npy_cimag(&a) == npy_cimag(&a);
+    else if (npymath_creal(&a) > npymath_creal(&b)) {
+        ret = npymath_cimag(&b) != npymath_cimag(&b) && npymath_cimag(&a) == npymath_cimag(&a);
     }
-    else if (npy_creal(&a) == npy_creal(&b) || (npy_creal(&a) != npy_creal(&a) && npy_creal(&b) != npy_creal(&b))) {
-        ret =  npy_cimag(&a) < npy_cimag(&b) || (npy_cimag(&b) != npy_cimag(&b) && npy_cimag(&a) == npy_cimag(&a));
+    else if (npymath_creal(&a) == npymath_creal(&b) || (npymath_creal(&a) != npymath_creal(&a) && npymath_creal(&b) != npymath_creal(&b))) {
+        ret =  npymath_cimag(&a) < npymath_cimag(&b) || (npymath_cimag(&b) != npymath_cimag(&b) && npymath_cimag(&a) == npymath_cimag(&a));
     }
     else {
-        ret = npy_creal(&b) != npy_creal(&b);
+        ret = npymath_creal(&b) != npymath_creal(&b);
     }
 
     return ret;
@@ -243,17 +243,17 @@ CLONGDOUBLE_LT(npy_clongdouble a, npy_clongdouble b)
 {
     int ret;
 
-    if (npy_creall(&a) < npy_creall(&b)) {
-        ret = npy_cimagl(&a) == npy_cimagl(&a) || npy_cimagl(&b) != npy_cimagl(&b);
+    if (npymath_creall(&a) < npymath_creall(&b)) {
+        ret = npymath_cimagl(&a) == npymath_cimagl(&a) || npymath_cimagl(&b) != npymath_cimagl(&b);
     }
-    else if (npy_creall(&a) > npy_creall(&b)) {
-        ret = npy_cimagl(&b) != npy_cimagl(&b) && npy_cimagl(&a) == npy_cimagl(&a);
+    else if (npymath_creall(&a) > npymath_creall(&b)) {
+        ret = npymath_cimagl(&b) != npymath_cimagl(&b) && npymath_cimagl(&a) == npymath_cimagl(&a);
     }
-    else if (npy_creall(&a) == npy_creall(&b) || (npy_creall(&a) != npy_creall(&a) && npy_creall(&b) != npy_creall(&b))) {
-        ret =  npy_cimagl(&a) < npy_cimagl(&b) || (npy_cimagl(&b) != npy_cimagl(&b) && npy_cimagl(&a) == npy_cimagl(&a));
+    else if (npymath_creall(&a) == npymath_creall(&b) || (npymath_creall(&a) != npymath_creall(&a) && npymath_creall(&b) != npymath_creall(&b))) {
+        ret =  npymath_cimagl(&a) < npymath_cimagl(&b) || (npymath_cimagl(&b) != npymath_cimagl(&b) && npymath_cimagl(&a) == npymath_cimagl(&a));
     }
     else {
-        ret = npy_creall(&b) != npy_creall(&b);
+        ret = npymath_creall(&b) != npymath_creall(&b);
     }
 
     return ret;

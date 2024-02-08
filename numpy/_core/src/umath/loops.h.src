@@ -445,7 +445,7 @@ NPY_NO_EXPORT void
 
 /**begin repeat1
  * #kind = isnan, isinf, isfinite, signbit, copysign, nextafter, spacing#
- * #func = npy_isnan, npy_isinf, npy_isfinite, npy_signbit, npy_copysign, nextafter, spacing#
+ * #func = npymath_isnan, npymath_isinf, npymath_isfinite, npymath_signbit, npymath_copysign, nextafter, spacing#
  * #dispatched = 1, 1, 1, 1, 0, 0, 0#
  **/
 
@@ -638,7 +638,7 @@ NPY_NO_EXPORT void
 C@TYPE@_logical_not(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 /**begin repeat1
  * #kind = isnan, isinf, isfinite#
- * #func = npy_isnan, npy_isinf, npy_isfinite#
+ * #func = npymath_isnan, npymath_isinf, npymath_isfinite#
  * #OP = ||, ||, &&#
  **/
 NPY_NO_EXPORT void

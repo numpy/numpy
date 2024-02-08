@@ -95,7 +95,7 @@ libnpymath_dep = dependency(
     'numpy_build=true',
     'install_lib=true',
     'lib_dir=numpy/_core/lib',
-    'headers_dir=numpy/_core/include/numpy',
+    'headers_dir=numpy/_core/include',
   ],
 )
 

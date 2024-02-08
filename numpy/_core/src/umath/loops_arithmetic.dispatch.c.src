@@ -82,7 +82,7 @@ simd_divide_by_scalar_contig_@sfx@(char **args, npy_intp len)
             }
         }
         if (raise_err) {
-            npy_set_floatstatus_overflow();
+            npymath_set_floatstatus_overflow();
         }
     } else {
         for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
@@ -234,7 +234,7 @@ vsx4_simd_divide_contig_@sfx@(char **args, npy_intp len)
         npyv_@sfx@ c = vsx4_div_@sfx@(a, b);
         npyv_store_@sfx@(dst1, c);
         if (NPY_UNLIKELY(vec_any_eq(b, vzero))) {
-            npy_set_floatstatus_divbyzero();
+            npymath_set_floatstatus_divbyzero();
         }
     }
 
@@ -242,7 +242,7 @@ vsx4_simd_divide_contig_@sfx@(char **args, npy_intp len)
         const npyv_lanetype_@sfx@ a = *src1;
         const npyv_lanetype_@sfx@ b = *src2;
         if (NPY_UNLIKELY(b == 0)) {
-            npy_set_floatstatus_divbyzero();
+            npymath_set_floatstatus_divbyzero();
             *dst1 = 0;
         } else{
             *dst1 = a / b;
@@ -300,20 +300,20 @@ vsx4_simd_divide_contig_@sfx@(char **args, npy_intp len)
     }
 
     if (!vec_all_eq(warn_zero, vzero)) {
-        npy_set_floatstatus_divbyzero();
+        npymath_set_floatstatus_divbyzero();
     }
     if (!vec_all_eq(warn_overflow, vzero)) {
-        npy_set_floatstatus_overflow();
+        npymath_set_floatstatus_overflow();
     }
 
     for (; len > 0; --len, ++src1, ++src2, ++dst1) {
         const npyv_lanetype_@sfx@ a = *src1;
         const npyv_lanetype_@sfx@ b = *src2;
         if (NPY_UNLIKELY(b == 0)) {
-            npy_set_floatstatus_divbyzero();
+            npymath_set_floatstatus_divbyzero();
             *dst1 = 0;
         } else if (NPY_UNLIKELY((a == NPY_MIN_INT@len@) && (b == -1))) {
-            npy_set_floatstatus_overflow();
+            npymath_set_floatstatus_overflow();
             *dst1 = NPY_MIN_INT@len@;
         } else {
             *dst1 = a / b;
@@ -357,15 +357,15 @@ NPY_FINLINE @type@ floor_div_@TYPE@(const @type@ n, const @type@ d)
      * by -1 causes a SIFGPE (division overflow). We treat this case here
      * (to avoid a SIGFPE crash at python level), but a good solution would
      * be to treat integer division problems separately from FPU exceptions
-     * (i.e. a different approach than npy_set_floatstatus_divbyzero()).
+     * (i.e. a different approach than npymath_set_floatstatus_divbyzero()).
      */
     if (NPY_UNLIKELY(d == 0 || (n == NPY_MIN_@TYPE@ && d == -1))) {
         if (d == 0) {
-            npy_set_floatstatus_divbyzero();
+            npymath_set_floatstatus_divbyzero();
             return 0;
         }
         else {
-            npy_set_floatstatus_overflow();
+            npymath_set_floatstatus_overflow();
             return NPY_MIN_@TYPE@;
         }
     }
@@ -462,7 +462,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_divide)
         BINARY_REDUCE_LOOP(@type@) {
             const @type@ d = *(@type@ *)ip2;
             if (NPY_UNLIKELY(d == 0)) {
-                npy_set_floatstatus_divbyzero();
+                npymath_set_floatstatus_divbyzero();
                 io1 = 0;
             } else {
                 io1 /= d;
@@ -488,7 +488,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_divide)
             const @type@ in1 = *(@type@ *)ip1;
             const @type@ in2 = *(@type@ *)ip2;
             if (NPY_UNLIKELY(in2 == 0)) {
-                npy_set_floatstatus_divbyzero();
+                npymath_set_floatstatus_divbyzero();
                 *((@type@ *)op1) = 0;
             } else{
                 *((@type@ *)op1) = in1 / in2;
@@ -516,7 +516,7 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_divide_indexed)
         indexed = (@type@ *)(ip1 + is1 * indx);
         @type@ in2 = *(@type@ *)value;
         if (NPY_UNLIKELY(in2 == 0)) {
-            npy_set_floatstatus_divbyzero();
+            npymath_set_floatstatus_divbyzero();
             *indexed = 0;
         } else {
             *indexed = *indexed / in2;

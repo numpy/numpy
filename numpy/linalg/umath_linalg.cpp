@@ -11,7 +11,7 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 
 #include "npy_pycompat.h"
 
@@ -413,18 +413,18 @@ static inline int
 get_fp_invalid_and_clear(void)
 {
     int status;
-    status = npy_clear_floatstatus_barrier((char*)&status);
-    return !!(status & NPY_FPE_INVALID);
+    status = npymath_clear_floatstatus_barrier((char*)&status);
+    return !!(status & NPYMATH_FPE_INVALID);
 }
 
 static inline void
 set_fp_invalid_or_clear(int error_occurred)
 {
     if (error_occurred) {
-        npy_set_floatstatus_invalid();
+        npymath_set_floatstatus_invalid();
     }
     else {
-        npy_clear_floatstatus_barrier((char*)&error_occurred);
+        npymath_clear_floatstatus_barrier((char*)&error_occurred);
     }
 }
 
@@ -450,8 +450,8 @@ static const float nan;
 constexpr float numeric_limits<float>::one;
 constexpr float numeric_limits<float>::zero;
 constexpr float numeric_limits<float>::minus_one;
-const float numeric_limits<float>::ninf = -NPY_INFINITYF;
-const float numeric_limits<float>::nan = NPY_NANF;
+const float numeric_limits<float>::ninf = -NPYMATH_INFINITYF;
+const float numeric_limits<float>::nan = NPYMATH_NANF;
 
 template<>
 struct numeric_limits<double> {
@@ -464,8 +464,8 @@ static const double nan;
 constexpr double numeric_limits<double>::one;
 constexpr double numeric_limits<double>::zero;
 constexpr double numeric_limits<double>::minus_one;
-const double numeric_limits<double>::ninf = -NPY_INFINITY;
-const double numeric_limits<double>::nan = NPY_NAN;
+const double numeric_limits<double>::ninf = -NPYMATH_INFINITY;
+const double numeric_limits<double>::nan = NPYMATH_NAN;
 
 template<>
 struct numeric_limits<npy_cfloat> {
@@ -478,8 +478,8 @@ static const npy_cfloat nan;
 constexpr npy_cfloat numeric_limits<npy_cfloat>::one;
 constexpr npy_cfloat numeric_limits<npy_cfloat>::zero;
 constexpr npy_cfloat numeric_limits<npy_cfloat>::minus_one;
-const npy_cfloat numeric_limits<npy_cfloat>::ninf = {-NPY_INFINITYF};
-const npy_cfloat numeric_limits<npy_cfloat>::nan = {NPY_NANF, NPY_NANF};
+const npy_cfloat numeric_limits<npy_cfloat>::ninf = {-NPYMATH_INFINITYF};
+const npy_cfloat numeric_limits<npy_cfloat>::nan = {NPYMATH_NANF, NPYMATH_NANF};
 
 template<>
 struct numeric_limits<f2c_complex> {
@@ -492,8 +492,8 @@ static const f2c_complex nan;
 constexpr f2c_complex numeric_limits<f2c_complex>::one;
 constexpr f2c_complex numeric_limits<f2c_complex>::zero;
 constexpr f2c_complex numeric_limits<f2c_complex>::minus_one;
-const f2c_complex numeric_limits<f2c_complex>::ninf = {-NPY_INFINITYF, 0.0f};
-const f2c_complex numeric_limits<f2c_complex>::nan = {NPY_NANF, NPY_NANF};
+const f2c_complex numeric_limits<f2c_complex>::ninf = {-NPYMATH_INFINITYF, 0.0f};
+const f2c_complex numeric_limits<f2c_complex>::nan = {NPYMATH_NANF, NPYMATH_NANF};
 
 template<>
 struct numeric_limits<npy_cdouble> {
@@ -506,8 +506,8 @@ static const npy_cdouble nan;
 constexpr npy_cdouble numeric_limits<npy_cdouble>::one;
 constexpr npy_cdouble numeric_limits<npy_cdouble>::zero;
 constexpr npy_cdouble numeric_limits<npy_cdouble>::minus_one;
-const npy_cdouble numeric_limits<npy_cdouble>::ninf = {-NPY_INFINITY};
-const npy_cdouble numeric_limits<npy_cdouble>::nan = {NPY_NAN, NPY_NAN};
+const npy_cdouble numeric_limits<npy_cdouble>::ninf = {-NPYMATH_INFINITY};
+const npy_cdouble numeric_limits<npy_cdouble>::nan = {NPYMATH_NAN, NPYMATH_NAN};
 
 template<>
 struct numeric_limits<f2c_doublecomplex> {
@@ -520,8 +520,8 @@ static const f2c_doublecomplex nan;
 constexpr f2c_doublecomplex numeric_limits<f2c_doublecomplex>::one;
 constexpr f2c_doublecomplex numeric_limits<f2c_doublecomplex>::zero;
 constexpr f2c_doublecomplex numeric_limits<f2c_doublecomplex>::minus_one;
-const f2c_doublecomplex numeric_limits<f2c_doublecomplex>::ninf = {-NPY_INFINITY};
-const f2c_doublecomplex numeric_limits<f2c_doublecomplex>::nan = {NPY_NAN, NPY_NAN};
+const f2c_doublecomplex numeric_limits<f2c_doublecomplex>::ninf = {-NPYMATH_INFINITY};
+const f2c_doublecomplex numeric_limits<f2c_doublecomplex>::nan = {NPYMATH_NAN, NPYMATH_NAN};
 
 /*
  *****************************************************************************
@@ -1016,10 +1016,10 @@ tril_matrix(typ *matrix, size_t n)
 /* -------------------------------------------------------------------------- */
                           /* Determinants */
 
-static npy_float npylog(npy_float f) { return npy_logf(f);}
-static npy_double npylog(npy_double d) { return npy_log(d);}
-static npy_float npyexp(npy_float f) { return npy_expf(f);}
-static npy_double npyexp(npy_double d) { return npy_exp(d);}
+static npy_float npylog(npy_float f) { return npymath_logf(f);}
+static npy_double npylog(npy_double d) { return npymath_log(d);}
+static npy_float npyexp(npy_float f) { return npymath_expf(f);}
+static npy_double npyexp(npy_double d) { return npymath_exp(d);}
 
 template<typename typ>
 static inline void
@@ -1055,28 +1055,28 @@ det_from_slogdet(typ sign, typ logdet)
 }
 
 
-npy_float npyabs(npy_cfloat z) { return npy_cabsf(z);}
-npy_double npyabs(npy_cdouble z) { return npy_cabs(z);}
+npy_float npyabs(npy_cfloat z) { return npymath_cabsf(z);}
+npy_double npyabs(npy_cdouble z) { return npymath_cabs(z);}
 
-inline float RE(npy_cfloat *c) { return npy_crealf(c); }
-inline double RE(npy_cdouble *c) { return npy_creal(c); }
+inline float RE(npy_cfloat *c) { return npymath_crealf(c); }
+inline double RE(npy_cdouble *c) { return npymath_creal(c); }
 #if NPY_SIZEOF_COMPLEX_LONGDOUBLE != NPY_SIZEOF_COMPLEX_DOUBLE
-inline longdouble_t RE(npy_clongdouble *c) { return npy_creall(c); }
+inline longdouble_t RE(npy_clongdouble *c) { return npymath_creall(c); }
 #endif
-inline float IM(npy_cfloat *c) { return npy_cimagf(c); }
-inline double IM(npy_cdouble *c) { return npy_cimag(c); }
+inline float IM(npy_cfloat *c) { return npymath_cimagf(c); }
+inline double IM(npy_cdouble *c) { return npymath_cimag(c); }
 #if NPY_SIZEOF_COMPLEX_LONGDOUBLE != NPY_SIZEOF_COMPLEX_DOUBLE
-inline longdouble_t IM(npy_clongdouble *c) { return npy_cimagl(c); }
+inline longdouble_t IM(npy_clongdouble *c) { return npymath_cimagl(c); }
 #endif
-inline void SETRE(npy_cfloat *c, float real) { npy_csetrealf(c, real); }
-inline void SETRE(npy_cdouble *c, double real) { npy_csetreal(c, real); }
+inline void SETRE(npy_cfloat *c, float real) { npymath_csetrealf(c, real); }
+inline void SETRE(npy_cdouble *c, double real) { npymath_csetreal(c, real); }
 #if NPY_SIZEOF_COMPLEX_LONGDOUBLE != NPY_SIZEOF_COMPLEX_DOUBLE
-inline void SETRE(npy_clongdouble *c, double real) { npy_csetreall(c, real); }
+inline void SETRE(npy_clongdouble *c, double real) { npymath_csetreall(c, real); }
 #endif
-inline void SETIM(npy_cfloat *c, float real) { npy_csetimagf(c, real); }
-inline void SETIM(npy_cdouble *c, double real) { npy_csetimag(c, real); }
+inline void SETIM(npy_cfloat *c, float real) { npymath_csetimagf(c, real); }
+inline void SETIM(npy_cdouble *c, double real) { npymath_csetimag(c, real); }
 #if NPY_SIZEOF_COMPLEX_LONGDOUBLE != NPY_SIZEOF_COMPLEX_DOUBLE
-inline void SETIM(npy_clongdouble *c, double real) { npy_csetimagl(c, real); }
+inline void SETIM(npy_clongdouble *c, double real) { npymath_csetimagl(c, real); }
 #endif
 
 template<typename typ>

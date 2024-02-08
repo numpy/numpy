@@ -9,7 +9,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 
 #include "npy_config.h"
 
@@ -2676,7 +2676,7 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     }
     needs_api |= (flags & NPY_METH_REQUIRES_PYAPI) != 0;
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        npy_clear_floatstatus_barrier((char *)src_iter);
+        npymath_clear_floatstatus_barrier((char *)src_iter);
     }
     if (!needs_api) {
         NPY_BEGIN_THREADS;
@@ -2737,7 +2737,7 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     }
 
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        int fpes = npy_get_floatstatus_barrier((char *)&src_iter);
+        int fpes = npymath_get_floatstatus_barrier((char *)&src_iter);
         if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
             return -1;
         }
@@ -2979,9 +2979,9 @@ _arange_safe_ceil_to_intp(double value)
 {
     double ivalue;
 
-    ivalue = npy_ceil(value);
+    ivalue = npymath_ceil(value);
     /* condition inverted to handle NaN */
-    if (npy_isnan(ivalue)) {
+    if (npymath_isnan(ivalue)) {
         PyErr_SetString(PyExc_ValueError,
             "arange: cannot compute length");
         return -1;
@@ -3015,7 +3015,7 @@ PyArray_Arange(double start, double stop, double step, int type_num)
 
     /* Underflow and divide-by-inf check */
     if (tmp_len == 0.0 && delta != 0.0) {
-        if (npy_signbit(tmp_len)) {
+        if (npymath_signbit(tmp_len)) {
             length = 0;
         }
         else {
@@ -3166,7 +3166,7 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
 
         /* Underflow and divide-by-inf check */
         if (val_is_zero && next_is_nonzero) {
-            if (npy_signbit(value)) {
+            if (npymath_signbit(value)) {
                 len = 0;
             }
             else {

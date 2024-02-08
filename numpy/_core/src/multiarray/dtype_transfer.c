@@ -18,7 +18,7 @@
 #include <structmember.h>
 
 #include "numpy/arrayobject.h"
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 
 #include "lowlevel_strided_loops.h"
 #include "npy_pycompat.h"
@@ -3421,7 +3421,7 @@ PyArray_CastRawArrays(npy_intp count,
     }
 
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        npy_clear_floatstatus_barrier((char*)&cast_info);
+        npymath_clear_floatstatus_barrier((char*)&cast_info);
     }
 
     /* Cast */
@@ -3436,7 +3436,7 @@ PyArray_CastRawArrays(npy_intp count,
         return NPY_FAIL;
     }
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        int fpes = npy_get_floatstatus_barrier(*args);
+        int fpes = npymath_get_floatstatus_barrier(*args);
         if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
             return NPY_FAIL;
         }

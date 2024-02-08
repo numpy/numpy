@@ -13,7 +13,7 @@
 
 #include <numpy/npy_common.h>
 #include <numpy/ndarraytypes.h>  /* for NPY_NTYPES */
-#include <numpy/halffloat.h>
+#include <libnpymath/halffloat.h>
 
 #include "einsum_sumprod.h"
 #include "einsum_debug.h"
@@ -48,11 +48,11 @@
  *        f32, f64, clongdouble#
  * #to = ,,,,,
  *       ,,,,,
- *       npy_float_to_half,,,,
+ *       npymath_float_to_half,,,,
  *       ,,#
  * #from = ,,,,,
  *         ,,,,,
- *         npy_half_to_float,,,,
+ *         npymath_half_to_float,,,,
  *         ,,#
  * #complex = 0*5,
  *            0*5,

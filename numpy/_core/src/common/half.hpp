@@ -4,10 +4,10 @@
 #include "npstd.hpp"
 
 #include "npy_cpu_dispatch.h" // NPY_HAVE_CPU_FEATURES
-#include "numpy/halffloat.h"
+#include "libnpymath/halffloat.h"
 
 // TODO(@seiko2plus):
-// - covers half-precision operations that being supported by numpy/halffloat.h
+// - covers half-precision operations that being supported by libnpymath/halffloat.h
 // - add support for arithmetic operations
 // - enables __fp16 causes massive FP exceptions on aarch64,
 //   needs a deep investigation
@@ -52,7 +52,7 @@ class Half final {
     /// be set to ties to even.
     explicit Half(float f)
     {
-        bits_ = npy_float_to_half(f);
+        bits_ = npymath_float_to_half(f);
     }
 
     /// Construct from double.
@@ -60,19 +60,19 @@ class Half final {
     /// be set to ties to even.
     explicit Half(double f)
     {
-        bits_ = npy_double_to_half(f);
+        bits_ = npymath_double_to_half(f);
     }
 
     /// Cast to float
     explicit operator float() const
     {
-        return npy_half_to_float(bits_);
+        return npymath_half_to_float(bits_);
     }
 
     /// Cast to double
     explicit operator double() const
     {
-        return npy_half_to_double(bits_);
+        return npymath_half_to_double(bits_);
     }
 
     /// Returns a new Half constructed from the IEEE 754 binary16.

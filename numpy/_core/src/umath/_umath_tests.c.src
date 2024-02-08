@@ -14,7 +14,7 @@
 #endif
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 
 #include "npy_pycompat.h"
 

@@ -10,8 +10,8 @@
 #include "numpy/npy_common.h"
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
-#include "numpy/npy_math.h"
-#include "numpy/halffloat.h"
+#include "libnpymath/npy_math.h"
+#include "libnpymath/halffloat.h"
 #include "lowlevel_strided_loops.h"
 #include "loops_utils.h"
 #include "gil_utils.h"
@@ -81,8 +81,8 @@ PyUFunc_@c@@c@_@c@(char **args, npy_intp const *dimensions, npy_intp const *step
  * #c2    = f,         d,          d#
  * #type2 = npy_float, npy_double, npy_double#
  *
- * #conv12  = npy_half_to_float, npy_half_to_double, (double)#
- * #conv21  = npy_float_to_half, npy_double_to_half, (float)#
+ * #conv12  = npymath_half_to_float, npymath_half_to_double, (double)#
+ * #conv21  = npymath_float_to_half, npymath_double_to_half, (float)#
  **/
 
 /*UFUNC_API*/
@@ -159,11 +159,11 @@ PyUFunc_F_F_As_D_D(char **args, npy_intp const *dimensions, npy_intp const *step
     func_type *f = (func_type *)func;
     UNARY_LOOP {
         npy_cdouble tmp, out;
-        npy_csetreal(&tmp, (double)((float *)ip1)[0]);
-        npy_csetimag(&tmp, (double)((float *)ip1)[1]);
+        npymath_csetreal(&tmp, (double)((float *)ip1)[0]);
+        npymath_csetimag(&tmp, (double)((float *)ip1)[1]);
         f(&tmp, &out);
-        ((float *)op1)[0] = (float)npy_creal(&out);
-        ((float *)op1)[1] = (float)npy_cimag(&out);
+        ((float *)op1)[0] = (float)npymath_creal(&out);
+        ((float *)op1)[1] = (float)npymath_cimag(&out);
     }
 }
 
@@ -175,13 +175,13 @@ PyUFunc_FF_F_As_DD_D(char **args, npy_intp const *dimensions, npy_intp const *st
     func_type *f = (func_type *)func;
     BINARY_LOOP {
         npy_cdouble tmp1, tmp2, out;
-        npy_csetreal(&tmp1, (double)((float *)ip1)[0]);
-        npy_csetimag(&tmp1, (double)((float *)ip1)[1]);
-        npy_csetreal(&tmp2, (double)((float *)ip2)[0]);
-        npy_csetimag(&tmp2, (double)((float *)ip2)[1]);
+        npymath_csetreal(&tmp1, (double)((float *)ip1)[0]);
+        npymath_csetimag(&tmp1, (double)((float *)ip1)[1]);
+        npymath_csetreal(&tmp2, (double)((float *)ip2)[0]);
+        npymath_csetimag(&tmp2, (double)((float *)ip2)[1]);
         f(&tmp1, &tmp2, &out);
-        ((float *)op1)[0] = (float)npy_creal(&out);
-        ((float *)op1)[1] = (float)npy_cimag(&out);
+        ((float *)op1)[0] = (float)npymath_creal(&out);
+        ((float *)op1)[1] = (float)npymath_cimag(&out);
     }
 }
 
@@ -523,7 +523,7 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = npy_@kind@@c@(in1, in2);
+        *((@type@ *)op1) = npymath_@kind@@c@(in1, in2);
     }
 }
 /**end repeat1**/
@@ -543,7 +543,7 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = npy_@kind@@c@(in1, in2);
+        *((@type@ *)op1) = npymath_@kind@@c@(in1, in2);
     }
 }
 /**end repeat1**/
@@ -886,7 +886,7 @@ TIMEDELTA_md_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
         }
         else {
             double result = in1 * in2;
-            if (npy_isfinite(result)) {
+            if (npymath_isfinite(result)) {
                 *((npy_timedelta *)op1) = (npy_timedelta)result;
             }
             else {
@@ -907,7 +907,7 @@ TIMEDELTA_dm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
         }
         else {
             double result = in1 * in2;
-            if (npy_isfinite(result)) {
+            if (npymath_isfinite(result)) {
                 *((npy_timedelta *)op1) = (npy_timedelta)result;
             }
             else {
@@ -935,7 +935,7 @@ TIMEDELTA_mq_m_divide(char **args, npy_intp const *dimensions, npy_intp const *s
 
         /* If divisor is 0, we need not compute anything */
         if (in2 == 0) {
-            npy_set_floatstatus_divbyzero();
+            npymath_set_floatstatus_divbyzero();
             BINARY_LOOP_SLIDING {
                 *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
             }
@@ -978,7 +978,7 @@ TIMEDELTA_md_m_divide(char **args, npy_intp const *dimensions, npy_intp const *s
         }
         else {
             double result = in1 / in2;
-            if (npy_isfinite(result)) {
+            if (npymath_isfinite(result)) {
                 *((npy_timedelta *)op1) = (npy_timedelta)result;
             }
             else {
@@ -995,7 +995,7 @@ TIMEDELTA_mm_d_divide(char **args, npy_intp const *dimensions, npy_intp const *s
         const npy_timedelta in1 = *(npy_timedelta *)ip1;
         const npy_timedelta in2 = *(npy_timedelta *)ip2;
         if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
-            *((double *)op1) = NPY_NAN;
+            *((double *)op1) = NPYMATH_NAN;
         }
         else {
             *((double *)op1) = (double)in1 / (double)in2;
@@ -1014,7 +1014,7 @@ TIMEDELTA_mm_m_remainder(char **args, npy_intp const *dimensions, npy_intp const
         }
         else {
             if (in2 == 0) {
-                npy_set_floatstatus_divbyzero();
+                npymath_set_floatstatus_divbyzero();
                 *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
             }
             else {
@@ -1048,13 +1048,13 @@ TIMEDELTA_mm_q_floor_divide(char **args, npy_intp const *dimensions, npy_intp co
 
         /* If divisor is 0 or NAT, we need not compute anything */
         if (in2 == 0) {
-            npy_set_floatstatus_divbyzero();
+            npymath_set_floatstatus_divbyzero();
             BINARY_LOOP_SLIDING {
                 *((npy_int64 *)op1) = 0;
             }
         }
         else if (in2 == NPY_DATETIME_NAT) {
-            npy_set_floatstatus_invalid();
+            npymath_set_floatstatus_invalid();
             BINARY_LOOP_SLIDING {
                 *((npy_int64 *)op1) = 0;
             }
@@ -1064,7 +1064,7 @@ TIMEDELTA_mm_q_floor_divide(char **args, npy_intp const *dimensions, npy_intp co
              BINARY_LOOP_SLIDING {
                 const npy_timedelta in1 = *(npy_timedelta *)ip1;
                 if (in1 == NPY_DATETIME_NAT) {
-                    npy_set_floatstatus_invalid();
+                    npymath_set_floatstatus_invalid();
                     *((npy_int64 *)op1) = 0;
                 }
                 else {
@@ -1083,11 +1083,11 @@ TIMEDELTA_mm_q_floor_divide(char **args, npy_intp const *dimensions, npy_intp co
             const npy_timedelta in1 = *(npy_timedelta *)ip1;
             const npy_timedelta in2 = *(npy_timedelta *)ip2;
             if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
-                npy_set_floatstatus_invalid();
+                npymath_set_floatstatus_invalid();
                 *((npy_int64 *)op1) = 0;
             }
             else if (in2 == 0) {
-                npy_set_floatstatus_divbyzero();
+                npymath_set_floatstatus_divbyzero();
                 *((npy_int64 *)op1) = 0;
             }
             else {
@@ -1109,12 +1109,12 @@ TIMEDELTA_mm_qm_divmod(char **args, npy_intp const *dimensions, npy_intp const *
         const npy_timedelta in1 = *(npy_timedelta *)ip1;
         const npy_timedelta in2 = *(npy_timedelta *)ip2;
         if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
-            npy_set_floatstatus_invalid();
+            npymath_set_floatstatus_invalid();
             *((npy_int64 *)op1) = 0;
             *((npy_timedelta *)op2) = NPY_DATETIME_NAT;
         }
         else if (in2 == 0) {
-            npy_set_floatstatus_divbyzero();
+            npymath_set_floatstatus_divbyzero();
             *((npy_int64 *)op1) = 0;
             *((npy_timedelta *)op2) = NPY_DATETIME_NAT;
         }
@@ -1160,7 +1160,7 @@ NPY_NO_EXPORT void
         const @type@ in2 = *(@type@ *)ip2;
         *((npy_bool *)op1) = in1 @OP@ in2;
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
+    npymath_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 
@@ -1186,7 +1186,7 @@ NPY_NO_EXPORT void
 #if !@fd@
 /**begin repeat1
  * #kind = isnan, isinf, isfinite, signbit#
- * #func = npy_isnan, npy_isinf, npy_isfinite, npy_signbit#
+ * #func = npymath_isnan, npymath_isinf, npymath_isfinite, npymath_signbit#
  **/
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
@@ -1195,7 +1195,7 @@ NPY_NO_EXPORT void
         const @type@ in1 = *(@type@ *)ip1;
         *((npy_bool *)op1) = @func@(in1) != 0;
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
+    npymath_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 #endif
@@ -1205,7 +1205,7 @@ NPY_NO_EXPORT void
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = npy_spacing@c@(in1);
+        *((@type@ *)op1) = npymath_spacing@c@(in1);
     }
 }
 
@@ -1215,7 +1215,7 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1)= npy_copysign@c@(in1, in2);
+        *((@type@ *)op1)= npymath_copysign@c@(in1, in2);
     }
 }
 
@@ -1225,7 +1225,7 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1)= npy_nextafter@c@(in1, in2);
+        *((@type@ *)op1)= npymath_nextafter@c@(in1, in2);
     }
 }
 
@@ -1235,7 +1235,7 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = npy_floor_divide@c@(in1, in2);
+        *((@type@ *)op1) = npymath_floor_divide@c@(in1, in2);
     }
 }
 
@@ -1258,7 +1258,7 @@ NPY_NO_EXPORT int
             indx += shape;
         }
         indexed = (@type@ *)(ip1 + is1 * indx);
-        *indexed = npy_floor_divide@c@(*indexed, *(@type@ *)value);
+        *indexed = npymath_floor_divide@c@(*indexed, *(@type@ *)value);
     }
     return 0;
 }
@@ -1269,7 +1269,7 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *) op1) = npy_remainder@c@(in1, in2);
+        *((@type@ *) op1) = npymath_remainder@c@(in1, in2);
     }
 }
 
@@ -1279,7 +1279,7 @@ NPY_NO_EXPORT void
     BINARY_LOOP_TWO_OUT {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = npy_divmod@c@(in1, in2, (@type@ *)op2);
+        *((@type@ *)op1) = npymath_divmod@c@(in1, in2, (@type@ *)op2);
     }
 }
 
@@ -1317,7 +1317,7 @@ NPY_NO_EXPORT void
         const @type@ in1 = *(@type@ *)ip1;
         *((@type@ *)op1) = in1 > 0 ? 1 : (in1 < 0 ? -1 : (in1 == 0 ? 0 : in1));
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
+    npymath_clear_floatstatus_barrier((char*)dimensions);
 }
 
 NPY_NO_EXPORT void
@@ -1325,7 +1325,7 @@ NPY_NO_EXPORT void
 {
     UNARY_LOOP_TWO_OUT {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = npy_modf@c@(in1, (@type@ *)op2);
+        *((@type@ *)op1) = npymath_modf@c@(in1, (@type@ *)op2);
     }
 }
 
@@ -1342,7 +1342,7 @@ NPY_NO_EXPORT void
         const npy_int64 in2 = *(npy_int64 *)ip2;
         if (((int)in2) == in2) {
             /* Range OK */
-            *((@type@ *)op1) = npy_ldexp@c@(in1, ((int)in2));
+            *((@type@ *)op1) = npymath_ldexp@c@(in1, ((int)in2));
         }
         else {
             /*
@@ -1350,10 +1350,10 @@ NPY_NO_EXPORT void
              * given that exponent has less bits than npy_int.
              */
             if (in2 > 0) {
-                *((@type@ *)op1) = npy_ldexp@c@(in1, NPY_MAX_INT);
+                *((@type@ *)op1) = npymath_ldexp@c@(in1, NPY_MAX_INT);
             }
             else {
-                *((@type@ *)op1) = npy_ldexp@c@(in1, NPY_MIN_INT);
+                *((@type@ *)op1) = npymath_ldexp@c@(in1, NPY_MIN_INT);
             }
         }
     }
@@ -1436,7 +1436,7 @@ LONGDOUBLE_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps
         const npy_longdouble in2 = *(npy_longdouble *)ip2;
         *((npy_bool *)op1) = in1 @OP@ in2;
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
+    npymath_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat**/
 
@@ -1458,7 +1458,7 @@ LONGDOUBLE_absolute(char **args, npy_intp const *dimensions, npy_intp const *ste
         /* add 0 to clear -0.0 */
         *((npy_longdouble *)op1) = tmp + 0;
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
+    npymath_clear_floatstatus_barrier((char*)dimensions);
 }
 
 NPY_NO_EXPORT void
@@ -1475,7 +1475,7 @@ LONGDOUBLE_frexp(char **args, npy_intp const *dimensions, npy_intp const *steps,
 {
     UNARY_LOOP_TWO_OUT {
         const npy_longdouble in1 = *(npy_longdouble *)ip1;
-        *((npy_longdouble *)op1) = npy_frexpl(in1, (int *)op2);
+        *((npy_longdouble *)op1) = npymath_frexpl(in1, (int *)op2);
     }
 }
 
@@ -1485,7 +1485,7 @@ LONGDOUBLE_ldexp(char **args, npy_intp const *dimensions, npy_intp const *steps,
     BINARY_LOOP {
         const npy_longdouble in1 = *(npy_longdouble *)ip1;
         const int in2 = *(int *)ip2;
-        *((npy_longdouble *)op1) = npy_ldexpl(in1, in2);
+        *((npy_longdouble *)op1) = npymath_ldexpl(in1, in2);
     }
 }
 
@@ -1507,23 +1507,23 @@ HALF_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
 {
     if (IS_BINARY_REDUCE) {
         char *iop1 = args[0];
-        float io1 = npy_half_to_float(*(npy_half *)iop1);
+        float io1 = npymath_half_to_float(*(npy_half *)iop1);
 #if @PW@
         npy_intp n = dimensions[0];
 
         io1 @OP@= HALF_pairwise_sum(args[1], n, steps[1]);
 #else
         BINARY_REDUCE_LOOP_INNER {
-            io1 @OP@= npy_half_to_float(*(npy_half *)ip2);
+            io1 @OP@= npymath_half_to_float(*(npy_half *)ip2);
         }
 #endif
-        *((npy_half *)iop1) = npy_float_to_half(io1);
+        *((npy_half *)iop1) = npymath_float_to_half(io1);
     }
     else {
         BINARY_LOOP {
-            const float in1 = npy_half_to_float(*(npy_half *)ip1);
-            const float in2 = npy_half_to_float(*(npy_half *)ip2);
-            *((npy_half *)op1) = npy_float_to_half(in1 @OP@ in2);
+            const float in1 = npymath_half_to_float(*(npy_half *)ip1);
+            const float in2 = npymath_half_to_float(*(npy_half *)ip2);
+            *((npy_half *)op1) = npymath_float_to_half(in1 @OP@ in2);
         }
     }
 }
@@ -1547,20 +1547,20 @@ HALF_@kind@_indexed(void *NPY_UNUSED(context),
             indx += shape;
         }
         indexed = (npy_half *)(ip1 + is1 * indx);
-        const float v = npy_half_to_float(*(npy_half *)value);
-        *indexed = npy_float_to_half(npy_half_to_float(*indexed) @OP@ v);
+        const float v = npymath_half_to_float(*(npy_half *)value);
+        *indexed = npymath_float_to_half(npymath_half_to_float(*indexed) @OP@ v);
     }
     return 0;
 }
 /**end repeat**/
 
-#define _HALF_LOGICAL_AND(a,b) (!npy_half_iszero(a) && !npy_half_iszero(b))
-#define _HALF_LOGICAL_OR(a,b) (!npy_half_iszero(a) || !npy_half_iszero(b))
+#define _HALF_LOGICAL_AND(a,b) (!npymath_half_iszero(a) && !npymath_half_iszero(b))
+#define _HALF_LOGICAL_OR(a,b) (!npymath_half_iszero(a) || !npymath_half_iszero(b))
 /**begin repeat
  * #kind = equal, not_equal, less, less_equal, greater,
  *         greater_equal, logical_and, logical_or#
- * #OP = npy_half_eq, npy_half_ne, npy_half_lt, npy_half_le, npy_half_gt,
- *       npy_half_ge, _HALF_LOGICAL_AND, _HALF_LOGICAL_OR#
+ * #OP = npymath_half_eq, npymath_half_ne, npymath_half_lt, npymath_half_le, npymath_half_gt,
+ *       npymath_half_ge, _HALF_LOGICAL_AND, _HALF_LOGICAL_OR#
  */
 NPY_NO_EXPORT void
 HALF_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
@@ -1579,8 +1579,8 @@ NPY_NO_EXPORT void
 HALF_logical_xor(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        const int in1 = !npy_half_iszero(*(npy_half *)ip1);
-        const int in2 = !npy_half_iszero(*(npy_half *)ip2);
+        const int in1 = !npymath_half_iszero(*(npy_half *)ip1);
+        const int in2 = !npymath_half_iszero(*(npy_half *)ip2);
         *((npy_bool *)op1) = (in1 != in2);
     }
 }
@@ -1590,13 +1590,13 @@ HALF_logical_not(char **args, npy_intp const *dimensions, npy_intp const *steps,
 {
     UNARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
-        *((npy_bool *)op1) = npy_half_iszero(in1);
+        *((npy_bool *)op1) = npymath_half_iszero(in1);
     }
 }
 
 /**begin repeat
  * #kind = isnan, isinf, isfinite, signbit#
- * #func = npy_half_isnan, npy_half_isinf, npy_half_isfinite, npy_half_signbit#
+ * #func = npymath_half_isnan, npymath_half_isinf, npymath_half_isfinite, npymath_half_signbit#
  **/
 NPY_NO_EXPORT void
 HALF_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
@@ -1605,7 +1605,7 @@ HALF_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
         const npy_half in1 = *(npy_half *)ip1;
         *((npy_bool *)op1) = @func@(in1) != 0;
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
+    npymath_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat**/
 
@@ -1614,7 +1614,7 @@ HALF_spacing(char **args, npy_intp const *dimensions, npy_intp const *steps, voi
 {
     UNARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
-        *((npy_half *)op1) = npy_half_spacing(in1);
+        *((npy_half *)op1) = npymath_half_spacing(in1);
     }
 }
 
@@ -1624,7 +1624,7 @@ HALF_copysign(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
     BINARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
         const npy_half in2 = *(npy_half *)ip2;
-        *((npy_half *)op1)= npy_half_copysign(in1, in2);
+        *((npy_half *)op1)= npymath_half_copysign(in1, in2);
     }
 }
 
@@ -1634,13 +1634,13 @@ HALF_nextafter(char **args, npy_intp const *dimensions, npy_intp const *steps, v
     BINARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
         const npy_half in2 = *(npy_half *)ip2;
-        *((npy_half *)op1)= npy_half_nextafter(in1, in2);
+        *((npy_half *)op1)= npymath_half_nextafter(in1, in2);
     }
 }
 
 /**begin repeat
  * #kind = maximum, minimum#
- * #OP =  npy_half_ge, npy_half_le#
+ * #OP =  npymath_half_ge, npymath_half_le#
  **/
 NPY_NO_EXPORT void
 HALF_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
@@ -1649,9 +1649,9 @@ HALF_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
     BINARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
         const npy_half in2 = *(npy_half *)ip2;
-        *((npy_half *)op1) = (@OP@(in1, in2) || npy_half_isnan(in1)) ? in1 : in2;
+        *((npy_half *)op1) = (@OP@(in1, in2) || npymath_half_isnan(in1)) ? in1 : in2;
     }
-    /* npy_half_isnan will never set floatstatus_invalid, so do not clear */
+    /* npymath_half_isnan will never set floatstatus_invalid, so do not clear */
 }
 
 NPY_NO_EXPORT int
@@ -1674,7 +1674,7 @@ HALF_@kind@_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
         }
         indexed = (npy_half *)(ip1 + is1 * indx);
         npy_half v = *(npy_half *)value;
-        *indexed = (@OP@(*indexed, v) || npy_half_isnan(*indexed)) ? *indexed : v;
+        *indexed = (@OP@(*indexed, v) || npymath_half_isnan(*indexed)) ? *indexed : v;
     }
     return 0;
 }
@@ -1683,7 +1683,7 @@ HALF_@kind@_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
 
 /**begin repeat
  * #kind = fmax, fmin#
- * #OP =  npy_half_ge, npy_half_le#
+ * #OP =  npymath_half_ge, npymath_half_le#
  **/
 NPY_NO_EXPORT void
 HALF_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
@@ -1692,7 +1692,7 @@ HALF_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
     BINARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
         const npy_half in2 = *(npy_half *)ip2;
-        *((npy_half *)op1) = (@OP@(in1, in2) || npy_half_isnan(in2)) ? in1 : in2;
+        *((npy_half *)op1) = (@OP@(in1, in2) || npymath_half_isnan(in2)) ? in1 : in2;
     }
     /* no need to clear floatstatus_invalid */
 }
@@ -1717,7 +1717,7 @@ HALF_@kind@_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
         }
         indexed = (npy_half *)(ip1 + is1 * indx);
         npy_half v = *(npy_half *)value;
-        *indexed = (@OP@(*indexed, v) || npy_half_isnan(v)) ? *indexed: v;
+        *indexed = (@OP@(*indexed, v) || npymath_half_isnan(v)) ? *indexed: v;
     }
     return 0;
 }
@@ -1731,12 +1731,12 @@ HALF_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps
         const npy_half in1 = *(npy_half *)ip1;
         const npy_half in2 = *(npy_half *)ip2;
 
-        float fh1 = npy_half_to_float(in1);
-        float fh2 = npy_half_to_float(in2);
+        float fh1 = npymath_half_to_float(in1);
+        float fh2 = npymath_half_to_float(in2);
         float div;
 
-        div = npy_floor_dividef(fh1, fh2);
-        *((npy_half *)op1) = npy_float_to_half(div);
+        div = npymath_floor_dividef(fh1, fh2);
+        *((npy_half *)op1) = npymath_float_to_half(div);
     }
 }
 
@@ -1759,9 +1759,9 @@ HALF_floor_divide_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
             indx += shape;
         }
         indexed = (npy_half *)(ip1 + is1 * indx);
-        float v = npy_half_to_float(*(npy_half *)value);
-        float div = npy_floor_dividef(npy_half_to_float(*indexed), v);
-        *indexed = npy_float_to_half(div);
+        float v = npymath_half_to_float(*(npy_half *)value);
+        float div = npymath_floor_dividef(npymath_half_to_float(*indexed), v);
+        *indexed = npymath_float_to_half(div);
     }
     return 0;
 }
@@ -1772,11 +1772,11 @@ HALF_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, v
     BINARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
         const npy_half in2 = *(npy_half *)ip2;
-        float fh1 = npy_half_to_float(in1);
-        float fh2 = npy_half_to_float(in2);
+        float fh1 = npymath_half_to_float(in1);
+        float fh2 = npymath_half_to_float(in2);
         float mod;
-        mod = npy_remainderf(fh1, fh2);
-        *((npy_half *)op1) = npy_float_to_half(mod);
+        mod = npymath_remainderf(fh1, fh2);
+        *((npy_half *)op1) = npymath_float_to_half(mod);
     }
 }
 
@@ -1786,7 +1786,7 @@ HALF_divmod(char **args, npy_intp const *dimensions, npy_intp const *steps, void
     BINARY_LOOP_TWO_OUT {
         const npy_half in1 = *(npy_half *)ip1;
         const npy_half in2 = *(npy_half *)ip2;
-        *((npy_half *)op1) = npy_half_divmod(in1, in2, (npy_half *)op2);
+        *((npy_half *)op1) = npymath_half_divmod(in1, in2, (npy_half *)op2);
     }
 }
 
@@ -1794,8 +1794,8 @@ NPY_NO_EXPORT void
 HALF_square(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
     UNARY_LOOP {
-        const float in1 = npy_half_to_float(*(npy_half *)ip1);
-        *((npy_half *)op1) = npy_float_to_half(in1*in1);
+        const float in1 = npymath_half_to_float(*(npy_half *)ip1);
+        *((npy_half *)op1) = npymath_float_to_half(in1*in1);
     }
 }
 
@@ -1803,8 +1803,8 @@ NPY_NO_EXPORT void
 HALF_reciprocal(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
     UNARY_LOOP {
-        const float in1 = npy_half_to_float(*(npy_half *)ip1);
-        *((npy_half *)op1) = npy_float_to_half(1/in1);
+        const float in1 = npymath_half_to_float(*(npy_half *)ip1);
+        *((npy_half *)op1) = npymath_float_to_half(1/in1);
     }
 }
 
@@ -1812,7 +1812,7 @@ NPY_NO_EXPORT void
 HALF__ones_like(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
-        *((npy_half *)op1) = NPY_HALF_ONE;
+        *((npy_half *)op1) = NPYMATH_HALF_ONE;
     }
 }
 
@@ -1849,9 +1849,9 @@ HALF_sign(char **args, npy_intp const *dimensions, npy_intp const *steps, void *
     /* Sign of nan is nan */
     UNARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
-        *((npy_half *)op1) = npy_half_isnan(in1) ? in1 :
+        *((npy_half *)op1) = npymath_half_isnan(in1) ? in1 :
                     (((in1&0x7fffu) == 0) ? 0 :
-                      (((in1&0x8000u) == 0) ? NPY_HALF_ONE : NPY_HALF_NEGONE));
+                      (((in1&0x8000u) == 0) ? NPYMATH_HALF_ONE : NPYMATH_HALF_NEGONE));
     }
 }
 
@@ -1861,9 +1861,9 @@ HALF_modf(char **args, npy_intp const *dimensions, npy_intp const *steps, void *
     float temp;
 
     UNARY_LOOP_TWO_OUT {
-        const float in1 = npy_half_to_float(*(npy_half *)ip1);
-        *((npy_half *)op1) = npy_float_to_half(npy_modff(in1, &temp));
-        *((npy_half *)op2) = npy_float_to_half(temp);
+        const float in1 = npymath_half_to_float(*(npy_half *)ip1);
+        *((npy_half *)op1) = npymath_float_to_half(npymath_modff(in1, &temp));
+        *((npy_half *)op2) = npymath_float_to_half(temp);
     }
 }
 
@@ -1871,8 +1871,8 @@ NPY_NO_EXPORT void
 HALF_frexp(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP_TWO_OUT {
-        const float in1 = npy_half_to_float(*(npy_half *)ip1);
-        *((npy_half *)op1) = npy_float_to_half(npy_frexpf(in1, (int *)op2));
+        const float in1 = npymath_half_to_float(*(npy_half *)ip1);
+        *((npy_half *)op1) = npymath_float_to_half(npymath_frexpf(in1, (int *)op2));
     }
 }
 
@@ -1880,9 +1880,9 @@ NPY_NO_EXPORT void
 HALF_ldexp(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        const float in1 = npy_half_to_float(*(npy_half *)ip1);
+        const float in1 = npymath_half_to_float(*(npy_half *)ip1);
         const int in2 = *(int *)ip2;
-        *((npy_half *)op1) = npy_float_to_half(npy_ldexpf(in1, in2));
+        *((npy_half *)op1) = npymath_float_to_half(npymath_ldexpf(in1, in2));
     }
 }
 
@@ -1895,11 +1895,11 @@ HALF_ldexp_int64(char **args, npy_intp const *dimensions, npy_intp const *steps,
      * to handle the default integer type.
      */
     BINARY_LOOP {
-        const float in1 = npy_half_to_float(*(npy_half *)ip1);
+        const float in1 = npymath_half_to_float(*(npy_half *)ip1);
         const npy_int64 in2 = *(npy_int64 *)ip2;
         if (((int)in2) == in2) {
             /* Range OK */
-            *((npy_half *)op1) = npy_float_to_half(npy_ldexpf(in1, ((int)in2)));
+            *((npy_half *)op1) = npymath_float_to_half(npymath_ldexpf(in1, ((int)in2)));
         }
         else {
             /*
@@ -1907,10 +1907,10 @@ HALF_ldexp_int64(char **args, npy_intp const *dimensions, npy_intp const *steps,
              * given that exponent has less bits than npy_int.
              */
             if (in2 > 0) {
-                *((npy_half *)op1) = npy_float_to_half(npy_ldexpf(in1, NPY_MAX_INT));
+                *((npy_half *)op1) = npymath_float_to_half(npymath_ldexpf(in1, NPY_MAX_INT));
             }
             else {
-                *((npy_half *)op1) = npy_float_to_half(npy_ldexpf(in1, NPY_MIN_INT));
+                *((npy_half *)op1) = npymath_float_to_half(npymath_ldexpf(in1, NPY_MIN_INT));
             }
         }
     }
@@ -1922,13 +1922,13 @@ HALF_ldexp_int64(char **args, npy_intp const *dimensions, npy_intp const *steps,
  *****************************************************************************
  */
 
-#define CGE(xr,xi,yr,yi) ((xr > yr && !npy_isnan(xi) && !npy_isnan(yi)) \
+#define CGE(xr,xi,yr,yi) ((xr > yr && !npymath_isnan(xi) && !npymath_isnan(yi)) \
                           || (xr == yr && xi >= yi))
-#define CLE(xr,xi,yr,yi) ((xr < yr && !npy_isnan(xi) && !npy_isnan(yi)) \
+#define CLE(xr,xi,yr,yi) ((xr < yr && !npymath_isnan(xi) && !npymath_isnan(yi)) \
                           || (xr == yr && xi <= yi))
-#define CGT(xr,xi,yr,yi) ((xr > yr && !npy_isnan(xi) && !npy_isnan(yi)) \
+#define CGT(xr,xi,yr,yi) ((xr > yr && !npymath_isnan(xi) && !npymath_isnan(yi)) \
                           || (xr == yr && xi > yi))
-#define CLT(xr,xi,yr,yi) ((xr < yr && !npy_isnan(xi) && !npy_isnan(yi)) \
+#define CLT(xr,xi,yr,yi) ((xr < yr && !npymath_isnan(xi) && !npymath_isnan(yi)) \
                           || (xr == yr && xi < yi))
 #define CEQ(xr,xi,yr,yi) (xr == yr && xi == yi)
 #define CNE(xr,xi,yr,yi) (xr != yr || xi != yi)
@@ -2052,8 +2052,8 @@ NPY_NO_EXPORT void
         const @ftype@ in1i = ((@ftype@ *)ip1)[1];
         const @ftype@ in2r = ((@ftype@ *)ip2)[0];
         const @ftype@ in2i = ((@ftype@ *)ip2)[1];
-        const @ftype@ in2r_abs = npy_fabs@c@(in2r);
-        const @ftype@ in2i_abs = npy_fabs@c@(in2i);
+        const @ftype@ in2r_abs = npymath_fabs@c@(in2r);
+        const @ftype@ in2i_abs = npymath_fabs@c@(in2i);
         if (in2r_abs >= in2i_abs) {
             if (in2r_abs == 0 && in2i_abs == 0) {
                 /* divide by zero should yield a complex inf or nan */
@@ -2138,7 +2138,7 @@ NPY_NO_EXPORT void
 
 /**begin repeat1
  * #kind = isnan, isinf, isfinite#
- * #func = npy_isnan, npy_isinf, npy_isfinite#
+ * #func = npymath_isnan, npymath_isinf, npymath_isfinite#
  * #OP = ||, ||, &&#
  **/
 NPY_NO_EXPORT void
@@ -2149,7 +2149,7 @@ NPY_NO_EXPORT void
         const @ftype@ in1i = ((@ftype@ *)ip1)[1];
         *((npy_bool *)op1) = @func@(in1r) @OP@ @func@(in1i);
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
+    npymath_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 
@@ -2173,7 +2173,7 @@ NPY_NO_EXPORT void
     UNARY_LOOP {
         const @ftype@ in1r = ((@ftype@ *)ip1)[0];
         const @ftype@ in1i = ((@ftype@ *)ip1)[1];
-        if (npy_fabs@c@(in1i) <= npy_fabs@c@(in1r)) {
+        if (npymath_fabs@c@(in1i) <= npymath_fabs@c@(in1r)) {
             const @ftype@ r = in1i/in1r;
             const @ftype@ d = in1r + in1i*r;
             ((@ftype@ *)op1)[0] = 1/d;
@@ -2214,7 +2214,7 @@ NPY_NO_EXPORT void
     UNARY_LOOP {
         const @ftype@ in1r = ((@ftype@ *)ip1)[0];
         const @ftype@ in1i = ((@ftype@ *)ip1)[1];
-        *((@ftype@ *)op1) = npy_hypot@c@(in1r, in1i);
+        *((@ftype@ *)op1) = npymath_hypot@c@(in1r, in1i);
     }
 }
 #endif
@@ -2225,7 +2225,7 @@ NPY_NO_EXPORT void
     UNARY_LOOP {
         const @ftype@ in1r = ((@ftype@ *)ip1)[0];
         const @ftype@ in1i = ((@ftype@ *)ip1)[1];
-        *((@ftype@ *)op1) = npy_atan2@c@(in1i, in1r);
+        *((@ftype@ *)op1) = npymath_atan2@c@(in1i, in1r);
     }
 }
 
@@ -2235,16 +2235,16 @@ NPY_NO_EXPORT void
     UNARY_LOOP {
         const @ftype@ in_r = ((@ftype@ *)ip1)[0];
         const @ftype@ in_i = ((@ftype@ *)ip1)[1];
-        const @ftype@ in_abs = npy_hypot@c@(in_r, in_i);
-        if (NPY_UNLIKELY(npy_isnan(in_abs))) {
-            ((@ftype@ *)op1)[0] = NPY_NAN@C@;
-            ((@ftype@ *)op1)[1] = NPY_NAN@C@;
+        const @ftype@ in_abs = npymath_hypot@c@(in_r, in_i);
+        if (NPY_UNLIKELY(npymath_isnan(in_abs))) {
+            ((@ftype@ *)op1)[0] = NPYMATH_NAN@C@;
+            ((@ftype@ *)op1)[1] = NPYMATH_NAN@C@;
         }
-        else if (NPY_UNLIKELY(npy_isinf(in_abs))) {
-            if (npy_isinf(in_r)) {
-                if (npy_isinf(in_i)) {
-                    ((@ftype@ *)op1)[0] = NPY_NAN@C@;
-                    ((@ftype@ *)op1)[1] = NPY_NAN@C@;
+        else if (NPY_UNLIKELY(npymath_isinf(in_abs))) {
+            if (npymath_isinf(in_r)) {
+                if (npymath_isinf(in_i)) {
+                    ((@ftype@ *)op1)[0] = NPYMATH_NAN@C@;
+                    ((@ftype@ *)op1)[1] = NPYMATH_NAN@C@;
                 }
                 else {
                     ((@ftype@ *)op1)[0] = in_r > 0 ? 1.: -1.;
@@ -2279,14 +2279,14 @@ NPY_NO_EXPORT void
         @ftype@ in1i = ((@ftype@ *)ip1)[1];
         const @ftype@ in2r = ((@ftype@ *)ip2)[0];
         const @ftype@ in2i = ((@ftype@ *)ip2)[1];
-        if ( !(npy_isnan(in1r) || npy_isnan(in1i) || @OP@(in1r, in1i, in2r, in2i))) {
+        if ( !(npymath_isnan(in1r) || npymath_isnan(in1i) || @OP@(in1r, in1i, in2r, in2i))) {
             in1r = in2r;
             in1i = in2i;
         }
         ((@ftype@ *)op1)[0] = in1r;
         ((@ftype@ *)op1)[1] = in1i;
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
+    npymath_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 
@@ -2302,7 +2302,7 @@ NPY_NO_EXPORT void
         const @ftype@ in1i = ((@ftype@ *)ip1)[1];
         const @ftype@ in2r = ((@ftype@ *)ip2)[0];
         const @ftype@ in2i = ((@ftype@ *)ip2)[1];
-        if (npy_isnan(in2r) || npy_isnan(in2i) || @OP@(in1r, in1i, in2r, in2i)) {
+        if (npymath_isnan(in2r) || npymath_isnan(in2i) || @OP@(in1r, in1i, in2r, in2i)) {
             ((@ftype@ *)op1)[0] = in1r;
             ((@ftype@ *)op1)[1] = in1i;
         }
@@ -2311,7 +2311,7 @@ NPY_NO_EXPORT void
             ((@ftype@ *)op1)[1] = in2i;
         }
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
+    npymath_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 

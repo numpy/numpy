@@ -9,10 +9,10 @@ from numpy._core._multiarray_umath import __cpu_baseline__
 def check_floatstatus(divbyzero=False, overflow=False,
                       underflow=False, invalid=False,
                       all=False):
-    #define NPY_FPE_DIVIDEBYZERO  1
-    #define NPY_FPE_OVERFLOW      2
-    #define NPY_FPE_UNDERFLOW     4
-    #define NPY_FPE_INVALID       8
+    #define NPYMATH_FPE_DIVIDEBYZERO  1
+    #define NPYMATH_FPE_OVERFLOW      2
+    #define NPYMATH_FPE_UNDERFLOW     4
+    #define NPYMATH_FPE_INVALID       8
     err = get_floatstatus()
     ret = (all or divbyzero) and (err & 1) != 0
     ret |= (all or overflow) and (err & 2) != 0

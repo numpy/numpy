@@ -20,6 +20,9 @@ npy_path = run_command(py, [
     'import os; os.chdir(".."); import numpy; print(os.path.dirname(numpy.__file__).removesuffix("numpy"))'
     ], check: true).stdout().strip()
 
+libnpymath_dir = npy_include_path / '..' / 'lib'
+libnpymath = cc.find_library('npymath', dirs: libnpymath_dir)
+
 # TODO: This is a hack due to gh-25135, where cython may not find the right
 #       __init__.pyd file.
 add_project_arguments('-I', npy_path, language : 'cython')
@@ -34,4 +37,5 @@ py.extension_module(
       '-DNPY_TARGET_VERSION=NPY_2_0_API_VERSION',
     ],
     include_directories: [npy_include_path],
+    dependencies: libnpymath,
 )

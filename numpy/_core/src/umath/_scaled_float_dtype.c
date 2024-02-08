@@ -20,7 +20,7 @@
 
 #include "array_method.h"
 #include "common.h"
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 #include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "dispatching.h"
@@ -271,7 +271,7 @@ static PyArray_DTypeMeta PyArray_SFloatDType = {{{
  */
 static int
 check_factor(double factor) {
-    if (npy_isfinite(factor) && factor != 0.) {
+    if (npymath_isfinite(factor) && factor != 0.) {
         return 0;
     }
     npy_gil_error(PyExc_TypeError,
@@ -649,7 +649,7 @@ add_sfloats_resolve_descriptors(
     if (fin1 == fout && fin2 == fout) {
         return NPY_NO_CASTING;
     }
-    if (npy_fabs(fin1) == npy_fabs(fout) && npy_fabs(fin2) == npy_fabs(fout)) {
+    if (npymath_fabs(fin1) == npymath_fabs(fout) && npymath_fabs(fin2) == npymath_fabs(fout)) {
         return NPY_EQUIV_CASTING;
     }
     return NPY_SAME_KIND_CASTING;

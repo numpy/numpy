@@ -9,7 +9,7 @@
 
 #include <float.h>
 
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 #include "simd/simd.h"
 #include "npy_svml.h"
 #include "loops_utils.h"
@@ -434,9 +434,9 @@ simd_exp_FLOAT(npy_float * op,
     @vtype@ exp_q1 = _mm@vsize@_set1_ps(NPY_COEFF_Q1_EXPf);
     @vtype@ exp_q2 = _mm@vsize@_set1_ps(NPY_COEFF_Q2_EXPf);
     @vtype@ cvt_magic = _mm@vsize@_set1_ps(NPY_RINT_CVT_MAGICf);
-    @vtype@ log2e = _mm@vsize@_set1_ps(NPY_LOG2Ef);
-    @vtype@ inf = _mm@vsize@_set1_ps(NPY_INFINITYF);
-    @vtype@ ninf = _mm@vsize@_set1_ps(-1*NPY_INFINITYF);
+    @vtype@ log2e = _mm@vsize@_set1_ps(NPYMATH_LOG2Ef);
+    @vtype@ inf = _mm@vsize@_set1_ps(NPYMATH_INFINITYF);
+    @vtype@ ninf = _mm@vsize@_set1_ps(-1*NPYMATH_INFINITYF);
     @vtype@ zeros_f = _mm@vsize@_set1_ps(0.0f);
     @vtype@ poly, num_poly, denom_poly, quadrant;
     @vtype@i vindex = _mm@vsize@_loadu_si@vsize@((@vtype@i*)&indexarr[0]);
@@ -507,7 +507,7 @@ simd_exp_FLOAT(npy_float * op,
          * elem < xmin; return 0.0f
          * elem = +/- nan, return nan
          */
-        poly = @isa@_set_masked_lanes_ps(poly, _mm@vsize@_set1_ps(NPY_NANF), nan_mask);
+        poly = @isa@_set_masked_lanes_ps(poly, _mm@vsize@_set1_ps(NPYMATH_NANF), nan_mask);
         poly = @isa@_set_masked_lanes_ps(poly, inf, xmax_mask);
         poly = @isa@_set_masked_lanes_ps(poly, zeros_f, xmin_mask);
 
@@ -519,11 +519,11 @@ simd_exp_FLOAT(npy_float * op,
     }
 
     if (@mask_to_int@(overflow_mask)) {
-        npy_set_floatstatus_overflow();
+        npymath_set_floatstatus_overflow();
     }
 
     if (@mask_to_int@(underflow_mask)) {
-        npy_set_floatstatus_underflow();
+        npymath_set_floatstatus_underflow();
     }
 }
 
@@ -573,11 +573,11 @@ simd_log_FLOAT(npy_float * op,
     @vtype@ log_q3 = _mm@vsize@_set1_ps(NPY_COEFF_Q3_LOGf);
     @vtype@ log_q4 = _mm@vsize@_set1_ps(NPY_COEFF_Q4_LOGf);
     @vtype@ log_q5 = _mm@vsize@_set1_ps(NPY_COEFF_Q5_LOGf);
-    @vtype@ loge2 = _mm@vsize@_set1_ps(NPY_LOGE2f);
-    @vtype@ nan = _mm@vsize@_set1_ps(NPY_NANF);
-    @vtype@ neg_nan = _mm@vsize@_set1_ps(-NPY_NANF);
-    @vtype@ neg_inf = _mm@vsize@_set1_ps(-NPY_INFINITYF);
-    @vtype@ inf = _mm@vsize@_set1_ps(NPY_INFINITYF);
+    @vtype@ loge2 = _mm@vsize@_set1_ps(NPYMATH_LOGE2f);
+    @vtype@ nan = _mm@vsize@_set1_ps(NPYMATH_NANF);
+    @vtype@ neg_nan = _mm@vsize@_set1_ps(-NPYMATH_NANF);
+    @vtype@ neg_inf = _mm@vsize@_set1_ps(-NPYMATH_INFINITYF);
+    @vtype@ inf = _mm@vsize@_set1_ps(NPYMATH_INFINITYF);
     @vtype@ zeros_f = _mm@vsize@_set1_ps(0.0f);
     @vtype@ ones_f = _mm@vsize@_set1_ps(1.0f);
     @vtype@i vindex = _mm@vsize@_loadu_si@vsize@((@vtype@i*)indexarr);
@@ -619,7 +619,7 @@ simd_log_FLOAT(npy_float * op,
         x = @isa@_get_mantissa(x);
 
         /* if x < sqrt(2) {exp = exp-1; x = 2*x} */
-        sqrt2_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(NPY_SQRT1_2f), _CMP_LE_OQ);
+        sqrt2_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(NPYMATH_SQRT1_2f), _CMP_LE_OQ);
         x = @isa@_blend(x, _mm@vsize@_add_ps(x,x), sqrt2_mask);
         exponent = @isa@_blend(exponent,
                                _mm@vsize@_sub_ps(exponent,ones_f), sqrt2_mask);
@@ -659,10 +659,10 @@ simd_log_FLOAT(npy_float * op,
     }
 
     if (@mask_to_int@(invalid_mask)) {
-        npy_set_floatstatus_invalid();
+        npymath_set_floatstatus_invalid();
     }
     if (@mask_to_int@(divide_by_zero_mask)) {
-        npy_set_floatstatus_divbyzero();
+        npymath_set_floatstatus_divbyzero();
     }
 }
 #endif // @CHK@
@@ -748,8 +748,8 @@ AVX512F_exp_DOUBLE(npy_double * op,
     __m512d mTH_nearzero = _mm512_set1_pd(0x1p-54);
     __m512d mTH_max = _mm512_set1_pd(0x1.62e42fefa39efp+9);
     __m512d mTH_min = _mm512_set1_pd(-0x1.74910d52d3053p+9);
-    __m512d mTH_inf = _mm512_set1_pd(NPY_INFINITY);
-    __m512d mTH_ninf = _mm512_set1_pd(-NPY_INFINITY);
+    __m512d mTH_inf = _mm512_set1_pd(NPYMATH_INFINITY);
+    __m512d mTH_ninf = _mm512_set1_pd(-NPYMATH_INFINITY);
     __m512d zeros_d = _mm512_set1_pd(0.0f);
     __m512d ones_d = _mm512_set1_pd(1.0f);
     __m256i vindex = _mm256_loadu_si256((__m256i*)&indexarr[0]);
@@ -842,7 +842,7 @@ AVX512F_exp_DOUBLE(npy_double * op,
         /* return special cases */
         res = avx512_set_masked_lanes_pd(res, _mm512_add_pd(x, ones_d),
                                         nearzero_mask);
-        res = avx512_set_masked_lanes_pd(res, _mm512_set1_pd(NPY_NAN),
+        res = avx512_set_masked_lanes_pd(res, _mm512_set1_pd(NPYMATH_NAN),
                                         nan_mask);
         res = avx512_set_masked_lanes_pd(res, mTH_inf, xmax_mask);
         res = avx512_set_masked_lanes_pd(res, zeros_d, xmin_mask);
@@ -862,11 +862,11 @@ AVX512F_exp_DOUBLE(npy_double * op,
      * - https://github.com/numpy/numpy/issues/20356
      */
     if (npyv_tobits_b64(overflow_mask)) {
-        npy_set_floatstatus_overflow();
+        npymath_set_floatstatus_overflow();
     }
 
     if (npyv_tobits_b64(underflow_mask)) {
-        npy_set_floatstatus_underflow();
+        npymath_set_floatstatus_underflow();
     }
 }
 /*
@@ -884,7 +884,7 @@ AVX512F_exp_DOUBLE(npy_double * op,
  * 2) if x < 0; return NAN
  * 3) if x is INF; return INF
  * 4) if x is NAN; return NAN
- * 5) if x on (1.0 - 0x1p-4, 1.0 + 0x1.09p-4), calling npy_log()
+ * 5) if x on (1.0 - 0x1p-4, 1.0 + 0x1.09p-4), calling npymath_log()
  * 6) Range reduction:
  *    log(x) = log(2^m * z)
  *           = mln2 + log(z)
@@ -938,11 +938,11 @@ AVX512F_log_DOUBLE(npy_double * op,
 
     __m512d zeros_d = _mm512_set1_pd(0.0f);
     __m512d ones_d = _mm512_set1_pd(1.0f);
-    __m512d mInf = _mm512_set1_pd(NPY_INFINITY);
+    __m512d mInf = _mm512_set1_pd(NPYMATH_INFINITY);
     __m512d mInv64 = _mm512_castsi512_pd(_mm512_set1_epi64(0x3f90000000000000));
-    __m512d mNeg_nan = _mm512_set1_pd(-NPY_NAN);
-    __m512d mNan = _mm512_set1_pd(NPY_NAN);
-    __m512d mNeg_inf = _mm512_set1_pd(-NPY_INFINITY);
+    __m512d mNeg_nan = _mm512_set1_pd(-NPYMATH_NAN);
+    __m512d mNan = _mm512_set1_pd(NPYMATH_NAN);
+    __m512d mNeg_inf = _mm512_set1_pd(-NPYMATH_INFINITY);
     __m512d mA1 = _mm512_set1_pd(NPY_TANG_LOG_A1);
     __m512d mA2 = _mm512_set1_pd(NPY_TANG_LOG_A2);
     __m512d mA3 = _mm512_set1_pd(NPY_TANG_LOG_A3);
@@ -1081,7 +1081,7 @@ AVX512F_log_DOUBLE(npy_double * op,
 
             for (int ii = 0; ii < 8; ++ii, glibc_mask >>= 1) {
                 if (glibc_mask & 0x01) {
-                    op[ii] = npy_log(ip_fback[ii]);
+                    op[ii] = npymath_log(ip_fback[ii]);
                 }
             }
         }
@@ -1091,10 +1091,10 @@ AVX512F_log_DOUBLE(npy_double * op,
     }
 
     if (npyv_tobits_b64(invalid_mask)) {
-        npy_set_floatstatus_invalid();
+        npymath_set_floatstatus_invalid();
     }
     if (npyv_tobits_b64(divide_by_zero_mask)) {
-        npy_set_floatstatus_divbyzero();
+        npymath_set_floatstatus_divbyzero();
     }
 }
 
@@ -1276,7 +1276,7 @@ AVX512_SKX_frexp_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const 
  ********************************************************************************/
 /**begin repeat
  * #func = exp, log#
- * #scalarf = npy_expf, npy_logf#
+ * #scalarf = npymath_expf, npymath_logf#
  */
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(FLOAT_@func@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
@@ -1309,7 +1309,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(FLOAT_@func@)
 
 /**begin repeat
  * #func = exp, log#
- * #scalar = npy_exp, npy_log#
+ * #scalar = npymath_exp, npymath_log#
  */
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(DOUBLE_@func@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
@@ -1362,7 +1362,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_frexp)
 #endif
     UNARY_LOOP_TWO_OUT {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = npy_frexp@c@(in1, (int *)op2);
+        *((@type@ *)op1) = npymath_frexp@c@(in1, (int *)op2);
     }
 }
 
@@ -1378,7 +1378,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_ldexp)
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const int in2 = *(int *)ip2;
-        *((@type@ *)op1) = npy_ldexp@c@(in1, in2);
+        *((@type@ *)op1) = npymath_ldexp@c@(in1, in2);
     }
 }
 /**end repeat**/

@@ -16,7 +16,7 @@
 #define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include <float.h>
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 #include "simd/simd.h"
 #include "loops_utils.h"
 #include "loops.h"
@@ -496,7 +496,7 @@ static void simd_unary_@kind@_@TYPE@_@STYPE@_@DTYPE@
 
     // Scalar loop to finish off
     for (; len > 0; --len, ip += istride, op += ostride) {
-        *op = (npy_@kind@(*ip) != 0);
+        *op = (npymath_@kind@(*ip) != 0);
     }
 
     npyv_cleanup();
@@ -555,11 +555,11 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
     {
     UNARY_LOOP {
         const npyv_lanetype_@sfx@ in = *(npyv_lanetype_@sfx@ *)ip1;
-        *((npy_bool *)op1) = (npy_@kind@(in) != 0);
+        *((npy_bool *)op1) = (npymath_@kind@(in) != 0);
     }
     }
 
-    npy_clear_floatstatus_barrier((char*)dimensions);
+    npymath_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 /**end repeat**/

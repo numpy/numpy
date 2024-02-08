@@ -23,7 +23,7 @@
 #include "numpy/npy_3kcompat.h"
 #include "abstract.h"
 
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 #include "number.h"
 #include "dispatching.h"
 #include "string_ufuncs.h"
@@ -247,11 +247,11 @@ int initumath(PyObject *m)
         return -1;
     }
 
-    PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(NPY_PI));
+    PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(NPYMATH_PI));
     Py_DECREF(s);
-    PyDict_SetItemString(d, "e", s = PyFloat_FromDouble(NPY_E));
+    PyDict_SetItemString(d, "e", s = PyFloat_FromDouble(NPYMATH_E));
     Py_DECREF(s);
-    PyDict_SetItemString(d, "euler_gamma", s = PyFloat_FromDouble(NPY_EULER));
+    PyDict_SetItemString(d, "euler_gamma", s = PyFloat_FromDouble(NPYMATH_EULER));
     Py_DECREF(s);
 
 #define ADDCONST(str) PyModule_AddIntConstant(m, #str, UFUNC_##str)
@@ -273,11 +273,11 @@ int initumath(PyObject *m)
     Py_INCREF(npy_extobj_contextvar);
     PyModule_AddObject(m, "_extobj_contextvar", npy_extobj_contextvar);
 
-    PyModule_AddObject(m, "PINF", PyFloat_FromDouble(NPY_INFINITY));
-    PyModule_AddObject(m, "NINF", PyFloat_FromDouble(-NPY_INFINITY));
-    PyModule_AddObject(m, "PZERO", PyFloat_FromDouble(NPY_PZERO));
-    PyModule_AddObject(m, "NZERO", PyFloat_FromDouble(NPY_NZERO));
-    PyModule_AddObject(m, "NAN", PyFloat_FromDouble(NPY_NAN));
+    PyModule_AddObject(m, "PINF", PyFloat_FromDouble(NPYMATH_INFINITY));
+    PyModule_AddObject(m, "NINF", PyFloat_FromDouble(-NPYMATH_INFINITY));
+    PyModule_AddObject(m, "PZERO", PyFloat_FromDouble(NPYMATH_PZERO));
+    PyModule_AddObject(m, "NZERO", PyFloat_FromDouble(NPYMATH_NZERO));
+    PyModule_AddObject(m, "NAN", PyFloat_FromDouble(NPYMATH_NAN));
 
     s = PyDict_GetItemString(d, "divide");
     PyDict_SetItemString(d, "true_divide", s);

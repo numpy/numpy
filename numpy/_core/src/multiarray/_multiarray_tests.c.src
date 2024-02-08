@@ -6,8 +6,8 @@
 #define _NPY_NO_DEPRECATIONS /* for NPY_CHAR */
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
-#include "numpy/npy_math.h"
-#include "numpy/halffloat.h"
+#include "libnpymath/npy_math.h"
+#include "libnpymath/halffloat.h"
 #include "common.h"
 #include "npy_argparse.h"
 #include "mem_overlap.h"
@@ -1898,7 +1898,7 @@ call_npy_@name@@suffix@(PyObject *NPY_UNUSED(self), PyObject *args)
     }
 
     *(@otype@*)PyArray_DATA((PyArrayObject *)w_arr) =
-        npy_@name@@suffix@(*(@itype@*)PyArray_DATA((PyArrayObject *)z_arr));
+        npymath_@name@@suffix@(*(@itype@*)PyArray_DATA((PyArrayObject *)z_arr));
 
     Py_DECREF(z_arr);
     return w_arr;
@@ -1939,7 +1939,7 @@ call_npy_@name@@suffix@(PyObject *NPY_UNUSED(self), PyObject *args)
     }
 
     *(@type@*)PyArray_DATA((PyArrayObject *)w_arr) =
-        npy_@name@@suffix@(*(@type@*)PyArray_DATA((PyArrayObject *)z_arr));
+        npymath_@name@@suffix@(*(@type@*)PyArray_DATA((PyArrayObject *)z_arr));
 
     Py_DECREF(z_arr);
     return w_arr;
@@ -1961,7 +1961,7 @@ PrintFloat_Printf_g(PyObject *obj, int precision)
     if (PyArray_IsScalar(obj, Half)) {
         npy_half x = PyArrayScalar_VAL(obj, Half);
         PyOS_snprintf(str, sizeof(str), "%.*g", precision,
-                      npy_half_to_double(x));
+                      npymath_half_to_double(x));
     }
     else if (PyArray_IsScalar(obj, Float)) {
         npy_float x = PyArrayScalar_VAL(obj, Float);

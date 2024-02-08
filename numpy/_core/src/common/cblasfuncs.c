@@ -9,7 +9,7 @@
 #include <Python.h>
 
 #include "numpy/arrayobject.h"
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 #include "npy_cblas.h"
 #include "arraytypes.h"
 #include "common.h"
@@ -423,10 +423,10 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
                 ptr1 = (npy_cdouble *)PyArray_DATA(ap2);
                 ptr2 = (npy_cdouble *)PyArray_DATA(ap1);
                 res = (npy_cdouble *)PyArray_DATA(out_buf);
-                npy_csetreal(res, npy_creal(ptr1) * npy_creal(ptr2)
-                                            - npy_cimag(ptr1) * npy_cimag(ptr2));
-                npy_csetimag(res, npy_creal(ptr1) * npy_cimag(ptr2)
-                                            + npy_cimag(ptr1) * npy_creal(ptr2));
+                npymath_csetreal(res, npymath_creal(ptr1) * npymath_creal(ptr2)
+                                            - npymath_cimag(ptr1) * npymath_cimag(ptr2));
+                npymath_csetimag(res, npymath_creal(ptr1) * npymath_cimag(ptr2)
+                                            + npymath_cimag(ptr1) * npymath_creal(ptr2));
             }
             else if (ap1shape != _matrix) {
                 CBLAS_FUNC(cblas_zaxpy)(l,
@@ -498,10 +498,10 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
                 ptr1 = (npy_cfloat *)PyArray_DATA(ap2);
                 ptr2 = (npy_cfloat *)PyArray_DATA(ap1);
                 res = (npy_cfloat *)PyArray_DATA(out_buf);
-                npy_csetrealf(res, npy_crealf(ptr1) * npy_crealf(ptr2)
-                                           - npy_cimagf(ptr1) * npy_cimagf(ptr2));
-                npy_csetimagf(res, npy_crealf(ptr1) * npy_cimagf(ptr2)
-                                           + npy_cimagf(ptr1) * npy_crealf(ptr2));
+                npymath_csetrealf(res, npymath_crealf(ptr1) * npymath_crealf(ptr2)
+                                           - npymath_cimagf(ptr1) * npymath_cimagf(ptr2));
+                npymath_csetimagf(res, npymath_crealf(ptr1) * npymath_cimagf(ptr2)
+                                           + npymath_cimagf(ptr1) * npymath_crealf(ptr2));
             }
             else if (ap1shape != _matrix) {
                 CBLAS_FUNC(cblas_caxpy)(l,

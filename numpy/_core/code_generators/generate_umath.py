@@ -17,7 +17,7 @@ True_ = "(Py_INCREF(Py_True), Py_True)"
 False_ = "(Py_INCREF(Py_False), Py_False)"
 None_ = object()
 AllOnes = "PyLong_FromLong(-1)"
-MinusInfinity = 'PyFloat_FromDouble(-NPY_INFINITY)'
+MinusInfinity = 'PyFloat_FromDouble(-NPYMATH_INFINITY)'
 ReorderableNone = "(Py_INCREF(Py_None), Py_None)"
 
 class docstrings:
@@ -139,10 +139,10 @@ def check_td_order(tds):
 
 
 _floatformat_map = dict(
-    e='npy_%sf',
-    f='npy_%sf',
-    d='npy_%s',
-    g='npy_%sl',
+    e='npymath_%sf',
+    f='npymath_%sf',
+    d='npymath_%s',
+    g='npymath_%sl',
     F='nc_%sf',
     D='nc_%s',
     G='nc_%sl'

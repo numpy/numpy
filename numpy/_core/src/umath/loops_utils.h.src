@@ -2,7 +2,7 @@
 #define _NPY_UMATH_LOOPS_UTILS_H_
 
 #include "numpy/npy_common.h" // NPY_FINLINE
-#include "numpy/halffloat.h" // npy_half_to_float
+#include "libnpymath/halffloat.h" // npymath_half_to_float
 
 /**
  * Old versions of MSVC causes ambiguous link errors when we deal with large SIMD kernels
@@ -66,7 +66,7 @@ is_mem_overlap(const void *src, npy_intp src_step, const void *dst, npy_intp dst
  *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE, HALF#
  *  #c = f, , l, #
  *  #C = F, , L, #
- *  #trf = , , , npy_half_to_float#
+ *  #trf = , , , npymath_half_to_float#
  */
 
 /*

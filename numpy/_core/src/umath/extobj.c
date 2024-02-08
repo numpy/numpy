@@ -61,7 +61,7 @@ _error_handler(const char *name, int method, PyObject *pyfunc, char *errtype,
                int retstatus);
 
 
-#define HANDLEIT(NAME, str) {if (retstatus & NPY_FPE_##NAME) {          \
+#define HANDLEIT(NAME, str) {if (retstatus & NPYMATH_FPE_##NAME) {          \
             handle = errmask & UFUNC_MASK_##NAME;                       \
             if (handle &&                                               \
                 _error_handler(name, handle >> UFUNC_SHIFT_##NAME,      \
@@ -509,7 +509,7 @@ _extract_pyvals(int *bufsize, int *errmask, PyObject **pyfunc)
 /*
  * Handler which uses the default `np.errstate` given that `fpe_errors` is
  * already set.  `fpe_errors` is typically the (nonzero) result of
- * `npy_get_floatstatus_barrier`.
+ * `npymath_get_floatstatus_barrier`.
  *
  * Returns -1 on failure (an error was raised) and 0 on success.
  */
@@ -548,7 +548,7 @@ _check_ufunc_fperr(int errmask, const char *ufunc_name) {
     if (!errmask) {
         return 0;
     }
-    fperr = npy_get_floatstatus_barrier((char*)ufunc_name);
+    fperr = npymath_get_floatstatus_barrier((char*)ufunc_name);
     if (!fperr) {
         return 0;
     }

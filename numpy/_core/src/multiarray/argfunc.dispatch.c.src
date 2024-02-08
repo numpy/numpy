@@ -10,7 +10,7 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "simd/simd.h"
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 
 #include "arraytypes.h"
 
@@ -260,7 +260,7 @@ scalar_loop:
             s_acc = a;
             ret_idx = i;
         #if @is_fp@
-            if (npy_isnan(s_acc)) {
+            if (npymath_isnan(s_acc)) {
                 // nan encountered, it's maximal
                 return ret_idx;
             }
@@ -319,7 +319,7 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
 (@type@ *ip, npy_intp n, npy_intp *mindx, PyArrayObject *NPY_UNUSED(aip))
 {
 #if @is_fp@
-    if (npy_isnan(*ip)) {
+    if (npymath_isnan(*ip)) {
         // nan encountered; it's maximal|minimal
         *mindx = 0;
         return 0;
@@ -343,7 +343,7 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
             mp = a;
             *mindx = i;
         #if @is_fp@
-            if (npy_isnan(mp)) {
+            if (npymath_isnan(mp)) {
                 // nan encountered, it's maximal|minimal
                 break;
             }

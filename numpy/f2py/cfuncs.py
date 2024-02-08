@@ -49,7 +49,7 @@ includes0['setjmp.h'] = '#include <setjmp.h>'
 
 includes['arrayobject.h'] = '''#define PY_ARRAY_UNIQUE_SYMBOL PyArray_API
 #include "arrayobject.h"'''
-includes['npy_math.h'] = '#include "numpy/npy_math.h"'
+includes['npy_math.h'] = '#include "libnpymath/npy_math.h"'
 
 includes['arrayobject.h'] = '#include "fortranobject.h"'
 includes['stdarg.h'] = '#include <stdarg.h>'
@@ -1115,8 +1115,8 @@ complex_long_double_from_pyobj(complex_long_double* v, PyObject *obj, const char
             return 1;
         }
         else if (PyArray_Check(obj) && PyArray_TYPE(obj)==NPY_CLONGDOUBLE) {
-            (*v).r = npy_creall((((npy_clongdouble *)PyArray_DATA(obj))));
-            (*v).i = npy_cimagl((((npy_clongdouble *)PyArray_DATA(obj))));
+            (*v).r = npymath_creall((((npy_clongdouble *)PyArray_DATA(obj))));
+            (*v).i = npymath_cimagl((((npy_clongdouble *)PyArray_DATA(obj))));
             return 1;
         }
     }
@@ -1145,14 +1145,14 @@ complex_double_from_pyobj(complex_double* v, PyObject *obj, const char *errmess)
         if (PyArray_IsScalar(obj, CFloat)) {
             npy_cfloat new;
             PyArray_ScalarAsCtype(obj, &new);
-            (*v).r = (double)npy_crealf(&new);
-            (*v).i = (double)npy_cimagf(&new);
+            (*v).r = (double)npymath_crealf(&new);
+            (*v).i = (double)npymath_cimagf(&new);
         }
         else if (PyArray_IsScalar(obj, CLongDouble)) {
             npy_clongdouble new;
             PyArray_ScalarAsCtype(obj, &new);
-            (*v).r = (double)npy_creall(&new);
-            (*v).i = (double)npy_cimagl(&new);
+            (*v).r = (double)npymath_creall(&new);
+            (*v).i = (double)npymath_cimagl(&new);
         }
         else { /* if (PyArray_IsScalar(obj, CDouble)) */
             PyArray_ScalarAsCtype(obj, v);
@@ -1170,8 +1170,8 @@ complex_double_from_pyobj(complex_double* v, PyObject *obj, const char *errmess)
         if (arr == NULL) {
             return 0;
         }
-        (*v).r = npy_creal((((npy_cdouble *)PyArray_DATA(arr))));
-        (*v).i = npy_cimag((((npy_cdouble *)PyArray_DATA(arr))));
+        (*v).r = npymath_creal((((npy_cdouble *)PyArray_DATA(arr))));
+        (*v).i = npymath_cimag((((npy_cdouble *)PyArray_DATA(arr))));
         Py_DECREF(arr);
         return 1;
     }

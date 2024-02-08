@@ -431,7 +431,7 @@ is the primary thing that must be changed to create your own ufunc.
         #include <Python.h>
         #include "numpy/ndarraytypes.h"
         #include "numpy/ufuncobject.h"
-        #include "numpy/halffloat.h"
+        #include "libnpymath/halffloat.h"
         #include <math.h>
 
         /*
@@ -539,10 +539,10 @@ is the primary thing that must be changed to create your own ufunc.
             for (i = 0; i < n; i++) {
 
                 /* BEGIN main ufunc computation */
-                tmp = npy_half_to_float(*(npy_half *)in);
+                tmp = npymath_half_to_float(*(npy_half *)in);
                 tmp /= 1 - tmp;
                 tmp = logf(tmp);
-                *((npy_half *)out) = npy_float_to_half(tmp);
+                *((npy_half *)out) = npymath_float_to_half(tmp);
                 /* END main ufunc computation */
 
                 in += in_step;
@@ -697,7 +697,7 @@ as well as all other properties of a ufunc.
         #include <Python.h>
         #include "numpy/ndarraytypes.h"
         #include "numpy/ufuncobject.h"
-        #include "numpy/halffloat.h"
+        #include "libnpymath/halffloat.h"
         #include <math.h>
 
         /*

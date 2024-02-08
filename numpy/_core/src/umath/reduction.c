@@ -341,7 +341,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     needs_api |= NpyIter_IterationNeedsAPI(iter);
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* Start with the floating-point exception flags cleared */
-        npy_clear_floatstatus_barrier((char*)&iter);
+        npymath_clear_floatstatus_barrier((char*)&iter);
     }
 
     /*

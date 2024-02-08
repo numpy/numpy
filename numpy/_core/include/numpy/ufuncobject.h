@@ -1,7 +1,7 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY_UFUNCOBJECT_H_
 #define NUMPY_CORE_INCLUDE_NUMPY_UFUNCOBJECT_H_
 
-#include <numpy/npy_math.h>
+#include <libnpymath/npy_math.h>
 #include <numpy/npy_common.h>
 
 #ifdef __cplusplus
@@ -281,13 +281,13 @@ typedef struct _loop1d_info {
  * THESE MACROS ARE DEPRECATED.
  * Use npy_set_floatstatus_* in the npymath library.
  */
-#define UFUNC_FPE_DIVIDEBYZERO  NPY_FPE_DIVIDEBYZERO
-#define UFUNC_FPE_OVERFLOW      NPY_FPE_OVERFLOW
-#define UFUNC_FPE_UNDERFLOW     NPY_FPE_UNDERFLOW
-#define UFUNC_FPE_INVALID       NPY_FPE_INVALID
+#define UFUNC_FPE_DIVIDEBYZERO  NPYMATH_FPE_DIVIDEBYZERO
+#define UFUNC_FPE_OVERFLOW      NPYMATH_FPE_OVERFLOW
+#define UFUNC_FPE_UNDERFLOW     NPYMATH_FPE_UNDERFLOW
+#define UFUNC_FPE_INVALID       NPYMATH_FPE_INVALID
 
-#define generate_divbyzero_error() npy_set_floatstatus_divbyzero()
-#define generate_overflow_error() npy_set_floatstatus_overflow()
+#define generate_divbyzero_error() npymath_set_floatstatus_divbyzero()
+#define generate_overflow_error() npymath_set_floatstatus_overflow()
 
   /* Make sure it gets defined if it isn't already */
 #ifndef UFUNC_NOFPE

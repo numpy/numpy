@@ -1,7 +1,7 @@
 /*@targets
  ** $maxopt baseline avx512_skx avx512_spr
  */
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 #include "simd/simd.h"
 #include "loops_utils.h"
 #include "loops.h"
@@ -179,8 +179,8 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(HALF_@func@)
 #endif // NPY_SIMD && NPY_CAN_LINK_SVML
 #endif // SPR or SKX
     UNARY_LOOP {
-        const npy_float in1 = npy_half_to_float(*(npy_half *)ip1);
-        *((npy_half *)op1) = npy_float_to_half(npy_@intrin@f(in1));
+        const npy_float in1 = npymath_half_to_float(*(npy_half *)ip1);
+        *((npy_half *)op1) = npymath_float_to_half(npymath_@intrin@f(in1));
     }
 }
 /**end repeat**/
@@ -215,7 +215,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
 #endif
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *(@type@ *)op1 = npy_@intrin@@vsub@(in1);
+        *(@type@ *)op1 = npymath_@intrin@@vsub@(in1);
     }
 }
 /**end repeat1**/
@@ -254,7 +254,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *(@type@ *)op1 = npy_@intrin@@vsub@(in1, in2);
+        *(@type@ *)op1 = npymath_@intrin@@vsub@(in1, in2);
     }
 }
 /**end repeat1**/

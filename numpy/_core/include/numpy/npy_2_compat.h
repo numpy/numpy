@@ -45,8 +45,8 @@
 #endif
 
 /*
- * New macros for accessing real and complex part of a complex number can be
- * found in "npy_2_complexcompat.h".
+ * New macros for functions in npymath, which became a separate library,
+ * can be found in npy_2_npymathcompat.h
  */
 
 

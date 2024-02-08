@@ -14,8 +14,8 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 #include "npy_pycompat.h"
-#include "numpy/npy_math.h"
-#include "numpy/halffloat.h"
+#include "libnpymath/npy_math.h"
+#include "libnpymath/halffloat.h"
 
 #include "npy_config.h"
 #include "npy_sort.h"
@@ -90,11 +90,11 @@ MyPyFloat_AsDouble(PyObject *obj)
     PyObject *num;
 
     if (obj == Py_None) {
-        return NPY_NAN;
+        return NPYMATH_NAN;
     }
     num = PyNumber_Float(obj);
     if (num == NULL) {
-        return NPY_NAN;
+        return NPYMATH_NAN;
     }
     ret = PyFloat_AS_DOUBLE(num);
     Py_DECREF(num);
@@ -107,8 +107,8 @@ MyPyFloat_AsFloat(PyObject *obj)
 {
     double d_val = MyPyFloat_AsDouble(obj);
     float res = (float)d_val;
-    if (NPY_UNLIKELY(npy_isinf(res) && !npy_isinf(d_val))) {
-        if (PyUFunc_GiveFloatingpointErrors("cast", NPY_FPE_OVERFLOW) < 0) {
+    if (NPY_UNLIKELY(npymath_isinf(res) && !npymath_isinf(d_val))) {
+        if (PyUFunc_GiveFloatingpointErrors("cast", NPYMATH_FPE_OVERFLOW) < 0) {
             return -1;
         }
     }
@@ -120,10 +120,10 @@ static npy_half
 MyPyFloat_AsHalf(PyObject *obj)
 {
     double d_val = MyPyFloat_AsDouble(obj);
-    npy_half res = npy_double_to_half(d_val);
-    if (NPY_UNLIKELY(npy_half_isinf(res) && !npy_isinf(d_val))) {
-        if (PyUFunc_GiveFloatingpointErrors("cast", NPY_FPE_OVERFLOW) < 0) {
-            return npy_double_to_half(-1.);
+    npy_half res = npymath_double_to_half(d_val);
+    if (NPY_UNLIKELY(npymath_half_isinf(res) && !npymath_isinf(d_val))) {
+        if (PyUFunc_GiveFloatingpointErrors("cast", NPYMATH_FPE_OVERFLOW) < 0) {
+            return npymath_double_to_half(-1.);
         }
     }
     return res;
@@ -132,7 +132,7 @@ MyPyFloat_AsHalf(PyObject *obj)
 static PyObject *
 MyPyFloat_FromHalf(npy_half h)
 {
-    return PyFloat_FromDouble(npy_half_to_double(h));
+    return PyFloat_FromDouble(npymath_half_to_double(h));
 }
 
 /* Handle case of assigning from an array scalar in setitem */
@@ -459,8 +459,8 @@ NPY_NO_EXPORT int
     }
     else {
         if (op == Py_None) {
-            oop.real = NPY_NAN;
-            oop.imag = NPY_NAN;
+            oop.real = NPYMATH_NAN;
+            oop.imag = NPYMATH_NAN;
         }
         else if (PyBytes_Check(op) || PyUnicode_Check(op)) {
             /*
@@ -501,14 +501,14 @@ NPY_NO_EXPORT int
                 return -1;
             }
         }
-        npy_csetreal@suffix@(&temp, (@ftype@) oop.real);
-        npy_csetimag@suffix@(&temp, (@ftype@) oop.imag);
+        npymath_csetreal@suffix@(&temp, (@ftype@) oop.real);
+        npymath_csetimag@suffix@(&temp, (@ftype@) oop.imag);
 
 #if NPY_SIZEOF_@NAME@ < NPY_SIZEOF_CDOUBLE  /* really just float... */
         /* Overflow could have occurred converting double to float */
-        if (NPY_UNLIKELY((npy_isinf(npy_creal@suffix@(&temp)) && !npy_isinf(oop.real)) ||
-                         (npy_isinf(npy_cimag@suffix@(&temp)) && !npy_isinf(oop.imag)))) {
-            if (PyUFunc_GiveFloatingpointErrors("cast", NPY_FPE_OVERFLOW) < 0) {
+        if (NPY_UNLIKELY((npymath_isinf(npymath_creal@suffix@(&temp)) && !npymath_isinf(oop.real)) ||
+                         (npymath_isinf(npymath_cimag@suffix@(&temp)) && !npymath_isinf(oop.imag)))) {
+            if (PyUFunc_GiveFloatingpointErrors("cast", NPYMATH_FPE_OVERFLOW) < 0) {
                 return -1;
             }
         }
@@ -1316,7 +1316,7 @@ static void
         volatile @type2@ f = *ip;
         @type1@ t;
         /* Avoid undefined behaviour and warning for NaN -> NaT */
-        if (npy_isnan(f)) {
+        if (npymath_isnan(f)) {
             t = (@type1@)NPY_DATETIME_NAT;
         }
         else {
@@ -1387,7 +1387,7 @@ static void
     npy_half *op = output;
 
     while (n--) {
-        *op++ = npy_float_to_half((float)(*ip++));
+        *op++ = npymath_float_to_half((float)(*ip++));
     }
 }
 
@@ -1400,11 +1400,11 @@ HALF_to_@TYPE@(void *input, void *output, npy_intp n,
 
     while (n--) {
         @type@ t;
-        if (npy_half_isnan(*ip)) {
+        if (npymath_half_isnan(*ip)) {
             t = (@type@)NPY_DATETIME_NAT;
         }
         else {
-            t = (@type@)npy_half_to_float(*ip);
+            t = (@type@)npymath_half_to_float(*ip);
         }
 
         ip++;
@@ -1648,7 +1648,7 @@ HALF_scan(FILE *fp, npy_half *ip, void *NPY_UNUSED(ignore),
     int ret;
 
     ret = NumPyOS_ascii_ftolf(fp, &result);
-    *ip = npy_double_to_half(result);
+    *ip = npymath_double_to_half(result);
     return ret;
 }
 
@@ -1701,7 +1701,7 @@ static int
     char next = getc(fp);
     if ((next == '+') || (next == '-')) {
         // Imaginary component specified
-        npy_csetreal@suffix@(&output, result);
+        npymath_csetreal@suffix@(&output, result);
         // Revert peek and read imaginary component
         ungetc(next, fp);
         ret_imag = NumPyOS_ascii_ftolf(fp, &result);
@@ -1709,23 +1709,23 @@ static int
         next = getc(fp);
         if ((ret_imag == 1) && (next == 'j')) {
             // If read is successful and the immediate following char is j
-            npy_csetimag@suffix@(&output, result);
+            npymath_csetimag@suffix@(&output, result);
         }
         else {
-            npy_csetimag@suffix@(&output, 0);
+            npymath_csetimag@suffix@(&output, 0);
             // Push an invalid char to trigger the not everything is read error
             ungetc('a', fp);
         }
     }
     else if (next == 'j') {
         // Real component not specified
-        npy_csetreal@suffix@(&output, 0);
-        npy_csetimag@suffix@(&output, result);
+        npymath_csetreal@suffix@(&output, 0);
+        npymath_csetimag@suffix@(&output, result);
     }
     else {
         // Imaginary component not specified
-        npy_csetreal@suffix@(&output, result);
-        npy_csetimag@suffix@(&output, 0.);
+        npymath_csetreal@suffix@(&output, result);
+        npymath_csetimag@suffix@(&output, 0.);
         // Next character is not + / - / j. Revert peek.
         ungetc(next, fp);
     }
@@ -1812,7 +1812,7 @@ HALF_fromstr(char *str, void *ip, char **endptr,
     double result;
 
     result = NumPyOS_ascii_strtod(str, endptr);
-    *(npy_half *)ip = npy_double_to_half(result);
+    *(npy_half *)ip = npymath_double_to_half(result);
     return 0;
 }
 
@@ -1843,14 +1843,14 @@ static int
 
     if (endptr && ((*endptr[0] == '+') || (*endptr[0] == '-'))) {
         // Imaginary component specified
-        npy_csetreal@suffix@(&output, result);
+        npymath_csetreal@suffix@(&output, result);
         // Reading imaginary component
         char **prev = endptr;
         str = *endptr;
         result = NumPyOS_ascii_strtod(str, endptr);
         if (endptr && *endptr[0] == 'j') {
             // Read is successful if the immediate following char is j
-            npy_csetimag@suffix@(&output, result);
+            npymath_csetimag@suffix@(&output, result);
             // Skip j
             ++*endptr;
         }
@@ -1860,20 +1860,20 @@ static int
              * read error
              */
             endptr = prev;
-            npy_csetimag@suffix@(&output, 0);
+            npymath_csetimag@suffix@(&output, 0);
         }
     }
     else if (endptr && *endptr[0] == 'j') {
         // Real component not specified
-        npy_csetreal@suffix@(&output, 0);
-        npy_csetimag@suffix@(&output, result);
+        npymath_csetreal@suffix@(&output, 0);
+        npymath_csetimag@suffix@(&output, result);
         // Skip j
         ++*endptr;
     }
     else {
         // Imaginary component not specified
-        npy_csetreal@suffix@(&output, result);
-        npy_csetimag@suffix@(&output, 0.);
+        npymath_csetreal@suffix@(&output, result);
+        npymath_csetimag@suffix@(&output, 0.);
     }
     *(@type@ *)ip = output;
     return 0;
@@ -2501,7 +2501,7 @@ UNICODE_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
  *         npy_half, npy_float, npy_double, npy_longdouble,
  *         npy_datetime, npy_timedelta#
  * #isfloat = 0*11, 1*4, 0*2#
- * #nonzero = _NONZERO*11, !npy_half_iszero, _NONZERO*5#
+ * #nonzero = _NONZERO*11, !npymath_half_iszero, _NONZERO*5#
  */
 static npy_bool
 @fname@_nonzero (char *ip, PyArrayObject *ap)
@@ -2539,13 +2539,13 @@ static npy_bool
 {
     if (ap == NULL || PyArray_ISBEHAVED_RO(ap)) {
         @type@ *ptmp = (@type@ *)ip;
-        return (npy_bool) ((npy_creal@suffix@(ptmp) != 0) || (npy_cimag@suffix@(ptmp) != 0));
+        return (npy_bool) ((npymath_creal@suffix@(ptmp) != 0) || (npymath_cimag@suffix@(ptmp) != 0));
     }
     else {
         @type@ tmp;
         PyArray_DESCR(ap)->f->copyswap(&tmp, ip, PyArray_ISBYTESWAPPED(ap),
                                        ap);
-        return (npy_bool) ((npy_creal@suffix@(&tmp) != 0) || (npy_cimag@suffix@(&tmp) != 0));
+        return (npy_bool) ((npymath_creal@suffix@(&tmp) != 0) || (npymath_cimag@suffix@(&tmp) != 0));
     }
 }
 /**end repeat**/
@@ -2849,8 +2849,8 @@ HALF_compare (npy_half *pa, npy_half *pb, PyArrayObject *NPY_UNUSED(ap))
     npy_bool a_isnan, b_isnan;
     int ret;
 
-    a_isnan = npy_half_isnan(a);
-    b_isnan = npy_half_isnan(b);
+    a_isnan = npymath_half_isnan(a);
+    b_isnan = npymath_half_isnan(b);
 
     if (a_isnan) {
         ret = b_isnan ? 0 : -1;
@@ -2858,10 +2858,10 @@ HALF_compare (npy_half *pa, npy_half *pb, PyArrayObject *NPY_UNUSED(ap))
     else if (b_isnan) {
         ret = 1;
     }
-    else if(npy_half_lt_nonan(a, b)) {
+    else if(npymath_half_lt_nonan(a, b)) {
         ret = -1;
     }
-    else if(npy_half_lt_nonan(b, a)) {
+    else if(npymath_half_lt_nonan(b, a)) {
         ret = 1;
     }
     else {
@@ -3079,8 +3079,8 @@ finish:
  * #type = npy_half, npy_float, npy_double, npy_longdouble,
  *         npy_datetime, npy_timedelta#
  * #isfloat = 1*4, 0*2#
- * #isnan = npy_half_isnan, npy_isnan*3, nop*2#
- * #le = npy_half_le, _LESS_THAN_OR_EQUAL*5#
+ * #isnan = npymath_half_isnan, npymath_isnan*3, nop*2#
+ * #le = npymath_half_le, _LESS_THAN_OR_EQUAL*5#
  * #iscomplex = 0, 1*3, 0*2#
  * #incr = ip++, ip+=2*3, ip++*2#
  * #isdatetime = 0*4, 1*2#
@@ -3179,8 +3179,8 @@ BOOL_argmin(npy_bool *ip, npy_intp n, npy_intp *min_ind,
  * #type = npy_half, npy_float, npy_double, npy_longdouble,
  *         npy_datetime, npy_timedelta#
  * #isfloat = 1*4, 0*2#
- * #isnan = npy_half_isnan, npy_isnan*3, nop*2#
- * #le = npy_half_le, _LESS_THAN_OR_EQUAL*5#
+ * #isnan = npymath_half_isnan, npymath_isnan*3, nop*2#
+ * #le = npymath_half_le, _LESS_THAN_OR_EQUAL*5#
  * #iscomplex = 0, 1*3, 0*2#
  * #incr = ip++, ip+=2*3, ip++*2#
  * #isdatetime = 0*4, 1*2#
@@ -3565,10 +3565,10 @@ HALF_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op,
     npy_intp i;
 
     for (i = 0; i < n; i++, ip1 += is1, ip2 += is2) {
-        tmp += npy_half_to_float(*((npy_half *)ip1)) *
-               npy_half_to_float(*((npy_half *)ip2));
+        tmp += npymath_half_to_float(*((npy_half *)ip1)) *
+               npymath_half_to_float(*((npy_half *)ip2));
     }
-    *((npy_half *)op) = npy_float_to_half(tmp);
+    *((npy_half *)op) = npymath_float_to_half(tmp);
 }
 
 NPY_NO_EXPORT void
@@ -3722,12 +3722,12 @@ static int
 HALF_fill(npy_half *buffer, npy_intp length, void *NPY_UNUSED(ignored))
 {
     npy_intp i;
-    float start = npy_half_to_float(buffer[0]);
-    float delta = npy_half_to_float(buffer[1]);
+    float start = npymath_half_to_float(buffer[0]);
+    float delta = npymath_half_to_float(buffer[1]);
 
     delta -= start;
     for (i = 2; i < length; ++i) {
-        buffer[i] = npy_float_to_half(start + i*delta);
+        buffer[i] = npymath_float_to_half(start + i*delta);
     }
     return 0;
 }
@@ -3745,15 +3745,15 @@ static int
     @type@ start;
     @type@ delta;
 
-    npy_csetreal@t@(&start, npy_creal@t@(buffer));
-    npy_csetimag@t@(&start, npy_cimag@t@(buffer));
-    npy_csetreal@t@(&delta, npy_creal@t@(&buffer[1]) - npy_creal@t@(&start));
-    npy_csetimag@t@(&delta, npy_cimag@t@(&buffer[1]) - npy_cimag@t@(&start));
+    npymath_csetreal@t@(&start, npymath_creal@t@(buffer));
+    npymath_csetimag@t@(&start, npymath_cimag@t@(buffer));
+    npymath_csetreal@t@(&delta, npymath_creal@t@(&buffer[1]) - npymath_creal@t@(&start));
+    npymath_csetimag@t@(&delta, npymath_cimag@t@(&buffer[1]) - npymath_cimag@t@(&start));
 
     buffer += 2;
     for (i = 2; i < length; i++, buffer++) {
-        npy_csetreal@t@(buffer, npy_creal@t@(&start) + i*npy_creal@t@(&delta));
-        npy_csetimag@t@(buffer, npy_cimag@t@(&start) + i*npy_cimag@t@(&delta));
+        npymath_csetreal@t@(buffer, npymath_creal@t@(&start) + i*npymath_creal@t@(&delta));
+        npymath_csetimag@t@(buffer, npymath_cimag@t@(&start) + i*npymath_cimag@t@(&delta));
     }
     return 0;
 }

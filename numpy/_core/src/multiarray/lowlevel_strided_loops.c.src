@@ -16,7 +16,7 @@
 #define _UMATHMODULE
 #include <numpy/arrayobject.h>
 #include <numpy/npy_cpu.h>
-#include <numpy/halffloat.h>
+#include <libnpymath/halffloat.h>
 
 #include "lowlevel_strided_loops.h"
 #include "array_assign.h"
@@ -804,29 +804,29 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 #if @is_half1@
 
 #  if @is_float2@
-#    define _CONVERT_FN(x) npy_halfbits_to_floatbits(x)
+#    define _CONVERT_FN(x) npymath_halfbits_to_floatbits(x)
 #  elif @is_double2@
-#    define _CONVERT_FN(x) npy_halfbits_to_doublebits(x)
+#    define _CONVERT_FN(x) npymath_halfbits_to_doublebits(x)
 #  elif @is_half2@
 #    define _CONVERT_FN(x) (x)
 #  elif @is_bool2@
-#    define _CONVERT_FN(x) ((npy_bool)!npy_half_iszero(x))
+#    define _CONVERT_FN(x) ((npy_bool)!npymath_half_iszero(x))
 #  else
-#    define _CONVERT_FN(x) ((_TYPE2)npy_half_to_float(x))
+#    define _CONVERT_FN(x) ((_TYPE2)npymath_half_to_float(x))
 #  endif
 
 #elif @is_half2@
 
 #  if @is_float1@
-#    define _CONVERT_FN(x) npy_floatbits_to_halfbits(x)
+#    define _CONVERT_FN(x) npymath_floatbits_to_halfbits(x)
 #  elif @is_double1@
-#    define _CONVERT_FN(x) npy_doublebits_to_halfbits(x)
+#    define _CONVERT_FN(x) npymath_doublebits_to_halfbits(x)
 #  elif @is_half1@
 #    define _CONVERT_FN(x) (x)
 #  elif @is_bool1@
-#    define _CONVERT_FN(x) npy_float_to_half((float)(x!=0))
+#    define _CONVERT_FN(x) npymath_float_to_half((float)(x!=0))
 #  else
-#    define _CONVERT_FN(x) npy_float_to_half((float)x)
+#    define _CONVERT_FN(x) npymath_float_to_half((float)x)
 #  endif
 
 #else

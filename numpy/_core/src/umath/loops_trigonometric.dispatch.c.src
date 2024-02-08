@@ -5,7 +5,7 @@
  ** neon_vfpv4
  ** vxe vxe2
  **/
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 #include "simd/simd.h"
 #include "loops_utils.h"
 #include "loops.h"
@@ -349,7 +349,7 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
             // multiply by -1 for appropriate elements
             npyv_b32 negate_mask = npyv_cmpeq_s32(npyv_and_s32(iquadrant, twos), twos);
             cos = npyv_ifsub_f32(negate_mask, zerosf, cos, cos);
-            cos = npyv_select_f32(nnan_mask, cos, npyv_setall_f32(NPY_NANF));
+            cos = npyv_select_f32(nnan_mask, cos, npyv_setall_f32(NPYMATH_NANF));
 
             if (sdst == 1) {
                 npyv_store_till_f32(dst, len, cos);
@@ -367,7 +367,7 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
                     if ((simd_maski >> i) & 1) {
                         continue;
                     }
-                    dst[sdst*i] = npy_cosf(ip_fback[i]);
+                    dst[sdst*i] = npymath_cosf(ip_fback[i]);
                 }
             }
             else {
@@ -375,7 +375,7 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
                     if ((simd_maski >> i) & 1) {
                         continue;
                     }
-                    dst[sdst*i] = npy_sinf(ip_fback[i]);
+                    dst[sdst*i] = npymath_sinf(ip_fback[i]);
                 }
             }
         }
@@ -416,7 +416,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(DOUBLE_@func@)
 #else
     UNARY_LOOP {
         const npy_double in1 = *(npy_double *)ip1;
-        *(npy_double *)op1 = npy_@func@(in1);
+        *(npy_double *)op1 = npymath_@func@(in1);
     }
 #endif
 }
@@ -450,7 +450,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(FLOAT_@func@)
 #else
     UNARY_LOOP {
         const npy_float in1 = *(npy_float *)ip1;
-        *(npy_float *)op1 = npy_@func@f(in1);
+        *(npy_float *)op1 = npymath_@func@f(in1);
     }
 #endif
 }

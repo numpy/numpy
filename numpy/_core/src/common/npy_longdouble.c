@@ -5,7 +5,7 @@
 #include <Python.h>
 
 #include "numpy/ndarraytypes.h"
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 #include "npy_pycompat.h"
 #include "numpyos.h"
 
@@ -27,12 +27,12 @@ npy_longdouble_to_PyLong(npy_longdouble ldval)
     int i, ndig, expo, neg;
     neg = 0;
 
-    if (npy_isinf(ldval)) {
+    if (npymath_isinf(ldval)) {
         PyErr_SetString(PyExc_OverflowError,
                         "cannot convert longdouble infinity to integer");
         return NULL;
     }
-    if (npy_isnan(ldval)) {
+    if (npymath_isnan(ldval)) {
         PyErr_SetString(PyExc_ValueError,
                         "cannot convert longdouble NaN to integer");
         return NULL;
@@ -41,7 +41,7 @@ npy_longdouble_to_PyLong(npy_longdouble ldval)
         neg = 1;
         ldval = -ldval;
     }
-    frac = npy_frexpl(ldval, &expo); /* ldval = frac*2**expo; 0.0 <= frac < 1.0 */
+    frac = npymath_frexpl(ldval, &expo); /* ldval = frac*2**expo; 0.0 <= frac < 1.0 */
     v = PyLong_FromLong(0L);
     if (v == NULL)
         return NULL;
@@ -57,7 +57,7 @@ npy_longdouble_to_PyLong(npy_longdouble ldval)
     }
 
     /* Get the MSBs of the integral part of the float */
-    frac = npy_ldexpl(frac, (expo-1) % chunk_size + 1);
+    frac = npymath_ldexpl(frac, (expo-1) % chunk_size + 1);
     for (i = ndig; --i >= 0; ) {
         npy_ulonglong chunk = (npy_ulonglong)frac;
         PyObject *l_chunk;
@@ -81,7 +81,7 @@ npy_longdouble_to_PyLong(npy_longdouble ldval)
 
         /* Remove the msbs, and repeat */
         frac = frac - (npy_longdouble) chunk;
-        frac = npy_ldexpl(frac, chunk_size);
+        frac = npymath_ldexpl(frac, chunk_size);
     }
 
     /* v = -v */

@@ -12,7 +12,7 @@
  * such small operations that this file covers.
 */
 #define NPY_SIMD_FORCE_128
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 #include "simd/simd.h"
 #include "loops_utils.h"
 #include "loops.h"
@@ -64,21 +64,21 @@ NPY_FINLINE double c_square_f64(double a)
         return _mm_cvtsd_f64(lower);
     }
 #else
-    #define c_sqrt_f32 npy_sqrtf
-    #define c_sqrt_f64 npy_sqrt
+    #define c_sqrt_f32 npymath_sqrtf
+    #define c_sqrt_f64 npymath_sqrt
 #endif
 
-#define c_ceil_f32 npy_ceilf
-#define c_ceil_f64 npy_ceil
+#define c_ceil_f32 npymath_ceilf
+#define c_ceil_f64 npymath_ceil
 
-#define c_trunc_f32 npy_truncf
-#define c_trunc_f64 npy_trunc
+#define c_trunc_f32 npymath_truncf
+#define c_trunc_f64 npymath_trunc
 
-#define c_floor_f32 npy_floorf
-#define c_floor_f64 npy_floor
+#define c_floor_f32 npymath_floorf
+#define c_floor_f64 npymath_floor
 
-#define c_rint_f32 npy_rintf
-#define c_rint_f64 npy_rint
+#define c_rint_f32 npymath_rintf
+#define c_rint_f64 npymath_rint
 
 /********************************************************************************
  ** Defining the SIMD kernels
@@ -248,7 +248,7 @@ no_unroll:
 clear:;
 #endif
 #if @clear@
-    npy_clear_floatstatus_barrier((char*)dimensions);
+    npymath_clear_floatstatus_barrier((char*)dimensions);
 #endif
 }
 /**end repeat1**/

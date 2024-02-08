@@ -9,7 +9,7 @@
 
 #include "lowlevel_strided_loops.h"
 #include "numpy/arrayobject.h"
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 
 #include "descriptor.h"
 #include "convert_datatype.h"
@@ -401,7 +401,7 @@ npy_cast_raw_scalar_item(
     }
 
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        npy_clear_floatstatus_barrier(from_item);
+        npymath_clear_floatstatus_barrier(from_item);
     }
 
     char *args[2] = {from_item, to_item};
@@ -415,7 +415,7 @@ npy_cast_raw_scalar_item(
     NPY_cast_info_xfree(&cast_info);
 
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        int fpes = npy_get_floatstatus_barrier(to_item);
+        int fpes = npymath_get_floatstatus_barrier(to_item);
         if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
             return -1;
         }

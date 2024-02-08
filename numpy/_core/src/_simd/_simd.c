@@ -1,17 +1,17 @@
 #include "_simd.h"
 
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 
 static PyObject *
 get_floatstatus(PyObject* NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 {
-    return PyLong_FromLong(npy_get_floatstatus());
+    return PyLong_FromLong(npymath_get_floatstatus());
 }
 
 static PyObject *
 clear_floatstatus(PyObject* NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 {
-    npy_clear_floatstatus();
+    npymath_clear_floatstatus();
     Py_RETURN_NONE;
 }
 

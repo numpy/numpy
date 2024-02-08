@@ -45,8 +45,8 @@
  *
  *     Signal a floating point error respecting the error signaling setting in
  *     the NumPy errstate. Takes the name of the operation to use in the error
- *     message and an integer flag that is one of NPY_FPE_DIVIDEBYZERO,
- *     NPY_FPE_OVERFLOW, NPY_FPE_UNDERFLOW, NPY_FPE_INVALID. This allows for
+ *     message and an integer flag that is one of NPYMATH_FPE_DIVIDEBYZERO,
+ *     NPYMATH_FPE_OVERFLOW, NPYMATH_FPE_UNDERFLOW, NPYMATH_FPE_INVALID. This allows for
  *     custom floating point error signaling in cast and ufunc implementations
  *     provided by DTypes without a need to query the errstate or reimplement
  *     NumPy's error signaling.

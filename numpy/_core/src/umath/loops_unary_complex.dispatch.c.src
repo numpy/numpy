@@ -24,8 +24,8 @@
  * #VECTOR = NPY_SIMD_F32, NPY_SIMD_F64#
  * #is_double = 0, 1#
  * #c = f, #
- * #INF = NPY_INFINITYF, NPY_INFINITY#
- * #NAN = NPY_NANF, NPY_NAN#
+ * #INF = NPYMATH_INFINITYF, NPYMATH_INFINITY#
+ * #NAN = NPYMATH_NANF, NPYMATH_NAN#
  */
 #if @VECTOR@
 NPY_FINLINE npyv_@sfx@
@@ -126,14 +126,14 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_absolute)
             npyv_storen_till_@sfx@(dst, sdst, len, r);
         }
         npyv_cleanup();
-        npy_clear_floatstatus_barrier((char*)&len);
+        npymath_clear_floatstatus_barrier((char*)&len);
         return;
     }
 #endif
     UNARY_LOOP {
         const @ftype@ re = ((@ftype@ *)ip1)[0];
         const @ftype@ im = ((@ftype@ *)ip1)[1];
-        *((@ftype@ *)op1) = npy_hypot@c@(re, im);
+        *((@ftype@ *)op1) = npymath_hypot@c@(re, im);
     }
 }
 /**end repeat**/

@@ -14,7 +14,7 @@
 #include <Python.h>
 
 #include "numpy/ndarraytypes.h"
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -130,7 +130,7 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
     }
 
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        npy_clear_floatstatus_barrier((char*)&src_data);
+        npymath_clear_floatstatus_barrier((char*)&src_data);
     }
 
     /* Ensure number of elements exceeds threshold for threading */
@@ -159,7 +159,7 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
     NPY_cast_info_xfree(&cast_info);
 
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        int fpes = npy_get_floatstatus_barrier((char*)&src_data);
+        int fpes = npymath_get_floatstatus_barrier((char*)&src_data);
         if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
             return -1;
         }
@@ -241,7 +241,7 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
     }
 
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        npy_clear_floatstatus_barrier(src_data);
+        npymath_clear_floatstatus_barrier(src_data);
     }
     if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
         npy_intp nitems = 1, i;
@@ -273,7 +273,7 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
     NPY_cast_info_xfree(&cast_info);
 
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        int fpes = npy_get_floatstatus_barrier(src_data);
+        int fpes = npymath_get_floatstatus_barrier(src_data);
         if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
             return -1;
         }

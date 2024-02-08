@@ -23,11 +23,11 @@
 #define scalar_max_i(A, B) ((A > B) ? A : B)
 #define scalar_min_i(A, B) ((A < B) ? A : B)
 // fp, propagates NaNs
-#define scalar_max(A, B) ((A >= B || npy_isnan(A)) ? A : B)
+#define scalar_max(A, B) ((A >= B || npymath_isnan(A)) ? A : B)
 #define scalar_max_f scalar_max
 #define scalar_max_d scalar_max
 #define scalar_max_l scalar_max
-#define scalar_min(A, B) ((A <= B || npy_isnan(A)) ? A : B)
+#define scalar_min(A, B) ((A <= B || npymath_isnan(A)) ? A : B)
 #define scalar_min_f scalar_min
 #define scalar_min_d scalar_min
 #define scalar_min_l scalar_min
@@ -448,7 +448,7 @@ clear_fp:
     npyv_cleanup();
 #endif
 #if @is_fp@
-    npy_clear_floatstatus_barrier((char*)dimensions);
+    npymath_clear_floatstatus_barrier((char*)dimensions);
 #endif
 }
 

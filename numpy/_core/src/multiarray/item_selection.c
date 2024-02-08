@@ -8,7 +8,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
-#include "numpy/npy_math.h"
+#include "libnpymath/npy_math.h"
 #include "numpy/npy_cpu.h"
 
 #include "npy_config.h"

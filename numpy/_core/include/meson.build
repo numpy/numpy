@@ -8,7 +8,7 @@ installed_headers = [
   'numpy/ndarraytypes.h',
   'numpy/npy_1_7_deprecated_api.h',
   'numpy/npy_2_compat.h',
-  'numpy/npy_2_complexcompat.h',
+  'numpy/npy_2_npymathcompat.h',
   'numpy/npy_3kcompat.h',
   'numpy/npy_common.h',
   'numpy/npy_cpu.h',

@@ -436,7 +436,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
     npy_intp nsteps[3] = {steps[1], steps[0], steps[2]};
     run_binary_simd_@kind_to@_@sfx@(nargs, dimensions, nsteps);
 #if @fp@
-    npy_clear_floatstatus_barrier((char*)dimensions);
+    npymath_clear_floatstatus_barrier((char*)dimensions);
 #endif
 }
 /**end repeat1**/
@@ -449,7 +449,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
 {
     run_binary_simd_@kind@_@sfx@(args, dimensions, steps);
 #if @fp@
-    npy_clear_floatstatus_barrier((char*)dimensions);
+    npymath_clear_floatstatus_barrier((char*)dimensions);
 #endif
 }
 /**end repeat1**/
