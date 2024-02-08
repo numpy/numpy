@@ -1458,14 +1458,6 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 #define PyArray_FORTRAN_IF(m) ((PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS) ? \
                                NPY_ARRAY_F_CONTIGUOUS : 0))
 
-#if (defined(NPY_NO_DEPRECATED_API) && (NPY_1_7_API_VERSION <= NPY_NO_DEPRECATED_API))
-/*
- * Changing access macros into functions, to allow for future hiding
- * of the internal memory layout. This later hiding will allow the 2.x series
- * to change the internal representation of arrays without affecting
- * ABI compatibility.
- */
-
 static inline int
 PyArray_NDIM(const PyArrayObject *arr)
 {
@@ -1562,34 +1554,6 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
     return ((PyArrayObject_fields *)arr)->descr->f->setitem(v, itemptr, arr);
 }
 
-#else
-
-/* These macros are deprecated as of NumPy 1.7. */
-#define PyArray_NDIM(obj) (((PyArrayObject_fields *)(obj))->nd)
-#define PyArray_BYTES(obj) (((PyArrayObject_fields *)(obj))->data)
-#define PyArray_DATA(obj) ((void *)((PyArrayObject_fields *)(obj))->data)
-#define PyArray_DIMS(obj) (((PyArrayObject_fields *)(obj))->dimensions)
-#define PyArray_STRIDES(obj) (((PyArrayObject_fields *)(obj))->strides)
-#define PyArray_DIM(obj,n) (PyArray_DIMS(obj)[n])
-#define PyArray_STRIDE(obj,n) (PyArray_STRIDES(obj)[n])
-#define PyArray_BASE(obj) (((PyArrayObject_fields *)(obj))->base)
-#define PyArray_DESCR(obj) (((PyArrayObject_fields *)(obj))->descr)
-#define PyArray_FLAGS(obj) (((PyArrayObject_fields *)(obj))->flags)
-#define PyArray_CHKFLAGS(m, FLAGS) \
-        ((((PyArrayObject_fields *)(m))->flags & (FLAGS)) == (FLAGS))
-#define PyArray_ITEMSIZE(obj) \
-                    (((PyArrayObject_fields *)(obj))->descr->elsize)
-#define PyArray_TYPE(obj) \
-                    (((PyArrayObject_fields *)(obj))->descr->type_num)
-#define PyArray_GETITEM(obj,itemptr) \
-        PyArray_DESCR(obj)->f->getitem((char *)(itemptr), \
-                                     (PyArrayObject *)(obj))
-
-#define PyArray_SETITEM(obj,itemptr,v) \
-        PyArray_DESCR(obj)->f->setitem((PyObject *)(v), \
-                                     (char *)(itemptr), \
-                                     (PyArrayObject *)(obj))
-#endif
 
 static inline PyArray_Descr *
 PyArray_DTYPE(PyArrayObject *arr)
