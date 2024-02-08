@@ -1170,6 +1170,21 @@ defdict = {
           docstrings.get('numpy._core.umath.isspace'),
           None,
           ),
+'islower':
+    Ufunc(1, 1, False_,
+          docstrings.get('numpy._core.umath.islower'),
+          None,
+          ),
+'isupper':
+    Ufunc(1, 1, False_,
+          docstrings.get('numpy._core.umath.isupper'),
+          None,
+          ),
+'istitle':
+    Ufunc(1, 1, False_,
+          docstrings.get('numpy._core.umath.istitle'),
+          None,
+          ),
 'isdecimal':
     Ufunc(1, 1, False_,
           docstrings.get('numpy._core.umath.isdecimal'),

@@ -13,6 +13,9 @@ from numpy._core.umath import (
     isalpha,
     isdigit,
     isspace,
+    islower,
+    isupper,
+    istitle,
     isdecimal,
     isnumeric,
     str_len,
@@ -34,12 +37,12 @@ from numpy._core.umath import (
 __all__ = [
     # UFuncs
     "equal", "not_equal", "less", "less_equal", "greater", "greater_equal",
-    "add", "isalpha", "isdigit", "isspace", "isdecimal", "isnumeric",
-    "str_len", "find", "rfind", "count", "startswith", "endswith",
-    "lstrip", "rstrip", "strip", "replace",
+    "add", "isalpha", "isdigit", "isspace", "islower", "isupper", "istitle",
+    "isdecimal", "isnumeric", "str_len", "find", "rfind", "count",
+    "startswith", "endswith", "lstrip", "rstrip", "strip", "replace",
 
     # _vec_string - Will gradually become ufuncs as well
-    "isalnum", "islower", "istitle", "isupper", "multiply", "mod", "index",
+    "isalnum", "multiply", "mod", "index",
     "rindex", "decode", "encode", "expandtabs", "center",
     "ljust", "rjust", "zfill", "upper", "lower", "swapcase", "capitalize",
     "title", "join", "split", "rsplit", "splitlines",
@@ -123,109 +126,6 @@ def isalnum(a):
     
     """
     return _vec_string(a, np.bool, 'isalnum')
-
-
-def islower(a):
-    """
-    Returns true for each element if all cased characters in the
-    string are lowercase and there is at least one cased character,
-    false otherwise.
-
-    Calls :meth:`str.islower` element-wise.
-
-    For 8-bit strings, this method is locale-dependent.
-
-    Parameters
-    ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
-
-    Returns
-    -------
-    out : ndarray
-        Output array of bools
-
-    See Also
-    --------
-    str.islower
-
-    Examples
-    --------
-    >>> np.strings.islower("GHC")
-    array(False)
-    >>> np.strings.islower("ghc")
-    array(True)
-
-    """
-    return _vec_string(a, np.bool, 'islower')
-
-
-def istitle(a):
-    """
-    Returns true for each element if the element is a titlecased
-    string and there is at least one character, false otherwise.
-
-    Call :meth:`str.istitle` element-wise.
-
-    For 8-bit strings, this method is locale-dependent.
-
-    Parameters
-    ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
-
-    Returns
-    -------
-    out : ndarray
-        Output array of bools
-
-    See Also
-    --------
-    str.istitle
-
-    Examples
-    --------
-    >>> np.strings.istitle("Numpy Is Great")
-    array(True)
-
-    >>> np.strings.istitle("Numpy is great")
-    array(False)
-    
-    """
-    return _vec_string(a, np.bool, 'istitle')
-
-
-def isupper(a):
-    """
-    Return true for each element if all cased characters in the
-    string are uppercase and there is at least one character, false
-    otherwise.
-
-    Call :meth:`str.isupper` element-wise.
-
-    For 8-bit strings, this method is locale-dependent.
-
-    Parameters
-    ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
-
-    Returns
-    -------
-    out : ndarray
-        Output array of bools
-
-    See Also
-    --------
-    str.isupper
-
-    Examples
-    --------
-    >>> np.strings.isupper("GHC")
-    array(True)     
-    >>> a = np.array(["hello", "HELLO", "Hello"])
-    >>> np.strings.isupper(a)
-    array([False,  True, False]) 
-
-    """
-    return _vec_string(a, np.bool, 'isupper')
 
 
 def multiply(a, i):

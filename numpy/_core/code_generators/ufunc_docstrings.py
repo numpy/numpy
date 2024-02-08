@@ -4441,6 +4441,97 @@ add_newdoc('numpy._core.umath', 'isspace',
 
     """)
 
+add_newdoc('numpy._core.umath', 'islower',
+    """
+    Returns true for each element if all cased characters in the
+    string are lowercase and there is at least one cased character,
+    false otherwise.
+
+    Parameters
+    ----------
+    x : array_like, with `np.bytes_` or `np.str_` dtype
+    $PARAMS
+
+    Returns
+    -------
+    out : ndarray
+        Output array of bools
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    str.islower
+
+    Examples
+    --------
+    >>> np.strings.islower("GHC")
+    array(False)
+    >>> np.strings.islower("ghc")
+    array(True)
+
+    """)
+
+add_newdoc('numpy._core.umath', 'isupper',
+    """
+    Return true for each element if all cased characters in the
+    string are uppercase and there is at least one character, false
+    otherwise.
+
+    Parameters
+    ----------
+    x : array_like, with `np.bytes_` or `np.str_` dtype
+    $PARAMS
+
+    Returns
+    -------
+    out : ndarray
+        Output array of bools
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    str.isupper
+
+    Examples
+    --------
+    >>> np.strings.isupper("GHC")
+    array(True)     
+    >>> a = np.array(["hello", "HELLO", "Hello"])
+    >>> np.strings.isupper(a)
+    array([False,  True, False]) 
+
+    """)
+
+add_newdoc('numpy._core.umath', 'istitle',
+    """
+    Returns true for each element if the element is a titlecased
+    string and there is at least one character, false otherwise.
+
+    Parameters
+    ----------
+    x : array_like, with `np.bytes_` or `np.str_` dtype
+    $PARAMS
+
+    Returns
+    -------
+    out : ndarray
+        Output array of bools
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    str.istitle
+
+    Examples
+    --------
+    >>> np.strings.istitle("Numpy Is Great")
+    array(True)
+
+    >>> np.strings.istitle("Numpy is great")
+    array(False)
+    
+    """)
+
 add_newdoc('numpy._core.umath', 'isdecimal',
     """
     For each element, return True if there are only decimal

@@ -168,6 +168,61 @@ class TestMethods:
         assert_array_equal(np.strings.isspace(in_), out)
 
     @pytest.mark.parametrize("in_,out", [
+        ('', False),
+        ('a', True),
+        ('A', False),
+        ('\n', False),
+        ('abc', True),
+        ('aBc', False),
+        ('abc\n', True),
+    ])
+    def test_islower(self, in_, out, dt):
+        # TODO: Remove this
+        if dt == "T":
+            pytest.xfail(
+                "StringDType support to be added in a follow-up commit")
+        in_ = np.array(in_, dtype=dt)
+        assert_array_equal(np.strings.islower(in_), out)
+
+    @pytest.mark.parametrize("in_,out", [
+        ('', False),
+        ('a', False),
+        ('A', True),
+        ('\n', False),
+        ('ABC', True),
+        ('AbC', False),
+        ('ABC\n', True),
+    ])
+    def test_isupper(self, in_, out, dt):
+        # TODO: Remove this
+        if dt == "T":
+            pytest.xfail(
+                "StringDType support to be added in a follow-up commit")
+        in_ = np.array(in_, dtype=dt)
+        assert_array_equal(np.strings.isupper(in_), out)
+
+    @pytest.mark.parametrize("in_,out", [
+        ('', False),
+        ('a', False),
+        ('A', True),
+        ('\n', False),
+        ('A Titlecased Line', True),
+        ('A\nTitlecased Line', True),
+        ('A Titlecased, Line', True),
+        ('Not a capitalized String', False),
+        ('Not\ta Titlecase String', False),
+        ('Not--a Titlecase String', False),
+        ('NOT', False),
+    ])
+    def test_istitle(self, in_, out, dt):
+        # TODO: Remove this
+        if dt == "T":
+            pytest.xfail(
+                "StringDType support to be added in a follow-up commit")
+        in_ = np.array(in_, dtype=dt)
+        assert_array_equal(np.strings.istitle(in_), out)
+
+    @pytest.mark.parametrize("in_,out", [
         ("", 0),
         ("abc", 3),
         ("12345", 5),
@@ -616,6 +671,62 @@ class TestUnicodeOnlyMethods:
         buf = np.array("...\u043c......<", dtype=dt)
         assert_array_equal(np.strings.replace(buf,  "<", "&lt;", MAX),
                            "...\u043c......&lt;")
+
+    @pytest.mark.parametrize("dt", ["U", "T"])
+    @pytest.mark.parametrize("in_,out", [
+        ('\u1FFc', False),
+        ('\u2167', False),
+        ('\U00010401', False),
+        ('\U00010427', False),
+        ('\U0001F40D', False),
+        ('\U0001F46F', False),
+        ('\u2177', True),
+        ('\U00010429', True),
+        ('\U0001044E', True),
+    ])
+    def test_islower_unicode(self, in_, out, dt):
+        # TODO: Remove this
+        if dt == "T":
+            pytest.xfail(
+                "StringDType support to be added in a follow-up commit")
+        assert_array_equal(np.strings.islower(in_), out)
+
+    @pytest.mark.parametrize("dt", ["U", "T"])
+    @pytest.mark.parametrize("in_,out", [
+        ('\u1FFc', False),
+        ('\u2167', True),
+        ('\U00010401', True),
+        ('\U00010427', True),
+        ('\U0001F40D', False),
+        ('\U0001F46F', False),
+        ('\u2177', False),
+        ('\U00010429', False),
+        ('\U0001044E', False),
+    ])
+    def test_isupper_unicode(self, in_, out, dt):
+        # TODO: Remove this
+        if dt == "T":
+            pytest.xfail(
+                "StringDType support to be added in a follow-up commit")
+        assert_array_equal(np.strings.isupper(in_), out)
+
+    @pytest.mark.parametrize("dt", ["U", "T"])
+    @pytest.mark.parametrize("in_,out", [
+        ('\u1FFc', True),
+        ('Greek \u1FFcitlecases ...', True),
+        ('\U00010401\U00010429', True),
+        ('\U00010427\U0001044E', True),
+        ('\U00010429', False),
+        ('\U0001044E', False),
+        ('\U0001F40D', False),
+        ('\U0001F46F', False),
+    ])
+    def test_istitle_unicode(self, in_, out, dt):
+        # TODO: Remove this
+        if dt == "T":
+            pytest.xfail(
+                "StringDType support to be added in a follow-up commit")
+        assert_array_equal(np.strings.istitle(in_), out)
 
 
 def check_itemsize(n_elem, dt):

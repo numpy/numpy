@@ -283,6 +283,84 @@ string_isspace_loop(PyArrayMethod_Context *context,
 }
 
 
+template <ENCODING enc>
+static int
+string_islower_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize;
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf(in, elsize);
+        npy_bool res = buf.islower();
+        *(npy_bool *)out = res;
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_isupper_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize;
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf(in, elsize);
+        npy_bool res = buf.isupper();
+        *(npy_bool *)out = res;
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_istitle_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize;
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf(in, elsize);
+        npy_bool res = buf.istitle();
+        *(npy_bool *)out = res;
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
 static int
 string_isdecimal_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
@@ -1252,6 +1330,39 @@ init_string_ufuncs(PyObject *umath)
     if (init_ufunc<ENCODING::UTF32>(
             umath, "isspace", "templated_string_isspace", 1, 1, dtypes,
             string_isspace_loop<ENCODING::UTF32>, NULL) < 0) {
+        return -1;
+    }
+
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "islower", "templated_string_islower", 1, 1, dtypes,
+            string_islower_loop<ENCODING::ASCII>, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "islower", "templated_string_islower", 1, 1, dtypes,
+            string_islower_loop<ENCODING::UTF32>, NULL) < 0) {
+        return -1;
+    }
+
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "isupper", "templated_string_isupper", 1, 1, dtypes,
+            string_isupper_loop<ENCODING::ASCII>, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "isupper", "templated_string_isupper", 1, 1, dtypes,
+            string_isupper_loop<ENCODING::UTF32>, NULL) < 0) {
+        return -1;
+    }
+
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "istitle", "templated_string_istitle", 1, 1, dtypes,
+            string_istitle_loop<ENCODING::ASCII>, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "istitle", "templated_string_istitle", 1, 1, dtypes,
+            string_istitle_loop<ENCODING::UTF32>, NULL) < 0) {
         return -1;
     }
 
