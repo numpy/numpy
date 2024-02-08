@@ -10112,18 +10112,19 @@ def test_partition_fp(N, dtype):
             arr[np.argpartition(arr, k, kind='introselect')])
 
 def test_cannot_assign_data():
-    a= np.arange(10)
+    a = np.arange(10)
     b = np.linspace(0, 1, 10)
     with pytest.raises(AttributeError):
         a.data = b.data
 
 def test_insufficient_width():
     """
-    If a 'width' parameter is passed into ``binary_repr`` that is insufficient to
-    represent the number in base 2 (positive) or 2's complement (negative) form,
-    the function used to silently ignore the parameter and return a representation
-    using the minimal number of bits needed for the form in question. Such behavior
-    is now considered unsafe from a user perspective and will raise an error.
+    If a 'width' parameter is passed into ``binary_repr`` that is insufficient
+    to represent the number in base 2 (positive) or 2's complement (negative)
+    form, the function used to silently ignore the parameter and return a
+    representation using the minimal number of bits needed for the form in
+    question. Such behavior is now considered unsafe from a user perspective
+    and will raise an error.
     """
     with pytest.raises(ValueError):
         np.binary_repr(10, width=2)
