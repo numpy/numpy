@@ -68,7 +68,6 @@ macosx_arm64_task:
         CIBW_BUILD: cp310-* cp311-*
     - env:
         CIRRUS_CLONE_SUBMODULES: true
-        CIBW_PRERELEASE_PYTHONS: True
         CIBW_BUILD: cp312-*
   env:
     PATH: /usr/local/lib:/usr/local/include:$PATH
