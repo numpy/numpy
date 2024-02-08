@@ -397,11 +397,14 @@ fail:
     return -1;
 }
 
+
 static int
-maximum_strided_loop(PyArrayMethod_Context *context, char *const data[],
+minimum_maximum_strided_loop(PyArrayMethod_Context *context, char *const data[],
                      npy_intp const dimensions[], npy_intp const strides[],
                      NpyAuxData *NPY_UNUSED(auxdata))
 {
+    const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
+    npy_bool invert = *(npy_bool *)context->method->static_data; // true for maximum
     PyArray_StringDTypeObject *in1_descr =
             ((PyArray_StringDTypeObject *)context->descriptors[0]);
     PyArray_StringDTypeObject *in2_descr =
@@ -424,12 +427,16 @@ maximum_strided_loop(PyArrayMethod_Context *context, char *const data[],
         const npy_packed_static_string *sin1 = (npy_packed_static_string *)in1;
         const npy_packed_static_string *sin2 = (npy_packed_static_string *)in2;
         npy_packed_static_string *sout = (npy_packed_static_string *)out;
-        if (_compare(in1, in2, in1_descr, in2_descr) > 0) {
+        int cmp = _compare(in1, in2, in1_descr, in2_descr);
+        if (cmp == 0 && (in1 == out || in2 == out)) {
+            continue;
+        }
+        if ((cmp < 0) ^ invert) {
             // if in and out are the same address, do nothing to avoid a
             // use-after-free
             if (in1 != out) {
                 if (free_and_copy(in1_allocator, out_allocator, sin1, sout,
-                                  "maximum") == -1) {
+                                  ufunc_name) == -1) {
                     goto fail;
                 }
             }
@@ -437,65 +444,7 @@ maximum_strided_loop(PyArrayMethod_Context *context, char *const data[],
         else {
             if (in2 != out) {
                 if (free_and_copy(in2_allocator, out_allocator, sin2, sout,
-                                  "maximum") == -1) {
-                    goto fail;
-                }
-            }
-        }
-        in1 += in1_stride;
-        in2 += in2_stride;
-        out += out_stride;
-    }
-
-    NpyString_release_allocators(3, allocators);
-    return 0;
-
-fail:
-    NpyString_release_allocators(3, allocators);
-    return -1;
-}
-
-static int
-minimum_strided_loop(PyArrayMethod_Context *context, char *const data[],
-                     npy_intp const dimensions[], npy_intp const strides[],
-                     NpyAuxData *NPY_UNUSED(auxdata))
-{
-    PyArray_StringDTypeObject *in1_descr =
-            ((PyArray_StringDTypeObject *)context->descriptors[0]);
-    PyArray_StringDTypeObject *in2_descr =
-            ((PyArray_StringDTypeObject *)context->descriptors[1]);
-    npy_intp N = dimensions[0];
-    char *in1 = data[0];
-    char *in2 = data[1];
-    char *out = data[2];
-    npy_intp in1_stride = strides[0];
-    npy_intp in2_stride = strides[1];
-    npy_intp out_stride = strides[2];
-
-    npy_string_allocator *allocators[3] = {};
-    NpyString_acquire_allocators(3, context->descriptors, allocators);
-    npy_string_allocator *in1_allocator = allocators[0];
-    npy_string_allocator *in2_allocator = allocators[1];
-    npy_string_allocator *out_allocator = allocators[2];
-
-    while (N--) {
-        const npy_packed_static_string *sin1 = (npy_packed_static_string *)in1;
-        const npy_packed_static_string *sin2 = (npy_packed_static_string *)in2;
-        npy_packed_static_string *sout = (npy_packed_static_string *)out;
-        if (_compare(in1, in2, in1_descr, in2_descr) < 0) {
-            // if in and out are the same address, do nothing to avoid a
-            // use-after-free
-            if (in1 != out) {
-                if (free_and_copy(in1_allocator, out_allocator, sin1, sout,
-                                  "minimum") == -1) {
-                    goto fail;
-                }
-            }
-        }
-        else {
-            if (in2 != out) {
-                if (free_and_copy(in2_allocator, out_allocator, sin2, sout,
-                                  "minimum") == -1) {
+                                  ufunc_name) == -1) {
                     goto fail;
                 }
             }
@@ -2436,7 +2385,7 @@ string_inputs_promoter(
         PyArray_DTypeMeta *final_dtype,
         PyArray_DTypeMeta *result_dtype)
 {
-    PyUFuncObject *ufunc = (PyUFuncObject *)ufunc_obj;    
+    PyUFuncObject *ufunc = (PyUFuncObject *)ufunc_obj;
     /* set all input operands to final_dtype */
     for (int i = 0; i < ufunc->nin; i++) {
         PyArray_DTypeMeta *tmp = final_dtype;
@@ -2599,7 +2548,8 @@ int
 init_ufunc(PyObject *umath, const char *ufunc_name, PyArray_DTypeMeta **dtypes,
            PyArrayMethod_ResolveDescriptors *resolve_func,
            PyArrayMethod_StridedLoop *loop_func, int nin, int nout,
-           NPY_CASTING casting, NPY_ARRAYMETHOD_FLAGS flags)
+           NPY_CASTING casting, NPY_ARRAYMETHOD_FLAGS flags,
+           void *static_data)
 {
     PyObject *ufunc = PyObject_GetAttrString(umath, ufunc_name);
     if (ufunc == NULL) {
@@ -2621,6 +2571,7 @@ init_ufunc(PyObject *umath, const char *ufunc_name, PyArray_DTypeMeta **dtypes,
     PyType_Slot resolve_slots[] = {
             {NPY_METH_resolve_descriptors, (void *)resolve_func},
             {NPY_METH_strided_loop, (void *)loop_func},
+            {_NPY_METH_static_data, static_data},
             {0, NULL}};
 
     spec.slots = resolve_slots;
@@ -2688,7 +2639,7 @@ add_promoter(PyObject *numpy, const char *ufunc_name,
     if (init_ufunc(umath, "multiply", multiply_right_##shortname##_types,  \
                    &multiply_resolve_descriptors,                          \
                    &multiply_right_strided_loop<npy_##shortname>, 2, 1,    \
-                   NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {       \
+                   NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) { \
         return -1;                                                         \
     }                                                                      \
                                                                            \
@@ -2699,7 +2650,7 @@ add_promoter(PyObject *numpy, const char *ufunc_name,
     if (init_ufunc(umath, "multiply", multiply_left_##shortname##_types,   \
                    &multiply_resolve_descriptors,                          \
                    &multiply_left_strided_loop<npy_##shortname>, 2, 1,     \
-                   NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {       \
+                   NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) { \
         return -1;                                                         \
     }
 
@@ -2763,7 +2714,8 @@ init_stringdtype_ufuncs(PyObject *umath)
     for (int i = 0; i < 6; i++) {
         if (init_ufunc(umath, comparison_ufunc_names[i], comparison_dtypes,
                        &string_comparison_resolve_descriptors,
-                       strided_loops[i], 2, 1, NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                       strided_loops[i], 2, 1, NPY_NO_CASTING,
+                       (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
             return -1;
         }
 
@@ -2783,42 +2735,42 @@ init_stringdtype_ufuncs(PyObject *umath)
     if (init_ufunc(umath, "isnan", bool_output_dtypes,
                    &string_bool_output_resolve_descriptors,
                    &string_isnan_strided_loop, 1, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                   (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
     }
 
     if (init_ufunc(umath, "isalpha", bool_output_dtypes,
                    &string_bool_output_resolve_descriptors,
                    &string_isalpha_strided_loop, 1, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                   (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
     }
 
     if (init_ufunc(umath, "isdecimal", bool_output_dtypes,
                    &string_bool_output_resolve_descriptors,
                    &string_isdecimal_strided_loop, 1, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                   (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
     }
 
     if (init_ufunc(umath, "isdigit", bool_output_dtypes,
                    &string_bool_output_resolve_descriptors,
                    &string_isdigit_strided_loop, 1, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                   (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
     }
 
     if (init_ufunc(umath, "isnumeric", bool_output_dtypes,
                    &string_bool_output_resolve_descriptors,
                    &string_isnumeric_strided_loop, 1, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                   (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
     }
 
     if (init_ufunc(umath, "isspace", bool_output_dtypes,
                    &string_bool_output_resolve_descriptors,
                    &string_isspace_strided_loop, 1, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                   (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
     }
 
@@ -2830,7 +2782,7 @@ init_stringdtype_ufuncs(PyObject *umath)
     if (init_ufunc(umath, "str_len", intp_output_dtypes,
                    &string_intp_output_resolve_descriptors,
                    &string_strlen_strided_loop, 1, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                   (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
     }
 
@@ -2840,21 +2792,23 @@ init_stringdtype_ufuncs(PyObject *umath)
             &PyArray_StringDType,
     };
 
-    if (init_ufunc(umath, "maximum", binary_dtypes, binary_resolve_descriptors,
-                   &maximum_strided_loop, 2, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
-        return -1;
-    }
+    const char* minimum_maximum_names[] = {"minimum", "maximum"};
 
-    if (init_ufunc(umath, "minimum", binary_dtypes, binary_resolve_descriptors,
-                   &minimum_strided_loop, 2, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
-        return -1;
+    static npy_bool minimum_maximum_invert[2] = {NPY_FALSE, NPY_TRUE};
+
+    for (int i = 0; i < 2; i++) {
+        if (init_ufunc(umath, minimum_maximum_names[i],
+                       binary_dtypes, binary_resolve_descriptors,
+                       &minimum_maximum_strided_loop, 2, 1, NPY_NO_CASTING,
+                       (NPY_ARRAYMETHOD_FLAGS) 0,
+                       &minimum_maximum_invert[i]) < 0) {
+            return -1;
+        }
     }
 
     if (init_ufunc(umath, "add", binary_dtypes, binary_resolve_descriptors,
                    &add_strided_loop, 2, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                   (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
     }
 
@@ -2907,7 +2861,7 @@ init_stringdtype_ufuncs(PyObject *umath)
         if (init_ufunc(umath, find_rfind_count_names[i], find_rfind_count_dtypes,
                        &string_find_rfind_count_resolve_descriptors,
                        find_rfind_count_strided_loops[i], 4, 1, NPY_NO_CASTING,
-                       (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                       (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
             return -1;
         }
 
@@ -2944,7 +2898,7 @@ init_stringdtype_ufuncs(PyObject *umath)
         if (init_ufunc(umath, startswith_endswith_names[i], startswith_endswith_dtypes,
                        &string_startswith_endswith_resolve_descriptors,
                        startswith_endswith_strided_loops[i], 4, 1, NPY_NO_CASTING,
-                       (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                       (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
             return -1;
         }
 
@@ -2973,7 +2927,7 @@ init_stringdtype_ufuncs(PyObject *umath)
     for (int i=0; i<3; i++) {
         if (init_ufunc(umath, strip_whitespace_names[i], strip_whitespace_dtypes,
                        &strip_whitespace_resolve_descriptors, strip_whitespace_loops[i],
-                       1, 1, NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                       1, 1, NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
             return -1;
         }
     }
@@ -2999,7 +2953,7 @@ init_stringdtype_ufuncs(PyObject *umath)
     for (int i=0; i<3; i++) {
         if (init_ufunc(umath, strip_chars_names[i], strip_chars_dtypes,
                        &strip_chars_resolve_descriptors, strip_chars_loops[i],
-                       2, 1, NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                       2, 1, NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
             return -1;
         }
 
@@ -3019,7 +2973,7 @@ init_stringdtype_ufuncs(PyObject *umath)
                    &replace_resolve_descriptors,
                    &string_replace_strided_loop, 4, 1,
                    NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                   (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
     }
 
