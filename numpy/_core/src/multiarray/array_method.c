@@ -296,6 +296,9 @@ fill_arraymethod_from_slots(
             case NPY_METH_contiguous_indexed_loop:
                 meth->contiguous_indexed_loop = slot->pfunc;
                 continue;
+            case _NPY_METH_static_data:
+                meth->static_data = slot->pfunc;
+                continue;
             default:
                 break;
         }
