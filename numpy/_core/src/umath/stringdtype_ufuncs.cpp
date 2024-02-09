@@ -34,7 +34,8 @@
         npy_static_string s2 = {0, NULL};                                          \
         int s2_isnull = NpyString_load(s2allocator, ps2, &s2);                     \
         if (s1_isnull == -1 || s2_isnull == -1) {                                  \
-            npy_gil_error(PyExc_MemoryError, "Failed to load string in" CONTEXT);  \
+            npy_gil_error(PyExc_MemoryError, "Failed to load string in %s",        \
+                          CONTEXT);                                                \
             goto fail;                                                             \
         }                                                                          \
 
@@ -1302,12 +1303,18 @@ string_startswith_endswith_resolve_descriptors(
     return NPY_NO_CASTING;
 }
 
+typedef npy_intp find_like_function(Buffer<ENCODING::UTF8>, Buffer<ENCODING::UTF8>,
+                                    npy_int64, npy_int64);
+
 static int
-string_find_strided_loop(PyArrayMethod_Context *context, char *const data[],
+string_find_rfind_count_strided_loop(PyArrayMethod_Context *context,
+                         char *const data[],
                          npy_intp const dimensions[],
                          npy_intp const strides[],
                          NpyAuxData *auxdata)
 {
+    const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
+    find_like_function *function = *(find_like_function *)(context->method->static_data);
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
 
     int has_null = descr1->na_object != NULL;
@@ -1328,81 +1335,12 @@ string_find_strided_loop(PyArrayMethod_Context *context, char *const data[],
     npy_intp N = dimensions[0];
 
     while (N--) {
-        LOAD_TWO_INPUT_STRINGS("find");
+        LOAD_TWO_INPUT_STRINGS(ufunc_name);
         if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
             if (has_null && !has_string_na) {
                 npy_gil_error(PyExc_ValueError,
-                              "'find' not supported for null values that are not "
-                              "strings.");
-            }
-            else {
-                if (s1_isnull) {
-                    s1 = *default_string;
-                }
-                if (s2_isnull) {
-                    s2 = *default_string;
-                }
-            }
-        }
-
-        npy_int64 start = *(npy_int64 *)in3;
-        npy_int64 end = *(npy_int64 *)in4;
-
-        Buffer<ENCODING::UTF8> buf1((char *)s1.buf, s1.size);
-        Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
-
-        npy_intp pos = string_find(buf1, buf2, start, end);
-        *(npy_intp *)out = pos;
-
-        in1 += strides[0];
-        in2 += strides[1];
-        in3 += strides[2];
-        in4 += strides[3];
-        out += strides[4];
-    }
-
-    NpyString_release_allocators(2, allocators);
-
-    return 0;
-
-fail:
-    NpyString_release_allocators(2, allocators);
-
-    return -1;
-}
-
-static int
-string_rfind_strided_loop(PyArrayMethod_Context *context, char *const data[],
-                          npy_intp const dimensions[],
-                          npy_intp const strides[],
-                          NpyAuxData *auxdata)
-{
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
-
-    int has_null = descr1->na_object != NULL;
-    int has_string_na = descr1->has_string_na;
-    const npy_static_string *default_string = &descr1->default_string;
-
-    npy_string_allocator *allocators[2] = {};
-    NpyString_acquire_allocators(2, context->descriptors, allocators);
-    npy_string_allocator *s1allocator = allocators[0];
-    npy_string_allocator *s2allocator = allocators[1];
-
-    char *in1 = data[0];
-    char *in2 = data[1];
-    char *in3 = data[2];
-    char *in4 = data[3];
-    char *out = data[4];
-
-    npy_intp N = dimensions[0];
-
-    while (N--) {
-        LOAD_TWO_INPUT_STRINGS("rfind");
-        if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
-            if (has_null && !has_string_na) {
-                npy_gil_error(PyExc_ValueError,
-                          "'rfind' not supported for null values that are not "
-                          "strings.");
+                              "'%s' not supported for null values that are not "
+                              "strings.", ufunc_name);
                 goto fail;
             }
             else {
@@ -1421,77 +1359,7 @@ string_rfind_strided_loop(PyArrayMethod_Context *context, char *const data[],
         Buffer<ENCODING::UTF8> buf1((char *)s1.buf, s1.size);
         Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
 
-        npy_intp pos = string_rfind(buf1, buf2, start, end);
-        *(npy_intp *)out = pos;
-
-        in1 += strides[0];
-        in2 += strides[1];
-        in3 += strides[2];
-        in4 += strides[3];
-        out += strides[4];
-    }
-
-    NpyString_release_allocators(2, allocators);
-
-    return 0;
-
-fail:
-    NpyString_release_allocators(2, allocators);
-
-    return -1;
-}
-
-static int
-string_count_strided_loop(PyArrayMethod_Context *context, char *const data[],
-                          npy_intp const dimensions[],
-                          npy_intp const strides[],
-                          NpyAuxData *auxdata)
-{
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
-
-    int has_null = descr1->na_object != NULL;
-    int has_string_na = descr1->has_string_na;
-    const npy_static_string *default_string = &descr1->default_string;
-
-    npy_string_allocator *allocators[2] = {};
-    NpyString_acquire_allocators(2, context->descriptors, allocators);
-    npy_string_allocator *s1allocator = allocators[0];
-    npy_string_allocator *s2allocator = allocators[1];
-
-    char *in1 = data[0];
-    char *in2 = data[1];
-    char *in3 = data[2];
-    char *in4 = data[3];
-    char *out = data[4];
-
-    npy_intp N = dimensions[0];
-
-    while (N--) {
-        LOAD_TWO_INPUT_STRINGS("count");
-        if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
-            if (has_null && !has_string_na) {
-                npy_gil_error(PyExc_ValueError,
-                          "'count' not supported for null values that are not "
-                          "strings.");
-                goto fail;
-            }
-            else {
-                if (s1_isnull) {
-                    s1 = *default_string;
-                }
-                if (s2_isnull) {
-                    s2 = *default_string;
-                }
-            }
-        }
-
-        npy_int64 start = *(npy_int64 *)in3;
-        npy_int64 end = *(npy_int64 *)in4;
-
-        Buffer<ENCODING::UTF8> buf1((char *)s1.buf, s1.size);
-        Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
-
-        npy_intp pos = string_count(buf1, buf2, start, end);
+        npy_intp pos = function(buf1, buf2, start, end);
         *(npy_intp *)out = pos;
 
         in1 += strides[0];
@@ -2841,12 +2709,6 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_DefaultIntDType,
     };
 
-    static PyArrayMethod_StridedLoop *find_rfind_count_strided_loops[] = {
-        &string_find_strided_loop,
-        &string_rfind_strided_loop,
-        &string_count_strided_loop,
-    };
-
     const char* find_rfind_count_names[] = {
         "find", "rfind", "count",
     };
@@ -2857,11 +2719,18 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_DefaultIntDType,
     };
 
+    find_like_function *find_rfind_count_functions[] = {
+        string_find<ENCODING::UTF8>,
+        string_rfind<ENCODING::UTF8>,
+        string_count<ENCODING::UTF8>,
+    };
+
     for (int i=0; i<3; i++) {
         if (init_ufunc(umath, find_rfind_count_names[i], find_rfind_count_dtypes,
                        &string_find_rfind_count_resolve_descriptors,
-                       find_rfind_count_strided_loops[i], 4, 1, NPY_NO_CASTING,
-                       (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
+                       &string_find_rfind_count_strided_loop, 4, 1, NPY_NO_CASTING,
+                       (NPY_ARRAYMETHOD_FLAGS) 0,
+                       (void *)find_rfind_count_functions[i]) < 0) {
             return -1;
         }
 
