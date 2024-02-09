@@ -979,8 +979,8 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     out : ndarray, optional
         Alternate output array in which to place the result.  The default
         is ``None``; if provided, it must have the same shape as the
-        expected output, but the type will be cast if necessary. See
-        :ref:`ufuncs-output-type` for more details.
+        expected output, but the type will be cast if necessary.
+        See :ref:`ufuncs-output-type` for more details.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,

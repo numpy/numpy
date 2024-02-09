@@ -12,7 +12,7 @@
 #define _MULTIARRAYMODULE
 
 #include <numpy/npy_common.h>
-#include <numpy/ndarraytypes.h>  /* for NPY_NTYPES */
+#include <numpy/npy_2_compat.h>  /* for NPY_NTYPES */
 #include <libnpymath/halffloat.h>
 
 #include "einsum_sumprod.h"

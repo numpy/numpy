@@ -44,6 +44,7 @@
 #include "reduction.h"
 #include "mem_overlap.h"
 #include "npy_hashtable.h"
+#include "conversion_utils.h"
 
 #include "ufunc_object.h"
 #include "override.h"
@@ -3433,28 +3434,6 @@ _set_full_args_out(int nout, PyObject *out_obj, ufunc_full_args *full_args)
         return -1;
     }
     return 0;
-}
-
-
-/*
- * Convert function which replaces np._NoValue with NULL.
- * As a converter returns 0 on error and 1 on success.
- */
-static int
-_not_NoValue(PyObject *obj, PyObject **out)
-{
-    static PyObject *NoValue = NULL;
-    npy_cache_import("numpy", "_NoValue", &NoValue);
-    if (NoValue == NULL) {
-        return 0;
-    }
-    if (obj == NoValue) {
-        *out = NULL;
-    }
-    else {
-        *out = obj;
-    }
-    return 1;
 }
 
 

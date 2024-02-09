@@ -381,6 +381,14 @@ multiarray_funcs_api = {
     'NpyDatetime_GetDatetimeISO8601StrLen':          (310, MinVersion("2.0")),
     'NpyDatetime_MakeISO8601Datetime':               (311, MinVersion("2.0")),
     'NpyDatetime_ParseISO8601Datetime':              (312, MinVersion("2.0")),
+    'NpyString_load':                                (313, MinVersion("2.0")),
+    'NpyString_pack':                                (314, MinVersion("2.0")),
+    'NpyString_pack_null':                           (315, MinVersion("2.0")),
+    'NpyString_acquire_allocator':                   (316, MinVersion("2.0")),
+    'NpyString_acquire_allocators':                  (317, MinVersion("2.0")),
+    'NpyString_release_allocator':                   (318, MinVersion("2.0")),
+    'NpyString_release_allocators':                  (319, MinVersion("2.0")),
+    # End 2.0 API
 }
 
 ufunc_types_api = {

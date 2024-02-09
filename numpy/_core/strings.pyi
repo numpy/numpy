@@ -1,4 +1,4 @@
-from typing import overload
+from typing import Any, overload
 
 import numpy as np
 from numpy._typing import (
@@ -6,6 +6,7 @@ from numpy._typing import (
     _ArrayLikeStr_co as U_co,
     _ArrayLikeBytes_co as S_co,
     _ArrayLikeInt_co as i_co,
+    _ArrayLikeBool_co as b_co,
 )
 
 @overload
@@ -43,11 +44,25 @@ def add(x1: U_co, x2: U_co) -> NDArray[np.str_]: ...
 @overload
 def add(x1: S_co, x2: S_co) -> NDArray[np.bytes_]: ...
 
+@overload
+def multiply(a: U_co, i: i_co) -> NDArray[np.str_]: ...
+@overload
+def multiply(a: S_co, i: i_co) -> NDArray[np.bytes_]: ...
+
+@overload
+def mod(a: U_co, value: Any) -> NDArray[np.str_]: ...
+@overload
+def mod(a: S_co, value: Any) -> NDArray[np.bytes_]: ...
+
 def isalpha(x: U_co | S_co) -> NDArray[np.bool]: ...
+def isalnum(a: U_co | S_co) -> NDArray[np.bool]: ...
 def isdigit(x: U_co | S_co) -> NDArray[np.bool]: ...
 def isspace(x: U_co | S_co) -> NDArray[np.bool]: ...
 def isdecimal(x: U_co) -> NDArray[np.bool]: ...
 def isnumeric(x: U_co) -> NDArray[np.bool]: ...
+def islower(a: U_co | S_co) -> NDArray[np.bool]: ...
+def istitle(a: U_co | S_co) -> NDArray[np.bool]: ...
+def isupper(a: U_co | S_co) -> NDArray[np.bool]: ...
 
 def str_len(x: U_co | S_co) -> NDArray[np.int_]: ...
 
@@ -79,6 +94,36 @@ def rfind(
     sub: S_co,
     start: i_co = ...,
     end: i_co | None = ...,
+) -> NDArray[np.int_]: ...
+
+@overload
+def index(
+    a: U_co,
+    sub: U_co,
+    start: i_co = ...,
+    end: None | i_co = ...,
+) -> NDArray[np.int_]: ...
+@overload
+def index(
+    a: S_co,
+    sub: S_co,
+    start: i_co = ...,
+    end: None | i_co = ...,
+) -> NDArray[np.int_]: ...
+
+@overload
+def rindex(
+    a: U_co,
+    sub: U_co,
+    start: i_co = ...,
+    end: None | i_co = ...,
+) -> NDArray[np.int_]: ...
+@overload
+def rindex(
+    a: S_co,
+    sub: S_co,
+    start: i_co = ...,
+    end: None | i_co = ...,
 ) -> NDArray[np.int_]: ...
 
 @overload
@@ -126,6 +171,46 @@ def endswith(
     end: i_co | None = ...,
 ) -> NDArray[np.bool]: ...
 
+def decode(
+    a: S_co,
+    encoding: None | str = ...,
+    errors: None | str = ...,
+) -> NDArray[np.str_]: ...
+
+def encode(
+    a: U_co,
+    encoding: None | str = ...,
+    errors: None | str = ...,
+) -> NDArray[np.bytes_]: ...
+
+@overload
+def expandtabs(a: U_co, tabsize: i_co = ...) -> NDArray[np.str_]: ...
+@overload
+def expandtabs(a: S_co, tabsize: i_co = ...) -> NDArray[np.bytes_]: ...
+
+@overload
+def center(a: U_co, width: i_co, fillchar: U_co = ...) -> NDArray[np.str_]: ...
+@overload
+def center(a: S_co, width: i_co, fillchar: S_co = ...) -> NDArray[np.bytes_]: ...
+
+@overload
+def ljust(a: U_co, width: i_co, fillchar: U_co = ...) -> NDArray[np.str_]: ...
+@overload
+def ljust(a: S_co, width: i_co, fillchar: S_co = ...) -> NDArray[np.bytes_]: ...
+
+@overload
+def rjust(
+    a: U_co,
+    width: i_co,
+    fillchar: U_co = ...,
+) -> NDArray[np.str_]: ...
+@overload
+def rjust(
+    a: S_co,
+    width: i_co,
+    fillchar: S_co = ...,
+) -> NDArray[np.bytes_]: ...
+
 @overload
 def lstrip(a: U_co, chars: None | U_co = ...) -> NDArray[np.str_]: ...
 @overload
@@ -142,6 +227,36 @@ def strip(a: U_co, chars: None | U_co = ...) -> NDArray[np.str_]: ...
 def strip(a: S_co, chars: None | S_co = ...) -> NDArray[np.bytes_]: ...
 
 @overload
+def zfill(a: U_co, width: i_co) -> NDArray[np.str_]: ...
+@overload
+def zfill(a: S_co, width: i_co) -> NDArray[np.bytes_]: ...
+
+@overload
+def upper(a: U_co) -> NDArray[np.str_]: ...
+@overload
+def upper(a: S_co) -> NDArray[np.bytes_]: ...
+
+@overload
+def lower(a: U_co) -> NDArray[np.str_]: ...
+@overload
+def lower(a: S_co) -> NDArray[np.bytes_]: ...
+
+@overload
+def swapcase(a: U_co) -> NDArray[np.str_]: ...
+@overload
+def swapcase(a: S_co) -> NDArray[np.bytes_]: ...
+
+@overload
+def capitalize(a: U_co) -> NDArray[np.str_]: ...
+@overload
+def capitalize(a: S_co) -> NDArray[np.bytes_]: ...
+
+@overload
+def title(a: U_co) -> NDArray[np.str_]: ...
+@overload
+def title(a: S_co) -> NDArray[np.bytes_]: ...
+
+@overload
 def replace(
     a: U_co,
     old: U_co,
@@ -156,3 +271,61 @@ def replace(
     count: i_co = ...,
 ) -> NDArray[np.bytes_]: ...
 
+@overload
+def join(sep: U_co, seq: U_co) -> NDArray[np.str_]: ...
+@overload
+def join(sep: S_co, seq: S_co) -> NDArray[np.bytes_]: ...
+
+@overload
+def split(
+    a: U_co,
+    sep: None | U_co = ...,
+    maxsplit: None | i_co = ...,
+) -> NDArray[np.object_]: ...
+@overload
+def split(
+    a: S_co,
+    sep: None | S_co = ...,
+    maxsplit: None | i_co = ...,
+) -> NDArray[np.object_]: ...
+
+@overload
+def rsplit(
+    a: U_co,
+    sep: None | U_co = ...,
+    maxsplit: None | i_co = ...,
+) -> NDArray[np.object_]: ...
+@overload
+def rsplit(
+    a: S_co,
+    sep: None | S_co = ...,
+    maxsplit: None | i_co = ...,
+) -> NDArray[np.object_]: ...
+
+@overload
+def splitlines(a: U_co, keepends: None | b_co = ...) -> NDArray[np.object_]: ...
+@overload
+def splitlines(a: S_co, keepends: None | b_co = ...) -> NDArray[np.object_]: ...
+
+@overload
+def partition(a: U_co, sep: U_co) -> NDArray[np.str_]: ...
+@overload
+def partition(a: S_co, sep: S_co) -> NDArray[np.bytes_]: ...
+
+@overload
+def rpartition(a: U_co, sep: U_co) -> NDArray[np.str_]: ...
+@overload
+def rpartition(a: S_co, sep: S_co) -> NDArray[np.bytes_]: ...
+
+@overload
+def translate(
+    a: U_co,
+    table: U_co,
+    deletechars: None | U_co = ...,
+) -> NDArray[np.str_]: ...
+@overload
+def translate(
+    a: S_co,
+    table: S_co,
+    deletechars: None | S_co = ...,
+) -> NDArray[np.bytes_]: ...

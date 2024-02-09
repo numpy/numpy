@@ -10,7 +10,8 @@ import sys
 import warnings
 
 from ..exceptions import DTypePromotionError
-from .multiarray import dtype, array, ndarray, promote_types
+from .multiarray import dtype, array, ndarray, promote_types, StringDType
+from numpy import _NoValue
 try:
     import ctypes
 except ImportError:
@@ -949,3 +950,10 @@ def npy_ctypes_check(cls):
         return '_ctypes' in ctype_base.__module__
     except Exception:
         return False
+
+# used to handle the _NoValue default argument for na_object
+# in the C implementation of the __reduce__ method for stringdtype
+def _convert_to_stringdtype_kwargs(coerce, na_object=_NoValue):
+    if na_object is _NoValue:
+        return StringDType(coerce=coerce)
+    return StringDType(coerce=coerce, na_object=na_object)

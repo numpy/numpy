@@ -272,13 +272,15 @@ All the changes that we covered in the previous sections can be automatically ap
 to the codebase with the dedicated Ruff rule,
 `NPY201 <https://docs.astral.sh/ruff/rules/numpy2-deprecation/>`_.
 
-You should install Ruff, version ``0.1.8`` or above, and add to your ``pyproject.toml``::
+You should install Ruff, version ``0.2.0`` or above, and add the ``NPY201`` rule to
+your ``pyproject.toml``::
 
     [tool.ruff.lint]
-    extend-select = ["NPY201"]
-    preview = true
+    select = ["NPY201"]
 
-To learn more about preview mode see `Ruff docs <https://docs.astral.sh/ruff/preview/>`_.
+You can run NumPy 2.0 rule also directly from the command line::
+
+    $ ruff check path/to/code/ --select NPY201
 
 
 Note about pickled files

@@ -29,6 +29,7 @@
 #include "arrayobject.h"
 #include "alloc.h"
 #include "gil_utils.h"
+#include "stringdtype/dtype.h"
 
 #include "npy_longdouble.h"
 #include "numpyos.h"
@@ -359,7 +360,23 @@ NPY_NO_EXPORT int
     @type@ temp;  /* ensures alignment */
 
 #if @is_int@
-    if (PyLong_Check(op)) {
+    int is_pylong = PyLong_Check(op);
+    // array objects do not get checked for overflow after conversion to a
+    // pyint because the default fill value for integer masked arrays is
+    // array(999999), which overflows for (u)int8 and (u)int16.
+    if (!(is_pylong || PyArray_Check(op))) {
+        PyObject* ret = PyNumber_Long(op);
+        if (ret == NULL) {
+            return -1;
+        }
+        op = ret;
+        if (@TYPE@_safe_pyint_setitem(op, &temp) < 0) {
+            Py_DECREF(op);
+            return -1;
+        }
+        Py_DECREF(op);
+    }
+    else if (is_pylong) {
         /*
          * When weak promotion is enabled (using NEP 50) we also use more
          * strict parsing of integers:  All out-of-bound Python integer
@@ -4263,6 +4280,10 @@ PyArray_DescrFromType(int type)
          */
         ret = NULL;
     }
+    else if (type == NPY_VSTRING || type == NPY_VSTRINGLTR) {
+        ret = (PyArray_Descr *)new_stringdtype_instance(NULL, 1, NULL);
+    }
+    // builtin legacy dtypes
     else if (type < NPY_NTYPES) {
         ret = _builtin_descrs[type];
     }
@@ -4486,6 +4507,8 @@ set_typeinfo(PyObject *dict)
 #else
     #error "Did not find correct pointer sized integer."
 #endif
+
+    _letter_to_num['T'] = NPY_VSTRING;
 
     /**begin repeat
       * #name = BOOL,

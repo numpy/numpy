@@ -1376,6 +1376,23 @@ PyArray_IntTupleFromIntp(int len, npy_intp const *vals)
     return intTuple;
 }
 
+NPY_NO_EXPORT int
+_not_NoValue(PyObject *obj, PyObject **out)
+{
+    static PyObject *NoValue = NULL;
+    npy_cache_import("numpy", "_NoValue", &NoValue);
+    if (NoValue == NULL) {
+        return 0;
+    }
+    if (obj == NoValue) {
+        *out = NULL;
+    }
+    else {
+        *out = obj;
+    }
+    return 1;
+}
+
 /*
  * Device string converter.
  */

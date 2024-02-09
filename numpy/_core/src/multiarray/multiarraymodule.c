@@ -72,6 +72,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "convert.h" /* for PyArray_AssignZero */
 #include "lowlevel_strided_loops.h"
 #include "dtype_transfer.h"
+#include "stringdtype/dtype.h"
 
 #include "get_attr_string.h"
 #include "experimental_public_dtype_api.h"  /* _get_experimental_dtype_api */
@@ -4120,7 +4121,8 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
     if (PyArray_TYPE(char_array) == NPY_STRING) {
         method = PyObject_GetAttr((PyObject *)&PyBytes_Type, method_name);
     }
-    else if (PyArray_TYPE(char_array) == NPY_UNICODE) {
+    else if (PyArray_TYPE(char_array) == NPY_UNICODE ||
+             NPY_DTYPE(PyArray_DTYPE(char_array)) == &PyArray_StringDType) {
         method = PyObject_GetAttr((PyObject *)&PyUnicode_Type, method_name);
     }
     else {
@@ -5147,6 +5149,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (set_typeinfo(d) != 0) {
         goto err;
     }
+
     if (PyType_Ready(&PyArrayFunctionDispatcher_Type) < 0) {
         goto err;
     }
@@ -5175,6 +5178,10 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
+    if (init_string_dtype() < 0) {
+        goto err;
+    }
+
     if (initumath(m) != 0) {
         goto err;
     }
@@ -5182,6 +5189,28 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (set_matmul_flags(d) < 0) {
         goto err;
     }
+
+    /*
+     * Initialize np.dtypes.StringDType
+     *
+     * Note that this happens here after initializing
+     * the legacy built-in DTypes to avoid a circular dependency
+     * during NumPy setup, since this needs to happen after
+     * init_string_dtype() but that needs to happen after
+     * the legacy dtypemeta classes are available.
+     */
+    static PyObject *add_dtype_helper = NULL;
+    npy_cache_import("numpy.dtypes", "_add_dtype_helper", &add_dtype_helper);
+    if (add_dtype_helper == NULL) {
+        goto err;
+    }
+
+    if (PyObject_CallFunction(
+            add_dtype_helper,
+            "Os", (PyObject *)&PyArray_StringDType, NULL) == NULL) {
+        goto err;
+    }
+    PyDict_SetItemString(d, "StringDType", (PyObject *)&PyArray_StringDType);
 
     /*
      * Initialize the default PyDataMem_Handler capsule singleton.

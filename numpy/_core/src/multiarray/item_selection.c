@@ -1301,6 +1301,13 @@ fail:
         /* Out of memory during sorting or buffer creation */
         PyErr_NoMemory();
     }
+    // if an error happened with a dtype that doesn't hold the GIL, need
+    // to make sure we return an error value from this function.
+    // note: only the first error is ever reported, subsequent errors
+    // must *not* set the error handler.
+    if (PyErr_Occurred() && ret == 0) {
+        ret = -1;
+    }
     Py_DECREF(it);
     Py_DECREF(mem_handler);
     NPY_cast_info_xfree(&to_cast_info);

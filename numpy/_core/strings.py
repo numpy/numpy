@@ -8,6 +8,7 @@ from numpy import (
     equal, not_equal, less, less_equal, greater, greater_equal,
     add
 )
+from numpy._core.multiarray import _vec_string
 from numpy._core.umath import (
     isalpha,
     isdigit,
@@ -31,14 +32,272 @@ from numpy._core.umath import (
 
 
 __all__ = [
+    # UFuncs
     "equal", "not_equal", "less", "less_equal", "greater", "greater_equal",
     "add", "isalpha", "isdigit", "isspace", "isdecimal", "isnumeric",
     "str_len", "find", "rfind", "count", "startswith", "endswith",
-    "lstrip", "rstrip", "strip", "replace"
+    "lstrip", "rstrip", "strip", "replace",
+
+    # _vec_string - Will gradually become ufuncs as well
+    "isalnum", "islower", "istitle", "isupper", "multiply", "mod", "index",
+    "rindex", "decode", "encode", "expandtabs", "center",
+    "ljust", "rjust", "zfill", "upper", "lower", "swapcase", "capitalize",
+    "title", "join", "split", "rsplit", "splitlines",
+    "partition", "rpartition", "translate",
 ]
 
 
 MAX = np.iinfo(np.int64).max
+
+
+def _get_num_chars(a):
+    """
+    Helper function that returns the number of characters per field in
+    a string or unicode array.  This is to abstract out the fact that
+    for a unicode array this is itemsize / 4.
+    """
+    if issubclass(a.dtype.type, np.str_):
+        return a.itemsize // 4
+    return a.itemsize
+
+
+def _to_bytes_or_str_array(result, output_dtype_like):
+    """
+    Helper function to cast a result back into an array
+    with the appropriate dtype if an object array must be used
+    as an intermediary.
+    """
+    output_dtype_like = np.asarray(output_dtype_like)
+    if result.size == 0:
+        # Calling asarray & tolist in an empty array would result
+        # in losing shape information
+        return result.astype(output_dtype_like.dtype)
+    ret = np.asarray(result.tolist())
+    return ret.astype(type(output_dtype_like.dtype)(_get_num_chars(ret)))
+
+
+def _clean_args(*args):
+    """
+    Helper function for delegating arguments to Python string
+    functions.
+
+    Many of the Python string operations that have optional arguments
+    do not use 'None' to indicate a default value.  In these cases,
+    we need to remove all None arguments, and those following them.
+    """
+    newargs = []
+    for chk in args:
+        if chk is None:
+            break
+        newargs.append(chk)
+    return newargs
+
+
+def isalnum(a):
+    """
+    Returns true for each element if all characters in the string are
+    alphanumeric and there is at least one character, false otherwise.
+
+    Calls :meth:`str.isalnum` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input type
+
+    See Also
+    --------
+    str.isalnum
+
+    Examples
+    --------
+    >>> a = np.array(['a', '1', 'a1', '(', ''])
+    >>> np.strings.isalnum(a)
+    array([ True,  True,  True, False, False])
+    
+    """
+    return _vec_string(a, np.bool, 'isalnum')
+
+
+def islower(a):
+    """
+    Returns true for each element if all cased characters in the
+    string are lowercase and there is at least one cased character,
+    false otherwise.
+
+    Calls :meth:`str.islower` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    Returns
+    -------
+    out : ndarray
+        Output array of bools
+
+    See Also
+    --------
+    str.islower
+
+    Examples
+    --------
+    >>> np.strings.islower("GHC")
+    array(False)
+    >>> np.strings.islower("ghc")
+    array(True)
+
+    """
+    return _vec_string(a, np.bool, 'islower')
+
+
+def istitle(a):
+    """
+    Returns true for each element if the element is a titlecased
+    string and there is at least one character, false otherwise.
+
+    Call :meth:`str.istitle` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    Returns
+    -------
+    out : ndarray
+        Output array of bools
+
+    See Also
+    --------
+    str.istitle
+
+    Examples
+    --------
+    >>> np.strings.istitle("Numpy Is Great")
+    array(True)
+
+    >>> np.strings.istitle("Numpy is great")
+    array(False)
+    
+    """
+    return _vec_string(a, np.bool, 'istitle')
+
+
+def isupper(a):
+    """
+    Return true for each element if all cased characters in the
+    string are uppercase and there is at least one character, false
+    otherwise.
+
+    Call :meth:`str.isupper` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    Returns
+    -------
+    out : ndarray
+        Output array of bools
+
+    See Also
+    --------
+    str.isupper
+
+    Examples
+    --------
+    >>> np.strings.isupper("GHC")
+    array(True)     
+    >>> a = np.array(["hello", "HELLO", "Hello"])
+    >>> np.strings.isupper(a)
+    array([False,  True, False]) 
+
+    """
+    return _vec_string(a, np.bool, 'isupper')
+
+
+def multiply(a, i):
+    """
+    Return (a * i), that is string multiple concatenation,
+    element-wise.
+
+    Values in ``i`` of less than 0 are treated as 0 (which yields an
+    empty string).
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    i : array_like, with any integer dtype
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input types
+    
+    Examples
+    --------
+    >>> a = np.array(["a", "b", "c"])
+    >>> np.strings.multiply(a, 3)
+    array(['aaa', 'bbb', 'ccc'], dtype='<U3')
+    >>> i = np.array([1, 2, 3])
+    >>> np.strings.multiply(a, i)
+    array(['a', 'bb', 'ccc'], dtype='<U3')
+    >>> np.strings.multiply(np.array(['a']), i)
+    array(['a', 'aa', 'aaa'], dtype='<U3')
+    >>> a = np.array(['a', 'b', 'c', 'd', 'e', 'f']).reshape((2, 3))
+    >>> np.strings.multiply(a, 3)
+    array([['aaa', 'bbb', 'ccc'],
+           ['ddd', 'eee', 'fff']], dtype='<U3')
+    >>> np.strings.multiply(a, i)
+    array([['a', 'bb', 'ccc'],
+           ['d', 'ee', 'fff']], dtype='<U3')
+           
+    """
+    a_arr = np.asarray(a)
+    i_arr = np.asarray(i)
+    if not issubclass(i_arr.dtype.type, np.integer):
+        raise ValueError("Can only multiply by integers")
+    if a_arr.dtype.kind == "T":
+        return a_arr * i_arr
+    out_size = _get_num_chars(a_arr) * max(int(i_arr.max()), 0)
+    return _vec_string(
+        a_arr, type(a_arr.dtype)(out_size), '__mul__', (i_arr,))
+
+
+def mod(a, values):
+    """
+    Return (a % i), that is pre-Python 2.6 string formatting
+    (interpolation), element-wise for a pair of array_likes of str
+    or unicode.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    values : array_like of values
+       These values will be element-wise interpolated into the string.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input types
+        
+    """
+    return _to_bytes_or_str_array(
+        _vec_string(a, np.object_, '__mod__', (values,)), a)
 
 
 def find(a, sub, start=0, end=None):
@@ -105,6 +364,75 @@ def rfind(a, sub, start=0, end=None):
     """
     end = end if end is not None else MAX
     return _rfind_ufunc(a, sub, start, end)
+
+
+def index(a, sub, start=0, end=None):
+    """
+    Like `find`, but raises :exc:`ValueError` when the substring is not found.
+
+    Calls :meth:`str.index` element-wise.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    sub : str or unicode
+
+    start, end : int, optional
+
+    Returns
+    -------
+    out : ndarray
+        Output array of ints.  Returns -1 if `sub` is not found.
+
+    See Also
+    --------
+    find, str.find
+
+    Examples
+    --------
+    >>> a = np.array(["Computer Science"])
+    >>> np.strings.index(a, "Science", start=0, end=None)
+    array([9])
+
+    """
+    return _vec_string(
+        a, np.int_, 'index', [sub, start] + _clean_args(end))
+
+
+def rindex(a, sub, start=0, end=None):
+    """
+    Like `rfind`, but raises :exc:`ValueError` when the substring `sub` is
+    not found.
+
+    Calls :meth:`str.rindex` element-wise.
+
+    Parameters
+    ----------
+    a : array-like, with `np.bytes_` or `np.str_` dtype
+
+    sub : str or unicode
+
+    start, end : int, optional
+
+    Returns
+    -------
+    out : ndarray
+       Output array of ints.
+
+    See Also
+    --------
+    rfind, str.rindex
+
+    Examples
+    --------
+    >>> a = np.array(["Computer Science"])
+    >>> np.strings.rindex(a, "Science", start=0, end=None)
+    array([9])
+    
+    """
+    return _vec_string(
+        a, np.int_, 'rindex', [sub, start] + _clean_args(end))
 
 
 def count(a, sub, start=0, end=None):
@@ -218,6 +546,270 @@ def endswith(a, suffix, start=0, end=None):
     return _endswith_ufunc(a, suffix, start, end)
 
 
+def decode(a, encoding=None, errors=None):
+    r"""
+    Calls :meth:`bytes.decode` element-wise.
+
+    The set of available codecs comes from the Python standard library,
+    and may be extended at runtime.  For more information, see the
+    :mod:`codecs` module.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    encoding : str, optional
+       The name of an encoding
+
+    errors : str, optional
+       Specifies how to handle encoding errors
+
+    Returns
+    -------
+    out : ndarray
+
+    See Also
+    --------
+    :py:meth:`bytes.decode`
+
+    Notes
+    -----
+    The type of the result will depend on the encoding specified.
+
+    Examples
+    --------
+    >>> c = np.array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
+    ...               b'\x81\x82\xc2\xc1\xc2\x82\x81'])
+    >>> c
+    array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
+           b'\x81\x82\xc2\xc1\xc2\x82\x81'], dtype='|S7')
+    >>> np.strings.decode(c, encoding='cp037')
+    array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
+
+    """
+    return _to_bytes_or_str_array(
+        _vec_string(a, np.object_, 'decode', _clean_args(encoding, errors)),
+        np.str_(''))
+
+
+def encode(a, encoding=None, errors=None):
+    """
+    Calls :meth:`str.encode` element-wise.
+
+    The set of available codecs comes from the Python standard library,
+    and may be extended at runtime. For more information, see the
+    :mod:`codecs` module.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    encoding : str, optional
+       The name of an encoding
+
+    errors : str, optional
+       Specifies how to handle encoding errors
+
+    Returns
+    -------
+    out : ndarray
+
+    See Also
+    --------
+    str.encode
+
+    Notes
+    -----
+    The type of the result will depend on the encoding specified.
+
+    Examples
+    --------
+    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> np.strings.encode(a, encoding='cp037')
+    array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
+       b'\x81\x82\xc2\xc1\xc2\x82\x81'], dtype='|S7')
+       
+    """
+    return _to_bytes_or_str_array(
+        _vec_string(a, np.object_, 'encode', _clean_args(encoding, errors)),
+        np.bytes_(b''))
+
+
+def expandtabs(a, tabsize=8):
+    """
+    Return a copy of each string element where all tab characters are
+    replaced by one or more spaces.
+
+    Calls :meth:`str.expandtabs` element-wise.
+
+    Return a copy of each string element where all tab characters are
+    replaced by one or more spaces, depending on the current column
+    and the given `tabsize`. The column number is reset to zero after
+    each newline occurring in the string. This doesn't understand other
+    non-printing characters or escape sequences.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+        Input array
+    tabsize : int, optional
+        Replace tabs with `tabsize` number of spaces.  If not given defaults
+        to 8 spaces.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input type
+
+    See Also
+    --------
+    str.expandtabs
+
+    Examples
+    --------
+    >>> a = np.array(['\t\tHello\tworld'])  
+    >>> np.strings.expandtabs(a, tabsize=4)  # doctest: +SKIP
+    array(['        Hello   world'], dtype='<U21')  # doctest: +SKIP
+
+    """
+    return _to_bytes_or_str_array(
+        _vec_string(a, np.object_, 'expandtabs', (tabsize,)), a)
+
+
+def center(a, width, fillchar=' '):
+    """
+    Return a copy of `a` with its elements centered in a string of
+    length `width`.
+
+    Calls :meth:`str.center` element-wise.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    width : int
+        The length of the resulting strings
+    fillchar : str or unicode, optional
+        The padding character to use (default is space).
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input
+        types
+
+    See Also
+    --------
+    str.center
+    
+    Notes
+    -----
+    This function is intended to work with arrays of strings.  The
+    fill character is not applied to numeric types.
+
+    Examples
+    --------
+    >>> c = np.array(['a1b2','1b2a','b2a1','2a1b']); c
+    array(['a1b2', '1b2a', 'b2a1', '2a1b'], dtype='<U4')
+    >>> np.strings.center(c, width=9)
+    array(['   a1b2  ', '   1b2a  ', '   b2a1  ', '   2a1b  '], dtype='<U9')
+    >>> np.strings.center(c, width=9, fillchar='*')
+    array(['***a1b2**', '***1b2a**', '***b2a1**', '***2a1b**'], dtype='<U9')
+    >>> np.strings.center(c, width=1)
+    array(['a', '1', 'b', '2'], dtype='<U1')
+
+    """
+    a_arr = np.asarray(a)
+    width_arr = np.asarray(width)
+    size = int(np.max(width_arr.flat))
+    if np.issubdtype(a_arr.dtype, np.bytes_):
+        fillchar = np._utils.asbytes(fillchar)
+    return _vec_string(
+        a_arr, type(a_arr.dtype)(size), 'center', (width_arr, fillchar))
+
+
+def ljust(a, width, fillchar=' '):
+    """
+    Return an array with the elements of `a` left-justified in a
+    string of length `width`.
+
+    Calls :meth:`str.ljust` element-wise.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    width : int
+        The length of the resulting strings
+    fillchar : str or unicode, optional
+        The character to use for padding
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input type
+
+    See Also
+    --------
+    str.ljust
+
+    Examples
+    --------
+    >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> np.strings.ljust(c, width=3)
+    array(['aAa', '  a', 'abB'], dtype='<U3')
+    
+    """
+    a_arr = np.asarray(a)
+    width_arr = np.asarray(width)
+    size = int(np.max(width_arr.flat))
+    if np.issubdtype(a_arr.dtype, np.bytes_):
+        fillchar = np._utils.asbytes(fillchar)
+    return _vec_string(
+        a_arr, type(a_arr.dtype)(size), 'ljust', (width_arr, fillchar))
+
+
+def rjust(a, width, fillchar=' '):
+    """
+    Return an array with the elements of `a` right-justified in a
+    string of length `width`.
+
+    Calls :meth:`str.rjust` element-wise.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    width : int
+        The length of the resulting strings
+    fillchar : str or unicode, optional
+        The character to use for padding
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input type
+
+    See Also
+    --------
+    str.rjust
+
+    Examples
+    --------
+    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> np.strings.rjust(a, width=3)
+    array(['aAa', '  a', 'abB'], dtype='<U3')
+    
+    """
+    a_arr = np.asarray(a)
+    width_arr = np.asarray(width)
+    size = int(np.max(width_arr.flat))
+    if np.issubdtype(a_arr.dtype, np.bytes_):
+        fillchar = np._utils.asbytes(fillchar)
+    return _vec_string(
+        a_arr, type(a_arr.dtype)(size), 'rjust', (width_arr, fillchar))
+
+
 def lstrip(a, chars=None):
     """
     For each element in `a`, return a copy with the leading characters
@@ -225,7 +817,7 @@ def lstrip(a, chars=None):
 
     Parameters
     ----------
-    a : array_like, with ``bytes_`` or ``unicode_`` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
     chars : scalar with the same dtype as ``a``, optional
        The ``chars`` argument is a string specifying the set of
        characters to be removed. If ``None``, the ``chars``
@@ -236,7 +828,7 @@ def lstrip(a, chars=None):
     Returns
     -------
     out : ndarray
-        Output array of ``bytes_`` or ``unicode_`` dtype
+        Output array of ``bytes_`` or ``str_`` dtype
 
     See Also
     --------
@@ -270,7 +862,7 @@ def rstrip(a, chars=None):
 
     Parameters
     ----------
-    a : array_like, with ``bytes_`` or ``unicode_`` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
     chars : scalar with the same dtype as ``a``, optional
        The ``chars`` argument is a string specifying the set of
        characters to be removed. If ``None``, the ``chars``
@@ -281,7 +873,7 @@ def rstrip(a, chars=None):
     Returns
     -------
     out : ndarray
-        Output array of ``bytes_`` or ``unicode_`` dtype
+        Output array of ``bytes_`` or ``str_`` dtype
 
     See Also
     --------
@@ -310,7 +902,7 @@ def strip(a, chars=None):
 
     Parameters
     ----------
-    a : array_like, with ``bytes_`` or ``unicode_`` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
     chars : scalar with the same dtype as ``a``, optional
        The ``chars`` argument is a string specifying the set of
        characters to be removed. If ``None``, the ``chars``
@@ -321,7 +913,7 @@ def strip(a, chars=None):
     Returns
     -------
     out : ndarray
-        Output array of ``bytes_`` or ``unicode_`` dtype
+        Output array of ``bytes_`` or ``str_`` dtype
 
     See Also
     --------
@@ -345,6 +937,223 @@ def strip(a, chars=None):
     if chars is None:
         return _strip_whitespace(a)
     return _strip_chars(a, chars)
+
+
+def zfill(a, width):
+    """
+    Return the numeric string left-filled with zeros
+
+    Calls :meth:`str.zfill` element-wise.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+        Input array.
+    width : int
+        Width of string to left-fill elements in `a`.
+
+    Returns
+    -------
+    out : ndarray, {str, unicode}
+        Output array of str or unicode, depending on input type
+
+    See Also
+    --------
+    str.zfill
+
+    Examples
+    --------
+    >>> np.strings.zfill('1', 3)
+    array('001', dtype='<U3')
+
+    """
+    a_arr = np.asarray(a)
+    width_arr = np.asarray(width)
+    size = int(np.max(width_arr.flat))
+    return _vec_string(
+        a_arr, type(a_arr.dtype)(size), 'zfill', (width_arr,))
+
+
+def upper(a):
+    """
+    Return an array with the elements converted to uppercase.
+
+    Calls :meth:`str.upper` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+        Input array.
+
+    Returns
+    -------
+    out : ndarray, {str, unicode}
+        Output array of str or unicode, depending on input type
+
+    See Also
+    --------
+    str.upper
+
+    Examples
+    --------
+    >>> c = np.array(['a1b c', '1bca', 'bca1']); c
+    array(['a1b c', '1bca', 'bca1'], dtype='<U5')
+    >>> np.strings.upper(c)
+    array(['A1B C', '1BCA', 'BCA1'], dtype='<U5')
+
+    """
+    a_arr = np.asarray(a)
+    return _vec_string(a_arr, a_arr.dtype, 'upper')
+
+
+def lower(a):
+    """
+    Return an array with the elements converted to lowercase.
+
+    Call :meth:`str.lower` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+        Input array.
+
+    Returns
+    -------
+    out : ndarray, {str, unicode}
+        Output array of str or unicode, depending on input type
+
+    See Also
+    --------
+    str.lower
+
+    Examples
+    --------
+    >>> c = np.array(['A1B C', '1BCA', 'BCA1']); c
+    array(['A1B C', '1BCA', 'BCA1'], dtype='<U5')
+    >>> np.strings.lower(c)
+    array(['a1b c', '1bca', 'bca1'], dtype='<U5')
+
+    """
+    a_arr = np.asarray(a)
+    return _vec_string(a_arr, a_arr.dtype, 'lower')
+
+
+def swapcase(a):
+    """
+    Return element-wise a copy of the string with
+    uppercase characters converted to lowercase and vice versa.
+
+    Calls :meth:`str.swapcase` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+        Input array.
+
+    Returns
+    -------
+    out : ndarray, {str, unicode}
+        Output array of str or unicode, depending on input type
+
+    See Also
+    --------
+    str.swapcase
+
+    Examples
+    --------
+    >>> c=np.array(['a1B c','1b Ca','b Ca1','cA1b'],'S5'); c
+    array(['a1B c', '1b Ca', 'b Ca1', 'cA1b'],
+        dtype='|S5')
+    >>> np.strings.swapcase(c)
+    array(['A1b C', '1B cA', 'B cA1', 'Ca1B'],
+        dtype='|S5')
+
+    """
+    a_arr = np.asarray(a)
+    return _vec_string(a_arr, a_arr.dtype, 'swapcase')
+
+
+def capitalize(a):
+    """
+    Return a copy of ``a`` with only the first character of each element
+    capitalized.
+
+    Calls :meth:`str.capitalize` element-wise.
+
+    For byte strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+        Input array of strings to capitalize.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input
+        types
+
+    See Also
+    --------
+    str.capitalize
+
+    Examples
+    --------
+    >>> c = np.array(['a1b2','1b2a','b2a1','2a1b'],'S4'); c
+    array(['a1b2', '1b2a', 'b2a1', '2a1b'],
+        dtype='|S4')
+    >>> np.strings.capitalize(c)
+    array(['A1b2', '1b2a', 'B2a1', '2a1b'],
+        dtype='|S4')
+
+    """
+    a_arr = np.asarray(a)
+    return _vec_string(a_arr, a_arr.dtype, 'capitalize')
+
+
+def title(a):
+    """
+    Return element-wise title cased version of string or unicode.
+
+    Title case words start with uppercase characters, all remaining cased
+    characters are lowercase.
+
+    Calls :meth:`str.title` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+        Input array.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input type
+
+    See Also
+    --------
+    str.title
+
+    Examples
+    --------
+    >>> c=np.array(['a1b c','1b ca','b ca1','ca1b'],'S5'); c
+    array(['a1b c', '1b ca', 'b ca1', 'ca1b'],
+        dtype='|S5')
+    >>> np.strings.title(c)
+    array(['A1B C', '1B Ca', 'B Ca1', 'Ca1B'],
+        dtype='|S5')
+
+    """
+    a_arr = np.asarray(a)
+    return _vec_string(a_arr, a_arr.dtype, 'title')
 
 
 def replace(a, old, new, count=-1):
@@ -385,17 +1194,301 @@ def replace(a, old, new, count=-1):
     from numpy._core.umath import count as count_occurences
 
     arr = np.asanyarray(a)
-    old = np.asanyarray(old)
-    new = np.asanyarray(new)
+    a_dt = arr.dtype
+    old = np.asanyarray(old, dtype=getattr(old, 'dtype', a_dt))
+    new = np.asanyarray(new, dtype=getattr(new, 'dtype', a_dt))
 
     max_int64 = np.iinfo(np.int64).max
     counts = count_occurences(arr, old, 0, max_int64)
     count = np.asanyarray(count)
     counts = np.where(count < 0, counts, np.minimum(counts, count))
 
-    buffersizes = str_len(arr) + counts * (str_len(new) - str_len(old))
-
-    # buffersizes is properly broadcast along all inputs.
-    out = np.empty_like(arr, shape=buffersizes.shape,
-                        dtype=f"{arr.dtype.char}{buffersizes.max()}")
+    if arr.dtype.char == "T":
+        shape = np.broadcast_shapes(counts.shape, new.shape, old.shape)
+        out = np.empty_like(arr, shape=shape)
+    else:
+        buffersizes = str_len(arr) + counts * (str_len(new) - str_len(old))
+        out_dtype = f"{arr.dtype.char}{buffersizes.max()}"
+        out = np.empty_like(arr, shape=buffersizes.shape, dtype=out_dtype)
     return _replace(arr, old, new, counts, out=out)
+
+
+def join(sep, seq):
+    """
+    Return a string which is the concatenation of the strings in the
+    sequence `seq`.
+
+    Calls :meth:`str.join` element-wise.
+
+    Parameters
+    ----------
+    sep : array_like, with `np.bytes_` or `np.str_` dtype
+    seq : array_like, with `np.bytes_` or `np.str_` dtype
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input types
+
+    See Also
+    --------
+    str.join
+
+    Examples
+    --------
+    >>> np.strings.join('-', 'osd')
+    array('o-s-d', dtype='<U5')
+
+    >>> np.strings.join(['-', '.'], ['ghc', 'osd'])
+    array(['g-h-c', 'o.s.d'], dtype='<U5')
+
+    """
+    return _to_bytes_or_str_array(
+        _vec_string(sep, np.object_, 'join', (seq,)), seq)
+
+
+def split(a, sep=None, maxsplit=None):
+    """
+    For each element in `a`, return a list of the words in the
+    string, using `sep` as the delimiter string.
+
+    Calls :meth:`str.split` element-wise.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    sep : str or unicode, optional
+       If `sep` is not specified or None, any whitespace string is a
+       separator.
+
+    maxsplit : int, optional
+        If `maxsplit` is given, at most `maxsplit` splits are done.
+
+    Returns
+    -------
+    out : ndarray
+        Array of list objects
+
+    Examples
+    --------
+    >>> x = np.array("Numpy is nice!")
+    >>> np.strings.split(x, " ")
+    array(list(['Numpy', 'is', 'nice!']), dtype=object)
+
+    >>> np.strings.split(x, " ", 1)
+    array(list(['Numpy', 'is nice!']), dtype=object)
+
+    See Also
+    --------
+    str.split, rsplit
+
+    """
+    # This will return an array of lists of different sizes, so we
+    # leave it as an object array
+    return _vec_string(
+        a, np.object_, 'split', [sep] + _clean_args(maxsplit))
+
+
+def rsplit(a, sep=None, maxsplit=None):
+    """
+    For each element in `a`, return a list of the words in the
+    string, using `sep` as the delimiter string.
+
+    Calls :meth:`str.rsplit` element-wise.
+
+    Except for splitting from the right, `rsplit`
+    behaves like `split`.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    sep : str or unicode, optional
+        If `sep` is not specified or None, any whitespace string
+        is a separator.
+    maxsplit : int, optional
+        If `maxsplit` is given, at most `maxsplit` splits are done,
+        the rightmost ones.
+
+    Returns
+    -------
+    out : ndarray
+       Array of list objects
+
+    See Also
+    --------
+    str.rsplit, split
+
+    Examples
+    --------
+    >>> a = np.array(['aAaAaA', 'abBABba'])
+    >>> np.strings.rsplit(a, 'A')
+    array([list(['a', 'a', 'a', '']), list(['abB', 'Bba'])], dtype=object)
+    
+    """
+    # This will return an array of lists of different sizes, so we
+    # leave it as an object array
+    return _vec_string(
+        a, np.object_, 'rsplit', [sep] + _clean_args(maxsplit))
+
+
+def splitlines(a, keepends=None):
+    """
+    For each element in `a`, return a list of the lines in the
+    element, breaking at line boundaries.
+
+    Calls :meth:`str.splitlines` element-wise.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    keepends : bool, optional
+        Line breaks are not included in the resulting list unless
+        keepends is given and true.
+
+    Returns
+    -------
+    out : ndarray
+        Array of list objects
+
+    See Also
+    --------
+    str.splitlines
+
+    """
+    return _vec_string(
+        a, np.object_, 'splitlines', _clean_args(keepends))
+
+
+def partition(a, sep):
+    """
+    Partition each element in `a` around `sep`.
+
+    Calls :meth:`str.partition` element-wise.
+
+    For each element in `a`, split the element as the first
+    occurrence of `sep`, and return 3 strings containing the part
+    before the separator, the separator itself, and the part after
+    the separator. If the separator is not found, return 3 strings
+    containing the string itself, followed by two empty strings.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+        Input array
+    sep : {str, unicode}
+        Separator to split each string element in `a`.
+
+    Returns
+    -------
+    out : ndarray, {str, unicode}
+        Output array of str or unicode, depending on input type.
+        The output array will have an extra dimension with 3
+        elements per input element.
+
+    Examples
+    --------
+    >>> x = np.array(["Numpy is nice!"])
+    >>> np.strings.partition(x, " ")
+    array([['Numpy', ' ', 'is nice!']], dtype='<U8')
+    
+    See Also
+    --------
+    str.partition
+
+    """
+    return _to_bytes_or_str_array(
+        _vec_string(a, np.object_, 'partition', (sep,)), a)
+
+
+def rpartition(a, sep):
+    """
+    Partition (split) each element around the right-most separator.
+
+    Calls :meth:`str.rpartition` element-wise.
+
+    For each element in `a`, split the element as the last
+    occurrence of `sep`, and return 3 strings containing the part
+    before the separator, the separator itself, and the part after
+    the separator. If the separator is not found, return 3 strings
+    containing the string itself, followed by two empty strings.
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+        Input array
+    sep : str or unicode
+        Right-most separator to split each element in array.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of string or unicode, depending on input
+        type.  The output array will have an extra dimension with
+        3 elements per input element.
+
+    See Also
+    --------
+    str.rpartition
+
+    Examples
+    --------
+    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> np.strings.rpartition(a, 'A')
+    array([['aAaAa', 'A', ''],
+       ['  a', 'A', '  '],
+       ['abB', 'A', 'Bba']], dtype='<U5')
+
+    """
+    return _to_bytes_or_str_array(
+        _vec_string(a, np.object_, 'rpartition', (sep,)), a)
+
+
+def translate(a, table, deletechars=None):
+    """
+    For each element in `a`, return a copy of the string where all
+    characters occurring in the optional argument `deletechars` are
+    removed, and the remaining characters have been mapped through the
+    given translation table.
+
+    Calls :meth:`str.translate` element-wise.
+
+    Parameters
+    ----------
+    a : array-like, with `np.bytes_` or `np.str_` dtype
+
+    table : str of length 256
+
+    deletechars : str
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input type
+
+    See Also
+    --------
+    str.translate
+
+    Examples
+    --------
+    >>> a = np.array(['a1b c', '1bca', 'bca1'])
+    >>> table = a[0].maketrans('abc', '123')
+    >>> deletechars = ' '
+    >>> np.char.translate(a, table, deletechars)
+    array(['112 3', '1231', '2311'], dtype='<U5')
+    
+    """
+    a_arr = np.asarray(a)
+    if issubclass(a_arr.dtype.type, np.str_):
+        return _vec_string(
+            a_arr, a_arr.dtype, 'translate', (table,))
+    else:
+        return _vec_string(
+            a_arr,
+            a_arr.dtype,
+            'translate',
+            [table] + _clean_args(deletechars)
+        )

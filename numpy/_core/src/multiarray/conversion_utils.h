@@ -85,6 +85,10 @@ PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind);
 NPY_NO_EXPORT int
 PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags);
 
+typedef enum {
+        NPY_DEVICE_CPU = 0,
+} NPY_DEVICE;
+
 /*
  * Device string converter.
  */
@@ -102,5 +106,12 @@ PyArray_DeviceConverterOptional(PyObject *object, NPY_DEVICE *device);
  * evil global state like we create here.
  */
 extern NPY_NO_EXPORT int evil_global_disable_warn_O4O8_flag;
+
+/*
+ * Convert function which replaces np._NoValue with NULL.
+ * As a converter returns 0 on error and 1 on success.
+ */
+NPY_NO_EXPORT int
+_not_NoValue(PyObject *obj, PyObject **out);
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_CONVERSION_UTILS_H_ */

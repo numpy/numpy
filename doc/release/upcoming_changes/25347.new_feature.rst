@@ -1,0 +1,9 @@
+StringDType has been added to NumPy
+-----------------------------------
+
+We have added a new variable-width UTF-8 encoded string data type, implementing
+a "NumPy array of python strings", including support for a user-provided missing
+data sentinel. It is intended as a drop-in replacement for arrays of python
+strings and missing data sentinels using the object dtype. See `NEP 55
+<https://numpy.org/neps/nep-0055-string_dtype.html>`_ and :ref:`the
+documentation <stringdtype>` for more details.

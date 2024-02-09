@@ -3505,6 +3505,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
         is ``None``; if provided, it must have the same shape as the
         expected output, but the type will be cast if necessary.
         See :ref:`ufuncs-output-type` for more details.
+        See :ref:`ufuncs-output-type` for more details.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
@@ -3631,6 +3632,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         Alternative output array in which to place the result. It must have
         the same shape as the expected output but the type (of the calculated
         values) will be cast if necessary.
+        See :ref:`ufuncs-output-type` for more details.
     ddof : {int, float}, optional
         Means Delta Degrees of Freedom.  The divisor used in calculations
         is ``N - ddof``, where ``N`` represents the number of elements.
