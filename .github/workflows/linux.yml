@@ -130,7 +130,8 @@ jobs:
         sudo apt update
         sudo apt install gfortran libgfortran5
         python -m pip install -r requirements/ci32_requirements.txt
-        spin config-openblas --with-scipy-openblas=32
+        mkdir -p ./.openblas
+        python -c"import scipy_openblas32 as ob32; ob32.get_pkg_config()" > ./.openblas/scipy-openblas.pc
 
     - name: Build a wheel
       env:
@@ -191,7 +192,8 @@ jobs:
       run: |
         set -xe
         python -m pip install -r requirements/ci_requirements.txt
-        spin config-openblas --with-scipy-openblas=64
+        mkdir -p ./.openblas
+        python -c"import scipy_openblas64 as ob64; ob64.get_pkg_config()" > ./.openblas/scipy-openblas.pc
     - name: Build a wheel via an sdist
       env:
         PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
