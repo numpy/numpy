@@ -19,14 +19,6 @@
 #define __has_extension(x) 0
 #endif
 
-#if !defined(_NPY_NO_DEPRECATIONS) && \
-    ((defined(__GNUC__)&& __GNUC__ >= 6) || \
-     __has_extension(attribute_deprecated_with_message))
-#define NPY_ATTR_DEPRECATE(text) __attribute__ ((deprecated (text)))
-#else
-#define NPY_ATTR_DEPRECATE(text)
-#endif
-
 /*
  * There are several places in the code where an array of dimensions
  * is allocated statically.  This is the size of that static
@@ -69,7 +61,7 @@ enum NPY_TYPES {    NPY_BOOL=0,
                      */
                     NPY_DATETIME, NPY_TIMEDELTA, NPY_HALF,
 
-                    NPY_CHAR NPY_ATTR_DEPRECATE("Use NPY_STRING"),
+                    NPY_CHAR, /* Deprecated, will raise if used */
 
                     /*
                      * New types added after NumPy 2.0
@@ -91,10 +83,6 @@ enum NPY_TYPES {    NPY_BOOL=0,
 
 /* The number of legacy old-style dtypes */
 #define NPY_NTYPES_LEGACY 24
-
-#if defined(_MSC_VER) && !defined(__clang__)
-#pragma deprecated(NPY_CHAR)
-#endif
 
 /* basetype array priority */
 #define NPY_PRIORITY 0.0
