@@ -2315,7 +2315,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
                 !PyDataType_HASFIELDS(descr->subarray->base) &&
                 !PyDataType_HASSUBARRAY(descr->subarray->base) &&
                 !PyDataType_REFCHK(descr->subarray->base) &&
-                (descr->subarray->base->type_num < NPY_NTYPES));
+                (descr->subarray->base->type_num < NPY_NTYPES_LEGACY));
 
         if (can_optimize_subarray) {
             _basic_copyn(dst, dstride, src, sstride, n, descr->elsize);
@@ -2400,7 +2400,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
                 !PyDataType_HASFIELDS(descr->subarray->base) &&
                 !PyDataType_HASSUBARRAY(descr->subarray->base) &&
                 !PyDataType_REFCHK(descr->subarray->base) &&
-                (descr->subarray->base->type_num < NPY_NTYPES));
+                (descr->subarray->base->type_num < NPY_NTYPES_LEGACY));
 
         if (can_optimize_subarray) {
             _basic_copy(dst, src, descr->elsize);
@@ -4284,7 +4284,7 @@ PyArray_DescrFromType(int type)
         ret = (PyArray_Descr *)new_stringdtype_instance(NULL, 1, NULL);
     }
     // builtin legacy dtypes
-    else if (type < NPY_NTYPES) {
+    else if (type < NPY_NTYPES_LEGACY) {
         ret = _builtin_descrs[type];
     }
     else if (type == NPY_NOTYPE) {
@@ -4319,11 +4319,11 @@ PyArray_DescrFromType(int type)
         ret = userdescrs[type - NPY_USERDEF];
     }
     else {
-        int num = NPY_NTYPES;
+        int num = NPY_NTYPES_LEGACY;
         if (type < _MAX_LETTER) {
             num = (int) _letter_to_num[type];
         }
-        if (num >= NPY_NTYPES) {
+        if (num >= NPY_NTYPES_LEGACY) {
             ret = NULL;
         }
         else {
@@ -4478,7 +4478,7 @@ set_typeinfo(PyObject *dict)
     }
 
     for (i = 0; i < _MAX_LETTER; i++) {
-        _letter_to_num[i] = NPY_NTYPES;
+        _letter_to_num[i] = NPY_NTYPES_LEGACY;
     }
 
     /**begin repeat

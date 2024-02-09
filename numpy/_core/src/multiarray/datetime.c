@@ -4156,7 +4156,7 @@ PyArray_InitializeDatetimeCasts()
      * Some of these casts can fail (casting to unitless datetime), but these
      * are rather special.
      */
-    for (int num = 0; num < NPY_NTYPES; num++) {
+    for (int num = 0; num < NPY_NTYPES_LEGACY; num++) {
         if (!PyTypeNum_ISNUMBER(num) && num != NPY_BOOL) {
             continue;
         }

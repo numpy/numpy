@@ -71,26 +71,27 @@ enum NPY_TYPES {    NPY_BOOL=0,
 
                     NPY_CHAR NPY_ATTR_DEPRECATE("Use NPY_STRING"),
 
-                    /*
-                     * New types added after NumPy 2.0
-                     */
-                    NPY_VSTRING,
-
-                    /* NPY_NTYPES is version-dependent and defined in
-                       npy_2_compat.h */
+                    /* The number of *legacy* dtypes */
+                    NPY_NTYPES_LEGACY=24,
 
                     /* assign a high value to avoid changing this in the
                        future when new dtypes are added */
-                    NPY_NOTYPE=64,
+                    NPY_NOTYPE=25,
 
                     NPY_USERDEF=256,  /* leave room for characters */
 
                     /* The number of types not including the new 1.6 types */
                     NPY_NTYPES_ABI_COMPATIBLE=21,
+
+                    /*
+                     * New DTypes which do not share the legacy layout
+                     * (added after NumPy 2.0).  VSTRING is the first of these
+                     * we may open up a block for user-defined dtypes in the
+                     * future.
+                     */
+                    NPY_VSTRING=2056,
 };
 
-/* The number of legacy old-style dtypes */
-#define NPY_NTYPES_LEGACY 24
 
 #if defined(_MSC_VER) && !defined(__clang__)
 #pragma deprecated(NPY_CHAR)

@@ -164,6 +164,11 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
         }
     }
     typenum = NPY_USERDEF + NPY_NUMUSERTYPES;
+    if (typenum >= NPY_VSTRING) {
+        PyErr_SetString(PyExc_ValueError,
+                "Too many user defined dtypes registered");
+        return -1;
+    }
     descr->type_num = -1;
     if (PyDataType_ISUNSIZED(descr)) {
         PyErr_SetString(PyExc_ValueError, "cannot register a" \
@@ -335,7 +340,7 @@ PyArray_RegisterCastFunc(PyArray_Descr *descr, int totype,
     PyObject *cobj, *key;
     int ret;
 
-    if (totype >= NPY_NTYPES && !PyTypeNum_ISUSERDEF(totype)) {
+    if (totype >= NPY_NTYPES_LEGACY && !PyTypeNum_ISUSERDEF(totype)) {
         PyErr_SetString(PyExc_TypeError, "invalid type number.");
         return -1;
     }
