@@ -758,11 +758,11 @@ def array_split(ary, indices_or_sections, axis=0):
     --------
     >>> x = np.arange(8.0)
     >>> np.array_split(x, 3)
-    (array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.]))
+    [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.])]
 
     >>> x = np.arange(9)
     >>> np.array_split(x, 4)
-    (array([0, 1, 2]), array([3, 4]), array([5, 6]), array([7, 8]))
+    [array([0, 1, 2]), array([3, 4]), array([5, 6]), array([7, 8])]
 
     """
     try:
@@ -791,7 +791,7 @@ def array_split(ary, indices_or_sections, axis=0):
         end = div_points[i + 1]
         sub_arys.append(_nx.swapaxes(sary[st:end], axis, 0))
 
-    return tuple(sub_arys)
+    return sub_arys
 
 
 def _split_dispatcher(ary, indices_or_sections, axis=None):
@@ -827,8 +827,8 @@ def split(ary, indices_or_sections, axis=0):
 
     Returns
     -------
-    sub-arrays : tuple of ndarrays
-        A tuple of sub-arrays as views into `ary`.
+    sub-arrays : list of ndarrays
+        A list of sub-arrays as views into `ary`.
 
     Raises
     ------
@@ -854,15 +854,15 @@ def split(ary, indices_or_sections, axis=0):
     --------
     >>> x = np.arange(9.0)
     >>> np.split(x, 3)
-    (array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.,  8.]))
+    [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.,  8.])]
 
     >>> x = np.arange(8.0)
     >>> np.split(x, [3, 5, 6, 10])
-    (array([0.,  1.,  2.]),
+    [array([0.,  1.,  2.]),
      array([3.,  4.]),
      array([5.]),
      array([6.,  7.]),
-     array([], dtype=float64))
+     array([], dtype=float64)]
 
     """
     try:
@@ -902,21 +902,24 @@ def hsplit(ary, indices_or_sections):
            [ 8.,   9.,  10.,  11.],
            [12.,  13.,  14.,  15.]])
     >>> np.hsplit(x, 2)
-    (array([[ 0.,  1.],
-           [ 4.,  5.],
-           [ 8.,  9.],
-           [12., 13.]]), array([[ 2.,  3.],
-           [ 6.,  7.],
-           [10., 11.],
-           [14., 15.]]))
+    [array([[  0.,   1.],
+           [  4.,   5.],
+           [  8.,   9.],
+           [12.,  13.]]),
+     array([[  2.,   3.],
+           [  6.,   7.],
+           [10.,  11.],
+           [14.,  15.]])]
     >>> np.hsplit(x, np.array([3, 6]))
-    (array([[ 0.,  1.,  2.],
-           [ 4.,  5.,  6.],
-           [ 8.,  9., 10.],
-           [12., 13., 14.]]), array([[ 3.],
+    [array([[ 0.,   1.,   2.],
+           [ 4.,   5.,   6.],
+           [ 8.,   9.,  10.],
+           [12.,  13.,  14.]]),
+     array([[ 3.],
            [ 7.],
            [11.],
-           [15.]]), array([], shape=(4, 0), dtype=float64))
+           [15.]]),
+     array([], shape=(4, 0), dtype=float64)]
 
     With a higher dimensional array the split is still along the second axis.
 
@@ -927,16 +930,16 @@ def hsplit(ary, indices_or_sections):
            [[4.,  5.],
             [6.,  7.]]])
     >>> np.hsplit(x, 2)
-    (array([[[0.,  1.]],
+    [array([[[0.,  1.]],
            [[4.,  5.]]]),
      array([[[2.,  3.]],
-           [[6.,  7.]]]))
+           [[6.,  7.]]])]
 
     With a 1-D array, the split is along axis 0.
 
     >>> x = np.array([0, 1, 2, 3, 4, 5])
     >>> np.hsplit(x, 2)
-    (array([0, 1, 2]), array([3, 4, 5]))
+    [array([0, 1, 2]), array([3, 4, 5])]
 
     """
     if _nx.ndim(ary) == 0:
@@ -969,15 +972,16 @@ def vsplit(ary, indices_or_sections):
            [ 8.,   9.,  10.,  11.],
            [12.,  13.,  14.,  15.]])
     >>> np.vsplit(x, 2)
-    (array([[0., 1., 2., 3.],
-           [4., 5., 6., 7.]]), array([[ 8.,  9., 10., 11.],
-           [12., 13., 14., 15.]]))
+    [array([[0., 1., 2., 3.],
+            [4., 5., 6., 7.]]),
+     array([[ 8.,  9., 10., 11.],
+            [12., 13., 14., 15.]])]
     >>> np.vsplit(x, np.array([3, 6]))
-    (array([[ 0.,  1.,  2.,  3.],
+    [array([[ 0.,  1.,  2.,  3.],
             [ 4.,  5.,  6.,  7.],
             [ 8.,  9., 10., 11.]]),
      array([[12., 13., 14., 15.]]),
-     array([], shape=(0, 4), dtype=float64))
+     array([], shape=(0, 4), dtype=float64)]
 
     With a higher dimensional array the split is still along the first axis.
 
@@ -988,9 +992,10 @@ def vsplit(ary, indices_or_sections):
            [[4.,  5.],
             [6.,  7.]]])
     >>> np.vsplit(x, 2)
-    (array([[[0., 1.],
-            [2., 3.]]]), array([[[4., 5.],
-            [6., 7.]]]))
+    [array([[[0., 1.],
+             [2., 3.]]]),
+     array([[[4., 5.],
+             [6., 7.]]])]
 
     """
     if _nx.ndim(ary) < 2:
@@ -1020,15 +1025,15 @@ def dsplit(ary, indices_or_sections):
            [[ 8.,   9.,  10.,  11.],
             [12.,  13.,  14.,  15.]]])
     >>> np.dsplit(x, 2)
-    (array([[[ 0.,  1.],
+    [array([[[ 0.,  1.],
             [ 4.,  5.]],
            [[ 8.,  9.],
             [12., 13.]]]), array([[[ 2.,  3.],
             [ 6.,  7.]],
            [[10., 11.],
-            [14., 15.]]]))
+            [14., 15.]]])]
     >>> np.dsplit(x, np.array([3, 6]))
-    (array([[[ 0.,   1.,   2.],
+    [array([[[ 0.,   1.,   2.],
             [ 4.,   5.,   6.]],
            [[ 8.,   9.,  10.],
             [12.,  13.,  14.]]]),
@@ -1036,7 +1041,7 @@ def dsplit(ary, indices_or_sections):
             [ 7.]],
            [[11.],
             [15.]]]),
-    array([], shape=(2, 2, 0), dtype=float64))
+    array([], shape=(2, 2, 0), dtype=float64)]
     """
     if _nx.ndim(ary) < 3:
         raise ValueError('dsplit only works on arrays of 3 or more dimensions')
