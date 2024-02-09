@@ -62,13 +62,10 @@ macosx_arm64_task:
   matrix:
     - env:
         CIRRUS_CLONE_SUBMODULES: true
-        CIBW_BUILD: cp39-*
+        CIBW_BUILD: cp39-* cp310-*
     - env:
         CIRRUS_CLONE_SUBMODULES: true
-        CIBW_BUILD: cp310-* cp311-*
-    - env:
-        CIRRUS_CLONE_SUBMODULES: true
-        CIBW_BUILD: cp312-*
+        CIBW_BUILD: cp311-* cp312-*
   env:
     PATH: /usr/local/lib:/usr/local/include:$PATH
     CIBW_ARCHS: arm64

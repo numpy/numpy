@@ -153,9 +153,11 @@ test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 manylinux-x86_64-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"
 musllinux-x86_64-image = "musllinux_1_1"
-# RUNNER_OS is a GitHub Actions specific env var; define it here so it works on Cirrus CI too
+
 [tool.cibuildwheel.linux.environment]
+# RUNNER_OS is a GitHub Actions specific env var; define it here so it works on Cirrus CI too
 RUNNER_OS="Linux"
+# /project will be the $PWD equivalent inside the docker used to build the wheel
 PKG_CONFIG_PATH="/project/.openblas"
 LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/project/.openblas/lib"
 

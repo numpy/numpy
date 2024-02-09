@@ -111,8 +111,7 @@ jobs:
           $CIBW = "${{ github.workspace }}/.openblas"
           # pkgconfig needs a complete path, and not just "./openblas since the
           # build is run in a tmp dir (?)
-          # But {project} on cibuildwheel is "." on windows.
-          # In any case, it seems somewhere in the env passing, `\` is not
+          # It seems somewhere in the env passing, `\` is not
           # passed through, so convert it to '/'
           $CIBW = $CIBW.replace("\","/")
           echo "CIBW_ENVIRONMENT_WINDOWS=PKG_CONFIG_PATH=$CIBW" >> $env:GITHUB_ENV

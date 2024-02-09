@@ -4,6 +4,6 @@ configtool and pkg-config support
 A new ``numpy-config`` CLI script is available that can be queried for the
 NumPy version and for compile flags needed to use the NumPy C API. This will
 allow build systems to better support the use of NumPy as a dependency.
-Also, a ``numpy.pc`` pkg-config file is now included inside an installed
-``numpy`` package. In order to find its location for use with
-``PKG_CONFIG_PATH``, use ``numpy-config --pkgconfigdir``.
+Also, a ``numpy.pc`` pkg-config file is now included with Numpy. In order to
+find its location for use with ``PKG_CONFIG_PATH``, use
+``numpy-config --pkgconfigdir``.
