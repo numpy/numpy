@@ -204,7 +204,7 @@ Other useful related constants are
 
     .. note::
         Newly added DTypes such as ``NPY_VSTRING`` will not be counted
-        to ``NPY_NTYPES_LEGACY``.
+        in ``NPY_NTYPES_LEGACY``.
 
 .. c:macro:: NPY_NOTYPE
 

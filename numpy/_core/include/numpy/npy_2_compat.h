@@ -78,6 +78,9 @@
     #define NPY_DEFAULT_INT NPY_LONG
     #define NPY_RAVEL_AXIS 32
     #define NPY_MAXARGS 32
+
+    /* Renamed in 2.x */
+    #define NPY_NTYPES NPY_NTYPES_LEGACY
 #else
     #define NPY_DEFAULT_INT  \
         (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? NPY_INTP : NPY_LONG)
