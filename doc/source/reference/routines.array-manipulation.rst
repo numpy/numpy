@@ -9,6 +9,7 @@ Basic operations
    :toctree: generated/
 
     copyto
+    ndim
     shape
     size
 
