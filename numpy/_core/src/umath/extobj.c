@@ -507,7 +507,6 @@ _extract_pyvals(int *bufsize, int *errmask, PyObject **pyfunc)
 }
 
 /*UFUNC_API
- * Handler which uses the default `np.errstate` given that `fpe_errors` is
  * Signal a floating point error respecting the error signaling setting in
  * the NumPy errstate. Takes the name of the operation to use in the error
  * message and an integer flag that is one of NPY_FPE_DIVIDEBYZERO,
