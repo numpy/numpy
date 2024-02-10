@@ -594,11 +594,11 @@ PyArrayDescr_Type and PyArray_Descr
         A pointer to a function that scans (scanf style) one element
         of the corresponding type from the file descriptor ``fd`` into
         the array memory pointed to by ``ip``. The array is assumed
-        to be behaved. 
+        to be behaved.
         The last argument ``arr`` is the array to be scanned into.
         Returns number of receiving arguments successfully assigned (which
         may be zero in case a matching failure occurred before the first
-        receiving argument was assigned), or EOF if input failure occurs 
+        receiving argument was assigned), or EOF if input failure occurs
         before the first receiving argument was assigned.
         This function should be called without holding the Python GIL, and
         has to grab it for error reporting.
@@ -722,25 +722,27 @@ PyArray_DTypeMeta and Related Types
 
 .. c:type:: PyArray_DTypeMeta
 
-    A largely opaque struct representing DType classes. Each instance
-    defines a metaclass for a single NumPy data type. Data types can
-    either be non-parametric or parametric. For non-parametric types,
-    the DType class has a one-to-one correspondence with the descriptor
-    instance created from the DType class. Parametric types can
-    correspond to many different dtype instances depending on the chosen
-    parameters.
+   A largely opaque struct representing DType classes. Each instance defines a
+   metaclass for a single NumPy data type. Data types can either be
+   non-parametric or parametric. For non-parametric types, the DType class has
+   a one-to-one correspondence with the descriptor instance created from the
+   DType class. Parametric types can correspond to many different dtype
+   instances depending on the chosen parameters. This type is available in the
+   public ``numpy/dtype_api.h`` header. Currently use of this struct is not
+   supported in the limited CPython API, so if ``Py_LIMITED_API`` is set, this
+   type is a typedef for ``PyTypeObject``.
 
-    .. code-block:: c
+   .. code-block:: c
 
-       typedef struct {
-            PyHeapTypeObject super;
-            PyArray_Descr *singleton;
-            int type_num;
-            PyTypeObject *scalar_type;
-            npy_uint64 flags;
-            void *dt_slots;
-            void *reserved[3];
-       } PyArray_DTypeMeta
+      typedef struct {
+           PyHeapTypeObject super;
+           PyArray_Descr *singleton;
+           int type_num;
+           PyTypeObject *scalar_type;
+           npy_uint64 flags;
+           void *dt_slots;
+           void *reserved[3];
+      } PyArray_DTypeMeta
 
    .. c:member:: PyHeapTypeObject super
 
@@ -780,6 +782,189 @@ PyArray_DTypeMeta and Related Types
           implementations of functions in the DType API. This is filled
           in from the ``slots`` member of the ``PyArrayDTypeMeta_Spec``
           instance used to initialize the DType.
+
+.. c:type:: PyArrayDTypeMeta_Spec
+
+   A struct used to initialize a new DType with the
+   ``PyArrayInitDTypeMeta_FromSpec`` function.
+
+   .. code-block:: c
+
+      typedef struct {
+          PyTypeObject *typeobj;
+          int flags;
+          PyArrayMethod_Spec **casts;
+          PyType_Slot *slots;
+          PyTypeObject *baseclass;
+      }
+
+   .. c:member:: PyTypeObject *typeobj
+
+      Either ``NULL`` or the type of the python scalar associated with
+      the DType. Scalar indexing into an array returns an item with this
+      type.
+
+   .. c:member:: int flags
+
+      Static flags for the DType class, indicating whether the DType is
+      parametric, abstract, or represents numeric data. The latter is
+      optional but is useful to set to indicate to downstream code if
+      the DType represents data that are numbers (ints, floats, or other
+      numeric data type) or something else (e.g. a string, unit, or
+      date).
+
+   .. c:member:: PyArrayMethod_Spec **casts;
+
+      A ``NULL``-terminated array of ArrayMethod specifications for
+      casts defined by the DType.
+
+   .. c:member:: PyType_Slot *slots;
+
+      A NULL-terminated array of slot specifications for implementations
+      of functions in the DType API. Slot IDs must be one of the
+      DType slot IDs enumerated below.
+
+DType Slot IDs
+++++++++++++++
+
+These IDs correspond to slots in the DType API and are used to identify
+implementations of each slot from the items of the ``slots`` array
+member of ``PyArrayDTypeMeta_Spec`` struct.
+
+.. c:macro:: NPY_DT_discover_descr_from_pyobject
+
+   Used during DType inference to find the correct DType for a given
+   PyObject. Must return a descriptor instance appropriate to store the
+   data in the python object that is passed in.
+
+.. c:macro:: NPY_DT_default_descr
+
+   Returns the default descriptor instance for the DType. Must be
+   defined for parametric data types. Non-parametric data types return
+   the singleton by default.
+
+.. c:macro:: NPY_DT_common_dtype
+
+   Given two input DTypes, determines the appropriate "common" DType
+   that can store values for both types. Returns ``Py_NotImplemented``
+   if no such type exists.
+
+.. c:macro:: NPY_DT_common_instance
+
+   Given two input descriptors, determines the appropriate "common"
+   descriptor that can store values for both instances. Returns ``NULL``
+   on error.
+
+.. c:macro:: NPY_DT_ensure_canonical
+
+   Returns the "canonical" representation for a descriptor instance. The
+   notion of a canonical descriptor generalizes the concept of byte
+   order, in that a canonical descriptor always has native byte
+   order. If the descriptor is already canonical, this function returns
+   a new reference to the input descriptor.
+
+.. c:macro:: NPY_DT_setitem
+
+   Implements scalar setitem for an array element given a PyObject.
+
+.. c:macro:: NPY_DT_getitem
+
+   Implements scalar getitem for an array element. Must return a python
+   scalar.
+
+.. c:macro:: NPY_DT_get_clear_loop
+
+   If defined, sets a traversal loop that clears data in the array. This
+   is most useful for arrays of references that must clean up array
+   entries before the array is garbage collected.
+
+.. c:macro:: NPY_DT_get_fill_zero_loop
+
+   If defined, sets a traversal loop that fills an array with "zero"
+   values, which may have a DType-specific meaning. This is called
+   inside `numpy.zeros` for arrays that need to write a custom sentinel
+   value that represents zero if for some reason a zero-filled array is
+   not sufficient.
+
+.. c:macro:: NPY_DT_finalize_descr
+
+   If defined, a function that is called to "finalize" a descriptor
+   instance after an array is created. One use of this function is to
+   force newly created arrays to have a newly created descriptor
+   instance, no matter what input descriptor is provided by a user.
+
+PyArray_ArrFuncs slots
+^^^^^^^^^^^^^^^^^^^^^^
+
+In addition the above slots, the following slots are exposed to allow
+filling the ``PyArray_ArrFuncs`` struct attached to descriptor
+instances.
+
+.. c:macro:: NPY_DT_PyArray_ArrFuncs_getitem
+
+   Allows setting a per-dtype getitem. Note that this is not necessary
+   to define unless the default version calling the function defined
+   with the ``NPY_DT_getitem`` ID is unsuitable for some reason.
+
+.. c:macro:: NPY_DT_PyArray_ArrFuncs_setitem
+
+   Allows setting a per-dtype setitem. Note that this is not necessary
+   to define unless the default version calling the function defined
+   with the ``NPY_DT_setitem`` ID is unsuitable for some reason.
+
+.. c:macro:: NPY_DT_PyArray_ArrFuncs_compare
+
+   Computes a comparison for `numpy.sort`, implements ``PyArray_CompareFunc``.
+
+.. c:macro:: NPY_DT_PyArray_ArrFuncs_argmax
+
+   Computes the argmax for `numpy.argmax`, implements ``PyArray_ArgFunc``.
+
+.. c:macro:: NPY_DT_PyArray_ArrFuncs_argmin
+
+   Computes the argmin for `numpy.argmin`, implements ``PyArray_ArgFunc``.
+
+.. c:macro:: NPY_DT_PyArray_ArrFuncs_dotfunc
+
+   Computes the dot product for `numpy.dot`, implements
+   ``PyArray_DotFunc``.
+
+.. c:macro:: NPY_DT_PyArray_ArrFuncs_scanfunc
+
+   A formatted input function for `numpy.fromfile`, implements
+   ``PyArray_ScanFunc``.
+
+.. c:macro:: NPY_DT_PyArray_ArrFuncs_fromstr
+
+   A string parsing function for `numpy.fromstring`, implements
+   ``PyArray_FromStrFunc``.
+
+.. c:macro:: NPY_DT_PyArray_ArrFuncs_nonzero
+
+   Computes the nonzero function for `numpy.nonzero`, implements
+   ``PyArray_NonzeroFunc``.
+
+.. c:macro:: NPY_DT_PyArray_ArrFuncs_fill
+
+   An array filling function for `numpy.ndarray.fill`, implements
+   ``PyArray_FillFunc``.
+
+.. c:macro:: NPY_DT_PyArray_ArrFuncs_fillwithscalar
+
+   A function to fill an array with a scalar value for `numpy.ndarray.fill`,
+   implements ``PyArray_FillWithScalarFunc``.
+
+.. c:macro:: NPY_DT_PyArray_ArrFuncs_sort
+
+   An array of PyArray_SortFunc of length ``NPY_NSORTS``. If set, allows
+   defining custom sorting implementations for each of the sorting
+   algorithms numpy implements.
+
+.. c:macro:: NPY_DT_PyArray_ArrFuncs_argsort
+
+   An array of PyArray_ArgSortFunc of length ``NPY_NSORTS``. If set,
+   allows defining custom argsorting implementations for each of the
+   sorting algorithms numpy implements.
 
 PyUFunc_Type and PyUFuncObject
 ------------------------------
@@ -1241,7 +1426,7 @@ are ``Py{TYPE}ArrType_Type`` where ``{TYPE}`` can be
     **Bool**, **Byte**, **Short**, **Int**, **Long**, **LongLong**,
     **UByte**, **UShort**, **UInt**, **ULong**, **ULongLong**,
     **Half**, **Float**, **Double**, **LongDouble**, **CFloat**,
-    **CDouble**, **CLongDouble**, **String**, **Unicode**, **Void**, 
+    **CDouble**, **CLongDouble**, **String**, **Unicode**, **Void**,
     **Datetime**, **Timedelta**, and **Object**.
 
 These type names are part of the C-API and can therefore be created in

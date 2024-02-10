@@ -1558,6 +1558,198 @@ For all of these macros *arr* must be an instance of a (subclass of)
 Array method alternative API
 ----------------------------
 
+This defines a generic API for writing and registering new ArrayMethod
+loops. This is intended as a generic mechanism for writing loops over arrays,
+including ufunc loops and casts. It is defined in the public
+``numpy/dtype_api.h`` header.
+
+PyArrayMethod_Context and PyArrayMethod_Spec
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. c:type:: PyArrayMethodObject_tag
+
+   An opaque struct used to represent the method "self" in ArrayMethod loops.
+
+.. c:type:: PyArrayMethod_Context
+
+   A struct that is passed in to ArrayMethod loops to provide context for the
+   runtime usage of the loop.
+
+   .. code-block:: c
+
+      typedef struct {
+          PyObject *caller;
+          struct PyArrayMethodObject_tag *method;
+          PyArray_Descr **descriptors;
+      } PyArrayMethod_Context
+
+   .. c:member:: PyObject *caller
+
+      The caller, which is typically the ufunc that called the loop. May be
+      ``NULL``.
+
+   .. c:member:: struct PyArrayMethodObject_tag *method
+
+      The method "self". Currently this object is an opaque pointer.
+
+   .. c:member:: PyArray_Descr **descriptors
+
+      An array of descriptors for the ufunc loop, filled in by
+      ``resolve_descriptors``. The length of the array is ``nin`` + ``nout``.
+
+.. c:type:: PyArrayMethod_Spec
+
+   A struct used to register an ArrayMethod with NumPy. We use the slots
+   mechanism used by the Python limited API. See below for the slot definitions.
+
+   .. code-block:: c
+
+       typedef struct {
+          const char *name;
+          int nin, nout;
+          NPY_CASTING casting;
+          NPY_ARRAYMETHOD_FLAGS flags;
+          PyArray_DTypeMeta **dtypes;
+          PyType_Slot *slots;
+       } PyArrayMethod_Spec;
+
+   .. c:member:: const char *name
+
+      The name of the loop.
+
+   .. c:member:: int nin
+
+      The number of input operands
+
+   .. c:member:: int nout
+
+      The number of output operands.
+
+   .. c:member:: NPY_CASTING casting
+
+      Used to indicate how minimally permissive a casting operation should
+      be. For example, if a cast operation might in some circumstances be safe,
+      but in others unsafe, then ``NPY_UNSAFE_CASTING`` should be set. Not used
+      for ufunc loops but must still be set.
+
+   .. c:member:: NPY_ARRAYMETHOD_FLAGS flags
+
+      The flags set for the method.
+
+   .. c:member:: PyArray_DTypeMeta **dtypes
+
+      The DTypes for the loop. Must be ``nin`` + ``nout`` in length.
+
+   .. c:member:: PyType_Slot *slots
+
+      An array of slots for the method. Slot IDs must be one of the values
+      below.
+
+ArrayMethod Slots
+~~~~~~~~~~~~~~~~~
+
+These are used to identify which kind of function an ArrayMethod slot
+implements.
+
+.. c:macro:: NPY_METH_resolve_descriptors
+
+   The function used to set the descriptors for an operation based on the
+   descriptors of the operands. For example, a ufunc operation with two input
+   operands and one output operand that is called without ``out`` being set
+   in the python API, ``resolve_descriptors`` will be passed the descriptors
+   for the two operands and determine the correct descriptor to use for the
+   output based on the output DType set for the ArrayMethod. If ``out`` is
+   set, then the output descriptor would be passed in as well and should not
+   be overriden.
+
+.. c:macro:: NPY_METH_get_reduction_initial
+
+   A function that gets the initial value to use for a reduction.
+
+.. c:macro:: NPY_METH_strided_loop
+.. c:macro:: NPY_METH_contiguous_loop
+.. c:macro:: NPY_METH_unaligned_strided_loop
+.. c:macro:: NPY_METH_unaligned_contiguous_loop
+.. c:macro:: NPY_METH_contiguous_indexed_loop
+
+   TODO: I need help explaining the differences between these
+
+ArrayMethod Flags
+~~~~~~~~~~~~~~~~~
+
+.. c:enum:: NPY_ARRAYMETHOD_FLAGS
+
+   These flags allow switching on and off custom runtime behavior for
+   ArrayMethod loops.  For example, if a ufunc cannot possibly trigger floating
+   point errors, then the ``NPY_METH_NO_FLOATINGPOINT_ERRORS`` flag should be
+   set on the ufunc when it is registered.
+
+   .. c:enumerator:: NPY_METH_REQUIRES_PYAPI
+
+      Indicates the method must hold the GIL. If this flag is not set, the GIL
+      is released before the ufunc is called.
+
+   .. c:enumerator:: NPY_METH_NO_FLOATINGPOINT_ERRORS
+
+      Indicates the method cannot generate floating errors, so checking for
+      floating errors after the ufunc completes can be skipped.
+
+   .. c:enumerator:: NPY_METH_SUPPORTS_UNALIGNED
+
+      Indicates the method supports unaligned access.
+
+   .. c:enumerator:: NPY_METH_IS_REORDERABLE
+
+      Indicates that the result of applying the loop repeatedly (for example, in
+      a reduction operation) does not depend on the order of application.
+
+   .. c:enumerator:: NPY_METH_RUNTIME_FLAGS
+
+      The flags that can be changed at runtime.
+
+ArrayMethod API Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. c:function::  int PyUFunc_AddLoopFromSpec( \
+                         PyObject *ufunc, PyArrayMethod_Spec *spec)
+
+   Add loop directly to a ufunc from a given ArrayMethod spec.
+   the main ufunc registration function.  This adds a new implementation/loop
+   to a ufunc.  It replaces `PyUFunc_RegisterLoopForType`.
+
+.. c:function:: int PyUFunc_AddPromoter( \
+                        PyObject *ufunc, PyObject *DType_tuple, PyObject *promoter)
+
+   Register a new promoter for a ufunc. The first argument is the ufunc to
+   register the promoter with. The second argument is a Python tuple containing
+   DTypes or None matching the number of inputs and outputs for the ufuncs. The
+   last argument is a promoter is a function stored in a PyCapsule.  It is
+   passed the operation and requested DType signatures and can mutate it to
+   attempt a new search for a matching loop/promoter.
+
+.. c:function:: int PyUFunc_GiveFloatingpointErrors( \
+                        const char *name, int fpe_errors)
+
+    Signal a floating point error respecting the error signaling setting in
+    the NumPy errstate. Takes the name of the operation to use in the error
+    message and an integer flag that is one of NPY_FPE_DIVIDEBYZERO,
+    NPY_FPE_OVERFLOW, NPY_FPE_UNDERFLOW, NPY_FPE_INVALID to indicate
+    which errors to check for.
+
+    Returns -1 on failure (an error was raised) and 0 on success.
+
+.. c:function:: int PyUFunc_AddWrappingLoop(PyObject *ufunc_obj, \
+            PyArray_DTypeMeta *new_dtypes[], \
+            PyArray_DTypeMeta *wrapped_dtypes[], \
+            translate_given_descrs_func *translate_given_descrs, \
+            translate_loop_descrs_func *translate_loop_descrs)
+
+    Allows creating of a fairly lightweight wrapper around an existing
+    ufunc loop.  The idea is mainly for units, as this is currently
+    slightly limited in that it enforces that you cannot use a loop from
+    another ufunc.
+
+
 
 Conversion
 ~~~~~~~~~~
@@ -2375,7 +2567,7 @@ the new array iterator, :c:type:`NpyIter`.
 An array iterator is a simple way to access the elements of an
 N-dimensional array quickly and efficiently, as seen in :ref:`the
 example <iteration-example>` which provides more description
-of this useful approach to looping over an array from C. 
+of this useful approach to looping over an array from C.
 
 .. c:function:: PyObject* PyArray_IterNew(PyObject* arr)
 
@@ -2496,7 +2688,7 @@ Broadcasting (multi-iterators)
 
     .. versionadded:: 1.26.0
 
-    Returns the total broadcasted size of a multi-iterator object. 
+    Returns the total broadcasted size of a multi-iterator object.
 
 .. c:function:: int PyArray_MultiIter_NDIM(PyArrayMultiIterObject* multi)
 
@@ -2810,7 +3002,7 @@ Data-type descriptors
 
     The value of *newendian* is one of these macros:
 ..
-    dedent the enumeration of flags to avoid missing references sphinx warnings 
+    dedent the enumeration of flags to avoid missing references sphinx warnings
 
 .. c:macro:: NPY_IGNORE
              NPY_SWAP
@@ -2884,6 +3076,42 @@ Data-type descriptors
     Like :c:func:`PyArray_DescrConverter2` except it aligns C-struct-like
     objects on word-boundaries as the compiler would.
 
+Data Type Promotion and Inspection
+----------------------------------
+
+.. c:function:: PyArray_DTypeMeta *PyArray_CommonDType( \
+                    PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
+
+   This function defines the common DType operator. Note that the common DType
+   will not be ``object`` (unless one of the DTypes is ``object``). Similar to
+   `numpy.result_type`, but works on the classes and not instances.
+
+.. c:function:: PyArray_DTypeMeta *PyArray_PromoteDTypeSequence( \
+                    npy_intp length, PyArray_DTypeMeta **dtypes_in)
+
+   Promotes a list of DTypes with each other in a way that should guarantee
+   stable results even when changing the order.  This function is smarter and
+   can often return successful and unambiguous results when
+   ``common_dtype(common_dtype(dt1, dt2), dt3)`` would depend on the operation
+   order or fail.  Nevertheless, DTypes should aim to ensure that their
+   common-dtype implementation is associative and commutative!  (Mainly,
+   unsigned and signed integers are not.)
+   
+   For guaranteed consistent results DTypes must implement common-Dtype
+   "transitively".  If A promotes B and B promotes C, than A must generally
+   also promote C; where "promotes" means implements the promotion.  (There
+   are some exceptions for abstract DTypes)
+   
+   In general this approach always works as long as the most generic dtype
+   is either strictly larger, or compatible with all other dtypes.
+   For example promoting ``float16`` with any other float, integer, or unsigned
+   integer again gives a floating point number.
+
+.. c:function:: PyArray_Descr *PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
+
+   Given a DType class, returns the default instance (descriptor).  This checks
+   for a ``singleton`` first and only calls the ``default_descr`` function if
+   necessary.
 
 Custom Data Types
 -----------------
@@ -2891,20 +3119,39 @@ Custom Data Types
 ..versionadded:: 2.0
 
 These functions allow defining custom flexible data types outside of NumPy.  See
-:ref:`NEP 42 <NEP 42>` for more details about the rationale and design of the
-new DType system. See the :ref:`numpy-user-dtypes repository
-<https://github.com/numpy/numpy-user-dtypes>` for a number of example DTypes.
+:ref:`NEP 42 <NEP42>` for more details about the rationale and design of the new
+DType system. See the `numpy-user-dtypes repository
+<https://github.com/numpy/numpy-user-dtypes>`_ for a number of example DTypes.
 
-.. c:function:: PyArrayInitDTypeMeta_FromSpec(PyArray_DTypeMeta *Dtype,
-                                              PyArrayDTypeMeta_Spec *spec)
+.. c:function:: int PyArrayInitDTypeMeta_FromSpec( \
+                PyArray_DTypeMeta *Dtype, PyArrayDTypeMeta_Spec *spec)
 
  Initialize a new DType.  It must currently be a static Python C type that is
  declared as :c:type:`PyArray_DTypeMeta` and not c:type:`PyTypeObject`.
  Further, it must subclass `np.dtype` and set its type to
- :c:type:`PyArrayDTypeMeta_Type` (before calling
- :c:function:`PyType_Ready()`), which has additional fields
- compared to a normal :c:type:`PyTypeObject`.
+ :c:type:`PyArrayDTypeMeta_Type` (before calling :c:func:`PyType_Ready()`),
+ which has additional fields compared to a normal :c:type:`PyTypeObject`. See
+ the examples in the ``numpy-user-dtypes`` repository for usage with both
+ parametric and non-parametric data types.
 
+DType Flags
+~~~~~~~~~~~
+
+Flags that can be set on the ``PyArrayDTypeMeta_Spec`` to initialize the DType.
+
+.. c:macro:: NPY_DT_ABSTRACT
+
+   Indicates the DType is an abstract "base" DType in a DType hierarchy and
+   should not be directly instantiated.
+
+.. c:macro:: NPY_DT_PARAMETRIC
+
+   Indicates the DType is parametric and does not have a unique singleton
+   instance.
+
+.. c:macro:: NPY_DT_NUMERIC
+
+   Indicates the DType is represents a numerical value.
 
 Conversion utilities
 --------------------
@@ -3277,7 +3524,7 @@ python-defined :c:data:`WITH_THREADS` constant unless the environment
 variable ``NPY_NOSMP`` is set in which case
 :c:data:`NPY_ALLOW_THREADS` is defined to be 0.
 
-.. c:macro:: NPY_ALLOW_THREADS 
+.. c:macro:: NPY_ALLOW_THREADS
 
 .. c:macro:: WITH_THREADS
 
