@@ -3,5 +3,4 @@ of ndarrays instead. Returning tuples consistently whenever a sequence of
 arrays is returned makes it easier for JIT compilers like Numba, as well as for
 static type checkers in some cases, to support these functions. Changed
 functions are: ``atleast_1d``, ``atleast_2d``, ``atleast_3d``, ``broadcast_arrays``,
-``array_split``, ``split``, ``hsplit``, ``vsplit``, ``dsplit``, ``meshgrid``,
-``ogrid``, ``histogramdd``.
+``meshgrid``, ``ogrid``, ``histogramdd``.
