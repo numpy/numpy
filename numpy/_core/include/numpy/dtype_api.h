@@ -1,11 +1,9 @@
 /*
- * DType related API shared by the (experimental) public API And internal API.
+ * The public DType API
  */
 
 #ifndef NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 #define NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
-
-#define __EXPERIMENTAL_DTYPE_API_VERSION 15
 
 struct PyArrayMethodObject_tag;
 
@@ -63,11 +61,8 @@ typedef PyTypeObject PyArray_DTypeMeta;
  *         ArrayMethod API (Casting and UFuncs)
  * ******************************************************
  */
-/*
- * NOTE: Expected changes:
- *       * probably split runtime and general flags into two
- *       * should possibly not use an enum for typedef for more stable ABI?
- */
+
+
 typedef enum {
     /* Flag for whether the GIL is required */
     NPY_METH_REQUIRES_PYAPI = 1 << 0,
@@ -375,8 +370,9 @@ typedef int (get_traverse_loop_function)(
 #define NPY_DT_PyArray_ArrFuncs_getitem 1 + _NPY_DT_ARRFUNCS_OFFSET
 #define NPY_DT_PyArray_ArrFuncs_setitem 2 + _NPY_DT_ARRFUNCS_OFFSET
 
-#define NPY_DT_PyArray_ArrFuncs_copyswapn 3 + _NPY_DT_ARRFUNCS_OFFSET
-#define NPY_DT_PyArray_ArrFuncs_copyswap 4 + _NPY_DT_ARRFUNCS_OFFSET
+// Copyswap is disabled
+// #define NPY_DT_PyArray_ArrFuncs_copyswapn 3 + _NPY_DT_ARRFUNCS_OFFSET
+// #define NPY_DT_PyArray_ArrFuncs_copyswap 4 + _NPY_DT_ARRFUNCS_OFFSET
 #define NPY_DT_PyArray_ArrFuncs_compare 5 + _NPY_DT_ARRFUNCS_OFFSET
 #define NPY_DT_PyArray_ArrFuncs_argmax 6 + _NPY_DT_ARRFUNCS_OFFSET
 #define NPY_DT_PyArray_ArrFuncs_dotfunc 7 + _NPY_DT_ARRFUNCS_OFFSET
