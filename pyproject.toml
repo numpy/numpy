@@ -143,10 +143,9 @@ tracker = "https://github.com/numpy/numpy/issues"
 # `tools/ci/cirrus_wheels.yml`.
 build-frontend = "build"
 skip = "cp36-* cp37-* cp-38* pp37-* *-manylinux_i686 *_ppc64le *_s390x"
-build-verbosity = "3"
 before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
 # The build will use openblas64 everywhere, except on arm64 macOS >=14.0 (uses Accelerate)
-config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dallow-noblas=false build-dir=build"
+config-settings = "setup-args=-Dallow-noblas=false build-dir=build"
 before-test = "pip install -r {project}/requirements/test_requirements.txt"
 test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 
@@ -154,24 +153,40 @@ test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 manylinux-x86_64-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"
 musllinux-x86_64-image = "musllinux_1_1"
+
+[tool.cibuildwheel.linux.environment]
 # RUNNER_OS is a GitHub Actions specific env var; define it here so it works on Cirrus CI too
-environment = {RUNNER_OS="Linux"}
+RUNNER_OS="Linux"
+# /project will be the $PWD equivalent inside the docker used to build the wheel
+PKG_CONFIG_PATH="/project/.openblas"
+LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/project/.openblas/lib"
 
 [tool.cibuildwheel.macos]
 # universal2 wheels are not supported (see gh-21233), use `delocate-fuse` if you need them
 archs = "x86_64 arm64"
 test-skip = "*_universal2:arm64"
-environment = {RUNNER_OS="macOS"}
+# Not clear why the DYLD_LIBRARY_PATH is not passed through from the environment
+repair-wheel-command = [
+  "export DYLD_LIBRARY_PATH=$PWD/.openblas/lib",
+  "echo DYLD_LIBRARY_PATH $DYLD_LIBRARY_PATH",
+  "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}",
+]
+
+[tool.cibuildwheel.macos.environment]
+# In cibuildwheel, {project} is $PWD
+RUNNER_OS="macOS"
+PKG_CONFIG_PATH="$PWD/.openblas"
+DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH:/$PWD/.openblas/lib"
 
 [tool.cibuildwheel.windows]
-environment = {PKG_CONFIG_PATH="C:/opt/64/lib/pkgconfig"}
-config-settings = "setup-args=--vsenv setup-args=-Duse-ilp64=true setup-args=-Dblas=openblas setup-args=-Dlapack=openblas"
-repair-wheel-command = "bash ./tools/wheels/repair_windows.sh {wheel} {dest_dir}"
+# This does not work, use CIBW_ENVIRONMENT_WINDOWS
+environment = {PKG_CONFIG_PATH="./.openblas"}
+config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=false build-dir=build"
+repair-wheel-command = "bash -el ./tools/wheels/repair_windows.sh {wheel} {dest_dir}"
 
 [[tool.cibuildwheel.overrides]]
 select = "*-win32"
-environment = {PKG_CONFIG_PATH="/opt/32/lib/pkgconfig"}
-config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=true"
+config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=true build-dir=build"
 repair-wheel-command = ""
 
 [tool.meson-python]
