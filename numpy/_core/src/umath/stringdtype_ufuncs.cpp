@@ -1380,11 +1380,14 @@ fail:
 }
 
 static int
-string_startswith_strided_loop(PyArrayMethod_Context *context, char *const data[],
+string_startswith_endswith_strided_loop(PyArrayMethod_Context *context,
+                               char *const data[],
                                npy_intp const dimensions[],
                                npy_intp const strides[],
                                NpyAuxData *auxdata)
 {
+    const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
+    STARTPOSITION startposition = *(STARTPOSITION *)context->method->static_data;
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
 
     int has_null = descr1->na_object != NULL;
@@ -1406,7 +1409,7 @@ string_startswith_strided_loop(PyArrayMethod_Context *context, char *const data[
     npy_intp N = dimensions[0];
 
     while (N--) {
-        LOAD_TWO_INPUT_STRINGS("startswith");
+        LOAD_TWO_INPUT_STRINGS(ufunc_name);
         if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
             if (has_null && !has_string_na) {
                 if (has_nan_na) {
@@ -1416,8 +1419,8 @@ string_startswith_strided_loop(PyArrayMethod_Context *context, char *const data[
                 }
                 else {
                     npy_gil_error(PyExc_ValueError,
-                                  "'startswith' not supported for null values that "
-                                  "are not nan-like or strings.");
+                                  "'%s' not supported for null values that "
+                                  "are not nan-like or strings.", ufunc_name);
                     goto fail;
                 }
             }
@@ -1438,89 +1441,7 @@ string_startswith_strided_loop(PyArrayMethod_Context *context, char *const data[
             Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
 
             npy_bool match = tailmatch<ENCODING::UTF8>(buf1, buf2, start, end,
-                                                       STARTPOSITION::FRONT);
-            *(npy_bool *)out = match;
-        }
-
-      next_step:
-
-        in1 += strides[0];
-        in2 += strides[1];
-        in3 += strides[2];
-        in4 += strides[3];
-        out += strides[4];
-    }
-
-    NpyString_release_allocators(2, allocators);
-
-    return 0;
-
-fail:
-    NpyString_release_allocators(2, allocators);
-
-    return -1;
-}
-
-static int
-string_endswith_strided_loop(PyArrayMethod_Context *context, char *const data[],
-                             npy_intp const dimensions[],
-                             npy_intp const strides[],
-                             NpyAuxData *auxdata)
-{
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
-
-    int has_null = descr1->na_object != NULL;
-    int has_string_na = descr1->has_string_na;
-    int has_nan_na = descr1->has_nan_na;
-    const npy_static_string *default_string = &descr1->default_string;
-
-    npy_string_allocator *allocators[2] = {};
-    NpyString_acquire_allocators(2, context->descriptors, allocators);
-    npy_string_allocator *s1allocator = allocators[0];
-    npy_string_allocator *s2allocator = allocators[1];
-
-    char *in1 = data[0];
-    char *in2 = data[1];
-    char *in3 = data[2];
-    char *in4 = data[3];
-    char *out = data[4];
-
-    npy_intp N = dimensions[0];
-
-    while (N--) {
-        LOAD_TWO_INPUT_STRINGS("endswidth");
-        if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
-            if (has_null && !has_string_na) {
-                if (has_nan_na) {
-                    // nulls are always falsey for this operation.
-                    *(npy_bool *)out = 0;
-                    goto next_step;
-                }
-                else {
-                    npy_gil_error(PyExc_ValueError,
-                                  "'endswith' not supported for null values that "
-                                  "are not nan-like or strings.");
-                    goto fail;
-                }
-            }
-            else {
-                if (s1_isnull) {
-                    s1 = *default_string;
-                }
-                if (s2_isnull) {
-                    s2 = *default_string;
-                }
-            }
-        }
-        {
-            npy_int64 start = *(npy_int64 *)in3;
-            npy_int64 end = *(npy_int64 *)in4;
-
-            Buffer<ENCODING::UTF8> buf1((char *)s1.buf, s1.size);
-            Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
-
-            npy_bool match = tailmatch<ENCODING::UTF8>(buf1, buf2, start, end,
-                                                       STARTPOSITION::BACK);
+                                                       startposition);
             *(npy_bool *)out = match;
         }
 
@@ -2465,11 +2386,6 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_BoolDType,
     };
 
-    static PyArrayMethod_StridedLoop *startswith_endswith_strided_loops[] = {
-        &string_startswith_strided_loop,
-        &string_endswith_strided_loop,
-    };
-
     const char* startswith_endswith_names[] = {
         "startswith", "endswith",
     };
@@ -2480,11 +2396,17 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_BoolDType,
     };
 
+    static STARTPOSITION startswith_endswith_startposition[] = {
+        STARTPOSITION::FRONT,
+        STARTPOSITION::BACK,
+    };
+
     for (int i=0; i<2; i++) {
         if (init_ufunc(umath, startswith_endswith_names[i], startswith_endswith_dtypes,
                        &string_startswith_endswith_resolve_descriptors,
-                       startswith_endswith_strided_loops[i], 4, 1, NPY_NO_CASTING,
-                       (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
+                       &string_startswith_endswith_strided_loop,
+                       4, 1, NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0,
+                       &startswith_endswith_startposition[i]) < 0) {
             return -1;
         }
 
