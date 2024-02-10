@@ -14,7 +14,7 @@ npy_get_clear_object_strided_loop(
 
 NPY_NO_EXPORT int
 npy_get_clear_void_and_legacy_user_dtype_loop(
-        void *traverse_context, PyArray_Descr *descr, int aligned,
+        void *traverse_context, _PyArray_LegacyDescr *descr, int aligned,
         npy_intp fixed_stride,
         PyArrayMethod_TraverseLoop **out_loop, NpyAuxData **out_traversedata,
         NPY_ARRAYMETHOD_FLAGS *flags);
@@ -30,7 +30,7 @@ npy_object_get_fill_zero_loop(
 
 NPY_NO_EXPORT int
 npy_get_zerofill_void_and_legacy_user_dtype_loop(
-        void *traverse_context, PyArray_Descr *dtype, int aligned,
+        void *traverse_context, _PyArray_LegacyDescr *dtype, int aligned,
         npy_intp stride, PyArrayMethod_TraverseLoop **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags);
 

@@ -868,7 +868,7 @@ VOID_getitem(void *input, void *vap)
 {
     PyArrayObject *ap = vap;
     char *ip = input;
-    PyArray_Descr* descr = PyArray_DESCR(vap);
+    _PyArray_LegacyDescr *descr = (_PyArray_LegacyDescr *)PyArray_DESCR(vap);
 
     if (PyDataType_HASFIELDS(descr)) {
         PyObject *key;
@@ -970,7 +970,7 @@ NPY_NO_EXPORT int PyArray_CopyObject(PyArrayObject *, PyObject *);
  *          on the original array!
  */
 NPY_NO_EXPORT int
-_setup_field(int i, PyArray_Descr *descr, PyArrayObject *arr,
+_setup_field(int i, _PyArray_LegacyDescr *descr, PyArrayObject *arr,
             npy_intp *offset_p, char *dstdata)
 {
     PyObject *key;
@@ -1001,7 +1001,7 @@ _setup_field(int i, PyArray_Descr *descr, PyArrayObject *arr,
  * copy structured datatypes between numpy arrays or scalars.
  */
 static int
-_copy_and_return_void_setitem(PyArray_Descr *dstdescr, char *dstdata,
+_copy_and_return_void_setitem(_PyArray_LegacyDescr *dstdescr, char *dstdata,
                               PyArray_Descr *srcdescr, char *srcdata){
     PyArrayObject_fields dummy_struct;
     PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_struct;
@@ -1011,7 +1011,7 @@ _copy_and_return_void_setitem(PyArray_Descr *dstdescr, char *dstdata,
     int ret;
 
     /* Fast path if dtypes are equal */
-    if (PyArray_EquivTypes(srcdescr, dstdescr)) {
+    if (PyArray_EquivTypes(srcdescr, (PyArray_Descr *)dstdescr)) {
         for (i = 0; i < names_size; i++) {
             /* neither line can ever fail, in principle */
             if (_setup_field(i, dstdescr, dummy_arr, &offset, dstdata)) {
@@ -1039,7 +1039,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
     PyArrayObject *ap = vap;
     int itemsize = PyArray_ITEMSIZE(ap);
     int res;
-    PyArray_Descr *descr = PyArray_DESCR(ap);
+    _PyArray_LegacyDescr *descr = (_PyArray_LegacyDescr *)PyArray_DESCR(ap);
 
     if (PyDataType_HASFIELDS(descr)) {
         PyObject *errmsg;
@@ -1059,13 +1059,13 @@ VOID_setitem(PyObject *op, void *input, void *vap)
                                     PyArray_DESCR(oparr), PyArray_DATA(oparr));
         }
         else if (PyArray_IsScalar(op, Void)) {
-            PyArray_Descr *srcdescr = ((PyVoidScalarObject *)op)->descr;
+            PyArray_Descr *srcdescr = (PyArray_Descr *)((PyVoidScalarObject *)op)->descr;
             char *srcdata = ((PyVoidScalarObject *)op)->obval;
             return _copy_and_return_void_setitem(descr, ip, srcdescr, srcdata);
         }
         else if (PyTuple_Check(op)) {
             /* if it's a tuple, copy field-by-field to ap, */
-            npy_intp names_size = PyTuple_GET_SIZE(descr->names);
+            npy_intp names_size = PyTuple_GET_SIZE(((_PyArray_LegacyDescr *)descr)->names);
 
             if (names_size != PyTuple_Size(op)) {
                 errmsg = PyUnicode_FromFormat(

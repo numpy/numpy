@@ -315,7 +315,7 @@ traverse_fields_function(
 
 static int
 get_fields_traverse_function(
-        void *traverse_context, PyArray_Descr *dtype, int NPY_UNUSED(aligned),
+        void *traverse_context, _PyArray_LegacyDescr *dtype, int NPY_UNUSED(aligned),
         npy_intp stride, PyArrayMethod_TraverseLoop **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags,
         get_traverse_func_function *get_traverse_func)
@@ -502,7 +502,7 @@ clear_no_op(
 
 NPY_NO_EXPORT int
 npy_get_clear_void_and_legacy_user_dtype_loop(
-        void *traverse_context, PyArray_Descr *dtype, int aligned,
+        void *traverse_context, _PyArray_LegacyDescr *dtype, int aligned,
         npy_intp stride, PyArrayMethod_TraverseLoop **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -569,7 +569,7 @@ npy_get_clear_void_and_legacy_user_dtype_loop(
 
 static int
 zerofill_fields_function(
-        void *traverse_context, PyArray_Descr *descr,
+        void *traverse_context, _PyArray_LegacyDescr *descr,
         char *data, npy_intp N, npy_intp stride,
         NpyAuxData *auxdata)
 {
@@ -598,7 +598,7 @@ zerofill_fields_function(
  */
 NPY_NO_EXPORT int
 npy_get_zerofill_void_and_legacy_user_dtype_loop(
-        void *traverse_context, PyArray_Descr *dtype, int aligned,
+        void *traverse_context, _PyArray_LegacyDescr *dtype, int aligned,
         npy_intp stride, PyArrayMethod_TraverseLoop **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags)
 {

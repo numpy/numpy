@@ -598,8 +598,8 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
         return NULL;
     }
     if (PyArray_HASFIELDS(self) && PyArray_HASFIELDS(other)) {
-        PyArray_Descr *self_descr = PyArray_DESCR(self);
-        PyArray_Descr *other_descr = PyArray_DESCR(other);
+        _PyArray_LegacyDescr *self_descr = (_PyArray_LegacyDescr *)PyArray_DESCR(self);
+        _PyArray_LegacyDescr *other_descr = (_PyArray_LegacyDescr *)PyArray_DESCR(other);
 
         /* Use promotion to decide whether the comparison is valid */
         PyArray_Descr *promoted = PyArray_PromoteTypes(self_descr, other_descr);

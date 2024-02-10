@@ -280,14 +280,14 @@ static int
 _update_descr_and_dimensions(PyArray_Descr **des, npy_intp *newdims,
                              npy_intp *newstrides, int oldnd)
 {
-    PyArray_Descr *old;
+    _PyArray_LegacyDescr *old;
     int newnd;
     int numnew;
     npy_intp *mydim;
     int i;
     int tuple;
 
-    old = *des;
+    old = (_PyArray_LegacyDescr *)*des;  /* guaranteed as it has subarray */
     *des = old->subarray->base;
 
 

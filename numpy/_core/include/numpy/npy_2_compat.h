@@ -94,6 +94,8 @@
     /* Aliases of 2.x names to 1.x only equivalent names */
     #define NPY_NTYPES NPY_NTYPES_LEGACY
     #define PyArray_DescrProto PyArray_Descr
+    /* NumPy 2 definition always works, but add it for 1.x only */
+    #define PyDataType_ISLEGACY(dtype) (1)
 #else
     #define NPY_DEFAULT_INT  \
         (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? NPY_INTP : NPY_LONG)

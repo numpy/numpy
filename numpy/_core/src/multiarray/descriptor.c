@@ -288,9 +288,9 @@ _convert_from_tuple(PyObject *obj, int align)
         }
         return type;
     }
-    else if (type->metadata && (PyDict_Check(val) || PyDictProxy_Check(val))) {
+    else if (PyDataType_METADATA(metadata) && (PyDict_Check(val) || PyDictProxy_Check(val))) {
         /* Assume it's a metadata dictionary */
-        if (PyDict_Merge(type->metadata, val, 0) == -1) {
+        if (PyDict_Merge(PyDataType_METADATA(metadata), val, 0) == -1) {
             Py_DECREF(type);
             return NULL;
         }
@@ -345,7 +345,7 @@ _convert_from_tuple(PyObject *obj, int align)
                             "bytes must fit into a C int.");
             goto fail;
         }
-        PyArray_Descr *newdescr = PyArray_DescrNewFromType(NPY_VOID);
+        _PyArray_LegacyDescr *newdescr = PyArray_DescrNewFromType(NPY_VOID);
         if (newdescr == NULL) {
             goto fail;
         }

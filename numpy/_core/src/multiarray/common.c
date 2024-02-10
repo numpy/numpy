@@ -338,7 +338,7 @@ _may_have_objects(PyArray_Descr *dtype)
 {
     PyArray_Descr *base = dtype;
     if (PyDataType_HASSUBARRAY(dtype)) {
-        base = dtype->subarray->base;
+        base = ((_PyArray_LegacyDescr *)dtype)->subarray->base;
     }
 
     return (PyDataType_HASFIELDS(base) ||

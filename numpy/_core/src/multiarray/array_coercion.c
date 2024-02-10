@@ -1265,7 +1265,8 @@ PyArray_DiscoverDTypeAndShape(
             flags |= DISCOVER_STRINGS_AS_SEQUENCES;
         }
         else if (requested_descr->type_num == NPY_VOID &&
-                    (requested_descr->names || requested_descr->subarray))  {
+                    (((_PyArray_LegacyDescr *)requested_descr)->names
+                     || ((_PyArray_LegacyDescr *)requested_descr)->subarray))  {
             /* Void is a chimera, in that it may or may not be structured... */
             flags |= DISCOVER_TUPLES_AS_ELEMENTS;
         }

@@ -1279,8 +1279,8 @@ array_sort(PyArrayObject *self,
             Py_DECREF(new_name);
             return NULL;
         }
-        Py_DECREF(newd->names);
-        newd->names = new_name;
+        Py_DECREF(((PyArray_LegacyDescr *)newd)->names);
+        ((PyArray_LegacyDescr *)newd)->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
     if (sortkind != _NPY_SORT_UNDEFINED && stable != -1) {
@@ -1357,8 +1357,8 @@ array_partition(PyArrayObject *self,
             Py_DECREF(new_name);
             return NULL;
         }
-        Py_DECREF(newd->names);
-        newd->names = new_name;
+        Py_DECREF(((PyArray_LegacyDescr *)newd)->names);
+        ((PyArray_LegacyDescr *)newd)->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
 

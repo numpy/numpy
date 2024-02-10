@@ -26,7 +26,7 @@
  * in the same order, 0 if not.
  */
 static int
-_equivalent_fields(PyArray_Descr *type1, PyArray_Descr *type2) {
+_equivalent_fields(_PyArray_LegacyDescr *type1, _PyArray_LegacyDescr *type2) {
 
     int val;
 
@@ -86,6 +86,9 @@ PyArray_LegacyEquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 
     if (type1 == type2) {
         return NPY_TRUE;
+    }
+    if (!PyDataType_ISLEGACY(type1) || !PyDataType_ISLEGACY(type2)) {
+        return NPY_FALSE;
     }
 
     type_num1 = type1->type_num;
@@ -336,6 +339,9 @@ NPY_NO_EXPORT npy_bool
 PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
         NPY_CASTING casting)
 {
+    _PyArray_LegacyDescr *lfrom = (_PyArray_LegacyDescr *)from;
+    _PyArray_LegacyDescr *lto = (_PyArray_LegacyDescr *)to;
+
     /*
      * Fast paths for equality and for basic types.
      */
@@ -345,6 +351,9 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
          NPY_LIKELY(from->type_num == to->type_num) &&
          NPY_LIKELY(from->byteorder == to->byteorder))) {
         return 1;
+    }
+    if (!PyDataType_ISLEGACY(from) || !PyDataType_ISLEGACY(to)) {
+        return 0;
     }
     /*
      * Cases with subarrays and fields need special treatment.
@@ -357,11 +366,11 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
          */
         if (!PyDataType_HASFIELDS(to) && !PyDataType_ISOBJECT(to)) {
             if (casting == NPY_UNSAFE_CASTING &&
-                    PyDict_Size(from->fields) == 1) {
+                    PyDict_Size(lfrom->fields) == 1) {
                 Py_ssize_t ppos = 0;
                 PyObject *tuple;
                 PyArray_Descr *field;
-                PyDict_Next(from->fields, &ppos, NULL, &tuple);
+                PyDict_Next(lfrom->fields, &ppos, NULL, &tuple);
                 field = (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0);
                 /*
                  * For a subarray, we need to get the underlying type;
@@ -450,7 +459,7 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
                      * `from' and `to' must have the same fields, and
                      * corresponding fields must be (recursively) castable.
                      */
-                    return can_cast_fields(from->fields, to->fields, casting);
+                    return can_cast_fields(lfrom->fields, lto->fields, casting);
 
                 case NPY_NO_CASTING:
                 default:
