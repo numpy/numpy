@@ -477,7 +477,7 @@ PyArrayDescr_Type and PyArray_Descr
     .. code-block:: c
 
        typedef struct {
-           PyArray_VectorUnaryFunc *cast[NPY_NTYPES];
+           PyArray_VectorUnaryFunc *cast[NPY_NTYPES_LEGACY];
            PyArray_GetItemFunc *getitem;
            PyArray_SetItemFunc *setitem;
            PyArray_CopySwapNFunc *copyswapn;

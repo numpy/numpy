@@ -778,7 +778,7 @@ PyArray_ScalarKind(int typenum, PyArrayObject **arr)
 {
     NPY_SCALARKIND ret = NPY_NOSCALAR;
 
-    if ((unsigned int)typenum < NPY_NTYPES) {
+    if ((unsigned int)typenum < NPY_NTYPES_LEGACY) {
         ret = _npy_scalar_kinds_table[typenum];
         /* Signed integer types are INTNEG in the table */
         if (ret == NPY_INTNEG_SCALAR) {
@@ -814,7 +814,7 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
     if (scalar == NPY_NOSCALAR) {
         return PyArray_CanCastSafely(thistype, neededtype);
     }
-    if ((unsigned int)neededtype < NPY_NTYPES) {
+    if ((unsigned int)neededtype < NPY_NTYPES_LEGACY) {
         NPY_SCALARKIND neededscalar;
 
         if (scalar == NPY_OBJECT_SCALAR) {

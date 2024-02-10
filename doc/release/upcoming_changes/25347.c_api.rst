@@ -2,8 +2,6 @@
   exposed. This includes functions for acquiring and releasing mutexes locking
   access to the string data as well as packing and unpacking UTF-8 bytestreams
   from array entries.
-* ``NPY_NTYPES`` is now version-dependent to accomadate the availability of a
-  new NumPy built-in DType. It is now defined in ``npy2_compat.h``.
-* ``NPY_NTYPES_LEGACY`` is now defined in ``ndarraytypes.h``, use this value
-  if you do not wish to update code to support dtypes written using the new
-  DType API that may not function in the same way as legacy dtypes.
+* ``NPY_NTYPES`` has been renamed to ``NPY_NTYPES_LEGACY`` as it does not
+  include new NumPy built-in DTypes. In particular the new string DType
+  will likely not work correctly with code that handles legacy DTypes.

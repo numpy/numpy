@@ -151,7 +151,7 @@ initialize_and_map_pytypes_to_dtypes()
 static PyArray_DTypeMeta *
 int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
 {
-    if (NPY_DT_is_legacy(other) && other->type_num < NPY_NTYPES) {
+    if (NPY_DT_is_legacy(other) && other->type_num < NPY_NTYPES_LEGACY) {
         if (other->type_num == NPY_BOOL) {
             /* Use the default integer for bools: */
             return NPY_DT_NewRef(&PyArray_IntpDType);
@@ -199,7 +199,7 @@ int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
 static PyArray_DTypeMeta *
 float_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
-    if (NPY_DT_is_legacy(other) && other->type_num < NPY_NTYPES) {
+    if (NPY_DT_is_legacy(other) && other->type_num < NPY_NTYPES_LEGACY) {
         if (other->type_num == NPY_BOOL || PyTypeNum_ISINTEGER(other->type_num)) {
             /* Use the default integer for bools and ints: */
             return NPY_DT_NewRef(&PyArray_DoubleDType);
@@ -235,7 +235,7 @@ float_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 static PyArray_DTypeMeta *
 complex_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
-    if (NPY_DT_is_legacy(other) && other->type_num < NPY_NTYPES) {
+    if (NPY_DT_is_legacy(other) && other->type_num < NPY_NTYPES_LEGACY) {
         if (other->type_num == NPY_BOOL ||
                 PyTypeNum_ISINTEGER(other->type_num)) {
             /* Use the default integer for bools and ints: */

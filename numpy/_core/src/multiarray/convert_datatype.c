@@ -190,7 +190,7 @@ PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
     else if (!NPY_DT_is_legacy(from) || !NPY_DT_is_legacy(to)) {
         Py_RETURN_NONE;
     }
-    else if (from->type_num < NPY_NTYPES && to->type_num < NPY_NTYPES) {
+    else if (from->type_num < NPY_NTYPES_LEGACY && to->type_num < NPY_NTYPES_LEGACY) {
         /* All builtin dtypes have their casts explicitly defined. */
         PyErr_Format(PyExc_RuntimeError,
                 "builtin cast from %S to %S not found, this should not "
@@ -1009,7 +1009,7 @@ promote_types(PyArray_Descr *type1, PyArray_Descr *type2,
         int type_num2 = type2->type_num;
         int ret_type_num;
 
-        if (type_num2 < NPY_NTYPES && !(PyTypeNum_ISBOOL(type_num2) ||
+        if (type_num2 < NPY_NTYPES_LEGACY && !(PyTypeNum_ISBOOL(type_num2) ||
                                         PyTypeNum_ISUNSIGNED(type_num2))) {
             /* Convert to the equivalent-sized signed integer */
             type_num1 = type_num_unsigned_to_signed(type_num1);
@@ -1028,7 +1028,7 @@ promote_types(PyArray_Descr *type1, PyArray_Descr *type2,
         int type_num2 = type2->type_num;
         int ret_type_num;
 
-        if (type_num1 < NPY_NTYPES && !(PyTypeNum_ISBOOL(type_num1) ||
+        if (type_num1 < NPY_NTYPES_LEGACY && !(PyTypeNum_ISBOOL(type_num1) ||
                                         PyTypeNum_ISUNSIGNED(type_num1))) {
             /* Convert to the equivalent-sized signed integer */
             type_num2 = type_num_unsigned_to_signed(type_num2);
@@ -1881,7 +1881,7 @@ PyArray_ResultType(
      * 2. It does nothing, but warns if there the result would differ.
      * 3. It replaces the result based on the legacy value-based logic.
      */
-    if (at_least_one_scalar && !all_pyscalar && result->type_num < NPY_NTYPES) {
+    if (at_least_one_scalar && !all_pyscalar && result->type_num < NPY_NTYPES_LEGACY) {
         if (PyArray_CheckLegacyResultType(
                 &result, narrs, arrs, ndtypes, descrs) < 0) {
             Py_DECREF(common_dtype);
@@ -2701,13 +2701,13 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
 static int
 PyArray_InitializeNumericCasts(void)
 {
-    for (int from = 0; from < NPY_NTYPES; from++) {
+    for (int from = 0; from < NPY_NTYPES_LEGACY; from++) {
         if (!PyTypeNum_ISNUMBER(from) && from != NPY_BOOL) {
             continue;
         }
         PyArray_DTypeMeta *from_dt = PyArray_DTypeFromTypeNum(from);
 
-        for (int to = 0; to < NPY_NTYPES; to++) {
+        for (int to = 0; to < NPY_NTYPES_LEGACY; to++) {
             if (!PyTypeNum_ISNUMBER(to) && to != NPY_BOOL) {
                 continue;
             }
@@ -2971,7 +2971,7 @@ PyArray_InitializeStringCasts(void)
     PyArray_DTypeMeta *other_dt = NULL;
 
     /* Add most casts as legacy ones */
-    for (int other = 0; other < NPY_NTYPES; other++) {
+    for (int other = 0; other < NPY_NTYPES_LEGACY; other++) {
         if (PyTypeNum_ISDATETIME(other) || other == NPY_VOID ||
                 other == NPY_OBJECT) {
             continue;
