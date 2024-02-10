@@ -1025,7 +1025,7 @@ _copy_and_return_void_setitem(_PyArray_LegacyDescr *dstdescr, char *dstdata,
 
     /* Slow path */
     ret = PyArray_CastRawArrays(1, srcdata, dstdata, 0, 0,
-                                srcdescr, dstdescr, 0);
+                                srcdescr, (PyArray_Descr *)dstdescr, 0);
     if (ret != NPY_SUCCEED) {
         return -1;
     }
@@ -2282,7 +2282,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         PyArrayObject_fields dummy_fields = get_dummy_stack_array(arr);
         PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
 
-        while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+        while (PyDict_Next(PyDataType_FIELDS(descr), &pos, &key, &value)) {
             npy_intp offset;
             PyArray_Descr *new;
             if (NPY_TITLE_KEY(key, value)) {
@@ -2311,17 +2311,17 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
          * be simply copied (no object, fields, subarray, and not a user dtype).
          */
         npy_bool can_optimize_subarray = (!swap &&
-                !PyDataType_HASFIELDS(descr->subarray->base) &&
-                !PyDataType_HASSUBARRAY(descr->subarray->base) &&
-                !PyDataType_REFCHK(descr->subarray->base) &&
-                (descr->subarray->base->type_num < NPY_NTYPES_LEGACY));
+                !PyDataType_HASFIELDS(PyDataType_SUBARRAY(descr)->base) &&
+                !PyDataType_HASSUBARRAY(PyDataType_SUBARRAY(descr)->base) &&
+                !PyDataType_REFCHK(PyDataType_SUBARRAY(descr)->base) &&
+                (PyDataType_SUBARRAY(descr)->base->type_num < NPY_NTYPES_LEGACY));
 
         if (can_optimize_subarray) {
             _basic_copyn(dst, dstride, src, sstride, n, descr->elsize);
             return;
         }
 
-        new = descr->subarray->base;
+        new = PyDataType_SUBARRAY(descr)->base;
         dstptr = dst;
         srcptr = src;
         subitemsize = new->elsize;
@@ -2369,7 +2369,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         PyArrayObject_fields dummy_fields = get_dummy_stack_array(arr);
         PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
 
-        while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+        while (PyDict_Next(PyDataType_FIELDS(descr), &pos, &key, &value)) {
             npy_intp offset;
 
             PyArray_Descr * new;
@@ -2396,17 +2396,17 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
          * be simply copied (no object, fields, subarray, and not a user dtype).
          */
         npy_bool can_optimize_subarray = (!swap &&
-                !PyDataType_HASFIELDS(descr->subarray->base) &&
-                !PyDataType_HASSUBARRAY(descr->subarray->base) &&
-                !PyDataType_REFCHK(descr->subarray->base) &&
-                (descr->subarray->base->type_num < NPY_NTYPES_LEGACY));
+                !PyDataType_HASFIELDS(PyDataType_SUBARRAY(descr)->base) &&
+                !PyDataType_HASSUBARRAY(PyDataType_SUBARRAY(descr)->base) &&
+                !PyDataType_REFCHK(PyDataType_SUBARRAY(descr)->base) &&
+                (PyDataType_SUBARRAY(descr)->base->type_num < NPY_NTYPES_LEGACY));
 
         if (can_optimize_subarray) {
             _basic_copy(dst, src, descr->elsize);
             return;
         }
 
-        new = descr->subarray->base;
+        new = PyDataType_SUBARRAY(descr)->base;
         subitemsize = new->elsize;
         if (subitemsize == 0) {
             /* There cannot be any elements, so return */
@@ -2654,7 +2654,7 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
         PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
 
         descr = PyArray_DESCR(ap);
-        while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+        while (PyDict_Next(PyDataType_FIELDS(descr), &pos, &key, &value)) {
             PyArray_Descr * new;
             npy_intp offset;
             if (NPY_TITLE_KEY(key, value)) {
@@ -3011,12 +3011,12 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
      * Compare on the first-field.  If equal, then
      * compare on the second-field, etc.
      */
-    names = descr->names;
+    names = PyDataType_NAMES(descr);
     for (i = 0; i < PyTuple_GET_SIZE(names); i++) {
         PyArray_Descr *new;
         npy_intp offset;
         key = PyTuple_GET_ITEM(names, i);
-        tup = PyDict_GetItem(descr->fields, key);
+        tup = PyDict_GetItem(PyDataType_FIELDS(descr), key);
         if (_unpack_field(tup, &new, &offset) < 0) {
             goto finish;
         }
@@ -4045,7 +4045,7 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 /*
  * FIXME: check for PY3K
  */
-static PyArray_Descr @from@_Descr = {
+static _PyArray_LegacyDescr @from@_Descr = {
     PyObject_HEAD_INIT(&PyArrayDescr_Type)
     /* typeobj */
     &Py@NAME@ArrType_Type,
@@ -4195,7 +4195,7 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 /*
  * FIXME: check for PY3K
  */
-NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
+NPY_NO_EXPORT _PyArray_LegacyDescr @from@_Descr = {
     PyObject_HEAD_INIT(&PyArrayDescr_Type)
     /* typeobj */
     &Py@NAME@ArrType_Type,
@@ -4236,7 +4236,7 @@ NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
 static npy_int16 _letter_to_num[_MAX_LETTER - '?'];
 #define LETTER_TO_NUM(letter) _letter_to_num[letter - '?']
 
-static PyArray_Descr *_builtin_descrs[] = {
+static _PyArray_LegacyDescr *_builtin_descrs[] = {
     &BOOL_Descr,
     &BYTE_Descr,
     &UBYTE_Descr,
@@ -4286,7 +4286,7 @@ PyArray_DescrFromType(int type)
     }
     // builtin legacy dtypes
     else if (type < NPY_NTYPES_LEGACY) {
-        ret = _builtin_descrs[type];
+        ret = (PyArray_Descr *)_builtin_descrs[type];
     }
     else if (type == NPY_NOTYPE) {
         /*
@@ -4301,7 +4301,7 @@ PyArray_DescrFromType(int type)
         ret = NULL;
     }
     else if (type == NPY_CHARLTR) {
-        ret = PyArray_DescrNew(_builtin_descrs[NPY_STRING]);
+        ret = PyArray_DescrNew((PyArray_Descr *)_builtin_descrs[NPY_STRING]);
         if (ret == NULL) {
             return NULL;
         }
@@ -4310,7 +4310,7 @@ PyArray_DescrFromType(int type)
         return ret;
     }
     else if (PyTypeNum_ISUSERDEF(type)) {
-        ret = userdescrs[type - NPY_USERDEF];
+        ret = (PyArray_Descr *)userdescrs[type - NPY_USERDEF];
     }
     else {
         int num = NPY_NTYPES_LEGACY;
@@ -4321,7 +4321,7 @@ PyArray_DescrFromType(int type)
             ret = NULL;
         }
         else {
-            ret = _builtin_descrs[num];
+            ret = (PyArray_Descr *)_builtin_descrs[num];
         }
     }
     if (ret == NULL) {
@@ -4352,7 +4352,7 @@ set_typeinfo(PyObject *dict)
     PyObject *infodict = NULL;
     int i;
 
-    PyArray_Descr *dtype;
+    _PyArray_LegacyDescr *dtype;
     PyObject *cobj, *key;
 
     // SIMD runtime dispatching
@@ -4430,7 +4430,7 @@ set_typeinfo(PyObject *dict)
      * #name2 = HALF, DATETIME, TIMEDELTA#
      */
 
-    dtype = _builtin_descrs[NPY_@name1@];
+    dtype = (_PyArray_LegacyDescr *)_builtin_descrs[NPY_@name1@];
     if (dtype->f->castdict == NULL) {
         dtype->f->castdict = PyDict_New();
         if (dtype->f->castdict == NULL) {
@@ -4558,14 +4558,14 @@ set_typeinfo(PyObject *dict)
      * they are strict aliases and we do not add the "p" and "P" character
      * codes for them.
      */
-    dtype = PyArray_DescrFromType(NPY_@NAME@);
+    dtype = (_PyArray_LegacyDescr *)PyArray_DescrFromType(NPY_@NAME@);
     ret = PyDict_SetItemString(infodict, NPY_@NAME@_name, (PyObject *)dtype);
     Py_DECREF(dtype);
     if (ret < 0) {
         goto error;
     }
 #ifdef NPY_@NAME@_alias
-    dtype = PyArray_DescrFromType(NPY_@NAME@);
+    dtype = (_PyArray_LegacyDescr *)PyArray_DescrFromType(NPY_@NAME@);
     ret = PyDict_SetItemString(infodict, NPY_@NAME@_alias, (PyObject *)dtype);
     Py_DECREF(dtype);
     if (ret < 0) {
@@ -4573,7 +4573,7 @@ set_typeinfo(PyObject *dict)
     }
 #endif
 
-    dtype = PyArray_DescrFromType(NPY_@NAME@);
+    dtype = (_PyArray_LegacyDescr *)PyArray_DescrFromType(NPY_@NAME@);
     ret = PyDict_SetItemString(infodict, "NPY_@NAME@", (PyObject *)dtype);
     Py_DECREF(dtype);
     if (ret < 0) {
@@ -4583,13 +4583,13 @@ set_typeinfo(PyObject *dict)
     /**end repeat**/
 
     /* Intp and UIntp are an additional alias */
-    dtype = PyArray_DescrFromType(NPY_INTP);
+    dtype = (_PyArray_LegacyDescr *)PyArray_DescrFromType(NPY_INTP);
     ret = PyDict_SetItemString(infodict, "intp", (PyObject *)dtype);
     Py_DECREF(dtype);
     if (ret < 0) {
         goto error;
     }
-    dtype = PyArray_DescrFromType(NPY_UINTP);
+    dtype = (_PyArray_LegacyDescr *)PyArray_DescrFromType(NPY_UINTP);
     ret = PyDict_SetItemString(infodict, "uintp", (PyObject *)dtype);
     Py_DECREF(dtype);
     if (ret < 0) {

@@ -297,7 +297,7 @@ end:
 }
 
 /**
- * unpack tuple of dtype->fields (descr, offset, title[not-needed])
+ * unpack tuple of PyDataType_FIELDS(dtype) (descr, offset, title[not-needed])
  *
  * @param "value" should be the tuple.
  *

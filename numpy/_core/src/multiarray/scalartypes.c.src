@@ -2598,7 +2598,7 @@ voidtype_length(PyVoidScalarObject *self)
     }
     else {
         /* return the number of fields */
-        return (Py_ssize_t) PyTuple_GET_SIZE(self->descr->names);
+        return (Py_ssize_t) PyTuple_GET_SIZE(PyDataType_NAMES(self->descr));
     }
 }
 
@@ -2616,7 +2616,7 @@ voidtype_item(PyVoidScalarObject *self, Py_ssize_t n)
                 "can't index void scalar without fields");
         return NULL;
     }
-    flist = self->descr->names;
+    flist = PyDataType_NAMES(self->descr);
     m = PyTuple_GET_SIZE(flist);
     if (n < 0) {
         n += m;
@@ -2676,7 +2676,7 @@ voidtype_ass_item(PyVoidScalarObject *self, Py_ssize_t n, PyObject *val)
         return -1;
     }
 
-    flist = self->descr->names;
+    flist = PyDataType_NAMES(self->descr);
     m = PyTuple_GET_SIZE(flist);
     if (n < 0) {
         n += m;

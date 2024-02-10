@@ -45,7 +45,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "legacy_dtype_implementation.h"
 
 
-NPY_NO_EXPORT PyArray_Descr **userdescrs=NULL;
+NPY_NO_EXPORT _PyArray_LegacyDescr **userdescrs = NULL;
 
 static int
 _append_new(int **p_types, int insert)
@@ -162,15 +162,13 @@ PyArray_InitArrFuncs(PyArray_ArrFuncs *f)
 NPY_NO_EXPORT int
 PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
 {
-    PyArray_Descr *descr2;
     int typenum;
     int i;
     PyArray_ArrFuncs *f;
 
     /* See if this type is already registered */
     for (i = 0; i < NPY_NUMUSERTYPES; i++) {
-        descr2 = userdescrs[i];
-        if (descr2->type_num == descr_proto->type_num) {
+        if (userdescrs[i]->type_num == descr_proto->type_num) {
             return descr_proto->type_num;
         }
     }
@@ -216,7 +214,7 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
         use_void_clearimpl = 1;
 
         if (descr_proto->names == NULL || descr_proto->fields == NULL ||
-            !PyDict_CheckExact(descr_proto->fields)) {
+            !PyDict_CheckExact(PyDataType_FIELDS(descr_proto))) {
             PyErr_Format(PyExc_ValueError,
                     "Failed to register dtype for %S: Legacy user dtypes "
                     "using `NPY_ITEM_IS_POINTER` or `NPY_ITEM_REFCOUNT` are "
@@ -270,7 +268,7 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
      * Copy the user provided descriptor struct into a new one.  This is done
      * in order to allow different layout between the two.
      */
-    PyArray_Descr *descr = PyObject_Malloc(sizeof(PyArray_Descr));
+    _PyArray_LegacyDescr *descr = PyObject_Malloc(sizeof(PyArray_Descr));
     if (descr == NULL) {
         PyMem_FREE(name);
         PyErr_NoMemory();
@@ -320,10 +318,10 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
     }
     if (use_void_clearimpl) {
         /* See comment where use_void_clearimpl is set... */
-        NPY_DT_SLOTS(NPY_DTYPE(descr))->get_clear_loop = (
+        NPY_DT_SLOTS(NPY_DTYPE(descr))->get_clear_loop = (void *)(
                 &npy_get_clear_void_and_legacy_user_dtype_loop);
         /* Also use the void zerofill since there may be objects */
-        NPY_DT_SLOTS(NPY_DTYPE(descr))->get_clear_loop = (
+        NPY_DT_SLOTS(NPY_DTYPE(descr))->get_clear_loop = (void *)(
                 &npy_get_zerofill_void_and_legacy_user_dtype_loop);
     }
 

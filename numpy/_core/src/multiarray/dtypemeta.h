@@ -152,10 +152,10 @@ python_builtins_are_known_scalar_types(
 
 NPY_NO_EXPORT int
 dtypemeta_wrap_legacy_descriptor(
-        PyArray_Descr *dtypem, const char *name, const char *alias);
+        _PyArray_LegacyDescr *dtypem, const char *name, const char *alias);
 
 NPY_NO_EXPORT void
-initialize_legacy_dtypemeta_aliases(PyArray_Descr **_builtin_descrs);
+initialize_legacy_dtypemeta_aliases(_PyArray_LegacyDescr **_builtin_descrs);
 
 /*
  * NumPy's builtin DTypes:

@@ -736,7 +736,7 @@ PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
      *       should probably be deprecated.
      *       (This logic is duplicated in `PyArray_CanCastArrayTo`)
      */
-    if (PyDataType_ISUNSIZED(to) && to->subarray == NULL) {
+    if (PyDataType_ISUNSIZED(to) && PyDataType_SUBARRAY(to) == NULL) {
         to = NULL;  /* consider mainly S0 and U0 as S and U */
     }
 
@@ -894,7 +894,7 @@ PyArray_CanCastArrayTo(PyArrayObject *arr, PyArray_Descr *to,
     PyArray_DTypeMeta *to_dtype = NPY_DTYPE(to);
 
     /* NOTE, TODO: The same logic as `PyArray_CanCastTypeTo`: */
-    if (PyDataType_ISUNSIZED(to) && to->subarray == NULL) {
+    if (PyDataType_ISUNSIZED(to) && PyDataType_SUBARRAY(to) == NULL) {
         to = NULL;
     }
 
@@ -1140,7 +1140,7 @@ PyArray_FindConcatenationDescriptor(
         return NULL;
     }
     if (result != NULL) {
-        if (result->subarray != NULL) {
+        if (PyDataType_SUBARRAY(result) != NULL) {
             PyErr_Format(PyExc_TypeError,
                     "The dtype `%R` is not a valid dtype for concatenation "
                     "since it is a subarray dtype (the subarray dimensions "
@@ -3047,7 +3047,8 @@ cast_to_void_dtype_class(
 
     *view_offset = 0;
     if (loop_descrs[0]->type_num == NPY_VOID &&
-            loop_descrs[0]->subarray == NULL && loop_descrs[1]->names == NULL) {
+            PyDataType_SUBARRAY(loop_descrs[0]) == NULL &&
+            PyDataType_NAMES(loop_descrs[1]) == NULL) {
         return NPY_NO_CASTING;
     }
     return NPY_SAFE_CASTING;
@@ -3068,7 +3069,7 @@ nonstructured_to_structured_resolve_descriptors(
         return cast_to_void_dtype_class(given_descrs, loop_descrs, view_offset);
     }
 
-    if (given_descrs[1]->subarray != NULL) {
+    if (PyDataType_SUBARRAY(given_descrs[1]) != NULL) {
         /*
          * We currently consider this at most a safe cast. It would be
          * possible to allow a view if the field has exactly one element.
@@ -3077,20 +3078,20 @@ nonstructured_to_structured_resolve_descriptors(
         npy_intp sub_view_offset = NPY_MIN_INTP;
         /* Subarray dtype */
         NPY_CASTING base_casting = PyArray_GetCastInfo(
-                given_descrs[0], given_descrs[1]->subarray->base, NULL,
+                given_descrs[0], PyDataType_SUBARRAY(given_descrs[1])->base, NULL,
                 &sub_view_offset);
         if (base_casting < 0) {
             return -1;
         }
-        if (given_descrs[1]->elsize == given_descrs[1]->subarray->base->elsize) {
+        if (given_descrs[1]->elsize == PyDataType_SUBARRAY(given_descrs[1])->base->elsize) {
             /* A single field, view is OK if sub-view is */
             *view_offset = sub_view_offset;
         }
         casting = PyArray_MinCastSafety(casting, base_casting);
     }
-    else if (given_descrs[1]->names != NULL) {
+    else if (PyDataType_NAMES(given_descrs[1]) != NULL) {
         /* Structured dtype */
-        if (PyTuple_Size(given_descrs[1]->names) == 0) {
+        if (PyTuple_Size(PyDataType_NAMES(given_descrs[1])) == 0) {
             /* TODO: This retained behaviour, but likely should be changed. */
             casting = NPY_UNSAFE_CASTING;
         }
@@ -3100,7 +3101,7 @@ nonstructured_to_structured_resolve_descriptors(
 
             Py_ssize_t pos = 0;
             PyObject *key, *tuple;
-            while (PyDict_Next(given_descrs[1]->fields, &pos, &key, &tuple)) {
+            while (PyDict_Next(PyDataType_FIELDS(given_descrs[1]), &pos, &key, &tuple)) {
                 PyArray_Descr *field_descr = (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0);
                 npy_intp field_view_off = NPY_MIN_INTP;
                 NPY_CASTING field_casting = PyArray_GetCastInfo(
@@ -3117,7 +3118,7 @@ nonstructured_to_structured_resolve_descriptors(
                     *view_offset = field_view_off - to_off;
                 }
             }
-            if (PyTuple_Size(given_descrs[1]->names) != 1 || *view_offset < 0) {
+            if (PyTuple_Size(PyDataType_NAMES(given_descrs[1])) != 1 || *view_offset < 0) {
                 /*
                  * Assume that a view is impossible when there is more than one
                  * field.  (Fields could overlap, but that seems weird...)
@@ -3179,7 +3180,7 @@ nonstructured_to_structured_get_loop(
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    if (context->descriptors[1]->names != NULL) {
+    if (PyDataType_NAMES(context->descriptors[1]) != NULL) {
         if (get_fields_transfer_function(
                 aligned, strides[0], strides[1],
                 context->descriptors[0], context->descriptors[1],
@@ -3188,7 +3189,7 @@ nonstructured_to_structured_get_loop(
             return -1;
         }
     }
-    else if (context->descriptors[1]->subarray != NULL) {
+    else if (PyDataType_SUBARRAY(context->descriptors[1]) != NULL) {
         if (get_subarray_transfer_function(
                 aligned, strides[0], strides[1],
                 context->descriptors[0], context->descriptors[1],
@@ -3256,20 +3257,20 @@ structured_to_nonstructured_resolve_descriptors(
     /* The structured part may allow a view (and have its own offset): */
     npy_intp struct_view_offset = NPY_MIN_INTP;
 
-    if (given_descrs[0]->subarray != NULL) {
-        base_descr = given_descrs[0]->subarray->base;
+    if (PyDataType_SUBARRAY(given_descrs[0]) != NULL) {
+        base_descr = PyDataType_SUBARRAY(given_descrs[0])->base;
         /* A view is possible if the subarray has exactly one element: */
-        if (given_descrs[0]->elsize == given_descrs[0]->subarray->base->elsize) {
+        if (given_descrs[0]->elsize == PyDataType_SUBARRAY(given_descrs[0])->base->elsize) {
             struct_view_offset = 0;
         }
     }
-    else if (given_descrs[0]->names != NULL) {
-        if (PyTuple_Size(given_descrs[0]->names) != 1) {
+    else if (PyDataType_NAMES(given_descrs[0]) != NULL) {
+        if (PyTuple_Size(PyDataType_NAMES(given_descrs[0])) != 1) {
             /* Only allow casting a single field */
             return -1;
         }
-        PyObject *key = PyTuple_GetItem(given_descrs[0]->names, 0);
-        PyObject *base_tup = PyDict_GetItem(given_descrs[0]->fields, key);
+        PyObject *key = PyTuple_GetItem(PyDataType_NAMES(given_descrs[0]), 0);
+        PyObject *base_tup = PyDict_GetItem(PyDataType_FIELDS(given_descrs[0]), key);
         base_descr = (PyArray_Descr *)PyTuple_GET_ITEM(base_tup, 0);
         struct_view_offset = PyLong_AsSsize_t(PyTuple_GET_ITEM(base_tup, 1));
         if (error_converting(struct_view_offset)) {
@@ -3337,7 +3338,7 @@ structured_to_nonstructured_get_loop(
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    if (context->descriptors[0]->names != NULL) {
+    if (PyDataType_NAMES(context->descriptors[0]) != NULL) {
         if (get_fields_transfer_function(
                 aligned, strides[0], strides[1],
                 context->descriptors[0], context->descriptors[1],
@@ -3346,7 +3347,7 @@ structured_to_nonstructured_get_loop(
             return -1;
         }
     }
-    else if (context->descriptors[0]->subarray != NULL) {
+    else if (PyDataType_SUBARRAY(context->descriptors[0]) != NULL) {
         if (get_subarray_transfer_function(
                 aligned, strides[0], strides[1],
                 context->descriptors[0], context->descriptors[1],
@@ -3413,8 +3414,8 @@ static NPY_CASTING
 can_cast_fields_safety(
         PyArray_Descr *from, PyArray_Descr *to, npy_intp *view_offset)
 {
-    Py_ssize_t field_count = PyTuple_Size(from->names);
-    if (field_count != PyTuple_Size(to->names)) {
+    Py_ssize_t field_count = PyTuple_Size(PyDataType_NAMES(from));
+    if (field_count != PyTuple_Size(PyDataType_NAMES(to))) {
         return -1;
     }
 
@@ -3422,16 +3423,16 @@ can_cast_fields_safety(
     *view_offset = 0;  /* if there are no fields, a view is OK. */
     for (Py_ssize_t i = 0; i < field_count; i++) {
         npy_intp field_view_off = NPY_MIN_INTP;
-        PyObject *from_key = PyTuple_GET_ITEM(from->names, i);
-        PyObject *from_tup = PyDict_GetItemWithError(from->fields, from_key);
+        PyObject *from_key = PyTuple_GET_ITEM(PyDataType_NAMES(from), i);
+        PyObject *from_tup = PyDict_GetItemWithError(PyDataType_FIELDS(from), from_key);
         if (from_tup == NULL) {
             return give_bad_field_error(from_key);
         }
         PyArray_Descr *from_base = (PyArray_Descr *) PyTuple_GET_ITEM(from_tup, 0);
 
         /* Check whether the field names match */
-        PyObject *to_key = PyTuple_GET_ITEM(to->names, i);
-        PyObject *to_tup = PyDict_GetItem(to->fields, to_key);
+        PyObject *to_key = PyTuple_GET_ITEM(PyDataType_NAMES(to), i);
+        PyObject *to_tup = PyDict_GetItem(PyDataType_FIELDS(to), to_key);
         if (to_tup == NULL) {
             return give_bad_field_error(from_key);
         }
@@ -3529,7 +3530,7 @@ void_to_void_resolve_descriptors(
         return cast_to_void_dtype_class(given_descrs, loop_descrs, view_offset);
     }
 
-    if (given_descrs[0]->names != NULL && given_descrs[1]->names != NULL) {
+    if (PyDataType_NAMES(given_descrs[0]) != NULL && PyDataType_NAMES(given_descrs[1]) != NULL) {
         /* From structured to structured, need to check fields */
         casting = can_cast_fields_safety(
                 given_descrs[0], given_descrs[1], view_offset);
@@ -3537,16 +3538,16 @@ void_to_void_resolve_descriptors(
             return -1;
         }
     }
-    else if (given_descrs[0]->names != NULL) {
+    else if (PyDataType_NAMES(given_descrs[0]) != NULL) {
         return structured_to_nonstructured_resolve_descriptors(
                 self, dtypes, given_descrs, loop_descrs, view_offset);
     }
-    else if (given_descrs[1]->names != NULL) {
+    else if (PyDataType_NAMES(given_descrs[1]) != NULL) {
         return nonstructured_to_structured_resolve_descriptors(
                 self, dtypes, given_descrs, loop_descrs, view_offset);
     }
-    else if (given_descrs[0]->subarray == NULL &&
-                given_descrs[1]->subarray == NULL) {
+    else if (PyDataType_SUBARRAY(given_descrs[0]) == NULL &&
+                PyDataType_SUBARRAY(given_descrs[1]) == NULL) {
         /* Both are plain void dtypes */
         if (given_descrs[0]->elsize == given_descrs[1]->elsize) {
             casting = NPY_NO_CASTING;
@@ -3565,8 +3566,8 @@ void_to_void_resolve_descriptors(
          * At this point, one of the dtypes must be a subarray dtype, the
          * other is definitely not a structured one.
          */
-        PyArray_ArrayDescr *from_sub = given_descrs[0]->subarray;
-        PyArray_ArrayDescr *to_sub = given_descrs[1]->subarray;
+        PyArray_ArrayDescr *from_sub = PyDataType_SUBARRAY(given_descrs[0]);
+        PyArray_ArrayDescr *to_sub = PyDataType_SUBARRAY(given_descrs[1]);
         assert(from_sub || to_sub);
 
         /* If the shapes do not match, this is at most an unsafe cast */
@@ -3641,8 +3642,8 @@ void_to_void_get_loop(
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    if (context->descriptors[0]->names != NULL ||
-            context->descriptors[1]->names != NULL) {
+    if (PyDataType_NAMES(context->descriptors[0]) != NULL ||
+            PyDataType_NAMES(context->descriptors[1]) != NULL) {
         if (get_fields_transfer_function(
                 aligned, strides[0], strides[1],
                 context->descriptors[0], context->descriptors[1],
@@ -3651,8 +3652,8 @@ void_to_void_get_loop(
             return -1;
         }
     }
-    else if (context->descriptors[0]->subarray != NULL ||
-             context->descriptors[1]->subarray != NULL) {
+    else if (PyDataType_SUBARRAY(context->descriptors[0]) != NULL ||
+             PyDataType_SUBARRAY(context->descriptors[1]) != NULL) {
         if (get_subarray_transfer_function(
                 aligned, strides[0], strides[1],
                 context->descriptors[0], context->descriptors[1],

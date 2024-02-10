@@ -1263,7 +1263,7 @@ string_to_datetime(PyArrayMethod_Context *context, char *const data[],
     PyArray_DatetimeMetaData in_meta = {0, 1};
     npy_bool out_special;
 
-    PyArray_Descr *dt_descr = context->descriptors[1];
+    _PyArray_LegacyDescr *dt_descr = (_PyArray_LegacyDescr *)context->descriptors[1];
     PyArray_DatetimeMetaData *dt_meta =
             &(((PyArray_DatetimeDTypeMetaData *)dt_descr->c_metadata)->meta);
 
@@ -1329,7 +1329,7 @@ datetime_to_string(PyArrayMethod_Context *context, char *const data[],
     npy_intp in_stride = strides[0] / sizeof(npy_datetime);
     npy_intp out_stride = strides[1];
 
-    PyArray_Descr *dt_descr = context->descriptors[0];
+    _PyArray_LegacyDescr *dt_descr = (_PyArray_LegacyDescr *)context->descriptors[0];
     PyArray_DatetimeMetaData *dt_meta =
             &(((PyArray_DatetimeDTypeMetaData *)dt_descr->c_metadata)->meta);
     // buffer passed to numpy to build datetime string
@@ -1415,7 +1415,7 @@ string_to_void_resolve_descriptors(PyObject *NPY_UNUSED(self),
     }
     else {
         // reject structured voids
-        if (given_descrs[1]->names != NULL || given_descrs[1]->subarray != NULL) {
+        if (PyDataType_NAMES(given_descrs[1]) != NULL || PyDataType_SUBARRAY(given_descrs[1]) != NULL) {
             PyErr_SetString(
                     PyExc_TypeError,
                     "Casting from StringDType to a structured dtype is not "

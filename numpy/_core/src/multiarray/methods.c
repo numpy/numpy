@@ -1279,8 +1279,8 @@ array_sort(PyArrayObject *self,
             Py_DECREF(new_name);
             return NULL;
         }
-        Py_DECREF(((PyArray_LegacyDescr *)newd)->names);
-        ((PyArray_LegacyDescr *)newd)->names = new_name;
+        Py_DECREF(((_PyArray_LegacyDescr *)newd)->names);
+        ((_PyArray_LegacyDescr *)newd)->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
     if (sortkind != _NPY_SORT_UNDEFINED && stable != -1) {
@@ -1357,8 +1357,8 @@ array_partition(PyArrayObject *self,
             Py_DECREF(new_name);
             return NULL;
         }
-        Py_DECREF(((PyArray_LegacyDescr *)newd)->names);
-        ((PyArray_LegacyDescr *)newd)->names = new_name;
+        Py_DECREF(((_PyArray_LegacyDescr *)newd)->names);
+        ((_PyArray_LegacyDescr *)newd)->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
 
@@ -1426,8 +1426,8 @@ array_argsort(PyArrayObject *self,
             Py_DECREF(new_name);
             return NULL;
         }
-        Py_DECREF(newd->names);
-        newd->names = new_name;
+        Py_DECREF(((_PyArray_LegacyDescr *)newd)->names);
+        ((_PyArray_LegacyDescr *)newd)->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
     if (sortkind != _NPY_SORT_UNDEFINED && stable != -1) {
@@ -1499,8 +1499,8 @@ array_argpartition(PyArrayObject *self,
             Py_DECREF(new_name);
             return NULL;
         }
-        Py_DECREF(newd->names);
-        newd->names = new_name;
+        Py_DECREF(((_PyArray_LegacyDescr *)newd)->names);
+        ((_PyArray_LegacyDescr *)newd)->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
 
@@ -1554,7 +1554,7 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
         PyArray_Descr *new;
         int offset, res;
         Py_ssize_t pos = 0;
-        while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
+        while (PyDict_Next(PyDataType_FIELDS(dtype), &pos, &key, &value)) {
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
@@ -2153,8 +2153,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
                                         datastr, PyArray_ITEMSIZE(self),
                                         numels, 1, self);
                 if (!(PyArray_ISEXTENDED(self) ||
-                      PyArray_DESCR(self)->metadata ||
-                      PyArray_DESCR(self)->c_metadata)) {
+                      PyDataType_METADATA(PyArray_DESCR(self)) ||
+                      PyDataType_C_METADATA(PyArray_DESCR(self)))) {
                     fa->descr = PyArray_DescrFromType(
                                     PyArray_DESCR(self)->type_num);
                 }

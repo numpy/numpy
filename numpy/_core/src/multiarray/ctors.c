@@ -288,13 +288,13 @@ _update_descr_and_dimensions(PyArray_Descr **des, npy_intp *newdims,
     int tuple;
 
     old = (_PyArray_LegacyDescr *)*des;  /* guaranteed as it has subarray */
-    *des = old->subarray->base;
+    *des = PyDataType_SUBARRAY(old)->base;
 
 
     mydim = newdims + oldnd;
-    tuple = PyTuple_Check(old->subarray->shape);
+    tuple = PyTuple_Check(PyDataType_SUBARRAY(old)->shape);
     if (tuple) {
-        numnew = PyTuple_GET_SIZE(old->subarray->shape);
+        numnew = PyTuple_GET_SIZE(PyDataType_SUBARRAY(old)->shape);
     }
     else {
         numnew = 1;
@@ -308,11 +308,11 @@ _update_descr_and_dimensions(PyArray_Descr **des, npy_intp *newdims,
     if (tuple) {
         for (i = 0; i < numnew; i++) {
             mydim[i] = (npy_intp) PyLong_AsLong(
-                    PyTuple_GET_ITEM(old->subarray->shape, i));
+                    PyTuple_GET_ITEM(PyDataType_SUBARRAY(old)->shape, i));
         }
     }
     else {
-        mydim[0] = (npy_intp) PyLong_AsLong(old->subarray->shape);
+        mydim[0] = (npy_intp) PyLong_AsLong(PyDataType_SUBARRAY(old)->shape);
     }
 
     if (newstrides) {
@@ -637,7 +637,7 @@ fail:
  * Generic new array creation routine.
  * Internal variant with calloc argument for PyArray_Zeros.
  *
- * steals a reference to descr. On failure or descr->subarray, descr will
+ * steals a reference to descr. On failure or PyDataType_SUBARRAY(descr), descr will
  * be decrefed.
  */
 NPY_NO_EXPORT PyObject *
@@ -678,7 +678,7 @@ PyArray_NewFromDescr_int(
      * a view where growing the dtype would be presumable wrong).
      */
     if (!(cflags & _NPY_ARRAY_ENSURE_DTYPE_IDENTITY)) {
-        if (descr->subarray) {
+        if (PyDataType_SUBARRAY(descr)) {
             PyObject *ret;
             npy_intp newdims[2*NPY_MAXDIMS];
             npy_intp *newstrides = NULL;
@@ -999,7 +999,7 @@ PyArray_NewFromDescr_int(
 /*NUMPY_API
  * Generic new array creation routine.
  *
- * steals a reference to descr. On failure or when dtype->subarray is
+ * steals a reference to descr. On failure or when PyDataType_SUBARRAY(dtype) is
  * true, dtype will be decrefed.
  */
 NPY_NO_EXPORT PyObject *
@@ -1058,7 +1058,7 @@ PyArray_NewFromDescrAndBase(
  *             always create a base-class array.
  *
  * NOTE: If dtype is not NULL, steals the dtype reference.  On failure or when
- * dtype->subarray is true, dtype will be decrefed.
+ * PyDataType_SUBARRAY(dtype) is true, dtype will be decrefed.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
@@ -1186,7 +1186,7 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
  *             always create a base-class array.
  *
  * NOTE: If dtype is not NULL, steals the dtype reference.  On failure or when
- * dtype->subarray is true, dtype will be decrefed.
+ * PyDataType_SUBARRAY(dtype) is true, dtype will be decrefed.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
@@ -2834,7 +2834,7 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
 /*NUMPY_API
  * Zeros
  *
- * steals a reference to type. On failure or when dtype->subarray is
+ * steals a reference to type. On failure or when PyDataType_SUBARRAY(dtype) is
  * true, dtype will be decrefed.
  * accepts NULL type
  */
