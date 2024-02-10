@@ -1596,12 +1596,14 @@ strip_chars_resolve_descriptors(
 
 
 NPY_NO_EXPORT int
-string_lstrip_chars_strided_loop(
+string_lrstrip_chars_strided_loop(
         PyArrayMethod_Context *context, char *const data[],
         npy_intp const dimensions[],
         npy_intp const strides[],
         NpyAuxData *auxdata)
 {
+    const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
+    STRIPTYPE striptype = *(STRIPTYPE *)context->method->static_data;
     PyArray_StringDTypeObject *s1descr = (PyArray_StringDTypeObject *)context->descriptors[0];
     int has_null = s1descr->na_object != NULL;
     int has_string_na = s1descr->has_string_na;
@@ -1619,7 +1621,7 @@ string_lstrip_chars_strided_loop(
     npy_string_allocator *oallocator = allocators[2];
 
     while (N--) {
-        LOAD_TWO_INPUT_STRINGS("lstrip");
+        LOAD_TWO_INPUT_STRINGS(ufunc_name);
         npy_packed_static_string *ops = (npy_packed_static_string *)out;
 
         if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
@@ -1644,156 +1646,11 @@ string_lstrip_chars_strided_loop(
         Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
         Buffer<ENCODING::UTF8> outbuf(new_buf, s1.size);
         size_t new_buf_size = string_lrstrip_chars
-                (buf1, buf2, outbuf, STRIPTYPE::LEFTSTRIP);
+                (buf1, buf2, outbuf, striptype);
 
         if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
-            npy_gil_error(PyExc_MemoryError, "Failed to pack string in strip");
-            goto fail;
-        }
-
-        PyMem_RawFree(new_buf);
-
-        in1 += strides[0];
-        in2 += strides[1];
-        out += strides[2];
-    }
-
-    NpyString_release_allocators(3, allocators);
-    return 0;
-
-fail:
-    NpyString_release_allocators(3, allocators);
-    return -1;
-
-}
-
-
-NPY_NO_EXPORT int
-string_rstrip_chars_strided_loop(
-        PyArrayMethod_Context *context, char *const data[],
-        npy_intp const dimensions[],
-        npy_intp const strides[],
-        NpyAuxData *auxdata)
-{
-    PyArray_StringDTypeObject *s1descr = (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_null = s1descr->na_object != NULL;
-    int has_string_na = s1descr->has_string_na;
-
-    const npy_static_string *default_string = &s1descr->default_string;
-    npy_intp N = dimensions[0];
-    char *in1 = data[0];
-    char *in2 = data[1];
-    char *out = data[2];
-
-    npy_string_allocator *allocators[3] = {};
-    NpyString_acquire_allocators(3, context->descriptors, allocators);
-    npy_string_allocator *s1allocator = allocators[0];
-    npy_string_allocator *s2allocator = allocators[1];
-    npy_string_allocator *oallocator = allocators[2];
-
-    while (N--) {
-        LOAD_TWO_INPUT_STRINGS("rstrip");
-        npy_packed_static_string *ops = (npy_packed_static_string *)out;
-
-        if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
-            if (has_string_na || !has_null) {
-                if (s1_isnull) {
-                    s1 = *default_string;
-                }
-                if (s2_isnull) {
-                    s2 = *default_string;
-                }
-            }
-            else {
-                npy_gil_error(PyExc_ValueError,
-                              "Cannot strip null values that are not strings");
-                goto fail;
-            }
-        }
-
-
-        char *new_buf = (char *)PyMem_RawCalloc(s1.size, 1);
-        Buffer<ENCODING::UTF8> buf1((char *)s1.buf, s1.size);
-        Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
-        Buffer<ENCODING::UTF8> outbuf(new_buf, s1.size);
-        size_t new_buf_size = string_lrstrip_chars(
-                buf1, buf2, outbuf, STRIPTYPE::RIGHTSTRIP);
-
-        if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
-            npy_gil_error(PyExc_MemoryError, "Failed to pack string in strip");
-            goto fail;
-        }
-
-        PyMem_RawFree(new_buf);
-
-        in1 += strides[0];
-        in2 += strides[1];
-        out += strides[2];
-    }
-
-    NpyString_release_allocators(3, allocators);
-    return 0;
-
-fail:
-    NpyString_release_allocators(3, allocators);
-    return -1;
-
-}
-
-
-NPY_NO_EXPORT int
-string_strip_chars_strided_loop(
-        PyArrayMethod_Context *context, char *const data[],
-        npy_intp const dimensions[],
-        npy_intp const strides[],
-        NpyAuxData *auxdata)
-{
-    PyArray_StringDTypeObject *s1descr = (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_null = s1descr->na_object != NULL;
-    int has_string_na = s1descr->has_string_na;
-
-    const npy_static_string *default_string = &s1descr->default_string;
-    npy_intp N = dimensions[0];
-    char *in1 = data[0];
-    char *in2 = data[1];
-    char *out = data[2];
-
-    npy_string_allocator *allocators[3] = {};
-    NpyString_acquire_allocators(3, context->descriptors, allocators);
-    npy_string_allocator *s1allocator = allocators[0];
-    npy_string_allocator *s2allocator = allocators[1];
-    npy_string_allocator *oallocator = allocators[2];
-
-    while (N--) {
-        LOAD_TWO_INPUT_STRINGS("strip");
-        npy_packed_static_string *ops = (npy_packed_static_string *)out;
-
-        if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
-            if (has_string_na || !has_null) {
-                if (s1_isnull) {
-                    s1 = *default_string;
-                }
-                if (s2_isnull) {
-                    s2 = *default_string;
-                }
-            }
-            else {
-                npy_gil_error(PyExc_ValueError,
-                              "Cannot strip null values that are not strings");
-                goto fail;
-            }
-        }
-
-
-        char *new_buf = (char *)PyMem_RawCalloc(s1.size, 1);
-        Buffer<ENCODING::UTF8> buf1((char *)s1.buf, s1.size);
-        Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
-        Buffer<ENCODING::UTF8> outbuf(new_buf, s1.size);
-        size_t new_buf_size = string_lrstrip_chars(
-                buf1, buf2, outbuf, STRIPTYPE::BOTHSTRIP);
-
-        if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
-            npy_gil_error(PyExc_MemoryError, "Failed to pack string in strip");
+            npy_gil_error(PyExc_MemoryError, "Failed to pack string in %s",
+                          ufunc_name);
             goto fail;
         }
 
@@ -1847,11 +1704,13 @@ strip_whitespace_resolve_descriptors(
 }
 
 static int
-string_lstrip_whitespace_strided_loop(
+string_lrstrip_whitespace_strided_loop(
         PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
+    const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
+    STRIPTYPE striptype = *(STRIPTYPE *)context->method->static_data;
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
     int has_string_na = descr->has_string_na;
     int has_null = descr->na_object != NULL;
@@ -1873,7 +1732,8 @@ string_lstrip_whitespace_strided_loop(
         int s_isnull = NpyString_load(allocator, ps, &s);
 
         if (s_isnull == -1) {
-            npy_gil_error(PyExc_MemoryError, "Failed to load string in lstrip");
+            npy_gil_error(PyExc_MemoryError, "Failed to load string in %s",
+                          ufunc_name);
             goto fail;
         }
 
@@ -1894,10 +1754,11 @@ string_lstrip_whitespace_strided_loop(
         Buffer<ENCODING::UTF8> buf((char *)s.buf, s.size);
         Buffer<ENCODING::UTF8> outbuf(new_buf, s.size);
         size_t new_buf_size = string_lrstrip_whitespace(
-                buf, outbuf, STRIPTYPE::LEFTSTRIP);
+                buf, outbuf, striptype);
 
         if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
-            npy_gil_error(PyExc_MemoryError, "Failed to pack string in lstrip");
+            npy_gil_error(PyExc_MemoryError, "Failed to pack string in %s",
+                          ufunc_name);
             goto fail;
         }
 
@@ -1916,150 +1777,6 @@ string_lstrip_whitespace_strided_loop(
 
     return -1;
 
-}
-
-static int
-string_rstrip_whitespace_strided_loop(
-        PyArrayMethod_Context *context,
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
-{
-    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_string_na = descr->has_string_na;
-    int has_null = descr->na_object != NULL;
-    const npy_static_string *default_string = &descr->default_string;
-
-    npy_string_allocator *allocators[2] = {};
-    NpyString_acquire_allocators(2, context->descriptors, allocators);
-    npy_string_allocator *allocator = allocators[0];
-    npy_string_allocator *oallocator = allocators[1];
-
-    char *in = data[0];
-    char *out = data[1];
-
-    npy_intp N = dimensions[0];
-
-    while (N--) {
-        const npy_packed_static_string *ps = (npy_packed_static_string *)in;
-        npy_static_string s = {0, NULL};
-        int s_isnull = NpyString_load(allocator, ps, &s);
-
-        if (s_isnull == -1) {
-            npy_gil_error(PyExc_MemoryError, "Failed to load string in rstrip");
-            goto fail;
-        }
-
-        npy_packed_static_string *ops = (npy_packed_static_string *)out;
-
-        if (NPY_UNLIKELY(s_isnull)) {
-            if (has_string_na || !has_null) {
-                s = *default_string;
-            }
-            else {
-                npy_gil_error(PyExc_ValueError,
-                              "Cannot strip null values that are not strings");
-                goto fail;
-            }
-        }
-
-        char *new_buf = (char *)PyMem_RawCalloc(s.size, 1);
-        Buffer<ENCODING::UTF8> buf((char *)s.buf, s.size);
-        Buffer<ENCODING::UTF8> outbuf(new_buf, s.size);
-        size_t new_buf_size = string_lrstrip_whitespace(
-                buf, outbuf, STRIPTYPE::RIGHTSTRIP);
-
-        if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
-            npy_gil_error(PyExc_MemoryError, "Failed to pack string in rstrip");
-            goto fail;
-        }
-
-        PyMem_RawFree(new_buf);
-
-        in += strides[0];
-        out += strides[1];
-    }
-
-    NpyString_release_allocators(2, allocators);
-
-    return 0;
-
-  fail:
-    NpyString_release_allocators(2, allocators);
-
-    return -1;
-
-}
-
-
-static int
-string_strip_whitespace_strided_loop(
-        PyArrayMethod_Context *context,
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
-{
-    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_string_na = descr->has_string_na;
-    int has_null = descr->na_object != NULL;
-    const npy_static_string *default_string = &descr->default_string;
-
-    npy_string_allocator *allocators[2] = {};
-    NpyString_acquire_allocators(2, context->descriptors, allocators);
-    npy_string_allocator *allocator = allocators[0];
-    npy_string_allocator *oallocator = allocators[1];
-
-    char *in = data[0];
-    char *out = data[1];
-
-    npy_intp N = dimensions[0];
-
-    while (N--) {
-        const npy_packed_static_string *ps = (npy_packed_static_string *)in;
-        npy_static_string s = {0, NULL};
-        int s_isnull = NpyString_load(allocator, ps, &s);
-
-        if (s_isnull == -1) {
-            npy_gil_error(PyExc_MemoryError, "Failed to load string in strip");
-            goto fail;
-        }
-
-        npy_packed_static_string *ops = (npy_packed_static_string *)out;
-
-        if (NPY_UNLIKELY(s_isnull)) {
-            if (has_string_na || !has_null) {
-                s = *default_string;
-            }
-            else {
-                npy_gil_error(PyExc_ValueError,
-                              "Cannot strip null values that are not strings");
-                goto fail;
-            }
-        }
-
-        char *new_buf = (char *)PyMem_RawCalloc(s.size, 1);
-        Buffer<ENCODING::UTF8> buf((char *)s.buf, s.size);
-        Buffer<ENCODING::UTF8> outbuf(new_buf, s.size);
-        size_t new_buf_size = string_lrstrip_whitespace(
-                buf, outbuf, STRIPTYPE::BOTHSTRIP);
-
-        if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
-            npy_gil_error(PyExc_MemoryError, "Failed to pack string in strip");
-            goto fail;
-        }
-
-        PyMem_RawFree(new_buf);
-
-        in += strides[0];
-        out += strides[1];
-    }
-
-    NpyString_release_allocators(2, allocators);
-
-    return 0;
-
-  fail:
-    NpyString_release_allocators(2, allocators);
-
-    return -1;
 }
 
 static int
@@ -2783,32 +2500,28 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_StringDType, &PyArray_StringDType
     };
 
-    PyArrayMethod_StridedLoop *strip_whitespace_loops[] = {
-        &string_lstrip_whitespace_strided_loop,
-        &string_rstrip_whitespace_strided_loop,
-        &string_strip_whitespace_strided_loop,
-    };
-
     const char *strip_whitespace_names[] = {
         "_lstrip_whitespace", "_rstrip_whitespace", "_strip_whitespace",
     };
 
+    static STRIPTYPE strip_types[] = {
+        STRIPTYPE::LEFTSTRIP,
+        STRIPTYPE::RIGHTSTRIP,
+        STRIPTYPE::BOTHSTRIP,
+    };
+
     for (int i=0; i<3; i++) {
         if (init_ufunc(umath, strip_whitespace_names[i], strip_whitespace_dtypes,
-                       &strip_whitespace_resolve_descriptors, strip_whitespace_loops[i],
-                       1, 1, NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
+                       &strip_whitespace_resolve_descriptors,
+                       &string_lrstrip_whitespace_strided_loop,
+                       1, 1, NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0,
+                       &strip_types[i]) < 0) {
             return -1;
         }
     }
 
     PyArray_DTypeMeta *strip_chars_dtypes[] = {
         &PyArray_StringDType, &PyArray_StringDType, &PyArray_StringDType
-    };
-
-    PyArrayMethod_StridedLoop *strip_chars_loops[] = {
-        &string_lstrip_chars_strided_loop,
-        &string_rstrip_chars_strided_loop,
-        &string_strip_chars_strided_loop,
     };
 
     const char *strip_chars_names[] = {
@@ -2821,8 +2534,10 @@ init_stringdtype_ufuncs(PyObject *umath)
 
     for (int i=0; i<3; i++) {
         if (init_ufunc(umath, strip_chars_names[i], strip_chars_dtypes,
-                       &strip_chars_resolve_descriptors, strip_chars_loops[i],
-                       2, 1, NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
+                       &strip_chars_resolve_descriptors,
+                       &string_lrstrip_chars_strided_loop,
+                       2, 1, NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0,
+                       &strip_types[i]) < 0) {
             return -1;
         }
 
