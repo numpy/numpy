@@ -185,10 +185,6 @@ def trimcoef(c, tol=0):
     ValueError
         If `tol` < 0
 
-    See Also
-    --------
-    polynomial.polyutils.trimseq
-
     Examples
     --------
     >>> from numpy.polynomial import polyutils as pu
