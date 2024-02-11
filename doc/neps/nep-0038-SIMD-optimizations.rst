@@ -8,7 +8,7 @@ NEP 38 — Using SIMD optimization instructions for performance
 :Status: Accepted
 :Type: Standards
 :Created: 2019-11-25
-:Resolution: http://numpy-discussion.10968.n7.nabble.com/NEP-38-Universal-SIMD-intrinsics-td47854.html
+:Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/thread/PVWJ74UVBRZ5ZWF6MDU7EUSJXVNILAQB/#PVWJ74UVBRZ5ZWF6MDU7EUSJXVNILAQB
 
 
 Abstract
@@ -26,9 +26,9 @@ function that matches the run-time CPU info `is chosen`_ from the candidates.Thi
 NEP proposes a mechanism to build on that for many more features and
 architectures.  The steps proposed are to:
 
-- Establish a set of well-defined, architecture-agnostic, universal intrisics
+- Establish a set of well-defined, architecture-agnostic, universal intrinsics
   which capture features available across architectures.
-- Capture these universal intrisics in a set of C macros and use the macros
+- Capture these universal intrinsics in a set of C macros and use the macros
   to build code paths for sets of features from the baseline up to the maximum
   set of features available on that architecture. Offer these as a limited
   number of compiled alternative code paths.
@@ -36,14 +36,14 @@ architectures.  The steps proposed are to:
   the possible code paths accordingly.
 
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 Traditionally NumPy has depended on compilers to generate optimal code
 specifically for the target architecture.
 However few users today compile NumPy locally for their machines. Most use the
 binary packages which must provide run-time support for the lowest-common
-denominator CPU architecture. Thus NumPy cannot take advantage of 
+denominator CPU architecture. Thus NumPy cannot take advantage of
 more advanced features of their CPU processors, since they may not be available
 on all users' systems.
 
@@ -64,7 +64,7 @@ mechanism for NumPy. There are three stages to using the mechanism:
 - Infrastructure is provided in the code for abstract intrinsics. The ufunc
   machinery will be extended using sets of these abstract intrinsics, so that
   a single ufunc will be expressed as a set of loops, going from a minimal to
-  a maximal set of possibly availabe intrinsics.
+  a maximal set of possibly available intrinsics.
 - At compile time, compiler macros and CPU detection are used to turn the
   abstract intrinsics into concrete intrinsic calls. Any intrinsics not
   available on the platform, either because the CPU does not support them
@@ -85,7 +85,7 @@ specifically available CPU features at runtime, currently used for ``avx2``,
 universal intrinsics would extend the generated code to include more loop
 variants.
 
-Usage and Impact
+Usage and impact
 ----------------
 
 The end user will be able to get a list of intrinsics available for their
@@ -124,7 +124,7 @@ Therefore, such code should only be added if it yields a significant
 performance benefit. Assessing this performance benefit can be nontrivial.
 To aid with this, the implementation for this NEP will add a way to select
 which instruction sets can be used at *runtime* via environment variables.
-(name TBD). This ablility is critical for CI code verification.
+(name TBD). This ability is critical for CI code verification.
 
 
 Diagnostics
@@ -153,7 +153,7 @@ SIMD loops for many ufuncs. These would likely be the first candidates
 to be ported to universal intrinsics. The expectation is that the new
 implementation may cause a regression in benchmarks, but not increase the
 size of the binary. If the regression is not minimal, we may choose to keep
-the X86-specific code for that platform and use the universal intrisic code
+the X86-specific code for that platform and use the universal intrinsic code
 for other platforms.
 
 Any new PRs to implement ufuncs using intrinsics will be expected to use the
@@ -183,7 +183,7 @@ yet supported as a universal intrinsic, then:
 1. It should be added as a universal intrinsic for all platforms
 2. If it does not have an equivalent instruction on other platforms (e.g.
    ``_mm512_mask_i32gather_ps`` in ``AVX512``), then no universal intrinsic
-   should be added and a platform-specific ``ufunc`` or a short helper fuction
+   should be added and a platform-specific ``ufunc`` or a short helper function
    should be written instead. If such a helper function is used, it must be
    wrapped with the feature macros, and a reasonable non-intrinsic fallback to
    be used by default.
@@ -208,12 +208,12 @@ There should be no impact on backwards compatibility.
 Detailed description
 --------------------
 
-The CPU-specific are mapped to unversal intrinsics which are
+The CPU-specific are mapped to universal intrinsics which are
 similar for all x86 SIMD variants, ARM SIMD variants etc. For example, the
 NumPy universal intrinsic ``npyv_load_u32`` maps to:
 
 *  ``vld1q_u32`` for ARM based NEON
-* ``_mm256_loadu_si256`` for x86 based AVX2 
+* ``_mm256_loadu_si256`` for x86 based AVX2
 * ``_mm512_loadu_si512`` for x86 based AVX-512
 
 Anyone writing a SIMD loop will use the ``npyv_load_u32`` macro instead of the
@@ -238,7 +238,7 @@ When importing the ufuncs, the available compiled loops' required features are
 matched to the ones discovered. The loop with the best match is marked to be
 called by the ufunc.
 
-Related Work
+Related work
 ------------
 
 - `Pixman`_ is the library used by Cairo and X to manipulate pixels. It uses
@@ -271,7 +271,7 @@ Current PRs:
 
 The compile-time and runtime code infrastructure are supplied by the first PR.
 The second adds a demonstration of use of the infrastructure for a loop. Once
-the NEP is approved, more work is needed to write loops using the machnisms
+the NEP is approved, more work is needed to write loops using the mechanisms
 provided by the NEP.
 
 Alternatives
@@ -289,7 +289,7 @@ implementing and maintaining that platform's loop code.
 Discussion
 ----------
 
-Most of the discussion took place on the PR `gh-15228`_ to accecpt this NEP.
+Most of the discussion took place on the PR `gh-15228`_ to accept this NEP.
 Discussion on the mailing list mentioned `VOLK`_ which was added to
 the section on related work. The question of maintainability also was raised
 both on the mailing list and in `gh-15228`_ and resolved as follows:
@@ -302,7 +302,7 @@ both on the mailing list and in `gh-15228`_ and resolved as follows:
   architecture-specific code helps one architecture but harms performance
   on another? (answered in the tradeoffs_ part of the workflow).
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. _`build alternative loops`: https://github.com/numpy/numpy/blob/v1.17.4/numpy/core/code_generators/generate_umath.py#L50

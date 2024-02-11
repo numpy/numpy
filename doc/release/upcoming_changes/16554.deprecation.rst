@@ -1,8 +1,0 @@
-Further Numeric Style types Deprecated
---------------------------------------
-
-The remaining numeric-style type codes ``Bytes0``, ``Str0``,
-``Uint32``, ``Uint64``, and ``Datetime64``
-have been deprecated.  The lower-case variants should be used
-instead.  For bytes and string ``"S"`` and ``"U"``
-are further alternatives.

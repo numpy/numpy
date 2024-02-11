@@ -5,7 +5,7 @@ Subclassing ndarray
 *******************
 
 Introduction
-------------
+============
 
 Subclassing ndarray is relatively simple, but it has some complications
 compared to other Python objects.  On this page we explain the machinery
@@ -13,7 +13,7 @@ that allows you to subclass ndarray, and the implications for
 implementing a subclass.
 
 ndarrays and object creation
-============================
+----------------------------
 
 Subclassing ndarray is complicated by the fact that new instances of
 ndarray classes can come about in three different ways.  These are:
@@ -31,10 +31,53 @@ things like array slicing.  The complications of subclassing ndarray are
 due to the mechanisms numpy has to support these latter two routes of
 instance creation.
 
+When to use subclassing
+-----------------------
+
+Besides the additional complexities of subclassing a NumPy array, subclasses
+can run into unexpected behaviour because some functions may convert the
+subclass to a baseclass and "forget" any additional information
+associated with the subclass.
+This can result in surprising behavior if you use NumPy methods or
+functions you have not explicitly tested.
+
+On the other hand, compared to other interoperability approaches,
+subclassing can be a useful because many thing will "just work".
+
+This means that subclassing can be a convenient approach and for a long time
+it was also often the only available approach.
+However, NumPy now provides additional interoperability protocols described
+in ":ref:`Interoperability with NumPy <basics.interoperability>`".
+For many use-cases these interoperability protocols may now be a better fit
+or supplement the use of subclassing.
+
+Subclassing can be a good fit if:
+
+* you are less worried about maintainability or users other than yourself:
+  Subclass will be faster to implement and additional interoperability
+  can be added "as-needed".  And with few users, possible surprises are not
+  an issue.
+* you do not think it is problematic if the subclass information is
+  ignored or lost silently.  An example is ``np.memmap`` where "forgetting"
+  about data being memory mapped cannot lead to a wrong result.
+  An example of a subclass that sometimes confuses users are NumPy's masked
+  arrays.  When they were introduced, subclassing was the only approach for
+  implementation.  However, today we would possibly try to avoid subclassing
+  and rely only on interoperability protocols.
+
+Note that also subclass authors may wish to study
+:ref:`Interoperability with NumPy <basics.interoperability>`
+to support more complex use-cases or work around the surprising behavior.
+
+``astropy.units.Quantity`` and ``xarray`` are examples for array-like objects
+that interoperate well with NumPy.  Astropy's ``Quantity`` is an example
+which uses a dual approach of both subclassing and interoperability protocols.
+
+
 .. _view-casting:
 
 View casting
-------------
+============
 
 *View casting* is the standard ndarray mechanism by which you take an
 ndarray of any subclass, and return a view of the array as another
@@ -48,12 +91,12 @@ ndarray of any subclass, and return a view of the array as another
 >>> # take a view of it, as our useless subclass
 >>> c_arr = arr.view(C)
 >>> type(c_arr)
-<class 'C'>
+<class '__main__.C'>
 
 .. _new-from-template:
 
 Creating new from template
---------------------------
+==========================
 
 New instances of an ndarray subclass can also come about by a very
 similar mechanism to :ref:`view-casting`, when numpy finds it needs to
@@ -63,7 +106,7 @@ For example:
 
 >>> v = c_arr[1:]
 >>> type(v) # the view is of type 'C'
-<class 'C'>
+<class '__main__.C'>
 >>> v is c_arr # but it's a new instance
 False
 
@@ -77,7 +120,7 @@ such as copying arrays (``c_arr.copy()``), creating ufunc output arrays
 ``c_arr.mean()``).
 
 Relationship of view casting and new-from-template
---------------------------------------------------
+==================================================
 
 These paths both use the same machinery.  We make the distinction here,
 because they result in different input to your methods.  Specifically,
@@ -88,12 +131,12 @@ instance, allowing you - for example - to copy across attributes that
 are particular to your subclass.
 
 Implications for subclassing
-----------------------------
+============================
 
 If we subclass ndarray, we need to deal not only with explicit
 construction of our array type, but also :ref:`view-casting` or
-:ref:`new-from-template`.  NumPy has the machinery to do this, and this
-machinery that makes subclassing slightly non-standard.
+:ref:`new-from-template`.  NumPy has the machinery to do this, and it is
+this machinery that makes subclassing slightly non-standard.
 
 There are two aspects to the machinery that ndarray uses to support
 views and new-from-template in subclasses.
@@ -105,7 +148,7 @@ allow subclasses to clean up after the creation of views and new
 instances from templates.
 
 A brief Python primer on ``__new__`` and ``__init__``
-=====================================================
+-----------------------------------------------------
 
 ``__new__`` is a standard Python method, and, if present, is called
 before ``__init__`` when we create a class instance. See the `python
@@ -114,18 +157,15 @@ __new__ documentation
 
 For example, consider the following Python code:
 
-.. testcode::
-
-  class C:
-      def __new__(cls, *args):
-          print('Cls in __new__:', cls)
-          print('Args in __new__:', args)
-          # The `object` type __new__ method takes a single argument.
-          return object.__new__(cls)
-
-      def __init__(self, *args):
-          print('type(self) in __init__:', type(self))
-          print('Args in __init__:', args)
+>>> class C:
+>>>     def __new__(cls, *args):
+>>>         print('Cls in __new__:', cls)
+>>>         print('Args in __new__:', args)
+>>>         # The `object` type __new__ method takes a single argument.
+>>>         return object.__new__(cls)
+>>>     def __init__(self, *args):
+>>>         print('type(self) in __init__:', type(self))
+>>>         print('Args in __init__:', args)
 
 meaning that we get:
 
@@ -199,7 +239,7 @@ why not call ``obj = subdtype.__new__(...`` then?  Because we may not
 have a ``__new__`` method with the same call signature).
 
 The role of ``__array_finalize__``
-==================================
+----------------------------------
 
 ``__array_finalize__`` is the mechanism that numpy provides to allow
 subclasses to handle the various ways that new instances get created.
@@ -223,8 +263,8 @@ where our object creation housekeeping usually goes.
   new ndarray instance of its own class.  In practice this means that
   we, the authors of the code, will need to make a call to
   ``ndarray.__new__(MySubClass,...)``, a class-hierarchy prepared call to
-  ``super(MySubClass, cls).__new__(cls, ...)``, or do view casting of an
-  existing array (see below)
+  ``super().__new__(cls, ...)``, or do view casting of an existing array
+  (see below)
 * For view casting and new-from-template, the equivalent of
   ``ndarray.__new__(MySubClass,...`` is called, at the C level.
 
@@ -240,7 +280,7 @@ The following code allows us to look at the call sequences and arguments:
    class C(np.ndarray):
        def __new__(cls, *args, **kwargs):
            print('In __new__ with class %s' % cls)
-           return super(C, cls).__new__(cls, *args, **kwargs)
+           return super().__new__(cls, *args, **kwargs)
 
        def __init__(self, *args, **kwargs):
            # in practice you probably will not need or want an __init__
@@ -298,7 +338,7 @@ defaults for new object attributes, among other tasks.
 This may be clearer with an example.
 
 Simple example - adding an extra attribute to ndarray
------------------------------------------------------
+=====================================================
 
 .. testcode::
 
@@ -312,9 +352,8 @@ Simple example - adding an extra attribute to ndarray
           # ndarray input arguments.  This will call the standard
           # ndarray constructor, but return an object of our type.
           # It also triggers a call to InfoArray.__array_finalize__
-          obj = super(InfoArray, subtype).__new__(subtype, shape, dtype,
-                                                  buffer, offset, strides,
-                                                  order)
+          obj = super().__new__(subtype, shape, dtype,
+                                buffer, offset, strides, order)
           # set the new 'info' attribute to the value passed
           obj.info = info
           # Finally, we must return the newly created object:
@@ -377,7 +416,7 @@ formed ndarray from the usual numpy calls to ``np.array`` and return an
 object.
 
 Slightly more realistic example - attribute added to existing array
--------------------------------------------------------------------
+===================================================================
 
 Here is a class that takes a standard ndarray that already exists, casts
 as our type, and adds an extra attribute.
@@ -420,9 +459,9 @@ So:
 .. _array-ufunc:
 
 ``__array_ufunc__`` for ufuncs
-------------------------------
+==============================
 
-  .. versionadded:: 1.13
+.. versionadded:: 1.13
 
 A subclass can override what happens when executing numpy ufuncs on it by
 overriding the default ``ndarray.__array_ufunc__`` method. This method is
@@ -434,21 +473,21 @@ The signature of ``__array_ufunc__`` is::
 
     def __array_ufunc__(ufunc, method, *inputs, **kwargs):
 
-    - *ufunc* is the ufunc object that was called.
-    - *method* is a string indicating how the Ufunc was called, either
-      ``"__call__"`` to indicate it was called directly, or one of its
-      :ref:`methods<ufuncs.methods>`: ``"reduce"``, ``"accumulate"``,
-      ``"reduceat"``, ``"outer"``, or ``"at"``.
-    - *inputs* is a tuple of the input arguments to the ``ufunc``
-    - *kwargs* contains any optional or keyword arguments passed to the
-      function. This includes any ``out`` arguments, which are always
-      contained in a tuple.
+- *ufunc* is the ufunc object that was called.
+- *method* is a string indicating how the Ufunc was called, either
+  ``"__call__"`` to indicate it was called directly, or one of its
+  :ref:`methods<ufuncs.methods>`: ``"reduce"``, ``"accumulate"``,
+  ``"reduceat"``, ``"outer"``, or ``"at"``.
+- *inputs* is a tuple of the input arguments to the ``ufunc``
+- *kwargs* contains any optional or keyword arguments passed to the
+  function. This includes any ``out`` arguments, which are always
+  contained in a tuple.
 
 A typical implementation would convert any inputs or outputs that are
 instances of one's own class, pass everything on to a superclass using
 ``super()``, and finally return the results after possible
 back-conversion. An example, taken from the test case
-``test_ufunc_override_with_super`` in ``core/tests/test_umath.py``, is the
+``test_ufunc_override_with_super`` in ``_core/tests/test_umath.py``, is the
 following.
 
 .. testcode::
@@ -486,8 +525,7 @@ following.
             if out_no:
                 info['outputs'] = out_no
 
-            results = super(A, self).__array_ufunc__(ufunc, method,
-                                                     *args, **kwargs)
+            results = super().__array_ufunc__(ufunc, method, *args, **kwargs)
             if results is NotImplemented:
                 return NotImplemented
 
@@ -528,10 +566,10 @@ which inputs and outputs it converted. Hence, e.g.,
 >>> a.info
 {'inputs': [0, 1], 'outputs': [0]}
 
-Note that another approach would be to to use ``getattr(ufunc,
+Note that another approach would be to use ``getattr(ufunc,
 methods)(*inputs, **kwargs)`` instead of the ``super`` call. For this example,
 the result would be identical, but there is a difference if another operand
-also defines ``__array_ufunc__``. E.g., lets assume that we evalulate
+also defines ``__array_ufunc__``. E.g., lets assume that we evaluate
 ``np.add(a, b)``, where ``b`` is an instance of another class ``B`` that has
 an override.  If you use ``super`` as in the example,
 ``ndarray.__array_ufunc__`` will notice that ``b`` has an override, which
@@ -561,11 +599,11 @@ pass on to ``A.__array_ufunc__``, the ``super`` call in ``A`` would go to
 .. _array-wrap:
 
 ``__array_wrap__`` for ufuncs and other functions
--------------------------------------------------
+=================================================
 
 Prior to numpy 1.13, the behaviour of ufuncs could only be tuned using
-``__array_wrap__`` and ``__array_prepare__``. These two allowed one to
-change the output type of a ufunc, but, in contrast to
+``__array_wrap__`` and ``__array_prepare__`` (the latter is now removed).
+These two allowed one to change the output type of a ufunc, but, in contrast to
 ``__array_ufunc__``, did not allow one to make any changes to the inputs.
 It is hoped to eventually deprecate these, but ``__array_wrap__`` is also
 used by other numpy functions and methods, such as ``squeeze``, so at the
@@ -595,12 +633,12 @@ some print statements:
           if obj is None: return
           self.info = getattr(obj, 'info', None)
 
-      def __array_wrap__(self, out_arr, context=None):
+      def __array_wrap__(self, out_arr, context=None, return_scalar=False):
           print('In __array_wrap__:')
           print('   self is %s' % repr(self))
           print('   arr is %s' % repr(out_arr))
           # then just call the parent
-          return super(MySubClass, self).__array_wrap__(self, out_arr, context)
+          return super().__array_wrap__(self, out_arr, context, return_scalar)
 
 We run a ufunc on an instance of our new array:
 
@@ -634,7 +672,7 @@ But, we could do anything we wanted:
 
   class SillySubClass(np.ndarray):
 
-      def __array_wrap__(self, arr, context=None):
+      def __array_wrap__(self, arr, context=None, return_scalar=False):
           return 'I lost your data'
 
 >>> arr1 = np.arange(5)
@@ -646,27 +684,20 @@ But, we could do anything we wanted:
 
 So, by defining a specific ``__array_wrap__`` method for our subclass,
 we can tweak the output from ufuncs. The ``__array_wrap__`` method
-requires ``self``, then an argument - which is the result of the ufunc -
-and an optional parameter *context*. This parameter is returned by
-ufuncs as a 3-element tuple: (name of the ufunc, arguments of the ufunc,
-domain of the ufunc), but is not set by other numpy functions. Though,
+requires ``self``, then an argument - which is the result of the ufunc 
+or another NumPy function - and an optional parameter *context*.
+This parameter is passed by ufuncs as a 3-element tuple:
+(name of the ufunc, arguments of the ufunc, domain of the ufunc),
+but is not passed by other numpy functions. Though,
 as seen above, it is possible to do otherwise, ``__array_wrap__`` should
 return an instance of its containing class.  See the masked array
 subclass for an implementation.
+``__array_wrap__`` is always passed a NumPy array which may or may not be
+a subclass (usually of the caller).
 
-In addition to ``__array_wrap__``, which is called on the way out of the
-ufunc, there is also an ``__array_prepare__`` method which is called on
-the way into the ufunc, after the output arrays are created but before any
-computation has been performed. The default implementation does nothing
-but pass through the array. ``__array_prepare__`` should not attempt to
-access the array data or resize the array, it is intended for setting the
-output array type, updating attributes and metadata, and performing any
-checks based on the input that may be desired before computation begins.
-Like ``__array_wrap__``, ``__array_prepare__`` must return an ndarray or
-subclass thereof or raise an error.
 
 Extra gotchas - custom ``__del__`` methods and ndarray.base
------------------------------------------------------------
+===========================================================
 
 One of the problems that ndarray solves is keeping track of memory
 ownership of ndarrays and their views.  Consider the case where we have
@@ -701,10 +732,10 @@ to know whether or not to do some specific cleanup when the subclassed
 array is deleted.  For example, we may only want to do the cleanup if
 the original array is deleted, but not the views.  For an example of
 how this can work, have a look at the ``memmap`` class in
-``numpy.core``.
+``numpy._core``.
 
-Subclassing and Downstream Compatibility
-----------------------------------------
+Subclassing and downstream compatibility
+========================================
 
 When sub-classing ``ndarray`` or creating duck-types that mimic the ``ndarray``
 interface, it is your responsibility to decide how aligned your APIs will be

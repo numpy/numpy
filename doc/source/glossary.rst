@@ -166,9 +166,10 @@ Glossary
 
 
    array scalar
-       For uniformity in handling operands, NumPy treats
-       a :doc:`scalar <reference/arrays.scalars>` as an array of zero
-       dimension.
+       An :doc:`array scalar <reference/arrays.scalars>` is an instance of the types/classes float32, float64,
+       etc.. For uniformity in handling operands, NumPy treats a scalar as
+       an array of zero dimension. In contrast, a 0-dimensional array is an :doc:`ndarray <reference/arrays.ndarray>` instance
+       containing precisely one value.
 
 
    axis
@@ -257,7 +258,7 @@ Glossary
            >>> a + 3
            array([3, 4, 5])
 
-       Ordinarly, vector operands must all be the same size, because NumPy
+       Ordinarily, vector operands must all be the same size, because NumPy
        works element by element -- for instance, ``c = a * b`` is ::
 
            c[0,0,0] = a[0,0,0] * b[0,0,0]
@@ -273,16 +274,55 @@ Glossary
    C order
        Same as :term:`row-major`.
 
+   casting
+       The process of converting array data from one dtype to another. There
+       exist several casting modes, defined by the following casting rules:
+
+       - ``no``: The data types should not be cast at all.
+         Any mismatch in data types between the arrays will raise a
+         `TypeError`.
+       - ``equiv``: Only byte-order changes are allowed.
+       - ``safe``: Only casts that can preserve values are allowed. Upcasting
+         (e.g., from int to float) is allowed, but downcasting is not.
+       - ``same_kind``: The 'same_kind' casting option allows safe casts and
+         casts within a kind, like float64 to float32.
+       - ``unsafe``: any data conversions may be done.
 
    column-major
        See `Row- and column-major order <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_.
 
 
    contiguous
-       An array is contiguous if
-           * it occupies an unbroken block of memory, and
-           * array elements with higher indexes occupy higher addresses (that
-             is, no :term:`stride` is negative).
+
+       An array is contiguous if:
+
+       - it occupies an unbroken block of memory, and
+       - array elements with higher indexes occupy higher addresses (that
+         is, no :term:`stride` is negative).
+
+       There are two types of proper-contiguous NumPy arrays:
+
+       - Fortran-contiguous arrays refer to data that is stored column-wise,
+         i.e. the indexing of data as stored in memory starts from the
+         lowest dimension;
+       - C-contiguous, or simply contiguous arrays, refer to data that is
+         stored row-wise, i.e. the indexing of data as stored in memory
+         starts from the highest dimension.
+
+       For one-dimensional arrays these notions coincide.
+
+       For example, a 2x2 array ``A`` is Fortran-contiguous if its elements are
+       stored in memory in the following order::
+
+           A[0,0] A[1,0] A[0,1] A[1,1]
+
+       and C-contiguous if the order is as follows::
+
+           A[0,0] A[0,1] A[1,0] A[1,1]
+
+       To test whether an array is C-contiguous, use the ``.flags.c_contiguous``
+       attribute of NumPy arrays.  To test for Fortran contiguity, use the
+       ``.flags.f_contiguous`` attribute.
 
 
    copy
@@ -394,7 +434,7 @@ Glossary
        both flatten an ndarray. ``ravel`` will return a view if possible;
        ``flatten`` always returns a copy.
 
-       Flattening collapses a multimdimensional array to a single dimension;
+       Flattening collapses a multidimensional array to a single dimension;
        details of how this is done (for instance, whether ``a[n+1]`` should be
        the next row or next column) are parameters.
 
@@ -502,7 +542,7 @@ Glossary
 
        Some NumPy routines always return views, some always return copies, some
        may return one or the other, and for some the choice can be specified.
-       Responsiblity for managing views and copies falls to the programmer.
+       Responsibility for managing views and copies falls to the programmer.
        :func:`numpy.shares_memory` will check whether ``b`` is a view of
        ``a``, but an exact answer isn't always feasible, as the documentation
        page explains.
@@ -518,4 +558,3 @@ Glossary
          >>> x[0] = 3 # changing x changes y as well, since y is a view on x
          >>> y
          array([3, 2, 4])
-

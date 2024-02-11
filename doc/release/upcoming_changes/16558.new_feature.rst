@@ -1,9 +1,0 @@
-``numpy.typing`` is accessible at runtime
------------------------------------------
-The types in ``numpy.typing`` can now be imported at runtime. Code
-like the following will now work:
-
-.. code:: python
-
-    from numpy.typing import ArrayLike
-    x: ArrayLike = [1, 2, 3, 4]

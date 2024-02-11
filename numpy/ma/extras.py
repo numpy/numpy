@@ -10,12 +10,12 @@ A collection of utilities for `numpy.ma`.
 """
 __all__ = [
     'apply_along_axis', 'apply_over_axes', 'atleast_1d', 'atleast_2d',
-    'atleast_3d', 'average', 'clump_masked', 'clump_unmasked',
-    'column_stack', 'compress_cols', 'compress_nd', 'compress_rowcols',
-    'compress_rows', 'count_masked', 'corrcoef', 'cov', 'diagflat', 'dot',
-    'dstack', 'ediff1d', 'flatnotmasked_contiguous', 'flatnotmasked_edges',
-    'hsplit', 'hstack', 'isin', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols',
-    'mask_rows', 'masked_all', 'masked_all_like', 'median', 'mr_',
+    'atleast_3d', 'average', 'clump_masked', 'clump_unmasked', 'column_stack',
+    'compress_cols', 'compress_nd', 'compress_rowcols', 'compress_rows',
+    'count_masked', 'corrcoef', 'cov', 'diagflat', 'dot', 'dstack', 'ediff1d',
+    'flatnotmasked_contiguous', 'flatnotmasked_edges', 'hsplit', 'hstack',
+    'isin', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols', 'mask_rows',
+    'masked_all', 'masked_all_like', 'median', 'mr_', 'ndenumerate',
     'notmasked_contiguous', 'notmasked_edges', 'polyfit', 'row_stack',
     'setdiff1d', 'setxor1d', 'stack', 'unique', 'union1d', 'vander', 'vstack',
     ]
@@ -27,17 +27,15 @@ from . import core as ma
 from .core import (
     MaskedArray, MAError, add, array, asarray, concatenate, filled, count,
     getmask, getmaskarray, make_mask_descr, masked, masked_array, mask_or,
-    nomask, ones, sort, zeros, getdata, get_masked_subclass, dot,
-    mask_rowcols
+    nomask, ones, sort, zeros, getdata, get_masked_subclass, dot
     )
 
 import numpy as np
 from numpy import ndarray, array as nxarray
-import numpy.core.umath as umath
-from numpy.core.multiarray import normalize_axis_index
-from numpy.core.numeric import normalize_axis_tuple
-from numpy.lib.function_base import _ureduce
-from numpy.lib.index_tricks import AxisConcatenator
+from numpy.lib.array_utils import normalize_axis_index, normalize_axis_tuple
+from numpy.lib._function_base_impl import _ureduce
+from numpy.lib._index_tricks_impl import AxisConcatenator
+from numpy._core.numeric import normalize_axis_tuple
 
 
 def issequence(seq):
@@ -72,12 +70,11 @@ def count_masked(arr, axis=None):
 
     Examples
     --------
-    >>> import numpy.ma as ma
     >>> a = np.arange(9).reshape((3,3))
-    >>> a = ma.array(a)
-    >>> a[1, 0] = ma.masked
-    >>> a[1, 2] = ma.masked
-    >>> a[2, 1] = ma.masked
+    >>> a = np.ma.array(a)
+    >>> a[1, 0] = np.ma.masked
+    >>> a[1, 2] = np.ma.masked
+    >>> a[2, 1] = np.ma.masked
     >>> a
     masked_array(
       data=[[0, 1, 2],
@@ -87,14 +84,14 @@ def count_masked(arr, axis=None):
             [ True, False,  True],
             [False,  True, False]],
       fill_value=999999)
-    >>> ma.count_masked(a)
+    >>> np.ma.count_masked(a)
     3
 
     When the `axis` keyword is used an array is returned.
 
-    >>> ma.count_masked(a, axis=0)
+    >>> np.ma.count_masked(a, axis=0)
     array([1, 1, 1])
-    >>> ma.count_masked(a, axis=1)
+    >>> np.ma.count_masked(a, axis=1)
     array([0, 2, 1])
 
     """
@@ -111,8 +108,8 @@ def masked_all(shape, dtype=float):
 
     Parameters
     ----------
-    shape : tuple
-        Shape of the required MaskedArray.
+    shape : int or tuple of ints
+        Shape of the required MaskedArray, e.g., ``(2, 3)`` or ``2``.
     dtype : dtype, optional
         Data type of the output.
 
@@ -125,10 +122,18 @@ def masked_all(shape, dtype=float):
     --------
     masked_all_like : Empty masked array modelled on an existing array.
 
+    Notes
+    -----
+    Unlike other masked array creation functions (e.g. `numpy.ma.zeros`,
+    `numpy.ma.ones`, `numpy.ma.full`), `masked_all` does not initialize the
+    values of the array, and may therefore be marginally faster. However,
+    the values stored in the newly allocated array are arbitrary. For
+    reproducible behavior, be sure to set each element of the array before
+    reading.
+
     Examples
     --------
-    >>> import numpy.ma as ma
-    >>> ma.masked_all((3, 3))
+    >>> np.ma.masked_all((3, 3))
     masked_array(
       data=[[--, --, --],
             [--, --, --],
@@ -141,10 +146,10 @@ def masked_all(shape, dtype=float):
 
     The `dtype` parameter defines the underlying data type.
 
-    >>> a = ma.masked_all((3, 3))
+    >>> a = np.ma.masked_all((3, 3))
     >>> a.dtype
     dtype('float64')
-    >>> a = ma.masked_all((3, 3), dtype=np.int32)
+    >>> a = np.ma.masked_all((3, 3), dtype=np.int32)
     >>> a.dtype
     dtype('int32')
 
@@ -180,27 +185,35 @@ def masked_all_like(arr):
     --------
     masked_all : Empty masked array with all elements masked.
 
+    Notes
+    -----
+    Unlike other masked array creation functions (e.g. `numpy.ma.zeros_like`,
+    `numpy.ma.ones_like`, `numpy.ma.full_like`), `masked_all_like` does not
+    initialize the values of the array, and may therefore be marginally
+    faster. However, the values stored in the newly allocated array are
+    arbitrary. For reproducible behavior, be sure to set each element of the
+    array before reading.
+
     Examples
     --------
-    >>> import numpy.ma as ma
     >>> arr = np.zeros((2, 3), dtype=np.float32)
     >>> arr
     array([[0., 0., 0.],
            [0., 0., 0.]], dtype=float32)
-    >>> ma.masked_all_like(arr)
+    >>> np.ma.masked_all_like(arr)
     masked_array(
       data=[[--, --, --],
             [--, --, --]],
       mask=[[ True,  True,  True],
             [ True,  True,  True]],
-      fill_value=1e+20,
+      fill_value=np.float64(1e+20),
       dtype=float32)
 
     The dtype of the masked array matches the dtype of `arr`.
 
     >>> arr.dtype
     dtype('float32')
-    >>> ma.masked_all_like(arr).dtype
+    >>> np.ma.masked_all_like(arr).dtype
     dtype('float32')
 
     """
@@ -252,10 +265,12 @@ class _fromnxfunction:
         npfunc = getattr(np, self.__name__, None)
         doc = getattr(npfunc, '__doc__', None)
         if doc:
-            sig = self.__name__ + ma.get_object_signature(npfunc)
+            sig = ma.get_object_signature(npfunc)
             doc = ma.doc_note(doc, "The function is applied to both the _data "
                                    "and the _mask, if any.")
-            return '\n\n'.join((sig, doc))
+            if sig:
+                sig = self.__name__ + sig + "\n\n"
+            return sig + doc
         return
 
     def __call__(self, *args, **params):
@@ -399,7 +414,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         dtypes.append(np.asarray(res).dtype)
         outarr = zeros(outshape, object)
         outarr[tuple(ind)] = res
-        Ntot = np.product(outshape)
+        Ntot = np.prod(outshape)
         k = 1
         while k < Ntot:
             # increment the index
@@ -419,7 +434,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         j = i.copy()
         j[axis] = ([slice(None, None)] * res.ndim)
         j.put(indlist, ind)
-        Ntot = np.product(outshape)
+        Ntot = np.prod(outshape)
         holdshape = outshape
         outshape = list(arr.shape)
         outshape[axis] = res.shape
@@ -476,6 +491,7 @@ def apply_over_axes(func, a, axes):
                         "an array of the correct shape")
     return val
 
+
 if apply_over_axes.__doc__ is not None:
     apply_over_axes.__doc__ = np.apply_over_axes.__doc__[
         :np.apply_over_axes.__doc__.find('Notes')].rstrip() + \
@@ -525,7 +541,8 @@ if apply_over_axes.__doc__ is not None:
     """
 
 
-def average(a, axis=None, weights=None, returned=False):
+def average(a, axis=None, weights=None, returned=False, *,
+            keepdims=np._NoValue):
     """
     Return the weighted average of array over the given axis.
 
@@ -534,23 +551,39 @@ def average(a, axis=None, weights=None, returned=False):
     a : array_like
         Data to be averaged.
         Masked entries are not taken into account in the computation.
-    axis : int, optional
-        Axis along which to average `a`. If None, averaging is done over
-        the flattened array.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which to average `a`.  The default,
+        `axis=None`, will average over all of the elements of the input array.
+        If axis is a tuple of ints, averaging is performed on all of the axes
+        specified in the tuple instead of a single axis or all the axes as
+        before.
     weights : array_like, optional
-        The importance that each element has in the computation of the average.
-        The weights array can either be 1-D (in which case its length must be
-        the size of `a` along the given axis) or of the same shape as `a`.
-        If ``weights=None``, then all data in `a` are assumed to have a
-        weight equal to one.  The 1-D calculation is::
+        An array of weights associated with the values in `a`. Each value in
+        `a` contributes to the average according to its associated weight.
+        The array of weights must be the same shape as `a` if no axis is
+        specified, otherwise the weights must have dimensions and shape
+        consistent with `a` along the specified axis.
+        If `weights=None`, then all data in `a` are assumed to have a
+        weight equal to one.
+        The calculation is::
 
             avg = sum(a * weights) / sum(weights)
 
-        The only constraint on `weights` is that `sum(weights)` must not be 0.
+        where the sum is over all included elements.
+        The only constraint on the values of `weights` is that `sum(weights)`
+        must not be 0.
     returned : bool, optional
         Flag indicating whether a tuple ``(result, sum of weights)``
         should be returned as output (True), or just the result (False).
         Default is False.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `a`.
+        *Note:* `keepdims` will not work with instances of `numpy.matrix`
+        or other classes whose methods do not support `keepdims`.
+
+        .. versionadded:: 1.23.0
 
     Returns
     -------
@@ -561,6 +594,17 @@ def average(a, axis=None, weights=None, returned=False):
         if `a` is of integer type and floats smaller than `float64`, or the
         input data-type, otherwise. If returned, `sum_of_weights` is always
         `float64`.
+
+    Raises
+    ------
+    ZeroDivisionError
+        When all weights along axis are zero. See `numpy.ma.average` for a
+        version robust to this type of error.
+    TypeError
+        When `weights` does not have the same shape as `a`, and `axis=None`.
+    ValueError
+        When `weights` does not have dimensions and shape consistent with `a`
+        along specified `axis`.
 
     Examples
     --------
@@ -576,6 +620,22 @@ def average(a, axis=None, weights=None, returned=False):
             [4., 5.]],
       mask=False,
       fill_value=1e+20)
+    >>> data = np.arange(8).reshape((2, 2, 2))
+    >>> data
+    array([[[0, 1],
+            [2, 3]],
+           [[4, 5],
+            [6, 7]]])
+    >>> np.ma.average(data, axis=(0, 1), weights=[[1./4, 3./4], [1., 1./2]])
+    masked_array(data=[3.4, 4.4],
+             mask=[False, False],
+       fill_value=1e+20)
+    >>> np.ma.average(data, axis=0, weights=[[1./4, 3./4], [1., 1./2]])
+    Traceback (most recent call last):
+        ...
+    ValueError: Shape of weights must be consistent
+    with shape of a along specified axis.
+
     >>> avg, sumweights = np.ma.average(x, axis=0, weights=[1, 2, 3],
     ...                                 returned=True)
     >>> avg
@@ -583,19 +643,35 @@ def average(a, axis=None, weights=None, returned=False):
                  mask=[False, False],
            fill_value=1e+20)
 
+    With ``keepdims=True``, the following result has shape (3, 1).
+
+    >>> np.ma.average(x, axis=1, keepdims=True)
+    masked_array(
+      data=[[0.5],
+            [2.5],
+            [4.5]],
+      mask=False,
+      fill_value=1e+20)
     """
     a = asarray(a)
     m = getmask(a)
 
-    # inspired by 'average' in numpy/lib/function_base.py
+    if axis is not None:
+        axis = normalize_axis_tuple(axis, a.ndim, argname="axis")
+
+    if keepdims is np._NoValue:
+        # Don't pass on the keepdims argument if one wasn't given.
+        keepdims_kw = {}
+    else:
+        keepdims_kw = {'keepdims': keepdims}
 
     if weights is None:
-        avg = a.mean(axis)
+        avg = a.mean(axis, **keepdims_kw)
         scl = avg.dtype.type(a.count(axis))
     else:
-        wgt = np.asanyarray(weights)
+        wgt = asarray(weights)
 
-        if issubclass(a.dtype.type, (np.integer, np.bool_)):
+        if issubclass(a.dtype.type, (np.integer, np.bool)):
             result_dtype = np.result_type(a.dtype, wgt.dtype, 'f8')
         else:
             result_dtype = np.result_type(a.dtype, wgt.dtype)
@@ -606,22 +682,23 @@ def average(a, axis=None, weights=None, returned=False):
                 raise TypeError(
                     "Axis must be specified when shapes of a and weights "
                     "differ.")
-            if wgt.ndim != 1:
-                raise TypeError(
-                    "1D weights expected when shapes of a and weights differ.")
-            if wgt.shape[0] != a.shape[axis]:
+            if wgt.shape != tuple(a.shape[ax] for ax in axis):
                 raise ValueError(
-                    "Length of weights not compatible with specified axis.")
+                    "Shape of weights must be consistent with "
+                    "shape of a along specified axis.")
 
             # setup wgt to broadcast along axis
-            wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape)
-            wgt = wgt.swapaxes(-1, axis)
+            wgt = wgt.transpose(np.argsort(axis))
+            wgt = wgt.reshape(tuple((s if ax in axis else 1)
+                                    for ax, s in enumerate(a.shape)))
 
         if m is not nomask:
             wgt = wgt*(~a.mask)
+            wgt.mask |= a.mask
 
-        scl = wgt.sum(axis=axis, dtype=result_dtype)
-        avg = np.multiply(a, wgt, dtype=result_dtype).sum(axis)/scl
+        scl = wgt.sum(axis=axis, dtype=result_dtype, **keepdims_kw)
+        avg = np.multiply(a, wgt,
+                          dtype=result_dtype).sum(axis, **keepdims_kw) / scl
 
     if returned:
         if scl.shape != avg.shape:
@@ -706,12 +783,9 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
         else:
             return m
 
-    r, k = _ureduce(a, func=_median, axis=axis, out=out,
+    return _ureduce(a, func=_median, keepdims=keepdims, axis=axis, out=out,
                     overwrite_input=overwrite_input)
-    if keepdims:
-        return r.reshape(k)
-    else:
-        return r
+
 
 def _median(a, axis=None, out=None, overwrite_input=False):
     # when an unmasked NaN is present return it, so we need to sort the NaN
@@ -744,7 +818,6 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         return np.ma.mean(asorted[indexer], axis=axis, out=out)
 
     if asorted.ndim == 1:
-        counts = count(asorted)
         idx, odd = divmod(count(asorted), 2)
         mid = asorted[idx + odd - 1:idx + 1]
         if np.issubdtype(asorted.dtype, np.inexact) and asorted.size > 0:
@@ -752,7 +825,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
             s = mid.sum(out=out)
             if not odd:
                 s = np.true_divide(s, 2., casting='safe', out=out)
-            s = np.lib.utils._median_nancheck(asorted, s, axis, out)
+            s = np.lib._utils_impl._median_nancheck(asorted, s, axis)
         else:
             s = mid.mean(out=out)
 
@@ -792,7 +865,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         s = np.ma.sum(low_high, axis=axis, out=out)
         np.true_divide(s.data, 2., casting='unsafe', out=s.data)
 
-        s = np.lib.utils._median_nancheck(asorted, s, axis, out)
+        s = np.lib._utils_impl._median_nancheck(asorted, s, axis)
     else:
         s = np.ma.mean(low_high, axis=axis, out=out)
 
@@ -819,6 +892,20 @@ def compress_nd(x, axis=None):
     -------
     compress_array : ndarray
         The compressed array.
+
+    Examples
+    --------
+    >>> arr = [[1, 2], [3, 4]]
+    >>> mask = [[0, 1], [0, 0]]
+    >>> x = np.ma.array(arr, mask=mask)
+    >>> np.ma.compress_nd(x, axis=0)
+    array([[3, 4]])
+    >>> np.ma.compress_nd(x, axis=1)
+    array([[1],
+           [3]])
+    >>> np.ma.compress_nd(x)
+    array([[3]])
+
     """
     x = asarray(x)
     m = getmask(x)
@@ -840,6 +927,7 @@ def compress_nd(x, axis=None):
         axes = tuple(list(range(ax)) + list(range(ax + 1, x.ndim)))
         data = data[(slice(None),)*ax + (~m.any(axis=axes),)]
     return data
+
 
 def compress_rowcols(x, axis=None):
     """
@@ -903,15 +991,36 @@ def compress_rows(a):
     This is equivalent to ``np.ma.compress_rowcols(a, 0)``, see
     `compress_rowcols` for details.
 
+    Parameters
+    ----------
+    x : array_like, MaskedArray
+        The array to operate on. If not a MaskedArray instance (or if no array
+        elements are masked), `x` is interpreted as a MaskedArray with
+        `mask` set to `nomask`. Must be a 2D array.
+
+    Returns
+    -------
+    compressed_array : ndarray
+        The compressed array.
+
     See Also
     --------
     compress_rowcols
 
+    Examples
+    --------
+    >>> a = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
+    ...                                                   [1, 0, 0],
+    ...                                                   [0, 0, 0]])
+    >>> np.ma.compress_rows(a)
+    array([[6, 7, 8]])
+    
     """
     a = asarray(a)
     if a.ndim != 2:
         raise NotImplementedError("compress_rows works for 2D arrays only.")
     return compress_rowcols(a, 0)
+
 
 def compress_cols(a):
     """
@@ -920,15 +1029,126 @@ def compress_cols(a):
     This is equivalent to ``np.ma.compress_rowcols(a, 1)``, see
     `compress_rowcols` for details.
 
+    Parameters
+    ----------
+    x : array_like, MaskedArray
+        The array to operate on.  If not a MaskedArray instance (or if no array
+        elements are masked), `x` is interpreted as a MaskedArray with
+        `mask` set to `nomask`. Must be a 2D array.
+
+    Returns
+    -------
+    compressed_array : ndarray
+        The compressed array.
+
     See Also
     --------
     compress_rowcols
+
+    Examples
+    --------
+    >>> a = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
+    ...                                                   [1, 0, 0],
+    ...                                                   [0, 0, 0]])
+    >>> np.ma.compress_cols(a)
+    array([[1, 2],
+           [4, 5],
+           [7, 8]])
 
     """
     a = asarray(a)
     if a.ndim != 2:
         raise NotImplementedError("compress_cols works for 2D arrays only.")
     return compress_rowcols(a, 1)
+
+
+def mask_rowcols(a, axis=None):
+    """
+    Mask rows and/or columns of a 2D array that contain masked values.
+
+    Mask whole rows and/or columns of a 2D array that contain
+    masked values.  The masking behavior is selected using the
+    `axis` parameter.
+
+      - If `axis` is None, rows *and* columns are masked.
+      - If `axis` is 0, only rows are masked.
+      - If `axis` is 1 or -1, only columns are masked.
+
+    Parameters
+    ----------
+    a : array_like, MaskedArray
+        The array to mask.  If not a MaskedArray instance (or if no array
+        elements are masked), the result is a MaskedArray with `mask` set
+        to `nomask` (False). Must be a 2D array.
+    axis : int, optional
+        Axis along which to perform the operation. If None, applies to a
+        flattened version of the array.
+
+    Returns
+    -------
+    a : MaskedArray
+        A modified version of the input array, masked depending on the value
+        of the `axis` parameter.
+
+    Raises
+    ------
+    NotImplementedError
+        If input array `a` is not 2D.
+
+    See Also
+    --------
+    mask_rows : Mask rows of a 2D array that contain masked values.
+    mask_cols : Mask cols of a 2D array that contain masked values.
+    masked_where : Mask where a condition is met.
+
+    Notes
+    -----
+    The input array's mask is modified by this function.
+
+    Examples
+    --------
+    >>> a = np.zeros((3, 3), dtype=int)
+    >>> a[1, 1] = 1
+    >>> a
+    array([[0, 0, 0],
+           [0, 1, 0],
+           [0, 0, 0]])
+    >>> a = np.ma.masked_equal(a, 1)
+    >>> a
+    masked_array(
+      data=[[0, 0, 0],
+            [0, --, 0],
+            [0, 0, 0]],
+      mask=[[False, False, False],
+            [False,  True, False],
+            [False, False, False]],
+      fill_value=1)
+    >>> np.ma.mask_rowcols(a)
+    masked_array(
+      data=[[0, --, 0],
+            [--, --, --],
+            [0, --, 0]],
+      mask=[[False,  True, False],
+            [ True,  True,  True],
+            [False,  True, False]],
+      fill_value=1)
+
+    """
+    a = array(a, subok=False)
+    if a.ndim != 2:
+        raise NotImplementedError("mask_rowcols works for 2D arrays only.")
+    m = getmask(a)
+    # Nothing is masked: return a
+    if m is nomask or not m.any():
+        return a
+    maskedval = m.nonzero()
+    a._mask = a._mask.copy()
+    if not axis:
+        a[np.unique(maskedval[0])] = masked
+    if axis in [None, 1, -1]:
+        a[:, np.unique(maskedval[1])] = masked
+    return a
+
 
 def mask_rows(a, axis=np._NoValue):
     """
@@ -943,14 +1163,13 @@ def mask_rows(a, axis=np._NoValue):
 
     Examples
     --------
-    >>> import numpy.ma as ma
     >>> a = np.zeros((3, 3), dtype=int)
     >>> a[1, 1] = 1
     >>> a
     array([[0, 0, 0],
            [0, 1, 0],
            [0, 0, 0]])
-    >>> a = ma.masked_equal(a, 1)
+    >>> a = np.ma.masked_equal(a, 1)
     >>> a
     masked_array(
       data=[[0, 0, 0],
@@ -961,7 +1180,7 @@ def mask_rows(a, axis=np._NoValue):
             [False, False, False]],
       fill_value=1)
 
-    >>> ma.mask_rows(a)
+    >>> np.ma.mask_rows(a)
     masked_array(
       data=[[0, 0, 0],
             [--, --, --],
@@ -980,6 +1199,7 @@ def mask_rows(a, axis=np._NoValue):
             "will raise TypeError", DeprecationWarning, stacklevel=2)
     return mask_rowcols(a, 0)
 
+
 def mask_cols(a, axis=np._NoValue):
     """
     Mask columns of a 2D array that contain masked values.
@@ -993,14 +1213,13 @@ def mask_cols(a, axis=np._NoValue):
 
     Examples
     --------
-    >>> import numpy.ma as ma
     >>> a = np.zeros((3, 3), dtype=int)
     >>> a[1, 1] = 1
     >>> a
     array([[0, 0, 0],
            [0, 1, 0],
            [0, 0, 0]])
-    >>> a = ma.masked_equal(a, 1)
+    >>> a = np.ma.masked_equal(a, 1)
     >>> a
     masked_array(
       data=[[0, 0, 0],
@@ -1010,7 +1229,7 @@ def mask_cols(a, axis=np._NoValue):
             [False,  True, False],
             [False, False, False]],
       fill_value=1)
-    >>> ma.mask_cols(a)
+    >>> np.ma.mask_cols(a)
     masked_array(
       data=[[0, --, 0],
             [0, --, 0],
@@ -1045,6 +1264,14 @@ def ediff1d(arr, to_end=None, to_begin=None):
     --------
     numpy.ediff1d : Equivalent function for ndarrays.
 
+    Examples
+    --------
+    >>> arr = np.ma.array([1, 2, 4, 7, 0])
+    >>> np.ma.ediff1d(arr)
+    masked_array(data=[ 1,  2,  3, -7],
+                 mask=False,
+           fill_value=999999)
+
     """
     arr = ma.asanyarray(arr).flat
     ed = arr[1:] - arr[:-1]
@@ -1074,6 +1301,31 @@ def unique(ar1, return_index=False, return_inverse=False):
     --------
     numpy.unique : Equivalent function for ndarrays.
 
+    Examples
+    --------
+    >>> a = [1, 2, 1000, 2, 3]
+    >>> mask = [0, 0, 1, 0, 0]
+    >>> masked_a = np.ma.masked_array(a, mask)
+    >>> masked_a
+    masked_array(data=[1, 2, --, 2, 3],
+                mask=[False, False,  True, False, False],
+        fill_value=999999)
+    >>> np.ma.unique(masked_a)
+    masked_array(data=[1, 2, 3, --],
+                mask=[False, False, False,  True],
+        fill_value=999999)
+    >>> np.ma.unique(masked_a, return_index=True)
+    (masked_array(data=[1, 2, 3, --],
+                mask=[False, False, False,  True],
+        fill_value=999999), array([0, 1, 4, 2]))
+    >>> np.ma.unique(masked_a, return_inverse=True)
+    (masked_array(data=[1, 2, 3, --],
+                mask=[False, False, False,  True],
+        fill_value=999999), array([0, 1, 3, 1, 2]))
+    >>> np.ma.unique(masked_a, return_index=True, return_inverse=True)
+    (masked_array(data=[1, 2, 3, --],
+                mask=[False, False, False,  True],
+        fill_value=999999), array([0, 1, 4, 2]), array([0, 1, 3, 1, 2]))
     """
     output = np.unique(ar1,
                        return_index=return_index,
@@ -1129,6 +1381,15 @@ def setxor1d(ar1, ar2, assume_unique=False):
     --------
     numpy.setxor1d : Equivalent function for ndarrays.
 
+    Examples
+    --------
+    >>> ar1 = np.ma.array([1, 2, 3, 2, 4])
+    >>> ar2 = np.ma.array([2, 3, 5, 7, 5])
+    >>> np.ma.setxor1d(ar1, ar2)
+    masked_array(data=[1, 4, 5, 7],
+                 mask=False,    
+           fill_value=999999)
+
     """
     if not assume_unique:
         ar1 = unique(ar1)
@@ -1163,6 +1424,15 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     Notes
     -----
     .. versionadded:: 1.4.0
+
+    Examples
+    --------
+    >>> ar1 = np.ma.array([0, 1, 2, 5, 0])
+    >>> ar2 = [0, 2]
+    >>> np.ma.in1d(ar1, ar2)
+    masked_array(data=[ True, False,  True, False,  True],
+                 mask=False,
+           fill_value=True)
 
     """
     if not assume_unique:
@@ -1205,6 +1475,15 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     -----
     .. versionadded:: 1.13.0
 
+    Examples
+    --------
+    >>> element = np.ma.array([1, 2, 3, 4, 5, 6])
+    >>> test_elements = [0, 2]
+    >>> np.ma.isin(element, test_elements)
+    masked_array(data=[False,  True, False, False, False, False],
+                 mask=False,
+           fill_value=True)
+
     """
     element = ma.asarray(element)
     return in1d(element, test_elements, assume_unique=assume_unique,
@@ -1217,9 +1496,18 @@ def union1d(ar1, ar2):
 
     The output is always a masked array. See `numpy.union1d` for more details.
 
-    See also
+    See Also
     --------
     numpy.union1d : Equivalent function for ndarrays.
+
+    Examples
+    --------
+    >>> ar1 = np.ma.array([1, 2, 3, 4])
+    >>> ar2 = np.ma.array([3, 4, 5, 6])
+    >>> np.ma.union1d(ar1, ar2)
+    masked_array(data=[1, 2, 3, 4, 5, 6],
+             mask=False,
+       fill_value=999999)
 
     """
     return unique(ma.concatenate((ar1, ar2), axis=None))
@@ -1322,7 +1610,7 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
         observation of all those variables. Also see `rowvar` below.
     y : array_like, optional
         An additional set of variables and observations. `y` has the same
-        form as `x`.
+        shape as `x`.
     rowvar : bool, optional
         If `rowvar` is True (default), then each row represents a
         variable, with observations in the columns. Otherwise, the relationship
@@ -1353,6 +1641,23 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
     --------
     numpy.cov
 
+    Examples
+    --------
+    >>> x = np.ma.array([[0, 1], [1, 1]], mask=[0, 1, 0, 1])
+    >>> y = np.ma.array([[1, 0], [0, 1]], mask=[0, 0, 1, 1])
+    >>> np.ma.cov(x, y)
+    masked_array(
+    data=[[--, --, --, --],
+          [--, --, --, --],
+          [--, --, --, --],
+          [--, --, --, --]],
+    mask=[[ True,  True,  True,  True],
+          [ True,  True,  True,  True],
+          [ True,  True,  True,  True],
+          [ True,  True,  True,  True]],
+    fill_value=1e+20,
+    dtype=float64)
+    
     """
     # Check inputs
     if ddof is not None and ddof != int(ddof):
@@ -1421,6 +1726,19 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
     for backwards compatibility with previous versions of this function.  These
     arguments had no effect on the return values of the function and can be
     safely ignored in this and previous versions of numpy.
+
+    Examples
+    --------
+    >>> x = np.ma.array([[0, 1], [1, 1]], mask=[0, 1, 0, 1])
+    >>> np.ma.corrcoef(x)
+    masked_array(
+      data=[[--, --],
+            [--, --]],
+      mask=[[ True,  True],
+            [ True,  True]],
+      fill_value=1e+20,
+      dtype=float64)
+
     """
     msg = 'bias and ddof have no effect and are deprecated'
     if bias is not np._NoValue or ddof is not np._NoValue:
@@ -1483,7 +1801,7 @@ class MAxisConcatenator(AxisConcatenator):
         # deprecate that class. In preparation, we use the unmasked version
         # to construct the matrix (with copy=False for backwards compatibility
         # with the .view)
-        data = super(MAxisConcatenator, cls).makemat(arr.data, copy=False)
+        data = super().makemat(arr.data, copy=False)
         return array(data, mask=arr.mask)
 
     def __getitem__(self, key):
@@ -1491,18 +1809,18 @@ class MAxisConcatenator(AxisConcatenator):
         if isinstance(key, str):
             raise MAError("Unavailable for masked array.")
 
-        return super(MAxisConcatenator, self).__getitem__(key)
+        return super().__getitem__(key)
 
 
 class mr_class(MAxisConcatenator):
     """
     Translate slice objects to concatenation along the first axis.
 
-    This is the masked array version of `lib.index_tricks.RClass`.
+    This is the masked array version of `r_`.
 
     See Also
     --------
-    lib.index_tricks.RClass
+    r_
 
     Examples
     --------
@@ -1517,9 +1835,78 @@ class mr_class(MAxisConcatenator):
 
 mr_ = mr_class()
 
+
 #####--------------------------------------------------------------------------
 #---- Find unmasked data ---
 #####--------------------------------------------------------------------------
+
+def ndenumerate(a, compressed=True):
+    """
+    Multidimensional index iterator.
+
+    Return an iterator yielding pairs of array coordinates and values,
+    skipping elements that are masked. With `compressed=False`,
+    `ma.masked` is yielded as the value of masked elements. This
+    behavior differs from that of `numpy.ndenumerate`, which yields the
+    value of the underlying data array.
+
+    Notes
+    -----
+    .. versionadded:: 1.23.0
+
+    Parameters
+    ----------
+    a : array_like
+        An array with (possibly) masked elements.
+    compressed : bool, optional
+        If True (default), masked elements are skipped.
+
+    See Also
+    --------
+    numpy.ndenumerate : Equivalent function ignoring any mask.
+
+    Examples
+    --------
+    >>> a = np.ma.arange(9).reshape((3, 3))
+    >>> a[1, 0] = np.ma.masked
+    >>> a[1, 2] = np.ma.masked
+    >>> a[2, 1] = np.ma.masked
+    >>> a
+    masked_array(
+      data=[[0, 1, 2],
+            [--, 4, --],
+            [6, --, 8]],
+      mask=[[False, False, False],
+            [ True, False,  True],
+            [False,  True, False]],
+      fill_value=999999)
+    >>> for index, x in np.ma.ndenumerate(a):
+    ...     print(index, x)
+    (0, 0) 0
+    (0, 1) 1
+    (0, 2) 2
+    (1, 1) 4
+    (2, 0) 6
+    (2, 2) 8
+
+    >>> for index, x in np.ma.ndenumerate(a, compressed=False):
+    ...     print(index, x)
+    (0, 0) 0
+    (0, 1) 1
+    (0, 2) 2
+    (1, 0) --
+    (1, 1) 4
+    (1, 2) --
+    (2, 0) 6
+    (2, 1) --
+    (2, 2) 8
+    """
+    for it, mask in zip(np.ndenumerate(a), getmaskarray(a).flat):
+        if not mask:
+            yield it
+        elif not compressed:
+            yield it[0], masked
+
 
 def flatnotmasked_edges(a):
     """
@@ -1629,11 +2016,11 @@ def notmasked_edges(a, axis=None):
 
 def flatnotmasked_contiguous(a):
     """
-    Find contiguous unmasked data in a masked array along the given axis.
+    Find contiguous unmasked data in a masked array.
 
     Parameters
     ----------
-    a : narray
+    a : array_like
         The input array.
 
     Returns
@@ -1682,6 +2069,7 @@ def flatnotmasked_contiguous(a):
             result.append(slice(i, i + n))
         i += n
     return result
+
 
 def notmasked_contiguous(a, axis=None):
     """
@@ -1744,7 +2132,7 @@ def notmasked_contiguous(a, axis=None):
     a = asarray(a)
     nd = a.ndim
     if nd > 2:
-        raise NotImplementedError("Currently limited to atmost 2D array.")
+        raise NotImplementedError("Currently limited to at most 2D array.")
     if axis is None or nd == 1:
         return flatnotmasked_contiguous(a)
     #

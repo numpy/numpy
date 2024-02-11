@@ -1,5 +1,0 @@
-* The deprecation of numeric style type-codes ``np.dtype("Complex64")``
-  (with upper case spelling), is expired.  ``"Complex64"`` corresponded to
-  ``"complex128"`` and ``"Complex32"`` corresponded to ``"complex64"``.
-* The deprecation of ``np.sctypeNA`` and ``np.typeNA`` is expired. Both
-  have been removed from the public API. Use ``np.typeDict`` instead.

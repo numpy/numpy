@@ -1,7 +1,7 @@
 .. _NEP01:
 
 =============================================
-NEP 1 — A Simple File Format for NumPy Arrays
+NEP 1 — A simple file format for NumPy arrays
 =============================================
 
 :Author: Robert Kern <robert.kern@gmail.com>
@@ -53,7 +53,7 @@ more complicated problems for which more complicated formats like
 HDF5 [2] are a better solution.
 
 
-Use Cases
+Use cases
 ---------
 
 - Neville Newbie has just started to pick up Python and NumPy.  He
@@ -152,7 +152,7 @@ The format explicitly *does not* need to:
   general NPY format.
 
 
-Format Specification: Version 1.0
+Format specification: version 1.0
 ---------------------------------
 
 The first 6 bytes are a magic string: exactly "\x93NUMPY".
@@ -200,7 +200,7 @@ bytes of the array.  Consumers can figure out the number of bytes
 by multiplying the number of elements given by the shape (noting
 that shape=() means there is 1 element) by dtype.itemsize.
 
-Format Specification: Version 2.0
+Format specification: version 2.0
 ---------------------------------
 
 The version 1.0 format only allowed the array header to have a
@@ -292,7 +292,7 @@ included in the 1.9.0 release of numpy.
 Specifically, the file format.py in this directory implements the
 format as described here.
 
-    https://github.com/numpy/numpy/blob/master/numpy/lib/format.py
+    https://github.com/numpy/numpy/blob/main/numpy/lib/format.py
 
 
 References

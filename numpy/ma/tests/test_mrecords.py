@@ -5,13 +5,14 @@
 :contact: pierregm_at_uga_dot_edu
 
 """
+import pickle
+
 import numpy as np
 import numpy.ma as ma
-from numpy import recarray
 from numpy.ma import masked, nomask
 from numpy.testing import temppath
-from numpy.core.records import (
-    fromrecords as recfromrecords, fromarrays as recfromarrays
+from numpy._core.records import (
+    recarray, fromrecords as recfromrecords, fromarrays as recfromarrays
     )
 from numpy.ma.mrecords import (
     MaskedRecords, mrecarray, fromarrays, fromtextfile, fromrecords,
@@ -21,7 +22,6 @@ from numpy.ma.testutils import (
     assert_, assert_equal,
     assert_equal_records,
     )
-from numpy.compat import pickle
 
 
 class TestMRecords:
@@ -348,7 +348,7 @@ class TestMRecords:
 
 class TestView:
 
-    def setup(self):
+    def setup_method(self):
         (a, b) = (np.arange(10), np.random.rand(10))
         ndtype = [('a', float), ('b', float)]
         arr = np.array(list(zip(a, b)), dtype=ndtype)
@@ -405,7 +405,7 @@ class TestMRecordsImport:
         for (f, l) in zip(('a', 'b', 'c'), (_a, _b, _c)):
             assert_equal(getattr(mrec, f)._mask, l._mask)
         # One record only
-        _x = ma.array([1, 1.1, 'one'], mask=[1, 0, 0],)
+        _x = ma.array([1, 1.1, 'one'], mask=[1, 0, 0], dtype=object)
         assert_equal_records(fromarrays(_x, dtype=mrec.dtype), mrec[0])
 
     def test_fromrecords(self):
@@ -468,7 +468,7 @@ class TestMRecordsImport:
         with temppath() as path:
             with open(path, 'w') as f:
                 f.write(fcontent)
-            mrectxt = fromtextfile(path, delimitor=',', varnames='ABCDEFG')
+            mrectxt = fromtextfile(path, delimiter=',', varnames='ABCDEFG')
         assert_(isinstance(mrectxt, MaskedRecords))
         assert_equal(mrectxt.F, [1, 1, 1, 1])
         assert_equal(mrectxt.E._mask, [1, 1, 1, 1])

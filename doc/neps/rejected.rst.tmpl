@@ -1,0 +1,9 @@
+Rejected and Withdrawn NEPs
+---------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+{% for nep, tags in neps.items() if tags['Status'] in ('Rejected', 'Withdrawn') %}
+   {{ tags['Title'] }} <{{ tags['Filename'] }}>
+{% endfor %}

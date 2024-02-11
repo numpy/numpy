@@ -1,10 +1,12 @@
 import warnings
 
+import pytest
+
 import numpy as np
 from numpy.testing import (
         assert_, assert_raises, assert_equal, assert_warns,
         assert_no_warnings, assert_array_equal, assert_array_almost_equal,
-        suppress_warnings
+        suppress_warnings, IS_WASM
         )
 from numpy import random
 import sys
@@ -99,7 +101,7 @@ class TestMultinomial:
 
 
 class TestSetState:
-    def setup(self):
+    def setup_method(self):
         self.seed = 1234567890
         self.prng = random.RandomState(self.seed)
         self.state = self.prng.get_state()
@@ -145,13 +147,18 @@ class TestSetState:
         # arguments without truncation.
         self.prng.negative_binomial(0.5, 0.5)
 
+    def test_set_invalid_state(self):
+        # gh-25402
+        with pytest.raises(IndexError):
+            self.prng.set_state(())
+
 
 class TestRandint:
 
     rfunc = np.random.randint
 
     # valid integer/boolean types
-    itype = [np.bool_, np.int8, np.uint8, np.int16, np.uint16,
+    itype = [np.bool, np.int8, np.uint8, np.int16, np.uint16,
              np.int32, np.uint32, np.int64, np.uint64]
 
     def test_unsupported_type(self):
@@ -159,8 +166,8 @@ class TestRandint:
 
     def test_bounds_checking(self):
         for dt in self.itype:
-            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
             assert_raises(ValueError, self.rfunc, lbnd - 1, ubnd, dtype=dt)
             assert_raises(ValueError, self.rfunc, lbnd, ubnd + 1, dtype=dt)
             assert_raises(ValueError, self.rfunc, ubnd, lbnd, dtype=dt)
@@ -168,8 +175,8 @@ class TestRandint:
 
     def test_rng_zero_and_extremes(self):
         for dt in self.itype:
-            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
 
             tgt = ubnd - 1
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
@@ -184,8 +191,8 @@ class TestRandint:
         # Test for ticket #1690
 
         for dt in self.itype:
-            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
 
             try:
                 self.rfunc(lbnd, ubnd, dtype=dt)
@@ -204,25 +211,25 @@ class TestRandint:
                 assert_(vals.max() < ubnd)
                 assert_(vals.min() >= 2)
 
-        vals = self.rfunc(0, 2, size=2**16, dtype=np.bool_)
+        vals = self.rfunc(0, 2, size=2**16, dtype=np.bool)
 
         assert_(vals.max() < 2)
         assert_(vals.min() >= 0)
 
     def test_repeatability(self):
         import hashlib
-        # We use a md5 hash of generated sequences of 1000 samples
+        # We use a sha256 hash of generated sequences of 1000 samples
         # in the range [0, 6) for all but bool, where the range
         # is [0, 2). Hashes are for little endian numbers.
-        tgt = {'bool': '7dd3170d7aa461d201a65f8bcf3944b0',
-               'int16': '1b7741b80964bb190c50d541dca1cac1',
-               'int32': '4dc9fcc2b395577ebb51793e58ed1a05',
-               'int64': '17db902806f448331b5a758d7d2ee672',
-               'int8': '27dd30c4e08a797063dffac2490b0be6',
-               'uint16': '1b7741b80964bb190c50d541dca1cac1',
-               'uint32': '4dc9fcc2b395577ebb51793e58ed1a05',
-               'uint64': '17db902806f448331b5a758d7d2ee672',
-               'uint8': '27dd30c4e08a797063dffac2490b0be6'}
+        tgt = {'bool': '509aea74d792fb931784c4b0135392c65aec64beee12b0cc167548a2c3d31e71',
+               'int16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',
+               'int32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',
+               'int64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',
+               'int8': '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404',
+               'uint16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',
+               'uint32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',
+               'uint64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',
+               'uint8': '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404'}
 
         for dt in self.itype[1:]:
             np.random.seed(1234)
@@ -233,13 +240,13 @@ class TestRandint:
             else:
                 val = self.rfunc(0, 6, size=1000, dtype=dt).byteswap()
 
-            res = hashlib.md5(val.view(np.int8)).hexdigest()
+            res = hashlib.sha256(val.view(np.int8)).hexdigest()
             assert_(tgt[np.dtype(dt).name] == res)
 
         # bools do not depend on endianness
         np.random.seed(1234)
         val = self.rfunc(0, 2, size=1000, dtype=bool).view(np.int8)
-        res = hashlib.md5(val).hexdigest()
+        res = hashlib.sha256(val).hexdigest()
         assert_(tgt[np.dtype(bool).name] == res)
 
     def test_int64_uint64_corner_case(self):
@@ -268,15 +275,16 @@ class TestRandint:
     def test_respect_dtype_singleton(self):
         # See gh-7203
         for dt in self.itype:
-            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
 
             sample = self.rfunc(lbnd, ubnd, dtype=dt)
             assert_equal(sample.dtype, np.dtype(dt))
 
-        for dt in (bool, int, np.compat.long):
-            lbnd = 0 if dt is bool else np.iinfo(dt).min
-            ubnd = 2 if dt is bool else np.iinfo(dt).max + 1
+        for dt in (bool, int):
+            # The legacy rng uses "long" as the default integer:
+            lbnd = 0 if dt is bool else np.iinfo("long").min
+            ubnd = 2 if dt is bool else np.iinfo("long").max + 1
 
             # gh-7284: Ensure that we get Python data types
             sample = self.rfunc(lbnd, ubnd, dtype=dt)
@@ -288,7 +296,7 @@ class TestRandomDist:
     # Make sure the random distribution returns the correct value for a
     # given seed
 
-    def setup(self):
+    def setup_method(self):
         self.seed = 1234567890
 
     def test_rand(self):
@@ -509,6 +517,64 @@ class TestRandomDist:
             np.random.shuffle(b)
             assert_equal(
                 sorted(b.data[~b.mask]), sorted(b_orig.data[~b_orig.mask]))
+
+    @pytest.mark.parametrize("random",
+            [np.random, np.random.RandomState(), np.random.default_rng()])
+    def test_shuffle_untyped_warning(self, random):
+        # Create a dict works like a sequence but isn't one
+        values = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6}
+        with pytest.warns(UserWarning,
+                match="you are shuffling a 'dict' object") as rec:
+            random.shuffle(values)
+        assert "test_random" in rec[0].filename
+
+    @pytest.mark.parametrize("random",
+        [np.random, np.random.RandomState(), np.random.default_rng()])
+    @pytest.mark.parametrize("use_array_like", [True, False])
+    def test_shuffle_no_object_unpacking(self, random, use_array_like):
+        class MyArr(np.ndarray):
+            pass
+
+        items = [
+            None, np.array([3]), np.float64(3), np.array(10), np.float64(7)
+        ]
+        arr = np.array(items, dtype=object)
+        item_ids = {id(i) for i in items}
+        if use_array_like:
+            arr = arr.view(MyArr)
+
+        # The array was created fine, and did not modify any objects:
+        assert all(id(i) in item_ids for i in arr)
+
+        if use_array_like and not isinstance(random, np.random.Generator):
+            # The old API gives incorrect results, but warns about it.
+            with pytest.warns(UserWarning,
+                    match="Shuffling a one dimensional array.*"):
+                random.shuffle(arr)
+        else:
+            random.shuffle(arr)
+            assert all(id(i) in item_ids for i in arr)
+
+    def test_shuffle_memoryview(self):
+        # gh-18273
+        # allow graceful handling of memoryviews
+        # (treat the same as arrays)
+        np.random.seed(self.seed)
+        a = np.arange(5).data
+        np.random.shuffle(a)
+        assert_equal(np.asarray(a), [0, 1, 4, 3, 2])
+        rng = np.random.RandomState(self.seed)
+        rng.shuffle(a)
+        assert_equal(np.asarray(a), [0, 1, 2, 3, 4])
+        rng = np.random.default_rng(self.seed)
+        rng.shuffle(a)
+        assert_equal(np.asarray(a), [4, 1, 0, 3, 2])
+
+    def test_shuffle_not_writeable(self):
+        a = np.zeros(3)
+        a.flags.writeable = False
+        with pytest.raises(ValueError, match='read-only'):
+            np.random.shuffle(a)
 
     def test_beta(self):
         np.random.seed(self.seed)
@@ -988,7 +1054,7 @@ class TestRandomDist:
 class TestBroadcast:
     # tests that functions that broadcast behave
     # correctly when presented with non-scalar arguments
-    def setup(self):
+    def setup_method(self):
         self.seed = 123456789
 
     def setSeed(self):
@@ -1555,9 +1621,10 @@ class TestBroadcast:
         assert_raises(ValueError, logseries, bad_p_two * 3)
 
 
+@pytest.mark.skipif(IS_WASM, reason="can't start thread")
 class TestThread:
     # make sure each state produces the same sequence even in threads
-    def setup(self):
+    def setup_method(self):
         self.seeds = range(4)
 
     def check_function(self, function, sz):
@@ -1600,7 +1667,7 @@ class TestThread:
 
 # See Issue #4263
 class TestSingleEltArrayInput:
-    def setup(self):
+    def setup_method(self):
         self.argOne = np.array([2])
         self.argTwo = np.array([3])
         self.argThree = np.array([4])
@@ -1652,23 +1719,22 @@ class TestSingleEltArrayInput:
             out = func(self.argOne, argTwo[0])
             assert_equal(out.shape, self.tgtShape)
 
-# TODO: Uncomment once randint can broadcast arguments
-#    def test_randint(self):
-#        itype = [bool, np.int8, np.uint8, np.int16, np.uint16,
-#                 np.int32, np.uint32, np.int64, np.uint64]
-#        func = np.random.randint
-#        high = np.array([1])
-#        low = np.array([0])
-#
-#        for dt in itype:
-#            out = func(low, high, dtype=dt)
-#            self.assert_equal(out.shape, self.tgtShape)
-#
-#            out = func(low[0], high, dtype=dt)
-#            self.assert_equal(out.shape, self.tgtShape)
-#
-#            out = func(low, high[0], dtype=dt)
-#            self.assert_equal(out.shape, self.tgtShape)
+    def test_randint(self):
+        itype = [bool, np.int8, np.uint8, np.int16, np.uint16,
+                 np.int32, np.uint32, np.int64, np.uint64]
+        func = np.random.randint
+        high = np.array([1])
+        low = np.array([0])
+
+        for dt in itype:
+            out = func(low, high, dtype=dt)
+            assert_equal(out.shape, self.tgtShape)
+
+            out = func(low[0], high, dtype=dt)
+            assert_equal(out.shape, self.tgtShape)
+
+            out = func(low, high[0], dtype=dt)
+            assert_equal(out.shape, self.tgtShape)
 
     def test_three_arg_funcs(self):
         funcs = [np.random.noncentral_f, np.random.triangular,

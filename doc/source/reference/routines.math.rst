@@ -1,5 +1,5 @@
 Mathematical functions
-**********************
+======================
 
 .. currentmodule:: numpy
 
@@ -12,10 +12,14 @@ Trigonometric functions
    cos
    tan
    arcsin
+   asin
    arccos
+   acos
    arctan
+   atan
    hypot
    arctan2
+   atan2
    degrees
    radians
    unwrap
@@ -31,16 +35,19 @@ Hyperbolic functions
    cosh
    tanh
    arcsinh
+   asinh
    arccosh
+   acosh
    arctanh
+   atanh
 
 Rounding
 --------
 .. autosummary::
    :toctree: generated/
 
+   round
    around
-   round_
    rint
    fix
    floor
@@ -64,7 +71,6 @@ Sums, products, differences
    ediff1d
    gradient
    cross
-   trapz
 
 Exponents and logarithms
 ------------------------
@@ -121,6 +127,7 @@ Arithmetic operations
    multiply
    divide
    power
+   pow
    subtract
    true_divide
    floor_divide
@@ -143,6 +150,23 @@ Handling complex numbers
    conj
    conjugate
 
+Extrema finding
+---------------
+.. autosummary::
+   :toctree: generated/
+
+   maximum
+   max
+   amax
+   fmax
+   nanmax
+   
+   minimum
+   min
+   amin
+   fmin
+   nanmin
+   
 
 Miscellaneous
 -------------
@@ -160,12 +184,10 @@ Miscellaneous
    fabs
    sign
    heaviside
-   maximum
-   minimum
-   fmax
-   fmin
-
+   
    nan_to_num
    real_if_close
 
    interp
+
+   bitwise_count

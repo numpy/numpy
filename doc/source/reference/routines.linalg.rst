@@ -3,7 +3,7 @@
 .. module:: numpy.linalg
 
 Linear algebra (:mod:`numpy.linalg`)
-************************************
+====================================
 
 The NumPy linear algebra functions rely on BLAS and LAPACK to provide efficient
 low level implementations of standard linear algebra algorithms. Those
@@ -30,24 +30,44 @@ flexible broadcasting options.  For example, `numpy.linalg.solve` can handle
 "stacked" arrays, while `scipy.linalg.solve` accepts only a single square
 array as its first argument.
 
+.. note::
+
+   The term *matrix* as it is used on this page indicates a 2d `numpy.array`
+   object, and *not* a `numpy.matrix` object. The latter is no longer
+   recommended, even for linear algebra. See
+   :ref:`the matrix object documentation<matrix-objects>` for
+   more information.
+
+The ``@`` operator
+------------------
+
+Introduced in NumPy 1.10.0, the ``@`` operator is preferable to
+other methods when computing the matrix product between 2d arrays. The
+:func:`numpy.matmul` function implements the ``@`` operator.
+
 .. currentmodule:: numpy
 
 Matrix and vector products
 --------------------------
+
 .. autosummary::
    :toctree: generated/
 
    dot
    linalg.multi_dot
    vdot
+   vecdot
    inner
    outer
    matmul
+   linalg.matmul (Array API compatible location)
    tensordot
+   linalg.tensordot (Array API compatible location)
    einsum
    einsum_path
    linalg.matrix_power
    kron
+   linalg.cross
 
 Decompositions
 --------------
@@ -55,8 +75,10 @@ Decompositions
    :toctree: generated/
 
    linalg.cholesky
+   linalg.outer
    linalg.qr
    linalg.svd
+   linalg.svdvals
 
 Matrix eigenvalues
 ------------------
@@ -74,11 +96,14 @@ Norms and other numbers
    :toctree: generated/
 
    linalg.norm
+   linalg.matrix_norm (Array API compatible)
+   linalg.vector_norm (Array API compatible)
    linalg.cond
    linalg.det
    linalg.matrix_rank
    linalg.slogdet
    trace
+   linalg.trace (Array API compatible)
 
 Solving equations and inverting matrices
 ----------------------------------------
@@ -91,6 +116,15 @@ Solving equations and inverting matrices
    linalg.inv
    linalg.pinv
    linalg.tensorinv
+
+Other matrix operations
+-----------------------
+.. autosummary::
+   :toctree: generated/
+
+   diagonal
+   linalg.diagonal (Array API compatible)
+   linalg.matrix_transpose (Array API compatible)
 
 Exceptions
 ----------

@@ -1,7 +1,7 @@
 .. _NEP17:
 
 ================================
-NEP 17 — Split Out Masked Arrays
+NEP 17 — Split out masked arrays
 ================================
 
 :Author: Stéfan van der Walt <stefanv@berkeley.edu>
@@ -69,7 +69,7 @@ how to modify code to use `maskedarray`.
 After two releases, `np.ma` will be removed entirely. In order to obtain
 `np.ma`, a user will install it via `pip install` or via their package
 manager. Subsequently, `importing maskedarray` on a version of NumPy that
-includes it intgrally will raise an `ImportError`.
+includes it integrally will raise an `ImportError`.
 
 Documentation
 `````````````
@@ -118,12 +118,12 @@ After a lively discussion on the mailing list:
 - `MaskedArray` will stay where it is, at least until the new masked array
   class materializes and has been tried in the wild.
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. [1] Subclassing ndarray,
        https://docs.scipy.org/doc/numpy/user/basics.subclassing.html
-.. [2] PyPi: maskedarray, https://pypi.org/project/maskedarray/
+.. [2] PyPI: maskedarray, https://pypi.org/project/maskedarray/
 
 Copyright
 ---------

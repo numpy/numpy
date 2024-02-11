@@ -75,7 +75,7 @@ The axis keyword can be used to specify different axes to reduce: ::
  >>> np.add.reduce(np.arange(10).reshape(2,5),axis=1)
  array([10, 35])
 
-**.accumulate(arr)** applies the binary operator and generates an an
+**.accumulate(arr)** applies the binary operator and generates an
 equivalently shaped array that includes the accumulated amount for each
 element of the array. A couple examples: ::
 

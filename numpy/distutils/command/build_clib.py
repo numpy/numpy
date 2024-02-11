@@ -118,23 +118,31 @@ class build_clib(old_build_clib):
         self.compiler.show_customization()
 
         if not self.disable_optimization:
+            dispatch_hpath = os.path.join("numpy", "distutils", "include", "npy_cpu_dispatch_config.h")
+            dispatch_hpath = os.path.join(self.get_finalized_command("build_src").build_src, dispatch_hpath)
             opt_cache_path = os.path.abspath(
-                os.path.join(self.build_temp, 'ccompiler_opt_cache_clib.py'
-            ))
-            self.compiler_opt = new_ccompiler_opt(
-                compiler=self.compiler, cpu_baseline=self.cpu_baseline,
-                cpu_dispatch=self.cpu_dispatch, cache_path=opt_cache_path
+                os.path.join(self.build_temp, 'ccompiler_opt_cache_clib.py')
             )
-            if not self.compiler_opt.is_cached():
-                log.info("Detected changes on compiler optimizations, force rebuilding")
-                self.force = True
+            if hasattr(self, "compiler_opt"):
+                # By default `CCompilerOpt` update the cache at the exit of
+                # the process, which may lead to duplicate building
+                # (see build_extension()/force_rebuild) if run() called
+                # multiple times within the same os process/thread without
+                # giving the chance the previous instances of `CCompilerOpt`
+                # to update the cache.
+                self.compiler_opt.cache_flush()
+
+            self.compiler_opt = new_ccompiler_opt(
+                compiler=self.compiler, dispatch_hpath=dispatch_hpath,
+                cpu_baseline=self.cpu_baseline, cpu_dispatch=self.cpu_dispatch,
+                cache_path=opt_cache_path
+            )
+            def report(copt):
+                log.info("\n########### CLIB COMPILER OPTIMIZATION ###########")
+                log.info(copt.report(full=True))
 
             import atexit
-            def report():
-                log.info("\n########### CLIB COMPILER OPTIMIZATION ###########")
-                log.info(self.compiler_opt.report(full=True))
-
-            atexit.register(report)
+            atexit.register(report, self.compiler_opt)
 
         if self.have_f_sources():
             from numpy.distutils.fcompiler import new_fcompiler
@@ -177,6 +185,30 @@ class build_clib(old_build_clib):
         for (lib_name, build_info) in libraries:
             self.build_a_library(build_info, lib_name, libraries)
 
+    def assemble_flags(self, in_flags):
+        """ Assemble flags from flag list
+
+        Parameters
+        ----------
+        in_flags : None or sequence
+            None corresponds to empty list.  Sequence elements can be strings
+            or callables that return lists of strings. Callable takes `self` as
+            single parameter.
+
+        Returns
+        -------
+        out_flags : list
+        """
+        if in_flags is None:
+            return []
+        out_flags = []
+        for in_flag in in_flags:
+            if callable(in_flag):
+                out_flags += in_flag(self)
+            else:
+                out_flags.append(in_flag)
+        return out_flags
+
     def build_a_library(self, build_info, lib_name, libraries):
         # default compilers
         compiler = self.compiler
@@ -209,7 +241,12 @@ class build_clib(old_build_clib):
         lib_file = compiler.library_filename(lib_name,
                                              output_dir=self.build_clib)
         depends = sources + build_info.get('depends', [])
-        if not (self.force or newer_group(depends, lib_file, 'newer')):
+
+        force_rebuild = self.force
+        if not self.disable_optimization and not self.compiler_opt.is_cached():
+            log.debug("Detected changes on compiler optimizations")
+            force_rebuild = True
+        if not (force_rebuild or newer_group(depends, lib_file, 'newer')):
             log.debug("skipping '%s' library (up-to-date)", lib_name)
             return
         else:
@@ -250,7 +287,13 @@ class build_clib(old_build_clib):
         include_dirs = build_info.get('include_dirs')
         if include_dirs is None:
             include_dirs = []
-        extra_postargs = build_info.get('extra_compiler_args') or []
+        # Flags can be strings, or callables that return a list of strings.
+        extra_postargs = self.assemble_flags(
+            build_info.get('extra_compiler_args'))
+        extra_cflags = self.assemble_flags(
+            build_info.get('extra_cflags'))
+        extra_cxxflags = self.assemble_flags(
+            build_info.get('extra_cxxflags'))
 
         include_dirs.extend(get_numpy_include_dirs())
         # where compiled F90 module files are:
@@ -264,51 +307,84 @@ class build_clib(old_build_clib):
             # problem, msvc uses its own convention :(
             c_sources += cxx_sources
             cxx_sources = []
+            extra_cflags += extra_cxxflags
 
         # filtering C dispatch-table sources when optimization is not disabled,
         # otherwise treated as normal sources.
         copt_c_sources = []
+        copt_cxx_sources = []
         copt_baseline_flags = []
         copt_macros = []
         if not self.disable_optimization:
-            copt_build_src = None if self.inplace else self.get_finalized_command("build_src").build_src
-            copt_c_sources = [
-                c_sources.pop(c_sources.index(src))
-                for src in c_sources[:] if src.endswith(".dispatch.c")
-            ]
+            bsrc_dir = self.get_finalized_command("build_src").build_src
+            dispatch_hpath = os.path.join("numpy", "distutils", "include")
+            dispatch_hpath = os.path.join(bsrc_dir, dispatch_hpath)
+            include_dirs.append(dispatch_hpath)
+            # copt_build_src = None if self.inplace else bsrc_dir
+            copt_build_src = bsrc_dir
+            for _srcs, _dst, _ext in (
+                ((c_sources,), copt_c_sources, ('.dispatch.c',)),
+                ((c_sources, cxx_sources), copt_cxx_sources,
+                    ('.dispatch.cpp', '.dispatch.cxx'))
+            ):
+                for _src in _srcs:
+                    _dst += [
+                        _src.pop(_src.index(s))
+                        for s in _src[:] if s.endswith(_ext)
+                    ]
             copt_baseline_flags = self.compiler_opt.cpu_baseline_flags()
         else:
             copt_macros.append(("NPY_DISABLE_OPTIMIZATION", 1))
 
         objects = []
+        if copt_cxx_sources:
+            log.info("compiling C++ dispatch-able sources")
+            objects += self.compiler_opt.try_dispatch(
+                copt_c_sources,
+                output_dir=self.build_temp,
+                src_dir=copt_build_src,
+                macros=macros + copt_macros,
+                include_dirs=include_dirs,
+                debug=self.debug,
+                extra_postargs=extra_postargs + extra_cxxflags,
+                ccompiler=cxx_compiler
+            )
+
         if copt_c_sources:
             log.info("compiling C dispatch-able sources")
-            objects += self.compiler_opt.try_dispatch(copt_c_sources,
-                                                      output_dir=self.build_temp,
-                                                      src_dir=copt_build_src,
-                                                      macros=macros + copt_macros,
-                                                      include_dirs=include_dirs,
-                                                      debug=self.debug,
-                                                      extra_postargs=extra_postargs)
+            objects += self.compiler_opt.try_dispatch(
+                copt_c_sources,
+                output_dir=self.build_temp,
+                src_dir=copt_build_src,
+                macros=macros + copt_macros,
+                include_dirs=include_dirs,
+                debug=self.debug,
+                extra_postargs=extra_postargs + extra_cflags)
 
         if c_sources:
             log.info("compiling C sources")
-            objects += compiler.compile(c_sources,
-                                        output_dir=self.build_temp,
-                                        macros=macros + copt_macros,
-                                        include_dirs=include_dirs,
-                                        debug=self.debug,
-                                        extra_postargs=extra_postargs + copt_baseline_flags)
+            objects += compiler.compile(
+                c_sources,
+                output_dir=self.build_temp,
+                macros=macros + copt_macros,
+                include_dirs=include_dirs,
+                debug=self.debug,
+                extra_postargs=(extra_postargs +
+                                copt_baseline_flags +
+                                extra_cflags))
 
         if cxx_sources:
             log.info("compiling C++ sources")
             cxx_compiler = compiler.cxx_compiler()
-            cxx_objects = cxx_compiler.compile(cxx_sources,
-                                               output_dir=self.build_temp,
-                                               macros=macros + copt_macros,
-                                               include_dirs=include_dirs,
-                                               debug=self.debug,
-                                               extra_postargs=extra_postargs + copt_baseline_flags)
+            cxx_objects = cxx_compiler.compile(
+                cxx_sources,
+                output_dir=self.build_temp,
+                macros=macros + copt_macros,
+                include_dirs=include_dirs,
+                debug=self.debug,
+                extra_postargs=(extra_postargs +
+                                copt_baseline_flags +
+                                extra_cxxflags))
             objects.extend(cxx_objects)
 
         if f_sources or fmodule_sources:

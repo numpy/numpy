@@ -13,23 +13,22 @@ and the masking of individual fields.
 #  first place, and then rename the invalid fields with a trailing
 #  underscore. Maybe we could just overload the parser function ?
 
+from numpy.ma import (
+    MAError, MaskedArray, masked, nomask, masked_array, getdata,
+    getmaskarray, filled
+)
+import numpy.ma as ma
 import warnings
 
 import numpy as np
-from numpy import (
-        bool_, dtype, ndarray, recarray, array as narray
-        )
-from numpy.core.records import (
-        fromarrays as recfromarrays, fromrecords as recfromrecords
-        )
+from numpy import dtype, ndarray, array as narray
 
-_byteorderconv = np.core.records._byteorderconv
+from numpy._core.records import (
+    recarray, fromarrays as recfromarrays, fromrecords as recfromrecords
+)
 
-import numpy.ma as ma
-from numpy.ma import (
-        MAError, MaskedArray, masked, nomask, masked_array, getdata,
-        getmaskarray, filled
-        )
+_byteorderconv = np._core.records._byteorderconv
+
 
 _check_fill_value = ma.core._check_fill_value
 
@@ -37,7 +36,7 @@ _check_fill_value = ma.core._check_fill_value
 __all__ = [
     'MaskedRecords', 'mrecarray', 'fromarrays', 'fromrecords',
     'fromtextfile', 'addfield',
-    ]
+]
 
 reserved_fields = ['_data', '_mask', '_fieldmask', 'dtype']
 
@@ -60,7 +59,7 @@ def _checknames(descr, names=None):
         elif isinstance(names, str):
             new_names = names.split(',')
         else:
-            raise NameError("illegal input names %s" % repr(names))
+            raise NameError(f'illegal input names {names!r}')
         nnames = len(new_names)
         if nnames < ndescr:
             new_names += default_names[nnames:]
@@ -129,7 +128,6 @@ class MaskedRecords(MaskedArray):
                     msg = "Mask and data not compatible: data size is %i, " + \
                           "mask size is %i."
                     raise MAError(msg % (nd, nm))
-                copy = True
             if not keep_mask:
                 self.__setmask__(mask)
                 self._sharedmask = True
@@ -199,7 +197,8 @@ class MaskedRecords(MaskedArray):
         try:
             res = fielddict[attr][:2]
         except (TypeError, KeyError) as e:
-            raise AttributeError("record array has no attribute %s" % attr) from e
+            raise AttributeError(
+                f'record array has no attribute {attr}') from e
         # So far, so good
         _localdict = ndarray.__getattribute__(self, '__dict__')
         _data = ndarray.view(self, _localdict['_baseclass'])
@@ -273,8 +272,9 @@ class MaskedRecords(MaskedArray):
         # Let's try to set the field
         try:
             res = fielddict[attr][:2]
-        except (TypeError, KeyError):
-            raise AttributeError("record array has no attribute %s" % attr)
+        except (TypeError, KeyError) as e:
+            raise AttributeError(
+                f'record array has no attribute {attr}') from e
 
         if val is masked:
             _fill_value = _localdict['_fill_value']
@@ -337,13 +337,13 @@ class MaskedRecords(MaskedArray):
 
         """
         if self.size > 1:
-            mstr = ["(%s)" % ",".join([str(i) for i in s])
+            mstr = [f"({','.join([str(i) for i in s])})"
                     for s in zip(*[getattr(self, f) for f in self.dtype.names])]
-            return "[%s]" % ", ".join(mstr)
+            return f"[{', '.join(mstr)}]"
         else:
-            mstr = ["%s" % ",".join([str(i) for i in s])
+            mstr = [f"{','.join([str(i) for i in s])}"
                     for s in zip([getattr(self, f) for f in self.dtype.names])]
-            return "(%s)" % ", ".join(mstr)
+            return f"({', '.join(mstr)})"
 
     def __repr__(self):
         """
@@ -355,7 +355,7 @@ class MaskedRecords(MaskedArray):
         reprstr = [fmt % (f, getattr(self, f)) for f in self.dtype.names]
         reprstr.insert(0, 'masked_records(')
         reprstr.extend([fmt % ('    fill_value', self.fill_value),
-                         '              )'])
+                        '              )'])
         return str("\n".join(reprstr))
 
     def view(self, dtype=None, type=None):
@@ -374,7 +374,6 @@ class MaskedRecords(MaskedArray):
             try:
                 if issubclass(dtype, ndarray):
                     output = ndarray.view(self, dtype)
-                    dtype = None
                 else:
                     output = ndarray.view(self, dtype)
             # OK, there's the change
@@ -470,7 +469,7 @@ class MaskedRecords(MaskedArray):
         """
         (ver, shp, typ, isf, raw, msk, flv) = state
         ndarray.__setstate__(self, (shp, typ, isf, raw))
-        mdtype = dtype([(k, bool_) for (k, _) in self.dtype.descr])
+        mdtype = dtype([(k, np.bool) for (k, _) in self.dtype.descr])
         self.__dict__['_mask'].__setstate__((shp, mdtype, isf, msk))
         self.fill_value = flv
 
@@ -482,6 +481,7 @@ class MaskedRecords(MaskedArray):
         return (_mrreconstruct,
                 (self.__class__, self._baseclass, (0,), 'b',),
                 self.__getstate__())
+
 
 def _mrreconstruct(subtype, baseclass, baseshape, basetype,):
     """
@@ -656,8 +656,8 @@ def openfile(fname):
     # Try to open the file and guess its type
     try:
         f = open(fname)
-    except IOError:
-        raise IOError("No such file: '%s'" % fname)
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"No such file: '{fname}'") from e
     if f.readline()[:2] != "\\x":
         f.seek(0, 0)
         return f
@@ -665,8 +665,9 @@ def openfile(fname):
     raise NotImplementedError("Wow, binary file")
 
 
-def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',
-                 varnames=None, vartypes=None):
+def fromtextfile(fname, delimiter=None, commentchar='#', missingchar='',
+                 varnames=None, vartypes=None,
+                 *, delimitor=np._NoValue):  # backwards compatibility
     """
     Creates a mrecarray from data stored in the file `filename`.
 
@@ -674,7 +675,7 @@ def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',
     ----------
     fname : {file name/handle}
         Handle of an opened file.
-    delimitor : {None, string}, optional
+    delimiter : {None, string}, optional
         Alphanumeric character used to separate columns in the file.
         If None, any (group of) white spacestring(s) will be used.
     commentchar : {'#', string}, optional
@@ -690,6 +691,17 @@ def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',
 
 
     Ultra simple: the varnames are in the header, one line"""
+    if delimitor is not np._NoValue:
+        if delimiter is not None:
+            raise TypeError("fromtextfile() got multiple values for argument "
+                            "'delimiter'")
+        # NumPy 1.22.0, 2021-09-23
+        warnings.warn("The 'delimitor' keyword argument of "
+                      "numpy.ma.mrecords.fromtextfile() is deprecated "
+                      "since NumPy 1.22.0, use 'delimiter' instead.",
+                      DeprecationWarning, stacklevel=2)
+        delimiter = delimitor
+
     # Try to open the file.
     ftext = openfile(fname)
 
@@ -697,14 +709,14 @@ def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',
     while True:
         line = ftext.readline()
         firstline = line[:line.find(commentchar)].strip()
-        _varnames = firstline.split(delimitor)
+        _varnames = firstline.split(delimiter)
         if len(_varnames) > 1:
             break
     if varnames is None:
         varnames = _varnames
 
     # Get the data.
-    _variables = masked_array([line.strip().split(delimitor) for line in ftext
+    _variables = masked_array([line.strip().split(delimiter) for line in ftext
                                if line[0] != commentchar and len(line) > 1])
     (_, nfields) = _variables.shape
     ftext.close()
@@ -752,17 +764,17 @@ def addfield(mrecord, newfield, newfieldname=None):
     newdata = recarray(_data.shape, newdtype)
     # Add the existing field
     [newdata.setfield(_data.getfield(*f), *f)
-         for f in _data.dtype.fields.values()]
+     for f in _data.dtype.fields.values()]
     # Add the new field
     newdata.setfield(newfield._data, *newdata.dtype.fields[newfieldname])
     newdata = newdata.view(MaskedRecords)
     # Get the new mask
     # Create a new empty recarray
-    newmdtype = np.dtype([(n, bool_) for n in newdtype.names])
+    newmdtype = np.dtype([(n, np.bool) for n in newdtype.names])
     newmask = recarray(_data.shape, newmdtype)
     # Add the old masks
     [newmask.setfield(_mask.getfield(*f), *f)
-         for f in _mask.dtype.fields.values()]
+     for f in _mask.dtype.fields.values()]
     # Add the mask of the new field
     newmask.setfield(getmaskarray(newfield),
                      *newmask.dtype.fields[newfieldname])

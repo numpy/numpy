@@ -1,7 +1,7 @@
 .. _NEP05:
 
 =======================================
-NEP 5 — Generalized Universal Functions
+NEP 5 — Generalized universal functions
 =======================================
 
 :Status: Final
@@ -45,7 +45,7 @@ determines how the dimensions of each input/output object are split
 into core and loop dimensions:
 
 #. While an input array has a smaller dimensionality than the corresponding
-   number of core dimensions, 1's are pre-pended to its shape.
+   number of core dimensions, 1's are prepended to its shape.
 #. The core dimensions are removed from all inputs and the remaining
    dimensions are broadcasted; defining the loop dimensions.
 #. The output is given by the loop dimensions plus the output core dimensions.
@@ -86,7 +86,7 @@ Dimension Index
     occurrence of each name in the signature.
 
 
-Details of Signature
+Details of signature
 --------------------
 
 The signature defines "core" dimensionality of input and output
@@ -141,7 +141,7 @@ Here are some examples of signatures:
 |             |                        | and loop/broadcast over the rest. |
 +-------------+------------------------+-----------------------------------+
 
-C-API for implementing Elementary Functions
+C-API for implementing elementary functions
 -------------------------------------------
 
 The current interface remains unchanged, and ``PyUFunc_FromFuncAndData``

@@ -44,27 +44,26 @@ class config(old_config):
         if sys.platform == 'win32' and (self.compiler.compiler_type in
                                         ('msvc', 'intelw', 'intelemw')):
             # XXX: hack to circumvent a python 2.6 bug with msvc9compiler:
-            # initialize call query_vcvarsall, which throws an IOError, and
+            # initialize call query_vcvarsall, which throws an OSError, and
             # causes an error along the way without much information. We try to
-            # catch it here, hoping it is early enough, and print an helpful
+            # catch it here, hoping it is early enough, and print a helpful
             # message instead of Error: None.
             if not self.compiler.initialized:
                 try:
                     self.compiler.initialize()
-                except IOError as e:
+                except OSError as e:
                     msg = textwrap.dedent("""\
                         Could not initialize compiler instance: do you have Visual Studio
                         installed?  If you are trying to build with MinGW, please use "python setup.py
                         build -c mingw32" instead.  If you have Visual Studio installed, check it is
-                        correctly installed, and the right version (VS 2008 for python 2.6, 2.7 and 3.2,
-                        VS 2010 for >= 3.3).
+                        correctly installed, and the right version (VS 2015 as of this writing).
 
                         Original exception was: %s, and the Compiler class was %s
                         ============================================================================""") \
                         % (e, self.compiler.__class__.__name__)
                     print(textwrap.dedent("""\
                         ============================================================================"""))
-                    raise distutils.errors.DistutilsPlatformError(msg)
+                    raise distutils.errors.DistutilsPlatformError(msg) from e
 
             # After MSVC is initialized, add an explicit /MANIFEST to linker
             # flags.  See issues gh-4245 and gh-4101 for details.  Also
@@ -92,12 +91,13 @@ class config(old_config):
         save_compiler = self.compiler
         if lang in ['f77', 'f90']:
             self.compiler = self.fcompiler
+        if self.compiler is None:
+            raise CompileError('%s compiler is not set' % (lang,))
         try:
             ret = mth(*((self,)+args))
         except (DistutilsExecError, CompileError) as e:
-            str(e)
             self.compiler = save_compiler
-            raise CompileError
+            raise CompileError from e
         self.compiler = save_compiler
         return ret
 

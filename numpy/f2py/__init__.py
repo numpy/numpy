@@ -1,118 +1,88 @@
 #!/usr/bin/env python3
 """Fortran to Python Interface Generator.
 
+Copyright 1999 -- 2011 Pearu Peterson all rights reserved.
+Copyright 2011 -- present NumPy Developers.
+Permission to use, modify, and distribute this software is given under the terms
+of the NumPy License.
+
+NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
-__all__ = ['run_main', 'compile', 'f2py_testing']
+__all__ = ['run_main', 'get_include']
 
 import sys
 import subprocess
 import os
+import warnings
 
+from numpy.exceptions import VisibleDeprecationWarning
 from . import f2py2e
-from . import f2py_testing
 from . import diagnose
 
 run_main = f2py2e.run_main
 main = f2py2e.main
 
 
-def compile(source,
-            modulename='untitled',
-            extra_args='',
-            verbose=True,
-            source_fn=None,
-            extension='.f'
-           ):
+def get_include():
     """
-    Build extension module from a Fortran 77 source string with f2py.
+    Return the directory that contains the ``fortranobject.c`` and ``.h`` files.
 
-    Parameters
-    ----------
-    source : str or bytes
-        Fortran source of module / subroutine to compile
+    .. note::
 
-        .. versionchanged:: 1.16.0
-           Accept str as well as bytes
+        This function is not needed when building an extension with
+        `numpy.distutils` directly from ``.f`` and/or ``.pyf`` files
+        in one go.
 
-    modulename : str, optional
-        The name of the compiled python module
-    extra_args : str or list, optional
-        Additional parameters passed to f2py
-
-        .. versionchanged:: 1.16.0
-            A list of args may also be provided.
-
-    verbose : bool, optional
-        Print f2py output to screen
-    source_fn : str, optional
-        Name of the file where the fortran source is written.
-        The default is to use a temporary file with the extension
-        provided by the `extension` parameter
-    extension : {'.f', '.f90'}, optional
-        Filename extension if `source_fn` is not provided.
-        The extension tells which fortran standard is used.
-        The default is `.f`, which implies F77 standard.
-
-        .. versionadded:: 1.11.0
+    Python extension modules built with f2py-generated code need to use
+    ``fortranobject.c`` as a source file, and include the ``fortranobject.h``
+    header. This function can be used to obtain the directory containing
+    both of these files.
 
     Returns
     -------
-    result : int
-        0 on success
+    include_path : str
+        Absolute path to the directory containing ``fortranobject.c`` and
+        ``fortranobject.h``.
 
-    Examples
+    Notes
+    -----
+    .. versionadded:: 1.21.1
+
+    Unless the build system you are using has specific support for f2py,
+    building a Python extension using a ``.pyf`` signature file is a two-step
+    process. For a module ``mymod``:
+
+    * Step 1: run ``python -m numpy.f2py mymod.pyf --quiet``. This
+      generates ``mymodmodule.c`` and (if needed)
+      ``mymod-f2pywrappers.f`` files next to ``mymod.pyf``.
+    * Step 2: build your Python extension module. This requires the
+      following source files:
+
+      * ``mymodmodule.c``
+      * ``mymod-f2pywrappers.f`` (if it was generated in Step 1)
+      * ``fortranobject.c``
+
+    See Also
     --------
-    .. include:: compile_session.dat
-        :literal:
+    numpy.get_include : function that returns the numpy include directory
 
     """
-    import tempfile
-    import shlex
+    return os.path.join(os.path.dirname(__file__), 'src')
 
-    if source_fn is None:
-        f, fname = tempfile.mkstemp(suffix=extension)
-        # f is a file descriptor so need to close it
-        # carefully -- not with .close() directly
-        os.close(f)
+
+def __getattr__(attr):
+
+    # Avoid importing things that aren't needed for building
+    # which might import the main numpy module
+    if attr == "test":
+        from numpy._pytesttester import PytestTester
+        test = PytestTester(__name__)
+        return test
+
     else:
-        fname = source_fn
+        raise AttributeError("module {!r} has no attribute "
+                              "{!r}".format(__name__, attr))
 
-    if not isinstance(source, str):
-        source = str(source, 'utf-8')
-    try:
-        with open(fname, 'w') as f:
-            f.write(source)
 
-        args = ['-c', '-m', modulename, f.name]
-
-        if isinstance(extra_args, str):
-            is_posix = (os.name == 'posix')
-            extra_args = shlex.split(extra_args, posix=is_posix)
-
-        args.extend(extra_args)
-
-        c = [sys.executable,
-             '-c',
-             'import numpy.f2py as f2py2e;f2py2e.main()'] + args
-        try:
-            output = subprocess.check_output(c)
-        except subprocess.CalledProcessError as exc:
-            status = exc.returncode
-            output = ''
-        except OSError:
-            # preserve historic status code used by exec_command()
-            status = 127
-            output = ''
-        else:
-            status = 0
-            output = output.decode()
-        if verbose:
-            print(output)
-    finally:
-        if source_fn is None:
-            os.remove(fname)
-    return status
-
-from numpy._pytesttester import PytestTester
-test = PytestTester(__name__)
-del PytestTester
+def __dir__():
+    return list(globals().keys() | {"test"})

@@ -4,6 +4,7 @@ import json
 import sys
 
 from numpy.distutils import _shell_utils
+from numpy.testing import IS_WASM
 
 argv_cases = [
     [r'exe'],
@@ -49,6 +50,7 @@ def runner(Parser):
         raise NotImplementedError
 
 
+@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
 @pytest.mark.parametrize('argv', argv_cases)
 def test_join_matches_subprocess(Parser, runner, argv):
     """
@@ -64,6 +66,7 @@ def test_join_matches_subprocess(Parser, runner, argv):
     assert json.loads(json_out) == argv
 
 
+@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
 @pytest.mark.parametrize('argv', argv_cases)
 def test_roundtrip(Parser, argv):
     """

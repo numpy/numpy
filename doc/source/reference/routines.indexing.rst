@@ -1,9 +1,10 @@
 .. _routines.indexing:
+.. _arrays.indexing:
 
 Indexing routines
 =================
 
-.. seealso:: :ref:`Indexing <arrays.indexing>`
+.. seealso:: :ref:`basics.indexing`
 
 .. currentmodule:: numpy
 
@@ -42,7 +43,6 @@ Indexing-like operations
    diag
    diagonal
    select
-   lib.stride_tricks.as_strided
 
 Inserting data into arrays
 --------------------------
@@ -65,4 +65,4 @@ Iterating over arrays
    ndindex
    nested_iters
    flatiter
-   lib.Arrayterator
+   iterable

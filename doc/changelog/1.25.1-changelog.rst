@@ -1,0 +1,37 @@
+
+Contributors
+============
+
+A total of 10 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Andrew Nelson
+* Charles Harris
+* Developer-Ecosystem-Engineering
+* Hood Chatham
+* Nathan Goldbaum
+* Rohit Goswami
+* Sebastian Berg
+* Tim Paine +
+* dependabot[bot]
+* matoro +
+
+Pull requests merged
+====================
+
+A total of 14 pull requests were merged for this release.
+
+* `#23968 <https://github.com/numpy/numpy/pull/23968>`__: MAINT: prepare 1.25.x for further development
+* `#24036 <https://github.com/numpy/numpy/pull/24036>`__: BLD: Port long double identification to C for meson
+* `#24037 <https://github.com/numpy/numpy/pull/24037>`__: BUG: Fix reduction ``return NULL`` to be ``goto fail``
+* `#24038 <https://github.com/numpy/numpy/pull/24038>`__: BUG: Avoid undefined behavior in array.astype()
+* `#24039 <https://github.com/numpy/numpy/pull/24039>`__: BUG: Ensure ``__array_ufunc__`` works without any kwargs passed
+* `#24117 <https://github.com/numpy/numpy/pull/24117>`__: MAINT: Pin urllib3 to avoid anaconda-client bug.
+* `#24118 <https://github.com/numpy/numpy/pull/24118>`__: TST: Pin pydantic<2 in Pyodide workflow
+* `#24119 <https://github.com/numpy/numpy/pull/24119>`__: MAINT: Bump pypa/cibuildwheel from 2.13.0 to 2.13.1
+* `#24120 <https://github.com/numpy/numpy/pull/24120>`__: MAINT: Bump actions/checkout from 3.5.2 to 3.5.3
+* `#24122 <https://github.com/numpy/numpy/pull/24122>`__: BUG: Multiply or Divides using SIMD without a full vector can...
+* `#24127 <https://github.com/numpy/numpy/pull/24127>`__: MAINT: testing for IS_MUSL closes #24074
+* `#24128 <https://github.com/numpy/numpy/pull/24128>`__: BUG: Only replace dtype temporarily if dimensions changed
+* `#24129 <https://github.com/numpy/numpy/pull/24129>`__: MAINT: Bump actions/setup-node from 3.6.0 to 3.7.0
+* `#24134 <https://github.com/numpy/numpy/pull/24134>`__: BUG: Fix private procedures in f2py modules

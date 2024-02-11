@@ -303,7 +303,7 @@ A total of 438 pull requests were merged for this release.
 * `#10566 <https://github.com/numpy/numpy/pull/10566>`__: BUG: Fix travis failure in previous commit
 * `#10571 <https://github.com/numpy/numpy/pull/10571>`__: BUG: Fix corner-case behavior of cond() and use SVD when possible
 * `#10576 <https://github.com/numpy/numpy/pull/10576>`__: MAINT: Fix misc. documentation typos
-* `#10583 <https://github.com/numpy/numpy/pull/10583>`__: MAINT: Fix typos in DISTUTILS.rst.txt.
+* `#10583 <https://github.com/numpy/numpy/pull/10583>`__: MAINT: Fix typos in DISTUTILS.rst.
 * `#10588 <https://github.com/numpy/numpy/pull/10588>`__: BUG: Revert sort optimization in np.unique.
 * `#10589 <https://github.com/numpy/numpy/pull/10589>`__: BUG: fix entry_points typo for from-template
 * `#10591 <https://github.com/numpy/numpy/pull/10591>`__: ENH: Add histogram_bin_edges function and test
@@ -580,5 +580,5 @@ A total of 438 pull requests were merged for this release.
 * `#11532 <https://github.com/numpy/numpy/pull/11532>`__: BUG: Decref of field title caused segfault
 * `#11540 <https://github.com/numpy/numpy/pull/11540>`__: DOC: Update the 1.15.0 release notes.
 * `#11577 <https://github.com/numpy/numpy/pull/11577>`__: BLD: Modify cpu detection and printing to get working aarch64...
-* `#11578 <https://github.com/numpy/numpy/pull/11578>`__: DOC: link to TESTS.rst.txt testing guidelines, tweak testing...
+* `#11578 <https://github.com/numpy/numpy/pull/11578>`__: DOC: link to TESTS.rst testing guidelines, tweak testing...
 * `#11602 <https://github.com/numpy/numpy/pull/11602>`__: TST: Add Python 3.7 to CI testing

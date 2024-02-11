@@ -47,6 +47,7 @@ Currently, the following classes are available, along with their section names:
     _numpy_info:Numeric
     _pkg_config_info:None
     accelerate_info:accelerate
+    accelerate_lapack_info:accelerate
     agg2_info:agg2
     amd_info:amd
     atlas_3_10_blas_info:atlas
@@ -62,6 +63,7 @@ Currently, the following classes are available, along with their section names:
     blas_ilp64_plain_opt_info:ALL      # usage recommended (general ILP64 BLAS, no symbol suffix)
     blas_info:blas
     blas_mkl_info:mkl
+    blas_ssl2_info:ssl2
     blas_opt_info:ALL                  # usage recommended
     blas_src_info:blas_src
     blis_info:blis
@@ -93,9 +95,11 @@ Currently, the following classes are available, along with their section names:
     lapack_ilp64_plain_opt_info:ALL    # usage recommended (general ILP64 LAPACK, no symbol suffix)
     lapack_info:lapack
     lapack_mkl_info:mkl
+    lapack_ssl2_info:ssl2
     lapack_opt_info:ALL                # usage recommended
     lapack_src_info:lapack_src
     mkl_info:mkl
+    ssl2_info:ssl2
     numarray_info:numarray
     numerix_info:numerix
     numpy_info:numpy
@@ -113,6 +117,19 @@ Currently, the following classes are available, along with their section names:
     wx_info:wx
     x11_info:x11
     xft_info:xft
+
+Note that blas_opt_info and lapack_opt_info honor the NPY_BLAS_ORDER
+and NPY_LAPACK_ORDER environment variables to determine the order in which
+specific BLAS and LAPACK libraries are searched for.
+
+This search (or autodetection) can be bypassed by defining the environment
+variables NPY_BLAS_LIBS and NPY_LAPACK_LIBS, which should then contain the
+exact linker flags to use (language will be set to F77). Building against
+Netlib BLAS/LAPACK or stub files, in order to be able to switch BLAS and LAPACK
+implementations at runtime. If using this to build NumPy itself, it is
+recommended to also define NPY_CBLAS_LIBS (assuming your BLAS library has a
+CBLAS interface) to enable CBLAS usage for matrix multiplication (unoptimized
+otherwise).
 
 Example:
 ----------
@@ -290,7 +307,7 @@ if sys.platform == 'win32':
     vcpkg = shutil.which('vcpkg')
     if vcpkg:
         vcpkg_dir = os.path.dirname(vcpkg)
-        if platform.architecture() == '32bit':
+        if platform.architecture()[0] == '32bit':
             specifier = 'x86'
         else:
             specifier = 'x64'
@@ -314,7 +331,7 @@ else:
                                  '/opt/local/lib', '/sw/lib'], platform_bits)
     default_runtime_dirs = []
     default_include_dirs = ['/usr/local/include',
-                            '/opt/include', '/usr/include',
+                            '/opt/include',
                             # path of umfpack under macports
                             '/opt/local/include/ufsparse',
                             '/opt/local/include', '/sw/include',
@@ -323,8 +340,7 @@ else:
 
     default_x11_lib_dirs = libpaths(['/usr/X11R6/lib', '/usr/X11/lib',
                                      '/usr/lib'], platform_bits)
-    default_x11_include_dirs = ['/usr/X11R6/include', '/usr/X11/include',
-                                '/usr/include']
+    default_x11_include_dirs = ['/usr/X11R6/include', '/usr/X11/include']
 
     if os.path.exists('/usr/lib/X11'):
         globbed_x11_dir = glob('/usr/lib/*/libX11.so')
@@ -363,22 +379,6 @@ default_src_dirs = [_m for _m in default_src_dirs if os.path.isdir(_m)]
 so_ext = get_shared_lib_extension()
 
 
-def is_symlink_to_accelerate(filename):
-    accelpath = '/System/Library/Frameworks/Accelerate.framework'
-    return (sys.platform == 'darwin' and os.path.islink(filename) and
-            os.path.realpath(filename).startswith(accelpath))
-
-
-_accel_msg = (
-    'Found {filename}, but that file is a symbolic link to the '
-    'MacOS Accelerate framework, which is not supported by NumPy. '
-    'You must configure the build to use a different optimized library, '
-    'or disable the use of optimized BLAS and LAPACK by setting the '
-    'environment variables NPY_BLAS_ORDER="" and NPY_LAPACK_ORDER="" '
-    'before building NumPy.'
-)
-
-
 def get_standard_file(fname):
     """Returns a list of files named 'fname' from
     1) System-wide directory (directory-location of this module)
@@ -391,11 +391,10 @@ def get_standard_file(fname):
         f = __file__
     except NameError:
         f = sys.argv[0]
-    else:
-        sysfile = os.path.join(os.path.split(os.path.abspath(f))[0],
-                               fname)
-        if os.path.isfile(sysfile):
-            filenames.append(sysfile)
+    sysfile = os.path.join(os.path.split(os.path.abspath(f))[0],
+                           fname)
+    if os.path.isfile(sysfile):
+        filenames.append(sysfile)
 
     # Home directory
     # And look for the user config file
@@ -418,7 +417,8 @@ def get_standard_file(fname):
 def _parse_env_order(base_order, env):
     """ Parse an environment variable `env` by splitting with "," and only returning elements from `base_order`
 
-    This method will sequence the environment variable and check for their invidual elements in `base_order`.
+    This method will sequence the environment variable and check for their
+    individual elements in `base_order`.
 
     The items in the environment variable may be negated via '^item' or '!itema,itemb'.
     It must start with ^/! to negate all options.
@@ -505,7 +505,11 @@ def get_info(name, notfound_action=0):
       1 - display warning message
       2 - raise error
     """
-    cl = {'atlas': atlas_info,  # use lapack_opt or blas_opt instead
+    cl = {'armpl': armpl_info,
+          'blas_armpl': blas_armpl_info,
+          'lapack_armpl': lapack_armpl_info,
+          'fftw3_armpl': fftw3_armpl_info,
+          'atlas': atlas_info,  # use lapack_opt or blas_opt instead
           'atlas_threads': atlas_threads_info,                # ditto
           'atlas_blas': atlas_blas_info,
           'atlas_blas_threads': atlas_blas_threads_info,
@@ -519,6 +523,7 @@ def get_info(name, notfound_action=0):
           'lapack_atlas_3_10_threads': lapack_atlas_3_10_threads_info,  # ditto
           'flame': flame_info,          # use lapack_opt instead
           'mkl': mkl_info,
+          'ssl2': ssl2_info,
           # openblas which may or may not have embedded lapack
           'openblas': openblas_info,          # use blas_opt instead
           # openblas with embedded lapack
@@ -527,6 +532,10 @@ def get_info(name, notfound_action=0):
           'blis': blis_info,                  # use blas_opt instead
           'lapack_mkl': lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl': blas_mkl_info,          # use blas_opt instead
+          'lapack_ssl2': lapack_ssl2_info,      
+          'blas_ssl2': blas_ssl2_info,          
+          'accelerate': accelerate_info,      # use blas_opt instead
+          'accelerate_lapack': accelerate_lapack_info,
           'openblas64_': openblas64__info,
           'openblas64__lapack': openblas64__lapack_info,
           'openblas_ilp64': openblas_ilp64_info,
@@ -1017,9 +1026,6 @@ class system_info:
             for prefix in lib_prefixes:
                 p = self.combine_paths(lib_dir, prefix + lib + ext)
                 if p:
-                    # p[0] is the full path to the binary library file.
-                    if is_symlink_to_accelerate(p[0]):
-                        raise RuntimeError(_accel_msg.format(filename=p[0]))
                     break
             if p:
                 assert len(p) == 1
@@ -1158,6 +1164,16 @@ class fftw3_info(fftw_info):
                     'macros':[('SCIPY_FFTW3_H', None)]},
                   ]
 
+    
+class fftw3_armpl_info(fftw_info):
+    section = 'fftw3'
+    dir_env_var = 'ARMPL_DIR'
+    notfounderror = FFTWNotFoundError
+    ver_info = [{'name': 'fftw3',
+                    'libs': ['armpl_lp64_mp'],
+                    'includes': ['fftw3.h'],
+                    'macros': [('SCIPY_FFTW3_H', None)]}]
+
 
 class dfftw_info(fftw_info):
     section = 'fftw'
@@ -1252,7 +1268,7 @@ class mkl_info(system_info):
         paths = os.environ.get('LD_LIBRARY_PATH', '').split(os.pathsep)
         ld_so_conf = '/etc/ld.so.conf'
         if os.path.isfile(ld_so_conf):
-            with open(ld_so_conf, 'r') as f:
+            with open(ld_so_conf) as f:
                 for d in f:
                     d = d.strip()
                     if d:
@@ -1317,6 +1333,88 @@ class blas_mkl_info(mkl_info):
     pass
 
 
+class ssl2_info(system_info):
+    section = 'ssl2'
+    dir_env_var = 'SSL2_DIR'
+    # Multi-threaded version. Python itself must be built by Fujitsu compiler.
+    _lib_ssl2 = ['fjlapackexsve']
+    # Single-threaded version
+    #_lib_ssl2 = ['fjlapacksve']
+
+    def get_tcsds_rootdir(self):
+        tcsdsroot = os.environ.get('TCSDS_PATH', None)
+        if tcsdsroot is not None:
+            return tcsdsroot
+        return None
+
+    def __init__(self):
+        tcsdsroot = self.get_tcsds_rootdir()
+        if tcsdsroot is None:
+            system_info.__init__(self)
+        else:
+            system_info.__init__(
+                self,
+                default_lib_dirs=[os.path.join(tcsdsroot, 'lib64')],
+                default_include_dirs=[os.path.join(tcsdsroot,
+                    'clang-comp/include')])
+
+    def calc_info(self):
+        tcsdsroot = self.get_tcsds_rootdir()
+
+        lib_dirs = self.get_lib_dirs()
+        if lib_dirs is None:
+            lib_dirs = os.path.join(tcsdsroot, 'lib64')
+
+        incl_dirs = self.get_include_dirs()
+        if incl_dirs is None:
+            incl_dirs = os.path.join(tcsdsroot, 'clang-comp/include')
+
+        ssl2_libs = self.get_libs('ssl2_libs', self._lib_ssl2)
+
+        info = self.check_libs2(lib_dirs, ssl2_libs)
+        if info is None:
+            return
+        dict_append(info,
+                    define_macros=[('HAVE_CBLAS', None),
+                                   ('HAVE_SSL2', 1)],
+                    include_dirs=incl_dirs,)
+        self.set_info(**info)
+
+
+class lapack_ssl2_info(ssl2_info):
+    pass
+
+
+class blas_ssl2_info(ssl2_info):
+    pass
+
+
+
+class armpl_info(system_info):
+    section = 'armpl'
+    dir_env_var = 'ARMPL_DIR'
+    _lib_armpl = ['armpl_lp64_mp']
+
+    def calc_info(self):
+        lib_dirs = self.get_lib_dirs()
+        incl_dirs = self.get_include_dirs()
+        armpl_libs = self.get_libs('armpl_libs', self._lib_armpl)
+        info = self.check_libs2(lib_dirs, armpl_libs)
+        if info is None:
+            return
+        dict_append(info,
+                    define_macros=[('SCIPY_MKL_H', None),
+                                   ('HAVE_CBLAS', None)],
+                    include_dirs=incl_dirs)
+        self.set_info(**info)
+
+class lapack_armpl_info(armpl_info):
+    pass
+
+class blas_armpl_info(armpl_info):
+    pass
+
+
 class atlas_info(system_info):
     section = 'atlas'
     dir_env_var = 'ATLAS'
@@ -1348,8 +1446,6 @@ class atlas_info(system_info):
         lapack = None
         atlas_1 = None
         for d in lib_dirs:
-            # FIXME: lapack_atlas is unused
-            lapack_atlas = self.check_libs2(d, ['lapack_atlas'], [])
             atlas = self.check_libs2(d, atlas_libs, [])
             if atlas is not None:
                 lib_dirs2 = [d] + self.combine_paths(d, ['atlas*', 'ATLAS*'])
@@ -1549,6 +1645,9 @@ class lapack_info(system_info):
 
 
 class lapack_src_info(system_info):
+    # LAPACK_SRC is deprecated, please do not use this!
+    # Build or install a BLAS library via your package manager or from
+    # source separately.
     section = 'lapack_src'
     dir_env_var = 'LAPACK_SRC'
     notfounderror = LapackSrcNotFoundError
@@ -1751,12 +1850,28 @@ def get_atlas_version(**config):
 
 class lapack_opt_info(system_info):
     notfounderror = LapackNotFoundError
+
     # List of all known LAPACK libraries, in the default order
-    lapack_order = ['mkl', 'openblas', 'flame', 'atlas', 'lapack']
+    lapack_order = ['armpl', 'mkl', 'ssl2', 'openblas', 'flame',
+                    'accelerate', 'atlas', 'lapack']
     order_env_var_name = 'NPY_LAPACK_ORDER'
+    
+    def _calc_info_armpl(self):
+        info = get_info('lapack_armpl')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
 
     def _calc_info_mkl(self):
         info = get_info('lapack_mkl')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
+
+    def _calc_info_ssl2(self):
+        info = get_info('lapack_ssl2')
         if info:
             self.set_info(**info)
             return True
@@ -1845,6 +1960,16 @@ class lapack_opt_info(system_info):
             return True
         return False
 
+    def _calc_info_from_envvar(self):
+        info = {}
+        info['language'] = 'f77'
+        info['libraries'] = []
+        info['include_dirs'] = []
+        info['define_macros'] = []
+        info['extra_link_args'] = os.environ['NPY_LAPACK_LIBS'].split()
+        self.set_info(**info)
+        return True
+
     def _calc_info(self, name):
         return getattr(self, '_calc_info_{}'.format(name))()
 
@@ -1854,6 +1979,12 @@ class lapack_opt_info(system_info):
             raise ValueError("lapack_opt_info user defined "
                              "LAPACK order has unacceptable "
                              "values: {}".format(unknown_order))
+
+        if 'NPY_LAPACK_LIBS' in os.environ:
+            # Bypass autodetection, set language to F77 and use env var linker
+            # flags directly
+            self._calc_info_from_envvar()
+            return
 
         for lapack in lapack_order:
             if self._calc_info(lapack):
@@ -1886,14 +2017,17 @@ class _ilp64_opt_info_mixin:
 
 class lapack_ilp64_opt_info(lapack_opt_info, _ilp64_opt_info_mixin):
     notfounderror = LapackILP64NotFoundError
-    lapack_order = ['openblas64_', 'openblas_ilp64']
+    lapack_order = ['openblas64_', 'openblas_ilp64', 'accelerate']
     order_env_var_name = 'NPY_LAPACK_ILP64_ORDER'
 
     def _calc_info(self, name):
+        print('lapack_ilp64_opt_info._calc_info(name=%s)' % (name))
         info = get_info(name + '_lapack')
         if self._check_info(info):
             self.set_info(**info)
             return True
+        else:
+            print('%s_lapack does not exist' % (name))
         return False
 
 
@@ -1911,11 +2045,27 @@ class lapack64__opt_info(lapack_ilp64_opt_info):
 class blas_opt_info(system_info):
     notfounderror = BlasNotFoundError
     # List of all known BLAS libraries, in the default order
-    blas_order = ['mkl', 'blis', 'openblas', 'atlas', 'blas']
+
+    blas_order = ['armpl', 'mkl', 'ssl2', 'blis', 'openblas',
+                  'accelerate', 'atlas', 'blas']
     order_env_var_name = 'NPY_BLAS_ORDER'
+    
+    def _calc_info_armpl(self):
+        info = get_info('blas_armpl')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
 
     def _calc_info_mkl(self):
         info = get_info('blas_mkl')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
+
+    def _calc_info_ssl2(self):
+        info = get_info('blas_ssl2')
         if info:
             self.set_info(**info)
             return True
@@ -1977,6 +2127,20 @@ class blas_opt_info(system_info):
         self.set_info(**info)
         return True
 
+    def _calc_info_from_envvar(self):
+        info = {}
+        info['language'] = 'f77'
+        info['libraries'] = []
+        info['include_dirs'] = []
+        info['define_macros'] = []
+        info['extra_link_args'] = os.environ['NPY_BLAS_LIBS'].split()
+        if 'NPY_CBLAS_LIBS' in os.environ:
+            info['define_macros'].append(('HAVE_CBLAS', None))
+            info['extra_link_args'].extend(
+                                        os.environ['NPY_CBLAS_LIBS'].split())
+        self.set_info(**info)
+        return True
+
     def _calc_info(self, name):
         return getattr(self, '_calc_info_{}'.format(name))()
 
@@ -1984,6 +2148,12 @@ class blas_opt_info(system_info):
         blas_order, unknown_order = _parse_env_order(self.blas_order, self.order_env_var_name)
         if len(unknown_order) > 0:
             raise ValueError("blas_opt_info user defined BLAS order has unacceptable values: {}".format(unknown_order))
+
+        if 'NPY_BLAS_LIBS' in os.environ:
+            # Bypass autodetection, set language to F77 and use env var linker
+            # flags directly
+            self._calc_info_from_envvar()
+            return
 
         for blas in blas_order:
             if self._calc_info(blas):
@@ -1998,7 +2168,7 @@ class blas_opt_info(system_info):
 
 class blas_ilp64_opt_info(blas_opt_info, _ilp64_opt_info_mixin):
     notfounderror = BlasILP64NotFoundError
-    blas_order = ['openblas64_', 'openblas_ilp64']
+    blas_order = ['openblas64_', 'openblas_ilp64', 'accelerate']
     order_env_var_name = 'NPY_BLAS_ILP64_ORDER'
 
     def _calc_info(self, name):
@@ -2017,6 +2187,14 @@ class blas_ilp64_plain_opt_info(blas_ilp64_opt_info):
 class blas64__opt_info(blas_ilp64_opt_info):
     symbol_prefix = ''
     symbol_suffix = '64_'
+
+
+class cblas_info(system_info):
+    section = 'cblas'
+    dir_env_var = 'CBLAS'
+    # No default as it's used only in blas_info
+    _lib_names = []
+    notfounderror = BlasNotFoundError
 
 
 class blas_info(system_info):
@@ -2040,6 +2218,13 @@ class blas_info(system_info):
             # often not installed when mingw is being used. This rough
             # treatment is not desirable, but windows is tricky.
             info['language'] = 'f77'  # XXX: is it generally true?
+            # If cblas is given as an option, use those
+            cblas_info_obj = cblas_info()
+            cblas_opt = cblas_info_obj.get_option_single('cblas_libs', 'libraries')
+            cblas_libs = cblas_info_obj.get_libs(cblas_opt, None)
+            if cblas_libs:
+                info['libraries'] = cblas_libs + blas_libs
+                info['define_macros'] = [('HAVE_CBLAS', None)]
         else:
             lib = self.get_cblas_libs(info)
             if lib is not None:
@@ -2087,7 +2272,7 @@ class blas_info(system_info):
             }""")
         src = os.path.join(tmpdir, 'source.c')
         try:
-            with open(src, 'wt') as f:
+            with open(src, 'w') as f:
                 f.write(s)
 
             try:
@@ -2242,7 +2427,7 @@ class openblas_info(blas_info):
         except Exception:
             extra_args = []
         try:
-            with open(src, 'wt') as f:
+            with open(src, 'w') as f:
                 f.write(s)
             obj = c.compile([src], output_dir=tmpdir)
             try:
@@ -2353,7 +2538,7 @@ class flame_info(system_info):
         # Add the additional "extra" arguments
         extra_args = info.get('extra_link_args', [])
         try:
-            with open(src, 'wt') as f:
+            with open(src, 'w') as f:
                 f.write(s)
             obj = c.compile([src], output_dir=tmpdir)
             try:
@@ -2373,6 +2558,10 @@ class flame_info(system_info):
         info = self.check_libs2(lib_dirs, flame_libs, [])
         if info is None:
             return
+
+        # Add the extra flag args to info
+        extra_info = self.calc_extra_info()
+        dict_append(info, **extra_info)
 
         if self.check_embedded_lapack(info):
             # check if the user has supplied all information required
@@ -2428,8 +2617,6 @@ class accelerate_info(system_info):
                     'accelerate' in libraries):
                 if intel:
                     args.extend(['-msse3'])
-                else:
-                    args.extend(['-faltivec'])
                 args.extend([
                     '-I/System/Library/Frameworks/vecLib.framework/Headers'])
                 link_args.extend(['-Wl,-framework', '-Wl,Accelerate'])
@@ -2438,21 +2625,36 @@ class accelerate_info(system_info):
                       'veclib' in libraries):
                 if intel:
                     args.extend(['-msse3'])
-                else:
-                    args.extend(['-faltivec'])
                 args.extend([
                     '-I/System/Library/Frameworks/vecLib.framework/Headers'])
                 link_args.extend(['-Wl,-framework', '-Wl,vecLib'])
 
             if args:
+                macros = [
+                    ('NO_ATLAS_INFO', 3),
+                    ('HAVE_CBLAS', None),
+                    ('ACCELERATE_NEW_LAPACK', None),
+                ]
+                if(os.getenv('NPY_USE_BLAS_ILP64', None)):
+                    print('Setting HAVE_BLAS_ILP64')
+                    macros += [
+                        ('HAVE_BLAS_ILP64', None),
+                        ('ACCELERATE_LAPACK_ILP64', None),
+                    ]
                 self.set_info(extra_compile_args=args,
                               extra_link_args=link_args,
-                              define_macros=[('NO_ATLAS_INFO', 3),
-                                             ('HAVE_CBLAS', None)])
+                              define_macros=macros)
 
         return
 
+class accelerate_lapack_info(accelerate_info):
+    def _calc_info(self):
+        return super()._calc_info()
+
 class blas_src_info(system_info):
+    # BLAS_SRC is deprecated, please do not use this!
+    # Build or install a BLAS library via your package manager or from
+    # source separately.
     section = 'blas_src'
     dir_env_var = 'BLAS_SRC'
     notfounderror = BlasSrcNotFoundError
@@ -3056,8 +3258,9 @@ def show_all(argv=None):
             del show_only[show_only.index(name)]
         conf = c()
         conf.verbosity = 2
-        # FIXME: r not used
-        r = conf.get_info()
+        # we don't need the result, but we want
+        # the side effect of printing diagnostics
+        conf.get_info()
     if show_only:
         log.info('Info classes not defined: %s', ','.join(show_only))
 

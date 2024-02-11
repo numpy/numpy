@@ -8,8 +8,8 @@
 import operator
 
 import numpy as np
-from numpy import ndarray, float_
-import numpy.core.umath as umath
+from numpy import ndarray
+import numpy._core.umath as umath
 import numpy.testing
 from numpy.testing import (
     assert_, assert_allclose, assert_array_almost_equal_nulp,
@@ -54,8 +54,10 @@ def approx(a, b, fill_value=True, rtol=1e-5, atol=1e-8):
     d2 = filled(b)
     if d1.dtype.char == "O" or d2.dtype.char == "O":
         return np.equal(d1, d2).ravel()
-    x = filled(masked_array(d1, copy=False, mask=m), fill_value).astype(float_)
-    y = filled(masked_array(d2, copy=False, mask=m), 1).astype(float_)
+    x = filled(
+        masked_array(d1, copy=False, mask=m), fill_value
+    ).astype(np.float64)
+    y = filled(masked_array(d2, copy=False, mask=m), 1).astype(np.float64)
     d = np.less_equal(umath.absolute(x - y), atol + rtol * umath.absolute(y))
     return d.ravel()
 
@@ -73,8 +75,10 @@ def almost(a, b, decimal=6, fill_value=True):
     d2 = filled(b)
     if d1.dtype.char == "O" or d2.dtype.char == "O":
         return np.equal(d1, d2).ravel()
-    x = filled(masked_array(d1, copy=False, mask=m), fill_value).astype(float_)
-    y = filled(masked_array(d2, copy=False, mask=m), 1).astype(float_)
+    x = filled(
+        masked_array(d1, copy=False, mask=m), fill_value
+    ).astype(np.float64)
+    y = filled(masked_array(d2, copy=False, mask=m), 1).astype(np.float64)
     d = np.around(np.abs(x - y), decimal) <= 10.0 ** (-decimal)
     return d.ravel()
 
@@ -86,7 +90,7 @@ def _assert_equal_on_sequences(actual, desired, err_msg=''):
     """
     assert_equal(len(actual), len(desired), err_msg)
     for k in range(len(desired)):
-        assert_equal(actual[k], desired[k], 'item=%r\n%s' % (k, err_msg))
+        assert_equal(actual[k], desired[k], f'item={k!r}\n{err_msg}')
     return
 
 
@@ -117,8 +121,8 @@ def assert_equal(actual, desired, err_msg=''):
         assert_equal(len(actual), len(desired), err_msg)
         for k, i in desired.items():
             if k not in actual:
-                raise AssertionError("%s not in %s" % (k, actual))
-            assert_equal(actual[k], desired[k], 'key=%r\n%s' % (k, err_msg))
+                raise AssertionError(f"{k} not in {actual}")
+            assert_equal(actual[k], desired[k], f'key={k!r}\n{err_msg}')
         return
     # Case #2: lists .....
     if isinstance(desired, (list, tuple)) and isinstance(actual, (list, tuple)):
@@ -134,8 +138,8 @@ def assert_equal(actual, desired, err_msg=''):
         msg = build_err_msg([actual, desired],
                             err_msg, header='', names=('x', 'y'))
         raise ValueError(msg)
-    actual = np.array(actual, copy=False, subok=True)
-    desired = np.array(desired, copy=False, subok=True)
+    actual = np.asanyarray(actual)
+    desired = np.asanyarray(desired)
     (actual_dtype, desired_dtype) = (actual.dtype, desired.dtype)
     if actual_dtype.char == "S" and desired_dtype.char == "S":
         return _assert_equal_on_sequences(actual.tolist(),
@@ -156,12 +160,12 @@ def fail_if_equal(actual, desired, err_msg='',):
         for k, i in desired.items():
             if k not in actual:
                 raise AssertionError(repr(k))
-            fail_if_equal(actual[k], desired[k], 'key=%r\n%s' % (k, err_msg))
+            fail_if_equal(actual[k], desired[k], f'key={k!r}\n{err_msg}')
         return
     if isinstance(desired, (list, tuple)) and isinstance(actual, (list, tuple)):
         fail_if_equal(len(actual), len(desired), err_msg)
         for k in range(len(desired)):
-            fail_if_equal(actual[k], desired[k], 'item=%r\n%s' % (k, err_msg))
+            fail_if_equal(actual[k], desired[k], f'item={k!r}\n{err_msg}')
         return
     if isinstance(actual, np.ndarray) or isinstance(desired, np.ndarray):
         return fail_if_array_equal(actual, desired, err_msg)
@@ -233,7 +237,7 @@ def fail_if_array_equal(x, y, err_msg='', verbose=True):
 
     """
     def compare(x, y):
-        return (not np.alltrue(approx(x, y)))
+        return (not np.all(approx(x, y)))
     assert_array_compare(compare, x, y, err_msg=err_msg, verbose=verbose,
                          header='Arrays are not equal')
 

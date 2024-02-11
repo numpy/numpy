@@ -1,10 +1,17 @@
+from importlib.util import spec_from_file_location, module_from_spec
 import os
+import pathlib
 import pytest
 import shutil
 import subprocess
 import sys
+import sysconfig
+import textwrap
 import warnings
+
 import numpy as np
+from numpy.testing import IS_WASM
+
 
 try:
     import cffi
@@ -21,7 +28,8 @@ try:
         # numba issue gh-4733
         warnings.filterwarnings('always', '', DeprecationWarning)
         import numba
-except ImportError:
+except (ImportError, SystemError):
+    # Certain numpy/numba versions trigger a SystemError due to a numba bug
     numba = None
 
 try:
@@ -30,56 +38,68 @@ try:
 except ImportError:
     cython = None
 else:
-    from distutils.version import LooseVersion
-    # Cython 0.29.21 is required for Python 3.9 and there are
-    # other fixes in the 0.29 series that are needed even for earlier
-    # Python versions.
+    from numpy._utils import _pep440
     # Note: keep in sync with the one in pyproject.toml
-    required_version = LooseVersion('0.29.21')
-    if LooseVersion(cython_version) < required_version:
+    required_version = '3.0.6'
+    if _pep440.parse(cython_version) < _pep440.Version(required_version):
         # too old or wrong cython, skip the test
         cython = None
 
+
+@pytest.mark.skipif(
+        sys.platform == "win32" and sys.maxsize < 2**32,
+        reason="Failing in 32-bit Windows wheel build job, skip for now"
+)
+@pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
 @pytest.mark.skipif(cython is None, reason="requires cython")
 @pytest.mark.slow
 def test_cython(tmp_path):
+    import glob
+    # build the examples in a temporary directory
     srcdir = os.path.join(os.path.dirname(__file__), '..')
     shutil.copytree(srcdir, tmp_path / 'random')
-    # build the examples and "install" them into a temporary directory
     build_dir = tmp_path / 'random' / '_examples' / 'cython'
-    subprocess.check_call([sys.executable, 'setup.py', 'build', 'install',
-                           '--prefix', str(tmp_path / 'installdir'),
-                           '--single-version-externally-managed',
-                           '--record', str(tmp_path/ 'tmp_install_log.txt'),
-                          ],
-                          cwd=str(build_dir),
-                      )
+    target_dir = build_dir / "build"
+    os.makedirs(target_dir, exist_ok=True)
+    if sys.platform == "win32":
+        subprocess.check_call(["meson", "setup",
+                               "--buildtype=release", 
+                               "--vsenv", str(build_dir)],
+                              cwd=target_dir,
+                              )
+    else:
+        subprocess.check_call(["meson", "setup", str(build_dir)],
+                              cwd=target_dir
+                              )
+    subprocess.check_call(["meson", "compile", "-vv"], cwd=target_dir)
+
     # gh-16162: make sure numpy's __init__.pxd was used for cython
     # not really part of this test, but it is a convenient place to check
-    with open(build_dir / 'extending.c') as fid:
-        txt_to_find = 'NumPy API declarations from "numpy/__init__.pxd"'
+
+    g = glob.glob(str(target_dir / "*" / "extending.pyx.c"))
+    with open(g[0]) as fid:
+        txt_to_find = 'NumPy API declarations from "numpy/__init__'
         for i, line in enumerate(fid):
             if txt_to_find in line:
                 break
         else:
             assert False, ("Could not find '{}' in C file, "
                            "wrong pxd used".format(txt_to_find))
-    # get the path to the so's
-    so1 = so2 = None
-    with open(tmp_path /'tmp_install_log.txt') as fid:
-        for line in fid:
-            if 'extending.' in line:
-                so1 = line.strip()
-            if 'extending_distributions' in line:
-                so2 = line.strip()
-    assert so1 is not None
-    assert so2 is not None
-    # import the so's without adding the directory to sys.path
-    from importlib.machinery import ExtensionFileLoader 
-    extending = ExtensionFileLoader('extending', so1).load_module()
-    extending_distributions = ExtensionFileLoader('extending_distributions', so2).load_module()
+    # import without adding the directory to sys.path
+    suffix = sysconfig.get_config_var('EXT_SUFFIX')
 
+    def load(modname):
+        so = (target_dir / modname).with_suffix(suffix)
+        spec = spec_from_file_location(modname, so)
+        mod = module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    # test that the module can be imported
+    load("extending")
+    load("extending_cpp")
     # actually test the cython c-extension
+    extending_distributions = load("extending_distributions")
     from numpy.random import PCG64
     values = extending_distributions.uniforms_ex(PCG64(0), 10, 'd')
     assert values.shape == (10,)

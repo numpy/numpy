@@ -22,8 +22,8 @@ example that has rather narrow utility but illustrates the concepts involved.
 ...         self._i = value
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
-...     def __array__(self):
-...         return self._i * np.eye(self._N)
+...     def __array__(self, dtype=None):
+...         return self._i * np.eye(self._N, dtype=dtype)
 
 Our custom array can be instantiated like:
 
@@ -56,13 +56,13 @@ array([[2., 0., 0., 0., 0.],
 
 Notice that the return type is a standard ``numpy.ndarray``.
 
->>> type(arr)
-numpy.ndarray
+>>> type(np.multiply(arr, 2))
+<class 'numpy.ndarray'>
 
 How can we pass our custom array type through this function? Numpy allows a
 class to indicate that it would like to handle computations in a custom-defined
 way through the interfaces ``__array_ufunc__`` and ``__array_function__``. Let's
-take one at a time, starting with ``_array_ufunc__``. This method covers
+take one at a time, starting with ``__array_ufunc__``. This method covers
 :ref:`ufuncs`, a class of functions that includes, for example,
 :func:`numpy.multiply` and :func:`numpy.sin`.
 
@@ -84,8 +84,8 @@ For this example we will only handle the method ``__call__``
 ...         self._i = value
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
-...     def __array__(self):
-...         return self._i * np.eye(self._N)
+...     def __array__(self, dtype=None):
+...         return self._i * np.eye(self._N, dtype=dtype)
 ...     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
 ...         if method == '__call__':
 ...             N = None
@@ -96,10 +96,10 @@ For this example we will only handle the method ``__call__``
 ...                 elif isinstance(input, self.__class__):
 ...                     scalars.append(input._i)
 ...                     if N is not None:
-...                         if N != self._N:
+...                         if N != input._N:
 ...                             raise TypeError("inconsistent sizes")
 ...                     else:
-...                         N = self._N
+...                         N = input._N
 ...                 else:
 ...                     return NotImplemented
 ...             return self.__class__(N, ufunc(*scalars, **kwargs))
@@ -119,7 +119,9 @@ DiagonalArray(N=5, value=0.8414709848078965)
 At this point ``arr + 3`` does not work.
 
 >>> arr + 3
-TypeError: unsupported operand type(s) for *: 'DiagonalArray' and 'int'
+Traceback (most recent call last):
+...
+TypeError: unsupported operand type(s) for +: 'DiagonalArray' and 'int'
 
 To support it, we need to define the Python interfaces ``__add__``, ``__lt__``,
 and so on to dispatch to the corresponding ufunc. We can achieve this
@@ -133,8 +135,8 @@ conveniently by inheriting from the mixin
 ...         self._i = value
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
-...     def __array__(self):
-...         return self._i * np.eye(self._N)
+...     def __array__(self, dtype=None):
+...         return self._i * np.eye(self._N, dtype=dtype)
 ...     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
 ...         if method == '__call__':
 ...             N = None
@@ -145,10 +147,10 @@ conveniently by inheriting from the mixin
 ...                 elif isinstance(input, self.__class__):
 ...                     scalars.append(input._i)
 ...                     if N is not None:
-...                         if N != self._N:
+...                         if N != input._N:
 ...                             raise TypeError("inconsistent sizes")
 ...                     else:
-...                         N = self._N
+...                         N = input._N
 ...                 else:
 ...                     return NotImplemented
 ...             return self.__class__(N, ufunc(*scalars, **kwargs))
@@ -171,8 +173,8 @@ functions to our custom variants.
 ...         self._i = value
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
-...     def __array__(self):
-...         return self._i * np.eye(self._N)
+...     def __array__(self, dtype=None):
+...         return self._i * np.eye(self._N, dtype=dtype)
 ...     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
 ...         if method == '__call__':
 ...             N = None
@@ -184,23 +186,23 @@ functions to our custom variants.
 ...                 elif isinstance(input, self.__class__):
 ...                     scalars.append(input._i)
 ...                     if N is not None:
-...                         if N != self._N:
+...                         if N != input._N:
 ...                             raise TypeError("inconsistent sizes")
 ...                     else:
-...                         N = self._N
+...                         N = input._N
 ...                 else:
 ...                     return NotImplemented
 ...             return self.__class__(N, ufunc(*scalars, **kwargs))
 ...         else:
 ...             return NotImplemented
-...    def __array_function__(self, func, types, args, kwargs):
-...        if func not in HANDLED_FUNCTIONS:
-...            return NotImplemented
-...        # Note: this allows subclasses that don't override
-...        # __array_function__ to handle DiagonalArray objects.
-...        if not all(issubclass(t, self.__class__) for t in types):
-...            return NotImplemented
-...        return HANDLED_FUNCTIONS[func](*args, **kwargs)
+...     def __array_function__(self, func, types, args, kwargs):
+...         if func not in HANDLED_FUNCTIONS:
+...             return NotImplemented
+...         # Note: this allows subclasses that don't override
+...         # __array_function__ to handle DiagonalArray objects.
+...         if not all(issubclass(t, self.__class__) for t in types):
+...             return NotImplemented
+...         return HANDLED_FUNCTIONS[func](*args, **kwargs)
 ...
 
 A convenient pattern is to define a decorator ``implements`` that can be used
@@ -241,13 +243,18 @@ this operation is not supported. For example, concatenating two
 supported.
 
 >>> np.concatenate([arr, arr])
+Traceback (most recent call last):
+...
 TypeError: no implementation found for 'numpy.concatenate' on types that implement __array_function__: [<class '__main__.DiagonalArray'>]
 
 Additionally, our implementations of ``sum`` and ``mean`` do not accept the
 optional arguments that numpy's implementation does.
 
 >>> np.sum(arr, axis=0)
+Traceback (most recent call last):
+...
 TypeError: sum() got an unexpected keyword argument 'axis'
+
 
 The user always has the option of converting to a normal ``numpy.ndarray`` with
 :func:`numpy.asarray` and using standard numpy from there.
@@ -263,6 +270,36 @@ array([[1., 0., 0., 0., 0.],
        [0., 0., 1., 0., 0.],
        [0., 0., 0., 1., 0.],
        [0., 0., 0., 0., 1.]])
+
+
+The implementation of ``DiagonalArray`` in this example only handles the
+``np.sum`` and ``np.mean`` functions for brevity. Many other functions in the
+Numpy API are also available to wrap and a full-fledged custom array container
+can explicitly support all functions that Numpy makes available to wrap.
+
+Numpy provides some utilities to aid testing of custom array containers that
+implement the ``__array_ufunc__`` and ``__array_function__`` protocols in the
+``numpy.testing.overrides`` namespace.
+
+To check if a Numpy function can be overridden via ``__array_ufunc__``, you can
+use :func:`~numpy.testing.overrides.allows_array_ufunc_override`:
+
+>>> from np.testing.overrides import allows_array_ufunc_override
+>>> allows_array_ufunc_override(np.add)
+True
+
+Similarly, you can check if a function can be overridden via
+``__array_function__`` using
+:func:`~numpy.testing.overrides.allows_array_function_override`.
+
+Lists of every overridable function in the Numpy API are also available via
+:func:`~numpy.testing.overrides.get_overridable_numpy_array_functions` for
+functions that support the ``__array_function__`` protocol and
+:func:`~numpy.testing.overrides.get_overridable_numpy_ufuncs` for functions that
+support the ``__array_ufunc__`` protocol. Both functions return sets of
+functions that are present in the Numpy public API. User-defined ufuncs or
+ufuncs defined in other libraries that depend on Numpy are not present in
+these sets.
 
 Refer to the `dask source code <https://github.com/dask/dask>`_ and
 `cupy source code <https://github.com/cupy/cupy>`_  for more fully-worked

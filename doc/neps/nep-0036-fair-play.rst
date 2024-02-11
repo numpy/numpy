@@ -1,12 +1,14 @@
+.. _NEP36:
+
 ==================
 NEP 36 — Fair play
 ==================
 
 :Author: Stéfan van der Walt <stefanv@berkeley.edu>
-:Status: Draft
+:Status: Accepted
 :Type: Informational
 :Created: 2019-10-24
-:Resolution: Draft
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2021-June/081890.html
 
 
 Abstract
@@ -26,37 +28,40 @@ troublesome, bothersome, and unacceptable.
 Motivation
 ----------
 
-We sometimes learn of NumPy versions modified and circulated by outsiders.
-These patched versions can cause problems for the NumPy community.
+Every so often, we learn of NumPy versions modified and circulated by outsiders.
+These patched versions can cause problems for the NumPy community
+(see, e.g., [#erf]_ and [#CVE-2019-6446]_).
+When issues like these arise, our developers waste time identifying
+the problematic release, locating alterations, and determining an
+appropriate course of action.
 
-- In December 2018, a `bug report
-  <https://github.com/numpy/numpy/issues/12515>`__ was filed against
-  `np.erf` -- a function that didn't exist in the NumPy distribution.
-  It came to light that a company had published a NumPy version with
-  an extended API footprint. After several months of discussion, the
-  company agreed to make its patches public, and we added a label to
-  the NumPy issue tracker to identify issues pertaining to that
-  distribution.
-
-- In another case, after a security issue (CVE-2019-6446) was filed
-  against NumPy, distributions put in their own fixes, most often by
-  changing a default keyword value. As a result the NumPy API was
-  inconsistent across distributions.
-
-When issues arise in cases like these, our developers waste time
-identifying the problematic release, locating alterations,
-and determining an appropriate course of action.
+In addition, packages on the Python Packaging Index are sometimes
+named such that users assume they are sanctioned or maintained by
+NumPy.  We wish to reduce the number of such incidents.
 
 During a community call on `October 16th, 2019
-<https://github.com/numpy/archive/blob/master/status_meetings/status-2019-10-16.md>`__
-the community resolved to draft guidelines on the distribution of
-modified NumPy versions.
+<https://github.com/numpy/archive/blob/main/status_meetings/status-2019-10-16.md>`__
+the community resolved to draft guidelines to address these matters.
+
+.. [#erf] In December 2018, a
+   `bug report <https://github.com/numpy/numpy/issues/12515>`__
+   was filed against `np.erf` -- a function that didn't exist in the
+   NumPy distribution.  It came to light that a company had published
+   a NumPy version with an extended API footprint. After several
+   months of discussion, the company agreed to make its patches
+   public, and we added a label to the NumPy issue tracker to identify
+   issues pertaining to that distribution.
+
+.. [#CVE-2019-6446] After a security issue (CVE-2019-6446) was filed
+   against NumPy, distributions put in their own fixes, most often by
+   changing a default keyword value. As a result the NumPy API was
+   inconsistent across distributions.
 
 Scope
 -----
 
 This document aims to define a minimal set of rules that, when
-followed, will be considered good faith efforts in line with the
+followed, will be considered good-faith efforts in line with the
 expectations of the NumPy developers.
 
 Our hope is that developers who feel they need to modify NumPy will
@@ -65,8 +70,8 @@ mechanisms for extending our APIs and for operating on
 externally defined array objects.
 
 When in doubt, please `talk to us first
-<http://numpy-discussion.10968.n7.nabble.com/>`__. We may suggest an
-alternative; at minimum, we'll be prepared.
+<https://numpy.org/community/>`__. We may suggest an alternative; at
+minimum, we'll be prepared.
 
 Fair play rules
 ---------------
@@ -74,11 +79,15 @@ Fair play rules
 1. Do not reuse the NumPy name for projects not developed by the NumPy
    community.
 
-   At time of writing, there are only a handful of `numpy`-named
-   packages developed by the community, including `numpy`,
-   `numpy-financial`, and `unumpy`.  We ask that external packages not
-   include the phrase `numpy`, i.e., avoid names such as
-   `mycompany_numpy`.
+   At time of writing, there are only a handful of ``numpy``-named
+   packages developed by the community, including ``numpy``,
+   ``numpy-financial``, and ``unumpy``.  We ask that external packages not
+   include the phrase ``numpy``, i.e., avoid names such as
+   ``mycompany_numpy``.
+
+   To be clear, this rule only applies to modules (package names); it
+   is perfectly acceptable to have a *submodule* of your own library
+   named ``mylibrary.numpy``.
 
    NumPy is a trademark owned by NumFOCUS.
 
@@ -89,22 +98,23 @@ Fair play rules
    which parts of NumPy have been modified.
 
    If you have to break this rule (and we implore you not
-   to!), then make it clear in the `__version__` tag that
+   to!), then make it clear in the ``__version__`` tag that
    you have modified NumPy, e.g.::
 
      >>> print(np.__version__)
      '1.17.2+mycompany.15`
 
    We understand that minor patches are often required to make a
-   library work under a certain distribution.  E.g., Debian may patch
+   library work inside of a distribution.  E.g., Debian may patch
    NumPy so that it searches for optimized BLAS libraries in the
-   correct locations.  But we ask that no substantive changes are
-   made.
+   correct locations.  This is acceptable, but we ask that no
+   substantive changes are made.
 
-3. Do not extend NumPy's API footprint.
+3. Do not extend or modify NumPy's API.
 
    If you absolutely have to break rule two, please do not add
-   additional functions to the namespace.  NumPy's API is already
+   additional functions to the namespace, or modify the API of
+   existing functions.  NumPy's API is already
    quite large, and we are working hard to reduce it where feasible.
    Having additional functions exposed in distributed versions is
    confusing for users and developers alike.
@@ -117,15 +127,15 @@ Fair play rules
    <https://numpy.org/neps/nep-0018-array-function-protocol.html>`__
    were designed to help external packages interact more easily with
    NumPy.  E.g., the latter allows objects from foreign libraries to
-   pass through NumPy unharmed.  We actively encourage using any of
-   these "officialy sanctioned" mechanisms for overriding or
+   pass through NumPy.  We actively encourage using any of
+   these "officially sanctioned" mechanisms for overriding or
    interacting with NumPy.
 
    If these mechanisms are deemed insufficient, please start a
    discussion on the mailing list before monkeypatching NumPy.
 
 Questions and answers
--------------------
+---------------------
 
 **Q:** We would like to distribute an optimized version of NumPy that
 utilizes special instructions for our company's CPU.  You recommend

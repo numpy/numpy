@@ -1,0 +1,12 @@
+Improved CPU optimization tracking
+----------------------------------
+
+Introduces a tracer mechanism that enables tracking of the enabled targets
+for each optimized function in the NumPy library. With this enhancement,
+it becomes possible to precisely monitor the enabled CPU dispatch
+targets for the dispatched functions.
+
+A new function named `opt_func_info` has been added to the new namespace `numpy.lib.introspect`,
+offering this tracing capability. This function allows you to retrieve information
+about the enabled targets based on function names and data type signatures.
+

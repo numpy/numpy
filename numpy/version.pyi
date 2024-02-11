@@ -1,7 +1,7 @@
-from typing import Any
+version: str
+__version__: str
+full_version: str
 
-short_version: Any
-version: Any
-full_version: Any
-git_revision: Any
-release: Any
+git_revision: str
+release: bool
+short_version: str

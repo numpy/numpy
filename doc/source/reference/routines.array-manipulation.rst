@@ -10,6 +10,7 @@ Basic operations
 
     copyto
     shape
+    size
 
 Changing array shape
 ====================
@@ -32,6 +33,8 @@ Transpose-like operations
    swapaxes
    ndarray.T
    transpose
+   permute_dims
+   matrix_transpose (Array API compatible)
 
 Changing number of dimensions
 =============================
@@ -55,11 +58,9 @@ Changing kind of array
    asarray
    asanyarray
    asmatrix
-   asfarray
    asfortranarray
    ascontiguousarray
    asarray_chkfinite
-   asscalar
    require
 
 Joining arrays
@@ -68,6 +69,7 @@ Joining arrays
    :toctree: generated/
 
    concatenate
+   concat
    stack
    block
    vstack
@@ -105,6 +107,7 @@ Adding and removing elements
    resize
    trim_zeros
    unique
+   pad
 
 Rearranging elements
 ====================

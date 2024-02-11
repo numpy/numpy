@@ -1,0 +1,579 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.21.0 Release Notes
+==========================
+The NumPy 1.21.0 release highlights are
+
+* continued SIMD work covering more functions and platforms,
+* initial work on the new dtype infrastructure and casting,
+* universal2 wheels for Python 3.8 and Python 3.9 on Mac,
+* improved documentation,
+* improved annotations,
+* new ``PCG64DXSM`` bitgenerator for random numbers.
+
+In addition there are the usual large number of bug fixes and other improvements.
+
+The Python versions supported for this release are 3.7-3.9. Official support
+for Python 3.10 will be added when it is released.
+
+.. warning::
+   There are unresolved problems compiling NumPy 1.20.0 with gcc-11.1.
+
+   * Optimization level `-O3` results in many incorrect warnings when
+     running the tests.
+   * On some hardware NumPY will hang in an infinite loop.
+
+
+
+
+
+New functions
+=============
+
+.. currentmodule:: numpy.random
+
+Add `PCG64DXSM` `BitGenerator`
+------------------------------
+
+Uses of the ``PCG64`` ``BitGenerator`` in a massively-parallel context have been
+shown to have statistical weaknesses that were not apparent at the first
+release in numpy 1.17. Most users will never observe this weakness and are
+safe to continue to use ``PCG64``. We have introduced a new ``PCG64DXSM``
+``BitGenerator`` that will eventually become the new default ``BitGenerator``
+implementation used by ``default_rng`` in future releases. ``PCG64DXSM`` solves
+the statistical weakness while preserving the performance and the features of
+``PCG64``.
+
+See :ref:`upgrading-pcg64` for more details.
+
+.. currentmodule:: numpy
+
+(`gh-18906 <https://github.com/numpy/numpy/pull/18906>`__)
+
+
+Expired deprecations
+====================
+
+* The ``shape`` argument `~numpy.unravel_index` cannot be passed
+  as ``dims`` keyword argument anymore. (Was deprecated in NumPy 1.16.)
+
+  (`gh-17900 <https://github.com/numpy/numpy/pull/17900>`__)
+
+* The function ``PyUFunc_GenericFunction`` has been disabled.
+  It was deprecated in NumPy 1.19.  Users should call the ufunc
+  directly using the Python API.
+
+  (`gh-18697 <https://github.com/numpy/numpy/pull/18697>`__)
+
+* The function ``PyUFunc_SetUsesArraysAsData`` has been disabled.
+  It was deprecated in NumPy 1.19.
+
+  (`gh-18697 <https://github.com/numpy/numpy/pull/18697>`__)
+
+* The class ``PolyBase`` has been removed (deprecated in numpy 1.9.0). Please
+  use the abstract ``ABCPolyBase`` class instead.
+
+  (`gh-18963 <https://github.com/numpy/numpy/pull/18963>`__)
+
+* The unused ``PolyError`` and ``PolyDomainError`` exceptions are
+  removed.
+
+  (`gh-18963 <https://github.com/numpy/numpy/pull/18963>`__)
+
+
+Deprecations
+============
+
+The ``.dtype`` attribute must return a ``dtype``
+------------------------------------------------
+
+A ``DeprecationWarning`` is now given if the ``.dtype`` attribute
+of an object passed into ``np.dtype`` or as a ``dtype=obj`` argument
+is not a dtype. NumPy will stop attempting to recursively coerce the
+result of ``.dtype``.
+
+(`gh-13578 <https://github.com/numpy/numpy/pull/13578>`__)
+
+Inexact matches for ``numpy.convolve`` and ``numpy.correlate`` are deprecated
+-----------------------------------------------------------------------------
+
+`~numpy.convolve` and `~numpy.correlate` now emit a warning when there are case
+insensitive and/or inexact matches found for ``mode`` argument in the functions.
+Pass full ``"same"``, ``"valid"``, ``"full"`` strings instead of
+``"s"``, ``"v"``, ``"f"`` for the ``mode`` argument.
+
+(`gh-17492 <https://github.com/numpy/numpy/pull/17492>`__)
+
+``np.typeDict`` has been formally deprecated
+--------------------------------------------
+``np.typeDict`` is a deprecated alias for ``np.sctypeDict`` and
+has been so for over 14 years (6689502_).
+A deprecation warning will now be issued whenever getting ``np.typeDict``.
+
+.. _6689502: https://github.com/numpy/numpy/commit/668950285c407593a368336ff2e737c5da84af7d
+
+(`gh-17586 <https://github.com/numpy/numpy/pull/17586>`__)
+
+Exceptions will be raised during array-like creation
+----------------------------------------------------
+When an object raised an exception during access of the special
+attributes ``__array__`` or ``__array_interface__``, this exception
+was usually ignored.
+A warning is now given when the exception is anything but AttributeError.
+To silence the warning, the type raising the exception has to be adapted
+to raise an ``AttributeError``.
+
+(`gh-19001 <https://github.com/numpy/numpy/pull/19001>`__)
+
+Four ``ndarray.ctypes`` methods have been deprecated
+----------------------------------------------------
+Four methods of the `ndarray.ctypes` object have been deprecated,
+as they are (undocumentated) implementation artifacts of their respective
+properties.
+
+The methods in question are:
+
+* ``_ctypes.get_data`` (use ``_ctypes.data`` instead)
+* ``_ctypes.get_shape`` (use ``_ctypes.shape`` instead)
+* ``_ctypes.get_strides`` (use ``_ctypes.strides`` instead)
+* ``_ctypes.get_as_parameter`` (use ``_ctypes._as_parameter_`` instead)
+
+(`gh-19031 <https://github.com/numpy/numpy/pull/19031>`__)
+
+
+Expired deprecations
+====================
+
+* The ``shape`` argument `numpy.unravel_index` cannot be passed
+  as ``dims`` keyword argument anymore. (Was deprecated in NumPy 1.16.)
+
+  (`gh-17900 <https://github.com/numpy/numpy/pull/17900>`__)
+
+* The function ``PyUFunc_GenericFunction`` has been disabled.
+  It was deprecated in NumPy 1.19.  Users should call the ufunc
+  directly using the Python API.
+
+  (`gh-18697 <https://github.com/numpy/numpy/pull/18697>`__)
+
+* The function ``PyUFunc_SetUsesArraysAsData`` has been disabled.
+  It was deprecated in NumPy 1.19.
+
+  (`gh-18697 <https://github.com/numpy/numpy/pull/18697>`__)
+
+Remove deprecated ``PolyBase`` and unused ``PolyError`` and ``PolyDomainError``
+-------------------------------------------------------------------------------
+
+The class ``PolyBase`` has been removed (deprecated in numpy 1.9.0). Please use
+the abstract ``ABCPolyBase`` class instead.
+
+Furthermore, the unused ``PolyError`` and ``PolyDomainError`` exceptions are
+removed from the `numpy.polynomial`.
+
+(`gh-18963 <https://github.com/numpy/numpy/pull/18963>`__)
+
+
+Compatibility notes
+===================
+
+Error type changes in universal functions
+-----------------------------------------
+The universal functions may now raise different errors on invalid input in some
+cases.  The main changes should be that a ``RuntimeError`` was replaced with a
+more fitting ``TypeError``.  When multiple errors were present in the same
+call, NumPy may now raise a different one.
+
+(`gh-15271 <https://github.com/numpy/numpy/pull/15271>`__)
+
+``__array_ufunc__`` argument validation
+---------------------------------------
+NumPy will now partially validate arguments before calling ``__array_ufunc__``.
+Previously, it was possible to pass on invalid arguments (such as a
+non-existing keyword argument) when dispatch was known to occur.
+
+(`gh-15271 <https://github.com/numpy/numpy/pull/15271>`__)
+
+``__array_ufunc__`` and additional positional arguments
+-------------------------------------------------------
+Previously, all positionally passed arguments were checked for
+``__array_ufunc__`` support.  In the case of ``reduce``, ``accumulate``, and
+``reduceat`` all arguments may be passed by position.  This means that when
+they were passed by position, they could previously have been asked to handle
+the ufunc call via ``__array_ufunc__``.  Since this depended on the way the
+arguments were passed (by position or by keyword), NumPy will now only dispatch
+on the input and output array.  For example, NumPy will never dispatch on the
+``where`` array in a reduction such as ``np.add.reduce``.
+
+(`gh-15271 <https://github.com/numpy/numpy/pull/15271>`__)
+
+Validate input values in ``Generator.uniform``
+----------------------------------------------
+Checked that ``high - low >= 0`` in ``np.random.Generator.uniform``. Raises
+``ValueError`` if ``low > high``. Previously out-of-order inputs were accepted
+and silently swapped, so that if ``low > high``, the value generated was
+``high + (low - high) * random()``.
+
+(`gh-17921 <https://github.com/numpy/numpy/pull/17921>`__)
+
+``/usr/include`` removed from default include paths
+---------------------------------------------------
+The default include paths when building a package with ``numpy.distutils`` no
+longer include ``/usr/include``. This path is normally added by the compiler,
+and hardcoding it can be problematic. In case this causes a problem, please
+open an issue. A workaround is documented in PR 18658.
+
+(`gh-18658 <https://github.com/numpy/numpy/pull/18658>`__)
+
+Changes to comparisons with ``dtype=...``
+-----------------------------------------
+When the ``dtype=`` (or ``signature``) arguments to comparison
+ufuncs (``equal``, ``less``, etc.) is used, this will denote
+the desired output dtype in the future.
+This means that:
+
+    np.equal(2, 3, dtype=object)
+
+will give a ``FutureWarning`` that it will return an ``object``
+array in the future, which currently happens for:
+
+    np.equal(None, None, dtype=object)
+
+due to the fact that ``np.array(None)`` is already an object
+array. (This also happens for some other dtypes.)
+
+Since comparisons normally only return boolean arrays, providing
+any other dtype will always raise an error in the future and
+give a ``DeprecationWarning`` now.
+
+(`gh-18718 <https://github.com/numpy/numpy/pull/18718>`__)
+
+Changes to ``dtype`` and ``signature`` arguments in ufuncs
+----------------------------------------------------------
+The universal function arguments ``dtype`` and ``signature``
+which are also valid for reduction such as ``np.add.reduce``
+(which is the implementation for ``np.sum``) will now issue
+a warning when the ``dtype`` provided is not a "basic" dtype.
+
+NumPy almost always ignored metadata, byteorder or time units
+on these inputs.  NumPy will now always ignore it and raise an
+error if byteorder or time unit changed.
+The following are the most important examples of changes which
+will give the error.  In some cases previously the information
+stored was not ignored, in all of these an error is now raised::
+
+    # Previously ignored the byte-order (affect if non-native)
+    np.add(3, 5, dtype=">i32")
+
+    # The biggest impact is for timedelta or datetimes:
+    arr = np.arange(10, dtype="m8[s]")
+    # The examples always ignored the time unit "ns":
+    np.add(arr, arr, dtype="m8[ns]")
+    np.maximum.reduce(arr, dtype="m8[ns]")
+
+    # The following previously did use "ns" (as opposed to `arr.dtype`)
+    np.add(3, 5, dtype="m8[ns]")  # Now return generic time units
+    np.maximum(arr, arr, dtype="m8[ns]")  # Now returns "s" (from `arr`)
+
+The same applies for functions like ``np.sum`` which use these internally.
+This change is necessary to achieve consistent handling within NumPy.
+
+If you run into these, in most cases pass for example ``dtype=np.timedelta64``
+which clearly denotes a general ``timedelta64`` without any unit or byte-order
+defined.  If you need to specify the output dtype precisely, you may do so
+by either casting the inputs or providing an output array using `out=`.
+
+NumPy may choose to allow providing an exact output ``dtype`` here in the
+future, which would be preceded by a ``FutureWarning``.
+
+(`gh-18718 <https://github.com/numpy/numpy/pull/18718>`__)
+
+Ufunc ``signature=...`` and ``dtype=`` generalization and ``casting``
+---------------------------------------------------------------------
+The behaviour for ``np.ufunc(1.0, 1.0, signature=...)`` or
+``np.ufunc(1.0, 1.0, dtype=...)`` can now yield different loops in 1.21
+compared to 1.20 because of changes in promotion.
+When ``signature`` was previously used, the casting check on inputs
+was relaxed, which could lead to downcasting inputs unsafely especially
+if combined with ``casting="unsafe"``.
+
+Casting is now guaranteed to be safe.  If a signature is only
+partially provided, for example using ``signature=("float64", None, None)``,
+this could lead to no loop being found (an error).
+In that case, it is necessary to provide the complete signature
+to enforce casting the inputs.
+If ``dtype="float64"`` is used or only outputs are set (e.g.
+``signature=(None, None, "float64")`` the is unchanged.
+We expect that very few users are affected by this change.
+
+Further, the meaning of ``dtype="float64"`` has been slightly modified and
+now strictly enforces only the correct output (and not input) DTypes.
+This means it is now always equivalent to::
+
+    signature=(None, None, "float64")
+
+(If the ufunc has two inputs and one output).  Since this could lead
+to no loop being found in some cases, NumPy will normally also search
+for the loop::
+
+    signature=("float64", "float64", "float64")
+
+if the first search failed.
+In the future, this behaviour may be customized to achieve the expected
+results for more complex ufuncs.  (For some universal functions such as
+``np.ldexp`` inputs can have different DTypes.)
+
+(`gh-18880 <https://github.com/numpy/numpy/pull/18880>`__)
+
+Distutils forces strict floating point model on clang
+-----------------------------------------------------
+NumPy distutils will now always add the ``-ffp-exception-behavior=strict``
+compiler flag when compiling with clang.  Clang defaults to a non-strict
+version, which allows the compiler to generate code that does not set
+floating point warnings/errors correctly.
+
+(`gh-19049 <https://github.com/numpy/numpy/pull/19049>`__)
+
+
+C API changes
+=============
+
+Use of ``ufunc->type_resolver`` and "type tuple"
+------------------------------------------------
+NumPy now normalizes the "type tuple" argument to the type resolver functions
+before calling it.  Note that in the use of this type resolver is legacy
+behaviour and NumPy will not do so when possible.  Calling
+``ufunc->type_resolver`` or ``PyUFunc_DefaultTypeResolver`` is strongly
+discouraged and will now enforce a normalized type tuple if done.  Note that
+this does not affect providing a type resolver, which is expected to keep
+working in most circumstances.  If you have an unexpected use-case for calling
+the type resolver, please inform the NumPy developers so that a solution can be
+found.
+
+(`gh-18718 <https://github.com/numpy/numpy/pull/18718>`__)
+
+
+New Features
+============
+
+Added a mypy plugin for handling platform-specific ``numpy.number`` precisions
+------------------------------------------------------------------------------
+A mypy_ plugin is now available for automatically assigning the (platform-dependent)
+precisions of certain `~numpy.number` subclasses, including the likes of
+`~numpy.int_`, `~numpy.intp` and `~numpy.longlong`. See the documentation on
+:ref:`scalar types <arrays.scalars.built-in>` for a comprehensive overview
+of the affected classes.
+
+Note that while usage of the plugin is completely optional, without it the
+precision of above-mentioned classes will be inferred as `~typing.Any`.
+
+To enable the plugin, one must add it to their mypy `configuration file`_:
+
+.. code-block:: ini
+
+    [mypy]
+    plugins = numpy.typing.mypy_plugin
+
+
+.. _mypy: http://mypy-lang.org/
+.. _configuration file: https://mypy.readthedocs.io/en/stable/config_file.html
+
+(`gh-17843 <https://github.com/numpy/numpy/pull/17843>`__)
+
+Let the mypy plugin manage extended-precision ``numpy.number`` subclasses
+-------------------------------------------------------------------------
+The mypy_ plugin, introduced in `numpy/numpy#17843`_, has been expanded:
+the plugin now removes annotations for platform-specific extended-precision
+types that are not available to the platform in question.
+For example, it will remove `~numpy.float128` when not available.
+
+Without the plugin *all* extended-precision types will, as far as mypy is concerned,
+be available on all platforms.
+
+To enable the plugin, one must add it to their mypy `configuration file`_:
+
+.. code-block:: ini
+
+    [mypy]
+    plugins = numpy.typing.mypy_plugin
+
+
+.. _mypy: http://mypy-lang.org/
+.. _configuration file: https://mypy.readthedocs.io/en/stable/config_file.html
+.. _`numpy/numpy#17843`: https://github.com/numpy/numpy/pull/17843
+
+(`gh-18322 <https://github.com/numpy/numpy/pull/18322>`__)
+
+New ``min_digits`` argument for printing float values
+-----------------------------------------------------
+A new ``min_digits`` argument has been added to the dragon4 float printing
+functions `~numpy.format_float_positional` and `~numpy.format_float_scientific`
+. This kwd guarantees that at least the given number of digits will be printed
+when printing in unique=True mode, even if the extra digits are unnecessary to
+uniquely specify the value. It is the counterpart to the precision argument
+which sets the maximum number of digits to be printed. When unique=False in
+fixed precision mode, it has no effect and the precision argument fixes the
+number of digits.
+
+(`gh-18629 <https://github.com/numpy/numpy/pull/18629>`__)
+
+f2py now recognizes Fortran abstract interface blocks
+-----------------------------------------------------
+`~numpy.f2py` can now parse abstract interface blocks.
+
+(`gh-18695 <https://github.com/numpy/numpy/pull/18695>`__)
+
+BLAS and LAPACK configuration via environment variables
+-------------------------------------------------------
+Autodetection of installed BLAS and LAPACK libraries can be bypassed by using
+the ``NPY_BLAS_LIBS`` and ``NPY_LAPACK_LIBS`` environment variables. Instead,
+the link flags in these environment variables will be used directly, and the
+language is assumed to be F77.  This is especially useful in automated builds
+where the BLAS and LAPACK that are installed are known exactly.  A use case is
+replacing the actual implementation at runtime via stub library links.
+
+If ``NPY_CBLAS_LIBS`` is set (optional in addition to ``NPY_BLAS_LIBS``), this
+will be used as well, by defining ``HAVE_CBLAS`` and appending the environment
+variable content to the link flags.
+
+(`gh-18737 <https://github.com/numpy/numpy/pull/18737>`__)
+
+A runtime-subcriptable alias has been added for ``ndarray``
+-----------------------------------------------------------
+``numpy.typing.NDArray`` has been added, a runtime-subscriptable alias for
+``np.ndarray[Any, np.dtype[~Scalar]]``. The new type alias can be used
+for annotating arrays with a given dtype and unspecified shape. :sup:`1`
+
+:sup:`1` NumPy does not support the annotating of array shapes as of 1.21,
+this is expected to change in the future though (see :pep:`646`).
+
+Examples
+~~~~~~~~
+
+.. code-block:: python
+
+    >>> import numpy as np
+    >>> import numpy.typing as npt
+
+    >>> print(npt.NDArray)
+    numpy.ndarray[typing.Any, numpy.dtype[~ScalarType]]
+
+    >>> print(npt.NDArray[np.float64])
+    numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]
+
+    >>> NDArrayInt = npt.NDArray[np.int_]
+    >>> a: NDArrayInt = np.arange(10)
+
+    >>> def func(a: npt.ArrayLike) -> npt.NDArray[Any]:
+    ...     return np.array(a)
+
+(`gh-18935 <https://github.com/numpy/numpy/pull/18935>`__)
+
+
+Improvements
+============
+
+Arbitrary ``period`` option for ``numpy.unwrap``
+------------------------------------------------
+The size of the interval over which phases are unwrapped is no longer restricted to ``2 * pi``.
+This is especially useful for unwrapping degrees, but can also be used for other intervals.
+
+.. code:: python
+
+    >>> phase_deg = np.mod(np.linspace(0,720,19), 360) - 180
+    >>> phase_deg
+    array([-180., -140., -100.,  -60.,  -20.,   20.,   60.,  100.,  140.,
+           -180., -140., -100.,  -60.,  -20.,   20.,   60.,  100.,  140.,
+           -180.])
+
+    >>> unwrap(phase_deg, period=360)
+    array([-180., -140., -100.,  -60.,  -20.,   20.,   60.,  100.,  140.,
+            180.,  220.,  260.,  300.,  340.,  380.,  420.,  460.,  500.,
+            540.])
+
+(`gh-16987 <https://github.com/numpy/numpy/pull/16987>`__)
+
+``np.unique`` now returns single ``NaN``
+----------------------------------------
+When ``np.unique`` operated on an array with multiple ``NaN`` entries,
+its return included a ``NaN`` for each entry that was ``NaN`` in the original array.
+This is now improved such that the returned array contains just one ``NaN`` as the
+last element.
+
+Also for complex arrays all ``NaN`` values are considered equivalent
+(no matter whether the ``NaN`` is in the real or imaginary part). As the
+representant for the returned array the smallest one in the
+lexicographical order is chosen - see ``np.sort`` for how the lexicographical
+order is defined for complex arrays.
+
+(`gh-18070 <https://github.com/numpy/numpy/pull/18070>`__)
+
+``Generator.rayleigh`` and ``Generator.geometric`` performance improved
+-----------------------------------------------------------------------
+The performance of Rayleigh and geometric random variate generation
+in ``Generator`` has improved. These are both transformation of exponential
+random variables and the slow log-based inverse cdf transformation has
+been replaced with the Ziggurat-based exponential variate generator.
+
+This change breaks the stream of variates generated  when variates from
+either of these distributions are produced.
+
+(`gh-18666 <https://github.com/numpy/numpy/pull/18666>`__)
+
+Placeholder annotations have been improved
+------------------------------------------
+All placeholder annotations, that were previously annotated as ``typing.Any``,
+have been improved. Where appropriate they have been replaced with explicit
+function definitions, classes or other miscellaneous objects.
+
+(`gh-18934 <https://github.com/numpy/numpy/pull/18934>`__)
+
+
+Performance improvements
+========================
+
+Improved performance in integer division of NumPy arrays
+--------------------------------------------------------
+Integer division of NumPy arrays now uses
+`libdivide <https://libdivide.com/>`__ when the divisor is a constant. With the
+usage of libdivide and other minor optimizations, there is a large speedup.
+The ``//`` operator and ``np.floor_divide`` makes use of the new changes.
+
+(`gh-17727 <https://github.com/numpy/numpy/pull/17727>`__)
+
+Improve performance of ``np.save`` and ``np.load`` for small arrays
+-------------------------------------------------------------------
+``np.save`` is now a lot faster for small arrays.
+
+``np.load`` is also faster for small arrays,
+but only when serializing with a version >= ``(3, 0)``.
+
+Both are done by removing checks that are only relevant for Python 2,
+while still maintaining compatibility with arrays
+which might have been created by Python 2.
+
+(`gh-18657 <https://github.com/numpy/numpy/pull/18657>`__)
+
+
+Changes
+=======
+
+`numpy.piecewise` output class now matches the input class
+----------------------------------------------------------
+When `~numpy.ndarray` subclasses are used on input to `~numpy.piecewise`,
+they are passed on to the functions. The output will now be of the
+same subclass as well.
+
+(`gh-18110 <https://github.com/numpy/numpy/pull/18110>`__)
+
+Enable Accelerate Framework
+----------------------------
+With the release of macOS 11.3, several different issues that numpy was
+encountering when using Accelerate Framework's implementation of BLAS and
+LAPACK should be resolved.  This change enables the Accelerate Framework as an
+option on macOS.  If additional issues are found, please file a bug report
+against Accelerate using the developer feedback assistant tool
+(https://developer.apple.com/bug-reporting/). We intend to address issues
+promptly and plan to continue supporting and updating our BLAS and LAPACK
+libraries.
+
+(`gh-18874 <https://github.com/numpy/numpy/pull/18874>`__)

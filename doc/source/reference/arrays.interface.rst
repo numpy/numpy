@@ -4,30 +4,30 @@
 
 .. _arrays.interface:
 
-*******************
-The Array Interface
-*******************
+****************************
+The array interface protocol
+****************************
 
 .. note::
 
-   This page describes the numpy-specific API for accessing the contents of
-   a numpy array from other C extensions. :pep:`3118` --
+   This page describes the NumPy-specific API for accessing the contents of
+   a NumPy array from other C extensions. :pep:`3118` --
    :c:func:`The Revised Buffer Protocol <PyObject_GetBuffer>` introduces
    similar, standardized API to Python 2.6 and 3.0 for any extension
    module to use. Cython__'s buffer array support
-   uses the :pep:`3118` API; see the `Cython numpy
+   uses the :pep:`3118` API; see the `Cython NumPy
    tutorial`__. Cython provides a way to write code that supports the buffer
    protocol with Python versions older than 2.6 because it has a
    backward-compatible implementation utilizing the array interface
    described here.
 
-__ http://cython.org/
+__ https://cython.org/
 __ https://github.com/cython/cython/wiki/tutorials-numpy
 
 :version: 3
 
 The array interface (sometimes called array protocol) was created in
-2005 as a means for array-like Python objects to re-use each other's
+2005 as a means for array-like Python objects to reuse each other's
 data buffers intelligently whenever possible. The homogeneous
 N-dimensional array interface is a default mechanism for objects to
 share N-dimensional array memory and information.  The interface
@@ -49,9 +49,9 @@ Python side
 ===========
 
 This approach to the interface consists of the object having an
-:data:`__array_interface__` attribute.
+:data:`~object.__array_interface__` attribute.
 
-.. data:: __array_interface__
+.. data:: object.__array_interface__
 
    A dictionary of items (3 required and 5 optional).  The optional
    keys in the dictionary have implied defaults if they are not
@@ -61,12 +61,12 @@ This approach to the interface consists of the object having an
 
    **shape** (required)
        Tuple whose elements are the array size in each dimension. Each
-       entry is an integer (a Python int or long).  Note that these
-       integers could be larger than the platform "int" or "long"
-       could hold (a Python int is a C long). It is up to the code
+       entry is an integer (a Python :py:class:`int`).  Note that these
+       integers could be larger than the platform ``int`` or ``long``
+       could hold (a Python :py:class:`int` is a C ``long``). It is up to the code
        using this attribute to handle this appropriately; either by
        raising an error when overflow is possible, or by using
-       :c:data:`Py_LONG_LONG` as the C type for the shapes.
+       ``long long`` as the C type for the shapes.
 
    **typestr** (required)
        A string providing the basic type of the homogeneous array The
@@ -81,7 +81,8 @@ This approach to the interface consists of the object having an
        =====  ================================================================
        ``t``  Bit field (following integer gives the number of
               bits in the bit field).
-       ``b``  Boolean (integer type where all values are only True or False)
+       ``b``  Boolean (integer type where all values are only ``True`` or
+              ``False``)
        ``i``  Integer
        ``u``  Unsigned integer
        ``f``  Floating point
@@ -90,7 +91,7 @@ This approach to the interface consists of the object having an
        ``M``  Datetime
        ``O``  Object (i.e. the memory contains a pointer to :c:type:`PyObject`)
        ``S``  String (fixed-length sequence of char)
-       ``U``  Unicode (fixed-length sequence of :c:type:`Py_UNICODE`)
+       ``U``  Unicode (fixed-length sequence of :c:type:`Py_UCS4`)
        ``V``  Other (void \* -- each item is a fixed-size chunk of memory)
        =====  ================================================================
 
@@ -124,15 +125,21 @@ This approach to the interface consists of the object having an
        **Default**: ``[('', typestr)]``
 
    **data** (optional)
-       A 2-tuple whose first argument is an integer (a long integer
-       if necessary) that points to the data-area storing the array
-       contents.  This pointer must point to the first element of
+       A 2-tuple whose first argument is a :doc:`Python integer <python:c-api/long>`
+       that points to the data-area storing the array contents.
+
+       .. note::
+          When converting from C/C++ via ``PyLong_From*`` or high-level
+          bindings such as Cython or pybind11, make sure to use an integer
+          of sufficiently large bitness.
+
+       This pointer must point to the first element of
        data (in other words any offset is always ignored in this
        case). The second entry in the tuple is a read-only flag (true
        means the data area is read-only).
 
        This attribute can also be an object exposing the
-       :c:func:`buffer interface <PyObject_AsCharBuffer>` which
+       :ref:`buffer interface <bufferobjects>` which
        will be used to share the data. If this key is not present (or
        returns None), then memory sharing will be done
        through the buffer interface of the object itself.  In this
@@ -141,41 +148,41 @@ This approach to the interface consists of the object having an
        must be stored by the new object if the memory area is to be
        secured.
 
-       **Default**: None
+       **Default**: ``None``
 
    **strides** (optional)
-       Either None to indicate a C-style contiguous array or
-       a Tuple of strides which provides the number of bytes needed
+       Either ``None`` to indicate a C-style contiguous array or
+       a tuple of strides which provides the number of bytes needed
        to jump to the next array element in the corresponding
        dimension. Each entry must be an integer (a Python
-       :const:`int` or :const:`long`). As with shape, the values may
-       be larger than can be represented by a C "int" or "long"; the
+       :py:class:`int`). As with shape, the values may
+       be larger than can be represented by a C ``int`` or ``long``; the
        calling code should handle this appropriately, either by
-       raising an error, or by using :c:type:`Py_LONG_LONG` in C. The
-       default is None which implies a C-style contiguous
-       memory buffer.  In this model, the last dimension of the array
+       raising an error, or by using ``long long`` in C. The
+       default is ``None`` which implies a C-style contiguous
+       memory buffer. In this model, the last dimension of the array
        varies the fastest.  For example, the default strides tuple
        for an object whose array entries are 8 bytes long and whose
-       shape is (10,20,30) would be (4800, 240, 8)
+       shape is ``(10, 20, 30)`` would be ``(4800, 240, 8)``.
 
-       **Default**: None (C-style contiguous)
+       **Default**: ``None`` (C-style contiguous)
 
    **mask** (optional)
-       None or an object exposing the array interface.  All
+       ``None`` or an object exposing the array interface.  All
        elements of the mask array should be interpreted only as true
        or not true indicating which elements of this array are valid.
        The shape of this object should be `"broadcastable"
        <arrays.broadcasting.broadcastable>` to the shape of the
        original array.
 
-       **Default**: None (All array values are valid)
+       **Default**: ``None`` (All array values are valid)
 
    **offset** (optional)
        An integer offset into the array data region. This can only be
-       used when data is None or returns a :class:`buffer`
+       used when data is ``None`` or returns a :class:`memoryview`
        object.
 
-       **Default**: 0.
+       **Default**: ``0``.
 
    **version** (required)
        An integer showing the version of the interface (i.e. 3 for
@@ -189,7 +196,7 @@ C-struct access
 This approach to the array interface allows for faster access to an
 array using only one attribute lookup and a well-defined C-structure.
 
-.. c:var:: __array_struct__
+.. data:: object.__array_struct__
 
    A :c:type:`PyCapsule` whose ``pointer`` member contains a
    pointer to a filled :c:type:`PyArrayInterface` structure.  Memory
@@ -213,8 +220,8 @@ as::
     int itemsize;         /* size of each element */
     int flags;            /* flags indicating how the data should be interpreted */
                           /*   must set ARR_HAS_DESCR bit to validate descr */
-    Py_intptr_t *shape;   /* A length-nd array of shape information */
-    Py_intptr_t *strides; /* A length-nd array of stride information */
+    Py_ssize_t *shape;    /* A length-nd array of shape information */
+    Py_ssize_t *strides;  /* A length-nd array of stride information */
     void *data;           /* A pointer to the first element of the array */
     PyObject *descr;      /* NULL or data-description (same as descr key
                                   of __array_interface__) -- must set ARR_HAS_DESCR
@@ -230,7 +237,7 @@ interpreted.  The data-bits are :c:macro:`NPY_ARRAY_C_CONTIGUOUS` (0x1),
 has the arrdescr field.  The field should not be accessed unless this
 flag is present.
 
-   .. c:macro:: NPY_ARR_HAS_DESCR
+.. c:macro:: NPY_ARR_HAS_DESCR
 
 .. admonition:: New since June 16, 2006:
 
@@ -243,12 +250,18 @@ flag is present.
    returning the :c:type:`PyCapsule`, and configure a destructor to decref this
    reference.
 
+.. note::
+
+    :obj:`~object.__array_struct__` is considered legacy and should not be used for new
+    code. Use the :doc:`buffer protocol <python:c-api/buffer>` or the DLPack protocol
+    `numpy.from_dlpack` instead.
+
 
 Type description examples
 =========================
 
 For clarity it is useful to provide some examples of the type
-description and corresponding :data:`__array_interface__` 'descr'
+description and corresponding :data:`~object.__array_interface__` 'descr'
 entries.  Thanks to Scott Gilbert for these examples:
 
 In every case, the 'descr' key is optional, but of course provides
@@ -301,7 +314,7 @@ more information which may be important for various applications::
 It should be clear that any structured type could be described using this
 interface.
 
-Differences with Array interface (Version 2)
+Differences with array interface (version 2)
 ============================================
 
 The version 2 interface was very similar.  The differences were

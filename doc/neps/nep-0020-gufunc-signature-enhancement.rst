@@ -1,7 +1,7 @@
 .. _NEP20:
 
 ===============================================================
-NEP 20 — Expansion of Generalized Universal Function Signatures
+NEP 20 — Expansion of generalized universal function signatures
 ===============================================================
 
 :Author: Marten van Kerkwijk <mhvk@astro.utoronto.ca>
@@ -112,7 +112,7 @@ have a summary of all flags. This could possibly be stored in ``core_enabled``
 but specific flags indicating whether or not a gufunc uses fixed, flexible, or
 broadcastable dimensions.
 
-With the above, the formal defition of the syntax would become [4]_::
+With the above, the formal definition of the syntax would become [4]_::
 
   <Signature>            ::= <Input arguments> "->" <Output arguments>
   <Input arguments>      ::= <Argument list>
@@ -225,7 +225,7 @@ strongest use case. The frozen dimensions has a very simple implementation and
 its meaning is obvious. The ability to broadcast is simple too, once the
 flexible dimensions are supported.
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. [1] Identified needs and suggestions for the implementation are not all by

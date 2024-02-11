@@ -1,0 +1,51 @@
+
+Contributors
+============
+
+A total of 11 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Bas van Beek
+* Charles Harris
+* Ganesh Kathiresan
+* Gregory R. Lee
+* Hugo Defois +
+* Kevin Sheppard
+* Matti Picus
+* Ralf Gommers
+* Sayed Adel
+* Sebastian Berg
+* Thomas J. Fan
+
+Pull requests merged
+====================
+
+A total of 26 pull requests were merged for this release.
+
+* `#19311 <https://github.com/numpy/numpy/pull/19311>`__: REV,BUG: Replace ``NotImplemented`` with ``typing.Any``
+* `#19324 <https://github.com/numpy/numpy/pull/19324>`__: MAINT: Fixed the return-dtype of ``ndarray.real`` and ``imag``
+* `#19330 <https://github.com/numpy/numpy/pull/19330>`__: MAINT: Replace ``"dtype[Any]"`` with ``dtype`` in the definiton of...
+* `#19342 <https://github.com/numpy/numpy/pull/19342>`__: DOC: Fix some docstrings that crash pdf generation.
+* `#19343 <https://github.com/numpy/numpy/pull/19343>`__: MAINT: bump scipy-mathjax
+* `#19347 <https://github.com/numpy/numpy/pull/19347>`__: BUG: Fix arr.flat.index for large arrays and big-endian machines
+* `#19348 <https://github.com/numpy/numpy/pull/19348>`__: ENH: add ``numpy.f2py.get_include`` function
+* `#19349 <https://github.com/numpy/numpy/pull/19349>`__: BUG: Fix reference count leak in ufunc dtype handling
+* `#19350 <https://github.com/numpy/numpy/pull/19350>`__: MAINT: Annotate missing attributes of ``np.number`` subclasses
+* `#19351 <https://github.com/numpy/numpy/pull/19351>`__: BUG: Fix cast safety and comparisons for zero sized voids
+* `#19352 <https://github.com/numpy/numpy/pull/19352>`__: BUG: Correct Cython declaration in random
+* `#19353 <https://github.com/numpy/numpy/pull/19353>`__: BUG: protect against accessing base attribute of a NULL subarray
+* `#19365 <https://github.com/numpy/numpy/pull/19365>`__: BUG, SIMD: Fix detecting AVX512 features on Darwin
+* `#19366 <https://github.com/numpy/numpy/pull/19366>`__: MAINT: remove ``print()``'s in distutils template handling
+* `#19390 <https://github.com/numpy/numpy/pull/19390>`__: ENH: SIMD architectures to show_config
+* `#19391 <https://github.com/numpy/numpy/pull/19391>`__: BUG: Do not raise deprecation warning for all nans in unique...
+* `#19392 <https://github.com/numpy/numpy/pull/19392>`__: BUG: Fix NULL special case in object-to-any cast code
+* `#19430 <https://github.com/numpy/numpy/pull/19430>`__: MAINT: Use arm64-graviton2 for testing on travis
+* `#19495 <https://github.com/numpy/numpy/pull/19495>`__: BUILD: update OpenBLAS to v0.3.17
+* `#19496 <https://github.com/numpy/numpy/pull/19496>`__: MAINT: Avoid unicode characters in division SIMD code comments
+* `#19499 <https://github.com/numpy/numpy/pull/19499>`__: BUG, SIMD: Fix infinite loop during count non-zero on GCC-11
+* `#19500 <https://github.com/numpy/numpy/pull/19500>`__: BUG: fix a numpy.npiter leak in npyiter_multi_index_set
+* `#19501 <https://github.com/numpy/numpy/pull/19501>`__: TST: Fix a ``GenericAlias`` test failure for python 3.9.0
+* `#19502 <https://github.com/numpy/numpy/pull/19502>`__: MAINT: Start testing with Python 3.10.0b3.
+* `#19503 <https://github.com/numpy/numpy/pull/19503>`__: MAINT: Add missing dtype overloads for object- and ctypes-based...
+* `#19510 <https://github.com/numpy/numpy/pull/19510>`__: REL: Prepare for NumPy 1.21.1 release.
+

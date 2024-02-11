@@ -2,28 +2,20 @@
 import operator
 
 import numpy as np
-from typing import Iterable  # noqa: F401
+import numpy.typing as npt
+from collections.abc import Iterable
 
 # Basic checks
 array = np.array([1, 2])
 
 
-def ndarray_func(x):
-    # type: (np.ndarray) -> np.ndarray
+def ndarray_func(x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     return x
 
 
-ndarray_func(np.array([1, 2]))
+ndarray_func(np.array([1, 2], dtype=np.float64))
 array == 1
 array.dtype == float
-
-ndarray_func(np.zeros([1, 2]))
-ndarray_func(np.ones([1, 2]))
-ndarray_func(np.empty([1, 2]))
-
-ndarray_func(np.zeros_like(array))
-ndarray_func(np.ones_like(array))
-ndarray_func(np.empty_like(array))
 
 # Dtype construction
 np.dtype(float)
@@ -41,13 +33,13 @@ np.dtype(two_tuples_dtype)
 three_tuples_dtype = [("R", "u1", 2)]
 np.dtype(three_tuples_dtype)
 
-mixed_tuples_dtype = [("R", "u1"), ("G", np.unicode_, 1)]
+mixed_tuples_dtype = [("R", "u1"), ("G", np.str_, 1)]
 np.dtype(mixed_tuples_dtype)
 
 shape_tuple_dtype = [("R", "u1", (2, 2))]
 np.dtype(shape_tuple_dtype)
 
-shape_like_dtype = [("R", "u1", (2, 2)), ("G", np.unicode_, 1)]
+shape_like_dtype = [("R", "u1", (2, 2)), ("G", np.str_, 1)]
 np.dtype(shape_like_dtype)
 
 object_dtype = [("field1", object)]
@@ -55,7 +47,7 @@ np.dtype(object_dtype)
 
 np.dtype((np.int32, (np.int8, 4)))
 
-# Dtype comparision
+# Dtype comparison
 np.dtype(float) == float
 np.dtype(float) != np.float64
 np.dtype(float) < None
@@ -64,8 +56,7 @@ np.dtype(float) > np.dtype(float)
 np.dtype(float) >= np.dtype(("U", 10))
 
 # Iteration and indexing
-def iterable_func(x):
-    # type: (Iterable) -> Iterable
+def iterable_func(x: Iterable[object]) -> Iterable[object]:
     return x
 
 

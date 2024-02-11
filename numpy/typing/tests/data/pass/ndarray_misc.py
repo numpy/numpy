@@ -6,18 +6,23 @@ function-based counterpart in `../from_numeric.py`.
 
 """
 
-from typing import cast
-import numpy as np
+from __future__ import annotations
 
-class SubClass(np.ndarray): ...
+import operator
+from typing import cast, Any
+
+import numpy as np
+import numpy.typing as npt
+
+class SubClass(npt.NDArray[np.float64]): ...
 
 i4 = np.int32(1)
-A = np.array([[1]], dtype=np.int32)
+A: np.ndarray[Any, np.dtype[np.int32]] = np.array([[1]], dtype=np.int32)
 B0 = np.empty((), dtype=np.int32).view(SubClass)
 B1 = np.empty((1,), dtype=np.int32).view(SubClass)
 B2 = np.empty((1, 1), dtype=np.int32).view(SubClass)
-C = np.array([0, 1, 2], dtype=np.int32)
-D = np.empty(3).view(SubClass)
+C: np.ndarray[Any, np.dtype[np.int32]] = np.array([0, 1, 2], dtype=np.int32)
+D = np.ones(3).view(SubClass)
 
 i4.all()
 A.all()
@@ -93,21 +98,11 @@ A.min(axis=0)
 A.min(keepdims=True)
 A.min(out=B0)
 
-i4.newbyteorder()
-A.newbyteorder()
-B0.newbyteorder('|')
-
 i4.prod()
 A.prod()
 A.prod(axis=0)
 A.prod(keepdims=True)
 A.prod(out=B0)
-
-i4.ptp()
-A.ptp()
-A.ptp(axis=0)
-A.ptp(keepdims=True)
-A.astype(int).ptp(out=B0)
 
 i4.round()
 A.round()
@@ -146,7 +141,7 @@ A.argpartition([0])
 A.diagonal()
 
 A.dot(1)
-A.dot(1, out=B0)
+A.dot(1, out=B2)
 
 A.nonzero()
 
@@ -157,3 +152,25 @@ A.trace(out=B0)
 
 void = cast(np.void, np.array(1, dtype=[("f", np.float64)]).take(0))
 void.setfield(10, np.float64)
+
+A.item(0)
+C.item(0)
+
+A.ravel()
+C.ravel()
+
+A.flatten()
+C.flatten()
+
+A.reshape(1)
+C.reshape(3)
+
+int(np.array(1.0, dtype=np.float64))
+int(np.array("1", dtype=np.str_))
+
+float(np.array(1.0, dtype=np.float64))
+float(np.array("1", dtype=np.str_))
+
+complex(np.array(1.0, dtype=np.float64))
+
+operator.index(np.array(1, dtype=np.int64))

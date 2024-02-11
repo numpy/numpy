@@ -1,7 +1,19 @@
 .. _underthehood:
 
 ===========================================
-Under-the-hood Documentation for developers
+Under-the-hood documentation for developers
 ===========================================
 
-To be completed.
+These documents are intended as a low-level look into NumPy; focused
+towards developers.
+
+.. toctree::
+   :maxdepth: 1
+
+   internals
+   internals.code-explanations
+   alignment
+   ../user/byteswapping
+   ../user/basics.dispatch
+   ../user/basics.subclassing
+

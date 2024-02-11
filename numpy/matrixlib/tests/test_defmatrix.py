@@ -7,7 +7,6 @@ from numpy.testing import (
     assert_array_almost_equal, assert_raises
     )
 from numpy.linalg import matrix_power
-from numpy.matrixlib import mat
 
 class TestCtor:
     def test_basic(self):
@@ -111,9 +110,10 @@ class TestProperties:
 
     def test_ptp(self):
         x = np.arange(4).reshape((2, 2))
-        assert_(x.ptp() == 3)
-        assert_(np.all(x.ptp(0) == np.array([2, 2])))
-        assert_(np.all(x.ptp(1) == np.array([1, 1])))
+        mx = x.view(np.matrix)
+        assert_(mx.ptp() == 3)
+        assert_(np.all(mx.ptp(0) == np.array([2, 2])))
+        assert_(np.all(mx.ptp(1) == np.array([1, 1])))
 
     def test_var(self):
         x = np.arange(9).reshape((3, 3))
@@ -283,10 +283,10 @@ class TestMatrixReturn:
             'argmin', 'choose', 'dump', 'dumps', 'fill', 'getfield',
             'getA', 'getA1', 'item', 'nonzero', 'put', 'putmask', 'resize',
             'searchsorted', 'setflags', 'setfield', 'sort',
-            'partition', 'argpartition',
+            'partition', 'argpartition', 'newbyteorder', 'to_device',
             'take', 'tofile', 'tolist', 'tostring', 'tobytes', 'all', 'any',
             'sum', 'argmax', 'argmin', 'min', 'max', 'mean', 'var', 'ptp',
-            'prod', 'std', 'ctypes', 'itemset',
+            'prod', 'std', 'ctypes', 'itemset', 'bitwise_count',
             ]
         for attrib in dir(a):
             if attrib.startswith('_') or attrib in excluded_methods:
@@ -389,7 +389,7 @@ class TestPower:
     def test_returntype(self):
         a = np.array([[0, 1], [0, 0]])
         assert_(type(matrix_power(a, 2)) is np.ndarray)
-        a = mat(a)
+        a = asmatrix(a)
         assert_(type(matrix_power(a, 2)) is matrix)
 
     def test_list(self):

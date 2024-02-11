@@ -58,7 +58,7 @@ class IntelEM64TCCompiler(UnixCCompiler):
 
         v = self.get_version()
         mpopt = 'openmp' if v and v < '15' else 'qopenmp'
-        self.cc_exe = ('icc -m64 -fPIC -fp-model strict -O3 '
+        self.cc_exe = ('icc -std=c99 -m64 -fPIC -fp-model strict -O3 '
                        '-fomit-frame-pointer -{}').format(mpopt)
         compiler = self.cc_exe
 

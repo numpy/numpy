@@ -1,0 +1,483 @@
+/*@targets
+ ** $maxopt baseline
+ ** neon asimd
+ ** sse2 avx2 avx512_skx
+ ** vsx2
+ ** vx vxe
+ **/
+#define _UMATHMODULE
+#define _MULTIARRAYMODULE
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include "simd/simd.h"
+#include "loops_utils.h"
+#include "loops.h"
+#include "lowlevel_strided_loops.h"
+// Provides the various *_LOOP macros
+#include "fast_loop_macros.h"
+
+/*******************************************************************************
+ ** Scalar intrinsics
+ ******************************************************************************/
+// signed/unsigned int
+#define scalar_max_i(A, B) ((A > B) ? A : B)
+#define scalar_min_i(A, B) ((A < B) ? A : B)
+// fp, propagates NaNs
+#define scalar_max(A, B) ((A >= B || npy_isnan(A)) ? A : B)
+#define scalar_max_f scalar_max
+#define scalar_max_d scalar_max
+#define scalar_max_l scalar_max
+#define scalar_min(A, B) ((A <= B || npy_isnan(A)) ? A : B)
+#define scalar_min_f scalar_min
+#define scalar_min_d scalar_min
+#define scalar_min_l scalar_min
+// fp, ignores NaNs
+#define scalar_maxp_f fmaxf
+#define scalar_maxp_d fmax
+#define scalar_maxp_l fmaxl
+#define scalar_minp_f fminf
+#define scalar_minp_d fmin
+#define scalar_minp_l fminl
+
+// special optimization for fp scalars propagates NaNs
+// since there're no C99 support for it
+#ifndef NPY_DISABLE_OPTIMIZATION
+/**begin repeat
+ * #type = npy_float, npy_double#
+ * #sfx = f32, f64#
+ * #c_sfx = f, d#
+ * #isa_sfx = s, d#
+ * #sse_type = __m128, __m128d#
+ */
+/**begin repeat1
+ * #op = max, min#
+ * #neon_instr = fmax, fmin#
+ */
+#ifdef NPY_HAVE_SSE2
+#undef scalar_@op@_@c_sfx@
+NPY_FINLINE @type@ scalar_@op@_@c_sfx@(@type@ a, @type@ b) {
+    @sse_type@ va = _mm_set_s@isa_sfx@(a);
+    @sse_type@ vb = _mm_set_s@isa_sfx@(b);
+    @sse_type@ rv = _mm_@op@_s@isa_sfx@(va, vb);
+    // X86 handle second operand
+    @sse_type@ nn = _mm_cmpord_s@isa_sfx@(va, va);
+    #ifdef NPY_HAVE_SSE41
+    rv = _mm_blendv_p@isa_sfx@(va, rv, nn);
+    #else
+    rv = _mm_xor_p@isa_sfx@(va, _mm_and_p@isa_sfx@(_mm_xor_p@isa_sfx@(va, rv), nn));
+    #endif
+    return _mm_cvts@isa_sfx@_@sfx@(rv);
+}
+#endif // SSE2
+#ifdef __aarch64__
+#undef scalar_@op@_@c_sfx@
+NPY_FINLINE @type@ scalar_@op@_@c_sfx@(@type@ a, @type@ b) {
+    @type@ result = 0;
+    __asm(
+        "@neon_instr@ %@isa_sfx@[result], %@isa_sfx@[a], %@isa_sfx@[b]"
+        : [result] "=w" (result)
+        : [a] "w" (a), [b] "w" (b)
+    );
+    return result;
+}
+#endif // __aarch64__
+/**end repeat1**/
+/**end repeat**/
+#endif // NPY_DISABLE_OPTIMIZATION
+// mapping to double if its possible
+#if NPY_BITSOF_DOUBLE == NPY_BITSOF_LONGDOUBLE
+/**begin repeat
+ * #op = max, min, maxp, minp#
+ */
+    #undef scalar_@op@_l
+    #define scalar_@op@_l scalar_@op@_d
+/**end repeat**/
+#endif
+
+/*******************************************************************************
+ ** Defining the SIMD kernels
+ ******************************************************************************/
+/**begin repeat
+ * #sfx = s8, u8, s16, u16, s32, u32, s64, u64, f32, f64#
+ * #simd_chk = NPY_SIMD*8, NPY_SIMD_F32, NPY_SIMD_F64#
+ * #is_fp = 0*8, 1, 1#
+ * #scalar_sfx = i*8, f, d#
+ */
+/**begin repeat1
+ * # intrin = max, min, maxp, minp#
+ * # fp_only = 0, 0, 1, 1#
+ */
+#define SCALAR_OP scalar_@intrin@_@scalar_sfx@
+#if @simd_chk@ && (!@fp_only@ || (@is_fp@ && @fp_only@))
+
+#if @is_fp@ && !@fp_only@
+    #define V_INTRIN npyv_@intrin@n_@sfx@ // propagates NaNs
+    #define V_REDUCE_INTRIN npyv_reduce_@intrin@n_@sfx@
+#else
+    #define V_INTRIN npyv_@intrin@_@sfx@
+    #define V_REDUCE_INTRIN npyv_reduce_@intrin@_@sfx@
+#endif
+
+// contiguous input.
+static inline void
+simd_reduce_c_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip, npyv_lanetype_@sfx@ *op1, npy_intp len)
+{
+    if (len < 1) {
+        return;
+    }
+    const int vstep = npyv_nlanes_@sfx@;
+    const int wstep = vstep*8;
+    npyv_@sfx@ acc = npyv_setall_@sfx@(op1[0]);
+    for (; len >= wstep; len -= wstep, ip += wstep) {
+    #ifdef NPY_HAVE_SSE2
+        NPY_PREFETCH(ip + wstep, 0, 3);
+    #endif
+        npyv_@sfx@ v0 = npyv_load_@sfx@(ip + vstep * 0);
+        npyv_@sfx@ v1 = npyv_load_@sfx@(ip + vstep * 1);
+        npyv_@sfx@ v2 = npyv_load_@sfx@(ip + vstep * 2);
+        npyv_@sfx@ v3 = npyv_load_@sfx@(ip + vstep * 3);
+
+        npyv_@sfx@ v4 = npyv_load_@sfx@(ip + vstep * 4);
+        npyv_@sfx@ v5 = npyv_load_@sfx@(ip + vstep * 5);
+        npyv_@sfx@ v6 = npyv_load_@sfx@(ip + vstep * 6);
+        npyv_@sfx@ v7 = npyv_load_@sfx@(ip + vstep * 7);
+
+        npyv_@sfx@ r01 = V_INTRIN(v0, v1);
+        npyv_@sfx@ r23 = V_INTRIN(v2, v3);
+        npyv_@sfx@ r45 = V_INTRIN(v4, v5);
+        npyv_@sfx@ r67 = V_INTRIN(v6, v7);
+        acc = V_INTRIN(acc, V_INTRIN(V_INTRIN(r01, r23), V_INTRIN(r45, r67)));
+    }
+    for (; len >= vstep; len -= vstep, ip += vstep) {
+        acc = V_INTRIN(acc, npyv_load_@sfx@(ip));
+    }
+    npyv_lanetype_@sfx@ r = V_REDUCE_INTRIN(acc);
+    // Scalar - finish up any remaining iterations
+    for (; len > 0; --len, ++ip) {
+        const npyv_lanetype_@sfx@ in2 = *ip;
+        r = SCALAR_OP(r, in2);
+    }
+    op1[0] = r;
+}
+
+// contiguous inputs and output.
+static inline void
+simd_binary_ccc_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip1, const npyv_lanetype_@sfx@ *ip2,
+                                     npyv_lanetype_@sfx@ *op1, npy_intp len)
+{
+#if NPY_SIMD_WIDTH == 128
+    // Note, 6x unroll was chosen for best results on Apple M1
+    const int vectorsPerLoop = 6;
+#else
+    // To avoid memory bandwidth bottleneck
+    const int vectorsPerLoop = 2;
+#endif
+    const int elemPerVector = npyv_nlanes_@sfx@;
+    int elemPerLoop = vectorsPerLoop * elemPerVector;
+
+    npy_intp i = 0;
+
+    for (; (i+elemPerLoop) <= len; i += elemPerLoop) {
+        npyv_@sfx@ v0 = npyv_load_@sfx@(&ip1[i + 0 * elemPerVector]);
+        npyv_@sfx@ v1 = npyv_load_@sfx@(&ip1[i + 1 * elemPerVector]);
+    #if NPY_SIMD_WIDTH == 128
+        npyv_@sfx@ v2 = npyv_load_@sfx@(&ip1[i + 2 * elemPerVector]);
+        npyv_@sfx@ v3 = npyv_load_@sfx@(&ip1[i + 3 * elemPerVector]);
+        npyv_@sfx@ v4 = npyv_load_@sfx@(&ip1[i + 4 * elemPerVector]);
+        npyv_@sfx@ v5 = npyv_load_@sfx@(&ip1[i + 5 * elemPerVector]);
+    #endif
+        npyv_@sfx@ u0 = npyv_load_@sfx@(&ip2[i + 0 * elemPerVector]);
+        npyv_@sfx@ u1 = npyv_load_@sfx@(&ip2[i + 1 * elemPerVector]);
+    #if NPY_SIMD_WIDTH == 128
+        npyv_@sfx@ u2 = npyv_load_@sfx@(&ip2[i + 2 * elemPerVector]);
+        npyv_@sfx@ u3 = npyv_load_@sfx@(&ip2[i + 3 * elemPerVector]);
+        npyv_@sfx@ u4 = npyv_load_@sfx@(&ip2[i + 4 * elemPerVector]);
+        npyv_@sfx@ u5 = npyv_load_@sfx@(&ip2[i + 5 * elemPerVector]);
+    #endif
+        npyv_@sfx@ m0 = V_INTRIN(v0, u0);
+        npyv_@sfx@ m1 = V_INTRIN(v1, u1);
+    #if NPY_SIMD_WIDTH == 128
+        npyv_@sfx@ m2 = V_INTRIN(v2, u2);
+        npyv_@sfx@ m3 = V_INTRIN(v3, u3);
+        npyv_@sfx@ m4 = V_INTRIN(v4, u4);
+        npyv_@sfx@ m5 = V_INTRIN(v5, u5);
+    #endif
+        npyv_store_@sfx@(&op1[i + 0 * elemPerVector], m0);
+        npyv_store_@sfx@(&op1[i + 1 * elemPerVector], m1);
+    #if NPY_SIMD_WIDTH == 128
+        npyv_store_@sfx@(&op1[i + 2 * elemPerVector], m2);
+        npyv_store_@sfx@(&op1[i + 3 * elemPerVector], m3);
+        npyv_store_@sfx@(&op1[i + 4 * elemPerVector], m4);
+        npyv_store_@sfx@(&op1[i + 5 * elemPerVector], m5);
+    #endif
+    }
+    for (; (i+elemPerVector) <= len; i += elemPerVector) {
+        npyv_@sfx@ v0 = npyv_load_@sfx@(ip1 + i);
+        npyv_@sfx@ u0 = npyv_load_@sfx@(ip2 + i);
+        npyv_@sfx@ m0 = V_INTRIN(v0, u0);
+        npyv_store_@sfx@(op1 + i, m0);
+    }
+    // Scalar - finish up any remaining iterations
+    for (; i < len; ++i) {
+        const npyv_lanetype_@sfx@ in1 = ip1[i];
+        const npyv_lanetype_@sfx@ in2 = ip2[i];
+        op1[i] = SCALAR_OP(in1, in2);
+    }
+}
+// non-contiguous for float 32/64-bit memory access
+#if @is_fp@ && !defined(NPY_HAVE_NEON)
+// unroll scalars faster than non-contiguous vector load/store on Arm
+static inline void
+simd_binary_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip1, npy_intp sip1,
+                           const npyv_lanetype_@sfx@ *ip2, npy_intp sip2,
+                                 npyv_lanetype_@sfx@ *op1, npy_intp sop1,
+                                 npy_intp len)
+{
+    const int vstep = npyv_nlanes_@sfx@;
+    for (; len >= vstep; len -= vstep, ip1 += sip1*vstep,
+                         ip2 += sip2*vstep, op1 += sop1*vstep
+    ) {
+        npyv_@sfx@ a, b;
+        if (sip1 == 1) {
+            a = npyv_load_@sfx@(ip1);
+        } else {
+            a = npyv_loadn_@sfx@(ip1, sip1);
+        }
+        if (sip2 == 1) {
+            b = npyv_load_@sfx@(ip2);
+        } else {
+            b = npyv_loadn_@sfx@(ip2, sip2);
+        }
+        npyv_@sfx@ r = V_INTRIN(a, b);
+        if (sop1 == 1) {
+            npyv_store_@sfx@(op1, r);
+        } else {
+            npyv_storen_@sfx@(op1, sop1, r);
+        }
+    }
+    for (; len > 0; --len, ip1 += sip1, ip2 += sip2, op1 += sop1) {
+        const npyv_lanetype_@sfx@ a = *ip1;
+        const npyv_lanetype_@sfx@ b = *ip2;
+        *op1 = SCALAR_OP(a, b);
+    }
+}
+#endif
+
+#undef V_INTRIN
+#undef V_REDUCE_INTRIN
+
+#endif // simd_chk && (!fp_only || (is_fp && fp_only))
+
+#undef SCALAR_OP
+/**end repeat1**/
+/**end repeat**/
+
+/*******************************************************************************
+ ** Defining ufunc inner functions
+ ******************************************************************************/
+/**begin repeat
+ * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *         BYTE, SHORT, INT, LONG, LONGLONG,
+ *         FLOAT, DOUBLE, LONGDOUBLE#
+ *
+ * #BTYPE = BYTE, SHORT, INT,  LONG, LONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG,
+ *          FLOAT, DOUBLE, LONGDOUBLE#
+ * #type = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
+ *         npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *         npy_float, npy_double, npy_longdouble#
+ *
+ * #is_fp = 0*10, 1*3#
+ * #is_unsigned = 1*5, 0*5, 0*3#
+ * #scalar_sfx = i*10, f, d, l#
+ */
+#undef TO_SIMD_SFX
+#if 0
+/**begin repeat1
+ * #len = 8, 16, 32, 64#
+ */
+#elif NPY_SIMD && NPY_BITSOF_@BTYPE@ == @len@
+    #if @is_fp@
+        #define TO_SIMD_SFX(X) X##_f@len@
+        #if NPY_BITSOF_@BTYPE@ == 32 && !NPY_SIMD_F32
+            #undef TO_SIMD_SFX
+        #endif
+        #if NPY_BITSOF_@BTYPE@ == 64 && !NPY_SIMD_F64
+            #undef TO_SIMD_SFX
+        #endif
+    #elif @is_unsigned@
+        #define TO_SIMD_SFX(X) X##_u@len@
+    #else
+        #define TO_SIMD_SFX(X) X##_s@len@
+    #endif
+/**end repeat1**/
+#endif
+
+/**begin repeat1
+ * # kind = maximum, minimum, fmax, fmin#
+ * # intrin = max, min, maxp, minp#
+ * # fp_only = 0, 0, 1, 1#
+ */
+#if !@fp_only@ || (@is_fp@ && @fp_only@)
+#define SCALAR_OP scalar_@intrin@_@scalar_sfx@
+
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];
+    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2],
+             len = dimensions[0];
+    npy_intp i = 0;
+#ifdef TO_SIMD_SFX
+    #undef STYPE
+    #define STYPE TO_SIMD_SFX(npyv_lanetype)
+    if (IS_BINARY_REDUCE) {
+        // reduce and contiguous
+        if (is2 == sizeof(@type@)) {
+            TO_SIMD_SFX(simd_reduce_c_@intrin@)(
+                (STYPE*)ip2, (STYPE*)op1, len
+            );
+            goto clear_fp;
+        }
+    }
+    else if (!is_mem_overlap(ip1, is1, op1, os1, len) &&
+        !is_mem_overlap(ip2, is2, op1, os1, len)
+    ) {
+        // no overlap and operands are binary contiguous
+        if (IS_BINARY_CONT(@type@, @type@)) {
+            TO_SIMD_SFX(simd_binary_ccc_@intrin@)(
+                (STYPE*)ip1, (STYPE*)ip2, (STYPE*)op1, len
+            );
+            goto clear_fp;
+        }
+    // unroll scalars faster than non-contiguous vector load/store on Arm
+    #if !defined(NPY_HAVE_NEON) && @is_fp@
+        if (TO_SIMD_SFX(npyv_loadable_stride)(is1/sizeof(STYPE)) &&
+            TO_SIMD_SFX(npyv_loadable_stride)(is2/sizeof(STYPE)) &&
+            TO_SIMD_SFX(npyv_storable_stride)(os1/sizeof(STYPE))
+        ) {
+            TO_SIMD_SFX(simd_binary_@intrin@)(
+                (STYPE*)ip1, is1/sizeof(STYPE),
+                (STYPE*)ip2, is2/sizeof(STYPE),
+                (STYPE*)op1, os1/sizeof(STYPE), len
+            );
+            goto clear_fp;
+        }
+    #endif
+    }
+#endif // TO_SIMD_SFX
+#ifndef NPY_DISABLE_OPTIMIZATION
+    // scalar unrolls
+    if (IS_BINARY_REDUCE) {
+        // Note, 8x unroll was chosen for best results on Apple M1
+        npy_intp elemPerLoop = 8;
+        if((i+elemPerLoop) <= len){
+            @type@ m0 = *((@type@ *)(ip2 + (i + 0) * is2));
+            @type@ m1 = *((@type@ *)(ip2 + (i + 1) * is2));
+            @type@ m2 = *((@type@ *)(ip2 + (i + 2) * is2));
+            @type@ m3 = *((@type@ *)(ip2 + (i + 3) * is2));
+            @type@ m4 = *((@type@ *)(ip2 + (i + 4) * is2));
+            @type@ m5 = *((@type@ *)(ip2 + (i + 5) * is2));
+            @type@ m6 = *((@type@ *)(ip2 + (i + 6) * is2));
+            @type@ m7 = *((@type@ *)(ip2 + (i + 7) * is2));
+
+            i += elemPerLoop;
+            for(; (i+elemPerLoop)<=len; i+=elemPerLoop){
+                @type@ v0 = *((@type@ *)(ip2 + (i + 0) * is2));
+                @type@ v1 = *((@type@ *)(ip2 + (i + 1) * is2));
+                @type@ v2 = *((@type@ *)(ip2 + (i + 2) * is2));
+                @type@ v3 = *((@type@ *)(ip2 + (i + 3) * is2));
+                @type@ v4 = *((@type@ *)(ip2 + (i + 4) * is2));
+                @type@ v5 = *((@type@ *)(ip2 + (i + 5) * is2));
+                @type@ v6 = *((@type@ *)(ip2 + (i + 6) * is2));
+                @type@ v7 = *((@type@ *)(ip2 + (i + 7) * is2));
+
+                m0 = SCALAR_OP(m0, v0);
+                m1 = SCALAR_OP(m1, v1);
+                m2 = SCALAR_OP(m2, v2);
+                m3 = SCALAR_OP(m3, v3);
+                m4 = SCALAR_OP(m4, v4);
+                m5 = SCALAR_OP(m5, v5);
+                m6 = SCALAR_OP(m6, v6);
+                m7 = SCALAR_OP(m7, v7);
+            }
+
+            m0 = SCALAR_OP(m0, m1);
+            m2 = SCALAR_OP(m2, m3);
+            m4 = SCALAR_OP(m4, m5);
+            m6 = SCALAR_OP(m6, m7);
+
+            m0 = SCALAR_OP(m0, m2);
+            m4 = SCALAR_OP(m4, m6);
+
+            m0 = SCALAR_OP(m0, m4);
+
+             *((@type@ *)op1) = SCALAR_OP(*((@type@ *)op1), m0);
+        }
+    } else{
+        // Note, 4x unroll was chosen for best results on Apple M1
+        npy_intp elemPerLoop = 4;
+        for(; (i+elemPerLoop)<=len; i+=elemPerLoop){
+            /* Note, we can't just load all, do all ops, then store all here.
+             * Sometimes ufuncs are called with `accumulate`, which makes the
+             * assumption that previous iterations have finished before next
+             * iteration.  For example, the output of iteration 2 depends on the
+             * result of iteration 1.
+             */
+
+            /**begin repeat2
+             * #unroll = 0, 1, 2, 3#
+             */
+            @type@ v@unroll@ = *((@type@ *)(ip1 + (i + @unroll@) * is1));
+            @type@ u@unroll@ = *((@type@ *)(ip2 + (i + @unroll@) * is2));
+            *((@type@ *)(op1 + (i + @unroll@) * os1)) = SCALAR_OP(v@unroll@, u@unroll@);
+            /**end repeat2**/
+        }
+    }
+#endif // NPY_DISABLE_OPTIMIZATION
+    ip1 += is1 * i;
+    ip2 += is2 * i;
+    op1 += os1 * i;
+    for (; i < len; ++i, ip1 += is1, ip2 += is2, op1 += os1) {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((@type@ *)op1) = SCALAR_OP(in1, in2);
+    }
+#ifdef TO_SIMD_SFX
+clear_fp:
+    npyv_cleanup();
+#endif
+#if @is_fp@
+    npy_clear_floatstatus_barrier((char*)dimensions);
+#endif
+}
+
+
+NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@_indexed)
+(PyArrayMethod_Context *NPY_UNUSED(context), char *const *args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indxp = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp shape = steps[3];
+    npy_intp i;
+    @type@ *indexed;
+    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
+        npy_intp indx = *(npy_intp *)indxp;
+        if (indx < 0) {
+            indx += shape;
+        }
+        indexed = (@type@ *)(ip1 + is1 * indx);
+        *indexed = SCALAR_OP(*indexed, *(@type@ *)value);
+    }
+    return 0;
+}
+
+#undef SCALAR_OP
+
+#endif // !fp_only || (is_fp && fp_only)
+/**end repeat1**/
+/**end repeat**/
+

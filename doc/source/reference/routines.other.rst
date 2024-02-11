@@ -1,5 +1,5 @@
 Miscellaneous routines
-**********************
+======================
 
 .. toctree::
 
@@ -21,21 +21,6 @@ Memory ranges
 
    shares_memory
    may_share_memory
-   byte_bounds
-
-Array mixins
-------------
-.. autosummary::
-   :toctree: generated/
-
-   lib.mixins.NDArrayOperatorsMixin
-
-NumPy version comparison
-------------------------
-.. autosummary::
-   :toctree: generated/
-
-   lib.NumpyVersion
 
 Utility
 -------
@@ -45,14 +30,13 @@ Utility
 
    get_include
    show_config
-   deprecate
-   deprecate_with_doc
+   show_runtime
    broadcast_shapes
 
-Matlab-like Functions
----------------------
+NumPy-specific help function
+----------------------------
+
 .. autosummary::
    :toctree: generated/
 
-   who
-   disp
+   info

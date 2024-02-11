@@ -4,8 +4,8 @@
 __docformat__ = "restructuredtext en"
 
 import numpy as np
-import numpy.core.numeric as nx
-from numpy.compat import asbytes, asunicode
+import numpy._core.numeric as nx
+from numpy._utils import asbytes, asunicode
 
 
 def _decode_line(line, encoding=None):
@@ -18,18 +18,18 @@ def _decode_line(line, encoding=None):
     ----------
     line : str or bytes
          Line to be decoded.
+    encoding : str
+         Encoding used to decode `line`.
 
     Returns
     -------
-    decoded_line : unicode
-         Unicode in Python 2, a str (unicode) in Python 3.
+    decoded_line : str
 
     """
     if type(line) is bytes:
         if encoding is None:
-            line = line.decode('latin1')
-        else:
-            line = line.decode(encoding)
+            encoding = "latin1"
+        line = line.decode(encoding)
 
     return line
 
@@ -495,7 +495,7 @@ class StringConverter:
         upgrade or not. Default is False.
 
     """
-    _mapper = [(nx.bool_, str2bool, False),
+    _mapper = [(nx.bool, str2bool, False),
                (nx.int_, int, -1),]
 
     # On 32-bit systems, we need to make sure that we explicitly include
@@ -513,8 +513,8 @@ class StringConverter:
                     (nx.complexfloating, complex, nx.nan + 0j),
                     # Last, try with the string types (must be last, because
                     # `_mapper[-1]` is used as default in some cases)
-                    (nx.unicode_, asunicode, '???'),
-                    (nx.string_, asbytes, '???'),
+                    (nx.str_, asunicode, '???'),
+                    (nx.bytes_, asbytes, '???'),
                     ])
 
     @classmethod
@@ -780,7 +780,7 @@ class StringConverter:
             value.
         missing_values : {sequence of str, None}, optional
             Sequence of strings indicating a missing value. If ``None``, then
-            the existing `missing_values` are cleared. The default is `''`.
+            the existing `missing_values` are cleared. The default is ``''``.
         locked : bool, optional
             Whether the StringConverter should be locked to prevent
             automatic upgrade or not. Default is False.

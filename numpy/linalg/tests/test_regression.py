@@ -87,6 +87,9 @@ class TestRegression:
                 assert_equal(np.linalg.matrix_rank(a), 1)
                 assert_array_less(1, np.linalg.norm(a, ord=2))
 
+                w_svdvals = linalg.svdvals(a)
+                assert_array_almost_equal(w, w_svdvals)
+
     def test_norm_object_array(self):
         # gh-7575
         testvector = np.array([np.array([0, 1]), 0, 0], dtype=object)
@@ -107,10 +110,7 @@ class TestRegression:
         assert_raises(ValueError, linalg.norm, testvector, ord='nuc')
         assert_raises(ValueError, linalg.norm, testvector, ord=np.inf)
         assert_raises(ValueError, linalg.norm, testvector, ord=-np.inf)
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", DeprecationWarning)
-            assert_raises((AttributeError, DeprecationWarning),
-                              linalg.norm, testvector, ord=0)
+        assert_raises(ValueError, linalg.norm, testvector, ord=0)
         assert_raises(ValueError, linalg.norm, testvector, ord=-1)
         assert_raises(ValueError, linalg.norm, testvector, ord=-2)
 

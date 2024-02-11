@@ -19,7 +19,7 @@ arch_compilers = dict(
 )
 
 class FakeCCompilerOpt(CCompilerOpt):
-    fake_info = ""
+    fake_info = ("arch", "compiler", "extra_args")
     def __init__(self, *args, **kwargs):
         CCompilerOpt.__init__(self, None, **kwargs)
     def dist_compile(self, sources, flags, **kwargs):
@@ -161,15 +161,15 @@ class _TestConfFeatures(FakeCCompilerOpt):
 class TestConfFeatures(unittest.TestCase):
     def __init__(self, methodName="runTest"):
         unittest.TestCase.__init__(self, methodName)
-        self.setup()
+        self._setup()
 
-    def setup(self):
+    def _setup(self):
         FakeCCompilerOpt.conf_nocache = True
 
     def test_features(self):
         for arch, compilers in arch_compilers.items():
             for cc in compilers:
-                FakeCCompilerOpt.fake_info = arch + cc
+                FakeCCompilerOpt.fake_info = (arch, cc, "")
                 _TestConfFeatures()
 
 if is_standalone:

@@ -6,9 +6,9 @@
    to this page.
 
 
-***************************
-Troubleshooting ImportError
-***************************
+***************
+Troubleshooting
+***************
 
 .. note::
 
@@ -60,22 +60,22 @@ See also the `conda user-guide <https://docs.conda.io/projects/conda/en/latest/u
 If you use an external editor/development environment it will have to be set
 up correctly.  See below for solutions for some common setups.
 
-Using PyCharm with Anaconda/conda Python
-----------------------------------------
+Using PyCharm with Anaconda Python
+----------------------------------
 
 There are fairly common issues when using PyCharm together with Anaconda,
 please see the `PyCharm support <https://www.jetbrains.com/help/pycharm/conda-support-creating-conda-virtual-environment.html>`_
 
-Using VSCode with Anaconda/conda Python (or environments)
----------------------------------------------------------
+Using VS Code with Anaconda Python (or environments)
+----------------------------------------------------
 
 A commonly reported issue is related to the environment activation within
 VSCode. Please see the `VSCode support <https://code.visualstudio.com/docs/python/environments>`_
 for information on how to correctly set up VSCode with virtual environments
 or conda.
 
-Using Eclipse/PyDev with Anaconda/conda Python (or environments)
-----------------------------------------------------------------
+Using Eclipse/PyDev with Anaconda Python (or environments)
+----------------------------------------------------------
 
 Please see the
 `Anaconda Documentation <https://docs.anaconda.com/anaconda/user-guide/tasks/integration/eclipse-pydev/>`_
@@ -116,7 +116,7 @@ need to recompile the entire stack of python modules you work with
 including NumPy
 
 
-All Setups
+All setups
 ----------
 
 Occasionally there may be simple issues with old or bad installations
@@ -124,7 +124,7 @@ of NumPy. In this case you may just try to uninstall and reinstall NumPy.
 Make sure that NumPy is not found after uninstalling.
 
 
-Development Setup
+Development setup
 -----------------
 
 If you are using a development setup, make sure to run ``git clean -xdf``
@@ -133,7 +133,7 @@ any modifications you made, e.g. ``site.cfg``).
 In many cases files from old builds may lead to incorrect builds.
 
 
-Check Environment Variables
+Check environment variables
 ---------------------------
 
 In general how to set and check your environment variables depends on
@@ -146,3 +146,102 @@ following in python::
 
 This may mainly help you if you are not running the python and/or NumPy
 version you are expecting to run.
+
+
+C-API incompatibility
+---------------------------
+
+If you see an error like:
+
+
+    RuntimeError: module compiled against API version v1 but this version of numpy is v2
+
+
+You may have:
+
+* A bad extension "wheel" (binary install) that should use
+  `oldest-support-numpy <https://pypi.org/project/oldest-supported-numpy/>`_ (
+  with manual constraints if necessary) to build their binary packages.
+
+* An environment issue messing with package versions.
+
+* Incompatible package versions somehow enforced manually.
+
+* An extension module compiled locally against a very recent version
+  followed by a NumPy downgrade.
+
+* A compiled extension copied to a different computer with an
+  older NumPy version.
+
+The best thing to do if you see this error is to contact
+the maintainers of the package that is causing problem
+so that they can solve the problem properly.
+
+However, while you wait for a solution, a work around
+that usually works is to upgrade the NumPy version::
+
+
+    pip install numpy --upgrade
+
+Segfaults or crashes
+====================
+
+NumPy tries to use advanced CPU features (SIMD) to speed up operations. If you
+are getting an "illegal instruction" error or a segfault, one cause could be
+that the environment claims it can support one or more of these features but
+actually cannot. This can happen inside a docker image or a VM (qemu, VMWare,
+...)
+
+You can use the output of ``np.show_runtime()`` to show which SIMD features are
+detected. For instance::
+
+    >>> np.show_runtime()
+    WARNING: `threadpoolctl` not found in system! Install it by `pip install \
+    threadpoolctl`. Once installed, try `np.show_runtime` again for more detailed
+    build information
+    [{'simd_extensions': {'baseline': ['SSE', 'SSE2', 'SSE3'],
+                          'found': ['SSSE3',
+                                    'SSE41',
+                                    'POPCNT',
+                                    'SSE42',
+                                    'AVX',
+                                    'F16C',
+                                    'FMA3',
+                                    'AVX2'],
+                          'not_found': ['AVX512F',
+                                        'AVX512CD',
+                                        'AVX512_KNL',
+                                        'AVX512_KNM',
+                                        'AVX512_SKX',
+                                        'AVX512_CLX',
+                                        'AVX512_CNL',
+                                        'AVX512_ICL']}}]
+
+In this case, it shows AVX2 and FMA3 under the ``found`` section, so you can
+try disabling them by setting ``NPY_DISABLE_CPU_FEATURES="AVX2,FMA3"`` in your
+environment before running python (for cmd.exe on windows)::
+
+    >SET NPY_DISABLE_CPU_FEATURES="AVX2,FMA3"
+    >python <myprogram.py>
+
+By installing threadpoolctl ``np.show_runtime()`` will show additional information::
+
+    ...
+    {'architecture': 'Zen',
+      'filepath': '/tmp/venv3/lib/python3.9/site-packages/numpy.libs/libopenblas64_p-r0-15028c96.3.21.so',
+      'internal_api': 'openblas',
+      'num_threads': 24,
+      'prefix': 'libopenblas',
+      'threading_layer': 'pthreads',
+      'user_api': 'blas',
+      'version': '0.3.21'}]
+
+If you use the wheel from PyPI, it contains code from the OpenBLAS project to
+speed up matrix operations. This code too can try to use SIMD instructions. It
+has a different mechanism for choosing which to use, based on a CPU
+architecture, You can override this architecture by setting
+``OPENBLAS_CORETYPE``: a minimal value for ``x86_64`` is
+``OPENBLAS_CORETYPE=Haswell``.  This too needs to be set before running your
+python (this time for posix)::
+
+    $ OPENBLAS_CORETYPE=Haswell python <myprogram.py>

@@ -7,7 +7,6 @@ Standard array subclasses
 .. currentmodule:: numpy
 
 .. for doctests
-   >>> import numpy as np
    >>> np.random.seed(1)
 
 .. note::
@@ -42,6 +41,7 @@ however, of why your subroutine may not be able to handle an arbitrary
 subclass of an array is that matrices redefine the "*" operator to be
 matrix-multiplication, rather than element-by-element multiplication.
 
+.. _special-attributes-and-methods:
 
 Special attributes and methods
 ==============================
@@ -71,10 +71,11 @@ NumPy provides several hooks that classes can customize:
    The method should return either the result of the operation, or
    :obj:`NotImplemented` if the operation requested is not implemented.
 
-   If one of the input or output arguments has a :func:`__array_ufunc__`
+   If one of the input, output, or ``where`` arguments has a :func:`__array_ufunc__`
    method, it is executed *instead* of the ufunc.  If more than one of the
    arguments implements :func:`__array_ufunc__`, they are tried in the
-   order: subclasses before superclasses, inputs before outputs, otherwise
+   order: subclasses before superclasses, inputs before outputs,
+   outputs before ``where``, otherwise
    left to right. The first routine returning something other than
    :obj:`NotImplemented` determines the result. If all of the
    :func:`__array_ufunc__` operations return :obj:`NotImplemented`, a
@@ -153,23 +154,9 @@ NumPy provides several hooks that classes can customize:
         to have a hierarchy of subclasses that extend the behaviour. See
         :ref:`Subclassing ndarray <basics.subclassing>` for details.
 
-   .. note:: If a class defines the :func:`__array_ufunc__` method,
-      this disables the :func:`__array_wrap__`,
-      :func:`__array_prepare__`, :data:`__array_priority__` mechanism
-      described below for ufuncs (which may eventually be deprecated).
-
 .. py:method:: class.__array_function__(func, types, args, kwargs)
 
    .. versionadded:: 1.16
-
-   .. note::
-
-       - In NumPy 1.17, the protocol is enabled by default, but can be disabled
-         with ``NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=0``.
-       - In NumPy 1.16, you need to set the environment variable
-         ``NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1`` before importing NumPy to use
-         NumPy function overrides.
-       - Eventually, expect to ``__array_function__`` to always be enabled.
 
    -  ``func`` is an arbitrary callable exposed by NumPy's public API,
       which was called in the form ``func(*args, **kwargs)``.
@@ -179,9 +166,9 @@ NumPy provides several hooks that classes can customize:
    -  The tuple ``args`` and dict ``kwargs`` are directly passed on from the
       original call.
 
-   As a convenience for ``__array_function__`` implementors, ``types``
+   As a convenience for ``__array_function__`` implementers, ``types``
    provides all argument types with an ``'__array_function__'`` attribute.
-   This allows implementors to quickly identify cases where they should defer
+   This allows implementers to quickly identify cases where they should defer
    to ``__array_function__`` implementations on other arguments.
    Implementations should not rely on the iteration order of ``types``.
 
@@ -282,22 +269,7 @@ NumPy provides several hooks that classes can customize:
    to update meta-information from the "parent." Subclasses inherit
    a default implementation of this method that does nothing.
 
-.. py:method:: class.__array_prepare__(array, context=None)
-
-   At the beginning of every :ref:`ufunc <ufuncs-output-type>`, this
-   method is called on the input object with the highest array
-   priority, or the output object if one was specified. The output
-   array is passed in and whatever is returned is passed to the ufunc.
-   Subclasses inherit a default implementation of this method which
-   simply returns the output array unmodified. Subclasses may opt to
-   use this method to transform the output array into an instance of
-   the subclass and update metadata before returning the array to the
-   ufunc for computation.
-
-   .. note:: For ufuncs, it is hoped to eventually deprecate this method in
-             favour of :func:`__array_ufunc__`.
-
-.. py:method:: class.__array_wrap__(array, context=None)
+.. py:method:: class.__array_wrap__(array, context=None, return_scalar=False)
 
    At the end of every :ref:`ufunc <ufuncs-output-type>`, this method
    is called on the input object with the highest array priority, or
@@ -309,8 +281,19 @@ NumPy provides several hooks that classes can customize:
    into an instance of the subclass and update metadata before
    returning the array to the user.
 
-   .. note:: For ufuncs, it is hoped to eventually deprecate this method in
-             favour of :func:`__array_ufunc__`.
+   NumPy may also call this function without a context from non-ufuncs to
+   allow preserving subclass information.
+
+   .. versionchanged:: 2.0
+      ``return_scalar`` is now passed as either ``False`` (usually) or ``True``
+      indicating that NumPy would return a scalar.
+      Subclasses may ignore the value, or return ``array[()]`` to behave more
+      like NumPy.
+
+   .. note::
+      It is hoped to eventually deprecate this method in favour of
+      func:`__array_ufunc__` for ufuncs (and :func:`__array_function__`
+      for a few other functions like :func:`numpy.squeeze`).
 
 .. py:attribute:: class.__array_priority__
 
@@ -324,11 +307,19 @@ NumPy provides several hooks that classes can customize:
 
 .. py:method:: class.__array__([dtype])
 
-   If a class (ndarray subclass or not) having the :func:`__array__`
-   method is used as the output object of an :ref:`ufunc
-   <ufuncs-output-type>`, results will *not* be written to the object
-   returned by :func:`__array__`. This practice will return ``TypeError``.
+    If defined on an object, should return an ``ndarray``.
+    This method is called by array-coercion functions like np.array()
+    if an object implementing this interface is passed to those functions.
+    Please refer to :ref:`Interoperability with NumPy <basics.interoperability>`
+    for the protocol hierarchy, of which ``__array__`` is the oldest and least
+    desirable.
 
+    .. note::  If a class (ndarray subclass or not) having the :func:`__array__`
+               method is used as the output object of an :ref:`ufunc
+               <ufuncs-output-type>`, results will *not* be written to the object
+               returned by :func:`__array__`. This practice will return ``TypeError``.
+
+.. _matrix-objects:
 
 Matrix objects
 ==============
@@ -407,7 +398,7 @@ alias for "matrix "in NumPy.
 
 Example 1: Matrix creation from a string
 
->>> a = np.mat('1 2 3; 4 5 3')
+>>> a = np.asmatrix('1 2 3; 4 5 3')
 >>> print((a*a.T).I)
     [[ 0.29239766 -0.13450292]
      [-0.13450292  0.08187135]]
@@ -415,13 +406,13 @@ Example 1: Matrix creation from a string
 
 Example 2: Matrix creation from nested sequence
 
->>> np.mat([[1,5,10],[1.0,3,4j]])
+>>> np.asmatrix([[1,5,10],[1.0,3,4j]])
 matrix([[  1.+0.j,   5.+0.j,  10.+0.j],
         [  1.+0.j,   3.+0.j,   0.+4.j]])
 
 Example 3: Matrix creation from an array
 
->>> np.mat(np.random.rand(3,3)).T
+>>> np.asmatrix(np.random.rand(3,3)).T
 matrix([[4.17022005e-01, 3.02332573e-01, 1.86260211e-01],
         [7.20324493e-01, 1.46755891e-01, 3.45560727e-01],
         [1.14374817e-04, 9.23385948e-02, 3.96767474e-01]])
@@ -477,31 +468,31 @@ Character arrays (:mod:`numpy.char`)
    single: character arrays
 
 .. note::
-   The `chararray` class exists for backwards compatibility with
+   The `~numpy.char.chararray` class exists for backwards compatibility with
    Numarray, it is not recommended for new development. Starting from numpy
    1.4, if one needs arrays of strings, it is recommended to use arrays of
-   `dtype` `object_`, `string_` or `unicode_`, and use the free functions
+   `dtype` `object_`, `bytes_` or `str_`, and use the free functions
    in the `numpy.char` module for fast vectorized string operations.
 
-These are enhanced arrays of either :class:`string_` type or
-:class:`unicode_` type.  These arrays inherit from the
+These are enhanced arrays of either :class:`str_` type or
+:class:`bytes_` type.  These arrays inherit from the
 :class:`ndarray`, but specially-define the operations ``+``, ``*``,
 and ``%`` on a (broadcasting) element-by-element basis.  These
 operations are not available on the standard :class:`ndarray` of
-character type. In addition, the :class:`chararray` has all of the
-standard :class:`string <str>` (and :class:`unicode`) methods,
+character type. In addition, the :class:`~numpy.char.chararray` has all of the
+standard :class:`str` (and :class:`bytes`) methods,
 executing them on an element-by-element basis. Perhaps the easiest
 way to create a chararray is to use :meth:`self.view(chararray)
 <ndarray.view>` where *self* is an ndarray of str or unicode
 data-type. However, a chararray can also be created using the
-:meth:`numpy.chararray` constructor, or via the
-:func:`numpy.char.array <core.defchararray.array>` function:
+:meth:`~numpy.char.chararray` constructor, or via the
+:func:`numpy.char.array <_core.defchararray.array>` function:
 
 .. autosummary::
    :toctree: generated/
 
-   chararray
-   core.defchararray.array
+   char.chararray
+   char.array
 
 Another difference with the standard ndarray of str data-type is
 that the chararray inherits the feature introduced by Numarray that
@@ -511,8 +502,8 @@ on item retrieval and comparison operations.
 
 .. _arrays.classes.rec:
 
-Record arrays (:mod:`numpy.rec`)
-================================
+Record arrays
+=============
 
 .. seealso:: :ref:`routines.array-creation.rec`, :ref:`routines.dtype`,
              :ref:`arrays.dtypes`.
@@ -528,6 +519,11 @@ scalar data type object :class:`record`.
 
    recarray
    record
+
+.. note::
+
+   The pandas DataFrame is more powerful than record array. If possible,
+   please use pandas DataFrame instead.
 
 Masked arrays (:mod:`numpy.ma`)
 ===============================
@@ -558,7 +554,7 @@ encouraged to use the ndarray class directly if you can.
    single: container class
 
 
-Array Iterators
+Array iterators
 ===============
 
 .. currentmodule:: numpy
@@ -663,9 +659,9 @@ objects as inputs and returns an iterator that returns tuples
 providing each of the input sequence elements in the broadcasted
 result.
 
->>> for val in np.broadcast([[1,0],[2,3]],[0,1]):
+>>> for val in np.broadcast([[1, 0], [2, 3]], [0, 1]):
 ...     print(val)
-(1, 0)
-(0, 1)
-(2, 0)
-(3, 1)
+(np.int64(1), np.int64(0))
+(np.int64(0), np.int64(1))
+(np.int64(2), np.int64(0))
+(np.int64(3), np.int64(1))

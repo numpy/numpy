@@ -7,6 +7,12 @@ import numpy as np
 cimport numpy as np
 
 from libc.stdint cimport uintptr_t
+from libc.math cimport isnan, signbit
+
+cdef extern from "limits.h":
+    cdef long LONG_MAX  # NumPy has it, maybe `__init__.pyd` should expose it
+
+
 
 __all__ = ['interface']
 
@@ -25,11 +31,11 @@ cdef uint64_t MAXSIZE = <uint64_t>sys.maxsize
 cdef object benchmark(bitgen_t *bitgen, object lock, Py_ssize_t cnt, object method):
     """Benchmark command used by BitGenerator"""
     cdef Py_ssize_t i
-    if method==u'uint64':
+    if method=='uint64':
         with lock, nogil:
             for i in range(cnt):
                 bitgen.next_uint64(bitgen.state)
-    elif method==u'double':
+    elif method=='double':
         with lock, nogil:
             for i in range(cnt):
                 bitgen.next_double(bitgen.state)
@@ -64,7 +70,7 @@ cdef object random_raw(bitgen_t *bitgen, object lock, object size, object output
 
     Notes
     -----
-    This method directly exposes the the raw underlying pseudo-random
+    This method directly exposes the raw underlying pseudo-random
     number generator. All values are returned as unsigned 64-bit
     values irrespective of the number of bits produced by the PRNG.
 
@@ -121,8 +127,8 @@ cdef object prepare_cffi(bitgen_t *bitgen):
     """
     try:
         import cffi
-    except ImportError:
-        raise ImportError('cffi cannot be imported.')
+    except ImportError as e:
+        raise ImportError('cffi cannot be imported.') from e
 
     ffi = cffi.FFI()
     _cffi = interface(<uintptr_t>bitgen.state,
@@ -170,9 +176,24 @@ cdef object prepare_ctypes(bitgen_t *bitgen):
                         ctypes.c_void_p(<uintptr_t>bitgen))
     return _ctypes
 
-cdef double kahan_sum(double *darr, np.npy_intp n):
+cdef double kahan_sum(double *darr, np.npy_intp n) noexcept:
+    """
+    Parameters
+    ----------
+    darr : reference to double array
+        Address of values to sum
+    n : intp
+        Length of d
+    
+    Returns
+    -------
+    float
+        The sum. 0.0 if n <= 0.
+    """
     cdef double c, y, t, sum
     cdef np.npy_intp i
+    if n <= 0:
+        return 0.0
     sum = darr[0]
     c = 0.0
     for i in range(1, n):
@@ -219,8 +240,8 @@ cdef np.ndarray int_to_array(object value, object name, object bits, object uint
 
 
 cdef validate_output_shape(iter_shape, np.ndarray output):
-    cdef np.npy_intp *shape
-    cdef ndim, i
+    cdef np.npy_intp *dims
+    cdef np.npy_intp ndim, i
     cdef bint error
     dims = np.PyArray_DIMS(output)
     ndim = np.PyArray_NDIM(output)
@@ -232,13 +253,34 @@ cdef validate_output_shape(iter_shape, np.ndarray output):
         )
 
 
-cdef check_output(object out, object dtype, object size):
+cdef check_output(object out, object dtype, object size, bint require_c_array):
+    """
+    Check user-supplied output array properties and shape
+    
+    Parameters
+    ----------
+    out : {ndarray, None}
+        The array to check.  If None, returns immediately.
+    dtype : dtype
+        The required dtype of out.
+    size : {None, int, tuple[int]}
+        The size passed.  If out is an ndarray, verifies that the shape of out
+        matches size.
+    require_c_array : bool
+        Whether out must be a C-array.  If False, out can be either C- or F-
+        ordered.  If True, must be C-ordered. In either case, must be
+        contiguous, writable, aligned and in native byte-order.
+    """
     if out is None:
         return
     cdef np.ndarray out_array = <np.ndarray>out
-    if not (np.PyArray_CHKFLAGS(out_array, np.NPY_CARRAY) or
-            np.PyArray_CHKFLAGS(out_array, np.NPY_FARRAY)):
-        raise ValueError('Supplied output array is not contiguous, writable or aligned.')
+    if not (np.PyArray_ISCARRAY(out_array) or
+            (np.PyArray_ISFARRAY(out_array) and not require_c_array)):
+        req = "C-" if require_c_array else ""
+        raise ValueError(
+            f'Supplied output array must be {req}contiguous, writable, '
+            f'aligned, and in machine byte-order.'
+        )
     if out_array.dtype != dtype:
         raise TypeError('Supplied output array has the wrong type. '
                         'Expected {0}, got {1}'.format(np.dtype(dtype), out_array.dtype))
@@ -264,7 +306,7 @@ cdef object double_fill(void *func, bitgen_t *state, object size, object lock, o
             return out_val
 
     if out is not None:
-        check_output(out, np.float64, size)
+        check_output(out, np.float64, size, False)
         out_array = <np.ndarray>out
     else:
         out_array = <np.ndarray>np.empty(size, np.double)
@@ -288,7 +330,7 @@ cdef object float_fill(void *func, bitgen_t *state, object size, object lock, ob
             return out_val
 
     if out is not None:
-        check_output(out, np.float32, size)
+        check_output(out, np.float32, size, False)
         out_array = <np.ndarray>out
     else:
         out_array = <np.ndarray>np.empty(size, np.float32)
@@ -310,7 +352,7 @@ cdef object float_fill_from_double(void *func, bitgen_t *state, object size, obj
             return <float>random_func(state)
 
     if out is not None:
-        check_output(out, np.float32, size)
+        check_output(out, np.float32, size, False)
         out_array = <np.ndarray>out
     else:
         out_array = <np.ndarray>np.empty(size, np.float32)
@@ -322,6 +364,24 @@ cdef object float_fill_from_double(void *func, bitgen_t *state, object size, obj
             out_array_data[i] = <float>random_func(state)
     return out_array
 
+cdef int _check_array_cons_bounded_0_1(np.ndarray val, object name) except -1:
+    cdef double *val_data
+    cdef np.npy_intp i
+    cdef bint err = 0
+
+    if not np.PyArray_ISONESEGMENT(val) or np.PyArray_TYPE(val) != np.NPY_DOUBLE:
+        # slow path for non-contiguous arrays or any non-double dtypes
+        err = not np.all(np.greater_equal(val, 0)) or not np.all(np.less_equal(val, 1))
+    else:
+        val_data = <double *>np.PyArray_DATA(val)
+        for i in range(np.PyArray_SIZE(val)):
+            err = (not (val_data[i] >= 0)) or (not val_data[i] <= 1)
+            if err:
+                break
+    if err:
+        raise ValueError(f"{name} < 0, {name} > 1 or {name} contains NaNs")
+
+    return 0
 
 cdef int check_array_constraint(np.ndarray val, object name, constraint_type cons) except -1:
     if cons == CONS_NON_NEGATIVE:
@@ -333,12 +393,13 @@ cdef int check_array_constraint(np.ndarray val, object name, constraint_type con
         elif np.any(np.less_equal(val, 0)):
             raise ValueError(name + " <= 0")
     elif cons == CONS_BOUNDED_0_1:
-        if not np.all(np.greater_equal(val, 0)) or \
-                not np.all(np.less_equal(val, 1)):
-            raise ValueError("{0} < 0, {0} > 1 or {0} contains NaNs".format(name))
+        return _check_array_cons_bounded_0_1(val, name)
     elif cons == CONS_BOUNDED_GT_0_1:
         if not np.all(np.greater(val, 0)) or not np.all(np.less_equal(val, 1)):
             raise ValueError("{0} <= 0, {0} > 1 or {0} contains NaNs".format(name))
+    elif cons == CONS_BOUNDED_LT_0_1:
+        if not np.all(np.greater_equal(val, 0)) or not np.all(np.less(val, 1)):
+            raise ValueError("{0} < 0, {0} >= 1 or {0} contains NaNs".format(name))
     elif cons == CONS_GT_1:
         if not np.all(np.greater(val, 1)):
             raise ValueError("{0} <= 1 or {0} contains NaNs".format(name))
@@ -355,6 +416,14 @@ cdef int check_array_constraint(np.ndarray val, object name, constraint_type con
             raise ValueError("{0} value too large".format(name))
         elif not np.all(np.greater_equal(val, 0.0)):
             raise ValueError("{0} < 0 or {0} contains NaNs".format(name))
+    elif cons == LEGACY_CONS_NON_NEGATVE_INBOUNDS_LONG:
+        # Note, we assume that array is integral:
+        if not np.all(val >= 0):
+            raise ValueError(name + " < 0")
+        elif not np.all(val <= int(LONG_MAX)):
+            raise ValueError(
+                    name + " is out of bounds for long, consider using "
+                    "the new generator API for 64bit integers.")
 
     return 0
 
@@ -362,10 +431,10 @@ cdef int check_array_constraint(np.ndarray val, object name, constraint_type con
 cdef int check_constraint(double val, object name, constraint_type cons) except -1:
     cdef bint is_nan
     if cons == CONS_NON_NEGATIVE:
-        if not np.isnan(val) and np.signbit(val):
+        if not isnan(val) and signbit(val):
             raise ValueError(name + " < 0")
     elif cons == CONS_POSITIVE or cons == CONS_POSITIVE_NOT_NAN:
-        if cons == CONS_POSITIVE_NOT_NAN and np.isnan(val):
+        if cons == CONS_POSITIVE_NOT_NAN and isnan(val):
             raise ValueError(name + " must not be NaN")
         elif val <= 0:
             raise ValueError(name + " <= 0")
@@ -375,6 +444,9 @@ cdef int check_constraint(double val, object name, constraint_type cons) except 
     elif cons == CONS_BOUNDED_GT_0_1:
         if not val >0 or not val <= 1:
             raise ValueError("{0} <= 0, {0} > 1 or {0} contains NaNs".format(name))
+    elif cons == CONS_BOUNDED_LT_0_1:
+        if not (val >= 0) or not (val < 1):
+            raise ValueError("{0} < 0, {0} >= 1 or {0} is NaN".format(name))
     elif cons == CONS_GT_1:
         if not (val > 1):
             raise ValueError("{0} <= 1 or {0} is NaN".format(name))
@@ -391,6 +463,14 @@ cdef int check_constraint(double val, object name, constraint_type cons) except 
             raise ValueError("{0} < 0 or {0} is NaN".format(name))
         elif not (val <= LEGACY_POISSON_LAM_MAX):
             raise ValueError(name + " value too large")
+    elif cons == LEGACY_CONS_NON_NEGATVE_INBOUNDS_LONG:
+        # Note: Assume value is integral (double of LONG_MAX should work out)
+        if val < 0:
+            raise ValueError(name + " < 0")
+        elif val > LONG_MAX:
+            raise ValueError(
+                    name + " is out of bounds for long, consider using "
+                    "the new generator API for 64bit integers.")
 
     return 0
 
@@ -521,7 +601,7 @@ cdef object cont(void *func, void *state, object size, object lock, int narg,
     cdef np.ndarray a_arr, b_arr, c_arr
     cdef double _a = 0.0, _b = 0.0, _c = 0.0
     cdef bint is_scalar = True
-    check_output(out, np.float64, size)
+    check_output(out, np.float64, size, narg > 0)
     if narg > 0:
         a_arr = <np.ndarray>np.PyArray_FROM_OTF(a, np.NPY_DOUBLE, np.NPY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(a_arr) == 0
@@ -971,7 +1051,7 @@ cdef object cont_f(void *func, bitgen_t *state, object size, object lock,
     cdef float _a
     cdef bint is_scalar = True
     cdef int requirements = np.NPY_ALIGNED | np.NPY_FORCECAST
-    check_output(out, np.float32, size)
+    check_output(out, np.float32, size, True)
     a_arr = <np.ndarray>np.PyArray_FROMANY(a, np.NPY_FLOAT32, 0, 0, requirements)
     is_scalar = np.PyArray_NDIM(a_arr) == 0
 

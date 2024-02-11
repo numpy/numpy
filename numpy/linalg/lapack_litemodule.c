@@ -4,10 +4,11 @@ More modifications by Jeff Whitaker
 */
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
-#include "Python.h"
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #include "numpy/arrayobject.h"
 #include "npy_cblas.h"
-
 
 #define FNAME(name) BLAS_FUNC(name)
 
@@ -26,7 +27,7 @@ typedef CBLAS_INT        fortran_int;
 #else
 #error No compatible 64-bit integer size. \
        Please contact NumPy maintainers and give detailed information about your \
-       compiler and platform, or set NPY_USE_BLAS64_=0
+       compiler and platform, or dont try to use ILP64 BLAS
 #endif
 
 #else

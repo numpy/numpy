@@ -1,7 +1,7 @@
 .. _NEP10:
 
 ==============================================
-NEP 10 — Optimizing Iterator/UFunc Performance
+NEP 10 — Optimizing iterator/UFunc performance
 ==============================================
 
 :Author: Mark Wiebe <mwwiebe@gmail.com>
@@ -10,7 +10,7 @@ NEP 10 — Optimizing Iterator/UFunc Performance
 :Status: Final
 
 *****************
-Table of Contents
+Table of contents
 *****************
 
 .. contents::
@@ -75,7 +75,7 @@ a view of the memory, adding, then reshaping back.  To further examine
 the problem and see how it isn’t always as trivial to work around,
 let’s consider simple code for working with image buffers in NumPy.
 
-Image Compositing Example
+Image compositing example
 =========================
 
 For a more realistic example, consider an image buffer.  Images are
@@ -164,7 +164,7 @@ proposed can produce, go to the example continued after the
 proposed API, near the bottom of the document.
 
 *************************
-Improving Cache-Coherency
+Improving cache-coherency
 *************************
 
 In order to get the best performance from UFunc calls, the pattern of
@@ -241,7 +241,7 @@ by adding an additional constraint.  I think the appropriate choice
 is to resolve it by picking the memory layout closest to C-contiguous,
 but still compatible with the input strides.
 
-Output Layout Selection Algorithm
+Output layout selection algorithm
 =================================
 
 The output ndarray memory layout we would like to produce is as follows:
@@ -296,7 +296,7 @@ output layout.::
     return perm
 
 *********************
-Coalescing Dimensions
+Coalescing dimensions
 *********************
 
 In many cases, the memory layout allows for the use of a one-dimensional
@@ -334,7 +334,7 @@ Here is pseudo-code for coalescing.::
                 j += 1
 
 *************************
-Inner Loop Specialization
+Inner loop specialization
 *************************
 
 Specialization is handled purely by the inner loop function, so this
@@ -371,7 +371,7 @@ constant argument may be combined with SSE when the strides match the
 data type size, and reductions can be optimized with SSE as well.
 
 **********************
-Implementation Details
+Implementation details
 **********************
 
 Except for inner loop specialization, the discussed
@@ -393,7 +393,9 @@ The proposed ‘order=’ flags become as follows:
 ‘K’  a layout equivalent to ‘C’ followed by some permutation of the axes, as close to the layout of the input(s) as possible (“Keep Layout”)
 ===  =====================================================================================
 
-Or as an enum::
+Or as an enum:
+
+.. code-block:: c
 
     /* For specifying array memory layout or iteration order */
     typedef enum {
@@ -416,7 +418,9 @@ parameter to control the layout of their output(s).
 
 The iterator can do automatic casting, and I have created a sequence
 of progressively more permissive casting rules.  Perhaps for 2.0, NumPy
-could adopt this enum as its preferred way of dealing with casting.::
+could adopt this enum as its preferred way of dealing with casting.
+
+.. code-block:: c
 
     /* For specifying allowed casting in operations which support it */
     typedef enum {
@@ -432,7 +436,7 @@ could adopt this enum as its preferred way of dealing with casting.::
             NPY_UNSAFE_CASTING=4
     } NPY_CASTING;
 
-Iterator Rewrite
+Iterator rewrite
 ================
 
 Based on an analysis of the code, it appears that refactoring the existing
@@ -491,12 +495,14 @@ Notes for implementation:
   a wrapper around the C iterator.  This is analogous to the
   PEP 3118 design separation of Py_buffer and memoryview.
 
-Proposed Iterator Memory Layout
+Proposed iterator memory layout
 ===============================
 
 The following struct describes the iterator memory.  All items
 are packed together, which means that different values of the flags,
-ndim, and niter will produce slightly different layouts.  ::
+ndim, and niter will produce slightly different layouts.
+
+.. code-block:: c
 
     struct {
         /* Flags indicate what optimizations have been applied, and
@@ -569,12 +575,16 @@ ndim, and niter will produce slightly different layouts.  ::
             intp shape;
             /* The current coordinate along this axis */
             intp coord;
-            /* The operand and index strides for this axis
+            /* The operand and index strides for this axis */
             intp stride[niter];
-            {intp indexstride;} #if (flags&FLAGS_HASINDEX);
+            #if (flags&FLAGS_HASINDEX)
+                intp indexstride;
+            #endif
             /* The operand pointers and index values for this axis */
             char* ptr[niter];
-            {intp index;} #if (flags&FLAGS_HASINDEX);
+            #if (flags&FLAGS_HASINDEX)
+                intp index;
+            #endif
         }[ndim];
     };
 
@@ -586,7 +596,7 @@ common properties are, resulting in increased cache coherency.
 It also simplifies the iternext call, while making getcoord and
 related functions slightly more complicated.
 
-Proposed Iterator API
+Proposed iterator API
 =====================
 
 The existing iterator API includes functions like PyArrayIter_Check,
@@ -621,7 +631,7 @@ to emulate UFunc behavior in cases which don't quite fit the
 UFunc paradigm.  In particular, emulating the UFunc buffering behavior
 is not a trivial enterprise.
 
-Old -> New Iterator API Conversion
+Old -> new iterator API conversion
 ----------------------------------
 
 For the regular iterator:
@@ -662,7 +672,7 @@ For other API calls:
 ===============================  =============================================
 
 
-Iterator Pointer Type
+Iterator pointer type
 ---------------------
 
 The iterator structure is internally generated, but a type is still needed
@@ -672,7 +682,7 @@ the API.  We do this with a typedef of an incomplete struct
 ``typedef struct NpyIter_InternalOnly NpyIter;``
 
 
-Construction and Destruction
+Construction and destruction
 ----------------------------
 
 ``NpyIter* NpyIter_New(PyArrayObject* op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, PyArray_Descr* dtype, npy_intp a_ndim, npy_intp *axes, npy_intp buffersize)``
@@ -710,13 +720,17 @@ Construction and Destruction
     Returns NULL if there is an error, otherwise returns the allocated
     iterator.
 
-    To make an iterator similar to the old iterator, this should work.::
+    To make an iterator similar to the old iterator, this should work.
+
+    .. code-block:: c
 
         iter = NpyIter_New(op, NPY_ITER_READWRITE,
                             NPY_CORDER, NPY_NO_CASTING, NULL, 0, NULL);
 
     If you want to edit an array with aligned ``double`` code,
-    but the order doesn't matter, you would use this.::
+    but the order doesn't matter, you would use this.
+
+    .. code-block:: c
 
         dtype = PyArray_DescrFromType(NPY_DOUBLE);
         iter = NpyIter_New(op, NPY_ITER_READWRITE |
@@ -764,7 +778,9 @@ Construction and Destruction
     In ``op_axes[j][i]`` is stored either a valid axis of ``op[j]``, or
     -1 which means ``newaxis``.  Within each ``op_axes[j]`` array, axes
     may not be repeated.  The following example is how normal broadcasting
-    applies to a 3-D array, a 2-D array, a 1-D array and a scalar.::
+    applies to a 3-D array, a 2-D array, a 1-D array and a scalar.
+
+    .. code-block:: c
 
         npy_intp oa_ndim = 3;               /* # iteration axes */
         npy_intp op0_axes[] = {0, 1, 2};    /* 3-D operand */
@@ -1139,7 +1155,9 @@ Construction and Destruction
     If you want to reset both the ``iterindex`` range and the base
     pointers at the same time, you can do the following to avoid
     extra buffer copying (be sure to add the return code error checks
-    when you copy this code).::
+    when you copy this code).
+
+    .. code-block:: c
 
         /* Set to a trivial empty range */
         NpyIter_ResetToIterIndexRange(iter, 0, 0);
@@ -1190,7 +1208,9 @@ Construction and Destruction
     is used as the source for ``baseptrs``, it will point into a small buffer
     instead of the array and the inner iteration will be invalid.
 
-    The pattern for using nested iterators is as follows.::
+    The pattern for using nested iterators is as follows:
+
+    .. code-block:: c
 
         NpyIter *iter1, *iter1;
         NpyIter_IterNext_Fn iternext1, iternext2;
@@ -1395,7 +1415,7 @@ Construction and Destruction
     Fills ``niter`` flags. Sets ``outwriteflags[i]`` to 1 if
     ``op[i]`` can be written to, and to 0 if not.
 
-Functions For Iteration
+Functions for iteration
 -----------------------
 
 ``NpyIter_IterNext_Fn NpyIter_GetIterNext(NpyIter *iter, char **errmsg)``
@@ -1412,7 +1432,9 @@ Functions For Iteration
     non-NULL, the function may be safely called without holding
     the Python GIL.
 
-    The typical looping construct is as follows.::
+    The typical looping construct is as follows:
+
+    .. code-block:: c
 
         NpyIter_IterNext_Fn iternext = NpyIter_GetIterNext(iter, NULL);
         char **dataptr = NpyIter_GetDataPtrArray(iter);
@@ -1422,7 +1444,9 @@ Functions For Iteration
         } while(iternext(iter));
 
     When ``NPY_ITER_NO_INNER_ITERATION`` is specified, the typical
-    inner loop construct is as follows.::
+    inner loop construct is as follows:
+
+    .. code-block:: c
 
         NpyIter_IterNext_Fn iternext = NpyIter_GetIterNext(iter, NULL);
         char **dataptr = NpyIter_GetDataPtrArray(iter);
@@ -1451,7 +1475,9 @@ Functions For Iteration
     to become zero when ``iternext()`` returns false, enabling the
     following loop construct.  Note that if you use this construct,
     you should not pass ``NPY_ITER_GROWINNER`` as a flag, because it
-    will cause larger sizes under some circumstances.::
+    will cause larger sizes under some circumstances:
+
+    .. code-block:: c
 
         /* The constructor should have buffersize passed as this value */
         #define FIXED_BUFFER_SIZE 1024
@@ -1519,7 +1545,7 @@ Functions For Iteration
 ``npy_intp *NpyIter_GetIndexPtr(NpyIter *iter)``
 
     This gives back a pointer to the index being tracked, or NULL
-    if no index is being tracked.  It is only useable if one of
+    if no index is being tracked.  It is only usable if one of
     the flags ``NPY_ITER_C_INDEX`` or ``NPY_ITER_F_INDEX``
     were specified during construction.
 
@@ -1571,7 +1597,9 @@ result.
 
 If the input is a reference type, this function will fail.
 To fix this, the code must be changed to specially handle writeable
-references, and add ``NPY_ITER_WRITEABLE_REFERENCES`` to the flags.::
+references, and add ``NPY_ITER_WRITEABLE_REFERENCES`` to the flags:
+
+.. code-block:: c
 
     /* NOTE: This code has not been compiled/tested */
     PyObject *CopyArray(PyObject *arr, NPY_ORDER order)
@@ -1652,7 +1680,7 @@ references, and add ``NPY_ITER_WRITEABLE_REFERENCES`` to the flags.::
         return ret;
     }
 
-Python Lambda UFunc Example
+Python lambda UFunc example
 ---------------------------
 
 To show how the new iterator allows the definition of efficient UFunc-like
@@ -1705,7 +1733,7 @@ can gain some performance from better cache behavior.::
     Out[7]: True
 
 
-Python Addition Example
+Python addition example
 -----------------------
 
 The iterator has been mostly written and exposed to Python.  To
@@ -1869,7 +1897,7 @@ Also, just to check that it's doing the same thing,::
 
     Out[22]: True
 
-Image Compositing Example Revisited
+Image compositing example revisited
 -----------------------------------
 
 For motivation, we had an example that did an 'over' composite operation
@@ -1955,7 +1983,7 @@ functions.::
         ...:        composite_over_it(image1, image2))
     Out[18]: True
 
-Image Compositing With NumExpr
+Image compositing with NumExpr
 ------------------------------
 
 As a test of the iterator, numexpr has been enhanced to allow use of

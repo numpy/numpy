@@ -1,5 +1,5 @@
 *****************
-Beyond the Basics
+Beyond the basics
 *****************
 
 |    The voyage of discovery is not in seeking new landscapes but in having
@@ -16,7 +16,7 @@ Iterating over elements in the array
 
 .. _`sec:array_iterator`:
 
-Basic Iteration
+Basic iteration
 ---------------
 
 One common algorithmic requirement is to be able to walk over all
@@ -172,16 +172,15 @@ iterators so that all that needs to be done to advance to the next element in
 each array is for PyArray_ITER_NEXT to be called for each of the inputs. This
 incrementing is automatically performed by
 :c:func:`PyArray_MultiIter_NEXT` ( ``obj`` ) macro (which can handle a
-multiterator ``obj`` as either a :c:type:`PyArrayMultiObject *` or a
-:c:type:`PyObject *<PyObject>`). The data from input number ``i`` is available using
-:c:func:`PyArray_MultiIter_DATA` ( ``obj``, ``i`` ) and the total (broadcasted)
-size as :c:func:`PyArray_MultiIter_SIZE` ( ``obj``). An example of using this
+multiterator ``obj`` as either a :c:expr:`PyArrayMultiIterObject *` or a
+:c:expr:`PyObject *`). The data from input number ``i`` is available using
+:c:func:`PyArray_MultiIter_DATA` ( ``obj``, ``i`` ). An example of using this
 feature follows.
 
 .. code-block:: c
 
     mobj = PyArray_MultiIterNew(2, obj1, obj2);
-    size = PyArray_MultiIter_SIZE(obj);
+    size = mobj->size;
     while(size--) {
         ptr1 = PyArray_MultiIter_DATA(mobj, 0);
         ptr2 = PyArray_MultiIter_DATA(mobj, 1);
@@ -221,7 +220,7 @@ which types your new data-type can be cast to and from.
 
 The NumPy source code includes an example of a custom data-type as part
 of its test suite. The file ``_rational_tests.c.src`` in the source code
-directory  ``numpy/numpy/core/src/umath/`` contains an implementation of
+directory  ``numpy/_core/src/umath/`` contains an implementation of
 a data-type that represents a rational number as the ratio of two 32 bit
 integers.
 
@@ -267,9 +266,7 @@ needed information and useful functions you call
 call is an integer providing you with a unique type_number that
 specifies your data-type. This type number should be stored and made
 available by your module so that other modules can use it to recognize
-your data-type (the other mechanism for finding a user-defined
-data-type number is to search based on the name of the type-object
-associated with the data-type using :c:func:`PyArray_TypeNumFromName` ).
+your data-type.
 
 
 Registering a casting function
@@ -330,7 +327,7 @@ function :c:func:`PyArray_RegisterCanCast` (from_descr, totype_number,
 scalarkind) should be used to specify that the data-type object
 from_descr can be cast to the data-type with type number
 totype_number. If you are not trying to alter scalar coercion rules,
-then use :c:data:`NPY_NOSCALAR` for the scalarkind argument.
+then use :c:enumerator:`NPY_NOSCALAR` for the scalarkind argument.
 
 If you want to allow your new data-type to also be able to share in
 the scalar coercion rules, then you need to specify the scalarkind
@@ -340,7 +337,7 @@ available to that function). Then, you can register data-types that
 can be cast to separately for each scalar kind that may be returned
 from your user-defined data-type. If you don't register scalar
 coercion handling, then all of your user-defined data-types will be
-seen as :c:data:`NPY_NOSCALAR`.
+seen as :c:enumerator:`NPY_NOSCALAR`.
 
 
 Registering a ufunc loop
@@ -400,7 +397,7 @@ describe the desired behavior of the type. Typically, a new
 C-structure is also created to contain the instance-specific
 information needed for each object of the type as well. For example,
 :c:data:`&PyArray_Type<PyArray_Type>` is a pointer to the type-object table for the ndarray
-while a :c:type:`PyArrayObject *` variable is a pointer to a particular instance
+while a :c:expr:`PyArrayObject *` variable is a pointer to a particular instance
 of an ndarray (one of the members of the ndarray structure is, in
 turn, a pointer to the type- object table :c:data:`&PyArray_Type<PyArray_Type>`). Finally
 :c:func:`PyType_Ready` (<pointer_to_type_object>) must be called for
@@ -451,6 +448,7 @@ type(s). In particular, to create a sub-type in C follow these steps:
 More information on creating sub-types in C can be learned by reading
 PEP 253 (available at https://www.python.org/dev/peps/pep-0253).
 
+.. _specific-array-subtyping:
 
 Specific features of ndarray sub-typing
 ---------------------------------------
@@ -459,7 +457,7 @@ Some special methods and attributes are used by arrays in order to
 facilitate the interoperation of sub-types with the base ndarray type.
 
 The __array_finalize\__ method
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. attribute:: ndarray.__array_finalize__
 
@@ -470,13 +468,14 @@ The __array_finalize\__ method
    __new_\_ method nor the __init\__ method gets called. Instead, the
    sub-type is allocated and the appropriate instance-structure
    members are filled in. Finally, the :obj:`~numpy.class.__array_finalize__`
-   attribute is looked-up in the object dictionary. If it is present
-   and not None, then it can be either a CObject containing a pointer
-   to a :c:func:`PyArray_FinalizeFunc` or it can be a method taking a
-   single argument (which could be None).
+   attribute is looked-up in the object dictionary. If it is present and not
+   None, then it can be either a :c:type:`PyCapsule` containing a pointer to a
+   :c:func:`PyArray_FinalizeFunc` or it can be a method taking a single argument
+   (which could be None)
 
-   If the :obj:`~numpy.class.__array_finalize__` attribute is a CObject, then the pointer
-   must be a pointer to a function with the signature:
+   If the :obj:`~numpy.class.__array_finalize__` attribute is a
+   :c:type:`PyCapsule`, then the pointer must be a pointer to a function with
+   the signature:
 
    .. code-block:: c
 
@@ -488,14 +487,14 @@ The __array_finalize\__ method
    is present). This routine can do anything it wants to. It should
    return a -1 on error and 0 otherwise.
 
-   If the :obj:`~numpy.class.__array_finalize__` attribute is not None nor a CObject,
-   then it must be a Python method that takes the parent array as an
-   argument (which could be None if there is no parent), and returns
+   If the :obj:`~numpy.class.__array_finalize__` attribute is not None nor a
+   :c:type:`PyCapsule`, then it must be a Python method that takes the parent
+   array as an argument (which could be None if there is no parent), and returns
    nothing. Errors in this method will be caught and handled.
 
 
 The __array_priority\__ attribute
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. attribute:: ndarray.__array_priority__
 
@@ -513,7 +512,7 @@ The __array_priority\__ attribute
    the return output.
 
 The __array_wrap\__ method
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. attribute:: ndarray.__array_wrap__
 

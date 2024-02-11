@@ -4,17 +4,18 @@ import os
 import itertools
 import pytest
 import weakref
+import re
 
 import numpy as np
+import numpy._core._multiarray_umath as ncu
 from numpy.testing import (
     assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_array_less, build_err_msg, raises,
+    assert_array_almost_equal, assert_array_less, build_err_msg,
     assert_raises, assert_warns, assert_no_warnings, assert_allclose,
     assert_approx_equal, assert_array_almost_equal_nulp, assert_array_max_ulp,
     clear_and_catch_warnings, suppress_warnings, assert_string_equal, assert_,
     tempdir, temppath, assert_no_gc_cycles, HAS_REFCOUNT
-    )
-from numpy.core.overrides import ARRAY_FUNCTION_ENABLED
+)
 
 
 class _GenericTest:
@@ -65,7 +66,7 @@ class _GenericTest:
 
 class TestArrayEqual(_GenericTest):
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_array_equal
 
     def test_generic_rank1(self):
@@ -90,16 +91,26 @@ class TestArrayEqual(_GenericTest):
     def test_0_ndim_array(self):
         x = np.array(473963742225900817127911193656584771)
         y = np.array(18535119325151578301457182298393896)
-        assert_raises(AssertionError, self._assert_func, x, y)
+
+        with pytest.raises(AssertionError) as exc_info:
+            self._assert_func(x, y)
+        msg = str(exc_info.value)
+        assert_('Mismatched elements: 1 / 1 (100%)\n'
+                in msg)
 
         y = x
         self._assert_func(x, y)
 
-        x = np.array(43)
-        y = np.array(10)
-        assert_raises(AssertionError, self._assert_func, x, y)
+        x = np.array(4395065348745.5643764887869876)
+        y = np.array(0)
+        expected_msg = ('Mismatched elements: 1 / 1 (100%)\n'
+                        'Max absolute difference among violations: '
+                        '4.39506535e+12\n'
+                        'Max relative difference among violations: inf\n')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(x, y)
 
-        y = x
+        x = y
         self._assert_func(x, y)
 
     def test_generic_rank3(self):
@@ -151,14 +162,13 @@ class TestArrayEqual(_GenericTest):
 
         self._test_equal(a, b)
 
-        c = np.empty(2, [('floupipi', float), ('floupa', float)])
+        c = np.empty(2, [('floupipi', float),
+                         ('floupi', float), ('floupa', float)])
         c['floupipi'] = a['floupi'].copy()
         c['floupa'] = a['floupa'].copy()
 
-        with suppress_warnings() as sup:
-            l = sup.record(FutureWarning, message="elementwise == ")
+        with pytest.raises(TypeError):
             self._test_not_equal(c, b)
-            assert_equal(len(l), 1)
 
     def test_masked_nan_inf(self):
         # Regression test for gh-11121
@@ -192,8 +202,19 @@ class TestArrayEqual(_GenericTest):
         self._test_not_equal(a, b)
         self._test_not_equal(b, a)
 
-    @pytest.mark.skipif(
-        not ARRAY_FUNCTION_ENABLED, reason='requires __array_function__')
+        expected_msg = ('Mismatched elements: 1 / 2 (50%)\n'
+                        'Max absolute difference among violations: 1.\n'
+                        'Max relative difference among violations: 0.5')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._test_equal(a, b)
+
+        c = np.array([0., 2.9]).view(MyArray)
+        expected_msg = ('Mismatched elements: 1 / 2 (50%)\n'
+                        'Max absolute difference among violations: 2.\n'
+                        'Max relative difference among violations: inf')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._test_equal(b, c)
+
     def test_subclass_that_does_not_implement_npall(self):
         class MyArray(np.ndarray):
             def __array_function__(self, *args, **kwargs):
@@ -206,6 +227,64 @@ class TestArrayEqual(_GenericTest):
         self._test_equal(a, a)
         self._test_not_equal(a, b)
         self._test_not_equal(b, a)
+
+    def test_suppress_overflow_warnings(self):
+        # Based on issue #18992
+        with pytest.raises(AssertionError):
+            with np.errstate(all="raise"):
+                np.testing.assert_array_equal(
+                    np.array([1, 2, 3], np.float32),
+                    np.array([1, 1e-40, 3], np.float32))
+
+    def test_array_vs_scalar_is_equal(self):
+        """Test comparing an array with a scalar when all values are equal."""
+        a = np.array([1., 1., 1.])
+        b = 1.
+
+        self._test_equal(a, b)
+
+    def test_array_vs_array_not_equal(self):
+        """Test comparing an array with a scalar when not all values equal."""
+        a = np.array([34986, 545676, 439655, 563766])
+        b = np.array([34986, 545676, 439655, 0])
+
+        expected_msg = ('Mismatched elements: 1 / 4 (25%)\n'
+                        'Max absolute difference among violations: 563766\n'
+                        'Max relative difference among violations: inf')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(a, b)
+
+        a = np.array([34986, 545676, 439655.2, 563766])
+        expected_msg = ('Mismatched elements: 2 / 4 (50%)\n'
+                        'Max absolute difference among violations: '
+                        '563766.\n'
+                        'Max relative difference among violations: '
+                        '4.54902139e-07')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(a, b)
+
+    def test_array_vs_scalar_strict(self):
+        """Test comparing an array with a scalar with strict option."""
+        a = np.array([1., 1., 1.])
+        b = 1.
+
+        with pytest.raises(AssertionError):
+            self._assert_func(a, b, strict=True)
+
+    def test_array_vs_array_strict(self):
+        """Test comparing two arrays with strict option."""
+        a = np.array([1., 1., 1.])
+        b = np.array([1., 1., 1.])
+
+        self._assert_func(a, b, strict=True)
+
+    def test_array_vs_float_array_strict(self):
+        """Test comparing two arrays with strict option."""
+        a = np.array([1, 1, 1])
+        b = np.array([1., 1., 1.])
+
+        with pytest.raises(AssertionError):
+            self._assert_func(a, b, strict=True)
 
 
 class TestBuildErrorMessage:
@@ -255,7 +334,7 @@ class TestBuildErrorMessage:
 
 class TestEqual(TestArrayEqual):
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_equal
 
     def test_nan_items(self):
@@ -332,7 +411,7 @@ class TestEqual(TestArrayEqual):
         self._test_not_equal(complex(np.nan, np.inf), complex(np.nan, 2))
 
     def test_negative_zero(self):
-        self._test_not_equal(np.PZERO, np.NZERO)
+        self._test_not_equal(ncu.PZERO, ncu.NZERO)
 
     def test_complex(self):
         x = np.array([complex(1, 2), complex(1, np.nan)])
@@ -341,7 +420,7 @@ class TestEqual(TestArrayEqual):
         self._test_not_equal(x, y)
 
     def test_object(self):
-        #gh-12942
+        # gh-12942
         import datetime
         a = np.array([datetime.datetime(2000, 1, 1),
                       datetime.datetime(2000, 1, 2)])
@@ -350,7 +429,7 @@ class TestEqual(TestArrayEqual):
 
 class TestArrayAlmostEqual(_GenericTest):
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_array_almost_equal
 
     def test_closeness(self):
@@ -361,14 +440,34 @@ class TestArrayAlmostEqual(_GenericTest):
         # so this check serves to preserve the wrongness.
 
         # test scalars
-        self._assert_func(1.499999, 0.0, decimal=0)
-        assert_raises(AssertionError,
-                          lambda: self._assert_func(1.5, 0.0, decimal=0))
+        expected_msg = ('Mismatched elements: 1 / 1 (100%)\n'
+                        'Max absolute difference among violations: 1.5\n'
+                        'Max relative difference among violations: inf')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(1.5, 0.0, decimal=0)
 
         # test arrays
         self._assert_func([1.499999], [0.0], decimal=0)
-        assert_raises(AssertionError,
-                          lambda: self._assert_func([1.5], [0.0], decimal=0))
+
+        expected_msg = ('Mismatched elements: 1 / 1 (100%)\n'
+                        'Max absolute difference among violations: 1.5\n'
+                        'Max relative difference among violations: inf')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func([1.5], [0.0], decimal=0)
+
+        a = [1.4999999, 0.00003]
+        b = [1.49999991, 0]
+        expected_msg = ('Mismatched elements: 1 / 2 (50%)\n'
+                        'Max absolute difference among violations: 3.e-05\n'
+                        'Max relative difference among violations: inf')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(a, b, decimal=7)
+
+        expected_msg = ('Mismatched elements: 1 / 2 (50%)\n'
+                        'Max absolute difference among violations: 3.e-05\n'
+                        'Max relative difference among violations: 1.')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(b, a, decimal=7)
 
     def test_simple(self):
         x = np.array([1234.2222])
@@ -376,8 +475,47 @@ class TestArrayAlmostEqual(_GenericTest):
 
         self._assert_func(x, y, decimal=3)
         self._assert_func(x, y, decimal=4)
-        assert_raises(AssertionError,
-                lambda: self._assert_func(x, y, decimal=5))
+
+        expected_msg = ('Mismatched elements: 1 / 1 (100%)\n'
+                        'Max absolute difference among violations: '
+                        '1.e-04\n'
+                        'Max relative difference among violations: '
+                        '8.10226812e-08')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(x, y, decimal=5)
+
+    def test_array_vs_scalar(self):
+        a = [5498.42354, 849.54345, 0.00]
+        b = 5498.42354
+        expected_msg = ('Mismatched elements: 2 / 3 (66.7%)\n'
+                        'Max absolute difference among violations: '
+                        '5498.42354\n'
+                        'Max relative difference among violations: 1.')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(a, b, decimal=9)
+
+        expected_msg = ('Mismatched elements: 2 / 3 (66.7%)\n'
+                        'Max absolute difference among violations: '
+                        '5498.42354\n'
+                        'Max relative difference among violations: 5.4722099')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(b, a, decimal=9)
+
+        a = [5498.42354, 0.00]
+        expected_msg = ('Mismatched elements: 1 / 2 (50%)\n'
+                        'Max absolute difference among violations: '
+                        '5498.42354\n'
+                        'Max relative difference among violations: inf')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(b, a, decimal=7)
+
+        b = 0
+        expected_msg = ('Mismatched elements: 1 / 2 (50%)\n'
+                        'Max absolute difference among violations: '
+                        '5498.42354\n'
+                        'Max relative difference among violations: inf')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(a, b, decimal=7)
 
     def test_nan(self):
         anan = np.array([np.nan])
@@ -385,21 +523,21 @@ class TestArrayAlmostEqual(_GenericTest):
         ainf = np.array([np.inf])
         self._assert_func(anan, anan)
         assert_raises(AssertionError,
-                lambda: self._assert_func(anan, aone))
+                      lambda: self._assert_func(anan, aone))
         assert_raises(AssertionError,
-                lambda: self._assert_func(anan, ainf))
+                      lambda: self._assert_func(anan, ainf))
         assert_raises(AssertionError,
-                lambda: self._assert_func(ainf, anan))
+                      lambda: self._assert_func(ainf, anan))
 
     def test_inf(self):
         a = np.array([[1., 2.], [3., 4.]])
         b = a.copy()
         a[0, 0] = np.inf
         assert_raises(AssertionError,
-                lambda: self._assert_func(a, b))
+                      lambda: self._assert_func(a, b))
         b[0, 0] = -np.inf
         assert_raises(AssertionError,
-                lambda: self._assert_func(a, b))
+                      lambda: self._assert_func(a, b))
 
     def test_subclass(self):
         a = np.array([[1., 2.], [3., 4.]])
@@ -427,6 +565,33 @@ class TestArrayAlmostEqual(_GenericTest):
         self._test_equal(a, b)
         self._test_equal(b, a)
 
+    def test_subclass_2(self):
+        # While we cannot guarantee testing functions will always work for
+        # subclasses, the tests should ideally rely only on subclasses having
+        # comparison operators, not on them being able to store booleans
+        # (which, e.g., astropy Quantity cannot usefully do). See gh-8452.
+        class MyArray(np.ndarray):
+            def __eq__(self, other):
+                return super().__eq__(other).view(np.ndarray)
+
+            def __lt__(self, other):
+                return super().__lt__(other).view(np.ndarray)
+
+            def all(self, *args, **kwargs):
+                return all(self)
+
+        a = np.array([1., 2.]).view(MyArray)
+        self._assert_func(a, a)
+
+        z = np.array([True, True]).view(MyArray)
+        all(z)
+        b = np.array([1., 202]).view(MyArray)
+        expected_msg = ('Mismatched elements: 1 / 2 (50%)\n'
+                        'Max absolute difference among violations: 200.\n'
+                        'Max relative difference among violations: 0.99009')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(a, b)
+
     def test_subclass_that_cannot_be_bool(self):
         # While we cannot guarantee testing functions will always work for
         # subclasses, the tests should ideally rely only on subclasses having
@@ -434,10 +599,10 @@ class TestArrayAlmostEqual(_GenericTest):
         # (which, e.g., astropy Quantity cannot usefully do). See gh-8452.
         class MyArray(np.ndarray):
             def __eq__(self, other):
-                return super(MyArray, self).__eq__(other).view(np.ndarray)
+                return super().__eq__(other).view(np.ndarray)
 
             def __lt__(self, other):
-                return super(MyArray, self).__lt__(other).view(np.ndarray)
+                return super().__lt__(other).view(np.ndarray)
 
             def all(self, *args, **kwargs):
                 raise NotImplementedError
@@ -448,7 +613,7 @@ class TestArrayAlmostEqual(_GenericTest):
 
 class TestAlmostEqual(_GenericTest):
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_almost_equal
 
     def test_closeness(self):
@@ -511,72 +676,68 @@ class TestAlmostEqual(_GenericTest):
         y = np.array([1.00000000002, 2.00000000003, 3.00004])
 
         # Test with a different amount of decimal digits
-        with pytest.raises(AssertionError) as exc_info:
+        expected_msg = ('Mismatched elements: 3 / 3 (100%)\n'
+                        'Max absolute difference among violations: 1.e-05\n'
+                        'Max relative difference among violations: '
+                        '3.33328889e-06\n'
+                        ' ACTUAL: array([1.00000000001, '
+                        '2.00000000002, '
+                        '3.00003      ])\n'
+                        ' DESIRED: array([1.00000000002, 2.00000000003, '
+                        '3.00004      ])')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(x, y, decimal=12)
-        msgs = str(exc_info.value).split('\n')
-        assert_equal(msgs[3], 'Mismatched elements: 3 / 3 (100%)')
-        assert_equal(msgs[4], 'Max absolute difference: 1.e-05')
-        assert_equal(msgs[5], 'Max relative difference: 3.33328889e-06')
-        assert_equal(
-            msgs[6],
-            ' x: array([1.00000000001, 2.00000000002, 3.00003      ])')
-        assert_equal(
-            msgs[7],
-            ' y: array([1.00000000002, 2.00000000003, 3.00004      ])')
 
         # With the default value of decimal digits, only the 3rd element
         # differs. Note that we only check for the formatting of the arrays
         # themselves.
-        with pytest.raises(AssertionError) as exc_info:
+        expected_msg = ('Mismatched elements: 1 / 3 (33.3%)\n'
+                        'Max absolute difference among violations: 1.e-05\n'
+                        'Max relative difference among violations: '
+                        '3.33328889e-06\n'
+                        ' ACTUAL: array([1.     , 2.     , 3.00003])\n'
+                        ' DESIRED: array([1.     , 2.     , 3.00004])')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(x, y)
-        msgs = str(exc_info.value).split('\n')
-        assert_equal(msgs[3], 'Mismatched elements: 1 / 3 (33.3%)')
-        assert_equal(msgs[4], 'Max absolute difference: 1.e-05')
-        assert_equal(msgs[5], 'Max relative difference: 3.33328889e-06')
-        assert_equal(msgs[6], ' x: array([1.     , 2.     , 3.00003])')
-        assert_equal(msgs[7], ' y: array([1.     , 2.     , 3.00004])')
 
         # Check the error message when input includes inf
         x = np.array([np.inf, 0])
         y = np.array([np.inf, 1])
-        with pytest.raises(AssertionError) as exc_info:
+        expected_msg = ('Mismatched elements: 1 / 2 (50%)\n'
+                        'Max absolute difference among violations: 1.\n'
+                        'Max relative difference among violations: 1.\n'
+                        ' ACTUAL: array([inf,  0.])\n'
+                        ' DESIRED: array([inf,  1.])')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(x, y)
-        msgs = str(exc_info.value).split('\n')
-        assert_equal(msgs[3], 'Mismatched elements: 1 / 2 (50%)')
-        assert_equal(msgs[4], 'Max absolute difference: 1.')
-        assert_equal(msgs[5], 'Max relative difference: 1.')
-        assert_equal(msgs[6], ' x: array([inf,  0.])')
-        assert_equal(msgs[7], ' y: array([inf,  1.])')
 
         # Check the error message when dividing by zero
         x = np.array([1, 2])
         y = np.array([0, 0])
-        with pytest.raises(AssertionError) as exc_info:
+        expected_msg = ('Mismatched elements: 2 / 2 (100%)\n'
+                        'Max absolute difference among violations: 2\n'
+                        'Max relative difference among violations: inf')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(x, y)
-        msgs = str(exc_info.value).split('\n')
-        assert_equal(msgs[3], 'Mismatched elements: 2 / 2 (100%)')
-        assert_equal(msgs[4], 'Max absolute difference: 2')
-        assert_equal(msgs[5], 'Max relative difference: inf')
 
     def test_error_message_2(self):
-        """Check the message is formatted correctly when either x or y is a scalar."""
+        """Check the message is formatted correctly """
+        """when either x or y is a scalar."""
         x = 2
         y = np.ones(20)
-        with pytest.raises(AssertionError) as exc_info:
+        expected_msg = ('Mismatched elements: 20 / 20 (100%)\n'
+                        'Max absolute difference among violations: 1.\n'
+                        'Max relative difference among violations: 1.')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(x, y)
-        msgs = str(exc_info.value).split('\n')
-        assert_equal(msgs[3], 'Mismatched elements: 20 / 20 (100%)')
-        assert_equal(msgs[4], 'Max absolute difference: 1.')
-        assert_equal(msgs[5], 'Max relative difference: 1.')
 
         y = 2
         x = np.ones(20)
-        with pytest.raises(AssertionError) as exc_info:
+        expected_msg = ('Mismatched elements: 20 / 20 (100%)\n'
+                        'Max absolute difference among violations: 1.\n'
+                        'Max relative difference among violations: 0.5')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(x, y)
-        msgs = str(exc_info.value).split('\n')
-        assert_equal(msgs[3], 'Mismatched elements: 20 / 20 (100%)')
-        assert_equal(msgs[4], 'Max absolute difference: 1.')
-        assert_equal(msgs[5], 'Max relative difference: 0.5')
 
     def test_subclass_that_cannot_be_bool(self):
         # While we cannot guarantee testing functions will always work for
@@ -585,10 +746,10 @@ class TestAlmostEqual(_GenericTest):
         # (which, e.g., astropy Quantity cannot usefully do). See gh-8452.
         class MyArray(np.ndarray):
             def __eq__(self, other):
-                return super(MyArray, self).__eq__(other).view(np.ndarray)
+                return super().__eq__(other).view(np.ndarray)
 
             def __lt__(self, other):
-                return super(MyArray, self).__lt__(other).view(np.ndarray)
+                return super().__lt__(other).view(np.ndarray)
 
             def all(self, *args, **kwargs):
                 raise NotImplementedError
@@ -599,7 +760,7 @@ class TestAlmostEqual(_GenericTest):
 
 class TestApproxEqual:
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_approx_equal
 
     def test_simple_0d_arrays(self):
@@ -642,7 +803,7 @@ class TestApproxEqual:
 
 class TestArrayAssertLess:
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_array_less
 
     def test_simple_arrays(self):
@@ -657,15 +818,27 @@ class TestArrayAssertLess:
         assert_raises(AssertionError, lambda: self._assert_func(x, y))
         assert_raises(AssertionError, lambda: self._assert_func(y, x))
 
+        a = np.array([1, 3, 6, 20])
+        b = np.array([2, 4, 6, 8])
+
+        expected_msg = ('Mismatched elements: 2 / 4 (50%)\n'
+                        'Max absolute difference among violations: 12\n'
+                        'Max relative difference among violations: 1.5')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(a, b)
+
     def test_rank2(self):
         x = np.array([[1.1, 2.2], [3.3, 4.4]])
         y = np.array([[1.2, 2.3], [3.4, 4.5]])
 
         self._assert_func(x, y)
-        assert_raises(AssertionError, lambda: self._assert_func(y, x))
+        expected_msg = ('Mismatched elements: 4 / 4 (100%)\n'
+                        'Max absolute difference among violations: 0.1\n'
+                        'Max relative difference among violations: 0.09090909')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(y, x)
 
         y = np.array([[1.0, 2.3], [3.4, 4.5]])
-
         assert_raises(AssertionError, lambda: self._assert_func(x, y))
         assert_raises(AssertionError, lambda: self._assert_func(y, x))
 
@@ -677,8 +850,12 @@ class TestArrayAssertLess:
         assert_raises(AssertionError, lambda: self._assert_func(y, x))
 
         y[0, 0, 0] = 0
+        expected_msg = ('Mismatched elements: 1 / 8 (12.5%)\n'
+                        'Max absolute difference among violations: 1.\n'
+                        'Max relative difference among violations: inf')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(x, y)
 
-        assert_raises(AssertionError, lambda: self._assert_func(x, y))
         assert_raises(AssertionError, lambda: self._assert_func(y, x))
 
     def test_simple_items(self):
@@ -686,7 +863,11 @@ class TestArrayAssertLess:
         y = 2.2
 
         self._assert_func(x, y)
-        assert_raises(AssertionError, lambda: self._assert_func(y, x))
+        expected_msg = ('Mismatched elements: 1 / 1 (100%)\n'
+                        'Max absolute difference among violations: 1.1\n'
+                        'Max relative difference among violations: 1.')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(y, x)
 
         y = np.array([2.2, 3.3])
 
@@ -696,6 +877,66 @@ class TestArrayAssertLess:
         y = np.array([1.0, 3.3])
 
         assert_raises(AssertionError, lambda: self._assert_func(x, y))
+
+    def test_simple_items_and_array(self):
+        x = np.array([[621.345454, 390.5436, 43.54657, 626.4535],
+                      [54.54, 627.3399, 13., 405.5435],
+                      [543.545, 8.34, 91.543, 333.3]])
+        y = 627.34
+        self._assert_func(x, y)
+
+        y = 8.339999
+        self._assert_func(y, x)
+
+        x = np.array([[3.4536, 2390.5436, 435.54657, 324525.4535],
+                      [5449.54, 999090.54, 130303.54, 405.5435],
+                      [543.545, 8.34, 91.543, 999090.53999]])
+        y = 999090.54
+
+        expected_msg = ('Mismatched elements: 1 / 12 (8.33%)\n'
+                        'Max absolute difference among violations: 0.\n'
+                        'Max relative difference among violations: 0.')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(x, y)
+
+        expected_msg = ('Mismatched elements: 12 / 12 (100%)\n'
+                        'Max absolute difference among violations: '
+                        '999087.0864\n'
+                        'Max relative difference among violations: '
+                        '289288.5934676')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(y, x)
+
+    def test_zeroes(self):
+        x = np.array([546456., 0, 15.455])
+        y = np.array(87654.)
+
+        expected_msg = ('Mismatched elements: 1 / 3 (33.3%)\n'
+                        'Max absolute difference among violations: 458802.\n'
+                        'Max relative difference among violations: 5.23423917')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(x, y)
+
+        expected_msg = ('Mismatched elements: 2 / 3 (66.7%)\n'
+                        'Max absolute difference among violations: 87654.\n'
+                        'Max relative difference among violations: '
+                        '5670.5626011')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(y, x)
+
+        y = 0
+
+        expected_msg = ('Mismatched elements: 3 / 3 (100%)\n'
+                        'Max absolute difference among violations: 546456.\n'
+                        'Max relative difference among violations: inf')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(x, y)
+
+        expected_msg = ('Mismatched elements: 1 / 3 (33.3%)\n'
+                        'Max absolute difference among violations: 0.\n'
+                        'Max relative difference among violations: inf')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(y, x)
 
     def test_nan_noncompare(self):
         anan = np.array(np.nan)
@@ -748,40 +989,17 @@ class TestArrayAssertLess:
         assert_raises(AssertionError, lambda: self._assert_func(-ainf, -x))
         self._assert_func(-ainf, x)
 
-
-@pytest.mark.skip(reason="The raises decorator depends on Nose")
-class TestRaises:
-
-    def setup(self):
-        class MyException(Exception):
-            pass
-
-        self.e = MyException
-
-    def raises_exception(self, e):
-        raise e
-
-    def does_not_raise_exception(self):
-        pass
-
-    def test_correct_catch(self):
-        raises(self.e)(self.raises_exception)(self.e)  # raises?
-
-    def test_wrong_exception(self):
-        try:
-            raises(self.e)(self.raises_exception)(RuntimeError)  # raises?
-        except RuntimeError:
-            return
-        else:
-            raise AssertionError("should have caught RuntimeError")
-
-    def test_catch_no_raise(self):
-        try:
-            raises(self.e)(self.does_not_raise_exception)()  # raises?
-        except AssertionError:
-            return
-        else:
-            raise AssertionError("should have raised an AssertionError")
+    def test_strict(self):
+        """Test the behavior of the `strict` option."""
+        x = np.zeros(3)
+        y = np.ones(())
+        self._assert_func(x, y)
+        with pytest.raises(AssertionError):
+            self._assert_func(x, y, strict=True)
+        y = np.broadcast_to(y, x.shape)
+        self._assert_func(x, y)
+        with pytest.raises(AssertionError):
+            self._assert_func(x, y.astype(np.float32), strict=True)
 
 
 class TestWarns:
@@ -844,6 +1062,25 @@ class TestAssertAllclose:
         assert_allclose(x, y, atol=1)
         assert_raises(AssertionError, assert_allclose, x, y)
 
+        expected_msg = ('Mismatched elements: 1 / 1 (100%)\n'
+                        'Max absolute difference among violations: 0.001\n'
+                        'Max relative difference among violations: 999999.')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(x, y)
+
+        z = 0
+        expected_msg = ('Mismatched elements: 1 / 1 (100%)\n'
+                        'Max absolute difference among violations: 1.e-09\n'
+                        'Max relative difference among violations: inf')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(y, z)
+
+        expected_msg = ('Mismatched elements: 1 / 1 (100%)\n'
+                        'Max absolute difference among violations: 1.e-09\n'
+                        'Max relative difference among violations: 1.')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(z, y)
+
         a = np.array([x, y, x, y])
         b = np.array([x, y, x, x])
 
@@ -857,6 +1094,20 @@ class TestAssertAllclose:
         assert_allclose(6, 10, rtol=0.5)
         assert_raises(AssertionError, assert_allclose, 10, 6, rtol=0.5)
 
+        b = np.array([x, y, x, x])
+        c = np.array([x, y, x, z])
+        expected_msg = ('Mismatched elements: 1 / 4 (25%)\n'
+                        'Max absolute difference among violations: 0.001\n'
+                        'Max relative difference among violations: inf')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(b, c)
+
+        expected_msg = ('Mismatched elements: 1 / 4 (25%)\n'
+                        'Max absolute difference among violations: 0.001\n'
+                        'Max relative difference among violations: 1.')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(c, b)
+
     def test_min_int(self):
         a = np.array([np.iinfo(np.int_).min], dtype=np.int_)
         # Should not raise:
@@ -866,12 +1117,11 @@ class TestAssertAllclose:
         a = np.array([1, 1, 1, 1])
         b = np.array([1, 1, 1, 2])
 
-        with pytest.raises(AssertionError) as exc_info:
+        expected_msg = ('Mismatched elements: 1 / 4 (25%)\n'
+                        'Max absolute difference among violations: 1\n'
+                        'Max relative difference among violations: 0.5')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             assert_allclose(a, b)
-        msg = str(exc_info.value)
-        assert_('Mismatched elements: 1 / 4 (25%)\n'
-                'Max absolute difference: 1\n'
-                'Max relative difference: 0.5' in msg)
 
     def test_equal_nan(self):
         a = np.array([np.nan])
@@ -899,10 +1149,38 @@ class TestAssertAllclose:
         a = np.array([0, 1])
         b = np.array([0, 2])
 
-        with pytest.raises(AssertionError) as exc_info:
+        expected_msg = 'Max relative difference among violations: 0.5'
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             assert_allclose(a, b)
-        msg = str(exc_info.value)
-        assert_('Max relative difference: 0.5' in msg)
+
+    def test_timedelta(self):
+        # see gh-18286
+        a = np.array([[1, 2, 3, "NaT"]], dtype="m8[ns]")
+        assert_allclose(a, a)
+
+    def test_error_message_unsigned(self):
+        """Check the message is formatted correctly when overflow can occur
+           (gh21768)"""
+        # Ensure to test for potential overflow in the case of:
+        #        x - y
+        # and
+        #        y - x
+        x = np.asarray([0, 1, 8], dtype='uint8')
+        y = np.asarray([4, 4, 4], dtype='uint8')
+        expected_msg = 'Max absolute difference among violations: 4'
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(x, y, atol=3)
+
+    def test_strict(self):
+        """Test the behavior of the `strict` option."""
+        x = np.ones(3)
+        y = np.ones(())
+        assert_allclose(x, y)
+        with pytest.raises(AssertionError):
+            assert_allclose(x, y, strict=True)
+        assert_allclose(x, x)
+        with pytest.raises(AssertionError):
+            assert_allclose(x, x.astype(np.float32), strict=True)
 
 
 class TestArrayAlmostEqualNulp:
@@ -1172,23 +1450,23 @@ class TestULP:
             nan = np.array([np.nan]).astype(dt)
             big = np.array([np.finfo(dt).max])
             tiny = np.array([np.finfo(dt).tiny])
-            zero = np.array([np.PZERO]).astype(dt)
-            nzero = np.array([np.NZERO]).astype(dt)
+            zero = np.array([0.0]).astype(dt)
+            nzero = np.array([-0.0]).astype(dt)
             assert_raises(AssertionError,
                           lambda: assert_array_max_ulp(nan, inf,
-                          maxulp=maxulp))
+                                                       maxulp=maxulp))
             assert_raises(AssertionError,
                           lambda: assert_array_max_ulp(nan, big,
-                          maxulp=maxulp))
+                                                       maxulp=maxulp))
             assert_raises(AssertionError,
                           lambda: assert_array_max_ulp(nan, tiny,
-                          maxulp=maxulp))
+                                                       maxulp=maxulp))
             assert_raises(AssertionError,
                           lambda: assert_array_max_ulp(nan, zero,
-                          maxulp=maxulp))
+                                                       maxulp=maxulp))
             assert_raises(AssertionError,
                           lambda: assert_array_max_ulp(nan, nzero,
-                          maxulp=maxulp))
+                                                       maxulp=maxulp))
 
 
 class TestStringEqual:
@@ -1211,7 +1489,7 @@ class TestStringEqual:
                       lambda: assert_string_equal("aaa", "a+b"))
 
 
-def assert_warn_len_equal(mod, n_in_context, py34=None, py37=None):
+def assert_warn_len_equal(mod, n_in_context):
     try:
         mod_warns = mod.__warningregistry__
     except AttributeError:
@@ -1225,25 +1503,14 @@ def assert_warn_len_equal(mod, n_in_context, py34=None, py37=None):
         mod_warns = {}
 
     num_warns = len(mod_warns)
-    # Python 3.4 appears to clear any pre-existing warnings of the same type,
-    # when raising warnings inside a catch_warnings block. So, there is a
-    # warning generated by the tests within the context manager, but no
-    # previous warnings.
+
     if 'version' in mod_warns:
         # Python 3 adds a 'version' entry to the registry,
         # do not count it.
         num_warns -= 1
 
-        # Behavior of warnings is Python version dependent. Adjust the
-        # expected result to compensate. In particular, Python 3.7 does
-        # not make an entry for ignored warnings.
-        if sys.version_info[:2] >= (3, 7):
-            if py37 is not None:
-                n_in_context = py37
-        else:
-            if py34 is not None:
-                n_in_context = py34
     assert_equal(num_warns, n_in_context)
+
 
 def test_warn_len_equal_call_scenarios():
     # assert_warn_len_equal is called under
@@ -1265,8 +1532,8 @@ def test_warn_len_equal_call_scenarios():
     # attribute should be present
     class mod:
         def __init__(self):
-            self.__warningregistry__ = {'warning1':1,
-                                        'warning2':2}
+            self.__warningregistry__ = {'warning1': 1,
+                                        'warning2': 2}
 
     mod_inst = mod()
     assert_warn_len_equal(mod=mod_inst,
@@ -1293,24 +1560,28 @@ def test_clear_and_catch_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Some warning')
     assert_equal(my_mod.__warningregistry__, {})
-    # Without specified modules, don't clear warnings during context
-    # Python 3.7 catch_warnings doesn't make an entry for 'ignore'.
+    # Without specified modules, don't clear warnings during context.
+    # catch_warnings doesn't make an entry for 'ignore'.
     with clear_and_catch_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Some warning')
-    assert_warn_len_equal(my_mod, 1, py37=0)
+    assert_warn_len_equal(my_mod, 0)
+
+    # Manually adding two warnings to the registry:
+    my_mod.__warningregistry__ = {'warning1': 1,
+                                  'warning2': 2}
+
     # Confirm that specifying module keeps old warning, does not add new
     with clear_and_catch_warnings(modules=[my_mod]):
         warnings.simplefilter('ignore')
         warnings.warn('Another warning')
-    assert_warn_len_equal(my_mod, 1, py37=0)
-    # Another warning, no module spec does add to warnings dict, except on
-    # Python 3.4 (see comments in `assert_warn_len_equal`)
-    # Python 3.7 catch_warnings doesn't make an entry for 'ignore'.
+    assert_warn_len_equal(my_mod, 2)
+
+    # Another warning, no module spec it clears up registry
     with clear_and_catch_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Another warning')
-    assert_warn_len_equal(my_mod, 2, py34=1, py37=0)
+    assert_warn_len_equal(my_mod, 0)
 
 
 def test_suppress_warnings_module():
@@ -1332,14 +1603,14 @@ def test_suppress_warnings_module():
         sup.record(UserWarning)
         # suppress warning from other module (may have .pyc ending),
         # if apply_along_axis is moved, had to be changed.
-        sup.filter(module=np.lib.shape_base)
+        sup.filter(module=np.lib._shape_base_impl)
         warnings.warn("Some warning")
         warn_other_module()
     # Check that the suppression did test the file correctly (this module
     # got filtered)
     assert_equal(len(sup.log), 1)
     assert_equal(sup.log[0].message.args[0], "Some warning")
-    assert_warn_len_equal(my_mod, 0, py37=0)
+    assert_warn_len_equal(my_mod, 0)
     sup = suppress_warnings()
     # Will have to be changed if apply_along_axis is moved:
     sup.filter(module=my_mod)
@@ -1352,12 +1623,12 @@ def test_suppress_warnings_module():
         warnings.warn('Some warning')
     assert_warn_len_equal(my_mod, 0)
 
-    # Without specified modules, don't clear warnings during context
-    # Python 3.7 does not add ignored warnings.
+    # Without specified modules
     with suppress_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Some warning')
-    assert_warn_len_equal(my_mod, 1, py37=0)
+    assert_warn_len_equal(my_mod, 0)
+
 
 def test_suppress_warnings_type():
     # Initial state of module, no warnings
@@ -1380,12 +1651,11 @@ def test_suppress_warnings_type():
         warnings.warn('Some warning')
     assert_warn_len_equal(my_mod, 0)
 
-    # Without specified modules, don't clear warnings during context
-    # Python 3.7 does not add ignored warnings.
+    # Without specified modules
     with suppress_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Some warning')
-    assert_warn_len_equal(my_mod, 1, py37=0)
+    assert_warn_len_equal(my_mod, 0)
 
 
 def test_suppress_warnings_decorate_no_record():
@@ -1416,7 +1686,7 @@ def test_suppress_warnings_record():
 
         assert_equal(len(sup.log), 2)
         assert_equal(len(log1), 1)
-        assert_equal(len(log2),1)
+        assert_equal(len(log2), 1)
         assert_equal(log2[0].message.args[0], 'Some other warning 2')
 
     # Do it again, with the same context to see if some warnings survived:
@@ -1540,6 +1810,7 @@ def test_clear_and_catch_warnings_inherit():
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 class TestAssertNoGcCycles:
     """ Test assert_no_gc_cycles """
+
     def test_passes(self):
         def no_cycle():
             b = []
@@ -1607,3 +1878,32 @@ class TestAssertNoGcCycles:
         finally:
             # make sure that we stop creating reference cycles
             ReferenceCycleInDel.make_cycle = False
+
+
+@pytest.mark.parametrize('assert_func', [assert_array_equal,
+                                         assert_array_almost_equal])
+def test_xy_rename(assert_func):
+    # Test that keywords `x` and `y` have been renamed to `actual` and
+    # `desired`, respectively. These tests and use of `_rename_parameter`
+    # decorator can be removed before the release of NumPy 2.2.0.
+    assert_func(1, 1)
+    assert_func(actual=1, desired=1)
+
+    assert_message = "Arrays are not..."
+    with pytest.raises(AssertionError, match=assert_message):
+        assert_func(1, 2)
+    with pytest.raises(AssertionError, match=assert_message):
+        assert_func(actual=1, desired=2)
+
+    dep_message = 'Use of keyword argument...'
+    with pytest.warns(DeprecationWarning, match=dep_message):
+        assert_func(x=1, desired=1)
+    with pytest.warns(DeprecationWarning, match=dep_message):
+        assert_func(1, y=1)
+
+    type_message = '...got multiple values for argument'
+    # explicit linebreak to support Python 3.9
+    with pytest.warns(DeprecationWarning, match=dep_message), \
+          pytest.raises(TypeError, match=type_message):
+        assert_func(1, x=1)
+        assert_func(1, 2, y=2)

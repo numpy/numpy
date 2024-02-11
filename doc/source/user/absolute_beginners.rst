@@ -5,216 +5,246 @@ NumPy: the absolute basics for beginners
 
 .. currentmodule:: numpy
 
-Welcome to the absolute beginner's guide to NumPy! If you have comments or
-suggestions, please don’t hesitate to reach out!
+Welcome to the absolute beginner's guide to NumPy!
 
-
-Welcome to NumPy!
------------------
-
-NumPy (**Numerical Python**) is an open source Python library that's used in
-almost every field of science and engineering. It's the universal standard for
-working with numerical data in Python, and it's at the core of the scientific
-Python and PyData ecosystems. NumPy users include everyone from beginning coders
-to experienced researchers doing state-of-the-art scientific and industrial
-research and development. The NumPy API is used extensively in Pandas, SciPy,
-Matplotlib, scikit-learn, scikit-image and most other data science and
-scientific Python packages.
-
-The NumPy library contains multidimensional array and matrix data structures
-(you'll find more information about this in later sections). It provides
-**ndarray**, a homogeneous n-dimensional array object, with methods to
-efficiently operate on it. NumPy can be used to perform a wide variety of
-mathematical operations on arrays.  It adds powerful data structures to Python
-that guarantee efficient calculations with arrays and matrices and it supplies
-an enormous library of high-level mathematical functions that operate on these
-arrays and matrices.
-
-Learn more about :ref:`NumPy here <whatisnumpy>`!
-
-Installing NumPy
-----------------
-
-To install NumPy, we strongly recommend using a scientific Python distribution.
-If you're looking for the full instructions for installing NumPy on your
-operating system, you can `find all of the details here
-<https://www.scipy.org/install.html>`_.
-
-
-
-If you already have Python, you can install NumPy with::
-
-  conda install numpy
-
-or ::
-
-  pip install numpy
-
-If you don't have Python yet, you might want to consider using `Anaconda
-<https://www.anaconda.com/>`_. It's the easiest way to get started. The good
-thing about getting this distribution is the fact that you don’t need to worry
-too much about separately installing NumPy or any of the major packages that
-you’ll be using for your data analyses, like pandas, Scikit-Learn, etc.
-
-You can find all of the installation details in the
-`Installation <https://www.scipy.org/install.html>`_ section
-at `SciPy <https://www.scipy.org>`_.
+NumPy (**Num**\ erical **Py**\ thon) is an open source Python library that's
+widely used in science and engineering. The NumPy library contains
+multidimensional array data structures, such as the homogeneous, N-dimensional
+``ndarray``, and a large library of functions that operate efficiently on these
+data structures. Learn more about NumPy at :ref:`What is NumPy <whatisnumpy>`,
+and if you have comments or suggestions, please
+`reach out <https://numpy.org/community/>`_!
 
 How to import NumPy
 -------------------
 
-Any time you want to use a package or library in your code, you first need to
-make it accessible.
-
-In order to start using NumPy and all of the functions available in NumPy,
-you'll need to import it. This can be easily done with this import statement::
+After `installing NumPy <https://numpy.org/install/>`_, it may be imported
+into Python code like::
 
   import numpy as np
 
-(We shorten ``numpy`` to ``np`` in order to save time and also to keep code
-standardized so that anyone working with your code can easily understand and
-run it.)
+This widespread convention allows access to NumPy features with a short,
+recognizable prefix (``np.``) while distinguishing NumPy features from others
+that have the same name.
 
 Reading the example code
 ------------------------
 
-If you aren't already comfortable with reading tutorials that contain a lot of code,
-you might not know how to interpret a code block that looks
-like this::
+Throughout the NumPy documentation, you will find blocks that look like::
 
-  >>> a = np.arange(6)
-  >>> a2 = a[np.newaxis, :]
-  >>> a2.shape
-  (1, 6)
+  >>> a = np.array([[1, 2, 3],
+  ...               [4, 5, 6]])
+  >>> a.shape
+  (2, 3)
 
-If you aren't familiar with this style, it's very easy to understand.
-If you see ``>>>``, you're looking at **input**, or the code that
-you would enter. Everything that doesn't have ``>>>`` in front of it
-is **output**, or the results of running your code. This is the style
-you see when you run ``python`` on the command line, but if you're using IPython, you might see a different style.
+Text preceded by ``>>>`` or ``...`` is **input**, the code that you would
+enter in a script or at a Python prompt. Everything else is **output**, the
+results of running your code. Note that ``>>>`` and ``...`` are not part of the
+code and may cause an error if entered at a Python prompt.
 
+Why use NumPy?
+--------------
 
-What’s the difference between a Python list and a NumPy array?
---------------------------------------------------------------
+Python lists are excellent, general-purpose containers. They can be
+"heterogeneous", meaning that they can contain elements of a variety of types,
+and they are quite fast when used to perform individual operations on a handful
+of elements.
 
-NumPy gives you an enormous range of fast and efficient ways of creating arrays
-and manipulating numerical data inside them. While a Python list can contain
-different data types within a single list, all of the elements in a NumPy array
-should be homogeneous. The mathematical operations that are meant to be performed
-on arrays would be extremely inefficient if the arrays weren't homogeneous.
+Depending on the characteristics of the data and the types of operations that
+need to be performed, other containers may be more appropriate; by exploiting
+these characteristics, we can improve speed, reduce memory consumption, and
+offer a high-level syntax for performing a variety of common processing tasks.
+NumPy shines when there are large quantities of "homogeneous" (same-type) data
+to be processed on the CPU.
 
-**Why use NumPy?**
+What is an "array"?
+-------------------
 
-NumPy arrays are faster and more compact than Python lists. An array consumes
-less memory and is convenient to use. NumPy uses much less memory to store data
-and it provides a mechanism of specifying the data types. This allows the code
-to be optimized even further.
+In computer programming, an array is a structure for storing and retrieving
+data. We often talk about an array as if it were a grid in space, with each
+cell storing one element of the data. For instance, if each element of the
+data were a number, we might visualize a "one-dimensional" array like a
+list:
 
-What is an array?
------------------
+.. math::
 
-An array is a central data structure of the NumPy library. An array is a grid of
-values and it contains information about the raw data, how to locate an element,
-and how to interpret an element. It has a grid of elements that can be indexed
-in :ref:`various ways <quickstart.indexing-slicing-and-iterating>`.
-The elements are all of the same type, referred to as the array ``dtype``.
+    \begin{array}{|c||c|c|c|}
+    \hline
+    1 & 5 & 2 & 0 \\
+    \hline
+    \end{array}
 
-An array can be indexed by a tuple of nonnegative integers, by booleans, by
-another array, or by integers. The ``rank`` of the array is the number of
-dimensions. The ``shape`` of the array is a tuple of integers giving the size of
-the array along each dimension.
+A two-dimensional array would be like a table:
 
-One way we can initialize NumPy arrays is from Python lists, using nested lists
-for two- or higher-dimensional data.
+.. math::
 
+    \begin{array}{|c||c|c|c|}
+    \hline
+    1 & 5 & 2 & 0 \\
+    \hline
+    8 & 3 & 6 & 1 \\
+    \hline
+    1 & 7 & 2 & 9 \\
+    \hline
+    \end{array}
+
+A three-dimensional array would be like a set of tables, perhaps stacked
+as though they were printed on separate pages. In NumPy, this idea is
+generalized to an arbitrary number of dimensions, and so the fundamental
+array class is called ``ndarray``: it represents an "N-dimensional
+array".
+
+Most NumPy arrays have some restrictions. For instance:
+
+- All elements of the array must be of the same type of data.
+- Once created, the total size of the the array can't change.
+- The shape must be "rectangular", not "jagged"; e.g., each row of
+  a two-dimensional array must have the same number of columns.
+
+When these conditions are met, NumPy exploits these characteristics to
+make the array faster, more memory efficient, and more convenient to use than
+less restrictive data structures.
+
+For the remainder of this document, we will use the word "array" to refer to
+an instance of ``ndarray``.
+
+Array fundamentals
+------------------
+
+One way to initialize an array is using a Python sequence, such as a list.
 For example::
 
-  >>> a = np.array([1, 2, 3, 4, 5, 6])
+    >>> a = np.array([1, 2, 3, 4, 5, 6])
+    >>> a
+    array([1, 2, 3, 4, 5, 6])
 
-or::
+Elements of an array can be accessed in :ref:`various ways
+<quickstart.indexing-slicing-and-iterating>`. For instance, we can access an
+individual element of this array as we would access an element in the original
+list: using the integer index of the element within square brackets.
 
-  >>> a = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+    >>> a[0]
+    1
 
-We can access the elements in the array using square brackets. When you're
-accessing elements, remember that indexing in NumPy starts at 0. That means that
-if you want to access the first element in your array, you'll be accessing
-element "0".
+.. note::
 
-::
+     As with built-in Python sequences, NumPy arrays are "0-indexed": the first
+     element of the array is accessed using index ``0``, not ``1``.
 
-  >>> print(a[0])
-  [1 2 3 4]
+Like the original list, the array is mutable.
 
+    >>> a[0] = 10
+    >>> a
+    array([10,  2,  3,  4,  5,  6])
 
-More information about arrays
------------------------------
+Also like the original list, Python slice notation can be used for indexing.
 
-*This section covers* ``1D array``, ``2D array``, ``ndarray``, ``vector``, ``matrix``
+    >>> a[:3]
+    array([10, 2, 3])
 
-------
+One major difference is that slice indexing of a list copies the elements into
+a new list, but slicing an array returns a *view*: an object that refers to the
+data in the original array. The original array can be mutated using the view.
 
-You might occasionally hear an array referred to as a "ndarray," which is
-shorthand for "N-dimensional array." An N-dimensional array is simply an array
-with any number of dimensions. You might also hear **1-D**, or one-dimensional
-array, **2-D**, or two-dimensional array, and so on. The NumPy ``ndarray`` class
-is used to represent both matrices and vectors. A **vector** is an array with a
-single dimension (there's no difference
-between row and column vectors), while a **matrix** refers to an
-array with two dimensions. For **3-D** or higher dimensional arrays, the term
-**tensor** is also commonly used.
+    >>> b = a[3:]
+    >>> b
+    array([4, 5, 6])
+    >>> b[0] = 40
+    >>> a
+    array([ 10,  2,  3, 40,  5,  6])
 
-**What are the attributes of an array?**
+See :ref:`basics.copies-and-views` for a more comprehensive explanation of when
+array operations return views rather than copies.
 
-An array is usually a fixed-size container of items of the same type and size.
-The number of dimensions and items in an array is defined by its shape. The
-shape of an array is a tuple of non-negative integers that specify the sizes of
-each dimension.
+Two- and higher-dimensional arrays can be initialized from nested Python
+sequences::
 
-In NumPy, dimensions are called **axes**. This means that if you have a 2D array
-that looks like this::
+    >>> a = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+    >>> a
+    array([[ 1,  2,  3,  4],
+           [ 5,  6,  7,  8],
+           [ 9, 10, 11, 12]])
 
-  [[0., 0., 0.],
-   [1., 1., 1.]]
+In NumPy, a dimension of an array is sometimes referred to as an "axis". This
+terminology may be useful to disambiguate between the dimensionality of an
+array and the dimensionality of the data represented by the array. For
+instance, the array ``a`` could represent three points, each lying within a
+four-dimensional space, but ``a`` has only two "axes".
 
-Your array has 2 axes. The first axis has a length of 2 and the second axis has
-a length of 3.
+Another difference between an array and a list of lists is that an
+element of the array can be accessed by specifying the index along each
+axis within a *single* set of square brackets, separated by commas.
+For instance, the element ``8`` is in row ``1`` and column ``3``:
 
-Just like in other Python container objects, the contents of an array can be
-accessed and modified by indexing or slicing the array. Unlike the typical container
-objects, different arrays can share the same data, so changes made on one array might
-be visible in another.
+    >>> a[1, 3]
+    8
 
-Array **attributes** reflect information intrinsic to the array itself. If you
-need to get, or even set, properties of an array without creating a new array,
-you can often access an array through its attributes.
+.. note::
 
-:ref:`Read more about array attributes here <arrays.ndarray>` and learn about
+    It is familiar practice in mathematics to refer to elements of a matrix
+    by the row index first and the column index second. This happens to be true
+    for two-dimensional arrays, but a better mental model is to think of
+    the column index as coming *last* and the row index as *second to last*.
+    This generalizes to arrays with *any* number of dimensions.
+
+.. note::
+
+    You might hear of a 0-D (zero-dimensional) array referred to as a "scalar",
+    a 1-D (one-dimensional) array as a "vector", a 2-D (two-dimensional) array
+    as a "matrix", or an N-D (N-dimensional, where "N" is typically an integer
+    greater than 2) array as a "tensor". For clarity, it is best to avoid the
+    mathematical terms when referring to an array because the mathematical
+    objects with these names behave differently than arrays (e.g. "matrix"
+    multiplication is fundamentally different from "array" multiplication), and
+    there are other objects in the scientific Python ecosystem that have these
+    names (e.g. the fundamental data structure of PyTorch is the "tensor").
+
+Array attributes
+----------------
+
+*This section covers the* ``ndim``, ``shape``, ``size``, *and* ``dtype``
+*attributes of an array*.
+
+-----
+
+The number of dimensions of an array is contained in the ``ndim`` attribute.
+
+    >>> a.ndim
+    2
+
+The shape of an array is a tuple of non-negative integers that specify the
+number of elements along each dimension.
+
+    >>> a.shape
+    (3, 4)
+    >>> len(a.shape) == a.ndim
+    True
+
+The fixed, total number of elements in array is contained in the ``size``
+attribute.
+
+    >>> a.size
+    12
+    >>> import math
+    >>> a.size == math.prod(a.shape)
+    True
+
+Arrays are typically "homogeneous", meaning that they contain elements of
+only one "data type". The data type is recorded in the ``dtype`` attribute.
+
+    >>> a.dtype
+    dtype('int64')  # "int" for integer, "64" for 64-bit
+
+ref:`Read more about array attributes here <arrays.ndarray>` and learn about
 :ref:`array objects here <arrays>`.
-
 
 How to create a basic array
 ---------------------------
 
-
-*This section covers* ``np.array()``, ``np.zeros()``, ``np.ones()``,
-``np.empty()``, ``np.arange()``, ``np.linspace()``, ``dtype``
+*This section covers* ``np.zeros()``, ``np.ones()``,
+``np.empty()``, ``np.arange()``, ``np.linspace()``
 
 -----
-
-To create a NumPy array, you can use the function ``np.array()``.
-
-All you need to do to create a simple array is pass a list to it. If you choose
-to, you can also specify the type of data in your list.
-:ref:`You can find more information about data types here <arrays.dtypes>`. ::
-
-    >>> import numpy as np
-    >>> a = np.array([1, 2, 3])
-
-You can visualize your array this way:
-
-.. image:: images/np_array.png
-
-*Be aware that these visualizations are meant to simplify ideas and give you a basic understanding of NumPy concepts and mechanics. Arrays and array operations are much more complicated than are captured here!*
 
 Besides creating an array from a sequence of elements, you can easily create an
 array filled with ``0``'s::
@@ -233,8 +263,8 @@ content is random and depends on the state of the memory. The reason to use
 fill every element afterwards! ::
 
   >>> # Create an empty array with 2 elements
-  >>> np.empty(2)
-  array([ 3.14, 42.  ])  # may vary
+  >>> np.empty(2) #doctest: +SKIP
+  array([3.14, 42.  ])  # may vary
 
 You can create an array with a range of elements::
 
@@ -395,7 +425,7 @@ this array to an array with three rows and two columns::
 
 With ``np.reshape``, you can specify a few optional parameters::
 
-  >>> numpy.reshape(a, newshape=(1, 6), order='C')
+  >>> np.reshape(a, newshape=(1, 6), order='C')
   array([[0, 1, 2, 3, 4, 5]])
 
 ``a`` is the array to be reshaped.
@@ -452,7 +482,7 @@ You can use ``np.newaxis`` to add a new axis::
   >>> a2.shape
   (1, 6)
 
-You can explicitly convert a 1D array with either a row vector or a column
+You can explicitly convert a 1D array to either a row vector or a column
 vector using ``np.newaxis``. For example, you can convert a 1D array to a row
 vector by inserting an axis along the first dimension::
 
@@ -585,10 +615,11 @@ example::
 
   >>> for coord in list_of_coordinates:
   ...     print(coord)
-  (0, 0)
-  (0, 1)
-  (0, 2)
-  (0, 3)
+  (np.int64(0), np.int64(0))
+  (np.int64(0), np.int64(1))
+  (np.int64(0), np.int64(2))
+  (np.int64(0), np.int64(3))
+
 
 You can also use ``np.nonzero()`` to print the elements in an array that are less
 than 5 with::
@@ -617,7 +648,7 @@ How to create an array from existing data
 
 -----
 
-You can easily use create a new array from a section of an existing array.
+You can easily create a new array from a section of an existing array.
 
 Let's say you have this array:
 
@@ -673,18 +704,18 @@ If you wanted to split this array into three equally shaped arrays, you would
 run::
 
   >>> np.hsplit(x, 3)
-  [array([[1,  2,  3,  4],
-          [13, 14, 15, 16]]), array([[ 5,  6,  7,  8],
-          [17, 18, 19, 20]]), array([[ 9, 10, 11, 12],
-          [21, 22, 23, 24]])]
+    [array([[ 1,  2,  3,  4],
+           [13, 14, 15, 16]]), array([[ 5,  6,  7,  8],
+           [17, 18, 19, 20]]), array([[ 9, 10, 11, 12],
+           [21, 22, 23, 24]])]
 
 If you wanted to split your array after the third and fourth column, you'd run::
 
   >>> np.hsplit(x, (3, 4))
-  [array([[1, 2, 3],
-          [13, 14, 15]]), array([[ 4],
-          [16]]), array([[ 5, 6, 7, 8, 9, 10, 11, 12],
-          [17, 18, 19, 20, 21, 22, 23, 24]])]
+    [array([[ 1,  2,  3],
+           [13, 14, 15]]), array([[ 4],
+           [16]]), array([[ 5,  6,  7,  8,  9, 10, 11, 12],
+           [17, 18, 19, 20, 21, 22, 23, 24]])]
 
 :ref:`Learn more about stacking and splitting arrays here <quickstart.stacking-arrays>`.
 
@@ -775,12 +806,12 @@ If you start with this array::
 
   >>> b = np.array([[1, 1], [2, 2]])
 
-You can sum the rows with::
+You can sum over the axis of rows with::
 
   >>> b.sum(axis=0)
   array([3, 3])
 
-You can sum the columns with::
+You can sum over the axis of columns with::
 
   >>> b.sum(axis=1)
   array([2, 4])
@@ -871,10 +902,11 @@ Creating matrices
 You can pass Python lists of lists to create a 2-D array (or "matrix") to
 represent them in NumPy. ::
 
-  >>> data = np.array([[1, 2], [3, 4]])
+  >>> data = np.array([[1, 2], [3, 4], [5, 6]])
   >>> data
   array([[1, 2],
-         [3, 4]])
+         [3, 4],
+         [5, 6]])
 
 .. image:: images/np_create_matrix.png
 
@@ -883,7 +915,8 @@ Indexing and slicing operations are useful when you're manipulating matrices::
   >>> data[0, 1]
   2
   >>> data[1:3]
-  array([[3, 4]])
+  array([[3, 4],
+         [5, 6]])
   >>> data[0:2, 0]
   array([1, 3])
 
@@ -892,21 +925,27 @@ Indexing and slicing operations are useful when you're manipulating matrices::
 You can aggregate matrices the same way you aggregated vectors::
 
   >>> data.max()
-  4
+  6
   >>> data.min()
   1
   >>> data.sum()
-  10
+  21
 
 .. image:: images/np_matrix_aggregation.png
 
 You can aggregate all the values in a matrix and you can aggregate them across
-columns or rows using the ``axis`` parameter::
+columns or rows using the ``axis`` parameter. To illustrate this point, let's
+look at a slightly modified dataset::
 
+  >>> data = np.array([[1, 2], [5, 3], [4, 6]])
+  >>> data
+  array([[1, 2],
+         [5, 3],
+         [4, 6]])
   >>> data.max(axis=0)
-  array([3, 4])
+  array([5, 6])
   >>> data.max(axis=1)
-  array([2, 4])
+  array([2, 5, 6])
 
 .. image:: images/np_matrix_aggregation_row.png
 
@@ -963,9 +1002,8 @@ All you need to do is pass in the number of elements you want it to generate::
   array([1., 1., 1.])
   >>> np.zeros(3)
   array([0., 0., 0.])
-  # the simplest way to generate random numbers
-  >>> rng = np.random.default_rng(0)
-  >>> rng.random(3)
+  >>> rng = np.random.default_rng()  # the simplest way to generate random numbers
+  >>> rng.random(3) #doctest: +SKIP
   array([0.63696169, 0.26978671, 0.04097352])
 
 .. image:: images/np_ones_zeros_random.png
@@ -981,7 +1019,7 @@ a 2D array if you give them a tuple describing the dimensions of the matrix::
   array([[0., 0.],
          [0., 0.],
          [0., 0.]])
-  >>> rng.random((3, 2))
+  >>> rng.random((3, 2)) #doctest: +SKIP
   array([[0.01652764, 0.81327024],
          [0.91275558, 0.60663578],
          [0.72949656, 0.54362499]])  # may vary
@@ -1007,7 +1045,7 @@ that this is inclusive with NumPy) to high (exclusive). You can set
 
 You can generate a 2 x 4 array of random integers between 0 and 4 with::
 
-  >>> rng.integers(5, size=(2, 4))
+  >>> rng.integers(5, size=(2, 4)) #doctest: +SKIP
   array([[2, 1, 1, 0],
          [0, 0, 0, 4]])  # may vary
 
@@ -1090,7 +1128,7 @@ To learn more about finding the unique elements in an array, see `unique`.
 Transposing and reshaping a matrix
 ----------------------------------
 
-*This section covers* ``arr.reshape()``, ``arr.transpose()``, ``arr.T()``
+*This section covers* ``arr.reshape()``, ``arr.transpose()``, ``arr.T``
 
 -----
 
@@ -1114,7 +1152,7 @@ You simply need to pass in the new dimensions that you want for the matrix. ::
 
 .. image:: images/np_reshape.png
 
-You can also use ``.transpose`` to reverse or change the axes of an array
+You can also use ``.transpose()`` to reverse or change the axes of an array
 according to the values you specify.
 
 If you start with this array::
@@ -1131,6 +1169,13 @@ You can transpose your array with ``arr.transpose()``. ::
          [1, 4],
          [2, 5]])
 
+You can also use ``arr.T``::
+
+    >>> arr.T
+    array([[0, 3],
+           [1, 4],
+           [2, 5]])
+
 To learn more about transposing and reshaping arrays, see `transpose` and
 `reshape`.
 
@@ -1138,12 +1183,12 @@ To learn more about transposing and reshaping arrays, see `transpose` and
 How to reverse an array
 -----------------------
 
-*This section covers* ``np.flip``
+*This section covers* ``np.flip()``
 
 -----
 
 NumPy's ``np.flip()`` function allows you to flip, or reverse, the contents of
-an array along an axis. When using ``np.flip``, specify the array you would like
+an array along an axis. When using ``np.flip()``, specify the array you would like
 to reverse and the axis. If you don't specify the axis, NumPy will reverse the
 contents along all of the axes of your input array.
 
@@ -1334,7 +1379,7 @@ followed by the docstring of ``ndarray`` of which ``a`` is an instance):
   Type:            ndarray
   String form:     [1 2 3 4 5 6]
   Length:          6
-  File:            ~/anaconda3/lib/python3.7/site-packages/numpy/__init__.py
+  File:            ~/anaconda3/lib/python3.9/site-packages/numpy/__init__.py
   Docstring:       <no docstring>
   Class docstring:
   ndarray(shape, dtype=float, buffer=None, offset=0,
@@ -1494,7 +1539,7 @@ You can use ``np.load()`` to reconstruct your array. ::
 
   >>> b = np.load('filename.npy')
 
-If you want to check your array, you can run:::
+If you want to check your array, you can run::
 
   >>> print(b)
   [1 2 3 4 5 6]
@@ -1578,7 +1623,7 @@ If you created this array "a" ::
 
 .. for doctests
    The continuous integration truncates dataframe display without this setting.
-   >>> pd.set_option('max_columns', 10)
+   >>> pd.set_option('display.max_columns', 10)
 
 You could create a Pandas dataframe ::
 
@@ -1665,9 +1710,8 @@ For example, you can plot a 1D array like this::
 
 With Matplotlib, you have access to an enormous number of visualization options. ::
 
-  >>> from mpl_toolkits.mplot3d import Axes3D
   >>> fig = plt.figure()
-  >>> ax = Axes3D(fig)
+  >>> ax = fig.add_subplot(projection='3d')
   >>> X = np.arange(-5, 5, 0.15)
   >>> Y = np.arange(-5, 5, 0.15)
   >>> X, Y = np.meshgrid(X, Y)
@@ -1689,4 +1733,4 @@ For directions regarding installing Matplotlib, see the official
 
 -------------------------------------------------------
 
-*Image credits: Jay Alammar http://jalammar.github.io/*
+*Image credits: Jay Alammar https://jalammar.github.io/*

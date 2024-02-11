@@ -3,14 +3,14 @@
 .. _extending:
 
 Extending
----------
+=========
 The BitGenerators have been designed to be extendable using standard tools for
 high-performance Python -- numba and Cython.  The `~Generator` object can also
 be used with user-provided BitGenerators as long as these export a small set of
 required functions.
 
 Numba
-=====
+-----
 Numba can be used with either CTypes or CFFI.  The current iteration of the
 BitGenerators all export a small set of functions through both interfaces.
 
@@ -25,12 +25,12 @@ provided by ``ctypes.next_double``.
 Both CTypes and CFFI allow the more complicated distributions to be used
 directly in Numba after compiling the file distributions.c into a ``DLL`` or
 ``so``.  An example showing the use of a more complicated distribution is in
-the `examples` section below.
+the `Examples`_ section below.
 
 .. _random_cython:
 
 Cython
-======
+------
 
 Cython can be used to unpack the ``PyCapsule`` provided by a BitGenerator.
 This example uses `PCG64` and the example from above.  The usual caveats
@@ -61,7 +61,7 @@ See :ref:`extending_cython_example` for the complete listings of these examples
 and a minimal ``setup.py`` to build the c-extension modules.
 
 CFFI
-====
+----
 
 CFFI can be used to directly access the functions in
 ``include/numpy/random/distributions.h``. Some "massaging" of the header
@@ -79,8 +79,8 @@ directly from the ``_generator`` shared object, using the `BitGenerator.cffi` in
     :start-after: dlopen
 
 
-New Bit Generators
-==================
+New BitGenerators
+-----------------
 `~Generator` can be used with user-provided `~BitGenerator`\ s. The simplest
 way to write a new BitGenerator is to examine the pyx file of one of the
 existing BitGenerators. The key structure that must be provided is the
@@ -109,10 +109,10 @@ the next 64-bit unsigned integer function if not needed. Functions inside
   bitgen_state->next_uint64(bitgen_state->state)
 
 Examples
-========
+--------
 
 .. toctree::
     Numba <examples/numba>
-    CFFI + Numba <examples/numba_cffi> 
+    CFFI + Numba <examples/numba_cffi>
     Cython <examples/cython/index>
     CFFI <examples/cffi>

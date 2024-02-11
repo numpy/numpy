@@ -1,7 +1,7 @@
 .. _NEP11:
 
 ==================================
-NEP 11 — Deferred UFunc Evaluation
+NEP 11 — Deferred UFunc evaluation
 ==================================
 
 :Author: Mark Wiebe <mwwiebe@gmail.com>
@@ -41,11 +41,15 @@ For an idea of how to get this kind of behavior in NumPy without
 changing the Python code, consider the C++ technique of
 expression templates. These can be used to quite arbitrarily
 rearrange expressions using
-vectors or other data structures, example,::
+vectors or other data structures, example:
+
+.. code-block:: cpp
 
     A = B + C + D;
 
-can be transformed into something equivalent to::
+can be transformed into something equivalent to:
+
+.. code-block:: cpp
 
     for(i = 0; i < A.size; ++i) {
         A[i] = B[i] + C[i] + D[i];
@@ -69,7 +73,7 @@ UFunc to evaluate on the fly.
 
 
 *******************
-Example Python Code
+Example Python code
 *******************
 
 Here's how it might be used in NumPy.::
@@ -134,7 +138,7 @@ divide by zero error?" can hopefully be avoided by recommending
 this approach.
 
 ********************************
-Proposed Deferred Evaluation API
+Proposed deferred evaluation API
 ********************************
 
 For deferred evaluation to work, the C API needs to be aware of its
@@ -212,7 +216,7 @@ The Python API would be expanded as follows.
     ``numpy.errstate``.
 
 
-Error Handling
+Error handling
 ==============
 
 Error handling is a thorny issue for deferred evaluation.  If the
@@ -228,7 +232,7 @@ only when the error state is set to ignore all, but allow user control with
 use deferred evaluation, False would mean never use it, and None would
 mean use it only when safe (i.e. the error state is set to ignore all).
 
-Interaction With UPDATEIFCOPY
+Interaction with UPDATEIFCOPY
 =============================
 
 The ``NPY_UPDATEIFCOPY`` documentation states:
@@ -268,7 +272,7 @@ To deal with this issue, we make these two states mutually exclusive.
   future.  If the deferred evaluation mechanism sees this flag in
   any operand, it triggers immediate evaluation.
 
-Other Implementation Details
+Other implementation details
 ============================
 
 When a deferred array is created, it gets references to all the
@@ -284,7 +288,7 @@ This may release references to other deferred arrays contained
 in the deferred expression tree, which then
 never have to be calculated.
 
-Further Optimization
+Further optimization
 ====================
 
 Instead of conservatively disabling deferred evaluation when any

@@ -6,7 +6,7 @@ boiler plate for doing that is to put the following in the module
 ``__init__.py`` file::
 
     from numpy._pytesttester import PytestTester
-    test = PytestTester(__name__).test
+    test = PytestTester(__name__)
     del PytestTester
 
 
@@ -20,8 +20,9 @@ whether or not that file is found as follows:
     DeprecationWarnings and PendingDeprecationWarnings are ignored, other
     warnings are passed through.
 
-In practice, tests run from the numpy repo are run in develop mode. That
-includes the standard ``python runtests.py`` invocation.
+In practice, tests run from the numpy repo are run in development mode with
+``spin``, through the standard ``spin test`` invocation or from an inplace
+build with ``pytest numpy``.
 
 This module is imported by every numpy subpackage, so lies at the top level to
 simplify circular import issues. For the same reason, it contains no numpy
@@ -33,28 +34,12 @@ import os
 __all__ = ['PytestTester']
 
 
-
 def _show_numpy_info():
-    from numpy.core._multiarray_umath import (
-        __cpu_features__, __cpu_baseline__, __cpu_dispatch__
-    )
     import numpy as np
 
     print("NumPy version %s" % np.__version__)
-    relaxed_strides = np.ones((10, 1), order="C").flags.f_contiguous
-    print("NumPy relaxed strides checking option:", relaxed_strides)
-
-    if len(__cpu_baseline__) == 0 and len(__cpu_dispatch__) == 0:
-        enabled_features = "nothing enabled"
-    else:
-        enabled_features = ' '.join(__cpu_baseline__)
-        for feature in __cpu_dispatch__:
-            if __cpu_features__[feature]:
-                enabled_features += " %s*" % feature
-            else:
-                enabled_features += " %s?" % feature
-    print("NumPy CPU features:", enabled_features)
-
+    info = np.lib._utils_impl._opt_info()
+    print("NumPy CPU features: ", (info if info else 'nothing enabled'))
 
 
 class PytestTester:
@@ -140,9 +125,6 @@ class PytestTester:
         import pytest
         import warnings
 
-        # Imported after pytest to enable assertion rewriting
-        import hypothesis
-
         module = sys.modules[self.module_name]
         module_path = os.path.abspath(module.__path__[0])
 
@@ -152,12 +134,20 @@ class PytestTester:
         # offset verbosity. The "-q" cancels a "-v".
         pytest_args += ["-q"]
 
-        # Filter out distutils cpu warnings (could be localized to
-        # distutils tests). ASV has problems with top level import,
-        # so fetch module for suppression here.
-        with warnings.catch_warnings():
-            warnings.simplefilter("always")
-            from numpy.distutils import cpuinfo
+        if sys.version_info < (3, 12):
+            with warnings.catch_warnings():
+                warnings.simplefilter("always")
+                # Filter out distutils cpu warnings (could be localized to
+                # distutils tests). ASV has problems with top level import,
+                # so fetch module for suppression here.
+                from numpy.distutils import cpuinfo
+
+        with warnings.catch_warnings(record=True):
+            # Ignore the warning from importing the array_api submodule. This
+            # warning is done on import, so it would break pytest collection,
+            # but importing it early here prevents the warning from being
+            # issued when it imported again.
+            import numpy.array_api
 
         # Filter out annoying import messages. Want these in both develop and
         # release mode.
@@ -175,7 +165,7 @@ class PytestTester:
             ]
 
         if doctests:
-            raise ValueError("Doctests not supported")
+            pytest_args += ["--doctest-modules"]
 
         if extra_argv:
             pytest_args += list(extra_argv)
@@ -204,15 +194,6 @@ class PytestTester:
             tests = [self.module_name]
 
         pytest_args += ["--pyargs"] + list(tests)
-
-        # This configuration is picked up by numpy.conftest, and ensures that
-        # running `np.test()` is deterministic and does not write any files.
-        # See https://hypothesis.readthedocs.io/en/latest/settings.html
-        hypothesis.settings.register_profile(
-            name="np.test() profile",
-            deadline=None, print_blob=True, database=None, derandomize=True,
-            suppress_health_check=hypothesis.HealthCheck.all(),
-        )
 
         # run tests.
         _show_numpy_info()

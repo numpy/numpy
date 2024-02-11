@@ -1,7 +1,7 @@
 .. _NEP41:
 
 =================================================
-NEP 41 — First step towards a new Datatype System
+NEP 41 — First step towards a new datatype system
 =================================================
 
 :title: First step towards a new Datatype System
@@ -23,7 +23,7 @@ NEP 41 — First step towards a new Datatype System
 
     - :ref:`NEP 42 <NEP42>` describes the new design's datatype-related APIs.
 
-    - NEP 43 describes the new design's API for universal functions.
+    - :ref:`NEP 43 <NEP43>` describes the new design's API for universal functions.
 
 
 Abstract
@@ -47,7 +47,7 @@ development of both user-defined external datatypes,
 as well as new features for existing datatypes internal to NumPy.
 
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 .. seealso::
@@ -74,7 +74,7 @@ cannot describe casting for such parametric datatypes implemented outside of Num
 This additional functionality for supporting parametric datatypes introduces
 increased complexity within NumPy itself,
 and furthermore is not available to external user-defined datatypes.
-In general the concerns of different datatypes are not well well-encapsulated.
+In general the concerns of different datatypes are not well-encapsulated.
 This burden is exacerbated by the exposure of internal C structures,
 limiting the addition of new fields
 (for example to support new sorting methods [new_sort]_).
@@ -183,7 +183,7 @@ For example ``common_dtype(a, b)`` must not be ``c`` unless ``a`` or ``b`` know
 that ``c`` exists.
 
 
-User Impact
+User impact
 -----------
 
 The current ecosystem has very few user-defined datatypes using NumPy, the
@@ -223,7 +223,7 @@ The following examples represent future user-defined datatypes we wish to enable
 These datatypes are not part the NEP and choices (e.g. choice of casting rules)
 are possibilities we wish to enable and do not represent recommendations.
 
-Simple Numerical Types
+Simple numerical types
 """"""""""""""""""""""
 
 Mainly used where memory is a consideration, lower-precision numeric types
@@ -284,7 +284,7 @@ in general, it is not safe::
     >>> np.can_cast(np.float64, np.dtype[mp.mpf](dps=4), casting="safe")
     False
 
-since a float64 has a higer precision than the ``mpf`` datatype with
+since a float64 has a higher precision than the ``mpf`` datatype with
 ``dps=4``.
 
 Alternatively, we can say that::
@@ -334,7 +334,7 @@ strictly more values defined, is something that the Categorical datatype would
 need to decide. Both options should be available.
 
 
-Unit on the Datatype
+Unit on the datatype
 """"""""""""""""""""
 
 There are different ways to define Units, depending on how the internal
@@ -400,7 +400,7 @@ certain decisions before the actual calculation can start.
 Implementation
 --------------
 
-Plan to Approach the Full Refactor
+Plan to approach the full refactor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To address these issues in NumPy and enable new datatypes,
@@ -532,7 +532,7 @@ are not yet fully clear, we anticipate, and accept the following changes:
     have to be changed to use the new API. Such changes are expected to be
     necessary in very few project.
 
-* **dtype implementors (C-API)**:
+* **dtype implementers (C-API)**:
 
   * The array which is currently provided to some functions (such as cast functions),
     will no longer be provided.
@@ -563,14 +563,14 @@ possibly never, by downstream projects.
 
 
 
-Detailed Description
+Detailed description
 --------------------
 
 This section details the design decisions covered by this NEP.
 The subsections correspond to the list of design choices presented
 in the Scope section.
 
-Datatypes as Python Classes (1)
+Datatypes as Python classes (1)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The current NumPy datatypes are not full scale python classes.
@@ -695,7 +695,7 @@ increase the complexity of both the design and implementation.
 A possible future path may be to instead simplify the current NumPy scalars to
 be much simpler objects which largely derive their behaviour from the datatypes.
 
-C-API for creating new Datatypes (3)
+C-API for creating new datatypes (3)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The current C-API with which users can create new datatypes
@@ -737,7 +737,7 @@ a later step in the implementation to reduce the complexity of the initial
 implementation.
 
 
-C-API Changes to the UFunc Machinery (4)
+C-API changes to the UFunc machinery (4)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Proposed changes to the UFunc machinery will be part of NEP 43.
@@ -765,7 +765,7 @@ Discussion
 See :ref:`NEP 40 <NEP40>`
 for a list of previous meetings and discussions.
 
-Additional discussion around this specific NEP has occured on both
+Additional discussion around this specific NEP has occurred on both
 the mailing list and the pull request:
 
 * `Mailing list discussion <https://mail.python.org/pipermail/numpy-discussion/2020-March/080481.html>`_

@@ -1,5 +1,3 @@
-import sys
-
 from numpy.distutils.fcompiler import FCompiler
 
 compilers = ['NVHPCFCompiler']

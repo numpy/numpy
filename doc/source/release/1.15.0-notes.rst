@@ -92,7 +92,7 @@ Deprecations
   ``np.sum(np.from_iter(generator))`` or the built-in Python ``sum`` instead.
 
 * Users of the C-API should call ``PyArrayResolveWriteBackIfCopy`` or
-  ``PyArray_DiscardWritbackIfCopy`` on any array with the ``WRITEBACKIFCOPY``
+  ``PyArray_DiscardWritebackIfCopy`` on any array with the ``WRITEBACKIFCOPY``
   flag set, before deallocating the array. A deprecation warning will be
   emitted if those calls are not used when needed.
 
@@ -326,8 +326,8 @@ passed explicitly, and are not yet computed automatically.
 No longer does an IQR of 0 result in ``n_bins=1``, rather the number of bins
 chosen is related to the data size in this situation.
 
-The edges retuned by `histogram`` and ``histogramdd`` now match the data float type
------------------------------------------------------------------------------------
+The edges returned by `histogram`` and ``histogramdd`` now match the data float type
+------------------------------------------------------------------------------------
 When passed ``np.float16``, ``np.float32``, or ``np.longdouble`` data, the
 returned edges are now of the same dtype. Previously, ``histogram`` would only
 return the same type if explicit bins were given, and ``histogram`` would

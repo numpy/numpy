@@ -1,6 +1,0 @@
-Concatenate supports providing an output dtype
-----------------------------------------------
-Support was added to `~numpy.concatenate` to provide
-an output ``dtype`` and ``casting`` using keyword
-arguments. The ``dtype`` argument cannot be provided
-in conjunction with the ``out`` one.

@@ -3,6 +3,7 @@ import shutil
 import pytest
 from tempfile import mkstemp, mkdtemp
 from subprocess import Popen, PIPE
+import importlib.metadata
 from distutils.errors import DistutilsError
 
 from numpy.testing import assert_, assert_equal, assert_raises
@@ -11,6 +12,16 @@ from numpy.distutils.system_info import system_info, ConfigParser, mkl_info
 from numpy.distutils.system_info import AliasedOptionError
 from numpy.distutils.system_info import default_lib_dirs, default_include_dirs
 from numpy.distutils import _shell_utils
+
+
+try:
+    if importlib.metadata.version('setuptools') >= '60':
+        # pkg-resources gives deprecation warnings, and there may be more
+        # issues. We only support setuptools <60
+        pytest.skip("setuptools is too new", allow_module_level=True)
+except importlib.metadata.PackageNotFoundError:
+    # we don't require `setuptools`; if it is not found, continue
+    pass
 
 
 def get_class(name, notfound_action=1):
@@ -130,7 +141,7 @@ class DuplicateOptionInfo(_system_info):
 
 class TestSystemInfoReading:
 
-    def setup(self):
+    def setup_method(self):
         """ Create the libraries """
         # Create 2 sources and 2 libraries
         self._dir1 = mkdtemp()
@@ -171,8 +182,7 @@ class TestSystemInfoReading:
         self.c_dup_options = site_and_parse(get_class('duplicate_options'),
                                             self._sitecfg)
 
-
-    def teardown(self):
+    def teardown_method(self):
         # Do each removal separately
         try:
             shutil.rmtree(self._dir1)
@@ -254,6 +264,10 @@ class TestSystemInfoReading:
         finally:
             os.chdir(previousDir)
 
+    HAS_MKL = "mkl_rt" in mkl_info().calc_libraries_info().get("libraries", [])
+
+    @pytest.mark.xfail(HAS_MKL, reason=("`[DEFAULT]` override doesn't work if "
+                                        "numpy is built with MKL support"))
     def test_overrides(self):
         previousDir = os.getcwd()
         cfg = os.path.join(self._dir1, 'site.cfg')
@@ -268,16 +282,16 @@ class TestSystemInfoReading:
 
             # But if we copy the values to a '[mkl]' section the value
             # is correct
-            with open(cfg, 'r') as fid:
-                mkl = fid.read().replace('ALL', 'mkl')
+            with open(cfg) as fid:
+                mkl = fid.read().replace('[ALL]', '[mkl]', 1)
             with open(cfg, 'w') as fid:
                 fid.write(mkl)
             info = mkl_info()
             assert info.get_lib_dirs() == lib_dirs
 
             # Also, the values will be taken from a section named '[DEFAULT]'
-            with open(cfg, 'r') as fid:
-                dflt = fid.read().replace('mkl', 'DEFAULT')
+            with open(cfg) as fid:
+                dflt = fid.read().replace('[mkl]', '[DEFAULT]', 1)
             with open(cfg, 'w') as fid:
                 fid.write(dflt)
             info = mkl_info()

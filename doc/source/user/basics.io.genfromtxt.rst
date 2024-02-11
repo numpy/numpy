@@ -58,10 +58,10 @@ Quite often, a single character marks the separation between columns.  For
 example, comma-separated files (CSV) use a comma (``,``) or a semicolon
 (``;``) as delimiter::
 
-   >>> data = u"1, 2, 3\n4, 5, 6"
+   >>> data = "1, 2, 3\n4, 5, 6"
    >>> np.genfromtxt(StringIO(data), delimiter=",")
-   array([[ 1.,  2.,  3.],
-          [ 4.,  5.,  6.]])
+   array([[1.,  2.,  3.],
+          [4.,  5.,  6.]])
 
 Another common separator is ``"\t"``, the tabulation character.  However,
 we are not limited to a single character, any string will do.  By default,
@@ -74,16 +74,16 @@ defined as a given number of characters.  In that case, we need to set
 ``delimiter`` to a single integer (if all the columns have the same
 size) or to a sequence of integers (if columns can have different sizes)::
 
-   >>> data = u"  1  2  3\n  4  5 67\n890123  4"
+   >>> data = "  1  2  3\n  4  5 67\n890123  4"
    >>> np.genfromtxt(StringIO(data), delimiter=3)
-   array([[   1.,    2.,    3.],
-          [   4.,    5.,   67.],
-          [ 890.,  123.,    4.]])
-   >>> data = u"123456789\n   4  7 9\n   4567 9"
+   array([[  1.,    2.,    3.],
+          [  4.,    5.,   67.],
+          [890.,  123.,    4.]])
+   >>> data = "123456789\n   4  7 9\n   4567 9"
    >>> np.genfromtxt(StringIO(data), delimiter=(4, 3, 2))
-   array([[ 1234.,   567.,    89.],
-          [    4.,     7.,     9.],
-          [    4.,   567.,     9.]])
+   array([[1234.,   567.,    89.],
+          [   4.,     7.,     9.],
+          [   4.,   567.,     9.]])
 
 
 The ``autostrip`` argument
@@ -94,7 +94,7 @@ individual entries are not stripped of leading nor trailing white spaces.
 This behavior can be overwritten by setting the optional argument
 ``autostrip`` to a value of ``True``::
 
-   >>> data = u"1, abc , 2\n 3, xxx, 4"
+   >>> data = "1, abc , 2\n 3, xxx, 4"
    >>> # Without autostrip
    >>> np.genfromtxt(StringIO(data), delimiter=",", dtype="|U5")
    array([['1', ' abc ', ' 2'],
@@ -114,7 +114,7 @@ string that marks the beginning of a comment.  By default,
 occur anywhere on the line.  Any character present after the comment
 marker(s) is simply ignored::
 
-   >>> data = u"""#
+   >>> data = """#
    ... # Skip me !
    ... # Skip me too !
    ... 1, 2
@@ -154,12 +154,12 @@ of lines to skip at the beginning of the file, before any other action is
 performed.  Similarly, we can skip the last ``n`` lines of the file by
 using the ``skip_footer`` attribute and giving it a value of ``n``::
 
-   >>> data = u"\n".join(str(i) for i in range(10))
+   >>> data = "\n".join(str(i) for i in range(10))
    >>> np.genfromtxt(StringIO(data),)
-   array([ 0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9.])
+   array([0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9.])
    >>> np.genfromtxt(StringIO(data),
    ...               skip_header=3, skip_footer=5)
-   array([ 3.,  4.])
+   array([3.,  4.])
 
 By default, ``skip_header=0`` and ``skip_footer=0``, meaning that no lines
 are skipped.
@@ -178,24 +178,22 @@ integers behave the same as regular Python negative indexes.
 For example, if we want to import only the first and the last columns, we
 can use ``usecols=(0, -1)``::
 
-   >>> data = u"1 2 3\n4 5 6"
+   >>> data = "1 2 3\n4 5 6"
    >>> np.genfromtxt(StringIO(data), usecols=(0, -1))
-   array([[ 1.,  3.],
-          [ 4.,  6.]])
+   array([[1.,  3.],
+          [4.,  6.]])
 
 If the columns have names, we can also select which columns to import by
 giving their name to the ``usecols`` argument, either as a sequence
 of strings or a comma-separated string::
 
-   >>> data = u"1 2 3\n4 5 6"
+   >>> data = "1 2 3\n4 5 6"
    >>> np.genfromtxt(StringIO(data),
    ...               names="a, b, c", usecols=("a", "c"))
-   array([(1.0, 3.0), (4.0, 6.0)],
-         dtype=[('a', '<f8'), ('c', '<f8')])
+   array([(1., 3.), (4., 6.)], dtype=[('a', '<f8'), ('c', '<f8')])
    >>> np.genfromtxt(StringIO(data),
    ...               names="a, b, c", usecols=("a, c"))
-       array([(1.0, 3.0), (4.0, 6.0)],
-             dtype=[('a', '<f8'), ('c', '<f8')])
+       array([(1., 3.), (4., 6.)], dtype=[('a', '<f8'), ('c', '<f8')])
 
 
 
@@ -231,9 +229,7 @@ When ``dtype=None``, the type of each column is determined iteratively from
 its data.  We start by checking whether a string can be converted to a
 boolean (that is, if the string matches ``true`` or ``false`` in lower
 cases); then whether it can be converted to an integer, then to a float,
-then to a complex and eventually to a string.  This behavior may be changed
-by modifying the default mapper of the
-:class:`~numpy.lib._iotools.StringConverter` class.
+then to a complex and eventually to a string.
 
 The option ``dtype=None`` is provided for convenience.  However, it is
 significantly slower than setting the dtype explicitly.
@@ -260,7 +256,7 @@ sequence of strings or a comma-separated string::
 
    >>> data = StringIO("1 2 3\n 4 5 6")
    >>> np.genfromtxt(data, names="A, B, C")
-   array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)],
+   array([(1., 2., 3.), (4., 5., 6.)],
          dtype=[('A', '<f8'), ('B', '<f8'), ('C', '<f8')])
 
 In the example above, we used the fact that by default, ``dtype=float``.
@@ -274,7 +270,7 @@ that case, we must use the ``names`` keyword with a value of
 
    >>> data = StringIO("So it goes\n#a b c\n1 2 3\n 4 5 6")
    >>> np.genfromtxt(data, skip_header=1, names=True)
-   array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)],
+   array([(1., 2., 3.), (4., 5., 6.)],
          dtype=[('a', '<f8'), ('b', '<f8'), ('c', '<f8')])
 
 The default value of ``names`` is ``None``.  If we give any other
@@ -285,7 +281,7 @@ have defined with the dtype::
    >>> ndtype=[('a',int), ('b', float), ('c', int)]
    >>> names = ["A", "B", "C"]
    >>> np.genfromtxt(data, names=names, dtype=ndtype)
-   array([(1, 2.0, 3), (4, 5.0, 6)],
+   array([(1, 2., 3), (4, 5., 6)],
          dtype=[('A', '<i8'), ('B', '<f8'), ('C', '<i8')])
 
 
@@ -298,7 +294,7 @@ with the standard NumPy default of ``"f%i"``, yielding names like ``f0``,
 
    >>> data = StringIO("1 2 3\n 4 5 6")
    >>> np.genfromtxt(data, dtype=(int, float, int))
-   array([(1, 2.0, 3), (4, 5.0, 6)],
+   array([(1, 2., 3), (4, 5., 6)],
          dtype=[('f0', '<i8'), ('f1', '<f8'), ('f2', '<i8')])
 
 In the same way, if we don't give enough names to match the length of the
@@ -306,7 +302,7 @@ dtype, the missing names will be defined with this default template::
 
    >>> data = StringIO("1 2 3\n 4 5 6")
    >>> np.genfromtxt(data, dtype=(int, float, int), names="a")
-   array([(1, 2.0, 3), (4, 5.0, 6)],
+   array([(1, 2., 3), (4, 5., 6)],
          dtype=[('a', '<i8'), ('f0', '<f8'), ('f1', '<i8')])
 
 We can overwrite this default with the ``defaultfmt`` argument, that
@@ -314,7 +310,7 @@ takes any format string::
 
    >>> data = StringIO("1 2 3\n 4 5 6")
    >>> np.genfromtxt(data, dtype=(int, float, int), defaultfmt="var_%02i")
-   array([(1, 2.0, 3), (4, 5.0, 6)],
+   array([(1, 2., 3), (4, 5., 6)],
          dtype=[('var_00', '<i8'), ('var_01', '<f8'), ('var_02', '<i8')])
 
 .. note::
@@ -334,20 +330,20 @@ correspond to the name of a standard attribute (like ``size`` or
 ``shape``), which would confuse the interpreter.  :func:`~numpy.genfromtxt`
 accepts three optional arguments that provide a finer control on the names:
 
-   ``deletechars``
-      Gives a string combining all the characters that must be deleted from
-      the name. By default, invalid characters are
-      ``~!@#$%^&*()-=+~\|]}[{';:
-      /?.>,<``.
-   ``excludelist``
-      Gives a list of the names to exclude, such as ``return``, ``file``,
-      ``print``...  If one of the input name is part of this list, an
-      underscore character (``'_'``) will be appended to it.
-   ``case_sensitive``
-      Whether the names should be case-sensitive (``case_sensitive=True``),
-      converted to upper case (``case_sensitive=False`` or
-      ``case_sensitive='upper'``) or to lower case
-      (``case_sensitive='lower'``).
+``deletechars``
+   Gives a string combining all the characters that must be deleted from
+   the name. By default, invalid characters are
+   ``~!@#$%^&*()-=+~\|]}[{';:
+   /?.>,<``.
+``excludelist``
+   Gives a list of the names to exclude, such as ``return``, ``file``,
+   ``print``...  If one of the input name is part of this list, an
+   underscore character (``'_'``) will be appended to it.
+``case_sensitive``
+   Whether the names should be case-sensitive (``case_sensitive=True``),
+   converted to upper case (``case_sensitive=False`` or
+   ``case_sensitive='upper'``) or to lower case
+   (``case_sensitive='lower'``).
 
 
 
@@ -374,8 +370,8 @@ single element of the wanted type.
 In the following example, the second column is converted from as string
 representing a percentage to a float between 0 and 1::
 
-   >>> convertfunc = lambda x: float(x.strip(b"%"))/100.
-   >>> data = u"1, 2.3%, 45.\n6, 78.9%, 0"
+   >>> convertfunc = lambda x: float(x.strip("%"))/100.
+   >>> data = "1, 2.3%, 45.\n6, 78.9%, 0"
    >>> names = ("i", "p", "n")
    >>> # General case .....
    >>> np.genfromtxt(StringIO(data), delimiter=",", names=names)
@@ -390,7 +386,7 @@ and ``' 78.9%'`` cannot be converted to float and we end up having
    >>> # Converted case ...
    >>> np.genfromtxt(StringIO(data), delimiter=",", names=names,
    ...               converters={1: convertfunc})
-   array([(1.0, 0.023, 45.0), (6.0, 0.78900000000000003, 0.0)],
+   array([(1., 0.023, 45.), (6., 0.789, 0.)],
          dtype=[('i', '<f8'), ('p', '<f8'), ('n', '<f8')])
 
 The same results can be obtained by using the name of the second column
@@ -399,7 +395,7 @@ The same results can be obtained by using the name of the second column
    >>> # Using a name for the converter ...
    >>> np.genfromtxt(StringIO(data), delimiter=",", names=names,
    ...               converters={"p": convertfunc})
-   array([(1.0, 0.023, 45.0), (6.0, 0.78900000000000003, 0.0)],
+   array([(1., 0.023, 45.), (6., 0.789, 0.)],
          dtype=[('i', '<f8'), ('p', '<f8'), ('n', '<f8')])
 
 
@@ -409,7 +405,7 @@ string into the corresponding float or into -999 if the string is empty.
 We need to explicitly strip the string from white spaces as it is not done
 by default::
 
-   >>> data = u"1, , 3\n 4, 5, 6"
+   >>> data = "1, , 3\n 4, 5, 6"
    >>> convert = lambda x: float(x.strip() or -999)
    >>> np.genfromtxt(StringIO(data), delimiter=",",
    ...               converters={1: convert})
@@ -437,19 +433,19 @@ process these missing data.
 
 By default, any empty string is marked as missing.  We can also consider
 more complex strings, such as ``"N/A"`` or ``"???"`` to represent missing
-or invalid data.  The ``missing_values`` argument accepts three kind
+or invalid data.  The ``missing_values`` argument accepts three kinds
 of values:
 
-   a string or a comma-separated string
-      This string will be used as the marker for missing data for all the
-      columns
-   a sequence of strings
-      In that case, each item is associated to a column, in order.
-   a dictionary
-      Values of the dictionary are strings or sequence of strings.  The
-      corresponding keys can be column indices (integers) or column names
-      (strings). In addition, the special key ``None`` can be used to
-      define a default applicable to all columns.
+a string or a comma-separated string
+   This string will be used as the marker for missing data for all the
+   columns
+a sequence of strings
+   In that case, each item is associated to a column, in order.
+a dictionary
+   Values of the dictionary are strings or sequence of strings.  The
+   corresponding keys can be column indices (integers) or column names
+   (strings). In addition, the special key ``None`` can be used to
+   define a default applicable to all columns.
 
 
 ``filling_values``
@@ -473,21 +469,21 @@ We can get a finer control on the conversion of missing values with the
 ``filling_values`` optional argument.  Like
 ``missing_values``, this argument accepts different kind of values:
 
-   a single value
-      This will be the default for all columns
-   a sequence of values
-      Each entry will be the default for the corresponding column
-   a dictionary
-      Each key can be a column index or a column name, and the
-      corresponding value should be a single object.  We can use the
-      special key ``None`` to define a default for all columns.
+a single value
+   This will be the default for all columns
+a sequence of values
+   Each entry will be the default for the corresponding column
+a dictionary
+   Each key can be a column index or a column name, and the
+   corresponding value should be a single object.  We can use the
+   special key ``None`` to define a default for all columns.
 
 In the following example, we suppose that the missing values are flagged
 with ``"N/A"`` in the first column and by ``"???"`` in the third column.
 We wish to transform these missing values to 0 if they occur in the first
 and second column, and to -999 if they occur in the last column::
 
-    >>> data = u"N/A, 2, 3\n4, ,???"
+    >>> data = "N/A, 2, 3\n4, ,???"
     >>> kwargs = dict(delimiter=",",
     ...               dtype=int,
     ...               names="a,b,c",
@@ -509,20 +505,3 @@ output array will then be a :class:`~numpy.ma.MaskedArray`.
 
 
 .. unpack=None, loose=True, invalid_raise=True)
-
-
-Shortcut functions
-==================
-
-In addition to :func:`~numpy.genfromtxt`, the :mod:`numpy.lib.npyio` module
-provides several convenience functions derived from
-:func:`~numpy.genfromtxt`.  These functions work the same way as the
-original, but they have different default values.
-
-:func:`~numpy.npyio.recfromtxt`
-   Returns a standard :class:`numpy.recarray` (if ``usemask=False``) or a
-   :class:`~numpy.ma.mrecords.MaskedRecords` array (if ``usemaske=True``).  The
-   default dtype is ``dtype=None``, meaning that the types of each column
-   will be automatically determined.
-:func:`~numpy.npyio.recfromcsv`
-   Like :func:`~numpy.npyio.recfromtxt`, but with a default ``delimiter=","``.

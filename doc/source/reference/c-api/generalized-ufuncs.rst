@@ -1,7 +1,7 @@
 .. _c-api.generalized-ufuncs:
 
 ==================================
-Generalized Universal Function API
+Generalized universal function API
 ==================================
 
 There is a general need for looping over not only functions on scalars
@@ -103,7 +103,7 @@ Dimension Index
 
 .. _details-of-signature:
 
-Details of Signature
+Details of signature
 --------------------
 
 The signature defines "core" dimensionality of input and output
@@ -178,7 +178,7 @@ Here are some examples of signatures:
 The last is an instance of freezing a core dimension and can be used to
 improve ufunc performance
 
-C-API for implementing Elementary Functions
+C-API for implementing elementary functions
 -------------------------------------------
 
 The current interface remains unchanged, and ``PyUFunc_FromFuncAndData``

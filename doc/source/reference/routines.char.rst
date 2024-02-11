@@ -1,13 +1,27 @@
-String operations
-*****************
+.. _routines.char:
+
+Legacy fixed-width string functionality
+=======================================
 
 .. currentmodule:: numpy.char
 
 .. module:: numpy.char
 
+.. legacy::
+
+   The string operations in this module, as well as the `numpy.char.chararray`
+   class, are planned to be deprecated in the future. Use `numpy.strings`
+   instead.
+
 The `numpy.char` module provides a set of vectorized string
-operations for arrays of type `numpy.string_` or `numpy.unicode_`.
-All of them are based on the string methods in the Python standard library.
+operations for arrays of type `numpy.str_` or `numpy.bytes_`. For example
+
+      >>> np.char.capitalize(["python", "numpy"])
+      array(['Python', 'Numpy'], dtype='<U6')
+      >>> np.char.add(["num", "doc"], ["py", "umentation"])
+      array(['numpy', 'documentation'], dtype='<U13')
+
+The methods in this module are based on the methods in :py:mod:`string`
 
 String operations
 -----------------

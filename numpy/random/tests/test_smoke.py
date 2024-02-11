@@ -4,10 +4,10 @@ from functools import partial
 import numpy as np
 import pytest
 from numpy.testing import assert_equal, assert_, assert_array_equal
-from numpy.random import (Generator, MT19937, PCG64, Philox, SFC64)
+from numpy.random import (Generator, MT19937, PCG64, PCG64DXSM, Philox, SFC64)
 
 @pytest.fixture(scope='module',
-                params=(np.bool_, np.int8, np.int16, np.int32, np.int64,
+                params=(np.bool, np.int8, np.int16, np.int32, np.int64,
                         np.uint8, np.uint16, np.uint32, np.uint64))
 def dtype(request):
     return request.param
@@ -129,7 +129,7 @@ class RNG:
             assert_(not comp_state(state, self.rg.bit_generator.state))
         else:
             bitgen_name = self.rg.bit_generator.__class__.__name__
-            pytest.skip('Advance is not supported by {0}'.format(bitgen_name))
+            pytest.skip(f'Advance is not supported by {bitgen_name}')
 
     def test_jump(self):
         state = self.rg.bit_generator.state
@@ -145,8 +145,8 @@ class RNG:
         else:
             bitgen_name = self.rg.bit_generator.__class__.__name__
             if bitgen_name not in ('SFC64',):
-                raise AttributeError('no "jumped" in %s' % bitgen_name)
-            pytest.skip('Jump is not supported by {0}'.format(bitgen_name))
+                raise AttributeError(f'no "jumped" in {bitgen_name}')
+            pytest.skip(f'Jump is not supported by {bitgen_name}')
 
     def test_uniform(self):
         r = self.rg.uniform(-1.0, 0.0, size=10)
@@ -447,8 +447,7 @@ class RNG:
     def test_seed_array(self):
         if self.seed_vector_bits is None:
             bitgen_name = self.bit_generator.__name__
-            pytest.skip('Vector seeding is not supported by '
-                        '{0}'.format(bitgen_name))
+            pytest.skip(f'Vector seeding is not supported by {bitgen_name}')
 
         if self.seed_vector_bits == 32:
             dtype = np.uint32
@@ -654,7 +653,7 @@ class RNG:
             rg.standard_gamma(1.0, out=existing[::3])
 
     def test_integers_broadcast(self, dtype):
-        if dtype == np.bool_:
+        if dtype == np.bool:
             upper = 2
             lower = 0
         else:
@@ -700,7 +699,7 @@ class RNG:
         assert out.shape == (1,)
 
     def test_integers_broadcast_errors(self, dtype):
-        if dtype == np.bool_:
+        if dtype == np.bool:
             upper = 2
             lower = 0
         else:
@@ -767,6 +766,18 @@ class TestPCG64(RNG):
     @classmethod
     def setup_class(cls):
         cls.bit_generator = PCG64
+        cls.advance = 2**63 + 2**31 + 2**15 + 1
+        cls.seed = [12345]
+        cls.rg = Generator(cls.bit_generator(*cls.seed))
+        cls.initial_state = cls.rg.bit_generator.state
+        cls.seed_vector_bits = 64
+        cls._extra_setup()
+
+
+class TestPCG64DXSM(RNG):
+    @classmethod
+    def setup_class(cls):
+        cls.bit_generator = PCG64DXSM
         cls.advance = 2**63 + 2**31 + 2**15 + 1
         cls.seed = [12345]
         cls.rg = Generator(cls.bit_generator(*cls.seed))

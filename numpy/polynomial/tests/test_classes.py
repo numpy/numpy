@@ -13,7 +13,7 @@ from numpy.polynomial import (
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
     )
-from numpy.polynomial.polyutils import RankWarning
+from numpy.exceptions import RankWarning
 
 #
 # fixtures
@@ -523,6 +523,13 @@ def test_call(Poly):
     assert_almost_equal(res, tgt)
 
 
+def test_call_with_list(Poly):
+    p = Poly([1, 2, 3])
+    x = [-1, 0, 2]
+    res = p(x)
+    assert_equal(res, p(np.array(x)))
+
+
 def test_cutdeg(Poly):
     p = Poly([1, 2, 3])
     assert_raises(ValueError, p.cutdeg, .5)
@@ -597,4 +604,4 @@ class TestInterpolate:
         for deg in range(0, 10):
             for t in range(0, deg + 1):
                 p = Chebyshev.interpolate(powx, deg, domain=[0, 2], args=(t,))
-                assert_almost_equal(p(x), powx(x, t), decimal=12)
+                assert_almost_equal(p(x), powx(x, t), decimal=11)

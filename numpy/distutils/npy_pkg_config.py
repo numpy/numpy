@@ -9,7 +9,7 @@ __all__ = ['FormatError', 'PkgNotFound', 'LibraryInfo', 'VariableSet',
 
 _VAR = re.compile(r'\$\{([a-zA-Z0-9_-]+)\}')
 
-class FormatError(IOError):
+class FormatError(OSError):
     """
     Exception thrown when there is a problem parsing a configuration file.
 
@@ -20,7 +20,7 @@ class FormatError(IOError):
     def __str__(self):
         return self.msg
 
-class PkgNotFound(IOError):
+class PkgNotFound(OSError):
     """Exception raised when a package can not be located."""
     def __init__(self, msg):
         self.msg = msg
@@ -408,9 +408,13 @@ if __name__ == '__main__':
     pkg_name = args[1]
     d = os.environ.get('NPY_PKG_CONFIG_PATH')
     if d:
-        info = read_config(pkg_name, ['numpy/core/lib/npy-pkg-config', '.', d])
+        info = read_config(
+            pkg_name, ['numpy/_core/lib/npy-pkg-config', '.', d]
+        )
     else:
-        info = read_config(pkg_name, ['numpy/core/lib/npy-pkg-config', '.'])
+        info = read_config(
+            pkg_name, ['numpy/_core/lib/npy-pkg-config', '.']
+        )
 
     if options.section:
         section = options.section

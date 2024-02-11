@@ -19,7 +19,7 @@ class BaseNAGFCompiler(FCompiler):
     def get_flags_opt(self):
         return ['-O4']
     def get_flags_arch(self):
-        return ['']
+        return []
 
 class NAGFCompiler(BaseNAGFCompiler):
 
@@ -64,6 +64,11 @@ class NAGFORCompiler(BaseNAGFCompiler):
         'ranlib'       : ["ranlib"]
         }
 
+    def get_flags_linker_so(self):
+        if sys.platform == 'darwin':
+            return ['-unsharedrts',
+                    '-Wl,-bundle,-flat_namespace,-undefined,suppress']
+        return BaseNAGFCompiler.get_flags_linker_so(self)
     def get_flags_debug(self):
         version = self.get_version()
         if version and version > '6.1':
