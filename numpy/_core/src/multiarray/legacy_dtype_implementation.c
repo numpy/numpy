@@ -30,20 +30,20 @@ _equivalent_fields(_PyArray_LegacyDescr *type1, _PyArray_LegacyDescr *type2) {
 
     int val;
 
-    if (PyDataType_FIELDS(type1) == PyDataType_FIELDS(type2) && PyDataType_NAMES(type1) == PyDataType_NAMES(type2)) {
+    if (type1->fields == type2->fields && type1->names == type2->names) {
         return 1;
     }
-    if (PyDataType_FIELDS(type1) == NULL || PyDataType_FIELDS(type2) == NULL) {
+    if (type1->fields == NULL || type2->fields == NULL) {
         return 0;
     }
 
-    val = PyObject_RichCompareBool(PyDataType_FIELDS(type1), PyDataType_FIELDS(type2), Py_EQ);
+    val = PyObject_RichCompareBool(type1->fields, type2->fields, Py_EQ);
     if (val != 1 || PyErr_Occurred()) {
         PyErr_Clear();
         return 0;
     }
 
-    val = PyObject_RichCompareBool(PyDataType_NAMES(type1), PyDataType_NAMES(type2), Py_EQ);
+    val = PyObject_RichCompareBool(type1->names, type2->names, Py_EQ);
     if (val != 1 || PyErr_Occurred()) {
         PyErr_Clear();
         return 0;

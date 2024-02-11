@@ -214,7 +214,7 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
         use_void_clearimpl = 1;
 
         if (descr_proto->names == NULL || descr_proto->fields == NULL ||
-            !PyDict_CheckExact(PyDataType_FIELDS(descr_proto))) {
+            !PyDict_CheckExact(descr_proto->fields)) {
             PyErr_Format(PyExc_ValueError,
                     "Failed to register dtype for %S: Legacy user dtypes "
                     "using `NPY_ITEM_IS_POINTER` or `NPY_ITEM_REFCOUNT` are "
