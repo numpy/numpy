@@ -2648,7 +2648,7 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
         PyArrayObject_fields dummy_fields = get_dummy_stack_array(ap);
         PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
 
-        _PyArray_LegacyDescr *descr = PyArray_DESCR(ap);
+        _PyArray_LegacyDescr *descr = (_PyArray_LegacyDescr *)PyArray_DESCR(ap);
         while (PyDict_Next(descr->fields, &pos, &key, &value)) {
             PyArray_Descr * new;
             npy_intp offset;
