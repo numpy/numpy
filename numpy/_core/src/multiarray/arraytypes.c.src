@@ -4437,24 +4437,25 @@ set_typeinfo(PyObject *dict)
             return -1;
         }
     }
-    if ((void *)@name1@_to_@name2@ != NULL) {
-        key = PyLong_FromLong(NPY_@name2@);
-        if (key == NULL) {
-            return -1;
-        }
-        cobj = NpyCapsule_FromVoidPtr((void *)@name1@_to_@name2@, NULL);
-        if (cobj == NULL) {
-            Py_DECREF(key);
-            return -1;
-        }
-        if (PyDict_SetItem(dtype->f->castdict, key, cobj) < 0) {
-            Py_DECREF(key);
-            Py_DECREF(cobj);
-            return -1;
-        }
+
+#ifndef @name1@_to_@name2@  /* Legacy cast NOT defined as NULL. */
+    key = PyLong_FromLong(NPY_@name2@);
+    if (key == NULL) {
+        return -1;
+    }
+    cobj = NpyCapsule_FromVoidPtr((void *)@name1@_to_@name2@, NULL);
+    if (cobj == NULL) {
+        Py_DECREF(key);
+        return -1;
+    }
+    if (PyDict_SetItem(dtype->f->castdict, key, cobj) < 0) {
         Py_DECREF(key);
         Py_DECREF(cobj);
+        return -1;
     }
+    Py_DECREF(key);
+    Py_DECREF(cobj);
+#endif  /* Legacy cast is used */
 
     /**end repeat1**/
 
