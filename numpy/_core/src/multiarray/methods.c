@@ -1235,18 +1235,20 @@ static PyObject *
 array_sort(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    int axis=-1;
+    int axis = -1;
     int val;
-    NPY_SORTKIND sortkind = NPY_QUICKSORT;
+    NPY_SORTKIND sortkind = _NPY_SORT_UNDEFINED;
     PyObject *order = NULL;
     PyArray_Descr *saved = NULL;
     PyArray_Descr *newd;
+    int stable = -1;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("sort", args, len_args, kwnames,
             "|axis", &PyArray_PythonPyIntFromInt, &axis,
             "|kind", &PyArray_SortkindConverter, &sortkind,
             "|order", NULL, &order,
+            "$stable", &PyArray_OptionalBoolConverter, &stable,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
@@ -1280,6 +1282,18 @@ array_sort(PyArrayObject *self,
         Py_DECREF(newd->names);
         newd->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
+    }
+    if (sortkind != _NPY_SORT_UNDEFINED && stable != -1) {
+        PyErr_SetString(PyExc_ValueError,
+            "`kind` and `stable` parameters can't be provided at "
+            "the same time. Use only one of them.");
+        return NULL;
+    }
+    else if ((sortkind == _NPY_SORT_UNDEFINED && stable == -1) || (stable == 0)) {
+        sortkind = NPY_QUICKSORT;
+    }
+    else if (stable == 1) {
+        sortkind = NPY_STABLESORT;
     }
 
     val = PyArray_Sort(self, axis, sortkind);
@@ -1371,15 +1385,17 @@ array_argsort(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     int axis = -1;
-    NPY_SORTKIND sortkind = NPY_QUICKSORT;
+    NPY_SORTKIND sortkind = _NPY_SORT_UNDEFINED;
     PyObject *order = NULL, *res;
     PyArray_Descr *newd, *saved=NULL;
+    int stable = -1;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("argsort", args, len_args, kwnames,
             "|axis", &PyArray_AxisConverter, &axis,
             "|kind", &PyArray_SortkindConverter, &sortkind,
             "|order", NULL, &order,
+            "$stable", &PyArray_OptionalBoolConverter, &stable,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
@@ -1413,6 +1429,18 @@ array_argsort(PyArrayObject *self,
         Py_DECREF(newd->names);
         newd->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
+    }
+    if (sortkind != _NPY_SORT_UNDEFINED && stable != -1) {
+        PyErr_SetString(PyExc_ValueError,
+            "`kind` and `stable` parameters can't be provided at "
+            "the same time. Use only one of them.");
+        return NULL;
+    }
+    else if ((sortkind == _NPY_SORT_UNDEFINED && stable == -1) || (stable == 0)) {
+        sortkind = NPY_QUICKSORT;
+    }
+    else if (stable == 1) {
+        sortkind = NPY_STABLESORT;
     }
 
     res = PyArray_ArgSort(self, axis, sortkind);
@@ -2760,19 +2788,28 @@ static PyObject *
 array_array_namespace(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"api_version", NULL};
-    char *array_api_version = "2022.12";
+    PyObject *array_api_version = Py_None;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|$s:__array_namespace__", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|$O:__array_namespace__", kwlist,
                                      &array_api_version)) {
         return NULL;
     }
 
-    if (strcmp(array_api_version, "2021.12") != 0 &&
-            strcmp(array_api_version, "2022.12") != 0) {
-        PyErr_Format(PyExc_ValueError,
-                     "Version \"%s\" of the Array API Standard is not supported.",
-                     array_api_version);
-        return NULL;
+    if (array_api_version != Py_None) {
+        if (!PyUnicode_Check(array_api_version))
+        {
+            PyErr_Format(PyExc_ValueError,
+                "Only None and strings are allowed as the Array API version, "
+                "but received: %S.", array_api_version);
+            return NULL;
+        } else if (PyUnicode_CompareWithASCIIString(array_api_version, "2021.12") != 0 &&
+            PyUnicode_CompareWithASCIIString(array_api_version, "2022.12") != 0)
+        {
+            PyErr_Format(PyExc_ValueError,
+                "Version \"%U\" of the Array API Standard is not supported.",
+                array_api_version);
+            return NULL;
+        }
     }
 
     PyObject *numpy_module = PyImport_ImportModule("numpy");
@@ -2781,6 +2818,36 @@ array_array_namespace(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
 
     return numpy_module;
+}
+
+static PyObject *
+array_to_device(PyArrayObject *self, PyObject *args, PyObject *kwds)
+{
+    static char *kwlist[] = {"", "stream", NULL};
+    char *device = "";
+    PyObject *stream = Py_None;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|$O:to_device", kwlist,
+                                     &device,
+                                     &stream)) {
+        return NULL;
+    }
+
+    if (stream != Py_None) {
+        PyErr_SetString(PyExc_ValueError,
+                        "The stream argument in to_device() "
+                        "is not supported");
+        return NULL;
+    }
+
+    if (strcmp(device, "cpu") != 0) {
+        PyErr_Format(PyExc_ValueError,
+                     "Unsupported device: %s.", device);
+        return NULL;
+    }
+
+    Py_INCREF(self);
+    return (PyObject *)self;
 }
 
 NPY_NO_EXPORT PyMethodDef array_methods[] = {
@@ -3011,6 +3078,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     // For Array API compatibility
     {"__array_namespace__",
         (PyCFunction)array_array_namespace,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"to_device",
+        (PyCFunction)array_to_device,
         METH_VARARGS | METH_KEYWORDS, NULL},
 
     {NULL, NULL, 0, NULL}           /* sentinel */

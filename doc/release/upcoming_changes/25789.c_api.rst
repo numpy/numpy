@@ -1,0 +1,3 @@
+* The C-API now only exports the static inline function versions
+  of the array accessors (previously this dependent on using "deprecated API").
+  While we discourage it, you can still use the struct fields directly.

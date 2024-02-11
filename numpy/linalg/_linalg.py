@@ -1965,12 +1965,12 @@ def cond(x, p=None):
     return r
 
 
-def _matrix_rank_dispatcher(A, tol=None, hermitian=None):
+def _matrix_rank_dispatcher(A, tol=None, hermitian=None, *, rtol=None):
     return (A,)
 
 
 @array_function_dispatch(_matrix_rank_dispatcher)
-def matrix_rank(A, tol=None, hermitian=False):
+def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     """
     Return matrix rank of array using SVD method
 
@@ -1998,6 +1998,11 @@ def matrix_rank(A, tol=None, hermitian=False):
         Defaults to False.
 
         .. versionadded:: 1.14
+    rtol : (...) array_like, float, optional
+        Parameter for the relative tolerance component. Only ``tol`` or
+        ``rtol`` can be set at a time. Defaults to ``max(M, N) * eps``.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -2067,12 +2072,12 @@ def matrix_rank(A, tol=None, hermitian=False):
     if A.ndim < 2:
         return int(not all(A == 0))
     S = svd(A, compute_uv=False, hermitian=hermitian)
+    if rtol is not None and tol is not None:
+        raise ValueError("`tol` and `rtol` can't be both set.")
+    if rtol is None:
+        rtol = max(A.shape[-2:]) * finfo(S.dtype).eps
     if tol is None:
-        tol = (
-            S.max(axis=-1, keepdims=True) *
-            max(A.shape[-2:]) *
-            finfo(S.dtype).eps
-        )
+        tol = S.max(axis=-1, keepdims=True) * rtol
     else:
         tol = asarray(tol)[..., newaxis]
     return count_nonzero(S > tol, axis=-1)
@@ -2361,7 +2366,7 @@ def _lstsq_dispatcher(a, b, rcond=None):
 
 
 @array_function_dispatch(_lstsq_dispatcher)
-def lstsq(a, b, rcond="warn"):
+def lstsq(a, b, rcond=None):
     r"""
     Return the least-squares solution to a linear matrix equation.
 
@@ -2387,13 +2392,12 @@ def lstsq(a, b, rcond="warn"):
         For the purposes of rank determination, singular values are treated
         as zero if they are smaller than `rcond` times the largest singular
         value of `a`.
+        The default uses the machine precision times ``max(M, N)``.  Passing
+        ``-1`` will use machine precision.
 
-        .. versionchanged:: 1.14.0
-           If not set, a FutureWarning is given. The previous default
-           of ``-1`` will use the machine precision as `rcond` parameter,
-           the new default will use the machine precision times `max(M, N)`.
-           To silence the warning and use the new default, use ``rcond=None``,
-           to keep using the old behavior, use ``rcond=-1``.
+        .. versionchanged:: 2.0
+            Previously, the default was ``-1``, but a warning was given that
+            this would change.
 
     Returns
     -------
@@ -2444,7 +2448,7 @@ def lstsq(a, b, rcond="warn"):
            [ 2.,  1.],
            [ 3.,  1.]])
 
-    >>> m, c = np.linalg.lstsq(A, y, rcond=None)[0]
+    >>> m, c = np.linalg.lstsq(A, y)[0]
     >>> m, c
     (1.0 -0.95) # may vary
 
@@ -2471,17 +2475,6 @@ def lstsq(a, b, rcond="warn"):
     t, result_t = _commonType(a, b)
     result_real_t = _realType(result_t)
 
-    # Determine default rcond value
-    if rcond == "warn":
-        # 2017-08-19, 1.14.0
-        warnings.warn("`rcond` parameter will change to the default of "
-                      "machine precision times ``max(M, N)`` where M and N "
-                      "are the input matrix dimensions.\n"
-                      "To use the future default and silence this warning "
-                      "we advise to pass `rcond=None`, to keep using the old, "
-                      "explicitly pass `rcond=-1`.",
-                      FutureWarning, stacklevel=2)
-        rcond = -1
     if rcond is None:
         rcond = finfo(t).eps * max(n, m)
 
@@ -3212,8 +3205,7 @@ def matmul(x1, x2, /):
 
 # tensordot
 
-def _tensordot_dispatcher(
-        x1, x2, /, *, offset=None, dtype=None):
+def _tensordot_dispatcher(x1, x2, /, *, axes=None):
     return (x1, x2)
 
 
@@ -3307,6 +3299,7 @@ def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
 
     """
     x = asanyarray(x)
+    shape = list(x.shape)
     if axis is None:
         # Note: np.linalg.norm() doesn't handle 0-D arrays
         x = x.ravel()
@@ -3332,9 +3325,8 @@ def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
     if keepdims:
         # We can't reuse np.linalg.norm(keepdims) because of the reshape hacks
         # above to avoid matrix norm logic.
-        shape = list(x.shape)
         _axis = normalize_axis_tuple(
-            range(x.ndim) if axis is None else axis, x.ndim
+            range(len(shape)) if axis is None else axis, len(shape)
         )
         for i in _axis:
             shape[i] = 1

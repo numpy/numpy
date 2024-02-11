@@ -226,6 +226,7 @@ python_sources = [
   '__init__.pxd',
   '__init__.py',
   '__init__.pyi',
+  '_configtool.py',
   '_distributor_init.py',
   '_globals.py',
   '_pytesttester.py',
@@ -243,7 +244,7 @@ python_sources = [
   'version.pyi',
 ]
 
-if blas_name == 'scipy-openblas'
+if fs.exists('_distributor_init_local.py')
   python_sources += ['_distributor_init_local.py']
 endif
 
@@ -277,7 +278,8 @@ pure_subdirs = [
   'typing',
   'rec',
   'char',
-  'core'
+  'core',
+  'strings',
 ]
 if py.version().version_compare('<3.12')
   pure_subdirs += 'distutils'

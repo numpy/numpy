@@ -10,7 +10,7 @@ signature files using ``usercode`` and ``pymethoddef`` statements
 (they must be used inside the ``python module`` block). For
 example, the following signature file ``spam.pyf``
 
-.. include:: ./code/spam.pyf
+.. include:: ./../code/spam.pyf
    :literal:
 
 wraps the C library function ``system()``::
@@ -19,7 +19,7 @@ wraps the C library function ``system()``::
 
 In Python this can then be used as:
 
-.. literalinclude:: ./code/results/spam_session.dat
+.. literalinclude:: ./../code/results/spam_session.dat
    :language: python
 
 Adding user-defined variables
@@ -29,7 +29,7 @@ The following example illustrates how to add user-defined variables to a F2PY
 generated extension module by modifying the dictionary of a F2PY generated
 module. Consider the following signature file (compiled with ``f2py -c var.pyf``):
 
-.. literalinclude:: ./code/var.pyf
+.. literalinclude:: ./../code/var.pyf
   :language: fortran
 
 Notice that the second ``usercode`` statement must be defined inside
@@ -39,7 +39,7 @@ additional details).
 
 Usage in Python:
 
-.. literalinclude:: ./code/results/var_session.dat
+.. literalinclude:: ./../code/results/var_session.dat
   :language: python
 
 
@@ -98,7 +98,7 @@ and the corresponding <C type>. The <C type> can be one of the following::
 
 For example, for a Fortran file ``func1.f`` containing:
 
-.. literalinclude:: ./code/f2cmap_demo.f
+.. literalinclude:: ./../code/f2cmap_demo.f
     :language: fortran
 
 In order to convert ``int64`` and ``real64`` to valid ``C`` data types,
@@ -151,12 +151,12 @@ extra declaration for the corresponding argument that specifies the
 length in character selector part. For example, consider a Fortran
 file ``asterisk1.f90``:
 
-.. include:: ./code/asterisk1.f90
+.. include:: ./../code/asterisk1.f90
   :literal:
 
 Compile it with ``f2py -c asterisk1.f90 -m asterisk1`` and then in Python:
 
-.. include:: ./code/results/asterisk1_session.dat
+.. include:: ./../code/results/asterisk1_session.dat
   :literal:
 
 Notice that the extra declaration ``character(f2py_len=12) s`` is
@@ -165,11 +165,11 @@ can use C-expressions as a length value.
 
 In the following example:
 
-.. include:: ./code/asterisk2.f90
+.. include:: ./../code/asterisk2.f90
   :literal:
 
 the length of the output assumed length string depends on an input
 argument ``n``, after wrapping with F2PY, in Python:
 
-.. include:: ./code/results/asterisk2_session.dat
+.. include:: ./../code/results/asterisk2_session.dat
   :literal:

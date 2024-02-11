@@ -144,7 +144,7 @@ dtypemeta_discover_as_default(
         PyArray_DTypeMeta *cls, PyObject* obj);
 
 NPY_NO_EXPORT int
-dtypemeta_initialize_struct_from_spec(PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *spec);
+dtypemeta_initialize_struct_from_spec(PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *spec, int priv);
 
 NPY_NO_EXPORT int
 python_builtins_are_known_scalar_types(
@@ -160,6 +160,13 @@ initialize_legacy_dtypemeta_aliases(PyArray_Descr **_builtin_descrs);
 /*
  * NumPy's builtin DTypes:
  */
+
+// note: the built-in legacy DTypes do not have static DTypeMeta
+//       implementations we can refer to at compile time. Instead, we
+//       null-initialize these pointers at compile time and then during
+//       initialization fill them in with the correct types after the
+//       dtypemeta instances for each type are dynamically created at startup.
+
 extern PyArray_DTypeMeta *_Bool_dtype;
 extern PyArray_DTypeMeta *_Byte_dtype;
 extern PyArray_DTypeMeta *_UByte_dtype;
@@ -181,6 +188,7 @@ extern PyArray_DTypeMeta *_Int64_dtype;
 extern PyArray_DTypeMeta *_UInt64_dtype;
 extern PyArray_DTypeMeta *_Intp_dtype;
 extern PyArray_DTypeMeta *_UIntp_dtype;
+extern PyArray_DTypeMeta *_DefaultInt_dtype;
 extern PyArray_DTypeMeta *_Half_dtype;
 extern PyArray_DTypeMeta *_Float_dtype;
 extern PyArray_DTypeMeta *_Double_dtype;
@@ -218,6 +226,7 @@ extern PyArray_DTypeMeta *_Void_dtype;
 #define PyArray_UInt64DType (*(_UInt64_dtype))
 #define PyArray_IntpDType (*(_Intp_dtype))
 #define PyArray_UIntpDType (*(_UIntp_dtype))
+#define PyArray_DefaultIntDType (*(_DefaultInt_dtype))
 /* Floats */
 #define PyArray_HalfDType (*(_Half_dtype))
 #define PyArray_FloatDType (*(_Float_dtype))
@@ -230,6 +239,10 @@ extern PyArray_DTypeMeta *_Void_dtype;
 /* String/Bytes */
 #define PyArray_BytesDType (*(_Bytes_dtype))
 #define PyArray_UnicodeDType (*(_Unicode_dtype))
+// StringDType is not a legacy DType and has a static dtypemeta implementation
+// we can refer to, so no need for the indirection we use for the built-in
+// dtypes.
+extern PyArray_DTypeMeta PyArray_StringDType;
 /* Datetime/Timedelta */
 #define PyArray_DatetimeDType (*(_Datetime_dtype))
 #define PyArray_TimedeltaDType (*(_Timedelta_dtype))

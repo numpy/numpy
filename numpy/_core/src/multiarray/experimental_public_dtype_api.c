@@ -64,7 +64,7 @@ PyArrayInitDTypeMeta_FromSpec(
         return -1;
     }
 
-    dtypemeta_initialize_struct_from_spec(DType, spec);
+    dtypemeta_initialize_struct_from_spec(DType, spec, 0);
 
     if (NPY_DT_SLOTS(DType)->setitem == NULL
             || NPY_DT_SLOTS(DType)->getitem == NULL) {
@@ -144,7 +144,7 @@ _PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
 NPY_NO_EXPORT PyObject *
 _get_experimental_dtype_api(PyObject *NPY_UNUSED(mod), PyObject *arg)
 {
-    static void *experimental_api_table[47] = {
+    static void *experimental_api_table[48] = {
             &PyUFunc_AddLoopFromSpec,
             &PyUFunc_AddPromoter,
             &PyArrayDTypeMeta_Type,
@@ -203,6 +203,7 @@ _get_experimental_dtype_api(PyObject *NPY_UNUSED(mod), PyObject *arg)
         experimental_api_table[44] = &PyArray_PyIntAbstractDType;
         experimental_api_table[45] = &PyArray_PyFloatAbstractDType;
         experimental_api_table[46] = &PyArray_PyComplexAbstractDType;
+        experimental_api_table[47] = &PyArray_DefaultIntDType;
     }
 
     char *env = getenv("NUMPY_EXPERIMENTAL_DTYPE_API");

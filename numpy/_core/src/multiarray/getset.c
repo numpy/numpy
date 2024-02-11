@@ -337,91 +337,6 @@ array_data_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     return PyMemoryView_FromObject((PyObject *)self);
 }
 
-static int
-array_data_set(PyArrayObject *self, PyObject *op, void *NPY_UNUSED(ignored))
-{
-    void *buf;
-    Py_ssize_t buf_len;
-    int writeable=1;
-    Py_buffer view;
-
-    /* 2016-19-02, 1.12 */
-    int ret = DEPRECATE("Assigning the 'data' attribute is an "
-                        "inherently unsafe operation and will "
-                        "be removed in the future.");
-    if (ret < 0) {
-        return -1;
-    }
-
-    if (op == NULL) {
-        PyErr_SetString(PyExc_AttributeError,
-                "Cannot delete array data");
-        return -1;
-    }
-    if (PyObject_GetBuffer(op, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
-        writeable = 0;
-        PyErr_Clear();
-        if (PyObject_GetBuffer(op, &view, PyBUF_SIMPLE) < 0) {
-            return -1;
-        }
-    }
-    buf = view.buf;
-    buf_len = view.len;
-    /*
-     * In Python 3 both of the deprecated functions PyObject_AsWriteBuffer and
-     * PyObject_AsReadBuffer that this code replaces release the buffer. It is
-     * up to the object that supplies the buffer to guarantee that the buffer
-     * sticks around after the release.
-     */
-    PyBuffer_Release(&view);
-
-    if (!PyArray_ISONESEGMENT(self)) {
-        PyErr_SetString(PyExc_AttributeError,
-                "cannot set single-segment buffer for discontiguous array");
-        return -1;
-    }
-    if (PyArray_NBYTES(self) > buf_len) {
-        PyErr_SetString(PyExc_AttributeError, "not enough data for array");
-        return -1;
-    }
-    if (PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA) {
-        PyArray_XDECREF(self);
-        size_t nbytes = PyArray_NBYTES(self);
-        if (nbytes == 0) {
-            nbytes = 1;
-        }
-        PyObject *handler = PyArray_HANDLER(self);
-        if (handler == NULL) {
-            /* This can happen if someone arbitrarily sets NPY_ARRAY_OWNDATA */
-            PyErr_SetString(PyExc_RuntimeError,
-                            "no memory handler found but OWNDATA flag set");
-            return -1;
-        }
-        PyDataMem_UserFREE(PyArray_DATA(self), nbytes, handler);
-        Py_CLEAR(((PyArrayObject_fields *)self)->mem_handler);
-    }
-    if (PyArray_BASE(self)) {
-        if (PyArray_FLAGS(self) & NPY_ARRAY_WRITEBACKIFCOPY) {
-            PyArray_ENABLEFLAGS((PyArrayObject *)PyArray_BASE(self),
-                                                NPY_ARRAY_WRITEABLE);
-            PyArray_CLEARFLAGS(self, NPY_ARRAY_WRITEBACKIFCOPY);
-        }
-        Py_DECREF(PyArray_BASE(self));
-        ((PyArrayObject_fields *)self)->base = NULL;
-    }
-    Py_INCREF(op);
-    if (PyArray_SetBaseObject(self, op) < 0) {
-        return -1;
-    }
-    ((PyArrayObject_fields *)self)->data = buf;
-    ((PyArrayObject_fields *)self)->flags = NPY_ARRAY_CARRAY;
-    if (!writeable) {
-        PyArray_CLEARFLAGS(self, ~NPY_ARRAY_WRITEABLE);
-    }
-    return 0;
-}
-
-
 static PyObject *
 array_itemsize_get(PyArrayObject *self, void* NPY_UNUSED(ignored))
 {
@@ -967,6 +882,12 @@ array_itemset(PyArrayObject *self, PyObject *args)
     return NULL;
 }
 
+static PyObject *
+array_device(PyArrayObject *self, void *NPY_UNUSED(ignored))
+{
+    return PyUnicode_FromString("cpu");
+}
+
 NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
     {"ndim",
         (getter)array_ndim_get,
@@ -986,7 +907,7 @@ NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
         NULL, NULL},
     {"data",
         (getter)array_data_get,
-        (setter)array_data_set,
+        NULL,
         NULL, NULL},
     {"itemsize",
         (getter)array_itemsize_get,
@@ -1042,6 +963,10 @@ NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
         NULL, NULL},
     {"itemset",
         (getter)array_itemset,
+        NULL,
+        NULL, NULL},
+    {"device",
+        (getter)array_device,
         NULL,
         NULL, NULL},
     {"__array_interface__",

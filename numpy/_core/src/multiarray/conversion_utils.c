@@ -18,6 +18,7 @@
 #include "conversion_utils.h"
 #include "alloc.h"
 #include "npy_buffer.h"
+#include "multiarraymodule.h"
 
 static int
 PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char * msg) NPY_GCC_NONNULL(2);
@@ -424,6 +425,28 @@ PyArray_BoolConverter(PyObject *object, npy_bool *val)
     }
     else {
         *val = NPY_FALSE;
+    }
+    if (PyErr_Occurred()) {
+        return NPY_FAIL;
+    }
+    return NPY_SUCCEED;
+}
+
+/*
+ * Optionally convert an object to true / false
+ */
+NPY_NO_EXPORT int
+PyArray_OptionalBoolConverter(PyObject *object, int *val)
+{
+    /* Leave the desired default from the caller for Py_None */
+    if (object == Py_None) {
+        return NPY_SUCCEED;
+    }
+    if (PyObject_IsTrue(object)) {
+        *val = 1;
+    }
+    else {
+        *val = 0;
     }
     if (PyErr_Occurred()) {
         return NPY_FAIL;
@@ -1351,4 +1374,43 @@ PyArray_IntTupleFromIntp(int len, npy_intp const *vals)
 
  fail:
     return intTuple;
+}
+
+NPY_NO_EXPORT int
+_not_NoValue(PyObject *obj, PyObject **out)
+{
+    static PyObject *NoValue = NULL;
+    npy_cache_import("numpy", "_NoValue", &NoValue);
+    if (NoValue == NULL) {
+        return 0;
+    }
+    if (obj == NoValue) {
+        *out = NULL;
+    }
+    else {
+        *out = obj;
+    }
+    return 1;
+}
+
+/*
+ * Device string converter.
+ */
+NPY_NO_EXPORT int
+PyArray_DeviceConverterOptional(PyObject *object, NPY_DEVICE *device)
+{
+    if (object == Py_None) {
+        return NPY_SUCCEED;
+    }
+
+    if (PyUnicode_Check(object) &&
+        PyUnicode_Compare(object, npy_ma_str_cpu) == 0) {
+        *device = NPY_DEVICE_CPU;
+        return NPY_SUCCEED;
+    }
+
+    PyErr_Format(PyExc_ValueError,
+            "Device not understood. Only \"cpu\" is allowed, "
+            "but received: %S", object);
+    return NPY_FAIL;
 }

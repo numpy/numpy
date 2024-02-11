@@ -1,0 +1,2 @@
+* ``np.dtype(("f8", 1)`` will now return a shape 1 subarray dtype
+  rather than a non-subarray one.

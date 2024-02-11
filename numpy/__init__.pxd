@@ -48,7 +48,7 @@ cdef extern from "numpy/arrayobject.h":
         NPY_VOID
         NPY_DATETIME
         NPY_TIMEDELTA
-        NPY_NTYPES
+        NPY_NTYPES_LEGACY
         NPY_NOTYPE
 
         NPY_INT8

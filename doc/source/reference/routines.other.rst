@@ -33,4 +33,10 @@ Utility
    show_runtime
    broadcast_shapes
 
-.. automodule:: numpy.dtypes
+NumPy-specific help function
+----------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   info

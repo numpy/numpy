@@ -5,6 +5,7 @@
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
 
+#include "numpy/arrayobject.h"
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_math.h"
 #include "numpy/ufuncobject.h"
@@ -20,88 +21,14 @@
 #include "string_buffer.h"
 
 
-enum class STARTPOSITION {
-    FRONT, BACK
-};
-
-enum class STRIPTYPE {
-    LEFTSTRIP, RIGHTSTRIP, BOTHSTRIP
-};
-
-
-/*
- * Helper to fixup start/end slice values.
- *
- * This function is taken from CPython's unicode module
- * (https://github.com/python/cpython/blob/0b718e6407da65b838576a2459d630824ca62155/Objects/bytes_methods.c#L495)
- * in order to remain compatible with how CPython handles
- * start/end arguments to str function like find/rfind etc.
- */
-static inline void
-adjust_offsets(npy_int64 *start, npy_int64 *end, npy_int64 len)
-{
-    if (*end > len) {
-        *end = len;
-    }
-    else if (*end < 0) {
-        *end += len;
-        if (*end < 0) {
-            *end = 0;
-        }
-    }
-
-    if (*start < 0) {
-        *start += len;
-        if (*start < 0) {
-            *start = 0;
-        }
-    }
-}
-
-
-template <ENCODING enc>
-static inline npy_bool
-tailmatch(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
-          STARTPOSITION direction)
-{
-    npy_int64 len1 = buf1.num_codepoints();
-    npy_int64 len2 = buf2.num_codepoints();
-
-    adjust_offsets(&start, &end, len1);
-    end -= len2;
-    if (end < start) {
-        return 0;
-    }
-
-    if (len2 == 0) {
-        return 1;
-    }
-
-    npy_int64 offset;
-    npy_int64 end_sub = len2 - 1;
-    if (direction == STARTPOSITION::BACK) {
-        offset = end;
-    }
-    else {
-        offset = start;
-    }
-
-    if (buf1[offset] == buf2[0] && buf1[offset+end_sub] == buf2[end_sub]) {
-        return !(buf1 + offset).buffer_memcmp(buf2, len2);
-    }
-
-    return 0;
-}
-
-
 template <ENCODING enc>
 static inline void
 string_add(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out)
 {
-    npy_int64 len1 = buf1.num_codepoints();
-    npy_int64 len2 = buf2.num_codepoints();
-    buf1.buffer_memcpy(out, (size_t) len1);
-    buf2.buffer_memcpy(out + len1, (size_t) len2);
+    size_t len1 = buf1.num_codepoints();
+    size_t len2 = buf2.num_codepoints();
+    buf1.buffer_memcpy(out, len1);
+    buf2.buffer_memcpy(out + len1, len2);
     out.buffer_fill_with_zeros_after_index(len1 + len2);
 }
 
@@ -109,13 +36,13 @@ string_add(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out)
 static inline npy_bool
 string_isdecimal(Buffer<ENCODING::UTF32> buf)
 {
-    npy_int64 len = buf.num_codepoints();
+    size_t len = buf.num_codepoints();
 
     if (len == 0) {
         return (npy_bool) 0;
     }
 
-    for (npy_int64 i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++) {
         npy_bool isdecimal = (npy_bool) Py_UNICODE_ISDECIMAL(*buf);
         if (!isdecimal) {
             return isdecimal;
@@ -129,13 +56,13 @@ string_isdecimal(Buffer<ENCODING::UTF32> buf)
 static inline npy_bool
 string_isnumeric(Buffer<ENCODING::UTF32> buf)
 {
-    npy_int64 len = buf.num_codepoints();
+    size_t len = buf.num_codepoints();
 
     if (len == 0) {
         return (npy_bool) 0;
     }
 
-    for (npy_int64 i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++) {
         npy_bool isnumeric = (npy_bool) Py_UNICODE_ISNUMERIC(*buf);
         if (!isnumeric) {
             return isnumeric;
@@ -143,230 +70,6 @@ string_isnumeric(Buffer<ENCODING::UTF32> buf)
         buf++;
     }
     return (npy_bool) 1;
-}
-
-
-template <ENCODING enc>
-static inline npy_intp
-string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
-{
-    npy_int64 len1 = buf1.num_codepoints();
-    npy_int64 len2 = buf2.num_codepoints();
-
-    adjust_offsets(&start, &end, len1);
-    if (end - start < len2) {
-        return (npy_intp) -1;
-    }
-
-    if (len2 == 0) {
-        return (npy_intp) start;
-    }
-    if (len2 == 1) {
-        npy_ucs4 ch = *buf2;
-        npy_intp result = (npy_intp) findchar<enc>(buf1 + start, end - start, ch);
-        if (result == -1) {
-            return (npy_intp) -1;
-        }
-        else {
-            return result + (npy_intp) start;
-        }
-    }
-
-    npy_intp pos = fastsearch<enc>(buf1 + start, end - start, buf2, len2, -1, FAST_SEARCH);
-    if (pos >= 0) {
-        pos += start;
-    }
-    return pos;
-}
-
-
-template <ENCODING enc>
-static inline npy_intp
-string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
-{
-    npy_int64 len1 = buf1.num_codepoints();
-    npy_int64 len2 = buf2.num_codepoints();
-
-    adjust_offsets(&start, &end, len1);
-    if (end - start < len2) {
-        return (npy_intp) -1;
-    }
-
-    if (len2 == 0) {
-        return (npy_intp) end;
-    }
-    if (len2 == 1) {
-        npy_ucs4 ch = *buf2;
-        npy_intp result = (npy_intp) rfindchar(buf1 + start, end - start, ch);
-        if (result == -1) {
-            return (npy_intp) -1;
-        }
-        else {
-            return result + (npy_intp) start;
-        }
-    }
-
-    npy_intp pos = (npy_intp) fastsearch<enc>(buf1 + start, end - start, buf2, len2, -1, FAST_RSEARCH);
-    if (pos >= 0) {
-        pos += start;
-    }
-    return pos;
-}
-
-
-template <ENCODING enc>
-static inline void
-string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE striptype)
-{
-    npy_int64 len = buf.num_codepoints();
-    if (len == 0) {
-        out.buffer_fill_with_zeros_after_index(0);
-        return;
-    }
-
-    npy_int64 i = 0;
-    if (striptype != STRIPTYPE::RIGHTSTRIP) {
-        while (i < len) {
-            if (!buf.isspace(i)) {
-                break;
-            }
-            i++;
-        }
-    }
-
-    npy_int64 j = len - 1;
-    if (striptype != STRIPTYPE::LEFTSTRIP) {
-        while (j >= i) {
-            if (!buf.isspace(j)) {
-                break;
-            }
-            j--;
-        }
-    }
-
-    (buf + i).buffer_memcpy(out, j - i + 1);
-    out.buffer_fill_with_zeros_after_index(j - i + 1);
-}
-
-
-template <ENCODING enc>
-static inline void
-string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPTYPE striptype)
-{
-    npy_int64 len1 = buf1.num_codepoints();
-    if (len1 == 0) {
-        out.buffer_fill_with_zeros_after_index(0);
-        return;
-    }
-
-    npy_int64 len2 = buf2.num_codepoints();
-    if (len2 == 0) {
-        buf1.buffer_memcpy(out, len1);
-        out.buffer_fill_with_zeros_after_index(len1);
-        return;
-    }
-
-    npy_int64 i = 0;
-    if (striptype != STRIPTYPE::RIGHTSTRIP) {
-        while (i < len1) {
-            if (findchar(buf2, len2, buf1[i]) < 0) {
-                break;
-            }
-            i++;
-        }
-    }
-
-    npy_int64 j = len1 - 1;
-    if (striptype != STRIPTYPE::LEFTSTRIP) {
-        while (j >= i) {
-            if (findchar(buf2, len2, buf1[j]) < 0) {
-                break;
-            }
-            j--;
-        }
-    }
-
-    (buf1 + i).buffer_memcpy(out, j - i + 1);
-    out.buffer_fill_with_zeros_after_index(j - i + 1);
-}
-
-
-/*
- * Count the number of occurences of buf2 in buf1 between
- * start (inclusive) and end (exclusive)
- */
-template <ENCODING enc>
-static inline npy_intp
-string_count(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
-{
-    npy_int64 len1 = buf1.num_codepoints();
-    npy_int64 len2 = buf2.num_codepoints();
-
-    adjust_offsets(&start, &end, len1);
-    if (end < start || end - start < len2) {
-        return (npy_intp) 0;
-    }
-
-    if (len2 == 0) {
-        return (end - start) < PY_SSIZE_T_MAX ? end - start + 1 : PY_SSIZE_T_MAX;
-    }
-
-    npy_intp count = (npy_intp) fastsearch<enc>(buf1 + start, end - start, buf2, len2,
-                                                PY_SSIZE_T_MAX, FAST_COUNT);
-    if (count < 0) {
-        return 0;
-    }
-    return count;
-}
-
-
-template <ENCODING enc>
-static inline npy_intp
-findslice_for_replace(Buffer<enc> buf1, npy_int64 len1, Buffer<enc> buf2, npy_int64 len2)
-{
-    if (len2 == 0) {
-        return 0;
-    }
-    if (len2 == 1) {
-        return (npy_intp) findchar(buf1, len1, *buf2);
-    }
-    return (npy_intp) fastsearch(buf1, len1, buf2, len2, -1, FAST_SEARCH);
-}
-
-
-template <ENCODING enc>
-static inline void
-string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 count,
-               Buffer<enc> out)
-{
-    npy_int64 len1 = buf1.num_codepoints();
-    npy_int64 len2 = buf2.num_codepoints();
-    npy_int64 len3 = buf3.num_codepoints();
-
-    Buffer<enc> end1 = buf1 + len1;
-    // Only try to replace if useful.
-    if (len1 >= len2  // Input is big enough to make a match possible.
-        && len2 > 0  // Match string is not empty (so output will be finite).
-        && !(len2 == len3 && buf2.strcmp(buf3) == 0)  // Match and replacement differ.
-        ) {
-        for (npy_int64 time = 0; time < count; time++) {
-            npy_intp pos = findslice_for_replace(buf1, end1 - buf1, buf2, len2);
-            if (pos < 0) {
-                break;
-            }
-            buf1.buffer_memcpy(out, pos);
-            out += pos;
-            buf1 += pos;
-
-            buf3.buffer_memcpy(out, len3);
-            out += len3;
-            buf1 += len2;
-        }
-    }
-
-    buf1.buffer_memcpy(out, end1 - buf1);
-    out.buffer_fill_with_zeros_after_index(end1 - buf1);
-    return;
 }
 
 
@@ -510,7 +213,8 @@ string_isalpha_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    int elsize = context->descriptors[0]->elsize;
+    PyArray_Descr *descr = context->descriptors[0];
+    int elsize = descr->elsize;
 
     char *in = data[0];
     char *out = data[1];

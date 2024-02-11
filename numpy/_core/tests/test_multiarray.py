@@ -1879,6 +1879,20 @@ class TestMethods:
         assert_equal(a.any(where=False), False)
         assert_equal(np.any(a, where=False), False)
 
+    @pytest.mark.parametrize("dtype",
+            ["i8", "U10", "object", "datetime64[ms]"])
+    def test_any_and_all_result_dtype(self, dtype):
+        arr = np.ones(3, dtype=dtype)
+        assert arr.any().dtype == np.bool_
+        assert arr.all().dtype == np.bool_
+
+    def test_any_and_all_object_dtype(self):
+        # (seberg) Not sure we should even allow dtype here, but it is.
+        arr = np.ones(3, dtype=object)
+        # keepdims to prevent getting a scalar.
+        assert arr.any(dtype=object, keepdims=True).dtype == object
+        assert arr.all(dtype=object, keepdims=True).dtype == object
+
     def test_compress(self):
         tgt = [[5, 6, 7, 8, 9]]
         arr = np.arange(10).reshape(2, 5)
@@ -2042,6 +2056,12 @@ class TestMethods:
         a.imag += [np.nan, 1, 0, np.nan, np.nan, 1, 0, 1, 0]
         b = np.sort(a)
         assert_equal(b, a[::-1], msg)
+
+        with assert_raises_regex(
+            ValueError,
+            "kind` and `stable` parameters can't be provided at the same time"
+        ):
+            np.sort(a, kind="stable", stable=True)
 
     # all c scalar sorts use the same code with different types
     # so it suffices to run a quick check with one type. The number
@@ -2480,6 +2500,12 @@ class TestMethods:
         # unicode
         a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.str_)
         assert_equal(a.argsort(kind='m'), r)
+
+        with assert_raises_regex(
+            ValueError,
+            "kind` and `stable` parameters can't be provided at the same time"
+        ):
+            np.argsort(a, kind="stable", stable=True)
 
     def test_sort_unicode_kind(self):
         d = np.arange(10)
@@ -9424,9 +9450,14 @@ class TestArange:
         assert_raises(TypeError, np.arange, start=4)
 
     def test_start_stop_kwarg(self):
+        with pytest.raises(TypeError):
+            # Start cannot be passed as a kwarg anymore, because on it's own
+            # it would be strange.
+            np.arange(start=0, stop=3)
+
         keyword_stop = np.arange(stop=3)
-        keyword_zerotostop = np.arange(start=0, stop=3)
-        keyword_start_stop = np.arange(start=3, stop=9)
+        keyword_zerotostop = np.arange(0, stop=3)
+        keyword_start_stop = np.arange(3, stop=9)
 
         assert len(keyword_stop) == 3
         assert len(keyword_zerotostop) == 3
@@ -9613,7 +9644,7 @@ def test_equal_subclass_no_override(op, dt1, dt2):
     class MyArr(np.ndarray):
         called_wrap = 0
 
-        def __array_wrap__(self, new):
+        def __array_wrap__(self, new, context=None, return_scalar=False):
             type(self).called_wrap += 1
             return super().__array_wrap__(new)
 
@@ -10079,3 +10110,54 @@ def test_partition_fp(N, dtype):
             np.partition(arr, k, kind='introselect'))
     assert_arr_partitioned(np.sort(arr)[k], k,
             arr[np.argpartition(arr, k, kind='introselect')])
+
+def test_cannot_assign_data():
+    a = np.arange(10)
+    b = np.linspace(0, 1, 10)
+    with pytest.raises(AttributeError):
+        a.data = b.data
+
+def test_insufficient_width():
+    """
+    If a 'width' parameter is passed into ``binary_repr`` that is insufficient
+    to represent the number in base 2 (positive) or 2's complement (negative)
+    form, the function used to silently ignore the parameter and return a
+    representation using the minimal number of bits needed for the form in
+    question. Such behavior is now considered unsafe from a user perspective
+    and will raise an error.
+    """
+    with pytest.raises(ValueError):
+        np.binary_repr(10, width=2)
+    with pytest.raises(ValueError):
+        np.binary_repr(-5, width=2)
+
+def test_npy_char_raises():
+    from numpy._core._multiarray_tests import npy_char_deprecation
+    with pytest.raises(ValueError):
+        npy_char_deprecation()
+
+
+class TestDevice:
+    """
+    Test arr.device attribute and arr.to_device() method.
+    """
+    def test_device(self):
+        arr = np.arange(5)
+
+        assert arr.device == "cpu"
+        with assert_raises_regex(
+            AttributeError,
+            r"attribute 'device' of '(numpy.|)ndarray' objects is "
+            r"not writable"
+        ):
+            arr.device = "other"
+
+    def test_to_device(self):
+        arr = np.arange(5)
+
+        assert arr.to_device("cpu") is arr
+        with assert_raises_regex(
+            ValueError,
+            r"The stream argument in to_device\(\) is not supported"
+        ):
+            arr.to_device("cpu", stream=1)

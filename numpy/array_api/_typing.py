@@ -29,20 +29,8 @@ from typing import (
     Protocol,
 )
 
-from ._array_object import Array
-from numpy import (
-    dtype,
-    int8,
-    int16,
-    int32,
-    int64,
-    uint8,
-    uint16,
-    uint32,
-    uint64,
-    float32,
-    float64,
-)
+from ._array_object import Array, _cpu_device
+from ._dtypes import _DType
 
 _T_co = TypeVar("_T_co", covariant=True)
 
@@ -50,20 +38,10 @@ class NestedSequence(Protocol[_T_co]):
     def __getitem__(self, key: int, /) -> _T_co | NestedSequence[_T_co]: ...
     def __len__(self, /) -> int: ...
 
-Device = Literal["cpu"]
 
-Dtype = dtype[Union[
-    int8,
-    int16,
-    int32,
-    int64,
-    uint8,
-    uint16,
-    uint32,
-    uint64,
-    float32,
-    float64,
-]]
+Device = _cpu_device
+
+Dtype = _DType
 
 if sys.version_info >= (3, 12):
     from collections.abc import Buffer as SupportsBufferProtocol

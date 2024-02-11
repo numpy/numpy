@@ -193,7 +193,8 @@ else:
         gradient, angle, unwrap, sort_complex, flip, rot90, extract, place,
         vectorize, asarray_chkfinite, average, bincount, digitize, cov,
         corrcoef, median, sinc, hamming, hanning, bartlett, blackman,
-        kaiser, trapz, i0, meshgrid, delete, insert, append, interp, quantile
+        kaiser, trapezoid, trapz, i0, meshgrid, delete, insert, append,
+        interp, quantile
     )
     from .lib._twodim_base_impl import (
         diag, diagflat, eye, fliplr, flipud, tri, triu, tril, vander, 
@@ -246,7 +247,7 @@ else:
     __numpy_submodules__ = {
         "linalg", "fft", "dtypes", "random", "polynomial", "ma", 
         "exceptions", "lib", "ctypeslib", "testing", "typing",
-        "f2py", "test", "rec", "char", "core"
+        "f2py", "test", "rec", "char", "core", "strings",
     }
 
     # We build warning messages for former attributes
@@ -371,6 +372,9 @@ else:
         elif attr == "core":
             import numpy.core as core
             return core
+        elif attr == "strings":
+            import numpy.strings as strings
+            return strings
         elif attr == "distutils":
             if 'distutils' in __numpy_submodules__:
                 import numpy.distutils as distutils

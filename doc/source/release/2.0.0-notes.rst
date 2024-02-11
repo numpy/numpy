@@ -313,3 +313,12 @@ precalculated mean as an keyword argument. See the doc-strings for details and a
 example illustrating the speed-up.
 
 (`gh-24126 <https://github.com/numpy/numpy/pull/24126>`__)
+
+``np.unique`` ``return_inverse`` shape for multi-dimensional inputs
+-------------------------------------------------------------------
+When multi-dimensional inputs are passed to ``np.unique`` with ``return_inverse=True``,
+the ``unique_inverse`` output is now shaped such that the input can be reconstructed
+directly using ``np.take(unique, unique_inverse)`` when ``axis = None``, and
+``np.take_along_axis(unique, unique_inverse, axis=axis)`` otherwise.
+
+(`gh-25553 <https://github.com/numpy/numpy/pull/24126>`__)

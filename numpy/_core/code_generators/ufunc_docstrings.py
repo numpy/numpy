@@ -3597,10 +3597,11 @@ add_newdoc('numpy._core.umath', 'sign',
     The `sign` function returns ``-1 if x < 0, 0 if x==0, 1 if x > 0``.  nan
     is returned for nan inputs.
 
-    For complex inputs, the `sign` function returns
-    ``sign(x.real) + 0j if x.real != 0 else sign(x.imag) + 0j``.
+    For complex inputs, the `sign` function returns ``x / abs(x)``, the
+    generalization of the above (and ``0 if x==0``).
 
-    complex(nan, 0) is returned for complex nan inputs.
+    .. versionchanged:: 2.0.0
+        Definition of complex sign changed to follow the Array API standard.
 
     Parameters
     ----------
@@ -3626,8 +3627,8 @@ add_newdoc('numpy._core.umath', 'sign',
     array([-1.,  1.])
     >>> np.sign(0)
     0
-    >>> np.sign(5-2j)
-    (1+0j)
+    >>> np.sign([3-4j, 8j])
+    array([0.6-0.8j, 0. +1.j ])
 
     """)
 
@@ -4318,7 +4319,7 @@ add_newdoc('numpy._core.umath', 'str_len',
 
     Parameters
     ----------
-    x : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x : array_like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
     $PARAMS
 
     Returns
@@ -4334,13 +4335,13 @@ add_newdoc('numpy._core.umath', 'str_len',
     Examples
     --------
     >>> a = np.array(['Grace Hopper Conference', 'Open Source Day'])
-    >>> np.char.str_len(a)
+    >>> np.strings.str_len(a)
     array([23, 15])
     >>> a = np.array(['\u0420', '\u043e'])
-    >>> np.char.str_len(a)
+    >>> np.strings.str_len(a)
     array([1, 1])
     >>> a = np.array([['hello', 'world'], ['\u0420', '\u043e']])
-    >>> np.char.str_len(a)
+    >>> np.strings.str_len(a)
     array([[5, 5], [1, 1]])
 
     """)
@@ -4359,7 +4360,7 @@ add_newdoc('numpy._core.umath', 'isalpha',
 
     Parameters
     ----------
-    x : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x : array_like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
     $PARAMS
 
     Returns
@@ -4387,7 +4388,7 @@ add_newdoc('numpy._core.umath', 'isdigit',
 
     Parameters
     ----------
-    x : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x : array_like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
     $PARAMS
 
     Returns
@@ -4403,10 +4404,10 @@ add_newdoc('numpy._core.umath', 'isdigit',
     Examples
     --------
     >>> a = np.array(['a', 'b', '0'])
-    >>> np.char.isdigit(a)
+    >>> np.strings.isdigit(a)
     array([False, False,  True])
     >>> a = np.array([['a', 'b', '0'], ['c', '1', '2']])
-    >>> np.char.isdigit(a)
+    >>> np.strings.isdigit(a)
     array([[False, False,  True], [False,  True,  True]])
 
     """)
@@ -4425,7 +4426,7 @@ add_newdoc('numpy._core.umath', 'isspace',
 
     Parameters
     ----------
-    x : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x : array_like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
     $PARAMS
 
     Returns
@@ -4451,7 +4452,7 @@ add_newdoc('numpy._core.umath', 'isdecimal',
 
     Parameters
     ----------
-    x : array_like, with ``unicode_`` dtype
+    x : array_like, with ``StringDType`` or ``str_`` dtype
     $PARAMS
 
     Returns
@@ -4466,7 +4467,7 @@ add_newdoc('numpy._core.umath', 'isdecimal',
 
     Examples
     --------
-    >>> np.char.isdecimal(['12345', '4.99', '123ABC', ''])
+    >>> np.strings.isdecimal(['12345', '4.99', '123ABC', ''])
     array([ True, False, False, False])
 
     """)
@@ -4482,7 +4483,7 @@ add_newdoc('numpy._core.umath', 'isnumeric',
 
     Parameters
     ----------
-    x : array_like, with ``unicode_`` dtype
+    x : array_like, with ``StringDType`` or ``str_`` dtype
     $PARAMS
 
     Returns
@@ -4497,7 +4498,7 @@ add_newdoc('numpy._core.umath', 'isnumeric',
 
     Examples
     --------
-    >>> np.char.isnumeric(['123', '123abc', '9.0', '1/4', 'VIII'])
+    >>> np.strings.isnumeric(['123', '123abc', '9.0', '1/4', 'VIII'])
     array([ True, False, False, False, False])
 
     """)
@@ -4510,9 +4511,9 @@ add_newdoc('numpy._core.umath', 'find',
 
     Parameters
     ----------
-    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x1 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
-    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
     x3 : array_like, with ``int_`` dtype
 
@@ -4534,7 +4535,7 @@ add_newdoc('numpy._core.umath', 'find',
     Examples
     --------
     >>> a = np.array(["NumPy is a Python library"])
-    >>> np.char.find(a, "Python", 0, None)
+    >>> np.strings.find(a, "Python", 0, None)
     array([11])
 
     """)
@@ -4547,9 +4548,9 @@ add_newdoc('numpy._core.umath', 'rfind',
 
     Parameters
     ----------
-    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x1 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
-    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
     x3 : array_like, with ``int_`` dtype
 
@@ -4577,9 +4578,9 @@ add_newdoc('numpy._core.umath', 'count',
 
     Parameters
     ----------
-    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x1 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
-    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
        The substring to search for.
 
     x3 : array_like, with ``int_`` dtype
@@ -4604,13 +4605,13 @@ add_newdoc('numpy._core.umath', 'count',
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
-    >>> np.char.count(c, 'A')
+    >>> np.strings.count(c, 'A')
     array([3, 1, 1])
-    >>> np.char.count(c, 'aA')
+    >>> np.strings.count(c, 'aA')
     array([3, 1, 0])
-    >>> np.char.count(c, 'A', start=1, end=4)
+    >>> np.strings.count(c, 'A', start=1, end=4)
     array([2, 1, 1])
-    >>> np.char.count(c, 'A', start=1, end=3)
+    >>> np.strings.count(c, 'A', start=1, end=3)
     array([1, 0, 0])
 
     """)
@@ -4629,9 +4630,9 @@ add_newdoc('numpy._core.umath', 'startswith',
 
     Parameters
     ----------
-    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x1 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
-    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
     x3 : array_like, with ``int_`` dtype
 
@@ -4659,9 +4660,9 @@ add_newdoc('numpy._core.umath', 'endswith',
 
     Parameters
     ----------
-    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x1 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
-    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
     x3 : array_like, with ``int_`` dtype
 
@@ -4685,9 +4686,9 @@ add_newdoc('numpy._core.umath', 'endswith',
     >>> s = np.array(['foo', 'bar'])
     >>> s
     array(['foo', 'bar'], dtype='<U3')
-    >>> np.char.endswith(s, 'ar')
+    >>> np.strings.endswith(s, 'ar')
     array([False,  True])
-    >>> np.char.endswith(s, 'a', start=1, end=2)
+    >>> np.strings.endswith(s, 'a', start=1, end=2)
     array([False,  True])
 
     """)
