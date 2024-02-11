@@ -50,7 +50,7 @@ __all__ = [
 # _QuantileMethods is a dictionary listing all the supported methods to
 # compute quantile/percentile.
 #
-# Below virtual_index refer to the index of the element where the percentile
+# Below virtual_index refers to the index of the element where the percentile
 # would be found in the sorted sample.
 # When the sample contains exactly the percentile wanted, the virtual_index is
 # an integer to the index of this element.
@@ -68,7 +68,7 @@ _QuantileMethods = dict(
     # Discrete methods
     inverted_cdf=dict(
         get_virtual_index=lambda n, quantiles: _inverted_cdf(n, quantiles),
-        fix_gamma=lambda gamma, _: gamma,  # should never be called
+        fix_gamma=None,  # should never be called
     ),
     averaged_inverted_cdf=dict(
         get_virtual_index=lambda n, quantiles: (n * quantiles) - 1,
@@ -81,7 +81,7 @@ _QuantileMethods = dict(
     closest_observation=dict(
         get_virtual_index=lambda n, quantiles: _closest_observation(n,
                                                                     quantiles),
-        fix_gamma=lambda gamma, _: gamma,  # should never be called
+        fix_gamma=None,  # should never be called
     ),
     # Continuous methods
     interpolated_inverted_cdf=dict(
@@ -121,14 +121,12 @@ _QuantileMethods = dict(
     lower=dict(
         get_virtual_index=lambda n, quantiles: np.floor(
             (n - 1) * quantiles).astype(np.intp),
-        fix_gamma=lambda gamma, _: gamma,
-        # should never be called, index dtype is int
+        fix_gamma=None,  # should never be called, index dtype is int
     ),
     higher=dict(
         get_virtual_index=lambda n, quantiles: np.ceil(
             (n - 1) * quantiles).astype(np.intp),
-        fix_gamma=lambda gamma, _: gamma,
-        # should never be called, index dtype is int
+        fix_gamma=None,  # should never be called, index dtype is int
     ),
     midpoint=dict(
         get_virtual_index=lambda n, quantiles: 0.5 * (
@@ -143,7 +141,7 @@ _QuantileMethods = dict(
     nearest=dict(
         get_virtual_index=lambda n, quantiles: np.around(
             (n - 1) * quantiles).astype(np.intp),
-        fix_gamma=lambda gamma, _: gamma,
+        fix_gamma=None,
         # should never be called, index dtype is int
     ))
 
@@ -4866,15 +4864,23 @@ def _quantile(
         # Virtual because it is a floating point value, not an valid index.
         # The nearest neighbours are used for interpolation
         try:
-            method = _QuantileMethods[method]
+            method_props = _QuantileMethods[method]
         except KeyError:
             raise ValueError(
                 f"{method!r} is not a valid method. Use one of: "
                 f"{_QuantileMethods.keys()}") from None
-        virtual_indexes = method["get_virtual_index"](values_count, quantiles)
+        virtual_indexes = method_props["get_virtual_index"](values_count,
+                                                            quantiles)
         virtual_indexes = np.asanyarray(virtual_indexes)
 
-        if np.issubdtype(virtual_indexes.dtype, np.integer):
+        if method_props["fix_gamma"] is None:
+            supports_integers = True
+        else:
+            int_virtual_indices = np.issubdtype(virtual_indexes.dtype,
+                                                np.integer)
+            supports_integers = method == 'linear' and int_virtual_indices
+
+        if supports_integers:
             # No interpolation needed, take the points along axis
             if supports_nans:
                 # may contain nan, which would sort to the end
@@ -4906,7 +4912,7 @@ def _quantile(
             previous = arr[previous_indexes]
             next = arr[next_indexes]
             # --- Linear interpolation
-            gamma = _get_gamma(virtual_indexes, previous_indexes, method)
+            gamma = _get_gamma(virtual_indexes, previous_indexes, method_props)
             result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
             gamma = gamma.reshape(result_shape)
             result = _lerp(previous,
