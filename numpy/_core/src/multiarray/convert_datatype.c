@@ -3069,7 +3069,10 @@ nonstructured_to_structured_resolve_descriptors(
         return cast_to_void_dtype_class(given_descrs, loop_descrs, view_offset);
     }
 
-    if (PyDataType_SUBARRAY(given_descrs[1]) != NULL) {
+    PyArray_Descr *from_descr = given_descrs[0];
+    _PyArray_LegacyDescr *to_descr = (_PyArray_LegacyDescr *)given_descrs[1];
+
+    if (to_descr->subarray != NULL) {
         /*
          * We currently consider this at most a safe cast. It would be
          * possible to allow a view if the field has exactly one element.
@@ -3078,20 +3081,20 @@ nonstructured_to_structured_resolve_descriptors(
         npy_intp sub_view_offset = NPY_MIN_INTP;
         /* Subarray dtype */
         NPY_CASTING base_casting = PyArray_GetCastInfo(
-                given_descrs[0], PyDataType_SUBARRAY(given_descrs[1])->base, NULL,
+                from_descr, to_descr->subarray->base, NULL,
                 &sub_view_offset);
         if (base_casting < 0) {
             return -1;
         }
-        if (given_descrs[1]->elsize == PyDataType_SUBARRAY(given_descrs[1])->base->elsize) {
+        if (to_descr->elsize == to_descr->subarray->base->elsize) {
             /* A single field, view is OK if sub-view is */
             *view_offset = sub_view_offset;
         }
         casting = PyArray_MinCastSafety(casting, base_casting);
     }
-    else if (PyDataType_NAMES(given_descrs[1]) != NULL) {
+    else if (to_descr->names != NULL) {
         /* Structured dtype */
-        if (PyTuple_Size(PyDataType_NAMES(given_descrs[1])) == 0) {
+        if (PyTuple_Size(to_descr->names) == 0) {
             /* TODO: This retained behaviour, but likely should be changed. */
             casting = NPY_UNSAFE_CASTING;
         }
@@ -3101,11 +3104,11 @@ nonstructured_to_structured_resolve_descriptors(
 
             Py_ssize_t pos = 0;
             PyObject *key, *tuple;
-            while (PyDict_Next(PyDataType_FIELDS(given_descrs[1]), &pos, &key, &tuple)) {
+            while (PyDict_Next(to_descr->fields, &pos, &key, &tuple)) {
                 PyArray_Descr *field_descr = (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0);
                 npy_intp field_view_off = NPY_MIN_INTP;
                 NPY_CASTING field_casting = PyArray_GetCastInfo(
-                        given_descrs[0], field_descr, NULL, &field_view_off);
+                        from_descr, field_descr, NULL, &field_view_off);
                 casting = PyArray_MinCastSafety(casting, field_casting);
                 if (casting < 0) {
                     return -1;
@@ -3118,7 +3121,7 @@ nonstructured_to_structured_resolve_descriptors(
                     *view_offset = field_view_off - to_off;
                 }
             }
-            if (PyTuple_Size(PyDataType_NAMES(given_descrs[1])) != 1 || *view_offset < 0) {
+            if (PyTuple_Size(to_descr->names) != 1 || *view_offset < 0) {
                 /*
                  * Assume that a view is impossible when there is more than one
                  * field.  (Fields could overlap, but that seems weird...)
@@ -3129,8 +3132,8 @@ nonstructured_to_structured_resolve_descriptors(
     }
     else {
         /* Plain void type. This behaves much like a "view" */
-        if (given_descrs[0]->elsize == given_descrs[1]->elsize &&
-                !PyDataType_REFCHK(given_descrs[0])) {
+        if (from_descr->elsize == to_descr->elsize &&
+                !PyDataType_REFCHK(from_descr)) {
             /*
              * A simple view, at the moment considered "safe" (the refcheck is
              * probably not necessary, but more future proof)
@@ -3138,23 +3141,23 @@ nonstructured_to_structured_resolve_descriptors(
             *view_offset = 0;
             casting = NPY_SAFE_CASTING;
         }
-        else if (given_descrs[0]->elsize <= given_descrs[1]->elsize) {
+        else if (from_descr->elsize <= to_descr->elsize) {
             casting = NPY_SAFE_CASTING;
         }
         else {
             casting = NPY_UNSAFE_CASTING;
             /* new elsize is smaller so a view is OK (reject refs for now) */
-            if (!PyDataType_REFCHK(given_descrs[0])) {
+            if (!PyDataType_REFCHK(from_descr)) {
                 *view_offset = 0;
             }
         }
     }
 
     /* Void dtypes always do the full cast. */
-    Py_INCREF(given_descrs[0]);
-    loop_descrs[0] = given_descrs[0];
-    Py_INCREF(given_descrs[1]);
-    loop_descrs[1] = given_descrs[1];
+    Py_INCREF(from_descr);
+    loop_descrs[0] = from_descr;
+    Py_INCREF(to_descr);
+    loop_descrs[1] = (PyArray_Descr *)to_descr;
 
     return casting;
 }

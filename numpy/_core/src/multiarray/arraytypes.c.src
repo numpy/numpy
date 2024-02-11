@@ -2266,14 +2266,12 @@ static void
 VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
                 npy_intp n, int swap, PyArrayObject *arr)
 {
-    PyArray_Descr *descr;
-
     assert(arr != NULL);
     if (arr == NULL) {
         return;
     }
 
-    descr = PyArray_DESCR(arr);
+    _PyArray_LegacyDescr *descr = (_PyArray_LegacyDescr *)PyArray_DESCR(arr);
 
     if (PyArray_HASFIELDS(arr)) {
         PyObject *key, *value;
@@ -2282,7 +2280,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         PyArrayObject_fields dummy_fields = get_dummy_stack_array(arr);
         PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
 
-        while (PyDict_Next(PyDataType_FIELDS(descr), &pos, &key, &value)) {
+        while (PyDict_Next(descr->fields, &pos, &key, &value)) {
             npy_intp offset;
             PyArray_Descr *new;
             if (NPY_TITLE_KEY(key, value)) {
@@ -2311,17 +2309,17 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
          * be simply copied (no object, fields, subarray, and not a user dtype).
          */
         npy_bool can_optimize_subarray = (!swap &&
-                !PyDataType_HASFIELDS(PyDataType_SUBARRAY(descr)->base) &&
-                !PyDataType_HASSUBARRAY(PyDataType_SUBARRAY(descr)->base) &&
-                !PyDataType_REFCHK(PyDataType_SUBARRAY(descr)->base) &&
-                (PyDataType_SUBARRAY(descr)->base->type_num < NPY_NTYPES_LEGACY));
+                !PyDataType_HASFIELDS(descr->subarray->base) &&
+                !PyDataType_HASSUBARRAY(descr->subarray->base) &&
+                !PyDataType_REFCHK(descr->subarray->base) &&
+                (descr->subarray->base->type_num < NPY_NTYPES_LEGACY));
 
         if (can_optimize_subarray) {
             _basic_copyn(dst, dstride, src, sstride, n, descr->elsize);
             return;
         }
 
-        new = PyDataType_SUBARRAY(descr)->base;
+        new = descr->subarray->base;
         dstptr = dst;
         srcptr = src;
         subitemsize = new->elsize;
@@ -2353,14 +2351,12 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
 static void
 VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
 {
-    PyArray_Descr *descr;
-
     assert(arr != NULL);
     if (arr == NULL) {
         return;
     }
 
-    descr = PyArray_DESCR(arr);
+    _PyArray_LegacyDescr *descr = (_PyArray_LegacyDescr *)PyArray_DESCR(arr);
 
     if (PyArray_HASFIELDS(arr)) {
         PyObject *key, *value;
@@ -2369,7 +2365,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         PyArrayObject_fields dummy_fields = get_dummy_stack_array(arr);
         PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
 
-        while (PyDict_Next(PyDataType_FIELDS(descr), &pos, &key, &value)) {
+        while (PyDict_Next(descr->fields, &pos, &key, &value)) {
             npy_intp offset;
 
             PyArray_Descr * new;
@@ -2396,17 +2392,17 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
          * be simply copied (no object, fields, subarray, and not a user dtype).
          */
         npy_bool can_optimize_subarray = (!swap &&
-                !PyDataType_HASFIELDS(PyDataType_SUBARRAY(descr)->base) &&
-                !PyDataType_HASSUBARRAY(PyDataType_SUBARRAY(descr)->base) &&
-                !PyDataType_REFCHK(PyDataType_SUBARRAY(descr)->base) &&
-                (PyDataType_SUBARRAY(descr)->base->type_num < NPY_NTYPES_LEGACY));
+                !PyDataType_HASFIELDS(descr->subarray->base) &&
+                !PyDataType_HASSUBARRAY(descr->subarray->base) &&
+                !PyDataType_REFCHK(descr->subarray->base) &&
+                (descr->subarray->base->type_num < NPY_NTYPES_LEGACY));
 
         if (can_optimize_subarray) {
             _basic_copy(dst, src, descr->elsize);
             return;
         }
 
-        new = PyDataType_SUBARRAY(descr)->base;
+        new = descr->subarray->base;
         subitemsize = new->elsize;
         if (subitemsize == 0) {
             /* There cannot be any elements, so return */
@@ -2647,14 +2643,13 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
     npy_bool nonz = NPY_FALSE;
 
     if (PyArray_HASFIELDS(ap)) {
-        PyArray_Descr *descr;
         PyObject *key, *value;
         Py_ssize_t pos = 0;
         PyArrayObject_fields dummy_fields = get_dummy_stack_array(ap);
         PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
 
-        descr = PyArray_DESCR(ap);
-        while (PyDict_Next(PyDataType_FIELDS(descr), &pos, &key, &value)) {
+        _PyArray_LegacyDescr *descr = PyArray_DESCR(ap);
+        while (PyDict_Next(descr->fields, &pos, &key, &value)) {
             PyArray_Descr * new;
             npy_intp offset;
             if (NPY_TITLE_KEY(key, value)) {
