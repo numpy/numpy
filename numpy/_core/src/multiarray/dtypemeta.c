@@ -639,28 +639,28 @@ string_unicode_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
 
 
 static PyArray_Descr *
-void_ensure_canonical(PyArray_Descr *self)
+void_ensure_canonical(_PyArray_LegacyDescr *self)
 {
-    if (PyDataType_SUBARRAY(self) != NULL) {
+    if (self->subarray != NULL) {
         PyArray_Descr *new_base = NPY_DT_CALL_ensure_canonical(
-                PyDataType_SUBARRAY(self)->base);
+                self->subarray->base);
         if (new_base == NULL) {
             return NULL;
         }
-        if (new_base == PyDataType_SUBARRAY(self)->base) {
+        if (new_base == self->subarray->base) {
             /* just return self, no need to modify */
             Py_DECREF(new_base);
             Py_INCREF(self);
-            return self;
+            return (PyArray_Descr *)self;
         }
-        PyArray_Descr *new = PyArray_DescrNew(self);
+        PyArray_Descr *new = PyArray_DescrNew((PyArray_Descr *)self);
         if (new == NULL) {
             return NULL;
         }
-        Py_SETREF(PyDataType_SUBARRAY(new)->base, new_base);
+        Py_SETREF(((_PyArray_LegacyDescr *)new)->subarray->base, new_base);
         return new;
     }
-    else if (PyDataType_NAMES(self) != NULL) {
+    else if (self->names != NULL) {
         /*
          * This branch is fairly complex, since it needs to build a new
          * descriptor that is in canonical form.  This means that the new
@@ -671,9 +671,10 @@ void_ensure_canonical(PyArray_Descr *self)
          * TODO: In principle we could/should try to provide the identity when
          *       no change is necessary. (Simple if we add a flag.)
          */
-        Py_ssize_t field_num = PyTuple_GET_SIZE(PyDataType_NAMES(self));
+        Py_ssize_t field_num = PyTuple_GET_SIZE(self->names);
 
-        _PyArray_LegacyDescr *new = (_PyArray_LegacyDescr *)PyArray_DescrNew(self);
+        _PyArray_LegacyDescr *new = (_PyArray_LegacyDescr *)PyArray_DescrNew(
+                (PyArray_Descr *)self);
         if (new == NULL) {
             return NULL;
         }
@@ -688,8 +689,8 @@ void_ensure_canonical(PyArray_Descr *self)
         int totalsize = 0;
         int maxalign = 1;
         for (Py_ssize_t i = 0; i < field_num; i++) {
-            PyObject *name = PyTuple_GET_ITEM(PyDataType_NAMES(self), i);
-            PyObject *tuple = PyDict_GetItem(PyDataType_FIELDS(self), name);
+            PyObject *name = PyTuple_GET_ITEM(self->names, i);
+            PyObject *tuple = PyDict_GetItem(self->fields, name);
             PyObject *new_tuple = PyTuple_New(PyTuple_GET_SIZE(tuple));
             PyArray_Descr *field_descr = NPY_DT_CALL_ensure_canonical(
                     (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0));
@@ -740,16 +741,16 @@ void_ensure_canonical(PyArray_Descr *self)
     else {
         /* unstructured voids are always canonical. */
         Py_INCREF(self);
-        return self;
+        return (PyArray_Descr *)self;
     }
 }
 
 
 static PyArray_Descr *
-void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
+void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
 {
-    if (PyDataType_SUBARRAY(descr1) == NULL && PyDataType_NAMES(descr1) == NULL &&
-            PyDataType_SUBARRAY(descr2) == NULL && PyDataType_NAMES(descr2) == NULL) {
+    if (descr1->subarray == NULL && descr1->names == NULL &&
+            descr2->subarray == NULL && descr2->names == NULL) {
         if (descr1->elsize != descr2->elsize) {
             PyErr_SetString(npy_DTypePromotionError,
                     "Invalid type promotion with void datatypes of different "
@@ -758,10 +759,10 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
             return NULL;
         }
         Py_INCREF(descr1);
-        return descr1;
+        return (PyArray_Descr *)descr1;
     }
 
-    if (PyDataType_NAMES(descr1) != NULL && PyDataType_NAMES(descr2) != NULL) {
+    if (descr1->names != NULL && descr2->names != NULL) {
         /* If both have fields promoting individual fields may be possible */
         static PyObject *promote_fields_func = NULL;
         npy_cache_import("numpy._core._internal", "_promote_fields",
@@ -783,9 +784,9 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
         }
         return (PyArray_Descr *)result;
     }
-    else if (PyDataType_SUBARRAY(descr1) != NULL && PyDataType_SUBARRAY(descr2) != NULL) {
+    else if (descr1->subarray != NULL && descr2->subarray != NULL) {
         int cmp = PyObject_RichCompareBool(
-                PyDataType_SUBARRAY(descr1)->shape, PyDataType_SUBARRAY(descr2)->shape, Py_EQ);
+                descr1->subarray->shape, descr2->subarray->shape, Py_EQ);
         if (error_converting(cmp)) {
             return NULL;
         }
@@ -796,7 +797,7 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
             return NULL;
         }
         PyArray_Descr *new_base = PyArray_PromoteTypes(
-                PyDataType_SUBARRAY(descr1)->base, PyDataType_SUBARRAY(descr2)->base);
+                descr1->subarray->base, descr2->subarray->base);
         if (new_base == NULL) {
             return NULL;
         }
@@ -805,18 +806,18 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
          * as well preserve identity and metadata.  This could probably be
          * changed.
          */
-        if (descr1 == descr2 && new_base == PyDataType_SUBARRAY(descr1)->base) {
+        if (descr1 == descr2 && new_base == descr1->subarray->base) {
             Py_DECREF(new_base);
             Py_INCREF(descr1);
-            return descr1;
+            return (PyArray_Descr *)descr1;
         }
 
-        PyArray_Descr *new_descr = PyArray_DescrNew(descr1);
+        PyArray_Descr *new_descr = PyArray_DescrNew((PyArray_Descr *)descr1);
         if (new_descr == NULL) {
             Py_DECREF(new_base);
             return NULL;
         }
-        Py_SETREF(PyDataType_SUBARRAY(new_descr)->base, new_base);
+        Py_SETREF(((_PyArray_LegacyDescr *)new_descr)->subarray->base, new_base);
         return new_descr;
     }
 
@@ -1206,8 +1207,8 @@ dtypemeta_wrap_legacy_descriptor(_PyArray_LegacyDescr *descr,
             dt_slots->default_descr = void_default_descr;
             dt_slots->discover_descr_from_pyobject = (
                     void_discover_descr_from_pyobject);
-            dt_slots->common_instance = void_common_instance;
-            dt_slots->ensure_canonical = void_ensure_canonical;
+            dt_slots->common_instance = (void *)void_common_instance;
+            dt_slots->ensure_canonical = (void *)void_ensure_canonical;
             dt_slots->get_fill_zero_loop =
                     (void *)npy_get_zerofill_void_and_legacy_user_dtype_loop;
             dt_slots->get_clear_loop =
