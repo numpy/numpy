@@ -3309,19 +3309,19 @@ cdef class Generator:
         >>> lam, size = 5, 10000
         >>> s = rng.poisson(lam=lam, size=size)
 
-        The mean and variance of the distribution are both ``lam``
+        Verify the mean and variance, which should be approximately ``lam``:
         
         >>> s.mean(), s.var()
         (4.9917 5.1088311)  # may vary
 
-        The sample with the corresponding pmf 
+        Display the histogram and probability mass function:
 
         >>> import matplotlib.pyplot as plt
-        >>> from scipy import stats  # doctest: +SKIP
-        >>> weights = np.ones_like(s)/len(s)
-        >>> count, bins, _ = plt.hist(s, 30, weights=weights)
-        >>> x = np.arange(0, 20)
-        >>> plt.stem(x, stats.poisson.pmf(x, mu=lam), linefmt='C1-')
+        >>> from scipy import stats
+        >>> x = np.arange(0, 21)
+        >>> pmf = stats.poisson.pmf(x, mu=lam)
+        >>> plt.hist(s, bins=x, density=True, width=0.5)
+        >>> plt.stem(x, pmf, 'C1-')
         >>> plt.show()
 
         Draw each 100 values for lambda 100 and 500:
