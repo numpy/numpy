@@ -288,13 +288,13 @@ _update_descr_and_dimensions(PyArray_Descr **des, npy_intp *newdims,
     int tuple;
 
     old = (_PyArray_LegacyDescr *)*des;  /* guaranteed as it has subarray */
-    *des = PyDataType_SUBARRAY(old)->base;
+    *des = old->subarray->base;
 
 
     mydim = newdims + oldnd;
-    tuple = PyTuple_Check(PyDataType_SUBARRAY(old)->shape);
+    tuple = PyTuple_Check(old->subarray->shape);
     if (tuple) {
-        numnew = PyTuple_GET_SIZE(PyDataType_SUBARRAY(old)->shape);
+        numnew = PyTuple_GET_SIZE(old->subarray->shape);
     }
     else {
         numnew = 1;
@@ -308,11 +308,11 @@ _update_descr_and_dimensions(PyArray_Descr **des, npy_intp *newdims,
     if (tuple) {
         for (i = 0; i < numnew; i++) {
             mydim[i] = (npy_intp) PyLong_AsLong(
-                    PyTuple_GET_ITEM(PyDataType_SUBARRAY(old)->shape, i));
+                    PyTuple_GET_ITEM(old->subarray->shape, i));
         }
     }
     else {
-        mydim[0] = (npy_intp) PyLong_AsLong(PyDataType_SUBARRAY(old)->shape);
+        mydim[0] = (npy_intp) PyLong_AsLong(old->subarray->shape);
     }
 
     if (newstrides) {

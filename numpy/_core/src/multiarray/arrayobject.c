@@ -616,8 +616,8 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
         npy_intp result_ndim = PyArray_NDIM(self) > PyArray_NDIM(other) ?
                             PyArray_NDIM(self) : PyArray_NDIM(other);
 
-        int field_count = PyTuple_GET_SIZE(PyDataType_NAMES(self_descr));
-        if (field_count != PyTuple_GET_SIZE(PyDataType_NAMES(other_descr))) {
+        int field_count = PyTuple_GET_SIZE(self_descr->names);
+        if (field_count != PyTuple_GET_SIZE(other_descr->names)) {
             PyErr_SetString(PyExc_TypeError,
                     "Cannot compare structured dtypes with different number of "
                     "fields.  (unreachable error please report to NumPy devs)");
@@ -629,14 +629,14 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
         for (int i = 0; i < field_count; ++i) {
             PyObject *fieldname, *temp, *temp2;
 
-            fieldname = PyTuple_GET_ITEM(PyDataType_NAMES(self_descr), i);
+            fieldname = PyTuple_GET_ITEM(self_descr->names, i);
             PyArrayObject *a = (PyArrayObject *)array_subscript_asarray(
                     self, fieldname);
             if (a == NULL) {
                 Py_XDECREF(res);
                 return NULL;
             }
-            fieldname = PyTuple_GET_ITEM(PyDataType_NAMES(other_descr), i);
+            fieldname = PyTuple_GET_ITEM(other_descr->names, i);
             PyArrayObject *b = (PyArrayObject *)array_subscript_asarray(
                     other, fieldname);
             if (b == NULL) {

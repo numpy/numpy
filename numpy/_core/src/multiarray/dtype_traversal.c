@@ -520,7 +520,7 @@ npy_get_clear_void_and_legacy_user_dtype_loop(
         PyArray_Dims shape = {NULL, -1};
         npy_intp size;
 
-        if (!(PyArray_IntpConverter(PyDataType_SUBARRAY(dtype)->shape, &shape))) {
+        if (!(PyArray_IntpConverter(dtype->subarray->shape, &shape))) {
             PyErr_SetString(PyExc_ValueError,
                     "invalid subarray shape");
             return -1;
@@ -529,7 +529,7 @@ npy_get_clear_void_and_legacy_user_dtype_loop(
         npy_free_cache_dim_obj(shape);
 
         if (get_subarray_traverse_func(
-                traverse_context, PyDataType_SUBARRAY(dtype)->base, aligned, size, stride,
+                traverse_context, dtype->subarray->base, aligned, size, stride,
                 out_func, out_auxdata, flags, &get_clear_function) < 0) {
             return -1;
         }
@@ -606,7 +606,7 @@ npy_get_zerofill_void_and_legacy_user_dtype_loop(
         PyArray_Dims shape = {NULL, -1};
         npy_intp size;
 
-        if (!(PyArray_IntpConverter(PyDataType_SUBARRAY(dtype)->shape, &shape))) {
+        if (!(PyArray_IntpConverter(dtype->subarray->shape, &shape))) {
             PyErr_SetString(PyExc_ValueError,
                     "invalid subarray shape");
             return -1;
@@ -615,7 +615,7 @@ npy_get_zerofill_void_and_legacy_user_dtype_loop(
         npy_free_cache_dim_obj(shape);
 
         if (get_subarray_traverse_func(
-                traverse_context, PyDataType_SUBARRAY(dtype)->base, aligned, size, stride,
+                traverse_context, dtype->subarray->base, aligned, size, stride,
                 out_func, out_auxdata, flags, &get_zerofill_function) < 0) {
             return -1;
         }

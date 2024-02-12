@@ -719,13 +719,13 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
                 PyObject *title = PyTuple_GET_ITEM(tuple, 2);
                 Py_INCREF(title);
                 PyTuple_SET_ITEM(new_tuple, 2, title);
-                if (PyDict_SetItem(PyDataType_FIELDS(new), title, new_tuple) < 0) {
+                if (PyDict_SetItem(new->fields, title, new_tuple) < 0) {
                     Py_DECREF(new_tuple);
                     Py_DECREF(new);
                     return NULL;
                 }
             }
-            if (PyDict_SetItem(PyDataType_FIELDS(new), name, new_tuple) < 0) {
+            if (PyDict_SetItem(new->fields, name, new_tuple) < 0) {
                 Py_DECREF(new_tuple);
                 Py_DECREF(new);
                 return NULL;

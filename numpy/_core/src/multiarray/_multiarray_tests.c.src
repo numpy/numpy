@@ -507,9 +507,9 @@ create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
         return NULL;
     }
     /* check that the result should be more or less valid */
-    if (dtype->type_num != NPY_VOID || PyDataType_FIELDS(dtype) == NULL ||
-            !PyDict_CheckExact(PyDataType_FIELDS(dtype)) ||
-            PyTuple_Size(PyDataType_NAMES(dtype)) != 1 ||
+    if (dtype->type_num != NPY_VOID || dtype->fields == NULL ||
+            !PyDict_CheckExact(dtype->fields) ||
+            PyTuple_Size(dtype->names) != 1 ||
             !PyDataType_REFCHK(dtype) ||
             dtype->elsize != sizeof(PyObject *)) {
         PyErr_SetString(PyExc_ValueError,
@@ -528,12 +528,12 @@ create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
     proto.type_num = dtype->type_num;
     proto.elsize = dtype->elsize;
     proto.alignment = dtype->alignment;
-    proto.subarray = PyDataType_SUBARRAY(dtype);
-    proto.fields = PyDataType_FIELDS(dtype);
-    proto.names = PyDataType_NAMES(dtype);
+    proto.subarray = dtype->subarray;
+    proto.fields = dtype->fields;
+    proto.names = dtype->names;
     proto.f = dtype->f;
-    proto.metadata = PyDataType_METADATA(dtype);
-    proto.c_metadata = PyDataType_C_METADATA(dtype);
+    proto.metadata = dtype->metadata;
+    proto.c_metadata = dtype->c_metadata;
 
     if (error_path == 1) {
         /* Test that we reject this, if fields was not already set */

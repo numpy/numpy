@@ -877,11 +877,11 @@ _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj)
 
     if (PyDataType_HASFIELDS(conv)) {
         Py_XDECREF(new->fields);
-        new->fields = PyDataType_FIELDS(conv);
+        new->fields = conv->fields;
         Py_XINCREF(new->fields);
 
         Py_XDECREF(new->names);
-        new->names = PyDataType_NAMES(conv);
+        new->names = conv->names;
         Py_XINCREF(new->names);
     }
     if (conv->metadata != NULL) {
@@ -928,9 +928,9 @@ _validate_object_field_overlap(_PyArray_LegacyDescr *dtype)
     int fld_offset, fld2_offset;
 
     /* Get some properties from the dtype */
-    names = PyDataType_NAMES(dtype);
+    names = dtype->names;
     names_size = PyTuple_GET_SIZE(names);
-    fields = PyDataType_FIELDS(dtype);
+    fields = dtype->fields;
 
     for (i = 0; i < names_size; ++i) {
         key = PyTuple_GET_ITEM(names, i);
@@ -2403,7 +2403,7 @@ arraydescr_names_set(
         int ret;
         key = PyTuple_GET_ITEM(self->names, i);
         /* Borrowed references to item and new_key */
-        item = PyDict_GetItemWithError(PyDataType_FIELDS(self), key);
+        item = PyDict_GetItemWithError(self->fields, key);
         if (item == NULL) {
             if (!PyErr_Occurred()) {
                 /* fields was missing the name it claimed to contain */
