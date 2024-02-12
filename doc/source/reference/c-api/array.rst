@@ -1127,7 +1127,7 @@ User-defined data types
         for 1.x compatibility.  Further, the struct will *not* be the actual
         descriptor anymore, only it's type number will be updated.
         After successful registration, you must thus fetch the actual
-        dtype with:
+        dtype with::
 
             int type_num = PyArray_RegisterDataType(&my_descr_proto);
             if (type_num < 0) {
