@@ -35,7 +35,7 @@ perform a series of procedures.
 
 To customize CPU/build options::
 
-    pip install -Csetup-args=-Dcpu-baseline="avx2 fma3" -Csetup-args=-Dcpu-dispatch="max" .
+    pip install . -Csetup-args=-Dcpu-baseline="avx2 fma3" -Csetup-args=-Dcpu-dispatch="max"
 
 Quick start
 -----------
@@ -187,7 +187,7 @@ Behaviors
     export CFLAGS="-march=native"
     pip install .
     # is equivalent to
-    pip install -Csetup-args=-Dcpu-baseline=native .
+    pip install . -Csetup-args=-Dcpu-baseline=native
 
 - ``cpu-baseline`` escapes any specified features that aren't supported
   by the target platform or compiler rather than raising fatal errors.
