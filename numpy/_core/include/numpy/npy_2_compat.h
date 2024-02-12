@@ -120,13 +120,13 @@
 #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
     #define PyDataType_GetArrFuncs _PyDataType_GetArrFuncs
 #elif NPY_ABI_VERSION < 0x02000000
-    NPY_NO_EXPORT PyArray_ArrFuncs *
+    static inline PyArray_ArrFuncs *
     PyDataType_GetArrFuncs(PyArray_Descr *descr)
     {
         return descr->f;
     }
 #else
-    NPY_NO_EXPORT PyArray_ArrFuncs *
+    static inline PyArray_ArrFuncs *
     PyDataType_GetArrFuncs(PyArray_Descr *descr)
     {
         if (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION) {

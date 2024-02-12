@@ -543,8 +543,10 @@ typedef struct {
 } PyArray_ArrFuncs;
 
 /* Forward declaration, actual definition in npy_2_compat.h */
+#if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
 static inline PyArray_ArrFuncs *
 PyDataType_GetArrFuncs(struct _PyArray_Descr *);
+#endif  /* not internal build */
 
 /* The item must be reference counted when it is inserted or extracted. */
 #define NPY_ITEM_REFCOUNT   0x01
