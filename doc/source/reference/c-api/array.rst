@@ -1670,9 +1670,37 @@ implements.
 .. c:macro:: NPY_METH_contiguous_loop
 .. c:macro:: NPY_METH_unaligned_strided_loop
 .. c:macro:: NPY_METH_unaligned_contiguous_loop
+
+   One dimensional strided loops implementing the behavior (either a ufunc
+   or cast).  In most cases, ``NPY_METH_strided_loop`` is the generic and only
+   version that needs to be implemented.
+   ``NPY_METH_contiguous_loop`` can be implemented additionally as a more
+   light-weight/faster version and it is used when all inputs and outputs
+   are contiguous.
+   To deal with possibly unaligned data, NumPy needs to be able to copy
+   unaligned to aligned data.  When implementing a new DType, the "cast" or
+   copy for it needs to implement ``NPY_METH_unaligned_strided_loop ``.
+   Unlike the normal versions, this loop must not assume that the data can be
+   accessed in an aligned fashion.  These loops must copy each value before
+   accessing or storing::
+
+       type_in in_value;
+       type_out out_value
+       memcpy(&value, in_data, sizeof(type_in));
+       out_value = in_value;
+       memcpy(out_data, &out_value, sizeof(type_out)
+
+   while a normal loop can just use
+   ``*(type_out *)out_data = *(type_in)in_data;``.
+
+   The unaligned loops are currently only used in casts and will never be picked
+   in ufuncs (ufuncs create a temporary copy to ensure aligned inputs).
+   These flags are ignored when ``NPY_METH_get_loop`` is defined, where instead
+   whichever loop returned by the ``get_loop`` function is used.
+
 .. c:macro:: NPY_METH_contiguous_indexed_loop
 
-   TODO: I need help explaining the differences between these
+   A specialized inner-loop option to speed up common ``ufunc.at`` computations.
 
 ArrayMethod Flags
 ~~~~~~~~~~~~~~~~~
@@ -3096,12 +3124,12 @@ Data Type Promotion and Inspection
    order or fail.  Nevertheless, DTypes should aim to ensure that their
    common-dtype implementation is associative and commutative!  (Mainly,
    unsigned and signed integers are not.)
-   
+
    For guaranteed consistent results DTypes must implement common-Dtype
    "transitively".  If A promotes B and B promotes C, than A must generally
    also promote C; where "promotes" means implements the promotion.  (There
    are some exceptions for abstract DTypes)
-   
+
    In general this approach always works as long as the most generic dtype
    is either strictly larger, or compatible with all other dtypes.
    For example promoting ``float16`` with any other float, integer, or unsigned
@@ -3133,6 +3161,8 @@ DType system. See the `numpy-user-dtypes repository
  which has additional fields compared to a normal :c:type:`PyTypeObject`. See
  the examples in the ``numpy-user-dtypes`` repository for usage with both
  parametric and non-parametric data types.
+
+.. _dtype-flags:
 
 DType Flags
 ~~~~~~~~~~~

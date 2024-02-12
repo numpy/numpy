@@ -773,7 +773,7 @@ PyArray_DTypeMeta and Related Types
    .. c:member:: npy_uint64 flags
 
           Flags can be set to indicate to NumPy that this data type
-          has optional behavior. See <TODO TODO> for a listing of
+          has optional behavior. See :ref:`dtype-flags` for a listing of
           allowed flag values.
 
    .. c:member:: void* dt_slots
