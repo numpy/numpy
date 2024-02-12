@@ -35,9 +35,7 @@ perform a series of procedures.
 
 To customize CPU/build options::
 
-    pip install \
-    --config-settings=setup-args=-Dcpu-baseline="avx2 fma3" \
-    --config-settings=setup-args=-Dcpu-dispatch="max" .
+    pip install -Csetup-args=-Dcpu-baseline="avx2 fma3" -Csetup-args=-Dcpu-dispatch="max" .
 
 Quick start
 -----------
@@ -61,13 +59,13 @@ different CPU than what the host has.
 Set ``native`` for baseline, or manually specify the CPU features in case of option
 ``native`` isn't supported by your platform::
 
-    pip wheel --config-settings=setup-args=-Dcpu-baseline="native" .
+    pip wheel -Csetup-args=-Dcpu-baseline="native" .
 
 Building NumPy with extra CPU features isn't necessary for this case,
 since all supported features are already defined within the baseline features::
 
-    pip wheel --config-settings=setup-args=-Dcpu-baseline="native" \
-    --config-settings=setup-args=-Dcpu-dispatch="none" .
+    pip wheel -Csetup-args=-Dcpu-baseline="native" \
+    -Csetup-args=-Dcpu-dispatch="none" .
 
 .. note::
 
@@ -78,7 +76,7 @@ I do not want to support the old processors of the x86 architecture
 
 Since most of the CPUs nowadays support at least ``AVX``, ``F16C`` features, you can use::
 
-    pip wheel --config-settings=setup-args=-Dcpu-baseline="avx f16c" .
+    pip wheel -Csetup-args=-Dcpu-baseline="avx f16c" .
 
 .. note::
 
@@ -91,7 +89,7 @@ I'm facing the same case above but with ppc64 architecture
 
 Then raise the ceiling of the baseline features to Power8::
 
-    pip wheel --config-settings=setup-args=-Dcpu-baseline="vsx2" .
+    pip wheel -Csetup-args=-Dcpu-baseline="vsx2" .
 
 Having issues with AVX512 features?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -99,7 +97,7 @@ Having issues with AVX512 features?
 You may have some reservations about including of ``AVX512`` or
 any other CPU feature and you want to exclude from the dispatched features::
 
-    pip wheel --config-settings=setup-args=-Dcpu-dispatch="max -avx512f -avx512cd \
+    pip wheel -Csetup-args=-Dcpu-dispatch="max -avx512f -avx512cd \
     -avx512_knl -avx512_knm -avx512_skx -avx512_clx -avx512_cnl -avx512_icl" .
 
 .. _opt-supported-features:
@@ -156,31 +154,31 @@ Behaviors
 
 - CPU features and other options are case-insensitive, for example::
 
-    pip wheel --config-settings=setup-args=-Dcpu-dispatch="SSE41 avx2 FMA3" .
+    pip wheel -Csetup-args=-Dcpu-dispatch="SSE41 avx2 FMA3" .
 
 - The order of the requested optimizations doesn't matter::
 
-    pip wheel --config-settings=setup-args=-Dcpu-dispatch="SSE41 AVX2 FMA3" .
+    pip wheel -Csetup-args=-Dcpu-dispatch="SSE41 AVX2 FMA3" .
     # equivalent to
-    pip wheel --config-settings=setup-args=-Dcpu-dispatch="FMA3 AVX2 SSE41" .
+    pip wheel -Csetup-args=-Dcpu-dispatch="FMA3 AVX2 SSE41" .
 
 - Either commas or spaces or '+' can be used as a separator,
   for example::
 
-    pip wheel --config-settings=setup-args=-Dcpu-dispatch="avx2 avx512f" .
+    pip wheel -Csetup-args=-Dcpu-dispatch="avx2 avx512f" .
     # or
-    pip wheel --config-settings=setup-args=-Dcpu-dispatch=avx2,avx512f .
+    pip wheel -Csetup-args=-Dcpu-dispatch=avx2,avx512f .
     # or
-    pip wheel --config-settings=setup-args=-Dcpu-dispatch="avx2+avx512f" .
+    pip wheel -Csetup-args=-Dcpu-dispatch="avx2+avx512f" .
 
   all works but arguments should be enclosed in quotes or escaped
   by backslash if any spaces are used.
 
 - ``cpu-baseline`` combines all implied CPU features, for example::
 
-    pip wheel --config-settings=setup-args=-Dcpu-baseline=sse42 .
+    pip wheel -Csetup-args=-Dcpu-baseline=sse42 .
     # equivalent to
-    pip wheel --config-settings=setup-args=-Dcpu-baseline="sse sse2 sse3 ssse3 sse41 popcnt sse42" .
+    pip wheel -Csetup-args=-Dcpu-baseline="sse sse2 sse3 ssse3 sse41 popcnt sse42" .
 
 - ``cpu-baseline`` will be treated as "native" if compiler native flag
   ``-march=native`` or ``-xHost`` or ``/QxHost`` is enabled through environment variable
@@ -189,7 +187,7 @@ Behaviors
     export CFLAGS="-march=native"
     pip install --user .
     # is equivalent to
-    pip install --user --config-settings=setup-args=-Dcpu-baseline=native .
+    pip install --user -Csetup-args=-Dcpu-baseline=native .
 
 - ``cpu-baseline`` escapes any specified features that aren't supported
   by the target platform or compiler rather than raising fatal errors.
@@ -201,17 +199,17 @@ Behaviors
        For example::
 
           # Requesting `AVX2,FMA3` but the compiler only support **SSE** features
-          pip wheel --config-settings=setup-args=-Dcpu-baseline="avx2 fma3" .
+          pip wheel -Csetup-args=-Dcpu-baseline="avx2 fma3" .
           # is equivalent to
-          pip wheel --config-settings=setup-args=-Dcpu-baseline="sse sse2 sse3 ssse3 sse41 popcnt sse42" .
+          pip wheel -Csetup-args=-Dcpu-baseline="sse sse2 sse3 ssse3 sse41 popcnt sse42" .
 
 - ``cpu-dispatch`` does not combain any of implied CPU features,
   so you must add them unless you want to disable one or all of them::
 
     # Only dispatches AVX2 and FMA3
-    pip wheel --config-settings=setup-args=-Dcpu-dispatch=avx2,fma3 .
+    pip wheel -Csetup-args=-Dcpu-dispatch=avx2,fma3 .
     # Dispatches AVX and SSE features
-    pip wheel --config-settings=setup-args=-Dcpu-dispatch=ssse3,sse41,sse42,avx,avx2,fma3 .
+    pip wheel -Csetup-args=-Dcpu-dispatch=ssse3,sse41,sse42,avx,avx2,fma3 .
 
 - ``cpu-dispatch`` escapes any specified baseline features and also escapes
   any features not supported by the target platform or compiler without raising
@@ -244,9 +242,9 @@ For example::
 
     # On ARMv8/A64, specify NEON is going to enable Advanced SIMD
     # and all predecessor extensions
-    pip wheel --config-settings=setup-args=-Dcpu-baseline=neon .
+    pip wheel -Csetup-args=-Dcpu-baseline=neon .
     # which equivalent to
-    pip wheel --config-settings=setup-args=-Dcpu-baseline="neon neon_fp16 neon_vfpv4 asimd" .
+    pip wheel -Csetup-args=-Dcpu-baseline="neon neon_fp16 neon_vfpv4 asimd" .
 
 .. note::
 
@@ -263,9 +261,9 @@ but this approach is incompatible with other **x86** CPUs from **AMD** or **VIA*
 For example::
 
     # Specify AVX2 will force enables FMA3 on Intel compilers
-    pip wheel --config-settings=setup-args=-Dcpu-baseline=avx2 .
+    pip wheel -Csetup-args=-Dcpu-baseline=avx2 .
     # which equivalent to
-    pip wheel --config-settings=setup-args=-Dcpu-baseline="avx2 fma3" .
+    pip wheel -Csetup-args=-Dcpu-baseline="avx2 fma3" .
 
 
 The following tables only show the differences imposed by some compilers from the
