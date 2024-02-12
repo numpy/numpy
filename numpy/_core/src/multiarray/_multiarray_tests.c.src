@@ -126,7 +126,7 @@ static int copy_object(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
     npy_intp i, j;
     npy_intp odims[NPY_MAXDIMS_LEGACY_ITERS];
     PyArrayObject *aout;
-    PyArray_CopySwapFunc *copyswap = PyArray_DESCR(itx->ao)->f->copyswap;
+    PyArray_CopySwapFunc *copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(itx->ao))->copyswap;
     npy_int itemsize = PyArray_ITEMSIZE(itx->ao);
 
     /*

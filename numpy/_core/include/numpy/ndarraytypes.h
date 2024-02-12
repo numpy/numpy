@@ -1549,7 +1549,7 @@ PyArray_CHKFLAGS(const PyArrayObject *arr, int flags)
 static inline PyObject *
 PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 {
-    return ((PyArrayObject_fields *)arr)->descr->f->getitem(
+    return PyDataType_GetArrFuncs(((PyArrayObject_fields *)arr)->descr)->getitem(
                                         (void *)itemptr, (PyArrayObject *)arr);
 }
 
@@ -1561,7 +1561,7 @@ PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 static inline int
 PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 {
-    return ((PyArrayObject_fields *)arr)->descr->f->setitem(v, itemptr, arr);
+    return PyDataType_GetArrFuncs(((PyArrayObject_fields *)arr)->descr)->setitem(v, itemptr, arr);
 }
 #endif  /* not internal */
 

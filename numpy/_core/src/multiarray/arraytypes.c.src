@@ -347,7 +347,7 @@ static PyObject *
         return @func1@((@type1@)t1);
     }
     else {
-        PyArray_DESCR(ap)->f->copyswap(&t1, ip, PyArray_ISBYTESWAPPED(ap), ap);
+        PyDataType_GetArrFuncs(PyArray_DESCR(ap))->copyswap(&t1, ip, PyArray_ISBYTESWAPPED(ap), ap);
         return @func1@((@type1@)t1);
     }
 }
@@ -412,7 +412,7 @@ NPY_NO_EXPORT int
         *((@type@ *)ov)=temp;
     }
     else {
-        PyArray_DESCR(ap)->f->copyswap(ov, &temp, PyArray_ISBYTESWAPPED(ap),
+        PyDataType_GetArrFuncs(PyArray_DESCR(ap))->copyswap(ov, &temp, PyArray_ISBYTESWAPPED(ap),
                                        ap);
     }
     return 0;
@@ -1017,7 +1017,7 @@ _copy_and_return_void_setitem(PyArray_Descr *dstdescr, char *dstdata,
             if (_setup_field(i, dstdescr, dummy_arr, &offset, dstdata)) {
                 return -1;
             }
-            PyArray_DESCR(dummy_arr)->f->copyswap(dstdata + offset,
+            PyDataType_GetArrFuncs(PyArray_DESCR(dummy_arr))->copyswap(dstdata + offset,
                     srcdata + offset, 0, dummy_arr);
         }
         return 0;
@@ -1190,7 +1190,7 @@ DATETIME_getitem(void *ip, void *vap)
         dt = *((npy_datetime *)ip);
     }
     else {
-        PyArray_DESCR(ap)->f->copyswap(&dt, ip, PyArray_ISBYTESWAPPED(ap), ap);
+        PyDataType_GetArrFuncs(PyArray_DESCR(ap))->copyswap(&dt, ip, PyArray_ISBYTESWAPPED(ap), ap);
     }
 
     return convert_datetime_to_pyobject(dt, meta);
@@ -1214,7 +1214,7 @@ TIMEDELTA_getitem(void *ip, void *vap)
         td = *((npy_timedelta *)ip);
     }
     else {
-        PyArray_DESCR(ap)->f->copyswap(&td, ip, PyArray_ISBYTESWAPPED(ap), ap);
+        PyDataType_GetArrFuncs(PyArray_DESCR(ap))->copyswap(&td, ip, PyArray_ISBYTESWAPPED(ap), ap);
     }
 
     return convert_timedelta_to_pyobject(td, meta);
@@ -1245,7 +1245,7 @@ DATETIME_setitem(PyObject *op, void *ov, void *vap)
         *((npy_datetime *)ov)=temp;
     }
     else {
-        PyArray_DESCR(ap)->f->copyswap(ov, &temp, PyArray_ISBYTESWAPPED(ap),
+        PyDataType_GetArrFuncs(PyArray_DESCR(ap))->copyswap(ov, &temp, PyArray_ISBYTESWAPPED(ap),
                                        ap);
     }
 
@@ -1277,7 +1277,7 @@ TIMEDELTA_setitem(PyObject *op, void *ov, void *vap)
         *((npy_timedelta *)ov)=temp;
     }
     else {
-        PyArray_DESCR(ap)->f->copyswap(ov, &temp, PyArray_ISBYTESWAPPED(ap),
+        PyDataType_GetArrFuncs(PyArray_DESCR(ap))->copyswap(ov, &temp, PyArray_ISBYTESWAPPED(ap),
                                        ap);
     }
 
@@ -2293,7 +2293,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
             }
 
             dummy_fields.descr = new;
-            new->f->copyswapn(dst+offset, dstride,
+            PyDataType_GetArrFuncs(new)->copyswapn(dst+offset, dstride,
                     (src != NULL ? src+offset : NULL),
                     sstride, n, swap, dummy_arr);
         }
@@ -2336,7 +2336,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
 
         num = descr->elsize / subitemsize;
         for (i = 0; i < n; i++) {
-            new->f->copyswapn(dstptr, subitemsize, srcptr,
+            PyDataType_GetArrFuncs(new)->copyswapn(dstptr, subitemsize, srcptr,
                     subitemsize, num, swap, dummy_arr);
             dstptr += dstride;
             if (srcptr) {
@@ -2380,7 +2380,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
                 return;
             }
             dummy_fields.descr = new;
-            new->f->copyswap(dst+offset,
+            PyDataType_GetArrFuncs(new)->copyswap(dst+offset,
                     (src != NULL ? src+offset : NULL),
                     swap, dummy_arr);
         }
@@ -2418,7 +2418,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         dummy_fields.descr = new;
 
         num = descr->elsize / subitemsize;
-        new->f->copyswapn(dst, subitemsize, src,
+        PyDataType_GetArrFuncs(new)->copyswapn(dst, subitemsize, src,
                 subitemsize, num, swap, dummy_arr);
         return;
     }
@@ -2534,7 +2534,7 @@ static npy_bool
          */
         @type@ tmp;
 #if @isfloat@
-        PyArray_DESCR(ap)->f->copyswap(&tmp, ip, PyArray_ISBYTESWAPPED(ap),
+        PyDataType_GetArrFuncs(PyArray_DESCR(ap))->copyswap(&tmp, ip, PyArray_ISBYTESWAPPED(ap),
                                        ap);
 #else
         memcpy(&tmp, ip, sizeof(@type@));
@@ -2559,7 +2559,7 @@ static npy_bool
     }
     else {
         @type@ tmp;
-        PyArray_DESCR(ap)->f->copyswap(&tmp, ip, PyArray_ISBYTESWAPPED(ap),
+        PyDataType_GetArrFuncs(PyArray_DESCR(ap))->copyswap(&tmp, ip, PyArray_ISBYTESWAPPED(ap),
                                        ap);
         return (npy_bool) ((npy_creal@suffix@(tmp) != 0) || (npy_cimag@suffix@(tmp) != 0));
     }
@@ -2673,7 +2673,7 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
             else {
                 PyArray_ENABLEFLAGS(dummy_arr, NPY_ARRAY_ALIGNED);
             }
-            if (new->f->nonzero(ip+offset, dummy_arr)) {
+            if (PyDataType_GetArrFuncs(new)->nonzero(ip+offset, dummy_arr)) {
                 nonz = NPY_TRUE;
                 break;
             }
@@ -3038,7 +3038,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
                 }
                 memcpy(nip1, ip1 + offset, new->elsize);
                 if (swap)
-                    new->f->copyswap(nip1, NULL, swap, dummy);
+                    PyDataType_GetArrFuncs(new)->copyswap(nip1, NULL, swap, dummy);
             }
             if (swap || !npy_is_aligned(nip2, new->alignment)) {
                 /*
@@ -3055,10 +3055,10 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
                 }
                 memcpy(nip2, ip2 + offset, new->elsize);
                 if (swap)
-                    new->f->copyswap(nip2, NULL, swap, dummy);
+                    PyDataType_GetArrFuncs(new)->copyswap(nip2, NULL, swap, dummy);
             }
         }
-        res = new->f->compare(nip1, nip2, dummy);
+        res = PyDataType_GetArrFuncs(new)->compare(nip1, nip2, dummy);
         if (swap || new->alignment > 1) {
             if (nip1 != ip1 + offset) {
                 /* destroy temporary buffer */
@@ -4431,9 +4431,9 @@ set_typeinfo(PyObject *dict)
      */
 
     dtype = _builtin_descrs[NPY_@name1@];
-    if (dtype->f->castdict == NULL) {
-        dtype->f->castdict = PyDict_New();
-        if (dtype->f->castdict == NULL) {
+    if (PyDataType_GetArrFuncs(dtype)->castdict == NULL) {
+        PyDataType_GetArrFuncs(dtype)->castdict = PyDict_New();
+        if (PyDataType_GetArrFuncs(dtype)->castdict == NULL) {
             return -1;
         }
     }
@@ -4448,7 +4448,7 @@ set_typeinfo(PyObject *dict)
         Py_DECREF(key);
         return -1;
     }
-    if (PyDict_SetItem(dtype->f->castdict, key, cobj) < 0) {
+    if (PyDict_SetItem(PyDataType_GetArrFuncs(dtype)->castdict, key, cobj) < 0) {
         Py_DECREF(key);
         Py_DECREF(cobj);
         return -1;

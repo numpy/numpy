@@ -1,6 +1,9 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_
 
+#define _MULTIARRAYMODULE
+#include "numpy/arrayobject.h"
+
 #include "array_method.h"
 #include "dtype_traversal.h"
 

@@ -54,7 +54,7 @@ npy_heapsort(void *start, npy_intp num, void *varr)
 {
     PyArrayObject *arr = (PyArrayObject *)varr;
     npy_intp elsize = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
+    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
     if (elsize == 0) {
         return 0;  /* no need for sorting elements of no size */
     }
@@ -116,7 +116,7 @@ npy_aheapsort(void *vv, npy_intp *tosort, npy_intp n, void *varr)
     char *v = (char *)vv;
     PyArrayObject *arr = (PyArrayObject *)varr;
     npy_intp elsize = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
+    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
     npy_intp *a, i, j, l, tmp;
 
     /* The array needs to be offset by one for heapsort indexing */
