@@ -26,7 +26,8 @@ that target certain CPU features:
       During the runtime, NumPy modules will skip any specified features
       that are not available in the target CPU.
 
-These options are accessible through ``pip`` command.
+These options are accessible at build time by passing setup arguments to meson-python
+via the build frontend (e.g., ``pip`` or ``build``).
 They accept a set of :ref:`CPU features <opt-supported-features>`
 or groups of features that gather several features or
 :ref:`special options <opt-special-options>` that
