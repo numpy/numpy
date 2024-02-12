@@ -621,6 +621,8 @@ typedef struct _PyArray_Descr {
          * if no fields are defined
          */
         PyObject *names;
+         // TODO: Remove: still there to break all downstream nightlies once only
+        void *_former_f;
         /* Metadata about this dtype */
         PyObject *metadata;
         /*
