@@ -116,4 +116,29 @@
 #endif
 
 
+#if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
+#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
+    #define PyDataType_GetArrFuncs _PyDataType_GetArrFuncs
+#elif NPY_ABI_VERSION < 0x02000000
+    NPY_NO_EXPORT PyArray_ArrFuncs *
+    PyDataType_GetArrFuncs(PyArray_Descr *descr)
+    {
+        return descr->f;
+    }
+#else
+    NPY_NO_EXPORT PyArray_ArrFuncs *
+    PyDataType_GetArrFuncs(PyArray_Descr *descr)
+    {
+        if (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION) {
+            return _PyDataType_GetArrFuncs(descr);
+        }
+        else {
+            return descr->f;
+        }
+    }
+#endif
+
+
+#endif  /* not internal build */
+
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_2_COMPAT_H_ */

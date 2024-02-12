@@ -254,4 +254,13 @@ extern PyArray_DTypeMeta PyArray_StringDType;
 }
 #endif
 
+
+/* Internal version see dtypmeta.c for more information. */
+NPY_NO_EXPORT inline PyArray_ArrFuncs *
+PyDataType_GetArrFuncs(PyArray_Descr *descr)
+{
+    return &NPY_DT_SLOTS(NPY_DTYPE(descr))->f;
+}
+
+
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_ */

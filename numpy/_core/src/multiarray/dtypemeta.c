@@ -1387,3 +1387,22 @@ PyArray_DTypeMeta *_Datetime_dtype = NULL;
 PyArray_DTypeMeta *_Timedelta_dtype = NULL;
 PyArray_DTypeMeta *_Object_dtype = NULL;
 PyArray_DTypeMeta *_Void_dtype = NULL;
+
+
+
+/*NUMPY_API
+ * Fetch the ArrFuncs struct which new lives on the DType and not the
+ * descriptor.  Use of this struct should be avoided but remains necessary
+ * for certain functionality.
+ *
+ * The use of any slot besides getitem, setitem, copyswap, and copyswapn
+ * is only valid after checking for NULL.  Checking for NULL is generally
+ * encouraged.
+ *
+ * The public name of this is a macro until 1.x BC is irrelevant.
+ */
+NPY_NO_EXPORT PyArray_ArrFuncs *
+_PyDataType_GetArrFuncs(PyArray_Descr *descr)
+{
+    return PyDataType_GetArrFuncs(descr);
+}
