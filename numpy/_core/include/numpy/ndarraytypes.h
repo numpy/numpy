@@ -1540,6 +1540,12 @@ PyArray_CHKFLAGS(const PyArrayObject *arr, int flags)
     return (PyArray_FLAGS(arr) & flags) == flags;
 }
 
+#if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
+/* The internal copy of this is now defined in `dtypemeta.h` */
+/*
+ * `PyArray_Scalar` is the same as this function but converts will convert
+ * most NumPy types to Python scalars.
+ */
 static inline PyObject *
 PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 {
@@ -1557,6 +1563,7 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 {
     return ((PyArrayObject_fields *)arr)->descr->f->setitem(v, itemptr, arr);
 }
+#endif  /* not internal */
 
 
 static inline PyArray_Descr *

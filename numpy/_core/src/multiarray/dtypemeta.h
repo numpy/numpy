@@ -262,5 +262,24 @@ PyDataType_GetArrFuncs(PyArray_Descr *descr)
     return &NPY_DT_SLOTS(NPY_DTYPE(descr))->f;
 }
 
+/*
+ * Internal versions.  Note that `PyArray_Pack` or `PyArray_Scalar` are often
+ * preferred (PyArray_Pack knows how to cast and deal with arrays,
+ * PyArray_Scalar will convert to the Python type).
+ */
+static inline PyObject *
+PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
+{
+    return ((PyArrayObject_fields *)arr)->descr->f->getitem(
+                                        (void *)itemptr, (PyArrayObject *)arr);
+}
+
+static inline int
+PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
+{
+    return ((PyArrayObject_fields *)arr)->descr->f->setitem(v, itemptr, arr);
+}
+
+
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_ */

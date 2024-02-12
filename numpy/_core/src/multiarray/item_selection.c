@@ -18,6 +18,7 @@
 #include "multiarraymodule.h"
 #include "common.h"
 #include "dtype_transfer.h"
+#include "dtypemeta.h"
 #include "arrayobject.h"
 #include "ctors.h"
 #include "lowlevel_strided_loops.h"
