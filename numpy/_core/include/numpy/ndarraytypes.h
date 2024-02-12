@@ -579,7 +579,7 @@ typedef struct {
         PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
 
 
-#if !defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+#if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
 /*
  * Public version of the Descriptor struct
  */
@@ -1725,19 +1725,37 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
  * npy_2_compat.h and are not defined here.
  */
 
-/* Access macros for "legacy" fields: metadata, structured and datetime */
-// TODO: Public access to these would be preferable only through a function.
-//       (although macros are good enough to rewire in the future).
-#define PyDataType_SUBARRAY(dtype) (!PyDataType_ISLEGACY(dtype) ?  \
-            NULL : ((_PyArray_LegacyDescr *)dtype)->subarray)
-#define PyDataType_NAMES(dtype) (!PyDataType_ISLEGACY(dtype) ?  \
-            NULL : ((_PyArray_LegacyDescr *)dtype)->names)
-#define PyDataType_FIELDS(dtype) (!PyDataType_ISLEGACY(dtype) ?  \
-            NULL : ((_PyArray_LegacyDescr *)dtype)->fields)
-#define PyDataType_METADATA(dtype) (!PyDataType_ISLEGACY(dtype) ?  \
-            NULL : ((_PyArray_LegacyDescr *)dtype)->metadata)
-#define PyDataType_C_METADATA(dtype) (!PyDataType_ISLEGACY(dtype) ?  \
-            NULL : ((_PyArray_LegacyDescr *)dtype)->c_metadata)
+/*
+ * Access inline functions for legacy fields.  Except metadata these fields are
+ * specific to structured arrays (names, fields) or datetime (c_metadata).
+ * Although technically they may be used (but normally ignored) on non-struct
+ * dtypes as well.
+ * For structured dtypes, new ways to define and access fields make sense.
+ */
+static inline PyArray_ArrayDescr *
+PyDataType_SUBARRAY(PyArray_Descr *dtype) {
+    return !PyDataType_ISLEGACY(dtype) ? NULL : ((_PyArray_LegacyDescr *)dtype)->subarray;
+}
+
+static inline PyObject *
+PyDataType_NAMES(PyArray_Descr *dtype) {
+    return !PyDataType_ISLEGACY(dtype) ? NULL : ((_PyArray_LegacyDescr *)dtype)->names;
+}
+
+static inline PyObject *
+PyDataType_FIELDS(PyArray_Descr *dtype) {
+    return !PyDataType_ISLEGACY(dtype) ? NULL : ((_PyArray_LegacyDescr *)dtype)->fields;
+}
+
+static inline PyObject *
+PyDataType_METADATA(PyArray_Descr *dtype) {
+    return !PyDataType_ISLEGACY(dtype) ? NULL : ((_PyArray_LegacyDescr *)dtype)->metadata;
+}
+
+static inline NpyAuxData *
+PyDataType_C_METADATA(PyArray_Descr *dtype) {
+    return !PyDataType_ISLEGACY(dtype) ? NULL : ((_PyArray_LegacyDescr *)dtype)->c_metadata;
+}
 
 #define PyArray_ISBOOL(obj) PyTypeNum_ISBOOL(PyArray_TYPE(obj))
 #define PyArray_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(PyArray_TYPE(obj))
