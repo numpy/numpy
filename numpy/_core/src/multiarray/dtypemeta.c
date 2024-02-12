@@ -1072,7 +1072,7 @@ object_common_dtype(
  */
 NPY_NO_EXPORT int
 dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr,
-        const char *name, const char *alias)
+        PyArray_ArrFuncs *arr_funcs, const char *name, const char *alias)
 {
     int has_type_set = Py_TYPE(descr) == &PyArrayDescr_Type;
 
@@ -1162,7 +1162,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr,
     Py_INCREF(descr->typeobj);
     dtype_class->scalar_type = descr->typeobj;
     dtype_class->type_num = descr->type_num;
-    dt_slots->f = *(descr->f);
+    dt_slots->f = *arr_funcs;
 
     /* Set default functions (correct for most dtypes, override below) */
     dt_slots->default_descr = nonparametric_default_descr;

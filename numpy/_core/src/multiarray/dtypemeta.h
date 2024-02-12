@@ -155,7 +155,8 @@ python_builtins_are_known_scalar_types(
 
 NPY_NO_EXPORT int
 dtypemeta_wrap_legacy_descriptor(
-        PyArray_Descr *dtypem, const char *name, const char *alias);
+        PyArray_Descr *dtype, PyArray_ArrFuncs *arr_funcs,
+        const char *name, const char *alias);
 
 NPY_NO_EXPORT void
 initialize_legacy_dtypemeta_aliases(PyArray_Descr **_builtin_descrs);
@@ -273,14 +274,15 @@ PyDataType_GetArrFuncs(PyArray_Descr *descr)
 static inline PyObject *
 PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 {
-    return ((PyArrayObject_fields *)arr)->descr->f->getitem(
-                                        (void *)itemptr, (PyArrayObject *)arr);
+    return PyDataType_GetArrFuncs(((PyArrayObject_fields *)arr)->descr)->getitem(
+            (void *)itemptr, (PyArrayObject *)arr);
 }
 
 static inline int
 PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 {
-    return ((PyArrayObject_fields *)arr)->descr->f->setitem(v, itemptr, arr);
+    return PyDataType_GetArrFuncs(((PyArrayObject_fields *)arr)->descr)->setitem(
+            v, itemptr, arr);
 }
 
 

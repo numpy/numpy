@@ -133,7 +133,7 @@
             return _PyDataType_GetArrFuncs(descr);
         }
         else {
-            return descr->f;
+            return ((PyArray_DescrProto *)descr)->f;
         }
     }
 #endif

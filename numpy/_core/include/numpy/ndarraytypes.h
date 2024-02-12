@@ -619,11 +619,6 @@ typedef struct _PyArray_Descr {
          * if no fields are defined
          */
         PyObject *names;
-        /*
-         * a table of functions specific for each
-         * basic data descriptor
-         */
-        PyArray_ArrFuncs *f;
         /* Metadata about this dtype */
         PyObject *metadata;
         /*

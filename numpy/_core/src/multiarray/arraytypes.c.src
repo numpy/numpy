@@ -4069,9 +4069,7 @@ static PyArray_Descr @from@_Descr = {
     NULL,
     /* names */
     NULL,
-    /* f */
-    &_Py@NAME@_ArrFuncs,
-    /* metadata */
+/* metadata */
     NULL,
     /* c_metadata */
     NULL,
@@ -4219,8 +4217,6 @@ NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
     NULL,
     /* names */
     NULL,
-    /* f */
-    &_Py@NAME@_ArrFuncs,
     /* metadata */
     NULL,
     /* c_metadata */
@@ -4393,9 +4389,17 @@ set_typeinfo(PyObject *dict)
      *         CFLOAT, CDOUBLE, CLONGDOUBLE,
      *         OBJECT, STRING, UNICODE, VOID,
      *         DATETIME, TIMEDELTA#
+     * #Name = Bool,
+     *         Byte, UByte, Short, UShort, Int, UInt,
+     *         Long, ULong, LongLong, ULongLong,
+     *         Half, Float, Double, LongDouble,
+     *         CFloat, CDouble, CLongDouble,
+     *         Object, String, Unicode, Void,
+     *         Datetime, Timedelta#
      */
     if (dtypemeta_wrap_legacy_descriptor(
             _builtin_descrs[NPY_@NAME@],
+            &_Py@Name@_ArrFuncs,
             "numpy.dtypes." NPY_@NAME@_Name "DType",
 #ifdef NPY_@NAME@_alias
             "numpy.dtypes." NPY_@NAME@_Alias "DType"

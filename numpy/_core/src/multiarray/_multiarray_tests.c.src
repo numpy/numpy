@@ -531,7 +531,7 @@ create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
     proto.subarray = dtype->subarray;
     proto.fields = dtype->fields;
     proto.names = dtype->names;
-    proto.f = dtype->f;
+    proto.f = PyDataType_GetArrFuncs(dtype);
     proto.metadata = dtype->metadata;
     proto.c_metadata = dtype->c_metadata;
 

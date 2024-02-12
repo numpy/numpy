@@ -292,7 +292,6 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
     descr->fields = descr_proto->fields;
     Py_XINCREF(descr_proto->names);
     descr->names = descr_proto->names;
-    descr->f = descr_proto->f;
     Py_XINCREF(descr_proto->metadata);
     descr->metadata = descr_proto->metadata;
     if (descr_proto->c_metadata != NULL) {
@@ -309,7 +308,7 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
     descr->type_num = typenum;
     /* update prototype to notice duplicate registration */
     descr_proto->type_num = typenum;
-    if (dtypemeta_wrap_legacy_descriptor(descr, name, NULL) < 0) {
+    if (dtypemeta_wrap_legacy_descriptor(descr, descr_proto->f, name, NULL) < 0) {
         descr->type_num = -1;
         NPY_NUMUSERTYPES--;
         /* Override the type, it might be wrong and then decref crashes */
