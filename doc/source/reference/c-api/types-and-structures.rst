@@ -278,7 +278,6 @@ PyArrayDescr_Type and PyArray_Descr
           PyArray_ArrayDescr *subarray;
           PyObject *fields;
           PyObject *names;
-          PyArray_ArrFuncs *f;
           PyObject *metadata;
           NpyAuxData *c_metadata;
           npy_hash_t hash;
@@ -397,13 +396,6 @@ PyArrayDescr_Type and PyArray_Descr
        An ordered tuple of field names. It is NULL if no field is
        defined.
 
-   .. c:member:: PyArray_ArrFuncs *f
-
-       A pointer to a structure containing functions that the type needs
-       to implement internal features. These functions are not the same
-       thing as the universal functions (ufuncs) described later. Their
-       signatures can vary arbitrarily.
-
    .. c:member:: PyObject *metadata
 
        Metadata about this dtype.
@@ -490,6 +482,17 @@ PyArrayDescr_Type and PyArray_Descr
 PyArray_ArrFuncs
 ----------------
 
+.. c:function:: PyArray_ArrFuncs *PyDataType_GetArrFuncs(PyArray_Descr *dtype)
+    Fetch the legacy `PyArray_ArrFuncs` of the datatype (cannot fail).
+
+    .. versionadded:: NumPy 2.0
+        This function was added in a backwards compatible and backportable
+        way in NumPy 2.0 (see ``npy_2_compat.h``).
+        Any code that previously accessed the ``->f`` slot of the
+        ``PyArray_Descr``, must now use this function and backport it to
+        compile with 1.x.
+        (The ``npy_2_compat.h`` header can be vendored for this purpose.)
+
 .. c:type:: PyArray_ArrFuncs
 
     Functions implementing internal features. Not all of these
@@ -536,6 +539,17 @@ PyArray_ArrFuncs
     ``copyswap``, ``copyswapn``, ``getitem``, and ``setitem``
     functions can (and must) deal with mis-behaved arrays. The other
     functions require behaved memory segments.
+
+    .. note::
+        The functions are largely legacy API, however, some are still used.
+        As of NumPy 2.x they are only available via `PyDataType_GetArrFuncs`
+        (see the function for more details).
+        Before using any function defined in the struct you should check
+        whether it is ``NULL``.  In general, the functions ``getitem``,
+        ``setitem``, ``copyswap``, and ``copyswapn`` can be expected to be
+        defined, but all functions are expected to be replaced with newer API.
+        For example, ``PyArray_Pack`` is a more powerful version of ``setitem``
+        that for example correctly deals with casts.
 
     .. c:member:: void cast( \
             void *from, void *to, npy_intp n, void *fromarr, void *toarr)

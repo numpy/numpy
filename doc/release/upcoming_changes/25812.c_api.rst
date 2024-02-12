@@ -1,0 +1,5 @@
+* The ``->f`` slot has been removed from ``PyArray_Descr``.
+  If you use this slot, replace accessing it with
+  `PyDataType_GetArrFuncs` (see its documentation and the `numpy-2-migration-guide`_).
+  In some cases using other functions like ``PyArray_GETITEM`` may
+  be an alterantives.
