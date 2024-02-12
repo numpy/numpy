@@ -243,7 +243,7 @@ For example::
     # On ARMv8/A64, specify NEON is going to enable Advanced SIMD
     # and all predecessor extensions
     python -m build --wheel -Csetup-args=-Dcpu-baseline=neon .
-    # which equivalent to
+    # which is equivalent to
     python -m build --wheel -Csetup-args=-Dcpu-baseline="neon neon_fp16 neon_vfpv4 asimd" .
 
 .. note::
@@ -262,7 +262,7 @@ For example::
 
     # Specify AVX2 will force enables FMA3 on Intel compilers
     python -m build --wheel -Csetup-args=-Dcpu-baseline=avx2 .
-    # which equivalent to
+    # which is equivalent to
     python -m build --wheel -Csetup-args=-Dcpu-baseline="avx2 fma3" .
 
 
