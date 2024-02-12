@@ -720,9 +720,7 @@ cdef inline object PyArray_MultiIterNew5(a, b, c, d, e):
 
 cdef inline tuple PyDataType_SHAPE(dtype d):
     if PyDataType_HASSUBARRAY(d):
-        # TODO: Could make this a C-level access again, but no-subarray fast
-        #       path is probably the interesting one anyway.
-        return <tuple>d.shape
+        return <tuple>d.subarray.shape
     else:
         return ()
 
