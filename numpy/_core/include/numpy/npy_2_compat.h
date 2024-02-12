@@ -118,7 +118,11 @@
 
 #if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
 #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
-    #define PyDataType_GetArrFuncs _PyDataType_GetArrFuncs
+    static inline PyArray_ArrFuncs *
+    PyDataType_GetArrFuncs(PyArray_Descr *descr)
+    {
+        return _PyDataType_GetArrFuncs(descr);
+    }
 #elif NPY_ABI_VERSION < 0x02000000
     static inline PyArray_ArrFuncs *
     PyDataType_GetArrFuncs(PyArray_Descr *descr)
