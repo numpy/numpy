@@ -1,0 +1,7 @@
+* The dtype flags on ``PyArray_Descr`` must now be accessed through the
+  ``PyDataType_FLAGS` inline function to be compatible with both 1.x and 2.x.
+  This function is defined in ``npy_2_compat.h`` to allow backporting.
+  Most or all users should use ``PyDataType_FLAGCHK`` which is available on
+  1.x and does not require backporting.
+  *Cython* users should use Cython 3.  Otherwise access will go through Python
+  unless they use ``PyDataType_FLAGCHK`` instead.

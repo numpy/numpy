@@ -572,8 +572,11 @@ typedef struct {
                                 NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT | \
                                 NPY_NEEDS_INIT | NPY_NEEDS_PYAPI)
 
+/* Actual definition in npy_2_compat.h due to version dependenc */
+static inline npy_uint64 PyDataType_FLAGS(const struct _PyArray_Descr *dtype);
+
 #define PyDataType_FLAGCHK(dtype, flag) \
-        (((dtype)->flags & (flag)) == (flag))
+        ((PyDataType_FLAGS(dtype) & (flag)) == (flag))
 
 #define PyDataType_REFCHK(dtype) \
         PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
