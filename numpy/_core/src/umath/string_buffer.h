@@ -620,14 +620,6 @@ struct call_buffer_member_function {
                 return codepoint_isdigit<enc>(*buf);
             case IMPLEMENTED_UNARY_FUNCTIONS::ISSPACE:
                 return codepoint_isspace<enc>(*buf);
-            case IMPLEMENTED_UNARY_FUNCTIONS::STR_LEN:
-                return (T)buf.num_codepoints();
-            case IMPLEMENTED_UNARY_FUNCTIONS::ISLOWER:
-                return (T)buf.islower();
-            case IMPLEMENTED_UNARY_FUNCTIONS::ISUPPER:
-                return (T)buf.isupper();
-            case IMPLEMENTED_UNARY_FUNCTIONS::ISTITLE:
-                return (T)buf.istitle();
             case IMPLEMENTED_UNARY_FUNCTIONS::ISNUMERIC:
                 return codepoint_isnumeric(*buf);
             case IMPLEMENTED_UNARY_FUNCTIONS::ISDECIMAL:
