@@ -126,6 +126,25 @@ class TestMethods:
         out = np.array(out, dtype=dt)
         assert_array_equal(np.strings.add(in1, in2), out)
 
+    @pytest.mark.parametrize("in1,in2,out", [
+        ("abc", 3, "abcabcabc"),
+        ("abc", 0, ""),
+        ("abc", -1, ""),
+        (["abc", "def"], [1, 4], ["abc", "defdefdefdef"]),
+    ])
+    def test_multiply(self, in1, in2, out, dt):
+        in1 = np.array(in1, dtype=dt)
+        out = np.array(out, dtype=dt)
+        assert_array_equal(np.strings.multiply(in1, in2), out)
+
+    def test_multiply_raises(self, dt):
+        with pytest.raises(TypeError, match="unsupported type"):
+            np.strings.multiply(np.array("abc", dtype=dt), 3.14)
+
+        with pytest.raises(OverflowError,
+                           match="repeated string is too long"):
+            np.strings.multiply(np.array("abc", dtype=dt), sys.maxsize)
+
     @pytest.mark.parametrize("in_,out", [
         ("", False),
         ("a", True),
@@ -615,6 +634,7 @@ class TestMethods:
         ("abc", "xy", "--", -1, "abc"),
         ("Ae¢☃€ 😊" * 2, "A", "B", -1, "Be¢☃€ 😊Be¢☃€ 😊"),
         ("Ae¢☃€ 😊" * 2, "😊", "B", -1, "Ae¢☃€ BAe¢☃€ B"),
+        (["abbc", "abbd"], "b", "z", [1, 2], ["azbc", "azzd"]),
     ])
     def test_replace(self, buf, old, new, count, res, dt):
         if "😊" in buf and dt == "S":

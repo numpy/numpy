@@ -166,6 +166,30 @@ string_add(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out)
 
 
 template <ENCODING enc>
+static inline void
+string_multiply(Buffer<enc> buf1, npy_int64 reps, Buffer<enc> out)
+{
+    size_t len1 = buf1.num_codepoints();
+    if (reps < 1 || len1 == 0) {
+        out.buffer_fill_with_zeros_after_index(0);
+        return;
+    }
+
+    if (len1 == 1) {
+        out.buffer_memset(*buf1, reps);
+        out.buffer_fill_with_zeros_after_index(reps);
+    }
+    else {
+        for (npy_int64 i = 0; i < reps; i++) {
+            buf1.buffer_memcpy(out, len1);
+            out += len1;
+        }
+        out.buffer_fill_with_zeros_after_index(0);
+    }
+}
+
+
+template <ENCODING enc>
 static int
 string_add_loop(PyArrayMethod_Context *context,
                 char *const data[], npy_intp const dimensions[],
@@ -186,6 +210,64 @@ string_add_loop(PyArrayMethod_Context *context,
         Buffer<enc> buf2(in2, elsize2);
         Buffer<enc> outbuf(out, outsize);
         string_add<enc>(buf1, buf2, outbuf);
+
+        in1 += strides[0];
+        in2 += strides[1];
+        out += strides[2];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_multiply_strint_loop(PyArrayMethod_Context *context,
+                char *const data[], npy_intp const dimensions[],
+                npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize;
+    int outsize = context->descriptors[2]->elsize;
+
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *out = data[2];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf(in1, elsize);
+        Buffer<enc> outbuf(out, outsize);
+        string_multiply<enc>(buf, *(npy_int64 *)in2, outbuf);
+
+        in1 += strides[0];
+        in2 += strides[1];
+        out += strides[2];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_multiply_intstr_loop(PyArrayMethod_Context *context,
+                char *const data[], npy_intp const dimensions[],
+                npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[1]->elsize;
+    int outsize = context->descriptors[2]->elsize;
+
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *out = data[2];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf(in2, elsize);
+        Buffer<enc> outbuf(out, outsize);
+        string_multiply<enc>(buf, *(npy_int64 *)in1, outbuf);
 
         in1 += strides[0];
         in2 += strides[1];
@@ -393,6 +475,40 @@ string_addition_resolve_descriptors(
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
     loop_descrs[2]->elsize += loop_descrs[1]->elsize;
+
+    return NPY_NO_CASTING;
+}
+
+
+static NPY_CASTING
+string_multiply_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
+        PyArray_Descr *given_descrs[3],
+        PyArray_Descr *loop_descrs[3],
+        npy_intp *NPY_UNUSED(view_offset))
+{
+    if (given_descrs[2] == NULL) {
+        PyErr_SetString(
+            PyExc_TypeError,
+            "The 'out' kwarg is necessary. Use numpy.strings.multiply without it.");
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
+    if (loop_descrs[0] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
+    if (loop_descrs[1] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    loop_descrs[2] = NPY_DT_CALL_ensure_canonical(given_descrs[2]);
+    if (loop_descrs[2] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
 
     return NPY_NO_CASTING;
 }
@@ -773,6 +889,36 @@ init_string_ufuncs(PyObject *umath)
     if (init_ufunc(
             umath, "add", 2, 1, dtypes, ENCODING::UTF32,
             string_add_loop<ENCODING::UTF32>, string_addition_resolve_descriptors,
+            NULL) < 0) {
+        return -1;
+    }
+
+    dtypes[0] = dtypes[2] = NPY_OBJECT;
+    dtypes[1] = NPY_INT64;
+    if (init_ufunc(
+            umath, "multiply", 2, 1, dtypes, ENCODING::ASCII,
+            string_multiply_strint_loop<ENCODING::ASCII>, string_multiply_resolve_descriptors,
+            NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc(
+            umath, "multiply", 2, 1, dtypes, ENCODING::UTF32,
+            string_multiply_strint_loop<ENCODING::UTF32>, string_multiply_resolve_descriptors,
+            NULL) < 0) {
+        return -1;
+    }
+
+    dtypes[1] = dtypes[2] = NPY_OBJECT;
+    dtypes[0] = NPY_INT64;
+    if (init_ufunc(
+            umath, "multiply", 2, 1, dtypes, ENCODING::ASCII,
+            string_multiply_intstr_loop<ENCODING::ASCII>, string_multiply_resolve_descriptors,
+            NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc(
+            umath, "multiply", 2, 1, dtypes, ENCODING::UTF32,
+            string_multiply_intstr_loop<ENCODING::UTF32>, string_multiply_resolve_descriptors,
             NULL) < 0) {
         return -1;
     }

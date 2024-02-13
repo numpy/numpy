@@ -3,10 +3,11 @@ This module contains a set of functions for vectorized string
 operations.
 """
 
+import sys
 import numpy as np
 from numpy import (
     equal, not_equal, less, less_equal, greater, greater_equal,
-    add
+    add, multiply as _multiply_ufunc,
 )
 from numpy._core.multiarray import _vec_string
 from numpy._core.umath import (
@@ -40,16 +41,15 @@ from numpy._core.umath import (
 __all__ = [
     # UFuncs
     "equal", "not_equal", "less", "less_equal", "greater", "greater_equal",
-    "add", "isalpha", "isdigit", "isspace", "isalnum", "islower", "isupper",
-    "istitle", "isdecimal", "isnumeric", "str_len", "find", "rfind",  "index",
-    "rindex", "count", "startswith", "endswith", "lstrip", "rstrip", "strip",
-    "replace",
+    "add", "multiply", "isalpha", "isdigit", "isspace", "isalnum", "islower",
+    "isupper", "istitle", "isdecimal", "isnumeric", "str_len", "find",
+    "rfind", "index", "rindex", "count", "startswith", "endswith", "lstrip",
+    "rstrip", "strip", "replace",
 
     # _vec_string - Will gradually become ufuncs as well
-    "multiply", "mod", "decode", "encode", "expandtabs", "center",
-    "ljust", "rjust", "zfill", "upper", "lower", "swapcase", "capitalize",
-    "title", "join", "split", "rsplit", "splitlines",
-    "partition", "rpartition", "translate",
+    "mod", "decode", "encode", "expandtabs", "center", "ljust", "rjust",
+    "zfill", "upper", "lower", "swapcase", "capitalize", "title", "join",
+    "split", "rsplit", "splitlines", "partition", "rpartition", "translate",
 ]
 
 
@@ -139,15 +139,26 @@ def multiply(a, i):
            ['d', 'ee', 'fff']], dtype='<U3')
            
     """
-    a_arr = np.asarray(a)
-    i_arr = np.asarray(i)
-    if not issubclass(i_arr.dtype.type, np.integer):
-        raise ValueError("Can only multiply by integers")
-    if a_arr.dtype.kind == "T":
-        return a_arr * i_arr
-    out_size = _get_num_chars(a_arr) * max(int(i_arr.max()), 0)
-    return _vec_string(
-        a_arr, type(a_arr.dtype)(out_size), '__mul__', (i_arr,))
+    a = np.asanyarray(a)
+    i = np.asanyarray(i)
+    if not np.issubdtype(i.dtype, np.integer):
+        raise TypeError(f"unsupported type {i.dtype} for operand 'i'")
+    i = np.where(i < 0, 0, i)
+
+    a_len = str_len(a)
+    overflow_buffers = np.full(i.shape, False)
+    overflow_buffers[i != 0] = a_len[i != 0] > sys.maxsize / i[i != 0]
+    if np.any(overflow_buffers):
+        raise OverflowError("repeated string is too long")
+
+    if a.dtype.char == "T":
+        shape = np.broadcast_shapes(a.shape, i.shape)
+        out = np.empty_like(a, shape=shape)
+    else:
+        buffersizes = a_len * i
+        out_dtype = f"{a.dtype.char}{buffersizes.max()}"
+        out = np.empty_like(a, shape=buffersizes.shape, dtype=out_dtype)
+    return _multiply_ufunc(a, i, out=out)
 
 
 def mod(a, values):
@@ -1068,15 +1079,13 @@ def replace(a, old, new, count=-1):
     array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
     
     """
-    from numpy._core.umath import count as count_occurences
-
     arr = np.asanyarray(a)
     a_dt = arr.dtype
     old = np.asanyarray(old, dtype=getattr(old, 'dtype', a_dt))
     new = np.asanyarray(new, dtype=getattr(new, 'dtype', a_dt))
 
     max_int64 = np.iinfo(np.int64).max
-    counts = count_occurences(arr, old, 0, max_int64)
+    counts = _count_ufunc(arr, old, 0, max_int64)
     count = np.asanyarray(count)
     counts = np.where(count < 0, counts, np.minimum(counts, count))
 
