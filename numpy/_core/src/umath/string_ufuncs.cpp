@@ -119,6 +119,9 @@ struct call_buffer_unary_function {
             case IMPLEMENTED_UNARY_FUNCTIONS::ISSPACE:
                 *(T *)out = buf.isspace();
                 break;
+            case IMPLEMENTED_UNARY_FUNCTIONS::ISALNUM:
+                *(T *)out = buf.isalnum();
+                break;
             case IMPLEMENTED_UNARY_FUNCTIONS::ISLOWER:
                 *(T *)out = buf.islower();
                 break;
@@ -1130,6 +1133,19 @@ init_string_ufuncs(PyObject *umath)
     if (init_ufunc<ENCODING::UTF32>(
             umath, "isspace", "templated_string_isspace", 1, 1, dtypes,
             string_unary_loop<ENCODING::UTF32, IMPLEMENTED_UNARY_FUNCTIONS::ISSPACE, npy_bool>,
+            NULL) < 0) {
+        return -1;
+    }
+
+    if (init_ufunc<ENCODING::ASCII>(
+            umath, "isalnum", "templated_string_isalnum", 1, 1, dtypes,
+            string_unary_loop<ENCODING::ASCII, IMPLEMENTED_UNARY_FUNCTIONS::ISALNUM, npy_bool>,
+            NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc<ENCODING::UTF32>(
+            umath, "isalnum", "templated_string_isalnum", 1, 1, dtypes,
+            string_unary_loop<ENCODING::UTF32, IMPLEMENTED_UNARY_FUNCTIONS::ISALNUM, npy_bool>,
             NULL) < 0) {
         return -1;
     }

@@ -26,6 +26,7 @@ enum class IMPLEMENTED_UNARY_FUNCTIONS {
     ISDECIMAL,
     ISDIGIT,
     ISSPACE,
+    ISALNUM,
     ISLOWER,
     ISUPPER,
     ISTITLE,
@@ -137,6 +138,31 @@ inline bool
 codepoint_isspace<ENCODING::UTF8>(npy_ucs4 code)
 {
     return Py_UNICODE_ISSPACE(code);
+}
+
+template<ENCODING enc>
+inline bool
+codepoint_isalnum(npy_ucs4 code);
+
+template<>
+inline bool
+codepoint_isalnum<ENCODING::ASCII>(npy_ucs4 code)
+{
+    return NumPyOS_ascii_isalnum(code);
+}
+
+template<>
+inline bool
+codepoint_isalnum<ENCODING::UTF32>(npy_ucs4 code)
+{
+    return Py_UNICODE_ISALNUM(code);
+}
+
+template<>
+inline bool
+codepoint_isalnum<ENCODING::UTF8>(npy_ucs4 code)
+{
+    return Py_UNICODE_ISALNUM(code);
 }
 
 template<ENCODING enc>
@@ -468,6 +494,12 @@ struct Buffer {
     }
 
     inline bool
+    isalnum()
+    {
+        return unary_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISALNUM>();
+    }
+
+    inline bool
     islower()
     {
         size_t len = num_codepoints();
@@ -620,6 +652,8 @@ struct call_buffer_member_function {
                 return codepoint_isdigit<enc>(*buf);
             case IMPLEMENTED_UNARY_FUNCTIONS::ISSPACE:
                 return codepoint_isspace<enc>(*buf);
+            case IMPLEMENTED_UNARY_FUNCTIONS::ISALNUM:
+                return codepoint_isalnum<enc>(*buf);
             case IMPLEMENTED_UNARY_FUNCTIONS::ISNUMERIC:
                 return codepoint_isnumeric(*buf);
             case IMPLEMENTED_UNARY_FUNCTIONS::ISDECIMAL:

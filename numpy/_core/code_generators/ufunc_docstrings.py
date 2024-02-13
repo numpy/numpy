@@ -4441,6 +4441,34 @@ add_newdoc('numpy._core.umath', 'isspace',
 
     """)
 
+add_newdoc('numpy._core.umath', 'isalnum',
+    """
+    Returns true for each element if all characters in the string are
+    alphanumeric and there is at least one character, false otherwise.
+
+    Parameters
+    ----------
+    x : array_like, with `np.bytes_` or `np.str_` dtype
+    $PARAMS
+
+    Returns
+    -------
+    out : ndarray
+        Output array of bool
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    str.isalnum
+
+    Examples
+    --------
+    >>> a = np.array(['a', '1', 'a1', '(', ''])
+    >>> np.strings.isalnum(a)
+    array([ True,  True,  True, False, False])
+    
+    """)
+
 add_newdoc('numpy._core.umath', 'islower',
     """
     Returns true for each element if all cased characters in the

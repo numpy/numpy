@@ -381,7 +381,7 @@ NumPyOS_ascii_isdigit(char c)
  *
  * Same as isalnum under C locale
  */
-static int
+NPY_NO_EXPORT int
 NumPyOS_ascii_isalnum(char c)
 {
     return NumPyOS_ascii_isdigit(c) || NumPyOS_ascii_isalpha(c);

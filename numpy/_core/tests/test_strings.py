@@ -170,6 +170,24 @@ class TestMethods:
     @pytest.mark.parametrize("in_,out", [
         ('', False),
         ('a', True),
+        ('A', True),
+        ('\n', False),
+        ('123abc456', True),
+        ('a1b3c', True),
+        ('aBc000 ', False),
+        ('abc\n', False),
+    ])
+    def test_isalnum(self, in_, out, dt):
+        # TODO: Remove this
+        if dt == "T":
+            pytest.xfail(
+                "StringDType support to be added in a follow-up commit")
+        in_ = np.array(in_, dtype=dt)
+        assert_array_equal(np.strings.isalnum(in_), out)
+
+    @pytest.mark.parametrize("in_,out", [
+        ('', False),
+        ('a', True),
         ('A', False),
         ('\n', False),
         ('abc', True),
@@ -671,6 +689,24 @@ class TestUnicodeOnlyMethods:
         buf = np.array("...\u043c......<", dtype=dt)
         assert_array_equal(np.strings.replace(buf,  "<", "&lt;", MAX),
                            "...\u043c......&lt;")
+
+    @pytest.mark.parametrize("dt", ["U", "T"])
+    @pytest.mark.parametrize("in_", [
+        '\U00010401',
+        '\U00010427',
+        '\U00010429',
+        '\U0001044E',
+        '\U0001D7F6',
+        '\U00011066',
+        '\U000104A0',
+        '\U0001F107',
+    ])
+    def test_isalnum_unicode(self, in_, dt):
+        # TODO: Remove this
+        if dt == "T":
+            pytest.xfail(
+                "StringDType support to be added in a follow-up commit")
+        assert_array_equal(np.strings.isalnum(in_), True)
 
     @pytest.mark.parametrize("dt", ["U", "T"])
     @pytest.mark.parametrize("in_,out", [

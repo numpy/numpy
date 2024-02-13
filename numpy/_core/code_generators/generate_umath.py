@@ -1170,6 +1170,11 @@ defdict = {
           docstrings.get('numpy._core.umath.isspace'),
           None,
           ),
+'isalnum':
+    Ufunc(1, 1, False_,
+          docstrings.get('numpy._core.umath.isalnum'),
+          None,
+          ),
 'islower':
     Ufunc(1, 1, False_,
           docstrings.get('numpy._core.umath.islower'),

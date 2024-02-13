@@ -13,6 +13,7 @@ from numpy._core.umath import (
     isalpha,
     isdigit,
     isspace,
+    isalnum,
     islower,
     isupper,
     istitle,
@@ -37,12 +38,12 @@ from numpy._core.umath import (
 __all__ = [
     # UFuncs
     "equal", "not_equal", "less", "less_equal", "greater", "greater_equal",
-    "add", "isalpha", "isdigit", "isspace", "islower", "isupper", "istitle",
-    "isdecimal", "isnumeric", "str_len", "find", "rfind", "count",
+    "add", "isalpha", "isdigit", "isspace", "isalnum", "islower", "isupper",
+    "istitle", "isdecimal", "isnumeric", "str_len", "find", "rfind", "count",
     "startswith", "endswith", "lstrip", "rstrip", "strip", "replace",
 
     # _vec_string - Will gradually become ufuncs as well
-    "isalnum", "multiply", "mod", "index",
+    "multiply", "mod", "index",
     "rindex", "decode", "encode", "expandtabs", "center",
     "ljust", "rjust", "zfill", "upper", "lower", "swapcase", "capitalize",
     "title", "join", "split", "rsplit", "splitlines",
@@ -94,38 +95,6 @@ def _clean_args(*args):
             break
         newargs.append(chk)
     return newargs
-
-
-def isalnum(a):
-    """
-    Returns true for each element if all characters in the string are
-    alphanumeric and there is at least one character, false otherwise.
-
-    Calls :meth:`str.isalnum` element-wise.
-
-    For 8-bit strings, this method is locale-dependent.
-
-    Parameters
-    ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
-
-    Returns
-    -------
-    out : ndarray
-        Output array of str or unicode, depending on input type
-
-    See Also
-    --------
-    str.isalnum
-
-    Examples
-    --------
-    >>> a = np.array(['a', '1', 'a1', '(', ''])
-    >>> np.strings.isalnum(a)
-    array([ True,  True,  True, False, False])
-    
-    """
-    return _vec_string(a, np.bool, 'isalnum')
 
 
 def multiply(a, i):
