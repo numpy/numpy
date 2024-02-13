@@ -422,7 +422,7 @@ init_special_int_comparisons(PyObject *umath)
      * resolver ensures native byte order/canonical representation.
      */
     PyType_Slot slots[] = {
-        {_NPY_METH_get_loop, nullptr},
+        {NPY_METH_get_loop, nullptr},
         {_NPY_METH_resolve_descriptors_with_scalars,
              (void *)&resolve_descriptors_with_scalars},
         {0, NULL},

@@ -399,7 +399,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
     }
 
     PyType_Slot slots[4] = {
-        {_NPY_METH_get_loop, &get_wrapped_legacy_ufunc_loop},
+        {NPY_METH_get_loop, &get_wrapped_legacy_ufunc_loop},
         {NPY_METH_resolve_descriptors, &simple_legacy_resolve_descriptors},
         {NPY_METH_get_reduction_initial, get_reduction_intial},
         {0, NULL},
