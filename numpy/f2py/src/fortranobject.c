@@ -803,7 +803,7 @@ get_elsize(PyObject *obj) {
   */
 
   if (PyArray_Check(obj)) {
-    return PyArray_DESCR((PyArrayObject *)obj)->elsize;
+    return PyArray_ITEMSIZE((PyArrayObject *)obj);
   } else if (PyBytes_Check(obj)) {
     return PyBytes_GET_SIZE(obj);
   } else if (PyUnicode_Check(obj)) {
