@@ -15,6 +15,7 @@
 #include "dtypemeta.h"
 #include "common_dtype.h"
 #include "convert_datatype.h"
+#include "gil_utils.h"
 
 #include "string_ufuncs.h"
 #include "string_fastsearch.h"
@@ -355,7 +356,7 @@ string_find_loop(PyArrayMethod_Context *context,
         Buffer<enc> buf2(in2, elsize2);
         npy_intp idx = string_find<enc>(buf1, buf2, *(npy_int64 *)in3, *(npy_int64 *)in4);
         if (raise_error && idx == -1) {
-            PyErr_SetString(PyExc_ValueError, "substring not found");
+            npy_gil_error(PyExc_ValueError, "substring not found");
             return -1;
         }
         *(npy_intp *)out = idx;
@@ -392,7 +393,7 @@ string_rfind_loop(PyArrayMethod_Context *context,
         Buffer<enc> buf2(in2, elsize2);
         npy_intp idx = string_rfind<enc>(buf1, buf2, *(npy_int64 *)in3, *(npy_int64 *)in4);
         if (raise_error && idx == -1) {
-            PyErr_SetString(PyExc_ValueError, "substring not found");
+            npy_gil_error(PyExc_ValueError, "substring not found");
             return -1;
         }
         *(npy_intp *)out = idx;
