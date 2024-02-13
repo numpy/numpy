@@ -400,7 +400,7 @@ multiarray_funcs_api = {
     # End 2.0 API
     # The actual public API for this is the inline function
     # `PyDataType_GetArrFuncs` checks for the NumPy runtime version.
-    '_PyDataType_GetArrFuncs':                       (320,),
+    '_PyDataType_GetArrFuncs':                       (365,),
 }
 
 ufunc_types_api = {
