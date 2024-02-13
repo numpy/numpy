@@ -717,8 +717,94 @@ The :c:data:`PyArray_Type` can also be sub-typed.
     :c:func:`PyUFunc_ReplaceLoopBySignature` The ``tp_str`` and ``tp_repr``
     methods can also be altered using :c:func:`PyArray_SetStringFunction`.
 
-PyArray_DTypeMeta and Related Types
------------------------------------
+.. arraymethod-structs_
+
+PyArrayMethod_Context and PyArrayMethod_Spec
+--------------------------------------------
+
+.. c:type:: PyArrayMethodObject_tag
+
+   An opaque struct used to represent the method "self" in ArrayMethod loops.
+
+.. c:type:: PyArrayMethod_Context
+
+   A struct that is passed in to ArrayMethod loops to provide context for the
+   runtime usage of the loop.
+
+   .. code-block:: c
+
+      typedef struct {
+          PyObject *caller;
+          struct PyArrayMethodObject_tag *method;
+          PyArray_Descr **descriptors;
+      } PyArrayMethod_Context
+
+   .. c:member:: PyObject *caller
+
+      The caller, which is typically the ufunc that called the loop. May be
+      ``NULL``.
+
+   .. c:member:: struct PyArrayMethodObject_tag *method
+
+      The method "self". Currently this object is an opaque pointer.
+
+   .. c:member:: PyArray_Descr **descriptors
+
+      An array of descriptors for the ufunc loop, filled in by
+      ``resolve_descriptors``. The length of the array is ``nin`` + ``nout``.
+
+.. c:type:: PyArrayMethod_Spec
+
+   A struct used to register an ArrayMethod with NumPy. We use the slots
+   mechanism used by the Python limited API. See below for the slot definitions.
+
+   .. code-block:: c
+
+       typedef struct {
+          const char *name;
+          int nin, nout;
+          NPY_CASTING casting;
+          NPY_ARRAYMETHOD_FLAGS flags;
+          PyArray_DTypeMeta **dtypes;
+          PyType_Slot *slots;
+       } PyArrayMethod_Spec;
+
+   .. c:member:: const char *name
+
+      The name of the loop.
+
+   .. c:member:: int nin
+
+      The number of input operands
+
+   .. c:member:: int nout
+
+      The number of output operands.
+
+   .. c:member:: NPY_CASTING casting
+
+      Used to indicate how minimally permissive a casting operation should
+      be. For example, if a cast operation might in some circumstances be safe,
+      but in others unsafe, then ``NPY_UNSAFE_CASTING`` should be set. Not used
+      for ufunc loops but must still be set.
+
+   .. c:member:: NPY_ARRAYMETHOD_FLAGS flags
+
+      The flags set for the method.
+
+   .. c:member:: PyArray_DTypeMeta **dtypes
+
+      The DTypes for the loop. Must be ``nin`` + ``nout`` in length.
+
+   .. c:member:: PyType_Slot *slots
+
+      An array of slots for the method. Slot IDs must be one of the values
+      below.
+
+.. dtypemeta_
+
+PyArray_DTypeMeta and PyArrayDTypeMeta_Spec
+-------------------------------------------
 
 .. c:type:: PyArray_DTypeMeta
 
@@ -824,147 +910,6 @@ PyArray_DTypeMeta and Related Types
       of functions in the DType API. Slot IDs must be one of the
       DType slot IDs enumerated below.
 
-DType Slot IDs
-++++++++++++++
-
-These IDs correspond to slots in the DType API and are used to identify
-implementations of each slot from the items of the ``slots`` array
-member of ``PyArrayDTypeMeta_Spec`` struct.
-
-.. c:macro:: NPY_DT_discover_descr_from_pyobject
-
-   Used during DType inference to find the correct DType for a given
-   PyObject. Must return a descriptor instance appropriate to store the
-   data in the python object that is passed in.
-
-.. c:macro:: NPY_DT_default_descr
-
-   Returns the default descriptor instance for the DType. Must be
-   defined for parametric data types. Non-parametric data types return
-   the singleton by default.
-
-.. c:macro:: NPY_DT_common_dtype
-
-   Given two input DTypes, determines the appropriate "common" DType
-   that can store values for both types. Returns ``Py_NotImplemented``
-   if no such type exists.
-
-.. c:macro:: NPY_DT_common_instance
-
-   Given two input descriptors, determines the appropriate "common"
-   descriptor that can store values for both instances. Returns ``NULL``
-   on error.
-
-.. c:macro:: NPY_DT_ensure_canonical
-
-   Returns the "canonical" representation for a descriptor instance. The
-   notion of a canonical descriptor generalizes the concept of byte
-   order, in that a canonical descriptor always has native byte
-   order. If the descriptor is already canonical, this function returns
-   a new reference to the input descriptor.
-
-.. c:macro:: NPY_DT_setitem
-
-   Implements scalar setitem for an array element given a PyObject.
-
-.. c:macro:: NPY_DT_getitem
-
-   Implements scalar getitem for an array element. Must return a python
-   scalar.
-
-.. c:macro:: NPY_DT_get_clear_loop
-
-   If defined, sets a traversal loop that clears data in the array. This
-   is most useful for arrays of references that must clean up array
-   entries before the array is garbage collected.
-
-.. c:macro:: NPY_DT_get_fill_zero_loop
-
-   If defined, sets a traversal loop that fills an array with "zero"
-   values, which may have a DType-specific meaning. This is called
-   inside `numpy.zeros` for arrays that need to write a custom sentinel
-   value that represents zero if for some reason a zero-filled array is
-   not sufficient.
-
-.. c:macro:: NPY_DT_finalize_descr
-
-   If defined, a function that is called to "finalize" a descriptor
-   instance after an array is created. One use of this function is to
-   force newly created arrays to have a newly created descriptor
-   instance, no matter what input descriptor is provided by a user.
-
-PyArray_ArrFuncs slots
-^^^^^^^^^^^^^^^^^^^^^^
-
-In addition the above slots, the following slots are exposed to allow
-filling the ``PyArray_ArrFuncs`` struct attached to descriptor
-instances.
-
-.. c:macro:: NPY_DT_PyArray_ArrFuncs_getitem
-
-   Allows setting a per-dtype getitem. Note that this is not necessary
-   to define unless the default version calling the function defined
-   with the ``NPY_DT_getitem`` ID is unsuitable for some reason.
-
-.. c:macro:: NPY_DT_PyArray_ArrFuncs_setitem
-
-   Allows setting a per-dtype setitem. Note that this is not necessary
-   to define unless the default version calling the function defined
-   with the ``NPY_DT_setitem`` ID is unsuitable for some reason.
-
-.. c:macro:: NPY_DT_PyArray_ArrFuncs_compare
-
-   Computes a comparison for `numpy.sort`, implements ``PyArray_CompareFunc``.
-
-.. c:macro:: NPY_DT_PyArray_ArrFuncs_argmax
-
-   Computes the argmax for `numpy.argmax`, implements ``PyArray_ArgFunc``.
-
-.. c:macro:: NPY_DT_PyArray_ArrFuncs_argmin
-
-   Computes the argmin for `numpy.argmin`, implements ``PyArray_ArgFunc``.
-
-.. c:macro:: NPY_DT_PyArray_ArrFuncs_dotfunc
-
-   Computes the dot product for `numpy.dot`, implements
-   ``PyArray_DotFunc``.
-
-.. c:macro:: NPY_DT_PyArray_ArrFuncs_scanfunc
-
-   A formatted input function for `numpy.fromfile`, implements
-   ``PyArray_ScanFunc``.
-
-.. c:macro:: NPY_DT_PyArray_ArrFuncs_fromstr
-
-   A string parsing function for `numpy.fromstring`, implements
-   ``PyArray_FromStrFunc``.
-
-.. c:macro:: NPY_DT_PyArray_ArrFuncs_nonzero
-
-   Computes the nonzero function for `numpy.nonzero`, implements
-   ``PyArray_NonzeroFunc``.
-
-.. c:macro:: NPY_DT_PyArray_ArrFuncs_fill
-
-   An array filling function for `numpy.ndarray.fill`, implements
-   ``PyArray_FillFunc``.
-
-.. c:macro:: NPY_DT_PyArray_ArrFuncs_fillwithscalar
-
-   A function to fill an array with a scalar value for `numpy.ndarray.fill`,
-   implements ``PyArray_FillWithScalarFunc``.
-
-.. c:macro:: NPY_DT_PyArray_ArrFuncs_sort
-
-   An array of PyArray_SortFunc of length ``NPY_NSORTS``. If set, allows
-   defining custom sorting implementations for each of the sorting
-   algorithms numpy implements.
-
-.. c:macro:: NPY_DT_PyArray_ArrFuncs_argsort
-
-   An array of PyArray_ArgSortFunc of length ``NPY_NSORTS``. If set,
-   allows defining custom argsorting implementations for each of the
-   sorting algorithms numpy implements.
 
 PyUFunc_Type and PyUFuncObject
 ------------------------------
