@@ -39,8 +39,6 @@ jobs:
         uses: actions/checkout@v4
       - name: Safe directory
         run: git config --global --add safe.directory `pwd`
-      - name : configure
-        run: autoreconf -fi; ./configure --with-openssl
       - name: Checkout CodeSonar CI-Script
         uses: actions/checkout@v4
         with:
