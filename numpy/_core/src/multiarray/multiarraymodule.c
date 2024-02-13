@@ -750,7 +750,7 @@ _signbit_set(PyArrayObject *arr)
     char byteorder;
     int elsize;
 
-    elsize = PyArray_DESCR(arr)->elsize;
+    elsize = PyArray_ITEMSIZE(arr);
     byteorder = PyArray_DESCR(arr)->byteorder;
     ptr = PyArray_DATA(arr);
     if (elsize > 1 &&
@@ -1068,7 +1068,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     }
 
     op = PyArray_DATA(out_buf);
-    os = PyArray_DESCR(out_buf)->elsize;
+    os = PyArray_ITEMSIZE(out_buf);
     axis = PyArray_NDIM(ap1)-1;
     it1 = (PyArrayIterObject *)
         PyArray_IterAllButAxis((PyObject *)ap1, &axis);
@@ -1198,7 +1198,7 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
     is1 = PyArray_STRIDES(ap1)[0];
     is2 = PyArray_STRIDES(ap2)[0];
     op = PyArray_DATA(ret);
-    os = PyArray_DESCR(ret)->elsize;
+    os = PyArray_ITEMSIZE(ret);
     ip1 = PyArray_DATA(ap1);
     ip2 = PyArray_BYTES(ap2) + n_left*is2;
     n = n - n_left;
@@ -1249,7 +1249,7 @@ static int
 _pyarray_revert(PyArrayObject *ret)
 {
     npy_intp length = PyArray_DIM(ret, 0);
-    npy_intp os = PyArray_DESCR(ret)->elsize;
+    npy_intp os = PyArray_ITEMSIZE(ret);
     char *op = PyArray_DATA(ret);
     char *sw1 = op;
     char *sw2;
@@ -1268,7 +1268,7 @@ _pyarray_revert(PyArrayObject *ret)
         copyswapn(op, os, NULL, 0, length, 1, NULL);
     }
     else {
-        char *tmp = PyArray_malloc(PyArray_DESCR(ret)->elsize);
+        char *tmp = PyArray_malloc(PyArray_ITEMSIZE(ret));
         if (tmp == NULL) {
             PyErr_NoMemory();
             return -1;
@@ -1517,7 +1517,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
     PyArray_Descr *dtype;
 
     if (order == NPY_FORTRANORDER || PyArray_ISFORTRAN(arr) || PyArray_NDIM(arr) == 0) {
-        newstride = PyArray_DESCR(arr)->elsize;
+        newstride = PyArray_ITEMSIZE(arr);
     }
     else {
         newstride = PyArray_STRIDES(arr)[0] * PyArray_DIMS(arr)[0];

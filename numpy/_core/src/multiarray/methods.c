@@ -546,7 +546,7 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
         }
         size = PyArray_SIZE(self);
         if (PyArray_ISONESEGMENT(self)) {
-            copyswapn(PyArray_DATA(self), PyArray_DESCR(self)->elsize, NULL, -1, size, 1, self);
+            copyswapn(PyArray_DATA(self), PyArray_ITEMSIZE(self), NULL, -1, size, 1, self);
         }
         else { /* Use iterator */
             int axis = -1;
@@ -2024,7 +2024,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         }
     }
     overflowed = npy_mul_sizes_with_overflow(
-            &nbytes, nbytes, PyArray_DESCR(self)->elsize);
+            &nbytes, nbytes, PyArray_ITEMSIZE(self));
     if (overflowed) {
         return PyErr_NoMemory();
     }
@@ -2116,7 +2116,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
             memcpy(PyArray_DIMS(self), dimensions, sizeof(npy_intp)*nd);
         }
         _array_fill_strides(PyArray_STRIDES(self), dimensions, nd,
-                               PyArray_DESCR(self)->elsize,
+                               PyArray_ITEMSIZE(self),
                                (is_f_order ? NPY_ARRAY_F_CONTIGUOUS :
                                              NPY_ARRAY_C_CONTIGUOUS),
                                &(fa->flags));
@@ -2149,8 +2149,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 /* byte-swap on pickle-read */
                 npy_intp numels = PyArray_SIZE(self);
                 PyArray_DESCR(self)->f->copyswapn(PyArray_DATA(self),
-                                        PyArray_DESCR(self)->elsize,
-                                        datastr, PyArray_DESCR(self)->elsize,
+                                        PyArray_ITEMSIZE(self),
+                                        datastr, PyArray_ITEMSIZE(self),
                                         numels, 1, self);
                 if (!(PyArray_ISEXTENDED(self) ||
                       PyArray_DESCR(self)->metadata ||
