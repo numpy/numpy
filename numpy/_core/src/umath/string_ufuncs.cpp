@@ -507,6 +507,73 @@ string_expandtabs_loop(PyArrayMethod_Context *context,
 }
 
 
+template <ENCODING enc>
+static int
+string_center_ljust_rjust_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    JUSTPOSITION pos = *(JUSTPOSITION *)(context->method->static_data);
+    int elsize1 = context->descriptors[0]->elsize;
+    int elsize3 = context->descriptors[2]->elsize;
+    int outsize = context->descriptors[3]->elsize;
+
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *in3 = data[2];
+    char *out = data[3];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf(in1, elsize1);
+        Buffer<enc> fill(in3, elsize3);
+        Buffer<enc> outbuf(out, outsize);
+        size_t len = string_pad(buf, *(npy_int64 *)in2, fill, pos, outbuf);
+        if (len < 0) {
+            return -1;
+        }
+
+        in1 += strides[0];
+        in2 += strides[1];
+        in3 += strides[2];
+        out += strides[3];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static int
+string_zfill_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize;
+    int outsize = context->descriptors[2]->elsize;
+
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *out = data[2];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf(in1, elsize);
+        Buffer<enc> outbuf(out, outsize);
+        npy_intp newlen = string_zfill(buf, *(npy_int64 *)in2, outbuf);
+        outbuf.buffer_fill_with_zeros_after_index(newlen);
+
+        in1 += strides[0];
+        in2 += strides[1];
+        out += strides[2];
+    }
+
+    return 0;
+}
+
+
 /* Resolve descriptors & promoter functions */
 
 static NPY_CASTING
@@ -747,6 +814,109 @@ string_expandtabs_resolve_descriptors(
         PyErr_SetString(
             PyExc_TypeError,
             "The 'out' kwarg is necessary. Use numpy.strings.expandtabs without it.");
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
+    if (loop_descrs[0] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
+    if (loop_descrs[1] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    loop_descrs[2] = NPY_DT_CALL_ensure_canonical(given_descrs[2]);
+    if (loop_descrs[2] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    return NPY_NO_CASTING;
+}
+
+
+static int
+string_center_ljust_rjust_promoter(PyObject *NPY_UNUSED(ufunc),
+        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *new_op_dtypes[])
+{
+    Py_INCREF(op_dtypes[0]);
+    new_op_dtypes[0] = op_dtypes[0];
+    new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_Int64DType);
+    Py_INCREF(op_dtypes[0]);
+    new_op_dtypes[2] = op_dtypes[0];
+    Py_INCREF(op_dtypes[0]);
+    new_op_dtypes[3] = op_dtypes[0];
+    return 0;
+}
+
+
+static NPY_CASTING
+string_center_ljust_rjust_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
+        PyArray_Descr *given_descrs[5],
+        PyArray_Descr *loop_descrs[5],
+        npy_intp *NPY_UNUSED(view_offset))
+{
+    if (given_descrs[3] == NULL) {
+        PyErr_SetString(
+            PyExc_TypeError,
+            "The 'out' kwarg is necessary. Use the version in numpy.strings without it.");
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
+    if (loop_descrs[0] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
+    if (loop_descrs[1] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    loop_descrs[2] = NPY_DT_CALL_ensure_canonical(given_descrs[2]);
+    if (loop_descrs[2] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    loop_descrs[3] = NPY_DT_CALL_ensure_canonical(given_descrs[3]);
+    if (loop_descrs[3] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    return NPY_NO_CASTING;
+}
+
+
+static int
+string_zfill_promoter(PyObject *NPY_UNUSED(ufunc),
+        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *new_op_dtypes[])
+{
+    Py_INCREF(op_dtypes[0]);
+    new_op_dtypes[0] = op_dtypes[0];
+    new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_Int64DType);
+    Py_INCREF(op_dtypes[0]);
+    new_op_dtypes[2] = op_dtypes[0];
+    return 0;
+}
+
+
+static NPY_CASTING
+string_zfill_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
+        PyArray_Descr *given_descrs[3],
+        PyArray_Descr *loop_descrs[3],
+        npy_intp *NPY_UNUSED(view_offset))
+{
+    if (given_descrs[2] == NULL) {
+        PyErr_SetString(
+            PyExc_TypeError,
+            "The 'out' kwarg is necessary. Use numpy.strings.zfill without it.");
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
 
@@ -1281,6 +1451,57 @@ init_string_ufuncs(PyObject *umath)
         return -1;
     }
     if (init_promoter(umath, "_expandtabs", 2, 1, string_expandtabs_promoter) < 0) {
+        return -1;
+    }
+
+    dtypes[0] = dtypes[2] = dtypes[3] = NPY_OBJECT;
+    dtypes[1] = NPY_INT64;
+
+    const char *center_ljust_rjust_names[] = {
+        "_center", "_ljust", "_rjust"
+    };
+
+    static JUSTPOSITION padpositions[] = {
+        JUSTPOSITION::CENTER, JUSTPOSITION::LEFT, JUSTPOSITION::RIGHT
+    };
+
+    for (int i = 0; i < 3; i++) {
+        if (init_ufunc(
+                umath, center_ljust_rjust_names[i], 3, 1, dtypes, ENCODING::ASCII,
+                string_center_ljust_rjust_loop<ENCODING::ASCII>,
+                string_center_ljust_rjust_resolve_descriptors,
+                &padpositions[i]) < 0) {
+            return -1;
+        }
+        if (init_ufunc(
+                umath, center_ljust_rjust_names[i], 3, 1, dtypes, ENCODING::UTF32,
+                string_center_ljust_rjust_loop<ENCODING::UTF32>,
+                string_center_ljust_rjust_resolve_descriptors,
+                &padpositions[i]) < 0) {
+            return -1;
+        }
+        if (init_promoter(umath, center_ljust_rjust_names[i], 3, 1,
+                string_center_ljust_rjust_promoter) < 0) {
+            return -1;
+        }
+    }
+
+    dtypes[0] = NPY_OBJECT;
+    dtypes[1] = NPY_INT64;
+    dtypes[2] = NPY_OBJECT;
+    if (init_ufunc(
+            umath, "_zfill", 2, 1, dtypes, ENCODING::ASCII,
+            string_zfill_loop<ENCODING::ASCII>,
+            string_zfill_resolve_descriptors, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc(
+            umath, "_zfill", 2, 1, dtypes, ENCODING::UTF32,
+            string_zfill_loop<ENCODING::UTF32>,
+            string_zfill_resolve_descriptors, NULL) < 0) {
+        return -1;
+    }
+    if (init_promoter(umath, "_zfill", 2, 1, string_zfill_promoter) < 0) {
         return -1;
     }
 
