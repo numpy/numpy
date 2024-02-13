@@ -15,6 +15,7 @@
 #include "convert_datatype.h"
 #include "common_dtype.h"
 #include "dtypemeta.h"
+#include "stringdtype/dtype.h"
 
 #include "npy_argparse.h"
 #include "abstractdtypes.h"
@@ -193,6 +194,12 @@ _PyArray_MapPyTypeToDType(
     int res = PyDict_Contains(_global_pytype_to_type_dict, (PyObject *)pytype);
     if (res < 0) {
         return -1;
+    }
+    else if (DType == &PyArray_StringDType) {
+        // PyArray_StringDType's scalar is str which we allow because it doesn't
+        // participate in DType inference, so don't add it to the
+        // pytype to type mapping
+        return 0;
     }
     else if (res) {
         PyErr_SetString(PyExc_RuntimeError,

@@ -219,7 +219,7 @@ multi-step extension module generation. In this case, after running
 
 .. code-block:: python
 
-	python -m numpy.f2py myroutine.f90 -h myroutine.pyf
+	python -m numpy.f2py myroutine.f90 -m myroutine -h myroutine.pyf
 
 the following signature file is generated:
 

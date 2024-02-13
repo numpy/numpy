@@ -1,0 +1,3 @@
+* ``__array_wrap__`` is now passed ``arr, context, return_scalar`` and
+  implementations not accepting all three are deprecated.  It's signature
+  should be ``__array_wrap__(self, arr, context=None, return_scalar=False)`` 

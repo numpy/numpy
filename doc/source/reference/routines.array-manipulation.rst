@@ -10,6 +10,7 @@ Basic operations
 
     copyto
     shape
+    size
 
 Changing array shape
 ====================
@@ -106,6 +107,7 @@ Adding and removing elements
    resize
    trim_zeros
    unique
+   pad
 
 Rearranging elements
 ====================

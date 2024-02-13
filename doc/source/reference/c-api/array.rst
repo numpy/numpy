@@ -1104,7 +1104,39 @@ User-defined data types
 
     Initialize all function pointers and members to ``NULL``.
 
-.. c:function:: int PyArray_RegisterDataType(PyArray_Descr* dtype)
+.. c:function:: int PyArray_RegisterDataType(PyArray_DescrProto* dtype)
+
+    .. note::
+        As of NumPy 2.0 this API is considered legacy, the new DType API
+        is more powerful and provides additional flexibility.
+        The API may eventually be deprecated but support is continued for
+        the time being.
+
+        **Compiling for NumPy 1.x and 2.x**
+
+        NumPy 2.x requires passing in a ``PyArray_DescrProto`` typed struct
+        rather than a ``PyArray_Descr``.  This is necessary to allow changes.
+        To allow code to run and compile on both 1.x and 2.x you need to
+        change the type of your struct to ``PyArray_DescrProto`` and add::
+
+            /* Allow compiling on NumPy 1.x */
+            #if NPY_ABI_VERSION < 0x02000000
+            #define PyArray_DescrProto PyArray_Descr
+            #endif
+
+        for 1.x compatibility.  Further, the struct will *not* be the actual
+        descriptor anymore, only it's type number will be updated.
+        After successful registration, you must thus fetch the actual
+        dtype with::
+
+            int type_num = PyArray_RegisterDataType(&my_descr_proto);
+            if (type_num < 0) {
+                /* error */
+            }
+            PyArray_Descr *my_descr = PyArray_DescrFromType(type_num);
+
+        With these two changes, the code should compile and work on both 1.x
+        and 2.x or later.
 
     Register a data-type as a new user-defined data type for
     arrays. The type must have most of its entries filled in. This is

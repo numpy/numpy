@@ -38,7 +38,7 @@ linux_aarch64_task:
         CIBW_PRERELEASE_PYTHONS: True
         CIBW_BUILD: cp312-*
 
-  build_script: |
+  initial_setup_script: |
     apt update
     apt install -y python3-venv python-is-python3 gfortran libatlas-base-dev libgfortran5 eatmydata
     git fetch origin
@@ -62,14 +62,10 @@ macosx_arm64_task:
   matrix:
     - env:
         CIRRUS_CLONE_SUBMODULES: true
-        CIBW_BUILD: cp39-*
+        CIBW_BUILD: cp39-* cp310-*
     - env:
         CIRRUS_CLONE_SUBMODULES: true
-        CIBW_BUILD: cp310-* cp311-*
-    - env:
-        CIRRUS_CLONE_SUBMODULES: true
-        CIBW_PRERELEASE_PYTHONS: True
-        CIBW_BUILD: cp312-*
+        CIBW_BUILD: cp311-* cp312-*
   env:
     PATH: /usr/local/lib:/usr/local/include:$PATH
     CIBW_ARCHS: arm64
@@ -85,13 +81,17 @@ macosx_arm64_task:
     
     ver=$(sw_vers -productVersion)
     macos_target=$(python -c "print('14.0') if '$ver' >= '14.0' else print('11.0')")
-    if [ macos_target == '14.0' ]; then
+    if [ $macos_target == '14.0' ]; then
+        # Use native Accelerate
         export INSTALL_OPENBLAS=false
+        export CIBW_ENVIRONMENT_MACOS="MACOSX_DEPLOYMENT_TARGET=$macos_target INSTALL_OPENBLAS=false RUNNER_OS=macOS"
+        export CIBW_REPAIR_WHEEL_COMMAND_MACOS=""
     else
+        # Use scipy-openblas wheels
         export INSTALL_OPENBLAS=true
+        export CIBW_ENVIRONMENT_MACOS="MACOSX_DEPLOYMENT_TARGET=$macos_target INSTALL_OPENBLAS=true RUNNER_OS=macOS PKG_CONFIG_PATH=$PWD/.openblas"
     fi
 
-    export CIBW_ENVIRONMENT_MACOS="MACOSX_DEPLOYMENT_TARGET=$macos_target INSTALL_OPENBLAS=$INSTALL_OPENBLAS INSTALL_GFORTRAN=false RUNNER_OS=macOS"
     
     # needed for submodules
     git submodule update --init

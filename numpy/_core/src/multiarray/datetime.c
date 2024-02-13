@@ -2256,15 +2256,11 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
         else {
             PyObject *offset;
             int seconds_offset, minutes_offset;
-
-            /* 2016-01-14, 1.11 */
-            PyErr_Clear();
-            if (DEPRECATE(
-                    "parsing timezone aware datetimes is deprecated; "
-                    "this will raise an error in the future") < 0) {
-                Py_DECREF(tmp);
-                return -1;
-            }
+            if (PyErr_WarnEx(PyExc_UserWarning,
+                "no explicit representation of timezones available for np.datetime64",
+                1) < 0) {
+                    return -1;
+                }
 
             /* The utcoffset function should return a timedelta */
             offset = PyObject_CallMethod(tmp, "utcoffset", "O", obj);
@@ -4160,7 +4156,7 @@ PyArray_InitializeDatetimeCasts()
      * Some of these casts can fail (casting to unitless datetime), but these
      * are rather special.
      */
-    for (int num = 0; num < NPY_NTYPES; num++) {
+    for (int num = 0; num < NPY_NTYPES_LEGACY; num++) {
         if (!PyTypeNum_ISNUMBER(num) && num != NPY_BOOL) {
             continue;
         }

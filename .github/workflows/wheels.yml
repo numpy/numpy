@@ -107,7 +107,14 @@ jobs:
 
       - name: pkg-config-for-win
         run: |
-          choco install -y --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+          choco install -y --no-progress --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+          $CIBW = "${{ github.workspace }}/.openblas"
+          # pkgconfig needs a complete path, and not just "./openblas since the
+          # build is run in a tmp dir (?)
+          # It seems somewhere in the env passing, `\` is not
+          # passed through, so convert it to '/'
+          $CIBW = $CIBW.replace("\","/")
+          echo "CIBW_ENVIRONMENT_WINDOWS=PKG_CONFIG_PATH=$CIBW" >> $env:GITHUB_ENV
         if: runner.os == 'windows'
 
       # Used to push the built wheels
@@ -116,12 +123,12 @@ jobs:
           python-version: "3.x"
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@7da7df1efc530f07d1945c00934b8cfd34be0d50 # v2.16.1
+        uses: pypa/cibuildwheel@ce3fb7832089eb3e723a0a99cab7f3eaccf074fd  # v2.16.5
         env:
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
-      - uses: actions/upload-artifact@1eb3cb2b3e0f29609092a73eb033bb759a334595 # v4.1.0
+      - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
           name: ${{ matrix.python }}-${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
           path: ./wheelhouse/*.whl
@@ -196,7 +203,7 @@ jobs:
           # TODO: Don't run test suite, and instead build wheels from sdist
           # Depends on pypa/cibuildwheel#1020
           python -m pip install dist/*.gz -Csetup-args=-Dallow-noblas=true
-          pip install -r test_requirements.txt
+          pip install -r requirements/test_requirements.txt
           cd .. # Can't import numpy within numpy src directory
           python -c "import numpy, sys; print(numpy.__version__); sys.exit(numpy.test() is False)"
 
@@ -205,7 +212,7 @@ jobs:
           python -mpip install twine
           twine check dist/*
 
-      - uses: actions/upload-artifact@1eb3cb2b3e0f29609092a73eb033bb759a334595 # v4.1.0
+      - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
           name: sdist
           path: ./dist/*

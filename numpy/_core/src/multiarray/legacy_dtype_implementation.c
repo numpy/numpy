@@ -142,8 +142,8 @@ PyArray_LegacyCanCastSafely(int fromtype, int totype)
     PyArray_Descr *from;
 
     /* Fast table lookup for small type numbers */
-    if ((unsigned int)fromtype < NPY_NTYPES &&
-        (unsigned int)totype < NPY_NTYPES) {
+    if ((unsigned int)fromtype < NPY_NTYPES_LEGACY &&
+        (unsigned int)totype < NPY_NTYPES_LEGACY) {
         return _npy_can_cast_safely_table[fromtype][totype];
     }
 

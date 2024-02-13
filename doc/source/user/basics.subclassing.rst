@@ -633,12 +633,12 @@ some print statements:
           if obj is None: return
           self.info = getattr(obj, 'info', None)
 
-      def __array_wrap__(self, out_arr, context=None):
+      def __array_wrap__(self, out_arr, context=None, return_scalar=False):
           print('In __array_wrap__:')
           print('   self is %s' % repr(self))
           print('   arr is %s' % repr(out_arr))
           # then just call the parent
-          return super().__array_wrap__(self, out_arr, context)
+          return super().__array_wrap__(self, out_arr, context, return_scalar)
 
 We run a ufunc on an instance of our new array:
 
@@ -672,7 +672,7 @@ But, we could do anything we wanted:
 
   class SillySubClass(np.ndarray):
 
-      def __array_wrap__(self, arr, context=None):
+      def __array_wrap__(self, arr, context=None, return_scalar=False):
           return 'I lost your data'
 
 >>> arr1 = np.arange(5)

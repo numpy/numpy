@@ -154,9 +154,19 @@ PyArray_ArrFuncs default_funcs = {
         .setitem = &legacy_setitem_using_DType,
 };
 
+/*
+ * Internal version of PyArrayInitDTypeMeta_FromSpec.
+ *
+ * See the documentation of that function for more details.  Does not do any
+ * error checking.
+
+ * Setting priv to a nonzero value indicates that a dtypemeta is being
+ * initialized from inside NumPy, otherwise this function is being called by
+ * the public implementation.
+ */
 NPY_NO_EXPORT int
 dtypemeta_initialize_struct_from_spec(
-        PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *spec)
+        PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *spec, int priv)
 {
     if (DType->dt_slots != NULL) {
         PyErr_Format(PyExc_RuntimeError,
@@ -334,7 +344,8 @@ dtypemeta_initialize_struct_from_spec(
             }
         }
         /* Register the cast! */
-        int res = PyArray_AddCastingImplementation_FromSpec(meth_spec, 0);
+        // priv indicates whether or not the is an internal call
+        int res = PyArray_AddCastingImplementation_FromSpec(meth_spec, priv);
 
         /* Also clean up again, so nobody can get bad ideas... */
         for (int i=0; i < meth_spec->nin + meth_spec->nout; i++) {
@@ -907,7 +918,7 @@ string_known_scalar_types(
 static PyArray_DTypeMeta *
 default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
-    assert(cls->type_num < NPY_NTYPES);
+    assert(cls->type_num < NPY_NTYPES_LEGACY);
     if (NPY_UNLIKELY(NPY_DT_is_abstract(other))) {
         /*
          * The abstract complex has a lower priority than the concrete inexact
@@ -971,7 +982,7 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 static PyArray_DTypeMeta *
 string_unicode_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
-    assert(cls->type_num < NPY_NTYPES && cls != other);
+    assert(cls->type_num < NPY_NTYPES_LEGACY && cls != other);
     if (!NPY_DT_is_legacy(other) || (!PyTypeNum_ISNUMBER(other->type_num) &&
             /* Not numeric so defer unless cls is unicode and other is string */
             !(cls->type_num == NPY_UNICODE && other->type_num == NPY_STRING))) {
@@ -1067,7 +1078,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr,
 
     if (!has_type_set) {
         /* Accept if the type was filled in from an existing builtin dtype */
-        for (int i = 0; i < NPY_NTYPES; i++) {
+        for (int i = 0; i < NPY_NTYPES_LEGACY; i++) {
             PyArray_Descr *builtin = PyArray_DescrFromType(i);
             has_type_set = Py_TYPE(descr) == Py_TYPE(builtin);
             Py_DECREF(builtin);

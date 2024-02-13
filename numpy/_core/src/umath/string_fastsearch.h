@@ -11,7 +11,6 @@
 #include <type_traits>
 
 #include <numpy/npy_common.h>
-#include "string_buffer.h"
 
 
 /* fast search/count implementation, based on a mix between boyer-
@@ -56,33 +55,164 @@
 #define MEMCHR_CUT_OFF 15
 
 
-template <ENCODING enc>
-inline Py_ssize_t
-findchar(Buffer<enc> s, Py_ssize_t n, npy_ucs4 ch)
-{
-    Buffer<enc> p = s, e = s + n;
+template <typename char_type>
+struct CheckedIndexer {
+    char_type *buffer;
+    size_t length;
 
-    if (n > MEMCHR_CUT_OFF && (enc == ENCODING::ASCII || NPY_SIZEOF_WCHAR_T == 4)) {
-        p = s.buffer_memchr(ch, n);
-        if (p.buf != NULL) {
-            return (p - s);
+    CheckedIndexer<char_type>()
+    {
+        buffer = NULL;
+        length = 0;
+    }
+
+    CheckedIndexer<char_type>(char_type *buf, size_t len)
+    {
+        buffer = buf;
+        length = len;
+    }
+
+    char_type
+    operator*()
+    {
+        return *(this->buffer);
+    }
+
+    char_type
+    operator[](size_t index)
+    {
+        if (index >= this->length) {
+            return (char_type) 0;
+        }
+        return this->buffer[index];
+    }
+
+    CheckedIndexer<char_type>
+    operator+(size_t rhs)
+    {
+        if (rhs > this->length) {
+            rhs = this->length;
+        }
+        return CheckedIndexer<char_type>(this->buffer + rhs, this->length - rhs);
+    }
+
+    CheckedIndexer<char_type>&
+    operator+=(size_t rhs)
+    {
+        if (rhs > this->length) {
+            rhs = this->length;
+        }
+        this->buffer += rhs;
+        this->length -= rhs;
+        return *this;
+    }
+
+    CheckedIndexer<char_type>
+    operator++(int)
+    {
+        *this += 1;
+        return *this;
+    }
+
+    CheckedIndexer<char_type>&
+    operator-=(size_t rhs)
+    {
+        this->buffer -= rhs;
+        this->length += rhs;
+        return *this;
+    }
+
+    CheckedIndexer<char_type>
+    operator--(int)
+    {
+        *this -= 1;
+        return *this;
+    }
+
+    std::ptrdiff_t
+    operator-(CheckedIndexer<char_type> rhs)
+    {
+        return this->buffer - rhs.buffer;
+    }
+
+    CheckedIndexer<char_type>
+    operator-(size_t rhs)
+    {
+        return CheckedIndexer(this->buffer - rhs, this->length + rhs);
+    }
+
+    int
+    operator>(CheckedIndexer<char_type> rhs)
+    {
+        return this->buffer > rhs.buffer;
+    }
+
+    int
+    operator>=(CheckedIndexer<char_type> rhs)
+    {
+        return this->buffer >= rhs.buffer;
+    }
+
+    int
+    operator<(CheckedIndexer<char_type> rhs)
+    {
+        return this->buffer < rhs.buffer;
+    }
+
+    int
+    operator<=(CheckedIndexer<char_type> rhs)
+    {
+        return this->buffer <= rhs.buffer;
+    }
+
+    int
+    operator==(CheckedIndexer<char_type> rhs)
+    {
+        return this->buffer == rhs.buffer;
+    }
+};
+
+
+template <typename char_type>
+inline Py_ssize_t
+findchar(CheckedIndexer<char_type> s, Py_ssize_t n, char_type ch)
+{
+    char_type *p = s.buffer, *e = (s + n).buffer;
+
+    if (n > MEMCHR_CUT_OFF) {
+        if (std::is_same<char_type, char>::value) {
+            p = (char_type *)memchr(s.buffer, ch, n);
+        }
+        else if (NPY_SIZEOF_WCHAR_T == 2) {
+            for (Py_ssize_t i=0; i<n; i++) {
+                if (s[i] == ch) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        else {
+            p = (char_type *)wmemchr((wchar_t *)(s.buffer), ch, n);
+        }
+        if (p != NULL) {
+            return (p - s.buffer);
         }
         return -1;
     }
     while (p < e) {
         if (*p == ch) {
-            return (p - s);
+            return (p - s.buffer);
         }
         p++;
     }
     return -1;
 }
 
-template <ENCODING enc>
+template <typename char_type>
 inline Py_ssize_t
-rfindchar(Buffer<enc> s, Py_ssize_t n, npy_ucs4 ch)
+rfindchar(CheckedIndexer<char_type> s, Py_ssize_t n, char_type ch)
 {
-    Buffer p = s + n;
+    CheckedIndexer<char_type> p = s + n;
     while (p > s) {
         p--;
         if (*p == ch)
@@ -107,9 +237,9 @@ rfindchar(Buffer<enc> s, Py_ssize_t n, npy_ucs4 ch)
 # define LOG_LINEUP()
 #endif
 
-template <ENCODING enc>
+template <typename char_type>
 static inline Py_ssize_t
-_lex_search(Buffer<enc> needle, Py_ssize_t len_needle,
+_lex_search(CheckedIndexer<char_type> needle, Py_ssize_t len_needle,
             Py_ssize_t *return_period, int invert_alphabet)
 {
     /* Do a lexicographic search. Essentially this:
@@ -123,8 +253,8 @@ _lex_search(Buffer<enc> needle, Py_ssize_t len_needle,
 
     while (candidate + k < len_needle) {
         // each loop increases candidate + k + max_suffix
-        npy_ucs4 a = needle[candidate + k];
-        npy_ucs4 b = needle[max_suffix + k];
+        char_type a = needle[candidate + k];
+        char_type b = needle[max_suffix + k];
         // check if the suffix at candidate is better than max_suffix
         if (invert_alphabet ? (b < a) : (a < b)) {
             // Fell short of max_suffix.
@@ -160,11 +290,11 @@ _lex_search(Buffer<enc> needle, Py_ssize_t len_needle,
     return max_suffix;
 }
 
-template <ENCODING enc>
+template <typename char_type>
 static inline Py_ssize_t
-_factorize(Buffer<enc> needle,
-                      Py_ssize_t len_needle,
-                      Py_ssize_t *return_period)
+_factorize(CheckedIndexer<char_type> needle,
+           Py_ssize_t len_needle,
+           Py_ssize_t *return_period)
 {
     /* Do a "critical factorization", making it so that:
        >>> needle = (left := needle[:cut]) + (right := needle[cut:])
@@ -199,8 +329,8 @@ _factorize(Buffer<enc> needle,
        period of the original string. */
 
     Py_ssize_t cut1, period1, cut2, period2, cut, period;
-    cut1 = _lex_search<enc>(needle, len_needle, &period1, 0);
-    cut2 = _lex_search<enc>(needle, len_needle, &period2, 1);
+    cut1 = _lex_search<char_type>(needle, len_needle, &period1, 0);
+    cut2 = _lex_search<char_type>(needle, len_needle, &period2, 1);
 
     // Take the later cut.
     if (cut1 > cut2) {
@@ -228,9 +358,9 @@ _factorize(Buffer<enc> needle,
 #define TABLE_SIZE (1U << TABLE_SIZE_BITS)
 #define TABLE_MASK (TABLE_SIZE - 1U)
 
-template <ENCODING enc>
+template <typename char_type>
 struct prework {
-    Buffer<enc> needle;
+    CheckedIndexer<char_type> needle;
     Py_ssize_t len_needle;
     Py_ssize_t cut;
     Py_ssize_t period;
@@ -240,16 +370,23 @@ struct prework {
 };
 
 
-template <ENCODING enc>
+template <typename char_type>
 static void
-_preprocess(Buffer<enc> needle, Py_ssize_t len_needle,
-            prework<enc> *p)
+_preprocess(CheckedIndexer<char_type> needle, Py_ssize_t len_needle,
+            prework<char_type> *p)
 {
     p->needle = needle;
     p->len_needle = len_needle;
     p->cut = _factorize(needle, len_needle, &(p->period));
     assert(p->period + p->cut <= len_needle);
-    p->is_periodic = (0 == needle.buffer_memcmp(needle + p->period, (size_t) p->cut));
+    int cmp;
+    if (std::is_same<char_type, npy_ucs4>::value) {
+        cmp = memcmp(needle.buffer, needle.buffer + (p->period * sizeof(npy_ucs4)), (size_t) p->cut);
+    }
+    else {
+        cmp = memcmp(needle.buffer, needle.buffer + p->period, (size_t) p->cut);
+    }
+    p->is_periodic = (0 == cmp);
     if (p->is_periodic) {
         assert(p->cut <= len_needle/2);
         assert(p->cut < p->period);
@@ -261,9 +398,9 @@ _preprocess(Buffer<enc> needle, Py_ssize_t len_needle,
         // The gap between the last character and the previous
         // occurrence of an equivalent character (modulo TABLE_SIZE)
         p->gap = len_needle;
-        npy_ucs4 last = needle[len_needle - 1] & TABLE_MASK;
+        char_type last = needle[len_needle - 1] & TABLE_MASK;
         for (Py_ssize_t i = len_needle - 2; i >= 0; i--) {
-            npy_ucs4 x = needle[i] & TABLE_MASK;
+            char_type x = needle[i] & TABLE_MASK;
             if (x == last) {
                 p->gap = len_needle - 1 - i;
                 break;
@@ -283,21 +420,21 @@ _preprocess(Buffer<enc> needle, Py_ssize_t len_needle,
     }
 }
 
-template <ENCODING enc>
+template <typename char_type>
 static Py_ssize_t
-_two_way(Buffer<enc> haystack, Py_ssize_t len_haystack,
-         prework<enc> *p)
+_two_way(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
+         prework<char_type> *p)
 {
     // Crochemore and Perrin's (1991) Two-Way algorithm.
     // See http://www-igm.univ-mlv.fr/~lecroq/string/node26.html#SECTION00260
     const Py_ssize_t len_needle = p->len_needle;
     const Py_ssize_t cut = p->cut;
     Py_ssize_t period = p->period;
-    Buffer<enc> needle = p->needle;
-    Buffer<enc> window_last = haystack + len_needle - 1;
-    Buffer<enc> haystack_end = haystack + len_haystack;
+    CheckedIndexer<char_type> needle = p->needle;
+    CheckedIndexer<char_type> window_last = haystack + (len_needle - 1);
+    CheckedIndexer<char_type> haystack_end = haystack + len_haystack;
     SHIFT_TYPE *table = p->table;
-    Buffer<enc> window;
+    CheckedIndexer<char_type> window;
     LOG("===== Two-way: \"%s\" in \"%s\". =====\n", needle, haystack);
 
     if (p->is_periodic) {
@@ -326,7 +463,7 @@ _two_way(Buffer<enc> haystack, Py_ssize_t len_haystack,
             for (; i < len_needle; i++) {
                 if (needle[i] != window[i]) {
                     LOG("Right half does not match.\n");
-                    window_last += i - cut + 1;
+                    window_last += (i - cut + 1);
                     memory = 0;
                     goto periodicwindowloop;
                 }
@@ -412,26 +549,26 @@ _two_way(Buffer<enc> haystack, Py_ssize_t len_haystack,
 }
 
 
-template <ENCODING enc>
+template <typename char_type>
 static inline Py_ssize_t
-_two_way_find(Buffer<enc> haystack, Py_ssize_t len_haystack,
-              Buffer<enc> needle, Py_ssize_t len_needle)
+_two_way_find(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
+              CheckedIndexer<char_type> needle, Py_ssize_t len_needle)
 {
     LOG("###### Finding \"%s\" in \"%s\".\n", needle, haystack);
-    prework<enc> p;
+    prework<char_type> p;
     _preprocess(needle, len_needle, &p);
     return _two_way(haystack, len_haystack, &p);
 }
 
 
-template <ENCODING enc>
+template <typename char_type>
 static inline Py_ssize_t
-_two_way_count(Buffer<enc> haystack, Py_ssize_t len_haystack,
-               Buffer<enc> needle, Py_ssize_t len_needle,
+_two_way_count(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
+               CheckedIndexer<char_type> needle, Py_ssize_t len_needle,
                Py_ssize_t maxcount)
 {
     LOG("###### Counting \"%s\" in \"%s\".\n", needle, haystack);
-    prework<enc> p;
+    prework<char_type> p;
     _preprocess(needle, len_needle, &p);
     Py_ssize_t index = 0, count = 0;
     while (1) {
@@ -461,17 +598,17 @@ _two_way_count(Buffer<enc> haystack, Py_ssize_t len_haystack,
 #undef LOG_STRING
 #undef LOG_LINEUP
 
-template <ENCODING enc>
+template <typename char_type>
 static inline Py_ssize_t
-default_find(Buffer<enc> s, Py_ssize_t n,
-             Buffer<enc> p, Py_ssize_t m,
+default_find(CheckedIndexer<char_type> s, Py_ssize_t n,
+             CheckedIndexer<char_type> p, Py_ssize_t m,
              Py_ssize_t maxcount, int mode)
 {
     const Py_ssize_t w = n - m;
     Py_ssize_t mlast = m - 1, count = 0;
     Py_ssize_t gap = mlast;
-    const npy_ucs4 last = p[mlast];
-    Buffer<enc> ss = s + mlast;
+    const char_type last = p[mlast];
+    CheckedIndexer<char_type> ss = s + mlast;
 
     unsigned long mask = 0;
     for (Py_ssize_t i = 0; i < mlast; i++) {
@@ -522,18 +659,18 @@ default_find(Buffer<enc> s, Py_ssize_t n,
 }
 
 
-template <ENCODING enc>
+template <typename char_type>
 static Py_ssize_t
-adaptive_find(Buffer<enc> s, Py_ssize_t n,
-              Buffer<enc> p, Py_ssize_t m,
+adaptive_find(CheckedIndexer<char_type> s, Py_ssize_t n,
+              CheckedIndexer<char_type> p, Py_ssize_t m,
               Py_ssize_t maxcount, int mode)
 {
     const Py_ssize_t w = n - m;
     Py_ssize_t mlast = m - 1, count = 0;
     Py_ssize_t gap = mlast;
     Py_ssize_t hits = 0, res;
-    const npy_ucs4 last = p[mlast];
-    Buffer<enc> ss = s + mlast;
+    const char_type last = p[mlast];
+    CheckedIndexer<char_type> ss = s + mlast;
 
     unsigned long mask = 0;
     for (Py_ssize_t i = 0; i < mlast; i++) {
@@ -595,10 +732,10 @@ adaptive_find(Buffer<enc> s, Py_ssize_t n,
 }
 
 
-template <ENCODING enc>
+template <typename char_type>
 static Py_ssize_t
-default_rfind(Buffer<enc> s, Py_ssize_t n,
-              Buffer<enc> p, Py_ssize_t m,
+default_rfind(CheckedIndexer<char_type> s, Py_ssize_t n,
+              CheckedIndexer<char_type> p, Py_ssize_t m,
               Py_ssize_t maxcount, int mode)
 {
     /* create compressed boyer-moore delta 1 table */
@@ -646,10 +783,10 @@ default_rfind(Buffer<enc> s, Py_ssize_t n,
 }
 
 
-template <ENCODING enc>
+template <typename char_type>
 static inline Py_ssize_t
-countchar(Buffer<enc> s, Py_ssize_t n,
-          const npy_ucs4 p0, Py_ssize_t maxcount)
+countchar(CheckedIndexer<char_type> s, Py_ssize_t n,
+          const char_type p0, Py_ssize_t maxcount)
 {
     Py_ssize_t i, count = 0;
     for (i = 0; i < n; i++) {
@@ -664,12 +801,15 @@ countchar(Buffer<enc> s, Py_ssize_t n,
 }
 
 
-template <ENCODING enc>
+template <typename char_type>
 inline Py_ssize_t
-fastsearch(Buffer<enc> s, Py_ssize_t n,
-           Buffer<enc> p, Py_ssize_t m,
+fastsearch(char_type* s, Py_ssize_t n,
+           char_type* p, Py_ssize_t m,
            Py_ssize_t maxcount, int mode)
 {
+    CheckedIndexer<char_type> s_(s, n);
+    CheckedIndexer<char_type> p_(p, m);
+
     if (n < m || (mode == FAST_COUNT && maxcount == 0)) {
         return -1;
     }
@@ -681,17 +821,17 @@ fastsearch(Buffer<enc> s, Py_ssize_t n,
         }
         /* use special case for 1-character strings */
         if (mode == FAST_SEARCH)
-            return findchar(s, n, p[0]);
+            return findchar(s_, n, p_[0]);
         else if (mode == FAST_RSEARCH)
-            return rfindchar(s, n, p[0]);
+            return rfindchar(s_, n, p_[0]);
         else {
-            return countchar(s, n, p[0], maxcount);
+            return countchar(s_, n, p_[0], maxcount);
         }
     }
 
     if (mode != FAST_RSEARCH) {
         if (n < 2500 || (m < 100 && n < 30000) || m < 6) {
-            return default_find(s, n, p, m, maxcount, mode);
+            return default_find(s_, n, p_, m, maxcount, mode);
         }
         else if ((m >> 2) * 3 < (n >> 2)) {
             /* 33% threshold, but don't overflow. */
@@ -700,10 +840,10 @@ fastsearch(Buffer<enc> s, Py_ssize_t n,
                expensive O(m) startup cost of the two-way algorithm
                will surely pay off. */
             if (mode == FAST_SEARCH) {
-                return _two_way_find(s, n, p, m);
+                return _two_way_find(s_, n, p_, m);
             }
             else {
-                return _two_way_count(s, n, p, m, maxcount);
+                return _two_way_count(s_, n, p_, m, maxcount);
             }
         }
         else {
@@ -712,12 +852,12 @@ fastsearch(Buffer<enc> s, Py_ssize_t n,
                we match O(m) characters without any matches of the
                entire needle, then we predict that the startup cost of
                the two-way algorithm will probably be worth it. */
-            return adaptive_find(s, n, p, m, maxcount, mode);
+            return adaptive_find(s_, n, p_, m, maxcount, mode);
         }
     }
     else {
         /* FAST_RSEARCH */
-        return default_rfind(s, n, p, m, maxcount, mode);
+        return default_rfind(s_, n, p_, m, maxcount, mode);
     }
 }
 

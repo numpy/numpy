@@ -8,7 +8,6 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
-#define _NPY_NO_DEPRECATIONS /* for NPY_CHAR */
 
 #include "numpy/npy_common.h"
 #include "numpy/arrayobject.h"
@@ -29,6 +28,7 @@
 #include "arrayobject.h"
 #include "alloc.h"
 #include "gil_utils.h"
+#include "stringdtype/dtype.h"
 
 #include "npy_longdouble.h"
 #include "numpyos.h"
@@ -359,7 +359,23 @@ NPY_NO_EXPORT int
     @type@ temp;  /* ensures alignment */
 
 #if @is_int@
-    if (PyLong_Check(op)) {
+    int is_pylong = PyLong_Check(op);
+    // array objects do not get checked for overflow after conversion to a
+    // pyint because the default fill value for integer masked arrays is
+    // array(999999), which overflows for (u)int8 and (u)int16.
+    if (!(is_pylong || PyArray_Check(op))) {
+        PyObject* ret = PyNumber_Long(op);
+        if (ret == NULL) {
+            return -1;
+        }
+        op = ret;
+        if (@TYPE@_safe_pyint_setitem(op, &temp) < 0) {
+            Py_DECREF(op);
+            return -1;
+        }
+        Py_DECREF(op);
+    }
+    else if (is_pylong) {
         /*
          * When weak promotion is enabled (using NEP 50) we also use more
          * strict parsing of integers:  All out-of-bound Python integer
@@ -2298,7 +2314,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
                 !PyDataType_HASFIELDS(descr->subarray->base) &&
                 !PyDataType_HASSUBARRAY(descr->subarray->base) &&
                 !PyDataType_REFCHK(descr->subarray->base) &&
-                (descr->subarray->base->type_num < NPY_NTYPES));
+                (descr->subarray->base->type_num < NPY_NTYPES_LEGACY));
 
         if (can_optimize_subarray) {
             _basic_copyn(dst, dstride, src, sstride, n, descr->elsize);
@@ -2383,7 +2399,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
                 !PyDataType_HASFIELDS(descr->subarray->base) &&
                 !PyDataType_HASSUBARRAY(descr->subarray->base) &&
                 !PyDataType_REFCHK(descr->subarray->base) &&
-                (descr->subarray->base->type_num < NPY_NTYPES));
+                (descr->subarray->base->type_num < NPY_NTYPES_LEGACY));
 
         if (can_optimize_subarray) {
             _basic_copy(dst, src, descr->elsize);
@@ -4215,8 +4231,10 @@ NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
 
 /**end repeat**/
 
-#define _MAX_LETTER 128
-static char _letter_to_num[_MAX_LETTER];
+/* The smallest type number is ?, the largest bounded by 'z'. */
+#define _MAX_LETTER ('z' + 1)
+static npy_int16 _letter_to_num[_MAX_LETTER - '?'];
+#define LETTER_TO_NUM(letter) _letter_to_num[letter - '?']
 
 static PyArray_Descr *_builtin_descrs[] = {
     &BOOL_Descr,
@@ -4263,7 +4281,11 @@ PyArray_DescrFromType(int type)
          */
         ret = NULL;
     }
-    else if (type < NPY_NTYPES) {
+    else if (type == NPY_VSTRING || type == NPY_VSTRINGLTR) {
+        ret = (PyArray_Descr *)new_stringdtype_instance(NULL, 1, NULL);
+    }
+    // builtin legacy dtypes
+    else if (type < NPY_NTYPES_LEGACY) {
         ret = _builtin_descrs[type];
     }
     else if (type == NPY_NOTYPE) {
@@ -4274,18 +4296,11 @@ PyArray_DescrFromType(int type)
          */
         return NULL;
     }
-    else if ((type == NPY_CHAR) || (type == NPY_CHARLTR)) {
-        if (type == NPY_CHAR) {
-            /*
-             * warning added 2017-04-25, 1.13
-             * deprecated in 1.7
-             * */
-            if (DEPRECATE("The NPY_CHAR type_num is deprecated. "
-                          "Please port your code to use "
-                          "NPY_STRING instead.") < 0) {
-                return NULL;
-            }
-        }
+    else if (type == NPY_CHAR) {
+        /* Deprecation expired for NumPy 2.0 */
+        ret = NULL;
+    }
+    else if (type == NPY_CHARLTR) {
         ret = PyArray_DescrNew(_builtin_descrs[NPY_STRING]);
         if (ret == NULL) {
             return NULL;
@@ -4298,11 +4313,11 @@ PyArray_DescrFromType(int type)
         ret = userdescrs[type - NPY_USERDEF];
     }
     else {
-        int num = NPY_NTYPES;
-        if (type < _MAX_LETTER) {
-            num = (int) _letter_to_num[type];
+        int num = NPY_NTYPES_LEGACY;
+        if (type >= '?' && type < _MAX_LETTER) {
+            num = (int) LETTER_TO_NUM(type);
         }
-        if (num >= NPY_NTYPES) {
+        if (num < 0 || num >= NPY_NTYPES_LEGACY) {
             ret = NULL;
         }
         else {
@@ -4422,24 +4437,25 @@ set_typeinfo(PyObject *dict)
             return -1;
         }
     }
-    if ((void *)@name1@_to_@name2@ != NULL) {
-        key = PyLong_FromLong(NPY_@name2@);
-        if (key == NULL) {
-            return -1;
-        }
-        cobj = NpyCapsule_FromVoidPtr((void *)@name1@_to_@name2@, NULL);
-        if (cobj == NULL) {
-            Py_DECREF(key);
-            return -1;
-        }
-        if (PyDict_SetItem(dtype->f->castdict, key, cobj) < 0) {
-            Py_DECREF(key);
-            Py_DECREF(cobj);
-            return -1;
-        }
+
+#ifndef @name1@_to_@name2@  /* Legacy cast NOT defined as NULL. */
+    key = PyLong_FromLong(NPY_@name2@);
+    if (key == NULL) {
+        return -1;
+    }
+    cobj = NpyCapsule_FromVoidPtr((void *)@name1@_to_@name2@, NULL);
+    if (cobj == NULL) {
+        Py_DECREF(key);
+        return -1;
+    }
+    if (PyDict_SetItem(dtype->f->castdict, key, cobj) < 0) {
         Py_DECREF(key);
         Py_DECREF(cobj);
+        return -1;
     }
+    Py_DECREF(key);
+    Py_DECREF(cobj);
+#endif  /* Legacy cast is used */
 
     /**end repeat1**/
 
@@ -4456,8 +4472,8 @@ set_typeinfo(PyObject *dict)
         return -1;
     }
 
-    for (i = 0; i < _MAX_LETTER; i++) {
-        _letter_to_num[i] = NPY_NTYPES;
+    for (i = '?'; i < _MAX_LETTER; i++) {
+        LETTER_TO_NUM(i) = -1;
     }
 
     /**begin repeat
@@ -4471,21 +4487,23 @@ set_typeinfo(PyObject *dict)
      *         DATETIME,TIMEDELTA#
      */
 
-    _letter_to_num[NPY_@name@LTR] = NPY_@name@;
+    LETTER_TO_NUM(NPY_@name@LTR) = NPY_@name@;
 
     /**end repeat**/
-    _letter_to_num['n'] = NPY_INTP;
-    _letter_to_num['N'] = NPY_UINTP;
+    LETTER_TO_NUM('n') = NPY_INTP;
+    LETTER_TO_NUM('N') = NPY_UINTP;
 
 #if NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_INTP
-    _letter_to_num['p'] = NPY_INTP;
-    _letter_to_num['P'] = NPY_UINTP;
+    LETTER_TO_NUM('p') = NPY_INTP;
+    LETTER_TO_NUM('P') = NPY_UINTP;
 #elif NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_LONGLONG
-    _letter_to_num['p'] = NPY_LONGLONG;
-    _letter_to_num['P'] = NPY_ULONGLONG;
+    LETTER_TO_NUM('p') = NPY_LONGLONG;
+    LETTER_TO_NUM('P') = NPY_ULONGLONG;
 #else
     #error "Did not find correct pointer sized integer."
 #endif
+
+    LETTER_TO_NUM('T') = NPY_VSTRING;
 
     /**begin repeat
       * #name = BOOL,

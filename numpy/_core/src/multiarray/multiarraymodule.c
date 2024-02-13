@@ -40,6 +40,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "arrayfunction_override.h"
 #include "arraytypes.h"
 #include "arrayobject.h"
+#include "array_converter.h"
 #include "hashdescr.h"
 #include "descriptor.h"
 #include "dragon4.h"
@@ -71,6 +72,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "convert.h" /* for PyArray_AssignZero */
 #include "lowlevel_strided_loops.h"
 #include "dtype_transfer.h"
+#include "stringdtype/dtype.h"
 
 #include "get_attr_string.h"
 #include "experimental_public_dtype_api.h"  /* _get_experimental_dtype_api */
@@ -776,7 +778,7 @@ PyArray_ScalarKind(int typenum, PyArrayObject **arr)
 {
     NPY_SCALARKIND ret = NPY_NOSCALAR;
 
-    if ((unsigned int)typenum < NPY_NTYPES) {
+    if ((unsigned int)typenum < NPY_NTYPES_LEGACY) {
         ret = _npy_scalar_kinds_table[typenum];
         /* Signed integer types are INTNEG in the table */
         if (ret == NPY_INTNEG_SCALAR) {
@@ -812,7 +814,7 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
     if (scalar == NPY_NOSCALAR) {
         return PyArray_CanCastSafely(thistype, neededtype);
     }
-    if ((unsigned int)neededtype < NPY_NTYPES) {
+    if ((unsigned int)neededtype < NPY_NTYPES_LEGACY) {
         NPY_SCALARKIND neededscalar;
 
         if (scalar == NPY_OBJECT_SCALAR) {
@@ -3068,7 +3070,7 @@ array_arange(PyObject *NPY_UNUSED(ignored),
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("arange", args, len_args, kwnames,
-            "|start", NULL, &o_start,
+            "|", NULL, &o_start,
             "|stop", NULL, &o_stop,
             "|step", NULL, &o_step,
             "|dtype", &PyArray_DescrConverter2, &typecode,
@@ -4119,7 +4121,8 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
     if (PyArray_TYPE(char_array) == NPY_STRING) {
         method = PyObject_GetAttr((PyObject *)&PyBytes_Type, method_name);
     }
-    else if (PyArray_TYPE(char_array) == NPY_UNICODE) {
+    else if (PyArray_TYPE(char_array) == NPY_UNICODE ||
+             NPY_DTYPE(PyArray_DTYPE(char_array)) == &PyArray_StringDType) {
         method = PyObject_GetAttr((PyObject *)&PyUnicode_Type, method_name);
     }
     else {
@@ -4784,7 +4787,11 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis2 = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_like = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_numpy = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_where = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_convert = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_preserve = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_convert_if_no_array = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_cpu = NULL;
+
 
 static int
 intern_strings(void)
@@ -4843,6 +4850,19 @@ intern_strings(void)
     }
     npy_ma_str_where = PyUnicode_InternFromString("where");
     if (npy_ma_str_where == NULL) {
+        return -1;
+    }
+    /* scalar policies */
+    npy_ma_str_convert = PyUnicode_InternFromString("convert");
+    if (npy_ma_str_convert == NULL) {
+        return -1;
+    }
+    npy_ma_str_preserve = PyUnicode_InternFromString("preserve");
+    if (npy_ma_str_preserve == NULL) {
+        return -1;
+    }
+    npy_ma_str_convert_if_no_array = PyUnicode_InternFromString("convert_if_no_array");
+    if (npy_ma_str_convert_if_no_array == NULL) {
         return -1;
     }
     npy_ma_str_cpu = PyUnicode_InternFromString("cpu");
@@ -5129,12 +5149,21 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (set_typeinfo(d) != 0) {
         goto err;
     }
+
     if (PyType_Ready(&PyArrayFunctionDispatcher_Type) < 0) {
         goto err;
     }
     PyDict_SetItemString(
             d, "_ArrayFunctionDispatcher",
             (PyObject *)&PyArrayFunctionDispatcher_Type);
+
+    if (PyType_Ready(&PyArrayArrayConverter_Type) < 0) {
+        goto err;
+    }
+    PyDict_SetItemString(
+            d, "_array_converter",
+            (PyObject *)&PyArrayArrayConverter_Type);
+
     if (PyType_Ready(&PyArrayMethod_Type) < 0) {
         goto err;
     }
@@ -5149,6 +5178,10 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
+    if (init_string_dtype() < 0) {
+        goto err;
+    }
+
     if (initumath(m) != 0) {
         goto err;
     }
@@ -5156,6 +5189,28 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (set_matmul_flags(d) < 0) {
         goto err;
     }
+
+    /*
+     * Initialize np.dtypes.StringDType
+     *
+     * Note that this happens here after initializing
+     * the legacy built-in DTypes to avoid a circular dependency
+     * during NumPy setup, since this needs to happen after
+     * init_string_dtype() but that needs to happen after
+     * the legacy dtypemeta classes are available.
+     */
+    static PyObject *add_dtype_helper = NULL;
+    npy_cache_import("numpy.dtypes", "_add_dtype_helper", &add_dtype_helper);
+    if (add_dtype_helper == NULL) {
+        goto err;
+    }
+
+    if (PyObject_CallFunction(
+            add_dtype_helper,
+            "Os", (PyObject *)&PyArray_StringDType, NULL) == NULL) {
+        goto err;
+    }
+    PyDict_SetItemString(d, "StringDType", (PyObject *)&PyArray_StringDType);
 
     /*
      * Initialize the default PyDataMem_Handler capsule singleton.

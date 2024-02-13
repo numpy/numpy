@@ -1,21 +1,58 @@
+import warnings
+
 import numpy as np
 
-# Note: we use dtype objects instead of dtype classes. The spec does not
-# require any behavior on dtypes other than equality.
-int8 = np.dtype("int8")
-int16 = np.dtype("int16")
-int32 = np.dtype("int32")
-int64 = np.dtype("int64")
-uint8 = np.dtype("uint8")
-uint16 = np.dtype("uint16")
-uint32 = np.dtype("uint32")
-uint64 = np.dtype("uint64")
-float32 = np.dtype("float32")
-float64 = np.dtype("float64")
-complex64 = np.dtype("complex64")
-complex128 = np.dtype("complex128")
+# Note: we wrap the NumPy dtype objects in a bare class, so that none of the
+# additional methods and behaviors of NumPy dtype objects are exposed.
+
+class _DType:
+    def __init__(self, np_dtype):
+        np_dtype = np.dtype(np_dtype)
+        self._np_dtype = np_dtype
+
+    def __repr__(self):
+        return f"np.array_api.{self._np_dtype.name}"
+
+    def __eq__(self, other):
+        # See https://github.com/numpy/numpy/pull/25370/files#r1423259515.
+        # Avoid the user error of numpy.array_api.float32 == numpy.float32,
+        # which gives False. Making == error is probably too egregious, so
+        # warn instead.
+        if isinstance(other, np.dtype) or (
+            isinstance(other, type) and issubclass(other, np.generic)
+        ):
+            warnings.warn(
+                """You are comparing a numpy.array_api dtype against \
+a NumPy native dtype object, but you probably don't want to do this. \
+numpy.array_api dtype objects compare unequal to their NumPy equivalents. \
+Such cross-library comparison is not supported by the standard.""",
+            stacklevel=2)
+        if not isinstance(other, _DType):
+            return NotImplemented
+        return self._np_dtype == other._np_dtype
+
+    def __hash__(self):
+        # Note: this is not strictly required
+        # (https://github.com/data-apis/array-api/issues/582), but makes the
+        # dtype objects much easier to work with here and elsewhere if they
+        # can be used as dict keys.
+        return hash(self._np_dtype)
+
+
+int8 = _DType("int8")
+int16 = _DType("int16")
+int32 = _DType("int32")
+int64 = _DType("int64")
+uint8 = _DType("uint8")
+uint16 = _DType("uint16")
+uint32 = _DType("uint32")
+uint64 = _DType("uint64")
+float32 = _DType("float32")
+float64 = _DType("float64")
+complex64 = _DType("complex64")
+complex128 = _DType("complex128")
 # Note: This name is changed
-bool = np.dtype("bool")
+bool = _DType("bool")
 
 _all_dtypes = (
     int8,

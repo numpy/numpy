@@ -5,12 +5,13 @@ from cpython cimport PyFloat_AsDouble
 import sys
 import numpy as np
 cimport numpy as np
-cimport numpy.math as npmath
 
 from libc.stdint cimport uintptr_t
+from libc.math cimport isnan, signbit
 
 cdef extern from "limits.h":
     cdef long LONG_MAX  # NumPy has it, maybe `__init__.pyd` should expose it
+
 
 
 __all__ = ['interface']
@@ -430,10 +431,10 @@ cdef int check_array_constraint(np.ndarray val, object name, constraint_type con
 cdef int check_constraint(double val, object name, constraint_type cons) except -1:
     cdef bint is_nan
     if cons == CONS_NON_NEGATIVE:
-        if not npmath.isnan(val) and npmath.signbit(val):
+        if not isnan(val) and signbit(val):
             raise ValueError(name + " < 0")
     elif cons == CONS_POSITIVE or cons == CONS_POSITIVE_NOT_NAN:
-        if cons == CONS_POSITIVE_NOT_NAN and npmath.isnan(val):
+        if cons == CONS_POSITIVE_NOT_NAN and isnan(val):
             raise ValueError(name + " must not be NaN")
         elif val <= 0:
             raise ValueError(name + " <= 0")

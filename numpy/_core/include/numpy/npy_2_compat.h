@@ -55,32 +55,38 @@
  *
  * The default integer has changed, `NPY_DEFAULT_INT` is available at runtime
  * for use as type number, e.g. `PyArray_DescrFromType(NPY_DEFAULT_INT)`.
+ *
+ * NPY_RAVEL_AXIS
+ *
+ * This was introduced in NumPy 2.0 to allow indicating that an axis should be
+ * raveled in an operation. Before NumPy 2.0, NPY_MAXDIMS was used for this purpose.
+ *
+ * NPY_MAXDIMS
+ *
+ * A constant indicating the maximum number dimensions allowed when creating
+ * an ndarray.
+ *
+ * NPY_NTYPES_LEGACY
+ *
+ * The number of built-in NumPy dtypes.
  */
 #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
     #define NPY_DEFAULT_INT NPY_INTP
+    #define NPY_RAVEL_AXIS NPY_MIN_INT
+    #define NPY_MAXARGS 64
 #elif NPY_ABI_VERSION < 0x02000000
     #define NPY_DEFAULT_INT NPY_LONG
+    #define NPY_RAVEL_AXIS 32
+    #define NPY_MAXARGS 32
+
+    /* Aliases of 2.x names to 1.x only equivalent names */
+    #define NPY_NTYPES NPY_NTYPES_LEGACY
+    #define PyArray_DescrProto PyArray_Descr
 #else
     #define NPY_DEFAULT_INT  \
         (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? NPY_INTP : NPY_LONG)
-#endif
-
-
-#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
-    #define NPY_RAVEL_AXIS NPY_MIN_INT
-#elif NPY_ABI_VERSION < 0x02000000
-    #define NPY_RAVEL_AXIS 32
-#else
     #define NPY_RAVEL_AXIS  \
         (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? -1 : 32)
-#endif
-
-
-#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
-    #define NPY_MAXARGS 64
-#elif NPY_ABI_VERSION < 0x02000000
-    #define NPY_MAXARGS 32
-#else
     #define NPY_MAXARGS  \
         (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? 64 : 32)
 #endif

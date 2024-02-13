@@ -1,0 +1,14 @@
+Make ``numpy.array_api`` more portable
+--------------------------------------
+
+``numpy.array_api`` no longer uses ``"cpu"`` as its "device", but rather a
+separate ``CPU_DEVICE`` object (which is not accessible in the namespace).
+This is because "cpu" is not part of the array API standard.
+
+``numpy.array_api`` now uses separate wrapped objects for dtypes. Previously
+it reused the ``numpy`` dtype objects. This makes it clear which behaviors on
+dtypes are part of the array API standard (effectively, the standard only
+requires ``==``  on dtype objects).
+
+``numpy.array_api.nonzero`` now errors on zero-dimensional arrays, as required
+by the array API standard.

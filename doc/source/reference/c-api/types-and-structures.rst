@@ -97,8 +97,7 @@ PyArray_Type and PyArrayObject
           /* version dependent private members */
       } PyArrayObject;
 
-   .. c:macro:: PyObject_HEAD
-
+   :c:macro:`PyObject_HEAD`
        This is needed by all Python objects. It consists of (at least)
        a reference count member ( ``ob_refcnt`` ) and a pointer to the
        typeobject ( ``ob_type`` ). (Other elements may also be present
@@ -478,7 +477,7 @@ PyArrayDescr_Type and PyArray_Descr
     .. code-block:: c
 
        typedef struct {
-           PyArray_VectorUnaryFunc *cast[NPY_NTYPES];
+           PyArray_VectorUnaryFunc *cast[NPY_NTYPES_LEGACY];
            PyArray_GetItemFunc *getitem;
            PyArray_SetItemFunc *setitem;
            PyArray_CopySwapNFunc *copyswapn;

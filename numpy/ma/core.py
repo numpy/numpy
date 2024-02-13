@@ -3090,7 +3090,7 @@ class MaskedArray(ndarray):
             # Finalize the default fill_value for structured arrays
             self._fill_value = _check_fill_value(None, self.dtype)
 
-    def __array_wrap__(self, obj, context=None):
+    def __array_wrap__(self, obj, context=None, return_scalar=False):
         """
         Special hook for ufuncs.
 
@@ -6695,7 +6695,7 @@ class MaskedConstant(MaskedArray):
             self.__class__ = MaskedArray
             MaskedArray.__array_finalize__(self, obj)
 
-    def __array_wrap__(self, obj, context=None):
+    def __array_wrap__(self, obj, context=None, return_scalar=False):
         return self.view(MaskedArray).__array_wrap__(obj, context)
 
     def __str__(self):

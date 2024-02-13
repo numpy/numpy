@@ -1,4 +1,4 @@
-* ``np.trapz`` has been deprecated. Use ``scipy.interpolate.trapezoid`` instead.
+* ``np.trapz`` has been deprecated. Use ``np.trapezoid`` or a ``scipy.integrate`` function instead.
 
 * ``np.in1d`` has been deprecated. Use ``np.isin`` instead.
 

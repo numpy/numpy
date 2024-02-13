@@ -119,6 +119,8 @@ Solving equations and inverting matrices
 
 Other matrix operations
 -----------------------
+.. autosummary::
+   :toctree: generated/
 
    diagonal
    linalg.diagonal (Array API compatible)

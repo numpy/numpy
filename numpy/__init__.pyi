@@ -1493,6 +1493,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         self,
         array: ndarray[_ShapeType2, _DType],
         context: None | tuple[ufunc, tuple[Any, ...], int] = ...,
+        return_scalar: builtins.bool = ...,
         /,
     ) -> ndarray[_ShapeType2, _DType]: ...
 
@@ -3655,6 +3656,7 @@ class memmap(ndarray[_ShapeType, _DType_co]):
         self,
         array: memmap[_ShapeType, _DType_co],
         context: None | tuple[ufunc, tuple[Any, ...], int] = ...,
+        return_scalar: builtins.bool = ...,
     ) -> Any: ...
     def flush(self) -> None: ...
 

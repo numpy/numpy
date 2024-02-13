@@ -107,7 +107,7 @@ def test_float_to_string_cast(str_dt, float_dt):
     assert_array_equal(res, np.array(expected, dtype=str_dt))
 
 
-@pytest.mark.parametrize("dt", ["S", "U"])
+@pytest.mark.parametrize("dt", ["S", "U", "T"])
 class TestMethods:
 
     @pytest.mark.parametrize("in1,in2,out", [
@@ -212,8 +212,12 @@ class TestMethods:
                      id="15000*a+15000*b-15000*c-0-MAX--1"),
         (["abcdefghiabc", "rrarrrrrrrrra"], ["def", "arr"], [0, 3],
          [MAX, MAX], [3, -1]),
+        ("Ae¢☃€ 😊" * 2, "😊", 0, MAX, 6),
+        ("Ae¢☃€ 😊" * 2, "😊", 7, MAX, 13),
     ])
     def test_find(self, a, sub, start, end, out, dt):
+        if "😊" in a and dt == "S":
+            pytest.skip("Bytes dtype does not support non-ascii input")
         a = np.array(a, dtype=dt)
         sub = np.array(sub, dtype=dt)
         assert_array_equal(np.strings.find(a, sub, start, end), out)
@@ -231,8 +235,12 @@ class TestMethods:
         ("rrarrrrrrrrra", "a", 4, 6, -1),
         (["abcdefghiabc", "rrarrrrrrrrra"], ["abc", "a"], [0, 0],
          [MAX, MAX], [9, 12]),
+        ("Ae¢☃€ 😊" * 2, "😊", 0, MAX, 13),
+        ("Ae¢☃€ 😊" * 2, "😊", 0, 7, 6),
     ])
     def test_rfind(self, a, sub, start, end, out, dt):
+        if "😊" in a and dt == "S":
+            pytest.skip("Bytes dtype does not support non-ascii input")
         a = np.array(a, dtype=dt)
         sub = np.array(sub, dtype=dt)
         assert_array_equal(np.strings.rfind(a, sub, start, end), out)
@@ -272,9 +280,12 @@ class TestMethods:
         ("", "xx", 0, MAX, 0),
         ("", "xx", 1, 1, 0),
         ("", "xx", MAX, 0, 0),
-        (["aaa", ""], ["a", ""], [0, 0], [MAX, MAX], [3, 1])
+        (["aaa", ""], ["a", ""], [0, 0], [MAX, MAX], [3, 1]),
+        ("Ae¢☃€ 😊" * 100, "😊", 0, MAX, 100),
     ])
     def test_count(self, a, sub, start, end, out, dt):
+        if "😊" in a and dt == "S":
+            pytest.skip("Bytes dtype does not support non-ascii input")
         a = np.array(a, dtype=dt)
         sub = np.array(sub, dtype=dt)
         assert_array_equal(np.strings.count(a, sub, start, end), out)
@@ -384,6 +395,8 @@ class TestMethods:
         ("", "", ""),
         ("", "xyz", ""),
         ("hello", "", "hello"),
+        (["hello    ", "abcdefghijklmnop"], None,
+         ["hello", "abcdefghijklmnop"]),
         ("xyzzyhelloxyzzy", "xyz", "xyzzyhello"),
         ("hello", "xyz", "hello"),
         ("xyxz", "xyxz", ""),
@@ -542,8 +555,12 @@ class TestMethods:
         ("abc", "", "-", 0, "abc"),
         ("abc", "ab", "--", 0, "abc"),
         ("abc", "xy", "--", MAX, "abc"),
+        ("Ae¢☃€ 😊" * 2, "A", "B", MAX, "Be¢☃€ 😊Be¢☃€ 😊"),
+        ("Ae¢☃€ 😊" * 2, "😊", "B", MAX, "Ae¢☃€ BAe¢☃€ B"),
     ])
     def test_replace(self, buf, old, new, count, res, dt):
+        if "😊" in buf and dt == "S":
+            pytest.skip("Bytes dtype does not support non-ascii input")
         buf = np.array(buf, dtype=dt)
         old = np.array(old, dtype=dt)
         new = np.array(new, dtype=dt)
@@ -552,6 +569,7 @@ class TestMethods:
 
 
 class TestUnicodeOnlyMethods:
+    @pytest.mark.parametrize("dt", ["U", "T"])
     @pytest.mark.parametrize("in_,out", [
         ("", False),
         ("a", False),
@@ -563,14 +581,16 @@ class TestUnicodeOnlyMethods:
         ("012345a", False),
         (["0", "a"], [True, False]),
     ])
-    def test_isdecimal_unicode(self, in_, out):
-        assert_array_equal(np.strings.isdecimal(in_), out)
+    def test_isdecimal_unicode(self, in_, out, dt):
+        buf = np.array(in_, dtype=dt)
+        assert_array_equal(np.strings.isdecimal(buf), out)
 
     def test_isdecimal_bytes(self):
         in_ = np.array(b"1")
         with assert_raises(TypeError):
             np.strings.isdecimal(in_)
 
+    @pytest.mark.parametrize("dt", ["U", "T"])
     @pytest.mark.parametrize("in_,out", [
         ("", False),
         ("a", False),
@@ -582,50 +602,63 @@ class TestUnicodeOnlyMethods:
         ("012345a", False),
         (["0", "a"], [True, False]),
     ])
-    def test_isnumeric_unicode(self, in_, out):
-        assert_array_equal(np.strings.isnumeric(in_), out)
+    def test_isnumeric_unicode(self, in_, out, dt):
+        buf = np.array(in_, dtype=dt)
+        assert_array_equal(np.strings.isnumeric(buf), out)
 
     def test_isnumeric_bytes(self):
         in_ = np.array(b"1")
         with assert_raises(TypeError):
             np.strings.isnumeric(in_)
 
-    def test_replace_unicode(self):
-        assert_array_equal(np.strings.replace(
-            "...\u043c......<", "<", "&lt;", MAX), "...\u043c......&lt;")
+    @pytest.mark.parametrize("dt", ["U", "T"])
+    def test_replace_unicode(self, dt):
+        buf = np.array("...\u043c......<", dtype=dt)
+        assert_array_equal(np.strings.replace(buf,  "<", "&lt;", MAX),
+                           "...\u043c......&lt;")
 
 
+def check_itemsize(n_elem, dt):
+    if dt == "T":
+        return np.dtype(dt).itemsize
+    if dt == "S":
+        return n_elem
+    if dt == "U":
+        return n_elem * 4
+
+@pytest.mark.parametrize("dt", ["S", "U", "T"])
 class TestReplaceOnArrays:
 
-    def test_replace_count_and_size(self):
-        a = np.array(["0123456789" * i for i in range(4)])
+    def test_replace_count_and_size(self, dt):
+        a = np.array(["0123456789" * i for i in range(4)], dtype=dt)
         r1 = np.strings.replace(a, "5", "ABCDE", MAX)
-        assert r1.dtype.itemsize == (3*10 + 3*4) * 4
-        assert_array_equal(r1, np.array(["01234ABCDE6789" * i
-                                         for i in range(4)]))
+        assert r1.dtype.itemsize == check_itemsize(3*10 + 3*4, dt)
+        r1_res = np.array(["01234ABCDE6789" * i for i in range(4)], dtype=dt)
+        assert_array_equal(r1, r1_res)
         r2 = np.strings.replace(a, "5", "ABCDE", 1)
-        assert r2.dtype.itemsize == (3*10 + 4) * 4
+        assert r2.dtype.itemsize == check_itemsize(3*10 + 4, dt)
         r3 = np.strings.replace(a, "5", "ABCDE", 0)
         assert r3.dtype.itemsize == a.dtype.itemsize
         assert_array_equal(r3, a)
         # Negative values mean to replace all.
         r4 = np.strings.replace(a, "5", "ABCDE", -1)
-        assert r4.dtype.itemsize == (3*10 + 3*4) * 4
+        assert r4.dtype.itemsize == check_itemsize(3*10 + 3*4, dt)
         assert_array_equal(r4, r1)
         # We can do count on an element-by-element basis.
         r5 = np.strings.replace(a, "5", "ABCDE", [-1, -1, -1, 1])
-        assert r5.dtype.itemsize == (3*10 + 4) * 4
+        assert r5.dtype.itemsize == check_itemsize(3*10 + 4, dt)
         assert_array_equal(r5, np.array(
             ["01234ABCDE6789" * i for i in range(3)]
-            + ["01234ABCDE6789" + "0123456789" * 2]))
+            + ["01234ABCDE6789" + "0123456789" * 2], dtype=dt))
 
-    def test_replace_broadcasting(self):
-        a = np.array("0,0,0")
+    def test_replace_broadcasting(self, dt):
+        a = np.array("0,0,0", dtype=dt)
         r1 = np.strings.replace(a, "0", "1", np.arange(3))
         assert r1.dtype == a.dtype
-        assert_array_equal(r1, np.array(["0,0,0", "1,0,0", "1,1,0"]))
+        assert_array_equal(r1, np.array(["0,0,0", "1,0,0", "1,1,0"], dtype=dt))
         r2 = np.strings.replace(a, "0", [["1"], ["2"]], np.arange(1, 4))
         assert_array_equal(r2, np.array([["1,0,0", "1,1,0", "1,1,1"],
-                                         ["2,0,0", "2,2,0", "2,2,2"]]))
+                                         ["2,0,0", "2,2,0", "2,2,2"]],
+                                        dtype=dt))
         r3 = np.strings.replace(a, ["0", "0,0", "0,0,0"], "X", MAX)
-        assert_array_equal(r3, np.array(["X,X,X", "X,0", "X"]))
+        assert_array_equal(r3, np.array(["X,X,X", "X,0", "X"], dtype=dt))
