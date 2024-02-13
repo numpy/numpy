@@ -134,8 +134,7 @@ typedef struct {
  */
 #define _NPY_METH_resolve_descriptors_with_scalars 1
 #define NPY_METH_resolve_descriptors 2
-/* We may want to adapt the `get_loop` signature a bit: */
-#define _NPY_METH_get_loop 3
+#define NPY_METH_get_loop 3
 #define NPY_METH_get_reduction_initial 4
 /* specific loops for constructions/default get_loop: */
 #define NPY_METH_strided_loop 5

@@ -1702,6 +1702,13 @@ implements.
 
    A specialized inner-loop option to speed up common ``ufunc.at`` computations.
 
+.. c:macro:: NPY_METH_get_loop
+
+   Allows more fine-grained control over loop selection. Accepts an
+   implementation of PyArrayMethod_GetLoop, which in turn returns a
+   strided loop implementation. If ``NPY_METH_get_loop`` is defined,
+   the other loop slot IDs are ignored, if specified.
+
 ArrayMethod Flags
 ~~~~~~~~~~~~~~~~~
 
