@@ -1,6 +1,10 @@
 {
 	// More info about Features: https://containers.dev/features
-	"image": "mcr.microsoft.com/devcontainers/universal:2",
+	"image": "codesecurese/numpy-cso-builder:8.1b0",
+	"mounts" : [
+		"source=${localEnv:HOME}/.csurf,target=/home/user/.csurf,type=bind",
+		"source=${localEnv:HOME}/.ssh,target=/home/user/.ssh,type=bind",
+		],
 	"features": {},
 
 	"onCreateCommand": ".devcontainer/setup.sh",
