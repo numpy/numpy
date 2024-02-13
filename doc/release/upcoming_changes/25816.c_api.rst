@@ -1,3 +1,6 @@
+* Due to runtime dependencies, some functionality was moved out of
+  ``numpy/ndarraytypes.h`` and is only available after including ``ndarrayobject.h``
+  (requires ``import_array()`` setup).
 * The dtype flags on ``PyArray_Descr`` must now be accessed through the
   ``PyDataType_FLAGS` inline function to be compatible with both 1.x and 2.x.
   This function is defined in ``npy_2_compat.h`` to allow backporting.

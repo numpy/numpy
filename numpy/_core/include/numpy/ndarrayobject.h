@@ -237,6 +237,28 @@ NPY_TITLE_KEY_check(PyObject *key, PyObject *value)
 #define DEPRECATE(msg) PyErr_WarnEx(PyExc_DeprecationWarning,msg,1)
 #define DEPRECATE_FUTUREWARNING(msg) PyErr_WarnEx(PyExc_FutureWarning,msg,1)
 
+
+/*
+ * These macros unfortunately require runtime version checks and are only
+ * defined in `npy_2_compat.h`.  For that reasons they cannot be part of
+ * `ndarraytypes.h` which tries to be self contained.
+ */
+
+#define PyDataType_FLAGCHK(dtype, flag) \
+        ((PyDataType_FLAGS(dtype) & (flag)) == (flag))
+
+#define PyDataType_REFCHK(dtype) \
+        PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
+
+#define NPY_BEGIN_THREADS_DESCR(dtype) \
+        do {if (!(PyDataType_FLAGCHK((dtype), NPY_NEEDS_PYAPI))) \
+                NPY_BEGIN_THREADS;} while (0);
+
+#define NPY_END_THREADS_DESCR(dtype) \
+        do {if (!(PyDataType_FLAGCHK((dtype), NPY_NEEDS_PYAPI))) \
+                NPY_END_THREADS; } while (0);
+
+
 #ifdef __cplusplus
 }
 #endif
