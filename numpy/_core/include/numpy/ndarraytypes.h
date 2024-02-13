@@ -1478,13 +1478,13 @@ PyArray_NDIM(const PyArrayObject *arr)
 }
 
 static inline void *
-PyArray_DATA(PyArrayObject *arr)
+PyArray_DATA(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->data;
 }
 
 static inline char *
-PyArray_BYTES(PyArrayObject *arr)
+PyArray_BYTES(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->data;
 }
