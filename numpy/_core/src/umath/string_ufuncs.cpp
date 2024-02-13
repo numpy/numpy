@@ -999,7 +999,7 @@ init_comparison(PyObject *umath)
 
 static int
 init_promoter(PyObject *umath, const char *name, int nin, int nout,
-              promoter_function promoter)
+              PyArrayMethod_PromoterFunction promoter)
 {
     PyObject *promoter_obj = PyCapsule_New((void *) promoter, "numpy._ufunc_promoter", NULL);
     if (promoter_obj == NULL) {
@@ -1034,7 +1034,7 @@ template <ENCODING enc>
 static int
 init_ufunc(PyObject *umath, const char *name, const char *specname, int nin, int nout,
            NPY_TYPES *typenums, PyArrayMethod_StridedLoop loop,
-           resolve_descriptors_function resolve_descriptors)
+           PyArrayMethod_ResolveDescriptors resolve_descriptors)
 {
     int res = -1;
 

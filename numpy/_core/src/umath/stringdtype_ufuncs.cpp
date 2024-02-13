@@ -2597,7 +2597,7 @@ string_multiply_promoter(PyObject *ufunc_obj, PyArray_DTypeMeta *op_dtypes[],
 // Pass NULL for resolve_func to use the default_resolve_descriptors.
 int
 init_ufunc(PyObject *umath, const char *ufunc_name, PyArray_DTypeMeta **dtypes,
-           resolve_descriptors_function *resolve_func,
+           PyArrayMethod_ResolveDescriptors *resolve_func,
            PyArrayMethod_StridedLoop *loop_func, int nin, int nout,
            NPY_CASTING casting, NPY_ARRAYMETHOD_FLAGS flags)
 {
@@ -2637,7 +2637,7 @@ init_ufunc(PyObject *umath, const char *ufunc_name, PyArray_DTypeMeta **dtypes,
 int
 add_promoter(PyObject *numpy, const char *ufunc_name,
              PyArray_DTypeMeta *dtypes[], size_t n_dtypes,
-             promoter_function *promoter_impl)
+             PyArrayMethod_PromoterFunction *promoter_impl)
 {
     PyObject *ufunc = PyObject_GetAttrString((PyObject *)numpy, ufunc_name);
 
@@ -2705,8 +2705,8 @@ add_promoter(PyObject *numpy, const char *ufunc_name,
 
 NPY_NO_EXPORT int
 add_object_and_unicode_promoters(PyObject *umath, const char* ufunc_name,
-                                 promoter_function *unicode_promoter_wrapper,
-                                 promoter_function *object_promoter_wrapper)
+                                 PyArrayMethod_PromoterFunction *unicode_promoter_wrapper,
+                                 PyArrayMethod_PromoterFunction *object_promoter_wrapper)
 {
     {
         PyArray_DTypeMeta *dtypes[] = {

@@ -125,7 +125,7 @@ legacy_setitem_using_DType(PyObject *obj, void *data, void *arr)
                 "supported for basic NumPy DTypes.");
         return -1;
     }
-    setitemfunction *setitem;
+    PyArrayDTypeMeta_SetItem *setitem;
     setitem = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(arr)))->setitem;
     return setitem(PyArray_DESCR(arr), obj, data);
 }
@@ -140,7 +140,7 @@ legacy_getitem_using_DType(void *data, void *arr)
                 "supported for basic NumPy DTypes.");
         return NULL;
     }
-    getitemfunction *getitem;
+    PyArrayDTypeMeta_GetItem *getitem;
     getitem = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(arr)))->getitem;
     return getitem(PyArray_DESCR(arr), data);
 }

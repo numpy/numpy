@@ -500,8 +500,8 @@ call_promoter_and_recurse(PyUFuncObject *ufunc, PyObject *promoter,
 
     if (PyCapsule_CheckExact(promoter)) {
         /* We could also go the other way and wrap up the python function... */
-        promoter_function *promoter_function = PyCapsule_GetPointer(promoter,
-                "numpy._ufunc_promoter");
+        PyArrayMethod_PromoterFunction *promoter_function = PyCapsule_GetPointer(
+                promoter, "numpy._ufunc_promoter");
         if (promoter_function == NULL) {
             return NULL;
         }
@@ -1294,7 +1294,7 @@ get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
  * @param DType_tuple A Python tuple containing DTypes or None matching the
  *        number of inputs and outputs of the ufunc.
  * @param promoter A PyCapsule with name "numpy._ufunc_promoter" containing
- *        a pointer to a `promoter_function`.
+ *        a pointer to a `PyArrayMethod_PromoterFunction`.
  */
 NPY_NO_EXPORT int
 PyUFunc_AddPromoter(

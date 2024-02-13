@@ -225,8 +225,8 @@ wrapping_method_get_identity_function(
 NPY_NO_EXPORT int
 PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
         PyArray_DTypeMeta *new_dtypes[], PyArray_DTypeMeta *wrapped_dtypes[],
-        translate_given_descrs_func *translate_given_descrs,
-        translate_loop_descrs_func *translate_loop_descrs)
+        PyArrayMethod_TranslateGivenDescriptors *translate_given_descrs,
+        PyArrayMethod_TranslateLoopDescriptors *translate_loop_descrs)
 {
     int res = -1;
     PyUFuncObject *ufunc = (PyUFuncObject *)ufunc_obj;

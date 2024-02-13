@@ -367,7 +367,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         flags = _NPY_METH_FORCE_CAST_INPUTS;
     }
 
-    get_reduction_initial_function *get_reduction_intial = NULL;
+    PyArrayMethod_GetReductionInitial *get_reduction_intial = NULL;
     if (ufunc->nin == 2 && ufunc->nout == 1) {
         npy_bool reorderable = NPY_FALSE;
         PyObject *identity_obj = PyUFunc_GetDefaultIdentity(
