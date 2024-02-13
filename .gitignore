@@ -143,5 +143,6 @@ numpy/_distributor_init_local.py
 
 #CodeSonar project files
 numpy.prj*
-numpy.conf
+numpy*.conf
 pylintout.txt
+*.sarif
