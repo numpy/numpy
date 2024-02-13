@@ -1490,13 +1490,13 @@ PyArray_BYTES(PyArrayObject *arr)
 }
 
 static inline npy_intp *
-PyArray_DIMS(PyArrayObject *arr)
+PyArray_DIMS(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->dimensions;
 }
 
 static inline npy_intp *
-PyArray_STRIDES(PyArrayObject *arr)
+PyArray_STRIDES(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->strides;
 }
@@ -1514,13 +1514,13 @@ PyArray_STRIDE(const PyArrayObject *arr, int istride)
 }
 
 static inline NPY_RETURNS_BORROWED_REF PyObject *
-PyArray_BASE(PyArrayObject *arr)
+PyArray_BASE(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->base;
 }
 
 static inline NPY_RETURNS_BORROWED_REF PyArray_Descr *
-PyArray_DESCR(PyArrayObject *arr)
+PyArray_DESCR(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->descr;
 }
@@ -1569,13 +1569,13 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 
 
 static inline PyArray_Descr *
-PyArray_DTYPE(PyArrayObject *arr)
+PyArray_DTYPE(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->descr;
 }
 
 static inline npy_intp *
-PyArray_SHAPE(PyArrayObject *arr)
+PyArray_SHAPE(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->dimensions;
 }
