@@ -1388,7 +1388,7 @@ def _savetxt_dispatcher(fname, X, fmt=None, delimiter=None, newline=None,
 
 
 @array_function_dispatch(_savetxt_dispatcher)
-def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
+def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline=None, header='',
             footer='', comments='# ', encoding=None):
     """
     Save an array to a text file.
@@ -1417,7 +1417,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     delimiter : str, optional
         String or character separating columns.
     newline : str, optional
-        String or character separating lines.
+        String or character separating lines.  Default is universal newline.
 
         .. versionadded:: 1.5.0
     header : str, optional
@@ -1548,13 +1548,24 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 self.write_bytes(v)
                 self.write = self.write_bytes
 
+    # _datasource.open() needs to be passed None to enable universal
+    # newlines, and this function needs to write newlines.
+    if newline is None:
+        open_newline = None
+        newline = os.linesep
+    else:
+        open_newline = newline
+                
     own_fh = False
     if isinstance(fname, os_PathLike):
         fname = os_fspath(fname)
     if _is_string_like(fname):
         # datasource doesn't support creating a new file ...
         open(fname, 'wt').close()
-        fh = np.lib._datasource.open(fname, 'wt', encoding=encoding)
+        fh = np.lib._datasource.open(fname, 
+                                     'wt',
+                                     encoding=encoding,
+                                     newline=open_newline)
         own_fh = True
     elif hasattr(fname, 'write'):
         # wrap to handle byte output streams
@@ -1607,7 +1618,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             raise ValueError('invalid fmt: %r' % (fmt,))
 
         if len(header) > 0:
-            header = header.replace('\n', '\n' + comments)
+            header = header.replace(newline, newline + comments)
             fh.write(comments + header + newline)
         if iscomplex_X:
             for row in X:
@@ -1628,7 +1639,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 fh.write(v)
 
         if len(footer) > 0:
-            footer = footer.replace('\n', '\n' + comments)
+            footer = footer.replace(newline, newline + comments)
             fh.write(comments + footer + newline)
     finally:
         if own_fh:

@@ -356,14 +356,15 @@ class TestSaveTxt:
         np.savetxt(c, a, fmt=fmt)
         c.seek(0)
         assert_equal(c.readlines(),
-                     [asbytes((fmt + ' ' + fmt + '\n') % (1, 2)),
-                      asbytes((fmt + ' ' + fmt + '\n') % (3, 4))])
+                     [asbytes((fmt + ' ' + fmt + os.linesep) % (1, 2)),
+                      asbytes((fmt + ' ' + fmt + os.linesep) % (3, 4))])
 
         a = np.array([[1, 2], [3, 4]], int)
         c = BytesIO()
         np.savetxt(c, a, fmt='%d')
         c.seek(0)
-        assert_equal(c.readlines(), [b'1 2\n', b'3 4\n'])
+        assert_equal(c.readlines(), [b'1 2'+os.linesep.encode(),
+                                     b'3 4'+os.linesep.encode()])
 
     def test_1D(self):
         a = np.array([1, 2, 3, 4], int)
@@ -371,7 +372,9 @@ class TestSaveTxt:
         np.savetxt(c, a, fmt='%d')
         c.seek(0)
         lines = c.readlines()
-        assert_equal(lines, [b'1\n', b'2\n', b'3\n', b'4\n'])
+        newline = os.linesep.encode()
+        assert_equal(lines, [b'1'+newline, b'2'+newline, b'3'+newline,
+                             b'4'+newline])
 
     def test_0D_3D(self):
         c = BytesIO()
@@ -383,7 +386,8 @@ class TestSaveTxt:
         c = BytesIO()
         np.savetxt(c, a, fmt='%d')
         c.seek(0)
-        assert_equal(c.readlines(), [b'1 2\n', b'3 4\n'])
+        newline = os.linesep.encode()
+        assert_equal(c.readlines(), [b'1 2'+newline, b'3 4'+newline])
 
     def test_structured_padded(self):
         # gh-13297
@@ -393,7 +397,8 @@ class TestSaveTxt:
         c = BytesIO()
         np.savetxt(c, a[['foo', 'baz']], fmt='%d')
         c.seek(0)
-        assert_equal(c.readlines(), [b'1 3\n', b'4 6\n'])
+        newline = os.linesep.encode()
+        assert_equal(c.readlines(), [b'1 3'+newline, b'4 6'+newline])
 
     def test_multifield_view(self):
         a = np.ones(1, dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'f4')])
@@ -409,51 +414,101 @@ class TestSaveTxt:
         c = BytesIO()
         np.savetxt(c, a, delimiter=',', fmt='%d')
         c.seek(0)
-        assert_equal(c.readlines(), [b'1,2\n', b'3,4\n'])
+        newline = os.linesep.encode()
+        assert_equal(c.readlines(), [b'1,2'+newline, b'3,4'+newline])
 
     def test_format(self):
         a = np.array([(1, 2), (3, 4)])
+        newline = os.linesep.encode()
         c = BytesIO()
         # Sequence of formats
         np.savetxt(c, a, fmt=['%02d', '%3.1f'])
         c.seek(0)
-        assert_equal(c.readlines(), [b'01 2.0\n', b'03 4.0\n'])
+        assert_equal(c.readlines(), [b'01 2.0'+newline, b'03 4.0'+newline])
 
         # A single multiformat string
         c = BytesIO()
         np.savetxt(c, a, fmt='%02d : %3.1f')
         c.seek(0)
         lines = c.readlines()
-        assert_equal(lines, [b'01 : 2.0\n', b'03 : 4.0\n'])
+        assert_equal(lines, [b'01 : 2.0'+newline, b'03 : 4.0'+newline])
 
         # Specify delimiter, should be overridden
         c = BytesIO()
         np.savetxt(c, a, fmt='%02d : %3.1f', delimiter=',')
         c.seek(0)
         lines = c.readlines()
-        assert_equal(lines, [b'01 : 2.0\n', b'03 : 4.0\n'])
+        assert_equal(lines, [b'01 : 2.0'+newline, b'03 : 4.0'+newline])
 
         # Bad fmt, should raise a ValueError
         c = BytesIO()
         assert_raises(ValueError, np.savetxt, c, a, fmt=99)
 
+    def test_newline(self):
+        a = np.array([(1, 2), (3, 4)])
+        c = BytesIO()
+        
+        # Universal newline, implicit and explicit
+        newline = os.linesep.encode()
+        np.savetxt(c, a, fmt='%d')
+        c.seek(0)
+        assert_equal(c.readlines(), [b'1 2'+newline, b'3 4'+newline],
+                     err_msg='Universal newline, implicit')
+        c = BytesIO()
+        np.savetxt(c, a, fmt='%d', newline=None)
+        c.seek(0)
+        assert_equal(c.readlines(), [b'1 2'+newline, b'3 4'+newline],
+                     err_msg='Universal newline, explicit')
+
+        # POSIX newline
+        newline = '\n'
+        c = BytesIO()
+        np.savetxt(c, a, fmt='%d', newline=newline)
+        c.seek(0)
+        lines = c.readlines()
+        newline = newline.encode()
+        assert_equal(lines, [b'1 2'+newline, b'3 4'+newline],
+                     err_msg='POSIX newline')
+
+        # NT newline
+        newline = '\r\n'
+        c = BytesIO()
+        np.savetxt(c, a, fmt='%d', newline=newline)
+        c.seek(0)
+        lines = c.readlines()
+        newline = newline.encode()
+        assert_equal(lines, [b'1 2'+newline, b'3 4'+newline],
+                     err_msg='NT newline')
+
+        # Tab "newline"
+        newline = '\t'
+        c = BytesIO()
+        np.savetxt(c, a, fmt='%d', newline=newline)
+        c.seek(0)
+        lines = c.readlines()
+        newline = newline.encode()
+        assert_equal(lines, [b'1 2'+newline+b'3 4'+newline, ],
+                     err_msg='Tab newline')
+    
     def test_header_footer(self):
         # Test the functionality of the header and footer keyword argument.
 
         c = BytesIO()
         a = np.array([(1, 2), (3, 4)], dtype=int)
+        a_txt = '1 2' + os.linesep + '3 4' + os.linesep
         test_header_footer = 'Test header / footer'
         # Test the header keyword argument
         np.savetxt(c, a, fmt='%1d', header=test_header_footer)
         c.seek(0)
         assert_equal(c.read(),
-                     asbytes('# ' + test_header_footer + '\n1 2\n3 4\n'))
+                     asbytes('# ' + test_header_footer + os.linesep
+                             + a_txt))
         # Test the footer keyword argument
         c = BytesIO()
         np.savetxt(c, a, fmt='%1d', footer=test_header_footer)
         c.seek(0)
         assert_equal(c.read(),
-                     asbytes('1 2\n3 4\n# ' + test_header_footer + '\n'))
+                     asbytes(a_txt + '# ' + test_header_footer + os.linesep))
         # Test the commentstr keyword argument used on the header
         c = BytesIO()
         commentstr = '% '
@@ -461,7 +516,8 @@ class TestSaveTxt:
                    header=test_header_footer, comments=commentstr)
         c.seek(0)
         assert_equal(c.read(),
-                     asbytes(commentstr + test_header_footer + '\n' + '1 2\n3 4\n'))
+                     asbytes(commentstr + test_header_footer + os.linesep
+                            + a_txt))
         # Test the commentstr keyword argument used on the footer
         c = BytesIO()
         commentstr = '% '
@@ -469,8 +525,24 @@ class TestSaveTxt:
                    footer=test_header_footer, comments=commentstr)
         c.seek(0)
         assert_equal(c.read(),
-                     asbytes('1 2\n3 4\n' + commentstr + test_header_footer + '\n'))
+                     asbytes(a_txt + commentstr + test_header_footer
+                            + os.linesep))
 
+    @pytest.mark.parametrize("newline", ['\n', '\r\n'])
+    def test_newline_header_footer(self, newline):
+        c = BytesIO()
+        a = np.array([(1, 2), (3, 4)], dtype=int)
+        a_txt = '1 2' + newline + '3 4' + newline
+        test_header_footer = 'Test header / footer'
+        # Test the header and footer keyword argument
+        np.savetxt(c, a, fmt='%1d', newline=newline, header=test_header_footer,
+                   footer=test_header_footer)
+        c.seek(0)
+        assert_equal(c.read(),
+                     asbytes('# ' + test_header_footer + newline
+                             + a_txt
+                             + '# ' + test_header_footer + newline))
+    
     def test_file_roundtrip(self):
         with temppath() as name:
             a = np.array([(1, 2), (3, 4)])
@@ -485,6 +557,7 @@ class TestSaveTxt:
         re = np.pi
         im = np.e
         a[:] = re + 1.0j * im
+        newline = os.linesep.encode()
 
         # One format only
         c = BytesIO()
@@ -493,8 +566,10 @@ class TestSaveTxt:
         lines = c.readlines()
         assert_equal(
             lines,
-            [b' ( +3.142e+00+ +2.718e+00j)  ( +3.142e+00+ +2.718e+00j)\n',
-             b' ( +3.142e+00+ +2.718e+00j)  ( +3.142e+00+ +2.718e+00j)\n'])
+            [b' ( +3.142e+00+ +2.718e+00j)  ( +3.142e+00+ +2.718e+00j)'
+             + newline,
+             b' ( +3.142e+00+ +2.718e+00j)  ( +3.142e+00+ +2.718e+00j)'
+             + newline])
 
         # One format for each real and imaginary part
         c = BytesIO()
@@ -503,8 +578,10 @@ class TestSaveTxt:
         lines = c.readlines()
         assert_equal(
             lines,
-            [b'  +3.142e+00  +2.718e+00  +3.142e+00  +2.718e+00\n',
-             b'  +3.142e+00  +2.718e+00  +3.142e+00  +2.718e+00\n'])
+            [b'  +3.142e+00  +2.718e+00  +3.142e+00  +2.718e+00'
+             + newline,
+             b'  +3.142e+00  +2.718e+00  +3.142e+00  +2.718e+00'
+             + newline])
 
         # One format for each complex number
         c = BytesIO()
@@ -513,8 +590,10 @@ class TestSaveTxt:
         lines = c.readlines()
         assert_equal(
             lines,
-            [b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)\n',
-             b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)\n'])
+            [b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)'
+             + newline,
+             b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)'
+             + newline])
 
     def test_complex_negative_exponent(self):
         # Previous to 1.15, some formats generated x+-yj, gh 7895
@@ -524,14 +603,17 @@ class TestSaveTxt:
         re = np.pi
         im = np.e
         a[:] = re - 1.0j * im
+        newline = os.linesep.encode()
         c = BytesIO()
         np.savetxt(c, a, fmt='%.3e')
         c.seek(0)
         lines = c.readlines()
         assert_equal(
             lines,
-            [b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)\n',
-             b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)\n'])
+            [b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)'
+             + newline,
+             b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)'
+             + newline])
 
 
     def test_custom_writer(self):
@@ -577,7 +659,7 @@ class TestSaveTxt:
         s = BytesIO()
         np.savetxt(s, a, fmt=['%s'], encoding='UTF-8')
         s.seek(0)
-        assert_equal(s.read().decode('UTF-8'), utf8 + '\n')
+        assert_equal(s.read().decode('UTF-8'), utf8 + os.linesep)
 
     def test_unicode_stringstream(self):
         utf8 = b'\xcf\x96'.decode('UTF-8')
@@ -585,7 +667,7 @@ class TestSaveTxt:
         s = StringIO()
         np.savetxt(s, a, fmt=['%s'], encoding='UTF-8')
         s.seek(0)
-        assert_equal(s.read(), utf8 + '\n')
+        assert_equal(s.read(), utf8 + os.linesep)
 
     @pytest.mark.parametrize("fmt", ["%f", b"%f"])
     @pytest.mark.parametrize("iotype", [StringIO, BytesIO])
@@ -596,9 +678,9 @@ class TestSaveTxt:
         np.savetxt(s, a, fmt=fmt)
         s.seek(0)
         if iotype is StringIO:
-            assert_equal(s.read(), "%f\n" % 1.)
+            assert_equal(s.read(), "%f%s" % (1., os.linesep))
         else:
-            assert_equal(s.read(), b"%f\n" % 1.)
+            assert_equal(s.read(), b"%f%s" % (1., os.linesep.encode()))
 
     @pytest.mark.skipif(sys.platform=='win32', reason="files>4GB may not work")
     @pytest.mark.slow

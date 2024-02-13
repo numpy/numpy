@@ -189,7 +189,7 @@ def savetxt(
     X: ArrayLike,
     fmt: str | Sequence[str] = ...,
     delimiter: str = ...,
-    newline: str = ...,
+    newline: None | str = ...,
     header: str = ...,
     footer: str = ...,
     comments: str = ...,
