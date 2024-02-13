@@ -717,7 +717,7 @@ The :c:data:`PyArray_Type` can also be sub-typed.
     :c:func:`PyUFunc_ReplaceLoopBySignature` The ``tp_str`` and ``tp_repr``
     methods can also be altered using :c:func:`PyArray_SetStringFunction`.
 
-.. arraymethod-structs_
+.. _arraymethod-structs:
 
 PyArrayMethod_Context and PyArrayMethod_Spec
 --------------------------------------------
@@ -801,7 +801,7 @@ PyArrayMethod_Context and PyArrayMethod_Spec
       An array of slots for the method. Slot IDs must be one of the values
       below.
 
-.. dtypemeta_
+.. _dtypemeta:
 
 PyArray_DTypeMeta and PyArrayDTypeMeta_Spec
 -------------------------------------------

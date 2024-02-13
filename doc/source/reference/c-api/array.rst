@@ -1663,7 +1663,7 @@ Flags
 
       The flags that can be changed at runtime.
 
-.. arraymethod-typedefs_
+.. _arraymethod-typedefs:
 
 Typedefs
 ~~~~~~~~
@@ -1730,6 +1730,7 @@ described below.
    empty. When it is, the value returned may differ.  In this case it is a
    "default" value that may differ from the "identity" value normally used.
    For example:
+
        - `0.0` is the default for `sum([])`.  But `-0.0` is the correct
          identity otherwise as it preserves the sign for `sum([-0.0])`.
        - We use no identity for object, but return the default of `0` and `1`
@@ -1737,6 +1738,7 @@ described below.
          This allows `np.sum(np.array(["a", "b"], dtype=object))` to work.
        - `-inf` or `INT_MIN` for `max` is an identity, but at least `INT_MIN`
          not a good *default* when there are no items.
+
    *initial* is a pointer to the data for the initial value, which should be
    filled in. Returns -1, 0, or 1 indicating error, no initial value, and the
    initial value being successfully filled. Errors must not be given where no
@@ -3283,7 +3285,7 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
 
 .. c:macro:: NPY_DT_common_instance
 
-.. c:type:: PyArray_Descr *(PyArrayDTypeMeta_CommonInstance)(
+.. c:type:: PyArray_Descr *(PyArrayDTypeMeta_CommonInstance)( \
                PyArray_Descr *dtype1, PyArray_Descr *dtype2)
 
    Given two input descriptors, determines the appropriate "common"
@@ -3806,7 +3808,7 @@ variable ``NPY_NOSMP`` is set in which case
 .. c:macro:: WITH_THREADS
 
 Group 1
-"""""""
+^^^^^^^
 
 This group is used to call code that may take some time but does not
 use any Python C-API calls. Thus, the GIL should be released during
@@ -3859,7 +3861,7 @@ its calculation.
     with a :c:macro:`NPY_END_THREADS` to regain the GIL.
 
 Group 2
-"""""""
+^^^^^^^
 
 This group is used to re-acquire the Python GIL after it has been
 released. For example, suppose the GIL has been released (using the
