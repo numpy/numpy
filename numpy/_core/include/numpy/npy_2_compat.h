@@ -78,7 +78,7 @@
     static inline npy_uint64
     PyDataType_FLAGS(const PyArray_Descr *dtype)
     {
-        return dtype->flags;
+        return (unsigned char)dtype->flags;
     }
 #elif NPY_ABI_VERSION < 0x02000000
     #define NPY_DEFAULT_INT NPY_LONG
@@ -88,7 +88,7 @@
     static inline npy_uint64
     PyDataType_FLAGS(const PyArray_Descr *dtype)
     {
-        return dtype->flags;
+        return (unsigned char)dtype->flags;
     }
 
     /* Aliases of 2.x names to 1.x only equivalent names */
@@ -107,10 +107,10 @@
     {
         if (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION) {
             // TODO: This will change to a semi-private 2.0 struct name
-            return ((PyArray_Descr *)dtype)->flags;
+            return (unsigned char)((PyArray_Descr *)dtype)->flags;
         }
         else {
-            return ((PyArray_DescrProto *)dtype)->flags;
+            return (unsigned char)((PyArray_DescrProto *)dtype)->flags;
         }
     }
 #endif
