@@ -1,0 +1,26 @@
+{
+    "version": "2.0.0",
+    "inputs": [
+    {
+    "id": "codesonarAnalysisName",
+    "type": "promptString",
+    "description": "CodeSonar analysis name",
+    "default": "Analysis-1234"
+    }
+    ],
+    "tasks": [
+    {
+    "type": "shell",
+    "label": "Python: CodeSonar analyze",
+    "command": [
+        "codesonar analyze numpy -hubuser ${config:codesonar.hubUser} -auth certificate -name ${input:codesonarAnalysisName} -conf-file codesonar.conf -project OSS-Projects/numpy-GitHub/developers/${config:codesonar.hubUser}  ${config:codesonar.hubAddress} codesonar python_scan.py numpy/*.py numpy/**/*.py"
+    ],
+    "group": "build",
+    "detail": "builder: make",
+    "presentation": {
+        "showReuseMessage": false,
+        "panel": "new"
+    }
+    }
+    ]
+}
