@@ -71,13 +71,13 @@ macosx_arm64_task:
     CIBW_ARCHS: arm64
 
   build_script: |
-    brew install micromamba
+    brew install micromamba gfortran
     micromamba shell init -s bash -p ~/micromamba
     source ~/.bash_profile
     
     micromamba create -n numpydev
     micromamba activate numpydev
-    micromamba install -y -c conda-forge compilers python=3.11 2>/dev/null
+    micromamba install -y -c conda-forge python=3.11 2>/dev/null
     
     ver=$(sw_vers -productVersion)
     macos_target=$(python -c "print('14.0') if '$ver' >= '14.0' else print('11.0')")
@@ -85,7 +85,7 @@ macosx_arm64_task:
         # Use native Accelerate
         export INSTALL_OPENBLAS=false
         export CIBW_ENVIRONMENT_MACOS="MACOSX_DEPLOYMENT_TARGET=$macos_target INSTALL_OPENBLAS=false RUNNER_OS=macOS"
-        export CIBW_REPAIR_WHEEL_COMMAND_MACOS=""
+        # export CIBW_REPAIR_WHEEL_COMMAND_MACOS=""
     else
         # Use scipy-openblas wheels
         export INSTALL_OPENBLAS=true
