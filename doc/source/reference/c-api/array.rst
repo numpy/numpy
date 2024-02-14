@@ -1563,8 +1563,10 @@ over arrays, including ufunc loops and casts. The public API is defined in the
 ``numpy/dtype_api.h`` header. See :ref:`arraymethod-structs` for
 documentation on the C structs exposed in the ArrayMethod API.
 
-Slots
-~~~~~
+.. _arraymethod-typedefs:
+
+Slots and Typedefs
+~~~~~~~~~~~~~~~~~~
 
 These are used to identify which kind of function an ArrayMethod slot
 implements. See :ref:`arraymethod-typedefs` below for documentation on
@@ -1572,37 +1574,54 @@ the functions that must be implemented for each slot.
 
 .. c:macro:: NPY_METH_resolve_descriptors
 
-   The function used to set the descriptors for an operation based on the
-   descriptors of the operands. For example, a ufunc operation with two input
-   operands and one output operand that is called without ``out`` being set
-   in the python API, ``resolve_descriptors`` will be passed the descriptors
-   for the two operands and determine the correct descriptor to use for the
-   output based on the output DType set for the ArrayMethod. If ``out`` is
-   set, then the output descriptor would be passed in as well and should not
-   be overriden.
+.. c:type:: NPY_CASTING (PyArrayMethod_ResolveDescriptors)( \
+                struct PyArrayMethodObject_tag *method, \
+                PyArray_DTypeMeta **dtypes, \
+                PyArray_Descr **given_descrs, \
+                PyArray_Descr **loop_descrs, \
+                npy_intp *view_offset)
 
-.. c:macro:: NPY_METH_get_reduction_initial
+   The function used to set the descriptors for an operation based on
+   the descriptors of the operands. For example, a ufunc operation with
+   two input operands and one output operand that is called without
+   ``out`` being set in the python API, ``resolve_descriptors`` will be
+   passed the descriptors for the two operands and determine the correct
+   descriptor to use for the output based on the output DType set for
+   the ArrayMethod. If ``out`` is set, then the output descriptor would
+   be passed in as well and should not be overriden.
 
-   A function that gets the initial value to use for a reduction.
+   The *method* is a pointer to the underlying cast or ufunc loop. In
+   the future we may expose this struct publicly but for now this is an
+   opaque pointer and the method cannot be inspected. The *dtypes* is an
+   ``nargs`` length array of ``PyArray_DTypeMeta`` pointers,
+   *given_descrs* is an ``nargs`` length array of input descriptor
+   instances (output descriptors may be NULL if no output was provided
+   by the user), and *loop_descrs* is an ``nargs`` length array of
+   descriptors that must be filled in by the resolve descriptors
+   implementation.  *view_offset* is currently only interesting for
+   casts and can normally be ignored.  When a cast does not require any
+   operation, this can be signalled by setting ``view_offset`` to 0.  On
+   error, you must return ``(NPY_CASTING)-1`` with an error set.
 
 .. c:macro:: NPY_METH_strided_loop
 .. c:macro:: NPY_METH_contiguous_loop
 .. c:macro:: NPY_METH_unaligned_strided_loop
 .. c:macro:: NPY_METH_unaligned_contiguous_loop
 
-   One dimensional strided loops implementing the behavior (either a ufunc
-   or cast).  In most cases, ``NPY_METH_strided_loop`` is the generic and only
-   version that needs to be implemented.
-   ``NPY_METH_contiguous_loop`` can be implemented additionally as a more
-   light-weight/faster version and it is used when all inputs and outputs
-   are contiguous.
+   One dimensional strided loops implementing the behavior (either a
+   ufunc or cast).  In most cases, ``NPY_METH_strided_loop`` is the
+   generic and only version that needs to be implemented.
+   ``NPY_METH_contiguous_loop`` can be implemented additionally as a
+   more light-weight/faster version and it is used when all inputs and
+   outputs are contiguous.
 
    To deal with possibly unaligned data, NumPy needs to be able to copy
-   unaligned to aligned data.  When implementing a new DType, the "cast" or
-   copy for it needs to implement ``NPY_METH_unaligned_strided_loop``.
-   Unlike the normal versions, this loop must not assume that the data can be
-   accessed in an aligned fashion.  These loops must copy each value before
-   accessing or storing::
+   unaligned to aligned data.  When implementing a new DType, the "cast"
+   or copy for it needs to implement
+   ``NPY_METH_unaligned_strided_loop``.  Unlike the normal versions,
+   this loop must not assume that the data can be accessed in an aligned
+   fashion.  These loops must copy each value before accessing or
+   storing::
 
        type_in in_value;
        type_out out_value
@@ -1614,14 +1633,32 @@ the functions that must be implemented for each slot.
 
        *(type_out *)out_data = *(type_in)in_data;
 
-   The unaligned loops are currently only used in casts and will never be picked
-   in ufuncs (ufuncs create a temporary copy to ensure aligned inputs).
-   These flags are ignored when ``NPY_METH_get_loop`` is defined, where instead
-   whichever loop returned by the ``get_loop`` function is used.
+   The unaligned loops are currently only used in casts and will never
+   be picked in ufuncs (ufuncs create a temporary copy to ensure aligned
+   inputs).  These slot IDs are ignored when ``NPY_METH_get_loop`` is
+   defined, where instead whichever loop returned by the ``get_loop``
+   function is used.
 
 .. c:macro:: NPY_METH_contiguous_indexed_loop
 
    A specialized inner-loop option to speed up common ``ufunc.at`` computations.
+
+.. c:type:: int (PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context, \
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides, \
+        NpyAuxData *auxdata)
+
+   An implementation of an ArrayMethod loop. All of the loop slot IDs
+   listed above must provide a ``PyArrayMethod_StridedLoop``
+   implementation. The *context* is a struct containing context for the
+   loop operation - in particular the input descriptors. The *data* are
+   an array of pointers to the beginning of the input and output array
+   buffers. The *dimensions* are the loop dimensions for the
+   operation. The *strides* are an ``nargs`` length array of strides for
+   each input. The *auxdata* is an optional set of auxiliary data that
+   can be passed in to the loop - helpful to turn on and off optional
+   behavior or reduce boilerplate by allowing similar ufuncs to share
+   loop implementations or to allocate space that is persistent over
+   multiple strided loop calls.
 
 .. c:macro:: NPY_METH_get_loop
 
@@ -1630,90 +1667,10 @@ the functions that must be implemented for each slot.
    strided loop implementation. If ``NPY_METH_get_loop`` is defined,
    the other loop slot IDs are ignored, if specified.
 
-Flags
-~~~~~
-
-.. c:enum:: NPY_ARRAYMETHOD_FLAGS
-
-   These flags allow switching on and off custom runtime behavior for
-   ArrayMethod loops.  For example, if a ufunc cannot possibly trigger floating
-   point errors, then the ``NPY_METH_NO_FLOATINGPOINT_ERRORS`` flag should be
-   set on the ufunc when it is registered.
-
-   .. c:enumerator:: NPY_METH_REQUIRES_PYAPI
-
-      Indicates the method must hold the GIL. If this flag is not set, the GIL
-      is released before the ufunc is called.
-
-   .. c:enumerator:: NPY_METH_NO_FLOATINGPOINT_ERRORS
-
-      Indicates the method cannot generate floating errors, so checking for
-      floating errors after the ufunc completes can be skipped.
-
-   .. c:enumerator:: NPY_METH_SUPPORTS_UNALIGNED
-
-      Indicates the method supports unaligned access.
-
-   .. c:enumerator:: NPY_METH_IS_REORDERABLE
-
-      Indicates that the result of applying the loop repeatedly (for example, in
-      a reduction operation) does not depend on the order of application.
-
-   .. c:enumerator:: NPY_METH_RUNTIME_FLAGS
-
-      The flags that can be changed at runtime.
-
-.. _arraymethod-typedefs:
-
-Typedefs
-~~~~~~~~
-
-Typedefs for functions that users of the ArrayMethod API can implement are
-described below.
-
-.. c:type:: NPY_CASTING (PyArrayMethod_ResolveDescriptors)( \
-                struct PyArrayMethodObject_tag *method, \
-                PyArray_DTypeMeta **dtypes, \
-                PyArray_Descr **given_descrs, \
-                PyArray_Descr **loop_descrs, \
-                npy_intp *view_offset)
-
-   The resolve descriptors function. Given the DType classes the method was
-   created for and the concrete descriptor instances used at runtime, determines
-   the correct descriptors to pass into the loop implementation, which may or
-   may not be the descriptors passed in by the user. The *method* is an opaque
-   pointer to the underlying cast or ufunc loop which is currently exposed
-   publicly, *dtypes* is an ``nargs`` length array of ``PyArray_DTypeMeta``
-   pointers, *given_descrs* is an ``nargs`` length array of input descriptor
-   instances (output descriptors may be NULL if no output was provided by the
-   user), and *loop_descrs* is an ``nargs`` length array of descriptors that
-   must be filled in by the resolve descriptors implementation.
-   *view_offset* is currently only interesting for casts and can normally be
-   ignored.  When a cast does not require any operation, this can be signalled
-   by setting ``view_offset`` to 0.
-   On error, you must return ``(NPY_CASTING)-1`` with an error set.
-
-.. c:type:: int (PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context, \
-        char *const *data, const npy_intp *dimensions, const npy_intp *strides, \
-        NpyAuxData *auxdata)
-
-   An implementation of an ArrayMethod loop. The *context* is a struct
-   containing context for the loop operation - in particular the input
-   descriptors. The *data* an array of pointers to the beginning of the input
-   and output array buffers. The *dimensions* are the loop dimensions for the
-   operation. The *strides* are an ``narg`` length array of strides for each
-   input. The *auxdata* is an optional set of auxiliary data that can be passed
-   in to the loop - helpful to turn on and off optional behavior or reduce
-   boilerplate by allowing similar ufuncs to share loop implementations or
-   to allocate space that is persistent over multiple strided loop calls.
-
 .. c:type:: int (PyArrayMethod_GetLoop)( \
-	    PyArrayMethod_Context *context, \
-        int aligned, int move_references, \
-        const npy_intp *strides, \
-        PyArrayMethod_StridedLoop **out_loop, \
-        NpyAuxData **out_transferdata, \
-        NPY_ARRAYMETHOD_FLAGS *flags);
+	    PyArrayMethod_Context *context, int aligned, int move_references, \
+        const npy_intp *strides, PyArrayMethod_StridedLoop **out_loop, \
+        NpyAuxData **out_transferdata, NPY_ARRAYMETHOD_FLAGS *flags);
 
    Sets the loop to use for an operation at runtime. The *context* is the
    runtime context for the operation. *aligned* indicates whether the data
@@ -1725,6 +1682,8 @@ described below.
    operation. *flags* must be filled in with ArrayMethod flags relevant for the
    operation.  This is for example necessary to indicate if the inner loop
    requires the Python GIL to be held.
+
+.. c:macro:: NPY_METH_get_reduction_initial
 
 .. c:type:: int (PyArrayMethod_GetReductionInitial)( \
         PyArrayMethod_Context *context, npy_bool reduction_is_empty, \
@@ -1752,6 +1711,45 @@ described below.
    initial value is correct, since NumPy may call this even when it is not
    strictly necessary to do so.
 
+Flags
+~~~~~
+
+.. c:enum:: NPY_ARRAYMETHOD_FLAGS
+
+   These flags allow switching on and off custom runtime behavior for
+   ArrayMethod loops.  For example, if a ufunc cannot possibly trigger floating
+   point errors, then the ``NPY_METH_NO_FLOATINGPOINT_ERRORS`` flag should be
+   set on the ufunc when it is registered.
+
+   .. c:enumerator:: NPY_METH_REQUIRES_PYAPI
+
+      Indicates the method must hold the GIL. If this flag is not set, the GIL
+      is released before the loop is called.
+
+   .. c:enumerator:: NPY_METH_NO_FLOATINGPOINT_ERRORS
+
+      Indicates the method cannot generate floating errors, so checking for
+      floating errors after the loop completes can be skipped.
+
+   .. c:enumerator:: NPY_METH_SUPPORTS_UNALIGNED
+
+      Indicates the method supports unaligned access.
+
+   .. c:enumerator:: NPY_METH_IS_REORDERABLE
+
+      Indicates that the result of applying the loop repeatedly (for example, in
+      a reduction operation) does not depend on the order of application.
+
+   .. c:enumerator:: NPY_METH_RUNTIME_FLAGS
+
+      The flags that can be changed at runtime.
+
+Typedefs
+~~~~~~~~
+
+Typedefs for functions that users of the ArrayMethod API can implement are
+described below.
+
 .. c:type:: int (PyArrayMethod_TraverseLoop)( \
         void *traverse_context, PyArray_Descr *descr, char *data, \
         npy_intp size, npy_intp stride, NpyAuxData *auxdata)
@@ -1773,7 +1771,7 @@ described below.
    Interpreter state or similar in the future, but we don't want to pass in a
    full context (with pointers to dtypes, method, caller which all make no sense
    for a traverse function). We assume for now that this context can be just
-   passed through in the the future (for structured dtypes).
+   passed through in the future (for structured dtypes).
 
 .. c:type:: int (PyArrayMethod_GetTraverseLoop)( \
                 void *traverse_context, PyArray_Descr *descr, \
@@ -1788,20 +1786,8 @@ described below.
    pointer. Currently this is used for zero-filling and clearing arrays storing
    embedded references.
 
-.. c:type:: int (PyArrayMethod_PromoterFunction)(PyObject *ufunc, \
-                PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[], \
-                PyArray_DTypeMeta *new_op_dtypes[])
-
-   Type of the promoter function, which must be wrapped into a
-   ``PyCapsule`` with name ``"numpy._ufunc_promoter"``.
-
-   Note that currently the output dtypes are always ``NULL`` unless they are
-   also part of the signature. This is an implementation detail and could
-   change in the future. However, in general promoters should not have a
-   need for output dtypes.
-
-API Functions
-~~~~~~~~~~~~~
+API Functions and Typedefs
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These functions are part of the main numpy array API and were added along
 with the rest of the ArrayMethod API.
@@ -1816,6 +1802,10 @@ with the rest of the ArrayMethod API.
 .. c:function:: int PyUFunc_AddPromoter( \
                         PyObject *ufunc, PyObject *DType_tuple, PyObject *promoter)
 
+   Note that currently the output dtypes are always ``NULL`` unless they are
+   also part of the signature. This is an implementation detail and could
+   change in the future. However, in general promoters should not have a
+   need for output dtypes.
    Register a new promoter for a ufunc. The first argument is the ufunc to
    register the promoter with. The second argument is a Python tuple containing
    DTypes or None matching the number of inputs and outputs for the ufuncs. The
@@ -1823,14 +1813,25 @@ with the rest of the ArrayMethod API.
    passed the operation and requested DType signatures and can mutate it to
    attempt a new search for a matching loop/promoter.
 
+.. c:type:: int (PyArrayMethod_PromoterFunction)(PyObject *ufunc, \
+                PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[], \
+                PyArray_DTypeMeta *new_op_dtypes[])
+
+   Type of the promoter function, which must be wrapped into a
+   ``PyCapsule`` with name ``"numpy._ufunc_promoter"``. It is passed the
+   operation and requested DType signatures and can mutate the signatures to
+   attempt a search for a new loop or promoter that can accomplish the operation
+   by casting the inputs to the "promoted" DTypes.
+
 .. c:function:: int PyUFunc_GiveFloatingpointErrors( \
                         const char *name, int fpe_errors)
 
-    Signal a floating point error respecting the error signaling setting in
-    the NumPy errstate. Takes the name of the operation to use in the error
-    message and an integer flag that is one of NPY_FPE_DIVIDEBYZERO,
-    NPY_FPE_OVERFLOW, NPY_FPE_UNDERFLOW, NPY_FPE_INVALID to indicate
-    which errors to check for.
+    Checks for a floating point error after performing a floating point
+    operation in a manner that takes into account the error signaling configured
+    via `numpy.errstate`. Takes the name of the operation to use in the error
+    message and an integer flag that is one of ``NPY_FPE_DIVIDEBYZERO``,
+    ``NPY_FPE_OVERFLOW``, ``NPY_FPE_UNDERFLOW``, ``NPY_FPE_INVALID`` to indicate
+    which error to check for.
 
     Returns -1 on failure (an error was raised) and 0 on success.
 
@@ -1845,6 +1846,107 @@ with the rest of the ArrayMethod API.
     slightly limited in that it enforces that you cannot use a loop from
     another ufunc.
 
+.. c:type:: int (PyArrayMethod_TranslateGivenDescriptors)( \
+                    int nin, int nout, \
+                    PyArray_DTypeMeta *wrapped_dtypes[], \
+                    PyArray_Descr *given_descrs[], \
+                    PyArray_Descr *new_descrs[]);
+
+    The function to convert the given descriptors (passed in to
+    ``resolve_descriptors``) and translates them for the wrapped loop.
+    The new descriptors MUST be viewable with the old ones, `NULL` must be
+    supported (for output arguments) and should normally be forwarded.
+
+    The output of of this function will be used to construct
+    views of the arguments as if they were the translated dtypes and
+    does not use a cast. This means this mechanism is mostly useful for
+    DTypes that "wrap" another DType implementation. For example, a unit
+    DType could use this to wrap an exisiting floating point DType
+    without needing to re-implement low-level ufunc logic. In the unit
+    example, ``resolve_descriptors`` would handle computing the output
+    unit from the input unit.
+
+.. c:type:: int (PyArrayMethod_TranslateLoopDescriptors)( \
+                    int nin, int nout, PyArray_DTypeMeta *new_dtypes[], \
+                    PyArray_Descr *given_descrs[], \
+                    PyArray_Descr *original_descrs[], \
+                    PyArray_Descr *loop_descrs[]);
+
+   The function to convert the actual loop descriptors (as returned by
+   the original `resolve_descriptors` function) to the ones the output
+   array should use. This function must return "viewable" types, it must
+   not mutate them in any form that would break the inner-loop logic.
+   Does not need to support NULL.
+
+Wrapping Loop Example
+^^^^^^^^^^^^^^^^^^^^^
+
+Suppose you want to wrap the ``float64`` multiply implementation for a
+``WrappedDoubleDType``. You would add a wrapping loop like so:
+
+.. code-block:: c
+
+    PyArray_DTypeMeta *orig_dtypes[3] = {
+        &WrappedDoubleDType, &WrappedDoubleDType, &WrappedDoubleDType};
+    PyArray_DTypeMeta *wrapped_dtypes[3] = {
+         &PyArray_Float64DType, &PyArray_Float64DType, &PyArray_Float64DType}
+
+    PyObject *mod = PyImport_ImportModule("numpy");
+    if (mod == NULL) {
+        return -1;
+    }
+    PyObject *multiply = PyObject_GetAttrString(mod, "multiply");
+    Py_DECREF(mod);
+
+    if (multiply == NULL) {
+        return -1;
+    }
+
+    int res = PyUFunc_AddWrappingLoop(
+        multiply, orig_dtypes, wrapped_dtypes, &translate_given_descrs
+        &translate_loop_descrs);
+
+    Py_DECREF(multiply);
+
+Note that this also requires two functions to be defined above this
+code:
+
+.. code-block:: c
+
+    static int
+    translate_given_descrs(int nin, int nout,
+                           PyArray_DTypeMeta *NPY_UNUSED(wrapped_dtypes[]),
+                           PyArray_Descr *given_descrs[],
+                           PyArray_Descr *new_descrs[])
+    {
+        for (int i = 0; i < nin + nout; i++) {
+            if (given_descrs[i] == NULL) {
+                new_descrs[i] = NULL;
+            }
+            else {
+                new_descrs[i] = PyArray_DescrFromType(NPY_DOUBLE);
+            }
+        }
+        return 0;
+    }
+
+    static int
+    translate_loop_descrs(int nin, int NPY_UNUSED(nout),
+                          PyArray_DTypeMeta *NPY_UNUSED(new_dtypes[]),
+                          PyArray_Descr *given_descrs[],
+                          PyArray_Descr *original_descrs[],
+                          PyArray_Descr *loop_descrs[])
+    {
+        // more complicated parametric DTypes may need to
+        // to do additional checking, but we know the wrapped
+        // DTypes *have* to be float64 for this example.
+        loop_descrs[0] = PyArray_DescrFromType(NPY_FLOAT64);
+        Py_INCREF(loop_descrs[0]);
+        loop_descrs[1] = PyArray_DescrFromType(NPY_FLOAT64);
+        Py_INCREF(loop_descrs[1]);
+        loop_descrs[2] = PyArray_DescrFromType(NPY_FLOAT64);
+        Py_INCREF(loop_descrs[2]);
+    }
 
 
 Conversion
@@ -3210,7 +3312,7 @@ Data Type Promotion and Inspection
    necessary.
 
 .. dtype-api_
-   
+
 Custom Data Types
 -----------------
 
@@ -3253,7 +3355,7 @@ Flags that can be set on the ``PyArrayDTypeMeta_Spec`` to initialize the DType.
 
 .. c:macro:: NPY_DT_NUMERIC
 
-   Indicates the DType is represents a numerical value.
+   Indicates the DType represents a numerical value.
 
 
 .. _dtype-slots:
@@ -3331,7 +3433,7 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
    If defined, sets a traversal loop that clears data in the array. This
    is most useful for arrays of references that must clean up array
    entries before the array is garbage collected. Implements
-   ``PyArrayMethod_GetLoop``.
+   ``PyArrayMethod_GetTraverseLoop``.
 
 .. c:macro:: NPY_DT_get_fill_zero_loop
 
@@ -3339,7 +3441,7 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
    values, which may have a DType-specific meaning. This is called
    inside `numpy.zeros` for arrays that need to write a custom sentinel
    value that represents zero if for some reason a zero-filled array is
-   not sufficient. Implements ``PyArrayMethod_GetLoop``.
+   not sufficient. Implements ``PyArrayMethod_GetTraverseLoop``.
 
 .. c:macro:: NPY_DT_finalize_descr
 
@@ -3355,14 +3457,18 @@ PyArray_ArrFuncs slots
 ^^^^^^^^^^^^^^^^^^^^^^
 
 In addition the above slots, the following slots are exposed to allow
-filling the ``PyArray_ArrFuncs`` struct attached to descriptor
-instances.
+filling the :ref:`arrfuncs-type` struct attached to descriptor
+instances. Note that in the future these will be replaced by proper
+DType API slots but for now we have exposed the legacy
+``PyArray_ArrFuncs`` slots.
 
 .. c:macro:: NPY_DT_PyArray_ArrFuncs_getitem
 
    Allows setting a per-dtype getitem. Note that this is not necessary
    to define unless the default version calling the function defined
-   with the ``NPY_DT_getitem`` ID is unsuitable for some reason.
+   with the ``NPY_DT_getitem`` ID is unsuitable. This version will be slightly
+   faster than using ``NPY_DT_getitem`` at the cost of sometimes needing to deal
+   with a NULL input array.
 
 .. c:macro:: NPY_DT_PyArray_ArrFuncs_setitem
 
@@ -3428,7 +3534,7 @@ Macros and Static Inline Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These macros and static inline functions are provided to allow more
-understandable and iomatic code when working with ``PyArray_DTypeMeta``
+understandable and idiomatic code when working with ``PyArray_DTypeMeta``
 instances.
 
 .. c:macro:: NPY_DTYPE(descr)

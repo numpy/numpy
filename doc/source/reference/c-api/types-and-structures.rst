@@ -48,7 +48,7 @@ supportive role: the :c:data:`PyArrayIter_Type`, the
 . The :c:data:`PyArrayIter_Type` is the type for a flat iterator for an
 ndarray (the object that is returned when getting the flat
 attribute). The :c:data:`PyArrayMultiIter_Type` is the type of the
-object returned when calling ``broadcast`` (). It handles iteration and
+object returned when calling ``broadcast``. It handles iteration and
 broadcasting over a collection of nested sequences. Also, the
 :c:data:`PyArrayDescr_Type` is the data-type-descriptor type whose
 instances describe the data and :c:data:`PyArray_DTypeMeta` is the
@@ -465,6 +465,8 @@ PyArrayDescr_Type and PyArray_Descr
    Equivalent to :c:func:`PyDataType_FLAGCHK` (*dtype*,
    :c:data:`NPY_ITEM_REFCOUNT`).
 
+.. _arrfuncs-type:
+
 .. c:type:: PyArray_ArrFuncs
 
     Functions implementing internal features. Not all of these
@@ -850,7 +852,7 @@ PyArray_DTypeMeta and PyArrayDTypeMeta_Spec
           Corresponds to the type number for legacy data types. Data
           types defined outside of NumPy and possibly future data types
           shipped with NumPy will have ``type_num`` set to -1, so this
-          should be relied on to descriminate between data types.
+          should not be relied on to descriminate between data types.
 
    .. c:member:: PyTypeObject *scalar_type
 
