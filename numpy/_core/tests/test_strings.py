@@ -567,19 +567,6 @@ class TestMethods:
         res = np.array(res, dtype=dt)
         assert_array_equal(np.strings.replace(buf, old, new, count), res)
 
-
-@pytest.mark.parametrize("dt", [
-    "S",
-    "U",
-    pytest.param("T", marks=pytest.mark.xfail(
-        reason="StringDType support not implemented yet", strict=True)),
-])
-class TestMethosWithoutStringDTypeSupport:
-    """
-    Tests shoud be moved to `TestMethods` once StringDType support is
-    implemeted
-    """
-
     @pytest.mark.parametrize("in_,out", [
         ('', False),
         ('a', True),
@@ -674,18 +661,6 @@ class TestMethodsWithUnicode:
         buf = np.array("...\u043c......<", dtype=dt)
         assert_array_equal(np.strings.replace(buf,  "<", "&lt;", MAX),
                            "...\u043c......&lt;")
-
-
-@pytest.mark.parametrize("dt", [
-    "U",
-    pytest.param("T", marks=pytest.mark.xfail(
-        reason="StringDType support not implemented yet", strict=True)),
-])
-class TestMethodsWithoutStringDTypeSupportWithUnicode:
-    """
-    Tests shoud be moved to `TestMethods` once StringDType support is
-    implemeted
-    """
 
     @pytest.mark.parametrize("in_", [
         '\U00010401',

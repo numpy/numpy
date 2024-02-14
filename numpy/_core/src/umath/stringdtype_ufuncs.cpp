@@ -1034,6 +1034,18 @@ struct call_buffer_function {
             case IMPLEMENTED_UNARY_FUNCTIONS::STR_LEN:
                 *(T *)out = buf.num_codepoints();
                 break;
+            case IMPLEMENTED_UNARY_FUNCTIONS::ISALNUM:
+                *(T *)out = buf.isalnum();
+                break;
+            case IMPLEMENTED_UNARY_FUNCTIONS::ISTITLE:
+                *(T *)out = buf.istitle();
+                break;
+            case IMPLEMENTED_UNARY_FUNCTIONS::ISUPPER:
+                *(T *)out = buf.isupper();
+                break;
+            case IMPLEMENTED_UNARY_FUNCTIONS::ISLOWER:
+                *(T *)out = buf.islower();
+                break;
         }
     }
 };
@@ -1168,6 +1180,58 @@ string_isspace_strided_loop(PyArrayMethod_Context *context, char *const data[],
                             NpyAuxData *auxdata)
 {
     return string_bool_output_unary_strided_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISSPACE, isspace_name>(
+            context, data, dimensions, strides, auxdata);
+}
+
+
+static const char isalnum_name[] = "isalnum";
+
+static int
+string_isalnum_strided_loop(PyArrayMethod_Context *context, char *const data[],
+                            npy_intp const dimensions[],
+                            npy_intp const strides[],
+                            NpyAuxData *auxdata)
+{
+    return string_bool_output_unary_strided_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISALNUM, isalnum_name>(
+            context, data, dimensions, strides, auxdata);
+}
+
+
+static const char istitle_name[] = "istitle";
+
+static int
+string_istitle_strided_loop(PyArrayMethod_Context *context, char *const data[],
+                            npy_intp const dimensions[],
+                            npy_intp const strides[],
+                            NpyAuxData *auxdata)
+{
+    return string_bool_output_unary_strided_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISTITLE, istitle_name>(
+            context, data, dimensions, strides, auxdata);
+}
+
+
+static const char islower_name[] = "islower";
+
+static int
+string_islower_strided_loop(PyArrayMethod_Context *context, char *const data[],
+                            npy_intp const dimensions[],
+                            npy_intp const strides[],
+                            NpyAuxData *auxdata)
+{
+    return string_bool_output_unary_strided_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISLOWER, islower_name>(
+            context, data, dimensions, strides, auxdata);
+}
+
+
+static const char isupper_name[] = "isupper";
+
+static int
+string_isupper_strided_loop(PyArrayMethod_Context *context, char *const data[],
+                            npy_intp const dimensions[],
+                            npy_intp const strides[],
+                            NpyAuxData *auxdata)
+{
+    return string_bool_output_unary_strided_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISUPPER, isupper_name>(
             context, data, dimensions, strides, auxdata);
 }
 
@@ -2817,6 +2881,34 @@ init_stringdtype_ufuncs(PyObject *umath)
     if (init_ufunc(umath, "isspace", bool_output_dtypes,
                    &string_bool_output_resolve_descriptors,
                    &string_isspace_strided_loop, 1, 1, NPY_NO_CASTING,
+                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+        return -1;
+    }
+
+    if (init_ufunc(umath, "isalnum", bool_output_dtypes,
+                   &string_bool_output_resolve_descriptors,
+                   &string_isalnum_strided_loop, 1, 1, NPY_NO_CASTING,
+                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+        return -1;
+    }
+
+    if (init_ufunc(umath, "istitle", bool_output_dtypes,
+                   &string_bool_output_resolve_descriptors,
+                   &string_istitle_strided_loop, 1, 1, NPY_NO_CASTING,
+                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+        return -1;
+    }
+
+    if (init_ufunc(umath, "isupper", bool_output_dtypes,
+                   &string_bool_output_resolve_descriptors,
+                   &string_isupper_strided_loop, 1, 1, NPY_NO_CASTING,
+                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+        return -1;
+    }
+
+    if (init_ufunc(umath, "islower", bool_output_dtypes,
+                   &string_bool_output_resolve_descriptors,
+                   &string_islower_strided_loop, 1, 1, NPY_NO_CASTING,
                    (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
         return -1;
     }
