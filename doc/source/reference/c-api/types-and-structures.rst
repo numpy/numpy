@@ -202,6 +202,26 @@ PyArray_Type and PyArrayObject
       A solution guaranteed to be compatible with any future NumPy version
       requires the use of a runtime calculate offset and allocation size.
 
+The :c:data:`PyArray_Type` typeobject implements many of the features of
+:c:type:`Python objects <PyTypeObject>` including the :c:member:`tp_as_number
+<PyTypeObject.tp_as_number>`, :c:member:`tp_as_sequence
+<PyTypeObject.tp_as_sequence>`, :c:member:`tp_as_mapping
+<PyTypeObject.tp_as_mapping>`, and :c:member:`tp_as_buffer
+<PyTypeObject.tp_as_buffer>` interfaces. The :c:type:`rich comparison
+<richcmpfunc>`) is also used along with new-style attribute lookup for
+member (:c:member:`tp_members <PyTypeObject.tp_members>`) and properties
+(:c:member:`tp_getset <PyTypeObject.tp_getset>`).
+The :c:data:`PyArray_Type` can also be sub-typed.
+
+.. tip::
+
+    The ``tp_as_number`` methods use a generic approach to call whatever
+    function has been registered for handling the operation.  When the
+    ``_multiarray_umath module`` is imported, it sets the numeric operations
+    for all arrays to the corresponding ufuncs. This choice can be changed with
+    :c:func:`PyUFunc_ReplaceLoopBySignature` The ``tp_str`` and ``tp_repr``
+    methods can also be altered using :c:func:`PyArray_SetStringFunction`.
+
 PyGenericArrType_Type
 ---------------------
 
@@ -467,6 +487,9 @@ PyArrayDescr_Type and PyArray_Descr
 
 .. _arrfuncs-type:
 
+PyArray_ArrFuncs
+----------------
+
 .. c:type:: PyArray_ArrFuncs
 
     Functions implementing internal features. Not all of these
@@ -697,27 +720,6 @@ PyArrayDescr_Type and PyArray_Descr
         memory segment be contiguous and behaved. The return value is
         always 0. The index of the smallest element is returned in
         ``min_ind``.
-
-
-The :c:data:`PyArray_Type` typeobject implements many of the features of
-:c:type:`Python objects <PyTypeObject>` including the :c:member:`tp_as_number
-<PyTypeObject.tp_as_number>`, :c:member:`tp_as_sequence
-<PyTypeObject.tp_as_sequence>`, :c:member:`tp_as_mapping
-<PyTypeObject.tp_as_mapping>`, and :c:member:`tp_as_buffer
-<PyTypeObject.tp_as_buffer>` interfaces. The :c:type:`rich comparison
-<richcmpfunc>`) is also used along with new-style attribute lookup for
-member (:c:member:`tp_members <PyTypeObject.tp_members>`) and properties
-(:c:member:`tp_getset <PyTypeObject.tp_getset>`).
-The :c:data:`PyArray_Type` can also be sub-typed.
-
-.. tip::
-
-    The ``tp_as_number`` methods use a generic approach to call whatever
-    function has been registered for handling the operation.  When the
-    ``_multiarray_umath module`` is imported, it sets the numeric operations
-    for all arrays to the corresponding ufuncs. This choice can be changed with
-    :c:func:`PyUFunc_ReplaceLoopBySignature` The ``tp_str`` and ``tp_repr``
-    methods can also be altered using :c:func:`PyArray_SetStringFunction`.
 
 .. _arraymethod-structs:
 
