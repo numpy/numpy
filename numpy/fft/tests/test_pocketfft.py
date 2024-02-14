@@ -543,3 +543,19 @@ def test_irfft_with_n_large_regression():
                          -6.62459848, 4., -3.37540152, -0.16057669,
                          1.8819096, -20.86055364])
     assert_allclose(result, expected)
+
+
+@pytest.mark.parametrize("fft", [
+    np.fft.fft, np.fft.ifft, np.fft.rfft, np.fft.irfft
+])
+@pytest.mark.parametrize("data", [
+    np.array([False, True, False]),
+    np.arange(10, dtype=np.uint8),
+    np.arange(5, dtype=np.int16),
+])
+def test_fft_with_integer_or_bool_input(data, fft):
+    # Regression test for gh-25819
+    result = fft(data)
+    float_data = data.astype(np.result_type(data, 1.))
+    expected = fft(float_data)
+    assert_array_equal(result, expected)

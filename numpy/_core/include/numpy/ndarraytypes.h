@@ -1186,7 +1186,7 @@ struct PyArrayIterObject_tag {
                 _PyArray_ITER_NEXT1(_PyAIT(it)); \
         } \
         else if (_PyAIT(it)->contiguous) \
-                _PyAIT(it)->dataptr += PyArray_DESCR(_PyAIT(it)->ao)->elsize; \
+                _PyAIT(it)->dataptr += PyArray_ITEMSIZE(_PyAIT(it)->ao); \
         else if (_PyAIT(it)->nd_m1 == 1) { \
                 _PyArray_ITER_NEXT2(_PyAIT(it)); \
         } \
@@ -1239,7 +1239,7 @@ struct PyArrayIterObject_tag {
         } \
         else if (_PyAIT(it)->contiguous) \
                 _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao) + \
-                        __npy_ind * PyArray_DESCR(_PyAIT(it)->ao)->elsize; \
+                        __npy_ind * PyArray_ITEMSIZE(_PyAIT(it)->ao); \
         else { \
                 _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao); \
                 for (__npy_i = 0; __npy_i<=_PyAIT(it)->nd_m1; \

@@ -130,7 +130,7 @@ F2PyGetThreadLocalCallbackPtr(char *key);
              : (F2PY_ALIGN8(intent) ? 8 : (F2PY_ALIGN16(intent) ? 16 : 1)))
 #define F2PY_CHECK_ALIGNMENT(arr, intent) \
     ARRAY_ISALIGNED(arr, F2PY_GET_ALIGNMENT(intent))
-#define F2PY_ARRAY_IS_CHARACTER_COMPATIBLE(arr) ((PyArray_DESCR(arr)->type_num == NPY_STRING && PyArray_DESCR(arr)->elsize >= 1) \
+#define F2PY_ARRAY_IS_CHARACTER_COMPATIBLE(arr) ((PyArray_DESCR(arr)->type_num == NPY_STRING && PyArray_ITEMSIZE(arr) >= 1) \
                                                  || PyArray_DESCR(arr)->type_num == NPY_UINT8)
 #define F2PY_IS_UNICODE_ARRAY(arr) (PyArray_DESCR(arr)->type_num == NPY_UNICODE)
 
@@ -156,7 +156,7 @@ dump_attrs(const PyArrayObject *arr);
      expressions. See signature-file.rst for documentation.
   */
 
-#define f2py_itemsize(var) (PyArray_DESCR((capi_ ## var ## _as_array))->elsize)
+#define f2py_itemsize(var) (PyArray_ITEMSIZE(capi_ ## var ## _as_array))
 #define f2py_size(var, ...) f2py_size_impl((PyArrayObject *)(capi_ ## var ## _as_array), ## __VA_ARGS__, -1)
 #define f2py_rank(var) var ## _Rank
 #define f2py_shape(var,dim) var ## _Dims[dim]

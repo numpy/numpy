@@ -2136,7 +2136,7 @@ PyArray_Zero(PyArrayObject *arr)
     if (_check_object_rec(PyArray_DESCR(arr)) < 0) {
         return NULL;
     }
-    zeroval = PyDataMem_NEW(PyArray_DESCR(arr)->elsize);
+    zeroval = PyDataMem_NEW(PyArray_ITEMSIZE(arr));
     if (zeroval == NULL) {
         PyErr_SetNone(PyExc_MemoryError);
         return NULL;
@@ -2182,7 +2182,7 @@ PyArray_One(PyArrayObject *arr)
     if (_check_object_rec(PyArray_DESCR(arr)) < 0) {
         return NULL;
     }
-    oneval = PyDataMem_NEW(PyArray_DESCR(arr)->elsize);
+    oneval = PyDataMem_NEW(PyArray_ITEMSIZE(arr));
     if (oneval == NULL) {
         PyErr_SetNone(PyExc_MemoryError);
         return NULL;

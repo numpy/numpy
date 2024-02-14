@@ -57,12 +57,13 @@ def _raw_fft(a, n, axis, is_real, is_forward, norm, out=None):
     if not is_forward:
         norm = _swap_direction(norm)
 
+    real_dtype = result_type(a.real.dtype, 1.0)
     if norm is None or norm == "backward":
         fct = 1
     elif norm == "ortho":
-        fct = reciprocal(sqrt(n, dtype=a.real.dtype))
+        fct = reciprocal(sqrt(n, dtype=real_dtype))
     elif norm == "forward":
-        fct = reciprocal(n, dtype=a.real.dtype)
+        fct = reciprocal(n, dtype=real_dtype)
     else:
         raise ValueError(f'Invalid norm value {norm}; should be "backward",'
                          '"ortho" or "forward".')
@@ -81,7 +82,7 @@ def _raw_fft(a, n, axis, is_real, is_forward, norm, out=None):
 
     if out is None:
         if is_real and not is_forward:  # irfft, complex in, real output.
-            out_dtype = result_type(a.real.dtype, 1.0)
+            out_dtype = real_dtype
         else:  # Others, complex output.
             out_dtype = result_type(a.dtype, 1j)
         out = empty(a.shape[:axis] + (n_out,) + a.shape[axis+1:],
