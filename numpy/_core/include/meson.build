@@ -1,5 +1,6 @@
 installed_headers = [
   'numpy/_neighborhood_iterator_imp.h',
+  'numpy/_public_dtype_api_table.h',
   'numpy/arrayobject.h',
   'numpy/arrayscalars.h',
   'numpy/dtype_api.h',

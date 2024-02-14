@@ -7,8 +7,8 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_EXPERIMENTAL_PUBLIC_DTYPE_API_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_EXPERIMENTAL_PUBLIC_DTYPE_API_H_
 
-NPY_NO_EXPORT PyObject *
-_get_dtype_api(PyObject *mod, PyObject *arg);
+NPY_NO_EXPORT void
+_fill_dtype_api(void *numpy_api_table[]);
 
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_EXPERIMENTAL_PUBLIC_DTYPE_API_H_ */

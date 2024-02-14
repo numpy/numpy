@@ -119,10 +119,10 @@ PyArrayInitDTypeMeta_FromSpec(
 }
 
 
-NPY_NO_EXPORT PyObject *
-_get_dtype_api(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(arg))
+void
+_fill_dtype_api(void *full_api_table[])
 {
-    static void *api_table[40] = {0};
+    void **api_table = full_api_table + 320;
 
     /* The type of the DType metaclass */
     api_table[0] = &PyArrayDTypeMeta_Type;
@@ -175,6 +175,4 @@ _get_dtype_api(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(arg))
     api_table[38] = &PyArray_DefaultIntDType;
     /* Non-legacy DTypes that are built in to NumPy */
     api_table[39] = &PyArray_StringDType;
-
-    return PyCapsule_New(&api_table, "dtype_api_table", NULL);
 }
