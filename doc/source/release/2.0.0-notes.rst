@@ -692,7 +692,7 @@ find its location for use with ``PKG_CONFIG_PATH``, use
 Improvements
 ============
 
-* Strings are now supported by ``any``, ``all`, and the logical ufuncs.
+* Strings are now supported by ``any``, ``all``, and the logical ufuncs.
 
   (`gh-25651 <https://github.com/numpy/numpy/pull/25651>`__)
 
@@ -826,6 +826,7 @@ This has no effect on the vast majority of machines since the size
 of these types only differ on extremely niche platforms.
 
 However, it means that:
+
 * Pointers may not necessarily fit into an ``intp`` typed array anymore.
   The ``p`` and ``P`` character codes can still be used, however.
 * Creating ``intptr_t`` or ``uintptr_t`` typed arrays in C remains possible
