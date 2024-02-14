@@ -168,79 +168,6 @@ class TestMethods:
         assert_array_equal(np.strings.isspace(in_), out)
 
     @pytest.mark.parametrize("in_,out", [
-        ('', False),
-        ('a', True),
-        ('A', True),
-        ('\n', False),
-        ('123abc456', True),
-        ('a1b3c', True),
-        ('aBc000 ', False),
-        ('abc\n', False),
-    ])
-    def test_isalnum(self, in_, out, dt):
-        # TODO: Remove this
-        if dt == "T":
-            pytest.xfail(
-                "StringDType support to be added in a follow-up commit")
-        in_ = np.array(in_, dtype=dt)
-        assert_array_equal(np.strings.isalnum(in_), out)
-
-    @pytest.mark.parametrize("in_,out", [
-        ('', False),
-        ('a', True),
-        ('A', False),
-        ('\n', False),
-        ('abc', True),
-        ('aBc', False),
-        ('abc\n', True),
-    ])
-    def test_islower(self, in_, out, dt):
-        # TODO: Remove this
-        if dt == "T":
-            pytest.xfail(
-                "StringDType support to be added in a follow-up commit")
-        in_ = np.array(in_, dtype=dt)
-        assert_array_equal(np.strings.islower(in_), out)
-
-    @pytest.mark.parametrize("in_,out", [
-        ('', False),
-        ('a', False),
-        ('A', True),
-        ('\n', False),
-        ('ABC', True),
-        ('AbC', False),
-        ('ABC\n', True),
-    ])
-    def test_isupper(self, in_, out, dt):
-        # TODO: Remove this
-        if dt == "T":
-            pytest.xfail(
-                "StringDType support to be added in a follow-up commit")
-        in_ = np.array(in_, dtype=dt)
-        assert_array_equal(np.strings.isupper(in_), out)
-
-    @pytest.mark.parametrize("in_,out", [
-        ('', False),
-        ('a', False),
-        ('A', True),
-        ('\n', False),
-        ('A Titlecased Line', True),
-        ('A\nTitlecased Line', True),
-        ('A Titlecased, Line', True),
-        ('Not a capitalized String', False),
-        ('Not\ta Titlecase String', False),
-        ('Not--a Titlecase String', False),
-        ('NOT', False),
-    ])
-    def test_istitle(self, in_, out, dt):
-        # TODO: Remove this
-        if dt == "T":
-            pytest.xfail(
-                "StringDType support to be added in a follow-up commit")
-        in_ = np.array(in_, dtype=dt)
-        assert_array_equal(np.strings.istitle(in_), out)
-
-    @pytest.mark.parametrize("in_,out", [
         ("", 0),
         ("abc", 3),
         ("12345", 5),
@@ -641,8 +568,78 @@ class TestMethods:
         assert_array_equal(np.strings.replace(buf, old, new, count), res)
 
 
-class TestUnicodeOnlyMethods:
-    @pytest.mark.parametrize("dt", ["U", "T"])
+@pytest.mark.parametrize("dt", [
+    "S",
+    "U",
+    pytest.param("T", marks=pytest.mark.xfail(
+        reason="StringDType support not implemented yet", strict=True)),
+])
+class TestMethosWithoutStringDTypeSupport:
+    """
+    Tests shoud be moved to `TestMethods` once StringDType support is
+    implemeted
+    """
+
+    @pytest.mark.parametrize("in_,out", [
+        ('', False),
+        ('a', True),
+        ('A', True),
+        ('\n', False),
+        ('123abc456', True),
+        ('a1b3c', True),
+        ('aBc000 ', False),
+        ('abc\n', False),
+    ])
+    def test_isalnum(self, in_, out, dt):
+        in_ = np.array(in_, dtype=dt)
+        assert_array_equal(np.strings.isalnum(in_), out)
+
+    @pytest.mark.parametrize("in_,out", [
+        ('', False),
+        ('a', True),
+        ('A', False),
+        ('\n', False),
+        ('abc', True),
+        ('aBc', False),
+        ('abc\n', True),
+    ])
+    def test_islower(self, in_, out, dt):
+        in_ = np.array(in_, dtype=dt)
+        assert_array_equal(np.strings.islower(in_), out)
+
+    @pytest.mark.parametrize("in_,out", [
+        ('', False),
+        ('a', False),
+        ('A', True),
+        ('\n', False),
+        ('ABC', True),
+        ('AbC', False),
+        ('ABC\n', True),
+    ])
+    def test_isupper(self, in_, out, dt):
+        in_ = np.array(in_, dtype=dt)
+        assert_array_equal(np.strings.isupper(in_), out)
+
+    @pytest.mark.parametrize("in_,out", [
+        ('', False),
+        ('a', False),
+        ('A', True),
+        ('\n', False),
+        ('A Titlecased Line', True),
+        ('A\nTitlecased Line', True),
+        ('A Titlecased, Line', True),
+        ('Not a capitalized String', False),
+        ('Not\ta Titlecase String', False),
+        ('Not--a Titlecase String', False),
+        ('NOT', False),
+    ])
+    def test_istitle(self, in_, out, dt):
+        in_ = np.array(in_, dtype=dt)
+        assert_array_equal(np.strings.istitle(in_), out)
+
+
+@pytest.mark.parametrize("dt", ["U", "T"])
+class TestMethodsWithUnicode:
     @pytest.mark.parametrize("in_,out", [
         ("", False),
         ("a", False),
@@ -658,12 +655,6 @@ class TestUnicodeOnlyMethods:
         buf = np.array(in_, dtype=dt)
         assert_array_equal(np.strings.isdecimal(buf), out)
 
-    def test_isdecimal_bytes(self):
-        in_ = np.array(b"1")
-        with assert_raises(TypeError):
-            np.strings.isdecimal(in_)
-
-    @pytest.mark.parametrize("dt", ["U", "T"])
     @pytest.mark.parametrize("in_,out", [
         ("", False),
         ("a", False),
@@ -679,18 +670,23 @@ class TestUnicodeOnlyMethods:
         buf = np.array(in_, dtype=dt)
         assert_array_equal(np.strings.isnumeric(buf), out)
 
-    def test_isnumeric_bytes(self):
-        in_ = np.array(b"1")
-        with assert_raises(TypeError):
-            np.strings.isnumeric(in_)
-
-    @pytest.mark.parametrize("dt", ["U", "T"])
     def test_replace_unicode(self, dt):
         buf = np.array("...\u043c......<", dtype=dt)
         assert_array_equal(np.strings.replace(buf,  "<", "&lt;", MAX),
                            "...\u043c......&lt;")
 
-    @pytest.mark.parametrize("dt", ["U", "T"])
+
+@pytest.mark.parametrize("dt", [
+    "U",
+    pytest.param("T", marks=pytest.mark.xfail(
+        reason="StringDType support not implemented yet", strict=True)),
+])
+class TestMethodsWithoutStringDTypeSupportWithUnicode:
+    """
+    Tests shoud be moved to `TestMethods` once StringDType support is
+    implemeted
+    """
+
     @pytest.mark.parametrize("in_", [
         '\U00010401',
         '\U00010427',
@@ -702,13 +698,9 @@ class TestUnicodeOnlyMethods:
         '\U0001F107',
     ])
     def test_isalnum_unicode(self, in_, dt):
-        # TODO: Remove this
-        if dt == "T":
-            pytest.xfail(
-                "StringDType support to be added in a follow-up commit")
+        in_ = np.array(in_, dtype=dt)
         assert_array_equal(np.strings.isalnum(in_), True)
 
-    @pytest.mark.parametrize("dt", ["U", "T"])
     @pytest.mark.parametrize("in_,out", [
         ('\u1FFc', False),
         ('\u2167', False),
@@ -721,13 +713,9 @@ class TestUnicodeOnlyMethods:
         ('\U0001044E', True),
     ])
     def test_islower_unicode(self, in_, out, dt):
-        # TODO: Remove this
-        if dt == "T":
-            pytest.xfail(
-                "StringDType support to be added in a follow-up commit")
+        in_ = np.array(in_, dtype=dt)
         assert_array_equal(np.strings.islower(in_), out)
 
-    @pytest.mark.parametrize("dt", ["U", "T"])
     @pytest.mark.parametrize("in_,out", [
         ('\u1FFc', False),
         ('\u2167', True),
@@ -740,13 +728,9 @@ class TestUnicodeOnlyMethods:
         ('\U0001044E', False),
     ])
     def test_isupper_unicode(self, in_, out, dt):
-        # TODO: Remove this
-        if dt == "T":
-            pytest.xfail(
-                "StringDType support to be added in a follow-up commit")
+        in_ = np.array(in_, dtype=dt)
         assert_array_equal(np.strings.isupper(in_), out)
 
-    @pytest.mark.parametrize("dt", ["U", "T"])
     @pytest.mark.parametrize("in_,out", [
         ('\u1FFc', True),
         ('Greek \u1FFcitlecases ...', True),
@@ -758,11 +742,20 @@ class TestUnicodeOnlyMethods:
         ('\U0001F46F', False),
     ])
     def test_istitle_unicode(self, in_, out, dt):
-        # TODO: Remove this
-        if dt == "T":
-            pytest.xfail(
-                "StringDType support to be added in a follow-up commit")
+        in_ = np.array(in_, dtype=dt)
         assert_array_equal(np.strings.istitle(in_), out)
+
+
+class TestUnicodeOnlyMethodsRaiseWithBytes:
+    def test_isdecimal_raises(self):
+        in_ = np.array(b"1")
+        with assert_raises(TypeError):
+            np.strings.isdecimal(in_)
+
+    def test_isnumeric_bytes(self):
+        in_ = np.array(b"1")
+        with assert_raises(TypeError):
+            np.strings.isnumeric(in_)
 
 
 def check_itemsize(n_elem, dt):
