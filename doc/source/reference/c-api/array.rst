@@ -1948,6 +1948,8 @@ code:
         Py_INCREF(loop_descrs[2]);
     }
 
+API for calling array methods
+-----------------------------
 
 Conversion
 ~~~~~~~~~~
@@ -3316,7 +3318,7 @@ Data Type Promotion and Inspection
 Custom Data Types
 -----------------
 
-..versionadded:: 2.0
+.. versionadded:: 2.0
 
 These functions allow defining custom flexible data types outside of NumPy.  See
 :ref:`NEP 42 <NEP42>` for more details about the rationale and design of the new
