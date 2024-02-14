@@ -1,6 +1,0 @@
-``np.linalg.lstsq`` now defaults to new ``rcond`` value
--------------------------------------------------------
-`~numpy.linalg.lstsq` now uses the new rcond value of the machine precision
-times ``max(M, N)``.  Previously, the machine precision was used but a
-FutureWarning was given to notify that this change will happen eventually.
-That old behavior can still be achieved by passing ``rcond=-1``.
