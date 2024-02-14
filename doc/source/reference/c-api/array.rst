@@ -1676,7 +1676,7 @@ described below.
                 PyArray_DTypeMeta **dtypes, \
                 PyArray_Descr **given_descrs, \
                 PyArray_Descr **loop_descrs, \
-                npy_intp *view_offset_)
+                npy_intp *view_offset)
 
    The resolve descriptors function. Given the DType classes the method was
    created for and the concrete descriptor instances used at runtime, determines
@@ -1688,6 +1688,10 @@ described below.
    instances (output descriptors may be NULL if no output was provided by the
    user), and *loop_descrs* is an ``nargs`` length array of descriptors that
    must be filled in by the resolve descriptors implementation.
+   *view_offset* is currently only interesting for casts and can normally be
+   ignored.  When a cast does not require any operation, this can be signalled
+   by setting ``view_offset`` to 0.
+   On error, you must return ``(NPY_CASTING)-1`` with an error set.
 
 .. c:type:: int (PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context, \
         char *const *data, const npy_intp *dimensions, const npy_intp *strides, \
@@ -1700,7 +1704,8 @@ described below.
    operation. The *strides* are an ``narg`` length array of strides for each
    input. The *auxdata* is an optional set of auxiliary data that can be passed
    in to the loop - helpful to turn on and off optional behavior or reduce
-   boilerplate by allowing similar ufuncs to share loop implementations.
+   boilerplate by allowing similar ufuncs to share loop implementations or
+   to allocate space that is persistent over multiple strided loop calls.
 
 .. c:type:: int (PyArrayMethod_GetLoop)( \
 	    PyArrayMethod_Context *context, \
@@ -1717,8 +1722,9 @@ described below.
    are the strides for the input array, *out_loop* is a pointer that must be
    filled in with a pointer to the loop implementation. *out_transferdata* can
    be optionally filled in to allow passing in extra user-defined context to an
-   operation. *flags* can also be filled in with ArrayMethod flags for the
-   operation.
+   operation. *flags* must be filled in with ArrayMethod flags relevant for the
+   operation.  This is for example necessary to indicate if the inner loop
+   requires the Python GIL to be held.
 
 .. c:type:: int (PyArrayMethod_GetReductionInitial)( \
         PyArrayMethod_Context *context, npy_bool reduction_is_empty, \
@@ -1731,17 +1737,18 @@ described below.
    "default" value that may differ from the "identity" value normally used.
    For example:
 
-       - `0.0` is the default for `sum([])`.  But `-0.0` is the correct
-         identity otherwise as it preserves the sign for `sum([-0.0])`.
-       - We use no identity for object, but return the default of `0` and `1`
-         for the empty `sum([], dtype=object)` and `prod([], dtype=object)`.
-         This allows `np.sum(np.array(["a", "b"], dtype=object))` to work.
-       - `-inf` or `INT_MIN` for `max` is an identity, but at least `INT_MIN`
-         not a good *default* when there are no items.
+       - ``0.0`` is the default for ``sum([])``.  But ``-0.0`` is the correct
+         identity otherwise as it preserves the sign for ``sum([-0.0])``.
+       - We use no identity for object, but return the default of ``0`` and
+         ``1`` for the empty ``sum([], dtype=object)`` and
+         ``prod([], dtype=object)``.
+         This allows ``np.sum(np.array(["a", "b"], dtype=object))`` to work.
+       - ``-inf`` or ``INT_MIN`` for ``max`` is an identity, but at least
+         ``INT_MIN`` not a good *default* when there are no items.
 
    *initial* is a pointer to the data for the initial value, which should be
    filled in. Returns -1, 0, or 1 indicating error, no initial value, and the
-   initial value being successfully filled. Errors must not be given where no
+   initial value being successfully filled. Errors must not be given when no
    initial value is correct, since NumPy may call this even when it is not
    strictly necessary to do so.
 
@@ -1753,10 +1760,10 @@ described below.
    strided-loop function. This is designed for loops that need to visit every
    element of a single array.
 
-   Currently this is used for array clearing, via the NPY_DT_get_clear_loop
-   DType API hook, and zero-filling, via the NPY_DT_get_fill_zero_loop DType API
-   hook.  These are most useful for handling arrays storing embedded references
-   to python objects or heap-allocated data.
+   Currently this is used for array clearing, via the ``NPY_DT_get_clear_loop``
+   DType API hook, and zero-filling, via the ``NPY_DT_get_fill_zero_loop``
+   DType API hook.  These are most useful for handling arrays storing embedded
+   references to python objects or heap-allocated data.
 
    The *descr* is the descriptor for the array, *data* is a pointer to the array
    buffer, *size* is the 1D size of the array buffer, *stride* is the stride,
@@ -1776,8 +1783,8 @@ described below.
 
    Simplified get_loop function specific to dtype traversal
 
-   It should set the flags needed for the traversal loop and set out_loop to the
-   loop function, which must be a valid PyArrayMethod_TraverseLoop
+   It should set the flags needed for the traversal loop and set *out_loop* to the
+   loop function, which must be a valid ``PyArrayMethod_TraverseLoop``
    pointer. Currently this is used for zero-filling and clearing arrays storing
    embedded references.
 
@@ -1788,7 +1795,7 @@ described below.
    Type of the promoter function, which must be wrapped into a
    ``PyCapsule`` with name ``"numpy._ufunc_promoter"``.
 
-   Note that currently the output dtypes are always NULL unless they are
+   Note that currently the output dtypes are always ``NULL`` unless they are
    also part of the signature. This is an implementation detail and could
    change in the future. However, in general promoters should not have a
    need for output dtypes.
@@ -3247,6 +3254,9 @@ Flags that can be set on the ``PyArrayDTypeMeta_Spec`` to initialize the DType.
 .. c:macro:: NPY_DT_NUMERIC
 
    Indicates the DType is represents a numerical value.
+
+
+.. _dtype-slots:
 
 Slot IDs and API Function Typedefs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -742,7 +742,7 @@ PyArrayMethod_Context and PyArrayMethod_Spec
    .. c:member:: PyObject *caller
 
       The caller, which is typically the ufunc that called the loop. May be
-      ``NULL``.
+      ``NULL`` when a call is not from a ufunc (e.g. casts).
 
    .. c:member:: struct PyArrayMethodObject_tag *method
 
@@ -906,9 +906,9 @@ PyArray_DTypeMeta and PyArrayDTypeMeta_Spec
 
    .. c:member:: PyType_Slot *slots;
 
-      A NULL-terminated array of slot specifications for implementations
+      A ``NULL``-terminated array of slot specifications for implementations
       of functions in the DType API. Slot IDs must be one of the
-      DType slot IDs enumerated below.
+      DType slot IDs enumerated in :ref:`dtype-slots`.
 
 
 PyUFunc_Type and PyUFuncObject
