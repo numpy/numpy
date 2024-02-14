@@ -47,7 +47,7 @@ int InitOperations(PyObject *mdict)
         OnesLikeOP<Half>, OnesLikeOP<Float>, OnesLikeOP<Double>, OnesLikeOP<LongDouble>,
         OnesLikeOP<CFloat>, OnesLikeOP<CDouble>, OnesLikeOP<CLongDouble>,
         OnesLikeOP<TimeDelta>, OnesLikeOP<DateTime>, OnesLikeOP<Object>
-    > ones_like_obj("_ones_like", DOC_NUMPY_CORE_UMATH__ONES_LIKE);
+    > ones_like_obj("_ones_like", DOC_NUMPY__CORE_UMATH__ONES_LIKE);
 
     static_cast<PyUFuncObject*>(ones_like_obj)->type_resolver = &PyUFunc_OnesLikeTypeResolver;
     PyDict_SetItemString(mdict, "_ones_like", ones_like_obj);
@@ -57,7 +57,7 @@ int InitOperations(PyObject *mdict)
         CopysignOP<Half>, CopysignOP<Float>,
         CopysignOP<Double>, CopysignOP<LongDouble>
     > copysign_obj(
-        "copysign", DOC_NUMPY_CORE_UMATH_COPYSIGN
+        "copysign", DOC_NUMPY__CORE_UMATH_COPYSIGN
     );
     if (copysign_obj.IsNull()) {
         return -1;
