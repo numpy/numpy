@@ -35,6 +35,8 @@ from numpy._core.umath import (
     _strip_whitespace,
     _strip_chars,
     _replace,
+    _expandtabs_length,
+    _expandtabs,
 )
 
 
@@ -44,12 +46,12 @@ __all__ = [
     "add", "multiply", "isalpha", "isdigit", "isspace", "isalnum", "islower",
     "isupper", "istitle", "isdecimal", "isnumeric", "str_len", "find",
     "rfind", "index", "rindex", "count", "startswith", "endswith", "lstrip",
-    "rstrip", "strip", "replace",
+    "rstrip", "strip", "replace", "expandtabs",
 
     # _vec_string - Will gradually become ufuncs as well
-    "mod", "decode", "encode", "expandtabs", "center", "ljust", "rjust",
-    "zfill", "upper", "lower", "swapcase", "capitalize", "title", "join",
-    "split", "rsplit", "splitlines", "partition", "rpartition", "translate",
+    "mod", "decode", "encode", "center", "ljust", "rjust", "zfill", "upper",
+    "lower", "swapcase", "capitalize", "title", "join", "split", "rsplit",
+    "splitlines", "partition", "rpartition", "translate",
 ]
 
 
@@ -553,8 +555,17 @@ def expandtabs(a, tabsize=8):
     array(['        Hello   world'], dtype='<U21')  # doctest: +SKIP
 
     """
-    return _to_bytes_or_str_array(
-        _vec_string(a, np.object_, 'expandtabs', (tabsize,)), a)
+    a = np.asanyarray(a)
+    tabsize = np.asanyarray(tabsize)
+
+    if a.dtype.char == "T":
+        shape = np.broadcast_shapes(a.shape, tabsize.shape)
+        out = np.empty_like(a, shape=shape)
+    else:
+        buffersizes = _expandtabs_length(a, tabsize)
+        out_dtype = f"{a.dtype.char}{buffersizes.max()}"
+        out = np.empty_like(a, shape=buffersizes.shape, dtype=out_dtype)
+    return _expandtabs(a, tabsize, out=out)
 
 
 def center(a, width, fillchar=' '):

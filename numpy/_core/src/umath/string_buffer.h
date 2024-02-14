@@ -1428,5 +1428,78 @@ copy_rest:
 }
 
 
+template <ENCODING enc>
+static inline npy_intp
+string_expandtabs_length(Buffer<enc> buf, npy_int64 tabsize)
+{
+    size_t len = buf.num_codepoints();
+
+    npy_intp new_len = 0, line_pos = 0;
+
+    Buffer<enc> tmp = buf;
+    for (size_t i = 0; i < len; i++) {
+        npy_ucs4 ch = *tmp;
+        if (ch == '\t') {
+            if (tabsize > 0) {
+                npy_intp incr = tabsize - (line_pos % tabsize);
+                if (new_len > PY_SSIZE_T_MAX - incr) {
+                    npy_gil_error(PyExc_OverflowError, "new string is too long");
+                    return -1;
+                }
+                line_pos += incr;
+                new_len += incr;
+            }
+        }
+        else {
+            if (new_len > PY_SSIZE_T_MAX - 1) {
+                npy_gil_error(PyExc_OverflowError, "new string is too long");
+                return -1;
+            }
+            line_pos++;
+            new_len++;
+            if (ch == '\n' || ch == '\r') {
+                line_pos = 0;
+            }
+        }
+        tmp++;
+    }
+    return new_len;
+}
+
+
+template <ENCODING enc>
+static inline void
+string_expandtabs(Buffer<enc> buf, npy_int64 tabsize, Buffer<enc> out)
+{
+    size_t len = buf.num_codepoints();
+
+    npy_intp new_len = 0, line_pos = 0;
+
+    Buffer<enc> tmp = buf;
+    for (size_t i = 0; i < len; i++) {
+        npy_ucs4 ch = *tmp;
+        if (ch == '\t') {
+            if (tabsize > 0) {
+                npy_intp incr = tabsize - (line_pos % tabsize);
+                line_pos += incr;
+                new_len += incr;
+                out.buffer_memset((npy_ucs4) ' ', incr);
+                out += incr;
+            }
+        }
+        else {
+            line_pos++;
+            new_len++;
+            out.buffer_memset(ch, 1);
+            out++;
+            if (ch == '\n' || ch == '\r') {
+                line_pos = 0;
+            }
+        }
+        tmp++;
+    }
+    out.buffer_fill_with_zeros_after_index(new_len);
+}
+
 
 #endif /* _NPY_CORE_SRC_UMATH_STRING_BUFFER_H_ */

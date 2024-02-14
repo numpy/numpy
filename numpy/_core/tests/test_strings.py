@@ -702,6 +702,32 @@ class TestMethods:
             np.strings.rindex(buf, sub, start, end)
 
 
+@pytest.mark.parametrize("dt", [
+    "S",
+    "U",
+    pytest.param("T", marks=pytest.mark.xfail(
+        reason="SrtingDType support to be implemented in a follow-up commit",
+        strict=True)),
+])
+class TestMethodsWithoutStringDTypeSupport:
+    @pytest.mark.parametrize("buf,tabsize,res", [
+        ("abc\rab\tdef\ng\thi", 8, "abc\rab      def\ng       hi"),
+        ("abc\rab\tdef\ng\thi", 4, "abc\rab  def\ng   hi"),
+        ("abc\r\nab\tdef\ng\thi", 8, "abc\r\nab      def\ng       hi"),
+        ("abc\r\nab\tdef\ng\thi", 4, "abc\r\nab  def\ng   hi"),
+        ("abc\r\nab\r\ndef\ng\r\nhi", 4, "abc\r\nab\r\ndef\ng\r\nhi"),
+        (" \ta\n\tb", 1, "  a\n b"),
+    ])
+    def test_expandtabs(self, buf, tabsize, res, dt):
+        buf = np.array(buf, dtype=dt)
+        res = np.array(res, dtype=dt)
+        assert_array_equal(np.strings.expandtabs(buf, tabsize), res)
+
+    def test_expandtabs_raises_overflow(self, dt):
+        with pytest.raises(OverflowError, match="new string is too long"):
+            np.strings.expandtabs(np.array("\ta\n\tb", dtype=dt), sys.maxsize)
+
+
 @pytest.mark.parametrize("dt", ["U", "T"])
 class TestMethodsWithUnicode:
     @pytest.mark.parametrize("in_,out", [
