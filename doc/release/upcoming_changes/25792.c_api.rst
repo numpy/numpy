@@ -1,8 +1,0 @@
-Required changes for custom legacy user dtypes
-----------------------------------------------
-In order to improve our DTypes it is unfortunately necessary
-to break with ABI, which requires some changes for dtypes registered
-with `PyArray_RegisterDataType`.
-Please see the documentation of `PyArray_RegisterDataType` for how
-to adapt your code and achieve compatibility with both 1.x and 2.x.
-
