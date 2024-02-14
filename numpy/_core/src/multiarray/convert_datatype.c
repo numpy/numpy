@@ -20,7 +20,7 @@
 #include "ctors.h"
 #include "descriptor.h"
 #include "dtypemeta.h"
-#include "common_dtype.h"
+
 #include "scalartypes.h"
 #include "mapping.h"
 #include "legacy_dtype_implementation.h"
@@ -2648,7 +2648,7 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
          * consider moving this warning into the inner-loop at some point
          * for simplicity (this requires ensuring it is only emitted once).
          */
-        slots[5].slot = _NPY_METH_get_loop;
+        slots[5].slot = NPY_METH_get_loop;
         slots[5].pfunc = &complex_to_noncomplex_get_loop;
         slots[6].slot = 0;
         slots[6].pfunc = NULL;
@@ -2669,7 +2669,7 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
         /* When there is no casting (equivalent C-types) use byteswap loops */
         slots[0].slot = NPY_METH_resolve_descriptors;
         slots[0].pfunc = &legacy_same_dtype_resolve_descriptors;
-        slots[1].slot = _NPY_METH_get_loop;
+        slots[1].slot = NPY_METH_get_loop;
         slots[1].pfunc = &get_byteswap_loop;
         slots[2].slot = 0;
         slots[2].pfunc = NULL;
@@ -2853,7 +2853,7 @@ add_other_to_and_from_string_cast(
      */
     PyArray_DTypeMeta *dtypes[2] = {other, string};
     PyType_Slot slots[] = {
-            {_NPY_METH_get_loop, &legacy_cast_get_strided_loop},
+            {NPY_METH_get_loop, &legacy_cast_get_strided_loop},
             {NPY_METH_resolve_descriptors, &cast_to_string_resolve_descriptors},
             {0, NULL}};
     PyArrayMethod_Spec spec = {
@@ -2992,7 +2992,7 @@ PyArray_InitializeStringCasts(void)
     /* string<->string and unicode<->unicode have their own specialized casts */
     PyArray_DTypeMeta *dtypes[2];
     PyType_Slot slots[] = {
-            {_NPY_METH_get_loop, &string_to_string_get_loop},
+            {NPY_METH_get_loop, &string_to_string_get_loop},
             {NPY_METH_resolve_descriptors, &string_to_string_resolve_descriptors},
             {0, NULL}};
     PyArrayMethod_Spec spec = {
@@ -3689,7 +3689,7 @@ PyArray_InitializeVoidToVoidCast(void)
     PyArray_DTypeMeta *Void = &PyArray_VoidDType;
     PyArray_DTypeMeta *dtypes[2] = {Void, Void};
     PyType_Slot slots[] = {
-            {_NPY_METH_get_loop, &void_to_void_get_loop},
+            {NPY_METH_get_loop, &void_to_void_get_loop},
             {NPY_METH_resolve_descriptors, &void_to_void_resolve_descriptors},
             {0, NULL}};
     PyArrayMethod_Spec spec = {
@@ -3874,7 +3874,7 @@ PyArray_InitializeObjectToObjectCast(void)
     PyArray_DTypeMeta *Object = &PyArray_ObjectDType;
     PyArray_DTypeMeta *dtypes[2] = {Object, Object};
     PyType_Slot slots[] = {
-            {_NPY_METH_get_loop, &object_to_object_get_loop},
+            {NPY_METH_get_loop, &object_to_object_get_loop},
             {0, NULL}};
     PyArrayMethod_Spec spec = {
             .name = "object_to_object_cast",

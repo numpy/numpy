@@ -35,7 +35,6 @@
 #include "array_coercion.h"
 #include "array_method.h"
 #include "dtypemeta.h"
-#include "common_dtype.h"
 #include "convert_datatype.h"
 #include "common.h"
 #include "numpy/ufuncobject.h"
@@ -268,7 +267,7 @@ fill_arraymethod_from_slots(
             case NPY_METH_resolve_descriptors:
                 meth->resolve_descriptors = slot->pfunc;
                 continue;
-            case _NPY_METH_get_loop:
+            case NPY_METH_get_loop:
                 /*
                  * NOTE: get_loop is considered "unstable" in the public API,
                  *       I do not like the signature, and the `move_references`

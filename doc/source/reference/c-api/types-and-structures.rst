@@ -48,14 +48,17 @@ supportive role: the :c:data:`PyArrayIter_Type`, the
 . The :c:data:`PyArrayIter_Type` is the type for a flat iterator for an
 ndarray (the object that is returned when getting the flat
 attribute). The :c:data:`PyArrayMultiIter_Type` is the type of the
-object returned when calling ``broadcast`` (). It handles iteration
-and broadcasting over a collection of nested sequences. Also, the
+object returned when calling ``broadcast``. It handles iteration and
+broadcasting over a collection of nested sequences. Also, the
 :c:data:`PyArrayDescr_Type` is the data-type-descriptor type whose
-instances describe the data.  Finally, there are 21 new scalar-array
+instances describe the data and :c:data:`PyArray_DTypeMeta` is the
+metaclass for data-type descriptors.  There are also new scalar-array
 types which are new Python scalars corresponding to each of the
-fundamental data types available for arrays. An additional 10 other
-types are place holders that allow the array scalars to fit into a
-hierarchy of actual Python types.
+fundamental data types available for arrays. Additional types are
+placeholders that allow the array scalars to fit into a hierarchy of
+actual Python types. Finally, the :c:data:`PyArray_DTypeMeta` instances
+corresponding to the NumPy built-in data types are also publicly
+visible.
 
 
 PyArray_Type and PyArrayObject
@@ -198,6 +201,26 @@ PyArray_Type and PyArrayObject
       NumPy version, you may add a constant, leaving room for changes in NumPy.
       A solution guaranteed to be compatible with any future NumPy version
       requires the use of a runtime calculate offset and allocation size.
+
+The :c:data:`PyArray_Type` typeobject implements many of the features of
+:c:type:`Python objects <PyTypeObject>` including the :c:member:`tp_as_number
+<PyTypeObject.tp_as_number>`, :c:member:`tp_as_sequence
+<PyTypeObject.tp_as_sequence>`, :c:member:`tp_as_mapping
+<PyTypeObject.tp_as_mapping>`, and :c:member:`tp_as_buffer
+<PyTypeObject.tp_as_buffer>` interfaces. The :c:type:`rich comparison
+<richcmpfunc>`) is also used along with new-style attribute lookup for
+member (:c:member:`tp_members <PyTypeObject.tp_members>`) and properties
+(:c:member:`tp_getset <PyTypeObject.tp_getset>`).
+The :c:data:`PyArray_Type` can also be sub-typed.
+
+.. tip::
+
+    The ``tp_as_number`` methods use a generic approach to call whatever
+    function has been registered for handling the operation.  When the
+    ``_multiarray_umath module`` is imported, it sets the numeric operations
+    for all arrays to the corresponding ufuncs. This choice can be changed with
+    :c:func:`PyUFunc_ReplaceLoopBySignature` The ``tp_str`` and ``tp_repr``
+    methods can also be altered using :c:func:`PyArray_SetStringFunction`.
 
 PyGenericArrType_Type
 ---------------------
@@ -462,6 +485,11 @@ PyArrayDescr_Type and PyArray_Descr
    Equivalent to :c:func:`PyDataType_FLAGCHK` (*dtype*,
    :c:data:`NPY_ITEM_REFCOUNT`).
 
+.. _arrfuncs-type:
+
+PyArray_ArrFuncs
+----------------
+
 .. c:type:: PyArray_ArrFuncs
 
     Functions implementing internal features. Not all of these
@@ -591,11 +619,11 @@ PyArrayDescr_Type and PyArray_Descr
         A pointer to a function that scans (scanf style) one element
         of the corresponding type from the file descriptor ``fd`` into
         the array memory pointed to by ``ip``. The array is assumed
-        to be behaved. 
+        to be behaved.
         The last argument ``arr`` is the array to be scanned into.
         Returns number of receiving arguments successfully assigned (which
         may be zero in case a matching failure occurred before the first
-        receiving argument was assigned), or EOF if input failure occurs 
+        receiving argument was assigned), or EOF if input failure occurs
         before the first receiving argument was assigned.
         This function should be called without holding the Python GIL, and
         has to grab it for error reporting.
@@ -693,26 +721,198 @@ PyArrayDescr_Type and PyArray_Descr
         always 0. The index of the smallest element is returned in
         ``min_ind``.
 
+.. _arraymethod-structs:
 
-The :c:data:`PyArray_Type` typeobject implements many of the features of
-:c:type:`Python objects <PyTypeObject>` including the :c:member:`tp_as_number
-<PyTypeObject.tp_as_number>`, :c:member:`tp_as_sequence
-<PyTypeObject.tp_as_sequence>`, :c:member:`tp_as_mapping
-<PyTypeObject.tp_as_mapping>`, and :c:member:`tp_as_buffer
-<PyTypeObject.tp_as_buffer>` interfaces. The :c:type:`rich comparison
-<richcmpfunc>`) is also used along with new-style attribute lookup for
-member (:c:member:`tp_members <PyTypeObject.tp_members>`) and properties
-(:c:member:`tp_getset <PyTypeObject.tp_getset>`).
-The :c:data:`PyArray_Type` can also be sub-typed.
+PyArrayMethod_Context and PyArrayMethod_Spec
+--------------------------------------------
 
-.. tip::
+.. c:type:: PyArrayMethodObject_tag
 
-    The ``tp_as_number`` methods use a generic approach to call whatever
-    function has been registered for handling the operation.  When the
-    ``_multiarray_umath module`` is imported, it sets the numeric operations
-    for all arrays to the corresponding ufuncs. This choice can be changed with
-    :c:func:`PyUFunc_ReplaceLoopBySignature` The ``tp_str`` and ``tp_repr``
-    methods can also be altered using :c:func:`PyArray_SetStringFunction`.
+   An opaque struct used to represent the method "self" in ArrayMethod loops.
+
+.. c:type:: PyArrayMethod_Context
+
+   A struct that is passed in to ArrayMethod loops to provide context for the
+   runtime usage of the loop.
+
+   .. code-block:: c
+
+      typedef struct {
+          PyObject *caller;
+          struct PyArrayMethodObject_tag *method;
+          PyArray_Descr **descriptors;
+      } PyArrayMethod_Context
+
+   .. c:member:: PyObject *caller
+
+      The caller, which is typically the ufunc that called the loop. May be
+      ``NULL`` when a call is not from a ufunc (e.g. casts).
+
+   .. c:member:: struct PyArrayMethodObject_tag *method
+
+      The method "self". Currently this object is an opaque pointer.
+
+   .. c:member:: PyArray_Descr **descriptors
+
+      An array of descriptors for the ufunc loop, filled in by
+      ``resolve_descriptors``. The length of the array is ``nin`` + ``nout``.
+
+.. c:type:: PyArrayMethod_Spec
+
+   A struct used to register an ArrayMethod with NumPy. We use the slots
+   mechanism used by the Python limited API. See below for the slot definitions.
+
+   .. code-block:: c
+
+       typedef struct {
+          const char *name;
+          int nin, nout;
+          NPY_CASTING casting;
+          NPY_ARRAYMETHOD_FLAGS flags;
+          PyArray_DTypeMeta **dtypes;
+          PyType_Slot *slots;
+       } PyArrayMethod_Spec;
+
+   .. c:member:: const char *name
+
+      The name of the loop.
+
+   .. c:member:: int nin
+
+      The number of input operands
+
+   .. c:member:: int nout
+
+      The number of output operands.
+
+   .. c:member:: NPY_CASTING casting
+
+      Used to indicate how minimally permissive a casting operation should
+      be. For example, if a cast operation might in some circumstances be safe,
+      but in others unsafe, then ``NPY_UNSAFE_CASTING`` should be set. Not used
+      for ufunc loops but must still be set.
+
+   .. c:member:: NPY_ARRAYMETHOD_FLAGS flags
+
+      The flags set for the method.
+
+   .. c:member:: PyArray_DTypeMeta **dtypes
+
+      The DTypes for the loop. Must be ``nin`` + ``nout`` in length.
+
+   .. c:member:: PyType_Slot *slots
+
+      An array of slots for the method. Slot IDs must be one of the values
+      below.
+
+.. _dtypemeta:
+
+PyArray_DTypeMeta and PyArrayDTypeMeta_Spec
+-------------------------------------------
+
+.. c:type:: PyArray_DTypeMeta
+
+   A largely opaque struct representing DType classes. Each instance defines a
+   metaclass for a single NumPy data type. Data types can either be
+   non-parametric or parametric. For non-parametric types, the DType class has
+   a one-to-one correspondence with the descriptor instance created from the
+   DType class. Parametric types can correspond to many different dtype
+   instances depending on the chosen parameters. This type is available in the
+   public ``numpy/dtype_api.h`` header. Currently use of this struct is not
+   supported in the limited CPython API, so if ``Py_LIMITED_API`` is set, this
+   type is a typedef for ``PyTypeObject``.
+
+   .. code-block:: c
+
+      typedef struct {
+           PyHeapTypeObject super;
+           PyArray_Descr *singleton;
+           int type_num;
+           PyTypeObject *scalar_type;
+           npy_uint64 flags;
+           void *dt_slots;
+           void *reserved[3];
+      } PyArray_DTypeMeta
+
+   .. c:member:: PyHeapTypeObject super
+
+          The superclass, providing hooks into the python object
+          API. Set members of this struct to fill in the functions
+          implementing the ``PyTypeObject`` API (e.g. ``tp_new``).
+
+   .. c:member:: PyArray_Descr *singleton
+
+          A descriptor instance suitable for use as a singleton
+          descriptor for the data type. This is useful for
+          non-parametric types representing simple plain old data type
+          where there is only one logical descriptor instance for all
+          data of the type. Can be NULL if a singleton instance is not
+          appropriate.
+
+   .. c:member:: int type_num
+
+          Corresponds to the type number for legacy data types. Data
+          types defined outside of NumPy and possibly future data types
+          shipped with NumPy will have ``type_num`` set to -1, so this
+          should not be relied on to descriminate between data types.
+
+   .. c:member:: PyTypeObject *scalar_type
+
+          The type of scalar instances for this data type.
+
+   .. c:member:: npy_uint64 flags
+
+          Flags can be set to indicate to NumPy that this data type
+          has optional behavior. See :ref:`dtype-flags` for a listing of
+          allowed flag values.
+
+   .. c:member:: void* dt_slots
+
+          An opaque pointer to a private struct containing
+          implementations of functions in the DType API. This is filled
+          in from the ``slots`` member of the ``PyArrayDTypeMeta_Spec``
+          instance used to initialize the DType.
+
+.. c:type:: PyArrayDTypeMeta_Spec
+
+   A struct used to initialize a new DType with the
+   ``PyArrayInitDTypeMeta_FromSpec`` function.
+
+   .. code-block:: c
+
+      typedef struct {
+          PyTypeObject *typeobj;
+          int flags;
+          PyArrayMethod_Spec **casts;
+          PyType_Slot *slots;
+          PyTypeObject *baseclass;
+      }
+
+   .. c:member:: PyTypeObject *typeobj
+
+      Either ``NULL`` or the type of the python scalar associated with
+      the DType. Scalar indexing into an array returns an item with this
+      type.
+
+   .. c:member:: int flags
+
+      Static flags for the DType class, indicating whether the DType is
+      parametric, abstract, or represents numeric data. The latter is
+      optional but is useful to set to indicate to downstream code if
+      the DType represents data that are numbers (ints, floats, or other
+      numeric data type) or something else (e.g. a string, unit, or
+      date).
+
+   .. c:member:: PyArrayMethod_Spec **casts;
+
+      A ``NULL``-terminated array of ArrayMethod specifications for
+      casts defined by the DType.
+
+   .. c:member:: PyType_Slot *slots;
+
+      A ``NULL``-terminated array of slot specifications for implementations
+      of functions in the DType API. Slot IDs must be one of the
+      DType slot IDs enumerated in :ref:`dtype-slots`.
 
 
 PyUFunc_Type and PyUFuncObject
@@ -1175,7 +1375,7 @@ are ``Py{TYPE}ArrType_Type`` where ``{TYPE}`` can be
     **Bool**, **Byte**, **Short**, **Int**, **Long**, **LongLong**,
     **UByte**, **UShort**, **UInt**, **ULong**, **ULongLong**,
     **Half**, **Float**, **Double**, **LongDouble**, **CFloat**,
-    **CDouble**, **CLongDouble**, **String**, **Unicode**, **Void**, 
+    **CDouble**, **CLongDouble**, **String**, **Unicode**, **Void**,
     **Datetime**, **Timedelta**, and **Object**.
 
 These type names are part of the C-API and can therefore be created in

@@ -1,11 +1,9 @@
 /*
- * DType related API shared by the (experimental) public API And internal API.
+ * The public DType API
  */
 
 #ifndef NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 #define NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
-
-#define __EXPERIMENTAL_DTYPE_API_VERSION 15
 
 struct PyArrayMethodObject_tag;
 
@@ -16,6 +14,8 @@ struct PyArrayMethodObject_tag;
  * externally).
  */
 #if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
+
+#ifndef Py_LIMITED_API
 
     typedef struct PyArray_DTypeMeta_tag {
         PyHeapTypeObject super;
@@ -48,6 +48,12 @@ struct PyArrayMethodObject_tag;
         void *reserved[3];
     } PyArray_DTypeMeta;
 
+#else
+
+typedef PyTypeObject PyArray_DTypeMeta;
+
+#endif /* Py_LIMITED_API */
+
 #endif  /* not internal build */
 
 /*
@@ -55,11 +61,8 @@ struct PyArrayMethodObject_tag;
  *         ArrayMethod API (Casting and UFuncs)
  * ******************************************************
  */
-/*
- * NOTE: Expected changes:
- *       * probably split runtime and general flags into two
- *       * should possibly not use an enum for typedef for more stable ABI?
- */
+
+
 typedef enum {
     /* Flag for whether the GIL is required */
     NPY_METH_REQUIRES_PYAPI = 1 << 0,
@@ -131,8 +134,7 @@ typedef struct {
  */
 #define _NPY_METH_resolve_descriptors_with_scalars 1
 #define NPY_METH_resolve_descriptors 2
-/* We may want to adapt the `get_loop` signature a bit: */
-#define _NPY_METH_get_loop 3
+#define NPY_METH_get_loop 3
 #define NPY_METH_get_reduction_initial 4
 /* specific loops for constructions/default get_loop: */
 #define NPY_METH_strided_loop 5
@@ -140,6 +142,7 @@ typedef struct {
 #define NPY_METH_unaligned_strided_loop 7
 #define NPY_METH_unaligned_contiguous_loop 8
 #define NPY_METH_contiguous_indexed_loop 9
+
 
 /*
  * The resolve descriptors function, must be able to handle NULL values for
@@ -151,7 +154,7 @@ typedef struct {
  *
  * `resolve_descriptors` is optional if all output DTypes are non-parametric.
  */
-typedef NPY_CASTING (resolve_descriptors_function)(
+typedef NPY_CASTING (PyArrayMethod_ResolveDescriptors)(
         /* "method" is currently opaque (necessary e.g. to wrap Python) */
         struct PyArrayMethodObject_tag *method,
         /* DTypes the method was created for */
@@ -165,13 +168,13 @@ typedef NPY_CASTING (resolve_descriptors_function)(
 
 /*
  * Rarely needed, slightly more powerful version of `resolve_descriptors`.
- * See also `resolve_descriptors_function` for details on shared arguments.
+ * See also `PyArrayMethod_ResolveDescriptors` for details on shared arguments.
  *
  * NOTE: This function is private now as it is unclear how and what to pass
  *       exactly as additional information to allow dealing with the scalars.
  *       See also gh-24915.
  */
-typedef NPY_CASTING (resolve_descriptors_with_scalars_function)(
+typedef NPY_CASTING (PyArrayMethod_ResolveDescriptorsWithScalar)(
         struct PyArrayMethodObject_tag *method,
         PyArray_DTypeMeta **dtypes,
         /* Unlike above, these can have any DType and we may allow NULL. */
@@ -187,12 +190,13 @@ typedef NPY_CASTING (resolve_descriptors_with_scalars_function)(
         npy_intp *view_offset);
 
 
+
 typedef int (PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context,
         char *const *data, const npy_intp *dimensions, const npy_intp *strides,
         NpyAuxData *transferdata);
 
 
-typedef int (get_loop_function)(
+typedef int (PyArrayMethod_GetLoop)(
         PyArrayMethod_Context *context,
         int aligned, int move_references,
         const npy_intp *strides,
@@ -220,7 +224,7 @@ typedef int (get_loop_function)(
  *     successfully filled.  Errors must not be given where 0 is correct, NumPy
  *     may call this even when not strictly necessary.
  */
-typedef int (get_reduction_initial_function)(
+typedef int (PyArrayMethod_GetReductionInitial)(
         PyArrayMethod_Context *context, npy_bool reduction_is_empty,
         char *initial);
 
@@ -228,6 +232,7 @@ typedef int (get_reduction_initial_function)(
  * The following functions are only used by the wrapping array method defined
  * in umath/wrapping_array_method.c
  */
+
 
 /*
  * The function to convert the given descriptors (passed in to
@@ -249,7 +254,7 @@ typedef int (get_reduction_initial_function)(
  *       (I am considering including `auxdata` as an "optional" parameter to
  *       `resolve_descriptors`, so that it can be filled there if not NULL.)
  */
-typedef int translate_given_descrs_func(int nin, int nout,
+typedef int (PyArrayMethod_TranslateGivenDescriptors)(int nin, int nout,
         PyArray_DTypeMeta *wrapped_dtypes[],
         PyArray_Descr *given_descrs[], PyArray_Descr *new_descrs[]);
 
@@ -271,9 +276,10 @@ typedef int translate_given_descrs_func(int nin, int nout,
  *
  * @returns 0 on success, -1 on failure.
  */
-typedef int translate_loop_descrs_func(int nin, int nout,
+typedef int (PyArrayMethod_TranslateLoopDescriptors)(int nin, int nout,
         PyArray_DTypeMeta *new_dtypes[], PyArray_Descr *given_descrs[],
         PyArray_Descr *original_descrs[], PyArray_Descr *loop_descrs[]);
+
 
 
 /*
@@ -295,7 +301,7 @@ typedef int translate_loop_descrs_func(int nin, int nout,
  * the future (for structured dtypes).
  *
  */
-typedef int (traverse_loop_function)(
+typedef int (PyArrayMethod_TraverseLoop)(
         void *traverse_context, PyArray_Descr *descr, char *data,
         npy_intp size, npy_intp stride, NpyAuxData *auxdata);
 
@@ -304,17 +310,31 @@ typedef int (traverse_loop_function)(
  * Simplified get_loop function specific to dtype traversal
  *
  * It should set the flags needed for the traversal loop and set out_loop to the
- * loop function, which must be a valid traverse_loop_function
+ * loop function, which must be a valid PyArrayMethod_TraverseLoop
  * pointer. Currently this is used for zero-filling and clearing arrays storing
  * embedded references.
  *
  */
-typedef int (get_traverse_loop_function)(
+typedef int (PyArrayMethod_GetTraverseLoop)(
         void *traverse_context, PyArray_Descr *descr,
         int aligned, npy_intp fixed_stride,
-        traverse_loop_function **out_loop, NpyAuxData **out_auxdata,
+        PyArrayMethod_TraverseLoop **out_loop, NpyAuxData **out_auxdata,
         NPY_ARRAYMETHOD_FLAGS *flags);
 
+
+/*
+ * Type of the C promoter function, which must be wrapped into a
+ * PyCapsule with name "numpy._ufunc_promoter".
+ *
+ * Note that currently the output dtypes are always NULL unless they are
+ * also part of the signature. This is an implementation detail and could
+ * change in the future. However, in general promoters should not have a
+ * need for output dtypes.
+ * (There are potential use-cases, these are currently unsupported.)
+ */
+typedef int (PyArrayMethod_PromoterFunction)(PyObject *ufunc,
+        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *new_op_dtypes[]);
 
 /*
  * ****************************
@@ -363,8 +383,9 @@ typedef int (get_traverse_loop_function)(
 #define NPY_DT_PyArray_ArrFuncs_getitem 1 + _NPY_DT_ARRFUNCS_OFFSET
 #define NPY_DT_PyArray_ArrFuncs_setitem 2 + _NPY_DT_ARRFUNCS_OFFSET
 
-#define NPY_DT_PyArray_ArrFuncs_copyswapn 3 + _NPY_DT_ARRFUNCS_OFFSET
-#define NPY_DT_PyArray_ArrFuncs_copyswap 4 + _NPY_DT_ARRFUNCS_OFFSET
+// Copyswap is disabled
+// #define NPY_DT_PyArray_ArrFuncs_copyswapn 3 + _NPY_DT_ARRFUNCS_OFFSET
+// #define NPY_DT_PyArray_ArrFuncs_copyswap 4 + _NPY_DT_ARRFUNCS_OFFSET
 #define NPY_DT_PyArray_ArrFuncs_compare 5 + _NPY_DT_ARRFUNCS_OFFSET
 #define NPY_DT_PyArray_ArrFuncs_argmax 6 + _NPY_DT_ARRFUNCS_OFFSET
 #define NPY_DT_PyArray_ArrFuncs_dotfunc 7 + _NPY_DT_ARRFUNCS_OFFSET
@@ -389,6 +410,7 @@ typedef int (get_traverse_loop_function)(
 // #define NPY_DT_PyArray_ArrFuncs_fasttake 21 + _NPY_DT_ARRFUNCS_OFFSET
 #define NPY_DT_PyArray_ArrFuncs_argmin 22 + _NPY_DT_ARRFUNCS_OFFSET
 
+
 // TODO: These slots probably still need some thought, and/or a way to "grow"?
 typedef struct {
     PyTypeObject *typeobj;    /* type of python scalar or NULL */
@@ -401,7 +423,7 @@ typedef struct {
 } PyArrayDTypeMeta_Spec;
 
 
-typedef PyArray_Descr *(discover_descr_from_pyobject_function)(
+typedef PyArray_Descr *(PyArrayDTypeMeta_DiscoverDescrFromPyobject)(
         PyArray_DTypeMeta *cls, PyObject *obj);
 
 /*
@@ -410,33 +432,13 @@ typedef PyArray_Descr *(discover_descr_from_pyobject_function)(
  * `np.array(np.array([0]), dtype=np.ndarray)`
  * Could consider arrays that are not `dtype=ndarray` "scalars".
  */
-typedef int (is_known_scalar_type_function)(
+typedef int (PyArrayDTypeMeta_IsKnownScalarType)(
         PyArray_DTypeMeta *cls, PyTypeObject *obj);
 
-typedef PyArray_Descr *(default_descr_function)(PyArray_DTypeMeta *cls);
-typedef PyArray_DTypeMeta *(common_dtype_function)(
+typedef PyArray_Descr *(PyArrayDTypeMeta_DefaultDescriptor)(PyArray_DTypeMeta *cls);
+typedef PyArray_DTypeMeta *(PyArrayDTypeMeta_CommonDType)(
         PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2);
-typedef PyArray_Descr *(common_instance_function)(
-        PyArray_Descr *dtype1, PyArray_Descr *dtype2);
-typedef PyArray_Descr *(ensure_canonical_function)(PyArray_Descr *dtype);
-/*
- * Returns either a new reference to *dtype* or a new descriptor instance
- * initialized with the same parameters as *dtype*. The caller cannot know
- * which choice a dtype will make. This function is called just before the
- * array buffer is created for a newly created array, it is not called for
- * views and the descriptor returned by this function is attached to the array.
- */
-typedef PyArray_Descr *(finalize_descr_function)(PyArray_Descr *dtype);
 
-/*
- * TODO: These two functions are currently only used for experimental DType
- *       API support.  Their relation should be "reversed": NumPy should
- *       always use them internally.
- *       There are open points about "casting safety" though, e.g. setting
- *       elements is currently always unsafe.
- */
-typedef int(setitemfunction)(PyArray_Descr *, PyObject *, char *);
-typedef PyObject *(getitemfunction)(PyArray_Descr *, char *);
 
 /*
  * Convenience utility for getting a reference to the DType metaclass associated
@@ -449,5 +451,28 @@ NPY_DT_NewRef(PyArray_DTypeMeta *o) {
     Py_INCREF(o);
     return o;
 }
+
+
+typedef PyArray_Descr *(PyArrayDTypeMeta_CommonInstance)(
+        PyArray_Descr *dtype1, PyArray_Descr *dtype2);
+typedef PyArray_Descr *(PyArrayDTypeMeta_EnsureCanonical)(PyArray_Descr *dtype);
+/*
+ * Returns either a new reference to *dtype* or a new descriptor instance
+ * initialized with the same parameters as *dtype*. The caller cannot know
+ * which choice a dtype will make. This function is called just before the
+ * array buffer is created for a newly created array, it is not called for
+ * views and the descriptor returned by this function is attached to the array.
+ */
+typedef PyArray_Descr *(PyArrayDTypeMeta_FinalizeDescriptor)(PyArray_Descr *dtype);
+
+/*
+ * TODO: These two functions are currently only used for experimental DType
+ *       API support.  Their relation should be "reversed": NumPy should
+ *       always use them internally.
+ *       There are open points about "casting safety" though, e.g. setting
+ *       elements is currently always unsafe.
+ */
+typedef int(PyArrayDTypeMeta_SetItem)(PyArray_Descr *, PyObject *, char *);
+typedef PyObject *(PyArrayDTypeMeta_GetItem)(PyArray_Descr *, char *);
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */

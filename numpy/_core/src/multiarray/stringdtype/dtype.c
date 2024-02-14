@@ -550,7 +550,7 @@ stringdtype_get_clear_loop(void *NPY_UNUSED(traverse_context),
                            PyArray_Descr *NPY_UNUSED(descr),
                            int NPY_UNUSED(aligned),
                            npy_intp NPY_UNUSED(fixed_stride),
-                           traverse_loop_function **out_loop,
+                           PyArrayMethod_TraverseLoop **out_loop,
                            NpyAuxData **NPY_UNUSED(out_auxdata),
                            NPY_ARRAYMETHOD_FLAGS *flags)
 {
