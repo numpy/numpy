@@ -5716,11 +5716,9 @@ add_newdoc('numpy._core', 'ufunc', ('_get_strided_loop',
         } ufunc_call_info;
 
     Note that the first call only fills in the ``context``.  The call to
-    ``_get_strided_loop`` fills in all other data.
-    Please see the ``numpy/experimental_dtype_api.h`` header for exact
-    call information; the main thing to note is that the new-style loops
-    return 0 on success, -1 on failure.  They are passed context as new
-    first input and ``auxdata`` as (replaced) last.
+    ``_get_strided_loop`` fills in all other data.  The main thing to note is
+    that the new-style loops return 0 on success, -1 on failure.  They are
+    passed context as new first input and ``auxdata`` as (replaced) last.
 
     Only the ``strided_loop``signature is considered guaranteed stable
     for NumPy bug-fix releases.  All other API is tied to the experimental

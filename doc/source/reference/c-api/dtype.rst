@@ -154,6 +154,9 @@ Enumerated types
         the array buffer. Use the C API for working with numpy variable-width
         static strings to access the string data in each array entry.
 
+        .. note::
+            This DType is new-style and is not included in ``NPY_NTYPES_LEGACY``.
+
     .. c:enumerator:: NPY_OBJECT
 
         The enumeration value for references to arbitrary Python objects.
@@ -190,19 +193,18 @@ Enumerated types
 
 Other useful related constants are
 
-.. c:macro:: NPY_NTYPES
-
-    The total number of built-in NumPy types. The enumeration covers
-    the range from 0 to NPY_NTYPES-1.
-
 .. c:macro:: NPY_NTYPES_LEGACY
 
     The number of built-in NumPy types written using the legacy DType
     system. New NumPy dtypes will be written using the new DType API and may not
     function in the same manner as legacy DTypes. Use this macro if you want to
     handle legacy DTypes using different code paths or if you do not want to
-    update code that uses ``NPY_NTYPES`` and does not work correctly with new
+    update code that uses ``NPY_NTYPES_LEGACY`` and does not work correctly with new
     DTypes.
+
+    .. note::
+        Newly added DTypes such as ``NPY_VSTRING`` will not be counted
+        in ``NPY_NTYPES_LEGACY``.
 
 .. c:macro:: NPY_NOTYPE
 
@@ -210,7 +212,12 @@ Other useful related constants are
 
 .. c:macro:: NPY_USERDEF
 
-    The start of type numbers used for Custom Data types.
+    The start of type numbers used for legacy Custom Data types.
+    New-style user DTypes currently are currently *not* assigned a type-number.
+
+    .. note::
+        The total number of user dtypes is limited to below ``NPY_VSTRING``.
+        Higher numbers are reserved to future new-style DType use.
 
 The various character codes indicating certain types are also part of
 an enumerated list. References to type characters (should they be

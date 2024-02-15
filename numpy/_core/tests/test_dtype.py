@@ -161,7 +161,7 @@ class TestBuiltin:
         # Byte order indicator, but no type
         assert_raises(TypeError, np.dtype, b'|')
 
-        # Single character with ordinal < NPY_NTYPES returns
+        # Single character with ordinal < NPY_NTYPES_LEGACY returns
         # type by index into _builtin_descrs
         assert_dtype_equal(np.dtype(bytes([0])), np.dtype('bool'))
         assert_dtype_equal(np.dtype(bytes([17])), np.dtype(object))

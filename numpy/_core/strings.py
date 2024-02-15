@@ -686,7 +686,7 @@ def lstrip(a, chars=None):
 
     Parameters
     ----------
-    a : array_like, with ``bytes_`` or ``unicode_`` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
     chars : scalar with the same dtype as ``a``, optional
        The ``chars`` argument is a string specifying the set of
        characters to be removed. If ``None``, the ``chars``
@@ -697,7 +697,7 @@ def lstrip(a, chars=None):
     Returns
     -------
     out : ndarray
-        Output array of ``bytes_`` or ``unicode_`` dtype
+        Output array of ``bytes_`` or ``str_`` dtype
 
     See Also
     --------
@@ -731,7 +731,7 @@ def rstrip(a, chars=None):
 
     Parameters
     ----------
-    a : array_like, with ``bytes_`` or ``unicode_`` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
     chars : scalar with the same dtype as ``a``, optional
        The ``chars`` argument is a string specifying the set of
        characters to be removed. If ``None``, the ``chars``
@@ -742,7 +742,7 @@ def rstrip(a, chars=None):
     Returns
     -------
     out : ndarray
-        Output array of ``bytes_`` or ``unicode_`` dtype
+        Output array of ``bytes_`` or ``str_`` dtype
 
     See Also
     --------
@@ -771,7 +771,7 @@ def strip(a, chars=None):
 
     Parameters
     ----------
-    a : array_like, with ``bytes_`` or ``unicode_`` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
     chars : scalar with the same dtype as ``a``, optional
        The ``chars`` argument is a string specifying the set of
        characters to be removed. If ``None``, the ``chars``
@@ -782,7 +782,7 @@ def strip(a, chars=None):
     Returns
     -------
     out : ndarray
-        Output array of ``bytes_`` or ``unicode_`` dtype
+        Output array of ``bytes_`` or ``str_`` dtype
 
     See Also
     --------

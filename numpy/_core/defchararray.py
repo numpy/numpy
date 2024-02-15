@@ -1107,8 +1107,8 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         None and `obj` is one of the following:
 
         - a `~numpy.char.chararray`,
-        - an ndarray of type `str_` or `unicode_`
-        - a Python str or unicode object,
+        - an ndarray of type :class:`str_` or :class:`bytes_`
+        - a Python :class:`str` or :class:`bytes` object,
 
         then the unicode setting of the output array will be
         automatically determined.

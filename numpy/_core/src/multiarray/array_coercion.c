@@ -13,7 +13,6 @@
 
 #include "descriptor.h"
 #include "convert_datatype.h"
-#include "common_dtype.h"
 #include "dtypemeta.h"
 #include "stringdtype/dtype.h"
 

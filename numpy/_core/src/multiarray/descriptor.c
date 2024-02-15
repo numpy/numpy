@@ -1524,6 +1524,24 @@ PyArray_DTypeOrDescrConverterOptional(PyObject *obj, npy_dtype_info *dt_info)
     return PyArray_DTypeOrDescrConverterRequired(obj, dt_info);
 }
 
+/*NUMPY_API
+ *
+ * Given a DType class, returns the default instance (descriptor).  This
+ * checks for a `singleton` first and only calls the `default_descr` function
+ * if necessary.
+ *
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
+{
+    if (DType->singleton != NULL) {
+        Py_INCREF(DType->singleton);
+        return DType->singleton;
+    }
+    return NPY_DT_CALL_default_descr(DType);
+}
+
+
 /**
  * Get a dtype instance from a python type
  */

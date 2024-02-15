@@ -1,8 +1,0 @@
-``any`` and ``all`` return booleans for object arrays
------------------------------------------------------
-The ``any`` and ``all`` functions and methods now return
-booleans also for object arrays.  Previously, they did
-a reduction which behaved like the Python ``or`` and
-``and`` operators which evaluates to one of the arguments.
-You can use ``np.logical_or.reduce`` and ``np.logical_and.reduce``
-to achieve the previous behavior.

@@ -66,7 +66,7 @@
  * A constant indicating the maximum number dimensions allowed when creating
  * an ndarray.
  *
- * NPY_NTYPES
+ * NPY_NTYPES_LEGACY
  *
  * The number of built-in NumPy dtypes.
  */
@@ -74,12 +74,14 @@
     #define NPY_DEFAULT_INT NPY_INTP
     #define NPY_RAVEL_AXIS NPY_MIN_INT
     #define NPY_MAXARGS 64
-    #define NPY_NTYPES 24
 #elif NPY_ABI_VERSION < 0x02000000
     #define NPY_DEFAULT_INT NPY_LONG
     #define NPY_RAVEL_AXIS 32
     #define NPY_MAXARGS 32
-    #define NPY_NTYPES 25
+
+    /* Aliases of 2.x names to 1.x only equivalent names */
+    #define NPY_NTYPES NPY_NTYPES_LEGACY
+    #define PyArray_DescrProto PyArray_Descr
 #else
     #define NPY_DEFAULT_INT  \
         (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? NPY_INTP : NPY_LONG)
@@ -87,8 +89,6 @@
         (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? -1 : 32)
     #define NPY_MAXARGS  \
         (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? 64 : 32)
-    #define NPY_NTYPES  \
-        (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? 25 : 24)
 #endif
 
 

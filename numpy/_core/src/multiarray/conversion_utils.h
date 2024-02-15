@@ -85,6 +85,10 @@ PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind);
 NPY_NO_EXPORT int
 PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags);
 
+typedef enum {
+        NPY_DEVICE_CPU = 0,
+} NPY_DEVICE;
+
 /*
  * Device string converter.
  */

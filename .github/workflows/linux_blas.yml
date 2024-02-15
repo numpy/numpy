@@ -75,14 +75,14 @@ jobs:
       run: |
         pip install -r requirements/build_requirements.txt
         # Install OpenBLAS
-        set -xe
         if [[ $USE_NIGHTLY_OPENBLAS == "true" ]]; then
-          target=$(python tools/openblas_support.py --nightly)
+            python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scipy-openblas32
         else
-          target=$(python tools/openblas_support.py)
+            python -m pip install -r requirements/ci32_requirements.txt
         fi
-        sudo cp -r $target/lib/* /usr/lib
-        sudo cp $target/include/* /usr/include
+        mkdir -p ./.openblas
+        python -c"import scipy_openblas32 as ob32; ob32.get_pkg_config()" > ./.openblas/scipy-openblas.pc
+        echo "PKG_CONFIG_PATH=${{ github.workspace }}/.openblas" >> $GITHUB_ENV
 
     - name: Build
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'

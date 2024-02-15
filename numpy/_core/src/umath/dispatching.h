@@ -10,15 +10,8 @@
 extern "C" {
 #endif
 
-typedef int promoter_function(PyUFuncObject *ufunc,
-        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
-        PyArray_DTypeMeta *new_op_dtypes[]);
-
 NPY_NO_EXPORT int
 PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate);
-
-NPY_NO_EXPORT int
-PyUFunc_AddLoopFromSpec(PyObject *ufunc, PyArrayMethod_Spec *spec);
 
 NPY_NO_EXPORT int
 PyUFunc_AddLoopFromSpec_int(PyObject *ufunc, PyArrayMethod_Spec *spec, int priv);
@@ -38,23 +31,18 @@ add_and_return_legacy_wrapping_ufunc_loop(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *operation_dtypes[], int ignore_duplicate);
 
 NPY_NO_EXPORT int
-default_ufunc_promoter(PyUFuncObject *ufunc,
+default_ufunc_promoter(PyObject *ufunc,
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[]);
 
 NPY_NO_EXPORT int
-object_only_ufunc_promoter(PyUFuncObject *ufunc,
+object_only_ufunc_promoter(PyObject *ufunc,
         PyArray_DTypeMeta *NPY_UNUSED(op_dtypes[]),
         PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[]);
 
 NPY_NO_EXPORT int
 install_logical_ufunc_promoter(PyObject *ufunc);
-
-NPY_NO_EXPORT int
-PyUFunc_AddPromoter(
-        PyObject *ufunc, PyObject *DType_tuple, PyObject *promoter);
-
 
 #ifdef __cplusplus
 }
