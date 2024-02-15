@@ -86,16 +86,6 @@ linear algebra functions need to all support batching in the same way, and
 consider the last two axes as matrices). As a result, NumPy should become more
 rather than less consistent.
 
-We'll note that one remaining incompatibility will be that NumPy is returning
-array scalars rather than 0-D arrays in most cases where the standard, and
-other array libraries, return 0-D arrays (e.g., indexing and reductions). There
-have been multiple discussions over the past year about the feasibility of
-removing array scalars from NumPy, or at least no longer returning them by
-default. However, this would be a large effort with some uncertainty about
-technical risks and impact of the change, and no one has taken it on. Given
-that array scalars implement a mostly array-compatible interface, this doesn't
-seem like the highest-prio item regarding array API standard compatibility.
-
 Here are what we see as the main expected benefits and costs of the complete
 set of proposed changes:
 
@@ -461,16 +451,7 @@ Parts of the standard that are not adopted
 There are a couple of things that the standard prescribes which we propose *not*
 to follow (at least at this time). These are:
 
-1. The requirement that an indexing operation must result in an array of the
-   same dtype of the indexed array.
-
-   *Rationale: this does not hold when the result would be a 0-D array; NumPy
-   returns scalars (i.e., instances of dtype classes) here. Removing scalars
-   from NumPy would be a large amount of work with a nontrivial backwards
-   compatibility impact. It may be feasible to remove scalars in the future,
-   but not for 2.0 - and this requires experimentation and assessing impact.*
-
-2. The requirement for ``sum`` and ``prod`` to always upcast lower-precision
+1. The requirement for ``sum`` and ``prod`` to always upcast lower-precision
    floating-point dtypes to ``float64`` when ``dtype=None``.
 
    *Rationale: this is potentially disruptive (e.g.,* ``float32_arr - float32_arr.mean()``
@@ -480,9 +461,10 @@ to follow (at least at this time). These are:
    for floating-point dtypes.*
 
    `array-api#731 <https://github.com/data-apis/array-api/issues/731>`__ was
-   opened to reconsider this design choice in the standard.
+   opened to reconsider this design choice in the standard, and that was accepted
+   for the next standard version.
 
-3. Making function signatures positional-only and keyword-only in many places.
+2. Making function signatures positional-only and keyword-only in many places.
 
    *Rationale: the 2022.12 version of the standard said "must", but this has
    already been softened to "should" in the about-to-be-released 2023.12
@@ -493,7 +475,7 @@ to follow (at least at this time). These are:
    already compliant), however there is no need to rush this change - doing so
    for 2.0 would be unnecessarily disruptive.*
 
-4. The requirement "An in-place operation must have the same behavior
+3. The requirement "An in-place operation must have the same behavior
    (including special cases) as its respective binary (i.e., two operand,
    non-assignment) operation" (excluding the effect on views).
 
@@ -506,6 +488,22 @@ to follow (at least at this time). These are:
 
    This topic is tracked in
    `gh-25621 <https://github.com/numpy/numpy/issues/25621>`__.
+
+.. note::
+
+   We note that one NumPy-specific behavior that remains is returning array
+   scalars rather than 0-D arrays in most cases where the standard, and other
+   array libraries, return 0-D arrays (e.g., indexing and reductions). Array
+   scalars basically duck type 0-D arrays, which is allowed by the standard (it
+   doesn't mandate that there is only one array type, nor contains
+   ``isinstance`` checks or other semantics that won't work with array
+   scalars). There have been multiple discussions over the past year about the
+   feasibility of removing array scalars from NumPy, or at least no longer
+   returning them by default. However, this would be a large effort with some
+   uncertainty about technical risks and impact of the change, and no one has
+   taken it on. Given that array scalars implement a largely array-compatible
+   interface, this doesn't seem like the highest-prio item regarding array API
+   standard compatibility (or in general).
 
 
 Related work
