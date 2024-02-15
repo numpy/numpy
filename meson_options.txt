@@ -39,3 +39,42 @@ option('test-simd', type: 'array',
         description: 'Specify a list of CPU features to be tested against NumPy SIMD interface')
 option('test-simd-args', type: 'string', value: '',
         description: 'Extra args to be passed to the `_simd` module that is used for testing the NumPy SIMD interface')
+
+======================================================================================
+import cv2 as cv
+import numpy as np
+import math
+math.ceil(y/2)
+math.ceil(x/2)
+
+img = cv.imread('audi test.jpeg')
+y = img.shape[0]
+x = img.shape[1]
+top_left = np.full((math.ceil(y/2), math.ceil(x/2), 3), 0).astype(np.uint8) #248*440
+top_right = np.full((math.ceil(y/2), x-math.ceil(x/2), 3), 0).astype(np.uint8)
+bottom_left = np.full((y-math.ceil(y/2), math.ceil(x/2), 3), 0).astype(np.uint8) #247*440
+bottom_right = np.full((y-math.ceil(y/2), x-math.ceil(x/2), 3), 0).astype(np.uint8)
+
+
+count=0
+for j in range(x//2+1):
+    for i in range(math.ceil(y/2)):
+        if i < len(top_left) and j < len(top_left[i]):
+            top_left[i][j] = img[i][j]
+        if i < len(top_right) and j < len(top_right[i]):
+            top_right[i][j] = img[i][math.ceil(x/2)+j]
+        if i < len(bottom_left) and j < len(bottom_left[i]):
+            bottom_left[i][j] = img[math.ceil(y/2)+i][j]
+        if i < len(bottom_right) and j < len(bottom_right[i]):
+            bottom_right[i][j] = img[math.ceil(y/2)+i][math.ceil(x/2)+j]
+
+cv.imwrite('top_left.jpg', top_left)
+cv.imwrite('top_right.jpg', top_right)
+cv.imwrite('bottom_left.jpg', bottom_left)
+cv.imwrite('bottom_right.jpg', bottom_right)
+top = np.append(bottom_right, bottom_left, axis=1)
+bottom = np.append(top_right, top_left, axis=1)
+all = np.append(top, bottom, axis=0)
+cv.imwrite('top.jpg', top) 
+cv.imwrite('all.jpg', all) 
+
