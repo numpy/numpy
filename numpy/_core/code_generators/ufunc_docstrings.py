@@ -4616,7 +4616,71 @@ add_newdoc('numpy._core.umath', 'count',
 
     """)
 
-add_newdoc('numpy.core.umath', '_replace',
+add_newdoc('numpy._core.umath', 'index',
+    """
+    Like `find`, but raises :exc:`ValueError` when the substring is not found.
+
+    Parameters
+    ----------
+    x1 : array_like, with ``StringDType``, ``bytes_`` or ``unicode_`` dtype
+
+    x2 : array_like, with ``StringDType``, ``bytes_`` or ``unicode_`` dtype
+
+    x3, x4 : array_like, with any integer dtype
+        The range to look in, interpreted as in slice notation.
+        $PARAMS
+
+    Returns
+    -------
+    out : ndarray
+        Output array of ints.  Raises :exc:`ValueError` if `x2` is not found.
+        $OUT_SCALAR_2
+
+    See Also
+    --------
+    find, str.find
+
+    Examples
+    --------
+    >>> a = np.array(["Computer Science"])
+    >>> np.strings.index(a, "Science")
+    array([9])
+
+    """)
+
+add_newdoc('numpy._core.umath', 'rindex',
+    """
+    Like `rfind`, but raises :exc:`ValueError` when the substring is not found.
+
+    Parameters
+    ----------
+    x1 : array_like, with ``StringDType``, ``bytes_`` or ``unicode_`` dtype
+
+    x2 : array_like, with ``StringDType``, ``bytes_`` or ``unicode_`` dtype
+
+    x3, x4 : array_like, with any integer dtype
+        The range to look in, interpreted as in slice notation.
+        $PARAMS
+
+    Returns
+    -------
+    out : ndarray
+        Output array of ints.  Raises :exc:`ValueError` if `x2` is not found.
+        $OUT_SCALAR_2
+
+    See Also
+    --------
+    rfind, str.rfind
+
+    Examples
+    --------
+    >>> a = np.array(["Computer Science"])
+    >>> np.strings.rindex(a, "Science")
+    array([9])
+
+    """)
+
+add_newdoc('numpy._core.umath', '_replace',
     """
     UFunc implementation of ``replace``. This internal function
     is called by ``replace`` with ``out`` set, so that the

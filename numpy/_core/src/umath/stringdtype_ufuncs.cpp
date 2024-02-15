@@ -761,7 +761,7 @@ fail:
 }
 
 static int
-string_find_rfind_count_promoter(PyObject *NPY_UNUSED(ufunc),
+string_findlike_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
@@ -774,7 +774,7 @@ string_find_rfind_count_promoter(PyObject *NPY_UNUSED(ufunc),
 }
 
 static NPY_CASTING
-string_find_rfind_count_resolve_descriptors(
+string_findlike_resolve_descriptors(
         struct PyArrayMethodObject_tag *NPY_UNUSED(method),
         PyArray_DTypeMeta *NPY_UNUSED(dtypes[]),
         PyArray_Descr *given_descrs[],
@@ -883,7 +883,7 @@ typedef npy_intp find_like_function(Buffer<ENCODING::UTF8>, Buffer<ENCODING::UTF
                                     npy_int64, npy_int64);
 
 static int
-string_find_rfind_count_strided_loop(PyArrayMethod_Context *context,
+string_findlike_strided_loop(PyArrayMethod_Context *context,
                          char *const data[],
                          npy_intp const dimensions[],
                          npy_intp const strides[],
@@ -936,6 +936,9 @@ string_find_rfind_count_strided_loop(PyArrayMethod_Context *context,
         Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
 
         npy_intp pos = function(buf1, buf2, start, end);
+        if (pos == -2) {
+            goto fail;
+        }
         *(npy_intp *)out = pos;
 
         in1 += strides[0];
@@ -1910,41 +1913,43 @@ init_stringdtype_ufuncs(PyObject *umath)
         return -1;
     }
 
-    PyArray_DTypeMeta *find_rfind_count_dtypes[] = {
+    PyArray_DTypeMeta *findlike_dtypes[] = {
         &PyArray_StringDType, &PyArray_StringDType,
         &PyArray_Int64DType, &PyArray_Int64DType,
         &PyArray_DefaultIntDType,
     };
 
-    const char* find_rfind_count_names[] = {
-        "find", "rfind", "count",
+    const char* findlike_names[] = {
+        "find", "rfind", "index", "rindex", "count",
     };
 
-    PyArray_DTypeMeta *find_rfind_count_promoter_dtypes[] = {
+    PyArray_DTypeMeta *findlike_promoter_dtypes[] = {
         &PyArray_StringDType, &PyArray_UnicodeDType,
         &PyArray_PyIntAbstractDType, &PyArray_PyIntAbstractDType,
         &PyArray_DefaultIntDType,
     };
 
-    find_like_function *find_rfind_count_functions[] = {
+    find_like_function *findlike_functions[] = {
         string_find<ENCODING::UTF8>,
         string_rfind<ENCODING::UTF8>,
+        string_index<ENCODING::UTF8>,
+        string_rindex<ENCODING::UTF8>,
         string_count<ENCODING::UTF8>,
     };
 
-    for (int i=0; i<3; i++) {
-        if (init_ufunc(umath, find_rfind_count_names[i], find_rfind_count_dtypes,
-                       &string_find_rfind_count_resolve_descriptors,
-                       &string_find_rfind_count_strided_loop, 4, 1, NPY_NO_CASTING,
+    for (int i=0; i<5; i++) {
+        if (init_ufunc(umath, findlike_names[i], findlike_dtypes,
+                       &string_findlike_resolve_descriptors,
+                       &string_findlike_strided_loop, 4, 1, NPY_NO_CASTING,
                        (NPY_ARRAYMETHOD_FLAGS) 0,
-                       (void *)find_rfind_count_functions[i]) < 0) {
+                       (void *)findlike_functions[i]) < 0) {
             return -1;
         }
 
 
-        if (add_promoter(umath, find_rfind_count_names[i],
-                         find_rfind_count_promoter_dtypes,
-                         5, string_find_rfind_count_promoter) < 0) {
+        if (add_promoter(umath, findlike_names[i],
+                         findlike_promoter_dtypes,
+                         5, string_findlike_promoter) < 0) {
             return -1;
         }
     }
