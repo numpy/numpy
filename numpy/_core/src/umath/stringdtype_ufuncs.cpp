@@ -883,7 +883,7 @@ typedef npy_intp find_like_function(Buffer<ENCODING::UTF8>, Buffer<ENCODING::UTF
                                     npy_int64, npy_int64);
 
 static int
-string_find_rfind_count_strided_loop(PyArrayMethod_Context *context,
+string_findlike_strided_loop(PyArrayMethod_Context *context,
                          char *const data[],
                          npy_intp const dimensions[],
                          npy_intp const strides[],
@@ -936,6 +936,9 @@ string_find_rfind_count_strided_loop(PyArrayMethod_Context *context,
         Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
 
         npy_intp pos = function(buf1, buf2, start, end);
+        if (PyErr_Occurred()) {
+            goto fail;
+        }
         *(npy_intp *)out = pos;
 
         in1 += strides[0];
@@ -1916,8 +1919,8 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_DefaultIntDType,
     };
 
-    const char* find_rfind_count_names[] = {
-        "find", "rfind", "count",
+    const char* findlike_names[] = {
+        "find", "rfind", "index", "rindex", "count",
     };
 
     PyArray_DTypeMeta *findlike_promoter_dtypes[] = {
@@ -1926,18 +1929,20 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_DefaultIntDType,
     };
 
-    find_like_function *find_rfind_count_functions[] = {
+    find_like_function *findlike_functions[] = {
         string_find<ENCODING::UTF8>,
         string_rfind<ENCODING::UTF8>,
+        string_index<ENCODING::UTF8>,
+        string_rindex<ENCODING::UTF8>,
         string_count<ENCODING::UTF8>,
     };
 
-    for (int i=0; i<3; i++) {
-        if (init_ufunc(umath, find_rfind_count_names[i], find_rfind_count_dtypes,
-                       &string_find_rfind_count_resolve_descriptors,
-                       &string_find_rfind_count_strided_loop, 4, 1, NPY_NO_CASTING,
+    for (int i=0; i<5; i++) {
+        if (init_ufunc(umath, findlike_names[i], findlike_dtypes,
+                       &string_findlike_resolve_descriptors,
+                       &string_findlike_strided_loop, 4, 1, NPY_NO_CASTING,
                        (NPY_ARRAYMETHOD_FLAGS) 0,
-                       (void *)find_rfind_count_functions[i]) < 0) {
+                       (void *)findlike_functions[i]) < 0) {
             return -1;
         }
 
