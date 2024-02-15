@@ -75,7 +75,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "stringdtype/dtype.h"
 
 #include "get_attr_string.h"
-#include "experimental_public_dtype_api.h"  /* _get_experimental_dtype_api */
+#include "public_dtype_api.h"  /* _fill_dtype_api */
 #include "textreading/readtext.h"  /* _readtext_from_file_object */
 
 #include "npy_dlpack.h"
@@ -4559,8 +4559,6 @@ static struct PyMethodDef array_module_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"_get_castingimpl",  (PyCFunction)_get_castingimpl,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"_get_experimental_dtype_api", (PyCFunction)_get_experimental_dtype_api,
-        METH_O, NULL},
     {"_load_from_filelike", (PyCFunction)_load_from_filelike,
         METH_FASTCALL | METH_KEYWORDS, NULL},
     /* from umath */
@@ -5036,23 +5034,6 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
-    c_api = PyCapsule_New((void *)PyArray_API, NULL, NULL);
-    if (c_api == NULL) {
-        goto err;
-    }
-    PyDict_SetItemString(d, "_ARRAY_API", c_api);
-    Py_DECREF(c_api);
-
-    c_api = PyCapsule_New((void *)PyUFunc_API, NULL, NULL);
-    if (c_api == NULL) {
-        goto err;
-    }
-    PyDict_SetItemString(d, "_UFUNC_API", c_api);
-    Py_DECREF(c_api);
-    if (PyErr_Occurred()) {
-        goto err;
-    }
-
     /*
      * PyExc_Exception should catch all the standard errors that are
      * now raised instead of the string exception "multiarray.error"
@@ -5225,6 +5206,28 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
      */
     current_handler = PyContextVar_New("current_allocator", PyDataMem_DefaultHandler);
     if (current_handler == NULL) {
+        goto err;
+    }
+
+    /*
+     * Export the API tables
+     */
+    c_api = PyCapsule_New((void *)PyArray_API, NULL, NULL);
+    /* The dtype API is not auto-filled/generated via Python scripts: */
+    _fill_dtype_api(PyArray_API);
+    if (c_api == NULL) {
+        goto err;
+    }
+    PyDict_SetItemString(d, "_ARRAY_API", c_api);
+    Py_DECREF(c_api);
+
+    c_api = PyCapsule_New((void *)PyUFunc_API, NULL, NULL);
+    if (c_api == NULL) {
+        goto err;
+    }
+    PyDict_SetItemString(d, "_UFUNC_API", c_api);
+    Py_DECREF(c_api);
+    if (PyErr_Occurred()) {
         goto err;
     }
 

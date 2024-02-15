@@ -14,15 +14,13 @@ Changes to NumPy data type promotion
 =====================================
 
 NumPy 2.0 changes promotion (the result of combining dissimilar data types)
-as per `NEP 50 <NEP50_>`.
-
-Please see the NEP for details on this change.  It includes a
-:ref:`table of example changes <nep50_comparison_table>` and a backwards
-compatibility section.
+as per :ref:`NEP 50 <NEP50>`. Please see the NEP for details on this change.
+It includes a table of example changes and a backwards compatibility section.
 
 The largest backwards compatibility change of this is that it means that
 the precision of scalars is now preserved consistently.
 Two examples are:
+
 * ``np.float32(3) + 3.`` now returns a float32 when it previously returned
   a float64.
 * ``np.array([3], dtype=np.float32) + np.float64(3)`` will now return a float64

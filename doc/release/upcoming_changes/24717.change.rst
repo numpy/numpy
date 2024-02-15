@@ -1,3 +1,0 @@
-The "relaxed strides" debug build option, which was previously enabled through
-the ``NPY_RELAXED_STRIDES_DEBUG`` environment variable or the
-``-Drelaxed-strides-debug`` config-settings flag, has been removed.
