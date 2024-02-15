@@ -4622,9 +4622,9 @@ add_newdoc('numpy._core.umath', 'index',
 
     Parameters
     ----------
-    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x1 : array_like, with ``StringDType``, ``bytes_`` or ``unicode_`` dtype
 
-    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x2 : array_like, with ``StringDType``, ``bytes_`` or ``unicode_`` dtype
 
     x3, x4 : array_like, with any integer dtype
         The range to look in, interpreted as in slice notation.
@@ -4654,9 +4654,9 @@ add_newdoc('numpy._core.umath', 'rindex',
 
     Parameters
     ----------
-    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x1 : array_like, with ``StringDType``, ``bytes_`` or ``unicode_`` dtype
 
-    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x2 : array_like, with ``StringDType``, ``bytes_`` or ``unicode_`` dtype
 
     x3, x4 : array_like, with any integer dtype
         The range to look in, interpreted as in slice notation.
