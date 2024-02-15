@@ -13,7 +13,8 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"ms-python.python"
+				"ms-python.python",
+				"MS-SarifVSCode.sarif-viewer"
 			],
 			"settings": {}
 		}
