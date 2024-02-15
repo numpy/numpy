@@ -696,6 +696,7 @@ string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
     return pos;
 }
 
+/* string_index returns -2 to signify a raised exception */
 template <ENCODING enc>
 static inline npy_intp
 string_index(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
@@ -703,6 +704,7 @@ string_index(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
     npy_intp pos = string_find(buf1, buf2, start, end);
     if (pos == -1) {
         npy_gil_error(PyExc_ValueError, "substring not found");
+        return -2;
     }
     return pos;
 }
@@ -798,6 +800,7 @@ string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 }
 
 
+/* string_rindex returns -2 to signify a raised exception */
 template <ENCODING enc>
 static inline npy_intp
 string_rindex(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
@@ -805,6 +808,7 @@ string_rindex(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end
     npy_intp pos = string_rfind(buf1, buf2, start, end);
     if (pos == -1) {
         npy_gil_error(PyExc_ValueError, "substring not found");
+        return -2;
     }
     return pos;
 }

@@ -936,7 +936,7 @@ string_findlike_strided_loop(PyArrayMethod_Context *context,
         Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
 
         npy_intp pos = function(buf1, buf2, start, end);
-        if (PyErr_Occurred()) {
+        if (pos == -2) {
             goto fail;
         }
         *(npy_intp *)out = pos;

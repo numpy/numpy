@@ -359,7 +359,7 @@ string_findlike_loop(PyArrayMethod_Context *context,
         Buffer<enc> buf1(in1, elsize1);
         Buffer<enc> buf2(in2, elsize2);
         npy_intp idx = function(buf1, buf2, *(npy_int64 *)in3, *(npy_int64 *)in4);
-        if (PyErr_Occurred()) {
+        if (idx == -2) {
             return -1;
         }
         *(npy_intp *)out = idx;
