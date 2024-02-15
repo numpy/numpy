@@ -39,7 +39,7 @@ NumPy has a large API surface that evolved organically over many years:
    >>> len(modules)
    14
 
-The above doesn't even include items that are public but have been
+The above doesn't even include items that are public but have
 been hidden from ``__dir__``.
 A particularly problematic example of that is ``np.core``,
 which is technically private but heavily used in practice.
