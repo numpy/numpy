@@ -7,7 +7,6 @@
 #include "numpy/npy_common.h"
 #include "numpy/arrayobject.h"
 
-#include "common_dtype.h"
 #include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "abstractdtypes.h"
@@ -28,12 +27,14 @@
  */
 
 
-/**
+/*NUMPY_API
  * This function defines the common DType operator.
  *
  * Note that the common DType will not be "object" (unless one of the dtypes
  * is object), even though object can technically represent all values
- * correctly.
+ * correctly. Similar to `np.result_type`, but works on the classes and not
+ * instances.
+ *
  *
  * TODO: Before exposure, we should review the return value (e.g. no error
  *       when no common DType is found).
@@ -149,9 +150,19 @@ reduce_dtypes_to_most_knowledgeable(
 }
 
 
-/**
+/*NUMPY_API
  * Promotes a list of DTypes with each other in a way that should guarantee
- * stable results even when changing the order.
+ * stable results even when changing the order.  This function is smarter and
+ * can often return successful and unambiguous results when
+ * `common_dtype(common_dtype(dt1, dt2), dt3)` would depend on the operation
+ * order or fail.  Nevertheless, DTypes should aim to ensure that their
+ * common-dtype implementation is associative and commutative!  (Mainly,
+ * unsigned and signed integers are not.)
+ *
+ * For guaranteed consistent results DTypes must implement common-Dtype
+ * "transitively".  If A promotes B and B promotes C, than A must generally
+ * also promote C; where "promotes" means implements the promotion.  (There
+ * are some exceptions for abstract DTypes)
  *
  * In general this approach always works as long as the most generic dtype
  * is either strictly larger, or compatible with all other dtypes.

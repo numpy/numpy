@@ -9,14 +9,14 @@ NPY_NO_EXPORT int
 npy_get_clear_object_strided_loop(
         void *traverse_context, PyArray_Descr *descr, int aligned,
         npy_intp fixed_stride,
-        traverse_loop_function **out_loop, NpyAuxData **out_traversedata,
+        PyArrayMethod_TraverseLoop **out_loop, NpyAuxData **out_traversedata,
         NPY_ARRAYMETHOD_FLAGS *flags);
 
 NPY_NO_EXPORT int
 npy_get_clear_void_and_legacy_user_dtype_loop(
         void *traverse_context, PyArray_Descr *descr, int aligned,
         npy_intp fixed_stride,
-        traverse_loop_function **out_loop, NpyAuxData **out_traversedata,
+        PyArrayMethod_TraverseLoop **out_loop, NpyAuxData **out_traversedata,
         NPY_ARRAYMETHOD_FLAGS *flags);
 
 /* NumPy DType zero-filling implementations */
@@ -25,20 +25,20 @@ NPY_NO_EXPORT int
 npy_object_get_fill_zero_loop(
         void *NPY_UNUSED(traverse_context), PyArray_Descr *NPY_UNUSED(descr),
         int NPY_UNUSED(aligned), npy_intp NPY_UNUSED(fixed_stride),
-        traverse_loop_function **out_loop, NpyAuxData **NPY_UNUSED(out_auxdata),
+        PyArrayMethod_TraverseLoop **out_loop, NpyAuxData **NPY_UNUSED(out_auxdata),
         NPY_ARRAYMETHOD_FLAGS *flags);
 
 NPY_NO_EXPORT int
 npy_get_zerofill_void_and_legacy_user_dtype_loop(
         void *traverse_context, PyArray_Descr *dtype, int aligned,
-        npy_intp stride, traverse_loop_function **out_func,
+        npy_intp stride, PyArrayMethod_TraverseLoop **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags);
 
 
 /* Helper to deal with calling or nesting simple strided loops */
 
 typedef struct {
-    traverse_loop_function *func;
+    PyArrayMethod_TraverseLoop *func;
     NpyAuxData *auxdata;
     PyArray_Descr *descr;
 } NPY_traverse_info;

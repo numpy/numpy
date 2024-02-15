@@ -13,7 +13,6 @@
 #include "numpyos.h"
 #include "dispatching.h"
 #include "dtypemeta.h"
-#include "common_dtype.h"
 #include "convert_datatype.h"
 #include "gil_utils.h"
 
@@ -811,7 +810,7 @@ string_findlike_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
 
 
 static int
-string_replace_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
+string_replace_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
@@ -871,7 +870,7 @@ string_replace_resolve_descriptors(
 
 
 static int
-string_startswith_endswith_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
+string_startswith_endswith_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
@@ -1009,7 +1008,7 @@ init_comparison(PyObject *umath)
 
 static int
 init_promoter(PyObject *umath, const char *name, int nin, int nout,
-              promoter_function promoter)
+              PyArrayMethod_PromoterFunction promoter)
 {
     PyObject *promoter_obj = PyCapsule_New((void *) promoter, "numpy._ufunc_promoter", NULL);
     if (promoter_obj == NULL) {
@@ -1044,7 +1043,7 @@ template <ENCODING enc>
 static int
 init_ufunc(PyObject *umath, const char *name, const char *specname, int nin, int nout,
            NPY_TYPES *typenums, PyArrayMethod_StridedLoop loop,
-           resolve_descriptors_function resolve_descriptors)
+           PyArrayMethod_ResolveDescriptors resolve_descriptors)
 {
     int res = -1;
 

@@ -351,7 +351,7 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
      */
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;
-    if (type_num1 >= NPY_NTYPES || type_num2 >= NPY_NTYPES ||
+    if (type_num1 >= NPY_NTYPES_LEGACY || type_num2 >= NPY_NTYPES_LEGACY ||
             type_num1 == NPY_OBJECT || type_num2 == NPY_OBJECT) {
         return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
                 type_tup, out_dtypes);
@@ -513,7 +513,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
     bool has_custom_or_object = false;
     for (int iop = 0; iop < ufunc->nin; iop++) {
         int type_num = PyArray_DESCR(operands[iop])->type_num;
-        if (type_num >= NPY_NTYPES || type_num == NPY_OBJECT) {
+        if (type_num >= NPY_NTYPES_LEGACY || type_num == NPY_OBJECT) {
             has_custom_or_object = true;
             break;
         }

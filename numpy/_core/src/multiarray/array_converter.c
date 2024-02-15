@@ -19,7 +19,6 @@
 #include "numpy/arrayscalars.h"
 #include "npy_argparse.h"
 #include "abstractdtypes.h"
-#include "common_dtype.h"
 #include "convert_datatype.h"
 #include "descriptor.h"
 #include "multiarraymodule.h"

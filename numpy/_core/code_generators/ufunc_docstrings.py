@@ -4319,7 +4319,7 @@ add_newdoc('numpy._core.umath', 'str_len',
 
     Parameters
     ----------
-    x : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x : array_like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
     $PARAMS
 
     Returns
@@ -4360,7 +4360,7 @@ add_newdoc('numpy._core.umath', 'isalpha',
 
     Parameters
     ----------
-    x : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x : array_like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
     $PARAMS
 
     Returns
@@ -4388,7 +4388,7 @@ add_newdoc('numpy._core.umath', 'isdigit',
 
     Parameters
     ----------
-    x : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x : array_like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
     $PARAMS
 
     Returns
@@ -4426,7 +4426,7 @@ add_newdoc('numpy._core.umath', 'isspace',
 
     Parameters
     ----------
-    x : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x : array_like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
     $PARAMS
 
     Returns
@@ -4452,7 +4452,7 @@ add_newdoc('numpy._core.umath', 'isdecimal',
 
     Parameters
     ----------
-    x : array_like, with ``unicode_`` dtype
+    x : array_like, with ``StringDType`` or ``str_`` dtype
     $PARAMS
 
     Returns
@@ -4483,7 +4483,7 @@ add_newdoc('numpy._core.umath', 'isnumeric',
 
     Parameters
     ----------
-    x : array_like, with ``unicode_`` dtype
+    x : array_like, with ``StringDType`` or ``str_`` dtype
     $PARAMS
 
     Returns
@@ -4511,9 +4511,9 @@ add_newdoc('numpy._core.umath', 'find',
 
     Parameters
     ----------
-    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x1 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
-    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
     x3 : array_like, with ``int_`` dtype
 
@@ -4548,9 +4548,9 @@ add_newdoc('numpy._core.umath', 'rfind',
 
     Parameters
     ----------
-    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x1 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
-    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
     x3 : array_like, with ``int_`` dtype
 
@@ -4578,9 +4578,9 @@ add_newdoc('numpy._core.umath', 'count',
 
     Parameters
     ----------
-    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x1 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
-    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
        The substring to search for.
 
     x3 : array_like, with ``int_`` dtype
@@ -4694,9 +4694,9 @@ add_newdoc('numpy._core.umath', 'startswith',
 
     Parameters
     ----------
-    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x1 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
-    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
     x3 : array_like, with ``int_`` dtype
 
@@ -4724,9 +4724,9 @@ add_newdoc('numpy._core.umath', 'endswith',
 
     Parameters
     ----------
-    x1 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x1 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
-    x2 : array_like, with ``bytes_`` or ``unicode_`` dtype
+    x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
     x3 : array_like, with ``int_`` dtype
 

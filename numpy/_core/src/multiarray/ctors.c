@@ -660,7 +660,7 @@ PyArray_NewFromDescr_int(
     }
 
     /* finalize the descriptor if the DType defines a finalization function */
-    finalize_descr_function *finalize =
+    PyArrayDTypeMeta_FinalizeDescriptor *finalize =
             NPY_DT_SLOTS(NPY_DTYPE(descr))->finalize_descr;
     if (finalize != NULL && data == NULL) {
         Py_SETREF(descr, finalize(descr));
@@ -825,7 +825,7 @@ PyArray_NewFromDescr_int(
     if (data == NULL) {
         /* float errors do not matter and we do not release GIL */
         NPY_ARRAYMETHOD_FLAGS zero_flags;
-        get_traverse_loop_function *get_fill_zero_loop =
+        PyArrayMethod_GetTraverseLoop *get_fill_zero_loop =
             NPY_DT_SLOTS(NPY_DTYPE(descr))->get_fill_zero_loop;
         if (get_fill_zero_loop != NULL) {
             if (get_fill_zero_loop(

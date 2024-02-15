@@ -34,7 +34,8 @@
         npy_static_string s2 = {0, NULL};                                          \
         int s2_isnull = NpyString_load(s2allocator, ps2, &s2);                     \
         if (s1_isnull == -1 || s2_isnull == -1) {                                  \
-            npy_gil_error(PyExc_MemoryError, "Failed to load string in" CONTEXT);  \
+            npy_gil_error(PyExc_MemoryError, "Failed to load string in %s",        \
+                          CONTEXT);                                                \
             goto fail;                                                             \
         }                                                                          \
 
@@ -397,11 +398,14 @@ fail:
     return -1;
 }
 
+
 static int
-maximum_strided_loop(PyArrayMethod_Context *context, char *const data[],
+minimum_maximum_strided_loop(PyArrayMethod_Context *context, char *const data[],
                      npy_intp const dimensions[], npy_intp const strides[],
                      NpyAuxData *NPY_UNUSED(auxdata))
 {
+    const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
+    npy_bool invert = *(npy_bool *)context->method->static_data; // true for maximum
     PyArray_StringDTypeObject *in1_descr =
             ((PyArray_StringDTypeObject *)context->descriptors[0]);
     PyArray_StringDTypeObject *in2_descr =
@@ -424,12 +428,16 @@ maximum_strided_loop(PyArrayMethod_Context *context, char *const data[],
         const npy_packed_static_string *sin1 = (npy_packed_static_string *)in1;
         const npy_packed_static_string *sin2 = (npy_packed_static_string *)in2;
         npy_packed_static_string *sout = (npy_packed_static_string *)out;
-        if (_compare(in1, in2, in1_descr, in2_descr) > 0) {
+        int cmp = _compare(in1, in2, in1_descr, in2_descr);
+        if (cmp == 0 && (in1 == out || in2 == out)) {
+            continue;
+        }
+        if ((cmp < 0) ^ invert) {
             // if in and out are the same address, do nothing to avoid a
             // use-after-free
             if (in1 != out) {
                 if (free_and_copy(in1_allocator, out_allocator, sin1, sout,
-                                  "maximum") == -1) {
+                                  ufunc_name) == -1) {
                     goto fail;
                 }
             }
@@ -437,7 +445,7 @@ maximum_strided_loop(PyArrayMethod_Context *context, char *const data[],
         else {
             if (in2 != out) {
                 if (free_and_copy(in2_allocator, out_allocator, sin2, sout,
-                                  "maximum") == -1) {
+                                  ufunc_name) == -1) {
                     goto fail;
                 }
             }
@@ -456,215 +464,17 @@ fail:
 }
 
 static int
-minimum_strided_loop(PyArrayMethod_Context *context, char *const data[],
-                     npy_intp const dimensions[], npy_intp const strides[],
-                     NpyAuxData *NPY_UNUSED(auxdata))
-{
-    PyArray_StringDTypeObject *in1_descr =
-            ((PyArray_StringDTypeObject *)context->descriptors[0]);
-    PyArray_StringDTypeObject *in2_descr =
-            ((PyArray_StringDTypeObject *)context->descriptors[1]);
-    npy_intp N = dimensions[0];
-    char *in1 = data[0];
-    char *in2 = data[1];
-    char *out = data[2];
-    npy_intp in1_stride = strides[0];
-    npy_intp in2_stride = strides[1];
-    npy_intp out_stride = strides[2];
-
-    npy_string_allocator *allocators[3] = {};
-    NpyString_acquire_allocators(3, context->descriptors, allocators);
-    npy_string_allocator *in1_allocator = allocators[0];
-    npy_string_allocator *in2_allocator = allocators[1];
-    npy_string_allocator *out_allocator = allocators[2];
-
-    while (N--) {
-        const npy_packed_static_string *sin1 = (npy_packed_static_string *)in1;
-        const npy_packed_static_string *sin2 = (npy_packed_static_string *)in2;
-        npy_packed_static_string *sout = (npy_packed_static_string *)out;
-        if (_compare(in1, in2, in1_descr, in2_descr) < 0) {
-            // if in and out are the same address, do nothing to avoid a
-            // use-after-free
-            if (in1 != out) {
-                if (free_and_copy(in1_allocator, out_allocator, sin1, sout,
-                                  "minimum") == -1) {
-                    goto fail;
-                }
-            }
-        }
-        else {
-            if (in2 != out) {
-                if (free_and_copy(in2_allocator, out_allocator, sin2, sout,
-                                  "minimum") == -1) {
-                    goto fail;
-                }
-            }
-        }
-        in1 += in1_stride;
-        in2 += in2_stride;
-        out += out_stride;
-    }
-
-    NpyString_release_allocators(3, allocators);
-    return 0;
-
-fail:
-    NpyString_release_allocators(3, allocators);
-    return -1;
-}
-
-static int
-string_equal_strided_loop(PyArrayMethod_Context *context, char *const data[],
-                          npy_intp const dimensions[],
-                          npy_intp const strides[],
-                          NpyAuxData *NPY_UNUSED(auxdata))
-{
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_null = descr1->na_object != NULL;
-    int has_nan_na = descr1->has_nan_na;
-    int has_string_na = descr1->has_string_na;
-    const npy_static_string *default_string = &descr1->default_string;
-    npy_intp N = dimensions[0];
-    char *in1 = data[0];
-    char *in2 = data[1];
-    npy_bool *out = (npy_bool *)data[2];
-    npy_intp in1_stride = strides[0];
-    npy_intp in2_stride = strides[1];
-    npy_intp out_stride = strides[2];
-
-    npy_string_allocator *allocators[2] = {};
-    NpyString_acquire_allocators(2, context->descriptors, allocators);
-    npy_string_allocator *s1allocator = allocators[0];
-    npy_string_allocator *s2allocator = allocators[1];
-
-    while (N--) {
-        LOAD_TWO_INPUT_STRINGS("equal");
-        if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
-            if (has_nan_na) {
-                // s1 or s2 is NA
-                *out = NPY_FALSE;
-                goto next_step;
-            }
-            else if (has_null && !has_string_na) {
-                if (s1_isnull && s2_isnull) {
-                    *out = NPY_TRUE;
-                }
-                else {
-                    *out = NPY_FALSE;
-                }
-            }
-            else {
-                if (s1_isnull) {
-                    s1 = *default_string;
-                }
-                if (s2_isnull) {
-                    s2 = *default_string;
-                }
-            }
-        }
-        if (s1.size == s2.size &&
-            (s1.size == 0 || memcmp(s1.buf, s2.buf, s1.size) == 0)) {
-            *out = NPY_TRUE;
-        }
-        else {
-            *out = NPY_FALSE;
-        }
-
-    next_step:
-        in1 += in1_stride;
-        in2 += in2_stride;
-        out += out_stride;
-    }
-
-    NpyString_release_allocators(2, allocators);
-
-    return 0;
-
-fail:
-    NpyString_release_allocators(2, allocators);
-
-    return -1;
-}
-
-static int
-string_not_equal_strided_loop(PyArrayMethod_Context *context,
-                              char *const data[], npy_intp const dimensions[],
-                              npy_intp const strides[],
-                              NpyAuxData *NPY_UNUSED(auxdata))
-{
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_null = descr1->na_object != NULL;
-    int has_nan_na = descr1->has_nan_na;
-    int has_string_na = descr1->has_string_na;
-    const npy_static_string *default_string = &descr1->default_string;
-    npy_intp N = dimensions[0];
-    char *in1 = data[0];
-    char *in2 = data[1];
-    npy_bool *out = (npy_bool *)data[2];
-    npy_intp in1_stride = strides[0];
-    npy_intp in2_stride = strides[1];
-    npy_intp out_stride = strides[2];
-
-    npy_string_allocator *allocators[2] = {};
-    NpyString_acquire_allocators(2, context->descriptors, allocators);
-    npy_string_allocator *s1allocator = allocators[0];
-    npy_string_allocator *s2allocator = allocators[1];
-
-    while (N--) {
-        LOAD_TWO_INPUT_STRINGS("not_equal");
-        if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
-            if (has_nan_na) {
-                // s1 or s2 is NA
-                *out = NPY_FALSE;
-                goto next_step;
-            }
-            else if (has_null && !has_string_na) {
-                if (s1_isnull && s2_isnull) {
-                    *out = NPY_FALSE;
-                }
-                else {
-                    *out = NPY_TRUE;
-                }
-            }
-            else {
-                if (s1_isnull) {
-                    s1 = *default_string;
-                }
-                if (s2_isnull) {
-                    s2 = *default_string;
-                }
-            }
-        }
-
-        if (s1.size == s2.size && memcmp(s1.buf, s2.buf, s1.size) == 0) {
-            *out = NPY_FALSE;
-        }
-        else {
-            *out = NPY_TRUE;
-        }
-
-    next_step:
-        in1 += in1_stride;
-        in2 += in2_stride;
-        out += out_stride;
-    }
-
-    NpyString_release_allocators(2, allocators);
-
-    return 0;
-
-fail:
-    NpyString_release_allocators(2, allocators);
-
-    return -1;
-}
-
-static int
-string_greater_strided_loop(PyArrayMethod_Context *context, char *const data[],
+string_comparison_strided_loop(PyArrayMethod_Context *context, char *const data[],
                             npy_intp const dimensions[],
                             npy_intp const strides[],
                             NpyAuxData *NPY_UNUSED(auxdata))
 {
+    const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
+    npy_bool res_for_eq = ((npy_bool *)context->method->static_data)[0];
+    npy_bool res_for_lt = ((npy_bool *)context->method->static_data)[1];
+    npy_bool res_for_gt = ((npy_bool *)context->method->static_data)[2];
+    npy_bool res_for_ne = !res_for_eq;
+    npy_bool eq_or_ne = res_for_lt == res_for_gt;
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
     int has_null = descr1->na_object != NULL;
     int has_nan_na = descr1->has_nan_na;
@@ -684,7 +494,8 @@ string_greater_strided_loop(PyArrayMethod_Context *context, char *const data[],
     npy_string_allocator *s2allocator = allocators[1];
 
     while (N--) {
-        LOAD_TWO_INPUT_STRINGS("greater");
+        int cmp;
+        LOAD_TWO_INPUT_STRINGS(ufunc_name);
         if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
             if (has_nan_na) {
                 // s1 or s2 is NA
@@ -692,10 +503,20 @@ string_greater_strided_loop(PyArrayMethod_Context *context, char *const data[],
                 goto next_step;
             }
             else if (has_null && !has_string_na) {
-                npy_gil_error(PyExc_ValueError,
-                          "'>' not supported for null values that are not "
-                          "nan-like or strings.");
-                goto fail;
+                if (eq_or_ne) {
+                    if (s1_isnull && s2_isnull) {
+                        *out = res_for_eq;
+                    }
+                    else {
+                        *out = res_for_ne;
+                    }
+                }
+                else {
+                    npy_gil_error(PyExc_ValueError,
+                                  "'%s' not supported for null values that are not "
+                                  "nan-like or strings.", ufunc_name);
+                    goto fail;
+                }
             }
             else {
                 if (s1_isnull) {
@@ -706,221 +527,15 @@ string_greater_strided_loop(PyArrayMethod_Context *context, char *const data[],
                 }
             }
         }
-        if (NpyString_cmp(&s1, &s2) > 0) {
-            *out = NPY_TRUE;
+        cmp = NpyString_cmp(&s1, &s2);
+        if (cmp == 0) {
+            *out = res_for_eq;
+        }
+        else if (cmp < 0) {
+            *out = res_for_lt;
         }
         else {
-            *out = NPY_FALSE;
-        }
-
-    next_step:
-        in1 += in1_stride;
-        in2 += in2_stride;
-        out += out_stride;
-    }
-
-    NpyString_release_allocators(2, allocators);
-
-    return 0;
-
-fail:
-    NpyString_release_allocators(2, allocators);
-
-    return -1;
-}
-
-static int
-string_greater_equal_strided_loop(PyArrayMethod_Context *context,
-                                  char *const data[],
-                                  npy_intp const dimensions[],
-                                  npy_intp const strides[],
-                                  NpyAuxData *NPY_UNUSED(auxdata))
-{
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_null = descr1->na_object != NULL;
-    int has_nan_na = descr1->has_nan_na;
-    int has_string_na = descr1->has_string_na;
-    const npy_static_string *default_string = &descr1->default_string;
-    npy_intp N = dimensions[0];
-    char *in1 = data[0];
-    char *in2 = data[1];
-    npy_bool *out = (npy_bool *)data[2];
-    npy_intp in1_stride = strides[0];
-    npy_intp in2_stride = strides[1];
-    npy_intp out_stride = strides[2];
-
-    npy_string_allocator *allocators[2] = {};
-    NpyString_acquire_allocators(2, context->descriptors, allocators);
-    npy_string_allocator *s1allocator = allocators[0];
-    npy_string_allocator *s2allocator = allocators[1];
-
-    while (N--) {
-        LOAD_TWO_INPUT_STRINGS("greater equal");
-        if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
-            if (has_nan_na) {
-                // s1 or s2 is NA
-                *out = NPY_FALSE;
-                goto next_step;
-            }
-            else if (has_null && !has_string_na) {
-                npy_gil_error(PyExc_ValueError,
-                          "'>=' not supported for null values that are not "
-                          "nan-like or strings.");
-                goto fail;
-            }
-            else {
-                if (s1_isnull) {
-                    s1 = *default_string;
-                }
-                if (s2_isnull) {
-                    s2 = *default_string;
-                }
-            }
-        }
-        if (NpyString_cmp(&s1, &s2) >= 0) {
-            *out = NPY_TRUE;
-        }
-        else {
-            *out = NPY_FALSE;
-        }
-
-    next_step:
-        in1 += in1_stride;
-        in2 += in2_stride;
-        out += out_stride;
-    }
-
-    NpyString_release_allocators(2, allocators);
-
-    return 0;
-
-fail:
-    NpyString_release_allocators(2, allocators);
-
-    return -1;
-}
-
-static int
-string_less_strided_loop(PyArrayMethod_Context *context, char *const data[],
-                         npy_intp const dimensions[], npy_intp const strides[],
-                         NpyAuxData *NPY_UNUSED(auxdata))
-{
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_null = descr1->na_object != NULL;
-    int has_nan_na = descr1->has_nan_na;
-    int has_string_na = descr1->has_string_na;
-    const npy_static_string *default_string = &descr1->default_string;
-    npy_intp N = dimensions[0];
-    char *in1 = data[0];
-    char *in2 = data[1];
-    npy_bool *out = (npy_bool *)data[2];
-    npy_intp in1_stride = strides[0];
-    npy_intp in2_stride = strides[1];
-    npy_intp out_stride = strides[2];
-
-    npy_string_allocator *allocators[2] = {};
-    NpyString_acquire_allocators(2, context->descriptors, allocators);
-    npy_string_allocator *s1allocator = allocators[0];
-    npy_string_allocator *s2allocator = allocators[1];
-
-    while (N--) {
-        LOAD_TWO_INPUT_STRINGS("less");
-        if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
-            if (has_nan_na) {
-                // s1 or s2 is NA
-                *out = NPY_FALSE;
-                goto next_step;
-            }
-            else if (has_null && !has_string_na) {
-                npy_gil_error(PyExc_ValueError,
-                          "'<' not supported for null values that are not "
-                          "nan-like or strings.");
-                goto fail;
-            }
-            else {
-                if (s1_isnull) {
-                    s1 = *default_string;
-                }
-                if (s2_isnull) {
-                    s2 = *default_string;
-                }
-            }
-        }
-        if (NpyString_cmp(&s1, &s2) < 0) {
-            *out = NPY_TRUE;
-        }
-        else {
-            *out = NPY_FALSE;
-        }
-
-    next_step:
-        in1 += in1_stride;
-        in2 += in2_stride;
-        out += out_stride;
-    }
-
-    NpyString_release_allocators(2, allocators);
-
-    return 0;
-
-fail:
-    NpyString_release_allocators(2, allocators);
-
-    return -1;
-}
-
-static int
-string_less_equal_strided_loop(PyArrayMethod_Context *context,
-                               char *const data[], npy_intp const dimensions[],
-                               npy_intp const strides[],
-                               NpyAuxData *NPY_UNUSED(auxdata))
-{
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_null = descr1->na_object != NULL;
-    int has_nan_na = descr1->has_nan_na;
-    int has_string_na = descr1->has_string_na;
-    const npy_static_string *default_string = &descr1->default_string;
-    npy_intp N = dimensions[0];
-    char *in1 = data[0];
-    char *in2 = data[1];
-    npy_bool *out = (npy_bool *)data[2];
-    npy_intp in1_stride = strides[0];
-    npy_intp in2_stride = strides[1];
-    npy_intp out_stride = strides[2];
-
-    npy_string_allocator *allocators[2] = {};
-    NpyString_acquire_allocators(2, context->descriptors, allocators);
-    npy_string_allocator *s1allocator = allocators[0];
-    npy_string_allocator *s2allocator = allocators[1];
-
-    while (N--) {
-        LOAD_TWO_INPUT_STRINGS("less equal");
-        if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
-            if (has_nan_na) {
-                // s1 or s2 is NA
-                *out = NPY_FALSE;
-                goto next_step;
-            }
-            else if (has_null && !has_string_na) {
-                npy_gil_error(PyExc_ValueError,
-                          "'<=' not supported for null values that are not "
-                          "nan-like or strings.");
-                goto fail;
-            }
-            else {
-                if (s1_isnull) {
-                    s1 = *default_string;
-                }
-                if (s2_isnull) {
-                    s2 = *default_string;
-                }
-            }
-        }
-        if (NpyString_cmp(&s1, &s2) <= 0) {
-            *out = NPY_TRUE;
-        }
-        else {
-            *out = NPY_FALSE;
+            *out = res_for_gt;
         }
 
     next_step:
@@ -1011,35 +626,8 @@ string_intp_output_resolve_descriptors(
     return NPY_NO_CASTING;
 }
 
-template <IMPLEMENTED_UNARY_FUNCTIONS f, typename T>
-struct call_buffer_function {
-    void operator()(const char *buffer, size_t size, char *out) {
-        Buffer<ENCODING::UTF8> buf((char *)buffer, size);
-        switch (f) {
-            case IMPLEMENTED_UNARY_FUNCTIONS::ISALPHA:
-                *(T *)out = buf.isalpha();
-                break;
-            case IMPLEMENTED_UNARY_FUNCTIONS::ISDECIMAL:
-                *(T *)out = buf.isdecimal();
-                break;
-            case IMPLEMENTED_UNARY_FUNCTIONS::ISDIGIT:
-                *(T *)out = buf.isdigit();
-                break;
-            case IMPLEMENTED_UNARY_FUNCTIONS::ISNUMERIC:
-                *(T *)out = buf.isnumeric();
-                break;
-            case IMPLEMENTED_UNARY_FUNCTIONS::ISSPACE:
-                *(T *)out = buf.isspace();
-                break;
-            case IMPLEMENTED_UNARY_FUNCTIONS::STR_LEN:
-                *(T *)out = buf.num_codepoints();
-                break;
-        }
-    }
-};
+typedef bool (Buffer<ENCODING::UTF8>::*utf8_buffer_method)();
 
-
-template <IMPLEMENTED_UNARY_FUNCTIONS f, const char* function_name>
 static int
 string_bool_output_unary_strided_loop(
         PyArrayMethod_Context *context, char *const data[],
@@ -1047,12 +635,13 @@ string_bool_output_unary_strided_loop(
         npy_intp const strides[],
         NpyAuxData *NPY_UNUSED(auxdata))
 {
+    const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
+    utf8_buffer_method is_it = *(utf8_buffer_method *)(context->method->static_data);
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
     int has_string_na = descr->has_string_na;
     int has_nan_na = descr->has_nan_na;
     const npy_static_string *default_string = &descr->default_string;
-
     npy_intp N = dimensions[0];
     char *in = data[0];
     char *out = data[1];
@@ -1065,11 +654,12 @@ string_bool_output_unary_strided_loop(
         npy_static_string s = {0, NULL};
         const char *buffer = NULL;
         size_t size = 0;
+        Buffer<ENCODING::UTF8> buf;
 
         int is_null = NpyString_load(allocator, ps, &s);
 
         if (is_null == -1) {
-            npy_gil_error(PyExc_MemoryError, "Failed to load string in %s", function_name);
+            npy_gil_error(PyExc_MemoryError, "Failed to load string in %s", ufunc_name);
             goto fail;
         }
 
@@ -1082,7 +672,7 @@ string_bool_output_unary_strided_loop(
             else if (!has_string_na) {
                 npy_gil_error(PyExc_ValueError,
                               "Cannot use the %s function with a null that is "
-                              "not a nan-like value", function_name);
+                              "not a nan-like value", ufunc_name);
                 goto fail;
             }
             buffer = default_string->buf;
@@ -1092,9 +682,8 @@ string_bool_output_unary_strided_loop(
             buffer = s.buf;
             size = s.size;
         }
-
-        call_buffer_function<f, npy_bool> cbf;
-        cbf(buffer, size, out);
+        buf = Buffer<ENCODING::UTF8>((char *)buffer, size);
+        *(npy_bool *)out = (buf.*is_it)();
 
       next_step:
         in += in_stride;
@@ -1109,68 +698,6 @@ fail:
 
     return -1;
 }
-
-static const char isalpha_name[] = "isalpha";
-
-static int
-string_isalpha_strided_loop(PyArrayMethod_Context *context, char *const data[],
-                            npy_intp const dimensions[],
-                            npy_intp const strides[],
-                            NpyAuxData *auxdata)
-{
-    return string_bool_output_unary_strided_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISALPHA, isalpha_name>(
-            context, data, dimensions, strides, auxdata);
-}
-
-
-static const char isdecimal_name[] = "isdecimal";
-
-static int
-string_isdecimal_strided_loop(PyArrayMethod_Context *context, char *const data[],
-                              npy_intp const dimensions[],
-                              npy_intp const strides[],
-                              NpyAuxData *auxdata)
-{
-    return string_bool_output_unary_strided_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISDECIMAL, isdecimal_name>(
-            context, data, dimensions, strides, auxdata);
-}
-
-static const char isdigit_name[] = "isdigit";
-
-static int
-string_isdigit_strided_loop(PyArrayMethod_Context *context, char *const data[],
-                            npy_intp const dimensions[],
-                            npy_intp const strides[],
-                            NpyAuxData *auxdata)
-{
-    return string_bool_output_unary_strided_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISDIGIT, isdigit_name>(
-            context, data, dimensions, strides, auxdata);
-}
-
-static const char isnumeric_name[] = "isnumeric";
-
-static int
-string_isnumeric_strided_loop(PyArrayMethod_Context *context, char *const data[],
-                              npy_intp const dimensions[],
-                              npy_intp const strides[],
-                              NpyAuxData *auxdata)
-{
-    return string_bool_output_unary_strided_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISNUMERIC, isnumeric_name>(
-            context, data, dimensions, strides, auxdata);
-}
-
-static const char isspace_name[] = "isspace";
-
-static int
-string_isspace_strided_loop(PyArrayMethod_Context *context, char *const data[],
-                            npy_intp const dimensions[],
-                            npy_intp const strides[],
-                            NpyAuxData *auxdata)
-{
-    return string_bool_output_unary_strided_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISSPACE, isspace_name>(
-            context, data, dimensions, strides, auxdata);
-}
-
 
 static int
 string_strlen_strided_loop(PyArrayMethod_Context *context, char *const data[],
@@ -1195,7 +722,7 @@ string_strlen_strided_loop(PyArrayMethod_Context *context, char *const data[],
         npy_static_string s = {0, NULL};
         const char *buffer = NULL;
         size_t size = 0;
-
+        Buffer<ENCODING::UTF8> buf;
         int is_null = NpyString_load(allocator, ps, &s);
 
         if (is_null == -1) {
@@ -1216,9 +743,8 @@ string_strlen_strided_loop(PyArrayMethod_Context *context, char *const data[],
             buffer = s.buf;
             size = s.size;
         }
-
-        call_buffer_function<IMPLEMENTED_UNARY_FUNCTIONS::STR_LEN, npy_intp> cbf;
-        cbf(buffer, size, out);
+        buf = Buffer<ENCODING::UTF8>((char *)buffer, size);
+        *(npy_intp *)out = buf.num_codepoints();
 
       next_step:
         in += in_stride;
@@ -1235,7 +761,7 @@ fail:
 }
 
 static int
-string_findlike_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
+string_findlike_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
@@ -1295,7 +821,7 @@ string_findlike_resolve_descriptors(
 
 static int
 string_startswith_endswith_promoter(
-        PyUFuncObject *NPY_UNUSED(ufunc),
+        PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
@@ -1353,13 +879,18 @@ string_startswith_endswith_resolve_descriptors(
     return NPY_NO_CASTING;
 }
 
-template <bool raise_error>
+typedef npy_intp find_like_function(Buffer<ENCODING::UTF8>, Buffer<ENCODING::UTF8>,
+                                    npy_int64, npy_int64);
+
 static int
-string_find_strided_loop(PyArrayMethod_Context *context, char *const data[],
+string_find_rfind_count_strided_loop(PyArrayMethod_Context *context,
+                         char *const data[],
                          npy_intp const dimensions[],
                          npy_intp const strides[],
                          NpyAuxData *auxdata)
 {
+    const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
+    find_like_function *function = *(find_like_function *)(context->method->static_data);
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
 
     int has_null = descr1->na_object != NULL;
@@ -1380,86 +911,12 @@ string_find_strided_loop(PyArrayMethod_Context *context, char *const data[],
     npy_intp N = dimensions[0];
 
     while (N--) {
-        LOAD_TWO_INPUT_STRINGS("find");
+        LOAD_TWO_INPUT_STRINGS(ufunc_name);
         if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
             if (has_null && !has_string_na) {
                 npy_gil_error(PyExc_ValueError,
-                              "'find' not supported for null values that are not "
-                              "strings.");
-            }
-            else {
-                if (s1_isnull) {
-                    s1 = *default_string;
-                }
-                if (s2_isnull) {
-                    s2 = *default_string;
-                }
-            }
-        }
-
-        npy_int64 start = *(npy_int64 *)in3;
-        npy_int64 end = *(npy_int64 *)in4;
-
-        Buffer<ENCODING::UTF8> buf1((char *)s1.buf, s1.size);
-        Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
-
-        npy_intp pos = string_find(buf1, buf2, start, end);
-        if (raise_error && pos == -1) {
-            npy_gil_error(PyExc_ValueError, "substring not found");
-            goto fail;
-        }
-        *(npy_intp *)out = pos;
-
-        in1 += strides[0];
-        in2 += strides[1];
-        in3 += strides[2];
-        in4 += strides[3];
-        out += strides[4];
-    }
-
-    NpyString_release_allocators(2, allocators);
-
-    return 0;
-
-fail:
-    NpyString_release_allocators(2, allocators);
-
-    return -1;
-}
-
-template <bool raise_error>
-static int
-string_rfind_strided_loop(PyArrayMethod_Context *context, char *const data[],
-                          npy_intp const dimensions[],
-                          npy_intp const strides[],
-                          NpyAuxData *auxdata)
-{
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
-
-    int has_null = descr1->na_object != NULL;
-    int has_string_na = descr1->has_string_na;
-    const npy_static_string *default_string = &descr1->default_string;
-
-    npy_string_allocator *allocators[2] = {};
-    NpyString_acquire_allocators(2, context->descriptors, allocators);
-    npy_string_allocator *s1allocator = allocators[0];
-    npy_string_allocator *s2allocator = allocators[1];
-
-    char *in1 = data[0];
-    char *in2 = data[1];
-    char *in3 = data[2];
-    char *in4 = data[3];
-    char *out = data[4];
-
-    npy_intp N = dimensions[0];
-
-    while (N--) {
-        LOAD_TWO_INPUT_STRINGS("rfind");
-        if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
-            if (has_null && !has_string_na) {
-                npy_gil_error(PyExc_ValueError,
-                          "'rfind' not supported for null values that are not "
-                          "strings.");
+                              "'%s' not supported for null values that are not "
+                              "strings.", ufunc_name);
                 goto fail;
             }
             else {
@@ -1478,11 +935,7 @@ string_rfind_strided_loop(PyArrayMethod_Context *context, char *const data[],
         Buffer<ENCODING::UTF8> buf1((char *)s1.buf, s1.size);
         Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
 
-        npy_intp pos = string_rfind(buf1, buf2, start, end);
-        if (raise_error && pos == -1) {
-            npy_gil_error(PyExc_ValueError, "substring not found");
-            goto fail;
-        }
+        npy_intp pos = function(buf1, buf2, start, end);
         *(npy_intp *)out = pos;
 
         in1 += strides[0];
@@ -1503,81 +956,14 @@ fail:
 }
 
 static int
-string_count_strided_loop(PyArrayMethod_Context *context, char *const data[],
-                          npy_intp const dimensions[],
-                          npy_intp const strides[],
-                          NpyAuxData *auxdata)
-{
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
-
-    int has_null = descr1->na_object != NULL;
-    int has_string_na = descr1->has_string_na;
-    const npy_static_string *default_string = &descr1->default_string;
-
-    npy_string_allocator *allocators[2] = {};
-    NpyString_acquire_allocators(2, context->descriptors, allocators);
-    npy_string_allocator *s1allocator = allocators[0];
-    npy_string_allocator *s2allocator = allocators[1];
-
-    char *in1 = data[0];
-    char *in2 = data[1];
-    char *in3 = data[2];
-    char *in4 = data[3];
-    char *out = data[4];
-
-    npy_intp N = dimensions[0];
-
-    while (N--) {
-        LOAD_TWO_INPUT_STRINGS("count");
-        if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
-            if (has_null && !has_string_na) {
-                npy_gil_error(PyExc_ValueError,
-                          "'count' not supported for null values that are not "
-                          "strings.");
-                goto fail;
-            }
-            else {
-                if (s1_isnull) {
-                    s1 = *default_string;
-                }
-                if (s2_isnull) {
-                    s2 = *default_string;
-                }
-            }
-        }
-
-        npy_int64 start = *(npy_int64 *)in3;
-        npy_int64 end = *(npy_int64 *)in4;
-
-        Buffer<ENCODING::UTF8> buf1((char *)s1.buf, s1.size);
-        Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
-
-        npy_intp pos = string_count(buf1, buf2, start, end);
-        *(npy_intp *)out = pos;
-
-        in1 += strides[0];
-        in2 += strides[1];
-        in3 += strides[2];
-        in4 += strides[3];
-        out += strides[4];
-    }
-
-    NpyString_release_allocators(2, allocators);
-
-    return 0;
-
-fail:
-    NpyString_release_allocators(2, allocators);
-
-    return -1;
-}
-
-static int
-string_startswith_strided_loop(PyArrayMethod_Context *context, char *const data[],
+string_startswith_endswith_strided_loop(PyArrayMethod_Context *context,
+                               char *const data[],
                                npy_intp const dimensions[],
                                npy_intp const strides[],
                                NpyAuxData *auxdata)
 {
+    const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
+    STARTPOSITION startposition = *(STARTPOSITION *)context->method->static_data;
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
 
     int has_null = descr1->na_object != NULL;
@@ -1599,7 +985,7 @@ string_startswith_strided_loop(PyArrayMethod_Context *context, char *const data[
     npy_intp N = dimensions[0];
 
     while (N--) {
-        LOAD_TWO_INPUT_STRINGS("startswith");
+        LOAD_TWO_INPUT_STRINGS(ufunc_name);
         if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
             if (has_null && !has_string_na) {
                 if (has_nan_na) {
@@ -1609,8 +995,8 @@ string_startswith_strided_loop(PyArrayMethod_Context *context, char *const data[
                 }
                 else {
                     npy_gil_error(PyExc_ValueError,
-                                  "'startswith' not supported for null values that "
-                                  "are not nan-like or strings.");
+                                  "'%s' not supported for null values that "
+                                  "are not nan-like or strings.", ufunc_name);
                     goto fail;
                 }
             }
@@ -1631,7 +1017,7 @@ string_startswith_strided_loop(PyArrayMethod_Context *context, char *const data[
             Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
 
             npy_bool match = tailmatch<ENCODING::UTF8>(buf1, buf2, start, end,
-                                                       STARTPOSITION::FRONT);
+                                                       startposition);
             *(npy_bool *)out = match;
         }
 
@@ -1655,89 +1041,7 @@ fail:
 }
 
 static int
-string_endswith_strided_loop(PyArrayMethod_Context *context, char *const data[],
-                             npy_intp const dimensions[],
-                             npy_intp const strides[],
-                             NpyAuxData *auxdata)
-{
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
-
-    int has_null = descr1->na_object != NULL;
-    int has_string_na = descr1->has_string_na;
-    int has_nan_na = descr1->has_nan_na;
-    const npy_static_string *default_string = &descr1->default_string;
-
-    npy_string_allocator *allocators[2] = {};
-    NpyString_acquire_allocators(2, context->descriptors, allocators);
-    npy_string_allocator *s1allocator = allocators[0];
-    npy_string_allocator *s2allocator = allocators[1];
-
-    char *in1 = data[0];
-    char *in2 = data[1];
-    char *in3 = data[2];
-    char *in4 = data[3];
-    char *out = data[4];
-
-    npy_intp N = dimensions[0];
-
-    while (N--) {
-        LOAD_TWO_INPUT_STRINGS("endswidth");
-        if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
-            if (has_null && !has_string_na) {
-                if (has_nan_na) {
-                    // nulls are always falsey for this operation.
-                    *(npy_bool *)out = 0;
-                    goto next_step;
-                }
-                else {
-                    npy_gil_error(PyExc_ValueError,
-                                  "'endswith' not supported for null values that "
-                                  "are not nan-like or strings.");
-                    goto fail;
-                }
-            }
-            else {
-                if (s1_isnull) {
-                    s1 = *default_string;
-                }
-                if (s2_isnull) {
-                    s2 = *default_string;
-                }
-            }
-        }
-        {
-            npy_int64 start = *(npy_int64 *)in3;
-            npy_int64 end = *(npy_int64 *)in4;
-
-            Buffer<ENCODING::UTF8> buf1((char *)s1.buf, s1.size);
-            Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
-
-            npy_bool match = tailmatch<ENCODING::UTF8>(buf1, buf2, start, end,
-                                                       STARTPOSITION::BACK);
-            *(npy_bool *)out = match;
-        }
-
-      next_step:
-
-        in1 += strides[0];
-        in2 += strides[1];
-        in3 += strides[2];
-        in4 += strides[3];
-        out += strides[4];
-    }
-
-    NpyString_release_allocators(2, allocators);
-
-    return 0;
-
-fail:
-    NpyString_release_allocators(2, allocators);
-
-    return -1;
-}
-
-static int
-strip_chars_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
+strip_chars_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
@@ -1789,12 +1093,14 @@ strip_chars_resolve_descriptors(
 
 
 NPY_NO_EXPORT int
-string_lstrip_chars_strided_loop(
+string_lrstrip_chars_strided_loop(
         PyArrayMethod_Context *context, char *const data[],
         npy_intp const dimensions[],
         npy_intp const strides[],
         NpyAuxData *auxdata)
 {
+    const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
+    STRIPTYPE striptype = *(STRIPTYPE *)context->method->static_data;
     PyArray_StringDTypeObject *s1descr = (PyArray_StringDTypeObject *)context->descriptors[0];
     int has_null = s1descr->na_object != NULL;
     int has_string_na = s1descr->has_string_na;
@@ -1812,7 +1118,7 @@ string_lstrip_chars_strided_loop(
     npy_string_allocator *oallocator = allocators[2];
 
     while (N--) {
-        LOAD_TWO_INPUT_STRINGS("lstrip");
+        LOAD_TWO_INPUT_STRINGS(ufunc_name);
         npy_packed_static_string *ops = (npy_packed_static_string *)out;
 
         if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
@@ -1837,156 +1143,11 @@ string_lstrip_chars_strided_loop(
         Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
         Buffer<ENCODING::UTF8> outbuf(new_buf, s1.size);
         size_t new_buf_size = string_lrstrip_chars
-                (buf1, buf2, outbuf, STRIPTYPE::LEFTSTRIP);
+                (buf1, buf2, outbuf, striptype);
 
         if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
-            npy_gil_error(PyExc_MemoryError, "Failed to pack string in strip");
-            goto fail;
-        }
-
-        PyMem_RawFree(new_buf);
-
-        in1 += strides[0];
-        in2 += strides[1];
-        out += strides[2];
-    }
-
-    NpyString_release_allocators(3, allocators);
-    return 0;
-
-fail:
-    NpyString_release_allocators(3, allocators);
-    return -1;
-
-}
-
-
-NPY_NO_EXPORT int
-string_rstrip_chars_strided_loop(
-        PyArrayMethod_Context *context, char *const data[],
-        npy_intp const dimensions[],
-        npy_intp const strides[],
-        NpyAuxData *auxdata)
-{
-    PyArray_StringDTypeObject *s1descr = (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_null = s1descr->na_object != NULL;
-    int has_string_na = s1descr->has_string_na;
-
-    const npy_static_string *default_string = &s1descr->default_string;
-    npy_intp N = dimensions[0];
-    char *in1 = data[0];
-    char *in2 = data[1];
-    char *out = data[2];
-
-    npy_string_allocator *allocators[3] = {};
-    NpyString_acquire_allocators(3, context->descriptors, allocators);
-    npy_string_allocator *s1allocator = allocators[0];
-    npy_string_allocator *s2allocator = allocators[1];
-    npy_string_allocator *oallocator = allocators[2];
-
-    while (N--) {
-        LOAD_TWO_INPUT_STRINGS("rstrip");
-        npy_packed_static_string *ops = (npy_packed_static_string *)out;
-
-        if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
-            if (has_string_na || !has_null) {
-                if (s1_isnull) {
-                    s1 = *default_string;
-                }
-                if (s2_isnull) {
-                    s2 = *default_string;
-                }
-            }
-            else {
-                npy_gil_error(PyExc_ValueError,
-                              "Cannot strip null values that are not strings");
-                goto fail;
-            }
-        }
-
-
-        char *new_buf = (char *)PyMem_RawCalloc(s1.size, 1);
-        Buffer<ENCODING::UTF8> buf1((char *)s1.buf, s1.size);
-        Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
-        Buffer<ENCODING::UTF8> outbuf(new_buf, s1.size);
-        size_t new_buf_size = string_lrstrip_chars(
-                buf1, buf2, outbuf, STRIPTYPE::RIGHTSTRIP);
-
-        if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
-            npy_gil_error(PyExc_MemoryError, "Failed to pack string in strip");
-            goto fail;
-        }
-
-        PyMem_RawFree(new_buf);
-
-        in1 += strides[0];
-        in2 += strides[1];
-        out += strides[2];
-    }
-
-    NpyString_release_allocators(3, allocators);
-    return 0;
-
-fail:
-    NpyString_release_allocators(3, allocators);
-    return -1;
-
-}
-
-
-NPY_NO_EXPORT int
-string_strip_chars_strided_loop(
-        PyArrayMethod_Context *context, char *const data[],
-        npy_intp const dimensions[],
-        npy_intp const strides[],
-        NpyAuxData *auxdata)
-{
-    PyArray_StringDTypeObject *s1descr = (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_null = s1descr->na_object != NULL;
-    int has_string_na = s1descr->has_string_na;
-
-    const npy_static_string *default_string = &s1descr->default_string;
-    npy_intp N = dimensions[0];
-    char *in1 = data[0];
-    char *in2 = data[1];
-    char *out = data[2];
-
-    npy_string_allocator *allocators[3] = {};
-    NpyString_acquire_allocators(3, context->descriptors, allocators);
-    npy_string_allocator *s1allocator = allocators[0];
-    npy_string_allocator *s2allocator = allocators[1];
-    npy_string_allocator *oallocator = allocators[2];
-
-    while (N--) {
-        LOAD_TWO_INPUT_STRINGS("strip");
-        npy_packed_static_string *ops = (npy_packed_static_string *)out;
-
-        if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
-            if (has_string_na || !has_null) {
-                if (s1_isnull) {
-                    s1 = *default_string;
-                }
-                if (s2_isnull) {
-                    s2 = *default_string;
-                }
-            }
-            else {
-                npy_gil_error(PyExc_ValueError,
-                              "Cannot strip null values that are not strings");
-                goto fail;
-            }
-        }
-
-
-        char *new_buf = (char *)PyMem_RawCalloc(s1.size, 1);
-        Buffer<ENCODING::UTF8> buf1((char *)s1.buf, s1.size);
-        Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
-        Buffer<ENCODING::UTF8> outbuf(new_buf, s1.size);
-        size_t new_buf_size = string_lrstrip_chars(
-                buf1, buf2, outbuf, STRIPTYPE::BOTHSTRIP);
-
-        if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
-            npy_gil_error(PyExc_MemoryError, "Failed to pack string in strip");
+            npy_gil_error(PyExc_MemoryError, "Failed to pack string in %s",
+                          ufunc_name);
             goto fail;
         }
 
@@ -2040,11 +1201,13 @@ strip_whitespace_resolve_descriptors(
 }
 
 static int
-string_lstrip_whitespace_strided_loop(
+string_lrstrip_whitespace_strided_loop(
         PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
+    const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
+    STRIPTYPE striptype = *(STRIPTYPE *)context->method->static_data;
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
     int has_string_na = descr->has_string_na;
     int has_null = descr->na_object != NULL;
@@ -2066,7 +1229,8 @@ string_lstrip_whitespace_strided_loop(
         int s_isnull = NpyString_load(allocator, ps, &s);
 
         if (s_isnull == -1) {
-            npy_gil_error(PyExc_MemoryError, "Failed to load string in lstrip");
+            npy_gil_error(PyExc_MemoryError, "Failed to load string in %s",
+                          ufunc_name);
             goto fail;
         }
 
@@ -2087,10 +1251,11 @@ string_lstrip_whitespace_strided_loop(
         Buffer<ENCODING::UTF8> buf((char *)s.buf, s.size);
         Buffer<ENCODING::UTF8> outbuf(new_buf, s.size);
         size_t new_buf_size = string_lrstrip_whitespace(
-                buf, outbuf, STRIPTYPE::LEFTSTRIP);
+                buf, outbuf, striptype);
 
         if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
-            npy_gil_error(PyExc_MemoryError, "Failed to pack string in lstrip");
+            npy_gil_error(PyExc_MemoryError, "Failed to pack string in %s",
+                          ufunc_name);
             goto fail;
         }
 
@@ -2112,151 +1277,7 @@ string_lstrip_whitespace_strided_loop(
 }
 
 static int
-string_rstrip_whitespace_strided_loop(
-        PyArrayMethod_Context *context,
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
-{
-    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_string_na = descr->has_string_na;
-    int has_null = descr->na_object != NULL;
-    const npy_static_string *default_string = &descr->default_string;
-
-    npy_string_allocator *allocators[2] = {};
-    NpyString_acquire_allocators(2, context->descriptors, allocators);
-    npy_string_allocator *allocator = allocators[0];
-    npy_string_allocator *oallocator = allocators[1];
-
-    char *in = data[0];
-    char *out = data[1];
-
-    npy_intp N = dimensions[0];
-
-    while (N--) {
-        const npy_packed_static_string *ps = (npy_packed_static_string *)in;
-        npy_static_string s = {0, NULL};
-        int s_isnull = NpyString_load(allocator, ps, &s);
-
-        if (s_isnull == -1) {
-            npy_gil_error(PyExc_MemoryError, "Failed to load string in rstrip");
-            goto fail;
-        }
-
-        npy_packed_static_string *ops = (npy_packed_static_string *)out;
-
-        if (NPY_UNLIKELY(s_isnull)) {
-            if (has_string_na || !has_null) {
-                s = *default_string;
-            }
-            else {
-                npy_gil_error(PyExc_ValueError,
-                              "Cannot strip null values that are not strings");
-                goto fail;
-            }
-        }
-
-        char *new_buf = (char *)PyMem_RawCalloc(s.size, 1);
-        Buffer<ENCODING::UTF8> buf((char *)s.buf, s.size);
-        Buffer<ENCODING::UTF8> outbuf(new_buf, s.size);
-        size_t new_buf_size = string_lrstrip_whitespace(
-                buf, outbuf, STRIPTYPE::RIGHTSTRIP);
-
-        if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
-            npy_gil_error(PyExc_MemoryError, "Failed to pack string in rstrip");
-            goto fail;
-        }
-
-        PyMem_RawFree(new_buf);
-
-        in += strides[0];
-        out += strides[1];
-    }
-
-    NpyString_release_allocators(2, allocators);
-
-    return 0;
-
-  fail:
-    NpyString_release_allocators(2, allocators);
-
-    return -1;
-
-}
-
-
-static int
-string_strip_whitespace_strided_loop(
-        PyArrayMethod_Context *context,
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
-{
-    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_string_na = descr->has_string_na;
-    int has_null = descr->na_object != NULL;
-    const npy_static_string *default_string = &descr->default_string;
-
-    npy_string_allocator *allocators[2] = {};
-    NpyString_acquire_allocators(2, context->descriptors, allocators);
-    npy_string_allocator *allocator = allocators[0];
-    npy_string_allocator *oallocator = allocators[1];
-
-    char *in = data[0];
-    char *out = data[1];
-
-    npy_intp N = dimensions[0];
-
-    while (N--) {
-        const npy_packed_static_string *ps = (npy_packed_static_string *)in;
-        npy_static_string s = {0, NULL};
-        int s_isnull = NpyString_load(allocator, ps, &s);
-
-        if (s_isnull == -1) {
-            npy_gil_error(PyExc_MemoryError, "Failed to load string in strip");
-            goto fail;
-        }
-
-        npy_packed_static_string *ops = (npy_packed_static_string *)out;
-
-        if (NPY_UNLIKELY(s_isnull)) {
-            if (has_string_na || !has_null) {
-                s = *default_string;
-            }
-            else {
-                npy_gil_error(PyExc_ValueError,
-                              "Cannot strip null values that are not strings");
-                goto fail;
-            }
-        }
-
-        char *new_buf = (char *)PyMem_RawCalloc(s.size, 1);
-        Buffer<ENCODING::UTF8> buf((char *)s.buf, s.size);
-        Buffer<ENCODING::UTF8> outbuf(new_buf, s.size);
-        size_t new_buf_size = string_lrstrip_whitespace(
-                buf, outbuf, STRIPTYPE::BOTHSTRIP);
-
-        if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
-            npy_gil_error(PyExc_MemoryError, "Failed to pack string in strip");
-            goto fail;
-        }
-
-        PyMem_RawFree(new_buf);
-
-        in += strides[0];
-        out += strides[1];
-    }
-
-    NpyString_release_allocators(2, allocators);
-
-    return 0;
-
-  fail:
-    NpyString_release_allocators(2, allocators);
-
-    return -1;
-}
-
-static int
-string_replace_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
+string_replace_promoter(PyObject *NPY_UNUSED(ufunc),
                         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
                         PyArray_DTypeMeta *new_op_dtypes[])
 {
@@ -2440,12 +1461,13 @@ string_replace_strided_loop(
 
 NPY_NO_EXPORT int
 string_inputs_promoter(
-        PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtypes[],
+        PyObject *ufunc_obj, PyArray_DTypeMeta *op_dtypes[],
         PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[],
         PyArray_DTypeMeta *final_dtype,
         PyArray_DTypeMeta *result_dtype)
 {
+    PyUFuncObject *ufunc = (PyUFuncObject *)ufunc_obj;
     /* set all input operands to final_dtype */
     for (int i = 0; i < ufunc->nin; i++) {
         PyArray_DTypeMeta *tmp = final_dtype;
@@ -2472,23 +1494,23 @@ string_inputs_promoter(
 
 static int
 string_object_bool_output_promoter(
-        PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtypes[],
+        PyObject *ufunc, PyArray_DTypeMeta *op_dtypes[],
         PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
     return string_inputs_promoter(
-            (PyUFuncObject *)ufunc, op_dtypes, signature,
+            ufunc, op_dtypes, signature,
             new_op_dtypes, &PyArray_ObjectDType, &PyArray_BoolDType);
 }
 
 static int
 string_unicode_bool_output_promoter(
-        PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtypes[],
+        PyObject *ufunc, PyArray_DTypeMeta *op_dtypes[],
         PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
     return string_inputs_promoter(
-            (PyUFuncObject *)ufunc, op_dtypes, signature,
+            ufunc, op_dtypes, signature,
             new_op_dtypes, &PyArray_StringDType, &PyArray_BoolDType);
 }
 
@@ -2565,7 +1587,7 @@ is_integer_dtype(PyArray_DTypeMeta *DType)
 
 
 static int
-string_multiply_promoter(PyUFuncObject *ufunc_obj, PyArray_DTypeMeta *op_dtypes[],
+string_multiply_promoter(PyObject *ufunc_obj, PyArray_DTypeMeta *op_dtypes[],
                          PyArray_DTypeMeta *signature[],
                          PyArray_DTypeMeta *new_op_dtypes[])
 {
@@ -2606,9 +1628,10 @@ string_multiply_promoter(PyUFuncObject *ufunc_obj, PyArray_DTypeMeta *op_dtypes[
 // Pass NULL for resolve_func to use the default_resolve_descriptors.
 int
 init_ufunc(PyObject *umath, const char *ufunc_name, PyArray_DTypeMeta **dtypes,
-           resolve_descriptors_function *resolve_func,
+           PyArrayMethod_ResolveDescriptors *resolve_func,
            PyArrayMethod_StridedLoop *loop_func, int nin, int nout,
-           NPY_CASTING casting, NPY_ARRAYMETHOD_FLAGS flags)
+           NPY_CASTING casting, NPY_ARRAYMETHOD_FLAGS flags,
+           void *static_data)
 {
     PyObject *ufunc = PyObject_GetAttrString(umath, ufunc_name);
     if (ufunc == NULL) {
@@ -2630,6 +1653,7 @@ init_ufunc(PyObject *umath, const char *ufunc_name, PyArray_DTypeMeta **dtypes,
     PyType_Slot resolve_slots[] = {
             {NPY_METH_resolve_descriptors, (void *)resolve_func},
             {NPY_METH_strided_loop, (void *)loop_func},
+            {_NPY_METH_static_data, static_data},
             {0, NULL}};
 
     spec.slots = resolve_slots;
@@ -2646,7 +1670,7 @@ init_ufunc(PyObject *umath, const char *ufunc_name, PyArray_DTypeMeta **dtypes,
 int
 add_promoter(PyObject *numpy, const char *ufunc_name,
              PyArray_DTypeMeta *dtypes[], size_t n_dtypes,
-             promoter_function *promoter_impl)
+             PyArrayMethod_PromoterFunction *promoter_impl)
 {
     PyObject *ufunc = PyObject_GetAttrString((PyObject *)numpy, ufunc_name);
 
@@ -2697,7 +1721,7 @@ add_promoter(PyObject *numpy, const char *ufunc_name,
     if (init_ufunc(umath, "multiply", multiply_right_##shortname##_types,  \
                    &multiply_resolve_descriptors,                          \
                    &multiply_right_strided_loop<npy_##shortname>, 2, 1,    \
-                   NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {       \
+                   NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) { \
         return -1;                                                         \
     }                                                                      \
                                                                            \
@@ -2708,14 +1732,14 @@ add_promoter(PyObject *numpy, const char *ufunc_name,
     if (init_ufunc(umath, "multiply", multiply_left_##shortname##_types,   \
                    &multiply_resolve_descriptors,                          \
                    &multiply_left_strided_loop<npy_##shortname>, 2, 1,     \
-                   NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {       \
+                   NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) { \
         return -1;                                                         \
     }
 
 NPY_NO_EXPORT int
 add_object_and_unicode_promoters(PyObject *umath, const char* ufunc_name,
-                                 promoter_function *unicode_promoter_wrapper,
-                                 promoter_function *object_promoter_wrapper)
+                                 PyArrayMethod_PromoterFunction *unicode_promoter_wrapper,
+                                 PyArrayMethod_PromoterFunction *object_promoter_wrapper)
 {
     {
         PyArray_DTypeMeta *dtypes[] = {
@@ -2755,24 +1779,31 @@ NPY_NO_EXPORT int
 init_stringdtype_ufuncs(PyObject *umath)
 {
     static const char *comparison_ufunc_names[6] = {
-            "equal",   "not_equal",
-            "greater", "greater_equal",
-            "less",    "less_equal"};
-
-    static PyArrayMethod_StridedLoop *strided_loops[6] = {
-            &string_equal_strided_loop,   &string_not_equal_strided_loop,
-            &string_greater_strided_loop, &string_greater_equal_strided_loop,
-            &string_less_strided_loop,    &string_less_equal_strided_loop,
+            "equal", "not_equal",
+            "less", "less_equal", "greater_equal", "greater",
     };
 
     PyArray_DTypeMeta *comparison_dtypes[] = {
             &PyArray_StringDType,
             &PyArray_StringDType, &PyArray_BoolDType};
 
+    // eq and ne get recognized in string_cmp_strided_loop by having
+    // res_for_lt == res_for_gt.
+    static npy_bool comparison_ufunc_eq_lt_gt_results[6*3] = {
+        NPY_TRUE, NPY_FALSE, NPY_FALSE, // eq: results for eq, lt, gt
+        NPY_FALSE, NPY_TRUE, NPY_TRUE,  // ne
+        NPY_FALSE, NPY_TRUE, NPY_FALSE, // lt
+        NPY_TRUE, NPY_TRUE, NPY_FALSE,  // le
+        NPY_TRUE, NPY_FALSE, NPY_TRUE,  // gt
+        NPY_FALSE, NPY_FALSE, NPY_TRUE, // ge
+    };
+
     for (int i = 0; i < 6; i++) {
         if (init_ufunc(umath, comparison_ufunc_names[i], comparison_dtypes,
                        &string_comparison_resolve_descriptors,
-                       strided_loops[i], 2, 1, NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                       &string_comparison_strided_loop, 2, 1, NPY_NO_CASTING,
+                       (NPY_ARRAYMETHOD_FLAGS) 0,
+                       &comparison_ufunc_eq_lt_gt_results[i*3]) < 0) {
             return -1;
         }
 
@@ -2792,43 +1823,30 @@ init_stringdtype_ufuncs(PyObject *umath)
     if (init_ufunc(umath, "isnan", bool_output_dtypes,
                    &string_bool_output_resolve_descriptors,
                    &string_isnan_strided_loop, 1, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                   (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
     }
 
-    if (init_ufunc(umath, "isalpha", bool_output_dtypes,
-                   &string_bool_output_resolve_descriptors,
-                   &string_isalpha_strided_loop, 1, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
-        return -1;
-    }
-
-    if (init_ufunc(umath, "isdecimal", bool_output_dtypes,
-                   &string_bool_output_resolve_descriptors,
-                   &string_isdecimal_strided_loop, 1, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
-        return -1;
-    }
-
-    if (init_ufunc(umath, "isdigit", bool_output_dtypes,
-                   &string_bool_output_resolve_descriptors,
-                   &string_isdigit_strided_loop, 1, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
-        return -1;
-    }
-
-    if (init_ufunc(umath, "isnumeric", bool_output_dtypes,
-                   &string_bool_output_resolve_descriptors,
-                   &string_isnumeric_strided_loop, 1, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
-        return -1;
-    }
-
-    if (init_ufunc(umath, "isspace", bool_output_dtypes,
-                   &string_bool_output_resolve_descriptors,
-                   &string_isspace_strided_loop, 1, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
-        return -1;
+    const char *unary_loop_names[] = {
+        "isalpha", "isdecimal", "isdigit", "isnumeric", "isspace",
+    };
+    // Note: these are member function pointers, not regular function
+    // function pointers, so we need to pass on their address, not value.
+    static utf8_buffer_method unary_loop_buffer_methods[] = {
+        &Buffer<ENCODING::UTF8>::isalpha,
+        &Buffer<ENCODING::UTF8>::isdecimal,
+        &Buffer<ENCODING::UTF8>::isdigit,
+        &Buffer<ENCODING::UTF8>::isnumeric,
+        &Buffer<ENCODING::UTF8>::isspace,
+    };
+    for (int i=0; i<5; i++) {
+        if (init_ufunc(umath, unary_loop_names[i], bool_output_dtypes,
+                       &string_bool_output_resolve_descriptors,
+                       &string_bool_output_unary_strided_loop, 1, 1, NPY_NO_CASTING,
+                       (NPY_ARRAYMETHOD_FLAGS) 0,
+                       &unary_loop_buffer_methods[i]) < 0) {
+            return -1;
+        }
     }
 
     PyArray_DTypeMeta *intp_output_dtypes[] = {
@@ -2839,7 +1857,7 @@ init_stringdtype_ufuncs(PyObject *umath)
     if (init_ufunc(umath, "str_len", intp_output_dtypes,
                    &string_intp_output_resolve_descriptors,
                    &string_strlen_strided_loop, 1, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                   (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
     }
 
@@ -2849,21 +1867,23 @@ init_stringdtype_ufuncs(PyObject *umath)
             &PyArray_StringDType,
     };
 
-    if (init_ufunc(umath, "maximum", binary_dtypes, binary_resolve_descriptors,
-                   &maximum_strided_loop, 2, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
-        return -1;
-    }
+    const char* minimum_maximum_names[] = {"minimum", "maximum"};
 
-    if (init_ufunc(umath, "minimum", binary_dtypes, binary_resolve_descriptors,
-                   &minimum_strided_loop, 2, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
-        return -1;
+    static npy_bool minimum_maximum_invert[2] = {NPY_FALSE, NPY_TRUE};
+
+    for (int i = 0; i < 2; i++) {
+        if (init_ufunc(umath, minimum_maximum_names[i],
+                       binary_dtypes, binary_resolve_descriptors,
+                       &minimum_maximum_strided_loop, 2, 1, NPY_NO_CASTING,
+                       (NPY_ARRAYMETHOD_FLAGS) 0,
+                       &minimum_maximum_invert[i]) < 0) {
+            return -1;
+        }
     }
 
     if (init_ufunc(umath, "add", binary_dtypes, binary_resolve_descriptors,
                    &add_strided_loop, 2, 1, NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                   (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
     }
 
@@ -2896,16 +1916,8 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_DefaultIntDType,
     };
 
-    static PyArrayMethod_StridedLoop *findlike_strided_loops[] = {
-        &string_find_strided_loop<false>,
-        &string_rfind_strided_loop<false>,
-        &string_find_strided_loop<true>,
-        &string_rfind_strided_loop<true>,
-        &string_count_strided_loop,
-    };
-
-    const char* findlike_names[] = {
-        "find", "rfind", "index", "rindex", "count",
+    const char* find_rfind_count_names[] = {
+        "find", "rfind", "count",
     };
 
     PyArray_DTypeMeta *findlike_promoter_dtypes[] = {
@@ -2914,11 +1926,18 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_DefaultIntDType,
     };
 
-    for (int i=0; i<5; i++) {
-        if (init_ufunc(umath, findlike_names[i], findlike_dtypes,
-                       &string_findlike_resolve_descriptors,
-                       findlike_strided_loops[i], 4, 1, NPY_NO_CASTING,
-                       (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+    find_like_function *find_rfind_count_functions[] = {
+        string_find<ENCODING::UTF8>,
+        string_rfind<ENCODING::UTF8>,
+        string_count<ENCODING::UTF8>,
+    };
+
+    for (int i=0; i<3; i++) {
+        if (init_ufunc(umath, find_rfind_count_names[i], find_rfind_count_dtypes,
+                       &string_find_rfind_count_resolve_descriptors,
+                       &string_find_rfind_count_strided_loop, 4, 1, NPY_NO_CASTING,
+                       (NPY_ARRAYMETHOD_FLAGS) 0,
+                       (void *)find_rfind_count_functions[i]) < 0) {
             return -1;
         }
 
@@ -2936,11 +1955,6 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_BoolDType,
     };
 
-    static PyArrayMethod_StridedLoop *startswith_endswith_strided_loops[] = {
-        &string_startswith_strided_loop,
-        &string_endswith_strided_loop,
-    };
-
     const char* startswith_endswith_names[] = {
         "startswith", "endswith",
     };
@@ -2951,11 +1965,17 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_BoolDType,
     };
 
+    static STARTPOSITION startswith_endswith_startposition[] = {
+        STARTPOSITION::FRONT,
+        STARTPOSITION::BACK,
+    };
+
     for (int i=0; i<2; i++) {
         if (init_ufunc(umath, startswith_endswith_names[i], startswith_endswith_dtypes,
                        &string_startswith_endswith_resolve_descriptors,
-                       startswith_endswith_strided_loops[i], 4, 1, NPY_NO_CASTING,
-                       (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                       &string_startswith_endswith_strided_loop,
+                       4, 1, NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0,
+                       &startswith_endswith_startposition[i]) < 0) {
             return -1;
         }
 
@@ -2971,32 +1991,28 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_StringDType, &PyArray_StringDType
     };
 
-    PyArrayMethod_StridedLoop *strip_whitespace_loops[] = {
-        &string_lstrip_whitespace_strided_loop,
-        &string_rstrip_whitespace_strided_loop,
-        &string_strip_whitespace_strided_loop,
-    };
-
     const char *strip_whitespace_names[] = {
         "_lstrip_whitespace", "_rstrip_whitespace", "_strip_whitespace",
     };
 
+    static STRIPTYPE strip_types[] = {
+        STRIPTYPE::LEFTSTRIP,
+        STRIPTYPE::RIGHTSTRIP,
+        STRIPTYPE::BOTHSTRIP,
+    };
+
     for (int i=0; i<3; i++) {
         if (init_ufunc(umath, strip_whitespace_names[i], strip_whitespace_dtypes,
-                       &strip_whitespace_resolve_descriptors, strip_whitespace_loops[i],
-                       1, 1, NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                       &strip_whitespace_resolve_descriptors,
+                       &string_lrstrip_whitespace_strided_loop,
+                       1, 1, NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0,
+                       &strip_types[i]) < 0) {
             return -1;
         }
     }
 
     PyArray_DTypeMeta *strip_chars_dtypes[] = {
         &PyArray_StringDType, &PyArray_StringDType, &PyArray_StringDType
-    };
-
-    PyArrayMethod_StridedLoop *strip_chars_loops[] = {
-        &string_lstrip_chars_strided_loop,
-        &string_rstrip_chars_strided_loop,
-        &string_strip_chars_strided_loop,
     };
 
     const char *strip_chars_names[] = {
@@ -3009,8 +2025,10 @@ init_stringdtype_ufuncs(PyObject *umath)
 
     for (int i=0; i<3; i++) {
         if (init_ufunc(umath, strip_chars_names[i], strip_chars_dtypes,
-                       &strip_chars_resolve_descriptors, strip_chars_loops[i],
-                       2, 1, NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                       &strip_chars_resolve_descriptors,
+                       &string_lrstrip_chars_strided_loop,
+                       2, 1, NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0,
+                       &strip_types[i]) < 0) {
             return -1;
         }
 
@@ -3030,7 +2048,7 @@ init_stringdtype_ufuncs(PyObject *umath)
                    &replace_resolve_descriptors,
                    &string_replace_strided_loop, 4, 1,
                    NPY_NO_CASTING,
-                   (NPY_ARRAYMETHOD_FLAGS) 0) < 0) {
+                   (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
     }
 

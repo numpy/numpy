@@ -3739,6 +3739,13 @@ class TestQuantile:
         assert res.dtype == dtype
 
     @pytest.mark.parametrize("method", quantile_methods)
+    def test_q_zero_one(self, method):
+        # gh-24710
+        arr = [10, 11, 12]
+        quantile = np.quantile(arr, q = [0, 1], method=method)
+        assert_equal(quantile,  np.array([10, 12]))
+
+    @pytest.mark.parametrize("method", quantile_methods)
     def test_quantile_monotonic(self, method):
         # GH 14685
         # test that the return value of quantile is monotonic if p0 is ordered
@@ -3972,6 +3979,13 @@ class TestQuantile:
         msg = "Only method 'inverted_cdf' supports weights"
         with pytest.raises(ValueError, match=msg):
             np.quantile(y, 0.5, weights=w, method=method)
+
+    def test_weibull_fraction(self):
+        arr = [Fraction(0, 1), Fraction(1, 10)]
+        quantile = np.quantile(arr, [0, ], method='weibull')
+        assert_equal(quantile, np.array(Fraction(0, 1)))
+        quantile = np.quantile(arr, [Fraction(1, 2)], method='weibull')
+        assert_equal(quantile, np.array(Fraction(1, 20)))
 
 
 class TestLerp:

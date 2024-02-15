@@ -1,6 +1,0 @@
-``outer`` for `numpy.linalg`
-----------------------------
-
-`numpy.linalg.outer` has been added. It computes the outer product of two vectors.
-It differs from `numpy.outer` by accepting one-dimensional arrays only.
-This function is compatible with Array API.

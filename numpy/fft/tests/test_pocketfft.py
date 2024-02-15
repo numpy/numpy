@@ -33,28 +33,35 @@ class TestFFT1D:
             assert_allclose(np.fft.irfft(np.fft.rfft(xr[0:i]), i),
                             xr[0:i], atol=1e-12)
 
-    def test_identity_long_short(self):
+    @pytest.mark.parametrize("dtype", [np.single, np.double, np.longdouble])
+    def test_identity_long_short(self, dtype):
         # Test with explicitly given number of points, both for n
         # smaller and for n larger than the input size.
         maxlen = 16
-        x = random(maxlen) + 1j*random(maxlen)
+        atol = 4 * np.spacing(np.array(1., dtype=dtype))
+        x = random(maxlen).astype(dtype) + 1j*random(maxlen).astype(dtype)
         xx = np.concatenate([x, np.zeros_like(x)])
-        xr = random(maxlen)
+        xr = random(maxlen).astype(dtype)
         xxr = np.concatenate([xr, np.zeros_like(xr)])
         for i in range(1, maxlen*2):
-            assert_allclose(np.fft.ifft(np.fft.fft(x, n=i), n=i),
-                            xx[0:i], atol=1e-12)
-            assert_allclose(np.fft.irfft(np.fft.rfft(xr, n=i), n=i),
-                            xxr[0:i], atol=1e-12)
+            check_c = np.fft.ifft(np.fft.fft(x, n=i), n=i)
+            assert check_c.real.dtype == dtype
+            assert_allclose(check_c, xx[0:i], atol=atol, rtol=0)
+            check_r = np.fft.irfft(np.fft.rfft(xr, n=i), n=i)
+            assert check_r.dtype == dtype
+            assert_allclose(check_r, xxr[0:i], atol=atol, rtol=0)
 
-    def test_identity_long_short_reversed(self):
+    @pytest.mark.parametrize("dtype", [np.single, np.double, np.longdouble])
+    def test_identity_long_short_reversed(self, dtype):
         # Also test explicitly given number of points in reversed order.
         maxlen = 16
-        x = random(maxlen) + 1j*random(maxlen)
+        atol = 4 * np.spacing(np.array(1., dtype=dtype))
+        x = random(maxlen).astype(dtype) + 1j*random(maxlen).astype(dtype)
         xx = np.concatenate([x, np.zeros_like(x)])
         for i in range(1, maxlen*2):
-            assert_allclose(np.fft.fft(np.fft.ifft(x, n=i), n=i),
-                            xx[0:i], atol=1e-12)
+            check_via_c = np.fft.fft(np.fft.ifft(x, n=i), n=i)
+            assert check_via_c.dtype == x.dtype
+            assert_allclose(check_via_c, xx[0:i], atol=atol, rtol=0)
             # For irfft, we can neither recover the imaginary part of
             # the first element, nor the imaginary part of the last
             # element if npts is even.  So, set to 0 for the comparison.
@@ -64,8 +71,9 @@ class TestFFT1D:
             if i % 2 == 0:
                 y.imag[n-1:] = 0
             yy = np.concatenate([y, np.zeros_like(y)])
-            assert_allclose(np.fft.rfft(np.fft.irfft(x, n=i), n=i),
-                            yy[0:n], atol=1e-12)
+            check_via_r = np.fft.rfft(np.fft.irfft(x, n=i), n=i)
+            assert check_via_r.dtype == x.dtype
+            assert_allclose(check_via_r, yy[0:n], atol=atol, rtol=0)
 
     def test_fft(self):
         x = random(30) + 1j*random(30)
@@ -143,7 +151,7 @@ class TestFFT1D:
             assert_array_equal(y3[:, 15:], y[:, 15:])
         # In-place with n > nin; rest should be unchanged.
         y4 = y.copy()
-        y4_sel = y[:10] if axis == 0 else y4[:, :10]
+        y4_sel = y4[:10] if axis == 0 else y4[:, :10]
         out4 = y4[:15] if axis == 0 else y4[:, :15]
         expected4 = np.fft.fft(y4_sel, n=15, axis=axis)
         result4 = np.fft.fft(y4_sel, n=15, axis=axis, out=out4)
@@ -381,15 +389,6 @@ class TestFFT1D:
                     assert_allclose(x_norm,
                                     np.linalg.norm(tmp), atol=1e-6)
 
-    @pytest.mark.parametrize("dtype", [np.half, np.single, np.double,
-                                       np.longdouble])
-    def test_dtypes(self, dtype):
-        # make sure that all input precisions are accepted and internally
-        # converted to 64bit
-        x = random(30).astype(dtype)
-        assert_allclose(np.fft.ifft(np.fft.fft(x)), x, atol=1e-6)
-        assert_allclose(np.fft.irfft(np.fft.rfft(x)), x, atol=1e-6)
-
     @pytest.mark.parametrize("axes", [(0, 1), (0, 2), None])
     @pytest.mark.parametrize("dtype", (complex, float))
     @pytest.mark.parametrize("transpose", (True, False))
@@ -544,3 +543,19 @@ def test_irfft_with_n_large_regression():
                          -6.62459848, 4., -3.37540152, -0.16057669,
                          1.8819096, -20.86055364])
     assert_allclose(result, expected)
+
+
+@pytest.mark.parametrize("fft", [
+    np.fft.fft, np.fft.ifft, np.fft.rfft, np.fft.irfft
+])
+@pytest.mark.parametrize("data", [
+    np.array([False, True, False]),
+    np.arange(10, dtype=np.uint8),
+    np.arange(5, dtype=np.int16),
+])
+def test_fft_with_integer_or_bool_input(data, fft):
+    # Regression test for gh-25819
+    result = fft(data)
+    float_data = data.astype(np.result_type(data, 1.))
+    expected = fft(float_data)
+    assert_array_equal(result, expected)

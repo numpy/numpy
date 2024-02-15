@@ -566,7 +566,7 @@ def _config_openblas(blas_variant):
         os.makedirs(openblas_dir, exist_ok=True)
         with open(pkg_config_fname, "wt", encoding="utf8") as fid:
             fid.write(
-                openblas.get_pkg_config(use_preloading=True).replace("\\", "/")
+                openblas.get_pkg_config(use_preloading=True)
             )
 
 
