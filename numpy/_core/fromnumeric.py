@@ -19,13 +19,13 @@ _dt_ = nt.sctype2char
 
 # functions that are methods
 __all__ = [
-    'all', 'alltrue', 'amax', 'amin', 'any', 'argmax',
+    'all', 'amax', 'amin', 'any', 'argmax',
     'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
-    'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
+    'compress', 'cumprod', 'cumsum', 'diagonal', 'mean',
     'max', 'min', 'matrix_transpose',
-    'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
+    'ndim', 'nonzero', 'partition', 'prod', 'ptp', 'put',
     'ravel', 'repeat', 'reshape', 'resize', 'round',
-    'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
+    'searchsorted', 'shape', 'size', 'sort', 'squeeze',
     'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
 ]
 
@@ -4008,107 +4008,3 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
                          **kwargs)
 
-
-# Aliases of other functions. Provided unique docstrings
-# are for reference purposes only. Wherever possible,
-# avoid using them.
-
-
-def _product_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
-                        initial=None, where=None):
-    # 2023-03-02, 1.25.0
-    warnings.warn("`product` is deprecated as of NumPy 1.25.0, and will be "
-                  "removed in NumPy 2.0. Please use `prod` instead.",
-                  DeprecationWarning, stacklevel=3)
-    return (a, out)
-
-
-@array_function_dispatch(_product_dispatcher, verify=False)
-def product(*args, **kwargs):
-    """
-    Return the product of array elements over a given axis.
-
-    .. deprecated:: 1.25.0
-        ``product`` is deprecated as of NumPy 1.25.0, and will be
-        removed in NumPy 2.0. Please use `prod` instead.
-
-    See Also
-    --------
-    prod : equivalent function; see for details.
-    """
-    return prod(*args, **kwargs)
-
-
-def _cumproduct_dispatcher(a, axis=None, dtype=None, out=None):
-    # 2023-03-02, 1.25.0
-    warnings.warn("`cumproduct` is deprecated as of NumPy 1.25.0, and will be "
-                  "removed in NumPy 2.0. Please use `cumprod` instead.",
-                  DeprecationWarning, stacklevel=3)
-    return (a, out)
-
-
-@array_function_dispatch(_cumproduct_dispatcher, verify=False)
-def cumproduct(*args, **kwargs):
-    """
-    Return the cumulative product over the given axis.
-
-    .. deprecated:: 1.25.0
-        ``cumproduct`` is deprecated as of NumPy 1.25.0, and will be
-        removed in NumPy 2.0. Please use `cumprod` instead.
-
-    See Also
-    --------
-    cumprod : equivalent function; see for details.
-    """
-    return cumprod(*args, **kwargs)
-
-
-def _sometrue_dispatcher(a, axis=None, out=None, keepdims=None, *,
-                         where=np._NoValue):
-    # 2023-03-02, 1.25.0
-    warnings.warn("`sometrue` is deprecated as of NumPy 1.25.0, and will be "
-                  "removed in NumPy 2.0. Please use `any` instead.",
-                  DeprecationWarning, stacklevel=3)
-    return (a, where, out)
-
-
-@array_function_dispatch(_sometrue_dispatcher, verify=False)
-def sometrue(*args, **kwargs):
-    """
-    Check whether some values are true.
-
-    Refer to `any` for full documentation.
-
-    .. deprecated:: 1.25.0
-        ``sometrue`` is deprecated as of NumPy 1.25.0, and will be
-        removed in NumPy 2.0. Please use `any` instead.
-
-    See Also
-    --------
-    any : equivalent function; see for details.
-    """
-    return any(*args, **kwargs)
-
-
-def _alltrue_dispatcher(a, axis=None, out=None, keepdims=None, *, where=None):
-    # 2023-03-02, 1.25.0
-    warnings.warn("`alltrue` is deprecated as of NumPy 1.25.0, and will be "
-                  "removed in NumPy 2.0. Please use `all` instead.",
-                  DeprecationWarning, stacklevel=3)
-    return (a, where, out)
-
-
-@array_function_dispatch(_alltrue_dispatcher, verify=False)
-def alltrue(*args, **kwargs):
-    """
-    Check if all elements of input array are true.
-
-    .. deprecated:: 1.25.0
-        ``alltrue`` is deprecated as of NumPy 1.25.0, and will be
-        removed in NumPy 2.0. Please use `all` instead.
-
-    See Also
-    --------
-    numpy.all : Equivalent function; see for details.
-    """
-    return all(*args, **kwargs)
