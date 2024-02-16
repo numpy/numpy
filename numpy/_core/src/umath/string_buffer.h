@@ -174,7 +174,7 @@ template<>
 inline bool
 codepoint_islower<ENCODING::ASCII>(npy_ucs4 code)
 {
-    return Py_ISLOWER((char) code);
+    return NumPyOS_ascii_islower(code);
 }
 
 template<>
@@ -199,7 +199,7 @@ template<>
 inline bool
 codepoint_isupper<ENCODING::ASCII>(npy_ucs4 code)
 {
-    return Py_ISUPPER((char) code);
+    return NumPyOS_ascii_isupper(code);
 }
 
 template<>
