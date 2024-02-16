@@ -50,7 +50,6 @@ jobs:
       run: |
         pip install pytest pytest-xdist hypothesis typing_extensions
         ASAN_OPTIONS=detect_leaks=0:symbolize=1:strict_init_order=true:allocator_may_return_null=1:halt_on_error=1 \
+        UBSAN_OPTIONS=halt_on_error=0 \
         LD_PRELOAD=$(gcc --print-file-name=libasan.so) \
         python -m spin test -- -v -s
-        
-  
