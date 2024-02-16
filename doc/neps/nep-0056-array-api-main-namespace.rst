@@ -233,21 +233,26 @@ categories:
    allows more flexible behavior,
 2. Dtypes of returned arrays for some element-wise functions and reductions,
 3. Numerical behavior for a few tolerance keywords,
-4. Functions moved to ``numpy.linalg`` and supporting stacking/batching.
+4. Functions moved to ``numpy.linalg`` and supporting stacking/batching,
+5. The semantics of the ``copy`` keyword in ``asarray`` and ``array``.
 
-Raising errors for consistency/strictness includes:
+**Raising errors for consistency/strictness includes**:
 
 1. Making ``.T`` error for >2 dimensions,
 2. Making ``cross`` error on size-2 vectors (only size-3 vectors are supported),
 3. Making ``solve`` error on ambiguous input (only accept ``x2`` as vector if ``x2.ndim == 1``),
 4. ``outer`` raises rather than flattens on >1-D inputs,
 
-Dtypes of returned arrays for some element-wise functions and reductions
+*We expect the impact of this category of changes to be small.*
+
+**Dtypes of returned arrays for some element-wise functions and reductions**
 includes functions where dtypes need to be preserved: ``ceil``, ``floor``, and
 ``trunc`` will start returning arrays with the same integer dtypes if the input
 has an integer dtype.
 
-Changes in numerical behavior include:
+*We expect the impact of this category of changes to be small.*
+
+**Changes in numerical behavior** include:
 
 - The ``rtol`` default value for ``pinv`` changes from ``1e-15`` to a
   dtype-dependent default value of ``None``, interpreted as ``max(M, N) *
@@ -255,12 +260,23 @@ Changes in numerical behavior include:
 - The ``tol`` keyword to ``matrix_rank`` changes to ``rtol`` with a different
   interpretation. In addition, ``matrix_rank`` will no longer support 1-D array
   input,
-- ``argsort`` and ``sort`` will gain a ``stable`` keyword argument in addition
-  to ``kind``, and the default will become ``stable=True``.
-- The ``ddof`` keyword in ``std`` and ``var`` changes its name to
-  ``correction``.
 
-The ``diagonal`` and ``trace`` functions are part of the ``linalg`` submodule
+Raising a ``FutureWarning`` for these tolerance changes doesn't seem reasonable;
+they'd be spurious warnings for the vast majority of users, and it would force
+users to hardcode a tolerance value to avoid the warning. Changes in numerical
+results are in principle undesirable, so while we expect the impact to be small
+it would be good to do this in a major release.
+
+*We expect the impact of this category of changes to be medium. It is the only
+category of changes that does not result in clear exceptions or warnings, and
+hence if it does matter (e.g., downstream tests start failing or users notice
+a change in behavior) it may require more work from users to track down the problem.
+This should happen infrequently - one month after the PR implementing this change
+was merged (see* `gh-25437 <https://github.com/numpy/numpy/pull/25437>`__),
+*the impact reported so far is a single test failure in AstroPy.*
+
+**Functions moved to numpy.linalg and supporting stacking/batching** are
+the ``diagonal`` and ``trace`` functions. They part of the ``linalg`` submodule
 in the standard, rather than the main namespace. Hence they will be introduced
 in ``numpy.linalg``. They will operate on the last two rather than first two
 axes. This is done for consistency, since this is now other NumPy functions
@@ -272,15 +288,31 @@ same name. We may deprecate ``np.trace`` and ``np.diagonal`` to resolve it, but
 preferably not immediately to avoid users having to write ``if-2.0-else``
 conditional code.
 
-There may be a few other changes that don't quite fall in one of the categories
-above. For example, ``numpy.fft`` functions need to preserve precision for
-32-bit input dtypes rather than upcast to ``float64``/``complex128`` (desirable
-anyway, and can be supported with the new gufunc implementation in 
-(`gh-25336 <https://github.com/numpy/numpy/pull/25336>`__) . Also in
-``numpy.fft``, there's an issue with the ``s``/``axes`` argument in n-D
-transforms that needs solving
-(see `gh-25495 <https://github.com/numpy/numpy/pull/25495>`__).
+*We expect the impact of this category of changes to be small.*
 
+**The semantics of the copy keyword in asarray and array** for
+``copy=False`` will change from "copy if needed" to "never copy". there are now
+three types of behavior rather than two - ``copy=None`` means "copy if needed".
+
+*We expect the impact of this category of changes to be medium. In case users get
+an exception because they use* ``copy=False`` *explicitly in their copy but a
+copy was previously made anyway, they have to inspect their code and determine
+whether the intent of the code was the old or the new semantics (both seem
+rougly equally likely), and adapt the code as appropriate. We expect most cases
+to be* ``np.array(..., copy=False)``, *because until a few years ago that had
+lower overhead than* ``np.asarray(...)``. *This was solved though, and*
+``np.asarray(...)`` *is idiomatic NumPy usage.*
+
+**Other changes**: there may be a few other changes that don't quite fall in
+one of the categories above. For example, ``numpy.fft`` functions need to
+preserve precision for 32-bit input dtypes rather than upcast to
+``float64``/``complex128`` (desirable anyway, and can be supported with the new
+gufunc implementation in (`gh-25336
+<https://github.com/numpy/numpy/pull/25336>`__) . Also in ``numpy.fft``,
+there's an issue with the ``s``/``axes`` argument in n-D transforms that needs
+solving (see `gh-25495 <https://github.com/numpy/numpy/pull/25495>`__).
+
+*We expect the impact of this category of changes to be small.*
 
 Adapting to the changes & tooling support
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -372,12 +404,21 @@ The ``copy`` keyword in ``asarray`` and ``array`` will now support
 ``True``/``False``/``None`` with new meanings:
 
 - ``True`` - Always make a copy.
-- ``False`` - Never make a copy. If a copy is required a ``ValueError`` is raised.
+- ``False`` - Never make a copy. If a copy is required, a ``ValueError`` is raised.
 - ``None`` - A copy will only be made if it is necessary (previously ``False``).
 
 The ``copy`` keyword in ``astype`` will stick to its current meaning, because
 "never copy" when asking for a cast to a different dtype doesn't quite make
 sense.
+
+There is still one hiccup for the change in semantics: if for user code
+``np.array(obj, copy=False)``, NumPy may end up calling ``obj.__array__`` and
+in that case turning the result into a NumPy array is the responsibility of the
+implementer of ``obj.__array__``. Therefore, we need to add a ``copy=None``
+keyword to ``__array__`` as well, and pass the copy keyword value along - taking
+care to not break backwards compatibility when the implementer of ``__array__``
+does not yet have the new keyword (a ``DeprecationWarning`` will be emitted in
+that case, to allow for a gradual transition).
 
 
 New function name aliases
