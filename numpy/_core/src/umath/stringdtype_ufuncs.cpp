@@ -626,7 +626,7 @@ string_intp_output_resolve_descriptors(
     return NPY_NO_CASTING;
 }
 
-typedef bool (Buffer<ENCODING::UTF8>::*utf8_buffer_method)();
+using utf8_buffer_method = bool (Buffer<ENCODING::UTF8>::*)();
 
 static int
 string_bool_output_unary_strided_loop(

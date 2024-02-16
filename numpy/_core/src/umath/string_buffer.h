@@ -567,7 +567,6 @@ struct Buffer {
                 if (!previous_is_cased) {
                     return false;
                 }
-                previous_is_cased = true;
                 cased = true;
             }
             else {
