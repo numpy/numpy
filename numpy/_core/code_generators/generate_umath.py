@@ -1215,9 +1215,19 @@ defdict = {
           docstrings.get('numpy._core.umath.count'),
           None,
           ),
+'index':
+    Ufunc(4, 1, None,
+          docstrings.get('numpy._core.umath.index'),
+          None,
+          ),
+'rindex':
+    Ufunc(4, 1, None,
+          docstrings.get('numpy._core.umath.rindex'),
+          None,
+          ),
 '_replace':
     Ufunc(4, 1, None,
-          docstrings.get('numpy.core.umath._replace'),
+          docstrings.get('numpy._core.umath._replace'),
           None,
           ),
 'startswith':

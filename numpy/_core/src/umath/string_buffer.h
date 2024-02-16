@@ -12,6 +12,7 @@
 #include "numpy/ndarraytypes.h"
 #include "stringdtype/utf8_utils.h"
 #include "string_fastsearch.h"
+#include "gil_utils.h"
 
 #define CHECK_OVERFLOW(index) if (buf + (index) >= after) return 0
 #define MSB(val) ((val) >> 7 & 1)
@@ -883,6 +884,19 @@ string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
     return pos;
 }
 
+/* string_index returns -2 to signify a raised exception */
+template <ENCODING enc>
+static inline npy_intp
+string_index(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
+{
+    npy_intp pos = string_find(buf1, buf2, start, end);
+    if (pos == -1) {
+        npy_gil_error(PyExc_ValueError, "substring not found");
+        return -2;
+    }
+    return pos;
+}
+
 template <ENCODING enc>
 static inline npy_intp
 string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
@@ -969,6 +983,20 @@ string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
     }
     if (pos >= 0) {
         pos += start;
+    }
+    return pos;
+}
+
+
+/* string_rindex returns -2 to signify a raised exception */
+template <ENCODING enc>
+static inline npy_intp
+string_rindex(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
+{
+    npy_intp pos = string_rfind(buf1, buf2, start, end);
+    if (pos == -1) {
+        npy_gil_error(PyExc_ValueError, "substring not found");
+        return -2;
     }
     return pos;
 }

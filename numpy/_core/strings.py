@@ -22,6 +22,8 @@ from numpy._core.umath import (
     str_len,
     find as _find_ufunc,
     rfind as _rfind_ufunc,
+    index as _index_ufunc,
+    rindex as _rindex_ufunc,
     count as _count_ufunc,
     startswith as _startswith_ufunc,
     endswith as _endswith_ufunc,
@@ -39,12 +41,12 @@ __all__ = [
     # UFuncs
     "equal", "not_equal", "less", "less_equal", "greater", "greater_equal",
     "add", "isalpha", "isdigit", "isspace", "isalnum", "islower", "isupper",
-    "istitle", "isdecimal", "isnumeric", "str_len", "find", "rfind", "count",
-    "startswith", "endswith", "lstrip", "rstrip", "strip", "replace",
+    "istitle", "isdecimal", "isnumeric", "str_len", "find", "rfind",  "index",
+    "rindex", "count", "startswith", "endswith", "lstrip", "rstrip", "strip",
+    "replace",
 
     # _vec_string - Will gradually become ufuncs as well
-    "multiply", "mod", "index",
-    "rindex", "decode", "encode", "expandtabs", "center",
+    "multiply", "mod", "decode", "encode", "expandtabs", "center",
     "ljust", "rjust", "zfill", "upper", "lower", "swapcase", "capitalize",
     "title", "join", "split", "rsplit", "splitlines",
     "partition", "rpartition", "translate",
@@ -239,24 +241,22 @@ def index(a, sub, start=0, end=None):
     """
     Like `find`, but raises :exc:`ValueError` when the substring is not found.
 
-    Calls :meth:`str.index` element-wise.
-
     Parameters
     ----------
     a : array_like, with `np.bytes_` or `np.str_` dtype
 
-    sub : str or unicode
+    sub : array_like, with `np.bytes_` or `np.str_` dtype
 
-    start, end : int, optional
+    start, end : array_like, with any integer dtype, optional
 
     Returns
     -------
     out : ndarray
-        Output array of ints.  Returns -1 if `sub` is not found.
+        Output array of ints.
 
     See Also
     --------
-    find, str.find
+    find, str.index
 
     Examples
     --------
@@ -265,8 +265,8 @@ def index(a, sub, start=0, end=None):
     array([9])
 
     """
-    return _vec_string(
-        a, np.int_, 'index', [sub, start] + _clean_args(end))
+    end = end if end is not None else MAX
+    return _index_ufunc(a, sub, start, end)
 
 
 def rindex(a, sub, start=0, end=None):
@@ -274,15 +274,13 @@ def rindex(a, sub, start=0, end=None):
     Like `rfind`, but raises :exc:`ValueError` when the substring `sub` is
     not found.
 
-    Calls :meth:`str.rindex` element-wise.
-
     Parameters
     ----------
     a : array-like, with `np.bytes_` or `np.str_` dtype
 
-    sub : str or unicode
+    sub : array-like, with `np.bytes_` or `np.str_` dtype
 
-    start, end : int, optional
+    start, end : array-like, with any integer dtype, optional
 
     Returns
     -------
@@ -300,8 +298,8 @@ def rindex(a, sub, start=0, end=None):
     array([9])
     
     """
-    return _vec_string(
-        a, np.int_, 'rindex', [sub, start] + _clean_args(end))
+    end = end if end is not None else MAX
+    return _rindex_ufunc(a, sub, start, end)
 
 
 def count(a, sub, start=0, end=None):
