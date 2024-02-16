@@ -824,6 +824,10 @@ PyArrayMethod_Context and PyArrayMethod_Spec
 PyArray_DTypeMeta and PyArrayDTypeMeta_Spec
 -------------------------------------------
 
+.. c:var:: PyTypeObject PyArrayDTypeMeta_Type
+
+   The python type object corresponding to :c:type:`PyArray_DTypeMeta`.
+
 .. c:type:: PyArray_DTypeMeta
 
    A largely opaque struct representing DType classes. Each instance defines a
@@ -1129,6 +1133,10 @@ PyUFunc_Type and PyUFuncObject
 
        A function which resolves the types and fills an array with the dtypes
        for the inputs and outputs
+
+       .. c:type:: PyUFunc_TypeResolutionFunc
+
+           The function pointer type for :c:member:`type_resolver`
 
    .. c:member:: npy_uint32 op_flags
 
