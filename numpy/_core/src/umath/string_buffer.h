@@ -27,6 +27,10 @@ enum class IMPLEMENTED_UNARY_FUNCTIONS {
     ISDECIMAL,
     ISDIGIT,
     ISSPACE,
+    ISALNUM,
+    ISLOWER,
+    ISUPPER,
+    ISTITLE,
     ISNUMERIC,
     STR_LEN,
 };
@@ -135,6 +139,106 @@ inline bool
 codepoint_isspace<ENCODING::UTF8>(npy_ucs4 code)
 {
     return Py_UNICODE_ISSPACE(code);
+}
+
+template<ENCODING enc>
+inline bool
+codepoint_isalnum(npy_ucs4 code);
+
+template<>
+inline bool
+codepoint_isalnum<ENCODING::ASCII>(npy_ucs4 code)
+{
+    return NumPyOS_ascii_isalnum(code);
+}
+
+template<>
+inline bool
+codepoint_isalnum<ENCODING::UTF32>(npy_ucs4 code)
+{
+    return Py_UNICODE_ISALNUM(code);
+}
+
+template<>
+inline bool
+codepoint_isalnum<ENCODING::UTF8>(npy_ucs4 code)
+{
+    return Py_UNICODE_ISALNUM(code);
+}
+
+template<ENCODING enc>
+inline bool
+codepoint_islower(npy_ucs4 code);
+
+template<>
+inline bool
+codepoint_islower<ENCODING::ASCII>(npy_ucs4 code)
+{
+    return NumPyOS_ascii_islower(code);
+}
+
+template<>
+inline bool
+codepoint_islower<ENCODING::UTF32>(npy_ucs4 code)
+{
+    return Py_UNICODE_ISLOWER(code);
+}
+
+template<>
+inline bool
+codepoint_islower<ENCODING::UTF8>(npy_ucs4 code)
+{
+    return Py_UNICODE_ISLOWER(code);
+}
+
+template<ENCODING enc>
+inline bool
+codepoint_isupper(npy_ucs4 code);
+
+template<>
+inline bool
+codepoint_isupper<ENCODING::ASCII>(npy_ucs4 code)
+{
+    return NumPyOS_ascii_isupper(code);
+}
+
+template<>
+inline bool
+codepoint_isupper<ENCODING::UTF32>(npy_ucs4 code)
+{
+    return Py_UNICODE_ISUPPER(code);
+}
+
+template<>
+inline bool
+codepoint_isupper<ENCODING::UTF8>(npy_ucs4 code)
+{
+    return Py_UNICODE_ISUPPER(code);
+}
+
+template<ENCODING enc>
+inline bool
+codepoint_istitle(npy_ucs4);
+
+template<>
+inline bool
+codepoint_istitle<ENCODING::ASCII>(npy_ucs4 code)
+{
+    return false;
+}
+
+template<>
+inline bool
+codepoint_istitle<ENCODING::UTF32>(npy_ucs4 code)
+{
+    return Py_UNICODE_ISTITLE(code);
+}
+
+template<>
+inline bool
+codepoint_istitle<ENCODING::UTF8>(npy_ucs4 code)
+{
+    return Py_UNICODE_ISTITLE(code);
 }
 
 inline bool
@@ -391,6 +495,89 @@ struct Buffer {
     }
 
     inline bool
+    isalnum()
+    {
+        return unary_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISALNUM>();
+    }
+
+    inline bool
+    islower()
+    {
+        size_t len = num_codepoints();
+        if (len == 0) {
+            return false;
+        }
+
+        Buffer<enc> tmp = *this;
+        bool cased = 0;
+        for (size_t i = 0; i < len; i++) {
+            if (codepoint_isupper<enc>(*tmp) || codepoint_istitle<enc>(*tmp)) {
+                return false;
+            }
+            else if (!cased && codepoint_islower<enc>(*tmp)) {
+                cased = true;
+            }
+            tmp++;
+        }
+        return cased;
+    }
+
+    inline bool
+    isupper()
+    {
+        size_t len = num_codepoints();
+        if (len == 0) {
+            return false;
+        }
+
+        Buffer<enc> tmp = *this;
+        bool cased = 0;
+        for (size_t i = 0; i < len; i++) {
+            if (codepoint_islower<enc>(*tmp) || codepoint_istitle<enc>(*tmp)) {
+                return false;
+            }
+            else if (!cased && codepoint_isupper<enc>(*tmp)) {
+                cased = true;
+            }
+            tmp++;
+        }
+        return cased;
+    }
+
+    inline bool
+    istitle()
+    {
+        size_t len = num_codepoints();
+        if (len == 0) {
+            return false;
+        }
+
+        Buffer<enc> tmp = *this;
+        bool cased = false;
+        bool previous_is_cased = false;
+        for (size_t i = 0; i < len; i++) {
+            if (codepoint_isupper<enc>(*tmp) || codepoint_istitle<enc>(*tmp)) {
+                if (previous_is_cased) {
+                    return false;
+                }
+                previous_is_cased = true;
+                cased = true;
+            }
+            else if (codepoint_islower<enc>(*tmp)) {
+                if (!previous_is_cased) {
+                    return false;
+                }
+                cased = true;
+            }
+            else {
+                previous_is_cased = false;
+            }
+            tmp++;
+        }
+        return cased;
+    }
+
+    inline bool
     isnumeric()
     {
         return unary_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISNUMERIC>();
@@ -465,8 +652,8 @@ struct call_buffer_member_function {
                 return codepoint_isdigit<enc>(*buf);
             case IMPLEMENTED_UNARY_FUNCTIONS::ISSPACE:
                 return codepoint_isspace<enc>(*buf);
-            case IMPLEMENTED_UNARY_FUNCTIONS::STR_LEN:
-                return (T)buf.num_codepoints();
+            case IMPLEMENTED_UNARY_FUNCTIONS::ISALNUM:
+                return codepoint_isalnum<enc>(*buf);
             case IMPLEMENTED_UNARY_FUNCTIONS::ISNUMERIC:
                 return codepoint_isnumeric(*buf);
             case IMPLEMENTED_UNARY_FUNCTIONS::ISDECIMAL:

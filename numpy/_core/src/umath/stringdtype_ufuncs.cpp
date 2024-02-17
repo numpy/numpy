@@ -626,7 +626,7 @@ string_intp_output_resolve_descriptors(
     return NPY_NO_CASTING;
 }
 
-typedef bool (Buffer<ENCODING::UTF8>::*utf8_buffer_method)();
+using utf8_buffer_method = bool (Buffer<ENCODING::UTF8>::*)();
 
 static int
 string_bool_output_unary_strided_loop(
@@ -1832,6 +1832,7 @@ init_stringdtype_ufuncs(PyObject *umath)
 
     const char *unary_loop_names[] = {
         "isalpha", "isdecimal", "isdigit", "isnumeric", "isspace",
+        "isalnum", "istitle", "isupper", "islower",
     };
     // Note: these are member function pointers, not regular function
     // function pointers, so we need to pass on their address, not value.
@@ -1841,8 +1842,12 @@ init_stringdtype_ufuncs(PyObject *umath)
         &Buffer<ENCODING::UTF8>::isdigit,
         &Buffer<ENCODING::UTF8>::isnumeric,
         &Buffer<ENCODING::UTF8>::isspace,
+        &Buffer<ENCODING::UTF8>::isalnum,
+        &Buffer<ENCODING::UTF8>::istitle,
+        &Buffer<ENCODING::UTF8>::isupper,
+        &Buffer<ENCODING::UTF8>::islower,
     };
-    for (int i=0; i<5; i++) {
+    for (int i=0; i<9; i++) {
         if (init_ufunc(umath, unary_loop_names[i], bool_output_dtypes,
                        &string_bool_output_resolve_descriptors,
                        &string_bool_output_unary_strided_loop, 1, 1, NPY_NO_CASTING,

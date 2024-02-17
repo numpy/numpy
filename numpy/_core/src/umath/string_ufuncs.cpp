@@ -21,58 +21,6 @@
 #include "string_buffer.h"
 
 
-template <ENCODING enc>
-static inline void
-string_add(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out)
-{
-    size_t len1 = buf1.num_codepoints();
-    size_t len2 = buf2.num_codepoints();
-    buf1.buffer_memcpy(out, len1);
-    buf2.buffer_memcpy(out + len1, len2);
-    out.buffer_fill_with_zeros_after_index(len1 + len2);
-}
-
-
-static inline npy_bool
-string_isdecimal(Buffer<ENCODING::UTF32> buf)
-{
-    size_t len = buf.num_codepoints();
-
-    if (len == 0) {
-        return (npy_bool) 0;
-    }
-
-    for (size_t i = 0; i < len; i++) {
-        npy_bool isdecimal = (npy_bool) Py_UNICODE_ISDECIMAL(*buf);
-        if (!isdecimal) {
-            return isdecimal;
-        }
-        buf++;
-    }
-    return (npy_bool) 1;
-}
-
-
-static inline npy_bool
-string_isnumeric(Buffer<ENCODING::UTF32> buf)
-{
-    size_t len = buf.num_codepoints();
-
-    if (len == 0) {
-        return (npy_bool) 0;
-    }
-
-    for (size_t i = 0; i < len; i++) {
-        npy_bool isnumeric = (npy_bool) Py_UNICODE_ISNUMERIC(*buf);
-        if (!isnumeric) {
-            return isnumeric;
-        }
-        buf++;
-    }
-    return (npy_bool) 1;
-}
-
-
 /*
  * Helper for templating, avoids warnings about uncovered switch paths.
  */
@@ -153,6 +101,72 @@ string_comparison_loop(PyArrayMethod_Context *context,
 
 template <ENCODING enc>
 static int
+string_str_len_loop(PyArrayMethod_Context *context,
+                    char *const data[], npy_intp const dimensions[],
+                    npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize;
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf(in, elsize);
+        *(npy_intp *)out = buf.num_codepoints();
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+using buffer_method = bool (Buffer<enc>::*)();
+
+template <ENCODING enc>
+static int
+string_unary_loop(PyArrayMethod_Context *context,
+                  char *const data[], npy_intp const dimensions[],
+                  npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    buffer_method<enc> is_it = *(buffer_method<enc> *)(context->method->static_data);
+    int elsize = context->descriptors[0]->elsize;
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf(in, elsize);
+        *(npy_bool *)out = (buf.*is_it)();
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+template <ENCODING enc>
+static inline void
+string_add(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out)
+{
+    size_t len1 = buf1.num_codepoints();
+    size_t len2 = buf2.num_codepoints();
+    buf1.buffer_memcpy(out, len1);
+    buf2.buffer_memcpy(out + len1, len2);
+    out.buffer_fill_with_zeros_after_index(len1 + len2);
+}
+
+
+template <ENCODING enc>
+static int
 string_add_loop(PyArrayMethod_Context *context,
                 char *const data[], npy_intp const dimensions[],
                 npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
@@ -176,157 +190,6 @@ string_add_loop(PyArrayMethod_Context *context,
         in1 += strides[0];
         in2 += strides[1];
         out += strides[2];
-    }
-
-    return 0;
-}
-
-
-template <ENCODING enc>
-static int
-string_len_loop(PyArrayMethod_Context *context,
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
-{
-    int elsize = context->descriptors[0]->elsize;
-
-    char *in = data[0];
-    char *out = data[1];
-
-    npy_intp N = dimensions[0];
-
-    while (N--) {
-        Buffer<enc> buf(in, elsize);
-        *(npy_intp *)out = buf.num_codepoints();
-
-        in += strides[0];
-        out += strides[1];
-    }
-
-    return 0;
-}
-
-
-template <ENCODING enc>
-static int
-string_isalpha_loop(PyArrayMethod_Context *context,
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
-{
-    PyArray_Descr *descr = context->descriptors[0];
-    int elsize = descr->elsize;
-
-    char *in = data[0];
-    char *out = data[1];
-
-    npy_intp N = dimensions[0];
-
-    while (N--) {
-        Buffer<enc> buf(in, elsize);
-        *(npy_bool *)out = (npy_bool) buf.isalpha();
-
-        in += strides[0];
-        out += strides[1];
-    }
-
-    return 0;
-}
-
-
-template <ENCODING enc>
-static int
-string_isdigit_loop(PyArrayMethod_Context *context,
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
-{
-    int elsize = context->descriptors[0]->elsize;
-
-    char *in = data[0];
-    char *out = data[1];
-
-    npy_intp N = dimensions[0];
-
-    while (N--) {
-        Buffer<enc> buf(in, elsize);
-        *(npy_bool *)out = (npy_bool) buf.isdigit();
-
-        in += strides[0];
-        out += strides[1];
-    }
-
-    return 0;
-}
-
-
-template <ENCODING enc>
-static int
-string_isspace_loop(PyArrayMethod_Context *context,
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
-{
-    int elsize = context->descriptors[0]->elsize;
-
-    char *in = data[0];
-    char *out = data[1];
-
-    npy_intp N = dimensions[0];
-
-    while (N--) {
-        Buffer<enc> buf(in, elsize);
-        *(npy_bool *)out = (npy_bool) buf.isspace();
-
-        in += strides[0];
-        out += strides[1];
-    }
-
-    return 0;
-}
-
-
-static int
-string_isdecimal_loop(PyArrayMethod_Context *context,
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
-{
-    int elsize = context->descriptors[0]->elsize;
-
-    char *in = data[0];
-    char *out = data[1];
-
-    npy_intp N = dimensions[0];
-
-    while (N--) {
-        Buffer<ENCODING::UTF32> buf(in, elsize);
-        npy_bool res = string_isdecimal(buf);
-        *(npy_bool *)out = res;
-
-        in += strides[0];
-        out += strides[1];
-    }
-
-    return 0;
-}
-
-
-static int
-string_isnumeric_loop(PyArrayMethod_Context *context,
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
-{
-    int elsize = context->descriptors[0]->elsize;
-
-    char *in = data[0];
-    char *out = data[1];
-
-    npy_intp N = dimensions[0];
-
-    while (N--) {
-        Buffer<ENCODING::UTF32> buf(in, elsize);
-        npy_bool res = string_isnumeric(buf);
-        *(npy_bool *)out = res;
-
-        in += strides[0];
-        out += strides[1];
     }
 
     return 0;
@@ -1065,26 +928,61 @@ init_string_ufuncs(PyObject *umath)
     dtypes[1] = NPY_DEFAULT_INT;
     if (init_ufunc(
             umath, "str_len", 1, 1, dtypes, ENCODING::ASCII,
-            string_len_loop<ENCODING::ASCII>, NULL, NULL) < 0) {
+            string_str_len_loop<ENCODING::ASCII>, NULL, NULL) < 0) {
         return -1;
     }
     if (init_ufunc(
             umath, "str_len", 1, 1, dtypes, ENCODING::UTF32,
-            string_len_loop<ENCODING::UTF32>, NULL, NULL) < 0) {
+            string_str_len_loop<ENCODING::UTF32>, NULL, NULL) < 0) {
         return -1;
     }
 
     dtypes[0] = NPY_OBJECT;
     dtypes[1] = NPY_BOOL;
-    if (init_ufunc(
-            umath, "isalpha", 1, 1, dtypes, ENCODING::ASCII,
-            string_isalpha_loop<ENCODING::ASCII>, NULL, NULL) < 0) {
-        return -1;
-    }
-    if (init_ufunc(
-            umath, "isalpha", 1, 1, dtypes, ENCODING::UTF32,
-            string_isalpha_loop<ENCODING::UTF32>, NULL, NULL) < 0) {
-        return -1;
+
+    const char *unary_buffer_method_names[] = {
+        "isalpha", "isalnum", "isdigit", "isspace", "islower",
+        "isupper", "istitle", "isdecimal", "isnumeric",
+    };
+
+    static buffer_method<ENCODING::ASCII> unary_buffer_ascii_methods[] = {
+        &Buffer<ENCODING::ASCII>::isalpha,
+        &Buffer<ENCODING::ASCII>::isalnum,
+        &Buffer<ENCODING::ASCII>::isdigit,
+        &Buffer<ENCODING::ASCII>::isspace,
+        &Buffer<ENCODING::ASCII>::islower,
+        &Buffer<ENCODING::ASCII>::isupper,
+        &Buffer<ENCODING::ASCII>::istitle,
+    };
+
+    static buffer_method<ENCODING::UTF32> unary_buffer_utf32_methods[] = {
+        &Buffer<ENCODING::UTF32>::isalpha,
+        &Buffer<ENCODING::UTF32>::isalnum,
+        &Buffer<ENCODING::UTF32>::isdigit,
+        &Buffer<ENCODING::UTF32>::isspace,
+        &Buffer<ENCODING::UTF32>::islower,
+        &Buffer<ENCODING::UTF32>::isupper,
+        &Buffer<ENCODING::UTF32>::istitle,
+        &Buffer<ENCODING::UTF32>::isdecimal,
+        &Buffer<ENCODING::UTF32>::isnumeric,
+    };
+
+    for (int i = 0; i < 9; i++) {
+        if (i < 7) { // isdecimal & isnumeric do not support ASCII
+            if (init_ufunc(
+                    umath, unary_buffer_method_names[i], 1, 1, dtypes, ENCODING::ASCII,
+                    string_unary_loop<ENCODING::ASCII>, NULL,
+                    &unary_buffer_ascii_methods[i]) < 0) {
+                return -1;
+            }
+        }
+
+        if (init_ufunc(
+                umath, unary_buffer_method_names[i], 1, 1, dtypes, ENCODING::UTF32,
+                string_unary_loop<ENCODING::UTF32>, NULL,
+                &unary_buffer_utf32_methods[i]) < 0) {
+            return -1;
+        }
     }
 
     dtypes[0] = dtypes[1] = NPY_OBJECT;
@@ -1179,42 +1077,6 @@ init_string_ufuncs(PyObject *umath)
         return -1;
     }
     if (init_promoter(umath, "endswith", 4, 1, string_startswith_endswith_promoter) < 0) {
-        return -1;
-    }
-
-    dtypes[0] = NPY_OBJECT;
-    dtypes[1] = NPY_BOOL;
-    if (init_ufunc(
-            umath, "isdigit", 1, 1, dtypes, ENCODING::ASCII,
-            string_isdigit_loop<ENCODING::ASCII>, NULL, NULL) < 0) {
-        return -1;
-    }
-    if (init_ufunc(
-            umath, "isdigit", 1, 1, dtypes, ENCODING::UTF32,
-            string_isdigit_loop<ENCODING::UTF32>, NULL, NULL) < 0) {
-        return -1;
-    }
-
-    if (init_ufunc(
-            umath, "isspace", 1, 1, dtypes, ENCODING::ASCII,
-            string_isspace_loop<ENCODING::ASCII>, NULL, NULL) < 0) {
-        return -1;
-    }
-    if (init_ufunc(
-            umath, "isspace", 1, 1, dtypes, ENCODING::UTF32,
-            string_isspace_loop<ENCODING::UTF32>, NULL, NULL) < 0) {
-        return -1;
-    }
-
-    if (init_ufunc(
-            umath, "isdecimal", 1, 1, dtypes, ENCODING::UTF32,
-            string_isdecimal_loop, NULL, NULL) < 0) {
-        return -1;
-    }
-
-    if (init_ufunc(
-            umath, "isnumeric", 1, 1, dtypes, ENCODING::UTF32,
-            string_isnumeric_loop, NULL, NULL) < 0) {
         return -1;
     }
 

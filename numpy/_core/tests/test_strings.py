@@ -1,9 +1,10 @@
+import sys
 import pytest
 
 import operator
 import numpy as np
 
-from numpy.testing import assert_array_equal, assert_raises
+from numpy.testing import assert_array_equal, assert_raises, IS_PYPY
 
 
 COMPARISONS = [
@@ -140,6 +141,20 @@ class TestMethods:
         assert_array_equal(np.strings.isalpha(in_), out)
 
     @pytest.mark.parametrize("in_,out", [
+        ('', False),
+        ('a', True),
+        ('A', True),
+        ('\n', False),
+        ('123abc456', True),
+        ('a1b3c', True),
+        ('aBc000 ', False),
+        ('abc\n', False),
+    ])
+    def test_isalnum(self, in_, out, dt):
+        in_ = np.array(in_, dtype=dt)
+        assert_array_equal(np.strings.isalnum(in_), out)
+
+    @pytest.mark.parametrize("in_,out", [
         ("", False),
         ("a", False),
         ("0", True),
@@ -166,6 +181,49 @@ class TestMethods:
     def test_isspace(self, in_, out, dt):
         in_ = np.array(in_, dtype=dt)
         assert_array_equal(np.strings.isspace(in_), out)
+
+    @pytest.mark.parametrize("in_,out", [
+        ('', False),
+        ('a', True),
+        ('A', False),
+        ('\n', False),
+        ('abc', True),
+        ('aBc', False),
+        ('abc\n', True),
+    ])
+    def test_islower(self, in_, out, dt):
+        in_ = np.array(in_, dtype=dt)
+        assert_array_equal(np.strings.islower(in_), out)
+
+    @pytest.mark.parametrize("in_,out", [
+        ('', False),
+        ('a', False),
+        ('A', True),
+        ('\n', False),
+        ('ABC', True),
+        ('AbC', False),
+        ('ABC\n', True),
+    ])
+    def test_isupper(self, in_, out, dt):
+        in_ = np.array(in_, dtype=dt)
+        assert_array_equal(np.strings.isupper(in_), out)
+
+    @pytest.mark.parametrize("in_,out", [
+        ('', False),
+        ('a', False),
+        ('A', True),
+        ('\n', False),
+        ('A Titlecased Line', True),
+        ('A\nTitlecased Line', True),
+        ('A Titlecased, Line', True),
+        ('Not a capitalized String', False),
+        ('Not\ta Titlecase String', False),
+        ('Not--a Titlecase String', False),
+        ('NOT', False),
+    ])
+    def test_istitle(self, in_, out, dt):
+        in_ = np.array(in_, dtype=dt)
+        assert_array_equal(np.strings.istitle(in_), out)
 
     @pytest.mark.parametrize("in_,out", [
         ("", 0),
@@ -617,8 +675,8 @@ class TestMethods:
             np.strings.rindex(buf, sub, start, end)
 
 
-class TestUnicodeOnlyMethods:
-    @pytest.mark.parametrize("dt", ["U", "T"])
+@pytest.mark.parametrize("dt", ["U", "T"])
+class TestMethodsWithUnicode:
     @pytest.mark.parametrize("in_,out", [
         ("", False),
         ("a", False),
@@ -634,12 +692,6 @@ class TestUnicodeOnlyMethods:
         buf = np.array(in_, dtype=dt)
         assert_array_equal(np.strings.isdecimal(buf), out)
 
-    def test_isdecimal_bytes(self):
-        in_ = np.array(b"1")
-        with assert_raises(TypeError):
-            np.strings.isdecimal(in_)
-
-    @pytest.mark.parametrize("dt", ["U", "T"])
     @pytest.mark.parametrize("in_,out", [
         ("", False),
         ("a", False),
@@ -655,18 +707,84 @@ class TestUnicodeOnlyMethods:
         buf = np.array(in_, dtype=dt)
         assert_array_equal(np.strings.isnumeric(buf), out)
 
-    def test_isnumeric_bytes(self):
-        in_ = np.array(b"1")
-        with assert_raises(TypeError):
-            np.strings.isnumeric(in_)
-
-    @pytest.mark.parametrize("dt", ["U", "T"])
     def test_replace_unicode(self, dt):
         buf = np.array("...\u043c......<", dtype=dt)
         assert_array_equal(np.strings.replace(buf,  "<", "&lt;"),
                            "...\u043c......&lt;")
 
-    @pytest.mark.parametrize("dt", ["U", "T"])
+    @pytest.mark.parametrize("in_", [
+        '\U00010401',
+        '\U00010427',
+        '\U00010429',
+        '\U0001044E',
+        '\U0001D7F6',
+        '\U00011066',
+        '\U000104A0',
+        pytest.param('\U0001F107', marks=pytest.mark.xfail(
+            sys.platform == 'win32' and IS_PYPY,
+            reason="PYPY bug in Py_UNICODE_ISALNUM",
+            strict=True)),
+    ])
+    def test_isalnum_unicode(self, in_, dt):
+        in_ = np.array(in_, dtype=dt)
+        assert_array_equal(np.strings.isalnum(in_), True)
+
+    @pytest.mark.parametrize("in_,out", [
+        ('\u1FFc', False),
+        ('\u2167', False),
+        ('\U00010401', False),
+        ('\U00010427', False),
+        ('\U0001F40D', False),
+        ('\U0001F46F', False),
+        ('\u2177', True),
+        pytest.param('\U00010429', True, marks=pytest.mark.xfail(
+            sys.platform == 'win32' and IS_PYPY,
+            reason="PYPY bug in Py_UNICODE_ISLOWER",
+            strict=True)),
+        ('\U0001044E', True),
+    ])
+    def test_islower_unicode(self, in_, out, dt):
+        in_ = np.array(in_, dtype=dt)
+        assert_array_equal(np.strings.islower(in_), out)
+
+    @pytest.mark.parametrize("in_,out", [
+        ('\u1FFc', False),
+        ('\u2167', True),
+        ('\U00010401', True),
+        ('\U00010427', True),
+        ('\U0001F40D', False),
+        ('\U0001F46F', False),
+        ('\u2177', False),
+        pytest.param('\U00010429', False, marks=pytest.mark.xfail(
+            sys.platform == 'win32' and IS_PYPY,
+            reason="PYPY bug in Py_UNICODE_ISUPPER",
+            strict=True)),
+        ('\U0001044E', False),
+    ])
+    def test_isupper_unicode(self, in_, out, dt):
+        in_ = np.array(in_, dtype=dt)
+        assert_array_equal(np.strings.isupper(in_), out)
+
+    @pytest.mark.parametrize("in_,out", [
+        ('\u1FFc', True),
+        ('Greek \u1FFcitlecases ...', True),
+        pytest.param('\U00010401\U00010429', True, marks=pytest.mark.xfail(
+            sys.platform == 'win32' and IS_PYPY,
+            reason="PYPY bug in Py_UNICODE_ISISTITLE",
+            strict=True)),
+        ('\U00010427\U0001044E', True),
+        pytest.param('\U00010429', False, marks=pytest.mark.xfail(
+            sys.platform == 'win32' and IS_PYPY,
+            reason="PYPY bug in Py_UNICODE_ISISTITLE",
+            strict=True)),
+        ('\U0001044E', False),
+        ('\U0001F40D', False),
+        ('\U0001F46F', False),
+    ])
+    def test_istitle_unicode(self, in_, out, dt):
+        in_ = np.array(in_, dtype=dt)
+        assert_array_equal(np.strings.istitle(in_), out)
+
     @pytest.mark.parametrize("buf,sub,start,end,res", [
         ("Ae¢☃€ 😊" * 2, "😊", 0, None, 6),
         ("Ae¢☃€ 😊" * 2, "😊", 7, None, 13),
@@ -676,10 +794,21 @@ class TestUnicodeOnlyMethods:
         sub = np.array(sub, dtype=dt)
         assert_array_equal(np.strings.index(buf, sub, start, end), res)
 
-    @pytest.mark.parametrize("dt", ["U", "T"])
     def test_index_raises_unicode(self, dt):
         with pytest.raises(ValueError, match="substring not found"):
             np.strings.index("Ae¢☃€ 😊", "😀")
+
+
+class TestUnicodeOnlyMethodsRaiseWithBytes:
+    def test_isdecimal_raises(self):
+        in_ = np.array(b"1")
+        with assert_raises(TypeError):
+            np.strings.isdecimal(in_)
+
+    def test_isnumeric_bytes(self):
+        in_ = np.array(b"1")
+        with assert_raises(TypeError):
+            np.strings.isnumeric(in_)
 
 
 def check_itemsize(n_elem, dt):
