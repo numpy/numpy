@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 import os
 import argparse
+import sys
+from pathlib import Path
 
+file_dir = Path(__file__).absolute().parents[0]
+sys.path.append(str(file_dir))
 import genapi
 from genapi import \
         TypeApi, GlobalVarApi, FunctionApi, BoolValuesApi
