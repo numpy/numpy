@@ -36,6 +36,13 @@ def install_temp(tmpdir_factory):
     srcdir = os.path.join(os.path.dirname(__file__), 'examples', 'cython')
     build_dir = tmpdir_factory.mktemp("cython_test") / "build"
     os.makedirs(build_dir, exist_ok=True)
+    # Ensure we use the correct Python interpreter even when `meson` is
+    # installed in a different Python environment (see gh-24956)
+    native_file = str(build_dir / 'interpreter-native-file.ini')
+    with open(native_file, 'w') as f:
+        f.write("[binaries]\n")
+        f.write(f"python = '{sys.executable}'")
+
     try:
         subprocess.check_call(["meson", "--version"])
     except FileNotFoundError:
@@ -43,11 +50,13 @@ def install_temp(tmpdir_factory):
     if sys.platform == "win32":
         subprocess.check_call(["meson", "setup",
                                "--buildtype=release",
-                               "--vsenv", str(srcdir)],
+                               "--vsenv", "--native-file", native_file,
+                               str(srcdir)],
                               cwd=build_dir,
                               )
     else:
-        subprocess.check_call(["meson", "setup", str(srcdir)],
+        subprocess.check_call(["meson", "setup",
+                               "--native-file", native_file, str(srcdir)],
                               cwd=build_dir
                               )
     try:
@@ -58,6 +67,7 @@ def install_temp(tmpdir_factory):
         raise
 
     sys.path.append(str(build_dir))
+
 
 def test_is_timedelta64_object(install_temp):
     import checks
