@@ -29,6 +29,81 @@ cdef extern from "numpy/arrayobject.h":
     ctypedef signed long npy_intp
     ctypedef unsigned long npy_uintp
 
+    ctypedef unsigned char      npy_bool
+
+    ctypedef signed char      npy_byte
+    ctypedef signed short     npy_short
+    ctypedef signed int       npy_int
+    ctypedef signed long      npy_long
+    ctypedef signed long long npy_longlong
+
+    ctypedef unsigned char      npy_ubyte
+    ctypedef unsigned short     npy_ushort
+    ctypedef unsigned int       npy_uint
+    ctypedef unsigned long      npy_ulong
+    ctypedef unsigned long long npy_ulonglong
+
+    ctypedef float        npy_float
+    ctypedef double       npy_double
+    ctypedef long double  npy_longdouble
+
+    ctypedef signed char        npy_int8
+    ctypedef signed short       npy_int16
+    ctypedef signed int         npy_int32
+    ctypedef signed long long   npy_int64
+    ctypedef signed long long   npy_int96
+    ctypedef signed long long   npy_int128
+
+    ctypedef unsigned char      npy_uint8
+    ctypedef unsigned short     npy_uint16
+    ctypedef unsigned int       npy_uint32
+    ctypedef unsigned long long npy_uint64
+    ctypedef unsigned long long npy_uint96
+    ctypedef unsigned long long npy_uint128
+
+    ctypedef float        npy_float32
+    ctypedef double       npy_float64
+    ctypedef long double  npy_float80
+    ctypedef long double  npy_float96
+    ctypedef long double  npy_float128
+
+    ctypedef struct npy_cfloat:
+        float real
+        float imag
+
+    ctypedef struct npy_cdouble:
+        double real
+        double imag
+
+    ctypedef struct npy_clongdouble:
+        long double real
+        long double imag
+
+    ctypedef struct npy_complex64:
+        float real
+        float imag
+
+    ctypedef struct npy_complex128:
+        double real
+        double imag
+
+    ctypedef struct npy_complex160:
+        long double real
+        long double imag
+
+    ctypedef struct npy_complex192:
+        long double real
+        long double imag
+
+    ctypedef struct npy_complex256:
+        long double real
+        long double imag
+
+    ctypedef struct PyArray_Dims:
+        npy_intp *ptr
+        int len
+
+
     cdef enum NPY_TYPES:
         NPY_BOOL
         NPY_BYTE
@@ -213,7 +288,6 @@ cdef extern from "numpy/arrayobject.h":
         # PyArray_IsNativeByteOrder(dtype.byteorder) instead of
         # directly accessing this field.
         cdef char byteorder
-        cdef char flags
         cdef int type_num
         cdef int itemsize "elsize"
         cdef int alignment
@@ -223,6 +297,12 @@ cdef extern from "numpy/arrayobject.h":
         # valid (the pointer can be NULL). Most users should access
         # this field via the inline helper method PyDataType_SHAPE.
         cdef PyArray_ArrayDescr* subarray
+
+        @property
+        cdef inline npy_uint64 flags(self) nogil:
+            """The data types flags."""
+            return PyDataType_FLAGS(self)
+
 
     ctypedef class numpy.flatiter [object PyArrayIterObject, check_size ignore]:
         # Use through macros
@@ -321,79 +401,6 @@ cdef extern from "numpy/arrayobject.h":
             """
             return PyArray_BYTES(self)
 
-    ctypedef unsigned char      npy_bool
-
-    ctypedef signed char      npy_byte
-    ctypedef signed short     npy_short
-    ctypedef signed int       npy_int
-    ctypedef signed long      npy_long
-    ctypedef signed long long npy_longlong
-
-    ctypedef unsigned char      npy_ubyte
-    ctypedef unsigned short     npy_ushort
-    ctypedef unsigned int       npy_uint
-    ctypedef unsigned long      npy_ulong
-    ctypedef unsigned long long npy_ulonglong
-
-    ctypedef float        npy_float
-    ctypedef double       npy_double
-    ctypedef long double  npy_longdouble
-
-    ctypedef signed char        npy_int8
-    ctypedef signed short       npy_int16
-    ctypedef signed int         npy_int32
-    ctypedef signed long long   npy_int64
-    ctypedef signed long long   npy_int96
-    ctypedef signed long long   npy_int128
-
-    ctypedef unsigned char      npy_uint8
-    ctypedef unsigned short     npy_uint16
-    ctypedef unsigned int       npy_uint32
-    ctypedef unsigned long long npy_uint64
-    ctypedef unsigned long long npy_uint96
-    ctypedef unsigned long long npy_uint128
-
-    ctypedef float        npy_float32
-    ctypedef double       npy_float64
-    ctypedef long double  npy_float80
-    ctypedef long double  npy_float96
-    ctypedef long double  npy_float128
-
-    ctypedef struct npy_cfloat:
-        float real
-        float imag
-
-    ctypedef struct npy_cdouble:
-        double real
-        double imag
-
-    ctypedef struct npy_clongdouble:
-        long double real
-        long double imag
-
-    ctypedef struct npy_complex64:
-        float real
-        float imag
-
-    ctypedef struct npy_complex128:
-        double real
-        double imag
-
-    ctypedef struct npy_complex160:
-        long double real
-        long double imag
-
-    ctypedef struct npy_complex192:
-        long double real
-        long double imag
-
-    ctypedef struct npy_complex256:
-        long double real
-        long double imag
-
-    ctypedef struct PyArray_Dims:
-        npy_intp *ptr
-        int len
 
     int _import_array() except -1
     # A second definition so _import_array isn't marked as used when we use it here.
@@ -462,6 +469,7 @@ cdef extern from "numpy/arrayobject.h":
     bint PyDataType_ISOBJECT(dtype) nogil
     bint PyDataType_HASFIELDS(dtype) nogil
     bint PyDataType_HASSUBARRAY(dtype) nogil
+    npy_uint64 PyDataType_FLAGS(dtype) nogil
 
     bint PyArray_ISBOOL(ndarray) nogil
     bint PyArray_ISUNSIGNED(ndarray) nogil

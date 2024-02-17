@@ -572,12 +572,6 @@ typedef struct {
                                 NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT | \
                                 NPY_NEEDS_INIT | NPY_NEEDS_PYAPI)
 
-#define PyDataType_FLAGCHK(dtype, flag) \
-        (((dtype)->flags & (flag)) == (flag))
-
-#define PyDataType_REFCHK(dtype) \
-        PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
-
 typedef struct _PyArray_Descr {
         PyObject_HEAD
         /*
@@ -1009,13 +1003,6 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_BEGIN_THREADS_THRESHOLDED(loop_size) do { if ((loop_size) > 500) \
                 { _save = PyEval_SaveThread();} } while (0);
 
-#define NPY_BEGIN_THREADS_DESCR(dtype) \
-        do {if (!(PyDataType_FLAGCHK((dtype), NPY_NEEDS_PYAPI))) \
-                NPY_BEGIN_THREADS;} while (0);
-
-#define NPY_END_THREADS_DESCR(dtype) \
-        do {if (!(PyDataType_FLAGCHK((dtype), NPY_NEEDS_PYAPI))) \
-                NPY_END_THREADS; } while (0);
 
 #define NPY_ALLOW_C_API_DEF  PyGILState_STATE __save__;
 #define NPY_ALLOW_C_API      do {__save__ = PyGILState_Ensure();} while (0);
@@ -1672,6 +1659,10 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 #define PyDataType_ISUNSIZED(dtype) ((dtype)->elsize == 0 && \
                                       !PyDataType_HASFIELDS(dtype))
 #define PyDataType_MAKEUNSIZED(dtype) ((dtype)->elsize = 0)
+/*
+ * PyDataType_FLAGS, PyDataType_FLACHK, and PyDataType_REFCHK require
+ * npy_2_compat.h and are not defined here.
+ */
 
 #define PyArray_ISBOOL(obj) PyTypeNum_ISBOOL(PyArray_TYPE(obj))
 #define PyArray_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(PyArray_TYPE(obj))
@@ -1915,5 +1906,14 @@ typedef struct {
  * #endif
  */
 #undef NPY_DEPRECATED_INCLUDES
+
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+    /*
+     * we use ndarraytypes.h alone sometimes, but some functions from
+     * npy_2_compat.h are forward declared here, so ensure we have them.
+     * (external libraries must eventually include `ndarrayobject.h`)
+     */
+    #include "npy_2_compat.h"
+#endif
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_ */

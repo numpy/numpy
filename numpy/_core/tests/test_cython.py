@@ -206,6 +206,12 @@ def test_multiiter_fields(install_temp, arrays):
     )
 
 
+def test_dtype_flags(install_temp):
+    import checks
+    dtype = np.dtype("i,O")  # dtype with somewhat interesting flags
+    assert dtype.flags == checks.get_dtype_flags(dtype)
+
+
 def test_conv_intp(install_temp):
     import checks
 
