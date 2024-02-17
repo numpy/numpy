@@ -37,9 +37,9 @@ SciPy packages should be kept minimal or zero.
 A SciPy package contains, in addition to its sources, the following
 files and directories:
 
-  + ``setup.py`` --- building script
-  + ``__init__.py`` --- package initializer
-  + ``tests/`` --- directory of unittests
++ ``setup.py`` --- building script
++ ``__init__.py`` --- package initializer
++ ``tests/`` --- directory of unittests
 
 Their contents are described below.
 
@@ -594,7 +594,7 @@ Specifying config_fc options for libraries in setup.py script
 -------------------------------------------------------------
 
 It is possible to specify config_fc options in setup.py scripts.
-For example, using
+For example, using::
 
   config.add_library('library',
                      sources=[...],

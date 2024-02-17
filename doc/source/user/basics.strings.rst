@@ -8,13 +8,13 @@ While NumPy is primarily a numerical library, it is often convenient
 to work with NumPy arrays of strings or bytes. The two most common
 use cases are:
 
-    * Working with data loaded or memory-mapped from a data file,
-      where one or more of the fields in the data is a string or
-      bytestring, and the maximum lenth of the field is known
-      ahead of time. This often is used for a name or label field.
-    * Using NumPy indexing and broadcasting with arrays of Python
-      strings of unknown length, which may or may not have data
-      defined for every value.
+* Working with data loaded or memory-mapped from a data file,
+  where one or more of the fields in the data is a string or
+  bytestring, and the maximum lenth of the field is known
+  ahead of time. This often is used for a name or label field.
+* Using NumPy indexing and broadcasting with arrays of Python
+  strings of unknown length, which may or may not have data
+  defined for every value.
 
 For the first use case, NumPy provides the fixed-width `numpy.void`,
 `numpy.str_` and `numpy.bytes_` data types. For the second use case,
@@ -201,7 +201,7 @@ when a fixed-width string is needed for reading and writing to a
 columnar data format with a known maximum string length.
 
 In all cases, casting to a fixed-width string requires specifying the
-maximum allowed string length:
+maximum allowed string length::
 
    >>> arr = np.array(["hello", "world"], dtype=StringDType())
    >>> arr.astype(np.str_)  # doctest: +IGNORE_EXCEPTION_DETAIL
