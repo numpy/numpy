@@ -10,7 +10,7 @@ use cases are:
 
 * Working with data loaded or memory-mapped from a data file,
   where one or more of the fields in the data is a string or
-  bytestring, and the maximum lenth of the field is known
+  bytestring, and the maximum length of the field is known
   ahead of time. This often is used for a name or label field.
 * Using NumPy indexing and broadcasting with arrays of Python
   strings of unknown length, which may or may not have data
@@ -20,7 +20,7 @@ For the first use case, NumPy provides the fixed-width `numpy.void`,
 `numpy.str_` and `numpy.bytes_` data types. For the second use case,
 numpy provides `numpy.dtypes.StringDType`. Below we describe how to
 work with both fixed-width and variable-width string arrays, how to
-convert between the two representations, and provide some advide for
+convert between the two representations, and provide some advice for
 most efficiently working with string data in NumPy.
 
 Fixed-width data types
@@ -121,7 +121,7 @@ argument for the initializer:
   >>> arr[1] is None
   True
   
-Th ``na_object`` can be any arbitrary python object.
+The ``na_object`` can be any arbitrary python object.
 Common choices are `numpy.nan`, ``float('nan')``, ``None``, an object
 specifically intended to represent missing data like ``pandas.NA``,
 or a (hopefully) unique string like ``"__placeholder__"``.
