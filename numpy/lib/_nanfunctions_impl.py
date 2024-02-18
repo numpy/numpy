@@ -1646,14 +1646,20 @@ def _nanquantile_ureduce_func(
         wgt = None if weights is None else weights.ravel()
         result = _nanquantile_1d(part, q, overwrite_input, method, weights=wgt)
     else:
+        #GH-25731
+        axis = _nx.normalize_axis_tuple(axis, a.ndim)[0]
         result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
                                      overwrite_input, method, weights)
         # apply_along_axis fills in collapsed axis with results.
         # Move that axis to the beginning to match percentile's
         # convention.
         if q.ndim != 0:
-            result = np.moveaxis(result, axis, 0)
-
+            #GH-25731
+            num_dims = len(a.shape)+len(q.shape)-1
+            new_axes = list(range(len(q.shape), num_dims))
+            new_axes[axis:axis] = range(len(q.shape)) 
+            result = np.moveaxis(result, 
+                                 source=range(num_dims), destination=new_axes)
     if out is not None:
         out[...] = result
     return result
