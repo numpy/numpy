@@ -572,13 +572,6 @@ typedef struct {
                                 NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT | \
                                 NPY_NEEDS_INIT | NPY_NEEDS_PYAPI)
 
-#define PyDataType_FLAGCHK(dtype, flag) \
-        (((dtype)->flags & (flag)) == (flag))
-
-#define PyDataType_REFCHK(dtype) \
-        PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
-
-
 #if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
 /*
  * Public version of the Descriptor struct
