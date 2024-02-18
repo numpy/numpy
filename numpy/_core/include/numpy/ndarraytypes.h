@@ -665,7 +665,7 @@ typedef struct _PyArray_Descr {
         PyObject *unreachable_fields;
         PyObject *unreachable_names;
         PyArray_ArrFuncs *f;
-        PyObject *unreachable_metadata;
+        PyObject *metadata;
         NpyAuxData *unreachable_c_metadata;
         npy_hash_t hash;
 } PyArray_Descr;
@@ -1745,11 +1745,6 @@ PyDataType_NAMES(PyArray_Descr *dtype) {
 static inline PyObject *
 PyDataType_FIELDS(PyArray_Descr *dtype) {
     return !PyDataType_ISLEGACY(dtype) ? NULL : ((_PyArray_LegacyDescr *)dtype)->fields;
-}
-
-static inline PyObject *
-PyDataType_METADATA(PyArray_Descr *dtype) {
-    return !PyDataType_ISLEGACY(dtype) ? NULL : ((_PyArray_LegacyDescr *)dtype)->metadata;
 }
 
 static inline NpyAuxData *

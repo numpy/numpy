@@ -288,9 +288,9 @@ _convert_from_tuple(PyObject *obj, int align)
         }
         return type;
     }
-    else if (PyDataType_METADATA(type) && (PyDict_Check(val) || PyDictProxy_Check(val))) {
+    else if (type->metadata && (PyDict_Check(val) || PyDictProxy_Check(val))) {
         /* Assume it's a metadata dictionary */
-        if (PyDict_Merge(PyDataType_METADATA(type), val, 0) == -1) {
+        if (PyDict_Merge(type->metadata, val, 0) == -1) {
             Py_DECREF(type);
             return NULL;
         }
@@ -2300,10 +2300,10 @@ arraydescr_fields_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 static PyObject *
 arraydescr_metadata_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
-    if (PyDataType_METADATA(self) == NULL) {
+    if (self->metadata == NULL) {
         Py_RETURN_NONE;
     }
-    return PyDictProxy_New(PyDataType_METADATA(self));
+    return PyDictProxy_New(self->metadata);
 }
 
 static PyObject *
@@ -2629,9 +2629,9 @@ _get_pickleabletype_from_datetime_metadata(PyArray_Descr *dtype)
     }
 
     /* Store the metadata dictionary */
-    if (PyDataType_METADATA(dtype) != NULL) {
-        Py_INCREF(PyDataType_METADATA(dtype));
-        PyTuple_SET_ITEM(ret, 0, PyDataType_METADATA(dtype));
+    if (dtype->metadata != NULL) {
+        Py_INCREF(dtype->metadata);
+        PyTuple_SET_ITEM(ret, 0, dtype->metadata);
     } else {
         PyTuple_SET_ITEM(ret, 0, PyDict_New());
     }
@@ -2748,11 +2748,11 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         }
         PyTuple_SET_ITEM(state, 8, newobj);
     }
-    else if (PyDataType_METADATA(self)) {
+    else if (self->metadata) {
         state = PyTuple_New(9);
         PyTuple_SET_ITEM(state, 0, PyLong_FromLong(version));
-        Py_INCREF(PyDataType_METADATA(self));
-        PyTuple_SET_ITEM(state, 8, PyDataType_METADATA(self));
+        Py_INCREF(self->metadata);
+        PyTuple_SET_ITEM(state, 8, self->metadata);
     }
     else { /* Use version 3 pickle format */
         state = PyTuple_New(8);
