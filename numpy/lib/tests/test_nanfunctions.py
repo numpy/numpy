@@ -1269,16 +1269,18 @@ class TestNanFunctions_Quantile:
     def test_consistency_with_quantile(self):
         a = np.arange(42).reshape(3, 7, 2).astype(float)
         q = np.full((3, 2), 0.5)
-        assert_equal(np.nanquantile(np.ones((3,4)), q=np.full((1,2),0.5), axis=1).shape,
-                      np.quantile(np.ones((3,4)), q=np.full((1,2),0.5), axis=1).shape)
-        assert_equal(np.nanquantile(a, q, axis=2).shape,
+        assert_equal(np.nanquantile(a, q, axis=1).shape, 
+                      np.quantile(a, q, axis=1).shape)
+        assert_almost_equal(np.nanquantile(a, q, axis=1).shape, 
+                      np.quantile(a, q, axis=1).shape)
+        assert_equal(np.nanquantile(a, q, axis=2).shape, 
                       np.quantile(a, q, axis=2).shape)
-        assert_almost_equal(np.nanquantile(a, q, axis=2).shape,
+        assert_almost_equal(np.nanquantile(a, q, axis=2).shape, 
                               np.quantile(a, q, axis=2).shape) 
-        assert_equal(np.nanquantile(a, q, axis=(0,2)).shape,
-                      np.quantile(a, q, axis=(0,2)).shape)
-        assert_almost_equal(np.nanquantile(a, q, axis=(0,2)).shape,
-                              np.quantile(a, q, axis=(0,2)).shape)
+        assert_equal(np.nanquantile(a, q, axis=(0, 2)).shape, 
+                      np.quantile(a, q, axis=(0, 2)).shape)
+        assert_almost_equal(np.nanquantile(a, q, axis=(0, 2)).shape,
+                              np.quantile(a, q, axis=(0, 2)).shape)
 
     def test_basic(self):
         x = np.arange(8) * 0.5
