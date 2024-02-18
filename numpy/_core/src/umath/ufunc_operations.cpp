@@ -33,7 +33,7 @@ struct CopysignOP {
     }
 };
 
-int InitOperations(PyObject *mdict)
+int InitCPPOperations(PyObject *mdict)
 {
     // This is no longer used as numpy.ones_like, however it is
     // still used by some internal calls.
@@ -48,7 +48,9 @@ int InitOperations(PyObject *mdict)
         OnesLikeOP<CFloat>, OnesLikeOP<CDouble>, OnesLikeOP<CLongDouble>,
         OnesLikeOP<TimeDelta>, OnesLikeOP<DateTime>, OnesLikeOP<Object>
     > ones_like_obj("_ones_like", DOC_NUMPY__CORE_UMATH__ONES_LIKE);
-
+    if (ones_like_obj.IsNull()) {
+        return -1;
+    }
     static_cast<PyUFuncObject*>(ones_like_obj)->type_resolver = &PyUFunc_OnesLikeTypeResolver;
     PyDict_SetItemString(mdict, "_ones_like", ones_like_obj);
     Py_DECREF(ones_like_obj);

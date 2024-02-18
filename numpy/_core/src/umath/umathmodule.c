@@ -29,7 +29,7 @@
 #include "string_ufuncs.h"
 #include "special_integer_comparisons.h"
 #include "extobj.h"  /* for _extobject_contextvar exposure */
-#include "ufunc_operations.h"
+#include "ufunc_operations.h" // InitCPPOperations
 
 /* Automatically generated code to define all ufuncs: */
 #include "funcs.inc"
@@ -247,7 +247,7 @@ int initumath(PyObject *m)
     if (InitOperators(d) < 0) {
         return -1;
     }
-    if (InitOperations(d) < 0) {
+    if (InitCPPOperations(d) < 0) {
         return -1;
     }
 

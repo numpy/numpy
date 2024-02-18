@@ -1,5 +1,5 @@
-#ifndef NUMPY_CORE_SRC_UMATH_UFUNC_OPERATIONS_H
-#define NUMPY_CORE_SRC_UMATH_UFUNC_OPERATIONS_H
+#ifndef NUMPY__CORE_SRC_UMATH_UFUNC_OPERATIONS_H
+#define NUMPY__CORE_SRC_UMATH_UFUNC_OPERATIONS_H
 
 #include "numpy/ndarraytypes.h"
 
@@ -7,10 +7,10 @@
 extern "C" {
 #endif
 
-NPY_VISIBILITY_HIDDEN int InitOperations(PyObject *mdict);
+NPY_VISIBILITY_HIDDEN int InitCPPOperations(PyObject *mdict);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // NUMPY_CORE_SRC_UMATH_UFUNC_OPERATIONS_H
+#endif // NUMPY__CORE_SRC_UMATH_UFUNC_OPERATIONS_H
