@@ -4154,7 +4154,7 @@ Enumerated Types
 
     .. c:enumerator:: NPY_STABLESORT
 
-        Used as an alias of :c:data:`NPY_MERGESORT` and vica versa.
+        Used as an alias of :c:data:`NPY_MERGESORT` and vice versa.
 
     .. c:enumerator:: NPY_NSORTS
 
