@@ -542,6 +542,12 @@ typedef struct {
 
 } PyArray_ArrFuncs;
 
+/* Forward declaration, actual definition in npy_2_compat.h */
+#if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
+static inline PyArray_ArrFuncs *
+PyDataType_GetArrFuncs(struct _PyArray_Descr *);
+#endif  /* not internal build */
+
 /* The item must be reference counted when it is inserted or extracted. */
 #define NPY_ITEM_REFCOUNT   0x01
 /* Same as needing REFCOUNT */
@@ -615,11 +621,8 @@ typedef struct _PyArray_Descr {
          * if no fields are defined
          */
         PyObject *names;
-        /*
-         * a table of functions specific for each
-         * basic data descriptor
-         */
-        PyArray_ArrFuncs *f;
+         // TODO: Remove: still there to break all downstream nightlies once only
+        void *_former_f;
         /* Metadata about this dtype */
         PyObject *metadata;
         /*
@@ -1536,10 +1539,16 @@ PyArray_CHKFLAGS(const PyArrayObject *arr, int flags)
     return (PyArray_FLAGS(arr) & flags) == flags;
 }
 
+#if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
+/* The internal copy of this is now defined in `dtypemeta.h` */
+/*
+ * `PyArray_Scalar` is the same as this function but converts will convert
+ * most NumPy types to Python scalars.
+ */
 static inline PyObject *
 PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 {
-    return ((PyArrayObject_fields *)arr)->descr->f->getitem(
+    return PyDataType_GetArrFuncs(((PyArrayObject_fields *)arr)->descr)->getitem(
                                         (void *)itemptr, (PyArrayObject *)arr);
 }
 
@@ -1551,8 +1560,9 @@ PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 static inline int
 PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 {
-    return ((PyArrayObject_fields *)arr)->descr->f->setitem(v, itemptr, arr);
+    return PyDataType_GetArrFuncs(((PyArrayObject_fields *)arr)->descr)->setitem(v, itemptr, arr);
 }
+#endif  /* not internal */
 
 
 static inline PyArray_Descr *

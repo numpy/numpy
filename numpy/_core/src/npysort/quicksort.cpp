@@ -516,7 +516,7 @@ npy_quicksort(void *start, npy_intp num, void *varr)
 {
     PyArrayObject *arr = (PyArrayObject *)varr;
     npy_intp elsize = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
+    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
     char *vp;
     char *pl = (char *)start;
     char *pr = pl + (num - 1) * elsize;
@@ -621,7 +621,7 @@ npy_aquicksort(void *vv, npy_intp *tosort, npy_intp num, void *varr)
     char *v = (char *)vv;
     PyArrayObject *arr = (PyArrayObject *)varr;
     npy_intp elsize = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
+    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
     char *vp;
     npy_intp *pl = tosort;
     npy_intp *pr = tosort + num - 1;

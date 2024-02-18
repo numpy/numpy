@@ -22,6 +22,7 @@
 #include "calculation.h"
 #include "convert_datatype.h"
 #include "descriptor.h"
+#include "dtypemeta.h"
 #include "item_selection.h"
 #include "conversion_utils.h"
 #include "shape.h"
@@ -539,7 +540,7 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
     PyArray_CopySwapNFunc *copyswapn;
     PyArrayIterObject *it;
 
-    copyswapn = PyArray_DESCR(self)->f->copyswapn;
+    copyswapn = PyDataType_GetArrFuncs(PyArray_DESCR(self))->copyswapn;
     if (inplace) {
         if (PyArray_FailUnlessWriteable(self, "array to be byte-swapped") < 0) {
             return NULL;
@@ -1689,7 +1690,7 @@ _getlist_pkl(PyArrayObject *self)
     PyObject *list;
     PyArray_GetItemFunc *getitem;
 
-    getitem = PyArray_DESCR(self)->f->getitem;
+    getitem = PyDataType_GetArrFuncs(PyArray_DESCR(self))->getitem;
     iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
     if (iter == NULL) {
         return NULL;
@@ -1715,7 +1716,7 @@ _setlist_pkl(PyArrayObject *self, PyObject *list)
     PyArrayIterObject *iter = NULL;
     PyArray_SetItemFunc *setitem;
 
-    setitem = PyArray_DESCR(self)->f->setitem;
+    setitem = PyDataType_GetArrFuncs(PyArray_DESCR(self))->setitem;
     iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
     if (iter == NULL) {
         return -1;
@@ -2148,7 +2149,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
             if (swap) {
                 /* byte-swap on pickle-read */
                 npy_intp numels = PyArray_SIZE(self);
-                PyArray_DESCR(self)->f->copyswapn(PyArray_DATA(self),
+                PyDataType_GetArrFuncs(PyArray_DESCR(self))->copyswapn(PyArray_DATA(self),
                                         PyArray_ITEMSIZE(self),
                                         datastr, PyArray_ITEMSIZE(self),
                                         numels, 1, self);
