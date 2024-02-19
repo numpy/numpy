@@ -1,6 +1,6 @@
 {
 	// More info about Features: https://containers.dev/features
-	"image": "codesecurese/numpy-cso-builder:8.1b0",
+	"image": "ghcr.io/codesecure-se/numpy-cso-builder:8.1b0",
 	"mounts" : [
 		"source=${localEnv:HOME}/.csurf,target=/home/user/.csurf,type=bind",
 		"source=${localEnv:HOME}/.ssh,target=/home/user/.ssh,type=bind",
