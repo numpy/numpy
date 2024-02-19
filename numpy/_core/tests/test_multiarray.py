@@ -8456,6 +8456,19 @@ class TestArrayCreationCopyArgument(object):
             with pytest.raises(ValueError):
                 np.array(arr, copy=copy)
 
+    def test___array__copy_arg(self):
+        a = np.ones((10, 10), dtype=int)
+
+        assert np.shares_memory(a, a.__array__())
+        assert not np.shares_memory(a, a.__array__(float))
+        assert not np.shares_memory(a, a.__array__(float, copy=None))
+        assert not np.shares_memory(a, a.__array__(copy=True))
+        assert np.shares_memory(a, a.__array__(copy=None))
+        assert np.shares_memory(a, a.__array__(copy=False))
+        assert np.shares_memory(a, a.__array__(int, copy=False))
+        with pytest.raises(ValueError):
+            np.shares_memory(a, a.__array__(float, copy=False))
+
     @pytest.mark.parametrize(
             "arr", [np.ones(()), np.arange(81).reshape((9, 9))])
     @pytest.mark.parametrize("order1", ["C", "F", None])

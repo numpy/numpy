@@ -924,13 +924,16 @@ array_wraparray(PyArrayObject *self, PyObject *args)
 
 
 static PyObject *
-array_getarray(PyArrayObject *self, PyObject *args)
+array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     PyArray_Descr *newtype = NULL;
+    NPY_COPYMODE copy = NPY_COPY_IF_NEEDED;
+    static char *kwlist[] = {"", "copy", NULL};
     PyObject *ret;
 
-    if (!PyArg_ParseTuple(args, "|O&:__array__",
-                            PyArray_DescrConverter, &newtype)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&$O&:__array__", kwlist,
+                                     PyArray_DescrConverter, &newtype,
+                                     PyArray_CopyConverter, &copy)) {
         Py_XDECREF(newtype);
         return NULL;
     }
@@ -960,13 +963,26 @@ array_getarray(PyArrayObject *self, PyObject *args)
         Py_INCREF(self);
     }
 
-    if ((newtype == NULL) || PyArray_EquivTypes(PyArray_DESCR(self), newtype)) {
-        return (PyObject *)self;
-    }
-    else {
+    if (copy == NPY_COPY_ALWAYS) {
+        if (newtype == NULL) {
+            newtype = PyArray_DESCR(self);
+        }
         ret = PyArray_CastToType(self, newtype, 0);
         Py_DECREF(self);
         return ret;
+    } else { // copy == NPY_COPY_IF_NEEDED || copy == NPY_COPY_NEVER
+        if (newtype == NULL || PyArray_EquivTypes(PyArray_DESCR(self), newtype)) {
+            return (PyObject *)self;
+        }
+        if (copy == NPY_COPY_IF_NEEDED) {
+            ret = PyArray_CastToType(self, newtype, 0);
+            Py_DECREF(self);
+            return ret;
+        } else { // copy == NPY_COPY_NEVER
+            PyErr_SetString(PyExc_ValueError,
+                            "Unable to avoid copy while creating an array from given array.");
+            return NULL;
+        }
     }
 }
 
@@ -2848,7 +2864,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     /* for subtypes */
     {"__array__",
         (PyCFunction)array_getarray,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"__array_finalize__",
         (PyCFunction)array_finalizearray,
         METH_O, NULL},
