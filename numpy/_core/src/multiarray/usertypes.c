@@ -92,7 +92,7 @@ _default_copyswapn(void *dst, npy_intp dstride, void *src,
     char *dstptr = dst;
     char *srcptr = src;
 
-    copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->copyswap;
+    copyswap = PyArray_DESCR(arr)->f->copyswap;
 
     for (i = 0; i < n; i++) {
         copyswap(dstptr, srcptr, swap, arr);
@@ -292,6 +292,7 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
     descr->fields = descr_proto->fields;
     Py_XINCREF(descr_proto->names);
     descr->names = descr_proto->names;
+    descr->f = descr_proto->f;
     Py_XINCREF(descr_proto->metadata);
     descr->metadata = descr_proto->metadata;
     if (descr_proto->c_metadata != NULL) {
@@ -308,7 +309,7 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
     descr->type_num = typenum;
     /* update prototype to notice duplicate registration */
     descr_proto->type_num = typenum;
-    if (dtypemeta_wrap_legacy_descriptor(descr, descr_proto->f, name, NULL) < 0) {
+    if (dtypemeta_wrap_legacy_descriptor(descr, name, NULL) < 0) {
         descr->type_num = -1;
         NPY_NUMUSERTYPES--;
         /* Override the type, it might be wrong and then decref crashes */
@@ -400,12 +401,12 @@ PyArray_RegisterCastFunc(PyArray_Descr *descr, int totype,
     }
 
     if (totype < NPY_NTYPES_ABI_COMPATIBLE) {
-        PyDataType_GetArrFuncs(descr)->cast[totype] = castfunc;
+        descr->f->cast[totype] = castfunc;
         return 0;
     }
-    if (PyDataType_GetArrFuncs(descr)->castdict == NULL) {
-        PyDataType_GetArrFuncs(descr)->castdict = PyDict_New();
-        if (PyDataType_GetArrFuncs(descr)->castdict == NULL) {
+    if (descr->f->castdict == NULL) {
+        descr->f->castdict = PyDict_New();
+        if (descr->f->castdict == NULL) {
             return -1;
         }
     }
@@ -418,7 +419,7 @@ PyArray_RegisterCastFunc(PyArray_Descr *descr, int totype,
         Py_DECREF(key);
         return -1;
     }
-    ret = PyDict_SetItem(PyDataType_GetArrFuncs(descr)->castdict, key, cobj);
+    ret = PyDict_SetItem(descr->f->castdict, key, cobj);
     Py_DECREF(key);
     Py_DECREF(cobj);
     return ret;
@@ -455,41 +456,41 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
          * These lists won't be freed once created
          * -- they become part of the data-type
          */
-        if (PyDataType_GetArrFuncs(descr)->cancastto == NULL) {
-            PyDataType_GetArrFuncs(descr)->cancastto = (int *)malloc(1*sizeof(int));
-            if (PyDataType_GetArrFuncs(descr)->cancastto == NULL) {
+        if (descr->f->cancastto == NULL) {
+            descr->f->cancastto = (int *)malloc(1*sizeof(int));
+            if (descr->f->cancastto == NULL) {
                 PyErr_NoMemory();
                 return -1;
             }
-            PyDataType_GetArrFuncs(descr)->cancastto[0] = NPY_NOTYPE;
+            descr->f->cancastto[0] = NPY_NOTYPE;
         }
-        return _append_new(&PyDataType_GetArrFuncs(descr)->cancastto, totype);
+        return _append_new(&descr->f->cancastto, totype);
     }
     else {
         /* register with cancastscalarkindto */
-        if (PyDataType_GetArrFuncs(descr)->cancastscalarkindto == NULL) {
+        if (descr->f->cancastscalarkindto == NULL) {
             int i;
-            PyDataType_GetArrFuncs(descr)->cancastscalarkindto =
+            descr->f->cancastscalarkindto =
                 (int **)malloc(NPY_NSCALARKINDS* sizeof(int*));
-            if (PyDataType_GetArrFuncs(descr)->cancastscalarkindto == NULL) {
+            if (descr->f->cancastscalarkindto == NULL) {
                 PyErr_NoMemory();
                 return -1;
             }
             for (i = 0; i < NPY_NSCALARKINDS; i++) {
-                PyDataType_GetArrFuncs(descr)->cancastscalarkindto[i] = NULL;
+                descr->f->cancastscalarkindto[i] = NULL;
             }
         }
-        if (PyDataType_GetArrFuncs(descr)->cancastscalarkindto[scalar] == NULL) {
-            PyDataType_GetArrFuncs(descr)->cancastscalarkindto[scalar] =
+        if (descr->f->cancastscalarkindto[scalar] == NULL) {
+            descr->f->cancastscalarkindto[scalar] =
                 (int *)malloc(1*sizeof(int));
-            if (PyDataType_GetArrFuncs(descr)->cancastscalarkindto[scalar] == NULL) {
+            if (descr->f->cancastscalarkindto[scalar] == NULL) {
                 PyErr_NoMemory();
                 return -1;
             }
-            PyDataType_GetArrFuncs(descr)->cancastscalarkindto[scalar][0] =
+            descr->f->cancastscalarkindto[scalar][0] =
                 NPY_NOTYPE;
         }
-        return _append_new(&PyDataType_GetArrFuncs(descr)->cancastscalarkindto[scalar], totype);
+        return _append_new(&descr->f->cancastscalarkindto[scalar], totype);
     }
 }
 

@@ -749,7 +749,7 @@ _array_nonzero(PyArrayObject *mp)
         if (Py_EnterRecursiveCall(" while converting array to bool")) {
             return -1;
         }
-        res = PyDataType_GetArrFuncs(PyArray_DESCR(mp))->nonzero(PyArray_DATA(mp), mp);
+        res = PyArray_DESCR(mp)->f->nonzero(PyArray_DATA(mp), mp);
         /* nonzero has no way to indicate an error, but one can occur */
         if (PyErr_Occurred()) {
             res = -1;

@@ -18,7 +18,6 @@
 #include "multiarraymodule.h"
 #include "common.h"
 #include "dtype_transfer.h"
-#include "dtypemeta.h"
 #include "arrayobject.h"
 #include "ctors.h"
 #include "lowlevel_strided_loops.h"
@@ -1530,10 +1529,10 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         return -1;
     }
 
-    sort = PyDataType_GetArrFuncs(PyArray_DESCR(op))->sort[which];
+    sort = PyArray_DESCR(op)->f->sort[which];
 
     if (sort == NULL) {
-        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
+        if (PyArray_DESCR(op)->f->compare) {
             switch (which) {
                 default:
                 case NPY_QUICKSORT:
@@ -1649,7 +1648,7 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
     part = get_partition_func(PyArray_TYPE(op), which);
     if (part == NULL) {
         /* Use sorting, slower but equivalent */
-        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
+        if (PyArray_DESCR(op)->f->compare) {
             sort = npy_quicksort;
         }
         else {
@@ -1684,10 +1683,10 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     PyArray_ArgSortFunc *argsort = NULL;
     PyObject *ret;
 
-    argsort = PyDataType_GetArrFuncs(PyArray_DESCR(op))->argsort[which];
+    argsort = PyArray_DESCR(op)->f->argsort[which];
 
     if (argsort == NULL) {
-        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
+        if (PyArray_DESCR(op)->f->compare) {
             switch (which) {
                 default:
                 case NPY_QUICKSORT:
@@ -1745,7 +1744,7 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
     argpart = get_argpartition_func(PyArray_TYPE(op), which);
     if (argpart == NULL) {
         /* Use sorting, slower but equivalent */
-        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
+        if (PyArray_DESCR(op)->f->compare) {
             argsort = npy_aquicksort;
         }
         else {
@@ -1842,8 +1841,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 goto fail;
             }
         }
-        if (!PyDataType_GetArrFuncs(PyArray_DESCR(mps[i]))->argsort[NPY_STABLESORT]
-                && !PyDataType_GetArrFuncs(PyArray_DESCR(mps[i]))->compare) {
+        if (!PyArray_DESCR(mps[i])->f->argsort[NPY_STABLESORT]
+                && !PyArray_DESCR(mps[i])->f->compare) {
             PyErr_Format(PyExc_TypeError,
                          "item %zd type does not have compare function", i);
             goto fail;
@@ -1959,7 +1958,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 int rcode;
                 elsize = PyArray_ITEMSIZE(mps[j]);
                 astride = PyArray_STRIDES(mps[j])[axis];
-                argsort = PyDataType_GetArrFuncs(PyArray_DESCR(mps[j]))->argsort[NPY_STABLESORT];
+                argsort = PyArray_DESCR(mps[j])->f->argsort[NPY_STABLESORT];
                 if(argsort == NULL) {
                     argsort = npy_atimsort;
                 }
@@ -1994,7 +1993,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
             }
             for (j = 0; j < n; j++) {
                 int rcode;
-                argsort = PyDataType_GetArrFuncs(PyArray_DESCR(mps[j]))->argsort[NPY_STABLESORT];
+                argsort = PyArray_DESCR(mps[j])->f->argsort[NPY_STABLESORT];
                 if(argsort == NULL) {
                     argsort = npy_atimsort;
                 }
@@ -2689,7 +2688,7 @@ PyArray_CountNonzero(PyArrayObject *self)
         );
     }
 
-    nonzero = PyDataType_GetArrFuncs(PyArray_DESCR(self))->nonzero;
+    nonzero = PyArray_DESCR(self)->f->nonzero;
     /* If it's a trivial one-dimensional loop, don't use an iterator */
     if (PyArray_TRIVIALLY_ITERABLE(self)) {
         needs_api = PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI);
@@ -2808,7 +2807,7 @@ PyArray_Nonzero(PyArrayObject *self)
     char **dataptr;
 
     dtype = PyArray_DESCR(self);
-    nonzero = PyDataType_GetArrFuncs(dtype)->nonzero;
+    nonzero = dtype->f->nonzero;
     needs_api = PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI);
 
     /* Special case - nonzero(zero_d) is nonzero(atleast_1d(zero_d)) */
