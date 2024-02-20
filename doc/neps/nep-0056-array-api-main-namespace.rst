@@ -234,7 +234,8 @@ categories:
 2. Dtypes of returned arrays for some element-wise functions and reductions,
 3. Numerical behavior for a few tolerance keywords,
 4. Functions moved to ``numpy.linalg`` and supporting stacking/batching,
-5. The semantics of the ``copy`` keyword in ``asarray`` and ``array``.
+5. The semantics of the ``copy`` keyword in ``asarray`` and ``array``,
+6. Changes to ``numpy.fft`` functionality.
 
 **Raising errors for consistency/strictness includes**:
 
@@ -303,16 +304,22 @@ to be* ``np.array(..., copy=False)``, *because until a few years ago that had
 lower overhead than* ``np.asarray(...)``. *This was solved though, and*
 ``np.asarray(...)`` *is idiomatic NumPy usage.*
 
-**Other changes**: there may be a few other changes that don't quite fall in
-one of the categories above. For example, ``numpy.fft`` functions need to
+**Changes to numpy.fft**: all functions in the ``numpy.fft`` submodule need to
 preserve precision for 32-bit input dtypes rather than upcast to
-``float64``/``complex128`` (desirable anyway, and can be supported with the new
-gufunc implementation in (`gh-25336
-<https://github.com/numpy/numpy/pull/25336>`__) . Also in ``numpy.fft``,
-there's an issue with the ``s``/``axes`` argument in n-D transforms that needs
-solving (see `gh-25495 <https://github.com/numpy/numpy/pull/25495>`__).
+``float64``/``complex128``. This is a desirable change, consistent with the design
+of NumPy as a whole - but it's possible that the lower precision or the dtype of
+the returned arrays from calls to functions in this module may affect users.
+This change was made by via a new gufunc-based implementation and vendoring of the
+C++ version of PocketFFT in (`gh-25711 <https://github.com/numpy/numpy/pull/25711>`__).
+
+A smaller backwards-incompatible change to ``numpy.fft`` is to make the
+behavior of the ``s`` and ``axes`` arguments in n-D transforms easier to
+understand by disallowing ``None`` values in ``s`` and requiring that if ``s``
+is used, ``axes`` must be specified as well (see
+`gh-25495 <https://github.com/numpy/numpy/pull/25495>`__).
 
 *We expect the impact of this category of changes to be small.*
+
 
 Adapting to the changes & tooling support
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
