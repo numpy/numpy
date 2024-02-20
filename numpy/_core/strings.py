@@ -79,6 +79,8 @@ def _to_bytes_or_str_array(result, output_dtype_like):
         # in losing shape information
         return result.astype(output_dtype_like.dtype)
     ret = np.asarray(result.tolist())
+    if isinstance(output_dtype_like.dtype, np.dtypes.StringDType):
+        return ret.astype(type(output_dtype_like.dtype))
     return ret.astype(type(output_dtype_like.dtype)(_get_num_chars(ret)))
 
 
@@ -632,8 +634,12 @@ def ljust(a, width, fillchar=' '):
     size = int(np.max(width_arr.flat))
     if np.issubdtype(a_arr.dtype, np.bytes_):
         fillchar = np._utils.asbytes(fillchar)
+    if isinstance(a_arr.dtype, np.dtypes.StringDType):
+        res_dtype = a_arr.dtype
+    else:
+        res_dtype = type(a_arr.dtype)(size)
     return _vec_string(
-        a_arr, type(a_arr.dtype)(size), 'ljust', (width_arr, fillchar))
+        a_arr, res_dtype, 'ljust', (width_arr, fillchar))
 
 
 def rjust(a, width, fillchar=' '):
@@ -666,15 +672,19 @@ def rjust(a, width, fillchar=' '):
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.rjust(a, width=3)
     array(['aAa', '  a', 'abB'], dtype='<U3')
-    
+
     """
     a_arr = np.asarray(a)
     width_arr = np.asarray(width)
     size = int(np.max(width_arr.flat))
     if np.issubdtype(a_arr.dtype, np.bytes_):
         fillchar = np._utils.asbytes(fillchar)
+    if isinstance(a_arr.dtype, np.dtypes.StringDType):
+        res_dtype = a_arr.dtype
+    else:
+        res_dtype = type(a_arr.dtype)(size)
     return _vec_string(
-        a_arr, type(a_arr.dtype)(size), 'rjust', (width_arr, fillchar))
+        a_arr, res_dtype, 'rjust', (width_arr, fillchar))
 
 
 def lstrip(a, chars=None):

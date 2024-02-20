@@ -685,14 +685,13 @@ static PyType_Slot PyArray_StringDType_Slots[] = {
 static PyObject *
 stringdtype_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwds)
 {
-    static char *kwargs_strs[] = {"", "coerce", "na_object", NULL};
+    static char *kwargs_strs[] = {"coerce", "na_object", NULL};
 
-    long size = 0;
     PyObject *na_object = NULL;
     int coerce = 1;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|l$pO&:StringDType",
-                                     kwargs_strs, &size, &coerce,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|$pO&:StringDType",
+                                     kwargs_strs, &coerce,
                                      _not_NoValue, &na_object)) {
         return NULL;
     }
