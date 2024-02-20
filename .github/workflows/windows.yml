@@ -39,7 +39,7 @@ jobs:
 
     - name: Install pkg-config
       run: |
-        choco install -y --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+        choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
         echo "PKG_CONFIG_PATH=${{ github.workspace }}/.openblas" >> $env:GITHUB_ENV
         
 
