@@ -1598,7 +1598,7 @@ class Configuration:
         """
         Similar to add_library, but the specified library is installed.
 
-        Most C libraries used with `distutils` are only used to build python
+        Most C libraries used with ``distutils`` are only used to build python
         extensions, but libraries built through this method will be installed
         so that they can be reused by third-party packages.
 

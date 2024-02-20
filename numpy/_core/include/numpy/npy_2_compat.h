@@ -74,10 +74,22 @@
     #define NPY_DEFAULT_INT NPY_INTP
     #define NPY_RAVEL_AXIS NPY_MIN_INT
     #define NPY_MAXARGS 64
+
+    static inline npy_uint64
+    PyDataType_FLAGS(const PyArray_Descr *dtype)
+    {
+        return (unsigned char)dtype->flags;
+    }
 #elif NPY_ABI_VERSION < 0x02000000
     #define NPY_DEFAULT_INT NPY_LONG
     #define NPY_RAVEL_AXIS 32
     #define NPY_MAXARGS 32
+
+    static inline npy_uint64
+    PyDataType_FLAGS(const PyArray_Descr *dtype)
+    {
+        return (unsigned char)dtype->flags;
+    }
 
     /* Aliases of 2.x names to 1.x only equivalent names */
     #define NPY_NTYPES NPY_NTYPES_LEGACY
@@ -89,7 +101,48 @@
         (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? -1 : 32)
     #define NPY_MAXARGS  \
         (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? 64 : 32)
+
+    static inline npy_uint64
+    PyDataType_FLAGS(const PyArray_Descr *dtype)
+    {
+        if (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION) {
+            // TODO: This will change to a semi-private 2.0 struct name
+            return (unsigned char)((PyArray_Descr *)dtype)->flags;
+        }
+        else {
+            return (unsigned char)((PyArray_DescrProto *)dtype)->flags;
+        }
+    }
 #endif
 
+
+#if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
+#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
+    static inline PyArray_ArrFuncs *
+    PyDataType_GetArrFuncs(PyArray_Descr *descr)
+    {
+        return _PyDataType_GetArrFuncs(descr);
+    }
+#elif NPY_ABI_VERSION < 0x02000000
+    static inline PyArray_ArrFuncs *
+    PyDataType_GetArrFuncs(PyArray_Descr *descr)
+    {
+        return descr->f;
+    }
+#else
+    static inline PyArray_ArrFuncs *
+    PyDataType_GetArrFuncs(PyArray_Descr *descr)
+    {
+        if (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION) {
+            return _PyDataType_GetArrFuncs(descr);
+        }
+        else {
+            return ((PyArray_DescrProto *)descr)->f;
+        }
+    }
+#endif
+
+
+#endif  /* not internal build */
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_2_COMPAT_H_ */

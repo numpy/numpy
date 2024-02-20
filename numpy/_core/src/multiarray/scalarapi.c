@@ -17,6 +17,7 @@
 #include "array_coercion.h"
 #include "ctors.h"
 #include "descriptor.h"
+#include "dtypemeta.h"
 #include "scalartypes.h"
 
 #include "common.h"
@@ -241,7 +242,7 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
     /* the dtype used by the array may be different to the one requested */
     typecode = PyArray_DESCR(r);
     if (PyDataType_FLAGCHK(typecode, NPY_USE_SETITEM)) {
-        if (typecode->f->setitem(scalar, PyArray_DATA(r), r) < 0) {
+        if (PyDataType_GetArrFuncs(typecode)->setitem(scalar, PyArray_DATA(r), r) < 0) {
             Py_DECREF(r);
             Py_XDECREF(outcode);
             return NULL;
@@ -503,10 +504,10 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         PyArrayScalar_RETURN_BOOL_FROM_LONG(*(npy_bool*)data);
     }
     else if (PyDataType_FLAGCHK(descr, NPY_USE_GETITEM)) {
-        return descr->f->getitem(data, base);
+        return PyDataType_GetArrFuncs(descr)->getitem(data, base);
     }
     itemsize = descr->elsize;
-    copyswap = descr->f->copyswap;
+    copyswap = PyDataType_GetArrFuncs(descr)->copyswap;
     type = descr->typeobj;
     swap = !PyArray_ISNBO(descr->byteorder);
     if (PyTypeNum_ISSTRING(type_num)) {

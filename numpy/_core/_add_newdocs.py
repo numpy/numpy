@@ -6922,7 +6922,7 @@ add_newdoc('numpy._core.numerictypes', 'character',
 
 add_newdoc('numpy._core.multiarray', 'StringDType',
     """
-    StringDType(/, size, *, na_object=np._NoValue, coerce=True)
+    StringDType(*, na_object=np._NoValue, coerce=True)
 
     Create a StringDType instance.
 
@@ -6931,10 +6931,6 @@ add_newdoc('numpy._core.multiarray', 'StringDType',
 
     Parameters
     ----------
-    size: integer
-        An optional positional-only size parameter. This is ignored and
-        provided only so that code that creates fixed-width strings with a size
-        will also work correctly with StringDType.
     na_object : object, optional
         Object used to represent missing data. If unset, the array will not
         use a missing data sentinel.

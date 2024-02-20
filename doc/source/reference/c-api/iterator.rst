@@ -434,7 +434,7 @@ Construction and destruction
     arrays or structured arrays containing an object type)
     may be accepted and used in the iterator.  If this flag
     is enabled, the caller must be sure to check whether
-    :c:expr:`NpyIter_IterationNeedsAPI(iter)` is true, in which case
+    ``NpyIter_IterationNeedsAPI(iter)`` is true, in which case
     it may not release the GIL during iteration.
 
 .. c:macro:: NPY_ITER_ZEROSIZE_OK

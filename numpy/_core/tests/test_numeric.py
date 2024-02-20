@@ -116,12 +116,6 @@ class TestNonarrayArgs:
         out = np.count_nonzero(arr, axis=1)
         assert_equal(out, tgt)
 
-    def test_cumproduct(self):
-        A = [[1, 2, 3], [4, 5, 6]]
-        with assert_warns(DeprecationWarning):
-            expected = np.array([1, 2, 6, 24, 120, 720])
-            assert_(np.all(np.cumproduct(A) == expected))
-
     def test_diagonal(self):
         a = [[0, 1, 2, 3],
              [4, 5, 6, 7],

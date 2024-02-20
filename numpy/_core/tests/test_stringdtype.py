@@ -952,15 +952,15 @@ UNARY_FUNCTIONS = [
     "upper",
     "isnumeric",
     "isdecimal",
+    "isalnum",
+    "islower",
+    "istitle",
+    "isupper",
 ]
 
 UNIMPLEMENTED_VEC_STRING_FUNCTIONS = [
     "capitalize",
     "expandtabs",
-    "isalnum",
-    "islower",
-    "istitle",
-    "isupper",
     "lower",
     "splitlines",
     "swapcase",

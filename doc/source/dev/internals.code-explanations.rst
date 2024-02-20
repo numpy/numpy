@@ -282,7 +282,7 @@ the start of the subarray, which then allows restarting the subarray
 iteration.
 
 When advanced indices are next to each other transposing may be necessary.
-All necessary transposing is handled by :c:func:`PyArray_MapIterSwapAxes` and
+All necessary transposing is handled by ``PyArray_MapIterSwapAxes`` and
 has to be handled by the caller unless ``PyArray_MapIterNew`` is asked to
 allocate the result.
 

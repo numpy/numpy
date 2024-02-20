@@ -133,6 +133,10 @@ def conv_intp(cnp.intp_t val):
     return val
 
 
+def get_dtype_flags(cnp.dtype dtype):
+    return dtype.flags
+
+
 cdef cnp.NpyIter* npyiter_from_nditer_obj(object it):
     """A function to create a NpyIter struct from a nditer object.
 

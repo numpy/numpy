@@ -18,6 +18,7 @@
 #include "ctors.h"
 #include "common.h"
 #include "conversion_utils.h"
+#include "dtypemeta.h"
 #include "array_coercion.h"
 #include "item_selection.h"
 #include "lowlevel_strided_loops.h"

@@ -1808,8 +1808,9 @@ class TestQR:
         np.csingle, np.cdouble])
     def test_stacked_inputs(self, outer_size, size, dt):
 
-        A = np.random.normal(size=outer_size + size).astype(dt)
-        B = np.random.normal(size=outer_size + size).astype(dt)
+        rng = np.random.default_rng(123)
+        A = rng.normal(size=outer_size + size).astype(dt)
+        B = rng.normal(size=outer_size + size).astype(dt)
         self.check_qr_stacked(A)
         self.check_qr_stacked(A + 1.j*B)
 

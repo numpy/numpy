@@ -1165,6 +1165,10 @@ User-defined data types
     *totype*. Any old casting function is over-written. A ``0`` is
     returned on success or a ``-1`` on failure.
 
+    .. c:type:: PyArray_VectorUnaryFunc
+
+        The function pointer type for low-level casting functions.
+
 .. c:function:: int PyArray_RegisterCanCast( \
         PyArray_Descr* descr, int totype, NPY_SCALARKIND scalar)
 
@@ -3331,7 +3335,7 @@ Also see :ref:`dtypemeta` for documentation on ``PyArray_DTypeMeta`` and
                 PyArray_DTypeMeta *Dtype, PyArrayDTypeMeta_Spec *spec)
 
  Initialize a new DType.  It must currently be a static Python C type that is
- declared as :c:type:`PyArray_DTypeMeta` and not c:type:`PyTypeObject`.
+ declared as :c:type:`PyArray_DTypeMeta` and not :c:type:`PyTypeObject`.
  Further, it must subclass `np.dtype` and set its type to
  :c:type:`PyArrayDTypeMeta_Type` (before calling :c:func:`PyType_Ready()`),
  which has additional fields compared to a normal :c:type:`PyTypeObject`. See
@@ -4154,7 +4158,7 @@ Enumerated Types
 
     .. c:enumerator:: NPY_STABLESORT
 
-        Used as an alias of :c:data:`NPY_MERGESORT` and vica versa.
+        Used as an alias of :c:data:`NPY_MERGESORT` and vice versa.
 
     .. c:enumerator:: NPY_NSORTS
 

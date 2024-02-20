@@ -13,6 +13,7 @@
 #include "npy_cblas.h"
 #include "arraytypes.h"
 #include "common.h"
+#include "dtypemeta.h"
 
 #include <assert.h>
 
@@ -538,7 +539,7 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
         NPY_BEGIN_ALLOW_THREADS;
 
         /* Dot product between two vectors -- Level 1 BLAS */
-        PyArray_DESCR(out_buf)->f->dotfunc(
+        PyDataType_GetArrFuncs(PyArray_DESCR(out_buf))->dotfunc(
                  PyArray_DATA(ap1), PyArray_STRIDE(ap1, (ap1shape == _row)),
                  PyArray_DATA(ap2), PyArray_STRIDE(ap2, 0),
                  PyArray_DATA(out_buf), l, NULL);

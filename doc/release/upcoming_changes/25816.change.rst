@@ -1,0 +1,6 @@
+* The ``dtype.flags`` value was previously usually stored as a
+  signed integer.  This means that the aligned dtype struct flag
+  lead to neagtive flags being set (-128 rather than ``128``).
+  This flag is now stored usigned (positive).
+  Code which checks flags manually may need to adapt.  This
+  may include code compiled with Cython 2.
