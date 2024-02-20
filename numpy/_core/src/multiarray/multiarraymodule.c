@@ -789,8 +789,8 @@ PyArray_ScalarKind(int typenum, PyArrayObject **arr)
     } else if (PyTypeNum_ISUSERDEF(typenum)) {
         PyArray_Descr* descr = PyArray_DescrFromType(typenum);
 
-        if (PyDataType_GetArrFuncs(descr)->scalarkind) {
-            ret = PyDataType_GetArrFuncs(descr)->scalarkind((arr ? *arr : NULL));
+        if (descr->f->scalarkind) {
+            ret = descr->f->scalarkind((arr ? *arr : NULL));
         }
         Py_DECREF(descr);
     }
@@ -844,8 +844,8 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
     }
 
     from = PyArray_DescrFromType(thistype);
-    if (PyDataType_GetArrFuncs(from)->cancastscalarkindto
-        && (castlist = PyDataType_GetArrFuncs(from)->cancastscalarkindto[scalar])) {
+    if (from->f->cancastscalarkindto
+        && (castlist = from->f->cancastscalarkindto[scalar])) {
         while (*castlist != NPY_NOTYPE) {
             if (*castlist++ == neededtype) {
                 Py_DECREF(from);
@@ -1060,7 +1060,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         }
     }
 
-    dot = PyDataType_GetArrFuncs(PyArray_DESCR(out_buf))->dotfunc;
+    dot = PyArray_DESCR(out_buf)->f->dotfunc;
     if (dot == NULL) {
         PyErr_SetString(PyExc_ValueError,
                         "dot not available for this type");
@@ -1187,7 +1187,7 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
     if (ret == NULL) {
         return NULL;
     }
-    dot = PyDataType_GetArrFuncs(PyArray_DESCR(ret))->dotfunc;
+    dot = PyArray_DESCR(ret)->f->dotfunc;
     if (dot == NULL) {
         PyErr_SetString(PyExc_ValueError,
                         "function not available for this data type");
@@ -1256,7 +1256,7 @@ _pyarray_revert(PyArrayObject *ret)
 
     if (PyArray_ISNUMBER(ret) && !PyArray_ISCOMPLEX(ret)) {
         /* Optimization for unstructured dtypes */
-        PyArray_CopySwapNFunc *copyswapn = PyDataType_GetArrFuncs(PyArray_DESCR(ret))->copyswapn;
+        PyArray_CopySwapNFunc *copyswapn = PyArray_DESCR(ret)->f->copyswapn;
         sw2 = op + length * os - 1;
         /* First reverse the whole array byte by byte... */
         while(sw1 < sw2) {
@@ -2632,7 +2632,7 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
             vdot = (PyArray_DotFunc *)OBJECT_vdot;
             break;
         default:
-            vdot = PyDataType_GetArrFuncs(type)->dotfunc;
+            vdot = type->f->dotfunc;
             if (vdot == NULL) {
                 PyErr_SetString(PyExc_ValueError,
                         "function not available for this data type");

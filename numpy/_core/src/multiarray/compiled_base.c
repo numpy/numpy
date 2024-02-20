@@ -15,7 +15,6 @@
 #include "alloc.h"
 #include "ctors.h"
 #include "common.h"
-#include "dtypemeta.h"
 #include "simd/simd.h"
 
 #include <string.h>
@@ -351,7 +350,7 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     src = PyArray_DATA(values);
     j = 0;
 
-    copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(array))->copyswap;
+    copyswap = PyArray_DESCR(array)->f->copyswap;
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(array));
     for (i = 0; i < ni; i++) {
         if (mask_data[i]) {

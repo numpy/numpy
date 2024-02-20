@@ -124,11 +124,11 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
 
     if (is_argmax) {
         func_name = "argmax";
-        arg_func = PyDataType_GetArrFuncs(PyArray_DESCR(ap))->argmax;
+        arg_func = PyArray_DESCR(ap)->f->argmax;
     }
     else {
         func_name = "argmin";
-        arg_func = PyDataType_GetArrFuncs(PyArray_DESCR(ap))->argmin;
+        arg_func = PyArray_DESCR(ap)->f->argmin;
     }
     if (arg_func == NULL) {
         PyErr_SetString(PyExc_TypeError,
