@@ -2047,23 +2047,19 @@ array_empty_like(PyObject *NPY_UNUSED(ignored),
         goto fail;
     }
     /* steals the reference to dt_info.descr if it's not NULL */
+    if (dt_info.descr != NULL) {
+        Py_INCREF(dt_info.descr);
+    }
     ret = (PyArrayObject *)PyArray_NewLikeArrayWithShape(
             prototype, order, dt_info.descr, dt_info.dtype,
             shape.len, shape.ptr, subok);
     npy_free_cache_dim_obj(shape);
-    if (!ret) {
-        goto fail;
-    }
-    Py_XDECREF(dt_info.dtype);
-    Py_DECREF(prototype);
-
-    return (PyObject *)ret;
 
 fail:
     Py_XDECREF(prototype);
     Py_XDECREF(dt_info.dtype);
     Py_XDECREF(dt_info.descr);
-    return NULL;
+    return (PyObject *)ret;
 }
 
 /*
