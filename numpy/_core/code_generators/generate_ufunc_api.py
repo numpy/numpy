@@ -112,6 +112,16 @@ _import_umath(void)
         }\
     } while(0)
 
+
+static inline int
+PyUFunc_ImportUFuncAPI()
+{
+    if (NPY_UNLIKELY(PyUFunc_API == NULL)) {
+        import_umath1(-1);
+    }
+    return 0;
+}
+
 #endif
 """
 
