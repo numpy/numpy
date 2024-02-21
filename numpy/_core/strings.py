@@ -141,11 +141,14 @@ def multiply(a, i):
     """
     a = np.asanyarray(a)
     i = np.asanyarray(i)
+    a, i = np.broadcast_arrays(a, i)
     if not np.issubdtype(i.dtype, np.integer):
         raise TypeError(f"unsupported type {i.dtype} for operand 'i'")
 
-    np.putmask(i, i < 0, 0)
+    # (negative number) * (any string dtype) should return an empty string
+    i = np.where(i < 0, 0, i)
 
+    # get length of input elements for computing the output buffer sizes
     try:
         a_len = str_len(a)
     except ValueError:
@@ -154,6 +157,8 @@ def multiply(a, i):
         non_nan = np.logical_not(np.isnan(a))
         a_len[non_nan] = str_len(a[non_nan])
 
+    # Check whether sizeof(buffer) > sys.maxsize avoiding overflow
+    # and division by zero
     overflow_buffers = np.full(i.shape, False)
     non_zero = i != 0
     np.putmask(overflow_buffers, non_zero,
