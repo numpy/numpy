@@ -1273,7 +1273,7 @@ class TestNanFunctions_Quantile:
         q = np.full((3, 2), 0.5)
         assert_equal(np.nanquantile(a, q, axis=axis).shape, 
                       np.quantile(a, q, axis=axis).shape)
-        
+
     def test_basic(self):
         x = np.arange(8) * 0.5
         assert_equal(np.nanquantile(x, 0), 0.)
