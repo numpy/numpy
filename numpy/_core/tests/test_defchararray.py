@@ -679,8 +679,8 @@ class TestOperations:
             assert_array_equal(Ar, (self.A * r))
 
         for ob in [object(), 'qrs']:
-            with assert_raises_regex(ValueError,
-                                     'Can only multiply by integers'):
+            with assert_raises_regex(TypeError,
+                                     'unsupported type'):
                 A*ob
 
     def test_rmul(self):
@@ -691,8 +691,8 @@ class TestOperations:
             assert_array_equal(Ar, (r * self.A))
 
         for ob in [object(), 'qrs']:
-            with assert_raises_regex(ValueError,
-                                     'Can only multiply by integers'):
+            with assert_raises_regex(TypeError,
+                                     'unsupported type'):
                 ob * A
 
     def test_mod(self):
