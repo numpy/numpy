@@ -928,7 +928,7 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     PyArray_Descr *newtype = NULL;
     NPY_COPYMODE copy = NPY_COPY_IF_NEEDED;
-    static char *kwlist[] = {"", "copy", NULL};
+    static char *kwlist[] = {"dtype", "copy", NULL};
     PyObject *ret;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&$O&:__array__", kwlist,
@@ -981,6 +981,7 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
         } else { // copy == NPY_COPY_NEVER
             PyErr_SetString(PyExc_ValueError,
                             "Unable to avoid copy while creating an array from given array.");
+            Py_DECREF(self);
             return NULL;
         }
     }

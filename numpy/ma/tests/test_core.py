@@ -4627,7 +4627,7 @@ class TestMaskedArrayFunctions:
         class Series():
             _data = "nonsense"
 
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 return np.array([5, np.nan, np.inf])
 
         arr = np.ma.masked_invalid(Series())

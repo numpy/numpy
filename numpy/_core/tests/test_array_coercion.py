@@ -53,7 +53,7 @@ def arraylikes():
         def __init__(self, a):
             self.a = a
 
-        def __array__(self, dtype=None):
+        def __array__(self, dtype=None, copy=None):
             return self.a
 
     yield param(ArrayDunder, id="__array__")
@@ -706,7 +706,7 @@ class TestArrayLikes:
             def __array_struct__(self):
                 pass
 
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 pass
 
         arr = np.array(ArrayLike)
@@ -832,7 +832,7 @@ class TestSpecialAttributeLookupFailure:
 
     class WeirdArrayLike:
         @property
-        def __array__(self):
+        def __array__(self, dtype=None, copy=None):
             raise RuntimeError("oops!")
 
     class WeirdArrayInterface:

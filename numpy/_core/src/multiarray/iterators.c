@@ -1071,7 +1071,7 @@ static PyMappingMethods iter_as_mapping = {
  *  ignored.
  */
 static PyArrayObject *
-iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
+iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds))
 {
 
     PyArrayObject *ret;
@@ -1120,7 +1120,7 @@ static PyMethodDef iter_methods[] = {
     /* to get array */
     {"__array__",
         (PyCFunction)iter_array,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"copy",
         (PyCFunction)iter_copy,
         METH_VARARGS, NULL},
@@ -1132,7 +1132,7 @@ iter_richcompare(PyArrayIterObject *self, PyObject *other, int cmp_op)
 {
     PyArrayObject *new;
     PyObject *ret;
-    new = (PyArrayObject *)iter_array(self, NULL);
+    new = (PyArrayObject *)iter_array(self, NULL, NULL);
     if (new == NULL) {
         return NULL;
     }

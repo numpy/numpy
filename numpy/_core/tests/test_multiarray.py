@@ -890,7 +890,7 @@ class TestCreation:
     """
     def test_from_attribute(self):
         class x:
-            def __array__(self, dtype=None):
+            def __array__(self, dtype=None, copy=None):
                 pass
 
         assert_raises(ValueError, np.array, x())
@@ -6855,7 +6855,7 @@ class TestDot:
     def test_dtype_discovery_fails(self):
         # See gh-14247, error checking was missing for failed dtype discovery
         class BadObject(object):
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 raise TypeError("just this tiny mint leaf")
 
         with pytest.raises(TypeError):
@@ -8432,7 +8432,7 @@ class TestArrayCreationCopyArgument(object):
         base_arr = np.arange(10)
 
         class ArrayLike:
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 # __array__ should return a copy, numpy cannot know this
                 # however.
                 return base_arr
@@ -8447,14 +8447,10 @@ class TestArrayCreationCopyArgument(object):
             # may be open for change:
             assert res is not base_arr
 
-        for copy in self.if_needed_vals:
+        for copy in self.if_needed_vals + self.false_vals:
             res = np.array(arr, copy=copy)
             assert_array_equal(res, base_arr)
             assert res is base_arr  # numpy trusts the ArrayLike
-
-        for copy in self.false_vals:
-            with pytest.raises(ValueError):
-                np.array(arr, copy=copy)
 
     def test___array__copy_arg(self):
         a = np.ones((10, 10), dtype=int)
@@ -9710,7 +9706,7 @@ def test_no_loop_gives_all_true_or_false(dt1, dt2):
         operator.gt])
 def test_comparisons_forwards_error(op):
     class NotArray:
-        def __array__(self):
+        def __array__(self, dtype=None, copy=None):
             raise TypeError("run you fools")
 
     with pytest.raises(TypeError, match="run you fools"):

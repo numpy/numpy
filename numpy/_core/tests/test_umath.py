@@ -3013,7 +3013,7 @@ class TestSpecialMethods:
     def test_wrap(self):
 
         class with_wrap:
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 return np.zeros(1)
 
             def __array_wrap__(self, arr, context, return_scalar):
@@ -3122,7 +3122,7 @@ class TestSpecialMethods:
     def test_priority(self):
 
         class A:
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 return np.zeros(1)
 
             def __array_wrap__(self, arr, context, return_scalar):
@@ -3165,7 +3165,7 @@ class TestSpecialMethods:
     def test_failing_wrap(self):
 
         class A:
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 return np.zeros(2)
 
             def __array_wrap__(self, arr, context, return_scalar):
@@ -3197,7 +3197,7 @@ class TestSpecialMethods:
         # Tests that issue #8507 is resolved. Previously, this would segfault
 
         class A:
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 return np.zeros(1)
 
             def __array_wrap__(self, arr, context=None, return_scalar=False):
@@ -3211,7 +3211,7 @@ class TestSpecialMethods:
         class with_wrap:
             __array_priority__ = 10
 
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 return np.zeros(1)
 
             def __array_wrap__(self, arr, context, return_scalar):
@@ -3225,7 +3225,7 @@ class TestSpecialMethods:
     def test_array_too_many_args(self):
 
         class A:
-            def __array__(self, dtype, context):
+            def __array__(self, dtype, context, copy=None):
                 return np.zeros(1)
 
         a = A()

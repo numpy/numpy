@@ -2434,7 +2434,7 @@ class TestRegression:
 
     def test_2d__array__shape(self):
         class T:
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 return np.ndarray(shape=(0,0))
 
             # Make sure __array__ is used instead of Sequence methods.
