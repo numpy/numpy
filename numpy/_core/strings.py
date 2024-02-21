@@ -143,16 +143,15 @@ def multiply(a, i):
     i = np.asanyarray(i)
     if not np.issubdtype(i.dtype, np.integer):
         raise TypeError(f"unsupported type {i.dtype} for operand 'i'")
-
-    if a.dtype.char == "T":
-        return a * i
-
-    i = np.where(i < 0, 0, i)
+    np.putmask(i, i < 0, 0)
     a_len = str_len(a)
     overflow_buffers = np.full(i.shape, False)
     np.putmask(overflow_buffers, i != 0, a_len[i != 0] > sys.maxsize / i[i != 0])
     if np.any(overflow_buffers):
         raise OverflowError("repeated string is too long")
+
+    if a.dtype.char == "T":
+        return a * i
 
     buffersizes = a_len * i
     out_dtype = f"{a.dtype.char}{buffersizes.max()}"

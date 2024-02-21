@@ -412,7 +412,6 @@ struct Buffer {
         }
         switch (enc) {
             case ENCODING::ASCII:
-            case ENCODING::UTF8:
                 memset(buf, fill_char, n_chars);
                 break;
             case ENCODING::UTF32:
@@ -424,6 +423,9 @@ struct Buffer {
                 }
                 break;
             }
+            case ENCODING::UTF8:
+                assert(false);  // buffer_memset not used by stringdtype
+                break;
         }
     }
 
