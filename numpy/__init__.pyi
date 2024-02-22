@@ -1504,8 +1504,6 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         | tuple[NDArray[integer[Any]] | NDArray[np.bool], ...]
     )) -> ndarray[Any, _DType_co]: ...
     @overload
-    def __getitem__(self, key: SupportsIndex | tuple[SupportsIndex, ...]) -> Any: ...
-    @overload
     def __getitem__(self, key: (
         None
         | slice
