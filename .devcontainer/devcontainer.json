@@ -14,7 +14,8 @@
 		"vscode": {
 			"extensions": [
 				"ms-python.python",
-				"MS-SarifVSCode.sarif-viewer"
+				"MS-SarifVSCode.sarif-viewer",
+				"CodeSecure.vscode-codesonar"
 			],
 			"settings": {}
 		}
