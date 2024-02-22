@@ -1,4 +1,5 @@
 import concurrent.futures
+import itertools
 import os
 import pickle
 import string
@@ -843,6 +844,14 @@ def test_datetime_cast(dtype):
         a = np.delete(a, 3)
 
     assert_array_equal(sa, a.astype("U"))
+
+
+def test_datetime_nat_casts():
+    s = 'nat'
+    all_nats = map(''.join, itertools.product(*zip(s.upper(), s.lower())))
+    arr = np.array([''] + list(all_nats), dtype=np.dtypes.StringDType())
+    NaT = np.datetime64('NaT')
+    assert_array_equal(arr.astype('M8[s]'), np.array([NaT] * arr.size))
 
 
 def test_growing_strings(dtype):

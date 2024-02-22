@@ -1240,6 +1240,16 @@ string_to_datetime_resolve_descriptors(
     return NPY_UNSAFE_CASTING;
 }
 
+// numpy interprets empty strings and any case combination of the string
+// 'nat' as equivalent to NaT in string casts
+static int
+is_nat_string(const npy_static_string *s) {
+    return s->size == 0 || (s->size == 3 &&
+             NumPyOS_ascii_tolower(s->buf[0]) == 'n' &&
+             NumPyOS_ascii_tolower(s->buf[1]) == 'a' &&
+             NumPyOS_ascii_tolower(s->buf[2]) == 't');
+}
+
 static int
 string_to_datetime(PyArrayMethod_Context *context, char *const data[],
                    npy_intp const dimensions[], npy_intp const strides[],
@@ -1277,7 +1287,7 @@ string_to_datetime(PyArrayMethod_Context *context, char *const data[],
                     "Failed to load string in string to datetime cast");
             goto fail;
         }
-        if (is_null) {
+        if (is_null || is_nat_string(&s)) {
             if (has_null && !has_string_na) {
                 *out = NPY_DATETIME_NAT;
                 goto next_step;
