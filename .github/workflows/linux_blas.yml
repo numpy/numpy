@@ -101,13 +101,9 @@ jobs:
       run:
         python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy')
     - name: Ensure scipy-openblas
-      shell: python
       run: |
-        import numpy
-        deps = numpy.show_config('dicts')['Build Dependencies']
-        assert "blas" in deps
-        assert deps["blas"]["version"].split(".") > ["0", "3", "26"]
-        
+        set -ex
+        spin python tools/check_openblas_version.py 0.3.26
 
     - name: Test
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
