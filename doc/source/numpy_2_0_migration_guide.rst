@@ -83,12 +83,13 @@ used to explicitly implement different behavior on NumPy 1.x and 2.0.
 
 Please let us know if you require additional workarounds here.
 
-Functionality moved to headers requiring ``import_numpy()``
+Functionality moved to headers requiring ``import_array()``
 -----------------------------------------------------------
 If you previously included only ``ndarraytypes.h`` you may find that some
 functionality is not available anymore and requires the inclusion of
 ``ndarrayobject.h`` or similar.
-This include is also needed when backporting ``npy_2_compat.h``.
+This include is also needed when vendoring ``npy_2_compat.h`` into your own
+codebase to allow use of the new definitions when compiling with NumPy 1.x.
 
 .. warning::
   It is important that the ``import_array()`` mechanism is used to ensure
