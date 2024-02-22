@@ -141,8 +141,7 @@ class TestMethods:
         with pytest.raises(TypeError, match="unsupported type"):
             np.strings.multiply(np.array("abc", dtype=dt), 3.14)
 
-        with pytest.raises(OverflowError,
-                           match="repeated string is too long"):
+        with pytest.raises(MemoryError):
             np.strings.multiply(np.array("abc", dtype=dt), sys.maxsize)
 
     @pytest.mark.parametrize("i_dt", [np.int8, np.int16, np.int32, np.int64])

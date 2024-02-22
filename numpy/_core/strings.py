@@ -148,26 +148,19 @@ def multiply(a, i):
     # (negative number) * (any string dtype) should return an empty string
     i = np.where(i < 0, 0, i)
 
-    # get length of input elements for computing the output buffer sizes
-    try:
-        a_len = str_len(a)
-    except ValueError:
-        # dtype is StringDType and there are nan strings
-        a_len = np.full(a.shape, 0)
-        non_nan = np.logical_not(np.isnan(a))
-        a_len[non_nan] = str_len(a[non_nan])
+    # delegate to stringdtype loops that also do overflow checking
+    if a.dtype.char == "T":
+        return a * i
 
     # Check whether sizeof(buffer) > sys.maxsize avoiding overflow
     # and division by zero
+    a_len = str_len(a)
     overflow_buffers = np.full(i.shape, False)
     non_zero = i != 0
     np.putmask(overflow_buffers, non_zero,
                a_len[non_zero] > sys.maxsize / i[non_zero])
     if np.any(overflow_buffers):
-        raise OverflowError("repeated string is too long")
-
-    if a.dtype.char == "T":
-        return a * i
+        raise MemoryError("repeated string is too long")
 
     buffersizes = a_len * i
     out_dtype = f"{a.dtype.char}{buffersizes.max()}"
