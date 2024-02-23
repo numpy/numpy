@@ -1123,8 +1123,6 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
     }
 
     if (PyTypeNum_ISSTRING(type_num1) || PyTypeNum_ISSTRING(type_num2)) {
-        // This is wrong, but only the DType matters here (String or Unicode) and
-        // the loop has the correct implementation itself.
         if (PyTypeNum_ISSTRING(type_num1)) {
             out_dtypes[0] = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
@@ -1136,6 +1134,8 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
 
+            // This is wrong cause of elsize, but only the DType matters
+            // here (String or Unicode). The loop has the correct implementation itself.
             out_dtypes[2] = out_dtypes[0];
             Py_INCREF(out_dtypes[0]);
         }
@@ -1150,6 +1150,8 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
 
+            // This is wrong agaian cause of elsize, but only the DType matters
+            // here (String or Unicode).
             out_dtypes[2] = out_dtypes[1];
             Py_INCREF(out_dtypes[1]);
         }
