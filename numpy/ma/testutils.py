@@ -112,7 +112,7 @@ def assert_equal_records(a, b):
 def assert_equal(actual, desired, err_msg=''):
     """
     Asserts that two items are equal.
-
+    
     """
     # Case #1: dictionary .....
     if isinstance(desired, dict):
@@ -130,7 +130,8 @@ def assert_equal(actual, desired, err_msg=''):
     if not (isinstance(actual, ndarray) or isinstance(desired, ndarray)):
         msg = build_err_msg([actual, desired], err_msg,)
         if not desired == actual:
-            raise AssertionError(msg)
+            # Handle case using testing.assert_equal
+            return np.testing.assert_equal(actual, desired)
         return
     # Case #4. arrays or equivalent
     if ((actual is masked) and not (desired is masked)) or \
