@@ -33,3 +33,18 @@ class TestModuleAndSubroutine(util.F2PyTest):
     def test_gh25337(self):
         self.module.data.set_shift(3)
         assert "data" in dir(self.module)
+
+
+@pytest.mark.slow
+class TestUsedModule(util.F2PyTest):
+    module_name = "example"
+    sources = [
+        util.getpath("tests", "src", "modules", "use_modules.f90"),
+    ]
+
+    def test_gh25867(self):
+        compiled_mods = [x for x in dir(self.module) if "__" not in x]
+        assert "useops" in compiled_mods
+        assert self.module.useops.sum_and_double(3, 7) == 20
+        assert "mathops" in compiled_mods
+        assert self.module.mathops.add(3, 7) == 10
