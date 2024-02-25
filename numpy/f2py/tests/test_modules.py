@@ -37,7 +37,7 @@ class TestModuleAndSubroutine(util.F2PyTest):
 
 @pytest.mark.slow
 class TestUsedModule(util.F2PyTest):
-    module_name = "example"
+    module_name = "fmath"
     sources = [
         util.getpath("tests", "src", "modules", "use_modules.f90"),
     ]
