@@ -130,6 +130,23 @@ def test_create_with_na(dtype):
     assert arr[1] is dtype.na_object
 
 
+@pytest.mark.parametrize("i", list(range(5)))
+def test_set_replace_na(i):
+    # Test strings of various lengths can be set to NaN and then replaced.
+    s_empty = ""
+    s_short = "0123456789"
+    s_medium = "abcdefghijklmnopqrstuvwxyz"
+    s_long = "-=+" * 100
+    strings = [s_medium, s_empty, s_short, s_medium, s_long]
+    a = np.array(strings, StringDType(na_object=np.nan))
+    for s in [a[i], s_medium+s_short, s_short, s_empty, s_long]:
+        a[i] = np.nan
+        assert np.isnan(a[i])
+        a[i] = s
+        assert a[i] == s
+        assert_array_equal(a, strings[:i] + [s] + strings[i+1:])
+
+
 def test_null_roundtripping():
     data = ["hello\0world", "ABC\0DEF\0\0"]
     arr = np.array(data, dtype="T")

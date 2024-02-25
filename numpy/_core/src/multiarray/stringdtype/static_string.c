@@ -494,8 +494,11 @@ heap_or_arena_allocate(npy_string_allocator *allocator,
             return buf;
         }
         else {
-            // No room, resort to a heap allocation.
-            *flags = NPY_STRING_ON_HEAP;
+            // No room, resort to a heap allocation. We also set the short
+            // flag to indicate we can no longer use the heap (because the
+            // offset into the arena will get lost; TODO: should this be decided
+            // in newemptysize?)
+            *flags |= NPY_STRING_ON_HEAP | NPY_STRING_SHORT;
             *on_heap = 1;
             return allocator->malloc(sizeof(char) * size);
         }
@@ -552,15 +555,6 @@ NpyString_newemptysize(size_t size, npy_packed_static_string *out,
 
     _npy_static_string_u *out_u = (_npy_static_string_u *)out;
 
-    unsigned char flags =
-            out_u->direct_buffer.size_and_flags & ~NPY_SHORT_STRING_SIZE_MASK;
-
-    if (size == 0) {
-        memcpy(out_u, &empty_string_u, sizeof(_npy_static_string_u));
-        out_u->direct_buffer.size_and_flags |= flags;
-        return 0;
-    }
-
     if (size > NPY_SHORT_STRING_MAX_SIZE) {
         int on_heap = 0;
         char *buf = heap_or_arena_allocate(allocator, out_u, size, &on_heap);
@@ -584,9 +578,9 @@ NpyString_newemptysize(size_t size, npy_packed_static_string *out,
     else {
         // Size can be no larger than 7 or 15, depending on CPU architecture.
         // In either case, the size data is in at most the least significant 4
-        // bits of the byte so it's safe to | with one of 0x10, 0x20, 0x40, or
-        // 0x80.
-        out_u->direct_buffer.size_and_flags = NPY_STRING_SHORT | flags | size;
+        // bits of the byte so it's safe to | with NPY_STRING_SHORT=0x40.
+        // All other flags are wiped, since we'll remove the buffer pointer.
+        out_u->direct_buffer.size_and_flags = NPY_STRING_SHORT | size;
     }
 
     return 0;
@@ -625,21 +619,32 @@ NPY_NO_EXPORT int
 NpyString_free(npy_packed_static_string *str, npy_string_allocator *allocator)
 {
     _npy_static_string_u *str_u = (_npy_static_string_u *)str;
-    if (is_not_a_vstring(str)) {
+    unsigned char *flags = &str_u->direct_buffer.size_and_flags;
+    if (NpyString_isnull(str)) {
+        // Nothing to free for missing string, but remove missing signal.
+        // TODO: is this the most logical place to do this??
+        *flags &= ~NPY_STRING_MISSING;
+        return 0;
+    }
+    else if (is_short_string(str)) {
+        if ((*flags & NPY_SHORT_STRING_SIZE_MASK) == 0) {
+            return 0;  // nothing to do if size is already 0.
+        }
         // zero out, keeping flags
-        unsigned char *flags = &str_u->direct_buffer.size_and_flags;
         unsigned char current_flags = *flags & ~NPY_SHORT_STRING_SIZE_MASK;
         memcpy(str_u, &empty_string_u, sizeof(_npy_static_string_u));
-        *flags |= current_flags;
+        *flags = current_flags;
     }
     else {
         if (VSTRING_SIZE(str_u) == 0) {
-            // empty string is a vstring but nothing to deallocate
+            // empty string is a vstring but nothing to deallocate.
             return 0;
         }
         if (heap_or_arena_deallocate(allocator, str_u) < 0) {
             return -1;
         }
+        // Set size to 0 to indicate there is nothing to deallocate any more.
+        set_vstring_size(str_u, 0);
     }
     return 0;
 }
@@ -655,17 +660,14 @@ NpyString_pack_null(npy_string_allocator *allocator,
                     npy_packed_static_string *packed_string)
 {
     _npy_static_string_u *str_u = (_npy_static_string_u *)packed_string;
-    unsigned char *flags = &str_u->direct_buffer.size_and_flags;
-    unsigned char current_flags = *flags & ~NPY_SHORT_STRING_SIZE_MASK;
     if (NpyString_free(packed_string, allocator) < 0) {
         return -1;
     }
-    memcpy(str_u, &empty_string_u, sizeof(_npy_static_string_u));
     // preserve the flags because we allow mutation, so we need metadata about
     // the original allocation associated with this string in order to
     // determine if there is space in the arena allocation for a new string
     // after a user mutates this one to a non-NULL value.
-    *flags = current_flags | NPY_STRING_MISSING;
+    str_u->direct_buffer.size_and_flags |= NPY_STRING_MISSING;
     return 0;
 }
 
@@ -688,7 +690,7 @@ NpyString_dup(const npy_packed_static_string *in,
         _npy_static_string_u *out_u = (_npy_static_string_u *)out;
         unsigned char flags = out_u->direct_buffer.size_and_flags &
                               ~NPY_SHORT_STRING_SIZE_MASK;
-        memcpy(out_u, &empty_string_u, sizeof(_npy_static_string_u));
+        set_vstring_size(out_u, 0);
         out_u->direct_buffer.size_and_flags |= flags;
         return 0;
     }
