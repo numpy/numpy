@@ -866,7 +866,7 @@ PyArray_DTypeMeta and PyArrayDTypeMeta_Spec
           Corresponds to the type number for legacy data types. Data
           types defined outside of NumPy and possibly future data types
           shipped with NumPy will have ``type_num`` set to -1, so this
-          should not be relied on to descriminate between data types.
+          should not be relied on to discriminate between data types.
 
    .. c:member:: PyTypeObject *scalar_type
 

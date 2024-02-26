@@ -395,7 +395,7 @@ replaced with ``NPY_RAVEL_AXIS``. See also :ref:`migration_maxdims`.
 ``NPY_MAXARGS`` not constant and ``PyArrayMultiIterObject`` size change
 -----------------------------------------------------------------------
 Since ``NPY_MAXARGS`` was increased, it is now a runtime constant and not
-compiletime constant anymore.
+compile-time constant anymore.
 We expect almost no users to notice this.  But if used for stack allocations
 it now must be replaced with a custom constant using ``NPY_MAXARGS`` as an
 additional runtime check.
@@ -698,7 +698,7 @@ Array API set functions
 -----------------------
 
 `numpy.unique_all`, `numpy.unique_counts`, `numpy.unique_inverse`,
-and `numpy.unique_values` functions have been added for Array API compatiblity.
+and `numpy.unique_values` functions have been added for Array API compatibility.
 They provide functionality of `numpy.unique` with different sets of flags.
 
 (`gh-25088 <https://github.com/numpy/numpy/pull/25088>`__)
