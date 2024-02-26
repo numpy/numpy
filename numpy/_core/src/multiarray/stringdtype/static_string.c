@@ -1,4 +1,19 @@
-/* Static string API */
+/* Static string API
+ *
+ * Strings can be stored in multiple ways. Initialization leaves them as
+ * either initialized or missing, with initialization being inside an arena
+ * except for short strings that fit inside the static string struct stored in
+ * the array buffer (<=15 or 7 bytes, depending on architecture).
+ *
+ * If a string is replaced, it will be allocated on the heap if it cannot fit
+ * inside the original short string or arena allocation.  If a string is set
+ * to missing, the information about the previous allocation is kept, so
+ * replacement with a new string can use the possible previous arena
+ * allocation. Note that after replacement with a short string, any arena
+ * information is lost, so a later replacement with a longer one will always
+ * be on the heap.
+ */
+
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
@@ -57,31 +72,53 @@ typedef union _npy_static_string_u {
     _short_string_buffer direct_buffer;
 } _npy_static_string_u;
 
-#define NPY_STRING_MISSING 0x80      // 1000 0000
-#define NPY_STRING_SHORT 0x40        // 0100 0000
-#define NPY_STRING_ARENA_FREED 0x20  // 0010 0000
-#define NPY_STRING_ON_HEAP 0x10      // 0001 0000
-#define NPY_STRING_MEDIUM 0x08       // 0000 1000
-#define NPY_STRING_FLAG_MASK 0xF8    // 1111 1000
 
-// short string sizes fit in a 4-bit integer
+// Flags defining whether a string exists and how it is stored.
+// Inside the arena, long means not medium (i.e., >255 bytes), while
+// outside, it means not short (i.e., >15 or 7, depending on arch).
+
+// set for null strings representing missing data
+#define NPY_STRING_MISSING 0x80        // 1000 0000
+// set after an array entry is initialized for the first time
+#define NPY_STRING_INITIALIZED 0x40    // 0100 0000
+// The string data is managed by malloc/free on the heap
+// Only set for strings that have been mutated to be longer
+// than the original entry
+#define NPY_STRING_OUTSIDE_ARENA 0x20  // 0010 0000
+// A string that lives in the arena with a size longer
+// than 255 bytes, so the size in the arena is stored in a size_t
+#define NPY_STRING_LONG 0x10           // 0001 0000
+
+
+// The last four bits of the flags byte is currently unused.
+#define NPY_STRING_FLAG_MASK 0xF0      // 1111 0000
+// short string sizes fit in a 4-bit integer.
 #define NPY_SHORT_STRING_SIZE_MASK 0x0F  // 0000 1111
 #define NPY_SHORT_STRING_MAX_SIZE \
     (sizeof(npy_static_string) - 1)      // 15 or 7 depending on arch
 #define NPY_MEDIUM_STRING_MAX_SIZE 0xFF  // 255
 
-// Since this has no flags set, technically this is a heap-allocated string
-// with size zero. Practically, that doesn't matter because we always do size
-// checks before accessing heap data, but that may be confusing. The nice part
-// of this choice is a calloc'd array buffer (e.g. from np.empty) is filled
-// with empty elements for free
+#define STRING_FLAGS(string) \
+    (((_npy_static_string_u *)string)->direct_buffer.size_and_flags & NPY_STRING_FLAG_MASK)
+#define SHORT_STRING_SIZE(string) \
+    (string->direct_buffer.size_and_flags & NPY_SHORT_STRING_SIZE_MASK)
+#define HIGH_BYTE_MASK ((size_t)0XFF << 8 * (sizeof(size_t) - 1))
+#define VSTRING_SIZE(string) (string->vstring.size_and_flags & ~HIGH_BYTE_MASK)
+
+// Since this has no flags set, technically this is an uninitialized,
+// arena-allocated medium-sized string with size zero. Practically, that
+// doesn't matter because it is flagged as uninitialized.
+// The nice part of this choice is a calloc'd array buffer (e.g. from
+// np.empty) is filled with empty elements for free.
 static const _npy_static_string_u empty_string_u = {
         .direct_buffer = {.size_and_flags = 0, .buf = {0}}};
 
-#define VSTRING_FLAGS(string) \
-    string->direct_buffer.size_and_flags & ~NPY_SHORT_STRING_SIZE_MASK;
-#define HIGH_BYTE_MASK ((size_t)0XFF << 8 * (sizeof(size_t) - 1))
-#define VSTRING_SIZE(string) (string->vstring.size_and_flags & ~HIGH_BYTE_MASK)
+static int
+is_short_string(const npy_packed_static_string *s)
+{
+    // Initialized and outside arena, but not missing, or long.
+    return STRING_FLAGS(s) == (NPY_STRING_INITIALIZED | NPY_STRING_OUTSIDE_ARENA);
+}
 
 typedef struct npy_string_arena {
     size_t cursor;
@@ -108,8 +145,7 @@ set_vstring_size(_npy_static_string_u *str, size_t size)
 static char *
 vstring_buffer(npy_string_arena *arena, _npy_static_string_u *string)
 {
-    char flags = VSTRING_FLAGS(string);
-    if (flags & NPY_STRING_ON_HEAP) {
+    if (STRING_FLAGS(string) & NPY_STRING_OUTSIDE_ARENA) {
         return (char *)string->vstring.offset;
     }
     if (arena->buffer == NULL) {
@@ -177,16 +213,15 @@ arena_malloc(npy_string_arena *arena, npy_string_realloc_func r, size_t size)
 static int
 arena_free(npy_string_arena *arena, _npy_static_string_u *str)
 {
-    if (arena->size == 0 && arena->cursor == 0 && arena->buffer == NULL) {
-        // empty arena, nothing to do
-        return 0;
-    }
+    size_t size = VSTRING_SIZE(str);
+    // When calling this function, string and arena should not be empty.
+    assert (size > 0);
+    assert (!(arena->size == 0 && arena->cursor == 0 && arena->buffer == NULL));
 
     char *ptr = vstring_buffer(arena, str);
     if (ptr == NULL) {
         return -1;
     }
-    size_t size = VSTRING_SIZE(str);
     uintptr_t buf_start = (uintptr_t)arena->buffer;
     uintptr_t ptr_loc = (uintptr_t)ptr;
     uintptr_t end_loc = ptr_loc + size;
@@ -239,46 +274,6 @@ NpyString_free_allocator(npy_string_allocator *allocator)
     }
 
     f(allocator);
-}
-
-static int
-is_short_string(const npy_packed_static_string *s)
-{
-    unsigned char high_byte =
-            ((_npy_static_string_u *)s)->direct_buffer.size_and_flags;
-    int has_short_flag = (high_byte & NPY_STRING_SHORT);
-    int has_on_heap_flag = (high_byte & NPY_STRING_ON_HEAP);
-    return has_short_flag && !has_on_heap_flag;
-}
-
-static int
-is_medium_string(const _npy_static_string_u *s)
-{
-    unsigned char high_byte = s->direct_buffer.size_and_flags;
-    int has_short_flag = (high_byte & NPY_STRING_SHORT);
-    int has_medium_flag = (high_byte & NPY_STRING_MEDIUM);
-    int has_on_heap_flag = (high_byte & NPY_STRING_ON_HEAP);
-    return (!has_short_flag && !has_on_heap_flag && has_medium_flag);
-}
-
-NPY_NO_EXPORT int
-NpyString_isnull(const npy_packed_static_string *s)
-{
-    unsigned char high_byte =
-            ((_npy_static_string_u *)s)->direct_buffer.size_and_flags;
-    return (high_byte & NPY_STRING_MISSING) == NPY_STRING_MISSING;
-}
-
-static int
-is_not_a_vstring(const npy_packed_static_string *s)
-{
-    return is_short_string(s) || NpyString_isnull(s);
-}
-
-static int
-is_a_vstring(const npy_packed_static_string *s)
-{
-    return !is_not_a_vstring(s);
 }
 
 /*NUMPY_API
@@ -421,8 +416,7 @@ NpyString_load(npy_string_allocator *allocator,
     _npy_static_string_u *string_u = (_npy_static_string_u *)packed_string;
 
     if (is_short_string(packed_string)) {
-        unsigned char high_byte = string_u->direct_buffer.size_and_flags;
-        unpacked_string->size = high_byte & NPY_SHORT_STRING_SIZE_MASK;
+        unpacked_string->size = SHORT_STRING_SIZE(string_u);
         unpacked_string->buf = string_u->direct_buffer.buf;
     }
 
@@ -457,89 +451,72 @@ heap_or_arena_allocate(npy_string_allocator *allocator,
                        int *on_heap)
 {
     unsigned char *flags = &to_init_u->direct_buffer.size_and_flags;
-    if (*flags & NPY_STRING_SHORT) {
-        // Have to heap allocate since there isn't a preexisting
-        // allocation. This leaves the NPY_STRING_SHORT flag set to indicate
-        // that there is no room in the arena buffer for strings in this
-        // entry
-        *flags |= NPY_STRING_ON_HEAP;
-        *on_heap = 1;
-        return allocator->malloc(sizeof(char) * size);
-    }
-    npy_string_arena *arena = &allocator->arena;
-    if (arena == NULL) {
-        return NULL;
-    }
-    if (*flags & NPY_STRING_ARENA_FREED) {
-        // Check if there's room for the new string in the existing
-        // allocation. The size is stored "behind" the beginning of the
-        // allocation.
+    if (!(*flags & NPY_STRING_OUTSIDE_ARENA)) {
+        // Arena allocation or re-allocation.
+        npy_string_arena *arena = &allocator->arena;
+        if (arena == NULL) {
+            return NULL;
+        }
+        if (*flags == 0) {
+            // string isn't previously allocated, so add to existing arena allocation
+            char *ret = arena_malloc(arena, allocator->realloc, sizeof(char) * size);
+            if (size < NPY_MEDIUM_STRING_MAX_SIZE) {
+                *flags = NPY_STRING_INITIALIZED;
+            }
+            else {
+                *flags = NPY_STRING_INITIALIZED | NPY_STRING_LONG;
+            }
+            return ret;
+        }
+        // String was in arena. See if there is still space.
+        // The size is stored "behind" the beginning of the allocation.
         char *buf = vstring_buffer(arena, to_init_u);
         if (buf == NULL) {
             return NULL;
         }
         size_t alloc_size;
-        if (is_medium_string(to_init_u)) {
-            // stored in a char so direct access is OK
-            alloc_size = (size_t) * (unsigned char *)(buf - 1);
-        }
-        else {
-            // not necessarily memory-aligned, so need to use memcpy
+        if (*flags & NPY_STRING_LONG) {
+            // Long string size not necessarily memory-aligned, so use memcpy.
             size_t *size_loc = (size_t *)((uintptr_t)buf - sizeof(size_t));
             memcpy(&alloc_size, size_loc, sizeof(size_t));
         }
+        else {
+            // medium string size is stored in a char so direct access is OK.
+            alloc_size = (size_t) * (unsigned char *)(buf - 1);
+        }
         if (size <= alloc_size) {
             // we have room!
-            *flags &= ~NPY_STRING_ARENA_FREED;
             return buf;
         }
-        else {
-            // No room, resort to a heap allocation. We also set the short
-            // flag to indicate we can no longer use the heap (because the
-            // offset into the arena will get lost; TODO: should this be decided
-            // in newemptysize?)
-            *flags |= NPY_STRING_ON_HEAP | NPY_STRING_SHORT;
-            *on_heap = 1;
-            return allocator->malloc(sizeof(char) * size);
-        }
+        // No room, fall through to heap allocation.
     }
-    else if (*flags & NPY_STRING_ON_HEAP) {
-        *on_heap = 1;
-        return allocator->malloc(sizeof(char) * size);
-    }
-    // string isn't previously allocated, so add to existing arena allocation
-    char *ret = arena_malloc(arena, allocator->realloc, sizeof(char) * size);
-    if (size < NPY_MEDIUM_STRING_MAX_SIZE) {
-        *flags |= NPY_STRING_MEDIUM;
-    }
-    return ret;
+    // Heap allocate
+    *on_heap = 1;
+    *flags = NPY_STRING_INITIALIZED | NPY_STRING_OUTSIDE_ARENA | NPY_STRING_LONG;
+    return allocator->malloc(sizeof(char) * size);
 }
 
 static int
 heap_or_arena_deallocate(npy_string_allocator *allocator,
                          _npy_static_string_u *str_u)
 {
-    unsigned char *flags = &str_u->direct_buffer.size_and_flags;
-    if (*flags & NPY_STRING_ON_HEAP) {
+    assert (VSTRING_SIZE(str_u) > 0); // should not get here with empty string.
+
+    if (STRING_FLAGS(str_u) & NPY_STRING_OUTSIDE_ARENA) {
         // It's a heap string (not in the arena buffer) so it needs to be
         // deallocated with free(). For heap strings the offset is a raw
         // address so this cast is safe.
         allocator->free((char *)str_u->vstring.offset);
+        str_u->vstring.offset = 0;
     }
-    // The empty string is a zero-filled packed string buffer and therefore
-    // cannot have the short string flag set, so calling free on an empty
-    // string will reach this block, and we don't want to call arena_free
-    // in that case.
-    else if (VSTRING_SIZE(str_u) != 0) {
+    else {
+        // In the arena buffer.
         npy_string_arena *arena = &allocator->arena;
         if (arena == NULL) {
             return -1;
         }
         if (arena_free(arena, str_u) < 0) {
             return -1;
-        }
-        if (arena->buffer != NULL) {
-            str_u->direct_buffer.size_and_flags |= NPY_STRING_ARENA_FREED;
         }
     }
     return 0;
@@ -578,9 +555,11 @@ NpyString_newemptysize(size_t size, npy_packed_static_string *out,
     else {
         // Size can be no larger than 7 or 15, depending on CPU architecture.
         // In either case, the size data is in at most the least significant 4
-        // bits of the byte so it's safe to | with NPY_STRING_SHORT=0x40.
-        // All other flags are wiped, since we'll remove the buffer pointer.
-        out_u->direct_buffer.size_and_flags = NPY_STRING_SHORT | size;
+        // bits of the byte so it's safe to | with the flags.  All other
+        // metadata for the previous allocation are wiped, since setting the
+        // short string will overwrite the previous size and offset.
+        out_u->direct_buffer.size_and_flags =
+            NPY_STRING_INITIALIZED | NPY_STRING_OUTSIDE_ARENA | size;
     }
 
     return 0;
@@ -620,31 +599,25 @@ NpyString_free(npy_packed_static_string *str, npy_string_allocator *allocator)
 {
     _npy_static_string_u *str_u = (_npy_static_string_u *)str;
     unsigned char *flags = &str_u->direct_buffer.size_and_flags;
-    if (NpyString_isnull(str)) {
-        // Nothing to free for missing string, but remove missing signal.
-        // TODO: is this the most logical place to do this??
-        *flags &= ~NPY_STRING_MISSING;
-        return 0;
-    }
-    else if (is_short_string(str)) {
-        if ((*flags & NPY_SHORT_STRING_SIZE_MASK) == 0) {
-            return 0;  // nothing to do if size is already 0.
+    // Unconditionally remove flag indicating something was missing.
+    // For that case, the string should have been deallocated already, but test
+    // anyway in case we later implement the option to mask the string.
+    *flags &= ~NPY_STRING_MISSING;
+    if (is_short_string(str)) {
+        if (SHORT_STRING_SIZE(str_u) > 0) {
+            // zero buffer and set flags for initialized out-of-arena empty string.
+            memcpy(str_u, &empty_string_u, sizeof(_npy_static_string_u));
+            *flags = NPY_STRING_OUTSIDE_ARENA | NPY_STRING_INITIALIZED;
         }
-        // zero out, keeping flags
-        unsigned char current_flags = *flags & ~NPY_SHORT_STRING_SIZE_MASK;
-        memcpy(str_u, &empty_string_u, sizeof(_npy_static_string_u));
-        *flags = current_flags;
     }
     else {
-        if (VSTRING_SIZE(str_u) == 0) {
-            // empty string is a vstring but nothing to deallocate.
-            return 0;
+        if (VSTRING_SIZE(str_u) > 0) {
+            // Deallocate string and set size to 0 to indicate that happened.
+            if (heap_or_arena_deallocate(allocator, str_u) < 0) {
+                return -1;
+            }
+            set_vstring_size(str_u, 0);
         }
-        if (heap_or_arena_deallocate(allocator, str_u) < 0) {
-            return -1;
-        }
-        // Set size to 0 to indicate there is nothing to deallocate any more.
-        set_vstring_size(str_u, 0);
     }
     return 0;
 }
@@ -688,10 +661,9 @@ NpyString_dup(const npy_packed_static_string *in,
     size_t size = VSTRING_SIZE(in_u);
     if (size == 0) {
         _npy_static_string_u *out_u = (_npy_static_string_u *)out;
-        unsigned char flags = out_u->direct_buffer.size_and_flags &
-                              ~NPY_SHORT_STRING_SIZE_MASK;
-        set_vstring_size(out_u, 0);
-        out_u->direct_buffer.size_and_flags |= flags;
+        memcpy(out_u, &empty_string_u, sizeof(_npy_static_string_u));
+        out_u->direct_buffer.size_and_flags =
+            NPY_STRING_INITIALIZED | NPY_STRING_OUTSIDE_ARENA;
         return 0;
     }
     char *in_buf = NULL;
@@ -700,7 +672,7 @@ NpyString_dup(const npy_packed_static_string *in,
         return -1;
     }
     int used_malloc = 0;
-    if (in_allocator == out_allocator && is_a_vstring(in)) {
+    if (in_allocator == out_allocator && !is_short_string(in)) {
         in_buf = in_allocator->malloc(size);
         memcpy(in_buf, vstring_buffer(arena, in_u), size);
         used_malloc = 1;
@@ -709,11 +681,17 @@ NpyString_dup(const npy_packed_static_string *in,
         in_buf = vstring_buffer(arena, in_u);
     }
     int ret =
-            NpyString_newsize(in_buf, VSTRING_SIZE(in_u), out, out_allocator);
+            NpyString_newsize(in_buf, size, out, out_allocator);
     if (used_malloc) {
         in_allocator->free(in_buf);
     }
     return ret;
+}
+
+NPY_NO_EXPORT int
+NpyString_isnull(const npy_packed_static_string *s)
+{
+    return (STRING_FLAGS(s) & NPY_STRING_MISSING) == NPY_STRING_MISSING;
 }
 
 NPY_NO_EXPORT int
@@ -776,7 +754,9 @@ NpyString_pack(npy_string_allocator *allocator,
 NPY_NO_EXPORT int
 NpyString_share_memory(const npy_packed_static_string *s1, npy_string_allocator *a1,
                        const npy_packed_static_string *s2, npy_string_allocator *a2) {
-    if (a1 != a2 || is_not_a_vstring(s1) || is_not_a_vstring(s2)) {
+    if (a1 != a2 ||
+        is_short_string(s1) || is_short_string(s2) ||
+        NpyString_isnull(s1) || NpyString_isnull(s2)) {
         return 0;
     }
 
