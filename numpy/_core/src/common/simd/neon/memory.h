@@ -52,21 +52,12 @@ NPYV_IMPL_NEON_MEM(f64, double)
  ***************************/
 NPY_FINLINE npyv_s32 npyv_loadn_s32(const npy_int32 *ptr, npy_intp stride)
 {
-    switch (stride) {
-    case 2:
-        return vld2q_s32((const int32_t*)ptr).val[0];
-    case 3:
-        return vld3q_s32((const int32_t*)ptr).val[0];
-    case 4:
-        return vld4q_s32((const int32_t*)ptr).val[0];
-    default:;
-        int32x2_t ax = vcreate_s32(*ptr);
-        int32x4_t a = vcombine_s32(ax, ax);
-                  a = vld1q_lane_s32((const int32_t*)ptr + stride,   a, 1);
-                  a = vld1q_lane_s32((const int32_t*)ptr + stride*2, a, 2);
-                  a = vld1q_lane_s32((const int32_t*)ptr + stride*3, a, 3);
-        return a;
-    }
+    int32x4_t a = vdupq_n_s32(0);
+    a = vld1q_lane_s32((const int32_t*)ptr,            a, 0);
+    a = vld1q_lane_s32((const int32_t*)ptr + stride,   a, 1);
+    a = vld1q_lane_s32((const int32_t*)ptr + stride*2, a, 2);
+    a = vld1q_lane_s32((const int32_t*)ptr + stride*3, a, 3);
+    return a;
 }
 
 NPY_FINLINE npyv_u32 npyv_loadn_u32(const npy_uint32 *ptr, npy_intp stride)

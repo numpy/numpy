@@ -215,4 +215,3 @@ replies <https://github.com/settings/replies/>`_ for reviewing:
 
         Please do not change unrelated lines. It makes your contribution harder to review and may introduce merge conflicts to other pull requests.
 
-.. include:: gitwash/git_links.inc

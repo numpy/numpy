@@ -1,0 +1,13 @@
+New Public DType API
+--------------------
+
+The C implementation of the NEP 42 DType API is now public. While the DType API
+has shipped in NumPy for a few versions, it was only usable in sessions with a
+special environment variable set. It is now possible to write custom DTypes
+outside of NumPy using the new DType API and the normal ``import_array()``
+mechanism for importing the numpy C API.
+
+See :ref:`dtype-api` for more details about the API. As always with a new
+feature, please report any bugs you run into implementing or using a new
+DType. It is likely that downstream C code that works with dtypes will need to
+be updated to work correctly with new DTypes.

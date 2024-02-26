@@ -26,15 +26,20 @@ Functions present in numpy.linalg are listed below.
 Matrix and vector products
 --------------------------
 
+   cross
    multi_dot
    matrix_power
+   tensordot
+   matmul
 
 Decompositions
 --------------
 
    cholesky
+   outer
    qr
    svd
+   svdvals
 
 Matrix eigenvalues
 ------------------
@@ -48,6 +53,8 @@ Norms and other numbers
 -----------------------
 
    norm
+   matrix_norm
+   vector_norm
    cond
    det
    matrix_rank
@@ -68,6 +75,7 @@ Other matrix operations
 -----------------------
 
    diagonal (Array API compatible)
+   matrix_transpose (Array API compatible)
 
 Exceptions
 ----------

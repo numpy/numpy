@@ -21,9 +21,8 @@ import numpy.ma as ma
 import warnings
 
 import numpy as np
-from numpy import (
-    bool_, dtype, ndarray, array as narray
-)
+from numpy import dtype, ndarray, array as narray
+
 from numpy._core.records import (
     recarray, fromarrays as recfromarrays, fromrecords as recfromrecords
 )
@@ -470,7 +469,7 @@ class MaskedRecords(MaskedArray):
         """
         (ver, shp, typ, isf, raw, msk, flv) = state
         ndarray.__setstate__(self, (shp, typ, isf, raw))
-        mdtype = dtype([(k, bool_) for (k, _) in self.dtype.descr])
+        mdtype = dtype([(k, np.bool) for (k, _) in self.dtype.descr])
         self.__dict__['_mask'].__setstate__((shp, mdtype, isf, msk))
         self.fill_value = flv
 
@@ -771,7 +770,7 @@ def addfield(mrecord, newfield, newfieldname=None):
     newdata = newdata.view(MaskedRecords)
     # Get the new mask
     # Create a new empty recarray
-    newmdtype = np.dtype([(n, bool_) for n in newdtype.names])
+    newmdtype = np.dtype([(n, np.bool) for n in newdtype.names])
     newmask = recarray(_data.shape, newmdtype)
     # Add the old masks
     [newmask.setfield(_mask.getfield(*f), *f)

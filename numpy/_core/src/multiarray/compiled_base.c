@@ -297,7 +297,7 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
     ni = PyArray_SIZE(array);
     dest = PyArray_DATA(array);
-    chunk = PyArray_DESCR(array)->elsize;
+    chunk = PyArray_ITEMSIZE(array);
     mask = (PyArrayObject *)PyArray_FROM_OTF(mask0, NPY_BOOL,
                                 NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST);
     if (mask == NULL) {
@@ -1977,7 +1977,7 @@ NPY_NO_EXPORT PyObject *
 io_pack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     PyObject *obj;
-    int axis = NPY_MAXDIMS;
+    int axis = NPY_RAVEL_AXIS;
     static char *kwlist[] = {"in", "axis", "bitorder", NULL};
     char c = 'b';
     const char * order_str = NULL;
@@ -2005,7 +2005,7 @@ NPY_NO_EXPORT PyObject *
 io_unpack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     PyObject *obj;
-    int axis = NPY_MAXDIMS;
+    int axis = NPY_RAVEL_AXIS;
     PyObject *count = Py_None;
     static char *kwlist[] = {"in", "axis", "count", "bitorder", NULL};
     const char * c = NULL;

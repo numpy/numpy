@@ -13,8 +13,8 @@
 
 #include "descriptor.h"
 #include "convert_datatype.h"
-#include "common_dtype.h"
 #include "dtypemeta.h"
+#include "stringdtype/dtype.h"
 
 #include "npy_argparse.h"
 #include "abstractdtypes.h"
@@ -193,6 +193,12 @@ _PyArray_MapPyTypeToDType(
     int res = PyDict_Contains(_global_pytype_to_type_dict, (PyObject *)pytype);
     if (res < 0) {
         return -1;
+    }
+    else if (DType == &PyArray_StringDType) {
+        // PyArray_StringDType's scalar is str which we allow because it doesn't
+        // participate in DType inference, so don't add it to the
+        // pytype to type mapping
+        return 0;
     }
     else if (res) {
         PyErr_SetString(PyExc_RuntimeError,
@@ -387,8 +393,8 @@ find_scalar_descriptor(
  * This helper uses the normal casting machinery, but e.g. does not care about
  * checking cast safety.
  */
-static int
-cast_raw_scalar_item(
+NPY_NO_EXPORT int
+npy_cast_raw_scalar_item(
         PyArray_Descr *from_descr, char *from_item,
         PyArray_Descr *to_descr, char *to_item)
 {
@@ -508,7 +514,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
             memcpy(item, PyArray_BYTES(arr), descr->elsize);
             return 0;  /* success (it was an array-like) */
         }
-        return cast_raw_scalar_item(
+        return npy_cast_raw_scalar_item(
                 PyArray_DESCR(arr), PyArray_BYTES(arr), descr, item);
 
     }
@@ -540,7 +546,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
         Py_DECREF(tmp_descr);
         return -1;
     }
-    int res = cast_raw_scalar_item(tmp_descr, data, descr, item);
+    int res = npy_cast_raw_scalar_item(tmp_descr, data, descr, item);
 
     if (PyDataType_REFCHK(tmp_descr)) {
         if (PyArray_ClearBuffer(tmp_descr, data, 0, 1, 1) < 0) {

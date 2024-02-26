@@ -23,8 +23,9 @@
 #include "array_coercion.h"
 #include "refcount.h"
 
-int
-fallocate(int fd, int mode, off_t offset, off_t len);
+#if defined(HAVE_FALLOCATE) && defined(__linux__)
+#include <fcntl.h>
+#endif
 
 /*
  * allocate nbytes of diskspace for file fp
@@ -145,7 +146,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                     "cannot write object arrays to a file in binary mode");
             return -1;
         }
-        if (PyArray_DESCR(self)->elsize == 0) {
+        if (PyArray_ITEMSIZE(self) == 0) {
             /* For zero-width data types there's nothing to write */
             return 0;
         }
@@ -184,15 +185,15 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
              * assert_((a[-n:] == testbytes).all())
              */
             {
-                size_t maxsize = 2147483648 / (size_t)PyArray_DESCR(self)->elsize;
+                size_t maxsize = 2147483648 / (size_t)PyArray_ITEMSIZE(self);
                 size_t chunksize;
 
                 n = 0;
                 while (size > 0) {
                     chunksize = (size > maxsize) ? maxsize : size;
                     n2 = fwrite((const void *)
-                             ((char *)PyArray_DATA(self) + (n * PyArray_DESCR(self)->elsize)),
-                             (size_t) PyArray_DESCR(self)->elsize,
+                             ((char *)PyArray_DATA(self) + (n * PyArray_ITEMSIZE(self))),
+                             (size_t) PyArray_ITEMSIZE(self),
                              chunksize, fp);
                     if (n2 < chunksize) {
                         break;
@@ -204,7 +205,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             }
 #else
             n = fwrite((const void *)PyArray_DATA(self),
-                    (size_t) PyArray_DESCR(self)->elsize,
+                    (size_t) PyArray_ITEMSIZE(self),
                     (size_t) size, fp);
 #endif
             NPY_END_ALLOW_THREADS;
@@ -222,7 +223,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             NPY_BEGIN_THREADS;
             while (it->index < it->size) {
                 if (fwrite((const void *)it->dataptr,
-                            (size_t) PyArray_DESCR(self)->elsize,
+                            (size_t) PyArray_ITEMSIZE(self),
                             1, fp) < 1) {
                     NPY_END_THREADS;
                     PyErr_Format(PyExc_OSError,
@@ -375,7 +376,7 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
         }
         dptr = PyBytes_AS_STRING(ret);
         i = it->size;
-        elsize = PyArray_DESCR(self)->elsize;
+        elsize = PyArray_ITEMSIZE(self);
         while (i--) {
             memcpy(dptr, it->dataptr, elsize);
             dptr += elsize;

@@ -1,3 +1,5 @@
+.. _numpy-2-migration-guide:
+
 *************************
 NumPy 2.0 migration guide
 *************************
@@ -5,6 +7,39 @@ NumPy 2.0 migration guide
 This document contains a set of instructions on how to update your code to
 work with Numpy 2.0.
 
+
+.. _migration_promotion_changes:
+
+Changes to NumPy data type promotion
+=====================================
+
+NumPy 2.0 changes promotion (the result of combining dissimilar data types)
+as per :ref:`NEP 50 <NEP50>`. Please see the NEP for details on this change.
+It includes a table of example changes and a backwards compatibility section.
+
+The largest backwards compatibility change of this is that it means that
+the precision of scalars is now preserved consistently.
+Two examples are:
+
+* ``np.float32(3) + 3.`` now returns a float32 when it previously returned
+  a float64.
+* ``np.array([3], dtype=np.float32) + np.float64(3)`` will now return a float64
+  array.  (The higher precision of the scalar is not ignored.)
+
+For floating point values, this can lead to lower precision results when
+working with scalars.  For integers, errors or overflows are possible.
+
+To solve this, you may cast explicitly.  Very often, it may also be a good
+solution to ensure you are working with Python scalars via ``int()``,
+``float()``, or ``numpy_scalar.item()``.
+
+To track down changes, you can enable emitting warnings for changed behavior
+(use ``warnings.simplefilter`` to raise it as an error for a traceback)::
+
+  np._set_promotion_state("weak_and_warn")
+
+which is useful during testing. Unfortunately,
+running this may flag many changes that are irrelevant in practice.
 
 .. _migration_windows_int64:
 
@@ -22,7 +57,7 @@ language it may help to explicitly cast to a ``long``, for example with:
 ``arr = arr.astype("long", copy=False)``.
 
 Libraries interfacing with compiled code that are written in C, Cython, or
-a similar language may require updating to accomodate user input if they
+a similar language may require updating to accommodate user input if they
 are using the ``long`` or equivalent type on the C-side.
 In this case, you may wish to use ``intp`` and cast user input or support
 both ``long`` and ``intp`` (to better support NumPy 1.x as well).
@@ -34,20 +69,62 @@ Note that the NumPy random API is not affected by this change.
 
 C-API Changes
 =============
-Some definitions where removed or replaced due to being outdated or
-unmaintaibale.  Some new API definition will evaluate differently at
+
+Some definitions were removed or replaced due to being outdated or
+unmaintainable.  Some new API definition will evaluate differently at
 runtime between NumPy 2.0 and NumPy 1.x.
 Some are defined in ``numpy/_core/include/numpy/npy_2_compat.h``
 (for example ``NPY_DEFAULT_INT``) which can be vendored in full or part
 to have the definitions available when compiling against NumPy 1.x.
 
+If necessary, ``PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION`` can be
+used to explicitly implement different behavior on NumPy 1.x and 2.0.
+(The compat header defines it in a way compatible with such use.)
+
 Please let us know if you require additional workarounds here.
+
+Functionality moved to headers requiring ``import_array()``
+-----------------------------------------------------------
+If you previously included only ``ndarraytypes.h`` you may find that some
+functionality is not available anymore and requires the inclusion of
+``ndarrayobject.h`` or similar.
+This include is also needed when vendoring ``npy_2_compat.h`` into your own
+codebase to allow use of the new definitions when compiling with NumPy 1.x.
+
+.. warning::
+  It is important that the ``import_array()`` mechanism is used to ensure
+  that the full NumPy API is accessible when using the ``npy_2_compat.h``
+  header.  In most cases your extension module probably already calls it.
+  However, if not we have added ``PyArray_ImportNumPyAPI()`` as a preferable
+  way to ensure the NumPy API is imported.  This function is light-weight 
+  when called multiple times so that you may insert it wherever it may be
+  needed (if you wish to avoid setting it up at module import).
+
+.. _migration_maxdims:
+
+Increased maximum number of dimensions
+--------------------------------------
+The maximum number of dimensions (and arguments) was increased to 64, this
+affects the ``NPY_MAXDIMS`` and ``NPY_MAXARGS`` macros.
+It may be good to review their use, and we generally encourage you to
+not use these macros (especially ``NPY_MAXARGS``), so that a future version of
+NumPy can remove this limitation on the number of dimensions.
+
+``NPY_MAXDIMS`` was also used to signal ``axis=None`` in the C-API, including
+the ``PyArray_AxisConverter``.
+The latter will return ``-2147483648`` as an axis (the smallest integer value).
+Other functions may error with
+``AxisError: axis 64 is out of bounds for array of dimension`` in which
+case you need to pass ``NPY_RAVEL_AXIS`` instead of ``NPY_MAXDIMS``.
+``NPY_RAVEL_AXIS`` is defined in the ``npy_2_compat.h`` header and runtime
+dependent (mapping to 32 on NumPy 1.x and ``-2147483648`` on NumPy 2.x).
+
 
 Namespace changes
 =================
 
 In NumPy 2.0 certain functions, modules, and constants were moved or removed
-to make the NumPy namespace more userfriendly by removing unnecessary or
+to make the NumPy namespace more user-friendly by removing unnecessary or
 outdated functionality and clarifying which parts of NumPy are considered
 private.
 Please see the tables below for guidance on migration.  For most changes this
@@ -139,8 +216,8 @@ The next table presents deprecated members, which will be removed in a release a
 deprecated member migration guideline
 ================= =======================================================================
 in1d              Use ``np.isin`` instead.
-row_stack         Use ``np.vstack`` instead (``row_stack`` was an alias for ``v_stack``).
-trapz             Use ``scipy.interpolate.trapezoid`` instead.
+row_stack         Use ``np.vstack`` instead (``row_stack`` was an alias for ``vstack``).
+trapz             Use ``np.trapezoid`` or a ``scipy.integrate`` function instead.
 ================= =======================================================================
 
 
@@ -202,6 +279,24 @@ ptp                     Use ``np.ptp(arr, ...)`` instead.
 setitem                 Use ``arr[index] = value`` instead.
 ...                     ...
 ======================  ========================================================
+
+
+Ruff plugin
+-----------
+
+All the changes that we covered in the previous sections can be automatically applied
+to the codebase with the dedicated Ruff rule,
+`NPY201 <https://docs.astral.sh/ruff/rules/numpy2-deprecation/>`_.
+
+You should install Ruff, version ``0.2.0`` or above, and add the ``NPY201`` rule to
+your ``pyproject.toml``::
+
+    [tool.ruff.lint]
+    select = ["NPY201"]
+
+You can run NumPy 2.0 rule also directly from the command line::
+
+    $ ruff check path/to/code/ --select NPY201
 
 
 Note about pickled files

@@ -3,8 +3,13 @@ import itertools
 
 import pytest
 import numpy as np
-from numpy._core.numerictypes import issctype, sctype2char, maximum_sctype
-from numpy.testing import assert_, assert_equal, assert_raises, IS_PYPY
+import numpy._core.numerictypes as nt
+from numpy._core.numerictypes import (
+    issctype, sctype2char, maximum_sctype, sctypes
+)
+from numpy.testing import (
+    assert_, assert_equal, assert_raises, assert_raises_regex, IS_PYPY
+)
 
 # This is the structure of the table used for plain objects:
 #
@@ -414,6 +419,61 @@ class TestIsSubDType:
         assert np.issubdtype(np.float32, "f")
 
 
+class TestIsDType:
+    """
+    Check correctness of `np.isdtype`. The test considers different argument
+    configurations: `np.isdtype(dtype, k1)` and `np.isdtype(dtype, (k1, k2))`
+    with concrete dtypes and dtype groups.
+    """
+    dtype_group_dict = {
+        "signed integer": sctypes["int"],
+        "unsigned integer": sctypes["uint"],
+        "integral": sctypes["int"] + sctypes["uint"],
+        "real floating": sctypes["float"],
+        "complex floating": sctypes["complex"],
+        "numeric": (
+            sctypes["int"] + sctypes["uint"] + sctypes["float"] +
+            sctypes["complex"]
+        )
+    }
+
+    @pytest.mark.parametrize(
+        "dtype,close_dtype",
+        [
+            (np.int64, np.int32), (np.uint64, np.uint32),
+            (np.float64, np.float32), (np.complex128, np.complex64)
+        ]
+    )
+    @pytest.mark.parametrize(
+        "dtype_group",
+        [
+            None, "signed integer", "unsigned integer", "integral",
+            "real floating", "complex floating", "numeric"
+        ]
+    )
+    def test_isdtype(self, dtype, close_dtype, dtype_group):
+        # First check if same dtypes return `true` and different ones
+        # give `false` (even if they're close in the dtype hierarchy!)
+        if dtype_group is None:
+            assert np.isdtype(dtype, dtype)
+            assert not np.isdtype(dtype, close_dtype)
+            assert np.isdtype(dtype, (dtype, close_dtype))
+
+        # Check that dtype and a dtype group that it belongs to
+        # return `true`, and `false` otherwise.
+        elif dtype in self.dtype_group_dict[dtype_group]:
+            assert np.isdtype(dtype, dtype_group)
+            assert np.isdtype(dtype, (close_dtype, dtype_group))
+        else:
+            assert not np.isdtype(dtype, dtype_group)
+
+    def test_isdtype_invalid_args(self):
+        with assert_raises_regex(TypeError, r".*must be a NumPy dtype.*"):
+            np.isdtype("int64", np.int64)
+        with assert_raises_regex(TypeError, r".*kind argument must.*"):
+            np.isdtype(np.int64, "int64")
+
+
 class TestSctypeDict:
     def test_longdouble(self):
         assert_(np._core.sctypeDict['float64'] is not np.longdouble)
@@ -451,7 +511,7 @@ class TestMaximumSctype:
     def test_complex(self, t):
         assert_equal(maximum_sctype(t), np._core.sctypes['complex'][-1])
 
-    @pytest.mark.parametrize('t', [np.bool_, np.object_, np.str_, np.bytes_,
+    @pytest.mark.parametrize('t', [np.bool, np.object_, np.str_, np.bytes_,
                                    np.void])
     def test_other(self, t):
         assert_equal(maximum_sctype(t), t)
@@ -542,3 +602,8 @@ class TestScalarTypeNames:
     def test_names_are_undersood_by_dtype(self, t):
         """ Test the dtype constructor maps names back to the type """
         assert np.dtype(t.__name__).type is t
+
+
+class TestBoolDefinition:
+    def test_bool_definition(self):
+        assert nt.bool is np.bool

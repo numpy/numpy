@@ -36,7 +36,11 @@ _import_umath(void)
   PyObject *numpy = PyImport_ImportModule("numpy._core._multiarray_umath");
   if (numpy == NULL && PyErr_ExceptionMatches(PyExc_ModuleNotFoundError)) {
     PyErr_Clear();
-    numpy = PyImport_ImportModule("numpy.core._multiarray_umath");
+    numpy = PyImport_ImportModule("numpy._core._multiarray_umath");
+    if (numpy == NULL && PyErr_ExceptionMatches(PyExc_ModuleNotFoundError)) {
+      PyErr_Clear();
+      numpy = PyImport_ImportModule("numpy.core._multiarray_umath");
+    }
   }
 
   if (numpy == NULL) {
@@ -107,6 +111,16 @@ _import_umath(void)
                     "numpy._core.umath failed to import");\
         }\
     } while(0)
+
+
+static inline int
+PyUFunc_ImportUFuncAPI()
+{
+    if (NPY_UNLIKELY(PyUFunc_API == NULL)) {
+        import_umath1(-1);
+    }
+    return 0;
+}
 
 #endif
 """

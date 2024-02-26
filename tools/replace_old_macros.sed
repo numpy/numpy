@@ -44,7 +44,7 @@ s/\bPyArray_UNICODE\b/NPY_UNICODE/g
 s/\bPyArray_VOID\b/NPY_VOID/g
 s/\bPyArray_DATETIME\b/NPY_DATETIME/g
 s/\bPyArray_TIMEDELTA\b/NPY_TIMEDELTA/g
-s/\bPyArray_NTYPES\b/NPY_NTYPES/g
+s/\bPyArray_NTYPES\b/NPY_NTYPES_LEGACY/g
 s/\bPyArray_NOTYPE\b/NPY_NOTYPE/g
 s/\bPyArray_CHAR\b/NPY_CHAR/g
 s/\bPyArray_USERDEF\b/NPY_USERDEF/g

@@ -82,9 +82,10 @@ cdata = configuration_data()
 cdata.set('NPY_ABI_VERSION', C_ABI_VERSION)
 cdata.set('NPY_API_VERSION', C_API_VERSION)
 
+cpu_family = host_machine.cpu_family()
 use_svml = (
   host_machine.system() == 'linux' and
-  host_machine.cpu_family() == 'x86_64' and
+  cpu_family == 'x86_64' and
   ('AVX512_SKX' in CPU_DISPATCH_NAMES or 'AVX512_SKX' in CPU_BASELINE_NAMES) and
   not get_option('disable-svml')
 )
@@ -94,7 +95,28 @@ if use_svml
     error('Missing the `SVML` git submodule! Run `git submodule update --init` to fix this.')
   endif
 endif
-if not fs.exists('src/npysort/x86-simd-sort/README.md')
+
+use_highway = not get_option('disable-highway')
+if use_highway and not fs.exists('src/highway/README.md')
+  error('Missing the `highway` git submodule! Run `git submodule update --init` to fix this.')
+endif
+
+if use_highway
+  highway_lib = static_library('highway',
+    [
+      # required for hwy::Abort symbol
+      'src/highway/hwy/targets.cc'
+    ],
+    cpp_args: '-DTOOLCHAIN_MISS_ASM_HWCAP_H',
+    include_directories: ['src/highway'],
+    install: false
+  )
+else
+  highway_lib = []
+endif
+
+use_intel_sort = not get_option('disable-intel-sort') and cpu_family in ['x86', 'x86_64']
+if use_intel_sort and not fs.exists('src/npysort/x86-simd-sort/README.md')
   error('Missing the `x86-simd-sort` git submodule! Run `git submodule update --init` to fix this.')
 endif
 
@@ -109,10 +131,13 @@ types_to_check = [
   ['NPY_SIZEOF_FLOAT', 'float'],
   ['NPY_SIZEOF_DOUBLE', 'double'],
   ['NPY_SIZEOF_LONGDOUBLE', 'long double'],
+  ['NPY_SIZEOF_INTP', 'size_t'],
+  ['NPY_SIZEOF_UINTP', 'size_t'],
 ]
 foreach symbol_type: types_to_check
   cdata.set(symbol_type[0], cc.sizeof(symbol_type[1]))
 endforeach
+cdata.set('NPY_SIZEOF_WCHAR_T', cc.sizeof('wchar_t', prefix: '#include <wchar.h>'))
 cdata.set('NPY_SIZEOF_OFF_T', cc.sizeof('off_t', prefix: '#include <sys/types.h>'))
 cdata.set('NPY_SIZEOF_PY_INTPTR_T',
   cc.sizeof('Py_intptr_t', dependencies: py_dep, prefix: '#include <Python.h>'))
@@ -598,8 +623,9 @@ src_umath_api_c = custom_target('__umath_generated',
 
 src_umath_doc_h = custom_target('_umath_doc_generated',
   output : '_umath_doc_generated.h',
-  input : 'code_generators/generate_umath_doc.py',
-  command: [py, '@INPUT@', '-o', '@OUTPUT@'],
+  input : ['code_generators/generate_umath_doc.py',
+           'code_generators/ufunc_docstrings.py'],
+  command: [py, '@INPUT0@', '-o', '@OUTPUT@'],
 )
 
 src_numpy_api = custom_target('__multiarray_api',
@@ -620,6 +646,23 @@ src_ufunc_api = custom_target('__ufunc_api',
   install_tag: 'devel'
 )
 
+# Write out pkg-config file
+# -------------------------
+
+# Note: we can't use Meson's built-in pkgconfig module, because we have to
+# install numpy.pc within site-packages rather than in its normal location.
+cdata_numpy_pc = configuration_data()
+cdata_numpy_pc.set('version', meson.project_version())
+
+# Note: keep install path in sync with numpy/_configtool.py
+_numpy_pc = configure_file(
+  input: 'numpy.pc.in',
+  output: 'numpy.pc',
+  configuration: cdata_numpy_pc,
+  install: true,
+  install_dir: np_dir / '_core/lib/pkgconfig',
+  install_tag: 'devel'
+)
 
 # Set common build flags for C and C++ code
 # -----------------------------------------
@@ -744,6 +787,7 @@ foreach gen_mtargets : [
       'include',
       'src/common',
       'src/multiarray',
+      'src/multiarray/stringdtype',
       'src/npymath',
       'src/umath'
     ]
@@ -759,14 +803,33 @@ endforeach
 # -----------------------------------
 foreach gen_mtargets : [
   [
-    'simd_qsort.dispatch.h',
-    'src/npysort/simd_qsort.dispatch.cpp',
-    [AVX512_SKX]
+    'x86_simd_argsort.dispatch.h',
+    'src/npysort/x86_simd_argsort.dispatch.cpp',
+    use_intel_sort ? [AVX512_SKX, AVX2] : []
   ],
   [
-    'simd_qsort_16bit.dispatch.h',
-    'src/npysort/simd_qsort_16bit.dispatch.cpp',
-    [AVX512_SPR, AVX512_ICL]
+    'x86_simd_qsort.dispatch.h',
+    'src/npysort/x86_simd_qsort.dispatch.cpp',
+    use_intel_sort ? [AVX512_SKX, AVX2] : []
+  ],
+  [
+    'x86_simd_qsort_16bit.dispatch.h',
+    'src/npysort/x86_simd_qsort_16bit.dispatch.cpp',
+    use_intel_sort ? [AVX512_SPR, AVX512_ICL] : []
+  ],
+  [
+    'highway_qsort.dispatch.h',
+    'src/npysort/highway_qsort.dispatch.cpp',
+    use_highway ? [
+      SVE, ASIMD, VSX2,  # FIXME: disable VXE due to runtime segfault
+    ] : []
+  ],
+  [
+    'highway_qsort_16bit.dispatch.h',
+    'src/npysort/highway_qsort_16bit.dispatch.cpp',
+    use_highway ? [
+      ASIMDHP, VSX2,  # VXE FIXME: disable VXE due to runtime segfault
+    ] : []
   ],
 ]
   mtargets = mod_features.multi_targets(
@@ -782,7 +845,8 @@ foreach gen_mtargets : [
       'src/common',
       'src/multiarray',
       'src/npymath',
-      'src/umath'
+      'src/umath',
+      'src/highway',
     ]
   )
   if not is_variable('multiarray_umath_mtargets')
@@ -967,6 +1031,7 @@ endforeach
 # ------------------------------
 src_multiarray_umath_common = [
   'src/common/array_assign.c',
+  'src/common/gil_utils.c',
   'src/common/mem_overlap.c',
   'src/common/npy_argparse.c',
   'src/common/npy_hashtable.c',
@@ -990,11 +1055,13 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/alloc.c',
   'src/multiarray/arrayobject.c',
   'src/multiarray/array_coercion.c',
+  'src/multiarray/array_converter.c',
   'src/multiarray/array_method.c',
   'src/multiarray/array_assign_scalar.c',
   'src/multiarray/array_assign_array.c',
   'src/multiarray/arrayfunction_override.c',
   src_file.process('src/multiarray/arraytypes.c.src'),
+  'src/multiarray/arraywrap.c',
   'src/multiarray/buffer.c',
   'src/multiarray/calculation.c',
   'src/multiarray/compiled_base.c',
@@ -1016,7 +1083,7 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/dtype_traversal.c',
   src_file.process('src/multiarray/einsum.c.src'),
   src_file.process('src/multiarray/einsum_sumprod.c.src'),
-  'src/multiarray/experimental_public_dtype_api.c',
+  'src/multiarray/public_dtype_api.c',
   'src/multiarray/flagsobject.c',
   'src/multiarray/getset.c',
   'src/multiarray/hashdescr.c',
@@ -1035,9 +1102,13 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/refcount.c',
   src_file.process('src/multiarray/scalartypes.c.src'),
   'src/multiarray/sequence.c',
-  'src/multiarray/shape.c',
   'src/multiarray/scalarapi.c',
+  'src/multiarray/shape.c',
   'src/multiarray/strfuncs.c',
+  'src/multiarray/stringdtype/casts.c',
+  'src/multiarray/stringdtype/dtype.c',
+  'src/multiarray/stringdtype/utf8_utils.c',
+  'src/multiarray/stringdtype/static_string.c',
   'src/multiarray/temp_elide.c',
   'src/multiarray/usertypes.c',
   'src/multiarray/vdot.c',
@@ -1081,6 +1152,7 @@ src_umath = umath_gen_headers + [
   'src/umath/umathmodule.c',
   'src/umath/special_integer_comparisons.cpp',
   'src/umath/string_ufuncs.cpp',
+  'src/umath/stringdtype_ufuncs.cpp',
   'src/umath/wrapping_array_method.c',
   # For testing. Eventually, should use public API and be separate:
   'src/umath/_scaled_float_dtype.c',
@@ -1091,6 +1163,13 @@ src_umath = umath_gen_headers + [
 # here. Note that this migration is desirable; we then get the performance
 # benefits for all platforms rather than only for AVX512 on 64-bit Linux, and
 # may be able to avoid the accuracy regressions in SVML.
+#
+CPU_FEATURES_NAMES = CPU_BASELINE_NAMES + CPU_DISPATCH_NAMES
+svml_file_suffix = ['d_la', 's_la', 'd_ha', 's_la']
+if CPU_FEATURES_NAMES.contains('AVX512_SPR')
+  svml_file_suffix += ['h_la']
+endif
+
 svml_objects = []
 if use_svml
   foreach svml_func : [
@@ -1105,7 +1184,7 @@ if use_svml
     'pow', 'sin', 'sinh', 'tan',
     'tanh'
   ]
-    foreach svml_sfx : ['d_la', 's_la', 'd_ha', 's_la']
+    foreach svml_sfx : svml_file_suffix
       svml_objects += [
         'src/umath/svml/linux/avx512/svml_z0_'+svml_func+'_'+svml_sfx+'.s'
       ]
@@ -1135,8 +1214,8 @@ py.extension_module('_multiarray_umath',
     'src/npymath',
     'src/umath',
   ],
-  dependencies: blas_dep,
-  link_with: [npymath_lib, multiarray_umath_mtargets.static_lib('_multiarray_umath_mtargets')],
+  dependencies: [blas_dep],
+  link_with: [npymath_lib, multiarray_umath_mtargets.static_lib('_multiarray_umath_mtargets')] + highway_lib,
   install: true,
   subdir: 'numpy/_core',
 )
@@ -1239,6 +1318,8 @@ python_sources = [
   'records.pyi',
   'shape_base.py',
   'shape_base.pyi',
+  'strings.py',
+  'strings.pyi',
   'umath.py',
 ]
 

@@ -12,7 +12,7 @@ import numpy.typing as npt
 f8: np.float64
 AR_f8: npt.NDArray[np.float64]
 AR_M: npt.NDArray[np.datetime64]
-AR_b: npt.NDArray[np.bool_]
+AR_b: npt.NDArray[np.bool]
 
 ctypes_obj = AR_f8.ctypes
 

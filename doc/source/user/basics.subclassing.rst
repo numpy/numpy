@@ -602,8 +602,8 @@ pass on to ``A.__array_ufunc__``, the ``super`` call in ``A`` would go to
 =================================================
 
 Prior to numpy 1.13, the behaviour of ufuncs could only be tuned using
-``__array_wrap__`` and ``__array_prepare__``. These two allowed one to
-change the output type of a ufunc, but, in contrast to
+``__array_wrap__`` and ``__array_prepare__`` (the latter is now removed).
+These two allowed one to change the output type of a ufunc, but, in contrast to
 ``__array_ufunc__``, did not allow one to make any changes to the inputs.
 It is hoped to eventually deprecate these, but ``__array_wrap__`` is also
 used by other numpy functions and methods, such as ``squeeze``, so at the
@@ -633,12 +633,12 @@ some print statements:
           if obj is None: return
           self.info = getattr(obj, 'info', None)
 
-      def __array_wrap__(self, out_arr, context=None):
+      def __array_wrap__(self, out_arr, context=None, return_scalar=False):
           print('In __array_wrap__:')
           print('   self is %s' % repr(self))
           print('   arr is %s' % repr(out_arr))
           # then just call the parent
-          return super().__array_wrap__(self, out_arr, context)
+          return super().__array_wrap__(self, out_arr, context, return_scalar)
 
 We run a ufunc on an instance of our new array:
 
@@ -672,7 +672,7 @@ But, we could do anything we wanted:
 
   class SillySubClass(np.ndarray):
 
-      def __array_wrap__(self, arr, context=None):
+      def __array_wrap__(self, arr, context=None, return_scalar=False):
           return 'I lost your data'
 
 >>> arr1 = np.arange(5)
@@ -684,24 +684,17 @@ But, we could do anything we wanted:
 
 So, by defining a specific ``__array_wrap__`` method for our subclass,
 we can tweak the output from ufuncs. The ``__array_wrap__`` method
-requires ``self``, then an argument - which is the result of the ufunc -
-and an optional parameter *context*. This parameter is returned by
-ufuncs as a 3-element tuple: (name of the ufunc, arguments of the ufunc,
-domain of the ufunc), but is not set by other numpy functions. Though,
+requires ``self``, then an argument - which is the result of the ufunc 
+or another NumPy function - and an optional parameter *context*.
+This parameter is passed by ufuncs as a 3-element tuple:
+(name of the ufunc, arguments of the ufunc, domain of the ufunc),
+but is not passed by other numpy functions. Though,
 as seen above, it is possible to do otherwise, ``__array_wrap__`` should
 return an instance of its containing class.  See the masked array
 subclass for an implementation.
+``__array_wrap__`` is always passed a NumPy array which may or may not be
+a subclass (usually of the caller).
 
-In addition to ``__array_wrap__``, which is called on the way out of the
-ufunc, there is also an ``__array_prepare__`` method which is called on
-the way into the ufunc, after the output arrays are created but before any
-computation has been performed. The default implementation does nothing
-but pass through the array. ``__array_prepare__`` should not attempt to
-access the array data or resize the array, it is intended for setting the
-output array type, updating attributes and metadata, and performing any
-checks based on the input that may be desired before computation begins.
-Like ``__array_wrap__``, ``__array_prepare__`` must return an ndarray or
-subclass thereof or raise an error.
 
 Extra gotchas - custom ``__del__`` methods and ndarray.base
 ===========================================================

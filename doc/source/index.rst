@@ -10,6 +10,7 @@ NumPy documentation
 
    User Guide <user/index>
    API reference <reference/index>
+   Building from source <building/index>
    Development <dev/index>
    release
 

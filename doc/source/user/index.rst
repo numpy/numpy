@@ -33,7 +33,6 @@ details are found in :ref:`reference`.
    :caption: Advanced usage and interoperability
    :maxdepth: 1
 
-   building
    c-info
    ../f2py/index
    ../dev/underthehood

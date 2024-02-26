@@ -257,7 +257,7 @@ def test_nep50_in_concat_and_choose():
         (np.float32, [np.int16, np.uint16, np.float16],
             [np.int8, np.uint8, np.float32, 0., 0]),
         (np.int32, [np.int16, np.uint16],
-            [np.int8, np.uint8, 0, np.bool_]),
+            [np.int8, np.uint8, 0, np.bool]),
         ])
 @hypothesis.given(data=strategies.data())
 def test_expected_promotion(expected, dtypes, optional_dtypes, data):
@@ -292,7 +292,7 @@ def test_integer_comparison(sctype, other_val, comp):
     assert comp(10, other_val) == comp(val, other_val)
     assert comp(val, other_val) == comp(10, other_val)
     # Except for the result type:
-    assert type(comp(val, other_val)) is np.bool_
+    assert type(comp(val, other_val)) is np.bool
 
     # Check that the integer array and object array behave the same:
     val_obj = np.array([10, 10], dtype=object)
@@ -309,3 +309,34 @@ def test_integer_integer_comparison(comp):
 
     # Test that the NumPy comparison ufuncs work with large Python integers
     assert comp(2**200, -2**200) == comp(2**200, -2**200, dtype=object)
+
+
+def create_with_scalar(sctype, value):
+    return sctype(value)
+
+
+def create_with_array(sctype, value):
+    return np.array([value], dtype=sctype)
+
+
+@pytest.mark.parametrize("sctype",
+        [np.int8, np.int16, np.int32, np.int64,
+         np.uint8, np.uint16, np.uint32, np.uint64])
+@pytest.mark.parametrize("create", [create_with_scalar, create_with_array])
+def test_oob_creation(sctype, create):
+    iinfo = np.iinfo(sctype)
+
+    with pytest.raises(OverflowError):
+        create(sctype, iinfo.min - 1)
+
+    with pytest.raises(OverflowError):
+        create(sctype, iinfo.max + 1)
+
+    with pytest.raises(OverflowError):
+        create(sctype, str(iinfo.min - 1))
+
+    with pytest.raises(OverflowError):
+        create(sctype, str(iinfo.max + 1))
+
+    assert create(sctype, iinfo.min) == iinfo.min
+    assert create(sctype, iinfo.max) == iinfo.max

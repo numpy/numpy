@@ -1,14 +1,16 @@
+import builtins
 from collections.abc import Callable, Sequence
 from typing import (
     Any,
     overload,
     TypeVar,
+    Literal as L,
 )
 
+import numpy as np
 from numpy import (
     generic,
     number,
-    bool_,
     timedelta64,
     datetime64,
     int_,
@@ -40,7 +42,7 @@ _SCT = TypeVar("_SCT", bound=generic)
 # The returned arrays dtype must be compatible with `np.equal`
 _MaskFunc = Callable[
     [NDArray[int_], _T],
-    NDArray[number[Any] | bool_ | timedelta64 | datetime64 | object_],
+    NDArray[number[Any] | np.bool | timedelta64 | datetime64 | object_],
 ]
 
 __all__: list[str]
@@ -63,6 +65,7 @@ def eye(
     dtype: None = ...,
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
@@ -73,6 +76,7 @@ def eye(
     dtype: _DTypeLike[_SCT] = ...,
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -83,6 +87,7 @@ def eye(
     dtype: DTypeLike = ...,
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 

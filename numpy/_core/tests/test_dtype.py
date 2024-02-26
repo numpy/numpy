@@ -161,7 +161,7 @@ class TestBuiltin:
         # Byte order indicator, but no type
         assert_raises(TypeError, np.dtype, b'|')
 
-        # Single character with ordinal < NPY_NTYPES returns
+        # Single character with ordinal < NPY_NTYPES_LEGACY returns
         # type by index into _builtin_descrs
         assert_dtype_equal(np.dtype(bytes([0])), np.dtype('bool'))
         assert_dtype_equal(np.dtype(bytes([17])), np.dtype(object))
@@ -282,6 +282,13 @@ class TestRecord:
         a.__setstate__(state)
         assert_dtype_equal(a, b)
         assert_dtype_not_equal(a, c)
+
+    def test_init_simple_structured(self):
+        dt1 = np.dtype("i, i")
+        assert dt1.names == ("f0", "f1")
+
+        dt2 = np.dtype("i,")
+        assert dt2.names == ("f0",)
 
     def test_mutate_error(self):
         # NOTE: Mutating should be deprecated, but new API added to replace it.
@@ -419,11 +426,11 @@ class TestRecord:
                        'offsets':[np.dtype('intp').itemsize, 0]})
 
     @pytest.mark.parametrize(["obj", "dtype", "expected"],
-        [([], ("(2)f4,"), np.empty((0, 2), dtype="f4")),
-         (3, "(3)f4,", [3, 3, 3]),
-         (np.float64(2), "(2)f4,", [2, 2]),
+        [([], ("2f4"), np.empty((0, 2), dtype="f4")),
+         (3, "(3,)f4", [3, 3, 3]),
+         (np.float64(2), "(2,)f4", [2, 2]),
          ([((0, 1), (1, 2)), ((2,),)], '(2,2)f4', None),
-         (["1", "2"], "(2)i,", None)])
+         (["1", "2"], "2i", None)])
     def test_subarray_list(self, obj, dtype, expected):
         dtype = np.dtype(dtype)
         res = np.array(obj, dtype=dtype)
@@ -435,6 +442,17 @@ class TestRecord:
                 expected[i] = obj[i]
 
         assert_array_equal(res, expected)
+
+    def test_parenthesized_single_number(self):
+        with pytest.raises(TypeError, match="not understood"):
+            np.dtype("(2)f4")
+
+        # Deprecation also tested in
+        # test_deprecations.py::TestDeprecatedDTypeParenthesizedRepeatCount
+        # Left here to allow easy conversion to an exception check.
+        with pytest.warns(DeprecationWarning,
+                          match="parenthesized single number"):
+            np.dtype("(2)f4,")
 
     def test_comma_datetime(self):
         dt = np.dtype('M8[D],datetime64[Y],i8')
@@ -615,10 +633,8 @@ class TestSubarray:
     def test_shape_equal(self):
         """Test some data types that are equal"""
         assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', tuple())))
-        # FutureWarning during deprecation period; after it is passed this
-        # should instead check that "(1)f8" == "1f8" == ("f8", 1).
-        with pytest.warns(FutureWarning):
-            assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', 1)))
+        assert_dtype_equal(np.dtype('(1,)f8'), np.dtype(('f8', 1)))
+        assert np.dtype(('f8', 1)).shape == (1,)
         assert_dtype_equal(np.dtype((int, 2)), np.dtype((int, (2,))))
         assert_dtype_equal(np.dtype(('<f4', (3, 2))), np.dtype(('<f4', (3, 2))))
         d = ([('a', 'f4', (1, 2)), ('b', 'f8', (3, 1))], (3, 2))
@@ -1434,7 +1450,7 @@ class TestPromotion:
         assert res == expected
 
     @pytest.mark.parametrize(["other", "expected"],
-                 [(np.bool_, np.complex128),
+                 [(np.bool, np.complex128),
                   (np.int64, np.complex128),
                   (np.float16, np.complex64),
                   (np.float32, np.complex64),
@@ -1505,7 +1521,7 @@ class TestPromotion:
              ([1., 1., np.int64], np.float64),
              ([1., 1j, np.float64], np.complex128),
              ([1j, 1j, np.float64], np.complex128),
-             ([1, True, np.bool_], np.int_),
+             ([1, True, np.bool], np.int_),
             ])
     def test_permutations_do_not_influence_result(self, dtypes, expected):
         # Tests that most permutations do not influence the result.  In the
@@ -1666,8 +1682,9 @@ class TestFromCTypes:
     @staticmethod
     def check(ctype, dtype):
         dtype = np.dtype(dtype)
-        assert_equal(np.dtype(ctype), dtype)
-        assert_equal(np.dtype(ctype()), dtype)
+        assert np.dtype(ctype) == dtype
+        assert np.dtype(ctype()) == dtype
+        assert ctypes.sizeof(ctype) == dtype.itemsize
 
     def test_array(self):
         c8 = ctypes.c_uint8
@@ -1702,8 +1719,12 @@ class TestFromCTypes:
         p_uint8 = ctypes.POINTER(ctypes.c_uint8)
         assert_raises(TypeError, np.dtype, p_uint8)
 
+    def test_size_t(self):
+        assert np.dtype(np.uintp) is np.dtype("N")
+        self.check(ctypes.c_size_t, np.uintp)
+
     def test_void_pointer(self):
-        self.check(ctypes.c_void_p, np.uintp)
+        self.check(ctypes.c_void_p, "P")
 
     def test_union(self):
         class Union(ctypes.Union):

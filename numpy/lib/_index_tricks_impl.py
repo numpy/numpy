@@ -99,7 +99,7 @@ def ix_(*args):
                 new = new.astype(_nx.intp)
         if new.ndim != 1:
             raise ValueError("Cross index must be 1 dimensional")
-        if issubdtype(new.dtype, _nx.bool_):
+        if issubdtype(new.dtype, _nx.bool):
             new, = new.nonzero()
         new = new.reshape((1,)*k + (new.size,) + (1,)*(nd-k-1))
         out.append(new)
@@ -189,7 +189,8 @@ class nd_grid:
                     slobj[k] = slice(None, None)
                     nn[k] = nn[k][tuple(slobj)]
                     slobj[k] = _nx.newaxis
-            return nn
+                return tuple(nn)  # ogrid -> tuple of arrays
+            return nn  # mgrid -> ndarray
         except (IndexError, TypeError):
             step = key.step
             stop = key.stop
@@ -225,8 +226,9 @@ class MGridClass(nd_grid):
 
     Returns
     -------
-    mesh-grid
-        `ndarray`\\ s all of the same dimensions
+    mesh-grid : ndarray
+        A single array, containing a set of `ndarray`\\ s all of the same
+        dimensions. stacked along the first axis.
 
     See Also
     --------
@@ -250,6 +252,13 @@ class MGridClass(nd_grid):
             [0, 1, 2, 3, 4]]])
     >>> np.mgrid[-1:1:5j]
     array([-1. , -0.5,  0. ,  0.5,  1. ])
+
+    >>> np.mgrid[0:4].shape
+    (4,)
+    >>> np.mgrid[0:4, 0:5].shape
+    (2, 4, 5)
+    >>> np.mgrid[0:4, 0:5, 0:6].shape
+    (3, 4, 5, 6)
 
     """
 
@@ -277,8 +286,10 @@ class OGridClass(nd_grid):
 
     Returns
     -------
-    mesh-grid
-        `ndarray`\\ s with only one dimension not equal to 1
+    mesh-grid : ndarray or tuple of ndarrays
+        If the input is a single slice, returns an array.
+        If the input is multiple slices, returns a tuple of arrays, with
+        only one dimension not equal to 1.
 
     See Also
     --------
@@ -292,12 +303,13 @@ class OGridClass(nd_grid):
     >>> from numpy import ogrid
     >>> ogrid[-1:1:5j]
     array([-1. , -0.5,  0. ,  0.5,  1. ])
-    >>> ogrid[0:5,0:5]
-    [array([[0],
+    >>> ogrid[0:5, 0:5]
+    (array([[0],
             [1],
             [2],
             [3],
-            [4]]), array([[0, 1, 2, 3, 4]])]
+            [4]]),
+     array([[0, 1, 2, 3, 4]]))
 
     """
 
@@ -789,14 +801,13 @@ def fill_diagonal(a, val, wrap=False):
     """Fill the main diagonal of the given array of any dimensionality.
 
     For an array `a` with ``a.ndim >= 2``, the diagonal is the list of
-    locations with indices ``a[i, ..., i]`` all identical. This function
-    modifies the input array in-place, it does not return a value.
+    values ``a[i, ..., i]`` with indices ``i`` all identical.  This function
+    modifies the input array in-place without returning a value.
 
     Parameters
     ----------
     a : array, at least 2-D.
-      Array whose diagonal is to be filled, it gets modified in-place.
-
+      Array whose diagonal is to be filled in-place.
     val : scalar or array_like
       Value(s) to write on the diagonal. If `val` is scalar, the value is
       written along the diagonal. If array-like, the flattened `val` is

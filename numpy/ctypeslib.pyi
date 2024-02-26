@@ -14,11 +14,11 @@ from typing import (
     ClassVar,
 )
 
+import numpy as np
 from numpy import (
     ndarray,
     dtype,
     generic,
-    bool_,
     byte,
     short,
     intc,
@@ -150,7 +150,7 @@ def ndpointer(
 ) -> type[_ndptr[dtype[Any]]]: ...
 
 @overload
-def as_ctypes_type(dtype: _BoolCodes | _DTypeLike[bool_] | type[ctypes.c_bool]) -> type[ctypes.c_bool]: ...
+def as_ctypes_type(dtype: _BoolCodes | _DTypeLike[np.bool] | type[ctypes.c_bool]) -> type[ctypes.c_bool]: ...
 @overload
 def as_ctypes_type(dtype: _ByteCodes | _DTypeLike[byte] | type[ctypes.c_byte]) -> type[ctypes.c_byte]: ...
 @overload
@@ -192,7 +192,7 @@ def as_array(obj: _ArrayLike[_SCT], shape: None | _ShapeLike = ...) -> NDArray[_
 def as_array(obj: object, shape: None | _ShapeLike = ...) -> NDArray[Any]: ...
 
 @overload
-def as_ctypes(obj: bool_) -> ctypes.c_bool: ...
+def as_ctypes(obj: np.bool) -> ctypes.c_bool: ...
 @overload
 def as_ctypes(obj: byte) -> ctypes.c_byte: ...
 @overload
@@ -222,7 +222,7 @@ def as_ctypes(obj: longdouble) -> ctypes.c_longdouble: ...
 @overload
 def as_ctypes(obj: void) -> Any: ...  # `ctypes.Union` or `ctypes.Structure`
 @overload
-def as_ctypes(obj: NDArray[bool_]) -> ctypes.Array[ctypes.c_bool]: ...
+def as_ctypes(obj: NDArray[np.bool]) -> ctypes.Array[ctypes.c_bool]: ...
 @overload
 def as_ctypes(obj: NDArray[byte]) -> ctypes.Array[ctypes.c_byte]: ...
 @overload

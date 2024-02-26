@@ -11,7 +11,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import assert_type
 
-AR_bool: npt.NDArray[np.bool_]
+AR_bool: npt.NDArray[np.bool]
 AR_ubyte: npt.NDArray[np.ubyte]
 AR_ushort: npt.NDArray[np.ushort]
 AR_uintc: npt.NDArray[np.uintc]
@@ -38,7 +38,7 @@ assert_type(np.ctypeslib.ndpointer(shape=(10, 3)), type[ctypeslib._ndptr[None]])
 assert_type(np.ctypeslib.ndpointer(np.int64, shape=(10, 3)), type[ctypeslib._concrete_ndptr[np.dtype[np.int64]]])
 assert_type(np.ctypeslib.ndpointer(int, shape=(1,)), type[np.ctypeslib._concrete_ndptr[np.dtype[Any]]])
 
-assert_type(np.ctypeslib.as_ctypes_type(np.bool_), type[ct.c_bool])
+assert_type(np.ctypeslib.as_ctypes_type(np.bool), type[ct.c_bool])
 assert_type(np.ctypeslib.as_ctypes_type(np.ubyte), type[ct.c_ubyte])
 assert_type(np.ctypeslib.as_ctypes_type(np.ushort), type[ct.c_ushort])
 assert_type(np.ctypeslib.as_ctypes_type(np.uintc), type[ct.c_uint])

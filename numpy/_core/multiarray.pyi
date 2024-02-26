@@ -1,5 +1,5 @@
 # TODO: Sort out any and all missing functions in this namespace
-
+import builtins
 import os
 import datetime as dt
 from collections.abc import Sequence, Callable, Iterable
@@ -15,6 +15,7 @@ from typing import (
     ClassVar,
 )
 
+import numpy as np
 from numpy import (
     # Re-exports
     busdaycalendar as busdaycalendar,
@@ -26,7 +27,6 @@ from numpy import (
     # The rest
     ufunc,
     str_,
-    bool_,
     uint8,
     intp,
     int_,
@@ -132,6 +132,8 @@ def empty_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike = ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> _ArrayType: ...
 @overload
 def empty_like(
@@ -140,6 +142,8 @@ def empty_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike = ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def empty_like(
@@ -148,6 +152,8 @@ def empty_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike = ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[Any]: ...
 @overload
 def empty_like(
@@ -156,6 +162,8 @@ def empty_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike = ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def empty_like(
@@ -164,6 +172,8 @@ def empty_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike = ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -228,6 +238,7 @@ def zeros(
     dtype: None = ...,
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
@@ -236,6 +247,7 @@ def zeros(
     dtype: _DTypeLike[_SCT],
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -244,6 +256,7 @@ def zeros(
     dtype: DTypeLike,
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
@@ -253,6 +266,7 @@ def empty(
     dtype: None = ...,
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
@@ -261,6 +275,7 @@ def empty(
     dtype: _DTypeLike[_SCT],
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -269,6 +284,7 @@ def empty(
     dtype: DTypeLike,
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
@@ -396,7 +412,7 @@ def dot(a: ArrayLike, b: ArrayLike, out: None = ...) -> Any: ...
 def dot(a: ArrayLike, b: ArrayLike, out: _ArrayType) -> _ArrayType: ...
 
 @overload
-def vdot(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co, /) -> bool_: ...  # type: ignore[misc]
+def vdot(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co, /) -> np.bool: ...  # type: ignore[misc]
 @overload
 def vdot(a: _ArrayLikeUInt_co, b: _ArrayLikeUInt_co, /) -> unsignedinteger[Any]: ...  # type: ignore[misc]
 @overload
@@ -468,6 +484,7 @@ def asarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -476,6 +493,7 @@ def asarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
@@ -484,6 +502,7 @@ def asarray(
     dtype: _DTypeLike[_SCT],
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -492,6 +511,7 @@ def asarray(
     dtype: DTypeLike,
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
@@ -714,6 +734,7 @@ def arange(  # type: ignore[misc]
     stop: _IntLike_co,
     /, *,
     dtype: None = ...,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[signedinteger[Any]]: ...
 @overload
@@ -723,6 +744,7 @@ def arange(  # type: ignore[misc]
     step: _IntLike_co = ...,
     dtype: None = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[signedinteger[Any]]: ...
 @overload
@@ -730,6 +752,7 @@ def arange(  # type: ignore[misc]
     stop: _FloatLike_co,
     /, *,
     dtype: None = ...,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
@@ -739,6 +762,7 @@ def arange(  # type: ignore[misc]
     step: _FloatLike_co = ...,
     dtype: None = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
@@ -746,6 +770,7 @@ def arange(
     stop: _TD64Like_co,
     /, *,
     dtype: None = ...,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[timedelta64]: ...
 @overload
@@ -755,6 +780,7 @@ def arange(
     step: _TD64Like_co = ...,
     dtype: None = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[timedelta64]: ...
 @overload
@@ -764,6 +790,7 @@ def arange(  # both start and stop must always be specified for datetime64
     step: datetime64 = ...,
     dtype: None = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[datetime64]: ...
 @overload
@@ -771,6 +798,7 @@ def arange(
     stop: Any,
     /, *,
     dtype: _DTypeLike[_SCT],
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -780,6 +808,7 @@ def arange(
     step: Any = ...,
     dtype: _DTypeLike[_SCT] = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -787,6 +816,7 @@ def arange(
     stop: Any, /,
     *,
     dtype: DTypeLike,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
@@ -796,6 +826,7 @@ def arange(
     step: Any = ...,
     dtype: DTypeLike = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
@@ -903,7 +934,7 @@ def is_busday(  # type: ignore[misc]
     holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
     out: None = ...,
-) -> bool_: ...
+) -> np.bool: ...
 @overload
 def is_busday(  # type: ignore[misc]
     dates: ArrayLike | _NestedSequence[dt.date],
@@ -911,7 +942,7 @@ def is_busday(  # type: ignore[misc]
     holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
     out: None = ...,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 @overload
 def is_busday(
     dates: ArrayLike | _NestedSequence[dt.date],
@@ -942,14 +973,14 @@ def compare_chararrays(
     a2: _ArrayLikeStr_co,
     cmp: L["<", "<=", "==", ">=", ">", "!="],
     rstrip: bool,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 @overload
 def compare_chararrays(
     a1: _ArrayLikeBytes_co,
     a2: _ArrayLikeBytes_co,
     cmp: L["<", "<=", "==", ">=", ">", "!="],
     rstrip: bool,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 
 def add_docstring(obj: Callable[..., Any], docstring: str, /) -> None: ...
 

@@ -23,6 +23,7 @@ from numpy._core import (
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
 from numpy import isfinite, isnan, isinf
 import numpy.linalg._umath_linalg
+from numpy._utils import _rename_parameter
 
 from io import StringIO
 
@@ -694,7 +695,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                          precision=6, equal_nan=True, equal_inf=True,
                          *, strict=False, names=('ACTUAL', 'DESIRED')):
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy._core import (array2string, isnan, inf, bool_, errstate,
+    from numpy._core import (array2string, isnan, inf, errstate,
                             all, max, object_)
 
     x = np.asanyarray(x)
@@ -725,13 +726,13 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         # (1) all() on `masked` array scalars can return masked arrays, so we
         #     use != True
         # (2) __eq__ on some ndarray subclasses returns Python booleans
-        #     instead of element-wise comparisons, so we cast to bool_() and
+        #     instead of element-wise comparisons, so we cast to np.bool() and
         #     use isinstance(..., bool) checks
         # (3) subclasses with bare-bones __array_function__ implementations may
         #     not implement np.all(), so favor using the .all() method
         # We are not committed to supporting such subclasses, but it's nice to
         # support them if possible.
-        if bool_(x_id == y_id).all() != True:
+        if np.bool(x_id == y_id).all() != True:
             msg = build_err_msg(
                 [x, y],
                 err_msg + '\n%s location mismatch:'
@@ -742,9 +743,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         # If there is a scalar, then here we know the array has the same
         # flag as it everywhere, so we should return the scalar flag.
         if isinstance(x_id, bool) or x_id.ndim == 0:
-            return bool_(x_id)
+            return np.bool(x_id)
         elif isinstance(y_id, bool) or y_id.ndim == 0:
-            return bool_(y_id)
+            return np.bool(y_id)
         else:
             return y_id
 
@@ -766,7 +767,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                                 precision=precision)
             raise AssertionError(msg)
 
-        flagged = bool_(False)
+        flagged = np.bool(False)
         if isnumber(x) and isnumber(y):
             if equal_nan:
                 flagged = func_assert_same_pos(x, y, func=isnan, hasval='nan')
@@ -837,7 +838,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                     # note: this definition of relative error matches that one
                     # used by assert_allclose (found in np.isclose)
                     # Filter values where the divisor would be zero
-                    nonzero = bool_(y != 0)
+                    nonzero = np.bool(y != 0)
                     nonzero_and_invalid = np.logical_and(invalids, nonzero)
                     
                     if all(~nonzero_and_invalid):
@@ -874,7 +875,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         raise ValueError(msg)
 
 
-def assert_array_equal(x, y, err_msg='', verbose=True, *, strict=False):
+@_rename_parameter(['x', 'y'], ['actual', 'desired'], dep_version='2.0.0')
+def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
+                       strict=False):
     """
     Raises an AssertionError if two array_like objects are not equal.
 
@@ -888,21 +891,22 @@ def assert_array_equal(x, y, err_msg='', verbose=True, *, strict=False):
     The usual caution for verifying equality with floating point numbers is
     advised.
 
-    .. note:: When either `x` or `y` is already an instance of `numpy.ndarray`
-        and `y` is not a ``dict``, the behavior of ``assert_equal(x, y)`` is
-        identical to the behavior of this function. Otherwise, this function
-        performs `np.asanyarray` on the inputs before comparison, whereas
-        `assert_equal` defines special comparison rules for common Python
-        types. For example, only `assert_equal` can be used to compare nested
-        Python lists. In new code, consider using only `assert_equal`,
-        explicitly converting either `x` or `y` to arrays if the behavior of
-        `assert_array_equal` is desired.
+    .. note:: When either `actual` or `desired` is already an instance of
+        `numpy.ndarray` and `desired` is not a ``dict``, the behavior of
+        ``assert_equal(actual, desired)`` is identical to the behavior of this
+        function. Otherwise, this function performs `np.asanyarray` on the
+        inputs before comparison, whereas `assert_equal` defines special
+        comparison rules for common Python types. For example, only
+        `assert_equal` can be used to compare nested Python lists. In new code,
+        consider using only `assert_equal`, explicitly converting either
+        `actual` or `desired` to arrays if the behavior of `assert_array_equal`
+        is desired.
 
     Parameters
     ----------
-    x : array_like
+    actual : array_like
         The actual object to check.
-    y : array_like
+    desired : array_like
         The desired, expected object.
     err_msg : str, optional
         The error message to be printed in case of failure.
@@ -928,8 +932,8 @@ def assert_array_equal(x, y, err_msg='', verbose=True, *, strict=False):
 
     Notes
     -----
-    When one of `x` and `y` is a scalar and the other is array_like, the
-    function checks that each element of the array_like object is equal to
+    When one of `actual` and `desired` is a scalar and the other is array_like,
+    the function checks that each element of the array_like object is equal to
     the scalar. This behaviour can be disabled with the `strict` parameter.
 
     Examples
@@ -996,13 +1000,15 @@ def assert_array_equal(x, y, err_msg='', verbose=True, *, strict=False):
      DESIRED: array([2., 2., 2.], dtype=float32)
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    assert_array_compare(operator.__eq__, x, y, err_msg=err_msg,
+    assert_array_compare(operator.__eq__, actual, desired, err_msg=err_msg,
                          verbose=verbose, header='Arrays are not equal',
                          strict=strict)
 
 
 @np._no_nep50_warning()
-def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
+@_rename_parameter(['x', 'y'], ['actual', 'desired'], dep_version='2.0.0')
+def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
+                              verbose=True):
     """
     Raises an AssertionError if two objects are not equal up to desired
     precision.
@@ -1025,9 +1031,9 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
 
     Parameters
     ----------
-    x : array_like
+    actual : array_like
         The actual object to check.
-    y : array_like
+    desired : array_like
         The desired, expected object.
     decimal : int, optional
         Desired precision, default is 6.
@@ -1110,7 +1116,8 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
 
         return z < 1.5 * 10.0**(-decimal)
 
-    assert_array_compare(compare, x, y, err_msg=err_msg, verbose=verbose,
+    assert_array_compare(compare, actual, desired, err_msg=err_msg,
+                         verbose=verbose,
              header=('Arrays are not almost equal to %d decimals' % decimal),
              precision=decimal)
 

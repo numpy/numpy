@@ -39,7 +39,7 @@ from .multiarray import (array, dragon4_positional, dragon4_scientific,
                          set_legacy_print_mode)
 from .fromnumeric import any
 from .numeric import concatenate, asarray, errstate
-from .numerictypes import (longlong, intc, int_, float64, complex128, bool_,
+from .numerictypes import (longlong, intc, int_, float64, complex128,
                            flexible)
 from .overrides import array_function_dispatch, set_module
 import operator
@@ -207,12 +207,12 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
                 represented with an equal number of fewer digits, use that
                 many digits for all elements.
     legacy : string or `False`, optional
-        If set to the string `'1.13'` enables 1.13 legacy printing mode. This
+        If set to the string ``'1.13'`` enables 1.13 legacy printing mode. This
         approximates numpy 1.13 print output by including a space in the sign
         position of floats and different behavior for 0d arrays. This also
         enables 1.21 legacy printing mode (described below).
 
-        If set to the string `'1.21'` enables 1.21 legacy printing mode. This
+        If set to the string ``'1.21'`` enables 1.21 legacy printing mode. This
         approximates numpy 1.21 print output of complex structured dtypes
         by not inserting spaces after commas that separate fields and after
         colons.
@@ -474,7 +474,7 @@ def _get_format_function(data, **options):
     formatdict = _get_formatdict(data, **options)
     if dtypeobj is None:
         return formatdict["numpystr"]()
-    elif issubclass(dtypeobj, _nt.bool_):
+    elif issubclass(dtypeobj, _nt.bool):
         return formatdict['bool']()
     elif issubclass(dtypeobj, _nt.integer):
         if issubclass(dtypeobj, _nt.timedelta64):
@@ -681,7 +681,7 @@ def array2string(a, max_line_width=None, precision=None,
           represented with an equal number of fewer digits, use that
           many digits for all elements.
     legacy : string or `False`, optional
-        If set to the string `'1.13'` enables 1.13 legacy printing mode. This
+        If set to the string ``'1.13'`` enables 1.13 legacy printing mode. This
         approximates numpy 1.13 print output by including a space in the sign
         position of floats and different behavior for 0d arrays. If set to
         `False`, disables legacy mode. Unrecognized strings will be ignored
@@ -1460,7 +1460,7 @@ def _void_scalar_to_string(x, is_repr=True):
     return f"{cls_fqn}({val_repr}, dtype={void_dtype!s})"
 
 
-_typelessdata = [int_, float64, complex128, bool_]
+_typelessdata = [int_, float64, complex128, _nt.bool]
 
 
 def dtype_is_implied(dtype):
@@ -1490,7 +1490,7 @@ def dtype_is_implied(dtype):
     array([1, 2, 3], dtype=int8)
     """
     dtype = np.dtype(dtype)
-    if _format_options['legacy'] <= 113 and dtype.type == bool_:
+    if _format_options['legacy'] <= 113 and dtype.type == np.bool:
         return False
 
     # not just void types can be structured, and names are not part of the repr

@@ -125,9 +125,9 @@ __array_api_version__ = "2022.12"
 
 __all__ = ["__array_api_version__"]
 
-from ._constants import e, inf, nan, pi
+from ._constants import e, inf, nan, pi, newaxis
 
-__all__ += ["e", "inf", "nan", "pi"]
+__all__ += ["e", "inf", "nan", "pi", "newaxis"]
 
 from ._creation_functions import (
     asarray,
@@ -352,6 +352,9 @@ __all__ += ["linalg"]
 from .linalg import matmul, tensordot, matrix_transpose, vecdot
 
 __all__ += ["matmul", "tensordot", "matrix_transpose", "vecdot"]
+
+from . import fft
+__all__ += ["fft"]
 
 from ._manipulation_functions import (
     concat,

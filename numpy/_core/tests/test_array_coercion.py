@@ -96,7 +96,7 @@ def scalar_instances(times=True, extended_precision=True, user_dtype=True):
     # Bool:
     # XFAIL: Bool should be added, but has some bad properties when it
     # comes to strings, see also gh-9875
-    # yield param(np.bool_(0), id="bool")
+    # yield param(np.bool(0), id="bool")
 
     # Integers:
     yield param(np.int8(2), id="int8")
@@ -851,14 +851,14 @@ def test_subarray_from_array_construction():
     # Arrays are more complex, since they "broadcast" on success:
     arr = np.array([1, 2])
 
-    res = arr.astype("(2)i,")
+    res = arr.astype("2i")
     assert_array_equal(res, [[1, 1], [2, 2]])
 
-    res = np.array(arr, dtype="(2)i,")
+    res = np.array(arr, dtype="(2,)i")
 
     assert_array_equal(res, [[1, 1], [2, 2]])
 
-    res = np.array([[(1,), (2,)], arr], dtype="(2)i,")
+    res = np.array([[(1,), (2,)], arr], dtype="2i")
     assert_array_equal(res, [[[1, 1], [2, 2]], [[1, 1], [2, 2]]])
 
     # Also try a multi-dimensional example:
