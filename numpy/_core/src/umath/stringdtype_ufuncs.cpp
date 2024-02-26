@@ -367,7 +367,7 @@ add_strided_loop(PyArrayMethod_Context *context, char *const data[],
             if (load_new_string(ops, &os, newsize, oallocator, "add") == -1) {
                 goto fail;
             }
-            // excplicitly discard const; initializing new buffer
+            // explicitly discard const; initializing new buffer
             buf = (char *)os.buf;
         }
 

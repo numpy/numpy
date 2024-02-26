@@ -50,7 +50,7 @@ static int PyArray_RUNTIME_VERSION = 0;
 
 /*
  * The DType classes are inconvenient for the Python generation so exposed
- * manualy in the header below  (may be moved).
+ * manually in the header below  (may be moved).
  */
 #include "numpy/_public_dtype_api_table.h"
 

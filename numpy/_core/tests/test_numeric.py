@@ -2108,7 +2108,7 @@ class TestArrayComparisons:
 
         - are the two inputs the same object or not (same object many not
           be equal if contains NaNs)
-        - Wether we should consider or not, NaNs, being equal.
+        - Whether we should consider or not, NaNs, being equal.
 
         """
         if equal_nan is None:
