@@ -248,6 +248,14 @@ PyArrayDescr_Type and PyArray_Descr
    be used to retrieve a :c:type:`PyArray_Descr` object from an enumerated
    type-number (either built-in or user- defined).
 
+.. c:type:: PyArray_DescrProto
+
+   Identical structure to :c:type:`PyArray_Descr`. This struct is used
+   for static definition of a prototype for registering a new legacy
+   DType by :c:func:`PyArray_RegisterDataType`.
+
+   See the note in :c:func:`PyArray_RegisterDataType` for details.
+
 .. c:type:: PyArray_Descr
 
    The :c:type:`PyArray_Descr` structure lies at the heart of the
