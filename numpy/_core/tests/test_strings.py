@@ -1,4 +1,3 @@
-from contextlib import nullcontext
 import sys
 import pytest
 
