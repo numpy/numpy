@@ -272,8 +272,9 @@ class CompilerChecker:
 
             self.compilers_checked = True
 
-checker = CompilerChecker()
-checker.check_compilers()
+if not IS_WASM:
+    checker = CompilerChecker()
+    checker.check_compilers()
 
 def has_c_compiler():
     return checker.has_c

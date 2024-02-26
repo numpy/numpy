@@ -5,6 +5,8 @@ import sysconfig
 import pytest
 import numpy as np
 
+from numpy.testing import IS_WASM
+
 
 is_editable = not bool(np.__path__)
 numpy_in_sitepackages = sysconfig.get_path('platlib') in np.__file__
@@ -20,17 +22,17 @@ def check_numpyconfig(arg):
     p.check_returncode()
     return p.stdout.strip()
 
-
+@pytest.mark.skipif(IS_WASM, reason="wasm interpreter cannot start subprocesses")
 def test_configtool_version():
     stdout = check_numpyconfig('--version')
     assert stdout == np.__version__
 
-
+@pytest.mark.skipif(IS_WASM, reason="wasm interpreter cannot start subprocesses")
 def test_configtool_cflags():
     stdout = check_numpyconfig('--cflags')
     assert stdout.endswith(os.path.join('numpy', '_core', 'include'))
 
-
+@pytest.mark.skipif(IS_WASM, reason="wasm interpreter cannot start subprocesses")
 def test_configtool_pkgconfigdir():
     stdout = check_numpyconfig('--pkgconfigdir')
     assert stdout.endswith(os.path.join('numpy', '_core', 'lib', 'pkgconfig'))

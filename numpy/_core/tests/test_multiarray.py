@@ -28,7 +28,7 @@ from numpy.exceptions import AxisError, ComplexWarning
 from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
     assert_array_equal, assert_raises_regex, assert_array_almost_equal,
-    assert_allclose, IS_PYPY, IS_PYSTON, HAS_REFCOUNT, assert_array_less,
+    assert_allclose, IS_PYPY, IS_WASM, IS_PYSTON, HAS_REFCOUNT, assert_array_less,
     runstring, temppath, suppress_warnings, break_cycles, _SUPPORTS_SVE,
     assert_array_compare,
     )
@@ -8837,6 +8837,7 @@ class TestWhere:
             assert_equal(np.where(c[::-3], d[::-3], e[::-3]), r[::-3])
             assert_equal(np.where(c[1::-3], d[1::-3], e[1::-3]), r[1::-3])
 
+    @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
     def test_exotic(self):
         # object
         assert_array_equal(np.where(True, None, None), np.array(None))
