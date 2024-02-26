@@ -18,6 +18,7 @@ permissions:
 
 jobs:
   build-wasm-emscripten:
+    name: Build NumPy distribution for Pyodide
     runs-on: ubuntu-22.04
     if: false  # NOTE: job disabled, it needs to be moved to Meson (see gh-24603)
     # if: "github.repository == 'numpy/numpy'"
@@ -73,10 +74,9 @@ jobs:
           source .venv-pyodide/bin/activate
           pip install dist/*.whl
           python -c "import sys; print(sys.platform)"
-          # TODO: when re-enabled this workflow, install test deps differently
-          # since ninja isn't installable with pyodide
-          pip install -r requirements/test_requirements.txt
-      - name: Test
+          pip install -r requirements/emscripten_test_requirements.txt
+
+      - name: Test NumPy for Pyodide
         run: |
           source .venv-pyodide/bin/activate
           cd ..
