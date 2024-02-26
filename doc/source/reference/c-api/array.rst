@@ -3726,7 +3726,17 @@ self-contained in a single .c file, then that is all that needs to be
 done. If, however, the extension module involves multiple files where
 the C-API is needed then some additional steps must be taken.
 
-.. c:function:: void import_array(void)
+.. c:function:: int PyArray_ImportNumPyAPI(void)
+
+    Ensures that the NumPy C-API is imported and usable.  It returns ``0``
+    on success and ``-1`` with an error set if NumPy couldn't be imported.
+    While preferable to call it once at module initialization, this function
+    is very light-weight if called multiple times.
+
+    .. versionadded:: 2.0
+        This function is backported in the ``npy_2_compat.h`` header.
+
+.. c:macro:: void import_array(void)
 
     This function must be called in the initialization section of a
     module that will make use of the C-API. It imports the module
