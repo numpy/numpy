@@ -537,7 +537,7 @@ cdef extern from "numpy/arrayobject.h":
     object PyArray_FROMANY(object m, int type, int min, int max, int flags)
     object PyArray_ZEROS(int nd, npy_intp* dims, int type, int fortran)
     object PyArray_EMPTY(int nd, npy_intp* dims, int type, int fortran)
-    void PyArray_FILLWBYTE(object, int val)
+    void PyArray_FILLWBYTE(ndarray, int val)
     npy_intp PyArray_REFCOUNT(object)
     object PyArray_ContiguousFromAny(op, int, int min_depth, int max_depth)
     unsigned char PyArray_EquivArrTypes(ndarray a1, ndarray a2)

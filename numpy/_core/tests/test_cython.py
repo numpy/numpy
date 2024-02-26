@@ -7,7 +7,7 @@ import time
 import pytest
 
 import numpy as np
-from numpy.testing import IS_WASM
+from numpy.testing import assert_array_equal, IS_WASM
 
 # This import is copied from random.tests.test_extending
 try:
@@ -267,3 +267,10 @@ def test_npyiter_api(install_temp):
             for x, y in zip(checks.get_npyiter_itviews(it), it.itviews)
         ]
     )
+
+
+def test_fillwithbytes(install_temp):
+    import checks
+
+    arr = checks.compile_fillwithbyte()
+    assert_array_equal(arr, np.ones((1, 2)))
