@@ -20,7 +20,7 @@ def concat(
     # (no for scalars with axis=None, no cross-kind casting)
     dtype = result_type(*arrays)
     arrays = tuple(a._array for a in arrays)
-    return Array._new(np.concatenate(arrays, axis=axis, dtype=dtype))
+    return Array._new(np.concatenate(arrays, axis=axis, dtype=dtype._np_dtype))
 
 
 def expand_dims(x: Array, /, *, axis: int) -> Array:
@@ -53,8 +53,8 @@ def permute_dims(x: Array, /, axes: Tuple[int, ...]) -> Array:
 
 
 # Note: the optional argument is called 'shape', not 'newshape'
-def reshape(x: Array, 
-            /, 
+def reshape(x: Array,
+            /,
             shape: Tuple[int, ...],
             *,
             copy: Optional[Bool] = None) -> Array:

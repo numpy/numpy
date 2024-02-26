@@ -44,7 +44,7 @@ jobs:
     strategy:
       matrix:
         os_python:
-          - [ubuntu-latest, '3.10']  # switch to 3.12-dev after mypy is upgraded (see gh-23764)
+          - [ubuntu-latest, '3.12']
           - [windows-2019, '3.11']
           - [macos-12, '3.9']
     steps:
@@ -52,13 +52,13 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
+    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: ${{ matrix.os_python[1] }}
     - name: Install dependencies
       run: |
-        pip install -r build_requirements.txt
-        pip install -r test_requirements.txt
+        pip install -r requirements/build_requirements.txt
+        pip install -r requirements/test_requirements.txt
     - name: Build
       run: |
         spin build -j2 -- -Dallow-noblas=true -Ddisable-optimization=true --vsenv

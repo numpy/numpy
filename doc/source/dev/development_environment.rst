@@ -11,7 +11,7 @@ Recommended development setup
 Since NumPy contains parts written in C and Cython that need to be
 compiled before use, make sure you have the necessary compilers and Python
 development headers installed - see :ref:`building-from-source`. Building
-NumPy as of version ``1.17`` requires a C99 compliant compiler.
+NumPy as of version ``2.0`` requires C11 and C++17 compliant compilers.
 
 Having compiled code also means that importing NumPy from the development
 sources needs some additional steps, which are explained below.  For the rest
@@ -58,9 +58,12 @@ once)::
 
 If you installed Python some other way than conda, first install
 `virtualenv`_ (optionally use `virtualenvwrapper`_), then create your
-virtualenv (named ``numpy-dev`` here) with::
+virtualenv (named ``numpy-dev`` here), activate it, and install all project 
+dependencies with::
 
     $ virtualenv numpy-dev
+    $ source numpy-dev/bin/activate # activate virtual environment
+    $ python -m pip install -r requirements/all_requirements.txt
 
 Now, whenever you want to switch to the virtual environment, you can use the
 command ``source numpy-dev/bin/activate``, and ``deactivate`` to exit from the
@@ -78,7 +81,7 @@ Testing builds
 
 Before running the tests, first install the test dependencies::
 
-    $ python -m pip install -r test_requirements.txt
+    $ python -m pip install -r requirements/test_requirements.txt
     $ python -m pip install asv # only for running benchmarks
 
 To build the development version of NumPy and run tests, spawn
@@ -179,7 +182,7 @@ Lint checks can be performed on newly added lines of Python code.
 
 Install all dependent packages using pip::
 
-    $ python -m pip install -r linter_requirements.txt
+    $ python -m pip install -r requirements/linter_requirements.txt
 
 To run lint checks before committing new code, run::
 

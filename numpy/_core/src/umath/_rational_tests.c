@@ -888,7 +888,7 @@ static PyArray_ArrFuncs npyrational_arrfuncs;
 
 typedef struct { char c; rational r; } align_test;
 
-PyArray_Descr npyrational_descr = {
+PyArray_DescrProto npyrational_descr_proto = {
     PyObject_HEAD_INIT(0)
     &PyRational_Type,       /* typeobj */
     'V',                    /* kind */
@@ -1159,15 +1159,16 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
     npyrational_arrfuncs.fill = npyrational_fill;
     npyrational_arrfuncs.fillwithscalar = npyrational_fillwithscalar;
     /* Left undefined: scanfunc, fromstr, sort, argsort */
-    Py_SET_TYPE(&npyrational_descr, &PyArrayDescr_Type);
-    npy_rational = PyArray_RegisterDataType(&npyrational_descr);
+    Py_SET_TYPE(&npyrational_descr_proto, &PyArrayDescr_Type);
+    npy_rational = PyArray_RegisterDataType(&npyrational_descr_proto);
     if (npy_rational<0) {
         goto fail;
     }
+    PyArray_Descr *npyrational_descr = PyArray_DescrFromType(npy_rational);
 
     /* Support dtype(rational) syntax */
     if (PyDict_SetItemString(PyRational_Type.tp_dict, "dtype",
-                             (PyObject*)&npyrational_descr) < 0) {
+                             (PyObject*)npyrational_descr) < 0) {
         goto fail;
     }
 
@@ -1188,17 +1189,17 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
     #define REGISTER_INT_CASTS(bits) \
         REGISTER_CAST(npy_int##bits, rational, \
                       PyArray_DescrFromType(NPY_INT##bits), npy_rational, 1) \
-        REGISTER_CAST(rational, npy_int##bits, &npyrational_descr, \
+        REGISTER_CAST(rational, npy_int##bits, npyrational_descr, \
                       NPY_INT##bits, 0)
     REGISTER_INT_CASTS(8)
     REGISTER_INT_CASTS(16)
     REGISTER_INT_CASTS(32)
     REGISTER_INT_CASTS(64)
-    REGISTER_CAST(rational,float,&npyrational_descr,NPY_FLOAT,0)
-    REGISTER_CAST(rational,double,&npyrational_descr,NPY_DOUBLE,1)
+    REGISTER_CAST(rational,float,npyrational_descr,NPY_FLOAT,0)
+    REGISTER_CAST(rational,double,npyrational_descr,NPY_DOUBLE,1)
     REGISTER_CAST(npy_bool,rational, PyArray_DescrFromType(NPY_BOOL),
                   npy_rational,1)
-    REGISTER_CAST(rational,npy_bool,&npyrational_descr,NPY_BOOL,0)
+    REGISTER_CAST(rational,npy_bool,npyrational_descr,NPY_BOOL,0)
 
     /* Register ufuncs */
     #define REGISTER_UFUNC(name,...) { \
@@ -1307,14 +1308,14 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
         PyObject* ufunc = PyUFunc_FromFuncAndData(0,0,0,0,2,1,
                 PyUFunc_None,(char*)"test_add_rationals",
                 (char*)"add two matrices of rationals and return rational matrix",0);
-        PyArray_Descr* types[3] = {&npyrational_descr,
-                                    &npyrational_descr,
-                                    &npyrational_descr};
+        PyArray_Descr* types[3] = {npyrational_descr,
+                                    npyrational_descr,
+                                    npyrational_descr};
 
         if (!ufunc) {
             goto fail;
         }
-        if (PyUFunc_RegisterLoopForDescr((PyUFuncObject*)ufunc, &npyrational_descr,
+        if (PyUFunc_RegisterLoopForDescr((PyUFuncObject*)ufunc, npyrational_descr,
                 rational_ufunc_test_add_rationals, types, 0) < 0) {
             goto fail;
         }

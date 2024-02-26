@@ -187,7 +187,7 @@ Built-in Python types
     (all others)             :class:`object_`
     ===================      ===============
 
-   Note that ``str_`` corresponds to UCS4 encoded unicode strings.
+    Note that ``str_`` corresponds to UCS4 encoded unicode strings.
 
     .. admonition:: Example
 
@@ -468,6 +468,50 @@ Type strings
 
        >>> dt = np.dtype(('i4', [('r','u1'),('g','u1'),('b','u1'),('a','u1')]))
 
+
+Checking the data type
+======================
+When checking for a specific data type, use ``==`` comparison.
+
+.. admonition:: Example
+
+   >>> a = np.array([1, 2], dtype=np.float32)
+   >>> a.dtype == np.float32
+   True
+
+As opposed to python types, a comparison using ``is`` should not be used.
+
+First, NumPy treats data type specifications (everything that can be passed to
+the :class:`dtype` constructor) as equivalent to the data type object itself.
+This equivalence can only be handled through ``==``, not through ``is``.
+
+.. admonition:: Example
+
+   A :class:`dtype` object is equal to all data type specifications that are
+   equivalent to it.
+
+   >>> a = np.array([1, 2], dtype=float)
+   >>> a.dtype == np.dtype(np.float64)
+   True
+   >>> a.dtype == np.float64
+   True
+   >>> a.dtype == float
+   True
+   >>> a.dtype == "float64"
+   True
+   >>> a.dtype == "d"
+   True
+
+Second, there is no guarantee that data type objects are singletons.
+
+.. admonition:: Example
+
+   Do not use ``is`` because data type objects may or may not be singletons.
+
+   >>> np.dtype(float) is np.dtype(float)
+   True
+   >>> np.dtype([('a', float)]) is np.dtype([('a', float)])
+   False
 
 :class:`dtype`
 ==============

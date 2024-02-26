@@ -269,7 +269,7 @@ NumPy provides several hooks that classes can customize:
    to update meta-information from the "parent." Subclasses inherit
    a default implementation of this method that does nothing.
 
-.. py:method:: class.__array_wrap__(array, context=None)
+.. py:method:: class.__array_wrap__(array, context=None, return_scalar=False)
 
    At the end of every :ref:`ufunc <ufuncs-output-type>`, this method
    is called on the input object with the highest array priority, or
@@ -284,10 +284,16 @@ NumPy provides several hooks that classes can customize:
    NumPy may also call this function without a context from non-ufuncs to
    allow preserving subclass information.
 
+   .. versionchanged:: 2.0
+      ``return_scalar`` is now passed as either ``False`` (usually) or ``True``
+      indicating that NumPy would return a scalar.
+      Subclasses may ignore the value, or return ``array[()]`` to behave more
+      like NumPy.
+
    .. note::
       It is hoped to eventually deprecate this method in favour of
       func:`__array_ufunc__` for ufuncs (and :func:`__array_function__`
-      for a few other functions like :func:`np.squeeze`).
+      for a few other functions like :func:`numpy.squeeze`).
 
 .. py:attribute:: class.__array_priority__
 
@@ -480,7 +486,7 @@ way to create a chararray is to use :meth:`self.view(chararray)
 <ndarray.view>` where *self* is an ndarray of str or unicode
 data-type. However, a chararray can also be created using the
 :meth:`~numpy.char.chararray` constructor, or via the
-:func:`numpy.char.array <_core.defchararray.array>` function:
+:func:`numpy.char.array` function:
 
 .. autosummary::
    :toctree: generated/

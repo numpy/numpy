@@ -7,12 +7,12 @@ name: numpy-dev
 channels:
   - conda-forge
 dependencies:
-  - python=3.9 #need to pin to avoid issues with builds
+  - python=3.11 #need to pin to avoid issues with builds
   - cython>=3.0
   - compilers
   - openblas
   - nomkl
-  - setuptools=59.2.0
+  - setuptools
   - ninja
   - pkg-config
   - meson-python
@@ -26,7 +26,7 @@ dependencies:
   - hypothesis
   # For type annotations
   - typing_extensions>=4.2.0  # needed for python < 3.10
-  - mypy=1.5.1
+  - mypy=1.7.1
   # For building docs
   - sphinx>=4.5.0
   - sphinx-design
@@ -40,7 +40,7 @@ dependencies:
   # NOTE: breathe 4.33.0 collides with sphinx.ext.graphviz
   - breathe>4.33.0
   # For linting
-  - pycodestyle=2.7.0
+  - pycodestyle=2.8.0
   - gitpython
   # Used in some tests
   - cffi

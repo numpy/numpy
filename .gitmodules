@@ -13,3 +13,6 @@
 [submodule "numpy/_core/src/highway"]
 	path = numpy/_core/src/highway
 	url = https://github.com/google/highway.git
+[submodule "numpy/fft/pocketfft"]
+	path = numpy/fft/pocketfft
+	url = https://github.com/mreineck/pocketfft

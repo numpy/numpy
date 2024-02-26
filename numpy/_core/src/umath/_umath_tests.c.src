@@ -12,8 +12,11 @@
 #if defined(NPY_INTERNAL_BUILD)
 #undef NPY_INTERNAL_BUILD
 #endif
+// for add_INT32_negative_indexed
+#define NPY_TARGET_VERSION NPY_2_0_API_VERSION
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
+#include "numpy/ndarrayobject.h"
 #include "numpy/npy_math.h"
 
 #include "npy_pycompat.h"
@@ -23,8 +26,7 @@
 #include "npy_cpu_dispatch.h"
 #include "numpy/npy_cpu.h"
 #include "npy_import.h"
-#include "numpy/experimental_dtype_api.h"
-
+#include "numpy/dtype_api.h"
 
 /*
  *****************************************************************************
@@ -728,10 +730,6 @@ err:
 
 static int
 add_INT32_negative_indexed(PyObject *module, PyObject *dict) {
-    if (import_experimental_dtype_api(__EXPERIMENTAL_DTYPE_API_VERSION) < 0) {
-        return -1;
-    }
-
     PyObject * negative = PyUFunc_FromFuncAndData(NULL, NULL, NULL, 0, 1, 1,
                                     PyUFunc_Zero, "indexed_negative", NULL, 0);
     if (negative == NULL) {
@@ -802,12 +800,10 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
         return NULL;
     }
 
-    import_array();
-    if (PyErr_Occurred()) {
+    if (PyArray_ImportNumPyAPI() < 0) {
         return NULL;
     }
-    import_ufunc();
-    if (PyErr_Occurred()) {
+    if (PyUFunc_ImportUFuncAPI() < 0) {
         return NULL;
     }
 

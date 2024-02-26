@@ -991,7 +991,7 @@ class ABCPolyBase(abc.ABC):
         rcond : float, optional
             Relative condition number of the fit. Singular values smaller
             than this relative to the largest singular value will be
-            ignored. The default value is len(x)*eps, where eps is the
+            ignored. The default value is ``len(x)*eps``, where eps is the
             relative precision of the float type, about 2e-16 in most
             cases.
         full : bool, optional

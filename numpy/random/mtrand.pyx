@@ -21,7 +21,7 @@ from numpy.random cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
             CONS_BOUNDED_LT_0_1, CONS_GTE_1, CONS_GT_1, LEGACY_CONS_POISSON,
-            LEGACY_CONS_NON_NEGATVE_INBOUNDS_LONG,
+            LEGACY_CONS_NON_NEGATIVE_INBOUNDS_LONG,
             double_fill, cont, kahan_sum, cont_broadcast_3,
             check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
             validate_output_shape
@@ -368,15 +368,16 @@ cdef class RandomState:
         else:
             if not isinstance(state, (tuple, list)):
                 raise TypeError('state must be a dict or a tuple.')
-            if state[0] != 'MT19937':
-                raise ValueError('set_state can only be used with legacy MT19937'
-                                 'state instances.')
-            st = {'bit_generator': state[0],
-                  'state': {'key': state[1], 'pos': state[2]}}
-            if len(state) > 3:
-                st['has_gauss'] = state[3]
-                st['gauss'] = state[4]
-                value = st
+            with cython.boundscheck(True):
+                if state[0] != 'MT19937':
+                    raise ValueError('set_state can only be used with legacy '
+                                     'MT19937 state instances.')
+                st = {'bit_generator': state[0],
+                      'state': {'key': state[1], 'pos': state[2]}}
+                if len(state) > 3:
+                    st['has_gauss'] = state[3]
+                    st['gauss'] = state[4]
+                    value = st
 
         self._aug_state.gauss = st.get('gauss', 0.0)
         self._aug_state.has_gauss = st.get('has_gauss', 0)
@@ -3477,7 +3478,7 @@ cdef class RandomState:
 
         if not is_scalar:
             check_array_constraint(p_arr, 'p', CONS_BOUNDED_0_1)
-            check_array_constraint(n_arr, 'n', LEGACY_CONS_NON_NEGATVE_INBOUNDS_LONG)
+            check_array_constraint(n_arr, 'n', LEGACY_CONS_NON_NEGATIVE_INBOUNDS_LONG)
             if size is not None:
                 randoms = <np.ndarray>np.empty(size, np.long)
             else:
@@ -3503,7 +3504,7 @@ cdef class RandomState:
         _dp = PyFloat_AsDouble(p)
         _in = n
         check_constraint(_dp, 'p', CONS_BOUNDED_0_1)
-        check_constraint(<double>_in, 'n', LEGACY_CONS_NON_NEGATVE_INBOUNDS_LONG)
+        check_constraint(<double>_in, 'n', LEGACY_CONS_NON_NEGATIVE_INBOUNDS_LONG)
 
         if size is None:
             with self.lock:
@@ -3971,7 +3972,7 @@ cdef class RandomState:
             if lngood + lnbad < lnsample:
                 raise ValueError("ngood + nbad < nsample")
             out = disc(&legacy_random_hypergeometric, &self._bitgen, size, self.lock, 0, 3,
-                       lngood, 'ngood', LEGACY_CONS_NON_NEGATVE_INBOUNDS_LONG,
+                       lngood, 'ngood', LEGACY_CONS_NON_NEGATIVE_INBOUNDS_LONG,
                        lnbad, 'nbad', CONS_NON_NEGATIVE,
                        lnsample, 'nsample', CONS_GTE_1)
             # Match historical output type
@@ -3981,7 +3982,7 @@ cdef class RandomState:
             raise ValueError("ngood + nbad < nsample")
 
         out = discrete_broadcast_iii(&legacy_random_hypergeometric,&self._bitgen, size, self.lock,
-                                     ongood, 'ngood', LEGACY_CONS_NON_NEGATVE_INBOUNDS_LONG,
+                                     ongood, 'ngood', LEGACY_CONS_NON_NEGATIVE_INBOUNDS_LONG,
                                      onbad, 'nbad', CONS_NON_NEGATIVE,
                                      onsample, 'nsample', CONS_GTE_1)
         # Match historical output type

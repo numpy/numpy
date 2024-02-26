@@ -56,14 +56,18 @@ Matrix and vector products
    dot
    linalg.multi_dot
    vdot
+   vecdot
    inner
    outer
    matmul
+   linalg.matmul (Array API compatible location)
    tensordot
+   linalg.tensordot (Array API compatible location)
    einsum
    einsum_path
    linalg.matrix_power
    kron
+   linalg.cross
 
 Decompositions
 --------------
@@ -71,8 +75,10 @@ Decompositions
    :toctree: generated/
 
    linalg.cholesky
+   linalg.outer
    linalg.qr
    linalg.svd
+   linalg.svdvals
 
 Matrix eigenvalues
 ------------------
@@ -90,6 +96,8 @@ Norms and other numbers
    :toctree: generated/
 
    linalg.norm
+   linalg.matrix_norm (Array API compatible)
+   linalg.vector_norm (Array API compatible)
    linalg.cond
    linalg.det
    linalg.matrix_rank
@@ -111,9 +119,12 @@ Solving equations and inverting matrices
 
 Other matrix operations
 -----------------------
+.. autosummary::
+   :toctree: generated/
 
    diagonal
    linalg.diagonal (Array API compatible)
+   linalg.matrix_transpose (Array API compatible)
 
 Exceptions
 ----------

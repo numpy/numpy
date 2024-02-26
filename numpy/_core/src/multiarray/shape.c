@@ -14,6 +14,7 @@
 
 #include "npy_pycompat.h"
 
+#include "arraywrap.h"
 #include "ctors.h"
 
 #include "shape.h"
@@ -77,7 +78,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
     }
 
     /* Convert to number of bytes. The new count might overflow */
-    elsize = PyArray_DESCR(self)->elsize;
+    elsize = PyArray_ITEMSIZE(self);
     oldnbytes = oldsize * elsize;
     if (npy_mul_sizes_with_overflow(&newnbytes, newsize, elsize)) {
         return PyErr_NoMemory();
@@ -173,7 +174,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         }
         /* make new_strides variable */
         _array_fill_strides(new_strides, new_dimensions, new_nd,
-                            PyArray_DESCR(self)->elsize, PyArray_FLAGS(self),
+                            PyArray_ITEMSIZE(self), PyArray_FLAGS(self),
                             &(((PyArrayObject_fields *)self)->flags));
         memmove(PyArray_DIMS(self), new_dimensions, new_nd*sizeof(npy_intp));
         memmove(PyArray_STRIDES(self), new_strides, new_nd*sizeof(npy_intp));
@@ -567,9 +568,9 @@ PyArray_Squeeze(PyArrayObject *self)
      * __array_wrap__ method
      */
     if (Py_TYPE(self) != &PyArray_Type) {
-        PyArrayObject *tmp = PyArray_SubclassWrap(self, ret);
+        PyObject *wrapped = npy_apply_wrap_simple(self, ret);
         Py_DECREF(ret);
-        ret = tmp;
+        return wrapped;
     }
 
     return (PyObject *)ret;
@@ -623,9 +624,9 @@ PyArray_SqueezeSelected(PyArrayObject *self, npy_bool *axis_flags)
      * __array_wrap__ method
      */
     if (Py_TYPE(self) != &PyArray_Type) {
-        PyArrayObject *tmp = PyArray_SubclassWrap(self, ret);
+        PyObject *wrapped = npy_apply_wrap_simple(self, ret);
         Py_DECREF(ret);
-        ret = tmp;
+        return wrapped;
     }
 
     return (PyObject *)ret;

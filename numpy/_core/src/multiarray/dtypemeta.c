@@ -29,6 +29,8 @@
 
 #include <assert.h>
 
+
+
 static void
 dtypemeta_dealloc(PyArray_DTypeMeta *self) {
     /* Do not accidentally delete a statically defined DType: */
@@ -123,7 +125,7 @@ legacy_setitem_using_DType(PyObject *obj, void *data, void *arr)
                 "supported for basic NumPy DTypes.");
         return -1;
     }
-    setitemfunction *setitem;
+    PyArrayDTypeMeta_SetItem *setitem;
     setitem = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(arr)))->setitem;
     return setitem(PyArray_DESCR(arr), obj, data);
 }
@@ -138,7 +140,7 @@ legacy_getitem_using_DType(void *data, void *arr)
                 "supported for basic NumPy DTypes.");
         return NULL;
     }
-    getitemfunction *getitem;
+    PyArrayDTypeMeta_GetItem *getitem;
     getitem = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(arr)))->getitem;
     return getitem(PyArray_DESCR(arr), data);
 }
@@ -152,9 +154,19 @@ PyArray_ArrFuncs default_funcs = {
         .setitem = &legacy_setitem_using_DType,
 };
 
+/*
+ * Internal version of PyArrayInitDTypeMeta_FromSpec.
+ *
+ * See the documentation of that function for more details.  Does not do any
+ * error checking.
+
+ * Setting priv to a nonzero value indicates that a dtypemeta is being
+ * initialized from inside NumPy, otherwise this function is being called by
+ * the public implementation.
+ */
 NPY_NO_EXPORT int
 dtypemeta_initialize_struct_from_spec(
-        PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *spec)
+        PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *spec, int priv)
 {
     if (DType->dt_slots != NULL) {
         PyErr_Format(PyExc_RuntimeError,
@@ -332,7 +344,8 @@ dtypemeta_initialize_struct_from_spec(
             }
         }
         /* Register the cast! */
-        int res = PyArray_AddCastingImplementation_FromSpec(meth_spec, 0);
+        // priv indicates whether or not the is an internal call
+        int res = PyArray_AddCastingImplementation_FromSpec(meth_spec, priv);
 
         /* Also clean up again, so nobody can get bad ideas... */
         for (int i=0; i < meth_spec->nin + meth_spec->nout; i++) {
@@ -905,7 +918,7 @@ string_known_scalar_types(
 static PyArray_DTypeMeta *
 default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
-    assert(cls->type_num < NPY_NTYPES);
+    assert(cls->type_num < NPY_NTYPES_LEGACY);
     if (NPY_UNLIKELY(NPY_DT_is_abstract(other))) {
         /*
          * The abstract complex has a lower priority than the concrete inexact
@@ -917,13 +930,13 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
                 return cls;
             }
             else if (cls->type_num == NPY_HALF || cls->type_num == NPY_FLOAT) {
-                    return PyArray_DTypeFromTypeNum(NPY_CFLOAT);
+                return NPY_DT_NewRef(&PyArray_CFloatDType);
             }
             else if (cls->type_num == NPY_DOUBLE) {
-                return PyArray_DTypeFromTypeNum(NPY_CDOUBLE);
+                return NPY_DT_NewRef(&PyArray_CDoubleDType);
             }
             else if (cls->type_num == NPY_LONGDOUBLE) {
-                return PyArray_DTypeFromTypeNum(NPY_CLONGDOUBLE);
+                return NPY_DT_NewRef(&PyArray_CLongDoubleDType);
             }
         }
         else if (other == &PyArray_PyFloatAbstractDType) {
@@ -969,7 +982,7 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 static PyArray_DTypeMeta *
 string_unicode_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
-    assert(cls->type_num < NPY_NTYPES && cls != other);
+    assert(cls->type_num < NPY_NTYPES_LEGACY && cls != other);
     if (!NPY_DT_is_legacy(other) || (!PyTypeNum_ISNUMBER(other->type_num) &&
             /* Not numeric so defer unless cls is unicode and other is string */
             !(cls->type_num == NPY_UNICODE && other->type_num == NPY_STRING))) {
@@ -1065,7 +1078,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr,
 
     if (!has_type_set) {
         /* Accept if the type was filled in from an existing builtin dtype */
-        for (int i = 0; i < NPY_NTYPES; i++) {
+        for (int i = 0; i < NPY_NTYPES_LEGACY; i++) {
             PyArray_Descr *builtin = PyArray_DescrFromType(i);
             has_type_set = Py_TYPE(descr) == Py_TYPE(builtin);
             Py_DECREF(builtin);
@@ -1195,7 +1208,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr,
                     void_discover_descr_from_pyobject);
             dt_slots->common_instance = void_common_instance;
             dt_slots->ensure_canonical = void_ensure_canonical;
-            dt_slots->get_fill_zero_loop = 
+            dt_slots->get_fill_zero_loop =
                     npy_get_zerofill_void_and_legacy_user_dtype_loop;
             dt_slots->get_clear_loop =
                     npy_get_clear_void_and_legacy_user_dtype_loop;
@@ -1281,6 +1294,45 @@ static PyMemberDef dtypemeta_members[] = {
     {NULL, 0, 0, 0, NULL},
 };
 
+NPY_NO_EXPORT void
+initialize_legacy_dtypemeta_aliases(PyArray_Descr **_builtin_descrs) {
+    _Bool_dtype = NPY_DTYPE(_builtin_descrs[NPY_BOOL]);
+    _Byte_dtype = NPY_DTYPE(_builtin_descrs[NPY_BYTE]);
+    _UByte_dtype = NPY_DTYPE(_builtin_descrs[NPY_UBYTE]);
+    _Short_dtype = NPY_DTYPE(_builtin_descrs[NPY_SHORT]);
+    _UShort_dtype = NPY_DTYPE(_builtin_descrs[NPY_USHORT]);
+    _Int_dtype = NPY_DTYPE(_builtin_descrs[NPY_INT]);
+    _UInt_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINT]);
+    _Long_dtype = NPY_DTYPE(_builtin_descrs[NPY_LONG]);
+    _ULong_dtype = NPY_DTYPE(_builtin_descrs[NPY_ULONG]);
+    _LongLong_dtype = NPY_DTYPE(_builtin_descrs[NPY_LONGLONG]);
+    _ULongLong_dtype = NPY_DTYPE(_builtin_descrs[NPY_ULONGLONG]);
+    _Int8_dtype = NPY_DTYPE(_builtin_descrs[NPY_INT8]);
+    _UInt8_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINT8]);
+    _Int16_dtype = NPY_DTYPE(_builtin_descrs[NPY_INT16]);
+    _UInt16_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINT16]);
+    _Int32_dtype = NPY_DTYPE(_builtin_descrs[NPY_INT32]);
+    _UInt32_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINT32]);
+    _Int64_dtype = NPY_DTYPE(_builtin_descrs[NPY_INT64]);
+    _UInt64_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINT64]);
+    _Intp_dtype = NPY_DTYPE(_builtin_descrs[NPY_INTP]);
+    _UIntp_dtype = NPY_DTYPE(_builtin_descrs[NPY_UINTP]);
+    _DefaultInt_dtype = NPY_DTYPE(_builtin_descrs[NPY_DEFAULT_INT]);
+    _Half_dtype = NPY_DTYPE(_builtin_descrs[NPY_HALF]);
+    _Float_dtype = NPY_DTYPE(_builtin_descrs[NPY_FLOAT]);
+    _Double_dtype = NPY_DTYPE(_builtin_descrs[NPY_DOUBLE]);
+    _LongDouble_dtype = NPY_DTYPE(_builtin_descrs[NPY_LONGDOUBLE]);
+    _CFloat_dtype = NPY_DTYPE(_builtin_descrs[NPY_CFLOAT]);
+    _CDouble_dtype = NPY_DTYPE(_builtin_descrs[NPY_CDOUBLE]);
+    _CLongDouble_dtype = NPY_DTYPE(_builtin_descrs[NPY_CLONGDOUBLE]);
+    // NPY_STRING is the legacy python2 name
+    _Bytes_dtype = NPY_DTYPE(_builtin_descrs[NPY_STRING]);
+    _Unicode_dtype = NPY_DTYPE(_builtin_descrs[NPY_UNICODE]);
+    _Datetime_dtype = NPY_DTYPE(_builtin_descrs[NPY_DATETIME]);
+    _Timedelta_dtype = NPY_DTYPE(_builtin_descrs[NPY_TIMEDELTA]);
+    _Object_dtype = NPY_DTYPE(_builtin_descrs[NPY_OBJECT]);
+    _Void_dtype = NPY_DTYPE(_builtin_descrs[NPY_VOID]);
+}
 
 NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
@@ -1299,3 +1351,39 @@ NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
     .tp_new = dtypemeta_new,
     .tp_is_gc = dtypemeta_is_gc,
 };
+
+PyArray_DTypeMeta *_Bool_dtype = NULL;
+PyArray_DTypeMeta *_Byte_dtype = NULL;
+PyArray_DTypeMeta *_UByte_dtype = NULL;
+PyArray_DTypeMeta *_Short_dtype = NULL;
+PyArray_DTypeMeta *_UShort_dtype = NULL;
+PyArray_DTypeMeta *_Int_dtype = NULL;
+PyArray_DTypeMeta *_UInt_dtype = NULL;
+PyArray_DTypeMeta *_Long_dtype = NULL;
+PyArray_DTypeMeta *_ULong_dtype = NULL;
+PyArray_DTypeMeta *_LongLong_dtype = NULL;
+PyArray_DTypeMeta *_ULongLong_dtype = NULL;
+PyArray_DTypeMeta *_Int8_dtype = NULL;
+PyArray_DTypeMeta *_UInt8_dtype = NULL;
+PyArray_DTypeMeta *_Int16_dtype = NULL;
+PyArray_DTypeMeta *_UInt16_dtype = NULL;
+PyArray_DTypeMeta *_Int32_dtype = NULL;
+PyArray_DTypeMeta *_UInt32_dtype = NULL;
+PyArray_DTypeMeta *_Int64_dtype = NULL;
+PyArray_DTypeMeta *_UInt64_dtype = NULL;
+PyArray_DTypeMeta *_Intp_dtype = NULL;
+PyArray_DTypeMeta *_UIntp_dtype = NULL;
+PyArray_DTypeMeta *_DefaultInt_dtype = NULL;
+PyArray_DTypeMeta *_Half_dtype = NULL;
+PyArray_DTypeMeta *_Float_dtype = NULL;
+PyArray_DTypeMeta *_Double_dtype = NULL;
+PyArray_DTypeMeta *_LongDouble_dtype = NULL;
+PyArray_DTypeMeta *_CFloat_dtype = NULL;
+PyArray_DTypeMeta *_CDouble_dtype = NULL;
+PyArray_DTypeMeta *_CLongDouble_dtype = NULL;
+PyArray_DTypeMeta *_Bytes_dtype = NULL;
+PyArray_DTypeMeta *_Unicode_dtype = NULL;
+PyArray_DTypeMeta *_Datetime_dtype = NULL;
+PyArray_DTypeMeta *_Timedelta_dtype = NULL;
+PyArray_DTypeMeta *_Object_dtype = NULL;
+PyArray_DTypeMeta *_Void_dtype = NULL;

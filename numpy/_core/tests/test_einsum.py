@@ -23,90 +23,94 @@ global_size_dict = dict(zip(chars, sizes))
 
 
 class TestEinsum:
-    def test_einsum_errors(self):
-        for do_opt in [True, False]:
-            # Need enough arguments
-            assert_raises(ValueError, np.einsum, optimize=do_opt)
-            assert_raises(ValueError, np.einsum, "", optimize=do_opt)
+    @pytest.mark.parametrize("do_opt", [True, False])
+    @pytest.mark.parametrize("einsum_fn", [np.einsum, np.einsum_path])
+    def test_einsum_errors(self, do_opt, einsum_fn):
+        # Need enough arguments
+        assert_raises(ValueError, einsum_fn, optimize=do_opt)
+        assert_raises(ValueError, einsum_fn, "", optimize=do_opt)
 
-            # subscripts must be a string
-            assert_raises(TypeError, np.einsum, 0, 0, optimize=do_opt)
+        # subscripts must be a string
+        assert_raises(TypeError, einsum_fn, 0, 0, optimize=do_opt)
 
-            # out parameter must be an array
-            assert_raises(TypeError, np.einsum, "", 0, out='test',
-                          optimize=do_opt)
+        # issue 4528 revealed a segfault with this call
+        assert_raises(TypeError, einsum_fn, *(None,)*63, optimize=do_opt)
 
-            # order parameter must be a valid order
-            assert_raises(ValueError, np.einsum, "", 0, order='W',
-                          optimize=do_opt)
+        # number of operands must match count in subscripts string
+        assert_raises(ValueError, einsum_fn, "", 0, 0, optimize=do_opt)
+        assert_raises(ValueError, einsum_fn, ",", 0, [0], [0],
+                      optimize=do_opt)
+        assert_raises(ValueError, einsum_fn, ",", [0], optimize=do_opt)
 
-            # casting parameter must be a valid casting
-            assert_raises(ValueError, np.einsum, "", 0, casting='blah',
-                          optimize=do_opt)
+        # can't have more subscripts than dimensions in the operand
+        assert_raises(ValueError, einsum_fn, "i", 0, optimize=do_opt)
+        assert_raises(ValueError, einsum_fn, "ij", [0, 0], optimize=do_opt)
+        assert_raises(ValueError, einsum_fn, "...i", 0, optimize=do_opt)
+        assert_raises(ValueError, einsum_fn, "i...j", [0, 0], optimize=do_opt)
+        assert_raises(ValueError, einsum_fn, "i...", 0, optimize=do_opt)
+        assert_raises(ValueError, einsum_fn, "ij...", [0, 0], optimize=do_opt)
 
-            # dtype parameter must be a valid dtype
-            assert_raises(TypeError, np.einsum, "", 0, dtype='bad_data_type',
-                          optimize=do_opt)
+        # invalid ellipsis
+        assert_raises(ValueError, einsum_fn, "i..", [0, 0], optimize=do_opt)
+        assert_raises(ValueError, einsum_fn, ".i...", [0, 0], optimize=do_opt)
+        assert_raises(ValueError, einsum_fn, "j->..j", [0, 0], optimize=do_opt)
+        assert_raises(ValueError, einsum_fn, "j->.j...", [0, 0],
+                      optimize=do_opt)
 
-            # other keyword arguments are rejected
-            assert_raises(TypeError, np.einsum, "", 0, bad_arg=0,
-                          optimize=do_opt)
+        # invalid subscript character
+        assert_raises(ValueError, einsum_fn, "i%...", [0, 0], optimize=do_opt)
+        assert_raises(ValueError, einsum_fn, "...j$", [0, 0], optimize=do_opt)
+        assert_raises(ValueError, einsum_fn, "i->&", [0, 0], optimize=do_opt)
 
-            # issue 4528 revealed a segfault with this call
-            assert_raises(TypeError, np.einsum, *(None,)*63, optimize=do_opt)
+        # output subscripts must appear in input
+        assert_raises(ValueError, einsum_fn, "i->ij", [0, 0], optimize=do_opt)
 
-            # number of operands must match count in subscripts string
-            assert_raises(ValueError, np.einsum, "", 0, 0, optimize=do_opt)
-            assert_raises(ValueError, np.einsum, ",", 0, [0], [0],
-                          optimize=do_opt)
-            assert_raises(ValueError, np.einsum, ",", [0], optimize=do_opt)
+        # output subscripts may only be specified once
+        assert_raises(ValueError, einsum_fn, "ij->jij", [[0, 0], [0, 0]],
+                      optimize=do_opt)
 
-            # can't have more subscripts than dimensions in the operand
-            assert_raises(ValueError, np.einsum, "i", 0, optimize=do_opt)
-            assert_raises(ValueError, np.einsum, "ij", [0, 0], optimize=do_opt)
-            assert_raises(ValueError, np.einsum, "...i", 0, optimize=do_opt)
-            assert_raises(ValueError, np.einsum, "i...j", [0, 0], optimize=do_opt)
-            assert_raises(ValueError, np.einsum, "i...", 0, optimize=do_opt)
-            assert_raises(ValueError, np.einsum, "ij...", [0, 0], optimize=do_opt)
+        # dimensions must match when being collapsed
+        assert_raises(ValueError, einsum_fn, "ii",
+                      np.arange(6).reshape(2, 3), optimize=do_opt)
+        assert_raises(ValueError, einsum_fn, "ii->i",
+                      np.arange(6).reshape(2, 3), optimize=do_opt)
 
-            # invalid ellipsis
-            assert_raises(ValueError, np.einsum, "i..", [0, 0], optimize=do_opt)
-            assert_raises(ValueError, np.einsum, ".i...", [0, 0], optimize=do_opt)
-            assert_raises(ValueError, np.einsum, "j->..j", [0, 0], optimize=do_opt)
-            assert_raises(ValueError, np.einsum, "j->.j...", [0, 0], optimize=do_opt)
+        with assert_raises_regex(ValueError, "'b'"):
+            # gh-11221 - 'c' erroneously appeared in the error message
+            a = np.ones((3, 3, 4, 5, 6))
+            b = np.ones((3, 4, 5))
+            einsum_fn('aabcb,abc', a, b)
 
-            # invalid subscript character
-            assert_raises(ValueError, np.einsum, "i%...", [0, 0], optimize=do_opt)
-            assert_raises(ValueError, np.einsum, "...j$", [0, 0], optimize=do_opt)
-            assert_raises(ValueError, np.einsum, "i->&", [0, 0], optimize=do_opt)
+    @pytest.mark.parametrize("do_opt", [True, False])
+    def test_einsum_specific_errors(self, do_opt):
+        # out parameter must be an array
+        assert_raises(TypeError, np.einsum, "", 0, out='test',
+                      optimize=do_opt)
 
-            # output subscripts must appear in input
-            assert_raises(ValueError, np.einsum, "i->ij", [0, 0], optimize=do_opt)
+        # order parameter must be a valid order
+        assert_raises(ValueError, np.einsum, "", 0, order='W',
+                      optimize=do_opt)
 
-            # output subscripts may only be specified once
-            assert_raises(ValueError, np.einsum, "ij->jij", [[0, 0], [0, 0]],
-                          optimize=do_opt)
+        # casting parameter must be a valid casting
+        assert_raises(ValueError, np.einsum, "", 0, casting='blah',
+                      optimize=do_opt)
 
-            # dimensions much match when being collapsed
-            assert_raises(ValueError, np.einsum, "ii",
-                          np.arange(6).reshape(2, 3), optimize=do_opt)
-            assert_raises(ValueError, np.einsum, "ii->i",
-                          np.arange(6).reshape(2, 3), optimize=do_opt)
+        # dtype parameter must be a valid dtype
+        assert_raises(TypeError, np.einsum, "", 0, dtype='bad_data_type',
+                      optimize=do_opt)
 
-            # broadcasting to new dimensions must be enabled explicitly
-            assert_raises(ValueError, np.einsum, "i", np.arange(6).reshape(2, 3),
-                          optimize=do_opt)
-            assert_raises(ValueError, np.einsum, "i->i", [[0, 1], [0, 1]],
-                          out=np.arange(4).reshape(2, 2), optimize=do_opt)
-            with assert_raises_regex(ValueError, "'b'"):
-                # gh-11221 - 'c' erroneously appeared in the error message
-                a = np.ones((3, 3, 4, 5, 6))
-                b = np.ones((3, 4, 5))
-                np.einsum('aabcb,abc', a, b)
+        # other keyword arguments are rejected
+        assert_raises(TypeError, np.einsum, "", 0, bad_arg=0, optimize=do_opt)
 
-            # Check order kwarg, asanyarray allows 1d to pass through
-            assert_raises(ValueError, np.einsum, "i->i", np.arange(6).reshape(-1, 1),
-                          optimize=do_opt, order='d')
+        # broadcasting to new dimensions must be enabled explicitly
+        assert_raises(ValueError, np.einsum, "i", np.arange(6).reshape(2, 3),
+                      optimize=do_opt)
+        assert_raises(ValueError, np.einsum, "i->i", [[0, 1], [0, 1]],
+                      out=np.arange(4).reshape(2, 2), optimize=do_opt)
+
+        # Check order kwarg, asanyarray allows 1d to pass through
+        assert_raises(ValueError, np.einsum, "i->i",
+                      np.arange(6).reshape(-1, 1), optimize=do_opt, order='d')
 
     def test_einsum_object_errors(self):
         # Exceptions created by object arithmetic should

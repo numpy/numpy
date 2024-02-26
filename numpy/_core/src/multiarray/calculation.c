@@ -135,7 +135,7 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
                 "data type not ordered");
         goto fail;
     }
-    elsize = PyArray_DESCR(ap)->elsize;
+    elsize = PyArray_ITEMSIZE(ap);
     m = PyArray_DIMS(ap)[PyArray_NDIM(ap)-1];
     if (m == 0) {
         PyErr_Format(PyExc_ValueError,
@@ -700,7 +700,7 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
  finish:
     Py_DECREF(f);
     Py_DECREF(out);
-    if (ret_int) {
+    if (ret_int && ret != NULL) {
         Py_INCREF(PyArray_DESCR(a));
         tmp = PyArray_CastToType((PyArrayObject *)ret,
                                  PyArray_DESCR(a), PyArray_ISFORTRAN(a));

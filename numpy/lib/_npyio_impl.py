@@ -1,3 +1,6 @@
+"""
+IO related functions.
+"""
 import os
 import re
 import functools
@@ -165,7 +168,7 @@ class NpzFile(Mapping):
     >>> isinstance(npz, np.lib.npyio.NpzFile)
     True
     >>> npz
-    NpzFile 'object' with keys x, y
+    NpzFile 'object' with keys: x, y
     >>> sorted(npz.files)
     ['x', 'y']
     >>> npz['x']  # getitem access
@@ -591,9 +594,9 @@ def savez(file, *args, **kwds):
     in the archive contains one variable in ``.npy`` format. For a
     description of the ``.npy`` format, see :py:mod:`numpy.lib.format`.
 
-    When opening the saved ``.npz`` file with `load` a `NpzFile` object is
-    returned. This is a dictionary-like object which can be queried for
-    its list of arrays (with the ``.files`` attribute), and for the arrays
+    When opening the saved ``.npz`` file with `load` a `~lib.npyio.NpzFile`
+    object is returned. This is a dictionary-like object which can be queried
+    for its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
     Keys passed in `kwds` are used as filenames inside the ZIP archive.
@@ -687,9 +690,9 @@ def savez_compressed(file, *args, **kwds):
     :py:mod:`numpy.lib.format`.
 
 
-    When opening the saved ``.npz`` file with `load` a `NpzFile` object is
-    returned. This is a dictionary-like object which can be queried for
-    its list of arrays (with the ``.files`` attribute), and for the arrays
+    When opening the saved ``.npz`` file with `load` a `~lib.npyio.NpzFile`
+    object is returned. This is a dictionary-like object which can be queried
+    for its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
     Examples
@@ -1249,9 +1252,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     This example shows how `converters` can be used to convert a field
     with a trailing minus sign into a negative number.
 
-    >>> s = StringIO('10.01 31.25-\n19.22 64.31\n17.57- 63.94')
+    >>> s = StringIO("10.01 31.25-\n19.22 64.31\n17.57- 63.94")
     >>> def conv(fld):
-    ...     return -float(fld[:-1]) if fld.endswith(b'-') else float(fld)
+    ...     return -float(fld[:-1]) if fld.endswith("-") else float(fld)
     ...
     >>> np.loadtxt(s, converters=conv)
     array([[ 10.01, -31.25],
@@ -1279,8 +1282,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     Or a format where the ``-`` sign comes after the number:
 
-    >>> s = StringIO('10.01 31.25-\n19.22 64.31\n17.57- 63.94')
-    >>> conv = lambda x: -float(x[:-1]) if x.endswith('-') else float(x)
+    >>> s = StringIO("10.01 31.25-\n19.22 64.31\n17.57- 63.94")
+    >>> conv = lambda x: -float(x[:-1]) if x.endswith("-") else float(x)
     >>> np.loadtxt(s, converters=conv)
     array([[ 10.01, -31.25],
            [ 19.22,  64.31],
@@ -1383,13 +1386,13 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         case `delimiter` is ignored. For complex `X`, the legal options
         for `fmt` are:
 
-        * a single specifier, `fmt='%.4e'`, resulting in numbers formatted
-          like `' (%s+%sj)' % (fmt, fmt)`
+        * a single specifier, ``fmt='%.4e'``, resulting in numbers formatted
+          like ``' (%s+%sj)' % (fmt, fmt)``
         * a full string specifying every real and imaginary part, e.g.
-          `' %.4e %+.4ej %.4e %+.4ej %.4e %+.4ej'` for 3 columns
+          ``' %.4e %+.4ej %.4e %+.4ej %.4e %+.4ej'`` for 3 columns
         * a list of specifiers, one per column - in this case, the real
           and imaginary part must have separate specifiers,
-          e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns
+          e.g. ``['%.3e + %.3ej', '(%.15e%+.15ej)']`` for 2 columns
     delimiter : str, optional
         String or character separating columns.
     newline : str, optional
@@ -1766,10 +1769,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     names : {None, True, str, sequence}, optional
         If `names` is True, the field names are read from the first line after
         the first `skip_header` lines. This line can optionally be preceded
-        by a comment delimiter. If `names` is a sequence or a single-string of
-        comma-separated names, the names will be used to define the field names
-        in a structured dtype. If `names` is None, the names of the dtype
-        fields will be used, if any.
+        by a comment delimiter. Any content before the comment delimiter is
+        discarded. If `names` is a sequence or a single-string of
+        comma-separated names, the names will be used to define the field
+        names in a structured dtype. If `names` is None, the names of the
+        dtype fields will be used, if any.
     excludelist : sequence, optional
         A list of names to exclude. This list is appended to the default list
         ['return','file','print']. Excluded names are appended with an
@@ -1844,8 +1848,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     -----
     * When spaces are used as delimiters, or when no delimiter has been given
       as input, there should not be any missing data between two fields.
-    * When variables are named (either by a flexible dtype or with `names`),
-      there must not be any header in the file (else a ValueError
+    * When variables are named (either by a flexible dtype or with a `names`
+      sequence), there must not be any header in the file (else a ValueError
       exception is raised).
     * Individual values are not stripped of spaces by default.
       When using a custom converter, make sure the function does remove spaces.
@@ -1877,8 +1881,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> data = np.genfromtxt(s, dtype=None,
     ... names = ['myint','myfloat','mystring'], delimiter=",")
     >>> data
-    array((1, 1.3, b'abcde'),
-          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', 'S5')])
+    array((1, 1.3, 'abcde'),
+          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', '<U5')])
 
     Specifying dtype and names
 
@@ -1895,8 +1899,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> data = np.genfromtxt(s, dtype=None, names=['intvar','fltvar','strvar'],
     ...     delimiter=[1,3,5])
     >>> data
-    array((1, 1.3, b'abcde'),
-          dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', 'S5')])
+    array((1, 1.3, 'abcde'),
+          dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', '<U5')])
 
     An example to show comments
 
