@@ -202,6 +202,7 @@ jobs:
       run: |
         pip install -r requirements/build_requirements.txt
         pip install pytest pytest-xdist hypothesis typing_extensions
+        sudo apt-get update
         sudo apt-get install libopenblas-dev cmake
         sudo apt-get remove pkg-config
 
@@ -228,6 +229,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
+        sudo apt-get update
         sudo apt-get install liblapack-dev pkg-config
 
     - name: Build
@@ -351,6 +353,7 @@ jobs:
       run: |
         pip install -r requirements/build_requirements.txt
         pip install pytest pytest-xdist hypothesis typing_extensions
+        sudo apt-get update
         sudo apt-get install libblis-dev libopenblas-dev pkg-config
 
     - name: Add BLIS pkg-config file
@@ -386,6 +389,7 @@ jobs:
       run: |
         pip install -r requirements/build_requirements.txt
         pip install pytest pytest-xdist hypothesis typing_extensions
+        sudo apt-get update
         sudo apt-get install libatlas-base-dev pkg-config
 
     - name: Build
