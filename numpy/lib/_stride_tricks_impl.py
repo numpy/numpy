@@ -3,6 +3,12 @@ Utilities that manipulate strides to achieve desirable effects.
 
 An explanation of strides can be found in the :ref:`arrays.ndarray`.
 
+Functions
+---------
+
+.. autosummary::
+   :toctree: generated/
+
 """
 import numpy as np
 from numpy._core.numeric import normalize_axis_tuple
@@ -34,6 +40,7 @@ def _maybe_view_as_subclass(original_array, new_array):
     return new_array
 
 
+@set_module("numpy.lib.stride_tricks")
 def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     """
     Create a view into the array with the given shape and strides.
@@ -119,7 +126,9 @@ def _sliding_window_view_dispatcher(x, window_shape, axis=None, *,
     return (x,)
 
 
-@array_function_dispatch(_sliding_window_view_dispatcher)
+@array_function_dispatch(
+    _sliding_window_view_dispatcher, module="numpy.lib.stride_tricks"
+)
 def sliding_window_view(x, window_shape, axis=None, *,
                         subok=False, writeable=False):
     """
@@ -195,6 +204,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
 
     Examples
     --------
+    >>> from numpy.lib.stride_tricks import sliding_window_view
     >>> x = np.arange(6)
     >>> x.shape
     (6,)
@@ -492,7 +502,7 @@ def broadcast_arrays(*args, subok=False):
 
     Returns
     -------
-    broadcasted : list of arrays
+    broadcasted : tuple of arrays
         These arrays are views on the original arrays.  They are typically
         not contiguous.  Furthermore, more than one element of a
         broadcasted array may refer to a single memory location. If you need
@@ -516,17 +526,19 @@ def broadcast_arrays(*args, subok=False):
     >>> x = np.array([[1,2,3]])
     >>> y = np.array([[4],[5]])
     >>> np.broadcast_arrays(x, y)
-    [array([[1, 2, 3],
-           [1, 2, 3]]), array([[4, 4, 4],
-           [5, 5, 5]])]
+    (array([[1, 2, 3],
+            [1, 2, 3]]),
+     array([[4, 4, 4],
+            [5, 5, 5]]))
 
     Here is a useful idiom for getting contiguous copies instead of
     non-contiguous views.
 
     >>> [np.array(a) for a in np.broadcast_arrays(x, y)]
     [array([[1, 2, 3],
-           [1, 2, 3]]), array([[4, 4, 4],
-           [5, 5, 5]])]
+            [1, 2, 3]]),
+     array([[4, 4, 4],
+            [5, 5, 5]])]
 
     """
     # nditer is not used here to avoid the limit of 32 arrays.
@@ -534,7 +546,7 @@ def broadcast_arrays(*args, subok=False):
     # return np.nditer(args, flags=['multi_index', 'zerosize_ok'],
     #                  order='C').itviews
 
-    args = [np.array(_m, copy=False, subok=subok) for _m in args]
+    args = tuple(np.array(_m, copy=False, subok=subok) for _m in args)
 
     shape = _broadcast_shape(*args)
 
@@ -542,5 +554,5 @@ def broadcast_arrays(*args, subok=False):
         # Common case where nothing needs to be broadcasted.
         return args
 
-    return [_broadcast_to(array, shape, subok=subok, readonly=False)
-            for array in args]
+    return tuple(_broadcast_to(array, shape, subok=subok, readonly=False)
+                 for array in args)

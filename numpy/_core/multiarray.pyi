@@ -132,6 +132,8 @@ def empty_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike = ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> _ArrayType: ...
 @overload
 def empty_like(
@@ -140,6 +142,8 @@ def empty_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike = ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def empty_like(
@@ -148,6 +152,8 @@ def empty_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike = ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[Any]: ...
 @overload
 def empty_like(
@@ -156,6 +162,8 @@ def empty_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike = ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def empty_like(
@@ -164,6 +172,8 @@ def empty_like(
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike = ...,
+    *,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -228,6 +238,7 @@ def zeros(
     dtype: None = ...,
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
@@ -236,6 +247,7 @@ def zeros(
     dtype: _DTypeLike[_SCT],
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -244,6 +256,7 @@ def zeros(
     dtype: DTypeLike,
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
@@ -253,6 +266,7 @@ def empty(
     dtype: None = ...,
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
@@ -261,6 +275,7 @@ def empty(
     dtype: _DTypeLike[_SCT],
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -269,6 +284,7 @@ def empty(
     dtype: DTypeLike,
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
@@ -468,6 +484,7 @@ def asarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -476,6 +493,7 @@ def asarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
@@ -484,6 +502,7 @@ def asarray(
     dtype: _DTypeLike[_SCT],
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -492,6 +511,7 @@ def asarray(
     dtype: DTypeLike,
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
@@ -714,6 +734,7 @@ def arange(  # type: ignore[misc]
     stop: _IntLike_co,
     /, *,
     dtype: None = ...,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[signedinteger[Any]]: ...
 @overload
@@ -723,6 +744,7 @@ def arange(  # type: ignore[misc]
     step: _IntLike_co = ...,
     dtype: None = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[signedinteger[Any]]: ...
 @overload
@@ -730,6 +752,7 @@ def arange(  # type: ignore[misc]
     stop: _FloatLike_co,
     /, *,
     dtype: None = ...,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
@@ -739,6 +762,7 @@ def arange(  # type: ignore[misc]
     step: _FloatLike_co = ...,
     dtype: None = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
@@ -746,6 +770,7 @@ def arange(
     stop: _TD64Like_co,
     /, *,
     dtype: None = ...,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[timedelta64]: ...
 @overload
@@ -755,6 +780,7 @@ def arange(
     step: _TD64Like_co = ...,
     dtype: None = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[timedelta64]: ...
 @overload
@@ -764,6 +790,7 @@ def arange(  # both start and stop must always be specified for datetime64
     step: datetime64 = ...,
     dtype: None = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[datetime64]: ...
 @overload
@@ -771,6 +798,7 @@ def arange(
     stop: Any,
     /, *,
     dtype: _DTypeLike[_SCT],
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -780,6 +808,7 @@ def arange(
     step: Any = ...,
     dtype: _DTypeLike[_SCT] = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -787,6 +816,7 @@ def arange(
     stop: Any, /,
     *,
     dtype: DTypeLike,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
@@ -796,6 +826,7 @@ def arange(
     step: Any = ...,
     dtype: DTypeLike = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 

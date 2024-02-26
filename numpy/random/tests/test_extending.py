@@ -39,11 +39,8 @@ except ImportError:
     cython = None
 else:
     from numpy._utils import _pep440
-    # Cython 0.29.30 is required for Python 3.11 and there are
-    # other fixes in the 0.29 series that are needed even for earlier
-    # Python versions.
     # Note: keep in sync with the one in pyproject.toml
-    required_version = '0.29.35'
+    required_version = '3.0.6'
     if _pep440.parse(cython_version) < _pep440.Version(required_version):
         # too old or wrong cython, skip the test
         cython = None

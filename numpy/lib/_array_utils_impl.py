@@ -1,3 +1,6 @@
+"""
+Miscellaneous utils.
+"""
 from numpy._core import asarray
 from numpy._core.numeric import normalize_axis_tuple, normalize_axis_index
 from numpy._utils import set_module

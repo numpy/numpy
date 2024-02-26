@@ -7,7 +7,7 @@ import time
 import pytest
 
 import numpy as np
-from numpy.testing import IS_WASM
+from numpy.testing import assert_array_equal, IS_WASM
 
 # This import is copied from random.tests.test_extending
 try:
@@ -18,11 +18,8 @@ except ImportError:
 else:
     from numpy._utils import _pep440
 
-    # Cython 0.29.30 is required for Python 3.11 and there are
-    # other fixes in the 0.29 series that are needed even for earlier
-    # Python versions.
     # Note: keep in sync with the one in pyproject.toml
-    required_version = "0.29.30"
+    required_version = "3.0.6"
     if _pep440.parse(cython_version) < _pep440.Version(required_version):
         # too old or wrong cython, skip the test
         cython = None
@@ -39,6 +36,13 @@ def install_temp(tmpdir_factory):
     srcdir = os.path.join(os.path.dirname(__file__), 'examples', 'cython')
     build_dir = tmpdir_factory.mktemp("cython_test") / "build"
     os.makedirs(build_dir, exist_ok=True)
+    # Ensure we use the correct Python interpreter even when `meson` is
+    # installed in a different Python environment (see gh-24956)
+    native_file = str(build_dir / 'interpreter-native-file.ini')
+    with open(native_file, 'w') as f:
+        f.write("[binaries]\n")
+        f.write(f"python = '{sys.executable}'")
+
     try:
         subprocess.check_call(["meson", "--version"])
     except FileNotFoundError:
@@ -46,16 +50,24 @@ def install_temp(tmpdir_factory):
     if sys.platform == "win32":
         subprocess.check_call(["meson", "setup",
                                "--buildtype=release",
-                               "--vsenv", str(srcdir)],
+                               "--vsenv", "--native-file", native_file,
+                               str(srcdir)],
                               cwd=build_dir,
                               )
     else:
-        subprocess.check_call(["meson", "setup", str(srcdir)],
+        subprocess.check_call(["meson", "setup",
+                               "--native-file", native_file, str(srcdir)],
                               cwd=build_dir
                               )
-    subprocess.check_call(["meson", "compile", "-vv"], cwd=build_dir)
+    try:
+        subprocess.check_call(["meson", "compile", "-vv"], cwd=build_dir)
+    except subprocess.CalledProcessError as p:
+        print(f"{p.stdout=}")
+        print(f"{p.stderr=}")
+        raise
 
     sys.path.append(str(build_dir))
+
 
 def test_is_timedelta64_object(install_temp):
     import checks
@@ -194,6 +206,12 @@ def test_multiiter_fields(install_temp, arrays):
     )
 
 
+def test_dtype_flags(install_temp):
+    import checks
+    dtype = np.dtype("i,O")  # dtype with somewhat interesting flags
+    assert dtype.flags == checks.get_dtype_flags(dtype)
+
+
 def test_conv_intp(install_temp):
     import checks
 
@@ -249,3 +267,10 @@ def test_npyiter_api(install_temp):
             for x, y in zip(checks.get_npyiter_itviews(it), it.itviews)
         ]
     )
+
+
+def test_fillwithbytes(install_temp):
+    import checks
+
+    arr = checks.compile_fillwithbyte()
+    assert_array_equal(arr, np.ones((1, 2)))

@@ -686,7 +686,7 @@ class TestUnique:
         # test for ticket #4785
         a = [(1, 2), (1, 2), (2, 3)]
         unq = [1, 2, 3]
-        inv = [0, 1, 0, 1, 1, 2]
+        inv = [[0, 1], [0, 1], [1, 2]]
         a1 = unique(a)
         assert_array_equal(a1, unq)
         a2, a2_inv = unique(a, return_inverse=True)
@@ -810,6 +810,16 @@ class TestUnique:
         uniq = unique(x, axis=axis)
         assert_array_equal(uniq, [1, 2, 3, 4])
 
+    @pytest.mark.parametrize("axis", [None, 0, -1])
+    def test_unique_inverse_with_axis(self, axis):
+        x = np.array([[4, 4, 3], [2, 2, 1], [2, 2, 1], [4, 4, 3]])
+        uniq, inv = unique(x, return_inverse=True, axis=axis)
+        assert_equal(inv.ndim, x.ndim)
+        if axis is None:
+            assert_array_equal(x, np.take(uniq, inv))
+        else:
+            assert_array_equal(x, np.take_along_axis(uniq, inv, axis=axis))
+
     def test_unique_axis_zeros(self):
         # issue 15559
         single_zero = np.empty(shape=(2, 0), dtype=np.int8)
@@ -820,7 +830,7 @@ class TestUnique:
         assert_equal(uniq.dtype, single_zero.dtype)
         assert_array_equal(uniq, np.empty(shape=(1, 0)))
         assert_array_equal(idx, np.array([0]))
-        assert_array_equal(inv, np.array([0, 0]))
+        assert_array_equal(inv, np.array([[0], [0]]))
         assert_array_equal(cnt, np.array([2]))
 
         # there's 0 elements of shape (2,) along axis 1
@@ -830,7 +840,7 @@ class TestUnique:
         assert_equal(uniq.dtype, single_zero.dtype)
         assert_array_equal(uniq, np.empty(shape=(2, 0)))
         assert_array_equal(idx, np.array([]))
-        assert_array_equal(inv, np.array([]))
+        assert_array_equal(inv, np.empty((1, 0)))
         assert_array_equal(cnt, np.array([]))
 
         # test a "complicated" shape
@@ -899,7 +909,7 @@ class TestUnique:
         msg = "Unique's return_index=True failed with axis=0"
         assert_array_equal(data[idx], uniq, msg)
         msg = "Unique's return_inverse=True failed with axis=0"
-        assert_array_equal(uniq[inv], data)
+        assert_array_equal(np.take_along_axis(uniq, inv, axis=0), data)
         msg = "Unique's return_counts=True failed with axis=0"
         assert_array_equal(cnt, np.array([2, 2]), msg)
 
@@ -908,7 +918,7 @@ class TestUnique:
         msg = "Unique's return_index=True failed with axis=1"
         assert_array_equal(data[:, idx], uniq)
         msg = "Unique's return_inverse=True failed with axis=1"
-        assert_array_equal(uniq[:, inv], data)
+        assert_array_equal(np.take_along_axis(uniq, inv, axis=1), data)
         msg = "Unique's return_counts=True failed with axis=1"
         assert_array_equal(cnt, np.array([2, 1, 1]), msg)
 
@@ -919,3 +929,45 @@ class TestUnique:
         not_unq = np.unique(a, equal_nan=False)
         assert_array_equal(unq, np.array([1, np.nan]))
         assert_array_equal(not_unq, np.array([1, np.nan, np.nan, np.nan]))
+
+    def test_unique_array_api_functions(self):
+        arr = np.array([np.nan, 1, 4, 1, 3, 4, np.nan, 5, 1])
+
+        for res_unique_array_api, res_unique in [
+            (
+                np.unique_values(arr),
+                np.unique(arr, equal_nan=False)
+            ),
+            (
+                np.unique_counts(arr),
+                np.unique(arr, return_counts=True, equal_nan=False)
+            ),
+            (
+                np.unique_inverse(arr),
+                np.unique(arr, return_inverse=True, equal_nan=False)
+            ),
+            (
+                np.unique_all(arr),
+                np.unique(
+                    arr,
+                    return_index=True,
+                    return_inverse=True,
+                    return_counts=True,
+                    equal_nan=False
+                )
+            )
+        ]:
+            assert len(res_unique_array_api) == len(res_unique)
+            for actual, expected in zip(res_unique_array_api, res_unique):
+                assert_array_equal(actual, expected)
+
+    def test_unique_inverse_shape(self):
+        # Regression test for https://github.com/numpy/numpy/issues/25552
+        arr = np.array([[1, 2, 3], [2, 3, 1]])
+        expected_values, expected_inverse = np.unique(arr, return_inverse=True)
+        expected_inverse = expected_inverse.reshape(arr.shape)
+        for func in np.unique_inverse, np.unique_all:
+            result = func(arr)
+            assert_array_equal(expected_values, result.values)
+            assert_array_equal(expected_inverse, result.inverse_indices)
+            assert_array_equal(arr, result.values[result.inverse_indices])

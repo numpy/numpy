@@ -18,6 +18,7 @@ import re
 from pathlib import Path
 from itertools import dropwhile
 import argparse
+import copy
 
 from . import crackfortran
 from . import rules
@@ -190,7 +191,7 @@ https://numpy.org/doc/stable/f2py/index.html\n"""
 
 def scaninputline(inputline):
     files, skipfuncs, onlyfuncs, debug = [], [], [], []
-    f, f2, f3, f5, f6, f7, f8, f9, f10 = 1, 0, 0, 0, 0, 0, 0, 0, 0
+    f, f2, f3, f5, f6, f8, f9, f10 = 1, 0, 0, 0, 0, 0, 0, 0
     verbose = 1
     emptygen = True
     dolc = -1
@@ -198,7 +199,7 @@ def scaninputline(inputline):
     dorestdoc = 0
     wrapfuncs = 1
     buildpath = '.'
-    include_paths = []
+    include_paths, inputline = get_includes(inputline)
     signsfile, modulename = None, None
     options = {'buildpath': buildpath,
                'coutput': None,
@@ -258,14 +259,6 @@ def scaninputline(inputline):
         elif l[:8] == '-include':
             cfuncs.outneeds['userincludes'].append(l[9:-1])
             cfuncs.userincludes[l[9:-1]] = '#include ' + l[8:]
-        elif l[:15] in '--include_paths':
-            outmess(
-                'f2py option --include_paths is deprecated, use --include-paths instead.\n')
-            f7 = 1
-        elif l[:15] in '--include-paths':
-            # Similar to using -I with -c, however this is
-            # also used during generation of wrappers
-            f7 = 1
         elif l == '--skip-empty-wrappers':
             emptygen = False
         elif l[0] == '-':
@@ -280,9 +273,6 @@ def scaninputline(inputline):
         elif f6:
             f6 = 0
             buildpath = l
-        elif f7:
-            f7 = 0
-            include_paths.extend(l.split(os.pathsep))
         elif f8:
             f8 = 0
             options["coutput"] = l
@@ -450,12 +440,11 @@ def run_main(comline_list):
     fobjhsrc = os.path.join(f2pydir, 'src', 'fortranobject.h')
     fobjcsrc = os.path.join(f2pydir, 'src', 'fortranobject.c')
     # gh-22819 -- begin
-    parser = make_f2py_parser()
+    parser = make_f2py_compile_parser()
     args, comline_list = parser.parse_known_args(comline_list)
     pyf_files, _ = filter_files("", "[.]pyf([.]src|)", comline_list)
     # Checks that no existing modulename is defined in a pyf file
     # TODO: Remove all this when scaninputline is replaced
-    modname = "untitled"  # Default
     if args.module_name:
         if "-h" in comline_list:
             modname = (
@@ -465,7 +454,7 @@ def run_main(comline_list):
             modname = validate_modulename(
                 pyf_files, args.module_name
             )  # Validate modname when -h is not present
-    comline_list += ['-m', modname]  # needed for the rest of scaninputline
+        comline_list += ['-m', modname]  # needed for the rest of scaninputline
     # gh-22819 -- end
     files, options = scaninputline(comline_list)
     auxfuncs.options = options
@@ -533,7 +522,35 @@ def get_prefix(module):
     p = os.path.dirname(os.path.dirname(module.__file__))
     return p
 
-def make_f2py_parser():
+
+class CombineIncludePaths(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        include_paths_set = set(getattr(namespace, 'include_paths', []) or [])
+        if option_string == "--include_paths":
+            outmess("Use --include-paths or -I instead of --include_paths which will be removed")
+        if option_string == "--include-paths" or option_string == "--include_paths":
+            include_paths_set.update(values.split(':'))
+        else:
+            include_paths_set.add(values)
+        setattr(namespace, 'include_paths', list(include_paths_set))
+
+def include_parser():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("-I", dest="include_paths", action=CombineIncludePaths)
+    parser.add_argument("--include-paths", dest="include_paths", action=CombineIncludePaths)
+    parser.add_argument("--include_paths", dest="include_paths", action=CombineIncludePaths)
+    return parser
+
+def get_includes(iline):
+    iline = (' '.join(iline)).split()
+    parser = include_parser()
+    args, remain = parser.parse_known_args(iline)
+    ipaths = args.include_paths
+    if args.include_paths is None:
+        ipaths = []
+    return ipaths, remain
+
+def make_f2py_compile_parser():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--dep", action="append", dest="dependencies")
     parser.add_argument("--backend", choices=['meson', 'distutils'], default='distutils')
@@ -543,7 +560,7 @@ def make_f2py_parser():
 def preparse_sysargv():
     # To keep backwards bug compatibility, newer flags are handled by argparse,
     # and `sys.argv` is passed to the rest of `f2py` as is.
-    parser = make_f2py_parser()
+    parser = make_f2py_compile_parser()
 
     args, remaining_argv = parser.parse_known_args()
     sys.argv = [sys.argv[0]] + remaining_argv
@@ -660,19 +677,19 @@ def run_compile():
     if '--quiet' in f2py_flags:
         setup_flags.append('--quiet')
 
+    # Ugly filter to remove everything but sources
     sources = sys.argv[1:]
-    for optname in ['--include_paths', '--include-paths', '--f2cmap']:
-        if optname in sys.argv:
-            i = sys.argv.index(optname)
-            f2py_flags.extend(sys.argv[i:i + 2])
-            del sys.argv[i + 1], sys.argv[i]
-            sources = sys.argv[1:]
+    f2cmapopt = '--f2cmap'
+    if f2cmapopt in sys.argv:
+        i = sys.argv.index(f2cmapopt)
+        f2py_flags.extend(sys.argv[i:i + 2])
+        del sys.argv[i + 1], sys.argv[i]
+        sources = sys.argv[1:]
 
     pyf_files, _sources = filter_files("", "[.]pyf([.]src|)", sources)
     sources = pyf_files + _sources
     modulename = validate_modulename(pyf_files, modulename)
     extra_objects, sources = filter_files('', '[.](o|a|so|dylib)', sources)
-    include_dirs, sources = filter_files('-I', '', sources, remove_prefix=1)
     library_dirs, sources = filter_files('-L', '', sources, remove_prefix=1)
     libraries, sources = filter_files('-l', '', sources, remove_prefix=1)
     undef_macros, sources = filter_files('-U', '', sources, remove_prefix=1)
@@ -688,13 +705,15 @@ def run_compile():
 
     # Construct wrappers / signatures / things
     if backend_key == 'meson':
-        outmess('Using meson backend\nWill pass --lower to f2py\nSee https://numpy.org/doc/stable/f2py/buildtools/meson.html\n')
-        f2py_flags.append('--lower')
-        if pyf_files:
-            run_main(f" {' '.join(f2py_flags)} {' '.join(pyf_files)}".split())
-        else:
+        if not pyf_files:
+            outmess('Using meson backend\nWill pass --lower to f2py\nSee https://numpy.org/doc/stable/f2py/buildtools/meson.html\n')
+            f2py_flags.append('--lower')
             run_main(f" {' '.join(f2py_flags)} -m {modulename} {' '.join(sources)}".split())
+        else:
+            run_main(f" {' '.join(f2py_flags)} {' '.join(pyf_files)}".split())
 
+    # Order matters here, includes are needed for run_main above
+    include_dirs, sources = get_includes(sources)
     # Now use the builder
     builder = build_backend(
         modulename,

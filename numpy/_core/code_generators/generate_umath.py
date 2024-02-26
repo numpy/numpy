@@ -1142,6 +1142,14 @@ defdict = {
           TD(O),
           signature='(n?,k),(k,m?)->(n?,m?)',
           ),
+'vecdot':
+    Ufunc(2, 1, None,
+          docstrings.get('numpy._core.umath.vecdot'),
+          "PyUFunc_SimpleUniformOperationTypeResolver",
+          TD(notimes_or_obj),
+          TD(O),
+          signature='(n),(n)->()',
+          ),
 'str_len':
     Ufunc(1, 1, Zero,
           docstrings.get('numpy._core.umath.str_len'),
@@ -1160,6 +1168,26 @@ defdict = {
 'isspace':
     Ufunc(1, 1, False_,
           docstrings.get('numpy._core.umath.isspace'),
+          None,
+          ),
+'isalnum':
+    Ufunc(1, 1, False_,
+          docstrings.get('numpy._core.umath.isalnum'),
+          None,
+          ),
+'islower':
+    Ufunc(1, 1, False_,
+          docstrings.get('numpy._core.umath.islower'),
+          None,
+          ),
+'isupper':
+    Ufunc(1, 1, False_,
+          docstrings.get('numpy._core.umath.isupper'),
+          None,
+          ),
+'istitle':
+    Ufunc(1, 1, False_,
+          docstrings.get('numpy._core.umath.istitle'),
           None,
           ),
 'isdecimal':
@@ -1187,6 +1215,21 @@ defdict = {
           docstrings.get('numpy._core.umath.count'),
           None,
           ),
+'index':
+    Ufunc(4, 1, None,
+          docstrings.get('numpy._core.umath.index'),
+          None,
+          ),
+'rindex':
+    Ufunc(4, 1, None,
+          docstrings.get('numpy._core.umath.rindex'),
+          None,
+          ),
+'_replace':
+    Ufunc(4, 1, None,
+          docstrings.get('numpy._core.umath._replace'),
+          None,
+          ),
 'startswith':
     Ufunc(4, 1, False_,
           docstrings.get('numpy._core.umath.startswith'),
@@ -1195,6 +1238,36 @@ defdict = {
 'endswith':
     Ufunc(4, 1, False_,
           docstrings.get('numpy._core.umath.endswith'),
+          None,
+          ),
+'_strip_chars':
+    Ufunc(2, 1, None,
+          docstrings.get('numpy._core.umath._strip_chars'),
+          None,
+          ),
+'_lstrip_chars':
+    Ufunc(2, 1, None,
+          docstrings.get('numpy._core.umath._lstrip_chars'),
+          None,
+          ),
+'_rstrip_chars':
+    Ufunc(2, 1, None,
+          docstrings.get('numpy._core.umath._rstrip_chars'),
+          None,
+          ),
+'_strip_whitespace':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy._core.umath._strip_whitespace'),
+          None,
+          ),
+'_lstrip_whitespace':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy._core.umath._lstrip_whitespace'),
+          None,
+          ),
+'_rstrip_whitespace':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy._core.umath._rstrip_whitespace'),
           None,
           ),
 }

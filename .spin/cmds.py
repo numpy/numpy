@@ -34,14 +34,12 @@ def _get_numpy_tools(filename):
 
 
 @click.command()
-@click.option(
-    "-t", "--token",
-    help="GitHub access token",
+@click.argument(
+    "token",
     required=True
 )
-@click.option(
-    "--revision-range",
-    help="<revision>..<revision>",
+@click.argument(
+    "revision-range",
     required=True
 )
 @click.pass_context
@@ -357,7 +355,7 @@ def lint(ctx, branch, uncommitted):
         linter = _get_numpy_tools(pathlib.Path('linter.py'))
     except ModuleNotFoundError as e:
         raise click.ClickException(
-            f"{e.msg}. Install using linter_requirements.txt"
+            f"{e.msg}. Install using requirements/linter_requirements.txt"
         )
 
     linter.DiffLinter(branch).run_lint(uncommitted)
@@ -567,7 +565,9 @@ def _config_openblas(blas_variant):
             fid.write(f"import {module_name}\n")
         os.makedirs(openblas_dir, exist_ok=True)
         with open(pkg_config_fname, "wt", encoding="utf8") as fid:
-            fid.write(openblas.get_pkg_config().replace("\\", "/"))
+            fid.write(
+                openblas.get_pkg_config(use_preloading=True)
+            )
 
 
 @click.command()

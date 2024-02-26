@@ -64,3 +64,15 @@ def test_include_path():
     fnames_in_dir = os.listdir(incdir)
     for fname in ("fortranobject.c", "fortranobject.h"):
         assert fname in fnames_in_dir
+
+
+class TestIncludeFiles(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "regression", "incfile.f90")]
+    options = [f"-I{util.getpath('tests', 'src', 'regression')}",
+               f"--include-paths {util.getpath('tests', 'src', 'regression')}"]
+
+    @pytest.mark.slow
+    def test_gh25344(self):
+        exp = 7.0
+        res = self.module.add(3.0, 4.0)
+        assert  exp == res

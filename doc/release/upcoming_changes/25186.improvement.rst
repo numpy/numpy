@@ -1,1 +1,0 @@
-``f2py`` now handles ``common`` blocks which have ``kind`` specifications from modules. This further expands the usability of intrinsics like ``iso_fortran_env`` and ``iso_c_binding``.

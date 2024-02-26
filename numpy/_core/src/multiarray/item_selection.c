@@ -418,7 +418,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     }
     max_item = PyArray_SIZE(self);
     dest = PyArray_DATA(self);
-    itemsize = PyArray_DESCR(self)->elsize;
+    itemsize = PyArray_ITEMSIZE(self);
 
     int has_references = PyDataType_REFCHK(PyArray_DESCR(self));
 
@@ -710,7 +710,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         self = obj;
     }
 
-    itemsize = PyArray_DESCR(self)->elsize;
+    itemsize = PyArray_ITEMSIZE(self);
     dest = PyArray_DATA(self);
 
     if (PyDataType_REFCHK(PyArray_DESCR(self))) {
@@ -926,7 +926,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     old_data = PyArray_DATA(aop);
 
     nel = 1;
-    elsize = PyArray_DESCR(aop)->elsize;
+    elsize = PyArray_ITEMSIZE(aop);
     for(i = axis + 1; i < PyArray_NDIM(aop); i++) {
         nel *= PyArray_DIMS(aop)[i];
     }
@@ -1300,6 +1300,13 @@ fail:
     if (ret < 0 && !PyErr_Occurred()) {
         /* Out of memory during sorting or buffer creation */
         PyErr_NoMemory();
+    }
+    // if an error happened with a dtype that doesn't hold the GIL, need
+    // to make sure we return an error value from this function.
+    // note: only the first error is ever reported, subsequent errors
+    // must *not* set the error handler.
+    if (PyErr_Occurred() && ret == 0) {
+        ret = -1;
     }
     Py_DECREF(it);
     Py_DECREF(mem_handler);
@@ -1901,15 +1908,15 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     size = rit->size;
     N = PyArray_DIMS(mps[0])[axis];
     rstride = PyArray_STRIDE(ret, axis);
-    maxelsize = PyArray_DESCR(mps[0])->elsize;
+    maxelsize = PyArray_ITEMSIZE(mps[0]);
     needcopy = (rstride != sizeof(npy_intp));
     for (j = 0; j < n; j++) {
         needcopy = needcopy
             || PyArray_ISBYTESWAPPED(mps[j])
             || !(PyArray_FLAGS(mps[j]) & NPY_ARRAY_ALIGNED)
-            || (PyArray_STRIDES(mps[j])[axis] != (npy_intp)PyArray_DESCR(mps[j])->elsize);
-        if (PyArray_DESCR(mps[j])->elsize > maxelsize) {
-            maxelsize = PyArray_DESCR(mps[j])->elsize;
+            || (PyArray_STRIDES(mps[j])[axis] != (npy_intp)PyArray_ITEMSIZE(mps[j]));
+        if (PyArray_ITEMSIZE(mps[j]) > maxelsize) {
+            maxelsize = PyArray_ITEMSIZE(mps[j]);
         }
     }
 
@@ -1949,7 +1956,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
             }
             for (j = 0; j < n; j++) {
                 int rcode;
-                elsize = PyArray_DESCR(mps[j])->elsize;
+                elsize = PyArray_ITEMSIZE(mps[j]);
                 astride = PyArray_STRIDES(mps[j])[axis];
                 argsort = PyArray_DESCR(mps[j])->f->argsort[NPY_STABLESORT];
                 if(argsort == NULL) {
@@ -2177,7 +2184,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
                   (const char *)PyArray_DATA(ap2),
                   (char *)PyArray_DATA(ret),
                   PyArray_SIZE(ap1), PyArray_SIZE(ap2),
-                  PyArray_STRIDES(ap1)[0], PyArray_DESCR(ap2)->elsize,
+                  PyArray_STRIDES(ap1)[0], PyArray_ITEMSIZE(ap2),
                   NPY_SIZEOF_INTP, ap2);
         NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
     }
@@ -2191,7 +2198,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
                              (char *)PyArray_DATA(ret),
                              PyArray_SIZE(ap1), PyArray_SIZE(ap2),
                              PyArray_STRIDES(ap1)[0],
-                             PyArray_DESCR(ap2)->elsize,
+                             PyArray_ITEMSIZE(ap2),
                              PyArray_STRIDES(sorter)[0], NPY_SIZEOF_INTP, ap2);
         NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
         if (error < 0) {
@@ -2367,6 +2374,7 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis,
  * even though it uses 64 bit types its faster than the bytewise sum on 32 bit
  * but a 32 bit type version would make it even faster on these platforms
  */
+#if !NPY_SIMD
 static inline npy_intp
 count_nonzero_bytes_384(const npy_uint64 * w)
 {
@@ -2407,6 +2415,7 @@ count_nonzero_bytes_384(const npy_uint64 * w)
 
     return r;
 }
+#endif
 
 #if NPY_SIMD
 /* Count the zero bytes between `*d` and `end`, updating `*d` to point to where to keep counting from. */

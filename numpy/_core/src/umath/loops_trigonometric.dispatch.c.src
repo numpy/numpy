@@ -19,8 +19,9 @@
 /**begin repeat
  *  #check = F64, F32#
  *  #sfx  = f64, f32#
+ *  #enable = 0, 1#
  */
-#if NPY_SIMD_@check@
+#if NPY_SIMD_@check@ && @enable@
 /*
  * Vectorized Cody-Waite range reduction technique
  * Performs the reduction step x* = x - y*C in three steps:
@@ -39,8 +40,10 @@ simd_range_reduction_@sfx@(npyv_@sfx@ x, npyv_@sfx@ y, npyv_@sfx@ c1, npyv_@sfx@
 }
 #endif
 /**end repeat**/
-
-#if NPY_SIMD_F64
+/* Disable SIMD code and revert to libm: see
+ * https://mail.python.org/archives/list/numpy-discussion@python.org/thread/C6EYZZSR4EWGVKHAZXLE7IBILRMNVK7L/
+ * for detailed discussion on this*/
+#if 0 // NPY_SIMD_F64
 /**begin repeat
  *  #op = cos, sin#
  */

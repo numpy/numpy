@@ -10,7 +10,8 @@ import sys
 import warnings
 
 from ..exceptions import DTypePromotionError
-from .multiarray import dtype, array, ndarray, promote_types
+from .multiarray import dtype, array, ndarray, promote_types, StringDType
+from numpy import _NoValue
 try:
     import ctypes
 except ImportError:
@@ -149,6 +150,7 @@ _convorder = {'=': _nbo}
 def _commastring(astr):
     startindex = 0
     result = []
+    islist = False
     while startindex < len(astr):
         mo = format_re.match(astr, pos=startindex)
         try:
@@ -169,6 +171,7 @@ def _commastring(astr):
                         'format number %d of "%s" is not recognized' %
                         (len(result)+1, astr))
                 startindex = mo.end()
+                islist = True
 
         if order2 == '':
             order = order1
@@ -186,13 +189,22 @@ def _commastring(astr):
         if order in ('|', '=', _nbo):
             order = ''
         dtype = order + dtype
-        if (repeats == ''):
+        if repeats == '':
             newitem = dtype
         else:
+            if (repeats[0] == "(" and repeats[-1] == ")"
+                    and repeats[1:-1].strip() != ""
+                    and "," not in repeats):
+                warnings.warn(
+                    'Passing in a parenthesized single number for repeats '
+                    'is deprecated; pass either a single number or indicate '
+                    'a tuple with a comma, like "(2,)".', DeprecationWarning,
+                    stacklevel=2)
             newitem = (dtype, ast.literal_eval(repeats))
+
         result.append(newitem)
 
-    return result
+    return result if islist else result[0]
 
 class dummy_ctype:
 
@@ -267,7 +279,7 @@ class _ctypes:
         """
         Return the data pointer cast to a particular c-types object.
         For example, calling ``self._as_parameter_`` is equivalent to
-        ``self.data_as(ctypes.c_void_p)``. Perhaps you want to use 
+        ``self.data_as(ctypes.c_void_p)``. Perhaps you want to use
         the data as a pointer to a ctypes array of floating-point data:
         ``self.data_as(ctypes.POINTER(ctypes.c_double))``.
 
@@ -335,9 +347,9 @@ class _ctypes:
     def strides(self):
         """
         (c_intp*self.ndim): A ctypes array of length self.ndim where
-        the basetype is the same as for the shape attribute. This ctypes 
-        array contains the strides information from the underlying array. 
-        This strides information is important for showing how many bytes 
+        the basetype is the same as for the shape attribute. This ctypes
+        array contains the strides information from the underlying array.
+        This strides information is important for showing how many bytes
         must be jumped to get to the next element in the array.
         """
         return self.strides_as(_getintp_ctype())
@@ -736,7 +748,7 @@ def __dtype_from_pep3118(stream, is_subdtype):
         #
         # Native alignment may require padding
         #
-        # Here we assume that the presence of a '@' character implicitly 
+        # Here we assume that the presence of a '@' character implicitly
         # implies that the start of the array is *already* aligned.
         #
         extra_offset = 0
@@ -938,3 +950,10 @@ def npy_ctypes_check(cls):
         return '_ctypes' in ctype_base.__module__
     except Exception:
         return False
+
+# used to handle the _NoValue default argument for na_object
+# in the C implementation of the __reduce__ method for stringdtype
+def _convert_to_stringdtype_kwargs(coerce, na_object=_NoValue):
+    if na_object is _NoValue:
+        return StringDType(coerce=coerce)
+    return StringDType(coerce=coerce, na_object=na_object)

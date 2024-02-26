@@ -1,1 +1,0 @@
-* Extend ``np.add`` to work with ``unicode`` and ``bytes`` dtypes.

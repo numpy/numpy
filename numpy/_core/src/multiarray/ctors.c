@@ -22,6 +22,7 @@
 #include "convert_datatype.h"
 #include "descriptor.h"
 #include "dtypemeta.h"
+#include "refcount.h"  /* for PyArray_SetObjectsToNone */
 #include "shape.h"
 #include "npy_buffer.h"
 #include "lowlevel_strided_loops.h"
@@ -659,7 +660,7 @@ PyArray_NewFromDescr_int(
     }
 
     /* finalize the descriptor if the DType defines a finalization function */
-    finalize_descr_function *finalize =
+    PyArrayDTypeMeta_FinalizeDescriptor *finalize =
             NPY_DT_SLOTS(NPY_DTYPE(descr))->finalize_descr;
     if (finalize != NULL && data == NULL) {
         Py_SETREF(descr, finalize(descr));
@@ -824,7 +825,7 @@ PyArray_NewFromDescr_int(
     if (data == NULL) {
         /* float errors do not matter and we do not release GIL */
         NPY_ARRAYMETHOD_FLAGS zero_flags;
-        get_traverse_loop_function *get_fill_zero_loop =
+        PyArrayMethod_GetTraverseLoop *get_fill_zero_loop =
             NPY_DT_SLOTS(NPY_DTYPE(descr))->get_fill_zero_loop;
         if (get_fill_zero_loop != NULL) {
             if (get_fill_zero_loop(
@@ -1162,8 +1163,7 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
 
     /* Logic shared by `empty`, `empty_like`, and `ndarray.__new__` */
     if (PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)ret))) {
-        PyArray_FillObjectArray((PyArrayObject *)ret, Py_None);
-        if (PyErr_Occurred()) {
+        if (PyArray_SetObjectsToNone((PyArrayObject *)ret) < 0) {
             Py_DECREF(ret);
             return NULL;
         }
@@ -1530,8 +1530,10 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         return NULL;
     }
 
-    PyObject* ret =  PyArray_FromAny_int(op, dt_info.descr, dt_info.dtype,
-                                         min_depth, max_depth, flags, context);
+    int was_scalar;
+    PyObject* ret =  PyArray_FromAny_int(
+            op, dt_info.descr, dt_info.dtype,
+            min_depth, max_depth, flags, context, &was_scalar);
 
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
@@ -1541,12 +1543,19 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 /*
  * Internal version of PyArray_FromAny that accepts a dtypemeta. Borrows
  * references to the descriptor and dtype.
+ *
+ * The `was_scalar` output returns 1 when the object was a "scalar".
+ * This means it was:
+ * - Recognized as a scalar by a/the dtype.  This can be DType specific,
+ *   for example a tuple may be a scalar, but only for structured dtypes.
+ * - Anything not recognized as an instance of a DType's scalar type but also not
+ *   convertable to an array.  (no __array__ protocol, etc.)
+ *   these must map to `dtype=object` (if a dtype wasn't specified).
  */
-
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
                     PyArray_DTypeMeta *in_DType, int min_depth, int max_depth,
-                    int flags, PyObject *context)
+                    int flags, PyObject *context, int *was_scalar)
 {
     /*
      * This is the main code to make a NumPy array from a Python
@@ -1570,6 +1579,9 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
     if (ndim < 0) {
         return NULL;
     }
+
+    /* If the cache is NULL, then the object is considered a scalar */
+    *was_scalar = (cache == NULL);
 
     if (dtype == NULL) {
         dtype = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
@@ -1827,8 +1839,9 @@ PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
         }
     }
 
+    int was_scalar;
     obj = PyArray_FromAny_int(op, in_descr, in_DType, min_depth,
-                              max_depth, requires, context);
+                              max_depth, requires, context, &was_scalar);
     if (obj == NULL) {
         return NULL;
     }
@@ -2763,17 +2776,6 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
 }
 
 /*NUMPY_API
- * Move the memory of one array into another, allowing for overlapping data.
- *
- * Returns 0 on success, negative on failure.
- */
-NPY_NO_EXPORT int
-PyArray_MoveInto(PyArrayObject *dst, PyArrayObject *src)
-{
-    return PyArray_AssignArray(dst, src, NULL, NPY_UNSAFE_CASTING);
-}
-
-/*NUMPY_API
  * PyArray_CheckAxis
  *
  * check that axis is valid
@@ -2957,8 +2959,7 @@ PyArray_Empty_int(int nd, npy_intp const *dims, PyArray_Descr *descr,
 
     /* Logic shared by `empty`, `empty_like`, and `ndarray.__new__` */
     if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
-        PyArray_FillObjectArray(ret, Py_None);
-        if (PyErr_Occurred()) {
+        if (PyArray_SetObjectsToNone(ret) < 0) {
             Py_DECREF(ret);
             return NULL;
         }
@@ -4084,27 +4085,4 @@ _array_fill_strides(npy_intp *strides, npy_intp const *dims, int nd, size_t item
         }
     }
     return;
-}
-
-/*
- * Calls arr_of_subclass.__array_wrap__(towrap), in order to make 'towrap'
- * have the same ndarray subclass as 'arr_of_subclass'.
- */
-NPY_NO_EXPORT PyArrayObject *
-PyArray_SubclassWrap(PyArrayObject *arr_of_subclass, PyArrayObject *towrap)
-{
-    PyObject *wrapped = PyObject_CallMethodObjArgs((PyObject *)arr_of_subclass,
-            npy_ma_str_array_wrap, (PyObject *)towrap, NULL);
-    if (wrapped == NULL) {
-        return NULL;
-    }
-    if (!PyArray_Check(wrapped)) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "ndarray subclass __array_wrap__ method returned an "
-                "object which was not an instance of an ndarray subclass");
-        Py_DECREF(wrapped);
-        return NULL;
-    }
-
-    return (PyArrayObject *)wrapped;
 }

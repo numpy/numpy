@@ -12,7 +12,7 @@
 #define _MULTIARRAYMODULE
 
 #include <numpy/npy_common.h>
-#include <numpy/ndarraytypes.h>  /* for NPY_NTYPES */
+#include <numpy/ndarraytypes.h>  /* for NPY_NTYPES_LEGACY */
 #include <numpy/halffloat.h>
 
 #include "einsum_sumprod.h"
@@ -1079,7 +1079,7 @@ static void
 
 /* These tables need to match up with the type enum */
 static sum_of_products_fn
-_contig_outstride0_unary_specialization_table[NPY_NTYPES] = {
+_contig_outstride0_unary_specialization_table[NPY_NTYPES_LEGACY] = {
 /**begin repeat
  * #name = bool,
  *         byte, ubyte,
@@ -1110,7 +1110,7 @@ _contig_outstride0_unary_specialization_table[NPY_NTYPES] = {
 /**end repeat**/
 }; /* End of _contig_outstride0_unary_specialization_table */
 
-static sum_of_products_fn _binary_specialization_table[NPY_NTYPES][5] = {
+static sum_of_products_fn _binary_specialization_table[NPY_NTYPES_LEGACY][5] = {
 /**begin repeat
  * #name = bool,
  *         byte, ubyte,
@@ -1147,7 +1147,7 @@ static sum_of_products_fn _binary_specialization_table[NPY_NTYPES][5] = {
 /**end repeat**/
 }; /* End of _binary_specialization_table */
 
-static sum_of_products_fn _outstride0_specialized_table[NPY_NTYPES][4] = {
+static sum_of_products_fn _outstride0_specialized_table[NPY_NTYPES_LEGACY][4] = {
 /**begin repeat
  * #name = bool,
  *         byte, ubyte,
@@ -1183,7 +1183,7 @@ static sum_of_products_fn _outstride0_specialized_table[NPY_NTYPES][4] = {
 /**end repeat**/
 }; /* End of _outstride0_specialized_table */
 
-static sum_of_products_fn _allcontig_specialized_table[NPY_NTYPES][4] = {
+static sum_of_products_fn _allcontig_specialized_table[NPY_NTYPES_LEGACY][4] = {
 /**begin repeat
  * #name = bool,
  *         byte, ubyte,
@@ -1219,7 +1219,7 @@ static sum_of_products_fn _allcontig_specialized_table[NPY_NTYPES][4] = {
 /**end repeat**/
 }; /* End of _allcontig_specialized_table */
 
-static sum_of_products_fn _unspecialized_table[NPY_NTYPES][4] = {
+static sum_of_products_fn _unspecialized_table[NPY_NTYPES_LEGACY][4] = {
 /**begin repeat
  * #name = bool,
  *         byte, ubyte,
@@ -1261,7 +1261,7 @@ get_sum_of_products_function(int nop, int type_num,
 {
     int iop;
 
-    if (type_num >= NPY_NTYPES) {
+    if (type_num >= NPY_NTYPES_LEGACY) {
         return NULL;
     }
 

@@ -75,18 +75,29 @@ def get_include():
     """
     Return the directory that contains the NumPy \\*.h header files.
 
-    Extension modules that need to compile against NumPy should use this
+    Extension modules that need to compile against NumPy may need to use this
     function to locate the appropriate include directory.
 
     Notes
     -----
-    When using ``distutils``, for example in ``setup.py``::
+    When using ``setuptools``, for example in ``setup.py``::
 
         import numpy as np
         ...
         Extension('extension_name', ...
-                include_dirs=[np.get_include()])
+                  include_dirs=[np.get_include()])
         ...
+
+    Note that a CLI tool ``numpy-config`` was introduced in NumPy 2.0, using
+    that is likely preferred for build systems other than ``setuptools``::
+
+        $ numpy-config --cflags
+        -I/path/to/site-packages/numpy/_core/include
+
+        # Or rely on pkg-config:
+        $ export PKG_CONFIG_PATH=$(numpy-config --pkgconfigdir)
+        $ pkg-config --cflags
+        -I/path/to/site-packages/numpy/_core/include
 
     """
     import numpy
@@ -261,7 +272,8 @@ def deprecate_with_doc(msg):
 
     See Also
     --------
-    deprecate : Decorate a function such that it issues a `DeprecationWarning`
+    deprecate : Decorate a function such that it issues a
+                :exc:`DeprecationWarning`
 
     Parameters
     ----------

@@ -20,10 +20,11 @@
 #include "ctors.h"
 #include "descriptor.h"
 #include "dtypemeta.h"
-#include "common_dtype.h"
+
 #include "scalartypes.h"
 #include "mapping.h"
 #include "legacy_dtype_implementation.h"
+#include "stringdtype/dtype.h"
 
 #include "abstractdtypes.h"
 #include "convert_datatype.h"
@@ -189,7 +190,7 @@ PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
     else if (!NPY_DT_is_legacy(from) || !NPY_DT_is_legacy(to)) {
         Py_RETURN_NONE;
     }
-    else if (from->type_num < NPY_NTYPES && to->type_num < NPY_NTYPES) {
+    else if (from->type_num < NPY_NTYPES_LEGACY && to->type_num < NPY_NTYPES_LEGACY) {
         /* All builtin dtypes have their casts explicitly defined. */
         PyErr_Format(PyExc_RuntimeError,
                 "builtin cast from %S to %S not found, this should not "
@@ -413,35 +414,6 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
     PyErr_SetString(PyExc_ValueError,
             "No cast function available.");
     return NULL;
-}
-
-
-/*
- * Must be broadcastable.
- * This code is very similar to PyArray_CopyInto/PyArray_MoveInto
- * except casting is done --- NPY_BUFSIZE is used
- * as the size of the casting buffer.
- */
-
-/*NUMPY_API
- * Cast to an already created array.
- */
-NPY_NO_EXPORT int
-PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
-{
-    /* CopyInto handles the casting now */
-    return PyArray_CopyInto(out, mp);
-}
-
-/*NUMPY_API
- * Cast to an already created array.  Arrays don't have to be "broadcastable"
- * Only requirement is they have the same number of elements.
- */
-NPY_NO_EXPORT int
-PyArray_CastAnyTo(PyArrayObject *out, PyArrayObject *mp)
-{
-    /* CopyAnyInto handles the casting now */
-    return PyArray_CopyAnyInto(out, mp);
 }
 
 
@@ -1037,7 +1009,7 @@ promote_types(PyArray_Descr *type1, PyArray_Descr *type2,
         int type_num2 = type2->type_num;
         int ret_type_num;
 
-        if (type_num2 < NPY_NTYPES && !(PyTypeNum_ISBOOL(type_num2) ||
+        if (type_num2 < NPY_NTYPES_LEGACY && !(PyTypeNum_ISBOOL(type_num2) ||
                                         PyTypeNum_ISUNSIGNED(type_num2))) {
             /* Convert to the equivalent-sized signed integer */
             type_num1 = type_num_unsigned_to_signed(type_num1);
@@ -1056,7 +1028,7 @@ promote_types(PyArray_Descr *type1, PyArray_Descr *type2,
         int type_num2 = type2->type_num;
         int ret_type_num;
 
-        if (type_num1 < NPY_NTYPES && !(PyTypeNum_ISBOOL(type_num1) ||
+        if (type_num1 < NPY_NTYPES_LEGACY && !(PyTypeNum_ISBOOL(type_num1) ||
                                         PyTypeNum_ISUNSIGNED(type_num1))) {
             /* Convert to the equivalent-sized signed integer */
             type_num2 = type_num_unsigned_to_signed(type_num2);
@@ -1909,7 +1881,7 @@ PyArray_ResultType(
      * 2. It does nothing, but warns if there the result would differ.
      * 3. It replaces the result based on the legacy value-based logic.
      */
-    if (at_least_one_scalar && !all_pyscalar && result->type_num < NPY_NTYPES) {
+    if (at_least_one_scalar && !all_pyscalar && result->type_num < NPY_NTYPES_LEGACY) {
         if (PyArray_CheckLegacyResultType(
                 &result, narrs, arrs, ndtypes, descrs) < 0) {
             Py_DECREF(common_dtype);
@@ -2164,7 +2136,7 @@ PyArray_Zero(PyArrayObject *arr)
     if (_check_object_rec(PyArray_DESCR(arr)) < 0) {
         return NULL;
     }
-    zeroval = PyDataMem_NEW(PyArray_DESCR(arr)->elsize);
+    zeroval = PyDataMem_NEW(PyArray_ITEMSIZE(arr));
     if (zeroval == NULL) {
         PyErr_SetNone(PyExc_MemoryError);
         return NULL;
@@ -2210,7 +2182,7 @@ PyArray_One(PyArrayObject *arr)
     if (_check_object_rec(PyArray_DESCR(arr)) < 0) {
         return NULL;
     }
-    oneval = PyDataMem_NEW(PyArray_DESCR(arr)->elsize);
+    oneval = PyDataMem_NEW(PyArray_ITEMSIZE(arr));
     if (oneval == NULL) {
         PyErr_SetNone(PyExc_MemoryError);
         return NULL;
@@ -2676,7 +2648,7 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
          * consider moving this warning into the inner-loop at some point
          * for simplicity (this requires ensuring it is only emitted once).
          */
-        slots[5].slot = _NPY_METH_get_loop;
+        slots[5].slot = NPY_METH_get_loop;
         slots[5].pfunc = &complex_to_noncomplex_get_loop;
         slots[6].slot = 0;
         slots[6].pfunc = NULL;
@@ -2697,7 +2669,7 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
         /* When there is no casting (equivalent C-types) use byteswap loops */
         slots[0].slot = NPY_METH_resolve_descriptors;
         slots[0].pfunc = &legacy_same_dtype_resolve_descriptors;
-        slots[1].slot = _NPY_METH_get_loop;
+        slots[1].slot = NPY_METH_get_loop;
         slots[1].pfunc = &get_byteswap_loop;
         slots[2].slot = 0;
         slots[2].pfunc = NULL;
@@ -2729,13 +2701,13 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
 static int
 PyArray_InitializeNumericCasts(void)
 {
-    for (int from = 0; from < NPY_NTYPES; from++) {
+    for (int from = 0; from < NPY_NTYPES_LEGACY; from++) {
         if (!PyTypeNum_ISNUMBER(from) && from != NPY_BOOL) {
             continue;
         }
         PyArray_DTypeMeta *from_dt = PyArray_DTypeFromTypeNum(from);
 
-        for (int to = 0; to < NPY_NTYPES; to++) {
+        for (int to = 0; to < NPY_NTYPES_LEGACY; to++) {
             if (!PyTypeNum_ISNUMBER(to) && to != NPY_BOOL) {
                 continue;
             }
@@ -2881,7 +2853,7 @@ add_other_to_and_from_string_cast(
      */
     PyArray_DTypeMeta *dtypes[2] = {other, string};
     PyType_Slot slots[] = {
-            {_NPY_METH_get_loop, &legacy_cast_get_strided_loop},
+            {NPY_METH_get_loop, &legacy_cast_get_strided_loop},
             {NPY_METH_resolve_descriptors, &cast_to_string_resolve_descriptors},
             {0, NULL}};
     PyArrayMethod_Spec spec = {
@@ -2994,12 +2966,12 @@ static int
 PyArray_InitializeStringCasts(void)
 {
     int result = -1;
-    PyArray_DTypeMeta *string = PyArray_DTypeFromTypeNum(NPY_STRING);
-    PyArray_DTypeMeta *unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
+    PyArray_DTypeMeta *string = &PyArray_BytesDType;
+    PyArray_DTypeMeta *unicode = &PyArray_UnicodeDType;
     PyArray_DTypeMeta *other_dt = NULL;
 
     /* Add most casts as legacy ones */
-    for (int other = 0; other < NPY_NTYPES; other++) {
+    for (int other = 0; other < NPY_NTYPES_LEGACY; other++) {
         if (PyTypeNum_ISDATETIME(other) || other == NPY_VOID ||
                 other == NPY_OBJECT) {
             continue;
@@ -3020,7 +2992,7 @@ PyArray_InitializeStringCasts(void)
     /* string<->string and unicode<->unicode have their own specialized casts */
     PyArray_DTypeMeta *dtypes[2];
     PyType_Slot slots[] = {
-            {_NPY_METH_get_loop, &string_to_string_get_loop},
+            {NPY_METH_get_loop, &string_to_string_get_loop},
             {NPY_METH_resolve_descriptors, &string_to_string_resolve_descriptors},
             {0, NULL}};
     PyArrayMethod_Spec spec = {
@@ -3049,8 +3021,6 @@ PyArray_InitializeStringCasts(void)
 
     result = 0;
   finish:
-    Py_DECREF(string);
-    Py_DECREF(unicode);
     Py_XDECREF(other_dt);
     return result;
 }
@@ -3716,10 +3686,10 @@ void_to_void_get_loop(
 static int
 PyArray_InitializeVoidToVoidCast(void)
 {
-    PyArray_DTypeMeta *Void = PyArray_DTypeFromTypeNum(NPY_VOID);
+    PyArray_DTypeMeta *Void = &PyArray_VoidDType;
     PyArray_DTypeMeta *dtypes[2] = {Void, Void};
     PyType_Slot slots[] = {
-            {_NPY_METH_get_loop, &void_to_void_get_loop},
+            {NPY_METH_get_loop, &void_to_void_get_loop},
             {NPY_METH_resolve_descriptors, &void_to_void_resolve_descriptors},
             {0, NULL}};
     PyArrayMethod_Spec spec = {
@@ -3733,7 +3703,6 @@ PyArray_InitializeVoidToVoidCast(void)
     };
 
     int res = PyArray_AddCastingImplementation_FromSpec(&spec, 1);
-    Py_DECREF(Void);
     return res;
 }
 
@@ -3758,8 +3727,11 @@ object_to_any_resolve_descriptors(
          * require inspecting the object array. Allow legacy ones, the path
          * here is that e.g. "M8" input is considered to be the DType class,
          * and by allowing it here, we go back to the "M8" instance.
+         *
+         * StringDType is excluded since using the parameters of that dtype
+         * requires creating an instance explicitly
          */
-        if (NPY_DT_is_parametric(dtypes[1])) {
+        if (NPY_DT_is_parametric(dtypes[1]) && dtypes[1] != &PyArray_StringDType) {
             PyErr_Format(PyExc_TypeError,
                     "casting from object to the parametric DType %S requires "
                     "the specified output dtype instance. "
@@ -3899,10 +3871,10 @@ object_to_object_get_loop(
 static int
 PyArray_InitializeObjectToObjectCast(void)
 {
-    PyArray_DTypeMeta *Object = PyArray_DTypeFromTypeNum(NPY_OBJECT);
+    PyArray_DTypeMeta *Object = &PyArray_ObjectDType;
     PyArray_DTypeMeta *dtypes[2] = {Object, Object};
     PyType_Slot slots[] = {
-            {_NPY_METH_get_loop, &object_to_object_get_loop},
+            {NPY_METH_get_loop, &object_to_object_get_loop},
             {0, NULL}};
     PyArrayMethod_Spec spec = {
             .name = "object_to_object_cast",
@@ -3915,7 +3887,6 @@ PyArray_InitializeObjectToObjectCast(void)
     };
 
     int res = PyArray_AddCastingImplementation_FromSpec(&spec, 1);
-    Py_DECREF(Object);
     return res;
 }
 

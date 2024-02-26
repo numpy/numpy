@@ -195,18 +195,18 @@ def test_nditer_multi_index_set():
     it.multi_index = (0, 2,)
 
     assert_equal([i for i in it], [2, 3, 4, 5])
-    
+
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 def test_nditer_multi_index_set_refcount():
     # Test if the reference count on index variable is decreased
-    
+
     index = 0
     i = np.nditer(np.array([111, 222, 333, 444]), flags=['multi_index'])
 
     start_count = sys.getrefcount(index)
     i.multi_index = (index,)
     end_count = sys.getrefcount(index)
-    
+
     assert_equal(start_count, end_count)
 
 def test_iter_best_order_multi_index_1d():
@@ -1436,9 +1436,9 @@ def test_iter_copy_casts_structured():
     # casts, which cause this to require all steps in the casting machinery
     # one level down as well as the iterator copy (which uses NpyAuxData clone)
     in_dtype = np.dtype([("a", np.dtype("i,")),
-                         ("b", np.dtype(">i,<i,>d,S17,>d,(3)f,O,i1"))])
+                         ("b", np.dtype(">i,<i,>d,S17,>d,3f,O,i1"))])
     out_dtype = np.dtype([("a", np.dtype("O")),
-                          ("b", np.dtype(">i,>i,S17,>d,>U3,(3)d,i1,O"))])
+                          ("b", np.dtype(">i,>i,S17,>d,>U3,3d,i1,O"))])
     arr = np.ones(1000, dtype=in_dtype)
 
     it = np.nditer((arr,), ["buffered", "external_loop", "refs_ok"],
@@ -1464,9 +1464,9 @@ def test_iter_copy_casts_structured():
 def test_iter_copy_casts_structured2():
     # Similar to the above, this is a fairly arcane test to cover internals
     in_dtype = np.dtype([("a", np.dtype("O,O")),
-                         ("b", np.dtype("(5)O,(3)O,(1,)O,(1,)i,(1,)O"))])
+                         ("b", np.dtype("5O,3O,(1,)O,(1,)i,(1,)O"))])
     out_dtype = np.dtype([("a", np.dtype("O")),
-                          ("b", np.dtype("O,(3)i,(4)O,(4)O,(4)i"))])
+                          ("b", np.dtype("O,3i,4O,4O,4i"))])
 
     arr = np.ones(1, dtype=in_dtype)
     it = np.nditer((arr,), ["buffered", "external_loop", "refs_ok"],
@@ -2079,7 +2079,7 @@ def test_buffered_cast_error_paths_unraisable():
     # pytest.PytestUnraisableExceptionWarning:
     code = textwrap.dedent("""
         import numpy as np
-    
+
         it = np.nditer((np.array(1, dtype="i"),), op_dtypes=["S1"],
                        op_flags=["writeonly"], casting="unsafe", flags=["buffered"])
         buf = next(it)
@@ -3032,7 +3032,7 @@ def test_object_iter_cleanup():
     class T:
         def __bool__(self):
             raise TypeError("Ambiguous")
-    assert_raises(TypeError, np.logical_or.reduce, 
+    assert_raises(TypeError, np.logical_or.reduce,
                              np.array([T(), T()], dtype='O'))
 
 def test_object_iter_cleanup_reduce():
