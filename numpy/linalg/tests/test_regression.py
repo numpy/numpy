@@ -154,3 +154,10 @@ class TestRegression:
         # gh-25840 - upper=True hung before.
         res = np.linalg.cholesky(np.zeros((0, 0)), upper=upper)
         assert res.size == 0
+
+    @pytest.mark.parametrize("rtol", [0.0, [0.0] * 4, np.zeros((4,))])
+    def test_matrix_rank_rtol_argument(self, rtol):
+        # gh-25877
+        x = np.zeros((4, 3, 2))
+        res = np.linalg.matrix_rank(x, rtol=rtol)
+        assert res.shape == (4,)

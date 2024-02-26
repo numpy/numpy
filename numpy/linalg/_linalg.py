@@ -2068,18 +2068,23 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     >>> matrix_rank(np.zeros((4,)))
     0
     """
+    if rtol is not None and tol is not None:
+        raise ValueError("`tol` and `rtol` can't be both set.")
+
     A = asarray(A)
     if A.ndim < 2:
         return int(not all(A == 0))
     S = svd(A, compute_uv=False, hermitian=hermitian)
-    if rtol is not None and tol is not None:
-        raise ValueError("`tol` and `rtol` can't be both set.")
-    if rtol is None:
-        rtol = max(A.shape[-2:]) * finfo(S.dtype).eps
+
     if tol is None:
+        if rtol is None:
+            rtol = max(A.shape[-2:]) * finfo(S.dtype).eps
+        else:
+            rtol = asarray(rtol)[..., newaxis]
         tol = S.max(axis=-1, keepdims=True) * rtol
     else:
         tol = asarray(tol)[..., newaxis]
+
     return count_nonzero(S > tol, axis=-1)
 
 
