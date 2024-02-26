@@ -207,5 +207,5 @@ Both ``meson`` and ``distutils`` are capable of linking against libraries.
 
     The resulting build can be customized via the
     `Meson Build How-To Guide <https://mesonbuild.com/howtox.html>`_.
-    In fact, the resulting set of files can even be commited directly and used
+    In fact, the resulting set of files can even be committed directly and used
     as a meson subproject in a separate codebase.

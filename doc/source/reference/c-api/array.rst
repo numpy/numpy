@@ -1592,7 +1592,7 @@ the functions that must be implemented for each slot.
    passed the descriptors for the two operands and determine the correct
    descriptor to use for the output based on the output DType set for
    the ArrayMethod. If ``out`` is set, then the output descriptor would
-   be passed in as well and should not be overriden.
+   be passed in as well and should not be overridden.
 
    The *method* is a pointer to the underlying cast or ufunc loop. In
    the future we may expose this struct publicly but for now this is an
@@ -1865,7 +1865,7 @@ with the rest of the ArrayMethod API.
     views of the arguments as if they were the translated dtypes and
     does not use a cast. This means this mechanism is mostly useful for
     DTypes that "wrap" another DType implementation. For example, a unit
-    DType could use this to wrap an exisiting floating point DType
+    DType could use this to wrap an existing floating point DType
     without needing to re-implement low-level ufunc logic. In the unit
     example, ``resolve_descriptors`` would handle computing the output
     unit from the input unit.
