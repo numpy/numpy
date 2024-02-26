@@ -19,6 +19,7 @@
 #include "dtype.h"
 #include "utf8_utils.h"
 
+
 #define ANY_TO_STRING_RESOLVE_DESCRIPTORS(safety)                              \
         static NPY_CASTING any_to_string_##safety##_resolve_descriptors(       \
                 PyObject *NPY_UNUSED(self),                                    \
@@ -1218,7 +1219,7 @@ FLOAT_TO_STRING_CAST(clongdouble, clongdouble, npy_clongdouble)
 // string to datetime
 
 static NPY_CASTING
-string_to_datetime_resolve_descriptors(
+string_to_datetime_timedelta_resolve_descriptors(
         PyObject *NPY_UNUSED(self), PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
         PyArray_Descr *given_descrs[2], PyArray_Descr *loop_descrs[2],
         npy_intp *NPY_UNUSED(view_offset))
@@ -1319,7 +1320,7 @@ fail:
 
 static PyType_Slot s2dt_slots[] = {
         {NPY_METH_resolve_descriptors,
-         &string_to_datetime_resolve_descriptors},
+         &string_to_datetime_timedelta_resolve_descriptors},
         {NPY_METH_strided_loop, &string_to_datetime},
         {0, NULL}};
 
@@ -1403,6 +1404,143 @@ static PyType_Slot dt2s_slots[] = {
         {0, NULL}};
 
 static char *dt2s_name = "cast_Datetime_to_StringDType";
+
+// string to timedelta
+
+static int
+string_to_timedelta(PyArrayMethod_Context *context, char *const data[],
+                                       npy_intp const dimensions[], npy_intp const strides[],
+                   NpyAuxData *NPY_UNUSED(auxdata))
+{
+    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
+    npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
+    int has_null = descr->na_object != NULL;
+    int has_string_na = descr->has_string_na;
+    const npy_static_string *default_string = &descr->default_string;
+
+    npy_intp N = dimensions[0];
+    char *in = data[0];
+    npy_timedelta *out = (npy_timedelta *)data[1];
+
+    npy_intp in_stride = strides[0];
+    npy_intp out_stride = strides[1] / sizeof(npy_timedelta);
+
+    while (N--) {
+        const npy_packed_static_string *ps = (npy_packed_static_string *)in;
+        npy_static_string s = {0, NULL};
+        int is_null = NpyString_load(allocator, ps, &s);
+        if (is_null == -1) {
+            PyErr_SetString(
+                    PyExc_MemoryError,
+                    "Failed to load string in string to datetime cast");
+            goto fail;
+        }
+        if (is_null || is_nat_string(&s)) {
+            if (has_null && !has_string_na) {
+                *out = NPY_DATETIME_NAT;
+                goto next_step;
+            }
+            s = *default_string;
+        }
+
+        PyObject *pystr = PyUnicode_FromStringAndSize(s.buf, s.size);
+
+        if (pystr == NULL) {
+            goto fail;
+        }
+
+        // interpret as integer in base 10
+        PyObject *pylong_value = PyLong_FromUnicodeObject(pystr, 10);
+
+        Py_DECREF(pystr);
+
+        if (pylong_value == NULL) {
+            goto fail;
+        }
+
+        npy_longlong value = PyLong_AsLongLong(pylong_value);
+
+        Py_DECREF(pylong_value);
+
+        if (value == -1 && PyErr_Occurred()) {
+            goto fail;
+        }
+
+        *out = (npy_timedelta)value;
+
+    next_step:
+        in += in_stride;
+        out += out_stride;
+    }
+
+    NpyString_release_allocator(allocator);
+    return 0;
+
+fail:
+    NpyString_release_allocator(allocator);
+    return -1;
+}
+
+static PyType_Slot s2td_slots[] = {
+        {NPY_METH_resolve_descriptors,
+         &string_to_datetime_timedelta_resolve_descriptors},
+        {NPY_METH_strided_loop, &string_to_timedelta},
+        {0, NULL}};
+
+static char *s2td_name = "cast_StringDType_to_Timedelta";
+
+// timedelta to string
+
+static int
+timedelta_to_string(PyArrayMethod_Context *context, char *const data[],
+                   npy_intp const dimensions[], npy_intp const strides[],
+                   NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp N = dimensions[0];
+    npy_timedelta *in = (npy_timedelta *)data[0];
+    char *out = data[1];
+
+    npy_intp in_stride = strides[0] / sizeof(npy_timedelta);
+    npy_intp out_stride = strides[1];
+
+    PyArray_StringDTypeObject *sdescr = (PyArray_StringDTypeObject *)context->descriptors[1];
+    npy_string_allocator *allocator = NpyString_acquire_allocator(sdescr);
+
+    while (N--) {
+        npy_packed_static_string *out_pss = (npy_packed_static_string *)out;
+        if (*in == NPY_DATETIME_NAT)
+        {
+            if (NpyString_pack_null(allocator, out_pss) < 0) {
+                npy_gil_error(
+                        PyExc_MemoryError,
+                        "Failed to pack string in datetime to string cast");
+                goto fail;
+            }
+        }
+
+        if (int_to_stringbuf((long long)*in, out, allocator) != 0) {
+            goto fail;
+        }
+
+        in += in_stride;
+        out += out_stride;
+    }
+
+    NpyString_release_allocator(allocator);
+    return 0;
+
+fail:
+    NpyString_release_allocator(allocator);
+    return -1;
+}
+
+static PyType_Slot td2s_slots[] = {
+        {NPY_METH_resolve_descriptors,
+         &any_to_string_SAFE_resolve_descriptors},
+        {NPY_METH_strided_loop, &timedelta_to_string},
+        {0, NULL}};
+
+static char *td2s_name = "cast_Timedelta_to_StringDType";
 
 // string to void
 
@@ -1734,7 +1872,7 @@ get_casts()
             get_cast_spec(t2t_name, NPY_UNSAFE_CASTING,
                           NPY_METH_SUPPORTS_UNALIGNED, t2t_dtypes, s2s_slots);
 
-    int num_casts = 41;
+    int num_casts = 43;
 
 #if NPY_SIZEOF_BYTE == NPY_SIZEOF_SHORT
     num_casts += 4;
@@ -1821,6 +1959,22 @@ get_casts()
             dt2s_name, NPY_SAFE_CASTING,
             NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_REQUIRES_PYAPI,
             dt2s_dtypes, dt2s_slots);
+
+    PyArray_DTypeMeta **s2td_dtypes = get_dtypes(
+            &PyArray_StringDType, &PyArray_TimedeltaDType);
+
+    PyArrayMethod_Spec *StringToTimedeltaCastSpec = get_cast_spec(
+            s2td_name, NPY_UNSAFE_CASTING,
+            NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_REQUIRES_PYAPI,
+            s2td_dtypes, s2td_slots);
+
+    PyArray_DTypeMeta **td2s_dtypes = get_dtypes(
+            &PyArray_TimedeltaDType, &PyArray_StringDType);
+
+    PyArrayMethod_Spec *TimedeltaToStringCastSpec = get_cast_spec(
+            td2s_name, NPY_SAFE_CASTING,
+            NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_REQUIRES_PYAPI,
+            td2s_dtypes, td2s_slots);
 
     PyArray_DTypeMeta **s2ld_dtypes = get_dtypes(
             &PyArray_StringDType, &PyArray_LongDoubleDType);
@@ -1927,6 +2081,8 @@ get_casts()
     casts[cast_i++] = HalfToStringCastSpec;
     casts[cast_i++] = StringToDatetimeCastSpec;
     casts[cast_i++] = DatetimeToStringCastSpec;
+    casts[cast_i++] = StringToTimedeltaCastSpec;
+    casts[cast_i++] = TimedeltaToStringCastSpec;
     casts[cast_i++] = StringToLongDoubleCastSpec;
     casts[cast_i++] = LongDoubleToStringCastSpec;
     casts[cast_i++] = StringToCFloatCastSpec;
