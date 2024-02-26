@@ -350,7 +350,7 @@ NpyString_acquire_allocators(size_t n_descriptors,
 
 /*NUMPY_API
  * Release the mutex locking an allocator. This must be called exactly once
- * after acquiring the allocator mutex and all operations requring the
+ * after acquiring the allocator mutex and all operations requiring the
  * allocator are done.
  *
  * If you need to release multiple allocators, see

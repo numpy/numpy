@@ -1259,7 +1259,7 @@ typedef struct {
         int                  nd;                      /* number of dims */
         npy_intp             dimensions[NPY_MAXDIMS_LEGACY_ITERS]; /* dimensions */
         /*
-         * Space for the indivdual iterators, do not specify size publically
+         * Space for the individual iterators, do not specify size publicly
          * to allow changing it more easily.
          * One reason is that Cython uses this for checks and only allows
          * growing structs (as of Cython 3.0.6).  It also allows NPY_MAXARGS

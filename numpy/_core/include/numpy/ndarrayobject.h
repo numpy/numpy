@@ -22,7 +22,7 @@ extern "C" {
 #include "__multiarray_api.h"
 
 /*
- * Include any defintions which are defined differently for 1.x and 2.x
+ * Include any definitions which are defined differently for 1.x and 2.x
  * (Symbols only available on 2.x are not there, but rather guarded.)
  */
 #include "npy_2_compat.h"

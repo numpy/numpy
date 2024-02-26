@@ -520,7 +520,7 @@ def inv(a):
 
     If `a` is detected to be singular, a `LinAlgError` is raised. If `a` is
     ill-conditioned, a `LinAlgError` may or may not be raised, and results may
-    be innacurate due to floating-point errors.
+    be inaccurate due to floating-point errors.
 
     References
     ----------

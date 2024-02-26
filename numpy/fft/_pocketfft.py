@@ -815,7 +815,7 @@ def fftn(a, s=None, axes=None, norm=None, out=None):
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for all axes (and hence is
-        imcompatible with passing in all but the trivial ``s``).
+        incompatible with passing in all but the trivial ``s``).
 
         .. versionadded:: 2.0.0
 
@@ -957,7 +957,7 @@ def ifftn(a, s=None, axes=None, norm=None, out=None):
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for all axes (and hence is
-        imcompatible with passing in all but the trivial ``s``).
+        incompatible with passing in all but the trivial ``s``).
 
         .. versionadded:: 2.0.0
 
@@ -1215,7 +1215,7 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None, out=None):
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for all axes (and hence is
-        imcompatible with passing in all but the trivial ``s``).
+        incompatible with passing in all but the trivial ``s``).
 
         .. versionadded:: 2.0.0
 
@@ -1331,7 +1331,7 @@ def rfftn(a, s=None, axes=None, norm=None, out=None):
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for all axes (and hence is
-        imcompatible with passing in all but the trivial ``s``).
+        incompatible with passing in all but the trivial ``s``).
 
         .. versionadded:: 2.0.0
 
@@ -1444,7 +1444,7 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for the last inverse transform.
-        imcompatible with passing in all but the trivial ``s``).
+        incompatible with passing in all but the trivial ``s``).
 
         .. versionadded:: 2.0.0
 

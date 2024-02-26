@@ -4790,7 +4790,7 @@ add_newdoc('numpy._core._multiarray_umath', '_array_converter', ('as_arrays',
     subok : True or False, optional
         Whether array subclasses are preserved.
     pyscalars : {"convert", "preserve", "convert_if_no_array"}, optional
-        To allow NEP 50 weak promotion later, it may be desireable to preserve
+        To allow NEP 50 weak promotion later, it may be desirable to preserve
         Python scalars.  As default, these are preserved unless all inputs
         are Python scalars.  "convert" enforces an array return.
     """))

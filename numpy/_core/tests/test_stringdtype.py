@@ -847,7 +847,7 @@ def test_datetime_cast(dtype):
 
 def test_growing_strings(dtype):
     # growing a string leads to a heap allocation, this tests to make sure
-    # we do that bookeeping correctly for all possible starting cases
+    # we do that bookkeeping correctly for all possible starting cases
     data = [
         "hello",  # a short string
         "abcdefghijklmnopqestuvwxyz",  # a medium heap-allocated string

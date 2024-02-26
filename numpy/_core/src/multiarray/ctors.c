@@ -1549,7 +1549,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
  * - Recognized as a scalar by a/the dtype.  This can be DType specific,
  *   for example a tuple may be a scalar, but only for structured dtypes.
  * - Anything not recognized as an instance of a DType's scalar type but also not
- *   convertable to an array.  (no __array__ protocol, etc.)
+ *   convertible to an array.  (no __array__ protocol, etc.)
  *   these must map to `dtype=object` (if a dtype wasn't specified).
  */
 NPY_NO_EXPORT PyObject *
