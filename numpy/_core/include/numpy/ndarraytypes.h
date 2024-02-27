@@ -542,11 +542,6 @@ typedef struct {
 
 } PyArray_ArrFuncs;
 
-/* Forward declaration, actual definition in npy_2_compat.h */
-#if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
-static inline PyArray_ArrFuncs *
-PyDataType_GetArrFuncs(struct _PyArray_Descr *);
-#endif  /* not internal build */
 
 /* The item must be reference counted when it is inserted or extracted. */
 #define NPY_ITEM_REFCOUNT   0x01
@@ -1538,32 +1533,6 @@ PyArray_CHKFLAGS(const PyArrayObject *arr, int flags)
 {
     return (PyArray_FLAGS(arr) & flags) == flags;
 }
-
-#if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
-/* The internal copy of this is now defined in `dtypemeta.h` */
-/*
- * `PyArray_Scalar` is the same as this function but converts will convert
- * most NumPy types to Python scalars.
- */
-static inline PyObject *
-PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
-{
-    return PyDataType_GetArrFuncs(((PyArrayObject_fields *)arr)->descr)->getitem(
-                                        (void *)itemptr, (PyArrayObject *)arr);
-}
-
-/*
- * SETITEM should only be used if it is known that the value is a scalar
- * and of a type understood by the arrays dtype.
- * Use `PyArray_Pack` if the value may be of a different dtype.
- */
-static inline int
-PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
-{
-    return PyDataType_GetArrFuncs(((PyArrayObject_fields *)arr)->descr)->setitem(v, itemptr, arr);
-}
-#endif  /* not internal */
-
 
 static inline PyArray_Descr *
 PyArray_DTYPE(const PyArrayObject *arr)
