@@ -495,7 +495,8 @@ string_expandtabs_loop(PyArrayMethod_Context *context,
     while (N--) {
         Buffer<enc> buf(in1, elsize);
         Buffer<enc> outbuf(out, outsize);
-        string_expandtabs(buf, *(npy_int64 *)in2, outbuf);
+        npy_intp new_len = string_expandtabs(buf, *(npy_int64 *)in2, outbuf);
+        outbuf.buffer_fill_with_zeros_after_index(new_len);
 
         in1 += strides[0];
         in2 += strides[1];

@@ -701,15 +701,6 @@ class TestMethods:
         with pytest.raises(ValueError, match="substring not found"):
             np.strings.rindex(buf, sub, start, end)
 
-
-@pytest.mark.parametrize("dt", [
-    "S",
-    "U",
-    pytest.param("T", marks=pytest.mark.xfail(
-        reason="SrtingDType support to be implemented in a follow-up commit",
-        strict=True)),
-])
-class TestMethodsWithoutStringDTypeSupport:
     @pytest.mark.parametrize("buf,tabsize,res", [
         ("abc\rab\tdef\ng\thi", 8, "abc\rab      def\ng       hi"),
         ("abc\rab\tdef\ng\thi", 4, "abc\rab  def\ng   hi"),

@@ -1352,6 +1352,7 @@ replace_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(method),
     return NPY_NO_CASTING;
 }
 
+
 static int
 string_replace_strided_loop(
         PyArrayMethod_Context *context,
@@ -1379,8 +1380,6 @@ string_replace_strided_loop(
     npy_string_allocator *i3allocator = allocators[2];
     // allocators[3] is NULL
     npy_string_allocator *oallocator = allocators[4];
-
-
 
     while (N--) {
         const npy_packed_static_string *i1ps = (npy_packed_static_string *)in1;
@@ -1460,6 +1459,122 @@ string_replace_strided_loop(
     NpyString_release_allocators(5, allocators);
     return -1;
 }
+
+
+static NPY_CASTING expandtabs_resolve_descriptors(
+        struct PyArrayMethodObject_tag *NPY_UNUSED(method),
+        PyArray_DTypeMeta *NPY_UNUSED(dtypes[]),
+        PyArray_Descr *given_descrs[],
+        PyArray_Descr *loop_descrs[],
+        npy_intp *NPY_UNUSED(view_offset))
+{
+    Py_INCREF(given_descrs[0]);
+    loop_descrs[0] = given_descrs[0];
+    Py_INCREF(given_descrs[1]);
+    loop_descrs[1] = given_descrs[1];
+    PyArray_Descr *out_descr = NULL;
+    PyArray_StringDTypeObject *idescr =
+            (PyArray_StringDTypeObject *)given_descrs[0];
+
+    if (given_descrs[2] == NULL) {
+        out_descr = (PyArray_Descr *)new_stringdtype_instance(
+                idescr->na_object, idescr->coerce, NULL);
+        if (out_descr == NULL) {
+            return (NPY_CASTING)-1;
+        }
+    }
+    else {
+        Py_INCREF(given_descrs[2]);
+        out_descr = given_descrs[2];
+    }
+    loop_descrs[2] = out_descr;
+    return NPY_NO_CASTING;
+}
+
+
+static int
+string_expandtabs_strided_loop(PyArrayMethod_Context *context,
+                               char *const data[],
+                               npy_intp const dimensions[],
+                               npy_intp const strides[],
+                               NpyAuxData *NPY_UNUSED(auxdata))
+{
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *out = data[2];
+
+    npy_intp N = dimensions[0];
+
+    PyArray_StringDTypeObject *descr0 =
+            (PyArray_StringDTypeObject *)context->descriptors[0];
+    int has_string_na = descr0->has_string_na;
+    const npy_static_string *default_string = &descr0->default_string;
+
+
+    npy_string_allocator *allocators[3] = {};
+    NpyString_acquire_allocators(3, context->descriptors, allocators);
+    npy_string_allocator *iallocator = allocators[0];
+    // allocators[1] is NULL
+    npy_string_allocator *oallocator = allocators[2];
+
+    while (N--) {
+        const npy_packed_static_string *ips = (npy_packed_static_string *)in1;
+        npy_packed_static_string *ops = (npy_packed_static_string *)out;
+        npy_static_string is = {0, NULL};
+        npy_int64 tabsize = *(npy_int64 *)in2;
+
+        int isnull = NpyString_load(iallocator, ips, &is);
+
+        if (isnull == -1) {
+            npy_gil_error(
+                    PyExc_MemoryError, "Failed to load string in expandtabs");
+            goto fail;
+        }
+        else if (isnull) {
+            if (!has_string_na) {
+                npy_gil_error(PyExc_ValueError,
+                              "Null values are not supported arguments for "
+                              "expandtabs");
+                goto fail;
+            }
+            else {
+                is = *default_string;
+            }
+        }
+
+        Buffer<ENCODING::UTF8> buf((char *)is.buf, is.size);
+        npy_intp new_buf_size = string_expandtabs_length(buf, tabsize);
+
+        if (new_buf_size < 0) {
+            goto fail;
+        }
+
+        char *new_buf = (char *)PyMem_RawCalloc(new_buf_size, 1);
+        Buffer<ENCODING::UTF8> outbuf(new_buf, new_buf_size);
+
+        string_expandtabs(buf, tabsize, outbuf);
+
+        if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
+            npy_gil_error(
+                    PyExc_MemoryError, "Failed to pack string in expandtabs");
+            goto fail;
+        }
+
+        PyMem_RawFree(new_buf);
+
+        in1 += strides[0];
+        in2 += strides[1];
+        out += strides[2];
+    }
+
+    NpyString_release_allocators(3, allocators);
+    return 0;
+
+  fail:
+    NpyString_release_allocators(3, allocators);
+    return -1;
+}
+
 
 
 NPY_NO_EXPORT int
@@ -2079,6 +2194,31 @@ init_stringdtype_ufuncs(PyObject *umath)
 
     if (add_promoter(umath, "_replace", replace_promoter_int64_dtypes, 5,
                      string_replace_promoter) < 0) {
+        return -1;
+    }
+
+    PyArray_DTypeMeta *expandtabs_dtypes[] = {
+        &PyArray_StringDType,
+        &PyArray_Int64DType,
+        &PyArray_StringDType,
+    };
+
+    if (init_ufunc(umath, "_expandtabs", expandtabs_dtypes,
+                   &expandtabs_resolve_descriptors,
+                   &string_expandtabs_strided_loop, 2, 1,
+                   NPY_NO_CASTING,
+                   (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
+        return -1;
+    }
+
+    PyArray_DTypeMeta *expandtabs_promoter_dtypes[] = {
+        &PyArray_StringDType,
+        (PyArray_DTypeMeta *)Py_None,
+        &PyArray_StringDType
+    };
+
+    if (add_promoter(umath, "_expandtabs", expandtabs_promoter_dtypes,
+                     3, string_multiply_promoter) < 0) {
         return -1;
     }
 

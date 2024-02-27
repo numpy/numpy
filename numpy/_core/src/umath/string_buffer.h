@@ -404,28 +404,36 @@ struct Buffer {
         }
     }
 
-    inline void
+    inline npy_intp
     buffer_memset(npy_ucs4 fill_char, size_t n_chars)
     {
         if (n_chars == 0) {
-            return;
+            return 0;
         }
         switch (enc) {
             case ENCODING::ASCII:
-                memset(buf, fill_char, n_chars);
-                break;
+                memset(this->buf, fill_char, n_chars);
+                return n_chars;
             case ENCODING::UTF32:
             {
-                char *tmp = buf;
+                char *tmp = this->buf;
                 for (size_t i = 0; i < n_chars; i++) {
                     *(npy_ucs4 *)tmp = fill_char;
                     tmp += sizeof(npy_ucs4);
                 }
-                break;
+                return n_chars;
             }
             case ENCODING::UTF8:
-                assert(false);  // buffer_memset not used by stringdtype
-                break;
+            {
+                char utf8_c[4] = {0};
+                char *tmp = this->buf;
+                size_t num_bytes = ucs4_code_to_utf8_char(fill_char, utf8_c);
+                for (size_t i = 0; i < n_chars; i++) {
+                    memcpy(tmp, utf8_c, num_bytes);
+                    tmp += num_bytes;
+                }
+                return num_bytes * n_chars;
+            }
         }
     }
 
@@ -1442,24 +1450,21 @@ string_expandtabs_length(Buffer<enc> buf, npy_int64 tabsize)
         if (ch == '\t') {
             if (tabsize > 0) {
                 npy_intp incr = tabsize - (line_pos % tabsize);
-                if (new_len > PY_SSIZE_T_MAX - incr) {
-                    npy_gil_error(PyExc_OverflowError, "new string is too long");
-                    return -1;
-                }
                 line_pos += incr;
                 new_len += incr;
             }
         }
         else {
-            if (new_len > PY_SSIZE_T_MAX - 1) {
-                npy_gil_error(PyExc_OverflowError, "new string is too long");
-                return -1;
-            }
-            line_pos++;
-            new_len++;
+            size_t n_bytes = tmp.num_bytes_next_character();
+            line_pos += n_bytes;
+            new_len += n_bytes;
             if (ch == '\n' || ch == '\r') {
                 line_pos = 0;
             }
+        }
+        if (new_len > PY_SSIZE_T_MAX - 1) {
+            npy_gil_error(PyExc_OverflowError, "new string is too long");
+            return -1;
         }
         tmp++;
     }
@@ -1468,7 +1473,7 @@ string_expandtabs_length(Buffer<enc> buf, npy_int64 tabsize)
 
 
 template <ENCODING enc>
-static inline void
+static inline npy_intp
 string_expandtabs(Buffer<enc> buf, npy_int64 tabsize, Buffer<enc> out)
 {
     size_t len = buf.num_codepoints();
@@ -1482,15 +1487,13 @@ string_expandtabs(Buffer<enc> buf, npy_int64 tabsize, Buffer<enc> out)
             if (tabsize > 0) {
                 npy_intp incr = tabsize - (line_pos % tabsize);
                 line_pos += incr;
-                new_len += incr;
-                out.buffer_memset((npy_ucs4) ' ', incr);
+                new_len += out.buffer_memset((npy_ucs4) ' ', incr);
                 out += incr;
             }
         }
         else {
             line_pos++;
-            new_len++;
-            out.buffer_memset(ch, 1);
+            new_len += out.buffer_memset(ch, 1);
             out++;
             if (ch == '\n' || ch == '\r') {
                 line_pos = 0;
@@ -1498,7 +1501,7 @@ string_expandtabs(Buffer<enc> buf, npy_int64 tabsize, Buffer<enc> out)
         }
         tmp++;
     }
-    out.buffer_fill_with_zeros_after_index(new_len);
+    return new_len;
 }
 
 
