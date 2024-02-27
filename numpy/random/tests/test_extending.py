@@ -111,5 +111,8 @@ def test_numba():
     from numpy.random._examples.numba import extending  # noqa: F401
 
 @pytest.mark.skipif(cffi is None, reason="requires cffi")
+@pytest.mark.xfail(reason="Test uses private symbols that are not exported "
+                          "after libnpymath was moved out of numpy",
+                   strict=True)
 def test_cffi():
     from numpy.random._examples.cffi import extending  # noqa: F401
