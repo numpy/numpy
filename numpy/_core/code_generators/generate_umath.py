@@ -1277,7 +1277,7 @@ defdict = {
           ),
 '_expandtabs':
     Ufunc(2, 1, None,
-          docstrings.get('numpy._core.umath._expandtabs_length'),
+          docstrings.get('numpy._core.umath._expandtabs'),
           None,
           ),
 

@@ -573,9 +573,9 @@ string_multiply_resolve_descriptors(
 static NPY_CASTING
 string_strip_whitespace_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
-        PyArray_Descr *given_descrs[3],
-        PyArray_Descr *loop_descrs[3],
+        PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
+        PyArray_Descr *given_descrs[2],
+        PyArray_Descr *loop_descrs[2],
         npy_intp *NPY_UNUSED(view_offset))
 {
     loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
@@ -656,7 +656,7 @@ string_replace_promoter(PyObject *NPY_UNUSED(ufunc),
 static NPY_CASTING
 string_replace_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
+        PyArray_DTypeMeta *NPY_UNUSED(dtypes[5]),
         PyArray_Descr *given_descrs[5],
         PyArray_Descr *loop_descrs[5],
         npy_intp *NPY_UNUSED(view_offset))
@@ -738,8 +738,8 @@ static NPY_CASTING
 string_expandtabs_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
-        PyArray_Descr *given_descrs[5],
-        PyArray_Descr *loop_descrs[5],
+        PyArray_Descr *given_descrs[3],
+        PyArray_Descr *loop_descrs[3],
         npy_intp *NPY_UNUSED(view_offset))
 {
     if (given_descrs[2] == NULL) {
