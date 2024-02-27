@@ -2,6 +2,7 @@ import concurrent.futures
 import os
 import pickle
 import string
+import sys
 import tempfile
 
 import numpy as np
@@ -1176,3 +1177,187 @@ def test_strip(string_array, unicode_array):
         np.char.strip(rjs),
         np.char.strip(rju).astype(StringDType()),
     )
+
+
+class TestImplementation:
+    """Check that strings are stored in the arena when possible.
+
+    This tests implementation details, so should be adjusted if
+    the implementation changes.
+    """
+
+    @classmethod
+    def setup_class(self):
+        self.MISSING = 0x80
+        self.INITIALIZED = 0x40
+        self.OUTSIDE_ARENA = 0x20
+        self.LONG = 0x10
+        self.dtype = StringDType(na_object=np.nan)
+        self.sizeofstr = self.dtype.itemsize
+        sp = self.dtype.itemsize // 2  # pointer size = sizeof(size_t)
+        # Below, size is not strictly correct, since it really uses
+        # 7 (or 3) bytes, but good enough for the tests here.
+        self.view_dtype = np.dtype([
+            ('offset', f'u{sp}'),
+            ('size', f'u{sp // 2}'),
+            ('xsiz', f'V{sp // 2 - 1}'),
+            ('size_and_flags', 'u1'),
+        ] if sys.byteorder == 'little' else [
+            ('size_and_flags', 'u1'),
+            ('xsiz', f'V{sp // 2 - 1}'),
+            ('size', f'u{sp // 2}'),
+            ('offset', f'u{sp}'),
+        ])
+        self.s_empty = ""
+        self.s_short = "01234"
+        self.s_medium = "abcdefghijklmnopqrstuvwxyz"
+        self.s_long = "-=+" * 100
+        self.a = np.array(
+            [self.s_empty, self.s_short, self.s_medium, self.s_long],
+            self.dtype)
+
+    def get_view(self, a):
+        # Cannot view a StringDType as anything else directly, since
+        # it has references. So, we use a stride trick hack.
+        from numpy.lib._stride_tricks_impl import DummyArray
+        interface = dict(a.__array_interface__)
+        interface['descr'] = self.view_dtype.descr
+        interface['typestr'] = self.view_dtype.str
+        return np.asarray(DummyArray(interface, base=a))
+
+    def get_flags(self, a):
+        return self.get_view(a)['size_and_flags'] & 0xf0
+
+    def is_short(self, a):
+        return self.get_flags(a) == self.INITIALIZED | self.OUTSIDE_ARENA
+
+    def is_on_heap(self, a):
+        return self.get_flags(a) == (self.INITIALIZED
+                                     | self.OUTSIDE_ARENA
+                                     | self.LONG)
+
+    def is_missing(self, a):
+        return self.get_flags(a) & self.MISSING == self.MISSING
+
+    def in_arena(self, a):
+        return (self.get_flags(a) & (self.INITIALIZED | self.OUTSIDE_ARENA)
+                == self.INITIALIZED)
+
+    def test_setup(self):
+        is_short = self.is_short(self.a)
+        assert_array_equal(is_short, np.strings.str_len(self.a) <= 15)
+        assert_array_equal(self.in_arena(self.a), ~is_short)
+        assert_array_equal(self.is_on_heap(self.a), False)
+        assert_array_equal(self.is_missing(self.a), False)
+        view = self.get_view(self.a)
+        sizes = np.where(is_short, view['size_and_flags'] & 0xf,
+                         view['size'])
+        assert_array_equal(sizes, np.strings.str_len(self.a))
+        assert_array_equal(view['xsiz'][2:],
+                           np.void(b'\x00' * (self.sizeofstr // 4 - 1)))
+        # Check that the medium string uses only 1 byte for its length
+        # in the arena, while the long string takes 8 (or 4).
+        offsets = view['offset']
+        assert offsets[2] == 1
+        assert offsets[3] == 1 + len(self.s_medium) + self.sizeofstr // 2
+
+    def test_empty(self):
+        e = np.empty((3,), self.dtype)
+        assert_array_equal(self.get_flags(e), 0)
+        assert_array_equal(e, "")
+
+    def test_zeros(self):
+        z = np.zeros((2,), self.dtype)
+        assert_array_equal(self.get_flags(z), 0)
+        assert_array_equal(z, "")
+
+    def test_copy(self):
+        c = self.a.copy()
+        assert_array_equal(self.get_flags(c), self.get_flags(self.a))
+        assert_array_equal(c, self.a)
+
+    def test_arena_use_with_setting(self):
+        c = np.zeros_like(self.a)
+        assert_array_equal(self.get_flags(c), 0)
+        c[:] = self.a
+        assert_array_equal(self.get_flags(c), self.get_flags(self.a))
+        assert_array_equal(c, self.a)
+
+    def test_arena_reuse_with_setting(self):
+        c = self.a.copy()
+        c[:] = self.a
+        assert_array_equal(self.get_flags(c), self.get_flags(self.a))
+        assert_array_equal(c, self.a)
+
+    def test_arena_reuse_after_missing(self):
+        c = self.a.copy()
+        c[:] = np.nan
+        assert np.all(self.is_missing(c))
+        # Replacing with the original strings, the arena should be reused.
+        c[:] = self.a
+        assert_array_equal(self.get_flags(c), self.get_flags(self.a))
+        assert_array_equal(c, self.a)
+
+    def test_arena_reuse_for_shorter(self):
+        c = self.a.copy()
+        in_arena = self.in_arena(self.a)
+        # A string slightly shorter than the shortest in the arena
+        # should be used for all strings in the arena.
+        c[:] = self.s_medium[:-1]
+        assert_array_equal(c, self.s_medium[:-1])
+        assert_array_equal(self.in_arena(c), in_arena)
+        # But when a short string is replaced, it will go on the heap.
+        assert_array_equal(self.is_short(c), False)
+        assert_array_equal(self.is_on_heap(c), ~in_arena)
+        # We can put the originals back, and they'll still fit,
+        # and short strings are back as short strings
+        c[:] = self.a
+        assert_array_equal(c, self.a)
+        assert_array_equal(self.in_arena(c), in_arena)
+        assert_array_equal(self.is_short(c), self.is_short(self.a))
+        assert_array_equal(self.is_on_heap(c), False)
+
+    def test_arena_reuse_if_possible(self):
+        c = self.a.copy()
+        # A slightly longer string will not fit in the arena for
+        # the medium string, but will fit for the longer one.
+        c[:] = self.s_medium + "±"
+        assert_array_equal(c, self.s_medium + "±")
+        in_arena_exp = np.strings.str_len(self.a) >= len(self.s_medium) + 1
+        assert not np.all(in_arena_exp == self.in_arena(self.a))
+        assert_array_equal(self.in_arena(c), in_arena_exp)
+        assert_array_equal(self.is_short(c), False)
+        assert_array_equal(self.is_on_heap(c), ~in_arena_exp)
+        # And once outside arena, it stays outside, since offset is lost.
+        # But short strings are used again.
+        c[:] = self.a
+        is_short_exp = self.is_short(self.a)
+        assert_array_equal(c, self.a)
+        assert_array_equal(self.in_arena(c), in_arena_exp)
+        assert_array_equal(self.is_short(c), is_short_exp)
+        assert_array_equal(self.is_on_heap(c), ~in_arena_exp & ~is_short_exp)
+
+    def test_arena_no_reuse_after_short(self):
+        c = self.a.copy()
+        # If we replace a string with a short string, it cannot
+        # go into the arena after because the offset is lost.
+        c[:] = self.s_short
+        assert_array_equal(c, self.s_short)
+        assert_array_equal(self.in_arena(c), False)
+        c[:] = self.a
+        assert_array_equal(c, self.a)
+        assert_array_equal(self.in_arena(c), False)
+        assert_array_equal(self.is_on_heap(c), self.in_arena(self.a))
+
+    def test_arena_no_reuse_after_empty(self):
+        c = self.a.copy()
+        # If we replace a string with the empty string, it is treated
+        # as a short string, so cannot  go into the arena after.
+        # TODO: in principle, the arena information could be kept here.
+        c[:] = ""
+        assert_array_equal(c, "")
+        assert_array_equal(self.in_arena(c), False)
+        c[:] = self.a
+        assert_array_equal(c, self.a)
+        assert_array_equal(self.in_arena(c), False)
+        assert_array_equal(self.is_on_heap(c), self.in_arena(self.a))
