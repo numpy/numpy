@@ -126,7 +126,7 @@ static int copy_object(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
     npy_intp i, j;
     npy_intp odims[NPY_MAXDIMS_LEGACY_ITERS];
     PyArrayObject *aout;
-    PyArray_CopySwapFunc *copyswap = PyArray_DESCR(itx->ao)->f->copyswap;
+    PyArray_CopySwapFunc *copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(itx->ao))->copyswap;
     npy_int itemsize = PyArray_ITEMSIZE(itx->ao);
 
     /*
@@ -531,7 +531,7 @@ create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
     proto.subarray = dtype->subarray;
     proto.fields = dtype->fields;
     proto.names = dtype->names;
-    proto.f = dtype->f;
+    proto.f = PyDataType_GetArrFuncs(dtype);
     proto.metadata = dtype->metadata;
     proto.c_metadata = dtype->c_metadata;
 
