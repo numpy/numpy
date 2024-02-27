@@ -14,15 +14,13 @@ Changes to NumPy data type promotion
 =====================================
 
 NumPy 2.0 changes promotion (the result of combining dissimilar data types)
-as per `NEP 50 <NEP50_>`.
-
-Please see the NEP for details on this change.  It includes a
-:ref:`table of example changes <nep50_comparison_table>` and a backwards
-compatibility section.
+as per :ref:`NEP 50 <NEP50>`. Please see the NEP for details on this change.
+It includes a table of example changes and a backwards compatibility section.
 
 The largest backwards compatibility change of this is that it means that
 the precision of scalars is now preserved consistently.
 Two examples are:
+
 * ``np.float32(3) + 3.`` now returns a float32 when it previously returned
   a float64.
 * ``np.array([3], dtype=np.float32) + np.float64(3)`` will now return a float64
@@ -71,6 +69,7 @@ Note that the NumPy random API is not affected by this change.
 
 C-API Changes
 =============
+
 Some definitions were removed or replaced due to being outdated or
 unmaintainable.  Some new API definition will evaluate differently at
 runtime between NumPy 2.0 and NumPy 1.x.
@@ -83,6 +82,23 @@ used to explicitly implement different behavior on NumPy 1.x and 2.0.
 (The compat header defines it in a way compatible with such use.)
 
 Please let us know if you require additional workarounds here.
+
+Functionality moved to headers requiring ``import_array()``
+-----------------------------------------------------------
+If you previously included only ``ndarraytypes.h`` you may find that some
+functionality is not available anymore and requires the inclusion of
+``ndarrayobject.h`` or similar.
+This include is also needed when vendoring ``npy_2_compat.h`` into your own
+codebase to allow use of the new definitions when compiling with NumPy 1.x.
+
+.. warning::
+  It is important that the ``import_array()`` mechanism is used to ensure
+  that the full NumPy API is accessible when using the ``npy_2_compat.h``
+  header.  In most cases your extension module probably already calls it.
+  However, if not we have added ``PyArray_ImportNumPyAPI()`` as a preferable
+  way to ensure the NumPy API is imported.  This function is light-weight 
+  when called multiple times so that you may insert it wherever it may be
+  needed (if you wish to avoid setting it up at module import).
 
 .. _migration_maxdims:
 

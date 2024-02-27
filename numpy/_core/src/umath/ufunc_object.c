@@ -2309,7 +2309,7 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
             if (PyTypeNum_ISBOOL(typenum)) {
                 typenum = NPY_INTP;
             }
-            else if ((size_t)PyArray_DESCR(arr)->elsize < sizeof(npy_intp)) {
+            else if ((size_t)PyArray_ITEMSIZE(arr) < sizeof(npy_intp)) {
                 if (PyTypeNum_ISUNSIGNED(typenum)) {
                     typenum = NPY_UINTP;
                 }

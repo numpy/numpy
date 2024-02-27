@@ -4790,7 +4790,7 @@ add_newdoc('numpy._core._multiarray_umath', '_array_converter', ('as_arrays',
     subok : True or False, optional
         Whether array subclasses are preserved.
     pyscalars : {"convert", "preserve", "convert_if_no_array"}, optional
-        To allow NEP 50 weak promotion later, it may be desireable to preserve
+        To allow NEP 50 weak promotion later, it may be desirable to preserve
         Python scalars.  As default, these are preserved unless all inputs
         are Python scalars.  "convert" enforces an array return.
     """))
@@ -5716,11 +5716,9 @@ add_newdoc('numpy._core', 'ufunc', ('_get_strided_loop',
         } ufunc_call_info;
 
     Note that the first call only fills in the ``context``.  The call to
-    ``_get_strided_loop`` fills in all other data.
-    Please see the ``numpy/experimental_dtype_api.h`` header for exact
-    call information; the main thing to note is that the new-style loops
-    return 0 on success, -1 on failure.  They are passed context as new
-    first input and ``auxdata`` as (replaced) last.
+    ``_get_strided_loop`` fills in all other data.  The main thing to note is
+    that the new-style loops return 0 on success, -1 on failure.  They are
+    passed context as new first input and ``auxdata`` as (replaced) last.
 
     Only the ``strided_loop``signature is considered guaranteed stable
     for NumPy bug-fix releases.  All other API is tied to the experimental
@@ -6924,7 +6922,7 @@ add_newdoc('numpy._core.numerictypes', 'character',
 
 add_newdoc('numpy._core.multiarray', 'StringDType',
     """
-    StringDType(/, size, *, na_object=np._NoValue, coerce=True)
+    StringDType(*, na_object=np._NoValue, coerce=True)
 
     Create a StringDType instance.
 
@@ -6933,10 +6931,6 @@ add_newdoc('numpy._core.multiarray', 'StringDType',
 
     Parameters
     ----------
-    size: integer
-        An optional positional-only size parameter. This is ignored and
-        provided only so that code that creates fixed-width strings with a size
-        will also work correctly with StringDType.
     na_object : object, optional
         Object used to represent missing data. If unset, the array will not
         use a missing data sentinel.

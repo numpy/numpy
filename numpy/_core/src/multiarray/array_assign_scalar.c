@@ -267,11 +267,11 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
          * Use a static buffer to store the aligned/cast version,
          * or allocate some memory if more space is needed.
          */
-        if ((int)sizeof(scalarbuffer) >= PyArray_DESCR(dst)->elsize) {
+        if ((int)sizeof(scalarbuffer) >= PyArray_ITEMSIZE(dst)) {
             tmp_src_data = (char *)&scalarbuffer[0];
         }
         else {
-            tmp_src_data = PyArray_malloc(PyArray_DESCR(dst)->elsize);
+            tmp_src_data = PyArray_malloc(PyArray_ITEMSIZE(dst));
             if (tmp_src_data == NULL) {
                 PyErr_NoMemory();
                 goto fail;
@@ -280,7 +280,7 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
         }
 
         if (PyDataType_FLAGCHK(PyArray_DESCR(dst), NPY_NEEDS_INIT)) {
-            memset(tmp_src_data, 0, PyArray_DESCR(dst)->elsize);
+            memset(tmp_src_data, 0, PyArray_ITEMSIZE(dst));
         }
 
         if (PyArray_CastRawArrays(1, src_data, tmp_src_data, 0, 0,

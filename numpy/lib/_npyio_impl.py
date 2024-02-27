@@ -1769,10 +1769,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     names : {None, True, str, sequence}, optional
         If `names` is True, the field names are read from the first line after
         the first `skip_header` lines. This line can optionally be preceded
-        by a comment delimiter. If `names` is a sequence or a single-string of
-        comma-separated names, the names will be used to define the field names
-        in a structured dtype. If `names` is None, the names of the dtype
-        fields will be used, if any.
+        by a comment delimiter. Any content before the comment delimiter is
+        discarded. If `names` is a sequence or a single-string of
+        comma-separated names, the names will be used to define the field
+        names in a structured dtype. If `names` is None, the names of the
+        dtype fields will be used, if any.
     excludelist : sequence, optional
         A list of names to exclude. This list is appended to the default list
         ['return','file','print']. Excluded names are appended with an
@@ -1847,8 +1848,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     -----
     * When spaces are used as delimiters, or when no delimiter has been given
       as input, there should not be any missing data between two fields.
-    * When variables are named (either by a flexible dtype or with `names`),
-      there must not be any header in the file (else a ValueError
+    * When variables are named (either by a flexible dtype or with a `names`
+      sequence), there must not be any header in the file (else a ValueError
       exception is raised).
     * Individual values are not stripped of spaces by default.
       When using a custom converter, make sure the function does remove spaces.

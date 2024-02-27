@@ -1,9 +1,9 @@
 installed_headers = [
   'numpy/_neighborhood_iterator_imp.h',
+  'numpy/_public_dtype_api_table.h',
   'numpy/arrayobject.h',
   'numpy/arrayscalars.h',
-  'numpy/_dtype_api.h',
-  'numpy/experimental_dtype_api.h',
+  'numpy/dtype_api.h',
   'numpy/ndarrayobject.h',
   'numpy/ndarraytypes.h',
   'numpy/npy_1_7_deprecated_api.h',

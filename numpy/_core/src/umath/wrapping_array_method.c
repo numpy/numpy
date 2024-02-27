@@ -210,7 +210,7 @@ wrapping_method_get_identity_function(
 }
 
 
-/**
+/*UFUNC_API
  * Allows creating of a fairly lightweight wrapper around an existing ufunc
  * loop.  The idea is mainly for units, as this is currently slightly limited
  * in that it enforces that you cannot use a loop from another ufunc.
@@ -225,8 +225,8 @@ wrapping_method_get_identity_function(
 NPY_NO_EXPORT int
 PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
         PyArray_DTypeMeta *new_dtypes[], PyArray_DTypeMeta *wrapped_dtypes[],
-        translate_given_descrs_func *translate_given_descrs,
-        translate_loop_descrs_func *translate_loop_descrs)
+        PyArrayMethod_TranslateGivenDescriptors *translate_given_descrs,
+        PyArrayMethod_TranslateLoopDescriptors *translate_loop_descrs)
 {
     int res = -1;
     PyUFuncObject *ufunc = (PyUFuncObject *)ufunc_obj;
@@ -276,7 +276,7 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
 
     PyType_Slot slots[] = {
         {NPY_METH_resolve_descriptors, &wrapping_method_resolve_descriptors},
-        {_NPY_METH_get_loop, &wrapping_method_get_loop},
+        {NPY_METH_get_loop, &wrapping_method_get_loop},
         {NPY_METH_get_reduction_initial,
             &wrapping_method_get_identity_function},
         {0, NULL}

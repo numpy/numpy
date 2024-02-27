@@ -135,7 +135,7 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
                 "data type not ordered");
         goto fail;
     }
-    elsize = PyArray_DESCR(ap)->elsize;
+    elsize = PyArray_ITEMSIZE(ap);
     m = PyArray_DIMS(ap)[PyArray_NDIM(ap)-1];
     if (m == 0) {
         PyErr_Format(PyExc_ValueError,

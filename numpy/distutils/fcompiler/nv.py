@@ -14,7 +14,7 @@ class NVHPCFCompiler(FCompiler):
 
     compiler_type = 'nv'
     description = 'NVIDIA HPC SDK'
-    version_pattern = r'\s*(nvfortran|(pg(f77|f90|fortran)) \(aka nvfortran\)) (?P<version>[\d.-]+).*'
+    version_pattern = r'\s*(nvfortran|.+ \(aka nvfortran\)) (?P<version>[\d.-]+).*'
 
     executables = {
         'version_cmd': ["<F90>", "-V"],

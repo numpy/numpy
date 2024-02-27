@@ -125,7 +125,7 @@ legacy_setitem_using_DType(PyObject *obj, void *data, void *arr)
                 "supported for basic NumPy DTypes.");
         return -1;
     }
-    setitemfunction *setitem;
+    PyArrayDTypeMeta_SetItem *setitem;
     setitem = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(arr)))->setitem;
     return setitem(PyArray_DESCR(arr), obj, data);
 }
@@ -140,7 +140,7 @@ legacy_getitem_using_DType(void *data, void *arr)
                 "supported for basic NumPy DTypes.");
         return NULL;
     }
-    getitemfunction *getitem;
+    PyArrayDTypeMeta_GetItem *getitem;
     getitem = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(arr)))->getitem;
     return getitem(PyArray_DESCR(arr), data);
 }
@@ -918,7 +918,7 @@ string_known_scalar_types(
 static PyArray_DTypeMeta *
 default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
-    assert(cls->type_num < NPY_NTYPES);
+    assert(cls->type_num < NPY_NTYPES_LEGACY);
     if (NPY_UNLIKELY(NPY_DT_is_abstract(other))) {
         /*
          * The abstract complex has a lower priority than the concrete inexact
@@ -982,7 +982,7 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 static PyArray_DTypeMeta *
 string_unicode_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
-    assert(cls->type_num < NPY_NTYPES && cls != other);
+    assert(cls->type_num < NPY_NTYPES_LEGACY && cls != other);
     if (!NPY_DT_is_legacy(other) || (!PyTypeNum_ISNUMBER(other->type_num) &&
             /* Not numeric so defer unless cls is unicode and other is string */
             !(cls->type_num == NPY_UNICODE && other->type_num == NPY_STRING))) {
@@ -1078,7 +1078,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr,
 
     if (!has_type_set) {
         /* Accept if the type was filled in from an existing builtin dtype */
-        for (int i = 0; i < NPY_NTYPES; i++) {
+        for (int i = 0; i < NPY_NTYPES_LEGACY; i++) {
             PyArray_Descr *builtin = PyArray_DescrFromType(i);
             has_type_set = Py_TYPE(descr) == Py_TYPE(builtin);
             Py_DECREF(builtin);

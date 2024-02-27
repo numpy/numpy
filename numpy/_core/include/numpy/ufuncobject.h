@@ -273,8 +273,6 @@ typedef struct _loop1d_info {
 } PyUFunc_Loop1d;
 
 
-#include "__ufunc_api.h"
-
 #define UFUNC_PYVALS_NAME "UFUNC_PYVALS"
 
 /*
@@ -298,6 +296,8 @@ typedef struct _loop1d_info {
 #define UFUNC_NOFPE
 #endif
 #endif
+
+#include "__ufunc_api.h"
 
 #ifdef __cplusplus
 }

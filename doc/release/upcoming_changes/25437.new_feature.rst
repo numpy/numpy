@@ -1,8 +1,0 @@
-`numpy.linalg.martrix_rank`, `numpy.sort` and `numpy.argsort` new parameters
-----------------------------------------------------------------------------
-
-New keyword parameters were added to improve array API compatibility:
-
-* ``rtol`` keyword parameter was added to `numpy.linalg.martrix_rank`.
-
-* ``stable`` keyword parameter was added to `numpy.sort` and `numpy.argsort`.

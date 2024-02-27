@@ -52,9 +52,6 @@ linux_aarch64_test_task:
     echo "PATH=$PATH" >> $CIRRUS_ENV
     echo "CCACHE_DIR=$PWD/.ccache" >> $CIRRUS_ENV
 
-    # required for figuring out the system tags in openblas_support
-    pip install packaging
-
     pip install -r requirements/build_requirements.txt
     pip install -r requirements/test_requirements.txt
 
@@ -63,48 +60,6 @@ linux_aarch64_test_task:
 
   test_script: |
     spin test -j 1
-    ccache -s
-
-
-macos_arm64_test_task:
-  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
-  depends_on:
-    - linux_aarch64_test
-  macos_instance:
-    image: ghcr.io/cirruslabs/macos-sonoma-xcode
-
-  <<: *MODIFIED_CLONE
-
-  ccache_cache:
-    folder: .ccache
-    populate_script:
-      - mkdir -p .ccache
-    fingerprint_key: ccache-macosx_arm64
-
-  pip_cache:
-    folder: ~/.cache/pip
-
-  test_script: |
-    brew install micromamba ccache
-    micromamba shell init -s bash -p ~/micromamba
-    source ~/.bash_profile
-    
-    micromamba create -n numpydev
-    micromamba activate numpydev
-    micromamba install -y -c conda-forge compilers python=3.11 2>/dev/null
-    
-    export PATH=/opt/homebrew/opt/ccache/libexec:$PATH
-    export CCACHE_DIR=$PWD/.ccache
-    echo "PATH=$PATH" >> $CIRRUS_ENV
-
-    python --version
-    
-    pip install -r requirements/build_requirements.txt
-    pip install pytest pytest-xdist hypothesis typing_extensions
-
-    spin build
-    spin test -j auto
-
     ccache -s
 
 

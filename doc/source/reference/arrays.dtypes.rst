@@ -187,7 +187,7 @@ Built-in Python types
     (all others)             :class:`object_`
     ===================      ===============
 
-   Note that ``str_`` corresponds to UCS4 encoded unicode strings.
+    Note that ``str_`` corresponds to UCS4 encoded unicode strings.
 
     .. admonition:: Example
 

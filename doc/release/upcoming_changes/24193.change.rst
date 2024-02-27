@@ -1,5 +1,0 @@
-Remove datetime64 deprecation warning when constructing with timezone
----------------------------------------------------------------------
-The ``np.datetime64`` method now issues a User Warning rather than a
-Deprecation Warning whenever a timezone is included in the datetime
-string that is provided.

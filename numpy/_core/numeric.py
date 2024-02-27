@@ -2062,12 +2062,11 @@ def binary_repr(num, width=None):
     '11101'
 
     """
-    def warn_if_insufficient(width, binwidth):
+    def err_if_insufficient(width, binwidth):
         if width is not None and width < binwidth:
-            warnings.warn(
-                "Insufficient bit width provided. This behavior "
-                "will raise an error in the future.", DeprecationWarning,
-                stacklevel=3)
+            raise ValueError(
+                f"Insufficient bit {width=} provided for {binwidth=}"
+            )
 
     # Ensure that num is a Python integer to avoid overflow or unwanted
     # casts to floating point.
@@ -2081,7 +2080,7 @@ def binary_repr(num, width=None):
         binwidth = len(binary)
         outwidth = (binwidth if width is None
                     else builtins.max(binwidth, width))
-        warn_if_insufficient(width, binwidth)
+        err_if_insufficient(width, binwidth)
         return binary.zfill(outwidth)
 
     else:
@@ -2101,7 +2100,7 @@ def binary_repr(num, width=None):
             binwidth = len(binary)
 
             outwidth = builtins.max(binwidth, width)
-            warn_if_insufficient(width, binwidth)
+            err_if_insufficient(width, binwidth)
             return '1' * (outwidth - binwidth) + binary
 
 

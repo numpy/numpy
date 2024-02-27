@@ -1421,7 +1421,7 @@ gentype_struct_get(PyObject *self, void *NPY_UNUSED(ignored))
     inter->flags &= ~(NPY_ARRAY_WRITEBACKIFCOPY | NPY_ARRAY_OWNDATA);
     inter->flags |= NPY_ARRAY_NOTSWAPPED;
     inter->typekind = PyArray_DESCR(arr)->kind;
-    inter->itemsize = PyArray_DESCR(arr)->elsize;
+    inter->itemsize = PyArray_ITEMSIZE(arr);
     inter->strides = NULL;
     inter->shape = NULL;
     inter->data = PyArray_DATA(arr);
@@ -3911,7 +3911,7 @@ static PyMappingMethods gentype_as_mapping = {
  * which is different than what PyArray_ScalarKind returns.
  */
 NPY_NO_EXPORT signed char
-_npy_scalar_kinds_table[NPY_NTYPES];
+_npy_scalar_kinds_table[NPY_NTYPES_LEGACY];
 
 /*
  * This table maps a scalar kind (excluding NPY_NOSCALAR)
@@ -3925,14 +3925,14 @@ _npy_smallest_type_of_kind_table[NPY_NSCALARKINDS];
  * of sizes.
  */
 NPY_NO_EXPORT signed char
-_npy_next_larger_type_table[NPY_NTYPES];
+_npy_next_larger_type_table[NPY_NTYPES_LEGACY];
 
 /*
  * This table gives the smallest-size and smallest-kind type to which
  * the input types may be safely cast, according to _npy_can_cast_safely.
  */
 NPY_NO_EXPORT signed char
-_npy_type_promotion_table[NPY_NTYPES][NPY_NTYPES];
+_npy_type_promotion_table[NPY_NTYPES_LEGACY][NPY_NTYPES_LEGACY];
 
 NPY_NO_EXPORT void
 initialize_casting_tables(void)
@@ -3991,14 +3991,14 @@ initialize_casting_tables(void)
      * Now that the _can_cast_safely table is finished, we can
      * use it to build the _type_promotion table
      */
-    for (i = 0; i < NPY_NTYPES; ++i) {
+    for (i = 0; i < NPY_NTYPES_LEGACY; ++i) {
         _npy_type_promotion_table[i][i] = i;
         /* Don't let number promote to string/unicode/void/datetime/timedelta */
         if (i == NPY_STRING || i == NPY_UNICODE || i == NPY_VOID ||
                 i == NPY_DATETIME || i == NPY_TIMEDELTA) {
             /* Promoting these types requires examining their contents */
             _npy_type_promotion_table[i][i] = -1;
-            for (j = i + 1; j < NPY_NTYPES; ++j) {
+            for (j = i + 1; j < NPY_NTYPES_LEGACY; ++j) {
                 _npy_type_promotion_table[i][j] = -1;
                 _npy_type_promotion_table[j][i] = -1;
             }
@@ -4007,7 +4007,7 @@ initialize_casting_tables(void)
             _npy_type_promotion_table[NPY_OBJECT][i] = NPY_OBJECT;
         }
         else {
-            for (j = i + 1; j < NPY_NTYPES; ++j) {
+            for (j = i + 1; j < NPY_NTYPES_LEGACY; ++j) {
                 /* Don't let number promote to string/unicode/void */
                 if (j == NPY_STRING || j == NPY_UNICODE || j == NPY_VOID) {
                     _npy_type_promotion_table[i][j] = -1;

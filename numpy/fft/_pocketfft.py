@@ -34,7 +34,8 @@ import functools
 import warnings
 
 from numpy.lib.array_utils import normalize_axis_index
-from numpy._core import asarray, empty, zeros, swapaxes, conjugate, take, sqrt
+from numpy._core import (asarray, empty, zeros, swapaxes, result_type,
+                         conjugate, take, sqrt, reciprocal)
 from . import _pocketfft_umath as pfu
 from numpy._core import overrides
 
@@ -47,12 +48,25 @@ array_function_dispatch = functools.partial(
 # divided. This replaces the original, more intuitive 'fct` parameter to avoid
 # divisions by zero (or alternatively additional checks) in the case of
 # zero-length axes during its computation.
-def _raw_fft(a, n, axis, is_real, is_forward, inv_norm, out=None):
-    axis = normalize_axis_index(axis, a.ndim)
-    if n is None:
-        n = a.shape[axis]
+def _raw_fft(a, n, axis, is_real, is_forward, norm, out=None):
+    if n < 1:
+        raise ValueError(f"Invalid number of FFT data points ({n}) specified.")
 
-    fct = 1/inv_norm
+    # Calculate the normalization factor, passing in the array dtype to
+    # avoid precision loss in the possible sqrt or reciprocal.
+    if not is_forward:
+        norm = _swap_direction(norm)
+
+    real_dtype = result_type(a.real.dtype, 1.0)
+    if norm is None or norm == "backward":
+        fct = 1
+    elif norm == "ortho":
+        fct = reciprocal(sqrt(n, dtype=real_dtype))
+    elif norm == "forward":
+        fct = reciprocal(n, dtype=real_dtype)
+    else:
+        raise ValueError(f'Invalid norm value {norm}; should be "backward",'
+                         '"ortho" or "forward".')
 
     n_out = n
     if is_real:
@@ -64,47 +78,20 @@ def _raw_fft(a, n, axis, is_real, is_forward, inv_norm, out=None):
     else:
         ufunc = pfu.fft if is_forward else pfu.ifft
 
+    axis = normalize_axis_index(axis, a.ndim)
+
     if out is None:
+        if is_real and not is_forward:  # irfft, complex in, real output.
+            out_dtype = real_dtype
+        else:  # Others, complex output.
+            out_dtype = result_type(a.dtype, 1j)
         out = empty(a.shape[:axis] + (n_out,) + a.shape[axis+1:],
-                    dtype=complex if is_forward or not is_real else float)
+                    dtype=out_dtype)
     elif ((shape := getattr(out, "shape", None)) is not None
           and (len(shape) != a.ndim or shape[axis] != n_out)):
         raise ValueError("output array has wrong shape.")
-    # Note: for backward compatibility, we want to accept longdouble as well,
-    # even though it is at reduced precision. To tell the promotor that we
-    # want to do that, we set the signature (to the only the ufunc has).
-    # Then, the default casting='same_kind' will take care of the rest.
-    # TODO: create separate float, double, and longdouble loops.
-    return ufunc(a, fct, axes=[(axis,), (), (axis,)], out=out,
-                 signature=ufunc.types[0])
 
-
-def _get_forward_norm(n, norm):
-    if n < 1:
-        raise ValueError(f"Invalid number of FFT data points ({n}) specified.")
-
-    if norm is None or norm == "backward":
-        return 1
-    elif norm == "ortho":
-        return sqrt(n)
-    elif norm == "forward":
-        return n
-    raise ValueError(f'Invalid norm value {norm}; should be "backward",'
-                     '"ortho" or "forward".')
-
-
-def _get_backward_norm(n, norm):
-    if n < 1:
-        raise ValueError(f"Invalid number of FFT data points ({n}) specified.")
-
-    if norm is None or norm == "backward":
-        return n
-    elif norm == "ortho":
-        return sqrt(n)
-    elif norm == "forward":
-        return 1
-    raise ValueError(f'Invalid norm value {norm}; should be "backward", '
-                     '"ortho" or "forward".')
+    return ufunc(a, fct, axes=[(axis,), (), (axis,)], out=out)
 
 
 _SWAP_DIRECTION_MAP = {"backward": "forward", None: "forward",
@@ -220,8 +207,7 @@ def fft(a, n=None, axis=-1, norm=None, out=None):
     a = asarray(a)
     if n is None:
         n = a.shape[axis]
-    inv_norm = _get_forward_norm(n, norm)
-    output = _raw_fft(a, n, axis, False, True, inv_norm, out)
+    output = _raw_fft(a, n, axis, False, True, norm, out)
     return output
 
 
@@ -327,8 +313,7 @@ def ifft(a, n=None, axis=-1, norm=None, out=None):
     a = asarray(a)
     if n is None:
         n = a.shape[axis]
-    inv_norm = _get_backward_norm(n, norm)
-    output = _raw_fft(a, n, axis, False, False, inv_norm, out=out)
+    output = _raw_fft(a, n, axis, False, False, norm, out=out)
     return output
 
 
@@ -426,8 +411,7 @@ def rfft(a, n=None, axis=-1, norm=None, out=None):
     a = asarray(a)
     if n is None:
         n = a.shape[axis]
-    inv_norm = _get_forward_norm(n, norm)
-    output = _raw_fft(a, n, axis, True, True, inv_norm, out=out)
+    output = _raw_fft(a, n, axis, True, True, norm, out=out)
     return output
 
 
@@ -536,8 +520,7 @@ def irfft(a, n=None, axis=-1, norm=None, out=None):
     a = asarray(a)
     if n is None:
         n = (a.shape[axis] - 1) * 2
-    inv_norm = _get_backward_norm(n, norm)
-    output = _raw_fft(a, n, axis, True, False, inv_norm, out=out)
+    output = _raw_fft(a, n, axis, True, False, norm, out=out)
     return output
 
 
@@ -832,7 +815,7 @@ def fftn(a, s=None, axes=None, norm=None, out=None):
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for all axes (and hence is
-        imcompatible with passing in all but the trivial ``s``).
+        incompatible with passing in all but the trivial ``s``).
 
         .. versionadded:: 2.0.0
 
@@ -974,7 +957,7 @@ def ifftn(a, s=None, axes=None, norm=None, out=None):
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for all axes (and hence is
-        imcompatible with passing in all but the trivial ``s``).
+        incompatible with passing in all but the trivial ``s``).
 
         .. versionadded:: 2.0.0
 
@@ -1232,7 +1215,7 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None, out=None):
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for all axes (and hence is
-        imcompatible with passing in all but the trivial ``s``).
+        incompatible with passing in all but the trivial ``s``).
 
         .. versionadded:: 2.0.0
 
@@ -1348,7 +1331,7 @@ def rfftn(a, s=None, axes=None, norm=None, out=None):
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for all axes (and hence is
-        imcompatible with passing in all but the trivial ``s``).
+        incompatible with passing in all but the trivial ``s``).
 
         .. versionadded:: 2.0.0
 
@@ -1461,7 +1444,7 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for the last inverse transform.
-        imcompatible with passing in all but the trivial ``s``).
+        incompatible with passing in all but the trivial ``s``).
 
         .. versionadded:: 2.0.0
 

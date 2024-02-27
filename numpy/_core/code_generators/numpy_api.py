@@ -91,6 +91,10 @@ multiarray_types_api = {
     'PyHalfArrType_Type':               (217,),
     'NpyIter_Type':                     (218,),
     # End 1.6 API
+    # NOTE: The Slots 320-360 are defined in `_experimental_dtype_api.h`
+    #       and filled explicitly outside the code generator as the metaclass
+    #       makes them tricky to expose.  (This may be refactored.)
+    # End 2.0 API
 }
 
 # define NPY_NUMUSERTYPES (*(int *)PyArray_API[6])
@@ -98,11 +102,13 @@ multiarray_types_api = {
 # define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[8])
 
 multiarray_funcs_api = {
-    '__unused_indices__': [
-        1, 4, 40, 41, 65, 66, 67, 68, 81, 82, 83,
-        103, 115, 117, 122, 163, 164, 171, 173, 197,
-        201, 202, 208, 219, 278, 291, 293, 294, 295,
-        301],
+    '__unused_indices__': (
+        [1, 4, 40, 41, 65, 66, 67, 68, 81, 82, 83,
+         103, 115, 117, 122, 163, 164, 171, 173, 197,
+         201, 202, 208, 219, 220, 221, 222, 223, 278,
+         291, 293, 294, 295, 301]
+        + list(range(320, 361))  # range reserved DType class slots
+        ),
     'PyArray_GetNDArrayCVersion':           (0,),
     # Unused slot 40, was `PyArray_SetNumericOps`
     # Unused slot 41, was `PyArray_GetNumericOps`,
@@ -280,10 +286,10 @@ multiarray_funcs_api = {
     'PyArray_NeighborhoodIterNew':          (213,),
     # End 1.5 API
     # Unused slot 219, was `PyArray_SetDatetimeParseFunction`
-    'PyArray_DatetimeToDatetimeStruct':     (220,),
-    'PyArray_TimedeltaToTimedeltaStruct':   (221,),
-    'PyArray_DatetimeStructToDatetime':     (222,),
-    'PyArray_TimedeltaStructToTimedelta':   (223,),
+    # Unused slot 220, was `PyArray_DatetimeToDatetimeStruct`
+    # Unused slot 221, was `PyArray_TimedeltaToTimedeltaStruct`
+    # Unused slot 222, was `PyArray_DatetimeStructToDatetime`
+    # Unused slot 223, was `PyArray_TimedeltaStructToTimedelta`
     # NDIter API
     'NpyIter_New':                          (224,),
     'NpyIter_MultiNew':                     (225,),
@@ -388,6 +394,11 @@ multiarray_funcs_api = {
     'NpyString_acquire_allocators':                  (317, MinVersion("2.0")),
     'NpyString_release_allocator':                   (318, MinVersion("2.0")),
     'NpyString_release_allocators':                  (319, MinVersion("2.0")),
+    # Slots 320-360 reserved for DType classes (see comment in types)
+    'PyArray_GetDefaultDescr':                       (361, MinVersion("2.0")),
+    'PyArrayInitDTypeMeta_FromSpec':                 (362, MinVersion("2.0")),
+    'PyArray_CommonDType':                           (363, MinVersion("2.0")),
+    'PyArray_PromoteDTypeSequence':                  (364, MinVersion("2.0")),
     # End 2.0 API
 }
 
@@ -444,6 +455,10 @@ ufunc_funcs_api = {
     # End 1.8 API
     'PyUFunc_FromFuncAndDataAndSignatureAndIdentity': (42, MinVersion("1.16")),
     # End 1.16 API
+    'PyUFunc_AddLoopFromSpec':                       (43, MinVersion("2.0")),
+    'PyUFunc_AddPromoter':                           (44, MinVersion("2.0")),
+    'PyUFunc_AddWrappingLoop':                       (45, MinVersion("2.0")),
+    'PyUFunc_GiveFloatingpointErrors':               (46, MinVersion("2.0")),
 }
 
 # List of all the dicts which define the C API

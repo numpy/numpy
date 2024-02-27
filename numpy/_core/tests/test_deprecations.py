@@ -138,50 +138,6 @@ class _VisibleDeprecationTestCase(_DeprecationTestCase):
     warning_cls = np.exceptions.VisibleDeprecationWarning
 
 
-class TestArrayDataAttributeAssignmentDeprecation(_DeprecationTestCase):
-    """Assigning the 'data' attribute of an ndarray is unsafe as pointed
-     out in gh-7093. Eventually, such assignment should NOT be allowed, but
-     in the interests of maintaining backwards compatibility, only a Deprecation-
-     Warning will be raised instead for the time being to give developers time to
-     refactor relevant code.
-    """
-
-    def test_data_attr_assignment(self):
-        a = np.arange(10)
-        b = np.linspace(0, 1, 10)
-
-        self.message = ("Assigning the 'data' attribute is an "
-                        "inherently unsafe operation and will "
-                        "be removed in the future.")
-        self.assert_deprecated(a.__setattr__, args=('data', b.data))
-
-
-class TestBinaryReprInsufficientWidthParameterForRepresentation(_DeprecationTestCase):
-    """
-    If a 'width' parameter is passed into ``binary_repr`` that is insufficient to
-    represent the number in base 2 (positive) or 2's complement (negative) form,
-    the function used to silently ignore the parameter and return a representation
-    using the minimal number of bits needed for the form in question. Such behavior
-    is now considered unsafe from a user perspective and will raise an error in the future.
-    """
-
-    def test_insufficient_width_positive(self):
-        args = (10,)
-        kwargs = {'width': 2}
-
-        self.message = ("Insufficient bit width provided. This behavior "
-                        "will raise an error in the future.")
-        self.assert_deprecated(np.binary_repr, args=args, kwargs=kwargs)
-
-    def test_insufficient_width_negative(self):
-        args = (-5,)
-        kwargs = {'width': 2}
-
-        self.message = ("Insufficient bit width provided. This behavior "
-                        "will raise an error in the future.")
-        self.assert_deprecated(np.binary_repr, args=args, kwargs=kwargs)
-
-
 class TestDTypeAttributeIsDTypeDeprecation(_DeprecationTestCase):
     # Deprecated 2021-01-05, NumPy 1.21
     message = r".*`.dtype` attribute"
@@ -225,14 +181,6 @@ class TestNonNumericConjugate(_DeprecationTestCase):
         for a in (np.array('s'), np.array('2016', 'M'),
                 np.array((1, 2), [('a', int), ('b', int)])):
             self.assert_deprecated(a.conjugate)
-
-
-class TestNPY_CHAR(_DeprecationTestCase):
-    # 2017-05-03, 1.13.0
-    def test_npy_char_deprecation(self):
-        from numpy._core._multiarray_tests import npy_char_deprecation
-        self.assert_deprecated(npy_char_deprecation)
-        assert_(npy_char_deprecation() == 'S1')
 
 
 class TestDatetimeEvent(_DeprecationTestCase):
@@ -693,23 +641,6 @@ class TestDeprecatedFinfo(_DeprecationTestCase):
     def test_deprecated_none(self):
         self.assert_deprecated(np.finfo, args=(None,))
 
-class TestFromnumeric(_DeprecationTestCase):
-    # 2023-03-02, 1.25.0
-    def test_cumproduct(self):
-        self.assert_deprecated(lambda: np.cumproduct(np.array([1, 2, 3])))
-
-    # 2023-03-02, 1.25.0
-    def test_product(self):
-        self.assert_deprecated(lambda: np.product(np.array([1, 2, 3])))
-
-    # 2023-03-02, 1.25.0
-    def test_sometrue(self):
-        self.assert_deprecated(lambda: np.sometrue(np.array([True, False])))
-
-    # 2023-03-02, 1.25.0
-    def test_alltrue(self):
-        self.assert_deprecated(lambda: np.alltrue(np.array([True, False])))
-
 
 class TestMathAlias(_DeprecationTestCase):
     def test_deprecated_np_lib_math(self):
@@ -787,7 +718,7 @@ class TestDeprecatedArrayWrap(_DeprecationTestCase):
 
 
 class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
-    messsage = "Passing in a parenthesized single number"
+    message = "Passing in a parenthesized single number"
 
     @pytest.mark.parametrize("string", ["(2)i,", "(3)3S,", "f,(2)f"])
     def test_parenthesized_repeat_count(self, string):
