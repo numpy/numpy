@@ -8,7 +8,7 @@
 
 #include "numpy/arrayobject.h"
 #include "numpy/ndarraytypes.h"
-#include "libnpymath/npy_math.h"
+#include "numpy/npy_2_npymathcompat.h"
 #include "numpy/ufuncobject.h"
 
 #include "numpyos.h"

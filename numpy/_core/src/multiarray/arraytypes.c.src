@@ -13,8 +13,8 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 #include "npy_pycompat.h"
-#include "libnpymath/npy_math.h"
-#include "libnpymath/halffloat.h"
+#include "numpy/npy_2_npymathcompat.h"
+#include "numpy/npy_2_npymathcompat.h"
 
 #include "npy_config.h"
 #include "npy_sort.h"
@@ -522,8 +522,8 @@ NPY_NO_EXPORT int
 
 #if NPY_SIZEOF_@NAME@ < NPY_SIZEOF_CDOUBLE  /* really just float... */
         /* Overflow could have occurred converting double to float */
-        if (NPY_UNLIKELY((npymath_isinf(npymath_creal@suffix@(&temp)) && !npymath_isinf(oop.real)) ||
-                         (npymath_isinf(npymath_cimag@suffix@(&temp)) && !npymath_isinf(oop.imag)))) {
+        if (NPY_UNLIKELY((npymath_isinf(npymath_creal@suffix@(temp)) && !npymath_isinf(oop.real)) ||
+                         (npymath_isinf(npymath_cimag@suffix@(temp)) && !npymath_isinf(oop.imag)))) {
             if (PyUFunc_GiveFloatingpointErrors("cast", NPYMATH_FPE_OVERFLOW) < 0) {
                 return -1;
             }
@@ -2555,13 +2555,13 @@ static npy_bool
 {
     if (ap == NULL || PyArray_ISBEHAVED_RO(ap)) {
         @type@ *ptmp = (@type@ *)ip;
-        return (npy_bool) ((npymath_creal@suffix@(ptmp) != 0) || (npymath_cimag@suffix@(ptmp) != 0));
+        return (npy_bool) ((npymath_creal@suffix@(*ptmp) != 0) || (npymath_cimag@suffix@(*ptmp) != 0));
     }
     else {
         @type@ tmp;
         PyArray_DESCR(ap)->f->copyswap(&tmp, ip, PyArray_ISBYTESWAPPED(ap),
                                        ap);
-        return (npy_bool) ((npymath_creal@suffix@(&tmp) != 0) || (npymath_cimag@suffix@(&tmp) != 0));
+        return (npy_bool) ((npymath_creal@suffix@(tmp) != 0) || (npymath_cimag@suffix@(tmp) != 0));
     }
 }
 /**end repeat**/
@@ -3761,15 +3761,15 @@ static int
     @type@ start;
     @type@ delta;
 
-    npymath_csetreal@t@(&start, npymath_creal@t@(buffer));
-    npymath_csetimag@t@(&start, npymath_cimag@t@(buffer));
-    npymath_csetreal@t@(&delta, npymath_creal@t@(&buffer[1]) - npymath_creal@t@(&start));
-    npymath_csetimag@t@(&delta, npymath_cimag@t@(&buffer[1]) - npymath_cimag@t@(&start));
+    npymath_csetreal@t@(&start, npymath_creal@t@(buffer[0]));
+    npymath_csetimag@t@(&start, npymath_cimag@t@(buffer[0]));
+    npymath_csetreal@t@(&delta, npymath_creal@t@(buffer[1]) - npymath_creal@t@(start));
+    npymath_csetimag@t@(&delta, npymath_cimag@t@(buffer[1]) - npymath_cimag@t@(start));
 
     buffer += 2;
     for (i = 2; i < length; i++, buffer++) {
-        npymath_csetreal@t@(buffer, npymath_creal@t@(&start) + i*npymath_creal@t@(&delta));
-        npymath_csetimag@t@(buffer, npymath_cimag@t@(&start) + i*npymath_cimag@t@(&delta));
+        npymath_csetreal@t@(buffer, npymath_creal@t@(start) + i*npymath_creal@t@(delta));
+        npymath_csetimag@t@(buffer, npymath_cimag@t@(start) + i*npymath_cimag@t@(delta));
     }
     return 0;
 }

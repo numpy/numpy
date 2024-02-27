@@ -248,7 +248,7 @@ part of a complex number:
     npy_cdouble c;
     npymath_csetreal(&c, 1.0);
     npymath_csetimag(&c, 0.0);
-    printf("%d + %di\n", npymath_creal(&c), npymath_cimag(&c));
+    printf("%d + %di\n", npymath_creal(c), npymath_cimag(c));
 
 .. versionchanged:: 2.0.0
 

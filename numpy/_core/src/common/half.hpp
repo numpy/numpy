@@ -4,7 +4,7 @@
 #include "npstd.hpp"
 
 #include "npy_cpu_dispatch.h" // NPY_HAVE_CPU_FEATURES
-#include "libnpymath/halffloat.h"
+#include "numpy/npy_2_npymathcompat.h"
 
 // TODO(@seiko2plus):
 // - covers half-precision operations that being supported by libnpymath/halffloat.h

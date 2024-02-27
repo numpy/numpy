@@ -2,7 +2,7 @@
 #define _NPY_UMATH_LOOPS_UTILS_H_
 
 #include "numpy/npy_common.h" // NPY_FINLINE
-#include "libnpymath/halffloat.h" // npymath_half_to_float
+#include "numpy/npy_2_npymathcompat.h" // npymath_half_to_float
 
 /**
  * Old versions of MSVC causes ambiguous link errors when we deal with large SIMD kernels

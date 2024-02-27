@@ -1,7 +1,7 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY_UFUNCOBJECT_H_
 #define NUMPY_CORE_INCLUDE_NUMPY_UFUNCOBJECT_H_
 
-#include <libnpymath/npy_math.h>
+#include "numpy/npy_2_npymathcompat.h"
 #include <numpy/npy_common.h>
 
 #ifdef __cplusplus

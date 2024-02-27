@@ -10,8 +10,8 @@
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_common.h"
-#include "libnpymath/npy_math.h"
-#include "libnpymath/halffloat.h"
+#include "numpy/npy_2_npymathcompat.h"
+#include "numpy/npy_2_npymathcompat.h"
 #include "numpy/utils.h"
 
 #include "fast_loop_macros.h"
@@ -55,15 +55,15 @@ _NPY_MAX(T a, T b, npy::floating_point_tag const &)
     return npymath_isnan(a) ? (a) : PyArray_MAX(a, b);
 }
 
-#define PyArray_CLT(p,q,suffix) (((npymath_creal##suffix(&p)==npymath_creal##suffix(&q)) ? (npymath_cimag##suffix(&p) < npymath_cimag##suffix(&q)) : \
-                               (npymath_creal##suffix(&p) < npymath_creal##suffix(&q))))
-#define PyArray_CGT(p,q,suffix) (((npymath_creal##suffix(&p)==npymath_creal##suffix(&q)) ? (npymath_cimag##suffix(&p) > npymath_cimag##suffix(&q)) : \
-                               (npymath_creal##suffix(&p) > npymath_creal##suffix(&q))))
+#define PyArray_CLT(p,q,suffix) (((npymath_creal##suffix(p)==npymath_creal##suffix(q)) ? (npymath_cimag##suffix(p) < npymath_cimag##suffix(q)) : \
+                               (npymath_creal##suffix(p) < npymath_creal##suffix(q))))
+#define PyArray_CGT(p,q,suffix) (((npymath_creal##suffix(p)==npymath_creal##suffix(q)) ? (npymath_cimag##suffix(p) > npymath_cimag##suffix(q)) : \
+                               (npymath_creal##suffix(p) > npymath_creal##suffix(q))))
 
 npy_cdouble
 _NPY_MIN(npy_cdouble a, npy_cdouble b, npy::complex_tag const &)
 {
-    return npymath_isnan(npymath_creal(&a)) || npymath_isnan(npymath_cimag(&a)) || PyArray_CLT(a, b,)
+    return npymath_isnan(npymath_creal(a)) || npymath_isnan(npymath_cimag(a)) || PyArray_CLT(a, b,)
                 ? (a)
                 : (b);
 }
@@ -71,7 +71,7 @@ _NPY_MIN(npy_cdouble a, npy_cdouble b, npy::complex_tag const &)
 npy_cfloat
 _NPY_MIN(npy_cfloat a, npy_cfloat b, npy::complex_tag const &)
 {
-    return npymath_isnan(npymath_crealf(&a)) || npymath_isnan(npymath_cimagf(&a)) || PyArray_CLT(a, b, f)
+    return npymath_isnan(npymath_crealf(a)) || npymath_isnan(npymath_cimagf(a)) || PyArray_CLT(a, b, f)
                 ? (a)
                 : (b);
 }
@@ -79,7 +79,7 @@ _NPY_MIN(npy_cfloat a, npy_cfloat b, npy::complex_tag const &)
 npy_clongdouble
 _NPY_MIN(npy_clongdouble a, npy_clongdouble b, npy::complex_tag const &)
 {
-    return npymath_isnan(npymath_creall(&a)) || npymath_isnan(npymath_cimagl(&a)) || PyArray_CLT(a, b, l)
+    return npymath_isnan(npymath_creall(a)) || npymath_isnan(npymath_cimagl(a)) || PyArray_CLT(a, b, l)
                 ? (a)
                 : (b);
 }
@@ -87,7 +87,7 @@ _NPY_MIN(npy_clongdouble a, npy_clongdouble b, npy::complex_tag const &)
 npy_cdouble
 _NPY_MAX(npy_cdouble a, npy_cdouble b, npy::complex_tag const &)
 {
-    return npymath_isnan(npymath_creal(&a)) || npymath_isnan(npymath_cimag(&a)) || PyArray_CGT(a, b,)
+    return npymath_isnan(npymath_creal(a)) || npymath_isnan(npymath_cimag(a)) || PyArray_CGT(a, b,)
                 ? (a)
                 : (b);
 }
@@ -95,7 +95,7 @@ _NPY_MAX(npy_cdouble a, npy_cdouble b, npy::complex_tag const &)
 npy_cfloat
 _NPY_MAX(npy_cfloat a, npy_cfloat b, npy::complex_tag const &)
 {
-    return npymath_isnan(npymath_crealf(&a)) || npymath_isnan(npymath_cimagf(&a)) || PyArray_CGT(a, b, f)
+    return npymath_isnan(npymath_crealf(a)) || npymath_isnan(npymath_cimagf(a)) || PyArray_CGT(a, b, f)
                 ? (a)
                 : (b);
 }
@@ -103,7 +103,7 @@ _NPY_MAX(npy_cfloat a, npy_cfloat b, npy::complex_tag const &)
 npy_clongdouble
 _NPY_MAX(npy_clongdouble a, npy_clongdouble b, npy::complex_tag const &)
 {
-    return npymath_isnan(npymath_creall(&a)) || npymath_isnan(npymath_cimagl(&a)) || PyArray_CGT(a, b, l)
+    return npymath_isnan(npymath_creall(a)) || npymath_isnan(npymath_cimagl(a)) || PyArray_CGT(a, b, l)
                 ? (a)
                 : (b);
 }

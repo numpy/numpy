@@ -10,8 +10,8 @@
 #include "numpy/npy_common.h"
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
-#include "libnpymath/npy_math.h"
-#include "libnpymath/halffloat.h"
+#include "numpy/npy_2_npymathcompat.h"
+#include "numpy/npy_2_npymathcompat.h"
 #include "lowlevel_strided_loops.h"
 #include "loops_utils.h"
 #include "gil_utils.h"
@@ -162,8 +162,8 @@ PyUFunc_F_F_As_D_D(char **args, npy_intp const *dimensions, npy_intp const *step
         npymath_csetreal(&tmp, (double)((float *)ip1)[0]);
         npymath_csetimag(&tmp, (double)((float *)ip1)[1]);
         f(&tmp, &out);
-        ((float *)op1)[0] = (float)npymath_creal(&out);
-        ((float *)op1)[1] = (float)npymath_cimag(&out);
+        ((float *)op1)[0] = (float)npymath_creal(out);
+        ((float *)op1)[1] = (float)npymath_cimag(out);
     }
 }
 
@@ -180,8 +180,8 @@ PyUFunc_FF_F_As_DD_D(char **args, npy_intp const *dimensions, npy_intp const *st
         npymath_csetreal(&tmp2, (double)((float *)ip2)[0]);
         npymath_csetimag(&tmp2, (double)((float *)ip2)[1]);
         f(&tmp1, &tmp2, &out);
-        ((float *)op1)[0] = (float)npymath_creal(&out);
-        ((float *)op1)[1] = (float)npymath_cimag(&out);
+        ((float *)op1)[0] = (float)npymath_creal(out);
+        ((float *)op1)[1] = (float)npymath_cimag(out);
     }
 }
 

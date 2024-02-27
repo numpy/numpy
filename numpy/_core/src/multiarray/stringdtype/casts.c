@@ -6,8 +6,8 @@
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/arrayobject.h"
-#include "libnpymath/halffloat.h"
-#include "libnpymath/npy_math.h"
+#include "numpy/npy_2_npymathcompat.h"
+#include "numpy/npy_2_npymathcompat.h"
 #include "numpy/ufuncobject.h"
 
 #include "common.h"

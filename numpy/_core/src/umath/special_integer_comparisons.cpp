@@ -5,7 +5,7 @@
 #define _UMATHMODULE
 
 #include "numpy/ndarraytypes.h"
-#include "libnpymath/npy_math.h"
+#include "numpy/npy_2_npymathcompat.h"
 #include "numpy/ufuncobject.h"
 
 #include "abstractdtypes.h"

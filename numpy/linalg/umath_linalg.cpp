@@ -11,7 +11,7 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
-#include "libnpymath/npy_math.h"
+#include "numpy/npy_2_npymathcompat.h"
 
 #include "npy_pycompat.h"
 
@@ -1028,15 +1028,15 @@ det_from_slogdet(typ sign, typ logdet)
 npy_float npyabs(npy_cfloat z) { return npymath_cabsf(z);}
 npy_double npyabs(npy_cdouble z) { return npymath_cabs(z);}
 
-inline float RE(npy_cfloat *c) { return npymath_crealf(c); }
-inline double RE(npy_cdouble *c) { return npymath_creal(c); }
+inline float RE(npy_cfloat *c) { return npymath_crealf(*c); }
+inline double RE(npy_cdouble *c) { return npymath_creal(*c); }
 #if NPY_SIZEOF_COMPLEX_LONGDOUBLE != NPY_SIZEOF_COMPLEX_DOUBLE
-inline longdouble_t RE(npy_clongdouble *c) { return npymath_creall(c); }
+inline longdouble_t RE(npy_clongdouble *c) { return npymath_creall(*c); }
 #endif
-inline float IM(npy_cfloat *c) { return npymath_cimagf(c); }
-inline double IM(npy_cdouble *c) { return npymath_cimag(c); }
+inline float IM(npy_cfloat *c) { return npymath_cimagf(*c); }
+inline double IM(npy_cdouble *c) { return npymath_cimag(*c); }
 #if NPY_SIZEOF_COMPLEX_LONGDOUBLE != NPY_SIZEOF_COMPLEX_DOUBLE
-inline longdouble_t IM(npy_clongdouble *c) { return npymath_cimagl(c); }
+inline longdouble_t IM(npy_clongdouble *c) { return npymath_cimagl(*c); }
 #endif
 inline void SETRE(npy_cfloat *c, float real) { npymath_csetrealf(c, real); }
 inline void SETRE(npy_cdouble *c, double real) { npymath_csetreal(c, real); }

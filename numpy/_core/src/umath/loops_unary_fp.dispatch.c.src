@@ -12,7 +12,7 @@
  * such small operations that this file covers.
 */
 #define NPY_SIMD_FORCE_128
-#include "libnpymath/npy_math.h"
+#include "numpy/npy_2_npymathcompat.h"
 #include "simd/simd.h"
 #include "loops_utils.h"
 #include "loops.h"

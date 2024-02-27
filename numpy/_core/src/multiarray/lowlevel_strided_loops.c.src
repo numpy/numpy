@@ -16,7 +16,7 @@
 #define _UMATHMODULE
 #include <numpy/arrayobject.h>
 #include <numpy/npy_cpu.h>
-#include <libnpymath/halffloat.h>
+#include "numpy/npy_2_npymathcompat.h"
 
 #include "lowlevel_strided_loops.h"
 #include "array_assign.h"

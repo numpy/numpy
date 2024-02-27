@@ -13,7 +13,7 @@
 
 #include <numpy/npy_common.h>
 #include <numpy/ndarraytypes.h>  /* for NPY_NTYPES_LEGACY */
-#include <libnpymath/halffloat.h>
+#include "numpy/npy_2_npymathcompat.h"
 
 #include "einsum_sumprod.h"
 #include "einsum_debug.h"

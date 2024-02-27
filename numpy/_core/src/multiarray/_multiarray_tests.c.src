@@ -5,8 +5,7 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
-#include "libnpymath/npy_math.h"
-#include "libnpymath/halffloat.h"
+#include "numpy/npy_2_npymathcompat.h"
 #include "common.h"
 #include "npy_argparse.h"
 #include "mem_overlap.h"

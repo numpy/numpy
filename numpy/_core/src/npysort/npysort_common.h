@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <numpy/ndarraytypes.h>
 #include <numpy/npy_common.h>
-#include <libnpymath/npy_math.h>
+#include "numpy/npy_2_npymathcompat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -199,17 +199,17 @@ CFLOAT_LT(npy_cfloat a, npy_cfloat b)
 {
     int ret;
 
-    if (npymath_crealf(&a) < npymath_crealf(&b)) {
-        ret = npymath_cimagf(&a) == npymath_cimagf(&a) || npymath_cimagf(&b) != npymath_cimagf(&b);
+    if (npymath_crealf(a) < npymath_crealf(b)) {
+        ret = npymath_cimagf(a) == npymath_cimagf(a) || npymath_cimagf(b) != npymath_cimagf(b);
     }
-    else if (npymath_crealf(&a) > npymath_crealf(&b)) {
-        ret = npymath_cimagf(&b) != npymath_cimagf(&b) && npymath_cimagf(&a) == npymath_cimagf(&a);
+    else if (npymath_crealf(a) > npymath_crealf(b)) {
+        ret = npymath_cimagf(b) != npymath_cimagf(b) && npymath_cimagf(a) == npymath_cimagf(a);
     }
-    else if (npymath_crealf(&a) == npymath_crealf(&b) || (npymath_crealf(&a) != npymath_crealf(&a) && npymath_crealf(&b) != npymath_crealf(&b))) {
-        ret =  npymath_cimagf(&a) < npymath_cimagf(&b) || (npymath_cimagf(&b) != npymath_cimagf(&b) && npymath_cimagf(&a) == npymath_cimagf(&a));
+    else if (npymath_crealf(a) == npymath_crealf(b) || (npymath_crealf(a) != npymath_crealf(a) && npymath_crealf(b) != npymath_crealf(b))) {
+        ret =  npymath_cimagf(a) < npymath_cimagf(b) || (npymath_cimagf(b) != npymath_cimagf(b) && npymath_cimagf(a) == npymath_cimagf(a));
     }
     else {
-        ret = npymath_crealf(&b) != npymath_crealf(&b);
+        ret = npymath_crealf(b) != npymath_crealf(b);
     }
 
     return ret;
@@ -221,17 +221,17 @@ CDOUBLE_LT(npy_cdouble a, npy_cdouble b)
 {
     int ret;
 
-    if (npymath_creal(&a) < npymath_creal(&b)) {
-        ret = npymath_cimag(&a) == npymath_cimag(&a) || npymath_cimag(&b) != npymath_cimag(&b);
+    if (npymath_creal(a) < npymath_creal(b)) {
+        ret = npymath_cimag(a) == npymath_cimag(a) || npymath_cimag(b) != npymath_cimag(b);
     }
-    else if (npymath_creal(&a) > npymath_creal(&b)) {
-        ret = npymath_cimag(&b) != npymath_cimag(&b) && npymath_cimag(&a) == npymath_cimag(&a);
+    else if (npymath_creal(a) > npymath_creal(b)) {
+        ret = npymath_cimag(b) != npymath_cimag(b) && npymath_cimag(a) == npymath_cimag(a);
     }
-    else if (npymath_creal(&a) == npymath_creal(&b) || (npymath_creal(&a) != npymath_creal(&a) && npymath_creal(&b) != npymath_creal(&b))) {
-        ret =  npymath_cimag(&a) < npymath_cimag(&b) || (npymath_cimag(&b) != npymath_cimag(&b) && npymath_cimag(&a) == npymath_cimag(&a));
+    else if (npymath_creal(a) == npymath_creal(b) || (npymath_creal(a) != npymath_creal(a) && npymath_creal(b) != npymath_creal(b))) {
+        ret =  npymath_cimag(a) < npymath_cimag(b) || (npymath_cimag(b) != npymath_cimag(b) && npymath_cimag(a) == npymath_cimag(a));
     }
     else {
-        ret = npymath_creal(&b) != npymath_creal(&b);
+        ret = npymath_creal(b) != npymath_creal(b);
     }
 
     return ret;
@@ -243,17 +243,17 @@ CLONGDOUBLE_LT(npy_clongdouble a, npy_clongdouble b)
 {
     int ret;
 
-    if (npymath_creall(&a) < npymath_creall(&b)) {
-        ret = npymath_cimagl(&a) == npymath_cimagl(&a) || npymath_cimagl(&b) != npymath_cimagl(&b);
+    if (npymath_creall(a) < npymath_creall(b)) {
+        ret = npymath_cimagl(a) == npymath_cimagl(a) || npymath_cimagl(b) != npymath_cimagl(b);
     }
-    else if (npymath_creall(&a) > npymath_creall(&b)) {
-        ret = npymath_cimagl(&b) != npymath_cimagl(&b) && npymath_cimagl(&a) == npymath_cimagl(&a);
+    else if (npymath_creall(a) > npymath_creall(b)) {
+        ret = npymath_cimagl(b) != npymath_cimagl(b) && npymath_cimagl(a) == npymath_cimagl(a);
     }
-    else if (npymath_creall(&a) == npymath_creall(&b) || (npymath_creall(&a) != npymath_creall(&a) && npymath_creall(&b) != npymath_creall(&b))) {
-        ret =  npymath_cimagl(&a) < npymath_cimagl(&b) || (npymath_cimagl(&b) != npymath_cimagl(&b) && npymath_cimagl(&a) == npymath_cimagl(&a));
+    else if (npymath_creall(a) == npymath_creall(b) || (npymath_creall(a) != npymath_creall(a) && npymath_creall(b) != npymath_creall(b))) {
+        ret =  npymath_cimagl(a) < npymath_cimagl(b) || (npymath_cimagl(b) != npymath_cimagl(b) && npymath_cimagl(a) == npymath_cimagl(a));
     }
     else {
-        ret = npymath_creall(&b) != npymath_creall(&b);
+        ret = npymath_creall(b) != npymath_creall(b);
     }
 
     return ret;

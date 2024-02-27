@@ -1,6 +1,6 @@
 #include "_simd.h"
 
-#include "libnpymath/npy_math.h"
+#include "numpy/npy_2_npymathcompat.h"
 
 static PyObject *
 get_floatstatus(PyObject* NPY_UNUSED(self), PyObject *NPY_UNUSED(args))

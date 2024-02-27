@@ -20,7 +20,7 @@
 
 #include "array_method.h"
 #include "common.h"
-#include "libnpymath/npy_math.h"
+#include "numpy/npy_2_npymathcompat.h"
 #include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "dispatching.h"

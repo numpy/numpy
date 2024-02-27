@@ -23,7 +23,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
-#include "libnpymath/npy_math.h"
+#include "numpy/npy_2_npymathcompat.h"
 #include "npy_argparse.h"
 #include "npy_config.h"
 #include "npy_pycompat.h"

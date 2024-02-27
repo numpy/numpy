@@ -900,7 +900,7 @@ Complex types - Underlying type changes
       npy_cdouble c;
       npymath_csetreal(&c, 1.0);
       npymath_csetimag(&c, 0.0);
-      printf("%d + %di\n", npymath_creal(&c), npymath_cimag(&c));
+      printf("%d + %di\n", npymath_creal(c), npymath_cimag(c));
 
 * To ease cross-version compatibility, equivalent macros and a compatibility
   layer have been added which can be used by downstream packages to continue

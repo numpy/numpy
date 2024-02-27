@@ -8,7 +8,7 @@
 
 #include <numpy/ndarraytypes.h>
 #include <numpy/arrayscalars.h>
-#include <libnpymath/npy_math.h>
+#include "numpy/npy_2_npymathcompat.h"
 #include "npy_pycompat.h"
 #include "npy_import.h"
 

@@ -10,8 +10,8 @@
 #include "numpy/npy_common.h"
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
-#include "libnpymath/npy_math.h"
-#include "libnpymath/halffloat.h"
+#include "numpy/npy_2_npymathcompat.h"
+#include "numpy/npy_2_npymathcompat.h"
 #include "lowlevel_strided_loops.h"
 
 #include "npy_pycompat.h"
@@ -251,10 +251,10 @@ NPY_NO_EXPORT void
 #if @IS_HALF@
                 sum += npymath_half_to_float(val1) * npymath_half_to_float(val2);
 #elif @IS_COMPLEX@ == 1
-                npymath_csetreal@suff@((@typ@ *) op, npymath_creal@suff@((@typ@ *) op) + ((npymath_creal@suff@(&val1) * npymath_creal@suff@(&val2)) -
-                                       (npymath_cimag@suff@(&val1) * npymath_cimag@suff@(&val2))));
-                npymath_csetimag@suff@((@typ@ *) op, npymath_cimag@suff@((@typ@ *) op) + ((npymath_creal@suff@(&val1) * npymath_cimag@suff@(&val2)) +
-                                       (npymath_cimag@suff@(&val1) * npymath_creal@suff@(&val2))));
+                npymath_csetreal@suff@((@typ@ *) op, npymath_creal@suff@(*(@typ@ *) op) + ((npymath_creal@suff@(val1) * npymath_creal@suff@(val2)) -
+                                       (npymath_cimag@suff@(val1) * npymath_cimag@suff@(val2))));
+                npymath_csetimag@suff@((@typ@ *) op, npymath_cimag@suff@(*(@typ@ *) op) + ((npymath_creal@suff@(val1) * npymath_cimag@suff@(val2)) +
+                                       (npymath_cimag@suff@(val1) * npymath_creal@suff@(val2))));
 #else
                 *(@typ@ *)op += val1 * val2;
 #endif

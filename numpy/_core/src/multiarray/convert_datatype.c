@@ -12,7 +12,7 @@
 #include "lowlevel_strided_loops.h"
 
 #include "npy_pycompat.h"
-#include "libnpymath/npy_math.h"
+#include "numpy/npy_2_npymathcompat.h"
 
 #include "array_coercion.h"
 #include "can_cast_table.h"
@@ -1512,8 +1512,8 @@ static int min_scalar_type_num(char *valueptr, int type_num,
                                             NPY_DOUBLE, is_small_unsigned);
             }
             */
-            if (npymath_creal(&value) > -3.4e38 && npymath_creal(&value) < 3.4e38 &&
-                     npymath_cimag(&value) > -3.4e38 && npymath_cimag(&value) < 3.4e38) {
+            if (npymath_creal(value) > -3.4e38 && npymath_creal(value) < 3.4e38 &&
+                     npymath_cimag(value) > -3.4e38 && npymath_cimag(value) < 3.4e38) {
                 return NPY_CFLOAT;
             }
             break;
@@ -1526,12 +1526,12 @@ static int min_scalar_type_num(char *valueptr, int type_num,
                                             NPY_LONGDOUBLE, is_small_unsigned);
             }
             */
-            if (npymath_creall(&value) > -3.4e38 && npymath_creall(&value) < 3.4e38 &&
-                     npymath_cimagl(&value) > -3.4e38 && npymath_cimagl(&value) < 3.4e38) {
+            if (npymath_creall(value) > -3.4e38 && npymath_creall(value) < 3.4e38 &&
+                     npymath_cimagl(value) > -3.4e38 && npymath_cimagl(value) < 3.4e38) {
                 return NPY_CFLOAT;
             }
-            else if (npymath_creall(&value) > -1.7e308 && npymath_creall(&value) < 1.7e308 &&
-                     npymath_cimagl(&value) > -1.7e308 && npymath_cimagl(&value) < 1.7e308) {
+            else if (npymath_creall(value) > -1.7e308 && npymath_creall(value) < 1.7e308 &&
+                     npymath_cimagl(value) > -1.7e308 && npymath_cimagl(value) < 1.7e308) {
                 return NPY_CDOUBLE;
             }
             break;

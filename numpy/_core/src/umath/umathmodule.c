@@ -23,7 +23,7 @@
 #include "numpy/npy_3kcompat.h"
 #include "abstract.h"
 
-#include "libnpymath/npy_math.h"
+#include "numpy/npy_2_npymathcompat.h"
 #include "number.h"
 #include "dispatching.h"
 #include "string_ufuncs.h"
