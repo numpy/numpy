@@ -1455,8 +1455,8 @@ string_expandtabs_length(Buffer<enc> buf, npy_int64 tabsize)
             }
         }
         else {
+            line_pos += 1;
             size_t n_bytes = tmp.num_bytes_next_character();
-            line_pos += n_bytes;
             new_len += n_bytes;
             if (ch == '\n' || ch == '\r') {
                 line_pos = 0;
