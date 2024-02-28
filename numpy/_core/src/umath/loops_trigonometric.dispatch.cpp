@@ -197,8 +197,8 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
         if (!hn::AllTrue(f32, simd_mask)) {
             npy_uint64 simd_maski;
             hn::StoreMaskBits(f32, simd_mask, (uint8_t*)&simd_maski);
-            float ip_fback[hn::Lanes(f32)];
-            hn::StoreU(x_in, f32, ip_fback);
+            float NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) ip_fback[hn::Lanes(f32)];
+            hn::Store(x_in, f32, ip_fback);
 
             // process elements using libc for large elements
             if (trig_op == SIMD_COMPUTE_COS) {
