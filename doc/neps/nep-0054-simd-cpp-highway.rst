@@ -101,7 +101,7 @@ merged clang-cl support a while back (see `gh-20866`_), and SciPy builds with
 Mingw-w64. It may however impact other redistributors or end users who build
 from source on Windows.
 
-In response to the earlier dicussions around this NEP, Highway is now
+In response to the earlier discussions around this NEP, Highway is now
 dual-licensed as Apache 2 / BSD-3.
 
 

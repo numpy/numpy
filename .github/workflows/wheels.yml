@@ -107,7 +107,7 @@ jobs:
 
       - name: pkg-config-for-win
         run: |
-          choco install -y --no-progress --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+          choco install -y --no-progress --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
           $CIBW = "${{ github.workspace }}/.openblas"
           # pkgconfig needs a complete path, and not just "./openblas since the
           # build is run in a tmp dir (?)
@@ -133,7 +133,7 @@ jobs:
           name: ${{ matrix.python }}-${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
           path: ./wheelhouse/*.whl
 
-      - uses: conda-incubator/setup-miniconda@11b562958363ec5770fef326fe8ef0366f8cbf8a # v3.0.1
+      - uses: conda-incubator/setup-miniconda@392cf345b1784333caa1a1185081c71e6ffd61bc # v3.0.2
         with:
           # for installation of anaconda-client, required for upload to
           # anaconda.org
@@ -217,7 +217,7 @@ jobs:
           name: sdist
           path: ./dist/*
 
-      - uses: conda-incubator/setup-miniconda@11b562958363ec5770fef326fe8ef0366f8cbf8a # v3.0.1
+      - uses: conda-incubator/setup-miniconda@392cf345b1784333caa1a1185081c71e6ffd61bc # v3.0.2
         with:
           # for installation of anaconda-client, required for upload to
           # anaconda.org

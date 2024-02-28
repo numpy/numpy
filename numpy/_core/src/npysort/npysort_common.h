@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <numpy/ndarraytypes.h>
 #include <numpy/npy_math.h>
-#include "dtypemeta.h"
 
 #ifdef __cplusplus
 extern "C" {

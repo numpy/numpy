@@ -102,11 +102,13 @@ multiarray_types_api = {
 # define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[8])
 
 multiarray_funcs_api = {
-    '__unused_indices__': [
-        1, 4, 40, 41, 65, 66, 67, 68, 81, 82, 83,
-        103, 115, 117, 122, 163, 164, 171, 173, 197,
-        201, 202, 208, 219, 278, 291, 293, 294, 295,
-        301] + list(range(320, 361)),  # range reserves DType class slots
+    '__unused_indices__': (
+        [1, 4, 40, 41, 65, 66, 67, 68, 81, 82, 83,
+         103, 115, 117, 122, 163, 164, 171, 173, 197,
+         201, 202, 208, 219, 220, 221, 222, 223, 278,
+         291, 293, 294, 295, 301]
+        + list(range(320, 361))  # range reserved DType class slots
+        ),
     'PyArray_GetNDArrayCVersion':           (0,),
     # Unused slot 40, was `PyArray_SetNumericOps`
     # Unused slot 41, was `PyArray_GetNumericOps`,
@@ -284,10 +286,10 @@ multiarray_funcs_api = {
     'PyArray_NeighborhoodIterNew':          (213,),
     # End 1.5 API
     # Unused slot 219, was `PyArray_SetDatetimeParseFunction`
-    'PyArray_DatetimeToDatetimeStruct':     (220,),
-    'PyArray_TimedeltaToTimedeltaStruct':   (221,),
-    'PyArray_DatetimeStructToDatetime':     (222,),
-    'PyArray_TimedeltaStructToTimedelta':   (223,),
+    # Unused slot 220, was `PyArray_DatetimeToDatetimeStruct`
+    # Unused slot 221, was `PyArray_TimedeltaToTimedeltaStruct`
+    # Unused slot 222, was `PyArray_DatetimeStructToDatetime`
+    # Unused slot 223, was `PyArray_TimedeltaStructToTimedelta`
     # NDIter API
     'NpyIter_New':                          (224,),
     'NpyIter_MultiNew':                     (225,),
@@ -398,9 +400,6 @@ multiarray_funcs_api = {
     'PyArray_CommonDType':                           (363, MinVersion("2.0")),
     'PyArray_PromoteDTypeSequence':                  (364, MinVersion("2.0")),
     # End 2.0 API
-    # The actual public API for this is the inline function
-    # `PyDataType_GetArrFuncs` checks for the NumPy runtime version.
-    '_PyDataType_GetArrFuncs':                       (365,),
 }
 
 ufunc_types_api = {

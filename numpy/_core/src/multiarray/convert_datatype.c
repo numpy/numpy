@@ -372,10 +372,10 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
     PyArray_VectorUnaryFunc *castfunc = NULL;
 
     if (type_num < NPY_NTYPES_ABI_COMPATIBLE) {
-        castfunc = PyDataType_GetArrFuncs(descr)->cast[type_num];
+        castfunc = descr->f->cast[type_num];
     }
     else {
-        PyObject *obj = PyDataType_GetArrFuncs(descr)->castdict;
+        PyObject *obj = descr->f->castdict;
         if (obj && PyDict_Check(obj)) {
             PyObject *key;
             PyObject *cobj;
@@ -801,7 +801,7 @@ can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
     npy_longlong value[4];
 
     int swap = !PyArray_ISNBO(scal_type->byteorder);
-    PyDataType_GetArrFuncs(scal_type)->copyswap(&value, scal_data, swap, NULL);
+    scal_type->f->copyswap(&value, scal_data, swap, NULL);
 
     type_num = min_scalar_type_num((char *)&value, scal_type->type_num,
                                     &is_small_unsigned);
@@ -1559,7 +1559,7 @@ PyArray_MinScalarType_internal(PyArrayObject *arr, int *is_small_unsigned)
         int swap = !PyArray_ISNBO(dtype->byteorder);
         /* An aligned memory buffer large enough to hold any type */
         npy_longlong value[4];
-        PyDataType_GetArrFuncs(dtype)->copyswap(&value, data, swap, NULL);
+        dtype->f->copyswap(&value, data, swap, NULL);
 
         return PyArray_DescrFromType(
                         min_scalar_type_num((char *)&value,

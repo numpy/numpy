@@ -486,7 +486,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
          * TODO: For a Categorical[object] this path may be necessary?
          */
         arr_fields.descr = descr;
-        return PyDataType_GetArrFuncs(descr)->setitem(value, item, &arr_fields);
+        return descr->f->setitem(value, item, &arr_fields);
     }
 
     /* discover_dtype_from_pyobject includes a check for is_known_scalar_type */
@@ -522,7 +522,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
         /* We can set the element directly (or at least will try to) */
         Py_XDECREF(DType);
         arr_fields.descr = descr;
-        return PyDataType_GetArrFuncs(descr)->setitem(value, item, &arr_fields);
+        return descr->f->setitem(value, item, &arr_fields);
     }
     PyArray_Descr *tmp_descr;
     tmp_descr = NPY_DT_CALL_discover_descr_from_pyobject(DType, value);
@@ -541,7 +541,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
         memset(data, 0, tmp_descr->elsize);
     }
     arr_fields.descr = tmp_descr;
-    if (PyDataType_GetArrFuncs(tmp_descr)->setitem(value, data, &arr_fields) < 0) {
+    if (tmp_descr->f->setitem(value, data, &arr_fields) < 0) {
         PyObject_Free(data);
         Py_DECREF(tmp_descr);
         return -1;

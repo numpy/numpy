@@ -718,7 +718,7 @@ class TestDeprecatedArrayWrap(_DeprecationTestCase):
 
 
 class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
-    messsage = "Passing in a parenthesized single number"
+    message = "Passing in a parenthesized single number"
 
     @pytest.mark.parametrize("string", ["(2)i,", "(3)3S,", "f,(2)f"])
     def test_parenthesized_repeat_count(self, string):

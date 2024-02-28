@@ -180,7 +180,7 @@ By default, non-string data are coerced to strings:
   array(['1', '<object object at 0x7faa2497dde0>', '3.4'], dtype=StringDType())
 
 If this behavior is not desired, an instance of the DType can be created that
-disables string coercion by setting ``coerce=False`` in the initalizer:
+disables string coercion by setting ``coerce=False`` in the initializer:
 
   >>> np.array([1, object(), 3.4], dtype=StringDType(coerce=False))
   Traceback (most recent call last):

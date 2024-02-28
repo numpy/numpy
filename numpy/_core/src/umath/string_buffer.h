@@ -405,6 +405,31 @@ struct Buffer {
     }
 
     inline void
+    buffer_memset(npy_ucs4 fill_char, size_t n_chars)
+    {
+        if (n_chars == 0) {
+            return;
+        }
+        switch (enc) {
+            case ENCODING::ASCII:
+                memset(buf, fill_char, n_chars);
+                break;
+            case ENCODING::UTF32:
+            {
+                char *tmp = buf;
+                for (size_t i = 0; i < n_chars; i++) {
+                    *(npy_ucs4 *)tmp = fill_char;
+                    tmp += sizeof(npy_ucs4);
+                }
+                break;
+            }
+            case ENCODING::UTF8:
+                assert(false);  // buffer_memset not used by stringdtype
+                break;
+        }
+    }
+
+    inline void
     buffer_fill_with_zeros_after_index(size_t start_index)
     {
         Buffer<enc> offset = *this + start_index;
@@ -1002,7 +1027,7 @@ string_rindex(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end
 
 
 /*
- * Count the number of occurences of buf2 in buf1 between
+ * Count the number of occurrences of buf2 in buf1 between
  * start (inclusive) and end (exclusive)
  */
 template <ENCODING enc>

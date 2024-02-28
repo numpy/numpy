@@ -800,12 +800,10 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
         return NULL;
     }
 
-    import_array();
-    if (PyErr_Occurred()) {
+    if (PyArray_ImportNumPyAPI() < 0) {
         return NULL;
     }
-    import_ufunc();
-    if (PyErr_Occurred()) {
+    if (PyUFunc_ImportUFuncAPI() < 0) {
         return NULL;
     }
 

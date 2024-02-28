@@ -414,36 +414,6 @@ NpyDatetime_ConvertDatetimeStructToDatetime64(PyArray_DatetimeMetaData *meta,
 }
 
 /*NUMPY_API
- * Create a datetime value from a filled datetime struct and resolution unit.
- *
- * TO BE REMOVED - NOT USED INTERNALLY.
- */
-NPY_NO_EXPORT npy_datetime
-PyArray_DatetimeStructToDatetime(
-        NPY_DATETIMEUNIT NPY_UNUSED(fr), npy_datetimestruct *NPY_UNUSED(d))
-{
-    PyErr_SetString(PyExc_RuntimeError,
-            "The NumPy PyArray_DatetimeStructToDatetime function has "
-            "been removed");
-    return -1;
-}
-
-/*NUMPY_API
- * Create a timedelta value from a filled timedelta struct and resolution unit.
- *
- * TO BE REMOVED - NOT USED INTERNALLY.
- */
-NPY_NO_EXPORT npy_datetime
-PyArray_TimedeltaStructToTimedelta(
-        NPY_DATETIMEUNIT NPY_UNUSED(fr), npy_timedeltastruct *NPY_UNUSED(d))
-{
-    PyErr_SetString(PyExc_RuntimeError,
-            "The NumPy PyArray_TimedeltaStructToTimedelta function has "
-            "been removed");
-    return -1;
-}
-
-/*NUMPY_API
  *
  * Converts a datetime based on the given metadata into a datetimestruct
  */
@@ -603,44 +573,6 @@ NpyDatetime_ConvertDatetime64ToDatetimeStruct(
     return 0;
 }
 
-
-/*NUMPY_API
- * Fill the datetime struct from the value and resolution unit.
- *
- * TO BE REMOVED - NOT USED INTERNALLY.
- */
-NPY_NO_EXPORT void
-PyArray_DatetimeToDatetimeStruct(
-        npy_datetime NPY_UNUSED(val), NPY_DATETIMEUNIT NPY_UNUSED(fr),
-        npy_datetimestruct *result)
-{
-    PyErr_SetString(PyExc_RuntimeError,
-            "The NumPy PyArray_DatetimeToDatetimeStruct function has "
-            "been removed");
-    memset(result, -1, sizeof(npy_datetimestruct));
-}
-
-/*
- * FIXME: Overflow is not handled at all
- *   To convert from Years or Months,
- *   multiplication by the average is done
- */
-
-/*NUMPY_API
- * Fill the timedelta struct from the timedelta value and resolution unit.
- *
- * TO BE REMOVED - NOT USED INTERNALLY.
- */
-NPY_NO_EXPORT void
-PyArray_TimedeltaToTimedeltaStruct(
-        npy_timedelta NPY_UNUSED(val), NPY_DATETIMEUNIT NPY_UNUSED(fr),
-        npy_timedeltastruct *result)
-{
-    PyErr_SetString(PyExc_RuntimeError,
-            "The NumPy PyArray_TimedeltaToTimedeltaStruct function has "
-            "been removed");
-    memset(result, -1, sizeof(npy_timedeltastruct));
-}
 
 /*
  * Creates a datetime or timedelta dtype using a copy of the provided metadata.
@@ -2471,7 +2403,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         if (arr_meta == NULL) {
             return -1;
         }
-        PyDataType_GetArrFuncs(PyArray_DESCR(arr))->copyswap(&dt,
+        PyArray_DESCR(arr)->f->copyswap(&dt,
                                 PyArray_DATA(arr),
                                 PyArray_ISBYTESWAPPED(arr),
                                 obj);
@@ -2673,7 +2605,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         if (arr_meta == NULL) {
             return -1;
         }
-        PyDataType_GetArrFuncs(PyArray_DESCR(arr))->copyswap(&dt,
+        PyArray_DESCR(arr)->f->copyswap(&dt,
                                 PyArray_DATA(arr),
                                 PyArray_ISBYTESWAPPED(arr),
                                 obj);

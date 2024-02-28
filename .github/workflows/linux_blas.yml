@@ -81,8 +81,10 @@ jobs:
             python -m pip install -r requirements/ci32_requirements.txt
         fi
         mkdir -p ./.openblas
-        python -c"import scipy_openblas32 as ob32; ob32.get_pkg_config()" > ./.openblas/scipy-openblas.pc
+        python -c"import scipy_openblas32 as ob32; print(ob32.get_pkg_config())" > ./.openblas/scipy-openblas.pc
         echo "PKG_CONFIG_PATH=${{ github.workspace }}/.openblas" >> $GITHUB_ENV
+        ld_library_path=$(python -c"import scipy_openblas32 as ob32; print(ob32.get_lib_dir())")
+        echo "LD_LIBRARY_PATH=$ld_library_path" >> $GITHUB_ENV
 
     - name: Build
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
@@ -98,12 +100,15 @@ jobs:
     - name: Check installed test and stub files
       run:
         python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy')
+    - name: Ensure scipy-openblas
+      run: |
+        set -ex
+        spin python tools/check_openblas_version.py 0.3.26
 
     - name: Test
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       env:
         TERM: xterm-256color
-        LD_LIBRARY_PATH: "/usr/local/lib/"  # to find libopenblas.so.0
 
       run: |
         pip install pytest pytest-xdist hypothesis typing_extensions
@@ -197,6 +202,7 @@ jobs:
       run: |
         pip install -r requirements/build_requirements.txt
         pip install pytest pytest-xdist hypothesis typing_extensions
+        sudo apt-get update
         sudo apt-get install libopenblas-dev cmake
         sudo apt-get remove pkg-config
 
@@ -223,6 +229,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
+        sudo apt-get update
         sudo apt-get install liblapack-dev pkg-config
 
     - name: Build
@@ -346,6 +353,7 @@ jobs:
       run: |
         pip install -r requirements/build_requirements.txt
         pip install pytest pytest-xdist hypothesis typing_extensions
+        sudo apt-get update
         sudo apt-get install libblis-dev libopenblas-dev pkg-config
 
     - name: Add BLIS pkg-config file
@@ -381,6 +389,7 @@ jobs:
       run: |
         pip install -r requirements/build_requirements.txt
         pip install pytest pytest-xdist hypothesis typing_extensions
+        sudo apt-get update
         sudo apt-get install libatlas-base-dev pkg-config
 
     - name: Build

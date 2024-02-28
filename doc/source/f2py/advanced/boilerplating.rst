@@ -25,7 +25,7 @@ is no longer recommended in any case.
         0000000000000124 T __add_mod_MOD_add_real
         00000000000000ee T __add_mod_MOD_add_real_dp
 
-Here we will discuss a few techniques to leverage ``f2py`` in conjuction with
+Here we will discuss a few techniques to leverage ``f2py`` in conjunction with
 `fypp`_ to emulate generic interfaces and to ease the binding of multiple
 (similar) functions.
 
@@ -83,7 +83,7 @@ Which corresponds to:
 
 Finally, we can template over this in a similar manner, to attain the original
 goal of having bindings which make use of ``f2py`` directives and have minimal
-spurious repitition.
+spurious repetition.
 
 .. literalinclude:: ./../code/advanced/boilerplating/src/adder.pyf.fypp
 
