@@ -45,7 +45,7 @@ using vec_s32 = hn::Vec<decltype(s32)>;
 using opmask_t = hn::Mask<decltype(f32)>;
 
 NPY_FINLINE vec_f32
-simd_range_reduction_f32(vec_f32 x, vec_f32 y, vec_f32 c1, vec_f32 c2, vec_f32 c3)
+simd_range_reduction_f32(vec_f32& x, vec_f32& y, const vec_f32& c1, const vec_f32& c2, const vec_f32& c3)
 {
     vec_f32 reduced_x = hn::MulAdd(y, c1, x);
     reduced_x = hn::MulAdd(y, c2, reduced_x);
@@ -54,7 +54,7 @@ simd_range_reduction_f32(vec_f32 x, vec_f32 y, vec_f32 c1, vec_f32 c2, vec_f32 c
 }
 
 NPY_FINLINE vec_f32
-simd_cosine_poly_f32(vec_f32 x2)
+simd_cosine_poly_f32(vec_f32& x2)
 {
     const vec_f32 invf8 = hn::Set(f32, 0x1.98e616p-16f);
     const vec_f32 invf6 = hn::Set(f32, -0x1.6c06dcp-10f);
@@ -74,7 +74,7 @@ simd_cosine_poly_f32(vec_f32 x2)
  * Polynomial approximation based on unpublished work by T. Myklebust
  */
 NPY_FINLINE vec_f32
-simd_sine_poly_f32(vec_f32 x, vec_f32 x2)
+simd_sine_poly_f32(vec_f32& x, vec_f32& x2)
 {
     const vec_f32 invf9 = hn::Set(f32, 0x1.7d3bbcp-19f);
     const vec_f32 invf7 = hn::Set(f32, -0x1.a06bbap-13f);
@@ -152,8 +152,6 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
         // Eliminate NaN to avoid FP invalid exception
         x_in = hn::IfThenElse(nnan_mask, x_in, zerosf);
         opmask_t simd_mask = hn::Le(hn::Abs(x_in), max_cody);
-        npy_uint64 simd_maski;
-        hn::StoreMaskBits(f32, simd_mask, (uint8_t*)&simd_maski);
         /*
          * For elements outside of this range, Cody-Waite's range reduction
          * becomes inaccurate and we will call libc to compute cosine for
@@ -196,7 +194,9 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
                 ScatterIndexN(cos, dst, sdst, len);
             }
         }
-        if (simd_maski != (npy_uint64)((1 << lanes) - 1)) {
+        if (!hn::AllTrue(f32, simd_mask)) {
+            npy_uint64 simd_maski;
+            hn::StoreMaskBits(f32, simd_mask, (uint8_t*)&simd_maski);
             float ip_fback[hn::Lanes(f32)];
             hn::StoreU(x_in, f32, ip_fback);
 
