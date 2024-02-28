@@ -39,7 +39,8 @@ jobs:
   get_commit_message:
     name: Get commit message
     runs-on: ubuntu-latest
-    if: "github.repository == 'numpy/numpy'"
+    # To enable this job and subsequent jobs on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
     outputs:
       message: ${{ steps.commit_message.outputs.message }}
     steps:
@@ -97,7 +98,7 @@ jobs:
           # fetch the complete history to get access to the tags.
           # A shallow clone can work when the following issue is resolved:
           # https://github.com/actions/checkout/issues/338
-          fetch-depth: 0
+          fetch-tags: true
 
       - name: Setup MSVC (32-bit)
         if: ${{ matrix.buildplat[1] == 'win32' }}
@@ -188,7 +189,7 @@ jobs:
           # fetch the complete history to get access to the tags.
           # A shallow clone can work when the following issue is resolved:
           # https://github.com/actions/checkout/issues/338
-          fetch-depth: 0
+          fetch-tags: true
       # Used to push the built wheels
       - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
