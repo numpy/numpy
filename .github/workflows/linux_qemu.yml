@@ -28,7 +28,8 @@ permissions:
 
 jobs:
   linux_qemu:
-    if: "github.repository == 'numpy/numpy'"
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-22.04
     continue-on-error: true
     strategy:
@@ -94,7 +95,7 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
 
     - name: Initialize binfmt_misc for qemu-user-static
       run: |

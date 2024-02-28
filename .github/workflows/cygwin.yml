@@ -1,6 +1,3 @@
-# To enable this workflow on a fork, comment out:
-#
-# if: github.repository == 'numpy/numpy'
 name: Test on Cygwin
 on:
   pull_request:
@@ -18,14 +15,15 @@ permissions:
 jobs:
   cygwin_build_test:
     runs-on: windows-latest
-    if: "github.repository == 'numpy/numpy'"
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: recursive
-          fetch-depth: 0
+          fetch-tags: true
       - name: Install Cygwin
-        uses: egor-tensin/setup-cygwin@d2c752bab416d4b0662591bd366fc2686297c82d   #v4
+        uses: egor-tensin/setup-cygwin@d2c752bab416d4b0662591bd366fc2686297c82d # v4
         with:
           platform: x86_64
           install-dir: 'C:\tools\cygwin'

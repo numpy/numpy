@@ -54,7 +54,8 @@ permissions:
 
 jobs:
   openblas32_stable_nightly:
-    if: "github.repository == 'numpy/numpy'"
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -66,7 +67,7 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
     - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.11'
@@ -116,7 +117,7 @@ jobs:
 
 
   openblas_no_pkgconfig_fedora:
-    if: "github.repository == 'numpy/numpy'"
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     container: fedora:39
     name: "OpenBLAS (Fedora, no pkg-config, LP64/ILP64)"
@@ -128,7 +129,7 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
 
     - name: Install dependencies
       run: |
@@ -151,7 +152,7 @@ jobs:
 
 
   flexiblas_fedora:
-    if: "github.repository == 'numpy/numpy'"
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     container: fedora:39
     name: "FlexiBLAS (LP64, ILP64 on Fedora)"
@@ -163,7 +164,7 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
 
     - name: Install dependencies
       run: |
@@ -186,14 +187,14 @@ jobs:
 
 
   openblas_cmake:
-    if: "github.repository == 'numpy/numpy'"
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     name: "OpenBLAS with CMake"
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
     - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.11'
@@ -214,14 +215,14 @@ jobs:
 
  
   netlib-debian:
-    if: "github.repository == 'numpy/numpy'"
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     name: "Debian libblas/liblapack"
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
     - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.11'
@@ -243,7 +244,7 @@ jobs:
 
 
   netlib-split:
-    if: "github.repository == 'numpy/numpy'"
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     container: opensuse/tumbleweed
     name: "OpenSUSE Netlib BLAS/LAPACK"
@@ -257,7 +258,7 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
 
     - name: Install PyPI dependencies
       run: |
@@ -274,14 +275,14 @@ jobs:
 
 
   mkl:
-    if: "github.repository == 'numpy/numpy'"
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     name: "MKL (LP64, ILP64, SDL)"
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
     - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.11'
@@ -337,14 +338,14 @@ jobs:
       run: spin test -- numpy/linalg
 
   blis:
-    if: "github.repository == 'numpy/numpy'"
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     name: "BLIS"
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
     - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.11'
@@ -373,14 +374,14 @@ jobs:
       run: spin test -- numpy/linalg
 
   atlas:
-    if: "github.repository == 'numpy/numpy'"
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     name: "ATLAS"
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
     - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.11'

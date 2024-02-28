@@ -8,7 +8,7 @@ permissions: {}
 jobs:
   pr-labeler:
     runs-on: ubuntu-latest
-    permissions: 
+    permissions:
       pull-requests: write  # to add labels
     steps:
     - name: Label the PR
