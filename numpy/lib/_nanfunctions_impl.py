@@ -1655,10 +1655,10 @@ def _nanquantile_ureduce_func(
         # convention.
         if q.ndim != 0:
             #GH-25731
-            num_dims = len(a.shape)+len(q.shape)-1
-            new_axes = list(range(len(q.shape), num_dims))
-            new_axes[axis:axis] = range(len(q.shape)) 
-            result = np.moveaxis(result, 
+            num_dims = a.ndim + q.ndim - 1
+            new_axes = list(range(q.ndim, num_dims))
+            new_axes[axis:axis] = range(q.ndim)
+            result = np.moveaxis(result,
                                  source=range(num_dims), destination=new_axes)
     if out is not None:
         out[...] = result
