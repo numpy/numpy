@@ -1288,13 +1288,19 @@ string_to_datetime(PyArrayMethod_Context *context, char *const data[],
                     "Failed to load string in string to datetime cast");
             goto fail;
         }
-        if (is_null || is_nat_string(&s)) {
+        if (is_null) {
             if (has_null && !has_string_na) {
                 *out = NPY_DATETIME_NAT;
                 goto next_step;
             }
             s = *default_string;
         }
+        if (is_nat_string(&s)) {
+            *out = NPY_DATETIME_NAT;
+            goto next_step;
+        }
+
+        // actually parse the datetime string
         if (NpyDatetime_ParseISO8601Datetime(
                     (const char *)s.buf, s.size, in_unit, NPY_UNSAFE_CASTING,
                     &dts, &in_meta.base, &out_special) < 0) {
@@ -1347,13 +1353,24 @@ datetime_to_string(PyArrayMethod_Context *context, char *const data[],
     char datetime_buf[NPY_DATETIME_MAX_ISO8601_STRLEN];
 
     PyArray_StringDTypeObject *sdescr = (PyArray_StringDTypeObject *)context->descriptors[1];
+    int has_null = sdescr->na_object != NULL;
     npy_string_allocator *allocator = NpyString_acquire_allocator(sdescr);
 
     while (N--) {
         npy_packed_static_string *out_pss = (npy_packed_static_string *)out;
         if (*in == NPY_DATETIME_NAT)
         {
-            if (NpyString_pack_null(allocator, out_pss) < 0) {
+            if (!has_null) {
+                npy_static_string os = {3, "NaT"};
+                if (NpyString_pack(allocator, out_pss, os.buf, os.size) < 0) {
+                    npy_gil_error(
+                            PyExc_MemoryError,
+                            "Failed to pack string in datetime to string "
+                            "cast");
+                    goto fail;
+                }
+            }
+            else if (NpyString_pack_null(allocator, out_pss) < 0) {
                 npy_gil_error(
                         PyExc_MemoryError,
                         "Failed to pack string in datetime to string cast");
@@ -1435,33 +1452,32 @@ string_to_timedelta(PyArrayMethod_Context *context, char *const data[],
                     "Failed to load string in string to datetime cast");
             goto fail;
         }
-        if (is_null || is_nat_string(&s)) {
+        if (is_null) {
             if (has_null && !has_string_na) {
                 *out = NPY_DATETIME_NAT;
                 goto next_step;
             }
             s = *default_string;
         }
+        if (is_nat_string(&s)) {
+            *out = NPY_DATETIME_NAT;
+            goto next_step;
+        }
 
         PyObject *pystr = PyUnicode_FromStringAndSize(s.buf, s.size);
-
         if (pystr == NULL) {
             goto fail;
         }
 
         // interpret as integer in base 10
         PyObject *pylong_value = PyLong_FromUnicodeObject(pystr, 10);
-
         Py_DECREF(pystr);
-
         if (pylong_value == NULL) {
             goto fail;
         }
 
         npy_longlong value = PyLong_AsLongLong(pylong_value);
-
         Py_DECREF(pylong_value);
-
         if (value == -1 && PyErr_Occurred()) {
             goto fail;
         }
@@ -1504,21 +1520,31 @@ timedelta_to_string(PyArrayMethod_Context *context, char *const data[],
     npy_intp out_stride = strides[1];
 
     PyArray_StringDTypeObject *sdescr = (PyArray_StringDTypeObject *)context->descriptors[1];
+    int has_null = sdescr->na_object != NULL;
     npy_string_allocator *allocator = NpyString_acquire_allocator(sdescr);
 
     while (N--) {
         npy_packed_static_string *out_pss = (npy_packed_static_string *)out;
         if (*in == NPY_DATETIME_NAT)
         {
-            if (NpyString_pack_null(allocator, out_pss) < 0) {
+            if (!has_null) {
+                npy_static_string os = {3, "NaT"};
+                if (NpyString_pack(allocator, out_pss, os.buf, os.size) < 0) {
+                    npy_gil_error(
+                            PyExc_MemoryError,
+                            "Failed to pack string in timedelta to string "
+                            "cast");
+                    goto fail;
+                }
+            }
+            else if (NpyString_pack_null(allocator, out_pss) < 0) {
                 npy_gil_error(
                         PyExc_MemoryError,
                         "Failed to pack string in datetime to string cast");
                 goto fail;
             }
         }
-
-        if (int_to_stringbuf((long long)*in, out, allocator) != 0) {
+        else if (int_to_stringbuf((long long)*in, out, allocator) < 0) {
             goto fail;
         }
 

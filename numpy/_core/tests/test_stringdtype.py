@@ -874,13 +874,30 @@ def test_datetime_timedelta_cast(dtype, input_data, input_dtype):
 
 def test_nat_casts():
     s = 'nat'
-    all_nats = map(''.join, itertools.product(*zip(s.upper(), s.lower())))
-    arr = np.array(
-        [''] + list(all_nats), dtype=np.dtypes.StringDType(na_object=None))
-    NaT = np.datetime64('NaT')
-    assert_array_equal(arr.astype('M8[s]'), np.array([NaT] * arr.size))
-    NaT = np.timedelta64('NaT')
-    assert_array_equal(arr.astype('m8[s]'), np.array([NaT] * arr.size))
+    all_nats = itertools.product(*zip(s.upper(), s.lower()))
+    all_nats = list(map(''.join, all_nats))
+    NaT_dt = np.datetime64('NaT')
+    NaT_td = np.timedelta64('NaT')
+    for na_object in [np._NoValue, None, np.nan, 'nat', '']:
+        # numpy treats empty string and all case combinations of 'nat' as NaT
+        dtype = StringDType(na_object=na_object)
+        arr = np.array([''] + all_nats, dtype=dtype)
+        dt_array = arr.astype('M8[s]')
+        td_array = arr.astype('m8[s]')
+        assert_array_equal(
+            dt_array, np.array([NaT_dt] * arr.size, dtype='M8[s]'))
+        assert_array_equal(
+            td_array, np.array([NaT_td] * arr.size, dtype='m8[s]'))
+
+        if na_object is np._NoValue:
+            output_object = 'NaT'
+        else:
+            output_object = na_object
+
+        for arr in [dt_array, td_array]:
+            assert_array_equal(
+                arr.astype(dtype),
+                np.array([output_object]*arr.size, dtype=dtype))
 
 
 def test_growing_strings(dtype):
