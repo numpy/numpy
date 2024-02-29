@@ -20,6 +20,7 @@ jobs:
     # To enable this job on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     strategy:
+      fail-fast: false
       matrix:
         compiler: ["MSVC", "Clang-cl"]
     steps:

@@ -111,6 +111,7 @@ jobs:
     if: github.event_name != 'push'
     continue-on-error: true
     strategy:
+      fail-fast: false
       matrix:
         BUILD_PROP:
           - [
