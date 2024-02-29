@@ -23,6 +23,7 @@ jobs:
     if: github.repository == 'numpy/numpy'
     runs-on: macos-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.11"]
 
@@ -106,6 +107,7 @@ jobs:
     if: github.repository == 'numpy/numpy'
     runs-on: ${{ matrix.build_runner[0] }}
     strategy:
+      fail-fast: false
       matrix:
         build_runner:
           - [ macos-13, "macos_x86_64" ]
