@@ -514,8 +514,9 @@ From other objects
         PyObject* op, PyArray_Descr* dtype, PyObject* context)
 
     Return an ndarray object from a Python object that exposes the
-    :obj:`~numpy.class.__array__` method. The :obj:`~numpy.class.__array__`
-    method can take 0, or 1 argument ``([dtype])``. ``context`` is unused.
+    :obj:`~numpy.class.__array__` method. The third-party implementations of
+    :obj:`~numpy.class.__array__` must take ``dtype`` and ``copy`` keyword
+    arguments. ``context`` is unused.
 
 .. c:function:: PyObject* PyArray_ContiguousFromAny( \
         PyObject* op, int typenum, int min_depth, int max_depth)

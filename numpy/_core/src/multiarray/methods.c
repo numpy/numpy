@@ -782,7 +782,7 @@ array_astype(PyArrayObject *self,
     npy_dtype_info dt_info = {NULL, NULL};
     NPY_CASTING casting = NPY_UNSAFE_CASTING;
     NPY_ORDER order = NPY_KEEPORDER;
-    _PyArray_CopyMode forcecopy = 1;
+    NPY_ASTYPECOPYMODE forcecopy = 1;
     int subok = 1;
 
     NPY_PREPARE_ARGPARSER;
@@ -791,7 +791,7 @@ array_astype(PyArrayObject *self,
             "|order", &PyArray_OrderConverter, &order,
             "|casting", &PyArray_CastingConverter, &casting,
             "|subok", &PyArray_PythonPyIntFromInt, &subok,
-            "|copy", &PyArray_CopyConverter, &forcecopy,
+            "|copy", &PyArray_AsTypeCopyConverter, &forcecopy,
             NULL, NULL, NULL) < 0) {
         Py_XDECREF(dt_info.descr);
         Py_XDECREF(dt_info.dtype);
@@ -813,7 +813,7 @@ array_astype(PyArrayObject *self,
      * and it's not a subtype if subok is False, then we
      * can skip the copy.
      */
-    if (forcecopy != NPY_COPY_ALWAYS &&
+    if (forcecopy != NPY_AS_TYPE_COPY_ALWAYS &&
                     (order == NPY_KEEPORDER ||
                     (order == NPY_ANYORDER &&
                         (PyArray_IS_C_CONTIGUOUS(self) ||
@@ -827,13 +827,6 @@ array_astype(PyArrayObject *self,
         Py_DECREF(dtype);
         Py_INCREF(self);
         return (PyObject *)self;
-    }
-
-    if (forcecopy == NPY_COPY_NEVER) {
-        PyErr_SetString(PyExc_ValueError,
-                "Unable to avoid copy while casting in never copy mode.");
-        Py_DECREF(dtype);
-        return NULL;
     }
 
     if (!PyArray_CanCastArrayTo(self, dtype, casting)) {
@@ -931,13 +924,16 @@ array_wraparray(PyArrayObject *self, PyObject *args)
 
 
 static PyObject *
-array_getarray(PyArrayObject *self, PyObject *args)
+array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     PyArray_Descr *newtype = NULL;
+    NPY_COPYMODE copy = NPY_COPY_IF_NEEDED;
+    static char *kwlist[] = {"dtype", "copy", NULL};
     PyObject *ret;
 
-    if (!PyArg_ParseTuple(args, "|O&:__array__",
-                            PyArray_DescrConverter, &newtype)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&$O&:__array__", kwlist,
+                                     PyArray_DescrConverter, &newtype,
+                                     PyArray_CopyConverter, &copy)) {
         Py_XDECREF(newtype);
         return NULL;
     }
@@ -967,13 +963,27 @@ array_getarray(PyArrayObject *self, PyObject *args)
         Py_INCREF(self);
     }
 
-    if ((newtype == NULL) || PyArray_EquivTypes(PyArray_DESCR(self), newtype)) {
-        return (PyObject *)self;
-    }
-    else {
+    if (copy == NPY_COPY_ALWAYS) {
+        if (newtype == NULL) {
+            newtype = PyArray_DESCR(self);
+        }
         ret = PyArray_CastToType(self, newtype, 0);
         Py_DECREF(self);
         return ret;
+    } else { // copy == NPY_COPY_IF_NEEDED || copy == NPY_COPY_NEVER
+        if (newtype == NULL || PyArray_EquivTypes(PyArray_DESCR(self), newtype)) {
+            return (PyObject *)self;
+        }
+        if (copy == NPY_COPY_IF_NEEDED) {
+            ret = PyArray_CastToType(self, newtype, 0);
+            Py_DECREF(self);
+            return ret;
+        } else { // copy == NPY_COPY_NEVER
+            PyErr_SetString(PyExc_ValueError,
+                            "Unable to avoid copy while creating an array from given array.");
+            Py_DECREF(self);
+            return NULL;
+        }
     }
 }
 
@@ -2855,7 +2865,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     /* for subtypes */
     {"__array__",
         (PyCFunction)array_getarray,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"__array_finalize__",
         (PyCFunction)array_finalizearray,
         METH_O, NULL},

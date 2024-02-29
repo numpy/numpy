@@ -750,7 +750,7 @@ def polyval(x, c, tensor=True):
     array([2.,  7.])
 
     """
-    c = np.array(c, ndmin=1, copy=False)
+    c = np.array(c, ndmin=1, copy=None)
     if c.dtype.char in '?bBhHiIlLqQpP':
         # astype fails with NA
         c = c + 0.0
@@ -841,7 +841,7 @@ def polyvalfromroots(x, r, tensor=True):
     array([-0.,  0.])
 
     """
-    r = np.array(r, ndmin=1, copy=False)
+    r = np.array(r, ndmin=1, copy=None)
     if r.dtype.char in '?bBhHiIlLqQpP':
         r = r.astype(np.double)
     if isinstance(x, (tuple, list)):
@@ -1149,7 +1149,7 @@ def polyvander(x, deg):
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
-    x = np.array(x, copy=False, ndmin=1) + 0.0
+    x = np.array(x, copy=None, ndmin=1) + 0.0
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)

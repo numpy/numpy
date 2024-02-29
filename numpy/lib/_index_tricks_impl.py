@@ -372,7 +372,7 @@ class AxisConcatenator:
                 else:
                     newobj = _nx.arange(start, stop, step)
                 if ndmin > 1:
-                    newobj = array(newobj, copy=False, ndmin=ndmin)
+                    newobj = array(newobj, copy=None, ndmin=ndmin)
                     if trans1d != -1:
                         newobj = newobj.swapaxes(-1, trans1d)
             elif isinstance(item, str):
@@ -404,7 +404,7 @@ class AxisConcatenator:
                 newobj = item
             else:
                 item_ndim = np.ndim(item)
-                newobj = array(item, copy=False, subok=True, ndmin=ndmin)
+                newobj = array(item, copy=None, subok=True, ndmin=ndmin)
                 if trans1d != -1 and item_ndim < ndmin:
                     k2 = ndmin - item_ndim
                     k1 = trans1d
@@ -425,7 +425,7 @@ class AxisConcatenator:
         if len(result_type_objs) != 0:
             final_dtype = _nx.result_type(*result_type_objs)
             # concatenate could do cast, but that can be overridden:
-            objs = [array(obj, copy=False, subok=True,
+            objs = [array(obj, copy=None, subok=True,
                           ndmin=ndmin, dtype=final_dtype) for obj in objs]
 
         res = self.concatenate(tuple(objs), axis=axis)

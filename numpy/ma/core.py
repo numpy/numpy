@@ -468,7 +468,7 @@ def _check_fill_value(fill_value, ndtype):
     elif ndtype.names is not None:
         if isinstance(fill_value, (ndarray, np.void)):
             try:
-                fill_value = np.array(fill_value, copy=False, dtype=ndtype)
+                fill_value = np.asarray(fill_value, dtype=ndtype)
             except ValueError as e:
                 err_msg = "Unable to transform %s to dtype %s"
                 raise ValueError(err_msg % (fill_value, ndtype)) from e
@@ -485,7 +485,7 @@ def _check_fill_value(fill_value, ndtype):
             # In case we want to convert 1e20 to int.
             # Also in case of converting string arrays.
             try:
-                fill_value = np.array(fill_value, copy=False, dtype=ndtype)
+                fill_value = np.asarray(fill_value, dtype=ndtype)
             except (OverflowError, ValueError) as e:
                 # Raise TypeError instead of OverflowError or ValueError.
                 # OverflowError is seldom used, and the real problem here is
@@ -735,7 +735,7 @@ def getdata(a, subok=True):
     try:
         data = a._data
     except AttributeError:
-        data = np.array(a, copy=False, subok=subok)
+        data = np.array(a, copy=None, subok=subok)
     if not subok:
         return data.view(ndarray)
     return data
@@ -1656,6 +1656,7 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
         return np.ones(m.shape, dtype=dtype)
 
     # Fill the mask in case there are missing data; turn it into an ndarray.
+    copy = None if not copy else True
     result = np.array(filled(m, True), copy=copy, dtype=dtype, subok=True)
     # Bas les masques !
     if shrink:
@@ -2378,7 +2379,7 @@ def masked_invalid(a, copy=True):
            fill_value=1e+20)
 
     """
-    a = np.array(a, copy=False, subok=True)
+    a = np.array(a, copy=None, subok=True)
     res = masked_where(~(np.isfinite(a)), a, copy=copy)
     # masked_invalid previously never returned nomask as a mask and doing so
     # threw off matplotlib (gh-22842).  So use shrink=False:
@@ -2839,6 +2840,7 @@ class MaskedArray(ndarray):
 
         """
         # Process data.
+        copy = None if not copy else True
         _data = np.array(data, dtype=dtype, copy=copy,
                          order=order, subok=True, ndmin=ndmin)
         _baseclass = getattr(data, '_baseclass', type(_data))
@@ -3497,7 +3499,7 @@ class MaskedArray(ndarray):
         else:
             # Named fields w/
             mdtype = current_mask.dtype
-            mask = np.array(mask, copy=False)
+            mask = np.asarray(mask)
             # Mask is a singleton
             if not mask.ndim:
                 # It's a boolean : make a record
@@ -3511,6 +3513,7 @@ class MaskedArray(ndarray):
             else:
                 # Make sure the new mask is a ndarray with the proper dtype
                 try:
+                    copy = None if not copy else True
                     mask = np.array(mask, copy=copy, dtype=mdtype)
                 # Or assume it's a sequence of bool/int
                 except TypeError:
@@ -4875,8 +4878,8 @@ class MaskedArray(ndarray):
         # Hard mask: Get rid of the values/indices that fall on masked data
         if self._hardmask and self._mask is not nomask:
             mask = self._mask[indices]
-            indices = narray(indices, copy=False)
-            values = narray(values, copy=False, subok=True)
+            indices = narray(indices, copy=None)
+            values = narray(values, copy=None, subok=True)
             values.resize(indices.shape)
             indices = indices[~mask]
             values = values[~mask]
@@ -5116,7 +5119,7 @@ class MaskedArray(ndarray):
         (array([1, 1, 1, 2, 2, 2]), array([0, 1, 2, 0, 1, 2]))
 
         """
-        return narray(self.filled(0), copy=False).nonzero()
+        return np.asarray(self.filled(0)).nonzero()
 
     def trace(self, offset=0, axis1=0, axis2=1, dtype=None, out=None):
         """
@@ -6465,6 +6468,7 @@ class mvoid(MaskedArray):
 
     def __new__(self, data, mask=nomask, dtype=None, fill_value=None,
                 hardmask=False, copy=False, subok=True):
+        copy = None if not copy else True
         _data = np.array(data, copy=copy, subok=subok, dtype=dtype)
         _data = _data.view(self)
         _data._hardmask = hardmask
@@ -6866,7 +6870,7 @@ class _extrema_operation(_MaskedUFunc):
 
     def reduce(self, target, axis=np._NoValue):
         "Reduce target along the given axis."
-        target = narray(target, copy=False, subok=True)
+        target = narray(target, copy=None, subok=True)
         m = getmask(target)
 
         if axis is np._NoValue and target.ndim > 1:
@@ -7390,7 +7394,7 @@ def put(a, indices, values, mode='raise'):
     try:
         return a.put(indices, values, mode=mode)
     except AttributeError:
-        return narray(a, copy=False).put(indices, values, mode=mode)
+        return np.asarray(a).put(indices, values, mode=mode)
 
 
 def putmask(a, mask, values):  # , mode='raise'):
@@ -7484,7 +7488,7 @@ def transpose(a, axes=None):
     try:
         return a.transpose(axes)
     except AttributeError:
-        return narray(a, copy=False).transpose(axes).view(MaskedArray)
+        return np.asarray(a).transpose(axes).view(MaskedArray)
 
 
 def reshape(a, new_shape, order='C'):
@@ -7502,7 +7506,7 @@ def reshape(a, new_shape, order='C'):
     try:
         return a.reshape(new_shape, order=order)
     except AttributeError:
-        _tmp = narray(a, copy=False).reshape(new_shape, order=order)
+        _tmp = np.asarray(a).reshape(new_shape, order=order)
         return _tmp.view(MaskedArray)
 
 

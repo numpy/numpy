@@ -712,7 +712,7 @@ def test_function_like():
     assert type(np.mean) is np._core._multiarray_umath._ArrayFunctionDispatcher 
 
     class MyClass:
-        def __array__(self):
+        def __array__(self, dtype=None, copy=None):
             # valid argument to mean:
             return np.arange(3)
 

@@ -692,7 +692,7 @@ def append_fields(base, names, data, dtypes=None,
         data = [data, ]
     #
     if dtypes is None:
-        data = [np.array(a, copy=False, subok=True) for a in data]
+        data = [np.array(a, copy=None, subok=True) for a in data]
         data = [a.view([(name, a.dtype)]) for (name, a) in zip(names, data)]
     else:
         if not isinstance(dtypes, (tuple, list)):
@@ -703,7 +703,7 @@ def append_fields(base, names, data, dtypes=None,
             else:
                 msg = "The dtypes argument must be None, a dtype, or a list."
                 raise ValueError(msg)
-        data = [np.array(a, copy=False, subok=True, dtype=d).view([(n, d)])
+        data = [np.array(a, copy=None, subok=True, dtype=d).view([(n, d)])
                 for (a, n, d) in zip(data, names, dtypes)]
     #
     base = merge_arrays(base, usemask=usemask, fill_value=fill_value)
