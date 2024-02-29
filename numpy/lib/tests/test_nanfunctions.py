@@ -1265,14 +1265,22 @@ class TestNanFunctions_Quantile:
                      np.nanpercentile(ar, q=[50], axis=1, **w_args))
         assert_equal(np.nanquantile(ar, q=[0.25, 0.5, 0.75], axis=1, **w_args),
                      np.nanpercentile(ar, q=[25, 50, 75], axis=1, **w_args))
-    
-    @pytest.mark.parametrize(argnames='axis', 
-        argvalues=[1, (1, ), 2, (0, 2), -1, (-1, -2)])
-    def test_consistency_with_quantile(self, axis):
-        a = np.arange(42).reshape(3, 7, 2).astype(float)
+
+    @pytest.mark.parametrize(argnames='axis',
+         argvalues=[None, 0, 1, (1, ), 2, (0, 2), -1, (-1, -2)])
+    @pytest.mark.parametrize(argnames='shape',
+                             argvalues=[(42, ), (3, 7, 2)])
+    def test_consistency_with_quantile(self, shape, axis):
+        a = np.arange(np.prod(shape)).reshape(shape).astype(float)
+        if a.ndim == 1 and axis not in (None, 0, -1):
+            pytest.skip(f"Skipping test for {a.ndim}-D array"
+                        f" with incompatible axis {axis}")
+
         q = np.full((3, 2), 0.5)
-        assert_equal(np.nanquantile(a, q, axis=axis).shape, 
-                      np.quantile(a, q, axis=axis).shape)
+        assert_equal(np.nanquantile(a, q, axis=axis).shape,
+                     np.quantile(a, q, axis=axis).shape)
+        assert_equal(np.nanquantile(a, q, axis=axis),
+                     np.quantile(a, q, axis=axis))
 
     def test_basic(self):
         x = np.arange(8) * 0.5
