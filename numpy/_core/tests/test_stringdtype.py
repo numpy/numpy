@@ -9,7 +9,7 @@ import pytest
 
 from numpy.dtypes import StringDType
 from numpy._core.tests._natype import pd_NA
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, IS_WASM
 
 
 @pytest.fixture
@@ -349,7 +349,7 @@ def _pickle_load(filename):
 
     return res
 
-
+@pytest.mark.skipif(IS_WASM, reason="no threading support in wasm")
 def test_pickle(dtype, string_list):
     arr = np.array(string_list, dtype=dtype)
 
@@ -864,6 +864,7 @@ def test_growing_strings(dtype):
     assert_array_equal(arr, uarr)
 
 
+@pytest.mark.skipif(IS_WASM, reason="no threading support in wasm")
 def test_threaded_access_and_mutation(dtype, random_string_list):
     # this test uses an RNG and may crash or cause deadlocks if there is a
     # threading bug
