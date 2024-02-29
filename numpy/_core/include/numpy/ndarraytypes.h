@@ -572,12 +572,6 @@ typedef struct {
                                 NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT | \
                                 NPY_NEEDS_INIT | NPY_NEEDS_PYAPI)
 
-#define PyDataType_FLAGCHK(dtype, flag) \
-        (((dtype)->flags & (flag)) == (flag))
-
-#define PyDataType_REFCHK(dtype) \
-        PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
-
 typedef struct _PyArray_Descr {
         PyObject_HEAD
         /*
@@ -1009,13 +1003,6 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_BEGIN_THREADS_THRESHOLDED(loop_size) do { if ((loop_size) > 500) \
                 { _save = PyEval_SaveThread();} } while (0);
 
-#define NPY_BEGIN_THREADS_DESCR(dtype) \
-        do {if (!(PyDataType_FLAGCHK((dtype), NPY_NEEDS_PYAPI))) \
-                NPY_BEGIN_THREADS;} while (0);
-
-#define NPY_END_THREADS_DESCR(dtype) \
-        do {if (!(PyDataType_FLAGCHK((dtype), NPY_NEEDS_PYAPI))) \
-                NPY_END_THREADS; } while (0);
 
 #define NPY_ALLOW_C_API_DEF  PyGILState_STATE __save__;
 #define NPY_ALLOW_C_API      do {__save__ = PyGILState_Ensure();} while (0);
@@ -1186,7 +1173,7 @@ struct PyArrayIterObject_tag {
                 _PyArray_ITER_NEXT1(_PyAIT(it)); \
         } \
         else if (_PyAIT(it)->contiguous) \
-                _PyAIT(it)->dataptr += PyArray_DESCR(_PyAIT(it)->ao)->elsize; \
+                _PyAIT(it)->dataptr += PyArray_ITEMSIZE(_PyAIT(it)->ao); \
         else if (_PyAIT(it)->nd_m1 == 1) { \
                 _PyArray_ITER_NEXT2(_PyAIT(it)); \
         } \
@@ -1239,7 +1226,7 @@ struct PyArrayIterObject_tag {
         } \
         else if (_PyAIT(it)->contiguous) \
                 _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao) + \
-                        __npy_ind * PyArray_DESCR(_PyAIT(it)->ao)->elsize; \
+                        __npy_ind * PyArray_ITEMSIZE(_PyAIT(it)->ao); \
         else { \
                 _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao); \
                 for (__npy_i = 0; __npy_i<=_PyAIT(it)->nd_m1; \
@@ -1272,7 +1259,7 @@ typedef struct {
         int                  nd;                      /* number of dims */
         npy_intp             dimensions[NPY_MAXDIMS_LEGACY_ITERS]; /* dimensions */
         /*
-         * Space for the indivdual iterators, do not specify size publically
+         * Space for the individual iterators, do not specify size publicly
          * to allow changing it more easily.
          * One reason is that Cython uses this for checks and only allows
          * growing structs (as of Cython 3.0.6).  It also allows NPY_MAXARGS
@@ -1478,25 +1465,25 @@ PyArray_NDIM(const PyArrayObject *arr)
 }
 
 static inline void *
-PyArray_DATA(PyArrayObject *arr)
+PyArray_DATA(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->data;
 }
 
 static inline char *
-PyArray_BYTES(PyArrayObject *arr)
+PyArray_BYTES(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->data;
 }
 
 static inline npy_intp *
-PyArray_DIMS(PyArrayObject *arr)
+PyArray_DIMS(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->dimensions;
 }
 
 static inline npy_intp *
-PyArray_STRIDES(PyArrayObject *arr)
+PyArray_STRIDES(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->strides;
 }
@@ -1514,13 +1501,13 @@ PyArray_STRIDE(const PyArrayObject *arr, int istride)
 }
 
 static inline NPY_RETURNS_BORROWED_REF PyObject *
-PyArray_BASE(PyArrayObject *arr)
+PyArray_BASE(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->base;
 }
 
 static inline NPY_RETURNS_BORROWED_REF PyArray_Descr *
-PyArray_DESCR(PyArrayObject *arr)
+PyArray_DESCR(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->descr;
 }
@@ -1569,13 +1556,13 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 
 
 static inline PyArray_Descr *
-PyArray_DTYPE(PyArrayObject *arr)
+PyArray_DTYPE(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->descr;
 }
 
 static inline npy_intp *
-PyArray_SHAPE(PyArrayObject *arr)
+PyArray_SHAPE(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->dimensions;
 }
@@ -1672,6 +1659,10 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 #define PyDataType_ISUNSIZED(dtype) ((dtype)->elsize == 0 && \
                                       !PyDataType_HASFIELDS(dtype))
 #define PyDataType_MAKEUNSIZED(dtype) ((dtype)->elsize = 0)
+/*
+ * PyDataType_FLAGS, PyDataType_FLACHK, and PyDataType_REFCHK require
+ * npy_2_compat.h and are not defined here.
+ */
 
 #define PyArray_ISBOOL(obj) PyTypeNum_ISBOOL(PyArray_TYPE(obj))
 #define PyArray_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(PyArray_TYPE(obj))
@@ -1915,5 +1906,14 @@ typedef struct {
  * #endif
  */
 #undef NPY_DEPRECATED_INCLUDES
+
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+    /*
+     * we use ndarraytypes.h alone sometimes, but some functions from
+     * npy_2_compat.h are forward declared here, so ensure we have them.
+     * (external libraries must eventually include `ndarrayobject.h`)
+     */
+    #include "npy_2_compat.h"
+#endif
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_ */

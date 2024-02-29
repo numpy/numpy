@@ -3,21 +3,28 @@ This module contains a set of functions for vectorized string
 operations.
 """
 
+import sys
 import numpy as np
 from numpy import (
     equal, not_equal, less, less_equal, greater, greater_equal,
-    add
+    add, multiply as _multiply_ufunc,
 )
 from numpy._core.multiarray import _vec_string
 from numpy._core.umath import (
     isalpha,
     isdigit,
     isspace,
+    isalnum,
+    islower,
+    isupper,
+    istitle,
     isdecimal,
     isnumeric,
     str_len,
     find as _find_ufunc,
     rfind as _rfind_ufunc,
+    index as _index_ufunc,
+    rindex as _rindex_ufunc,
     count as _count_ufunc,
     startswith as _startswith_ufunc,
     endswith as _endswith_ufunc,
@@ -34,16 +41,15 @@ from numpy._core.umath import (
 __all__ = [
     # UFuncs
     "equal", "not_equal", "less", "less_equal", "greater", "greater_equal",
-    "add", "isalpha", "isdigit", "isspace", "isdecimal", "isnumeric",
-    "str_len", "find", "rfind", "count", "startswith", "endswith",
-    "lstrip", "rstrip", "strip", "replace",
+    "add", "multiply", "isalpha", "isdigit", "isspace", "isalnum", "islower",
+    "isupper", "istitle", "isdecimal", "isnumeric", "str_len", "find",
+    "rfind", "index", "rindex", "count", "startswith", "endswith", "lstrip",
+    "rstrip", "strip", "replace",
 
     # _vec_string - Will gradually become ufuncs as well
-    "isalnum", "islower", "istitle", "isupper", "multiply", "mod", "index",
-    "rindex", "decode", "encode", "expandtabs", "center",
-    "ljust", "rjust", "zfill", "upper", "lower", "swapcase", "capitalize",
-    "title", "join", "split", "rsplit", "splitlines",
-    "partition", "rpartition", "translate",
+    "mod", "decode", "encode", "expandtabs", "center", "ljust", "rjust",
+    "zfill", "upper", "lower", "swapcase", "capitalize", "title", "join",
+    "split", "rsplit", "splitlines", "partition", "rpartition", "translate",
 ]
 
 
@@ -73,6 +79,8 @@ def _to_bytes_or_str_array(result, output_dtype_like):
         # in losing shape information
         return result.astype(output_dtype_like.dtype)
     ret = np.asarray(result.tolist())
+    if isinstance(output_dtype_like.dtype, np.dtypes.StringDType):
+        return ret.astype(type(output_dtype_like.dtype))
     return ret.astype(type(output_dtype_like.dtype)(_get_num_chars(ret)))
 
 
@@ -93,141 +101,6 @@ def _clean_args(*args):
     return newargs
 
 
-def isalnum(a):
-    """
-    Returns true for each element if all characters in the string are
-    alphanumeric and there is at least one character, false otherwise.
-
-    Calls :meth:`str.isalnum` element-wise.
-
-    For 8-bit strings, this method is locale-dependent.
-
-    Parameters
-    ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
-
-    Returns
-    -------
-    out : ndarray
-        Output array of str or unicode, depending on input type
-
-    See Also
-    --------
-    str.isalnum
-
-    Examples
-    --------
-    >>> a = np.array(['a', '1', 'a1', '(', ''])
-    >>> np.strings.isalnum(a)
-    array([ True,  True,  True, False, False])
-    
-    """
-    return _vec_string(a, np.bool, 'isalnum')
-
-
-def islower(a):
-    """
-    Returns true for each element if all cased characters in the
-    string are lowercase and there is at least one cased character,
-    false otherwise.
-
-    Calls :meth:`str.islower` element-wise.
-
-    For 8-bit strings, this method is locale-dependent.
-
-    Parameters
-    ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
-
-    Returns
-    -------
-    out : ndarray
-        Output array of bools
-
-    See Also
-    --------
-    str.islower
-
-    Examples
-    --------
-    >>> np.strings.islower("GHC")
-    array(False)
-    >>> np.strings.islower("ghc")
-    array(True)
-
-    """
-    return _vec_string(a, np.bool, 'islower')
-
-
-def istitle(a):
-    """
-    Returns true for each element if the element is a titlecased
-    string and there is at least one character, false otherwise.
-
-    Call :meth:`str.istitle` element-wise.
-
-    For 8-bit strings, this method is locale-dependent.
-
-    Parameters
-    ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
-
-    Returns
-    -------
-    out : ndarray
-        Output array of bools
-
-    See Also
-    --------
-    str.istitle
-
-    Examples
-    --------
-    >>> np.strings.istitle("Numpy Is Great")
-    array(True)
-
-    >>> np.strings.istitle("Numpy is great")
-    array(False)
-    
-    """
-    return _vec_string(a, np.bool, 'istitle')
-
-
-def isupper(a):
-    """
-    Return true for each element if all cased characters in the
-    string are uppercase and there is at least one character, false
-    otherwise.
-
-    Call :meth:`str.isupper` element-wise.
-
-    For 8-bit strings, this method is locale-dependent.
-
-    Parameters
-    ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
-
-    Returns
-    -------
-    out : ndarray
-        Output array of bools
-
-    See Also
-    --------
-    str.isupper
-
-    Examples
-    --------
-    >>> np.strings.isupper("GHC")
-    array(True)     
-    >>> a = np.array(["hello", "HELLO", "Hello"])
-    >>> np.strings.isupper(a)
-    array([False,  True, False]) 
-
-    """
-    return _vec_string(a, np.bool, 'isupper')
-
-
 def multiply(a, i):
     """
     Return (a * i), that is string multiple concatenation,
@@ -246,7 +119,7 @@ def multiply(a, i):
     -------
     out : ndarray
         Output array of str or unicode, depending on input types
-    
+
     Examples
     --------
     >>> a = np.array(["a", "b", "c"])
@@ -264,17 +137,29 @@ def multiply(a, i):
     >>> np.strings.multiply(a, i)
     array([['a', 'bb', 'ccc'],
            ['d', 'ee', 'fff']], dtype='<U3')
-           
+
     """
-    a_arr = np.asarray(a)
-    i_arr = np.asarray(i)
-    if not issubclass(i_arr.dtype.type, np.integer):
-        raise ValueError("Can only multiply by integers")
-    if a_arr.dtype.kind == "T":
-        return a_arr * i_arr
-    out_size = _get_num_chars(a_arr) * max(int(i_arr.max()), 0)
-    return _vec_string(
-        a_arr, type(a_arr.dtype)(out_size), '__mul__', (i_arr,))
+    a = np.asanyarray(a)
+
+    i = np.asanyarray(i)
+    if not np.issubdtype(i.dtype, np.integer):
+        raise TypeError(f"unsupported type {i.dtype} for operand 'i'")
+    i = np.maximum(i, 0)
+
+    # delegate to stringdtype loops that also do overflow checking
+    if a.dtype.char == "T":
+        return a * i
+
+    a_len = str_len(a)
+
+    # Ensure we can do a_len * i without overflow.
+    if np.any(a_len > sys.maxsize / np.maximum(i, 1)):
+        raise MemoryError("repeated string is too long")
+
+    buffersizes = a_len * i
+    out_dtype = f"{a.dtype.char}{buffersizes.max()}"
+    out = np.empty_like(a, shape=buffersizes.shape, dtype=out_dtype)
+    return _multiply_ufunc(a, i, out=out)
 
 
 def mod(a, values):
@@ -370,24 +255,22 @@ def index(a, sub, start=0, end=None):
     """
     Like `find`, but raises :exc:`ValueError` when the substring is not found.
 
-    Calls :meth:`str.index` element-wise.
-
     Parameters
     ----------
     a : array_like, with `np.bytes_` or `np.str_` dtype
 
-    sub : str or unicode
+    sub : array_like, with `np.bytes_` or `np.str_` dtype
 
-    start, end : int, optional
+    start, end : array_like, with any integer dtype, optional
 
     Returns
     -------
     out : ndarray
-        Output array of ints.  Returns -1 if `sub` is not found.
+        Output array of ints.
 
     See Also
     --------
-    find, str.find
+    find, str.index
 
     Examples
     --------
@@ -396,8 +279,8 @@ def index(a, sub, start=0, end=None):
     array([9])
 
     """
-    return _vec_string(
-        a, np.int_, 'index', [sub, start] + _clean_args(end))
+    end = end if end is not None else MAX
+    return _index_ufunc(a, sub, start, end)
 
 
 def rindex(a, sub, start=0, end=None):
@@ -405,15 +288,13 @@ def rindex(a, sub, start=0, end=None):
     Like `rfind`, but raises :exc:`ValueError` when the substring `sub` is
     not found.
 
-    Calls :meth:`str.rindex` element-wise.
-
     Parameters
     ----------
     a : array-like, with `np.bytes_` or `np.str_` dtype
 
-    sub : str or unicode
+    sub : array-like, with `np.bytes_` or `np.str_` dtype
 
-    start, end : int, optional
+    start, end : array-like, with any integer dtype, optional
 
     Returns
     -------
@@ -431,8 +312,8 @@ def rindex(a, sub, start=0, end=None):
     array([9])
     
     """
-    return _vec_string(
-        a, np.int_, 'rindex', [sub, start] + _clean_args(end))
+    end = end if end is not None else MAX
+    return _rindex_ufunc(a, sub, start, end)
 
 
 def count(a, sub, start=0, end=None):
@@ -765,8 +646,12 @@ def ljust(a, width, fillchar=' '):
     size = int(np.max(width_arr.flat))
     if np.issubdtype(a_arr.dtype, np.bytes_):
         fillchar = np._utils.asbytes(fillchar)
+    if isinstance(a_arr.dtype, np.dtypes.StringDType):
+        res_dtype = a_arr.dtype
+    else:
+        res_dtype = type(a_arr.dtype)(size)
     return _vec_string(
-        a_arr, type(a_arr.dtype)(size), 'ljust', (width_arr, fillchar))
+        a_arr, res_dtype, 'ljust', (width_arr, fillchar))
 
 
 def rjust(a, width, fillchar=' '):
@@ -799,15 +684,19 @@ def rjust(a, width, fillchar=' '):
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.rjust(a, width=3)
     array(['aAa', '  a', 'abB'], dtype='<U3')
-    
+
     """
     a_arr = np.asarray(a)
     width_arr = np.asarray(width)
     size = int(np.max(width_arr.flat))
     if np.issubdtype(a_arr.dtype, np.bytes_):
         fillchar = np._utils.asbytes(fillchar)
+    if isinstance(a_arr.dtype, np.dtypes.StringDType):
+        res_dtype = a_arr.dtype
+    else:
+        res_dtype = type(a_arr.dtype)(size)
     return _vec_string(
-        a_arr, type(a_arr.dtype)(size), 'rjust', (width_arr, fillchar))
+        a_arr, res_dtype, 'rjust', (width_arr, fillchar))
 
 
 def lstrip(a, chars=None):
@@ -1191,15 +1080,13 @@ def replace(a, old, new, count=-1):
     array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
     
     """
-    from numpy._core.umath import count as count_occurences
-
     arr = np.asanyarray(a)
     a_dt = arr.dtype
     old = np.asanyarray(old, dtype=getattr(old, 'dtype', a_dt))
     new = np.asanyarray(new, dtype=getattr(new, 'dtype', a_dt))
 
     max_int64 = np.iinfo(np.int64).max
-    counts = count_occurences(arr, old, 0, max_int64)
+    counts = _count_ufunc(arr, old, 0, max_int64)
     count = np.asanyarray(count)
     counts = np.where(count < 0, counts, np.minimum(counts, count))
 

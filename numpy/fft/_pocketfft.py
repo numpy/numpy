@@ -57,12 +57,13 @@ def _raw_fft(a, n, axis, is_real, is_forward, norm, out=None):
     if not is_forward:
         norm = _swap_direction(norm)
 
+    real_dtype = result_type(a.real.dtype, 1.0)
     if norm is None or norm == "backward":
         fct = 1
     elif norm == "ortho":
-        fct = reciprocal(sqrt(n, dtype=a.real.dtype))
+        fct = reciprocal(sqrt(n, dtype=real_dtype))
     elif norm == "forward":
-        fct = reciprocal(n, dtype=a.real.dtype)
+        fct = reciprocal(n, dtype=real_dtype)
     else:
         raise ValueError(f'Invalid norm value {norm}; should be "backward",'
                          '"ortho" or "forward".')
@@ -81,7 +82,7 @@ def _raw_fft(a, n, axis, is_real, is_forward, norm, out=None):
 
     if out is None:
         if is_real and not is_forward:  # irfft, complex in, real output.
-            out_dtype = result_type(a.real.dtype, 1.0)
+            out_dtype = real_dtype
         else:  # Others, complex output.
             out_dtype = result_type(a.dtype, 1j)
         out = empty(a.shape[:axis] + (n_out,) + a.shape[axis+1:],
@@ -814,7 +815,7 @@ def fftn(a, s=None, axes=None, norm=None, out=None):
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for all axes (and hence is
-        imcompatible with passing in all but the trivial ``s``).
+        incompatible with passing in all but the trivial ``s``).
 
         .. versionadded:: 2.0.0
 
@@ -956,7 +957,7 @@ def ifftn(a, s=None, axes=None, norm=None, out=None):
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for all axes (and hence is
-        imcompatible with passing in all but the trivial ``s``).
+        incompatible with passing in all but the trivial ``s``).
 
         .. versionadded:: 2.0.0
 
@@ -1214,7 +1215,7 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None, out=None):
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for all axes (and hence is
-        imcompatible with passing in all but the trivial ``s``).
+        incompatible with passing in all but the trivial ``s``).
 
         .. versionadded:: 2.0.0
 
@@ -1330,7 +1331,7 @@ def rfftn(a, s=None, axes=None, norm=None, out=None):
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for all axes (and hence is
-        imcompatible with passing in all but the trivial ``s``).
+        incompatible with passing in all but the trivial ``s``).
 
         .. versionadded:: 2.0.0
 
@@ -1443,7 +1444,7 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for the last inverse transform.
-        imcompatible with passing in all but the trivial ``s``).
+        incompatible with passing in all but the trivial ``s``).
 
         .. versionadded:: 2.0.0
 

@@ -1,6 +1,0 @@
-``cross`` for `numpy.linalg`
-----------------------------
-
-`numpy.linalg.cross` has been added. It computes the cross product of two
-(arrays of) 3-dimensional vectors. It differs from `numpy.cross` by accepting
-three-dimensional vectors only. This function is compatible with Array API.

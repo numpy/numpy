@@ -57,6 +57,7 @@ Strings and Bytestrings
 
 .. attribute:: StrDType
                BytesDType
+               StringDType
 
 Times
 -----

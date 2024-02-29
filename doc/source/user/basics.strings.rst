@@ -8,19 +8,19 @@ While NumPy is primarily a numerical library, it is often convenient
 to work with NumPy arrays of strings or bytes. The two most common
 use cases are:
 
-    * Working with data loaded or memory-mapped from a data file,
-      where one or more of the fields in the data is a string or
-      bytestring, and the maximum lenth of the field is known
-      ahead of time. This often is used for a name or label field.
-    * Using NumPy indexing and broadcasting with arrays of Python
-      strings of unknown length, which may or may not have data
-      defined for every value.
+* Working with data loaded or memory-mapped from a data file,
+  where one or more of the fields in the data is a string or
+  bytestring, and the maximum length of the field is known
+  ahead of time. This often is used for a name or label field.
+* Using NumPy indexing and broadcasting with arrays of Python
+  strings of unknown length, which may or may not have data
+  defined for every value.
 
 For the first use case, NumPy provides the fixed-width `numpy.void`,
 `numpy.str_` and `numpy.bytes_` data types. For the second use case,
 numpy provides `numpy.dtypes.StringDType`. Below we describe how to
 work with both fixed-width and variable-width string arrays, how to
-convert between the two representations, and provide some advide for
+convert between the two representations, and provide some advice for
 most efficiently working with string data in NumPy.
 
 Fixed-width data types
@@ -121,7 +121,7 @@ argument for the initializer:
   >>> arr[1] is None
   True
   
-Th ``na_object`` can be any arbitrary python object.
+The ``na_object`` can be any arbitrary python object.
 Common choices are `numpy.nan`, ``float('nan')``, ``None``, an object
 specifically intended to represent missing data like ``pandas.NA``,
 or a (hopefully) unique string like ``"__placeholder__"``.
@@ -180,7 +180,7 @@ By default, non-string data are coerced to strings:
   array(['1', '<object object at 0x7faa2497dde0>', '3.4'], dtype=StringDType())
 
 If this behavior is not desired, an instance of the DType can be created that
-disables string coercion by setting ``coerce=False`` in the initalizer:
+disables string coercion by setting ``coerce=False`` in the initializer:
 
   >>> np.array([1, object(), 3.4], dtype=StringDType(coerce=False))
   Traceback (most recent call last):
@@ -201,7 +201,7 @@ when a fixed-width string is needed for reading and writing to a
 columnar data format with a known maximum string length.
 
 In all cases, casting to a fixed-width string requires specifying the
-maximum allowed string length:
+maximum allowed string length::
 
    >>> arr = np.array(["hello", "world"], dtype=StringDType())
    >>> arr.astype(np.str_)  # doctest: +IGNORE_EXCEPTION_DETAIL

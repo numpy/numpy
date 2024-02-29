@@ -641,23 +641,6 @@ class TestDeprecatedFinfo(_DeprecationTestCase):
     def test_deprecated_none(self):
         self.assert_deprecated(np.finfo, args=(None,))
 
-class TestFromnumeric(_DeprecationTestCase):
-    # 2023-03-02, 1.25.0
-    def test_cumproduct(self):
-        self.assert_deprecated(lambda: np.cumproduct(np.array([1, 2, 3])))
-
-    # 2023-03-02, 1.25.0
-    def test_product(self):
-        self.assert_deprecated(lambda: np.product(np.array([1, 2, 3])))
-
-    # 2023-03-02, 1.25.0
-    def test_sometrue(self):
-        self.assert_deprecated(lambda: np.sometrue(np.array([True, False])))
-
-    # 2023-03-02, 1.25.0
-    def test_alltrue(self):
-        self.assert_deprecated(lambda: np.alltrue(np.array([True, False])))
-
 
 class TestMathAlias(_DeprecationTestCase):
     def test_deprecated_np_lib_math(self):
@@ -735,7 +718,7 @@ class TestDeprecatedArrayWrap(_DeprecationTestCase):
 
 
 class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
-    messsage = "Passing in a parenthesized single number"
+    message = "Passing in a parenthesized single number"
 
     @pytest.mark.parametrize("string", ["(2)i,", "(3)3S,", "f,(2)f"])
     def test_parenthesized_repeat_count(self, string):

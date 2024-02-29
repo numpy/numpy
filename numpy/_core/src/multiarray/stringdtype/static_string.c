@@ -350,7 +350,7 @@ NpyString_acquire_allocators(size_t n_descriptors,
 
 /*NUMPY_API
  * Release the mutex locking an allocator. This must be called exactly once
- * after acquiring the allocator mutex and all operations requring the
+ * after acquiring the allocator mutex and all operations requiring the
  * allocator are done.
  *
  * If you need to release multiple allocators, see
@@ -391,6 +391,7 @@ NpyString_release_allocators(size_t length, npy_string_allocator *allocators[])
     }
 }
 
+static const char * const EMPTY_STRING = "";
 
 /*NUMPY_API
  * Extract the packed contents of *packed_string* into *unpacked_string*.
@@ -427,7 +428,7 @@ NpyString_load(npy_string_allocator *allocator,
 
     else {
         size_t size = VSTRING_SIZE(string_u);
-        char *buf = NULL;
+        const char *buf = EMPTY_STRING;
         if (size > 0) {
             npy_string_arena *arena = &allocator->arena;
             if (arena == NULL) {

@@ -22,13 +22,14 @@ permissions:
 
 jobs:
   gcc_sanitizers:
-    if: "github.repository == 'numpy/numpy'"
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
     - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
@@ -50,7 +51,6 @@ jobs:
       run: |
         pip install pytest pytest-xdist hypothesis typing_extensions
         ASAN_OPTIONS=detect_leaks=0:symbolize=1:strict_init_order=true:allocator_may_return_null=1:halt_on_error=1 \
+        UBSAN_OPTIONS=halt_on_error=0 \
         LD_PRELOAD=$(gcc --print-file-name=libasan.so) \
         python -m spin test -- -v -s
-        
-  

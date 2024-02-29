@@ -643,7 +643,7 @@ LONGDOUBLE_setitem(PyObject *op, void *ov, void *vap)
         *((npy_longdouble *)ov) = temp;
     }
     else {
-        copy_and_swap(ov, &temp, PyArray_DESCR(ap)->elsize, 1, 0,
+        copy_and_swap(ov, &temp, PyArray_ITEMSIZE(ap), 1, 0,
                       PyArray_ISBYTESWAPPED(ap));
     }
     return 0;
@@ -695,7 +695,7 @@ UNICODE_setitem(PyObject *op, void *ov, void *vap)
     }
 
     /* truncate if needed */
-    Py_ssize_t max_len = PyArray_DESCR(ap)->elsize >> 2;
+    Py_ssize_t max_len = PyArray_ITEMSIZE(ap) >> 2;
     Py_ssize_t actual_len = PyUnicode_GetLength(temp);
     if (actual_len < 0) {
         Py_DECREF(temp);
@@ -735,8 +735,8 @@ UNICODE_setitem(PyObject *op, void *ov, void *vap)
     }
 
     /* Fill in the rest of the space with 0 */
-    if (PyArray_DESCR(ap)->elsize > num_bytes) {
-        memset((char*)ov + num_bytes, 0, (PyArray_DESCR(ap)->elsize - num_bytes));
+    if (PyArray_ITEMSIZE(ap) > num_bytes) {
+        memset((char*)ov + num_bytes, 0, (PyArray_ITEMSIZE(ap) - num_bytes));
     }
     if (PyArray_ISBYTESWAPPED(ap)) {
         byte_swap_vector(ov, actual_len, 4);
@@ -756,7 +756,7 @@ STRING_getitem(void *ip, void *vap)
     PyArrayObject *ap = vap;
     /* Will eliminate NULLs at the end */
     char *ptr;
-    int size = PyArray_DESCR(ap)->elsize;
+    int size = PyArray_ITEMSIZE(ap);
 
     ptr = (char *)ip + size - 1;
     while (size > 0 && *ptr-- == '\0') {
@@ -812,13 +812,13 @@ STRING_setitem(PyObject *op, void *ov, void *vap)
         Py_DECREF(temp);
         return -1;
     }
-    memcpy(ov, ptr, PyArray_MIN(PyArray_DESCR(ap)->elsize,len));
+    memcpy(ov, ptr, PyArray_MIN(PyArray_ITEMSIZE(ap),len));
     /*
      * If string length is smaller than room in array
      * Then fill the rest of the element size with NULL
      */
-    if (PyArray_DESCR(ap)->elsize > len) {
-        memset((char *)ov + len, 0, (PyArray_DESCR(ap)->elsize - len));
+    if (PyArray_ITEMSIZE(ap) > len) {
+        memset((char *)ov + len, 0, (PyArray_ITEMSIZE(ap) - len));
     }
     Py_DECREF(temp);
     return 0;
@@ -1037,7 +1037,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
 {
     char *ip = input;
     PyArrayObject *ap = vap;
-    int itemsize = PyArray_DESCR(ap)->elsize;
+    int itemsize = PyArray_ITEMSIZE(ap);
     int res;
     PyArray_Descr *descr = PyArray_DESCR(ap);
 
@@ -1518,9 +1518,9 @@ BOOL_to_@TOTYPE@(void *input, void *output, npy_intp n,
  *              npy_cfloat, npy_cdouble, npy_clongdouble,
  *              npy_char, npy_char, npy_char,
  *              npy_datetime, npy_timedelta)*3#
- * #oskip = 1*18,(PyArray_DESCR(aop)->elsize)*3,1*2,
- *          1*18,(PyArray_DESCR(aop)->elsize)*3,1*2,
- *          1*18,(PyArray_DESCR(aop)->elsize)*3,1*2#
+ * #oskip = 1*18,(PyArray_ITEMSIZE(aop))*3,1*2,
+ *          1*18,(PyArray_ITEMSIZE(aop))*3,1*2,
+ *          1*18,(PyArray_ITEMSIZE(aop))*3,1*2#
  */
 
 static void
@@ -1532,7 +1532,7 @@ static void
     PyArrayObject *aip = vaip;
 
     npy_intp i;
-    int skip = PyArray_DESCR(aip)->elsize;
+    int skip = PyArray_ITEMSIZE(aip);
     int oskip = @oskip@;
 
     for (i = 0; i < n; i++, ip+=skip, op+=oskip) {
@@ -1581,7 +1581,7 @@ static void
     npy_intp i;
     PyObject *temp = NULL;
     int skip = 1;
-    int oskip = PyArray_DESCR(aop)->elsize;
+    int oskip = PyArray_ITEMSIZE(aop);
     for (i = 0; i < n; i++, ip += skip, op += oskip) {
         temp = PyArray_Scalar(ip, PyArray_DESCR(aip), (PyObject *)aip);
         if (temp == NULL) {
@@ -2256,7 +2256,7 @@ STRING_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
     if (arr == NULL) {
         return;
     }
-    _basic_copyn(dst, dstride, src, sstride, n, PyArray_DESCR(arr)->elsize);
+    _basic_copyn(dst, dstride, src, sstride, n, PyArray_ITEMSIZE(arr));
     return;
 }
 
@@ -2438,7 +2438,7 @@ UNICODE_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
     if (arr == NULL) {
         return;
     }
-    itemsize = PyArray_DESCR(arr)->elsize;
+    itemsize = PyArray_ITEMSIZE(arr);
     _basic_copyn(dst, dstride, src, sstride, n, itemsize);
 
     if (swap) {
@@ -2467,7 +2467,7 @@ STRING_copyswap(char *dst, char *src, int NPY_UNUSED(swap), PyArrayObject *arr)
         return;
     }
     /* copy first if needed */
-    _basic_copy(dst, src, PyArray_DESCR(arr)->elsize);
+    _basic_copy(dst, src, PyArray_ITEMSIZE(arr));
 }
 
 static void
@@ -2479,7 +2479,7 @@ UNICODE_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
     if (arr == NULL) {
         return;
     }
-    itemsize = PyArray_DESCR(arr)->elsize;
+    itemsize = PyArray_ITEMSIZE(arr);
     _basic_copy(dst, src, itemsize);
 
     if (swap) {
@@ -2571,7 +2571,7 @@ static npy_bool
 static npy_bool
 STRING_nonzero (char *ip, PyArrayObject *ap)
 {
-    int len = PyArray_DESCR(ap)->elsize;
+    int len = PyArray_ITEMSIZE(ap);
 
     for (int i = 0; i < len; i++) {
         if (ip[i]) {
@@ -2588,7 +2588,7 @@ UNICODE_nonzero (char *ip, PyArrayObject *ap)
     if (PyArray_ISALIGNED(ap)) {
         /* go character by character */
         Py_UCS4 *chars = (Py_UCS4 *)ip;
-        int len = PyArray_DESCR(ap)->elsize / 4;
+        int len = PyArray_ITEMSIZE(ap) / 4;
         for (int i = 0; i < len; i++) {
             if (chars[i]) {
                 return NPY_TRUE;
@@ -2597,7 +2597,7 @@ UNICODE_nonzero (char *ip, PyArrayObject *ap)
     }
     else {
         /* go char/byte by char/byte, it doesn't matter where the nonzero is */
-        int len = PyArray_DESCR(ap)->elsize;
+        int len = PyArray_ITEMSIZE(ap);
         for (int i = 0; i < len; i++) {
             if (ip[i]) {
                 return NPY_TRUE;
@@ -2680,7 +2680,7 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
         }
         return nonz;
     }
-    len = PyArray_DESCR(ap)->elsize;
+    len = PyArray_ITEMSIZE(ap);
     for (i = 0; i < len; i++) {
         if (*ip != '\0') {
             nonz = NPY_TRUE;
@@ -2941,7 +2941,7 @@ STRING_compare(char *ip1, char *ip2, PyArrayObject *ap)
 {
     const unsigned char *c1 = (unsigned char *)ip1;
     const unsigned char *c2 = (unsigned char *)ip2;
-    const size_t len = PyArray_DESCR(ap)->elsize;
+    const size_t len = PyArray_ITEMSIZE(ap);
     int i;
 
     i = memcmp(c1, c2, len);
@@ -2961,7 +2961,7 @@ static int
 UNICODE_compare(npy_ucs4 *ip1, npy_ucs4 *ip2,
                 PyArrayObject *ap)
 {
-    int itemsize = PyArray_DESCR(ap)->elsize;
+    int itemsize = PyArray_ITEMSIZE(ap);
 
     if (itemsize < 0) {
         return 0;
@@ -3317,7 +3317,7 @@ static int
 @fname@_argmax(@type@ *ip, npy_intp n, npy_intp *max_ind, PyArrayObject *aip)
 {
     npy_intp i;
-    int elsize = PyArray_DESCR(aip)->elsize;
+    int elsize = PyArray_ITEMSIZE(aip);
     @type@ *mp = (@type@ *)PyArray_malloc(elsize);
 
     if (mp == NULL) {
@@ -3381,7 +3381,7 @@ static int
 @fname@_argmin(@type@ *ip, npy_intp n, npy_intp *min_ind, PyArrayObject *aip)
 {
     npy_intp i;
-    int elsize = PyArray_DESCR(aip)->elsize;
+    int elsize = PyArray_ITEMSIZE(aip);
     @type@ *mp = (@type@ *)PyArray_malloc(elsize);
 
     if (mp==NULL) return 0;
@@ -4437,24 +4437,25 @@ set_typeinfo(PyObject *dict)
             return -1;
         }
     }
-    if ((void *)@name1@_to_@name2@ != NULL) {
-        key = PyLong_FromLong(NPY_@name2@);
-        if (key == NULL) {
-            return -1;
-        }
-        cobj = NpyCapsule_FromVoidPtr((void *)@name1@_to_@name2@, NULL);
-        if (cobj == NULL) {
-            Py_DECREF(key);
-            return -1;
-        }
-        if (PyDict_SetItem(dtype->f->castdict, key, cobj) < 0) {
-            Py_DECREF(key);
-            Py_DECREF(cobj);
-            return -1;
-        }
+
+#ifndef @name1@_to_@name2@  /* Legacy cast NOT defined as NULL. */
+    key = PyLong_FromLong(NPY_@name2@);
+    if (key == NULL) {
+        return -1;
+    }
+    cobj = NpyCapsule_FromVoidPtr((void *)@name1@_to_@name2@, NULL);
+    if (cobj == NULL) {
+        Py_DECREF(key);
+        return -1;
+    }
+    if (PyDict_SetItem(dtype->f->castdict, key, cobj) < 0) {
         Py_DECREF(key);
         Py_DECREF(cobj);
+        return -1;
     }
+    Py_DECREF(key);
+    Py_DECREF(cobj);
+#endif  /* Legacy cast is used */
 
     /**end repeat1**/
 
