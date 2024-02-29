@@ -180,7 +180,7 @@ class TestFFT1D:
             np.fft.fft(x, out="")
         with pytest.raises(ValueError, match="has wrong shape"):
             np.fft.fft(x, out=np.zeros_like(x).reshape(5, -1))
-        with pytest.raises(TypeError, match="Cannot cast"):
+        with pytest.raises(TypeError, match="Output of ufunc fft"):
             np.fft.fft(x, out=np.zeros_like(x, dtype=float))
 
 

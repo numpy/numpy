@@ -297,7 +297,7 @@ PyUFunc_ValidateOutCasting(PyUFuncObject *ufunc,
         if (!PyArray_CanCastTypeTo(dtypes[i],
                 PyArray_DESCR(operands[i]), casting)) {
             return raise_output_casting_error(
-                    ufunc, casting, dtypes[i], PyArray_DESCR(operands[i]), i);
+                    ufunc, casting, operands, dtypes, i);
         }
     }
     return 0;

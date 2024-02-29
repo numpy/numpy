@@ -2804,7 +2804,7 @@ def test_ufunc_input_floatingpoint_error(bad_offset):
 def test_trivial_loop_invalid_cast():
     # This tests the fast-path "invalid cast", see gh-19904.
     with pytest.raises(TypeError,
-            match="cast ufunc 'add' input 0"):
+            match="Input of ufunc add"):
         # the void dtype definitely cannot cast to double:
         np.add(np.array(1, "i,i"), 3, signature="dd->d")
 
