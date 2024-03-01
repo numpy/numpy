@@ -533,6 +533,7 @@ string_center_ljust_rjust_loop(PyArrayMethod_Context *context,
         if (len < 0) {
             return -1;
         }
+        outbuf.buffer_fill_with_zeros_after_index(len);
 
         in1 += strides[0];
         in2 += strides[1];
@@ -563,6 +564,9 @@ string_zfill_loop(PyArrayMethod_Context *context,
         Buffer<enc> buf(in1, elsize);
         Buffer<enc> outbuf(out, outsize);
         npy_intp newlen = string_zfill(buf, *(npy_int64 *)in2, outbuf);
+        if (newlen < 0) {
+            return -1;
+        }
         outbuf.buffer_fill_with_zeros_after_index(newlen);
 
         in1 += strides[0];

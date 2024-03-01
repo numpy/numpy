@@ -1536,11 +1536,7 @@ string_pad(Buffer<enc> buf, npy_int64 width, Buffer<enc> fill, JUSTPOSITION pos,
         right = 0;
     }
 
-    if (left == 0 && right == 0) {
-        buf.buffer_memcpy(out, len);
-        out.buffer_fill_with_zeros_after_index(len);
-        return len;
-    }
+    assert(left >= 0 || right >= 0);
 
     if (left > PY_SSIZE_T_MAX - len || right > PY_SSIZE_T_MAX - (left + len)) {
         npy_gil_error(PyExc_OverflowError, "padded string is too long");
@@ -1555,7 +1551,7 @@ string_pad(Buffer<enc> buf, npy_int64 width, Buffer<enc> fill, JUSTPOSITION pos,
     if (right > 0) {
         out.buffer_memset(*fill, right);
     }
-    return left + len + right;
+    return finalwidth;
 }
 
 
@@ -1568,14 +1564,17 @@ string_zfill(Buffer<enc> buf, npy_int64 width, Buffer<enc> out)
     char fill = '0';
     Buffer<enc> fillchar(&fill, 1);
     npy_intp new_len = string_pad(buf, width, fillchar, JUSTPOSITION::RIGHT, out);
+    if (new_len == -1) {
+        return -1;
+    }
 
     size_t offset = finalwidth - buf.num_codepoints();
-    Buffer<enc> tmp = buf + offset;
+    Buffer<enc> tmp = out + offset;
 
     npy_ucs4 c = *tmp;
     if (c == '+' || c == '-') {
-        buf.buffer_memset(c, 1);
         tmp.buffer_memset(fill, 1);
+        out.buffer_memset(c, 1);
     }
 
     return new_len;

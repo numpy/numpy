@@ -739,6 +739,8 @@ def zfill(a, width):
     --------
     >>> np.strings.zfill('1', 3)
     array('001', dtype='<U3')
+    >>> np.strings.zfill('-1', 3)
+    array('-01', dtype='<U3')
 
     """
     a = np.asanyarray(a)

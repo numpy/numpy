@@ -4895,7 +4895,7 @@ add_newdoc('numpy._core.umath', '_center',
     ----------
     x1 : array_like, with `np.bytes_` or `np.str_` dtype
 
-    x2 : array_lie, with any integer dtype
+    x2 : array_like, with any integer dtype
         The length of the resulting strings
     x3 : array_like, with `np.bytes_` or `np.str_` dtype
         The padding character to use.
@@ -4911,11 +4911,6 @@ add_newdoc('numpy._core.umath', '_center',
     See Also
     --------
     str.center
-    
-    Notes
-    -----
-    This function is intended to work with arrays of strings.  The
-    fill character is not applied to numeric types.
 
     Examples
     --------
@@ -4939,7 +4934,7 @@ add_newdoc('numpy._core.umath', '_ljust',
     ----------
     x1 : array_like, with `np.bytes_` or `np.str_` dtype
 
-    x2 : array_lie, with any integer dtype
+    x2 : array_like, with any integer dtype
         The length of the resulting strings
     x3 : array_like, with `np.bytes_` or `np.str_` dtype
         The padding character to use.
@@ -4972,7 +4967,7 @@ add_newdoc('numpy._core.umath', '_rjust',
     ----------
     x1 : array_like, with `np.bytes_` or `np.str_` dtype
 
-    x2 : array_lie, with any integer dtype
+    x2 : array_like, with any integer dtype
         The length of the resulting strings
     x3 : array_like, with `np.bytes_` or `np.str_` dtype
         The padding character to use.
@@ -5024,5 +5019,7 @@ add_newdoc('numpy._core.umath', '_zfill',
     --------
     >>> np.strings.zfill('1', 3)
     array('001', dtype='<U3')
+    >>> np.strings.zfill('-1', 3)
+    array('-01', dtype='<U3')
 
     """)
