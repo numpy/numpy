@@ -522,10 +522,31 @@ heap_or_arena_deallocate(npy_string_allocator *allocator,
     return 0;
 }
 
+// A regular empty string is just a short string with a size of 0.  But if a
+// string was already initialized on the arena, we just set the vstring size to
+// 0, so that we still can use the arena if the string gets reset again.
+NPY_NO_EXPORT int
+NpyString_pack_empty(npy_packed_static_string *out)
+{
+    _npy_static_string_u *out_u = (_npy_static_string_u *)out;
+    unsigned char *flags = &out_u->direct_buffer.size_and_flags;
+    if (*flags == 0 || *flags & NPY_STRING_OUTSIDE_ARENA) {
+        // This also sets short string size to 0.
+        *flags = NPY_STRING_INITIALIZED | NPY_STRING_OUTSIDE_ARENA;
+    }
+    else {
+        set_vstring_size(out_u, 0);
+    }
+    return 0;
+}
+
 NPY_NO_EXPORT int
 NpyString_newemptysize(size_t size, npy_packed_static_string *out,
                        npy_string_allocator *allocator)
 {
+    if (size == 0) {
+        return NpyString_pack_empty(out);
+    }
     if (size > NPY_MAX_STRING_SIZE) {
         return -1;
     }
@@ -653,19 +674,15 @@ NpyString_dup(const npy_packed_static_string *in,
     if (NpyString_isnull(in)) {
         return NpyString_pack_null(out_allocator, out);
     }
+    size_t size = NpyString_size(in);
+    if (size == 0) {
+        return NpyString_pack_empty(out);
+    }
     if (is_short_string(in)) {
         memcpy(out, in, sizeof(_npy_static_string_u));
         return 0;
     }
     _npy_static_string_u *in_u = (_npy_static_string_u *)in;
-    size_t size = VSTRING_SIZE(in_u);
-    if (size == 0) {
-        _npy_static_string_u *out_u = (_npy_static_string_u *)out;
-        memcpy(out_u, &empty_string_u, sizeof(_npy_static_string_u));
-        out_u->direct_buffer.size_and_flags =
-            NPY_STRING_INITIALIZED | NPY_STRING_OUTSIDE_ARENA;
-        return 0;
-    }
     char *in_buf = NULL;
     npy_string_arena *arena = &in_allocator->arena;
     if (arena->buffer == NULL) {

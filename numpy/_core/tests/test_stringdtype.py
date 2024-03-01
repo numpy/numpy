@@ -1298,6 +1298,15 @@ class TestImplementation:
         assert_array_equal(self.get_flags(c), self.get_flags(self.a))
         assert_array_equal(c, self.a)
 
+    def test_arena_reuse_after_empty(self):
+        c = self.a.copy()
+        c[:] = ""
+        assert_array_equal(c, "")
+        # Replacing with the original strings, the arena should be reused.
+        c[:] = self.a
+        assert_array_equal(self.get_flags(c), self.get_flags(self.a))
+        assert_array_equal(c, self.a)
+
     def test_arena_reuse_for_shorter(self):
         c = self.a.copy()
         in_arena = self.in_arena(self.a)
@@ -1343,19 +1352,6 @@ class TestImplementation:
         # go into the arena after because the offset is lost.
         c[:] = self.s_short
         assert_array_equal(c, self.s_short)
-        assert_array_equal(self.in_arena(c), False)
-        c[:] = self.a
-        assert_array_equal(c, self.a)
-        assert_array_equal(self.in_arena(c), False)
-        assert_array_equal(self.is_on_heap(c), self.in_arena(self.a))
-
-    def test_arena_no_reuse_after_empty(self):
-        c = self.a.copy()
-        # If we replace a string with the empty string, it is treated
-        # as a short string, so cannot  go into the arena after.
-        # TODO: in principle, the arena information could be kept here.
-        c[:] = ""
-        assert_array_equal(c, "")
         assert_array_equal(self.in_arena(c), False)
         c[:] = self.a
         assert_array_equal(c, self.a)
