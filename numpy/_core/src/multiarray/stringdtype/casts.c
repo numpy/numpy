@@ -1426,8 +1426,8 @@ static char *dt2s_name = "cast_Datetime_to_StringDType";
 
 static int
 string_to_timedelta(PyArrayMethod_Context *context, char *const data[],
-                                       npy_intp const dimensions[], npy_intp const strides[],
-                   NpyAuxData *NPY_UNUSED(auxdata))
+                    npy_intp const dimensions[], npy_intp const strides[],
+                    NpyAuxData *NPY_UNUSED(auxdata))
 {
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
@@ -1540,7 +1540,7 @@ timedelta_to_string(PyArrayMethod_Context *context, char *const data[],
             else if (NpyString_pack_null(allocator, out_pss) < 0) {
                 npy_gil_error(
                         PyExc_MemoryError,
-                        "Failed to pack string in datetime to string cast");
+                        "Failed to pack string in timedelta to string cast");
                 goto fail;
             }
         }

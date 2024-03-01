@@ -884,10 +884,8 @@ def test_nat_casts():
         arr = np.array([''] + all_nats, dtype=dtype)
         dt_array = arr.astype('M8[s]')
         td_array = arr.astype('m8[s]')
-        assert_array_equal(
-            dt_array, np.array([NaT_dt] * arr.size, dtype='M8[s]'))
-        assert_array_equal(
-            td_array, np.array([NaT_td] * arr.size, dtype='m8[s]'))
+        assert_array_equal(dt_array, NaT_dt)
+        assert_array_equal(td_array, NaT_td)
 
         if na_object is np._NoValue:
             output_object = 'NaT'
