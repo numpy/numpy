@@ -327,7 +327,7 @@ def solve(a, b):
     ----------
     a : (..., M, M) array_like
         Coefficient matrix.
-    b : {(..., M,), (..., M, K)}, array_like
+    b : {(M,), (..., M, K)}, array_like
         Ordinate or "dependent variable" values.
 
     Returns
@@ -358,6 +358,13 @@ def solve(a, b):
     columns) must be linearly independent; if either is not true, use
     `lstsq` for the least-squares best "solution" of the
     system/equation.
+
+    .. versionchanged:: 2.0
+
+       The b array is only treated as a shape (M,) column vector if it is
+       exactly 1-dimensional. In all other instances it is treated as a stack
+       of (M, K) matrices. Previously b would be treated as a stack of (M,)
+       vectors if b.ndim was equal to a.ndim - 1.
 
     References
     ----------
@@ -390,7 +397,7 @@ def solve(a, b):
 
     # We use the b = (..., M,) logic, only if the number of extra dimensions
     # match exactly
-    if b.ndim == a.ndim - 1:
+    if b.ndim == 1:
         gufunc = _umath_linalg.solve1
     else:
         gufunc = _umath_linalg.solve

@@ -475,6 +475,23 @@ class TestSolve(SolveCases):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
         assert_equal(linalg.solve(x, x).dtype, dtype)
 
+    def test_1_d(self):
+        class ArraySubclass(np.ndarray):
+            pass
+        a = np.arange(8).reshape(2, 2, 2)
+        b = np.arange(2).view(ArraySubclass)
+        result = linalg.solve(a, b)
+        assert result.shape == (2, 2)
+
+        # If b is anything other than 1-D it should be treated as a stack of
+        # matrices
+        b = np.arange(4).reshape(2, 2).view(ArraySubclass)
+        result = linalg.solve(a, b)
+        assert result.shape == (2, 2, 2)
+
+        b = np.arange(2).reshape(1, 2).view(ArraySubclass)
+        assert_raises(ValueError, linalg.solve, a, b)
+
     def test_0_size(self):
         class ArraySubclass(np.ndarray):
             pass
@@ -497,9 +514,9 @@ class TestSolve(SolveCases):
         assert_raises(ValueError, linalg.solve, a[0:0], b[0:0])
 
         # Test zero "single equations" with 0x0 matrices.
-        b = np.arange(2).reshape(1, 2).view(ArraySubclass)
+        b = np.arange(2).view(ArraySubclass)
         expected = linalg.solve(a, b)[:, 0:0]
-        result = linalg.solve(a[:, 0:0, 0:0], b[:, 0:0])
+        result = linalg.solve(a[:, 0:0, 0:0], b[0:0])
         assert_array_equal(result, expected)
         assert_(isinstance(result, ArraySubclass))
 
