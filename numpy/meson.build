@@ -265,7 +265,6 @@ pure_subdirs = [
   '_pyinstaller',
   '_typing',
   '_utils',
-  'array_api',
   'compat',
   'doc',
   'f2py',
