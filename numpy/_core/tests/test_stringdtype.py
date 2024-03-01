@@ -1,4 +1,5 @@
 import concurrent.futures
+import itertools
 import os
 import pickle
 import string
@@ -827,18 +828,38 @@ def test_ufunc_multiply(dtype, string_list, other, other_dtype, use_out):
             other * arr
 
 
-def test_datetime_cast(dtype):
-    a = np.array(
-        [
-            np.datetime64("1923-04-14T12:43:12"),
-            np.datetime64("1994-06-21T14:43:15"),
-            np.datetime64("2001-10-15T04:10:32"),
-            np.datetime64("NaT"),
-            np.datetime64("1995-11-25T16:02:16"),
-            np.datetime64("2005-01-04T03:14:12"),
-            np.datetime64("2041-12-03T14:05:03"),
-        ]
-    )
+DATETIME_INPUT = [
+    np.datetime64("1923-04-14T12:43:12"),
+    np.datetime64("1994-06-21T14:43:15"),
+    np.datetime64("2001-10-15T04:10:32"),
+    np.datetime64("NaT"),
+    np.datetime64("1995-11-25T16:02:16"),
+    np.datetime64("2005-01-04T03:14:12"),
+    np.datetime64("2041-12-03T14:05:03"),
+]
+
+
+TIMEDELTA_INPUT = [
+    np.timedelta64(12358, "s"),
+    np.timedelta64(23, "s"),
+    np.timedelta64(74, "s"),
+    np.timedelta64("NaT"),
+    np.timedelta64(23, "s"),
+    np.timedelta64(73, "s"),
+    np.timedelta64(7, "s"),
+]
+
+
+@pytest.mark.parametrize(
+    "input_data, input_dtype",
+    [
+        (DATETIME_INPUT, "M8[s]"),
+        (TIMEDELTA_INPUT, "m8[s]")
+    ]
+)
+def test_datetime_timedelta_cast(dtype, input_data, input_dtype):
+
+    a = np.array(input_data, dtype=input_dtype)
 
     has_na = hasattr(dtype, "na_object")
     is_str = isinstance(getattr(dtype, "na_object", None), str)
@@ -860,7 +881,39 @@ def test_datetime_cast(dtype):
         sa = np.delete(sa, 3)
         a = np.delete(a, 3)
 
-    assert_array_equal(sa, a.astype("U"))
+    if input_dtype.startswith("M"):
+        assert_array_equal(sa, a.astype("U"))
+    else:
+        # The timedelta to unicode cast produces strings
+        # that aren't round-trippable and we don't want to
+        # reproduce that behavior in stringdtype
+        assert_array_equal(sa, a.astype("int64").astype("U"))
+
+
+def test_nat_casts():
+    s = 'nat'
+    all_nats = itertools.product(*zip(s.upper(), s.lower()))
+    all_nats = list(map(''.join, all_nats))
+    NaT_dt = np.datetime64('NaT')
+    NaT_td = np.timedelta64('NaT')
+    for na_object in [np._NoValue, None, np.nan, 'nat', '']:
+        # numpy treats empty string and all case combinations of 'nat' as NaT
+        dtype = StringDType(na_object=na_object)
+        arr = np.array([''] + all_nats, dtype=dtype)
+        dt_array = arr.astype('M8[s]')
+        td_array = arr.astype('m8[s]')
+        assert_array_equal(dt_array, NaT_dt)
+        assert_array_equal(td_array, NaT_td)
+
+        if na_object is np._NoValue:
+            output_object = 'NaT'
+        else:
+            output_object = na_object
+
+        for arr in [dt_array, td_array]:
+            assert_array_equal(
+                arr.astype(dtype),
+                np.array([output_object]*arr.size, dtype=dtype))
 
 
 def test_growing_strings(dtype):
