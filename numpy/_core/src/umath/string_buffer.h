@@ -1561,8 +1561,9 @@ string_zfill(Buffer<enc> buf, npy_int64 width, Buffer<enc> out)
 {
     size_t finalwidth = width > 0 ? width : 0;
 
-    char fill = '0';
-    Buffer<enc> fillchar(&fill, 1);
+    npy_ucs4 fill = '0';
+    Buffer<enc> fillchar(&fill, 4);  // max codepoint size is 4 bytes
+
     npy_intp new_len = string_pad(buf, width, fillchar, JUSTPOSITION::RIGHT, out);
     if (new_len == -1) {
         return -1;
