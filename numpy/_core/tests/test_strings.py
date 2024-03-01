@@ -925,7 +925,6 @@ class TestMethodsWithUnicode:
         assert_array_equal(np.strings.expandtabs(buf), res)
 
 
-
 @pytest.mark.parametrize("dt", [
     "U",
     pytest.param("T", marks=pytest.mark.xfail(
