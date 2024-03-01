@@ -6,7 +6,8 @@ NEP 55 — Add a UTF-8 variable-width string DType to NumPy
 
 :Author: Nathan Goldbaum <ngoldbaum@quansight.com>
 :Author: Warren Weckesser
-:Status: Accepted
+:Author: Marten van Kerkwijk
+:Status: Final
 :Type: Standards Track
 :Created: 2023-06-29
 :Updated: 2024-01-18
@@ -905,10 +906,10 @@ endian-dependent layouts of these structs is an implementation detail and is not
 publicly exposed in the API.
 
 Whether or not a string is stored directly on the arena buffer or in the heap is
-signaled by setting the ``NPY_STRING_SHORT`` flag on the string data. Because
-the maximum size of a heap-allocated string is limited to the size of the
-largest 7-byte unsized integer, this flag can never be set for a valid heap
-string.
+signaled by setting the ``NPY_OUTSIDE_ARENA`` and ``NPY_STRING_LONG`` flags on
+the string data. Because the maximum size of a heap-allocated string is limited
+to the size of the largest 7-byte unsized integer, these flags can never be set
+for a valid heap string.
 
 See :ref:`memorylayoutexamples` for some visual examples of strings in each of these
 memory layouts.
@@ -956,20 +957,29 @@ exponentially expanding buffer, with an expansion factor of 1.25.
 Each string entry in the arena is prepended by a size, stored either in a
 ``char`` or a ``size_t``, depending on the length of the string. Strings with
 lengths between 16 or 8 (depending on architecture) and 255 are stored with a
-``char`` size. We refer to these as "medium" strings internally and strings
-stored this way have the ``NPY_STRING_MEDIUM`` flag set. This choice reduces the
-overhead for storing smaller strings on the heap by 7 bytes per medium-length
-string.
+``char`` size. We refer to these as "medium" strings internally. This choice
+reduces the overhead for storing smaller strings on the heap by 7 bytes per
+medium-length string. Strings in the arena with lengths longer than 255 bytes
+have the ``NPY_STRING_LONG`` flag set.
 
 If the contents of a packed string are freed and then assigned to a new string
 with the same size or smaller than the string that was originally stored in the
-packed string, the existing short string or arena allocation is re-used, with
-padding zeros written to the end of the subset of the buffer reserved for the
-string. If the string is enlarged, the existing space in the arena buffer cannot
-be used, so instead we resort to allocating space directly on the heap via
-``malloc`` and the ``NPY_STRING_ON_HEAP`` flag is set. Any pre-existing flags
-are kept set to allow future use of the string to determine if there is space in
-the arena buffer allocated for the string for possible re-use.
+packed string, the existing short string or arena allocation is re-used. There
+is one exception however, when a string in the arena is overwritten with a short
+string, the arena metadata is lost and the arena allocation cannot be re-used.
+
+If the string is enlarged, the existing space in the arena buffer cannot be
+used, so instead we resort to allocating space directly on the heap via
+``malloc`` and the ``NPY_STRING_OUTSIDE_ARENA`` and ``NPY_STRING_LONG`` flags
+are set. Note that ``NPY_STRING_LONG`` can be set even for strings with lengths
+less than 255 bytes in this case. Any pre-existing flags are kept set to allow
+future use of the string to determine if there is space in the arena buffer
+allocated for the string for possible re-use.
+
+No matter where it is stored, once a string is initialized is marked with the
+``NPY_STRING_INITIALIZED`` flag. This lets us clearly distinguish between an
+unitialized empty string and a string that has been mutated into the empty
+string.
 
 The size of the allocation is stored in the arena to allow reuse of the arena
 allocation if a string is mutated. In principle we could disallow re-use of the
@@ -1022,13 +1032,7 @@ Freeing Strings
 Existing strings must be freed before discarding or re-using a packed
 string. The API is constructed to require this for all strings, even for short
 strings with no heap allocations. In all cases, all data in the packed string
-are zeroed out, except for the flags, which are preserved except as noted below.
-
-For strings with data living in the arena allocation, the data for the string in
-the arena buffer are zeroed out and the ``NPY_STRING_ARENA_FREED`` flag is set
-on the packed string to indicate there is space in the arena for a later re-use
-of the packed string. Heap strings have their heap allocation freed and the
-``NPY_STRING_ON_HEAP`` flag removed.
+are zeroed out, except for the flags, which are preserved.
 
 .. _memorylayoutexamples:
 
@@ -1044,8 +1048,8 @@ Short strings store string data directly in the array buffer. On little-endian
 architectures, the string data appear first, followed by a single byte that
 allows space for four flags and stores the size of the string as an
 unsigned integer in the final 4 bits. In this example, the string contents are
-"Hello world", with a size of 11. The only flag set indicates that this is a
-short string.
+"Hello world", with a size of 11. The flags indicate this string is stored
+outside the arena and is initialized.
 
 .. image:: _static/nep-0055-arena-string-memory-layout.svg
 
@@ -1060,7 +1064,7 @@ a "medium"-length string and the size requires only one byte in the arena
 allocation. An arena string larger than 255 bytes would need 8 bytes in the
 arena to store the size in a ``size_t``. The only flag set indicates that this
 is a such "medium"-length string with a size that fits in a ``unsigned
-char``. Arena strings that are longer than 255 bytes have no flags set.
+char``. The only flag set indicates this string is initialized.
 
 .. image:: _static/nep-0055-heap-string-memory-layout.svg
 
@@ -1068,8 +1072,10 @@ Heap strings store string data in a buffer returned by ``PyMem_RawMalloc`` and
 instead of storing an offset into an arena buffer, directly store the address of
 the heap address returned by ``malloc``. In this example, the string contents
 are "Numpy is a very cool library" and are stored at heap address
-``0x4d3d3d3``. The string has one flag set, indicating that the allocation lives
-directly on the heap rather than in the arena buffer.
+``0x4d3d3d3``. The string has three flags set, indicating it is a "Long" string
+(e.g. not a short string) stored outside the arena, and is initialized. Note
+that if this string were stored inside the arena, it would not have the long
+string flag set.
 
 Empty Strings and Missing Data
 ++++++++++++++++++++++++++++++
