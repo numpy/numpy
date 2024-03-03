@@ -92,6 +92,7 @@ This include is also needed when vendoring ``npy_2_compat.h`` into your own
 codebase to allow use of the new definitions when compiling with NumPy 1.x.
 
 Functionality which previously did not require import includes:
+
 * Functions to access dtype flags: ``PyDataType_FLAGCHK``,
   ``PyDataType_REFCHK``, and the related ``NPY_BEGIN_THREADS_DESCR``.
 * ``PyArray_GETITEM`` and ``PyArray_SETITEM``.

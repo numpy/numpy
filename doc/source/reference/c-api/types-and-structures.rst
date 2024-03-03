@@ -491,6 +491,7 @@ PyArray_ArrFuncs
 ----------------
 
 .. c:function:: PyArray_ArrFuncs *PyDataType_GetArrFuncs(PyArray_Descr *dtype)
+
     Fetch the legacy `PyArray_ArrFuncs` of the datatype (cannot fail).
 
     .. versionadded:: NumPy 2.0
