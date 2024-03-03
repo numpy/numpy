@@ -2013,14 +2013,8 @@ def binary_repr(num, width=None):
         The length of the returned string if `num` is positive, or the length
         of the two's complement if `num` is negative, provided that `width` is
         at least a sufficient number of bits for `num` to be represented in
-        the designated form.
-
-        If the `width` value is insufficient, it will be ignored, and `num`
-        will be returned in binary (`num` > 0) or two's complement (`num` < 0)
-        form with its width equal to the minimum number of bits represent the
-        number in the designated form. While the `width` parameter is 
-        available, this behavior is deprecated since version 1.12.0 and will
-        later raise an error.
+        the designated form. If the `width` value is insufficient, an error is
+        raised.
 
     Returns
     -------
