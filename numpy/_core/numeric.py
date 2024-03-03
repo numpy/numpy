@@ -1016,10 +1016,8 @@ def tensordot(a, b, axes=2):
     * ``axes = 1`` : tensor dot product :math:`a\\cdot b`
     * ``axes = 2`` : (default) tensor double contraction :math:`a:b`
 
-    When `axes` is integer_like and positive, the operation starts with the
-    Nth position from the last (axis = -N) in `a` and the first position
-    (axis = 0) in `b` and continue until the last position 
-    (axis = -1) in `a` and Nth position (axis = N-1) in `b`.
+    When `axes` is a positive integer ``N``, the behavior is equivalent to
+    that of ``axes=[range(-N, 0), range(0, N)]``.
 
     When there is more than one axis to sum over - and they are not the last
     (first) axes of `a` (`b`) - the argument `axes` should consist of
