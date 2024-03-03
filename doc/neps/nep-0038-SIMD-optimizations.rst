@@ -5,7 +5,7 @@ NEP 38 — Using SIMD optimization instructions for performance
 =============================================================
 
 :Author: Sayed Adel, Matti Picus, Ralf Gommers
-:Status: Accepted
+:Status: Final
 :Type: Standards
 :Created: 2019-11-25
 :Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/thread/PVWJ74UVBRZ5ZWF6MDU7EUSJXVNILAQB/#PVWJ74UVBRZ5ZWF6MDU7EUSJXVNILAQB
