@@ -3318,7 +3318,7 @@ Data Type Promotion and Inspection
    for a ``singleton`` first and only calls the ``default_descr`` function if
    necessary.
 
-.. dtype-api_
+.. _dtype-api:
 
 Custom Data Types
 -----------------

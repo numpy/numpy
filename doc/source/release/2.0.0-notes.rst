@@ -342,6 +342,31 @@ C API changes
 
   (`gh-25789 <https://github.com/numpy/numpy/pull/25789>`__)
 
+* The ``->f`` slot has been removed from ``PyArray_Descr``.
+  If you use this slot, replace accessing it with
+  ``PyDataType_GetArrFuncs`` (see its documentation and the
+  :ref:`numpy-2-migration-guide`). In some cases using other functions like
+  ``PyArray_GETITEM`` may be an alternatives.
+* ``PyArray_GETITEM`` and ``PyArray_SETITEM`` now require the import of the
+  NumPy API table to be used and are no longer defined in ``ndarraytypes.h``.
+
+  (`gh-25812 <https://github.com/numpy/numpy/pull/25812>`__)
+
+* Due to runtime dependencies, the definition for functionality accessing
+  the dtype flags was moved from ``numpy/ndarraytypes.h`` and is only available
+  after including ``numpy/ndarrayobject.h`` as it requires ``import_array()``.
+  This includes ``PyDataType_FLAGCHK``, ``PyDataType_REFCHK`` and
+  ``NPY_BEGIN_THREADS_DESCR``.
+* The dtype flags on ``PyArray_Descr`` must now be accessed through the
+  ``PyDataType_FLAGS`` inline function to be compatible with both 1.x and 2.x.
+  This function is defined in ``npy_2_compat.h`` to allow backporting.
+  Most or all users should use ``PyDataType_FLAGCHK`` which is available on
+  1.x and does not require backporting.
+  Cython users should use Cython 3.  Otherwise access will go through Python
+  unless they use ``PyDataType_FLAGCHK`` instead.
+
+  (`gh-25816 <https://github.com/numpy/numpy/pull/25816>`__)
+
 Datetime functionality exposed in the C API and Cython bindings
 ---------------------------------------------------------------
 
@@ -357,6 +382,7 @@ external libraries.
 
 Const correctness for the generalized ufunc C API
 -------------------------------------------------
+
 The NumPy C API's functions for constructing generalized ufuncs
 (``PyUFunc_FromFuncAndData``, ``PyUFunc_FromFuncAndDataAndSignature``,
 ``PyUFunc_FromFuncAndDataAndSignatureAndIdentity``) take ``types`` and ``data``
@@ -384,6 +410,7 @@ replaced with ``NPY_RAVEL_AXIS``. See also :ref:`migration_maxdims`.
 
 ``NPY_MAXARGS`` not constant and ``PyArrayMultiIterObject`` size change
 -----------------------------------------------------------------------
+
 Since ``NPY_MAXARGS`` was increased, it is now a runtime constant and not
 compile-time constant anymore.
 We expect almost no users to notice this.  But if used for stack allocations
@@ -398,13 +425,49 @@ to avoid issues with Cython.
 
 Required changes for custom legacy user dtypes
 ----------------------------------------------
+
 In order to improve our DTypes it is unfortunately necessary
-to break with ABI, which requires some changes for dtypes registered
-with `PyArray_RegisterDataType`.
-Please see the documentation of `PyArray_RegisterDataType` for how
+to break the ABI, which requires some changes for dtypes registered
+with ``PyArray_RegisterDataType``.
+Please see the documentation of ``PyArray_RegisterDataType`` for how
 to adapt your code and achieve compatibility with both 1.x and 2.x.
 
 (`gh-25792 <https://github.com/numpy/numpy/pull/25792>`__)
+
+New Public DType API
+--------------------
+
+The C implementation of the NEP 42 DType API is now public. While the DType API
+has shipped in NumPy for a few versions, it was only usable in sessions with a
+special environment variable set. It is now possible to write custom DTypes
+outside of NumPy using the new DType API and the normal ``import_array()``
+mechanism for importing the numpy C API.
+
+See :ref:`dtype-api` for more details about the API. As always with a new
+feature, please report any bugs you run into implementing or using a new
+DType. It is likely that downstream C code that works with dtypes will need to
+be updated to work correctly with new DTypes.
+
+(`gh-25754 <https://github.com/numpy/numpy/pull/25754>`__)
+
+New C-API import functions
+--------------------------
+
+We have now added ``PyArray_ImportNumPyAPI`` and ``PyUFunc_ImportUFuncAPI``
+as static inline functions to import the NumPy C-API tables.
+The new functions have two advantages over ``import_array`` and
+``import_ufunc``:
+
+- They check whether the import was already performed and are light-weight
+  if not, allowing to add them judiciously (although this is not preferable
+  in most cases).
+- The old mechanisms were macros rather than functions which included a
+  ``return`` statement.
+
+The ``PyArray_ImportNumPyAPI()`` function is included in ``npy_2_compat.h``
+for simpler backporting.
+
+(`gh-25866 <https://github.com/numpy/numpy/pull/25866>`__)
 
 
 NumPy 2.0 C API removals
@@ -983,6 +1046,14 @@ Changes
 
   (`gh-25080 <https://github.com/numpy/numpy/pull/25080>`__)
 
+* The ``dtype.flags`` value was previously usually stored as a signed integer.
+  This means that the aligned dtype struct flag lead to negative flags being
+  set (-128 rather than 128). This flag is now stored unsigned (positive). Code
+  which checks flags manually may need to adapt.  This may include code
+  compiled with Cython 0.29.x.
+
+  (`gh-25816 <https://github.com/numpy/numpy/pull/25816>`__)
+
 Representation of NumPy scalars changed
 ---------------------------------------
 As per :ref:`NEP 51 <NEP51>`, the scalar representation has been
@@ -1126,6 +1197,32 @@ Any out of bound axis value will now error, make sure to use
 ``axis=None``.
 
 (`gh-25149 <https://github.com/numpy/numpy/pull/25149>`__)
+
+New ``copy`` keyword meaning for `numpy.array` and `numpy.asarray`
+------------------------------------------------------------------
+Now `numpy.array` and `numpy.asarray` support three values for ``copy`` parameter:
+
+* ``None`` - A copy will only be made if it is necessary.
+* ``True`` - Always make a copy.
+* ``False`` - Never make a copy. If a copy is required a ``ValueError`` is raised.
+
+The meaning of ``False`` changed as it now raises an exception if a copy is needed.
+
+(`gh-25168 <https://github.com/numpy/numpy/pull/25168>`__)
+
+The ``__array__`` special method now takes a ``copy`` keyword argument.
+-----------------------------------------------------------------------
+
+NumPy will pass ``copy`` to the ``__array__`` special method in situations where
+it would be set to a non-default value (e.g. in a call to
+``np.asarray(some_object, copy=False)``). Currently, if an
+unexpected keyword argument error is raised after this, NumPy will print a
+warning and re-try without the ``copy`` keyword argument. Implementations of
+objects implementing the ``__array__`` protocol should accept a ``copy`` keyword
+argument with the same meaning as when passed to `numpy.array` or
+`numpy.asarray`.
+
+(`gh-25168 <https://github.com/numpy/numpy/pull/25168>`__)
 
 Cleanup of initialization of ``numpy.dtype`` with strings with commas
 ---------------------------------------------------------------------
