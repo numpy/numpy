@@ -86,8 +86,12 @@ class _UFuncInputCastingError(_UFuncCastingError):
 
     def __str__(self):
         if self.ufunc.nout > 1:
-            from_outs = "out=({})".format(", ".join(f.name for f in self.to[self.ufunc.nin:]))
-            to_outs = "out=({})".format(", ".join(t.name for t in self.to[self.ufunc.nin:]))
+            from_outs = "out=({})".format(
+                ", ".join(f.name for f in self.to[self.ufunc.nin:])
+            )
+            to_outs = "out=({})".format(
+                ", ".join(t.name for t in self.to[self.ufunc.nin:])
+            )
         else:
             from_outs = "out={}".format(self.from_[-1])
             to_outs = "out={}".format(self.to[-1])
@@ -97,10 +101,14 @@ class _UFuncInputCastingError(_UFuncCastingError):
             "but can_cast({}, {}, casting='{}') is False"
         ).format(
             self.ufunc.__name__,
-            ", ".join([f.name for i, f in enumerate(self.to) if i<self.ufunc.nin]),
+            ", ".join(
+                [f.name for i, f in enumerate(self.to) if i < self.ufunc.nin]
+            ),
             to_outs,
             self.ufunc.__name__,
-            ", ".join([f.name for i, f in enumerate(self.from_) if i<self.ufunc.nin]),
+            ", ".join(
+                [f.name for i, f in enumerate(self.from_) if i < self.ufunc.nin]
+            ),
             from_outs,
             self.from_[self.in_i].name, self.to[self.in_i].name, self.casting
         )
@@ -115,8 +123,12 @@ class _UFuncOutputCastingError(_UFuncCastingError):
 
     def __str__(self):
         if self.ufunc.nout > 1:
-            from_outs = "out=({})".format(", ".join(f.name for f in self.to[self.ufunc.nin:]))
-            to_outs = "out=({})".format(", ".join(t.name for t in self.to[self.ufunc.nin:]))
+            from_outs = "out=({})".format(
+                ", ".join(f.name for f in self.to[self.ufunc.nin:])
+            )
+            to_outs = "out=({})".format(
+                ", ".join(t.name for t in self.to[self.ufunc.nin:])
+            )
         else:
             from_outs = "out={}".format(self.from_[-1])
             to_outs = "out={}".format(self.to[-1])
