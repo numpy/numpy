@@ -43,6 +43,7 @@ jobs:
     name: "MyPy"
     runs-on: ${{ matrix.os_python[0] }}
     strategy:
+      fail-fast: false
       matrix:
         os_python:
           - [ubuntu-latest, '3.12']

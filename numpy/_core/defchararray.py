@@ -1148,7 +1148,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
 
     copy : bool, optional
         If true (default), then the object is copied.  Otherwise, a copy
-        will only be made if __array__ returns a copy, if obj is a
+        will only be made if ``__array__`` returns a copy, if obj is a
         nested sequence, or if a copy is needed to satisfy any of the other
         requirements (`itemsize`, unicode, `order`, etc.).
 

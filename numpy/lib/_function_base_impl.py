@@ -2696,7 +2696,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     if X.shape[0] == 0:
         return np.array([]).reshape(0, 0)
     if y is not None:
-        y = array(y, copy=False, ndmin=2, dtype=dtype)
+        y = array(y, copy=None, ndmin=2, dtype=dtype)
         if not rowvar and y.shape[0] != 1:
             y = y.T
         X = np.concatenate((X, y), axis=0)
@@ -5648,7 +5648,7 @@ def insert(arr, obj, values, axis=None):
 
         # There are some object array corner cases here, but we cannot avoid
         # that:
-        values = array(values, copy=False, ndmin=arr.ndim, dtype=arr.dtype)
+        values = array(values, copy=None, ndmin=arr.ndim, dtype=arr.dtype)
         if indices.ndim == 0:
             # broadcasting is very different here, since a[:,0,:] = ... behaves
             # very different from a[:,[0],:] = ...! This changes values so that

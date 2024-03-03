@@ -2535,7 +2535,6 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         /* Parse as an integer */
         else {
             char *strend = NULL;
-
             *out = strtol(str, &strend, 10);
             if (strend - str == len) {
                 succeeded = 1;

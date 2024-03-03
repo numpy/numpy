@@ -710,6 +710,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     def istime(x):
         return x.dtype.char in "Mm"
 
+    def isvstring(x):
+        return x.dtype.char == "T"
+
     def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
         """Handling nan/inf.
 
@@ -784,6 +787,21 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             # If one is datetime64 and the other timedelta64 there is no point
             if equal_nan and x.dtype.type == y.dtype.type:
                 flagged = func_assert_same_pos(x, y, func=isnat, hasval="NaT")
+
+        elif isvstring(x) and isvstring(y):
+            dt = x.dtype
+            if equal_nan and dt == y.dtype and hasattr(dt, 'na_object'):
+                is_nan = (isinstance(dt.na_object, float) and
+                          np.isnan(dt.na_object))
+                bool_errors = 0
+                try:
+                    bool(dt.na_object)
+                except TypeError:
+                    bool_errors = 1
+                if is_nan or bool_errors:
+                    # nan-like NA object
+                    flagged = func_assert_same_pos(
+                        x, y, func=isnan, hasval=x.dtype.na_object)
 
         if flagged.ndim > 0:
             x, y = x[~flagged], y[~flagged]

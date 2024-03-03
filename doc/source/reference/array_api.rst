@@ -494,9 +494,6 @@ Creation functions differences
    * - Feature
      - Type
      - Notes
-   * - ``copy`` keyword argument to ``asarray``
-     - **Compatible**
-     -
 
 Elementwise functions differences
 ---------------------------------

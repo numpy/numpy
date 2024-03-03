@@ -23,6 +23,7 @@ jobs:
     if: github.repository == 'numpy/numpy'
     runs-on: macos-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.11"]
 
@@ -43,7 +44,7 @@ jobs:
         echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
 
     - name: Setup compiler cache
-      uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+      uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
       id:    cache-ccache
       with:
         path: ${{ steps.prep-ccache.outputs.dir }}
@@ -67,7 +68,7 @@ jobs:
     # ensure we re-solve once a day (since we don't lock versions). Could be
     # replaced by a conda-lock based approach in the future.
     - name: Cache conda environment
-      uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+      uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
       env:
         # Increase this value to reset cache if environment.yml has not changed
         CACHE_NUMBER: 1
@@ -106,6 +107,7 @@ jobs:
     if: github.repository == 'numpy/numpy'
     runs-on: ${{ matrix.build_runner[0] }}
     strategy:
+      fail-fast: false
       matrix:
         build_runner:
           - [ macos-13, "macos_x86_64" ]

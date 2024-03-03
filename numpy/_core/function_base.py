@@ -300,7 +300,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     """
     ndmax = np.broadcast(start, stop, base).ndim
     start, stop, base = (
-        np.array(a, copy=False, subok=True, ndmin=ndmax)
+        np.array(a, copy=None, subok=True, ndmin=ndmax)
         for a in (start, stop, base)
     )
     y = linspace(start, stop, num=num, endpoint=endpoint, axis=axis)

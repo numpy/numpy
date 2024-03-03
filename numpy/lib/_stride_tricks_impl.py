@@ -101,7 +101,7 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     possible.
     """
     # first convert input to array, possibly keeping subclass
-    x = np.array(x, copy=False, subok=subok)
+    x = np.array(x, copy=None, subok=subok)
     interface = dict(x.__array_interface__)
     if shape is not None:
         interface['shape'] = tuple(shape)
@@ -312,7 +312,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
                     if np.iterable(window_shape)
                     else (window_shape,))
     # first convert input to array, possibly keeping subclass
-    x = np.array(x, copy=False, subok=subok)
+    x = np.array(x, copy=None, subok=subok)
 
     window_shape_array = np.array(window_shape)
     if np.any(window_shape_array < 0):
@@ -348,7 +348,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
 
 def _broadcast_to(array, shape, subok, readonly):
     shape = tuple(shape) if np.iterable(shape) else (shape,)
-    array = np.array(array, copy=False, subok=subok)
+    array = np.array(array, copy=None, subok=subok)
     if not shape and array.shape:
         raise ValueError('cannot broadcast a non-scalar to a scalar array')
     if any(size < 0 for size in shape):
@@ -546,7 +546,7 @@ def broadcast_arrays(*args, subok=False):
     # return np.nditer(args, flags=['multi_index', 'zerosize_ok'],
     #                  order='C').itviews
 
-    args = tuple(np.array(_m, copy=False, subok=subok) for _m in args)
+    args = tuple(np.array(_m, copy=None, subok=subok) for _m in args)
 
     shape = _broadcast_shape(*args)
 

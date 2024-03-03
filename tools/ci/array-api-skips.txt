@@ -1,6 +1,3 @@
-# copy not implemented
-array_api_tests/test_creation_functions.py::test_asarray_arrays
-
 # 'unique_inverse' output array is 1-D for 0-D input
 array_api_tests/test_set_functions.py::test_unique_all
 array_api_tests/test_set_functions.py::test_unique_inverse
@@ -28,11 +25,6 @@ array_api_tests/test_special_cases.py::test_iop[__ifloordiv__(x1_i is -infinity 
 array_api_tests/test_special_cases.py::test_iop[__ifloordiv__(isfinite(x1_i) and x1_i > 0 and x2_i is -infinity) -> -0]
 array_api_tests/test_special_cases.py::test_iop[__ifloordiv__(isfinite(x1_i) and x1_i < 0 and x2_i is +infinity) -> -0]
 
-# asarray() got an unexpected keyword argument 'copy'
-array_api_tests/test_array_object.py::test_setitem
-# array_api_tests/test_array_object.py::test_setitem_masking
-array_api_tests/test_creation_functions.py::test_asarray_scalars
-
 # fft test suite is buggy as of 83f0bcdc
 array_api_tests/test_fft.py
 
@@ -53,9 +45,6 @@ array_api_tests/test_signatures.py::test_func_signature[reshape]
 # missing 'descending' keyword arguments
 array_api_tests/test_signatures.py::test_func_signature[argsort]
 array_api_tests/test_signatures.py::test_func_signature[sort]
-
-# asarray() got an unexpected keyword argument 'copy'
-array_api_tests/test_special_cases.py::test_iop
 
 # assertionError: out.dtype=float32, but should be float64 [sum(float32)]
 array_api_tests/test_statistical_functions.py::test_sum

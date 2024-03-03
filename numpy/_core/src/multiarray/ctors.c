@@ -1477,16 +1477,7 @@ _array_from_array_like(PyObject *op,
         }
     }
 
-    /*
-     * If op supplies the __array__ function.
-     * The documentation says this should produce a copy, so
-     * we skip this method if writeable is true, because the intent
-     * of writeable is to modify the operand.
-     * XXX: If the implementation is wrong, and/or if actual
-     *      usage requires this behave differently,
-     *      this should be changed!
-     */
-    if (!writeable && tmp == Py_NotImplemented) {
+    if (tmp == Py_NotImplemented) {
         tmp = PyArray_FromArrayAttr_int(op, requested_dtype, never_copy);
         if (tmp == NULL) {
             return NULL;
@@ -2418,9 +2409,8 @@ PyArray_FromInterface(PyObject *origin)
  * @param descr The desired `arr.dtype`, passed into the `__array__` call,
  *        as information but is not checked/enforced!
  * @param never_copy Specifies that a copy is not allowed.
- *        NOTE: Currently, this means an error is raised instead of calling
- *        `op.__array__()`.  In the future we could call for example call
- *        `op.__array__(never_copy=True)` instead.
+ *        NOTE: For false it passes `op.__array__(copy=None)`,
+ *              for true: `op.__array__(copy=False)`.
  * @returns NotImplemented if `__array__` is not defined or a NumPy array
  *          (or subclass).  On error, return NULL.
  */
@@ -2438,15 +2428,6 @@ PyArray_FromArrayAttr_int(
         }
         return Py_NotImplemented;
     }
-    if (never_copy) {
-        /* Currently, we must always assume that `__array__` returns a copy */
-        PyErr_SetString(PyExc_ValueError,
-                "Unable to avoid copy while converting from an object "
-                "implementing the `__array__` protocol.  NumPy cannot ensure "
-                "that no copy will be made.");
-        Py_DECREF(array_meth);
-        return NULL;
-    }
 
     if (PyType_Check(op) && PyObject_HasAttrString(array_meth, "__get__")) {
         /*
@@ -2458,12 +2439,33 @@ PyArray_FromArrayAttr_int(
         Py_DECREF(array_meth);
         return Py_NotImplemented;
     }
-    if (descr == NULL) {
-        new = PyObject_CallFunction(array_meth, NULL);
+
+    PyObject *copy = never_copy ? Py_False : Py_None;
+    PyObject *kwargs = PyDict_New();
+    PyDict_SetItemString(kwargs, "copy", copy);
+    PyObject *args = descr != NULL ? PyTuple_Pack(1, descr) : PyTuple_New(0);
+
+    new = PyObject_Call(array_meth, args, kwargs);
+
+    if (PyErr_Occurred()) {
+        PyObject *type, *value, *traceback;
+        PyErr_Fetch(&type, &value, &traceback);
+        if (PyUnicode_Check(value) && PyUnicode_CompareWithASCIIString(value,
+                    "__array__() got an unexpected keyword argument 'copy'") == 0) {
+            Py_DECREF(type);
+            Py_XDECREF(value);
+            Py_XDECREF(traceback);
+            if (PyErr_WarnEx(PyExc_UserWarning,
+                             "__array__ should implement 'dtype' and 'copy' keywords", 1) < 0) {
+                return NULL;
+            }
+            Py_SETREF(new, PyObject_Call(array_meth, args, NULL));
+        } else {
+            PyErr_Restore(type, value, traceback);
+            return NULL;
+        }
     }
-    else {
-        new = PyObject_CallFunction(array_meth, "O", descr);
-    }
+
     Py_DECREF(array_meth);
     if (new == NULL) {
         return NULL;

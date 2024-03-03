@@ -1270,6 +1270,17 @@ defdict = {
           docstrings.get('numpy._core.umath._rstrip_whitespace'),
           None,
           ),
+'_expandtabs_length':
+    Ufunc(2, 1, None,
+          docstrings.get('numpy._core.umath._expandtabs_length'),
+          None,
+          ),
+'_expandtabs':
+    Ufunc(2, 1, None,
+          docstrings.get('numpy._core.umath._expandtabs'),
+          None,
+          ),
+
 }
 
 def indent(st, spaces):

@@ -35,7 +35,7 @@ class TestSetOps:
     def test_intersect1d_array_like(self):
         # See gh-11772
         class Test:
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 return np.arange(3)
 
         a = Test()

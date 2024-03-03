@@ -58,6 +58,7 @@ jobs:
     if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         USE_NIGHTLY_OPENBLAS: [false, true]
     env:

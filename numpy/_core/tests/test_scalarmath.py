@@ -703,7 +703,8 @@ class TestMultiply:
         class ArrayLike:
             def __init__(self, arr):
                 self.arr = arr
-            def __array__(self):
+
+            def __array__(self, dtype=None, copy=None):
                 return self.arr
 
         # Test for simple ArrayLike above and memoryviews (original report)
