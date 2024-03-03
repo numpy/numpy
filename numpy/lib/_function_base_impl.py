@@ -42,7 +42,7 @@ __all__ = [
     'rot90', 'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
     'bincount', 'digitize', 'cov', 'corrcoef',
     'median', 'sinc', 'hamming', 'hanning', 'bartlett',
-    'blackman', 'kaiser', 'trapz', 'i0',
+    'blackman', 'kaiser', 'trapezoid', 'trapz', 'i0',
     'meshgrid', 'delete', 'insert', 'append', 'interp',
     'quantile'
     ]
@@ -50,7 +50,7 @@ __all__ = [
 # _QuantileMethods is a dictionary listing all the supported methods to
 # compute quantile/percentile.
 #
-# Below virtual_index refer to the index of the element where the percentile
+# Below virtual_index refers to the index of the element where the percentile
 # would be found in the sorted sample.
 # When the sample contains exactly the percentile wanted, the virtual_index is
 # an integer to the index of this element.
@@ -68,7 +68,7 @@ _QuantileMethods = dict(
     # Discrete methods
     inverted_cdf=dict(
         get_virtual_index=lambda n, quantiles: _inverted_cdf(n, quantiles),
-        fix_gamma=lambda gamma, _: gamma,  # should never be called
+        fix_gamma=None,  # should never be called
     ),
     averaged_inverted_cdf=dict(
         get_virtual_index=lambda n, quantiles: (n * quantiles) - 1,
@@ -81,7 +81,7 @@ _QuantileMethods = dict(
     closest_observation=dict(
         get_virtual_index=lambda n, quantiles: _closest_observation(n,
                                                                     quantiles),
-        fix_gamma=lambda gamma, _: gamma,  # should never be called
+        fix_gamma=None,  # should never be called
     ),
     # Continuous methods
     interpolated_inverted_cdf=dict(
@@ -121,14 +121,12 @@ _QuantileMethods = dict(
     lower=dict(
         get_virtual_index=lambda n, quantiles: np.floor(
             (n - 1) * quantiles).astype(np.intp),
-        fix_gamma=lambda gamma, _: gamma,
-        # should never be called, index dtype is int
+        fix_gamma=None,  # should never be called, index dtype is int
     ),
     higher=dict(
         get_virtual_index=lambda n, quantiles: np.ceil(
             (n - 1) * quantiles).astype(np.intp),
-        fix_gamma=lambda gamma, _: gamma,
-        # should never be called, index dtype is int
+        fix_gamma=None,  # should never be called, index dtype is int
     ),
     midpoint=dict(
         get_virtual_index=lambda n, quantiles: 0.5 * (
@@ -143,7 +141,7 @@ _QuantileMethods = dict(
     nearest=dict(
         get_virtual_index=lambda n, quantiles: np.around(
             (n - 1) * quantiles).astype(np.intp),
-        fix_gamma=lambda gamma, _: gamma,
+        fix_gamma=None,
         # should never be called, index dtype is int
     ))
 
@@ -933,6 +931,10 @@ def copy(a, order='K', subok=False):
 
     >>> np.array(a, copy=True)  #doctest: +SKIP
 
+    The copy made of the data is shallow, i.e., for arrays with object dtype,
+    the new array will point to the same objects.
+    See Examples from `ndarray.copy`.
+
     Examples
     --------
     Create an array x, with a reference y and a copy z:
@@ -959,31 +961,6 @@ def copy(a, order='K', subok=False):
     >>> b[0] = 3
     >>> b
     array([3, 2, 3])
-
-    Note that np.copy is a shallow copy and will not copy object
-    elements within arrays. This is mainly important for arrays
-    containing Python objects. The new array will contain the
-    same object which may lead to surprises if that object can
-    be modified (is mutable):
-
-    >>> a = np.array([1, 'm', [2, 3, 4]], dtype=object)
-    >>> b = np.copy(a)
-    >>> b[2][0] = 10
-    >>> a
-    array([1, 'm', list([10, 3, 4])], dtype=object)
-
-    To ensure all elements within an ``object`` array are copied,
-    use `copy.deepcopy`:
-
-    >>> import copy
-    >>> a = np.array([1, 'm', [2, 3, 4]], dtype=object)
-    >>> c = copy.deepcopy(a)
-    >>> c[2][0] = 10
-    >>> c
-    array([1, 'm', list([10, 3, 4])], dtype=object)
-    >>> a
-    array([1, 'm', list([2, 3, 4])], dtype=object)
-
     """
     return array(a, order=order, subok=subok, copy=True)
 
@@ -2719,7 +2696,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     if X.shape[0] == 0:
         return np.array([]).reshape(0, 0)
     if y is not None:
-        y = array(y, copy=False, ndmin=2, dtype=dtype)
+        y = array(y, copy=None, ndmin=2, dtype=dtype)
         if not rowvar and y.shape[0] != 1:
             y = y.T
         X = np.concatenate((X, y), axis=0)
@@ -4737,7 +4714,8 @@ def _lerp(a, b, t, out=None):
     diff_b_a = subtract(b, a)
     # asanyarray is a stop-gap until gh-13105
     lerp_interpolation = asanyarray(add(a, diff_b_a * t, out=out))
-    subtract(b, diff_b_a * (1 - t), out=lerp_interpolation, where=t >= 0.5)
+    subtract(b, diff_b_a * (1 - t), out=lerp_interpolation, where=t >= 0.5,
+             casting='unsafe', dtype=type(lerp_interpolation.dtype))
     if lerp_interpolation.ndim == 0 and out is None:
         lerp_interpolation = lerp_interpolation[()]  # unpack 0d arrays
     return lerp_interpolation
@@ -4886,15 +4864,23 @@ def _quantile(
         # Virtual because it is a floating point value, not an valid index.
         # The nearest neighbours are used for interpolation
         try:
-            method = _QuantileMethods[method]
+            method_props = _QuantileMethods[method]
         except KeyError:
             raise ValueError(
                 f"{method!r} is not a valid method. Use one of: "
                 f"{_QuantileMethods.keys()}") from None
-        virtual_indexes = method["get_virtual_index"](values_count, quantiles)
+        virtual_indexes = method_props["get_virtual_index"](values_count,
+                                                            quantiles)
         virtual_indexes = np.asanyarray(virtual_indexes)
 
-        if np.issubdtype(virtual_indexes.dtype, np.integer):
+        if method_props["fix_gamma"] is None:
+            supports_integers = True
+        else:
+            int_virtual_indices = np.issubdtype(virtual_indexes.dtype,
+                                                np.integer)
+            supports_integers = method == 'linear' and int_virtual_indices
+
+        if supports_integers:
             # No interpolation needed, take the points along axis
             if supports_nans:
                 # may contain nan, which would sort to the end
@@ -4926,7 +4912,7 @@ def _quantile(
             previous = arr[previous_indexes]
             next = arr[next_indexes]
             # --- Linear interpolation
-            gamma = _get_gamma(virtual_indexes, previous_indexes, method)
+            gamma = _get_gamma(virtual_indexes, previous_indexes, method_props)
             result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
             gamma = gamma.reshape(result_shape)
             result = _lerp(previous,
@@ -5018,17 +5004,14 @@ def _quantile(
     return result
 
 
-def _trapz_dispatcher(y, x=None, dx=None, axis=None):
+def _trapezoid_dispatcher(y, x=None, dx=None, axis=None):
     return (y, x)
 
 
-@array_function_dispatch(_trapz_dispatcher)
-def trapz(y, x=None, dx=1.0, axis=-1):
+@array_function_dispatch(_trapezoid_dispatcher)
+def trapezoid(y, x=None, dx=1.0, axis=-1):
     r"""
     Integrate along the given axis using the composite trapezoidal rule.
-
-    .. deprecated:: 2.0
-        Use `scipy.integrate.trapezoid` instead.
 
     If `x` is provided, the integration happens in sequence along its
     elements - they are not sorted.
@@ -5038,6 +5021,8 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     When `x` is specified, this integrates along the parametric curve,
     computing :math:`\int_t y(t) dt =
     \int_t y(t) \left.\frac{dx}{dt}\right|_{x=x(t)} dt`.
+
+    .. versionadded:: 2.0.0
 
     Parameters
     ----------
@@ -5054,7 +5039,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
     Returns
     -------
-    trapz : float or ndarray
+    trapezoid : float or ndarray
         Definite integral of `y` = n-dimensional array as approximated along
         a single axis by the trapezoidal rule. If `y` is a 1-dimensional array,
         then the result is a float. If `n` is greater than 1, then the result
@@ -5084,20 +5069,20 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     --------
     Use the trapezoidal rule on evenly spaced points:
 
-    >>> np.trapz([1, 2, 3])
+    >>> np.trapezoid([1, 2, 3])
     4.0
 
     The spacing between sample points can be selected by either the
     ``x`` or ``dx`` arguments:
 
-    >>> np.trapz([1, 2, 3], x=[4, 6, 8])
+    >>> np.trapezoid([1, 2, 3], x=[4, 6, 8])
     8.0
-    >>> np.trapz([1, 2, 3], dx=2)
+    >>> np.trapezoid([1, 2, 3], dx=2)
     8.0
 
     Using a decreasing ``x`` corresponds to integrating in reverse:
 
-    >>> np.trapz([1, 2, 3], x=[8, 6, 4])
+    >>> np.trapezoid([1, 2, 3], x=[8, 6, 4])
     -8.0
 
     More generally ``x`` is used to integrate along a parametric curve. We can
@@ -5105,35 +5090,28 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
     >>> x = np.linspace(0, 1, num=50)
     >>> y = x**2
-    >>> np.trapz(y, x)
+    >>> np.trapezoid(y, x)
     0.33340274885464394
 
     Or estimate the area of a circle, noting we repeat the sample which closes
     the curve:
 
     >>> theta = np.linspace(0, 2 * np.pi, num=1000, endpoint=True)
-    >>> np.trapz(np.cos(theta), x=np.sin(theta))
+    >>> np.trapezoid(np.cos(theta), x=np.sin(theta))
     3.141571941375841
 
-    ``np.trapz`` can be applied along a specified axis to do multiple
+    ``np.trapezoid`` can be applied along a specified axis to do multiple
     computations in one call:
 
     >>> a = np.arange(6).reshape(2, 3)
     >>> a
     array([[0, 1, 2],
            [3, 4, 5]])
-    >>> np.trapz(a, axis=0)
+    >>> np.trapezoid(a, axis=0)
     array([1.5, 2.5, 3.5])
-    >>> np.trapz(a, axis=1)
+    >>> np.trapezoid(a, axis=1)
     array([2.,  8.])
     """
-
-    # Deprecated in NumPy 2.0, 2023-08-18
-    warnings.warn(
-        "`trapz` is deprecated. Use `scipy.integrate.trapezoid` instead.",
-        DeprecationWarning,
-        stacklevel=2
-    )
 
     y = asanyarray(y)
     if x is None:
@@ -5163,22 +5141,22 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     return ret
 
 
-# __array_function__ has no __code__ or other attributes normal Python funcs we
-# wrap everything into a C callable. SciPy however, tries to "clone" `trapz`
-# into a new Python function which requires `__code__` and a few other
-# attributes. So we create a dummy clone and copy over its attributes allowing
-# SciPy <= 1.10 to work: https://github.com/scipy/scipy/issues/17811
-assert not hasattr(trapz, "__code__")
+@set_module('numpy')
+def trapz(y, x=None, dx=1.0, axis=-1):
+    """
+    `trapz` is deprecated in NumPy 2.0.
 
-def _fake_trapz(y, x=None, dx=1.0, axis=-1):
-    return trapz(y, x=x, dx=dx, axis=axis)
-
-
-trapz.__code__ = _fake_trapz.__code__
-trapz.__globals__ = _fake_trapz.__globals__
-trapz.__defaults__ = _fake_trapz.__defaults__
-trapz.__closure__ = _fake_trapz.__closure__
-trapz.__kwdefaults__ = _fake_trapz.__kwdefaults__
+    Please use `trapezoid` instead, or one of the numerical integration
+    functions in `scipy.integrate`.
+    """
+    # Deprecated in NumPy 2.0, 2023-08-18
+    warnings.warn(
+        "`trapz` is deprecated. Use `trapezoid` instead, or one of the "
+        "numerical integration functions in `scipy.integrate`.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+    return trapezoid(y, x=x, dx=dx, axis=axis)
 
 
 def _meshgrid_dispatcher(*xi, copy=None, sparse=None, indexing=None):
@@ -5670,7 +5648,7 @@ def insert(arr, obj, values, axis=None):
 
         # There are some object array corner cases here, but we cannot avoid
         # that:
-        values = array(values, copy=False, ndmin=arr.ndim, dtype=arr.dtype)
+        values = array(values, copy=None, ndmin=arr.ndim, dtype=arr.dtype)
         if indices.ndim == 0:
             # broadcasting is very different here, since a[:,0,:] = ... behaves
             # very different from a[:,[0],:] = ...! This changes values so that

@@ -124,18 +124,18 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
 
     if (is_argmax) {
         func_name = "argmax";
-        arg_func = PyArray_DESCR(ap)->f->argmax;
+        arg_func = PyDataType_GetArrFuncs(PyArray_DESCR(ap))->argmax;
     }
     else {
         func_name = "argmin";
-        arg_func = PyArray_DESCR(ap)->f->argmin;
+        arg_func = PyDataType_GetArrFuncs(PyArray_DESCR(ap))->argmin;
     }
     if (arg_func == NULL) {
         PyErr_SetString(PyExc_TypeError,
                 "data type not ordered");
         goto fail;
     }
-    elsize = PyArray_DESCR(ap)->elsize;
+    elsize = PyArray_ITEMSIZE(ap);
     m = PyArray_DIMS(ap)[PyArray_NDIM(ap)-1];
     if (m == 0) {
         PyErr_Format(PyExc_ValueError,

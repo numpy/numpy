@@ -368,7 +368,7 @@ NPY_FINLINE npyv_s32x3 npyv_divisor_s32(npy_int32 d)
 {
     npy_int32 d1 = abs(d);
     npy_int32 sh, m;
-    // Handel abs overflow
+    // Handle abs overflow
     if ((npy_uint32)d == 0x80000000U) {
         m = 0x80000001;
         sh = 30;
@@ -445,7 +445,7 @@ NPY_FINLINE npyv_s64x3 npyv_divisor_s64(npy_int64 d)
 #else
     npy_int64 d1 = llabs(d);
     npy_int64 sh, m;
-    // Handel abs overflow
+    // Handle abs overflow
     if ((npy_uint64)d == 0x8000000000000000ULL) {
         m = 0x8000000000000001LL;
         sh = 62;

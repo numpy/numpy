@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 import numpy as np
 import pytest
 
@@ -26,7 +26,8 @@ i = int(1)
 
 
 class Object:
-    def __array__(self) -> np.ndarray[Any, np.dtype[np.object_]]:
+    def __array__(self, dtype: Optional[np.typing.DTypeLike] = None,
+                  copy: Optional[bool] = None) -> np.ndarray[Any, np.dtype[np.object_]]:
         ret = np.empty((), dtype=object)
         ret[()] = self
         return ret

@@ -19,13 +19,13 @@ _dt_ = nt.sctype2char
 
 # functions that are methods
 __all__ = [
-    'all', 'alltrue', 'amax', 'amin', 'any', 'argmax',
+    'all', 'amax', 'amin', 'any', 'argmax',
     'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
-    'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
+    'compress', 'cumprod', 'cumsum', 'diagonal', 'mean',
     'max', 'min', 'matrix_transpose',
-    'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
+    'ndim', 'nonzero', 'partition', 'prod', 'ptp', 'put',
     'ravel', 'repeat', 'reshape', 'resize', 'round',
-    'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
+    'searchsorted', 'shape', 'size', 'sort', 'squeeze',
     'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
 ]
 
@@ -84,6 +84,22 @@ def _wrapreduction(obj, ufunc, method, axis, dtype, out, **kwargs):
                 return reduction(axis=axis, out=out, **passkwargs)
 
     return ufunc.reduce(obj, axis, dtype, out, **passkwargs)
+
+
+def _wrapreduction_any_all(obj, ufunc, method, axis, out, **kwargs):
+    # Same as above function, but dtype is always bool (but never passed on)
+    passkwargs = {k: v for k, v in kwargs.items()
+                  if v is not np._NoValue}
+
+    if type(obj) is not mu.ndarray:
+        try:
+            reduction = getattr(obj, method)
+        except AttributeError:
+            pass
+        else:
+            return reduction(axis=axis, out=out, **passkwargs)
+
+    return ufunc.reduce(obj, axis, bool, out, **passkwargs)
 
 
 def _take_dispatcher(a, indices, axis=None, out=None, mode=None):
@@ -2443,6 +2459,11 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     Not a Number (NaN), positive infinity and negative infinity evaluate
     to `True` because these are not equal to zero.
 
+    .. versionchanged:: 2.0
+       Before NumPy 2.0, ``any`` did not return booleans for object dtype
+       input arrays.
+       This behavior is still available via ``np.logical_or.reduce``.
+
     Examples
     --------
     >>> np.any([[True, False], [True, True]])
@@ -2480,8 +2501,8 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     (191614240, 191614240)
 
     """
-    return _wrapreduction(a, np.logical_or, 'any', axis, None, out,
-                          keepdims=keepdims, where=where)
+    return _wrapreduction_any_all(a, np.logical_or, 'any', axis, out,
+                                  keepdims=keepdims, where=where)
 
 
 def _all_dispatcher(a, axis=None, out=None, keepdims=None, *,
@@ -2549,6 +2570,11 @@ def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     Not a Number (NaN), positive infinity and negative infinity
     evaluate to `True` because these are not equal to zero.
 
+    .. versionchanged:: 2.0
+       Before NumPy 2.0, ``all`` did not return booleans for object dtype
+       input arrays.
+       This behavior is still available via ``np.logical_and.reduce``.
+
     Examples
     --------
     >>> np.all([[True,False],[True,True]])
@@ -2572,8 +2598,8 @@ def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     (28293632, 28293632, array(True)) # may vary
 
     """
-    return _wrapreduction(a, np.logical_and, 'all', axis, None, out,
-                          keepdims=keepdims, where=where)
+    return _wrapreduction_any_all(a, np.logical_and, 'all', axis, out,
+                                  keepdims=keepdims, where=where)
 
 
 def _cumsum_dispatcher(a, axis=None, dtype=None, out=None):
@@ -3479,6 +3505,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
         is ``None``; if provided, it must have the same shape as the
         expected output, but the type will be cast if necessary.
         See :ref:`ufuncs-output-type` for more details.
+        See :ref:`ufuncs-output-type` for more details.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
@@ -3605,6 +3632,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         Alternative output array in which to place the result. It must have
         the same shape as the expected output but the type (of the calculated
         values) will be cast if necessary.
+        See :ref:`ufuncs-output-type` for more details.
     ddof : {int, float}, optional
         Means Delta Degrees of Freedom.  The divisor used in calculations
         is ``N - ddof``, where ``N`` represents the number of elements.
@@ -3980,107 +4008,3 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
                          **kwargs)
 
-
-# Aliases of other functions. Provided unique docstrings
-# are for reference purposes only. Wherever possible,
-# avoid using them.
-
-
-def _product_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
-                        initial=None, where=None):
-    # 2023-03-02, 1.25.0
-    warnings.warn("`product` is deprecated as of NumPy 1.25.0, and will be "
-                  "removed in NumPy 2.0. Please use `prod` instead.",
-                  DeprecationWarning, stacklevel=3)
-    return (a, out)
-
-
-@array_function_dispatch(_product_dispatcher, verify=False)
-def product(*args, **kwargs):
-    """
-    Return the product of array elements over a given axis.
-
-    .. deprecated:: 1.25.0
-        ``product`` is deprecated as of NumPy 1.25.0, and will be
-        removed in NumPy 2.0. Please use `prod` instead.
-
-    See Also
-    --------
-    prod : equivalent function; see for details.
-    """
-    return prod(*args, **kwargs)
-
-
-def _cumproduct_dispatcher(a, axis=None, dtype=None, out=None):
-    # 2023-03-02, 1.25.0
-    warnings.warn("`cumproduct` is deprecated as of NumPy 1.25.0, and will be "
-                  "removed in NumPy 2.0. Please use `cumprod` instead.",
-                  DeprecationWarning, stacklevel=3)
-    return (a, out)
-
-
-@array_function_dispatch(_cumproduct_dispatcher, verify=False)
-def cumproduct(*args, **kwargs):
-    """
-    Return the cumulative product over the given axis.
-
-    .. deprecated:: 1.25.0
-        ``cumproduct`` is deprecated as of NumPy 1.25.0, and will be
-        removed in NumPy 2.0. Please use `cumprod` instead.
-
-    See Also
-    --------
-    cumprod : equivalent function; see for details.
-    """
-    return cumprod(*args, **kwargs)
-
-
-def _sometrue_dispatcher(a, axis=None, out=None, keepdims=None, *,
-                         where=np._NoValue):
-    # 2023-03-02, 1.25.0
-    warnings.warn("`sometrue` is deprecated as of NumPy 1.25.0, and will be "
-                  "removed in NumPy 2.0. Please use `any` instead.",
-                  DeprecationWarning, stacklevel=3)
-    return (a, where, out)
-
-
-@array_function_dispatch(_sometrue_dispatcher, verify=False)
-def sometrue(*args, **kwargs):
-    """
-    Check whether some values are true.
-
-    Refer to `any` for full documentation.
-
-    .. deprecated:: 1.25.0
-        ``sometrue`` is deprecated as of NumPy 1.25.0, and will be
-        removed in NumPy 2.0. Please use `any` instead.
-
-    See Also
-    --------
-    any : equivalent function; see for details.
-    """
-    return any(*args, **kwargs)
-
-
-def _alltrue_dispatcher(a, axis=None, out=None, keepdims=None, *, where=None):
-    # 2023-03-02, 1.25.0
-    warnings.warn("`alltrue` is deprecated as of NumPy 1.25.0, and will be "
-                  "removed in NumPy 2.0. Please use `all` instead.",
-                  DeprecationWarning, stacklevel=3)
-    return (a, where, out)
-
-
-@array_function_dispatch(_alltrue_dispatcher, verify=False)
-def alltrue(*args, **kwargs):
-    """
-    Check if all elements of input array are true.
-
-    .. deprecated:: 1.25.0
-        ``alltrue`` is deprecated as of NumPy 1.25.0, and will be
-        removed in NumPy 2.0. Please use `all` instead.
-
-    See Also
-    --------
-    numpy.all : Equivalent function; see for details.
-    """
-    return all(*args, **kwargs)

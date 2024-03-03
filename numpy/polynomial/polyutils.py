@@ -113,7 +113,7 @@ def as_series(alist, trim=True):
     [array([2.]), array([1.1, 0. ])]
 
     """
-    arrays = [np.array(a, ndmin=1, copy=False) for a in alist]
+    arrays = [np.array(a, ndmin=1, copy=None) for a in alist]
     for a in arrays:
         if a.size == 0:
             raise ValueError("Coefficient array is empty")
@@ -167,10 +167,6 @@ def trimcoef(c, tol=0):
     ------
     ValueError
         If `tol` < 0
-
-    See Also
-    --------
-    trimseq
 
     Examples
     --------
@@ -417,7 +413,7 @@ def _vander_nd(vander_fs, points, degrees):
         raise ValueError("Unable to guess a dtype or shape when no points are given")
 
     # convert to the same shape and type
-    points = tuple(np.array(tuple(points), copy=False) + 0.0)
+    points = tuple(np.asarray(tuple(points)) + 0.0)
 
     # produce the vandermonde matrix for each dimension, placing the last
     # axis of each in an independent trailing axis of the output

@@ -13,8 +13,8 @@
 
 #include "descriptor.h"
 #include "convert_datatype.h"
-#include "common_dtype.h"
 #include "dtypemeta.h"
+#include "stringdtype/dtype.h"
 
 #include "npy_argparse.h"
 #include "abstractdtypes.h"
@@ -193,6 +193,12 @@ _PyArray_MapPyTypeToDType(
     int res = PyDict_Contains(_global_pytype_to_type_dict, (PyObject *)pytype);
     if (res < 0) {
         return -1;
+    }
+    else if (DType == &PyArray_StringDType) {
+        // PyArray_StringDType's scalar is str which we allow because it doesn't
+        // participate in DType inference, so don't add it to the
+        // pytype to type mapping
+        return 0;
     }
     else if (res) {
         PyErr_SetString(PyExc_RuntimeError,
@@ -480,7 +486,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
          * TODO: For a Categorical[object] this path may be necessary?
          */
         arr_fields.descr = descr;
-        return descr->f->setitem(value, item, &arr_fields);
+        return PyDataType_GetArrFuncs(descr)->setitem(value, item, &arr_fields);
     }
 
     /* discover_dtype_from_pyobject includes a check for is_known_scalar_type */
@@ -516,7 +522,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
         /* We can set the element directly (or at least will try to) */
         Py_XDECREF(DType);
         arr_fields.descr = descr;
-        return descr->f->setitem(value, item, &arr_fields);
+        return PyDataType_GetArrFuncs(descr)->setitem(value, item, &arr_fields);
     }
     PyArray_Descr *tmp_descr;
     tmp_descr = NPY_DT_CALL_discover_descr_from_pyobject(DType, value);
@@ -535,7 +541,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
         memset(data, 0, tmp_descr->elsize);
     }
     arr_fields.descr = tmp_descr;
-    if (tmp_descr->f->setitem(value, data, &arr_fields) < 0) {
+    if (PyDataType_GetArrFuncs(tmp_descr)->setitem(value, data, &arr_fields) < 0) {
         PyObject_Free(data);
         Py_DECREF(tmp_descr);
         return -1;

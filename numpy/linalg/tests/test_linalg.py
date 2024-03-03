@@ -964,23 +964,20 @@ class LstsqCases(LinalgSquareTestCase, LinalgNonsquareTestCase):
 
 
 class TestLstsq(LstsqCases):
-    def test_future_rcond(self):
+    def test_rcond(self):
         a = np.array([[0., 1.,  0.,  1.,  2.,  0.],
                       [0., 2.,  0.,  0.,  1.,  0.],
                       [1., 0.,  1.,  0.,  0.,  4.],
                       [0., 0.,  0.,  2.,  3.,  0.]]).T
 
         b = np.array([1, 0, 0, 0, 0, 0])
-        with suppress_warnings() as sup:
-            w = sup.record(FutureWarning, "`rcond` parameter will change")
-            x, residuals, rank, s = linalg.lstsq(a, b)
-            assert_(rank == 4)
-            x, residuals, rank, s = linalg.lstsq(a, b, rcond=-1)
-            assert_(rank == 4)
-            x, residuals, rank, s = linalg.lstsq(a, b, rcond=None)
-            assert_(rank == 3)
-            # Warning should be raised exactly once (first command)
-            assert_(len(w) == 1)
+
+        x, residuals, rank, s = linalg.lstsq(a, b, rcond=-1)
+        assert_(rank == 4)
+        x, residuals, rank, s = linalg.lstsq(a, b)
+        assert_(rank == 3)
+        x, residuals, rank, s = linalg.lstsq(a, b, rcond=None)
+        assert_(rank == 3)
 
     @pytest.mark.parametrize(["m", "n", "n_rhs"], [
         (4, 2, 2),
@@ -1811,8 +1808,9 @@ class TestQR:
         np.csingle, np.cdouble])
     def test_stacked_inputs(self, outer_size, size, dt):
 
-        A = np.random.normal(size=outer_size + size).astype(dt)
-        B = np.random.normal(size=outer_size + size).astype(dt)
+        rng = np.random.default_rng(123)
+        A = rng.normal(size=outer_size + size).astype(dt)
+        B = rng.normal(size=outer_size + size).astype(dt)
         self.check_qr_stacked(A)
         self.check_qr_stacked(A + 1.j*B)
 

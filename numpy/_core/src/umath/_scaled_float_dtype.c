@@ -26,14 +26,6 @@
 #include "dispatching.h"
 #include "gil_utils.h"
 
-/* TODO: from wrapping_array_method.c, use proper public header eventually  */
-NPY_NO_EXPORT int
-PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
-        PyArray_DTypeMeta *new_dtypes[], PyArray_DTypeMeta *wrapped_dtypes[],
-        translate_given_descrs_func *translate_given_descrs,
-        translate_loop_descrs_func *translate_loop_descrs);
-
-
 typedef struct {
     PyArray_Descr base;
     double scaling;
@@ -150,7 +142,6 @@ static PyArray_SFloatDescr SFloatSingleton = {{
         .type_num = -1,
         .elsize = sizeof(double),
         .alignment = NPY_ALIGNOF(double),
-        .f = &sfloat_slots.f,
     },
     .scaling = 1,
 };

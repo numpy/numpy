@@ -1,5 +1,0 @@
-``weights`` option for `quantile` and `percentile`
-----------------------------------------------------
-The ``weights`` option is now available for `quantile`, `percentile`,
-`nanquantile` and `nanpercentile`. Only ``method="inverted_cdf"`` supports
-weights.

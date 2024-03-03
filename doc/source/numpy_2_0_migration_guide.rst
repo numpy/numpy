@@ -8,6 +8,39 @@ This document contains a set of instructions on how to update your code to
 work with Numpy 2.0.
 
 
+.. _migration_promotion_changes:
+
+Changes to NumPy data type promotion
+=====================================
+
+NumPy 2.0 changes promotion (the result of combining dissimilar data types)
+as per :ref:`NEP 50 <NEP50>`. Please see the NEP for details on this change.
+It includes a table of example changes and a backwards compatibility section.
+
+The largest backwards compatibility change of this is that it means that
+the precision of scalars is now preserved consistently.
+Two examples are:
+
+* ``np.float32(3) + 3.`` now returns a float32 when it previously returned
+  a float64.
+* ``np.array([3], dtype=np.float32) + np.float64(3)`` will now return a float64
+  array.  (The higher precision of the scalar is not ignored.)
+
+For floating point values, this can lead to lower precision results when
+working with scalars.  For integers, errors or overflows are possible.
+
+To solve this, you may cast explicitly.  Very often, it may also be a good
+solution to ensure you are working with Python scalars via ``int()``,
+``float()``, or ``numpy_scalar.item()``.
+
+To track down changes, you can enable emitting warnings for changed behavior
+(use ``warnings.simplefilter`` to raise it as an error for a traceback)::
+
+  np._set_promotion_state("weak_and_warn")
+
+which is useful during testing. Unfortunately,
+running this may flag many changes that are irrelevant in practice.
+
 .. _migration_windows_int64:
 
 Windows default integer
@@ -36,6 +69,7 @@ Note that the NumPy random API is not affected by this change.
 
 C-API Changes
 =============
+
 Some definitions were removed or replaced due to being outdated or
 unmaintainable.  Some new API definition will evaluate differently at
 runtime between NumPy 2.0 and NumPy 1.x.
@@ -48,6 +82,29 @@ used to explicitly implement different behavior on NumPy 1.x and 2.0.
 (The compat header defines it in a way compatible with such use.)
 
 Please let us know if you require additional workarounds here.
+
+Functionality moved to headers requiring ``import_array()``
+-----------------------------------------------------------
+If you previously included only ``ndarraytypes.h`` you may find that some
+functionality is not available anymore and requires the inclusion of
+``ndarrayobject.h`` or similar.
+This include is also needed when vendoring ``npy_2_compat.h`` into your own
+codebase to allow use of the new definitions when compiling with NumPy 1.x.
+
+Functionality which previously did not require import includes:
+
+* Functions to access dtype flags: ``PyDataType_FLAGCHK``,
+  ``PyDataType_REFCHK``, and the related ``NPY_BEGIN_THREADS_DESCR``.
+* ``PyArray_GETITEM`` and ``PyArray_SETITEM``.
+
+.. warning::
+  It is important that the ``import_array()`` mechanism is used to ensure
+  that the full NumPy API is accessible when using the ``npy_2_compat.h``
+  header.  In most cases your extension module probably already calls it.
+  However, if not we have added ``PyArray_ImportNumPyAPI()`` as a preferable
+  way to ensure the NumPy API is imported.  This function is light-weight 
+  when called multiple times so that you may insert it wherever it may be
+  needed (if you wish to avoid setting it up at module import).
 
 .. _migration_maxdims:
 
@@ -166,7 +223,7 @@ deprecated member migration guideline
 ================= =======================================================================
 in1d              Use ``np.isin`` instead.
 row_stack         Use ``np.vstack`` instead (``row_stack`` was an alias for ``vstack``).
-trapz             Use ``scipy.integrate.trapezoid`` instead.
+trapz             Use ``np.trapezoid`` or a ``scipy.integrate`` function instead.
 ================= =======================================================================
 
 
@@ -237,13 +294,15 @@ All the changes that we covered in the previous sections can be automatically ap
 to the codebase with the dedicated Ruff rule,
 `NPY201 <https://docs.astral.sh/ruff/rules/numpy2-deprecation/>`_.
 
-You should install Ruff, version ``0.1.8`` or above, and add to your ``pyproject.toml``::
+You should install Ruff, version ``0.2.0`` or above, and add the ``NPY201`` rule to
+your ``pyproject.toml``::
 
     [tool.ruff.lint]
-    extend-select = ["NPY201"]
-    preview = true
+    select = ["NPY201"]
 
-To learn more about preview mode see `Ruff docs <https://docs.astral.sh/ruff/preview/>`_.
+You can run NumPy 2.0 rule also directly from the command line::
+
+    $ ruff check path/to/code/ --select NPY201
 
 
 Note about pickled files

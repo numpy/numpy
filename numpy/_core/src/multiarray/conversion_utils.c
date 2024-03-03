@@ -227,11 +227,10 @@ PyArray_OptionalIntpConverter(PyObject *obj, PyArray_Dims *seq)
 }
 
 NPY_NO_EXPORT int
-PyArray_CopyConverter(PyObject *obj, _PyArray_CopyMode *copymode) {
+PyArray_CopyConverter(PyObject *obj, NPY_COPYMODE *copymode) {
     if (obj == Py_None) {
-        PyErr_SetString(PyExc_ValueError,
-                        "NoneType copy mode not allowed.");
-        return NPY_FAIL;
+        *copymode = NPY_COPY_IF_NEEDED;
+        return NPY_SUCCEED;
     }
 
     int int_copymode;
@@ -258,7 +257,32 @@ PyArray_CopyConverter(PyObject *obj, _PyArray_CopyMode *copymode) {
         int_copymode = (int)bool_copymode;
     }
 
-    *copymode = (_PyArray_CopyMode)int_copymode;
+    *copymode = (NPY_COPYMODE)int_copymode;
+    return NPY_SUCCEED;
+}
+
+NPY_NO_EXPORT int
+PyArray_AsTypeCopyConverter(PyObject *obj, NPY_ASTYPECOPYMODE *copymode)
+{
+    int int_copymode;
+    static PyObject* numpy_CopyMode = NULL;
+    npy_cache_import("numpy", "_CopyMode", &numpy_CopyMode);
+
+    if (numpy_CopyMode != NULL && (PyObject *)Py_TYPE(obj) == numpy_CopyMode) {
+        PyErr_SetString(PyExc_ValueError,
+                        "_CopyMode enum is not allowed for astype function. "
+                        "Use true/false instead.");
+        return NPY_FAIL;
+    }
+    else {
+        npy_bool bool_copymode;
+        if (!PyArray_BoolConverter(obj, &bool_copymode)) {
+            return NPY_FAIL;
+        }
+        int_copymode = (int)bool_copymode;
+    }
+
+    *copymode = (NPY_ASTYPECOPYMODE)int_copymode;
     return NPY_SUCCEED;
 }
 
@@ -1374,6 +1398,23 @@ PyArray_IntTupleFromIntp(int len, npy_intp const *vals)
 
  fail:
     return intTuple;
+}
+
+NPY_NO_EXPORT int
+_not_NoValue(PyObject *obj, PyObject **out)
+{
+    static PyObject *NoValue = NULL;
+    npy_cache_import("numpy", "_NoValue", &NoValue);
+    if (NoValue == NULL) {
+        return 0;
+    }
+    if (obj == NoValue) {
+        *out = NULL;
+    }
+    else {
+        *out = obj;
+    }
+    return 1;
 }
 
 /*

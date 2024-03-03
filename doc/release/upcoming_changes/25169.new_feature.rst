@@ -1,7 +1,0 @@
-``correction`` argument for `numpy.var` and `numpy.std`
--------------------------------------------------------
-
-``correction`` argument was added to `numpy.var` and `numpy.std`,
-which is an Array API compatible alias for ``ddof``.
-As both arguments serve the same purpose only one of them can be
-provided at the same time.

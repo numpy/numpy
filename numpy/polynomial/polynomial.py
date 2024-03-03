@@ -95,7 +95,7 @@ polytrim = pu.trimcoef
 #
 
 # Polynomial default domain.
-polydomain = np.array([-1, 1])
+polydomain = np.array([-1., 1.])
 
 # Polynomial coefficients representing zero.
 polyzero = np.array([0])
@@ -673,7 +673,7 @@ def polyval(x, c, tensor=True):
     """
     Evaluate a polynomial at points x.
 
-    If `c` is of length `n + 1`, this function returns the value
+    If `c` is of length ``n + 1``, this function returns the value
 
     .. math:: p(x) = c_0 + c_1 * x + ... + c_n * x^n
 
@@ -682,7 +682,7 @@ def polyval(x, c, tensor=True):
     or its elements must support multiplication and addition both with
     themselves and with the elements of `c`.
 
-    If `c` is a 1-D array, then `p(x)` will have the same shape as `x`.  If
+    If `c` is a 1-D array, then ``p(x)`` will have the same shape as `x`.  If
     `c` is multidimensional, then the shape of the result depends on the
     value of `tensor`. If `tensor` is true the shape will be c.shape[1:] +
     x.shape. If `tensor` is false the shape will be c.shape[1:]. Note that
@@ -750,7 +750,7 @@ def polyval(x, c, tensor=True):
     array([2.,  7.])
 
     """
-    c = np.array(c, ndmin=1, copy=False)
+    c = np.array(c, ndmin=1, copy=None)
     if c.dtype.char in '?bBhHiIlLqQpP':
         # astype fails with NA
         c = c + 0.0
@@ -769,7 +769,7 @@ def polyvalfromroots(x, r, tensor=True):
     """
     Evaluate a polynomial specified by its roots at points x.
 
-    If `r` is of length `N`, this function returns the value
+    If `r` is of length ``N``, this function returns the value
 
     .. math:: p(x) = \\prod_{n=1}^{N} (x - r_n)
 
@@ -778,7 +778,7 @@ def polyvalfromroots(x, r, tensor=True):
     or its elements must support multiplication and addition both with
     themselves and with the elements of `r`.
 
-    If `r` is a 1-D array, then `p(x)` will have the same shape as `x`.  If `r`
+    If `r` is a 1-D array, then ``p(x)`` will have the same shape as `x`.  If `r`
     is multidimensional, then the shape of the result depends on the value of
     `tensor`. If `tensor` is ``True`` the shape will be r.shape[1:] + x.shape;
     that is, each polynomial is evaluated at every value of `x`. If `tensor` is
@@ -841,7 +841,7 @@ def polyvalfromroots(x, r, tensor=True):
     array([-0.,  0.])
 
     """
-    r = np.array(r, ndmin=1, copy=False)
+    r = np.array(r, ndmin=1, copy=None)
     if r.dtype.char in '?bBhHiIlLqQpP':
         r = r.astype(np.double)
     if isinstance(x, (tuple, list)):
@@ -875,13 +875,13 @@ def polyval2d(x, y, c):
     Parameters
     ----------
     x, y : array_like, compatible objects
-        The two dimensional series is evaluated at the points `(x, y)`,
+        The two dimensional series is evaluated at the points ``(x, y)``,
         where `x` and `y` must have the same shape. If `x` or `y` is a list
         or tuple, it is first converted to an ndarray, otherwise it is left
         unchanged and, if it isn't an ndarray, it is treated as a scalar.
     c : array_like
         Array of coefficients ordered so that the coefficient of the term
-        of multi-degree i,j is contained in `c[i,j]`. If `c` has
+        of multi-degree i,j is contained in ``c[i,j]``. If `c` has
         dimension greater than two the remaining indices enumerate multiple
         sets of coefficients.
 
@@ -919,7 +919,7 @@ def polygrid2d(x, y, c):
 
     .. math:: p(a,b) = \\sum_{i,j} c_{i,j} * a^i * b^j
 
-    where the points `(a, b)` consist of all pairs formed by taking
+    where the points ``(a, b)`` consist of all pairs formed by taking
     `a` from `x` and `b` from `y`. The resulting points form a grid with
     `x` in the first dimension and `y` in the second.
 
@@ -994,7 +994,7 @@ def polyval3d(x, y, z, c):
     ----------
     x, y, z : array_like, compatible object
         The three dimensional series is evaluated at the points
-        `(x, y, z)`, where `x`, `y`, and `z` must have the same shape.  If
+        ``(x, y, z)``, where `x`, `y`, and `z` must have the same shape.  If
         any of `x`, `y`, or `z` is a list or tuple, it is first converted
         to an ndarray, otherwise it is left unchanged and if it isn't an
         ndarray it is  treated as a scalar.
@@ -1038,7 +1038,7 @@ def polygrid3d(x, y, z, c):
 
     .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} * a^i * b^j * c^k
 
-    where the points `(a, b, c)` consist of all triples formed by taking
+    where the points ``(a, b, c)`` consist of all triples formed by taking
     `a` from `x`, `b` from `y`, and `c` from `z`. The resulting points form
     a grid with `x` in the first dimension, `y` in the second, and `z` in
     the third.
@@ -1102,10 +1102,10 @@ def polyvander(x, deg):
 
     .. math:: V[..., i] = x^i,
 
-    where `0 <= i <= deg`. The leading indices of `V` index the elements of
+    where ``0 <= i <= deg``. The leading indices of `V` index the elements of
     `x` and the last index is the power of `x`.
 
-    If `c` is a 1-D array of coefficients of length `n + 1` and `V` is the
+    If `c` is a 1-D array of coefficients of length ``n + 1`` and `V` is the
     matrix ``V = polyvander(x, n)``, then ``np.dot(V, c)`` and
     ``polyval(x, c)`` are the same up to roundoff. This equivalence is
     useful both for least squares fitting and for the evaluation of a large
@@ -1149,7 +1149,7 @@ def polyvander(x, deg):
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
-    x = np.array(x, copy=False, ndmin=1) + 0.0
+    x = np.array(x, copy=None, ndmin=1) + 0.0
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
@@ -1165,12 +1165,12 @@ def polyvander2d(x, y, deg):
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
-    points `(x, y)`. The pseudo-Vandermonde matrix is defined by
+    points ``(x, y)``. The pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., (deg[1] + 1)*i + j] = x^i * y^j,
 
-    where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
-    `V` index the points `(x, y)` and the last index encodes the powers of
+    where ``0 <= i <= deg[0]`` and ``0 <= j <= deg[1]``. The leading indices of
+    `V` index the points ``(x, y)`` and the last index encodes the powers of
     `x` and `y`.
 
     If ``V = polyvander2d(x, y, [xdeg, ydeg])``, then the columns of `V`
@@ -1242,13 +1242,13 @@ def polyvander3d(x, y, z, deg):
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
-    points `(x, y, z)`. If `l, m, n` are the given degrees in `x, y, z`,
+    points ``(x, y, z)``. If `l`, `m`, `n` are the given degrees in `x`, `y`, `z`,
     then The pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = x^i * y^j * z^k,
 
-    where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
-    indices of `V` index the points `(x, y, z)` and the last index encodes
+    where ``0 <= i <= l``, ``0 <= j <= m``, and ``0 <= j <= n``.  The leading
+    indices of `V` index the points ``(x, y, z)`` and the last index encodes
     the powers of `x`, `y`, and `z`.
 
     If ``V = polyvander3d(x, y, z, [xdeg, ydeg, zdeg])``, then the columns
@@ -1422,8 +1422,8 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     decomposition of `V`.
 
     If some of the singular values of `V` are so small that they are
-    neglected (and `full` == ``False``), a `RankWarning` will be raised.
-    This means that the coefficient values may be poorly determined.
+    neglected (and `full` == ``False``), a `~exceptions.RankWarning` will be
+    raised.  This means that the coefficient values may be poorly determined.
     Fitting to a lower order polynomial will usually get rid of the warning
     (but may not be what you want, of course; if you have independent
     reason(s) for choosing the degree which isn't working, you may have to:

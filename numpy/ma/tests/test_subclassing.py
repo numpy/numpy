@@ -164,7 +164,7 @@ class WrappedArray(NDArrayOperatorsMixin):
     def __repr__(self):
         return f"{self.__class__.__name__}(\n{self._array}\n{self.attrs}\n)"
 
-    def __array__(self):
+    def __array__(self, dtype=None, copy=None):
         return np.asarray(self._array)
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):

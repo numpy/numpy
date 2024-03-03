@@ -4627,7 +4627,7 @@ class TestMaskedArrayFunctions:
         class Series():
             _data = "nonsense"
 
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 return np.array([5, np.nan, np.inf])
 
         arr = np.ma.masked_invalid(Series())
@@ -5580,7 +5580,7 @@ def test_astype_mask_ordering():
     assert x_a2.mask.dtype.names == np.dtype(descr).names
     assert_equal(x, x_a2)
 
-    assert_(x is np.array(x, dtype=descr, copy=False, subok=True))
+    assert_(x is np.array(x, dtype=descr, copy=None, subok=True))
 
     x_f2 = np.array(x, dtype=x.dtype, order='F', subok=True)
     assert_(x_f2.flags.f_contiguous)

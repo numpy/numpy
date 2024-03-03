@@ -18,7 +18,8 @@ from ._multiarray_umath import (
 # These imports are needed for the strip & replace implementations
 from ._multiarray_umath import (
     _replace, _strip_whitespace, _lstrip_whitespace, _rstrip_whitespace,
-    _strip_chars, _lstrip_chars, _rstrip_chars)
+    _strip_chars, _lstrip_chars, _rstrip_chars, _expandtabs_length,
+    _expandtabs)
 
 __all__ = [
     'absolute', 'add',

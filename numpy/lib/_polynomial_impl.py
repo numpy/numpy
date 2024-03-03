@@ -552,8 +552,8 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
     The coefficient matrix of the coefficients `p` is a Vandermonde matrix.
 
-    `polyfit` issues a `RankWarning` when the least-squares fit is badly
-    conditioned. This implies that the best fit is not well-defined due
+    `polyfit` issues a `~exceptions.RankWarning` when the least-squares fit is
+    badly conditioned. This implies that the best fit is not well-defined due
     to numerical error. The results may be improved by lowering the polynomial
     degree or by replacing `x` by `x` - `x`.mean(). The `rcond` parameter
     can also be set to a value smaller than its default, but the resulting
@@ -1240,11 +1240,11 @@ class poly1d:
             variable = 'x'
         self._variable = variable
 
-    def __array__(self, t=None):
+    def __array__(self, t=None, copy=None):
         if t:
-            return NX.asarray(self.coeffs, t)
+            return NX.asarray(self.coeffs, t, copy=copy)
         else:
-            return NX.asarray(self.coeffs)
+            return NX.asarray(self.coeffs, copy=copy)
 
     def __repr__(self):
         vals = repr(self.coeffs)

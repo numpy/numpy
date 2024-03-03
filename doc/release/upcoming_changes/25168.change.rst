@@ -1,0 +1,9 @@
+New ``copy`` keyword meaning for `numpy.array` and `numpy.asarray`
+------------------------------------------------------------------
+Now `numpy.array` and `numpy.asarray` support three values for ``copy`` parameter:
+
+* ``None`` - A copy will only be made if it is necessary.
+* ``True`` - Always make a copy.
+* ``False`` - Never make a copy. If a copy is required a ``ValueError`` is raised.
+
+The meaning of ``False`` changed as it now raises an exception if a copy is needed.

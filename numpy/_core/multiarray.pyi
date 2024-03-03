@@ -181,7 +181,7 @@ def array(
     object: _ArrayType,
     dtype: None = ...,
     *,
-    copy: bool | _CopyMode = ...,
+    copy: None | bool | _CopyMode = ...,
     order: _OrderKACF = ...,
     subok: L[True],
     ndmin: int = ...,
@@ -192,7 +192,7 @@ def array(
     object: _ArrayLike[_SCT],
     dtype: None = ...,
     *,
-    copy: bool | _CopyMode = ...,
+    copy: None | bool | _CopyMode = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
@@ -203,7 +203,7 @@ def array(
     object: object,
     dtype: None = ...,
     *,
-    copy: bool | _CopyMode = ...,
+    copy: None | bool | _CopyMode = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
@@ -214,7 +214,7 @@ def array(
     object: Any,
     dtype: _DTypeLike[_SCT],
     *,
-    copy: bool | _CopyMode = ...,
+    copy: None | bool | _CopyMode = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
@@ -225,7 +225,7 @@ def array(
     object: Any,
     dtype: DTypeLike,
     *,
-    copy: bool | _CopyMode = ...,
+    copy: None | bool | _CopyMode = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
@@ -485,6 +485,7 @@ def asarray(
     order: _OrderKACF = ...,
     *,
     device: None | L["cpu"] = ...,
+    copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -494,6 +495,7 @@ def asarray(
     order: _OrderKACF = ...,
     *,
     device: None | L["cpu"] = ...,
+    copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
@@ -503,6 +505,7 @@ def asarray(
     order: _OrderKACF = ...,
     *,
     device: None | L["cpu"] = ...,
+    copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -512,6 +515,7 @@ def asarray(
     order: _OrderKACF = ...,
     *,
     device: None | L["cpu"] = ...,
+    copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 

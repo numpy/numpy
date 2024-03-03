@@ -367,7 +367,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         flags = _NPY_METH_FORCE_CAST_INPUTS;
     }
 
-    get_reduction_initial_function *get_reduction_intial = NULL;
+    PyArrayMethod_GetReductionInitial *get_reduction_intial = NULL;
     if (ufunc->nin == 2 && ufunc->nout == 1) {
         npy_bool reorderable = NPY_FALSE;
         PyObject *identity_obj = PyUFunc_GetDefaultIdentity(
@@ -399,7 +399,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
     }
 
     PyType_Slot slots[4] = {
-        {_NPY_METH_get_loop, &get_wrapped_legacy_ufunc_loop},
+        {NPY_METH_get_loop, &get_wrapped_legacy_ufunc_loop},
         {NPY_METH_resolve_descriptors, &simple_legacy_resolve_descriptors},
         {NPY_METH_get_reduction_initial, get_reduction_intial},
         {0, NULL},

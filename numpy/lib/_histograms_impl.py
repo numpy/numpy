@@ -485,11 +485,11 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         sequence, it defines the bin edges, including the rightmost
         edge, allowing for non-uniform bin widths.
 
-        If `bins` is a string from the list below, `histogram_bin_edges` will use
-        the method chosen to calculate the optimal bin width and
-        consequently the number of bins (see `Notes` for more detail on
-        the estimators) from the data that falls within the requested
-        range. While the bin width will be optimal for the actual data
+        If `bins` is a string from the list below, `histogram_bin_edges` will
+        use the method chosen to calculate the optimal bin width and
+        consequently the number of bins (see the Notes section for more detail
+        on the estimators) from the data that falls within the requested range.
+        While the bin width will be optimal for the actual data
         in the range, the number of bins will be computed to fill the
         entire range, including the empty portions. For visualisation,
         using the 'auto' option is suggested. Weighted data is not

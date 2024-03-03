@@ -8,6 +8,7 @@ from decimal import Decimal
 
 import numpy as np
 from numpy._core import umath, sctypes
+from numpy._core._exceptions import _ArrayMemoryError
 from numpy._core.numerictypes import obj2sctype
 from numpy._core.arrayprint import set_string_function
 from numpy.exceptions import AxisError
@@ -115,12 +116,6 @@ class TestNonarrayArgs:
         tgt = np.array([2, 3])
         out = np.count_nonzero(arr, axis=1)
         assert_equal(out, tgt)
-
-    def test_cumproduct(self):
-        A = [[1, 2, 3], [4, 5, 6]]
-        with assert_warns(DeprecationWarning):
-            expected = np.array([1, 2, 6, 24, 120, 720])
-            assert_(np.all(np.cumproduct(A) == expected))
 
     def test_diagonal(self):
         a = [[0, 1, 2, 3],
@@ -2113,7 +2108,7 @@ class TestArrayComparisons:
 
         - are the two inputs the same object or not (same object many not
           be equal if contains NaNs)
-        - Wether we should consider or not, NaNs, being equal.
+        - Whether we should consider or not, NaNs, being equal.
 
         """
         if equal_nan is None:
@@ -3348,6 +3343,11 @@ class TestLikeFuncs:
 
         b = like_function(a, subok=False, **fill_kwarg)
         assert_(type(b) is not MyNDArray)
+
+        # Test invalid dtype
+        with assert_raises(_ArrayMemoryError):
+            a = np.array(b"abc")
+            like_function(a, dtype="S-1", **fill_kwarg)
 
     def test_ones_like(self):
         self.check_like_function(np.ones_like, 1)

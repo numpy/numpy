@@ -192,13 +192,14 @@ def lag2poly(c):
             c1 = polyadd(tmp, polysub((2*i - 1)*c1, polymulx(c1))/i)
         return polyadd(c0, polysub(c1, polymulx(c1)))
 
+
 #
 # These are constant arrays are of integer type so as to be compatible
 # with the widest range of other types, such as Decimal.
 #
 
 # Laguerre
-lagdomain = np.array([0, 1])
+lagdomain = np.array([0., 1.])
 
 # Laguerre coefficients representing zero.
 lagzero = np.array([0])
@@ -801,7 +802,7 @@ def lagval(x, c, tensor=True):
     """
     Evaluate a Laguerre series at points x.
 
-    If `c` is of length `n + 1`, this function returns the value:
+    If `c` is of length ``n + 1``, this function returns the value:
 
     .. math:: p(x) = c_0 * L_0(x) + c_1 * L_1(x) + ... + c_n * L_n(x)
 
@@ -810,7 +811,7 @@ def lagval(x, c, tensor=True):
     or its elements must support multiplication and addition both with
     themselves and with the elements of `c`.
 
-    If `c` is a 1-D array, then `p(x)` will have the same shape as `x`.  If
+    If `c` is a 1-D array, then ``p(x)`` will have the same shape as `x`.  If
     `c` is multidimensional, then the shape of the result depends on the
     value of `tensor`. If `tensor` is true the shape will be c.shape[1:] +
     x.shape. If `tensor` is false the shape will be c.shape[1:]. Note that
@@ -866,7 +867,7 @@ def lagval(x, c, tensor=True):
            [-4.5, -2. ]])
 
     """
-    c = np.array(c, ndmin=1, copy=False)
+    c = np.array(c, ndmin=1, copy=None)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
     if isinstance(x, (tuple, list)):
@@ -912,7 +913,7 @@ def lagval2d(x, y, c):
     Parameters
     ----------
     x, y : array_like, compatible objects
-        The two dimensional series is evaluated at the points `(x, y)`,
+        The two dimensional series is evaluated at the points ``(x, y)``,
         where `x` and `y` must have the same shape. If `x` or `y` is a list
         or tuple, it is first converted to an ndarray, otherwise it is left
         unchanged and if it isn't an ndarray it is treated as a scalar.
@@ -955,7 +956,7 @@ def laggrid2d(x, y, c):
 
     .. math:: p(a,b) = \\sum_{i,j} c_{i,j} * L_i(a) * L_j(b)
 
-    where the points `(a, b)` consist of all pairs formed by taking
+    where the points ``(a, b)`` consist of all pairs formed by taking
     `a` from `x` and `b` from `y`. The resulting points form a grid with
     `x` in the first dimension and `y` in the second.
 
@@ -977,7 +978,7 @@ def laggrid2d(x, y, c):
         unchanged and, if it isn't an ndarray, it is treated as a scalar.
     c : array_like
         Array of coefficients ordered so that the coefficient of the term of
-        multi-degree i,j is contained in `c[i,j]`. If `c` has dimension
+        multi-degree i,j is contained in ``c[i,j]``. If `c` has dimension
         greater than two the remaining indices enumerate multiple sets of
         coefficients.
 
@@ -1030,7 +1031,7 @@ def lagval3d(x, y, z, c):
     ----------
     x, y, z : array_like, compatible object
         The three dimensional series is evaluated at the points
-        `(x, y, z)`, where `x`, `y`, and `z` must have the same shape.  If
+        ``(x, y, z)``, where `x`, `y`, and `z` must have the same shape.  If
         any of `x`, `y`, or `z` is a list or tuple, it is first converted
         to an ndarray, otherwise it is left unchanged and if it isn't an
         ndarray it is  treated as a scalar.
@@ -1074,7 +1075,7 @@ def laggrid3d(x, y, z, c):
 
     .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} * L_i(a) * L_j(b) * L_k(c)
 
-    where the points `(a, b, c)` consist of all triples formed by taking
+    where the points ``(a, b, c)`` consist of all triples formed by taking
     `a` from `x`, `b` from `y`, and `c` from `z`. The resulting points form
     a grid with `x` in the first dimension, `y` in the second, and `z` in
     the third.
@@ -1140,10 +1141,10 @@ def lagvander(x, deg):
 
     .. math:: V[..., i] = L_i(x)
 
-    where `0 <= i <= deg`. The leading indices of `V` index the elements of
+    where ``0 <= i <= deg``. The leading indices of `V` index the elements of
     `x` and the last index is the degree of the Laguerre polynomial.
 
-    If `c` is a 1-D array of coefficients of length `n + 1` and `V` is the
+    If `c` is a 1-D array of coefficients of length ``n + 1`` and `V` is the
     array ``V = lagvander(x, n)``, then ``np.dot(V, c)`` and
     ``lagval(x, c)`` are the same up to roundoff. This equivalence is
     useful both for least squares fitting and for the evaluation of a large
@@ -1180,7 +1181,7 @@ def lagvander(x, deg):
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
-    x = np.array(x, copy=False, ndmin=1) + 0.0
+    x = np.array(x, copy=None, ndmin=1) + 0.0
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
@@ -1196,12 +1197,12 @@ def lagvander2d(x, y, deg):
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
-    points `(x, y)`. The pseudo-Vandermonde matrix is defined by
+    points ``(x, y)``. The pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., (deg[1] + 1)*i + j] = L_i(x) * L_j(y),
 
-    where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
-    `V` index the points `(x, y)` and the last index encodes the degrees of
+    where ``0 <= i <= deg[0]`` and ``0 <= j <= deg[1]``. The leading indices of
+    `V` index the points ``(x, y)`` and the last index encodes the degrees of
     the Laguerre polynomials.
 
     If ``V = lagvander2d(x, y, [xdeg, ydeg])``, then the columns of `V`
@@ -1257,13 +1258,13 @@ def lagvander3d(x, y, z, deg):
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
-    points `(x, y, z)`. If `l, m, n` are the given degrees in `x, y, z`,
+    points ``(x, y, z)``. If `l`, `m`, `n` are the given degrees in `x`, `y`, `z`,
     then The pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = L_i(x)*L_j(y)*L_k(z),
 
-    where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
-    indices of `V` index the points `(x, y, z)` and the last index encodes
+    where ``0 <= i <= l``, ``0 <= j <= m``, and ``0 <= j <= n``.  The leading
+    indices of `V` index the points ``(x, y, z)`` and the last index encodes
     the degrees of the Laguerre polynomials.
 
     If ``V = lagvander3d(x, y, z, [xdeg, ydeg, zdeg])``, then the columns
@@ -1419,8 +1420,8 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
     decomposition of ``V``.
 
     If some of the singular values of `V` are so small that they are
-    neglected, then a `RankWarning` will be issued. This means that the
-    coefficient values may be poorly determined. Using a lower order fit
+    neglected, then a `~exceptions.RankWarning` will be issued. This means that
+    the coefficient values may be poorly determined. Using a lower order fit
     will usually get rid of the warning.  The `rcond` parameter can also be
     set to a value smaller than its default, but the resulting fit may be
     spurious and have large contributions from roundoff error.

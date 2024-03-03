@@ -420,7 +420,7 @@ class TestIndexing:
 
         class ArrayLike:
             # Simple array, should behave like the array
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 return np.array(0)
 
         a = np.zeros(())

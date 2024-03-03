@@ -15,6 +15,7 @@
 #include "common.h"
 #include "conversion_utils.h"
 #include "ctors.h"
+#include "dtypemeta.h"
 #include "scalartypes.h"
 #include "descriptor.h"
 #include "flagsobject.h"
@@ -337,95 +338,10 @@ array_data_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     return PyMemoryView_FromObject((PyObject *)self);
 }
 
-static int
-array_data_set(PyArrayObject *self, PyObject *op, void *NPY_UNUSED(ignored))
-{
-    void *buf;
-    Py_ssize_t buf_len;
-    int writeable=1;
-    Py_buffer view;
-
-    /* 2016-19-02, 1.12 */
-    int ret = DEPRECATE("Assigning the 'data' attribute is an "
-                        "inherently unsafe operation and will "
-                        "be removed in the future.");
-    if (ret < 0) {
-        return -1;
-    }
-
-    if (op == NULL) {
-        PyErr_SetString(PyExc_AttributeError,
-                "Cannot delete array data");
-        return -1;
-    }
-    if (PyObject_GetBuffer(op, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
-        writeable = 0;
-        PyErr_Clear();
-        if (PyObject_GetBuffer(op, &view, PyBUF_SIMPLE) < 0) {
-            return -1;
-        }
-    }
-    buf = view.buf;
-    buf_len = view.len;
-    /*
-     * In Python 3 both of the deprecated functions PyObject_AsWriteBuffer and
-     * PyObject_AsReadBuffer that this code replaces release the buffer. It is
-     * up to the object that supplies the buffer to guarantee that the buffer
-     * sticks around after the release.
-     */
-    PyBuffer_Release(&view);
-
-    if (!PyArray_ISONESEGMENT(self)) {
-        PyErr_SetString(PyExc_AttributeError,
-                "cannot set single-segment buffer for discontiguous array");
-        return -1;
-    }
-    if (PyArray_NBYTES(self) > buf_len) {
-        PyErr_SetString(PyExc_AttributeError, "not enough data for array");
-        return -1;
-    }
-    if (PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA) {
-        PyArray_XDECREF(self);
-        size_t nbytes = PyArray_NBYTES(self);
-        if (nbytes == 0) {
-            nbytes = 1;
-        }
-        PyObject *handler = PyArray_HANDLER(self);
-        if (handler == NULL) {
-            /* This can happen if someone arbitrarily sets NPY_ARRAY_OWNDATA */
-            PyErr_SetString(PyExc_RuntimeError,
-                            "no memory handler found but OWNDATA flag set");
-            return -1;
-        }
-        PyDataMem_UserFREE(PyArray_DATA(self), nbytes, handler);
-        Py_CLEAR(((PyArrayObject_fields *)self)->mem_handler);
-    }
-    if (PyArray_BASE(self)) {
-        if (PyArray_FLAGS(self) & NPY_ARRAY_WRITEBACKIFCOPY) {
-            PyArray_ENABLEFLAGS((PyArrayObject *)PyArray_BASE(self),
-                                                NPY_ARRAY_WRITEABLE);
-            PyArray_CLEARFLAGS(self, NPY_ARRAY_WRITEBACKIFCOPY);
-        }
-        Py_DECREF(PyArray_BASE(self));
-        ((PyArrayObject_fields *)self)->base = NULL;
-    }
-    Py_INCREF(op);
-    if (PyArray_SetBaseObject(self, op) < 0) {
-        return -1;
-    }
-    ((PyArrayObject_fields *)self)->data = buf;
-    ((PyArrayObject_fields *)self)->flags = NPY_ARRAY_CARRAY;
-    if (!writeable) {
-        PyArray_CLEARFLAGS(self, ~NPY_ARRAY_WRITEABLE);
-    }
-    return 0;
-}
-
-
 static PyObject *
 array_itemsize_get(PyArrayObject *self, void* NPY_UNUSED(ignored))
 {
-    return PyLong_FromLong((long) PyArray_DESCR(self)->elsize);
+    return PyLong_FromLong((long) PyArray_ITEMSIZE(self));
 }
 
 static PyObject *
@@ -491,16 +407,16 @@ array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
      */
     if (newtype->type_num == NPY_VOID &&
             PyDataType_ISUNSIZED(newtype) &&
-            newtype->elsize != PyArray_DESCR(self)->elsize) {
+            newtype->elsize != PyArray_ITEMSIZE(self)) {
         PyArray_DESCR_REPLACE(newtype);
         if (newtype == NULL) {
             return -1;
         }
-        newtype->elsize = PyArray_DESCR(self)->elsize;
+        newtype->elsize = PyArray_ITEMSIZE(self);
     }
 
     /* Changing the size of the dtype results in a shape change */
-    if (newtype->elsize != PyArray_DESCR(self)->elsize) {
+    if (newtype->elsize != PyArray_ITEMSIZE(self)) {
         /* forbidden cases */
         if (PyArray_NDIM(self) == 0) {
             PyErr_SetString(PyExc_ValueError,
@@ -519,7 +435,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
         int axis = PyArray_NDIM(self) - 1;
         if (PyArray_DIMS(self)[axis] != 1 &&
                 PyArray_SIZE(self) != 0 &&
-                PyArray_STRIDES(self)[axis] != PyArray_DESCR(self)->elsize) {
+                PyArray_STRIDES(self)[axis] != PyArray_ITEMSIZE(self)) {
             PyErr_SetString(PyExc_ValueError,
                     "To change to a dtype of a different size, the last axis "
                     "must be contiguous");
@@ -528,22 +444,22 @@ array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
 
         npy_intp newdim;
 
-        if (newtype->elsize < PyArray_DESCR(self)->elsize) {
+        if (newtype->elsize < PyArray_ITEMSIZE(self)) {
             /* if it is compatible, increase the size of the last axis */
             if (newtype->elsize == 0 ||
-                    PyArray_DESCR(self)->elsize % newtype->elsize != 0) {
+                    PyArray_ITEMSIZE(self) % newtype->elsize != 0) {
                 PyErr_SetString(PyExc_ValueError,
                         "When changing to a smaller dtype, its size must be a "
                         "divisor of the size of original dtype");
                 goto fail;
             }
-            newdim = PyArray_DESCR(self)->elsize / newtype->elsize;
+            newdim = PyArray_ITEMSIZE(self) / newtype->elsize;
             PyArray_DIMS(self)[axis] *= newdim;
             PyArray_STRIDES(self)[axis] = newtype->elsize;
         }
-        else /* newtype->elsize > PyArray_DESCR(self)->elsize */ {
+        else /* newtype->elsize > PyArray_ITEMSIZE(self) */ {
             /* if it is compatible, decrease the size of the relevant axis */
-            newdim = PyArray_DIMS(self)[axis] * PyArray_DESCR(self)->elsize;
+            newdim = PyArray_DIMS(self)[axis] * PyArray_ITEMSIZE(self);
             if ((newdim % newtype->elsize) != 0) {
                 PyErr_SetString(PyExc_ValueError,
                         "When changing to a larger dtype, its size must be a "
@@ -608,7 +524,7 @@ array_struct_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     inter->two = 2;
     inter->nd = PyArray_NDIM(self);
     inter->typekind = PyArray_DESCR(self)->kind;
-    inter->itemsize = PyArray_DESCR(self)->elsize;
+    inter->itemsize = PyArray_ITEMSIZE(self);
     inter->flags = PyArray_FLAGS(self);
     if (inter->flags & NPY_ARRAY_WARN_ON_WRITE) {
         /* Export a warn-on-write array as read-only */
@@ -891,7 +807,7 @@ array_flat_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
         goto exit;
     }
     swap = PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(arr);
-    copyswap = PyArray_DESCR(self)->f->copyswap;
+    copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(self))->copyswap;
     if (PyDataType_REFCHK(PyArray_DESCR(self))) {
         while (selfit->index < selfit->size) {
             PyArray_Item_XDECREF(selfit->dataptr, PyArray_DESCR(self));
@@ -992,7 +908,7 @@ NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
         NULL, NULL},
     {"data",
         (getter)array_data_get,
-        (setter)array_data_set,
+        NULL,
         NULL, NULL},
     {"itemsize",
         (getter)array_itemsize_get,

@@ -125,7 +125,7 @@ legacy_setitem_using_DType(PyObject *obj, void *data, void *arr)
                 "supported for basic NumPy DTypes.");
         return -1;
     }
-    setitemfunction *setitem;
+    PyArrayDTypeMeta_SetItem *setitem;
     setitem = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(arr)))->setitem;
     return setitem(PyArray_DESCR(arr), obj, data);
 }
@@ -140,7 +140,7 @@ legacy_getitem_using_DType(void *data, void *arr)
                 "supported for basic NumPy DTypes.");
         return NULL;
     }
-    getitemfunction *getitem;
+    PyArrayDTypeMeta_GetItem *getitem;
     getitem = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(arr)))->getitem;
     return getitem(PyArray_DESCR(arr), data);
 }
@@ -154,9 +154,19 @@ PyArray_ArrFuncs default_funcs = {
         .setitem = &legacy_setitem_using_DType,
 };
 
+/*
+ * Internal version of PyArrayInitDTypeMeta_FromSpec.
+ *
+ * See the documentation of that function for more details.  Does not do any
+ * error checking.
+
+ * Setting priv to a nonzero value indicates that a dtypemeta is being
+ * initialized from inside NumPy, otherwise this function is being called by
+ * the public implementation.
+ */
 NPY_NO_EXPORT int
 dtypemeta_initialize_struct_from_spec(
-        PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *spec)
+        PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *spec, int priv)
 {
     if (DType->dt_slots != NULL) {
         PyErr_Format(PyExc_RuntimeError,
@@ -334,7 +344,8 @@ dtypemeta_initialize_struct_from_spec(
             }
         }
         /* Register the cast! */
-        int res = PyArray_AddCastingImplementation_FromSpec(meth_spec, 0);
+        // priv indicates whether or not the is an internal call
+        int res = PyArray_AddCastingImplementation_FromSpec(meth_spec, priv);
 
         /* Also clean up again, so nobody can get bad ideas... */
         for (int i=0; i < meth_spec->nin + meth_spec->nout; i++) {
@@ -907,7 +918,7 @@ string_known_scalar_types(
 static PyArray_DTypeMeta *
 default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
-    assert(cls->type_num < NPY_NTYPES);
+    assert(cls->type_num < NPY_NTYPES_LEGACY);
     if (NPY_UNLIKELY(NPY_DT_is_abstract(other))) {
         /*
          * The abstract complex has a lower priority than the concrete inexact
@@ -971,7 +982,7 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 static PyArray_DTypeMeta *
 string_unicode_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
-    assert(cls->type_num < NPY_NTYPES && cls != other);
+    assert(cls->type_num < NPY_NTYPES_LEGACY && cls != other);
     if (!NPY_DT_is_legacy(other) || (!PyTypeNum_ISNUMBER(other->type_num) &&
             /* Not numeric so defer unless cls is unicode and other is string */
             !(cls->type_num == NPY_UNICODE && other->type_num == NPY_STRING))) {
@@ -1061,13 +1072,13 @@ object_common_dtype(
  */
 NPY_NO_EXPORT int
 dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr,
-        const char *name, const char *alias)
+        PyArray_ArrFuncs *arr_funcs, const char *name, const char *alias)
 {
     int has_type_set = Py_TYPE(descr) == &PyArrayDescr_Type;
 
     if (!has_type_set) {
         /* Accept if the type was filled in from an existing builtin dtype */
-        for (int i = 0; i < NPY_NTYPES; i++) {
+        for (int i = 0; i < NPY_NTYPES_LEGACY; i++) {
             PyArray_Descr *builtin = PyArray_DescrFromType(i);
             has_type_set = Py_TYPE(descr) == Py_TYPE(builtin);
             Py_DECREF(builtin);
@@ -1151,7 +1162,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr,
     Py_INCREF(descr->typeobj);
     dtype_class->scalar_type = descr->typeobj;
     dtype_class->type_num = descr->type_num;
-    dt_slots->f = *(descr->f);
+    dt_slots->f = *arr_funcs;
 
     /* Set default functions (correct for most dtypes, override below) */
     dt_slots->default_descr = nonparametric_default_descr;
@@ -1376,3 +1387,28 @@ PyArray_DTypeMeta *_Datetime_dtype = NULL;
 PyArray_DTypeMeta *_Timedelta_dtype = NULL;
 PyArray_DTypeMeta *_Object_dtype = NULL;
 PyArray_DTypeMeta *_Void_dtype = NULL;
+
+
+
+/*NUMPY_API
+ * Fetch the ArrFuncs struct which new lives on the DType and not the
+ * descriptor.  Use of this struct should be avoided but remains necessary
+ * for certain functionality.
+ *
+ * The use of any slot besides getitem, setitem, copyswap, and copyswapn
+ * is only valid after checking for NULL.  Checking for NULL is generally
+ * encouraged.
+ *
+ * This function is exposed with an underscore "privately" because the
+ * public version is a static inline function which only calls the function
+ * on 2.x but directly accesses the `descr` struct on 1.x.
+ * Once 1.x backwards compatibility is gone, it shoudl be exported without
+ * the underscore directly.
+ * Internally, we define a private inline function `PyDataType_GetArrFuncs`
+ * for convenience as we are allowed to access the `DType` slots directly.
+ */
+NPY_NO_EXPORT PyArray_ArrFuncs *
+_PyDataType_GetArrFuncs(PyArray_Descr *descr)
+{
+    return PyDataType_GetArrFuncs(descr);
+}

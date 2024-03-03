@@ -162,7 +162,6 @@ following hold::
     np.bool_(True) + 1 == np.int64(2)
     True + np.uint8(2) == np.uint8(3)
 
-
 Note that while this NEP uses simple operators as example, the rules described
 generally apply to all of NumPy operations.
 
@@ -416,6 +415,7 @@ can convert both inputs to ``float64`` to find the result.
 
 In practice this means that arbitrary Python integer values are accepted in
 the following cases:
+
 * All comparisons (``==``, ``<``, etc.) between NumPy and Python integers are
   always well defined.
 * Unary functions like ``np.sqrt`` that give a floating point result can and
@@ -549,7 +549,7 @@ That is, it will try the following dtypes:
 Note that e.g. for the integer value of ``10``, the smallest dtype can be
 *either* ``uint8`` or ``int8``.
 
-NumPy never applied this rule when all arguments are scalar values:
+NumPy never applied this rule when all arguments are scalar values::
 
     np.int64(1) + np.int32(2) == np.int64(3)
 

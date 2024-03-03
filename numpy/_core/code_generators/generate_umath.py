@@ -1170,6 +1170,26 @@ defdict = {
           docstrings.get('numpy._core.umath.isspace'),
           None,
           ),
+'isalnum':
+    Ufunc(1, 1, False_,
+          docstrings.get('numpy._core.umath.isalnum'),
+          None,
+          ),
+'islower':
+    Ufunc(1, 1, False_,
+          docstrings.get('numpy._core.umath.islower'),
+          None,
+          ),
+'isupper':
+    Ufunc(1, 1, False_,
+          docstrings.get('numpy._core.umath.isupper'),
+          None,
+          ),
+'istitle':
+    Ufunc(1, 1, False_,
+          docstrings.get('numpy._core.umath.istitle'),
+          None,
+          ),
 'isdecimal':
     Ufunc(1, 1, False_,
           docstrings.get('numpy._core.umath.isdecimal'),
@@ -1195,9 +1215,19 @@ defdict = {
           docstrings.get('numpy._core.umath.count'),
           None,
           ),
+'index':
+    Ufunc(4, 1, None,
+          docstrings.get('numpy._core.umath.index'),
+          None,
+          ),
+'rindex':
+    Ufunc(4, 1, None,
+          docstrings.get('numpy._core.umath.rindex'),
+          None,
+          ),
 '_replace':
     Ufunc(4, 1, None,
-          docstrings.get('numpy.core.umath._replace'),
+          docstrings.get('numpy._core.umath._replace'),
           None,
           ),
 'startswith':
@@ -1240,6 +1270,17 @@ defdict = {
           docstrings.get('numpy._core.umath._rstrip_whitespace'),
           None,
           ),
+'_expandtabs_length':
+    Ufunc(2, 1, None,
+          docstrings.get('numpy._core.umath._expandtabs_length'),
+          None,
+          ),
+'_expandtabs':
+    Ufunc(2, 1, None,
+          docstrings.get('numpy._core.umath._expandtabs'),
+          None,
+          ),
+
 }
 
 def indent(st, spaces):

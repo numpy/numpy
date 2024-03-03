@@ -378,7 +378,7 @@ def poly2cheb(pol):
     >>> from numpy import polynomial as P
     >>> p = P.Polynomial(range(4))
     >>> p
-    Polynomial([0., 1., 2., 3.], domain=[-1,  1], window=[-1,  1], symbol='x')
+    Polynomial([0., 1., 2., 3.], domain=[-1.,  1.], window=[-1.,  1.], symbol='x')
     >>> c = p.convert(kind=P.Chebyshev)
     >>> c
     Chebyshev([1.  , 3.25, 1.  , 0.75], domain=[-1.,  1.], window=[-1., ...
@@ -430,7 +430,7 @@ def cheb2poly(c):
     >>> from numpy import polynomial as P
     >>> c = P.Chebyshev(range(4))
     >>> c
-    Chebyshev([0., 1., 2., 3.], domain=[-1,  1], window=[-1,  1], symbol='x')
+    Chebyshev([0., 1., 2., 3.], domain=[-1.,  1.], window=[-1.,  1.], symbol='x')
     >>> p = c.convert(kind=P.Polynomial)
     >>> p
     Polynomial([-2., -8.,  4., 12.], domain=[-1.,  1.], window=[-1.,  1.], ...
@@ -461,7 +461,7 @@ def cheb2poly(c):
 #
 
 # Chebyshev default domain.
-chebdomain = np.array([-1, 1])
+chebdomain = np.array([-1., 1.])
 
 # Chebyshev coefficients representing zero.
 chebzero = np.array([0])
@@ -1104,7 +1104,7 @@ def chebval(x, c, tensor=True):
     or its elements must support multiplication and addition both with
     themselves and with the elements of `c`.
 
-    If `c` is a 1-D array, then `p(x)` will have the same shape as `x`.  If
+    If `c` is a 1-D array, then ``p(x)`` will have the same shape as `x`.  If
     `c` is multidimensional, then the shape of the result depends on the
     value of `tensor`. If `tensor` is true the shape will be c.shape[1:] +
     x.shape. If `tensor` is false the shape will be c.shape[1:]. Note that
@@ -1195,7 +1195,7 @@ def chebval2d(x, y, c):
     Parameters
     ----------
     x, y : array_like, compatible objects
-        The two dimensional series is evaluated at the points `(x, y)`,
+        The two dimensional series is evaluated at the points ``(x, y)``,
         where `x` and `y` must have the same shape. If `x` or `y` is a list
         or tuple, it is first converted to an ndarray, otherwise it is left
         unchanged and if it isn't an ndarray it is treated as a scalar.
@@ -1254,7 +1254,7 @@ def chebgrid2d(x, y, c):
         unchanged and, if it isn't an ndarray, it is treated as a scalar.
     c : array_like
         Array of coefficients ordered so that the coefficient of the term of
-        multi-degree i,j is contained in `c[i,j]`. If `c` has dimension
+        multi-degree i,j is contained in ``c[i,j]``. If `c` has dimension
         greater than two the remaining indices enumerate multiple sets of
         coefficients.
 
@@ -1299,7 +1299,7 @@ def chebval3d(x, y, z, c):
     ----------
     x, y, z : array_like, compatible object
         The three dimensional series is evaluated at the points
-        `(x, y, z)`, where `x`, `y`, and `z` must have the same shape.  If
+        ``(x, y, z)``, where `x`, `y`, and `z` must have the same shape.  If
         any of `x`, `y`, or `z` is a list or tuple, it is first converted
         to an ndarray, otherwise it is left unchanged and if it isn't an
         ndarray it is  treated as a scalar.
@@ -1336,7 +1336,7 @@ def chebgrid3d(x, y, z, c):
 
     .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} * T_i(a) * T_j(b) * T_k(c)
 
-    where the points `(a, b, c)` consist of all triples formed by taking
+    where the points ``(a, b, c)`` consist of all triples formed by taking
     `a` from `x`, `b` from `y`, and `c` from `z`. The resulting points form
     a grid with `x` in the first dimension, `y` in the second, and `z` in
     the third.
@@ -1392,10 +1392,10 @@ def chebvander(x, deg):
 
     .. math:: V[..., i] = T_i(x),
 
-    where `0 <= i <= deg`. The leading indices of `V` index the elements of
+    where ``0 <= i <= deg``. The leading indices of `V` index the elements of
     `x` and the last index is the degree of the Chebyshev polynomial.
 
-    If `c` is a 1-D array of coefficients of length `n + 1` and `V` is the
+    If `c` is a 1-D array of coefficients of length ``n + 1`` and `V` is the
     matrix ``V = chebvander(x, n)``, then ``np.dot(V, c)`` and
     ``chebval(x, c)`` are the same up to roundoff.  This equivalence is
     useful both for least squares fitting and for the evaluation of a large
@@ -1423,7 +1423,7 @@ def chebvander(x, deg):
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
-    x = np.array(x, copy=False, ndmin=1) + 0.0
+    x = np.array(x, copy=None, ndmin=1) + 0.0
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
@@ -1441,12 +1441,12 @@ def chebvander2d(x, y, deg):
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
-    points `(x, y)`. The pseudo-Vandermonde matrix is defined by
+    points ``(x, y)``. The pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., (deg[1] + 1)*i + j] = T_i(x) * T_j(y),
 
-    where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
-    `V` index the points `(x, y)` and the last index encodes the degrees of
+    where ``0 <= i <= deg[0]`` and ``0 <= j <= deg[1]``. The leading indices of
+    `V` index the points ``(x, y)`` and the last index encodes the degrees of
     the Chebyshev polynomials.
 
     If ``V = chebvander2d(x, y, [xdeg, ydeg])``, then the columns of `V`
@@ -1494,13 +1494,13 @@ def chebvander3d(x, y, z, deg):
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
-    points `(x, y, z)`. If `l, m, n` are the given degrees in `x, y, z`,
+    points ``(x, y, z)``. If `l`, `m`, `n` are the given degrees in `x`, `y`, `z`,
     then The pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = T_i(x)*T_j(y)*T_k(z),
 
-    where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
-    indices of `V` index the points `(x, y, z)` and the last index encodes
+    where ``0 <= i <= l``, ``0 <= j <= m``, and ``0 <= j <= n``.  The leading
+    indices of `V` index the points ``(x, y, z)`` and the last index encodes
     the degrees of the Chebyshev polynomials.
 
     If ``V = chebvander3d(x, y, z, [xdeg, ydeg, zdeg])``, then the columns
@@ -1575,7 +1575,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     rcond : float, optional
         Relative condition number of the fit. Singular values smaller than
         this relative to the largest singular value will be ignored. The
-        default value is len(x)*eps, where eps is the relative precision of
+        default value is ``len(x)*eps``, where eps is the relative precision of
         the float type, about 2e-16 in most cases.
     full : bool, optional
         Switch determining nature of return value. When it is False (the
@@ -1648,8 +1648,8 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     decomposition of `V`.
 
     If some of the singular values of `V` are so small that they are
-    neglected, then a `RankWarning` will be issued. This means that the
-    coefficient values may be poorly determined. Using a lower order fit
+    neglected, then a `~exceptions.RankWarning` will be issued. This means that
+    the coefficient values may be poorly determined. Using a lower order fit
     will usually get rid of the warning.  The `rcond` parameter can also be
     set to a value smaller than its default, but the resulting fit may be
     spurious and have large contributions from roundoff error.

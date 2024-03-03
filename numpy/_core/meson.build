@@ -646,6 +646,23 @@ src_ufunc_api = custom_target('__ufunc_api',
   install_tag: 'devel'
 )
 
+# Write out pkg-config file
+# -------------------------
+
+# Note: we can't use Meson's built-in pkgconfig module, because we have to
+# install numpy.pc within site-packages rather than in its normal location.
+cdata_numpy_pc = configuration_data()
+cdata_numpy_pc.set('version', meson.project_version())
+
+# Note: keep install path in sync with numpy/_configtool.py
+_numpy_pc = configure_file(
+  input: 'numpy.pc.in',
+  output: 'numpy.pc',
+  configuration: cdata_numpy_pc,
+  install: true,
+  install_dir: np_dir / '_core/lib/pkgconfig',
+  install_tag: 'devel'
+)
 
 # Set common build flags for C and C++ code
 # -----------------------------------------
@@ -770,6 +787,7 @@ foreach gen_mtargets : [
       'include',
       'src/common',
       'src/multiarray',
+      'src/multiarray/stringdtype',
       'src/npymath',
       'src/umath'
     ]
@@ -1065,7 +1083,7 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/dtype_traversal.c',
   src_file.process('src/multiarray/einsum.c.src'),
   src_file.process('src/multiarray/einsum_sumprod.c.src'),
-  'src/multiarray/experimental_public_dtype_api.c',
+  'src/multiarray/public_dtype_api.c',
   'src/multiarray/flagsobject.c',
   'src/multiarray/getset.c',
   'src/multiarray/hashdescr.c',
@@ -1084,9 +1102,13 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/refcount.c',
   src_file.process('src/multiarray/scalartypes.c.src'),
   'src/multiarray/sequence.c',
-  'src/multiarray/shape.c',
   'src/multiarray/scalarapi.c',
+  'src/multiarray/shape.c',
   'src/multiarray/strfuncs.c',
+  'src/multiarray/stringdtype/casts.c',
+  'src/multiarray/stringdtype/dtype.c',
+  'src/multiarray/stringdtype/utf8_utils.c',
+  'src/multiarray/stringdtype/static_string.c',
   'src/multiarray/temp_elide.c',
   'src/multiarray/usertypes.c',
   'src/multiarray/vdot.c',
@@ -1130,6 +1152,7 @@ src_umath = umath_gen_headers + [
   'src/umath/umathmodule.c',
   'src/umath/special_integer_comparisons.cpp',
   'src/umath/string_ufuncs.cpp',
+  'src/umath/stringdtype_ufuncs.cpp',
   'src/umath/wrapping_array_method.c',
   # For testing. Eventually, should use public API and be separate:
   'src/umath/_scaled_float_dtype.c',

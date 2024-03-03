@@ -11,7 +11,6 @@
 #include "abstractdtypes.h"
 #include "dispatching.h"
 #include "dtypemeta.h"
-#include "common_dtype.h"
 #include "convert_datatype.h"
 
 #include "legacy_array_method.h"  /* For `get_wrapped_legacy_ufunc_loop`. */
@@ -423,7 +422,7 @@ init_special_int_comparisons(PyObject *umath)
      * resolver ensures native byte order/canonical representation.
      */
     PyType_Slot slots[] = {
-        {_NPY_METH_get_loop, nullptr},
+        {NPY_METH_get_loop, nullptr},
         {_NPY_METH_resolve_descriptors_with_scalars,
              (void *)&resolve_descriptors_with_scalars},
         {0, NULL},

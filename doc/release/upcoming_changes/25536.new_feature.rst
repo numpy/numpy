@@ -1,4 +1,0 @@
-``out`` for `numpy.fft`
------------------------
-The various FFT routines in `numpy.fft` have gained an ``out``
-argument that can be used for in-place calculations.

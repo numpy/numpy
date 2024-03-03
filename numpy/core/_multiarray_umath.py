@@ -16,6 +16,7 @@ def __getattr__(attr_name):
     if attr_name in {"_ARRAY_API", "_UFUNC_API"}:
         from numpy.version import short_version, release
         import textwrap
+        import traceback
         import sys
 
         msg = textwrap.dedent(f"""
@@ -35,27 +36,21 @@ def __getattr__(attr_name):
                 the NumPy pre-release is used at build time.
                 The main way to ensure this is using no build isolation
                 and installing dependencies manually with NumPy.
-                For cibuildwheel for example, this may be achieved by using
-                the flag to pip:
-                    CIBW_BUILD_FRONTEND: pip; args: --no-build-isolation
-                installing NumPy with:
-                    pip install --pre --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
-                in the `CIBW_BEFORE_BUILD` step.  Please compare with the
-                solutions e.g. in astropy or matplotlib for how to make this
-                conditional for nightly wheel builds using expressions.
-                If you do not worry about using pre-releases of all
-                dependencies, you can also use `--pre --extra-index-url` in the
-                build frontend (instead of build isolation).
-                This will become unnecessary as soon as NumPy 2.0 is released.
 
                 If your dependencies have the issue, check whether they
-                have nightly wheels build against NumPy 2.0.
+                build nightly wheels build against NumPy 2.0.
 
-                pybind11 note: You may see this message if using pybind11,
-                this is not problematic at pre-release time
-                it indicates the need for a new pybind11 release.
+                pybind11 note: If you see this message and do not see
+                any errors raised, it's possible this is due to a
+                package using an old version of pybind11 that should be
+                updated.
 
                 """)
+        msg += "Traceback (most recent call last):"
+        for line in traceback.format_stack()[:-1]:
+            if "frozen importlib" in line:
+                continue
+            msg += line
         # Only print the message.  This has two reasons (for now!):
         # 1. Old NumPy replaced the error here making it never actually show
         #    in practice, thus raising alone would not be helpful.

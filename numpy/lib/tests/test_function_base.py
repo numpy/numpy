@@ -15,7 +15,7 @@ from numpy import (
     ma, angle, average, bartlett, blackman, corrcoef, cov,
     delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
     i0, insert, interp, kaiser, meshgrid, piecewise, place, rot90,
-    select, setxor1d, sinc, trapz, trim_zeros, unwrap, unique, vectorize
+    select, setxor1d, sinc, trapezoid, trim_zeros, unwrap, unique, vectorize
     )
 from numpy.exceptions import AxisError
 from numpy.testing import (
@@ -249,6 +249,13 @@ class TestAll:
         assert_(not np.all(y1))
         assert_array_equal(np.all(y1, axis=0), [0, 0, 1])
         assert_array_equal(np.all(y1, axis=1), [0, 0, 1])
+
+
+@pytest.mark.parametrize("dtype", ["i8", "U10", "object", "datetime64[ms]"])
+def test_any_and_all_result_dtype(dtype):
+    arr = np.ones(3, dtype=dtype)
+    assert np.any(arr).dtype == np.bool_
+    assert np.all(arr).dtype == np.bool_
 
 
 class TestCopy:
@@ -2160,12 +2167,11 @@ class TestFilterwindows:
             assert_almost_equal(np.sum(w, axis=0), 10, 15)
 
 
-@pytest.mark.filterwarnings('ignore:.*trapz.*:DeprecationWarning')
-class TestTrapz:
+class TestTrapezoid:
 
     def test_simple(self):
         x = np.arange(-10, 10, .1)
-        r = trapz(np.exp(-.5 * x ** 2) / np.sqrt(2 * np.pi), dx=0.1)
+        r = trapezoid(np.exp(-.5 * x ** 2) / np.sqrt(2 * np.pi), dx=0.1)
         # check integral of normal equals 1
         assert_almost_equal(r, 1, 7)
 
@@ -2191,19 +2197,19 @@ class TestTrapz:
         qz = (q * wz[None, None, :]).sum(axis=2)
 
         # n-d `x`
-        r = trapz(q, x=x[:, None, None], axis=0)
+        r = trapezoid(q, x=x[:, None, None], axis=0)
         assert_almost_equal(r, qx)
-        r = trapz(q, x=y[None,:, None], axis=1)
+        r = trapezoid(q, x=y[None, :, None], axis=1)
         assert_almost_equal(r, qy)
-        r = trapz(q, x=z[None, None,:], axis=2)
+        r = trapezoid(q, x=z[None, None, :], axis=2)
         assert_almost_equal(r, qz)
 
         # 1-d `x`
-        r = trapz(q, x=x, axis=0)
+        r = trapezoid(q, x=x, axis=0)
         assert_almost_equal(r, qx)
-        r = trapz(q, x=y, axis=1)
+        r = trapezoid(q, x=y, axis=1)
         assert_almost_equal(r, qy)
-        r = trapz(q, x=z, axis=2)
+        r = trapezoid(q, x=z, axis=2)
         assert_almost_equal(r, qz)
 
     def test_masked(self):
@@ -2214,13 +2220,13 @@ class TestTrapz:
         mask = x == 2
         ym = np.ma.array(y, mask=mask)
         r = 13.0  # sum(0.5 * (0 + 1) * 1.0 + 0.5 * (9 + 16))
-        assert_almost_equal(trapz(ym, x), r)
+        assert_almost_equal(trapezoid(ym, x), r)
 
         xm = np.ma.array(x, mask=mask)
-        assert_almost_equal(trapz(ym, xm), r)
+        assert_almost_equal(trapezoid(ym, xm), r)
 
         xm = np.ma.array(x, mask=mask)
-        assert_almost_equal(trapz(y, xm), r)
+        assert_almost_equal(trapezoid(y, xm), r)
 
 
 class TestSinc:
@@ -3685,6 +3691,10 @@ class TestQuantile:
         assert_equal(q, Fraction(7, 2))
         assert_equal(type(q), Fraction)
 
+        q = np.quantile(x, .5)
+        assert_equal(q, 1.75)
+        assert_equal(type(q), np.float64)
+
         q = np.quantile(x, Fraction(1, 2))
         assert_equal(q, Fraction(7, 4))
         assert_equal(type(q), Fraction)
@@ -3727,6 +3737,13 @@ class TestQuantile:
         res = np.quantile(np.array([1, 2], dtype=dtype), [0.5],
                           method="nearest")
         assert res.dtype == dtype
+
+    @pytest.mark.parametrize("method", quantile_methods)
+    def test_q_zero_one(self, method):
+        # gh-24710
+        arr = [10, 11, 12]
+        quantile = np.quantile(arr, q = [0, 1], method=method)
+        assert_equal(quantile,  np.array([10, 12]))
 
     @pytest.mark.parametrize("method", quantile_methods)
     def test_quantile_monotonic(self, method):
@@ -3962,6 +3979,13 @@ class TestQuantile:
         msg = "Only method 'inverted_cdf' supports weights"
         with pytest.raises(ValueError, match=msg):
             np.quantile(y, 0.5, weights=w, method=method)
+
+    def test_weibull_fraction(self):
+        arr = [Fraction(0, 1), Fraction(1, 10)]
+        quantile = np.quantile(arr, [0, ], method='weibull')
+        assert_equal(quantile, np.array(Fraction(0, 1)))
+        quantile = np.quantile(arr, [Fraction(1, 2)], method='weibull')
+        assert_equal(quantile, np.array(Fraction(1, 20)))
 
 
 class TestLerp:

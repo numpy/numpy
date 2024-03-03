@@ -807,10 +807,14 @@ add_newdoc('numpy._core.multiarray', 'array',
         a default ``dtype`` that can represent the values (by applying promotion
         rules when necessary.)
     copy : bool, optional
-        If true (default), then the object is copied.  Otherwise, a copy will
-        only be made if ``__array__`` returns a copy, if obj is a nested
-        sequence, or if a copy is needed to satisfy any of the other
-        requirements (``dtype``, ``order``, etc.).
+        If ``True`` (default), then the array data is copied. If ``None``,
+        a copy will only be made if ``__array__`` returns a copy, if obj is
+        a nested sequence, or if a copy is needed to satisfy any of the other
+        requirements (``dtype``, ``order``, etc.). Note that any copy of
+        the data is shallow, i.e., for arrays with object dtype, the new
+        array will point to the same objects. See Examples for `ndarray.copy`.
+        For ``False`` it raises a ``ValueError`` if a copy cannot be avoided.
+        Default: ``True``.
     order : {'K', 'A', 'C', 'F'}, optional
         Specify the memory layout of the array. If object is not an array, the
         newly created array will be in C order (row major) unless 'F' is
@@ -826,7 +830,7 @@ add_newdoc('numpy._core.multiarray', 'array',
         'F'   F order   F order
         ===== ========= ===================================================
 
-        When ``copy=False`` and a copy is made for other reasons, the result is
+        When ``copy=None`` and a copy is made for other reasons, the result is
         the same as if ``copy=True``, with some exceptions for 'A', see the
         Notes section. The default order is 'K'.
     subok : bool, optional
@@ -855,6 +859,7 @@ add_newdoc('numpy._core.multiarray', 'array',
     ones : Return a new array setting values to one.
     zeros : Return a new array setting values to zero.
     full : Return a new array of given shape filled with value.
+    copy: Return an array copy of the given object.
 
 
     Notes
@@ -912,7 +917,7 @@ add_newdoc('numpy._core.multiarray', 'array',
 
 add_newdoc('numpy._core.multiarray', 'asarray',
     """
-    asarray(a, dtype=None, order=None, *, device=None, like=None)
+    asarray(a, dtype=None, order=None, *, device=None, copy=None, like=None)
 
     Convert the input to an array.
 
@@ -936,6 +941,13 @@ add_newdoc('numpy._core.multiarray', 'asarray',
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
+    copy : bool, optional
+        If ``True``, then the object is copied. If ``None`` then the object is
+        copied only if needed, i.e. if ``__array__`` returns a copy, if obj
+        is a nested sequence, or if a copy is needed to satisfy any of
+        the other requirements (``dtype``, ``order``, etc.).
+        For ``False`` it raises a ``ValueError`` if a copy cannot be avoided.
+        Default: ``None``.
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -1226,13 +1238,13 @@ add_newdoc('numpy._core.multiarray', 'empty',
     zeros : Return a new array setting values to zero.
     full : Return a new array of given shape filled with value.
 
-
     Notes
     -----
-    `empty`, unlike `zeros`, does not set the array values to zero,
-    and may therefore be marginally faster.  On the other hand, it requires
-    the user to manually set all the values in the array, and should be
-    used with caution.
+    Unlike other array creation functions (e.g. `zeros`, `ones`, `full`),
+    `empty` does not initialize the values of the array, and may therefore be
+    marginally faster. However, the values stored in the newly allocated array
+    are arbitrary. For reproducible behavior, be sure to set each element of
+    the array before reading.
 
     Examples
     --------
@@ -2009,8 +2021,9 @@ add_newdoc('numpy._core.multiarray', 'c_einsum',
     identifier '->' as well as the list of output subscript labels.
     This feature increases the flexibility of the function since
     summing can be disabled or forced when required. The call
-    ``np.einsum('i->', a)`` is like :py:func:`np.sum(a, axis=-1) <numpy.sum>`,
-    and ``np.einsum('ii->i', a)`` is like :py:func:`np.diag(a) <numpy.diag>`.
+    ``np.einsum('i->', a)`` is like :py:func:`np.sum(a) <numpy.sum>`
+    if ``a`` is a 1-D array, and ``np.einsum('ii->i', a)``
+    is like :py:func:`np.diag(a) <numpy.diag>` if ``a`` is a square 2-D array.
     The difference is that `einsum` does not allow broadcasting by default.
     Additionally ``np.einsum('ij,jh->ih', a, b)`` directly specifies the
     order of the output subscript labels and therefore returns matrix
@@ -2019,6 +2032,8 @@ add_newdoc('numpy._core.multiarray', 'c_einsum',
     To enable and control broadcasting, use an ellipsis.  Default
     NumPy-style broadcasting is done by adding an ellipsis
     to the left of each term, like ``np.einsum('...ii->...i', a)``.
+    ``np.einsum('...i->...', a)`` is like 
+    :py:func:`np.sum(a, axis=-1) <numpy.sum>` for array ``a`` of any shape.
     To take the trace along the first and last axes,
     you can do ``np.einsum('i...i', a)``, or to do a matrix-matrix
     product with the left-most indices instead of rightmost, one can do
@@ -2928,11 +2943,15 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('mT',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__array__',
     """
-    a.__array__([dtype], /)
+    a.__array__([dtype], /, *, copy=None)
 
-    Returns either a new reference to self if dtype is not given or a new array
-    of provided data type if dtype is different from the current dtype of the
-    array.
+    For ``dtype`` parameter it returns either a new reference to self if
+    ``dtype`` is not given or a new array of provided data type if ``dtype``
+    is different from the current data type of the array.
+    For ``copy`` parameter it returns a new reference to self if
+    ``copy=False`` or ``copy=None`` and copying isn't enforced by ``dtype``
+    parameter. The method returns a new array for ``copy=True``, regardless of
+    ``dtype`` parameter.
 
     """))
 
@@ -3377,6 +3396,29 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('copy',
 
     >>> y.flags['C_CONTIGUOUS']
     True
+
+    For arrays containing Python objects (e.g. dtype=object),
+    the copy is a shallow one. The new array will contain the
+    same object which may lead to surprises if that object can
+    be modified (is mutable):
+
+    >>> a = np.array([1, 'm', [2, 3, 4]], dtype=object)
+    >>> b = a.copy()
+    >>> b[2][0] = 10
+    >>> a
+    array([1, 'm', list([10, 3, 4])], dtype=object)
+
+    To ensure all elements within an ``object`` array are copied,
+    use `copy.deepcopy`:
+
+    >>> import copy
+    >>> a = np.array([1, 'm', [2, 3, 4]], dtype=object)
+    >>> c = copy.deepcopy(a)
+    >>> c[2][0] = 10
+    >>> c
+    array([1, 'm', list([10, 3, 4])], dtype=object)
+    >>> a
+    array([1, 'm', list([2, 3, 4])], dtype=object)
 
     """))
 
@@ -4761,7 +4803,7 @@ add_newdoc('numpy._core._multiarray_umath', '_array_converter', ('as_arrays',
     subok : True or False, optional
         Whether array subclasses are preserved.
     pyscalars : {"convert", "preserve", "convert_if_no_array"}, optional
-        To allow NEP 50 weak promotion later, it may be desireable to preserve
+        To allow NEP 50 weak promotion later, it may be desirable to preserve
         Python scalars.  As default, these are preserved unless all inputs
         are Python scalars.  "convert" enforces an array return.
     """))
@@ -5151,9 +5193,10 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
         ufuncs do not currently raise an exception in this case, but will
         likely do so in the future.
     dtype : data-type code, optional
-        The type used to represent the intermediate results. Defaults
-        to the data-type of the output array if this is provided, or
-        the data-type of the input array if no output array is provided.
+        The data type used to perform the operation. Defaults to that of
+        ``out`` if given, and the data type of ``array`` otherwise (though
+        upcast to conserve precision for some cases, such as
+        ``numpy.add.reduce`` for integer or boolean input).
     out : ndarray, None, or tuple of ndarray and None, optional
         A location into which the result is stored. If not provided or None,
         a freshly-allocated array is returned. For consistency with
@@ -5350,9 +5393,10 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
     axis : int, optional
         The axis along which to apply the reduceat.
     dtype : data-type code, optional
-        The type used to represent the intermediate results. Defaults
-        to the data type of the output array if this is provided, or
-        the data type of the input array if no output array is provided.
+        The data type used to perform the operation. Defaults to that of
+        ``out`` if given, and the data type of ``array`` otherwise (though
+        upcast to conserve precision for some cases, such as
+        ``numpy.add.reduce`` for integer or boolean input).
     out : ndarray, None, or tuple of ndarray and None, optional
         A location into which the result is stored. If not provided or None,
         a freshly-allocated array is returned. For consistency with
@@ -5685,11 +5729,9 @@ add_newdoc('numpy._core', 'ufunc', ('_get_strided_loop',
         } ufunc_call_info;
 
     Note that the first call only fills in the ``context``.  The call to
-    ``_get_strided_loop`` fills in all other data.
-    Please see the ``numpy/experimental_dtype_api.h`` header for exact
-    call information; the main thing to note is that the new-style loops
-    return 0 on success, -1 on failure.  They are passed context as new
-    first input and ``auxdata`` as (replaced) last.
+    ``_get_strided_loop`` fills in all other data.  The main thing to note is
+    that the new-style loops return 0 on success, -1 on failure.  They are
+    passed context as new first input and ``auxdata`` as (replaced) last.
 
     Only the ``strided_loop``signature is considered guaranteed stable
     for NumPy bug-fix releases.  All other API is tied to the experimental
@@ -6889,4 +6931,53 @@ add_newdoc('numpy._core.numerictypes', 'character',
     """
     Abstract base class of all character string scalar types.
 
+    """)
+
+add_newdoc('numpy._core.multiarray', 'StringDType',
+    """
+    StringDType(*, na_object=np._NoValue, coerce=True)
+
+    Create a StringDType instance.
+
+    StringDType can be used to store UTF-8 encoded variable-width strings in
+    a NumPy array.
+
+    Parameters
+    ----------
+    na_object : object, optional
+        Object used to represent missing data. If unset, the array will not
+        use a missing data sentinel.
+    coerce : bool, optional
+        Whether or not items in an array-like passed to an array creation
+        function that are neither a str or str subtype should be coerced to
+        str. Defaults to True. If set to False, creating a StringDType
+        array from an array-like containing entries that are not already
+        strings will raise an error.
+
+    Examples
+    --------
+
+    >>> from numpy.dtypes import StringDType
+    >>> np.array(["hello", "world"], dtype=StringDType())
+    array(["hello", "world"], dtype=StringDType())
+
+    >>> arr = np.array(["hello", None, "world"],
+                       dtype=StringDType(na_object=None))
+    >>> arr
+    array(["hello", None, "world", dtype=StringDType(na_object=None))
+    >>> arr[1] is None
+    True
+
+    >>> arr = np.array(["hello", np.nan, "world"],
+                       dtype=StringDType(na_object=np.nan))
+    >>> np.isnan(arr)
+    array([False, True, False])
+
+    >>> np.array([1.2, object(), "hello world"],
+                 dtype=StringDType(coerce=True))
+    ValueError: StringDType only allows string data when string coercion
+    is disabled.
+
+    >>> np.array(["hello", "world"], dtype=StringDType(coerce=True))
+    array(["hello", "world"], dtype=StringDType(coerce=True))
     """)

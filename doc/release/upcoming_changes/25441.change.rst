@@ -1,7 +1,0 @@
-Change in how complex sign is calculated
-----------------------------------------
-Following the API Array standard, the complex sign is now calculated as
-``z / |z|`` (instead of the rather less logical case where the sign of
-the real part was taken, unless the real part was zero, in which case
-the sign of the imaginary part was returned).  Like for real numbers,
-zero is returned if ``z==0``.

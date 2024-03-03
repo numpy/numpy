@@ -1,7 +1,7 @@
 .. _routines.strings:
 
-String universal functions
-==========================
+String functionality
+====================
 
 .. currentmodule:: numpy.strings
 
@@ -17,6 +17,12 @@ For example
 These universal functions are also used in `numpy.char`, which provides
 the `numpy.char.chararray` array subclass, in order for those routines
 to get the performance benefits as well.
+
+.. note::
+
+   Prior to NumPy 2.0, all string functionality was in `numpy.char`, which
+   only operated on fixed-width strings. That module will not be getting
+   updates and will be deprecated at some point in the future.
 
 String operations
 -----------------
