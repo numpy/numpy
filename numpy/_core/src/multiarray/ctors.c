@@ -1421,7 +1421,7 @@ fail:
  *                       DType may be used, but is not enforced.
  * @param writeable whether the result must be writeable.
  * @param context Unused parameter, must be NULL (should be removed later).
- * @param never_copy Specifies that a copy is not allowed.
+ * @param copy Specifies the copy behavior.
  *
  * @returns The array object, Py_NotImplemented if op is not array-like,
  *          or NULL with an error set. (A new reference to Py_NotImplemented
@@ -1430,7 +1430,7 @@ fail:
 NPY_NO_EXPORT PyObject *
 _array_from_array_like(PyObject *op,
         PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context,
-        int never_copy) {
+        int copy) {
     PyObject* tmp;
 
     /*
@@ -1478,7 +1478,7 @@ _array_from_array_like(PyObject *op,
     }
 
     if (tmp == Py_NotImplemented) {
-        tmp = PyArray_FromArrayAttr_int(op, requested_dtype, never_copy);
+        tmp = PyArray_FromArrayAttr_int(op, requested_dtype, copy);
         if (tmp == NULL) {
             return NULL;
         }
@@ -1563,9 +1563,15 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         return NULL;
     }
 
-    ndim = PyArray_DiscoverDTypeAndShape(op,
-            NPY_MAXDIMS, dims, &cache, in_DType, in_descr, &dtype,
-            flags & NPY_ARRAY_ENSURENOCOPY);
+    // Default is copy = None
+    int copy = -1;
+
+    if (flags & NPY_ARRAY_ENSURENOCOPY) {
+        copy = 0;
+    }
+
+    ndim = PyArray_DiscoverDTypeAndShape(
+            op, NPY_MAXDIMS, dims, &cache, in_DType, in_descr, &dtype, copy);
 
     if (ndim < 0) {
         return NULL;
@@ -2408,15 +2414,16 @@ PyArray_FromInterface(PyObject *origin)
  * @param op The Python object to convert to an array.
  * @param descr The desired `arr.dtype`, passed into the `__array__` call,
  *        as information but is not checked/enforced!
- * @param never_copy Specifies that a copy is not allowed.
- *        NOTE: For false it passes `op.__array__(copy=None)`,
- *              for true: `op.__array__(copy=False)`.
+ * @param copy Specifies the copy behavior
+ *        NOTE: For copy == -1 it passes `op.__array__(copy=None)`,
+ *              for copy == 0, `op.__array__(copy=False)`, and
+ *              for copy == 1, `op.__array__(copy=True).
  * @returns NotImplemented if `__array__` is not defined or a NumPy array
  *          (or subclass).  On error, return NULL.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_FromArrayAttr_int(
-        PyObject *op, PyArray_Descr *descr, int never_copy)
+        PyObject *op, PyArray_Descr *descr, int copy)
 {
     PyObject *new;
     PyObject *array_meth;
@@ -2440,36 +2447,59 @@ PyArray_FromArrayAttr_int(
         return Py_NotImplemented;
     }
 
-    PyObject *copy = never_copy ? Py_False : Py_None;
     PyObject *kwargs = PyDict_New();
-    PyDict_SetItemString(kwargs, "copy", copy);
+
+    /*
+     * Only if the value of `copy` isn't the default one, we try to pass it
+     * along; for backwards compatibility we then retry if it fails because the
+     * signature of the __array__ method being called does not have `copy`.
+     */
+    int copy_passed = 0;
+    if (copy != -1) {
+        copy_passed = 1;
+        PyObject *copy_obj = copy == 1 ? Py_True : Py_False;
+        PyDict_SetItemString(kwargs, "copy", copy_obj);
+    }
     PyObject *args = descr != NULL ? PyTuple_Pack(1, descr) : PyTuple_New(0);
 
     new = PyObject_Call(array_meth, args, kwargs);
 
-    if (PyErr_Occurred()) {
+    if (new == NULL) {
+        PyObject *errmsg_substr = PyUnicode_FromString(
+                "__array__() got an unexpected keyword argument 'copy'");
+        if (errmsg_substr == NULL) {
+            return NULL;
+        }
         PyObject *type, *value, *traceback;
         PyErr_Fetch(&type, &value, &traceback);
-        if (PyUnicode_Check(value) && PyUnicode_CompareWithASCIIString(value,
-                    "__array__() got an unexpected keyword argument 'copy'") == 0) {
+        if (PyUnicode_Check(value) && PyUnicode_Contains(value, errmsg_substr) > 0) {
             Py_DECREF(type);
             Py_XDECREF(value);
             Py_XDECREF(traceback);
+            Py_DECREF(errmsg_substr);
             if (PyErr_WarnEx(PyExc_UserWarning,
                              "__array__ should implement 'dtype' and 'copy' keywords", 1) < 0) {
                 return NULL;
             }
-            Py_SETREF(new, PyObject_Call(array_meth, args, NULL));
+            if (copy_passed) { /* try again */
+                PyDict_DelItemString(kwargs, "copy");
+                new = PyObject_Call(array_meth, args, kwargs);
+                if (new == NULL) {
+                    Py_DECREF(kwargs);
+                    return NULL;
+                }
+            }
         } else {
             PyErr_Restore(type, value, traceback);
+            Py_DECREF(errmsg_substr);
+            Py_DECREF(kwargs);
             return NULL;
         }
     }
 
+    Py_DECREF(kwargs);
     Py_DECREF(array_meth);
-    if (new == NULL) {
-        return NULL;
-    }
+
     if (!PyArray_Check(new)) {
         PyErr_SetString(PyExc_ValueError,
                         "object __array__ method not "  \
