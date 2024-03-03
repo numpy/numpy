@@ -77,7 +77,7 @@ fromstr_next_element(char **s, void *dptr, PyArray_Descr *dtype,
                      const char *end)
 {
     char *e = *s;
-    int r = dtype->f->fromstr(*s, dptr, &e, dtype);
+    int r = PyDataType_GetArrFuncs(dtype)->fromstr(*s, dptr, &e, dtype);
     /*
      * fromstr always returns 0 for basic dtypes; s points to the end of the
      * parsed string. If s is not changed an error occurred or the end was
@@ -103,7 +103,7 @@ fromfile_next_element(FILE **fp, void *dptr, PyArray_Descr *dtype,
                       void *NPY_UNUSED(stream_data))
 {
     /* the NULL argument is for backwards-compatibility */
-    int r = dtype->f->scanfunc(*fp, dptr, NULL, dtype);
+    int r = PyDataType_GetArrFuncs(dtype)->scanfunc(*fp, dptr, NULL, dtype);
     /* r can be EOF or the number of items read (0 or 1) */
     if (r == 1) {
         return 0;
@@ -3041,7 +3041,7 @@ PyArray_Arange(double start, double stop, double step, int type_num)
     if (range == NULL) {
         return NULL;
     }
-    funcs = PyArray_DESCR(range)->f;
+    funcs = PyDataType_GetArrFuncs(PyArray_DESCR(range));
 
     /*
      * place start in the buffer and the next value in the second position
@@ -3262,7 +3262,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         swap = 0;
     }
 
-    funcs = native->f;
+    funcs = PyDataType_GetArrFuncs(native);
     if (!funcs->fill) {
         /* This effectively forbids subarray types as well... */
         PyErr_Format(PyExc_TypeError,
@@ -3584,7 +3584,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
         ret = array_fromfile_binary(fp, dtype, num, &nread);
     }
     else {
-        if (dtype->f->scanfunc == NULL) {
+        if (PyDataType_GetArrFuncs(dtype)->scanfunc == NULL) {
             PyErr_SetString(PyExc_ValueError,
                     "Unable to read character files of that array type");
             Py_DECREF(dtype);
@@ -3832,7 +3832,7 @@ PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
         size_t nread = 0;
         char *end;
 
-        if (dtype->f->fromstr == NULL) {
+        if (PyDataType_GetArrFuncs(dtype)->fromstr == NULL) {
             PyErr_SetString(PyExc_ValueError,
                             "don't know how to read "       \
                             "character strings with that "  \

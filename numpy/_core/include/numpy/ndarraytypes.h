@@ -542,6 +542,7 @@ typedef struct {
 
 } PyArray_ArrFuncs;
 
+
 /* The item must be reference counted when it is inserted or extracted. */
 #define NPY_ITEM_REFCOUNT   0x01
 /* Same as needing REFCOUNT */
@@ -615,11 +616,8 @@ typedef struct _PyArray_Descr {
          * if no fields are defined
          */
         PyObject *names;
-        /*
-         * a table of functions specific for each
-         * basic data descriptor
-         */
-        PyArray_ArrFuncs *f;
+         // TODO: Remove: still there to break all downstream nightlies once only
+        void *_former_f;
         /* Metadata about this dtype */
         PyObject *metadata;
         /*
@@ -1535,25 +1533,6 @@ PyArray_CHKFLAGS(const PyArrayObject *arr, int flags)
 {
     return (PyArray_FLAGS(arr) & flags) == flags;
 }
-
-static inline PyObject *
-PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
-{
-    return ((PyArrayObject_fields *)arr)->descr->f->getitem(
-                                        (void *)itemptr, (PyArrayObject *)arr);
-}
-
-/*
- * SETITEM should only be used if it is known that the value is a scalar
- * and of a type understood by the arrays dtype.
- * Use `PyArray_Pack` if the value may be of a different dtype.
- */
-static inline int
-PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
-{
-    return ((PyArrayObject_fields *)arr)->descr->f->setitem(v, itemptr, arr);
-}
-
 
 static inline PyArray_Descr *
 PyArray_DTYPE(const PyArrayObject *arr)
