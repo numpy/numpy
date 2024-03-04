@@ -716,6 +716,27 @@ class TestMethods:
         with pytest.raises(OverflowError, match="new string is too long"):
             np.strings.expandtabs(np.array("\ta\n\tb", dtype=dt), sys.maxsize)
 
+    def test_center_raises_multiple_character_fill(self, dt):
+        buf = np.array("abc", dtype=dt)
+        fill = np.array("**", dtype=dt)
+        with pytest.raises(TypeError,
+                match="The fill character must be exactly one character long"):
+            np.strings.center(buf, 10, fill)
+
+    def test_ljust_raises_multiple_character_fill(self, dt):
+        buf = np.array("abc", dtype=dt)
+        fill = np.array("**", dtype=dt)
+        with pytest.raises(TypeError,
+                match="The fill character must be exactly one character long"):
+            np.strings.ljust(buf, 10, fill)
+
+    def test_rjust_raises_multiple_character_fill(self, dt):
+        buf = np.array("abc", dtype=dt)
+        fill = np.array("**", dtype=dt)
+        with pytest.raises(TypeError,
+                match="The fill character must be exactly one character long"):
+            np.strings.rjust(buf, 10, fill)
+
 
 @pytest.mark.parametrize("dt", [
     "S",
@@ -942,6 +963,74 @@ class TestMethodsWithUnicodeWithoutStringDTypeSupport:
         fillchar = np.array(fillchar, dtype=dt)
         res = np.array(res, dtype=dt)
         assert_array_equal(np.strings.center(buf, width, fillchar), res)
+
+    @pytest.mark.parametrize("buf,width,fillchar,res", [
+        ('x', 2, '\U0010FFFF', 'x\U0010FFFF'),
+        ('x', 3, '\U0010FFFF', '\U0010FFFFx\U0010FFFF'),
+        ('x', 4, '\U0010FFFF', '\U0010FFFFx\U0010FFFF\U0010FFFF'),
+    ])
+    def test_center(self, buf, width, fillchar, res, dt):
+        buf = np.array(buf, dtype=dt)
+        fillchar = np.array(fillchar, dtype=dt)
+        res = np.array(res, dtype=dt)
+        assert_array_equal(np.strings.center(buf, width, fillchar), res)
+
+    @pytest.mark.parametrize("buf,width,fillchar,res", [
+        ('x', 2, '\U0010FFFF', 'x\U0010FFFF'),
+        ('x', 3, '\U0010FFFF', 'x\U0010FFFF\U0010FFFF'),
+        ('x', 4, '\U0010FFFF', 'x\U0010FFFF\U0010FFFF\U0010FFFF'),
+    ])
+    def test_ljust(self, buf, width, fillchar, res, dt):
+        buf = np.array(buf, dtype=dt)
+        fillchar = np.array(fillchar, dtype=dt)
+        res = np.array(res, dtype=dt)
+        assert_array_equal(np.strings.ljust(buf, width, fillchar), res)
+
+    @pytest.mark.parametrize("buf,width,fillchar,res", [
+        ('x', 2, '\U0010FFFF', '\U0010FFFFx'),
+        ('x', 3, '\U0010FFFF', '\U0010FFFF\U0010FFFFx'),
+        ('x', 4, '\U0010FFFF', '\U0010FFFF\U0010FFFF\U0010FFFFx'),
+    ])
+    def test_rjust(self, buf, width, fillchar, res, dt):
+        buf = np.array(buf, dtype=dt)
+        fillchar = np.array(fillchar, dtype=dt)
+        res = np.array(res, dtype=dt)
+        assert_array_equal(np.strings.rjust(buf, width, fillchar), res)
+
+
+class TestMixedTypeMethods:
+    def test_center(self):
+        u = np.array("😊", dtype="U")
+        s = np.array("*", dtype="S")
+        res = np.array("*😊*", dtype="U")
+        assert_array_equal(np.strings.center(u, 3, s), res)
+
+        u = np.array("*", dtype="U")
+        s = np.array("s", dtype="S")
+        res = np.array("*s*", dtype="S")
+        assert_array_equal(np.strings.center(s, 3, u), res)
+
+    def test_ljust(self):
+        u = np.array("😊", dtype="U")
+        s = np.array("*", dtype="S")
+        res = np.array("😊**", dtype="U")
+        assert_array_equal(np.strings.ljust(u, 3, s), res)
+
+        u = np.array("*", dtype="U")
+        s = np.array("s", dtype="S")
+        res = np.array("s**", dtype="S")
+        assert_array_equal(np.strings.ljust(s, 3, u), res)
+
+    def test_rjust(self):
+        u = np.array("😊", dtype="U")
+        s = np.array("*", dtype="S")
+        res = np.array("**😊", dtype="U")
+        assert_array_equal(np.strings.rjust(u, 3, s), res)
+
+        u = np.array("*", dtype="U")
+        s = np.array("s", dtype="S")
+        res = np.array("**s", dtype="S")
+        assert_array_equal(np.strings.rjust(s, 3, u), res)
 
 
 class TestUnicodeOnlyMethodsRaiseWithBytes:

@@ -590,8 +590,7 @@ def center(a, width, fillchar=' '):
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input
-        types
+        Output array of str or unicode, depending on the type of ``a``
 
     See Also
     --------
@@ -599,8 +598,9 @@ def center(a, width, fillchar=' '):
 
     Notes
     -----
-    This function is intended to work with arrays of strings.  The
-    fill character is not applied to numeric types.
+    While it is possible for ``a`` and ``fillchar`` to have different dtypes,
+    passing a non-ASCII character in ``fillchar`` when ``a`` is of dtype "S",
+    will result in silent errors (resulting buffer might have wrong data).
 
     Examples
     --------
@@ -616,14 +616,18 @@ def center(a, width, fillchar=' '):
     """
     a = np.asanyarray(a)
     width = np.maximum(str_len(a), width)
-    fillchar = np.asanyarray(fillchar, dtype=f"{a.dtype.char}1")
 
+    fillchar = np.asanyarray(fillchar)
+    if np.any(str_len(fillchar) != 1):
+        raise TypeError(
+            "The fill character must be exactly one character long")
+
+    shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     if a.dtype.char == "T":
-        shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
         out = np.empty_like(a, shape=shape)
     else:
         out_dtype = f"{a.dtype.char}{width.max()}"
-        out = np.empty_like(a, shape=a.shape, dtype=out_dtype)
+        out = np.empty_like(a, shape=shape, dtype=out_dtype)
     return _center(a, width, fillchar, out=out)
 
 
@@ -650,6 +654,12 @@ def ljust(a, width, fillchar=' '):
     --------
     str.ljust
 
+    Notes
+    -----
+    While it is possible for ``a`` and ``fillchar`` to have different dtypes,
+    passing a non-ASCII character in ``fillchar`` when ``a`` is of dtype "S",
+    will result in silent errors (resulting buffer might have wrong data).
+
     Examples
     --------
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
@@ -661,14 +671,18 @@ def ljust(a, width, fillchar=' '):
     """
     a = np.asanyarray(a)
     width = np.maximum(str_len(a), width)
-    fillchar = np.asanyarray(fillchar)
 
+    fillchar = np.asanyarray(fillchar)
+    if np.any(str_len(fillchar) != 1):
+        raise TypeError(
+            "The fill character must be exactly one character long")
+
+    shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     if a.dtype.char == "T":
-        shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
         out = np.empty_like(a, shape=shape)
     else:
         out_dtype = f"{a.dtype.char}{width.max()}"
-        out = np.empty_like(a, shape=a.shape, dtype=out_dtype)
+        out = np.empty_like(a, shape=shape, dtype=out_dtype)
     return _ljust(a, width, fillchar, out=out)
 
 
@@ -695,6 +709,12 @@ def rjust(a, width, fillchar=' '):
     --------
     str.rjust
 
+    Notes
+    -----
+    While it is possible for ``a`` and ``fillchar`` to have different dtypes,
+    passing a non-ASCII character in ``fillchar`` when ``a`` is of dtype "S",
+    will result in silent errors (resulting buffer might have wrong data).
+
     Examples
     --------
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
@@ -706,14 +726,18 @@ def rjust(a, width, fillchar=' '):
     """
     a = np.asanyarray(a)
     width = np.maximum(str_len(a), width)
-    fillchar = np.asanyarray(fillchar)
 
+    fillchar = np.asanyarray(fillchar)
+    if np.any(str_len(fillchar) != 1):
+        raise TypeError(
+            "The fill character must be exactly one character long")
+
+    shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     if a.dtype.char == "T":
-        shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
         out = np.empty_like(a, shape=shape)
     else:
         out_dtype = f"{a.dtype.char}{width.max()}"
-        out = np.empty_like(a, shape=a.shape, dtype=out_dtype)
+        out = np.empty_like(a, shape=shape, dtype=out_dtype)
     return _rjust(a, width, fillchar, out=out)
 
 
@@ -748,12 +772,12 @@ def zfill(a, width):
     a = np.asanyarray(a)
     width = np.maximum(str_len(a), width)
 
+    shape = np.broadcast_shapes(a.shape, width.shape)
     if a.dtype.char == "T":
-        shape = np.broadcast_shapes(a.shape, width.shape)
         out = np.empty_like(a, shape=shape)
     else:
         out_dtype = f"{a.dtype.char}{width.max()}"
-        out = np.empty_like(a, shape=a.shape, dtype=out_dtype)
+        out = np.empty_like(a, shape=shape, dtype=out_dtype)
     return _zfill(a, width, out=out)
 
 

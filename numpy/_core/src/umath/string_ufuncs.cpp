@@ -507,7 +507,7 @@ string_expandtabs_loop(PyArrayMethod_Context *context,
 }
 
 
-template <ENCODING enc>
+template <ENCODING bufferenc, ENCODING fillenc>
 static int
 string_center_ljust_rjust_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
@@ -526,9 +526,9 @@ string_center_ljust_rjust_loop(PyArrayMethod_Context *context,
     npy_intp N = dimensions[0];
 
     while (N--) {
-        Buffer<enc> buf(in1, elsize1);
-        Buffer<enc> fill(in3, elsize3);
-        Buffer<enc> outbuf(out, outsize);
+        Buffer<bufferenc> buf(in1, elsize1);
+        Buffer<fillenc> fill(in3, elsize3);
+        Buffer<bufferenc> outbuf(out, outsize);
         size_t len = string_pad(buf, *(npy_int64 *)in2, *fill, pos, outbuf);
         if (len < 0) {
             return -1;
@@ -1160,6 +1160,67 @@ init_ufunc(PyObject *umath, const char *name, int nin, int nout,
 }
 
 
+/*
+ * This is a variant of init_ufunc that allows for mixed string dtypes
+ * in its parameters. Instead of having NPY_OBJECT be a sentinel for a
+ * fixed dtype, here the typenums are always the correct ones.
+ */
+static int
+init_mixed_type_ufunc(PyObject *umath, const char *name, int nin, int nout,
+           NPY_TYPES *typenums, PyArrayMethod_StridedLoop loop,
+           PyArrayMethod_ResolveDescriptors resolve_descriptors,
+           void *static_data)
+{
+    int res = -1;
+
+    PyArray_DTypeMeta **dtypes = (PyArray_DTypeMeta **) PyMem_Malloc(
+        (nin + nout) * sizeof(PyArray_DTypeMeta *));
+    if (dtypes == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    for (int i = 0; i < nin+nout; i++) {
+        dtypes[i] = PyArray_DTypeFromTypeNum(typenums[i]);
+    }
+
+    PyType_Slot slots[4];
+    slots[0] = {NPY_METH_strided_loop, nullptr};
+    slots[1] = {_NPY_METH_static_data, static_data};
+    slots[3] = {0, nullptr};
+    if (resolve_descriptors != NULL) {
+        slots[2] = {NPY_METH_resolve_descriptors, (void *) resolve_descriptors};
+    }
+    else {
+        slots[2] = {0, nullptr};
+    }
+
+    char loop_name[256] = {0};
+    snprintf(loop_name, sizeof(loop_name), "templated_string_%s", name);
+
+    PyArrayMethod_Spec spec = {};
+    spec.name = loop_name;
+    spec.nin = nin;
+    spec.nout = nout;
+    spec.dtypes = dtypes;
+    spec.slots = slots;
+    spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+
+    if (add_loop(umath, name, &spec, loop) < 0) {
+        goto finish;
+    }
+
+    res = 0;
+  finish:
+    for (int i = 0; i < nin+nout; i++) {
+        Py_DECREF(dtypes[i]);
+    }
+    PyMem_Free((void *) dtypes);
+    return res;
+}
+
+
+
 NPY_NO_EXPORT int
 init_string_ufuncs(PyObject *umath)
 {
@@ -1458,7 +1519,6 @@ init_string_ufuncs(PyObject *umath)
         return -1;
     }
 
-    dtypes[0] = dtypes[2] = dtypes[3] = NPY_OBJECT;
     dtypes[1] = NPY_INT64;
 
     const char *center_ljust_rjust_names[] = {
@@ -1470,16 +1530,42 @@ init_string_ufuncs(PyObject *umath)
     };
 
     for (int i = 0; i < 3; i++) {
-        if (init_ufunc(
-                umath, center_ljust_rjust_names[i], 3, 1, dtypes, ENCODING::ASCII,
-                string_center_ljust_rjust_loop<ENCODING::ASCII>,
+        dtypes[0] = NPY_STRING;
+        dtypes[2] = NPY_STRING;
+        dtypes[3] = NPY_STRING;
+        if (init_mixed_type_ufunc(
+                umath, center_ljust_rjust_names[i], 3, 1, dtypes,
+                string_center_ljust_rjust_loop<ENCODING::ASCII, ENCODING::ASCII>,
                 string_center_ljust_rjust_resolve_descriptors,
                 &padpositions[i]) < 0) {
             return -1;
         }
-        if (init_ufunc(
-                umath, center_ljust_rjust_names[i], 3, 1, dtypes, ENCODING::UTF32,
-                string_center_ljust_rjust_loop<ENCODING::UTF32>,
+        dtypes[0] = NPY_STRING;
+        dtypes[2] = NPY_UNICODE;
+        dtypes[3] = NPY_STRING;
+        if (init_mixed_type_ufunc(
+                umath, center_ljust_rjust_names[i], 3, 1, dtypes,
+                string_center_ljust_rjust_loop<ENCODING::ASCII, ENCODING::UTF32>,
+                string_center_ljust_rjust_resolve_descriptors,
+                &padpositions[i]) < 0) {
+            return -1;
+        }
+        dtypes[0] = NPY_UNICODE;
+        dtypes[2] = NPY_UNICODE;
+        dtypes[3] = NPY_UNICODE;
+        if (init_mixed_type_ufunc(
+                umath, center_ljust_rjust_names[i], 3, 1, dtypes,
+                string_center_ljust_rjust_loop<ENCODING::UTF32, ENCODING::UTF32>,
+                string_center_ljust_rjust_resolve_descriptors,
+                &padpositions[i]) < 0) {
+            return -1;
+        }
+        dtypes[0] = NPY_UNICODE;
+        dtypes[2] = NPY_STRING;
+        dtypes[3] = NPY_UNICODE;
+        if (init_mixed_type_ufunc(
+                umath, center_ljust_rjust_names[i], 3, 1, dtypes,
+                string_center_ljust_rjust_loop<ENCODING::UTF32, ENCODING::ASCII>,
                 string_center_ljust_rjust_resolve_descriptors,
                 &padpositions[i]) < 0) {
             return -1;
