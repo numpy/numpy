@@ -373,7 +373,7 @@ get_fields_traverse_function(
         field++;
     }
 
-    *out_func = (void *)&traverse_fields_function;
+    *out_func = (PyArrayMethod_TraverseLoop *)&traverse_fields_function;
     *out_auxdata = (NpyAuxData *)data;
 
     return 0;
@@ -640,7 +640,7 @@ npy_get_zerofill_void_and_legacy_user_dtype_loop(
          * Traversal skips fields that have no custom zeroing, so we need
          * to take care of it.
          */
-        *out_func = (void *)&zerofill_fields_function;
+        *out_func = (PyArrayMethod_TraverseLoop *)&zerofill_fields_function;
         return 0;
     }
 

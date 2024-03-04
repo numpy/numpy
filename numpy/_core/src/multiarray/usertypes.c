@@ -317,11 +317,11 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
     }
     if (use_void_clearimpl) {
         /* See comment where use_void_clearimpl is set... */
-        NPY_DT_SLOTS(NPY_DTYPE(descr))->get_clear_loop = (void *)(
-                &npy_get_clear_void_and_legacy_user_dtype_loop);
+        NPY_DT_SLOTS(NPY_DTYPE(descr))->get_clear_loop = (
+                (PyArrayMethod_GetTraverseLoop *)&npy_get_clear_void_and_legacy_user_dtype_loop);
         /* Also use the void zerofill since there may be objects */
-        NPY_DT_SLOTS(NPY_DTYPE(descr))->get_clear_loop = (void *)(
-                &npy_get_zerofill_void_and_legacy_user_dtype_loop);
+        NPY_DT_SLOTS(NPY_DTYPE(descr))->get_clear_loop = (
+                (PyArrayMethod_GetTraverseLoop *)&npy_get_zerofill_void_and_legacy_user_dtype_loop);
     }
 
     return typenum;

@@ -1207,12 +1207,12 @@ dtypemeta_wrap_legacy_descriptor(_PyArray_LegacyDescr *descr,
             dt_slots->default_descr = void_default_descr;
             dt_slots->discover_descr_from_pyobject = (
                     void_discover_descr_from_pyobject);
-            dt_slots->common_instance = (void *)void_common_instance;
-            dt_slots->ensure_canonical = (void *)void_ensure_canonical;
+            dt_slots->common_instance = (PyArrayDTypeMeta_CommonInstance *)void_common_instance;
+            dt_slots->ensure_canonical = (PyArrayDTypeMeta_EnsureCanonical *)void_ensure_canonical;
             dt_slots->get_fill_zero_loop =
-                    (void *)npy_get_zerofill_void_and_legacy_user_dtype_loop;
+                    (PyArrayMethod_GetTraverseLoop *)npy_get_zerofill_void_and_legacy_user_dtype_loop;
             dt_slots->get_clear_loop =
-                    (void *)npy_get_clear_void_and_legacy_user_dtype_loop;
+                    (PyArrayMethod_GetTraverseLoop *)npy_get_clear_void_and_legacy_user_dtype_loop;
         }
         else {
             dt_slots->default_descr = string_and_unicode_default_descr;
