@@ -1,7 +1,0 @@
-Metadata and structured dtype information access through functions
-------------------------------------------------------------------
-The dtype structures fields ``metadata``, ``c_metadata``, ``names``,
-``fields``, and ``subarray`` must now be accessed through new
-functions following the same names, such as ``PyDataType_METADATA``.
-Direct access of the fields is not valid as they do not exist for
-all ``PyArray_Descr`` instances.

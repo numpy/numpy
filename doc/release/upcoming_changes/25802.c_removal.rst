@@ -1,2 +1,0 @@
-* ``PyDataType_GetDatetimeMetaData`` has been removed, it did not actually
-  do anything since at least NumPy 1.7.

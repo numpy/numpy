@@ -407,6 +407,17 @@ to adapt your code and achieve compatibility with both 1.x and 2.x.
 (`gh-25792 <https://github.com/numpy/numpy/pull/25792>`__)
 
 
+Structured dtype information access through functions
+-----------------------------------------------------
+The dtype structures fields `c_metadata``, ``names``,
+``fields``, and ``subarray`` must now be accessed through new
+functions following the same names, such as ``PyDataType_NAMES``.
+Direct access of the fields is not valid as they do not exist for
+all ``PyArray_Descr`` instances.
+The ``metadata`` field is kept, but the macro version should also be preferred.
+
+(`gh-25802 <https://github.com/numpy/numpy/pull/25802>`__)
+
 NumPy 2.0 C API removals
 ========================
 
@@ -486,6 +497,12 @@ NumPy 2.0 C API removals
   strings.
 
   (`gh-25292 <https://github.com/numpy/numpy/pull/25292>`__)
+
+
+* ``PyDataType_GetDatetimeMetaData`` has been removed, it did not actually
+  do anything since at least NumPy 1.7.
+
+  (`gh-25802 <https://github.com/numpy/numpy/pull/25802>`__)
 
 ``PyArray_GetCastFunc`` was removed
 -----------------------------------
