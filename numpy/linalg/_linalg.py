@@ -333,7 +333,9 @@ def solve(a, b):
     Returns
     -------
     x : {(..., M,), (..., M, K)} ndarray
-        Solution to the system a x = b.  Returned shape is identical to `b`.
+        Solution to the system a x = b.  Returned shape is (..., M) is b is
+        shape (M,) and (..., M, K) if b is (..., M, K), where the "..." part is
+        broadcasted between a and b.
 
     Raises
     ------
