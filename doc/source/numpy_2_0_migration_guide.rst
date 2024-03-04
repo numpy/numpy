@@ -125,6 +125,25 @@ case you need to pass ``NPY_RAVEL_AXIS`` instead of ``NPY_MAXDIMS``.
 ``NPY_RAVEL_AXIS`` is defined in the ``npy_2_compat.h`` header and runtime
 dependent (mapping to 32 on NumPy 1.x and ``-2147483648`` on NumPy 2.x).
 
+Complex types - Underlying type changes
+---------------------------------------
+
+The underlying C types for all of the complex types have been changed to use
+native C99 types. While the memory layout of those types remains identical
+to the types used in NumPy 1.x, the API is slightly different, since direct
+field access (like ``c.real`` or ``c.imag``) is no longer possible.
+
+It is recommended to use the functions `npy_creal` and `npy_cimag` (and the
+corresponding float and long double variants) to retrieve
+the real or imaginary part of a complex number, as these will work with both
+NumPy 1.x and with NumPy 2.x. New functions `npy_csetreal` and `npy_csetimag`,
+along with compatibility macros `NPY_CSETREAL` and `NPY_CSETIMAG` (and the
+corresponding float and long double variants), have been
+added for setting the real or imaginary part.
+
+The underlying type remains a struct under C++ (all of the above still remains
+valid).
+
 
 Namespace changes
 =================
