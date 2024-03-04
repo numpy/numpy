@@ -190,7 +190,7 @@ class TestNonarrayArgs:
 
     @pytest.mark.parametrize('val, ndigits', [
         pytest.param(2**31 - 1, -1,
-            marks=pytest.mark.xfail(reason="Out of range of int32")
+            marks=pytest.mark.skip(reason="Out of range of int32")
         ),
         (2**31 - 1, 1-math.ceil(math.log10(2**31 - 1))),
         (2**31 - 1, -math.ceil(math.log10(2**31 - 1)))
