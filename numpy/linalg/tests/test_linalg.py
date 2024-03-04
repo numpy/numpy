@@ -250,6 +250,8 @@ def _make_generalized_cases():
         a = np.array([case.a, 2 * case.a, 3 * case.a])
         if case.b is None:
             b = None
+        elif case.b.ndim == 1:
+            b = case.b
         else:
             b = np.array([case.b, 7 * case.b, 6 * case.b])
         new_case = LinalgCase(case.name + "_tile3", a, b,
@@ -259,6 +261,8 @@ def _make_generalized_cases():
         a = np.array([case.a] * 2 * 3).reshape((3, 2) + case.a.shape)
         if case.b is None:
             b = None
+        elif case.b.ndim == 1:
+            b = np.array([case.b] * 2 * 3 * a.shape[-1]).reshape((3, 2) + case.a.shape[-2:])
         else:
             b = np.array([case.b] * 2 * 3).reshape((3, 2) + case.b.shape)
         new_case = LinalgCase(case.name + "_tile213", a, b,
@@ -432,25 +436,6 @@ class HermitianGeneralizedTestCase(LinalgTestCase):
                          exclude={'none'})
 
 
-def dot_generalized(a, b):
-    a = asarray(a)
-    if a.ndim >= 3:
-        if a.ndim == b.ndim:
-            # matrix x matrix
-            new_shape = a.shape[:-1] + b.shape[-1:]
-        elif a.ndim == b.ndim + 1:
-            # matrix x vector
-            new_shape = a.shape[:-1]
-        else:
-            raise ValueError("Not implemented...")
-        r = np.empty(new_shape, dtype=np.common_type(a, b))
-        for c in itertools.product(*map(range, a.shape[:-2])):
-            r[c] = dot(a[c], b[c])
-        return r
-    else:
-        return dot(a, b)
-
-
 def identity_like_generalized(a):
     a = asarray(a)
     if a.ndim >= 3:
@@ -465,7 +450,14 @@ class SolveCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
     # kept apart from TestSolve for use for testing with matrices.
     def do(self, a, b, tags):
         x = linalg.solve(a, b)
-        assert_almost_equal(b, dot_generalized(a, x))
+        if np.array(b).ndim == 1:
+            # When a is (..., M, M) and b is (M,), it is the same as when b is
+            # (M, 1), except the result has shape (..., M)
+            adotx = matmul(a, x[..., None])[..., 0]
+            assert_almost_equal(np.broadcast_to(b, adotx.shape), adotx)
+        else:
+            adotx = matmul(a, x)
+            assert_almost_equal(b, adotx)
         assert_(consistent_subclass(x, b))
 
 
@@ -548,7 +540,7 @@ class InvCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
     def do(self, a, b, tags):
         a_inv = linalg.inv(a)
-        assert_almost_equal(dot_generalized(a, a_inv),
+        assert_almost_equal(matmul(a, a_inv),
                             identity_like_generalized(a))
         assert_(consistent_subclass(a_inv, a))
 
@@ -616,7 +608,7 @@ class EigCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
     def do(self, a, b, tags):
         res = linalg.eig(a)
         eigenvalues, eigenvectors = res.eigenvalues, res.eigenvectors
-        assert_allclose(dot_generalized(a, eigenvectors),
+        assert_allclose(matmul(a, eigenvectors),
                         np.asarray(eigenvectors) * np.asarray(eigenvalues)[..., None, :],
                         rtol=get_rtol(eigenvalues.dtype))
         assert_(consistent_subclass(eigenvectors, a))
@@ -677,7 +669,7 @@ class SVDCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
     def do(self, a, b, tags):
         u, s, vt = linalg.svd(a, False)
-        assert_allclose(a, dot_generalized(np.asarray(u) * np.asarray(s)[..., None, :],
+        assert_allclose(a, matmul(np.asarray(u) * np.asarray(s)[..., None, :],
                                            np.asarray(vt)),
                         rtol=get_rtol(u.dtype))
         assert_(consistent_subclass(u, a))
@@ -710,7 +702,7 @@ class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
 
     def do(self, a, b, tags):
         u, s, vt = linalg.svd(a, False, hermitian=True)
-        assert_allclose(a, dot_generalized(np.asarray(u) * np.asarray(s)[..., None, :],
+        assert_allclose(a, matmul(np.asarray(u) * np.asarray(s)[..., None, :],
                                            np.asarray(vt)),
                         rtol=get_rtol(u.dtype))
         def hermitian(mat):
@@ -850,7 +842,7 @@ class PinvCases(LinalgSquareTestCase,
     def do(self, a, b, tags):
         a_ginv = linalg.pinv(a)
         # `a @ a_ginv == I` does not hold if a is singular
-        dot = dot_generalized
+        dot = matmul
         assert_almost_equal(dot(dot(a, a_ginv), a), a, single_decimal=5, double_decimal=11)
         assert_(consistent_subclass(a_ginv, a))
 
@@ -864,7 +856,7 @@ class PinvHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
     def do(self, a, b, tags):
         a_ginv = linalg.pinv(a, hermitian=True)
         # `a @ a_ginv == I` does not hold if a is singular
-        dot = dot_generalized
+        dot = matmul
         assert_almost_equal(dot(dot(a, a_ginv), a), a, single_decimal=5, double_decimal=11)
         assert_(consistent_subclass(a_ginv, a))
 
@@ -1195,14 +1187,14 @@ class TestEighCases(HermitianTestCase, HermitianGeneralizedTestCase):
         evalues.sort(axis=-1)
         assert_almost_equal(ev, evalues)
 
-        assert_allclose(dot_generalized(a, evc),
+        assert_allclose(matmul(a, evc),
                         np.asarray(ev)[..., None, :] * np.asarray(evc),
                         rtol=get_rtol(ev.dtype))
 
         ev2, evc2 = linalg.eigh(a, 'U')
         assert_almost_equal(ev2, evalues)
 
-        assert_allclose(dot_generalized(a, evc2),
+        assert_allclose(matmul(a, evc2),
                         np.asarray(ev2)[..., None, :] * np.asarray(evc2),
                         rtol=get_rtol(ev.dtype), err_msg=repr(a))
 
