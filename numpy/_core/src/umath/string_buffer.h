@@ -1511,9 +1511,14 @@ enum class JUSTPOSITION {
 
 template <ENCODING enc>
 static inline npy_intp
-string_pad(Buffer<enc> buf, npy_int64 width, Buffer<enc> fill, JUSTPOSITION pos, Buffer<enc> out)
+string_pad(Buffer<enc> buf, npy_int64 width, npy_ucs4 fill, JUSTPOSITION pos, Buffer<enc> out)
 {
     size_t finalwidth = width > 0 ? width : 0;
+    if (finalwidth > PY_SSIZE_T_MAX) {
+        npy_gil_error(PyExc_OverflowError, "padded string is too long");
+        return -1;
+    }
+
     size_t len = buf.num_codepoints();
     if (len >= finalwidth) {
         buf.buffer_memcpy(out, len);
@@ -1537,19 +1542,15 @@ string_pad(Buffer<enc> buf, npy_int64 width, Buffer<enc> fill, JUSTPOSITION pos,
     }
 
     assert(left >= 0 || right >= 0);
-
-    if (left > PY_SSIZE_T_MAX - len || right > PY_SSIZE_T_MAX - (left + len)) {
-        npy_gil_error(PyExc_OverflowError, "padded string is too long");
-        return -1;
-    }
+    assert(left <= PY_SSIZE_T_MAX - len && right <= PY_SSIZE_T_MAX - (left + len));
 
     if (left > 0) {
-        out += out.buffer_memset(*fill, left);
+        out += out.buffer_memset(fill, left);
     }
     buf.buffer_memcpy(out, len);
     out += len;
     if (right > 0) {
-        out.buffer_memset(*fill, right);
+        out.buffer_memset(fill, right);
     }
     return finalwidth;
 }
@@ -1562,9 +1563,7 @@ string_zfill(Buffer<enc> buf, npy_int64 width, Buffer<enc> out)
     size_t finalwidth = width > 0 ? width : 0;
 
     npy_ucs4 fill = '0';
-    Buffer<enc> fillchar(&fill, 4);  // max codepoint size is 4 bytes
-
-    npy_intp new_len = string_pad(buf, width, fillchar, JUSTPOSITION::RIGHT, out);
+    npy_intp new_len = string_pad(buf, width, fill, JUSTPOSITION::RIGHT, out);
     if (new_len == -1) {
         return -1;
     }

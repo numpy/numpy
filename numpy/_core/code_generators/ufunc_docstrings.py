@@ -4896,7 +4896,7 @@ add_newdoc('numpy._core.umath', '_center',
     x1 : array_like, with `np.bytes_` or `np.str_` dtype
 
     x2 : array_like, with any integer dtype
-        The length of the resulting strings
+        The length of the resulting strings, unless ``width < str_len(a)``.
     x3 : array_like, with `np.bytes_` or `np.str_` dtype
         The padding character to use.
         $PARAMS
@@ -4921,7 +4921,7 @@ add_newdoc('numpy._core.umath', '_center',
     >>> np.strings.center(c, width=9, fillchar='*')
     array(['***a1b2**', '***1b2a**', '***b2a1**', '***2a1b**'], dtype='<U9')
     >>> np.strings.center(c, width=1)
-    array(['a', '1', 'b', '2'], dtype='<U1')
+    array(['a1b2', '1b2a', 'b2a1', '2a1b'], dtype='<U4')
 
     """)
 
@@ -4935,7 +4935,7 @@ add_newdoc('numpy._core.umath', '_ljust',
     x1 : array_like, with `np.bytes_` or `np.str_` dtype
 
     x2 : array_like, with any integer dtype
-        The length of the resulting strings
+        The length of the resulting strings, unless ``width < str_len(a)``.
     x3 : array_like, with `np.bytes_` or `np.str_` dtype
         The padding character to use.
         $PARAMS
@@ -4954,7 +4954,9 @@ add_newdoc('numpy._core.umath', '_ljust',
     --------
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.ljust(c, width=3)
-    array(['aAa', '  a', 'abB'], dtype='<U3')
+    array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
+    >>> np.strings.ljust(c, width=9)
+    array(['aAaAaA   ', '  aA     ', 'abBABba  '], dtype='<U9')
 
     """)
 
@@ -4968,7 +4970,7 @@ add_newdoc('numpy._core.umath', '_rjust',
     x1 : array_like, with `np.bytes_` or `np.str_` dtype
 
     x2 : array_like, with any integer dtype
-        The length of the resulting strings
+        The length of the resulting strings, unless ``width < str_len(a)``.
     x3 : array_like, with `np.bytes_` or `np.str_` dtype
         The padding character to use.
         $PARAMS
@@ -4985,9 +4987,11 @@ add_newdoc('numpy._core.umath', '_rjust',
 
     Examples
     --------
-    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+>>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.rjust(a, width=3)
-    array(['aAa', '  a', 'abB'], dtype='<U3')
+    array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
+    >>> np.strings.rjust(a, width=9)
+    array(['   aAaAaA', '     aA  ', '  abBABba'], dtype='<U9')
 
     """)
 
@@ -5017,9 +5021,7 @@ add_newdoc('numpy._core.umath', '_zfill',
 
     Examples
     --------
-    >>> np.strings.zfill('1', 3)
-    array('001', dtype='<U3')
-    >>> np.strings.zfill('-1', 3)
-    array('-01', dtype='<U3')
+    >>> np.strings.zfill(['1', '-1', '+1'], 3)
+    array(['001', '-01', '+01'], dtype='<U3')
 
     """)

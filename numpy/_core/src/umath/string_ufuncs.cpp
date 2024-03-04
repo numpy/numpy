@@ -529,7 +529,7 @@ string_center_ljust_rjust_loop(PyArrayMethod_Context *context,
         Buffer<enc> buf(in1, elsize1);
         Buffer<enc> fill(in3, elsize3);
         Buffer<enc> outbuf(out, outsize);
-        size_t len = string_pad(buf, *(npy_int64 *)in2, fill, pos, outbuf);
+        size_t len = string_pad(buf, *(npy_int64 *)in2, *fill, pos, outbuf);
         if (len < 0) {
             return -1;
         }

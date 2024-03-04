@@ -583,7 +583,7 @@ def center(a, width, fillchar=' '):
     a : array_like, with `np.bytes_` or `np.str_` dtype
 
     width : array_like, with any integer dtype
-        The length of the resulting strings
+        The length of the resulting strings, unless ``width < str_len(a)``.
     fillchar : array_like, with `np.bytes_` or `np.str_` dtype, optional
         The padding character to use (default is space).
 
@@ -596,7 +596,7 @@ def center(a, width, fillchar=' '):
     See Also
     --------
     str.center
-    
+
     Notes
     -----
     This function is intended to work with arrays of strings.  The
@@ -611,7 +611,7 @@ def center(a, width, fillchar=' '):
     >>> np.strings.center(c, width=9, fillchar='*')
     array(['***a1b2**', '***1b2a**', '***b2a1**', '***2a1b**'], dtype='<U9')
     >>> np.strings.center(c, width=1)
-    array(['a', '1', 'b', '2'], dtype='<U1')
+    array(['a1b2', '1b2a', 'b2a1', '2a1b'], dtype='<U4')
 
     """
     a = np.asanyarray(a)
@@ -637,7 +637,7 @@ def ljust(a, width, fillchar=' '):
     a : array_like, with `np.bytes_` or `np.str_` dtype
 
     width : array_like, with any integer dtype
-        The length of the resulting strings
+        The length of the resulting strings, unless ``width < str_len(a)``.
     fillchar : array_like, with `np.bytes_` or `np.str_` dtype, optional
         The character to use for padding (default is space).
 
@@ -654,8 +654,10 @@ def ljust(a, width, fillchar=' '):
     --------
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.ljust(c, width=3)
-    array(['aAa', '  a', 'abB'], dtype='<U3')
-    
+    array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
+    >>> np.strings.ljust(c, width=9)
+    array(['aAaAaA   ', '  aA     ', 'abBABba  '], dtype='<U9')
+
     """
     a = np.asanyarray(a)
     width = np.maximum(str_len(a), width)
@@ -680,7 +682,7 @@ def rjust(a, width, fillchar=' '):
     a : array_like, with `np.bytes_` or `np.str_` dtype
 
     width : array_like, with any integer dtype
-        The length of the resulting strings
+        The length of the resulting strings, unless ``width < str_len(a)``.
     fillchar : array_like, with `np.bytes_` or `np.str_` dtype, optional
         The character to use for padding
 
@@ -697,7 +699,9 @@ def rjust(a, width, fillchar=' '):
     --------
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.rjust(a, width=3)
-    array(['aAa', '  a', 'abB'], dtype='<U3')
+    array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
+    >>> np.strings.rjust(a, width=9)
+    array(['   aAaAaA', '     aA  ', '  abBABba'], dtype='<U9')
 
     """
     a = np.asanyarray(a)
@@ -737,10 +741,8 @@ def zfill(a, width):
 
     Examples
     --------
-    >>> np.strings.zfill('1', 3)
-    array('001', dtype='<U3')
-    >>> np.strings.zfill('-1', 3)
-    array('-01', dtype='<U3')
+    >>> np.strings.zfill(['1', '-1', '+1'], 3)
+    array(['001', '-01', '+01'], dtype='<U3')
 
     """
     a = np.asanyarray(a)
