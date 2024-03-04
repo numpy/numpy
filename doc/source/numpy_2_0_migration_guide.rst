@@ -287,6 +287,16 @@ setitem                 Use ``arr[index] = value`` instead.
 ======================  ========================================================
 
 
+Strings namespace
+-----------------
+
+A new ``np.strings`` namespace has been created, where most of the string
+operations are implemented as ufuncs. The old ``np.char`` namespace still is
+available, and, wherever possible, uses the new ufuncs for greater performance.
+We recommend using the ``np.strings`` methods going forward. The ``np.char``
+namespace may be deprecated in the future.
+
+
 Ruff plugin
 -----------
 
