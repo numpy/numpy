@@ -3,7 +3,7 @@ Data type API
 
 .. sectionauthor:: Travis E. Oliphant
 
-The standard array can have 24 different data types (and has some
+The standard array can have 25 different data types (and has some
 support for adding your own types). These data types all have an
 enumerated type, an enumerated type-character, and a corresponding
 array scalar Python type object (placed in a hierarchy). There are
@@ -27,7 +27,7 @@ Enumerated types
 
 .. c:enum:: NPY_TYPES
 
-    There is a list of enumerated types defined providing the basic 24
+    There is a list of enumerated types defined providing the basic 25
     data types plus some useful generic names. Whenever the code requires
     a type number, one of these enumerated types is requested. The types
     are all called ``NPY_{NAME}``:
@@ -139,13 +139,23 @@ Enumerated types
 
     .. c:enumerator:: NPY_STRING
 
-        The enumeration value for ASCII strings of a selectable size. The
-        strings have a fixed maximum size within a given array.
+        The enumeration value for null-padded byte strings of a selectable
+        size. The strings have a fixed maximum size within a given array.
 
     .. c:enumerator:: NPY_UNICODE
 
         The enumeration value for UCS4 strings of a selectable size. The
         strings have a fixed maximum size within a given array.
+
+    .. c:enumerator:: NPY_VSTRING
+
+        The enumeration value for UTF-8 variable-width strings. Note that this
+        dtype holds an array of references, with string data stored outside of
+        the array buffer. Use the C API for working with numpy variable-width
+        static strings to access the string data in each array entry.
+
+        .. note::
+            This DType is new-style and is not included in ``NPY_NTYPES_LEGACY``.
 
     .. c:enumerator:: NPY_OBJECT
 
@@ -183,10 +193,18 @@ Enumerated types
 
 Other useful related constants are
 
-.. c:macro:: NPY_NTYPES
+.. c:macro:: NPY_NTYPES_LEGACY
 
-    The total number of built-in NumPy types. The enumeration covers
-    the range from 0 to NPY_NTYPES-1.
+    The number of built-in NumPy types written using the legacy DType
+    system. New NumPy dtypes will be written using the new DType API and may not
+    function in the same manner as legacy DTypes. Use this macro if you want to
+    handle legacy DTypes using different code paths or if you do not want to
+    update code that uses ``NPY_NTYPES_LEGACY`` and does not work correctly with new
+    DTypes.
+
+    .. note::
+        Newly added DTypes such as ``NPY_VSTRING`` will not be counted
+        in ``NPY_NTYPES_LEGACY``.
 
 .. c:macro:: NPY_NOTYPE
 
@@ -194,7 +212,12 @@ Other useful related constants are
 
 .. c:macro:: NPY_USERDEF
 
-    The start of type numbers used for Custom Data types.
+    The start of type numbers used for legacy Custom Data types.
+    New-style user DTypes currently are currently *not* assigned a type-number.
+
+    .. note::
+        The total number of user dtypes is limited to below ``NPY_VSTRING``.
+        Higher numbers are reserved to future new-style DType use.
 
 The various character codes indicating certain types are also part of
 an enumerated list. References to type characters (should they be
@@ -205,7 +228,7 @@ is ``NPY_{NAME}LTR`` where ``{NAME}`` can be
     **UINT**, **LONG**, **ULONG**, **LONGLONG**, **ULONGLONG**,
     **HALF**, **FLOAT**, **DOUBLE**, **LONGDOUBLE**, **CFLOAT**,
     **CDOUBLE**, **CLONGDOUBLE**, **DATETIME**, **TIMEDELTA**,
-    **OBJECT**, **STRING**, **VOID**
+    **OBJECT**, **STRING**, **UNICODE**, **VSTRING**, **VOID**
 
     **INTP**, **UINTP**
 
@@ -363,13 +386,20 @@ to the front of the integer name.
 
 .. c:type:: npy_intp
 
-    Py_intptr_t (an integer that is the size of a pointer on
-    the platform).
+    ``Py_ssize_t`` (a signed integer with the same size as the C ``size_t``).
+    This is the correct integer for lengths or indexing.  In practice this is
+    normally the size of a pointer, but this is not guaranteed.
+
+    ..note::
+        Before NumPy 2.0, this was the same as ``Py_intptr_t``.
+        While a better match, this did not match actual usage in practice.
+        On the Python side, we still support ``np.dtype('p')`` to fetch a dtype
+        compatible with storing pointers, while ``n`` is the correct character
+        for the ``ssize_t``.
 
 .. c:type:: npy_uintp
 
-    unsigned Py_intptr_t (an integer that is the size of a pointer on
-    the platform).
+    The C ``size_t``/``Py_size_t``.
 
 
 (Complex) Floating point

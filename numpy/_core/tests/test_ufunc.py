@@ -22,13 +22,6 @@ from numpy.testing import (
 from numpy.testing._private.utils import requires_memory
 
 
-import cython
-from packaging.version import parse, Version
-
-# Remove this when cython fixes https://github.com/cython/cython/issues/5411
-cython_version = parse(cython.__version__)
-BUG_5411 = Version("3.0.0a7") <= cython_version <= Version("3.0.0b3")
-
 UNARY_UFUNCS = [obj for obj in np._core.umath.__dict__.values()
                     if isinstance(obj, np.ufunc)]
 UNARY_OBJECT_UFUNCS = [uf for uf in UNARY_UFUNCS if "O->O" in uf.types]
@@ -133,10 +126,10 @@ class TestUfuncGenericLoops:
     # class to use in testing object method loops
     class foo:
         def conjugate(self):
-            return np.bool_(1)
+            return np.bool(1)
 
         def logical_xor(self, obj):
-            return np.bool_(1)
+            return np.bool(1)
 
     def test_unary_PyUFunc_O_O(self):
         x = np.ones(10, dtype=object)
@@ -214,9 +207,6 @@ class TestUfunc:
                    b"(S'numpy._core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
         assert_(pickle.loads(astring) is np.cos)
 
-    @pytest.mark.skipif(BUG_5411,
-        reason=("cython raises a AttributeError where it should raise a "
-                "ModuleNotFoundError"))
     @pytest.mark.skipif(IS_PYPY, reason="'is' check does not work on PyPy")
     def test_pickle_name_is_qualname(self):
         # This tests that a simplification of our ufunc pickle code will
@@ -443,7 +433,7 @@ class TestUfunc:
             umt.test_signature(2, 2, "(i),(i)->()")
 
     def test_get_signature(self):
-        assert_equal(umt.inner1d.signature, "(i),(i)->()")
+        assert_equal(np.vecdot.signature, "(n),(n)->()")
 
     def test_forced_sig(self):
         a = 0.5*np.arange(3, dtype='f8')
@@ -705,7 +695,7 @@ class TestUfunc:
                     assert_(res.dtype.name == dtout.name)
 
         # Check booleans
-        a = np.ones((), dtype=np.bool_)
+        a = np.ones((), dtype=np.bool)
         res = np.true_divide(a, a)
         assert_(res == 1.0)
         assert_(res.dtype.name == 'float64')
@@ -797,32 +787,79 @@ class TestUfunc:
         assert_equal(np.sum([[1., 2.], [3., 4.]], axis=0, initial=5.,
                             where=[True, False]), [9., 5.])
 
-    def test_inner1d(self):
-        a = np.arange(6).reshape((2, 3))
-        assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1))
-        a = np.arange(6)
-        assert_array_equal(umt.inner1d(a, a), np.sum(a*a))
+    def test_vecdot(self):
+        arr1 = np.arange(6).reshape((2, 3))
+        arr2 = np.arange(3).reshape((1, 3))
+
+        actual = np.vecdot(arr1, arr2)
+        expected = np.array([5, 14])
+
+        assert_array_equal(actual, expected)
+
+        actual2 = np.vecdot(arr1.T, arr2.T, axis=-2)
+        assert_array_equal(actual2, expected)
+
+        actual3 = np.vecdot(arr1.astype("object"), arr2)
+        assert_array_equal(actual3, expected.astype("object"))
+
+    def test_vecdot_complex(self):
+        arr1 = np.array([1, 2j, 3])
+        arr2 = np.array([1, 2, 3])
+
+        actual = np.vecdot(arr1, arr2)
+        expected = np.array([10-4j])
+        assert_array_equal(actual, expected)
+
+        actual2 = np.vecdot(arr2, arr1)
+        assert_array_equal(actual2, expected.conj())
+
+        actual3 = np.vecdot(arr1.astype("object"), arr2.astype("object"))
+        assert_array_equal(actual3, expected.astype("object"))
+
+    def test_vecdot_subclass(self):
+        class MySubclass(np.ndarray):
+            pass
+
+        arr1 = np.arange(6).reshape((2, 3)).view(MySubclass)
+        arr2 = np.arange(3).reshape((1, 3)).view(MySubclass)
+        result = np.vecdot(arr1, arr2)
+        assert isinstance(result, MySubclass)
+
+    def test_vecdot_object_no_conjugate(self):
+        arr = np.array(["1", "2"], dtype=object)
+        with pytest.raises(AttributeError, match="conjugate"):
+            np.vecdot(arr, arr)
+
+    def test_vecdot_object_breaks_outer_loop_on_error(self):
+        arr1 = np.ones((3, 3)).astype(object)
+        arr2 = arr1.copy()
+        arr2[1, 1] = None
+        out = np.zeros(3).astype(object)
+        with pytest.raises(TypeError, match=r"\*: 'float' and 'NoneType'"):
+            np.vecdot(arr1, arr2, out=out)
+        assert out[0] == 3
+        assert out[1] == out[2] == 0
 
     def test_broadcast(self):
         msg = "broadcast"
         a = np.arange(4).reshape((2, 1, 2))
         b = np.arange(4).reshape((1, 2, 2))
-        assert_array_equal(umt.inner1d(a, b), np.sum(a*b, axis=-1), err_msg=msg)
+        assert_array_equal(np.vecdot(a, b), np.sum(a*b, axis=-1), err_msg=msg)
         msg = "extend & broadcast loop dimensions"
         b = np.arange(4).reshape((2, 2))
-        assert_array_equal(umt.inner1d(a, b), np.sum(a*b, axis=-1), err_msg=msg)
+        assert_array_equal(np.vecdot(a, b), np.sum(a*b, axis=-1), err_msg=msg)
         # Broadcast in core dimensions should fail
         a = np.arange(8).reshape((4, 2))
         b = np.arange(4).reshape((4, 1))
-        assert_raises(ValueError, umt.inner1d, a, b)
+        assert_raises(ValueError, np.vecdot, a, b)
         # Extend core dimensions should fail
         a = np.arange(8).reshape((4, 2))
         b = np.array(7)
-        assert_raises(ValueError, umt.inner1d, a, b)
+        assert_raises(ValueError, np.vecdot, a, b)
         # Broadcast should fail
         a = np.arange(2).reshape((2, 1, 1))
         b = np.arange(3).reshape((3, 1, 1))
-        assert_raises(ValueError, umt.inner1d, a, b)
+        assert_raises(ValueError, np.vecdot, a, b)
 
         # Writing to a broadcasted array with overlap should warn, gh-2705
         a = np.arange(2)
@@ -841,9 +878,9 @@ class TestUfunc:
         a = np.arange(6).reshape(3, 2)
         b = np.ones(2)
         out = np.empty(())
-        assert_raises(ValueError, umt.inner1d, a, b, out)
+        assert_raises(ValueError, np.vecdot, a, b, out)
         out2 = np.empty(3)
-        c = umt.inner1d(a, b, out2)
+        c = np.vecdot(a, b, out2)
         assert_(c is out2)
 
     def test_out_broadcasts(self):
@@ -857,7 +894,7 @@ class TestUfunc:
         assert (out == np.arange(3) * 2).all()
 
         # The same holds for gufuncs (gh-16484)
-        umt.inner1d(arr, arr, out=out)
+        np.vecdot(arr, arr, out=out)
         # the result would be just a scalar `5`, but is broadcast fully:
         assert (out == 5).all()
 
@@ -878,22 +915,22 @@ class TestUfunc:
     def test_type_cast(self):
         msg = "type cast"
         a = np.arange(6, dtype='short').reshape((2, 3))
-        assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1),
+        assert_array_equal(np.vecdot(a, a), np.sum(a*a, axis=-1),
                            err_msg=msg)
         msg = "type cast on one argument"
         a = np.arange(6).reshape((2, 3))
         b = a + 0.1
-        assert_array_almost_equal(umt.inner1d(a, b), np.sum(a*b, axis=-1),
+        assert_array_almost_equal(np.vecdot(a, b), np.sum(a*b, axis=-1),
                                   err_msg=msg)
 
     def test_endian(self):
         msg = "big endian"
         a = np.arange(6, dtype='>i4').reshape((2, 3))
-        assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1),
+        assert_array_equal(np.vecdot(a, a), np.sum(a*a, axis=-1),
                            err_msg=msg)
         msg = "little endian"
         a = np.arange(6, dtype='<i4').reshape((2, 3))
-        assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1),
+        assert_array_equal(np.vecdot(a, a), np.sum(a*a, axis=-1),
                            err_msg=msg)
 
         # Output should always be native-endian
@@ -917,86 +954,85 @@ class TestUfunc:
         a[0, 0, 0] = -1
         msg2 = "make sure it references to the original array"
         assert_equal(x[0, 0, 0, 0, 0, 0], -1, err_msg=msg2)
-        assert_array_equal(umt.inner1d(a, b), np.sum(a*b, axis=-1), err_msg=msg)
+        assert_array_equal(np.vecdot(a, b), np.sum(a*b, axis=-1), err_msg=msg)
         x = np.arange(24).reshape(2, 3, 4)
         a = x.T
         b = x.T
         a[0, 0, 0] = -1
         assert_equal(x[0, 0, 0], -1, err_msg=msg2)
-        assert_array_equal(umt.inner1d(a, b), np.sum(a*b, axis=-1), err_msg=msg)
+        assert_array_equal(np.vecdot(a, b), np.sum(a*b, axis=-1), err_msg=msg)
 
     def test_output_argument(self):
         msg = "output argument"
         a = np.arange(12).reshape((2, 3, 2))
         b = np.arange(4).reshape((2, 1, 2)) + 1
         c = np.zeros((2, 3), dtype='int')
-        umt.inner1d(a, b, c)
+        np.vecdot(a, b, c)
         assert_array_equal(c, np.sum(a*b, axis=-1), err_msg=msg)
         c[:] = -1
-        umt.inner1d(a, b, out=c)
+        np.vecdot(a, b, out=c)
         assert_array_equal(c, np.sum(a*b, axis=-1), err_msg=msg)
 
         msg = "output argument with type cast"
         c = np.zeros((2, 3), dtype='int16')
-        umt.inner1d(a, b, c)
+        np.vecdot(a, b, c)
         assert_array_equal(c, np.sum(a*b, axis=-1), err_msg=msg)
         c[:] = -1
-        umt.inner1d(a, b, out=c)
+        np.vecdot(a, b, out=c)
         assert_array_equal(c, np.sum(a*b, axis=-1), err_msg=msg)
 
         msg = "output argument with incontiguous layout"
         c = np.zeros((2, 3, 4), dtype='int16')
-        umt.inner1d(a, b, c[..., 0])
+        np.vecdot(a, b, c[..., 0])
         assert_array_equal(c[..., 0], np.sum(a*b, axis=-1), err_msg=msg)
         c[:] = -1
-        umt.inner1d(a, b, out=c[..., 0])
+        np.vecdot(a, b, out=c[..., 0])
         assert_array_equal(c[..., 0], np.sum(a*b, axis=-1), err_msg=msg)
 
     def test_axes_argument(self):
-        # inner1d signature: '(i),(i)->()'
-        inner1d = umt.inner1d
+        # vecdot signature: '(n),(n)->()'
         a = np.arange(27.).reshape((3, 3, 3))
         b = np.arange(10., 19.).reshape((3, 1, 3))
         # basic tests on inputs (outputs tested below with matrix_multiply).
-        c = inner1d(a, b)
+        c = np.vecdot(a, b)
         assert_array_equal(c, (a * b).sum(-1))
         # default
-        c = inner1d(a, b, axes=[(-1,), (-1,), ()])
+        c = np.vecdot(a, b, axes=[(-1,), (-1,), ()])
         assert_array_equal(c, (a * b).sum(-1))
         # integers ok for single axis.
-        c = inner1d(a, b, axes=[-1, -1, ()])
+        c = np.vecdot(a, b, axes=[-1, -1, ()])
         assert_array_equal(c, (a * b).sum(-1))
         # mix fine
-        c = inner1d(a, b, axes=[(-1,), -1, ()])
+        c = np.vecdot(a, b, axes=[(-1,), -1, ()])
         assert_array_equal(c, (a * b).sum(-1))
         # can omit last axis.
-        c = inner1d(a, b, axes=[-1, -1])
+        c = np.vecdot(a, b, axes=[-1, -1])
         assert_array_equal(c, (a * b).sum(-1))
         # can pass in other types of integer (with __index__ protocol)
-        c = inner1d(a, b, axes=[np.int8(-1), np.array(-1, dtype=np.int32)])
+        c = np.vecdot(a, b, axes=[np.int8(-1), np.array(-1, dtype=np.int32)])
         assert_array_equal(c, (a * b).sum(-1))
         # swap some axes
-        c = inner1d(a, b, axes=[0, 0])
+        c = np.vecdot(a, b, axes=[0, 0])
         assert_array_equal(c, (a * b).sum(0))
-        c = inner1d(a, b, axes=[0, 2])
+        c = np.vecdot(a, b, axes=[0, 2])
         assert_array_equal(c, (a.transpose(1, 2, 0) * b).sum(-1))
         # Check errors for improperly constructed axes arguments.
         # should have list.
-        assert_raises(TypeError, inner1d, a, b, axes=-1)
+        assert_raises(TypeError, np.vecdot, a, b, axes=-1)
         # needs enough elements
-        assert_raises(ValueError, inner1d, a, b, axes=[-1])
+        assert_raises(ValueError, np.vecdot, a, b, axes=[-1])
         # should pass in indices.
-        assert_raises(TypeError, inner1d, a, b, axes=[-1.0, -1.0])
-        assert_raises(TypeError, inner1d, a, b, axes=[(-1.0,), -1])
-        assert_raises(TypeError, inner1d, a, b, axes=[None, 1])
+        assert_raises(TypeError, np.vecdot, a, b, axes=[-1.0, -1.0])
+        assert_raises(TypeError, np.vecdot, a, b, axes=[(-1.0,), -1])
+        assert_raises(TypeError, np.vecdot, a, b, axes=[None, 1])
         # cannot pass an index unless there is only one dimension
         # (output is wrong in this case)
-        assert_raises(AxisError, inner1d, a, b, axes=[-1, -1, -1])
+        assert_raises(AxisError, np.vecdot, a, b, axes=[-1, -1, -1])
         # or pass in generally the wrong number of axes
-        assert_raises(AxisError, inner1d, a, b, axes=[-1, -1, (-1,)])
-        assert_raises(AxisError, inner1d, a, b, axes=[-1, (-2, -1), ()])
+        assert_raises(AxisError, np.vecdot, a, b, axes=[-1, -1, (-1,)])
+        assert_raises(AxisError, np.vecdot, a, b, axes=[-1, (-2, -1), ()])
         # axes need to have same length.
-        assert_raises(ValueError, inner1d, a, b, axes=[0, 1])
+        assert_raises(ValueError, np.vecdot, a, b, axes=[0, 1])
 
         # matrix_multiply signature: '(m,n),(n,p)->(m,p)'
         mm = umt.matrix_multiply
@@ -1058,19 +1094,18 @@ class TestUfunc:
         assert_raises(TypeError, mm, z, z, axes=[0, 1], parrot=True)
 
     def test_axis_argument(self):
-        # inner1d signature: '(i),(i)->()'
-        inner1d = umt.inner1d
+        # vecdot signature: '(n),(n)->()'
         a = np.arange(27.).reshape((3, 3, 3))
         b = np.arange(10., 19.).reshape((3, 1, 3))
-        c = inner1d(a, b)
+        c = np.vecdot(a, b)
         assert_array_equal(c, (a * b).sum(-1))
-        c = inner1d(a, b, axis=-1)
+        c = np.vecdot(a, b, axis=-1)
         assert_array_equal(c, (a * b).sum(-1))
         out = np.zeros_like(c)
-        d = inner1d(a, b, axis=-1, out=out)
+        d = np.vecdot(a, b, axis=-1, out=out)
         assert_(d is out)
         assert_array_equal(d, c)
-        c = inner1d(a, b, axis=0)
+        c = np.vecdot(a, b, axis=0)
         assert_array_equal(c, (a * b).sum(0))
         # Sanity checks on innerwt and cumsum.
         a = np.arange(6).reshape((2, 3))
@@ -1089,9 +1124,9 @@ class TestUfunc:
         assert_array_equal(b, np.cumsum(a, axis=-1))
         # Check errors.
         # Cannot pass in both axis and axes.
-        assert_raises(TypeError, inner1d, a, b, axis=0, axes=[0, 0])
+        assert_raises(TypeError, np.vecdot, a, b, axis=0, axes=[0, 0])
         # Not an integer.
-        assert_raises(TypeError, inner1d, a, b, axis=[0])
+        assert_raises(TypeError, np.vecdot, a, b, axis=[0])
         # more than 1 core dimensions.
         mm = umt.matrix_multiply
         assert_raises(TypeError, mm, a, b, axis=1)
@@ -1102,49 +1137,48 @@ class TestUfunc:
         assert_raises(TypeError, np.add, 1., 1., axis=0)
 
     def test_keepdims_argument(self):
-        # inner1d signature: '(i),(i)->()'
-        inner1d = umt.inner1d
+        # vecdot signature: '(n),(n)->()'
         a = np.arange(27.).reshape((3, 3, 3))
         b = np.arange(10., 19.).reshape((3, 1, 3))
-        c = inner1d(a, b)
+        c = np.vecdot(a, b)
         assert_array_equal(c, (a * b).sum(-1))
-        c = inner1d(a, b, keepdims=False)
+        c = np.vecdot(a, b, keepdims=False)
         assert_array_equal(c, (a * b).sum(-1))
-        c = inner1d(a, b, keepdims=True)
+        c = np.vecdot(a, b, keepdims=True)
         assert_array_equal(c, (a * b).sum(-1, keepdims=True))
         out = np.zeros_like(c)
-        d = inner1d(a, b, keepdims=True, out=out)
+        d = np.vecdot(a, b, keepdims=True, out=out)
         assert_(d is out)
         assert_array_equal(d, c)
         # Now combined with axis and axes.
-        c = inner1d(a, b, axis=-1, keepdims=False)
+        c = np.vecdot(a, b, axis=-1, keepdims=False)
         assert_array_equal(c, (a * b).sum(-1, keepdims=False))
-        c = inner1d(a, b, axis=-1, keepdims=True)
+        c = np.vecdot(a, b, axis=-1, keepdims=True)
         assert_array_equal(c, (a * b).sum(-1, keepdims=True))
-        c = inner1d(a, b, axis=0, keepdims=False)
+        c = np.vecdot(a, b, axis=0, keepdims=False)
         assert_array_equal(c, (a * b).sum(0, keepdims=False))
-        c = inner1d(a, b, axis=0, keepdims=True)
+        c = np.vecdot(a, b, axis=0, keepdims=True)
         assert_array_equal(c, (a * b).sum(0, keepdims=True))
-        c = inner1d(a, b, axes=[(-1,), (-1,), ()], keepdims=False)
+        c = np.vecdot(a, b, axes=[(-1,), (-1,), ()], keepdims=False)
         assert_array_equal(c, (a * b).sum(-1))
-        c = inner1d(a, b, axes=[(-1,), (-1,), (-1,)], keepdims=True)
+        c = np.vecdot(a, b, axes=[(-1,), (-1,), (-1,)], keepdims=True)
         assert_array_equal(c, (a * b).sum(-1, keepdims=True))
-        c = inner1d(a, b, axes=[0, 0], keepdims=False)
+        c = np.vecdot(a, b, axes=[0, 0], keepdims=False)
         assert_array_equal(c, (a * b).sum(0))
-        c = inner1d(a, b, axes=[0, 0, 0], keepdims=True)
+        c = np.vecdot(a, b, axes=[0, 0, 0], keepdims=True)
         assert_array_equal(c, (a * b).sum(0, keepdims=True))
-        c = inner1d(a, b, axes=[0, 2], keepdims=False)
+        c = np.vecdot(a, b, axes=[0, 2], keepdims=False)
         assert_array_equal(c, (a.transpose(1, 2, 0) * b).sum(-1))
-        c = inner1d(a, b, axes=[0, 2], keepdims=True)
+        c = np.vecdot(a, b, axes=[0, 2], keepdims=True)
         assert_array_equal(c, (a.transpose(1, 2, 0) * b).sum(-1,
                                                              keepdims=True))
-        c = inner1d(a, b, axes=[0, 2, 2], keepdims=True)
+        c = np.vecdot(a, b, axes=[0, 2, 2], keepdims=True)
         assert_array_equal(c, (a.transpose(1, 2, 0) * b).sum(-1,
                                                              keepdims=True))
-        c = inner1d(a, b, axes=[0, 2, 0], keepdims=True)
+        c = np.vecdot(a, b, axes=[0, 2, 0], keepdims=True)
         assert_array_equal(c, (a * b.transpose(2, 0, 1)).sum(0, keepdims=True))
         # Hardly useful, but should work.
-        c = inner1d(a, b, axes=[0, 2, 1], keepdims=True)
+        c = np.vecdot(a, b, axes=[0, 2, 1], keepdims=True)
         assert_array_equal(c, (a.transpose(1, 0, 2) * b.transpose(0, 2, 1))
                            .sum(1, keepdims=True))
         # Check with two core dimensions.
@@ -1172,7 +1206,7 @@ class TestUfunc:
                            np.sum(a * b * w, axis=0, keepdims=True))
         # Check errors.
         # Not a boolean
-        assert_raises(TypeError, inner1d, a, b, keepdims='true')
+        assert_raises(TypeError, np.vecdot, a, b, keepdims='true')
         # More than 1 core dimension, and core output dimensions.
         mm = umt.matrix_multiply
         assert_raises(TypeError, mm, a, b, keepdims=True)
@@ -1518,7 +1552,7 @@ class TestUfunc:
         assert_(type(np.min(np.float32(2.5), axis=0)) is np.float32)
 
         # check if scalars/0-d arrays get cast
-        assert_(type(np.any(0, axis=0)) is np.bool_)
+        assert_(type(np.any(0, axis=0)) is np.bool)
 
         # assert that 0-d arrays get wrapped
         class MyArray(np.ndarray):
@@ -2428,20 +2462,20 @@ class TestUfunc:
 
     @pytest.mark.parametrize("ufunc",
             [np.logical_and, np.logical_or, np.logical_xor])
-    def test_logical_ufuncs_reject_string(self, ufunc):
-        """
-        Logical ufuncs are normally well defined by working with the boolean
-        equivalent, i.e. casting all inputs to bools should work.
+    @pytest.mark.parametrize("dtype", ["S", "U"])
+    @pytest.mark.parametrize("values", [["1", "hi", "0"], ["", ""]])
+    def test_logical_ufuncs_supports_string(self, ufunc, dtype, values):
+        # note that values are either all true or all false
+        arr = np.array(values, dtype=dtype)
+        obj_arr = np.array(values, dtype=object)
+        res = ufunc(arr, arr)
+        expected = ufunc(obj_arr, obj_arr, dtype=bool)
 
-        However, casting strings to bools is *currently* weird, because it
-        actually uses `bool(int(str))`.  Thus we explicitly reject strings.
-        This test should succeed (and can probably just be removed) as soon as
-        string to bool casts are well defined in NumPy.
-        """
-        with pytest.raises(TypeError, match="contain a loop with signature"):
-            ufunc(["1"], ["3"])
-        with pytest.raises(TypeError, match="contain a loop with signature"):
-            ufunc.reduce(["1", "2", "0"])
+        assert_array_equal(res, expected)
+
+        res = ufunc.reduce(arr)
+        expected = ufunc.reduce(obj_arr, dtype=bool)
+        assert_array_equal(res, expected)
 
     @pytest.mark.parametrize("ufunc",
              [np.logical_and, np.logical_or, np.logical_xor])
@@ -2907,10 +2941,9 @@ def test_find_non_long_args(dtype):
 
 def test_find_access_past_buffer():
     # This checks that no read past the string buffer occurs in
-    # string_fastsearch.h. The READC macro is there to check this.
-    # To see it in action, you can redefine READC to just read the
-    # i'th character of the buffer and this test will produce an
-    # 'Invalid read' if run under valgrind.
+    # string_fastsearch.h. The buffer class makes sure this is checked.
+    # To see it in action, you can remove the checks in the buffer and
+    # this test will produce an 'Invalid read' if run under valgrind.
     arr = np.array([b'abcd', b'ebcd'])
     result = np._core.umath.find(arr, b'cde', 0, np.iinfo(np.int64).max)
     assert np.all(result == -1)
@@ -2986,9 +3019,9 @@ class TestLowlevelAPIAccess:
             reason="`ctypes.pythonapi` required for capsule unpacking.")
     def test_loop_access(self):
         # This is a basic test for the full strided loop access
-        data_t = ct.ARRAY(ct.c_char_p, 2)
-        dim_t = ct.ARRAY(ct.c_ssize_t, 1)
-        strides_t = ct.ARRAY(ct.c_ssize_t, 2)
+        data_t = ct.c_char_p * 2
+        dim_t = ct.c_ssize_t * 1
+        strides_t = ct.c_ssize_t * 2
         strided_loop_t = ct.CFUNCTYPE(
                 ct.c_int, ct.c_void_p, data_t, dim_t, strides_t, ct.c_void_p)
 

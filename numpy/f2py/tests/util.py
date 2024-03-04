@@ -18,11 +18,13 @@ import re
 import pytest
 import contextlib
 import numpy
+import concurrent.futures
 
 from pathlib import Path
 from numpy._utils import asunicode
 from numpy.testing import temppath, IS_WASM
 from importlib import import_module
+from numpy.f2py._backends._meson import MesonBackend
 
 #
 # Maintaining a temporary module directory
@@ -128,6 +130,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     if module_name is None:
         module_name = get_temp_module_name()
     f2py_opts = ["-c", "-m", module_name] + options + f2py_sources
+    f2py_opts += ["--backend", "meson"]
     if skip:
         f2py_opts += ["skip:"] + skip
     if only:
@@ -165,8 +168,6 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
             + _module_list
         )
 
-
-
     # Import
     return import_module(module_name)
 
@@ -198,150 +199,145 @@ def build_code(source_code,
 # Check if compilers are available at all...
 #
 
-_compiler_status = None
-
-
-def _get_compiler_status():
-    global _compiler_status
-    if _compiler_status is not None:
-        return _compiler_status
-
-    _compiler_status = (False, False, False)
-    if IS_WASM:
-        # Can't run compiler from inside WASM.
-        return _compiler_status
-
-    # XXX: this is really ugly. But I don't know how to invoke Distutils
-    #      in a safer way...
-    code = textwrap.dedent(f"""\
-        import os
-        import sys
-        sys.path = {repr(sys.path)}
-
-        def configuration(parent_name='',top_path=None):
-            global config
-            from numpy.distutils.misc_util import Configuration
-            config = Configuration('', parent_name, top_path)
-            return config
-
-        from numpy.distutils.core import setup
-        setup(configuration=configuration)
-
-        config_cmd = config.get_config_cmd()
-        have_c = config_cmd.try_compile('void foo() {{}}')
-        print('COMPILERS:%%d,%%d,%%d' %% (have_c,
-                                          config.have_f77c(),
-                                          config.have_f90c()))
-        sys.exit(99)
-        """)
-    code = code % dict(syspath=repr(sys.path))
-
+def check_language(lang, code_snippet=None):
     tmpdir = tempfile.mkdtemp()
     try:
-        script = os.path.join(tmpdir, "setup.py")
-
-        with open(script, "w") as f:
-            f.write(code)
-
-        cmd = [sys.executable, "setup.py", "config"]
-        p = subprocess.Popen(cmd,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT,
-                             cwd=tmpdir)
-        out, err = p.communicate()
+        meson_file = os.path.join(tmpdir, "meson.build")
+        with open(meson_file, "w") as f:
+            f.write("project('check_compilers')\n")
+            f.write(f"add_languages('{lang}')\n")
+            if code_snippet:
+                f.write(f"{lang}_compiler = meson.get_compiler('{lang}')\n")
+                f.write(f"{lang}_code = '''{code_snippet}'''\n")
+                f.write(
+                    f"_have_{lang}_feature ="
+                    f"{lang}_compiler.compiles({lang}_code,"
+                    f" name: '{lang} feature check')\n"
+                )
+        runmeson = subprocess.run(
+            ["meson", "setup", "btmp"],
+            check=False,
+            cwd=tmpdir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if runmeson.returncode == 0:
+            return True
+        else:
+            return False
     finally:
         shutil.rmtree(tmpdir)
+    return False
 
-    m = re.search(br"COMPILERS:(\d+),(\d+),(\d+)", out)
-    if m:
-        _compiler_status = (
-            bool(int(m.group(1))),
-            bool(int(m.group(2))),
-            bool(int(m.group(3))),
-        )
-    # Finished
-    return _compiler_status
+fortran77_code = '''
+C Example Fortran 77 code
+      PROGRAM HELLO
+      PRINT *, 'Hello, Fortran 77!'
+      END
+'''
 
+fortran90_code = '''
+! Example Fortran 90 code
+program hello90
+  type :: greeting
+    character(len=20) :: text
+  end type greeting
+
+  type(greeting) :: greet
+  greet%text = 'hello, fortran 90!'
+  print *, greet%text
+end program hello90
+'''
+
+# Dummy class for caching relevant checks
+class CompilerChecker:
+    def __init__(self):
+        self.compilers_checked = False
+        self.has_c = False
+        self.has_f77 = False
+        self.has_f90 = False
+
+    def check_compilers(self):
+        if (not self.compilers_checked) and (not sys.platform == "cygwin"):
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                futures = [
+                    executor.submit(check_language, "c"),
+                    executor.submit(check_language, "fortran", fortran77_code),
+                    executor.submit(check_language, "fortran", fortran90_code)
+                ]
+
+                self.has_c = futures[0].result()
+                self.has_f77 = futures[1].result()
+                self.has_f90 = futures[2].result()
+
+            self.compilers_checked = True
+
+if not IS_WASM:
+    checker = CompilerChecker()
+    checker.check_compilers()
 
 def has_c_compiler():
-    return _get_compiler_status()[0]
-
+    return checker.has_c
 
 def has_f77_compiler():
-    return _get_compiler_status()[1]
-
+    return checker.has_f77
 
 def has_f90_compiler():
-    return _get_compiler_status()[2]
-
+    return checker.has_f90
 
 #
-# Building with distutils
+# Building with meson
 #
 
 
-@_memoize
-def build_module_distutils(source_files, config_code, module_name, **kw):
+class SimplifiedMesonBackend(MesonBackend):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def compile(self):
+        self.write_meson_build(self.build_dir)
+        self.run_meson(self.build_dir)
+
+
+def build_meson(source_files, module_name=None, **kwargs):
     """
-    Build a module via distutils and import it.
-
+    Build a module via Meson and import it.
     """
-    d = get_module_dir()
+    build_dir = get_module_dir()
+    if module_name is None:
+        module_name = get_temp_module_name()
 
-    # Copy files
-    dst_sources = []
-    for fn in source_files:
-        if not os.path.isfile(fn):
-            raise RuntimeError("%s is not a file" % fn)
-        dst = os.path.join(d, os.path.basename(fn))
-        shutil.copyfile(fn, dst)
-        dst_sources.append(dst)
+    # Initialize the MesonBackend
+    backend = SimplifiedMesonBackend(
+        modulename=module_name,
+        sources=source_files,
+        extra_objects=kwargs.get("extra_objects", []),
+        build_dir=build_dir,
+        include_dirs=kwargs.get("include_dirs", []),
+        library_dirs=kwargs.get("library_dirs", []),
+        libraries=kwargs.get("libraries", []),
+        define_macros=kwargs.get("define_macros", []),
+        undef_macros=kwargs.get("undef_macros", []),
+        f2py_flags=kwargs.get("f2py_flags", []),
+        sysinfo_flags=kwargs.get("sysinfo_flags", []),
+        fc_flags=kwargs.get("fc_flags", []),
+        flib_flags=kwargs.get("flib_flags", []),
+        setup_flags=kwargs.get("setup_flags", []),
+        remove_build_dir=kwargs.get("remove_build_dir", False),
+        extra_dat=kwargs.get("extra_dat", {}),
+    )
 
-    # Build script
-    config_code = textwrap.dedent(config_code).replace("\n", "\n    ")
-
-    code = fr"""
-import os
-import sys
-sys.path = {repr(sys.path)}
-
-def configuration(parent_name='',top_path=None):
-    from numpy.distutils.misc_util import Configuration
-    config = Configuration('', parent_name, top_path)
-    {config_code}
-    return config
-
-if __name__ == "__main__":
-    from numpy.distutils.core import setup
-    setup(configuration=configuration)
-    """
-    script = os.path.join(d, get_temp_module_name() + ".py")
-    dst_sources.append(script)
-    with open(script, "wb") as f:
-        f.write(code.encode('latin1'))
-
-    # Build
-    cwd = os.getcwd()
+    # Compile the module
+    # NOTE: Catch-all since without distutils it is hard to determine which
+    # compiler stack is on the CI
     try:
-        os.chdir(d)
-        cmd = [sys.executable, script, "build_ext", "-i"]
-        p = subprocess.Popen(cmd,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
-        out, err = p.communicate()
-        if p.returncode != 0:
-            raise RuntimeError("Running distutils build failed: %s\n%s" %
-                               (cmd[4:], asstr(out)))
-    finally:
-        os.chdir(cwd)
+        backend.compile()
+    except:
+        pytest.skip("Failed to compile module")
 
-        # Partial cleanup
-        for fn in dst_sources:
-            os.unlink(fn)
-
-    # Import
-    __import__(module_name)
-    return sys.modules[module_name]
+    # Import the compiled module
+    sys.path.insert(0, f"{build_dir}/{backend.meson_build_dir}")
+    return import_module(module_name)
 
 
 #
@@ -357,44 +353,40 @@ class F2PyTest:
     only = []
     suffix = ".f"
     module = None
+    _has_c_compiler = None
+    _has_f77_compiler = None
+    _has_f90_compiler = None
 
     @property
     def module_name(self):
         cls = type(self)
         return f'_{cls.__module__.rsplit(".",1)[-1]}_{cls.__name__}_ext_module'
 
-    def setup_method(self):
+    @classmethod
+    def setup_class(cls):
         if sys.platform == "win32":
             pytest.skip("Fails with MinGW64 Gfortran (Issue #9673)")
+        F2PyTest._has_c_compiler = has_c_compiler()
+        F2PyTest._has_f77_compiler = has_f77_compiler()
+        F2PyTest._has_f90_compiler = has_f90_compiler()
 
+    def setup_method(self):
         if self.module is not None:
             return
 
-        # Check compiler availability first
-        if not has_c_compiler():
-            pytest.skip("No C compiler available")
-
-        codes = []
-        if self.sources:
-            codes.extend(self.sources)
-        if self.code is not None:
+        codes = self.sources if self.sources else []
+        if self.code:
             codes.append(self.suffix)
 
-        needs_f77 = False
-        needs_f90 = False
-        needs_pyf = False
-        for fn in codes:
-            if str(fn).endswith(".f"):
-                needs_f77 = True
-            elif str(fn).endswith(".f90"):
-                needs_f90 = True
-            elif str(fn).endswith(".pyf"):
-                needs_pyf = True
-        if needs_f77 and not has_f77_compiler():
+        needs_f77 = any(str(fn).endswith(".f") for fn in codes)
+        needs_f90 = any(str(fn).endswith(".f90") for fn in codes)
+        needs_pyf = any(str(fn).endswith(".pyf") for fn in codes)
+
+        if needs_f77 and not self._has_f77_compiler:
             pytest.skip("No Fortran 77 compiler available")
-        if needs_f90 and not has_f90_compiler():
+        if needs_f90 and not self._has_f90_compiler:
             pytest.skip("No Fortran 90 compiler available")
-        if needs_pyf and not (has_f90_compiler() or has_f77_compiler()):
+        if needs_pyf and not (self._has_f90_compiler or self._has_f77_compiler):
             pytest.skip("No Fortran compiler available")
 
         # Build the module

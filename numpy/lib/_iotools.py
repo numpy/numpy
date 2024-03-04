@@ -495,7 +495,7 @@ class StringConverter:
         upgrade or not. Default is False.
 
     """
-    _mapper = [(nx.bool_, str2bool, False),
+    _mapper = [(nx.bool, str2bool, False),
                (nx.int_, int, -1),]
 
     # On 32-bit systems, we need to make sure that we explicitly include
@@ -780,7 +780,7 @@ class StringConverter:
             value.
         missing_values : {sequence of str, None}, optional
             Sequence of strings indicating a missing value. If ``None``, then
-            the existing `missing_values` are cleared. The default is `''`.
+            the existing `missing_values` are cleared. The default is ``''``.
         locked : bool, optional
             Whether the StringConverter should be locked to prevent
             automatic upgrade or not. Default is False.

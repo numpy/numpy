@@ -24,7 +24,7 @@ try:
 except TypeError:
     USING_CLANG_CL = False
 
-types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
+types = [np.bool, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.int_, np.uint, np.longlong, np.ulonglong,
          np.single, np.double, np.longdouble, np.csingle,
          np.cdouble, np.clongdouble]
@@ -703,7 +703,8 @@ class TestMultiply:
         class ArrayLike:
             def __init__(self, arr):
                 self.arr = arr
-            def __array__(self):
+
+            def __array__(self, dtype=None, copy=None):
                 return self.arr
 
         # Test for simple ArrayLike above and memoryviews (original report)
@@ -716,7 +717,7 @@ class TestMultiply:
 
 class TestNegative:
     def test_exceptions(self):
-        a = np.ones((), dtype=np.bool_)[()]
+        a = np.ones((), dtype=np.bool)[()]
         assert_raises(TypeError, operator.neg, a)
 
     def test_result(self):
@@ -734,7 +735,7 @@ class TestNegative:
 
 class TestSubtract:
     def test_exceptions(self):
-        a = np.ones((), dtype=np.bool_)[()]
+        a = np.ones((), dtype=np.bool)[()]
         assert_raises(TypeError, operator.sub, a, a)
 
     def test_result(self):
@@ -1047,7 +1048,7 @@ def test_subclass_deferral(sctype, __op__, __rop__, op, cmp):
 
     # inheritance has to override, or this is correctly lost:
     res = op(myf_simple1(1), myf_simple2(2))
-    assert type(res) == sctype or type(res) == np.bool_
+    assert type(res) == sctype or type(res) == np.bool
     assert op(myf_simple1(1), myf_simple2(2)) == op(1, 2)  # inherited
 
     # Two independent subclasses do not really define an order.  This could
@@ -1109,3 +1110,46 @@ def test_pyscalar_subclasses(subtype, __op__, __rop__, op, cmp):
     res = op(np.float32(2), myt(1))
     expected = op(np.longdouble(2), subtype(1))
     assert res == expected
+
+
+def test_truediv_int():
+    # This should work, as the result is float:
+    assert np.uint8(3) / 123454 == np.float64(3) / 123454
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize("op",
+    # TODO: Power is a bit special, but here mostly bools seem to behave oddly
+    [op for op in reasonable_operators_for_scalars if op is not operator.pow])
+@pytest.mark.parametrize("sctype", types)
+@pytest.mark.parametrize("other_type", [float, int, complex])
+@pytest.mark.parametrize("rop", [True, False])
+def test_scalar_matches_array_op_with_pyscalar(op, sctype, other_type, rop):
+    # Check that the ufunc path matches by coercing to an array explicitly
+    val1 = sctype(2)
+    val2 = other_type(2)
+
+    if rop:
+        _op = op
+        op = lambda x, y: _op(y, x)
+
+    try:
+        res = op(val1, val2)
+    except TypeError:
+        try:
+            expected = op(np.asarray(val1), val2)
+            raise AssertionError("ufunc didn't raise.")
+        except TypeError:
+            return
+    else:
+        expected = op(np.asarray(val1), val2)
+
+    # Note that we only check dtype equivalency, as ufuncs may pick the lower
+    # dtype if they are equivalent.
+    assert res == expected
+    if isinstance(val1, float) and other_type is complex and rop:
+        # Python complex accepts float subclasses, so we don't get a chance
+        # and the result may be a Python complelx (thus, the `np.array()``)
+        assert np.array(res).dtype == expected.dtype
+    else:
+        assert res.dtype == expected.dtype

@@ -45,12 +45,12 @@ multiarray_scalar_bool_values = {
 # index, annotations
 # please mark functions that have been checked to not need any annotations
 multiarray_types_api = {
-    'PyBigArray_Type':                  (1,),
+    # Slot 1 was never meaningfully used by NumPy
     'PyArray_Type':                     (2,),
     # Internally, PyArrayDescr_Type is a PyArray_DTypeMeta,
     # the following also defines PyArrayDescr_TypeFull (Full appended)
     'PyArrayDescr_Type':                (3, "PyArray_DTypeMeta"),
-    'PyArrayFlags_Type':                (4,),
+    # Unused slot 4, was `PyArrayFlags_Type`
     'PyArrayIter_Type':                 (5,),
     'PyArrayMultiIter_Type':            (6,),
     'PyBoolArrType_Type':               (8,),
@@ -91,6 +91,10 @@ multiarray_types_api = {
     'PyHalfArrType_Type':               (217,),
     'NpyIter_Type':                     (218,),
     # End 1.6 API
+    # NOTE: The Slots 320-360 are defined in `_experimental_dtype_api.h`
+    #       and filled explicitly outside the code generator as the metaclass
+    #       makes them tricky to expose.  (This may be refactored.)
+    # End 2.0 API
 }
 
 # define NPY_NUMUSERTYPES (*(int *)PyArray_API[6])
@@ -98,8 +102,13 @@ multiarray_types_api = {
 # define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[8])
 
 multiarray_funcs_api = {
-    '__unused_indices__': [
-        40, 41, 65, 67, 68, 163, 164, 171, 201, 202, 278, 291],
+    '__unused_indices__': (
+        [1, 4, 40, 41, 65, 66, 67, 68, 81, 82, 83,
+         103, 115, 117, 122, 163, 164, 171, 173, 197,
+         201, 202, 208, 219, 220, 221, 222, 223, 278,
+         291, 293, 294, 295, 301]
+        + list(range(320, 361))  # range reserved DType class slots
+        ),
     'PyArray_GetNDArrayCVersion':           (0,),
     # Unused slot 40, was `PyArray_SetNumericOps`
     # Unused slot 41, was `PyArray_GetNumericOps`,
@@ -111,8 +120,8 @@ multiarray_funcs_api = {
     'PyArray_Zero':                         (47,),
     'PyArray_One':                          (48,),
     'PyArray_CastToType':                   (49, StealRef(2)),
-    'PyArray_CastTo':                       (50,),
-    'PyArray_CastAnyTo':                    (51,),
+    'PyArray_CopyInto':                     (50,),
+    'PyArray_CopyAnyInto':                  (51,),
     'PyArray_CanCastSafely':                (52,),
     'PyArray_CanCastTo':                    (53,),
     'PyArray_ObjectType':                   (54,),
@@ -127,7 +136,7 @@ multiarray_funcs_api = {
     'PyArray_CastScalarToCtype':            (63,),
     'PyArray_CastScalarDirect':             (64,),
     # Unused slot 65, was `PyArray_ScalarFromObject`
-    'PyArray_GetCastFunc':                  (66,),
+    # Unused slot 66, was `PyArray_GetCastFunc`
     # Unused slot 67, was `PyArray_FromDims`
     # Unused slot 68, was `PyArray_FromDimsAndDataAndDescr`
     'PyArray_FromAny':                      (69, StealRef(2)),
@@ -142,9 +151,9 @@ multiarray_funcs_api = {
     'PyArray_SetField':                     (78, StealRef(2)),
     'PyArray_Byteswap':                     (79,),
     'PyArray_Resize':                       (80,),
-    'PyArray_MoveInto':                     (81,),
-    'PyArray_CopyInto':                     (82,),
-    'PyArray_CopyAnyInto':                  (83,),
+    # Unused slot 81, was `PyArray_MoveInto``
+    # Unused slot 82 was `PyArray_CopyInto` (which replaces `..._CastTo`)
+    # Unused slot 82 was `PyArray_CopyAnyInto` (which replaces `..._CastAnyTo`)
     'PyArray_CopyObject':                   (84,),
     'PyArray_NewCopy':                      (85,),
     'PyArray_ToList':                       (86,),
@@ -164,7 +173,7 @@ multiarray_funcs_api = {
     'PyArray_PyIntAsInt':                   (100,),
     'PyArray_PyIntAsIntp':                  (101,),
     'PyArray_Broadcast':                    (102,),
-    'PyArray_FillObjectArray':              (103,),
+    # Unused slot 103, was `PyArray_FillObjectArray`
     'PyArray_FillWithScalar':               (104,),
     'PyArray_CheckStrides':                 (105,),
     'PyArray_DescrNewByteorder':            (106,),
@@ -176,14 +185,14 @@ multiarray_funcs_api = {
     'PyArray_FromArrayAttr':                (112,),
     'PyArray_ScalarKind':                   (113,),
     'PyArray_CanCoerceScalar':              (114,),
-    'PyArray_NewFlagsObject':               (115,),
+    # Unused slot 115, was `PyArray_NewFlagsObject`
     'PyArray_CanCastScalar':                (116,),
-    'PyArray_CompareUCS4':                  (117,),
+    # Unused slot 117, was `PyArray_CompareUCS4`
     'PyArray_RemoveSmallest':               (118,),
     'PyArray_ElementStrides':               (119,),
     'PyArray_Item_INCREF':                  (120,),
     'PyArray_Item_XDECREF':                 (121,),
-    'PyArray_FieldNames':                   (122,),
+    # Unused slot 122, was `PyArray_FieldNames`
     'PyArray_Transpose':                    (123,),
     'PyArray_TakeFrom':                     (124,),
     'PyArray_PutTo':                        (125,),
@@ -234,7 +243,7 @@ multiarray_funcs_api = {
     'PyArray_MatrixProduct':                (170,),
     # Unused slot 171, was `PyArray_CopyAndTranspose`
     'PyArray_Correlate':                    (172,),
-    'PyArray_TypestrConvert':               (173,),
+    # Unused slot 173, was `PyArray_TypestrConvert`
     'PyArray_DescrConverter':               (174,),
     'PyArray_DescrConverter2':              (175,),
     'PyArray_IntpConverter':                (176,),
@@ -258,7 +267,7 @@ multiarray_funcs_api = {
     'PyArray_RegisterCanCast':              (194,),
     'PyArray_InitArrFuncs':                 (195,),
     'PyArray_IntTupleFromIntp':             (196,),
-    'PyArray_TypeNumFromName':              (197,),
+    # Unused slot 197, was `PyArray_TypeNumFromName`
     'PyArray_ClipmodeConverter':            (198,),
     'PyArray_OutputConverter':              (199,),
     'PyArray_BroadcastToShape':             (200,),
@@ -269,18 +278,18 @@ multiarray_funcs_api = {
     'PyArray_SearchsideConverter':          (205,),
     'PyArray_CheckAxis':                    (206,),
     'PyArray_OverflowMultiplyList':         (207,),
-    'PyArray_CompareString':                (208,),
+    # Unused slot 208, was `PyArray_CompareString`
     'PyArray_MultiIterFromObjects':         (209,),
     'PyArray_GetEndianness':                (210,),
     'PyArray_GetNDArrayCFeatureVersion':    (211,),
     'PyArray_Correlate2':                   (212,),
     'PyArray_NeighborhoodIterNew':          (213,),
     # End 1.5 API
-    'PyArray_SetDatetimeParseFunction':     (219,),
-    'PyArray_DatetimeToDatetimeStruct':     (220,),
-    'PyArray_TimedeltaToTimedeltaStruct':   (221,),
-    'PyArray_DatetimeStructToDatetime':     (222,),
-    'PyArray_TimedeltaStructToTimedelta':   (223,),
+    # Unused slot 219, was `PyArray_SetDatetimeParseFunction`
+    # Unused slot 220, was `PyArray_DatetimeToDatetimeStruct`
+    # Unused slot 221, was `PyArray_TimedeltaToTimedeltaStruct`
+    # Unused slot 222, was `PyArray_DatetimeStructToDatetime`
+    # Unused slot 223, was `PyArray_TimedeltaStructToTimedelta`
     # NDIter API
     'NpyIter_New':                          (224,),
     'NpyIter_MultiNew':                     (225,),
@@ -352,9 +361,9 @@ multiarray_funcs_api = {
     'PyDataMem_FREE':                       (289,),
     'PyDataMem_RENEW':                      (290,),
     # Unused slot 291, was `PyDataMem_SetEventHook`
-    'PyArray_MapIterSwapAxes':              (293,),
-    'PyArray_MapIterArray':                 (294,),
-    'PyArray_MapIterNext':                  (295,),
+    # Unused slot 293, was `PyArray_MapIterSwapAxes`
+    # Unused slot 294, was `PyArray_MapIterArray`
+    # Unused slot 295, was `PyArray_MapIterNext`
     # End 1.7 API
     'PyArray_Partition':                    (296,),
     'PyArray_ArgPartition':                 (297,),
@@ -364,7 +373,7 @@ multiarray_funcs_api = {
     # End 1.9 API
     'PyArray_CheckAnyScalarExact':          (300,),
     # End 1.10 API
-    'PyArray_MapIterArrayCopyIfOverlap':    (301,),
+    # Unused slot 301, was `PyArray_MapIterArrayCopyIfOverlap`
     # End 1.13 API
     'PyArray_ResolveWritebackIfCopy':       (302,),
     'PyArray_SetWritebackIfCopyBase':       (303,),
@@ -378,6 +387,22 @@ multiarray_funcs_api = {
     'NpyDatetime_GetDatetimeISO8601StrLen':          (310, MinVersion("2.0")),
     'NpyDatetime_MakeISO8601Datetime':               (311, MinVersion("2.0")),
     'NpyDatetime_ParseISO8601Datetime':              (312, MinVersion("2.0")),
+    'NpyString_load':                                (313, MinVersion("2.0")),
+    'NpyString_pack':                                (314, MinVersion("2.0")),
+    'NpyString_pack_null':                           (315, MinVersion("2.0")),
+    'NpyString_acquire_allocator':                   (316, MinVersion("2.0")),
+    'NpyString_acquire_allocators':                  (317, MinVersion("2.0")),
+    'NpyString_release_allocator':                   (318, MinVersion("2.0")),
+    'NpyString_release_allocators':                  (319, MinVersion("2.0")),
+    # Slots 320-360 reserved for DType classes (see comment in types)
+    'PyArray_GetDefaultDescr':                       (361, MinVersion("2.0")),
+    'PyArrayInitDTypeMeta_FromSpec':                 (362, MinVersion("2.0")),
+    'PyArray_CommonDType':                           (363, MinVersion("2.0")),
+    'PyArray_PromoteDTypeSequence':                  (364, MinVersion("2.0")),
+    # End 2.0 API
+    # The actual public API for this is the inline function
+    # `PyDataType_GetArrFuncs` checks for the NumPy runtime version.
+    '_PyDataType_GetArrFuncs':                       (365,),
 }
 
 ufunc_types_api = {
@@ -433,6 +458,10 @@ ufunc_funcs_api = {
     # End 1.8 API
     'PyUFunc_FromFuncAndDataAndSignatureAndIdentity': (42, MinVersion("1.16")),
     # End 1.16 API
+    'PyUFunc_AddLoopFromSpec':                       (43, MinVersion("2.0")),
+    'PyUFunc_AddPromoter':                           (44, MinVersion("2.0")),
+    'PyUFunc_AddWrappingLoop':                       (45, MinVersion("2.0")),
+    'PyUFunc_GiveFloatingpointErrors':               (46, MinVersion("2.0")),
 }
 
 # List of all the dicts which define the C API

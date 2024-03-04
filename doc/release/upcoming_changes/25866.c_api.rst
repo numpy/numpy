@@ -1,0 +1,14 @@
+New C-API import functions
+--------------------------
+We have now added ``PyArray_ImportNumPyAPI`` and ``PyUFunc_ImportUFuncAPI``
+as static inline functions to import the NumPy C-API tables.
+The new functions have two advantages over `import_array` and `import_ufunc`:
+
+- They check whether the import was already performed and are light-weight
+  if not, allowing to add them judiciously (although this is not preferable
+  in most cases).
+- The old mechanisms were macros rather than functions which included a
+  ``return`` statement.
+
+The ``PyArray_ImportNumPyAPI()`` function is included in ``npy_2_compat.h``
+for simpler backporting.

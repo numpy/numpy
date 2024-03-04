@@ -17,7 +17,6 @@ typedef struct {
         npy_bool obval;
 } PyBoolScalarObject;
 
-extern NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type;
 extern NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type;
 extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 
@@ -48,6 +47,12 @@ static int PyArray_RUNTIME_VERSION = 0;
 #endif
 
 %s
+
+/*
+ * The DType classes are inconvenient for the Python generation so exposed
+ * manually in the header below  (may be moved).
+ */
+#include "numpy/_public_dtype_api_table.h"
 
 #if !defined(NO_IMPORT_ARRAY) && !defined(NO_IMPORT)
 static int
@@ -82,6 +87,17 @@ _import_array(void)
       return -1;
   }
 
+  /*
+   * On exceedingly few platforms these sizes may not match, in which case
+   * We do not support older NumPy versions at all.
+   */
+  if (sizeof(Py_ssize_t) != sizeof(Py_intptr_t) &&
+        PyArray_RUNTIME_VERSION < NPY_2_0_API_VERSION) {
+    PyErr_Format(PyExc_RuntimeError,
+        "module compiled against NumPy 2.0 but running on NumPy 1.x. "
+        "Unfortunately, this is not supported on niche platforms where "
+        "`sizeof(size_t) != sizeof(inptr_t)`.");
+  }
   /*
    * Perform runtime check of C API version.  As of now NumPy 2.0 is ABI
    * backwards compatible (in the exposed feature subset!) for all practical

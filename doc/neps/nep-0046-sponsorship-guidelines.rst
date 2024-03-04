@@ -18,7 +18,7 @@ This NEP provides guidelines on how the NumPy project will acknowledge
 financial and in-kind support.
 
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 In the past few years, the NumPy project has gotten significant financial
@@ -204,7 +204,7 @@ to a more suitable platform, such as `Open Collective <https://opencollective.co
 in the future, we should reconsider listing all individual donations.
 
 
-Related Work
+Related work
 ------------
 
 Here we provide a few examples of how other projects handle sponsorship
@@ -238,7 +238,7 @@ Discussion
 - `PR with review of the NEP draft <https://github.com/numpy/numpy/pull/18084>`__
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 - `Inside NumPy: preparing for the next decade <https://github.com/numpy/archive/blob/main/content/inside_numpy_presentation_SciPy2019.pdf>`__ presentation at SciPy'19 discussing the impact of the first NumPy grant.

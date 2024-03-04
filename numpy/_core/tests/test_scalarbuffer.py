@@ -10,7 +10,7 @@ from numpy.testing import assert_, assert_equal, assert_raises
 
 # PEP3118 format strings for native (standard alignment and byteorder) types
 scalars_and_codes = [
-    (np.bool_, '?'),
+    (np.bool, '?'),
     (np.byte, 'b'),
     (np.short, 'h'),
     (np.intc, 'i'),

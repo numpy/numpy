@@ -20,7 +20,7 @@ Exported symbols include:
 
     c-based names
 
-    bool_
+    bool
 
     object_
 
@@ -40,7 +40,7 @@ Exported symbols include:
    As part of the type-hierarchy:    xx -- is bit-width
 
    generic
-     +-> bool_                                  (kind=b)
+     +-> bool                                   (kind=b)
      +-> number
      |   +-> integer
      |   |   +-> signedinteger     (intxx)      (kind=i)
@@ -79,6 +79,7 @@ Exported symbols include:
 import numbers
 import warnings
 
+from . import multiarray as ma
 from .multiarray import (
         ndarray, array, dtype, datetime_data, datetime_as_string,
         busday_offset, busday_count, is_busday, busdaycalendar
@@ -89,7 +90,7 @@ from .._utils import set_module
 __all__ = [
     'ScalarType', 'typecodes', 'issubdtype', 'datetime_data', 
     'datetime_as_string', 'busday_offset', 'busday_count', 
-    'is_busday', 'busdaycalendar'
+    'is_busday', 'busdaycalendar', 'isdtype'
 ]
 
 # we don't need all these imports, but we need to keep them for compatibility
@@ -359,6 +360,97 @@ def issubsctype(arg1, arg2):
     return issubclass(obj2sctype(arg1), obj2sctype(arg2))
 
 
+def _preprocess_dtype(dtype, err_msg):
+    """
+    Preprocess dtype argument by:
+      1. fetching type from a data type
+      2. verifying that types are built-in NumPy dtypes
+    """
+    if isinstance(dtype, ma.dtype):
+        dtype = dtype.type
+    if isinstance(dtype, ndarray) or dtype not in allTypes.values():
+        raise TypeError(f"{err_msg}, but it is a {type(dtype)}.")
+    return dtype
+
+
+@set_module('numpy')
+def isdtype(dtype, kind):
+    """
+    Determine if a provided dtype is of a specified data type ``kind``.
+
+    This function only supports built-in NumPy's data types.
+    Third-party dtypes are not yet supported.
+
+    Parameters
+    ----------
+    dtype : dtype
+        The input dtype.
+    kind : dtype or str or tuple of dtypes/strs.
+        dtype or dtype kind. Allowed dtype kinds are:
+        * ``'bool'`` : boolean kind
+        * ``'signed integer'`` : signed integer data types
+        * ``'unsigned integer'`` : unsigned integer data types
+        * ``'integral'`` : integer data types
+        * ``'real floating'`` : real-valued floating-point data types
+        * ``'complex floating'`` : complex floating-point data types
+        * ``'numeric'`` : numeric data types
+
+    Returns
+    -------
+    out : bool
+
+    See Also
+    --------
+    issubdtype
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> np.isdtype(np.float32, np.float64)
+    False
+    >>> np.isdtype(np.float32, "real floating")
+    True
+    >>> np.isdtype(np.complex128, ("real floating", "complex floating"))
+    True
+
+    """
+    dtype = _preprocess_dtype(
+        dtype, err_msg="dtype argument must be a NumPy dtype"
+    )
+
+    input_kinds = kind if isinstance(kind, tuple) else (kind,)
+
+    processed_kinds = set()
+
+    for kind in input_kinds:
+        if kind == "bool":
+            processed_kinds.add(allTypes["bool"])
+        elif kind == "signed integer":
+            processed_kinds.update(sctypes["int"])
+        elif kind == "unsigned integer":
+            processed_kinds.update(sctypes["uint"])
+        elif kind == "integral":
+            processed_kinds.update(sctypes["int"] + sctypes["uint"])
+        elif kind == "real floating":
+            processed_kinds.update(sctypes["float"])
+        elif kind == "complex floating":
+            processed_kinds.update(sctypes["complex"])
+        elif kind == "numeric":
+            processed_kinds.update(
+                sctypes["int"] + sctypes["uint"] +
+                sctypes["float"] + sctypes["complex"]
+            )
+        else:
+            kind = _preprocess_dtype(
+                kind,
+                err_msg="kind argument must be comprised of "
+                        "NumPy dtypes or strings only"
+            )
+            processed_kinds.add(kind)
+
+    return dtype in processed_kinds
+
+
 @set_module('numpy')
 def issubdtype(arg1, arg2):
     r"""
@@ -497,14 +589,14 @@ for key in allTypes:
 del key
 
 typecodes = {'Character': 'c',
-             'Integer': 'bhilqp',
-             'UnsignedInteger': 'BHILQP',
+             'Integer': 'bhilqnp',
+             'UnsignedInteger': 'BHILQNP',
              'Float': 'efdg',
              'Complex': 'FDG',
-             'AllInteger': 'bBhHiIlLqQpP',
+             'AllInteger': 'bBhHiIlLqQnNpP',
              'AllFloat': 'efdgFDG',
              'Datetime': 'Mm',
-             'All': '?bhilqpBHILQPefdgFDGSUVOMm'}
+             'All': '?bhilqnpBHILQNPefdgFDGSUVOMm'}
 
 # backwards compatibility --- deprecated name
 # Formal deprecation: Numpy 1.20.0, 2020-10-19 (see numpy/__init__.py)

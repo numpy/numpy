@@ -351,7 +351,7 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
      */
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;
-    if (type_num1 >= NPY_NTYPES || type_num2 >= NPY_NTYPES ||
+    if (type_num1 >= NPY_NTYPES_LEGACY || type_num2 >= NPY_NTYPES_LEGACY ||
             type_num1 == NPY_OBJECT || type_num2 == NPY_OBJECT) {
         return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
                 type_tup, out_dtypes);
@@ -513,7 +513,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
     bool has_custom_or_object = false;
     for (int iop = 0; iop < ufunc->nin; iop++) {
         int type_num = PyArray_DESCR(operands[iop])->type_num;
-        if (type_num >= NPY_NTYPES || type_num == NPY_OBJECT) {
+        if (type_num >= NPY_NTYPES_LEGACY || type_num == NPY_OBJECT) {
             has_custom_or_object = true;
             break;
         }
@@ -1115,12 +1115,48 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
     type_num2 = PyArray_DESCR(operands[1])->type_num;
 
     /* Use the default when datetime and timedelta are not involved */
-    if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
+    if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)
+        && !((PyTypeNum_ISSTRING(type_num1) && PyTypeNum_ISINTEGER(type_num2))
+             || (PyTypeNum_ISINTEGER(type_num1) && PyTypeNum_ISSTRING(type_num2)))) {
         return PyUFunc_SimpleUniformOperationTypeResolver(ufunc, casting,
                     operands, type_tup, out_dtypes);
     }
 
-    if (type_num1 == NPY_TIMEDELTA) {
+    if (PyTypeNum_ISSTRING(type_num1) || PyTypeNum_ISSTRING(type_num2)) {
+        if (PyTypeNum_ISSTRING(type_num1)) {
+            out_dtypes[0] = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(operands[0]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
+
+            out_dtypes[1] = PyArray_DescrNewFromType(NPY_INT64);
+            if (out_dtypes[1] == NULL) {
+                return -1;
+            }
+
+            // This is wrong cause of elsize, but only the DType matters
+            // here (String or Unicode). The loop has the correct implementation itself.
+            out_dtypes[2] = out_dtypes[0];
+            Py_INCREF(out_dtypes[0]);
+        }
+        else {
+            out_dtypes[0] = PyArray_DescrNewFromType(NPY_INT64);
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
+
+            out_dtypes[1] = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(operands[1]));
+            if (out_dtypes[1] == NULL) {
+                return -1;
+            }
+
+            // This is wrong agaian cause of elsize, but only the DType matters
+            // here (String or Unicode).
+            out_dtypes[2] = out_dtypes[1];
+            Py_INCREF(out_dtypes[1]);
+        }
+    }
+    else if (type_num1 == NPY_TIMEDELTA) {
         /* m8[<A>] * int## => m8[<A>] * int64 */
         if (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2)) {
             out_dtypes[0] = NPY_DT_CALL_ensure_canonical(

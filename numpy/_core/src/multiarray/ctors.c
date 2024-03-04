@@ -22,6 +22,7 @@
 #include "convert_datatype.h"
 #include "descriptor.h"
 #include "dtypemeta.h"
+#include "refcount.h"  /* for PyArray_SetObjectsToNone */
 #include "shape.h"
 #include "npy_buffer.h"
 #include "lowlevel_strided_loops.h"
@@ -76,7 +77,7 @@ fromstr_next_element(char **s, void *dptr, PyArray_Descr *dtype,
                      const char *end)
 {
     char *e = *s;
-    int r = dtype->f->fromstr(*s, dptr, &e, dtype);
+    int r = PyDataType_GetArrFuncs(dtype)->fromstr(*s, dptr, &e, dtype);
     /*
      * fromstr always returns 0 for basic dtypes; s points to the end of the
      * parsed string. If s is not changed an error occurred or the end was
@@ -102,7 +103,7 @@ fromfile_next_element(FILE **fp, void *dptr, PyArray_Descr *dtype,
                       void *NPY_UNUSED(stream_data))
 {
     /* the NULL argument is for backwards-compatibility */
-    int r = dtype->f->scanfunc(*fp, dptr, NULL, dtype);
+    int r = PyDataType_GetArrFuncs(dtype)->scanfunc(*fp, dptr, NULL, dtype);
     /* r can be EOF or the number of items read (0 or 1) */
     if (r == 1) {
         return 0;
@@ -659,7 +660,7 @@ PyArray_NewFromDescr_int(
     }
 
     /* finalize the descriptor if the DType defines a finalization function */
-    finalize_descr_function *finalize =
+    PyArrayDTypeMeta_FinalizeDescriptor *finalize =
             NPY_DT_SLOTS(NPY_DTYPE(descr))->finalize_descr;
     if (finalize != NULL && data == NULL) {
         Py_SETREF(descr, finalize(descr));
@@ -824,7 +825,7 @@ PyArray_NewFromDescr_int(
     if (data == NULL) {
         /* float errors do not matter and we do not release GIL */
         NPY_ARRAYMETHOD_FLAGS zero_flags;
-        get_traverse_loop_function *get_fill_zero_loop =
+        PyArrayMethod_GetTraverseLoop *get_fill_zero_loop =
             NPY_DT_SLOTS(NPY_DTYPE(descr))->get_fill_zero_loop;
         if (get_fill_zero_loop != NULL) {
             if (get_fill_zero_loop(
@@ -1162,8 +1163,7 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
 
     /* Logic shared by `empty`, `empty_like`, and `ndarray.__new__` */
     if (PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)ret))) {
-        PyArray_FillObjectArray((PyArrayObject *)ret, Py_None);
-        if (PyErr_Occurred()) {
+        if (PyArray_SetObjectsToNone((PyArrayObject *)ret) < 0) {
             Py_DECREF(ret);
             return NULL;
         }
@@ -1421,7 +1421,7 @@ fail:
  *                       DType may be used, but is not enforced.
  * @param writeable whether the result must be writeable.
  * @param context Unused parameter, must be NULL (should be removed later).
- * @param never_copy Specifies that a copy is not allowed.
+ * @param copy Specifies the copy behavior.
  *
  * @returns The array object, Py_NotImplemented if op is not array-like,
  *          or NULL with an error set. (A new reference to Py_NotImplemented
@@ -1430,7 +1430,7 @@ fail:
 NPY_NO_EXPORT PyObject *
 _array_from_array_like(PyObject *op,
         PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context,
-        int never_copy) {
+        int copy) {
     PyObject* tmp;
 
     /*
@@ -1477,17 +1477,8 @@ _array_from_array_like(PyObject *op,
         }
     }
 
-    /*
-     * If op supplies the __array__ function.
-     * The documentation says this should produce a copy, so
-     * we skip this method if writeable is true, because the intent
-     * of writeable is to modify the operand.
-     * XXX: If the implementation is wrong, and/or if actual
-     *      usage requires this behave differently,
-     *      this should be changed!
-     */
-    if (!writeable && tmp == Py_NotImplemented) {
-        tmp = PyArray_FromArrayAttr_int(op, requested_dtype, never_copy);
+    if (tmp == Py_NotImplemented) {
+        tmp = PyArray_FromArrayAttr_int(op, requested_dtype, copy);
         if (tmp == NULL) {
             return NULL;
         }
@@ -1530,8 +1521,10 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         return NULL;
     }
 
-    PyObject* ret =  PyArray_FromAny_int(op, dt_info.descr, dt_info.dtype,
-                                         min_depth, max_depth, flags, context);
+    int was_scalar;
+    PyObject* ret =  PyArray_FromAny_int(
+            op, dt_info.descr, dt_info.dtype,
+            min_depth, max_depth, flags, context, &was_scalar);
 
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
@@ -1541,12 +1534,19 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 /*
  * Internal version of PyArray_FromAny that accepts a dtypemeta. Borrows
  * references to the descriptor and dtype.
+ *
+ * The `was_scalar` output returns 1 when the object was a "scalar".
+ * This means it was:
+ * - Recognized as a scalar by a/the dtype.  This can be DType specific,
+ *   for example a tuple may be a scalar, but only for structured dtypes.
+ * - Anything not recognized as an instance of a DType's scalar type but also not
+ *   convertible to an array.  (no __array__ protocol, etc.)
+ *   these must map to `dtype=object` (if a dtype wasn't specified).
  */
-
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
                     PyArray_DTypeMeta *in_DType, int min_depth, int max_depth,
-                    int flags, PyObject *context)
+                    int flags, PyObject *context, int *was_scalar)
 {
     /*
      * This is the main code to make a NumPy array from a Python
@@ -1563,13 +1563,22 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         return NULL;
     }
 
-    ndim = PyArray_DiscoverDTypeAndShape(op,
-            NPY_MAXDIMS, dims, &cache, in_DType, in_descr, &dtype,
-            flags & NPY_ARRAY_ENSURENOCOPY);
+    // Default is copy = None
+    int copy = -1;
+
+    if (flags & NPY_ARRAY_ENSURENOCOPY) {
+        copy = 0;
+    }
+
+    ndim = PyArray_DiscoverDTypeAndShape(
+            op, NPY_MAXDIMS, dims, &cache, in_DType, in_descr, &dtype, copy);
 
     if (ndim < 0) {
         return NULL;
     }
+
+    /* If the cache is NULL, then the object is considered a scalar */
+    *was_scalar = (cache == NULL);
 
     if (dtype == NULL) {
         dtype = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
@@ -1827,8 +1836,9 @@ PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
         }
     }
 
+    int was_scalar;
     obj = PyArray_FromAny_int(op, in_descr, in_DType, min_depth,
-                              max_depth, requires, context);
+                              max_depth, requires, context, &was_scalar);
     if (obj == NULL) {
         return NULL;
     }
@@ -2404,16 +2414,16 @@ PyArray_FromInterface(PyObject *origin)
  * @param op The Python object to convert to an array.
  * @param descr The desired `arr.dtype`, passed into the `__array__` call,
  *        as information but is not checked/enforced!
- * @param never_copy Specifies that a copy is not allowed.
- *        NOTE: Currently, this means an error is raised instead of calling
- *        `op.__array__()`.  In the future we could call for example call
- *        `op.__array__(never_copy=True)` instead.
+ * @param copy Specifies the copy behavior
+ *        NOTE: For copy == -1 it passes `op.__array__(copy=None)`,
+ *              for copy == 0, `op.__array__(copy=False)`, and
+ *              for copy == 1, `op.__array__(copy=True).
  * @returns NotImplemented if `__array__` is not defined or a NumPy array
  *          (or subclass).  On error, return NULL.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_FromArrayAttr_int(
-        PyObject *op, PyArray_Descr *descr, int never_copy)
+        PyObject *op, PyArray_Descr *descr, int copy)
 {
     PyObject *new;
     PyObject *array_meth;
@@ -2424,15 +2434,6 @@ PyArray_FromArrayAttr_int(
             return NULL;
         }
         return Py_NotImplemented;
-    }
-    if (never_copy) {
-        /* Currently, we must always assume that `__array__` returns a copy */
-        PyErr_SetString(PyExc_ValueError,
-                "Unable to avoid copy while converting from an object "
-                "implementing the `__array__` protocol.  NumPy cannot ensure "
-                "that no copy will be made.");
-        Py_DECREF(array_meth);
-        return NULL;
     }
 
     if (PyType_Check(op) && PyObject_HasAttrString(array_meth, "__get__")) {
@@ -2445,16 +2446,66 @@ PyArray_FromArrayAttr_int(
         Py_DECREF(array_meth);
         return Py_NotImplemented;
     }
-    if (descr == NULL) {
-        new = PyObject_CallFunction(array_meth, NULL);
+
+    PyObject *kwargs = PyDict_New();
+
+    /*
+     * Only if the value of `copy` isn't the default one, we try to pass it
+     * along; for backwards compatibility we then retry if it fails because the
+     * signature of the __array__ method being called does not have `copy`.
+     */
+    int copy_passed = 0;
+    if (copy != -1) {
+        copy_passed = 1;
+        PyObject *copy_obj = copy == 1 ? Py_True : Py_False;
+        PyDict_SetItemString(kwargs, "copy", copy_obj);
     }
-    else {
-        new = PyObject_CallFunction(array_meth, "O", descr);
-    }
-    Py_DECREF(array_meth);
+    PyObject *args = descr != NULL ? PyTuple_Pack(1, descr) : PyTuple_New(0);
+
+    new = PyObject_Call(array_meth, args, kwargs);
+
     if (new == NULL) {
-        return NULL;
+        if (npy_ma_str_array_err_msg_substr == NULL) {
+            return NULL;
+        }
+        PyObject *type, *value, *traceback;
+        PyErr_Fetch(&type, &value, &traceback);
+        if (value != NULL) {
+            PyObject *str_value = PyObject_Str(value);
+            if (PyUnicode_Contains(
+                        str_value, npy_ma_str_array_err_msg_substr) > 0) {
+                Py_DECREF(type);
+                Py_DECREF(value);
+                Py_XDECREF(traceback);
+                if (PyErr_WarnEx(PyExc_UserWarning,
+                                 "__array__ should implement 'dtype' and "
+                                 "'copy' keywords", 1) < 0) {
+                    Py_DECREF(str_value);
+                    Py_DECREF(kwargs);
+                    return NULL;
+                }
+                if (copy_passed) { /* try again */
+                    PyDict_DelItemString(kwargs, "copy");
+                    new = PyObject_Call(array_meth, args, kwargs);
+                    if (new == NULL) {
+                        Py_DECREF(str_value);
+                        Py_DECREF(kwargs);
+                        return NULL;
+                    }
+                }
+            }
+            Py_DECREF(str_value);
+        }
+        if (new == NULL) {
+            PyErr_Restore(type, value, traceback);
+            Py_DECREF(kwargs);
+            return NULL;
+        }
     }
+
+    Py_DECREF(kwargs);
+    Py_DECREF(array_meth);
+
     if (!PyArray_Check(new)) {
         PyErr_SetString(PyExc_ValueError,
                         "object __array__ method not "  \
@@ -2763,17 +2814,6 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
 }
 
 /*NUMPY_API
- * Move the memory of one array into another, allowing for overlapping data.
- *
- * Returns 0 on success, negative on failure.
- */
-NPY_NO_EXPORT int
-PyArray_MoveInto(PyArrayObject *dst, PyArrayObject *src)
-{
-    return PyArray_AssignArray(dst, src, NULL, NPY_UNSAFE_CASTING);
-}
-
-/*NUMPY_API
  * PyArray_CheckAxis
  *
  * check that axis is valid
@@ -2785,14 +2825,14 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
     PyObject *temp1, *temp2;
     int n = PyArray_NDIM(arr);
 
-    if (*axis == NPY_MAXDIMS || n == 0) {
+    if (*axis == NPY_RAVEL_AXIS || n == 0) {
         if (n != 1) {
             temp1 = PyArray_Ravel(arr,0);
             if (temp1 == NULL) {
                 *axis = 0;
                 return NULL;
             }
-            if (*axis == NPY_MAXDIMS) {
+            if (*axis == NPY_RAVEL_AXIS) {
                 *axis = PyArray_NDIM((PyArrayObject *)temp1)-1;
             }
         }
@@ -2957,8 +2997,7 @@ PyArray_Empty_int(int nd, npy_intp const *dims, PyArray_Descr *descr,
 
     /* Logic shared by `empty`, `empty_like`, and `ndarray.__new__` */
     if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
-        PyArray_FillObjectArray(ret, Py_None);
-        if (PyErr_Occurred()) {
+        if (PyArray_SetObjectsToNone(ret) < 0) {
             Py_DECREF(ret);
             return NULL;
         }
@@ -3038,7 +3077,7 @@ PyArray_Arange(double start, double stop, double step, int type_num)
     if (range == NULL) {
         return NULL;
     }
-    funcs = PyArray_DESCR(range)->f;
+    funcs = PyDataType_GetArrFuncs(PyArray_DESCR(range));
 
     /*
      * place start in the buffer and the next value in the second position
@@ -3259,7 +3298,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         swap = 0;
     }
 
-    funcs = native->f;
+    funcs = PyDataType_GetArrFuncs(native);
     if (!funcs->fill) {
         /* This effectively forbids subarray types as well... */
         PyErr_Format(PyExc_TypeError,
@@ -3581,7 +3620,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
         ret = array_fromfile_binary(fp, dtype, num, &nread);
     }
     else {
-        if (dtype->f->scanfunc == NULL) {
+        if (PyDataType_GetArrFuncs(dtype)->scanfunc == NULL) {
             PyErr_SetString(PyExc_ValueError,
                     "Unable to read character files of that array type");
             Py_DECREF(dtype);
@@ -3829,7 +3868,7 @@ PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
         size_t nread = 0;
         char *end;
 
-        if (dtype->f->fromstr == NULL) {
+        if (PyDataType_GetArrFuncs(dtype)->fromstr == NULL) {
             PyErr_SetString(PyExc_ValueError,
                             "don't know how to read "       \
                             "character strings with that "  \
@@ -4084,27 +4123,4 @@ _array_fill_strides(npy_intp *strides, npy_intp const *dims, int nd, size_t item
         }
     }
     return;
-}
-
-/*
- * Calls arr_of_subclass.__array_wrap__(towrap), in order to make 'towrap'
- * have the same ndarray subclass as 'arr_of_subclass'.
- */
-NPY_NO_EXPORT PyArrayObject *
-PyArray_SubclassWrap(PyArrayObject *arr_of_subclass, PyArrayObject *towrap)
-{
-    PyObject *wrapped = PyObject_CallMethodObjArgs((PyObject *)arr_of_subclass,
-            npy_ma_str_array_wrap, (PyObject *)towrap, NULL);
-    if (wrapped == NULL) {
-        return NULL;
-    }
-    if (!PyArray_Check(wrapped)) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "ndarray subclass __array_wrap__ method returned an "
-                "object which was not an instance of an ndarray subclass");
-        Py_DECREF(wrapped);
-        return NULL;
-    }
-
-    return (PyArrayObject *)wrapped;
 }

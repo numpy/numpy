@@ -183,6 +183,9 @@ class TestMultinomial:
         with pytest.raises(ValueError, match=match):
             random.multinomial(1, pvals)
 
+    def test_multinomial_n_float(self):
+        # Non-index integer types should gracefully truncate floats
+        random.multinomial(100.5, [0.2, 0.8])
 
 class TestSetState:
     def setup_method(self):
@@ -276,7 +279,7 @@ class TestRandint:
     rfunc = random.randint
 
     # valid integer/boolean types
-    itype = [np.bool_, np.int8, np.uint8, np.int16, np.uint16,
+    itype = [np.bool, np.int8, np.uint8, np.int16, np.uint16,
              np.int32, np.uint32, np.int64, np.uint64]
 
     def test_unsupported_type(self):
@@ -284,8 +287,8 @@ class TestRandint:
 
     def test_bounds_checking(self):
         for dt in self.itype:
-            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
             assert_raises(ValueError, self.rfunc, lbnd - 1, ubnd, dtype=dt)
             assert_raises(ValueError, self.rfunc, lbnd, ubnd + 1, dtype=dt)
             assert_raises(ValueError, self.rfunc, ubnd, lbnd, dtype=dt)
@@ -293,8 +296,8 @@ class TestRandint:
 
     def test_rng_zero_and_extremes(self):
         for dt in self.itype:
-            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
 
             tgt = ubnd - 1
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
@@ -309,8 +312,8 @@ class TestRandint:
         # Test for ticket #1690
 
         for dt in self.itype:
-            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
 
             try:
                 self.rfunc(lbnd, ubnd, dtype=dt)
@@ -329,7 +332,7 @@ class TestRandint:
                 assert_(vals.max() < ubnd)
                 assert_(vals.min() >= 2)
 
-        vals = self.rfunc(0, 2, size=2**16, dtype=np.bool_)
+        vals = self.rfunc(0, 2, size=2**16, dtype=np.bool)
 
         assert_(vals.max() < 2)
         assert_(vals.min() >= 0)
@@ -416,8 +419,8 @@ class TestRandint:
     def test_respect_dtype_singleton(self):
         # See gh-7203
         for dt in self.itype:
-            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
 
             sample = self.rfunc(lbnd, ubnd, dtype=dt)
             assert_equal(sample.dtype, np.dtype(dt))

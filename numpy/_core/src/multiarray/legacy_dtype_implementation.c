@@ -15,6 +15,7 @@
 #include "datetime_strings.h"
 #include "can_cast_table.h"
 #include "convert_datatype.h"
+#include "dtypemeta.h"
 
 #include "legacy_dtype_implementation.h"
 
@@ -142,8 +143,8 @@ PyArray_LegacyCanCastSafely(int fromtype, int totype)
     PyArray_Descr *from;
 
     /* Fast table lookup for small type numbers */
-    if ((unsigned int)fromtype < NPY_NTYPES &&
-        (unsigned int)totype < NPY_NTYPES) {
+    if ((unsigned int)fromtype < NPY_NTYPES_LEGACY &&
+        (unsigned int)totype < NPY_NTYPES_LEGACY) {
         return _npy_can_cast_safely_table[fromtype][totype];
     }
 
@@ -157,8 +158,8 @@ PyArray_LegacyCanCastSafely(int fromtype, int totype)
      * cancastto is a NPY_NOTYPE terminated C-int-array of types that
      * the data-type can be cast to safely.
      */
-    if (from->f->cancastto) {
-        int *curtype = from->f->cancastto;
+    if (PyDataType_GetArrFuncs(from)->cancastto) {
+        int *curtype = PyDataType_GetArrFuncs(from)->cancastto;
 
         while (*curtype != NPY_NOTYPE) {
             if (*curtype++ == totype) {

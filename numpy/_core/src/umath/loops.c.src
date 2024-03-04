@@ -14,6 +14,7 @@
 #include "numpy/halffloat.h"
 #include "lowlevel_strided_loops.h"
 #include "loops_utils.h"
+#include "gil_utils.h"
 
 #include "npy_pycompat.h"
 
@@ -480,11 +481,8 @@ NPY_NO_EXPORT void
 
 #if @SIGNED@
         if (in2 < 0) {
-            NPY_ALLOW_C_API_DEF
-            NPY_ALLOW_C_API;
-            PyErr_SetString(PyExc_ValueError,
-                    "Integers to negative integer powers are not allowed.");
-            NPY_DISABLE_C_API;
+            npy_gil_error(PyExc_ValueError,
+                          "Integers to negative integer powers are not allowed.");
             return;
         }
 #endif
@@ -2234,14 +2232,38 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_sign(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    /* fixme: sign of nan is currently 0 */
     UNARY_LOOP {
-        const @ftype@ in1r = ((@ftype@ *)ip1)[0];
-        const @ftype@ in1i = ((@ftype@ *)ip1)[1];
-        ((@ftype@ *)op1)[0] = CGT(in1r, in1i, 0.0, 0.0) ?  1 :
-                            (CLT(in1r, in1i, 0.0, 0.0) ? -1 :
-                            (CEQ(in1r, in1i, 0.0, 0.0) ?  0 : NPY_NAN@C@));
-        ((@ftype@ *)op1)[1] = 0;
+        const @ftype@ in_r = ((@ftype@ *)ip1)[0];
+        const @ftype@ in_i = ((@ftype@ *)ip1)[1];
+        const @ftype@ in_abs = npy_hypot@c@(in_r, in_i);
+        if (NPY_UNLIKELY(npy_isnan(in_abs))) {
+            ((@ftype@ *)op1)[0] = NPY_NAN@C@;
+            ((@ftype@ *)op1)[1] = NPY_NAN@C@;
+        }
+        else if (NPY_UNLIKELY(npy_isinf(in_abs))) {
+            if (npy_isinf(in_r)) {
+                if (npy_isinf(in_i)) {
+                    ((@ftype@ *)op1)[0] = NPY_NAN@C@;
+                    ((@ftype@ *)op1)[1] = NPY_NAN@C@;
+                }
+                else {
+                    ((@ftype@ *)op1)[0] = in_r > 0 ? 1.: -1.;
+                    ((@ftype@ *)op1)[1] = 0.;
+                }
+            }
+            else {
+                ((@ftype@ *)op1)[0] = 0.;
+                ((@ftype@ *)op1)[1] = in_i > 0 ? 1.: -1.;
+            }
+        }
+        else if (NPY_UNLIKELY(in_abs == 0)) {
+            ((@ftype@ *)op1)[0] = 0.@C@;
+            ((@ftype@ *)op1)[1] = 0.@C@;
+        }
+        else{
+            ((@ftype@ *)op1)[0] = in_r / in_abs;
+            ((@ftype@ *)op1)[1] = in_i / in_abs;
+        }
     }
 }
 

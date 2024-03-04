@@ -2,6 +2,8 @@
 """
 import warnings
 
+import pytest
+
 import numpy as np
 from numpy import linalg, arange, float64, array, dot, transpose
 from numpy.testing import (
@@ -87,6 +89,9 @@ class TestRegression:
                 assert_equal(np.linalg.matrix_rank(a), 1)
                 assert_array_less(1, np.linalg.norm(a, ord=2))
 
+                w_svdvals = linalg.svdvals(a)
+                assert_array_almost_equal(w, w_svdvals)
+
     def test_norm_object_array(self):
         # gh-7575
         testvector = np.array([np.array([0, 1]), 0, 0], dtype=object)
@@ -143,3 +148,16 @@ class TestRegression:
         u_lstsq, res, rank, sv = linalg.lstsq(G, b, rcond=None)
         # check results just in case
         assert_array_almost_equal(u_lstsq, u)
+
+    @pytest.mark.parametrize("upper", [True, False])
+    def test_cholesky_empty_array(self, upper):
+        # gh-25840 - upper=True hung before.
+        res = np.linalg.cholesky(np.zeros((0, 0)), upper=upper)
+        assert res.size == 0
+
+    @pytest.mark.parametrize("rtol", [0.0, [0.0] * 4, np.zeros((4,))])
+    def test_matrix_rank_rtol_argument(self, rtol):
+        # gh-25877
+        x = np.zeros((4, 3, 2))
+        res = np.linalg.matrix_rank(x, rtol=rtol)
+        assert res.shape == (4,)

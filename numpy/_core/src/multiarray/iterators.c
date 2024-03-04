@@ -18,6 +18,7 @@
 #include "ctors.h"
 #include "common.h"
 #include "conversion_utils.h"
+#include "dtypemeta.h"
 #include "array_coercion.h"
 #include "item_selection.h"
 #include "lowlevel_strided_loops.h"
@@ -133,6 +134,8 @@ PyArray_RawIterBaseInit(PyArrayIterObject *it, PyArrayObject *ao)
     int nd, i;
 
     nd = PyArray_NDIM(ao);
+    /* The legacy iterator only supports 32 dimensions */
+    assert(nd <= NPY_MAXDIMS_LEGACY_ITERS);
     PyArray_UpdateFlags(ao, NPY_ARRAY_C_CONTIGUOUS);
     if (PyArray_ISCONTIGUOUS(ao)) {
         it->contiguous = 1;
@@ -190,6 +193,12 @@ PyArray_IterNew(PyObject *obj)
         return NULL;
     }
     ao = (PyArrayObject *)obj;
+    if (PyArray_NDIM(ao) > NPY_MAXDIMS_LEGACY_ITERS) {
+        PyErr_Format(PyExc_RuntimeError,
+                "this function only supports up to 32 dimensions but "
+                "the array has %d.", PyArray_NDIM(ao));
+        return NULL;
+    }
 
     it = (PyArrayIterObject *)PyArray_malloc(sizeof(PyArrayIterObject));
     PyObject_Init((PyObject *)it, &PyArrayIter_Type);
@@ -444,7 +453,7 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind,
     /* Get size of return array */
     count = count_boolean_trues(PyArray_NDIM(ind), PyArray_DATA(ind),
                                 PyArray_DIMS(ind), PyArray_STRIDES(ind));
-    itemsize = PyArray_DESCR(self->ao)->elsize;
+    itemsize = PyArray_ITEMSIZE(self->ao);
     PyArray_Descr *dtype = PyArray_DESCR(self->ao);
     Py_INCREF(dtype);
     ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self->ao),
@@ -1063,7 +1072,7 @@ static PyMappingMethods iter_as_mapping = {
  *  ignored.
  */
 static PyArrayObject *
-iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
+iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds))
 {
 
     PyArrayObject *ret;
@@ -1112,7 +1121,7 @@ static PyMethodDef iter_methods[] = {
     /* to get array */
     {"__array__",
         (PyCFunction)iter_array,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"copy",
         (PyCFunction)iter_copy,
         METH_VARARGS, NULL},
@@ -1124,7 +1133,7 @@ iter_richcompare(PyArrayIterObject *self, PyObject *other, int cmp_op)
 {
     PyArrayObject *new;
     PyObject *ret;
-    new = (PyArrayObject *)iter_array(self, NULL);
+    new = (PyArrayObject *)iter_array(self, NULL, NULL);
     if (new == NULL) {
         return NULL;
     }
@@ -1630,7 +1639,7 @@ static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
     PyArrayIterObject *ar = iter->_internal_iter;
     int storeflags, st;
 
-    ret = PyDataMem_NEW(PyArray_DESCR(ar->ao)->elsize);
+    ret = PyDataMem_NEW(PyArray_ITEMSIZE(ar->ao));
     if (ret == NULL) {
         PyErr_SetNone(PyExc_MemoryError);
         return NULL;

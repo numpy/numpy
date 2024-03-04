@@ -204,6 +204,6 @@ class TestIntpConverter:
             self.conv(2**64)
 
     def test_too_many_dims(self):
-        assert self.conv([1]*32) == (1,)*32
+        assert self.conv([1]*64) == (1,)*64
         with pytest.raises(ValueError):
-            self.conv([1]*33)
+            self.conv([1]*65)

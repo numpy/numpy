@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from typing import Any, overload, TypeVar, Literal, SupportsIndex
 
+import numpy as np
 from numpy import (
     number,
     uint64,
@@ -8,7 +9,6 @@ from numpy import (
     int64,
     intp,
     float16,
-    bool_,
     floating,
     complexfloating,
     object_,
@@ -176,6 +176,11 @@ def transpose(
 ) -> NDArray[Any]: ...
 
 @overload
+def matrix_transpose(x: _ArrayLike[_SCT]) -> NDArray[_SCT]: ...
+@overload
+def matrix_transpose(x: ArrayLike) -> NDArray[Any]: ...
+
+@overload
 def partition(
     a: _ArrayLike[_SCT],
     kth: _ArrayLikeInt_co,
@@ -206,6 +211,8 @@ def sort(
     axis: None | SupportsIndex = ...,
     kind: None | _SortKind = ...,
     order: None | str | Sequence[str] = ...,
+    *,
+    stable: None | bool = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def sort(
@@ -213,6 +220,8 @@ def sort(
     axis: None | SupportsIndex = ...,
     kind: None | _SortKind = ...,
     order: None | str | Sequence[str] = ...,
+    *,
+    stable: None | bool = ...,
 ) -> NDArray[Any]: ...
 
 def argsort(
@@ -220,6 +229,8 @@ def argsort(
     axis: None | SupportsIndex = ...,
     kind: None | _SortKind = ...,
     order: None | str | Sequence[str] = ...,
+    *,
+    stable: None | bool = ...,
 ) -> NDArray[intp]: ...
 
 @overload
@@ -503,7 +514,7 @@ def all(
     keepdims: Literal[False] = ...,
     *,
     where: _ArrayLikeBool_co = ...,
-) -> bool_: ...
+) -> np.bool: ...
 @overload
 def all(
     a: ArrayLike,
@@ -531,7 +542,7 @@ def any(
     keepdims: Literal[False] = ...,
     *,
     where: _ArrayLikeBool_co = ...,
-) -> bool_: ...
+) -> np.bool: ...
 @overload
 def any(
     a: ArrayLike,
@@ -941,10 +952,12 @@ def std(
     axis: None = ...,
     dtype: None = ...,
     out: None = ...,
-    ddof: float = ...,
+    ddof: int | float = ...,
     keepdims: Literal[False] = ...,
     *,
     where: _ArrayLikeBool_co = ...,
+    mean: _ArrayLikeComplex_co = ...,
+    correction: int | float = ...,
 ) -> floating[Any]: ...
 @overload
 def std(
@@ -952,10 +965,12 @@ def std(
     axis: None | _ShapeLike = ...,
     dtype: None = ...,
     out: None = ...,
-    ddof: float = ...,
+    ddof: int | float = ...,
     keepdims: bool = ...,
     *,
     where: _ArrayLikeBool_co = ...,
+    mean: _ArrayLikeComplex_co | _ArrayLikeObject_co = ...,
+    correction: int | float = ...,
 ) -> Any: ...
 @overload
 def std(
@@ -963,10 +978,12 @@ def std(
     axis: None = ...,
     dtype: _DTypeLike[_SCT] = ...,
     out: None = ...,
-    ddof: float = ...,
+    ddof: int | float = ...,
     keepdims: Literal[False] = ...,
     *,
     where: _ArrayLikeBool_co = ...,
+    mean: _ArrayLikeComplex_co | _ArrayLikeObject_co = ...,
+    correction: int | float = ...,
 ) -> _SCT: ...
 @overload
 def std(
@@ -974,10 +991,12 @@ def std(
     axis: None | _ShapeLike = ...,
     dtype: DTypeLike = ...,
     out: None = ...,
-    ddof: float = ...,
+    ddof: int | float = ...,
     keepdims: bool = ...,
     *,
     where: _ArrayLikeBool_co = ...,
+    mean: _ArrayLikeComplex_co | _ArrayLikeObject_co = ...,
+    correction: int | float = ...,
 ) -> Any: ...
 @overload
 def std(
@@ -985,10 +1004,12 @@ def std(
     axis: None | _ShapeLike = ...,
     dtype: DTypeLike = ...,
     out: _ArrayType = ...,
-    ddof: float = ...,
+    ddof: int | float = ...,
     keepdims: bool = ...,
     *,
     where: _ArrayLikeBool_co = ...,
+    mean: _ArrayLikeComplex_co | _ArrayLikeObject_co = ...,
+    correction: int | float = ...,
 ) -> _ArrayType: ...
 
 @overload
@@ -997,10 +1018,12 @@ def var(
     axis: None = ...,
     dtype: None = ...,
     out: None = ...,
-    ddof: float = ...,
+    ddof: int | float = ...,
     keepdims: Literal[False] = ...,
     *,
     where: _ArrayLikeBool_co = ...,
+    mean: _ArrayLikeComplex_co = ...,
+    correction: int | float = ...,
 ) -> floating[Any]: ...
 @overload
 def var(
@@ -1008,10 +1031,12 @@ def var(
     axis: None | _ShapeLike = ...,
     dtype: None = ...,
     out: None = ...,
-    ddof: float = ...,
+    ddof: int | float = ...,
     keepdims: bool = ...,
     *,
     where: _ArrayLikeBool_co = ...,
+    mean: _ArrayLikeComplex_co | _ArrayLikeObject_co = ...,
+    correction: int | float = ...,
 ) -> Any: ...
 @overload
 def var(
@@ -1019,10 +1044,12 @@ def var(
     axis: None = ...,
     dtype: _DTypeLike[_SCT] = ...,
     out: None = ...,
-    ddof: float = ...,
+    ddof: int | float = ...,
     keepdims: Literal[False] = ...,
     *,
     where: _ArrayLikeBool_co = ...,
+    mean: _ArrayLikeComplex_co | _ArrayLikeObject_co = ...,
+    correction: int | float = ...,
 ) -> _SCT: ...
 @overload
 def var(
@@ -1030,10 +1057,12 @@ def var(
     axis: None | _ShapeLike = ...,
     dtype: DTypeLike = ...,
     out: None = ...,
-    ddof: float = ...,
+    ddof: int | float = ...,
     keepdims: bool = ...,
     *,
     where: _ArrayLikeBool_co = ...,
+    mean: _ArrayLikeComplex_co | _ArrayLikeObject_co = ...,
+    correction: int | float = ...,
 ) -> Any: ...
 @overload
 def var(
@@ -1041,10 +1070,12 @@ def var(
     axis: None | _ShapeLike = ...,
     dtype: DTypeLike = ...,
     out: _ArrayType = ...,
-    ddof: float = ...,
+    ddof: int | float = ...,
     keepdims: bool = ...,
     *,
     where: _ArrayLikeBool_co = ...,
+    mean: _ArrayLikeComplex_co | _ArrayLikeObject_co = ...,
+    correction: int | float = ...,
 ) -> _ArrayType: ...
 
 max = amax

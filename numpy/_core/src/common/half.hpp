@@ -36,7 +36,7 @@ class Half final {
         #endif
         ) || (
             std::is_same_v<T, double> &&
-        #if defined(NPY_HAVE_AVX512FP16) || defined(NPY_HAVE_VSX3)
+        #if defined(NPY_HAVE_AVX512FP16) || (defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX3_HALF_DOUBLE))
             true
         #else
             false
@@ -59,7 +59,11 @@ class Half final {
         __vector float vf32 = vec_splats(f);
         __vector unsigned short vf16;
         __asm__ __volatile__ ("xvcvsphp %x0,%x1" : "=wa" (vf16) : "wa" (vf32));
+        #ifdef __BIG_ENDIAN__
+        bits_ = vec_extract(vf16, 1);
+        #else
         bits_ = vec_extract(vf16, 0);
+        #endif
     #else
         bits_ = half_private::FromFloatBits(BitCast<uint32_t>(f));
     #endif
@@ -73,11 +77,8 @@ class Half final {
     #if defined(NPY_HAVE_AVX512FP16)
         __m128d md = _mm_load_sd(&f);
         bits_ = static_cast<uint16_t>(_mm_cvtsi128_si32(_mm_castph_si128(_mm_cvtpd_ph(md))));
-    #elif defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX_ASM)
-        __vector double vf64 = vec_splats(f);
-        __vector unsigned short vf16;
-        __asm__ __volatile__ ("xvcvdphp %x0,%x1" : "=wa" (vf16) : "wa" (vf64));
-        bits_ = vec_extract(vf16, 0);
+    #elif defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX3_HALF_DOUBLE)
+        __asm__ __volatile__ ("xscvdphp %x0,%x1" : "=wa" (bits_) : "wa" (f));
     #else
         bits_ = half_private::FromDoubleBits(BitCast<uint64_t>(f));
     #endif
@@ -96,7 +97,7 @@ class Half final {
         __vector float vf32;
         __asm__ __volatile__("xvcvhpsp %x0,%x1"
                              : "=wa"(vf32)
-                             : "wa"(vec_splats(bits_.u)));
+                             : "wa"(vec_splats(bits_)));
         return vec_extract(vf32, 0);
     #else
         return BitCast<float>(half_private::ToFloatBits(bits_));
@@ -110,12 +111,12 @@ class Half final {
         double ret;
         _mm_store_sd(&ret, _mm_cvtph_pd(_mm_castsi128_ph(_mm_cvtsi32_si128(bits_))));
         return ret;
-    #elif defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX_ASM)
-        __vector float vf64;
-        __asm__ __volatile__("xvcvhpdp %x0,%x1"
-                             : "=wa"(vf32)
-                             : "wa"(vec_splats(bits_)));
-        return vec_extract(vf64, 0);
+    #elif defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX3_HALF_DOUBLE)
+        double f64;
+        __asm__ __volatile__("xscvhpdp %x0,%x1"
+                             : "=wa"(f64)
+                             : "wa"(bits_));
+        return f64;
     #else
         return BitCast<double>(half_private::ToDoubleBits(bits_));
     #endif

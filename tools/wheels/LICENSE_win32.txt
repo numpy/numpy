@@ -8,7 +8,7 @@ Name: OpenBLAS
 Files: numpy.libs\libopenblas*.dll
 Description: bundled as a dynamically linked library
 Availability: https://github.com/OpenMathLib/OpenBLAS/
-License: BSD-3-Clause-Attribution
+License: BSD-3-Clause
   Copyright (c) 2011-2014, The OpenBLAS Project
   All rights reserved.
 
@@ -96,7 +96,7 @@ License: BSD-3-Clause-Attribution
 
 
 Name: GCC runtime library
-Files: numpy.libs\libopenblas*.dll
+Files: numpy.libs\libgfortran*.dll
 Description: statically linked to files compiled with gcc
 Availability: https://gcc.gnu.org/git/?p=gcc.git;a=tree;f=libgfortran
 License: GPL-3.0-with-GCC-exception

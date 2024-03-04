@@ -101,7 +101,7 @@ class TestRegression:
 
     def test_bool(self):
         # Ticket #60
-        np.bool_(1)  # Should succeed
+        np.bool(1)  # Should succeed
 
     def test_indexing1(self):
         # Ticket #64
@@ -1189,9 +1189,10 @@ class TestRegression:
     def test_sign_for_complex_nan(self):
         # Ticket 794.
         with np.errstate(invalid='ignore'):
-            C = np.array([-np.inf, -2+1j, 0, 2-1j, np.inf, np.nan])
+            C = np.array([-np.inf, -3+4j, 0, 4-3j, np.inf, np.nan])
             have = np.sign(C)
-            want = np.array([-1+0j, -1+0j, 0+0j, 1+0j, 1+0j, np.nan])
+            want = np.array([-1+0j, -0.6+0.8j, 0+0j, 0.8-0.6j, 1+0j,
+                             complex(np.nan, np.nan)])
             assert_equal(have, want)
 
     def test_for_equal_names(self):
@@ -1230,7 +1231,7 @@ class TestRegression:
 
     def test_array_ndmin_overflow(self):
         "Ticket #947."
-        assert_raises(ValueError, lambda: np.array([1], ndmin=33))
+        assert_raises(ValueError, lambda: np.array([1], ndmin=65))
 
     def test_void_scalar_with_titles(self):
         # No ticket
@@ -1481,7 +1482,7 @@ class TestRegression:
 
         x = np.array([1, 2, 3], dtype=np.dtype('<i4'))
         assert_equal(
-            sha256(x).hexdigest(), 
+            sha256(x).hexdigest(),
             '4636993d3e1da4e9d6b8f87b79e8f7c6d018580d52661950eabc3845c5897a4d'
         )
 
@@ -1508,7 +1509,7 @@ class TestRegression:
         dtypes = [x for x in np._core.sctypeDict.values()
                   if (issubclass(x, np.number)
                       and not issubclass(x, np.timedelta64))]
-        a = np.array([], np.bool_)  # not x[0] because it is unordered
+        a = np.array([], np.bool)  # not x[0] because it is unordered
         failures = []
 
         for x in dtypes:
@@ -1941,7 +1942,7 @@ class TestRegression:
              'invalid'),
 
             # different 8-bit code point in KOI8-R vs latin1
-            (np.bytes_(b'\x9c'),  
+            (np.bytes_(b'\x9c'),
              b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'S1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'|'\np5\nNNNI1\nI1\nI0\ntp6\nbS'\\x9c'\np7\ntp8\nRp9\n.",  # noqa
              'different'),
         ]
@@ -2091,7 +2092,7 @@ class TestRegression:
         assert_array_equal(arr2, data_back)
 
     def test_structured_count_nonzero(self):
-        arr = np.array([0, 1]).astype('i4, (2)i4')[:1]
+        arr = np.array([0, 1]).astype('i4, 2i4')[:1]
         count = np.count_nonzero(arr)
         assert_equal(count, 0)
 
@@ -2210,7 +2211,7 @@ class TestRegression:
         def passer(*args):
             pass
 
-        assert_raises(ValueError, np.frompyfunc, passer, 32, 1)
+        assert_raises(ValueError, np.frompyfunc, passer, 64, 1)
 
     def test_repeat_broadcasting(self):
         # gh-5743
@@ -2433,7 +2434,7 @@ class TestRegression:
 
     def test_2d__array__shape(self):
         class T:
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 return np.ndarray(shape=(0,0))
 
             # Make sure __array__ is used instead of Sequence methods.
@@ -2534,9 +2535,9 @@ class TestRegression:
         # create two arrays with bit patterns that do not overlap.
         # needs to be large enough to test both SIMD and scalar paths
         size = 100
-        a = np.frombuffer(b'\x01' * size, dtype=np.bool_)
-        b = np.frombuffer(b'\x80' * size, dtype=np.bool_)
-        expected = np.ones(size, dtype=np.bool_)
+        a = np.frombuffer(b'\x01' * size, dtype=np.bool)
+        b = np.frombuffer(b'\x80' * size, dtype=np.bool)
+        expected = np.ones(size, dtype=np.bool)
         assert_array_equal(np.logical_and(a, b), expected)
 
     @pytest.mark.skipif(IS_PYPY, reason="PyPy issue 2742")
@@ -2556,3 +2557,60 @@ class TestRegression:
         test_data = b'\x80\x04\x95(\x00\x00\x00\x00\x00\x00\x00\x8c\x1cnumpy.core._multiarray_umath\x94\x8c\x03add\x94\x93\x94.'  # noqa
         result = pickle.loads(test_data, encoding='bytes')
         assert result is np.add
+
+    def test__array_namespace__(self):
+        arr = np.arange(2)
+
+        xp = arr.__array_namespace__()
+        assert xp is np
+        xp = arr.__array_namespace__(api_version="2021.12")
+        assert xp is np
+        xp = arr.__array_namespace__(api_version="2022.12")
+        assert xp is np
+        xp = arr.__array_namespace__(api_version=None)
+        assert xp is np
+
+        with pytest.raises(
+            ValueError,
+            match="Version \"2023.12\" of the Array API Standard "
+                  "is not supported."
+        ):
+            arr.__array_namespace__(api_version="2023.12")
+
+        with pytest.raises(
+            ValueError,
+            match="Only None and strings are allowed as the Array API version"
+        ):
+            arr.__array_namespace__(api_version=2023)
+
+    def test_isin_refcnt_bug(self):
+        # gh-25295
+        for _ in range(1000):
+            np.isclose(np.int64(2), np.int64(2), atol=1e-15, rtol=1e-300)
+
+    def test_replace_regression(self):
+        # gh-25513 segfault
+        carr = np.char.chararray((2,), itemsize=25)
+        test_strings = [b'  4.52173913043478315E+00',
+                        b'  4.95652173913043548E+00']
+        carr[:] = test_strings
+        out = carr.replace(b"E", b"D")
+        expected = np.char.chararray((2,), itemsize=25)
+        expected[:] = [s.replace(b"E", b"D") for s in test_strings]
+        assert_array_equal(out, expected)
+
+    def test_logspace_base_does_not_determine_dtype(self):
+        # gh-24957 and cupy/cupy/issues/7946
+        start = np.array([0, 2], dtype=np.float16)
+        stop = np.array([2, 0], dtype=np.float16)
+        out = np.logspace(start, stop, num=5, axis=1, dtype=np.float32)
+        expected = np.array([[1., 3.1621094, 10., 31.625, 100.],
+                             [100., 31.625, 10., 3.1621094, 1.]],
+                            dtype=np.float32)
+        assert_almost_equal(out, expected)
+        # Check test fails if the calculation is done in float64, as happened
+        # before when a python float base incorrectly influenced the dtype.
+        out2 = np.logspace(start, stop, num=5, axis=1, dtype=np.float32,
+                           base=np.array([10.0]))
+        with pytest.raises(AssertionError, match="not almost equal"):
+            assert_almost_equal(out2, expected)

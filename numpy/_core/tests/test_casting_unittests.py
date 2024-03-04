@@ -39,7 +39,7 @@ def simple_dtype_instances():
 def get_expected_stringlength(dtype):
     """Returns the string length when casting the basic dtypes to strings.
     """
-    if dtype == np.bool_:
+    if dtype == np.bool:
         return 5
     if dtype.kind in "iu":
         if dtype.itemsize == 1:

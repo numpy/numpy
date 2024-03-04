@@ -125,7 +125,7 @@ class Arrayterator:
             out.stop[i] = min(stop, out.stop[i])
         return out
 
-    def __array__(self):
+    def __array__(self, dtype=None, copy=None):
         """
         Return corresponding data.
 

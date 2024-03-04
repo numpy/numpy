@@ -1,6 +1,3 @@
-# To enable this workflow on a fork, comment out:
-#
-# if: github.repository == 'numpy/numpy'
 name: Test Emscripten/Pyodide build
 
 on:
@@ -8,6 +5,9 @@ on:
     branches:
       - main
       - maintenance/**
+
+env:
+  FORCE_COLOR: 3
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -18,52 +18,68 @@ permissions:
 
 jobs:
   build-wasm-emscripten:
+    name: Build NumPy distribution for Pyodide
     runs-on: ubuntu-22.04
-    if: false  # NOTE: job disabled, it needs to be moved to Meson (see gh-24603)
-    # if: "github.repository == 'numpy/numpy'"
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
     env:
-      PYODIDE_VERSION: 0.23.1
+      PYODIDE_VERSION: 0.25.0
       # PYTHON_VERSION and EMSCRIPTEN_VERSION are determined by PYODIDE_VERSION.
       # The appropriate versions can be found in the Pyodide repodata.json
       # "info" field, or in Makefile.envs:
       # https://github.com/pyodide/pyodide/blob/main/Makefile.envs#L2
-      PYTHON_VERSION: 3.11.2
-      EMSCRIPTEN_VERSION: 3.1.32
+      PYTHON_VERSION: 3.11.3
+      EMSCRIPTEN_VERSION: 3.1.46
       NODE_VERSION: 18
     steps:
-      - name: Checkout numpy
+      - name: Checkout NumPy
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
-          submodules: true
-          # versioneer.py requires the latest tag to be reachable. Here we
-          # fetch the complete history to get access to the tags.
-          # A shallow clone can work when the following issue is resolved:
-          # https://github.com/actions/checkout/issues/338
-          fetch-depth: 0
+          submodules: recursive
+          # This input shall fetch tags without the need to fetch the
+          # entire VCS history, see https://github.com/actions/checkout#usage
+          fetch-tags: true
 
-      - name: set up python
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
         id: setup-python
-        uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - uses: mymindstorm/setup-emsdk@ab889da2abbcbb280f91ec4c215d3bb4f3a8f775 # v12
+      - name: Set up Emscripten toolchain
+        uses: mymindstorm/setup-emsdk@6ab9eb1bda2574c4ddb79809fc9247783eaf9021 # v14
         with:
           version: ${{ env.EMSCRIPTEN_VERSION }}
           actions-cache-folder: emsdk-cache
 
       - name: Install pyodide-build
-        run: pip install "pydantic<2" pyodide-build==$PYODIDE_VERSION
+        run: pip install "pydantic<2" pyodide-build==${{ env.PYODIDE_VERSION }}
 
-      - name: Build
+      - name: Find installation for pyodide-build
+        shell: python
         run: |
-          # Pyodide is still in the process of adding better/easier support for
-          # non-setup.py based builds.
-          cp pyproject.toml.setuppy pyproject.toml
-          CFLAGS=-g2 LDFLAGS=-g2 pyodide build
+          import os
+          import pyodide_build
+          from pathlib import Path
 
-      - name: set up node
-        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
+          pyodide_build_path = Path(pyodide_build.__file__).parent
+
+          env_file = os.getenv('GITHUB_ENV')
+
+          with open(env_file, "a") as myfile:
+              myfile.write(f"PYODIDE_BUILD_PATH={pyodide_build_path}\n")
+
+      - name: Apply patch(es) for pyodide-build installation
+        run: |
+          ls -a ${{ env.PYODIDE_BUILD_PATH }}
+          patch -d "${{ env.PYODIDE_BUILD_PATH }}" -p1 < tools/ci/emscripten/0001-do-not-set-meson-environment-variable-pyodide-gh-4502.patch
+
+      - name: Build NumPy for Pyodide
+        run: |
+          pyodide build -Cbuild-dir=build -Csetup-args="--cross-file=$PWD/tools/ci/emscripten/emscripten.meson.cross" -Csetup-args="-Dblas=none" -Csetup-args="-Dlapack=none"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -72,10 +88,10 @@ jobs:
           pyodide venv .venv-pyodide
           source .venv-pyodide/bin/activate
           pip install dist/*.whl
-          python -c "import sys; print(sys.platform)"
-          pip install -r test_requirements.txt
-      - name: Test
+          pip install -r requirements/emscripten_test_requirements.txt
+
+      - name: Test NumPy for Pyodide
         run: |
           source .venv-pyodide/bin/activate
           cd ..
-          python numpy/runtests.py -n -vv
+          pytest --pyargs numpy -m "not slow"

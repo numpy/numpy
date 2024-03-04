@@ -51,12 +51,12 @@ PyArray_New(
 NPY_NO_EXPORT PyObject *
 _array_from_array_like(PyObject *op,
         PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context,
-        int never_copy);
+        int copy);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
                     PyArray_DTypeMeta *in_DType, int min_depth, int max_depth,
-                    int flags, PyObject *context);
+                    int flags, PyObject *context, int *was_scalar);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
@@ -82,7 +82,7 @@ PyArray_FromInterface(PyObject *input);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromArrayAttr_int(
-        PyObject *op, PyArray_Descr *descr, int never_copy);
+        PyObject *op, PyArray_Descr *descr, int copy);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode,
@@ -93,9 +93,6 @@ PyArray_EnsureArray(PyObject *op);
 
 NPY_NO_EXPORT PyObject *
 PyArray_EnsureAnyArray(PyObject *op);
-
-NPY_NO_EXPORT int
-PyArray_MoveInto(PyArrayObject *dest, PyArrayObject *src);
 
 NPY_NO_EXPORT int
 PyArray_CopyAnyInto(PyArrayObject *dest, PyArrayObject *src);
@@ -126,13 +123,6 @@ copy_and_swap(void *dst, void *src, int itemsize, npy_intp numitems,
 
 NPY_NO_EXPORT void
 byte_swap_vector(void *p, npy_intp n, int size);
-
-/*
- * Calls arr_of_subclass.__array_wrap__(towrap), in order to make 'towrap'
- * have the same ndarray subclass as 'arr_of_subclass'.
- */
-NPY_NO_EXPORT PyArrayObject *
-PyArray_SubclassWrap(PyArrayObject *arr_of_subclass, PyArrayObject *towrap);
 
 NPY_NO_EXPORT PyObject *
 PyArray_Zeros_int(int nd, npy_intp const *dims, PyArray_Descr *descr,

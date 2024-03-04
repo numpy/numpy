@@ -302,9 +302,10 @@ class TestConcatenate:
         r = np.concatenate(x, None)
         assert_array_equal(x, r)
 
-        # This should probably be deprecated:
-        r = np.concatenate(x, 100)  # axis is >= MAXDIMS
-        assert_array_equal(x, r)
+        # Once upon a time, this was the same as `axis=None` now it fails
+        # (with an unspecified error, as multiple things are wrong here)
+        with pytest.raises(ValueError):
+            np.concatenate(x, 100)
 
     def test_concatenate(self):
         # Test concatenate function

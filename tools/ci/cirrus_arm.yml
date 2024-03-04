@@ -52,68 +52,14 @@ linux_aarch64_test_task:
     echo "PATH=$PATH" >> $CIRRUS_ENV
     echo "CCACHE_DIR=$PWD/.ccache" >> $CIRRUS_ENV
 
-    # required for figuring out the system tags in openblas_support
-    pip install packaging
-
-    pip install -r build_requirements.txt
-    pip install -r test_requirements.txt
+    pip install -r requirements/build_requirements.txt
+    pip install -r requirements/test_requirements.txt
 
   build_script: |
     spin build -- -Dallow-noblas=true
 
   test_script: |
     spin test -j 1
-    ccache -s
-
-
-macos_arm64_test_task:
-  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
-  depends_on:
-    - linux_aarch64_test
-  macos_instance:
-    image: ghcr.io/cirruslabs/macos-monterey-xcode:14
-
-  <<: *MODIFIED_CLONE
-
-  ccache_cache:
-    folder: .ccache
-    populate_script:
-      - mkdir -p .ccache
-    fingerprint_key: ccache-macosx_arm64
-
-  pip_cache:
-    folder: ~/.cache/pip
-
-  test_script: |
-    brew install python@3.10 ccache
-
-    export PATH=/opt/homebrew/opt/python@3.10/libexec/bin:$PATH
-    export PATH=/opt/homebrew/opt/ccache/libexec:$PATH
-    export CCACHE_DIR=$PWD/.ccache
-    echo "PATH=$PATH" >> $CIRRUS_ENV
-
-    python --version
-
-    RUNNER_OS="macOS"
-    SDKROOT=/Applications/Xcode-14.0.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk
-
-    # NOTE: OpenBLAS is not used in this job; if that's done in the future, ensure
-    # PKG_CONFIG_PATH points to the directory containing the openblas.pc file
-    # that's installed with the cibw_before_build.sh command.
-    # used for installing OpenBLAS/gfortran
-    bash tools/wheels/cibw_before_build.sh $PWD
-
-    pushd ~/
-    python -m venv numpy-dev
-    source numpy-dev/bin/activate
-    popd
-
-    pip install -r build_requirements.txt
-    pip install pytest pytest-xdist hypothesis typing_extensions
-
-    spin build -- -Dallow-noblas=true
-    spin test -j auto
-
     ccache -s
 
 

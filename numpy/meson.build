@@ -67,6 +67,30 @@ else
   blas_interface = ['interface: lp64']
 endif
 
+
+blas_order = get_option('blas-order')
+if blas_order == ['auto']
+  blas_order = []
+  if host_machine.system() == 'darwin'
+    blas_order += 'accelerate'
+  endif
+  if host_machine.cpu_family() == 'x86_64'
+    blas_order += 'mkl'
+  endif
+  blas_order += ['openblas', 'flexiblas', 'blis', 'blas']
+endif
+lapack_order = get_option('lapack-order')
+if lapack_order == ['auto']
+  lapack_order = []
+  if host_machine.system() == 'darwin'
+    lapack_order += 'accelerate'
+  endif
+  if host_machine.cpu_family() == 'x86_64'
+    lapack_order += 'mkl'
+  endif
+  lapack_order += ['openblas', 'flexiblas', 'lapack']
+endif
+
 # MKL-specific options
 _threading_opt = get_option('mkl-threading')
 if _threading_opt == 'auto'
@@ -91,7 +115,7 @@ if blas_name == 'openblas' or blas_name == 'auto'
   endif
 endif
 if blas_name == 'auto'
-  foreach _name : get_option('blas-order')
+  foreach _name : blas_order
     if _name == 'mkl'
       blas = dependency('mkl',
         modules: ['cblas'] + blas_interface + mkl_opts,
@@ -170,7 +194,7 @@ if 'mkl' in blas.name() or blas.name() == 'accelerate' or blas_name == 'scipy-op
   lapack = blas
 else
   if lapack_name == 'auto'
-    foreach _name : get_option('lapack-order')
+    foreach _name : lapack_order
       lapack = dependency(_name, modules: ['lapack'] + blas_interface, required: false)
       if lapack.found()
         break
@@ -202,6 +226,7 @@ python_sources = [
   '__init__.pxd',
   '__init__.py',
   '__init__.pyi',
+  '_configtool.py',
   '_distributor_init.py',
   '_globals.py',
   '_pytesttester.py',
@@ -215,10 +240,11 @@ python_sources = [
   'dtypes.py',
   'dtypes.pyi',
   'matlib.py',
-  'py.typed'
+  'py.typed',
+  'version.pyi',
 ]
 
-if blas_name == 'scipy-openblas'
+if fs.exists('_distributor_init_local.py')
   python_sources += ['_distributor_init_local.py']
 endif
 
@@ -239,7 +265,6 @@ pure_subdirs = [
   '_pyinstaller',
   '_typing',
   '_utils',
-  'array_api',
   'compat',
   'doc',
   'f2py',
@@ -252,7 +277,8 @@ pure_subdirs = [
   'typing',
   'rec',
   'char',
-  'core'
+  'core',
+  'strings',
 ]
 if py.version().version_compare('<3.12')
   pure_subdirs += 'distutils'

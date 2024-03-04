@@ -10,7 +10,7 @@ project(
   default_options: [
     'buildtype=debugoptimized',
     'b_ndebug=if-release',
-    'c_std=c99',
+    'c_std=c11',
     'cpp_std=c++17',
     'pkgconfig.relocatable=true',
   ],
@@ -33,8 +33,8 @@ elif cc.get_id() == 'msvc'
           'when building with MSVC')
   endif
 endif
-if not cy.version().version_compare('>=0.29.34')
-  error('NumPy requires Cython >= 0.29.34')
+if not cy.version().version_compare('>=3.0.6')
+  error('NumPy requires Cython >= 3.0.6')
 endif
 
 # Intel compilers default to fast-math, so disable it if we detect Intel

@@ -297,14 +297,14 @@ class TestIndexing:
 
     def test_too_many_fancy_indices_special_case(self):
         # Just documents behaviour, this is a small limitation.
-        a = np.ones((1,) * 32)  # 32 is NPY_MAXDIMS
-        assert_raises(IndexError, a.__getitem__, (np.array([0]),) * 32)
+        a = np.ones((1,) * 64)  # 64 is NPY_MAXDIMS
+        assert_raises(IndexError, a.__getitem__, (np.array([0]),) * 64)
 
     def test_scalar_array_bool(self):
         # NumPy bools can be used as boolean index (python ones as of yet not)
         a = np.array(1)
-        assert_equal(a[np.bool_(True)], a[np.array(True)])
-        assert_equal(a[np.bool_(False)], a[np.array(False)])
+        assert_equal(a[np.bool(True)], a[np.array(True)])
+        assert_equal(a[np.bool(False)], a[np.array(False)])
 
         # After deprecating bools as integers:
         #a = np.array([0,1,2])
@@ -420,7 +420,7 @@ class TestIndexing:
 
         class ArrayLike:
             # Simple array, should behave like the array
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 return np.array(0)
 
         a = np.zeros(())
@@ -552,8 +552,8 @@ class TestIndexing:
 
     @pytest.mark.parametrize("index",
             [True, False, np.array([0])])
-    @pytest.mark.parametrize("num", [32, 40])
-    @pytest.mark.parametrize("original_ndim", [1, 32])
+    @pytest.mark.parametrize("num", [64, 80])
+    @pytest.mark.parametrize("original_ndim", [1, 64])
     def test_too_many_advanced_indices(self, index, num, original_ndim):
         # These are limitations based on the number of arguments we can process.
         # For `num=32` (and all boolean cases), the result is actually define;
@@ -1289,7 +1289,7 @@ class TestBooleanIndexing:
         a = np.array([[[1]]])
 
         assert_raises(TypeError, np.reshape, a, (True, -1))
-        assert_raises(TypeError, np.reshape, a, (np.bool_(True), -1))
+        assert_raises(TypeError, np.reshape, a, (np.bool(True), -1))
         # Note that operator.index(np.array(True)) does not work, a boolean
         # array is thus also deprecated, but not with the same message:
         assert_raises(TypeError, operator.index, np.array(True))
@@ -1311,30 +1311,30 @@ class TestBooleanIndexing:
         # This used to incorrectly work (and give an array of shape (0,))
         idx1 = np.array([[False]*9])
         assert_raises_regex(IndexError,
-            "boolean index did not match indexed array along dimension 0; "
-            "dimension is 3 but corresponding boolean dimension is 1",
+            "boolean index did not match indexed array along axis 0; "
+            "size of axis is 3 but size of corresponding boolean axis is 1",
             lambda: a[idx1])
 
         # This used to incorrectly give a ValueError: operands could not be broadcast together
         idx2 = np.array([[False]*8 + [True]])
         assert_raises_regex(IndexError,
-            "boolean index did not match indexed array along dimension 0; "
-            "dimension is 3 but corresponding boolean dimension is 1",
+            "boolean index did not match indexed array along axis 0; "
+            "size of axis is 3 but size of corresponding boolean axis is 1",
             lambda: a[idx2])
 
         # This is the same as it used to be. The above two should work like this.
         idx3 = np.array([[False]*10])
         assert_raises_regex(IndexError,
-            "boolean index did not match indexed array along dimension 0; "
-            "dimension is 3 but corresponding boolean dimension is 1",
+            "boolean index did not match indexed array along axis 0; "
+            "size of axis is 3 but size of corresponding boolean axis is 1",
             lambda: a[idx3])
 
         # This used to give ValueError: non-broadcastable operand
         a = np.ones((1, 1, 2))
         idx = np.array([[[True], [False]]])
         assert_raises_regex(IndexError,
-            "boolean index did not match indexed array along dimension 1; "
-            "dimension is 1 but corresponding boolean dimension is 2",
+            "boolean index did not match indexed array along axis 1; "
+            "size of axis is 1 but size of corresponding boolean axis is 2",
             lambda: a[idx])
 
 

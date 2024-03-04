@@ -265,6 +265,10 @@ Other types
    :members: __init__
    :exclude-members: __init__
 
+.. autoclass:: numpy.bool
+   :members: __init__
+   :exclude-members: __init__
+
 .. autoclass:: numpy.datetime64
    :members: __init__
    :exclude-members: __init__

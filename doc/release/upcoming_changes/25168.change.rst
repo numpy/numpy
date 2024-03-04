@@ -1,0 +1,21 @@
+New ``copy`` keyword meaning for `numpy.array` and `numpy.asarray`
+------------------------------------------------------------------
+Now `numpy.array` and `numpy.asarray` support three values for ``copy`` parameter:
+
+* ``None`` - A copy will only be made if it is necessary.
+* ``True`` - Always make a copy.
+* ``False`` - Never make a copy. If a copy is required a ``ValueError`` is raised.
+
+The meaning of ``False`` changed as it now raises an exception if a copy is needed.
+
+The ``__array__`` special method now takes a ``copy`` keyword argument.
+-----------------------------------------------------------------------
+
+NumPy will pass ``copy`` to the ``__array__`` special method in situations where
+it would be set to a non-default value (e.g. in a call to
+``np.asarray(some_object, copy=False)``). Currently, if an
+unexpected keyword argument error is raised after this, NumPy will print a
+warning and re-try without the ``copy`` keyword argument. Implementations of
+objects implementing the ``__array__`` protocol should accept a ``copy`` keyword
+argument with the same meaning as when passed to `numpy.array` or
+`numpy.asarray`.

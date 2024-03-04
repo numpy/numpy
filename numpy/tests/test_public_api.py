@@ -108,8 +108,6 @@ def test_NPY_NO_EXPORT():
 # current status is fine.  For others it may make sense to work on making them
 # private, to clean up our public API and avoid confusion.
 PUBLIC_MODULES = ['numpy.' + s for s in [
-    "array_api",
-    "array_api.linalg",
     "ctypeslib",
     "dtypes",
     "exceptions",
@@ -160,6 +158,7 @@ PUBLIC_ALIASED_MODULES = [
     "numpy.char",
     "numpy.emath",
     "numpy.rec",
+    "numpy.strings",
 ]
 
 
@@ -319,8 +318,6 @@ def test_all_modules_are_expected():
 # Stuff that clearly shouldn't be in the API and is detected by the next test
 # below
 SKIP_LIST_2 = [
-    'numpy.math',
-    'numpy.lib.emath',
     'numpy.lib.math',
     'numpy.matlib.char',
     'numpy.matlib.rec',
@@ -452,7 +449,7 @@ def test_api_importable():
 def test_array_api_entry_point():
     """
     Entry point for Array API implementation can be found with importlib and
-    returns the numpy.array_api namespace.
+    returns the main numpy namespace.
     """
     # For a development install that did not go through meson-python,
     # the entrypoint will not have been installed. So ensure this test fails
@@ -482,24 +479,40 @@ def test_array_api_entry_point():
             raise AssertionError(msg) from None
         return
 
+    if ep.value == 'numpy.array_api':
+        # Looks like the entrypoint for the current numpy build isn't
+        # installed, but an older numpy is also installed and hence the
+        # entrypoint is pointing to the old (no longer existing) location.
+        # This isn't a problem except for when running tests with `spin` or an
+        # in-place build.
+        return
+
     xp = ep.load()
     msg = (
         f"numpy entry point value '{ep.value}' "
         "does not point to our Array API implementation"
     )
-    assert xp is numpy.array_api, msg
+    assert xp is numpy, msg
 
 
 def test_main_namespace_all_dir_coherence():
     """
-    Checks if `dir(np)` and `np.__all__` are consistent
-    and return same content, excluding private members.
+    Checks if `dir(np)` and `np.__all__` are consistent and return
+    the same content, excluding exceptions and private members.
     """
     def _remove_private_members(member_set):
         return {m for m in member_set if not m.startswith('_')}
 
+    def _remove_exceptions(member_set):
+        return member_set.difference({
+            "bool"  # included only in __dir__
+        })
+
     all_members = _remove_private_members(np.__all__)
+    all_members = _remove_exceptions(all_members)
+
     dir_members = _remove_private_members(np.__dir__())
+    dir_members = _remove_exceptions(dir_members)
 
     assert all_members == dir_members, (
         "Members that break symmetry: "
@@ -518,8 +531,13 @@ def test_core_shims_coherence():
     import numpy.core as core
 
     for member_name in dir(np._core):
-        # skip private and test members
-        if member_name.startswith("_") or member_name == "tests":
+        # Skip private and test members. Also if a module is aliased,
+        # no need to add it to np.core
+        if (
+            member_name.startswith("_")
+            or member_name == "tests"
+            or f"numpy.{member_name}" in PUBLIC_ALIASED_MODULES 
+        ):
             continue
 
         member = getattr(np._core, member_name)
@@ -605,10 +623,22 @@ def test_functions_single_location():
                     if (
                         member.__name__ in [
                             "absolute",  # np.abs
+                            "arccos",  # np.acos
+                            "arccosh",  # np.acosh
+                            "arcsin",  # np.asin
+                            "arcsinh",  # np.asinh
+                            "arctan",  # np.atan
+                            "arctan2",  # np.atan2
+                            "arctanh",  # np.atanh
+                            "left_shift",  # np.bitwise_left_shift
+                            "right_shift",  # np.bitwise_right_shift
                             "conjugate",  # np.conj
-                            "invert",  # np.bitwise_not
+                            "invert",  # np.bitwise_not & np.bitwise_invert
                             "remainder",  # np.mod
                             "divide",  # np.true_divide
+                            "concatenate",  # np.concat
+                            "power",  # np.pow
+                            "transpose",  # np.permute_dims
                         ] and
                         module.__name__ == "numpy"
                     ):
@@ -619,6 +649,23 @@ def test_functions_single_location():
                         member.__name__ == "trimcoef" and
                         module.__name__.startswith("numpy.polynomial")
                     ):
+                        continue
+
+                    # skip ufuncs that are exported in np.strings as well
+                    if member.__name__ in (
+                        "add",
+                        "equal",
+                        "not_equal",
+                        "greater",
+                        "greater_equal",
+                        "less",
+                        "less_equal",
+                    ) and module.__name__ == "numpy.strings":
+                        continue
+
+                    # numpy.char reexports all numpy.strings functions for
+                    # backwards-compatibility
+                    if module.__name__ == "numpy.char":
                         continue
 
                     # function is present in more than one location!

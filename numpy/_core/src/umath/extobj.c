@@ -506,10 +506,12 @@ _extract_pyvals(int *bufsize, int *errmask, PyObject **pyfunc)
     return 0;
 }
 
-/*
- * Handler which uses the default `np.errstate` given that `fpe_errors` is
- * already set.  `fpe_errors` is typically the (nonzero) result of
- * `npy_get_floatstatus_barrier`.
+/*UFUNC_API
+ * Signal a floating point error respecting the error signaling setting in
+ * the NumPy errstate. Takes the name of the operation to use in the error
+ * message and an integer flag that is one of NPY_FPE_DIVIDEBYZERO,
+ * NPY_FPE_OVERFLOW, NPY_FPE_UNDERFLOW, NPY_FPE_INVALID to indicate
+ * which errors to check for.
  *
  * Returns -1 on failure (an error was raised) and 0 on success.
  */

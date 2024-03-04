@@ -3,7 +3,6 @@
 #include <Python.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _NPY_NO_DEPRECATIONS /* for NPY_CHAR */
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 #include "numpy/npy_math.h"
@@ -84,7 +83,7 @@ static int copy_@name@(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
 {
     npy_intp i, j;
     @type@ *ptr;
-    npy_intp odims[NPY_MAXDIMS];
+    npy_intp odims[NPY_MAXDIMS_LEGACY_ITERS];
     PyArrayObject *aout;
 
     /*
@@ -125,9 +124,9 @@ static int copy_object(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
         PyObject **out)
 {
     npy_intp i, j;
-    npy_intp odims[NPY_MAXDIMS];
+    npy_intp odims[NPY_MAXDIMS_LEGACY_ITERS];
     PyArrayObject *aout;
-    PyArray_CopySwapFunc *copyswap = PyArray_DESCR(itx->ao)->f->copyswap;
+    PyArray_CopySwapFunc *copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(itx->ao))->copyswap;
     npy_int itemsize = PyArray_ITEMSIZE(itx->ao);
 
     /*
@@ -166,7 +165,7 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
     PyArrayIterObject *itx;
     int i, typenum, mode, st;
     Py_ssize_t idxstart = 0;
-    npy_intp bounds[NPY_MAXDIMS*2];
+    npy_intp bounds[NPY_MAXDIMS_LEGACY_ITERS*2];
     PyArrayNeighborhoodIterObject *niterx;
 
     if (!PyArg_ParseTuple(args, "OOOi|n", &x, &b, &fill, &mode, &idxstart)) {
@@ -298,7 +297,7 @@ copy_double_double(PyArrayNeighborhoodIterObject *itx,
 {
     npy_intp i, j;
     double *ptr;
-    npy_intp odims[NPY_MAXDIMS];
+    npy_intp odims[NPY_MAXDIMS_LEGACY_ITERS];
     PyArrayObject *aout;
 
     /*
@@ -338,7 +337,7 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
     PyArrayObject *ax;
     PyArrayIterObject *itx;
     int i, typenum, mode1, mode2, st;
-    npy_intp bounds[NPY_MAXDIMS*2];
+    npy_intp bounds[NPY_MAXDIMS_LEGACY_ITERS*2];
     PyArrayNeighborhoodIterObject *niterx1, *niterx2;
 
     if (!PyArg_ParseTuple(args, "OOiOi", &x, &b1, &mode1, &b2, &mode2)) {
@@ -357,6 +356,10 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
     ax = (PyArrayObject*)PyArray_FromObject(x, typenum, 1, 10);
     if (ax == NULL) {
         return NULL;
+    }
+    if (PyArray_NDIM(ax) > NPY_MAXDIMS_LEGACY_ITERS) {
+        PyErr_SetString(PyExc_TypeError, "too many dimensions.");
+        goto clean_ax;
     }
     if (PySequence_Size(b1) != 2 * PyArray_NDIM(ax)) {
         PyErr_SetString(PyExc_ValueError,
@@ -467,132 +470,6 @@ clean_ax:
 }
 
 
-typedef void (*inplace_map_binop)(PyArrayMapIterObject *, PyArrayIterObject *);
-
-static void npy_float64_inplace_add(PyArrayMapIterObject *mit, PyArrayIterObject *it)
-{
-    int index = mit->size;
-    while (index--) {
-        ((npy_float64*)mit->dataptr)[0] = ((npy_float64*)mit->dataptr)[0] + ((npy_float64*)it->dataptr)[0];
-
-        PyArray_MapIterNext(mit);
-        PyArray_ITER_NEXT(it);
-    }
-}
-
-inplace_map_binop addition_funcs[] = {
-npy_float64_inplace_add,
-NULL};
-
-int type_numbers[] = {
-NPY_FLOAT64,
--1000};
-
-
-
-static int
-map_increment(PyArrayMapIterObject *mit, PyObject *op, inplace_map_binop add_inplace)
-{
-    PyArrayObject *arr = NULL;
-    PyArrayIterObject *it;
-    PyArray_Descr *descr;
-
-    if (mit->ait == NULL) {
-        return -1;
-    }
-    descr = PyArray_DESCR(mit->ait->ao);
-    Py_INCREF(descr);
-    arr = (PyArrayObject *)PyArray_FromAny(op, descr,
-                                0, 0, NPY_ARRAY_FORCECAST, NULL);
-    if (arr == NULL) {
-        return -1;
-    }
-
-    if ((mit->subspace != NULL) && (mit->consec)) {
-        PyArray_MapIterSwapAxes(mit, (PyArrayObject **)&arr, 0);
-        if (arr == NULL) {
-            return -1;
-        }
-    }
-
-    if ((it = (PyArrayIterObject *)\
-            PyArray_BroadcastToShape((PyObject *)arr, mit->dimensions,
-                                     mit->nd)) == NULL) {
-        Py_DECREF(arr);
-
-        return -1;
-    }
-
-    (*add_inplace)(mit, it);
-
-    Py_DECREF(arr);
-    Py_DECREF(it);
-    return 0;
-}
-
-
-static PyObject *
-inplace_increment(PyObject *dummy, PyObject *args)
-{
-    PyObject *arg_a = NULL, *index=NULL, *inc=NULL;
-    PyArrayObject *a;
-    inplace_map_binop add_inplace = NULL;
-    int type_number = -1;
-    int i =0;
-    PyArrayMapIterObject * mit;
-
-    if (!PyArg_ParseTuple(args, "OOO", &arg_a, &index,
-            &inc)) {
-        return NULL;
-    }
-    if (!PyArray_Check(arg_a)) {
-         PyErr_SetString(PyExc_ValueError, "needs an ndarray as first argument");
-         return NULL;
-    }
-    a = (PyArrayObject *) arg_a;
-
-    if (PyArray_FailUnlessWriteable(a, "input/output array") < 0) {
-        return NULL;
-    }
-
-    if (PyArray_NDIM(a) == 0) {
-        PyErr_SetString(PyExc_IndexError, "0-d arrays can't be indexed.");
-        return NULL;
-    }
-    type_number = PyArray_TYPE(a);
-
-    while (type_numbers[i] >= 0 && addition_funcs[i] != NULL){
-        if (type_number == type_numbers[i]) {
-            add_inplace = addition_funcs[i];
-            break;
-        }
-        i++ ;
-    }
-
-    if (add_inplace == NULL) {
-        PyErr_SetString(PyExc_TypeError, "unsupported type for a");
-        return NULL;
-    }
-
-    mit = (PyArrayMapIterObject *) PyArray_MapIterArray(a, index);
-    if (mit == NULL) {
-        goto fail;
-    }
-
-    if (map_increment(mit, inc, add_inplace) != 0) {
-        goto fail;
-    }
-
-    Py_DECREF(mit);
-
-    Py_RETURN_NONE;
-
-fail:
-    Py_XDECREF(mit);
-
-    return NULL;
-}
-
 /*
  * Helper to test fromstring of 0 terminated strings, as the C-API supports
  * the -1 length identifier.
@@ -618,9 +495,9 @@ fromstring_null_term_c_api(PyObject *dummy, PyObject *byte_obj)
 static PyObject *
 create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
 {
+    PyArray_DescrProto proto;
     PyArray_Descr *dtype;
     PyTypeObject *scalar_type;
-    PyTypeObject *original_type = NULL;
     int error_path;
 
     if (!PyArg_ParseTuple(args, "O!O!i",
@@ -641,38 +518,44 @@ create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
         return NULL;
     }
 
-    /* Copy and then appropriate this dtype */
-    original_type = Py_TYPE(dtype);
-    dtype = PyArray_DescrNew(dtype);
-    if (dtype == NULL) {
-        return NULL;
-    }
+    /* Set all fields, mostly copying them from the passed in dtype: */
+    Py_SET_TYPE(&proto, Py_TYPE(dtype));
+    proto.typeobj = scalar_type;
+    proto.kind = dtype->kind;
+    proto.type = dtype->type;
+    proto.byteorder = dtype->byteorder;
+    proto.flags = dtype->flags;
+    proto.type_num = dtype->type_num;
+    proto.elsize = dtype->elsize;
+    proto.alignment = dtype->alignment;
+    proto.subarray = dtype->subarray;
+    proto.fields = dtype->fields;
+    proto.names = dtype->names;
+    proto.f = PyDataType_GetArrFuncs(dtype);
+    proto.metadata = dtype->metadata;
+    proto.c_metadata = dtype->c_metadata;
 
-    Py_INCREF(scalar_type);
-    Py_SETREF(dtype->typeobj, scalar_type);
     if (error_path == 1) {
         /* Test that we reject this, if fields was not already set */
-        Py_SETREF(dtype->fields, NULL);
+        proto.fields = NULL;
     }
     else if (error_path == 2) {
         /*
          * Test that we reject this if the type is not set to something that
          * we are pretty sure can be safely replaced.
          */
-        Py_SET_TYPE(dtype, scalar_type);
+        Py_SET_TYPE(&proto, scalar_type);
     }
     else if (error_path != 0) {
         PyErr_SetString(PyExc_ValueError,
                 "invalid error argument to test function.");
     }
-    if (PyArray_RegisterDataType(dtype) < 0) {
-        /* Fix original type in the error_path == 2 case and delete it */
-        Py_SET_TYPE(dtype, original_type);
-        Py_DECREF(dtype);
+    int new_typenum = PyArray_RegisterDataType(&proto);
+    if (new_typenum < 0) {
         return NULL;
     }
-    Py_INCREF(dtype);  /* hold on to the original (leaks a reference) */
-    return (PyObject *)dtype;
+
+    return (PyObject *)PyArray_DescrFromType(new_typenum);
 }
 
 
@@ -745,7 +628,7 @@ incref_elide_l(PyObject *dummy, PyObject *args)
     return res;
 }
 
-/* used to test NPY_CHAR usage emits deprecation warning */
+/* used to test NPY_CHAR usage raises an error */
 static PyObject*
 npy_char_deprecation(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
 {
@@ -2154,6 +2037,7 @@ run_sortkind_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         return NULL;
     }
     switch (kind) {
+        case _NPY_SORT_UNDEFINED: return PyUnicode_FromString("_NPY_SORT_UNDEFINED");
         case NPY_QUICKSORT: return PyUnicode_FromString("NPY_QUICKSORT");
         case NPY_HEAPSORT: return PyUnicode_FromString("NPY_HEAPSORT");
         case NPY_STABLESORT: return PyUnicode_FromString("NPY_STABLESORT");
@@ -2301,9 +2185,6 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_VARARGS, NULL},
     {"test_neighborhood_iterator_oob",
         test_neighborhood_iterator_oob,
-        METH_VARARGS, NULL},
-    {"test_inplace_increment",
-        inplace_increment,
         METH_VARARGS, NULL},
     {"fromstring_null_term_c_api",
         fromstring_null_term_c_api,

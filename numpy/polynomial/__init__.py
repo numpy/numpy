@@ -107,10 +107,10 @@ Misc
 - ``p.linspace()`` -- Return ``x, p(x)`` at equally-spaced points in ``domain``
 - ``p.mapparms()`` -- Return the parameters for the linear mapping between
   ``domain`` and ``window``.
-- ``p.roots()``    -- Return the roots of `p`.
+- ``p.roots()``    -- Return the roots of ``p``.
 - ``p.trim()``     -- Remove trailing coefficients.
-- ``p.cutdeg(degree)`` -- Truncate p to given degree
-- ``p.truncate(size)`` -- Truncate p to given size
+- ``p.cutdeg(degree)`` -- Truncate ``p`` to given degree
+- ``p.truncate(size)`` -- Truncate ``p`` to given size
 
 """
 from .polynomial import Polynomial

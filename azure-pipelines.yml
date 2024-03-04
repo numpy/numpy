@@ -48,7 +48,7 @@ stages:
         addToPath: true
         architecture: 'x64'
     - script: >-
-        python -m pip install -r linter_requirements.txt
+        python -m pip install -r requirements/linter_requirements.txt
       displayName: 'Install tools'
       # pip 21.1 emits a pile of garbage messages to annoy users :)
       #      failOnStderr: true
@@ -68,22 +68,11 @@ stages:
             # yum does not have a ninja package, so use the PyPI one
             docker run -v $(pwd):/numpy -e CFLAGS="-msse2 -std=c99 -UNDEBUG" \
             -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2014_i686 \
-            /bin/bash -xc " \
-            git config --global --add safe.directory /numpy && \
-            cd /numpy && \
-            /opt/python/cp39-cp39/bin/python -mvenv venv && \
-            source venv/bin/activate && \
-            python3 -m pip install ninja scipy-openblas32 spin && \
-            python3 -m pip install -r test_requirements.txt && \
-            echo CFLAGS \$CFLAGS && \
-            spin config-openblas --with-scipy-openblas=32 && \
-            export PKG_CONFIG_PATH=/numpy/.openblas && \
-            python3 -m pip install  . && \
-            cd tools && \
-            python3 -m pytest --pyargs numpy"
+            /bin/bash -xc "source /numpy/tools/ci/run_32_bit_linux_docker.sh"
       displayName: 'Run 32-bit manylinux2014 Docker Build / Tests'
 
   - job: Windows
+    timeoutInMinutes: 120
     pool:
       vmImage: 'windows-2019'
     strategy:

@@ -12,16 +12,19 @@
 
 #include "npy_config.h"
 #include "npy_ctypes.h"
+#include "npy_import.h"
 #include "npy_pycompat.h"
 
 #include "_datetime.h"
 #include "common.h"
+#include "conversion_utils.h"  /* for PyArray_TypestrConvert */
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "descriptor.h"
 #include "alloc.h"
 #include "assert.h"
 #include "npy_buffer.h"
 #include "dtypemeta.h"
+#include "stringdtype/dtype.h"
 
 #ifndef PyDictProxy_Check
 #define PyDictProxy_Check(obj) (Py_TYPE(obj) == &PyDictProxy_Type)
@@ -310,20 +313,6 @@ _convert_from_tuple(PyObject *obj, int align)
             npy_free_cache_dim_obj(shape);
             return type;
         }
-        /* (type, 1) use to be equivalent to type, but is deprecated */
-        if (shape.len == 1
-                && shape.ptr[0] == 1
-                && PyNumber_Check(val)) {
-            /* 2019-05-20, 1.17 */
-            if (DEPRECATE_FUTUREWARNING(
-                        "Passing (type, 1) or '1type' as a synonym of type is "
-                        "deprecated; in a future version of numpy, it will be "
-                        "understood as (type, (1,)) / '(1,)type'.") < 0) {
-                goto fail;
-            }
-            npy_free_cache_dim_obj(shape);
-            return type;
-        }
 
         /* validate and set shape */
         for (int i=0; i < shape.len; i++) {
@@ -509,6 +498,11 @@ _convert_from_array_descr(PyObject *obj, int align)
         else {
             PyErr_Format(PyExc_TypeError,
                     "Field elements must be tuples with at most 3 elements, got '%R'", item);
+            goto fail;
+        }
+        if (PyObject_IsInstance((PyObject *)conv, (PyObject *)&PyArray_StringDType)) {
+            PyErr_Format(PyExc_TypeError,
+                         "StringDType is not currently supported for structured dtype fields.");
             goto fail;
         }
         if ((PyDict_GetItemWithError(fields, name) != NULL)
@@ -716,8 +710,8 @@ _convert_from_list(PyObject *obj, int align)
  * this is the format developed by the numarray records module and implemented
  * by the format parser in that module this is an alternative implementation
  * found in the _internal.py file patterned after that one -- the approach is
- * to try to convert to a list (with tuples if any repeat information is
- * present) and then call the _convert_from_list)
+ * to convert strings like "i,i" or "i1,2i,(3,4)f4" to a list of simple dtypes or
+ * (dtype, repeat) tuples. A single tuple is expected for strings such as "(2,)i".
  *
  * TODO: Calling Python from C like this in critical-path code is not
  *       a good idea. This should all be converted to C code.
@@ -725,32 +719,31 @@ _convert_from_list(PyObject *obj, int align)
 static PyArray_Descr *
 _convert_from_commastring(PyObject *obj, int align)
 {
-    PyObject *listobj;
+    PyObject *parsed;
     PyArray_Descr *res;
-    PyObject *_numpy_internal;
+    static PyObject *_commastring = NULL;
     assert(PyUnicode_Check(obj));
-    _numpy_internal = PyImport_ImportModule("numpy._core._internal");
-    if (_numpy_internal == NULL) {
+    npy_cache_import("numpy._core._internal", "_commastring", &_commastring);
+    if (_commastring == NULL) {
         return NULL;
     }
-    listobj = PyObject_CallMethod(_numpy_internal, "_commastring", "O", obj);
-    Py_DECREF(_numpy_internal);
-    if (listobj == NULL) {
+    parsed = PyObject_CallOneArg(_commastring, obj);
+    if (parsed == NULL) {
         return NULL;
     }
-    if (!PyList_Check(listobj) || PyList_GET_SIZE(listobj) < 1) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "_commastring is not returning a list with len >= 1");
-        Py_DECREF(listobj);
-        return NULL;
+    if ((PyTuple_Check(parsed) && PyTuple_GET_SIZE(parsed) == 2)) {
+        res = _convert_from_any(parsed, align);
     }
-    if (PyList_GET_SIZE(listobj) == 1) {
-        res = _convert_from_any(PyList_GET_ITEM(listobj, 0), align);
+    else if (PyList_Check(parsed) && PyList_GET_SIZE(parsed) >= 1) {
+        res = _convert_from_list(parsed, align);
     }
     else {
-        res = _convert_from_list(listobj, align);
+        PyErr_SetString(PyExc_RuntimeError,
+                "_commastring should return a tuple with len == 2, or "
+                "a list with len >= 1");
+        res = NULL;
     }
-    Py_DECREF(listobj);
+    Py_DECREF(parsed);
     return res;
 }
 
@@ -1530,6 +1523,24 @@ PyArray_DTypeOrDescrConverterOptional(PyObject *obj, npy_dtype_info *dt_info)
     }
     return PyArray_DTypeOrDescrConverterRequired(obj, dt_info);
 }
+
+/*NUMPY_API
+ *
+ * Given a DType class, returns the default instance (descriptor).  This
+ * checks for a `singleton` first and only calls the `default_descr` function
+ * if necessary.
+ *
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
+{
+    if (DType->singleton != NULL) {
+        Py_INCREF(DType->singleton);
+        return DType->singleton;
+    }
+    return NPY_DT_CALL_default_descr(DType);
+}
+
 
 /**
  * Get a dtype instance from a python type
@@ -2479,7 +2490,6 @@ arraydescr_new(PyTypeObject *subtype,
                 PyErr_NoMemory();
                 return NULL;
             }
-            descr->f = &NPY_DT_SLOTS(DType)->f;
             Py_XINCREF(DType->scalar_type);
             descr->typeobj = DType->scalar_type;
             descr->type_num = DType->type_num;

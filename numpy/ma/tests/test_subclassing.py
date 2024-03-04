@@ -140,8 +140,8 @@ class ComplicatedSubArray(SubArray):
         y = self.ravel()
         y[:] = value
 
-    def __array_wrap__(self, obj, context=None):
-        obj = super().__array_wrap__(obj, context)
+    def __array_wrap__(self, obj, context=None, return_scalar=False):
+        obj = super().__array_wrap__(obj, context, return_scalar)
         if context is not None and context[0] is np.multiply:
             obj.info['multiplied'] = obj.info.get('multiplied', 0) + 1
 
@@ -164,7 +164,7 @@ class WrappedArray(NDArrayOperatorsMixin):
     def __repr__(self):
         return f"{self.__class__.__name__}(\n{self._array}\n{self.attrs}\n)"
 
-    def __array__(self):
+    def __array__(self, dtype=None, copy=None):
         return np.asarray(self._array)
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):

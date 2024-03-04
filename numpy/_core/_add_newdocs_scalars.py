@@ -93,17 +93,22 @@ def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
     add_newdoc('numpy._core.numerictypes', obj, docstring)
 
 
-add_newdoc_for_scalar_type('bool_', [],
+_bool_docstring = (
     """
     Boolean type (True or False), stored as a byte.
 
     .. warning::
 
-       The :class:`bool_` type is not a subclass of the :class:`int_` type
-       (the :class:`bool_` is not even a number type). This is different
+       The :class:`bool` type is not a subclass of the :class:`int_` type
+       (the :class:`bool` is not even a number type). This is different
        than Python's default implementation of :class:`bool` as a
        sub-class of :class:`int`.
-    """)
+    """
+)
+
+add_newdoc_for_scalar_type('bool', [], _bool_docstring)
+
+add_newdoc_for_scalar_type('bool_', [], _bool_docstring)
 
 add_newdoc_for_scalar_type('byte', [],
     """
@@ -287,6 +292,13 @@ add_newdoc_for_scalar_type('datetime64', [],
     ``1970-01-01T00:00:00``.
     If created from string, the string can be in ISO 8601 date
     or datetime format.
+    
+    When parsing a string to create a datetime object, if the string contains
+    a trailing timezone (A 'Z' or a timezone offset), the timezone will be 
+    dropped and a User Warning is given.
+    
+    Datetime64 objects should be considered to be UTC and therefore have an 
+    offset of +0000.
 
     >>> np.datetime64(10, 'Y')
     numpy.datetime64('1980')

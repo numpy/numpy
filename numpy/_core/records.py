@@ -1,38 +1,5 @@
 """
-Record Arrays
-=============
-Record arrays expose the fields of structured arrays as properties.
-
-Most commonly, ndarrays contain elements of a single type, e.g. floats,
-integers, bools etc.  However, it is possible for elements to be combinations
-of these using structured types, such as::
-
-  >>> a = np.array([(1, 2.0), (1, 2.0)], 
-  ...     dtype=[('x', np.int64), ('y', np.float64)])
-  >>> a
-  array([(1, 2.), (1, 2.)], dtype=[('x', '<i8'), ('y', '<f8')])
-
-Here, each element consists of two fields: x (and int), and y (a float).
-This is known as a structured array.  The different fields are analogous
-to columns in a spread-sheet.  The different fields can be accessed as
-one would a dictionary::
-
-  >>> a['x']
-  array([1, 1])
-
-  >>> a['y']
-  array([2., 2.])
-
-Record arrays allow us to access fields as properties::
-
-  >>> ar = np.rec.array(a)
-
-  >>> ar.x
-  array([1, 1])
-
-  >>> ar.y
-  array([2., 2.])
-
+This module contains a set of functions for record arrays.
 """
 import os
 import warnings
@@ -371,8 +338,8 @@ class recarray(ndarray):
 
     See Also
     --------
-    _core.records.fromrecords : Construct a record array from data.
-    record : fundamental data-type for `recarray`.
+    numpy.rec.fromrecords : Construct a record array from data.
+    numpy.record : fundamental data-type for `recarray`.
     numpy.rec.format_parser : determine data-type from formats, names, titles.
 
     Notes
@@ -629,7 +596,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> x1=np.array([1,2,3,4])
     >>> x2=np.array(['a','dd','xyz','12'])
     >>> x3=np.array([1.1,2,3,4])
-    >>> r = np._core.records.fromarrays([x1,x2,x3],names='a,b,c')
+    >>> r = np.rec.fromarrays([x1,x2,x3],names='a,b,c')
     >>> print(r[1])
     (2, 'dd', 2.0) # may vary
     >>> x1[1]=34
@@ -639,7 +606,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> x1 = np.array([1, 2, 3, 4])
     >>> x2 = np.array(['a', 'dd', 'xyz', '12'])
     >>> x3 = np.array([1.1, 2, 3,4])
-    >>> r = np._core.records.fromarrays(
+    >>> r = np.rec.fromarrays(
     ...     [x1, x2, x3],
     ...     dtype=np.dtype([('a', np.int32), ('b', 'S3'), ('c', np.float32)]))
     >>> r
@@ -724,7 +691,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
 
     Examples
     --------
-    >>> r=np._core.records.fromrecords([(456,'dbe',1.2),(2,'de',1.3)],
+    >>> r=np.rec.fromrecords([(456,'dbe',1.2),(2,'de',1.3)],
     ... names='col1,col2,col3')
     >>> print(r[0])
     (456, 'dbe', 1.2)
@@ -820,7 +787,7 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     Examples
     --------
     >>> a = b'\x01\x02\x03abc'
-    >>> np._core.records.fromstring(a, dtype='u1,u1,u1,S3')
+    >>> np.rec.fromstring(a, dtype='u1,u1,u1,S3')
     rec.array([(1, 2, 3, b'abc')],
             dtype=[('f0', 'u1'), ('f1', 'u1'), ('f2', 'u1'), ('f3', 'S3')])
 
@@ -828,13 +795,13 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     ...                 ('GradeLevel', np.int32)]
     >>> grades_array = np.array([('Sam', 33.3, 3), ('Mike', 44.4, 5),
     ...                         ('Aadi', 66.6, 6)], dtype=grades_dtype)
-    >>> np._core.records.fromstring(grades_array.tobytes(), dtype=grades_dtype)
+    >>> np.rec.fromstring(grades_array.tobytes(), dtype=grades_dtype)
     rec.array([('Sam', 33.3, 3), ('Mike', 44.4, 5), ('Aadi', 66.6, 6)],
             dtype=[('Name', '<U10'), ('Marks', '<f8'), ('GradeLevel', '<i4')])
 
     >>> s = '\x01\x02\x03abc'
-    >>> np._core.records.fromstring(s, dtype='u1,u1,u1,S3')
-    Traceback (most recent call last)
+    >>> np.rec.fromstring(s, dtype='u1,u1,u1,S3')
+    Traceback (most recent call last):
        ...
     TypeError: a bytes-like object is required, not 'str'
     """
@@ -905,10 +872,10 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     >>> a.tofile(fd)
     >>>
     >>> _ = fd.seek(0)
-    >>> r=np._core.records.fromfile(fd, formats='f8,i4,a5', shape=10,
+    >>> r=np.rec.fromfile(fd, formats='f8,i4,a5', shape=10,
     ... byteorder='<')
     >>> print(r[5])
-    (0.5, 10, 'abcde')
+    (0.5, 10, b'abcde')
     >>> r.shape
     (10,)
     """
@@ -1024,6 +991,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     Examples
     --------
     >>> a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    >>> a
     array([[1, 2, 3],
            [4, 5, 6],
            [7, 8, 9]])
@@ -1032,19 +1000,19 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     rec.array([[1, 2, 3],
                [4, 5, 6],
                [7, 8, 9]],
-        dtype=int32)
+              dtype=int64)
 
     >>> b = [(1, 1), (2, 4), (3, 9)]
     >>> c = np.rec.array(b, formats = ['i2', 'f2'], names = ('x', 'y'))
     >>> c
-    rec.array([(1, 1.0), (2, 4.0), (3, 9.0)],
+    rec.array([(1, 1.), (2, 4.), (3, 9.)],
               dtype=[('x', '<i2'), ('y', '<f2')])
 
     >>> c.x
-    rec.array([1, 2, 3], dtype=int16)
+    array([1, 2, 3], dtype=int16)
 
     >>> c.y
-    rec.array([ 1.0,  4.0,  9.0], dtype=float16)
+    array([1.,  4.,  9.], dtype=float16)
 
     >>> r = np.rec.array(['abc','def'], names=['col1','col2'])
     >>> print(r.col1)
