@@ -2481,6 +2481,7 @@ PyArray_FromArrayAttr_int(
                                  "__array__ should implement 'dtype' and "
                                  "'copy' keywords", 1) < 0) {
                     Py_DECREF(str_value);
+                    Py_DECREF(args);
                     Py_DECREF(kwargs);
                     return NULL;
                 }
@@ -2489,6 +2490,7 @@ PyArray_FromArrayAttr_int(
                     new = PyObject_Call(array_meth, args, kwargs);
                     if (new == NULL) {
                         Py_DECREF(str_value);
+                        Py_DECREF(args);
                         Py_DECREF(kwargs);
                         return NULL;
                     }
@@ -2498,11 +2500,13 @@ PyArray_FromArrayAttr_int(
         }
         if (new == NULL) {
             PyErr_Restore(type, value, traceback);
+            Py_DECREF(args);
             Py_DECREF(kwargs);
             return NULL;
         }
     }
 
+    Py_DECREF(args);
     Py_DECREF(kwargs);
     Py_DECREF(array_meth);
 
