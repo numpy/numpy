@@ -367,8 +367,8 @@ else:
             import numpy.char as char
             return char
         elif attr == "array_api":
-            import numpy.array_api as array_api
-            return array_api
+            raise AttributeError("`numpy.array_api` is not available from "
+                                 "numpy 2.0 onwards")
         elif attr == "core":
             import numpy.core as core
             return core
