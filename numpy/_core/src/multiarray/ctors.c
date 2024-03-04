@@ -2465,18 +2465,16 @@ PyArray_FromArrayAttr_int(
     new = PyObject_Call(array_meth, args, kwargs);
 
     if (new == NULL) {
-        PyObject *errmsg_substr = PyUnicode_FromString(
-                "__array__() got an unexpected keyword argument 'copy'");
-        if (errmsg_substr == NULL) {
+        if (npy_ma_str_array_err_msg_substr == NULL) {
             return NULL;
         }
         PyObject *type, *value, *traceback;
         PyErr_Fetch(&type, &value, &traceback);
-        if (PyUnicode_Check(value) && PyUnicode_Contains(value, errmsg_substr) > 0) {
+        if ((PyUnicode_Check(value) &&
+             PyUnicode_Contains(value, npy_ma_str_array_err_msg_substr) > 0)) {
             Py_DECREF(type);
             Py_XDECREF(value);
             Py_XDECREF(traceback);
-            Py_DECREF(errmsg_substr);
             if (PyErr_WarnEx(PyExc_UserWarning,
                              "__array__ should implement 'dtype' and 'copy' keywords", 1) < 0) {
                 return NULL;
@@ -2491,7 +2489,6 @@ PyArray_FromArrayAttr_int(
             }
         } else {
             PyErr_Restore(type, value, traceback);
-            Py_DECREF(errmsg_substr);
             Py_DECREF(kwargs);
             return NULL;
         }
