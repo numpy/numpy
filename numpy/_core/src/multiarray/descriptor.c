@@ -778,7 +778,8 @@ _validate_union_object_dtype(_PyArray_LegacyDescr *new, _PyArray_LegacyDescr *co
     PyObject *name, *tup;
     PyArray_Descr *dtype;
 
-    if (!PyDataType_REFCHK(new) && !PyDataType_REFCHK(conv)) {
+    if (!PyDataType_REFCHK((PyArray_Descr *)new)
+            && !PyDataType_REFCHK((PyArray_Descr *)conv)) {
         return 0;
     }
     if (PyDataType_HASFIELDS(new) || new->kind != 'O') {
@@ -1282,7 +1283,7 @@ _convert_from_dict(PyObject *obj, int align)
      * If the fields weren't in order, and there was an OBJECT type,
      * need to verify that no OBJECT types overlap with something else.
      */
-    if (has_out_of_order_fields && PyDataType_REFCHK(new)) {
+    if (has_out_of_order_fields && PyDataType_REFCHK((PyArray_Descr *)new)) {
         if (_validate_object_field_overlap(new) < 0) {
             Py_DECREF(new);
             goto fail;

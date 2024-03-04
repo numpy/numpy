@@ -683,7 +683,7 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
             Py_DECREF(new);
             return NULL;
         }
-        int aligned = PyDataType_FLAGCHK(new, NPY_ALIGNED_STRUCT);
+        int aligned = PyDataType_FLAGCHK((PyArray_Descr *)new, NPY_ALIGNED_STRUCT);
         new->flags = new->flags & ~NPY_FROM_FIELDS;
         new->flags |= NPY_NEEDS_PYAPI;  /* always needed for field access */
         int totalsize = 0;

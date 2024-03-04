@@ -510,7 +510,7 @@ create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
     if (dtype->type_num != NPY_VOID || dtype->fields == NULL ||
             !PyDict_CheckExact(dtype->fields) ||
             PyTuple_Size(dtype->names) != 1 ||
-            !PyDataType_REFCHK(dtype) ||
+            !PyDataType_REFCHK((PyArray_Descr *)dtype) ||
             dtype->elsize != sizeof(PyObject *)) {
         PyErr_SetString(PyExc_ValueError,
                 "Bad dtype passed to test function, must be an object "
@@ -531,7 +531,7 @@ create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
     proto.subarray = dtype->subarray;
     proto.fields = dtype->fields;
     proto.names = dtype->names;
-    proto.f = PyDataType_GetArrFuncs(dtype);
+    proto.f = PyDataType_GetArrFuncs((PyArray_Descr *)dtype);
     proto.metadata = dtype->metadata;
     proto.c_metadata = dtype->c_metadata;
 

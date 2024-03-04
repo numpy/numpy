@@ -511,7 +511,7 @@ npy_get_clear_void_and_legacy_user_dtype_loop(
      * but structured dtypes are tricky when a dtype which included references
      * was sliced to not include any.
      */
-    if (!PyDataType_REFCHK(dtype)) {
+    if (!PyDataType_REFCHK((PyArray_Descr *)dtype)) {
         *out_func = &clear_no_op;
         return 0;
     }
