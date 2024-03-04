@@ -5,7 +5,7 @@ NEP 36 — Fair play
 ==================
 
 :Author: Stéfan van der Walt <stefanv@berkeley.edu>
-:Status: Accepted
+:Status: Active
 :Type: Informational
 :Created: 2019-10-24
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2021-June/081890.html

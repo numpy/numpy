@@ -11,7 +11,7 @@ NEP 47 — Adopting the array API standard
 :Replaced-By: 56
 :Type: Standards Track
 :Created: 2021-01-21
-:Resolution:
+:Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/message/Z6AA5CL47NHBNEPTFWYOTSUVSRDGHYPN/
 
 .. note::
 

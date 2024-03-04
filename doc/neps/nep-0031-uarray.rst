@@ -7,9 +7,11 @@ NEP 31 — Context-local and global overrides of the NumPy API
 :Author: Hameer Abbasi <habbasi@quansight.com>
 :Author: Ralf Gommers <rgommers@quansight.com>
 :Author: Peter Bell <pbell@quansight.com>
-:Status: Draft
+:Status: Superseded
+:Replaced-By: 56
 :Type: Standards Track
 :Created: 2019-08-22
+:Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/message/Z6AA5CL47NHBNEPTFWYOTSUVSRDGHYPN/
 
 
 Abstract

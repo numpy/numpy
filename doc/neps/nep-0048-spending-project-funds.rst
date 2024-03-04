@@ -7,7 +7,7 @@ NEP 48 — Spending NumPy project funds
 :Author: Ralf Gommers <ralf.gommers@gmail.com>
 :Author: Inessa Pawson <inessa@albuscode.org>
 :Author: Stefan van der Walt <stefanv@berkeley.edu>
-:Status: Draft
+:Status: Active
 :Type: Informational
 :Created: 2021-02-07
 :Resolution:

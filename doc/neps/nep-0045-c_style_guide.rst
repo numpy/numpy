@@ -5,7 +5,7 @@ NEP 45 — C style guide
 =================================
 
 :Author: Charles Harris <charlesr.harris@gmail.com>
-:Status: Accepted
+:Status: Active
 :Type: Process
 :Created: 2012-02-26
 :Resolution: https://github.com/numpy/numpy/issues/11911

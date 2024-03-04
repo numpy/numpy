@@ -84,22 +84,36 @@ def nep_metadata():
                     f"no Replaces tag."
                 )
 
-            if not int(replacement_nep['Replaces']) == nr:
+            if nr not in parse_replaces_metadata(replacement_nep):
                 raise RuntimeError(
                     f'NEP {nr} is superseded by {replaced_by}, but that NEP has a '
                     f"Replaces tag of `{replacement_nep['Replaces']}`."
                 )
 
         if 'Replaces' in tags:
-            replaced_nep = int(tags['Replaces'])
-            replaced_nep_tags = neps[replaced_nep]
-            if not replaced_nep_tags['Status'] == 'Superseded':
-                raise RuntimeError(
-                    f'NEP {nr} replaces {replaced_nep}, but that NEP has not '
-                    f'been set to Superseded'
-                )
+            replaced_neps = parse_replaces_metadata(tags)
+            for nr_replaced in replaced_neps:
+                replaced_nep_tags = neps[nr_replaced]
+                if not replaced_nep_tags['Status'] == 'Superseded':
+                    raise RuntimeError(
+                        f'NEP {nr} replaces NEP {nr_replaced}, but that NEP '
+                        'has not been set to Superseded'
+                    )
 
     return {'neps': neps, 'has_provisional': has_provisional}
+
+
+def parse_replaces_metadata(replacement_nep):
+    """Handle :Replaces: as integer or list of integers"""
+    replaces = replacement_nep['Replaces']
+    if ' ' in replaces:
+        # Replaces multiple NEPs, should be comma-separated ints
+        replaced_neps = [int(s) for s in replaces.split(', ')]
+    else:
+        replaced_neps = [int(replaces)]
+
+    return replaced_neps
+
 
 meta = nep_metadata()
 
