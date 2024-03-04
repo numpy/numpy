@@ -60,10 +60,8 @@ tracker = "https://github.com/numpy/numpy/issues"
 "release notes" = "https://numpy.org/doc/stable/release"
 
 [tool.towncrier]
-    # Do no set this since it is hard to import numpy inside the source directory
-    # the name is hardcoded. Use "--version 1.18.0" to set the version
     single_file = false
-    filename = "doc/source/release/{version}-notes.rst"
+    filename = "doc/source/release/notes-towncrier.rst"
     directory = "doc/release/upcoming_changes/"
     issue_format = "`gh-{issue} <https://github.com/numpy/numpy/pull/{issue}>`__"
     template = "doc/release/upcoming_changes/template.rst"

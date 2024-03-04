@@ -1,3 +1,5 @@
+.. currentmodule:: numpy
+
 =========================
 NumPy 2.0.0 Release Notes
 =========================
@@ -1304,3 +1306,9 @@ You can use ``np.logical_or.reduce`` and ``np.logical_and.reduce``
 to achieve the previous behavior.
 
 (`gh-25712 <https://github.com/numpy/numpy/pull/25712>`__)
+
+
+
+**Content from release note snippets in doc/release/upcoming_changes:**
+
+.. include:: notes-towncrier.rst
