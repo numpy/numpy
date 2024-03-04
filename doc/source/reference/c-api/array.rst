@@ -3737,7 +3737,7 @@ the C-API is needed then some additional steps must be taken.
     .. versionadded:: 2.0
         This function is backported in the ``npy_2_compat.h`` header.
 
-.. c:macro:: void import_array(void)
+.. c:macro:: import_array(void)
 
     This function must be called in the initialization section of a
     module that will make use of the C-API. It imports the module

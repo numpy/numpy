@@ -442,7 +442,7 @@ Importing the API
         This function mainly checks for ``PyUFunc_API == NULL`` so it can be
         manually backported if desired.
 
-.. c:macro:: void import_ufunc(void)
+.. c:macro:: import_ufunc(void)
 
     These are the constants and functions for accessing the ufunc
     C-API from extension modules in precisely the same way as the

@@ -400,6 +400,9 @@ multiarray_funcs_api = {
     'PyArray_CommonDType':                           (363, MinVersion("2.0")),
     'PyArray_PromoteDTypeSequence':                  (364, MinVersion("2.0")),
     # End 2.0 API
+    # The actual public API for this is the inline function
+    # `PyDataType_GetArrFuncs` checks for the NumPy runtime version.
+    '_PyDataType_GetArrFuncs':                       (365,),
 }
 
 ufunc_types_api = {

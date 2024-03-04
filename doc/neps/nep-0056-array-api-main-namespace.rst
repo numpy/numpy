@@ -1,3 +1,5 @@
+.. _NEP56:
+
 =============================================================
 NEP 56 — Array API standard support in NumPy's main namespace
 =============================================================
@@ -6,6 +8,7 @@ NEP 56 — Array API standard support in NumPy's main namespace
 :Author: Mateusz Sokół <msokol@quansight.com>
 :Author: Nathan Goldbaum <ngoldbaum@quansight.com>
 :Status: Draft
+:Replaces: 47
 :Type: Standards Track
 :Created: 2023-12-19
 :Resolution: TODO mailing list link (after acceptance)

@@ -19,6 +19,7 @@
 #include "npy_config.h"
 #include "mapping.h"
 #include "ctors.h"
+#include "dtypemeta.h"
 #include "usertypes.h"
 #include "numpyos.h"
 #include "can_cast_table.h"
@@ -1787,7 +1788,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
             return PyErr_NoMemory();
         }
         else {
-            descr->f->copyswap(newmem, data, 1, NULL);
+            PyDataType_GetArrFuncs(descr)->copyswap(newmem, data, 1, NULL);
         }
         new = PyArray_Scalar(newmem, descr, NULL);
         PyObject_Free(newmem);
