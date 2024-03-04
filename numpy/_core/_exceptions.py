@@ -28,6 +28,17 @@ def _display_as_base(cls):
     cls.__name__ = cls.__base__.__name__
     return cls
 
+def _ufunc_call_sig(ufunc, arg_dtypes):
+    assert len(arg_dtypes) == ufunc.nin + ufunc.nout
+    if ufunc.nout > 1:
+        outs = "out=({})".format(
+            ", ".join(f.name for f in arg_dtypes[ufunc.nin:])
+        )
+    else:
+        outs = "out={}".format(arg_dtypes[-1])
+    return "{}({}, {})".format(
+        ufunc.__name__, ", ".join(f.name for f in arg_dtypes[:ufunc.nin]), outs
+    )
 
 class UFuncTypeError(TypeError):
     """ Base class for all ufunc exceptions """
@@ -85,31 +96,12 @@ class _UFuncInputCastingError(_UFuncCastingError):
         self.in_i = i
 
     def __str__(self):
-        if self.ufunc.nout > 1:
-            from_outs = "out=({})".format(
-                ", ".join(f.name for f in self.to[self.ufunc.nin:])
-            )
-            to_outs = "out=({})".format(
-                ", ".join(t.name for t in self.to[self.ufunc.nin:])
-            )
-        else:
-            from_outs = "out={}".format(self.from_[-1])
-            to_outs = "out={}".format(self.to[-1])
-
         return (
-            "Input of ufunc {}({}, {}) resolved to the {}({}, {}) loop, " 
+            "Input of ufunc {} resolved to the {} loop, " 
             "but can_cast({}, {}, casting='{}') is False"
         ).format(
-            self.ufunc.__name__,
-            ", ".join(
-                f.name for i, f in enumerate(self.to) if i < self.ufunc.nin
-            ),
-            to_outs,
-            self.ufunc.__name__,
-            ", ".join(
-                f.name for i, f in enumerate(self.from_) if i < self.ufunc.nin
-            ),
-            from_outs,
+            _ufunc_call_sig(self.ufunc, self.to),
+            _ufunc_call_sig(self.ufunc, self.from_),
             self.from_[self.in_i].name, self.to[self.in_i].name, self.casting
         )
 
@@ -122,31 +114,12 @@ class _UFuncOutputCastingError(_UFuncCastingError):
         self.out_i = i
 
     def __str__(self):
-        if self.ufunc.nout > 1:
-            from_outs = "out=({})".format(
-                ", ".join(f.name for f in self.to[self.ufunc.nin:])
-            )
-            to_outs = "out=({})".format(
-                ", ".join(t.name for t in self.to[self.ufunc.nin:])
-            )
-        else:
-            from_outs = "out={}".format(self.from_[-1])
-            to_outs = "out={}".format(self.to[-1])
-
         return (
-            "Output of ufunc {}({}, {}) resolved to the {}({}, {}) loop, " 
+            "Output of ufunc {} resolved to the {} loop, " 
             "but can_cast({}, {}, casting='{}') is False"
         ).format(
-            self.ufunc.__name__,
-            ", ".join(
-                f.name for i, f in enumerate(self.to) if i < self.ufunc.nin
-            ),
-            to_outs,
-            self.ufunc.__name__,
-            ", ".join(
-                f.name for i, f in enumerate(self.from_) if i < self.ufunc.nin
-            ),
-            from_outs,
+            _ufunc_call_sig(self.ufunc, self.to),
+            _ufunc_call_sig(self.ufunc, self.from_),
             self.from_[self.out_i].name, self.to[self.out_i].name, self.casting
         )
 
