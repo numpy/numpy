@@ -1240,11 +1240,11 @@ class poly1d:
             variable = 'x'
         self._variable = variable
 
-    def __array__(self, t=None):
+    def __array__(self, t=None, copy=None):
         if t:
-            return NX.asarray(self.coeffs, t)
+            return NX.asarray(self.coeffs, t, copy=copy)
         else:
-            return NX.asarray(self.coeffs)
+            return NX.asarray(self.coeffs, copy=copy)
 
     def __repr__(self):
         vals = repr(self.coeffs)

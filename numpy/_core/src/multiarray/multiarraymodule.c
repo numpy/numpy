@@ -789,8 +789,8 @@ PyArray_ScalarKind(int typenum, PyArrayObject **arr)
     } else if (PyTypeNum_ISUSERDEF(typenum)) {
         PyArray_Descr* descr = PyArray_DescrFromType(typenum);
 
-        if (descr->f->scalarkind) {
-            ret = descr->f->scalarkind((arr ? *arr : NULL));
+        if (PyDataType_GetArrFuncs(descr)->scalarkind) {
+            ret = PyDataType_GetArrFuncs(descr)->scalarkind((arr ? *arr : NULL));
         }
         Py_DECREF(descr);
     }
@@ -844,8 +844,8 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
     }
 
     from = PyArray_DescrFromType(thistype);
-    if (from->f->cancastscalarkindto
-        && (castlist = from->f->cancastscalarkindto[scalar])) {
+    if (PyDataType_GetArrFuncs(from)->cancastscalarkindto
+        && (castlist = PyDataType_GetArrFuncs(from)->cancastscalarkindto[scalar])) {
         while (*castlist != NPY_NOTYPE) {
             if (*castlist++ == neededtype) {
                 Py_DECREF(from);
@@ -1060,7 +1060,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         }
     }
 
-    dot = PyArray_DESCR(out_buf)->f->dotfunc;
+    dot = PyDataType_GetArrFuncs(PyArray_DESCR(out_buf))->dotfunc;
     if (dot == NULL) {
         PyErr_SetString(PyExc_ValueError,
                         "dot not available for this type");
@@ -1187,7 +1187,7 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
     if (ret == NULL) {
         return NULL;
     }
-    dot = PyArray_DESCR(ret)->f->dotfunc;
+    dot = PyDataType_GetArrFuncs(PyArray_DESCR(ret))->dotfunc;
     if (dot == NULL) {
         PyErr_SetString(PyExc_ValueError,
                         "function not available for this data type");
@@ -1256,7 +1256,7 @@ _pyarray_revert(PyArrayObject *ret)
 
     if (PyArray_ISNUMBER(ret) && !PyArray_ISCOMPLEX(ret)) {
         /* Optimization for unstructured dtypes */
-        PyArray_CopySwapNFunc *copyswapn = PyArray_DESCR(ret)->f->copyswapn;
+        PyArray_CopySwapNFunc *copyswapn = PyDataType_GetArrFuncs(PyArray_DESCR(ret))->copyswapn;
         sw2 = op + length * os - 1;
         /* First reverse the whole array byte by byte... */
         while(sw1 < sw2) {
@@ -1554,7 +1554,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
 static inline PyObject *
 _array_fromobject_generic(
         PyObject *op, PyArray_Descr *in_descr, PyArray_DTypeMeta *in_DType,
-        _PyArray_CopyMode copy, NPY_ORDER order, npy_bool subok, int ndmin)
+        NPY_COPYMODE copy, NPY_ORDER order, npy_bool subok, int ndmin)
 {
     PyArrayObject *oparr = NULL, *ret = NULL;
     PyArray_Descr *oldtype = NULL;
@@ -1655,7 +1655,7 @@ _array_fromobject_generic(
     if (copy == NPY_COPY_ALWAYS) {
         flags = NPY_ARRAY_ENSURECOPY;
     }
-    else if (copy == NPY_COPY_NEVER ) {
+    else if (copy == NPY_COPY_NEVER) {
         flags = NPY_ARRAY_ENSURENOCOPY;
     }
     if (order == NPY_CORDER) {
@@ -1703,7 +1703,7 @@ array_array(PyObject *NPY_UNUSED(ignored),
 {
     PyObject *op;
     npy_bool subok = NPY_FALSE;
-    _PyArray_CopyMode copy = NPY_COPY_ALWAYS;
+    NPY_COPYMODE copy = NPY_COPY_ALWAYS;
     int ndmin = 0;
     npy_dtype_info dt_info = {NULL, NULL};
     NPY_ORDER order = NPY_KEEPORDER;
@@ -1751,6 +1751,7 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *op;
+    NPY_COPYMODE copy = NPY_COPY_IF_NEEDED;
     npy_dtype_info dt_info = {NULL, NULL};
     NPY_ORDER order = NPY_KEEPORDER;
     NPY_DEVICE device = NPY_DEVICE_CPU;
@@ -1763,6 +1764,7 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
                 "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
                 "|order", &PyArray_OrderConverter, &order,
                 "$device", &PyArray_DeviceConverterOptional, &device,
+                "$copy", &PyArray_CopyConverter, &copy,
                 "$like", NULL, &like,
                 NULL, NULL, NULL) < 0) {
             Py_XDECREF(dt_info.descr);
@@ -1784,7 +1786,7 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, dt_info.descr, dt_info.dtype, NPY_FALSE, order, NPY_FALSE, 0);
+            op, dt_info.descr, dt_info.dtype, copy, order, NPY_FALSE, 0);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1826,7 +1828,7 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, dt_info.descr, dt_info.dtype, NPY_FALSE, order, NPY_TRUE, 0);
+            op, dt_info.descr, dt_info.dtype, NPY_COPY_IF_NEEDED, order, NPY_TRUE, 0);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1867,7 +1869,7 @@ array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, dt_info.descr, dt_info.dtype, NPY_FALSE, NPY_CORDER, NPY_FALSE,
+            op, dt_info.descr, dt_info.dtype, NPY_COPY_IF_NEEDED, NPY_CORDER, NPY_FALSE,
             1);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
@@ -1909,7 +1911,7 @@ array_asfortranarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, dt_info.descr, dt_info.dtype, NPY_FALSE, NPY_FORTRANORDER,
+            op, dt_info.descr, dt_info.dtype, NPY_COPY_IF_NEEDED, NPY_FORTRANORDER,
             NPY_FALSE, 1);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
@@ -2047,23 +2049,19 @@ array_empty_like(PyObject *NPY_UNUSED(ignored),
         goto fail;
     }
     /* steals the reference to dt_info.descr if it's not NULL */
+    if (dt_info.descr != NULL) {
+        Py_INCREF(dt_info.descr);
+    }
     ret = (PyArrayObject *)PyArray_NewLikeArrayWithShape(
             prototype, order, dt_info.descr, dt_info.dtype,
             shape.len, shape.ptr, subok);
     npy_free_cache_dim_obj(shape);
-    if (!ret) {
-        goto fail;
-    }
-    Py_XDECREF(dt_info.dtype);
-    Py_DECREF(prototype);
-
-    return (PyObject *)ret;
 
 fail:
     Py_XDECREF(prototype);
     Py_XDECREF(dt_info.dtype);
     Py_XDECREF(dt_info.descr);
-    return NULL;
+    return (PyObject *)ret;
 }
 
 /*
@@ -2636,7 +2634,7 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
             vdot = (PyArray_DotFunc *)OBJECT_vdot;
             break;
         default:
-            vdot = type->f->dotfunc;
+            vdot = PyDataType_GetArrFuncs(type)->dotfunc;
             if (vdot == NULL) {
                 PyErr_SetString(PyExc_ValueError,
                         "function not available for this data type");
@@ -4789,7 +4787,7 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_convert = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_preserve = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_convert_if_no_array = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_cpu = NULL;
-
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_err_msg_substr = NULL;
 
 static int
 intern_strings(void)
@@ -4865,6 +4863,11 @@ intern_strings(void)
     }
     npy_ma_str_cpu = PyUnicode_InternFromString("cpu");
     if (npy_ma_str_cpu == NULL) {
+        return -1;
+    }
+    npy_ma_str_array_err_msg_substr = PyUnicode_InternFromString(
+            "__array__() got an unexpected keyword argument 'copy'");
+    if (npy_ma_str_array_err_msg_substr == NULL) {
         return -1;
     }
     return 0;

@@ -404,6 +404,39 @@ struct Buffer {
         }
     }
 
+    inline npy_intp
+    buffer_memset(npy_ucs4 fill_char, size_t n_chars)
+    {
+        if (n_chars == 0) {
+            return 0;
+        }
+        switch (enc) {
+            case ENCODING::ASCII:
+                memset(this->buf, fill_char, n_chars);
+                return n_chars;
+            case ENCODING::UTF32:
+            {
+                char *tmp = this->buf;
+                for (size_t i = 0; i < n_chars; i++) {
+                    *(npy_ucs4 *)tmp = fill_char;
+                    tmp += sizeof(npy_ucs4);
+                }
+                return n_chars;
+            }
+            case ENCODING::UTF8:
+            {
+                char utf8_c[4] = {0};
+                char *tmp = this->buf;
+                size_t num_bytes = ucs4_code_to_utf8_char(fill_char, utf8_c);
+                for (size_t i = 0; i < n_chars; i++) {
+                    memcpy(tmp, utf8_c, num_bytes);
+                    tmp += num_bytes;
+                }
+                return num_bytes * n_chars;
+            }
+        }
+    }
+
     inline void
     buffer_fill_with_zeros_after_index(size_t start_index)
     {
@@ -1002,7 +1035,7 @@ string_rindex(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end
 
 
 /*
- * Count the number of occurences of buf2 in buf1 between
+ * Count the number of occurrences of buf2 in buf1 between
  * start (inclusive) and end (exclusive)
  */
 template <ENCODING enc>
@@ -1402,6 +1435,74 @@ copy_rest:
     return ret;
 }
 
+
+template <ENCODING enc>
+static inline npy_intp
+string_expandtabs_length(Buffer<enc> buf, npy_int64 tabsize)
+{
+    size_t len = buf.num_codepoints();
+
+    npy_intp new_len = 0, line_pos = 0;
+
+    Buffer<enc> tmp = buf;
+    for (size_t i = 0; i < len; i++) {
+        npy_ucs4 ch = *tmp;
+        if (ch == '\t') {
+            if (tabsize > 0) {
+                npy_intp incr = tabsize - (line_pos % tabsize);
+                line_pos += incr;
+                new_len += incr;
+            }
+        }
+        else {
+            line_pos += 1;
+            size_t n_bytes = tmp.num_bytes_next_character();
+            new_len += n_bytes;
+            if (ch == '\n' || ch == '\r') {
+                line_pos = 0;
+            }
+        }
+        if (new_len == PY_SSIZE_T_MAX || new_len < 0) {
+            npy_gil_error(PyExc_OverflowError, "new string is too long");
+            return -1;
+        }
+        tmp++;
+    }
+    return new_len;
+}
+
+
+template <ENCODING enc>
+static inline npy_intp
+string_expandtabs(Buffer<enc> buf, npy_int64 tabsize, Buffer<enc> out)
+{
+    size_t len = buf.num_codepoints();
+
+    npy_intp new_len = 0, line_pos = 0;
+
+    Buffer<enc> tmp = buf;
+    for (size_t i = 0; i < len; i++) {
+        npy_ucs4 ch = *tmp;
+        if (ch == '\t') {
+            if (tabsize > 0) {
+                npy_intp incr = tabsize - (line_pos % tabsize);
+                line_pos += incr;
+                new_len += out.buffer_memset((npy_ucs4) ' ', incr);
+                out += incr;
+            }
+        }
+        else {
+            line_pos++;
+            new_len += out.buffer_memset(ch, 1);
+            out++;
+            if (ch == '\n' || ch == '\r') {
+                line_pos = 0;
+            }
+        }
+        tmp++;
+    }
+    return new_len;
+}
 
 
 #endif /* _NPY_CORE_SRC_UMATH_STRING_BUFFER_H_ */

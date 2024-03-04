@@ -142,7 +142,6 @@ static PyArray_SFloatDescr SFloatSingleton = {{
         .type_num = -1,
         .elsize = sizeof(double),
         .alignment = NPY_ALIGNOF(double),
-        .f = &sfloat_slots.f,
     },
     .scaling = 1,
 };

@@ -126,6 +126,32 @@ class TestMethods:
         out = np.array(out, dtype=dt)
         assert_array_equal(np.strings.add(in1, in2), out)
 
+    @pytest.mark.parametrize("in1,in2,out", [
+        ("abc", 3, "abcabcabc"),
+        ("abc", 0, ""),
+        ("abc", -1, ""),
+        (["abc", "def"], [1, 4], ["abc", "defdefdefdef"]),
+    ])
+    def test_multiply(self, in1, in2, out, dt):
+        in1 = np.array(in1, dtype=dt)
+        out = np.array(out, dtype=dt)
+        assert_array_equal(np.strings.multiply(in1, in2), out)
+
+    def test_multiply_raises(self, dt):
+        with pytest.raises(TypeError, match="unsupported type"):
+            np.strings.multiply(np.array("abc", dtype=dt), 3.14)
+
+        with pytest.raises(MemoryError):
+            np.strings.multiply(np.array("abc", dtype=dt), sys.maxsize)
+
+    @pytest.mark.parametrize("i_dt", [np.int8, np.int16, np.int32,
+                                      np.int64, np.int_])
+    def test_multiply_integer_dtypes(self, i_dt, dt):
+        a = np.array("abc", dtype=dt)
+        i = np.array(3, dtype=i_dt)
+        res = np.array("abcabcabc", dtype=dt)
+        assert_array_equal(np.strings.multiply(a, i), res)
+
     @pytest.mark.parametrize("in_,out", [
         ("", False),
         ("a", True),
@@ -613,8 +639,7 @@ class TestMethods:
         ("abc", "", "-", 0, "abc"),
         ("abc", "ab", "--", 0, "abc"),
         ("abc", "xy", "--", -1, "abc"),
-        ("Ae¢☃€ 😊" * 2, "A", "B", -1, "Be¢☃€ 😊Be¢☃€ 😊"),
-        ("Ae¢☃€ 😊" * 2, "😊", "B", -1, "Ae¢☃€ BAe¢☃€ B"),
+        (["abbc", "abbd"], "b", "z", [1, 2], ["azbc", "azzd"]),
     ])
     def test_replace(self, buf, old, new, count, res, dt):
         if "😊" in buf and dt == "S":
@@ -674,6 +699,23 @@ class TestMethods:
         with pytest.raises(ValueError, match="substring not found"):
             np.strings.rindex(buf, sub, start, end)
 
+    @pytest.mark.parametrize("buf,tabsize,res", [
+        ("abc\rab\tdef\ng\thi", 8, "abc\rab      def\ng       hi"),
+        ("abc\rab\tdef\ng\thi", 4, "abc\rab  def\ng   hi"),
+        ("abc\r\nab\tdef\ng\thi", 8, "abc\r\nab      def\ng       hi"),
+        ("abc\r\nab\tdef\ng\thi", 4, "abc\r\nab  def\ng   hi"),
+        ("abc\r\nab\r\ndef\ng\r\nhi", 4, "abc\r\nab\r\ndef\ng\r\nhi"),
+        (" \ta\n\tb", 1, "  a\n b"),
+    ])
+    def test_expandtabs(self, buf, tabsize, res, dt):
+        buf = np.array(buf, dtype=dt)
+        res = np.array(res, dtype=dt)
+        assert_array_equal(np.strings.expandtabs(buf, tabsize), res)
+
+    def test_expandtabs_raises_overflow(self, dt):
+        with pytest.raises(OverflowError, match="new string is too long"):
+            np.strings.expandtabs(np.array("\ta\n\tb", dtype=dt), sys.maxsize)
+
 
 @pytest.mark.parametrize("dt", ["U", "T"])
 class TestMethodsWithUnicode:
@@ -707,10 +749,17 @@ class TestMethodsWithUnicode:
         buf = np.array(in_, dtype=dt)
         assert_array_equal(np.strings.isnumeric(buf), out)
 
-    def test_replace_unicode(self, dt):
-        buf = np.array("...\u043c......<", dtype=dt)
-        assert_array_equal(np.strings.replace(buf,  "<", "&lt;"),
-                           "...\u043c......&lt;")
+    @pytest.mark.parametrize("buf,old,new,count,res", [
+        ("...\u043c......<", "<", "&lt;", -1, "...\u043c......&lt;"),
+        ("Ae¢☃€ 😊" * 2, "A", "B", -1, "Be¢☃€ 😊Be¢☃€ 😊"),
+        ("Ae¢☃€ 😊" * 2, "😊", "B", -1, "Ae¢☃€ BAe¢☃€ B"),
+    ])
+    def test_replace_unicode(self, buf, old, new, count, res, dt):
+        buf = np.array(buf, dtype=dt)
+        old = np.array(old, dtype=dt)
+        new = np.array(new, dtype=dt)
+        res = np.array(res, dtype=dt)
+        assert_array_equal(np.strings.replace(buf, old, new, count), res)
 
     @pytest.mark.parametrize("in_", [
         '\U00010401',
@@ -797,6 +846,16 @@ class TestMethodsWithUnicode:
     def test_index_raises_unicode(self, dt):
         with pytest.raises(ValueError, match="substring not found"):
             np.strings.index("Ae¢☃€ 😊", "😀")
+
+    @pytest.mark.parametrize("buf,res", [
+        ("Ae¢☃€ \t 😊", "Ae¢☃€    😊"),
+        ("\t\U0001044E", "        \U0001044E"),
+    ])
+    def test_expandtabs(self, buf, res, dt):
+        buf = np.array(buf, dtype=dt)
+        res = np.array(res, dtype=dt)
+        assert_array_equal(np.strings.expandtabs(buf), res)
+
 
 
 class TestUnicodeOnlyMethodsRaiseWithBytes:

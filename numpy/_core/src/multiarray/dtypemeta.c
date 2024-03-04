@@ -1073,7 +1073,7 @@ object_common_dtype(
  */
 NPY_NO_EXPORT int
 dtypemeta_wrap_legacy_descriptor(_PyArray_LegacyDescr *descr,
-        const char *name, const char *alias)
+        PyArray_ArrFuncs *arr_funcs, const char *name, const char *alias)
 {
     int has_type_set = Py_TYPE(descr) == &PyArrayDescr_Type;
 
@@ -1163,7 +1163,7 @@ dtypemeta_wrap_legacy_descriptor(_PyArray_LegacyDescr *descr,
     Py_INCREF(descr->typeobj);
     dtype_class->scalar_type = descr->typeobj;
     dtype_class->type_num = descr->type_num;
-    dt_slots->f = *(descr->f);
+    dt_slots->f = *arr_funcs;
 
     /* Set default functions (correct for most dtypes, override below) */
     dt_slots->default_descr = nonparametric_default_descr;
@@ -1388,3 +1388,28 @@ PyArray_DTypeMeta *_Datetime_dtype = NULL;
 PyArray_DTypeMeta *_Timedelta_dtype = NULL;
 PyArray_DTypeMeta *_Object_dtype = NULL;
 PyArray_DTypeMeta *_Void_dtype = NULL;
+
+
+
+/*NUMPY_API
+ * Fetch the ArrFuncs struct which new lives on the DType and not the
+ * descriptor.  Use of this struct should be avoided but remains necessary
+ * for certain functionality.
+ *
+ * The use of any slot besides getitem, setitem, copyswap, and copyswapn
+ * is only valid after checking for NULL.  Checking for NULL is generally
+ * encouraged.
+ *
+ * This function is exposed with an underscore "privately" because the
+ * public version is a static inline function which only calls the function
+ * on 2.x but directly accesses the `descr` struct on 1.x.
+ * Once 1.x backwards compatibility is gone, it shoudl be exported without
+ * the underscore directly.
+ * Internally, we define a private inline function `PyDataType_GetArrFuncs`
+ * for convenience as we are allowed to access the `DType` slots directly.
+ */
+NPY_NO_EXPORT PyArray_ArrFuncs *
+_PyDataType_GetArrFuncs(PyArray_Descr *descr)
+{
+    return PyDataType_GetArrFuncs(descr);
+}

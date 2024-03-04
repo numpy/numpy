@@ -542,6 +542,7 @@ typedef struct {
 
 } PyArray_ArrFuncs;
 
+
 /* The item must be reference counted when it is inserted or extracted. */
 #define NPY_ITEM_REFCOUNT   0x01
 /* Same as needing REFCOUNT */
@@ -619,11 +620,8 @@ typedef struct _PyArray_Descr {
          * if no fields are defined
          */
         PyObject *names;
-        /*
-         * a table of functions specific for each
-         * basic data descriptor
-         */
-        PyArray_ArrFuncs *f;
+         // TODO: Remove: still there to break all downstream nightlies once only
+        void *_former_f;
         /* Metadata about this dtype */
         PyObject *metadata;
         /*
@@ -657,7 +655,7 @@ typedef struct _PyArray_Descr {
         struct _arr_descr *unreachable_subarray;
         PyObject *unreachable_fields;
         PyObject *unreachable_names;
-        PyArray_ArrFuncs *f;
+        PyArray_ArrFuncs *_former_f;
         PyObject *metadata;
         NpyAuxData *unreachable_c_metadata;
         npy_hash_t hash;
@@ -683,7 +681,7 @@ typedef struct {
         struct _arr_descr *subarray;
         PyObject *fields;
         PyObject *names;
-        PyArray_ArrFuncs *f;
+        PyArray_ArrFuncs *_former_f;
         PyObject *metadata;
         NpyAuxData *c_metadata;
         npy_hash_t hash;
@@ -1312,7 +1310,7 @@ typedef struct {
         int                  nd;                      /* number of dims */
         npy_intp             dimensions[NPY_MAXDIMS_LEGACY_ITERS]; /* dimensions */
         /*
-         * Space for the indivdual iterators, do not specify size publically
+         * Space for the individual iterators, do not specify size publicly
          * to allow changing it more easily.
          * One reason is that Cython uses this for checks and only allows
          * growing structs (as of Cython 3.0.6).  It also allows NPY_MAXARGS
@@ -1588,25 +1586,6 @@ PyArray_CHKFLAGS(const PyArrayObject *arr, int flags)
 {
     return (PyArray_FLAGS(arr) & flags) == flags;
 }
-
-static inline PyObject *
-PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
-{
-    return ((PyArrayObject_fields *)arr)->descr->f->getitem(
-                                        (void *)itemptr, (PyArrayObject *)arr);
-}
-
-/*
- * SETITEM should only be used if it is known that the value is a scalar
- * and of a type understood by the arrays dtype.
- * Use `PyArray_Pack` if the value may be of a different dtype.
- */
-static inline int
-PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
-{
-    return ((PyArrayObject_fields *)arr)->descr->f->setitem(v, itemptr, arr);
-}
-
 
 static inline PyArray_Descr *
 PyArray_DTYPE(const PyArrayObject *arr)

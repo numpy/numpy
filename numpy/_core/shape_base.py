@@ -552,7 +552,7 @@ def _block_check_depths_match(arrays, parent_index=[]):
 def _atleast_nd(a, ndim):
     # Ensures `a` has at least `ndim` dimensions by prepending
     # ones to `a.shape` as necessary
-    return array(a, ndmin=ndim, copy=False, subok=True)
+    return array(a, ndmin=ndim, copy=None, subok=True)
 
 
 def _accumulate(values):

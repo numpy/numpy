@@ -108,9 +108,6 @@ def test_NPY_NO_EXPORT():
 # current status is fine.  For others it may make sense to work on making them
 # private, to clean up our public API and avoid confusion.
 PUBLIC_MODULES = ['numpy.' + s for s in [
-    "array_api",
-    "array_api.fft",
-    "array_api.linalg",
     "ctypeslib",
     "dtypes",
     "exceptions",
@@ -452,7 +449,7 @@ def test_api_importable():
 def test_array_api_entry_point():
     """
     Entry point for Array API implementation can be found with importlib and
-    returns the numpy.array_api namespace.
+    returns the main numpy namespace.
     """
     # For a development install that did not go through meson-python,
     # the entrypoint will not have been installed. So ensure this test fails
@@ -482,12 +479,20 @@ def test_array_api_entry_point():
             raise AssertionError(msg) from None
         return
 
+    if ep.value == 'numpy.array_api':
+        # Looks like the entrypoint for the current numpy build isn't
+        # installed, but an older numpy is also installed and hence the
+        # entrypoint is pointing to the old (no longer existing) location.
+        # This isn't a problem except for when running tests with `spin` or an
+        # in-place build.
+        return
+
     xp = ep.load()
     msg = (
         f"numpy entry point value '{ep.value}' "
         "does not point to our Array API implementation"
     )
-    assert xp is numpy.array_api, msg
+    assert xp is numpy, msg
 
 
 def test_main_namespace_all_dir_coherence():

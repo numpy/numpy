@@ -27,7 +27,7 @@ np.ndarray(Index())
 np.ndarray([Index()])
 
 np.array(1, dtype=float)
-np.array(1, copy=False)
+np.array(1, copy=None)
 np.array(1, order='F')
 np.array(1, order=None)
 np.array(1, subok=True)

@@ -305,19 +305,30 @@ NumPy provides several hooks that classes can customize:
    .. note:: For ufuncs, it is hoped to eventually deprecate this method in
              favour of :func:`__array_ufunc__`.
 
-.. py:method:: class.__array__([dtype])
+.. py:method:: class.__array__(dtype=None, copy=None)
 
-    If defined on an object, should return an ``ndarray``.
-    This method is called by array-coercion functions like np.array()
-    if an object implementing this interface is passed to those functions.
-    Please refer to :ref:`Interoperability with NumPy <basics.interoperability>`
-    for the protocol hierarchy, of which ``__array__`` is the oldest and least
-    desirable.
+   If defined on an object, should return an ``ndarray``.
+   This method is called by array-coercion functions like np.array()
+   if an object implementing this interface is passed to those functions.
+   The third-party implementations of ``__array__`` must take ``dtype`` and
+   ``copy`` keyword arguments, as ignoring them might break third-party code
+   or NumPy itself.
 
-    .. note::  If a class (ndarray subclass or not) having the :func:`__array__`
-               method is used as the output object of an :ref:`ufunc
-               <ufuncs-output-type>`, results will *not* be written to the object
-               returned by :func:`__array__`. This practice will return ``TypeError``.
+   - ``dtype`` is a data type of the returned array.
+   - ``copy`` is an optional boolean that indicates whether a copy should be
+     returned. For ``True`` a copy should always be made, for ``None`` only
+     if required (e.g. due to passed ``dtype`` value), and for ``False`` a copy
+     should never be made (if a copy is still required, an appropriate exception
+     should be raised).
+
+   Please refer to :ref:`Interoperability with NumPy <basics.interoperability>`
+   for the protocol hierarchy, of which ``__array__`` is the oldest and least
+   desirable.
+
+   .. note:: If a class (ndarray subclass or not) having the :func:`__array__`
+             method is used as the output object of an :ref:`ufunc
+             <ufuncs-output-type>`, results will *not* be written to the object
+             returned by :func:`__array__`. This practice will return ``TypeError``.
 
 .. _matrix-objects:
 

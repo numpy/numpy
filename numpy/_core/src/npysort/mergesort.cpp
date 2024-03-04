@@ -385,7 +385,7 @@ npy_mergesort(void *start, npy_intp num, void *varr)
 {
     PyArrayObject *arr = (PyArrayObject *)varr;
     npy_intp elsize = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
+    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
     char *pl = (char *)start;
     char *pr = pl + num * elsize;
     char *pw;
@@ -461,7 +461,7 @@ npy_amergesort(void *v, npy_intp *tosort, npy_intp num, void *varr)
 {
     PyArrayObject *arr = (PyArrayObject *)varr;
     npy_intp elsize = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
+    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
     npy_intp *pl, *pr, *pw;
 
     /* Items that have zero size don't make sense to sort */

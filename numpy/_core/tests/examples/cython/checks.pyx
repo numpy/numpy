@@ -140,7 +140,7 @@ def get_dtype_flags(cnp.dtype dtype):
 cdef cnp.NpyIter* npyiter_from_nditer_obj(object it):
     """A function to create a NpyIter struct from a nditer object.
 
-    This function is only meant for testing purposes and onl extracts the
+    This function is only meant for testing purposes and only extracts the
     necessary info from nditer to test the functionality of NpyIter methods
     """
     cdef:
@@ -246,3 +246,11 @@ def npyiter_has_finished(it: "nditer"):
         return not (cnp.NpyIter_GetIterIndex(cit) < cnp.NpyIter_GetIterSize(cit))
     finally:
         cnp.NpyIter_Deallocate(cit)
+
+def compile_fillwithbyte():
+    # Regression test for gh-25878, mostly checks it compiles.
+    cdef cnp.npy_intp dims[2]
+    dims = (1, 2)
+    pos = cnp.PyArray_ZEROS(2, dims, cnp.NPY_UINT8, 0)
+    cnp.PyArray_FILLWBYTE(pos, 1)
+    return pos

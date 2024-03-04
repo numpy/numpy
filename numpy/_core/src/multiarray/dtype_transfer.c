@@ -253,7 +253,7 @@ any_to_object_get_loop(
     data->arr_fields.flags = aligned ? NPY_ARRAY_ALIGNED : 0;
     data->arr_fields.nd = 0;
 
-    data->getitem = context->descriptors[0]->f->getitem;
+    data->getitem = PyDataType_GetArrFuncs(context->descriptors[0])->getitem;
     NPY_traverse_info_init(&data->decref_src);
 
     if (move_references && PyDataType_REFCHK(context->descriptors[0])) {
@@ -554,7 +554,7 @@ wrap_copy_swap_function(
 
     data->base.free = &_wrap_copy_swap_data_free;
     data->base.clone = &_wrap_copy_swap_data_clone;
-    data->copyswapn = dtype->f->copyswapn;
+    data->copyswapn = PyDataType_GetArrFuncs(dtype)->copyswapn;
     data->swap = should_swap;
 
     /*
@@ -3212,7 +3212,7 @@ wrap_aligned_transferfunction(
 
 
 /*
- * This function wraps the legacy casts stored on the `dtype->f->cast`
+ * This function wraps the legacy casts stored on the PyDataType_GetArrFuncs(`dtype)->cast`
  * or registered with `PyArray_RegisterCastFunc`.
  * For casts between two dtypes with the same type (within DType casts)
  * it also wraps the `copyswapn` function.

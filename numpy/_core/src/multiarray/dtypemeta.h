@@ -1,6 +1,9 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_
 
+#define _MULTIARRAYMODULE
+#include "numpy/arrayobject.h"
+
 #include "array_method.h"
 #include "dtype_traversal.h"
 
@@ -152,7 +155,8 @@ python_builtins_are_known_scalar_types(
 
 NPY_NO_EXPORT int
 dtypemeta_wrap_legacy_descriptor(
-        _PyArray_LegacyDescr *dtypem, const char *name, const char *alias);
+        _PyArray_LegacyDescr *descr, PyArray_ArrFuncs *arr_funcs,
+        const char *name, const char *alias);
 
 NPY_NO_EXPORT void
 initialize_legacy_dtypemeta_aliases(_PyArray_LegacyDescr **_builtin_descrs);
@@ -253,5 +257,34 @@ extern PyArray_DTypeMeta PyArray_StringDType;
 #ifdef __cplusplus
 }
 #endif
+
+
+/* Internal version see dtypmeta.c for more information. */
+static inline PyArray_ArrFuncs *
+PyDataType_GetArrFuncs(PyArray_Descr *descr)
+{
+    return &NPY_DT_SLOTS(NPY_DTYPE(descr))->f;
+}
+
+/*
+ * Internal versions.  Note that `PyArray_Pack` or `PyArray_Scalar` are often
+ * preferred (PyArray_Pack knows how to cast and deal with arrays,
+ * PyArray_Scalar will convert to the Python type).
+ */
+static inline PyObject *
+PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
+{
+    return PyDataType_GetArrFuncs(((PyArrayObject_fields *)arr)->descr)->getitem(
+            (void *)itemptr, (PyArrayObject *)arr);
+}
+
+static inline int
+PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
+{
+    return PyDataType_GetArrFuncs(((PyArrayObject_fields *)arr)->descr)->setitem(
+            v, itemptr, arr);
+}
+
+
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_ */

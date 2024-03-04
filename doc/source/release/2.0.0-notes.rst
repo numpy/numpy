@@ -116,10 +116,17 @@ NumPy 2.0 Python API removals
 
   (`gh-24587 <https://github.com/numpy/numpy/pull/24587>`__)
 
-Seven data type aliases have been removed from ``np.dtype(alias)`` search:
-``int0``, ``uint0``, ``void0``, ``object0``, ``str0``, ``bytes0`` and ``bool8``.
+* Seven data type aliases have been removed from ``np.dtype(alias)`` search:
+  ``int0``, ``uint0``, ``void0``, ``object0``, ``str0``, ``bytes0`` and ``bool8``.
 
-(`gh-24807 <https://github.com/numpy/numpy/pull/24807>`__)
+  (`gh-24807 <https://github.com/numpy/numpy/pull/24807>`__)
+
+* The experimental ``numpy.array_api`` submodule has been removed. Use the main
+  ``numpy`` namespace for regular usage instead, or the separate
+  ``array-api-strict`` package for the compliance testing use case for which
+  ``numpy.array_api`` was mostly used.
+
+  (`gh-25911 <https://github.com/numpy/numpy/pull/25911>`__)
 
 ``__array_prepare__`` is removed
 --------------------------------
@@ -308,23 +315,6 @@ before.
 
 (`gh-25336 <https://github.com/numpy/numpy/pull/25336>`__)
 
-Make ``numpy.array_api`` more portable
---------------------------------------
-
-``numpy.array_api`` no longer uses ``"cpu"`` as its "device", but rather a
-separate ``CPU_DEVICE`` object (which is not accessible in the namespace).
-This is because "cpu" is not part of the array API standard.
-
-``numpy.array_api`` now uses separate wrapped objects for dtypes. Previously
-it reused the ``numpy`` dtype objects. This makes it clear which behaviors on
-dtypes are part of the array API standard (effectively, the standard only
-requires ``==``  on dtype objects).
-
-``numpy.array_api.nonzero`` now errors on zero-dimensional arrays, as required
-by the array API standard.
-
-(`gh-25370 <https://github.com/numpy/numpy/pull/25370>`__)
-
 
 C API changes
 =============
@@ -395,7 +385,7 @@ replaced with ``NPY_RAVEL_AXIS``. See also :ref:`migration_maxdims`.
 ``NPY_MAXARGS`` not constant and ``PyArrayMultiIterObject`` size change
 -----------------------------------------------------------------------
 Since ``NPY_MAXARGS`` was increased, it is now a runtime constant and not
-compiletime constant anymore.
+compile-time constant anymore.
 We expect almost no users to notice this.  But if used for stack allocations
 it now must be replaced with a custom constant using ``NPY_MAXARGS`` as an
 additional runtime check.
@@ -541,16 +531,6 @@ algebra operations. When Accelerate is selected at build time, the 13.3+
 version will automatically be used if available.
 
 (`gh-24053 <https://github.com/numpy/numpy/pull/24053>`__)
-
-Array API v2022.12 support in ``numpy.array_api``
--------------------------------------------------
-
-- ``numpy.array_api`` now fully supports the `v2022.12 version
-  <https://data-apis.org/array-api/2022.12>`__ of the array API standard. Note
-  that this does not yet include the optional ``fft`` extension in the
-  standard.
-
-(`gh-23789 <https://github.com/numpy/numpy/pull/23789>`__)
 
 ``weights`` option for `quantile` and `percentile`
 ----------------------------------------------------
@@ -698,7 +678,7 @@ Array API set functions
 -----------------------
 
 `numpy.unique_all`, `numpy.unique_counts`, `numpy.unique_inverse`,
-and `numpy.unique_values` functions have been added for Array API compatiblity.
+and `numpy.unique_values` functions have been added for Array API compatibility.
 They provide functionality of `numpy.unique` with different sets of flags.
 
 (`gh-25088 <https://github.com/numpy/numpy/pull/25088>`__)
@@ -850,6 +830,13 @@ find its location for use with ``PKG_CONFIG_PATH``, use
 
 (`gh-25730 <https://github.com/numpy/numpy/pull/25730>`__)
 
+Array API standard support in the main namespace
+------------------------------------------------
+
+The main ``numpy`` namespace now supports the array API standard. See
+:ref:`array-api-standard-compatibility` for details.
+
+(`gh-25911 <https://github.com/numpy/numpy/pull/25911>`__)
 
 Improvements
 ============

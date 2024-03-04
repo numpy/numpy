@@ -983,36 +983,6 @@ identity_matrix(typ *matrix, size_t n)
     }
 }
 
-         /* zero the undefined part in a upper/lower triangular matrix */
-          /* Note: matrix from fortran routine, so column-major order */
-
-template<typename typ>
-static inline void
-triu_matrix(typ *matrix, size_t n)
-{
-    size_t i, j;
-    for (i = 0; i < n-1; ++i) {
-        for (j = i+1; j < n; ++j) {
-            matrix[j] = numeric_limits<typ>::zero;
-        }
-        matrix += n;
-    }
-}
-
-template<typename typ>
-static inline void
-tril_matrix(typ *matrix, size_t n)
-{
-    size_t i, j;
-    matrix += n;
-    for (i = 1; i < n; ++i) {
-        for (j = 0; j < i; ++j) {
-            matrix[j] = numeric_limits<typ>::zero;
-        }
-        matrix += n;
-    }
-}
-
 /* -------------------------------------------------------------------------- */
                           /* Determinants */
 
@@ -1884,6 +1854,40 @@ struct POTR_PARAMS_t
 };
 
 
+         /* zero the undefined part in a upper/lower triangular matrix */
+          /* Note: matrix from fortran routine, so column-major order */
+
+template<typename typ>
+static inline void
+zero_lower_triangle(POTR_PARAMS_t<typ> *params)
+{
+    fortran_int n = params->N;
+    typ *matrix = params->A;
+    fortran_int i, j;
+    for (i = 0; i < n-1; ++i) {
+        for (j = i+1; j < n; ++j) {
+            matrix[j] = numeric_limits<typ>::zero;
+        }
+        matrix += n;
+    }
+}
+
+template<typename typ>
+static inline void
+zero_upper_triangle(POTR_PARAMS_t<typ> *params)
+{
+    fortran_int n = params->N;
+    typ *matrix = params->A;
+    fortran_int i, j;
+    matrix += n;
+    for (i = 1; i < n; ++i) {
+        for (j = 0; j < i; ++j) {
+            matrix[j] = numeric_limits<typ>::zero;
+        }
+        matrix += n;
+    }
+}
+
 static inline fortran_int
 call_potrf(POTR_PARAMS_t<fortran_real> *params)
 {
@@ -1983,10 +1987,10 @@ cholesky(char uplo, char **args, npy_intp const *dimensions, npy_intp const *ste
             not_ok = call_potrf(&params);
             if (!not_ok) {
                 if (uplo == 'L') {
-                    tril_matrix(params.A, params.N);
+                    zero_upper_triangle(&params);
                 }
                 else {
-                    triu_matrix(params.A, params.N);
+                    zero_lower_triangle(&params);
                 }
                 delinearize_matrix((ftyp*)args[1], params.A, &r_out);
             } else {

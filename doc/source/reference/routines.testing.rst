@@ -64,6 +64,8 @@ Test running
    rundocs
    suppress_warnings
 
+.. module:: numpy.testing.overrides
+
 Testing custom array containers (:mod:`numpy.testing.overrides`)
 ----------------------------------------------------------------
 

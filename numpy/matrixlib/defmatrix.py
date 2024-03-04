@@ -144,6 +144,7 @@ class matrix(N.ndarray):
             data = _convert_from_string(data)
 
         # now convert data to an array
+        copy = None if not copy else True
         arr = N.array(data, dtype=dtype, copy=copy)
         ndim = arr.ndim
         shape = arr.shape

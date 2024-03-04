@@ -657,7 +657,7 @@ def column_stack(tup):
     for v in tup:
         arr = asanyarray(v)
         if arr.ndim < 2:
-            arr = array(arr, copy=False, subok=True, ndmin=2).T
+            arr = array(arr, copy=None, subok=True, ndmin=2).T
         arrays.append(arr)
     return _nx.concatenate(arrays, 1)
 
@@ -1155,7 +1155,7 @@ def kron(a, b):
     # 5. Reshape the result to kron's shape, which is same as
     #    product of shapes of the two arrays.
     b = asanyarray(b)
-    a = array(a, copy=False, subok=True, ndmin=b.ndim)
+    a = array(a, copy=None, subok=True, ndmin=b.ndim)
     is_any_mat = isinstance(a, matrix) or isinstance(b, matrix)
     ndb, nda = b.ndim, a.ndim
     nd = max(ndb, nda)
@@ -1273,7 +1273,7 @@ def tile(A, reps):
     else:
         # Note that no copy of zero-sized arrays is made. However since they
         # have no data there is no risk of an inadvertent overwrite.
-        c = _nx.array(A, copy=False, subok=True, ndmin=d)
+        c = _nx.array(A, copy=None, subok=True, ndmin=d)
     if (d < c.ndim):
         tup = (1,)*(c.ndim-d) + tup
     shape_out = tuple(s*t for s, t in zip(c.shape, tup))

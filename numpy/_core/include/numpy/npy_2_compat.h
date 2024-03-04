@@ -31,23 +31,55 @@
 #define NUMPY_CORE_INCLUDE_NUMPY_NPY_2_COMPAT_H_
 
 /*
- * Allow users to use `PyArray_RUNTIME_VERSION` when vendoring the file for
- * compilation with NumPy 1.x.
- * Simply do not define when compiling with 2.x.  It must be defined later
- * as it is set during `import_array()`.
+ * New macros for accessing real and complex part of a complex number can be
+ * found in "npy_2_complexcompat.h".
  */
-#if !defined(PyArray_RUNTIME_VERSION) && NPY_ABI_VERSION < 0x02000000
+
+
+/*
+ * This header is meant to be included by downstream directly for 1.x compat.
+ * In that case we need to ensure that users first included the full headers
+ * and not just `ndarraytypes.h`.
+ */
+#ifndef NPY_FEATURE_VERSION
+  #error "The NumPy 2 compat header requires `import_array()` for which "  \
+         "the `ndarraytypes.h` header include is not sufficient.  Please "  \
+         "include it after `numpy/ndarrayobject.h` or similar.\n"  \
+         "To simplify includsion, you may use `PyArray_ImportNumPy()` " \
+         "which is defined in the compat header and is lightweight (can be)."
+#endif
+
+#if NPY_ABI_VERSION < 0x02000000
+  /*
+   * Define 2.0 feature version as it is needed below to decide whether we
+   * compile for both 1.x and 2.x (defining it gaurantees 1.x only).
+   */
+  #define NPY_2_0_API_VERSION 0x00000012
   /*
    * If we are compiling with NumPy 1.x, PyArray_RUNTIME_VERSION so we
    * pretend the `PyArray_RUNTIME_VERSION` is `NPY_FEATURE_VERSION`.
+   * This allows downstream to use `PyArray_RUNTIME_VERSION` if they need to.
    */
   #define PyArray_RUNTIME_VERSION NPY_FEATURE_VERSION
 #endif
 
+
 /*
- * New macros for accessing real and complex part of a complex number can be
- * found in "npy_2_complexcompat.h".
+ * Define a better way to call `_import_array()` to simplify backporting as
+ * we now require imports more often (necessary to make ABI flexible).
  */
+#ifdef import_array1
+
+static inline int
+PyArray_ImportNumPyAPI()
+{
+    if (NPY_UNLIKELY(PyArray_API == NULL)) {
+        import_array1(-1);
+    }
+    return 0;
+}
+
+#endif  /* import_array1 */
 
 
 /*
@@ -117,5 +149,34 @@
     }
 #endif
 
+
+#if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
+#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
+    static inline PyArray_ArrFuncs *
+    PyDataType_GetArrFuncs(PyArray_Descr *descr)
+    {
+        return _PyDataType_GetArrFuncs(descr);
+    }
+#elif NPY_ABI_VERSION < 0x02000000
+    static inline PyArray_ArrFuncs *
+    PyDataType_GetArrFuncs(PyArray_Descr *descr)
+    {
+        return descr->f;
+    }
+#else
+    static inline PyArray_ArrFuncs *
+    PyDataType_GetArrFuncs(PyArray_Descr *descr)
+    {
+        if (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION) {
+            return _PyDataType_GetArrFuncs(descr);
+        }
+        else {
+            return ((PyArray_DescrProto *)descr)->f;
+        }
+    }
+#endif
+
+
+#endif  /* not internal build */
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_2_COMPAT_H_ */

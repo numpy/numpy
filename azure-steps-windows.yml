@@ -14,9 +14,9 @@ steps:
   displayName: 'Install dependencies; some are optional to avoid test skips'
 
 - powershell: |
-    choco install unzip -y
-    choco install -y --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
-    choco install ninja
+    choco install -y --stoponfirstfailure unzip
+    choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+    choco install --stoponfirstfailure ninja
     echo "##vso[task.setvariable variable=RTOOLS43_HOME]c:\rtools43"
   displayName: 'Install utilities'
 

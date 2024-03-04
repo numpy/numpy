@@ -869,7 +869,7 @@ def hermval(x, c, tensor=True):
            [115.,  203.]])
 
     """
-    c = np.array(c, ndmin=1, copy=False)
+    c = np.array(c, ndmin=1, copy=None)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
     if isinstance(x, (tuple, list)):
@@ -1196,7 +1196,7 @@ def hermvander(x, deg):
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
-    x = np.array(x, copy=False, ndmin=1) + 0.0
+    x = np.array(x, copy=None, ndmin=1) + 0.0
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
@@ -1751,7 +1751,7 @@ class Hermite(ABCPolyBase):
     ----------
     coef : array_like
         Hermite coefficients in order of increasing degree, i.e,
-        ``(1, 2, 3)`` gives ``1*H_0(x) + 2*H_1(X) + 3*H_2(x)``.
+        ``(1, 2, 3)`` gives ``1*H_0(x) + 2*H_1(x) + 3*H_2(x)``.
     domain : (2,) array_like, optional
         Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
         to the interval ``[window[0], window[1]]`` by shifting and scaling.

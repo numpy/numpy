@@ -807,12 +807,14 @@ add_newdoc('numpy._core.multiarray', 'array',
         a default ``dtype`` that can represent the values (by applying promotion
         rules when necessary.)
     copy : bool, optional
-        If true (default), then the array data is copied. Otherwise, a copy
-        will only be made if ``__array__`` returns a copy, if obj is a nested
-        sequence, or if a copy is needed to satisfy any of the other
+        If ``True`` (default), then the array data is copied. If ``None``,
+        a copy will only be made if ``__array__`` returns a copy, if obj is
+        a nested sequence, or if a copy is needed to satisfy any of the other
         requirements (``dtype``, ``order``, etc.). Note that any copy of
         the data is shallow, i.e., for arrays with object dtype, the new
         array will point to the same objects. See Examples for `ndarray.copy`.
+        For ``False`` it raises a ``ValueError`` if a copy cannot be avoided.
+        Default: ``True``.
     order : {'K', 'A', 'C', 'F'}, optional
         Specify the memory layout of the array. If object is not an array, the
         newly created array will be in C order (row major) unless 'F' is
@@ -828,7 +830,7 @@ add_newdoc('numpy._core.multiarray', 'array',
         'F'   F order   F order
         ===== ========= ===================================================
 
-        When ``copy=False`` and a copy is made for other reasons, the result is
+        When ``copy=None`` and a copy is made for other reasons, the result is
         the same as if ``copy=True``, with some exceptions for 'A', see the
         Notes section. The default order is 'K'.
     subok : bool, optional
@@ -915,7 +917,7 @@ add_newdoc('numpy._core.multiarray', 'array',
 
 add_newdoc('numpy._core.multiarray', 'asarray',
     """
-    asarray(a, dtype=None, order=None, *, device=None, like=None)
+    asarray(a, dtype=None, order=None, *, device=None, copy=None, like=None)
 
     Convert the input to an array.
 
@@ -939,6 +941,13 @@ add_newdoc('numpy._core.multiarray', 'asarray',
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
+    copy : bool, optional
+        If ``True``, then the object is copied. If ``None`` then the object is
+        copied only if needed, i.e. if ``__array__`` returns a copy, if obj
+        is a nested sequence, or if a copy is needed to satisfy any of
+        the other requirements (``dtype``, ``order``, etc.).
+        For ``False`` it raises a ``ValueError`` if a copy cannot be avoided.
+        Default: ``None``.
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -2934,11 +2943,15 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('mT',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__array__',
     """
-    a.__array__([dtype], /)
+    a.__array__([dtype], /, *, copy=None)
 
-    Returns either a new reference to self if dtype is not given or a new array
-    of provided data type if dtype is different from the current dtype of the
-    array.
+    For ``dtype`` parameter it returns either a new reference to self if
+    ``dtype`` is not given or a new array of provided data type if ``dtype``
+    is different from the current data type of the array.
+    For ``copy`` parameter it returns a new reference to self if
+    ``copy=False`` or ``copy=None`` and copying isn't enforced by ``dtype``
+    parameter. The method returns a new array for ``copy=True``, regardless of
+    ``dtype`` parameter.
 
     """))
 
@@ -4790,7 +4803,7 @@ add_newdoc('numpy._core._multiarray_umath', '_array_converter', ('as_arrays',
     subok : True or False, optional
         Whether array subclasses are preserved.
     pyscalars : {"convert", "preserve", "convert_if_no_array"}, optional
-        To allow NEP 50 weak promotion later, it may be desireable to preserve
+        To allow NEP 50 weak promotion later, it may be desirable to preserve
         Python scalars.  As default, these are preserved unless all inputs
         are Python scalars.  "convert" enforces an array return.
     """))
@@ -6922,7 +6935,7 @@ add_newdoc('numpy._core.numerictypes', 'character',
 
 add_newdoc('numpy._core.multiarray', 'StringDType',
     """
-    StringDType(/, size, *, na_object=np._NoValue, coerce=True)
+    StringDType(*, na_object=np._NoValue, coerce=True)
 
     Create a StringDType instance.
 
@@ -6931,10 +6944,6 @@ add_newdoc('numpy._core.multiarray', 'StringDType',
 
     Parameters
     ----------
-    size: integer
-        An optional positional-only size parameter. This is ignored and
-        provided only so that code that creates fixed-width strings with a size
-        will also work correctly with StringDType.
     na_object : object, optional
         Object used to represent missing data. If unset, the array will not
         use a missing data sentinel.

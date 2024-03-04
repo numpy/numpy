@@ -54,9 +54,11 @@ permissions:
 
 jobs:
   openblas32_stable_nightly:
-    if: "github.repository == 'numpy/numpy'"
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         USE_NIGHTLY_OPENBLAS: [false, true]
     env:
@@ -66,7 +68,7 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
     - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.11'
@@ -81,8 +83,10 @@ jobs:
             python -m pip install -r requirements/ci32_requirements.txt
         fi
         mkdir -p ./.openblas
-        python -c"import scipy_openblas32 as ob32; ob32.get_pkg_config()" > ./.openblas/scipy-openblas.pc
+        python -c"import scipy_openblas32 as ob32; print(ob32.get_pkg_config())" > ./.openblas/scipy-openblas.pc
         echo "PKG_CONFIG_PATH=${{ github.workspace }}/.openblas" >> $GITHUB_ENV
+        ld_library_path=$(python -c"import scipy_openblas32 as ob32; print(ob32.get_lib_dir())")
+        echo "LD_LIBRARY_PATH=$ld_library_path" >> $GITHUB_ENV
 
     - name: Build
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
@@ -98,12 +102,15 @@ jobs:
     - name: Check installed test and stub files
       run:
         python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy')
+    - name: Ensure scipy-openblas
+      run: |
+        set -ex
+        spin python tools/check_openblas_version.py 0.3.26
 
     - name: Test
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       env:
         TERM: xterm-256color
-        LD_LIBRARY_PATH: "/usr/local/lib/"  # to find libopenblas.so.0
 
       run: |
         pip install pytest pytest-xdist hypothesis typing_extensions
@@ -111,7 +118,7 @@ jobs:
 
 
   openblas_no_pkgconfig_fedora:
-    if: "github.repository == 'numpy/numpy'"
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     container: fedora:39
     name: "OpenBLAS (Fedora, no pkg-config, LP64/ILP64)"
@@ -123,7 +130,7 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
 
     - name: Install dependencies
       run: |
@@ -146,7 +153,7 @@ jobs:
 
 
   flexiblas_fedora:
-    if: "github.repository == 'numpy/numpy'"
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     container: fedora:39
     name: "FlexiBLAS (LP64, ILP64 on Fedora)"
@@ -158,7 +165,7 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
 
     - name: Install dependencies
       run: |
@@ -181,14 +188,14 @@ jobs:
 
 
   openblas_cmake:
-    if: "github.repository == 'numpy/numpy'"
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     name: "OpenBLAS with CMake"
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
     - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.11'
@@ -197,6 +204,7 @@ jobs:
       run: |
         pip install -r requirements/build_requirements.txt
         pip install pytest pytest-xdist hypothesis typing_extensions
+        sudo apt-get update
         sudo apt-get install libopenblas-dev cmake
         sudo apt-get remove pkg-config
 
@@ -208,14 +216,14 @@ jobs:
 
  
   netlib-debian:
-    if: "github.repository == 'numpy/numpy'"
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     name: "Debian libblas/liblapack"
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
     - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.11'
@@ -223,6 +231,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
+        sudo apt-get update
         sudo apt-get install liblapack-dev pkg-config
 
     - name: Build
@@ -236,7 +245,7 @@ jobs:
 
 
   netlib-split:
-    if: "github.repository == 'numpy/numpy'"
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     container: opensuse/tumbleweed
     name: "OpenSUSE Netlib BLAS/LAPACK"
@@ -250,7 +259,7 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
 
     - name: Install PyPI dependencies
       run: |
@@ -267,14 +276,14 @@ jobs:
 
 
   mkl:
-    if: "github.repository == 'numpy/numpy'"
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     name: "MKL (LP64, ILP64, SDL)"
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
     - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.11'
@@ -330,14 +339,14 @@ jobs:
       run: spin test -- numpy/linalg
 
   blis:
-    if: "github.repository == 'numpy/numpy'"
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     name: "BLIS"
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
     - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.11'
@@ -346,6 +355,7 @@ jobs:
       run: |
         pip install -r requirements/build_requirements.txt
         pip install pytest pytest-xdist hypothesis typing_extensions
+        sudo apt-get update
         sudo apt-get install libblis-dev libopenblas-dev pkg-config
 
     - name: Add BLIS pkg-config file
@@ -365,14 +375,14 @@ jobs:
       run: spin test -- numpy/linalg
 
   atlas:
-    if: "github.repository == 'numpy/numpy'"
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     name: "ATLAS"
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
     - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.11'
@@ -381,6 +391,7 @@ jobs:
       run: |
         pip install -r requirements/build_requirements.txt
         pip install pytest pytest-xdist hypothesis typing_extensions
+        sudo apt-get update
         sudo apt-get install libatlas-base-dev pkg-config
 
     - name: Build
