@@ -4787,7 +4787,7 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_convert = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_preserve = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_convert_if_no_array = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_cpu = NULL;
-
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_err_msg_substr = NULL;
 
 static int
 intern_strings(void)
@@ -4863,6 +4863,11 @@ intern_strings(void)
     }
     npy_ma_str_cpu = PyUnicode_InternFromString("cpu");
     if (npy_ma_str_cpu == NULL) {
+        return -1;
+    }
+    npy_ma_str_array_err_msg_substr = PyUnicode_InternFromString(
+            "__array__() got an unexpected keyword argument 'copy'");
+    if (npy_ma_str_array_err_msg_substr == NULL) {
         return -1;
     }
     return 0;
