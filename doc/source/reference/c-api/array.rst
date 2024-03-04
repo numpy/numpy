@@ -763,19 +763,19 @@ cannot not be accessed directly.
     Prior to NumPy 2.0 the ABI was different but unnecessary large for user
     DTypes.  These accessors were all added in 2.0.
 
-.. c:function:: PyObject *PyTypeNum_METADATA(PyArray_Descr *descr)
+.. c:function:: PyObject *PyDataType_METADATA(PyArray_Descr *descr)
     The Metadata attached to a dtype, either ``NULL`` or a dictionary.
 
-.. c:function:: PyObject *PyTypeNum_NAMES(PyArray_Descr *descr)
+.. c:function:: PyObject *PyDataType_NAMES(PyArray_Descr *descr)
     ``NULL`` or a list of structured field names attached to a dtype,
     this list should not be mutated, NumPy may change the way fields are
     stored in the future.
 
-.. c:function:: PyObject *PyTypeNum_NAMES(PyArray_Descr *descr)
+.. c:function:: PyObject *PyDataType_FIELDS(PyArray_Descr *descr)
     ``NULL``, ``None``, or a dict of structured dtype fields, this dict must
     not be mutated, NumPy may change the way fields are stored in the future.
 
-.. c:function:: NpyAuxData *PyTypeNum_C_METADATA(PyArray_Descr *descr)
+.. c:function:: NpyAuxData *PyDataType_C_METADATA(PyArray_Descr *descr)
     C-metadata object attached to a descriptor.  This accessor should not
     be needed usually.  The C-Metadata field does provide access to the
     datetime/timedelta time unit information.

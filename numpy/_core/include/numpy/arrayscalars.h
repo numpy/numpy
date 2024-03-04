@@ -151,7 +151,7 @@ typedef struct {
         PyObject_VAR_HEAD
         char *obval;
 #if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
-        /* Internally it should be able to conveniently access names/fields */
+        /* Internally use the subclass to allow accessing names/fields */
         _PyArray_LegacyDescr *descr;
 #else
         PyArray_Descr *descr;
