@@ -147,9 +147,6 @@ we propose to:
   types related to string support, enabling a migration path for a future
   deprecation of ``np.char``.
 
-* An update to the ``npy`` and ``npz`` file formats to allow storage of
-  arbitrary-length sidecar data.
-
 The following is out of scope for this work:
 
 * Changing DType inference for string data.
@@ -161,6 +158,9 @@ The following is out of scope for this work:
   missing data sentinel to NumPy itself.
 
 * Implement SIMD optimizations for string operations.
+
+* An update to the ``npy`` and ``npz`` file formats to allow storage of
+  arbitrary-length sidecar data.
 
 While we're explicitly ruling out implementing these items as part of this work,
 adding a new string DType helps set up future work that does implement some of
@@ -407,7 +407,7 @@ Missing data can be represented using a sentinel:
   >>> np.isnan(arr)
   array([False,  True, False])
   >>> np.empty(3, dtype=dt)
-  array([nan, nan, nan])
+  array(['', '', ''])
 
 We only propose supporting user-provided sentinels. By default, empty arrays
 will be populated with empty strings:
@@ -563,14 +563,14 @@ be populated with string ufuncs:
   True
 
 We feel ``np.strings`` is a more intuitive name than ``np.char``, and eventually
-will replace ``np.char`` once downstream libraries that conform to SPEC-0 can
-safely switch to ``np.strings`` without needing any logic conditional on the NumPy
-version.
+will replace ``np.char`` once the minimum NumPy version supported by downstream
+libraries per SPEC-0 is new enough that they can safely switch to ``np.strings``
+without needing any logic conditional on the NumPy version.
 
 Serialization
 *************
 
-Since string data are stored outside the array buffer, serialization top the
+Since string data are stored outside the array buffer, serialization to the
 ``npy`` format would requires a format revision to support storing
 variable-width sidecare data. Rather than doing this as part of this effort, we
 do not plan on supporting serialization to the ``npy`` or ``npz`` format without
@@ -972,11 +972,11 @@ If the string is enlarged, the existing space in the arena buffer cannot be
 used, so instead we resort to allocating space directly on the heap via
 ``malloc`` and the ``NPY_STRING_OUTSIDE_ARENA`` and ``NPY_STRING_LONG`` flags
 are set. Note that ``NPY_STRING_LONG`` can be set even for strings with lengths
-less than 255 bytes in this case. Any pre-existing flags are kept set to allow
-future use of the string to determine if there is space in the arena buffer
-allocated for the string for possible re-use.
+less than 255 bytes in this case. Since the heap address overwrites the arena
+offset, and future string replacements will be stored on the heap or directly
+in the array buffer as a short string.
 
-No matter where it is stored, once a string is initialized is marked with the
+No matter where it is stored, once a string is initialized it is marked with the
 ``NPY_STRING_INITIALIZED`` flag. This lets us clearly distinguish between an
 unitialized empty string and a string that has been mutated into the empty
 string.
@@ -1062,9 +1062,8 @@ re-use of the arena allocation if a string is mutated. Also note that because
 the length of the string is small enough to fit in an ``unsigned char``, this is
 a "medium"-length string and the size requires only one byte in the arena
 allocation. An arena string larger than 255 bytes would need 8 bytes in the
-arena to store the size in a ``size_t``. The only flag set indicates that this
-is a such "medium"-length string with a size that fits in a ``unsigned
-char``. The only flag set indicates this string is initialized.
+arena to store the size in a ``size_t``. The only flag set indicates this string
+is initialized.
 
 .. image:: _static/nep-0055-heap-string-memory-layout.svg
 
@@ -1072,26 +1071,28 @@ Heap strings store string data in a buffer returned by ``PyMem_RawMalloc`` and
 instead of storing an offset into an arena buffer, directly store the address of
 the heap address returned by ``malloc``. In this example, the string contents
 are "Numpy is a very cool library" and are stored at heap address
-``0x4d3d3d3``. The string has three flags set, indicating it is a "Long" string
+``0x4d3d3d3``. The string has three flags set, indicating it is a "long" string
 (e.g. not a short string) stored outside the arena, and is initialized. Note
 that if this string were stored inside the arena, it would not have the long
-string flag set.
+string flag set because it requires less than 256 bytes to store.
 
 Empty Strings and Missing Data
 ++++++++++++++++++++++++++++++
 
 The layout we have chosen has the benefit that newly created array buffer
 returned by ``calloc`` will be an array filled with empty strings by
-construction, since a string with no flags set is a heap string with size
-zero. This is not the only valid representation of an empty string, since other
-flags may be set to indicate that the missing string is associated with a
-pre-existing short string or arena string. Missing strings will have an
-identical representation, except they will always have a flag,
-``NPY_STRING_MISSING`` set in the flags field. Users will need to check if a
-string is null before accessing an unpacked string buffer and we have set up the
-C API in such a way as to force null-checking whenever a string is
-unpacked. Both missing and empty strings are stored directly in the array buffer
-and do not require additional heap storage.
+construction, since a string with no flags set is an uninitialized zero-length
+arena string. This is not the only valid representation of an empty string, since other
+flags may be set to indicate that the empty string is associated with a
+pre-existing short string or arena string.
+
+Missing strings will have an identical representation, except they will always
+have a flag, ``NPY_STRING_MISSING`` set in the flags field. Users will need to
+check if a string is null before accessing an unpacked string buffer and we have
+set up the C API in such a way as to force null-checking whenever a string is
+unpacked. Both missing and empty strings can be detected based on data in the
+packed string representation and do not require corresponding room in the arena
+allocation or extra heap allocations.
 
 Related work
 ------------
