@@ -8,6 +8,25 @@ This document contains a set of instructions on how to update your code to
 work with Numpy 2.0.
 
 
+Ruff plugin
+===========
+
+Many of the changes covered in the 2.0 release notes and in this migration
+guide can be automatically adapted to in downstream code with a dedicated
+`Ruff <https://docs.astral.sh/ruff/>`__ rule, namely rule
+`NPY201 <https://docs.astral.sh/ruff/rules/numpy2-deprecation/>`_.
+
+You should install ``ruff>=0.2.0`` and add the ``NPY201`` rule to your
+``pyproject.toml``::
+
+    [tool.ruff.lint]
+    select = ["NPY201"]
+
+You can also apply the NumPy 2.0 rule directly from the command line::
+
+    $ ruff check path/to/code/ --select NPY201
+
+
 .. _migration_promotion_changes:
 
 Changes to NumPy data type promotion
@@ -188,8 +207,8 @@ The underlying type remains a struct under C++ (all of the above still remains
 valid).
 
 
-Namespace changes
-=================
+Changes to namespaces
+=====================
 
 In NumPy 2.0 certain functions, modules, and constants were moved or removed
 to make the NumPy namespace more user-friendly by removing unnecessary or
@@ -298,8 +317,8 @@ downstream libraries we don't provide any information on how to replace them:
 ``MAY_SHARE_BOUNDS``]
 
 
-Lib namespace
--------------
+numpy.lib namespace
+-------------------
 
 Most of the functions available within ``np.lib`` are also present in the main
 namespace, which is their primary location. To make it unambiguous how to access each
@@ -321,10 +340,10 @@ the main namespace, then you're using a private member. You should either use th
 API or, in case it's infeasible, reach out to us with a request to restore the removed entry.
 
 
-Core namespace
---------------
+numpy.core namespace
+--------------------
 
-``np.core`` namespace is now officially private and has been renamed to ``np._core``.
+The ``np.core`` namespace is now officially private and has been renamed to ``np._core``.
 The user should never fetch members from the ``_core`` directly - instead the main 
 namespace should be used to access the attribute in question. The layout of the ``_core``
 module might change in the future without notice, contrary to public modules which adhere 
@@ -333,8 +352,8 @@ then you should either use the existing API or, in case it's infeasible, reach o
 with a request to restore the removed entry.
 
 
-ndarray and scalar namespace
-----------------------------
+ndarray and scalar methods
+--------------------------
 
 A few methods from ``np.ndarray`` and ``np.generic`` scalar classes have been removed.
 The table below provides replacements for the removed members:
@@ -349,32 +368,18 @@ setitem                 Use ``arr[index] = value`` instead.
 ======================  ========================================================
 
 
-Strings namespace
------------------
+numpy.strings namespace
+-----------------------
 
-A new ``np.strings`` namespace has been created, where most of the string
-operations are implemented as ufuncs. The old ``np.char`` namespace still is
+A new `numpy.strings` namespace has been created, where most of the string
+operations are implemented as ufuncs. The old `numpy.char` namespace still is
 available, and, wherever possible, uses the new ufuncs for greater performance.
-We recommend using the ``np.strings`` methods going forward. The ``np.char``
-namespace may be deprecated in the future.
+We recommend using the `~numpy.strings` function going forward. The
+`~numpy.char` namespace may be deprecated in the future.
 
 
-Ruff plugin
------------
-
-All the changes that we covered in the previous sections can be automatically applied
-to the codebase with the dedicated Ruff rule,
-`NPY201 <https://docs.astral.sh/ruff/rules/numpy2-deprecation/>`_.
-
-You should install Ruff, version ``0.2.0`` or above, and add the ``NPY201`` rule to
-your ``pyproject.toml``::
-
-    [tool.ruff.lint]
-    select = ["NPY201"]
-
-You can run NumPy 2.0 rule also directly from the command line::
-
-    $ ruff check path/to/code/ --select NPY201
+Other changes
+=============
 
 
 Note about pickled files
