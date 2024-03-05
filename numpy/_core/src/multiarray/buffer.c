@@ -401,7 +401,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         case NPY_OBJECT:       if (_append_char(str, 'O') < 0) return -1; break;
         case NPY_STRING: {
             char buf[128];
-            PyOS_snprintf(buf, sizeof(buf), "%ds", descr->elsize);
+            PyOS_snprintf(buf, sizeof(buf), "%" NPY_INTP_FMT "s", descr->elsize);
             if (_append_str(str, buf) < 0) return -1;
             break;
         }
@@ -409,14 +409,14 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             /* NumPy Unicode is always 4-byte */
             char buf[128];
             assert(descr->elsize % 4 == 0);
-            PyOS_snprintf(buf, sizeof(buf), "%dw", descr->elsize / 4);
+            PyOS_snprintf(buf, sizeof(buf), "%" NPY_INTP_FMT "w", descr->elsize / 4);
             if (_append_str(str, buf) < 0) return -1;
             break;
         }
         case NPY_VOID: {
             /* Insert padding bytes */
             char buf[128];
-            PyOS_snprintf(buf, sizeof(buf), "%dx", descr->elsize);
+            PyOS_snprintf(buf, sizeof(buf), "%" NPY_INTP_FMT "x", descr->elsize);
             if (_append_str(str, buf) < 0) return -1;
             break;
         }
