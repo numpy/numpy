@@ -1253,6 +1253,8 @@ Any out of bound axis value will now error, make sure to use
 
 (`gh-25149 <https://github.com/numpy/numpy/pull/25149>`__)
 
+.. _copy-keyword-changes-2.0:
+
 New ``copy`` keyword meaning for ``array`` and ``asarray`` constructors
 -----------------------------------------------------------------------
 
