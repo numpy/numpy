@@ -262,7 +262,8 @@ def _make_generalized_cases():
         if case.b is None:
             b = None
         elif case.b.ndim == 1:
-            b = np.array([case.b] * 2 * 3 * a.shape[-1]).reshape((3, 2) + case.a.shape[-2:])
+            b = np.array([case.b] * 2 * 3 * a.shape[-1])\
+                  .reshape((3, 2) + case.a.shape[-2:])
         else:
             b = np.array([case.b] * 2 * 3).reshape((3, 2) + case.b.shape)
         new_case = LinalgCase(case.name + "_tile213", a, b,
