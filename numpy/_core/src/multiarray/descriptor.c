@@ -2785,7 +2785,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     }
     PyTuple_SET_ITEM(state, 5, PyLong_FromLong(elsize));
     PyTuple_SET_ITEM(state, 6, PyLong_FromLong(alignment));
-    PyTuple_SET_ITEM(state, 7, PyLong_FromLong(self->flags));
+    PyTuple_SET_ITEM(state, 7, PyLong_FromUnsignedLongLong(self->flags));
 
     PyTuple_SET_ITEM(ret, 2, state);
     return ret;
@@ -2840,7 +2840,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
     PyObject *subarray, *fields, *names = NULL, *metadata=NULL;
     int incref_names = 1;
     int int_dtypeflags = 0;
-    char dtypeflags;
+    npy_uint64 dtypeflags;
 
     if (!PyDataType_ISLEGACY(self)) {
         PyErr_SetString(PyExc_RuntimeError,
@@ -3140,6 +3140,10 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
      * flags as an int even though it actually was a char in the PyArray_Descr
      * structure
      */
+    if (int_dtypeflags < 0 && int_dtypeflags >= -128) {
+        /* NumPy used to use a char. So normalize if signed. */
+        int_dtypeflags += 128;
+    }
     dtypeflags = int_dtypeflags;
     if (dtypeflags != int_dtypeflags) {
         PyErr_Format(PyExc_ValueError,
