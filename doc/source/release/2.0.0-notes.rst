@@ -4,6 +4,82 @@
 NumPy 2.0.0 Release Notes
 =========================
 
+NumPy 2.0.0 is the first major release since 2006. It is the result of X months
+of development since the last feature release by Y contributors, and contains a
+large amount of exciting new features as well as a large amount of changes to
+both the Python and C APIs.
+
+Highlights of this release include:
+
+- New features:
+
+  - A new variable-length string dtype, `~numpy.dtypes.StringDType` and a new
+    `numpy.strings` namespace with performant ufuncs ...
+  - Support for ``float32`` and ``longdouble`` in all `numpy.fft` functions,
+  - Support for the array API standard in the main ``numpy`` namespace
+
+- Performance improvements:
+
+  - Sorting functions (`sort`, `argsort`, `partition`)
+    have been accelerated through use of SIMD kernels and Highway, and may
+    see large (hardware-specific) speedups,
+  - macOS Accelerate support and binary wheels for macOS >=14, with significant
+    performance improvements for linear algebra operations on macOS
+  - `numpy.char` fixed-length string dtypes have been accelerated, ...
+  - A new tracing and introspection API to determine which hardware-specific
+    kernels are available and will be dispatched to ... see
+    `~numpy.lib.introspect.opt_func_info`
+
+- Python API improvements:
+
+  - A clear split between public and private API, with a new
+    :ref:`module structure <module-structure>`, and each public function now
+    available in a single place,
+  - Many removals of non-recommended functions and aliases. This should make
+    it easier to learn and use NumPy. The number of objects in the main
+    namespace decreased by ~10% and in ``numpy.lib`` by ~80%,
+  - :ref:`Canonical dtype names <canonical-python-and-c-types>` and a new
+    `~numpy.isdtype` introspection function,
+
+- C API improvements:
+
+  - A new public C API for creating custom dtypes
+  - Many outdated functions and macros removed, and private internals hidden to
+    ease future extensibility,
+  - New, easier to use, initialization functions,
+
+- Improved behavior:
+
+  - Improvements to type promotion behavior (NEP 50) ...
+  - The default integer type on Windows is now ``int64`` rather than ``int32``,
+    matching the behavior on other platform,
+  - The maximum number of array dimensions is changed from 32 to 64
+
+- Documentation:
+
+  - The reference guide navigation was signficantly improved, and there is now
+    documentation on NumPy's :ref:`module structure <module-structure>`,
+  - The :ref:`building from source <building-from-source>` documentation was
+    completely rewritten,
+
+Furthermore there are many changes to NumPy internals, including continuing to
+migrate code from C to C++, that will make it easier to improve and maintain
+NumPy in the future.
+
+The "no free lunch" theorem dictates that there is a price to pay for all these
+API and behavior improvements and better future extensibility. This price is:
+
+1. Backwards compatibility - clear errors in most cases; see the Deprecation
+   and Compatibility sections below, and the :ref:`numpy-2-migration-guide`
+   (note: there is a ``ruff`` mode to auto-fix many things in Python code)
+2. ABI change - impact on downstream libraries and binaries. See
+   :ref:`numpy-2-abi-handling`.
+   TODO: main messages.
+
+
+The Python versions supported by this release are 3.9-3.12.
+
+
 
 NumPy 2.0 Python API removals
 =============================

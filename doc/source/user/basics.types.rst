@@ -140,6 +140,8 @@ use an unstructured void data type::
 Advanced types, not listed above, are explored in section
 :ref:`structured_arrays`.
 
+.. _canonical-python-and-c-types:
+
 Relationship Between NumPy Data Types and C Data Data Types
 ===========================================================
 
