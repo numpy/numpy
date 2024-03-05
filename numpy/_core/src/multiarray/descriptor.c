@@ -3043,7 +3043,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         }
 
         self->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
-        if (!PyDataType_HASSUBARRAY(self)) {
+        if (self->subarray == NULL) {
             return PyErr_NoMemory();
         }
         self->subarray->base = (PyArray_Descr *)PyTuple_GET_ITEM(subarray, 0);
@@ -3341,7 +3341,7 @@ PyArray_DescrNewByteorder(PyArray_Descr *oself, char newendian)
         Py_DECREF(new->fields);
         new->fields = newfields;
     }
-    if (PyDataType_HASSUBARRAY(new)) {
+    if (new->subarray) {
         Py_DECREF(new->subarray->base);
         new->subarray->base = PyArray_DescrNewByteorder(
                 self->subarray->base, newendian);
