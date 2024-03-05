@@ -2063,12 +2063,16 @@ static PyMemberDef arraydescr_members[] = {
     {"byteorder",
         T_CHAR, offsetof(PyArray_Descr, byteorder), READONLY, NULL},
     {"itemsize",
-        T_INT, offsetof(PyArray_Descr, elsize), READONLY, NULL},
+        T_PYSSIZET, offsetof(PyArray_Descr, elsize), READONLY, NULL},
     {"alignment",
-        T_INT, offsetof(PyArray_Descr, alignment), READONLY, NULL},
+        T_PYSSIZET, offsetof(PyArray_Descr, alignment), READONLY, NULL},
     {"flags",
-        T_BYTE, offsetof(PyArray_Descr, flags), READONLY, NULL},
-    {NULL, 0, 0, 0, NULL},
+#if NPY_ULONGLONG == NPY_UINT64
+        T_ULONGLONG, offsetof(PyArray_Descr, flags), READONLY, NULL},
+#else
+    #error Assuming long long is 64bit, if not replace with getter function.
+#endif
+  {NULL, 0, 0, 0, NULL},
 };
 
 static PyObject *
