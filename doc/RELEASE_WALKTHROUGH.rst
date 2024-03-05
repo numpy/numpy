@@ -105,9 +105,7 @@ The generated release note will always need some fixups, the introduction will
 need to be written, and significant changes should be called out. For patch
 releases the changelog text may also be appended, but not for the initial
 release as it is too long. Check previous release notes to see how this is
-done. Note that the ``:orphan:`` markup at the top, if present, will need
-changing to ``.. currentmodule:: numpy`` and the ``doc/source/release.rst``
-index file will need updating.
+done.
 
 
 Set the release version
