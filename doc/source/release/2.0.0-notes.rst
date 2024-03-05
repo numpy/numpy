@@ -320,6 +320,13 @@ before.
 
 (`gh-25336 <https://github.com/numpy/numpy/pull/25336>`__)
 
+Minor changes in behavior of sorting functions
+----------------------------------------------
+
+Due to algorithmic changes and use of SIMD code, sorting functions with methods
+that aren't stable may return slightly different results in 2.0.0 compared to
+1.26.x. This includes the default method of `~numpy.sort` and `~numpy.argsort`.
+
 
 C API changes
 =============
