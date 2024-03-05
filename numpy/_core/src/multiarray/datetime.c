@@ -580,12 +580,12 @@ NpyDatetime_ConvertDatetime64ToDatetimeStruct(
 NPY_NO_EXPORT PyArray_Descr *
 create_datetime_dtype(int type_num, PyArray_DatetimeMetaData *meta)
 {
-    PyArray_Descr *dtype = NULL;
+    _PyArray_LegacyDescr *dtype = NULL;
     PyArray_DatetimeMetaData *dt_data;
 
     /* Create a default datetime or timedelta */
     if (type_num == NPY_DATETIME || type_num == NPY_TIMEDELTA) {
-        dtype = PyArray_DescrNewFromType(type_num);
+        dtype = (_PyArray_LegacyDescr *)PyArray_DescrNewFromType(type_num);
     }
     else {
         PyErr_SetString(PyExc_RuntimeError,
@@ -603,7 +603,7 @@ create_datetime_dtype(int type_num, PyArray_DatetimeMetaData *meta)
     /* Copy the metadata */
     *dt_data = *meta;
 
-    return dtype;
+    return (PyArray_Descr *)dtype;
 }
 
 /*
@@ -630,8 +630,8 @@ get_datetime_metadata_from_dtype(PyArray_Descr *dtype)
                 "cannot get datetime metadata from non-datetime type");
         return NULL;
     }
-
-    return &(((PyArray_DatetimeDTypeMetaData *)dtype->c_metadata)->meta);
+    _PyArray_LegacyDescr *ldtype = (_PyArray_LegacyDescr *)dtype;
+    return &(((PyArray_DatetimeDTypeMetaData *)ldtype->c_metadata)->meta);
 }
 
 /* strtol does not know whether to put a const qualifier on endptr, wrap

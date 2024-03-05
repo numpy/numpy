@@ -3473,7 +3473,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
                                              NPY_ARRAY_OWNDATA;
         ((PyVoidScalarObject *)ret)->base = NULL;
         ((PyVoidScalarObject *)ret)->descr =
-            PyArray_DescrNewFromType(NPY_VOID);
+            (_PyArray_LegacyDescr *)PyArray_DescrNewFromType(NPY_VOID);
         if (((PyVoidScalarObject *)ret)->descr == NULL) {
             Py_DECREF(ret);
             return NULL;

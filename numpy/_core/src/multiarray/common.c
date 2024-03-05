@@ -297,7 +297,7 @@ end:
 }
 
 /**
- * unpack tuple of dtype->fields (descr, offset, title[not-needed])
+ * unpack tuple of PyDataType_FIELDS(dtype) (descr, offset, title[not-needed])
  *
  * @param "value" should be the tuple.
  *
@@ -338,7 +338,7 @@ _may_have_objects(PyArray_Descr *dtype)
 {
     PyArray_Descr *base = dtype;
     if (PyDataType_HASSUBARRAY(dtype)) {
-        base = dtype->subarray->base;
+        base = ((_PyArray_LegacyDescr *)dtype)->subarray->base;
     }
 
     return (PyDataType_HASFIELDS(base) ||

@@ -518,7 +518,7 @@ void_discover_descr_from_pyobject(
     if (PyArray_IsScalar(obj, Void)) {
         PyVoidScalarObject *void_obj = (PyVoidScalarObject *)obj;
         Py_INCREF(void_obj->descr);
-        return void_obj->descr;
+        return (PyArray_Descr *)void_obj->descr;
     }
     if (PyBytes_Check(obj)) {
         PyArray_Descr *descr = PyArray_DescrNewFromType(NPY_VOID);
@@ -639,7 +639,7 @@ string_unicode_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
 
 
 static PyArray_Descr *
-void_ensure_canonical(PyArray_Descr *self)
+void_ensure_canonical(_PyArray_LegacyDescr *self)
 {
     if (self->subarray != NULL) {
         PyArray_Descr *new_base = NPY_DT_CALL_ensure_canonical(
@@ -651,13 +651,13 @@ void_ensure_canonical(PyArray_Descr *self)
             /* just return self, no need to modify */
             Py_DECREF(new_base);
             Py_INCREF(self);
-            return self;
+            return (PyArray_Descr *)self;
         }
-        PyArray_Descr *new = PyArray_DescrNew(self);
+        PyArray_Descr *new = PyArray_DescrNew((PyArray_Descr *)self);
         if (new == NULL) {
             return NULL;
         }
-        Py_SETREF(new->subarray->base, new_base);
+        Py_SETREF(((_PyArray_LegacyDescr *)new)->subarray->base, new_base);
         return new;
     }
     else if (self->names != NULL) {
@@ -673,7 +673,8 @@ void_ensure_canonical(PyArray_Descr *self)
          */
         Py_ssize_t field_num = PyTuple_GET_SIZE(self->names);
 
-        PyArray_Descr *new = PyArray_DescrNew(self);
+        _PyArray_LegacyDescr *new = (_PyArray_LegacyDescr *)PyArray_DescrNew(
+                (PyArray_Descr *)self);
         if (new == NULL) {
             return NULL;
         }
@@ -682,7 +683,7 @@ void_ensure_canonical(PyArray_Descr *self)
             Py_DECREF(new);
             return NULL;
         }
-        int aligned = PyDataType_FLAGCHK(new, NPY_ALIGNED_STRUCT);
+        int aligned = PyDataType_FLAGCHK((PyArray_Descr *)new, NPY_ALIGNED_STRUCT);
         new->flags = new->flags & ~NPY_FROM_FIELDS;
         new->flags |= NPY_NEEDS_PYAPI;  /* always needed for field access */
         int totalsize = 0;
@@ -729,24 +730,24 @@ void_ensure_canonical(PyArray_Descr *self)
                 Py_DECREF(new);
                 return NULL;
             }
-            Py_DECREF(new_tuple);  /* Reference now owned by new->fields */
+            Py_DECREF(new_tuple);  /* Reference now owned by PyDataType_FIELDS(new) */
             totalsize += field_descr->elsize;
         }
         totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, maxalign);
         new->elsize = totalsize;
         new->alignment = maxalign;
-        return new;
+        return (PyArray_Descr *)new;
     }
     else {
         /* unstructured voids are always canonical. */
         Py_INCREF(self);
-        return self;
+        return (PyArray_Descr *)self;
     }
 }
 
 
 static PyArray_Descr *
-void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
+void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
 {
     if (descr1->subarray == NULL && descr1->names == NULL &&
             descr2->subarray == NULL && descr2->names == NULL) {
@@ -758,7 +759,7 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
             return NULL;
         }
         Py_INCREF(descr1);
-        return descr1;
+        return (PyArray_Descr *)descr1;
     }
 
     if (descr1->names != NULL && descr2->names != NULL) {
@@ -808,15 +809,15 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
         if (descr1 == descr2 && new_base == descr1->subarray->base) {
             Py_DECREF(new_base);
             Py_INCREF(descr1);
-            return descr1;
+            return (PyArray_Descr *)descr1;
         }
 
-        PyArray_Descr *new_descr = PyArray_DescrNew(descr1);
+        PyArray_Descr *new_descr = PyArray_DescrNew((PyArray_Descr *)descr1);
         if (new_descr == NULL) {
             Py_DECREF(new_base);
             return NULL;
         }
-        Py_SETREF(new_descr->subarray->base, new_base);
+        Py_SETREF(((_PyArray_LegacyDescr *)new_descr)->subarray->base, new_base);
         return new_descr;
     }
 
@@ -1071,7 +1072,7 @@ object_common_dtype(
  * @returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr,
+dtypemeta_wrap_legacy_descriptor(_PyArray_LegacyDescr *descr,
         PyArray_ArrFuncs *arr_funcs, const char *name, const char *alias)
 {
     int has_type_set = Py_TYPE(descr) == &PyArrayDescr_Type;
@@ -1158,7 +1159,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr,
      * Fill DTypeMeta information that varies between DTypes, any variable
      * type information would need to be set before PyType_Ready().
      */
-    dtype_class->singleton = descr;
+    dtype_class->singleton = (PyArray_Descr *)descr;
     Py_INCREF(descr->typeobj);
     dtype_class->scalar_type = descr->typeobj;
     dtype_class->type_num = descr->type_num;
@@ -1206,12 +1207,12 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr,
             dt_slots->default_descr = void_default_descr;
             dt_slots->discover_descr_from_pyobject = (
                     void_discover_descr_from_pyobject);
-            dt_slots->common_instance = void_common_instance;
-            dt_slots->ensure_canonical = void_ensure_canonical;
+            dt_slots->common_instance = (PyArrayDTypeMeta_CommonInstance *)void_common_instance;
+            dt_slots->ensure_canonical = (PyArrayDTypeMeta_EnsureCanonical *)void_ensure_canonical;
             dt_slots->get_fill_zero_loop =
-                    npy_get_zerofill_void_and_legacy_user_dtype_loop;
+                    (PyArrayMethod_GetTraverseLoop *)npy_get_zerofill_void_and_legacy_user_dtype_loop;
             dt_slots->get_clear_loop =
-                    npy_get_clear_void_and_legacy_user_dtype_loop;
+                    (PyArrayMethod_GetTraverseLoop *)npy_get_clear_void_and_legacy_user_dtype_loop;
         }
         else {
             dt_slots->default_descr = string_and_unicode_default_descr;
@@ -1295,7 +1296,7 @@ static PyMemberDef dtypemeta_members[] = {
 };
 
 NPY_NO_EXPORT void
-initialize_legacy_dtypemeta_aliases(PyArray_Descr **_builtin_descrs) {
+initialize_legacy_dtypemeta_aliases(_PyArray_LegacyDescr **_builtin_descrs) {
     _Bool_dtype = NPY_DTYPE(_builtin_descrs[NPY_BOOL]);
     _Byte_dtype = NPY_DTYPE(_builtin_descrs[NPY_BYTE]);
     _UByte_dtype = NPY_DTYPE(_builtin_descrs[NPY_UBYTE]);

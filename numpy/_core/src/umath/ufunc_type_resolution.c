@@ -723,8 +723,8 @@ timedelta_dtype_with_copied_meta(PyArray_Descr *dtype)
         return NULL;
     }
 
-    src_dtmd = ((PyArray_DatetimeDTypeMetaData *)dtype->c_metadata);
-    dst_dtmd = ((PyArray_DatetimeDTypeMetaData *)ret->c_metadata);
+    src_dtmd = (PyArray_DatetimeDTypeMetaData *)((_PyArray_LegacyDescr *)dtype)->c_metadata;
+    dst_dtmd = (PyArray_DatetimeDTypeMetaData *)((_PyArray_LegacyDescr *)ret)->c_metadata;
     src = &(src_dtmd->meta);
     dst = &(dst_dtmd->meta);
 

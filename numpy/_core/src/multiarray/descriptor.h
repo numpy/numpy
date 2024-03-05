@@ -61,7 +61,7 @@ is_dtype_struct_simple_unaligned_layout(PyArray_Descr *dtype);
  *   KeyError - if an invalid field name (or any field title) is used
  */
 NPY_NO_EXPORT PyArray_Descr *
-arraydescr_field_subset_view(PyArray_Descr *self, PyObject *ind);
+arraydescr_field_subset_view(_PyArray_LegacyDescr *self, PyObject *ind);
 
 extern NPY_NO_EXPORT char const *_datetime_strings[];
 

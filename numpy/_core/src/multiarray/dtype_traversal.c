@@ -275,7 +275,7 @@ fields_traverse_data_clone(NpyAuxData *data)
 
 static int
 traverse_fields_function(
-        void *traverse_context, PyArray_Descr *NPY_UNUSED(descr),
+        void *traverse_context, _PyArray_LegacyDescr *NPY_UNUSED(descr),
         char *data, npy_intp N, npy_intp stride,
         NpyAuxData *auxdata)
 {
@@ -315,7 +315,7 @@ traverse_fields_function(
 
 static int
 get_fields_traverse_function(
-        void *traverse_context, PyArray_Descr *dtype, int NPY_UNUSED(aligned),
+        void *traverse_context, _PyArray_LegacyDescr *dtype, int NPY_UNUSED(aligned),
         npy_intp stride, PyArrayMethod_TraverseLoop **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags,
         get_traverse_func_function *get_traverse_func)
@@ -326,7 +326,7 @@ get_fields_traverse_function(
     Py_ssize_t field_count;
 
     names = dtype->names;
-    field_count = PyTuple_GET_SIZE(dtype->names);
+    field_count = PyTuple_GET_SIZE(names);
 
     /* Over-allocating here: less fields may be used */
     structsize = (sizeof(fields_traverse_data) +
@@ -373,7 +373,7 @@ get_fields_traverse_function(
         field++;
     }
 
-    *out_func = &traverse_fields_function;
+    *out_func = (PyArrayMethod_TraverseLoop *)&traverse_fields_function;
     *out_auxdata = (NpyAuxData *)data;
 
     return 0;
@@ -502,7 +502,7 @@ clear_no_op(
 
 NPY_NO_EXPORT int
 npy_get_clear_void_and_legacy_user_dtype_loop(
-        void *traverse_context, PyArray_Descr *dtype, int aligned,
+        void *traverse_context, _PyArray_LegacyDescr *dtype, int aligned,
         npy_intp stride, PyArrayMethod_TraverseLoop **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -511,7 +511,7 @@ npy_get_clear_void_and_legacy_user_dtype_loop(
      * but structured dtypes are tricky when a dtype which included references
      * was sliced to not include any.
      */
-    if (!PyDataType_REFCHK(dtype)) {
+    if (!PyDataType_REFCHK((PyArray_Descr *)dtype)) {
         *out_func = &clear_no_op;
         return 0;
     }
@@ -569,7 +569,7 @@ npy_get_clear_void_and_legacy_user_dtype_loop(
 
 static int
 zerofill_fields_function(
-        void *traverse_context, PyArray_Descr *descr,
+        void *traverse_context, _PyArray_LegacyDescr *descr,
         char *data, npy_intp N, npy_intp stride,
         NpyAuxData *auxdata)
 {
@@ -598,7 +598,7 @@ zerofill_fields_function(
  */
 NPY_NO_EXPORT int
 npy_get_zerofill_void_and_legacy_user_dtype_loop(
-        void *traverse_context, PyArray_Descr *dtype, int aligned,
+        void *traverse_context, _PyArray_LegacyDescr *dtype, int aligned,
         npy_intp stride, PyArrayMethod_TraverseLoop **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -640,7 +640,7 @@ npy_get_zerofill_void_and_legacy_user_dtype_loop(
          * Traversal skips fields that have no custom zeroing, so we need
          * to take care of it.
          */
-        *out_func = &zerofill_fields_function;
+        *out_func = (PyArrayMethod_TraverseLoop *)&zerofill_fields_function;
         return 0;
     }
 
