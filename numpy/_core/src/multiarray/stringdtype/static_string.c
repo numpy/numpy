@@ -530,7 +530,7 @@ NpyString_pack_empty(npy_packed_static_string *out)
 {
     _npy_static_string_u *out_u = (_npy_static_string_u *)out;
     unsigned char *flags = &out_u->direct_buffer.size_and_flags;
-    if (*flags == 0 || *flags & NPY_STRING_OUTSIDE_ARENA) {
+    if (*flags & NPY_STRING_OUTSIDE_ARENA) {
         // This also sets short string size to 0.
         *flags = NPY_STRING_INITIALIZED | NPY_STRING_OUTSIDE_ARENA;
     }
@@ -685,9 +685,6 @@ NpyString_dup(const npy_packed_static_string *in,
     _npy_static_string_u *in_u = (_npy_static_string_u *)in;
     char *in_buf = NULL;
     npy_string_arena *arena = &in_allocator->arena;
-    if (arena->buffer == NULL) {
-        return -1;
-    }
     int used_malloc = 0;
     if (in_allocator == out_allocator && !is_short_string(in)) {
         in_buf = in_allocator->malloc(size);

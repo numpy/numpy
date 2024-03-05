@@ -1299,8 +1299,9 @@ class TestImplementation:
 
     def test_setup(self):
         is_short = self.is_short(self.a)
-        assert_array_equal(is_short, np.strings.str_len(self.a) <= 15)
-        assert_array_equal(self.in_arena(self.a), ~is_short)
+        length = np.strings.str_len(self.a)
+        assert_array_equal(is_short, (length > 0) & (length <= 15))
+        assert_array_equal(self.in_arena(self.a), [False, False, True, True])
         assert_array_equal(self.is_on_heap(self.a), False)
         assert_array_equal(self.is_missing(self.a), False)
         view = self.get_view(self.a)
@@ -1329,6 +1330,9 @@ class TestImplementation:
         c = self.a.copy()
         assert_array_equal(self.get_flags(c), self.get_flags(self.a))
         assert_array_equal(c, self.a)
+        offsets = self.get_view(c)['offset']
+        assert offsets[2] == 1
+        assert offsets[3] == 1 + len(self.s_medium) + self.sizeofstr // 2
 
     def test_arena_use_with_setting(self):
         c = np.zeros_like(self.a)
@@ -1363,11 +1367,15 @@ class TestImplementation:
 
     def test_arena_reuse_for_shorter(self):
         c = self.a.copy()
-        in_arena = self.in_arena(self.a)
         # A string slightly shorter than the shortest in the arena
         # should be used for all strings in the arena.
         c[:] = self.s_medium[:-1]
         assert_array_equal(c, self.s_medium[:-1])
+        # first empty string in original was never initialized, so
+        # filling it in now leaves it initialized inside the arena.
+        # second string started as a short string so it can never live
+        # in the arena.
+        in_arena = np.array([True, False, True, True])
         assert_array_equal(self.in_arena(c), in_arena)
         # But when a short string is replaced, it will go on the heap.
         assert_array_equal(self.is_short(c), False)
@@ -1387,6 +1395,9 @@ class TestImplementation:
         c[:] = self.s_medium + "±"
         assert_array_equal(c, self.s_medium + "±")
         in_arena_exp = np.strings.str_len(self.a) >= len(self.s_medium) + 1
+        # first entry started uninitialized and empty, so filling it leaves
+        # it in the arena
+        in_arena_exp[0] = True
         assert not np.all(in_arena_exp == self.in_arena(self.a))
         assert_array_equal(self.in_arena(c), in_arena_exp)
         assert_array_equal(self.is_short(c), False)

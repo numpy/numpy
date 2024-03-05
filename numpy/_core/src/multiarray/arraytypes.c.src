@@ -4235,7 +4235,7 @@ PyArray_DescrFromType(int type)
         ret = NULL;
     }
     else if (type == NPY_VSTRING || type == NPY_VSTRINGLTR) {
-        ret = (PyArray_Descr *)new_stringdtype_instance(NULL, 1, NULL);
+        ret = (PyArray_Descr *)new_stringdtype_instance(NULL, 1);
     }
     // builtin legacy dtypes
     else if (type < NPY_NTYPES_LEGACY) {

@@ -337,14 +337,16 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         goto fail;
     }
 
-    Py_XDECREF(indices);
-    Py_XDECREF(self);
     if (out != NULL && out != obj) {
-        Py_INCREF(out);
-        PyArray_ResolveWritebackIfCopy(obj);
+        if (PyArray_ResolveWritebackIfCopy(obj) < 0) {
+            goto fail;
+        }
         Py_DECREF(obj);
+        Py_INCREF(out);
         obj = out;
     }
+    Py_XDECREF(indices);
+    Py_XDECREF(self);
     return (PyObject *)obj;
 
  fail:
