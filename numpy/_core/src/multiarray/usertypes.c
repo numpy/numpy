@@ -268,7 +268,7 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
      * Copy the user provided descriptor struct into a new one.  This is done
      * in order to allow different layout between the two.
      */
-    _PyArray_LegacyDescr *descr = PyObject_Malloc(sizeof(PyArray_Descr));
+    _PyArray_LegacyDescr *descr = PyObject_Malloc(sizeof(_PyArray_LegacyDescr));
     if (descr == NULL) {
         PyMem_FREE(name);
         PyErr_NoMemory();
