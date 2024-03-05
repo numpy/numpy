@@ -83,6 +83,49 @@ used to explicitly implement different behavior on NumPy 1.x and 2.0.
 
 Please let us know if you require additional workarounds here.
 
+.. _migration_c_descr:
+
+The ``PyArray_Descr`` struct has been changed
+---------------------------------------------
+One of the most impactful C-API changes is that the ``PyArray_Descr`` struct
+is now more opaque to allow us to add additional flags and have
+itemsizes not limited by the size of ``int`` as well as allow improving
+structured dtypes in the future and not burdon new dtypes with their fields.
+
+Code which only uses the type number and other initial fields is unaffected.
+Most code will hopefull mainly access the ``->elsize`` field, when the
+dtype/descriptor itself is attached to an array (e.g. ``arr->descr->elsize``)
+this is best replaced with ``PyArray_ITEMSIZE(arr)``.
+
+Where not possible, new accessor functions are required:
+* ``PyDataType_ELSIZE`` and ``PyDataType_SET_ELSIZE`` (note that the result
+  is now ``npy_intp`` and not ``int``).
+* ``PyDataType_ALIGNENT``
+* ``PyDataType_FIELDS``, ``PyDataType_NAMES``, ``PyDataType_SUBARRAY``
+* ``PyDataType_C_METADATA``
+
+Cython code should use Cython 3, in which case the change is transparent.
+(Struct access is available for elsize and alignment when compiling only for
+NumPy 2.)
+
+For compiling with both 1.x and 2.x if you use these new accessors it is
+unfortunately necessary to either define them locally via a macro like::
+
+  #if NPY_ABI_VERSION < 0x02000000
+    #define PyDataType_ELSIZE(descr) ((descr)->elsize)
+  #endif
+
+or adding ``npy2_compat.h`` into your code base and explicitly include it
+when compiling with NumPy 1.x (as they are new API).
+Including the file has no effect on NumPy 2.
+
+Please do not hesitate to open a NumPy issue, if you require assistence or
+the provided functions are not sufficient.
+
+**Custom User DTypes:**
+Existing user dtypes must now use ``PyArray_DescrProto`` to define their
+dtype and slightly modify the code. See note in `PyArray_RegisterDataType`.
+
 Functionality moved to headers requiring ``import_array()``
 -----------------------------------------------------------
 If you previously included only ``ndarraytypes.h`` you may find that some
