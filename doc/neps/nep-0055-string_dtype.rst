@@ -455,23 +455,12 @@ following the behavior of sorting an array containing ``nan``.
 String Sentinels
 ++++++++++++++++
 
-A string missing data value is an instance of ``str`` or subtype of ``str`` and
-will be used as the default value for empty arrays:
+A string missing data value is an instance of ``str`` or subtype of ``str``.
 
-  >>> arr = np.empty(3, dtype=StringDType(na_object='missing'))
-  >>> arr
-  array(['missing', 'missing', 'missing'])
-
-If such an array is passed to a string operation or a cast, "missing" entries
-will be treated as if they have a value given by the string sentinel:
-
-  >>> np.char.upper(arr)
-  array(['MISSING', 'MISSING', 'MISSING'])
-
-Comparison operations will similarly use the sentinel value directly for missing
-entries. This is the primary usage of this pattern we've found in downstream
-code, where a missing data sentinel like ``"__nan__"`` is passed to a low-level
-sorting or partitioning algorithm.
+Operations will use the sentinel value directly for missing entries. This is the
+primary usage of this pattern we've found in downstream code, where a missing
+data sentinel like ``"__nan__"`` is passed to a low-level sorting or
+partitioning algorithm.
 
 Other Sentinels
 +++++++++++++++
@@ -564,8 +553,9 @@ be populated with string ufuncs:
 
 We feel ``np.strings`` is a more intuitive name than ``np.char``, and eventually
 will replace ``np.char`` once the minimum NumPy version supported by downstream
-libraries per SPEC-0 is new enough that they can safely switch to ``np.strings``
-without needing any logic conditional on the NumPy version.
+libraries per `SPEC-0 <https://scientific-python.org/specs/spec-0000/>`_ is new
+enough that they can safely switch to ``np.strings`` without needing any logic
+conditional on the NumPy version.
 
 Serialization
 *************
