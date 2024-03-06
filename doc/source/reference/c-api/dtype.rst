@@ -455,6 +455,18 @@ bit-widths are available is platform dependent. The bolded bit-widths
 are usually available on all platforms.
 
 
+Time and timedelta
+~~~~~~~~~~~~~~~~~~
+
+.. c:type:: npy_datetime
+
+    date or datetime (alias of :c:type:`npy_int64`)
+
+.. c:type:: npy_timedelta
+
+    length of time (alias of :c:type:`npy_int64`)
+
+
 Printf formatting
 -----------------
 
