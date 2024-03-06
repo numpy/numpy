@@ -455,6 +455,26 @@ class TestSlidingWindowView:
                               [[21, 22, 23], [31, 32, 33]]]])
         assert_array_equal(arr_view, expected)
 
+    def test_1d_empty(self):
+        arr = np.arange(1)
+        arr_view = sliding_window_view(arr, 2)
+        expected = np.empty((0, 2), dtype=int)
+        assert_array_equal(arr_view, expected)
+
+    def test_2d_empty(self):
+        i, j = np.ogrid[:3, :2]
+        arr = 10*i + j
+        arr_view = sliding_window_view(arr, (4, 1))
+        expected = np.empty((0, 2, 4, 1), dtype=int)
+        assert_array_equal(arr_view, expected)
+
+    def test_2d_with_axis_empty(self):
+        i, j = np.ogrid[:1, :3]
+        arr = 10*i + j
+        arr_view = sliding_window_view(arr, 2, 0)
+        expected = np.empty((0, 3, 2), dtype=int)
+        assert_array_equal(arr_view, expected)
+
     def test_errors(self):
         i, j = np.ogrid[:4, :4]
         arr = 10*i + j
@@ -470,8 +490,8 @@ class TestSlidingWindowView:
             sliding_window_view(arr, (1, 3, 4), axis=(0, 1))
         with pytest.raises(
                 ValueError,
-                match='window shape cannot be larger than input array'):
-            sliding_window_view(arr, (5, 5))
+                match='window shape may exceed input array shape by at most 1'):
+            sliding_window_view(arr, (6, 6))
 
     def test_writeable(self):
         arr = np.arange(5)
