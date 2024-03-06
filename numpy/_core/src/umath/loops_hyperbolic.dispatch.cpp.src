@@ -242,7 +242,7 @@ store_vector(vtype vec, type_t* dst, npy_intp sdst, npy_intp len){
     }
 }
 
-#ifdef NPY_SIMD_F64
+#if NPY_SIMD_F64
 
     // For architectures without efficient gather / scatter instructions, it is
     // better to use a transposed LUT where we can load all coefficients for an
@@ -457,15 +457,10 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
         
         x = load_vector<vec_f64>(src, ssrc, len);
         
-        /*if (ssrc == 1) {
-            x = hn::LoadN(f64, src, len);
-        } else {
-            x = GatherIndexN64(src, ssrc, len);
-        }*/
         vec_s64 ndnan = hn::And(hn::BitCast(s64, x), hn::Set(s64, 0x7ff8000000000000ll));
         // |x| > HUGE_THRESHOLD, INF and NaNs.
         auto special_m = hn::Le(ndnan, hn::Set(s64, 0x7fe0000000000000ll));
-        auto nnan_m = hn::Not(hn::IsNaN(x));
+        auto nan_m = hn::IsNaN(x);
         vec_s64 idxs = hn::Sub(ndnan, hn::Set(s64, 0x3fc0000000000000ll));
         // no native 64-bit for max/min and its fine to use 32-bit max/min
         // since we're not crossing 32-bit edge
@@ -536,7 +531,7 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
         r = hn::IfThenElse(hn::RebindMask(f64, special_m), r, hn::Set(f64, 1.0));
         r = hn::Or(r, sign);
         // qnan if nan
-        r = hn::IfThenElse(hn::RebindMask(f64, nnan_m), r, qnan);
+        r = hn::IfThenElse(hn::RebindMask(f64, nan_m), qnan, r);
         
         store_vector<vec_f64>(r, dst, sdst, len);
     }
@@ -663,17 +658,12 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
         
         x = load_vector<vec_f32>(src, ssrc, len);
         
-        /*if (ssrc == 1) {
-            x = hn::LoadN(f32, src, len);
-        } else {
-            x = GatherIndexN32(src, ssrc, len);
-        }*/
         vec_s32 ndnan = hn::And(hn::BitCast(s32, x), hn::Set(s32, 0x7fe00000));
         // check |x| > HUGE_THRESHOLD, INF and NaNs.
         auto special_m = hn::Le(ndnan, hn::Set(s32, 0x7f000000));
-        auto nnan_m = hn::Not(hn::IsNaN(x));
+        auto nan_m = hn::IsNaN(x);
         vec_s32 idxs = hn::Sub(ndnan, hn::Set(s32, 0x3d400000));
-                 idxs = hn::Max(idxs, hn::Set(s32, 0)); // TODO probably faster zero method
+                 idxs = hn::Max(idxs, hn::Zero(s32));
                  idxs = hn::Min(idxs, hn::Set(s32, 0x3e00000));
         vec_u32 idx  = hn::ShiftRightSame(hn::BitCast(u32, idxs), 21);
 
@@ -743,7 +733,7 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
         r = hn::IfThenElse(hn::RebindMask(f32, special_m), r, hn::Set(f32, 1.0f));
         r = hn::Or(r, sign);
         // qnan if nan
-        r = hn::IfThenElse(hn::RebindMask(f32, nnan_m), r, qnan);
+        r = hn::IfThenElse(hn::RebindMask(f32, nan_m), qnan, r);
         
         store_vector<vec_f32>(r, dst, sdst, len);
     }
@@ -752,7 +742,7 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
 #undef TANHF_TRANSPOSED_LUT
 
 #endif // NPY_SIMD_F32
-#endif // NPY_SIMD_FMA3
+#endif // NPY_SIMD_FMA3 && (NPY_SIMD_F32 || NPY_SIMD_F64)
 
 /**begin repeat
  * #TYPE = FLOAT, DOUBLE#
