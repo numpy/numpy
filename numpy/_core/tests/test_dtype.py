@@ -1897,6 +1897,13 @@ class TestUserDType:
         # unnecessary restriction, but one that has been around forever:
         assert np.dtype(mytype) == np.dtype("O")
 
+        if HAS_REFCOUNT:
+            # Create an array and test that memory gets cleaned up (gh-25949)
+            o = object()
+            a = np.array([o], dtype=dt)
+            del a
+            assert sys.getrefcount(o) == 2
+
     def test_custom_structured_dtype_errors(self):
         class mytype:
             pass
