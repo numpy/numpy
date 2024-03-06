@@ -610,7 +610,7 @@ typedef struct _PyArray_Descr {
         /* Cached hash value (-1 if not yet computed). */
         npy_hash_t hash;
         /* Unused slot (must be initialized to NULL) for future use */
-        void *reserved_null;
+        void *reserved_null[2];
 } PyArray_Descr;
 
 #else  /* 1.x and 2.x compatible version (only shared fields): */
@@ -639,7 +639,7 @@ typedef struct {
         npy_intp alignment;
         PyObject *metadata;
         npy_hash_t hash;
-        void *reserved_null;
+        void *reserved_null[2];
 } _PyArray_DescrNumPy2;
 
 #endif  /* 1.x and 2.x compatible version */
@@ -662,7 +662,7 @@ typedef struct {
         npy_intp alignment;
         PyObject *metadata;
         npy_hash_t hash;
-        void *reserved_null;
+        void *reserved_null[2];
         struct _arr_descr *subarray;
         PyObject *fields;
         PyObject *names;
