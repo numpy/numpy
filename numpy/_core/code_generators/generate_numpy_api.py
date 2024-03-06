@@ -111,13 +111,15 @@ _import_array(void)
   }
   PyArray_RUNTIME_VERSION = (int)PyArray_GetNDArrayCFeatureVersion();
   if (NPY_FEATURE_VERSION > PyArray_RUNTIME_VERSION) {
-      PyErr_Format(PyExc_RuntimeError, "module compiled against "\
-             "API version 0x%%x but this version of numpy is 0x%%x . "\
-             "Check the section C-API incompatibility at the "\
-             "Troubleshooting ImportError section at "\
-             "https://numpy.org/devdocs/user/troubleshooting-importerror.html"\
-             "#c-api-incompatibility "\
-              "for indications on how to solve this problem .", \
+      PyErr_Format(PyExc_RuntimeError,
+             "module was compiled against NumPy C-API version 0x%%x "
+             "(NumPy " NPY_FEATURE_VERSION_STRING ") "
+             "but the running NumPy has C-API version 0x%%x. "
+             "Check the section C-API incompatibility at the "
+             "Troubleshooting ImportError section at "
+             "https://numpy.org/devdocs/user/troubleshooting-importerror.html"
+             "#c-api-incompatibility "
+             "for indications on how to solve this problem.",
              (int)NPY_FEATURE_VERSION, PyArray_RUNTIME_VERSION);
       return -1;
   }
