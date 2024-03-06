@@ -111,6 +111,19 @@ HWY_ATTR NPY_FINLINE vec_f64 lut_16_f64(const double * lut, vec_u64 idx){
         const vec_f64 lut0 = hn::Load(f64, lut);
         const vec_f64 lut1 = hn::Load(f64, lut + 8);
         return hn::TwoTablesLookupLanes(f64, lut0, lut1, hn::IndicesFromVec(f64, idx));
+    }else if constexpr (hn::Lanes(f64) == 4){
+        const vec_f64 lut0 = hn::Load(f64, lut);
+        const vec_f64 lut1 = hn::Load(f64, lut + 4);
+        const vec_f64 lut2 = hn::Load(f64, lut + 8);
+        const vec_f64 lut3 = hn::Load(f64, lut + 12);
+        
+        const auto high_mask = hn::Ne(hn::ShiftRight<3>(idx), hn::Zero(u64));
+        const auto load_mask = hn::And(idx, hn::Set(u64, 0b111));
+        
+        const vec_f64 lut_low = hn::TwoTablesLookupLanes(f64, lut0, lut1, hn::IndicesFromVec(f64, load_mask));
+        const vec_f64 lut_high = hn::TwoTablesLookupLanes(f64, lut2, lut3, hn::IndicesFromVec(f64, load_mask));
+        
+        return hn::IfThenElse(hn::RebindMask(f64, high_mask), lut_high, lut_low);
     }else{
         return hn::GatherIndex(f64, lut, hn::BitCast(s64, idx));
     }
@@ -121,6 +134,19 @@ HWY_ATTR NPY_FINLINE vec_f32 lut_32_f32(const float * lut, vec_u32 idx){
         const vec_f32 lut0 = hn::Load(f32, lut);
         const vec_f32 lut1 = hn::Load(f32, lut + 16);
         return hn::TwoTablesLookupLanes(f32, lut0, lut1, hn::IndicesFromVec(f32, idx));
+    }else if constexpr (hn::Lanes(f32) == 8){
+        const vec_f32 lut0 = hn::Load(f32, lut);
+        const vec_f32 lut1 = hn::Load(f32, lut + 8);
+        const vec_f32 lut2 = hn::Load(f32, lut + 16);
+        const vec_f32 lut3 = hn::Load(f32, lut + 24);
+        
+        const auto high_mask = hn::Ne(hn::ShiftRight<4>(idx), hn::Zero(u32));
+        const auto load_mask = hn::And(idx, hn::Set(u32, 0b1111));
+        
+        const vec_f32 lut_low = hn::TwoTablesLookupLanes(f32, lut0, lut1, hn::IndicesFromVec(f32, load_mask));
+        const vec_f32 lut_high = hn::TwoTablesLookupLanes(f32, lut2, lut3, hn::IndicesFromVec(f32, load_mask));
+        
+        return hn::IfThenElse(hn::RebindMask(f32, high_mask), lut_high, lut_low);
     }else{
         return hn::GatherIndex(f32, lut, hn::BitCast(s32, idx));
     }
