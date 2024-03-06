@@ -14,7 +14,7 @@ Ruff plugin
 Many of the changes covered in the 2.0 release notes and in this migration
 guide can be automatically adapted to in downstream code with a dedicated
 `Ruff <https://docs.astral.sh/ruff/>`__ rule, namely rule
-`NPY201 <https://docs.astral.sh/ruff/rules/numpy2-deprecation/>`_.
+`NPY201 <https://docs.astral.sh/ruff/rules/numpy2-deprecation/>`__.
 
 You should install ``ruff>=0.2.0`` and add the ``NPY201`` rule to your
 ``pyproject.toml``::
@@ -374,7 +374,7 @@ numpy.strings namespace
 A new `numpy.strings` namespace has been created, where most of the string
 operations are implemented as ufuncs. The old `numpy.char` namespace still is
 available, and, wherever possible, uses the new ufuncs for greater performance.
-We recommend using the `~numpy.strings` function going forward. The
+We recommend using the `~numpy.strings` functions going forward. The
 `~numpy.char` namespace may be deprecated in the future.
 
 
@@ -401,7 +401,7 @@ The :ref:`copy keyword behavior changes <copy-keyword-changes-2.0>` in
    ``np.asarray(...)``. Older code tended to use ``np.array`` like this because
    it had less overhead than the default ``np.asarray`` copy-if-needed
    behavior. This is no longer true, and ``np.asarray`` is the preferred function.
-2. For code that explicitly needs to pass ``None/False`` meaning "copy if
+2. For code that explicitly needs to pass ``None``/``False`` meaning "copy if
    needed" in a way that's compatible with NumPy 1.x and 2.x, see
    `scipy#20172 <https://github.com/scipy/scipy/pull/20172>`__ for an example
    of how to do so.

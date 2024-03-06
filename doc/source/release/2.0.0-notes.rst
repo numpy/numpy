@@ -4,10 +4,32 @@
 NumPy 2.0.0 Release Notes
 =========================
 
+.. note::
+
+    The release of 2.0 is in progress and the current release overview and
+    highlights are still in a draft state. However, the highlights should
+    already list the most significant changes detailed in the full notes below,
+    and those full notes should be complete (if not copy-edited well enough
+    yet).
+
 NumPy 2.0.0 is the first major release since 2006. It is the result of X months
 of development since the last feature release by Y contributors, and contains a
 large amount of exciting new features as well as a large amount of changes to
 both the Python and C APIs.
+
+This major release includes breaking changes that could not happen in a regular
+minor (feature) release - including an ABI break, changes to type promotion
+rules, and API changes which may not have been emitting deprecation warnings
+in 1.26.x. Key documents related to how to adapt to changes in NumPy 2.0, in
+addition to these release notes, include:
+
+- The :ref:`numpy-2-migration-guide`
+- The :ref:`NumPy 2.0-specific advice <numpy-2-abi-handling>` in
+  :ref:`for-downstream-package-authors`
+
+
+Highlights
+==========
 
 Highlights of this release include:
 
@@ -20,12 +42,14 @@ Highlights of this release include:
 
 - Performance improvements:
 
-  - Sorting functions (`sort`, `argsort`, `partition`)
-    have been accelerated through use of SIMD kernels and Highway, and may
-    see large (hardware-specific) speedups,
+  - Sorting functions (`sort`, `argsort`, `partition`, `argpartition`)
+    have been accelerated through the use of the Intel x86-simd-sort and Google
+    Highway libraries, and may see large (hardware-specific) speedups,
   - macOS Accelerate support and binary wheels for macOS >=14, with significant
     performance improvements for linear algebra operations on macOS
-  - `numpy.char` fixed-length string dtypes have been accelerated, ...
+  - `numpy.char` fixed-length string operations have been accelerated by
+    implementing ufuncs that also support `~numpy.dtypes.StringDType` in
+    addition to the the fixed-length string dtypes.
   - A new tracing and introspection API to determine which hardware-specific
     kernels are available and will be dispatched to ... see
     `~numpy.lib.introspect.opt_func_info`
@@ -50,9 +74,14 @@ Highlights of this release include:
 
 - Improved behavior:
 
-  - Improvements to type promotion behavior (NEP 50) ...
+  - Improvements to type promotion behavior was changed by adopting `NEP
+    50 <NEP50>`_. This fixes many user surprises about promotions which
+    previously often depended on data values of input arrays rather than only
+    their dtypes.  Please see the NEP and the :ref:`numpy-2-migration-guide`
+    for details as this change can lead to changes in output dtypes and lower
+    precision results for mixed-dtype operations.
   - The default integer type on Windows is now ``int64`` rather than ``int32``,
-    matching the behavior on other platform,
+    matching the behavior on other platforms,
   - The maximum number of array dimensions is changed from 32 to 64
 
 - Documentation:
@@ -76,9 +105,7 @@ API and behavior improvements and better future extensibility. This price is:
    :ref:`numpy-2-abi-handling`.
    TODO: main messages.
 
-
 The Python versions supported by this release are 3.9-3.12.
-
 
 
 NumPy 2.0 Python API removals
@@ -401,7 +428,17 @@ Minor changes in behavior of sorting functions
 
 Due to algorithmic changes and use of SIMD code, sorting functions with methods
 that aren't stable may return slightly different results in 2.0.0 compared to
-1.26.x. This includes the default method of `~numpy.sort` and `~numpy.argsort`.
+1.26.x. This includes the default method of `~numpy.argsort` and
+`~numpy.argpartition`.
+
+Removed ambiguity when broadcasting in ``np.solve``
+---------------------------------------------------
+The broadcasting rules for ``np.solve(a, b)`` were ambiguous when ``b`` had 1
+fewer dimensions than ``a``. This has been resolved in a backward-incompatible
+way and is now compliant with the Array API. The old behaviour can be
+reconstructed by using ``np.solve(a, b[..., None])[..., 0]``.
+
+(`gh-25914 <https://github.com/numpy/numpy/pull/25914>`__)
 
 
 C API changes
@@ -577,7 +614,7 @@ fields must now be accessed via `PyDataType_ELSIZE`,
 `PyDataType_SET_ELSIZE`, and `PyDataType_ALIGNMENT`.
 In cases where the descriptor is attached to an array, we advise
 using ``PyArray_ITEMSIZE`` as it exists on all NumPy versions.
-Please see :ref:`_migration_c_descr` for more information.
+Please see :ref:`migration_c_descr` for more information.
 
 (`gh-25943 <https://github.com/numpy/numpy/pull/25943>`__)
 
