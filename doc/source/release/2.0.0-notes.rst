@@ -492,9 +492,9 @@ Descriptor ``elsize`` and ``alignment`` access
 Unless compiling only with NumPy 2 support, the ``elsize`` and ``aligment``
 fields must now be accessed via `PyDataType_ELSIZE`,
 `PyDataType_SET_ELSIZE`, and `PyDataType_ALIGNMENT`.
-In cases were the array is available, we advise using ``PyArray_ITEMSIZE``
-as it exists on all NumPy versions otherwise please see
-:ref:`_migration_c_descr`.
+In cases where the descriptor is attached to an array, we advise
+using ``PyArray_ITEMSIZE`` as it exists on all NumPy versions.
+Please see :ref:`_migration_c_descr` for more information.
 
 (`gh-25943 <https://github.com/numpy/numpy/pull/25943>`__)
 
