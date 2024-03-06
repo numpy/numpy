@@ -160,21 +160,12 @@ PKG_CONFIG_PATH="/project/.openblas"
 LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/project/.openblas/lib"
 
 [tool.cibuildwheel.macos]
-# universal2 wheels are not supported (see gh-21233), use `delocate-fuse` if you need them
-archs = "x86_64 arm64"
-test-skip = "*_universal2:arm64"
 # Not clear why the DYLD_LIBRARY_PATH is not passed through from the environment
 repair-wheel-command = [
   "export DYLD_LIBRARY_PATH=$PWD/.openblas/lib",
   "echo DYLD_LIBRARY_PATH $DYLD_LIBRARY_PATH",
   "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}",
 ]
-
-[tool.cibuildwheel.macos.environment]
-# In cibuildwheel, {project} is $PWD
-RUNNER_OS="macOS"
-PKG_CONFIG_PATH="$PWD/.openblas"
-DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH:/$PWD/.openblas/lib"
 
 [tool.cibuildwheel.windows]
 # This does not work, use CIBW_ENVIRONMENT_WINDOWS
