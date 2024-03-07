@@ -141,15 +141,16 @@ initialize_keywords(const char *funcname,
         }
 
         if (*name == '\0') {
+            npositional_only += 1;
             /* Empty string signals positional only */
-            if (state != '\0') {
+            if (state == '$' || npositional_only != npositional) {
                 PyErr_Format(PyExc_SystemError,
-                        "NumPy internal error: non-kwarg marked with | or $ "
-                        "to %s() at argument %d.", funcname, nargs);
+                        "NumPy internal error: non-kwarg marked with $ "
+                        "to %s() at argument %d or positional only following "
+                        "kwarg.", funcname, nargs);
                 va_end(va);
                 return -1;
             }
-            npositional_only += 1;
         }
         else {
             nkwargs += 1;
