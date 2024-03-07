@@ -490,7 +490,8 @@ class TestSlidingWindowView:
             sliding_window_view(arr, (1, 3, 4), axis=(0, 1))
         with pytest.raises(
                 ValueError,
-                match='window shape may exceed input array shape by at most 1'):
+                match='window shape may exceed input array shape by at most 1',
+        ):
             sliding_window_view(arr, (6, 6))
 
     def test_writeable(self):
