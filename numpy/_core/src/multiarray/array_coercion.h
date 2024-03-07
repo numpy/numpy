@@ -28,7 +28,7 @@ npy_cast_raw_scalar_item(
         PyArray_Descr *to_descr, char *to_item);
 
 NPY_NO_EXPORT int
-PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value);
+PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value);
 
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_AdaptDescriptorToArray(

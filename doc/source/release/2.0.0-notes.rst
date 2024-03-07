@@ -347,6 +347,12 @@ C API changes
 
   (`gh-25789 <https://github.com/numpy/numpy/pull/25789>`__)
 
+* NumPy now defines :c:function:`PyArray_Pack` to set an individual memory
+  address.  Unlike ``PyArray_SETITEM`` this function is equivalent to setting
+  an individual array item and does not require a NumPy array input.
+
+  (`gh-25954 <https://github.com/numpy/numpy/pull/25954>`__)
+
 * The ``->f`` slot has been removed from ``PyArray_Descr``.
   If you use this slot, replace accessing it with
   ``PyDataType_GetArrFuncs`` (see its documentation and the
