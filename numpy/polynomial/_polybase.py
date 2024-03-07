@@ -9,6 +9,7 @@ abc module from the stdlib, hence it is only available for Python >= 2.6.
 import os
 import abc
 import numbers
+from typing import Callable
 
 import numpy as np
 from . import polyutils as pu
@@ -367,6 +368,14 @@ class ABCPolyBase(abc.ABC):
         if linewidth < 1:
             linewidth = 1
         out = pu.format_float(self.coef[0])
+
+        off, scale = self.mapparms()
+
+        scaled_symbol, needs_parens = self._format_term(pu.format_float,
+                                                        off, scale)
+        if needs_parens:
+            scaled_symbol = '(' + scaled_symbol + ')'
+
         for i, coef in enumerate(self.coef[1:]):
             out += " "
             power = str(i + 1)
@@ -376,13 +385,13 @@ class ABCPolyBase(abc.ABC):
             # complex). In this case, represent the coefficient as-is.
             try:
                 if coef >= 0:
-                    next_term = f"+ " + pu.format_float(coef, parens=True)
+                    next_term = "+ " + pu.format_float(coef, parens=True)
                 else:
-                    next_term = f"- " + pu.format_float(-coef, parens=True)
+                    next_term = "- " + pu.format_float(-coef, parens=True)
             except TypeError:
                 next_term = f"+ {coef}"
             # Polynomial term
-            next_term += term_method(power, self.symbol)
+            next_term += term_method(power, scaled_symbol)
             # Length of the current line with next term added
             line_len = len(out.split('\n')[-1]) + len(next_term)
             # If not the last term in the polynomial, it will be two
@@ -437,24 +446,30 @@ class ABCPolyBase(abc.ABC):
         # exponents in this function
         return r'\text{{{}}}'.format(pu.format_float(x, parens=parens))
 
-    def _repr_latex_(self):
-        # get the scaled argument string to the basis functions
-        off, scale = self.mapparms()
+    def _format_term(self, scalar_format: Callable, off: float, scale: float):
+        """ Format a single term in the expansion """
         if off == 0 and scale == 1:
             term = self.symbol
             needs_parens = False
         elif scale == 1:
-            term = f"{self._repr_latex_scalar(off)} + {self.symbol}"
+            term = f"{scalar_format(off)} + {self.symbol}"
             needs_parens = True
         elif off == 0:
-            term = f"{self._repr_latex_scalar(scale)}{self.symbol}"
+            term = f"{scalar_format(scale)}{self.symbol}"
             needs_parens = True
         else:
             term = (
-                f"{self._repr_latex_scalar(off)} + "
-                f"{self._repr_latex_scalar(scale)}{self.symbol}"
+                f"{scalar_format(off)} + "
+                f"{scalar_format(scale)}{self.symbol}"
             )
             needs_parens = True
+        return term, needs_parens
+    
+    def _repr_latex_(self):
+        # get the scaled argument string to the basis functions
+        off, scale = self.mapparms()
+        term, needs_parens = self._format_term(self._repr_latex_scalar,
+                                               off, scale)
 
         mute = r"\color{{LightGray}}{{{}}}".format
 
@@ -465,7 +480,7 @@ class ABCPolyBase(abc.ABC):
                 coef_str = f"{self._repr_latex_scalar(c)}"
             elif not isinstance(c, numbers.Real):
                 coef_str = f" + ({self._repr_latex_scalar(c)})"
-            elif not np.signbit(c):
+            elif c >= 0:
                 coef_str = f" + {self._repr_latex_scalar(c, parens=True)}"
             else:
                 coef_str = f" - {self._repr_latex_scalar(-c, parens=True)}"
