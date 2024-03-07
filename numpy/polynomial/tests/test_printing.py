@@ -175,7 +175,7 @@ class TestStrAscii:
         assert_equal(res, tgt)
 
         res = str(poly.Polynomial([0, 1], domain=[1, 2]))
-        tgt = '0.0 + 1.0 (-3.0 + 2.0*x)'
+        tgt = '0.0 + 1.0 (-3.0 + 2.0x)'
         assert_equal(res, tgt)
 
 class TestLinebreaking:
