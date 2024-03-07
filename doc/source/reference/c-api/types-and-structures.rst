@@ -290,7 +290,7 @@ PyArrayDescr_Type and PyArray_Descr
           npy_intp alignment;
           NpyAuxData *c_metadata;
           npy_hash_t hash;
-          void *reserved_null;  // unused field, must be NULL.
+          void *reserved_null[2];  // unused field, must be NULLed.
       } PyArray_Descr;
 
    Some dtypes have additional members which are accessible through

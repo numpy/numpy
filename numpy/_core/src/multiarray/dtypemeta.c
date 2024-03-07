@@ -1125,7 +1125,7 @@ dtypemeta_wrap_legacy_descriptor(_PyArray_LegacyDescr *descr,
         {{
             PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
             .tp_name = NULL,  /* set below */
-            .tp_basicsize = sizeof(PyArray_Descr),
+            .tp_basicsize = sizeof(_PyArray_LegacyDescr),
             .tp_flags = Py_TPFLAGS_DEFAULT,
             .tp_base = &PyArrayDescr_Type,
             .tp_new = (newfunc)legacy_dtype_default_new,

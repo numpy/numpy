@@ -245,6 +245,17 @@ NPY_TITLE_KEY_check(PyObject *key, PyObject *value)
  * part of `ndarraytypes.h` which tries to be self contained.
  */
 
+static inline npy_intp
+PyArray_ITEMSIZE(const PyArrayObject *arr)
+{
+    return PyDataType_ELSIZE(((PyArrayObject_fields *)arr)->descr);
+}
+
+#define PyDataType_HASFIELDS(obj) (PyDataType_ISLEGACY((PyArray_Descr*)(obj)) && PyDataType_NAMES((PyArray_Descr*)(obj)) != NULL)
+#define PyDataType_HASSUBARRAY(dtype) (PyDataType_ISLEGACY(dtype) && PyDataType_SUBARRAY(dtype) != NULL)
+#define PyDataType_ISUNSIZED(dtype) ((dtype)->elsize == 0 && \
+                                      !PyDataType_HASFIELDS(dtype))
+
 #define PyDataType_FLAGCHK(dtype, flag) \
         ((PyDataType_FLAGS(dtype) & (flag)) == (flag))
 

@@ -516,7 +516,7 @@ npy_get_clear_void_and_legacy_user_dtype_loop(
         return 0;
     }
 
-    if (PyDataType_HASSUBARRAY(dtype)) {
+    if (dtype->subarray != NULL) {
         PyArray_Dims shape = {NULL, -1};
         npy_intp size;
 
@@ -602,7 +602,7 @@ npy_get_zerofill_void_and_legacy_user_dtype_loop(
         npy_intp stride, PyArrayMethod_TraverseLoop **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    if (PyDataType_HASSUBARRAY(dtype)) {
+    if (dtype->subarray != NULL) {
         PyArray_Dims shape = {NULL, -1};
         npy_intp size;
 
