@@ -22,19 +22,8 @@ class TestStrUnicodeSuperSubscripts:
                       "6.0·x⁶ + 7.0·x⁷ +\n8.0·x⁸ + 9.0·x⁹ + 10.0·x¹⁰ + "
                       "11.0·x¹¹")),
     ))
-    def test_polynomial_str_with_unicode(self, inp, tgt):
+    def test_polynomial_str(self, inp, tgt):
         p = poly.Polynomial(inp)
-        p._use_unicode = True
-        res = str(p)
-        assert_equal(res, tgt)
-
-    @pytest.mark.parametrize(('inp', 'tgt'), (
-        ([1, 2, 3], "1.0 + 2.0 x + 3.0 x**2"),
-        ([-1, 0, 3, -1], "-1.0 + 0.0 x + 3.0 x**2 - 1.0 x**3"),
-    ))
-    def test_polynomial_str_without_unicode(self, inp, tgt):
-        p = poly.Polynomial(inp)
-        p._use_unicode = False
         res = str(p)
         assert_equal(res, tgt)
 
@@ -94,6 +83,14 @@ class TestStrUnicodeSuperSubscripts:
         res = str(poly.Laguerre(inp))
         assert_equal(res, tgt)
 
+    def test_polynomial_str_domains(self):
+        res = str(poly.Polynomial([0, 1]))
+        tgt = '0.0 + 1.0·x'
+        assert_equal(res, tgt)
+
+        res = str(poly.Polynomial([0, 1], domain=[1, 2]))
+        tgt = '0.0 + 1.0 (-1.0 + x)'
+        assert_equal(res, tgt)
 
 class TestStrAscii:
 
@@ -172,6 +169,14 @@ class TestStrAscii:
         res = str(poly.Laguerre(inp))
         assert_equal(res, tgt)
 
+    def test_polynomial_str_domains(self):
+        res = str(poly.Polynomial([0, 1]))
+        tgt = '0.0 + 1.0 x'
+        assert_equal(res, tgt)
+
+        res = str(poly.Polynomial([0, 1], domain=[1, 2]))
+        tgt = '0.0 + 1.0 (-1.0 + x)'
+        assert_equal(res, tgt)
 
 class TestLinebreaking:
 
@@ -333,17 +338,6 @@ class TestFormat:
 def test_symbol(poly, tgt):
     p = poly([1, 2, 3], symbol='z')
     assert_equal(f"{p:unicode}", tgt)
-
-
-class TestStr:
-    def test_polynomial_str(self):
-        res = str(poly.Polynomial([0, 1]))
-        tgt = '0.0 + 1.0 x'
-        assert_equal(res, tgt)
-
-        res = str(poly.Polynomial([0, 1], domain=[0, 2]))
-        tgt = '0.0 + 1.0 (-1.0 + x)'
-        assert_equal(res, tgt)
 
 
 class TestRepr:
