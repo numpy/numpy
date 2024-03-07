@@ -292,7 +292,6 @@ cdef extern from "numpy/arrayobject.h":
 
         @property
         cdef inline npy_intp itemsize(self) nogil:
-            # Note: if you need to set the itemsize use PyDataType_SET_ELSIZE
             return PyDataType_ELSIZE(self)
 
         @property
@@ -474,7 +473,6 @@ cdef extern from "numpy/arrayobject.h":
     bint PyTypeNum_ISOBJECT(int) nogil
 
     npy_intp PyDataType_ELSIZE(dtype) nogil
-    void PyDataType_SET_ELSIZE(dtype, npy_intp) nogil
     npy_intp PyDataType_ALIGNMENT(dtype) nogil
     PyObject* PyDataType_METADATA(dtype) nogil
     PyArray_ArrayDescr* PyDataType_SUBARRAY(dtype) nogil

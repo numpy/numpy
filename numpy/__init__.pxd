@@ -286,9 +286,9 @@ cdef extern from "numpy/arrayobject.h":
         # Flags are not directly accessible on Cython <3. Use PyDataType_FLAGS.
         # cdef char flags
         cdef int type_num
-        # itemsize/elsize, alignment, fields, names, and subarray also must
-        # now use the `PyDataType_*` accessor macros on Cython 2 we advise
-        # using Cython 3.
+        # itemsize/elsize, alignment, fields, names, and subarray must
+        # use the `PyDataType_*` accessor macros. With Cython 3 you can
+        # still use getter attributes `dtype.itemsize`
 
     ctypedef class numpy.flatiter [object PyArrayIterObject, check_size ignore]:
         # Use through macros
