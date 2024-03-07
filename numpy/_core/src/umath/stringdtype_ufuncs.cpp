@@ -60,7 +60,7 @@ multiply_resolve_descriptors(
 
     if (given_descrs[2] == NULL) {
         out_descr = (PyArray_Descr *)new_stringdtype_instance(
-                odescr->na_object, odescr->coerce, NULL);
+                odescr->na_object, odescr->coerce);
         if (out_descr == NULL) {
             return (NPY_CASTING)-1;
         }
@@ -273,8 +273,7 @@ binary_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(method),
     if (given_descrs[2] == NULL) {
         out_descr = (PyArray_Descr *)new_stringdtype_instance(
                 ((PyArray_StringDTypeObject *)given_descrs[1])->na_object,
-                ((PyArray_StringDTypeObject *)given_descrs[1])->coerce,
-                NULL);
+                ((PyArray_StringDTypeObject *)given_descrs[1])->coerce);
 
         if (out_descr == NULL) {
             return (NPY_CASTING)-1;
@@ -1077,8 +1076,7 @@ strip_chars_resolve_descriptors(
     if (given_descrs[2] == NULL) {
         out_descr = (PyArray_Descr *)new_stringdtype_instance(
                 ((PyArray_StringDTypeObject *)given_descrs[0])->na_object,
-                ((PyArray_StringDTypeObject *)given_descrs[0])->coerce,
-                NULL);
+                ((PyArray_StringDTypeObject *)given_descrs[0])->coerce);
 
         if (out_descr == NULL) {
             return (NPY_CASTING)-1;
@@ -1186,8 +1184,7 @@ strip_whitespace_resolve_descriptors(
     if (given_descrs[1] == NULL) {
         out_descr = (PyArray_Descr *)new_stringdtype_instance(
                 ((PyArray_StringDTypeObject *)given_descrs[0])->na_object,
-                ((PyArray_StringDTypeObject *)given_descrs[0])->coerce,
-                NULL);
+                ((PyArray_StringDTypeObject *)given_descrs[0])->coerce);
 
         if (out_descr == NULL) {
             return (NPY_CASTING)-1;
@@ -1335,8 +1332,7 @@ replace_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(method),
     if (given_descrs[4] == NULL) {
         out_descr = (PyArray_Descr *)new_stringdtype_instance(
                 ((PyArray_StringDTypeObject *)given_descrs[0])->na_object,
-                ((PyArray_StringDTypeObject *)given_descrs[0])->coerce,
-                NULL);
+                ((PyArray_StringDTypeObject *)given_descrs[0])->coerce);
 
         if (out_descr == NULL) {
             return (NPY_CASTING)-1;
@@ -1478,7 +1474,7 @@ static NPY_CASTING expandtabs_resolve_descriptors(
 
     if (given_descrs[2] == NULL) {
         out_descr = (PyArray_Descr *)new_stringdtype_instance(
-                idescr->na_object, idescr->coerce, NULL);
+                idescr->na_object, idescr->coerce);
         if (out_descr == NULL) {
             return (NPY_CASTING)-1;
         }
