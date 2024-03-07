@@ -328,6 +328,9 @@ NpyString_acquire_allocators(size_t n_descriptors,
         }
         int allocators_match = 0;
         for (size_t j=0; j<i; j++) {
+            if (allocators[j] == NULL) {
+                continue;
+            }
             if (((PyArray_StringDTypeObject *)descrs[i])->allocator ==
                 ((PyArray_StringDTypeObject *)descrs[j])->allocator)
             {
