@@ -22,8 +22,20 @@ class TestStrUnicodeSuperSubscripts:
                       "6.0·x⁶ + 7.0·x⁷ +\n8.0·x⁸ + 9.0·x⁹ + 10.0·x¹⁰ + "
                       "11.0·x¹¹")),
     ))
-    def test_polynomial_str(self, inp, tgt):
-        res = str(poly.Polynomial(inp))
+    def test_polynomial_str_with_unicode(self, inp, tgt):
+        p = poly.Polynomial(inp)
+        p._use_unicode = True
+        res = str(p)
+        assert_equal(res, tgt)
+
+    @pytest.mark.parametrize(('inp', 'tgt'), (
+        ([1, 2, 3], "1.0 + 2.0 x + 3.0 x**2"),
+        ([-1, 0, 3, -1], "-1.0 + 0.0 x + 3.0 x**2 - 1.0 x**3"),
+    ))
+    def test_polynomial_str_without_unicode(self, inp, tgt):
+        p = poly.Polynomial(inp)
+        p._use_unicode = False
+        res = str(p)
         assert_equal(res, tgt)
 
     @pytest.mark.parametrize(('inp', 'tgt'), (
