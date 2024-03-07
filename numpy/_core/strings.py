@@ -625,6 +625,7 @@ def center(a, width, fillchar=' '):
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     if a.dtype.char == "T":
         out = np.empty_like(a, shape=shape)
+        fillchar = fillchar.astype(a.dtype)
     else:
         out_dtype = f"{a.dtype.char}{width.max()}"
         out = np.empty_like(a, shape=shape, dtype=out_dtype)
@@ -680,6 +681,7 @@ def ljust(a, width, fillchar=' '):
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     if a.dtype.char == "T":
         out = np.empty_like(a, shape=shape)
+        fillchar = fillchar.astype(a.dtype)
     else:
         out_dtype = f"{a.dtype.char}{width.max()}"
         out = np.empty_like(a, shape=shape, dtype=out_dtype)
@@ -735,6 +737,7 @@ def rjust(a, width, fillchar=' '):
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     if a.dtype.char == "T":
         out = np.empty_like(a, shape=shape)
+        fillchar = fillchar.astype(a.dtype)
     else:
         out_dtype = f"{a.dtype.char}{width.max()}"
         out = np.empty_like(a, shape=shape, dtype=out_dtype)

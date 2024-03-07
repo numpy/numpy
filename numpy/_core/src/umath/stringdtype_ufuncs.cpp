@@ -148,7 +148,7 @@ static int multiply_loop_core(
             buf = (char *)PyMem_RawMalloc(newsize);
             if (buf == NULL) {
                 npy_gil_error(PyExc_MemoryError,
-                          "Failed to allocate string in multiply");
+                              "Failed to allocate string in multiply");
                 goto fail;
             }
         }
@@ -172,7 +172,7 @@ static int multiply_loop_core(
         if (descrs[0] == descrs[1]) {
             if (NpyString_pack(oallocator, ops, buf, newsize) < 0) {
                 npy_gil_error(PyExc_MemoryError,
-                          "Failed to pack string in multiply");
+                              "Failed to pack string in multiply");
                 goto fail;
             }
 
@@ -1575,7 +1575,214 @@ string_expandtabs_strided_loop(PyArrayMethod_Context *context,
     return -1;
 }
 
+static NPY_CASTING
+center_ljust_rjust_resolve_descriptors(
+        struct PyArrayMethodObject_tag *NPY_UNUSED(method),
+        PyArray_DTypeMeta *dtypes[], PyArray_Descr *given_descrs[],
+        PyArray_Descr *loop_descrs[], npy_intp *NPY_UNUSED(view_offset))
+{
+    PyArray_StringDTypeObject *input_descr = (PyArray_StringDTypeObject *)given_descrs[0];
+    PyArray_StringDTypeObject *fill_descr = (PyArray_StringDTypeObject *)given_descrs[2];
 
+    int eq_res = _eq_comparison(input_descr->coerce, fill_descr->coerce,
+                                input_descr->na_object, fill_descr->na_object);
+
+    if (eq_res < 0) {
+        return (NPY_CASTING)-1;
+    }
+
+    if (eq_res != 1) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Can only text justification operations with equal"
+                        "StringDType instances.");
+        return (NPY_CASTING)-1;
+    }
+
+    Py_INCREF(given_descrs[0]);
+    loop_descrs[0] = given_descrs[0];
+    Py_INCREF(given_descrs[1]);
+    loop_descrs[1] = given_descrs[1];
+    Py_INCREF(given_descrs[2]);
+    loop_descrs[2] = given_descrs[2];
+
+    PyArray_Descr *out_descr = NULL;
+
+    if (given_descrs[3] == NULL) {
+        out_descr = (PyArray_Descr *)new_stringdtype_instance(
+                ((PyArray_StringDTypeObject *)given_descrs[1])->na_object,
+                ((PyArray_StringDTypeObject *)given_descrs[1])->coerce,
+                NULL);
+
+        if (out_descr == NULL) {
+            return (NPY_CASTING)-1;
+        }
+    }
+    else {
+        Py_INCREF(given_descrs[3]);
+        out_descr = given_descrs[3];
+    }
+
+    loop_descrs[3] = out_descr;
+
+    return NPY_NO_CASTING;
+}
+
+
+static const char* CENTER_NAME = "center";
+static const char* LJUST_NAME = "ljust";
+static const char* RJUST_NAME = "rjust";
+
+template <ENCODING enc>
+static int
+center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
+                                char *const data[],
+                                npy_intp const dimensions[],
+                                npy_intp const strides[],
+                                NpyAuxData *NPY_UNUSED(auxdata))
+{
+    PyArray_StringDTypeObject *s1descr = (PyArray_StringDTypeObject *)context->descriptors[0];
+    int has_null = s1descr->na_object != NULL;
+    int has_nan_na = s1descr->has_nan_na;
+    int has_string_na = s1descr->has_string_na;
+    const npy_static_string *default_string = &s1descr->default_string;
+    npy_intp N = dimensions[0];
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *in3 = data[2];
+    char *out = data[3];
+    npy_intp in1_stride = strides[0];
+    npy_intp in2_stride = strides[1];
+    npy_intp in3_stride = strides[2];
+    npy_intp out_stride = strides[3];
+
+    npy_string_allocator *allocators[4] = {};
+    NpyString_acquire_allocators(4, context->descriptors, allocators);
+    npy_string_allocator *s1allocator = allocators[0];
+    // allocators[1] is NULL
+    npy_string_allocator *s2allocator = allocators[2];
+    npy_string_allocator *oallocator = allocators[3];
+
+    JUSTPOSITION pos = *(JUSTPOSITION *)(context->method->static_data);
+    const char* ufunc_name = NULL;
+
+    switch (pos) {
+        case JUSTPOSITION::CENTER:
+            ufunc_name = CENTER_NAME;
+            break;
+        case JUSTPOSITION::LEFT:
+            ufunc_name = LJUST_NAME;
+            break;
+        case JUSTPOSITION::RIGHT:
+            ufunc_name = RJUST_NAME;
+            break;
+    }
+
+    while (N--) {
+        const npy_packed_static_string *ps1 = (npy_packed_static_string *)in1;
+        npy_static_string s1 = {0, NULL};
+        int s1_isnull = NpyString_load(s1allocator, ps1, &s1);
+        const npy_packed_static_string *ps2 = (npy_packed_static_string *)in3;
+        npy_static_string s2 = {0, NULL};
+        int s2_isnull = NpyString_load(s2allocator, ps2, &s2);
+        npy_static_string os = {0, NULL};
+        npy_packed_static_string *ops = (npy_packed_static_string *)out;
+        if (s1_isnull == -1 || s2_isnull == -1) {
+            npy_gil_error(PyExc_MemoryError, "Failed to load string in %s",
+                          ufunc_name);
+            goto fail;
+        }
+        if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
+            if (has_nan_na) {
+                if (NpyString_pack_null(oallocator, ops) < 0) {
+                    npy_gil_error(PyExc_MemoryError,
+                                  "Failed to deallocate string in %s",
+                                  ufunc_name);
+                    goto fail;
+                }
+                goto next_step;
+            }
+            else if (has_string_na || !has_null) {
+                if (s1_isnull) {
+                    s1 = *default_string;
+                }
+                if (s2_isnull) {
+                    s2 = *default_string;
+                }
+            }
+            else {
+                npy_gil_error(PyExc_ValueError,
+                              "Cannot %s null that is not a nan-like value",
+                              ufunc_name);
+                goto fail;
+            }
+        }
+        {
+            char *buf = NULL;
+            npy_intp newsize;
+            int overflowed = npy_mul_sizes_with_overflow(
+                    &newsize,
+                    (npy_intp)num_bytes_for_utf8_character((unsigned char *)s2.buf),
+                    (npy_intp)*(npy_int64*)in2);
+
+            if (overflowed) {
+                npy_gil_error(PyExc_MemoryError,
+                              "Failed to allocate string in %s", ufunc_name);
+                goto fail;
+            }
+
+            if (context->descriptors[0] == context->descriptors[3]) {
+                // in-place
+                buf = (char *)PyMem_RawMalloc(newsize);
+                if (buf == NULL) {
+                    npy_gil_error(PyExc_MemoryError,
+                                  "Failed to allocate string in %s", ufunc_name);
+                    goto fail;
+                }
+            }
+            else {
+                if (load_new_string(ops, &os, newsize, oallocator, ufunc_name) < 0) {
+                    goto fail;
+                }
+                /* explicitly discard const; initializing new buffer */
+                buf = (char *)os.buf;
+            }
+
+            Buffer<enc> inbuf((char *)s1.buf, s1.size);
+            Buffer<enc> fill((char *)s2.buf, s2.size);
+            Buffer<enc> outbuf(buf, newsize);
+
+            npy_intp len = string_pad(inbuf, (npy_int64)newsize, *fill, pos, outbuf);
+
+            if (len < 0) {
+                return -1;
+            }
+
+            // in-place operations need to clean up temp buffer
+            if (context->descriptors[0] == context->descriptors[3]) {
+                if (NpyString_pack(oallocator, ops, buf, newsize) < 0) {
+                    npy_gil_error(PyExc_MemoryError,
+                                  "Failed to pack string in %s", ufunc_name);
+                    goto fail;
+                }
+
+                PyMem_RawFree(buf);
+            }
+        }
+      next_step:
+
+        in1 += in1_stride;
+        in2 += in2_stride;
+        in3 += in3_stride;
+        out += out_stride;
+    }
+
+    NpyString_release_allocators(4, allocators);
+    return 0;
+
+ fail:
+    NpyString_release_allocators(4, allocators);
+    return -1;
+}
 
 NPY_NO_EXPORT int
 string_inputs_promoter(
@@ -2221,6 +2428,59 @@ init_stringdtype_ufuncs(PyObject *umath)
                      3, string_multiply_promoter) < 0) {
         return -1;
     }
+
+    PyArray_DTypeMeta *center_ljust_rjust_dtypes[] = {
+        &PyArray_StringDType,
+        &PyArray_Int64DType,
+        &PyArray_StringDType,
+        &PyArray_StringDType,
+    };
+
+    static const char* center_ljust_rjust_names[3] = {
+        "_center", "_ljust", "_rjust"
+    };
+
+    static JUSTPOSITION positions[3] = {
+        JUSTPOSITION::CENTER, JUSTPOSITION::LEFT, JUSTPOSITION::RIGHT
+    };
+
+    for (int i=0; i<3; i++) {
+        if (init_ufunc(umath, center_ljust_rjust_names[i],
+                       center_ljust_rjust_dtypes,
+                       &center_ljust_rjust_resolve_descriptors,
+                       &center_ljust_rjust_strided_loop<ENCODING::UTF8>, 3, 1, NPY_NO_CASTING,
+                       (NPY_ARRAYMETHOD_FLAGS) 0, &positions[i]) < 0) {
+            return -1;
+        }
+
+        PyArray_DTypeMeta *int_promoter_dtypes[] = {
+            &PyArray_StringDType,
+            (PyArray_DTypeMeta *)Py_None,
+            &PyArray_StringDType,
+            &PyArray_StringDType,
+        };
+
+        if (add_promoter(umath, center_ljust_rjust_names[i],
+                         int_promoter_dtypes, 4,
+                         string_multiply_promoter) < 0) {
+            return -1;
+        }
+
+        PyArray_DTypeMeta *unicode_promoter_dtypes[] = {
+            &PyArray_StringDType,
+            (PyArray_DTypeMeta *)Py_None,
+            &PyArray_UnicodeDType,
+            &PyArray_StringDType,
+        };
+
+        if (add_promoter(umath, center_ljust_rjust_names[i],
+                         unicode_promoter_dtypes, 4,
+                         string_multiply_promoter) < 0) {
+            return -1;
+        }
+    }
+
+
 
     return 0;
 }

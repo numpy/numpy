@@ -1519,10 +1519,19 @@ string_pad(Buffer<enc> buf, npy_int64 width, npy_ucs4 fill, JUSTPOSITION pos, Bu
         return -1;
     }
 
-    size_t len = buf.num_codepoints();
+    size_t len;
+    switch (enc) {
+        case ENCODING::ASCII:
+        case ENCODING::UTF32:
+            len = buf.num_codepoints();
+            break;
+        case ENCODING::UTF8:
+            len = buf.after - buf.buf;
+            break;
+    }
+
     if (len >= finalwidth) {
         buf.buffer_memcpy(out, len);
-        out.buffer_fill_with_zeros_after_index(len);
         return (npy_intp) len;
     }
 
