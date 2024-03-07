@@ -431,7 +431,8 @@ npy_cast_raw_scalar_item(
 }
 
 
-/**
+/*NUMPY_API
+ **
  * Assign a single element in an array from a python value.
  *
  * The dtypes SETITEM should only be trusted to generally do the right
@@ -471,7 +472,7 @@ npy_cast_raw_scalar_item(
  * @return 0 on success -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
+PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
 {
     PyArrayObject_fields arr_fields = {
             .flags = NPY_ARRAY_WRITEABLE,  /* assume array is not behaved. */

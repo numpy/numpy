@@ -38,12 +38,31 @@ and its sub-types).
 
     Return the (builtin) typenumber for the elements of this array.
 
+.. c:function:: int PyArray_Pack(  \
+        const PyArray_Descr *descr, void *item, const PyObject *value)
+
+    .. versionadded:: 2.0
+
+    Sets the memory location ``item`` of dtype ``descr`` to ``value``.
+
+    The function is equivalent to setting a single array element with a Python
+    assignment.  Returns 0 on success and -1 with an error set on failure.
+
+    .. note::
+        If the ``descr`` has the :c:data:`NPY_NEEDS_INIT` flag set, the
+        data must be valid or the memory zeroed.
+
 .. c:function:: int PyArray_SETITEM( \
         PyArrayObject* arr, void* itemptr, PyObject* obj)
 
     Convert obj and place it in the ndarray, *arr*, at the place
     pointed to by itemptr. Return -1 if an error occurs or 0 on
     success.
+
+    .. note::
+        In general, prefer the use of :c:function:`PyArray_Pack` when
+        handling arbitrary Python objects.  Setitem is for example not able
+        to handle arbitrary casts between different dtypes.
 
 .. c:function:: void PyArray_ENABLEFLAGS(PyArrayObject* arr, int flags)
 
