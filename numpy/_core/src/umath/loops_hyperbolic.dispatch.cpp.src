@@ -13,9 +13,10 @@
 
 // Provides the various *_LOOP macros
 #include "fast_loop_macros.h"
-#include <hwy/highway.h>
 
 #if NPY_SIMD_FMA3 // native support
+#include <hwy/highway.h>
+
 /*
  * NOTE: The following implementation of tanh(f32, f64) have been converted from
  * Intel SVML to universal intrinsics, and the original code can be found in:
@@ -82,97 +83,18 @@
 namespace hn = hwy::HWY_NAMESPACE;
 
 const hn::ScalableTag<float> f32;
-const hn::ScalableTag<double> f64;
 const hn::ScalableTag<int32_t> s32;
-const hn::ScalableTag<int64_t> s64;
 const hn::ScalableTag<uint32_t> u32;
-const hn::ScalableTag<uint64_t> u64;
 using vec_f32 = hn::Vec<decltype(f32)>;
-using vec_f64 = hn::Vec<decltype(f64)>;
 using vec_s32 = hn::Vec<decltype(s32)>;
-using vec_s64 = hn::Vec<decltype(s64)>;
 using vec_u32 = hn::Vec<decltype(u32)>;
+
+const hn::ScalableTag<double> f64;
+const hn::ScalableTag<int64_t> s64;
+const hn::ScalableTag<uint64_t> u64;
+using vec_f64 = hn::Vec<decltype(f64)>;
+using vec_s64 = hn::Vec<decltype(s64)>;
 using vec_u64 = hn::Vec<decltype(u64)>;
-using opmask_t = hn::Mask<decltype(f32)>;
-
-struct hwy_f32x2 {
-    vec_f32 val[2];
-};
-
-HWY_ATTR NPY_FINLINE hwy_f32x2 zip_f32(vec_f32 a, vec_f32 b){
-    hwy_f32x2 res;
-    res.val[0] = hn::InterleaveLower(f32, a, b);
-    res.val[1] = hn::InterleaveUpper(f32, a, b);
-    return res;
-}
-
-HWY_ATTR NPY_FINLINE vec_f64 lut_16_f64(const double * lut, vec_u64 idx){
-    if constexpr(hn::Lanes(f64) == 8){
-        const vec_f64 lut0 = hn::Load(f64, lut);
-        const vec_f64 lut1 = hn::Load(f64, lut + 8);
-        return hn::TwoTablesLookupLanes(f64, lut0, lut1, hn::IndicesFromVec(f64, idx));
-    }else if constexpr (hn::Lanes(f64) == 4){
-        const vec_f64 lut0 = hn::Load(f64, lut);
-        const vec_f64 lut1 = hn::Load(f64, lut + 4);
-        const vec_f64 lut2 = hn::Load(f64, lut + 8);
-        const vec_f64 lut3 = hn::Load(f64, lut + 12);
-        
-        const auto high_mask = hn::Ne(hn::ShiftRight<3>(idx), hn::Zero(u64));
-        const auto load_mask = hn::And(idx, hn::Set(u64, 0b111));
-        
-        const vec_f64 lut_low = hn::TwoTablesLookupLanes(f64, lut0, lut1, hn::IndicesFromVec(f64, load_mask));
-        const vec_f64 lut_high = hn::TwoTablesLookupLanes(f64, lut2, lut3, hn::IndicesFromVec(f64, load_mask));
-        
-        return hn::IfThenElse(hn::RebindMask(f64, high_mask), lut_high, lut_low);
-    }else{
-        return hn::GatherIndex(f64, lut, hn::BitCast(s64, idx));
-    }
-}
-
-HWY_ATTR NPY_FINLINE vec_f32 lut_32_f32(const float * lut, vec_u32 idx){
-    if constexpr(hn::Lanes(f32) == 16){
-        const vec_f32 lut0 = hn::Load(f32, lut);
-        const vec_f32 lut1 = hn::Load(f32, lut + 16);
-        return hn::TwoTablesLookupLanes(f32, lut0, lut1, hn::IndicesFromVec(f32, idx));
-    }else if constexpr (hn::Lanes(f32) == 8){
-        const vec_f32 lut0 = hn::Load(f32, lut);
-        const vec_f32 lut1 = hn::Load(f32, lut + 8);
-        const vec_f32 lut2 = hn::Load(f32, lut + 16);
-        const vec_f32 lut3 = hn::Load(f32, lut + 24);
-        
-        const auto high_mask = hn::Ne(hn::ShiftRight<4>(idx), hn::Zero(u32));
-        const auto load_mask = hn::And(idx, hn::Set(u32, 0b1111));
-        
-        const vec_f32 lut_low = hn::TwoTablesLookupLanes(f32, lut0, lut1, hn::IndicesFromVec(f32, load_mask));
-        const vec_f32 lut_high = hn::TwoTablesLookupLanes(f32, lut2, lut3, hn::IndicesFromVec(f32, load_mask));
-        
-        return hn::IfThenElse(hn::RebindMask(f32, high_mask), lut_high, lut_low);
-    }else{
-        return hn::GatherIndex(f32, lut, hn::BitCast(s32, idx));
-    }
-}
-
-template <typename vtype>
-HWY_ATTR NPY_FINLINE vtype
-combine_lower(vtype a, vtype b){
-    vec_f64 a64 = hn::BitCast(f64, a);
-    vec_f64 b64 = hn::BitCast(f64, b);
-    
-    auto D = hn::DFromV<vtype>();
-    
-    return hn::BitCast(D, hn::InterleaveLower(f64, a64, b64));
-}
-
-template <typename vtype>
-HWY_ATTR NPY_FINLINE vtype
-combine_upper(vtype a, vtype b){
-    vec_f64 a64 = hn::BitCast(f64, a);
-    vec_f64 b64 = hn::BitCast(f64, b);
-    
-    auto D = hn::DFromV<vtype>();
-    
-    return hn::BitCast(D, hn::InterleaveUpper(f64, a64, b64));
-}
 
 template <typename vtype, typename type_t>
 HWY_ATTR NPY_FINLINE vtype
@@ -243,6 +165,29 @@ store_vector(vtype vec, type_t* dst, npy_intp sdst, npy_intp len){
 }
 
 #if NPY_SIMD_F64
+
+HWY_ATTR NPY_FINLINE vec_f64 lut_16_f64(const double * lut, vec_u64 idx){
+    if constexpr(hn::Lanes(f64) == 8){
+        const vec_f64 lut0 = hn::Load(f64, lut);
+        const vec_f64 lut1 = hn::Load(f64, lut + 8);
+        return hn::TwoTablesLookupLanes(f64, lut0, lut1, hn::IndicesFromVec(f64, idx));
+    }else if constexpr (hn::Lanes(f64) == 4){
+        const vec_f64 lut0 = hn::Load(f64, lut);
+        const vec_f64 lut1 = hn::Load(f64, lut + 4);
+        const vec_f64 lut2 = hn::Load(f64, lut + 8);
+        const vec_f64 lut3 = hn::Load(f64, lut + 12);
+        
+        const auto high_mask = hn::Ne(hn::ShiftRight<3>(idx), hn::Zero(u64));
+        const auto load_mask = hn::And(idx, hn::Set(u64, 0b111));
+        
+        const vec_f64 lut_low = hn::TwoTablesLookupLanes(f64, lut0, lut1, hn::IndicesFromVec(f64, load_mask));
+        const vec_f64 lut_high = hn::TwoTablesLookupLanes(f64, lut2, lut3, hn::IndicesFromVec(f64, load_mask));
+        
+        return hn::IfThenElse(hn::RebindMask(f64, high_mask), lut_high, lut_low);
+    }else{
+        return hn::GatherIndex(f64, lut, hn::BitCast(s64, idx));
+    }
+}
 
     // For architectures without efficient gather / scatter instructions, it is
     // better to use a transposed LUT where we can load all coefficients for an
@@ -483,8 +428,8 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
          */
         e0e1[@lane@] = hn::BitCast(f64, hn::LoadU(u64, lut18x16 + index[@lane@] * 18 + @off@));
         /**end repeat1**/
-        vec_f64 @e0@ = combine_lower<vec_f64>(e0e1[0], e0e1[1]);
-        vec_f64 @e1@ = combine_upper<vec_f64>(e0e1[0], e0e1[1]);
+        vec_f64 @e0@ = hn::ConcatLowerLower(f64, e0e1[1], e0e1[0]);
+        vec_f64 @e1@ = hn::ConcatUpperUpper(f64, e0e1[1], e0e1[0]);
         /**end repeat**/
 #else
         vec_f64 b = lut_16_f64((const double*)lut16x18 + 16*0, idx);
@@ -542,6 +487,40 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
 #endif // NPY_SIMD_F64
 
 #if NPY_SIMD_F32
+
+struct hwy_f32x2 {
+    vec_f32 val[2];
+};
+
+HWY_ATTR NPY_FINLINE hwy_f32x2 zip_f32(vec_f32 a, vec_f32 b){
+    hwy_f32x2 res;
+    res.val[0] = hn::InterleaveLower(f32, a, b);
+    res.val[1] = hn::InterleaveUpper(f32, a, b);
+    return res;
+}
+
+HWY_ATTR NPY_FINLINE vec_f32 lut_32_f32(const float * lut, vec_u32 idx){
+    if constexpr(hn::Lanes(f32) == 16){
+        const vec_f32 lut0 = hn::Load(f32, lut);
+        const vec_f32 lut1 = hn::Load(f32, lut + 16);
+        return hn::TwoTablesLookupLanes(f32, lut0, lut1, hn::IndicesFromVec(f32, idx));
+    }else if constexpr (hn::Lanes(f32) == 8){
+        const vec_f32 lut0 = hn::Load(f32, lut);
+        const vec_f32 lut1 = hn::Load(f32, lut + 8);
+        const vec_f32 lut2 = hn::Load(f32, lut + 16);
+        const vec_f32 lut3 = hn::Load(f32, lut + 24);
+        
+        const auto high_mask = hn::Ne(hn::ShiftRight<4>(idx), hn::Zero(u32));
+        const auto load_mask = hn::And(idx, hn::Set(u32, 0b1111));
+        
+        const vec_f32 lut_low = hn::TwoTablesLookupLanes(f32, lut0, lut1, hn::IndicesFromVec(f32, load_mask));
+        const vec_f32 lut_high = hn::TwoTablesLookupLanes(f32, lut2, lut3, hn::IndicesFromVec(f32, load_mask));
+        
+        return hn::IfThenElse(hn::RebindMask(f32, high_mask), lut_high, lut_low);
+    }else{
+        return hn::GatherIndex(f32, lut, hn::BitCast(s32, idx));
+    }
+}
 
 // For architectures without efficient gather / scatter instructions, it is
 // better to use a transposed LUT where we can load all coefficients for an
@@ -697,17 +676,17 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
 
         hwy_f32x2 c6543_l01 = zip_f32(c6543[0], c6543[1]);
         hwy_f32x2 c6543_l23 = zip_f32(c6543[2], c6543[3]);
-        vec_f32 c6 = combine_lower<vec_f32>(c6543_l01.val[0], c6543_l23.val[0]);
-        vec_f32 c5 = combine_upper<vec_f32>(c6543_l01.val[0], c6543_l23.val[0]);
-        vec_f32 c4 = combine_lower<vec_f32>(c6543_l01.val[1], c6543_l23.val[1]);
-        vec_f32 c3 = combine_upper<vec_f32>(c6543_l01.val[1], c6543_l23.val[1]);
+        vec_f32 c6 = hn::ConcatLowerLower(f32, c6543_l23.val[0], c6543_l01.val[0]);
+        vec_f32 c5 = hn::ConcatUpperUpper(f32, c6543_l23.val[0], c6543_l01.val[0]);
+        vec_f32 c4 = hn::ConcatLowerLower(f32, c6543_l23.val[1], c6543_l01.val[1]);
+        vec_f32 c3 = hn::ConcatUpperUpper(f32, c6543_l23.val[1], c6543_l01.val[1]);
 
         hwy_f32x2 c210b_l01 = zip_f32(c210b[0], c210b[1]);
         hwy_f32x2 c210b_l23 = zip_f32(c210b[2], c210b[3]);
-        vec_f32 c2 = combine_lower<vec_f32>(c210b_l01.val[0], c210b_l23.val[0]);
-        vec_f32 c1 = combine_upper<vec_f32>(c210b_l01.val[0], c210b_l23.val[0]);
-        vec_f32 c0 = combine_lower<vec_f32>(c210b_l01.val[1], c210b_l23.val[1]);
-        vec_f32 b  = combine_upper<vec_f32>(c210b_l01.val[1], c210b_l23.val[1]);
+        vec_f32 c2 = hn::ConcatLowerLower(f32, c210b_l23.val[0], c210b_l01.val[0]);
+        vec_f32 c1 = hn::ConcatUpperUpper(f32, c210b_l23.val[0], c210b_l01.val[0]);
+        vec_f32 c0 = hn::ConcatLowerLower(f32, c210b_l23.val[1], c210b_l01.val[1]);
+        vec_f32 b  = hn::ConcatUpperUpper(f32, c210b_l23.val[1], c210b_l01.val[1]);
 #else
         vec_f32 b  = lut_32_f32((const float*)lut32x8 + 32*0, idx);
         vec_f32 c0 = lut_32_f32((const float*)lut32x8 + 32*1, idx);
