@@ -23,7 +23,8 @@ class TestStrUnicodeSuperSubscripts:
                       "11.0·x¹¹")),
     ))
     def test_polynomial_str(self, inp, tgt):
-        res = str(poly.Polynomial(inp))
+        p = poly.Polynomial(inp)
+        res = str(p)
         assert_equal(res, tgt)
 
     @pytest.mark.parametrize(('inp', 'tgt'), (
@@ -82,6 +83,14 @@ class TestStrUnicodeSuperSubscripts:
         res = str(poly.Laguerre(inp))
         assert_equal(res, tgt)
 
+    def test_polynomial_str_domains(self):
+        res = str(poly.Polynomial([0, 1]))
+        tgt = '0.0 + 1.0·x'
+        assert_equal(res, tgt)
+
+        res = str(poly.Polynomial([0, 1], domain=[1, 2]))
+        tgt = '0.0 + 1.0·(-3.0 + 2.0x)'
+        assert_equal(res, tgt)
 
 class TestStrAscii:
 
@@ -160,6 +169,14 @@ class TestStrAscii:
         res = str(poly.Laguerre(inp))
         assert_equal(res, tgt)
 
+    def test_polynomial_str_domains(self):
+        res = str(poly.Polynomial([0, 1]))
+        tgt = '0.0 + 1.0 x'
+        assert_equal(res, tgt)
+
+        res = str(poly.Polynomial([0, 1], domain=[1, 2]))
+        tgt = '0.0 + 1.0 (-3.0 + 2.0x)'
+        assert_equal(res, tgt)
 
 class TestLinebreaking:
 
@@ -321,17 +338,6 @@ class TestFormat:
 def test_symbol(poly, tgt):
     p = poly([1, 2, 3], symbol='z')
     assert_equal(f"{p:unicode}", tgt)
-
-
-class TestStr:
-    def test_polynomial_str(self):
-        res = str(poly.Polynomial([0, 1]))
-        tgt = '0.0 + 1.0 x'
-        assert_equal(res, tgt)
-
-        res = str(poly.Polynomial([0, 1], domain=[0, 2]))
-        tgt = '0.0 + 1.0 (-1.0 + x)'
-        assert_equal(res, tgt)
 
 
 class TestRepr:
