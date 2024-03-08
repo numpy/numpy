@@ -36,9 +36,9 @@ Highlights of this release include:
 - New features:
 
   - A new variable-length string dtype, `~numpy.dtypes.StringDType` and a new
-    `numpy.strings` namespace with performant ufuncs ...
+    `numpy.strings` namespace with performant ufuncs for string operations,
   - Support for ``float32`` and ``longdouble`` in all `numpy.fft` functions,
-  - Support for the array API standard in the main ``numpy`` namespace
+  - Support for the array API standard in the main ``numpy`` namespace.
 
 - Performance improvements:
 
@@ -46,13 +46,14 @@ Highlights of this release include:
     have been accelerated through the use of the Intel x86-simd-sort and Google
     Highway libraries, and may see large (hardware-specific) speedups,
   - macOS Accelerate support and binary wheels for macOS >=14, with significant
-    performance improvements for linear algebra operations on macOS
+    performance improvements for linear algebra operations on macOS, and wheels
+    that are about 3 times smaller,
   - `numpy.char` fixed-length string operations have been accelerated by
     implementing ufuncs that also support `~numpy.dtypes.StringDType` in
-    addition to the the fixed-length string dtypes.
-  - A new tracing and introspection API to determine which hardware-specific
-    kernels are available and will be dispatched to ... see
-    `~numpy.lib.introspect.opt_func_info`
+    addition to the the fixed-length string dtypes,
+  - A new tracing and introspection API, `~numpy.lib.introspect.opt_func_info`,
+    to determine which hardware-specific kernels are available and will be
+    dispatched to.
 
 - Python API improvements:
 
@@ -67,10 +68,11 @@ Highlights of this release include:
 
 - C API improvements:
 
-  - A new public C API for creating custom dtypes
+  - A new :ref:`public C API for creating custom dtypes <dtype-api>`,
   - Many outdated functions and macros removed, and private internals hidden to
     ease future extensibility,
-  - New, easier to use, initialization functions,
+  - New, easier to use, initialization functions:
+    :c:func:`PyArray_ImportNumPyAPI` and :c:func:`PyUFunc_ImportUFuncAPI`.
 
 - Improved behavior:
 
@@ -98,12 +100,27 @@ NumPy in the future.
 The "no free lunch" theorem dictates that there is a price to pay for all these
 API and behavior improvements and better future extensibility. This price is:
 
-1. Backwards compatibility - clear errors in most cases; see the Deprecation
-   and Compatibility sections below, and the :ref:`numpy-2-migration-guide`
-   (note: there is a ``ruff`` mode to auto-fix many things in Python code)
-2. ABI change - impact on downstream libraries and binaries. See
-   :ref:`numpy-2-abi-handling`.
-   TODO: main messages.
+1. Backwards compatibility. There are a significant number of breaking changes
+   to both the Python and C APIs. In the majority of cases, there are clear
+   error messages that will inform the user how to adapt their code. However,
+   there are also changes in behavior for which it was not possible to give
+   such an error message - these cases are all covered in the Deprecation and
+   Compatibility sections below, and in the :ref:`numpy-2-migration-guide`.
+
+   Note that there is a ``ruff`` mode to auto-fix many things in Python code.
+
+2. Breaking changes to the NumPy ABI. As a result, binaries of packages that
+   use the NumPy C API and were built against a NumPy 1.xx release will not
+   work with NumPy 2.0. On import, such packages will see an ``ImportError``
+   with a message about binary incompatibiliy.
+
+   It is possible to build binaries against NumPy 2.0 that will work at runtime
+   with both NumPy 2.0 and 1.x. See :ref:`numpy-2-abi-handling` for more details.
+
+   **All downstream packages that depend on the NumPy ABI are advised to do a
+   new release built against NumPy 2.0 and verify that that release works with
+   both 2.0 and 1.26 - ideally in the period between 2.0.0rc1 (which will be
+   ABI-stable) and the final 2.0.0 release to avoid problems for their users.**
 
 The Python versions supported by this release are 3.9-3.12.
 

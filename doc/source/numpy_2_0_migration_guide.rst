@@ -5,7 +5,14 @@ NumPy 2.0 migration guide
 *************************
 
 This document contains a set of instructions on how to update your code to
-work with Numpy 2.0.
+work with NumPy 2.0. It covers changes in NumPy's Python and C APIs.
+
+.. note::
+
+   Note that NumPy 2.0 also breaks binary compatibility - if you are
+   distributing binaries for a Python package that depends on NumPy's C API,
+   please see :ref:`numpy-2-abi-handling`.
+
 
 
 Ruff plugin
