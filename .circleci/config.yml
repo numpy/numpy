@@ -9,7 +9,7 @@ _defaults: &defaults
   docker:
     # CircleCI maintains a library of pre-built images
     # documented at https://circleci.com/developer/images/image/cimg/python
-    - image: cimg/python:3.11.4
+    - image: cimg/python:3.11.8
   working_directory: ~/repo
 
 
