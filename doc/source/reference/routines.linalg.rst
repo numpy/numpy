@@ -57,6 +57,7 @@ Matrix and vector products
    linalg.multi_dot
    vdot
    vecdot
+   linalg.vecdot
    inner
    outer
    matmul

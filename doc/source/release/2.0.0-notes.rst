@@ -440,6 +440,16 @@ reconstructed by using ``np.solve(a, b[..., None])[..., 0]``.
 
 (`gh-25914 <https://github.com/numpy/numpy/pull/25914>`__)
 
+Modified representation for ``Polynomial``
+------------------------------------------
+The representation method for `~numpy.polynomial.polynomial.Polynomial` was
+updated to include the domain in the representation. The plain text and latex
+representations are now consistent. For example the output of
+``str(np.polynomial.Polynomial([1, 1], domain=[.1, .2]))`` used to be ``1.0 +
+1.0 x``, but now is ``1.0 + 1.0 (-3.0000000000000004 + 20.0 x)``.
+
+(`gh-21760 <https://github.com/numpy/numpy/pull/21760>`__)
+
 
 C API changes
 =============
@@ -467,7 +477,7 @@ C API changes
 
   (`gh-25789 <https://github.com/numpy/numpy/pull/25789>`__)
 
-* NumPy now defines :c:function:`PyArray_Pack` to set an individual memory
+* NumPy now defines :c:func:`PyArray_Pack` to set an individual memory
   address.  Unlike ``PyArray_SETITEM`` this function is equivalent to setting
   an individual array item and does not require a NumPy array input.
 
@@ -603,7 +613,7 @@ for simpler backporting.
 
 Structured dtype information access through functions
 -----------------------------------------------------
-The dtype structures fields `c_metadata``, ``names``,
+The dtype structures fields ``c_metadata``, ``names``,
 ``fields``, and ``subarray`` must now be accessed through new
 functions following the same names, such as ``PyDataType_NAMES``.
 Direct access of the fields is not valid as they do not exist for
@@ -616,8 +626,8 @@ The ``metadata`` field is kept, but the macro version should also be preferred.
 Descriptor ``elsize`` and ``alignment`` access
 ----------------------------------------------
 Unless compiling only with NumPy 2 support, the ``elsize`` and ``aligment``
-fields must now be accessed via `PyDataType_ELSIZE`,
-`PyDataType_SET_ELSIZE`, and `PyDataType_ALIGNMENT`.
+fields must now be accessed via ``PyDataType_ELSIZE``,
+``PyDataType_SET_ELSIZE``, and ``PyDataType_ALIGNMENT``.
 In cases where the descriptor is attached to an array, we advise
 using ``PyArray_ITEMSIZE`` as it exists on all NumPy versions.
 Please see :ref:`migration_c_descr` for more information.
@@ -1347,7 +1357,7 @@ However, it means that:
 ``numpy.fft.helper`` made private
 ---------------------------------
 
-``numpy.fft.helper`` was renamed to `numpy.fft._helper` to indicate
+``numpy.fft.helper`` was renamed to ``numpy.fft._helper`` to indicate
 that it is a private submodule. All public functions exported by it
 should be accessed from `numpy.fft`.
 
@@ -1356,7 +1366,7 @@ should be accessed from `numpy.fft`.
 ``numpy.linalg.linalg`` made private
 ------------------------------------
 
-``numpy.linalg.linalg`` was renamed to `numpy.linalg._linalg`
+``numpy.linalg.linalg`` was renamed to ``numpy.linalg._linalg``
 to indicate that it is a private submodule. All public functions
 exported by it should be accessed from `numpy.linalg`.
 

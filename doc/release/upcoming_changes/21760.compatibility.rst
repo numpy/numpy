@@ -1,6 +1,0 @@
-Modified representation for ``Polynomial``
-------------------------------------------
-The representation method for `numpy.polynomial.Polynomial` was updated to include the domain in the representation.
-The plain text and latex representations are now consistent.
-For example the output of ``str(np.polynomial.Polynomial([1, 1], domain=[.1, .2]))`` used to be ``1.0 + 1.0 x``, but 
-now is ``1.0 + 1.0 (-3.0000000000000004 + 20.0 x)``.
