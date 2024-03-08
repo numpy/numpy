@@ -81,11 +81,9 @@ macosx_arm64_task:
     micromamba activate numpydev
     micromamba install -y -c conda-forge python=3.11 2>/dev/null
     
-    ver=$(sw_vers -productVersion)
-    macos_target=$(python -c "print('14.0') if '$ver' >= '14.0' else print('11.0')")
     # Use scipy-openblas wheels
     export INSTALL_OPENBLAS=true
-    export CIBW_ENVIRONMENT_MACOS="MACOSX_DEPLOYMENT_TARGET=$macos_target INSTALL_OPENBLAS=true RUNNER_OS=macOS PKG_CONFIG_PATH=$PWD/.openblas"
+    export CIBW_ENVIRONMENT_MACOS="MACOSX_DEPLOYMENT_TARGET='11.0' INSTALL_OPENBLAS=true RUNNER_OS=macOS PKG_CONFIG_PATH=$PWD/.openblas"
 
     # needed for submodules
     git submodule update --init
