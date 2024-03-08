@@ -162,6 +162,15 @@ def docs(ctx, sphinx_target, clean, first_build, jobs):
 
     """
     meson.docs.ignore_unknown_options = True
+
+    # Run towncrier without staging anything for commit. This is the way to get
+    # release notes snippets included in a local doc build.
+    cmd = ['towncrier', 'build', '--version', '2.x.y', '--keep', '--draft']
+    p = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    outfile = curdir.parent / 'doc' / 'source' / 'release' / 'notes-towncrier.rst'
+    with open(outfile, 'w') as f:
+        f.write(p.stdout)
+
     ctx.forward(meson.docs)
 
 

@@ -542,6 +542,7 @@ typedef struct {
 
 } PyArray_ArrFuncs;
 
+
 /* The item must be reference counted when it is inserted or extracted. */
 #define NPY_ITEM_REFCOUNT   0x01
 /* Same as needing REFCOUNT */
@@ -572,6 +573,10 @@ typedef struct {
                                 NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT | \
                                 NPY_NEEDS_INIT | NPY_NEEDS_PYAPI)
 
+#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
+/*
+ * Public version of the Descriptor struct as of 2.x
+ */
 typedef struct _PyArray_Descr {
         PyObject_HEAD
         /*
@@ -590,51 +595,79 @@ typedef struct _PyArray_Descr {
          * (not-applicable), or '=' (native).
          */
         char byteorder;
-        /* flags describing data type */
-        char flags;
+        /* Former flags flags space (unused) to ensure type_num is stable. */
+        char _former_flags;
         /* number representing this type */
         int type_num;
+        /* Space for dtype instance specific flags. */
+        npy_uint64 flags;
         /* element size (itemsize) for this type */
-        int elsize;
+        npy_intp elsize;
         /* alignment needed for this type */
-        int alignment;
-        /*
-         * Non-NULL if this type is
-         * is an array (C-contiguous)
-         * of some other type
-         */
-        struct _arr_descr *subarray;
-        /*
-         * The fields dictionary for this type
-         * For statically defined descr this
-         * is always Py_None
-         */
-        PyObject *fields;
-        /*
-         * An ordered tuple of field names or NULL
-         * if no fields are defined
-         */
-        PyObject *names;
-        /*
-         * a table of functions specific for each
-         * basic data descriptor
-         */
-        PyArray_ArrFuncs *f;
-        /* Metadata about this dtype */
+        npy_intp alignment;
+        /* metadata dict or NULL */
         PyObject *metadata;
-        /*
-         * Metadata specific to the C implementation
-         * of the particular dtype. This was added
-         * for NumPy 1.7.0.
-         */
-        NpyAuxData *c_metadata;
-        /* Cached hash value (-1 if not yet computed).
-         * This was added for NumPy 2.0.0.
-         */
+        /* Cached hash value (-1 if not yet computed). */
         npy_hash_t hash;
-
+        /* Unused slot (must be initialized to NULL) for future use */
+        void *reserved_null[2];
 } PyArray_Descr;
 
+#else  /* 1.x and 2.x compatible version (only shared fields): */
+
+typedef struct _PyArray_Descr {
+        PyObject_HEAD
+        PyTypeObject *typeobj;
+        char kind;
+        char type;
+        char byteorder;
+        char _former_flags;
+        int type_num;
+} PyArray_Descr;
+
+/* To access modified fields, define the full 2.0 struct: */
+typedef struct {
+        PyObject_HEAD
+        PyTypeObject *typeobj;
+        char kind;
+        char type;
+        char byteorder;
+        char _former_flags;
+        int type_num;
+        npy_uint64 flags;
+        npy_intp elsize;
+        npy_intp alignment;
+        PyObject *metadata;
+        npy_hash_t hash;
+        void *reserved_null[2];
+} _PyArray_DescrNumPy2;
+
+#endif  /* 1.x and 2.x compatible version */
+
+/*
+ * Semi-private struct with additional field of legacy descriptors (must
+ * check NPY_DT_is_legacy before casting/accessing).  The struct is also not
+ * valid when running on 1.x (i.e. in public API use).
+ */
+typedef struct {
+        PyObject_HEAD
+        PyTypeObject *typeobj;
+        char kind;
+        char type;
+        char byteorder;
+        char _former_flags;
+        int type_num;
+        npy_uint64 flags;
+        npy_intp elsize;
+        npy_intp alignment;
+        PyObject *metadata;
+        npy_hash_t hash;
+        void *reserved_null[2];
+        struct _arr_descr *subarray;
+        PyObject *fields;
+        PyObject *names;
+        NpyAuxData *c_metadata;
+} _PyArray_LegacyDescr;
 
 
 /*
@@ -1518,11 +1551,6 @@ PyArray_FLAGS(const PyArrayObject *arr)
     return ((PyArrayObject_fields *)arr)->flags;
 }
 
-static inline npy_intp
-PyArray_ITEMSIZE(const PyArrayObject *arr)
-{
-    return ((PyArrayObject_fields *)arr)->descr->elsize;
-}
 
 static inline int
 PyArray_TYPE(const PyArrayObject *arr)
@@ -1535,25 +1563,6 @@ PyArray_CHKFLAGS(const PyArrayObject *arr, int flags)
 {
     return (PyArray_FLAGS(arr) & flags) == flags;
 }
-
-static inline PyObject *
-PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
-{
-    return ((PyArrayObject_fields *)arr)->descr->f->getitem(
-                                        (void *)itemptr, (PyArrayObject *)arr);
-}
-
-/*
- * SETITEM should only be used if it is known that the value is a scalar
- * and of a type understood by the arrays dtype.
- * Use `PyArray_Pack` if the value may be of a different dtype.
- */
-static inline int
-PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
-{
-    return ((PyArrayObject_fields *)arr)->descr->f->setitem(v, itemptr, arr);
-}
-
 
 static inline PyArray_Descr *
 PyArray_DTYPE(const PyArrayObject *arr)
@@ -1641,6 +1650,7 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 #define PyTypeNum_ISOBJECT(type) ((type) == NPY_OBJECT)
 
 
+#define PyDataType_ISLEGACY(dtype) ((dtype)->type_num < NPY_VSTRING && ((dtype)->type_num >= 0))
 #define PyDataType_ISBOOL(obj) PyTypeNum_ISBOOL(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISSIGNED(obj) PyTypeNum_ISSIGNED(((PyArray_Descr*)(obj))->type_num)
@@ -1654,15 +1664,13 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 #define PyDataType_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISOBJECT(obj) PyTypeNum_ISOBJECT(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_HASFIELDS(obj) (((PyArray_Descr *)(obj))->names != NULL)
-#define PyDataType_HASSUBARRAY(dtype) ((dtype)->subarray != NULL)
-#define PyDataType_ISUNSIZED(dtype) ((dtype)->elsize == 0 && \
-                                      !PyDataType_HASFIELDS(dtype))
 #define PyDataType_MAKEUNSIZED(dtype) ((dtype)->elsize = 0)
 /*
- * PyDataType_FLAGS, PyDataType_FLACHK, and PyDataType_REFCHK require
- * npy_2_compat.h and are not defined here.
+ * PyDataType_* FLAGS, FLACHK, REFCHK, HASFIELDS, HASSUBARRAY, UNSIZED,
+ * SUBARRAY, NAMES, FIELDS, C_METADATA, and METADATA require version specific
+ * lookup and are defined in npy_2_compat.h.
  */
+
 
 #define PyArray_ISBOOL(obj) PyTypeNum_ISBOOL(PyArray_TYPE(obj))
 #define PyArray_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(PyArray_TYPE(obj))
@@ -1906,14 +1914,5 @@ typedef struct {
  * #endif
  */
 #undef NPY_DEPRECATED_INCLUDES
-
-#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
-    /*
-     * we use ndarraytypes.h alone sometimes, but some functions from
-     * npy_2_compat.h are forward declared here, so ensure we have them.
-     * (external libraries must eventually include `ndarrayobject.h`)
-     */
-    #include "npy_2_compat.h"
-#endif
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_ */

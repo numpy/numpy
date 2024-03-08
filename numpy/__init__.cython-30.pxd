@@ -289,14 +289,31 @@ cdef extern from "numpy/arrayobject.h":
         # directly accessing this field.
         cdef char byteorder
         cdef int type_num
-        cdef int itemsize "elsize"
-        cdef int alignment
-        cdef object fields
-        cdef tuple names
+
+        @property
+        cdef inline npy_intp itemsize(self) nogil:
+            return PyDataType_ELSIZE(self)
+
+        @property
+        cdef inline npy_intp alignment(self) nogil:
+            return PyDataType_ALIGNMENT(self)
+
+        # Use fields/names with care as they may be NULL.  You must check
+        # for this using PyDataType_HASFIELDS.
+        @property
+        cdef inline object fields(self):
+            return <object>PyDataType_FIELDS(self)
+
+        @property
+        cdef inline tuple names(self):
+            return <tuple>PyDataType_NAMES(self)
+
         # Use PyDataType_HASSUBARRAY to test whether this field is
         # valid (the pointer can be NULL). Most users should access
         # this field via the inline helper method PyDataType_SHAPE.
-        cdef PyArray_ArrayDescr* subarray
+        @property
+        cdef inline PyArray_ArrayDescr* subarray(self) nogil:
+            return PyDataType_SUBARRAY(self)
 
         @property
         cdef inline npy_uint64 flags(self) nogil:
@@ -454,6 +471,13 @@ cdef extern from "numpy/arrayobject.h":
     bint PyTypeNum_ISUSERDEF(int) nogil
     bint PyTypeNum_ISEXTENDED(int) nogil
     bint PyTypeNum_ISOBJECT(int) nogil
+
+    npy_intp PyDataType_ELSIZE(dtype) nogil
+    npy_intp PyDataType_ALIGNMENT(dtype) nogil
+    PyObject* PyDataType_METADATA(dtype) nogil
+    PyArray_ArrayDescr* PyDataType_SUBARRAY(dtype) nogil
+    PyObject* PyDataType_NAMES(dtype) nogil
+    PyObject* PyDataType_FIELDS(dtype) nogil
 
     bint PyDataType_ISBOOL(dtype) nogil
     bint PyDataType_ISUNSIGNED(dtype) nogil

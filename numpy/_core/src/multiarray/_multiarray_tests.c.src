@@ -126,7 +126,7 @@ static int copy_object(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
     npy_intp i, j;
     npy_intp odims[NPY_MAXDIMS_LEGACY_ITERS];
     PyArrayObject *aout;
-    PyArray_CopySwapFunc *copyswap = PyArray_DESCR(itx->ao)->f->copyswap;
+    PyArray_CopySwapFunc *copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(itx->ao))->copyswap;
     npy_int itemsize = PyArray_ITEMSIZE(itx->ao);
 
     /*
@@ -496,7 +496,7 @@ static PyObject *
 create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
 {
     PyArray_DescrProto proto;
-    PyArray_Descr *dtype;
+    _PyArray_LegacyDescr *dtype;  /* Is checked for void, so legacy is OK */
     PyTypeObject *scalar_type;
     int error_path;
 
@@ -510,7 +510,7 @@ create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
     if (dtype->type_num != NPY_VOID || dtype->fields == NULL ||
             !PyDict_CheckExact(dtype->fields) ||
             PyTuple_Size(dtype->names) != 1 ||
-            !PyDataType_REFCHK(dtype) ||
+            !PyDataType_REFCHK((PyArray_Descr *)dtype) ||
             dtype->elsize != sizeof(PyObject *)) {
         PyErr_SetString(PyExc_ValueError,
                 "Bad dtype passed to test function, must be an object "
@@ -531,7 +531,7 @@ create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
     proto.subarray = dtype->subarray;
     proto.fields = dtype->fields;
     proto.names = dtype->names;
-    proto.f = dtype->f;
+    proto.f = PyDataType_GetArrFuncs((PyArray_Descr *)dtype);
     proto.metadata = dtype->metadata;
     proto.c_metadata = dtype->c_metadata;
 

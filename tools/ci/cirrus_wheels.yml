@@ -50,13 +50,15 @@ linux_aarch64_task:
 
 ######################################################################
 # Build macosx_arm64 natively
+#
+# macosx_arm64 for macos >= 14 used to be built here, but are now
+# built on GHA.
 ######################################################################
 
 macosx_arm64_task:
   use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   macos_instance:
     matrix:
-      image: ghcr.io/cirruslabs/macos-sonoma-xcode
       image: ghcr.io/cirruslabs/macos-monterey-xcode
 
   matrix:
@@ -79,20 +81,10 @@ macosx_arm64_task:
     micromamba activate numpydev
     micromamba install -y -c conda-forge python=3.11 2>/dev/null
     
-    ver=$(sw_vers -productVersion)
-    macos_target=$(python -c "print('14.0') if '$ver' >= '14.0' else print('11.0')")
-    if [ $macos_target == '14.0' ]; then
-        # Use native Accelerate
-        export INSTALL_OPENBLAS=false
-        export CIBW_ENVIRONMENT_MACOS="MACOSX_DEPLOYMENT_TARGET=$macos_target INSTALL_OPENBLAS=false RUNNER_OS=macOS"
-        # export CIBW_REPAIR_WHEEL_COMMAND_MACOS=""
-    else
-        # Use scipy-openblas wheels
-        export INSTALL_OPENBLAS=true
-        export CIBW_ENVIRONMENT_MACOS="MACOSX_DEPLOYMENT_TARGET=$macos_target INSTALL_OPENBLAS=true RUNNER_OS=macOS PKG_CONFIG_PATH=$PWD/.openblas"
-    fi
+    # Use scipy-openblas wheels
+    export INSTALL_OPENBLAS=true
+    export CIBW_ENVIRONMENT_MACOS="MACOSX_DEPLOYMENT_TARGET='11.0' INSTALL_OPENBLAS=true RUNNER_OS=macOS PKG_CONFIG_PATH=$PWD/.openblas"
 
-    
     # needed for submodules
     git submodule update --init
     # need to obtain all the tags so setup.py can determine FULLVERSION

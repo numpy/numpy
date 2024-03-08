@@ -240,10 +240,21 @@ NPY_TITLE_KEY_check(PyObject *key, PyObject *value)
 
 
 /*
- * These macros unfortunately require runtime version checks and are only
- * defined in `npy_2_compat.h`.  For that reasons they cannot be part of
- * `ndarraytypes.h` which tries to be self contained.
+ * These macros and functions unfortunately require runtime version checks
+ * that are only defined in `npy_2_compat.h`.  For that reasons they cannot be
+ * part of `ndarraytypes.h` which tries to be self contained.
  */
+
+static inline npy_intp
+PyArray_ITEMSIZE(const PyArrayObject *arr)
+{
+    return PyDataType_ELSIZE(((PyArrayObject_fields *)arr)->descr);
+}
+
+#define PyDataType_HASFIELDS(obj) (PyDataType_ISLEGACY((PyArray_Descr*)(obj)) && PyDataType_NAMES((PyArray_Descr*)(obj)) != NULL)
+#define PyDataType_HASSUBARRAY(dtype) (PyDataType_ISLEGACY(dtype) && PyDataType_SUBARRAY(dtype) != NULL)
+#define PyDataType_ISUNSIZED(dtype) ((dtype)->elsize == 0 && \
+                                      !PyDataType_HASFIELDS(dtype))
 
 #define PyDataType_FLAGCHK(dtype, flag) \
         ((PyDataType_FLAGS(dtype) & (flag)) == (flag))
@@ -258,6 +269,31 @@ NPY_TITLE_KEY_check(PyObject *key, PyObject *value)
 #define NPY_END_THREADS_DESCR(dtype) \
         do {if (!(PyDataType_FLAGCHK((dtype), NPY_NEEDS_PYAPI))) \
                 NPY_END_THREADS; } while (0);
+
+#if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
+/* The internal copy of this is now defined in `dtypemeta.h` */
+/*
+ * `PyArray_Scalar` is the same as this function but converts will convert
+ * most NumPy types to Python scalars.
+ */
+static inline PyObject *
+PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
+{
+    return PyDataType_GetArrFuncs(((PyArrayObject_fields *)arr)->descr)->getitem(
+                                        (void *)itemptr, (PyArrayObject *)arr);
+}
+
+/*
+ * SETITEM should only be used if it is known that the value is a scalar
+ * and of a type understood by the arrays dtype.
+ * Use `PyArray_Pack` if the value may be of a different dtype.
+ */
+static inline int
+PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
+{
+    return PyDataType_GetArrFuncs(((PyArrayObject_fields *)arr)->descr)->setitem(v, itemptr, arr);
+}
+#endif  /* not internal */
 
 
 #ifdef __cplusplus

@@ -8414,9 +8414,9 @@ class TestArrayCreationCopyArgument(object):
         assert np.may_share_memory(arr, res)
 
     def test_array_interfaces(self):
-        # Array interface gives direct memory access (much like a memoryview)
         base_arr = np.arange(10)
 
+        # Array interface gives direct memory access (much like a memoryview)
         class ArrayLike:
             __array_interface__ = base_arr.__array_interface__
 
@@ -8433,8 +8433,6 @@ class TestArrayCreationCopyArgument(object):
 
         class ArrayLike:
             def __array__(self, dtype=None, copy=None):
-                # __array__ should return a copy, numpy cannot know this
-                # however.
                 return base_arr
 
         arr = ArrayLike()
@@ -8464,6 +8462,23 @@ class TestArrayCreationCopyArgument(object):
         assert np.shares_memory(a, a.__array__(int, copy=False))
         with pytest.raises(ValueError):
             np.shares_memory(a, a.__array__(float, copy=False))
+
+        base_arr = np.arange(10)
+
+        class ArrayLikeNoCopy:
+            def __array__(self, dtype=None):
+                return base_arr
+
+        a = ArrayLikeNoCopy()
+
+        # explicitly passing copy=None shouldn't raise a warning
+        arr = np.array(a, copy=None)
+        assert_array_equal(arr, base_arr)
+        assert arr is base_arr
+
+        with pytest.warns(UserWarning, match=("should implement 'dtype' "
+                                              "and 'copy' keywords")):
+            np.array(a, copy=False)
 
     @pytest.mark.parametrize(
             "arr", [np.ones(()), np.arange(81).reshape((9, 9))])
@@ -9456,14 +9471,9 @@ class TestArange:
         assert_raises(TypeError, np.arange, start=4)
 
     def test_start_stop_kwarg(self):
-        with pytest.raises(TypeError):
-            # Start cannot be passed as a kwarg anymore, because on it's own
-            # it would be strange.
-            np.arange(start=0, stop=3)
-
         keyword_stop = np.arange(stop=3)
         keyword_zerotostop = np.arange(0, stop=3)
-        keyword_start_stop = np.arange(3, stop=9)
+        keyword_start_stop = np.arange(start=3, stop=9)
 
         assert len(keyword_stop) == 3
         assert len(keyword_zerotostop) == 3

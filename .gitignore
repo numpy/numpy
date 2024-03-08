@@ -120,6 +120,7 @@ Thumbs.db
 #############################
 doc/source/savefig/
 doc/source/**/generated/
+doc/source/release/notes-towncrier.rst
 
 # Things specific to this project #
 ###################################

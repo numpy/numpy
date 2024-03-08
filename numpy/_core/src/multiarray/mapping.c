@@ -1335,6 +1335,7 @@ array_subscript_asarray(PyArrayObject *self, PyObject *op)
 NPY_NO_EXPORT int
 _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
 {
+    assert(PyDataType_ISLEGACY(PyArray_DESCR(arr)));
     *view = NULL;
 
     /* first check for a single field name */
@@ -1344,7 +1345,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         npy_intp offset;
 
         /* get the field offset and dtype */
-        tup = PyDict_GetItemWithError(PyArray_DESCR(arr)->fields, ind);
+        tup = PyDict_GetItemWithError(PyDataType_FIELDS(PyArray_DESCR(arr)), ind);
         if (tup == NULL && PyErr_Occurred()) {
             return 0;
         }
@@ -1408,7 +1409,8 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         }
 
         /* Call into the dtype subscript */
-        view_dtype = arraydescr_field_subset_view(PyArray_DESCR(arr), ind);
+        view_dtype = arraydescr_field_subset_view(
+                (_PyArray_LegacyDescr *)PyArray_DESCR(arr), ind);
         if (view_dtype == NULL) {
             return 0;
         }

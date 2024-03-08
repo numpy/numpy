@@ -789,8 +789,8 @@ PyArray_ScalarKind(int typenum, PyArrayObject **arr)
     } else if (PyTypeNum_ISUSERDEF(typenum)) {
         PyArray_Descr* descr = PyArray_DescrFromType(typenum);
 
-        if (descr->f->scalarkind) {
-            ret = descr->f->scalarkind((arr ? *arr : NULL));
+        if (PyDataType_GetArrFuncs(descr)->scalarkind) {
+            ret = PyDataType_GetArrFuncs(descr)->scalarkind((arr ? *arr : NULL));
         }
         Py_DECREF(descr);
     }
@@ -844,8 +844,8 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
     }
 
     from = PyArray_DescrFromType(thistype);
-    if (from->f->cancastscalarkindto
-        && (castlist = from->f->cancastscalarkindto[scalar])) {
+    if (PyDataType_GetArrFuncs(from)->cancastscalarkindto
+        && (castlist = PyDataType_GetArrFuncs(from)->cancastscalarkindto[scalar])) {
         while (*castlist != NPY_NOTYPE) {
             if (*castlist++ == neededtype) {
                 Py_DECREF(from);
@@ -1060,7 +1060,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         }
     }
 
-    dot = PyArray_DESCR(out_buf)->f->dotfunc;
+    dot = PyDataType_GetArrFuncs(PyArray_DESCR(out_buf))->dotfunc;
     if (dot == NULL) {
         PyErr_SetString(PyExc_ValueError,
                         "dot not available for this type");
@@ -1187,7 +1187,7 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
     if (ret == NULL) {
         return NULL;
     }
-    dot = PyArray_DESCR(ret)->f->dotfunc;
+    dot = PyDataType_GetArrFuncs(PyArray_DESCR(ret))->dotfunc;
     if (dot == NULL) {
         PyErr_SetString(PyExc_ValueError,
                         "function not available for this data type");
@@ -1256,7 +1256,7 @@ _pyarray_revert(PyArrayObject *ret)
 
     if (PyArray_ISNUMBER(ret) && !PyArray_ISCOMPLEX(ret)) {
         /* Optimization for unstructured dtypes */
-        PyArray_CopySwapNFunc *copyswapn = PyArray_DESCR(ret)->f->copyswapn;
+        PyArray_CopySwapNFunc *copyswapn = PyDataType_GetArrFuncs(PyArray_DESCR(ret))->copyswapn;
         sw2 = op + length * os - 1;
         /* First reverse the whole array byte by byte... */
         while(sw1 < sw2) {
@@ -2634,7 +2634,7 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
             vdot = (PyArray_DotFunc *)OBJECT_vdot;
             break;
         default:
-            vdot = type->f->dotfunc;
+            vdot = PyDataType_GetArrFuncs(type)->dotfunc;
             if (vdot == NULL) {
                 PyErr_SetString(PyExc_ValueError,
                         "function not available for this data type");
@@ -3068,7 +3068,7 @@ array_arange(PyObject *NPY_UNUSED(ignored),
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("arange", args, len_args, kwnames,
-            "|", NULL, &o_start,
+            "|start", NULL, &o_start,
             "|stop", NULL, &o_stop,
             "|step", NULL, &o_step,
             "|dtype", &PyArray_DescrConverter2, &typecode,
@@ -4787,7 +4787,7 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_convert = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_preserve = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_convert_if_no_array = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_cpu = NULL;
-
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_err_msg_substr = NULL;
 
 static int
 intern_strings(void)
@@ -4863,6 +4863,11 @@ intern_strings(void)
     }
     npy_ma_str_cpu = PyUnicode_InternFromString("cpu");
     if (npy_ma_str_cpu == NULL) {
+        return -1;
+    }
+    npy_ma_str_array_err_msg_substr = PyUnicode_InternFromString(
+            "__array__() got an unexpected keyword argument 'copy'");
+    if (npy_ma_str_array_err_msg_substr == NULL) {
         return -1;
     }
     return 0;

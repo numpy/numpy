@@ -14,6 +14,7 @@
 #include "common.h"
 #include "arrayobject.h"
 #include "ctors.h"
+#include "dtypemeta.h"
 #include "mapping.h"
 #include "lowlevel_strided_loops.h"
 #include "scalartypes.h"

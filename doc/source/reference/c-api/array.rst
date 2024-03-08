@@ -38,12 +38,31 @@ and its sub-types).
 
     Return the (builtin) typenumber for the elements of this array.
 
+.. c:function:: int PyArray_Pack(  \
+        const PyArray_Descr *descr, void *item, const PyObject *value)
+
+    .. versionadded:: 2.0
+
+    Sets the memory location ``item`` of dtype ``descr`` to ``value``.
+
+    The function is equivalent to setting a single array element with a Python
+    assignment.  Returns 0 on success and -1 with an error set on failure.
+
+    .. note::
+        If the ``descr`` has the :c:data:`NPY_NEEDS_INIT` flag set, the
+        data must be valid or the memory zeroed.
+
 .. c:function:: int PyArray_SETITEM( \
         PyArrayObject* arr, void* itemptr, PyObject* obj)
 
     Convert obj and place it in the ndarray, *arr*, at the place
     pointed to by itemptr. Return -1 if an error occurs or 0 on
     success.
+
+    .. note::
+        In general, prefer the use of :c:func:`PyArray_Pack` when
+        handling arbitrary Python objects.  Setitem is for example not able
+        to handle arbitrary casts between different dtypes.
 
 .. c:function:: void PyArray_ENABLEFLAGS(PyArrayObject* arr, int flags)
 
@@ -751,6 +770,88 @@ General check of Python Type
     :c:func:`PyArray_IsPythonScalar`), an array scalar (an instance of a
     sub-type of :c:data:`PyGenericArrType_Type`) or an instance of a sub-type of
     :c:data:`PyArray_Type` whose dimensionality is 0.
+
+
+Data-type accessors
+~~~~~~~~~~~~~~~~~~~
+
+Some of the descriptor attributes may not always be defined and should or
+cannot not be accessed directly.
+
+.. versionchanged:: 2.0
+    Prior to NumPy 2.0 the ABI was different but unnecessary large for user
+    DTypes.  These accessors were all added in 2.0 and can be backported
+    (see :ref:`migration_c_descr`).
+
+.. c:function:: npy_intp PyDataType_ELSIZE(PyArray_Descr *descr)
+
+    The element size of the datatype (``itemsize`` in Python).
+
+    .. note::
+        If the ``descr`` is attached to an array ``PyArray_ITEMSIZE(arr)``
+        can be used and is available on all NumPy versions.
+
+.. c:function:: void PyDataType_SET_ELSIZE(PyArray_Descr *descr, npy_intp size)
+
+    Allows setting of the itemsize, this is *only* relevant for string/bytes
+    datatypes as it is the current pattern to define one with a new size.
+
+.. c:function:: npy_intp PyDataType_ALIGNENT(PyArray_Descr *descr)
+
+    The alignment of the datatype.
+
+.. c:function:: PyObject *PyDataType_METADATA(PyArray_Descr *descr)
+
+    The Metadata attached to a dtype, either ``NULL`` or a dictionary.
+
+.. c:function:: PyObject *PyDataType_NAMES(PyArray_Descr *descr)
+
+    ``NULL`` or a tuple of structured field names attached to a dtype.
+
+.. c:function:: PyObject *PyDataType_FIELDS(PyArray_Descr *descr)
+
+    ``NULL``, ``None``, or a dict of structured dtype fields, this dict must
+    not be mutated, NumPy may change the way fields are stored in the future.
+
+    This is the same dict as returned by `np.dtype.fields`.
+
+.. c:function:: NpyAuxData *PyDataType_C_METADATA(PyArray_Descr *descr)
+
+    C-metadata object attached to a descriptor.  This accessor should not
+    be needed usually.  The C-Metadata field does provide access to the
+    datetime/timedelta time unit information.
+
+.. c:function:: PyArray_ArrayDescr *PyDataType_SUBARRAY(PyArray_Descr *descr)
+
+    Information about a subarray dtype eqivalent to the Python `np.dtype.base`
+    and `np.dtype.shape`.
+
+    If this is non- ``NULL``, then this data-type descriptor is a
+    C-style contiguous array of another data-type descriptor. In
+    other-words, each element that this descriptor describes is
+    actually an array of some other base descriptor. This is most
+    useful as the data-type descriptor for a field in another
+    data-type descriptor. The fields member should be ``NULL`` if this
+    is non- ``NULL`` (the fields member of the base descriptor can be
+    non- ``NULL`` however).
+
+    .. c:type:: PyArray_ArrayDescr
+
+        .. code-block:: c
+
+            typedef struct {
+                PyArray_Descr *base;
+                PyObject *shape;
+            } PyArray_ArrayDescr;
+
+        .. c:member:: PyArray_Descr *base
+
+            The data-type-descriptor object of the base-type.
+
+        .. c:member:: PyObject *shape
+
+            The shape (always C-style contiguous) of the sub-array as a Python
+            tuple.
 
 
 Data-type checking
@@ -3318,7 +3419,7 @@ Data Type Promotion and Inspection
    for a ``singleton`` first and only calls the ``default_descr`` function if
    necessary.
 
-.. dtype-api_
+.. _dtype-api:
 
 Custom Data Types
 -----------------
@@ -3737,7 +3838,7 @@ the C-API is needed then some additional steps must be taken.
     .. versionadded:: 2.0
         This function is backported in the ``npy_2_compat.h`` header.
 
-.. c:macro:: void import_array(void)
+.. c:macro:: import_array(void)
 
     This function must be called in the initialization section of a
     module that will make use of the C-API. It imports the module

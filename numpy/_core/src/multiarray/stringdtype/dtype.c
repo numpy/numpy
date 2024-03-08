@@ -22,7 +22,7 @@
  * Internal helper to create new instances
  */
 PyObject *
-new_stringdtype_instance(PyObject *na_object, int coerce, npy_string_allocator *allocator)
+new_stringdtype_instance(PyObject *na_object, int coerce)
 {
     PyObject *new =
             PyArrayDescr_Type.tp_new((PyTypeObject *)&PyArray_StringDType, NULL, NULL);
@@ -35,18 +35,12 @@ new_stringdtype_instance(PyObject *na_object, int coerce, npy_string_allocator *
     char *na_name_buf = NULL;
     char array_owned = 0;
 
+    npy_string_allocator *allocator = NpyString_new_allocator(PyMem_RawMalloc, PyMem_RawFree,
+                                                              PyMem_RawRealloc);
     if (allocator == NULL) {
-        allocator = NpyString_new_allocator(PyMem_RawMalloc, PyMem_RawFree,
-                                            PyMem_RawRealloc);
-        if (allocator == NULL) {
-            PyErr_SetString(PyExc_MemoryError,
-                            "Failed to create string allocator");
-            goto fail;
-        }
-    }
-    else {
-        // indicating that this is a view
-        array_owned = 2;
+        PyErr_SetString(PyExc_MemoryError,
+                        "Failed to create string allocator");
+        goto fail;
     }
 
     npy_static_string default_string = {0, NULL};
@@ -119,7 +113,7 @@ new_stringdtype_instance(PyObject *na_object, int coerce, npy_string_allocator *
     snew->has_string_na = has_string_na;
     snew->coerce = coerce;
     snew->allocator = allocator;
-    snew->array_owned = 2;
+    snew->array_owned = 0;
     snew->na_name = na_name;
     snew->default_string = default_string;
 
@@ -210,7 +204,7 @@ common_instance(PyArray_StringDTypeObject *dtype1, PyArray_StringDTypeObject *dt
     }
 
     return (PyArray_StringDTypeObject *)new_stringdtype_instance(
-            dtype1->na_object, dtype1->coerce, NULL);
+            dtype1->na_object, dtype1->coerce);
 }
 
 /*
@@ -274,7 +268,7 @@ string_discover_descriptor_from_pyobject(PyTypeObject *NPY_UNUSED(cls),
 
     Py_DECREF(val);
 
-    PyArray_Descr *ret = (PyArray_Descr *)new_stringdtype_instance(NULL, 1, NULL);
+    PyArray_Descr *ret = (PyArray_Descr *)new_stringdtype_instance(NULL, 1);
 
     return ret;
 }
@@ -657,10 +651,8 @@ stringdtype_finalize_descr(PyArray_Descr *dtype)
         return dtype;
     }
     PyArray_StringDTypeObject *ret = (PyArray_StringDTypeObject *)new_stringdtype_instance(
-            sdtype->na_object, sdtype->coerce, sdtype->allocator);
-    if (ret->array_owned == 0) {
-        ret->array_owned = 1;
-    }
+            sdtype->na_object, sdtype->coerce);
+    ret->array_owned = 1;
     return (PyArray_Descr *)ret;
 }
 
@@ -696,7 +688,7 @@ stringdtype_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    return new_stringdtype_instance(na_object, coerce, NULL);
+    return new_stringdtype_instance(na_object, coerce);
 }
 
 static void

@@ -279,18 +279,23 @@ PyArrayDescr_Type and PyArray_Descr
           char kind;
           char type;
           char byteorder;
-          char flags;
+          char _former_flags;  // unused field
           int type_num;
-          int elsize;
-          int alignment;
-          PyArray_ArrayDescr *subarray;
-          PyObject *fields;
-          PyObject *names;
-          PyArray_ArrFuncs *f;
-          PyObject *metadata;
+          /* 
+           * Definitions after this one must be accessed through accessor
+           * functions (see below) when compiling with NumPy 1.x support.
+           */
+          npy_uint64 flags;
+          npy_intp elsize;
+          npy_intp alignment;
           NpyAuxData *c_metadata;
           npy_hash_t hash;
+          void *reserved_null[2];  // unused field, must be NULLed.
       } PyArray_Descr;
+
+   Some dtypes have additional members which are accessible through
+   `PyDataType_NAMES`, `PyDataType_FIELDS`, `PyDataType_SUBARRAY`, and
+   in some cases (times) `PyDataType_C_METADATA`.
 
    .. c:member:: PyTypeObject *typeobj
 
@@ -321,7 +326,7 @@ PyArrayDescr_Type and PyArray_Descr
        endian), '=' (native), '\|' (irrelevant, ignore). All builtin data-
        types have byteorder '='.
 
-   .. c:member:: char flags
+   .. c:member:: npy_uint64 flags
 
        A data-type bit-flag that determines if the data-type exhibits object-
        array like behavior. Each bit in this member is a flag which are named
@@ -343,14 +348,17 @@ PyArrayDescr_Type and PyArray_Descr
        A number that uniquely identifies the data type. For new data-types,
        this number is assigned when the data-type is registered.
 
-   .. c:member:: int elsize
+   .. c:member:: npy_intp elsize
 
        For data types that are always the same size (such as long), this
        holds the size of the data type. For flexible data types where
        different arrays can have a different elementsize, this should be
        0.
 
-   .. c:member:: int alignment
+       See `PyDataType_ELSIZE` and `PyDataType_SET_ELSIZE` for a way to access
+       this field in a NumPy 1.x compatible way.
+
+   .. c:member:: npy_intp alignment
 
        A number providing alignment information for this data type.
        Specifically, it shows how far from the start of a 2-element
@@ -358,59 +366,8 @@ PyArrayDescr_Type and PyArray_Descr
        places an item of this type: ``offsetof(struct {char c; type v;},
        v)``
 
-   .. c:member:: PyArray_ArrayDescr *subarray
-
-       If this is non- ``NULL``, then this data-type descriptor is a
-       C-style contiguous array of another data-type descriptor. In
-       other-words, each element that this descriptor describes is
-       actually an array of some other base descriptor. This is most
-       useful as the data-type descriptor for a field in another
-       data-type descriptor. The fields member should be ``NULL`` if this
-       is non- ``NULL`` (the fields member of the base descriptor can be
-       non- ``NULL`` however).
-
-       .. c:type:: PyArray_ArrayDescr
-
-           .. code-block:: c
-
-              typedef struct {
-                  PyArray_Descr *base;
-                  PyObject *shape;
-              } PyArray_ArrayDescr;
-
-           .. c:member:: PyArray_Descr *base
-
-               The data-type-descriptor object of the base-type.
-
-           .. c:member:: PyObject *shape
-
-               The shape (always C-style contiguous) of the sub-array as a Python
-               tuple.
-
-   .. c:member:: PyObject *fields
-
-       If this is non-NULL, then this data-type-descriptor has fields
-       described by a Python dictionary whose keys are names (and also
-       titles if given) and whose values are tuples that describe the
-       fields. Recall that a data-type-descriptor always describes a
-       fixed-length set of bytes. A field is a named sub-region of that
-       total, fixed-length collection. A field is described by a tuple
-       composed of another data- type-descriptor and a byte
-       offset. Optionally, the tuple may contain a title which is
-       normally a Python string. These tuples are placed in this
-       dictionary keyed by name (and also title if given).
-
-   .. c:member:: PyObject *names
-
-       An ordered tuple of field names. It is NULL if no field is
-       defined.
-
-   .. c:member:: PyArray_ArrFuncs *f
-
-       A pointer to a structure containing functions that the type needs
-       to implement internal features. These functions are not the same
-       thing as the universal functions (ufuncs) described later. Their
-       signatures can vary arbitrarily.
+       See `PyDataType_ALIGNMENT` for a way to access this field in a NumPy 1.x
+       compatible way.
 
    .. c:member:: PyObject *metadata
 
@@ -498,6 +455,18 @@ PyArrayDescr_Type and PyArray_Descr
 PyArray_ArrFuncs
 ----------------
 
+.. c:function:: PyArray_ArrFuncs *PyDataType_GetArrFuncs(PyArray_Descr *dtype)
+
+    Fetch the legacy `PyArray_ArrFuncs` of the datatype (cannot fail).
+
+    .. versionadded:: NumPy 2.0
+        This function was added in a backwards compatible and backportable
+        way in NumPy 2.0 (see ``npy_2_compat.h``).
+        Any code that previously accessed the ``->f`` slot of the
+        ``PyArray_Descr``, must now use this function and backport it to
+        compile with 1.x.
+        (The ``npy_2_compat.h`` header can be vendored for this purpose.)
+
 .. c:type:: PyArray_ArrFuncs
 
     Functions implementing internal features. Not all of these
@@ -544,6 +513,17 @@ PyArray_ArrFuncs
     ``copyswap``, ``copyswapn``, ``getitem``, and ``setitem``
     functions can (and must) deal with mis-behaved arrays. The other
     functions require behaved memory segments.
+
+    .. note::
+        The functions are largely legacy API, however, some are still used.
+        As of NumPy 2.x they are only available via `PyDataType_GetArrFuncs`
+        (see the function for more details).
+        Before using any function defined in the struct you should check
+        whether it is ``NULL``.  In general, the functions ``getitem``,
+        ``setitem``, ``copyswap``, and ``copyswapn`` can be expected to be
+        defined, but all functions are expected to be replaced with newer API.
+        For example, ``PyArray_Pack`` is a more powerful version of ``setitem``
+        that for example correctly deals with casts.
 
     .. c:member:: void cast( \
             void *from, void *to, npy_intp n, void *fromarr, void *toarr)

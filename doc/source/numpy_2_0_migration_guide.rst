@@ -5,7 +5,33 @@ NumPy 2.0 migration guide
 *************************
 
 This document contains a set of instructions on how to update your code to
-work with Numpy 2.0.
+work with NumPy 2.0. It covers changes in NumPy's Python and C APIs.
+
+.. note::
+
+   Note that NumPy 2.0 also breaks binary compatibility - if you are
+   distributing binaries for a Python package that depends on NumPy's C API,
+   please see :ref:`numpy-2-abi-handling`.
+
+
+
+Ruff plugin
+===========
+
+Many of the changes covered in the 2.0 release notes and in this migration
+guide can be automatically adapted to in downstream code with a dedicated
+`Ruff <https://docs.astral.sh/ruff/>`__ rule, namely rule
+`NPY201 <https://docs.astral.sh/ruff/rules/numpy2-deprecation/>`__.
+
+You should install ``ruff>=0.2.0`` and add the ``NPY201`` rule to your
+``pyproject.toml``::
+
+    [tool.ruff.lint]
+    select = ["NPY201"]
+
+You can also apply the NumPy 2.0 rule directly from the command line::
+
+    $ ruff check path/to/code/ --select NPY201
 
 
 .. _migration_promotion_changes:
@@ -83,6 +109,50 @@ used to explicitly implement different behavior on NumPy 1.x and 2.0.
 
 Please let us know if you require additional workarounds here.
 
+.. _migration_c_descr:
+
+The ``PyArray_Descr`` struct has been changed
+---------------------------------------------
+One of the most impactful C-API changes is that the ``PyArray_Descr`` struct
+is now more opaque to allow us to add additional flags and have
+itemsizes not limited by the size of ``int`` as well as allow improving
+structured dtypes in the future and not burdon new dtypes with their fields.
+
+Code which only uses the type number and other initial fields is unaffected.
+Most code will hopefull mainly access the ``->elsize`` field, when the
+dtype/descriptor itself is attached to an array (e.g. ``arr->descr->elsize``)
+this is best replaced with ``PyArray_ITEMSIZE(arr)``.
+
+Where not possible, new accessor functions are required:
+
+* ``PyDataType_ELSIZE`` and ``PyDataType_SET_ELSIZE`` (note that the result
+  is now ``npy_intp`` and not ``int``).
+* ``PyDataType_ALIGNENT``
+* ``PyDataType_FIELDS``, ``PyDataType_NAMES``, ``PyDataType_SUBARRAY``
+* ``PyDataType_C_METADATA``
+
+Cython code should use Cython 3, in which case the change is transparent.
+(Struct access is available for elsize and alignment when compiling only for
+NumPy 2.)
+
+For compiling with both 1.x and 2.x if you use these new accessors it is
+unfortunately necessary to either define them locally via a macro like::
+
+  #if NPY_ABI_VERSION < 0x02000000
+    #define PyDataType_ELSIZE(descr) ((descr)->elsize)
+  #endif
+
+or adding ``npy2_compat.h`` into your code base and explicitly include it
+when compiling with NumPy 1.x (as they are new API).
+Including the file has no effect on NumPy 2.
+
+Please do not hesitate to open a NumPy issue, if you require assistence or
+the provided functions are not sufficient.
+
+**Custom User DTypes:**
+Existing user dtypes must now use ``PyArray_DescrProto`` to define their
+dtype and slightly modify the code. See note in `PyArray_RegisterDataType`.
+
 Functionality moved to headers requiring ``import_array()``
 -----------------------------------------------------------
 If you previously included only ``ndarraytypes.h`` you may find that some
@@ -90,6 +160,12 @@ functionality is not available anymore and requires the inclusion of
 ``ndarrayobject.h`` or similar.
 This include is also needed when vendoring ``npy_2_compat.h`` into your own
 codebase to allow use of the new definitions when compiling with NumPy 1.x.
+
+Functionality which previously did not require import includes:
+
+* Functions to access dtype flags: ``PyDataType_FLAGCHK``,
+  ``PyDataType_REFCHK``, and the related ``NPY_BEGIN_THREADS_DESCR``.
+* ``PyArray_GETITEM`` and ``PyArray_SETITEM``.
 
 .. warning::
   It is important that the ``import_array()`` mechanism is used to ensure
@@ -119,9 +195,28 @@ case you need to pass ``NPY_RAVEL_AXIS`` instead of ``NPY_MAXDIMS``.
 ``NPY_RAVEL_AXIS`` is defined in the ``npy_2_compat.h`` header and runtime
 dependent (mapping to 32 on NumPy 1.x and ``-2147483648`` on NumPy 2.x).
 
+Complex types - Underlying type changes
+---------------------------------------
 
-Namespace changes
-=================
+The underlying C types for all of the complex types have been changed to use
+native C99 types. While the memory layout of those types remains identical
+to the types used in NumPy 1.x, the API is slightly different, since direct
+field access (like ``c.real`` or ``c.imag``) is no longer possible.
+
+It is recommended to use the functions `npy_creal` and `npy_cimag` (and the
+corresponding float and long double variants) to retrieve
+the real or imaginary part of a complex number, as these will work with both
+NumPy 1.x and with NumPy 2.x. New functions `npy_csetreal` and `npy_csetimag`,
+along with compatibility macros `NPY_CSETREAL` and `NPY_CSETIMAG` (and the
+corresponding float and long double variants), have been
+added for setting the real or imaginary part.
+
+The underlying type remains a struct under C++ (all of the above still remains
+valid).
+
+
+Changes to namespaces
+=====================
 
 In NumPy 2.0 certain functions, modules, and constants were moved or removed
 to make the NumPy namespace more user-friendly by removing unnecessary or
@@ -230,8 +325,8 @@ downstream libraries we don't provide any information on how to replace them:
 ``MAY_SHARE_BOUNDS``]
 
 
-Lib namespace
--------------
+numpy.lib namespace
+-------------------
 
 Most of the functions available within ``np.lib`` are also present in the main
 namespace, which is their primary location. To make it unambiguous how to access each
@@ -253,10 +348,10 @@ the main namespace, then you're using a private member. You should either use th
 API or, in case it's infeasible, reach out to us with a request to restore the removed entry.
 
 
-Core namespace
---------------
+numpy.core namespace
+--------------------
 
-``np.core`` namespace is now officially private and has been renamed to ``np._core``.
+The ``np.core`` namespace is now officially private and has been renamed to ``np._core``.
 The user should never fetch members from the ``_core`` directly - instead the main 
 namespace should be used to access the attribute in question. The layout of the ``_core``
 module might change in the future without notice, contrary to public modules which adhere 
@@ -265,8 +360,8 @@ then you should either use the existing API or, in case it's infeasible, reach o
 with a request to restore the removed entry.
 
 
-ndarray and scalar namespace
-----------------------------
+ndarray and scalar methods
+--------------------------
 
 A few methods from ``np.ndarray`` and ``np.generic`` scalar classes have been removed.
 The table below provides replacements for the removed members:
@@ -281,22 +376,18 @@ setitem                 Use ``arr[index] = value`` instead.
 ======================  ========================================================
 
 
-Ruff plugin
------------
+numpy.strings namespace
+-----------------------
 
-All the changes that we covered in the previous sections can be automatically applied
-to the codebase with the dedicated Ruff rule,
-`NPY201 <https://docs.astral.sh/ruff/rules/numpy2-deprecation/>`_.
+A new `numpy.strings` namespace has been created, where most of the string
+operations are implemented as ufuncs. The old `numpy.char` namespace still is
+available, and, wherever possible, uses the new ufuncs for greater performance.
+We recommend using the `~numpy.strings` functions going forward. The
+`~numpy.char` namespace may be deprecated in the future.
 
-You should install Ruff, version ``0.2.0`` or above, and add the ``NPY201`` rule to
-your ``pyproject.toml``::
 
-    [tool.ruff.lint]
-    select = ["NPY201"]
-
-You can run NumPy 2.0 rule also directly from the command line::
-
-    $ ruff check path/to/code/ --select NPY201
+Other changes
+=============
 
 
 Note about pickled files
@@ -305,3 +396,23 @@ Note about pickled files
 NumPy 2.0 is designed to load pickle files created with NumPy 1.26,
 and vice versa. For versions 1.25 and earlier loading NumPy 2.0
 pickle file will throw an exception.
+
+
+Adapting to changes in the ``copy`` keyword
+-------------------------------------------
+
+The :ref:`copy keyword behavior changes <copy-keyword-changes-2.0>` in
+`~numpy.asarray`, `~numpy.array` and `ndarray.__array__
+<numpy.ndarray.__array__>` may require these changes:
+
+1. Code using ``np.array(..., copy=False)`` can in most cases be changed to
+   ``np.asarray(...)``. Older code tended to use ``np.array`` like this because
+   it had less overhead than the default ``np.asarray`` copy-if-needed
+   behavior. This is no longer true, and ``np.asarray`` is the preferred function.
+2. For code that explicitly needs to pass ``None``/``False`` meaning "copy if
+   needed" in a way that's compatible with NumPy 1.x and 2.x, see
+   `scipy#20172 <https://github.com/scipy/scipy/pull/20172>`__ for an example
+   of how to do so.
+3. For any ``__array__`` method on a non-NumPy array-like object, a
+   ``copy=None`` keyword can be added to the signature - this will work with
+   older NumPy versions as well.

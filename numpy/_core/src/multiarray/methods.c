@@ -22,6 +22,7 @@
 #include "calculation.h"
 #include "convert_datatype.h"
 #include "descriptor.h"
+#include "dtypemeta.h"
 #include "item_selection.h"
 #include "conversion_utils.h"
 #include "shape.h"
@@ -539,7 +540,7 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
     PyArray_CopySwapNFunc *copyswapn;
     PyArrayIterObject *it;
 
-    copyswapn = PyArray_DESCR(self)->f->copyswapn;
+    copyswapn = PyDataType_GetArrFuncs(PyArray_DESCR(self))->copyswapn;
     if (inplace) {
         if (PyArray_FailUnlessWriteable(self, "array to be byte-swapped") < 0) {
             return NULL;
@@ -1289,8 +1290,8 @@ array_sort(PyArrayObject *self,
             Py_DECREF(new_name);
             return NULL;
         }
-        Py_DECREF(newd->names);
-        newd->names = new_name;
+        Py_DECREF(((_PyArray_LegacyDescr *)newd)->names);
+        ((_PyArray_LegacyDescr *)newd)->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
     if (sortkind != _NPY_SORT_UNDEFINED && stable != -1) {
@@ -1367,8 +1368,8 @@ array_partition(PyArrayObject *self,
             Py_DECREF(new_name);
             return NULL;
         }
-        Py_DECREF(newd->names);
-        newd->names = new_name;
+        Py_DECREF(((_PyArray_LegacyDescr *)newd)->names);
+        ((_PyArray_LegacyDescr *)newd)->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
 
@@ -1436,8 +1437,8 @@ array_argsort(PyArrayObject *self,
             Py_DECREF(new_name);
             return NULL;
         }
-        Py_DECREF(newd->names);
-        newd->names = new_name;
+        Py_DECREF(((_PyArray_LegacyDescr *)newd)->names);
+        ((_PyArray_LegacyDescr *)newd)->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
     if (sortkind != _NPY_SORT_UNDEFINED && stable != -1) {
@@ -1509,8 +1510,8 @@ array_argpartition(PyArrayObject *self,
             Py_DECREF(new_name);
             return NULL;
         }
-        Py_DECREF(newd->names);
-        newd->names = new_name;
+        Py_DECREF(((_PyArray_LegacyDescr *)newd)->names);
+        ((_PyArray_LegacyDescr *)newd)->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
 
@@ -1564,7 +1565,7 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
         PyArray_Descr *new;
         int offset, res;
         Py_ssize_t pos = 0;
-        while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
+        while (PyDict_Next(PyDataType_FIELDS(dtype), &pos, &key, &value)) {
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
@@ -1699,7 +1700,7 @@ _getlist_pkl(PyArrayObject *self)
     PyObject *list;
     PyArray_GetItemFunc *getitem;
 
-    getitem = PyArray_DESCR(self)->f->getitem;
+    getitem = PyDataType_GetArrFuncs(PyArray_DESCR(self))->getitem;
     iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
     if (iter == NULL) {
         return NULL;
@@ -1725,7 +1726,7 @@ _setlist_pkl(PyArrayObject *self, PyObject *list)
     PyArrayIterObject *iter = NULL;
     PyArray_SetItemFunc *setitem;
 
-    setitem = PyArray_DESCR(self)->f->setitem;
+    setitem = PyDataType_GetArrFuncs(PyArray_DESCR(self))->setitem;
     iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
     if (iter == NULL) {
         return -1;
@@ -2158,13 +2159,13 @@ array_setstate(PyArrayObject *self, PyObject *args)
             if (swap) {
                 /* byte-swap on pickle-read */
                 npy_intp numels = PyArray_SIZE(self);
-                PyArray_DESCR(self)->f->copyswapn(PyArray_DATA(self),
+                PyDataType_GetArrFuncs(PyArray_DESCR(self))->copyswapn(PyArray_DATA(self),
                                         PyArray_ITEMSIZE(self),
                                         datastr, PyArray_ITEMSIZE(self),
                                         numels, 1, self);
                 if (!(PyArray_ISEXTENDED(self) ||
                       PyArray_DESCR(self)->metadata ||
-                      PyArray_DESCR(self)->c_metadata)) {
+                      PyDataType_C_METADATA(PyArray_DESCR(self)))) {
                     fa->descr = PyArray_DescrFromType(
                                     PyArray_DESCR(self)->type_num);
                 }
