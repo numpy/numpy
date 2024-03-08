@@ -175,6 +175,8 @@ alongside other, newer packages
     `here for SciPy <https://github.com/MacPython/scipy-wheels>`__.
 
 
+.. _numpy-2-abi-handling:
+
 NumPy 2.0-specific advice
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 

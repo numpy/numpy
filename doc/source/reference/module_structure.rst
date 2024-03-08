@@ -1,3 +1,5 @@
+.. _module-structure:
+
 ************************
 NumPy's module structure
 ************************

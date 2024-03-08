@@ -4,6 +4,126 @@
 NumPy 2.0.0 Release Notes
 =========================
 
+.. note::
+
+    The release of 2.0 is in progress and the current release overview and
+    highlights are still in a draft state. However, the highlights should
+    already list the most significant changes detailed in the full notes below,
+    and those full notes should be complete (if not copy-edited well enough
+    yet).
+
+NumPy 2.0.0 is the first major release since 2006. It is the result of X months
+of development since the last feature release by Y contributors, and contains a
+large amount of exciting new features as well as a large amount of changes to
+both the Python and C APIs.
+
+This major release includes breaking changes that could not happen in a regular
+minor (feature) release - including an ABI break, changes to type promotion
+rules, and API changes which may not have been emitting deprecation warnings
+in 1.26.x. Key documents related to how to adapt to changes in NumPy 2.0, in
+addition to these release notes, include:
+
+- The :ref:`numpy-2-migration-guide`
+- The :ref:`NumPy 2.0-specific advice <numpy-2-abi-handling>` in
+  :ref:`for-downstream-package-authors`
+
+
+Highlights
+==========
+
+Highlights of this release include:
+
+- New features:
+
+  - A new variable-length string dtype, `~numpy.dtypes.StringDType` and a new
+    `numpy.strings` namespace with performant ufuncs for string operations,
+  - Support for ``float32`` and ``longdouble`` in all `numpy.fft` functions,
+  - Support for the array API standard in the main ``numpy`` namespace.
+
+- Performance improvements:
+
+  - Sorting functions (`sort`, `argsort`, `partition`, `argpartition`)
+    have been accelerated through the use of the Intel x86-simd-sort and Google
+    Highway libraries, and may see large (hardware-specific) speedups,
+  - macOS Accelerate support and binary wheels for macOS >=14, with significant
+    performance improvements for linear algebra operations on macOS, and wheels
+    that are about 3 times smaller,
+  - `numpy.char` fixed-length string operations have been accelerated by
+    implementing ufuncs that also support `~numpy.dtypes.StringDType` in
+    addition to the the fixed-length string dtypes,
+  - A new tracing and introspection API, `~numpy.lib.introspect.opt_func_info`,
+    to determine which hardware-specific kernels are available and will be
+    dispatched to.
+
+- Python API improvements:
+
+  - A clear split between public and private API, with a new
+    :ref:`module structure <module-structure>`, and each public function now
+    available in a single place,
+  - Many removals of non-recommended functions and aliases. This should make
+    it easier to learn and use NumPy. The number of objects in the main
+    namespace decreased by ~10% and in ``numpy.lib`` by ~80%,
+  - :ref:`Canonical dtype names <canonical-python-and-c-types>` and a new
+    `~numpy.isdtype` introspection function,
+
+- C API improvements:
+
+  - A new :ref:`public C API for creating custom dtypes <dtype-api>`,
+  - Many outdated functions and macros removed, and private internals hidden to
+    ease future extensibility,
+  - New, easier to use, initialization functions:
+    :c:func:`PyArray_ImportNumPyAPI` and :c:func:`PyUFunc_ImportUFuncAPI`.
+
+- Improved behavior:
+
+  - Improvements to type promotion behavior was changed by adopting `NEP
+    50 <NEP50>`_. This fixes many user surprises about promotions which
+    previously often depended on data values of input arrays rather than only
+    their dtypes.  Please see the NEP and the :ref:`numpy-2-migration-guide`
+    for details as this change can lead to changes in output dtypes and lower
+    precision results for mixed-dtype operations.
+  - The default integer type on Windows is now ``int64`` rather than ``int32``,
+    matching the behavior on other platforms,
+  - The maximum number of array dimensions is changed from 32 to 64
+
+- Documentation:
+
+  - The reference guide navigation was signficantly improved, and there is now
+    documentation on NumPy's :ref:`module structure <module-structure>`,
+  - The :ref:`building from source <building-from-source>` documentation was
+    completely rewritten,
+
+Furthermore there are many changes to NumPy internals, including continuing to
+migrate code from C to C++, that will make it easier to improve and maintain
+NumPy in the future.
+
+The "no free lunch" theorem dictates that there is a price to pay for all these
+API and behavior improvements and better future extensibility. This price is:
+
+1. Backwards compatibility. There are a significant number of breaking changes
+   to both the Python and C APIs. In the majority of cases, there are clear
+   error messages that will inform the user how to adapt their code. However,
+   there are also changes in behavior for which it was not possible to give
+   such an error message - these cases are all covered in the Deprecation and
+   Compatibility sections below, and in the :ref:`numpy-2-migration-guide`.
+
+   Note that there is a ``ruff`` mode to auto-fix many things in Python code.
+
+2. Breaking changes to the NumPy ABI. As a result, binaries of packages that
+   use the NumPy C API and were built against a NumPy 1.xx release will not
+   work with NumPy 2.0. On import, such packages will see an ``ImportError``
+   with a message about binary incompatibiliy.
+
+   It is possible to build binaries against NumPy 2.0 that will work at runtime
+   with both NumPy 2.0 and 1.x. See :ref:`numpy-2-abi-handling` for more details.
+
+   **All downstream packages that depend on the NumPy ABI are advised to do a
+   new release built against NumPy 2.0 and verify that that release works with
+   both 2.0 and 1.26 - ideally in the period between 2.0.0rc1 (which will be
+   ABI-stable) and the final 2.0.0 release to avoid problems for their users.**
+
+The Python versions supported by this release are 3.9-3.12.
+
 
 NumPy 2.0 Python API removals
 =============================
@@ -310,6 +430,43 @@ environment variables to interact with ``meson``. `Native files
 
 (`gh-25193 <https://github.com/numpy/numpy/pull/25193>`__)
 
+``arange``'s ``start`` argument is positional-only
+--------------------------------------------------
+The first argument of ``arange`` is now positional only. This way,
+specifying a ``start`` argument as a keyword, e.g. ``arange(start=0, stop=4)``,
+raises a TypeError. Other behaviors, are unchanged so ``arange(stop=4)``,
+``arange(2, stop=4)`` and so on, are still valid and have the same meaning as
+before.
+
+(`gh-25336 <https://github.com/numpy/numpy/pull/25336>`__)
+
+Minor changes in behavior of sorting functions
+----------------------------------------------
+
+Due to algorithmic changes and use of SIMD code, sorting functions with methods
+that aren't stable may return slightly different results in 2.0.0 compared to
+1.26.x. This includes the default method of `~numpy.argsort` and
+`~numpy.argpartition`.
+
+Removed ambiguity when broadcasting in ``np.solve``
+---------------------------------------------------
+The broadcasting rules for ``np.solve(a, b)`` were ambiguous when ``b`` had 1
+fewer dimensions than ``a``. This has been resolved in a backward-incompatible
+way and is now compliant with the Array API. The old behaviour can be
+reconstructed by using ``np.solve(a, b[..., None])[..., 0]``.
+
+(`gh-25914 <https://github.com/numpy/numpy/pull/25914>`__)
+
+Modified representation for ``Polynomial``
+------------------------------------------
+The representation method for `~numpy.polynomial.polynomial.Polynomial` was
+updated to include the domain in the representation. The plain text and latex
+representations are now consistent. For example the output of
+``str(np.polynomial.Polynomial([1, 1], domain=[.1, .2]))`` used to be ``1.0 +
+1.0 x``, but now is ``1.0 + 1.0 (-3.0000000000000004 + 20.0 x)``.
+
+(`gh-21760 <https://github.com/numpy/numpy/pull/21760>`__)
+
 
 C API changes
 =============
@@ -337,7 +494,7 @@ C API changes
 
   (`gh-25789 <https://github.com/numpy/numpy/pull/25789>`__)
 
-* NumPy now defines :c:function:`PyArray_Pack` to set an individual memory
+* NumPy now defines :c:func:`PyArray_Pack` to set an individual memory
   address.  Unlike ``PyArray_SETITEM`` this function is equivalent to setting
   an individual array item and does not require a NumPy array input.
 
@@ -473,7 +630,7 @@ for simpler backporting.
 
 Structured dtype information access through functions
 -----------------------------------------------------
-The dtype structures fields `c_metadata``, ``names``,
+The dtype structures fields ``c_metadata``, ``names``,
 ``fields``, and ``subarray`` must now be accessed through new
 functions following the same names, such as ``PyDataType_NAMES``.
 Direct access of the fields is not valid as they do not exist for
@@ -486,11 +643,11 @@ The ``metadata`` field is kept, but the macro version should also be preferred.
 Descriptor ``elsize`` and ``alignment`` access
 ----------------------------------------------
 Unless compiling only with NumPy 2 support, the ``elsize`` and ``aligment``
-fields must now be accessed via `PyDataType_ELSIZE`,
-`PyDataType_SET_ELSIZE`, and `PyDataType_ALIGNMENT`.
+fields must now be accessed via ``PyDataType_ELSIZE``,
+``PyDataType_SET_ELSIZE``, and ``PyDataType_ALIGNMENT``.
 In cases where the descriptor is attached to an array, we advise
 using ``PyArray_ITEMSIZE`` as it exists on all NumPy versions.
-Please see :ref:`_migration_c_descr` for more information.
+Please see :ref:`migration_c_descr` for more information.
 
 (`gh-25943 <https://github.com/numpy/numpy/pull/25943>`__)
 
@@ -1217,7 +1374,7 @@ However, it means that:
 ``numpy.fft.helper`` made private
 ---------------------------------
 
-``numpy.fft.helper`` was renamed to `numpy.fft._helper` to indicate
+``numpy.fft.helper`` was renamed to ``numpy.fft._helper`` to indicate
 that it is a private submodule. All public functions exported by it
 should be accessed from `numpy.fft`.
 
@@ -1226,7 +1383,7 @@ should be accessed from `numpy.fft`.
 ``numpy.linalg.linalg`` made private
 ------------------------------------
 
-``numpy.linalg.linalg`` was renamed to `numpy.linalg._linalg`
+``numpy.linalg.linalg`` was renamed to ``numpy.linalg._linalg``
 to indicate that it is a private submodule. All public functions
 exported by it should be accessed from `numpy.linalg`.
 
@@ -1241,6 +1398,8 @@ Any out of bound axis value will now error, make sure to use
 ``axis=None``.
 
 (`gh-25149 <https://github.com/numpy/numpy/pull/25149>`__)
+
+.. _copy-keyword-changes-2.0:
 
 New ``copy`` keyword meaning for ``array`` and ``asarray`` constructors
 -----------------------------------------------------------------------
