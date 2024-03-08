@@ -60,7 +60,7 @@ and its sub-types).
     success.
 
     .. note::
-        In general, prefer the use of :c:function:`PyArray_Pack` when
+        In general, prefer the use of :c:func:`PyArray_Pack` when
         handling arbitrary Python objects.  Setitem is for example not able
         to handle arbitrary casts between different dtypes.
 
@@ -781,7 +781,7 @@ cannot not be accessed directly.
 .. versionchanged:: 2.0
     Prior to NumPy 2.0 the ABI was different but unnecessary large for user
     DTypes.  These accessors were all added in 2.0 and can be backported
-    (see :ref:`_migration_c_descr`).
+    (see :ref:`migration_c_descr`).
 
 .. c:function:: npy_intp PyDataType_ELSIZE(PyArray_Descr *descr)
 

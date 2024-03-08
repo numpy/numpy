@@ -98,6 +98,7 @@ dtype/descriptor itself is attached to an array (e.g. ``arr->descr->elsize``)
 this is best replaced with ``PyArray_ITEMSIZE(arr)``.
 
 Where not possible, new accessor functions are required:
+
 * ``PyDataType_ELSIZE`` and ``PyDataType_SET_ELSIZE`` (note that the result
   is now ``npy_intp`` and not ``int``).
 * ``PyDataType_ALIGNENT``
