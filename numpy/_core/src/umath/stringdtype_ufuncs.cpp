@@ -1781,6 +1781,121 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
     return -1;
 }
 
+static int
+zfill_strided_loop(PyArrayMethod_Context *context,
+                   char *const data[], npy_intp const dimensions[],
+                   npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    PyArray_StringDTypeObject *idescr =
+            (PyArray_StringDTypeObject *)context->descriptors[0];
+    npy_intp N = dimensions[0];
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *out = data[2];
+    npy_intp in1_stride = strides[0];
+    npy_intp in2_stride = strides[1];
+    npy_intp out_stride = strides[2];
+
+    npy_string_allocator *allocators[3] = {};
+    NpyString_acquire_allocators(3, context->descriptors, allocators);
+    npy_string_allocator *iallocator = allocators[0];
+    // allocators[1] is NULL
+    npy_string_allocator *oallocator = allocators[2];
+    int has_null = idescr->na_object != NULL;
+    int has_nan_na = idescr->has_nan_na;
+    int has_string_na = idescr->has_string_na;
+    const npy_static_string *default_string = &idescr->default_string;
+
+    while (N--) {
+        npy_static_string is = {0, NULL};
+        const npy_packed_static_string *ips =
+                (npy_packed_static_string *)in1;
+        npy_static_string os = {0, NULL};
+        npy_packed_static_string *ops = (npy_packed_static_string *)out;
+        int is_isnull = NpyString_load(iallocator, ips, &is);
+        if (is_isnull == -1) {
+            npy_gil_error(PyExc_MemoryError,
+                          "Failed to load string in zfill");
+            goto fail;
+        }
+        else if (is_isnull) {
+            if (has_nan_na) {
+                if (NpyString_pack_null(oallocator, ops) < 0) {
+                    npy_gil_error(PyExc_MemoryError,
+                                  "Failed to deallocate string in zfill");
+                    goto fail;
+                }
+
+                goto next_step;
+            }
+            else if (has_string_na || !has_null) {
+                is = *(npy_static_string *)default_string;
+            }
+            else {
+                npy_gil_error(PyExc_TypeError,
+                          "Cannot zfill null string that is not a nan-like "
+                          "value");
+                goto fail;
+            }
+        }
+        {
+            Buffer<ENCODING::UTF8> inbuf((char *)is.buf, is.size);
+            size_t in_codepoints = inbuf.num_codepoints();
+            size_t width = (size_t)*(npy_int64 *)in2;
+            // number of leading one-byte characters plus the size of the
+            // original string
+            size_t outsize = (width - in_codepoints) + is.size;
+            char *buf = NULL;
+            if (context->descriptors[0] == context->descriptors[2]) {
+                // in-place
+                buf = (char *)PyMem_RawMalloc(outsize);
+                if (buf == NULL) {
+                    npy_gil_error(PyExc_MemoryError,
+                                  "Failed to allocate string in zfill");
+                    goto fail;
+                }
+            }
+            else {
+                if (load_new_string(ops, &os, outsize, oallocator, "zfill") < 0) {
+                    goto fail;
+                }
+                /* explicitly discard const; initializing new buffer */
+                buf = (char *)os.buf;
+            }
+
+            Buffer<ENCODING::UTF8> outbuf(buf, outsize);
+            if (string_zfill(inbuf, (npy_int64)width, outbuf) < 0) {
+                goto fail;
+            }
+
+            // in-place operations need to clean up temp buffer
+            if (context->descriptors[0] == context->descriptors[2]) {
+                if (NpyString_pack(oallocator, ops, buf, outsize) < 0) {
+                    npy_gil_error(PyExc_MemoryError,
+                                  "Failed to pack string in zfill");
+                    goto fail;
+                }
+
+                PyMem_RawFree(buf);
+            }
+
+        }
+
+      next_step:
+
+        in1 += in1_stride;
+        in2 += in2_stride;
+        out += out_stride;
+    }
+
+    NpyString_release_allocators(3, allocators);
+    return 0;
+
+fail:
+    NpyString_release_allocators(3, allocators);
+    return -1;
+}
+
 NPY_NO_EXPORT int
 string_inputs_promoter(
         PyObject *ufunc_obj, PyArray_DTypeMeta *op_dtypes[],
@@ -2477,7 +2592,28 @@ init_stringdtype_ufuncs(PyObject *umath)
         }
     }
 
+    PyArray_DTypeMeta *zfill_dtypes[] = {
+        &PyArray_StringDType,
+        &PyArray_Int64DType,
+        &PyArray_StringDType,
+    };
 
+    if (init_ufunc(umath, "_zfill", zfill_dtypes, multiply_resolve_descriptors,
+                   zfill_strided_loop, 2, 1, NPY_NO_CASTING,
+                   (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
+        return -1;
+    }
+
+    PyArray_DTypeMeta *int_promoter_dtypes[] = {
+            &PyArray_StringDType,
+            (PyArray_DTypeMeta *)Py_None,
+            &PyArray_StringDType,
+    };
+
+    if (add_promoter(umath, "_zfill", int_promoter_dtypes, 3,
+                     string_multiply_promoter) < 0) {
+        return -1;
+    }
 
     return 0;
 }
