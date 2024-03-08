@@ -1519,34 +1519,34 @@ string_pad(Buffer<enc> buf, npy_int64 width, npy_ucs4 fill, JUSTPOSITION pos, Bu
         return -1;
     }
 
+    size_t len_codepoints = buf.num_codepoints();
+    size_t len_bytes = buf.after - buf.buf;
+
     size_t len;
-    switch (enc) {
-        case ENCODING::ASCII:
-        case ENCODING::UTF32:
-            len = buf.num_codepoints();
-            break;
-        case ENCODING::UTF8:
-            len = buf.after - buf.buf;
-            break;
+    if (enc == ENCODING::UTF8) {
+        len = len_bytes;
+    }
+    else {
+        len = len_codepoints;
     }
 
-    if (len >= finalwidth) {
+    if (len_codepoints >= finalwidth) {
         buf.buffer_memcpy(out, len);
         return (npy_intp) len;
     }
 
     size_t left, right;
     if (pos == JUSTPOSITION::CENTER) {
-        size_t pad = finalwidth - len;
+        size_t pad = finalwidth - len_codepoints;
         left = pad / 2 + (pad & finalwidth & 1);
         right = pad - left;
     }
     else if (pos == JUSTPOSITION::LEFT) {
         left = 0;
-        right = finalwidth - len;
+        right = finalwidth - len_codepoints;
     }
     else {
-        left = finalwidth - len;
+        left = finalwidth - len_codepoints;
         right = 0;
     }
 
@@ -1554,13 +1554,16 @@ string_pad(Buffer<enc> buf, npy_int64 width, npy_ucs4 fill, JUSTPOSITION pos, Bu
     assert(left <= PY_SSIZE_T_MAX - len && right <= PY_SSIZE_T_MAX - (left + len));
 
     if (left > 0) {
-        out += out.buffer_memset(fill, left);
+        out.advance_chars_or_bytes(out.buffer_memset(fill, left));
     }
+
     buf.buffer_memcpy(out, len);
-    out.advance_chars_or_bytes(len);
+    out += len_codepoints;
+
     if (right > 0) {
-        out.buffer_memset(fill, right);
+        out.advance_chars_or_bytes(out.buffer_memset(fill, right));
     }
+
     return finalwidth;
 }
 

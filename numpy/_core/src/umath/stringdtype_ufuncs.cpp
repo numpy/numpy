@@ -1712,12 +1712,16 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
             }
         }
         {
+            Buffer<enc> inbuf((char *)s1.buf, s1.size);
+            Buffer<enc> fill((char *)s2.buf, s2.size);
+
             char *buf = NULL;
             npy_intp newsize;
             int overflowed = npy_mul_sizes_with_overflow(
-                    &newsize,
+                    &(newsize),
                     (npy_intp)num_bytes_for_utf8_character((unsigned char *)s2.buf),
-                    (npy_intp)*(npy_int64*)in2);
+                    (npy_intp)*(npy_int64*)in2 - inbuf.num_codepoints());
+            newsize += s1.size;
 
             if (overflowed) {
                 npy_gil_error(PyExc_MemoryError,
@@ -1742,11 +1746,9 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
                 buf = (char *)os.buf;
             }
 
-            Buffer<enc> inbuf((char *)s1.buf, s1.size);
-            Buffer<enc> fill((char *)s2.buf, s2.size);
             Buffer<enc> outbuf(buf, newsize);
 
-            npy_intp len = string_pad(inbuf, (npy_int64)newsize, *fill, pos, outbuf);
+            npy_intp len = string_pad(inbuf, *(npy_int64*)in2, *fill, pos, outbuf);
 
             if (len < 0) {
                 return -1;

@@ -716,36 +716,26 @@ class TestMethods:
         with pytest.raises(OverflowError, match="new string is too long"):
             np.strings.expandtabs(np.array("\ta\n\tb", dtype=dt), sys.maxsize)
 
+    FILL_ERROR = "The fill character must be exactly one character long"
+
     def test_center_raises_multiple_character_fill(self, dt):
         buf = np.array("abc", dtype=dt)
         fill = np.array("**", dtype=dt)
-        with pytest.raises(TypeError,
-                match="The fill character must be exactly one character long"):
+        with pytest.raises(TypeError, match=self.FILL_ERROR):
             np.strings.center(buf, 10, fill)
 
     def test_ljust_raises_multiple_character_fill(self, dt):
         buf = np.array("abc", dtype=dt)
         fill = np.array("**", dtype=dt)
-        with pytest.raises(TypeError,
-                match="The fill character must be exactly one character long"):
+        with pytest.raises(TypeError, match=self.FILL_ERROR):
             np.strings.ljust(buf, 10, fill)
 
     def test_rjust_raises_multiple_character_fill(self, dt):
         buf = np.array("abc", dtype=dt)
         fill = np.array("**", dtype=dt)
-        with pytest.raises(TypeError,
-                match="The fill character must be exactly one character long"):
+        with pytest.raises(TypeError, match=self.FILL_ERROR):
             np.strings.rjust(buf, 10, fill)
 
-
-@pytest.mark.parametrize("dt", [
-    "S",
-    "U",
-    pytest.param("T", marks=pytest.mark.xfail(
-        reason="SrtingDType support to be implemented in a follow-up commit",
-        strict=True)),
-])
-class TestMethodsWithoutStringDTypeSupport:
     @pytest.mark.parametrize("buf,width,fillchar,res", [
         ('abc', 10, ' ', '   abc    '),
         ('abc', 6, ' ', ' abc  '),
@@ -945,18 +935,10 @@ class TestMethodsWithUnicode:
         res = np.array(res, dtype=dt)
         assert_array_equal(np.strings.expandtabs(buf), res)
 
-
-@pytest.mark.parametrize("dt", [
-    "U",
-    pytest.param("T", marks=pytest.mark.xfail(
-        reason="SrtingDType support to be implemented in a follow-up commit",
-        strict=True)),
-])
-class TestMethodsWithUnicodeWithoutStringDTypeSupport:
     @pytest.mark.parametrize("buf,width,fillchar,res", [
-        ('x', 2, '\U0010FFFF', 'x\U0010FFFF'),
-        ('x', 3, '\U0010FFFF', '\U0010FFFFx\U0010FFFF'),
-        ('x', 4, '\U0010FFFF', '\U0010FFFFx\U0010FFFF\U0010FFFF'),
+        ('x', 2, '\U0001044E', 'x\U0001044E'),
+        ('x', 3, '\U0001044E', '\U0001044Ex\U0001044E'),
+        ('x', 4, '\U0001044E', '\U0001044Ex\U0001044E\U0001044E'),
     ])
     def test_center(self, buf, width, fillchar, res, dt):
         buf = np.array(buf, dtype=dt)
@@ -965,20 +947,9 @@ class TestMethodsWithUnicodeWithoutStringDTypeSupport:
         assert_array_equal(np.strings.center(buf, width, fillchar), res)
 
     @pytest.mark.parametrize("buf,width,fillchar,res", [
-        ('x', 2, '\U0010FFFF', 'x\U0010FFFF'),
-        ('x', 3, '\U0010FFFF', '\U0010FFFFx\U0010FFFF'),
-        ('x', 4, '\U0010FFFF', '\U0010FFFFx\U0010FFFF\U0010FFFF'),
-    ])
-    def test_center(self, buf, width, fillchar, res, dt):
-        buf = np.array(buf, dtype=dt)
-        fillchar = np.array(fillchar, dtype=dt)
-        res = np.array(res, dtype=dt)
-        assert_array_equal(np.strings.center(buf, width, fillchar), res)
-
-    @pytest.mark.parametrize("buf,width,fillchar,res", [
-        ('x', 2, '\U0010FFFF', 'x\U0010FFFF'),
-        ('x', 3, '\U0010FFFF', 'x\U0010FFFF\U0010FFFF'),
-        ('x', 4, '\U0010FFFF', 'x\U0010FFFF\U0010FFFF\U0010FFFF'),
+        ('x', 2, '\U0001044E', 'x\U0001044E'),
+        ('x', 3, '\U0001044E', 'x\U0001044E\U0001044E'),
+        ('x', 4, '\U0001044E', 'x\U0001044E\U0001044E\U0001044E'),
     ])
     def test_ljust(self, buf, width, fillchar, res, dt):
         buf = np.array(buf, dtype=dt)
@@ -987,9 +958,9 @@ class TestMethodsWithUnicodeWithoutStringDTypeSupport:
         assert_array_equal(np.strings.ljust(buf, width, fillchar), res)
 
     @pytest.mark.parametrize("buf,width,fillchar,res", [
-        ('x', 2, '\U0010FFFF', '\U0010FFFFx'),
-        ('x', 3, '\U0010FFFF', '\U0010FFFF\U0010FFFFx'),
-        ('x', 4, '\U0010FFFF', '\U0010FFFF\U0010FFFF\U0010FFFFx'),
+        ('x', 2, '\U0001044E', '\U0001044Ex'),
+        ('x', 3, '\U0001044E', '\U0001044E\U0001044Ex'),
+        ('x', 4, '\U0001044E', '\U0001044E\U0001044E\U0001044Ex'),
     ])
     def test_rjust(self, buf, width, fillchar, res, dt):
         buf = np.array(buf, dtype=dt)
