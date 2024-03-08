@@ -310,16 +310,6 @@ environment variables to interact with ``meson``. `Native files
 
 (`gh-25193 <https://github.com/numpy/numpy/pull/25193>`__)
 
-``arange``'s ``start`` argument is positional-only
---------------------------------------------------
-The first argument of ``arange`` is now positional only. This way,
-specifying a ``start`` argument as a keyword, e.g. ``arange(start=0, stop=4)``,
-raises a TypeError. Other behaviors, are unchanged so ``arange(stop=4)``,
-``arange(2, stop=4)`` and so on, are still valid and have the same meaning as
-before.
-
-(`gh-25336 <https://github.com/numpy/numpy/pull/25336>`__)
-
 
 C API changes
 =============
