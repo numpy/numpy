@@ -15,7 +15,7 @@
 #include "npy_config.h"
 #include "npy_ctypes.h"
 #include "npy_import.h"
-#include "npy_pycompat.h"
+
 
 #include "_datetime.h"
 #include "common.h"
@@ -2038,7 +2038,6 @@ arraydescr_dealloc(PyArray_Descr *self)
 {
     Py_XDECREF(self->typeobj);
     if (!PyDataType_ISLEGACY(self)) {
-        /* non legacy dtypes must not have fields, etc. */
         Py_TYPE(self)->tp_free((PyObject *)self);
         return;
     }
