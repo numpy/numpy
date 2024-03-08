@@ -1813,6 +1813,11 @@ _convert_from_str(PyObject *obj, int align)
 
         /* Parse the integer, make sure it's the rest of the string */
         elsize = (int)strtol(type + 1, &typeend, 10);
+        /* Make sure size is not negative */
+        if (elsize < 0) {
+            goto fail;
+        }
+
         if (typeend - type == len) {
 
             kind = type[0];
