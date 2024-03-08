@@ -1557,7 +1557,7 @@ string_pad(Buffer<enc> buf, npy_int64 width, npy_ucs4 fill, JUSTPOSITION pos, Bu
         out += out.buffer_memset(fill, left);
     }
     buf.buffer_memcpy(out, len);
-    out += len;
+    out.advance_chars_or_bytes(len);
     if (right > 0) {
         out.buffer_memset(fill, right);
     }
