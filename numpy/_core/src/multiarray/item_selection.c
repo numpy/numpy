@@ -384,6 +384,12 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         return NULL;
     }
 
+    if (PyArray_Size((PyObject *)self) == 0) {
+        PyErr_SetString(PyExc_IndexError, 
+                        "put: cannot do a put on an empty array");
+        return NULL;
+    }
+
     if (PyArray_FailUnlessWriteable(self, "put: output array") < 0) {
         return NULL;
     }

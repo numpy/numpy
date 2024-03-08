@@ -3501,6 +3501,12 @@ class TestMethods:
         bad_array = [1, 2, 3]
         assert_raises(TypeError, np.put, bad_array, [0, 2], 5)
 
+        # when calling np.put, make sure an 
+        # IndexError is raised if the 
+        # array is empty
+        empty_array = np.asarray(list())
+        assert_raises(IndexError, np.put, empty_array, 1, 1, mode="wrap")
+
     def test_ravel(self):
         a = np.array([[0, 1], [2, 3]])
         assert_equal(a.ravel(), [0, 1, 2, 3])
