@@ -1606,8 +1606,7 @@ center_ljust_rjust_resolve_descriptors(
     if (given_descrs[3] == NULL) {
         out_descr = (PyArray_Descr *)new_stringdtype_instance(
                 ((PyArray_StringDTypeObject *)given_descrs[1])->na_object,
-                ((PyArray_StringDTypeObject *)given_descrs[1])->coerce,
-                NULL);
+                ((PyArray_StringDTypeObject *)given_descrs[1])->coerce);
 
         if (out_descr == NULL) {
             return (NPY_CASTING)-1;

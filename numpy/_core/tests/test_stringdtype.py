@@ -1206,21 +1206,31 @@ def test_binary(string_array, unicode_array, function_name, args):
 
 
 def test_strip(string_array, unicode_array):
+    print("rjs")
+
     rjs = np.char.rjust(string_array, 1000)
     rju = np.char.rjust(unicode_array, 1000)
 
+    print("ljs")
+
     ljs = np.char.ljust(string_array, 1000)
     lju = np.char.ljust(unicode_array, 1000)
+
+    print("lstrip")
 
     assert_array_equal(
         np.char.lstrip(rjs),
         np.char.lstrip(rju).astype(StringDType()),
     )
 
+    print("rstrip")
+
     assert_array_equal(
         np.char.rstrip(ljs),
         np.char.rstrip(lju).astype(StringDType()),
     )
+
+    print("strip")
 
     assert_array_equal(
         np.char.strip(ljs),
