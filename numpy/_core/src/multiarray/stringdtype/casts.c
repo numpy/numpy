@@ -30,7 +30,7 @@
             if (given_descrs[1] == NULL) {                                     \
                 PyArray_Descr *new =                                           \
                         (PyArray_Descr *)new_stringdtype_instance(             \
-                                NULL, 1, NULL);                                \
+                                NULL, 1);                                      \
                 if (new == NULL) {                                             \
                     return (NPY_CASTING)-1;                                    \
                 }                                                              \
@@ -121,7 +121,7 @@ string_to_string(PyArrayMethod_Context *context, char *const data[],
                 }
             }
             else if (free_and_copy(iallocator, oallocator, s, os,
-                                   "string to string cast") == -1) {
+                                   "string to string cast") < 0) {
                 goto fail;
             }
         }

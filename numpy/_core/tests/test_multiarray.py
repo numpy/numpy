@@ -9471,14 +9471,9 @@ class TestArange:
         assert_raises(TypeError, np.arange, start=4)
 
     def test_start_stop_kwarg(self):
-        with pytest.raises(TypeError):
-            # Start cannot be passed as a kwarg anymore, because on it's own
-            # it would be strange.
-            np.arange(start=0, stop=3)
-
         keyword_stop = np.arange(stop=3)
         keyword_zerotostop = np.arange(0, stop=3)
-        keyword_start_stop = np.arange(3, stop=9)
+        keyword_start_stop = np.arange(start=3, stop=9)
 
         assert len(keyword_stop) == 3
         assert len(keyword_zerotostop) == 3

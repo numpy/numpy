@@ -286,14 +286,9 @@ cdef extern from "numpy/arrayobject.h":
         # Flags are not directly accessible on Cython <3. Use PyDataType_FLAGS.
         # cdef char flags
         cdef int type_num
-        cdef int itemsize "elsize"
-        cdef int alignment
-        cdef object fields
-        cdef tuple names
-        # Use PyDataType_HASSUBARRAY to test whether this field is
-        # valid (the pointer can be NULL). Most users should access
-        # this field via the inline helper method PyDataType_SHAPE.
-        cdef PyArray_ArrayDescr* subarray
+        # itemsize/elsize, alignment, fields, names, and subarray must
+        # use the `PyDataType_*` accessor macros. With Cython 3 you can
+        # still use getter attributes `dtype.itemsize`
 
     ctypedef class numpy.flatiter [object PyArrayIterObject, check_size ignore]:
         # Use through macros
@@ -374,6 +369,14 @@ cdef extern from "numpy/arrayobject.h":
     bint PyTypeNum_ISUSERDEF(int) nogil
     bint PyTypeNum_ISEXTENDED(int) nogil
     bint PyTypeNum_ISOBJECT(int) nogil
+
+    npy_intp PyDataType_ELSIZE(dtype) nogil
+    void PyDataType_SET_ELSIZE(dtype, npy_intp) nogil
+    npy_intp PyDataType_ALIGNMENT(dtype) nogil
+    PyObject* PyDataType_METADATA(dtype) nogil
+    PyArray_ArrayDescr* PyDataType_SUBARRAY(dtype) nogil
+    PyObject* PyDataType_NAMES(dtype) nogil
+    PyObject* PyDataType_FIELDS(dtype) nogil
 
     bint PyDataType_ISBOOL(dtype) nogil
     bint PyDataType_ISUNSIGNED(dtype) nogil

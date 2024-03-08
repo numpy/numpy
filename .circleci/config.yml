@@ -69,16 +69,6 @@ jobs:
             ./tools/ci/test_all_newsfragments_used.py
 
       - run:
-          name: run doctests on documentation
-          command: |
-            . venv/bin/activate
-            # Note: keep these two checks separate, because they seem to
-            # influence each other through changing global state (e.g., via
-            # `np.polynomial.set_default_printstyle`)
-            python tools/refguide_check.py --rst
-            python tools/refguide_check.py --doctests
-
-      - run:
           name: build devdocs w/ref warnings
           command: |
             . venv/bin/activate
@@ -103,6 +93,16 @@ jobs:
       - store_artifacts:
           path: doc/neps/_build/html/
      #      destination: neps
+
+      - run:
+          name: run doctests on documentation
+          command: |
+            . venv/bin/activate
+            # Note: keep these two checks separate, because they seem to
+            # influence each other through changing global state (e.g., via
+            # `np.polynomial.set_default_printstyle`)
+            python tools/refguide_check.py --rst
+            python tools/refguide_check.py --doctests
 
       - persist_to_workspace:
           root: ~/repo

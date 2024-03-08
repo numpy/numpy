@@ -244,7 +244,7 @@ static int _array_descr_walk(PyArray_Descr* descr, PyObject *l)
                 return -1;
             }
         }
-        if(PyDataType_HASSUBARRAY(ldescr)) {
+        if(ldescr->subarray != NULL) {
             st = _array_descr_walk_subarray(ldescr->subarray, l);
             if (st) {
                 return -1;

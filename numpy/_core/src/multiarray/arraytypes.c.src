@@ -1125,7 +1125,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
         }
         return 0;
     }
-    else if (PyDataType_HASSUBARRAY(descr)) {
+    else if (descr->subarray != NULL) {
         /* copy into an array of the same basic type */
         PyArray_Dims shape = {NULL, -1};
         if (!(PyArray_IntpConverter(descr->subarray->shape, &shape))) {
@@ -2297,7 +2297,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         }
         return;
     }
-    if (PyDataType_HASSUBARRAY(descr)) {
+    if (descr->subarray) {
         PyArray_Descr *new;
         npy_intp num;
         npy_intp i;
@@ -2382,7 +2382,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         }
         return;
     }
-    if (PyDataType_HASSUBARRAY(descr)) {
+    if (descr->subarray != NULL) {
         PyArray_Descr *new;
         npy_intp num;
         int subitemsize;
@@ -4048,7 +4048,6 @@ static _PyArray_LegacyDescr @from@_Descr = {
     .type_num = NPY_@from@,
     .elsize = 0,
     .alignment = NPY_ALIGNOF(@align@),
-    ._former_f = &_Py@NAME@_ArrFuncs,
     .hash = -1,
 };
 
@@ -4178,7 +4177,6 @@ NPY_NO_EXPORT _PyArray_LegacyDescr @from@_Descr = {
     .type_num = NPY_@from@,
     .elsize = sizeof(@fromtype@),
     .alignment = NPY_ALIGNOF(@fromtype@),
-    ._former_f = &_Py@NAME@_ArrFuncs,
     .hash = -1,
 };
 
@@ -4235,7 +4233,7 @@ PyArray_DescrFromType(int type)
         ret = NULL;
     }
     else if (type == NPY_VSTRING || type == NPY_VSTRINGLTR) {
-        ret = (PyArray_Descr *)new_stringdtype_instance(NULL, 1, NULL);
+        ret = (PyArray_Descr *)new_stringdtype_instance(NULL, 1);
     }
     // builtin legacy dtypes
     else if (type < NPY_NTYPES_LEGACY) {

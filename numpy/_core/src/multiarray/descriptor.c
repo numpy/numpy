@@ -1969,7 +1969,7 @@ PyArray_DescrNew(PyArray_Descr *base_descr)
     /* Don't copy PyObject_HEAD part */
     memcpy((char *)newdescr + sizeof(PyObject),
            (char *)base + sizeof(PyObject),
-           sizeof(PyArray_Descr) - sizeof(PyObject));
+           sizeof(_PyArray_LegacyDescr) - sizeof(PyObject));
 
     /*
      * The c_metadata has a by-value ownership model, need to clone it
@@ -2063,12 +2063,16 @@ static PyMemberDef arraydescr_members[] = {
     {"byteorder",
         T_CHAR, offsetof(PyArray_Descr, byteorder), READONLY, NULL},
     {"itemsize",
-        T_INT, offsetof(PyArray_Descr, elsize), READONLY, NULL},
+        T_PYSSIZET, offsetof(PyArray_Descr, elsize), READONLY, NULL},
     {"alignment",
-        T_INT, offsetof(PyArray_Descr, alignment), READONLY, NULL},
+        T_PYSSIZET, offsetof(PyArray_Descr, alignment), READONLY, NULL},
     {"flags",
-        T_BYTE, offsetof(PyArray_Descr, flags), READONLY, NULL},
-    {NULL, 0, 0, 0, NULL},
+#if NPY_ULONGLONG == NPY_UINT64
+        T_ULONGLONG, offsetof(PyArray_Descr, flags), READONLY, NULL},
+#else
+    #error Assuming long long is 64bit, if not replace with getter function.
+#endif
+  {NULL, 0, 0, 0, NULL},
 };
 
 static PyObject *
@@ -2785,7 +2789,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     }
     PyTuple_SET_ITEM(state, 5, PyLong_FromLong(elsize));
     PyTuple_SET_ITEM(state, 6, PyLong_FromLong(alignment));
-    PyTuple_SET_ITEM(state, 7, PyLong_FromLong(self->flags));
+    PyTuple_SET_ITEM(state, 7, PyLong_FromUnsignedLongLong(self->flags));
 
     PyTuple_SET_ITEM(ret, 2, state);
     return ret;
@@ -2840,7 +2844,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
     PyObject *subarray, *fields, *names = NULL, *metadata=NULL;
     int incref_names = 1;
     int int_dtypeflags = 0;
-    char dtypeflags;
+    npy_uint64 dtypeflags;
 
     if (!PyDataType_ISLEGACY(self)) {
         PyErr_SetString(PyExc_RuntimeError,
@@ -3043,7 +3047,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         }
 
         self->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
-        if (!PyDataType_HASSUBARRAY(self)) {
+        if (self->subarray == NULL) {
             return PyErr_NoMemory();
         }
         self->subarray->base = (PyArray_Descr *)PyTuple_GET_ITEM(subarray, 0);
@@ -3140,6 +3144,10 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
      * flags as an int even though it actually was a char in the PyArray_Descr
      * structure
      */
+    if (int_dtypeflags < 0 && int_dtypeflags >= -128) {
+        /* NumPy used to use a char. So normalize if signed. */
+        int_dtypeflags += 128;
+    }
     dtypeflags = int_dtypeflags;
     if (dtypeflags != int_dtypeflags) {
         PyErr_Format(PyExc_ValueError,
@@ -3337,7 +3345,7 @@ PyArray_DescrNewByteorder(PyArray_Descr *oself, char newendian)
         Py_DECREF(new->fields);
         new->fields = newfields;
     }
-    if (PyDataType_HASSUBARRAY(new)) {
+    if (new->subarray) {
         Py_DECREF(new->subarray->base);
         new->subarray->base = PyArray_DescrNewByteorder(
                 self->subarray->base, newendian);

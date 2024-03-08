@@ -3068,7 +3068,7 @@ array_arange(PyObject *NPY_UNUSED(ignored),
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("arange", args, len_args, kwnames,
-            "|", NULL, &o_start,
+            "|start", NULL, &o_start,
             "|stop", NULL, &o_stop,
             "|step", NULL, &o_step,
             "|dtype", &PyArray_DescrConverter2, &typecode,

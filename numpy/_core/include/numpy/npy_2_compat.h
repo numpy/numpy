@@ -41,6 +41,7 @@
  * In that case we need to ensure that users first included the full headers
  * and not just `ndarraytypes.h`.
  */
+
 #ifndef NPY_FEATURE_VERSION
   #error "The NumPy 2 compat header requires `import_array()` for which "  \
          "the `ndarraytypes.h` header include is not sufficient.  Please "  \
@@ -61,6 +62,8 @@
    * This allows downstream to use `PyArray_RUNTIME_VERSION` if they need to.
    */
   #define PyArray_RUNTIME_VERSION NPY_FEATURE_VERSION
+  /* Compiling on NumPy 1.x where these are the same: */
+  #define PyArray_DescrProto PyArray_Descr
 #endif
 
 
@@ -107,25 +110,15 @@ PyArray_ImportNumPyAPI()
     #define NPY_RAVEL_AXIS NPY_MIN_INT
     #define NPY_MAXARGS 64
 
-    static inline npy_uint64
-    PyDataType_FLAGS(const PyArray_Descr *dtype)
-    {
-        return (unsigned char)dtype->flags;
-    }
 #elif NPY_ABI_VERSION < 0x02000000
     #define NPY_DEFAULT_INT NPY_LONG
     #define NPY_RAVEL_AXIS 32
     #define NPY_MAXARGS 32
 
-    static inline npy_uint64
-    PyDataType_FLAGS(const PyArray_Descr *dtype)
-    {
-        return (unsigned char)dtype->flags;
-    }
-
     /* Aliases of 2.x names to 1.x only equivalent names */
     #define NPY_NTYPES NPY_NTYPES_LEGACY
     #define PyArray_DescrProto PyArray_Descr
+    #define _PyArray_LegacyDescr PyArray_Descr
     /* NumPy 2 definition always works, but add it for 1.x only */
     #define PyDataType_ISLEGACY(dtype) (1)
 #else
@@ -135,19 +128,93 @@ PyArray_ImportNumPyAPI()
         (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? -1 : 32)
     #define NPY_MAXARGS  \
         (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? 64 : 32)
+#endif
+
+
+/*
+ * Access inline functions for descriptor fields.  Except for the first
+ * few fields, these needed to be moved (elsize, alignment) for
+ * additional space.  Or they are descriptor specific and are not generally
+ * available anymore (metadata, c_metadata, subarray, names, fields).
+ *
+ * Most of these are defined via the `DESCR_ACCESSOR` macro helper.
+ */
+#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION || NPY_ABI_VERSION < 0x02000000
+    /* Compiling for 1.x or 2.x only, direct field access is OK: */
+
+    static inline void
+    PyDataType_SET_ELSIZE(PyArray_Descr *dtype, npy_intp size)
+    {
+        dtype->elsize = size;
+    }
+
+    static inline npy_uint64
+    PyDataType_FLAGS(const PyArray_Descr *dtype)
+    {
+    #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
+        return dtype->flags;
+    #else
+        return (unsigned char)dtype->flags;  /* Need unsigned cast on 1.x */
+    #endif
+    }
+
+    #define DESCR_ACCESSOR(FIELD, field, type, legacy_only)    \
+        static inline type                                     \
+        PyDataType_##FIELD(const PyArray_Descr *dtype) {       \
+            if (legacy_only && !PyDataType_ISLEGACY(dtype)) {  \
+                return (type)0;                                \
+            }                                                  \
+            return ((_PyArray_LegacyDescr *)dtype)->field;     \
+        }
+#else  /* compiling for both 1.x and 2.x */
+
+    static inline void
+    PyDataType_SET_ELSIZE(PyArray_Descr *dtype, npy_intp size)
+    {
+        if (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION) {
+            ((_PyArray_DescrNumPy2 *)dtype)->elsize = size;
+        }
+        else {
+            ((PyArray_DescrProto *)dtype)->elsize = (int)size;
+        }
+    }
 
     static inline npy_uint64
     PyDataType_FLAGS(const PyArray_Descr *dtype)
     {
         if (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION) {
-            // TODO: This will change to a semi-private 2.0 struct name
-            return (unsigned char)((PyArray_Descr *)dtype)->flags;
+            return ((_PyArray_DescrNumPy2 *)dtype)->flags;
         }
         else {
             return (unsigned char)((PyArray_DescrProto *)dtype)->flags;
         }
     }
+
+    /* Cast to LegacyDescr always fine but needed when `legacy_only` */
+    #define DESCR_ACCESSOR(FIELD, field, type, legacy_only)        \
+        static inline type                                         \
+        PyDataType_##FIELD(const PyArray_Descr *dtype) {           \
+            if (legacy_only && !PyDataType_ISLEGACY(dtype)) {      \
+                return (type)0;                                    \
+            }                                                      \
+            if (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION) {  \
+                return ((_PyArray_LegacyDescr *)dtype)->field;     \
+            }                                                      \
+            else {                                                 \
+                return ((PyArray_DescrProto *)dtype)->field;       \
+            }                                                      \
+        }
 #endif
+
+DESCR_ACCESSOR(ELSIZE, elsize, npy_intp, 0)
+DESCR_ACCESSOR(ALIGNMENT, alignment, npy_intp, 0)
+DESCR_ACCESSOR(METADATA, metadata, PyObject *, 1)
+DESCR_ACCESSOR(SUBARRAY, subarray, PyArray_ArrayDescr *, 1)
+DESCR_ACCESSOR(NAMES, names, PyObject *, 1)
+DESCR_ACCESSOR(FIELDS, fields, PyObject *, 1)
+DESCR_ACCESSOR(C_METADATA, c_metadata, NpyAuxData *, 1)
+
+#undef DESCR_ACCESSOR
 
 
 #if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
