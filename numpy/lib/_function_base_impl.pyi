@@ -48,7 +48,7 @@ from numpy._typing import (
     _ComplexLike_co,
 )
 
-from numpy.core.multiarray import (
+from numpy._core.multiarray import (
     bincount as bincount,
 )
 
@@ -505,6 +505,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> floating[Any]: ...
 @overload
 def percentile(
@@ -515,6 +517,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> complexfloating[Any, Any]: ...
 @overload
 def percentile(
@@ -525,6 +529,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> timedelta64: ...
 @overload
 def percentile(
@@ -535,6 +541,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> datetime64: ...
 @overload
 def percentile(
@@ -545,6 +553,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> Any: ...
 @overload
 def percentile(
@@ -555,6 +565,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
 def percentile(
@@ -565,6 +577,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> NDArray[complexfloating[Any, Any]]: ...
 @overload
 def percentile(
@@ -575,6 +589,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> NDArray[timedelta64]: ...
 @overload
 def percentile(
@@ -585,6 +601,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> NDArray[datetime64]: ...
 @overload
 def percentile(
@@ -595,6 +613,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> NDArray[object_]: ...
 @overload
 def percentile(
@@ -605,6 +625,8 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: bool = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> Any: ...
 @overload
 def percentile(
@@ -615,26 +637,20 @@ def percentile(
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: bool = ...,
+    *,
+    weights: None | _ArrayLikeFloat_co = ...,
 ) -> _ArrayType: ...
 
 # NOTE: Not an alias, but they do have identical signatures
 # (that we can reuse)
 quantile = percentile
 
-# TODO: Returns a scalar for <= 1D array-likes; returns an ndarray otherwise
-def trapz(
-    y: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
-    x: None | _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co = ...,
-    dx: float = ...,
-    axis: SupportsIndex = ...,
-) -> Any: ...
-
 def meshgrid(
     *xi: ArrayLike,
     copy: bool = ...,
     sparse: bool = ...,
     indexing: L["xy", "ij"] = ...,
-) -> list[NDArray[Any]]: ...
+) -> tuple[NDArray[Any], ...]: ...
 
 @overload
 def delete(

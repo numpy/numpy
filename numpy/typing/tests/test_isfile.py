@@ -10,7 +10,7 @@ FILES = [
     ROOT / "py.typed",
     ROOT / "__init__.pyi",
     ROOT / "ctypeslib.pyi",
-    ROOT / "core" / "__init__.pyi",
+    ROOT / "_core" / "__init__.pyi",
     ROOT / "f2py" / "__init__.pyi",
     ROOT / "fft" / "__init__.pyi",
     ROOT / "lib" / "__init__.pyi",

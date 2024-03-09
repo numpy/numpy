@@ -12,7 +12,7 @@ import itertools
 import pytest
 
 import numpy as np
-from numpy.core.numeric import normalize_axis_tuple
+from numpy._core.numeric import normalize_axis_tuple
 from numpy.testing import (
     assert_warns, suppress_warnings
     )
@@ -250,6 +250,57 @@ class TestAverage:
         actual = average(b, weights=w, axis=1, keepdims=True)
         desired = masked_array([[2.], [3.], [4.]], [[False], [False], [True]])
         assert_equal(actual, desired)
+
+    def test_weight_and_input_dims_different(self):
+        # this test mirrors a test for np.average()
+        # in lib/test/test_function_base.py
+        y = np.arange(12).reshape(2, 2, 3)
+        w = np.array([0., 0., 1., .5, .5, 0., 0., .5, .5, 1., 0., 0.])\
+            .reshape(2, 2, 3)
+
+        m = np.full((2, 2, 3), False)
+        yma = np.ma.array(y, mask=m)
+        subw0 = w[:, :, 0]
+
+        actual = average(yma, axis=(0, 1), weights=subw0)
+        desired = masked_array([7., 8., 9.], mask=[False, False, False])
+        assert_almost_equal(actual, desired)
+
+        m = np.full((2, 2, 3), False)
+        m[:, :, 0] = True
+        m[0, 0, 1] = True
+        yma = np.ma.array(y, mask=m)
+        actual = average(yma, axis=(0, 1), weights=subw0)
+        desired = masked_array(
+            [np.nan, 8., 9.],
+            mask=[True, False, False])
+        assert_almost_equal(actual, desired)
+
+        m = np.full((2, 2, 3), False)
+        yma = np.ma.array(y, mask=m)
+
+        subw1 = w[1, :, :]
+        actual = average(yma, axis=(1, 2), weights=subw1)
+        desired = masked_array([2.25, 8.25], mask=[False, False])
+        assert_almost_equal(actual, desired)
+
+        # here the weights have the wrong shape for the specified axes
+        with pytest.raises(
+                ValueError,
+                match="Shape of weights must be consistent with "
+                      "shape of a along specified axis"):
+            average(yma, axis=(0, 1, 2), weights=subw0)
+
+        with pytest.raises(
+                ValueError,
+                match="Shape of weights must be consistent with "
+                      "shape of a along specified axis"):
+            average(yma, axis=(0, 1), weights=subw1)
+
+        # swapping the axes should be same as transposing weights
+        actual = average(yma, axis=(1, 0), weights=subw0)
+        desired = average(yma, axis=(0, 1), weights=subw0.T)
+        assert_almost_equal(actual, desired)
 
     def test_onintegers_with_mask(self):
         # Test average on integers with mask

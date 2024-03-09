@@ -20,8 +20,9 @@ whether or not that file is found as follows:
     DeprecationWarnings and PendingDeprecationWarnings are ignored, other
     warnings are passed through.
 
-In practice, tests run from the numpy repo are run in develop mode. That
-includes the standard ``python runtests.py`` invocation.
+In practice, tests run from the numpy repo are run in development mode with
+``spin``, through the standard ``spin test`` invocation or from an inplace
+build with ``pytest numpy``.
 
 This module is imported by every numpy subpackage, so lies at the top level to
 simplify circular import issues. For the same reason, it contains no numpy
@@ -37,8 +38,6 @@ def _show_numpy_info():
     import numpy as np
 
     print("NumPy version %s" % np.__version__)
-    relaxed_strides = np.ones((10, 1), order="C").flags.f_contiguous
-    print("NumPy relaxed strides checking option:", relaxed_strides)
     info = np.lib._utils_impl._opt_info()
     print("NumPy CPU features: ", (info if info else 'nothing enabled'))
 
@@ -142,13 +141,6 @@ class PytestTester:
                 # distutils tests). ASV has problems with top level import,
                 # so fetch module for suppression here.
                 from numpy.distutils import cpuinfo
-
-        with warnings.catch_warnings(record=True):
-            # Ignore the warning from importing the array_api submodule. This
-            # warning is done on import, so it would break pytest collection,
-            # but importing it early here prevents the warning from being
-            # issued when it imported again.
-            import numpy.array_api
 
         # Filter out annoying import messages. Want these in both develop and
         # release mode.

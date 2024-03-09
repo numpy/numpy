@@ -1,15 +1,17 @@
 from typing import (
-    Literal as L,
     Any,
-    TypeVar,
+    Generic,
+    Literal as L,
+    NamedTuple,
     overload,
     SupportsIndex,
+    TypeVar,
 )
 
+import numpy as np
 from numpy import (
     generic,
     number,
-    bool_,
     ushort,
     ubyte,
     uintc,
@@ -59,7 +61,7 @@ _NumberType = TypeVar("_NumberType", bound=number[Any])
 # `number[_64Bit]` array
 _SCTNoCast = TypeVar(
     "_SCTNoCast",
-    bool_,
+    np.bool,
     ushort,
     ubyte,
     uintc,
@@ -84,6 +86,20 @@ _SCTNoCast = TypeVar(
     bytes_,
     void,
 )
+
+class UniqueAllResult(NamedTuple, Generic[_SCT]):
+    values: NDArray[_SCT]
+    indices: NDArray[intp]
+    inverse_indices: NDArray[intp]
+    counts: NDArray[intp]
+
+class UniqueCountsResult(NamedTuple, Generic[_SCT]):
+    values: NDArray[_SCT]
+    counts: NDArray[intp]
+
+class UniqueInverseResult(NamedTuple, Generic[_SCT]):
+    values: NDArray[_SCT]
+    inverse_indices: NDArray[intp]
 
 __all__: list[str]
 
@@ -280,6 +296,34 @@ def unique(
 ) -> tuple[NDArray[Any], NDArray[intp], NDArray[intp], NDArray[intp]]: ...
 
 @overload
+def unique_all(
+    x: _ArrayLike[_SCT], /
+) -> UniqueAllResult[_SCT]: ...
+@overload
+def unique_all(
+    x: ArrayLike, /
+) -> UniqueAllResult[Any]: ...
+
+@overload
+def unique_counts(
+    x: _ArrayLike[_SCT], /
+) -> UniqueCountsResult[_SCT]: ...
+@overload
+def unique_counts(
+    x: ArrayLike, /
+) -> UniqueCountsResult[Any]: ...
+
+@overload
+def unique_inverse(x: _ArrayLike[_SCT], /) -> UniqueInverseResult[_SCT]: ...
+@overload
+def unique_inverse(x: ArrayLike, /) -> UniqueInverseResult[Any]: ...
+
+@overload
+def unique_values(x: _ArrayLike[_SCT], /) -> NDArray[_SCT]: ...
+@overload
+def unique_values(x: ArrayLike, /) -> NDArray[Any]: ...
+
+@overload
 def intersect1d(
     ar1: _ArrayLike[_SCTNoCast],
     ar2: _ArrayLike[_SCTNoCast],
@@ -321,13 +365,6 @@ def setxor1d(
     assume_unique: bool = ...,
 ) -> NDArray[Any]: ...
 
-def in1d(
-    ar1: ArrayLike,
-    ar2: ArrayLike,
-    assume_unique: bool = ...,
-    invert: bool = ...,
-) -> NDArray[bool_]: ...
-
 def isin(
     element: ArrayLike,
     test_elements: ArrayLike,
@@ -335,7 +372,7 @@ def isin(
     invert: bool = ...,
     *,
     kind: None | str = ...,
-) -> NDArray[bool_]: ...
+) -> NDArray[np.bool]: ...
 
 @overload
 def union1d(

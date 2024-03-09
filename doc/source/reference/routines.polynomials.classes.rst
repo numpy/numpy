@@ -1,4 +1,4 @@
-Using the Convenience Classes
+Using the convenience classes
 =============================
 
 The convenience classes provided by the polynomial package are:
@@ -52,7 +52,7 @@ the conventional Polynomial class because of its familiarity::
    >>> from numpy.polynomial import Polynomial as P
    >>> p = P([1,2,3])
    >>> p
-   Polynomial([1., 2., 3.], domain=[-1,  1], window=[-1,  1], symbol='x')
+   Polynomial([1., 2., 3.], domain=[-1.,  1.], window=[-1.,  1.], symbol='x')
 
 Note that there are three parts to the long version of the printout. The
 first is the coefficients, the second is the domain, and the third is the
@@ -61,9 +61,9 @@ window::
    >>> p.coef
    array([1., 2., 3.])
    >>> p.domain
-   array([-1,  1])
+   array([-1.,  1.])
    >>> p.window
-   array([-1,  1])
+   array([-1.,  1.])
 
 Printing a polynomial yields the polynomial expression in a more familiar
 format::
@@ -240,7 +240,7 @@ number of times the polynomial is differentiated::
     Polynomial([6.], domain=[-1.,  1.], window=[-1.,  1.], symbol='x')
 
 
-Other Polynomial Constructors
+Other polynomial constructors
 -----------------------------
 
 Constructing polynomials by specifying coefficients is just one way of

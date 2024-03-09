@@ -3,7 +3,9 @@ from typing import Any
 
 import numpy as np
 import numpy.typing as npt
-from numpy.linalg.linalg import QRResult, EigResult, EighResult, SVDResult, SlogdetResult
+from numpy.linalg._linalg import (
+    QRResult, EigResult, EighResult, SVDResult, SlogdetResult
+)
 
 if sys.version_info >= (3, 11):
     from typing import assert_type
@@ -16,6 +18,7 @@ AR_c16: npt.NDArray[np.complex128]
 AR_O: npt.NDArray[np.object_]
 AR_m: npt.NDArray[np.timedelta64]
 AR_S: npt.NDArray[np.str_]
+AR_b: npt.NDArray[np.bool]
 
 assert_type(np.linalg.tensorsolve(AR_i8, AR_i8), npt.NDArray[np.float64])
 assert_type(np.linalg.tensorsolve(AR_i8, AR_f8), npt.NDArray[np.floating[Any]])
@@ -41,6 +44,13 @@ assert_type(np.linalg.matrix_power(AR_O, 2), npt.NDArray[Any])
 assert_type(np.linalg.cholesky(AR_i8), npt.NDArray[np.float64])
 assert_type(np.linalg.cholesky(AR_f8), npt.NDArray[np.floating[Any]])
 assert_type(np.linalg.cholesky(AR_c16), npt.NDArray[np.complexfloating[Any, Any]])
+
+assert_type(np.linalg.outer(AR_i8, AR_i8), npt.NDArray[np.signedinteger[Any]])
+assert_type(np.linalg.outer(AR_f8, AR_f8), npt.NDArray[np.floating[Any]])
+assert_type(np.linalg.outer(AR_c16, AR_c16), npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(np.linalg.outer(AR_b, AR_b), npt.NDArray[np.bool])
+assert_type(np.linalg.outer(AR_O, AR_O), npt.NDArray[np.object_])
+assert_type(np.linalg.outer(AR_i8, AR_m), npt.NDArray[np.timedelta64])
 
 assert_type(np.linalg.qr(AR_i8), QRResult)
 assert_type(np.linalg.qr(AR_f8), QRResult)
@@ -99,8 +109,26 @@ assert_type(np.linalg.norm(AR_c16), np.floating[Any])
 assert_type(np.linalg.norm(AR_S), np.floating[Any])
 assert_type(np.linalg.norm(AR_f8, axis=0), Any)
 
+assert_type(np.linalg.matrix_norm(AR_i8), np.floating[Any])
+assert_type(np.linalg.matrix_norm(AR_f8), np.floating[Any])
+assert_type(np.linalg.matrix_norm(AR_c16), np.floating[Any])
+assert_type(np.linalg.matrix_norm(AR_S), np.floating[Any])
+
+assert_type(np.linalg.vector_norm(AR_i8), np.floating[Any])
+assert_type(np.linalg.vector_norm(AR_f8), np.floating[Any])
+assert_type(np.linalg.vector_norm(AR_c16), np.floating[Any])
+assert_type(np.linalg.vector_norm(AR_S), np.floating[Any])
+
 assert_type(np.linalg.multi_dot([AR_i8, AR_i8]), Any)
 assert_type(np.linalg.multi_dot([AR_i8, AR_f8]), Any)
 assert_type(np.linalg.multi_dot([AR_f8, AR_c16]), Any)
 assert_type(np.linalg.multi_dot([AR_O, AR_O]), Any)
 assert_type(np.linalg.multi_dot([AR_m, AR_m]), Any)
+
+assert_type(np.linalg.cross(AR_i8, AR_i8), npt.NDArray[np.signedinteger[Any]])
+assert_type(np.linalg.cross(AR_f8, AR_f8), npt.NDArray[np.floating[Any]])
+assert_type(np.linalg.cross(AR_c16, AR_c16), npt.NDArray[np.complexfloating[Any, Any]])
+
+assert_type(np.linalg.matmul(AR_i8, AR_i8), npt.NDArray[np.signedinteger[Any]])
+assert_type(np.linalg.matmul(AR_f8, AR_f8), npt.NDArray[np.floating[Any]])
+assert_type(np.linalg.matmul(AR_c16, AR_c16), npt.NDArray[np.complexfloating[Any, Any]])

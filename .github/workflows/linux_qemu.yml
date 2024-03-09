@@ -28,10 +28,12 @@ permissions:
 
 jobs:
   linux_qemu:
-    if: "github.repository == 'numpy/numpy'"
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-22.04
     continue-on-error: true
     strategy:
+      fail-fast: false
       matrix:
         BUILD_PROP:
           - [
@@ -52,6 +54,13 @@ jobs:
               "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
           ]
           - [
+              "ppc64le - baseline(Power9)",
+              "powerpc64le-linux-gnu",
+              "ppc64le/ubuntu:22.04",
+              "-Dallow-noblas=true -Dcpu-baseline=vsx3",
+              "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
+          ]
+          - [
               "s390x",
               "s390x-linux-gnu",
               "s390x/ubuntu:22.04",
@@ -68,6 +77,13 @@ jobs:
               "-Dallow-noblas=true -Dcpu-baseline=vx",
               "(test_kind or test_multiarray or test_simd or test_umath or test_ufunc) and not test_gcd_overflow"
           ]
+          - [
+              "riscv64",
+              "riscv64-linux-gnu",
+              "riscv64/ubuntu:22.04",
+              "-Dallow-noblas=true",
+              "test_kind or test_multiarray or test_simd or test_umath or test_ufunc"
+          ]
     env:
       TOOLCHAIN_NAME: ${{ matrix.BUILD_PROP[1] }}
       DOCKER_CONTAINER: ${{ matrix.BUILD_PROP[2] }}
@@ -77,10 +93,10 @@ jobs:
 
     name: "${{ matrix.BUILD_PROP[0] }}"
     steps:
-    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
 
     - name: Initialize binfmt_misc for qemu-user-static
       run: |
@@ -92,11 +108,11 @@ jobs:
         sudo apt install -y ninja-build gcc-${TOOLCHAIN_NAME} g++-${TOOLCHAIN_NAME} gfortran-${TOOLCHAIN_NAME}
 
     - name: Cache docker container
-      uses: actions/cache@v3
+      uses: actions/cache@v4.0.1
       id: container-cache
       with:
         path: ~/docker_${{ matrix.BUILD_PROP[1] }}
-        key: container-${{ runner.os }}-${{ matrix.BUILD_PROP[1] }}-${{ matrix.BUILD_PROP[2] }}-${{ hashFiles('build_requirements.txt') }}
+        key: container-${{ runner.os }}-${{ matrix.BUILD_PROP[1] }}-${{ matrix.BUILD_PROP[2] }}-${{ hashFiles('requirements/build_requirements.txt') }}
 
     - name: Creates new container
       if: steps.container-cache.outputs.cache-hit != 'true'
@@ -117,7 +133,7 @@ jobs:
           rm -f /usr/bin/ld.bfd && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-ld.bfd /usr/bin/ld.bfd &&
           rm -f /usr/bin/ninja && ln -s /host/usr/bin/ninja /usr/bin/ninja &&
           git config --global --add safe.directory /numpy &&
-          python -m pip install -r /numpy/build_requirements.txt &&
+          python -m pip install -r /numpy/requirements/build_requirements.txt &&
           python -m pip install pytest pytest-xdist hypothesis typing_extensions &&
           rm -f /usr/local/bin/ninja && mkdir -p /usr/local/bin && ln -s /host/usr/bin/ninja /usr/local/bin/ninja
         "

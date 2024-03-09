@@ -6,16 +6,17 @@ py3 = py_mod.find_installation(pure: false)
 cc = meson.get_compiler('c')
 cy = meson.get_compiler('cython')
 
-if not cy.version().version_compare('>=0.29.35')
-  error('tests requires Cython >= 0.29.35')
+# Keep synced with pyproject.toml
+if not cy.version().version_compare('>=3.0.6')
+  error('tests requires Cython >= 3.0.6')
 endif
 
 _numpy_abs = run_command(py3, ['-c',
                'import os; os.chdir(".."); import numpy; print(os.path.abspath(numpy.get_include() + "../../.."))'],
                          check: true).stdout().strip()
 
-npymath_path = _numpy_abs / 'core' / 'lib'
-npy_include_path = _numpy_abs / 'core' / 'include'
+npymath_path = _numpy_abs / '_core' / 'lib'
+npy_include_path = _numpy_abs / '_core' / 'include'
 npyrandom_path = _numpy_abs / 'random' / 'lib'
 npymath_lib = cc.find_library('npymath', dirs: npymath_path)
 npyrandom_lib = cc.find_library('npyrandom', dirs: npyrandom_path)

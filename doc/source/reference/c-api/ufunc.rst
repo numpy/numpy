@@ -1,4 +1,4 @@
-UFunc API
+ufunc API
 =========
 
 .. sectionauthor:: Travis E. Oliphant
@@ -61,25 +61,21 @@ Types
     .. c:function:: void loopfunc(\
             char** args, npy_intp const *dimensions, npy_intp const *steps, void* data)
 
-        *args*
-
+        :param args:
             An array of pointers to the actual data for the input and output
             arrays. The input arguments are given first followed by the output
             arguments.
 
-        *dimensions*
-
+        :param dimensions:
             A pointer to the size of the dimension over which this function is
             looping.
 
-        *steps*
-
+        :param steps:
             A pointer to the number of bytes to jump to get to the
             next element in this dimension for each of the input and
             output arguments.
 
-        *data*
-
+        :param data:
             Arbitrary data (extra arguments, function names, *etc.* )
             that can be stored with the ufunc and will be passed in
             when it is called. May be ``NULL``.
@@ -435,7 +431,18 @@ Importing the API
 
 .. c:macro:: NO_IMPORT_UFUNC
 
-.. c:function:: void import_ufunc(void)
+.. c:function:: int PyUFunc_ImportUFuncAPI(void)
+
+    Ensures that the UFunc C-API is imported and usable.  It returns ``0``
+    on success and ``-1`` with an error set if NumPy couldn't be imported.
+    While preferable to call it once at module initialization, this function
+    is very light-weight if called multiple times.
+
+    .. versionadded:: 2.0
+        This function mainly checks for ``PyUFunc_API == NULL`` so it can be
+        manually backported if desired.
+
+.. c:macro:: import_ufunc(void)
 
     These are the constants and functions for accessing the ufunc
     C-API from extension modules in precisely the same way as the

@@ -1,14 +1,16 @@
 import functools
 import warnings
 
-import numpy.core.numeric as _nx
-from numpy.core.numeric import asarray, zeros, array, asanyarray
-from numpy.core.fromnumeric import reshape, transpose
-from numpy.core.multiarray import normalize_axis_index
-from numpy.core import overrides
-from numpy.core import vstack, atleast_3d
-from numpy.core.numeric import normalize_axis_tuple
-from numpy.core.shape_base import _arrays_for_stack_dispatcher
+import numpy._core.numeric as _nx
+from numpy._core.numeric import asarray, zeros, zeros_like, array, asanyarray
+from numpy._core.fromnumeric import reshape, transpose
+from numpy._core.multiarray import normalize_axis_index
+from numpy._core._multiarray_umath import _array_converter
+from numpy._core import overrides
+from numpy._core import vstack, atleast_3d
+from numpy._core.numeric import normalize_axis_tuple
+from numpy._core.overrides import set_module
+from numpy._core.shape_base import _arrays_for_stack_dispatcher
 from numpy.lib._index_tricks_impl import ndindex
 from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
 
@@ -357,7 +359,9 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
             [0, 0, 9]]])
     """
     # handle negative axes
-    arr = asanyarray(arr)
+    conv = _array_converter(arr)
+    arr = conv[0]
+
     nd = arr.ndim
     axis = normalize_axis_index(axis, nd)
 
@@ -383,7 +387,11 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     # remove the requested axis, and add the new ones on the end.
     # laid out so that each write is contiguous.
     # for a tuple index inds, buff[inds] = func1d(inarr_view[inds])
-    buff = zeros(inarr_view.shape[:-1] + res.shape, res.dtype)
+    if not isinstance(res, matrix):
+        buff = zeros_like(res, shape=inarr_view.shape[:-1] + res.shape)
+    else:
+        # Matrices are nasty with reshaping, so do not preserve them here.
+        buff = zeros(inarr_view.shape[:-1] + res.shape, dtype=res.dtype)
 
     # permutation of axes such that out = buff.transpose(buff_permute)
     buff_dims = list(range(buff.ndim))
@@ -393,26 +401,13 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         buff_dims[axis : buff.ndim-res.ndim]
     )
 
-    # matrices have a nasty __array_prepare__ and __array_wrap__
-    if not isinstance(res, matrix):
-        buff = res.__array_prepare__(buff)
-
     # save the first result, then compute and save all remaining results
     buff[ind0] = res
     for ind in inds:
         buff[ind] = asanyarray(func1d(inarr_view[ind], *args, **kwargs))
 
-    if not isinstance(res, matrix):
-        # wrap the array, to preserve subclasses
-        buff = res.__array_wrap__(buff)
-
-        # finally, rotate the inserted axes back to where they belong
-        return transpose(buff, buff_permute)
-
-    else:
-        # matrices have to be transposed first, because they collapse dimensions!
-        out_arr = transpose(buff, buff_permute)
-        return res.__array_wrap__(out_arr)
+    res = transpose(buff, buff_permute)
+    return conv.wrap(res)
 
 
 def _apply_over_axes_dispatcher(func, a, axes):
@@ -544,7 +539,7 @@ def expand_dims(a, axis):
     --------
     squeeze : The inverse operation, removing singleton dimensions
     reshape : Insert, remove, and combine dimensions, and resize existing ones
-    doc.indexing, atleast_1d, atleast_2d, atleast_3d
+    atleast_1d, atleast_2d, atleast_3d
 
     Examples
     --------
@@ -604,7 +599,8 @@ def expand_dims(a, axis):
     return a.reshape(shape)
 
 
-# TODO: Remove once deprecation period passes
+# NOTE: Remove once deprecation period passes
+@set_module("numpy")
 def row_stack(tup, *, dtype=None, casting="same_kind"):
     # Deprecated in NumPy 2.0, 2023-08-18
     warnings.warn(
@@ -661,7 +657,7 @@ def column_stack(tup):
     for v in tup:
         arr = asanyarray(v)
         if arr.ndim < 2:
-            arr = array(arr, copy=False, subok=True, ndmin=2).T
+            arr = array(arr, copy=None, subok=True, ndmin=2).T
         arrays.append(arr)
     return _nx.concatenate(arrays, 1)
 
@@ -724,8 +720,8 @@ def dstack(tup):
 
     """
     arrs = atleast_3d(*tup)
-    if not isinstance(arrs, list):
-        arrs = [arrs]
+    if not isinstance(arrs, tuple):
+        arrs = (arrs,)
     return _nx.concatenate(arrs, 2)
 
 
@@ -977,12 +973,15 @@ def vsplit(ary, indices_or_sections):
            [12.,  13.,  14.,  15.]])
     >>> np.vsplit(x, 2)
     [array([[0., 1., 2., 3.],
-           [4., 5., 6., 7.]]), array([[ 8.,  9., 10., 11.],
-           [12., 13., 14., 15.]])]
+            [4., 5., 6., 7.]]),
+     array([[ 8.,  9., 10., 11.],
+            [12., 13., 14., 15.]])]
     >>> np.vsplit(x, np.array([3, 6]))
     [array([[ 0.,  1.,  2.,  3.],
-           [ 4.,  5.,  6.,  7.],
-           [ 8.,  9., 10., 11.]]), array([[12., 13., 14., 15.]]), array([], shape=(0, 4), dtype=float64)]
+            [ 4.,  5.,  6.,  7.],
+            [ 8.,  9., 10., 11.]]),
+     array([[12., 13., 14., 15.]]),
+     array([], shape=(0, 4), dtype=float64)]
 
     With a higher dimensional array the split is still along the first axis.
 
@@ -994,8 +993,9 @@ def vsplit(ary, indices_or_sections):
             [6.,  7.]]])
     >>> np.vsplit(x, 2)
     [array([[[0., 1.],
-            [2., 3.]]]), array([[[4., 5.],
-            [6., 7.]]])]
+             [2., 3.]]]),
+     array([[[4., 5.],
+             [6., 7.]]])]
 
     """
     if _nx.ndim(ary) < 2:
@@ -1155,7 +1155,7 @@ def kron(a, b):
     # 5. Reshape the result to kron's shape, which is same as
     #    product of shapes of the two arrays.
     b = asanyarray(b)
-    a = array(a, copy=False, subok=True, ndmin=b.ndim)
+    a = array(a, copy=None, subok=True, ndmin=b.ndim)
     is_any_mat = isinstance(a, matrix) or isinstance(b, matrix)
     ndb, nda = b.ndim, a.ndim
     nd = max(ndb, nda)
@@ -1208,7 +1208,7 @@ def tile(A, reps):
     behavior, promote `A` to d-dimensions manually before calling this
     function.
 
-    If ``A.ndim > d``, `reps` is promoted to `A`.ndim by pre-pending 1's to it.
+    If ``A.ndim > d``, `reps` is promoted to `A`.ndim by prepending 1's to it.
     Thus for an `A` of shape (2, 3, 4, 5), a `reps` of (2, 2) is treated as
     (1, 1, 2, 2).
 
@@ -1273,7 +1273,7 @@ def tile(A, reps):
     else:
         # Note that no copy of zero-sized arrays is made. However since they
         # have no data there is no risk of an inadvertent overwrite.
-        c = _nx.array(A, copy=False, subok=True, ndmin=d)
+        c = _nx.array(A, copy=None, subok=True, ndmin=d)
     if (d < c.ndim):
         tup = (1,)*(c.ndim-d) + tup
     shape_out = tuple(s*t for s, t in zip(c.shape, tup))

@@ -24,8 +24,7 @@ import warnings
 
 import numpy as np
 
-from numpy.core.multiarray import dragon4_positional, dragon4_scientific
-from numpy.core.umath import absolute
+from numpy._core.multiarray import dragon4_positional, dragon4_scientific
 from numpy.exceptions import RankWarning
 
 __all__ = [
@@ -114,9 +113,10 @@ def as_series(alist, trim=True):
     [array([2.]), array([1.1, 0. ])]
 
     """
-    arrays = [np.array(a, ndmin=1, copy=False) for a in alist]
-    if min([a.size for a in arrays]) == 0:
-        raise ValueError("Coefficient array is empty")
+    arrays = [np.array(a, ndmin=1, copy=None) for a in alist]
+    for a in arrays:
+        if a.size == 0:
+            raise ValueError("Coefficient array is empty")
     if any(a.ndim != 1 for a in arrays):
         raise ValueError("Coefficient array is not 1-d")
     if trim:
@@ -167,10 +167,6 @@ def trimcoef(c, tol=0):
     ------
     ValueError
         If `tol` < 0
-
-    See Also
-    --------
-    trimseq
 
     Examples
     --------
@@ -417,7 +413,7 @@ def _vander_nd(vander_fs, points, degrees):
         raise ValueError("Unable to guess a dtype or shape when no points are given")
 
     # convert to the same shape and type
-    points = tuple(np.array(tuple(points), copy=False) + 0.0)
+    points = tuple(np.asarray(tuple(points)) + 0.0)
 
     # produce the vandermonde matrix for each dimension, placing the last
     # axis of each in an independent trailing axis of the output
@@ -735,7 +731,7 @@ def format_float(x, parens=False):
 
     exp_format = False
     if x != 0:
-        a = absolute(x)
+        a = np.abs(x)
         if a >= 1.e8 or a < 10**min(0, -(opts['precision']-1)//2):
             exp_format = True
 

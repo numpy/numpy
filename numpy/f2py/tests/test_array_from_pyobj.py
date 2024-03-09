@@ -3,21 +3,26 @@ import sys
 import copy
 import platform
 import pytest
+from pathlib import Path
 
 import numpy as np
 
 from numpy.testing import assert_, assert_equal
-from numpy.core.multiarray import typeinfo as _typeinfo
+from numpy._core._type_aliases import c_names_dict as _c_names_dict
 from . import util
 
 wrap = None
 
 # Extend core typeinfo with CHARACTER to test dtype('c')
-_ti = _typeinfo['STRING']
-typeinfo = dict(
-    CHARACTER=type(_ti)(('c', _ti.num, 8, _ti.alignment, _ti.type)),
-    **_typeinfo)
+c_names_dict = dict(
+    CHARACTER=np.dtype("c"),
+    **_c_names_dict
+)
 
+
+def get_testdir():
+    testroot = Path(__file__).resolve().parent / "src"
+    return  testroot / "array_from_pyobj"
 
 def setup_module():
     """
@@ -26,24 +31,11 @@ def setup_module():
     """
     global wrap
 
-    # Check compiler availability first
-    if not util.has_c_compiler():
-        pytest.skip("No C compiler available")
-
     if wrap is None:
-        config_code = """
-        config.add_extension('test_array_from_pyobj_ext',
-                             sources=['wrapmodule.c', 'fortranobject.c'],
-                             define_macros=[])
-        """
-        d = os.path.dirname(__file__)
         src = [
-            util.getpath("tests", "src", "array_from_pyobj", "wrapmodule.c"),
-            util.getpath("src", "fortranobject.c"),
-            util.getpath("src", "fortranobject.h"),
+            get_testdir() / "wrapmodule.c",
         ]
-        wrap = util.build_module_distutils(src, config_code,
-                                           "test_array_from_pyobj_ext")
+        wrap = util.build_meson(src, module_name = "test_array_from_pyobj_ext")
 
 
 def flags_info(arr):
@@ -185,7 +177,7 @@ class Type:
         if isinstance(name, np.dtype):
             dtype0 = name
             name = None
-            for n, i in typeinfo.items():
+            for n, i in c_names_dict.items():
                 if not isinstance(i, type) and dtype0.type is i.type:
                     name = n
                     break
@@ -201,19 +193,19 @@ class Type:
         self.NAME = name.upper()
 
         if self.NAME == 'CHARACTER':
-            info = typeinfo[self.NAME]
+            info = c_names_dict[self.NAME]
             self.type_num = getattr(wrap, 'NPY_STRING')
             self.elsize = 1
             self.dtype = np.dtype('c')
         elif self.NAME.startswith('STRING'):
-            info = typeinfo[self.NAME[:6]]
+            info = c_names_dict[self.NAME[:6]]
             self.type_num = getattr(wrap, 'NPY_STRING')
             self.elsize = int(self.NAME[6:] or 0)
             self.dtype = np.dtype(f'S{self.elsize}')
         else:
-            info = typeinfo[self.NAME]
+            info = c_names_dict[self.NAME]
             self.type_num = getattr(wrap, 'NPY_' + self.NAME)
-            self.elsize = info.bits // 8
+            self.elsize = info.itemsize
             self.dtype = np.dtype(info.type)
 
         assert self.type_num == info.num
@@ -233,28 +225,28 @@ class Type:
         return [self.__class__(_m) for _m in _type_names]
 
     def smaller_types(self):
-        bits = typeinfo[self.NAME].alignment
+        bits = c_names_dict[self.NAME].alignment
         types = []
         for name in _type_names:
-            if typeinfo[name].alignment < bits:
+            if c_names_dict[name].alignment < bits:
                 types.append(Type(name))
         return types
 
     def equal_types(self):
-        bits = typeinfo[self.NAME].alignment
+        bits = c_names_dict[self.NAME].alignment
         types = []
         for name in _type_names:
             if name == self.NAME:
                 continue
-            if typeinfo[name].alignment == bits:
+            if c_names_dict[name].alignment == bits:
                 types.append(Type(name))
         return types
 
     def larger_types(self):
-        bits = typeinfo[self.NAME].alignment
+        bits = c_names_dict[self.NAME].alignment
         types = []
         for name in _type_names:
-            if typeinfo[name].alignment > bits:
+            if c_names_dict[name].alignment > bits:
                 types.append(Type(name))
         return types
 
@@ -556,6 +548,10 @@ class TestSharedMemory:
                 # string elsize is 0, so skipping the test
                 continue
             if t.elsize >= self.type.elsize:
+                continue
+            is_int = np.issubdtype(t.dtype, np.integer)
+            if is_int and int(self.num2seq[0]) > np.iinfo(t.dtype).max:
+                # skip test if num2seq would trigger an overflow error
                 continue
             obj = np.array(self.num2seq, dtype=t.dtype)
             shape = (len(self.num2seq), )

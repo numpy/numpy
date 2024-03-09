@@ -1598,7 +1598,7 @@ class Configuration:
         """
         Similar to add_library, but the specified library is installed.
 
-        Most C libraries used with `distutils` are only used to build python
+        Most C libraries used with ``distutils`` are only used to build python
         extensions, but libraries built through this method will be installed
         so that they can be reused by third-party packages.
 
@@ -1710,7 +1710,7 @@ class Configuration:
         cross-compilation you of-course need to link with target libraries,
         while using the host Python installation.
 
-        You can copy out the numpy/core/lib/npy-pkg-config directory, add a
+        You can copy out the numpy/_core/lib/npy-pkg-config directory, add a
         pkgdir value to the .ini files and set NPY_PKG_CONFIG_PATH environment
         variable to point to the directory with the modified npy-pkg-config
         files.
@@ -1723,8 +1723,8 @@ class Configuration:
             Version=0.1
 
             [variables]
-            pkgname=numpy.core
-            pkgdir=/build/arm-linux-gnueabi/sysroot/usr/lib/python3.7/site-packages/numpy/core
+            pkgname=numpy._core
+            pkgdir=/build/arm-linux-gnueabi/sysroot/usr/lib/python3.7/site-packages/numpy/_core
             prefix=${pkgdir}
             libdir=${prefix}/lib
             includedir=${prefix}/include
@@ -2141,12 +2141,12 @@ def get_cmd(cmdname, _cache={}):
     return _cache[cmdname]
 
 def get_numpy_include_dirs():
-    # numpy_include_dirs are set by numpy/core/setup.py, otherwise []
+    # numpy_include_dirs are set by numpy/_core/setup.py, otherwise []
     include_dirs = Configuration.numpy_include_dirs[:]
     if not include_dirs:
         import numpy
         include_dirs = [ numpy.get_include() ]
-    # else running numpy/core/setup.py
+    # else running numpy/_core/setup.py
     return include_dirs
 
 def get_npy_pkg_dir():
@@ -2166,7 +2166,7 @@ def get_npy_pkg_dir():
         return d
     spec = importlib.util.find_spec('numpy')
     d = os.path.join(os.path.dirname(spec.origin),
-            'core', 'lib', 'npy-pkg-config')
+            '_core', 'lib', 'npy-pkg-config')
     return d
 
 def get_pkg_info(pkgname, dirs=None):
@@ -2245,7 +2245,7 @@ def get_info(pkgname, dirs=None):
     >>> npymath_info = np.distutils.misc_util.get_info('npymath')
     >>> npymath_info                                    #doctest: +SKIP
     {'define_macros': [], 'libraries': ['npymath'], 'library_dirs':
-    ['.../numpy/core/lib'], 'include_dirs': ['.../numpy/core/include']}
+    ['.../numpy/_core/lib'], 'include_dirs': ['.../numpy/_core/include']}
 
     This info dict can then be used as input to a `Configuration` instance::
 
@@ -2426,7 +2426,7 @@ def generate_config_py(target):
                     libraries = ['openblas', 'openblas']
                     library_dirs = ['/usr/local/lib']
                 """
-                from numpy.core._multiarray_umath import (
+                from numpy._core._multiarray_umath import (
                     __cpu_features__, __cpu_baseline__, __cpu_dispatch__
                 )
                 for name,info_dict in globals().items():

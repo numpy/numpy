@@ -8,10 +8,11 @@ matplotlib.  They have been rewritten and extended for convenience.
 import itertools
 import numpy as np
 import numpy.ma as ma
-from numpy import ndarray, recarray
+from numpy import ndarray
 from numpy.ma import MaskedArray
 from numpy.ma.mrecords import MaskedRecords
-from numpy.core.overrides import array_function_dispatch
+from numpy._core.overrides import array_function_dispatch
+from numpy._core.records import recarray
 from numpy.lib._iotools import _is_string_like
 
 _check_fill_value = np.ma.core._check_fill_value
@@ -691,7 +692,7 @@ def append_fields(base, names, data, dtypes=None,
         data = [data, ]
     #
     if dtypes is None:
-        data = [np.array(a, copy=False, subok=True) for a in data]
+        data = [np.array(a, copy=None, subok=True) for a in data]
         data = [a.view([(name, a.dtype)]) for (name, a) in zip(names, data)]
     else:
         if not isinstance(dtypes, (tuple, list)):
@@ -702,7 +703,7 @@ def append_fields(base, names, data, dtypes=None,
             else:
                 msg = "The dtypes argument must be None, a dtype, or a list."
                 raise ValueError(msg)
-        data = [np.array(a, copy=False, subok=True, dtype=d).view([(n, d)])
+        data = [np.array(a, copy=None, subok=True, dtype=d).view([(n, d)])
                 for (a, n, d) in zip(data, names, dtypes)]
     #
     base = merge_arrays(base, usemask=usemask, fill_value=fill_value)

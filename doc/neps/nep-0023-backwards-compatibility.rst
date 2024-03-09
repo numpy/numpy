@@ -5,7 +5,7 @@ NEP 23 — Backwards compatibility and deprecation policy
 =======================================================
 
 :Author: Ralf Gommers <ralf.gommers@gmail.com>
-:Status: Final
+:Status: Active
 :Type: Process
 :Created: 2018-07-14
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2021-January/081423.html
@@ -20,7 +20,7 @@ processes for individual cases where breaking backwards compatibility
 is considered.
 
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 NumPy has a very large user base.  Those users rely on NumPy being stable
@@ -330,7 +330,7 @@ Discussion
 - `PR with review comments on the Dec 2020 update of this NEP <https://github.com/numpy/numpy/pull/18097>`__
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 - `Issue requesting semantic versioning <https://github.com/numpy/numpy/issues/10156>`__

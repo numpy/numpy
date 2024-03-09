@@ -9,7 +9,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import assert_type
 
-b: np.bool_
+b: np.bool
 u8: np.uint64
 i8: np.int64
 f8: np.float64
@@ -55,6 +55,7 @@ assert_type(np.short(), np.short)
 assert_type(np.intc(), np.intc)
 assert_type(np.intp(), np.intp)
 assert_type(np.int_(), np.int_)
+assert_type(np.long(), np.long)
 assert_type(np.longlong(), np.longlong)
 
 assert_type(np.ubyte(), np.ubyte)
@@ -62,6 +63,7 @@ assert_type(np.ushort(), np.ushort)
 assert_type(np.uintc(), np.uintc)
 assert_type(np.uintp(), np.uintp)
 assert_type(np.uint(), np.uint)
+assert_type(np.ulong(), np.ulong)
 assert_type(np.ulonglong(), np.ulonglong)
 
 assert_type(np.half(), np.half)
@@ -89,7 +91,7 @@ assert_type(c16.tolist(), complex)
 assert_type(U.tolist(), str)
 assert_type(S.tolist(), bytes)
 
-assert_type(b.ravel(), npt.NDArray[np.bool_])
+assert_type(b.ravel(), npt.NDArray[np.bool])
 assert_type(i8.ravel(), npt.NDArray[np.int64])
 assert_type(u8.ravel(), npt.NDArray[np.uint64])
 assert_type(f8.ravel(), npt.NDArray[np.float64])
@@ -97,7 +99,7 @@ assert_type(c16.ravel(), npt.NDArray[np.complex128])
 assert_type(U.ravel(), npt.NDArray[np.str_])
 assert_type(S.ravel(), npt.NDArray[np.bytes_])
 
-assert_type(b.flatten(), npt.NDArray[np.bool_])
+assert_type(b.flatten(), npt.NDArray[np.bool])
 assert_type(i8.flatten(), npt.NDArray[np.int64])
 assert_type(u8.flatten(), npt.NDArray[np.uint64])
 assert_type(f8.flatten(), npt.NDArray[np.float64])
@@ -105,7 +107,7 @@ assert_type(c16.flatten(), npt.NDArray[np.complex128])
 assert_type(U.flatten(), npt.NDArray[np.str_])
 assert_type(S.flatten(), npt.NDArray[np.bytes_])
 
-assert_type(b.reshape(1), npt.NDArray[np.bool_])
+assert_type(b.reshape(1), npt.NDArray[np.bool])
 assert_type(i8.reshape(1), npt.NDArray[np.int64])
 assert_type(u8.reshape(1), npt.NDArray[np.uint64])
 assert_type(f8.reshape(1), npt.NDArray[np.float64])

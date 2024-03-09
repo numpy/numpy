@@ -1,0 +1,457 @@
+/*@targets
+ ** $maxopt baseline
+ ** (avx2 fma3) avx512f
+ ** vsx2 vsx3 vsx4
+ ** neon_vfpv4
+ ** vxe vxe2
+ **/
+#include "numpy/npy_math.h"
+#include "simd/simd.h"
+#include "loops_utils.h"
+#include "loops.h"
+#include "fast_loop_macros.h"
+/*
+ * TODO:
+ * - use vectorized version of Payne-Hanek style reduction for large elements or
+ *   when there's no native FUSED support instead of fallback to libc
+ */
+#if NPY_SIMD_FMA3  // native support
+/**begin repeat
+ *  #check = F64, F32#
+ *  #sfx  = f64, f32#
+ *  #enable = 0, 1#
+ */
+#if NPY_SIMD_@check@ && @enable@
+/*
+ * Vectorized Cody-Waite range reduction technique
+ * Performs the reduction step x* = x - y*C in three steps:
+ * 1) x* = x - y*c1
+ * 2) x* = x - y*c2
+ * 3) x* = x - y*c3
+ * c1, c2 are exact floating points, c3 = C - c1 - c2 simulates higher precision
+ */
+NPY_FINLINE npyv_@sfx@
+simd_range_reduction_@sfx@(npyv_@sfx@ x, npyv_@sfx@ y, npyv_@sfx@ c1, npyv_@sfx@ c2, npyv_@sfx@ c3)
+{
+    npyv_@sfx@ reduced_x = npyv_muladd_@sfx@(y, c1, x);
+    reduced_x = npyv_muladd_@sfx@(y, c2, reduced_x);
+    reduced_x = npyv_muladd_@sfx@(y, c3, reduced_x);
+    return reduced_x;
+}
+#endif
+/**end repeat**/
+/* Disable SIMD code and revert to libm: see
+ * https://mail.python.org/archives/list/numpy-discussion@python.org/thread/C6EYZZSR4EWGVKHAZXLE7IBILRMNVK7L/
+ * for detailed discussion on this*/
+#if 0 // NPY_SIMD_F64
+/**begin repeat
+ *  #op = cos, sin#
+ */
+#if defined(NPY_OS_WIN32) || defined(NPY_OS_CYGWIN)
+NPY_FINLINE npyv_f64
+#else
+NPY_NOINLINE npyv_f64
+#endif
+simd_@op@_scalar_f64(npyv_f64 out, npy_uint64 cmp_bits)
+{
+    // MSVC doesn't compile with direct vector access, so we copy it here
+    // as we have no npyv_get_lane/npyv_set_lane intrinsics
+    npy_double NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) out_copy[npyv_nlanes_f64];
+    npyv_storea_f64(out_copy, out);
+
+    for (unsigned i = 0; i < npyv_nlanes_f64; ++i) {
+        if (cmp_bits & (1 << i)) {
+            out_copy[i] = npy_@op@(out_copy[i]);
+        }
+    }
+
+    return npyv_loada_f64(out_copy);
+}
+/**end repeat**/
+
+/*
+ * Approximate sine algorithm for x \in [-pi/2, pi/2]
+ * worst-case error is 3.5 ulp.
+ * abs error: 0x1.be222a58p-53 in [-pi/2, pi/2].
+ */
+NPY_FINLINE npyv_f64
+simd_approx_sine_poly_f64(npyv_f64 r)
+{
+    const npyv_f64 poly1 = npyv_setall_f64(-0x1.9f4a9c8b21dc9p-41);
+    const npyv_f64 poly2 = npyv_setall_f64(0x1.60e88a10163f2p-33);
+    const npyv_f64 poly3 = npyv_setall_f64(-0x1.ae6361b7254e7p-26);
+    const npyv_f64 poly4 = npyv_setall_f64(0x1.71de382e8d62bp-19);
+    const npyv_f64 poly5 = npyv_setall_f64(-0x1.a01a019aeb4ffp-13);
+    const npyv_f64 poly6 = npyv_setall_f64(0x1.111111110b25ep-7);
+    const npyv_f64 poly7 = npyv_setall_f64(-0x1.55555555554c3p-3);
+
+    npyv_f64 r2 = npyv_mul_f64(r, r);
+    npyv_f64 y = npyv_muladd_f64(poly1, r2, poly2);
+    y = npyv_muladd_f64(y, r2, poly3);
+    y = npyv_muladd_f64(y, r2, poly4);
+    y = npyv_muladd_f64(y, r2, poly5);
+    y = npyv_muladd_f64(y, r2, poly6);
+    y = npyv_muladd_f64(y, r2, poly7);
+    y = npyv_muladd_f64(npyv_mul_f64(y, r2), r, r);
+
+    return y;
+}
+
+/* r = |x| - n*pi  (range reduction into -pi/2 .. pi/2).  */
+NPY_FINLINE npyv_f64
+simd_range_reduction_pi2(npyv_f64 r, npyv_f64 n) {
+    const npyv_f64 pi1 = npyv_setall_f64(-0x1.921fb54442d18p+1);
+    const npyv_f64 pi2 = npyv_setall_f64(-0x1.1a62633145c06p-53);
+    const npyv_f64 pi3 = npyv_setall_f64(-0x1.c1cd129024e09p-106);
+
+    return simd_range_reduction_f64(r, n, pi1, pi2, pi3);
+}
+
+NPY_FINLINE npyv_b64 simd_sin_range_check_f64(npyv_u64 ir) {
+    const npyv_u64 tiny_bound = npyv_setall_u64(0x202); /* top12 (asuint64 (0x1p-509)).  */
+    const npyv_u64 simd_thresh = npyv_setall_u64(0x214); /* top12 (asuint64 (RangeVal)) - SIMD_TINY_BOUND.  */
+
+    return npyv_cmpge_u64(npyv_sub_u64(npyv_shri_u64(ir, 52), tiny_bound), simd_thresh);
+}
+
+NPY_FINLINE npyv_b64 simd_cos_range_check_f64(npyv_u64 ir) {
+    const npyv_f64 range_val = npyv_setall_f64(0x1p23);
+
+    return npyv_cmpge_u64(ir, npyv_reinterpret_u64_f64(range_val));
+}
+
+NPY_FINLINE npyv_f64
+simd_cos_poly_f64(npyv_f64 r, npyv_u64 ir, npyv_u64 sign)
+{
+    const npyv_f64 inv_pi = npyv_setall_f64(0x1.45f306dc9c883p-2);
+    const npyv_f64 half_pi = npyv_setall_f64(0x1.921fb54442d18p+0);
+    const npyv_f64 shift = npyv_setall_f64(0x1.8p52);
+
+    /* n = rint((|x|+pi/2)/pi) - 0.5.  */
+    npyv_f64 n = npyv_muladd_f64(inv_pi, npyv_add_f64(r, half_pi), shift);
+    npyv_u64 odd = npyv_shli_u64(npyv_reinterpret_u64_f64(n), 63);
+    n = npyv_sub_f64(n, shift);
+    n = npyv_sub_f64(n, npyv_setall_f64(0.5));
+
+    /* r = |x| - n*pi  (range reduction into -pi/2 .. pi/2).  */
+    r = simd_range_reduction_pi2(r, n);
+
+    /* sin(r) poly approx.  */
+    npyv_f64 y = simd_approx_sine_poly_f64(r);
+
+    /* sign.  */
+    return npyv_reinterpret_f64_u64(npyv_xor_u64(npyv_reinterpret_u64_f64(y), odd));
+}
+
+NPY_FINLINE npyv_f64
+simd_sin_poly_f64(npyv_f64 r, npyv_u64 ir, npyv_u64 sign)
+{
+    const npyv_f64 inv_pi = npyv_setall_f64(0x1.45f306dc9c883p-2);
+    const npyv_f64 shift = npyv_setall_f64(0x1.8p52);
+
+    /* n = rint(|x|/pi).  */
+    npyv_f64 n = npyv_muladd_f64(inv_pi, r, shift);
+    npyv_u64 odd = npyv_shli_u64(npyv_reinterpret_u64_f64(n), 63);
+    n = npyv_sub_f64(n, shift);
+
+    /* r = |x| - n*pi  (range reduction into -pi/2 .. pi/2).  */
+    r = simd_range_reduction_pi2(r, n);
+
+    /* sin(r) poly approx.  */
+    npyv_f64 y = simd_approx_sine_poly_f64(r);
+
+    /* sign.  */
+    return npyv_reinterpret_f64_u64(npyv_xor_u64(npyv_xor_u64(npyv_reinterpret_u64_f64(y), sign), odd));
+}
+
+/**begin repeat
+ *  #op = cos, sin#
+ */
+NPY_FINLINE void
+simd_@op@_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_intp len)
+{
+    const npyv_u64 abs_mask = npyv_setall_u64(0x7fffffffffffffff);
+    const int vstep = npyv_nlanes_f64;
+
+    npyv_f64 out = npyv_zero_f64();
+    npyv_f64 x_in;
+
+    for (; len > 0; len -= vstep, src += ssrc*vstep, dst += sdst*vstep) {
+        if (ssrc == 1) {
+            x_in = npyv_load_tillz_f64(src, len);
+        } else {
+            x_in = npyv_loadn_tillz_f64(src, ssrc, len);
+        }
+
+        npyv_u64 ir = npyv_and_u64(npyv_reinterpret_u64_f64(x_in), abs_mask);
+        npyv_f64 r = npyv_reinterpret_f64_u64(ir);
+        npyv_u64 sign = npyv_and_u64(npyv_reinterpret_u64_f64(x_in), npyv_not_u64(abs_mask));
+
+        npyv_b64 cmp = simd_@op@_range_check_f64(ir);
+        /* If fenv exceptions are to be triggered correctly, set any special lanes
+        to 1 (which is neutral w.r.t. fenv). These lanes will be fixed by
+        scalar loop later.  */
+        r = npyv_select_f64(cmp, npyv_setall_f64(1.0), r);
+
+        // Some in range, at least one calculation is useful
+        if (!npyv_all_b64(cmp)) {
+            out = simd_@op@_poly_f64(r, ir, sign);
+        }
+
+        if (npyv_any_b64(cmp)) {
+            out = npyv_select_f64(cmp, x_in, out);
+            out = simd_@op@_scalar_f64(out, npyv_tobits_b64(cmp));
+        }
+
+        if (sdst == 1) {
+            npyv_store_till_f64(dst, len, out);
+        } else {
+            npyv_storen_till_f64(dst, sdst, len, out);
+        }
+    }
+    npyv_cleanup();
+}
+/**end repeat**/
+#endif // NPY_SIMD_F64
+
+#if NPY_SIMD_F32
+/*
+ * Approximate cosine algorithm for x \in [-PI/4, PI/4]
+ * Maximum ULP across all 32-bit floats = 0.875
+ */
+NPY_FINLINE npyv_f32
+simd_cosine_poly_f32(npyv_f32 x2)
+{
+    const npyv_f32 invf8 = npyv_setall_f32(0x1.98e616p-16f);
+    const npyv_f32 invf6 = npyv_setall_f32(-0x1.6c06dcp-10f);
+    const npyv_f32 invf4 = npyv_setall_f32(0x1.55553cp-05f);
+    const npyv_f32 invf2 = npyv_setall_f32(-0x1.000000p-01f);
+    const npyv_f32 invf0 = npyv_setall_f32(0x1.000000p+00f);
+
+    npyv_f32 r = npyv_muladd_f32(invf8, x2, invf6);
+    r = npyv_muladd_f32(r, x2, invf4);
+    r = npyv_muladd_f32(r, x2, invf2);
+    r = npyv_muladd_f32(r, x2, invf0);
+    return r;
+}
+/*
+ * Approximate sine algorithm for x \in [-PI/4, PI/4]
+ * Maximum ULP across all 32-bit floats = 0.647
+ * Polynomial approximation based on unpublished work by T. Myklebust
+ */
+NPY_FINLINE npyv_f32
+simd_sine_poly_f32(npyv_f32 x, npyv_f32 x2)
+{
+    const npyv_f32 invf9 = npyv_setall_f32(0x1.7d3bbcp-19f);
+    const npyv_f32 invf7 = npyv_setall_f32(-0x1.a06bbap-13f);
+    const npyv_f32 invf5 = npyv_setall_f32(0x1.11119ap-07f);
+    const npyv_f32 invf3 = npyv_setall_f32(-0x1.555556p-03f);
+
+    npyv_f32 r = npyv_muladd_f32(invf9, x2, invf7);
+    r = npyv_muladd_f32(r, x2, invf5);
+    r = npyv_muladd_f32(r, x2, invf3);
+    r = npyv_muladd_f32(r, x2, npyv_zero_f32());
+    r = npyv_muladd_f32(r, x, x);
+    return r;
+}
+/*
+ * Vectorized approximate sine/cosine algorithms: The following code is a
+ * vectorized version of the algorithm presented here:
+ * https://stackoverflow.com/questions/30463616/payne-hanek-algorithm-implementation-in-c/30465751#30465751
+ * (1) Load data in registers and generate mask for elements that are
+ * within range [-71476.0625f, 71476.0625f] for cosine and [-117435.992f,
+ * 117435.992f] for sine.
+ * (2) For elements within range, perform range reduction using Cody-Waite's
+ * method: x* = x - y*PI/2, where y = rint(x*2/PI). x* \in [-PI/4, PI/4].
+ * (3) Map cos(x) to (+/-)sine or (+/-)cosine of x* based on the quadrant k =
+ * int(y).
+ * (4) For elements outside that range, Cody-Waite reduction performs poorly
+ * leading to catastrophic cancellation. We compute cosine by calling glibc in
+ * a scalar fashion.
+ * (5) Vectorized implementation has a max ULP of 1.49 and performs at least
+ * 5-7x(x86) - 2.5-3x(Power) - 1-2x(Arm) faster than scalar implementations
+ * when magnitude of all elements in the array < 71476.0625f (117435.992f for sine).
+ * Worst case performance is when all the elements are large leading to about 1-2% reduction in
+ * performance.
+ */
+typedef enum
+{
+    SIMD_COMPUTE_SIN,
+    SIMD_COMPUTE_COS
+} SIMD_TRIG_OP;
+
+static void SIMD_MSVC_NOINLINE
+simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
+                npy_intp len, SIMD_TRIG_OP trig_op)
+{
+    // Load up frequently used constants
+    const npyv_f32 zerosf = npyv_zero_f32();
+    const npyv_s32 ones  = npyv_setall_s32(1);
+    const npyv_s32 twos  = npyv_setall_s32(2);
+    const npyv_f32 two_over_pi = npyv_setall_f32(0x1.45f306p-1f);
+    const npyv_f32 codyw_pio2_highf = npyv_setall_f32(-0x1.921fb0p+00f);
+    const npyv_f32 codyw_pio2_medf = npyv_setall_f32(-0x1.5110b4p-22f);
+    const npyv_f32 codyw_pio2_lowf = npyv_setall_f32(-0x1.846988p-48f);
+    const npyv_f32 rint_cvt_magic = npyv_setall_f32(0x1.800000p+23f);
+    // Cody-Waite's range
+    float max_codi = 117435.992f;
+    if (trig_op == SIMD_COMPUTE_COS) {
+        max_codi = 71476.0625f;
+    }
+    const npyv_f32 max_cody = npyv_setall_f32(max_codi);
+    const int vstep = npyv_nlanes_f32;
+
+    for (; len > 0; len -= vstep, src += ssrc*vstep, dst += sdst*vstep) {
+        npyv_f32 x_in;
+        if (ssrc == 1) {
+            x_in = npyv_load_tillz_f32(src, len);
+        } else {
+            x_in = npyv_loadn_tillz_f32(src, ssrc, len);
+        }
+        npyv_b32 nnan_mask = npyv_notnan_f32(x_in);
+    #if NPY_SIMD_CMPSIGNAL
+        // Eliminate NaN to avoid FP invalid exception
+        x_in = npyv_and_f32(x_in, npyv_reinterpret_f32_u32(npyv_cvt_u32_b32(nnan_mask)));
+    #endif
+        npyv_b32 simd_mask = npyv_cmple_f32(npyv_abs_f32(x_in), max_cody);
+        npy_uint64 simd_maski = npyv_tobits_b32(simd_mask);
+        /*
+         * For elements outside of this range, Cody-Waite's range reduction
+         * becomes inaccurate and we will call libc to compute cosine for
+         * these numbers
+         */
+        if (simd_maski != 0) {
+            npyv_f32 x = npyv_select_f32(npyv_and_b32(nnan_mask, simd_mask), x_in, zerosf);
+
+            npyv_f32 quadrant = npyv_mul_f32(x, two_over_pi);
+            // round to nearest, -0.0f -> +0.0f, and |a| must be <= 0x1.0p+22
+            quadrant = npyv_add_f32(quadrant, rint_cvt_magic);
+            quadrant = npyv_sub_f32(quadrant, rint_cvt_magic);
+
+            // Cody-Waite's range reduction algorithm
+            npyv_f32 reduced_x = simd_range_reduction_f32(
+                x, quadrant, codyw_pio2_highf, codyw_pio2_medf, codyw_pio2_lowf
+            );
+            npyv_f32 reduced_x2 = npyv_square_f32(reduced_x);
+
+            // compute cosine and sine
+            npyv_f32 cos = simd_cosine_poly_f32(reduced_x2);
+            npyv_f32 sin = simd_sine_poly_f32(reduced_x, reduced_x2);
+
+            npyv_s32 iquadrant = npyv_round_s32_f32(quadrant);
+            if (trig_op == SIMD_COMPUTE_COS) {
+                iquadrant = npyv_add_s32(iquadrant, ones);
+            }
+            // blend sin and cos based on the quadrant
+            npyv_b32 sine_mask = npyv_cmpeq_s32(npyv_and_s32(iquadrant, ones), npyv_zero_s32());
+            cos = npyv_select_f32(sine_mask, sin, cos);
+
+            // multiply by -1 for appropriate elements
+            npyv_b32 negate_mask = npyv_cmpeq_s32(npyv_and_s32(iquadrant, twos), twos);
+            cos = npyv_ifsub_f32(negate_mask, zerosf, cos, cos);
+            cos = npyv_select_f32(nnan_mask, cos, npyv_setall_f32(NPY_NANF));
+
+            if (sdst == 1) {
+                npyv_store_till_f32(dst, len, cos);
+            } else {
+                npyv_storen_till_f32(dst, sdst, len, cos);
+            }
+        }
+        if (simd_maski != (npy_uint64)((1 << vstep) - 1)) {
+            float NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) ip_fback[npyv_nlanes_f32];
+            npyv_storea_f32(ip_fback, x_in);
+
+            // process elements using libc for large elements
+            if (trig_op == SIMD_COMPUTE_COS) {
+                for (unsigned i = 0; i < npyv_nlanes_f32; ++i) {
+                    if ((simd_maski >> i) & 1) {
+                        continue;
+                    }
+                    dst[sdst*i] = npy_cosf(ip_fback[i]);
+                }
+            }
+            else {
+                for (unsigned i = 0; i < npyv_nlanes_f32; ++i) {
+                    if ((simd_maski >> i) & 1) {
+                        continue;
+                    }
+                    dst[sdst*i] = npy_sinf(ip_fback[i]);
+                }
+            }
+        }
+    }
+    npyv_cleanup();
+}
+#endif // NPY_SIMD_FP32
+#endif // NYP_SIMD_FMA3
+
+/**begin repeat
+ *  #func = cos, sin#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(DOUBLE_@func@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
+{
+    /* Disable SIMD code and revert to libm: see
+     * https://mail.python.org/archives/list/numpy-discussion@python.org/thread/C6EYZZSR4EWGVKHAZXLE7IBILRMNVK7L/
+     * for detailed discussion on this*/
+//#if NPY_SIMD_F64 && NPY_SIMD_FMA3
+#if 0
+    const double *src = (double*)args[0];
+          double *dst = (double*)args[1];
+    const int lsize = sizeof(src[0]);
+    const npy_intp ssrc = steps[0] / lsize;
+    const npy_intp sdst = steps[1] / lsize;
+    npy_intp len = dimensions[0];
+    assert(len <= 1 || (steps[0] % lsize == 0 && steps[1] % lsize == 0));
+
+    if (is_mem_overlap(src, steps[0], dst, steps[1], len) ||
+        !npyv_loadable_stride_f64(ssrc) || !npyv_storable_stride_f64(sdst)
+    ) {
+        for (; len > 0; --len, src += ssrc, dst += sdst) {
+            simd_@func@_f64(src, 1, dst, 1, 1);
+        }
+    } else {
+        simd_@func@_f64(src, ssrc, dst, sdst, len);
+    }
+#else
+    UNARY_LOOP {
+        const npy_double in1 = *(npy_double *)ip1;
+        *(npy_double *)op1 = npy_@func@(in1);
+    }
+#endif
+}
+/**end repeat**/
+
+/**begin repeat
+ *  #func = sin, cos#
+ *  #enum = SIMD_COMPUTE_SIN, SIMD_COMPUTE_COS#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(FLOAT_@func@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
+{
+#if NPY_SIMD_F32 && NPY_SIMD_FMA3
+    const npy_float *src = (npy_float*)args[0];
+          npy_float *dst = (npy_float*)args[1];
+
+    const int lsize = sizeof(src[0]);
+    const npy_intp ssrc = steps[0] / lsize;
+    const npy_intp sdst = steps[1] / lsize;
+    npy_intp len = dimensions[0];
+    assert(len <= 1 || (steps[0] % lsize == 0 && steps[1] % lsize == 0));
+    if (is_mem_overlap(src, steps[0], dst, steps[1], len) ||
+        !npyv_loadable_stride_f32(ssrc) || !npyv_storable_stride_f32(sdst)
+    ) {
+        for (; len > 0; --len, src += ssrc, dst += sdst) {
+            simd_sincos_f32(src, 1, dst, 1, 1, @enum@);
+        }
+    } else {
+        simd_sincos_f32(src, ssrc, dst, sdst, len, @enum@);
+    }
+#else
+    UNARY_LOOP {
+        const npy_float in1 = *(npy_float *)ip1;
+        *(npy_float *)op1 = npy_@func@f(in1);
+    }
+#endif
+}
+/**end repeat**/

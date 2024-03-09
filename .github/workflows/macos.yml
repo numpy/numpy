@@ -19,17 +19,19 @@ concurrency:
 jobs:
   x86_conda:
     name: macOS x86-64 conda
-    if: "github.repository == 'numpy/numpy'"
-    runs-on: macos-latest
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    runs-on: macos-13
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.11"]
 
     steps:
-    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
 
     - name:  Prepare cache dirs and timestamps
       id:    prep-ccache
@@ -42,7 +44,7 @@ jobs:
         echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
 
     - name: Setup compiler cache
-      uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+      uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
       id:    cache-ccache
       with:
         path: ${{ steps.prep-ccache.outputs.dir }}
@@ -51,7 +53,7 @@ jobs:
           ${{ github.workflow }}-${{ matrix.python-version }}-ccache-macos-
 
     - name: Setup Mambaforge
-      uses: conda-incubator/setup-miniconda@3b0f2504dd76ef23b6d31f291f4913fb60ab5ff3 # v2.2.0
+      uses: conda-incubator/setup-miniconda@030178870c779d9e5e1b4e563269f3aa69b04081 # v3.0.3
       with:
         python-version: ${{ matrix.python-version }}
         channels: conda-forge
@@ -66,7 +68,7 @@ jobs:
     # ensure we re-solve once a day (since we don't lock versions). Could be
     # replaced by a conda-lock based approach in the future.
     - name: Cache conda environment
-      uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+      uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
       env:
         # Increase this value to reset cache if environment.yml has not changed
         CACHE_NUMBER: 1
@@ -84,7 +86,7 @@ jobs:
       shell: bash -l {0}
       run: |
         conda activate numpy-dev
-        CC="ccache $CC" spin build -j2
+        CC="ccache $CC" spin build -j2 -- -Dallow-noblas=false
 
     - name: Run test suite (full)
       shell: bash -l {0}
@@ -99,37 +101,48 @@ jobs:
         conda activate numpy-dev
         ccache -s
 
+
   accelerate:
-    name: Accelerate ILP64
-    if: "github.repository == 'numpy/numpy'"
-    runs-on: macos-13
+    name: Accelerate (LP64, ILP64) - ${{ matrix.build_runner[1] }}
+    if: github.repository == 'numpy/numpy'
+    runs-on: ${{ matrix.build_runner[0] }}
+    strategy:
+      fail-fast: false
+      matrix:
+        build_runner:
+          - [ macos-13, "macos_x86_64" ]
+          - [ macos-14, "macos_arm64" ]
+
     steps:
-    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
 
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.10'
 
-    - uses: maxim-lobanov/setup-xcode@9a697e2b393340c3cacd97468baa318e4c883d98 # v1.5.1
+    - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # v1.6.0
+      if: ${{ matrix.build_runner[0] == 'macos-13' }}
       with:
         xcode-version: '14.3'
 
     - name: Install dependencies
       run: |
-        pip install -r build_requirements.txt
+        pip install -r requirements/build_requirements.txt
         pip install pytest pytest-xdist hypothesis
+
+    - name: Build against Accelerate (LP64)
+      run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
+
+    - name: Test (linalg only)
+      run: spin test -j2 -- numpy/linalg
 
     - name: Build NumPy against Accelerate (ILP64)
       run: |
-        spin build -- -Dblas=accelerate -Dlapack=accelerate -Duse-ilp64=true
+        git clean -xdf
+        spin build -- -Duse-ilp64=true -Ddisable-optimization=true -Dallow-noblas=false
 
-    - name: Show meson-log.txt
-      if: always()
-      run: 'cat build/meson-logs/meson-log.txt'
-
-    - name: Test
-      run: |
-        spin test -j2
+    - name: Test (fast tests)
+      run: spin test -j2

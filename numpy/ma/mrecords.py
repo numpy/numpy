@@ -21,14 +21,13 @@ import numpy.ma as ma
 import warnings
 
 import numpy as np
-from numpy import (
-    bool_, dtype, ndarray, recarray, array as narray
-)
-from numpy.core.records import (
-    fromarrays as recfromarrays, fromrecords as recfromrecords
+from numpy import dtype, ndarray, array as narray
+
+from numpy._core.records import (
+    recarray, fromarrays as recfromarrays, fromrecords as recfromrecords
 )
 
-_byteorderconv = np.core.records._byteorderconv
+_byteorderconv = np._core.records._byteorderconv
 
 
 _check_fill_value = ma.core._check_fill_value
@@ -319,8 +318,8 @@ class MaskedRecords(MaskedArray):
             return obj
         # We want some elements.
         # First, the data.
-        obj = np.array(_data[indx], copy=False).view(mrecarray)
-        obj._mask = np.array(_mask[indx], copy=False).view(recarray)
+        obj = np.asarray(_data[indx]).view(mrecarray)
+        obj._mask = np.asarray(_mask[indx]).view(recarray)
         return obj
 
     def __setitem__(self, indx, value):
@@ -470,7 +469,7 @@ class MaskedRecords(MaskedArray):
         """
         (ver, shp, typ, isf, raw, msk, flv) = state
         ndarray.__setstate__(self, (shp, typ, isf, raw))
-        mdtype = dtype([(k, bool_) for (k, _) in self.dtype.descr])
+        mdtype = dtype([(k, np.bool) for (k, _) in self.dtype.descr])
         self.__dict__['_mask'].__setstate__((shp, mdtype, isf, msk))
         self.fill_value = flv
 
@@ -596,7 +595,7 @@ def fromrecords(reclist, dtype=None, shape=None, formats=None, names=None,
         mrec.fill_value = fill_value
     # Now, let's deal w/ the mask
     if mask is not nomask:
-        mask = np.array(mask, copy=False)
+        mask = np.asarray(mask)
         maskrecordlength = len(mask.dtype)
         if maskrecordlength:
             mrec._mask.flat = mask
@@ -771,7 +770,7 @@ def addfield(mrecord, newfield, newfieldname=None):
     newdata = newdata.view(MaskedRecords)
     # Get the new mask
     # Create a new empty recarray
-    newmdtype = np.dtype([(n, bool_) for n in newdtype.names])
+    newmdtype = np.dtype([(n, np.bool) for n in newdtype.names])
     newmask = recarray(_data.shape, newmdtype)
     # Add the old masks
     [newmask.setfield(_mask.getfield(*f), *f)

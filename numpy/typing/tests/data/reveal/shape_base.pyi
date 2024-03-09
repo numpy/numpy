@@ -12,7 +12,7 @@ else:
 i8: np.int64
 f8: np.float64
 
-AR_b: npt.NDArray[np.bool_]
+AR_b: npt.NDArray[np.bool]
 AR_i8: npt.NDArray[np.int64]
 AR_f8: npt.NDArray[np.float64]
 
@@ -47,7 +47,7 @@ assert_type(np.vsplit(AR_LIKE_f8, [3, 5, 6, 10]), list[npt.NDArray[Any]])
 assert_type(np.dsplit(AR_i8, [3, 5, 6, 10]), list[npt.NDArray[np.int64]])
 assert_type(np.dsplit(AR_LIKE_f8, [3, 5, 6, 10]), list[npt.NDArray[Any]])
 
-assert_type(np.kron(AR_b, AR_b), npt.NDArray[np.bool_])
+assert_type(np.kron(AR_b, AR_b), npt.NDArray[np.bool])
 assert_type(np.kron(AR_b, AR_i8), npt.NDArray[np.signedinteger[Any]])
 assert_type(np.kron(AR_f8, AR_f8), npt.NDArray[np.floating[Any]])
 

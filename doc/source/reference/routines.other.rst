@@ -21,21 +21,6 @@ Memory ranges
 
    shares_memory
    may_share_memory
-   lib.array_utils.byte_bounds
-
-Array mixins
-------------
-.. autosummary::
-   :toctree: generated/
-
-   lib.mixins.NDArrayOperatorsMixin
-
-NumPy version comparison
-------------------------
-.. autosummary::
-   :toctree: generated/
-
-   lib.NumpyVersion
 
 Utility
 -------
@@ -47,9 +32,11 @@ Utility
    show_config
    show_runtime
    broadcast_shapes
-   lib.array_utils.normalize_axis_index
-   lib.array_utils.normalize_axis_tuple
 
-.. automodule:: numpy.exceptions
+NumPy-specific help function
+----------------------------
 
-.. automodule:: numpy.dtypes
+.. autosummary::
+   :toctree: generated/
+
+   info

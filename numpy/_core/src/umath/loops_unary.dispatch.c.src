@@ -1,0 +1,367 @@
+/*@targets
+ ** $maxopt baseline
+ ** neon asimd
+ ** sse2 avx2 avx512_skx
+ ** vsx2
+ ** vx vxe
+ **/
+
+#define _UMATHMODULE
+#define _MULTIARRAYMODULE
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include "numpy/npy_math.h"
+#include "simd/simd.h"
+#include "loops_utils.h"
+#include "loops.h"
+#include "lowlevel_strided_loops.h"
+// Provides the various *_LOOP macros
+#include "fast_loop_macros.h"
+
+/*******************************************************************************
+ ** Scalar ops
+ ******************************************************************************/
+#define scalar_negative(X) (-X)
+
+/*******************************************************************************
+ ** extra SIMD intrinsics
+ ******************************************************************************/
+
+#if NPY_SIMD
+
+/**begin repeat
+ * #sfx  = s8, u8, s16, u16, s32, u32, s64, u64#
+ * #ssfx =  8,  8,  16,  16,  32,  32,  64,  64#
+ */
+static NPY_INLINE npyv_@sfx@
+npyv_negative_@sfx@(npyv_@sfx@ v)
+{
+#if defined(NPY_HAVE_NEON) && (defined(__aarch64__) || @ssfx@ < 64)
+    return npyv_reinterpret_@sfx@_s@ssfx@(vnegq_s@ssfx@(npyv_reinterpret_s@ssfx@_@sfx@(v)));
+#else
+    // (x ^ -1) + 1
+    const npyv_@sfx@ m1 = npyv_setall_@sfx@((npyv_lanetype_@sfx@)-1);
+    return npyv_sub_@sfx@(npyv_xor_@sfx@(v, m1), m1);
+#endif
+}
+/**end repeat**/
+
+/**begin repeat
+ * #sfx  = f32, f64#
+ * #VCHK = NPY_SIMD_F32, NPY_SIMD_F64#
+ * #fd = f, #
+ */
+#if @VCHK@
+static NPY_INLINE npyv_@sfx@
+npyv_negative_@sfx@(npyv_@sfx@ v)
+{
+#if defined(NPY_HAVE_NEON)
+    return vnegq_@sfx@(v);
+#else
+    // (v ^ signmask)
+    const npyv_@sfx@ signmask = npyv_setall_@sfx@(-0.@fd@);
+    return npyv_xor_@sfx@(v, signmask);
+#endif
+}
+#endif // @VCHK@
+/**end repeat**/
+
+#endif // NPY_SIMD
+
+/********************************************************************************
+ ** Defining the SIMD kernels
+ ********************************************************************************/
+/**begin repeat
+ * #sfx = s8, u8, s16, u16, s32, u32, s64, u64, f32, f64#
+ * #simd_chk = NPY_SIMD*8, NPY_SIMD_F32, NPY_SIMD_F64#
+ * #is_fp = 0*8, 1*2#
+ * #supports_ncontig = 0*4,1*6#
+ */
+/**begin repeat1
+ * #kind   = negative#
+ * #intrin = negative#
+ * #unroll = 4#
+ */
+#if @simd_chk@
+#if @unroll@ < 1
+#error "Unroll must be at least 1"
+#elif NPY_SIMD != 128 && @unroll@ > 2
+// Avoid memory bandwidth bottleneck for larger SIMD
+#define UNROLL 2
+#else
+#define UNROLL @unroll@
+#endif
+// contiguous inputs and output.
+static NPY_INLINE void
+simd_unary_cc_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip,
+                             npyv_lanetype_@sfx@ *op,
+                             npy_intp len)
+{
+    const int vstep = npyv_nlanes_@sfx@;
+    const int wstep = vstep * UNROLL;
+
+    // unrolled vector loop
+    for (; len >= wstep; len -= wstep, ip += wstep, op += wstep) {
+    /**begin repeat2
+     * #U = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+     */
+    #if UNROLL > @U@
+        npyv_@sfx@ v_@U@ = npyv_load_@sfx@(ip + @U@ * vstep);
+        npyv_@sfx@ r_@U@ = npyv_@intrin@_@sfx@(v_@U@);
+        npyv_store_@sfx@(op + @U@ * vstep, r_@U@);
+    #endif
+    /**end repeat2**/
+    }
+    // single vector loop
+    for (; len >= vstep; len -= vstep, ip += vstep, op +=vstep) {
+        npyv_@sfx@ v = npyv_load_@sfx@(ip);
+        npyv_@sfx@ r = npyv_@intrin@_@sfx@(v);
+        npyv_store_@sfx@(op, r);
+    }
+    // scalar finish up any remaining iterations
+    for (; len > 0; --len, ++ip, ++op) {
+        *op = scalar_@intrin@(*ip);
+    }
+}
+
+#if @supports_ncontig@
+// contiguous input, non-contiguous output
+static NPY_INLINE void
+simd_unary_cn_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip,
+                             npyv_lanetype_@sfx@ *op, npy_intp ostride,
+                             npy_intp len)
+{
+    const int vstep = npyv_nlanes_@sfx@;
+    const int wstep = vstep * UNROLL;
+
+    // unrolled vector loop
+    for (; len >= wstep; len -= wstep, ip += wstep, op += ostride*wstep) {
+    /**begin repeat2
+     * #U = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+     */
+    #if UNROLL > @U@
+        npyv_@sfx@ v_@U@ = npyv_load_@sfx@(ip + @U@ * vstep);
+        npyv_@sfx@ r_@U@ = npyv_@intrin@_@sfx@(v_@U@);
+        npyv_storen_@sfx@(op + @U@ * vstep * ostride, ostride, r_@U@);
+    #endif
+    /**end repeat2**/
+    }
+    // single vector loop
+    for (; len >= vstep; len -= vstep, ip += vstep, op += ostride*vstep) {
+        npyv_@sfx@ v = npyv_load_@sfx@(ip);
+        npyv_@sfx@ r = npyv_@intrin@_@sfx@(v);
+        npyv_storen_@sfx@(op, ostride, r);
+    }
+    // scalar finish up any remaining iterations
+    for (; len > 0; --len, ++ip, op += ostride) {
+        *op = scalar_@intrin@(*ip);
+    }
+}
+// non-contiguous input, contiguous output
+static NPY_INLINE void
+simd_unary_nc_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip, npy_intp istride,
+                             npyv_lanetype_@sfx@ *op,
+                             npy_intp len)
+{
+    const int vstep = npyv_nlanes_@sfx@;
+    const int wstep = vstep * UNROLL;
+
+    // unrolled vector loop
+    for (; len >= wstep; len -= wstep, ip += istride*wstep, op += wstep) {
+    /**begin repeat2
+     * #U = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+     */
+    #if UNROLL > @U@
+        npyv_@sfx@ v_@U@ = npyv_loadn_@sfx@(ip + @U@ * vstep * istride, istride);
+        npyv_@sfx@ r_@U@ = npyv_@intrin@_@sfx@(v_@U@);
+        npyv_store_@sfx@(op + @U@ * vstep, r_@U@);
+    #endif
+    /**end repeat2**/
+    }
+    // single vector loop
+    for (; len >= vstep; len -= vstep, ip += istride*vstep, op += vstep) {
+        npyv_@sfx@ v = npyv_loadn_@sfx@(ip, istride);
+        npyv_@sfx@ r = npyv_@intrin@_@sfx@(v);
+        npyv_store_@sfx@(op, r);
+    }
+    // scalar finish up any remaining iterations
+    for (; len > 0; --len, ip += istride, ++op) {
+        *op = scalar_@intrin@(*ip);
+    }
+}
+// non-contiguous input and output
+// limit unroll to 2x
+#if UNROLL > 2
+#undef UNROLL
+#define UNROLL 2
+#endif
+// X86 does better with unrolled scalar for heavy non-contiguous
+#ifndef NPY_HAVE_SSE2
+static NPY_INLINE void
+simd_unary_nn_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip, npy_intp istride,
+                             npyv_lanetype_@sfx@ *op, npy_intp ostride,
+                             npy_intp len)
+{
+    const int vstep = npyv_nlanes_@sfx@;
+    const int wstep = vstep * UNROLL;
+
+    // unrolled vector loop
+    for (; len >= wstep; len -= wstep, ip += istride*wstep, op += ostride*wstep) {
+    /**begin repeat2
+     * #U = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+     */
+    #if UNROLL > @U@
+        npyv_@sfx@ v_@U@ = npyv_loadn_@sfx@(ip + @U@ * vstep * istride, istride);
+        npyv_@sfx@ r_@U@ = npyv_@intrin@_@sfx@(v_@U@);
+        npyv_storen_@sfx@(op + @U@ * vstep * ostride, ostride, r_@U@);
+    #endif
+    /**end repeat2**/
+    }
+    // single vector loop
+    for (; len >= vstep; len -= vstep, ip += istride*vstep, op += ostride*vstep) {
+        npyv_@sfx@ v = npyv_loadn_@sfx@(ip, istride);
+        npyv_@sfx@ r = npyv_@intrin@_@sfx@(v);
+        npyv_storen_@sfx@(op, ostride, r);
+    }
+    // scalar finish up any remaining iterations
+    for (; len > 0; --len, ip += istride, op += ostride) {
+        *op = scalar_@intrin@(*ip);
+    }
+}
+#endif // NPY_HAVE_SSE2
+#endif // @supports_ncontig@
+#undef UNROLL
+#endif // @simd_chk@
+/*end repeat1**/
+/**end repeat**/
+
+/********************************************************************************
+ ** Defining ufunc inner functions
+ ********************************************************************************/
+/**begin repeat
+ * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *         BYTE,  SHORT,  INT,  LONG,  LONGLONG,
+ *         FLOAT, DOUBLE, LONGDOUBLE#
+ *
+ * #BTYPE = BYTE, SHORT, INT,  LONG, LONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG,
+ *          FLOAT, DOUBLE, LONGDOUBLE#
+ * #type = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
+ *         npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *         npy_float, npy_double, npy_longdouble#
+ *
+ * #is_fp = 0*10, 1*3#
+ * #is_unsigned = 1*5, 0*5, 0*3#
+ * #supports_ncontig = 0*2, 1*3, 0*2, 1*3, 1*3#
+ */
+#undef TO_SIMD_SFX
+#if 0
+/**begin repeat1
+ * #len = 8, 16, 32, 64#
+ */
+#elif NPY_SIMD && NPY_BITSOF_@BTYPE@ == @len@
+    #if @is_fp@
+        #define TO_SIMD_SFX(X) X##_f@len@
+        #if NPY_BITSOF_@BTYPE@ == 32 && !NPY_SIMD_F32
+            #undef TO_SIMD_SFX
+        #endif
+        #if NPY_BITSOF_@BTYPE@ == 64 && !NPY_SIMD_F64
+            #undef TO_SIMD_SFX
+        #endif
+    #elif @is_unsigned@
+        #define TO_SIMD_SFX(X) X##_u@len@
+    #else
+        #define TO_SIMD_SFX(X) X##_s@len@
+    #endif
+/**end repeat1**/
+#endif
+
+/**begin repeat1
+ * #kind = negative#
+ * #intrin = negative#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    char *ip = args[0], *op = args[1];
+    npy_intp istep = steps[0], ostep = steps[1],
+             len = dimensions[0];
+#ifdef TO_SIMD_SFX
+    #undef STYPE
+    #define STYPE TO_SIMD_SFX(npyv_lanetype)
+    if (!is_mem_overlap(ip, istep, op, ostep, len)) {
+        if (IS_UNARY_CONT(@type@, @type@)) {
+            // no overlap and operands are contiguous
+            TO_SIMD_SFX(simd_unary_cc_@intrin@)(
+                (STYPE*)ip, (STYPE*)op, len
+            );
+            goto clear;
+        }
+    #if @supports_ncontig@
+        const npy_intp istride = istep / sizeof(STYPE);
+        const npy_intp ostride = ostep / sizeof(STYPE);
+        if (TO_SIMD_SFX(npyv_loadable_stride)(istride) &&
+            TO_SIMD_SFX(npyv_storable_stride)(ostride))
+        {
+            if (istride == 1 && ostride != 1) {
+                // contiguous input, non-contiguous output
+                TO_SIMD_SFX(simd_unary_cn_@intrin@)(
+                    (STYPE*)ip, (STYPE*)op, ostride, len
+                );
+                goto clear;
+            }
+            else if (istride != 1 && ostride == 1) {
+                // non-contiguous input, contiguous output
+                TO_SIMD_SFX(simd_unary_nc_@intrin@)(
+                    (STYPE*)ip, istride, (STYPE*)op, len
+                );
+                goto clear;
+            }
+        // X86 does better with unrolled scalar for heavy non-contiguous
+        #ifndef NPY_HAVE_SSE2
+            else if (istride != 1 && ostride != 1) {
+                // non-contiguous input and output
+                TO_SIMD_SFX(simd_unary_nn_@intrin@)(
+                    (STYPE*)ip, istride, (STYPE*)op, ostride, len
+                );
+                goto clear;
+            }
+        #endif
+        }
+    #endif // @supports_ncontig@
+    }
+#endif // TO_SIMD_SFX
+#ifndef NPY_DISABLE_OPTIMIZATION
+    /*
+     * scalar unrolls
+     * 8x unroll performed best on
+     *  - Apple M1 Native / arm64
+     *  - Apple M1 Rosetta / SSE42
+     *  - iMacPro / AVX512
+     */
+    #define UNROLL 8
+    for (; len >= UNROLL; len -= UNROLL, ip += istep*UNROLL, op += ostep*UNROLL) {
+    /**begin repeat2
+     * #U = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+     */
+    #if UNROLL > @U@
+        const @type@ in_@U@ = *((const @type@ *)(ip + @U@ * istep));
+        *((@type@ *)(op + @U@ * ostep)) = scalar_@intrin@(in_@U@);
+    #endif
+    /**end repeat2**/
+    }
+#endif // NPY_DISABLE_OPTIMIZATION
+    for (; len > 0; --len, ip += istep, op += ostep) {
+        *((@type@ *)op) = scalar_@intrin@(*(const @type@ *)ip);
+    }
+#ifdef TO_SIMD_SFX
+clear:
+    npyv_cleanup();
+#endif
+#if @is_fp@
+    npy_clear_floatstatus_barrier((char*)dimensions);
+#endif
+}
+/**end repeat**/
+
+#undef NEGATIVE_CONTIG_ONLY

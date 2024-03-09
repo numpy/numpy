@@ -1,8 +1,3 @@
-{% set title = "NumPy {} Release Notes".format(versiondata.version) %}
-{{ "=" * title|length }}
-{{ title }}
-{{ "=" * title|length }}
-
 {% for section, _ in sections.items() %}
 {% set underline = underlines[0] %}{% if section %}{{ section }}
 {{ underline * section|length }}{% set underline = underlines[1] %}
@@ -32,8 +27,7 @@ No significant changes.
 {% endif %}
 {% endfor %}
 {% else %}
-No significant changes.
-
+(no release note snippets found)
 
 {% endif %}
 {% endfor %}

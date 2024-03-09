@@ -2,6 +2,8 @@ import os
 import re
 import sys
 import importlib
+from docutils import nodes
+from docutils.parsers.rst import Directive
 
 # Minimum version, enforced by sphinx
 needs_sphinx = '4.3'
@@ -40,8 +42,8 @@ def replace_scalar_type_names():
     ]
 
     # prevent numpy attaching docstrings to the scalar types
-    assert 'numpy.core._add_newdocs_scalars' not in sys.modules
-    sys.modules['numpy.core._add_newdocs_scalars'] = object()
+    assert 'numpy._core._add_newdocs_scalars' not in sys.modules
+    sys.modules['numpy._core._add_newdocs_scalars'] = object()
 
     import numpy
 
@@ -57,8 +59,8 @@ def replace_scalar_type_names():
         c_typ.tp_name = _name_cache[typ] = b"numpy." + name.encode('utf8')
 
     # now generate the docstrings as usual
-    del sys.modules['numpy.core._add_newdocs_scalars']
-    import numpy.core._add_newdocs_scalars
+    del sys.modules['numpy._core._add_newdocs_scalars']
+    import numpy._core._add_newdocs_scalars
 
 replace_scalar_type_names()
 
@@ -112,7 +114,7 @@ source_suffix = '.rst'
 
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2023, NumPy Developers'
+copyright = '2008-2024, NumPy Developers'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -152,10 +154,64 @@ add_function_parentheses = False
 # output. They are ignored by default.
 #show_authors = False
 
+class LegacyDirective(Directive):
+    """
+    Adapted from docutils/parsers/rst/directives/admonitions.py
+
+    Uses a default text if the directive does not have contents. If it does,
+    the default text is concatenated to the contents.
+
+    See also the same implementation in SciPy's conf.py.
+    """
+    has_content = True
+    node_class = nodes.admonition
+    optional_arguments = 1
+
+    def run(self):
+        try:
+            obj = self.arguments[0]
+        except IndexError:
+            # Argument is empty; use default text
+            obj = "submodule"
+        text = (f"This {obj} is considered legacy and will no longer receive "
+                "updates. This could also mean it will be removed in future "
+                "NumPy versions.")
+
+        try:
+            self.content[0] = text+" "+self.content[0]
+        except IndexError:
+            # Content is empty; use the default text
+            source, lineno = self.state_machine.get_source_and_line(
+                self.lineno
+            )
+            self.content.append(
+                text,
+                source=source,
+                offset=lineno
+            )
+        text = '\n'.join(self.content)
+        # Create the admonition node, to be populated by `nested_parse`
+        admonition_node = self.node_class(rawsource=text)
+        # Set custom title
+        title_text = "Legacy"
+        textnodes, _ = self.state.inline_text(title_text, self.lineno)
+        title = nodes.title(title_text, '', *textnodes)
+        # Set up admonition node
+        admonition_node += title
+        # Select custom class for CSS styling
+        admonition_node['classes'] = ['admonition-legacy']
+        # Parse the directive contents
+        self.state.nested_parse(self.content, self.content_offset,
+                                admonition_node)
+        return [admonition_node]
+
+
 def setup(app):
     # add a config value for `ifconfig` directives
     app.add_config_value('python_version_major', str(sys.version_info.major), 'env')
     app.add_lexer('NumPyC', NumPyLexer)
+    app.add_directive("legacy", LegacyDirective)
+
 
 # While these objects do have type `module`, the names are aliases for modules
 # elsewhere. Sphinx does not support referring to modules by an aliases name,
@@ -184,8 +240,8 @@ else:
 
 html_theme_options = {
   "logo": {
-      "image_light": "numpylogo.svg",
-      "image_dark": "numpylogo_dark.svg",
+      "image_light": "_static/numpylogo.svg",
+      "image_dark": "_static/numpylogo_dark.svg",
   },
   "github_url": "https://github.com/numpy/numpy",
   "collapse_navigation": True,
@@ -431,9 +487,9 @@ else:
 
 def _get_c_source_file(obj):
     if issubclass(obj, numpy.generic):
-        return r"core/src/multiarray/scalartypes.c.src"
+        return r"_core/src/multiarray/scalartypes.c.src"
     elif obj is numpy.ndarray:
-        return r"core/src/multiarray/arrayobject.c"
+        return r"_core/src/multiarray/arrayobject.c"
     else:
         # todo: come up with a better way to generate these
         return None

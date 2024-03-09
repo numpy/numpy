@@ -9,7 +9,7 @@ Internal organization of NumPy arrays
 It helps to understand a bit about how NumPy arrays are handled under the covers
 to help understand NumPy better. This section will not go into great detail.
 Those wishing to understand the full details are requested to refer to Travis
-Oliphant's book `Guide to NumPy <http://web.mit.edu/dvp/Public/numpybook.pdf>`_.
+Oliphant's book `Guide to NumPy <https://web.mit.edu/dvp/Public/numpybook.pdf>`_.
 
 NumPy arrays consist of two major components: the raw array data (from now on,
 referred to as the data buffer), and the information about the raw array data.
@@ -49,7 +49,7 @@ strides, etc) but shares the same data bytes. Many operations in NumPy do just
 this such as :term:`slicing <python:slice>`. Other operations, such as
 transpose, don't move data elements around in the array, but rather change the
 information about the shape and strides so that the indexing of the array
-changes, but the data in the doesn't move.
+changes, but the data in the array doesn't move.
 
 Typically these new versions of the array metadata but the same data buffer are
 new views into the data buffer. There is a different :class:`ndarray` object,

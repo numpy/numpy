@@ -7,7 +7,7 @@ import operator
 import warnings
 
 import numpy as np
-from numpy.core import overrides
+from numpy._core import overrides
 
 __all__ = ['histogram', 'histogramdd', 'histogram_bin_edges']
 
@@ -128,7 +128,7 @@ def _hist_bin_stone(x, range):
     https://en.wikipedia.org/wiki/Histogram#Scott.27s_normal_reference_rule
 
     This paper by Stone appears to be the origination of this rule.
-    http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/34.pdf
+    https://digitalassets.lib.berkeley.edu/sdtr/ucb/text/34.pdf
 
     Parameters
     ----------
@@ -285,7 +285,7 @@ def _ravel_and_check_weights(a, weights):
     a = np.asarray(a)
 
     # Ensure that the array is a "subtractable" dtype
-    if a.dtype == np.bool_:
+    if a.dtype == np.bool:
         warnings.warn("Converting input from {} to {} for compatibility."
                       .format(a.dtype, np.uint8),
                       RuntimeWarning, stacklevel=3)
@@ -348,13 +348,15 @@ def _unsigned_subtract(a, b):
     }
     dt = np.result_type(a, b)
     try:
-        dt = signed_to_unsigned[dt.type]
+        unsigned_dt = signed_to_unsigned[dt.type]
     except KeyError:
         return np.subtract(a, b, dtype=dt)
     else:
         # we know the inputs are integers, and we are deliberately casting
-        # signed to unsigned
-        return np.subtract(a, b, casting='unsafe', dtype=dt)
+        # signed to unsigned.  The input may be negative python integers so
+        # ensure we pass in arrays with the initial dtype (related to NEP 50).
+        return np.subtract(np.asarray(a, dtype=dt), np.asarray(b, dtype=dt),
+                           casting='unsafe', dtype=unsigned_dt)
 
 
 def _get_bin_edges(a, bins, range, weights):
@@ -483,19 +485,19 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         sequence, it defines the bin edges, including the rightmost
         edge, allowing for non-uniform bin widths.
 
-        If `bins` is a string from the list below, `histogram_bin_edges` will use
-        the method chosen to calculate the optimal bin width and
-        consequently the number of bins (see `Notes` for more detail on
-        the estimators) from the data that falls within the requested
-        range. While the bin width will be optimal for the actual data
+        If `bins` is a string from the list below, `histogram_bin_edges` will
+        use the method chosen to calculate the optimal bin width and
+        consequently the number of bins (see the Notes section for more detail
+        on the estimators) from the data that falls within the requested range.
+        While the bin width will be optimal for the actual data
         in the range, the number of bins will be computed to fill the
         entire range, including the empty portions. For visualisation,
         using the 'auto' option is suggested. Weighted data is not
         supported for automated bin size selection.
 
         'auto'
-            Maximum of the 'sturges' and 'fd' estimators. Provides good
-            all around performance.
+            Minimum bin width between the 'sturges' and 'fd' estimators. 
+            Provides good all-around performance.
 
         'fd' (Freedman Diaconis Estimator)
             Robust (resilient to outliers) estimator that takes into
@@ -565,7 +567,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     ``np.round(np.ceil(range / h))``. The final bin width is often less
     than what is returned by the estimators below.
 
-    'auto' (maximum of the 'sturges' and 'fd' estimators)
+    'auto' (minimum bin width of the 'sturges' and 'fd' estimators)
         A compromise to get a good value. For small datasets the Sturges
         value will usually be chosen, while larger datasets will usually
         default to FD.  Avoids the overly conservative behaviour of FD
@@ -709,6 +711,9 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
         (instead of 1). If `density` is True, the weights are
         normalized, so that the integral of the density over the range
         remains 1.
+        Please note that the ``dtype`` of `weights` will also become the
+        ``dtype`` of the returned accumulator (`hist`), so it must be
+        large enough to hold accumulated values as well.
     density : bool, optional
         If ``False``, the result will contain the number of samples in
         each bin. If ``True``, the result is the value of the
@@ -721,7 +726,8 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
     -------
     hist : array
         The values of the histogram. See `density` and `weights` for a
-        description of the possible semantics.
+        description of the possible semantics.  If `weights` are given,
+        ``hist.dtype`` will be taken from `weights`.
     bin_edges : array of dtype float
         Return the bin edges ``(length(hist)+1)``.
 
@@ -951,8 +957,8 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
     H : ndarray
         The multidimensional histogram of sample x. See density and weights
         for the different possible semantics.
-    edges : list
-        A list of D arrays describing the bin edges for each dimension.
+    edges : tuple of ndarrays
+        A tuple of D arrays describing the bin edges for each dimension.
 
     See Also
     --------

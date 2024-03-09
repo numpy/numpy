@@ -8,6 +8,7 @@ from typing import (
     SupportsIndex,
 )
 
+import numpy as np
 from numpy import (
     # Circumvent a naming conflict with `AxisConcatenator.matrix`
     matrix as _Matrix,
@@ -17,7 +18,6 @@ from numpy import (
     dtype,
     str_,
     bytes_,
-    bool_,
     int_,
     float64,
     complex128,
@@ -34,7 +34,7 @@ from numpy._typing import (
     _SupportsDType,
 )
 
-from numpy.core.multiarray import (
+from numpy._core.multiarray import (
     unravel_index as unravel_index,
     ravel_multi_index as ravel_multi_index,
 )
@@ -54,7 +54,7 @@ def ix_(*args: str | _NestedSequence[str]) -> tuple[NDArray[str_], ...]: ...
 @overload
 def ix_(*args: bytes | _NestedSequence[bytes]) -> tuple[NDArray[bytes_], ...]: ...
 @overload
-def ix_(*args: bool | _NestedSequence[bool]) -> tuple[NDArray[bool_], ...]: ...
+def ix_(*args: bool | _NestedSequence[bool]) -> tuple[NDArray[np.bool], ...]: ...
 @overload
 def ix_(*args: int | _NestedSequence[int]) -> tuple[NDArray[int_], ...]: ...
 @overload
@@ -74,7 +74,7 @@ class nd_grid(Generic[_BoolType]):
     def __getitem__(
         self: nd_grid[Literal[True]],
         key: slice | Sequence[slice],
-    ) -> list[NDArray[Any]]: ...
+    ) -> tuple[NDArray[Any], ...]: ...
 
 class MGridClass(nd_grid[Literal[False]]):
     def __init__(self) -> None: ...

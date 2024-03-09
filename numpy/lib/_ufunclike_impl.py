@@ -5,8 +5,8 @@ storing results in an output array.
 """
 __all__ = ['fix', 'isneginf', 'isposinf']
 
-import numpy.core.numeric as nx
-from numpy.core.overrides import array_function_dispatch
+import numpy._core.numeric as nx
+from numpy._core.overrides import array_function_dispatch
 import warnings
 import functools
 

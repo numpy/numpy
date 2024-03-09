@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 import numpy as np
 import pytest
 
@@ -17,7 +17,7 @@ u4 = np.uint32(1)
 dt = np.datetime64(1, "D")
 td = np.timedelta64(1, "D")
 
-b_ = np.bool_(1)
+b_ = np.bool(1)
 
 b = bool(1)
 c = complex(1)
@@ -26,7 +26,8 @@ i = int(1)
 
 
 class Object:
-    def __array__(self) -> np.ndarray[Any, np.dtype[np.object_]]:
+    def __array__(self, dtype: Optional[np.typing.DTypeLike] = None,
+                  copy: Optional[bool] = None) -> np.ndarray[Any, np.dtype[np.object_]]:
         ret = np.empty((), dtype=object)
         ret[()] = self
         return ret
@@ -56,7 +57,7 @@ class Object:
         return self
 
 
-AR_b: np.ndarray[Any, np.dtype[np.bool_]] = np.array([True])
+AR_b: np.ndarray[Any, np.dtype[np.bool]] = np.array([True])
 AR_u: np.ndarray[Any, np.dtype[np.uint32]] = np.array([1], dtype=np.uint32)
 AR_i: np.ndarray[Any, np.dtype[np.int64]] = np.array([1])
 AR_f: np.ndarray[Any, np.dtype[np.float64]] = np.array([1.0])

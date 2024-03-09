@@ -6,8 +6,8 @@ Memory management in NumPy
 The `numpy.ndarray` is a python class. It requires additional memory allocations
 to hold `numpy.ndarray.strides`, `numpy.ndarray.shape` and
 `numpy.ndarray.data` attributes. These attributes are specially allocated
-after creating the python object in `__new__`. The ``strides`` and
-``shape`` are stored in a piece of memory allocated internally.
+after creating the python object in :meth:`~object.__new__`. The ``strides``
+and ``shape`` are stored in a piece of memory allocated internally.
 
 The ``data`` allocation used to store the actual array values (which could be
 pointers in the case of ``object`` arrays) can be very large, so NumPy has
@@ -19,9 +19,7 @@ Historical overview
 
 Since version 1.7.0, NumPy has exposed a set of ``PyDataMem_*`` functions
 (:c:func:`PyDataMem_NEW`, :c:func:`PyDataMem_FREE`, :c:func:`PyDataMem_RENEW`)
-which are backed by `alloc`, `free`, `realloc` respectively. In that version
-NumPy also exposed the `PyDataMem_EventHook` function (now deprecated)
-described below, which wrap the OS-level calls.
+which are backed by `alloc`, `free`, `realloc` respectively.
 
 Since those early days, Python also improved its memory management
 capabilities, and began providing
@@ -49,8 +47,7 @@ less suited to NumPy's needs. User who wish to change the NumPy data memory
 management routines can use :c:func:`PyDataMem_SetHandler`, which uses a
 :c:type:`PyDataMem_Handler` structure to hold pointers to functions used to
 manage the data memory. The calls are still wrapped by internal routines to
-call :c:func:`PyTraceMalloc_Track`, :c:func:`PyTraceMalloc_Untrack`, and will
-use the deprecated :c:func:`PyDataMem_EventHookFunc` mechanism. Since the
+call :c:func:`PyTraceMalloc_Track`, :c:func:`PyTraceMalloc_Untrack`. Since the
 functions may change during the lifetime of the process, each ``ndarray``
 carries with it the functions used at the time of its instantiation, and these
 will be used to reallocate or free the data memory of the instance.
@@ -94,7 +91,7 @@ will be used to reallocate or free the data memory of the instance.
    next ``PyArrayObject``. On failure, return ``NULL``.
 
 For an example of setting up and using the PyDataMem_Handler, see the test in
-:file:`numpy/core/tests/test_mem_policy.py`
+:file:`numpy/_core/tests/test_mem_policy.py`
 
 
 What happens when deallocating if there is no policy set
@@ -140,7 +137,7 @@ Example of memory tracing with ``np.lib.tracemalloc_domain``
 Note that since Python 3.6 (or newer), the builtin ``tracemalloc`` module can be used to
 track allocations inside NumPy. NumPy places its CPU memory allocations into the 
 ``np.lib.tracemalloc_domain`` domain.
-For additional information, check: `https://docs.python.org/3/library/tracemalloc.html`.
+For additional information, check: https://docs.python.org/3/library/tracemalloc.html.
 
 Here is an example on how to use ``np.lib.tracemalloc_domain``:
 

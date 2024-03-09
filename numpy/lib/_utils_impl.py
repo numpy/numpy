@@ -7,7 +7,7 @@ import warnings
 import functools
 import platform
 
-from numpy.core import ndarray
+from numpy._core import ndarray
 from numpy._utils import set_module
 import numpy as np
 
@@ -37,7 +37,7 @@ def show_runtime():
        ``__cpu_baseline__`` and ``__cpu_dispatch__``
 
     """
-    from numpy.core._multiarray_umath import (
+    from numpy._core._multiarray_umath import (
         __cpu_features__, __cpu_baseline__, __cpu_dispatch__
     )
     from pprint import pprint
@@ -75,28 +75,39 @@ def get_include():
     """
     Return the directory that contains the NumPy \\*.h header files.
 
-    Extension modules that need to compile against NumPy should use this
+    Extension modules that need to compile against NumPy may need to use this
     function to locate the appropriate include directory.
 
     Notes
     -----
-    When using ``distutils``, for example in ``setup.py``::
+    When using ``setuptools``, for example in ``setup.py``::
 
         import numpy as np
         ...
         Extension('extension_name', ...
-                include_dirs=[np.get_include()])
+                  include_dirs=[np.get_include()])
         ...
+
+    Note that a CLI tool ``numpy-config`` was introduced in NumPy 2.0, using
+    that is likely preferred for build systems other than ``setuptools``::
+
+        $ numpy-config --cflags
+        -I/path/to/site-packages/numpy/_core/include
+
+        # Or rely on pkg-config:
+        $ export PKG_CONFIG_PATH=$(numpy-config --pkgconfigdir)
+        $ pkg-config --cflags
+        -I/path/to/site-packages/numpy/_core/include
 
     """
     import numpy
     if numpy.show_config is None:
         # running from numpy source directory
-        d = os.path.join(os.path.dirname(numpy.__file__), 'core', 'include')
+        d = os.path.join(os.path.dirname(numpy.__file__), '_core', 'include')
     else:
         # using installed numpy core headers
-        import numpy.core as core
-        d = os.path.join(os.path.dirname(core.__file__), 'include')
+        import numpy._core as _core
+        d = os.path.join(os.path.dirname(_core.__file__), 'include')
     return d
 
 
@@ -261,7 +272,8 @@ def deprecate_with_doc(msg):
 
     See Also
     --------
-    deprecate : Decorate a function such that it issues a `DeprecationWarning`
+    deprecate : Decorate a function such that it issues a
+                :exc:`DeprecationWarning`
 
     Parameters
     ----------
@@ -680,7 +692,7 @@ def _opt_info():
     Returns:
         str: A formatted string indicating the supported CPU features.
     """
-    from numpy.core._multiarray_umath import (
+    from numpy._core._multiarray_umath import (
         __cpu_features__, __cpu_baseline__, __cpu_dispatch__
     )
 

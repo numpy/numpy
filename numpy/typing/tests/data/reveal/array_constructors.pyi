@@ -186,13 +186,15 @@ assert_type(np.identity(10, dtype=int), npt.NDArray[Any])
 
 assert_type(np.atleast_1d(A), npt.NDArray[np.float64])
 assert_type(np.atleast_1d(C), npt.NDArray[Any])
-assert_type(np.atleast_1d(A, A), list[npt.NDArray[Any]])
-assert_type(np.atleast_1d(A, C), list[npt.NDArray[Any]])
-assert_type(np.atleast_1d(C, C), list[npt.NDArray[Any]])
+assert_type(np.atleast_1d(A, A), tuple[npt.NDArray[Any], ...])
+assert_type(np.atleast_1d(A, C), tuple[npt.NDArray[Any], ...])
+assert_type(np.atleast_1d(C, C), tuple[npt.NDArray[Any], ...])
 
 assert_type(np.atleast_2d(A), npt.NDArray[np.float64])
+assert_type(np.atleast_2d(A, A), tuple[npt.NDArray[Any], ...])
 
 assert_type(np.atleast_3d(A), npt.NDArray[np.float64])
+assert_type(np.atleast_3d(A, A), tuple[npt.NDArray[Any], ...])
 
 assert_type(np.vstack([A, A]), np.ndarray[Any, Any])
 assert_type(np.vstack([A, A], dtype=np.float64), npt.NDArray[np.float64])
@@ -211,3 +213,11 @@ assert_type(np.stack([A, A], out=B), SubClass[np.float64])
 
 assert_type(np.block([[A, A], [A, A]]), npt.NDArray[Any])
 assert_type(np.block(C), npt.NDArray[Any])
+
+if sys.version_info >= (3, 12):
+    from collections.abc import Buffer
+
+    def create_array(obj: npt.ArrayLike) -> npt.NDArray[Any]: ...
+
+    buffer: Buffer
+    assert_type(create_array(buffer), npt.NDArray[Any])

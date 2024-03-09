@@ -8,7 +8,7 @@ import hypothesis
 import pytest
 import numpy
 
-from numpy.core._multiarray_tests import get_fpu_mode
+from numpy._core._multiarray_tests import get_fpu_mode
 
 
 _old_fpu_mode = None

@@ -33,7 +33,6 @@ details are found in :ref:`reference`.
    :caption: Advanced usage and interoperability
    :maxdepth: 1
 
-   building
    c-info
    ../f2py/index
    ../dev/underthehood
@@ -51,4 +50,5 @@ details are found in :ref:`reference`.
 
    ../glossary
    ../release
+   ../numpy_2_0_migration_guide
    ../license

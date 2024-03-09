@@ -1,3 +1,6 @@
+"""
+IO related functions.
+"""
 import os
 import re
 import functools
@@ -13,10 +16,10 @@ import pickle
 import numpy as np
 from . import format
 from ._datasource import DataSource
-from numpy.core import overrides
-from numpy.core.multiarray import packbits, unpackbits
-from numpy.core._multiarray_umath import _load_from_filelike
-from numpy.core.overrides import set_array_function_like_doc, set_module
+from numpy._core import overrides
+from numpy._core.multiarray import packbits, unpackbits
+from numpy._core._multiarray_umath import _load_from_filelike
+from numpy._core.overrides import set_array_function_like_doc, set_module
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
     ConverterLockError, ConversionWarning, _is_string_like,
@@ -165,7 +168,7 @@ class NpzFile(Mapping):
     >>> isinstance(npz, np.lib.npyio.NpzFile)
     True
     >>> npz
-    NpzFile 'object' with keys x, y
+    NpzFile 'object' with keys: x, y
     >>> sorted(npz.files)
     ['x', 'y']
     >>> npz['x']  # getitem access
@@ -404,7 +407,7 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         # The 'encoding' value for pickle also affects what encoding
         # the serialized binary data of NumPy arrays is loaded
         # in. Pickle does not pass on the encoding information to
-        # NumPy. The unpickling code in numpy.core.multiarray is
+        # NumPy. The unpickling code in numpy._core.multiarray is
         # written to assume that unicode data appearing where binary
         # should be is in 'latin1'. 'bytes' is also safe, as is 'ASCII'.
         #
@@ -591,9 +594,9 @@ def savez(file, *args, **kwds):
     in the archive contains one variable in ``.npy`` format. For a
     description of the ``.npy`` format, see :py:mod:`numpy.lib.format`.
 
-    When opening the saved ``.npz`` file with `load` a `NpzFile` object is
-    returned. This is a dictionary-like object which can be queried for
-    its list of arrays (with the ``.files`` attribute), and for the arrays
+    When opening the saved ``.npz`` file with `load` a `~lib.npyio.NpzFile`
+    object is returned. This is a dictionary-like object which can be queried
+    for its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
     Keys passed in `kwds` are used as filenames inside the ZIP archive.
@@ -687,9 +690,9 @@ def savez_compressed(file, *args, **kwds):
     :py:mod:`numpy.lib.format`.
 
 
-    When opening the saved ``.npz`` file with `load` a `NpzFile` object is
-    returned. This is a dictionary-like object which can be queried for
-    its list of arrays (with the ``.files`` attribute), and for the arrays
+    When opening the saved ``.npz`` file with `load` a `~lib.npyio.NpzFile`
+    object is returned. This is a dictionary-like object which can be queried
+    for its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
     Examples
@@ -815,7 +818,7 @@ _loadtxt_chunksize = 50000
 def _read(fname, *, delimiter=',', comment='#', quote='"',
           imaginary_unit='j', usecols=None, skiplines=0,
           max_rows=None, converters=None, ndmin=None, unpack=False,
-          dtype=np.float64, encoding="bytes"):
+          dtype=np.float64, encoding=None):
     r"""
     Read a NumPy array from a text file.
     This is a helper function for loadtxt.
@@ -838,7 +841,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
         Character that is used to quote string fields. Default is '"'
         (a double quote). Use None to disable quote support.
     imaginary_unit : str, optional
-        Character that represent the imaginay unit `sqrt(-1)`.
+        Character that represent the imaginary unit `sqrt(-1)`.
         Default is 'j'.
     usecols : array_like, optional
         A one-dimensional array of integer column numbers.  These are the
@@ -1073,7 +1076,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
 @set_module('numpy')
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
-            ndmin=0, encoding='bytes', max_rows=None, *, quotechar=None,
+            ndmin=0, encoding=None, max_rows=None, *, quotechar=None,
             like=None):
     r"""
     Load data from a text file.
@@ -1145,6 +1148,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         the system default is used. The default value is 'bytes'.
 
         .. versionadded:: 1.14.0
+        .. versionchanged:: 2.0
+            Before NumPy 2, the default was ``'bytes'`` for Python 2
+            compatibility. The default is now ``None``.
+
     max_rows : int, optional
         Read `max_rows` rows of content after `skiprows` lines. The default is
         to read all the rows. Note that empty rows containing no data such as
@@ -1245,9 +1252,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     This example shows how `converters` can be used to convert a field
     with a trailing minus sign into a negative number.
 
-    >>> s = StringIO('10.01 31.25-\n19.22 64.31\n17.57- 63.94')
+    >>> s = StringIO("10.01 31.25-\n19.22 64.31\n17.57- 63.94")
     >>> def conv(fld):
-    ...     return -float(fld[:-1]) if fld.endswith(b'-') else float(fld)
+    ...     return -float(fld[:-1]) if fld.endswith("-") else float(fld)
     ...
     >>> np.loadtxt(s, converters=conv)
     array([[ 10.01, -31.25],
@@ -1262,7 +1269,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     array([1.e+00, 2.7e+00, 1.e+05])
 
     This idea can be extended to automatically handle values specified in
-    many different formats:
+    many different formats, such as hex values:
 
     >>> def conv(val):
     ...     try:
@@ -1270,16 +1277,14 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     ...     except ValueError:
     ...         return float.fromhex(val)
     >>> s = StringIO("1, 2.5, 3_000, 0b4, 0x1.4000000000000p+2")
-    >>> np.loadtxt(s, delimiter=",", converters=conv, encoding=None)
+    >>> np.loadtxt(s, delimiter=",", converters=conv)
     array([1.0e+00, 2.5e+00, 3.0e+03, 1.8e+02, 5.0e+00])
 
-    Note that with the default ``encoding="bytes"``, the inputs to the
-    converter function are latin-1 encoded byte strings. To deactivate the
-    implicit encoding prior to conversion, use ``encoding=None``
+    Or a format where the ``-`` sign comes after the number:
 
-    >>> s = StringIO('10.01 31.25-\n19.22 64.31\n17.57- 63.94')
-    >>> conv = lambda x: -float(x[:-1]) if x.endswith('-') else float(x)
-    >>> np.loadtxt(s, converters=conv, encoding=None)
+    >>> s = StringIO("10.01 31.25-\n19.22 64.31\n17.57- 63.94")
+    >>> conv = lambda x: -float(x[:-1]) if x.endswith("-") else float(x)
+    >>> np.loadtxt(s, converters=conv)
     array([[ 10.01, -31.25],
            [ 19.22,  64.31],
            [-17.57,  63.94]])
@@ -1381,13 +1386,13 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         case `delimiter` is ignored. For complex `X`, the legal options
         for `fmt` are:
 
-        * a single specifier, `fmt='%.4e'`, resulting in numbers formatted
-          like `' (%s+%sj)' % (fmt, fmt)`
+        * a single specifier, ``fmt='%.4e'``, resulting in numbers formatted
+          like ``' (%s+%sj)' % (fmt, fmt)``
         * a full string specifying every real and imaginary part, e.g.
-          `' %.4e %+.4ej %.4e %+.4ej %.4e %+.4ej'` for 3 columns
+          ``' %.4e %+.4ej %.4e %+.4ej %.4e %+.4ej'`` for 3 columns
         * a list of specifiers, one per column - in this case, the real
           and imaginary part must have separate specifiers,
-          e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns
+          e.g. ``['%.3e + %.3ej', '(%.15e%+.15ej)']`` for 2 columns
     delimiter : str, optional
         String or character separating columns.
     newline : str, optional
@@ -1715,7 +1720,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                deletechars=''.join(sorted(NameValidator.defaultdeletechars)),
                replace_space='_', autostrip=False, case_sensitive=True,
                defaultfmt="f%i", unpack=None, usemask=False, loose=True,
-               invalid_raise=True, max_rows=None, encoding='bytes',
+               invalid_raise=True, max_rows=None, encoding=None,
                *, ndmin=0, like=None):
     """
     Load data from a text file, with missing values handled as specified.
@@ -1764,10 +1769,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     names : {None, True, str, sequence}, optional
         If `names` is True, the field names are read from the first line after
         the first `skip_header` lines. This line can optionally be preceded
-        by a comment delimiter. If `names` is a sequence or a single-string of
-        comma-separated names, the names will be used to define the field names
-        in a structured dtype. If `names` is None, the names of the dtype
-        fields will be used, if any.
+        by a comment delimiter. Any content before the comment delimiter is
+        discarded. If `names` is a sequence or a single-string of
+        comma-separated names, the names will be used to define the field
+        names in a structured dtype. If `names` is None, the names of the
+        dtype fields will be used, if any.
     excludelist : sequence, optional
         A list of names to exclude. This list is appended to the default list
         ['return','file','print']. Excluded names are appended with an
@@ -1816,6 +1822,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         The default value is 'bytes'.
 
         .. versionadded:: 1.14.0
+        .. versionchanged:: 2.0
+            Before NumPy 2, the default was ``'bytes'`` for Python 2
+            compatibility. The default is now ``None``.
+
     ndmin : int, optional
         Same parameter as `loadtxt`
 
@@ -1838,8 +1848,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     -----
     * When spaces are used as delimiters, or when no delimiter has been given
       as input, there should not be any missing data between two fields.
-    * When variables are named (either by a flexible dtype or with `names`),
-      there must not be any header in the file (else a ValueError
+    * When variables are named (either by a flexible dtype or with a `names`
+      sequence), there must not be any header in the file (else a ValueError
       exception is raised).
     * Individual values are not stripped of spaces by default.
       When using a custom converter, make sure the function does remove spaces.
@@ -1858,7 +1868,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     Comma delimited file with mixed dtype
 
-    >>> s = StringIO(u"1,1.3,abcde")
+    >>> s = StringIO("1,1.3,abcde")
     >>> data = np.genfromtxt(s, dtype=[('myint','i8'),('myfloat','f8'),
     ... ('mystring','S5')], delimiter=",")
     >>> data
@@ -1871,8 +1881,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> data = np.genfromtxt(s, dtype=None,
     ... names = ['myint','myfloat','mystring'], delimiter=",")
     >>> data
-    array((1, 1.3, b'abcde'),
-          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', 'S5')])
+    array((1, 1.3, 'abcde'),
+          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', '<U5')])
 
     Specifying dtype and names
 
@@ -1885,12 +1895,12 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     An example with fixed-width columns
 
-    >>> s = StringIO(u"11.3abcde")
+    >>> s = StringIO("11.3abcde")
     >>> data = np.genfromtxt(s, dtype=None, names=['intvar','fltvar','strvar'],
     ...     delimiter=[1,3,5])
     >>> data
-    array((1, 1.3, b'abcde'),
-          dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', 'S5')])
+    array((1, 1.3, 'abcde'),
+          dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', '<U5')])
 
     An example to show comments
 

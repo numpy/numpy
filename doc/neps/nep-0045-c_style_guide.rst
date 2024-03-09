@@ -5,7 +5,7 @@ NEP 45 — C style guide
 =================================
 
 :Author: Charles Harris <charlesr.harris@gmail.com>
-:Status: Accepted
+:Status: Active
 :Type: Process
 :Created: 2012-02-26
 :Resolution: https://github.com/numpy/numpy/issues/11911
@@ -18,7 +18,7 @@ Abstract
 This document gives coding conventions for the C code comprising
 the C implementation of NumPy.
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 The NumPy C coding conventions are based on Python
@@ -29,7 +29,7 @@ Because the NumPy conventions are very close to those in PEP 7, that PEP is
 used as a template with the NumPy additions and variations in the appropriate
 spots.
 
-Usage and Impact
+Usage and impact
 ----------------
 
 There are many C coding conventions and it must be emphasized that the primary
@@ -246,7 +246,7 @@ NumPy style used for Python functions can also be used for documenting
 C functions, see the files in ``doc/cdoc/``.
 
 
-Related Work
+Related work
 ------------
 
 Based on Van Rossum and Warsaw, :pep:`7`

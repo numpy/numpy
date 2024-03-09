@@ -20,7 +20,7 @@ Creating data types
    :toctree: generated/
 
    dtype
-   format_parser
+   rec.format_parser
 
 Data type information
 ---------------------
@@ -35,6 +35,7 @@ Data type testing
 .. autosummary::
    :toctree: generated/
 
+   isdtype
    issubdtype
 
 Miscellaneous

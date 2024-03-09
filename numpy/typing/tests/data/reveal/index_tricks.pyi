@@ -51,8 +51,8 @@ assert_type(np.ravel_multi_index((3, 1, 4, 1), (6, 7, 8, 9)), np.intp)
 assert_type(np.mgrid[1:1:2], npt.NDArray[Any])
 assert_type(np.mgrid[1:1:2, None:10], npt.NDArray[Any])
 
-assert_type(np.ogrid[1:1:2], list[npt.NDArray[Any]])
-assert_type(np.ogrid[1:1:2, None:10], list[npt.NDArray[Any]])
+assert_type(np.ogrid[1:1:2], tuple[npt.NDArray[Any], ...])
+assert_type(np.ogrid[1:1:2, None:10], tuple[npt.NDArray[Any], ...])
 
 assert_type(np.index_exp[0:1], tuple[slice])
 assert_type(np.index_exp[0:1, None:3], tuple[slice, slice])
@@ -62,7 +62,7 @@ assert_type(np.s_[0:1], slice)
 assert_type(np.s_[0:1, None:3], tuple[slice, slice])
 assert_type(np.s_[0, 0:1, ..., [0, 1, 3]], tuple[Literal[0], slice, ellipsis, list[int]])
 
-assert_type(np.ix_(AR_LIKE_b), tuple[npt.NDArray[np.bool_], ...])
+assert_type(np.ix_(AR_LIKE_b), tuple[npt.NDArray[np.bool], ...])
 assert_type(np.ix_(AR_LIKE_i, AR_LIKE_f), tuple[npt.NDArray[np.float64], ...])
 assert_type(np.ix_(AR_i8), tuple[npt.NDArray[np.int64], ...])
 
