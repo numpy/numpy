@@ -37,6 +37,7 @@ from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue, angle
 from numpy import array as narray, expand_dims, iinfo, finfo
 from numpy._core.numeric import normalize_axis_tuple
 from numpy._utils._inspect import getargspec, formatargspec
+from numpy._utils import set_module
 
 
 __all__ = [
@@ -2636,7 +2637,7 @@ class MaskedIterator:
     >>> x = np.ma.array(arange(6).reshape(2, 3))
     >>> fl = x.flat
     >>> type(fl)
-    <class 'numpy.ma.core.MaskedIterator'>
+    <class 'numpy.ma.MaskedIterator'>
     >>> for item in fl:
     ...     print(item)
     ...
@@ -2717,6 +2718,7 @@ class MaskedIterator:
         return d
 
 
+@set_module("numpy.ma")
 class MaskedArray(ndarray):
     """
     An array class with possibly masked values.
@@ -8378,7 +8380,7 @@ def asarray(a, dtype=None, order=None):
       mask=False,
       fill_value=1e+20)
     >>> type(np.ma.asarray(x))
-    <class 'numpy.ma.core.MaskedArray'>
+    <class 'numpy.ma.MaskedArray'>
 
     """
     order = order or 'C'
@@ -8425,7 +8427,7 @@ def asanyarray(a, dtype=None):
       mask=False,
       fill_value=1e+20)
     >>> type(np.ma.asanyarray(x))
-    <class 'numpy.ma.core.MaskedArray'>
+    <class 'numpy.ma.MaskedArray'>
 
     """
     # workaround for #8666, to preserve identity. Ideally the bottom line
