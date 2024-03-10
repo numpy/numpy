@@ -286,25 +286,25 @@ class NpzFile(Mapping):
         """
         D.get(k,[,d]) returns D[k] if k in D, else d.  d defaults to None.
         """
-        return dict.get(self, key, default)
+        return Mapping.get(self, key, default)
 
     def items(self):
         """
         D.items() returns a set-like object providing a view on the items
         """
-        return dict.items(self)
+        return Mapping.items(self)
 
     def keys(self):
         """
         D.keys() returns a set-like object providing a view on the keys
         """
-        return dict.keys(self)
+        return Mapping.keys(self)
 
     def values(self):
         """
         D.values() returns a set-like object providing a view on the values
         """
-        return dict.values(self)
+        return Mapping.values(self)
 
 
 @set_module('numpy')
