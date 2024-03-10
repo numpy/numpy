@@ -583,7 +583,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
         ``arrayList[0]``.
     formats, names, titles, aligned, byteorder :
         If `dtype` is ``None``, these arguments are passed to
-        `numpy.format_parser` to construct a dtype. See that function for
+        `numpy.rec.format_parser` to construct a dtype. See that function for
         detailed documentation.
 
     Returns
