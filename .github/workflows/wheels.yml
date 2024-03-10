@@ -26,6 +26,9 @@ on:
     branches:
       - main
       - maintenance/**
+  push:
+    tags:
+      - v*
   workflow_dispatch:
 
 concurrency:
