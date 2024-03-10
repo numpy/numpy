@@ -635,4 +635,4 @@ class TestMisc:
         p = poly.Polynomial.fit([1, 1], [2, 2.1], deg=0)
         assert_equal(p.coef, [2.05])
         with assert_warns(pu.RankWarning):
-           p = poly.Polynomial.fit([1, 1], [2, 2.1], deg=1)
+            p = poly.Polynomial.fit([1, 1], [2, 2.1], deg=1)
