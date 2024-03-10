@@ -9,7 +9,7 @@ _defaults: &defaults
   docker:
     # CircleCI maintains a library of pre-built images
     # documented at https://circleci.com/developer/images/image/cimg/python
-    - image: cimg/python:3.11.4
+    - image: cimg/python:3.11.8
   working_directory: ~/repo
 
 
@@ -74,7 +74,7 @@ jobs:
             . venv/bin/activate
             cd doc
             # Don't use -q, show warning summary"
-            SPHINXOPTS="-j2 -n" make -e html || echo "ignoring errors for now, see gh-13114"
+            SPHINXOPTS="-j2 -n" make -e html
             if [[ $(find build/html -type f | wc -l) -lt 1000 ]]; then
                 echo "doc build failed: build/html is empty"
                 exit -1
@@ -85,7 +85,7 @@ jobs:
           command: |
             . venv/bin/activate
             cd doc/neps
-            SPHINXOPTS="-j2 -q" make -e html
+            SPHINXOPTS="-j2 -n" make -e html || echo "ignoring errors for now"
 
       - store_artifacts:
           path: doc/build/html/
