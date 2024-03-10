@@ -1041,6 +1041,9 @@ class ABCPolyBase(abc.ABC):
         """
         if domain is None:
             domain = pu.getdomain(x)
+            if domain[0] == domain[1]:
+                domain[0] -= 1
+                domain[1] += 1   
         elif type(domain) is list and len(domain) == 0:
             domain = cls.domain
 
