@@ -14,7 +14,7 @@ NumPy 2.0.0 Release Notes
 
 NumPy 2.0.0 is the first major release since 2006. It is the result of 10
 months of development since the last feature release and is the work of 190
-contributors spread over 965 pull requests. It contains a large number of
+contributors spread over 968 pull requests. It contains a large number of
 exciting new features as well as changes to both the Python and C APIs.
 
 This major release includes breaking changes that could not happen in a regular
@@ -417,7 +417,7 @@ unicode strings rather than bytes.
 
 * The ``f2py.compile()`` helper has been removed because it leaked memory, has
   been marked as experimental for several years now, and was implemented as a
-  thin ``subprocess.run`` wrapper. It is also one of the test bottlenecks. See
+  thin ``subprocess.run`` wrapper. It was also one of the test bottlenecks. See
   `gh-25122 <https://github.com/numpy/numpy/issues/25122>`_ for the full
   rationale. It also used several ``np.distutils`` features which are too
   fragile to be ported to work with ``meson``.
@@ -712,7 +712,7 @@ NumPy 2.0 C API removals
   use ``PyArray_CopyInto`` and if absolutely needed ``PyArray_CopyAnyInto``
   (the latter does a flat copy).
 
-* ``PyArray_FillObjectArray`` is removed, its only true use is for
+* ``PyArray_FillObjectArray`` is removed, its only true use was for
   implementing ``np.empty``.  Create a new empty array or use
   ``PyArray_FillWithScalar()`` (decrefs existing objects).
 
