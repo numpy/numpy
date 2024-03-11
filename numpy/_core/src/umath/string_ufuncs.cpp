@@ -529,7 +529,11 @@ string_center_ljust_rjust_loop(PyArrayMethod_Context *context,
         Buffer<bufferenc> buf(in1, elsize1);
         Buffer<fillenc> fill(in3, elsize3);
         Buffer<bufferenc> outbuf(out, outsize);
-        size_t len = string_pad(buf, *(npy_int64 *)in2, *fill, pos, outbuf);
+        if (bufferenc == ENCODING::ASCII && fillenc == ENCODING::UTF32 && *fill > 0x7F) {
+            npy_gil_error(PyExc_ValueError, "non-ascii fill character is not allowed when buffer is ascii");
+            return -1;
+        }
+        npy_intp len = string_pad(buf, *(npy_int64 *)in2, *fill, pos, outbuf);
         if (len < 0) {
             return -1;
         }

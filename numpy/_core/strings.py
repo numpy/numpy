@@ -599,8 +599,8 @@ def center(a, width, fillchar=' '):
     Notes
     -----
     While it is possible for ``a`` and ``fillchar`` to have different dtypes,
-    passing a non-ASCII character in ``fillchar`` when ``a`` is of dtype "S",
-    will result in silent errors (resulting buffer might have wrong data).
+    passing a non-ASCII character in ``fillchar`` when ``a`` is of dtype "S"
+    is not allowed, and a ``ValueError`` is raised.
 
     Examples
     --------
@@ -658,8 +658,8 @@ def ljust(a, width, fillchar=' '):
     Notes
     -----
     While it is possible for ``a`` and ``fillchar`` to have different dtypes,
-    passing a non-ASCII character in ``fillchar`` when ``a`` is of dtype "S",
-    will result in silent errors (resulting buffer might have wrong data).
+    passing a non-ASCII character in ``fillchar`` when ``a`` is of dtype "S"
+    is not allowed, and a ``ValueError`` is raised.
 
     Examples
     --------
@@ -714,8 +714,8 @@ def rjust(a, width, fillchar=' '):
     Notes
     -----
     While it is possible for ``a`` and ``fillchar`` to have different dtypes,
-    passing a non-ASCII character in ``fillchar`` when ``a`` is of dtype "S",
-    will result in silent errors (resulting buffer might have wrong data).
+    passing a non-ASCII character in ``fillchar`` when ``a`` is of dtype "S"
+    is not allowed, and a ``ValueError`` is raised.
 
     Examples
     --------

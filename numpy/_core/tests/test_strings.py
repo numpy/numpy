@@ -971,37 +971,52 @@ class TestMethodsWithUnicode:
 
 class TestMixedTypeMethods:
     def test_center(self):
-        u = np.array("😊", dtype="U")
-        s = np.array("*", dtype="S")
+        buf = np.array("😊", dtype="U")
+        fill = np.array("*", dtype="S")
         res = np.array("*😊*", dtype="U")
-        assert_array_equal(np.strings.center(u, 3, s), res)
+        assert_array_equal(np.strings.center(buf, 3, fill), res)
 
-        u = np.array("*", dtype="U")
-        s = np.array("s", dtype="S")
+        buf = np.array("s", dtype="S")
+        fill = np.array("*", dtype="U")
         res = np.array("*s*", dtype="S")
-        assert_array_equal(np.strings.center(s, 3, u), res)
+        assert_array_equal(np.strings.center(buf, 3, fill), res)
+
+        with pytest.raises(ValueError, match="non-ascii fill character"):
+            buf = np.array("s", dtype="S")
+            fill = np.array("😊", dtype="U")
+            np.strings.center(buf, 3, fill)
 
     def test_ljust(self):
-        u = np.array("😊", dtype="U")
-        s = np.array("*", dtype="S")
+        buf = np.array("😊", dtype="U")
+        fill = np.array("*", dtype="S")
         res = np.array("😊**", dtype="U")
-        assert_array_equal(np.strings.ljust(u, 3, s), res)
+        assert_array_equal(np.strings.ljust(buf, 3, fill), res)
 
-        u = np.array("*", dtype="U")
-        s = np.array("s", dtype="S")
+        buf = np.array("s", dtype="S")
+        fill = np.array("*", dtype="U")
         res = np.array("s**", dtype="S")
-        assert_array_equal(np.strings.ljust(s, 3, u), res)
+        assert_array_equal(np.strings.ljust(buf, 3, fill), res)
+
+        with pytest.raises(ValueError, match="non-ascii fill character"):
+            buf = np.array("s", dtype="S")
+            fill = np.array("😊", dtype="U")
+            np.strings.ljust(buf, 3, fill)
 
     def test_rjust(self):
-        u = np.array("😊", dtype="U")
-        s = np.array("*", dtype="S")
+        buf = np.array("😊", dtype="U")
+        fill = np.array("*", dtype="S")
         res = np.array("**😊", dtype="U")
-        assert_array_equal(np.strings.rjust(u, 3, s), res)
+        assert_array_equal(np.strings.rjust(buf, 3, fill), res)
 
-        u = np.array("*", dtype="U")
-        s = np.array("s", dtype="S")
+        buf = np.array("s", dtype="S")
+        fill = np.array("*", dtype="U")
         res = np.array("**s", dtype="S")
-        assert_array_equal(np.strings.rjust(s, 3, u), res)
+        assert_array_equal(np.strings.rjust(buf, 3, fill), res)
+
+        with pytest.raises(ValueError, match="non-ascii fill character"):
+            buf = np.array("s", dtype="S")
+            fill = np.array("😊", dtype="U")
+            np.strings.rjust(buf, 3, fill)
 
 
 class TestUnicodeOnlyMethodsRaiseWithBytes:
