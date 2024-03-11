@@ -6,7 +6,7 @@ ctypedef np.npy_bool bool_t
 
 from numpy.random cimport bitgen_t
 
-cdef inline uint64_t _gen_mask(uint64_t max_val) nogil:
+cdef inline uint64_t _gen_mask(uint64_t max_val) noexcept nogil:
     """Mask generator for use in bounded random numbers"""
     # Smallest bit mask >= max
     cdef uint64_t mask = max_val
