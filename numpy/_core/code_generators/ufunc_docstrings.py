@@ -4987,7 +4987,7 @@ add_newdoc('numpy._core.umath', '_rjust',
 
     Examples
     --------
->>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.rjust(a, width=3)
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
     >>> np.strings.rjust(a, width=9)

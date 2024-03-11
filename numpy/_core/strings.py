@@ -555,7 +555,7 @@ def expandtabs(a, tabsize=8):
 
     Examples
     --------
-    >>> a = np.array(['\t\tHello\tworld'])  
+    >>> a = np.array(['\t\tHello\tworld'])
     >>> np.strings.expandtabs(a, tabsize=4)  # doctest: +SKIP
     array(['        Hello   world'], dtype='<U21')  # doctest: +SKIP
 
@@ -564,12 +564,11 @@ def expandtabs(a, tabsize=8):
     tabsize = np.asanyarray(tabsize)
 
     if a.dtype.char == "T":
-        shape = np.broadcast_shapes(a.shape, tabsize.shape)
-        out = np.empty_like(a, shape=shape)
-    else:
-        buffersizes = _expandtabs_length(a, tabsize)
-        out_dtype = f"{a.dtype.char}{buffersizes.max()}"
-        out = np.empty_like(a, shape=buffersizes.shape, dtype=out_dtype)
+        return _expandtabs(a, tabsize)
+
+    buffersizes = _expandtabs_length(a, tabsize)
+    out_dtype = f"{a.dtype.char}{buffersizes.max()}"
+    out = np.empty_like(a, shape=buffersizes.shape, dtype=out_dtype)
     return _expandtabs(a, tabsize, out=out)
 
 
@@ -616,19 +615,18 @@ def center(a, width, fillchar=' '):
     """
     a = np.asanyarray(a)
     width = np.maximum(str_len(a), width)
+    fillchar = np.asanyarray(fillchar, dtype=a.dtype)
 
-    fillchar = np.asanyarray(fillchar)
     if np.any(str_len(fillchar) != 1):
         raise TypeError(
             "The fill character must be exactly one character long")
 
-    shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     if a.dtype.char == "T":
-        out = np.empty_like(a, shape=shape)
-        fillchar = fillchar.astype(a.dtype)
-    else:
-        out_dtype = f"{a.dtype.char}{width.max()}"
-        out = np.empty_like(a, shape=shape, dtype=out_dtype)
+        return _center(a, width, fillchar)
+
+    out_dtype = f"{a.dtype.char}{width.max()}"
+    shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
+    out = np.empty_like(a, shape=shape, dtype=out_dtype)
     return _center(a, width, fillchar, out=out)
 
 
@@ -672,19 +670,18 @@ def ljust(a, width, fillchar=' '):
     """
     a = np.asanyarray(a)
     width = np.maximum(str_len(a), width)
+    fillchar = np.asanyarray(fillchar, dtype=a.dtype)
 
-    fillchar = np.asanyarray(fillchar)
     if np.any(str_len(fillchar) != 1):
         raise TypeError(
             "The fill character must be exactly one character long")
 
-    shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     if a.dtype.char == "T":
-        out = np.empty_like(a, shape=shape)
-        fillchar = fillchar.astype(a.dtype)
-    else:
-        out_dtype = f"{a.dtype.char}{width.max()}"
-        out = np.empty_like(a, shape=shape, dtype=out_dtype)
+        return _ljust(a, width, fillchar)
+
+    shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
+    out_dtype = f"{a.dtype.char}{width.max()}"
+    out = np.empty_like(a, shape=shape, dtype=out_dtype)
     return _ljust(a, width, fillchar, out=out)
 
 
@@ -728,19 +725,18 @@ def rjust(a, width, fillchar=' '):
     """
     a = np.asanyarray(a)
     width = np.maximum(str_len(a), width)
+    fillchar = np.asanyarray(fillchar, dtype=a.dtype)
 
-    fillchar = np.asanyarray(fillchar)
     if np.any(str_len(fillchar) != 1):
         raise TypeError(
             "The fill character must be exactly one character long")
 
-    shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     if a.dtype.char == "T":
-        out = np.empty_like(a, shape=shape)
-        fillchar = fillchar.astype(a.dtype)
-    else:
-        out_dtype = f"{a.dtype.char}{width.max()}"
-        out = np.empty_like(a, shape=shape, dtype=out_dtype)
+        return _rjust(a, width, fillchar)
+
+    shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
+    out_dtype = f"{a.dtype.char}{width.max()}"
+    out = np.empty_like(a, shape=shape, dtype=out_dtype)
     return _rjust(a, width, fillchar, out=out)
 
 
@@ -775,12 +771,12 @@ def zfill(a, width):
     a = np.asanyarray(a)
     width = np.maximum(str_len(a), width)
 
-    shape = np.broadcast_shapes(a.shape, width.shape)
     if a.dtype.char == "T":
-        out = np.empty_like(a, shape=shape)
-    else:
-        out_dtype = f"{a.dtype.char}{width.max()}"
-        out = np.empty_like(a, shape=shape, dtype=out_dtype)
+        return _zfill(a, width)
+
+    shape = np.broadcast_shapes(a.shape, width.shape)
+    out_dtype = f"{a.dtype.char}{width.max()}"
+    out = np.empty_like(a, shape=shape, dtype=out_dtype)
     return _zfill(a, width, out=out)
 
 
@@ -1141,12 +1137,11 @@ def replace(a, old, new, count=-1):
     counts = np.where(count < 0, counts, np.minimum(counts, count))
 
     if arr.dtype.char == "T":
-        shape = np.broadcast_shapes(counts.shape, new.shape, old.shape)
-        out = np.empty_like(arr, shape=shape)
-    else:
-        buffersizes = str_len(arr) + counts * (str_len(new) - str_len(old))
-        out_dtype = f"{arr.dtype.char}{buffersizes.max()}"
-        out = np.empty_like(arr, shape=buffersizes.shape, dtype=out_dtype)
+        return _replace(arr, old, new, counts)
+
+    buffersizes = str_len(arr) + counts * (str_len(new) - str_len(old))
+    out_dtype = f"{arr.dtype.char}{buffersizes.max()}"
+    out = np.empty_like(arr, shape=buffersizes.shape, dtype=out_dtype)
     return _replace(arr, old, new, counts, out=out)
 
 

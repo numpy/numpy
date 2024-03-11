@@ -1589,7 +1589,7 @@ center_ljust_rjust_resolve_descriptors(
 
     if (eq_res != 1) {
         PyErr_SetString(PyExc_TypeError,
-                        "Can only text justification operations with equal"
+                        "Can only do text justification operations with equal"
                         "StringDType instances.");
         return (NPY_CASTING)-1;
     }
@@ -1623,11 +1623,6 @@ center_ljust_rjust_resolve_descriptors(
 }
 
 
-static const char* CENTER_NAME = "center";
-static const char* LJUST_NAME = "ljust";
-static const char* RJUST_NAME = "rjust";
-
-template <ENCODING enc>
 static int
 center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
                                 char *const data[],
@@ -1658,19 +1653,7 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
     npy_string_allocator *oallocator = allocators[3];
 
     JUSTPOSITION pos = *(JUSTPOSITION *)(context->method->static_data);
-    const char* ufunc_name = NULL;
-
-    switch (pos) {
-        case JUSTPOSITION::CENTER:
-            ufunc_name = CENTER_NAME;
-            break;
-        case JUSTPOSITION::LEFT:
-            ufunc_name = LJUST_NAME;
-            break;
-        case JUSTPOSITION::RIGHT:
-            ufunc_name = RJUST_NAME;
-            break;
-    }
+    const char* ufunc_name = ((PyUFuncObject *)context->caller)->name;
 
     while (N--) {
         const npy_packed_static_string *ps1 = (npy_packed_static_string *)in1;
@@ -1712,8 +1695,8 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
             }
         }
         {
-            Buffer<enc> inbuf((char *)s1.buf, s1.size);
-            Buffer<enc> fill((char *)s2.buf, s2.size);
+            Buffer<ENCODING::UTF8> inbuf((char *)s1.buf, s1.size);
+            Buffer<ENCODING::UTF8> fill((char *)s2.buf, s2.size);
 
             char *buf = NULL;
             npy_intp newsize;
@@ -1746,7 +1729,7 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
                 buf = (char *)os.buf;
             }
 
-            Buffer<enc> outbuf(buf, newsize);
+            Buffer<ENCODING::UTF8> outbuf(buf, newsize);
 
             npy_intp len = string_pad(inbuf, *(npy_int64*)in2, *fill, pos, outbuf);
 
@@ -2560,7 +2543,7 @@ init_stringdtype_ufuncs(PyObject *umath)
         if (init_ufunc(umath, center_ljust_rjust_names[i],
                        center_ljust_rjust_dtypes,
                        &center_ljust_rjust_resolve_descriptors,
-                       &center_ljust_rjust_strided_loop<ENCODING::UTF8>, 3, 1, NPY_NO_CASTING,
+                       &center_ljust_rjust_strided_loop, 3, 1, NPY_NO_CASTING,
                        (NPY_ARRAYMETHOD_FLAGS) 0, &positions[i]) < 0) {
             return -1;
         }
