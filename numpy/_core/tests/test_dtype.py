@@ -96,6 +96,11 @@ class TestBuiltin:
             assert_raises(TypeError, np.dtype, 'q8')
             assert_raises(TypeError, np.dtype, 'Q8')
 
+        # Make sure negative-sized dtype raises an error
+        assert_raises(TypeError, np.dtype, 'S-1')
+        assert_raises(TypeError, np.dtype, 'U-1')
+        assert_raises(TypeError, np.dtype, 'V-1')
+
     def test_richcompare_invalid_dtype_equality(self):
         # Make sure objects that cannot be converted to valid
         # dtypes results in False/True when compared to valid dtypes.
