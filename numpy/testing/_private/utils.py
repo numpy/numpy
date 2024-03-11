@@ -1949,8 +1949,10 @@ def assert_warns(warning_class, *args, **kwargs):
     >>> ret = np.testing.assert_warns(DeprecationWarning, deprecated_func, 4)
     >>> assert ret == 16
     """
-    if not args:
+    if not args and not kwargs:
         return _assert_warns_context(warning_class)
+    elif len(args) < 1:
+        raise RuntimeError("assert_warns called without args")
 
     func = args[0]
     args = args[1:]
