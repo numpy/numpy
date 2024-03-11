@@ -412,11 +412,9 @@ PyArrayMethod_FromSpec(PyArrayMethod_Spec *spec)
 /**
  * Create a new ArrayMethod (internal version).
  *
- * @param name A name for the individual method, may be NULL.
  * @param spec A filled context object to pass generic information about
  *        the method (such as usually needing the API, and the DTypes).
  *        Unused fields must be NULL.
- * @param slots Slots with the correct pair of IDs and (function) pointers.
  * @param private Some slots are currently considered private, if not true,
  *        these will be rejected.
  *

@@ -278,6 +278,34 @@ class NpzFile(Mapping):
             array_names += "..."
         return f"NpzFile {filename!r} with keys: {array_names}"
 
+    # Work around problems with the docstrings in the Mapping methods
+    # They contain a `->`, which confuses the type annotation interpretations
+    # of sphinx-docs. See gh-25964
+
+    def get(self, key, default=None, /):
+        """
+        D.get(k,[,d]) returns D[k] if k in D, else d.  d defaults to None.
+        """
+        return Mapping.get(self, key, default)
+
+    def items(self):
+        """
+        D.items() returns a set-like object providing a view on the items
+        """
+        return Mapping.items(self)
+
+    def keys(self):
+        """
+        D.keys() returns a set-like object providing a view on the keys
+        """
+        return Mapping.keys(self)
+
+    def values(self):
+        """
+        D.values() returns a set-like object providing a view on the values
+        """
+        return Mapping.values(self)
+
 
 @set_module('numpy')
 def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
@@ -487,9 +515,9 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     arr : array_like
         Array data to be saved.
     allow_pickle : bool, optional
-        Allow saving object arrays using Python pickles. Reasons for 
+        Allow saving object arrays using Python pickles. Reasons for
         disallowing pickles include security (loading pickled data can execute
-        arbitrary code) and portability (pickled objects may not be loadable 
+        arbitrary code) and portability (pickled objects may not be loadable
         on different Python installations, for example if the stored objects
         require libraries that are not available, and not all pickled data is
         compatible between Python 2 and Python 3).
@@ -1814,10 +1842,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         .. versionadded:: 1.10.0
     encoding : str, optional
         Encoding used to decode the inputfile. Does not apply when `fname`
-        is a file object. The special value 'bytes' enables backward 
+        is a file object. The special value 'bytes' enables backward
         compatibility workarounds that ensure that you receive byte arrays
-        when possible and passes latin1 encoded strings to converters. 
-        Override this value to receive unicode arrays and pass strings 
+        when possible and passes latin1 encoded strings to converters.
+        Override this value to receive unicode arrays and pass strings
         as input to converters.  If set to None the system default is used.
         The default value is 'bytes'.
 
@@ -1854,7 +1882,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     * Individual values are not stripped of spaces by default.
       When using a custom converter, make sure the function does remove spaces.
     * Custom converters may receive unexpected values due to dtype
-      discovery. 
+      discovery.
 
     References
     ----------
@@ -2127,7 +2155,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     except ValueError:
                         # We couldn't find it: the name must have been dropped
                         continue
-                # Redefine the key if it's a column number 
+                # Redefine the key if it's a column number
                 # and usecols is defined
                 if usecols:
                     try:
@@ -2161,23 +2189,23 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             if len(dtype_flat) > 1:
                 # Flexible type : get a converter from each dtype
                 zipit = zip(dtype_flat, missing_values, filling_values)
-                converters = [StringConverter(dt, 
+                converters = [StringConverter(dt,
                                               locked=True,
-                                              missing_values=miss, 
+                                              missing_values=miss,
                                               default=fill)
                               for (dt, miss, fill) in zipit]
             else:
                 # Set to a default converter (but w/ different missing values)
                 zipit = zip(missing_values, filling_values)
-                converters = [StringConverter(dtype, 
+                converters = [StringConverter(dtype,
                                               locked=True,
-                                              missing_values=miss, 
+                                              missing_values=miss,
                                               default=fill)
                               for (miss, fill) in zipit]
         # Update the converters to use the user-defined ones
         uc_update = []
         for (j, conv) in user_converters.items():
-            # If the converter is specified by column names, 
+            # If the converter is specified by column names,
             # use the index instead
             if _is_string_like(j):
                 try:
@@ -2201,8 +2229,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             if conv is bytes:
                 user_conv = asbytes
             elif byte_converters:
-                # Converters may use decode to workaround numpy's old 
-                # behavior, so encode the string again before passing 
+                # Converters may use decode to workaround numpy's old
+                # behavior, so encode the string again before passing
                 # to the user converter.
                 def tobytes_first(x, conv):
                     if type(x) is bytes:
@@ -2338,7 +2366,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                 "argument is deprecated. Set the encoding, use None for the "
                 "system default.",
                 np.exceptions.VisibleDeprecationWarning, stacklevel=2)
-            
+
             def encode_unicode_cols(row_tup):
                 row = list(row_tup)
                 for i in strcolidx:

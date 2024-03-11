@@ -390,7 +390,7 @@ to the front of the integer name.
     This is the correct integer for lengths or indexing.  In practice this is
     normally the size of a pointer, but this is not guaranteed.
 
-    ..note::
+    .. note::
         Before NumPy 2.0, this was the same as ``Py_intptr_t``.
         While a better match, this did not match actual usage in practice.
         On the Python side, we still support ``np.dtype('p')`` to fetch a dtype
