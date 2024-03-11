@@ -199,7 +199,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 965 pull requests were merged for this release.
+A total of 968 pull requests were merged for this release.
 
 * `#15457 <https://github.com/numpy/numpy/pull/15457>`__: BUG: Adds support for array parameter declaration in fortran...
 * `#21199 <https://github.com/numpy/numpy/pull/21199>`__: ENH: expose datetime.c functions to cython
@@ -1166,4 +1166,7 @@ A total of 965 pull requests were merged for this release.
 * `#25977 <https://github.com/numpy/numpy/pull/25977>`__: REL: Prepare for the NumPy 2.0.0b1 release [wheel build]
 * `#25983 <https://github.com/numpy/numpy/pull/25983>`__: CI: fix last docbuild warnings
 * `#25986 <https://github.com/numpy/numpy/pull/25986>`__: BLD: push a tag builds a wheel
+* `#25987 <https://github.com/numpy/numpy/pull/25987>`__: REL: Prepare for the NumPy 2.0.0b1 release (2) [wheel build]
+* `#25994 <https://github.com/numpy/numpy/pull/25994>`__: DOC: remove reverted release blurb [skip actions][skip azp][skip...
+* `#25996 <https://github.com/numpy/numpy/pull/25996>`__: CI: don't use ``fetch-tags`` in wheel build jobs
 
