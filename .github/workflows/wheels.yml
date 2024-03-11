@@ -88,9 +88,11 @@ jobs:
         python: ["cp39", "cp310", "cp311", "cp312", "pp39"]
         exclude:
           # Don't build PyPy 32-bit windows
-          - buildplat: [windows-2019, win32]
+          - buildplat: [windows-2019, win32, ""]
             python: "pp39"
-          - buildplat: [ ubuntu-20.04, musllinux_x86_64 ]
+          - buildplat: [ ubuntu-20.04, musllinux_x86_64, "" ]
+            python: "pp39"
+          - buildplat: [ macos-14, macosx_arm64, accelerate ]
             python: "pp39"
     env:
       IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}
