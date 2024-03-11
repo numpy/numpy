@@ -14,10 +14,7 @@ steps:
   displayName: 'Install dependencies; some are optional to avoid test skips'
 
 - powershell: |
-    choco install -y --stoponfirstfailure unzip
     choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
-    choco install --stoponfirstfailure ninja
-    echo "##vso[task.setvariable variable=RTOOLS43_HOME]c:\rtools43"
   displayName: 'Install utilities'
 
 - powershell: |
@@ -42,7 +39,7 @@ steps:
 - powershell: |
     cd tools  # avoid root dir to not pick up source tree
     # Get a gfortran onto the path for f2py tests
-    $env:PATH = "$env:RTOOLS43_HOME\\x86_64-w64-mingw32.static.posix\\bin;$env:PATH"
+    $env:PATH = "c:\\rtools43\\x86_64-w64-mingw32.static.posix\\bin;$env:PATH"
     If ( $env:TEST_MODE -eq "full" ) {
       pytest --pyargs numpy -rsx --junitxml=junit/test-results.xml
     } else {
