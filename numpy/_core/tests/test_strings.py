@@ -981,7 +981,7 @@ class TestMixedTypeMethods:
         res = np.array("*s*", dtype="S")
         assert_array_equal(np.strings.center(buf, 3, fill), res)
 
-        with pytest.raises(ValueError, match="non-ascii fill character"):
+        with pytest.raises(ValueError, match="'ascii' codec can't encode"):
             buf = np.array("s", dtype="S")
             fill = np.array("😊", dtype="U")
             np.strings.center(buf, 3, fill)
@@ -997,7 +997,7 @@ class TestMixedTypeMethods:
         res = np.array("s**", dtype="S")
         assert_array_equal(np.strings.ljust(buf, 3, fill), res)
 
-        with pytest.raises(ValueError, match="non-ascii fill character"):
+        with pytest.raises(ValueError, match="'ascii' codec can't encode"):
             buf = np.array("s", dtype="S")
             fill = np.array("😊", dtype="U")
             np.strings.ljust(buf, 3, fill)
@@ -1013,7 +1013,7 @@ class TestMixedTypeMethods:
         res = np.array("**s", dtype="S")
         assert_array_equal(np.strings.rjust(buf, 3, fill), res)
 
-        with pytest.raises(ValueError, match="non-ascii fill character"):
+        with pytest.raises(ValueError, match="'ascii' codec can't encode"):
             buf = np.array("s", dtype="S")
             fill = np.array("😊", dtype="U")
             np.strings.rjust(buf, 3, fill)
