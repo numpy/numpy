@@ -4448,7 +4448,7 @@ add_newdoc('numpy._core.umath', 'isalnum',
 
     Parameters
     ----------
-    x : array_like, with `np.bytes_` or `np.str_` dtype
+    x : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
     $PARAMS
 
     Returns
@@ -4477,7 +4477,7 @@ add_newdoc('numpy._core.umath', 'islower',
 
     Parameters
     ----------
-    x : array_like, with `np.bytes_` or `np.str_` dtype
+    x : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
     $PARAMS
 
     Returns
@@ -4507,7 +4507,7 @@ add_newdoc('numpy._core.umath', 'isupper',
 
     Parameters
     ----------
-    x : array_like, with `np.bytes_` or `np.str_` dtype
+    x : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
     $PARAMS
 
     Returns
@@ -4537,7 +4537,7 @@ add_newdoc('numpy._core.umath', 'istitle',
 
     Parameters
     ----------
-    x : array_like, with `np.bytes_` or `np.str_` dtype
+    x : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
     $PARAMS
 
     Returns
