@@ -1100,23 +1100,23 @@ BINARY_FUNCTIONS = [
     ("add", (None, None)),
     ("multiply", (None, 2)),
     ("mod", ("format: %s", None)),
-    pytest.param("center", (None, 25), marks=unicode_bug_fail),
+    ("center", (None, 25)),
     ("count", (None, "A")),
     ("encode", (None, "UTF-8")),
     ("endswith", (None, "lo")),
     ("find", (None, "A")),
     ("index", (None, "e")),
     ("join", ("-", None)),
-    pytest.param("ljust", (None, 12), marks=unicode_bug_fail),
+    ("ljust", (None, 12)),
     ("partition", (None, "A")),
     ("replace", (None, "A", "B")),
     ("rfind", (None, "A")),
     ("rindex", (None, "e")),
-    pytest.param("rjust", (None, 12), marks=unicode_bug_fail),
+    ("rjust", (None, 12)),
     ("rpartition", (None, "A")),
     ("split", (None, "A")),
     ("startswith", (None, "A")),
-    pytest.param("zfill", (None, 12), marks=unicode_bug_fail),
+    ("zfill", (None, 12)),
 ]
 
 PASSES_THROUGH_NAN_NULLS = [
@@ -1205,7 +1205,7 @@ def test_binary(string_array, unicode_array, function_name, args):
         assert 0
 
 
-def test_strip(string_array, unicode_array):
+def test_strip_ljust_rjust_consistency(string_array, unicode_array):
     rjs = np.char.rjust(string_array, 1000)
     rju = np.char.rjust(unicode_array, 1000)
 

@@ -922,8 +922,7 @@ load_new_string(npy_packed_static_string *out, npy_static_string *out_ss,
                       "Failed to allocate string in %s", err_context);
         return -1;
     }
-    int is_null = NpyString_load(allocator, out_pss, out_ss);
-    if (is_null == -1) {
+    if (NpyString_load(allocator, out_pss, out_ss) == -1) {
         npy_gil_error(PyExc_MemoryError,
                       "Failed to load string in %s", err_context);
         return -1;
