@@ -1043,9 +1043,9 @@ fail:
 }
 
 static int
-strip_chars_promoter(PyObject *NPY_UNUSED(ufunc),
-        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
-        PyArray_DTypeMeta *new_op_dtypes[])
+all_strings_promoter(PyObject *NPY_UNUSED(ufunc),
+                     PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+                     PyArray_DTypeMeta *new_op_dtypes[])
 {
     new_op_dtypes[0] = NPY_DT_NewRef(&PyArray_StringDType);
     new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_StringDType);
@@ -2312,6 +2312,28 @@ init_stringdtype_ufuncs(PyObject *umath)
         return -1;
     }
 
+    PyArray_DTypeMeta *rall_strings_promoter_dtypes[] = {
+        &PyArray_StringDType,
+        &PyArray_UnicodeDType,
+        &PyArray_StringDType,
+    };
+
+    if (add_promoter(umath, "add", rall_strings_promoter_dtypes, 3,
+                     all_strings_promoter) < 0) {
+        return -1;
+    }
+
+    PyArray_DTypeMeta *lall_strings_promoter_dtypes[] = {
+        &PyArray_UnicodeDType,
+        &PyArray_StringDType,
+        &PyArray_StringDType,
+    };
+
+    if (add_promoter(umath, "add", lall_strings_promoter_dtypes, 3,
+                     all_strings_promoter) < 0) {
+        return -1;
+    }
+
     INIT_MULTIPLY(Int64, int64);
     INIT_MULTIPLY(UInt64, uint64);
 
@@ -2446,10 +2468,6 @@ init_stringdtype_ufuncs(PyObject *umath)
         "_lstrip_chars", "_rstrip_chars", "_strip_chars",
     };
 
-    PyArray_DTypeMeta *strip_chars_promoter_dtypes[] = {
-        &PyArray_StringDType, &PyArray_UnicodeDType, &PyArray_StringDType
-    };
-
     for (int i=0; i<3; i++) {
         if (init_ufunc(umath, strip_chars_names[i], strip_chars_dtypes,
                        &strip_chars_resolve_descriptors,
@@ -2460,7 +2478,14 @@ init_stringdtype_ufuncs(PyObject *umath)
         }
 
         if (add_promoter(umath, strip_chars_names[i],
-                         strip_chars_promoter_dtypes, 3, strip_chars_promoter) < 0) {
+                         rall_strings_promoter_dtypes, 3,
+                         all_strings_promoter) < 0) {
+            return -1;
+        }
+
+        if (add_promoter(umath, strip_chars_names[i],
+                         lall_strings_promoter_dtypes, 3,
+                         all_strings_promoter) < 0) {
             return -1;
         }
     }
