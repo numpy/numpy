@@ -149,6 +149,10 @@ NumPy 2.0 Python API removals
 
   (`gh-24321 <https://github.com/numpy/numpy/pull/24321>`__)
 
+* Warnings and exceptions present in `numpy.exceptions` (e.g,
+  `~numpy.exceptions.ComplexWarning`,
+  `~numpy.exceptions.VisibleDeprecationWarning`) are no longer exposed in the
+  main namespace.
 * Multiple niche enums, expired members and functions have been removed from
   the main namespace, such as: ``ERR_*``, ``SHIFT_*``, ``np.fastCopyAndTranspose``,
   ``np.kernel_version``, ``np.numarray``, ``np.oldnumeric`` and ``np.set_numeric_ops``.
