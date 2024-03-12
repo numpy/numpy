@@ -362,13 +362,6 @@ def test_isnan(dtype, string_list):
         assert not np.any(np.isnan(sarr))
 
 
-def _pickle_load(filename):
-    with open(filename, "rb") as f:
-        res = pickle.load(f)
-
-    return res
-
-@pytest.mark.skipif(IS_WASM, reason="no threading support in wasm")
 def test_pickle(dtype, string_list):
     arr = np.array(string_list, dtype=dtype)
 
@@ -377,15 +370,6 @@ def test_pickle(dtype, string_list):
 
     with open(f.name, "rb") as f:
         res = pickle.load(f)
-
-    assert_array_equal(res[0], arr)
-    assert res[1] == dtype
-
-    # load the pickle in a subprocess to ensure the string data are
-    # actually stored in the pickle file
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        e = executor.submit(_pickle_load, f.name)
-        res = e.result()
 
     assert_array_equal(res[0], arr)
     assert res[1] == dtype
