@@ -1952,7 +1952,12 @@ def assert_warns(warning_class, *args, **kwargs):
     if not args and not kwargs:
         return _assert_warns_context(warning_class)
     elif len(args) < 1:
-        raise RuntimeError("assert_warns called without args")
+        if "match" in kwargs:
+            raise RuntimeError(
+                "assert_warns does not use 'match' kwarg, "
+                "use pytest.warns instead"
+                )
+        raise RuntimeError("assert_warns(...) needs at least one arg")
 
     func = args[0]
     args = args[1:]

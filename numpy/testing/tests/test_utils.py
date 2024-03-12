@@ -1043,10 +1043,18 @@ class TestWarns:
         assert assert_warns(UserWarning, f, b=20) == 20
 
         with pytest.raises(RuntimeError) as exc:
-            # assert_warns cannot do regexp matching, use pytest.warn
+            # assert_warns cannot do regexp matching, use pytest.warns
             with assert_warns(UserWarning, match="A"):
                 warnings.warn("B", UserWarning)
-            assert "assert_warns" in str(exc)
+        assert "assert_warns" in str(exc)
+        assert "pytest.warns" in str(exc)
+
+        with pytest.raises(RuntimeError) as exc:
+            # assert_warns cannot do regexp matching, use pytest.warns
+            with assert_warns(UserWarning, wrong="A"):
+                warnings.warn("B", UserWarning)
+        assert "assert_warns" in str(exc)
+        assert "pytest.warns" not in str(exc)
 
     def test_warn_wrong_warning(self):
         def f():
