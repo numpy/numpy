@@ -118,7 +118,7 @@ def multiply(a, i):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
 
     i : array_like, with any integer dtype
 
@@ -200,7 +200,7 @@ def find(a, sub, start=0, end=None):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
 
     sub : array_like, with `np.bytes_` or `np.str_` dtype
         The substring to search for.
@@ -236,9 +236,9 @@ def rfind(a, sub, start=0, end=None):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
-    sub : array_like, with `np.bytes_` or `np.str_` dtype
+    sub : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
         The substring to search for.
 
     start, end : array_like, with any integer dtype
@@ -264,9 +264,9 @@ def index(a, sub, start=0, end=None):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
-    sub : array_like, with `np.bytes_` or `np.str_` dtype
+    sub : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
     start, end : array_like, with any integer dtype, optional
 
@@ -330,9 +330,9 @@ def count(a, sub, start=0, end=None):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
-    sub : array_like, with `np.bytes_` or `np.str_` dtype
+    sub : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
        The substring to search for.
 
     start, end : array_like, with any integer dtype
@@ -373,9 +373,9 @@ def startswith(a, prefix, start=0, end=None):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
-    prefix : array_like, with `np.bytes_` or `np.str_` dtype
+    prefix : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
     start, end : array_like, with any integer dtype
         With ``start``, test beginning at that position. With ``end``,
@@ -402,9 +402,9 @@ def endswith(a, suffix, start=0, end=None):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
-    suffix : array_like, with `np.bytes_` or `np.str_` dtype
+    suffix : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
     start, end : array_like, with any integer dtype
         With ``start``, test beginning at that position. With ``end``,
@@ -444,7 +444,7 @@ def decode(a, encoding=None, errors=None):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array_like, with ``bytes_`` dtype
 
     encoding : str, optional
        The name of an encoding
@@ -490,7 +490,7 @@ def encode(a, encoding=None, errors=None):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array_like, with ``StringDType`` or ``str_`` dtype
 
     encoding : str, optional
        The name of an encoding
@@ -538,7 +538,7 @@ def expandtabs(a, tabsize=8):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
         Input array
     tabsize : int, optional
         Replace tabs with `tabsize` number of spaces.  If not given defaults
@@ -579,12 +579,12 @@ def center(a, width, fillchar=' '):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
     width : array_like, with any integer dtype
         The length of the resulting strings, unless ``width < str_len(a)``.
-    fillchar : array_like, with `np.bytes_` or `np.str_` dtype, optional
-        The padding character to use (default is space).
+    fillchar : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Optional padding character to use (default is space).
 
     Returns
     -------
@@ -637,12 +637,12 @@ def ljust(a, width, fillchar=' '):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
     width : array_like, with any integer dtype
         The length of the resulting strings, unless ``width < str_len(a)``.
-    fillchar : array_like, with `np.bytes_` or `np.str_` dtype, optional
-        The character to use for padding (default is space).
+    fillchar : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Optional character to use for padding (default is space).
 
     Returns
     -------
@@ -692,12 +692,12 @@ def rjust(a, width, fillchar=' '):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
     width : array_like, with any integer dtype
         The length of the resulting strings, unless ``width < str_len(a)``.
-    fillchar : array_like, with `np.bytes_` or `np.str_` dtype, optional
-        The character to use for padding
+    fillchar : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Optional padding character to use (default is space).
 
     Returns
     -------
@@ -748,7 +748,7 @@ def zfill(a, width):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
     width : array_like, with any integer dtype
         Width of string to left-fill elements in `a`.
@@ -919,7 +919,7 @@ def upper(a):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
         Input array.
 
     Returns
@@ -953,7 +953,7 @@ def lower(a):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
         Input array.
 
     Returns
@@ -988,7 +988,7 @@ def swapcase(a):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
         Input array.
 
     Returns
@@ -1025,7 +1025,7 @@ def capitalize(a):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
         Input array of strings to capitalize.
 
     Returns
@@ -1065,7 +1065,7 @@ def title(a):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
         Input array.
 
     Returns
@@ -1154,8 +1154,8 @@ def join(sep, seq):
 
     Parameters
     ----------
-    sep : array_like, with `np.bytes_` or `np.str_` dtype
-    seq : array_like, with `np.bytes_` or `np.str_` dtype
+    sep : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    seq : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
     Returns
     -------
@@ -1188,7 +1188,7 @@ def split(a, sep=None, maxsplit=None):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
     sep : str or unicode, optional
        If `sep` is not specified or None, any whitespace string is a
@@ -1234,7 +1234,7 @@ def rsplit(a, sep=None, maxsplit=None):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
     sep : str or unicode, optional
         If `sep` is not specified or None, any whitespace string
@@ -1274,7 +1274,7 @@ def splitlines(a, keepends=None):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
     keepends : bool, optional
         Line breaks are not included in the resulting list unless
@@ -1308,7 +1308,7 @@ def partition(a, sep):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
         Input array
     sep : {str, unicode}
         Separator to split each string element in `a`.
@@ -1349,7 +1349,7 @@ def rpartition(a, sep):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
         Input array
     sep : str or unicode
         Right-most separator to split each element in array.

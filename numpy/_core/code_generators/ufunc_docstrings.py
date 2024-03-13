@@ -4448,7 +4448,7 @@ add_newdoc('numpy._core.umath', 'isalnum',
 
     Parameters
     ----------
-    x : array_like, with `np.bytes_` or `np.str_` dtype
+    x : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
     $PARAMS
 
     Returns
@@ -4477,7 +4477,7 @@ add_newdoc('numpy._core.umath', 'islower',
 
     Parameters
     ----------
-    x : array_like, with `np.bytes_` or `np.str_` dtype
+    x : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
     $PARAMS
 
     Returns
@@ -4507,7 +4507,7 @@ add_newdoc('numpy._core.umath', 'isupper',
 
     Parameters
     ----------
-    x : array_like, with `np.bytes_` or `np.str_` dtype
+    x : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
     $PARAMS
 
     Returns
@@ -4537,7 +4537,7 @@ add_newdoc('numpy._core.umath', 'istitle',
 
     Parameters
     ----------
-    x : array_like, with `np.bytes_` or `np.str_` dtype
+    x : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
     $PARAMS
 
     Returns
@@ -4893,11 +4893,11 @@ add_newdoc('numpy._core.umath', '_center',
 
     Parameters
     ----------
-    x1 : array_like, with `np.bytes_` or `np.str_` dtype
+    x1 : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
 
     x2 : array_like, with any integer dtype
         The length of the resulting strings, unless ``width < str_len(a)``.
-    x3 : array_like, with `np.bytes_` or `np.str_` dtype
+    x3 : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
         The padding character to use.
         $PARAMS
 
@@ -4932,11 +4932,11 @@ add_newdoc('numpy._core.umath', '_ljust',
 
     Parameters
     ----------
-    x1 : array_like, with `np.bytes_` or `np.str_` dtype
+    x1 : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
 
     x2 : array_like, with any integer dtype
         The length of the resulting strings, unless ``width < str_len(a)``.
-    x3 : array_like, with `np.bytes_` or `np.str_` dtype
+    x3 : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
         The padding character to use.
         $PARAMS
 
@@ -4967,11 +4967,11 @@ add_newdoc('numpy._core.umath', '_rjust',
 
     Parameters
     ----------
-    x1 : array_like, with `np.bytes_` or `np.str_` dtype
+    x1 : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
 
     x2 : array_like, with any integer dtype
         The length of the resulting strings, unless ``width < str_len(a)``.
-    x3 : array_like, with `np.bytes_` or `np.str_` dtype
+    x3 : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
         The padding character to use.
         $PARAMS
 
@@ -5003,7 +5003,7 @@ add_newdoc('numpy._core.umath', '_zfill',
 
     Parameters
     ----------
-    x1 : array_like, with `np.bytes_` or `np.str_` dtype
+    x1 : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
 
     x2 : array_like, with any integer dtype
         Width of string to left-fill elements in `a`.
