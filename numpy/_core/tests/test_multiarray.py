@@ -3505,8 +3505,13 @@ class TestMethods:
         # IndexError is raised if the 
         # array is empty
         empty_array = np.asarray(list())
-        assert_raises(IndexError, np.put, empty_array, 1, 1, mode="wrap")
-        assert_raises(IndexError, np.put, empty_array, 1, 1, mode="clip")
+        with pytest.raises(IndexError, 
+                            match="cannot replace elements of an empty array"):
+            np.put(empty_array, 1, 1, mode="wrap")
+        with pytest.raises(IndexError, 
+                            match="cannot replace elements of an empty array"):
+            np.put(empty_array, 1, 1, mode="clip")
+        
 
     def test_ravel(self):
         a = np.array([[0, 1], [2, 3]])
