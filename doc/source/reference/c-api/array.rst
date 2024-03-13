@@ -4032,14 +4032,11 @@ variables), the GIL should be released so that other Python threads
 can run while the time-consuming calculations are performed. This can
 be accomplished using two groups of macros. Typically, if one macro in
 a group is used in a code block, all of them must be used in the same
-code block. Currently, :c:data:`NPY_ALLOW_THREADS` is defined to the
-python-defined :c:data:`WITH_THREADS` constant unless the environment
-variable ``NPY_NOSMP`` is set in which case
-:c:data:`NPY_ALLOW_THREADS` is defined to be 0.
+code block. :c:data:`NPY_ALLOW_THREADS` is true (defined as ``1``) unless the
+build option ``-Ddisable-threading`` is set to ``true`` - in which case
+:c:data:`NPY_ALLOW_THREADS` is false (``0``).
 
 .. c:macro:: NPY_ALLOW_THREADS
-
-.. c:macro:: WITH_THREADS
 
 Group 1
 ^^^^^^^
