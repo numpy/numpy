@@ -491,9 +491,6 @@ endif
 if cc.has_header('sys/endian.h')
   cdata.set10('NPY_HAVE_SYS_ENDIAN_H', true)
 endif
-if is_windows
-  cdata.set10('NPY_NO_SIGNAL', true)
-endif
 # Command-line switch; distutils build checked for `NPY_NOSMP` env var instead
 # TODO: document this (search for NPY_NOSMP in C API docs)
 cdata.set10('NPY_NO_SMP', get_option('disable-threading'))
