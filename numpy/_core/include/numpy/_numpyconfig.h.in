@@ -19,7 +19,6 @@
 
 #mesondefine NPY_USE_C99_FORMATS
 
-#mesondefine NPY_NO_SIGNAL
 #mesondefine NPY_NO_SMP
 
 #mesondefine NPY_VISIBILITY_HIDDEN
