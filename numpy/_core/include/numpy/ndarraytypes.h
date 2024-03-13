@@ -8,8 +8,8 @@
 
 #define NPY_NO_EXPORT NPY_VISIBILITY_HIDDEN
 
-/* Only use thread if configured in config and python supports it */
-#if defined WITH_THREAD && !NPY_NO_SMP
+/* Always allow threading unless it was explicitly disabled at build time */
+#if !NPY_NO_SMP
         #define NPY_ALLOW_THREADS 1
 #else
         #define NPY_ALLOW_THREADS 0
