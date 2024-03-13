@@ -17,8 +17,6 @@
 #mesondefine NPY_SIZEOF_PY_LONG_LONG
 #mesondefine NPY_SIZEOF_LONGLONG
 
-#mesondefine NPY_USE_C99_FORMATS
-
 #mesondefine NPY_NO_SMP
 
 #mesondefine NPY_VISIBILITY_HIDDEN
