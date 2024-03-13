@@ -396,7 +396,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     ni = PyArray_SIZE(indices);
     if ((ni > 0) && (PyArray_Size((PyObject *)self) == 0)) {
         PyErr_SetString(PyExc_IndexError, 
-                        "put: cannot do a non empty put on an empty array");
+                        "cannot replace elements of an empty array");
         return NULL;
     }
     Py_INCREF(PyArray_DESCR(self));
