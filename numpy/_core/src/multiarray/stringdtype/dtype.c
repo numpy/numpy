@@ -638,6 +638,9 @@ stringdtype_is_known_scalar_type(PyArray_DTypeMeta *NPY_UNUSED(cls),
     if (pytype == &PyDatetimeArrType_Type) {
         return 1;
     }
+    if (pytype == &PyTimedeltaArrType_Type) {
+        return 1;
+    }
     return 0;
 }
 
