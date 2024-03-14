@@ -305,8 +305,8 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
         NPY_DT_SLOTS(NPY_DTYPE(descr))->get_clear_loop = (
                 &npy_get_clear_void_and_legacy_user_dtype_loop);
         /* Also use the void zerofill since there may be objects */
-        NPY_DT_SLOTS(NPY_DTYPE(descr))->get_clear_loop = (
-                &npy_get_zerofill_void_and_legacy_user_dtype_loop);
+        NPY_DT_SLOTS(NPY_DTYPE(descr))->get_fill_zero_loop = (
+                (get_traverse_loop_function *)&npy_get_zerofill_void_and_legacy_user_dtype_loop);
     }
 
     return typenum;
