@@ -714,6 +714,16 @@ def test_ufunc_add(dtype, string_list, other_strings, use_out):
             np.add(arr1, arr2)
 
 
+def test_add_promoter(string_list):
+    arr = np.array(string_list, dtype=StringDType())
+    lresult = np.array(["hello" + s for s in string_list], dtype=StringDType())
+    rresult = np.array([s + "hello" for s in string_list], dtype=StringDType())
+
+    for op in ["hello", np.str_("hello"), np.array(["hello"])]:
+        assert_array_equal(op + arr, lresult)
+        assert_array_equal(arr + op, rresult)
+
+
 @pytest.mark.parametrize("use_out", [True, False])
 @pytest.mark.parametrize("other", [2, [2, 1, 3, 4, 1, 3]])
 @pytest.mark.parametrize(
