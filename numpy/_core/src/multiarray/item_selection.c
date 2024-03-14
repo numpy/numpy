@@ -394,6 +394,11 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         goto fail;
     }
     ni = PyArray_SIZE(indices);
+    if ((ni > 0) && (PyArray_Size((PyObject *)self) == 0)) {
+        PyErr_SetString(PyExc_IndexError, 
+                        "cannot replace elements of an empty array");
+        return NULL;
+    }
     Py_INCREF(PyArray_DESCR(self));
     values = (PyArrayObject *)PyArray_FromAny(values0, PyArray_DESCR(self), 0, 0,
                               NPY_ARRAY_DEFAULT | NPY_ARRAY_FORCECAST, NULL);
