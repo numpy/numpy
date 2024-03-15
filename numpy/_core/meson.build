@@ -492,11 +492,6 @@ endif
 # TODO: document this (search for NPY_NOSMP in C API docs)
 cdata.set10('NPY_NO_SMP', get_option('disable-threading'))
 
-# Check whether we can use inttypes (C99) formats
-if cc.has_header_symbol('inttypes.h', 'PRIdPTR')
-  cdata.set10('NPY_USE_C99_FORMATS', true)
-endif
-
 visibility_hidden = ''
 if cc.has_function_attribute('visibility:hidden') and host_machine.system() != 'cygwin'
   visibility_hidden = '__attribute__((visibility("hidden")))'
