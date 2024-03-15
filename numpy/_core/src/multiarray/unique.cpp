@@ -1,11 +1,13 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+
+#include <Python.h>
 
 #include <unordered_map>
 #include <vector>
 #include <random>
 #include <iostream>
 
-#define _MULTIARRAYMODULE
 #include "numpy/ndarraytypes.h"
 
 #include "numpy/arrayobject.h"
@@ -75,14 +77,19 @@ npy_intp unique(PyArrayObject *self)
     return 0;
 }
 
-NPY_NO_EXPORT npy_intp
-PyArray_Unique(PyArrayObject *self)
+static PyObject *
+PyArray_Unique(PyObject *dummy, PyObject *args)
 {
+    PyArrayObject *self = NULL;
+
+    if (!PyArg_ParseTuple(args, "O!", &PyArray_Type, &self))
+        return NULL;
+
     npy_intp itemsize;
 
     /* Handle zero-sized arrays specially */
     if (PyArray_SIZE(self) == 0) {
-        return 0;
+        return Py_BuildValue("i", 0);
     }
 
     itemsize = PyArray_ITEMSIZE(self);
@@ -93,5 +100,27 @@ PyArray_Unique(PyArrayObject *self)
     } else if (sizeof(int) == itemsize) {
         unique<int>(self);
     }
-    return 0;
+    return Py_BuildValue("i", 0);
+}
+
+static PyMethodDef UniqueMethods[] = {
+    {"unique_hash",  PyArray_Unique, METH_VARARGS,
+     "Collect unique values via a hash map."},
+    {NULL, NULL, 0, NULL}
+};
+
+static struct PyModuleDef uniquemodule = {
+    PyModuleDef_HEAD_INIT,
+    "unique", /* name of module */
+    NULL, /* module docs */
+    -1,  /* size of per-interpreter state of the module,
+            or -1 if the module keeps state in global variables. */
+    UniqueMethods
+};
+
+PyMODINIT_FUNC
+PyInit_unique(void)
+{
+    // import_array();
+    return PyModule_Create(&uniquemodule);
 }
