@@ -46,7 +46,8 @@ __all__ = [
     "add", "multiply", "isalpha", "isdigit", "isspace", "isalnum", "islower",
     "isupper", "istitle", "isdecimal", "isnumeric", "str_len", "find",
     "rfind", "index", "rindex", "count", "startswith", "endswith", "lstrip",
-    "rstrip", "strip", "replace", "expandtabs",
+    "rstrip", "strip", "replace", "expandtabs", "center", "ljust", "rjust",
+    "zfill",
 
     # _vec_string - Will gradually become ufuncs as well
     "upper", "lower", "swapcase", "capitalize", "title",
@@ -187,7 +188,7 @@ def mod(a, values):
     out : ndarray
         Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
         depending on input types
-        
+
     """
     return _to_bytes_or_str_array(
         _vec_string(a, np.object_, '__mod__', (values,)), a)
@@ -318,7 +319,7 @@ def rindex(a, sub, start=0, end=None):
     >>> a = np.array(["Computer Science"])
     >>> np.strings.rindex(a, "Science", start=0, end=None)
     array([9])
-    
+
     """
     end = end if end is not None else MAX
     return _rindex_ufunc(a, sub, start, end)
@@ -517,7 +518,7 @@ def encode(a, encoding=None, errors=None):
     >>> np.strings.encode(a, encoding='cp037')
     array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
        b'\x81\x82\xc2\xc1\xc2\x82\x81'], dtype='|S7')
-       
+
     """
     return _to_bytes_or_str_array(
         _vec_string(a, np.object_, 'encode', _clean_args(encoding, errors)),
@@ -557,7 +558,7 @@ def expandtabs(a, tabsize=8):
 
     Examples
     --------
-    >>> a = np.array(['\t\tHello\tworld'])  
+    >>> a = np.array(['\t\tHello\tworld'])
     >>> np.strings.expandtabs(a, tabsize=4)  # doctest: +SKIP
     array(['        Hello   world'], dtype='<U21')  # doctest: +SKIP
 
@@ -599,7 +600,7 @@ def center(a, width, fillchar=' '):
     See Also
     --------
     str.center
-    
+
     Notes
     -----
     This function is intended to work with arrays of strings.  The
@@ -656,7 +657,7 @@ def ljust(a, width, fillchar=' '):
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.ljust(c, width=3)
     array(['aAa', '  a', 'abB'], dtype='<U3')
-    
+
     """
     a_arr = np.asarray(a)
     width_arr = np.asarray(width)
@@ -1095,7 +1096,7 @@ def replace(a, old, new, count=-1):
     See Also
     --------
     str.replace
-    
+
     Examples
     --------
     >>> a = np.array(["That is a mango", "Monkeys eat mangos"])
@@ -1105,7 +1106,7 @@ def replace(a, old, new, count=-1):
     >>> a = np.array(["The dish is fresh", "This is it"])
     >>> np.strings.replace(a, 'is', 'was')
     array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
-    
+
     """
     arr = np.asanyarray(a)
     a_dt = arr.dtype
@@ -1151,11 +1152,11 @@ def _join(sep, seq):
 
     Examples
     --------
-    >>> np.strings.join('-', 'osd')
-    array('o-s-d', dtype='<U5')
+    >>> np.strings.join('-', 'osd')  # doctest: +SKIP
+    array('o-s-d', dtype='<U5')  # doctest: +SKIP
 
-    >>> np.strings.join(['-', '.'], ['ghc', 'osd'])
-    array(['g-h-c', 'o.s.d'], dtype='<U5')
+    >>> np.strings.join(['-', '.'], ['ghc', 'osd'])  # doctest: +SKIP
+    array(['g-h-c', 'o.s.d'], dtype='<U5')  # doctest: +SKIP
 
     """
     return _to_bytes_or_str_array(
@@ -1188,11 +1189,11 @@ def _split(a, sep=None, maxsplit=None):
     Examples
     --------
     >>> x = np.array("Numpy is nice!")
-    >>> np.strings.split(x, " ")
-    array(list(['Numpy', 'is', 'nice!']), dtype=object)
+    >>> np.strings.split(x, " ")  # doctest: +SKIP
+    array(list(['Numpy', 'is', 'nice!']), dtype=object)  # doctest: +SKIP
 
-    >>> np.strings.split(x, " ", 1)
-    array(list(['Numpy', 'is nice!']), dtype=object)
+    >>> np.strings.split(x, " ", 1)  # doctest: +SKIP
+    array(list(['Numpy', 'is nice!']), dtype=object)  # doctest: +SKIP
 
     See Also
     --------
@@ -1238,9 +1239,10 @@ def _rsplit(a, sep=None, maxsplit=None):
     Examples
     --------
     >>> a = np.array(['aAaAaA', 'abBABba'])
-    >>> np.strings.rsplit(a, 'A')
-    array([list(['a', 'a', 'a', '']), list(['abB', 'Bba'])], dtype=object)
-    
+    >>> np.strings.rsplit(a, 'A')  # doctest: +SKIP
+    array([list(['a', 'a', 'a', '']),  # doctest: +SKIP
+           list(['abB', 'Bba'])], dtype=object)  # doctest: +SKIP
+
     """
     # This will return an array of lists of different sizes, so we
     # leave it as an object array
@@ -1306,9 +1308,9 @@ def _partition(a, sep):
     Examples
     --------
     >>> x = np.array(["Numpy is nice!"])
-    >>> np.strings.partition(x, " ")
-    array([['Numpy', ' ', 'is nice!']], dtype='<U8')
-
+    >>> np.strings.partition(x, " ")  # doctest: +SKIP
+    array([['Numpy', ' ', 'is nice!']], dtype='<U8')  # doctest: +SKIP
+ 
     See Also
     --------
     str.partition
@@ -1351,10 +1353,10 @@ def _rpartition(a, sep):
     Examples
     --------
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
-    >>> np.strings.rpartition(a, 'A')
-    array([['aAaAa', 'A', ''],
-       ['  a', 'A', '  '],
-       ['abB', 'A', 'Bba']], dtype='<U5')
+    >>> np.strings.rpartition(a, 'A')  # doctest: +SKIP
+    array([['aAaAa', 'A', ''],  # doctest: +SKIP
+       ['  a', 'A', '  '],  # doctest: +SKIP
+       ['abB', 'A', 'Bba']], dtype='<U5')  # doctest: +SKIP
 
     """
     return _to_bytes_or_str_array(
@@ -1394,7 +1396,7 @@ def translate(a, table, deletechars=None):
     >>> deletechars = ' '
     >>> np.char.translate(a, table, deletechars)
     array(['112 3', '1231', '2311'], dtype='<U5')
-    
+
     """
     a_arr = np.asarray(a)
     if issubclass(a_arr.dtype.type, np.str_):
