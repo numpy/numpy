@@ -49,9 +49,13 @@ __all__ = [
     "rstrip", "strip", "replace", "expandtabs",
 
     # _vec_string - Will gradually become ufuncs as well
-    "mod", "decode", "encode", "center", "ljust", "rjust", "zfill", "upper",
-    "lower", "swapcase", "capitalize", "title", "join", "split", "rsplit",
-    "splitlines", "partition", "rpartition", "translate",
+    "upper", "lower", "swapcase", "capitalize", "title",
+
+    # _vec_string - Will probably not become ufuncs
+    "mod", "decode", "encode", "translate",
+
+    # Removed from namespace until behavior has been crystalized
+    # "join", "split", "rsplit", "splitlines", "partition", "rpartition",
 ]
 
 
@@ -1123,7 +1127,7 @@ def replace(a, old, new, count=-1):
     return _replace(arr, old, new, counts, out=out)
 
 
-def join(sep, seq):
+def _join(sep, seq):
     """
     Return a string which is the concatenation of the strings in the
     sequence `seq`.
@@ -1158,7 +1162,7 @@ def join(sep, seq):
         _vec_string(sep, np.object_, 'join', (seq,)), seq)
 
 
-def split(a, sep=None, maxsplit=None):
+def _split(a, sep=None, maxsplit=None):
     """
     For each element in `a`, return a list of the words in the
     string, using `sep` as the delimiter string.
@@ -1201,7 +1205,7 @@ def split(a, sep=None, maxsplit=None):
         a, np.object_, 'split', [sep] + _clean_args(maxsplit))
 
 
-def rsplit(a, sep=None, maxsplit=None):
+def _rsplit(a, sep=None, maxsplit=None):
     """
     For each element in `a`, return a list of the words in the
     string, using `sep` as the delimiter string.
@@ -1244,7 +1248,7 @@ def rsplit(a, sep=None, maxsplit=None):
         a, np.object_, 'rsplit', [sep] + _clean_args(maxsplit))
 
 
-def splitlines(a, keepends=None):
+def _splitlines(a, keepends=None):
     """
     For each element in `a`, return a list of the lines in the
     element, breaking at line boundaries.
@@ -1273,7 +1277,7 @@ def splitlines(a, keepends=None):
         a, np.object_, 'splitlines', _clean_args(keepends))
 
 
-def partition(a, sep):
+def _partition(a, sep):
     """
     Partition each element in `a` around `sep`.
 
@@ -1314,7 +1318,7 @@ def partition(a, sep):
         _vec_string(a, np.object_, 'partition', (sep,)), a)
 
 
-def rpartition(a, sep):
+def _rpartition(a, sep):
     """
     Partition (split) each element around the right-most separator.
 
