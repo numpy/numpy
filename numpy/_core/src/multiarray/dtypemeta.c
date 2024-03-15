@@ -838,22 +838,13 @@ python_builtins_are_known_scalar_types(
      * This is necessary only for python scalar classes which we discover
      * as valid DTypes.
      */
-    if (pytype == &PyFloat_Type) {
-        return 1;
-    }
-    if (pytype == &PyLong_Type) {
-        return 1;
-    }
-    if (pytype == &PyBool_Type) {
-        return 1;
-    }
-    if (pytype == &PyComplex_Type) {
-        return 1;
-    }
-    if (pytype == &PyUnicode_Type) {
-        return 1;
-    }
-    if (pytype == &PyBytes_Type) {
+    if (pytype == &PyFloat_Type ||
+        pytype == &PyLong_Type ||
+        pytype == &PyBool_Type ||
+        pytype == &PyComplex_Type ||
+        pytype == &PyUnicode_Type ||
+        pytype == &PyBytes_Type)
+    {
         return 1;
     }
     return 0;

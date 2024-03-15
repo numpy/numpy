@@ -910,6 +910,12 @@ def test_nat_casts():
                 np.array([output_object]*arr.size, dtype=dtype))
 
 
+def test_nat_conversion():
+    for nat in [np.datetime64("NaT", "s"), np.timedelta64("NaT", "s")]:
+        with pytest.raises(ValueError, match="string coercion is disabled"):
+            np.array(["a", nat], dtype=StringDType(coerce=False))
+
+
 def test_growing_strings(dtype):
     # growing a string leads to a heap allocation, this tests to make sure
     # we do that bookkeeping correctly for all possible starting cases
