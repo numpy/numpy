@@ -54,9 +54,13 @@ __all__ = [
     "zfill",
 
     # _vec_string - Will gradually become ufuncs as well
-    "mod", "decode", "encode", "upper", "lower", "swapcase", "capitalize",
-    "title", "join", "split", "rsplit", "splitlines", "partition",
-    "rpartition", "translate",
+    "upper", "lower", "swapcase", "capitalize", "title",
+
+    # _vec_string - Will probably not become ufuncs
+    "mod", "decode", "encode", "translate",
+
+    # Removed from namespace until behavior has been crystalized
+    # "join", "split", "rsplit", "splitlines", "partition", "rpartition",
 ]
 
 
@@ -1145,7 +1149,7 @@ def replace(a, old, new, count=-1):
     return _replace(arr, old, new, counts, out=out)
 
 
-def join(sep, seq):
+def _join(sep, seq):
     """
     Return a string which is the concatenation of the strings in the
     sequence `seq`.
@@ -1168,18 +1172,18 @@ def join(sep, seq):
 
     Examples
     --------
-    >>> np.strings.join('-', 'osd')
-    array('o-s-d', dtype='<U5')
+    >>> np.strings.join('-', 'osd')  # doctest: +SKIP
+    array('o-s-d', dtype='<U5')  # doctest: +SKIP
 
-    >>> np.strings.join(['-', '.'], ['ghc', 'osd'])
-    array(['g-h-c', 'o.s.d'], dtype='<U5')
+    >>> np.strings.join(['-', '.'], ['ghc', 'osd'])  # doctest: +SKIP
+    array(['g-h-c', 'o.s.d'], dtype='<U5')  # doctest: +SKIP
 
     """
     return _to_bytes_or_str_array(
         _vec_string(sep, np.object_, 'join', (seq,)), seq)
 
 
-def split(a, sep=None, maxsplit=None):
+def _split(a, sep=None, maxsplit=None):
     """
     For each element in `a`, return a list of the words in the
     string, using `sep` as the delimiter string.
@@ -1205,11 +1209,11 @@ def split(a, sep=None, maxsplit=None):
     Examples
     --------
     >>> x = np.array("Numpy is nice!")
-    >>> np.strings.split(x, " ")
-    array(list(['Numpy', 'is', 'nice!']), dtype=object)
+    >>> np.strings.split(x, " ")  # doctest: +SKIP
+    array(list(['Numpy', 'is', 'nice!']), dtype=object)  # doctest: +SKIP
 
-    >>> np.strings.split(x, " ", 1)
-    array(list(['Numpy', 'is nice!']), dtype=object)
+    >>> np.strings.split(x, " ", 1)  # doctest: +SKIP
+    array(list(['Numpy', 'is nice!']), dtype=object)  # doctest: +SKIP
 
     See Also
     --------
@@ -1222,7 +1226,7 @@ def split(a, sep=None, maxsplit=None):
         a, np.object_, 'split', [sep] + _clean_args(maxsplit))
 
 
-def rsplit(a, sep=None, maxsplit=None):
+def _rsplit(a, sep=None, maxsplit=None):
     """
     For each element in `a`, return a list of the words in the
     string, using `sep` as the delimiter string.
@@ -1255,8 +1259,9 @@ def rsplit(a, sep=None, maxsplit=None):
     Examples
     --------
     >>> a = np.array(['aAaAaA', 'abBABba'])
-    >>> np.strings.rsplit(a, 'A')
-    array([list(['a', 'a', 'a', '']), list(['abB', 'Bba'])], dtype=object)
+    >>> np.strings.rsplit(a, 'A')  # doctest: +SKIP
+    array([list(['a', 'a', 'a', '']),  # doctest: +SKIP
+           list(['abB', 'Bba'])], dtype=object)  # doctest: +SKIP
     
     """
     # This will return an array of lists of different sizes, so we
@@ -1265,7 +1270,7 @@ def rsplit(a, sep=None, maxsplit=None):
         a, np.object_, 'rsplit', [sep] + _clean_args(maxsplit))
 
 
-def splitlines(a, keepends=None):
+def _splitlines(a, keepends=None):
     """
     For each element in `a`, return a list of the lines in the
     element, breaking at line boundaries.
@@ -1294,7 +1299,7 @@ def splitlines(a, keepends=None):
         a, np.object_, 'splitlines', _clean_args(keepends))
 
 
-def partition(a, sep):
+def _partition(a, sep):
     """
     Partition each element in `a` around `sep`.
 
@@ -1323,8 +1328,8 @@ def partition(a, sep):
     Examples
     --------
     >>> x = np.array(["Numpy is nice!"])
-    >>> np.strings.partition(x, " ")
-    array([['Numpy', ' ', 'is nice!']], dtype='<U8')
+    >>> np.strings.partition(x, " ")  # doctest: +SKIP
+    array([['Numpy', ' ', 'is nice!']], dtype='<U8')  # doctest: +SKIP
     
     See Also
     --------
@@ -1335,7 +1340,7 @@ def partition(a, sep):
         _vec_string(a, np.object_, 'partition', (sep,)), a)
 
 
-def rpartition(a, sep):
+def _rpartition(a, sep):
     """
     Partition (split) each element around the right-most separator.
 
@@ -1368,10 +1373,10 @@ def rpartition(a, sep):
     Examples
     --------
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
-    >>> np.strings.rpartition(a, 'A')
-    array([['aAaAa', 'A', ''],
-       ['  a', 'A', '  '],
-       ['abB', 'A', 'Bba']], dtype='<U5')
+    >>> np.strings.rpartition(a, 'A')  # doctest: +SKIP
+    array([['aAaAa', 'A', ''],  # doctest: +SKIP
+       ['  a', 'A', '  '],  # doctest: +SKIP
+       ['abB', 'A', 'Bba']], dtype='<U5')  # doctest: +SKIP
 
     """
     return _to_bytes_or_str_array(
