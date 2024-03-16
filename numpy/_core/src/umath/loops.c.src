@@ -474,6 +474,47 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 int
 NPY_NO_EXPORT void
 @TYPE@_power(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
+    if (steps[1]==0) {
+        // stride for second argument is 0
+        BINARY_DEFS
+        @type@ in2 = *(@type@ *)ip2;
+        #if @SIGNED@
+                if (in2 < 0) {
+                    npy_gil_error(PyExc_ValueError,
+                                  "Integers to negative integer powers are not allowed.");
+                    return;
+                }
+        #endif
+
+        if (in2==2) {
+            for(i = 0; i < n; i++, ip1 += is1, op1 += os1) {
+                    @type@ in1 = *(@type@ *)ip1;
+
+                    *((@type@ *) op1) = in1 * in1;
+                }
+                return;
+        } else {
+            int first_bit = in2 & 1;
+            @type@ in2start = in2 >> 1;
+
+            for(i = 0; i < n; i++, ip1 += is1, op1 += os1) {
+                @type@ in1 = *(@type@ *)ip1;
+                @type@ var = in2start;
+                @type@ out;
+
+                out = first_bit ? in1 : 1;
+                while (var > 0) {
+                    in1 *= in1;
+                    if (var & 1) {
+                        out *= in1;
+                    }
+                    var >>= 1;
+                }
+                *((@type@ *) op1) = out;
+            }
+        return;
+        }
+    }
     BINARY_LOOP {
         @type@ in1 = *(@type@ *)ip1;
         @type@ in2 = *(@type@ *)ip2;
