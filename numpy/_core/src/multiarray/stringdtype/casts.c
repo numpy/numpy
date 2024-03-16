@@ -571,6 +571,9 @@ string_to_pylong(char *in, int has_null,
 {
     PyObject *val_obj = non_nullable_string_to_pystring(
             in, has_null, default_string, allocator);
+    if (val_obj == NULL) {
+        return NULL;
+    }
     // interpret as an integer in base 10
     PyObject *pylong_value = PyLong_FromUnicodeObject(val_obj, 10);
     Py_DECREF(val_obj);
