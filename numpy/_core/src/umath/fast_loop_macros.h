@@ -95,7 +95,7 @@ abs_ptrdiff(char *a, char *b)
     char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];\
     npy_intp is1 = steps[0], os1 = steps[2];\
     npy_intp n = dimensions[0];\
-    npy_intp i;
+    npy_intp i;\
 
 #define BINARY_LOOP_SLIDING_ZERO_STRIDE \
     for (i = 0; i < n; i++, ip1 += is1, op1 += os1)
