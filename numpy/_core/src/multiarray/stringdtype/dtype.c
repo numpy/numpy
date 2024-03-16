@@ -554,88 +554,36 @@ stringdtype_get_clear_loop(void *NPY_UNUSED(traverse_context),
 }
 
 static int
-stringdtype_is_known_scalar_type(PyArray_DTypeMeta *NPY_UNUSED(cls),
+stringdtype_is_known_scalar_type(PyArray_DTypeMeta *cls,
                                  PyTypeObject *pytype)
 {
-    if (pytype == &PyFloat_Type) {
+    if (python_builtins_are_known_scalar_types(cls, pytype)) {
         return 1;
     }
-    if (pytype == &PyLong_Type) {
-        return 1;
-    }
-    if (pytype == &PyBool_Type) {
-        return 1;
-    }
-    if (pytype == &PyComplex_Type) {
-        return 1;
-    }
-    if (pytype == &PyUnicode_Type) {
-        return 1;
-    }
-    if (pytype == &PyBytes_Type) {
-        return 1;
-    }
-    if (pytype == &PyBoolArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyByteArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyShortArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyIntArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyLongArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyLongLongArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyUByteArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyUShortArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyUIntArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyULongArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyULongLongArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyHalfArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyFloatArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyDoubleArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyLongDoubleArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyCFloatArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyCDoubleArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyCLongDoubleArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyIntpArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyUIntpArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyDatetimeArrType_Type) {
+    // accept every built-in numpy dtype
+    else if (pytype == &PyBoolArrType_Type ||
+             pytype == &PyByteArrType_Type ||
+             pytype == &PyShortArrType_Type ||
+             pytype == &PyIntArrType_Type ||
+             pytype == &PyLongArrType_Type ||
+             pytype == &PyLongLongArrType_Type ||
+             pytype == &PyUByteArrType_Type ||
+             pytype == &PyUShortArrType_Type ||
+             pytype == &PyUIntArrType_Type ||
+             pytype == &PyULongArrType_Type ||
+             pytype == &PyULongLongArrType_Type ||
+             pytype == &PyHalfArrType_Type ||
+             pytype == &PyFloatArrType_Type ||
+             pytype == &PyDoubleArrType_Type ||
+             pytype == &PyLongDoubleArrType_Type ||
+             pytype == &PyCFloatArrType_Type ||
+             pytype == &PyCDoubleArrType_Type ||
+             pytype == &PyCLongDoubleArrType_Type ||
+             pytype == &PyIntpArrType_Type ||
+             pytype == &PyUIntpArrType_Type ||
+             pytype == &PyDatetimeArrType_Type ||
+             pytype == &PyTimedeltaArrType_Type)
+    {
         return 1;
     }
     return 0;
