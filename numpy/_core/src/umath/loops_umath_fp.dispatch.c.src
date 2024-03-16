@@ -251,10 +251,28 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
         return;
     }
 #endif
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
+    if (steps[1]==0) {
+        BINARY_DEFS_ZERO_STRIDE
         const @type@ in2 = *(@type@ *)ip2;
-        *(@type@ *)op1 = npy_@intrin@@vsub@(in1, in2);
+        if (in2 == 2.0) {
+            BINARY_LOOP_SLIDING_ZERO_STRIDE {
+                const @type@ in1 = *(@type@ *)ip1;
+                *(@type@ *)op1 = in1 * in1;
+            }
+        }
+        else {
+            BINARY_LOOP_SLIDING_ZERO_STRIDE {
+                const @type@ in1 = *(@type@ *)ip1;
+                *(@type@ *)op1 = npy_@intrin@@vsub@(in1, in2);
+            }
+        }
+    }
+    else {
+        BINARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            const @type@ in2 = *(@type@ *)ip2;
+            *(@type@ *)op1 = npy_@intrin@@vsub@(in1, in2);
+        }
     }
 }
 /**end repeat1**/
