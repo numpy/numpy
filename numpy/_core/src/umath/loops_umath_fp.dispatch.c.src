@@ -230,6 +230,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
 /**begin repeat1
  *  #func = power, arctan2#
  *  #intrin = pow, atan2#
+ *  #ispower = 1, 0#
  */
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
@@ -251,6 +252,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
         return;
     }
 #endif
+#if @ispower@
     if (steps[1]==0) {
         BINARY_DEFS_ZERO_STRIDE
         const @type@ in2 = *(@type@ *)ip2;
@@ -266,13 +268,13 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
                 *(@type@ *)op1 = npy_@intrin@@vsub@(in1, in2);
             }
         }
+        return;
     }
-    else {
-        BINARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            const @type@ in2 = *(@type@ *)ip2;
-            *(@type@ *)op1 = npy_@intrin@@vsub@(in1, in2);
-        }
+#endif
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *(@type@ *)op1 = npy_@intrin@@vsub@(in1, in2);
     }
 }
 /**end repeat1**/
