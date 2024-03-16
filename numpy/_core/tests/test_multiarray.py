@@ -8492,6 +8492,25 @@ class TestArrayCreationCopyArgument(object):
                                               "and 'copy' keywords")):
             np.array(a, copy=False)
 
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    def test__array__reference_leak(self):
+        class NotAnArray:
+            def __array__(self):
+                raise NotImplementedError()
+
+        x = NotAnArray()
+
+        refcount = sys.getrefcount(x)
+
+        try:
+            np.array(x)
+        except NotImplementedError:
+            pass
+
+        gc.collect()
+
+        assert refcount == sys.getrefcount(x)
+
     @pytest.mark.parametrize(
             "arr", [np.ones(()), np.arange(81).reshape((9, 9))])
     @pytest.mark.parametrize("order1", ["C", "F", None])
