@@ -1274,6 +1274,16 @@ py.extension_module('_simd',
   subdir: 'numpy/_core',
 )
 
+py.extension_module('unique',
+  [
+    'src/multiarray/unique.cpp',
+  ],
+  c_args: c_args_common,
+  dependencies: np_core_dep,
+  install: true,
+  subdir: 'numpy/_core',
+)
+
 python_sources = [
   '__init__.py',
   '__init__.pyi',

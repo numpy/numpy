@@ -122,5 +122,6 @@ PyMODINIT_FUNC
 PyInit_unique(void)
 {
     // import_array();
+    // PyArray_ImportNumPyAPI();
     return PyModule_Create(&uniquemodule);
 }
