@@ -770,7 +770,7 @@ promote_to_sfloat(PyUFuncObject *NPY_UNUSED(ufunc),
         Py_INCREF(new);
         new_dtypes[i] = new;
     }
-    return 0;
+    return 1;
 }
 
 

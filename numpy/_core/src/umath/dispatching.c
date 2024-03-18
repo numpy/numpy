@@ -187,6 +187,19 @@ PyUFunc_AddLoopFromSpec_int(PyObject *ufunc, PyArrayMethod_Spec *spec, int priv)
 }
 
 
+/* Check if an loop "info" represents a promoter (by checking for method) */
+static int
+info_is_promoter(PyObject *info)
+{
+    return !PyObject_TypeCheck(PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type);
+}
+
+
+static int
+call_promoter(PyUFuncObject *ufunc, PyObject *resolver_info,
+        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *out_op_dtypes[]);
+
 /**
  * Resolves the implementation to use, this uses typical multiple dispatching
  * methods of finding the best matching implementation or resolver.
@@ -214,6 +227,9 @@ PyUFunc_AddLoopFromSpec_int(PyObject *ufunc, PyArrayMethod_Spec *spec, int priv)
  * @param op_dtypes The DTypes that are either passed in (defined by an
  *        operand) or defined by the `signature` as also passed in as
  *        `fixed_DTypes`.
+ * @param signature The signature passed by the user, for use by promoters
+ * @param only_promoters_first Only check promoters initially (used internally
+ *        to recurse), but then try again.
  * @param out_info Returns the tuple describing the best implementation
  *        (consisting of dtypes and ArrayMethod or promoter).
  *        WARNING: Returns a borrowed reference!
@@ -222,17 +238,20 @@ PyUFunc_AddLoopFromSpec_int(PyObject *ufunc, PyArrayMethod_Spec *spec, int priv)
  */
 static int
 resolve_implementation_info(PyUFuncObject *ufunc,
-        PyArray_DTypeMeta *op_dtypes[], npy_bool only_promoters,
-        PyObject **out_info)
+        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        npy_bool only_promoters_first, PyObject **out_info)
 {
+    int res = -1;
     int nin = ufunc->nin, nargs = ufunc->nargs;
     Py_ssize_t size = PySequence_Length(ufunc->_loops);
     PyObject *best_dtypes = NULL;
     PyObject *best_resolver_info = NULL;
+    PyArray_DTypeMeta *promoted_op_dtypes[NPY_MAXARGS];
+    memset(promoted_op_dtypes, 0, nargs * sizeof(*promoted_op_dtypes));
 
 #if PROMOTION_DEBUG_TRACING
-    printf("Promoting for '%s' promoters only: %d\n",
-            ufunc->name ? ufunc->name : "<unknown>", (int)only_promoters);
+    printf("Promoting for '%s' only promoters first: %d\n",
+            ufunc->name ? ufunc->name : "<unknown>", (int)only_promoters_first);
     printf("    DTypes: ");
     PyObject *tmp = PyArray_TupleFromItems(ufunc->nargs, op_dtypes, 1);
     PyObject_Print(tmp, stdout, 0);
@@ -246,8 +265,8 @@ resolve_implementation_info(PyUFuncObject *ufunc,
         PyObject *resolver_info = PySequence_Fast_GET_ITEM(
                 ufunc->_loops, res_idx);
 
-        if (only_promoters && PyObject_TypeCheck(
-                    PyTuple_GET_ITEM(resolver_info, 1), &PyArrayMethod_Type)) {
+        int is_promoter = info_is_promoter(resolver_info);
+        if (only_promoters_first && !is_promoter) {
             continue;
         }
 
@@ -306,7 +325,7 @@ resolve_implementation_info(PyUFuncObject *ufunc,
             int subclass = PyObject_IsSubclass(
                     (PyObject *)given_dtype, (PyObject *)resolver_dtype);
             if (subclass < 0) {
-                return -1;
+                goto cleanup;
             }
             if (!subclass) {
                 matches = NPY_FALSE;
@@ -324,9 +343,30 @@ resolve_implementation_info(PyUFuncObject *ufunc,
             continue;
         }
 
-        /* The resolver matches, but we have to check if it is better */
-        if (best_dtypes != NULL) {
-            int current_best = -1;  /* -1 neither, 0 current best, 1 new */
+        /*
+         * If we have no best match yet, call a promoter (if it is) to see
+         * if it really matches.
+         * Otherwise, see if the match is (or may be) better and onl call
+         * the promoter if that is the case.
+         * In either case unless we `continue` we update the `best_dtypes`
+         * and `best_resolver_info` after the branch.
+         */
+        if (best_dtypes == NULL) {
+            if (is_promoter) {
+                matches = call_promoter(
+                        ufunc, resolver_info, op_dtypes, signature,
+                        promoted_op_dtypes);
+                if (matches < 0) {
+                    goto cleanup;
+                }
+                if (!matches) {
+                    continue;  /* promoter didn't match so ignore */
+                }
+            }
+        }
+        else {
+            /* 0 current best, 1 new, -1 neither. -2 means error and breaks */
+            int current_best = -1;
             /*
              * If both have concrete and None in the same position and
              * they are identical, we will continue searching using the
@@ -336,7 +376,7 @@ resolve_implementation_info(PyUFuncObject *ufunc,
              * necessary to compare to two "best" cases.
              */
             for (Py_ssize_t i = 0; i < nargs; i++) {
-                if (i == ufunc->nin && current_best != -1) {
+                if (i == ufunc->nin && current_best >= 0) {
                     /* inputs prefer one loop and outputs have lower priority */
                     break;
                 }
@@ -399,12 +439,8 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                  *       in cas someone manages to get here.
                  */
                 else {
-                    PyErr_SetString(PyExc_NotImplementedError,
-                            "deciding which one of two abstract dtypes is "
-                            "a better match is not yet implemented.  This "
-                            "will pick the better (or bail) in the future.");
-                    *out_info = NULL;
-                    return -1;
+                    current_best = -2;
+                    break;
                 }
 
                 if (best == -1) {
@@ -427,17 +463,46 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                 current_best = best;
             }
 
-            if (current_best == -1) {
+            if (current_best == 0) {
+                /* The new match is not better, continue looking. */
+                continue;
+            }
+            /*
+             * If we have a promoter, call it now.  If it does not match we
+             * can ignore it.  If it does match but is not better we raise.
+             */
+            if (is_promoter) {
+                matches = call_promoter(
+                        ufunc, resolver_info, op_dtypes, signature,
+                        promoted_op_dtypes);
+                if (matches < 0) {
+                    goto cleanup;
+                }
+                if (!matches) {
+                    continue;  /* promoter didn't match so ignore */
+                }
+            }
+
+            if (current_best == -2) {
+                PyErr_SetString(PyExc_NotImplementedError,
+                        "deciding which one of two abstract dtypes is "
+                        "a better match is not yet implemented.  This "
+                        "will pick the better (or bail) in the future.");
+                goto cleanup;
+            }
+            else if (current_best == -1) {
                 /*
                  * We could not find a best loop, but promoters should be
                  * designed in a way to disambiguate such scenarios, so we
-                 * retry the whole lookup using only promoters.
+                 * retry the whole lookup but this time try first ignoring
+                 * non-promoters.
                  * (There is a small chance we already got two promoters.
                  * We just redo it anyway for simplicity.)
                  */
-                if (!only_promoters) {
-                    return resolve_implementation_info(ufunc,
-                            op_dtypes, NPY_TRUE, out_info);
+                if (!only_promoters_first) {
+                    res = resolve_implementation_info(ufunc,
+                            op_dtypes, signature, NPY_TRUE, out_info);
+                    goto cleanup;
                 }
                 /*
                  * If this is already the retry, we are out of luck.  Promoters
@@ -458,12 +523,11 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                             given, best_dtypes, curr_dtypes);
                     Py_DECREF(given);
                 }
-                *out_info = NULL;
-                return 0;
+                goto cleanup;
             }
-            else if (current_best == 0) {
-                /* The new match is not better, continue looking. */
-                continue;
+            else {
+                assert(current_best == 1);
+                break;
             }
         }
         /* The new match is better (or there was no previous match) */
@@ -473,11 +537,30 @@ resolve_implementation_info(PyUFuncObject *ufunc,
     if (best_dtypes == NULL) {
         /* The non-legacy lookup failed */
         *out_info = NULL;
-        return 0;
+        res = 0;
+        goto cleanup;
     }
 
-    *out_info = best_resolver_info;
-    return 0;
+    if (info_is_promoter(best_resolver_info)) {
+        /* If the best was a promoter, the `promoted_op_dtypes` are set */
+        if (Py_EnterRecursiveCall(" during ufunc promotion.") != 0) {
+            goto cleanup;
+        }
+        res = resolve_implementation_info(
+                ufunc, promoted_op_dtypes, signature, NPY_FALSE,
+                out_info);
+        Py_LeaveRecursiveCall();
+    }
+    else {
+        *out_info = best_resolver_info;
+        res = 0;
+    }
+
+  cleanup:
+    for (int i = 0; i < nargs; i++) {
+        Py_XDECREF(promoted_op_dtypes[i]);
+    }
+    return res;
 }
 
 
@@ -487,23 +570,22 @@ resolve_implementation_info(PyUFuncObject *ufunc,
  * only return new operation DTypes (i.e. mutate the input while leaving
  * those defined by the `signature` unmodified).
  */
-static PyObject *
-call_promoter_and_recurse(PyUFuncObject *ufunc, PyObject *promoter,
+static int
+call_promoter(PyUFuncObject *ufunc, PyObject *resolver_info,
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
-        PyArrayObject *const operands[])
+        PyArray_DTypeMeta *out_op_dtypes[])
 {
     int nargs = ufunc->nargs;
-    PyObject *resolved_info = NULL;
-
     int promoter_result;
     PyArray_DTypeMeta *new_op_dtypes[NPY_MAXARGS];
 
+    PyObject *promoter = PyTuple_GET_ITEM(resolver_info, 1);
     if (PyCapsule_CheckExact(promoter)) {
         /* We could also go the other way and wrap up the python function... */
         PyArrayMethod_PromoterFunction *promoter_function = PyCapsule_GetPointer(
                 promoter, "numpy._ufunc_promoter");
         if (promoter_function == NULL) {
-            return NULL;
+            return -1;
         }
         promoter_result = promoter_function((PyObject *)ufunc,
                 op_dtypes, signature, new_op_dtypes);
@@ -511,13 +593,17 @@ call_promoter_and_recurse(PyUFuncObject *ufunc, PyObject *promoter,
     else {
         PyErr_SetString(PyExc_NotImplementedError,
                 "Calling python functions for promotion is not implemented.");
-        return NULL;
+        return -1;
     }
     if (promoter_result < 0) {
-        return NULL;
+        return -1;
+    }
+    if (promoter_result == 0) {
+        return 0;
     }
     /*
-     * If none of the dtypes changes, we would recurse infinitely, abort.
+     * If none of the dtypes changes, we would recurse infinitely, so consider
+     * this a non-match.
      * (Of course it is nevertheless possible to recurse infinitely.)
      */
     int dtypes_changed = 0;
@@ -528,27 +614,16 @@ call_promoter_and_recurse(PyUFuncObject *ufunc, PyObject *promoter,
         }
     }
     if (!dtypes_changed) {
-        goto finish;
+        for (int i = 0; i < nargs; i++) {
+            Py_XDECREF(new_op_dtypes[i]);
+        }
+        return 0;
     }
-
-    /*
-     * Do a recursive call, the promotion function has to ensure that the
-     * new tuple is strictly more precise (thus guaranteeing eventual finishing)
-     */
-    if (Py_EnterRecursiveCall(" during ufunc promotion.") != 0) {
-        goto finish;
-    }
-    resolved_info = promote_and_get_info_and_ufuncimpl(ufunc,
-            operands, signature, new_op_dtypes,
-            /* no legacy promotion */ NPY_FALSE);
-
-    Py_LeaveRecursiveCall();
-
-  finish:
+    /* Otherwise, update the `out_op_dtypes` with whatever was returned */
     for (int i = 0; i < nargs; i++) {
-        Py_XDECREF(new_op_dtypes[i]);
+        Py_XSETREF(out_op_dtypes[i], new_op_dtypes[i]);
     }
-    return resolved_info;
+    return 1;
 }
 
 
@@ -757,8 +832,7 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
      */
     PyObject *info = PyArrayIdentityHash_GetItem(ufunc->_dispatch_cache,
                 (PyObject **)op_dtypes);
-    if (info != NULL && PyObject_TypeCheck(
-            PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {
+    if (info != NULL && !info_is_promoter(info)) {
         /* Found the ArrayMethod and NOT a promoter: return it */
         return info;
     }
@@ -769,37 +843,14 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
      */
     if (info == NULL) {
         if (resolve_implementation_info(ufunc,
-                op_dtypes, NPY_FALSE, &info) < 0) {
+                op_dtypes, signature, NPY_FALSE, &info) < 0) {
             return NULL;
         }
-        if (info != NULL && PyObject_TypeCheck(
-                PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {
+        if (info != NULL && !info_is_promoter(info)) {
             /*
              * Found the ArrayMethod and NOT promoter.  Before returning it
              * add it to the cache for faster lookup in the future.
              */
-            if (PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache,
-                    (PyObject **)op_dtypes, info, 0) < 0) {
-                return NULL;
-            }
-            return info;
-        }
-    }
-
-    /*
-     * At this point `info` is NULL if there is no matching loop, or it is
-     * a promoter that needs to be used/called:
-     */
-    if (info != NULL) {
-        PyObject *promoter = PyTuple_GET_ITEM(info, 1);
-
-        info = call_promoter_and_recurse(ufunc,
-                promoter, op_dtypes, signature, ops);
-        if (info == NULL && PyErr_Occurred()) {
-            return NULL;
-        }
-        else if (info != NULL) {
-            /* Add result to the cache using the original types: */
             if (PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache,
                     (PyObject **)op_dtypes, info, 0) < 0) {
                 return NULL;
@@ -1080,7 +1131,7 @@ default_ufunc_promoter(PyObject *ufunc,
         new_op_dtypes[1] = op_dtypes[1];
         Py_INCREF(op_dtypes[1]);
         new_op_dtypes[2] = op_dtypes[1];
-        return 0;
+        return 1;
     }
     PyArray_DTypeMeta *common = NULL;
     /*
@@ -1125,7 +1176,7 @@ default_ufunc_promoter(PyObject *ufunc,
     }
 
     Py_DECREF(common);
-    return 0;
+    return 1;
 }
 
 
@@ -1154,7 +1205,7 @@ object_only_ufunc_promoter(PyObject *ufunc,
         }
     }
 
-    return 0;
+    return 1;
 }
 
 /*
@@ -1197,7 +1248,7 @@ logical_ufunc_promoter(PyObject *NPY_UNUSED(ufunc),
 
     if (!force_object || (op_dtypes[2] != NULL
                           && op_dtypes[2]->type_num != NPY_OBJECT)) {
-        return 0;
+        return 1;
     }
     /*
      * Actually, we have to use the OBJECT loop after all, set all we can
@@ -1213,7 +1264,7 @@ logical_ufunc_promoter(PyObject *NPY_UNUSED(ufunc),
         }
         Py_SETREF(new_op_dtypes[i], NPY_DT_NewRef(&PyArray_ObjectDType));
     }
-    return 0;
+    return 1;
 }
 
 

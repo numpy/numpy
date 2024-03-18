@@ -1928,6 +1928,25 @@ with the rest of the ArrayMethod API.
    operation and requested DType signatures and can mutate the signatures to
    attempt a search for a new loop or promoter that can accomplish the operation
    by casting the inputs to the "promoted" DTypes.
+   The promoter must ensure that the new DTypes are compatible with the passed
+   in, user provided, ``signature``.  It should also take care to meaningfully
+   mutate the DTypes to avoid infinite recursion.
+
+   The function must return -1 on error and 1 if it wrote ``new_op_dtypes``.
+   It may return 0 to indicate that the promoter does not apply/match.
+   However, you must still register it with meaningful DTypes to ensure NumPy
+   can unambiguously pick a best promoter when multiple match.
+
+   How well a loop/promoter matches is defined by subclass relations so that
+   ``(None, None, MyDType)`` is more specific than ``(None, None, None)``
+   but not necessarily ``(IntDType, None, None)`` since that either loop
+   is more specific in one argument (although inputs are prioritized).
+
+    .. warning::
+        Promotion (more so than loop registration) can interfere with other
+        libraries and even NumPy in principle.  If ambiguities can arise when
+        NumPy or another library adds a generic promoter, you must be
+        prepared to adept to these. It is not possible guarantee stability.
 
 .. c:function:: int PyUFunc_GiveFloatingpointErrors( \
                         const char *name, int fpe_errors)

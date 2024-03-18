@@ -313,7 +313,7 @@ pyint_comparison_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
     new_op_dtypes[0] = NPY_DT_NewRef(&PyArray_ObjectDType);
     new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_ObjectDType);
     new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_BoolDType);
-    return 0;
+    return 1;
 }
 
 

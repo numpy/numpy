@@ -769,7 +769,7 @@ string_findlike_promoter(PyObject *NPY_UNUSED(ufunc),
     new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_Int64DType);
     new_op_dtypes[3] = NPY_DT_NewRef(&PyArray_Int64DType);
     new_op_dtypes[4] = PyArray_DTypeFromTypeNum(NPY_DEFAULT_INT);
-    return 0;
+    return 1;
 }
 
 static NPY_CASTING
@@ -829,7 +829,7 @@ string_startswith_endswith_promoter(
     new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_Int64DType);
     new_op_dtypes[3] = NPY_DT_NewRef(&PyArray_Int64DType);
     new_op_dtypes[4] = PyArray_DTypeFromTypeNum(NPY_BOOL);
-    return 0;
+    return 1;
 }
 
 static NPY_CASTING
@@ -1050,7 +1050,7 @@ all_strings_promoter(PyObject *NPY_UNUSED(ufunc),
     new_op_dtypes[0] = NPY_DT_NewRef(&PyArray_StringDType);
     new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_StringDType);
     new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_StringDType);
-    return 0;
+    return 1;
 }
 
 static NPY_CASTING
@@ -1286,7 +1286,7 @@ string_replace_promoter(PyObject *NPY_UNUSED(ufunc),
     new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_StringDType);
     new_op_dtypes[3] = NPY_DT_NewRef(&PyArray_Int64DType);
     new_op_dtypes[4] = NPY_DT_NewRef(&PyArray_StringDType);
-    return 0;
+    return 1;
 }
 
 static NPY_CASTING
@@ -1909,7 +1909,7 @@ string_inputs_promoter(
         }
     }
 
-    return 0;
+    return 1;
 }
 
 static int
@@ -2040,7 +2040,7 @@ string_multiply_promoter(PyObject *ufunc_obj, PyArray_DTypeMeta *op_dtypes[],
             new_op_dtypes[i] = &PyArray_StringDType;
         }
     }
-    return 0;
+    return 1;
 }
 
 // Register a ufunc.
