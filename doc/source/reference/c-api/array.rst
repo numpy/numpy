@@ -3387,7 +3387,7 @@ Data Type Promotion and Inspection
 ----------------------------------
 
 .. c:function:: PyArray_DTypeMeta *PyArray_CommonDType( \
-                    PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
+            const PyArray_DTypeMeta *dtype1, const PyArray_DTypeMeta *dtype2)
 
    This function defines the common DType operator. Note that the common DType
    will not be ``object`` (unless one of the DTypes is ``object``). Similar to
@@ -3414,7 +3414,7 @@ Data Type Promotion and Inspection
    For example promoting ``float16`` with any other float, integer, or unsigned
    integer again gives a floating point number.
 
-.. c:function:: PyArray_Descr *PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
+.. c:function:: PyArray_Descr *PyArray_GetDefaultDescr(const PyArray_DTypeMeta *DType)
 
    Given a DType class, returns the default instance (descriptor).  This checks
    for a ``singleton`` first and only calls the ``default_descr`` function if

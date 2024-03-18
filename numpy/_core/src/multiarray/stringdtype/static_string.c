@@ -286,7 +286,7 @@ NpyString_free_allocator(npy_string_allocator *allocator)
  * allocator mutex is held, as doing so may cause deadlocks.
  */
 NPY_NO_EXPORT npy_string_allocator *
-NpyString_acquire_allocator(PyArray_StringDTypeObject *descr)
+NpyString_acquire_allocator(const PyArray_StringDTypeObject *descr)
 {
     if (!PyThread_acquire_lock(descr->allocator->allocator_lock, NOWAIT_LOCK)) {
         PyThread_acquire_lock(descr->allocator->allocator_lock, WAIT_LOCK);
