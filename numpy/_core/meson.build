@@ -1278,7 +1278,7 @@ py.extension_module('unique',
   [
     'src/multiarray/unique.cpp',
   ],
-  c_args: c_args_common,
+  cpp_args: cpp_args_common,
   dependencies: np_core_dep,
   install: true,
   subdir: 'numpy/_core',

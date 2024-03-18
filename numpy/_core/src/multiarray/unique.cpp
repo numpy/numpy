@@ -1,5 +1,4 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _MULTIARRAYMODULE
 
 #include <Python.h>
 
