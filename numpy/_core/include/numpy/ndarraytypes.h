@@ -1298,10 +1298,15 @@ typedef struct {
          * growing structs (as of Cython 3.0.6).  It also allows NPY_MAXARGS
          * to be runtime dependent.
          */
-#if (defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD) || defined(__cplusplus)
-        /* 64 is NPY_MAXARGS for numpy 2.0 or newer. We can't use a flexible
-           array member in C++ so use the internal size there. */
+#if (defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
         PyArrayIterObject    *iters[64];
+#elif defined(__cplusplus)
+        /*
+         * C++ doesn't stricly support flexible members and gives compilers
+         * warnings (pedantic only), so we lie.  We can't make it 64 because
+         * then Cython is unhappy (larger struct at runtime is OK smaller not).
+         */
+        PyArrayIterObject    *iters[32];
 #else
         PyArrayIterObject    *iters[];
 #endif
