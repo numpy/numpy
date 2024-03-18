@@ -24,6 +24,14 @@ from numpy._core.multiarray import compare_chararrays
 from numpy._core import overrides
 from numpy.strings import *
 from numpy.strings import multiply as strings_multiply
+from numpy._core.strings import (
+    _partition as partition,
+    _rpartition as rpartition,
+    _split as split,
+    _rsplit as rsplit,
+    _splitlines as splitlines,
+    _join as join,
+)
 
 __all__ = [
     'equal', 'not_equal', 'greater_equal', 'less_equal',
