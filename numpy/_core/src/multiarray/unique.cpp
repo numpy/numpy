@@ -77,28 +77,36 @@ npy_intp unique(PyArrayObject *self)
 }
 
 static PyObject *
-PyArray_Unique(PyObject *dummy, PyObject *args)
+PyArray_Unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
+    int counter = 0;
+    std::cerr << counter++ << std::endl;
+    std::cerr << args << std::endl;
     PyArrayObject *self = NULL;
-
-    if (!PyArg_ParseTuple(args, "O!", &PyArray_Type, &self))
+    std::cerr << counter++ << std::endl;
+    if (!PyArg_ParseTuple(args, "O&", PyArray_Converter, &self))
         return NULL;
 
+    std::cerr << counter++ << std::endl;
     npy_intp itemsize;
 
     /* Handle zero-sized arrays specially */
     if (PyArray_SIZE(self) == 0) {
+        Py_XDECREF(self);
         return Py_BuildValue("i", 0);
     }
+    std::cerr << counter++;
 
     itemsize = PyArray_ITEMSIZE(self);
     std::cout << "Item size: " << itemsize << std::endl;
 
+    std::cerr << counter++;
     if (sizeof(char) == itemsize) {
         unique<char>(self);
     } else if (sizeof(int) == itemsize) {
         unique<int>(self);
     }
+    Py_XDECREF(self);
     return Py_BuildValue("i", 0);
 }
 
