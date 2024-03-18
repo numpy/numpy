@@ -1682,8 +1682,8 @@ the functions that must be implemented for each slot.
 
 .. c:type:: NPY_CASTING (PyArrayMethod_ResolveDescriptors)( \
                 struct PyArrayMethodObject_tag *method, \
-                PyArray_DTypeMeta **dtypes, \
-                PyArray_Descr **given_descrs, \
+                PyArray_DTypeMeta *const *dtypes, \
+                PyArray_Descr *const *given_descrs, \
                 PyArray_Descr **loop_descrs, \
                 npy_intp *view_offset)
 
@@ -1857,7 +1857,7 @@ Typedefs for functions that users of the ArrayMethod API can implement are
 described below.
 
 .. c:type:: int (PyArrayMethod_TraverseLoop)( \
-        void *traverse_context, PyArray_Descr *descr, char *data, \
+        void *traverse_context, const PyArray_Descr *descr, char *data, \
         npy_intp size, npy_intp stride, NpyAuxData *auxdata)
 
    A traverse loop working on a single array. This is similar to the general
@@ -1880,7 +1880,7 @@ described below.
    passed through in the future (for structured dtypes).
 
 .. c:type:: int (PyArrayMethod_GetTraverseLoop)( \
-                void *traverse_context, PyArray_Descr *descr, \
+                void *traverse_context, const PyArray_Descr *descr, \
                 int aligned, npy_intp fixed_stride, \
                 PyArrayMethod_TraverseLoop **out_loop, NpyAuxData **out_auxdata, \
                 NPY_ARRAYMETHOD_FLAGS *flags)
@@ -1920,7 +1920,8 @@ with the rest of the ArrayMethod API.
    attempt a new search for a matching loop/promoter.
 
 .. c:type:: int (PyArrayMethod_PromoterFunction)(PyObject *ufunc, \
-                PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[], \
+                PyArray_DTypeMeta *const op_dtypes[], \
+                PyArray_DTypeMeta *const signature[], \
                 PyArray_DTypeMeta *new_op_dtypes[])
 
    Type of the promoter function, which must be wrapped into a
