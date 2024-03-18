@@ -716,6 +716,85 @@ class TestMethods:
         with pytest.raises(OverflowError, match="new string is too long"):
             np.strings.expandtabs(np.array("\ta\n\tb", dtype=dt), sys.maxsize)
 
+    FILL_ERROR = "The fill character must be exactly one character long"
+
+    def test_center_raises_multiple_character_fill(self, dt):
+        buf = np.array("abc", dtype=dt)
+        fill = np.array("**", dtype=dt)
+        with pytest.raises(TypeError, match=self.FILL_ERROR):
+            np.strings.center(buf, 10, fill)
+
+    def test_ljust_raises_multiple_character_fill(self, dt):
+        buf = np.array("abc", dtype=dt)
+        fill = np.array("**", dtype=dt)
+        with pytest.raises(TypeError, match=self.FILL_ERROR):
+            np.strings.ljust(buf, 10, fill)
+
+    def test_rjust_raises_multiple_character_fill(self, dt):
+        buf = np.array("abc", dtype=dt)
+        fill = np.array("**", dtype=dt)
+        with pytest.raises(TypeError, match=self.FILL_ERROR):
+            np.strings.rjust(buf, 10, fill)
+
+    @pytest.mark.parametrize("buf,width,fillchar,res", [
+        ('abc', 10, ' ', '   abc    '),
+        ('abc', 6, ' ', ' abc  '),
+        ('abc', 3, ' ', 'abc'),
+        ('abc', 2, ' ', 'abc'),
+        ('abc', 10, '*', '***abc****'),
+    ])
+    def test_center(self, buf, width, fillchar, res, dt):
+        buf = np.array(buf, dtype=dt)
+        fillchar = np.array(fillchar, dtype=dt)
+        res = np.array(res, dtype=dt)
+        assert_array_equal(np.strings.center(buf, width, fillchar), res)
+
+    @pytest.mark.parametrize("buf,width,fillchar,res", [
+        ('abc', 10, ' ', 'abc       '),
+        ('abc', 6, ' ', 'abc   '),
+        ('abc', 3, ' ', 'abc'),
+        ('abc', 2, ' ', 'abc'),
+        ('abc', 10, '*', 'abc*******'),
+    ])
+    def test_ljust(self, buf, width, fillchar, res, dt):
+        buf = np.array(buf, dtype=dt)
+        fillchar = np.array(fillchar, dtype=dt)
+        res = np.array(res, dtype=dt)
+        assert_array_equal(np.strings.ljust(buf, width, fillchar), res)
+
+    @pytest.mark.parametrize("buf,width,fillchar,res", [
+        ('abc', 10, ' ', '       abc'),
+        ('abc', 6, ' ', '   abc'),
+        ('abc', 3, ' ', 'abc'),
+        ('abc', 2, ' ', 'abc'),
+        ('abc', 10, '*', '*******abc'),
+    ])
+    def test_rjust(self, buf, width, fillchar, res, dt):
+        buf = np.array(buf, dtype=dt)
+        fillchar = np.array(fillchar, dtype=dt)
+        res = np.array(res, dtype=dt)
+        assert_array_equal(np.strings.rjust(buf, width, fillchar), res)
+
+    @pytest.mark.parametrize("buf,width,res", [
+        ('123', 2, '123'),
+        ('123', 3, '123'),
+        ('0123', 4, '0123'),
+        ('+123', 3, '+123'),
+        ('+123', 4, '+123'),
+        ('+123', 5, '+0123'),
+        ('+0123', 5, '+0123'),
+        ('-123', 3, '-123'),
+        ('-123', 4, '-123'),
+        ('-0123', 5, '-0123'),
+        ('000', 3, '000'),
+        ('34', 1, '34'),
+        ('0034', 4, '0034'),
+    ])
+    def test_zfill(self, buf, width, res, dt):
+        buf = np.array(buf, dtype=dt)
+        res = np.array(res, dtype=dt)
+        assert_array_equal(np.strings.zfill(buf, width), res)
+
 
 @pytest.mark.parametrize("dt", ["U", "T"])
 class TestMethodsWithUnicode:
@@ -856,6 +935,88 @@ class TestMethodsWithUnicode:
         res = np.array(res, dtype=dt)
         assert_array_equal(np.strings.expandtabs(buf), res)
 
+    @pytest.mark.parametrize("buf,width,fillchar,res", [
+        ('x', 2, '\U0001044E', 'x\U0001044E'),
+        ('x', 3, '\U0001044E', '\U0001044Ex\U0001044E'),
+        ('x', 4, '\U0001044E', '\U0001044Ex\U0001044E\U0001044E'),
+    ])
+    def test_center(self, buf, width, fillchar, res, dt):
+        buf = np.array(buf, dtype=dt)
+        fillchar = np.array(fillchar, dtype=dt)
+        res = np.array(res, dtype=dt)
+        assert_array_equal(np.strings.center(buf, width, fillchar), res)
+
+    @pytest.mark.parametrize("buf,width,fillchar,res", [
+        ('x', 2, '\U0001044E', 'x\U0001044E'),
+        ('x', 3, '\U0001044E', 'x\U0001044E\U0001044E'),
+        ('x', 4, '\U0001044E', 'x\U0001044E\U0001044E\U0001044E'),
+    ])
+    def test_ljust(self, buf, width, fillchar, res, dt):
+        buf = np.array(buf, dtype=dt)
+        fillchar = np.array(fillchar, dtype=dt)
+        res = np.array(res, dtype=dt)
+        assert_array_equal(np.strings.ljust(buf, width, fillchar), res)
+
+    @pytest.mark.parametrize("buf,width,fillchar,res", [
+        ('x', 2, '\U0001044E', '\U0001044Ex'),
+        ('x', 3, '\U0001044E', '\U0001044E\U0001044Ex'),
+        ('x', 4, '\U0001044E', '\U0001044E\U0001044E\U0001044Ex'),
+    ])
+    def test_rjust(self, buf, width, fillchar, res, dt):
+        buf = np.array(buf, dtype=dt)
+        fillchar = np.array(fillchar, dtype=dt)
+        res = np.array(res, dtype=dt)
+        assert_array_equal(np.strings.rjust(buf, width, fillchar), res)
+
+
+class TestMixedTypeMethods:
+    def test_center(self):
+        buf = np.array("😊", dtype="U")
+        fill = np.array("*", dtype="S")
+        res = np.array("*😊*", dtype="U")
+        assert_array_equal(np.strings.center(buf, 3, fill), res)
+
+        buf = np.array("s", dtype="S")
+        fill = np.array("*", dtype="U")
+        res = np.array("*s*", dtype="S")
+        assert_array_equal(np.strings.center(buf, 3, fill), res)
+
+        with pytest.raises(ValueError, match="'ascii' codec can't encode"):
+            buf = np.array("s", dtype="S")
+            fill = np.array("😊", dtype="U")
+            np.strings.center(buf, 3, fill)
+
+    def test_ljust(self):
+        buf = np.array("😊", dtype="U")
+        fill = np.array("*", dtype="S")
+        res = np.array("😊**", dtype="U")
+        assert_array_equal(np.strings.ljust(buf, 3, fill), res)
+
+        buf = np.array("s", dtype="S")
+        fill = np.array("*", dtype="U")
+        res = np.array("s**", dtype="S")
+        assert_array_equal(np.strings.ljust(buf, 3, fill), res)
+
+        with pytest.raises(ValueError, match="'ascii' codec can't encode"):
+            buf = np.array("s", dtype="S")
+            fill = np.array("😊", dtype="U")
+            np.strings.ljust(buf, 3, fill)
+
+    def test_rjust(self):
+        buf = np.array("😊", dtype="U")
+        fill = np.array("*", dtype="S")
+        res = np.array("**😊", dtype="U")
+        assert_array_equal(np.strings.rjust(buf, 3, fill), res)
+
+        buf = np.array("s", dtype="S")
+        fill = np.array("*", dtype="U")
+        res = np.array("**s", dtype="S")
+        assert_array_equal(np.strings.rjust(buf, 3, fill), res)
+
+        with pytest.raises(ValueError, match="'ascii' codec can't encode"):
+            buf = np.array("s", dtype="S")
+            fill = np.array("😊", dtype="U")
+            np.strings.rjust(buf, 3, fill)
 
 
 class TestUnicodeOnlyMethodsRaiseWithBytes:

@@ -1949,8 +1949,15 @@ def assert_warns(warning_class, *args, **kwargs):
     >>> ret = np.testing.assert_warns(DeprecationWarning, deprecated_func, 4)
     >>> assert ret == 16
     """
-    if not args:
+    if not args and not kwargs:
         return _assert_warns_context(warning_class)
+    elif len(args) < 1:
+        if "match" in kwargs:
+            raise RuntimeError(
+                "assert_warns does not use 'match' kwarg, "
+                "use pytest.warns instead"
+                )
+        raise RuntimeError("assert_warns(...) needs at least one arg")
 
     func = args[0]
     args = args[1:]

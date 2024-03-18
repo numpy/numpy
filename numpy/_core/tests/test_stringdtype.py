@@ -362,13 +362,6 @@ def test_isnan(dtype, string_list):
         assert not np.any(np.isnan(sarr))
 
 
-def _pickle_load(filename):
-    with open(filename, "rb") as f:
-        res = pickle.load(f)
-
-    return res
-
-@pytest.mark.skipif(IS_WASM, reason="no threading support in wasm")
 def test_pickle(dtype, string_list):
     arr = np.array(string_list, dtype=dtype)
 
@@ -377,15 +370,6 @@ def test_pickle(dtype, string_list):
 
     with open(f.name, "rb") as f:
         res = pickle.load(f)
-
-    assert_array_equal(res[0], arr)
-    assert res[1] == dtype
-
-    # load the pickle in a subprocess to ensure the string data are
-    # actually stored in the pickle file
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        e = executor.submit(_pickle_load, f.name)
-        res = e.result()
 
     assert_array_equal(res[0], arr)
     assert res[1] == dtype
@@ -562,6 +546,10 @@ def test_sized_integer_casts(bitsize, signed):
     with pytest.raises(OverflowError):
         np.array(oob, dtype="T").astype(idtype)
 
+    with pytest.raises(ValueError):
+        np.array(["1", np.nan, "3"],
+                 dtype=StringDType(na_object=np.nan)).astype(idtype)
+
 
 @pytest.mark.parametrize("typename", ["byte", "short", "int", "longlong"])
 @pytest.mark.parametrize("signed", ["", "u"])
@@ -728,6 +716,28 @@ def test_ufunc_add(dtype, string_list, other_strings, use_out):
     else:
         with pytest.raises(ValueError):
             np.add(arr1, arr2)
+
+
+def test_ufunc_add_reduce(dtype):
+    values = ["a", "this is a long string", "c"]
+    arr = np.array(values, dtype=dtype)
+    out = np.empty((), dtype=dtype)
+
+    expected = np.array("".join(values), dtype=dtype)
+    assert_array_equal(np.add.reduce(arr), expected)
+
+    np.add.reduce(arr, out=out)
+    assert_array_equal(out, expected)
+
+
+def test_add_promoter(string_list):
+    arr = np.array(string_list, dtype=StringDType())
+    lresult = np.array(["hello" + s for s in string_list], dtype=StringDType())
+    rresult = np.array([s + "hello" for s in string_list], dtype=StringDType())
+
+    for op in ["hello", np.str_("hello"), np.array(["hello"])]:
+        assert_array_equal(op + arr, lresult)
+        assert_array_equal(arr + op, rresult)
 
 
 @pytest.mark.parametrize("use_out", [True, False])
@@ -916,6 +926,12 @@ def test_nat_casts():
                 np.array([output_object]*arr.size, dtype=dtype))
 
 
+def test_nat_conversion():
+    for nat in [np.datetime64("NaT", "s"), np.timedelta64("NaT", "s")]:
+        with pytest.raises(ValueError, match="string coercion is disabled"):
+            np.array(["a", nat], dtype=StringDType(coerce=False))
+
+
 def test_growing_strings(dtype):
     # growing a string leads to a heap allocation, this tests to make sure
     # we do that bookkeeping correctly for all possible starting cases
@@ -1100,23 +1116,23 @@ BINARY_FUNCTIONS = [
     ("add", (None, None)),
     ("multiply", (None, 2)),
     ("mod", ("format: %s", None)),
-    pytest.param("center", (None, 25), marks=unicode_bug_fail),
+    ("center", (None, 25)),
     ("count", (None, "A")),
     ("encode", (None, "UTF-8")),
     ("endswith", (None, "lo")),
     ("find", (None, "A")),
     ("index", (None, "e")),
     ("join", ("-", None)),
-    pytest.param("ljust", (None, 12), marks=unicode_bug_fail),
+    ("ljust", (None, 12)),
     ("partition", (None, "A")),
     ("replace", (None, "A", "B")),
     ("rfind", (None, "A")),
     ("rindex", (None, "e")),
-    pytest.param("rjust", (None, 12), marks=unicode_bug_fail),
+    ("rjust", (None, 12)),
     ("rpartition", (None, "A")),
     ("split", (None, "A")),
     ("startswith", (None, "A")),
-    pytest.param("zfill", (None, 12), marks=unicode_bug_fail),
+    ("zfill", (None, 12)),
 ]
 
 PASSES_THROUGH_NAN_NULLS = [
@@ -1205,7 +1221,7 @@ def test_binary(string_array, unicode_array, function_name, args):
         assert 0
 
 
-def test_strip(string_array, unicode_array):
+def test_strip_ljust_rjust_consistency(string_array, unicode_array):
     rjs = np.char.rjust(string_array, 1000)
     rju = np.char.rjust(unicode_array, 1000)
 

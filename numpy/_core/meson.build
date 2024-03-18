@@ -96,7 +96,10 @@ if use_svml
   endif
 endif
 
-use_highway = not get_option('disable-highway')
+use_highway = not get_option('disable-highway') and not (
+  host_machine.system() == 'darwin' and
+  cpu_family == 'aarch64'
+)
 if use_highway and not fs.exists('src/highway/README.md')
   error('Missing the `highway` git submodule! Run `git submodule update --init` to fix this.')
 endif
@@ -488,17 +491,9 @@ endif
 if cc.has_header('sys/endian.h')
   cdata.set10('NPY_HAVE_SYS_ENDIAN_H', true)
 endif
-if is_windows
-  cdata.set10('NPY_NO_SIGNAL', true)
-endif
-# Command-line switch; distutils build checked for `NPY_NOSMP` env var instead
-# TODO: document this (search for NPY_NOSMP in C API docs)
+# Build-time option to disable threading is stored and exposed in numpyconfig.h
+# Note: SMP is an old acronym for threading (Symmetric/Shared-memory MultiProcessing)
 cdata.set10('NPY_NO_SMP', get_option('disable-threading'))
-
-# Check whether we can use inttypes (C99) formats
-if cc.has_header_symbol('inttypes.h', 'PRIdPTR')
-  cdata.set10('NPY_USE_C99_FORMATS', true)
-endif
 
 visibility_hidden = ''
 if cc.has_function_attribute('visibility:hidden') and host_machine.system() != 'cygwin'

@@ -1505,4 +1505,92 @@ string_expandtabs(Buffer<enc> buf, npy_int64 tabsize, Buffer<enc> out)
 }
 
 
+enum class JUSTPOSITION {
+    CENTER, LEFT, RIGHT
+};
+
+template <ENCODING enc>
+static inline npy_intp
+string_pad(Buffer<enc> buf, npy_int64 width, npy_ucs4 fill, JUSTPOSITION pos, Buffer<enc> out)
+{
+    size_t finalwidth = width > 0 ? width : 0;
+    if (finalwidth > PY_SSIZE_T_MAX) {
+        npy_gil_error(PyExc_OverflowError, "padded string is too long");
+        return -1;
+    }
+
+    size_t len_codepoints = buf.num_codepoints();
+    size_t len_bytes = buf.after - buf.buf;
+
+    size_t len;
+    if (enc == ENCODING::UTF8) {
+        len = len_bytes;
+    }
+    else {
+        len = len_codepoints;
+    }
+
+    if (len_codepoints >= finalwidth) {
+        buf.buffer_memcpy(out, len);
+        return (npy_intp) len;
+    }
+
+    size_t left, right;
+    if (pos == JUSTPOSITION::CENTER) {
+        size_t pad = finalwidth - len_codepoints;
+        left = pad / 2 + (pad & finalwidth & 1);
+        right = pad - left;
+    }
+    else if (pos == JUSTPOSITION::LEFT) {
+        left = 0;
+        right = finalwidth - len_codepoints;
+    }
+    else {
+        left = finalwidth - len_codepoints;
+        right = 0;
+    }
+
+    assert(left >= 0 || right >= 0);
+    assert(left <= PY_SSIZE_T_MAX - len && right <= PY_SSIZE_T_MAX - (left + len));
+
+    if (left > 0) {
+        out.advance_chars_or_bytes(out.buffer_memset(fill, left));
+    }
+
+    buf.buffer_memcpy(out, len);
+    out += len_codepoints;
+
+    if (right > 0) {
+        out.advance_chars_or_bytes(out.buffer_memset(fill, right));
+    }
+
+    return finalwidth;
+}
+
+
+template <ENCODING enc>
+static inline npy_intp
+string_zfill(Buffer<enc> buf, npy_int64 width, Buffer<enc> out)
+{
+    size_t finalwidth = width > 0 ? width : 0;
+
+    npy_ucs4 fill = '0';
+    npy_intp new_len = string_pad(buf, width, fill, JUSTPOSITION::RIGHT, out);
+    if (new_len == -1) {
+        return -1;
+    }
+
+    size_t offset = finalwidth - buf.num_codepoints();
+    Buffer<enc> tmp = out + offset;
+
+    npy_ucs4 c = *tmp;
+    if (c == '+' || c == '-') {
+        tmp.buffer_memset(fill, 1);
+        out.buffer_memset(c, 1);
+    }
+
+    return new_len;
+}
+
+
 #endif /* _NPY_CORE_SRC_UMATH_STRING_BUFFER_H_ */

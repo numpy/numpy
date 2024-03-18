@@ -19,7 +19,7 @@ from ._multiarray_umath import (
 from ._multiarray_umath import (
     _replace, _strip_whitespace, _lstrip_whitespace, _rstrip_whitespace,
     _strip_chars, _lstrip_chars, _rstrip_chars, _expandtabs_length,
-    _expandtabs)
+    _expandtabs, _center, _ljust, _rjust, _zfill)
 
 __all__ = [
     'absolute', 'add',

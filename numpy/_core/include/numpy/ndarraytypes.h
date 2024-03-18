@@ -8,8 +8,8 @@
 
 #define NPY_NO_EXPORT NPY_VISIBILITY_HIDDEN
 
-/* Only use thread if configured in config and python supports it */
-#if defined WITH_THREAD && !NPY_NO_SMP
+/* Always allow threading unless it was explicitly disabled at build time */
+#if !NPY_NO_SMP
         #define NPY_ALLOW_THREADS 1
 #else
         #define NPY_ALLOW_THREADS 0
@@ -1298,9 +1298,16 @@ typedef struct {
          * growing structs (as of Cython 3.0.6).  It also allows NPY_MAXARGS
          * to be runtime dependent.
          */
-#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
-        PyArrayIterObject    *iters[64];  /* 64 is NPY_MAXARGS */
-#else /* not internal build */
+#if (defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
+        PyArrayIterObject    *iters[64];
+#elif defined(__cplusplus)
+        /*
+         * C++ doesn't stricly support flexible members and gives compilers
+         * warnings (pedantic only), so we lie.  We can't make it 64 because
+         * then Cython is unhappy (larger struct at runtime is OK smaller not).
+         */
+        PyArrayIterObject    *iters[32];
+#else
         PyArrayIterObject    *iters[];
 #endif
 } PyArrayMultiIterObject;
