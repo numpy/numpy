@@ -429,7 +429,7 @@ minimum_maximum_strided_loop(PyArrayMethod_Context *context, char *const data[],
         npy_packed_static_string *sout = (npy_packed_static_string *)out;
         int cmp = _compare(in1, in2, in1_descr, in2_descr);
         if (cmp == 0 && (in1 == out || in2 == out)) {
-            continue;
+            goto next_step;
         }
         if ((cmp < 0) ^ invert) {
             // if in and out are the same address, do nothing to avoid a
@@ -449,6 +449,8 @@ minimum_maximum_strided_loop(PyArrayMethod_Context *context, char *const data[],
                 }
             }
         }
+
+      next_step:
         in1 += in1_stride;
         in2 += in2_stride;
         out += out_stride;
