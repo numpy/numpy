@@ -318,7 +318,7 @@ NpyString_acquire_allocator(PyArray_StringDTypeObject *descr)
  */
 NPY_NO_EXPORT void
 NpyString_acquire_allocators(size_t n_descriptors,
-                             PyArray_Descr *descrs[],
+                             PyArray_Descr *const descrs[],
                              npy_string_allocator *allocators[])
 {
     for (size_t i=0; i<n_descriptors; i++) {
