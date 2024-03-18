@@ -303,7 +303,7 @@ def rindex(a, sub, start=0, end=None):
     Returns
     -------
     out : ndarray
-       Output array of ints.
+        Output array of ints.
 
     See Also
     --------
@@ -731,7 +731,8 @@ def lstrip(a, chars=None):
     Returns
     -------
     out : ndarray
-        Output array of ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input type
 
     See Also
     --------
@@ -1224,7 +1225,7 @@ def rsplit(a, sep=None, maxsplit=None):
     Returns
     -------
     out : ndarray
-       Array of list objects
+        Array of list objects
 
     See Also
     --------
