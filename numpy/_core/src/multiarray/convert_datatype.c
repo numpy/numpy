@@ -2440,8 +2440,8 @@ PyArray_AddCastingImplementation_FromSpec(PyArrayMethod_Spec *spec, int private)
 NPY_NO_EXPORT NPY_CASTING
 legacy_same_dtype_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[2]),
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset)
 {
@@ -2483,7 +2483,7 @@ legacy_cast_get_strided_loop(
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     int out_needs_api = 0;
 
     *flags = context->method->flags & NPY_METH_RUNTIME_FLAGS;
@@ -2507,8 +2507,8 @@ legacy_cast_get_strided_loop(
 NPY_NO_EXPORT NPY_CASTING
 simple_cast_resolve_descriptors(
         PyArrayMethodObject *self,
-        PyArray_DTypeMeta *dtypes[2],
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const dtypes[2],
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset)
 {
@@ -2548,7 +2548,7 @@ get_byteswap_loop(
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     assert(descrs[0]->kind == descrs[1]->kind);
     assert(descrs[0]->elsize == descrs[1]->elsize);
     int itemsize = descrs[0]->elsize;
@@ -2727,8 +2727,8 @@ PyArray_InitializeNumericCasts(void)
 static int
 cast_to_string_resolve_descriptors(
         PyArrayMethodObject *self,
-        PyArray_DTypeMeta *dtypes[2],
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const dtypes[2],
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *NPY_UNUSED(view_offset))
 {
@@ -2879,8 +2879,8 @@ add_other_to_and_from_string_cast(
 NPY_NO_EXPORT NPY_CASTING
 string_to_string_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[2]),
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset)
 {
@@ -2932,7 +2932,7 @@ string_to_string_get_loop(
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
     int unicode_swap = 0;
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
 
     assert(NPY_DTYPE(descrs[0]) == NPY_DTYPE(descrs[1]));
     *flags = context->method->flags & NPY_METH_RUNTIME_FLAGS;
@@ -3033,7 +3033,7 @@ PyArray_InitializeStringCasts(void)
  */
 static NPY_CASTING
 cast_to_void_dtype_class(
-        PyArray_Descr **given_descrs, PyArray_Descr **loop_descrs,
+        PyArray_Descr *const *given_descrs, PyArray_Descr **loop_descrs,
         npy_intp *view_offset)
 {
     /* `dtype="V"` means unstructured currently (compare final path) */
@@ -3058,8 +3058,8 @@ cast_to_void_dtype_class(
 static NPY_CASTING
 nonstructured_to_structured_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[2]),
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset)
 {
@@ -3251,8 +3251,8 @@ PyArray_GetGenericToVoidCastingImpl(void)
 static NPY_CASTING
 structured_to_nonstructured_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *dtypes[2],
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const dtypes[2],
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset)
 {
@@ -3521,8 +3521,8 @@ can_cast_fields_safety(
 static NPY_CASTING
 void_to_void_resolve_descriptors(
         PyArrayMethodObject *self,
-        PyArray_DTypeMeta *dtypes[2],
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const dtypes[2],
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset)
 {
@@ -3720,8 +3720,8 @@ PyArray_InitializeVoidToVoidCast(void)
 static NPY_CASTING
 object_to_any_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *dtypes[2],
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const dtypes[2],
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *NPY_UNUSED(view_offset))
 {
@@ -3794,8 +3794,8 @@ PyArray_GetObjectToGenericCastingImpl(void)
 static NPY_CASTING
 any_to_object_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *dtypes[2],
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const dtypes[2],
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *NPY_UNUSED(view_offset))
 {
