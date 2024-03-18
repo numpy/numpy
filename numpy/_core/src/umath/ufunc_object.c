@@ -2407,6 +2407,13 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
                 out_descrs[0], out_descrs[1], out_descrs[2]);
         goto fail;
     }
+    /*
+     * After checking that they are equivalent, we enforce the use of the out
+     * one (which the user should have defined).  (Needed by string dtype)
+     */
+    Py_INCREF(out_descrs[2]);
+    Py_SETREF(out_descrs[0], out_descrs[2]);
+
     /* TODO: This really should _not_ be unsafe casting (same above)! */
     if (validate_casting(ufuncimpl, ufunc, ops, out_descrs, casting) < 0) {
         goto fail;

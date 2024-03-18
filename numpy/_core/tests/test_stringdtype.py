@@ -734,6 +734,18 @@ def test_ufunc_add(dtype, string_list, other_strings, use_out):
             np.add(arr1, arr2)
 
 
+def test_ufunc_add_reduce(dtype):
+    values = ["a", "this is a long string", "c"]
+    arr = np.array(values, dtype=dtype)
+    out = np.empty((), dtype=dtype)
+
+    expected = np.array("".join(values), dtype=dtype)
+    assert_array_equal(np.add.reduce(arr), expected)
+
+    np.add.reduce(arr, out=out)
+    assert_array_equal(out, expected)
+
+
 def test_add_promoter(string_list):
     arr = np.array(string_list, dtype=StringDType())
     lresult = np.array(["hello" + s for s in string_list], dtype=StringDType())
