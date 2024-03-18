@@ -4904,8 +4904,8 @@ add_newdoc('numpy._core.umath', '_center',
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input
-        types
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types
         $OUT_SCALAR_2
 
     See Also
@@ -4943,7 +4943,8 @@ add_newdoc('numpy._core.umath', '_ljust',
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input type
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input type
         $OUT_SCALAR_2
 
     See Also
@@ -4978,7 +4979,8 @@ add_newdoc('numpy._core.umath', '_rjust',
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input type
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input type
         $OUT_SCALAR_2
 
     See Also
@@ -5012,7 +5014,8 @@ add_newdoc('numpy._core.umath', '_zfill',
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input type
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input type
         $OUT_SCALAR_2
 
     See Also

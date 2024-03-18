@@ -129,7 +129,8 @@ def multiply(a, i):
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input types
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types
 
     Examples
     --------
@@ -189,7 +190,8 @@ def mod(a, values):
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input types
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types
         
     """
     return _to_bytes_or_str_array(
@@ -310,7 +312,7 @@ def rindex(a, sub, start=0, end=None):
     Returns
     -------
     out : ndarray
-       Output array of ints.
+        Output array of ints.
 
     See Also
     --------
@@ -551,7 +553,8 @@ def expandtabs(a, tabsize=8):
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input type
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input type
 
     See Also
     --------
@@ -593,7 +596,8 @@ def center(a, width, fillchar=' '):
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on the type of ``a``
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types
 
     See Also
     --------
@@ -651,7 +655,8 @@ def ljust(a, width, fillchar=' '):
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input type
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types
 
     See Also
     --------
@@ -706,7 +711,8 @@ def rjust(a, width, fillchar=' '):
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input type
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types
 
     See Also
     --------
@@ -760,7 +766,8 @@ def zfill(a, width):
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input type
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input type
 
     See Also
     --------
@@ -802,7 +809,8 @@ def lstrip(a, chars=None):
     Returns
     -------
     out : ndarray
-        Output array of ``bytes_`` or ``str_`` dtype
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types
 
     See Also
     --------
@@ -847,7 +855,8 @@ def rstrip(a, chars=None):
     Returns
     -------
     out : ndarray
-        Output array of ``bytes_`` or ``str_`` dtype
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types
 
     See Also
     --------
@@ -887,7 +896,8 @@ def strip(a, chars=None):
     Returns
     -------
     out : ndarray
-        Output array of ``bytes_`` or ``str_`` dtype
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types
 
     See Also
     --------
@@ -928,8 +938,9 @@ def upper(a):
 
     Returns
     -------
-    out : ndarray, {str, unicode}
-        Output array of str or unicode, depending on input type
+    out : ndarray
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types
 
     See Also
     --------
@@ -962,8 +973,9 @@ def lower(a):
 
     Returns
     -------
-    out : ndarray, {str, unicode}
-        Output array of str or unicode, depending on input type
+    out : ndarray
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types
 
     See Also
     --------
@@ -997,8 +1009,9 @@ def swapcase(a):
 
     Returns
     -------
-    out : ndarray, {str, unicode}
-        Output array of str or unicode, depending on input type
+    out : ndarray
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types
 
     See Also
     --------
@@ -1035,8 +1048,8 @@ def capitalize(a):
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input
-        types
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types
 
     See Also
     --------
@@ -1075,7 +1088,8 @@ def title(a):
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input type
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types
 
     See Also
     --------
@@ -1113,7 +1127,8 @@ def replace(a, old, new, count=-1):
     Returns
     -------
     out : ndarray
-        Output array of ``str_`` or ``bytes_`` dtype
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types
 
     See Also
     --------
@@ -1164,7 +1179,8 @@ def _join(sep, seq):
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input types
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types
 
     See Also
     --------
@@ -1250,7 +1266,7 @@ def _rsplit(a, sep=None, maxsplit=None):
     Returns
     -------
     out : ndarray
-       Array of list objects
+        Array of list objects
 
     See Also
     --------
@@ -1320,10 +1336,10 @@ def _partition(a, sep):
 
     Returns
     -------
-    out : ndarray, {str, unicode}
-        Output array of str or unicode, depending on input type.
-        The output array will have an extra dimension with 3
-        elements per input element.
+    out : ndarray
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types. The output array will have an extra
+        dimension with 3 elements per input element.
 
     Examples
     --------
@@ -1362,9 +1378,9 @@ def _rpartition(a, sep):
     Returns
     -------
     out : ndarray
-        Output array of string or unicode, depending on input
-        type.  The output array will have an extra dimension with
-        3 elements per input element.
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types. The output array will have an extra
+        dimension with 3 elements per input element.
 
     See Also
     --------
