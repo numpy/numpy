@@ -281,7 +281,7 @@ run::
 
 In case you are using clang toolchain::
 
-    $ lldb python /path/to/mytest.py
+    $ spin lldb /path/to/mytest.py
 
 And then in the debugger::
 
