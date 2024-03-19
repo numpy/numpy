@@ -796,6 +796,52 @@ class TestMethods:
         assert_array_equal(np.strings.zfill(buf, width), res)
 
 
+@pytest.mark.parametrize("dt", [
+    "U",
+    "S",
+    pytest.param("T", marks=pytest.mark.xfail(
+        reason="StringDType support not implemented",
+        strict=True),
+    ),
+])
+class TestMethodsWithoutStringDTypeSupport:
+    @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
+        ("this is the partition method", "ti", "this is the par",
+            True, "tion method"),
+        ("http://www.python.org", "://", "http", True, "www.python.org"),
+        ("http://www.python.org", "?", "http://www.python.org", False, ""),
+        ("http://www.python.org", "http://", "", True, "www.python.org"),
+        ("http://www.python.org", "org", "http://www.python.", True, ""),
+        ("mississippi", "ss", "mi", True, "issippi"),
+        ("mississippi", "i", "m", True, "ssissippi"),
+        ("mississippi", "w", "mississippi", False, ""),
+    ])
+    def test_partition(self, buf, sep, res1, res2, res3, dt):
+        buf = np.array(buf, dtype=dt)
+        sep = np.array(sep, dtype=dt)
+        res1 = np.array(res1, dtype=dt)
+        res3 = np.array(res3, dtype=dt)
+        assert_array_equal(np.strings.partition(buf, sep), (res1, res2, res3))
+
+    @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
+        ("this is the partition method", "ti", "this is the parti",
+            True, "on method"),
+        ("http://www.python.org", "://", "http", True, "www.python.org"),
+        ("http://www.python.org", "?", "", False, "http://www.python.org"),
+        ("http://www.python.org", "http://", "", True, "www.python.org"),
+        ("http://www.python.org", "org", "http://www.python.", True, ""),
+        ("mississippi", "ss", "missi", True, "ippi"),
+        ("mississippi", "i", "mississipp", True, ""),
+        ("mississippi", "w", "", False, "mississippi"),
+    ])
+    def test_rpartition(self, buf, sep, res1, res2, res3, dt):
+        buf = np.array(buf, dtype=dt)
+        sep = np.array(sep, dtype=dt)
+        res1 = np.array(res1, dtype=dt)
+        res3 = np.array(res3, dtype=dt)
+        assert_array_equal(np.strings.rpartition(buf, sep), (res1, res2, res3))
+
+
 @pytest.mark.parametrize("dt", ["U", "T"])
 class TestMethodsWithUnicode:
     @pytest.mark.parametrize("in_,out", [
@@ -967,6 +1013,45 @@ class TestMethodsWithUnicode:
         fillchar = np.array(fillchar, dtype=dt)
         res = np.array(res, dtype=dt)
         assert_array_equal(np.strings.rjust(buf, width, fillchar), res)
+
+
+@pytest.mark.parametrize("dt", [
+    "U",
+    pytest.param("T", marks=pytest.mark.xfail(
+        reason="StringDType support not implemented",
+        strict=True),
+    ),
+])
+class TestMethodsWithUnicodeWithoutStringDTypeSupport:
+    @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
+        ("āāāāĀĀĀĀ", "Ă", "āāāāĀĀĀĀ", False, ""),
+        ("āāāāĂĀĀĀĀ", "Ă", "āāāā", True, "ĀĀĀĀ"),
+        ("āāāāĂĂĀĀĀĀ", "ĂĂ", "āāāā", True, "ĀĀĀĀ"),
+        ("𐌁𐌁𐌁𐌁𐌀𐌀𐌀𐌀", "𐌂", "𐌁𐌁𐌁𐌁𐌀𐌀𐌀𐌀", False, ""),
+        ("𐌁𐌁𐌁𐌁𐌂𐌀𐌀𐌀𐌀", "𐌂", "𐌁𐌁𐌁𐌁", True, "𐌀𐌀𐌀𐌀"),
+        ("𐌁𐌁𐌁𐌁𐌂𐌂𐌀𐌀𐌀𐌀", "𐌂𐌂", "𐌁𐌁𐌁𐌁", True, "𐌀𐌀𐌀𐌀"),
+    ])
+    def test_partition(self, buf, sep, res1, res2, res3, dt):
+        buf = np.array(buf, dtype=dt)
+        sep = np.array(sep, dtype=dt)
+        res1 = np.array(res1, dtype=dt)
+        res3 = np.array(res3, dtype=dt)
+        assert_array_equal(np.strings.partition(buf, sep), (res1, res2, res3))
+
+    @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
+        ("āāāāĀĀĀĀ", "Ă", "", False, "āāāāĀĀĀĀ"),
+        ("āāāāĂĀĀĀĀ", "Ă", "āāāā", True, "ĀĀĀĀ"),
+        ("āāāāĂĂĀĀĀĀ", "ĂĂ", "āāāā", True, "ĀĀĀĀ"),
+        ("𐌁𐌁𐌁𐌁𐌀𐌀𐌀𐌀", "𐌂", "", False, "𐌁𐌁𐌁𐌁𐌀𐌀𐌀𐌀"),
+        ("𐌁𐌁𐌁𐌁𐌂𐌀𐌀𐌀𐌀", "𐌂", "𐌁𐌁𐌁𐌁", True, "𐌀𐌀𐌀𐌀"),
+        ("𐌁𐌁𐌁𐌁𐌂𐌂𐌀𐌀𐌀𐌀", "𐌂𐌂", "𐌁𐌁𐌁𐌁", True, "𐌀𐌀𐌀𐌀"),
+    ])
+    def test_rpartition(self, buf, sep, res1, res2, res3, dt):
+        buf = np.array(buf, dtype=dt)
+        sep = np.array(sep, dtype=dt)
+        res1 = np.array(res1, dtype=dt)
+        res3 = np.array(res3, dtype=dt)
+        assert_array_equal(np.strings.rpartition(buf, sep), (res1, res2, res3))
 
 
 class TestMixedTypeMethods:

@@ -41,6 +41,8 @@ from numpy._core.umath import (
     _ljust,
     _rjust,
     _zfill,
+    _partition,
+    _rpartition,
 )
 
 
@@ -51,7 +53,7 @@ __all__ = [
     "isupper", "istitle", "isdecimal", "isnumeric", "str_len", "find",
     "rfind", "index", "rindex", "count", "startswith", "endswith", "lstrip",
     "rstrip", "strip", "replace", "expandtabs", "center", "ljust", "rjust",
-    "zfill",
+    "zfill", "partition", "rpartition",
 
     # _vec_string - Will gradually become ufuncs as well
     "upper", "lower", "swapcase", "capitalize", "title",
@@ -60,7 +62,7 @@ __all__ = [
     "mod", "decode", "encode", "translate",
 
     # Removed from namespace until behavior has been crystalized
-    # "join", "split", "rsplit", "splitlines", "partition", "rpartition",
+    # "join", "split", "rsplit", "splitlines",
 ]
 
 
@@ -1315,72 +1317,90 @@ def _splitlines(a, keepends=None):
         a, np.object_, 'splitlines', _clean_args(keepends))
 
 
-def _partition(a, sep):
+def partition(a, sep):
     """
-    Partition each element in `a` around `sep`.
+    Partition each element in ``a`` around ``sep``.
 
-    Calls :meth:`str.partition` element-wise.
-
-    For each element in `a`, split the element as the first
-    occurrence of `sep`, and return 3 strings containing the part
-    before the separator, the separator itself, and the part after
-    the separator. If the separator is not found, return 3 strings
-    containing the string itself, followed by two empty strings.
+    For each element in ``a``, split the element at the first
+    occurrence of ``sep``, and return a 3-tuple containing the part
+    before the separator, a boolean signifying whether the separator
+    was found, and the part after the separator. If the separator is
+    not found, the first part will contain the whole string,
+    the boolean will be false, and the third part will be the empty
+    string.
 
     Parameters
     ----------
     a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
         Input array
-    sep : {str, unicode}
-        Separator to split each string element in `a`.
+    sep : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Separator to split each string element in ``a``.
 
     Returns
     -------
     out : ndarray
-        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
-        depending on input types. The output array will have an extra
-        dimension with 3 elements per input element.
+        3-tuple:
+        - ``StringDType``, ``bytes_`` or ``str_`` dtype string with the part
+          before the separator
+        - ``bool_`` dtype, whether the separator was found
+        - ``StringDType``, ``bytes_`` or ``str_`` dtype string with the part
+          after the separator
 
-    Examples
-    --------
-    >>> x = np.array(["Numpy is nice!"])
-    >>> np.strings.partition(x, " ")  # doctest: +SKIP
-    array([['Numpy', ' ', 'is nice!']], dtype='<U8')  # doctest: +SKIP
-    
     See Also
     --------
     str.partition
 
+    Examples
+    --------
+    >>> x = np.array(["Numpy is nice!"])
+    >>> np.strings.partition(x, " ")
+    array([['Numpy', ' ', 'is nice!']], dtype='<U8')
+
     """
-    return _to_bytes_or_str_array(
-        _vec_string(a, np.object_, 'partition', (sep,)), a)
+    a = np.asanyarray(a)
+    sep = np.asanyarray(sep)
+
+    shape = np.broadcast_shapes(a.shape, sep.shape)
+    pos = _find_ufunc(a, sep, 0, MAX)
+
+    a_len = str_len(a)
+    sep_len = str_len(sep)
+    buffersizes1 = np.where(pos < 0, a_len, pos)
+    buffersizes2 = np.where(pos < 0, 0, a_len - pos - sep_len)
+    out_dtype1 = f"{a.dtype.char}{buffersizes1.max()}"
+    out1 = np.empty_like(a, shape=shape, dtype=out_dtype1)
+    out_dtype2 = f"{a.dtype.char}{buffersizes2.max()}"
+    out2 = np.empty_like(a, shape=shape, dtype=out_dtype2)
+    return _partition(a, sep, out=(out1, None, out2))
 
 
-def _rpartition(a, sep):
+def rpartition(a, sep):
     """
     Partition (split) each element around the right-most separator.
 
-    Calls :meth:`str.rpartition` element-wise.
-
-    For each element in `a`, split the element as the last
-    occurrence of `sep`, and return 3 strings containing the part
-    before the separator, the separator itself, and the part after
-    the separator. If the separator is not found, return 3 strings
-    containing the string itself, followed by two empty strings.
+    For each element in ``a``, split the element at the first
+    occurrence of ``sep``, and return a 3-tuple containing the part
+    before the separator, a boolean signifying whether the separator
+    was found, and the part after the separator. If the separator is
+    not found, the first part will contain the whole string,
+    the boolean will be false, and the third part will be the empty
+    string.
 
     Parameters
     ----------
     a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
         Input array
-    sep : str or unicode
-        Right-most separator to split each element in array.
+    sep : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Separator to split each string element in ``a``.
 
     Returns
     -------
-    out : ndarray
-        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
-        depending on input types. The output array will have an extra
-        dimension with 3 elements per input element.
+    out : 3-tuple:
+        - ``StringDType``, ``bytes_`` or ``str_`` dtype string with the part
+          before the separator
+        - ``bool_`` dtype, whether the separator was found
+        - ``StringDType``, ``bytes_`` or ``str_`` dtype string with the part
+          after the separator
 
     See Also
     --------
@@ -1389,14 +1409,27 @@ def _rpartition(a, sep):
     Examples
     --------
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
-    >>> np.strings.rpartition(a, 'A')  # doctest: +SKIP
-    array([['aAaAa', 'A', ''],  # doctest: +SKIP
-       ['  a', 'A', '  '],  # doctest: +SKIP
-       ['abB', 'A', 'Bba']], dtype='<U5')  # doctest: +SKIP
+    >>> np.strings.rpartition(a, 'A')
+    array([['aAaAa', 'A', ''],
+       ['  a', 'A', '  '],
+       ['abB', 'A', 'Bba']], dtype='<U5')
 
     """
-    return _to_bytes_or_str_array(
-        _vec_string(a, np.object_, 'rpartition', (sep,)), a)
+    a = np.asanyarray(a)
+    sep = np.asanyarray(sep)
+
+    shape = np.broadcast_shapes(a.shape, sep.shape)
+    pos = _rfind_ufunc(a, sep, 0, MAX)
+
+    a_len = str_len(a)
+    sep_len = str_len(sep)
+    buffersizes1 = np.where(pos < 0, 0, pos)
+    buffersizes2 = np.where(pos < 0, a_len, a_len - pos - sep_len)
+    out_dtype1 = f"{a.dtype.char}{buffersizes1.max()}"
+    out1 = np.empty_like(a, shape=shape, dtype=out_dtype1)
+    out_dtype2 = f"{a.dtype.char}{buffersizes2.max()}"
+    out2 = np.empty_like(a, shape=shape, dtype=out_dtype2)
+    return _rpartition(a, sep, out=(out1, None, out2))
 
 
 def translate(a, table, deletechars=None):

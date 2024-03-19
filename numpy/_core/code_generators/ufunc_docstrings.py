@@ -5028,3 +5028,85 @@ add_newdoc('numpy._core.umath', '_zfill',
     array(['001', '-01', '+01'], dtype='<U3')
 
     """)
+
+add_newdoc('numpy._core.umath', '_partition',
+    """
+    Partition each element in ``x1`` around ``x2``.
+
+    For each element in ``x1``, split the element at the first
+    occurrence of ``x2``, and return a 3-tuple containing the part
+    before the separator, a boolean signifying whether the separator
+    was found, and the part after the separator. If the separator is
+    not found, the first part will contain the whole string,
+    the boolean will be false, and the third part will be the empty
+    string.
+
+    Parameters
+    ----------
+    x1 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Input array
+    x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Separator to split each string element in ``x1``.
+
+    Returns
+    -------
+    out : 3-tuple:
+        - ``StringDType``, ``bytes_`` or ``str_`` dtype string with the part
+          before the separator
+        - ``bool_`` dtype, whether the separator was found
+        - ``StringDType``, ``bytes_`` or ``str_`` dtype string with the part
+          after the separator
+
+    See Also
+    --------
+    str.partition
+
+    Examples
+    --------
+    >>> x = np.array(["Numpy is nice!"])
+    >>> np.strings.partition(x, " ")
+    array([['Numpy', ' ', 'is nice!']], dtype='<U8')
+
+    """)
+
+add_newdoc('numpy._core.umath', '_rpartition',
+    """
+    Partition (split) each element around the right-most separator.
+
+    For each element in ``x1``, split the element at the first
+    occurrence of ``x2``, and return a 3-tuple containing the part
+    before the separator, a boolean signifying whether the separator
+    was found, and the part after the separator. If the separator is
+    not found, the first part will contain the whole string,
+    the boolean will be false, and the third part will be the empty
+    string.
+
+    Parameters
+    ----------
+    x1 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Input array
+    x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Separator to split each string element in ``x1``.
+
+    Returns
+    -------
+    out : 3-tuple:
+        - ``StringDType``, ``bytes_`` or ``str_`` dtype string with the part
+          before the separator
+        - ``bool_`` dtype, whether the separator was found
+        - ``StringDType``, ``bytes_`` or ``str_`` dtype string with the part
+          after the separator
+
+    See Also
+    --------
+    str.rpartition
+
+    Examples
+    --------
+    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> np.strings.rpartition(a, 'A')
+    array([['aAaAa', 'A', ''],
+       ['  a', 'A', '  '],
+       ['abB', 'A', 'Bba']], dtype='<U5')
+
+    """)
