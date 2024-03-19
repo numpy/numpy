@@ -1,0 +1,21 @@
+Shapes are now covariant
+------------------------
+When ``ndarray`` was made generic, more details and implementation were
+left to future development.  While it was recognized that shape was inherently
+a tuple (and thus covariant), development towards ``TypeVarTuple`` does not
+yet allow bounds or variance.  This change allows user code to type check in
+functions that attempt to specify the shape parameter:
+
+.. code::
+
+   from typing import NewType, Any
+   import numpy as np
+
+   Time = NewType("Time", int)
+   Series = NewType("Series", int)
+
+   arr: np.ndarray[tuple[Time, Series], Any] = np.arange(4.0).reshape((2, 2))
+
+   def foo(a: np.ndarray[tuple[int, ...], Any]) -> None: ...
+
+   foo(arr)
