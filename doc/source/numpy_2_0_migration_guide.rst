@@ -219,7 +219,7 @@ typedefs ``cfloat_t``, ``cdouble_t``, ``c_longdouble_t`` rather than the NumPy
 types ``npy_cfloat``, etc, unless you have to interface with C code written
 using the NumPy types. You can still write cython code using the ``c.real`` and
 ``c.imag`` attributes (using the native typedefs), but you can no longer use
-in-place operators ``c.imag += 1``.
+in-place operators ``c.imag += 1`` in Cython's c++ mode.
 
 
 Changes to namespaces
