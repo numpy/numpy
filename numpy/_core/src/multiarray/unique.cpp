@@ -40,32 +40,30 @@ PyObject* unique(PyArrayObject *self)
     strideptr = NpyIter_GetInnerStrideArray(iter);
     innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
 
-    std::cout << "printing values: " << std::endl;
     do {
         char* data = *dataptr;
         npy_intp stride = *strideptr;
         npy_intp count = *innersizeptr;
 
         while (count--) {
-            std::cout << (T)* data << std::endl;
-            hashmap[(T)* data] = 0;
+            hashmap[*((T *) data)] = 0;
             data += stride;
         }
     } while(iternext(iter));
     NpyIter_Deallocate(iter);
 
     T* res = new T[hashmap.size()];
-    std::cout << "unique values :" << std::endl;
     for (auto it = hashmap.begin(), i = 0; it != hashmap.end(); it++, i++) {
         res[i] = it->first;
-        std::cout << it->first << std::endl;
     }
 
     // does this need to have the same lifetime as the array?
     npy_intp dims[1] = {(npy_intp)hashmap.size()};
+    PyArray_Descr *descr = PyArray_DESCR(self);
+    Py_INCREF(descr);
     return PyArray_NewFromDescr(
         &PyArray_Type,
-        PyArray_DESCR(self),
+        descr,
         1, // ndim
         dims, // shape
         NULL, // strides
@@ -98,6 +96,9 @@ PyArray_Unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
 
     itemsize = PyArray_ITEMSIZE(self);
 
+    /* for the purpose of finding unique values on dtypes that we support, we
+    don't really care what dtype it is, and we can look at the data as if they
+    were all uint values */
     if (sizeof(npy_uint8) == itemsize) {
         res = unique<npy_uint8>(self);
     } else if (sizeof(npy_uint16) == itemsize) {
