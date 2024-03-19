@@ -79,15 +79,10 @@ npy_intp unique(PyArrayObject *self)
 static PyObject *
 PyArray_Unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
-    int counter = 0;
-    std::cerr << counter++ << std::endl;
-    std::cerr << args << std::endl;
     PyArrayObject *self = NULL;
-    std::cerr << counter++ << std::endl;
     if (!PyArg_ParseTuple(args, "O&", PyArray_Converter, &self))
         return NULL;
 
-    std::cerr << counter++ << std::endl;
     npy_intp itemsize;
 
     /* Handle zero-sized arrays specially */
@@ -95,12 +90,9 @@ PyArray_Unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
         Py_XDECREF(self);
         return Py_BuildValue("i", 0);
     }
-    std::cerr << counter++;
 
     itemsize = PyArray_ITEMSIZE(self);
-    std::cout << "Item size: " << itemsize << std::endl;
 
-    std::cerr << counter++;
     if (sizeof(char) == itemsize) {
         unique<char>(self);
     } else if (sizeof(int) == itemsize) {
@@ -128,7 +120,6 @@ static struct PyModuleDef uniquemodule = {
 PyMODINIT_FUNC
 PyInit_unique(void)
 {
-    // import_array();
-    // PyArray_ImportNumPyAPI();
+    PyArray_ImportNumPyAPI();
     return PyModule_Create(&uniquemodule);
 }
