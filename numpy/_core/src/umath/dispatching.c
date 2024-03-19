@@ -195,10 +195,68 @@ info_is_promoter(PyObject *info)
 }
 
 
+/*
+ * A promoter can currently be either a C-Capsule containing a promoter
+ * function pointer, or a Python function.  Both of these can at this time
+ * only return new operation DTypes (i.e. mutate the input while leaving
+ * those defined by the `signature` unmodified).
+ */
 static int
 call_promoter(PyUFuncObject *ufunc, PyObject *resolver_info,
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
-        PyArray_DTypeMeta *out_op_dtypes[]);
+        PyArray_DTypeMeta *out_op_dtypes[])
+{
+    int nargs = ufunc->nargs;
+    int promoter_result;
+    PyArray_DTypeMeta *new_op_dtypes[NPY_MAXARGS];
+
+    PyObject *promoter = PyTuple_GET_ITEM(resolver_info, 1);
+    if (PyCapsule_CheckExact(promoter)) {
+        /* We could also go the other way and wrap up the python function... */
+        PyArrayMethod_PromoterFunction *promoter_function = PyCapsule_GetPointer(
+                promoter, "numpy._ufunc_promoter");
+        if (promoter_function == NULL) {
+            return -1;
+        }
+        promoter_result = promoter_function((PyObject *)ufunc,
+                op_dtypes, signature, new_op_dtypes);
+    }
+    else {
+        PyErr_SetString(PyExc_NotImplementedError,
+                "Calling python functions for promotion is not implemented.");
+        return -1;
+    }
+    if (promoter_result < 0) {
+        return -1;
+    }
+    if (promoter_result == 0) {
+        return 0;
+    }
+    /*
+     * If none of the dtypes changes, we would recurse infinitely, so consider
+     * this a non-match.
+     * (Of course it is nevertheless possible to recurse infinitely.)
+     */
+    int dtypes_changed = 0;
+    for (int i = 0; i < nargs; i++) {
+        if (new_op_dtypes[i] != op_dtypes[i]) {
+            dtypes_changed = 1;
+            break;
+        }
+    }
+    if (!dtypes_changed) {
+        for (int i = 0; i < nargs; i++) {
+            Py_XDECREF(new_op_dtypes[i]);
+        }
+        return 0;
+    }
+    /* Otherwise, update the `out_op_dtypes` with whatever was returned */
+    for (int i = 0; i < nargs; i++) {
+        Py_XSETREF(out_op_dtypes[i], new_op_dtypes[i]);
+    }
+    return 1;
+}
+
 
 /**
  * Resolves the implementation to use, this uses typical multiple dispatching
@@ -561,69 +619,6 @@ resolve_implementation_info(PyUFuncObject *ufunc,
         Py_XDECREF(promoted_op_dtypes[i]);
     }
     return res;
-}
-
-
-/*
- * A promoter can currently be either a C-Capsule containing a promoter
- * function pointer, or a Python function.  Both of these can at this time
- * only return new operation DTypes (i.e. mutate the input while leaving
- * those defined by the `signature` unmodified).
- */
-static int
-call_promoter(PyUFuncObject *ufunc, PyObject *resolver_info,
-        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
-        PyArray_DTypeMeta *out_op_dtypes[])
-{
-    int nargs = ufunc->nargs;
-    int promoter_result;
-    PyArray_DTypeMeta *new_op_dtypes[NPY_MAXARGS];
-
-    PyObject *promoter = PyTuple_GET_ITEM(resolver_info, 1);
-    if (PyCapsule_CheckExact(promoter)) {
-        /* We could also go the other way and wrap up the python function... */
-        PyArrayMethod_PromoterFunction *promoter_function = PyCapsule_GetPointer(
-                promoter, "numpy._ufunc_promoter");
-        if (promoter_function == NULL) {
-            return -1;
-        }
-        promoter_result = promoter_function((PyObject *)ufunc,
-                op_dtypes, signature, new_op_dtypes);
-    }
-    else {
-        PyErr_SetString(PyExc_NotImplementedError,
-                "Calling python functions for promotion is not implemented.");
-        return -1;
-    }
-    if (promoter_result < 0) {
-        return -1;
-    }
-    if (promoter_result == 0) {
-        return 0;
-    }
-    /*
-     * If none of the dtypes changes, we would recurse infinitely, so consider
-     * this a non-match.
-     * (Of course it is nevertheless possible to recurse infinitely.)
-     */
-    int dtypes_changed = 0;
-    for (int i = 0; i < nargs; i++) {
-        if (new_op_dtypes[i] != op_dtypes[i]) {
-            dtypes_changed = 1;
-            break;
-        }
-    }
-    if (!dtypes_changed) {
-        for (int i = 0; i < nargs; i++) {
-            Py_XDECREF(new_op_dtypes[i]);
-        }
-        return 0;
-    }
-    /* Otherwise, update the `out_op_dtypes` with whatever was returned */
-    for (int i = 0; i < nargs; i++) {
-        Py_XSETREF(out_op_dtypes[i], new_op_dtypes[i]);
-    }
-    return 1;
 }
 
 
