@@ -1286,7 +1286,7 @@ PyArrayMultiIter_Type and PyArrayMultiIterObject
           npy_intp index;
           int nd;
           npy_intp dimensions[NPY_MAXDIMS_LEGACY_ITERS];
-          PyArrayIterObject *iters[NPY_MAXDIMS_LEGACY_ITERS];
+          PyArrayIterObject *iters[];
       } PyArrayMultiIterObject;
 
    .. c:macro: PyObject_HEAD
