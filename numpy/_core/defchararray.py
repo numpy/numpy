@@ -332,8 +332,8 @@ def partition(a, sep):
     Examples
     --------
     >>> x = np.array(["Numpy is nice!"])
-    >>> np.strings.partition(x, " ")  # doctest: +SKIP
-    array([['Numpy', ' ', 'is nice!']], dtype='<U8')  # doctest: +SKIP
+    >>> np.char.partition(x, " ")
+    array([['Numpy', ' ', 'is nice!']], dtype='<U8')
     
     See Also
     --------
@@ -377,10 +377,10 @@ def rpartition(a, sep):
     Examples
     --------
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
-    >>> np.strings.rpartition(a, 'A')  # doctest: +SKIP
-    array([['aAaAa', 'A', ''],  # doctest: +SKIP
-       ['  a', 'A', '  '],  # doctest: +SKIP
-       ['abB', 'A', 'Bba']], dtype='<U5')  # doctest: +SKIP
+    >>> np.char.rpartition(a, 'A')
+    array([['aAaAa', 'A', ''],
+       ['  a', 'A', '  '],
+       ['abB', 'A', 'Bba']], dtype='<U5')
 
     """
     return _to_bytes_or_str_array(

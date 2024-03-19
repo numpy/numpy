@@ -1354,7 +1354,9 @@ def partition(a, sep):
     --------
     >>> x = np.array(["Numpy is nice!"])
     >>> np.strings.partition(x, " ")
-    array([['Numpy', ' ', 'is nice!']], dtype='<U8')
+    (array(['Numpy'], dtype='<U5'),
+     array([ True]),
+     array(['is nice!'], dtype='<U8'))
 
     """
     a = np.asanyarray(a)
@@ -1410,9 +1412,9 @@ def rpartition(a, sep):
     --------
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.rpartition(a, 'A')
-    array([['aAaAa', 'A', ''],
-       ['  a', 'A', '  '],
-       ['abB', 'A', 'Bba']], dtype='<U5')
+    (array(['aAaAa', '  a', 'abB'], dtype='<U5'),
+     array([ True,  True,  True]),
+     array(['', '  ', 'Bba'], dtype='<U3'))
 
     """
     a = np.asanyarray(a)
