@@ -7,7 +7,7 @@ __all__: list[str]
 
 # TODO: Set the `bound` to something more suitable once we
 # have proper shape support
-_ShapeType = TypeVar("_ShapeType", bound=Any)
+_ShapeType = TypeVar("_ShapeType", covariant=True, bound=Any)
 _DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
 
 class MaskedRecords(MaskedArray[_ShapeType, _DType_co]):
