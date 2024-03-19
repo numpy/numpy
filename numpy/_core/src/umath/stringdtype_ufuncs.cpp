@@ -1047,6 +1047,12 @@ all_strings_promoter(PyObject *NPY_UNUSED(ufunc),
                      PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
                      PyArray_DTypeMeta *new_op_dtypes[])
 {
+    if (op_dtypes[0] != &PyArray_StringDType
+            && op_dtypes[1] != &PyArray_StringDType
+            && op_dtypes[1] != &PyArray_StringDType) {
+        /* No string DType involved after all, do not apply promoter */
+        return 0;
+    }
     new_op_dtypes[0] = NPY_DT_NewRef(&PyArray_StringDType);
     new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_StringDType);
     new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_StringDType);

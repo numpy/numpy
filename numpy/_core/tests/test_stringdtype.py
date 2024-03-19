@@ -740,6 +740,12 @@ def test_add_promoter(string_list):
         assert_array_equal(arr + op, rresult)
 
 
+def test_add_promoter_reduce():
+    # Exact TypeError could change, but ensure StringDtype doesn't match
+    with pytest.raises(TypeError, match="the resolved dtypes are not"):
+        np.add.reduce(np.array(["a", "b"], dtype="U"))
+
+
 @pytest.mark.parametrize("use_out", [True, False])
 @pytest.mark.parametrize("other", [2, [2, 1, 3, 4, 1, 3]])
 @pytest.mark.parametrize(
