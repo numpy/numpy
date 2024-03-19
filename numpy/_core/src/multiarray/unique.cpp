@@ -3,8 +3,6 @@
 #include <Python.h>
 
 #include <unordered_map>
-#include <vector>
-#include <random>
 #include <iostream>
 
 #include "numpy/ndarraytypes.h"
@@ -15,11 +13,12 @@
 #include "numpy/npy_2_compat.h"
 
 template<typename T>
-npy_intp unique(PyArrayObject *self)
+PyObject* unique(PyArrayObject *self)
 {
     NpyIter* iter;
     NpyIter_IterNextFunc *iternext;
     char** dataptr;
+    size_t i;
     npy_intp* strideptr,* innersizeptr;
     std::unordered_map<T, char> hashmap;
 
@@ -29,28 +28,20 @@ npy_intp unique(PyArrayObject *self)
                         NPY_KEEPORDER, NPY_NO_CASTING,
                         NULL);
     if (iter == NULL) {
-        return -1;
+        return Py_None;
     }
 
-    /*
-     * The iternext function gets stored in a local variable
-     * so it can be called repeatedly in an efficient manner.
-     */
     iternext = NpyIter_GetIterNext(iter, NULL);
     if (iternext == NULL) {
         NpyIter_Deallocate(iter);
-        return -1;
+        return Py_None;
     }
-    /* The location of the data pointer which the iterator may update */
     dataptr = NpyIter_GetDataPtrArray(iter);
-    /* The location of the stride which the iterator may update */
     strideptr = NpyIter_GetInnerStrideArray(iter);
-    /* The location of the inner loop size which the iterator may update */
     innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
 
     std::cout << "printing values: " << std::endl;
     do {
-        /* Get the inner loop data/stride/count values */
         char* data = *dataptr;
         npy_intp stride = *strideptr;
         npy_intp count = *innersizeptr;
@@ -60,26 +51,35 @@ npy_intp unique(PyArrayObject *self)
             hashmap[(T)* data] = 0;
             data += stride;
         }
-
-        /* Increment the iterator to the next inner loop */
     } while(iternext(iter));
+    NpyIter_Deallocate(iter);
 
-    std::vector<T> res;
+    T* res = new T[hashmap.size()];
     std::cout << "unique values :" << std::endl;
-    res.reserve(hashmap.size());
-    for (auto it = hashmap.begin(); it != hashmap.end(); it++) {
-        res.emplace_back(it->first);
+    for (auto it = hashmap.begin(), i = 0; it != hashmap.end(); it++, i++) {
+        res[i] = it->first;
         std::cout << it->first << std::endl;
     }
 
-    NpyIter_Deallocate(iter);
-    return 0;
+    // does this need to have the same lifetime as the array?
+    npy_intp dims[1] = {(npy_intp)hashmap.size()};
+    return PyArray_NewFromDescr(
+        &PyArray_Type,
+        PyArray_DESCR(self),
+        1, // ndim
+        dims, // shape
+        NULL, // strides
+        res, // data
+        NPY_ARRAY_OUT_ARRAY, // flags
+        NULL // obj
+    );
 }
 
 static PyObject *
 PyArray_Unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyArrayObject *self = NULL;
+    PyObject *res = NULL;
     if (!PyArg_ParseTuple(args, "O&", PyArray_Converter, &self))
         return NULL;
 
@@ -88,18 +88,35 @@ PyArray_Unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
     /* Handle zero-sized arrays specially */
     if (PyArray_SIZE(self) == 0) {
         Py_XDECREF(self);
-        return Py_BuildValue("i", 0);
+        return PyArray_NewLikeArray(
+            self,
+            NPY_ANYORDER,
+            NULL, // descr (use prototype's descr)
+            1 // subok
+        );
     }
 
     itemsize = PyArray_ITEMSIZE(self);
 
-    if (sizeof(char) == itemsize) {
-        unique<char>(self);
-    } else if (sizeof(int) == itemsize) {
-        unique<int>(self);
+    if (sizeof(npy_uint8) == itemsize) {
+        res = unique<npy_uint8>(self);
+    } else if (sizeof(npy_uint16) == itemsize) {
+        res = unique<npy_uint16>(self);
+    } else if (sizeof(npy_uint32) == itemsize) {
+        res = unique<npy_uint32>(self);
+    } else if (sizeof(npy_uint64) == itemsize) {
+        res = unique<npy_uint64>(self);
+    // these don't seem to be available?
+    // } else if (sizeof(npy_uint96) == itemsize) {
+    //     unique<npy_uint96>(self);
+    // } else if (sizeof(npy_uint128) == itemsize) {
+    //     unique<npy_uint128>(self);
+    } else {
+        Py_XDECREF(self);
+        return Py_None;
     }
     Py_XDECREF(self);
-    return Py_BuildValue("i", 0);
+    return res;
 }
 
 static PyMethodDef UniqueMethods[] = {
