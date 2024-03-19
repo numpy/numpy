@@ -5065,7 +5065,9 @@ add_newdoc('numpy._core.umath', '_partition',
     --------
     >>> x = np.array(["Numpy is nice!"])
     >>> np.strings.partition(x, " ")
-    array([['Numpy', ' ', 'is nice!']], dtype='<U8')
+    (array(['Numpy'], dtype='<U5'),
+     array([ True]),
+     array(['is nice!'], dtype='<U8'))
 
     """)
 
@@ -5105,8 +5107,8 @@ add_newdoc('numpy._core.umath', '_rpartition',
     --------
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.rpartition(a, 'A')
-    array([['aAaAa', 'A', ''],
-       ['  a', 'A', '  '],
-       ['abB', 'A', 'Bba']], dtype='<U5')
+    (array(['aAaAa', '  a', 'abB'], dtype='<U5'),
+     array([ True,  True,  True]),
+     array(['', '  ', 'Bba'], dtype='<U3'))
 
     """)
