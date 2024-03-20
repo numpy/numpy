@@ -572,7 +572,7 @@ class chararray(ndarray):
 
     def __array_finalize__(self, obj):
         # The b is a special case because it is used for reconstructing.
-        if self.dtype.char not in 'SUbc':
+        if self.dtype.char not in 'VSUbc':
             raise ValueError("Can only create a chararray from string data.")
 
     def __getitem__(self, obj):
