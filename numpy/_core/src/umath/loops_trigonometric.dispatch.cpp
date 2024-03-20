@@ -44,7 +44,7 @@ using vec_f32 = hn::Vec<decltype(f32)>;
 using vec_s32 = hn::Vec<decltype(s32)>;
 using opmask_t = hn::Mask<decltype(f32)>;
 
-NPY_FINLINE vec_f32
+NPY_FINLINE HWY_ATTR vec_f32
 simd_range_reduction_f32(vec_f32& x, vec_f32& y, const vec_f32& c1, const vec_f32& c2, const vec_f32& c3)
 {
     vec_f32 reduced_x = hn::MulAdd(y, c1, x);
@@ -53,7 +53,7 @@ simd_range_reduction_f32(vec_f32& x, vec_f32& y, const vec_f32& c1, const vec_f3
     return reduced_x;
 }
 
-NPY_FINLINE vec_f32
+NPY_FINLINE HWY_ATTR vec_f32
 simd_cosine_poly_f32(vec_f32& x2)
 {
     const vec_f32 invf8 = hn::Set(f32, 0x1.98e616p-16f);
@@ -73,7 +73,7 @@ simd_cosine_poly_f32(vec_f32& x2)
  * Maximum ULP across all 32-bit floats = 0.647
  * Polynomial approximation based on unpublished work by T. Myklebust
  */
-NPY_FINLINE vec_f32
+NPY_FINLINE HWY_ATTR vec_f32
 simd_sine_poly_f32(vec_f32& x, vec_f32& x2)
 {
     const vec_f32 invf9 = hn::Set(f32, 0x1.7d3bbcp-19f);
@@ -89,7 +89,7 @@ simd_sine_poly_f32(vec_f32& x, vec_f32& x2)
     return r;
 }
 
-NPY_FINLINE vec_f32
+NPY_FINLINE HWY_ATTR vec_f32
 GatherIndexN(const float* src, npy_intp ssrc, npy_intp len)
 {
     float temp[hn::Lanes(f32)] = { 0.0f };
@@ -99,7 +99,7 @@ GatherIndexN(const float* src, npy_intp ssrc, npy_intp len)
     return hn::LoadU(f32, temp);
 }
 
-NPY_FINLINE void
+NPY_FINLINE HWY_ATTR void
 ScatterIndexN(vec_f32 vec, float* dst, npy_intp sdst, npy_intp len)
 {
     float temp[hn::Lanes(f32)];
@@ -109,7 +109,7 @@ ScatterIndexN(vec_f32 vec, float* dst, npy_intp sdst, npy_intp len)
     }
 }
 
-static void SIMD_MSVC_NOINLINE
+static void HWY_ATTR SIMD_MSVC_NOINLINE
 simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
                 npy_intp len, SIMD_TRIG_OP trig_op)
 {
