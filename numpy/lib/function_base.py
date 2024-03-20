@@ -5410,7 +5410,9 @@ def insert(arr, obj, values, axis=None):
     -----
     Note that for higher dimensional inserts ``obj=0`` behaves very different
     from ``obj=[0]`` just like ``arr[:,0,:] = values`` is different from
-    ``arr[:,[0],:] = values``.
+    ``arr[:,[0],:] = values``. This is due to the way NumPy handles broadcasting and 
+    axis manipulation. For a detailed explanation, refer to the documentation on 
+    [Broadcasting](https://numpy.org/doc/stable/user/basics.broadcasting.html).
 
     Examples
     --------
