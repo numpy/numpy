@@ -17,20 +17,23 @@ The preferred alias for `defchararray` is `numpy.char`.
 """
 import functools
 
+import numpy as np
 from .._utils import set_module
 from .numerictypes import bytes_, str_, character, object_
 from .numeric import ndarray, array as narray, asarray as asnarray
 from numpy._core.multiarray import compare_chararrays
 from numpy._core import overrides
 from numpy.strings import *
-from numpy.strings import multiply as strings_multiply
+from numpy.strings import (
+    multiply as strings_multiply,
+    partition as strings_partition,
+    rpartition as strings_rpartition,
+)
 from numpy._core.strings import (
     _split as split,
     _rsplit as rsplit,
     _splitlines as splitlines,
     _join as join,
-    _to_bytes_or_str_array,
-    _vec_string,
 )
 
 __all__ = [
@@ -340,8 +343,7 @@ def partition(a, sep):
     str.partition
 
     """
-    return _to_bytes_or_str_array(
-        _vec_string(a, object_, 'partition', (sep,)), a)
+    return np.stack(strings_partition(a, sep), axis=-1)
 
 
 def rpartition(a, sep):
@@ -383,8 +385,7 @@ def rpartition(a, sep):
        ['abB', 'A', 'Bba']], dtype='<U5')
 
     """
-    return _to_bytes_or_str_array(
-        _vec_string(a, object_, 'rpartition', (sep,)), a)
+    return np.stack(strings_rpartition(a, sep), axis=-1)
 
 
 @set_module("numpy.char")

@@ -1618,7 +1618,7 @@ string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
         else {
             buf1.buffer_memcpy(out3, len1);
             *final_len1 = *final_len2 = 0;
-            *final_len3 = len;
+            *final_len3 = len1;
         }
         return;
     }

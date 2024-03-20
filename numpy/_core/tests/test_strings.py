@@ -812,6 +812,10 @@ class TestMethodsWithoutStringDTypeSupport:
         ("http://www.python.org", "?", "http://www.python.org", "", ""),
         ("http://www.python.org", "http://", "", "http://", "www.python.org"),
         ("http://www.python.org", "org", "http://www.python.", "org", ""),
+        ("http://www.python.org", ["://", "?", "http://", "org"],
+            ["http", "http://www.python.org", "", "http://www.python."],
+            ["://", "", "http://", "org"],
+            ["www.python.org", "", "www.python.org", ""]),
         ("mississippi", "ss", "mi", "ss", "issippi"),
         ("mississippi", "i", "m", "i", "ssissippi"),
         ("mississippi", "w", "mississippi", "", ""),
@@ -822,7 +826,11 @@ class TestMethodsWithoutStringDTypeSupport:
         res1 = np.array(res1, dtype=dt)
         res2 = np.array(res2, dtype=dt)
         res3 = np.array(res3, dtype=dt)
-        assert_array_equal(np.strings.partition(buf, sep), (res1, res2, res3))
+        act1, act2, act3 = np.strings.partition(buf, sep)
+        assert_array_equal(act1, res1)
+        assert_array_equal(act2, res2)
+        assert_array_equal(act3, res3)
+        assert_array_equal(act1 + act2 + act3, buf)
 
     @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
         ("this is the partition method", "ti", "this is the parti",
@@ -831,6 +839,10 @@ class TestMethodsWithoutStringDTypeSupport:
         ("http://www.python.org", "?", "", "", "http://www.python.org"),
         ("http://www.python.org", "http://", "", "http://", "www.python.org"),
         ("http://www.python.org", "org", "http://www.python.", "org", ""),
+        ("http://www.python.org", ["://", "?", "http://", "org"],
+            ["http", "", "", "http://www.python."],
+            ["://", "", "http://", "org"],
+            ["www.python.org", "http://www.python.org", "www.python.org", ""]),
         ("mississippi", "ss", "missi", "ss", "ippi"),
         ("mississippi", "i", "mississipp", "i", ""),
         ("mississippi", "w", "", "", "mississippi"),
@@ -841,7 +853,11 @@ class TestMethodsWithoutStringDTypeSupport:
         res1 = np.array(res1, dtype=dt)
         res2 = np.array(res2, dtype=dt)
         res3 = np.array(res3, dtype=dt)
-        assert_array_equal(np.strings.rpartition(buf, sep), (res1, res2, res3))
+        act1, act2, act3 = np.strings.rpartition(buf, sep)
+        assert_array_equal(act1, res1)
+        assert_array_equal(act2, res2)
+        assert_array_equal(act3, res3)
+        assert_array_equal(act1 + act2 + act3, buf)
 
 
 @pytest.mark.parametrize("dt", ["U", "T"])
@@ -1039,7 +1055,11 @@ class TestMethodsWithUnicodeWithoutStringDTypeSupport:
         res1 = np.array(res1, dtype=dt)
         res2 = np.array(res2, dtype=dt)
         res3 = np.array(res3, dtype=dt)
-        assert_array_equal(np.strings.partition(buf, sep), (res1, res2, res3))
+        act1, act2, act3 = np.strings.partition(buf, sep)
+        assert_array_equal(act1, res1)
+        assert_array_equal(act2, res2)
+        assert_array_equal(act3, res3)
+        assert_array_equal(act1 + act2 + act3, buf)
 
     @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
         ("āāāāĀĀĀĀ", "Ă", "", "", "āāāāĀĀĀĀ"),
@@ -1055,7 +1075,11 @@ class TestMethodsWithUnicodeWithoutStringDTypeSupport:
         res1 = np.array(res1, dtype=dt)
         res2 = np.array(res2, dtype=dt)
         res3 = np.array(res3, dtype=dt)
-        assert_array_equal(np.strings.rpartition(buf, sep), (res1, res2, res3))
+        act1, act2, act3 = np.strings.rpartition(buf, sep)
+        assert_array_equal(act1, res1)
+        assert_array_equal(act2, res2)
+        assert_array_equal(act3, res3)
+        assert_array_equal(act1 + act2 + act3, buf)
 
 
 class TestMixedTypeMethods:

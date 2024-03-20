@@ -5034,11 +5034,11 @@ add_newdoc('numpy._core.umath', '_partition',
     Partition each element in ``x1`` around ``x2``.
 
     For each element in ``x1``, split the element at the first
-    occurrence of ``x2``, and return a 3-tuple containing the part
-    before the separator, the separator itself, and the part after
-    the separator. If the separator is not found, the first item of
-    the tuple will contain the whole string, and the second and third
-    ones will be the empty string.
+    occurrence of ``x2`` at location ``x3``, and return a 3-tuple
+    containing the part before the separator, the separator itself,
+    and the part after the separator. If the separator is not found,
+    the first item of the tuple will contain the whole string, and
+    the second and third ones will be the empty string.
 
     Parameters
     ----------
@@ -5047,7 +5047,8 @@ add_newdoc('numpy._core.umath', '_partition',
     x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
         Separator to split each string element in ``x1``.
     x3 : array-like, with any integer dtype
-        The indices of the separator
+        The indices of the separator (<0 to indicate the separator is not
+        present).
 
     Returns
     -------
@@ -5066,23 +5067,27 @@ add_newdoc('numpy._core.umath', '_partition',
     Examples
     --------
     >>> x = np.array(["Numpy is nice!"])
+
+    The ufunc is used most easily via ``np.strings.partition``,
+    which calls it after calculating the indices::
+
     >>> np.strings.partition(x, " ")
     (array(['Numpy'], dtype='<U5'),
-     array([ True]),
+     array([' '], dtype='<U1'),
      array(['is nice!'], dtype='<U8'))
 
     """)
 
 add_newdoc('numpy._core.umath', '_rpartition',
     """
-    Partition (split) each element around the right-most separator.
+    Partition each element around the right-most separator.
 
     For each element in ``x1``, split the element at the last
-    occurrence of ``x2``, and return a 3-tuple containing the part
-    before the separator, the separator itself, and the part after
-    the separator. If the separator is not found, the third item of
-    the tuple will contain the whole string, and the first and second
-    ones will be the empty string.
+    occurrence of ``x2`` at location ``x3``, and return a 3-tuple
+    containing the part before the separator, the separator itself,
+    and the part after the separator. If the separator is not found,
+    the third item of the tuple will contain the whole string, and
+    the first and second ones will be the empty string.
 
     Parameters
     ----------
@@ -5091,7 +5096,8 @@ add_newdoc('numpy._core.umath', '_rpartition',
     x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
         Separator to split each string element in ``x1``.
     x3 : array-like, with any integer dtype
-        The indices of the separator
+        The indices of the separator (<0 to indicate the separator is not
+        present).
 
     Returns
     -------
@@ -5110,9 +5116,13 @@ add_newdoc('numpy._core.umath', '_rpartition',
     Examples
     --------
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+
+    The ufunc is used most easily via ``np.strings.rpartition``,
+    which calls it after calculating the indices::
+
     >>> np.strings.rpartition(a, 'A')
     (array(['aAaAa', '  a', 'abB'], dtype='<U5'),
-     array([ True,  True,  True]),
+     array(['A', 'A', 'A'], dtype='<U1'),
      array(['', '  ', 'Bba'], dtype='<U3'))
 
     """)

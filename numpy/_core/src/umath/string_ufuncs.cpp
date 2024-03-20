@@ -1028,55 +1028,18 @@ string_partition_resolve_descriptors(
         PyArray_Descr *loop_descrs[3],
         npy_intp *NPY_UNUSED(view_offset))
 {
-    if (given_descrs[3] == NULL) {
+    if (!given_descrs[3] || !given_descrs[4] || !given_descrs[5]) {
         PyErr_SetString(
             PyExc_TypeError,
             "The 'out' kwarg is necessary. Use numpy.strings without it.");
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
 
-    if (given_descrs[4] == NULL) {
-        PyErr_SetString(
-            PyExc_TypeError,
-            "The 'out' kwarg is necessary. Use numpy.strings without it.");
-        return _NPY_ERROR_OCCURRED_IN_CAST;
-    }
-
-    if (given_descrs[5] == NULL) {
-        PyErr_SetString(
-            PyExc_TypeError,
-            "The 'out' kwarg is necessary. Use numpy.strings without it.");
-        return _NPY_ERROR_OCCURRED_IN_CAST;
-    }
-
-    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
-    if (loop_descrs[0] == NULL) {
-        return _NPY_ERROR_OCCURRED_IN_CAST;
-    }
-
-    loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
-    if (loop_descrs[1] == NULL) {
-        return _NPY_ERROR_OCCURRED_IN_CAST;
-    }
-
-    loop_descrs[2] = NPY_DT_CALL_ensure_canonical(given_descrs[2]);
-    if (loop_descrs[2] == NULL) {
-        return _NPY_ERROR_OCCURRED_IN_CAST;
-    }
-
-    loop_descrs[3] = NPY_DT_CALL_ensure_canonical(given_descrs[3]);
-    if (loop_descrs[3] == NULL) {
-        return _NPY_ERROR_OCCURRED_IN_CAST;
-    }
-
-    loop_descrs[4] = NPY_DT_CALL_ensure_canonical(given_descrs[4]);
-    if (loop_descrs[4] == NULL) {
-        return _NPY_ERROR_OCCURRED_IN_CAST;
-    }
-
-    loop_descrs[5] = NPY_DT_CALL_ensure_canonical(given_descrs[5]);
-    if (loop_descrs[5] == NULL) {
-        return _NPY_ERROR_OCCURRED_IN_CAST;
+    for (int i = 0; i < 6; i++) {
+        loop_descrs[i] = NPY_DT_CALL_ensure_canonical(given_descrs[i]);
+        if (!loop_descrs[i]) {
+            return _NPY_ERROR_OCCURRED_IN_CAST;
+        }
     }
 
     return NPY_NO_CASTING;

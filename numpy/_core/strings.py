@@ -1354,7 +1354,7 @@ def partition(a, sep):
     >>> x = np.array(["Numpy is nice!"])
     >>> np.strings.partition(x, " ")
     (array(['Numpy'], dtype='<U5'),
-     array([ True]),
+     array([' '], dtype='<U1'),
      array(['is nice!'], dtype='<U8'))
 
     """
@@ -1371,13 +1371,13 @@ def partition(a, sep):
     buffersizes1 = np.where(not_found, a_len, pos)
     buffersizes3 = np.where(not_found, 0, a_len - pos - sep_len)
 
-    out_dtype1 = f"{a.dtype.char}{buffersizes1.max()}"
-    out1 = np.empty_like(a, shape=shape, dtype=out_dtype1)
-    out_dtype2 = f"{a.dtype.char}{0 if np.all(not_found) else sep_len.max()}"
-    out2 = np.empty_like(a, shape=shape, dtype=out_dtype2)
-    out_dtype3 = f"{a.dtype.char}{buffersizes3.max()}"
-    out3 = np.empty_like(a, shape=shape, dtype=out_dtype3)
-    return _partition(a, sep, pos, out=(out1, out2, out3))
+    out_dtype = ",".join([f"{a.dtype.char}{n}" for n in (
+        buffersizes1.max(),
+        1 if np.all(not_found) else sep_len.max(),
+        buffersizes3.max(),
+    )])
+    out = np.empty_like(a, shape=shape, dtype=out_dtype)
+    return _partition(a, sep, pos, out=(out["f0"], out["f1"], out["f2"]))
 
 
 def rpartition(a, sep):
@@ -1417,7 +1417,7 @@ def rpartition(a, sep):
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.rpartition(a, 'A')
     (array(['aAaAa', '  a', 'abB'], dtype='<U5'),
-     array([ True,  True,  True]),
+     array(['A', 'A', 'A'], dtype='<U1'),
      array(['', '  ', 'Bba'], dtype='<U3'))
 
     """
@@ -1434,14 +1434,13 @@ def rpartition(a, sep):
     buffersizes1 = np.where(not_found, 0, pos)
     buffersizes3 = np.where(not_found, a_len, a_len - pos - sep_len)
 
-    out_dtype1 = f"{a.dtype.char}{buffersizes1.max()}"
-    out1 = np.empty_like(a, shape=shape, dtype=out_dtype1)
-    out_dtype2 = f"{a.dtype.char}{0 if np.all(not_found) else sep_len.max()}"
-    out2 = np.empty_like(a, shape=shape, dtype=out_dtype2)
-    out_dtype3 = f"{a.dtype.char}{buffersizes3.max()}"
-    out3 = np.empty_like(a, shape=shape, dtype=out_dtype3)
-
-    return _rpartition(a, sep, pos, out=(out1, out2, out3))
+    out_dtype = ",".join([f"{a.dtype.char}{n}" for n in (
+        buffersizes1.max(),
+        1 if np.all(not_found) else sep_len.max(),
+        buffersizes3.max(),
+    )])
+    out = np.empty_like(a, shape=shape, dtype=out_dtype)
+    return _rpartition(a, sep, pos, out=(out["f0"], out["f1"], out["f2"]))
 
 
 def translate(a, table, deletechars=None):
