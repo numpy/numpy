@@ -5035,11 +5035,10 @@ add_newdoc('numpy._core.umath', '_partition',
 
     For each element in ``x1``, split the element at the first
     occurrence of ``x2``, and return a 3-tuple containing the part
-    before the separator, a boolean signifying whether the separator
-    was found, and the part after the separator. If the separator is
-    not found, the first part will contain the whole string,
-    the boolean will be false, and the third part will be the empty
-    string.
+    before the separator, the separator itself, and the part after
+    the separator. If the separator is not found, the first item of
+    the tuple will contain the whole string, and the second and third
+    ones will be the empty string.
 
     Parameters
     ----------
@@ -5047,15 +5046,18 @@ add_newdoc('numpy._core.umath', '_partition',
         Input array
     x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
         Separator to split each string element in ``x1``.
+    x3 : array-like, with any integer dtype
+        The indices of the separator
 
     Returns
     -------
     out : 3-tuple:
-        - ``StringDType``, ``bytes_`` or ``str_`` dtype string with the part
-          before the separator
-        - ``bool_`` dtype, whether the separator was found
-        - ``StringDType``, ``bytes_`` or ``str_`` dtype string with the part
-          after the separator
+        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+          part before the separator
+        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+          separator
+        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+          part after the separator
 
     See Also
     --------
@@ -5075,13 +5077,12 @@ add_newdoc('numpy._core.umath', '_rpartition',
     """
     Partition (split) each element around the right-most separator.
 
-    For each element in ``x1``, split the element at the first
+    For each element in ``x1``, split the element at the last
     occurrence of ``x2``, and return a 3-tuple containing the part
-    before the separator, a boolean signifying whether the separator
-    was found, and the part after the separator. If the separator is
-    not found, the first part will contain the whole string,
-    the boolean will be false, and the third part will be the empty
-    string.
+    before the separator, the separator itself, and the part after
+    the separator. If the separator is not found, the third item of
+    the tuple will contain the whole string, and the first and second
+    ones will be the empty string.
 
     Parameters
     ----------
@@ -5089,15 +5090,18 @@ add_newdoc('numpy._core.umath', '_rpartition',
         Input array
     x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
         Separator to split each string element in ``x1``.
+    x3 : array-like, with any integer dtype
+        The indices of the separator
 
     Returns
     -------
     out : 3-tuple:
-        - ``StringDType``, ``bytes_`` or ``str_`` dtype string with the part
-          before the separator
-        - ``bool_`` dtype, whether the separator was found
-        - ``StringDType``, ``bytes_`` or ``str_`` dtype string with the part
-          after the separator
+        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+          part before the separator
+        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+          separator
+        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+          part after the separator
 
     See Also
     --------

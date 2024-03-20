@@ -1301,12 +1301,12 @@ defdict = {
           None,
           ),
 '_partition':
-    Ufunc(2, 3, None,
+    Ufunc(3, 3, None,
           docstrings.get('numpy._core.umath._partition'),
           None,
           ),
 '_rpartition':
-    Ufunc(2, 3, None,
+    Ufunc(3, 3, None,
           docstrings.get('numpy._core.umath._rpartition'),
           None,
           ),

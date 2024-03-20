@@ -1594,10 +1594,10 @@ string_zfill(Buffer<enc> buf, npy_int64 width, Buffer<enc> out)
 
 
 template <ENCODING enc>
-static inline npy_bool
-string_partition(Buffer<enc> buf1, Buffer<enc> buf2,
-                 Buffer<enc> out1, Buffer<enc> out2,
-                 npy_intp *final_len1, npy_intp *final_len2,
+static inline void
+string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
+                 Buffer<enc> out1, Buffer<enc> out2, Buffer<enc> out3,
+                 npy_intp *final_len1, npy_intp *final_len2, npy_intp *final_len3,
                  STARTPOSITION pos)
 {
     size_t len1 = buf1.num_codepoints();
@@ -1605,51 +1605,30 @@ string_partition(Buffer<enc> buf1, Buffer<enc> buf2,
 
     if (len2 == 0) {
         npy_gil_error(PyExc_ValueError, "empty separator");
-        *final_len1 = *final_len2 = -1;
-        return false;
-    }
-
-    if (len1 < len2) {
-        buf1.buffer_memcpy(out1, len1);
-        *final_len1 = len1;
-        *final_len2 = 0;
-        return false;
-    }
-
-    npy_intp idx;
-    switch(enc) {
-        case ENCODING::UTF8:
-            assert(0); // TODO
-            break;
-        case ENCODING::ASCII:
-            idx = fastsearch(buf1.buf, len1, buf2.buf, len2, -1,
-                             pos == STARTPOSITION::FRONT ? FAST_SEARCH : FAST_RSEARCH);
-            break;
-        case ENCODING::UTF32:
-            idx = fastsearch((npy_ucs4 *)buf1.buf, len1, (npy_ucs4 *)buf2.buf, len2, -1,
-                             pos == STARTPOSITION::FRONT ? FAST_SEARCH : FAST_RSEARCH);
-            break;
+        *final_len1 = *final_len2 = *final_len3 = -1;
+        return;
     }
 
     if (idx < 0) {
         if (pos == STARTPOSITION::FRONT) {
             buf1.buffer_memcpy(out1, len1);
             *final_len1 = len1;
-            *final_len2 = 0;
+            *final_len2 = *final_len3 = 0;
         }
         else {
-            buf1.buffer_memcpy(out2, len1);
-            *final_len1 = 0;
-            *final_len2 = len1;
+            buf1.buffer_memcpy(out3, len1);
+            *final_len1 = *final_len2 = 0;
+            *final_len3 = len;
         }
-        return false;
+        return;
     }
 
     buf1.buffer_memcpy(out1, idx);
     *final_len1 = idx;
-    (buf1 + idx + len2).buffer_memcpy(out2, len1 - idx - len2);
-    *final_len2 = len1 - idx - len2;
-    return true;
+    buf2.buffer_memcpy(out2, len2);
+    *final_len2 = len2;
+    (buf1 + idx + len2).buffer_memcpy(out3, len1 - idx - len2);
+    *final_len3 = len1 - idx - len2;
 }
 
 

@@ -1323,11 +1323,10 @@ def partition(a, sep):
 
     For each element in ``a``, split the element at the first
     occurrence of ``sep``, and return a 3-tuple containing the part
-    before the separator, a boolean signifying whether the separator
-    was found, and the part after the separator. If the separator is
-    not found, the first part will contain the whole string,
-    the boolean will be false, and the third part will be the empty
-    string.
+    before the separator, the separator itself, and the part after
+    the separator. If the separator is not found, the first item of
+    the tuple will contain the whole string, and the second and third
+    ones will be the empty string.
 
     Parameters
     ----------
@@ -1338,13 +1337,13 @@ def partition(a, sep):
 
     Returns
     -------
-    out : ndarray
-        3-tuple:
-        - ``StringDType``, ``bytes_`` or ``str_`` dtype string with the part
-          before the separator
-        - ``bool_`` dtype, whether the separator was found
-        - ``StringDType``, ``bytes_`` or ``str_`` dtype string with the part
-          after the separator
+    out : 3-tuple:
+        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+          part before the separator
+        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+          separator
+        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+          part after the separator
 
     See Also
     --------
@@ -1367,26 +1366,30 @@ def partition(a, sep):
 
     a_len = str_len(a)
     sep_len = str_len(sep)
-    buffersizes1 = np.where(pos < 0, a_len, pos)
-    buffersizes2 = np.where(pos < 0, 0, a_len - pos - sep_len)
+
+    not_found = pos < 0
+    buffersizes1 = np.where(not_found, a_len, pos)
+    buffersizes3 = np.where(not_found, 0, a_len - pos - sep_len)
+
     out_dtype1 = f"{a.dtype.char}{buffersizes1.max()}"
     out1 = np.empty_like(a, shape=shape, dtype=out_dtype1)
-    out_dtype2 = f"{a.dtype.char}{buffersizes2.max()}"
+    out_dtype2 = f"{a.dtype.char}{0 if np.all(not_found) else sep_len.max()}"
     out2 = np.empty_like(a, shape=shape, dtype=out_dtype2)
-    return _partition(a, sep, out=(out1, None, out2))
+    out_dtype3 = f"{a.dtype.char}{buffersizes3.max()}"
+    out3 = np.empty_like(a, shape=shape, dtype=out_dtype3)
+    return _partition(a, sep, pos, out=(out1, out2, out3))
 
 
 def rpartition(a, sep):
     """
     Partition (split) each element around the right-most separator.
 
-    For each element in ``a``, split the element at the first
+    For each element in ``a``, split the element at the last
     occurrence of ``sep``, and return a 3-tuple containing the part
-    before the separator, a boolean signifying whether the separator
-    was found, and the part after the separator. If the separator is
-    not found, the first part will contain the whole string,
-    the boolean will be false, and the third part will be the empty
-    string.
+    before the separator, the separator itself, and the part after
+    the separator. If the separator is not found, the third item of
+    the tuple will contain the whole string, and the first and second
+    ones will be the empty string.
 
     Parameters
     ----------
@@ -1398,11 +1401,12 @@ def rpartition(a, sep):
     Returns
     -------
     out : 3-tuple:
-        - ``StringDType``, ``bytes_`` or ``str_`` dtype string with the part
-          before the separator
-        - ``bool_`` dtype, whether the separator was found
-        - ``StringDType``, ``bytes_`` or ``str_`` dtype string with the part
-          after the separator
+        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+          part before the separator
+        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+          separator
+        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+          part after the separator
 
     See Also
     --------
@@ -1425,13 +1429,19 @@ def rpartition(a, sep):
 
     a_len = str_len(a)
     sep_len = str_len(sep)
-    buffersizes1 = np.where(pos < 0, 0, pos)
-    buffersizes2 = np.where(pos < 0, a_len, a_len - pos - sep_len)
+
+    not_found = pos < 0
+    buffersizes1 = np.where(not_found, 0, pos)
+    buffersizes3 = np.where(not_found, a_len, a_len - pos - sep_len)
+
     out_dtype1 = f"{a.dtype.char}{buffersizes1.max()}"
     out1 = np.empty_like(a, shape=shape, dtype=out_dtype1)
-    out_dtype2 = f"{a.dtype.char}{buffersizes2.max()}"
+    out_dtype2 = f"{a.dtype.char}{0 if np.all(not_found) else sep_len.max()}"
     out2 = np.empty_like(a, shape=shape, dtype=out_dtype2)
-    return _rpartition(a, sep, out=(out1, None, out2))
+    out_dtype3 = f"{a.dtype.char}{buffersizes3.max()}"
+    out3 = np.empty_like(a, shape=shape, dtype=out_dtype3)
+
+    return _rpartition(a, sep, pos, out=(out1, out2, out3))
 
 
 def translate(a, table, deletechars=None):
