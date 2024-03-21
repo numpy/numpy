@@ -476,12 +476,8 @@ NPY_NO_EXPORT void
 {
     if (steps[1]==0) {
         // stride for second argument is 0
-        char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];
-        npy_intp is1 = steps[0], os1 = steps[2];
-        npy_intp n = dimensions[0];
-        npy_intp i;
-
-        @type@ in2 = *(@type@ *)ip2;
+        BINARY_DEFS_ZERO_STRIDE
+        const @type@ in2 = *(@type@ *)ip2;
         #if @SIGNED@
                 if (in2 < 0) {
                     npy_gil_error(PyExc_ValueError,
@@ -490,34 +486,25 @@ NPY_NO_EXPORT void
                 }
         #endif
 
-        if (in2==2) {
-            for(i = 0; i < n; i++, ip1 += is1, op1 += os1) {
-                    @type@ in1 = *(@type@ *)ip1;
+        int first_bit = in2 & 1;
+        @type@ in2start = in2 >> 1;
 
-                    *((@type@ *) op1) = in1 * in1;
+        BINARY_LOOP_SLIDING_ZERO_STRIDE {
+            @type@ in1 = *(@type@ *)ip1;
+            @type@ var = in2start;
+            @type@ out;
+
+            out = first_bit ? in1 : 1;
+            while (var > 0) {
+                in1 *= in1;
+                if (var & 1) {
+                    out *= in1;
                 }
-                return;
-        } else {
-            int first_bit = in2 & 1;
-            @type@ in2start = in2 >> 1;
-
-            for(i = 0; i < n; i++, ip1 += is1, op1 += os1) {
-                @type@ in1 = *(@type@ *)ip1;
-                @type@ var = in2start;
-                @type@ out;
-
-                out = first_bit ? in1 : 1;
-                while (var > 0) {
-                    in1 *= in1;
-                    if (var & 1) {
-                        out *= in1;
-                    }
-                    var >>= 1;
-                }
-                *((@type@ *) op1) = out;
+                var >>= 1;
             }
-        return;
+            *((@type@ *) op1) = out;
         }
+        return;
     }
     BINARY_LOOP {
         @type@ in1 = *(@type@ *)ip1;
