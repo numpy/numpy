@@ -25,7 +25,6 @@ PyObject* unique(PyArrayObject *self)
     NpyIter* iter;
     NpyIter_IterNextFunc *iternext;
     char** dataptr;
-    size_t i;
     npy_intp* strideptr,* innersizeptr;
     std::unordered_map<T, char> hashmap;
 
@@ -62,7 +61,9 @@ PyObject* unique(PyArrayObject *self)
 
     // then we iterate through the map's keys to get the unique values
     T* res = new T[hashmap.size()];
-    for (auto it = hashmap.begin(), i = 0; it != hashmap.end(); it++, i++) {
+    auto it = hashmap.begin();
+    size_t i = 0;
+    for (; it != hashmap.end(); it++, i++) {
         res[i] = it->first;
     }
 
