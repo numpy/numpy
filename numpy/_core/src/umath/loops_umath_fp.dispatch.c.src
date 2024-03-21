@@ -226,6 +226,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
  *  #type = npy_double, npy_float#
  *  #vsub = , f#
  *  #sfx  = f64, f32#
+ *  #sqrt  = sqrt, sqrtf#
  */
 /**begin repeat1
  *  #func = power#
@@ -242,6 +243,13 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
             BINARY_LOOP_SLIDING_ZERO_STRIDE {
                 const @type@ in1 = *(@type@ *)ip1;
                 *(@type@ *)op1 = in1 * in1;
+            }
+            return;
+        }
+        else if (in2 == 0.5) {
+            BINARY_LOOP_SLIDING_ZERO_STRIDE {
+                const @type@ in1 = *(@type@ *)ip1;
+                *(@type@ *)op1 =@sqrt@(in1);
             }
             return;
         }
