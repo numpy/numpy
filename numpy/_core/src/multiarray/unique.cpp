@@ -85,7 +85,7 @@ PyObject* unique(PyArrayObject *self)
 
 // this map contains the functions used for each item size.
 typedef std::function<PyObject *(PyArrayObject *)> function_type;
-std::unordered_map<uint, function_type> unique_funcs = {
+std::unordered_map<size_t, function_type> unique_funcs = {
     {sizeof(npy_uint8), unique<npy_uint8>},
     {sizeof(npy_uint16), unique<npy_uint16>},
     {sizeof(npy_uint32), unique<npy_uint32>},
