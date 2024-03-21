@@ -3,18 +3,25 @@
 #include <Python.h>
 
 #include <unordered_map>
-#include <iostream>
-
-#include "numpy/ndarraytypes.h"
+#include <functional>
 
 #include "numpy/arrayobject.h"
 #include "numpy/npy_common.h"
 
-#include "numpy/npy_2_compat.h"
 
 template<typename T>
 PyObject* unique(PyArrayObject *self)
 {
+    /* This function takes a numpy array and returns a numpy array containing
+    the unique values.
+
+    It assumes the numpy array includes data that can be viewed as unsigned integers
+    of a certain size (sizeof(T)).
+
+    It doesn't need to know the actual type, since it needs to find unique values
+    among binary representations of the input data. This means it won't apply to
+    custom or complicated dtypes or string values.
+    */
     NpyIter* iter;
     NpyIter_IterNextFunc *iternext;
     char** dataptr;
@@ -40,6 +47,7 @@ PyObject* unique(PyArrayObject *self)
     strideptr = NpyIter_GetInnerStrideArray(iter);
     innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
 
+    // first we put the data in a hash map
     do {
         char* data = *dataptr;
         npy_intp stride = *strideptr;
@@ -52,6 +60,7 @@ PyObject* unique(PyArrayObject *self)
     } while(iternext(iter));
     NpyIter_Deallocate(iter);
 
+    // then we iterate through the map's keys to get the unique values
     T* res = new T[hashmap.size()];
     for (auto it = hashmap.begin(), i = 0; it != hashmap.end(); it++, i++) {
         res[i] = it->first;
@@ -73,9 +82,26 @@ PyObject* unique(PyArrayObject *self)
     );
 }
 
+
+// this map contains the functions used for each item size.
+typedef std::function<PyObject *(PyArrayObject *)> function_type;
+std::unordered_map<uint, function_type> unique_funcs = {
+    {sizeof(npy_uint8), unique<npy_uint8>},
+    {sizeof(npy_uint16), unique<npy_uint16>},
+    {sizeof(npy_uint32), unique<npy_uint32>},
+    {sizeof(npy_uint64), unique<npy_uint64>},
+};
+
+
 static PyObject *
 PyArray_Unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
+    /* This is called from Python space, and expects a single numpy array as input.
+
+    It then returns a numpy array containing the unique values of the input array.
+
+    If the input array is not supported, it returns None.
+    */
     PyArrayObject *self = NULL;
     PyObject *res = NULL;
     if (!PyArg_ParseTuple(args, "O&", PyArray_Converter, &self))
@@ -95,31 +121,29 @@ PyArray_Unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
 
     itemsize = PyArray_ITEMSIZE(self);
+    PyArray_Descr *descr = PyArray_DESCR(self);
+    char kind = descr->kind;
+    // we only support booleans, integers, unsigned integers, and floats
+    // we also only support data sizes present in our unique_funcs map
+    if (
+        (kind != 'b' && kind != 'i' && kind != 'u' && kind !='f')
+        || (unique_funcs.find(itemsize) == unique_funcs.end())
+    ){
+        Py_XDECREF(self);
+        return Py_None;
+    }
+
 
     /* for the purpose of finding unique values on dtypes that we support, we
     don't really care what dtype it is, and we can look at the data as if they
     were all uint values */
-    if (sizeof(npy_uint8) == itemsize) {
-        res = unique<npy_uint8>(self);
-    } else if (sizeof(npy_uint16) == itemsize) {
-        res = unique<npy_uint16>(self);
-    } else if (sizeof(npy_uint32) == itemsize) {
-        res = unique<npy_uint32>(self);
-    } else if (sizeof(npy_uint64) == itemsize) {
-        res = unique<npy_uint64>(self);
-    // these don't seem to be available?
-    // } else if (sizeof(npy_uint96) == itemsize) {
-    //     unique<npy_uint96>(self);
-    // } else if (sizeof(npy_uint128) == itemsize) {
-    //     unique<npy_uint128>(self);
-    } else {
-        Py_XDECREF(self);
-        return Py_None;
-    }
+    res = unique_funcs[itemsize](self);
     Py_XDECREF(self);
     return res;
 }
 
+
+// The following is to expose the unique function to Python
 static PyMethodDef UniqueMethods[] = {
     {"unique_hash",  PyArray_Unique, METH_VARARGS,
      "Collect unique values via a hash map."},
