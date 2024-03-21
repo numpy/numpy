@@ -2103,6 +2103,7 @@ add_promoter(PyObject *numpy, const char *ufunc_name,
     PyObject *DType_tuple = PyTuple_New(n_dtypes);
 
     for (size_t i=0; i<n_dtypes; i++) {
+        Py_INCREF((PyObject *)dtypes[i]);
         PyTuple_SET_ITEM(DType_tuple, i, (PyObject *)dtypes[i]);
     }
 
@@ -2336,14 +2337,34 @@ init_stringdtype_ufuncs(PyObject *umath)
         return -1;
     }
 
+    INIT_MULTIPLY(Int8, int8);
+    INIT_MULTIPLY(Int16, int16);
+    INIT_MULTIPLY(Int32, int32);
     INIT_MULTIPLY(Int64, int64);
+    INIT_MULTIPLY(UInt8, uint8);
+    INIT_MULTIPLY(UInt16, uint16);
+    INIT_MULTIPLY(UInt32, uint32);
     INIT_MULTIPLY(UInt64, uint64);
-
-    // all other integer dtypes are handled with a generic promoter
+#if NPY_SIZEOF_BYTE == NPY_SIZEOF_SHORT
+    INIT_MULTIPLY(Byte, byte);
+    INIT_MULTIPLY(UByte, ubyte);
+#endif
+#if NPY_SIZEOF_SHORT == NPY_SIZEOF_INT
+    INIT_MULTIPLY(Short, short);
+    INIT_MULTIPLY(UShort, ushort);
+#endif
+#if NPY_SIZEOF_INT == NPY_SIZEOF_LONG
+    INIT_MULTIPLY(Long, long);
+    INIT_MULTIPLY(ULong, ulong);
+#endif
+#if NPY_SIZEOF_LONGLONG == NPY_SIZEOF_LONG
+    INIT_MULTIPLY(LongLong, longlong);
+    INIT_MULTIPLY(ULongLong, ulonglong);
+#endif
 
     PyArray_DTypeMeta *rdtypes[] = {
         &PyArray_StringDType,
-        (PyArray_DTypeMeta *)Py_None,
+        &PyArray_PyIntAbstractDType,
         &PyArray_StringDType};
 
     if (add_promoter(umath, "multiply", rdtypes, 3, string_multiply_promoter) < 0) {
@@ -2351,7 +2372,7 @@ init_stringdtype_ufuncs(PyObject *umath)
     }
 
     PyArray_DTypeMeta *ldtypes[] = {
-        (PyArray_DTypeMeta *)Py_None,
+        &PyArray_PyIntAbstractDType,
         &PyArray_StringDType,
         &PyArray_StringDType};
 
