@@ -38,26 +38,30 @@ class UFuncTypeError(TypeError):
 @_display_as_base
 class _UFuncNoLoopError(UFuncTypeError):
     """ Thrown when a ufunc loop cannot be found """
-    def __init__(self, ufunc, dtypes):
+    def __init__(self, ufunc, dtypes, ambiguous_promoter):
         super().__init__(ufunc)
         self.dtypes = tuple(dtypes)
+        self.ambiguous_promoter = ambiguous_promoter
 
     def __str__(self):
-        return (
+        err = (
             "ufunc {!r} did not contain a loop with signature matching types "
-            "{!r} -> {!r}"
+            "{!r} -> {!r}."
         ).format(
             self.ufunc.__name__,
             _unpack_tuple(self.dtypes[:self.ufunc.nin]),
             _unpack_tuple(self.dtypes[self.ufunc.nin:])
         )
+        if self.ambiguous_promoter:
+            err += " (ambiguous promoters found)"
+        return err
 
 
 @_display_as_base
 class _UFuncBinaryResolutionError(_UFuncNoLoopError):
     """ Thrown when a binary resolution fails """
     def __init__(self, ufunc, dtypes):
-        super().__init__(ufunc, dtypes)
+        super().__init__(ufunc, dtypes, False)
         assert len(self.dtypes) == 2
 
     def __str__(self):

@@ -140,6 +140,6 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
                                        int *out_needs_api);
 
 NPY_NO_EXPORT int
-raise_no_loop_found_error(PyUFuncObject *ufunc, PyObject **dtypes);
+raise_no_loop_found_error(PyUFuncObject *ufunc, PyObject **dtypes, int ambiguous_promoter);
 
 #endif

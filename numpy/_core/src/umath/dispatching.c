@@ -447,14 +447,7 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                 PyObject *given = PyArray_TupleFromItems(
                         ufunc->nargs, (PyObject **)op_dtypes, 1);
                 if (given != NULL) {
-                    PyErr_Format(PyExc_RuntimeError,
-                            "Could not find a loop for the inputs:\n    %S\n"
-                            "The two promoters %S and %S matched the input "
-                            "equally well.  Promoters must be designed "
-                            "to be unambiguous.  NOTE: This indicates an error "
-                            "in NumPy or an extending library and should be "
-                            "reported.",
-                            given, best_dtypes, curr_dtypes);
+                    raise_no_loop_found_error(ufunc, (PyObject **)op_dtypes, 1);
                     Py_DECREF(given);
                 }
                 *out_info = NULL;
@@ -1053,7 +1046,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
   handle_error:
     /* We only set the "no loop found error here" */
     if (!PyErr_Occurred()) {
-        raise_no_loop_found_error(ufunc, (PyObject **)op_dtypes);
+        raise_no_loop_found_error(ufunc, (PyObject **)op_dtypes, 0);
     }
     /*
      * Otherwise an error occurred, but if the error was DTypePromotionError
@@ -1063,7 +1056,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
     else if (PyErr_ExceptionMatches(npy_DTypePromotionError)) {
         PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;
         PyErr_Fetch(&err_type, &err_value, &err_traceback);
-        raise_no_loop_found_error(ufunc, (PyObject **)op_dtypes);
+        raise_no_loop_found_error(ufunc, (PyObject **)op_dtypes, 0);
         npy_PyErr_ChainExceptionsCause(err_type, err_value, err_traceback);
     }
     return NULL;

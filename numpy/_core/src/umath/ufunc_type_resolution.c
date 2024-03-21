@@ -106,7 +106,7 @@ raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
  */
 NPY_NO_EXPORT int
 raise_no_loop_found_error(
-        PyUFuncObject *ufunc, PyObject **dtypes)
+        PyUFuncObject *ufunc, PyObject **dtypes, int ambiguous_promoter)
 {
     static PyObject *exc_type = NULL;
 
@@ -122,7 +122,8 @@ raise_no_loop_found_error(
         return -1;
     }
     /* produce an error object */
-    PyObject *exc_value = PyTuple_Pack(2, ufunc, dtypes_tup);
+    PyObject *exc_value = PyTuple_Pack(3, ufunc, dtypes_tup,
+                                       ambiguous_promoter ? Py_True : Py_False);
     Py_DECREF(dtypes_tup);
     if (exc_value == NULL) {
         return -1;
@@ -553,7 +554,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
                     out_dtypes[iop] = PyArray_DESCR(operands[iop]);
                     Py_INCREF(out_dtypes[iop]);
                 }
-                raise_no_loop_found_error(ufunc, (PyObject **)out_dtypes);
+                raise_no_loop_found_error(ufunc, (PyObject **)out_dtypes, 0);
                 for (iop = 0; iop < ufunc->nin; iop++) {
                     Py_DECREF(out_dtypes[iop]);
                     out_dtypes[iop] = NULL;
@@ -1578,7 +1579,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
         types += nargs;
     }
 
-    return raise_no_loop_found_error(ufunc, (PyObject **)dtypes);
+    return raise_no_loop_found_error(ufunc, (PyObject **)dtypes, 0);
 }
 
 
