@@ -68,36 +68,28 @@ cdef extern from "numpy/arrayobject.h":
     ctypedef long double  npy_float128
 
     ctypedef struct npy_cfloat:
-        float real
-        float imag
+        pass
 
     ctypedef struct npy_cdouble:
-        double real
-        double imag
+        pass
 
     ctypedef struct npy_clongdouble:
-        long double real
-        long double imag
+        pass
 
     ctypedef struct npy_complex64:
-        float real
-        float imag
+        pass
 
     ctypedef struct npy_complex128:
-        double real
-        double imag
+        pass
 
     ctypedef struct npy_complex160:
-        long double real
-        long double imag
+        pass
 
     ctypedef struct npy_complex192:
-        long double real
-        long double imag
+        pass
 
     ctypedef struct npy_complex256:
-        long double real
-        long double imag
+        pass
 
     ctypedef struct PyArray_Dims:
         npy_intp *ptr
@@ -562,7 +554,6 @@ cdef extern from "numpy/arrayobject.h":
     object PyArray_ZEROS(int nd, npy_intp* dims, int type, int fortran)
     object PyArray_EMPTY(int nd, npy_intp* dims, int type, int fortran)
     void PyArray_FILLWBYTE(ndarray, int val)
-    npy_intp PyArray_REFCOUNT(object)
     object PyArray_ContiguousFromAny(op, int, int min_depth, int max_depth)
     unsigned char PyArray_EquivArrTypes(ndarray a1, ndarray a2)
     bint PyArray_EquivByteorders(int b1, int b2) nogil
@@ -808,11 +799,10 @@ ctypedef npy_double     float_t
 ctypedef npy_double     double_t
 ctypedef npy_longdouble longdouble_t
 
-ctypedef npy_cfloat      cfloat_t
-ctypedef npy_cdouble     cdouble_t
-ctypedef npy_clongdouble clongdouble_t
-
-ctypedef npy_cdouble     complex_t
+ctypedef float complex       cfloat_t
+ctypedef double complex      cdouble_t
+ctypedef double complex      complex_t
+ctypedef long double complex clongdouble_t
 
 cdef inline object PyArray_MultiIterNew1(a):
     return PyArray_MultiIterNew(1, <void*>a)
@@ -850,6 +840,7 @@ cdef extern from "numpy/ndarraytypes.h":
     ctypedef struct npy_datetimestruct:
         int64_t year
         int32_t month, day, hour, min, sec, us, ps, as
+
 
 cdef extern from "numpy/arrayscalars.h":
 
