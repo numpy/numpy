@@ -447,7 +447,8 @@ class ABCPolyBase(abc.ABC):
         # exponents in this function
         return r'\text{{{}}}'.format(pu.format_float(x, parens=parens))
 
-    def _format_term(self, scalar_format: Callable, mult: str, off: float, scale: float):
+    def _format_term(self, scalar_format: Callable, mult: str,
+                     off: float, scale: float):
         """ Format a single term in the expansion """
         if off == 0 and scale == 1:
             term = self.symbol
