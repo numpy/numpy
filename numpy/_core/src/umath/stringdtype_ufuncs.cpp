@@ -2011,19 +2011,31 @@ string_partition_strided_loop(
             npy_gil_error(PyExc_MemoryError,
                           "Failed to pack string in %s",
                           ((PyUFuncObject *)context->caller)->name);
+            PyMem_RawFree(out1_mem);
+            PyMem_RawFree(out2_mem);
+            PyMem_RawFree(out3_mem);
+            goto fail;
         }
+        PyMem_RawFree(out1_mem);
 
         if (NpyString_pack(out2allocator, o2ps, out2buf.buf, final_len2) < 0) {
             npy_gil_error(PyExc_MemoryError,
                           "Failed to pack string in %s",
                           ((PyUFuncObject *)context->caller)->name);
+            PyMem_RawFree(out2_mem);
+            PyMem_RawFree(out3_mem);
+            goto fail;
         }
+        PyMem_RawFree(out2_mem);
 
         if (NpyString_pack(out3allocator, o3ps, out3buf.buf, final_len3) < 0) {
             npy_gil_error(PyExc_MemoryError,
                           "Failed to pack string in %s",
                           ((PyUFuncObject *)context->caller)->name);
+            PyMem_RawFree(out3_mem);
+            goto fail;
         }
+        PyMem_RawFree(out3_mem);
 
         in1 += in1_stride;
         in2 += in2_stride;
