@@ -458,7 +458,7 @@ class ABCPolyBase(abc.ABC):
             needs_parens = True
         elif off == 0:
             term = ( f"{scalar_format(scale)}"
-                    "{multiplication_symbol}{self.symbol}" )
+                    f"{multiplication_symbol}{self.symbol}" )
             needs_parens = True
         else:
             term = (
