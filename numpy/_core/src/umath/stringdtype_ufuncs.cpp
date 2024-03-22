@@ -2339,6 +2339,18 @@ init_stringdtype_ufuncs(PyObject *umath)
     INIT_MULTIPLY(Int64, int64);
     INIT_MULTIPLY(UInt64, uint64);
 
+    // This is needed so the generic promoters defined after this don't match
+    // for np.multiply(string_array, string_array)
+
+    PyArray_DTypeMeta *hdtypes[] = {
+        &PyArray_StringDType,
+        &PyArray_StringDType,
+        &PyArray_StringDType};
+
+    if (add_promoter(umath, "multiply", hdtypes, 3, string_multiply_promoter) < 0) {
+        return -1;
+    }
+
     // all other integer dtypes are handled with a generic promoter
 
     PyArray_DTypeMeta *rdtypes[] = {

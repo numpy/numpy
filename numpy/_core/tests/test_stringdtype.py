@@ -765,6 +765,12 @@ def test_multiply_reduce():
     assert res == val * np.prod(repeats)
 
 
+def test_multiply_two_string_raises():
+    arr = np.array(["hello", "world"])
+    with pytest.raises(np._core._exceptions._UFuncNoLoopError):
+        np.multiply(arr, arr)
+
+
 @pytest.mark.parametrize("use_out", [True, False])
 @pytest.mark.parametrize("other", [2, [2, 1, 3, 4, 1, 3]])
 @pytest.mark.parametrize(
