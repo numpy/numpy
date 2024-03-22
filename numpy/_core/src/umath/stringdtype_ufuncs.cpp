@@ -2102,14 +2102,14 @@ add_promoter(PyObject *numpy, const char *ufunc_name,
 
     PyObject *DType_tuple = PyTuple_New(n_dtypes);
 
-    for (size_t i=0; i<n_dtypes; i++) {
-        PyTuple_SET_ITEM(DType_tuple, i, (PyObject *)dtypes[i]);
-    }
-
-
     if (DType_tuple == NULL) {
         Py_DECREF(ufunc);
         return -1;
+    }
+
+    for (size_t i=0; i<n_dtypes; i++) {
+        Py_INCREF((PyObject *)dtypes[i]);
+        PyTuple_SET_ITEM(DType_tuple, i, (PyObject *)dtypes[i]);
     }
 
     PyObject *promoter_capsule = PyCapsule_New((void *)promoter_impl,
