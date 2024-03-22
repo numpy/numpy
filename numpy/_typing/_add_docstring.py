@@ -160,11 +160,12 @@ add_newdoc('Array', repr(Array),
     of axes.  If it is important to enforce integer axis sizes, use np.ndarray
     for typing.
 
-    .. versionadded:: 2.0
+    .. versionadded:: 2.1
 
     Examples
     --------
     .. code-block:: python
+
         >>> from typing import NewType
         >>> import numpy as np
         >>> import numpy.typing as npt

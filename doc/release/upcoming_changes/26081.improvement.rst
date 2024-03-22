@@ -1,5 +1,5 @@
 ``ndarray`` Shapes are now covariant and bound
-----------------------------------
+---------------------------------------------------------------
 Static shape typing for ``ndarray`` is a long-term effort that continues 
 with this change.  Array shape can be described with a tuple of ints, but
 both ``TypeVar`` and ``TypeVarTuple`` provide some useful functionality.
@@ -7,7 +7,7 @@ The former allows bounds and type variance, whereas the latter allows
 unpacking.  ``ndarray`` is built with a ``TypeVar``, and this change
 provides the appropriate bounds and variance.  It allows users
 to type check functions that attempt to specify the shape parameter
-as a `NewType`, or functions which rely on the shape being a tuple of ints:
+as a ``NewType``, or functions which rely on the shape being a tuple of ints:
 
 .. code::
 
