@@ -11,12 +11,14 @@ from numpy import (
     int16,
     int32,
     int64,
+    int_,
     long,
-    ulong,
     uint8,
     uint16,
     uint32,
     uint64,
+    uint,
+    ulong,
 )
 from numpy.random.bit_generator import BitGenerator
 from numpy._typing import (
@@ -34,6 +36,7 @@ from numpy._typing import (
     _Int16Codes,
     _Int32Codes,
     _Int64Codes,
+    _IntCodes,
     _LongCodes,
     _ShapeLike,
     _SingleCodes,
@@ -42,6 +45,7 @@ from numpy._typing import (
     _UInt16Codes,
     _UInt32Codes,
     _UInt64Codes,
+    _UIntCodes,
     _ULongCodes,
 )
 
@@ -114,6 +118,7 @@ class RandomState:
         self,
         low: int,
         high: None | int = ...,
+        size: None = ...,
     ) -> int: ...
     @overload
     def randint(  # type: ignore[misc]
@@ -129,8 +134,112 @@ class RandomState:
         low: int,
         high: None | int = ...,
         size: None = ...,
+        dtype: type[np.bool] = ...,
+    ) -> np.bool: ...
+    @overload
+    def randint(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
         dtype: type[int] = ...,
     ) -> int: ...
+    @overload
+    def randint(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[uint8] | type[uint8] | _UInt8Codes | _SupportsDType[dtype[uint8]] = ...,
+    ) -> uint8: ...
+    @overload
+    def randint(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[uint16] | type[uint16] | _UInt16Codes | _SupportsDType[dtype[uint16]] = ...,
+    ) -> uint16: ...
+    @overload
+    def randint(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[uint32] | type[uint32] | _UInt32Codes | _SupportsDType[dtype[uint32]] = ...,
+    ) -> uint32: ...
+    @overload
+    def randint(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[uint] | type[uint] | _UIntCodes | _SupportsDType[dtype[uint]] = ...,
+    ) -> uint: ...
+    @overload
+    def randint(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[ulong] | type[ulong] | _ULongCodes | _SupportsDType[dtype[ulong]] = ...,
+    ) -> ulong: ...
+    @overload
+    def randint(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[uint64] | type[uint64] | _UInt64Codes | _SupportsDType[dtype[uint64]] = ...,
+    ) -> uint64: ...
+    @overload
+    def randint(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[int8] | type[int8] | _Int8Codes | _SupportsDType[dtype[int8]] = ...,
+    ) -> int8: ...
+    @overload
+    def randint(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[int16] | type[int16] | _Int16Codes | _SupportsDType[dtype[int16]] = ...,
+    ) -> int16: ...
+    @overload
+    def randint(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[int32] | type[int32] | _Int32Codes | _SupportsDType[dtype[int32]] = ...,
+    ) -> int32: ...
+    @overload
+    def randint(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[int_] | type[int_] | _IntCodes | _SupportsDType[dtype[int_]] = ...,
+    ) -> int_: ...
+    @overload
+    def randint(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[long] | type[long] | _LongCodes | _SupportsDType[dtype[long]] = ...,
+    ) -> long: ...
+    @overload
+    def randint(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[int64] | type[int64] | _Int64Codes | _SupportsDType[dtype[int64]] = ...,
+    ) -> int64: ...
     @overload
     def randint(  # type: ignore[misc]
         self,
