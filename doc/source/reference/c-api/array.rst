@@ -3858,6 +3858,7 @@ To solve this, NumPy provides the following pattern that the the main
 file is modified to define ``PY_ARRAY_UNIQUE_SYMBOL`` before the include:
 
 .. code-block:: c
+
     /* Main module file */
     #define PY_ARRAY_UNIQUE_SYMBOL MyModule
     #include "numpy/ndarrayobject.h"
@@ -3953,7 +3954,7 @@ the C-API is needed then some additional steps must be taken.
     ``PyArray_ImportNumPyAPI()`` is preferable for custom error checking.
     You may also see use of ``_import_array()`` (a function, not
     a macro, but you may want to raise a better error if it fails) and
-    the variations ``import_array1(ret)`` which customizes the return value. 
+    the variations ``import_array1(ret)`` which customizes the return value.
 
 .. c:macro:: PY_ARRAY_UNIQUE_SYMBOL
 
