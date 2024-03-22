@@ -3834,7 +3834,7 @@ For the typical Python project, multiple C or C++ files will be compiled into
 a single shared object (the Python C-module) and ``PyArray_ImportNumPyAPI()``
 should be called inside it's module initialization.
 
-When you have a single C-file, this will consist of::
+When you have a single C-file, this will consist of:
 
 .. code-block:: c
 
@@ -3917,7 +3917,7 @@ are defined:
   by other files which are linked.
 * If ``NO_IMPORT_ARRAY`` is defined, the table is declared as
   ``extern void **``, meaning that it must be linked to a file which does not
-  use ``NO_IMPORT_ARRAY`.
+  use ``NO_IMPORT_ARRAY``.
 
 The ``PY_ARRAY_UNIQUE_SYMBOL`` mechanism additionally mangles the names to
 avoid conflicts.
