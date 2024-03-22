@@ -2,7 +2,15 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Collection, Callable, Sequence
-from typing import Any, Protocol, Union, TypeVar, runtime_checkable
+from typing import (
+    Any,
+    Protocol,
+    Union,
+    TYPE_CHECKING,
+    TypeVar,
+    TypeVarTuple,
+    runtime_checkable
+)
 
 import numpy as np
 from numpy import (
@@ -30,6 +38,11 @@ _DType = TypeVar("_DType", bound=dtype[Any])
 _DType_co = TypeVar("_DType_co", covariant=True, bound=dtype[Any])
 
 NDArray = ndarray[Any, dtype[_ScalarType_co]]
+_ShapeTypeTuple = TypeVarTuple("_ShapeTypeTuple")
+if TYPE_CHECKING or sys.version_info >= (3, 11):
+    Array = ndarray[tuple[*_ShapeTypeTuple], dtype[_ScalarType_co]]
+else:
+    Array = NDArray
 
 # The `_SupportsArray` protocol only cares about the default dtype
 # (i.e. `dtype=None` or no `dtype` parameter at all) of the to-be returned
