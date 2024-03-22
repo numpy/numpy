@@ -1615,7 +1615,7 @@ string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
     else {
         len1 = buf1.num_codepoints();
         len2 = buf2.num_codepoints();
-        offset = (size_t)idx;
+        offset = idx;
     }
 
     if (len2 == 0) {
