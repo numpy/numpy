@@ -155,8 +155,8 @@ python_builtins_are_known_scalar_types(
 
 NPY_NO_EXPORT int
 dtypemeta_wrap_legacy_descriptor(
-        _PyArray_LegacyDescr *descr, PyArray_ArrFuncs *arr_funcs,
-        const char *name, const char *alias);
+    _PyArray_LegacyDescr *descr, PyArray_ArrFuncs *arr_funcs,
+    PyTypeObject *dtype_super_class, const char *name, const char *alias);
 
 NPY_NO_EXPORT void
 initialize_legacy_dtypemeta_aliases(_PyArray_LegacyDescr **_builtin_descrs);
