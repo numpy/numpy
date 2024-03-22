@@ -144,25 +144,25 @@ PyArray_Unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
 }
 
 
-// The following is to expose the unique function to Python
-static PyMethodDef UniqueMethods[] = {
-    {"unique_hash",  PyArray_Unique, METH_VARARGS,
-     "Collect unique values via a hash map."},
-    {NULL, NULL, 0, NULL}
-};
+// // The following is to expose the unique function to Python
+// static PyMethodDef UniqueMethods[] = {
+//     {"unique_hash",  PyArray_Unique, METH_VARARGS,
+//      "Collect unique values via a hash map."},
+//     {NULL, NULL, 0, NULL}
+// };
 
-static struct PyModuleDef uniquemodule = {
-    PyModuleDef_HEAD_INIT,
-    "unique", /* name of module */
-    NULL, /* module docs */
-    -1,  /* size of per-interpreter state of the module,
-            or -1 if the module keeps state in global variables. */
-    UniqueMethods
-};
+// static struct PyModuleDef uniquemodule = {
+//     PyModuleDef_HEAD_INIT,
+//     "_multiarray_umath", /* name of module */
+//     NULL, /* module docs */
+//     -1,  /* size of per-interpreter state of the module,
+//             or -1 if the module keeps state in global variables. */
+//     UniqueMethods
+// };
 
-PyMODINIT_FUNC
-PyInit_unique(void)
-{
-    PyArray_ImportNumPyAPI();
-    return PyModule_Create(&uniquemodule);
-}
+// PyMODINIT_FUNC
+// PyInit_unique(void)
+// {
+//     PyArray_ImportNumPyAPI();
+//     return PyModule_Create(&uniquemodule);
+// }
