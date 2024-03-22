@@ -1380,8 +1380,8 @@ _FlexDType = TypeVar("_FlexDType", bound=dtype[flexible])
 
 # TODO: Set the `bound` to something more suitable once we
 # have proper shape support
-_ShapeType = TypeVar("_ShapeType", covariant=True, bound=Any)
-_ShapeType2 = TypeVar("_ShapeType2", covariant=True, bound=Any)
+_ShapeType = TypeVar("_ShapeType", covariant=True, bound=tuple[int, ...])
+_ShapeType2 = TypeVar("_ShapeType2", covariant=True, bound=tuple[int, ...])
 _NumberType = TypeVar("_NumberType", bound=number[Any])
 
 if sys.version_info >= (3, 12):
