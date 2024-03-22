@@ -1,10 +1,13 @@
-Shapes are now covariant
-------------------------
-When ``ndarray`` was made generic, more details and implementation were
-left to future development.  While it was recognized that shape was inherently
-a tuple (and thus covariant), development towards ``TypeVarTuple`` does not
-yet allow bounds or variance.  This change allows user code to type check in
-functions that attempt to specify the shape parameter:
+``ndarray`` Shapes are now covariant and bound
+----------------------------------
+Static shape typing for ``ndarray`` is a long-term effort that continues 
+with this change.  Array shape can be described with a tuple of ints, but
+both ``TypeVar`` and ``TypeVarTuple`` provide some useful functionality.
+The former allows bounds and type variance, whereas the latter allows
+unpacking.  ``ndarray`` is built with a ``TypeVar``, and this change
+provides the appropriate bounds and variance.  It allows users
+to type check functions that attempt to specify the shape parameter
+as a `NewType`, or functions which rely on the shape being a tuple of ints:
 
 .. code::
 
@@ -16,6 +19,26 @@ functions that attempt to specify the shape parameter:
 
    arr: np.ndarray[tuple[Time, Series], Any] = np.arange(4.0).reshape((2, 2))
 
-   def foo(a: np.ndarray[tuple[int, ...], Any]) -> None: ...
+   def check_shape(a: np.ndarray[tuple[int, ...], Any]) -> bool: ...
 
-   foo(arr)
+   check_shape(arr)
+
+   reveal_type(arr.shape)  # tuple[Time, Series]
+
+This PR also provides the ``np.typing.Array`` type alias in the style of
+``NDArray``.  It allows specifying a shaped array with simpler dtype syntax.
+By relying on ``TypeVarTuple``, it also allows typing functions that change
+the number of axes:
+
+.. code::
+
+   from typing import TypeVarTuple, Any
+   import numpy as np
+   from numpy.typing import Array
+
+   arr = cast(Array[int, int, Any], np.arange(4.0).reshape((2, 2)))
+   Ts = TypeVarTuple("Ts")
+
+   def stack(a: Array[*Ts, Any]) -> Array[int, *Ts, Any]: ...
+
+   stack(arr)
