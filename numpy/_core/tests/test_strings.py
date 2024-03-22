@@ -795,16 +795,6 @@ class TestMethods:
         res = np.array(res, dtype=dt)
         assert_array_equal(np.strings.zfill(buf, width), res)
 
-
-@pytest.mark.parametrize("dt", [
-    "U",
-    "S",
-    pytest.param("T", marks=pytest.mark.xfail(
-        reason="StringDType support not implemented",
-        strict=True),
-    ),
-])
-class TestMethodsWithoutStringDTypeSupport:
     @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
         ("this is the partition method", "ti", "this is the par",
             "ti", "tion method"),
@@ -1032,15 +1022,6 @@ class TestMethodsWithUnicode:
         res = np.array(res, dtype=dt)
         assert_array_equal(np.strings.rjust(buf, width, fillchar), res)
 
-
-@pytest.mark.parametrize("dt", [
-    "U",
-    pytest.param("T", marks=pytest.mark.xfail(
-        reason="StringDType support not implemented",
-        strict=True),
-    ),
-])
-class TestMethodsWithUnicodeWithoutStringDTypeSupport:
     @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
         ("āāāāĀĀĀĀ", "Ă", "āāāāĀĀĀĀ", "", ""),
         ("āāāāĂĀĀĀĀ", "Ă", "āāāā", "Ă", "ĀĀĀĀ"),

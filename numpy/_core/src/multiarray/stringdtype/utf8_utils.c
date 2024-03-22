@@ -299,6 +299,26 @@ num_codepoints_for_utf8_bytes(const unsigned char *s, size_t *num_codepoints, si
     return state != UTF8_ACCEPT;
 }
 
+NPY_NO_EXPORT npy_int64
+num_bytes_until_index(char *buf, size_t buffer_size, npy_int64 index) {
+    size_t bytes_consumed = 0;
+    size_t num_codepoints = 0;
+
+    while (bytes_consumed < buffer_size && num_codepoints < (size_t) index) {
+        size_t num_bytes = num_bytes_for_utf8_character((const unsigned char *)buf);
+        num_codepoints += 1;
+        bytes_consumed += num_bytes;
+        buf += num_bytes;
+    }
+
+    if (num_codepoints < (size_t) index) {
+        // didn't hit the requested index
+        return -1;
+    }
+
+    return bytes_consumed;
+}
+
 NPY_NO_EXPORT void
 find_start_end_locs(char* buf, size_t buffer_size, npy_int64 start_index, npy_int64 end_index,
                     char **start_loc, char **end_loc) {

@@ -1359,10 +1359,11 @@ def partition(a, sep):
 
     """
     a = np.asanyarray(a)
-    sep = np.asanyarray(sep)
+    sep = np.asanyarray(sep).astype(a.dtype)
+    pos = _find_ufunc(a, sep, 0, MAX).astype('int64')
 
-    shape = np.broadcast_shapes(a.shape, sep.shape)
-    pos = _find_ufunc(a, sep, 0, MAX)
+    if a.dtype.char == "T":
+        return _partition(a, sep, pos)
 
     a_len = str_len(a)
     sep_len = str_len(sep)
@@ -1376,6 +1377,7 @@ def partition(a, sep):
         1 if np.all(not_found) else sep_len.max(),
         buffersizes3.max(),
     )])
+    shape = np.broadcast_shapes(a.shape, sep.shape)
     out = np.empty_like(a, shape=shape, dtype=out_dtype)
     return _partition(a, sep, pos, out=(out["f0"], out["f1"], out["f2"]))
 
@@ -1422,10 +1424,11 @@ def rpartition(a, sep):
 
     """
     a = np.asanyarray(a)
-    sep = np.asanyarray(sep)
+    sep = np.asanyarray(sep).astype(a.dtype)
+    pos = _rfind_ufunc(a, sep, 0, MAX).astype('int64')
 
-    shape = np.broadcast_shapes(a.shape, sep.shape)
-    pos = _rfind_ufunc(a, sep, 0, MAX)
+    if a.dtype.char == "T":
+        return _rpartition(a, sep, pos)
 
     a_len = str_len(a)
     sep_len = str_len(sep)
@@ -1439,6 +1442,7 @@ def rpartition(a, sep):
         1 if np.all(not_found) else sep_len.max(),
         buffersizes3.max(),
     )])
+    shape = np.broadcast_shapes(a.shape, sep.shape)
     out = np.empty_like(a, shape=shape, dtype=out_dtype)
     return _rpartition(a, sep, pos, out=(out["f0"], out["f1"], out["f2"]))
 
