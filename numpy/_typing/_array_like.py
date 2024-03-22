@@ -8,9 +8,10 @@ from typing import (
     Union,
     TYPE_CHECKING,
     TypeVar,
-    TypeVarTuple,
     runtime_checkable
 )
+if sys.version_info >= (3, 11):
+    from typing import TypeVarTuple, Unpack
 
 import numpy as np
 from numpy import (
@@ -38,9 +39,9 @@ _DType = TypeVar("_DType", bound=dtype[Any])
 _DType_co = TypeVar("_DType_co", covariant=True, bound=dtype[Any])
 
 NDArray = ndarray[Any, dtype[_ScalarType_co]]
-_ShapeTypeTuple = TypeVarTuple("_ShapeTypeTuple")
 if TYPE_CHECKING or sys.version_info >= (3, 11):
-    Array = ndarray[tuple[*_ShapeTypeTuple], dtype[_ScalarType_co]]
+    _ShapeTypeTuple = TypeVarTuple("_ShapeTypeTuple")
+    Array = ndarray[tuple[Unpack[_ShapeTypeTuple]], dtype[_ScalarType_co]]
 else:
     Array = NDArray
 
