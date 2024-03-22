@@ -684,7 +684,8 @@ cdef class RandomState:
 
     def randint(self, low, high=None, size=None, dtype=int):
         """
-        randint(low, high=None, size=None, dtype=int)
+        randint(high, low=0, size=None, dtype=int)
+        randint(low, high, size=None, dtype=int)
 
         Return random integers from `low` (inclusive) to `high` (exclusive).
 
@@ -700,13 +701,12 @@ cdef class RandomState:
         Parameters
         ----------
         low : int or array-like of ints
-            Lowest (signed) integers to be drawn from the distribution (unless
-            ``high=None``, in which case this parameter is one above the
-            *highest* such integer).
+            Lowest (signed) integers to be drawn from the distribution.
+            When using a single positional argument, the first argument
+            is ``high``. If array-like, must contain integer values.
         high : int or array-like of ints, optional
-            If provided, one above the largest (signed) integer to be drawn
-            from the distribution (see above for behavior if ``high=None``).
-            If array-like, must contain integer values
+            One above the largest (signed) integer to be drawn from the
+            distribution. If array-like, must contain integer values.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
