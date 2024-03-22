@@ -234,7 +234,7 @@ it breaks NumPy compatibility checks.
 
 If you are experiencing problems due to an upstream header including NumPy,
 the solution is to make sure you ``#include "numpy/ndarrayobject.h"`` before
-their header and import NumPy yourself based on  :ref:`_including-the-c-api`.
+their header and import NumPy yourself based on  :ref:`including-the-c-api`.
 
 
 Changes to namespaces
