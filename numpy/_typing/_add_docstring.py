@@ -3,7 +3,7 @@
 import re
 import textwrap
 
-from ._array_like import NDArray
+from ._array_like import NDArray, Array
 
 _docstrings_list = []
 
@@ -120,7 +120,7 @@ add_newdoc('DTypeLike', 'typing.Union[...]',
 
 add_newdoc('NDArray', repr(NDArray),
     """
-    A `np.ndarray[Any, np.dtype[+ScalarType]] <numpy.ndarray>` type alias 
+    A `np.ndarray[Any, np.dtype[+ScalarType]] <numpy.ndarray>` type alias
     :term:`generic <generic type>` w.r.t. its `dtype.type <numpy.dtype.type>`.
 
     Can be used during runtime for typing arrays with a given dtype
@@ -147,6 +147,45 @@ add_newdoc('NDArray', repr(NDArray),
         >>> def func(a: npt.ArrayLike) -> npt.NDArray[Any]:
         ...     return np.array(a)
 
+    """)
+
+add_newdoc('Array', repr(Array),
+    """
+    A `np.ndarray[tuple[*Ts], np.dtype[+ScalarType]] <numpy.ndarray>` type
+    alias :term:`generic <generic type>` w.r.t. its shape and
+    `dtype.type <numpy.dtype.type>`.
+
+    Can be used during runtime for typing arrays with a given dtype
+    and specified shape.  Particularly useful for functions which modify number
+    of axes.  If it is important to enforce integer axis sizes, use np.ndarray
+    for typing.
+
+    .. versionadded:: 2.0
+
+    Examples
+    --------
+    .. code-block:: python
+        >>> from typing import NewType
+        >>> import numpy as np
+        >>> import numpy.typing as npt
+
+        >>> print(npt.Array)
+        numpy.ndarray[tuple[typing.Unpack[_ShapeTypeTuple]],
+        numpy.dtype[+_ScalarType_co]]
+
+        >>> print(npt.Array[int, int, np.float64])
+        numpy.ndarray[tuple[int, int], numpy.dtype[numpy.float64]]
+
+        >>> Length = NewType("Length", int)
+        >>> Width = NewType("Width", int)
+        >>> GreyscaleImage = npt.Array[Length, Width, np.int8]
+        >>> a: GreyscaleImage = np.arange(100, dtype=np.int8).reshape((10,10))
+
+        >>> def one_d(a: list[str | int | float]) -> npt.Array[int, Any]:
+        ...     return np.array(a)
+
+        >>> NotAnImage = npt.Array[str, np.int8]  # passes some type checking
+        >>> NotAnImage = np.ndarray[tuple[str], np.int8]  # error
     """)
 
 _docstrings = _parse_docstrings()
