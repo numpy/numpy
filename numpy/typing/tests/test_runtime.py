@@ -24,12 +24,14 @@ class TypeTup(NamedTuple):
 
 
 NDArrayTup = TypeTup(npt.NDArray, npt.NDArray.__args__, np.ndarray)
+ArrayTup = TypeTup(npt.Array, npt.Array.__args__, np.ndarray)
 
 TYPES = {
     "ArrayLike": TypeTup(npt.ArrayLike, npt.ArrayLike.__args__, Union),
     "DTypeLike": TypeTup(npt.DTypeLike, npt.DTypeLike.__args__, Union),
     "NBitBase": TypeTup(npt.NBitBase, (), None),
     "NDArray": NDArrayTup,
+    "Array": TypeTup(npt.Array, npt.Array.__args__, np.ndarray)
 }
 
 
