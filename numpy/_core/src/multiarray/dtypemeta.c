@@ -1063,8 +1063,9 @@ object_common_dtype(
  * @returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-dtypemeta_wrap_legacy_descriptor(_PyArray_LegacyDescr *descr,
-        PyArray_ArrFuncs *arr_funcs, const char *name, const char *alias)
+dtypemeta_wrap_legacy_descriptor(
+    _PyArray_LegacyDescr *descr, PyArray_ArrFuncs *arr_funcs,
+    PyTypeObject *dtype_super_class, const char *name, const char *alias)
 {
     int has_type_set = Py_TYPE(descr) == &PyArrayDescr_Type;
 
@@ -1118,7 +1119,7 @@ dtypemeta_wrap_legacy_descriptor(_PyArray_LegacyDescr *descr,
             .tp_name = NULL,  /* set below */
             .tp_basicsize = sizeof(_PyArray_LegacyDescr),
             .tp_flags = Py_TPFLAGS_DEFAULT,
-            .tp_base = &PyArrayDescr_Type,
+            .tp_base = NULL,  /* set below */
             .tp_new = (newfunc)legacy_dtype_default_new,
             .tp_doc = (
                 "DType class corresponding to the scalar type and dtype of "
@@ -1131,11 +1132,12 @@ dtypemeta_wrap_legacy_descriptor(_PyArray_LegacyDescr *descr,
         /* Further fields are not common between DTypes */
     };
     memcpy(dtype_class, &prototype, sizeof(PyArray_DTypeMeta));
-    /* Fix name of the Type*/
+    /* Fix name and superclass of the Type*/
     ((PyTypeObject *)dtype_class)->tp_name = name;
+    ((PyTypeObject *)dtype_class)->tp_base = dtype_super_class,
     dtype_class->dt_slots = dt_slots;
 
-    /* Let python finish the initialization (probably unnecessary) */
+    /* Let python finish the initialization */
     if (PyType_Ready((PyTypeObject *)dtype_class) < 0) {
         Py_DECREF(dtype_class);
         return -1;
