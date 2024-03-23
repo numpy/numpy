@@ -28,6 +28,17 @@ def _display_as_base(cls):
     cls.__name__ = cls.__base__.__name__
     return cls
 
+def _ufunc_call_sig(ufunc, arg_dtypes):
+    assert len(arg_dtypes) == ufunc.nin + ufunc.nout
+    if ufunc.nout > 1:
+        outs = "out=({})".format(
+            ", ".join(f.name for f in arg_dtypes[ufunc.nin:])
+        )
+    else:
+        outs = "out={}".format(arg_dtypes[-1])
+    return "{}({}, {})".format(
+        ufunc.__name__, ", ".join(f.name for f in arg_dtypes[:ufunc.nin]), outs
+    )
 
 class UFuncTypeError(TypeError):
     """ Base class for all ufunc exceptions """
@@ -85,13 +96,13 @@ class _UFuncInputCastingError(_UFuncCastingError):
         self.in_i = i
 
     def __str__(self):
-        # only show the number if more than one input exists
-        i_str = "{} ".format(self.in_i) if self.ufunc.nin != 1 else ""
         return (
-            "Cannot cast ufunc {!r} input {}from {!r} to {!r} with casting "
-            "rule {!r}"
+            "Input of ufunc {} resolved to the {} loop, " 
+            "but can_cast({}, {}, casting='{}') is False"
         ).format(
-            self.ufunc.__name__, i_str, self.from_, self.to, self.casting
+            _ufunc_call_sig(self.ufunc, self.to),
+            _ufunc_call_sig(self.ufunc, self.from_),
+            self.from_[self.in_i].name, self.to[self.in_i].name, self.casting
         )
 
 
@@ -103,13 +114,13 @@ class _UFuncOutputCastingError(_UFuncCastingError):
         self.out_i = i
 
     def __str__(self):
-        # only show the number if more than one output exists
-        i_str = "{} ".format(self.out_i) if self.ufunc.nout != 1 else ""
         return (
-            "Cannot cast ufunc {!r} output {}from {!r} to {!r} with casting "
-            "rule {!r}"
+            "Output of ufunc {} resolved to the {} loop, " 
+            "but can_cast({}, {}, casting='{}') is False"
         ).format(
-            self.ufunc.__name__, i_str, self.from_, self.to, self.casting
+            _ufunc_call_sig(self.ufunc, self.to),
+            _ufunc_call_sig(self.ufunc, self.from_),
+            self.from_[self.out_i].name, self.to[self.out_i].name, self.casting
         )
 
 

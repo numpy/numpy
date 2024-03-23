@@ -396,7 +396,7 @@ class TestModulus:
         a = np.array([1, 2], np.int64)
         b = np.array([1, 2], np.uint64)
         with pytest.raises(TypeError,
-                match=r"Cannot cast ufunc 'floor_divide' output from"):
+                match=r"Output of ufunc floor_divide"):
             a //= b
 
 
