@@ -911,10 +911,12 @@ static PyArray_DTypeMeta *
 default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
     assert(cls->type_num < NPY_NTYPES_LEGACY);
-    if (NPY_UNLIKELY(NPY_DT_is_abstract(other))) {
+    if (NPY_UNLIKELY(!NPY_DT_is_legacy(other))) {
         /*
-         * The abstract complex has a lower priority than the concrete inexact
-         * types to ensure the correct promotion with integers.
+         * Deal with the non-legacy types we understand: python scalars.
+         * These have lower priority than the concrete inexact types, but
+         * can change the type of the result (complex, float, int).
+         * If our own type if not numerical, signal not implemented.
          */
         if (other == &PyArray_PyComplexAbstractDType) {
             if (PyTypeNum_ISCOMPLEX(cls->type_num)) {
@@ -947,8 +949,10 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
                 return cls;
             }
         }
+        Py_INCREF(Py_NotImplemented);
+        return (PyArray_DTypeMeta *)Py_NotImplemented;
     }
-    if (!NPY_DT_is_legacy(other) || other->type_num > cls->type_num) {
+    if (other->type_num > cls->type_num) {
         /*
          * Let the more generic (larger type number) DType handle this
          * (note that half is after all others, which works out here.)
