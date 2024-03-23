@@ -589,8 +589,7 @@ _make_new_typetup(
             none_count++;
         }
         else {
-            if (!NPY_DT_is_legacy(signature[i])
-                    || NPY_DT_is_abstract(signature[i])) {
+            if (!NPY_DT_is_legacy(signature[i])) {
                 /*
                  * The legacy type resolution can't deal with these.
                  * This path will return `None` or so in the future to
