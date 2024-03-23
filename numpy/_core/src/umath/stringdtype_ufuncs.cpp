@@ -2343,7 +2343,7 @@ init_stringdtype_ufuncs(PyObject *umath)
 
     PyArray_DTypeMeta *rdtypes[] = {
         &PyArray_StringDType,
-        &PyArray_PyIntAbstractDType,
+        &PyArray_IntAbstractDType,
         &PyArray_StringDType};
 
     if (add_promoter(umath, "multiply", rdtypes, 3, string_multiply_promoter) < 0) {
@@ -2351,7 +2351,7 @@ init_stringdtype_ufuncs(PyObject *umath)
     }
 
     PyArray_DTypeMeta *ldtypes[] = {
-        &PyArray_PyIntAbstractDType,
+        &PyArray_IntAbstractDType,
         &PyArray_StringDType,
         &PyArray_StringDType};
 
@@ -2371,7 +2371,7 @@ init_stringdtype_ufuncs(PyObject *umath)
 
     PyArray_DTypeMeta *findlike_promoter_dtypes[] = {
         &PyArray_StringDType, &PyArray_UnicodeDType,
-        &PyArray_PyIntAbstractDType, &PyArray_PyIntAbstractDType,
+        &PyArray_IntAbstractDType, &PyArray_IntAbstractDType,
         &PyArray_DefaultIntDType,
     };
 
@@ -2412,7 +2412,7 @@ init_stringdtype_ufuncs(PyObject *umath)
 
     PyArray_DTypeMeta *startswith_endswith_promoter_dtypes[] = {
         &PyArray_StringDType, &PyArray_UnicodeDType,
-        &PyArray_PyIntAbstractDType, &PyArray_PyIntAbstractDType,
+        &PyArray_IntAbstractDType, &PyArray_IntAbstractDType,
         &PyArray_BoolDType,
     };
 
@@ -2508,7 +2508,7 @@ init_stringdtype_ufuncs(PyObject *umath)
 
     PyArray_DTypeMeta *replace_promoter_pyint_dtypes[] = {
         &PyArray_StringDType, &PyArray_UnicodeDType, &PyArray_UnicodeDType,
-        &PyArray_PyIntAbstractDType, &PyArray_StringDType,
+        &PyArray_IntAbstractDType, &PyArray_StringDType,
     };
 
     if (add_promoter(umath, "_replace", replace_promoter_pyint_dtypes, 5,
