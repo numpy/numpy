@@ -36,8 +36,8 @@
 static NPY_CASTING
 wrapping_method_resolve_descriptors(
         PyArrayMethodObject *self,
-        PyArray_DTypeMeta *dtypes[],
-        PyArray_Descr *given_descrs[],
+        PyArray_DTypeMeta *const dtypes[],
+        PyArray_Descr *const given_descrs[],
         PyArray_Descr *loop_descrs[],
         npy_intp *view_offset)
 {
@@ -158,8 +158,8 @@ wrapping_method_get_loop(
     auxdata->orig_context.caller = context->caller;
 
     if (context->method->translate_given_descrs(
-            nin, nout, context->method->wrapped_dtypes,
-            context->descriptors, auxdata->orig_context.descriptors) < 0) {
+            nin, nout, context->method->wrapped_dtypes, context->descriptors,
+            (PyArray_Descr **)auxdata->orig_context.descriptors) < 0) {
         NPY_AUXDATA_FREE((NpyAuxData *)auxdata);
         return -1;
     }

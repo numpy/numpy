@@ -43,7 +43,7 @@
 static NPY_CASTING
 multiply_resolve_descriptors(
         struct PyArrayMethodObject_tag *NPY_UNUSED(method),
-        PyArray_DTypeMeta *dtypes[], PyArray_Descr *given_descrs[],
+        PyArray_DTypeMeta *const dtypes[], PyArray_Descr *const given_descrs[],
         PyArray_Descr *loop_descrs[], npy_intp *NPY_UNUSED(view_offset))
 {
     PyArray_Descr *ldescr = given_descrs[0];
@@ -239,8 +239,8 @@ static int multiply_left_strided_loop(
 
 static NPY_CASTING
 binary_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(method),
-                           PyArray_DTypeMeta *NPY_UNUSED(dtypes[]),
-                           PyArray_Descr *given_descrs[],
+                           PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
+                           PyArray_Descr *const given_descrs[],
                            PyArray_Descr *loop_descrs[],
                            npy_intp *NPY_UNUSED(view_offset))
 {
@@ -558,7 +558,8 @@ fail:
 static NPY_CASTING
 string_comparison_resolve_descriptors(
         struct PyArrayMethodObject_tag *NPY_UNUSED(method),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[]), PyArray_Descr *given_descrs[],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
+        PyArray_Descr *const given_descrs[],
         PyArray_Descr *loop_descrs[], npy_intp *NPY_UNUSED(view_offset))
 {
     Py_INCREF(given_descrs[0]);
@@ -604,7 +605,8 @@ string_isnan_strided_loop(PyArrayMethod_Context *context, char *const data[],
 static NPY_CASTING
 string_bool_output_resolve_descriptors(
         struct PyArrayMethodObject_tag *NPY_UNUSED(method),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[]), PyArray_Descr *given_descrs[],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
+        PyArray_Descr *const given_descrs[],
         PyArray_Descr *loop_descrs[], npy_intp *NPY_UNUSED(view_offset))
 {
     Py_INCREF(given_descrs[0]);
@@ -617,7 +619,8 @@ string_bool_output_resolve_descriptors(
 static NPY_CASTING
 string_intp_output_resolve_descriptors(
         struct PyArrayMethodObject_tag *NPY_UNUSED(method),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[]), PyArray_Descr *given_descrs[],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
+        PyArray_Descr *const given_descrs[],
         PyArray_Descr *loop_descrs[], npy_intp *NPY_UNUSED(view_offset))
 {
     Py_INCREF(given_descrs[0]);
@@ -763,7 +766,8 @@ fail:
 
 static int
 string_findlike_promoter(PyObject *NPY_UNUSED(ufunc),
-        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *const op_dtypes[],
+        PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
     new_op_dtypes[0] = NPY_DT_NewRef(&PyArray_StringDType);
@@ -777,8 +781,8 @@ string_findlike_promoter(PyObject *NPY_UNUSED(ufunc),
 static NPY_CASTING
 string_findlike_resolve_descriptors(
         struct PyArrayMethodObject_tag *NPY_UNUSED(method),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[]),
-        PyArray_Descr *given_descrs[],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
+        PyArray_Descr *const given_descrs[],
         PyArray_Descr *loop_descrs[],
         npy_intp *NPY_UNUSED(view_offset))
 {
@@ -823,7 +827,8 @@ string_findlike_resolve_descriptors(
 static int
 string_startswith_endswith_promoter(
         PyObject *NPY_UNUSED(ufunc),
-        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *const op_dtypes[],
+        PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
     new_op_dtypes[0] = NPY_DT_NewRef(&PyArray_StringDType);
@@ -837,8 +842,8 @@ string_startswith_endswith_promoter(
 static NPY_CASTING
 string_startswith_endswith_resolve_descriptors(
         struct PyArrayMethodObject_tag *NPY_UNUSED(method),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[]),
-        PyArray_Descr *given_descrs[],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
+        PyArray_Descr *const given_descrs[],
         PyArray_Descr *loop_descrs[],
         npy_intp *NPY_UNUSED(view_offset))
 {
@@ -1046,7 +1051,8 @@ fail:
 
 static int
 all_strings_promoter(PyObject *NPY_UNUSED(ufunc),
-                     PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+                     PyArray_DTypeMeta *const op_dtypes[],
+                     PyArray_DTypeMeta *const signature[],
                      PyArray_DTypeMeta *new_op_dtypes[])
 {
     new_op_dtypes[0] = NPY_DT_NewRef(&PyArray_StringDType);
@@ -1058,8 +1064,8 @@ all_strings_promoter(PyObject *NPY_UNUSED(ufunc),
 static NPY_CASTING
 strip_chars_resolve_descriptors(
         struct PyArrayMethodObject_tag *NPY_UNUSED(method),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[]),
-        PyArray_Descr *given_descrs[],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
+        PyArray_Descr *const given_descrs[],
         PyArray_Descr *loop_descrs[],
         npy_intp *NPY_UNUSED(view_offset))
 {
@@ -1173,8 +1179,8 @@ fail:
 static NPY_CASTING
 strip_whitespace_resolve_descriptors(
         struct PyArrayMethodObject_tag *NPY_UNUSED(method),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[]),
-        PyArray_Descr *given_descrs[],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
+        PyArray_Descr *const given_descrs[],
         PyArray_Descr *loop_descrs[],
         npy_intp *NPY_UNUSED(view_offset))
 {
@@ -1280,7 +1286,8 @@ string_lrstrip_whitespace_strided_loop(
 
 static int
 string_replace_promoter(PyObject *NPY_UNUSED(ufunc),
-                        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+                        PyArray_DTypeMeta *const op_dtypes[],
+                        PyArray_DTypeMeta *const signature[],
                         PyArray_DTypeMeta *new_op_dtypes[])
 {
     new_op_dtypes[0] = NPY_DT_NewRef(&PyArray_StringDType);
@@ -1293,8 +1300,8 @@ string_replace_promoter(PyObject *NPY_UNUSED(ufunc),
 
 static NPY_CASTING
 replace_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(method),
-                            PyArray_DTypeMeta *NPY_UNUSED(dtypes[]),
-                            PyArray_Descr *given_descrs[],
+                            PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
+                            PyArray_Descr *const given_descrs[],
                             PyArray_Descr *loop_descrs[],
                             npy_intp *NPY_UNUSED(view_offset))
 {
@@ -1461,8 +1468,8 @@ string_replace_strided_loop(
 
 static NPY_CASTING expandtabs_resolve_descriptors(
         struct PyArrayMethodObject_tag *NPY_UNUSED(method),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[]),
-        PyArray_Descr *given_descrs[],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
+        PyArray_Descr *const given_descrs[],
         PyArray_Descr *loop_descrs[],
         npy_intp *NPY_UNUSED(view_offset))
 {
@@ -1576,7 +1583,7 @@ string_expandtabs_strided_loop(PyArrayMethod_Context *context,
 static NPY_CASTING
 center_ljust_rjust_resolve_descriptors(
         struct PyArrayMethodObject_tag *NPY_UNUSED(method),
-        PyArray_DTypeMeta *dtypes[], PyArray_Descr *given_descrs[],
+        PyArray_DTypeMeta *const dtypes[], PyArray_Descr *const given_descrs[],
         PyArray_Descr *loop_descrs[], npy_intp *NPY_UNUSED(view_offset))
 {
     PyArray_StringDTypeObject *input_descr = (PyArray_StringDTypeObject *)given_descrs[0];
@@ -1883,8 +1890,8 @@ fail:
 
 NPY_NO_EXPORT int
 string_inputs_promoter(
-        PyObject *ufunc_obj, PyArray_DTypeMeta *op_dtypes[],
-        PyArray_DTypeMeta *signature[],
+        PyObject *ufunc_obj, PyArray_DTypeMeta *const op_dtypes[],
+        PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[],
         PyArray_DTypeMeta *final_dtype,
         PyArray_DTypeMeta *result_dtype)
@@ -1916,8 +1923,8 @@ string_inputs_promoter(
 
 static int
 string_object_bool_output_promoter(
-        PyObject *ufunc, PyArray_DTypeMeta *op_dtypes[],
-        PyArray_DTypeMeta *signature[],
+        PyObject *ufunc, PyArray_DTypeMeta *const op_dtypes[],
+        PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
     return string_inputs_promoter(
@@ -1927,8 +1934,8 @@ string_object_bool_output_promoter(
 
 static int
 string_unicode_bool_output_promoter(
-        PyObject *ufunc, PyArray_DTypeMeta *op_dtypes[],
-        PyArray_DTypeMeta *signature[],
+        PyObject *ufunc, PyArray_DTypeMeta *const op_dtypes[],
+        PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
     return string_inputs_promoter(
@@ -2009,8 +2016,9 @@ is_integer_dtype(PyArray_DTypeMeta *DType)
 
 
 static int
-string_multiply_promoter(PyObject *ufunc_obj, PyArray_DTypeMeta *op_dtypes[],
-                         PyArray_DTypeMeta *signature[],
+string_multiply_promoter(PyObject *ufunc_obj,
+                         PyArray_DTypeMeta *const op_dtypes[],
+                         PyArray_DTypeMeta *const signature[],
                          PyArray_DTypeMeta *new_op_dtypes[])
 {
     PyUFuncObject *ufunc = (PyUFuncObject *)ufunc_obj;

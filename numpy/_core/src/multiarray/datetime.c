@@ -3780,7 +3780,7 @@ time_to_time_get_loop(
 {
     int requires_wrap = 0;
     int inner_aligned = aligned;
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     *flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
     PyArray_DatetimeMetaData *meta1 = get_datetime_metadata_from_dtype(descrs[0]);
@@ -3929,7 +3929,7 @@ datetime_to_string_get_loop(
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     *flags = context->method->flags & NPY_METH_RUNTIME_FLAGS;
 
     if (descrs[1]->type_num == NPY_STRING) {
@@ -3989,7 +3989,7 @@ string_to_datetime_cast_get_loop(
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     *flags = context->method->flags & NPY_METH_RUNTIME_FLAGS;
 
     if (descrs[0]->type_num == NPY_STRING) {

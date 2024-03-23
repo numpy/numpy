@@ -226,7 +226,7 @@ NPY_NO_EXPORT int
 PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
                             NPY_CASTING casting,
                             PyArrayObject **operands,
-                            PyArray_Descr **dtypes)
+                            PyArray_Descr *const *dtypes)
 {
     int i, nin = ufunc->nin, nop = nin + ufunc->nout;
 
@@ -1471,7 +1471,7 @@ PyUFunc_TrueDivisionTypeResolver(PyUFuncObject *ufunc,
 
 static int
 find_userloop(PyUFuncObject *ufunc,
-                PyArray_Descr **dtypes,
+                PyArray_Descr *const *dtypes,
                 PyUFuncGenericFunction *out_innerloop,
                 void **out_innerloopdata)
 {
@@ -1535,7 +1535,7 @@ find_userloop(PyUFuncObject *ufunc,
 
 NPY_NO_EXPORT int
 PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
-                                PyArray_Descr **dtypes,
+                                PyArray_Descr *const *dtypes,
                                 PyUFuncGenericFunction *out_innerloop,
                                 void **out_innerloopdata,
                                 int *out_needs_api)

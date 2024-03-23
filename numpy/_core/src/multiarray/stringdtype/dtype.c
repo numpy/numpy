@@ -517,7 +517,7 @@ stringdtype_ensure_canonical(PyArray_StringDTypeObject *self)
 
 static int
 stringdtype_clear_loop(void *NPY_UNUSED(traverse_context),
-                       PyArray_Descr *descr, char *data, npy_intp size,
+                       const PyArray_Descr *descr, char *data, npy_intp size,
                        npy_intp stride, NpyAuxData *NPY_UNUSED(auxdata))
 {
     PyArray_StringDTypeObject *sdescr = (PyArray_StringDTypeObject *)descr;
