@@ -312,7 +312,6 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyIntAbstractDType = {{{
         .tp_flags = Py_TPFLAGS_DEFAULT,
     },},
     .type_num = -1,
-    .flags = NPY_DT_ABSTRACT,
     .dt_slots = &pyintdtype_slots,
 };
 
@@ -340,7 +339,6 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyFloatAbstractDType = {{{
        .tp_flags = Py_TPFLAGS_DEFAULT,
     },},
     .type_num = -1,
-    .flags = NPY_DT_ABSTRACT,
     .dt_slots = &pyfloatdtype_slots,
 };
 
@@ -368,6 +366,5 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyComplexAbstractDType = {{{
          .tp_flags = Py_TPFLAGS_DEFAULT,
     },},
     .type_num = -1,
-    .flags = NPY_DT_ABSTRACT,
     .dt_slots = &pycomplexdtype_slots,
 };
