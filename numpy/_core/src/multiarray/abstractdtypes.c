@@ -94,12 +94,21 @@ initialize_and_map_pytypes_to_dtypes()
     if (PyType_Ready((PyTypeObject *)&PyArray_ComplexAbstractDType) < 0) {
         return -1;
     }
+    ((PyTypeObject *)&PyArray_PyIntAbstractDType)->tp_base =
+        (PyTypeObject *)&PyArray_IntAbstractDType;
+    PyArray_PyIntAbstractDType.scalar_type = &PyLong_Type;
     if (PyType_Ready((PyTypeObject *)&PyArray_PyIntAbstractDType) < 0) {
         return -1;
     }
+    ((PyTypeObject *)&PyArray_PyFloatAbstractDType)->tp_base =
+        (PyTypeObject *)&PyArray_FloatAbstractDType;
+    PyArray_PyFloatAbstractDType.scalar_type = &PyFloat_Type;
     if (PyType_Ready((PyTypeObject *)&PyArray_PyFloatAbstractDType) < 0) {
         return -1;
     }
+    ((PyTypeObject *)&PyArray_PyComplexAbstractDType)->tp_base =
+        (PyTypeObject *)&PyArray_ComplexAbstractDType;
+    PyArray_PyComplexAbstractDType.scalar_type = &PyComplex_Type;
     if (PyType_Ready((PyTypeObject *)&PyArray_PyComplexAbstractDType) < 0) {
         return -1;
     }
@@ -299,14 +308,12 @@ NPY_DType_Slots pyintdtype_slots = {
 NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyIntAbstractDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
         .tp_name = "numpy._PythonIntegerDType",
-        .tp_base = (PyTypeObject *)&PyArray_IntAbstractDType,
         .tp_basicsize = sizeof(PyArray_Descr),
         .tp_flags = Py_TPFLAGS_DEFAULT,
     },},
     .type_num = -1,
     .flags = NPY_DT_ABSTRACT,
     .dt_slots = &pyintdtype_slots,
-    .scalar_type = &PyLong_Type,
 };
 
 NPY_NO_EXPORT PyArray_DTypeMeta PyArray_FloatAbstractDType = {{{
@@ -329,14 +336,12 @@ NPY_DType_Slots pyfloatdtype_slots = {
 NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyFloatAbstractDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
         .tp_name = "numpy._PythonFloatDType",
-        .tp_base = (PyTypeObject *)&PyArray_FloatAbstractDType,
         .tp_basicsize = sizeof(PyArray_Descr),
        .tp_flags = Py_TPFLAGS_DEFAULT,
     },},
     .type_num = -1,
     .flags = NPY_DT_ABSTRACT,
     .dt_slots = &pyfloatdtype_slots,
-    .scalar_type = &PyFloat_Type,
 };
 
 NPY_NO_EXPORT PyArray_DTypeMeta PyArray_ComplexAbstractDType = {{{
@@ -359,12 +364,10 @@ NPY_DType_Slots pycomplexdtype_slots = {
 NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyComplexAbstractDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
         .tp_name = "numpy._PythonComplexDType",
-        .tp_base = (PyTypeObject *)&PyArray_ComplexAbstractDType,
         .tp_basicsize = sizeof(PyArray_Descr),
          .tp_flags = Py_TPFLAGS_DEFAULT,
     },},
     .type_num = -1,
     .flags = NPY_DT_ABSTRACT,
     .dt_slots = &pycomplexdtype_slots,
-    .scalar_type = &PyComplex_Type,
 };
