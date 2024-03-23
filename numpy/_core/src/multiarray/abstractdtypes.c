@@ -85,6 +85,15 @@ discover_descriptor_from_pycomplex(
 NPY_NO_EXPORT int
 initialize_and_map_pytypes_to_dtypes()
 {
+    if (PyType_Ready((PyTypeObject *)&PyArray_IntAbstractDType) < 0) {
+        return -1;
+    }
+    if (PyType_Ready((PyTypeObject *)&PyArray_FloatAbstractDType) < 0) {
+        return -1;
+    }
+    if (PyType_Ready((PyTypeObject *)&PyArray_ComplexAbstractDType) < 0) {
+        return -1;
+    }
     if (PyType_Ready((PyTypeObject *)&PyArray_PyIntAbstractDType) < 0) {
         return -1;
     }
@@ -270,13 +279,7 @@ complex_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
  *       `Floating`, `Complex`, and `Integer` (both signed and unsigned).
  *       They will have to be renamed and exposed in that capacity.
  */
-NPY_DType_Slots pyintabstractdtype_slots = {
-    .discover_descr_from_pyobject = discover_descriptor_from_pyint,
-    .default_descr = int_default_descriptor,
-    .common_dtype = int_common_dtype,
-};
-
-NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyIntAbstractDType = {{{
+NPY_NO_EXPORT PyArray_DTypeMeta PyArray_IntAbstractDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
         .tp_name = "numpy._IntegerAbstractDType",
         .tp_base = &PyArrayDescr_Type,
@@ -285,18 +288,28 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyIntAbstractDType = {{{
     },},
     .type_num = -1,
     .flags = NPY_DT_ABSTRACT,
-    .dt_slots = &pyintabstractdtype_slots,
+};
+
+NPY_DType_Slots pyintdtype_slots = {
+    .discover_descr_from_pyobject = discover_descriptor_from_pyint,
+    .default_descr = int_default_descriptor,
+    .common_dtype = int_common_dtype,
+};
+
+NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyIntAbstractDType = {{{
+        PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
+        .tp_name = "numpy._PythonIntegerDType",
+        .tp_base = (PyTypeObject *)&PyArray_IntAbstractDType,
+        .tp_basicsize = sizeof(PyArray_Descr),
+        .tp_flags = Py_TPFLAGS_DEFAULT,
+    },},
+    .type_num = -1,
+    .flags = NPY_DT_ABSTRACT,
+    .dt_slots = &pyintdtype_slots,
     .scalar_type = &PyLong_Type,
 };
 
-
-NPY_DType_Slots pyfloatabstractdtype_slots = {
-    .discover_descr_from_pyobject = discover_descriptor_from_pyfloat,
-    .default_descr = float_default_descriptor,
-    .common_dtype = float_common_dtype,
-};
-
-NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyFloatAbstractDType = {{{
+NPY_NO_EXPORT PyArray_DTypeMeta PyArray_FloatAbstractDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
         .tp_name = "numpy._FloatAbstractDType",
         .tp_base = &PyArrayDescr_Type,
@@ -305,18 +318,28 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyFloatAbstractDType = {{{
     },},
     .type_num = -1,
     .flags = NPY_DT_ABSTRACT,
-    .dt_slots = &pyfloatabstractdtype_slots,
+};
+
+NPY_DType_Slots pyfloatdtype_slots = {
+    .discover_descr_from_pyobject = discover_descriptor_from_pyfloat,
+    .default_descr = float_default_descriptor,
+    .common_dtype = float_common_dtype,
+};
+
+NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyFloatAbstractDType = {{{
+        PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
+        .tp_name = "numpy._PythonFloatDType",
+        .tp_base = (PyTypeObject *)&PyArray_FloatAbstractDType,
+        .tp_basicsize = sizeof(PyArray_Descr),
+       .tp_flags = Py_TPFLAGS_DEFAULT,
+    },},
+    .type_num = -1,
+    .flags = NPY_DT_ABSTRACT,
+    .dt_slots = &pyfloatdtype_slots,
     .scalar_type = &PyFloat_Type,
 };
 
-
-NPY_DType_Slots pycomplexabstractdtype_slots = {
-    .discover_descr_from_pyobject = discover_descriptor_from_pycomplex,
-    .default_descr = complex_default_descriptor,
-    .common_dtype = complex_common_dtype,
-};
-
-NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyComplexAbstractDType = {{{
+NPY_NO_EXPORT PyArray_DTypeMeta PyArray_ComplexAbstractDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
         .tp_name = "numpy._ComplexAbstractDType",
         .tp_base = &PyArrayDescr_Type,
@@ -325,6 +348,23 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyComplexAbstractDType = {{{
     },},
     .type_num = -1,
     .flags = NPY_DT_ABSTRACT,
-    .dt_slots = &pycomplexabstractdtype_slots,
+};
+
+NPY_DType_Slots pycomplexdtype_slots = {
+    .discover_descr_from_pyobject = discover_descriptor_from_pycomplex,
+    .default_descr = complex_default_descriptor,
+    .common_dtype = complex_common_dtype,
+};
+
+NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyComplexAbstractDType = {{{
+        PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
+        .tp_name = "numpy._PythonComplexDType",
+        .tp_base = (PyTypeObject *)&PyArray_ComplexAbstractDType,
+        .tp_basicsize = sizeof(PyArray_Descr),
+         .tp_flags = Py_TPFLAGS_DEFAULT,
+    },},
+    .type_num = -1,
+    .flags = NPY_DT_ABSTRACT,
+    .dt_slots = &pycomplexdtype_slots,
     .scalar_type = &PyComplex_Type,
 };

@@ -4353,9 +4353,9 @@ set_typeinfo(PyObject *dict)
      *         Object, String, Unicode, Void,
      *         Datetime, Timedelta#
      * #scls = PyArrayDescr_Type,
-     *         PyArray_PyIntAbstractDType*10,
-     *         PyArray_PyFloatAbstractDType*4,
-     *         PyArray_PyComplexAbstractDType*3,
+     *         PyArray_IntAbstractDType*10,
+     *         PyArray_FloatAbstractDType*4,
+     *         PyArray_ComplexAbstractDType*3,
      *         PyArrayDescr_Type*6 #
      */
     if (dtypemeta_wrap_legacy_descriptor(

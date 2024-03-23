@@ -14,6 +14,9 @@ extern "C" {
  * may be necessary to make them (partially) public, to allow user-defined
  * dtypes to perform value based casting.
  */
+NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_IntAbstractDType;
+NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_FloatAbstractDType;
+NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_ComplexAbstractDType;
 NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_PyIntAbstractDType;
 NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_PyFloatAbstractDType;
 NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_PyComplexAbstractDType;
