@@ -605,7 +605,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
             /* The input was not an array, so give a general error message */
             PyErr_SetString(PyExc_IndexError,
                     "only integers, slices (`:`), ellipsis (`...`), "
-                    "numpy.newaxis (`None`) and integer or boolean "
+                    "numpy.newaxis (`None`), tuples of these objects, "
+                    "and integer or boolean "
                     "arrays are valid indices");
         }
         Py_DECREF(arr);
