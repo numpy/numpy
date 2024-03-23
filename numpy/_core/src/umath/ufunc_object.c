@@ -4065,17 +4065,15 @@ resolve_descriptors(int nop,
                 original_dtypes[i] = PyArray_DTYPE(operands[i]);
                 Py_INCREF(original_dtypes[i]);
             }
-            if (i < nin
-                    && NPY_DT_is_abstract(signature[i])
-                    && inputs_tup != NULL) {
-                /*
-                 * TODO: We may wish to allow any scalar here.  Checking for
-                 *       abstract assumes this works out for Python scalars,
-                 *       which is the important case (especially for now).
-                 *
-                 * One possible check would be `DType->type == type(obj)`.
-                 */
-                input_scalars[i] = PyTuple_GET_ITEM(inputs_tup, i);
+            /*
+             * Check whether something is a scalar of the given type.
+             * We leave it to resolve_descriptors_with_scalars to deal
+             * with, e.g., only doing something special for python scalars.
+             */
+            if (i < nin && inputs_tup != NULL) {
+                PyObject *input = PyTuple_GET_ITEM(inputs_tup, i);
+                input_scalars[i] = signature[i]->scalar_type == Py_TYPE(input) ?
+                    input : NULL;
             }
             else {
                 input_scalars[i] = NULL;
