@@ -728,7 +728,7 @@ PyArrayMethod_Context and PyArrayMethod_Spec
       typedef struct {
           PyObject *caller;
           struct PyArrayMethodObject_tag *method;
-          PyArray_Descr **descriptors;
+          PyArray_Descr *const *descriptors;
       } PyArrayMethod_Context
 
    .. c:member:: PyObject *caller

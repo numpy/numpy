@@ -156,7 +156,7 @@ unicode_to_string(PyArrayMethod_Context *context, char *const data[],
                   npy_intp const dimensions[], npy_intp const strides[],
                   NpyAuxData *NPY_UNUSED(auxdata))
 {
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     PyArray_StringDTypeObject *sdescr = (PyArray_StringDTypeObject *)descrs[1];
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(sdescr);
@@ -1672,7 +1672,7 @@ void_to_string(PyArrayMethod_Context *context, char *const data[],
                npy_intp const dimensions[], npy_intp const strides[],
                NpyAuxData *NPY_UNUSED(auxdata))
 {
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)descrs[1];
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
@@ -1802,7 +1802,7 @@ bytes_to_string(PyArrayMethod_Context *context, char *const data[],
                 npy_intp const dimensions[], npy_intp const strides[],
                 NpyAuxData *NPY_UNUSED(auxdata))
 {
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)descrs[1];
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);

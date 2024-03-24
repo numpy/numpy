@@ -512,8 +512,8 @@ string_expandtabs_loop(PyArrayMethod_Context *context,
 static NPY_CASTING
 string_addition_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
-        PyArray_Descr *given_descrs[3],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[3]),
+        PyArray_Descr *const given_descrs[3],
         PyArray_Descr *loop_descrs[3],
         npy_intp *NPY_UNUSED(view_offset))
 {
@@ -540,8 +540,8 @@ string_addition_resolve_descriptors(
 static NPY_CASTING
 string_multiply_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
-        PyArray_Descr *given_descrs[3],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[3]),
+        PyArray_Descr *const given_descrs[3],
         PyArray_Descr *loop_descrs[3],
         npy_intp *NPY_UNUSED(view_offset))
 {
@@ -574,8 +574,8 @@ string_multiply_resolve_descriptors(
 static NPY_CASTING
 string_strip_whitespace_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[2]),
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *NPY_UNUSED(view_offset))
 {
@@ -594,8 +594,8 @@ string_strip_whitespace_resolve_descriptors(
 static NPY_CASTING
 string_strip_chars_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
-        PyArray_Descr *given_descrs[3],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[3]),
+        PyArray_Descr *const given_descrs[3],
         PyArray_Descr *loop_descrs[3],
         npy_intp *NPY_UNUSED(view_offset))
 {
@@ -618,7 +618,7 @@ string_strip_chars_resolve_descriptors(
 
 static int
 string_findlike_promoter(PyObject *NPY_UNUSED(ufunc),
-        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
     Py_INCREF(op_dtypes[0]);
@@ -634,7 +634,7 @@ string_findlike_promoter(PyObject *NPY_UNUSED(ufunc),
 
 static int
 string_replace_promoter(PyObject *NPY_UNUSED(ufunc),
-        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
     Py_INCREF(op_dtypes[0]);
@@ -657,8 +657,8 @@ string_replace_promoter(PyObject *NPY_UNUSED(ufunc),
 static NPY_CASTING
 string_replace_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[5]),
-        PyArray_Descr *given_descrs[5],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[5]),
+        PyArray_Descr *const given_descrs[5],
         PyArray_Descr *loop_descrs[5],
         npy_intp *NPY_UNUSED(view_offset))
 {
@@ -694,7 +694,7 @@ string_replace_resolve_descriptors(
 
 static int
 string_startswith_endswith_promoter(PyObject *NPY_UNUSED(ufunc),
-        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
     Py_INCREF(op_dtypes[0]);
@@ -710,7 +710,7 @@ string_startswith_endswith_promoter(PyObject *NPY_UNUSED(ufunc),
 
 static int
 string_expandtabs_length_promoter(PyObject *NPY_UNUSED(ufunc),
-        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
     Py_INCREF(op_dtypes[0]);
@@ -723,7 +723,7 @@ string_expandtabs_length_promoter(PyObject *NPY_UNUSED(ufunc),
 
 static int
 string_expandtabs_promoter(PyObject *NPY_UNUSED(ufunc),
-        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
     Py_INCREF(op_dtypes[0]);
@@ -738,8 +738,8 @@ string_expandtabs_promoter(PyObject *NPY_UNUSED(ufunc),
 static NPY_CASTING
 string_expandtabs_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
-        PyArray_Descr *given_descrs[3],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[3]),
+        PyArray_Descr *const given_descrs[3],
         PyArray_Descr *loop_descrs[3],
         npy_intp *NPY_UNUSED(view_offset))
 {

@@ -106,7 +106,7 @@ typedef struct PyArrayMethod_Context_tag {
     struct PyArrayMethodObject_tag *method;
 
     /* Operand descriptors, filled in by resolve_descriptors */
-    PyArray_Descr **descriptors;
+    PyArray_Descr *const *descriptors;
     /* Structure may grow (this is harmless for DType authors) */
 } PyArrayMethod_Context;
 
@@ -159,9 +159,9 @@ typedef NPY_CASTING (PyArrayMethod_ResolveDescriptors)(
         /* "method" is currently opaque (necessary e.g. to wrap Python) */
         struct PyArrayMethodObject_tag *method,
         /* DTypes the method was created for */
-        PyArray_DTypeMeta **dtypes,
+        PyArray_DTypeMeta *const *dtypes,
         /* Input descriptors (instances).  Outputs may be NULL. */
-        PyArray_Descr **given_descrs,
+        PyArray_Descr *const *given_descrs,
         /* Exact loop descriptors to use, must not hold references on error */
         PyArray_Descr **loop_descrs,
         npy_intp *view_offset);
@@ -177,9 +177,9 @@ typedef NPY_CASTING (PyArrayMethod_ResolveDescriptors)(
  */
 typedef NPY_CASTING (PyArrayMethod_ResolveDescriptorsWithScalar)(
         struct PyArrayMethodObject_tag *method,
-        PyArray_DTypeMeta **dtypes,
+        PyArray_DTypeMeta *const *dtypes,
         /* Unlike above, these can have any DType and we may allow NULL. */
-        PyArray_Descr **given_descrs,
+        PyArray_Descr *const *given_descrs,
         /*
          * Input scalars or NULL.  Only ever passed for python scalars.
          * WARNING: In some cases, a loop may be explicitly selected and the
@@ -227,7 +227,7 @@ typedef int (PyArrayMethod_GetLoop)(
  */
 typedef int (PyArrayMethod_GetReductionInitial)(
         PyArrayMethod_Context *context, npy_bool reduction_is_empty,
-        char *initial);
+        void *initial);
 
 /*
  * The following functions are only used by the wrapping array method defined
@@ -256,8 +256,8 @@ typedef int (PyArrayMethod_GetReductionInitial)(
  *       `resolve_descriptors`, so that it can be filled there if not NULL.)
  */
 typedef int (PyArrayMethod_TranslateGivenDescriptors)(int nin, int nout,
-        PyArray_DTypeMeta *wrapped_dtypes[],
-        PyArray_Descr *given_descrs[], PyArray_Descr *new_descrs[]);
+        PyArray_DTypeMeta *const wrapped_dtypes[],
+        PyArray_Descr *const given_descrs[], PyArray_Descr *new_descrs[]);
 
 /**
  * The function to convert the actual loop descriptors (as returned by the
@@ -278,7 +278,7 @@ typedef int (PyArrayMethod_TranslateGivenDescriptors)(int nin, int nout,
  * @returns 0 on success, -1 on failure.
  */
 typedef int (PyArrayMethod_TranslateLoopDescriptors)(int nin, int nout,
-        PyArray_DTypeMeta *new_dtypes[], PyArray_Descr *given_descrs[],
+        PyArray_DTypeMeta *const new_dtypes[], PyArray_Descr *const given_descrs[],
         PyArray_Descr *original_descrs[], PyArray_Descr *loop_descrs[]);
 
 
@@ -303,7 +303,7 @@ typedef int (PyArrayMethod_TranslateLoopDescriptors)(int nin, int nout,
  *
  */
 typedef int (PyArrayMethod_TraverseLoop)(
-        void *traverse_context, PyArray_Descr *descr, char *data,
+        void *traverse_context, const PyArray_Descr *descr, char *data,
         npy_intp size, npy_intp stride, NpyAuxData *auxdata);
 
 
@@ -317,7 +317,7 @@ typedef int (PyArrayMethod_TraverseLoop)(
  *
  */
 typedef int (PyArrayMethod_GetTraverseLoop)(
-        void *traverse_context, PyArray_Descr *descr,
+        void *traverse_context, const PyArray_Descr *descr,
         int aligned, npy_intp fixed_stride,
         PyArrayMethod_TraverseLoop **out_loop, NpyAuxData **out_auxdata,
         NPY_ARRAYMETHOD_FLAGS *flags);
@@ -334,7 +334,7 @@ typedef int (PyArrayMethod_GetTraverseLoop)(
  * (There are potential use-cases, these are currently unsupported.)
  */
 typedef int (PyArrayMethod_PromoterFunction)(PyObject *ufunc,
-        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[]);
 
 /*
