@@ -2,7 +2,7 @@
 Contributors
 ============
 
-A total of 190 people contributed to this release.  People with a "+" by their
+A total of 193 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * @Algorithmist-Girl +
@@ -19,6 +19,7 @@ names contributed a patch for the first time.
 * @undermyumbrella1 +
 * Aaron Meurer
 * Aditi Saluja +
+* Adrin Jalali +
 * Agriya Khetarpal +
 * Albert Steppi +
 * Alex Cabrera +
@@ -71,6 +72,7 @@ names contributed a patch for the first time.
 * Evgeni Burovski
 * Filipe Laíns +
 * Ganesh Kathiresan
+* Gonzalo Tornaría +
 * Hans Meine
 * Heberto Mayorquin +
 * Heinz-Alexander Fuetterer +
@@ -150,6 +152,7 @@ names contributed a patch for the first time.
 * Raghuveer Devulapalli
 * Ralf Gommers
 * Randy Eckenrode +
+* Raquel Braunschweig +
 * Richard Howe +
 * Robert Kern
 * Rohit Goswami
@@ -199,7 +202,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 968 pull requests were merged for this release.
+A total of 1006 pull requests were merged for this release.
 
 * `#15457 <https://github.com/numpy/numpy/pull/15457>`__: BUG: Adds support for array parameter declaration in fortran...
 * `#21199 <https://github.com/numpy/numpy/pull/21199>`__: ENH: expose datetime.c functions to cython
@@ -1169,4 +1172,41 @@ A total of 968 pull requests were merged for this release.
 * `#25987 <https://github.com/numpy/numpy/pull/25987>`__: REL: Prepare for the NumPy 2.0.0b1 release (2) [wheel build]
 * `#25994 <https://github.com/numpy/numpy/pull/25994>`__: DOC: remove reverted release blurb [skip actions][skip azp][skip...
 * `#25996 <https://github.com/numpy/numpy/pull/25996>`__: CI: don't use ``fetch-tags`` in wheel build jobs
-
+* `#25997 <https://github.com/numpy/numpy/pull/25997>`__: REL: Prepare for the NumPy 2.0.0b1 release (3)
+* `#26008 <https://github.com/numpy/numpy/pull/26008>`__: DOC: mention the ``exceptions`` namespace in the 2.0.0 release...
+* `#26009 <https://github.com/numpy/numpy/pull/26009>`__: MAINT: Remove sdist task from pavement.py
+* `#26022 <https://github.com/numpy/numpy/pull/26022>`__: BUG: Fixes np.put receiving empty array causes endless loop
+* `#26023 <https://github.com/numpy/numpy/pull/26023>`__: MAINT: Bump pypa/cibuildwheel from 2.16.5 to 2.17.0
+* `#26034 <https://github.com/numpy/numpy/pull/26034>`__: MAINT: remove now-unused ``NPY_USE_C99_FORMAT``
+* `#26035 <https://github.com/numpy/numpy/pull/26035>`__: MAINT: remove the now-unused ``NPY_NO_SIGNAL``
+* `#26036 <https://github.com/numpy/numpy/pull/26036>`__: MAINT: handle ``NPY_ALLOW_THREADS`` and related build option...
+* `#26040 <https://github.com/numpy/numpy/pull/26040>`__: BUG: Filter out broken Highway platform
+* `#26041 <https://github.com/numpy/numpy/pull/26041>`__: BLD: omit pp39-macosx_arm64 from matrix [wheel build]
+* `#26042 <https://github.com/numpy/numpy/pull/26042>`__: BUG: fix kwarg handling in assert_warn [skip cirrus][skip azp]
+* `#26047 <https://github.com/numpy/numpy/pull/26047>`__: ENH: install StringDType promoter for add
+* `#26048 <https://github.com/numpy/numpy/pull/26048>`__: MAINT: avoid use of flexible array member in public header
+* `#26049 <https://github.com/numpy/numpy/pull/26049>`__: BUG: raise error trying to coerce object arrays containing timedelta64('NaT')...
+* `#26050 <https://github.com/numpy/numpy/pull/26050>`__: BUG: fix reference count leak in __array__ internals
+* `#26051 <https://github.com/numpy/numpy/pull/26051>`__: BUG: add missing error handling in string to int cast internals
+* `#26052 <https://github.com/numpy/numpy/pull/26052>`__: MAINT: Remove partition and split-like functions from numpy.strings
+* `#26053 <https://github.com/numpy/numpy/pull/26053>`__: CI: clean up some unused ``choco install`` invocations
+* `#26068 <https://github.com/numpy/numpy/pull/26068>`__: DOC: Backport np.strings docstrings
+* `#26073 <https://github.com/numpy/numpy/pull/26073>`__: DOC clarifications on debugging numpy
+* `#26074 <https://github.com/numpy/numpy/pull/26074>`__: BUG: fix logic error in stringdtype maximum/minimum ufunc
+* `#26075 <https://github.com/numpy/numpy/pull/26075>`__: BUG: Allow the new string dtype summation to work
+* `#26076 <https://github.com/numpy/numpy/pull/26076>`__: MAINT: Make PyArrayMultiIterObject struct "smaller"
+* `#26085 <https://github.com/numpy/numpy/pull/26085>`__: MAINT: Bump actions/cache from 4.0.1 to 4.0.2
+* `#26109 <https://github.com/numpy/numpy/pull/26109>`__: BUG: adapt cython files to new complex declarations (#26080)
+* `#26110 <https://github.com/numpy/numpy/pull/26110>`__: TYP: Adjust ``np.random.integers`` and ``np.random.randint``
+* `#26111 <https://github.com/numpy/numpy/pull/26111>`__: API: Require reduce promoters to start with None to match
+* `#26118 <https://github.com/numpy/numpy/pull/26118>`__: MAINT: install all-string promoter for multiply
+* `#26122 <https://github.com/numpy/numpy/pull/26122>`__: BUG: fix reference counting error in stringdtype setup
+* `#26124 <https://github.com/numpy/numpy/pull/26124>`__: MAINT,API: Const qualify some new API (mostly new DType API)
+* `#26127 <https://github.com/numpy/numpy/pull/26127>`__: BUG: update pocketfft to unconditionaly disable use of aligned_alloc
+* `#26131 <https://github.com/numpy/numpy/pull/26131>`__: MAINT: add missing noexcept clauses
+* `#26154 <https://github.com/numpy/numpy/pull/26154>`__: MAINT: Bump actions/setup-python from 5.0.0 to 5.1.0
+* `#26167 <https://github.com/numpy/numpy/pull/26167>`__: MAINT: Escalate import warning to an import error
+* `#26169 <https://github.com/numpy/numpy/pull/26169>`__: BUG,MAINT: Fix __array__ bugs and simplify code
+* `#26170 <https://github.com/numpy/numpy/pull/26170>`__: DOC: mention np.lib.NumPyVersion in the 2.0 migration guide
+* `#26171 <https://github.com/numpy/numpy/pull/26171>`__: ENH: inherit numerical dtypes from abstract ones.
+* `#26173 <https://github.com/numpy/numpy/pull/26173>`__: DOC, TST: make ``numpy.version`` officially public
