@@ -71,7 +71,7 @@ def atleast_1d(*arys):
         if result.ndim == 0:
             result = result.reshape(1)
         res.append(result)
-    return res
+    return tuple(res)
 
 
 def _atleast_2d_dispatcher(*arys):
