@@ -1891,8 +1891,8 @@ fail:
 static NPY_CASTING
 string_partition_resolve_descriptors(
         PyArrayMethodObject *self,
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
-        PyArray_Descr *given_descrs[3],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[3]),
+        PyArray_Descr *const given_descrs[3],
         PyArray_Descr *loop_descrs[3],
         npy_intp *NPY_UNUSED(view_offset))
 {
