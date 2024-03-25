@@ -301,7 +301,7 @@ Adding, removing, and sorting elements
 
 -----
 
-Sorting an element is simple with ``np.sort()``. You can specify the axis, kind,
+Sorting an array is simple with ``np.sort()``. You can specify the axis, kind,
 and order when you call the function.
 
 If you start with this array::
