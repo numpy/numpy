@@ -1011,9 +1011,11 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
  */
 static inline int
 validate_casting(PyArrayMethodObject *method, PyUFuncObject *ufunc,
-        PyArrayObject *ops[], PyArray_Descr *descriptors[],
+        PyArrayObject *ops[], PyArray_Descr *const descriptors_const[],
         NPY_CASTING casting)
 {
+    /* Cast away const to not change old public `PyUFunc_ValidateCasting`. */
+    PyArray_Descr **descriptors = (PyArray_Descr **)descriptors_const;
     if (method->resolve_descriptors == &wrapped_legacy_resolve_descriptors) {
         /*
          * In this case the legacy type resolution was definitely called
@@ -1091,7 +1093,7 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
     NpyIter *iter = NpyIter_AdvancedNew(nop + masked, op,
                         iter_flags,
                         order, NPY_UNSAFE_CASTING,
-                        op_flags, context->descriptors,
+                        op_flags, (PyArray_Descr **)context->descriptors,
                         -1, NULL, NULL, buffersize);
     if (iter == NULL) {
         return -1;
@@ -6250,7 +6252,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
     context->descriptors = call_info->_descrs;
     for (int i=0; i < ufunc->nargs; i++) {
         Py_INCREF(operation_descrs[i]);
-        context->descriptors[i] = operation_descrs[i];
+        ((PyArray_Descr **)context->descriptors)[i] = operation_descrs[i];
     }
 
     result = PyTuple_Pack(2, result_dtype_tuple, capsule);

@@ -1682,8 +1682,8 @@ the functions that must be implemented for each slot.
 
 .. c:type:: NPY_CASTING (PyArrayMethod_ResolveDescriptors)( \
                 struct PyArrayMethodObject_tag *method, \
-                PyArray_DTypeMeta **dtypes, \
-                PyArray_Descr **given_descrs, \
+                PyArray_DTypeMeta *const *dtypes, \
+                PyArray_Descr *const *given_descrs, \
                 PyArray_Descr **loop_descrs, \
                 npy_intp *view_offset)
 
@@ -1857,7 +1857,7 @@ Typedefs for functions that users of the ArrayMethod API can implement are
 described below.
 
 .. c:type:: int (PyArrayMethod_TraverseLoop)( \
-        void *traverse_context, PyArray_Descr *descr, char *data, \
+        void *traverse_context, const PyArray_Descr *descr, char *data, \
         npy_intp size, npy_intp stride, NpyAuxData *auxdata)
 
    A traverse loop working on a single array. This is similar to the general
@@ -1880,7 +1880,7 @@ described below.
    passed through in the future (for structured dtypes).
 
 .. c:type:: int (PyArrayMethod_GetTraverseLoop)( \
-                void *traverse_context, PyArray_Descr *descr, \
+                void *traverse_context, const PyArray_Descr *descr, \
                 int aligned, npy_intp fixed_stride, \
                 PyArrayMethod_TraverseLoop **out_loop, NpyAuxData **out_auxdata, \
                 NPY_ARRAYMETHOD_FLAGS *flags)
@@ -1920,7 +1920,8 @@ with the rest of the ArrayMethod API.
    attempt a new search for a matching loop/promoter.
 
 .. c:type:: int (PyArrayMethod_PromoterFunction)(PyObject *ufunc, \
-                PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[], \
+                PyArray_DTypeMeta *const op_dtypes[], \
+                PyArray_DTypeMeta *const signature[], \
                 PyArray_DTypeMeta *new_op_dtypes[])
 
    Type of the promoter function, which must be wrapped into a
@@ -3386,7 +3387,7 @@ Data Type Promotion and Inspection
 ----------------------------------
 
 .. c:function:: PyArray_DTypeMeta *PyArray_CommonDType( \
-                    PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
+            const PyArray_DTypeMeta *dtype1, const PyArray_DTypeMeta *dtype2)
 
    This function defines the common DType operator. Note that the common DType
    will not be ``object`` (unless one of the DTypes is ``object``). Similar to
@@ -3413,7 +3414,7 @@ Data Type Promotion and Inspection
    For example promoting ``float16`` with any other float, integer, or unsigned
    integer again gives a floating point number.
 
-.. c:function:: PyArray_Descr *PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
+.. c:function:: PyArray_Descr *PyArray_GetDefaultDescr(const PyArray_DTypeMeta *DType)
 
    Given a DType class, returns the default instance (descriptor).  This checks
    for a ``singleton`` first and only calls the ``default_descr`` function if

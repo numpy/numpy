@@ -1400,7 +1400,7 @@ PyArray_DTypeMeta *_Void_dtype = NULL;
  * for convenience as we are allowed to access the `DType` slots directly.
  */
 NPY_NO_EXPORT PyArray_ArrFuncs *
-_PyDataType_GetArrFuncs(PyArray_Descr *descr)
+_PyDataType_GetArrFuncs(const PyArray_Descr *descr)
 {
     return PyDataType_GetArrFuncs(descr);
 }

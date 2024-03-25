@@ -38,28 +38,19 @@ static void dlpack_capsule_deleter(PyObject *self) {
         return;
     }
 
-    /* an exception may be in-flight, we must save it in case we create another one */
-    PyObject *type, *value, *traceback;
-    PyErr_Fetch(&type, &value, &traceback);
-
     DLManagedTensor *managed =
         (DLManagedTensor *)PyCapsule_GetPointer(self, NPY_DLPACK_CAPSULE_NAME);
     if (managed == NULL) {
         PyErr_WriteUnraisable(self);
-        goto done;
+        return;
     }
     /*
-     *  the spec says the deleter can be NULL if there is no way for the caller
+     * The spec says the deleter can be NULL if there is no way for the caller
      * to provide a reasonable destructor.
      */
     if (managed->deleter) {
         managed->deleter(managed);
-        /* TODO: is the deleter allowed to set a python exception? */
-        assert(!PyErr_Occurred());
     }
-
-done:
-    PyErr_Restore(type, value, traceback);
 }
 
 /* used internally, almost identical to dlpack_capsule_deleter() */

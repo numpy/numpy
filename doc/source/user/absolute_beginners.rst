@@ -97,7 +97,7 @@ array".
 Most NumPy arrays have some restrictions. For instance:
 
 - All elements of the array must be of the same type of data.
-- Once created, the total size of the the array can't change.
+- Once created, the total size of the array can't change.
 - The shape must be "rectangular", not "jagged"; e.g., each row of
   a two-dimensional array must have the same number of columns.
 
@@ -301,7 +301,7 @@ Adding, removing, and sorting elements
 
 -----
 
-Sorting an element is simple with ``np.sort()``. You can specify the axis, kind,
+Sorting an array is simple with ``np.sort()``. You can specify the axis, kind,
 and order when you call the function.
 
 If you start with this array::

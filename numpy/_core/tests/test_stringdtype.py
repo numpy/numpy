@@ -746,6 +746,31 @@ def test_add_promoter(string_list):
         assert_array_equal(arr + op, rresult)
 
 
+def test_add_promoter_reduce():
+    # Exact TypeError could change, but ensure StringDtype doesn't match
+    with pytest.raises(TypeError, match="the resolved dtypes are not"):
+        np.add.reduce(np.array(["a", "b"], dtype="U"))
+
+    # On the other hand, using `dtype=T` in the *ufunc* should work.
+    np.add.reduce(np.array(["a", "b"], dtype="U"), dtype=np.dtypes.StringDType)
+
+
+def test_multiply_reduce():
+    # At the time of writing (NumPy 2.0) this is very limited (and rather
+    # ridiculous anyway).  But it works and actually makes some sense...
+    # (NumPy does not allow non-scalar initial values)
+    repeats = np.array([2, 3, 4])
+    val = "school-🚌"
+    res = np.multiply.reduce(repeats, initial=val, dtype=np.dtypes.StringDType)
+    assert res == val * np.prod(repeats)
+
+
+def test_multiply_two_string_raises():
+    arr = np.array(["hello", "world"], dtype="T")
+    with pytest.raises(np._core._exceptions._UFuncNoLoopError):
+        np.multiply(arr, arr)
+
+
 @pytest.mark.parametrize("use_out", [True, False])
 @pytest.mark.parametrize("other", [2, [2, 1, 3, 4, 1, 3]])
 @pytest.mark.parametrize(
