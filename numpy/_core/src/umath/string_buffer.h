@@ -1600,23 +1600,8 @@ string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
                  npy_intp *final_len1, npy_intp *final_len2, npy_intp *final_len3,
                  STARTPOSITION pos)
 {
-    size_t len1, len2;
-    npy_int64 offset;
-    if (enc == ENCODING::UTF8) {
-        len1 = buf1.after - buf1.buf;
-        len2 = buf2.after - buf2.buf;
-        if (idx > 0) {
-            offset = num_bytes_until_index(buf1.buf, len1, idx);
-        }
-        else {
-            offset = idx;
-        }
-    }
-    else {
-        len1 = buf1.num_codepoints();
-        len2 = buf2.num_codepoints();
-        offset = idx;
-    }
+    size_t len1 = buf1.num_codepoints();
+    size_t len2 = buf2.num_codepoints();
 
     if (len2 == 0) {
         npy_gil_error(PyExc_ValueError, "empty separator");
@@ -1624,7 +1609,7 @@ string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
         return;
     }
 
-    if (offset < 0) {
+    if (idx < 0) {
         if (pos == STARTPOSITION::FRONT) {
             buf1.buffer_memcpy(out1, len1);
             *final_len1 = len1;
@@ -1638,13 +1623,12 @@ string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
         return;
     }
 
-    buf1.buffer_memcpy(out1, offset);
-    *final_len1 = offset;
+    buf1.buffer_memcpy(out1, idx);
+    *final_len1 = idx;
     buf2.buffer_memcpy(out2, len2);
     *final_len2 = len2;
-    buf1.advance_chars_or_bytes(offset + len2);
-    buf1.buffer_memcpy(out3, len1 - offset - len2);
-    *final_len3 = len1 - offset - len2;
+    (buf1 + idx + len2).buffer_memcpy(out3, len1 - idx - len2);
+    *final_len3 = len1 - idx - len2;
 }
 
 

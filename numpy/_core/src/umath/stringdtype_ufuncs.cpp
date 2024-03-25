@@ -1889,17 +1889,17 @@ string_partition_resolve_descriptors(
         PyArray_Descr *loop_descrs[3],
         npy_intp *NPY_UNUSED(view_offset))
 {
-    if (given_descrs[3] || given_descrs[4] || given_descrs[5]) {
+    if (given_descrs[2] || given_descrs[3] || given_descrs[4]) {
         PyErr_Format(PyExc_TypeError, "The StringDType '%s' ufunc does not "
-                     "support the 'out' keyword", self->name);
+                     "currently support the 'out' keyword", self->name);
         return (NPY_CASTING)-1;
     }
-    for (int i=0; i<3; i++) {
+    for (int i=0; i<2; i++) {
         Py_INCREF(given_descrs[i]);
         loop_descrs[i] = given_descrs[i];
     }
     PyArray_StringDTypeObject *adescr = (PyArray_StringDTypeObject *)given_descrs[0];
-    for (int i=3; i<6; i++) {
+    for (int i=2; i<5; i++) {
         loop_descrs[i] = (PyArray_Descr *)new_stringdtype_instance(
                 adescr->na_object, adescr->coerce);
         if (loop_descrs[i] == NULL) {
@@ -1924,26 +1924,23 @@ string_partition_strided_loop(
 
     char *in1 = data[0];
     char *in2 = data[1];
-    char *in3 = data[2];
-    char *out1 = data[3];
-    char *out2 = data[4];
-    char *out3 = data[5];
+    char *out1 = data[2];
+    char *out2 = data[3];
+    char *out3 = data[4];
 
     npy_intp in1_stride = strides[0];
     npy_intp in2_stride = strides[1];
-    npy_intp in3_stride = strides[2];
-    npy_intp out1_stride = strides[3];
-    npy_intp out2_stride = strides[4];
-    npy_intp out3_stride = strides[5];
+    npy_intp out1_stride = strides[2];
+    npy_intp out2_stride = strides[3];
+    npy_intp out3_stride = strides[4];
 
-    npy_string_allocator *allocators[6] = {};
-    NpyString_acquire_allocators(6, context->descriptors, allocators);
+    npy_string_allocator *allocators[5] = {};
+    NpyString_acquire_allocators(5, context->descriptors, allocators);
     npy_string_allocator *in1allocator = allocators[0];
     npy_string_allocator *in2allocator = allocators[1];
-    // allocators[2] is NULL
-    npy_string_allocator *out1allocator = allocators[3];
-    npy_string_allocator *out2allocator = allocators[4];
-    npy_string_allocator *out3allocator = allocators[5];
+    npy_string_allocator *out1allocator = allocators[2];
+    npy_string_allocator *out2allocator = allocators[3];
+    npy_string_allocator *out3allocator = allocators[4];
 
     PyArray_StringDTypeObject *idescr =
             (PyArray_StringDTypeObject *)context->descriptors[0];
@@ -1955,9 +1952,6 @@ string_partition_strided_loop(
         npy_static_string i1s = {0, NULL};
         const npy_packed_static_string *i2ps = (npy_packed_static_string *)in2;
         npy_static_string i2s = {0, NULL};
-        npy_packed_static_string *o1ps = (npy_packed_static_string *)out1;
-        npy_packed_static_string *o2ps = (npy_packed_static_string *)out2;
-        npy_packed_static_string *o3ps = (npy_packed_static_string *)out3;
 
         int i1_isnull = NpyString_load(in1allocator, i1ps, &i1s);
         int i2_isnull = NpyString_load(in2allocator, i2ps, &i2s);
@@ -1984,73 +1978,85 @@ string_partition_strided_loop(
             }
         }
 
-        Buffer<ENCODING::UTF8> in1buf((char *)i1s.buf, i1s.size);
-        Buffer<ENCODING::UTF8> in2buf((char *)i2s.buf, i2s.size);
-
-        // out1 and out3 can be no longer than in1, so conservatively
-        // overallocate buffers big enough to store in1
-        // out2 must be no bigger than in2
-        char *out1_mem = (char *)PyMem_RawCalloc(i1s.size, 1);
-        char *out2_mem = (char *)PyMem_RawCalloc(i2s.size, 1);
-        char *out3_mem = (char *)PyMem_RawCalloc(i1s.size, 1);
-
-        Buffer<ENCODING::UTF8> out1buf(out1_mem, i1s.size);
-        Buffer<ENCODING::UTF8> out2buf(out2_mem, i2s.size);
-        Buffer<ENCODING::UTF8> out3buf(out3_mem, i1s.size);
-
-        npy_intp final_len1, final_len2, final_len3;
-
-        string_partition(in1buf, in2buf, *(npy_int64 *)in3, out1buf, out2buf, out3buf,
-                          &final_len1, &final_len2, &final_len3, startposition);
-
-        if (final_len1 < 0 || final_len2 < 0 || final_len3 < 0) {
+        if (i2s.size == 0) {
+            npy_gil_error(PyExc_ValueError, "empty separator");
             goto fail;
         }
 
-        if (NpyString_pack(out1allocator, o1ps, out1buf.buf, final_len1) < 0) {
-            npy_gil_error(PyExc_MemoryError,
-                          "Failed to pack string in %s",
-                          ((PyUFuncObject *)context->caller)->name);
-            PyMem_RawFree(out1_mem);
-            PyMem_RawFree(out2_mem);
-            PyMem_RawFree(out3_mem);
-            goto fail;
-        }
-        PyMem_RawFree(out1_mem);
+        npy_intp idx;
 
-        if (NpyString_pack(out2allocator, o2ps, out2buf.buf, final_len2) < 0) {
-            npy_gil_error(PyExc_MemoryError,
-                          "Failed to pack string in %s",
-                          ((PyUFuncObject *)context->caller)->name);
-            PyMem_RawFree(out2_mem);
-            PyMem_RawFree(out3_mem);
-            goto fail;
+        if (startposition == STARTPOSITION::FRONT) {
+            idx = fastsearch((char *)i1s.buf, i1s.size, (char *)i2s.buf, i2s.size, -1, FAST_SEARCH);
         }
-        PyMem_RawFree(out2_mem);
+        else {
+            idx = fastsearch((char *)i1s.buf, i1s.size, (char *)i2s.buf, i2s.size, -1, FAST_RSEARCH);
+        }
 
-        if (NpyString_pack(out3allocator, o3ps, out3buf.buf, final_len3) < 0) {
-            npy_gil_error(PyExc_MemoryError,
-                          "Failed to pack string in %s",
-                          ((PyUFuncObject *)context->caller)->name);
-            PyMem_RawFree(out3_mem);
+        npy_intp out1_size, out2_size, out3_size;
+
+        if (idx == -1) {
+            if (startposition == STARTPOSITION::FRONT) {
+                out1_size = i1s.size;
+                out2_size = out3_size = 0;
+            }
+            else {
+                out1_size = out2_size = 0;
+                out3_size = i1s.size;
+            }
+        }
+        else {
+            out1_size = idx;
+            out2_size = i2s.size;
+            out3_size = i1s.size - out2_size - out1_size;
+        }
+
+        npy_packed_static_string *o1ps = (npy_packed_static_string *)out1;
+        npy_static_string o1s = {0, NULL};
+        npy_packed_static_string *o2ps = (npy_packed_static_string *)out2;
+        npy_static_string o2s = {0, NULL};
+        npy_packed_static_string *o3ps = (npy_packed_static_string *)out3;
+        npy_static_string o3s = {0, NULL};
+
+        if (load_new_string(o1ps, &o1s, out1_size, out1allocator,
+                            ((PyUFuncObject *)context->caller)->name) == -1) {
             goto fail;
         }
-        PyMem_RawFree(out3_mem);
+        if (load_new_string(o2ps, &o2s, out2_size, out2allocator,
+                            ((PyUFuncObject *)context->caller)->name) == -1) {
+            goto fail;
+        }
+        if (load_new_string(o3ps, &o3s, out3_size, out3allocator,
+                            ((PyUFuncObject *)context->caller)->name) == -1) {
+            goto fail;
+        }
+
+        if (idx == -1) {
+            if (startposition == STARTPOSITION::FRONT) {
+                memcpy((char *)o1s.buf, i1s.buf, out1_size);
+            }
+            else {
+                memcpy((char *)o3s.buf, i1s.buf, out3_size);
+            }
+        }
+        else {
+            memcpy((char *)o1s.buf, i1s.buf, out1_size);
+            memcpy((char *)o2s.buf, i2s.buf, out2_size);
+            memcpy((char *)o3s.buf, i1s.buf + out1_size + out2_size, out3_size);
+        }
 
         in1 += in1_stride;
         in2 += in2_stride;
-        in3 += in3_stride;
         out1 += out1_stride;
         out2 += out2_stride;
         out3 += out3_stride;
     }
 
-    NpyString_release_allocators(6, allocators);
+    NpyString_release_allocators(5, allocators);
     return 0;
 
   fail:
 
-    NpyString_release_allocators(6, allocators);
+    NpyString_release_allocators(5, allocators);
     return -1;
 }
 
@@ -2801,7 +2807,6 @@ init_stringdtype_ufuncs(PyObject *umath)
     PyArray_DTypeMeta *partition_dtypes[] = {
         &PyArray_StringDType,
         &PyArray_StringDType,
-        &PyArray_Int64DType,
         &PyArray_StringDType,
         &PyArray_StringDType,
         &PyArray_StringDType
@@ -2816,7 +2821,7 @@ init_stringdtype_ufuncs(PyObject *umath)
     for (int i=0; i<2; i++) {
         if (init_ufunc(umath, partition_names[i], partition_dtypes,
                        string_partition_resolve_descriptors,
-                       string_partition_strided_loop, 3, 3, NPY_NO_CASTING,
+                       string_partition_strided_loop, 2, 3, NPY_NO_CASTING,
                        (NPY_ARRAYMETHOD_FLAGS) 0, &partition_startpositions[i]) < 0) {
             return -1;
         }

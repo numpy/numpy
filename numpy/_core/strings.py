@@ -42,7 +42,9 @@ from numpy._core.umath import (
     _rjust,
     _zfill,
     _partition,
+    _partition_index,
     _rpartition,
+    _rpartition_index,
 )
 
 
@@ -1359,12 +1361,11 @@ def partition(a, sep):
 
     """
     a = np.asanyarray(a)
-    sep = np.asanyarray(sep).astype(a.dtype)
-    pos = _find_ufunc(a, sep, 0, MAX).astype('int64')
-
+    sep = np.array(sep, dtype=a.dtype, copy=None, subok=True)
     if a.dtype.char == "T":
-        return _partition(a, sep, pos)
+        return _partition(a, sep)
 
+    pos = _find_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
 
@@ -1379,7 +1380,7 @@ def partition(a, sep):
     )])
     shape = np.broadcast_shapes(a.shape, sep.shape)
     out = np.empty_like(a, shape=shape, dtype=out_dtype)
-    return _partition(a, sep, pos, out=(out["f0"], out["f1"], out["f2"]))
+    return _partition_index(a, sep, pos, out=(out["f0"], out["f1"], out["f2"]))
 
 
 def rpartition(a, sep):
@@ -1424,12 +1425,11 @@ def rpartition(a, sep):
 
     """
     a = np.asanyarray(a)
-    sep = np.asanyarray(sep).astype(a.dtype)
-    pos = _rfind_ufunc(a, sep, 0, MAX).astype('int64')
-
+    sep = np.array(sep, dtype=a.dtype, copy=None, subok=True)
     if a.dtype.char == "T":
-        return _rpartition(a, sep, pos)
+        return _rpartition(a, sep)
 
+    pos = _rfind_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
 
@@ -1444,7 +1444,8 @@ def rpartition(a, sep):
     )])
     shape = np.broadcast_shapes(a.shape, sep.shape)
     out = np.empty_like(a, shape=shape, dtype=out_dtype)
-    return _rpartition(a, sep, pos, out=(out["f0"], out["f1"], out["f2"]))
+    return _rpartition_index(
+        a, sep, pos, out=(out["f0"], out["f1"], out["f2"]))
 
 
 def translate(a, table, deletechars=None):

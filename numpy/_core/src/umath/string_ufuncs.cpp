@@ -584,7 +584,7 @@ string_zfill_loop(PyArrayMethod_Context *context,
 
 template <ENCODING enc>
 static int
-string_partition_loop(PyArrayMethod_Context *context,
+string_partition_index_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
@@ -1701,7 +1701,7 @@ init_string_ufuncs(PyObject *umath)
     dtypes[0] = dtypes[1] = dtypes[3] = dtypes[4] = dtypes[5] = NPY_OBJECT;
     dtypes[2] = NPY_INT64;
 
-    const char *partition_names[] = {"_partition", "_rpartition"};
+    const char *partition_names[] = {"_partition_index", "_rpartition_index"};
 
     static STARTPOSITION partition_startpositions[] = {
         STARTPOSITION::FRONT, STARTPOSITION::BACK
@@ -1710,13 +1710,13 @@ init_string_ufuncs(PyObject *umath)
     for (int i = 0; i < 2; i++) {
         if (init_ufunc(
                 umath, partition_names[i], 3, 3, dtypes, ENCODING::ASCII,
-                string_partition_loop<ENCODING::ASCII>,
+                string_partition_index_loop<ENCODING::ASCII>,
                 string_partition_resolve_descriptors, &partition_startpositions[i]) < 0) {
             return -1;
         }
         if (init_ufunc(
                 umath, partition_names[i], 3, 3, dtypes, ENCODING::UTF32,
-                string_partition_loop<ENCODING::UTF32>,
+                string_partition_index_loop<ENCODING::UTF32>,
                 string_partition_resolve_descriptors, &partition_startpositions[i]) < 0) {
             return -1;
         }
