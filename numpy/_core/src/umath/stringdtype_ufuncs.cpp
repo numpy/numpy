@@ -1990,14 +1990,8 @@ string_partition_strided_loop(
             goto fail;
         }
 
-        npy_intp idx;
-
-        if (startposition == STARTPOSITION::FRONT) {
-            idx = fastsearch((char *)i1s.buf, i1s.size, (char *)i2s.buf, i2s.size, -1, FAST_SEARCH);
-        }
-        else {
-            idx = fastsearch((char *)i1s.buf, i1s.size, (char *)i2s.buf, i2s.size, -1, FAST_RSEARCH);
-        }
+        int direction = startposition == STARTPOSITION::FRONT ? FAST_SEARCH : FAST_RSEARCH;
+        npy_intp idx = fastsearch((char *)i1s.buf, i1s.size, (char *)i2s.buf, i2s.size, -1, direction);
 
         npy_intp out1_size, out2_size, out3_size;
 
