@@ -1926,6 +1926,8 @@ string_partition_strided_loop(
         NpyAuxData *NPY_UNUSED(auxdata))
 {
     STARTPOSITION startposition = *(STARTPOSITION *)(context->method->static_data);
+    int fastsearch_direction =
+            startposition == STARTPOSITION::FRONT ? FAST_SEARCH : FAST_RSEARCH;
 
     npy_intp N = dimensions[0];
 
@@ -1990,8 +1992,8 @@ string_partition_strided_loop(
             goto fail;
         }
 
-        int direction = startposition == STARTPOSITION::FRONT ? FAST_SEARCH : FAST_RSEARCH;
-        npy_intp idx = fastsearch((char *)i1s.buf, i1s.size, (char *)i2s.buf, i2s.size, -1, direction);
+        npy_intp idx = fastsearch((char *)i1s.buf, i1s.size, (char *)i2s.buf, i2s.size, -1,
+                                  fastsearch_direction);
 
         npy_intp out1_size, out2_size, out3_size;
 
