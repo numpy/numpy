@@ -283,11 +283,11 @@ cdef extern from "numpy/arrayobject.h":
         cdef int type_num
 
         @property
-        cdef inline npy_intp itemsize(self) nogil:
+        cdef inline npy_intp itemsize(self) noexcept nogil:
             return PyDataType_ELSIZE(self)
 
         @property
-        cdef inline npy_intp alignment(self) nogil:
+        cdef inline npy_intp alignment(self) noexcept nogil:
             return PyDataType_ALIGNMENT(self)
 
         # Use fields/names with care as they may be NULL.  You must check
@@ -304,11 +304,11 @@ cdef extern from "numpy/arrayobject.h":
         # valid (the pointer can be NULL). Most users should access
         # this field via the inline helper method PyDataType_SHAPE.
         @property
-        cdef inline PyArray_ArrayDescr* subarray(self) nogil:
+        cdef inline PyArray_ArrayDescr* subarray(self) noexcept nogil:
             return PyDataType_SUBARRAY(self)
 
         @property
-        cdef inline npy_uint64 flags(self) nogil:
+        cdef inline npy_uint64 flags(self) noexcept nogil:
             """The data types flags."""
             return PyDataType_FLAGS(self)
 
@@ -320,32 +320,32 @@ cdef extern from "numpy/arrayobject.h":
     ctypedef class numpy.broadcast [object PyArrayMultiIterObject, check_size ignore]:
 
         @property
-        cdef inline int numiter(self) nogil:
+        cdef inline int numiter(self) noexcept nogil:
             """The number of arrays that need to be broadcast to the same shape."""
             return PyArray_MultiIter_NUMITER(self)
 
         @property
-        cdef inline npy_intp size(self) nogil:
+        cdef inline npy_intp size(self) noexcept nogil:
             """The total broadcasted size."""
             return PyArray_MultiIter_SIZE(self)
 
         @property
-        cdef inline npy_intp index(self) nogil:
+        cdef inline npy_intp index(self) noexcept nogil:
             """The current (1-d) index into the broadcasted result."""
             return PyArray_MultiIter_INDEX(self)
 
         @property
-        cdef inline int nd(self) nogil:
+        cdef inline int nd(self) noexcept nogil:
             """The number of dimensions in the broadcasted result."""
             return PyArray_MultiIter_NDIM(self)
 
         @property
-        cdef inline npy_intp* dimensions(self) nogil:
+        cdef inline npy_intp* dimensions(self) noexcept nogil:
             """The shape of the broadcasted result."""
             return PyArray_MultiIter_DIMS(self)
 
         @property
-        cdef inline void** iters(self) nogil:
+        cdef inline void** iters(self) noexcept nogil:
             """An array of iterator objects that holds the iterators for the arrays to be broadcast together.
             On return, the iterators are adjusted for broadcasting."""
             return PyArray_MultiIter_ITERS(self)
