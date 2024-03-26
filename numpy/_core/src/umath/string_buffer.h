@@ -1600,6 +1600,9 @@ string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
                  npy_intp *final_len1, npy_intp *final_len2, npy_intp *final_len3,
                  STARTPOSITION pos)
 {
+    // StringDType uses a ufunc that implements the find-part as well
+    assert(enc != ENCODING::UTF8);
+
     size_t len1 = buf1.num_codepoints();
     size_t len2 = buf2.num_codepoints();
 
