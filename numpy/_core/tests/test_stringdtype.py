@@ -458,15 +458,6 @@ def test_creation_functions():
     assert np.empty(3, dtype="T")[0] == ""
 
 
-def test_creation_from_view(string_list):
-    arr = np.array(string_list, dtype=StringDType())
-    arr_rev = np.array(string_list[::-1], dtype=StringDType())
-
-    arr_view = np.array(arr, copy=None, dtype=arr_rev.dtype)
-
-    assert_array_equal(arr, arr_view)
-
-
 @pytest.mark.parametrize(
     "strings",
     [

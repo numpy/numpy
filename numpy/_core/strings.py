@@ -1361,7 +1361,8 @@ def partition(a, sep):
 
     """
     a = np.asanyarray(a)
-    sep = np.array(sep, dtype=a.dtype, copy=None, subok=True)
+    # TODO switch to copy=False when issues around views are fixed
+    sep = np.array(sep, dtype=a.dtype, copy=True, subok=True)
     if a.dtype.char == "T":
         return _partition(a, sep)
 
@@ -1425,7 +1426,8 @@ def rpartition(a, sep):
 
     """
     a = np.asanyarray(a)
-    sep = np.array(sep, dtype=a.dtype, copy=None, subok=True)
+    # TODO switch to copy=False when issues around views are fixed
+    sep = np.array(sep, dtype=a.dtype, copy=True, subok=True)
     if a.dtype.char == "T":
         return _rpartition(a, sep)
 
