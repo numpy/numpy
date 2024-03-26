@@ -1888,6 +1888,181 @@ fail:
     return -1;
 }
 
+static NPY_CASTING
+string_partition_resolve_descriptors(
+        PyArrayMethodObject *self,
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[3]),
+        PyArray_Descr *const given_descrs[3],
+        PyArray_Descr *loop_descrs[3],
+        npy_intp *NPY_UNUSED(view_offset))
+{
+    if (given_descrs[2] || given_descrs[3] || given_descrs[4]) {
+        PyErr_Format(PyExc_TypeError, "The StringDType '%s' ufunc does not "
+                     "currently support the 'out' keyword", self->name);
+        return (NPY_CASTING)-1;
+    }
+    for (int i=0; i<2; i++) {
+        Py_INCREF(given_descrs[i]);
+        loop_descrs[i] = given_descrs[i];
+    }
+    PyArray_StringDTypeObject *adescr = (PyArray_StringDTypeObject *)given_descrs[0];
+    for (int i=2; i<5; i++) {
+        loop_descrs[i] = (PyArray_Descr *)new_stringdtype_instance(
+                adescr->na_object, adescr->coerce);
+        if (loop_descrs[i] == NULL) {
+            return (NPY_CASTING)-1;
+        }
+    }
+
+    return NPY_NO_CASTING;
+}
+
+NPY_NO_EXPORT int
+string_partition_strided_loop(
+        PyArrayMethod_Context *context,
+        char *const data[],
+        npy_intp const dimensions[],
+        npy_intp const strides[],
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    STARTPOSITION startposition = *(STARTPOSITION *)(context->method->static_data);
+    int fastsearch_direction =
+            startposition == STARTPOSITION::FRONT ? FAST_SEARCH : FAST_RSEARCH;
+
+    npy_intp N = dimensions[0];
+
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *out1 = data[2];
+    char *out2 = data[3];
+    char *out3 = data[4];
+
+    npy_intp in1_stride = strides[0];
+    npy_intp in2_stride = strides[1];
+    npy_intp out1_stride = strides[2];
+    npy_intp out2_stride = strides[3];
+    npy_intp out3_stride = strides[4];
+
+    npy_string_allocator *allocators[5] = {};
+    NpyString_acquire_allocators(5, context->descriptors, allocators);
+    npy_string_allocator *in1allocator = allocators[0];
+    npy_string_allocator *in2allocator = allocators[1];
+    npy_string_allocator *out1allocator = allocators[2];
+    npy_string_allocator *out2allocator = allocators[3];
+    npy_string_allocator *out3allocator = allocators[4];
+
+    PyArray_StringDTypeObject *idescr =
+            (PyArray_StringDTypeObject *)context->descriptors[0];
+    int has_string_na = idescr->has_string_na;
+    const npy_static_string *default_string = &idescr->default_string;
+
+    while (N--) {
+        const npy_packed_static_string *i1ps = (npy_packed_static_string *)in1;
+        npy_static_string i1s = {0, NULL};
+        const npy_packed_static_string *i2ps = (npy_packed_static_string *)in2;
+        npy_static_string i2s = {0, NULL};
+
+        int i1_isnull = NpyString_load(in1allocator, i1ps, &i1s);
+        int i2_isnull = NpyString_load(in2allocator, i2ps, &i2s);
+
+        if (i1_isnull == -1 || i2_isnull == -1) {
+            npy_gil_error(PyExc_MemoryError, "Failed to load string in %s",
+                          ((PyUFuncObject *)context->caller)->name);
+            goto fail;
+        }
+        else if (NPY_UNLIKELY(i1_isnull || i2_isnull)) {
+            if (!has_string_na) {
+                npy_gil_error(PyExc_ValueError,
+                              "Null values are not supported in %s",
+                              ((PyUFuncObject *)context->caller)->name);
+                goto fail;
+            }
+            else {
+                if (i1_isnull) {
+                    i1s = *default_string;
+                }
+                if (i2_isnull) {
+                    i2s = *default_string;
+                }
+            }
+        }
+
+        if (i2s.size == 0) {
+            npy_gil_error(PyExc_ValueError, "empty separator");
+            goto fail;
+        }
+
+        npy_intp idx = fastsearch((char *)i1s.buf, i1s.size, (char *)i2s.buf, i2s.size, -1,
+                                  fastsearch_direction);
+
+        npy_intp out1_size, out2_size, out3_size;
+
+        if (idx == -1) {
+            if (startposition == STARTPOSITION::FRONT) {
+                out1_size = i1s.size;
+                out2_size = out3_size = 0;
+            }
+            else {
+                out1_size = out2_size = 0;
+                out3_size = i1s.size;
+            }
+        }
+        else {
+            out1_size = idx;
+            out2_size = i2s.size;
+            out3_size = i1s.size - out2_size - out1_size;
+        }
+
+        npy_packed_static_string *o1ps = (npy_packed_static_string *)out1;
+        npy_static_string o1s = {0, NULL};
+        npy_packed_static_string *o2ps = (npy_packed_static_string *)out2;
+        npy_static_string o2s = {0, NULL};
+        npy_packed_static_string *o3ps = (npy_packed_static_string *)out3;
+        npy_static_string o3s = {0, NULL};
+
+        if (load_new_string(o1ps, &o1s, out1_size, out1allocator,
+                            ((PyUFuncObject *)context->caller)->name) == -1) {
+            goto fail;
+        }
+        if (load_new_string(o2ps, &o2s, out2_size, out2allocator,
+                            ((PyUFuncObject *)context->caller)->name) == -1) {
+            goto fail;
+        }
+        if (load_new_string(o3ps, &o3s, out3_size, out3allocator,
+                            ((PyUFuncObject *)context->caller)->name) == -1) {
+            goto fail;
+        }
+
+        if (idx == -1) {
+            if (startposition == STARTPOSITION::FRONT) {
+                memcpy((char *)o1s.buf, i1s.buf, out1_size);
+            }
+            else {
+                memcpy((char *)o3s.buf, i1s.buf, out3_size);
+            }
+        }
+        else {
+            memcpy((char *)o1s.buf, i1s.buf, out1_size);
+            memcpy((char *)o2s.buf, i2s.buf, out2_size);
+            memcpy((char *)o3s.buf, i1s.buf + out1_size + out2_size, out3_size);
+        }
+
+        in1 += in1_stride;
+        in2 += in2_stride;
+        out1 += out1_stride;
+        out2 += out2_stride;
+        out3 += out3_stride;
+    }
+
+    NpyString_release_allocators(5, allocators);
+    return 0;
+
+  fail:
+
+    NpyString_release_allocators(5, allocators);
+    return -1;
+}
+
 NPY_NO_EXPORT int
 string_inputs_promoter(
         PyObject *ufunc_obj, PyArray_DTypeMeta *const op_dtypes[],
@@ -2643,6 +2818,29 @@ init_stringdtype_ufuncs(PyObject *umath)
     if (add_promoter(umath, "_zfill", int_promoter_dtypes, 3,
                      string_multiply_promoter) < 0) {
         return -1;
+    }
+
+    PyArray_DTypeMeta *partition_dtypes[] = {
+        &PyArray_StringDType,
+        &PyArray_StringDType,
+        &PyArray_StringDType,
+        &PyArray_StringDType,
+        &PyArray_StringDType
+    };
+
+    const char *partition_names[] = {"_partition", "_rpartition"};
+
+    static STARTPOSITION partition_startpositions[] = {
+        STARTPOSITION::FRONT, STARTPOSITION::BACK
+    };
+
+    for (int i=0; i<2; i++) {
+        if (init_ufunc(umath, partition_names[i], partition_dtypes,
+                       string_partition_resolve_descriptors,
+                       string_partition_strided_loop, 2, 3, NPY_NO_CASTING,
+                       (NPY_ARRAYMETHOD_FLAGS) 0, &partition_startpositions[i]) < 0) {
+            return -1;
+        }
     }
 
     return 0;

@@ -1300,6 +1300,26 @@ defdict = {
           docstrings.get('numpy._core.umath._zfill'),
           None,
           ),
+'_partition_index':
+    Ufunc(3, 3, None,
+          docstrings.get('numpy._core.umath._partition_index'),
+          None,
+          ),
+'_rpartition_index':
+    Ufunc(3, 3, None,
+          docstrings.get('numpy._core.umath._rpartition_index'),
+          None,
+          ),
+'_partition':
+    Ufunc(2, 3, None,
+          docstrings.get('numpy._core.umath._partition'),
+          None,
+          ),
+'_rpartition':
+    Ufunc(2, 3, None,
+          docstrings.get('numpy._core.umath._rpartition'),
+          None,
+          ),
 }
 
 def indent(st, spaces):
