@@ -61,13 +61,11 @@
 /* Object/Void */
 #define PyArray_ObjectDType (*(PyArray_DTypeMeta *)(PyArray_API + 320)[33])
 #define PyArray_VoidDType (*(PyArray_DTypeMeta *)(PyArray_API + 320)[34])
-/* Abstract */
-#define PyArray_PyIntAbstractDType \
-    (*(PyArray_DTypeMeta *)(PyArray_API + 320)[35])
-#define PyArray_PyFloatAbstractDType \
-    (*(PyArray_DTypeMeta *)(PyArray_API + 320)[36])
-#define PyArray_PyComplexAbstractDType \
-    (*(PyArray_DTypeMeta *)(PyArray_API + 320)[37])
+/* Python types (used as markers for scalars) */
+#define PyArray_PyLongDType (*(PyArray_DTypeMeta *)(PyArray_API + 320)[35])
+#define PyArray_PyFloatDType (*(PyArray_DTypeMeta *)(PyArray_API + 320)[36])
+#define PyArray_PyComplexDType (*(PyArray_DTypeMeta *)(PyArray_API + 320)[37])
+/* Default integer type */
 #define PyArray_DefaultIntDType (*(PyArray_DTypeMeta *)(PyArray_API + 320)[38])
 /* New non-legacy DTypes follow in the order they were added */
 #define PyArray_StringDType (*(PyArray_DTypeMeta *)(PyArray_API + 320)[39])

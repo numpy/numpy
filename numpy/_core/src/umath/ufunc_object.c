@@ -6117,8 +6117,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
                 goto finish;
             }
             PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_INT);
-            Py_INCREF(&PyArray_PyIntAbstractDType);
-            DTypes[i] = &PyArray_PyIntAbstractDType;
+            Py_INCREF(&PyArray_PyLongDType);
+            DTypes[i] = &PyArray_PyLongDType;
             promoting_pyscalars = NPY_TRUE;
         }
         else if (descr_obj == (PyObject *)&PyFloat_Type) {
@@ -6128,8 +6128,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
                 goto finish;
             }
             PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_FLOAT);
-            Py_INCREF(&PyArray_PyFloatAbstractDType);
-            DTypes[i] = &PyArray_PyFloatAbstractDType;
+            Py_INCREF(&PyArray_PyFloatDType);
+            DTypes[i] = &PyArray_PyFloatDType;
             promoting_pyscalars = NPY_TRUE;
         }
         else if (descr_obj == (PyObject *)&PyComplex_Type) {
@@ -6139,8 +6139,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
                 goto finish;
             }
             PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_COMPLEX);
-            Py_INCREF(&PyArray_PyComplexAbstractDType);
-            DTypes[i] = &PyArray_PyComplexAbstractDType;
+            Py_INCREF(&PyArray_PyComplexDType);
+            DTypes[i] = &PyArray_PyComplexDType;
             promoting_pyscalars = NPY_TRUE;
         }
         else if (descr_obj == Py_None) {
