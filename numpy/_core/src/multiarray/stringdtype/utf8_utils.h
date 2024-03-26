@@ -39,9 +39,6 @@ utf8_character_index(
         const char* start_loc, size_t start_byte_offset, size_t start_index,
         size_t search_byte_offset, size_t buffer_size);
 
-NPY_NO_EXPORT npy_int64
-num_bytes_until_index(char *buf, size_t buffer_size, npy_int64 index);
-
 #ifdef __cplusplus
 }
 #endif

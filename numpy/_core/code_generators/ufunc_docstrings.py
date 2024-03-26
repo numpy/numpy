@@ -5043,9 +5043,9 @@ add_newdoc('numpy._core.umath', '_partition_index',
 
     Parameters
     ----------
-    x1 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    x1 : array-like, with ``bytes_``, or ``str_`` dtype
         Input array
-    x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    x2 : array-like, with ``bytes_``, or ``str_`` dtype
         Separator to split each string element in ``x1``.
     x3 : array-like, with any integer dtype
         The indices of the separator (<0 to indicate the separator is not
@@ -5054,12 +5054,11 @@ add_newdoc('numpy._core.umath', '_partition_index',
     Returns
     -------
     out : 3-tuple:
-        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
-          part before the separator
-        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+        - array with ``bytes_`` or ``str_`` dtype with the part before the
           separator
-        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
-          part after the separator
+        - array with ``bytes_`` or ``str_`` dtype with the separator
+        - array with ``bytes_`` or ``str_`` dtype with the part after the
+          separator
 
     See Also
     --------
@@ -5067,11 +5066,10 @@ add_newdoc('numpy._core.umath', '_partition_index',
 
     Examples
     --------
-    >>> x = np.array(["Numpy is nice!"])
-
     The ufunc is used most easily via ``np.strings.partition``,
     which calls it after calculating the indices::
 
+    >>> x = np.array(["Numpy is nice!"])
     >>> np.strings.partition(x, " ")
     (array(['Numpy'], dtype='<U5'),
      array([' '], dtype='<U1'),
@@ -5093,9 +5091,9 @@ add_newdoc('numpy._core.umath', '_rpartition_index',
 
     Parameters
     ----------
-    x1 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    x1 : array-like, with ``bytes_``, or ``str_`` dtype
         Input array
-    x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    x2 : array-like, with ``bytes_``, or ``str_`` dtype
         Separator to split each string element in ``x1``.
     x3 : array-like, with any integer dtype
         The indices of the separator (<0 to indicate the separator is not
@@ -5104,12 +5102,11 @@ add_newdoc('numpy._core.umath', '_rpartition_index',
     Returns
     -------
     out : 3-tuple:
-        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
-          part before the separator
-        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+        - array with ``bytes_`` or ``str_`` dtype with the part before the
           separator
-        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
-          part after the separator
+        - array with ``bytes_`` or ``str_`` dtype with the separator
+        - array with ``bytes_`` or ``str_`` dtype with the part after the
+          separator
 
     See Also
     --------
@@ -5117,11 +5114,10 @@ add_newdoc('numpy._core.umath', '_rpartition_index',
 
     Examples
     --------
-    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
-
     The ufunc is used most easily via ``np.strings.rpartition``,
     which calls it after calculating the indices::
 
+    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.rpartition(a, 'A')
     (array(['aAaAa', '  a', 'abB'], dtype='<U5'),
      array(['A', 'A', 'A'], dtype='<U1'),
@@ -5142,20 +5138,17 @@ add_newdoc('numpy._core.umath', '_partition',
 
     Parameters
     ----------
-    x1 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    x1 : array-like, with ``StringDType`` dtype
         Input array
-    x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    x2 : array-like, with ``StringDType`` dtype
         Separator to split each string element in ``x1``.
 
     Returns
     -------
     out : 3-tuple:
-        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
-          part before the separator
-        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
-          separator
-        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
-          part after the separator
+        - ``StringDType`` array with the part before the separator
+        - ``StringDType`` array with the separator
+        - ``StringDType`` array with the part after the separator
 
     See Also
     --------
@@ -5163,11 +5156,10 @@ add_newdoc('numpy._core.umath', '_partition',
 
     Examples
     --------
-    >>> x = np.array(["Numpy is nice!"], dtype="T")
-
     The ufunc is used most easily via ``np.strings.partition``,
     which calls it under the hood::
 
+    >>> x = np.array(["Numpy is nice!"], dtype="T")
     >>> np.strings.partition(x, " ")
     (array(['Numpy'], dtype=StringDType()),
      array([' '], dtype=StringDType()),
@@ -5189,20 +5181,17 @@ add_newdoc('numpy._core.umath', '_rpartition',
 
     Parameters
     ----------
-    x1 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    x1 : array-like, with ``StringDType`` dtype
         Input array
-    x2 : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    x2 : array-like, with ``StringDType`` dtype
         Separator to split each string element in ``x1``.
 
     Returns
     -------
     out : 3-tuple:
-        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
-          part before the separator
-        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
-          separator
-        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
-          part after the separator
+        - ``StringDType`` array with the part before the separator
+        - ``StringDType`` array with the separator
+        - ``StringDType`` array with the part after the separator
 
     See Also
     --------
@@ -5210,11 +5199,10 @@ add_newdoc('numpy._core.umath', '_rpartition',
 
     Examples
     --------
-    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'], dtype="T")
-
     The ufunc is used most easily via ``np.strings.rpartition``,
     which calls it after calculating the indices::
 
+    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'], dtype="T")
     >>> np.strings.rpartition(a, 'A')
     (array(['aAaAa', '  a', 'abB'], dtype=StringDType()),
      array(['A', 'A', 'A'], dtype=StringDType()),
