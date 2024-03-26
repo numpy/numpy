@@ -1010,28 +1010,29 @@ string_partition_promoter(PyObject *NPY_UNUSED(ufunc),
 
     new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_Int64DType);
 
-    Py_INCREF(op_dtypes[3]);
-    new_op_dtypes[3] = op_dtypes[3];
-    Py_INCREF(op_dtypes[4]);
-    new_op_dtypes[4] = op_dtypes[4];
-    Py_INCREF(op_dtypes[5]);
-    new_op_dtypes[5] = op_dtypes[5];
+    Py_INCREF(op_dtypes[0]);
+    new_op_dtypes[3] = op_dtypes[0];
+    Py_INCREF(op_dtypes[0]);
+    new_op_dtypes[4] = op_dtypes[0];
+    Py_INCREF(op_dtypes[0]);
+    new_op_dtypes[5] = op_dtypes[0];
     return 0;
 }
 
 
 static NPY_CASTING
 string_partition_resolve_descriptors(
-        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArrayMethodObject *self,
         PyArray_DTypeMeta *const NPY_UNUSED(dtypes[3]),
         PyArray_Descr *const given_descrs[3],
         PyArray_Descr *loop_descrs[3],
         npy_intp *NPY_UNUSED(view_offset))
 {
     if (!given_descrs[3] || !given_descrs[4] || !given_descrs[5]) {
-        PyErr_SetString(
-            PyExc_TypeError,
-            "The 'out' kwarg is necessary. Use numpy.strings without it.");
+        PyErr_Format(PyExc_TypeError,
+            "The '%s' ufunc requires the 'out' keyword to be set. The "
+            "python wrapper in numpy.strings can be used without the "
+            "out keyword.", self->name);
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
 
