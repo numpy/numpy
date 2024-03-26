@@ -21,7 +21,7 @@ int_default_descriptor(PyArray_DTypeMeta* NPY_UNUSED(cls))
 }
 
 static PyArray_Descr *
-discover_descriptor_from_pyint(
+discover_descriptor_from_pylong(
         PyArray_DTypeMeta *NPY_UNUSED(cls), PyObject *obj)
 {
     assert(PyLong_Check(obj));
@@ -94,36 +94,36 @@ initialize_and_map_pytypes_to_dtypes()
     if (PyType_Ready((PyTypeObject *)&PyArray_ComplexAbstractDType) < 0) {
         return -1;
     }
-    ((PyTypeObject *)&PyArray_PyIntAbstractDType)->tp_base =
+    ((PyTypeObject *)&PyArray_PyLongDType)->tp_base =
         (PyTypeObject *)&PyArray_IntAbstractDType;
-    PyArray_PyIntAbstractDType.scalar_type = &PyLong_Type;
-    if (PyType_Ready((PyTypeObject *)&PyArray_PyIntAbstractDType) < 0) {
+    PyArray_PyLongDType.scalar_type = &PyLong_Type;
+    if (PyType_Ready((PyTypeObject *)&PyArray_PyLongDType) < 0) {
         return -1;
     }
-    ((PyTypeObject *)&PyArray_PyFloatAbstractDType)->tp_base =
+    ((PyTypeObject *)&PyArray_PyFloatDType)->tp_base =
         (PyTypeObject *)&PyArray_FloatAbstractDType;
-    PyArray_PyFloatAbstractDType.scalar_type = &PyFloat_Type;
-    if (PyType_Ready((PyTypeObject *)&PyArray_PyFloatAbstractDType) < 0) {
+    PyArray_PyFloatDType.scalar_type = &PyFloat_Type;
+    if (PyType_Ready((PyTypeObject *)&PyArray_PyFloatDType) < 0) {
         return -1;
     }
-    ((PyTypeObject *)&PyArray_PyComplexAbstractDType)->tp_base =
+    ((PyTypeObject *)&PyArray_PyComplexDType)->tp_base =
         (PyTypeObject *)&PyArray_ComplexAbstractDType;
-    PyArray_PyComplexAbstractDType.scalar_type = &PyComplex_Type;
-    if (PyType_Ready((PyTypeObject *)&PyArray_PyComplexAbstractDType) < 0) {
+    PyArray_PyComplexDType.scalar_type = &PyComplex_Type;
+    if (PyType_Ready((PyTypeObject *)&PyArray_PyComplexDType) < 0) {
         return -1;
     }
 
     /* Register the new DTypes for discovery */
     if (_PyArray_MapPyTypeToDType(
-            &PyArray_PyIntAbstractDType, &PyLong_Type, NPY_FALSE) < 0) {
+            &PyArray_PyLongDType, &PyLong_Type, NPY_FALSE) < 0) {
         return -1;
     }
     if (_PyArray_MapPyTypeToDType(
-            &PyArray_PyFloatAbstractDType, &PyFloat_Type, NPY_FALSE) < 0) {
+            &PyArray_PyFloatDType, &PyFloat_Type, NPY_FALSE) < 0) {
         return -1;
     }
     if (_PyArray_MapPyTypeToDType(
-            &PyArray_PyComplexAbstractDType, &PyComplex_Type, NPY_FALSE) < 0) {
+            &PyArray_PyComplexDType, &PyComplex_Type, NPY_FALSE) < 0) {
         return -1;
     }
 
@@ -217,7 +217,7 @@ float_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
             return NPY_DT_NewRef(&PyArray_DoubleDType);
         }
     }
-    else if (other == &PyArray_PyIntAbstractDType) {
+    else if (other == &PyArray_PyLongDType) {
         Py_INCREF(cls);
         return cls;
     }
@@ -273,8 +273,8 @@ complex_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
         return res;
 
     }
-    else if (other == &PyArray_PyIntAbstractDType ||
-             other == &PyArray_PyFloatAbstractDType) {
+    else if (other == &PyArray_PyLongDType ||
+             other == &PyArray_PyFloatDType) {
         Py_INCREF(cls);
         return cls;
     }
@@ -299,20 +299,20 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_IntAbstractDType = {{{
     .flags = NPY_DT_ABSTRACT,
 };
 
-NPY_DType_Slots pyintdtype_slots = {
-    .discover_descr_from_pyobject = discover_descriptor_from_pyint,
+NPY_DType_Slots pylongdtype_slots = {
+    .discover_descr_from_pyobject = discover_descriptor_from_pylong,
     .default_descr = int_default_descriptor,
     .common_dtype = int_common_dtype,
 };
 
-NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyIntAbstractDType = {{{
+NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyLongDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
-        .tp_name = "numpy._PythonIntegerDType",
+        .tp_name = "numpy._PyLongDType",
         .tp_basicsize = sizeof(PyArray_Descr),
         .tp_flags = Py_TPFLAGS_DEFAULT,
     },},
     .type_num = -1,
-    .dt_slots = &pyintdtype_slots,
+    .dt_slots = &pylongdtype_slots,
 };
 
 NPY_NO_EXPORT PyArray_DTypeMeta PyArray_FloatAbstractDType = {{{
@@ -332,9 +332,9 @@ NPY_DType_Slots pyfloatdtype_slots = {
     .common_dtype = float_common_dtype,
 };
 
-NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyFloatAbstractDType = {{{
+NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyFloatDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
-        .tp_name = "numpy._PythonFloatDType",
+        .tp_name = "numpy._PyFloatDType",
         .tp_basicsize = sizeof(PyArray_Descr),
        .tp_flags = Py_TPFLAGS_DEFAULT,
     },},
@@ -359,9 +359,9 @@ NPY_DType_Slots pycomplexdtype_slots = {
     .common_dtype = complex_common_dtype,
 };
 
-NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyComplexAbstractDType = {{{
+NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyComplexDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
-        .tp_name = "numpy._PythonComplexDType",
+        .tp_name = "numpy._PyComplexDType",
         .tp_basicsize = sizeof(PyArray_Descr),
          .tp_flags = Py_TPFLAGS_DEFAULT,
     },},

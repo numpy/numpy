@@ -918,7 +918,7 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
          * can change the type of the result (complex, float, int).
          * If our own type if not numerical, signal not implemented.
          */
-        if (other == &PyArray_PyComplexAbstractDType) {
+        if (other == &PyArray_PyComplexDType) {
             if (PyTypeNum_ISCOMPLEX(cls->type_num)) {
                 Py_INCREF(cls);
                 return cls;
@@ -933,14 +933,14 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
                 return NPY_DT_NewRef(&PyArray_CLongDoubleDType);
             }
         }
-        else if (other == &PyArray_PyFloatAbstractDType) {
+        else if (other == &PyArray_PyFloatDType) {
             if (PyTypeNum_ISCOMPLEX(cls->type_num)
                     || PyTypeNum_ISFLOAT(cls->type_num)) {
                 Py_INCREF(cls);
                 return cls;
             }
         }
-        else if (other == &PyArray_PyIntAbstractDType) {
+        else if (other == &PyArray_PyLongDType) {
             if (PyTypeNum_ISCOMPLEX(cls->type_num)
                     || PyTypeNum_ISFLOAT(cls->type_num)
                     || PyTypeNum_ISINTEGER(cls->type_num)

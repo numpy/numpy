@@ -1639,7 +1639,7 @@ string_unicode_bool_output_promoter(
 static int
 is_integer_dtype(PyArray_DTypeMeta *DType)
 {
-    if (DType == &PyArray_PyIntAbstractDType) {
+    if (DType == &PyArray_PyLongDType) {
         return 1;
     }
     else if (DType == &PyArray_Int8DType) {
