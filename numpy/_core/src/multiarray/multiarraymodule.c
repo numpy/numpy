@@ -1611,7 +1611,7 @@ _array_fromobject_generic(
         oldtype = PyArray_DESCR(oparr);
         if (PyArray_EquivTypes(oldtype, dtype)) {
             if (copy != NPY_COPY_ALWAYS && STRIDING_OK(oparr, order)) {
-                if (oldtype == dtype) {
+                if (oldtype == dtype || oldtype->kind == 'T') {
                     Py_INCREF(op);
                     ret = oparr;
                 }
