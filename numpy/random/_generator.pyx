@@ -576,7 +576,8 @@ cdef class Generator:
 
     def integers(self, low, high=None, size=None, dtype=np.int64, endpoint=False):
         """
-        integers(low, high=None, size=None, dtype=np.int64, endpoint=False)
+        integers(high, low=0, size=None, dtype=np.int64, endpoint=False)
+        integers(low, high, size=None, dtype=np.int64, endpoint=False)
 
         Return random integers from `low` (inclusive) to `high` (exclusive), or
         if endpoint=True, `low` (inclusive) to `high` (inclusive). Replaces
@@ -584,18 +585,17 @@ cdef class Generator:
         `RandomState.random_integers` (with endpoint=True)
 
         Return random integers from the "discrete uniform" distribution of
-        the specified dtype. If `high` is None (the default), then results are
-        from 0 to `low`.
+        the specified dtype.
 
         Parameters
         ----------
         low : int or array-like of ints
-            Lowest (signed) integers to be drawn from the distribution (unless
-            ``high=None``, in which case this parameter is 0 and this value is
-            used for `high`).
+            Lowest integers to be drawn from the distribution. When using a
+            single positional argument, the first argument is ``high``.
+            If array-like, must contain integer values.
         high : int or array-like of ints, optional
-            If provided, one above the largest (signed) integer to be drawn
-            from the distribution (see above for behavior if ``high=None``).
+            The upper bound for the integers sampled. When ``endpoint`` is
+            ``False`` (default), ``high`` is not included in the interval.
             If array-like, must contain integer values
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
@@ -606,8 +606,7 @@ cdef class Generator:
             The default value is np.int64.
         endpoint : bool, optional
             If true, sample from the interval [low, high] instead of the
-            default [low, high)
-            Defaults to False
+            default [low, high). Defaults to False.
 
         Returns
         -------
@@ -617,9 +616,8 @@ cdef class Generator:
 
         Notes
         -----
-        When using broadcasting with uint64 dtypes, the maximum value (2**64)
-        cannot be represented as a standard integer type. The high array (or
-        low if high is None) must have object dtype, e.g., array([2**64]).
+        In order to sample the full range of uint64 dtypes, set ``endpoint``
+        to ``True`` and use 2**64-1 as ``high``.
 
         Examples
         --------
