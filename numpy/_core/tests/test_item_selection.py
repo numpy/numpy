@@ -87,6 +87,13 @@ class TestTake:
         b = np.array([0, 1, 2, 3, 4, 5])
         assert_array_equal(a, b)
 
+    def test_out_dtype(self):
+        # In reference to github issue #25588
+        a = np.arange(3).astype(np.int32)
+        indices = np.arange(2)
+        out = np.zeros_like(indices, dtype=np.int64)
+        np.take(a, indices, out=out)
+
 
 class TestPutMask:
     @pytest.mark.parametrize("dtype", list(np.typecodes["All"]) + ["i,O"])
