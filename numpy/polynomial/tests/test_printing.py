@@ -89,7 +89,7 @@ class TestStrUnicodeSuperSubscripts:
         assert_equal(res, tgt)
 
         res = str(poly.Polynomial([0, 1], domain=[1, 2]))
-        tgt = '0.0 + 1.0·(-3.0 + 2.0x)'
+        tgt = '0.0 + 1.0·(-3.0 + 2.0·x)'
         assert_equal(res, tgt)
 
 class TestStrAscii:
@@ -175,7 +175,7 @@ class TestStrAscii:
         assert_equal(res, tgt)
 
         res = str(poly.Polynomial([0, 1], domain=[1, 2]))
-        tgt = '0.0 + 1.0 (-3.0 + 2.0x)'
+        tgt = '0.0 + 1.0 (-3.0 + 2.0 x)'
         assert_equal(res, tgt)
 
 class TestLinebreaking:
@@ -418,12 +418,14 @@ class TestLatexRepr:
         # scaled input
         p = poly.Polynomial([1, 2, 3], domain=[-0.5, 0.5])
         assert_equal(self.as_latex(p),
-            r'$x \mapsto 1.0 + 2.0\,\left(2.0x\right) + 3.0\,\left(2.0x\right)^{2}$')
+            r'$x \mapsto 1.0 + 2.0\,\left(2.0\,x\right)'
+            r' + 3.0\,\left(2.0\,x\right)^{2}$')
 
         # affine input
         p = poly.Polynomial([1, 2, 3], domain=[-1, 0])
         assert_equal(self.as_latex(p),
-            r'$x \mapsto 1.0 + 2.0\,\left(1.0 + 2.0x\right) + 3.0\,\left(1.0 + 2.0x\right)^{2}$')
+            r'$x \mapsto 1.0 + 2.0\,\left(1.0 + 2.0\,x\right) '
+            r'+ 3.0\,\left(1.0 + 2.0\,x\right)^{2}$')
 
     def test_basis_func(self):
         p = poly.Chebyshev([1, 2, 3])
@@ -432,7 +434,8 @@ class TestLatexRepr:
         # affine input - check no surplus parens are added
         p = poly.Chebyshev([1, 2, 3], domain=[-1, 0])
         assert_equal(self.as_latex(p),
-            r'$x \mapsto 1.0\,{T}_{0}(1.0 + 2.0x) + 2.0\,{T}_{1}(1.0 + 2.0x) + 3.0\,{T}_{2}(1.0 + 2.0x)$')
+            r'$x \mapsto 1.0\,{T}_{0}(1.0 + 2.0\,x)'
+            r' + 2.0\,{T}_{1}(1.0 + 2.0\,x) + 3.0\,{T}_{2}(1.0 + 2.0\,x)$')
 
     def test_multichar_basis_func(self):
         p = poly.HermiteE([1, 2, 3])
@@ -460,8 +463,8 @@ class TestLatexRepr:
         assert_equal(
             self.as_latex(p),
             (
-                r'$z \mapsto 1.0 + 2.0\,\left(2.0z\right) + 3.0\,'
-                r'\left(2.0z\right)^{2}$'
+                r'$z \mapsto 1.0 + 2.0\,\left(2.0\,z\right) + 3.0\,'
+                r'\left(2.0\,z\right)^{2}$'
             ),
         )
 
@@ -470,8 +473,8 @@ class TestLatexRepr:
         assert_equal(
             self.as_latex(p),
             (
-                r'$z \mapsto 1.0 + 2.0\,\left(1.0 + 2.0z\right) + 3.0\,'
-                r'\left(1.0 + 2.0z\right)^{2}$'
+                r'$z \mapsto 1.0 + 2.0\,\left(1.0 + 2.0\,z\right) + 3.0\,'
+                r'\left(1.0 + 2.0\,z\right)^{2}$'
             ),
         )
 
