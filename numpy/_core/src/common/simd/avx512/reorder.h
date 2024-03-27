@@ -360,17 +360,17 @@ NPY_FINLINE npyv_f32 npyv_rev64_f32(npyv_f32 a)
 // Permuting the elements of each 128-bit lane by immediate index for
 // each element.
 #define npyv_permi128_u32(A, E0, E1, E2, E3) \
-    _mm512_shuffle_epi32(A, _MM_SHUFFLE(E3, E2, E1, E0))
+    _mm512_shuffle_epi32(A, (_MM_PERM_ENUM)_MM_SHUFFLE(E3, E2, E1, E0))
 
 #define npyv_permi128_s32 npyv_permi128_u32
 
 #define npyv_permi128_u64(A, E0, E1) \
-    _mm512_shuffle_epi32(A, _MM_SHUFFLE(((E1)<<1)+1, ((E1)<<1), ((E0)<<1)+1, ((E0)<<1)))
+    _mm512_shuffle_epi32(A, (_MM_PERM_ENUM)_MM_SHUFFLE(((E1)<<1)+1, ((E1)<<1), ((E0)<<1)+1, ((E0)<<1)))
 
 #define npyv_permi128_s64 npyv_permi128_u64
 
 #define npyv_permi128_f32(A, E0, E1, E2, E3) \
-    _mm512_permute_ps(A, _MM_SHUFFLE(E3, E2, E1, E0))
+    _mm512_permute_ps(A, (_MM_PERM_ENUM)_MM_SHUFFLE(E3, E2, E1, E0))
 
 #define npyv_permi128_f64(A, E0, E1) \
     _mm512_permute_pd(A, (((E1)<<7) | ((E0)<<6) | ((E1)<<5) | ((E0)<<4) | ((E1)<<3) | ((E0)<<2) | ((E1)<<1) | (E0)))

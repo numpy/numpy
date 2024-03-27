@@ -16,7 +16,8 @@
 #include "simd_utils.h"
 
 #ifdef __cplusplus
-extern "C" {
+// to avoid violates the C++ One Definition Rule
+namespace np::NPY_CPU_DISPATCH_CURFX(simd_ext) {
 #endif
 /*
  * clang commit an aggressive optimization behaviour when flag `-ftrapping-math`
@@ -166,6 +167,6 @@ typedef double     npyv_lanetype_f64;
 #endif
 
 #ifdef __cplusplus
-}
+} // namespace np::NPY_CPU_DISPATCH_CURFX(simd_ext)
 #endif
 #endif // _NPY_SIMD_H_

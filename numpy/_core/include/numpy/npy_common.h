@@ -96,13 +96,24 @@
 #else
     #define NPY_INLINE
 #endif
-
 #ifdef _MSC_VER
-    #define NPY_FINLINE static __forceinline
+    #ifdef __cplusplus
+        #define NPY_FINLINE __forceinline
+    #else
+        #define NPY_FINLINE static __forceinline
+    #endif
 #elif defined(__GNUC__)
-    #define NPY_FINLINE static inline __attribute__((always_inline))
+    #ifdef __cplusplus
+        #define NPY_FINLINE inline __attribute__((always_inline))
+    #else
+        #define NPY_FINLINE static inline __attribute__((always_inline))
+    #endif
 #else
-    #define NPY_FINLINE static
+    #ifdef __cplusplus
+        #define NPY_FINLINE inline
+    #else
+        #define NPY_FINLINE static NPY_INLINE
+    #endif
 #endif
 
 #if defined(_MSC_VER)

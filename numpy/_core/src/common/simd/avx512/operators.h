@@ -149,7 +149,16 @@
  * Logical (boolean)
  ***************************/
 #ifdef NPY_HAVE_AVX512BW_MASK
-    #define npyv_and_b8  _kand_mask64
+    // I triggerd a bug here with 32-bit not sure yet if its
+    // also exists on 64-bit.
+    // The operation doesn't perform on the whole bits
+    // TODO(@seiko2plus): debug and report to the upstream
+    #ifdef _MSC_VER
+        NPY_FINLINE npyv_b8  npyv_and_b8(npyv_b8 a, npyv_b8 b)
+        { return a & b; }
+    #else
+        #define npyv_and_b8  _kand_mask64
+    #endif
     #define npyv_and_b16 _kand_mask32
     #define npyv_or_b8   _kor_mask64
     #define npyv_or_b16  _kor_mask32

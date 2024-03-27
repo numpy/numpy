@@ -110,13 +110,13 @@ check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis,
         /* Try to be as clear as possible about what went wrong. */
         if (axis >= 0) {
             PyErr_Format(PyExc_IndexError,
-                         "index %"NPY_INTP_FMT" is out of bounds "
-                         "for axis %d with size %"NPY_INTP_FMT,
+                         "index %" NPY_INTP_FMT" is out of bounds "
+                         "for axis %d with size %" NPY_INTP_FMT,
                          *index, axis, max_item);
         } else {
             PyErr_Format(PyExc_IndexError,
-                         "index %"NPY_INTP_FMT" is out of bounds "
-                         "for size %"NPY_INTP_FMT, *index, max_item);
+                         "index %" NPY_INTP_FMT" is out of bounds "
+                         "for size %" NPY_INTP_FMT, *index, max_item);
         }
         return -1;
     }
@@ -184,9 +184,15 @@ check_and_adjust_axis(int *axis, int ndim)
      || (defined __GNUC__ && __GNUC__ < 4 + (__GNUC_MINOR__ < 9) \
   && !defined __clang__) \
      || (defined __clang__ && __clang_major__ < 8))
-# define NPY_ALIGNOF(type) offsetof(struct {char c; type v;}, v)
+
+    #ifdef __cplusplus
+        template <typename T> struct NPOffsetOffCPP {char c; T v;};
+        #define NPY_ALIGNOF(type) offsetof(NPOffsetOffCPP<type>, v)
+    #else
+        #define NPY_ALIGNOF(type) offsetof(struct {char c; type v;}, v)
+    #endif
 #else
-# define NPY_ALIGNOF(type) _Alignof(type)
+    #define NPY_ALIGNOF(type) _Alignof(type)
 #endif
 #define  NPY_ALIGNOF_UINT(type) npy_uint_alignment(sizeof(type))
 /*

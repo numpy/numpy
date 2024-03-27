@@ -38,6 +38,7 @@ The optimization process in NumPy is carried out in three layers:
 
     build-options
     how-it-works
+    intrinsics/index
 
 .. _`NEP-38`: https://numpy.org/neps/nep-0038-SIMD-optimizations.html
 

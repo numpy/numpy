@@ -62,6 +62,20 @@ typedef float32x4x3_t npyv_f32x3;
 typedef float64x2x3_t npyv_f64x3;
 #endif
 
+typedef uint8x16x4_t  npyv_u8x4;
+typedef int8x16x4_t   npyv_s8x4;
+typedef uint16x8x4_t  npyv_u16x4;
+typedef int16x8x4_t   npyv_s16x4;
+typedef uint32x4x4_t  npyv_u32x4;
+typedef int32x4x4_t   npyv_s32x4;
+typedef uint64x2x4_t  npyv_u64x4;
+typedef int64x2x4_t   npyv_s64x4;
+typedef float32x4x4_t npyv_f32x4;
+#if NPY_SIMD_F64
+typedef float64x2x4_t npyv_f64x4;
+#endif
+
+
 #define npyv_nlanes_u8  16
 #define npyv_nlanes_s8  16
 #define npyv_nlanes_u16 8

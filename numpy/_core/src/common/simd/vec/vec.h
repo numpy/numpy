@@ -84,6 +84,21 @@ typedef struct { npyv_f32 val[3]; } npyv_f32x3;
 #endif
 typedef struct { npyv_f64 val[3]; } npyv_f64x3;
 
+
+typedef struct { npyv_u8  val[4]; } npyv_u8x4;
+typedef struct { npyv_s8  val[4]; } npyv_s8x4;
+typedef struct { npyv_u16 val[4]; } npyv_u16x4;
+typedef struct { npyv_s16 val[4]; } npyv_s16x4;
+typedef struct { npyv_u32 val[4]; } npyv_u32x4;
+typedef struct { npyv_s32 val[4]; } npyv_s32x4;
+typedef struct { npyv_u64 val[4]; } npyv_u64x4;
+typedef struct { npyv_s64 val[4]; } npyv_s64x4;
+#if NPY_SIMD_F32
+typedef struct { npyv_f32 val[4]; } npyv_f32x4;
+#endif
+typedef struct { npyv_f64 val[4]; } npyv_f64x4;
+
+
 #define npyv_nlanes_u8  16
 #define npyv_nlanes_s8  16
 #define npyv_nlanes_u16 8

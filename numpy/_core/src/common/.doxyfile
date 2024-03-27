@@ -1,1 +1,8 @@
 INCLUDE_PATH += @CUR_DIR
+INPUT += @CUR_DIR/simd/simd.hpp \
+         @CUR_DIR/simd/wrapper/datatypes.hpp \
+         @CUR_DIR/simd/forward.inc.hpp
+
+
+PREDEFINED += NPY_FINLINE=inline NPY_CPU_DISPATCH_CURFX(X)=simd NPY_HAVE_SSE2
+EXCLUDE_SYMBOLS += NPYV_IMPL_* helper

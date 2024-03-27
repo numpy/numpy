@@ -1,0 +1,6 @@
+#ifndef NUMPY_CORE_SRC_COMMON_SIMD_SSE_SSE_HPP_
+#define NUMPY_CORE_SRC_COMMON_SIMD_SSE_SSE_HPP_
+
+#include "operators.inc.hpp"
+
+#endif // NUMPY_CORE_SRC_COMMON_SIMD_SSE_SSE_HPP_
