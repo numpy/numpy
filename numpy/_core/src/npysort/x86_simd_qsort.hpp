@@ -2,6 +2,7 @@
 #define NUMPY_SRC_COMMON_NPYSORT_X86_SIMD_QSORT_HPP
 
 #include "common.hpp"
+#include <numpy/npy_common.h> // npy_intp
 
 namespace np { namespace qsort_simd {
 

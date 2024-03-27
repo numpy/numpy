@@ -24,12 +24,6 @@ Py_square(PyObject *o)
 }
 
 static PyObject *
-Py_get_one(PyObject *NPY_UNUSED(o))
-{
-    return PyLong_FromLong(1);
-}
-
-static PyObject *
 Py_reciprocal(PyObject *o)
 {
     PyObject *one = PyLong_FromLong(1);
