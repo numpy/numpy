@@ -43,7 +43,7 @@
 NPY_NO_EXPORT const char *npy_no_copy_err_msg = (
         "Unable to avoid copy while creating an array as requested.\n"
         "If using `np.array(obj, copy=False)` use `np.asarray(obj)` "
-        "or `copy=None` to allow NumPy to make the copy.\n"
+        "to allow NumPy to make a copy when needed.\n"
         "This changed in NumPy 2. The suggested fix works on all versions.");
 
 /*
@@ -2424,28 +2424,25 @@ check_or_clear_and_warn_error_if_due_to_copy_kwarg(PyObject *kwnames)
         return -1;
     }
 
-    PyObject *type, *value, *traceback;
-    PyErr_Fetch(&type, &value, &traceback);
-    if (value == NULL) {
-        PyErr_Restore(type, value, traceback);
-        return -1;
-    }
-
     /*
      * In most cases, if we fail, we assume the error was unrelated to the
      * copy kwarg and simply restore the original one.
      */
+    PyObject *type, *value, *traceback;
+    PyErr_Fetch(&type, &value, &traceback);
+    if (value == NULL) {
+        goto restore_error;
+    }
+
     PyObject *str_value = PyObject_Str(value);
     if (str_value == NULL) {
-        PyErr_Restore(type, value, traceback);
-        return -1;
+        goto restore_error;
     }
     int copy_kwarg_unsupported = PyUnicode_Contains(
             str_value, npy_ma_str_array_err_msg_substr);
     Py_DECREF(str_value);
     if (copy_kwarg_unsupported == -1) {
-        PyErr_Restore(type, value, traceback);
-        return -1;
+        goto restore_error;
     }
     if (copy_kwarg_unsupported) {
         /*
@@ -2461,6 +2458,8 @@ check_or_clear_and_warn_error_if_due_to_copy_kwarg(PyObject *kwnames)
         }
         return 0;
     }
+
+  restore_error:
     PyErr_Restore(type, value, traceback);
     return -1;
 }
@@ -2551,7 +2550,7 @@ PyArray_FromArrayAttr_int(
             return NULL;
         }
         /*
-         * The seems to have been due to passing copy.  We try to see
+         * The error seems to have been due to passing copy.  We try to see
          * more precisely what the message is and may try again.
          */
         must_copy_but_copy_kwarg_unimplemented = 1;
