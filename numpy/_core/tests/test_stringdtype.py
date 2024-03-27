@@ -474,6 +474,23 @@ def test_creation_functions():
     assert np.empty(3, dtype="T")[0] == ""
 
 
+def test_create_with_copy_none(string_list):
+    arr = np.array(string_list, dtype=StringDType())
+    arr_rev = np.array(string_list[::-1], dtype=StringDType())
+
+    arr_copy = np.array(arr, copy=None, dtype=arr_rev.dtype)
+    np.testing.assert_array_equal(arr, arr_copy)
+    assert arr_copy.base is None
+
+    with pytest.raises(ValueError, match="Unable to avoid copy"):
+        np.array(arr, copy=False, dtype=arr_rev.dtype)
+
+    arr_view = np.array(arr, copy=None, dtype=arr.dtype)
+    np.testing.assert_array_equal(arr, arr)
+    np.testing.assert_array_equal(arr_view[::-1], arr_rev)
+    assert arr_view is arr
+
+
 @pytest.mark.parametrize(
     "strings",
     [

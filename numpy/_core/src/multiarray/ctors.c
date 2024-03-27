@@ -1927,7 +1927,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
            /* If a writeable array was requested, and arr is not */
            ((flags & NPY_ARRAY_WRITEABLE) &&
                    (!(arrflags & NPY_ARRAY_WRITEABLE))) ||
-           !PyArray_EquivTypes(oldtype, newtype);
+           !PyArray_ViewableTypes(oldtype, newtype);
 
     if (copy) {
         if (flags & NPY_ARRAY_ENSURENOCOPY ) {
