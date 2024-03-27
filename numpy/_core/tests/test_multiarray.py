@@ -8498,7 +8498,7 @@ class TestArrayCreationCopyArgument(object):
         # an error:
         with pytest.warns(DeprecationWarning, match="__array__.*'copy'"):
             with pytest.raises(ValueError,
-                    match=r"Unable to avoid copy(.|\n)*changed in NumPy 2"):
+                    match=r"Unable to avoid copy(.|\n)*numpy_2_0_migration_guide.html"):
                 np.array(a, copy=False)
 
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
