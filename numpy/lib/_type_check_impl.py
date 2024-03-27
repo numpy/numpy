@@ -684,13 +684,13 @@ def common_type(*arrays):
     precision = 0
     for a in arrays:
         t = a.dtype.type
-        if iscomplexobj(a):
-            is_complex = True
-        if issubclass(t, _nx.integer):
-            p = 2  # array_precision[_nx.double]
-        else:
-            p = array_precision.get(t, None)
-            if p is None:
+        is_complex = is_complex or issubclass(t, _nx.complexfloating)
+
+        p = array_precision.get(t, None)
+        if p is None:
+            if issubclass(t, _nx.integer):
+                p = 2  # array_precision[_nx.double]
+            else:
                 raise TypeError("can't get common type for non-numeric array")
         precision = max(precision, p)
     if is_complex:
