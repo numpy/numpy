@@ -347,7 +347,7 @@ max_opt = {
   'msvc': ['/O2'],
   'intel-cl': ['/O3'],
 }.get(compiler_id, ['-O3'])
-max_opt = cc.has_multi_arguments(max_opt) ? max_opt : []
+max_opt = cc.has_multi_arguments(max_opt) and get_option('buildtype') != 'debug' ? max_opt : []
 
 # Optional GCC compiler builtins and their call arguments.
 # If given, a required header and definition name (HAVE_ prepended)
