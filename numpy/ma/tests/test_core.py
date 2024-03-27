@@ -2581,6 +2581,14 @@ class TestUfuncs:
             # also check that allclose uses ma ufuncs, to avoid warning
             allclose(m, 0.5)
 
+    def test_masked_array_underflow(self):
+        with(np.errstate(under="raise")):
+            x = np.arange(0, 3, 0.1)
+            X = np.ma.array(x)
+            x2 = x/2.0  # <- works
+            X2 = X/2.0
+            assert(X2.all() == X.all() / 2.0)
+
 class TestMaskedArrayInPlaceArithmetic:
     # Test MaskedArray Arithmetic
 
