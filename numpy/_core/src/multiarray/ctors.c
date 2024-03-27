@@ -42,9 +42,9 @@
 
 NPY_NO_EXPORT const char *npy_no_copy_err_msg = (
         "Unable to avoid copy while creating an array as requested.\n"
-        "If using `np.array(obj, copy=False)` use `np.asarray(obj)` "
-        "to allow NumPy to make a copy when needed.\n"
-        "This changed in NumPy 2. The suggested fix works on all versions.");
+        "If using `np.array(obj, copy=False)` replace it with `np.asarray(obj)` "
+        "to allow a copy when needed (no behavior change in NumPy 1.x).\n"
+        "For more details, see https://numpy.org/devdocs/numpy_2_0_migration_guide.html#adapting-to-changes-in-the-copy-keyword.");
 
 /*
  * Reading from a file or a string.
