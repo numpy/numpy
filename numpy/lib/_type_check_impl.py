@@ -12,8 +12,9 @@ from .._utils import set_module
 import numpy._core.numeric as _nx
 from numpy._core.numeric import asarray, asanyarray, isnan, zeros
 from numpy._core import overrides, getlimits
+from numpy._core._multiarray_umath import result_type as _result_type
+from numpy import integer as _integer_type
 from ._ufunclike_impl import isneginf, isposinf
-
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -627,18 +628,6 @@ def typename(char):
 #-----------------------------------------------------------------------------
 
 
-#determine the "minimum common type" for a group of arrays.
-array_type = [[_nx.float16, _nx.float32, _nx.float64, _nx.longdouble],
-              [None, _nx.complex64, _nx.complex128, _nx.clongdouble]]
-array_precision = {_nx.float16: 0,
-                   _nx.float32: 1,
-                   _nx.float64: 2,
-                   _nx.longdouble: 3,
-                   _nx.complex64: 1,
-                   _nx.complex128: 2,
-                   _nx.clongdouble: 3}
-
-
 def _common_type_dispatcher(*arrays):
     return arrays
 
@@ -680,20 +669,9 @@ def common_type(*arrays):
     <class 'numpy.complex128'>
 
     """
-    is_complex = False
-    precision = 0
-    for a in arrays:
-        t = a.dtype.type
-        if iscomplexobj(a):
-            is_complex = True
-        if issubclass(t, _nx.integer):
-            p = 2  # array_precision[_nx.double]
-        else:
-            p = array_precision.get(t, None)
-            if p is None:
-                raise TypeError("can't get common type for non-numeric array")
-        precision = max(precision, p)
-    if is_complex:
-        return array_type[1][precision]
-    else:
-        return array_type[0][precision]
+    common_type = _result_type(*[a.dtype for a in arrays]).type
+    if issubclass(common_type, _integer_type):
+        return _nx.float64
+    if not issubclass(common_type, _nx.inexact):
+        raise TypeError("can't get common type for non-numeric array")
+    return common_type
