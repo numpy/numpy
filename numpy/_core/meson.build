@@ -899,7 +899,7 @@ foreach gen_mtargets : [
   ],
   [
     'loops_hyperbolic.dispatch.h',
-    src_file.process('src/umath/loops_hyperbolic.dispatch.c.src'),
+    src_file.process('src/umath/loops_hyperbolic.dispatch.cpp.src'),
     [
       AVX512_SKX, [AVX2, FMA3],
       VSX4, VSX2,
@@ -1012,7 +1012,8 @@ foreach gen_mtargets : [
       'src/common',
       'src/multiarray',
       'src/npymath',
-      'src/umath'
+      'src/umath',
+      'src/highway'
     ]
   )
   if not is_variable('multiarray_umath_mtargets')
