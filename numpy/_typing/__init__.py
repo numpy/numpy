@@ -184,6 +184,7 @@ from ._dtype_like import (
 )
 from ._array_like import (
     NDArray as NDArray,
+    Array as Array,
     ArrayLike as ArrayLike,
     _ArrayLike as _ArrayLike,
     _FiniteNestedSequence as _FiniteNestedSequence,

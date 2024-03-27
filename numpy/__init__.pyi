@@ -1380,8 +1380,8 @@ _FlexDType = TypeVar("_FlexDType", bound=dtype[flexible])
 
 # TODO: Set the `bound` to something more suitable once we
 # have proper shape support
-_ShapeType = TypeVar("_ShapeType", bound=Any)
-_ShapeType2 = TypeVar("_ShapeType2", bound=Any)
+_ShapeType = TypeVar("_ShapeType", covariant=True, bound=tuple[int, ...])
+_ShapeType2 = TypeVar("_ShapeType2", covariant=True, bound=tuple[int, ...])
 _NumberType = TypeVar("_NumberType", bound=number[Any])
 
 if sys.version_info >= (3, 12):
@@ -1526,7 +1526,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @property
     def ctypes(self) -> _ctypes[int]: ...
     @property
-    def shape(self) -> _Shape: ...
+    def shape(self) -> _ShapeType: ...
     @shape.setter
     def shape(self, value: _ShapeLike) -> None: ...
     @property
