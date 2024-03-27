@@ -337,9 +337,9 @@ def sliding_window_view(x, window_shape, axis=None, *,
     # note: same axis can be windowed repeatedly
     x_shape_trimmed = list(x.shape)
     for ax, dim in zip(axis, window_shape):
-        if x_shape_trimmed[ax] < dim:
+        if dim > x_shape_trimmed[ax] + 1:
             raise ValueError(
-                'window shape cannot be larger than input array shape')
+                'window shape may exceed input array shape by at most 1')
         x_shape_trimmed[ax] -= dim - 1
     out_shape = tuple(x_shape_trimmed) + window_shape
     return as_strided(x, strides=out_strides, shape=out_shape,
