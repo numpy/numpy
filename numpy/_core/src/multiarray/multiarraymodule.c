@@ -1481,6 +1481,26 @@ PyArray_EquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 }
 
 
+/*
+ * This function returns true if a view can be safely created
+ * between the two types. This implies that PyArray_EquivTypes
+ * is true as well.
+ */
+NPY_NO_EXPORT unsigned char
+PyArray_ViewableTypes(PyArray_Descr *type1, PyArray_Descr *type2)
+{
+    if (!PyArray_EquivTypes(type1, type2)) {
+        return 0;
+    }
+    // a view of a stringdtype array has a corrupt arena, unless
+    // type1 and type2 are exactly the same object
+    if ((type1 != type2) && (type1->kind == 'T')) {
+        return 0;
+    }
+    return 1;
+}
+
+
 /*NUMPY_API*/
 NPY_NO_EXPORT unsigned char
 PyArray_EquivTypenums(int typenum1, int typenum2)
@@ -1609,7 +1629,7 @@ _array_fromobject_generic(
 
         /* One more chance for faster exit if user specified the dtype. */
         oldtype = PyArray_DESCR(oparr);
-        if (PyArray_EquivTypes(oldtype, dtype)) {
+        if (PyArray_ViewableTypes(oldtype, dtype)) {
             if (copy != NPY_COPY_ALWAYS && STRIDING_OK(oparr, order)) {
                 if (oldtype == dtype) {
                     Py_INCREF(op);
