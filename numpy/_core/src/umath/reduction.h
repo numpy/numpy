@@ -31,6 +31,10 @@ typedef int (PyArray_ReduceLoopFunc)(PyArrayMethod_Context *context,
         npy_intp const *countptr, NpyIter_IterNextFunc *iternext,
         int needs_api, npy_intp skip_first_count);
 
+NPY_NO_EXPORT int
+get_initial_buf(PyArrayMethod_Context *context, npy_bool empty_iteration,
+                PyArray_Descr *dtype, PyObject *initial, char **initial_buf);
+
 /*
  * This function executes all the standard NumPy reduction function
  * boilerplate code, just calling the appropriate inner loop function where
