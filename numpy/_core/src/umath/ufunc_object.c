@@ -4065,17 +4065,15 @@ resolve_descriptors(int nop,
                 original_dtypes[i] = PyArray_DTYPE(operands[i]);
                 Py_INCREF(original_dtypes[i]);
             }
-            if (i < nin
-                    && NPY_DT_is_abstract(signature[i])
-                    && inputs_tup != NULL) {
-                /*
-                 * TODO: We may wish to allow any scalar here.  Checking for
-                 *       abstract assumes this works out for Python scalars,
-                 *       which is the important case (especially for now).
-                 *
-                 * One possible check would be `DType->type == type(obj)`.
-                 */
-                input_scalars[i] = PyTuple_GET_ITEM(inputs_tup, i);
+            /*
+             * Check whether something is a scalar of the given type.
+             * We leave it to resolve_descriptors_with_scalars to deal
+             * with, e.g., only doing something special for python scalars.
+             */
+            if (i < nin && inputs_tup != NULL) {
+                PyObject *input = PyTuple_GET_ITEM(inputs_tup, i);
+                input_scalars[i] = signature[i]->scalar_type == Py_TYPE(input) ?
+                    input : NULL;
             }
             else {
                 input_scalars[i] = NULL;
@@ -6121,8 +6119,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
                 goto finish;
             }
             PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_INT);
-            Py_INCREF(&PyArray_PyIntAbstractDType);
-            DTypes[i] = &PyArray_PyIntAbstractDType;
+            Py_INCREF(&PyArray_PyLongDType);
+            DTypes[i] = &PyArray_PyLongDType;
             promoting_pyscalars = NPY_TRUE;
         }
         else if (descr_obj == (PyObject *)&PyFloat_Type) {
@@ -6132,8 +6130,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
                 goto finish;
             }
             PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_FLOAT);
-            Py_INCREF(&PyArray_PyFloatAbstractDType);
-            DTypes[i] = &PyArray_PyFloatAbstractDType;
+            Py_INCREF(&PyArray_PyFloatDType);
+            DTypes[i] = &PyArray_PyFloatDType;
             promoting_pyscalars = NPY_TRUE;
         }
         else if (descr_obj == (PyObject *)&PyComplex_Type) {
@@ -6143,8 +6141,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
                 goto finish;
             }
             PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_COMPLEX);
-            Py_INCREF(&PyArray_PyComplexAbstractDType);
-            DTypes[i] = &PyArray_PyComplexAbstractDType;
+            Py_INCREF(&PyArray_PyComplexDType);
+            DTypes[i] = &PyArray_PyComplexDType;
             promoting_pyscalars = NPY_TRUE;
         }
         else if (descr_obj == Py_None) {

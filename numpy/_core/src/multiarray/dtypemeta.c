@@ -911,12 +911,15 @@ static PyArray_DTypeMeta *
 default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
     assert(cls->type_num < NPY_NTYPES_LEGACY);
-    if (NPY_UNLIKELY(NPY_DT_is_abstract(other))) {
+    if (NPY_UNLIKELY(!NPY_DT_is_legacy(other))) {
         /*
-         * The abstract complex has a lower priority than the concrete inexact
-         * types to ensure the correct promotion with integers.
+         * Deal with the non-legacy types we understand: python scalars.
+         * These may have lower priority than the concrete inexact types,
+         * but can change the type of the result (complex, float, int).
+         * If our own DType is not numerical or has lower priority (e.g.
+         * integer but abstract one is float), signal not implemented.
          */
-        if (other == &PyArray_PyComplexAbstractDType) {
+        if (other == &PyArray_PyComplexDType) {
             if (PyTypeNum_ISCOMPLEX(cls->type_num)) {
                 Py_INCREF(cls);
                 return cls;
@@ -931,14 +934,14 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
                 return NPY_DT_NewRef(&PyArray_CLongDoubleDType);
             }
         }
-        else if (other == &PyArray_PyFloatAbstractDType) {
+        else if (other == &PyArray_PyFloatDType) {
             if (PyTypeNum_ISCOMPLEX(cls->type_num)
                     || PyTypeNum_ISFLOAT(cls->type_num)) {
                 Py_INCREF(cls);
                 return cls;
             }
         }
-        else if (other == &PyArray_PyIntAbstractDType) {
+        else if (other == &PyArray_PyLongDType) {
             if (PyTypeNum_ISCOMPLEX(cls->type_num)
                     || PyTypeNum_ISFLOAT(cls->type_num)
                     || PyTypeNum_ISINTEGER(cls->type_num)
@@ -947,8 +950,10 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
                 return cls;
             }
         }
+        Py_INCREF(Py_NotImplemented);
+        return (PyArray_DTypeMeta *)Py_NotImplemented;
     }
-    if (!NPY_DT_is_legacy(other) || other->type_num > cls->type_num) {
+    if (other->type_num > cls->type_num) {
         /*
          * Let the more generic (larger type number) DType handle this
          * (note that half is after all others, which works out here.)
@@ -1063,8 +1068,9 @@ object_common_dtype(
  * @returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-dtypemeta_wrap_legacy_descriptor(_PyArray_LegacyDescr *descr,
-        PyArray_ArrFuncs *arr_funcs, const char *name, const char *alias)
+dtypemeta_wrap_legacy_descriptor(
+    _PyArray_LegacyDescr *descr, PyArray_ArrFuncs *arr_funcs,
+    PyTypeObject *dtype_super_class, const char *name, const char *alias)
 {
     int has_type_set = Py_TYPE(descr) == &PyArrayDescr_Type;
 
@@ -1118,7 +1124,7 @@ dtypemeta_wrap_legacy_descriptor(_PyArray_LegacyDescr *descr,
             .tp_name = NULL,  /* set below */
             .tp_basicsize = sizeof(_PyArray_LegacyDescr),
             .tp_flags = Py_TPFLAGS_DEFAULT,
-            .tp_base = &PyArrayDescr_Type,
+            .tp_base = NULL,  /* set below */
             .tp_new = (newfunc)legacy_dtype_default_new,
             .tp_doc = (
                 "DType class corresponding to the scalar type and dtype of "
@@ -1131,11 +1137,12 @@ dtypemeta_wrap_legacy_descriptor(_PyArray_LegacyDescr *descr,
         /* Further fields are not common between DTypes */
     };
     memcpy(dtype_class, &prototype, sizeof(PyArray_DTypeMeta));
-    /* Fix name of the Type*/
+    /* Fix name and superclass of the Type*/
     ((PyTypeObject *)dtype_class)->tp_name = name;
+    ((PyTypeObject *)dtype_class)->tp_base = dtype_super_class,
     dtype_class->dt_slots = dt_slots;
 
-    /* Let python finish the initialization (probably unnecessary) */
+    /* Let python finish the initialization */
     if (PyType_Ready((PyTypeObject *)dtype_class) < 0) {
         Py_DECREF(dtype_class);
         return -1;

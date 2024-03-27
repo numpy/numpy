@@ -1252,6 +1252,27 @@ def test_binary(string_array, unicode_array, function_name, args):
         assert 0
 
 
+@pytest.mark.parametrize("function, expected", [
+    (np.strings.find, [[2, -1], [1, -1]]),
+    (np.strings.startswith, [[False, False], [True, False]])])
+@pytest.mark.parametrize("start, stop", [
+    (1, 4),
+    (np.int8(1), np.int8(4)),
+    (np.array([1, 1], dtype='u2'), np.array([4, 4], dtype='u2'))])
+def test_non_default_start_stop(function, start, stop, expected):
+    a = np.array([["--🐍--", "--🦜--"],
+                  ["-🐍---", "-🦜---"]], "T")
+    indx = function(a, "🐍", start, stop)
+    assert_array_equal(indx, expected)
+
+
+@pytest.mark.parametrize("count", [2, np.int8(2), np.array([2, 2], 'u2')])
+def test_replace_non_default_repeat(count):
+    a = np.array(["🐍--", "🦜-🦜-"], "T")
+    result = np.strings.replace(a, "🦜-", "🦜†", count)
+    assert_array_equal(result, np.array(["🐍--", "🦜†🦜†"], "T"))
+
+
 def test_strip_ljust_rjust_consistency(string_array, unicode_array):
     rjs = np.char.rjust(string_array, 1000)
     rju = np.char.rjust(unicode_array, 1000)

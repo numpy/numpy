@@ -2121,7 +2121,7 @@ string_unicode_bool_output_promoter(
 static int
 is_integer_dtype(PyArray_DTypeMeta *DType)
 {
-    if (DType == &PyArray_PyIntAbstractDType) {
+    if (DType == &PyArray_PyLongDType) {
         return 1;
     }
     else if (DType == &PyArray_Int8DType) {
@@ -2522,23 +2522,11 @@ init_stringdtype_ufuncs(PyObject *umath)
     INIT_MULTIPLY(Int64, int64);
     INIT_MULTIPLY(UInt64, uint64);
 
-    // This is needed so the generic promoters defined after this don't match
-    // for np.multiply(string_array, string_array)
-
-    PyArray_DTypeMeta *hdtypes[] = {
-        &PyArray_StringDType,
-        &PyArray_StringDType,
-        &PyArray_StringDType};
-
-    if (add_promoter(umath, "multiply", hdtypes, 3, string_multiply_promoter) < 0) {
-        return -1;
-    }
-
     // all other integer dtypes are handled with a generic promoter
 
     PyArray_DTypeMeta *rdtypes[] = {
         &PyArray_StringDType,
-        (PyArray_DTypeMeta *)Py_None,
+        &PyArray_IntAbstractDType,
         &PyArray_StringDType};
 
     if (add_promoter(umath, "multiply", rdtypes, 3, string_multiply_promoter) < 0) {
@@ -2546,7 +2534,7 @@ init_stringdtype_ufuncs(PyObject *umath)
     }
 
     PyArray_DTypeMeta *ldtypes[] = {
-        (PyArray_DTypeMeta *)Py_None,
+        &PyArray_IntAbstractDType,
         &PyArray_StringDType,
         &PyArray_StringDType};
 
@@ -2566,7 +2554,7 @@ init_stringdtype_ufuncs(PyObject *umath)
 
     PyArray_DTypeMeta *findlike_promoter_dtypes[] = {
         &PyArray_StringDType, &PyArray_UnicodeDType,
-        &PyArray_PyIntAbstractDType, &PyArray_PyIntAbstractDType,
+        &PyArray_IntAbstractDType, &PyArray_IntAbstractDType,
         &PyArray_DefaultIntDType,
     };
 
@@ -2607,7 +2595,7 @@ init_stringdtype_ufuncs(PyObject *umath)
 
     PyArray_DTypeMeta *startswith_endswith_promoter_dtypes[] = {
         &PyArray_StringDType, &PyArray_UnicodeDType,
-        &PyArray_PyIntAbstractDType, &PyArray_PyIntAbstractDType,
+        &PyArray_IntAbstractDType, &PyArray_IntAbstractDType,
         &PyArray_BoolDType,
     };
 
@@ -2703,7 +2691,7 @@ init_stringdtype_ufuncs(PyObject *umath)
 
     PyArray_DTypeMeta *replace_promoter_pyint_dtypes[] = {
         &PyArray_StringDType, &PyArray_UnicodeDType, &PyArray_UnicodeDType,
-        &PyArray_PyIntAbstractDType, &PyArray_StringDType,
+        &PyArray_IntAbstractDType, &PyArray_StringDType,
     };
 
     if (add_promoter(umath, "_replace", replace_promoter_pyint_dtypes, 5,

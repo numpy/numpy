@@ -1796,17 +1796,17 @@ PyArray_ResultType(
         all_descriptors[i_all] = NULL;  /* no descriptor for py-scalars */
         if (PyArray_FLAGS(arrs[i]) & NPY_ARRAY_WAS_PYTHON_INT) {
             /* This could even be an object dtype here for large ints */
-            all_DTypes[i_all] = &PyArray_PyIntAbstractDType;
+            all_DTypes[i_all] = &PyArray_PyLongDType;
             if (PyArray_TYPE(arrs[i]) != NPY_LONG) {
                 /* Not a "normal" scalar, so we cannot avoid the legacy path */
                 all_pyscalar = 0;
             }
         }
         else if (PyArray_FLAGS(arrs[i]) & NPY_ARRAY_WAS_PYTHON_FLOAT) {
-            all_DTypes[i_all] = &PyArray_PyFloatAbstractDType;
+            all_DTypes[i_all] = &PyArray_PyFloatDType;
         }
         else if (PyArray_FLAGS(arrs[i]) & NPY_ARRAY_WAS_PYTHON_COMPLEX) {
-            all_DTypes[i_all] = &PyArray_PyComplexAbstractDType;
+            all_DTypes[i_all] = &PyArray_PyComplexDType;
         }
         else {
             all_descriptors[i_all] = PyArray_DTYPE(arrs[i]);

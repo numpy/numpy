@@ -14,9 +14,12 @@ extern "C" {
  * may be necessary to make them (partially) public, to allow user-defined
  * dtypes to perform value based casting.
  */
-NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_PyIntAbstractDType;
-NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_PyFloatAbstractDType;
-NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_PyComplexAbstractDType;
+NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_IntAbstractDType;
+NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_FloatAbstractDType;
+NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_ComplexAbstractDType;
+NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_PyLongDType;
+NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_PyFloatDType;
+NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_PyComplexDType;
 
 NPY_NO_EXPORT int
 initialize_and_map_pytypes_to_dtypes(void);
@@ -48,8 +51,8 @@ npy_mark_tmp_array_if_pyscalar(
             && (PyArray_ISINTEGER(arr) || PyArray_ISOBJECT(arr))) {
         ((PyArrayObject_fields *)arr)->flags |= NPY_ARRAY_WAS_PYTHON_INT;
         if (dtype != NULL) {
-            Py_INCREF(&PyArray_PyIntAbstractDType);
-            Py_SETREF(*dtype, &PyArray_PyIntAbstractDType);
+            Py_INCREF(&PyArray_PyLongDType);
+            Py_SETREF(*dtype, &PyArray_PyLongDType);
         }
         return 1;
     }
@@ -57,8 +60,8 @@ npy_mark_tmp_array_if_pyscalar(
              && PyArray_TYPE(arr) == NPY_DOUBLE) {
         ((PyArrayObject_fields *)arr)->flags |= NPY_ARRAY_WAS_PYTHON_FLOAT;
         if (dtype != NULL) {
-            Py_INCREF(&PyArray_PyFloatAbstractDType);
-            Py_SETREF(*dtype, &PyArray_PyFloatAbstractDType);
+            Py_INCREF(&PyArray_PyFloatDType);
+            Py_SETREF(*dtype, &PyArray_PyFloatDType);
         }
         return 1;
     }
@@ -66,8 +69,8 @@ npy_mark_tmp_array_if_pyscalar(
              && PyArray_TYPE(arr) == NPY_CDOUBLE) {
         ((PyArrayObject_fields *)arr)->flags |= NPY_ARRAY_WAS_PYTHON_COMPLEX;
         if (dtype != NULL) {
-            Py_INCREF(&PyArray_PyComplexAbstractDType);
-            Py_SETREF(*dtype, &PyArray_PyComplexAbstractDType);
+            Py_INCREF(&PyArray_PyComplexDType);
+            Py_SETREF(*dtype, &PyArray_PyComplexDType);
         }
         return 1;
     }

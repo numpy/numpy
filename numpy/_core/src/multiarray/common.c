@@ -48,7 +48,7 @@ _array_find_python_scalar_type(PyObject *op)
     }
     else if (PyLong_Check(op)) {
         return NPY_DT_CALL_discover_descr_from_pyobject(
-                &PyArray_PyIntAbstractDType, op);
+                &PyArray_PyLongDType, op);
     }
     return NULL;
 }

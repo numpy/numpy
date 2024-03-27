@@ -226,10 +226,10 @@ npy_discover_dtype_from_pytype(PyTypeObject *pytype)
         DType = Py_None;
     }
     else if (pytype == &PyFloat_Type) {
-        DType = (PyObject *)&PyArray_PyFloatAbstractDType;
+        DType = (PyObject *)&PyArray_PyFloatDType;
     }
     else if (pytype == &PyLong_Type) {
-        DType = (PyObject *)&PyArray_PyIntAbstractDType;
+        DType = (PyObject *)&PyArray_PyLongDType;
     }
     else {
         DType = PyDict_GetItem(_global_pytype_to_type_dict,
