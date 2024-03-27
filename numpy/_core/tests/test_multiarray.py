@@ -8488,9 +8488,18 @@ class TestArrayCreationCopyArgument(object):
         assert_array_equal(arr, base_arr)
         assert arr is base_arr
 
-        with pytest.warns(UserWarning, match=("should implement 'dtype' "
-                                              "and 'copy' keywords")):
-            np.array(a, copy=False)
+        # As of NumPy 2, explicitly passing copy=True does not trigger passing
+        # it to __array__ (deprecation warning is not triggered).
+        arr = np.array(a, copy=True)
+        assert_array_equal(arr, base_arr)
+        assert arr is not base_arr
+
+        # And passing copy=False gives a deprecation warning, but also raises
+        # an error:
+        with pytest.warns(DeprecationWarning, match="__array__.*'copy'"):
+            with pytest.raises(ValueError,
+                    match=r"Unable to avoid copy(.|\n)*numpy_2_0_migration_guide.html"):
+                np.array(a, copy=False)
 
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test__array__reference_leak(self):

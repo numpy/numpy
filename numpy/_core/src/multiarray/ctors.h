@@ -1,6 +1,9 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_
 
+extern NPY_NO_EXPORT const char *npy_no_copy_err_msg;
+
+
 NPY_NO_EXPORT PyObject *
 PyArray_NewFromDescr(
         PyTypeObject *subtype, PyArray_Descr *descr, int nd,

@@ -980,8 +980,7 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
             Py_DECREF(self);
             return ret;
         } else { // copy == NPY_COPY_NEVER
-            PyErr_SetString(PyExc_ValueError,
-                            "Unable to avoid copy while creating an array from given array.");
+            PyErr_SetString(PyExc_ValueError, npy_no_copy_err_msg);
             Py_DECREF(self);
             return NULL;
         }
