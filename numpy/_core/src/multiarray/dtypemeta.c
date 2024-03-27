@@ -914,9 +914,10 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
     if (NPY_UNLIKELY(!NPY_DT_is_legacy(other))) {
         /*
          * Deal with the non-legacy types we understand: python scalars.
-         * These have lower priority than the concrete inexact types, but
-         * can change the type of the result (complex, float, int).
-         * If our own type if not numerical, signal not implemented.
+         * These may have lower priority than the concrete inexact types,
+         * but can change the type of the result (complex, float, int).
+         * If our own DType is not numerical or has lower priority (e.g.
+         * integer but abstract one is float), signal not implemented.
          */
         if (other == &PyArray_PyComplexDType) {
             if (PyTypeNum_ISCOMPLEX(cls->type_num)) {
