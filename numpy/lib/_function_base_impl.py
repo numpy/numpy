@@ -4044,144 +4044,9 @@ def percentile(a,
 
     Notes
     -----
-    In general, the percentile at percentage level :math:`q` of a cumulative
-    distribution function :math:`F(y)=P(Y \\leq y)` with probability measure
-    :math:`P` is defined as any number :math:`x` that fulfills the
-    *coverage conditions*
-
-    .. math:: P(Y < x) \\leq q/100 \\quad\\text{and}
-              \\quad P(Y \\leq x) \\geq q/100
-
-    with random variable :math:`Y\\sim P`.
-    Sample percentiles, the result of ``percentile``, provide nonparametric
-    estimation of the underlying population counterparts, represented by the
-    unknown :math:`F`, given a data vector ``a`` of length ``n``.
-
-    One type of estimators arises when one considers :math:`F` as the empirical
-    distribution function of the data, i.e.
-    :math:`F(y) = \\frac{1}{n} \\sum_i 1_{a_i \\leq y}`.
-    Then, different methods correspond to different choices of :math:`x` that
-    fulfill the above inequalities. Methods that follow this approach are
-    ``inverted_cdf`` and ``averaged_inverted_cdf``.
-
-    A more general way to define sample percentile estimators is as follows.
-    The empirical q-percentile of ``a`` is the ``n * q/100``-th value of the
-    way from the minimum to the maximum in a sorted copy of ``a``. The values
-    and distances of the two nearest neighbors as well as the `method`
-    parameter will determine the percentile if the normalized ranking does not
-    match the location of ``n * q/100`` exactly. This function is the same as
-    the median if ``q=50``, the same as the minimum if ``q=0`` and the same
-    as the maximum if ``q=100``.
-
-    The optional `method` parameter specifies the method to use when the
-    desired percentile lies between two indexes ``i`` and ``j = i + 1``.
-    In that case, we first determine ``i + g``, a virtual index that lies
-    between ``i`` and ``j``, where  ``i`` is the floor and ``g`` is the
-    fractional part of the index. The final result is, then, an interpolation
-    of ``a[i]`` and ``a[j]`` based on ``g``. During the computation of ``g``,
-    ``i`` and ``j`` are modified using correction constants ``alpha`` and
-    ``beta`` whose choices depend on the ``method`` used. Finally, note that
-    since Python uses 0-based indexing, the code subtracts another 1 from the
-    index internally.
-
-    The following formula determines the virtual index ``i + g``, the location
-    of the percentile in the sorted sample:
-
-    .. math::
-        i + g = (q / 100) * ( n - alpha - beta + 1 ) + alpha
-
-    The different methods then work as follows
-
-    inverted_cdf:
-        method 1 of H&F [1]_.
-        This method gives discontinuous results:
-
-        * if g > 0 ; then take j
-        * if g = 0 ; then take i
-
-    averaged_inverted_cdf:
-        method 2 of H&F [1]_.
-        This method gives discontinuous results:
-
-        * if g > 0 ; then take j
-        * if g = 0 ; then average between bounds
-
-    closest_observation:
-        method 3 of H&F [1]_.
-        This method gives discontinuous results:
-
-        * if g > 0 ; then take j
-        * if g = 0 and index is odd ; then take j
-        * if g = 0 and index is even ; then take i
-
-    interpolated_inverted_cdf:
-        method 4 of H&F [1]_.
-        This method gives continuous results using:
-
-        * alpha = 0
-        * beta = 1
-
-    hazen:
-        method 5 of H&F [1]_.
-        This method gives continuous results using:
-
-        * alpha = 1/2
-        * beta = 1/2
-
-    weibull:
-        method 6 of H&F [1]_.
-        This method gives continuous results using:
-
-        * alpha = 0
-        * beta = 0
-
-    linear:
-        method 7 of H&F [1]_.
-        This method gives continuous results using:
-
-        * alpha = 1
-        * beta = 1
-
-    median_unbiased:
-        method 8 of H&F [1]_.
-        This method is probably the best method if the sample
-        distribution function is unknown (see reference).
-        This method gives continuous results using:
-
-        * alpha = 1/3
-        * beta = 1/3
-
-    normal_unbiased:
-        method 9 of H&F [1]_.
-        This method is probably the best method if the sample
-        distribution function is known to be normal.
-        This method gives continuous results using:
-
-        * alpha = 3/8
-        * beta = 3/8
-
-    lower:
-        NumPy method kept for backwards compatibility.
-        Takes ``i`` as the interpolation point.
-
-    higher:
-        NumPy method kept for backwards compatibility.
-        Takes ``j`` as the interpolation point.
-
-    nearest:
-        NumPy method kept for backwards compatibility.
-        Takes ``i`` or ``j``, whichever is nearest.
-
-    midpoint:
-        NumPy method kept for backwards compatibility.
-        Uses ``(i + j) / 2``.
-
-    For weighted percentiles, the above coverage conditions still hold. The
-    empirical cumulative distribution is simply replaced by its weighted
-    version, i.e.
-    :math:`P(Y \\leq t) = \\frac{1}{\\sum_i w_i} \\sum_i w_i 1_{x_i \\leq t}`.
-    Only ``method="inverted_cdf"`` supports weights.
-
+    The behavior of `numpy.percentile` with percentage `q` is
+    that of `numpy.quantile` with argument ``q/100``.
+    For more information, please see `numpy.quantile`.
 
     Examples
     --------
@@ -4394,7 +4259,10 @@ def quantile(a,
 
     Notes
     -----
-    In general, the quantile at probability level :math:`q` of a cumulative
+    Given a sample `a` from an underlying distribution, `quantile` provides a
+    nonparametric estimate of the inverse cumulative distribution function.
+
+    More formally, the quantile at probability level :math:`q` of a cumulative
     distribution function :math:`F(y)=P(Y \\leq y)` with probability measure
     :math:`P` is defined as any number :math:`x` that fulfills the
     *coverage conditions*
@@ -4406,126 +4274,65 @@ def quantile(a,
     estimation of the underlying population counterparts, represented by the
     unknown :math:`F`, given a data vector ``a`` of length ``n``.
 
-    One type of estimators arises when one considers :math:`F` as the empirical
-    distribution function of the data, i.e.
-    :math:`F(y) = \\frac{1}{n} \\sum_i 1_{a_i \\leq y}`.
-    Then, different methods correspond to different choices of :math:`x` that
-    fulfill the above inequalities. Methods that follow this approach are
-    ``inverted_cdf`` and ``averaged_inverted_cdf``.
+    By default (``method='linear'``), this is done by interpolating between
+    adjacent elements in ``y``, a sorted copy of `a`::
 
-    A more general way to define sample quantile estimators is as follows.
-    The empirical q-quantile of ``a`` is the ``n * q``-th value of the
-    way from the minimum to the maximum in a sorted copy of ``a``. The values
-    and distances of the two nearest neighbors as well as the `method`
-    parameter will determine the quantile if the normalized ranking does not
-    match the location of ``n * q`` exactly. This function is the same as
-    the median if ``q=0.5``, the same as the minimum if ``q=0.0`` and the same
-    as the maximum if ``q=1.0``.
+        (1-g)*y[j] + g*y[j+1]
 
-    The optional `method` parameter specifies the method to use when the
-    desired quantile lies between two indexes ``i`` and ``j = i + 1``.
-    In that case, we first determine ``i + g``, a virtual index that lies
-    between ``i`` and ``j``, where  ``i`` is the floor and ``g`` is the
-    fractional part of the index. The final result is, then, an interpolation
-    of ``a[i]`` and ``a[j]`` based on ``g``. During the computation of ``g``,
-    ``i`` and ``j`` are modified using correction constants ``alpha`` and
-    ``beta`` whose choices depend on the ``method`` used. Finally, note that
-    since Python uses 0-based indexing, the code subtracts another 1 from the
-    index internally.
+    where the index ``j`` and coefficient ``g`` are the integral and
+    fractional components of ``q * (n-1)``, and ``n`` is the number of
+    elements in the sample.
 
-    The following formula determines the virtual index ``i + g``, the location
-    of the quantile in the sorted sample:
+    This a special case of Equation 1 of H&F [1]_. More generally,
 
-    .. math::
-        i + g = q * ( n - alpha - beta + 1 ) + alpha
+    - ``j = (q*n + m - 1) // 1``, and
+    - ``g = (q*n + m - 1) % 1``,
 
-    The different methods then work as follows
+    where ``m`` is defined differently for each value of the ``method``
+    parameter.
 
-    inverted_cdf:
-        method 1 of H&F [1]_.
-        This method gives discontinuous results:
+    =============================== =============== ===============
+    ``method``                      number in H&F   ``m``
+    =============================== =============== ===============
+    ``interpolated_inverted_cdf``   4               ``0``
+    ``hazen``                       5               ``1/2``
+    ``weibull``                     6               ``q``
+    ``linear`` (default)            7               ``1 - q``
+    ``median_unbiased``             8               ``q/3 + 1/3``
+    ``normal_unbiased``             9               ``q/4 + 3/8``
+    =============================== =============== ===============
 
-        * if g > 0 ; then take j
-        * if g = 0 ; then take i
+    Note that indices ``j`` and ``j + 1`` are clipped to the range ``0`` to
+    ``n - 1`` when the results of the formula would be outside the allowed
+    range of non-negative indices.
 
-    averaged_inverted_cdf:
-        method 2 of H&F [1]_.
-        This method gives discontinuous results:
+    The methods above are all continuous functions of probability `q`.
+    Methods 1-3 of H&F [1]_ provide three discontinuous estimators, where
+    ``j`` is defined as above and ``m`` and ``g`` are defined as follows.
 
-        * if g > 0 ; then take j
-        * if g = 0 ; then average between bounds
+    1. ``inverted_cdf``: ``m = 0`` and ``g = int(q*n > 0)``
+    2. ``averaged_inverted_cdf``: ``m = 0`` and ``g = (1 + int(q*n > 0)) / 2``
+    3. ``closest_observation``: ``m = -1/2`` and
+       ``1 - int((g == 0) & (j%2 == 0))``
 
-    closest_observation:
-        method 3 of H&F [1]_.
-        This method gives discontinuous results:
+    For backward compatibility with previous versions of NumPy, `quantile`
+    provides four additional discontinuous estimators. Like
+    ``method='linear'``, all have ``m = 1 - q`` so that ``j = q*(n-1) // 1``,
+    but ``g`` is defined as follows.
 
-        * if g > 0 ; then take j
-        * if g = 0 and index is odd ; then take j
-        * if g = 0 and index is even ; then take i
-
-    interpolated_inverted_cdf:
-        method 4 of H&F [1]_.
-        This method gives continuous results using:
-
-        * alpha = 0
-        * beta = 1
-
-    hazen:
-        method 5 of H&F [1]_.
-        This method gives continuous results using:
-
-        * alpha = 1/2
-        * beta = 1/2
-
-    weibull:
-        method 6 of H&F [1]_.
-        This method gives continuous results using:
-
-        * alpha = 0
-        * beta = 0
-
-    linear:
-        method 7 of H&F [1]_.
-        This method gives continuous results using:
-
-        * alpha = 1
-        * beta = 1
-
-    median_unbiased:
-        method 8 of H&F [1]_.
-        This method is probably the best method if the sample
-        distribution function is unknown (see reference).
-        This method gives continuous results using:
-
-        * alpha = 1/3
-        * beta = 1/3
-
-    normal_unbiased:
-        method 9 of H&F [1]_.
-        This method is probably the best method if the sample
-        distribution function is known to be normal.
-        This method gives continuous results using:
-
-        * alpha = 3/8
-        * beta = 3/8
-
-    lower:
-        NumPy method kept for backwards compatibility.
-        Takes ``i`` as the interpolation point.
-
-    higher:
-        NumPy method kept for backwards compatibility.
-        Takes ``j`` as the interpolation point.
-
-    nearest:
-        NumPy method kept for backwards compatibility.
-        Takes ``i`` or ``j``, whichever is nearest.
-
-    midpoint:
-        NumPy method kept for backwards compatibility.
-        Uses ``(i + j) / 2``.
+    - ``lower``: ``g = 0``
+    - ``midpoint``: ``g = 0.5``
+    - ``higher``: ``g = 1``
+    - ``nearest``: ``g = (q*(n-1) % 1) > 0.5``
 
     **Weighted quantiles:**
+    Some of the quantile estimators above (namely ``inverted_cdf`` and
+    ``averaged_inverted_cdf``) arise when one considers :math:`F` as the
+    empirical distribution function of the data, i.e.
+    :math:`F(y) = \\frac{1}{n} \\sum_i 1_{a_i \\leq y}`.
+    Then, different methods correspond to different choices of :math:`x` that
+    fulfill the above inequalities.
+
     For weighted quantiles, the above coverage conditions still hold. The
     empirical cumulative distribution is simply replaced by its weighted
     version, i.e. 
