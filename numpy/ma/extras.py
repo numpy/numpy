@@ -1576,7 +1576,7 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
             xnm_dtype = np.float64
         else:
             xnm_dtype = np.float32
-        xnotmask = np.logical_not(xmask, dtype=xnm_dtype)
+        xnotmask = np.logical_not(xmask).astype(xnm_dtype)
     else:
         y = array(y, copy=False, ndmin=2, dtype=float)
         ymask = ma.getmaskarray(y)
@@ -1598,7 +1598,9 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
             xnm_dtype = np.float64
         else:
             xnm_dtype = np.float32
-        xnotmask = np.logical_not(np.concatenate((xmask, ymask), axis), dtype=xnm_dtype)
+        xnotmask = np.logical_not(np.concatenate((xmask, ymask), axis)).astype(
+            xnm_dtype
+        )
     x -= x.mean(axis=rowvar)[tup]
     return (x, xnotmask, rowvar)
 
