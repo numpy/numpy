@@ -14,7 +14,7 @@ from distutils.version import LooseVersion
 
 compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 
-TARGET_R = re.compile(r"Target: ([a-zA-Z0-9_\-]*)")
+TARGET_R = re.compile(r"Target: ([-\w]*)")
 
 # XXX: handle cross compilation
 
