@@ -14,7 +14,7 @@ def __getattr__(attr_name):
     from ._utils import _raise_warning
 
     if attr_name in {"_ARRAY_API", "_UFUNC_API"}:
-        from numpy.version import short_version, release
+        from numpy.version import short_version
         import textwrap
         import traceback
         import sys
@@ -22,42 +22,26 @@ def __getattr__(attr_name):
         msg = textwrap.dedent(f"""
             A module that was compiled using NumPy 1.x cannot be run in
             NumPy {short_version} as it may crash. To support both 1.x and 2.x
-            versions of NumPy, modules must be compiled against NumPy 2.0.
+            versions of NumPy, modules must be compiled with NumPy 2.0.
+            Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
 
             If you are a user of the module, the easiest solution will be to
-            either downgrade NumPy or update the failing module (if available).
+            downgrade to 'numpy<2' or try to upgrade the affected module.
+            We expect that some modules will need time to support NumPy 2.
 
             """)
-        if not release and short_version.startswith("2.0.0"):
-            # TODO: Can remove this after the release.
-            msg += textwrap.dedent("""\
-                NOTE: When testing against pre-release versions of NumPy 2.0
-                or building nightly wheels for it, it is necessary to ensure
-                the NumPy pre-release is used at build time.
-                The main way to ensure this is using no build isolation
-                and installing dependencies manually with NumPy.
-
-                If your dependencies have the issue, check whether they
-                build nightly wheels build against NumPy 2.0.
-
-                pybind11 note: If you see this message and do not see
-                any errors raised, it's possible this is due to a
-                package using an old version of pybind11 that should be
-                updated.
-
-                """)
-        msg += "Traceback (most recent call last):"
+        tb_msg = "Traceback (most recent call last):"
         for line in traceback.format_stack()[:-1]:
             if "frozen importlib" in line:
                 continue
-            msg += line
-        # Only print the message.  This has two reasons (for now!):
-        # 1. Old NumPy replaced the error here making it never actually show
-        #    in practice, thus raising alone would not be helpful.
-        # 2. pybind11 simply reaches into NumPy internals and requires a
-        #    new release that includes the fix. That is missing as of 2023-11.
-        #    But, it "conveniently" ignores the ABI version.
-        sys.stderr.write(msg)
+            tb_msg += line
+
+        # Also print the message (with traceback).  This is because old versions
+        # of NumPy unfortunately set up the import to replace (and hide) the
+        # error.  The traceback shouldn't be needed, but e.g. pytest plugins
+        # seem to swallow it and we should be failing anyway...
+        sys.stderr.write(msg + tb_msg)
+        raise ImportError(msg)
 
     ret = getattr(_multiarray_umath, attr_name, None)
     if ret is None:
