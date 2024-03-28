@@ -546,13 +546,12 @@ def broadcast_arrays(*args, subok=False):
     # return np.nditer(args, flags=['multi_index', 'zerosize_ok'],
     #                  order='C').itviews
 
-    args = tuple(np.array(_m, copy=None, subok=subok) for _m in args)
+    args = [np.array(_m, copy=None, subok=subok) for _m in args]
 
     shape = _broadcast_shape(*args)
 
-    if all(array.shape == shape for array in args):
-        # Common case where nothing needs to be broadcasted.
-        return args
+    result = [array if array.shape == shape
+              else _broadcast_to(array, shape, subok=subok, readonly=False)
+                              for array in args]
+    return tuple(result)
 
-    return tuple(_broadcast_to(array, shape, subok=subok, readonly=False)
-                 for array in args)
