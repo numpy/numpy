@@ -1569,7 +1569,14 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
         tup = (None, slice(None))
     #
     if y is None:
-        xnotmask = np.logical_not(xmask).astype(int)
+        # Check if we can guarantee that the integers in the (N - ddof) normalisation 
+        # can be accurately represented with single-precision before computing the dot 
+        # product.
+        if x.shape[0] > 2 ** 24 or x.shape[1] > 2 ** 24:
+            xnm_dtype = np.float64
+        else:
+            xnm_dtype = np.float32
+        xnotmask = np.logical_not(xmask).astype(xnm_dtype)
     else:
         y = array(y, copy=False, ndmin=2, dtype=float)
         ymask = ma.getmaskarray(y)
@@ -1584,7 +1591,16 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
                     x._sharedmask = False
                     y._sharedmask = False
         x = ma.concatenate((x, y), axis)
-        xnotmask = np.logical_not(np.concatenate((xmask, ymask), axis)).astype(int)
+        # Check if we can guarantee that the integers in the (N - ddof) normalisation 
+        # can be accurately represented with single-precision before computing the dot 
+        # product.
+        if x.shape[0] > 2 ** 24 or x.shape[1] > 2 ** 24:
+            xnm_dtype = np.float64
+        else:
+            xnm_dtype = np.float32
+        xnotmask = np.logical_not(np.concatenate((xmask, ymask), axis)).astype(
+            xnm_dtype
+        )
     x -= x.mean(axis=rowvar)[tup]
     return (x, xnotmask, rowvar)
 
