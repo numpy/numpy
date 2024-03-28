@@ -1691,13 +1691,13 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
         mask = np.equal(fact, 0)
         fact -= ddof
         data = np.dot(filled(x.T, 0), filled(x.conj(), 0)) / fact
-        result = ma.masked_array(data, mask=mask).squeeze()
+        result = ma.array(data, mask=mask).squeeze()
     else:
         fact = np.dot(xnotmask, xnotmask.T)
         mask = np.equal(fact, 0)
         fact -= ddof
         data = np.dot(filled(x, 0), filled(x.T.conj(), 0)) / fact
-        result = ma.masked_array(data, mask=mask).squeeze()
+        result = ma.array(data, mask=mask).squeeze()
     return result
 
 
