@@ -79,7 +79,8 @@ string_to_string_resolve_descriptors(PyObject *NPY_UNUSED(self),
         return NPY_UNSAFE_CASTING;
     }
 
-    *view_offset = 0;
+    // views are only legal between descriptors that share allocators (e.g. the same object)
+    *view_offset = descr0->allocator != descr1->allocator;
 
     return NPY_NO_CASTING;
 }

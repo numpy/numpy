@@ -560,7 +560,7 @@ def _view_is_safe(oldtype, newtype):
         return
 
     if newtype.hasobject or oldtype.hasobject:
-        raise TypeError("Cannot change data-type for object array.")
+        raise TypeError("Cannot change data-type for array of references.")
     return
 
 

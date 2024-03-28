@@ -21,4 +21,7 @@ NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_convert_if_no_array;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_cpu;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_array_err_msg_substr;
 
+NPY_NO_EXPORT unsigned char
+PyArray_ViewableTypes(PyArray_Descr *type1, PyArray_Descr *type2);
+
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_MULTIARRAYMODULE_H_ */
