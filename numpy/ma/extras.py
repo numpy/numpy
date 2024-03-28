@@ -1770,11 +1770,15 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
     (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
     # Compute the covariance matrix
     if not rowvar:
-        fact = np.dot(xnotmask.T, xnotmask) * 1.
-        c = (dot(x.T, x.conj(), strict=False) / fact).squeeze()
+        fact = np.dot(xnotmask.T, xnotmask)
+        mask = np.equal(fact, 0)
+        data = np.dot(filled(x.T, 0), filled(x.conj(), 0)) / fact
+        c = ma.array(data, mask=mask).squeeze()
     else:
-        fact = np.dot(xnotmask, xnotmask.T) * 1.
-        c = (dot(x, x.T.conj(), strict=False) / fact).squeeze()
+        fact = np.dot(xnotmask, xnotmask.T)
+        mask = np.equal(fact, 0)
+        data = np.dot(filled(x, 0), filled(x.T.conj(), 0)) / fact
+        c = ma.array(data, mask=mask).squeeze()
     # Check whether we have a scalar
     try:
         diag = ma.diagonal(c)
