@@ -1913,6 +1913,12 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     }
 
     arrflags = PyArray_FLAGS(arr);
+    unsigned char viewable = PyArray_ViewableTypes(oldtype, newtype);
+    if (viewable < 0) {
+        Py_DECREF(newtype);
+        return NULL;
+    }
+
            /* If a guaranteed copy was requested */
     copy = (flags & NPY_ARRAY_ENSURECOPY) ||
            /* If C contiguous was requested, and arr is not */
@@ -1927,7 +1933,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
            /* If a writeable array was requested, and arr is not */
            ((flags & NPY_ARRAY_WRITEABLE) &&
                    (!(arrflags & NPY_ARRAY_WRITEABLE))) ||
-           !PyArray_ViewableTypes(oldtype, newtype);
+           !viewable;
 
     if (copy) {
         if (flags & NPY_ARRAY_ENSURENOCOPY ) {
