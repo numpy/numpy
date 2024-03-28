@@ -1576,7 +1576,7 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
             xnm_dtype = np.float64
         else:
             xnm_dtype = np.float32
-        xnotmask = np.logical_not(xmask).astype(xnm_dtype)
+        xnotmask = np.logical_not(xmask, dtype=xnm_dtype)
     else:
         y = array(y, copy=False, ndmin=2, dtype=float)
         ymask = ma.getmaskarray(y)
@@ -1598,9 +1598,7 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
             xnm_dtype = np.float64
         else:
             xnm_dtype = np.float32
-        xnotmask = np.logical_not(np.concatenate((xmask, ymask), axis)).astype(
-            xnm_dtype
-        )
+        xnotmask = np.logical_not(np.concatenate((xmask, ymask), axis), dtype=xnm_dtype)
     x -= x.mean(axis=rowvar)[tup]
     return (x, xnotmask, rowvar)
 
@@ -1688,13 +1686,13 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
     (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
     if not rowvar:
         fact = np.dot(xnotmask.T, xnotmask)
-        mask = np.equal(fact, 0)
+        mask = np.equal(fact, 0, dtype=bool)
         fact -= ddof
         data = np.dot(filled(x.T, 0), filled(x.conj(), 0)) / fact
         result = ma.array(data, mask=mask).squeeze()
     else:
         fact = np.dot(xnotmask, xnotmask.T)
-        mask = np.equal(fact, 0)
+        mask = np.equal(fact, 0, dtype=bool)
         fact -= ddof
         data = np.dot(filled(x, 0), filled(x.T.conj(), 0)) / fact
         result = ma.array(data, mask=mask).squeeze()
@@ -1771,12 +1769,12 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
     # Compute the covariance matrix
     if not rowvar:
         fact = np.dot(xnotmask.T, xnotmask)
-        mask = np.equal(fact, 0)
+        mask = np.equal(fact, 0, dtype=bool)
         data = np.dot(filled(x.T, 0), filled(x.conj(), 0)) / fact
         c = ma.array(data, mask=mask).squeeze()
     else:
         fact = np.dot(xnotmask, xnotmask.T)
-        mask = np.equal(fact, 0)
+        mask = np.equal(fact, 0, dtype=bool)
         data = np.dot(filled(x, 0), filled(x.T.conj(), 0)) / fact
         c = ma.array(data, mask=mask).squeeze()
     # Check whether we have a scalar
