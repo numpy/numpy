@@ -578,8 +578,8 @@ def test_writeable():
 
     # but the result of broadcast_arrays needs to be writeable, to
     # preserve backwards compatibility
-    for is_broadcast, results in [( (False, ), broadcast_arrays(original,)),
-                                  ( (True, False), broadcast_arrays(0, original))]:
+    for is_broadcast, results in [((False,), broadcast_arrays(original,)),
+                              ((True, False), broadcast_arrays(0, original))]:
         for array_is_broadcast, result in zip(is_broadcast, results):
             # This will change to False in a future version
             if array_is_broadcast:
@@ -623,8 +623,8 @@ def test_writeable_memoryview():
     # See gh-13929.
     original = np.array([1, 2, 3])
 
-    for is_broadcast, results in [( (False, ), broadcast_arrays(original,)),
-                              ( (True, False), broadcast_arrays(0, original))]:
+    for is_broadcast, results in [((False, ), broadcast_arrays(original,)),
+                              ((True, False), broadcast_arrays(0, original))]:
         for array_is_broadcast, result in zip(is_broadcast, results):
             # This will change to False in a future version
             if array_is_broadcast:
