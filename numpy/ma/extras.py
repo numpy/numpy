@@ -1687,11 +1687,17 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
 
     (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
     if not rowvar:
-        fact = np.dot(xnotmask.T, xnotmask) * 1. - ddof
-        result = (dot(x.T, x.conj(), strict=False) / fact).squeeze()
+        fact = np.dot(xnotmask.T, xnotmask)
+        mask = np.equal(fact, 0)
+        fact -= ddof
+        data = np.dot(filled(x.T, 0), filled(x.conj(), 0)) / fact
+        result = ma.masked_array(data, mask=mask).squeeze()
     else:
-        fact = np.dot(xnotmask, xnotmask.T) * 1. - ddof
-        result = (dot(x, x.T.conj(), strict=False) / fact).squeeze()
+        fact = np.dot(xnotmask, xnotmask.T)
+        mask = np.equal(fact, 0)
+        fact -= ddof
+        data = np.dot(filled(x, 0), filled(x.T.conj(), 0)) / fact
+        result = ma.masked_array(data, mask=mask).squeeze()
     return result
 
 
