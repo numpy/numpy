@@ -466,6 +466,7 @@ _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
      * Check for less harmful non-standard returns.  The following two returns
      * should never happen:
      * 1. No-casting must imply a view offset of 0.
+     *    (with an exception for stringdtype)
      * 2. Equivalent-casting + 0 view offset is (usually) the definition
      *    of a "no" cast.  However, changing the order of fields can also
      *    create descriptors that are not equivalent but views.
@@ -473,7 +474,9 @@ _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
      * principle, casting `<i8` to `<i4` is a cast with 0 offset.
      */
     if (*view_offset != 0) {
-        assert(casting != NPY_NO_CASTING);
+        if (from->kind != 'T' || to->kind != 'T') {
+            assert(casting != NPY_NO_CASTING);
+        }
     }
     else {
         assert(casting != NPY_EQUIV_CASTING

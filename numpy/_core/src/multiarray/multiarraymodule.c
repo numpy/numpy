@@ -1489,15 +1489,38 @@ PyArray_EquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 NPY_NO_EXPORT unsigned char
 PyArray_ViewableTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 {
-    if (!PyArray_EquivTypes(type1, type2)) {
+    if (type1 == type2) {
+        return 1;
+    }
+
+    if (Py_TYPE(Py_TYPE(type1)) == &PyType_Type) {
+        /*
+         * 2021-12-17: This case is nonsense and should be removed eventually!
+         *
+         * boost::python has/had a bug effectively using EquivTypes with
+         * `type(arbitrary_obj)`.  That is clearly wrong as that cannot be a
+         * `PyArray_Descr *`.  We assume that `type(type(type(arbitrary_obj))`
+         * is always in practice `type` (this is the type of the metaclass),
+         * but for our descriptors, `type(type(descr))` is DTypeMeta.
+         *
+         * In that case, we just return False.  There is a possibility that
+         * this actually _worked_ effectively (returning 1 sometimes).
+         * We ignore that possibility for simplicity; it really is not our bug.
+         */
         return 0;
     }
-    // a view of a stringdtype array has a corrupt arena, unless
-    // type1 and type2 are exactly the same object
-    if ((type1 != type2) && (type1->kind == 'T')) {
+
+    npy_intp view_offset;
+    NPY_CASTING safety = PyArray_GetCastInfo(type1, type2, NULL, &view_offset);
+    if (safety < 0) {
+        PyErr_Clear();
         return 0;
     }
-    return 1;
+    if (view_offset != 0) {
+        return 0;
+    }
+    /* If casting is "no casting" this dtypes are considered equivalent. */
+    return PyArray_MinCastSafety(safety, NPY_NO_CASTING) == NPY_NO_CASTING;
 }
 
 
@@ -1629,7 +1652,11 @@ _array_fromobject_generic(
 
         /* One more chance for faster exit if user specified the dtype. */
         oldtype = PyArray_DESCR(oparr);
-        if (PyArray_ViewableTypes(oldtype, dtype)) {
+        unsigned char viewable = PyArray_ViewableTypes(oldtype, dtype);
+        if (viewable < 0) {
+            goto finish;
+        }
+        if (viewable) {
             if (copy != NPY_COPY_ALWAYS && STRIDING_OK(oparr, order)) {
                 if (oldtype == dtype) {
                     Py_INCREF(op);
