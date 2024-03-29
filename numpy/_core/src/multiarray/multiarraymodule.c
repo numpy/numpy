@@ -1586,8 +1586,7 @@ _array_fromobject_generic(
             }
             else {
                 if (copy == NPY_COPY_NEVER) {
-                    PyErr_SetString(PyExc_ValueError,
-                            "Unable to avoid copy while creating a new array.");
+                    PyErr_SetString(PyExc_ValueError, npy_no_copy_err_msg);
                     goto finish;
                 }
                 ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
