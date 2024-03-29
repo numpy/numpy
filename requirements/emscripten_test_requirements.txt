@@ -2,3 +2,4 @@ hypothesis==6.81.1
 pytest==7.4.0
 pytz==2023.3.post1
 pytest-xdist
+build<1.2
