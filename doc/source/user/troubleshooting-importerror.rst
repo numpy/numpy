@@ -194,7 +194,7 @@ If you see a message such as::
     versions of NumPy, modules must be compiled with NumPy 2.0.
     Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
 
-Either as an ``ImportError` or with::
+Either as an ``ImportError`` or with::
 
     AttributeError: _ARRAY_API not found
 
