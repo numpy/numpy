@@ -423,3 +423,24 @@ The :ref:`copy keyword behavior changes <copy-keyword-changes-2.0>` in
 3. For any ``__array__`` method on a non-NumPy array-like object, a
    ``copy=None`` keyword can be added to the signature - this will work with
    older NumPy versions as well.
+
+
+Writing numpy-version-dependent code
+------------------------------------
+
+It should be fairly rare to have to write code that explicitly branches on the
+``numpy`` version - in most cases, code can be rewritten to be compatible with
+1.x and 2.0 at the same time. However, if it is necessary, here is a suggested
+code pattern to use, using `numpy.lib.NumpyVersion`::
+
+    # example with AxisError, which is no longer available in
+    # the main namespace in 2.0, and not available in the
+    # `exceptions` namespace in <1.25.0 (example uses <2.0.0b1
+    # for illustrative purposes):
+    if np.lib.NumpyVersion(np.__version__) >= '2.0.0b1':
+        from numpy.exceptions import AxisError
+    else:
+        from numpy import AxisError
+
+This pattern will work correctly including with NumPy release candidates, which
+is important during the 2.0.0 release period.
