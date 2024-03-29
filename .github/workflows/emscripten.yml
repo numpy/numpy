@@ -28,8 +28,8 @@ jobs:
       # The appropriate versions can be found in the Pyodide repodata.json
       # "info" field, or in Makefile.envs:
       # https://github.com/pyodide/pyodide/blob/main/Makefile.envs#L2
-      PYTHON_VERSION: 3.11.3
-      EMSCRIPTEN_VERSION: 3.1.46
+      PYTHON_VERSION: 3.12.1
+      EMSCRIPTEN_VERSION: 3.1.52
       NODE_VERSION: 18
     steps:
       - name: Checkout NumPy
