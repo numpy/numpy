@@ -94,6 +94,7 @@ multiarray_types_api = {
     # NOTE: The Slots 320-360 are defined in `_experimental_dtype_api.h`
     #       and filled explicitly outside the code generator as the metaclass
     #       makes them tricky to expose.  (This may be refactored.)
+    # Slot 366, 367, 368 are the abstract DTypes
     # End 2.0 API
 }
 
@@ -107,7 +108,8 @@ multiarray_funcs_api = {
          103, 115, 117, 122, 163, 164, 171, 173, 197,
          201, 202, 208, 219, 220, 221, 222, 223, 278,
          291, 293, 294, 295, 301]
-        + list(range(320, 361))  # range reserved DType class slots
+        # range/slots reserved DType classes (see _public_dtype_api_table.h):
+        + list(range(320, 361)) + [366, 367, 368]
         ),
     'PyArray_GetNDArrayCVersion':           (0,),
     # Unused slot 40, was `PyArray_SetNumericOps`

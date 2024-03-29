@@ -2972,6 +2972,13 @@ class TestLowlevelAPIAccess:
         with pytest.raises(TypeError):
             np.add.resolve_dtypes((i4, f4, None), casting="no")
 
+    def test_resolve_dtypes_comparison(self):
+        i4 = np.dtype("i4")
+        i8 = np.dtype("i8")
+        b = np.dtype("?")
+        r = np.equal.resolve_dtypes((i4, i8, None))
+        assert r == (i8, i8, b)
+
     def test_weird_dtypes(self):
         S0 = np.dtype("S0")
         # S0 is often converted by NumPy to S1, but not here:

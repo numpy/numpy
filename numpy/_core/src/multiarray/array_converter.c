@@ -351,8 +351,8 @@ array_converter_result_type(PyArrayArrayConverterObject *self,
                     "extra_dtype and ensure_inexact are mutually exclusive.");
             goto finish;
         }
-        Py_INCREF(&PyArray_PyFloatAbstractDType);
-        dt_info.dtype = &PyArray_PyFloatAbstractDType;
+        Py_INCREF(&PyArray_PyFloatDType);
+        dt_info.dtype = &PyArray_PyFloatDType;
     }
 
     if (dt_info.dtype != NULL) {
