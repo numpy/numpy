@@ -1913,11 +1913,9 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     }
 
     arrflags = PyArray_FLAGS(arr);
-    unsigned char viewable = PyArray_ViewableTypes(oldtype, newtype);
-    if (viewable < 0) {
-        Py_DECREF(newtype);
-        return NULL;
-    }
+    npy_intp view_offset;
+    npy_intp is_safe = PyArray_SafeCast(oldtype, newtype, &view_offset, NPY_NO_CASTING, 1);
+    npy_intp view_safe = (is_safe && (view_offset == 0));
 
            /* If a guaranteed copy was requested */
     copy = (flags & NPY_ARRAY_ENSURECOPY) ||
@@ -1933,7 +1931,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
            /* If a writeable array was requested, and arr is not */
            ((flags & NPY_ARRAY_WRITEABLE) &&
                    (!(arrflags & NPY_ARRAY_WRITEABLE))) ||
-           !viewable;
+           !view_safe;
 
     if (copy) {
         if (flags & NPY_ARRAY_ENSURENOCOPY ) {
