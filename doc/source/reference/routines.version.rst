@@ -27,7 +27,7 @@ package:
     >>> np.__version__
     '2.1.0.dev0+git20240319.2ea7ce0'  # may vary
     >>> np.version.short_version
-    '2.1.0.dev0'
+    '2.1.0.dev0'  # may vary
 
 .. data:: git_revision
 
