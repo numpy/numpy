@@ -1969,6 +1969,9 @@ class TestBaseRepr:
         with assert_raises(ValueError):
             np.base_repr(1, 37)
 
+    def test_minimal_signed_int(self):
+        assert_equal(np.base_repr(np.int8(-128)), '-10000000')
+
 
 def _test_array_equal_parametrizations():
     """
