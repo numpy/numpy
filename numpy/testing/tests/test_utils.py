@@ -167,7 +167,9 @@ class TestArrayEqual(_GenericTest):
         c['floupipi'] = a['floupi'].copy()
         c['floupa'] = a['floupa'].copy()
 
-        with pytest.raises(TypeError):
+        # Improve clarity of error message
+        error_msg = ("Arrays with different record fields should not be considered equal.")
+        with pytest.raises(ValueError, match=re.escape(error_msg)):
             self._test_not_equal(c, b)
 
     def test_masked_nan_inf(self):
