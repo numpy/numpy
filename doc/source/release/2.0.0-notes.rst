@@ -13,8 +13,8 @@ NumPy 2.0.0 Release Notes
     yet).
 
 NumPy 2.0.0 is the first major release since 2006. It is the result of 10
-months of development since the last feature release and is the work of 190
-contributors spread over 968 pull requests. It contains a large number of
+months of development since the last feature release and is the work of 193
+contributors spread over 1006 pull requests. It contains a large number of
 exciting new features as well as changes to both the Python and C APIs.
 
 This major release includes breaking changes that could not happen in a regular
