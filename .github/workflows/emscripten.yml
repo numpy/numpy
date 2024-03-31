@@ -23,7 +23,7 @@ jobs:
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     env:
-      PYODIDE_VERSION: 0.25.0
+      PYODIDE_VERSION: 0.25.1
       # PYTHON_VERSION and EMSCRIPTEN_VERSION are determined by PYODIDE_VERSION.
       # The appropriate versions can be found in the Pyodide repodata.json
       # "info" field, or in Makefile.envs:
@@ -68,11 +68,6 @@ jobs:
 
           with open(env_file, "a") as myfile:
               myfile.write(f"PYODIDE_BUILD_PATH={pyodide_build_path}\n")
-
-      - name: Apply patch(es) for pyodide-build installation
-        run: |
-          ls -a ${{ env.PYODIDE_BUILD_PATH }}
-          patch -d "${{ env.PYODIDE_BUILD_PATH }}" -p1 < tools/ci/emscripten/0001-do-not-set-meson-environment-variable-pyodide-gh-4502.patch
 
       - name: Build NumPy for Pyodide
         run: |
