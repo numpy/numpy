@@ -1913,12 +1913,10 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     }
 
     arrflags = PyArray_FLAGS(arr);
-    npy_intp view_offset;
-    npy_intp is_safe = PyArray_SafeCast(oldtype, newtype, &view_offset, NPY_NO_CASTING, 1);
-    npy_intp view_safe = (is_safe && (view_offset == 0));
 
-           /* If a guaranteed copy was requested */
-    copy = (flags & NPY_ARRAY_ENSURECOPY) ||
+
+    copy = /* If a guaranteed copy was requested */
+           (flags & NPY_ARRAY_ENSURECOPY) ||
            /* If C contiguous was requested, and arr is not */
            ((flags & NPY_ARRAY_C_CONTIGUOUS) &&
                    (!(arrflags & NPY_ARRAY_C_CONTIGUOUS))) ||
@@ -1930,8 +1928,13 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
                    (!(arrflags & NPY_ARRAY_F_CONTIGUOUS))) ||
            /* If a writeable array was requested, and arr is not */
            ((flags & NPY_ARRAY_WRITEABLE) &&
-                   (!(arrflags & NPY_ARRAY_WRITEABLE))) ||
-           !view_safe;
+                   (!(arrflags & NPY_ARRAY_WRITEABLE)));
+
+    if (!copy) {
+        npy_intp view_offset;
+        npy_intp is_safe = PyArray_SafeCast(oldtype, newtype, &view_offset, NPY_NO_CASTING, 1);
+        copy = copy || !(is_safe && (view_offset == 0));
+    }
 
     if (copy) {
         if (flags & NPY_ARRAY_ENSURENOCOPY ) {
