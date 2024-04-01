@@ -62,7 +62,6 @@
 #include "legacy_array_method.h"
 #include "abstractdtypes.h"
 #include "mapping.h"
-#include "multiarraymodule.h"
 
 /* TODO: Only for `NpyIter_GetTransferFlags` until it is public */
 #define NPY_ITERATOR_IMPLEMENTATION_CODE

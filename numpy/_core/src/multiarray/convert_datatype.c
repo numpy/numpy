@@ -651,6 +651,35 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 }
 
 
+/*
+ * This function returns true if the two types can be safely cast at
+ * *minimum_safety* casting level. Sets the *view_offset* if that is set
+ * for the cast. If ignore_error is set, the error indicator is cleared
+ * if there are any errors in cast setup and returns false, otherwise
+ * the error indicator is left set and returns -1.
+ */
+NPY_NO_EXPORT npy_intp
+PyArray_SafeCast(PyArray_Descr *type1, PyArray_Descr *type2,
+                 npy_intp* view_offset, NPY_CASTING minimum_safety,
+                 npy_intp ignore_error)
+{
+    if (type1 == type2) {
+        *view_offset = 0;
+        return 1;
+    }
+
+    NPY_CASTING safety = PyArray_GetCastInfo(type1, type2, NULL, view_offset);
+    if (safety < 0) {
+        if (ignore_error) {
+            PyErr_Clear();
+            return 0;
+        }
+        return -1;
+    }
+    return PyArray_MinCastSafety(safety, minimum_safety) == minimum_safety;
+}
+
+
 /* Provides an ordering for the dtype 'kind' character codes */
 NPY_NO_EXPORT int
 dtype_kind_to_ordering(char kind)
