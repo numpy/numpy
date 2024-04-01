@@ -1844,7 +1844,7 @@ class TestFPClass:
         assert_equal(np.isnan(arr_f64[::stride]), nan[::stride])
         assert_equal(np.isinf(arr_f32[::stride]), inf[::stride])
         assert_equal(np.isinf(arr_f64[::stride]), inf[::stride])
-        if platform.processor() == 'riscv64':
+        if platform.machine() == 'riscv64':
             # On RISC-V, many operations that produce NaNs, such as converting
             # a -NaN from f64 to f32, return a canonical NaN.  The canonical
             # NaNs are always positive.  See section 11.3 NaN Generation and
@@ -1881,7 +1881,7 @@ class TestFPClass:
         ncontig_out = out[1::3]
         contig_in = np.array(ncontig_in)
 
-        if platform.processor() == 'riscv64':
+        if platform.machine() == 'riscv64':
             # Disable the -np.nan signbit tests on riscv64.  See comments in
             # test_fpclass for more details.
             data_rv = np.copy(data)
@@ -1920,7 +1920,7 @@ class TestFPClass:
         finite_split = np.array(np.array_split(finite, 2))
         assert_equal(np.isnan(data_split), nan_split)
         assert_equal(np.isinf(data_split), inf_split)
-        if platform.processor() == 'riscv64':
+        if platform.machine() == 'riscv64':
             data_split_rv = np.array(np.array_split(data_rv, 2))
             assert_equal(np.signbit(data_split_rv), sign_split)
         else:
