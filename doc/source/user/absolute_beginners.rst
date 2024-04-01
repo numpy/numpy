@@ -1525,7 +1525,7 @@ If you want to store a single ndarray object, store it as a .npy file using
 save it as a .npz file using ``np.savez``. You can also save several arrays
 into a single file in compressed npz format with `savez_compressed`.
 
-It's easy to save and load and array with ``np.save()``. Just make sure to
+It's easy to save and load an array with ``np.save()``. Just make sure to
 specify the array you want to save and a file name. For example, if you create
 this array::
 
