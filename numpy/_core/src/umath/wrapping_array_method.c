@@ -54,7 +54,7 @@ wrapping_method_resolve_descriptors(
             self->wrapped_meth, self->wrapped_dtypes,
             orig_given_descrs, orig_loop_descrs, view_offset);
     for (int i = 0; i < nargs; i++) {
-        Py_XDECREF(orig_given_descrs);
+        Py_XDECREF(orig_given_descrs[i]);
     }
     if (casting < 0) {
         return -1;
@@ -62,7 +62,7 @@ wrapping_method_resolve_descriptors(
     int res = self->translate_loop_descrs(
             nin, nout, dtypes, given_descrs, orig_loop_descrs, loop_descrs);
     for (int i = 0; i < nargs; i++) {
-        Py_DECREF(orig_given_descrs);
+        Py_DECREF(orig_loop_descrs[i]);
     }
     if (res < 0) {
         return -1;
