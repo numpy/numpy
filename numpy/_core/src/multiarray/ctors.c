@@ -1928,7 +1928,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     if (!copy) {
         npy_intp view_offset;
         npy_intp is_safe = PyArray_SafeCast(oldtype, newtype, &view_offset, NPY_NO_CASTING, 1);
-        copy = copy || !(is_safe && (view_offset != NPY_MIN_INTP));
+        copy = !(is_safe && (view_offset != NPY_MIN_INTP));
     }
 
     if (copy) {
