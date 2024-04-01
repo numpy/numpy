@@ -2,7 +2,7 @@
 #define NUMPY_CORE_SRC_COMMON_NPY_PYCOMPAT_H_
 
 #include "numpy/npy_3kcompat.h"
-
+#include "pythoncapi-compat/pythoncapi_compat.h"
 
 /*
  * In Python 3.10a7 (or b1), python started using the identity for the hash
