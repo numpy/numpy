@@ -33,7 +33,7 @@
 #include <stddef.h>
 
 #include "npy_config.h"
-#include "npy_pycompat.h"
+
 #include "npy_argparse.h"
 
 #include "numpy/arrayobject.h"

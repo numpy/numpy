@@ -10,8 +10,6 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include "npy_pycompat.h"
-
 static struct PyMethodDef methods[] = {
     {NULL, NULL, 0, NULL}
 };

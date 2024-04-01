@@ -12,7 +12,7 @@
 
 #include "npy_config.h"
 
-#include "npy_pycompat.h"
+
 
 #include "array_coercion.h"
 #include "ctors.h"

@@ -14,7 +14,7 @@
 #include "numpy/halffloat.h"
 #include "lowlevel_strided_loops.h"
 
-#include "npy_pycompat.h"
+
 
 #include "npy_cblas.h"
 #include "arraytypes.h" /* For TYPE_dot functions */

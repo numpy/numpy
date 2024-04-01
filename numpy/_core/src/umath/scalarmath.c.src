@@ -19,7 +19,7 @@
 #include "numpy/npy_math.h"
 
 #include "npy_import.h"
-#include "npy_pycompat.h"
+
 
 #include "numpy/halffloat.h"
 #include "templ_common.h"

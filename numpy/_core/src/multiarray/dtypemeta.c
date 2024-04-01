@@ -9,7 +9,7 @@
 #include <numpy/ndarraytypes.h>
 #include <numpy/arrayscalars.h>
 #include <numpy/npy_math.h>
-#include "npy_pycompat.h"
+
 #include "npy_import.h"
 
 #include "abstractdtypes.h"

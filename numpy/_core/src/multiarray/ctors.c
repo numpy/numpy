@@ -14,7 +14,7 @@
 #include "npy_config.h"
 
 #include "npy_ctypes.h"
-#include "npy_pycompat.h"
+
 #include "multiarraymodule.h"
 
 #include "common.h"
