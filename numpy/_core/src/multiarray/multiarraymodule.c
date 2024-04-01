@@ -1593,7 +1593,7 @@ _array_fromobject_generic(
         oldtype = PyArray_DESCR(oparr);
         npy_intp view_offset;
         npy_intp is_safe = PyArray_SafeCast(oldtype, dtype, &view_offset, NPY_NO_CASTING, 1);
-        npy_intp view_safe = (is_safe && (view_offset == 0));
+        npy_intp view_safe = (is_safe && (view_offset != NPY_MIN_INTP));
         if (view_safe) {
             if (copy != NPY_COPY_ALWAYS && STRIDING_OK(oparr, order)) {
                 if (oldtype == dtype) {
