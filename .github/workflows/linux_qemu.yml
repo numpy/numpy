@@ -9,11 +9,7 @@
 
 name: Linux Qemu tests
 
-on:
-  pull_request:
-    branches:
-      - main
-      - maintenance/**
+on: [push]
 
 defaults:
   run:
@@ -29,7 +25,7 @@ permissions:
 jobs:
   linux_qemu:
     # To enable this workflow on a fork, comment out:
-    if: github.repository == 'numpy/numpy'
+    if: github.repository == 'plctlab/numpy'
     runs-on: ubuntu-22.04
     continue-on-error: true
     strategy:
@@ -82,13 +78,15 @@ jobs:
               "riscv64-linux-gnu",
               "riscv64/ubuntu:22.04",
               "-Dallow-noblas=true",
-              "test_kind or test_multiarray or test_simd or test_umath or test_ufunc"
+              "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
+              "-e QEMU_CPU=rv64,v=true,vext_spec=v1.0"
           ]
     env:
       TOOLCHAIN_NAME: ${{ matrix.BUILD_PROP[1] }}
       DOCKER_CONTAINER: ${{ matrix.BUILD_PROP[2] }}
       MESON_OPTIONS: ${{ matrix.BUILD_PROP[3] }}
       RUNTIME_TEST_FILTER: ${{ matrix.BUILD_PROP[4] }}
+      QEMU_OPTIONS: ${{ matrix.BUILD_PROP[5] }}
       TERM: xterm-256color
 
     name: "${{ matrix.BUILD_PROP[0] }}"
@@ -117,7 +115,7 @@ jobs:
     - name: Creates new container
       if: steps.container-cache.outputs.cache-hit != 'true'
       run: |
-        docker run --name the_container --interactive -v /:/host -v $(pwd):/numpy ${DOCKER_CONTAINER} /bin/bash -c "
+        docker run --name the_container ${QEMU_OPTIONS} --interactive -v /:/host -v $(pwd):/numpy ${DOCKER_CONTAINER} /bin/bash -c "
           apt update &&
           apt install -y cmake git python3 python-is-python3 python3-dev python3-pip &&
           mkdir -p /lib64 && ln -s /host/lib64/ld-* /lib64/ &&

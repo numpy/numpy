@@ -119,7 +119,8 @@ static struct {
                 {NPY_CPU_FEATURE_ASIMDHP, "ASIMDHP"},
                 {NPY_CPU_FEATURE_ASIMDDP, "ASIMDDP"},
                 {NPY_CPU_FEATURE_ASIMDFHM, "ASIMDFHM"},
-                {NPY_CPU_FEATURE_SVE, "SVE"}};
+                {NPY_CPU_FEATURE_SVE, "SVE"},
+                {NPY_CPU_FEATURE_RVV, "RVV"}};
 
 
 NPY_VISIBILITY_HIDDEN PyObject *
@@ -811,6 +812,31 @@ npy__cpu_init_features(void)
         npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4] = npy__cpu_have[NPY_CPU_FEATURE_NEON];
     #endif
 #endif
+}
+
+/**************** RISC-V ****************/
+
+#elif defined(__riscv) && __riscv_xlen == 64
+
+#include <sys/auxv.h>
+
+#ifndef HWCAP_RVV
+    #define HWCAP_RVV 0x200000
+#endif
+
+static void
+npy__cpu_init_features(void)
+{
+    memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
+
+    unsigned int hwcap = getauxval(AT_HWCAP);
+    if (hwcap & HWCAP_RVV) {
+        npy__cpu_have[NPY_CPU_FEATURE_RVV]  = 1;
+    } else if (hwcap == 0) {
+        #ifdef __riscv_vector
+        npy__cpu_have[NPY_CPU_FEATURE_RVV]  = 1;
+        #endif
+    }
 }
 
 /*********** Unsupported ARCH ***********/
