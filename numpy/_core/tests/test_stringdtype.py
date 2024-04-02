@@ -1193,6 +1193,22 @@ SUPPORTS_NULLS = (
     NULLS_ALWAYS_ERROR
 )
 
+STRING_SECOND_ARGUMENT = [
+    "find",
+    "rfind",
+    "index",
+    "rindex",
+    "count",
+    "startswith",
+    "endswith",
+    "lstrip",
+    "rstrip",
+    "strip",
+    "partition",
+    "rpartition",
+    "replace",
+]
+
 
 def call_func(func, args, array, sanitize=True):
     if args == (None, None):
@@ -1220,6 +1236,14 @@ def test_binary(string_array, unicode_array, function_name, args):
     if sres.dtype == StringDType():
         ures = ures.astype(StringDType())
     assert_array_equal(sres, ures)
+
+    if function_name in STRING_SECOND_ARGUMENT:
+        # call again with a non-default stringdtype instance, this should
+        # work even though the inferred dtype for the second argument is
+        # the default stringdtype instance
+        sres = call_func(func, args,
+                         string_array.astype(StringDType(na_object="foobar")))
+        assert_array_equal(sres, ures)
 
     dtype = string_array.dtype
     if function_name not in SUPPORTS_NULLS or not hasattr(dtype, "na_object"):
