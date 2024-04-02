@@ -422,7 +422,9 @@ The :ref:`copy keyword behavior changes <copy-keyword-changes-2.0>` in
    of how to do so.
 3. For any ``__array__`` method on a non-NumPy array-like object, a
    ``copy=None`` keyword can be added to the signature - this will work with
-   older NumPy versions as well.
+   older NumPy versions as well. If ``copy`` keyword is considered in
+   the ``__array__`` method implementation, then for ``copy=True`` always
+   return a new copy.
 
 
 Writing numpy-version-dependent code
