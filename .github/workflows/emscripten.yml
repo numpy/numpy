@@ -21,8 +21,10 @@ on:
   workflow_dispatch:
     inputs:
       push_wheels:
+        # Can be 'true' or 'false'. Default is 'false'.
+        # Warning: this will overwrite existing wheels.
         description: >
-          Push wheels to Anaconda.org if the build is successful, can be 'true' or 'false'. Default is 'false'. Warning: this will overwrite existing wheels.
+          Push wheels to Anaconda.org if the build succeeds
         required: false
         default: 'false'
 
