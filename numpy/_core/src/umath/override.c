@@ -1,5 +1,5 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define NO_IMPORT_
+#define NO_IMPORT_ARRAY
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"

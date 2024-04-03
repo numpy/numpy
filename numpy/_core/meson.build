@@ -123,6 +123,11 @@ if use_intel_sort and not fs.exists('src/npysort/x86-simd-sort/README.md')
   error('Missing the `x86-simd-sort` git submodule! Run `git submodule update --init` to fix this.')
 endif
 
+if not fs.exists('src/common/pythoncapi-compat')
+  error('Missing the `pythoncapi-compat` git submodule! ' +
+        'Run `git submodule update --init` to fix this.')
+endif
+
 # Check sizes of types. Note, some of these landed in config.h before, but were
 # unused. So clean that up and only define the NPY_SIZEOF flavors rather than
 # the SIZEOF ones
