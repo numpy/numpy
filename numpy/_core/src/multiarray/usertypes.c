@@ -34,7 +34,7 @@ maintainer email:  oliphant.travis@ieee.org
 
 #include "common.h"
 
-#include "npy_pycompat.h"
+
 
 #include "usertypes.h"
 #include "dtypemeta.h"

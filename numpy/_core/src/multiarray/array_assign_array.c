@@ -17,7 +17,7 @@
 #include "numpy/npy_math.h"
 
 #include "npy_config.h"
-#include "npy_pycompat.h"
+
 
 #include "convert_datatype.h"
 #include "methods.h"

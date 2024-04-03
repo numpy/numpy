@@ -13,7 +13,7 @@
 #include "npy_config.h"
 #include "npy_ctypes.h"
 #include "npy_import.h"
-#include "npy_pycompat.h"
+
 
 #include "_datetime.h"
 #include "common.h"

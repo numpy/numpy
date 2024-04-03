@@ -5,8 +5,9 @@
 #include <Python.h>
 
 #include "numpy/ndarraytypes.h"
+#include "numpy/npy_2_compat.h"
 #include "npy_argparse.h"
-#include "npy_pycompat.h"
+
 #include "npy_import.h"
 
 #include "arrayfunction_override.h"
@@ -195,7 +196,7 @@ initialize_keywords(const char *funcname,
         }
         if (i >= npositional_only) {
             int i_kwarg = i - npositional_only;
-            cache->kw_strings[i_kwarg] = PyUString_InternFromString(name);
+            cache->kw_strings[i_kwarg] = PyUnicode_InternFromString(name);
             if (cache->kw_strings[i_kwarg] == NULL) {
                 va_end(va);
                 goto error;

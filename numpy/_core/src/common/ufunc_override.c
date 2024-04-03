@@ -1,7 +1,7 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
-#include "npy_pycompat.h"
+#include "numpy/ndarraytypes.h"
 #include "get_attr_string.h"
 #include "npy_import.h"
 #include "ufunc_override.h"

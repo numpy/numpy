@@ -6,7 +6,7 @@
 #include <Python.h>
 
 #include "npy_config.h"
-#include "npy_pycompat.h"
+
 #include "npy_argparse.h"
 
 #include "conversion_utils.h"
