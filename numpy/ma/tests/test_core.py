@@ -2584,7 +2584,7 @@ class TestUfuncs:
     def test_masked_array_underflow(self):
         x = np.arange(0, 3, 0.1)
         X = np.ma.array(x)
-        with(np.errstate(under="raise")):
+        with np.errstate(under="raise"):
             X2 = X/2.0
             np.testing.assert_array_equal(X2, x/2)
 
