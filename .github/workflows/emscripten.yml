@@ -5,6 +5,28 @@ on:
     branches:
       - main
       - maintenance/**
+  # Note: this workflow gets triggered on the same schedule as the
+  # wheels.yml workflow, with the exception that this workflow runs
+  # the test suite for the Pyodide wheel too, prior to uploading it.
+  #
+  # Run on schedule to upload to Anaconda.org
+  schedule:
+    #        ┌───────────── minute (0 - 59)
+    #        │  ┌───────────── hour (0 - 23)
+    #        │  │ ┌───────────── day of the month (1 - 31)
+    #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
+    #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
+    #        │  │ │ │ │
+    - cron: "42 2 * * SUN,WED"
+  workflow_dispatch:
+    inputs:
+      push_wheels:
+        # Can be 'true' or 'false'. Default is 'false'.
+        # Warning: this will overwrite existing wheels.
+        description: >
+          Push wheels to Anaconda.org if the build succeeds
+        required: false
+        default: 'false'
 
 env:
   FORCE_COLOR: 3
@@ -90,3 +112,15 @@ jobs:
           source .venv-pyodide/bin/activate
           cd ..
           pytest --pyargs numpy -m "not slow"
+
+        # Push to https://anaconda.org/scientific-python-nightly-wheels/numpy
+        # WARNING: this job will overwrite any existing WASM wheels.
+      - name: Push to Anaconda PyPI index
+        if: >-
+          (github.repository == 'numpy/numpy') &&
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.push_wheels == 'true') ||
+          (github.event_name == 'schedule')
+        uses: scientific-python/upload-nightly-action@b67d7fcc0396e1128a474d1ab2b48aa94680f9fc # v0.5.0
+        with:
+          artifacts_path: dist/
+          anaconda_nightly_upload_token: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
