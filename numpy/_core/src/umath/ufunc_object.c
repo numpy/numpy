@@ -789,9 +789,9 @@ check_for_trivial_loop(PyArrayMethodObject *ufuncimpl,
 
         if (dtypes[i] != PyArray_DESCR(op[i])) {
             npy_intp view_offset;
-            NPY_CASTING safety = PyArray_GetCastInfo(
-                    PyArray_DESCR(op[i]), dtypes[i], NULL, &view_offset);
-            if (safety < 0 && PyErr_Occurred()) {
+            npy_intp is_safe = PyArray_SafeCast(
+                    PyArray_DESCR(op[i]), dtypes[i], &view_offset, casting, 0);
+            if (is_safe < 0 && PyErr_Occurred()) {
                 /* A proper error during a cast check, should be rare */
                 return -1;
             }
@@ -806,8 +806,8 @@ check_for_trivial_loop(PyArrayMethodObject *ufuncimpl,
                  * can  force cast to bool)
                  */
             }
-            else if (PyArray_MinCastSafety(safety, casting) != casting) {
-                return 0;  /* the cast is not safe enough */
+            else if (is_safe != 1) {
+                return 0;  /* there was a cast error or cast is not safe enough */
             }
         }
         if (must_copy) {

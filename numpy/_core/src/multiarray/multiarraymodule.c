@@ -1449,23 +1449,6 @@ PyArray_EquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
         return 1;
     }
 
-    if (Py_TYPE(Py_TYPE(type1)) == &PyType_Type) {
-        /*
-         * 2021-12-17: This case is nonsense and should be removed eventually!
-         *
-         * boost::python has/had a bug effectively using EquivTypes with
-         * `type(arbitrary_obj)`.  That is clearly wrong as that cannot be a
-         * `PyArray_Descr *`.  We assume that `type(type(type(arbitrary_obj))`
-         * is always in practice `type` (this is the type of the metaclass),
-         * but for our descriptors, `type(type(descr))` is DTypeMeta.
-         *
-         * In that case, we just return False.  There is a possibility that
-         * this actually _worked_ effectively (returning 1 sometimes).
-         * We ignore that possibility for simplicity; it really is not our bug.
-         */
-        return 0;
-    }
-
     /*
      * Do not use PyArray_CanCastTypeTo because it supports legacy flexible
      * dtypes as input.
@@ -1608,7 +1591,10 @@ _array_fromobject_generic(
 
         /* One more chance for faster exit if user specified the dtype. */
         oldtype = PyArray_DESCR(oparr);
-        if (PyArray_EquivTypes(oldtype, dtype)) {
+        npy_intp view_offset;
+        npy_intp is_safe = PyArray_SafeCast(oldtype, dtype, &view_offset, NPY_NO_CASTING, 1);
+        npy_intp view_safe = (is_safe && (view_offset != NPY_MIN_INTP));
+        if (view_safe) {
             if (copy != NPY_COPY_ALWAYS && STRIDING_OK(oparr, order)) {
                 if (oldtype == dtype) {
                     Py_INCREF(op);

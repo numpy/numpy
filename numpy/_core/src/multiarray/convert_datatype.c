@@ -465,14 +465,17 @@ _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
     /*
      * Check for less harmful non-standard returns.  The following two returns
      * should never happen:
-     * 1. No-casting must imply a view offset of 0.
+     * 1. No-casting must imply a view offset of 0 unless the DType
+          defines a finalization function, which implies it stores data
+          on the descriptor
      * 2. Equivalent-casting + 0 view offset is (usually) the definition
      *    of a "no" cast.  However, changing the order of fields can also
      *    create descriptors that are not equivalent but views.
      * Note that unsafe casts can have a view offset.  For example, in
      * principle, casting `<i8` to `<i4` is a cast with 0 offset.
      */
-    if (*view_offset != 0) {
+    if ((*view_offset != 0 &&
+         NPY_DT_SLOTS(NPY_DTYPE(from))->finalize_descr == NULL)) {
         assert(casting != NPY_NO_CASTING);
     }
     else {
@@ -645,6 +648,35 @@ NPY_NO_EXPORT npy_bool
 PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 {
     return PyArray_CanCastTypeTo(from, to, NPY_SAFE_CASTING);
+}
+
+
+/*
+ * This function returns true if the two types can be safely cast at
+ * *minimum_safety* casting level. Sets the *view_offset* if that is set
+ * for the cast. If ignore_error is set, the error indicator is cleared
+ * if there are any errors in cast setup and returns false, otherwise
+ * the error indicator is left set and returns -1.
+ */
+NPY_NO_EXPORT npy_intp
+PyArray_SafeCast(PyArray_Descr *type1, PyArray_Descr *type2,
+                 npy_intp* view_offset, NPY_CASTING minimum_safety,
+                 npy_intp ignore_error)
+{
+    if (type1 == type2) {
+        *view_offset = 0;
+        return 1;
+    }
+
+    NPY_CASTING safety = PyArray_GetCastInfo(type1, type2, NULL, view_offset);
+    if (safety < 0) {
+        if (ignore_error) {
+            PyErr_Clear();
+            return 0;
+        }
+        return -1;
+    }
+    return PyArray_MinCastSafety(safety, minimum_safety) == minimum_safety;
 }
 
 
