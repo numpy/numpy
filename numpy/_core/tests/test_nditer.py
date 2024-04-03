@@ -1,4 +1,5 @@
 import sys
+import sysconfig
 import pytest
 
 import textwrap
@@ -13,6 +14,7 @@ from numpy.testing import (
     IS_WASM, HAS_REFCOUNT, suppress_warnings, break_cycles
     )
 
+NOGIL_BUILD = bool(sysconfig.get_config_var('Py_GIL_DISABLED'))
 
 def iter_multi_index(i):
     ret = []
@@ -68,7 +70,9 @@ def test_iter_refcount():
     rc2_dt = sys.getrefcount(dt)
     it2 = it.copy()
     assert_(sys.getrefcount(a) > rc2_a)
-    assert_(sys.getrefcount(dt) > rc2_dt)
+    if not NOGIL_BUILD:
+        # np.dtype('f4') is immortal in the nogil build
+        assert_(sys.getrefcount(dt) > rc2_dt)
     it = None
     assert_equal(sys.getrefcount(a), rc2_a)
     assert_equal(sys.getrefcount(dt), rc2_dt)
