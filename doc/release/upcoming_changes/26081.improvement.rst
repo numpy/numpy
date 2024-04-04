@@ -1,34 +1,41 @@
 ``ndarray`` Shapes are now covariant and bound
 ---------------------------------------------------------------
-Static shape typing for ``ndarray`` is a long-term effort that continues 
-with this change.  Array shape can be described with a tuple of ints, but
-both ``TypeVar`` and ``TypeVarTuple`` provide some useful functionality.
-The former allows bounds and type variance, whereas the latter allows
-unpacking.  ``ndarray`` is built with a ``TypeVar``, and this change
-provides the appropriate bounds and variance.  It allows users
-to type check functions that attempt to specify the shape parameter
-as a ``NewType``, or functions which rely on the shape being a tuple of ints:
+Static typing for ``ndarray`` is a long-term effort that continues 
+with this change.  Arrays are a generic type, parameterized by both 
+shape and data type.  The shape parameter could previously be assigned
+any value.  This change restricts it to a tuple of ints, as one would expect
+from using ``ndarray.shape``.  However, this change also allows parameterizing
+shape by a tuple of ``int`` subtypes, which are reflected in the type of
+``ndarray.shape``, and allows typing functions that manipulate axes:
 
 .. code::
 
-   from typing import NewType, Any
+   from typing import Any, NewType, TypeVar
    import numpy as np
 
    Time = NewType("Time", int)
    Series = NewType("Series", int)
+   DType = TypeVar("DType", bound=np.dtype)
+   Ax1 = TypeVar("Ax1", bound=int)
+   Ax2 = TypeVar("Ax2", bound=int)
 
    arr: np.ndarray[tuple[Time, Series], Any] = np.arange(4.0).reshape((2, 2))
 
    def check_shape(a: np.ndarray[tuple[int, ...], Any]) -> bool: ...
 
-   check_shape(arr)
+   check_shape(arr)  # passes type checking
+
+   def transpose(
+      a: np.ndarray[tuple[Ax1, Ax2], DType]
+   ) -> np.ndarray[tuple[Ax2, Ax1], DType]: ...
 
    reveal_type(arr.shape)  # tuple[Time, Series]
+   reveal_type(transpose(arr).shape)  # tuple[Series, Time]
 
 This PR also provides the ``np.typing.Array`` type alias in the style of
 ``NDArray``.  It allows specifying a shaped array with simpler dtype syntax.
-By relying on ``TypeVarTuple``, it also allows typing functions that change
-the number of axes:
+By relying on variadic type parameters, it also allows typing functions that
+handle an unknown number of axes:
 
 .. code::
 
