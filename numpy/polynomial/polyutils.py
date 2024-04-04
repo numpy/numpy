@@ -125,16 +125,18 @@ def as_series(alist, trim=True):
     try:
         dtype = np.common_type(*arrays)
     except Exception as e:
-        if any(a.dtype == np.dtype(object) for a in arrays):
-            ret = []
-            for a in arrays:
-                if a.dtype != np.dtype(object):
-                    tmp = np.empty(len(a), dtype=np.dtype(object))
-                    tmp[:] = a[:]
-                    ret.append(tmp)
-                else:
-                    ret.append(a.copy())
-        else:
+        object_dtype = np.dtypes.ObjectDType()
+        has_one_object_type = False
+        ret = []
+        for a in arrays:
+            if a.dtype != object_dtype:
+                tmp = np.empty(len(a), dtype=object_dtype)
+                tmp[:] = a[:]
+                ret.append(tmp)
+            else:
+                has_one_object_type = True
+                ret.append(a.copy())
+        if not has_one_object_type:
             raise ValueError("Coefficient arrays have no common type") from e
     else:
         ret = [np.array(a, copy=True, dtype=dtype) for a in arrays]
