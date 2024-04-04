@@ -659,7 +659,8 @@ create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
          * Test that we reject this if the type is not set to something that
          * we are pretty sure can be safely replaced.
          */
-        Py_SET_TYPE(dtype, scalar_type);
+        Py_TYPE(dtype) = scalar_type;
+        dtype->ob_type = scalar_type;
     }
     else if (error_path != 0) {
         PyErr_SetString(PyExc_ValueError,
@@ -667,7 +668,8 @@ create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
     }
     if (PyArray_RegisterDataType(dtype) < 0) {
         /* Fix original type in the error_path == 2 case and delete it */
-        Py_SET_TYPE(dtype, original_type);
+        Py_TYPE(dtype) = original_type;
+        dtype->ob_type = original_type;
         Py_DECREF(dtype);
         return NULL;
     }
