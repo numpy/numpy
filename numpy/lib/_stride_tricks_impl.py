@@ -478,7 +478,7 @@ def broadcast_shapes(*args):
     >>> np.broadcast_shapes((6, 7), (5, 6, 1), (7,), (5, 1, 7))
     (5, 6, 7)
     """
-    arrays = [np.empty(x, dtype=[]) for x in args]
+    arrays = [np.empty(x, dtype=bool) for x in args]
     return _broadcast_shape(*arrays)
 
 
