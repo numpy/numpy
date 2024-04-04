@@ -341,7 +341,7 @@ def test_broadcast_shapes_raises():
         [(2, 3), (2,)],
         [(3,), (3,), (4,)],
         [(1, 3, 4), (2, 3, 3)],
-        [(1, 2), (3,1), (3,2), (10, 5)],
+        [(1, 2), (3, 1), (3,2), (10, 5)],
         [2, (2, 3)],
     ]
     for input_shapes in data:
@@ -579,7 +579,7 @@ def test_writeable():
     # but the result of broadcast_arrays needs to be writeable, to
     # preserve backwards compatibility
     for is_broadcast, results in [((False,), broadcast_arrays(original,)),
-                              ((True, False), broadcast_arrays(0, original))]:
+                                  ((True, False), broadcast_arrays(0, original))]:
         for array_is_broadcast, result in zip(is_broadcast, results):
             # This will change to False in a future version
             if array_is_broadcast:
@@ -624,7 +624,7 @@ def test_writeable_memoryview():
     original = np.array([1, 2, 3])
 
     for is_broadcast, results in [((False, ), broadcast_arrays(original,)),
-                              ((True, False), broadcast_arrays(0, original))]:
+                                  ((True, False), broadcast_arrays(0, original))]:
         for array_is_broadcast, result in zip(is_broadcast, results):
             # This will change to False in a future version
             if array_is_broadcast:
