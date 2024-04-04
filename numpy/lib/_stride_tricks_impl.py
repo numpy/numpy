@@ -531,9 +531,9 @@ def broadcast_arrays(*args, subok=False):
             [5, 5, 5]])]
 
     """
-    if len(args)< 65 and not subok:
-        return np.nditer(args, flags=['multi_index', 'zerosize_ok', 'reduce_ok', 
-                                      'refs_ok'], order='C').itviews
+    if len(args) < 65 and not subok:
+        return np.nditer(args, flags=['multi_index', 'reduce_ok', 'refs_ok',
+                                      'zerosize_ok'], order='C').itviews
 
     args = [np.array(_m, copy=None, subok=subok) for _m in args]
 

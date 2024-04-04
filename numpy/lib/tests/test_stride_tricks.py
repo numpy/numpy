@@ -580,8 +580,8 @@ def test_writeable():
     # preserve backwards compatibility
     for results in [broadcast_arrays(original,),
                     broadcast_arrays(0, original)]:
-        for result in  results:
-                assert_equal(result.flags.writeable, False)
+        for result in results:
+            assert_equal(result.flags.writeable, False)
 
     for results in [broadcast_arrays(original),
                     broadcast_arrays(0, original)]:
