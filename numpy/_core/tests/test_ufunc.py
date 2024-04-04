@@ -867,11 +867,9 @@ class TestUfunc:
         u, v = np.broadcast_arrays(a, b)
         assert_equal(u.strides[0], 0)
         x = u + v
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
+        assert_array_equal(x, np.array([[0, 2], [2, 4]]))
+        with pytest.raises(ValueError, match=r"output array is read-only"):
             u += v
-            assert_equal(len(w), 1)
-            assert_(x[0, 0] != u[0, 0])
 
         # Output reduction should not be allowed.
         # See gh-15139
