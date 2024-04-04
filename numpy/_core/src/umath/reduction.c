@@ -16,11 +16,12 @@
 #include "npy_config.h"
 #include "numpy/arrayobject.h"
 
-#include "npy_pycompat.h"
+
 #include "array_assign.h"
 #include "array_coercion.h"
 #include "array_method.h"
 #include "ctors.h"
+#include "refcount.h"
 
 #include "numpy/ufuncobject.h"
 #include "lowlevel_strided_loops.h"
@@ -438,7 +439,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     Py_INCREF(result);
 
     if (initial_buf != NULL && PyDataType_REFCHK(PyArray_DESCR(result))) {
-        PyArray_Item_XDECREF(initial_buf, PyArray_DESCR(result));
+        PyArray_ClearBuffer(PyArray_DESCR(result), initial_buf, 0, 1, 1);
     }
     PyMem_FREE(initial_buf);
     NPY_AUXDATA_FREE(auxdata);
@@ -450,7 +451,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
 
 fail:
     if (initial_buf != NULL && PyDataType_REFCHK(op_dtypes[0])) {
-        PyArray_Item_XDECREF(initial_buf, op_dtypes[0]);
+        PyArray_ClearBuffer(op_dtypes[0], initial_buf, 0, 1, 1);
     }
     PyMem_FREE(initial_buf);
     NPY_AUXDATA_FREE(auxdata);

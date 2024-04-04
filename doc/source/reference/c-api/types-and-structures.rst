@@ -728,7 +728,7 @@ PyArrayMethod_Context and PyArrayMethod_Spec
       typedef struct {
           PyObject *caller;
           struct PyArrayMethodObject_tag *method;
-          PyArray_Descr **descriptors;
+          PyArray_Descr *const *descriptors;
       } PyArrayMethod_Context
 
    .. c:member:: PyObject *caller
@@ -905,6 +905,30 @@ PyArray_DTypeMeta and PyArrayDTypeMeta_Spec
       A ``NULL``-terminated array of slot specifications for implementations
       of functions in the DType API. Slot IDs must be one of the
       DType slot IDs enumerated in :ref:`dtype-slots`.
+
+Exposed DTypes classes (``PyArray_DTypeMeta`` objects)
+------------------------------------------------------
+
+For use with promoters, NumPy exposes a number of Dtypes following the
+pattern ``PyArray_<Name>DType`` corresponding to those found in `np.dtypes`.
+
+Additionally, the three DTypes, ``PyArray_PyLongDType``,
+``PyArray_PyFloatDType``, ``PyArray_PyComplexDType`` correspond to the
+Python scalar values.  These cannot be used in all places, but do allow
+for example the common dtype operation and implementing promotion with them
+may be necessary.
+
+Further, the following abstract DTypes are defined which cover both the
+builtin NumPy ones and the python ones, and users can in principle subclass
+from them (this does not inherit any DType specific functionality):
+* ``PyArray_IntAbstractDType``
+* ``PyArray_FloatAbstractDType``
+* ``PyArray_ComplexAbstractDType``
+
+.. warning::
+    As of NumPy 2.0, the *only* valid use for these DTypes is registering a
+    promoter conveniently to e.g. match "any integers" (and subclass checks).
+    Because of this, they are not exposed to Python.
 
 
 PyUFunc_Type and PyUFuncObject
@@ -1286,7 +1310,7 @@ PyArrayMultiIter_Type and PyArrayMultiIterObject
           npy_intp index;
           int nd;
           npy_intp dimensions[NPY_MAXDIMS_LEGACY_ITERS];
-          PyArrayIterObject *iters[NPY_MAXDIMS_LEGACY_ITERS];
+          PyArrayIterObject *iters[];
       } PyArrayMultiIterObject;
 
    .. c:macro: PyObject_HEAD

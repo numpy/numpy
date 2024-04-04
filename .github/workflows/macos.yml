@@ -44,7 +44,7 @@ jobs:
         echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
 
     - name: Setup compiler cache
-      uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
+      uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
       id:    cache-ccache
       with:
         path: ${{ steps.prep-ccache.outputs.dir }}
@@ -68,7 +68,7 @@ jobs:
     # ensure we re-solve once a day (since we don't lock versions). Could be
     # replaced by a conda-lock based approach in the future.
     - name: Cache conda environment
-      uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
+      uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
       env:
         # Increase this value to reset cache if environment.yml has not changed
         CACHE_NUMBER: 1
@@ -119,7 +119,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
 
-    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
         python-version: '3.10'
 

@@ -21,7 +21,7 @@
 #include "numpy/npy_math.h"
 
 #include "lowlevel_strided_loops.h"
-#include "npy_pycompat.h"
+
 
 #include "convert_datatype.h"
 #include "ctors.h"

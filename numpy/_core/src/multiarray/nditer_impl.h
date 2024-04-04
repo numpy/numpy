@@ -18,7 +18,7 @@
 #include <structmember.h>
 
 #include "numpy/arrayobject.h"
-#include "npy_pycompat.h"
+
 #include "convert_datatype.h"
 
 #include "lowlevel_strided_loops.h"

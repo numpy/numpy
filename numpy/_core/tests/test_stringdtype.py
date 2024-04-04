@@ -362,13 +362,6 @@ def test_isnan(dtype, string_list):
         assert not np.any(np.isnan(sarr))
 
 
-def _pickle_load(filename):
-    with open(filename, "rb") as f:
-        res = pickle.load(f)
-
-    return res
-
-@pytest.mark.skipif(IS_WASM, reason="no threading support in wasm")
 def test_pickle(dtype, string_list):
     arr = np.array(string_list, dtype=dtype)
 
@@ -377,15 +370,6 @@ def test_pickle(dtype, string_list):
 
     with open(f.name, "rb") as f:
         res = pickle.load(f)
-
-    assert_array_equal(res[0], arr)
-    assert res[1] == dtype
-
-    # load the pickle in a subprocess to ensure the string data are
-    # actually stored in the pickle file
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        e = executor.submit(_pickle_load, f.name)
-        res = e.result()
 
     assert_array_equal(res[0], arr)
     assert res[1] == dtype
@@ -472,6 +456,29 @@ def test_creation_functions():
 
     assert np.zeros(3, dtype="T")[0] == ""
     assert np.empty(3, dtype="T")[0] == ""
+
+
+def test_create_with_copy_none(string_list):
+    arr = np.array(string_list, dtype=StringDType())
+    # create another stringdtype array with an arena that has a different
+    # in-memory layout than the first array
+    arr_rev = np.array(string_list[::-1], dtype=StringDType())
+
+    # this should create a copy and the resulting array
+    # shouldn't share an allocator or arena with arr_rev, despite
+    # explicitly passing arr_rev.dtype
+    arr_copy = np.array(arr, copy=None, dtype=arr_rev.dtype)
+    np.testing.assert_array_equal(arr, arr_copy)
+    assert arr_copy.base is None
+
+    with pytest.raises(ValueError, match="Unable to avoid copy"):
+        np.array(arr, copy=False, dtype=arr_rev.dtype)
+
+    # because we're using arr's dtype instance, the view is safe
+    arr_view = np.array(arr, copy=None, dtype=arr.dtype)
+    np.testing.assert_array_equal(arr, arr)
+    np.testing.assert_array_equal(arr_view[::-1], arr_rev)
+    assert arr_view is arr
 
 
 @pytest.mark.parametrize(
@@ -561,6 +568,10 @@ def test_sized_integer_casts(bitsize, signed):
     oob = [str(2**bitsize), str(-(2**bitsize))]
     with pytest.raises(OverflowError):
         np.array(oob, dtype="T").astype(idtype)
+
+    with pytest.raises(ValueError):
+        np.array(["1", np.nan, "3"],
+                 dtype=StringDType(na_object=np.nan)).astype(idtype)
 
 
 @pytest.mark.parametrize("typename", ["byte", "short", "int", "longlong"])
@@ -680,6 +691,12 @@ def test_ufuncs_minmax(string_list, ufunc_name, func, use_out):
         res = ufunc(arr, arr)
 
     assert_array_equal(uarr, res)
+    assert_array_equal(getattr(arr, ufunc_name)(), func(string_list))
+
+
+def test_max_regression():
+    arr = np.array(['y', 'y', 'z'], dtype="T")
+    assert arr.max() == 'z'
 
 
 @pytest.mark.parametrize("use_out", [True, False])
@@ -728,6 +745,53 @@ def test_ufunc_add(dtype, string_list, other_strings, use_out):
     else:
         with pytest.raises(ValueError):
             np.add(arr1, arr2)
+
+
+def test_ufunc_add_reduce(dtype):
+    values = ["a", "this is a long string", "c"]
+    arr = np.array(values, dtype=dtype)
+    out = np.empty((), dtype=dtype)
+
+    expected = np.array("".join(values), dtype=dtype)
+    assert_array_equal(np.add.reduce(arr), expected)
+
+    np.add.reduce(arr, out=out)
+    assert_array_equal(out, expected)
+
+
+def test_add_promoter(string_list):
+    arr = np.array(string_list, dtype=StringDType())
+    lresult = np.array(["hello" + s for s in string_list], dtype=StringDType())
+    rresult = np.array([s + "hello" for s in string_list], dtype=StringDType())
+
+    for op in ["hello", np.str_("hello"), np.array(["hello"])]:
+        assert_array_equal(op + arr, lresult)
+        assert_array_equal(arr + op, rresult)
+
+
+def test_add_promoter_reduce():
+    # Exact TypeError could change, but ensure StringDtype doesn't match
+    with pytest.raises(TypeError, match="the resolved dtypes are not"):
+        np.add.reduce(np.array(["a", "b"], dtype="U"))
+
+    # On the other hand, using `dtype=T` in the *ufunc* should work.
+    np.add.reduce(np.array(["a", "b"], dtype="U"), dtype=np.dtypes.StringDType)
+
+
+def test_multiply_reduce():
+    # At the time of writing (NumPy 2.0) this is very limited (and rather
+    # ridiculous anyway).  But it works and actually makes some sense...
+    # (NumPy does not allow non-scalar initial values)
+    repeats = np.array([2, 3, 4])
+    val = "school-🚌"
+    res = np.multiply.reduce(repeats, initial=val, dtype=np.dtypes.StringDType)
+    assert res == val * np.prod(repeats)
+
+
+def test_multiply_two_string_raises():
+    arr = np.array(["hello", "world"], dtype="T")
+    with pytest.raises(np._core._exceptions._UFuncNoLoopError):
+        np.multiply(arr, arr)
 
 
 @pytest.mark.parametrize("use_out", [True, False])
@@ -916,6 +980,12 @@ def test_nat_casts():
                 np.array([output_object]*arr.size, dtype=dtype))
 
 
+def test_nat_conversion():
+    for nat in [np.datetime64("NaT", "s"), np.timedelta64("NaT", "s")]:
+        with pytest.raises(ValueError, match="string coercion is disabled"):
+            np.array(["a", nat], dtype=StringDType(coerce=False))
+
+
 def test_growing_strings(dtype):
     # growing a string leads to a heap allocation, this tests to make sure
     # we do that bookkeeping correctly for all possible starting cases
@@ -1100,23 +1170,23 @@ BINARY_FUNCTIONS = [
     ("add", (None, None)),
     ("multiply", (None, 2)),
     ("mod", ("format: %s", None)),
-    pytest.param("center", (None, 25), marks=unicode_bug_fail),
+    ("center", (None, 25)),
     ("count", (None, "A")),
     ("encode", (None, "UTF-8")),
     ("endswith", (None, "lo")),
     ("find", (None, "A")),
     ("index", (None, "e")),
     ("join", ("-", None)),
-    pytest.param("ljust", (None, 12), marks=unicode_bug_fail),
+    ("ljust", (None, 12)),
     ("partition", (None, "A")),
     ("replace", (None, "A", "B")),
     ("rfind", (None, "A")),
     ("rindex", (None, "e")),
-    pytest.param("rjust", (None, 12), marks=unicode_bug_fail),
+    ("rjust", (None, 12)),
     ("rpartition", (None, "A")),
     ("split", (None, "A")),
     ("startswith", (None, "A")),
-    pytest.param("zfill", (None, 12), marks=unicode_bug_fail),
+    ("zfill", (None, 12)),
 ]
 
 PASSES_THROUGH_NAN_NULLS = [
@@ -1205,7 +1275,28 @@ def test_binary(string_array, unicode_array, function_name, args):
         assert 0
 
 
-def test_strip(string_array, unicode_array):
+@pytest.mark.parametrize("function, expected", [
+    (np.strings.find, [[2, -1], [1, -1]]),
+    (np.strings.startswith, [[False, False], [True, False]])])
+@pytest.mark.parametrize("start, stop", [
+    (1, 4),
+    (np.int8(1), np.int8(4)),
+    (np.array([1, 1], dtype='u2'), np.array([4, 4], dtype='u2'))])
+def test_non_default_start_stop(function, start, stop, expected):
+    a = np.array([["--🐍--", "--🦜--"],
+                  ["-🐍---", "-🦜---"]], "T")
+    indx = function(a, "🐍", start, stop)
+    assert_array_equal(indx, expected)
+
+
+@pytest.mark.parametrize("count", [2, np.int8(2), np.array([2, 2], 'u2')])
+def test_replace_non_default_repeat(count):
+    a = np.array(["🐍--", "🦜-🦜-"], "T")
+    result = np.strings.replace(a, "🦜-", "🦜†", count)
+    assert_array_equal(result, np.array(["🐍--", "🦜†🦜†"], "T"))
+
+
+def test_strip_ljust_rjust_consistency(string_array, unicode_array):
     rjs = np.char.rjust(string_array, 1000)
     rju = np.char.rjust(unicode_array, 1000)
 

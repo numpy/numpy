@@ -9,7 +9,7 @@
 
 #include "npy_config.h"
 
-#include "npy_pycompat.h"
+
 #include "ctors.h"
 
 /*

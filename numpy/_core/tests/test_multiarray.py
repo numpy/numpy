@@ -3501,6 +3501,18 @@ class TestMethods:
         bad_array = [1, 2, 3]
         assert_raises(TypeError, np.put, bad_array, [0, 2], 5)
 
+        # when calling np.put, make sure an 
+        # IndexError is raised if the 
+        # array is empty
+        empty_array = np.asarray(list())
+        with pytest.raises(IndexError, 
+                            match="cannot replace elements of an empty array"):
+            np.put(empty_array, 1, 1, mode="wrap")
+        with pytest.raises(IndexError, 
+                            match="cannot replace elements of an empty array"):
+            np.put(empty_array, 1, 1, mode="clip")
+        
+
     def test_ravel(self):
         a = np.array([[0, 1], [2, 3]])
         assert_equal(a.ravel(), [0, 1, 2, 3])
@@ -8476,9 +8488,37 @@ class TestArrayCreationCopyArgument(object):
         assert_array_equal(arr, base_arr)
         assert arr is base_arr
 
-        with pytest.warns(UserWarning, match=("should implement 'dtype' "
-                                              "and 'copy' keywords")):
-            np.array(a, copy=False)
+        # As of NumPy 2, explicitly passing copy=True does not trigger passing
+        # it to __array__ (deprecation warning is not triggered).
+        arr = np.array(a, copy=True)
+        assert_array_equal(arr, base_arr)
+        assert arr is not base_arr
+
+        # And passing copy=False gives a deprecation warning, but also raises
+        # an error:
+        with pytest.warns(DeprecationWarning, match="__array__.*'copy'"):
+            with pytest.raises(ValueError,
+                    match=r"Unable to avoid copy(.|\n)*numpy_2_0_migration_guide.html"):
+                np.array(a, copy=False)
+
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    def test__array__reference_leak(self):
+        class NotAnArray:
+            def __array__(self):
+                raise NotImplementedError()
+
+        x = NotAnArray()
+
+        refcount = sys.getrefcount(x)
+
+        try:
+            np.array(x)
+        except NotImplementedError:
+            pass
+
+        gc.collect()
+
+        assert refcount == sys.getrefcount(x)
 
     @pytest.mark.parametrize(
             "arr", [np.ones(()), np.arange(81).reshape((9, 9))])

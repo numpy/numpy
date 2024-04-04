@@ -103,11 +103,6 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: true
-          # versioneer.py requires the latest tag to be reachable. Here we
-          # fetch the complete history to get access to the tags.
-          # A shallow clone can work when the following issue is resolved:
-          # https://github.com/actions/checkout/issues/338
-          fetch-tags: true
 
       - name: Setup MSVC (32-bit)
         if: ${{ matrix.buildplat[1] == 'win32' }}
@@ -128,7 +123,7 @@ jobs:
         if: runner.os == 'windows'
 
       # Used to push the built wheels
-      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
         with:
           python-version: "3.x"
 
@@ -154,7 +149,7 @@ jobs:
           fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@ce3fb7832089eb3e723a0a99cab7f3eaccf074fd  # v2.16.5
+        uses: pypa/cibuildwheel@8d945475ac4b1aac4ae08b2fd27db9917158b6ce  # v2.17.0
         env:
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
@@ -217,13 +212,8 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: true
-          # versioneer.py requires the latest tag to be reachable. Here we
-          # fetch the complete history to get access to the tags.
-          # A shallow clone can work when the following issue is resolved:
-          # https://github.com/actions/checkout/issues/338
-          fetch-tags: true
       # Used to push the built wheels
-      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
         with:
           # Build sdist on lowest supported Python
           python-version: "3.9"
