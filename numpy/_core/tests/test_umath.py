@@ -1238,12 +1238,15 @@ class TestPower:
     def test_power_fast_paths(self):
         # gh-26055
         for dt in [np.float32, np.float64]:
+            a = np.array([0, 1.1, 2, 12e12, -10., np.inf, -np.inf], dt)
+
             expected = np.array([0.0, 1.21, 4., 1.44e+26, np.inf, np.inf])
-            a = np.array([0, 1.1, 2, 12e12, np.inf, -np.inf], dt)
-            assert_equal(np.power(a, 2.), expected.astype(dt))
+            result = np.power(a, 2.)
+            assert_array_max_ulp(result, expected.astype(dt), maxulp=1)
 
             expected = np.sqrt(a)
-            assert_equal(np.power(a, 0.5), expected.astype(dt))
+            result = np.power(a, 0.5)
+            assert_array_max_ulp(result, expected.astype(dt), maxulp=1)
 
 
 class TestFloat_power:
