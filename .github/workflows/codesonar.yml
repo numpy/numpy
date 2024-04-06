@@ -12,7 +12,7 @@ jobs:
     permissions: write-all
     runs-on: self-hosted
     container:
-      image: ghcr.io/codesecure-se/numpy-cso-builder:8.1b0
+      image: ghcr.io/codesecure-se/numpy-cso-builder:8.1p0
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.github_token }}
@@ -24,11 +24,10 @@ jobs:
       ROOT_TREE: "OSS-Projects/numpy-GitHub" 
       PROJECT_NAME: "curl"
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
-      CSONAR_HUB_URL: "https://duck.dyndns.org:7340" 
+      CSONAR_HUB_URL: "https://partnerdemo.codesonar.com/" 
       CSONAR_HUB_USER: "${{ secrets.CSONAR_HUB_USER }}"
       CSONAR_HUB_PASSWORD: "${{ secrets.CSONAR_HUB_PASS }}"
       CSONAR_CSHOME: /opt/codesonar
-      CS_USER_HOME: /__w/numpy/numpy
       COMMIT_HASH: ${{ github.sha }}
       REPO_URL: "https://github.com/CodeSecure-SE/numpy"    # the github.repositoryUrl is not an http-link.
       TARGET: ${{ github.base_ref }}
