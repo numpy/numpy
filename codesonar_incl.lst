@@ -1,0 +1,2 @@
+-include-sources numpy/core*.py
+-include-sources numpy/lib*.py
