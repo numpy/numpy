@@ -39,7 +39,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
-        python-version: '3.9'
+        python-version: '3.10'
     - name: Install linter requirements
       run:
         python -m pip install -r requirements/linter_requirements.txt
@@ -60,7 +60,7 @@ jobs:
         fetch-tags: true
     - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
-        python-version: '3.9'
+        python-version: '3.10'
     - uses: ./.github/meson_actions
 
   pypy:
@@ -74,7 +74,7 @@ jobs:
         fetch-tags: true
     - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
-        python-version: 'pypy3.9-v7.3.12'
+        python-version: 'pypy3.10-v7.3.15'
     - name: Setup using scipy-openblas
       run: |
         python -m pip install -r requirements/ci_requirements.txt
@@ -121,7 +121,7 @@ jobs:
         fetch-tags: true
     - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
-        python-version: '3.9'
+        python-version: '3.10'
     - name: Install build and test dependencies from PyPI
       run: |
         pip install -r requirements/build_requirements.txt
@@ -158,7 +158,7 @@ jobs:
         fetch-tags: true
     - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
-        python-version: '3.9'
+        python-version: '3.10'
     - name: Install build and benchmarking dependencies
       run: |
         sudo apt-get update
