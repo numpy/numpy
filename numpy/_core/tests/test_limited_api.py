@@ -67,6 +67,12 @@ def install_temp(tmpdir_factory):
         "and Py_REF_DEBUG"
     ),
 )
+@pytest.mark.xfail(
+    sysconfig.get_config_var("Py_GIL_DISABLED"),
+    reason=(
+        "Py_LIMITED_API is incompatible with the Python 3.6 limited API"
+    ),
+)
 @pytest.mark.skipif(IS_PYPY, reason="no support for limited API in PyPy")
 def test_limited_api(install_temp):
     """Test building a third-party C extension with the limited API
