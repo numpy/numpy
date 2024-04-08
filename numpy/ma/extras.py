@@ -1687,16 +1687,16 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
 
     (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
     if not rowvar:
-        fact = np.dot(xnotmask.T, xnotmask)
-        mask = np.equal(fact, 0, dtype=bool)
-        fact -= ddof
-        data = np.dot(filled(x.T, 0), filled(x.conj(), 0)) / fact
+        fact = np.dot(xnotmask.T, xnotmask) - ddof
+        mask = np.less_equal(fact, 0, dtype=bool)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            data = np.dot(filled(x.T, 0), filled(x.conj(), 0)) / fact
         result = ma.array(data, mask=mask).squeeze()
     else:
-        fact = np.dot(xnotmask, xnotmask.T)
-        mask = np.equal(fact, 0, dtype=bool)
-        fact -= ddof
-        data = np.dot(filled(x, 0), filled(x.T.conj(), 0)) / fact
+        fact = np.dot(xnotmask, xnotmask.T) - ddof
+        mask = np.less_equal(fact, 0, dtype=bool)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            data = np.dot(filled(x, 0), filled(x.T.conj(), 0)) / fact
         result = ma.array(data, mask=mask).squeeze()
     return result
 
@@ -1766,43 +1766,15 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
     if bias is not np._NoValue or ddof is not np._NoValue:
         # 2015-03-15, 1.10
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
-    # Get the data
-    (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
-    # Compute the covariance matrix
-    if not rowvar:
-        fact = np.dot(xnotmask.T, xnotmask)
-        mask = np.equal(fact, 0, dtype=bool)
-        data = np.dot(filled(x.T, 0), filled(x.conj(), 0)) / fact
-        c = ma.array(data, mask=mask).squeeze()
-    else:
-        fact = np.dot(xnotmask, xnotmask.T)
-        mask = np.equal(fact, 0, dtype=bool)
-        data = np.dot(filled(x, 0), filled(x.T.conj(), 0)) / fact
-        c = ma.array(data, mask=mask).squeeze()
-    # Check whether we have a scalar
+    # Estimate the covariance matrix.
+    corr = cov(x, y, rowvar, allow_masked=allow_masked)
+    # The non-masked version returns a masked value for a scalar.
     try:
-        diag = ma.diagonal(c)
+        std = ma.sqrt(ma.diagonal(corr))
     except ValueError:
-        return 1
-    #
-    if xnotmask.all():
-        _denom = ma.sqrt(ma.multiply.outer(diag, diag))
-    else:
-        _denom = diagflat(diag)
-        _denom._sharedmask = False  # We know return is always a copy
-        n = x.shape[1 - rowvar]
-        if rowvar:
-            for i in range(n - 1):
-                for j in range(i + 1, n):
-                    _x = mask_cols(vstack((x[i], x[j]))).var(axis=1)
-                    _denom[i, j] = _denom[j, i] = ma.sqrt(ma.multiply.reduce(_x))
-        else:
-            for i in range(n - 1):
-                for j in range(i + 1, n):
-                    _x = mask_cols(
-                            vstack((x[:, i], x[:, j]))).var(axis=1)
-                    _denom[i, j] = _denom[j, i] = ma.sqrt(ma.multiply.reduce(_x))
-    return c / _denom
+        return ma.MaskedConstant()
+    corr /= ma.multiply.outer(std, std)
+    return corr
 
 #####--------------------------------------------------------------------------
 #---- --- Concatenation helpers ---
