@@ -36,7 +36,7 @@
 #include "__umath_generated.c"
 
 
-static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
+static const PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 
 static int
 object_ufunc_type_resolver(PyUFuncObject *ufunc,
@@ -142,7 +142,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     doc = "dynamic ufunc based on a python function";
 
     self = (PyUFuncObject *)PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
-            (PyUFuncGenericFunction *)pyfunc_functions, data,
+            pyfunc_functions, data,
             types, /* ntypes */ 1, nin, nout, identity ? PyUFunc_IdentityValue : PyUFunc_None,
             str, doc, /* unused */ 0, NULL, identity);
 

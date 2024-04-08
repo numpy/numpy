@@ -4134,14 +4134,14 @@ static void *array_of_nulls[] = {
 #define FUNC_ARRAY_NAME(NAME) NAME ## _funcs
 
 #define GUFUNC_FUNC_ARRAY_REAL(NAME)                    \
-    static PyUFuncGenericFunction                       \
+    static const PyUFuncGenericFunction                 \
     FUNC_ARRAY_NAME(NAME)[] = {                         \
         FLOAT_ ## NAME,                                 \
         DOUBLE_ ## NAME                                 \
     }
 
 #define GUFUNC_FUNC_ARRAY_REAL_COMPLEX(NAME)            \
-    static PyUFuncGenericFunction                       \
+    static const PyUFuncGenericFunction                 \
     FUNC_ARRAY_NAME(NAME)[] = {                         \
         FLOAT_ ## NAME,                                 \
         DOUBLE_ ## NAME,                                \
@@ -4149,7 +4149,7 @@ static void *array_of_nulls[] = {
         CDOUBLE_ ## NAME                                \
     }
 #define GUFUNC_FUNC_ARRAY_REAL_COMPLEX_(NAME)            \
-    static PyUFuncGenericFunction                       \
+    static const PyUFuncGenericFunction                  \
     FUNC_ARRAY_NAME(NAME)[] = {                         \
         NAME<npy_float, npy_float>,                                 \
         NAME<npy_double, npy_double>,                                \
@@ -4157,7 +4157,7 @@ static void *array_of_nulls[] = {
         NAME<npy_cdouble, npy_double>                                \
     }
 #define GUFUNC_FUNC_ARRAY_REAL_COMPLEX__(NAME)            \
-    static PyUFuncGenericFunction                       \
+    static const PyUFuncGenericFunction                   \
     FUNC_ARRAY_NAME(NAME)[] = {                         \
         NAME<npy_float>,                                 \
         NAME<npy_double>,                                \
@@ -4169,7 +4169,7 @@ static void *array_of_nulls[] = {
  * That kernel is disabled
  */
 #define GUFUNC_FUNC_ARRAY_EIG(NAME)                     \
-    static PyUFuncGenericFunction                       \
+    static const PyUFuncGenericFunction                 \
     FUNC_ARRAY_NAME(NAME)[] = {                         \
         NAME<fortran_complex,fortran_real>,                                 \
         NAME<fortran_doublecomplex,fortran_doublereal>,                                \
@@ -4181,13 +4181,13 @@ static void *array_of_nulls[] = {
  * in Python, so they are not implemented here.
  */
 #define GUFUNC_FUNC_ARRAY_QR(NAME)                      \
-    static PyUFuncGenericFunction                       \
+    static const PyUFuncGenericFunction                 \
     FUNC_ARRAY_NAME(NAME)[] = {                         \
         DOUBLE_ ## NAME,                                \
         CDOUBLE_ ## NAME                                \
     }
 #define GUFUNC_FUNC_ARRAY_QR__(NAME)                      \
-    static PyUFuncGenericFunction                       \
+    static const PyUFuncGenericFunction                   \
     FUNC_ARRAY_NAME(NAME)[] = {                         \
         NAME<npy_double>,                                \
         NAME<npy_cdouble>                                \
@@ -4310,7 +4310,7 @@ typedef struct gufunc_descriptor_struct {
     int ntypes;
     int nin;
     int nout;
-    PyUFuncGenericFunction *funcs;
+    const PyUFuncGenericFunction *funcs;
     char *types;
 } GUFUNC_DESCRIPTOR_t;
 

@@ -303,7 +303,7 @@ the primary thing that must be changed to create your own ufunc.
         }
 
         /* This a pointer to the above function */
-        PyUFuncGenericFunction funcs[1] = {&double_logit};
+        static const PyUFuncGenericFunction funcs[1] = {&double_logit};
 
         /* These are the input and return dtypes of logit.*/
         static const char types[2] = {NPY_DOUBLE, NPY_DOUBLE};

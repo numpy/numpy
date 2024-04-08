@@ -1345,7 +1345,7 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
         static const char types[3] = {type,type,type}; \
         static void* data[1] = {0}; \
         PyObject* ufunc = PyUFunc_FromFuncAndData( \
-            (PyUFuncGenericFunction*)func, data,(char*)types, \
+            func, data,(char*)types, \
             1,2,1,PyUFunc_One,(char*)#name,(char*)doc,0); \
         if (!ufunc) { \
             goto fail; \

@@ -33,7 +33,7 @@ inplace_add(char **args, npy_intp const *dimensions, npy_intp const *steps, void
 
 
 /*This a pointer to the above function*/
-PyUFuncGenericFunction funcs[1] = {&inplace_add};
+static const PyUFuncGenericFunction funcs[1] = {&inplace_add};
 
 /* These are the input and return dtypes of logit.*/
 static char types[2] = {NPY_INTP, NPY_INTP};

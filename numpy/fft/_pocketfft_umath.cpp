@@ -292,7 +292,7 @@ irfft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
     return;
 }
 
-static PyUFuncGenericFunction fft_functions[] = {
+static const PyUFuncGenericFunction fft_functions[] = {
     wrap_legacy_cpp_ufunc<fft_loop<npy_double>>,
     wrap_legacy_cpp_ufunc<fft_loop<npy_float>>,
     wrap_legacy_cpp_ufunc<fft_loop<npy_longdouble>>
@@ -313,12 +313,12 @@ static void *ifft_data[] = {
     (void*)&pocketfft::BACKWARD
 };
 
-static PyUFuncGenericFunction rfft_n_even_functions[] = {
+static const PyUFuncGenericFunction rfft_n_even_functions[] = {
     wrap_legacy_cpp_ufunc<rfft_n_even_loop<npy_double>>,
     wrap_legacy_cpp_ufunc<rfft_n_even_loop<npy_float>>,
     wrap_legacy_cpp_ufunc<rfft_n_even_loop<npy_longdouble>>
 };
-static PyUFuncGenericFunction rfft_n_odd_functions[] = {
+static const PyUFuncGenericFunction rfft_n_odd_functions[] = {
     wrap_legacy_cpp_ufunc<rfft_n_odd_loop<npy_double>>,
     wrap_legacy_cpp_ufunc<rfft_n_odd_loop<npy_float>>,
     wrap_legacy_cpp_ufunc<rfft_n_odd_loop<npy_longdouble>>
@@ -329,7 +329,7 @@ static char rfft_types[] = {
     NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_CLONGDOUBLE
 };
 
-static PyUFuncGenericFunction irfft_functions[] = {
+static const PyUFuncGenericFunction irfft_functions[] = {
     wrap_legacy_cpp_ufunc<irfft_loop<npy_double>>,
     wrap_legacy_cpp_ufunc<irfft_loop<npy_float>>,
     wrap_legacy_cpp_ufunc<irfft_loop<npy_longdouble>>

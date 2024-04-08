@@ -4628,7 +4628,7 @@ PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func,
 
 /*UFUNC_API*/
 NPY_NO_EXPORT PyObject *
-PyUFunc_FromFuncAndData(PyUFuncGenericFunction *func, void *const *data,
+PyUFunc_FromFuncAndData(const PyUFuncGenericFunction *func, void *const *data,
                         const char *types, int ntypes,
                         int nin, int nout, int identity,
                         const char *name, const char *doc, int unused)
@@ -4639,7 +4639,7 @@ PyUFunc_FromFuncAndData(PyUFuncGenericFunction *func, void *const *data,
 
 /*UFUNC_API*/
 NPY_NO_EXPORT PyObject *
-PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void *const *data,
+PyUFunc_FromFuncAndDataAndSignature(const PyUFuncGenericFunction *func, void *const *data,
                                      const char *types, int ntypes,
                                      int nin, int nout, int identity,
                                      const char *name, const char *doc,
@@ -4652,7 +4652,7 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void *const *d
 
 /*UFUNC_API*/
 NPY_NO_EXPORT PyObject *
-PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, void *const *data,
+PyUFunc_FromFuncAndDataAndSignatureAndIdentity(const PyUFuncGenericFunction *func, void *const *data,
                                      const char *types, int ntypes,
                                      int nin, int nout, int identity,
                                      const char *name, const char *doc,

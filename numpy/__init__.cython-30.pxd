@@ -951,7 +951,7 @@ cdef extern from "numpy/ufuncobject.h":
         UFUNC_FPE_UNDERFLOW
         UFUNC_FPE_INVALID
 
-    object PyUFunc_FromFuncAndData(PyUFuncGenericFunction *,
+    object PyUFunc_FromFuncAndData(const PyUFuncGenericFunction *,
           void **, char *, int, int, int, int, char *, char *, int)
     int PyUFunc_RegisterLoopForType(ufunc, int,
                                     PyUFuncGenericFunction, int *, void *) except -1
@@ -1002,7 +1002,7 @@ cdef extern from "numpy/ufuncobject.h":
     int PyUFunc_ReplaceLoopBySignature \
         (ufunc, PyUFuncGenericFunction, int *, PyUFuncGenericFunction *)
     object PyUFunc_FromFuncAndDataAndSignature \
-             (PyUFuncGenericFunction *, void **, char *, int, int, int,
+             (const PyUFuncGenericFunction *, void **, char *, int, int, int,
               int, char *, char *, int, char *)
 
     int _import_umath() except -1

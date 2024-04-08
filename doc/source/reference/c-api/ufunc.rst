@@ -112,7 +112,7 @@ Functions
 ---------
 
 .. c:function:: PyObject *PyUFunc_FromFuncAndData( \
-        PyUFuncGenericFunction *func, void *const *data, const char *types, \
+        const PyUFuncGenericFunction *func, void *const *data, const char *types, \
         int ntypes, int nin, int nout, int identity, const char *name, \
         const char *doc, int unused)
 
@@ -192,7 +192,7 @@ Functions
         Unused and present for backwards compatibility of the C-API.
 
 .. c:function:: PyObject *PyUFunc_FromFuncAndDataAndSignature( \
-        PyUFuncGenericFunction *func, void *const *data, const char *types, \
+        const PyUFuncGenericFunction *func, void *const *data, const char *types, \
         int ntypes, int nin, int nout, int identity, const char *name, \
         const char *doc, int unused, const char *signature)
 
@@ -209,7 +209,7 @@ Functions
         so the passed in buffer can be freed.
 
 .. c:function:: PyObject* PyUFunc_FromFuncAndDataAndSignatureAndIdentity( \
-        PyUFuncGenericFunction *func, void **data, char *types, int ntypes, \
+        const PyUFuncGenericFunction *func, void **data, char *types, int ntypes, \
         int nin, int nout, int identity, char *name, char *doc, int unused, \
         char *signature, PyObject *identity_value)
 
