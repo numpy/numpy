@@ -356,7 +356,7 @@ def test_isnan(dtype, string_list):
         # isnan is only true when na_object is a NaN
         assert_array_equal(
             np.isnan(sarr),
-            np.array([0] * len(string_list) + [1], dtype=np.bool_),
+            np.array([0] * len(string_list) + [1], dtype=np.bool),
         )
     else:
         assert not np.any(np.isnan(sarr))

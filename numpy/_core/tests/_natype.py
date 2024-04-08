@@ -15,7 +15,7 @@ def _create_binary_propagating_op(name, is_divmod=False):
         if (
             other is pd_NA
             or isinstance(other, (str, bytes))
-            or isinstance(other, (numbers.Number, np.bool_))
+            or isinstance(other, (numbers.Number, np.bool))
             or util.is_array(other)
             and not other.shape
         ):
@@ -119,7 +119,7 @@ class NAType:
     def __pow__(self, other):
         if other is pd_NA:
             return pd_NA
-        elif isinstance(other, (numbers.Number, np.bool_)):
+        elif isinstance(other, (numbers.Number, np.bool)):
             if other == 0:
                 # returning positive is correct for +/- 0.
                 return type(other)(1)
@@ -133,7 +133,7 @@ class NAType:
     def __rpow__(self, other):
         if other is pd_NA:
             return pd_NA
-        elif isinstance(other, (numbers.Number, np.bool_)):
+        elif isinstance(other, (numbers.Number, np.bool)):
             if other == 1:
                 return other
             else:
@@ -170,7 +170,7 @@ class NAType:
     __rxor__ = __xor__
 
     __array_priority__ = 1000
-    _HANDLED_TYPES = (np.ndarray, numbers.Number, str, np.bool_)
+    _HANDLED_TYPES = (np.ndarray, numbers.Number, str, np.bool)
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         types = self._HANDLED_TYPES + (NAType,)
