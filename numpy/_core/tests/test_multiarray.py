@@ -1890,8 +1890,8 @@ class TestMethods:
             ["i8", "U10", "object", "datetime64[ms]"])
     def test_any_and_all_result_dtype(self, dtype):
         arr = np.ones(3, dtype=dtype)
-        assert arr.any().dtype == np.bool_
-        assert arr.all().dtype == np.bool_
+        assert arr.any().dtype == np.bool
+        assert arr.all().dtype == np.bool
 
     def test_any_and_all_object_dtype(self):
         # (seberg) Not sure we should even allow dtype here, but it is.
