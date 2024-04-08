@@ -4743,7 +4743,7 @@ add_newdoc('numpy._core.umath', '_add_newdoc_ufunc',
     Notes
     -----
     This method allocates memory for new_docstring on
-    the heap. Technically this creates a mempory leak, since this
+    the heap. Technically this creates a memory leak, since this
     memory will not be reclaimed until the end of the program
     even if the ufunc itself is removed. However this will only
     be a problem if the user is repeatedly creating ufuncs with
