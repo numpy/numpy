@@ -165,9 +165,24 @@ class MaskError(MAError):
 
 
 # b: boolean - c: complex - f: floats - i: integer - O: object - S: string
+"""
 default_filler = {'b': True,
                   'c': 1.e20 + 0.0j,
                   'f': 1.e20,
+                  'i': 999999,
+                  'O': '?',
+                  'S': b'N/A',
+                  'u': 999999,
+                  'V': b'???',
+                  'U': 'N/A'
+                  }
+"""
+
+default_filler = {'b': True,
+                  'c': 1.e20 + 0.0j,
+                  "float16": 1.e4,
+                  "float32": 1.e20,
+                  "float64": 1.e30,
                   'i': 999999,
                   'O': '?',
                   'S': b'N/A',
@@ -298,7 +313,11 @@ def default_fill_value(obj):
         if dtype.kind in 'Mm':
             return default_filler.get(dtype.str[1:], '?')
         else:
-            return default_filler.get(dtype.kind, '?')
+            if dtype.kind == "f":
+                return default_filler.get(str(dtype), '?')
+            else:
+                return default_filler.get(dtype.kind, '?')
+            # return default_filler.get(dtype.kind, '?')
 
     dtype = _get_dtype_of(obj)
     return _recursive_fill_value(dtype, _scalar_fill_value)
@@ -7085,7 +7104,8 @@ def power(a, b, third=None):
     # Get the masks
     ma = getmask(a)
     mb = getmask(b)
-    m = mask_or(ma, mb)
+    # m = mask_or(ma, mb)
+    m = mask_or(ma, mb, shrink = False)
     # Get the rawdata
     fa = getdata(a)
     fb = getdata(b)
@@ -7112,6 +7132,7 @@ def power(a, b, third=None):
         elif result._mask is nomask:
             result._mask = invalid
         result._data[invalid] = result.fill_value
+    # result.mask = a.mask
     return result
 
 argmin = _frommethod('argmin')
