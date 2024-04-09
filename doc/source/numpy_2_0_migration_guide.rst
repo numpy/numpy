@@ -221,21 +221,6 @@ using the NumPy types. You can still write cython code using the ``c.real`` and
 ``c.imag`` attributes (using the native typedefs), but you can no longer use
 in-place operators ``c.imag += 1`` in Cython's c++ mode.
 
-.. _api-table-visibility-change:
-
-Changes in table visibility (linking error)
--------------------------------------------
-If you are experiencing linking errors related to ``PyArray_API`` or
-``PyArray_RUNTIME_VERSION``, NumPy changed the default visibility to hidden
-(which was always the case on windows).
-You can use the :c:macro:`NPY_API_SYMBOL_ATTRIBUTE` to opt-out of this change.
-However, we generally discourage linking across project boundaries because
-it breaks NumPy compatibility checks.
-
-If you are experiencing problems due to an upstream header including NumPy,
-the solution is to make sure you ``#include "numpy/ndarrayobject.h"`` before
-their header and import NumPy yourself based on  :ref:`including-the-c-api`.
-
 
 Changes to namespaces
 =====================

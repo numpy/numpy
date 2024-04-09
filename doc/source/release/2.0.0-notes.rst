@@ -655,17 +655,6 @@ Please see :ref:`migration_c_descr` for more information.
 
 (`gh-25943 <https://github.com/numpy/numpy/pull/25943>`__)
 
-API symbols now hidden but customizable
----------------------------------------
-NumPy now defaults to hide the API symbols it adds to allow all NumPy API
-usage.
-This means that by default you cannot dynamically fetch the NumPy API from
-another library (this was never possible on windows).
-Please see :ref:`api-table-visibility-change` and the new
-:c:macro:`NPY_API_SYMBOL_ATTRIBUTE` which allows to customize/revert this.
-
-(`gh-26103 <https://github.com/numpy/numpy/pull/26103>`__)
-
 
 NumPy 2.0 C API removals
 ========================
