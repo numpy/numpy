@@ -39,7 +39,7 @@ __all__ = [
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', "IS_WASM", 'suppress_warnings', 'assert_array_compare',
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
-        '_OLD_PROMOTION', 'IS_MUSL', '_SUPPORTS_SVE'
+        '_OLD_PROMOTION', 'IS_MUSL', '_SUPPORTS_SVE', 'NOGIL_BUILD'
         ]
 
 
@@ -68,6 +68,7 @@ _v = sysconfig.get_config_var('HOST_GNU_TYPE') or ''
 if 'musl' in _v:
     IS_MUSL = True
 
+NOGIL_BUILD = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
 
 def assert_(val, msg=''):
     """
