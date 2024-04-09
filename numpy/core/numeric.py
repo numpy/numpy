@@ -2347,7 +2347,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
     xfin = isfinite(x)
     yfin = isfinite(y)
-    if all(xfin) and all(yfin):
+    if all(xfin & yfin):
         return within_tol(x, y, atol, rtol)
     else:
         finite = xfin & yfin
