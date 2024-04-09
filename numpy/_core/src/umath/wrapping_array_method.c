@@ -26,6 +26,7 @@
 
 #include "numpy/ndarraytypes.h"
 
+#include "npy_pycompat.h"
 #include "common.h"
 #include "array_method.h"
 #include "legacy_array_method.h"
@@ -250,8 +251,9 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
     PyObject *loops = ufunc->_loops;
     Py_ssize_t length = PyList_Size(loops);
     for (Py_ssize_t i = 0; i < length; i++) {
-        PyObject *item = PyList_GetItem(loops, i);
+        PyObject *item = PyList_GetItemRef(loops, i);
         PyObject *cur_DType_tuple = PyTuple_GetItem(item, 0);
+        Py_DECREF(item);
         int cmp = PyObject_RichCompareBool(cur_DType_tuple, wrapped_dt_tuple, Py_EQ);
         if (cmp < 0) {
             goto finish;
