@@ -225,7 +225,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: data-apis/array-api-tests
-        ref: '9afe8c709d81f005c98d383c82ad5e1c2cd8166c'  # Latest commit as of 2023-11-24
+        ref: '3cf8ef654c456d9fd1633d64e67b4470465940e9'  # Latest commit as of 2024-04-09
         submodules: 'true'
         path: 'array-api-tests'
     - name: Set up Python
@@ -246,8 +246,6 @@ jobs:
         PYTHONWARNINGS: 'ignore::UserWarning::,ignore::DeprecationWarning::,ignore::RuntimeWarning::'
       run: |
         cd ${GITHUB_WORKSPACE}/array-api-tests
-        # remove once https://github.com/data-apis/array-api-tests/pull/217 is merged
-        touch pytest.ini
         pytest array_api_tests -v -c pytest.ini --ci --max-examples=2 --derandomize --disable-deadline --skips-file ${GITHUB_WORKSPACE}/tools/ci/array-api-skips.txt
 
   custom_checks:

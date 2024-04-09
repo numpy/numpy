@@ -1,50 +1,22 @@
-# 'unique_inverse' output array is 1-D for 0-D input
-array_api_tests/test_set_functions.py::test_unique_all
-array_api_tests/test_set_functions.py::test_unique_inverse
-
-# https://github.com/numpy/numpy/issues/21213
-array_api_tests/test_special_cases.py::test_iop[__ipow__(x1_i is -infinity and x2_i > 0 and not (x2_i.is_integer() and x2_i % 2 == 1)) -> +infinity]
-array_api_tests/test_special_cases.py::test_iop[__ipow__(x1_i is -0 and x2_i > 0 and not (x2_i.is_integer() and x2_i % 2 == 1)) -> +0]
-# noted diversions from spec
-array_api_tests/test_special_cases.py::test_binary[floor_divide(x1_i is +infinity and isfinite(x2_i) and x2_i > 0) -> +infinity]
-array_api_tests/test_special_cases.py::test_binary[floor_divide(x1_i is +infinity and isfinite(x2_i) and x2_i < 0) -> -infinity]
-array_api_tests/test_special_cases.py::test_binary[floor_divide(x1_i is -infinity and isfinite(x2_i) and x2_i > 0) -> -infinity]
-array_api_tests/test_special_cases.py::test_binary[floor_divide(x1_i is -infinity and isfinite(x2_i) and x2_i < 0) -> +infinity]
-array_api_tests/test_special_cases.py::test_binary[floor_divide(isfinite(x1_i) and x1_i > 0 and x2_i is -infinity) -> -0]
-array_api_tests/test_special_cases.py::test_binary[floor_divide(isfinite(x1_i) and x1_i < 0 and x2_i is +infinity) -> -0]
-array_api_tests/test_special_cases.py::test_binary[__floordiv__(x1_i is +infinity and isfinite(x2_i) and x2_i > 0) -> +infinity]
-array_api_tests/test_special_cases.py::test_binary[__floordiv__(x1_i is +infinity and isfinite(x2_i) and x2_i < 0) -> -infinity]
-array_api_tests/test_special_cases.py::test_binary[__floordiv__(x1_i is -infinity and isfinite(x2_i) and x2_i > 0) -> -infinity]
-array_api_tests/test_special_cases.py::test_binary[__floordiv__(x1_i is -infinity and isfinite(x2_i) and x2_i < 0) -> +infinity]
-array_api_tests/test_special_cases.py::test_binary[__floordiv__(isfinite(x1_i) and x1_i > 0 and x2_i is -infinity) -> -0]
-array_api_tests/test_special_cases.py::test_binary[__floordiv__(isfinite(x1_i) and x1_i < 0 and x2_i is +infinity) -> -0]
-array_api_tests/test_special_cases.py::test_iop[__ifloordiv__(x1_i is +infinity and isfinite(x2_i) and x2_i > 0) -> +infinity]
-array_api_tests/test_special_cases.py::test_iop[__ifloordiv__(x1_i is +infinity and isfinite(x2_i) and x2_i < 0) -> -infinity]
-array_api_tests/test_special_cases.py::test_iop[__ifloordiv__(x1_i is -infinity and isfinite(x2_i) and x2_i > 0) -> -infinity]
-array_api_tests/test_special_cases.py::test_iop[__ifloordiv__(x1_i is -infinity and isfinite(x2_i) and x2_i < 0) -> +infinity]
-array_api_tests/test_special_cases.py::test_iop[__ifloordiv__(isfinite(x1_i) and x1_i > 0 and x2_i is -infinity) -> -0]
-array_api_tests/test_special_cases.py::test_iop[__ifloordiv__(isfinite(x1_i) and x1_i < 0 and x2_i is +infinity) -> -0]
-
-# fft test suite is buggy as of 83f0bcdc
-array_api_tests/test_fft.py
-
 # finfo return type misalignment
 array_api_tests/test_data_type_functions.py::test_finfo[float32]
 
-# a few misalignments
-array_api_tests/test_operators_and_elementwise_functions.py
-array_api_tests/test_signatures.py::test_func_signature[std]
-array_api_tests/test_signatures.py::test_func_signature[var]
-array_api_tests/test_signatures.py::test_func_signature[asarray]
-array_api_tests/test_signatures.py::test_func_signature[reshape]
-array_api_tests/test_signatures.py::test_array_method_signature[__array_namespace__]
+# out.dtype=float32, but should be int16
+# dtype('float16') not found
+array_api_tests/test_operators_and_elementwise_functions.py::test_ceil
+array_api_tests/test_operators_and_elementwise_functions.py::test_floor
+array_api_tests/test_operators_and_elementwise_functions.py::test_trunc
 
-# missing 'copy' keyword argument, 'newshape' should be named 'shape'
+# 'newshape' should be named 'shape'
 array_api_tests/test_signatures.py::test_func_signature[reshape]
 
 # missing 'descending' keyword arguments
 array_api_tests/test_signatures.py::test_func_signature[argsort]
 array_api_tests/test_signatures.py::test_func_signature[sort]
 
-# assertionError: out.dtype=float32, but should be float64 [sum(float32)]
-array_api_tests/test_statistical_functions.py::test_sum
+# nonzero for 0D should error
+array_api_tests/test_searching_functions.py::test_nonzero_zerodim_error
+
+# TODO: check why in CI `inspect.signature(np.vecdot)` returns (*arg, **kwarg)
+#       instead of raising ValueError. mtsokol: couldn't reproduce locally
+array_api_tests/test_signatures.py::test_func_signature[vecdot]
