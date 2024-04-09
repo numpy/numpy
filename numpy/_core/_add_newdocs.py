@@ -948,6 +948,8 @@ add_newdoc('numpy._core.multiarray', 'asarray',
         the other requirements (``dtype``, ``order``, etc.).
         For ``False`` it raises a ``ValueError`` if a copy cannot be avoided.
         Default: ``None``.
+
+        .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
