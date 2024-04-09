@@ -2328,8 +2328,12 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     array([False,  True])
     """
     def within_tol(x, y, atol, rtol):
-        with errstate(invalid='ignore'), _no_nep50_warning():
-            return less_equal(abs(x-y), atol + rtol * abs(y))
+        with _no_nep50_warning():
+            if isfinite(atol) & isfinite(rtol):
+                return less_equal(abs(x - y), atol + rtol * abs(y))
+            else:
+                with errstate(invalid='ignore'), _no_nep50_warning():
+                    return less_equal(abs(x-y), atol + rtol * abs(y))
 
     x = asanyarray(a)
     y = asanyarray(b)
