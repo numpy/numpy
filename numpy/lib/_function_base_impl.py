@@ -3867,8 +3867,29 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     >>> assert not np.all(a==b)
 
     """
+
+    # handle edge case where a is a Python list
+    if isinstance(a, list):
+        a = np.array(a)
+
+    if a.size > 0 and len(a.shape) > 0 and all(isinstance(i, np.datetime64) for i in a):
+        a = sorted(a)
+        if len(a) % 2 != 0:
+            return a[len(a)//2]
+        else:
+            second = a[len(a)//2]
+            first = a[len(a)//2 - 1]
+            days_between = (second - first)//2
+            median_date = np.datetime64(first + days_between)
+            return median_date
+    else:
+        return _ureduce(a, func=_median, keepdims=keepdims, axis=axis, out=out,
+                        overwrite_input=overwrite_input)
+
+    """
     return _ureduce(a, func=_median, keepdims=keepdims, axis=axis, out=out,
                     overwrite_input=overwrite_input)
+    """
 
 
 def _median(a, axis=None, out=None, overwrite_input=False):
