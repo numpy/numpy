@@ -25,10 +25,6 @@ linux_aarch64_task:
     # cirrus-ci task).
     - env:
         CIRRUS_CLONE_SUBMODULES: true
-        CIBW_BUILD: cp39-*
-        EXPECT_CPU_FEATURES: NEON NEON_FP16 NEON_VFPV4 ASIMD ASIMDHP ASIMDDP ASIMDFHM
-    - env:
-        CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp310-*
     - env:
         CIRRUS_CLONE_SUBMODULES: true
@@ -64,7 +60,7 @@ macosx_arm64_task:
   matrix:
     - env:
         CIRRUS_CLONE_SUBMODULES: true
-        CIBW_BUILD: cp39-* cp310-*
+        CIBW_BUILD: cp310-*
     - env:
         CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp311-* cp312-*
