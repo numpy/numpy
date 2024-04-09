@@ -11,6 +11,7 @@
 #include "numpy/npy_common.h"
 #include "npy_config.h"
 #include "alloc.h"
+#include "common.h"
 
 #include <assert.h>
 #ifdef NPY_OS_LINUX
@@ -32,8 +33,8 @@ typedef struct {
     npy_uintp available; /* number of cached pointers */
     void * ptrs[NCACHE];
 } cache_bucket;
-static cache_bucket datacache[NBUCKETS];
-static cache_bucket dimcache[NBUCKETS_DIM];
+static thread_local cache_bucket datacache[NBUCKETS];
+static thread_local cache_bucket dimcache[NBUCKETS_DIM];
 
 static int _madvise_hugepage = 1;
 
