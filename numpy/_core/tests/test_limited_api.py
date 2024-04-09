@@ -5,7 +5,7 @@ import sys
 import sysconfig
 import pytest
 
-from numpy.testing import IS_WASM, IS_PYPY
+from numpy.testing import IS_WASM, IS_PYPY, NOGIL_BUILD
 
 # This import is copied from random.tests.test_extending
 try:
@@ -68,10 +68,8 @@ def install_temp(tmpdir_factory):
     ),
 )
 @pytest.mark.xfail(
-    sysconfig.get_config_var("Py_GIL_DISABLED"),
-    reason=(
-        "Py_LIMITED_API is incompatible with the Python 3.6 limited API"
-    ),
+    NOGIL_BUILD,
+    reason="Py_GIL_DISABLED builds do not currently support the limited API",
 )
 @pytest.mark.skipif(IS_PYPY, reason="no support for limited API in PyPy")
 def test_limited_api(install_temp):
