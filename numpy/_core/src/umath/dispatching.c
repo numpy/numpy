@@ -45,6 +45,7 @@
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_3kcompat.h"
 #include "common.h"
+#include "npy_pycompat.h"
 
 #include "dispatching.h"
 #include "dtypemeta.h"
@@ -121,8 +122,9 @@ PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
     PyObject *loops = ufunc->_loops;
     Py_ssize_t length = PyList_Size(loops);
     for (Py_ssize_t i = 0; i < length; i++) {
-        PyObject *item = PyList_GetItem(loops, i);
+        PyObject *item = PyList_GetItemRef(loops, i);
         PyObject *cur_DType_tuple = PyTuple_GetItem(item, 0);
+        Py_DECREF(item);
         int cmp = PyObject_RichCompareBool(cur_DType_tuple, DType_tuple, Py_EQ);
         if (cmp < 0) {
             return -1;
@@ -1277,8 +1279,9 @@ get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
     PyObject *loops = ufunc->_loops;
     Py_ssize_t length = PyList_Size(loops);
     for (Py_ssize_t i = 0; i < length; i++) {
-        PyObject *item = PyList_GetItem(loops, i);
+        PyObject *item = PyList_GetItemRef(loops, i);
         PyObject *cur_DType_tuple = PyTuple_GetItem(item, 0);
+        Py_DECREF(item);
         int cmp = PyObject_RichCompareBool(cur_DType_tuple,
                                            t_dtypes, Py_EQ);
         if (cmp < 0) {
