@@ -1,0 +1,5 @@
+`np.show_runtime` has display modes
+-----------------------------------
+
+`np.show_runtime` now has a new optional parameter ``mode`` to help
+customize the output.
