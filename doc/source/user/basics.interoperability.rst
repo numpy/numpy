@@ -113,6 +113,8 @@ We can check that ``arr`` and ``new_arr`` share the same data buffer:
  array([1000, 2, 3, 4])
 
 
+.. _dunder_array.interface:
+
 The ``__array__()`` method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 

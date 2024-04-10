@@ -2956,6 +2956,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__array__',
     parameter. The method returns a new array for ``copy=True``, regardless of
     ``dtype`` parameter.
 
+    A more detailed explanation of the ``__array__`` interface
+    can be found in :ref:`dunder_array.interface`.
+
     """))
 
 

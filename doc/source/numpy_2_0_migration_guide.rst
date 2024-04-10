@@ -423,7 +423,7 @@ The :ref:`copy keyword behavior changes <copy-keyword-changes-2.0>` in
 * For any ``__array__`` method on a non-NumPy array-like object, ``dtype=None``
   and ``copy=None`` keywords must be added to the signature - this will work with older
   NumPy versions as well (although older numpy versions will never pass in ``copy`` keyword).
-  If the keywords are actually used in the ``__array__`` method implementation, then for:
+  If the keywords are added to the ``__array__`` signature, then for:
 
   * ``copy=True`` and any ``dtype`` value always return a new copy,
   * ``copy=None`` create a copy if required (for example by ``dtype``),
