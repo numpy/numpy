@@ -99,7 +99,7 @@ enum _dtype_discovery_flags {
     DISCOVER_TUPLES_AS_ELEMENTS = 1 << 4,
     MAX_DIMS_WAS_REACHED = 1 << 5,
     DESCRIPTOR_WAS_SET = 1 << 6,
-    COPY_WAS_CREATED = 1 << 7,
+    COPY_WAS_CREATED_BY__ARRAY__ = 1 << 7,
 };
 
 
@@ -1028,9 +1028,9 @@ PyArray_DiscoverDTypeAndShape_Recursive(
             /* __array__ may be passed the requested descriptor if provided */
             requested_descr = *out_descr;
         }
-        int was_copied = 0;
+        int was_copied_by__array__ = 0;
         arr = (PyArrayObject *)_array_from_array_like(obj,
-                requested_descr, 0, NULL, copy, &was_copied);
+                requested_descr, 0, NULL, copy, &was_copied_by__array__);
         if (arr == NULL) {
             return -1;
         }
@@ -1038,8 +1038,8 @@ PyArray_DiscoverDTypeAndShape_Recursive(
             Py_DECREF(arr);
             arr = NULL;
         }
-        if (was_copied == 1) {
-            *flags |= COPY_WAS_CREATED;
+        if (was_copied_by__array__ == 1) {
+            *flags |= COPY_WAS_CREATED_BY__ARRAY__;
         }
     }
     if (arr != NULL) {
@@ -1231,8 +1231,8 @@ PyArray_DiscoverDTypeAndShape_Recursive(
  *        to choose a default.
  * @param copy Specifies the copy behavior. -1 is corresponds to copy=None,
  *        0 to copy=False, and 1 to copy=True in the Python API.
- * @param was_copied Set to 1 if it can be assumed that a copy was made
- *        by implementor.
+ * @param was_copied_by__array__ Set to 1 if it can be assumed that a copy was
+ *        made by implementor.
  * @return dimensions of the discovered object or -1 on error.
  *         WARNING: If (and only if) the output is a single array, the ndim
  *         returned _can_ exceed the maximum allowed number of dimensions.
@@ -1245,7 +1245,7 @@ PyArray_DiscoverDTypeAndShape(
         npy_intp out_shape[NPY_MAXDIMS],
         coercion_cache_obj **coercion_cache,
         PyArray_DTypeMeta *fixed_DType, PyArray_Descr *requested_descr,
-        PyArray_Descr **out_descr, int copy, int *was_copied)
+        PyArray_Descr **out_descr, int copy, int *was_copied_by__array__)
 {
     coercion_cache_obj **coercion_cache_head = coercion_cache;
     *coercion_cache = NULL;
@@ -1298,8 +1298,8 @@ PyArray_DiscoverDTypeAndShape(
         goto fail;
     }
 
-    if (was_copied != NULL && flags & COPY_WAS_CREATED) {
-        *was_copied = 1;
+    if (was_copied_by__array__ != NULL && flags & COPY_WAS_CREATED_BY__ARRAY__) {
+        *was_copied_by__array__ = 1;
     }
 
     if (NPY_UNLIKELY(flags & FOUND_RAGGED_ARRAY)) {

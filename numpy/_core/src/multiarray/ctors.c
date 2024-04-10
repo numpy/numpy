@@ -1429,8 +1429,8 @@ fail:
  * @param writeable whether the result must be writeable.
  * @param context Unused parameter, must be NULL (should be removed later).
  * @param copy Specifies the copy behavior.
- * @param was_copied Set to 1 if it can be assumed that a copy was made
- *        by implementor.
+ * @param was_copied_by__array__ Set to 1 if it can be assumed that a copy
+ *        was made by implementor.
  *
  * @returns The array object, Py_NotImplemented if op is not array-like,
  *          or NULL with an error set. (A new reference to Py_NotImplemented
@@ -1439,7 +1439,7 @@ fail:
 NPY_NO_EXPORT PyObject *
 _array_from_array_like(PyObject *op,
         PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context,
-        int copy, int *was_copied) {
+        int copy, int *was_copied_by__array__) {
     PyObject* tmp;
 
     /*
@@ -1487,7 +1487,8 @@ _array_from_array_like(PyObject *op,
     }
 
     if (tmp == Py_NotImplemented) {
-        tmp = PyArray_FromArrayAttr_int(op, requested_dtype, copy, was_copied);
+        tmp = PyArray_FromArrayAttr_int(
+                op, requested_dtype, copy, was_copied_by__array__);
         if (tmp == NULL) {
             return NULL;
         }
@@ -1574,7 +1575,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
 
     // Default is copy = None
     int copy = -1;
-    int was_copied = 0;
+    int was_copied_by__array__ = 0;
 
     if (flags & NPY_ARRAY_ENSURENOCOPY) {
         copy = 0;
@@ -1583,7 +1584,8 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
     }
 
     ndim = PyArray_DiscoverDTypeAndShape(
-            op, NPY_MAXDIMS, dims, &cache, in_DType, in_descr, &dtype, copy, &was_copied);
+            op, NPY_MAXDIMS, dims, &cache, in_DType, in_descr, &dtype,
+            copy, &was_copied_by__array__);
 
     if (ndim < 0) {
         return NULL;
@@ -1620,7 +1622,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         assert(cache->converted_obj == op);
         arr = (PyArrayObject *)(cache->arr_or_sequence);
         /* we may need to cast or assert flags (e.g. copy) */
-        if (was_copied == 1 && flags & NPY_ARRAY_ENSURECOPY) {
+        if (was_copied_by__array__ == 1 && flags & NPY_ARRAY_ENSURECOPY) {
             flags = flags & ~NPY_ARRAY_ENSURECOPY;
             flags = flags | NPY_ARRAY_ENSURENOCOPY;
         }
@@ -2495,14 +2497,14 @@ check_or_clear_and_warn_error_if_due_to_copy_kwarg(PyObject *kwnames)
  *        NOTE: For copy == -1 it passes `op.__array__(copy=None)`,
  *              for copy == 0, `op.__array__(copy=False)`, and
  *              for copy == 1, `op.__array__(copy=True).
- * @param was_copied Set to 1 if it can be assumed that a copy was made
- *        by implementor.
+ * @param was_copied_by__array__ Set to 1 if it can be assumed that a copy
+ *        was made by implementor.
  * @returns NotImplemented if `__array__` is not defined or a NumPy array
  *          (or subclass).  On error, return NULL.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_FromArrayAttr_int(
-        PyObject *op, PyArray_Descr *descr, int copy, int *was_copied)
+PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int copy,
+                          int *was_copied_by__array__)
 {
     PyObject *new;
     PyObject *array_meth;
@@ -2589,9 +2591,10 @@ PyArray_FromArrayAttr_int(
         Py_DECREF(new);
         return NULL;
     }
-    if (was_copied != NULL && copy == 1 && must_copy_but_copy_kwarg_unimplemented == 0) {
+    if (was_copied_by__array__ != NULL && copy == 1 &&
+        must_copy_but_copy_kwarg_unimplemented == 0) {
         /* We can assume that a copy was made */
-        *was_copied = 1;
+        *was_copied_by__array__ = 1;
     }
 
     return new;

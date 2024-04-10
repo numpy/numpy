@@ -8502,7 +8502,6 @@ class TestArrayCreationCopyArgument(object):
                     match=r"Unable to avoid copy(.|\n)*numpy_2_0_migration_guide.html"):
                 np.array(a, copy=False)
 
-    @pytest.mark.skipif(IS_PYPY, reason="PyPy copies differently")
     def test___array__copy_once(self):
         size = 100
         base_arr = np.zeros((size, size))
