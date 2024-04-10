@@ -2459,8 +2459,9 @@ check_or_clear_and_warn_error_if_due_to_copy_kwarg(PyObject *kwnames)
         Py_DECREF(type);
         Py_DECREF(value);
         Py_XDECREF(traceback);
-        if (DEPRECATE("__array__ should implement the 'dtype' and "
-                      "'copy' keyword argument") < 0) {
+        if (DEPRECATE("__array__ implementation doesn't accept a copy keyword, "
+                      "so passing copy=False failed. __array__ must implement "
+                      "'dtype' and 'copy' keyword arguments.") < 0) {
             return -1;
         }
         return 0;
