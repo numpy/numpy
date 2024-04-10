@@ -5,7 +5,8 @@ import types
 
 import numpy as np
 from numpy._core import ndarray
-from numpy._utils import set_module
+from numpy._utils import set_module, _config_helpers
+import numpy as np
 
 __all__ = [
     'get_include', 'info', 'show_runtime'
@@ -13,13 +14,25 @@ __all__ = [
 
 
 @set_module('numpy')
-def show_runtime():
+def show_runtime(mode=_config_helpers.ConfigDisplayModes.stdout.value):
     """
     Print information about various resources in the system
     including available intrinsic support and BLAS/LAPACK library
     in use
 
     .. versionadded:: 1.24.0
+
+    Parameters
+    ----------
+    mode : {`'stdout'`, `'dicts'`}, optional.
+        Indicates how to display the config information.
+        `'stdout'` prints to console, `'dicts'` returns a dictionary
+        of the configuration.
+
+    Returns
+    -------
+    out : {`dict`, `None`}
+        If mode is `'dicts'`, a dict is returned, else None
 
     See Also
     --------
@@ -40,11 +53,19 @@ def show_runtime():
         __cpu_dispatch__,
         __cpu_features__,
     )
+    uname = platform.uname()
     config_found = [{
         "numpy_version": np.__version__,
         "python": sys.version,
-        "uname": platform.uname(),
-        }]
+        "uname": {
+            "machine": uname.machine,
+            "node": uname.node,
+            "processor": uname.processor,
+            "release": uname.release,
+            "system": uname.system,
+            "version": uname.version,
+        },
+    }]
     features_found, features_not_found = [], []
     for feature in __cpu_dispatch__:
         if __cpu_features__[feature]:
@@ -71,8 +92,7 @@ def show_runtime():
               " Install it by `pip install threadpoolctl`."
               " Once installed, try `np.show_runtime` again"
               " for more detailed build information")
-    pprint(config_found)
-
+    return _config_helpers.print_or_return_config(mode, config_found)
 
 @set_module('numpy')
 def get_include():
