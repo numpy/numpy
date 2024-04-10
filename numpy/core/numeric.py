@@ -5,6 +5,7 @@ import sys
 import warnings
 import numbers
 import builtins
+import contextlib
 
 import numpy as np
 from . import multiarray
@@ -2328,12 +2329,13 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     array([False,  True])
     """
     def within_tol(x, y, atol, rtol):
-        with _no_nep50_warning():
-            if isfinite(atol) & isfinite(rtol):
-                return less_equal(abs(x - y), atol + rtol * abs(y))
-            else:
-                with errstate(invalid='ignore'):
-                    return less_equal(abs(x-y), atol + rtol * abs(y))
+        # within tol is only called with finite x and y
+        if isfinite(atol) & isfinite(rtol):
+            context_manager = contextlib.nullcontext()
+        else:
+            context_manager = errstate(invalid='ignore')
+        with context_manager, _no_nep50_warning():
+            return less_equal(abs(x - y), atol + rtol * abs(y))
 
     x = asanyarray(a)
     y = asanyarray(b)
