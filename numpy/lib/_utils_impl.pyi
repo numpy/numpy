@@ -7,6 +7,7 @@ from typing import (
 from numpy._core.numerictypes import (
     issubdtype as issubdtype,
 )
+from numpy._utils._config_helpers import ConfigDisplayModes
 
 _T_contra = TypeVar("_T_contra", contravariant=True)
 
@@ -30,4 +31,4 @@ def source(
     output: None | _SupportsWrite[str] = ...,
 ) -> None: ...
 
-def show_runtime() -> None: ...
+def show_runtime(mode: ConfigDisplayModes) -> None | dict: ...
