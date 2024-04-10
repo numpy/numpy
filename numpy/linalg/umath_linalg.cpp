@@ -4215,14 +4215,14 @@ GUFUNC_FUNC_ARRAY_REAL_COMPLEX__(lstsq);
 GUFUNC_FUNC_ARRAY_EIG(eig);
 GUFUNC_FUNC_ARRAY_EIG(eigvals);
 
-static char equal_2_types[] = {
+static const char equal_2_types[] = {
     NPY_FLOAT, NPY_FLOAT,
     NPY_DOUBLE, NPY_DOUBLE,
     NPY_CFLOAT, NPY_CFLOAT,
     NPY_CDOUBLE, NPY_CDOUBLE
 };
 
-static char equal_3_types[] = {
+static const char equal_3_types[] = {
     NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
     NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
     NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT,
@@ -4230,47 +4230,47 @@ static char equal_3_types[] = {
 };
 
 /* second result is logdet, that will always be a REAL */
-static char slogdet_types[] = {
+static const char slogdet_types[] = {
     NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
     NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
     NPY_CFLOAT, NPY_CFLOAT, NPY_FLOAT,
     NPY_CDOUBLE, NPY_CDOUBLE, NPY_DOUBLE
 };
 
-static char eigh_types[] = {
+static const char eigh_types[] = {
     NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
     NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
     NPY_CFLOAT, NPY_FLOAT, NPY_CFLOAT,
     NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE
 };
 
-static char eighvals_types[] = {
+static const char eighvals_types[] = {
     NPY_FLOAT, NPY_FLOAT,
     NPY_DOUBLE, NPY_DOUBLE,
     NPY_CFLOAT, NPY_FLOAT,
     NPY_CDOUBLE, NPY_DOUBLE
 };
 
-static char eig_types[] = {
+static const char eig_types[] = {
     NPY_FLOAT, NPY_CFLOAT, NPY_CFLOAT,
     NPY_DOUBLE, NPY_CDOUBLE, NPY_CDOUBLE,
     NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE
 };
 
-static char eigvals_types[] = {
+static const char eigvals_types[] = {
     NPY_FLOAT, NPY_CFLOAT,
     NPY_DOUBLE, NPY_CDOUBLE,
     NPY_CDOUBLE, NPY_CDOUBLE
 };
 
-static char svd_1_1_types[] = {
+static const char svd_1_1_types[] = {
     NPY_FLOAT, NPY_FLOAT,
     NPY_DOUBLE, NPY_DOUBLE,
     NPY_CFLOAT, NPY_FLOAT,
     NPY_CDOUBLE, NPY_DOUBLE
 };
 
-static char svd_1_3_types[] = {
+static const char svd_1_3_types[] = {
     NPY_FLOAT,   NPY_FLOAT,   NPY_FLOAT,  NPY_FLOAT,
     NPY_DOUBLE,  NPY_DOUBLE,  NPY_DOUBLE, NPY_DOUBLE,
     NPY_CFLOAT,  NPY_CFLOAT,  NPY_FLOAT,  NPY_CFLOAT,
@@ -4278,25 +4278,25 @@ static char svd_1_3_types[] = {
 };
 
 /* A, tau */
-static char qr_r_raw_types[] = {
+static const char qr_r_raw_types[] = {
     NPY_DOUBLE,  NPY_DOUBLE,
     NPY_CDOUBLE, NPY_CDOUBLE,
 };
 
 /* A, tau, q */
-static char qr_reduced_types[] = {
+static const char qr_reduced_types[] = {
     NPY_DOUBLE,  NPY_DOUBLE,  NPY_DOUBLE,
     NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE,
 };
 
 /* A, tau, q */
-static char qr_complete_types[] = {
+static const char qr_complete_types[] = {
     NPY_DOUBLE,  NPY_DOUBLE,  NPY_DOUBLE,
     NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE,
 };
 
 /*  A,           b,           rcond,      x,           resid,      rank,    s,        */
-static char lstsq_types[] = {
+static const char lstsq_types[] = {
     NPY_FLOAT,   NPY_FLOAT,   NPY_FLOAT,  NPY_FLOAT,   NPY_FLOAT,  NPY_INT, NPY_FLOAT,
     NPY_DOUBLE,  NPY_DOUBLE,  NPY_DOUBLE, NPY_DOUBLE,  NPY_DOUBLE, NPY_INT, NPY_DOUBLE,
     NPY_CFLOAT,  NPY_CFLOAT,  NPY_FLOAT,  NPY_CFLOAT,  NPY_FLOAT,  NPY_INT, NPY_FLOAT,
@@ -4311,7 +4311,7 @@ typedef struct gufunc_descriptor_struct {
     int nin;
     int nout;
     PyUFuncGenericFunction *funcs;
-    char *types;
+    const char *types;
 } GUFUNC_DESCRIPTOR_t;
 
 GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
