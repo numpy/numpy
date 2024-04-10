@@ -2332,7 +2332,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
             if isfinite(atol) & isfinite(rtol):
                 return less_equal(abs(x - y), atol + rtol * abs(y))
             else:
-                with errstate(invalid='ignore'), _no_nep50_warning():
+                with errstate(invalid='ignore'):
                     return less_equal(abs(x-y), atol + rtol * abs(y))
 
     x = asanyarray(a)
