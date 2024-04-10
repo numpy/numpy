@@ -2945,15 +2945,19 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('mT',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__array__',
     """
-    a.__array__([dtype], /, *, copy=None)
+    a.__array__([dtype], *, copy=None)
 
-    For ``dtype`` parameter it returns either a new reference to self if
-    ``dtype`` is not given or a new array of provided data type if ``dtype``
+    For ``dtype`` parameter it returns a new reference to self if
+    ``dtype`` is not given or it matches array's data type.
+    A new array of provided data type is returned if ``dtype``
     is different from the current data type of the array.
     For ``copy`` parameter it returns a new reference to self if
     ``copy=False`` or ``copy=None`` and copying isn't enforced by ``dtype``
     parameter. The method returns a new array for ``copy=True``, regardless of
     ``dtype`` parameter.
+
+    A more detailed explanation of the ``__array__`` interface
+    can be found in :ref:`dunder_array.interface`.
 
     """))
 

@@ -412,20 +412,23 @@ The :ref:`copy keyword behavior changes <copy-keyword-changes-2.0>` in
 `~numpy.asarray`, `~numpy.array` and `ndarray.__array__
 <numpy.ndarray.__array__>` may require these changes:
 
-1. Code using ``np.array(..., copy=False)`` can in most cases be changed to
-   ``np.asarray(...)``. Older code tended to use ``np.array`` like this because
-   it had less overhead than the default ``np.asarray`` copy-if-needed
-   behavior. This is no longer true, and ``np.asarray`` is the preferred function.
-2. For code that explicitly needs to pass ``None``/``False`` meaning "copy if
-   needed" in a way that's compatible with NumPy 1.x and 2.x, see
-   `scipy#20172 <https://github.com/scipy/scipy/pull/20172>`__ for an example
-   of how to do so.
-3. For any ``__array__`` method on a non-NumPy array-like object, a
-   ``copy=None`` keyword can be added to the signature - this will work with
-   older NumPy versions as well. If ``copy`` keyword is considered in
-   the ``__array__`` method implementation, then for ``copy=True`` always
-   return a new copy.
+* Code using ``np.array(..., copy=False)`` can in most cases be changed to
+  ``np.asarray(...)``. Older code tended to use ``np.array`` like this because
+  it had less overhead than the default ``np.asarray`` copy-if-needed
+  behavior. This is no longer true, and ``np.asarray`` is the preferred function.
+* For code that explicitly needs to pass ``None``/``False`` meaning "copy if
+  needed" in a way that's compatible with NumPy 1.x and 2.x, see
+  `scipy#20172 <https://github.com/scipy/scipy/pull/20172>`__ for an example
+  of how to do so.
+* For any ``__array__`` method on a non-NumPy array-like object, ``dtype=None``
+  and ``copy=None`` keywords must be added to the signature - this will work with older
+  NumPy versions as well (although older numpy versions will never pass in ``copy`` keyword).
+  If the keywords are added to the ``__array__`` signature, then for:
 
+  * ``copy=True`` and any ``dtype`` value always return a new copy,
+  * ``copy=None`` create a copy if required (for example by ``dtype``),
+  * ``copy=False`` a copy must never be made. If a copy is needed to return a numpy array
+    or satisfy ``dtype``, then raise an exception (``ValueError``).
 
 Writing numpy-version-dependent code
 ------------------------------------
