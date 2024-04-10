@@ -2329,7 +2329,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     array([False,  True])
     """
     def within_tol(x, y, atol, rtol):
-        # within tol is only called with finite x and y
+        # within_tol is only called with finite x and y
         if isfinite(atol) & isfinite(rtol):
             context_manager = contextlib.nullcontext()
         else:
