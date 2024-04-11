@@ -298,6 +298,24 @@ class Base:
         aa = pickle.loads(pickle.dumps(ss))
         assert_equal(ss.state, aa.state)
 
+    def test_pickle_preserves_seed_sequence(self):
+        # GH 26234
+        # Add explicit test that bit generators preserve seed sequences
+        import pickle
+
+        bit_generator = self.bit_generator(*self.data1['seed'])
+        ss = bit_generator.seed_seq
+        bg_plk = pickle.loads(pickle.dumps(bit_generator))
+        ss_plk = bg_plk.seed_seq
+        assert_equal(ss.state, ss_plk.state)
+        assert_equal(ss.pool, ss_plk.pool)
+
+        bit_generator.seed_seq.spawn(10)
+        bg_plk = pickle.loads(pickle.dumps(bit_generator))
+        ss_plk = bg_plk.seed_seq
+        assert_equal(ss.state, ss_plk.state)
+        assert_equal(ss.n_children_spawned, ss_plk.n_children_spawned)
+
     def test_invalid_state_type(self):
         bit_generator = self.bit_generator(*self.data1['seed'])
         with pytest.raises(TypeError):

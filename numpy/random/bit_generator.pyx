@@ -544,7 +544,15 @@ cdef class BitGenerator():
 
     def __reduce__(self):
         from ._pickle import __bit_generator_ctor
-        return __bit_generator_ctor, (self.state['bit_generator'],), self.state
+
+        return (
+            __bit_generator_ctor,
+            (
+                self.state['bit_generator'],
+                self._seed_seq
+            ),
+            self.state
+        )
 
     @property
     def state(self):
