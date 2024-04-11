@@ -8490,7 +8490,7 @@ class TestArrayCreationCopyArgument(object):
         # As of NumPy 2.1, explicitly passing copy=True does trigger passing
         # it to __array__ (deprecation warning is triggered).
         with pytest.warns(DeprecationWarning,
-                          match="__array__.*should implement.*'copy'"):
+                          match="__array__.*must implement.*'copy'"):
             arr = np.array(a, copy=True)
         assert_array_equal(arr, base_arr)
         assert arr is not base_arr
@@ -8535,7 +8535,7 @@ class TestArrayCreationCopyArgument(object):
         arr_random = ArrayRandom()
         second_copy = np.array(arr_random, copy=True, order="F")
         assert arr_random.true_passed
-        assert not second_copy is copy_arr
+        assert second_copy is not copy_arr
 
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test__array__reference_leak(self):
