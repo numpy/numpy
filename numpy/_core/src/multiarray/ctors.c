@@ -1622,9 +1622,8 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         assert(cache->converted_obj == op);
         arr = (PyArrayObject *)(cache->arr_or_sequence);
         /* we may need to cast or assert flags (e.g. copy) */
-        if (was_copied_by__array__ == 1 && flags & NPY_ARRAY_ENSURECOPY) {
+        if (was_copied_by__array__ == 1) {
             flags = flags & ~NPY_ARRAY_ENSURECOPY;
-            flags = flags | NPY_ARRAY_ENSURENOCOPY;
         }
         PyObject *res = PyArray_FromArray(arr, dtype, flags);
         npy_unlink_coercion_cache(cache);
@@ -2591,6 +2590,7 @@ PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int copy,
         Py_DECREF(new);
         return NULL;
     }
+    /* TODO: Remove was_copied_by__array__ argument */
     if (was_copied_by__array__ != NULL && copy == 1 &&
         must_copy_but_copy_kwarg_unimplemented == 0) {
         /* We can assume that a copy was made */

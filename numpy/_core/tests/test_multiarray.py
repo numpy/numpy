@@ -8532,6 +8532,11 @@ class TestArrayCreationCopyArgument(object):
         _ = np.array([arr_random], copy=True)
         assert not arr_random.true_passed
 
+        arr_random = ArrayRandom()
+        second_copy = np.array(arr_random, copy=True, order="F")
+        assert arr_random.true_passed
+        assert not second_copy is copy_arr
+
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test__array__reference_leak(self):
         class NotAnArray:
