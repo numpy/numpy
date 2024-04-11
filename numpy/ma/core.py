@@ -177,16 +177,23 @@ default_filler = {'b': True,
                   'U': 'N/A'
                   }
 """
-
+# add custom fill values for uint8 and unit16 data types
 default_filler = {'b': True,
                   'c': 1.e20 + 0.0j,
                   "float16": 1.e4,
                   "float32": 1.e20,
                   "float64": 1.e20,
-                  'i': 999999,
+                  "int8": 127,
+                  "uint8": 255,
+                  'int16': 32767,
+                  "uint16": 65535,
+                  "int32": 2147483647,
+                  "uint32": 4294967295,
+                  "int64": 9223372036854775807,
+                  "uint64": pow(2, 64) - 1,
+                  "int": 999999,
                   'O': '?',
                   'S': b'N/A',
-                  'u': 999999,
                   'V': b'???',
                   'U': 'N/A'
                   }
@@ -314,6 +321,8 @@ def default_fill_value(obj):
             return default_filler.get(dtype.str[1:], '?')
         else:
             if dtype.kind == "f":
+                return default_filler.get(str(dtype), '?')
+            elif dtype.kind == "i" or dtype.kind == "u":
                 return default_filler.get(str(dtype), '?')
             else:
                 return default_filler.get(dtype.kind, '?')
