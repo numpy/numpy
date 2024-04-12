@@ -317,24 +317,16 @@ stringdtype_setitem(PyArray_StringDTypeObject *descr, PyObject *obj, char **data
 {
     npy_packed_static_string *sdata = (npy_packed_static_string *)dataptr;
 
-    int na_cmp = 0;
-
     // borrow reference
     PyObject *na_object = descr->na_object;
 
-    // Note there are two different na_object != NULL checks here.
-    //
-    // Do not refactor this!
-    //
     // We need the result of the comparison after acquiring the allocator, but
     // cannot use functions requiring the GIL when the allocator is acquired,
     // so we do the comparison before acquiring the allocator.
 
-    if (na_object != NULL) {
-        na_cmp = na_eq_cmp(obj, na_object);
-        if (na_cmp == -1) {
-            return -1;
-        }
+    int na_cmp = na_eq_cmp(obj, na_object);
+    if (na_cmp == -1) {
+        return -1;
     }
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
