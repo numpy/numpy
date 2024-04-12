@@ -1567,16 +1567,12 @@ class TestNonzero:
         assert_equal(np.count_nonzero(np.array([1], dtype='?')), 1)
         assert_equal(np.nonzero(np.array([1])), ([0],))
 
-    def test_nonzero_zerod(self):
-        assert_equal(np.count_nonzero(np.array(0)), 0)
-        assert_equal(np.count_nonzero(np.array(0, dtype='?')), 0)
-        with assert_warns(DeprecationWarning):
-            assert_equal(np.nonzero(np.array(0)), ([],))
-
-        assert_equal(np.count_nonzero(np.array(1)), 1)
-        assert_equal(np.count_nonzero(np.array(1, dtype='?')), 1)
-        with assert_warns(DeprecationWarning):
-            assert_equal(np.nonzero(np.array(1)), ([0],))
+    def test_nonzero_zerodim(self):
+        err_msg = "Calling nonzero on 0d arrays is not allowed"
+        with assert_raises_regex(ValueError, err_msg):
+            np.nonzero(np.array(0))
+        with assert_raises_regex(ValueError, err_msg):
+            np.array(1).nonzero()
 
     def test_nonzero_onedim(self):
         x = np.array([1, 0, 2, -1, 0, 0, 8])

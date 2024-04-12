@@ -14,9 +14,6 @@ array_api_tests/test_signatures.py::test_func_signature[reshape]
 array_api_tests/test_signatures.py::test_func_signature[argsort]
 array_api_tests/test_signatures.py::test_func_signature[sort]
 
-# nonzero for 0D should error
-array_api_tests/test_searching_functions.py::test_nonzero_zerodim_error
-
 # TODO: check why in CI `inspect.signature(np.vecdot)` returns (*arg, **kwarg)
 #       instead of raising ValueError. mtsokol: couldn't reproduce locally
 array_api_tests/test_signatures.py::test_func_signature[vecdot]
