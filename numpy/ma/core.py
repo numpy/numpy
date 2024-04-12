@@ -177,7 +177,11 @@ default_filler = {'b': True,
                   'U': 'N/A'
                   }
 """
-# add custom fill values for uint8 and unit16 data types
+
+"""
+Addressing issue 25677
+Added different custom fill values for different ints and floats.
+"""
 default_filler = {'b': True,
                   'c': 1.e20 + 0.0j,
                   "float16": 1.e4,
@@ -320,6 +324,13 @@ def default_fill_value(obj):
         if dtype.kind in 'Mm':
             return default_filler.get(dtype.str[1:], '?')
         else:
+            """
+            Addressing issue 25677
+            Using str(dtype) acts as the key in the default_filler dictionary to retrieve the
+            custom value.
+
+            If this key does not exist in default_filler, then dtype.kind is used as the key instead.
+            """
             if default_filler.get(str(dtype)) is not None:
                 return default_filler.get(str(dtype), '?')
             else:
@@ -7112,6 +7123,10 @@ def power(a, b, third=None):
     ma = getmask(a)
     mb = getmask(b)
     # m = mask_or(ma, mb)
+    """
+    Addressing issue 25589
+    Added shrink = False on line 7130 to preserve the existing mask.
+    """
     m = mask_or(ma, mb, shrink = False)
     # Get the rawdata
     fa = getdata(a)
