@@ -246,9 +246,12 @@ binary_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(method),
 {
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
-    PyArray_StringDTypeObject *common_descr = common_instance(descr1, descr2);
+    int out_coerce = 1;
+    PyObject *out_na_object = NULL;
 
-    if (common_descr == NULL) {
+    if (stringdtype_compatible_settings(
+                descr1->na_object, descr2->na_object, &out_na_object,
+                descr1->coerce, descr2->coerce, &out_coerce) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -261,7 +264,7 @@ binary_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(method),
 
     if (given_descrs[2] == NULL) {
         out_descr = (PyArray_Descr *)new_stringdtype_instance(
-                common_descr->na_object, common_descr->coerce);
+                out_na_object, out_coerce);
 
         if (out_descr == NULL) {
             return (NPY_CASTING)-1;
@@ -552,9 +555,8 @@ string_comparison_resolve_descriptors(
 {
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
-    PyArray_StringDTypeObject *common_descr = common_instance(descr1, descr2);
 
-    if (common_descr == NULL) {
+    if (stringdtype_compatible_na(descr1->na_object, descr2->na_object) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -784,9 +786,12 @@ string_findlike_resolve_descriptors(
 {
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
-    PyArray_StringDTypeObject *common_descr = common_instance(descr1, descr2);
+    int out_coerce = 1;
+    PyObject *out_na_object = NULL;
 
-    if (common_descr == NULL) {
+    if (stringdtype_compatible_settings(
+                descr1->na_object, descr2->na_object, &out_na_object,
+                descr1->coerce, descr2->coerce, &out_coerce) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -834,9 +839,12 @@ string_startswith_endswith_resolve_descriptors(
 {
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
-    PyArray_StringDTypeObject *common_descr = common_instance(descr1, descr2);
+    int out_coerce = 1;
+    PyObject *out_na_object = NULL;
 
-    if (common_descr == NULL) {
+    if (stringdtype_compatible_settings(
+                descr1->na_object, descr2->na_object, &out_na_object,
+                descr1->coerce, descr2->coerce, &out_coerce) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -1242,11 +1250,18 @@ replace_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(method),
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
     PyArray_StringDTypeObject *descr3 = (PyArray_StringDTypeObject *)given_descrs[2];
+    int out_coerce = 1;
+    PyObject *out_na_object = NULL;
 
-    PyArray_StringDTypeObject *common_descr = common_instance(
-            common_instance(descr1, descr2), descr3);
+    if (stringdtype_compatible_settings(
+                descr1->na_object, descr2->na_object, &out_na_object,
+                descr1->coerce, descr2->coerce, &out_coerce) == -1) {
+        return (NPY_CASTING)-1;
+    }
 
-    if (common_descr == NULL) {
+    if (stringdtype_compatible_settings(
+                out_na_object, descr3->na_object, &out_na_object,
+                out_coerce, descr3->coerce, &out_coerce) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -1263,7 +1278,7 @@ replace_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(method),
 
     if (given_descrs[4] == NULL) {
         out_descr = (PyArray_Descr *)new_stringdtype_instance(
-                common_descr->na_object, common_descr->coerce);
+                out_na_object, out_coerce);
 
         if (out_descr == NULL) {
             return (NPY_CASTING)-1;
@@ -1510,9 +1525,12 @@ center_ljust_rjust_resolve_descriptors(
 {
     PyArray_StringDTypeObject *input_descr = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *fill_descr = (PyArray_StringDTypeObject *)given_descrs[2];
-    PyArray_StringDTypeObject *common_descr = common_instance(input_descr, fill_descr);
+    int out_coerce = 1;
+    PyObject *out_na_object = NULL;
 
-    if (common_descr == NULL) {
+    if (stringdtype_compatible_settings(
+                input_descr->na_object, fill_descr->na_object, &out_na_object,
+                input_descr->coerce, fill_descr->coerce, &out_coerce) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -1527,7 +1545,7 @@ center_ljust_rjust_resolve_descriptors(
 
     if (given_descrs[3] == NULL) {
         out_descr = (PyArray_Descr *)new_stringdtype_instance(
-                common_descr->na_object, common_descr->coerce);
+                out_na_object, out_coerce);
 
         if (out_descr == NULL) {
             return (NPY_CASTING)-1;
@@ -1817,9 +1835,12 @@ string_partition_resolve_descriptors(
 
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
-    PyArray_StringDTypeObject *common_descr = common_instance(descr1, descr2);
+    int out_coerce = 1;
+    PyObject *out_na_object = NULL;
 
-    if (common_descr == NULL) {
+    if (stringdtype_compatible_settings(
+                descr1->na_object, descr2->na_object, &out_na_object,
+                descr1->coerce, descr2->coerce, &out_coerce) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -1830,7 +1851,7 @@ string_partition_resolve_descriptors(
 
     for (int i=2; i<5; i++) {
         loop_descrs[i] = (PyArray_Descr *)new_stringdtype_instance(
-                common_descr->na_object, common_descr->coerce);
+                out_na_object, out_coerce);
         if (loop_descrs[i] == NULL) {
             return (NPY_CASTING)-1;
         }
