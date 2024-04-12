@@ -367,8 +367,9 @@ class Base:
         bit_generator = self.bit_generator(*self.data1['seed'])
         state = bit_generator.state
         alt_state = bit_generator.__getstate__()
-        assert_state_equal(state, alt_state)
-
+        assert isinstance(alt_state, tuple)
+        assert_state_equal(state, alt_state[0])
+        assert isinstance(alt_state[1], SeedSequence)
 
 class TestPhilox(Base):
     @classmethod

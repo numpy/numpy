@@ -2738,13 +2738,13 @@ def test_generator_ctor_old_style_pickle():
     rg = np.random.Generator(np.random.PCG64DXSM(0))
     rg.standard_normal(1)
     # Directly call reduce which is used in pickling
-    ctor, args, state_a = rg.__reduce__()
+    ctor, args, bit_gen = rg.__reduce__()
     # Simulate unpickling an old pickle that only has the name
     assert args[:1] == ("PCG64DXSM",)
     b = ctor(*args[:1])
-    b.bit_generator.state = state_a
+    b.bit_generator.state = bit_gen.state
     state_b = b.bit_generator.state
-    assert state_a == state_b
+    assert bit_gen.state == state_b
 
 
 def test_pickle_preserves_seed_sequence():

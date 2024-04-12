@@ -14,7 +14,7 @@ BitGenerators = {'MT19937': MT19937,
                  }
 
 
-def __bit_generator_ctor(bit_generator_name='MT19937', seed_seq=None):
+def __bit_generator_ctor(bit_generator_name='MT19937'):
     """
     Pickling helper function that returns a bit generator object
 
@@ -22,8 +22,6 @@ def __bit_generator_ctor(bit_generator_name='MT19937', seed_seq=None):
     ----------
     bit_generator_name : str
         String containing the name of the BitGenerator
-    seed_seq : ISeedSequence or None
-        A seed sequence instance. If `None`, a new seed sequence is created.
 
     Returns
     -------
@@ -35,16 +33,12 @@ def __bit_generator_ctor(bit_generator_name='MT19937', seed_seq=None):
     else:
         raise ValueError(str(bit_generator_name) + ' is not a known '
                                                    'BitGenerator module.')
-    if seed_seq is None:
-        # Handles legacy pickles that do not preserve seed sequence info
-        return bit_generator()
 
-    return bit_generator(seed_seq)
+    return bit_generator()
 
 
 def __generator_ctor(bit_generator_name="MT19937",
-                     bit_generator_ctor=__bit_generator_ctor,
-                     seed_sequence=None):
+                     bit_generator_ctor=__bit_generator_ctor):
     """
     Pickling helper function that returns a Generator object
 
@@ -61,7 +55,7 @@ def __generator_ctor(bit_generator_name="MT19937",
     rg : Generator
         Generator using the named core BitGenerator
     """
-    return Generator(bit_generator_ctor(bit_generator_name, seed_sequence))
+    return Generator(bit_generator_ctor(bit_generator_name))
 
 
 def __randomstate_ctor(bit_generator_name="MT19937",

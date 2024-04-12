@@ -537,21 +537,19 @@ cdef class BitGenerator():
 
     # Pickling support:
     def __getstate__(self):
-        return self.state
+        return (self.state, self._seed_seq)
 
-    def __setstate__(self, state):
-        self.state = state
+    def __setstate__(self, state_seed_seq):
+        self._seed_seq = state_seed_seq[1]
+        self.state = state_seed_seq[0]
 
     def __reduce__(self):
         from ._pickle import __bit_generator_ctor
 
         return (
             __bit_generator_ctor,
-            (
-                self.state['bit_generator'],
-                self._seed_seq
-            ),
-            self.state
+            (self.state['bit_generator'], ),
+            (self.state, self._seed_seq)
         )
 
     @property
