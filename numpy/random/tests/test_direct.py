@@ -432,6 +432,7 @@ class TestPCG64(Base):
         assert state["state"] == advanced_state
 
 
+
 class TestPCG64DXSM(Base):
     @classmethod
     def setup_class(cls):
@@ -520,6 +521,29 @@ class TestSFC64(Base):
         cls.seed_error_type = (ValueError, TypeError)
         cls.invalid_init_types = [(3.2,), ([None],), (1, None)]
         cls.invalid_init_values = [(-1,)]
+
+    def test_legacy_pickle(self):
+        # Pickling format was changed in 2.0.x
+        import gzip
+        import pickle
+
+        expected_state = np.array(
+            [
+                9957867060933711493,
+                532597980065565856,
+                14769588338631205282,
+                13
+            ],
+            dtype=np.uint64
+        )
+
+        base_path = os.path.split(os.path.abspath(__file__))[0]
+        pkl_file = os.path.join(base_path, "data", f"sfc64_np126.pkl.gz")
+        with gzip.open(pkl_file) as gz:
+            sfc = pickle.load(gz)
+
+        assert isinstance(sfc, SFC64)
+        assert_equal(sfc.state["state"]["state"], expected_state)
 
 
 class TestDefaultRNG:

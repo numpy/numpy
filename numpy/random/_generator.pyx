@@ -217,7 +217,13 @@ cdef class Generator:
         return self.bit_generator
 
     def __setstate__(self, bit_gen):
-        self.__init__(bit_gen)
+        if isinstance(bit_gen, dict):
+            # Legacy path
+            # Prior to 2.0.x only the state of the underlying bit generator
+            # was preserved and any seed sequence information was lost
+            self.bit_generator.state = bit_gen
+        else:
+            self.__init__(bit_gen)
 
     def __reduce__(self):
         bit_gen_ctor, (bit_gen_name, ), _ = self._bit_generator.__reduce__()

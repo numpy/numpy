@@ -537,11 +537,18 @@ cdef class BitGenerator():
 
     # Pickling support:
     def __getstate__(self):
-        return (self.state, self._seed_seq)
+        return self.state, self._seed_seq
 
     def __setstate__(self, state_seed_seq):
-        self._seed_seq = state_seed_seq[1]
-        self.state = state_seed_seq[0]
+
+        if isinstance(state_seed_seq, dict):
+            # Legacy path
+            # Prior to 2.0.x only the state of the underlying bit generator
+            # was preserved and any seed sequence information was lost
+            self.state = state_seed_seq
+        else:
+            self._seed_seq = state_seed_seq[1]
+            self.state = state_seed_seq[0]
 
     def __reduce__(self):
         from ._pickle import __bit_generator_ctor
