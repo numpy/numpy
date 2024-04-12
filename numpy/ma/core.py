@@ -191,7 +191,7 @@ default_filler = {'b': True,
                   "uint32": 4294967295,
                   "int64": 9223372036854775807,
                   "uint64": pow(2, 64) - 1,
-                  "int": 999999,
+                  "i": 999999,
                   'O': '?',
                   'S': b'N/A',
                   'V': b'???',
@@ -320,9 +320,7 @@ def default_fill_value(obj):
         if dtype.kind in 'Mm':
             return default_filler.get(dtype.str[1:], '?')
         else:
-            if dtype.kind == "f":
-                return default_filler.get(str(dtype), '?')
-            elif dtype.kind == "i" or dtype.kind == "u":
+            if default_filler.get(str(dtype)) is not None:
                 return default_filler.get(str(dtype), '?')
             else:
                 return default_filler.get(dtype.kind, '?')
