@@ -96,10 +96,7 @@ if use_svml
   endif
 endif
 
-use_highway = not get_option('disable-highway') and not (
-  host_machine.system() == 'darwin' and
-  cpu_family == 'aarch64'
-)
+use_highway = not get_option('disable-highway')
 if use_highway and not fs.exists('src/highway/README.md')
   error('Missing the `highway` git submodule! Run `git submodule update --init` to fix this.')
 endif
