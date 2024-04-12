@@ -7,7 +7,7 @@ import time
 import pytest
 
 import numpy as np
-from numpy.testing import IS_WASM
+from numpy.testing import assert_array_equal, IS_WASM
 
 # This import is copied from random.tests.test_extending
 try:
@@ -61,9 +61,13 @@ def install_temp(tmpdir_factory):
                               )
     try:
         subprocess.check_call(["meson", "compile", "-vv"], cwd=build_dir)
-    except subprocess.CalledProcessError as p:
-        print(f"{p.stdout=}")
-        print(f"{p.stderr=}")
+    except subprocess.CalledProcessError:
+        print("----------------")
+        print("meson build failed when doing")
+        print(f"'meson setup --native-file {native_file} {srcdir}'")
+        print(f"'meson compile -vv'")
+        print(f"in {build_dir}")
+        print("----------------")
         raise
 
     sys.path.append(str(build_dir))
@@ -267,3 +271,18 @@ def test_npyiter_api(install_temp):
             for x, y in zip(checks.get_npyiter_itviews(it), it.itviews)
         ]
     )
+
+
+def test_fillwithbytes(install_temp):
+    import checks
+
+    arr = checks.compile_fillwithbyte()
+    assert_array_equal(arr, np.ones((1, 2)))
+
+
+def test_complex(install_temp):
+    from checks import inc2_cfloat_struct
+    
+    arr = np.array([0, 10+10j], dtype="F")
+    inc2_cfloat_struct(arr)
+    assert arr[1] == (12 + 12j)

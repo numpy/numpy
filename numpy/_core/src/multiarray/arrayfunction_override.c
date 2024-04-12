@@ -4,7 +4,7 @@
 #include <Python.h>
 #include "structmember.h"
 
-#include "npy_pycompat.h"
+#include "numpy/ndarraytypes.h"
 #include "get_attr_string.h"
 #include "npy_import.h"
 #include "multiarraymodule.h"

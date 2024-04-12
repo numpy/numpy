@@ -108,23 +108,20 @@ def test_NPY_NO_EXPORT():
 # current status is fine.  For others it may make sense to work on making them
 # private, to clean up our public API and avoid confusion.
 PUBLIC_MODULES = ['numpy.' + s for s in [
-    "array_api",
-    "array_api.fft",
-    "array_api.linalg",
     "ctypeslib",
     "dtypes",
     "exceptions",
     "f2py",
     "fft",
     "lib",
-    "lib.format",  # was this meant to be public?
+    "lib.array_utils",
+    "lib.format",
+    "lib.introspect",
     "lib.mixins",
-    "lib.recfunctions",
+    "lib.npyio",
+    "lib.recfunctions",  # note: still needs cleaning, was forgotten for 2.0
     "lib.scimath",
     "lib.stride_tricks",
-    "lib.npyio",
-    "lib.introspect",
-    "lib.array_utils",
     "linalg",
     "ma",
     "ma.extras",
@@ -137,11 +134,12 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "polynomial.legendre",
     "polynomial.polynomial",
     "random",
+    "strings",
     "testing",
     "testing.overrides",
     "typing",
     "typing.mypy_plugin",
-    "version"  # Should be removed for NumPy 2.0
+    "version",
 ]]
 if sys.version_info < (3, 12):
     PUBLIC_MODULES += [
@@ -161,7 +159,6 @@ PUBLIC_ALIASED_MODULES = [
     "numpy.char",
     "numpy.emath",
     "numpy.rec",
-    "numpy.strings",
 ]
 
 
@@ -452,7 +449,7 @@ def test_api_importable():
 def test_array_api_entry_point():
     """
     Entry point for Array API implementation can be found with importlib and
-    returns the numpy.array_api namespace.
+    returns the main numpy namespace.
     """
     # For a development install that did not go through meson-python,
     # the entrypoint will not have been installed. So ensure this test fails
@@ -482,12 +479,20 @@ def test_array_api_entry_point():
             raise AssertionError(msg) from None
         return
 
+    if ep.value == 'numpy.array_api':
+        # Looks like the entrypoint for the current numpy build isn't
+        # installed, but an older numpy is also installed and hence the
+        # entrypoint is pointing to the old (no longer existing) location.
+        # This isn't a problem except for when running tests with `spin` or an
+        # in-place build.
+        return
+
     xp = ep.load()
     msg = (
         f"numpy entry point value '{ep.value}' "
         "does not point to our Array API implementation"
     )
-    assert xp is numpy.array_api, msg
+    assert xp is numpy, msg
 
 
 def test_main_namespace_all_dir_coherence():
@@ -530,7 +535,7 @@ def test_core_shims_coherence():
         # no need to add it to np.core
         if (
             member_name.startswith("_")
-            or member_name == "tests"
+            or member_name in ["tests", "strings"]
             or f"numpy.{member_name}" in PUBLIC_ALIASED_MODULES 
         ):
             continue

@@ -94,6 +94,7 @@ multiarray_types_api = {
     # NOTE: The Slots 320-360 are defined in `_experimental_dtype_api.h`
     #       and filled explicitly outside the code generator as the metaclass
     #       makes them tricky to expose.  (This may be refactored.)
+    # Slot 366, 367, 368 are the abstract DTypes
     # End 2.0 API
 }
 
@@ -103,11 +104,12 @@ multiarray_types_api = {
 
 multiarray_funcs_api = {
     '__unused_indices__': (
-        [1, 4, 40, 41, 65, 66, 67, 68, 81, 82, 83,
+        [1, 4, 40, 41, 66, 67, 68, 81, 82, 83,
          103, 115, 117, 122, 163, 164, 171, 173, 197,
          201, 202, 208, 219, 220, 221, 222, 223, 278,
          291, 293, 294, 295, 301]
-        + list(range(320, 361))  # range reserved DType class slots
+        # range/slots reserved DType classes (see _public_dtype_api_table.h):
+        + list(range(320, 361)) + [366, 367, 368]
         ),
     'PyArray_GetNDArrayCVersion':           (0,),
     # Unused slot 40, was `PyArray_SetNumericOps`
@@ -135,7 +137,7 @@ multiarray_funcs_api = {
     'PyArray_ScalarAsCtype':                (62,),
     'PyArray_CastScalarToCtype':            (63,),
     'PyArray_CastScalarDirect':             (64,),
-    # Unused slot 65, was `PyArray_ScalarFromObject`
+    'PyArray_Pack':                         (65, MinVersion("2.0")),
     # Unused slot 66, was `PyArray_GetCastFunc`
     # Unused slot 67, was `PyArray_FromDims`
     # Unused slot 68, was `PyArray_FromDimsAndDataAndDescr`
@@ -399,6 +401,9 @@ multiarray_funcs_api = {
     'PyArrayInitDTypeMeta_FromSpec':                 (362, MinVersion("2.0")),
     'PyArray_CommonDType':                           (363, MinVersion("2.0")),
     'PyArray_PromoteDTypeSequence':                  (364, MinVersion("2.0")),
+    # The actual public API for this is the inline function
+    # `PyDataType_GetArrFuncs` checks for the NumPy runtime version.
+    '_PyDataType_GetArrFuncs':                       (365,),
     # End 2.0 API
 }
 

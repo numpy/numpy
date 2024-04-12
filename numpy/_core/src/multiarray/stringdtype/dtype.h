@@ -14,7 +14,7 @@ extern "C" {
 #define ALIGNOF_NPY_PACKED_STATIC_STRING _Alignof(size_t)
 
 NPY_NO_EXPORT PyObject *
-new_stringdtype_instance(PyObject *na_object, int coerce, npy_string_allocator *allocator);
+new_stringdtype_instance(PyObject *na_object, int coerce);
 
 NPY_NO_EXPORT int
 init_string_dtype(void);

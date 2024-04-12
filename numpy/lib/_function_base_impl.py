@@ -2132,6 +2132,12 @@ def _create_arrays(broadcast_shape, dim_sizes, list_of_core_dims, dtypes,
     return arrays
 
 
+def _get_vectorize_dtype(dtype):
+    if dtype.char in "SU":
+        return dtype.char
+    return dtype
+
+
 @set_module('numpy')
 class vectorize:
     """
@@ -2330,7 +2336,7 @@ class vectorize:
                 if char not in typecodes['All']:
                     raise ValueError("Invalid otype specified: %s" % (char,))
         elif iterable(otypes):
-            otypes = ''.join([_nx.dtype(x).char for x in otypes])
+            otypes = [_get_vectorize_dtype(_nx.dtype(x)) for x in otypes]
         elif otypes is not None:
             raise ValueError("Invalid otype specification")
         self.otypes = otypes
@@ -2696,7 +2702,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     if X.shape[0] == 0:
         return np.array([]).reshape(0, 0)
     if y is not None:
-        y = array(y, copy=False, ndmin=2, dtype=dtype)
+        y = array(y, copy=None, ndmin=2, dtype=dtype)
         if not rowvar and y.shape[0] != 1:
             y = y.T
         X = np.concatenate((X, y), axis=0)
@@ -5648,7 +5654,7 @@ def insert(arr, obj, values, axis=None):
 
         # There are some object array corner cases here, but we cannot avoid
         # that:
-        values = array(values, copy=False, ndmin=arr.ndim, dtype=arr.dtype)
+        values = array(values, copy=None, ndmin=arr.ndim, dtype=arr.dtype)
         if indices.ndim == 0:
             # broadcasting is very different here, since a[:,0,:] = ... behaves
             # very different from a[:,[0],:] = ...! This changes values so that

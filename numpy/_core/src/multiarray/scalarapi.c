@@ -12,11 +12,12 @@
 
 #include "npy_config.h"
 
-#include "npy_pycompat.h"
+
 
 #include "array_coercion.h"
 #include "ctors.h"
 #include "descriptor.h"
+#include "dtypemeta.h"
 #include "scalartypes.h"
 
 #include "common.h"
@@ -241,7 +242,7 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
     /* the dtype used by the array may be different to the one requested */
     typecode = PyArray_DESCR(r);
     if (PyDataType_FLAGCHK(typecode, NPY_USE_SETITEM)) {
-        if (typecode->f->setitem(scalar, PyArray_DATA(r), r) < 0) {
+        if (PyDataType_GetArrFuncs(typecode)->setitem(scalar, PyArray_DATA(r), r) < 0) {
             Py_DECREF(r);
             Py_XDECREF(outcode);
             return NULL;
@@ -364,16 +365,17 @@ PyArray_DescrFromTypeObject(PyObject *type)
 
     /* Do special thing for VOID sub-types */
     if (PyType_IsSubtype((PyTypeObject *)type, &PyVoidArrType_Type)) {
-        PyArray_Descr *new = PyArray_DescrNewFromType(NPY_VOID);
+        _PyArray_LegacyDescr *new = (_PyArray_LegacyDescr  *)PyArray_DescrNewFromType(NPY_VOID);
         if (new == NULL) {
             return NULL;
         }
-        PyArray_Descr *conv = _arraydescr_try_convert_from_dtype_attr(type);
-        if ((PyObject *)conv != Py_NotImplemented) {
-            if (conv == NULL) {
-                Py_DECREF(new);
-                return NULL;
-            }
+        _PyArray_LegacyDescr *conv = (_PyArray_LegacyDescr *)(
+                _arraydescr_try_convert_from_dtype_attr(type));
+        if (conv == NULL) {
+            Py_DECREF(new);
+            return NULL;
+        }
+        if ((PyObject *)conv != Py_NotImplemented && PyDataType_ISLEGACY(conv)) {
             new->fields = conv->fields;
             Py_XINCREF(new->fields);
             new->names = conv->names;
@@ -386,7 +388,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
         Py_XDECREF(new->typeobj);
         new->typeobj = (PyTypeObject *)type;
         Py_INCREF(type);
-        return new;
+        return (PyArray_Descr *)new;
     }
     return _descr_from_subtype(type);
 }
@@ -404,7 +406,7 @@ PyArray_DescrFromScalar(PyObject *sc)
     PyArray_Descr *descr;
 
     if (PyArray_IsScalar(sc, Void)) {
-        descr = ((PyVoidScalarObject *)sc)->descr;
+        descr = (PyArray_Descr *)((PyVoidScalarObject *)sc)->descr;
         Py_INCREF(descr);
         return descr;
     }
@@ -422,7 +424,7 @@ PyArray_DescrFromScalar(PyObject *sc)
         if (descr == NULL) {
             return NULL;
         }
-        dt_data = &(((PyArray_DatetimeDTypeMetaData *)descr->c_metadata)->meta);
+        dt_data = &(((PyArray_DatetimeDTypeMetaData *)((_PyArray_LegacyDescr *)descr)->c_metadata)->meta);
         memcpy(dt_data, &((PyDatetimeScalarObject *)sc)->obmeta,
                sizeof(PyArray_DatetimeMetaData));
 
@@ -433,7 +435,7 @@ PyArray_DescrFromScalar(PyObject *sc)
     if (descr == NULL) {
         return NULL;
     }
-    if (PyDataType_ISUNSIZED(descr)) {
+    if (PyDataType_ISLEGACY(descr) && PyDataType_ISUNSIZED(descr)) {
         PyArray_DESCR_REPLACE(descr);
         if (descr == NULL) {
             return NULL;
@@ -446,14 +448,15 @@ PyArray_DescrFromScalar(PyObject *sc)
             descr->elsize = PyUnicode_GET_LENGTH(sc) * 4;
         }
         else {
+            _PyArray_LegacyDescr *ldescr = (_PyArray_LegacyDescr *)descr;
             PyArray_Descr *dtype;
             dtype = (PyArray_Descr *)PyObject_GetAttrString(sc, "dtype");
             if (dtype != NULL) {
                 descr->elsize = dtype->elsize;
-                descr->fields = dtype->fields;
-                Py_XINCREF(dtype->fields);
-                descr->names = dtype->names;
-                Py_XINCREF(dtype->names);
+                ldescr->fields = PyDataType_FIELDS(dtype);
+                Py_XINCREF(ldescr->fields);
+                ldescr->names = PyDataType_NAMES(dtype);
+                Py_XINCREF(ldescr->names);
                 Py_DECREF(dtype);
             }
             PyErr_Clear();
@@ -503,10 +506,10 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         PyArrayScalar_RETURN_BOOL_FROM_LONG(*(npy_bool*)data);
     }
     else if (PyDataType_FLAGCHK(descr, NPY_USE_GETITEM)) {
-        return descr->f->getitem(data, base);
+        return PyDataType_GetArrFuncs(descr)->getitem(data, base);
     }
     itemsize = descr->elsize;
-    copyswap = descr->f->copyswap;
+    copyswap = PyDataType_GetArrFuncs(descr)->copyswap;
     type = descr->typeobj;
     swap = !PyArray_ISNBO(descr->byteorder);
     if (PyTypeNum_ISSTRING(type_num)) {
@@ -576,7 +579,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
          */
         PyArray_DatetimeMetaData *dt_data;
 
-        dt_data = &(((PyArray_DatetimeDTypeMetaData *)descr->c_metadata)->meta);
+        dt_data = &(((PyArray_DatetimeDTypeMetaData *)((_PyArray_LegacyDescr *)descr)->c_metadata)->meta);
         memcpy(&(((PyDatetimeScalarObject *)obj)->obmeta), dt_data,
                sizeof(PyArray_DatetimeMetaData));
     }
@@ -592,7 +595,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         else {
             PyVoidScalarObject *vobj = (PyVoidScalarObject *)obj;
             vobj->base = NULL;
-            vobj->descr = descr;
+            vobj->descr = (_PyArray_LegacyDescr *)descr;
             Py_INCREF(descr);
             vobj->obval = NULL;
             Py_SET_SIZE(vobj, itemsize);

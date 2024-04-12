@@ -13,13 +13,21 @@ NPY_NO_EXPORT int
 PyArray_OptionalIntpConverter(PyObject *obj, PyArray_Dims *seq);
 
 typedef enum {
-    NPY_COPY_IF_NEEDED = 0,
+    NPY_COPY_NEVER = 0,
     NPY_COPY_ALWAYS = 1,
-    NPY_COPY_NEVER = 2,
-} _PyArray_CopyMode;
+    NPY_COPY_IF_NEEDED = 2,
+} NPY_COPYMODE;
+
+typedef enum {
+    NPY_AS_TYPE_COPY_IF_NEEDED = 0,
+    NPY_AS_TYPE_COPY_ALWAYS = 1,
+} NPY_ASTYPECOPYMODE;
 
 NPY_NO_EXPORT int
-PyArray_CopyConverter(PyObject *obj, _PyArray_CopyMode *copyflag);
+PyArray_CopyConverter(PyObject *obj, NPY_COPYMODE *copyflag);
+
+NPY_NO_EXPORT int
+PyArray_AsTypeCopyConverter(PyObject *obj, NPY_ASTYPECOPYMODE *copyflag);
 
 NPY_NO_EXPORT int
 PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf);

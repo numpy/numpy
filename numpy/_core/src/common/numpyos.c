@@ -9,7 +9,7 @@
 
 #include "npy_config.h"
 
-#include "npy_pycompat.h"
+
 
 #if defined(HAVE_STRTOLD_L) && !defined(_GNU_SOURCE)
 # define _GNU_SOURCE
@@ -415,7 +415,7 @@ NumPyOS_ascii_isupper(char c)
  *
  * Same as tolower under C locale
  */
-static int
+NPY_NO_EXPORT int
 NumPyOS_ascii_tolower(int c)
 {
     if (c >= 'A' && c <= 'Z') {

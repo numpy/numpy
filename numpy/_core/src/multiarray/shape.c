@@ -12,7 +12,7 @@
 
 #include "npy_config.h"
 
-#include "npy_pycompat.h"
+
 
 #include "arraywrap.h"
 #include "ctors.h"
@@ -324,7 +324,7 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
         PyArray_Descr *new;
         int offset;
         Py_ssize_t pos = 0;
-        while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
+        while (PyDict_Next(PyDataType_FIELDS(dtype), &pos, &key, &value)) {
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }

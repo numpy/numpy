@@ -75,8 +75,8 @@ relies on the existence of the following attributes or methods:
 -  ``__array_interface__``: a Python dictionary containing the shape, the
    element type, and optionally, the data buffer address and the strides of an
    array-like object;
--  ``__array__()``: a method returning the NumPy ndarray view of an array-like
-   object;
+-  ``__array__()``: a method returning the NumPy ndarray copy or a view of an
+   array-like object;
 
 The ``__array_interface__`` attribute can be inspected directly:
 
@@ -113,6 +113,8 @@ We can check that ``arr`` and ``new_arr`` share the same data buffer:
  array([1000, 2, 3, 4])
 
 
+.. _dunder_array.interface:
+
 The ``__array__()`` method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -124,6 +126,16 @@ ndarray view of the array-like object. Otherwise, this copies the data into a
 new ndarray object. This is not optimal, as coercing arrays into ndarrays may
 cause performance problems or create the need for copies and loss of metadata,
 as the original object and any attributes/behavior it may have had, is lost.
+
+The signature of the method should be ``__array__(self, dtype=None, copy=None)``.
+If a passed ``dtype`` isn't ``None`` and different than the object's data type,
+a casting should happen to a specified type. If ``copy`` is ``None``, a copy
+should be made only if ``dtype`` argument enforces it. For ``copy=True``, a copy
+should always be made, where ``copy=False`` should raise an exception if a copy
+is needed.
+
+If a class implements the old signature ``__array__(self)``, for ``np.array(a)``
+a warning will be raised saying that ``dtype`` and ``copy`` arguments are missing.
 
 To see an example of a custom array implementation including the use of
 ``__array__()``, see :ref:`basics.dispatch`.

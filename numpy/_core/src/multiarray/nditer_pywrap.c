@@ -15,7 +15,7 @@
 
 #include "numpy/arrayobject.h"
 #include "npy_config.h"
-#include "npy_pycompat.h"
+
 #include "alloc.h"
 #include "common.h"
 #include "conversion_utils.h"

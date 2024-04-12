@@ -10,9 +10,9 @@ objects in C.
 Data types
 ----------
 
-In addition to the `npy_datetime` and `npy_timedelta` typedefs for `npy_int64`,
-NumPy defines two additional structs that represent time unit metadata and
-an "exploded" view of a datetime.
+In addition to the :c:type:`npy_datetime` and :c:type:`npy_timedelta` typedefs
+for :c:type:`npy_int64`, NumPy defines two additional structs that represent
+time unit metadata and an "exploded" view of a datetime.
 
 .. c:type:: PyArray_DatetimeMetaData
 
@@ -181,7 +181,7 @@ Conversion functions
 
     ``out_bestunit`` gives a suggested unit based on the amount of
     resolution provided in the string, or -1 for NaT.
-    
+
     ``out_special`` gets set to 1 if the parsed time was 'today',
     'now', empty string, or 'NaT'. For 'today', the unit recommended is
     'D', for 'now', the unit recommended is 's', and for 'NaT'

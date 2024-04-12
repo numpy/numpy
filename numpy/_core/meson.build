@@ -96,7 +96,10 @@ if use_svml
   endif
 endif
 
-use_highway = not get_option('disable-highway')
+use_highway = not get_option('disable-highway') and not (
+  host_machine.system() == 'darwin' and
+  cpu_family == 'aarch64'
+)
 if use_highway and not fs.exists('src/highway/README.md')
   error('Missing the `highway` git submodule! Run `git submodule update --init` to fix this.')
 endif
@@ -118,6 +121,11 @@ endif
 use_intel_sort = not get_option('disable-intel-sort') and cpu_family in ['x86', 'x86_64']
 if use_intel_sort and not fs.exists('src/npysort/x86-simd-sort/README.md')
   error('Missing the `x86-simd-sort` git submodule! Run `git submodule update --init` to fix this.')
+endif
+
+if not fs.exists('src/common/pythoncapi-compat')
+  error('Missing the `pythoncapi-compat` git submodule! ' +
+        'Run `git submodule update --init` to fix this.')
 endif
 
 # Check sizes of types. Note, some of these landed in config.h before, but were
@@ -344,7 +352,7 @@ max_opt = {
   'msvc': ['/O2'],
   'intel-cl': ['/O3'],
 }.get(compiler_id, ['-O3'])
-max_opt = cc.has_multi_arguments(max_opt) ? max_opt : []
+max_opt = cc.has_multi_arguments(max_opt) and get_option('buildtype') != 'debug' ? max_opt : []
 
 # Optional GCC compiler builtins and their call arguments.
 # If given, a required header and definition name (HAVE_ prepended)
@@ -488,17 +496,9 @@ endif
 if cc.has_header('sys/endian.h')
   cdata.set10('NPY_HAVE_SYS_ENDIAN_H', true)
 endif
-if is_windows
-  cdata.set10('NPY_NO_SIGNAL', true)
-endif
-# Command-line switch; distutils build checked for `NPY_NOSMP` env var instead
-# TODO: document this (search for NPY_NOSMP in C API docs)
+# Build-time option to disable threading is stored and exposed in numpyconfig.h
+# Note: SMP is an old acronym for threading (Symmetric/Shared-memory MultiProcessing)
 cdata.set10('NPY_NO_SMP', get_option('disable-threading'))
-
-# Check whether we can use inttypes (C99) formats
-if cc.has_header_symbol('inttypes.h', 'PRIdPTR')
-  cdata.set10('NPY_USE_C99_FORMATS', true)
-endif
 
 visibility_hidden = ''
 if cc.has_function_attribute('visibility:hidden') and host_machine.system() != 'cygwin'

@@ -38,7 +38,7 @@
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "npy_config.h"
-#include "npy_pycompat.h"
+
 #include "numpy/arrayscalars.h"
 
 /* Half binary format */

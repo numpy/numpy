@@ -50,6 +50,7 @@ assert_type(V[["field1", "field2"]], np.void)
 V[0] = 5
 
 # Aliases
+assert_type(np.bool_(), np.bool)
 assert_type(np.byte(), np.byte)
 assert_type(np.short(), np.short)
 assert_type(np.intc(), np.intc)

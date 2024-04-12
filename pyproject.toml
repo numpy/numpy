@@ -7,7 +7,7 @@ requires = [
 
 [project]
 name = "numpy"
-version = "2.0.0.dev0"
+version = "2.1.0.dev0"
 # TODO: add `license-files` once PEP 639 is accepted (see meson-python#88)
 license = {file = "LICENSE.txt"}
 
@@ -16,7 +16,7 @@ authors = [{name = "Travis E. Oliphant et al."}]
 maintainers = [
     {name = "NumPy Developers", email="numpy-discussion@python.org"},
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 readme = "README.md"
 classifiers = [
     'Development Status :: 5 - Production/Stable',
@@ -26,7 +26,6 @@ classifiers = [
     'Programming Language :: C',
     'Programming Language :: Python',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
@@ -46,7 +45,7 @@ f2py = 'numpy.f2py.f2py2e:main'
 numpy-config = 'numpy._configtool:main'
 
 [project.entry-points.array_api]
-numpy = 'numpy.array_api'
+numpy = 'numpy'
 
 [project.entry-points.pyinstaller40]
 hook-dirs = 'numpy:_pyinstaller_hooks_dir'
@@ -60,10 +59,8 @@ tracker = "https://github.com/numpy/numpy/issues"
 "release notes" = "https://numpy.org/doc/stable/release"
 
 [tool.towncrier]
-    # Do no set this since it is hard to import numpy inside the source directory
-    # the name is hardcoded. Use "--version 1.18.0" to set the version
     single_file = false
-    filename = "doc/source/release/{version}-notes.rst"
+    filename = "doc/source/release/notes-towncrier.rst"
     directory = "doc/release/upcoming_changes/"
     issue_format = "`gh-{issue} <https://github.com/numpy/numpy/pull/{issue}>`__"
     template = "doc/release/upcoming_changes/template.rst"
@@ -142,7 +139,7 @@ tracker = "https://github.com/numpy/numpy/issues"
 # build wheels for in CI are controlled in `.github/workflows/wheels.yml` and
 # `tools/ci/cirrus_wheels.yml`.
 build-frontend = "build"
-skip = "cp36-* cp37-* cp-38* pp37-* *-manylinux_i686 *_ppc64le *_s390x"
+skip = "cp36-* cp37-* cp-38* pp37-* *-manylinux_i686 *_ppc64le *_s390x *_universal2"
 before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
 # The build will use openblas64 everywhere, except on arm64 macOS >=14.0 (uses Accelerate)
 config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dallow-noblas=false build-dir=build"
@@ -163,20 +160,14 @@ LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/project/.openblas/lib"
 
 [tool.cibuildwheel.macos]
 # universal2 wheels are not supported (see gh-21233), use `delocate-fuse` if you need them
-archs = "x86_64 arm64"
-test-skip = "*_universal2:arm64"
+# note that universal2 wheels are not built, they're listed in the tool.cibuildwheel.skip
+# section
 # Not clear why the DYLD_LIBRARY_PATH is not passed through from the environment
 repair-wheel-command = [
   "export DYLD_LIBRARY_PATH=$PWD/.openblas/lib",
   "echo DYLD_LIBRARY_PATH $DYLD_LIBRARY_PATH",
   "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}",
 ]
-
-[tool.cibuildwheel.macos.environment]
-# In cibuildwheel, {project} is $PWD
-RUNNER_OS="macOS"
-PKG_CONFIG_PATH="$PWD/.openblas"
-DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH:/$PWD/.openblas/lib"
 
 [tool.cibuildwheel.windows]
 # This does not work, use CIBW_ENVIRONMENT_WINDOWS

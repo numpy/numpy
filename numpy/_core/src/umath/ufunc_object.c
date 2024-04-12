@@ -33,7 +33,7 @@
 #include <stddef.h>
 
 #include "npy_config.h"
-#include "npy_pycompat.h"
+
 #include "npy_argparse.h"
 
 #include "numpy/arrayobject.h"
@@ -789,9 +789,9 @@ check_for_trivial_loop(PyArrayMethodObject *ufuncimpl,
 
         if (dtypes[i] != PyArray_DESCR(op[i])) {
             npy_intp view_offset;
-            NPY_CASTING safety = PyArray_GetCastInfo(
-                    PyArray_DESCR(op[i]), dtypes[i], NULL, &view_offset);
-            if (safety < 0 && PyErr_Occurred()) {
+            npy_intp is_safe = PyArray_SafeCast(
+                    PyArray_DESCR(op[i]), dtypes[i], &view_offset, casting, 0);
+            if (is_safe < 0 && PyErr_Occurred()) {
                 /* A proper error during a cast check, should be rare */
                 return -1;
             }
@@ -806,8 +806,8 @@ check_for_trivial_loop(PyArrayMethodObject *ufuncimpl,
                  * can  force cast to bool)
                  */
             }
-            else if (PyArray_MinCastSafety(safety, casting) != casting) {
-                return 0;  /* the cast is not safe enough */
+            else if (is_safe != 1) {
+                return 0;  /* there was a cast error or cast is not safe enough */
             }
         }
         if (must_copy) {
@@ -1011,9 +1011,11 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
  */
 static inline int
 validate_casting(PyArrayMethodObject *method, PyUFuncObject *ufunc,
-        PyArrayObject *ops[], PyArray_Descr *descriptors[],
+        PyArrayObject *ops[], PyArray_Descr *const descriptors_const[],
         NPY_CASTING casting)
 {
+    /* Cast away const to not change old public `PyUFunc_ValidateCasting`. */
+    PyArray_Descr **descriptors = (PyArray_Descr **)descriptors_const;
     if (method->resolve_descriptors == &wrapped_legacy_resolve_descriptors) {
         /*
          * In this case the legacy type resolution was definitely called
@@ -1091,7 +1093,7 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
     NpyIter *iter = NpyIter_AdvancedNew(nop + masked, op,
                         iter_flags,
                         order, NPY_UNSAFE_CASTING,
-                        op_flags, context->descriptors,
+                        op_flags, (PyArray_Descr **)context->descriptors,
                         -1, NULL, NULL, buffersize);
     if (iter == NULL) {
         return -1;
@@ -2407,6 +2409,13 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
                 out_descrs[0], out_descrs[1], out_descrs[2]);
         goto fail;
     }
+    /*
+     * After checking that they are equivalent, we enforce the use of the out
+     * one (which the user should have defined).  (Needed by string dtype)
+     */
+    Py_INCREF(out_descrs[2]);
+    Py_SETREF(out_descrs[0], out_descrs[2]);
+
     /* TODO: This really should _not_ be unsafe casting (same above)! */
     if (validate_casting(ufuncimpl, ufunc, ops, out_descrs, casting) < 0) {
         goto fail;
@@ -4056,17 +4065,15 @@ resolve_descriptors(int nop,
                 original_dtypes[i] = PyArray_DTYPE(operands[i]);
                 Py_INCREF(original_dtypes[i]);
             }
-            if (i < nin
-                    && NPY_DT_is_abstract(signature[i])
-                    && inputs_tup != NULL) {
-                /*
-                 * TODO: We may wish to allow any scalar here.  Checking for
-                 *       abstract assumes this works out for Python scalars,
-                 *       which is the important case (especially for now).
-                 *
-                 * One possible check would be `DType->type == type(obj)`.
-                 */
-                input_scalars[i] = PyTuple_GET_ITEM(inputs_tup, i);
+            /*
+             * Check whether something is a scalar of the given type.
+             * We leave it to resolve_descriptors_with_scalars to deal
+             * with, e.g., only doing something special for python scalars.
+             */
+            if (i < nin && inputs_tup != NULL) {
+                PyObject *input = PyTuple_GET_ITEM(inputs_tup, i);
+                input_scalars[i] = signature[i]->scalar_type == Py_TYPE(input) ?
+                    input : NULL;
             }
             else {
                 input_scalars[i] = NULL;
@@ -6112,8 +6119,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
                 goto finish;
             }
             PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_INT);
-            Py_INCREF(&PyArray_PyIntAbstractDType);
-            DTypes[i] = &PyArray_PyIntAbstractDType;
+            Py_INCREF(&PyArray_PyLongDType);
+            DTypes[i] = &PyArray_PyLongDType;
             promoting_pyscalars = NPY_TRUE;
         }
         else if (descr_obj == (PyObject *)&PyFloat_Type) {
@@ -6123,8 +6130,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
                 goto finish;
             }
             PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_FLOAT);
-            Py_INCREF(&PyArray_PyFloatAbstractDType);
-            DTypes[i] = &PyArray_PyFloatAbstractDType;
+            Py_INCREF(&PyArray_PyFloatDType);
+            DTypes[i] = &PyArray_PyFloatDType;
             promoting_pyscalars = NPY_TRUE;
         }
         else if (descr_obj == (PyObject *)&PyComplex_Type) {
@@ -6134,8 +6141,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
                 goto finish;
             }
             PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_COMPLEX);
-            Py_INCREF(&PyArray_PyComplexAbstractDType);
-            DTypes[i] = &PyArray_PyComplexAbstractDType;
+            Py_INCREF(&PyArray_PyComplexDType);
+            DTypes[i] = &PyArray_PyComplexDType;
             promoting_pyscalars = NPY_TRUE;
         }
         else if (descr_obj == Py_None) {
@@ -6243,7 +6250,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
     context->descriptors = call_info->_descrs;
     for (int i=0; i < ufunc->nargs; i++) {
         Py_INCREF(operation_descrs[i]);
-        context->descriptors[i] = operation_descrs[i];
+        ((PyArray_Descr **)context->descriptors)[i] = operation_descrs[i];
     }
 
     result = PyTuple_Pack(2, result_dtype_tuple, capsule);

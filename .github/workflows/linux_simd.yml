@@ -52,7 +52,8 @@ permissions:
 
 jobs:
   baseline_only:
-    if: "github.repository == 'numpy/numpy'"
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     env:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-dispatch=none"
@@ -60,10 +61,10 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        fetch-tags: true
+    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
-        python-version: '3.9'
+        python-version: '3.10'
     - uses: ./.github/meson_actions
       name: Build/Test
 
@@ -77,10 +78,10 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        fetch-tags: true
+    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
-        python-version: '3.9'
+        python-version: '3.10'
 
     - name: Install GCC/8/9
       run: |
@@ -110,12 +111,13 @@ jobs:
     if: github.event_name != 'push'
     continue-on-error: true
     strategy:
+      fail-fast: false
       matrix:
         BUILD_PROP:
           - [
             "without optimizations",
             "-Dallow-noblas=true -Ddisable-optimization=true",
-            "3.12-dev"
+            "3.12"
           ]
           - [
             "native",
@@ -130,7 +132,7 @@ jobs:
           - [
             "without avx512/avx2/fma3",
             "-Dallow-noblas=true -Dcpu-dispatch=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C",
-            "3.9"
+            "3.10"
           ]
 
     env:
@@ -141,8 +143,8 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        fetch-tags: true
+    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
         python-version: "${{ matrix.BUILD_PROP[2] }}"
     - uses: ./.github/meson_actions
@@ -155,8 +157,8 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        fetch-tags: true
+    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
         python-version: '3.11'
 
@@ -209,8 +211,8 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        fetch-tags: true
+    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
         python-version: '3.11'
 

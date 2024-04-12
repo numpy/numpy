@@ -21,7 +21,7 @@
 
 #include "npy_config.h"
 
-#include "npy_pycompat.h"
+
 
 /*
  * Helper function to clear a strided memory (normally or always contiguous)
@@ -137,7 +137,7 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
         int offset;
         Py_ssize_t pos = 0;
 
-        while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+        while (PyDict_Next(PyDataType_FIELDS(descr), &pos, &key, &value)) {
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
@@ -151,7 +151,7 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
     else if (PyDataType_HASSUBARRAY(descr)) {
         int size, i, inner_elsize;
 
-        inner_elsize = descr->subarray->base->elsize;
+        inner_elsize = PyDataType_SUBARRAY(descr)->base->elsize;
         if (inner_elsize == 0) {
             /* There cannot be any elements, so return */
             return;
@@ -162,7 +162,7 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
         for (i = 0; i < size; i++){
             /* Recursively increment the reference count of subarray elements */
             PyArray_Item_INCREF(data + i * inner_elsize,
-                                descr->subarray->base);
+                                PyDataType_SUBARRAY(descr)->base);
         }
     }
     else {
@@ -199,7 +199,7 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
             int offset;
             Py_ssize_t pos = 0;
 
-            while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+            while (PyDict_Next(PyDataType_FIELDS(descr), &pos, &key, &value)) {
                 if (NPY_TITLE_KEY(key, value)) {
                     continue;
                 }
@@ -213,7 +213,7 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
     else if (PyDataType_HASSUBARRAY(descr)) {
         int size, i, inner_elsize;
 
-        inner_elsize = descr->subarray->base->elsize;
+        inner_elsize = PyDataType_SUBARRAY(descr)->base->elsize;
         if (inner_elsize == 0) {
             /* There cannot be any elements, so return */
             return;
@@ -224,7 +224,7 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
         for (i = 0; i < size; i++){
             /* Recursively decrement the reference count of subarray elements */
             PyArray_Item_XDECREF(data + i * inner_elsize,
-                                 descr->subarray->base);
+                                 PyDataType_SUBARRAY(descr)->base);
         }
     }
     else {
@@ -433,7 +433,7 @@ _fill_with_none(char *optr, PyArray_Descr *dtype)
         int offset;
         Py_ssize_t pos = 0;
 
-        while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
+        while (PyDict_Next(PyDataType_FIELDS(dtype), &pos, &key, &value)) {
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
@@ -448,7 +448,7 @@ _fill_with_none(char *optr, PyArray_Descr *dtype)
     else if (PyDataType_HASSUBARRAY(dtype)) {
         int size, i, inner_elsize;
 
-        inner_elsize = dtype->subarray->base->elsize;
+        inner_elsize = PyDataType_SUBARRAY(dtype)->base->elsize;
         if (inner_elsize == 0) {
             /* There cannot be any elements, so return */
             return 0;
@@ -458,7 +458,7 @@ _fill_with_none(char *optr, PyArray_Descr *dtype)
 
         /* Call _fillobject on each item recursively. */
         for (i = 0; i < size; i++) {
-            if (_fill_with_none(optr, dtype->subarray->base) < 0) {
+            if (_fill_with_none(optr, PyDataType_SUBARRAY(dtype)->base) < 0) {
                 return -1;
             }
             optr += inner_elsize;

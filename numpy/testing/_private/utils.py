@@ -39,7 +39,7 @@ __all__ = [
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', "IS_WASM", 'suppress_warnings', 'assert_array_compare',
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
-        '_OLD_PROMOTION', 'IS_MUSL', '_SUPPORTS_SVE'
+        '_OLD_PROMOTION', 'IS_MUSL', '_SUPPORTS_SVE', 'NOGIL_BUILD'
         ]
 
 
@@ -68,6 +68,7 @@ _v = sysconfig.get_config_var('HOST_GNU_TYPE') or ''
 if 'musl' in _v:
     IS_MUSL = True
 
+NOGIL_BUILD = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
 
 def assert_(val, msg=''):
     """
@@ -710,6 +711,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     def istime(x):
         return x.dtype.char in "Mm"
 
+    def isvstring(x):
+        return x.dtype.char == "T"
+
     def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
         """Handling nan/inf.
 
@@ -784,6 +788,21 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             # If one is datetime64 and the other timedelta64 there is no point
             if equal_nan and x.dtype.type == y.dtype.type:
                 flagged = func_assert_same_pos(x, y, func=isnat, hasval="NaT")
+
+        elif isvstring(x) and isvstring(y):
+            dt = x.dtype
+            if equal_nan and dt == y.dtype and hasattr(dt, 'na_object'):
+                is_nan = (isinstance(dt.na_object, float) and
+                          np.isnan(dt.na_object))
+                bool_errors = 0
+                try:
+                    bool(dt.na_object)
+                except TypeError:
+                    bool_errors = 1
+                if is_nan or bool_errors:
+                    # nan-like NA object
+                    flagged = func_assert_same_pos(
+                        x, y, func=isnan, hasval=x.dtype.na_object)
 
         if flagged.ndim > 0:
             x, y = x[~flagged], y[~flagged]
@@ -1931,8 +1950,15 @@ def assert_warns(warning_class, *args, **kwargs):
     >>> ret = np.testing.assert_warns(DeprecationWarning, deprecated_func, 4)
     >>> assert ret == 16
     """
-    if not args:
+    if not args and not kwargs:
         return _assert_warns_context(warning_class)
+    elif len(args) < 1:
+        if "match" in kwargs:
+            raise RuntimeError(
+                "assert_warns does not use 'match' kwarg, "
+                "use pytest.warns instead"
+                )
+        raise RuntimeError("assert_warns(...) needs at least one arg")
 
     func = args[0]
     args = args[1:]

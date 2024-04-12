@@ -104,8 +104,8 @@ generic_wrapped_legacy_loop(PyArrayMethod_Context *NPY_UNUSED(context),
  */
 NPY_NO_EXPORT NPY_CASTING
 wrapped_legacy_resolve_descriptors(PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[]),
-        PyArray_Descr *NPY_UNUSED(given_descrs[]),
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
+        PyArray_Descr *const NPY_UNUSED(given_descrs[]),
         PyArray_Descr *NPY_UNUSED(loop_descrs[]),
         npy_intp *NPY_UNUSED(view_offset))
 {
@@ -123,8 +123,8 @@ wrapped_legacy_resolve_descriptors(PyArrayMethodObject *NPY_UNUSED(self),
 static NPY_CASTING
 simple_legacy_resolve_descriptors(
         PyArrayMethodObject *method,
-        PyArray_DTypeMeta **dtypes,
-        PyArray_Descr **given_descrs,
+        PyArray_DTypeMeta *const *dtypes,
+        PyArray_Descr *const *given_descrs,
         PyArray_Descr **output_descrs,
         npy_intp *NPY_UNUSED(view_offset))
 {
@@ -246,7 +246,7 @@ get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
 static int
 copy_cached_initial(
         PyArrayMethod_Context *context, npy_bool NPY_UNUSED(reduction_is_empty),
-        char *initial)
+        void *initial)
 {
     memcpy(initial, context->method->legacy_initial,
            context->descriptors[0]->elsize);
@@ -266,7 +266,7 @@ copy_cached_initial(
 static int
 get_initial_from_ufunc(
         PyArrayMethod_Context *context, npy_bool reduction_is_empty,
-        char *initial)
+        void *initial)
 {
     if (context->caller == NULL
             || !PyObject_TypeCheck(context->caller, &PyUFunc_Type)) {

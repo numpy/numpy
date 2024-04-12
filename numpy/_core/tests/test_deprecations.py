@@ -696,7 +696,7 @@ class TestDeprecatedArrayWrap(_DeprecationTestCase):
 
     def test_deprecated(self):
         class Test1:
-            def __array__(self,):
+            def __array__(self, dtype=None, copy=None):
                 return np.arange(4)
 
             def __array_wrap__(self, arr, context=None):

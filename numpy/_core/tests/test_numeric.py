@@ -8,7 +8,6 @@ from decimal import Decimal
 
 import numpy as np
 from numpy._core import umath, sctypes
-from numpy._core._exceptions import _ArrayMemoryError
 from numpy._core.numerictypes import obj2sctype
 from numpy._core.arrayprint import set_string_function
 from numpy.exceptions import AxisError
@@ -190,7 +189,7 @@ class TestNonarrayArgs:
 
     @pytest.mark.parametrize('val, ndigits', [
         pytest.param(2**31 - 1, -1,
-            marks=pytest.mark.xfail(reason="Out of range of int32")
+            marks=pytest.mark.skip(reason="Out of range of int32")
         ),
         (2**31 - 1, 1-math.ceil(math.log10(2**31 - 1))),
         (2**31 - 1, -math.ceil(math.log10(2**31 - 1)))
@@ -799,7 +798,7 @@ class TestBoolCmp:
         # Propagation of the RISC-V Unprivileged ISA for more details.
         # We disable the float32 sign test on riscv64 for -np.nan as the sign
         # of the NaN will be lost when it's converted to a float32.
-        if platform.processor() != 'riscv64':
+        if platform.machine() != 'riscv64':
             self.signf[3::6][self.ef[3::6]] = -np.nan
         self.signd[3::6][self.ed[3::6]] = -np.nan
         self.signf[4::6][self.ef[4::6]] = -0.
@@ -1970,6 +1969,9 @@ class TestBaseRepr:
         with assert_raises(ValueError):
             np.base_repr(1, 37)
 
+    def test_minimal_signed_int(self):
+        assert_equal(np.base_repr(np.int8(-128)), '-10000000')
+
 
 def _test_array_equal_parametrizations():
     """
@@ -2108,7 +2110,7 @@ class TestArrayComparisons:
 
         - are the two inputs the same object or not (same object many not
           be equal if contains NaNs)
-        - Wether we should consider or not, NaNs, being equal.
+        - Whether we should consider or not, NaNs, being equal.
 
         """
         if equal_nan is None:
@@ -3345,7 +3347,7 @@ class TestLikeFuncs:
         assert_(type(b) is not MyNDArray)
 
         # Test invalid dtype
-        with assert_raises(_ArrayMemoryError):
+        with assert_raises(TypeError):
             a = np.array(b"abc")
             like_function(a, dtype="S-1", **fill_kwarg)
 

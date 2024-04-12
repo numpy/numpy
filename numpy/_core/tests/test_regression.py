@@ -2434,7 +2434,7 @@ class TestRegression:
 
     def test_2d__array__shape(self):
         class T:
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 return np.ndarray(shape=(0,0))
 
             # Make sure __array__ is used instead of Sequence methods.
@@ -2598,3 +2598,25 @@ class TestRegression:
         expected = np.char.chararray((2,), itemsize=25)
         expected[:] = [s.replace(b"E", b"D") for s in test_strings]
         assert_array_equal(out, expected)
+
+    def test_logspace_base_does_not_determine_dtype(self):
+        # gh-24957 and cupy/cupy/issues/7946
+        start = np.array([0, 2], dtype=np.float16)
+        stop = np.array([2, 0], dtype=np.float16)
+        out = np.logspace(start, stop, num=5, axis=1, dtype=np.float32)
+        expected = np.array([[1., 3.1621094, 10., 31.625, 100.],
+                             [100., 31.625, 10., 3.1621094, 1.]],
+                            dtype=np.float32)
+        assert_almost_equal(out, expected)
+        # Check test fails if the calculation is done in float64, as happened
+        # before when a python float base incorrectly influenced the dtype.
+        out2 = np.logspace(start, stop, num=5, axis=1, dtype=np.float32,
+                           base=np.array([10.0]))
+        with pytest.raises(AssertionError, match="not almost equal"):
+            assert_almost_equal(out2, expected)
+
+    def test_vectorize_fixed_width_string(self):
+        arr = np.array(["SOme wOrd Ǆ ß ᾛ ΣΣ ﬃ⁵Å Ç Ⅰ"]).astype(np.str_)
+        f = str.casefold
+        res = np.vectorize(f, otypes=[arr.dtype])(arr)
+        assert res.dtype == "U30"

@@ -298,13 +298,16 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     >>> plt.show()
 
     """
-    ndmax = np.broadcast(start, stop, base).ndim
-    start, stop, base = (
-        np.array(a, copy=False, subok=True, ndmin=ndmax)
-        for a in (start, stop, base)
-    )
+    if not isinstance(base, (float, int)) and np.ndim(base):
+        # If base is non-scalar, broadcast it with the others, since it
+        # may influence how axis is interpreted.
+        ndmax = np.broadcast(start, stop, base).ndim
+        start, stop, base = (
+            np.array(a, copy=None, subok=True, ndmin=ndmax)
+            for a in (start, stop, base)
+        )
+        base = np.expand_dims(base, axis=axis)
     y = linspace(start, stop, num=num, endpoint=endpoint, axis=axis)
-    base = np.expand_dims(base, axis=axis)
     if dtype is None:
         return _nx.power(base, y)
     return _nx.power(base, y).astype(dtype, copy=False)

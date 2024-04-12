@@ -17,8 +17,10 @@ jobs:
   python64bit_openblas:
     name: x86-64, LP64 OpenBLAS
     runs-on: windows-2019
-    if: "github.repository == 'numpy/numpy'"
+    # To enable this job on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
     strategy:
+      fail-fast: false
       matrix:
         compiler: ["MSVC", "Clang-cl"]
     steps:
@@ -26,10 +28,10 @@ jobs:
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
 
     - name: Setup Python
-      uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
         python-version: '3.11'
 
@@ -79,16 +81,17 @@ jobs:
   msvc_32bit_python_no_openblas:
     name: MSVC, 32-bit Python, no BLAS
     runs-on: windows-2019
-    if: "github.repository == 'numpy/numpy'"
+    # To enable this job on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: recursive
-          fetch-depth: 0
+          fetch-tags: true
 
       - name: Setup Python (32-bit)
-        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
         with:
           python-version: '3.10'
           architecture: 'x86'

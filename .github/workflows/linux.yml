@@ -28,6 +28,7 @@ permissions:
 
 jobs:
   lint:
+    # To enable this job and subsequent jobs on a fork, comment out:
     if: github.repository == 'numpy/numpy' && github.event_name != 'push'
     runs-on: ubuntu-latest
     continue-on-error: true
@@ -36,9 +37,9 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
-        python-version: '3.9'
+        python-version: '3.10'
     - name: Install linter requirements
       run:
         python -m pip install -r requirements/linter_requirements.txt
@@ -47,7 +48,8 @@ jobs:
         python tools/linter.py --branch origin/${{ github.base_ref }}
 
   smoke_test:
-    if: "github.repository == 'numpy/numpy'"
+    # To enable this job on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     env:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
@@ -55,10 +57,10 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        fetch-tags: true
+    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
-        python-version: '3.9'
+        python-version: '3.10'
     - uses: ./.github/meson_actions
 
   pypy:
@@ -69,10 +71,10 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        fetch-tags: true
+    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
-        python-version: 'pypy3.9-v7.3.12'
+        python-version: 'pypy3.10-v7.3.15'
     - name: Setup using scipy-openblas
       run: |
         python -m pip install -r requirements/ci_requirements.txt
@@ -87,7 +89,7 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
     - name: Install debug Python
       run: |
         sudo apt-get update
@@ -116,10 +118,10 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        fetch-tags: true
+    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
-        python-version: '3.9'
+        python-version: '3.10'
     - name: Install build and test dependencies from PyPI
       run: |
         pip install -r requirements/build_requirements.txt
@@ -153,10 +155,10 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        fetch-tags: true
+    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
-        python-version: '3.9'
+        python-version: '3.10'
     - name: Install build and benchmarking dependencies
       run: |
         sudo apt-get update
@@ -184,8 +186,8 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        fetch-tags: true
+    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
         python-version: '3.11'
     - name: Install gfortran and setup OpenBLAS (sdist build)
@@ -218,16 +220,16 @@ jobs:
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
     - name: Checkout array-api-tests
       uses: actions/checkout@v4
       with:
         repository: data-apis/array-api-tests
-        ref: '9afe8c709d81f005c98d383c82ad5e1c2cd8166c'  # Latest commit as of 2023-11-24
+        ref: '3cf8ef654c456d9fd1633d64e67b4470465940e9'  # Latest commit as of 2024-04-09
         submodules: 'true'
         path: 'array-api-tests'
     - name: Set up Python
-      uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
         python-version: '3.11'
     - name: Install build and test dependencies from PyPI
@@ -244,8 +246,6 @@ jobs:
         PYTHONWARNINGS: 'ignore::UserWarning::,ignore::DeprecationWarning::,ignore::RuntimeWarning::'
       run: |
         cd ${GITHUB_WORKSPACE}/array-api-tests
-        # remove once https://github.com/data-apis/array-api-tests/pull/217 is merged
-        touch pytest.ini
         pytest array_api_tests -v -c pytest.ini --ci --max-examples=2 --derandomize --disable-deadline --skips-file ${GITHUB_WORKSPACE}/tools/ci/array-api-skips.txt
 
   custom_checks:
@@ -256,8 +256,8 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        fetch-tags: true
+    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
         python-version: '3.11'
     - name: Install build and test dependencies from PyPI

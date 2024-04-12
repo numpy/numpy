@@ -17,7 +17,7 @@
 #include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
-#include "npy_pycompat.h"
+
 
 #include "common.h"
 #include "lowlevel_strided_loops.h"

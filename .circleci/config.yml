@@ -9,7 +9,7 @@ _defaults: &defaults
   docker:
     # CircleCI maintains a library of pre-built images
     # documented at https://circleci.com/developer/images/image/cimg/python
-    - image: cimg/python:3.11.4
+    - image: cimg/python:3.11.8
   working_directory: ~/repo
 
 
@@ -69,22 +69,12 @@ jobs:
             ./tools/ci/test_all_newsfragments_used.py
 
       - run:
-          name: run doctests on documentation
-          command: |
-            . venv/bin/activate
-            # Note: keep these two checks separate, because they seem to
-            # influence each other through changing global state (e.g., via
-            # `np.polynomial.set_default_printstyle`)
-            python tools/refguide_check.py --rst
-            python tools/refguide_check.py --doctests
-
-      - run:
           name: build devdocs w/ref warnings
           command: |
             . venv/bin/activate
             cd doc
             # Don't use -q, show warning summary"
-            SPHINXOPTS="-j2 -n" make -e html || echo "ignoring errors for now, see gh-13114"
+            SPHINXOPTS="-j2 -n" make -e html
             if [[ $(find build/html -type f | wc -l) -lt 1000 ]]; then
                 echo "doc build failed: build/html is empty"
                 exit -1
@@ -95,7 +85,7 @@ jobs:
           command: |
             . venv/bin/activate
             cd doc/neps
-            SPHINXOPTS="-j2 -q" make -e html
+            SPHINXOPTS="-j2 -n" make -e html || echo "ignoring errors for now"
 
       - store_artifacts:
           path: doc/build/html/
@@ -103,6 +93,16 @@ jobs:
       - store_artifacts:
           path: doc/neps/_build/html/
      #      destination: neps
+
+      - run:
+          name: run doctests on documentation
+          command: |
+            . venv/bin/activate
+            # Note: keep these two checks separate, because they seem to
+            # influence each other through changing global state (e.g., via
+            # `np.polynomial.set_default_printstyle`)
+            python tools/refguide_check.py --rst
+            python tools/refguide_check.py --doctests
 
       - persist_to_workspace:
           root: ~/repo

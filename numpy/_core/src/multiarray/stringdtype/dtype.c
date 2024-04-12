@@ -22,7 +22,7 @@
  * Internal helper to create new instances
  */
 PyObject *
-new_stringdtype_instance(PyObject *na_object, int coerce, npy_string_allocator *allocator)
+new_stringdtype_instance(PyObject *na_object, int coerce)
 {
     PyObject *new =
             PyArrayDescr_Type.tp_new((PyTypeObject *)&PyArray_StringDType, NULL, NULL);
@@ -35,18 +35,12 @@ new_stringdtype_instance(PyObject *na_object, int coerce, npy_string_allocator *
     char *na_name_buf = NULL;
     char array_owned = 0;
 
+    npy_string_allocator *allocator = NpyString_new_allocator(PyMem_RawMalloc, PyMem_RawFree,
+                                                              PyMem_RawRealloc);
     if (allocator == NULL) {
-        allocator = NpyString_new_allocator(PyMem_RawMalloc, PyMem_RawFree,
-                                            PyMem_RawRealloc);
-        if (allocator == NULL) {
-            PyErr_SetString(PyExc_MemoryError,
-                            "Failed to create string allocator");
-            goto fail;
-        }
-    }
-    else {
-        // indicating that this is a view
-        array_owned = 2;
+        PyErr_SetString(PyExc_MemoryError,
+                        "Failed to create string allocator");
+        goto fail;
     }
 
     npy_static_string default_string = {0, NULL};
@@ -119,7 +113,7 @@ new_stringdtype_instance(PyObject *na_object, int coerce, npy_string_allocator *
     snew->has_string_na = has_string_na;
     snew->coerce = coerce;
     snew->allocator = allocator;
-    snew->array_owned = 2;
+    snew->array_owned = 0;
     snew->na_name = na_name;
     snew->default_string = default_string;
 
@@ -210,7 +204,7 @@ common_instance(PyArray_StringDTypeObject *dtype1, PyArray_StringDTypeObject *dt
     }
 
     return (PyArray_StringDTypeObject *)new_stringdtype_instance(
-            dtype1->na_object, dtype1->coerce, NULL);
+            dtype1->na_object, dtype1->coerce);
 }
 
 /*
@@ -274,7 +268,7 @@ string_discover_descriptor_from_pyobject(PyTypeObject *NPY_UNUSED(cls),
 
     Py_DECREF(val);
 
-    PyArray_Descr *ret = (PyArray_Descr *)new_stringdtype_instance(NULL, 1, NULL);
+    PyArray_Descr *ret = (PyArray_Descr *)new_stringdtype_instance(NULL, 1);
 
     return ret;
 }
@@ -523,7 +517,7 @@ stringdtype_ensure_canonical(PyArray_StringDTypeObject *self)
 
 static int
 stringdtype_clear_loop(void *NPY_UNUSED(traverse_context),
-                       PyArray_Descr *descr, char *data, npy_intp size,
+                       const PyArray_Descr *descr, char *data, npy_intp size,
                        npy_intp stride, NpyAuxData *NPY_UNUSED(auxdata))
 {
     PyArray_StringDTypeObject *sdescr = (PyArray_StringDTypeObject *)descr;
@@ -560,88 +554,36 @@ stringdtype_get_clear_loop(void *NPY_UNUSED(traverse_context),
 }
 
 static int
-stringdtype_is_known_scalar_type(PyArray_DTypeMeta *NPY_UNUSED(cls),
+stringdtype_is_known_scalar_type(PyArray_DTypeMeta *cls,
                                  PyTypeObject *pytype)
 {
-    if (pytype == &PyFloat_Type) {
+    if (python_builtins_are_known_scalar_types(cls, pytype)) {
         return 1;
     }
-    if (pytype == &PyLong_Type) {
-        return 1;
-    }
-    if (pytype == &PyBool_Type) {
-        return 1;
-    }
-    if (pytype == &PyComplex_Type) {
-        return 1;
-    }
-    if (pytype == &PyUnicode_Type) {
-        return 1;
-    }
-    if (pytype == &PyBytes_Type) {
-        return 1;
-    }
-    if (pytype == &PyBoolArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyByteArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyShortArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyIntArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyLongArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyLongLongArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyUByteArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyUShortArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyUIntArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyULongArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyULongLongArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyHalfArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyFloatArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyDoubleArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyLongDoubleArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyCFloatArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyCDoubleArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyCLongDoubleArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyIntpArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyUIntpArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyDatetimeArrType_Type) {
+    // accept every built-in numpy dtype
+    else if (pytype == &PyBoolArrType_Type ||
+             pytype == &PyByteArrType_Type ||
+             pytype == &PyShortArrType_Type ||
+             pytype == &PyIntArrType_Type ||
+             pytype == &PyLongArrType_Type ||
+             pytype == &PyLongLongArrType_Type ||
+             pytype == &PyUByteArrType_Type ||
+             pytype == &PyUShortArrType_Type ||
+             pytype == &PyUIntArrType_Type ||
+             pytype == &PyULongArrType_Type ||
+             pytype == &PyULongLongArrType_Type ||
+             pytype == &PyHalfArrType_Type ||
+             pytype == &PyFloatArrType_Type ||
+             pytype == &PyDoubleArrType_Type ||
+             pytype == &PyLongDoubleArrType_Type ||
+             pytype == &PyCFloatArrType_Type ||
+             pytype == &PyCDoubleArrType_Type ||
+             pytype == &PyCLongDoubleArrType_Type ||
+             pytype == &PyIntpArrType_Type ||
+             pytype == &PyUIntpArrType_Type ||
+             pytype == &PyDatetimeArrType_Type ||
+             pytype == &PyTimedeltaArrType_Type)
+    {
         return 1;
     }
     return 0;
@@ -657,10 +599,8 @@ stringdtype_finalize_descr(PyArray_Descr *dtype)
         return dtype;
     }
     PyArray_StringDTypeObject *ret = (PyArray_StringDTypeObject *)new_stringdtype_instance(
-            sdtype->na_object, sdtype->coerce, sdtype->allocator);
-    if (ret->array_owned == 0) {
-        ret->array_owned = 1;
-    }
+            sdtype->na_object, sdtype->coerce);
+    ret->array_owned = 1;
     return (PyArray_Descr *)ret;
 }
 
@@ -696,7 +636,7 @@ stringdtype_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    return new_stringdtype_instance(na_object, coerce, NULL);
+    return new_stringdtype_instance(na_object, coerce);
 }
 
 static void
@@ -930,8 +870,7 @@ load_new_string(npy_packed_static_string *out, npy_static_string *out_ss,
                       "Failed to allocate string in %s", err_context);
         return -1;
     }
-    int is_null = NpyString_load(allocator, out_pss, out_ss);
-    if (is_null == -1) {
+    if (NpyString_load(allocator, out_pss, out_ss) == -1) {
         npy_gil_error(PyExc_MemoryError,
                       "Failed to load string in %s", err_context);
         return -1;

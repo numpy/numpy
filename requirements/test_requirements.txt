@@ -8,7 +8,7 @@ pytest==7.4.0
 pytz==2023.3.post1
 pytest-cov==4.1.0
 meson
-ninja
+ninja; sys_platform != "emscripten"
 pytest-xdist
 # for numpy.random.test.test_extending
 cffi; python_version < '3.10'

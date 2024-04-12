@@ -79,6 +79,11 @@ def get_files(dir_to_check, kind='test'):
             k: v for k, v in files.items() if not k.startswith('distutils')
         }
 
+    # ignore python files in vendored pythoncapi-compat submodule
+    files = {
+        k: v for k, v in files.items() if 'pythoncapi-compat' not in k
+    }
+
     return files
 
 

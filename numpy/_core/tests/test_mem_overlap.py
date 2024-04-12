@@ -553,7 +553,7 @@ def test_non_ndarray_inputs():
         def __init__(self, data):
             self.data = data
 
-        def __array__(self):
+        def __array__(self, dtype=None, copy=None):
             return self.data
 
     for cls in [MyArray, MyArray2]:

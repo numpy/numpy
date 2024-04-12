@@ -327,13 +327,15 @@ def solve(a, b):
     ----------
     a : (..., M, M) array_like
         Coefficient matrix.
-    b : {(..., M,), (..., M, K)}, array_like
+    b : {(M,), (..., M, K)}, array_like
         Ordinate or "dependent variable" values.
 
     Returns
     -------
     x : {(..., M,), (..., M, K)} ndarray
-        Solution to the system a x = b.  Returned shape is identical to `b`.
+        Solution to the system a x = b.  Returned shape is (..., M) if b is
+        shape (M,) and (..., M, K) if b is (..., M, K), where the "..." part is
+        broadcasted between a and b.
 
     Raises
     ------
@@ -358,6 +360,13 @@ def solve(a, b):
     columns) must be linearly independent; if either is not true, use
     `lstsq` for the least-squares best "solution" of the
     system/equation.
+
+    .. versionchanged:: 2.0
+
+       The b array is only treated as a shape (M,) column vector if it is
+       exactly 1-dimensional. In all other instances it is treated as a stack
+       of (M, K) matrices. Previously b would be treated as a stack of (M,)
+       vectors if b.ndim was equal to a.ndim - 1.
 
     References
     ----------
@@ -390,7 +399,7 @@ def solve(a, b):
 
     # We use the b = (..., M,) logic, only if the number of extra dimensions
     # match exactly
-    if b.ndim == a.ndim - 1:
+    if b.ndim == 1:
         gufunc = _umath_linalg.solve1
     else:
         gufunc = _umath_linalg.solve
@@ -520,7 +529,7 @@ def inv(a):
 
     If `a` is detected to be singular, a `LinAlgError` is raised. If `a` is
     ill-conditioned, a `LinAlgError` may or may not be raised, and results may
-    be innacurate due to floating-point errors.
+    be inaccurate due to floating-point errors.
 
     References
     ----------
@@ -2068,18 +2077,23 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     >>> matrix_rank(np.zeros((4,)))
     0
     """
+    if rtol is not None and tol is not None:
+        raise ValueError("`tol` and `rtol` can't be both set.")
+
     A = asarray(A)
     if A.ndim < 2:
         return int(not all(A == 0))
     S = svd(A, compute_uv=False, hermitian=hermitian)
-    if rtol is not None and tol is not None:
-        raise ValueError("`tol` and `rtol` can't be both set.")
-    if rtol is None:
-        rtol = max(A.shape[-2:]) * finfo(S.dtype).eps
+
     if tol is None:
+        if rtol is None:
+            rtol = max(A.shape[-2:]) * finfo(S.dtype).eps
+        else:
+            rtol = asarray(rtol)[..., newaxis]
         tol = S.max(axis=-1, keepdims=True) * rtol
     else:
         tol = asarray(tol)[..., newaxis]
+
     return count_nonzero(S > tol, axis=-1)
 
 

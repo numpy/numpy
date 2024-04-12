@@ -847,7 +847,7 @@ cdef class Generator:
         cdef uint64_t[::1] hash_set
         # Format and Verify input
         a_original = a
-        a = np.array(a, copy=False)
+        a = np.asarray(a)
         if a.ndim == 0:
             try:
                 # __index__ must return an integer by python rules.
@@ -907,7 +907,7 @@ cdef class Generator:
                 uniform_samples = self.random(shape)
                 idx = cdf.searchsorted(uniform_samples, side='right')
                 # searchsorted returns a scalar
-                idx = np.array(idx, copy=False, dtype=np.int64)
+                idx = np.asarray(idx, dtype=np.int64)
             else:
                 idx = self.integers(0, pop_size, size=shape, dtype=np.int64)
         else:

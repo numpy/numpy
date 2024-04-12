@@ -19,9 +19,11 @@ concurrency:
 jobs:
   x86_conda:
     name: macOS x86-64 conda
-    if: "github.repository == 'numpy/numpy'"
-    runs-on: macos-latest
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    runs-on: macos-13
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.11"]
 
@@ -29,7 +31,7 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
 
     - name:  Prepare cache dirs and timestamps
       id:    prep-ccache
@@ -42,7 +44,7 @@ jobs:
         echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
 
     - name: Setup compiler cache
-      uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+      uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
       id:    cache-ccache
       with:
         path: ${{ steps.prep-ccache.outputs.dir }}
@@ -51,7 +53,7 @@ jobs:
           ${{ github.workflow }}-${{ matrix.python-version }}-ccache-macos-
 
     - name: Setup Mambaforge
-      uses: conda-incubator/setup-miniconda@392cf345b1784333caa1a1185081c71e6ffd61bc # v3.0.2
+      uses: conda-incubator/setup-miniconda@030178870c779d9e5e1b4e563269f3aa69b04081 # v3.0.3
       with:
         python-version: ${{ matrix.python-version }}
         channels: conda-forge
@@ -66,7 +68,7 @@ jobs:
     # ensure we re-solve once a day (since we don't lock versions). Could be
     # replaced by a conda-lock based approach in the future.
     - name: Cache conda environment
-      uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+      uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
       env:
         # Increase this value to reset cache if environment.yml has not changed
         CACHE_NUMBER: 1
@@ -102,9 +104,10 @@ jobs:
 
   accelerate:
     name: Accelerate (LP64, ILP64) - ${{ matrix.build_runner[1] }}
-    if: "github.repository == 'numpy/numpy'"
+    if: github.repository == 'numpy/numpy'
     runs-on: ${{ matrix.build_runner[0] }}
     strategy:
+      fail-fast: false
       matrix:
         build_runner:
           - [ macos-13, "macos_x86_64" ]
@@ -114,9 +117,9 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-tags: true
 
-    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
         python-version: '3.10'
 

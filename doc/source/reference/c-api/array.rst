@@ -38,12 +38,31 @@ and its sub-types).
 
     Return the (builtin) typenumber for the elements of this array.
 
+.. c:function:: int PyArray_Pack(  \
+        const PyArray_Descr *descr, void *item, const PyObject *value)
+
+    .. versionadded:: 2.0
+
+    Sets the memory location ``item`` of dtype ``descr`` to ``value``.
+
+    The function is equivalent to setting a single array element with a Python
+    assignment.  Returns 0 on success and -1 with an error set on failure.
+
+    .. note::
+        If the ``descr`` has the :c:data:`NPY_NEEDS_INIT` flag set, the
+        data must be valid or the memory zeroed.
+
 .. c:function:: int PyArray_SETITEM( \
         PyArrayObject* arr, void* itemptr, PyObject* obj)
 
     Convert obj and place it in the ndarray, *arr*, at the place
     pointed to by itemptr. Return -1 if an error occurs or 0 on
     success.
+
+    .. note::
+        In general, prefer the use of :c:func:`PyArray_Pack` when
+        handling arbitrary Python objects.  Setitem is for example not able
+        to handle arbitrary casts between different dtypes.
 
 .. c:function:: void PyArray_ENABLEFLAGS(PyArrayObject* arr, int flags)
 
@@ -514,8 +533,9 @@ From other objects
         PyObject* op, PyArray_Descr* dtype, PyObject* context)
 
     Return an ndarray object from a Python object that exposes the
-    :obj:`~numpy.class.__array__` method. The :obj:`~numpy.class.__array__`
-    method can take 0, or 1 argument ``([dtype])``. ``context`` is unused.
+    :obj:`~numpy.class.__array__` method. The third-party implementations of
+    :obj:`~numpy.class.__array__` must take ``dtype`` and ``copy`` keyword
+    arguments. ``context`` is unused.
 
 .. c:function:: PyObject* PyArray_ContiguousFromAny( \
         PyObject* op, int typenum, int min_depth, int max_depth)
@@ -750,6 +770,88 @@ General check of Python Type
     :c:func:`PyArray_IsPythonScalar`), an array scalar (an instance of a
     sub-type of :c:data:`PyGenericArrType_Type`) or an instance of a sub-type of
     :c:data:`PyArray_Type` whose dimensionality is 0.
+
+
+Data-type accessors
+~~~~~~~~~~~~~~~~~~~
+
+Some of the descriptor attributes may not always be defined and should or
+cannot not be accessed directly.
+
+.. versionchanged:: 2.0
+    Prior to NumPy 2.0 the ABI was different but unnecessary large for user
+    DTypes.  These accessors were all added in 2.0 and can be backported
+    (see :ref:`migration_c_descr`).
+
+.. c:function:: npy_intp PyDataType_ELSIZE(PyArray_Descr *descr)
+
+    The element size of the datatype (``itemsize`` in Python).
+
+    .. note::
+        If the ``descr`` is attached to an array ``PyArray_ITEMSIZE(arr)``
+        can be used and is available on all NumPy versions.
+
+.. c:function:: void PyDataType_SET_ELSIZE(PyArray_Descr *descr, npy_intp size)
+
+    Allows setting of the itemsize, this is *only* relevant for string/bytes
+    datatypes as it is the current pattern to define one with a new size.
+
+.. c:function:: npy_intp PyDataType_ALIGNENT(PyArray_Descr *descr)
+
+    The alignment of the datatype.
+
+.. c:function:: PyObject *PyDataType_METADATA(PyArray_Descr *descr)
+
+    The Metadata attached to a dtype, either ``NULL`` or a dictionary.
+
+.. c:function:: PyObject *PyDataType_NAMES(PyArray_Descr *descr)
+
+    ``NULL`` or a tuple of structured field names attached to a dtype.
+
+.. c:function:: PyObject *PyDataType_FIELDS(PyArray_Descr *descr)
+
+    ``NULL``, ``None``, or a dict of structured dtype fields, this dict must
+    not be mutated, NumPy may change the way fields are stored in the future.
+
+    This is the same dict as returned by `np.dtype.fields`.
+
+.. c:function:: NpyAuxData *PyDataType_C_METADATA(PyArray_Descr *descr)
+
+    C-metadata object attached to a descriptor.  This accessor should not
+    be needed usually.  The C-Metadata field does provide access to the
+    datetime/timedelta time unit information.
+
+.. c:function:: PyArray_ArrayDescr *PyDataType_SUBARRAY(PyArray_Descr *descr)
+
+    Information about a subarray dtype eqivalent to the Python `np.dtype.base`
+    and `np.dtype.shape`.
+
+    If this is non- ``NULL``, then this data-type descriptor is a
+    C-style contiguous array of another data-type descriptor. In
+    other-words, each element that this descriptor describes is
+    actually an array of some other base descriptor. This is most
+    useful as the data-type descriptor for a field in another
+    data-type descriptor. The fields member should be ``NULL`` if this
+    is non- ``NULL`` (the fields member of the base descriptor can be
+    non- ``NULL`` however).
+
+    .. c:type:: PyArray_ArrayDescr
+
+        .. code-block:: c
+
+            typedef struct {
+                PyArray_Descr *base;
+                PyObject *shape;
+            } PyArray_ArrayDescr;
+
+        .. c:member:: PyArray_Descr *base
+
+            The data-type-descriptor object of the base-type.
+
+        .. c:member:: PyObject *shape
+
+            The shape (always C-style contiguous) of the sub-array as a Python
+            tuple.
 
 
 Data-type checking
@@ -1580,8 +1682,8 @@ the functions that must be implemented for each slot.
 
 .. c:type:: NPY_CASTING (PyArrayMethod_ResolveDescriptors)( \
                 struct PyArrayMethodObject_tag *method, \
-                PyArray_DTypeMeta **dtypes, \
-                PyArray_Descr **given_descrs, \
+                PyArray_DTypeMeta *const *dtypes, \
+                PyArray_Descr *const *given_descrs, \
                 PyArray_Descr **loop_descrs, \
                 npy_intp *view_offset)
 
@@ -1755,7 +1857,7 @@ Typedefs for functions that users of the ArrayMethod API can implement are
 described below.
 
 .. c:type:: int (PyArrayMethod_TraverseLoop)( \
-        void *traverse_context, PyArray_Descr *descr, char *data, \
+        void *traverse_context, const PyArray_Descr *descr, char *data, \
         npy_intp size, npy_intp stride, NpyAuxData *auxdata)
 
    A traverse loop working on a single array. This is similar to the general
@@ -1778,7 +1880,7 @@ described below.
    passed through in the future (for structured dtypes).
 
 .. c:type:: int (PyArrayMethod_GetTraverseLoop)( \
-                void *traverse_context, PyArray_Descr *descr, \
+                void *traverse_context, const PyArray_Descr *descr, \
                 int aligned, npy_intp fixed_stride, \
                 PyArrayMethod_TraverseLoop **out_loop, NpyAuxData **out_auxdata, \
                 NPY_ARRAYMETHOD_FLAGS *flags)
@@ -1818,7 +1920,8 @@ with the rest of the ArrayMethod API.
    attempt a new search for a matching loop/promoter.
 
 .. c:type:: int (PyArrayMethod_PromoterFunction)(PyObject *ufunc, \
-                PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[], \
+                PyArray_DTypeMeta *const op_dtypes[], \
+                PyArray_DTypeMeta *const signature[], \
                 PyArray_DTypeMeta *new_op_dtypes[])
 
    Type of the promoter function, which must be wrapped into a
@@ -3284,7 +3387,7 @@ Data Type Promotion and Inspection
 ----------------------------------
 
 .. c:function:: PyArray_DTypeMeta *PyArray_CommonDType( \
-                    PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
+            const PyArray_DTypeMeta *dtype1, const PyArray_DTypeMeta *dtype2)
 
    This function defines the common DType operator. Note that the common DType
    will not be ``object`` (unless one of the DTypes is ``object``). Similar to
@@ -3311,13 +3414,13 @@ Data Type Promotion and Inspection
    For example promoting ``float16`` with any other float, integer, or unsigned
    integer again gives a floating point number.
 
-.. c:function:: PyArray_Descr *PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
+.. c:function:: PyArray_Descr *PyArray_GetDefaultDescr(const PyArray_DTypeMeta *DType)
 
    Given a DType class, returns the default instance (descriptor).  This checks
    for a ``singleton`` first and only calls the ``default_descr`` function if
    necessary.
 
-.. dtype-api_
+.. _dtype-api:
 
 Custom Data Types
 -----------------
@@ -3736,7 +3839,7 @@ the C-API is needed then some additional steps must be taken.
     .. versionadded:: 2.0
         This function is backported in the ``npy_2_compat.h`` header.
 
-.. c:macro:: void import_array(void)
+.. c:macro:: import_array(void)
 
     This function must be called in the initialization section of a
     module that will make use of the C-API. It imports the module
@@ -3766,7 +3869,7 @@ the C-API is needed then some additional steps must be taken.
     .. code-block:: c
 
         #define PY_ARRAY_UNIQUE_SYMBOL cool_ARRAY_API
-        #include numpy/arrayobject.h
+        #include <numpy/arrayobject.h>
 
     On the other hand, coolhelper.c would contain at the top:
 
@@ -3774,7 +3877,7 @@ the C-API is needed then some additional steps must be taken.
 
         #define NO_IMPORT_ARRAY
         #define PY_ARRAY_UNIQUE_SYMBOL cool_ARRAY_API
-        #include numpy/arrayobject.h
+        #include <numpy/arrayobject.h>
 
     You can also put the common two last lines into an extension-local
     header file as long as you make sure that NO_IMPORT_ARRAY is
@@ -3930,14 +4033,11 @@ variables), the GIL should be released so that other Python threads
 can run while the time-consuming calculations are performed. This can
 be accomplished using two groups of macros. Typically, if one macro in
 a group is used in a code block, all of them must be used in the same
-code block. Currently, :c:data:`NPY_ALLOW_THREADS` is defined to the
-python-defined :c:data:`WITH_THREADS` constant unless the environment
-variable ``NPY_NOSMP`` is set in which case
-:c:data:`NPY_ALLOW_THREADS` is defined to be 0.
+code block. :c:data:`NPY_ALLOW_THREADS` is true (defined as ``1``) unless the
+build option ``-Ddisable-threading`` is set to ``true`` - in which case
+:c:data:`NPY_ALLOW_THREADS` is false (``0``).
 
 .. c:macro:: NPY_ALLOW_THREADS
-
-.. c:macro:: WITH_THREADS
 
 Group 1
 ^^^^^^^

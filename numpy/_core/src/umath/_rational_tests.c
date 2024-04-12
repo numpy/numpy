@@ -1273,8 +1273,8 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
     {
         int types2[3] = {npy_rational,npy_rational,npy_rational};
         PyObject* gufunc = PyUFunc_FromFuncAndDataAndSignature(0,0,0,0,2,1,
-            PyUFunc_None,(char*)"matrix_multiply",
-            (char*)"return result of multiplying two matrices of rationals",
+            PyUFunc_None,"matrix_multiply",
+            "return result of multiplying two matrices of rationals",
             0,"(m,n),(n,p)->(m,p)");
         if (!gufunc) {
             goto fail;
@@ -1291,8 +1291,8 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
         int types3[3] = {NPY_INT64,NPY_INT64,npy_rational};
 
         PyObject* ufunc = PyUFunc_FromFuncAndData(0,0,0,0,2,1,
-                PyUFunc_None,(char*)"test_add",
-                (char*)"add two matrices of int64 and return rational matrix",0);
+                PyUFunc_None,"test_add",
+                "add two matrices of int64 and return rational matrix",0);
         if (!ufunc) {
             goto fail;
         }
@@ -1306,8 +1306,8 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
     /* Create test ufunc with rational types using RegisterLoopForDescr */
     {
         PyObject* ufunc = PyUFunc_FromFuncAndData(0,0,0,0,2,1,
-                PyUFunc_None,(char*)"test_add_rationals",
-                (char*)"add two matrices of rationals and return rational matrix",0);
+                PyUFunc_None,"test_add_rationals",
+                "add two matrices of rationals and return rational matrix",0);
         PyArray_Descr* types[3] = {npyrational_descr,
                                     npyrational_descr,
                                     npyrational_descr};
@@ -1326,7 +1326,7 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
     #define NEW_UNARY_UFUNC(name,type,doc) { \
         int types[2] = {npy_rational,type}; \
         PyObject* ufunc = PyUFunc_FromFuncAndData(0,0,0,0,1,1, \
-            PyUFunc_None,(char*)#name,(char*)doc,0); \
+            PyUFunc_None,#name,doc,0); \
         if (!ufunc) { \
             goto fail; \
         } \
@@ -1345,8 +1345,8 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
         static const char types[3] = {type,type,type}; \
         static void* data[1] = {0}; \
         PyObject* ufunc = PyUFunc_FromFuncAndData( \
-            (PyUFuncGenericFunction*)func, data,(char*)types, \
-            1,2,1,PyUFunc_One,(char*)#name,(char*)doc,0); \
+            (PyUFuncGenericFunction*)func, data,types, \
+            1,2,1,PyUFunc_One,#name,doc,0); \
         if (!ufunc) { \
             goto fail; \
         } \

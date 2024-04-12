@@ -17,12 +17,24 @@ The preferred alias for `defchararray` is `numpy.char`.
 """
 import functools
 
+import numpy as np
 from .._utils import set_module
 from .numerictypes import bytes_, str_, character
 from .numeric import ndarray, array as narray, asarray as asnarray
 from numpy._core.multiarray import compare_chararrays
 from numpy._core import overrides
 from numpy.strings import *
+from numpy.strings import (
+    multiply as strings_multiply,
+    partition as strings_partition,
+    rpartition as strings_rpartition,
+)
+from numpy._core.strings import (
+    _split as split,
+    _rsplit as rsplit,
+    _splitlines as splitlines,
+    _join as join,
+)
 
 __all__ = [
     'equal', 'not_equal', 'greater_equal', 'less_equal',
@@ -244,6 +256,138 @@ def less(x1, x2):
     return compare_chararrays(x1, x2, '<', True)
 
 
+def multiply(a, i):
+    """
+    Return (a * i), that is string multiple concatenation,
+    element-wise.
+
+    Values in ``i`` of less than 0 are treated as 0 (which yields an
+    empty string).
+
+    Parameters
+    ----------
+    a : array_like, with `np.bytes_` or `np.str_` dtype
+
+    i : array_like, with any integer dtype
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input types
+
+    Notes
+    -----
+    This is a thin wrapper around np.strings.multiply that raises
+    `ValueError` when ``i`` is not an integer. It only
+    exists for backwards-compatibility.
+
+    Examples
+    --------
+    >>> a = np.array(["a", "b", "c"])
+    >>> np.strings.multiply(a, 3)
+    array(['aaa', 'bbb', 'ccc'], dtype='<U3')
+    >>> i = np.array([1, 2, 3])
+    >>> np.strings.multiply(a, i)
+    array(['a', 'bb', 'ccc'], dtype='<U3')
+    >>> np.strings.multiply(np.array(['a']), i)
+    array(['a', 'aa', 'aaa'], dtype='<U3')
+    >>> a = np.array(['a', 'b', 'c', 'd', 'e', 'f']).reshape((2, 3))
+    >>> np.strings.multiply(a, 3)
+    array([['aaa', 'bbb', 'ccc'],
+           ['ddd', 'eee', 'fff']], dtype='<U3')
+    >>> np.strings.multiply(a, i)
+    array([['a', 'bb', 'ccc'],
+           ['d', 'ee', 'fff']], dtype='<U3')
+
+    """
+    try:
+        return strings_multiply(a, i)
+    except TypeError:
+        raise ValueError("Can only multiply by integers")
+
+
+def partition(a, sep):
+    """
+    Partition each element in `a` around `sep`.
+
+    Calls :meth:`str.partition` element-wise.
+
+    For each element in `a`, split the element as the first
+    occurrence of `sep`, and return 3 strings containing the part
+    before the separator, the separator itself, and the part after
+    the separator. If the separator is not found, return 3 strings
+    containing the string itself, followed by two empty strings.
+
+    Parameters
+    ----------
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Input array
+    sep : {str, unicode}
+        Separator to split each string element in `a`.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types. The output array will have an extra
+        dimension with 3 elements per input element.
+
+    Examples
+    --------
+    >>> x = np.array(["Numpy is nice!"])
+    >>> np.char.partition(x, " ")
+    array([['Numpy', ' ', 'is nice!']], dtype='<U8')
+    
+    See Also
+    --------
+    str.partition
+
+    """
+    return np.stack(strings_partition(a, sep), axis=-1)
+
+
+def rpartition(a, sep):
+    """
+    Partition (split) each element around the right-most separator.
+
+    Calls :meth:`str.rpartition` element-wise.
+
+    For each element in `a`, split the element as the last
+    occurrence of `sep`, and return 3 strings containing the part
+    before the separator, the separator itself, and the part after
+    the separator. If the separator is not found, return 3 strings
+    containing the string itself, followed by two empty strings.
+
+    Parameters
+    ----------
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Input array
+    sep : str or unicode
+        Right-most separator to split each element in array.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types. The output array will have an extra
+        dimension with 3 elements per input element.
+
+    See Also
+    --------
+    str.rpartition
+
+    Examples
+    --------
+    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> np.char.rpartition(a, 'A')
+    array([['aAaAa', 'A', ''],
+       ['  a', 'A', '  '],
+       ['abB', 'A', 'Bba']], dtype='<U5')
+
+    """
+    return np.stack(strings_rpartition(a, sep), axis=-1)
+
+
 @set_module("numpy.char")
 class chararray(ndarray):
     """
@@ -428,7 +572,7 @@ class chararray(ndarray):
 
     def __array_finalize__(self, obj):
         # The b is a special case because it is used for reconstructing.
-        if self.dtype.char not in 'SUbc':
+        if self.dtype.char not in 'VSUbc':
             raise ValueError("Can only create a chararray from string data.")
 
     def __getitem__(self, obj):
@@ -1097,7 +1241,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
 
     copy : bool, optional
         If true (default), then the object is copied.  Otherwise, a copy
-        will only be made if __array__ returns a copy, if obj is a
+        will only be made if ``__array__`` returns a copy, if obj is a
         nested sequence, or if a copy is needed to satisfy any of the other
         requirements (`itemsize`, unicode, `order`, etc.).
 

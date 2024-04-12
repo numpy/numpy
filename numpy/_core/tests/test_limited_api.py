@@ -5,7 +5,7 @@ import sys
 import sysconfig
 import pytest
 
-from numpy.testing import IS_WASM, IS_PYPY
+from numpy.testing import IS_WASM, IS_PYPY, NOGIL_BUILD
 
 # This import is copied from random.tests.test_extending
 try:
@@ -66,6 +66,10 @@ def install_temp(tmpdir_factory):
         "Py_LIMITED_API is incompatible with Py_DEBUG, Py_TRACE_REFS, "
         "and Py_REF_DEBUG"
     ),
+)
+@pytest.mark.xfail(
+    NOGIL_BUILD,
+    reason="Py_GIL_DISABLED builds do not currently support the limited API",
 )
 @pytest.mark.skipif(IS_PYPY, reason="no support for limited API in PyPy")
 def test_limited_api(install_temp):

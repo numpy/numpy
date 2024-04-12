@@ -22,13 +22,6 @@ from numpy.testing import (
 from numpy.testing._private.utils import requires_memory
 
 
-import cython
-from packaging.version import parse, Version
-
-# Remove this when cython fixes https://github.com/cython/cython/issues/5411
-cython_version = parse(cython.__version__)
-BUG_5411 = Version("3.0.0a7") <= cython_version <= Version("3.0.0b3")
-
 UNARY_UFUNCS = [obj for obj in np._core.umath.__dict__.values()
                     if isinstance(obj, np.ufunc)]
 UNARY_OBJECT_UFUNCS = [uf for uf in UNARY_UFUNCS if "O->O" in uf.types]
@@ -214,9 +207,6 @@ class TestUfunc:
                    b"(S'numpy._core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
         assert_(pickle.loads(astring) is np.cos)
 
-    @pytest.mark.skipif(BUG_5411,
-        reason=("cython raises a AttributeError where it should raise a "
-                "ModuleNotFoundError"))
     @pytest.mark.skipif(IS_PYPY, reason="'is' check does not work on PyPy")
     def test_pickle_name_is_qualname(self):
         # This tests that a simplification of our ufunc pickle code will
@@ -2981,6 +2971,13 @@ class TestLowlevelAPIAccess:
 
         with pytest.raises(TypeError):
             np.add.resolve_dtypes((i4, f4, None), casting="no")
+
+    def test_resolve_dtypes_comparison(self):
+        i4 = np.dtype("i4")
+        i8 = np.dtype("i8")
+        b = np.dtype("?")
+        r = np.equal.resolve_dtypes((i4, i8, None))
+        assert r == (i8, i8, b)
 
     def test_weird_dtypes(self):
         S0 = np.dtype("S0")

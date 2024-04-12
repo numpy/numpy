@@ -50,7 +50,7 @@ static int PyArray_RUNTIME_VERSION = 0;
 
 /*
  * The DType classes are inconvenient for the Python generation so exposed
- * manualy in the header below  (may be moved).
+ * manually in the header below  (may be moved).
  */
 #include "numpy/_public_dtype_api_table.h"
 
@@ -111,13 +111,15 @@ _import_array(void)
   }
   PyArray_RUNTIME_VERSION = (int)PyArray_GetNDArrayCFeatureVersion();
   if (NPY_FEATURE_VERSION > PyArray_RUNTIME_VERSION) {
-      PyErr_Format(PyExc_RuntimeError, "module compiled against "\
-             "API version 0x%%x but this version of numpy is 0x%%x . "\
-             "Check the section C-API incompatibility at the "\
-             "Troubleshooting ImportError section at "\
-             "https://numpy.org/devdocs/user/troubleshooting-importerror.html"\
-             "#c-api-incompatibility "\
-              "for indications on how to solve this problem .", \
+      PyErr_Format(PyExc_RuntimeError,
+             "module was compiled against NumPy C-API version 0x%%x "
+             "(NumPy " NPY_FEATURE_VERSION_STRING ") "
+             "but the running NumPy has C-API version 0x%%x. "
+             "Check the section C-API incompatibility at the "
+             "Troubleshooting ImportError section at "
+             "https://numpy.org/devdocs/user/troubleshooting-importerror.html"
+             "#c-api-incompatibility "
+             "for indications on how to solve this problem.",
              (int)NPY_FEATURE_VERSION, PyArray_RUNTIME_VERSION);
       return -1;
   }
@@ -225,6 +227,7 @@ def do_generate_api(targets, sources):
 
     # Check multiarray api indexes
     multiarray_api_index = genapi.merge_api_dicts(multiarray_api)
+    unused_index_max = max(multiarray_api_index.get("__unused_indices__", 0))
     genapi.check_api_dict(multiarray_api_index)
 
     numpyapi_list = genapi.get_api_functions('NUMPY_API',
@@ -275,6 +278,10 @@ def do_generate_api(targets, sources):
         extension_list.append(api_item.define_from_array_api_string())
         init_list.append(api_item.array_api_define())
         module_list.append(api_item.internal_define())
+
+    # In case we end with a "hole", append more NULLs
+    while len(init_list) <= unused_index_max:
+        init_list.append("        NULL")
 
     # Write to header
     s = h_template % ('\n'.join(module_list), '\n'.join(extension_list))

@@ -59,8 +59,8 @@
 static NPY_CASTING
 default_resolve_descriptors(
         PyArrayMethodObject *method,
-        PyArray_DTypeMeta **dtypes,
-        PyArray_Descr **input_descrs,
+        PyArray_DTypeMeta *const *dtypes,
+        PyArray_Descr *const *input_descrs,
         PyArray_Descr **output_descrs,
         npy_intp *view_offset)
 {
@@ -139,7 +139,7 @@ npy_default_get_strided_loop(
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     PyArrayMethodObject *meth = context->method;
     *flags = meth->flags & NPY_METH_RUNTIME_FLAGS;
     *out_transferdata = NULL;
@@ -412,11 +412,9 @@ PyArrayMethod_FromSpec(PyArrayMethod_Spec *spec)
 /**
  * Create a new ArrayMethod (internal version).
  *
- * @param name A name for the individual method, may be NULL.
  * @param spec A filled context object to pass generic information about
  *        the method (such as usually needing the API, and the DTypes).
  *        Unused fields must be NULL.
- * @param slots Slots with the correct pair of IDs and (function) pointers.
  * @param private Some slots are currently considered private, if not true,
  *        these will be rejected.
  *

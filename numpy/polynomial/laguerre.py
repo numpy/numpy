@@ -867,7 +867,7 @@ def lagval(x, c, tensor=True):
            [-4.5, -2. ]])
 
     """
-    c = np.array(c, ndmin=1, copy=False)
+    c = np.array(c, ndmin=1, copy=None)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
     if isinstance(x, (tuple, list)):
@@ -1181,7 +1181,7 @@ def lagvander(x, deg):
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
-    x = np.array(x, copy=False, ndmin=1) + 0.0
+    x = np.array(x, copy=None, ndmin=1) + 0.0
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)

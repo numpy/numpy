@@ -21,7 +21,7 @@
 #include "numpy/npy_math.h"
 
 #include "lowlevel_strided_loops.h"
-#include "npy_pycompat.h"
+
 
 #include "convert_datatype.h"
 #include "ctors.h"
@@ -253,7 +253,7 @@ any_to_object_get_loop(
     data->arr_fields.flags = aligned ? NPY_ARRAY_ALIGNED : 0;
     data->arr_fields.nd = 0;
 
-    data->getitem = context->descriptors[0]->f->getitem;
+    data->getitem = PyDataType_GetArrFuncs(context->descriptors[0])->getitem;
     NPY_traverse_info_init(&data->decref_src);
 
     if (move_references && PyDataType_REFCHK(context->descriptors[0])) {
@@ -554,7 +554,7 @@ wrap_copy_swap_function(
 
     data->base.free = &_wrap_copy_swap_data_free;
     data->base.clone = &_wrap_copy_swap_data_clone;
-    data->copyswapn = dtype->f->copyswapn;
+    data->copyswapn = PyDataType_GetArrFuncs(dtype)->copyswapn;
     data->swap = should_swap;
 
     /*
@@ -2084,17 +2084,17 @@ get_subarray_transfer_function(int aligned,
 
     /* Get the subarray shapes and sizes */
     if (PyDataType_HASSUBARRAY(src_dtype)) {
-        if (!(PyArray_IntpConverter(src_dtype->subarray->shape,
+        if (!(PyArray_IntpConverter(PyDataType_SUBARRAY(src_dtype)->shape,
                                             &src_shape))) {
             PyErr_SetString(PyExc_ValueError,
                     "invalid subarray shape");
             return NPY_FAIL;
         }
         src_size = PyArray_MultiplyList(src_shape.ptr, src_shape.len);
-        src_dtype = src_dtype->subarray->base;
+        src_dtype = PyDataType_SUBARRAY(src_dtype)->base;
     }
     if (PyDataType_HASSUBARRAY(dst_dtype)) {
-        if (!(PyArray_IntpConverter(dst_dtype->subarray->shape,
+        if (!(PyArray_IntpConverter(PyDataType_SUBARRAY(dst_dtype)->shape,
                                             &dst_shape))) {
             npy_free_cache_dim_obj(src_shape);
             PyErr_SetString(PyExc_ValueError,
@@ -2102,7 +2102,7 @@ get_subarray_transfer_function(int aligned,
             return NPY_FAIL;
         }
         dst_size = PyArray_MultiplyList(dst_shape.ptr, dst_shape.len);
-        dst_dtype = dst_dtype->subarray->base;
+        dst_dtype = PyDataType_SUBARRAY(dst_dtype)->base;
     }
 
     /*
@@ -2300,7 +2300,7 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
 
     /* 1. src is non-structured. Copy the src value to all the fields of dst */
     if (!PyDataType_HASFIELDS(src_dtype)) {
-        field_count = PyTuple_GET_SIZE(dst_dtype->names);
+        field_count = PyTuple_GET_SIZE(PyDataType_NAMES(dst_dtype));
 
         /* Allocate the field-data structure and populate it */
         structsize = sizeof(_field_transfer_data) +
@@ -2317,8 +2317,8 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
 
         *out_flags = PyArrayMethod_MINIMAL_FLAGS;
         for (i = 0; i < field_count; ++i) {
-            key = PyTuple_GET_ITEM(dst_dtype->names, i);
-            tup = PyDict_GetItem(dst_dtype->fields, key);
+            key = PyTuple_GET_ITEM(PyDataType_NAMES(dst_dtype), i);
+            tup = PyDict_GetItem(PyDataType_FIELDS(dst_dtype), key);
             if (!PyArg_ParseTuple(tup, "Oi|O", &dst_fld_dtype,
                                                     &dst_offset, &title)) {
                 PyMem_Free(data);
@@ -2362,7 +2362,7 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
 
     /* 2. dst is non-structured. Allow transfer from single-field src to dst */
     if (!PyDataType_HASFIELDS(dst_dtype)) {
-        if (PyTuple_GET_SIZE(src_dtype->names) != 1) {
+        if (PyTuple_GET_SIZE(PyDataType_NAMES(src_dtype)) != 1) {
             PyErr_SetString(PyExc_ValueError,
                     "Can't cast from structure to non-structure, except if the "
                     "structure only has a single field.");
@@ -2381,8 +2381,8 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
         data->base.clone = &_field_transfer_data_clone;
         NPY_traverse_info_init(&data->decref_src);
 
-        key = PyTuple_GET_ITEM(src_dtype->names, 0);
-        tup = PyDict_GetItem(src_dtype->fields, key);
+        key = PyTuple_GET_ITEM(PyDataType_NAMES(src_dtype), 0);
+        tup = PyDict_GetItem(PyDataType_FIELDS(src_dtype), key);
         if (!PyArg_ParseTuple(tup, "Oi|O",
                               &src_fld_dtype, &src_offset, &title)) {
             PyMem_Free(data);
@@ -2409,10 +2409,10 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
     }
 
     /* 3. Otherwise both src and dst are structured arrays */
-    field_count = PyTuple_GET_SIZE(dst_dtype->names);
+    field_count = PyTuple_GET_SIZE(PyDataType_NAMES(dst_dtype));
 
     /* Match up the fields to copy (field-by-field transfer) */
-    if (PyTuple_GET_SIZE(src_dtype->names) != field_count) {
+    if (PyTuple_GET_SIZE(PyDataType_NAMES(src_dtype)) != field_count) {
         PyErr_SetString(PyExc_ValueError, "structures must have the same size");
         return NPY_FAIL;
     }
@@ -2433,15 +2433,15 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
     *out_flags = PyArrayMethod_MINIMAL_FLAGS;
     /* set up the transfer function for each field */
     for (i = 0; i < field_count; ++i) {
-        key = PyTuple_GET_ITEM(dst_dtype->names, i);
-        tup = PyDict_GetItem(dst_dtype->fields, key);
+        key = PyTuple_GET_ITEM(PyDataType_NAMES(dst_dtype), i);
+        tup = PyDict_GetItem(PyDataType_FIELDS(dst_dtype), key);
         if (!PyArg_ParseTuple(tup, "Oi|O", &dst_fld_dtype,
                                                 &dst_offset, &title)) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
         }
-        key = PyTuple_GET_ITEM(src_dtype->names, i);
-        tup = PyDict_GetItem(src_dtype->fields, key);
+        key = PyTuple_GET_ITEM(PyDataType_NAMES(src_dtype), i);
+        tup = PyDict_GetItem(PyDataType_FIELDS(src_dtype), key);
         if (!PyArg_ParseTuple(tup, "Oi|O", &src_fld_dtype,
                                                 &src_offset, &title)) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
@@ -3212,7 +3212,7 @@ wrap_aligned_transferfunction(
 
 
 /*
- * This function wraps the legacy casts stored on the `dtype->f->cast`
+ * This function wraps the legacy casts stored on the PyDataType_GetArrFuncs(`dtype)->cast`
  * or registered with `PyArray_RegisterCastFunc`.
  * For casts between two dtypes with the same type (within DType casts)
  * it also wraps the `copyswapn` function.

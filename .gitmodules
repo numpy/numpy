@@ -16,3 +16,6 @@
 [submodule "numpy/fft/pocketfft"]
 	path = numpy/fft/pocketfft
 	url = https://github.com/mreineck/pocketfft
+[submodule "numpy/_core/src/common/pythoncapi-compat"]
+	path = numpy/_core/src/common/pythoncapi-compat
+	url = https://github.com/python/pythoncapi-compat

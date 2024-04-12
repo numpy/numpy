@@ -96,6 +96,11 @@ class TestBuiltin:
             assert_raises(TypeError, np.dtype, 'q8')
             assert_raises(TypeError, np.dtype, 'Q8')
 
+        # Make sure negative-sized dtype raises an error
+        assert_raises(TypeError, np.dtype, 'S-1')
+        assert_raises(TypeError, np.dtype, 'U-1')
+        assert_raises(TypeError, np.dtype, 'V-1')
+
     def test_richcompare_invalid_dtype_equality(self):
         # Make sure objects that cannot be converted to valid
         # dtypes results in False/True when compared to valid dtypes.
@@ -1896,6 +1901,13 @@ class TestUserDType:
         # mytype does not inherit from `np.generic`.  This seems like an
         # unnecessary restriction, but one that has been around forever:
         assert np.dtype(mytype) == np.dtype("O")
+
+        if HAS_REFCOUNT:
+            # Create an array and test that memory gets cleaned up (gh-25949)
+            o = object()
+            a = np.array([o], dtype=dt)
+            del a
+            assert sys.getrefcount(o) == 2
 
     def test_custom_structured_dtype_errors(self):
         class mytype:

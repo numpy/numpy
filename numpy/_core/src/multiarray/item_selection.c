@@ -13,11 +13,12 @@
 
 #include "npy_config.h"
 
-#include "npy_pycompat.h"
+
 
 #include "multiarraymodule.h"
 #include "common.h"
 #include "dtype_transfer.h"
+#include "dtypemeta.h"
 #include "arrayobject.h"
 #include "ctors.h"
 #include "lowlevel_strided_loops.h"
@@ -336,14 +337,16 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         goto fail;
     }
 
-    Py_XDECREF(indices);
-    Py_XDECREF(self);
     if (out != NULL && out != obj) {
-        Py_INCREF(out);
-        PyArray_ResolveWritebackIfCopy(obj);
+        if (PyArray_ResolveWritebackIfCopy(obj) < 0) {
+            goto fail;
+        }
         Py_DECREF(obj);
+        Py_INCREF(out);
         obj = out;
     }
+    Py_XDECREF(indices);
+    Py_XDECREF(self);
     return (PyObject *)obj;
 
  fail:
@@ -391,6 +394,11 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         goto fail;
     }
     ni = PyArray_SIZE(indices);
+    if ((ni > 0) && (PyArray_Size((PyObject *)self) == 0)) {
+        PyErr_SetString(PyExc_IndexError, 
+                        "cannot replace elements of an empty array");
+        return NULL;
+    }
     Py_INCREF(PyArray_DESCR(self));
     values = (PyArrayObject *)PyArray_FromAny(values0, PyArray_DESCR(self), 0, 0,
                               NPY_ARRAY_DEFAULT | NPY_ARRAY_FORCECAST, NULL);
@@ -1529,10 +1537,10 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         return -1;
     }
 
-    sort = PyArray_DESCR(op)->f->sort[which];
+    sort = PyDataType_GetArrFuncs(PyArray_DESCR(op))->sort[which];
 
     if (sort == NULL) {
-        if (PyArray_DESCR(op)->f->compare) {
+        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
             switch (which) {
                 default:
                 case NPY_QUICKSORT:
@@ -1648,7 +1656,7 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
     part = get_partition_func(PyArray_TYPE(op), which);
     if (part == NULL) {
         /* Use sorting, slower but equivalent */
-        if (PyArray_DESCR(op)->f->compare) {
+        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
             sort = npy_quicksort;
         }
         else {
@@ -1683,10 +1691,10 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     PyArray_ArgSortFunc *argsort = NULL;
     PyObject *ret;
 
-    argsort = PyArray_DESCR(op)->f->argsort[which];
+    argsort = PyDataType_GetArrFuncs(PyArray_DESCR(op))->argsort[which];
 
     if (argsort == NULL) {
-        if (PyArray_DESCR(op)->f->compare) {
+        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
             switch (which) {
                 default:
                 case NPY_QUICKSORT:
@@ -1744,7 +1752,7 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
     argpart = get_argpartition_func(PyArray_TYPE(op), which);
     if (argpart == NULL) {
         /* Use sorting, slower but equivalent */
-        if (PyArray_DESCR(op)->f->compare) {
+        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
             argsort = npy_aquicksort;
         }
         else {
@@ -1841,8 +1849,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 goto fail;
             }
         }
-        if (!PyArray_DESCR(mps[i])->f->argsort[NPY_STABLESORT]
-                && !PyArray_DESCR(mps[i])->f->compare) {
+        if (!PyDataType_GetArrFuncs(PyArray_DESCR(mps[i]))->argsort[NPY_STABLESORT]
+                && !PyDataType_GetArrFuncs(PyArray_DESCR(mps[i]))->compare) {
             PyErr_Format(PyExc_TypeError,
                          "item %zd type does not have compare function", i);
             goto fail;
@@ -1958,7 +1966,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 int rcode;
                 elsize = PyArray_ITEMSIZE(mps[j]);
                 astride = PyArray_STRIDES(mps[j])[axis];
-                argsort = PyArray_DESCR(mps[j])->f->argsort[NPY_STABLESORT];
+                argsort = PyDataType_GetArrFuncs(PyArray_DESCR(mps[j]))->argsort[NPY_STABLESORT];
                 if(argsort == NULL) {
                     argsort = npy_atimsort;
                 }
@@ -1993,7 +2001,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
             }
             for (j = 0; j < n; j++) {
                 int rcode;
-                argsort = PyArray_DESCR(mps[j])->f->argsort[NPY_STABLESORT];
+                argsort = PyDataType_GetArrFuncs(PyArray_DESCR(mps[j]))->argsort[NPY_STABLESORT];
                 if(argsort == NULL) {
                     argsort = npy_atimsort;
                 }
@@ -2688,7 +2696,7 @@ PyArray_CountNonzero(PyArrayObject *self)
         );
     }
 
-    nonzero = PyArray_DESCR(self)->f->nonzero;
+    nonzero = PyDataType_GetArrFuncs(PyArray_DESCR(self))->nonzero;
     /* If it's a trivial one-dimensional loop, don't use an iterator */
     if (PyArray_TRIVIALLY_ITERABLE(self)) {
         needs_api = PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI);
@@ -2807,7 +2815,7 @@ PyArray_Nonzero(PyArrayObject *self)
     char **dataptr;
 
     dtype = PyArray_DESCR(self);
-    nonzero = dtype->f->nonzero;
+    nonzero = PyDataType_GetArrFuncs(dtype)->nonzero;
     needs_api = PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI);
 
     /* Special case - nonzero(zero_d) is nonzero(atleast_1d(zero_d)) */

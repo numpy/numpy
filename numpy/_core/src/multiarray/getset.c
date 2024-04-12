@@ -9,12 +9,13 @@
 #include "numpy/arrayobject.h"
 
 #include "npy_config.h"
-#include "npy_pycompat.h"
+
 #include "npy_import.h"
 
 #include "common.h"
 #include "conversion_utils.h"
 #include "ctors.h"
+#include "dtypemeta.h"
 #include "scalartypes.h"
 #include "descriptor.h"
 #include "flagsobject.h"
@@ -806,7 +807,7 @@ array_flat_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
         goto exit;
     }
     swap = PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(arr);
-    copyswap = PyArray_DESCR(self)->f->copyswap;
+    copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(self))->copyswap;
     if (PyDataType_REFCHK(PyArray_DESCR(self))) {
         while (selfit->index < selfit->size) {
             PyArray_Item_XDECREF(selfit->dataptr, PyArray_DESCR(self));
