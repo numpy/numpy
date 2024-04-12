@@ -954,7 +954,7 @@ assert_type(np.random.Generator(pcg64), np.random.Generator)
 assert_type(def_gen.__str__(), str)
 assert_type(def_gen.__repr__(), str)
 def_gen_state = def_gen.__getstate__()
-assert_type(def_gen_state, dict[str, Any])
+assert_type(def_gen_state, np.random.BitGenerator)
 assert_type(def_gen.__setstate__(def_gen_state), None)
 
 # RandomState
