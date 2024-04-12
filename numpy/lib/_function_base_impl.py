@@ -3868,6 +3868,15 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
 
     """
 
+    """
+    Addressing issue 26216
+    Calcuate the median date by sorting the list of np.datetime64 values and selecting either
+    the middle value if the list has an odd length or the middle two values if the list has an even length.
+
+    If the list is odd, returns the middle date, and if the list is even, it calculates the average distance between
+    the middle two dates, adding this average distance to the earlier middle date.
+    """
+
     # handle edge case where a is a Python list
     if isinstance(a, list):
         a = np.array(a)
