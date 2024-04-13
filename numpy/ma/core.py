@@ -184,9 +184,9 @@ Added different custom fill values for different ints and floats.
 """
 default_filler = {'b': True,
                   'c': 1.e20 + 0.0j,
-                  "float16": 1.e4,
-                  "float32": 1.e20,
-                  "float64": 1.e20,
+                  "float16": 65504,
+                  "float32": pow(2, 31) - 1,
+                  "float64": pow(2, 63) - 1,
                   "int8": 127,
                   "uint8": 255,
                   'int16': 32767,
@@ -7127,7 +7127,7 @@ def power(a, b, third=None):
     Addressing issue 25589
     Added shrink = False on line 7130 to preserve the existing mask.
     """
-    m = mask_or(ma, mb, shrink = False)
+    m = mask_or(ma, mb, shrink=False)
     # Get the rawdata
     fa = getdata(a)
     fb = getdata(b)
