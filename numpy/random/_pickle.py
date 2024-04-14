@@ -1,3 +1,4 @@
+from .bit_generator import BitGenerator
 from .mtrand import RandomState
 from ._philox import Philox
 from ._pcg64 import PCG64, PCG64DXSM
@@ -14,27 +15,30 @@ BitGenerators = {'MT19937': MT19937,
                  }
 
 
-def __bit_generator_ctor(bit_generator_name='MT19937'):
+def __bit_generator_ctor(bit_generator: str | type[BitGenerator] = 'MT19937'):
     """
     Pickling helper function that returns a bit generator object
 
     Parameters
     ----------
-    bit_generator_name : str
-        String containing the name of the BitGenerator
+    bit_generator : type[BitGenerator] or str
+        BitGenerator class or string containing the name of the BitGenerator
 
     Returns
     -------
-    bit_generator : BitGenerator
+    BitGenerator
         BitGenerator instance
     """
-    if bit_generator_name in BitGenerators:
-        bit_generator = BitGenerators[bit_generator_name]
+    if isinstance(bit_generator, type):
+        bit_gen_class = bit_generator
+    elif bit_generator in BitGenerators:
+        bit_gen_class = BitGenerators[bit_generator]
     else:
-        raise ValueError(str(bit_generator_name) + ' is not a known '
-                                                   'BitGenerator module.')
+        raise ValueError(
+            str(bit_generator) + ' is not a known BitGenerator module.'
+        )
 
-    return bit_generator()
+    return bit_gen_class()
 
 
 def __generator_ctor(bit_generator_name="MT19937",

@@ -555,7 +555,7 @@ cdef class BitGenerator():
 
         return (
             __bit_generator_ctor,
-            (self.state['bit_generator'], ),
+            (type(self), ),
             (self.state, self._seed_seq)
         )
 

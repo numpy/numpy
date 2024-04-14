@@ -2741,8 +2741,8 @@ def test_generator_ctor_old_style_pickle():
     # Directly call reduce which is used in pickling
     ctor, args, bit_gen = rg.__reduce__()
     # Simulate unpickling an old pickle that only has the name
-    assert args[:1] == ("PCG64DXSM",)
-    b = ctor(*args[:1])
+    assert args[0].__name__ == "PCG64DXSM"
+    b = ctor(*("PCG64DXSM",))
     b.bit_generator.state = bit_gen.state
     state_b = b.bit_generator.state
     assert bit_gen.state == state_b
