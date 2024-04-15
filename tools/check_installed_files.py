@@ -47,8 +47,9 @@ def main(install_dir, tests_check):
     if tests_check == "--no-tests":
         if len(installed_test_files) > 0:
             raise Exception(
-                "Test files aren't expected to be installed in %s" % INSTALLED_DIR
+                "Test files aren't expected to be installed in %s, found %s" % (INSTALLED_DIR, installed_test_files)
             )
+        print("----------- No test files were installed --------------")
     else:
         # Check test files detected in repo are installed
         for test_file in numpy_test_files.keys():
@@ -62,18 +63,14 @@ def main(install_dir, tests_check):
     numpy_pyi_files = get_files(NUMPY_DIR, kind='stub')
     installed_pyi_files = get_files(INSTALLED_DIR, kind='stub')
 
-    if tests_check == "--only-tests":
-        if len(installed_pyi_files) > 0:
-            raise Exception(
-                "Only test files are expected to be installed in %s" % INSTALLED_DIR
-            )
-    else:
-        # Check *.pyi files detected in repo are installed
-        for pyi_file in numpy_pyi_files.keys():
-            if pyi_file not in installed_pyi_files.keys():
-                raise Exception("%s is not installed" % numpy_pyi_files[pyi_file])
+    # Check *.pyi files detected in repo are installed
+    for pyi_file in numpy_pyi_files.keys():
+        if pyi_file not in installed_pyi_files.keys():
+            if tests_check == "--no-tests" and "tests" in numpy_pyi_files[pyi_file]:
+                continue
+            raise Exception("%s is not installed" % numpy_pyi_files[pyi_file])
 
-        print("----------- All the .pyi files were installed --------------")
+    print("----------- All the necessary .pyi files were installed --------------")
 
 
 def get_files(dir_to_check, kind='test'):
