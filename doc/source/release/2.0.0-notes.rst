@@ -298,7 +298,7 @@ Deprecations
   support for implementations not accepting all three are deprecated.  Its signature
   should be ``__array_wrap__(self, arr, context=None, return_scalar=False)``
 
-  (`gh-25408 <https://github.com/numpy/numpy/pull/25408>`__)
+  (`gh-25409 <https://github.com/numpy/numpy/pull/25409>`__)
 
 * Arrays of 2-dimensional vectors for ``np.cross`` have been deprecated. Use
   arrays of 3-dimensional vectors instead.
