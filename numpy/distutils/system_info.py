@@ -819,7 +819,7 @@ class system_info:
         if AliasedOptionError.__doc__ is None:
             raise AliasedOptionError()
         raise AliasedOptionError(AliasedOptionError.__doc__.format(
-            section=self.section, options=f'[{', '.join(options)}]'))
+            section=self.section, options=f'[{", ".join(options)}]'))
 
 
     def has_info(self):
