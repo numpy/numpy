@@ -214,7 +214,7 @@ cdef class Generator:
 
     # Pickling support:
     def __getstate__(self):
-        return self.bit_generator
+        return None
 
     def __setstate__(self, bit_gen):
         if isinstance(bit_gen, dict):
@@ -222,15 +222,11 @@ cdef class Generator:
             # Prior to 2.0.x only the state of the underlying bit generator
             # was preserved and any seed sequence information was lost
             self.bit_generator.state = bit_gen
-        else:
-            self.__init__(bit_gen)
 
     def __reduce__(self):
-        bit_gen_ctor, (bit_gen_name, ), _ = self._bit_generator.__reduce__()
-
         from ._pickle import __generator_ctor
-        # Requirements of __generator_ctor are (name, ctor)
-        return __generator_ctor, (bit_gen_name, bit_gen_ctor), self._bit_generator
+        # Requirements of __generator_ctor are (bit_generator, )
+        return __generator_ctor, (self._bit_generator, ), None
 
     @property
     def bit_generator(self):

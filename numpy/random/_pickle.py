@@ -48,8 +48,9 @@ def __generator_ctor(bit_generator_name="MT19937",
 
     Parameters
     ----------
-    bit_generator_name : str
-        String containing the core BitGenerator's name
+    bit_generator_name : str or BitGenerator
+        String containing the core BitGenerator's name or a
+        BitGenerator instance
     bit_generator_ctor : callable, optional
         Callable function that takes bit_generator_name as its only argument
         and returns an instantized bit generator.
@@ -59,6 +60,9 @@ def __generator_ctor(bit_generator_name="MT19937",
     rg : Generator
         Generator using the named core BitGenerator
     """
+    if isinstance(bit_generator_name, BitGenerator):
+        return Generator(bit_generator_name)
+    # Legacy path that uses a bit generator name and ctor
     return Generator(bit_generator_ctor(bit_generator_name))
 
 
@@ -80,5 +84,6 @@ def __randomstate_ctor(bit_generator_name="MT19937",
     rs : RandomState
         Legacy RandomState using the named core BitGenerator
     """
-
+    if isinstance(bit_generator_name, BitGenerator):
+        return RandomState(bit_generator_name)
     return RandomState(bit_generator_ctor(bit_generator_name))
