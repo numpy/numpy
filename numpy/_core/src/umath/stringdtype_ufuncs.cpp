@@ -246,12 +246,11 @@ binary_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(method),
 {
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
-    int out_coerce = 1;
+    int out_coerce = descr1->coerce && descr1->coerce;
     PyObject *out_na_object = NULL;
 
-    if (stringdtype_compatible_settings(
-                descr1->na_object, descr2->na_object, &out_na_object,
-                descr1->coerce, descr2->coerce, &out_coerce) == -1) {
+    if (stringdtype_compatible_na(
+                descr1->na_object, descr2->na_object, &out_na_object) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -556,7 +555,7 @@ string_comparison_resolve_descriptors(
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
 
-    if (stringdtype_compatible_na(descr1->na_object, descr2->na_object) == -1) {
+    if (stringdtype_compatible_na(descr1->na_object, descr2->na_object, NULL) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -786,12 +785,8 @@ string_findlike_resolve_descriptors(
 {
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
-    int out_coerce = 1;
-    PyObject *out_na_object = NULL;
 
-    if (stringdtype_compatible_settings(
-                descr1->na_object, descr2->na_object, &out_na_object,
-                descr1->coerce, descr2->coerce, &out_coerce) == -1) {
+    if (stringdtype_compatible_na(descr1->na_object, descr2->na_object, NULL) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -839,12 +834,8 @@ string_startswith_endswith_resolve_descriptors(
 {
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
-    int out_coerce = 1;
-    PyObject *out_na_object = NULL;
 
-    if (stringdtype_compatible_settings(
-                descr1->na_object, descr2->na_object, &out_na_object,
-                descr1->coerce, descr2->coerce, &out_coerce) == -1) {
+    if (stringdtype_compatible_na(descr1->na_object, descr2->na_object, NULL) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -1250,18 +1241,16 @@ replace_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(method),
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
     PyArray_StringDTypeObject *descr3 = (PyArray_StringDTypeObject *)given_descrs[2];
-    int out_coerce = 1;
+    int out_coerce = descr1->coerce && descr2->coerce && descr3->coerce;
     PyObject *out_na_object = NULL;
 
-    if (stringdtype_compatible_settings(
-                descr1->na_object, descr2->na_object, &out_na_object,
-                descr1->coerce, descr2->coerce, &out_coerce) == -1) {
+    if (stringdtype_compatible_na(
+                descr1->na_object, descr2->na_object, &out_na_object) == -1) {
         return (NPY_CASTING)-1;
     }
 
-    if (stringdtype_compatible_settings(
-                out_na_object, descr3->na_object, &out_na_object,
-                out_coerce, descr3->coerce, &out_coerce) == -1) {
+    if (stringdtype_compatible_na(
+                out_na_object, descr3->na_object, &out_na_object) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -1525,12 +1514,11 @@ center_ljust_rjust_resolve_descriptors(
 {
     PyArray_StringDTypeObject *input_descr = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *fill_descr = (PyArray_StringDTypeObject *)given_descrs[2];
-    int out_coerce = 1;
+    int out_coerce = input_descr->coerce && fill_descr->coerce;
     PyObject *out_na_object = NULL;
 
-    if (stringdtype_compatible_settings(
-                input_descr->na_object, fill_descr->na_object, &out_na_object,
-                input_descr->coerce, fill_descr->coerce, &out_coerce) == -1) {
+    if (stringdtype_compatible_na(
+                input_descr->na_object, fill_descr->na_object, &out_na_object) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -1835,12 +1823,11 @@ string_partition_resolve_descriptors(
 
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
-    int out_coerce = 1;
+    int out_coerce = descr1->coerce && descr2->coerce;
     PyObject *out_na_object = NULL;
 
-    if (stringdtype_compatible_settings(
-                descr1->na_object, descr2->na_object, &out_na_object,
-                descr1->coerce, descr2->coerce, &out_coerce) == -1) {
+    if (stringdtype_compatible_na(
+                descr1->na_object, descr2->na_object, &out_na_object) == -1) {
         return (NPY_CASTING)-1;
     }
 

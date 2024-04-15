@@ -50,11 +50,7 @@ NPY_NO_EXPORT int
 _eq_comparison(int scoerce, int ocoerce, PyObject *sna, PyObject *ona);
 
 NPY_NO_EXPORT int
-stringdtype_compatible_settings(PyObject *na1, PyObject *na2, PyObject **out_na,
-                                int coerce1, int coerce2, int *out_coerce);
-
-NPY_NO_EXPORT int
-stringdtype_compatible_na(PyObject *na1, PyObject *na2);
+stringdtype_compatible_na(PyObject *na1, PyObject *na2, PyObject **out_na);
 
 #ifdef __cplusplus
 }
