@@ -312,7 +312,9 @@ endif
 
 foreach subdir: pure_subdirs
   install_subdir(subdir, install_dir: np_dir, install_tag: 'python-runtime', exclude_directories: ['tests'])
-  install_subdir(subdir/'tests', install_dir: np_dir/subdir, install_tag: 'tests')
+  if fs.is_dir(subdir/'tests')
+    install_subdir(subdir/'tests', install_dir: np_dir/subdir, install_tag: 'tests')
+  endif
 endforeach
 
 install_subdir('tests', install_dir: np_dir, install_tag: 'tests')
