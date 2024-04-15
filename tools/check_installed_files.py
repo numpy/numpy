@@ -34,7 +34,7 @@ changed_installed_path = {
 }
 
 
-def main(install_dir):
+def main(install_dir, tests_check):
     INSTALLED_DIR = os.path.join(ROOT_DIR, install_dir)
     if not os.path.exists(INSTALLED_DIR):
         raise ValueError(
@@ -44,24 +44,36 @@ def main(install_dir):
     numpy_test_files = get_files(NUMPY_DIR, kind='test')
     installed_test_files = get_files(INSTALLED_DIR, kind='test')
 
-    # Check test files detected in repo are installed
-    for test_file in numpy_test_files.keys():
-        if test_file not in installed_test_files.keys():
+    if tests_check == "--no-tests":
+        if len(installed_test_files) > 0:
             raise Exception(
-                "%s is not installed" % numpy_test_files[test_file]
+                "Test files aren't expected to be installed in %s" % INSTALLED_DIR
             )
+    else:
+        # Check test files detected in repo are installed
+        for test_file in numpy_test_files.keys():
+            if test_file not in installed_test_files.keys():
+                raise Exception(
+                    "%s is not installed" % numpy_test_files[test_file]
+                )
 
-    print("----------- All the test files were installed --------------")
+        print("----------- All the test files were installed --------------")
 
     numpy_pyi_files = get_files(NUMPY_DIR, kind='stub')
     installed_pyi_files = get_files(INSTALLED_DIR, kind='stub')
 
-    # Check *.pyi files detected in repo are installed
-    for pyi_file in numpy_pyi_files.keys():
-        if pyi_file not in installed_pyi_files.keys():
-            raise Exception("%s is not installed" % numpy_pyi_files[pyi_file])
+    if tests_check == "--only-tests":
+        if len(installed_pyi_files) > 0:
+            raise Exception(
+                "Only test files are expected to be installed in %s" % INSTALLED_DIR
+            )
+    else:
+        # Check *.pyi files detected in repo are installed
+        for pyi_file in numpy_pyi_files.keys():
+            if pyi_file not in installed_pyi_files.keys():
+                raise Exception("%s is not installed" % numpy_pyi_files[pyi_file])
 
-    print("----------- All the .pyi files were installed --------------")
+        print("----------- All the .pyi files were installed --------------")
 
 
 def get_files(dir_to_check, kind='test'):
@@ -88,9 +100,12 @@ def get_files(dir_to_check, kind='test'):
 
 
 if __name__ == '__main__':
-    if not len(sys.argv) == 2:
+    if len(sys.argv) < 2:
         raise ValueError("Incorrect number of input arguments, need "
                          "check_installation.py relpath/to/installed/numpy")
 
     install_dir = sys.argv[1]
-    main(install_dir)
+    tests_check = ""
+    if len(sys.argv) >= 3:
+        tests_check = sys.argv[2]
+    main(install_dir, tests_check)

@@ -123,7 +123,8 @@ py.install_sources(
     'tests/test_seed_sequence.py',
     'tests/test_smoke.py',
   ],
-  subdir: 'numpy/random/tests'
+  subdir: 'numpy/random/tests',
+  install_tag: 'tests'
 )
 
 py.install_sources(
@@ -140,7 +141,8 @@ py.install_sources(
     'tests/data/sfc64-testset-1.csv',
     'tests/data/sfc64-testset-2.csv',
   ],
-  subdir: 'numpy/random/tests/data'
+  subdir: 'numpy/random/tests/data',
+  install_tag: 'tests'
 )
 
 py.install_sources(
