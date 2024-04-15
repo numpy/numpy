@@ -144,7 +144,7 @@ fail:
     return NULL;
 }
 
-NPY_NO_EXPORT int
+static int
 na_eq_cmp(PyObject *a, PyObject *b) {
     if (a == b) {
         // catches None and other singletons like Pandas.NA
@@ -185,39 +185,28 @@ _eq_comparison(int scoerce, int ocoerce, PyObject *sna, PyObject *ona)
     return na_eq_cmp(sna, ona);
 }
 
-// currently this can only return 1 or -1, the latter indicating that the
-// error indicator is set
+// Currently this can only return 1 or -1, the latter indicating that the
+// error indicator is set. Pass in out_na if you want to figure out which
+// na is valid.
 NPY_NO_EXPORT int
-stringdtype_compatible_na(PyObject *na1, PyObject *na2) {
-    if ((na1 == NULL) != (na2 == NULL)) {
-        return 1;
-    }
+stringdtype_compatible_na(PyObject *na1, PyObject *na2, PyObject **out_na) {
+    if ((na1 != NULL) && (na2 != NULL)) {
+        int na_eq = na_eq_cmp(na1, na2);
 
-    int na_eq = na_eq_cmp(na1, na2);
-
-    if (na_eq < 0) {
-        return -1;
+        if (na_eq < 0) {
+            return -1;
+        }
+        else if (na_eq == 0) {
+            PyErr_Format(PyExc_TypeError,
+                         "Cannot find a compatible null string value for "
+                         "null strings '%R' and '%R'", na1, na2);
+            return -1;
+        }
     }
-    else if (na_eq == 0) {
-        PyErr_Format(PyExc_TypeError,
-                     "Cannot find a compatible null string value for "
-                     "null strings '%R' and '%R'", na1, na2);
-        return -1;
+    if (out_na != NULL) {
+        *out_na = na1 ? na1 : na2;
     }
     return 1;
-}
-
-NPY_NO_EXPORT int
-stringdtype_compatible_settings(PyObject *na1, PyObject *na2, PyObject **out_na,
-                                int coerce1, int coerce2, int *out_coerce) {
-    int compatible = stringdtype_compatible_na(na1, na2);
-    if (compatible == -1) {
-        return -1;
-    }
-    *out_na = (na1 ? na1 : na2);
-    *out_coerce = (coerce1 && coerce2);
-
-    return 0;
 }
 
 /*
@@ -228,12 +217,10 @@ stringdtype_compatible_settings(PyObject *na1, PyObject *na2, PyObject **out_na,
 static PyArray_StringDTypeObject *
 common_instance(PyArray_StringDTypeObject *dtype1, PyArray_StringDTypeObject *dtype2)
 {
-    int out_coerce = 1;
     PyObject *out_na_object = NULL;
 
-    if (stringdtype_compatible_settings(
-                dtype1->na_object, dtype2->na_object, &out_na_object,
-                dtype1->coerce, dtype2->coerce, &out_coerce) == -1) {
+    if (stringdtype_compatible_na(
+                dtype1->na_object, dtype2->na_object, &out_na_object) == -1) {
         PyErr_Format(PyExc_TypeError,
                      "Cannot find common instance for incompatible dtypes "
                      "'%R' and '%R'", (PyObject *)dtype1, (PyObject *)dtype2);
@@ -241,7 +228,7 @@ common_instance(PyArray_StringDTypeObject *dtype1, PyArray_StringDTypeObject *dt
     }
 
     return (PyArray_StringDTypeObject *)new_stringdtype_instance(
-            out_na_object, out_coerce);
+            out_na_object, dtype1->coerce && dtype1->coerce);
 }
 
 /*
