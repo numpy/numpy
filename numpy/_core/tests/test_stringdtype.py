@@ -1363,8 +1363,9 @@ def test_unset_na_coercion():
     # a dtype instance with an unset na object is compatible
     # with a dtype that has one set
 
-    # this tests uses the "add" ufunc but all ufuncs that accept more
-    # than one string argument and produce a string should behave this way
+    # this test uses the "add" and "equal" ufunc but all ufuncs that
+    # accept more than one string argument and produce a string should
+    # behave this way
     # TODO: generalize to more ufuncs
     inp = ["hello", "world"]
     arr = np.array(inp, dtype=StringDType(na_object=None))
