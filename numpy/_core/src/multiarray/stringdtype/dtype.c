@@ -185,7 +185,7 @@ _eq_comparison(int scoerce, int ocoerce, PyObject *sna, PyObject *ona)
     return na_eq_cmp(sna, ona);
 }
 
-// Currently this can only return 1 or -1, the latter indicating that the
+// Currently this can only return 0 or -1, the latter indicating that the
 // error indicator is set. Pass in out_na if you want to figure out which
 // na is valid.
 NPY_NO_EXPORT int
@@ -206,7 +206,7 @@ stringdtype_compatible_na(PyObject *na1, PyObject *na2, PyObject **out_na) {
     if (out_na != NULL) {
         *out_na = na1 ? na1 : na2;
     }
-    return 1;
+    return 0;
 }
 
 /*
