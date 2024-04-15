@@ -118,15 +118,14 @@ PyUFuncOverride_GetOutObjects(PyObject *kwds, PyObject **out_kwd_obj, PyObject *
         seq = PySequence_Fast(*out_kwd_obj,
                               "Could not convert object to sequence");
         if (seq == NULL) {
-            *out_kwd_obj = NULL;
+            Py_CLEAR(*out_kwd_obj);
             return -1;
         }
         *out_objs = PySequence_Fast_ITEMS(seq);
-        *out_kwd_obj = seq;
+        Py_SETREF(*out_kwd_obj, seq);
         return PySequence_Fast_GET_SIZE(seq);
     }
     else {
-        Py_INCREF(*out_kwd_obj);
         *out_objs = out_kwd_obj;
         return 1;
     }
