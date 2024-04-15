@@ -1295,11 +1295,15 @@ class TestCov:
         # Test not mask output is equal after casting to float.
         mask = x > 0.5
         assert_array_equal(
-            _covhelper(np.ma.masked_array(x, mask), rowvar=True)[1].astype(bool),
+            _covhelper(
+                np.ma.masked_array(x, mask), rowvar=True
+            )[1].astype(bool),
             ~mask.reshape(1, -1),
         )
         assert_array_equal(
-            _covhelper(np.ma.masked_array(x, mask), y=x, rowvar=False)[1].astype(bool),
+            _covhelper(
+                np.ma.masked_array(x, mask), y=x, rowvar=False
+            )[1].astype(bool),
             np.vstack((~mask, ~mask)),
         )
 

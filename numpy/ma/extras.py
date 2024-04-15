@@ -1569,9 +1569,9 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
         tup = (None, slice(None))
     #
     if y is None:
-        # Check if we can guarantee that the integers in the (N - ddof) normalisation 
-        # can be accurately represented with single-precision before computing the dot 
-        # product.
+        # Check if we can guarantee that the integers in the (N - ddof) 
+        # normalisation can be accurately represented with single-precision 
+        # before computing the dot product.
         if x.shape[0] > 2 ** 24 or x.shape[1] > 2 ** 24:
             xnm_dtype = np.float64
         else:
@@ -1591,9 +1591,9 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
                     x._sharedmask = False
                     y._sharedmask = False
         x = ma.concatenate((x, y), axis)
-        # Check if we can guarantee that the integers in the (N - ddof) normalisation 
-        # can be accurately represented with single-precision before computing the dot 
-        # product.
+        # Check if we can guarantee that the integers in the (N - ddof) 
+        # normalisation can be accurately represented with single-precision 
+        # before computing the dot product.
         if x.shape[0] > 2 ** 24 or x.shape[1] > 2 ** 24:
             xnm_dtype = np.float64
         else:
