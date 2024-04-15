@@ -321,7 +321,8 @@ def _get_outer_edges(a, range):
         first_edge, last_edge = a.min(), a.max()
         if not (np.isfinite(first_edge) and np.isfinite(last_edge)):
             raise ValueError(
-                f"autodetected range of [{first_edge}, {last_edge}] is not finite")
+                f"autodetected range of "
+                f"[{first_edge}, {last_edge}] is not finite")
 
     # expand empty range to avoid divide by zero
     if first_edge == last_edge:
@@ -1016,7 +1017,7 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
 
             except TypeError as e:
                 raise TypeError(
-                	f'`bins[{i}]` must be an integer, when a scalar'
+                    f'`bins[{i}]` must be an integer, when a scalar'
                 ) from e
 
             edges[i] = np.linspace(smin, smax, n + 1)
@@ -1024,7 +1025,8 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
             edges[i] = np.asarray(bins[i])
             if np.any(edges[i][:-1] > edges[i][1:]):
                 raise ValueError(
-                    f'`bins[{i}]` must be monotonically increasing, when an array')
+                    f'`bins[{i}]` must be monotonically increasing, '
+                    'when an array')
         else:
             raise ValueError(
                 f'`bins[{i}]` must be a scalar or 1d array')

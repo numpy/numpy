@@ -882,8 +882,8 @@ def array_ufunc_errmsg_formatter(dummy, ufunc, method, *inputs, **kwargs):
 def array_function_errmsg_formatter(public_api, types):
     """ Format the error message for when __array_ufunc__ gives up. """
     func_name = f'{public_api.__module__}.{public_api.__name__}'
-    return (f"no implementation found for '{func_name}' on types that implement "
-            f'__array_function__: {list(types)}')
+    return (f"no implementation found for '{func_name}' on types "
+            f"that implement __array_function__: {list(types)}")
 
 
 def _ufunc_doc_signature_formatter(ufunc):
@@ -907,7 +907,7 @@ def _ufunc_doc_signature_formatter(ufunc):
     else:
         out_args = '[, {positional}], / [, out={default}]'.format(
             positional=', '.join(
-                'out{}'.format(i+1) for i in range(ufunc.nout)),
+                f'out{i+1}' for i in range(ufunc.nout)),
             default=repr((None,)*ufunc.nout)
         )
 
