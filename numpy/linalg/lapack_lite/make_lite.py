@@ -360,7 +360,7 @@ def main():
         patch_file = os.path.basename(fortran_file) + '.patch'
         if os.path.exists(patch_file):
             subprocess.check_call(['patch', '-u', fortran_file, patch_file])
-            print("Patched {}".format(fortran_file))
+            print(f"Patched {fortran_file}")
         try:
             runF2C(fortran_file, output_dir)
         except F2CError:

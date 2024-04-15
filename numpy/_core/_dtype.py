@@ -46,7 +46,7 @@ def __repr__(dtype):
     arg_str = _construction_repr(dtype, include_align=False)
     if dtype.isalignedstruct:
         arg_str = arg_str + ", align=True"
-    return "dtype({})".format(arg_str)
+    return f"dtype({arg_str})"
 
 
 def _unpack_field(dtype, offset, title=None):
@@ -187,9 +187,9 @@ def _datetime_metadata_str(dtype):
     if unit == 'generic':
         return ''
     elif count == 1:
-        return '[{}]'.format(unit)
+        return f'[{unit}]'
     else:
-        return '[{}{}]'.format(count, unit)
+        return f'[{count}{unit}]'
 
 
 def _struct_dict_str(dtype, includealignedflag):
@@ -367,7 +367,7 @@ def _name_get(dtype):
 
     # append bit counts
     if _name_includes_bit_suffix(dtype):
-        name += "{}".format(dtype.itemsize * 8)
+        name += f"{dtype.itemsize * 8}"
 
     # append metadata to datetimes
     if dtype.type in (np.datetime64, np.timedelta64):

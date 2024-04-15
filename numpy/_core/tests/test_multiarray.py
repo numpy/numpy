@@ -9263,7 +9263,7 @@ class TestFormat:
 
     def test_1d_no_format(self):
         a = np.array([np.pi])
-        assert_equal('{}'.format(a), str(a))
+        assert_equal(f'{a}', str(a))
 
     def test_1d_format(self):
         # until gh-5543, ensure that the behaviour matches what it used to be

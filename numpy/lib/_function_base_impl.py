@@ -869,7 +869,7 @@ def select(condlist, choicelist, default=0):
     for i, cond in enumerate(condlist):
         if cond.dtype.type is not np.bool:
             raise TypeError(
-                'invalid entry {} in condlist: should be boolean ndarray'.format(i))
+                f'invalid entry {i} in condlist: should be boolean ndarray')
 
     if choicelist[0].ndim == 0:
         # This may be common, so avoid the call.
@@ -2039,7 +2039,7 @@ def _parse_gufunc_signature(signature):
 
     if not re.match(_SIGNATURE, signature):
         raise ValueError(
-            'not a valid gufunc signature: {}'.format(signature))
+            f'not a valid gufunc signature: {signature}')
     return tuple([tuple(re.findall(_DIMENSION_NAME, arg))
                   for arg in re.findall(_ARGUMENT, arg_list)]
                  for arg_list in signature.split('->'))
@@ -5497,7 +5497,7 @@ def delete(arr, obj, axis=None):
             if obj.shape != (N,):
                 raise ValueError('boolean array argument obj to delete '
                                  'must be one dimensional and match the axis '
-                                 'length of {}'.format(N))
+                                 f'length of {N}')
 
             # optimization, the other branch is slower
             keep = ~obj

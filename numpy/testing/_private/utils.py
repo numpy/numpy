@@ -2510,11 +2510,8 @@ def _assert_no_gc_cycles_context(name=None):
                 n_objects_in_cycles,
                 len(objects_in_cycles),
                 ''.join(
-                    "\n  {} object with id={}:\n    {}".format(
-                        type(o).__name__,
-                        id(o),
-                        pprint.pformat(o).replace('\n', '\n    ')
-                    ) for o in objects_in_cycles
+                    f"\n  {type(o).__name__} object with id={id(o)}:\n    {pprint.pformat(o).replace('\n', '\n    ')}"
+                    for o in objects_in_cycles
                 )
             )
         )

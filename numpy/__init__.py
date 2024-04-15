@@ -480,7 +480,7 @@ else:
                             "\nIf you compiled yourself, more information is available at:"
                             "\nhttps://numpy.org/devdocs/building/index.html"
                             "\nOtherwise report this to the vendor "
-                            "that provided NumPy.\n\n{}\n".format(error_message))
+                            f"that provided NumPy.\n\n{error_message}\n")
                         raise RuntimeError(msg)
                 del _wn
             del w

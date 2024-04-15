@@ -35,7 +35,7 @@ class FindFuncs(ast.NodeVisitor):
             if node.args[0].value == "ignore":
                 raise AssertionError(
                     "warnings should have an appropriate stacklevel; found in "
-                    "{} on line {}".format(self.__filename, node.lineno))
+                    f"{self.__filename} on line {node.lineno}")
 
         if p.ls[-1] == 'warn' and (
                 len(p.ls) == 1 or p.ls[-2] == 'warnings'):
@@ -52,7 +52,7 @@ class FindFuncs(ast.NodeVisitor):
                 return
             raise AssertionError(
                 "warnings should have an appropriate stacklevel; found in "
-                "{} on line {}".format(self.__filename, node.lineno))
+                f"{self.__filename} on line {node.lineno}")
 
 
 @pytest.mark.slow

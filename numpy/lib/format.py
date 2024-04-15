@@ -394,7 +394,7 @@ def _wrap_header(header, version):
     try:
         header_prefix = magic(*version) + struct.pack(fmt, hlen + padlen)
     except struct.error:
-        msg = "Header length {} too big for version={}".format(hlen, version)
+        msg = f"Header length {hlen} too big for version={version}"
         raise ValueError(msg) from None
 
     # Pad the header with spaces and a final newline such that the magic

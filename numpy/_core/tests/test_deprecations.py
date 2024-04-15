@@ -258,7 +258,7 @@ class TestFromStringAndFileInvalidData(_DeprecationTestCase):
     @pytest.mark.parametrize("invalid_str", [",invalid_data", "invalid_sep"])
     def test_deprecate_unparsable_string(self, invalid_str):
         x = np.array([1.51, 2, 3.51, 4], dtype=float)
-        x_str = "1.51,2,3.51,4{}".format(invalid_str)
+        x_str = f"1.51,2,3.51,4{invalid_str}"
 
         self.assert_deprecated(lambda: np.fromstring(x_str, sep=","))
         self.assert_deprecated(lambda: np.fromstring(x_str, sep=",", count=5))

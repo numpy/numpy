@@ -229,7 +229,7 @@ def _c_string_literal(s):
     s = s.replace('\\', r'\\')
     s = s.replace('"',  r'\"')
     s = s.replace('\n', r'\n')
-    return '"{}"'.format(s)
+    return f'"{s}"'
 
 
 def libpaths(paths, bits):
@@ -819,7 +819,7 @@ class system_info:
         if AliasedOptionError.__doc__ is None:
             raise AliasedOptionError()
         raise AliasedOptionError(AliasedOptionError.__doc__.format(
-            section=self.section, options='[{}]'.format(', '.join(options))))
+            section=self.section, options=f'[{', '.join(options)}]'))
 
 
     def has_info(self):
@@ -1971,14 +1971,14 @@ class lapack_opt_info(system_info):
         return True
 
     def _calc_info(self, name):
-        return getattr(self, '_calc_info_{}'.format(name))()
+        return getattr(self, f'_calc_info_{name}')()
 
     def calc_info(self):
         lapack_order, unknown_order = _parse_env_order(self.lapack_order, self.order_env_var_name)
         if len(unknown_order) > 0:
             raise ValueError("lapack_opt_info user defined "
                              "LAPACK order has unacceptable "
-                             "values: {}".format(unknown_order))
+                             f"values: {unknown_order}")
 
         if 'NPY_LAPACK_LIBS' in os.environ:
             # Bypass autodetection, set language to F77 and use env var linker
@@ -2142,12 +2142,12 @@ class blas_opt_info(system_info):
         return True
 
     def _calc_info(self, name):
-        return getattr(self, '_calc_info_{}'.format(name))()
+        return getattr(self, f'_calc_info_{name}')()
 
     def calc_info(self):
         blas_order, unknown_order = _parse_env_order(self.blas_order, self.order_env_var_name)
         if len(unknown_order) > 0:
-            raise ValueError("blas_opt_info user defined BLAS order has unacceptable values: {}".format(unknown_order))
+            raise ValueError(f"blas_opt_info user defined BLAS order has unacceptable values: {unknown_order}")
 
         if 'NPY_BLAS_LIBS' in os.environ:
             # Bypass autodetection, set language to F77 and use env var linker
