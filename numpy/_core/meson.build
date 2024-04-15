@@ -1329,4 +1329,4 @@ py.install_sources(
 )
 
 subdir('include')
-install_subdir('tests', install_dir: np_dir / '_core', install_tag: 'python-runtime')
+install_subdir('tests', install_dir: np_dir / '_core', install_tag: 'tests')
