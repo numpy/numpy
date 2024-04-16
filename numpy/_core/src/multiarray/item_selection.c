@@ -2798,9 +2798,19 @@ PyArray_Nonzero(PyArrayObject *self)
 {
     int i, ndim = PyArray_NDIM(self);
     if (ndim == 0) {
-        PyErr_SetString(PyExc_ValueError,
-            "Calling nonzero on 0d arrays is not allowed. "
-            "Use np.atleast_1d(scalar).nonzero() instead.");
+        char const* msg;
+        if (PyArray_ISBOOL(self)) {
+            msg =
+                "Calling nonzero on 0d arrays is not allowed. "
+                "Use np.atleast_1d(scalar).nonzero() instead. "
+                "If the context of this error is of the form "
+                "`arr[nonzero(cond)]`, just use `arr[cond]`.";
+        } else {
+            msg =
+                "Calling nonzero on 0d arrays is not allowed. "
+                "Use np.atleast_1d(scalar).nonzero() instead.";
+        }
+        PyErr_SetString(PyExc_ValueError, msg);
         return NULL;
     }
 
