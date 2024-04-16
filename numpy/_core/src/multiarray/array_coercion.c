@@ -614,10 +614,13 @@ update_shape(int curr_ndim, int *max_ndim,
     return success;
 }
 
-
+#ifndef Py_GIL_DISABLED
 #define COERCION_CACHE_CACHE_SIZE 5
 static int _coercion_cache_num = 0;
 static coercion_cache_obj *_coercion_cache_cache[COERCION_CACHE_CACHE_SIZE];
+#else
+#define COERCION_CACHE_CACHE_SIZE 0
+#endif
 
 /*
  * Steals a reference to the object.
@@ -628,11 +631,14 @@ npy_new_coercion_cache(
         coercion_cache_obj ***next_ptr, int ndim)
 {
     coercion_cache_obj *cache;
+#if COERCION_CACHE_CACHE_SIZE > 0
     if (_coercion_cache_num > 0) {
         _coercion_cache_num--;
         cache = _coercion_cache_cache[_coercion_cache_num];
     }
-    else {
+    else
+#endif
+    {
         cache = PyMem_Malloc(sizeof(coercion_cache_obj));
     }
     if (cache == NULL) {
@@ -661,11 +667,14 @@ npy_unlink_coercion_cache(coercion_cache_obj *current)
 {
     coercion_cache_obj *next = current->next;
     Py_DECREF(current->arr_or_sequence);
+#if COERCION_CACHE_CACHE_SIZE > 0
     if (_coercion_cache_num < COERCION_CACHE_CACHE_SIZE) {
         _coercion_cache_cache[_coercion_cache_num] = current;
         _coercion_cache_num++;
     }
-    else {
+    else
+#endif
+    {
         PyMem_Free(current);
     }
     return next;
