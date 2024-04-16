@@ -1238,7 +1238,7 @@ class TestEinsumPath:
         arr = np.array([[1]])
         for sp in itertools.product(['', ' '], repeat=4):
             # no error for any spacing
-            np.einsum('{}...a{}->{}...a{}'.format(*sp), arr)
+            np.einsum(f'{sp[0]}...a{sp[1]}->{sp[2]}...a{sp[3]}', arr)
 
 def test_overlap():
     a = np.arange(9, dtype=int).reshape(3, 3)

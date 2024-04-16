@@ -1883,7 +1883,7 @@ class TestFromCTypes:
         Example: np.dtype('d,I') -> dtype([('f0', '<f8'), ('f1', '<u4')])
         """
         # gh-5645: check that np.dtype('i,L') can be used
-        pair_type = np.dtype('{},{}'.format(*pair))
+        pair_type = np.dtype(f'{pair[0]},{pair[1]}')
         expected = np.dtype([('f0', pair[0]), ('f1', pair[1])])
         assert_equal(pair_type, expected)
 
