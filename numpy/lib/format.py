@@ -612,7 +612,7 @@ def _read_array_header(fp, version, max_header_size=_MAX_HEADER_SIZE):
     import struct
     hinfo = _header_size_info.get(version)
     if hinfo is None:
-        raise ValueError("Invalid version {!r}".format(version))
+        raise ValueError(f"Invalid version {version!r}")
     hlength_type, encoding = hinfo
 
     hlength_str = _read_bytes(fp, struct.calcsize(hlength_type), "array header length")

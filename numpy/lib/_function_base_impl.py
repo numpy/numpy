@@ -2014,10 +2014,10 @@ def disp(mesg, device=None, linefeed=True):
 
 # See https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
 _DIMENSION_NAME = r'\w+'
-_CORE_DIMENSION_LIST = '(?:{0:}(?:,{0:})*)?'.format(_DIMENSION_NAME)
-_ARGUMENT = r'\({}\)'.format(_CORE_DIMENSION_LIST)
-_ARGUMENT_LIST = '{0:}(?:,{0:})*'.format(_ARGUMENT)
-_SIGNATURE = '^{0:}->{0:}$'.format(_ARGUMENT_LIST)
+_CORE_DIMENSION_LIST = f'(?:{_DIMENSION_NAME:}(?:,{_DIMENSION_NAME:})*)?'
+_ARGUMENT = fr'\({_CORE_DIMENSION_LIST}\)'
+_ARGUMENT_LIST = f'{_ARGUMENT:}(?:,{_ARGUMENT:})*'
+_SIGNATURE = f'^{_ARGUMENT_LIST:}->{_ARGUMENT_LIST:}$'
 
 
 def _parse_gufunc_signature(signature):

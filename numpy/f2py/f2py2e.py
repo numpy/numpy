@@ -471,10 +471,10 @@ def run_main(comline_list):
         if plist['block'] == 'python module' and '__user__' in plist['name']:
             if plist['name'] in isusedby:
                 # if not quiet:
+                joined_elements = ','.join(f'"{s}"' for s in isusedby[plist['name']])
                 outmess(
                     f'Skipping Makefile build for module "{plist["name"]}" '
-                    'which is used by {}\n'.format(
-                        ','.join(f'"{s}"' for s in isusedby[plist['name']])))
+                    f'which is used by {joined_elements}\n')
     if 'signsfile' in options:
         if options['verbose'] > 1:
             outmess(

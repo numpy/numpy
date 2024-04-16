@@ -452,8 +452,9 @@ class TestHistogramOptimBinNums:
             x = np.concatenate((x1, x2))
             for estimator, numbins in expectedResults.items():
                 a, b = np.histogram(x, estimator)
-                assert_equal(len(a), numbins, err_msg="For the {0} estimator "
-                             "with datasize of {1}".format(estimator, testlen))
+                assert_equal(len(a), numbins, err_msg=(
+                    f"For the {estimator} estimator "
+                    f"with datasize of {testlen}"))
 
     def test_small(self):
         """
@@ -472,8 +473,9 @@ class TestHistogramOptimBinNums:
             testdat = np.arange(testlen)
             for estimator, expbins in expectedResults.items():
                 a, b = np.histogram(testdat, estimator)
-                assert_equal(len(a), expbins, err_msg="For the {0} estimator "
-                             "with datasize of {1}".format(estimator, testlen))
+                assert_equal(len(a), expbins, err_msg=(
+                    f"For the {estimator} estimator "
+                    f"with datasize of {testlen}"))
 
     def test_incorrect_methods(self):
         """
@@ -578,8 +580,9 @@ class TestHistogramOptimBinNums:
             x = np.hstack((x1, x2, x3))
             for estimator, numbins in expectedResults.items():
                 a, b = np.histogram(x, estimator, range = (-20, 20))
-                msg = "For the {0} estimator".format(estimator)
-                msg += " with datasize of {0}".format(testlen)
+                msg = (
+                    f"For the {estimator} estimator"
+                    f" with datasize of {testlen}")
                 assert_equal(len(a), numbins, err_msg=msg)
 
     @pytest.mark.parametrize("bins", ['auto', 'fd', 'doane', 'scott',

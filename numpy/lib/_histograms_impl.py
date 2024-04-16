@@ -391,7 +391,7 @@ def _get_bin_edges(a, bins, range, weights):
         # this will replace it with the number of bins calculated
         if bin_name not in _hist_bin_selectors:
             raise ValueError(
-                "{!r} is not a valid estimator for `bins`".format(bin_name))
+                f"{bin_name!r} is not a valid estimator for `bins`")
         if weights is not None:
             raise TypeError("Automated estimation of the number of "
                             "bins is not supported for weighted data")
