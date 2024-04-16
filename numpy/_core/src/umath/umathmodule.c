@@ -309,6 +309,7 @@ int initumath(PyObject *m)
         return -1;
     }
     if (install_logical_ufunc_promoter(s) < 0) {
+        Py_DECREF(s);
         return -1;
     }
     Py_DECREF(s);
@@ -318,6 +319,7 @@ int initumath(PyObject *m)
         return -1;
     }
     if (install_logical_ufunc_promoter(s) < 0) {
+        Py_DECREF(s);
         return -1;
     }
     Py_DECREF(s);
@@ -327,6 +329,7 @@ int initumath(PyObject *m)
         return -1;
     }
     if (install_logical_ufunc_promoter(s) < 0) {
+        Py_DECREF(s);
         return -1;
     }
     Py_DECREF(s);
