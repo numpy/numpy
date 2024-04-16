@@ -162,7 +162,7 @@ class GnuFCompiler(FCompiler):
 
         libgfortran_dir = None
         if libgfortran_name:
-            find_lib_arg = ['-print-file-name={0}'.format(libgfortran_name)]
+            find_lib_arg = [f'-print-file-name={libgfortran_name}']
             try:
                 output = subprocess.check_output(
                                        self.compiler_f77 + find_lib_arg)
