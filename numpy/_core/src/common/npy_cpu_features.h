@@ -98,6 +98,9 @@ enum npy_cpu_features
     // Vector-Enhancements Facility 2
     NPY_CPU_FEATURE_VXE2              = 352,
 
+    // RISC-V
+    NPY_CPU_FEATURE_RVV               = 400,
+
     NPY_CPU_FEATURE_MAX
 };
 
