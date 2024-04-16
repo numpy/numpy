@@ -189,13 +189,14 @@ cdef class RandomState:
 
         self._initialize_bit_generator(bit_generator)
 
-    def __repr__(self):
-        return self.__str__() + ' at 0x{:X}'.format(id(self))
+    def __repr__(self) -> str:
+        return f'{self.__str__()} at 0x{id(self):X}'
 
-    def __str__(self):
-        _str = self.__class__.__name__
-        _str += '(' + self._bit_generator.__class__.__name__ + ')'
-        return _str
+    def __str__(self) -> str:
+        return (
+            f'{self.__class__.__name__}'
+            f'({self._bit_generator.__class__.__name__})'
+        )
 
     # Pickling support:
     def __getstate__(self):
@@ -1387,17 +1388,22 @@ cdef class RandomState:
 
         """
         if high is None:
-            warnings.warn(("This function is deprecated. Please call "
-                           "randint(1, {low} + 1) instead".format(low=low)),
-                          DeprecationWarning)
+            warnings.warn(
+                (
+                    "This function is deprecated. Please call "
+                    f"randint(1, {low} + 1) instead"
+                ),
+                DeprecationWarning)
             high = low
             low = 1
 
         else:
-            warnings.warn(("This function is deprecated. Please call "
-                           "randint({low}, {high} + 1) "
-                           "instead".format(low=low, high=high)),
-                          DeprecationWarning)
+            warnings.warn(
+                (
+                    "This function is deprecated. Please call "
+                    f"randint({low}, {high} + 1) instead"
+                ),
+                DeprecationWarning)
 
         return self.randint(low, int(high) + 1, size=size, dtype='l')
 
