@@ -539,7 +539,7 @@ def put(a, ind, v, mode='raise'):
         put = a.put
     except AttributeError as e:
         raise TypeError("argument 1 must be numpy.ndarray, "
-                        "not {name}".format(name=type(a).__name__)) from e
+                       f"not {type(a).__name__}") from e
 
     return put(ind, v, mode=mode)
 

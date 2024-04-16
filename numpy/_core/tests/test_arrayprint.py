@@ -509,7 +509,7 @@ class TestArray2String:
         assert_equal(a[0], text)
         text = text.item()  # use raw python strings for repr below
         # and that np.array2string puts a newline in the expected location
-        expected_repr = "[{0!r} {0!r}\n {0!r}]".format(text)
+        expected_repr = f"[{text!r} {text!r}\n {text!r}]"
         result = np.array2string(a, max_line_width=len(repr(text)) * 2 + 3)
         assert_equal(result, expected_repr)
 
