@@ -14,7 +14,7 @@ body {
 
 /* Version switcher colors from PyData Sphinx Theme */
 
-.version-switcher__button[data-active-version-name*="dev"] {
+.version-switcher__button[data-active-version-name*="devdocs"] {
   background-color: var(--pst-color-warning);
   border-color: var(--pst-color-warning);
   opacity: 0.9;
