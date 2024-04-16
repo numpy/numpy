@@ -139,6 +139,9 @@ py.install_sources(
     'tests/data/philox-testset-2.csv',
     'tests/data/sfc64-testset-1.csv',
     'tests/data/sfc64-testset-2.csv',
+    'tests/data/sfc64_np126.pkl.gz',
+    'tests/data/generator_pcg64_np126.pkl.gz',
+    'tests/data/generator_pcg64_np121.pkl.gz',
   ],
   subdir: 'numpy/random/tests/data'
 )
