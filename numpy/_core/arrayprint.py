@@ -1432,7 +1432,7 @@ class StructuredVoidFormat:
             for field, format_function in zip(x, self.format_functions)
         ]
         if len(str_fields) == 1:
-            return f"({str_fields[0]},)".format(str_fields[0])
+            return f"({str_fields[0]},)"
         else:
             return f"({', '.join(str_fields)})"
 
