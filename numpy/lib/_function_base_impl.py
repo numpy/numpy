@@ -3868,20 +3868,11 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
 
     """
 
-    """
-    Addressing issue 26216
-    Calculate the median date by sorting the list of np.datetime64 values and selecting either
-    the middle value if the list has an odd length or the middle two values if the list has an even length.
-
-    If the list is odd, returns the middle date, and if the list is even, it calculates the average distance between
-    the middle two dates, adding this average distance to the earlier middle date.
-    """
-
     # handle edge case where a is a Python list
     if isinstance(a, list):
         a = np.array(a)
 
-    if a.size > 0 and len(a.shape) > 0 and all(isinstance(i, np.datetime64) for i in a):
+    if a.size > 0 and len(a.shape) > 0 and all(isinstance(i, np.datetime64) for i in a) and axis is None:
         a = sorted(a)
         if len(a) % 2 != 0:
             return a[len(a)//2]
@@ -3890,15 +3881,20 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
             first = a[len(a)//2 - 1]
             days_between = (second - first)//2
             median_date = np.datetime64(first + days_between)
-            return median_date
+
+            if out is not None:
+                np.append(out, [median_date])
+                return out
+
+            else:
+                return median_date
+    elif a.size > 0 and len(a.shape) > 0 and all(isinstance(i, np.datetime64) for i in a) and axis is not None:
+        if isinstance(axis, int):
+            dates = a[:,axis]
+    
     else:
         return _ureduce(a, func=_median, keepdims=keepdims, axis=axis, out=out,
                         overwrite_input=overwrite_input)
-
-    """
-    return _ureduce(a, func=_median, keepdims=keepdims, axis=axis, out=out,
-                    overwrite_input=overwrite_input)
-    """
 
 
 def _median(a, axis=None, out=None, overwrite_input=False):
