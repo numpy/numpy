@@ -279,3 +279,8 @@ jobs:
       run: |
         # Need the explicit `bash -c` here because `grep` returns exit code 1 for no matches
         bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/,vendored-meson/ | grep 'unreachable'"
+    - name: Check usage of install_tag
+      run: |
+        rm -rf build_install
+        ./vendored-meson/meson/meson.py install -C build --destdir ../build-install --tags=runtime,python-runtime,devel
+        python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy') --no-tests
