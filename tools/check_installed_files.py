@@ -21,6 +21,7 @@ meant for use in CI so it's not like many files will be missing at once.
 import os
 import glob
 import sys
+import json
 
 
 CUR_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__)))
@@ -107,3 +108,16 @@ if __name__ == '__main__':
     if len(sys.argv) >= 3:
         tests_check = sys.argv[2]
     main(install_dir, tests_check)
+
+    all_tags = set()
+
+    with open(os.path.join('build', 'meson-info', 'intro-install_plan.json'), 'r') as f:
+        targets = json.load(f)
+
+    for key in targets.keys():
+        for values in list(targets[key].values()):
+            if not values['tag'] in all_tags:
+                all_tags.add(values['tag'])
+
+    if all_tags != set(['runtime', 'python-runtime', 'devel', 'tests']):
+        raise AssertionError(f"Found unexpected install tag: {all_tags}")
