@@ -2148,7 +2148,7 @@ class blas_opt_info(system_info):
         blas_order, unknown_order = _parse_env_order(self.blas_order, self.order_env_var_name)
         if len(unknown_order) > 0:
             raise ValueError(
-                f"blas_opt_info user defined BLAS order "
+                "blas_opt_info user defined BLAS order "
                 f"has unacceptable values: {unknown_order}")
 
         if 'NPY_BLAS_LIBS' in os.environ:

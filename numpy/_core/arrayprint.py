@@ -1434,7 +1434,8 @@ class StructuredVoidFormat:
         if len(str_fields) == 1:
             return f"({str_fields[0]},)"
         else:
-            return f"({', '.join(str_fields)})"
+            all_str_fields = ', '.join(str_fields)
+            return f"({all_str_fields})"
 
 
 def _void_scalar_to_string(x, is_repr=True):

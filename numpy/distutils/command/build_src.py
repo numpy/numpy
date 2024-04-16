@@ -93,7 +93,8 @@ class build_src(build_ext.build_ext):
 
         if self.build_src is None:
             plat_specifier = (
-                f".{get_platform()}-{sys.version_info[0]}.{sys.version_info[1]}"
+                f".{get_platform()}-"
+                f"{sys.version_info[0]}.{sys.version_info[1]}"
             )
             self.build_src = os.path.join(self.build_base, 'src'+plat_specifier)
 
