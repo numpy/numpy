@@ -123,7 +123,8 @@ py.install_sources(
     'tests/test_seed_sequence.py',
     'tests/test_smoke.py',
   ],
-  subdir: 'numpy/random/tests'
+  subdir: 'numpy/random/tests',
+  install_tag: 'tests'
 )
 
 py.install_sources(
@@ -143,7 +144,8 @@ py.install_sources(
     'tests/data/generator_pcg64_np126.pkl.gz',
     'tests/data/generator_pcg64_np121.pkl.gz',
   ],
-  subdir: 'numpy/random/tests/data'
+  subdir: 'numpy/random/tests/data',
+  install_tag: 'tests'
 )
 
 py.install_sources(
