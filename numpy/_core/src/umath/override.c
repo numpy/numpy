@@ -155,6 +155,7 @@ normalize_signature_keyword(PyObject *normal_kwds)
     }
     if (result == 1) {
         if (PyDict_SetItemString(normal_kwds, "signature", obj) < 0) {
+            Py_DECREF(obj);
             return -1;
         }
         Py_DECREF(obj);

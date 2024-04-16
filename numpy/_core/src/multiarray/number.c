@@ -68,6 +68,7 @@ array_inplace_matrix_multiply(PyArrayObject *m1, PyObject *m2);
     } \
     else if (res == 1) { \
         if (!(PyCallable_Check(temp))) { \
+            Py_DECREF(temp); \
             return -1; \
         } \
         Py_XSETREF(n_ops.op, temp); \
