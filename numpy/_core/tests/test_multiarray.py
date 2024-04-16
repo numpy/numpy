@@ -2138,7 +2138,7 @@ class TestMethods:
                 arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=endianness + dt)
                 c = arr.copy()
                 c.sort()
-                msg = 'byte-swapped complex sort, dtype={0}'.format(dt)
+                msg = f'byte-swapped complex sort, dtype={dt}'
                 assert_equal(c, arr, msg)
 
     @pytest.mark.parametrize('dtype', [np.bytes_, np.str_])
@@ -2225,7 +2225,7 @@ class TestMethods:
         a = np.array([])
         a.shape = (3, 2, 1, 0)
         for axis in range(-a.ndim, a.ndim):
-            msg = 'test empty array sort with axis={0}'.format(axis)
+            msg = f'test empty array sort with axis={axis}'
             assert_equal(np.sort(a, axis=axis), a, msg)
         msg = 'test empty array sort with axis=None'
         assert_equal(np.sort(a, axis=None), a.ravel(), msg)

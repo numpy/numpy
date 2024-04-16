@@ -289,16 +289,13 @@ def _struct_list_str(dtype):
 
         item = "("
         if title is not None:
-            item += "({!r}, {!r}), ".format(title, name)
+            item += f"({title!r}, {name!r}), "
         else:
-            item += "{!r}, ".format(name)
+            item += f"{name!r}, "
         # Special case subarray handling here
         if fld_dtype.subdtype is not None:
             base, shape = fld_dtype.subdtype
-            item += "{}, {}".format(
-                _construction_repr(base, short=True),
-                shape
-            )
+            item += f"{_construction_repr(base, short=True)}, {shape}"
         else:
             item += _construction_repr(fld_dtype, short=True)
 
@@ -320,17 +317,14 @@ def _struct_str(dtype, include_align):
 
     # If the data type isn't the default, void, show it
     if dtype.type != np.void:
-        return "({t.__module__}.{t.__name__}, {f})".format(t=dtype.type, f=sub)
+        return f"({dtype.type.__module__}.{dtype.type.__name__}, {sub})"
     else:
         return sub
 
 
 def _subarray_str(dtype):
     base, shape = dtype.subdtype
-    return "({}, {})".format(
-        _construction_repr(base, short=True),
-        shape
-    )
+    return f"({_construction_repr(base, short=True)}, {shape})"
 
 
 def _name_includes_bit_suffix(dtype):
