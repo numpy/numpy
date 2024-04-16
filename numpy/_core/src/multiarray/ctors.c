@@ -2394,14 +2394,12 @@ PyArray_FromInterface(PyObject *origin)
             PyErr_SetString(PyExc_TypeError,
                     "strides must be a tuple");
             Py_DECREF(ret);
-            Py_DECREF(attr);
             goto fail;
         }
         if (n != PyTuple_GET_SIZE(attr)) {
             PyErr_SetString(PyExc_ValueError,
                     "mismatch in length of strides and shape");
             Py_DECREF(ret);
-            Py_DECREF(attr);
             goto fail;
         }
         for (i = 0; i < n; i++) {
@@ -2409,7 +2407,6 @@ PyArray_FromInterface(PyObject *origin)
             strides[i] = PyArray_PyIntAsIntp(tmp);
             if (error_converting(strides[i])) {
                 Py_DECREF(ret);
-                Py_DECREF(attr);
                 goto fail;
             }
         }
