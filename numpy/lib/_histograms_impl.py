@@ -359,7 +359,7 @@ def _unsigned_subtract(a, b):
                            casting='unsafe', dtype=unsigned_dt)
 
 
-def _get_bin_edges(a, bins, range, weights):
+def _get_bin_edges(a, bins, range, weights, symlog=None):
     """
     Computes the bins used internally by `histogram`.
 
@@ -367,7 +367,7 @@ def _get_bin_edges(a, bins, range, weights):
     ==========
     a : ndarray
         Ravelled data array
-    bins, range
+    bins, range, symlog
         Forwarded arguments from `histogram`.
     weights : ndarray, optional
         Ravelled weights array, or None
@@ -383,6 +383,17 @@ def _get_bin_edges(a, bins, range, weights):
     # parse the overloaded bins argument
     n_equal_bins = None
     bin_edges = None
+    if symlog:
+        if np.ndim(bins) != 0:
+            warnings.warn(
+                "symlog option is only valid when bins is an integer. "
+                "Attempting without symlog.",
+                stacklevel=2
+            )
+            return _get_bin_edges(a, bins, range, weights, symlog=None)
+        n_unequal_bins = bins
+        bin_edges = _get_geomspace_edges(n_unequal_bins, a)
+        return bin_edges, None
 
     if isinstance(bins, str):
         bin_name = bins
@@ -451,6 +462,37 @@ def _get_bin_edges(a, bins, range, weights):
         return bin_edges, (first_edge, last_edge, n_equal_bins)
     else:
         return bin_edges, None
+
+
+def _get_geomspace_edges(n_unequal_bins, a):
+    """
+    Compute the bin edges for a histogram with geometrically spaced bins.
+    The bins are spaced such that the width of each bin is constant in
+    log-space.
+    Reference issue: https://github.com/numpy/numpy/issues/24368
+    Returns
+    -------
+    bin_edges : ndarray
+        The edges of the bins.
+    """
+    # The idea is to use the absolute min and max of the data to compute the
+    # range, and then the pseudo-first and last edge.
+    pseudo_first_edge, pseudo_last_edge = abs(a).min(), abs(a).max()
+    # Compute the edges of the bins.
+    num_bins = int(n_unequal_bins)
+    if n_unequal_bins % 2 == 0:
+        num_bins = int(n_unequal_bins / 2)
+    bin_edges_geomspaced = np.geomspace(
+        pseudo_first_edge, pseudo_last_edge, num=num_bins
+    )
+    bin_edges_concatenated = np.concatenate(
+        (-bin_edges_geomspaced, [0], bin_edges_geomspaced)
+    )
+    bin_edges_sorted = np.sort(bin_edges_concatenated)
+    bin_edges = bin_edges_sorted
+    if n_unequal_bins % 2 == 1:
+        bin_edges = bin_edges_sorted[::2]
+    return bin_edges
 
 
 def _search_sorted_inclusive(a, v):
@@ -673,12 +715,13 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
 
 
 def _histogram_dispatcher(
-        a, bins=None, range=None, density=None, weights=None):
+    a, bins=None, range=None, density=None, weights=None, symlog=None
+):
     return (a, bins, weights)
 
 
 @array_function_dispatch(_histogram_dispatcher)
-def histogram(a, bins=10, range=None, density=None, weights=None):
+def histogram(a, bins=10, range=None, density=None, weights=None, symlog=None):
     r"""
     Compute the histogram of a dataset.
 
@@ -721,6 +764,10 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
         the *integral* over the range is 1. Note that the sum of the
         histogram values will not be equal to 1 unless bins of unity
         width are chosen; it is not a probability *mass* function.
+    symlog : bool, optional
+        Allow numpy.histogram to give geometrically spaced bin edges.
+        Data can include both negative and positive numbers.
+        Based on https://github.com/numpy/numpy/issues/24368.
 
     Returns
     -------
@@ -768,6 +815,34 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
 
     .. versionadded:: 1.11.0
 
+    >>> # Example for symlog
+    >>> data = np.array([
+    ...     -2.40000e-03, -3.50000e-01, -4.60000e-02, -2.00000e-01,
+    ...     -3.60000e-04, -4.00000e+00, -2.60000e+01, -3.64000e+02,
+    ...     -2.43000e+02, -1.53240e+04, -1.35525e+05,  1.20000e-02,
+    ...      3.00000e-01,  1.40000e-03,  7.00000e-01,  7.00000e+00,
+    ...      3.60000e+01,  9.46000e+02,  2.54520e+04, -4.80000e-03,
+    ...     -7.00000e-01, -9.20000e-02, -4.00000e-01, -7.20000e-04,
+    ...     -8.00000e+00, -5.20000e+01, -7.28000e+02, -4.86000e+02,
+    ...     -3.06480e+04, -2.71050e+05,  2.40000e-02,  6.00000e-01,
+    ...      2.80000e-03,  1.40000e+00,  1.40000e+01,  7.20000e+01,
+    ...      1.89200e+03,  5.09040e+04, -1.20000e-03, -1.75000e-01,
+    ...     -2.30000e-02, -1.00000e-01, -1.80000e-04, -2.00000e+00,
+    ...     -1.30000e+01, -1.82000e+02, -1.21500e+02, -7.66200e+03,
+    ...     -6.77625e+04,  6.00000e-03,  1.50000e-01,  7.00000e-04,
+    ...      3.50000e-01,  3.50000e+00,  1.80000e+01,  4.73000e+02,
+    ...      1.27260e+04])
+    >>> np.histogram(data, bins=5, symlog=True)
+    (array([16, 16,  1, 13, 11]),
+     array([-2.71050000e+05, -6.98491231e+00, -1.80000000e-04,  1.80000000e-04,
+         6.98491231e+00,  2.71050000e+05]))
+
+    >>> np.histogram(data, bins=10, symlog=True)
+    (array([ 6, 10, 10,  6,  1,  0,  6,  7,  7,  4]),
+     array([-2.71050000e+05, -1.37595802e+03, -6.98491231e+00, -3.54582038e-02,
+        -1.80000000e-04,  0.00000000e+00,  1.80000000e-04,  3.54582038e-02,
+         6.98491231e+00,  1.37595802e+03,  2.71050000e+05]))
+
     Automated Bin Selection Methods example, using 2 peak random data
     with 2000 points.
 
@@ -787,7 +862,7 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
     """
     a, weights = _ravel_and_check_weights(a, weights)
 
-    bin_edges, uniform_bins = _get_bin_edges(a, bins, range, weights)
+    bin_edges, uniform_bins = _get_bin_edges(a, bins, range, weights, symlog)
 
     # Histogram is an integer or a float array depending on the weights.
     if weights is None:

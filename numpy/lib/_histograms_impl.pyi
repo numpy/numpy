@@ -36,6 +36,7 @@ def histogram(
     range: None | tuple[float, float] = ...,
     density: bool = ...,
     weights: None | ArrayLike = ...,
+    symlog: None | bool = ...,
 ) -> tuple[NDArray[Any], NDArray[Any]]: ...
 
 def histogramdd(
