@@ -111,7 +111,8 @@ if __name__ == '__main__':
 
     all_tags = set()
 
-    with open(os.path.join('build', 'meson-info', 'intro-install_plan.json'), 'r') as f:
+    with open(os.path.join('build', 'meson-info',
+                           'intro-install_plan.json'), 'r') as f:
         targets = json.load(f)
 
     for key in targets.keys():
