@@ -53,6 +53,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
+    strategy:
+      matrix:
+        version: ["3.10", "3.11", "3.12", "3.13-dev"]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
@@ -60,7 +63,7 @@ jobs:
         fetch-tags: true
     - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
-        python-version: '3.10'
+        python-version: ${{ matrix.version }}
     - uses: ./.github/meson_actions
 
   pypy:
