@@ -26,9 +26,14 @@ body {
   opacity: 0.9;
 }
 
+.version-switcher__menu a.list-group-item {
+  font-size: small;
+}
+
 button.btn.version-switcher__button,
 button.btn.version-switcher__button:hover {
   color: black;
+  font-size: small;
 }
 
 /* Main index page overview cards */
