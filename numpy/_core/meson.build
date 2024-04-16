@@ -112,7 +112,8 @@ if use_highway
     ],
     cpp_args: '-DTOOLCHAIN_MISS_ASM_HWCAP_H',
     include_directories: ['src/highway'],
-    install: false
+    install: false,
+    gnu_symbol_visibility: 'hidden',
   )
 else
   highway_lib = []
@@ -561,6 +562,7 @@ npymath_lib = static_library('npymath',
   install_dir: np_dir / '_core/lib',
   name_prefix: name_prefix_staticlib,
   name_suffix: name_suffix_staticlib,
+  gnu_symbol_visibility: 'hidden',
 )
 
 dir_separator = '/'
