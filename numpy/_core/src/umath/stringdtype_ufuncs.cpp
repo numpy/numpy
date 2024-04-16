@@ -246,20 +246,11 @@ binary_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(method),
 {
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
+    int out_coerce = descr1->coerce && descr1->coerce;
+    PyObject *out_na_object = NULL;
 
-    // _eq_comparison has a short-circuit pointer comparison fast path,
-    // so no need to check here
-    int eq_res = _eq_comparison(descr1->coerce, descr2->coerce,
-                                descr1->na_object, descr2->na_object);
-
-    if (eq_res < 0) {
-        return (NPY_CASTING)-1;
-    }
-
-    if (eq_res != 1) {
-        PyErr_SetString(PyExc_TypeError,
-                        "Can only do binary operations with equal StringDType "
-                        "instances.");
+    if (stringdtype_compatible_na(
+                descr1->na_object, descr2->na_object, &out_na_object) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -272,8 +263,7 @@ binary_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(method),
 
     if (given_descrs[2] == NULL) {
         out_descr = (PyArray_Descr *)new_stringdtype_instance(
-                ((PyArray_StringDTypeObject *)given_descrs[1])->na_object,
-                ((PyArray_StringDTypeObject *)given_descrs[1])->coerce);
+                out_na_object, out_coerce);
 
         if (out_descr == NULL) {
             return (NPY_CASTING)-1;
@@ -562,6 +552,13 @@ string_comparison_resolve_descriptors(
         PyArray_Descr *const given_descrs[],
         PyArray_Descr *loop_descrs[], npy_intp *NPY_UNUSED(view_offset))
 {
+    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
+    PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
+
+    if (stringdtype_compatible_na(descr1->na_object, descr2->na_object, NULL) == -1) {
+        return (NPY_CASTING)-1;
+    }
+
     Py_INCREF(given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
     Py_INCREF(given_descrs[1]);
@@ -789,19 +786,7 @@ string_findlike_resolve_descriptors(
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
 
-    // _eq_comparison has a short-circuit pointer comparison fast path,
-    // so no need to check here
-    int eq_res = _eq_comparison(descr1->coerce, descr2->coerce,
-                                descr1->na_object, descr2->na_object);
-
-    if (eq_res < 0) {
-        return (NPY_CASTING)-1;
-    }
-
-    if (eq_res != 1) {
-        PyErr_SetString(PyExc_TypeError,
-                        "Can only do binary operations with equal StringDType "
-                        "instances.");
+    if (stringdtype_compatible_na(descr1->na_object, descr2->na_object, NULL) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -850,19 +835,7 @@ string_startswith_endswith_resolve_descriptors(
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
 
-    // _eq_comparison has a short-circuit pointer comparison fast path, so
-    // no need to do it here
-    int eq_res = _eq_comparison(descr1->coerce, descr2->coerce,
-                                descr1->na_object, descr2->na_object);
-
-    if (eq_res < 0) {
-        return (NPY_CASTING)-1;
-    }
-
-    if (eq_res != 1) {
-        PyErr_SetString(PyExc_TypeError,
-                        "Can only do binary operations with equal StringDType "
-                        "instances.");
+    if (stringdtype_compatible_na(descr1->na_object, descr2->na_object, NULL) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -1060,46 +1033,6 @@ all_strings_promoter(PyObject *NPY_UNUSED(ufunc),
     new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_StringDType);
     return 0;
 }
-
-static NPY_CASTING
-strip_chars_resolve_descriptors(
-        struct PyArrayMethodObject_tag *NPY_UNUSED(method),
-        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
-        PyArray_Descr *const given_descrs[],
-        PyArray_Descr *loop_descrs[],
-        npy_intp *NPY_UNUSED(view_offset))
-{
-    Py_INCREF(given_descrs[0]);
-    loop_descrs[0] = given_descrs[0];
-
-    // we don't actually care about the null behavior of the second argument,
-    // so no need to check if the first two descrs are equal like in
-    // binary_resolve_descriptors
-
-    Py_INCREF(given_descrs[1]);
-    loop_descrs[1] = given_descrs[1];
-
-    PyArray_Descr *out_descr = NULL;
-
-    if (given_descrs[2] == NULL) {
-        out_descr = (PyArray_Descr *)new_stringdtype_instance(
-                ((PyArray_StringDTypeObject *)given_descrs[0])->na_object,
-                ((PyArray_StringDTypeObject *)given_descrs[0])->coerce);
-
-        if (out_descr == NULL) {
-            return (NPY_CASTING)-1;
-        }
-    }
-    else {
-        Py_INCREF(given_descrs[2]);
-        out_descr = given_descrs[2];
-    }
-
-    loop_descrs[2] = out_descr;
-
-    return NPY_NO_CASTING;
-}
-
 
 NPY_NO_EXPORT int
 string_lrstrip_chars_strided_loop(
@@ -1308,22 +1241,16 @@ replace_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(method),
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
     PyArray_StringDTypeObject *descr3 = (PyArray_StringDTypeObject *)given_descrs[2];
+    int out_coerce = descr1->coerce && descr2->coerce && descr3->coerce;
+    PyObject *out_na_object = NULL;
 
-    // _eq_comparison has a short-circuit pointer comparison fast path, so
-    // no need to do it here
-    int eq_res = (_eq_comparison(descr1->coerce, descr2->coerce,
-                                 descr1->na_object, descr2->na_object) &&
-                  _eq_comparison(descr1->coerce, descr3->coerce,
-                                 descr1->na_object, descr3->na_object));
-
-    if (eq_res < 0) {
+    if (stringdtype_compatible_na(
+                descr1->na_object, descr2->na_object, &out_na_object) == -1) {
         return (NPY_CASTING)-1;
     }
 
-    if (eq_res != 1) {
-        PyErr_SetString(PyExc_TypeError,
-                        "String replace is only supported with equal StringDType "
-                        "instances.");
+    if (stringdtype_compatible_na(
+                out_na_object, descr3->na_object, &out_na_object) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -1340,8 +1267,7 @@ replace_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(method),
 
     if (given_descrs[4] == NULL) {
         out_descr = (PyArray_Descr *)new_stringdtype_instance(
-                ((PyArray_StringDTypeObject *)given_descrs[0])->na_object,
-                ((PyArray_StringDTypeObject *)given_descrs[0])->coerce);
+                out_na_object, out_coerce);
 
         if (out_descr == NULL) {
             return (NPY_CASTING)-1;
@@ -1588,18 +1514,11 @@ center_ljust_rjust_resolve_descriptors(
 {
     PyArray_StringDTypeObject *input_descr = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *fill_descr = (PyArray_StringDTypeObject *)given_descrs[2];
+    int out_coerce = input_descr->coerce && fill_descr->coerce;
+    PyObject *out_na_object = NULL;
 
-    int eq_res = _eq_comparison(input_descr->coerce, fill_descr->coerce,
-                                input_descr->na_object, fill_descr->na_object);
-
-    if (eq_res < 0) {
-        return (NPY_CASTING)-1;
-    }
-
-    if (eq_res != 1) {
-        PyErr_SetString(PyExc_TypeError,
-                        "Can only do text justification operations with equal"
-                        "StringDType instances.");
+    if (stringdtype_compatible_na(
+                input_descr->na_object, fill_descr->na_object, &out_na_object) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -1614,8 +1533,7 @@ center_ljust_rjust_resolve_descriptors(
 
     if (given_descrs[3] == NULL) {
         out_descr = (PyArray_Descr *)new_stringdtype_instance(
-                ((PyArray_StringDTypeObject *)given_descrs[1])->na_object,
-                ((PyArray_StringDTypeObject *)given_descrs[1])->coerce);
+                out_na_object, out_coerce);
 
         if (out_descr == NULL) {
             return (NPY_CASTING)-1;
@@ -1888,6 +1806,7 @@ fail:
     return -1;
 }
 
+
 static NPY_CASTING
 string_partition_resolve_descriptors(
         PyArrayMethodObject *self,
@@ -1901,14 +1820,25 @@ string_partition_resolve_descriptors(
                      "currently support the 'out' keyword", self->name);
         return (NPY_CASTING)-1;
     }
-    for (int i=0; i<2; i++) {
-        Py_INCREF(given_descrs[i]);
-        loop_descrs[i] = given_descrs[i];
+
+    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
+    PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
+    int out_coerce = descr1->coerce && descr2->coerce;
+    PyObject *out_na_object = NULL;
+
+    if (stringdtype_compatible_na(
+                descr1->na_object, descr2->na_object, &out_na_object) == -1) {
+        return (NPY_CASTING)-1;
     }
-    PyArray_StringDTypeObject *adescr = (PyArray_StringDTypeObject *)given_descrs[0];
+
+    Py_INCREF(given_descrs[0]);
+    loop_descrs[0] = given_descrs[0];
+    Py_INCREF(given_descrs[1]);
+    loop_descrs[1] = given_descrs[1];
+
     for (int i=2; i<5; i++) {
         loop_descrs[i] = (PyArray_Descr *)new_stringdtype_instance(
-                adescr->na_object, adescr->coerce);
+                out_na_object, out_coerce);
         if (loop_descrs[i] == NULL) {
             return (NPY_CASTING)-1;
         }
@@ -2655,7 +2585,7 @@ init_stringdtype_ufuncs(PyObject *umath)
 
     for (int i=0; i<3; i++) {
         if (init_ufunc(umath, strip_chars_names[i], strip_chars_dtypes,
-                       &strip_chars_resolve_descriptors,
+                       &binary_resolve_descriptors,
                        &string_lrstrip_chars_strided_loop,
                        2, 1, NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0,
                        &strip_types[i]) < 0) {
