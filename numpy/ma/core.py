@@ -165,36 +165,11 @@ class MaskError(MAError):
 
 
 # b: boolean - c: complex - f: floats - i: integer - O: object - S: string
-"""
-default_filler = {'b': True,
-                  'c': 1.e20 + 0.0j,
-                  'f': 1.e20,
-                  'i': 999999,
-                  'O': '?',
-                  'S': b'N/A',
-                  'u': 999999,
-                  'V': b'???',
-                  'U': 'N/A'
-                  }
-"""
-
-"""
-Addressing issue 25677
-Added different custom fill values for different ints and floats.
-"""
 default_filler = {'b': True,
                   'c': 1.e20 + 0.0j,
                   "float16": 65504,
-                  "float32": pow(2, 31) - 1,
-                  "float64": pow(2, 63) - 1,
-                  "int8": 127,
-                  "uint8": 255,
-                  'int16': 32767,
-                  "uint16": 65535,
-                  "int32": 2147483647,
-                  "uint32": 4294967295,
-                  "int64": 9223372036854775807,
-                  "uint64": pow(2, 64) - 1,
+                  "float32": 1.e20,
+                  "float64": 1.e20,
                   "i": 999999,
                   'O': '?',
                   'S': b'N/A',
@@ -324,18 +299,10 @@ def default_fill_value(obj):
         if dtype.kind in 'Mm':
             return default_filler.get(dtype.str[1:], '?')
         else:
-            """
-            Addressing issue 25677
-            Using str(dtype) acts as the key in the default_filler dictionary to retrieve the
-            custom value.
-
-            If this key does not exist in default_filler, then dtype.kind is used as the key instead.
-            """
             if default_filler.get(str(dtype)) is not None:
                 return default_filler.get(str(dtype), '?')
             else:
                 return default_filler.get(dtype.kind, '?')
-            # return default_filler.get(dtype.kind, '?')
 
     dtype = _get_dtype_of(obj)
     return _recursive_fill_value(dtype, _scalar_fill_value)
@@ -7122,11 +7089,6 @@ def power(a, b, third=None):
     # Get the masks
     ma = getmask(a)
     mb = getmask(b)
-    # m = mask_or(ma, mb)
-    """
-    Addressing issue 25589
-    Added shrink = False on line 7130 to preserve the existing mask.
-    """
     m = mask_or(ma, mb, shrink=False)
     # Get the rawdata
     fa = getdata(a)
