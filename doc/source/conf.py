@@ -251,7 +251,12 @@ html_theme_options = {
     ],
     "header_links_before_dropdown": 6,
     # Add light/dark mode and documentation version switcher:
-    "navbar_end": ["search-button", "theme-switcher", "version-switcher", "navbar-icon-links"],
+    "navbar_end": [
+        "search-button",
+        "theme-switcher",
+        "version-switcher",
+        "navbar-icon-links"
+    ],
     "navbar_persistent": [],
     "switcher": {
         "version_match": switcher_version,
