@@ -2034,7 +2034,7 @@ add_newdoc('numpy._core.multiarray', 'c_einsum',
     To enable and control broadcasting, use an ellipsis.  Default
     NumPy-style broadcasting is done by adding an ellipsis
     to the left of each term, like ``np.einsum('...ii->...i', a)``.
-    ``np.einsum('...i->...', a)`` is like 
+    ``np.einsum('...i->...', a)`` is like
     :py:func:`np.sum(a, axis=-1) <numpy.sum>` for array ``a`` of any shape.
     To take the trace along the first and last axes,
     you can do ``np.einsum('i...i', a)``, or to do a matrix-matrix
@@ -4869,37 +4869,6 @@ add_newdoc('numpy._core.multiarray', '_set_madvise_hugepage',
     Set  or unset use of ``madvise (2)`` MADV_HUGEPAGE support when
     allocating the array data. Returns the previously set value.
     See `global_state` for more information.
-    """)
-
-add_newdoc('numpy._core._multiarray_tests', 'format_float_OSprintf_g',
-    """
-    format_float_OSprintf_g(val, precision)
-
-    Print a floating point scalar using the system's printf function,
-    equivalent to:
-
-        printf("%.*g", precision, val);
-
-    for half/float/double, or replacing 'g' by 'Lg' for longdouble. This
-    method is designed to help cross-validate the format_float_* methods.
-
-    Parameters
-    ----------
-    val : python float or numpy floating scalar
-        Value to format.
-
-    precision : non-negative integer, optional
-        Precision given to printf.
-
-    Returns
-    -------
-    rep : string
-        The string representation of the floating point value
-
-    See Also
-    --------
-    format_float_scientific
-    format_float_positional
     """)
 
 
