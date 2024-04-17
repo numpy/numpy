@@ -33,7 +33,7 @@
 #include <stddef.h>
 
 #include "npy_config.h"
-
+#include "npy_pycompat.h"
 #include "npy_argparse.h"
 
 #include "numpy/arrayobject.h"
@@ -142,8 +142,10 @@ PyUFunc_clearfperr()
 NPY_NO_EXPORT int
 set_matmul_flags(PyObject *d)
 {
-    PyObject *matmul = _PyDict_GetItemStringWithError(d, "matmul");
-    if (matmul == NULL) {
+    PyObject *matmul = NULL;
+    int result = PyDict_GetItemStringRef(d, "matmul", &matmul);
+    if (result <= 0) {
+        // caller sets an error if one isn't already set
         return -1;
     }
     /*
@@ -162,6 +164,7 @@ set_matmul_flags(PyObject *d)
                                          NPY_ITER_UPDATEIFCOPY |
                                          NPY_UFUNC_DEFAULT_OUTPUT_FLAGS) &
                                          ~NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
+    Py_DECREF(matmul);
     return 0;
 }
 

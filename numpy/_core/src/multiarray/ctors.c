@@ -12,7 +12,7 @@
 #include "numpy/npy_math.h"
 
 #include "npy_config.h"
-
+#include "npy_pycompat.h"
 #include "npy_ctypes.h"
 
 #include "multiarraymodule.h"
@@ -2180,10 +2180,10 @@ PyArray_FromInterface(PyObject *origin)
     }
 
     /* Get type string from interface specification */
-    attr = _PyDict_GetItemStringWithError(iface, "typestr");
-    if (attr == NULL) {
+    int result = PyDict_GetItemStringRef(iface, "typestr", &attr);
+    if (result <= 0) {
         Py_DECREF(iface);
-        if (!PyErr_Occurred()) {
+        if (result == 0) {
             PyErr_SetString(PyExc_ValueError,
                     "Missing __array_interface__ typestr");
         }
@@ -2207,43 +2207,47 @@ PyArray_FromInterface(PyObject *origin)
      * the 'descr' attribute.
      */
     if (dtype->type_num == NPY_VOID) {
-        PyObject *descr = _PyDict_GetItemStringWithError(iface, "descr");
-        if (descr == NULL && PyErr_Occurred()) {
+        PyObject *descr = NULL;
+        result = PyDict_GetItemStringRef(iface, "descr", &descr);
+        if (result == -1) {
             goto fail;
         }
         PyArray_Descr *new_dtype = NULL;
-        if (descr != NULL) {
+        if (result == 1) {
             int is_default = _is_default_descr(descr, attr);
             if (is_default < 0) {
+                Py_DECREF(descr);
                 goto fail;
             }
             if (!is_default) {
                 if (PyArray_DescrConverter2(descr, &new_dtype) != NPY_SUCCEED) {
+                    Py_DECREF(descr);
                     goto fail;
                 }
                 if (new_dtype != NULL) {
-                    Py_DECREF(dtype);
-                    dtype = new_dtype;
+                    Py_SETREF(dtype, new_dtype);
                 }
             }
-
         }
-
+        Py_DECREF(descr);
     }
+    Py_CLEAR(attr);
 
     /* Get shape tuple from interface specification */
-    attr = _PyDict_GetItemStringWithError(iface, "shape");
-    if (attr == NULL) {
-        if (PyErr_Occurred()) {
-            return NULL;
-        }
+    result = PyDict_GetItemStringRef(iface, "shape", &attr);
+    if (result < 0) {
+        return NULL;
+    }
+    if (result == 0) {
         /* Shape must be specified when 'data' is specified */
-        PyObject *data = _PyDict_GetItemStringWithError(iface, "data");
-        if (data == NULL && PyErr_Occurred()) {
+        int result = PyDict_ContainsString(iface, "data");
+        if (result < 0) {
+            Py_DECREF(attr);
             return NULL;
         }
-        else if (data != NULL) {
+        else if (result == 1) {
             Py_DECREF(iface);
+            Py_DECREF(attr);
             PyErr_SetString(PyExc_ValueError,
                     "Missing __array_interface__ shape");
             return NULL;
@@ -2271,10 +2275,11 @@ PyArray_FromInterface(PyObject *origin)
             }
         }
     }
+    Py_CLEAR(attr);
 
     /* Get data buffer from interface specification */
-    attr = _PyDict_GetItemStringWithError(iface, "data");
-    if (attr == NULL && PyErr_Occurred()){
+    result = PyDict_GetItemStringRef(iface, "data", &attr);
+    if (result == -1){
         return NULL;
     }
 
@@ -2337,20 +2342,24 @@ PyArray_FromInterface(PyObject *origin)
         PyBuffer_Release(&view);
 
         /* Get offset number from interface specification */
-        attr = _PyDict_GetItemStringWithError(iface, "offset");
-        if (attr == NULL && PyErr_Occurred()) {
+        PyObject *offset = NULL;
+        result = PyDict_GetItemStringRef(iface, "offset", &offset);
+        if (result == -1) {
             goto fail;
         }
-        else if (attr) {
-            npy_longlong num = PyLong_AsLongLong(attr);
+        else if (result == 1) {
+            npy_longlong num = PyLong_AsLongLong(offset);
             if (error_converting(num)) {
                 PyErr_SetString(PyExc_TypeError,
                         "__array_interface__ offset must be an integer");
+                Py_DECREF(offset);
                 goto fail;
             }
             data += num;
+            Py_DECREF(offset);
         }
     }
+    Py_CLEAR(attr);
 
     ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
             &PyArray_Type, dtype,
@@ -2376,11 +2385,11 @@ PyArray_FromInterface(PyObject *origin)
             goto fail;
         }
     }
-    attr = _PyDict_GetItemStringWithError(iface, "strides");
-    if (attr == NULL && PyErr_Occurred()){
+    result = PyDict_GetItemStringRef(iface, "strides", &attr);
+    if (result == -1){
         return NULL;
     }
-    if (attr != NULL && attr != Py_None) {
+    if (result == 1 && attr != Py_None) {
         if (!PyTuple_Check(attr)) {
             PyErr_SetString(PyExc_TypeError,
                     "strides must be a tuple");
@@ -2404,12 +2413,14 @@ PyArray_FromInterface(PyObject *origin)
         if (n) {
             memcpy(PyArray_STRIDES(ret), strides, n*sizeof(npy_intp));
         }
+        Py_DECREF(attr);
     }
     PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
     Py_DECREF(iface);
     return (PyObject *)ret;
 
  fail:
+    Py_XDECREF(attr);
     Py_XDECREF(dtype);
     Py_XDECREF(iface);
     return NULL;
