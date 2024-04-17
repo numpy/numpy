@@ -298,6 +298,24 @@ class Base:
         aa = pickle.loads(pickle.dumps(ss))
         assert_equal(ss.state, aa.state)
 
+    def test_pickle_preserves_seed_sequence(self):
+        # GH 26234
+        # Add explicit test that bit generators preserve seed sequences
+        import pickle
+
+        bit_generator = self.bit_generator(*self.data1['seed'])
+        ss = bit_generator.seed_seq
+        bg_plk = pickle.loads(pickle.dumps(bit_generator))
+        ss_plk = bg_plk.seed_seq
+        assert_equal(ss.state, ss_plk.state)
+        assert_equal(ss.pool, ss_plk.pool)
+
+        bit_generator.seed_seq.spawn(10)
+        bg_plk = pickle.loads(pickle.dumps(bit_generator))
+        ss_plk = bg_plk.seed_seq
+        assert_equal(ss.state, ss_plk.state)
+        assert_equal(ss.n_children_spawned, ss_plk.n_children_spawned)
+
     def test_invalid_state_type(self):
         bit_generator = self.bit_generator(*self.data1['seed'])
         with pytest.raises(TypeError):
@@ -349,8 +367,9 @@ class Base:
         bit_generator = self.bit_generator(*self.data1['seed'])
         state = bit_generator.state
         alt_state = bit_generator.__getstate__()
-        assert_state_equal(state, alt_state)
-
+        assert isinstance(alt_state, tuple)
+        assert_state_equal(state, alt_state[0])
+        assert isinstance(alt_state[1], SeedSequence)
 
 class TestPhilox(Base):
     @classmethod
@@ -411,6 +430,7 @@ class TestPCG64(Base):
         state = pcg.state["state"]
         advanced_state = 135275564607035429730177404003164635391
         assert state["state"] == advanced_state
+
 
 
 class TestPCG64DXSM(Base):
@@ -501,6 +521,29 @@ class TestSFC64(Base):
         cls.seed_error_type = (ValueError, TypeError)
         cls.invalid_init_types = [(3.2,), ([None],), (1, None)]
         cls.invalid_init_values = [(-1,)]
+
+    def test_legacy_pickle(self):
+        # Pickling format was changed in 2.0.x
+        import gzip
+        import pickle
+
+        expected_state = np.array(
+            [
+                9957867060933711493,
+                532597980065565856,
+                14769588338631205282,
+                13
+            ],
+            dtype=np.uint64
+        )
+
+        base_path = os.path.split(os.path.abspath(__file__))[0]
+        pkl_file = os.path.join(base_path, "data", f"sfc64_np126.pkl.gz")
+        with gzip.open(pkl_file) as gz:
+            sfc = pickle.load(gz)
+
+        assert isinstance(sfc, SFC64)
+        assert_equal(sfc.state["state"]["state"], expected_state)
 
 
 class TestDefaultRNG:

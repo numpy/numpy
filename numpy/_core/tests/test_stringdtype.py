@@ -225,6 +225,18 @@ def test_self_casts(dtype, dtype2, strings):
     else:
         arr.astype(dtype2, casting="safe")
 
+    if hasattr(dtype, "na_object") and hasattr(dtype2, "na_object"):
+        na1 = dtype.na_object
+        na2 = dtype2.na_object
+        if ((na1 is not na2 and
+             # check for pd_NA first because bool(pd_NA) is an error
+             ((na1 is pd_NA or na2 is pd_NA) or
+              # the second check is a NaN check, spelled this way
+              # to avoid errors from math.isnan and np.isnan
+              (na1 != na2 and not (na1 != na1 and na2 != na2))))):
+            with pytest.raises(TypeError):
+                arr[:-1] == newarr[:-1]
+            return
     assert_array_equal(arr[:-1], newarr[:-1])
 
 
@@ -356,7 +368,7 @@ def test_isnan(dtype, string_list):
         # isnan is only true when na_object is a NaN
         assert_array_equal(
             np.isnan(sarr),
-            np.array([0] * len(string_list) + [1], dtype=np.bool_),
+            np.array([0] * len(string_list) + [1], dtype=np.bool),
         )
     else:
         assert not np.any(np.isnan(sarr))
@@ -456,6 +468,29 @@ def test_creation_functions():
 
     assert np.zeros(3, dtype="T")[0] == ""
     assert np.empty(3, dtype="T")[0] == ""
+
+
+def test_create_with_copy_none(string_list):
+    arr = np.array(string_list, dtype=StringDType())
+    # create another stringdtype array with an arena that has a different
+    # in-memory layout than the first array
+    arr_rev = np.array(string_list[::-1], dtype=StringDType())
+
+    # this should create a copy and the resulting array
+    # shouldn't share an allocator or arena with arr_rev, despite
+    # explicitly passing arr_rev.dtype
+    arr_copy = np.array(arr, copy=None, dtype=arr_rev.dtype)
+    np.testing.assert_array_equal(arr, arr_copy)
+    assert arr_copy.base is None
+
+    with pytest.raises(ValueError, match="Unable to avoid copy"):
+        np.array(arr, copy=False, dtype=arr_rev.dtype)
+
+    # because we're using arr's dtype instance, the view is safe
+    arr_view = np.array(arr, copy=None, dtype=arr.dtype)
+    np.testing.assert_array_equal(arr, arr)
+    np.testing.assert_array_equal(arr_view[::-1], arr_rev)
+    assert arr_view is arr
 
 
 @pytest.mark.parametrize(
@@ -763,6 +798,12 @@ def test_multiply_reduce():
     val = "school-🚌"
     res = np.multiply.reduce(repeats, initial=val, dtype=np.dtypes.StringDType)
     assert res == val * np.prod(repeats)
+
+
+def test_multiply_two_string_raises():
+    arr = np.array(["hello", "world"], dtype="T")
+    with pytest.raises(np._core._exceptions._UFuncNoLoopError):
+        np.multiply(arr, arr)
 
 
 @pytest.mark.parametrize("use_out", [True, False])
@@ -1246,6 +1287,27 @@ def test_binary(string_array, unicode_array, function_name, args):
         assert 0
 
 
+@pytest.mark.parametrize("function, expected", [
+    (np.strings.find, [[2, -1], [1, -1]]),
+    (np.strings.startswith, [[False, False], [True, False]])])
+@pytest.mark.parametrize("start, stop", [
+    (1, 4),
+    (np.int8(1), np.int8(4)),
+    (np.array([1, 1], dtype='u2'), np.array([4, 4], dtype='u2'))])
+def test_non_default_start_stop(function, start, stop, expected):
+    a = np.array([["--🐍--", "--🦜--"],
+                  ["-🐍---", "-🦜---"]], "T")
+    indx = function(a, "🐍", start, stop)
+    assert_array_equal(indx, expected)
+
+
+@pytest.mark.parametrize("count", [2, np.int8(2), np.array([2, 2], 'u2')])
+def test_replace_non_default_repeat(count):
+    a = np.array(["🐍--", "🦜-🦜-"], "T")
+    result = np.strings.replace(a, "🦜-", "🦜†", count)
+    assert_array_equal(result, np.array(["🐍--", "🦜†🦜†"], "T"))
+
+
 def test_strip_ljust_rjust_consistency(string_array, unicode_array):
     rjs = np.char.rjust(string_array, 1000)
     rju = np.char.rjust(unicode_array, 1000)
@@ -1272,6 +1334,47 @@ def test_strip_ljust_rjust_consistency(string_array, unicode_array):
         np.char.strip(rjs),
         np.char.strip(rju).astype(StringDType()),
     )
+
+
+def test_unset_na_coercion():
+    # a dtype instance with an unset na object is compatible
+    # with a dtype that has one set
+
+    # this test uses the "add" and "equal" ufunc but all ufuncs that
+    # accept more than one string argument and produce a string should
+    # behave this way
+    # TODO: generalize to more ufuncs
+    inp = ["hello", "world"]
+    arr = np.array(inp, dtype=StringDType(na_object=None))
+    for op_dtype in [None, StringDType(), StringDType(coerce=False),
+                     StringDType(na_object=None)]:
+        if op_dtype is None:
+            op = "2"
+        else:
+            op = np.array("2", dtype=op_dtype)
+        res = arr + op
+        assert_array_equal(res, ["hello2", "world2"])
+
+    # dtype instances with distinct explicitly set NA objects are incompatible
+    for op_dtype in [StringDType(na_object=pd_NA), StringDType(na_object="")]:
+        op = np.array("2", dtype=op_dtype)
+        with pytest.raises(TypeError):
+            arr + op
+
+    # comparisons only consider the na_object
+    for op_dtype in [None, StringDType(), StringDType(coerce=True),
+                     StringDType(na_object=None)]:
+        if op_dtype is None:
+            op = inp
+        else:
+            op = np.array(inp, dtype=op_dtype)
+        assert_array_equal(arr, op)
+
+    for op_dtype in [StringDType(na_object=pd_NA),
+                     StringDType(na_object=np.nan)]:
+        op = np.array(inp, dtype=op_dtype)
+        with pytest.raises(TypeError):
+            arr == op
 
 
 class TestImplementation:

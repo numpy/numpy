@@ -948,6 +948,8 @@ add_newdoc('numpy._core.multiarray', 'asarray',
         the other requirements (``dtype``, ``order``, etc.).
         For ``False`` it raises a ``ValueError`` if a copy cannot be avoided.
         Default: ``None``.
+
+        .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -2032,7 +2034,7 @@ add_newdoc('numpy._core.multiarray', 'c_einsum',
     To enable and control broadcasting, use an ellipsis.  Default
     NumPy-style broadcasting is done by adding an ellipsis
     to the left of each term, like ``np.einsum('...ii->...i', a)``.
-    ``np.einsum('...i->...', a)`` is like 
+    ``np.einsum('...i->...', a)`` is like
     :py:func:`np.sum(a, axis=-1) <numpy.sum>` for array ``a`` of any shape.
     To take the trace along the first and last axes,
     you can do ``np.einsum('i...i', a)``, or to do a matrix-matrix
@@ -2943,15 +2945,19 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('mT',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__array__',
     """
-    a.__array__([dtype], /, *, copy=None)
+    a.__array__([dtype], *, copy=None)
 
-    For ``dtype`` parameter it returns either a new reference to self if
-    ``dtype`` is not given or a new array of provided data type if ``dtype``
+    For ``dtype`` parameter it returns a new reference to self if
+    ``dtype`` is not given or it matches array's data type.
+    A new array of provided data type is returned if ``dtype``
     is different from the current data type of the array.
     For ``copy`` parameter it returns a new reference to self if
     ``copy=False`` or ``copy=None`` and copying isn't enforced by ``dtype``
     parameter. The method returns a new array for ``copy=True``, regardless of
     ``dtype`` parameter.
+
+    A more detailed explanation of the ``__array__`` interface
+    can be found in :ref:`dunder_array.interface`.
 
     """))
 
@@ -4743,7 +4749,7 @@ add_newdoc('numpy._core.umath', '_add_newdoc_ufunc',
     Notes
     -----
     This method allocates memory for new_docstring on
-    the heap. Technically this creates a mempory leak, since this
+    the heap. Technically this creates a memory leak, since this
     memory will not be reclaimed until the end of the program
     even if the ufunc itself is removed. However this will only
     be a problem if the user is repeatedly creating ufuncs with
@@ -4863,37 +4869,6 @@ add_newdoc('numpy._core.multiarray', '_set_madvise_hugepage',
     Set  or unset use of ``madvise (2)`` MADV_HUGEPAGE support when
     allocating the array data. Returns the previously set value.
     See `global_state` for more information.
-    """)
-
-add_newdoc('numpy._core._multiarray_tests', 'format_float_OSprintf_g',
-    """
-    format_float_OSprintf_g(val, precision)
-
-    Print a floating point scalar using the system's printf function,
-    equivalent to:
-
-        printf("%.*g", precision, val);
-
-    for half/float/double, or replacing 'g' by 'Lg' for longdouble. This
-    method is designed to help cross-validate the format_float_* methods.
-
-    Parameters
-    ----------
-    val : python float or numpy floating scalar
-        Value to format.
-
-    precision : non-negative integer, optional
-        Precision given to printf.
-
-    Returns
-    -------
-    rep : string
-        The string representation of the floating point value
-
-    See Also
-    --------
-    format_float_scientific
-    format_float_positional
     """)
 
 

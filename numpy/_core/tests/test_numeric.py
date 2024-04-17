@@ -798,7 +798,7 @@ class TestBoolCmp:
         # Propagation of the RISC-V Unprivileged ISA for more details.
         # We disable the float32 sign test on riscv64 for -np.nan as the sign
         # of the NaN will be lost when it's converted to a float32.
-        if platform.processor() != 'riscv64':
+        if platform.machine() != 'riscv64':
             self.signf[3::6][self.ef[3::6]] = -np.nan
         self.signd[3::6][self.ed[3::6]] = -np.nan
         self.signf[4::6][self.ef[4::6]] = -0.
@@ -1567,16 +1567,12 @@ class TestNonzero:
         assert_equal(np.count_nonzero(np.array([1], dtype='?')), 1)
         assert_equal(np.nonzero(np.array([1])), ([0],))
 
-    def test_nonzero_zerod(self):
-        assert_equal(np.count_nonzero(np.array(0)), 0)
-        assert_equal(np.count_nonzero(np.array(0, dtype='?')), 0)
-        with assert_warns(DeprecationWarning):
-            assert_equal(np.nonzero(np.array(0)), ([],))
-
-        assert_equal(np.count_nonzero(np.array(1)), 1)
-        assert_equal(np.count_nonzero(np.array(1, dtype='?')), 1)
-        with assert_warns(DeprecationWarning):
-            assert_equal(np.nonzero(np.array(1)), ([0],))
+    def test_nonzero_zerodim(self):
+        err_msg = "Calling nonzero on 0d arrays is not allowed"
+        with assert_raises_regex(ValueError, err_msg):
+            np.nonzero(np.array(0))
+        with assert_raises_regex(ValueError, err_msg):
+            np.array(1).nonzero()
 
     def test_nonzero_onedim(self):
         x = np.array([1, 0, 2, -1, 0, 0, 8])
@@ -1968,6 +1964,9 @@ class TestBaseRepr:
             np.base_repr(1, 1)
         with assert_raises(ValueError):
             np.base_repr(1, 37)
+
+    def test_minimal_signed_int(self):
+        assert_equal(np.base_repr(np.int8(-128)), '-10000000')
 
 
 def _test_array_equal_parametrizations():

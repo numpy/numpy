@@ -46,7 +46,7 @@
   #error "The NumPy 2 compat header requires `import_array()` for which "  \
          "the `ndarraytypes.h` header include is not sufficient.  Please "  \
          "include it after `numpy/ndarrayobject.h` or similar.\n"  \
-         "To simplify includsion, you may use `PyArray_ImportNumPy()` " \
+         "To simplify inclusion, you may use `PyArray_ImportNumPy()` " \
          "which is defined in the compat header and is lightweight (can be)."
 #endif
 
@@ -220,19 +220,19 @@ DESCR_ACCESSOR(C_METADATA, c_metadata, NpyAuxData *, 1)
 #if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
 #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
     static inline PyArray_ArrFuncs *
-    PyDataType_GetArrFuncs(PyArray_Descr *descr)
+    PyDataType_GetArrFuncs(const PyArray_Descr *descr)
     {
         return _PyDataType_GetArrFuncs(descr);
     }
 #elif NPY_ABI_VERSION < 0x02000000
     static inline PyArray_ArrFuncs *
-    PyDataType_GetArrFuncs(PyArray_Descr *descr)
+    PyDataType_GetArrFuncs(const PyArray_Descr *descr)
     {
         return descr->f;
     }
 #else
     static inline PyArray_ArrFuncs *
-    PyDataType_GetArrFuncs(PyArray_Descr *descr)
+    PyDataType_GetArrFuncs(const PyArray_Descr *descr)
     {
         if (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION) {
             return _PyDataType_GetArrFuncs(descr);

@@ -16,7 +16,7 @@
 #include "npy_config.h"
 #include "numpy/arrayobject.h"
 
-#include "npy_pycompat.h"
+
 #include "array_assign.h"
 #include "array_coercion.h"
 #include "array_method.h"

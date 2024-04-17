@@ -12,9 +12,9 @@
 #include "numpy/npy_math.h"
 
 #include "npy_config.h"
-
-#include "npy_ctypes.h"
 #include "npy_pycompat.h"
+#include "npy_ctypes.h"
+
 #include "multiarraymodule.h"
 
 #include "common.h"
@@ -38,6 +38,13 @@
 #include "array_coercion.h"
 
 #include "umathmodule.h"
+
+
+NPY_NO_EXPORT const char *npy_no_copy_err_msg = (
+        "Unable to avoid copy while creating an array as requested.\n"
+        "If using `np.array(obj, copy=False)` replace it with `np.asarray(obj)` "
+        "to allow a copy when needed (no behavior change in NumPy 1.x).\n"
+        "For more details, see https://numpy.org/devdocs/numpy_2_0_migration_guide.html#adapting-to-changes-in-the-copy-keyword.");
 
 /*
  * Reading from a file or a string.
@@ -1637,9 +1644,8 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
      * If we got this far, we definitely have to create a copy, since we are
      * converting either from a scalar (cache == NULL) or a (nested) sequence.
      */
-    if (flags & NPY_ARRAY_ENSURENOCOPY ) {
-        PyErr_SetString(PyExc_ValueError,
-                "Unable to avoid copy while creating an array.");
+    if (flags & NPY_ARRAY_ENSURENOCOPY) {
+        PyErr_SetString(PyExc_ValueError, npy_no_copy_err_msg);
         Py_DECREF(dtype);
         npy_free_coercion_cache(cache);
         return NULL;
@@ -1847,8 +1853,7 @@ PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
             && !PyArray_ElementStrides(obj)) {
         PyObject *ret;
         if (requires & NPY_ARRAY_ENSURENOCOPY) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Unable to avoid copy while creating a new array.");
+            PyErr_SetString(PyExc_ValueError, npy_no_copy_err_msg);
             return NULL;
         }
         ret = PyArray_NewCopy((PyArrayObject *)obj, NPY_ANYORDER);
@@ -1908,8 +1913,10 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     }
 
     arrflags = PyArray_FLAGS(arr);
-           /* If a guaranteed copy was requested */
-    copy = (flags & NPY_ARRAY_ENSURECOPY) ||
+
+
+    copy = /* If a guaranteed copy was requested */
+           (flags & NPY_ARRAY_ENSURECOPY) ||
            /* If C contiguous was requested, and arr is not */
            ((flags & NPY_ARRAY_C_CONTIGUOUS) &&
                    (!(arrflags & NPY_ARRAY_C_CONTIGUOUS))) ||
@@ -1921,13 +1928,17 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
                    (!(arrflags & NPY_ARRAY_F_CONTIGUOUS))) ||
            /* If a writeable array was requested, and arr is not */
            ((flags & NPY_ARRAY_WRITEABLE) &&
-                   (!(arrflags & NPY_ARRAY_WRITEABLE))) ||
-           !PyArray_EquivTypes(oldtype, newtype);
+                   (!(arrflags & NPY_ARRAY_WRITEABLE)));
+
+    if (!copy) {
+        npy_intp view_offset;
+        npy_intp is_safe = PyArray_SafeCast(oldtype, newtype, &view_offset, NPY_NO_CASTING, 1);
+        copy = !(is_safe && (view_offset != NPY_MIN_INTP));
+    }
 
     if (copy) {
         if (flags & NPY_ARRAY_ENSURENOCOPY ) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Unable to avoid copy while creating an array from given array.");
+            PyErr_SetString(PyExc_ValueError, npy_no_copy_err_msg);
             Py_DECREF(newtype);
             return NULL;
         }
@@ -2169,10 +2180,10 @@ PyArray_FromInterface(PyObject *origin)
     }
 
     /* Get type string from interface specification */
-    attr = _PyDict_GetItemStringWithError(iface, "typestr");
-    if (attr == NULL) {
+    int result = PyDict_GetItemStringRef(iface, "typestr", &attr);
+    if (result <= 0) {
         Py_DECREF(iface);
-        if (!PyErr_Occurred()) {
+        if (result == 0) {
             PyErr_SetString(PyExc_ValueError,
                     "Missing __array_interface__ typestr");
         }
@@ -2196,43 +2207,47 @@ PyArray_FromInterface(PyObject *origin)
      * the 'descr' attribute.
      */
     if (dtype->type_num == NPY_VOID) {
-        PyObject *descr = _PyDict_GetItemStringWithError(iface, "descr");
-        if (descr == NULL && PyErr_Occurred()) {
+        PyObject *descr = NULL;
+        result = PyDict_GetItemStringRef(iface, "descr", &descr);
+        if (result == -1) {
             goto fail;
         }
         PyArray_Descr *new_dtype = NULL;
-        if (descr != NULL) {
+        if (result == 1) {
             int is_default = _is_default_descr(descr, attr);
             if (is_default < 0) {
+                Py_DECREF(descr);
                 goto fail;
             }
             if (!is_default) {
                 if (PyArray_DescrConverter2(descr, &new_dtype) != NPY_SUCCEED) {
+                    Py_DECREF(descr);
                     goto fail;
                 }
                 if (new_dtype != NULL) {
-                    Py_DECREF(dtype);
-                    dtype = new_dtype;
+                    Py_SETREF(dtype, new_dtype);
                 }
             }
-
         }
-
+        Py_DECREF(descr);
     }
+    Py_CLEAR(attr);
 
     /* Get shape tuple from interface specification */
-    attr = _PyDict_GetItemStringWithError(iface, "shape");
-    if (attr == NULL) {
-        if (PyErr_Occurred()) {
-            return NULL;
-        }
+    result = PyDict_GetItemStringRef(iface, "shape", &attr);
+    if (result < 0) {
+        return NULL;
+    }
+    if (result == 0) {
         /* Shape must be specified when 'data' is specified */
-        PyObject *data = _PyDict_GetItemStringWithError(iface, "data");
-        if (data == NULL && PyErr_Occurred()) {
+        int result = PyDict_ContainsString(iface, "data");
+        if (result < 0) {
+            Py_DECREF(attr);
             return NULL;
         }
-        else if (data != NULL) {
+        else if (result == 1) {
             Py_DECREF(iface);
+            Py_DECREF(attr);
             PyErr_SetString(PyExc_ValueError,
                     "Missing __array_interface__ shape");
             return NULL;
@@ -2260,10 +2275,11 @@ PyArray_FromInterface(PyObject *origin)
             }
         }
     }
+    Py_CLEAR(attr);
 
     /* Get data buffer from interface specification */
-    attr = _PyDict_GetItemStringWithError(iface, "data");
-    if (attr == NULL && PyErr_Occurred()){
+    result = PyDict_GetItemStringRef(iface, "data", &attr);
+    if (result == -1){
         return NULL;
     }
 
@@ -2326,20 +2342,24 @@ PyArray_FromInterface(PyObject *origin)
         PyBuffer_Release(&view);
 
         /* Get offset number from interface specification */
-        attr = _PyDict_GetItemStringWithError(iface, "offset");
-        if (attr == NULL && PyErr_Occurred()) {
+        PyObject *offset = NULL;
+        result = PyDict_GetItemStringRef(iface, "offset", &offset);
+        if (result == -1) {
             goto fail;
         }
-        else if (attr) {
-            npy_longlong num = PyLong_AsLongLong(attr);
+        else if (result == 1) {
+            npy_longlong num = PyLong_AsLongLong(offset);
             if (error_converting(num)) {
                 PyErr_SetString(PyExc_TypeError,
                         "__array_interface__ offset must be an integer");
+                Py_DECREF(offset);
                 goto fail;
             }
             data += num;
+            Py_DECREF(offset);
         }
     }
+    Py_CLEAR(attr);
 
     ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
             &PyArray_Type, dtype,
@@ -2365,11 +2385,11 @@ PyArray_FromInterface(PyObject *origin)
             goto fail;
         }
     }
-    attr = _PyDict_GetItemStringWithError(iface, "strides");
-    if (attr == NULL && PyErr_Occurred()){
+    result = PyDict_GetItemStringRef(iface, "strides", &attr);
+    if (result == -1){
         return NULL;
     }
-    if (attr != NULL && attr != Py_None) {
+    if (result == 1 && attr != Py_None) {
         if (!PyTuple_Check(attr)) {
             PyErr_SetString(PyExc_TypeError,
                     "strides must be a tuple");
@@ -2393,15 +2413,74 @@ PyArray_FromInterface(PyObject *origin)
         if (n) {
             memcpy(PyArray_STRIDES(ret), strides, n*sizeof(npy_intp));
         }
+        Py_DECREF(attr);
     }
     PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
     Py_DECREF(iface);
     return (PyObject *)ret;
 
  fail:
+    Py_XDECREF(attr);
     Py_XDECREF(dtype);
     Py_XDECREF(iface);
     return NULL;
+}
+
+
+
+/*
+ * Returns -1 and an error set or 0 with the original error cleared, must
+ * be called with an error set.
+ */
+static inline int
+check_or_clear_and_warn_error_if_due_to_copy_kwarg(PyObject *kwnames)
+{
+    if (kwnames == NULL) {
+        return -1;  /* didn't pass kwnames, can't possibly be the reason */
+    }
+    if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
+        return -1;
+    }
+
+    /*
+     * In most cases, if we fail, we assume the error was unrelated to the
+     * copy kwarg and simply restore the original one.
+     */
+    PyObject *type, *value, *traceback;
+    PyErr_Fetch(&type, &value, &traceback);
+    if (value == NULL) {
+        goto restore_error;
+    }
+
+    PyObject *str_value = PyObject_Str(value);
+    if (str_value == NULL) {
+        goto restore_error;
+    }
+    int copy_kwarg_unsupported = PyUnicode_Contains(
+            str_value, npy_ma_str_array_err_msg_substr);
+    Py_DECREF(str_value);
+    if (copy_kwarg_unsupported == -1) {
+        goto restore_error;
+    }
+    if (copy_kwarg_unsupported) {
+        /*
+         * TODO: As of now NumPy 2.0, the this warning is only triggered with
+         *       `copy=False` allowing downstream to not notice it.
+         */
+        Py_DECREF(type);
+        Py_DECREF(value);
+        Py_XDECREF(traceback);
+        if (DEPRECATE("__array__ implementation doesn't accept a copy keyword, "
+                      "so passing copy=False failed. __array__ must implement "
+                      "'dtype' and 'copy' keyword arguments.") < 0) {
+            return -1;
+        }
+        return 0;
+    }
+
+  restore_error:
+    PyErr_Restore(type, value, traceback);
+    return -1;
 }
 
 
@@ -2447,74 +2526,61 @@ PyArray_FromArrayAttr_int(
         return Py_NotImplemented;
     }
 
-    PyObject *kwargs = PyDict_New();
+    static PyObject *kwnames_is_copy = NULL;
+    if (kwnames_is_copy == NULL) {
+        kwnames_is_copy = Py_BuildValue("(s)", "copy");
+        if (kwnames_is_copy == NULL) {
+            Py_DECREF(array_meth);
+            return NULL;
+        }
+    }
+
+    Py_ssize_t nargs = 0;
+    PyObject *arguments[2];
+    PyObject *kwnames = NULL;
+
+    if (descr != NULL) {
+        arguments[0] = (PyObject *)descr;
+        nargs++;
+    }
 
     /*
      * Only if the value of `copy` isn't the default one, we try to pass it
      * along; for backwards compatibility we then retry if it fails because the
      * signature of the __array__ method being called does not have `copy`.
      */
-    int copy_passed = 0;
     if (copy != -1) {
-        copy_passed = 1;
-        PyObject *copy_obj = copy == 1 ? Py_True : Py_False;
-        PyDict_SetItemString(kwargs, "copy", copy_obj);
+        kwnames = kwnames_is_copy;
+        arguments[nargs] = copy == 1 ? Py_True : Py_False;
     }
-    PyObject *args = descr != NULL ? PyTuple_Pack(1, descr) : PyTuple_New(0);
 
-    new = PyObject_Call(array_meth, args, kwargs);
-
+    int must_copy_but_copy_kwarg_unimplemented = 0;
+    new = PyObject_Vectorcall(array_meth, arguments, nargs, kwnames);
     if (new == NULL) {
-        if (npy_ma_str_array_err_msg_substr == NULL) {
+        if (check_or_clear_and_warn_error_if_due_to_copy_kwarg(kwnames) < 0) {
+            /* Error was not cleared (or a new error set) */
             Py_DECREF(array_meth);
-            Py_DECREF(args);
-            Py_DECREF(kwargs);
             return NULL;
         }
-        PyObject *type, *value, *traceback;
-        PyErr_Fetch(&type, &value, &traceback);
-        if (value != NULL) {
-            PyObject *str_value = PyObject_Str(value);
-            if (PyUnicode_Contains(
-                        str_value, npy_ma_str_array_err_msg_substr) > 0) {
-                Py_DECREF(type);
-                Py_DECREF(value);
-                Py_XDECREF(traceback);
-                if (PyErr_WarnEx(PyExc_UserWarning,
-                                 "__array__ should implement 'dtype' and "
-                                 "'copy' keywords", 1) < 0) {
-                    Py_DECREF(str_value);
-                    Py_DECREF(array_meth);
-                    Py_DECREF(args);
-                    Py_DECREF(kwargs);
-                    return NULL;
-                }
-                if (copy_passed) { /* try again */
-                    PyDict_DelItemString(kwargs, "copy");
-                    new = PyObject_Call(array_meth, args, kwargs);
-                    if (new == NULL) {
-                        Py_DECREF(str_value);
-                        Py_DECREF(array_meth);
-                        Py_DECREF(args);
-                        Py_DECREF(kwargs);
-                        return NULL;
-                    }
-                }
-            }
-            Py_DECREF(str_value);
-        }
-        if (new == NULL) {
-            PyErr_Restore(type, value, traceback);
+        if (copy == 0) {
+            /* Cannot possibly avoid a copy, so error out. */
+            PyErr_SetString(PyExc_ValueError, npy_no_copy_err_msg);
             Py_DECREF(array_meth);
-            Py_DECREF(args);
-            Py_DECREF(kwargs);
+            return NULL;
+        }
+        /*
+         * The error seems to have been due to passing copy.  We try to see
+         * more precisely what the message is and may try again.
+         */
+        must_copy_but_copy_kwarg_unimplemented = 1;
+        new = PyObject_Vectorcall(array_meth, arguments, nargs, NULL);
+        if (new == NULL) {
+            Py_DECREF(array_meth);
             return NULL;
         }
     }
 
     Py_DECREF(array_meth);
-    Py_DECREF(args);
-    Py_DECREF(kwargs);
 
     if (!PyArray_Check(new)) {
         PyErr_SetString(PyExc_ValueError,
@@ -2522,6 +2588,10 @@ PyArray_FromArrayAttr_int(
                         "producing an array");
         Py_DECREF(new);
         return NULL;
+    }
+    if (must_copy_but_copy_kwarg_unimplemented) {
+        /* TODO: As of NumPy 2.0 this path is only reachable by C-API. */
+        Py_SETREF(new, PyArray_NewCopy((PyArrayObject *)new, NPY_KEEPORDER));
     }
     return new;
 }

@@ -2817,6 +2817,8 @@ class bool(generic):
     __gt__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
     __ge__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
 
+bool_ = bool
+
 class object_(generic):
     def __init__(self, value: object = ..., /) -> None: ...
     @property

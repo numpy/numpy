@@ -23,6 +23,10 @@ example that has rather narrow utility but illustrates the concepts involved.
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
 ...     def __array__(self, dtype=None, copy=None):
+...         if copy is False:
+...             raise ValueError(
+...                 "`copy=False` isn't supported. A copy is always created."
+...             )
 ...         return self._i * np.eye(self._N, dtype=dtype)
 
 Our custom array can be instantiated like:
@@ -85,6 +89,10 @@ For this example we will only handle the method ``__call__``
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
 ...     def __array__(self, dtype=None, copy=None):
+...         if copy is False:
+...             raise ValueError(
+...                 "`copy=False` isn't supported. A copy is always created."
+...             )
 ...         return self._i * np.eye(self._N, dtype=dtype)
 ...     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
 ...         if method == '__call__':
@@ -136,6 +144,10 @@ conveniently by inheriting from the mixin
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
 ...     def __array__(self, dtype=None, copy=None):
+...         if copy is False:
+...             raise ValueError(
+...                 "`copy=False` isn't supported. A copy is always created."
+...             )
 ...         return self._i * np.eye(self._N, dtype=dtype)
 ...     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
 ...         if method == '__call__':
@@ -174,6 +186,10 @@ functions to our custom variants.
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
 ...     def __array__(self, dtype=None, copy=None):
+...         if copy is False:
+...             raise ValueError(
+...                 "`copy=False` isn't supported. A copy is always created."
+...             )
 ...         return self._i * np.eye(self._N, dtype=dtype)
 ...     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
 ...         if method == '__call__':

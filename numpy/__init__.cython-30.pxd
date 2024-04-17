@@ -283,11 +283,11 @@ cdef extern from "numpy/arrayobject.h":
         cdef int type_num
 
         @property
-        cdef inline npy_intp itemsize(self) nogil:
+        cdef inline npy_intp itemsize(self) noexcept nogil:
             return PyDataType_ELSIZE(self)
 
         @property
-        cdef inline npy_intp alignment(self) nogil:
+        cdef inline npy_intp alignment(self) noexcept nogil:
             return PyDataType_ALIGNMENT(self)
 
         # Use fields/names with care as they may be NULL.  You must check
@@ -304,11 +304,11 @@ cdef extern from "numpy/arrayobject.h":
         # valid (the pointer can be NULL). Most users should access
         # this field via the inline helper method PyDataType_SHAPE.
         @property
-        cdef inline PyArray_ArrayDescr* subarray(self) nogil:
+        cdef inline PyArray_ArrayDescr* subarray(self) noexcept nogil:
             return PyDataType_SUBARRAY(self)
 
         @property
-        cdef inline npy_uint64 flags(self) nogil:
+        cdef inline npy_uint64 flags(self) noexcept nogil:
             """The data types flags."""
             return PyDataType_FLAGS(self)
 
@@ -320,32 +320,32 @@ cdef extern from "numpy/arrayobject.h":
     ctypedef class numpy.broadcast [object PyArrayMultiIterObject, check_size ignore]:
 
         @property
-        cdef inline int numiter(self) nogil:
+        cdef inline int numiter(self) noexcept nogil:
             """The number of arrays that need to be broadcast to the same shape."""
             return PyArray_MultiIter_NUMITER(self)
 
         @property
-        cdef inline npy_intp size(self) nogil:
+        cdef inline npy_intp size(self) noexcept nogil:
             """The total broadcasted size."""
             return PyArray_MultiIter_SIZE(self)
 
         @property
-        cdef inline npy_intp index(self) nogil:
+        cdef inline npy_intp index(self) noexcept nogil:
             """The current (1-d) index into the broadcasted result."""
             return PyArray_MultiIter_INDEX(self)
 
         @property
-        cdef inline int nd(self) nogil:
+        cdef inline int nd(self) noexcept nogil:
             """The number of dimensions in the broadcasted result."""
             return PyArray_MultiIter_NDIM(self)
 
         @property
-        cdef inline npy_intp* dimensions(self) nogil:
+        cdef inline npy_intp* dimensions(self) noexcept nogil:
             """The shape of the broadcasted result."""
             return PyArray_MultiIter_DIMS(self)
 
         @property
-        cdef inline void** iters(self) nogil:
+        cdef inline void** iters(self) noexcept nogil:
             """An array of iterator objects that holds the iterators for the arrays to be broadcast together.
             On return, the iterators are adjusted for broadcasting."""
             return PyArray_MultiIter_ITERS(self)
@@ -363,7 +363,7 @@ cdef extern from "numpy/arrayobject.h":
         # Instead, we use properties that map to the corresponding C-API functions.
 
         @property
-        cdef inline PyObject* base(self) nogil:
+        cdef inline PyObject* base(self) noexcept nogil:
             """Returns a borrowed reference to the object owning the data/memory.
             """
             return PyArray_BASE(self)
@@ -375,13 +375,13 @@ cdef extern from "numpy/arrayobject.h":
             return <dtype>PyArray_DESCR(self)
 
         @property
-        cdef inline int ndim(self) nogil:
+        cdef inline int ndim(self) noexcept nogil:
             """Returns the number of dimensions in the array.
             """
             return PyArray_NDIM(self)
 
         @property
-        cdef inline npy_intp *shape(self) nogil:
+        cdef inline npy_intp *shape(self) noexcept nogil:
             """Returns a pointer to the dimensions/shape of the array.
             The number of elements matches the number of dimensions of the array (ndim).
             Can return NULL for 0-dimensional arrays.
@@ -389,20 +389,20 @@ cdef extern from "numpy/arrayobject.h":
             return PyArray_DIMS(self)
 
         @property
-        cdef inline npy_intp *strides(self) nogil:
+        cdef inline npy_intp *strides(self) noexcept nogil:
             """Returns a pointer to the strides of the array.
             The number of elements matches the number of dimensions of the array (ndim).
             """
             return PyArray_STRIDES(self)
 
         @property
-        cdef inline npy_intp size(self) nogil:
+        cdef inline npy_intp size(self) noexcept nogil:
             """Returns the total size (in number of elements) of the array.
             """
             return PyArray_SIZE(self)
 
         @property
-        cdef inline char* data(self) nogil:
+        cdef inline char* data(self) noexcept nogil:
             """The pointer to the data buffer as a char*.
             This is provided for legacy reasons to avoid direct struct field access.
             For new code that needs this access, you probably want to cast the result
@@ -1007,7 +1007,7 @@ cdef extern from "numpy/ufuncobject.h":
 
     int _import_umath() except -1
 
-cdef inline void set_array_base(ndarray arr, object base):
+cdef inline void set_array_base(ndarray arr, object base) except *:
     Py_INCREF(base) # important to do this before stealing the reference below!
     PyArray_SetBaseObject(arr, base)
 
@@ -1038,7 +1038,7 @@ cdef inline int import_ufunc() except -1:
         raise ImportError("numpy._core.umath failed to import")
 
 
-cdef inline bint is_timedelta64_object(object obj):
+cdef inline bint is_timedelta64_object(object obj) noexcept:
     """
     Cython equivalent of `isinstance(obj, np.timedelta64)`
 
@@ -1053,7 +1053,7 @@ cdef inline bint is_timedelta64_object(object obj):
     return PyObject_TypeCheck(obj, &PyTimedeltaArrType_Type)
 
 
-cdef inline bint is_datetime64_object(object obj):
+cdef inline bint is_datetime64_object(object obj) noexcept:
     """
     Cython equivalent of `isinstance(obj, np.datetime64)`
 
@@ -1068,7 +1068,7 @@ cdef inline bint is_datetime64_object(object obj):
     return PyObject_TypeCheck(obj, &PyDatetimeArrType_Type)
 
 
-cdef inline npy_datetime get_datetime64_value(object obj) nogil:
+cdef inline npy_datetime get_datetime64_value(object obj) noexcept nogil:
     """
     returns the int64 value underlying scalar numpy datetime64 object
 
@@ -1078,14 +1078,14 @@ cdef inline npy_datetime get_datetime64_value(object obj) nogil:
     return (<PyDatetimeScalarObject*>obj).obval
 
 
-cdef inline npy_timedelta get_timedelta64_value(object obj) nogil:
+cdef inline npy_timedelta get_timedelta64_value(object obj) noexcept nogil:
     """
     returns the int64 value underlying scalar numpy timedelta64 object
     """
     return (<PyTimedeltaScalarObject*>obj).obval
 
 
-cdef inline NPY_DATETIMEUNIT get_datetime64_unit(object obj) nogil:
+cdef inline NPY_DATETIMEUNIT get_datetime64_unit(object obj) noexcept nogil:
     """
     returns the unit part of the dtype for a numpy datetime64 object.
     """

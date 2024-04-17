@@ -74,7 +74,7 @@ jobs:
             . venv/bin/activate
             cd doc
             # Don't use -q, show warning summary"
-            SPHINXOPTS="-j2 -n" make -e html
+            SPHINXOPTS="-n" make -e html
             if [[ $(find build/html -type f | wc -l) -lt 1000 ]]; then
                 echo "doc build failed: build/html is empty"
                 exit -1
@@ -85,7 +85,7 @@ jobs:
           command: |
             . venv/bin/activate
             cd doc/neps
-            SPHINXOPTS="-j2 -n" make -e html || echo "ignoring errors for now"
+            SPHINXOPTS="-n" make -e html || echo "ignoring errors for now"
 
       - store_artifacts:
           path: doc/build/html/

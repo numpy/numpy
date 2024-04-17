@@ -9,7 +9,7 @@
 
 #include "npy_config.h"
 
-#include "npy_pycompat.h"
+
 
 #if defined(HAVE_STRTOLD_L) && !defined(_GNU_SOURCE)
 # define _GNU_SOURCE

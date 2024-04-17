@@ -17,16 +17,19 @@ The preferred alias for `defchararray` is `numpy.char`.
 """
 import functools
 
+import numpy as np
 from .._utils import set_module
 from .numerictypes import bytes_, str_, character
 from .numeric import ndarray, array as narray, asarray as asnarray
 from numpy._core.multiarray import compare_chararrays
 from numpy._core import overrides
 from numpy.strings import *
-from numpy.strings import multiply as strings_multiply
+from numpy.strings import (
+    multiply as strings_multiply,
+    partition as strings_partition,
+    rpartition as strings_rpartition,
+)
 from numpy._core.strings import (
-    _partition as partition,
-    _rpartition as rpartition,
     _split as split,
     _rsplit as rsplit,
     _splitlines as splitlines,
@@ -303,6 +306,88 @@ def multiply(a, i):
         raise ValueError("Can only multiply by integers")
 
 
+def partition(a, sep):
+    """
+    Partition each element in `a` around `sep`.
+
+    Calls :meth:`str.partition` element-wise.
+
+    For each element in `a`, split the element as the first
+    occurrence of `sep`, and return 3 strings containing the part
+    before the separator, the separator itself, and the part after
+    the separator. If the separator is not found, return 3 strings
+    containing the string itself, followed by two empty strings.
+
+    Parameters
+    ----------
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Input array
+    sep : {str, unicode}
+        Separator to split each string element in `a`.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types. The output array will have an extra
+        dimension with 3 elements per input element.
+
+    Examples
+    --------
+    >>> x = np.array(["Numpy is nice!"])
+    >>> np.char.partition(x, " ")
+    array([['Numpy', ' ', 'is nice!']], dtype='<U8')
+    
+    See Also
+    --------
+    str.partition
+
+    """
+    return np.stack(strings_partition(a, sep), axis=-1)
+
+
+def rpartition(a, sep):
+    """
+    Partition (split) each element around the right-most separator.
+
+    Calls :meth:`str.rpartition` element-wise.
+
+    For each element in `a`, split the element as the last
+    occurrence of `sep`, and return 3 strings containing the part
+    before the separator, the separator itself, and the part after
+    the separator. If the separator is not found, return 3 strings
+    containing the string itself, followed by two empty strings.
+
+    Parameters
+    ----------
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Input array
+    sep : str or unicode
+        Right-most separator to split each element in array.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types. The output array will have an extra
+        dimension with 3 elements per input element.
+
+    See Also
+    --------
+    str.rpartition
+
+    Examples
+    --------
+    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> np.char.rpartition(a, 'A')
+    array([['aAaAa', 'A', ''],
+       ['  a', 'A', '  '],
+       ['abB', 'A', 'Bba']], dtype='<U5')
+
+    """
+    return np.stack(strings_rpartition(a, sep), axis=-1)
+
+
 @set_module("numpy.char")
 class chararray(ndarray):
     """
@@ -487,7 +572,7 @@ class chararray(ndarray):
 
     def __array_finalize__(self, obj):
         # The b is a special case because it is used for reconstructing.
-        if self.dtype.char not in 'SUbc':
+        if self.dtype.char not in 'VSUbc':
             raise ValueError("Can only create a chararray from string data.")
 
     def __getitem__(self, obj):
