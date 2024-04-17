@@ -326,7 +326,6 @@ npy__cpu_check_env(int disable, const char *env) {
         ) < 0) {
             return -1;
         }
-        return 0;
     }
 
     #define NOTSUPP_BODY \
