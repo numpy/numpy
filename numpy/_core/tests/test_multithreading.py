@@ -1,6 +1,12 @@
 import concurrent.futures
 
 import numpy as np
+import pytest
+
+from numpy.testing import IS_WASM
+
+if IS_WASM:
+    pytest.skip(allow_module_level=True, reason="no threading support in wasm")
 
 
 def test_parallel_errstate_creation():
