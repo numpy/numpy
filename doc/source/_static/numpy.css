@@ -12,6 +12,13 @@ body {
   font-size: medium;
 }
 
+/* Making sure the navbar shows correctly in one line
+   Reduces the space between the top-left logo and the navbar section titles */
+
+.col-lg-3 {
+  width: 15%;
+}
+
 /* Version switcher colors from PyData Sphinx Theme */
 
 .version-switcher__button[data-active-version-name*="devdocs"] {
@@ -58,12 +65,10 @@ div.admonition-legacy {
   border-color: var(--pst-color-warning);
 }
 
-.admonition>.admonition-title::after,
-div.admonition>.admonition-title::after {
+div.admonition-legacy>.admonition-title::after {
   color: var(--pst-color-warning);
 }
 
-.admonition>.admonition-title,
-div.admonition>.admonition-title {
+div.admonition-legacy>.admonition-title {
   background-color: var(--pst-color-warning-bg);
 }
