@@ -248,6 +248,10 @@ _reshape_with_copy_arg(PyArrayObject *array, PyArray_Dims *newdims,
     if (_fix_unknown_dimension(newdims, array) < 0) {
         return NULL;
     }
+    /*
+     * Memory order doesn't depend on a copy/no-copy context.
+     * 'order' argument is always honored.
+     */
     if (copy == NPY_COPY_ALWAYS) {
         PyObject *newcopy = PyArray_NewCopy(array, order);
         if (newcopy == NULL) {

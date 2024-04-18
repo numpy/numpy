@@ -320,7 +320,10 @@ def reshape(a, /, shape=None, *, newshape=None, order='C', copy=None):
             stacklevel=2,
         )
         shape = newshape
-    return _wrapfunc(a, 'reshape', shape, order=order, copy=copy)
+    kwargs = {"order": order}
+    if copy is not None:
+        kwargs["copy"] = copy
+    return _wrapfunc(a, 'reshape', shape, **kwargs)
 
 
 def _choose_dispatcher(a, choices, out=None, mode=None):
