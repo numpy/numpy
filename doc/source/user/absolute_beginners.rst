@@ -425,7 +425,7 @@ this array to an array with three rows and two columns::
 
 With ``np.reshape``, you can specify a few optional parameters::
 
-  >>> np.reshape(a, newshape=(1, 6), order='C')
+  >>> np.reshape(a, shape=(1, 6), order='C')
   array([[0, 1, 2, 3, 4, 5]])
 
 ``a`` is the array to be reshaped.

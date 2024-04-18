@@ -175,7 +175,7 @@ class TestNonarrayArgs:
             match="You cannot specify 'newshape' and 'shape' "
                   "arguments at the same time."
         ):
-            np.reshape(arr, newshape=shape, shape=shape)
+            np.reshape(arr, shape=shape, newshape=shape)
         with pytest.raises(
             TypeError,
             match=r"reshape\(\) missing 1 required positional "
@@ -185,9 +185,11 @@ class TestNonarrayArgs:
 
         assert_equal(np.reshape(arr, shape), expected)
         assert_equal(np.reshape(arr, shape, order="C"), expected)
-        assert_equal(np.reshape(arr, newshape=shape), expected)
         assert_equal(np.reshape(arr, shape=shape), expected)
         assert_equal(np.reshape(arr, shape=shape, order="C"), expected)
+        with pytest.warns(DeprecationWarning):
+            actual = np.reshape(arr, newshape=shape)
+            assert_equal(actual, expected)
 
     def test_reshape_copy_arg(self):
         arr = np.arange(24).reshape(2, 3, 4)

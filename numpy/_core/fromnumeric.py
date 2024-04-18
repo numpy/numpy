@@ -206,13 +206,13 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     return _wrapfunc(a, 'take', indices, axis=axis, out=out, mode=mode)
 
 
-def _reshape_dispatcher(a, /, newshape=None, shape=None, *,
-                        order=None, copy=None):
+def _reshape_dispatcher(a, /, shape=None, *, newshape=None, order=None,
+                        copy=None):
     return (a,)
 
 
 @array_function_dispatch(_reshape_dispatcher)
-def reshape(a, /, newshape=None, shape=None, *, order='C', copy=None):
+def reshape(a, /, shape=None, *, newshape=None, order='C', copy=None):
     """
     Gives a new shape to an array without changing its data.
 
@@ -220,14 +220,14 @@ def reshape(a, /, newshape=None, shape=None, *, order='C', copy=None):
     ----------
     a : array_like
         Array to be reshaped.
-    newshape : int or tuple of ints
-        Replaced by ``shape`` argument. Retained for backward
-        compatibility.
     shape : int or tuple of ints
         The new shape should be compatible with the original shape. If
         an integer, then the result will be a 1-D array of that length.
         One shape dimension can be -1. In this case, the value is
         inferred from the length of the array and remaining dimensions.
+    newshape : int or tuple of ints
+        Replaced by ``shape`` argument. Retained for backward
+        compatibility.
     order : {'C', 'F', 'A'}, optional
         Read the elements of ``a`` using this index order, and place the
         elements into the reshaped array using this index order. 'C'
@@ -310,9 +310,17 @@ def reshape(a, /, newshape=None, shape=None, *, order='C', copy=None):
         raise ValueError(
             "You cannot specify 'newshape' and 'shape' arguments "
             "at the same time.")
-    if shape is not None:
-        newshape = shape
-    return _wrapfunc(a, 'reshape', newshape, order=order, copy=copy)
+    if newshape is not None:
+        # Deprecated in NumPy 2.1, 2024-04-18
+        warnings.warn(
+            "`newshape` keyword argument is deprecated, "
+            "use `shape=...` or pass shape positionally instead. "
+            "(deprecated in NumPy 2.1)",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        shape = newshape
+    return _wrapfunc(a, 'reshape', shape, order=order, copy=copy)
 
 
 def _choose_dispatcher(a, choices, out=None, mode=None):
