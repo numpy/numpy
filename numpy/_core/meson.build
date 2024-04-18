@@ -96,10 +96,7 @@ if use_svml
   endif
 endif
 
-use_highway = not get_option('disable-highway') and not (
-  host_machine.system() == 'darwin' and
-  cpu_family == 'aarch64'
-)
+use_highway = not get_option('disable-highway')
 if use_highway and not fs.exists('src/highway/README.md')
   error('Missing the `highway` git submodule! Run `git submodule update --init` to fix this.')
 endif
@@ -108,7 +105,7 @@ if use_highway
   highway_lib = static_library('highway',
     [
       # required for hwy::Abort symbol
-      'src/highway/hwy/targets.cc'
+      'src/highway/hwy/abort.cc'
     ],
     cpp_args: '-DTOOLCHAIN_MISS_ASM_HWCAP_H',
     include_directories: ['src/highway'],
