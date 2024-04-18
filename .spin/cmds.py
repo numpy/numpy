@@ -616,7 +616,7 @@ def notes(ctx, version_override):
         bold=True, fg="bright_yellow"
     )
     # towncrier build --version 2.1 --yes
-    cmd = ["towncrie", "build", "--version", version, "--yes"]
+    cmd = ["towncrier", "build", "--version", version, "--yes"]
     p = util.run(cmd=cmd, sys_exit=False, output=True, encoding="utf-8")
     if p.returncode != 0:
         raise click.ClickException(
