@@ -9,132 +9,47 @@
 
 body {
   font-family: 'Open Sans', sans-serif;
+  font-size: medium;
 }
 
-pre, code {
-  font-size: 100%;
-  line-height: 155%;
+/* Version switcher colors from PyData Sphinx Theme */
+
+.version-switcher__button[data-active-version-name*="devdocs"] {
+  background-color: var(--pst-color-warning);
+  border-color: var(--pst-color-warning);
+  opacity: 0.9;
 }
 
-h1 {
-  font-family: "Lato", sans-serif;
-  color: #013243; /* warm black */
+.version-switcher__button:not([data-active-version-name*="stable"]):not([data-active-version-name*="dev"]):not([data-active-version-name*="pull"]) {
+  background-color: var(--pst-color-danger);
+  border-color: var(--pst-color-danger);
+  opacity: 0.9;
 }
 
-h2 {
-  color: #4d77cf; /* han blue */
-  letter-spacing: -.03em;
+.version-switcher__menu a.list-group-item {
+  font-size: small;
 }
 
-h3 {
-  color: #013243; /* warm black */
-  letter-spacing: -.03em;
-}
-
-/* Style the active version button.
-
-- dev: orange
-- stable: green
-- old, PR: red
-
-Colors from:
-
-Wong, B. Points of view: Color blindness.
-Nat Methods 8, 441 (2011). https://doi.org/10.1038/nmeth.1618
-*/
-
-/* If the active version has the name "dev", style it orange */
-#version_switcher_button[data-active-version-name*="dev"] {
-  background-color: #E69F00;
-  border-color: #E69F00;
-  color:#000000;
-}
-
-/* green for `stable` */
-#version_switcher_button[data-active-version-name*="stable"] {
-  background-color: #009E73;
-  border-color: #009E73;
-}
-
-/* red for `old` */
-#version_switcher_button:not([data-active-version-name*="stable"], [data-active-version-name*="dev"], [data-active-version-name=""]) {
-  background-color: #980F0F;
-  border-color: #980F0F;
-}
-
-/* Main page overview cards */
-
-.sd-card {
-  background: #fff;
-  border-radius: 0;
-  padding: 30px 10px 20px 10px;
-  margin: 10px 0px;
-}
-
-.sd-card .sd-card-header {
-  text-align: center;
-}
-
-.sd-card .sd-card-header .sd-card-text {
-  margin: 0px;
-}
-
-.sd-card .sd-card-img-top {
-  height: 52px;
-  width: 52px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.sd-card .sd-card-header {
-  border: none;
-  background-color: white;
-  color: #150458 !important;
-  font-size: var(--pst-font-size-h5);
-  font-weight: bold;
-  padding: 2.5rem 0rem 0.5rem 0rem;
-}
-
-.sd-card .sd-card-footer {
-  border: none;
-  background-color: white;
-}
-
-.sd-card .sd-card-footer .sd-card-text {
-  max-width: 220px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* Dark theme tweaking */
-html[data-theme=dark] .sd-card img[src*='.svg'] {
-    filter: invert(0.82) brightness(0.8) contrast(1.2);
+button.btn.version-switcher__button,
+button.btn.version-switcher__button:hover {
+  color: black;
+  font-size: small;
 }
 
 /* Main index page overview cards */
-html[data-theme=dark] .sd-card {
-  background-color:var(--pst-color-background);
+
+.sd-card .sd-card-img-top {
+  height: 60px;
+  width: 60px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 10px;
 }
 
-html[data-theme=dark] .sd-shadow-sm {
-    box-shadow: 0 .1rem 1rem rgba(250, 250, 250, .6) !important
-}
+/* Main index page overview images */
 
-html[data-theme=dark] .sd-card .sd-card-header {
-  background-color:var(--pst-color-background);
-  color: #150458 !important;
-}
-
-html[data-theme=dark] .sd-card .sd-card-footer {
-  background-color:var(--pst-color-background);
-}
-
-html[data-theme=dark] h1 {
-  color: var(--pst-color-primary);
-}
-
-html[data-theme=dark] h3 {
-  color: #0a6774;
+html[data-theme=dark] .sd-card img[src*='.svg'] {
+  filter: invert(0.82) brightness(0.8) contrast(1.2);
 }
 
 /* Legacy admonition */
@@ -143,15 +58,12 @@ div.admonition-legacy {
   border-color: var(--pst-color-warning);
 }
 
-.admonition-legacy.admonition>.admonition-title::before,
-div.admonition>.admonition-title::before {
-  color: var(--pst-color-warning);
-  content: var(--pst-icon-admonition-attention);
-  background-color: var(--pst-color-warning);
-}
-
-.admonition-legacy.admonition>.admonition-title::after,
+.admonition>.admonition-title::after,
 div.admonition>.admonition-title::after {
   color: var(--pst-color-warning);
-  content: var(--pst-icon-admonition-default);
+}
+
+.admonition>.admonition-title,
+div.admonition>.admonition-title {
+  background-color: var(--pst-color-warning-bg);
 }
