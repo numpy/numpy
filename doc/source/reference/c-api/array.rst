@@ -3923,9 +3923,8 @@ are defined:
 The ``PY_ARRAY_UNIQUE_SYMBOL`` mechanism additionally mangles the names to
 avoid conflicts.
 
-
 .. versionchanged::
-    NumPy 2.0 exports the headers to avoid sharing the table outside of a
+    NumPy 2.1 changed the headers to avoid sharing the table outside of a
     single shared object/dll (this was always the case on Windows).
     Please see :c:macro:`NPY_API_SYMBOL_ATTRIBUTE` for details.
 
@@ -3961,7 +3960,7 @@ the C-API is needed then some additional steps must be taken.
 
 .. c:macro:: NPY_API_SYMBOL_ATTRIBUTE
 
-    .. versionadded:: 2.0
+    .. versionadded:: 2.1
 
     An additional symbol which can be used to share e.g. visibility beyond
     shared object boundaries.
