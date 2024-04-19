@@ -177,6 +177,8 @@ Standard acronyms to start the commit message with are::
    TYP: static typing
    REL: related to releasing numpy
 
+.. skip-ci::
+
 Commands to skip continuous integration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -222,6 +224,10 @@ these fragments in each commit message of a PR:
   `CirrusCI <https://cirrus-ci.org/>`__ mostly triggers Linux aarch64 and MacOS Arm64 wheels
   uploads.
   `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.cirrus.star>`__
+
+* ``[docs only]``: Run only the documentation check
+
+  This is useful if you are only making changes to the documentation.
 
 Test building wheels
 ~~~~~~~~~~~~~~~~~~~~

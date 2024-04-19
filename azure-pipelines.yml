@@ -28,7 +28,7 @@ stages:
           git_log=`git log --max-count=1 --skip=1 --pretty=format:"%B" | tr "\n" " "`
           echo "##vso[task.setvariable variable=log]$git_log"
       - bash: echo "##vso[task.setvariable variable=RET]false"
-        condition: or(contains(variables.log, '[skip azp]'), contains(variables.log, '[azp skip]'), contains(variables.log, '[skip ci]'), contains(variables.log, '[ci skip]'))
+        condition: or(contains(variables.log, '[skip azp]'), contains(variables.log, '[azp skip]'), contains(variables.log, '[skip ci]'), contains(variables.log, '[ci skip]'), contains(variables.log, '[docs only]'), contains(variables.log, '[lint only]'))
       - bash: echo "##vso[task.setvariable variable=start_main;isOutput=true]$RET"
         name: result
 
