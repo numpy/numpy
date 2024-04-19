@@ -218,5 +218,7 @@ cli = 'vendored-meson/meson/meson.py'
 # Ref: https://github.com/codespell-project/codespell#using-a-config-file
 skip = '.git*,*.pdf,*.svg,*.css,lapack_lite'
 check-hidden = true
-# ignore-regex = ''
-# ignore-words-list = ''
+# some cases + pragma to add to line to ignore entire line
+ignore-regex = '"worl"|.*codespell-ignore.*'
+# some common hits
+ignore-words-list = 'nd,nin,numers,numer,inout,ccompiler,fo,CCompiler,dout,ans,ser,ot,asign,siz,alow,fro,delimitor,alo'
