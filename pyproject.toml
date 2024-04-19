@@ -201,8 +201,10 @@ cli = 'vendored-meson/meson/meson.py'
   ".spin/cmds.py:lint",
 ]
 "Environments" = [
-  "spin.cmds.meson.run", ".spin/cmds.py:ipython",
-  ".spin/cmds.py:python", "spin.cmds.meson.gdb",
+  "spin.cmds.meson.run",
+  ".spin/cmds.py:ipython",
+  ".spin/cmds.py:python",
+  "spin.cmds.meson.gdb",
   "spin.cmds.meson.lldb"
 ]
 "Documentation" = [

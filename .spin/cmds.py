@@ -1,11 +1,7 @@
 import os
 import shutil
-import sys
-import argparse
-import tempfile
 import pathlib
 import shutil
-import json
 import pathlib
 import importlib
 import subprocess
@@ -621,16 +617,10 @@ def notes(ctx, version_override):
     )
     # towncrier build --version 2.1 --yes
     cmd = ["towncrier", "build", "--version", version, "--yes"]
-    try:
-        p = util.run(
-                cmd=cmd,
-                sys_exit=False,
-                output=True,
-                encoding="utf-8"
-            )
-    except subprocess.SubprocessError as e:
+    p = util.run(cmd=cmd, sys_exit=False, output=True, encoding="utf-8")
+    if p.returncode != 0:
         raise click.ClickException(
-            f"`towncrier` failed returned {e.returncode} with error `{e.stderr}`"
+            f"`towncrier` failed returned {p.returncode} with error `{p.stderr}`"
         )
 
     output_path = project_config['tool.towncrier.filename'].format(version=version)
