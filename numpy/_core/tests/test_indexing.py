@@ -534,8 +534,8 @@ class TestIndexing:
     def test_indexing_array_negative_strides(self):
         # From gh-8264,
         # core dumps if negative strides are used in iteration
-        arro = np.zeros((4, 4))
-        arr = arro[::-1, ::-1]
+        arr0 = np.zeros((4, 4))
+        arr = arr0[::-1, ::-1]
 
         slices = (slice(None), [0, 1, 2, 3])
         arr[slices] = 10
