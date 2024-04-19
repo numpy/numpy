@@ -4102,7 +4102,7 @@ L50:
         Householder transformations, reducing the original problem
         into a "bidiagonal least squares problem" (BLS)
     (2) Solve the BLS using a divide and conquer approach.
-    (3) Apply back all the Householder tranformations to solve
+    (3) Apply back all the Householder transformations to solve
         the original least squares problem.
 
     The effective rank of A is determined by treating as zero those
@@ -9145,7 +9145,7 @@ L140:
 
           The first stage consists of deflating the size of the problem
           when there are multiple eigenvalues or if there is a zero in
-          the Z vector.  For each such occurence the dimension of the
+          the Z vector.  For each such occurrence the dimension of the
           secular equation problem is reduced by one.  This stage is
           performed by the routine SLAED2.
 
@@ -11610,7 +11610,7 @@ L60:
 
           The first stage consists of deflating the size of the problem
           when there are multiple eigenvalues or if there is a zero in
-          the Z vector.  For each such occurence the dimension of the
+          the Z vector.  For each such occurrence the dimension of the
           secular equation problem is reduced by one.  This stage is
           performed by the routine SLAED8.
 
@@ -12136,7 +12136,7 @@ L30:
 /* L40: */
     }
 
-/*     Calculate the allowable deflation tolerence */
+/*     Calculate the allowable deflation tolerance */
 
     imax = isamax_(n, &z__[1], &c__1);
     jmax = isamax_(n, &d__[1], &c__1);
@@ -13055,7 +13055,7 @@ L120:
 
     T must be in Schur canonical form, that is, block upper triangular
     with 1-by-1 and 2-by-2 diagonal blocks; each 2-by-2 diagonal block
-    has its diagonal elemnts equal and its off-diagonal elements of
+    has its diagonal elements equal and its off-diagonal elements of
     opposite sign.
 
     Arguments
@@ -13566,7 +13566,7 @@ L50:
 
                     If INFO .GT. 0 and WANTT is .TRUE., then on exit
             (*)       (initial value of H)*U  = U*(final value of H)
-                    where U is an orthognal matrix.    The final
+                    where U is an orthogonal matrix.    The final
                     value of H is upper Hessenberg and triangular in
                     rows and columns INFO+1 through IHI.
 
@@ -17968,7 +17968,7 @@ L60:
 		}
 
 /*
-                ==== Use up to NS of the smallest magnatiude
+                ==== Use up to NS of the smallest magnitude
                 .    shifts.  If there aren't NS shifts available,
                 .    then use them all, possibly dropping one to
                 .    make the number of shifts even. ====
@@ -20194,7 +20194,7 @@ L60:
 		}
 
 /*
-                ==== Use up to NS of the smallest magnatiude
+                ==== Use up to NS of the smallest magnitude
                 .    shifts.  If there aren't NS shifts available,
                 .    then use them all, possibly dropping one to
                 .    make the number of shifts even. ====
@@ -24345,7 +24345,7 @@ L10:
 
        The first stage consists of deflating the size of the problem
        when there are multiple singular values or when there are zeros in
-       the Z vector.  For each such occurence the dimension of the
+       the Z vector.  For each such occurrence the dimension of the
        secular equation problem is reduced by one.  This stage is
        performed by the routine SLASD2.
 
@@ -26805,7 +26805,7 @@ L240:
 
           The first stage consists of deflating the size of the problem
           when there are multiple singular values or if there is a zero
-          in the Z vector. For each such occurence the dimension of the
+          in the Z vector. For each such occurrence the dimension of the
           secular equation problem is reduced by one. This stage is
           performed by the routine SLASD7.
 
@@ -27361,7 +27361,7 @@ L240:
 /* L50: */
     }
 
-/*     Calculate the allowable deflation tolerence */
+/*     Calculate the allowable deflation tolerance */
 
     eps = slamch_("Epsilon");
 /* Computing MAX */
@@ -31271,7 +31271,7 @@ L80:
     =====================================================================
 
 
-       Test the input paramters.
+       Test the input parameters.
 */
 
     /* Parameter adjustments */
