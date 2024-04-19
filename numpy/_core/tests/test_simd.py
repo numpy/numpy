@@ -1057,8 +1057,8 @@ class _SIMD_ALL(_Test_Utility):
         vxor = cast(self.xor(vdata_a, vdata_b))
         assert vxor == data_xor
 
-        data_or  = cast_data([a | b for a, b in zip(data_cast_a, data_cast_b)])
-        vor  = cast(getattr(self, "or")(vdata_a, vdata_b))  # codespell-ignore   
+        data_or = cast_data([a | b for a, b in zip(data_cast_a, data_cast_b)])
+        vor = cast(getattr(self, "or")(vdata_a, vdata_b))  # codespell-ignore
         assert vor == data_or  # codespell-ignore
 
         data_and = cast_data([a & b for a, b in zip(data_cast_a, data_cast_b)])
