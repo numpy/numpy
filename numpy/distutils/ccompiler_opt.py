@@ -1005,9 +1005,10 @@ class _CCompiler:
             for attr, rgex, cexpr in section:
                 setattr(self, attr, False)
 
-        for detect, searchin in ((detect_arch, platform), (detect_compiler, compiler_info)):
+        for detect, search_in in ((detect_arch, platform), 
+                                  (detect_compiler, compiler_info)):
             for attr, rgex, cexpr in detect:
-                if rgex and not re.match(rgex, searchin, re.IGNORECASE):
+                if rgex and not re.match(rgex, search_in, re.IGNORECASE):
                     continue
                 if cexpr and not self.cc_test_cexpr(cexpr):
                     continue
@@ -1969,7 +1970,7 @@ class _Parse:
             if ch in ('+', '-'):
                 self.dist_fatal(
                     "+/- are 'not' allowed from target's groups or @targets, "
-                    "only from cpu_baseline and cpu_dispatch parms"
+                    "only from cpu_baseline and cpu_dispatch params"
                 )
             elif ch == '$':
                 if multi_target is not None:

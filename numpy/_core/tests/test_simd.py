@@ -156,8 +156,8 @@ class _SIMD_BOOL(_Test_Utility):
         assert vand == data_and
 
         data_or = [a | b for a, b in zip(data_a, data_b)]
-        vor = getattr(self, "or")(vdata_a, vdata_b)
-        assert vor == data_or
+        vor = getattr(self, "or")(vdata_a, vdata_b)  # codespell-ignore
+        assert vor == data_or  # codespell-ignore
 
         data_xor = [a ^ b for a, b in zip(data_a, data_b)]
         vxor = getattr(self, "xor")(vdata_a, vdata_b)
@@ -900,8 +900,8 @@ class _SIMD_ALL(_Test_Utility):
         broadcast_zero = self.zero()
         assert broadcast_zero == [0] * self.nlanes
         for i in range(1, 10):
-            broadcasti = self.setall(i)
-            assert broadcasti == [i] * self.nlanes
+            broadcast_i = self.setall(i)
+            assert broadcast_i == [i] * self.nlanes
 
         data_a, data_b = self._data(), self._data(reverse=True)
         vdata_a, vdata_b = self.load(data_a), self.load(data_b)
@@ -1058,8 +1058,8 @@ class _SIMD_ALL(_Test_Utility):
         assert vxor == data_xor
 
         data_or  = cast_data([a | b for a, b in zip(data_cast_a, data_cast_b)])
-        vor  = cast(getattr(self, "or")(vdata_a, vdata_b))
-        assert vor == data_or
+        vor  = cast(getattr(self, "or")(vdata_a, vdata_b))  # codespell-ignore   
+        assert vor == data_or  # codespell-ignore
 
         data_and = cast_data([a & b for a, b in zip(data_cast_a, data_cast_b)])
         vand = cast(getattr(self, "and")(vdata_a, vdata_b))
