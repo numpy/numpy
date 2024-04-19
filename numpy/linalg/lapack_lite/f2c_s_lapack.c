@@ -13561,7 +13561,7 @@ L50:
                     If INFO .GT. 0 and WANTT is .FALSE., then on exit,
                     the remaining unconverged eigenvalues are the
                     eigenvalues of the upper Hessenberg matrix rows
-                    and columns ILO thorugh INFO of the final, output
+                    and columns ILO through INFO of the final, output
                     value of H.
 
                     If INFO .GT. 0 and WANTT is .TRUE., then on exit
@@ -28373,7 +28373,7 @@ L100:
 
     UPLO  (input) CHARACTER*1
           On entry, UPLO specifies whether the input bidiagonal matrix
-          is upper or lower bidiagonal, and wether it is square are
+          is upper or lower bidiagonal, and whether it is square are
           not.
              UPLO = 'U' or 'u'   B is upper bidiagonal.
              UPLO = 'L' or 'l'   B is lower bidiagonal.
