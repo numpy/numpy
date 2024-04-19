@@ -5715,8 +5715,8 @@ def append(arr, values, axis=None):
         These values are appended to a copy of `arr`.  It must be of the
         correct shape (the same shape as `arr`, excluding `axis`).  If
         `axis` is not specified, `values` can be any shape and will be
-        flattened before use. If dtype of values is different from the
-        dtype of arr then their dtypes are compared to figure out the
+        flattened before use. If dtype of `values` is different from the
+        dtype of `arr` then their dtypes are compared to figure out the
         common dtype they can both be safely coerced to. For e.g. `int64`
         and `float64` can both go to `float64`.
     axis : int, optional
