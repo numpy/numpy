@@ -270,7 +270,8 @@ class TestMaskedArray:
 
     def test_unknown_keyword_parameter(self):
         with pytest.raises(TypeError, match="unexpected keyword argument"):
-            MaskedArray([1, 2, 3], maks=[0, 1, 0])  # `mask` is misspelled.
+            # `mask` is misspelled.
+            MaskedArray([1, 2, 3], maks=[0, 1, 0])  # codespell-ignore
 
     def test_asarray(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
