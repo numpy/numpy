@@ -219,6 +219,8 @@ cli = 'vendored-meson/meson/meson.py'
 skip = '.git*,*.pdf,*.svg,*.css,lapack_lite'
 check-hidden = true
 # some cases + pragma to add to line to ignore entire line
-ignore-regex = '"worl"|.*codespell-ignore.*'
+# Assume that capitalized shortish (up to 10) Word is a name - skip
+# Skip all shortish (up to 5) ACRONYMS
+ignore-regex = '"worl"|https://citeseerx\.ist\.psu\.edu|\b([A-Z][a-z]{1,9}|[A-Z]{1,5})\b|.*codespell-ignore.*'
 # some common hits
 ignore-words-list = 'nd,nin,numers,numer,inout,ccompiler,fo,CCompiler,dout,ans,ser,ot,asign,siz,alow,fro,delimitor,alo'
