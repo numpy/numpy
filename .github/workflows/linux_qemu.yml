@@ -27,9 +27,14 @@ permissions:
   contents: read
 
 jobs:
+  get_commit_message:
+    name: Get commit message
+    uses: ./.github/workflows/commit_message.yml
+
   linux_qemu:
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
+    needs: get_commit_message
     runs-on: ubuntu-22.04
     continue-on-error: true
     strategy:

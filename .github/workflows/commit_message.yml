@@ -1,0 +1,35 @@
+name: Skip tag checker
+
+on:
+  workflow_call:
+    outputs:
+      message:
+        description: "Skip tag checker"
+        value: ${{ jobs.check_skip_tags.outputs.message }}
+
+permissions:
+   contents: read
+
+jobs:
+  check_skip_tags:
+    name: Check for skips
+    runs-on: ubuntu-latest
+    outputs:
+      message: ${{ steps.skip_check.outputs.message }}
+    steps:
+      - name: Checkout numpy
+        uses: actions/checkout@v4.1.1
+        # Gets the correct commit message for pull request
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Check for skips
+        id: skip_check
+        run: |
+          set -xe
+          COMMIT_MSG=$(git log --no-merges -1)
+          RUN="1"
+          if [[ "$COMMIT_MSG" == *"[docs only]"* ]]; then
+              RUN="0"
+          fi
+          echo "message=$RUN" >> $GITHUB_OUTPUT
+          echo github.ref ${{ github.ref }}

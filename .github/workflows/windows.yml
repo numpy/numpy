@@ -14,8 +14,12 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
+  get_commit_message:
+    name: Get commit message
+    uses: ./.github/workflows/commit_message.yml
   python64bit_openblas:
     name: x86-64, LP64 OpenBLAS
+    needs: get_commit_message
     runs-on: windows-2019
     # To enable this job on a fork, comment out:
     if: github.repository == 'numpy/numpy'
@@ -83,6 +87,7 @@ jobs:
     runs-on: windows-2019
     # To enable this job on a fork, comment out:
     if: github.repository == 'numpy/numpy'
+    needs: get_commit_message
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
