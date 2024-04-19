@@ -216,7 +216,7 @@ cli = 'vendored-meson/meson/meson.py'
 
 [tool.codespell]
 # Ref: https://github.com/codespell-project/codespell#using-a-config-file
-skip = '.git*,*.pdf,*.svg,*.css'
+skip = '.git*,*.pdf,*.svg,*.css,lapack_lite'
 check-hidden = true
 # ignore-regex = ''
 # ignore-words-list = ''
