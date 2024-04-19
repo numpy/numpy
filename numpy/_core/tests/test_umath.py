@@ -1246,7 +1246,6 @@ class TestPower:
 
             expected = np.sqrt(a)
             result = np.power(a, 0.5)
-            # needs to be fixed!
             assert_array_max_ulp(result[:-1], expected[:-1].astype(dt), maxulp=1)
 
 

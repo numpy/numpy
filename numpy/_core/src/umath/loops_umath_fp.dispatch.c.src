@@ -246,13 +246,6 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
             }
             return;
         }
-        else if (in2 == 0.5) {
-            BINARY_LOOP_SLIDING_ZERO_STRIDE {
-                const @type@ in1 = *(@type@ *)ip1;
-                *(@type@ *)op1 =@sqrt@(in1);
-            }
-            return;
-        }
     }
 #if NPY_SIMD && defined(NPY_HAVE_AVX512_SKX) && defined(NPY_CAN_LINK_SVML)
     const @type@ *src1 = (@type@*)args[0];
