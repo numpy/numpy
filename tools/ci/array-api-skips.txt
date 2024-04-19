@@ -14,6 +14,6 @@ array_api_tests/test_signatures.py::test_func_signature[reshape]
 array_api_tests/test_signatures.py::test_func_signature[argsort]
 array_api_tests/test_signatures.py::test_func_signature[sort]
 
-# TODO: check why in CI `inspect.signature(np.vecdot)` returns (*arg, **kwarg)
-#       instead of raising ValueError. mtsokol: couldn't reproduce locally
+# ufuncs signature on linux is always <Signature (*args, **kwargs)>
+# np.vecdot is the only ufunc with a keyword argument which causes a failure
 array_api_tests/test_signatures.py::test_func_signature[vecdot]
