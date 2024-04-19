@@ -213,3 +213,10 @@ cli = 'vendored-meson/meson/meson.py'
   ".spin/cmds.py:notes",
 ]
 "Metrics" = [".spin/cmds.py:bench"]
+
+[tool.codespell]
+# Ref: https://github.com/codespell-project/codespell#using-a-config-file
+skip = '.git*,*.pdf,*.svg,*.css'
+check-hidden = true
+# ignore-regex = ''
+# ignore-words-list = ''
