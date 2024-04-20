@@ -205,8 +205,12 @@ simple datetime calculations.
 There are two Timedelta units ('Y', years and 'M', months) which are treated
 specially, because how much time they represent changes depending
 on when they are used. While a timedelta day unit is equivalent to
-24 hours, there is no way to convert a month unit into days, because
-different months have different numbers of days.
+24 hours, month and year units cannot be converted directly into days
+without using 'unsafe' casting.
+
+The `numpy.ndarray.astype` method can be used for unsafe
+conversion of months/years to days. The conversion follows
+calculating the averaged values from the 400 year leap-year cycle.
 
 .. admonition:: Example
 
@@ -219,6 +223,28 @@ different months have different numbers of days.
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
     TypeError: Cannot cast NumPy timedelta64 scalar from metadata [Y] to [D] according to the rule 'same_kind'
+  
+    Using the astype to convert month unit to days with unsafe casting.
+    400 year leap-year cycle has 400*365 + 97 days and 400*12 months.
+    Each month has approximately 30.4369 days rounded to an integer value of 30.
+
+    >>> np.timedelta64(1, 'M').astype(np.timedelta64(1, 'D')) # The default casting for astype is 'unsafe'.
+    numpy.timedelta64(30,'D')
+
+    Similarly, 12 years in the 400-year leap-year cycle is equivalent to 
+    4382.91 rounded to an integer value of 4382.
+
+    >>> np.timedelta64(12, 'Y').astype(np.timedelta64(1, 'D'))
+    numpy.timedelta64(4382,'D')
+
+    Safe casting cannot be used for the conversion of month unit to days
+    as different months have different numbers of days.
+
+    >>> np.timedelta64(1, 'M').astype(np.timedelta64(1, 'D'), casting='safe')
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    TypeError: Cannot cast scalar from dtype('<m8[M]') to dtype('<m8[D]') according to the rule 'safe'
+
 
 Datetime units
 ==============
