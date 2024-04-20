@@ -309,7 +309,7 @@ def _run_asv(cmd):
         '/usr/local/lib/ccache', '/usr/local/lib/f90cache'
     ])
     env = os.environ
-    env['PATH'] = f'EXTRA_PATH:{PATH}'
+    env['PATH'] = f'{EXTRA_PATH}{os.pathsep}{PATH}'
 
     # Control BLAS/LAPACK threads
     env['OPENBLAS_NUM_THREADS'] = '1'
