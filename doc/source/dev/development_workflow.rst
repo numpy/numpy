@@ -177,7 +177,7 @@ Standard acronyms to start the commit message with are::
    TYP: static typing
    REL: related to releasing numpy
 
-.. skip-ci::
+.. _skip-ci:
 
 Commands to skip continuous integration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
