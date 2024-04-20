@@ -8,7 +8,7 @@ NEP 37 — A dispatch protocol for NumPy-like modules
 :Author: Hameer Abbasi
 :Author: Sebastian Berg
 :Status: Superseded
-:Replaced-By: 56
+:Replaced-By: :ref:`NEP56`
 :Type: Standards Track
 :Created: 2019-12-29
 :Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/message/Z6AA5CL47NHBNEPTFWYOTSUVSRDGHYPN/
