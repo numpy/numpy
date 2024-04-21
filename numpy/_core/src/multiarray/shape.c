@@ -14,6 +14,7 @@
 
 #include "npy_pycompat.h"
 
+#include "arraywrap.h"
 #include "ctors.h"
 
 #include "shape.h"
@@ -567,9 +568,9 @@ PyArray_Squeeze(PyArrayObject *self)
      * __array_wrap__ method
      */
     if (Py_TYPE(self) != &PyArray_Type) {
-        PyArrayObject *tmp = PyArray_SubclassWrap(self, ret);
+        PyObject *wrapped = npy_apply_wrap_simple(self, ret);
         Py_DECREF(ret);
-        ret = tmp;
+        return wrapped;
     }
 
     return (PyObject *)ret;
@@ -623,9 +624,9 @@ PyArray_SqueezeSelected(PyArrayObject *self, npy_bool *axis_flags)
      * __array_wrap__ method
      */
     if (Py_TYPE(self) != &PyArray_Type) {
-        PyArrayObject *tmp = PyArray_SubclassWrap(self, ret);
+        PyObject *wrapped = npy_apply_wrap_simple(self, ret);
         Py_DECREF(ret);
-        ret = tmp;
+        return wrapped;
     }
 
     return (PyObject *)ret;

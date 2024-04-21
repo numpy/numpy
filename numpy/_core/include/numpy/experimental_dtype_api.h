@@ -330,6 +330,7 @@ PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
 #define PyArray_PyIntAbstractDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[44])
 #define PyArray_PyFloatAbstractDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[45])
 #define PyArray_PyComplexAbstractDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[46])
+#define PyArray_DefaultIntDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[47])
 
 /*
  * ********************************

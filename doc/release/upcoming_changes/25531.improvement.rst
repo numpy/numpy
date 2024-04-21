@@ -1,0 +1,6 @@
+Guard PyArrayScalar_VAL and PyUnicodeScalarObject for the limited API
+---------------------------------------------------------------------
+
+``PyUnicodeScalarObject`` holds a ``PyUnicodeObject``, which is not available
+when using ``Py_LIMITED_API``. Add guards to hide it and consequently also make
+the ``PyArrayScalar_VAL`` macro hidden.

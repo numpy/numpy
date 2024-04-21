@@ -1624,6 +1624,11 @@ class TestMatrixRank:
         # works on scalar
         assert_equal(matrix_rank(1), 1)
 
+        with assert_raises_regex(
+            ValueError, "`tol` and `rtol` can\'t be both set."
+        ):
+            matrix_rank(I, tol=0.01, rtol=0.01)
+
     def test_symmetric_rank(self):
         assert_equal(4, matrix_rank(np.eye(4), hermitian=True))
         assert_equal(1, matrix_rank(np.ones((4, 4)), hermitian=True))

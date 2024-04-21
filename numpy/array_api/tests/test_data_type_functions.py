@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 
 from numpy.testing import assert_raises
@@ -24,8 +26,15 @@ def test_isdtype_strictness():
     assert_raises(ValueError, lambda: xp.isdtype(xp.float64, 'f8'))
 
     assert_raises(TypeError, lambda: xp.isdtype(xp.float64, (('integral',),)))
-    assert_raises(TypeError, lambda: xp.isdtype(xp.float64, np.object_))
+    with assert_raises(TypeError), warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        xp.isdtype(xp.float64, np.object_)
+        assert len(w) == 1
+        assert issubclass(w[-1].category, UserWarning)
 
-    # TODO: These will require https://github.com/numpy/numpy/issues/23883
-    # assert_raises(TypeError, lambda: xp.isdtype(xp.float64, None))
-    # assert_raises(TypeError, lambda: xp.isdtype(xp.float64, np.float64))
+    assert_raises(TypeError, lambda: xp.isdtype(xp.float64, None))
+    with assert_raises(TypeError), warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        xp.isdtype(xp.float64, np.float64)
+        assert len(w) == 1
+        assert issubclass(w[-1].category, UserWarning)

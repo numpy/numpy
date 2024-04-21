@@ -798,7 +798,14 @@ class TestBoolCmp:
         self.signd[self.ed] *= -1.
         self.signf[1::6][self.ef[1::6]] = -np.inf
         self.signd[1::6][self.ed[1::6]] = -np.inf
-        self.signf[3::6][self.ef[3::6]] = -np.nan
+        # On RISC-V, many operations that produce NaNs, such as converting
+        # a -NaN from f64 to f32, return a canonical NaN.  The canonical
+        # NaNs are always positive.  See section 11.3 NaN Generation and
+        # Propagation of the RISC-V Unprivileged ISA for more details.
+        # We disable the float32 sign test on riscv64 for -np.nan as the sign
+        # of the NaN will be lost when it's converted to a float32.
+        if platform.processor() != 'riscv64':
+            self.signf[3::6][self.ef[3::6]] = -np.nan
         self.signd[3::6][self.ed[3::6]] = -np.nan
         self.signf[4::6][self.ef[4::6]] = -0.
         self.signd[4::6][self.ed[4::6]] = -0.
@@ -3084,6 +3091,22 @@ class TestStdVar:
                             self.real_var * len(self.A) / (len(self.A) - 2))
         assert_almost_equal(np.std(self.A, ddof=2)**2,
                             self.real_var * len(self.A) / (len(self.A) - 2))
+
+    def test_correction(self):
+        assert_almost_equal(
+            np.var(self.A, correction=1), np.var(self.A, ddof=1)
+        )
+        assert_almost_equal(
+            np.std(self.A, correction=1), np.std(self.A, ddof=1)
+        )
+
+        err_msg = "ddof and correction can't be provided simultaneously."
+
+        with assert_raises_regex(ValueError, err_msg):
+            np.var(self.A, ddof=1, correction=0)
+
+        with assert_raises_regex(ValueError, err_msg):
+            np.std(self.A, ddof=1, correction=1)
 
     def test_out_scalar(self):
         d = np.arange(10)

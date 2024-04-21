@@ -38,9 +38,9 @@ enum class STRIPTYPE {
  * start/end arguments to str function like find/rfind etc.
  */
 static inline void
-adjust_offsets(npy_int64 *start, npy_int64 *end, npy_int64 len)
+adjust_offsets(npy_int64 *start, npy_int64 *end, size_t len)
 {
-    if (*end > len) {
+    if (*end > static_cast<npy_int64>(len)) {
         *end = len;
     }
     else if (*end < 0) {
@@ -64,8 +64,8 @@ static inline npy_bool
 tailmatch(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
           STARTPOSITION direction)
 {
-    npy_int64 len1 = buf1.num_codepoints();
-    npy_int64 len2 = buf2.num_codepoints();
+    size_t len1 = buf1.num_codepoints();
+    size_t len2 = buf2.num_codepoints();
 
     adjust_offsets(&start, &end, len1);
     end -= len2;
@@ -98,10 +98,10 @@ template <ENCODING enc>
 static inline void
 string_add(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out)
 {
-    npy_int64 len1 = buf1.num_codepoints();
-    npy_int64 len2 = buf2.num_codepoints();
-    buf1.buffer_memcpy(out, (size_t) len1);
-    buf2.buffer_memcpy(out + len1, (size_t) len2);
+    size_t len1 = buf1.num_codepoints();
+    size_t len2 = buf2.num_codepoints();
+    buf1.buffer_memcpy(out, len1);
+    buf2.buffer_memcpy(out + len1, len2);
     out.buffer_fill_with_zeros_after_index(len1 + len2);
 }
 
@@ -109,13 +109,13 @@ string_add(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out)
 static inline npy_bool
 string_isdecimal(Buffer<ENCODING::UTF32> buf)
 {
-    npy_int64 len = buf.num_codepoints();
+    size_t len = buf.num_codepoints();
 
     if (len == 0) {
         return (npy_bool) 0;
     }
 
-    for (npy_int64 i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++) {
         npy_bool isdecimal = (npy_bool) Py_UNICODE_ISDECIMAL(*buf);
         if (!isdecimal) {
             return isdecimal;
@@ -129,13 +129,13 @@ string_isdecimal(Buffer<ENCODING::UTF32> buf)
 static inline npy_bool
 string_isnumeric(Buffer<ENCODING::UTF32> buf)
 {
-    npy_int64 len = buf.num_codepoints();
+    size_t len = buf.num_codepoints();
 
     if (len == 0) {
         return (npy_bool) 0;
     }
 
-    for (npy_int64 i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++) {
         npy_bool isnumeric = (npy_bool) Py_UNICODE_ISNUMERIC(*buf);
         if (!isnumeric) {
             return isnumeric;
@@ -150,11 +150,11 @@ template <ENCODING enc>
 static inline npy_intp
 string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
-    npy_int64 len1 = buf1.num_codepoints();
-    npy_int64 len2 = buf2.num_codepoints();
+    size_t len1 = buf1.num_codepoints();
+    size_t len2 = buf2.num_codepoints();
 
     adjust_offsets(&start, &end, len1);
-    if (end - start < len2) {
+    if (end - start < static_cast<npy_int64>(len2)) {
         return (npy_intp) -1;
     }
 
@@ -184,11 +184,11 @@ template <ENCODING enc>
 static inline npy_intp
 string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
-    npy_int64 len1 = buf1.num_codepoints();
-    npy_int64 len2 = buf2.num_codepoints();
+    size_t len1 = buf1.num_codepoints();
+    size_t len2 = buf2.num_codepoints();
 
     adjust_offsets(&start, &end, len1);
-    if (end - start < len2) {
+    if (end - start < static_cast<npy_int64>(len2)) {
         return (npy_intp) -1;
     }
 
@@ -218,13 +218,13 @@ template <ENCODING enc>
 static inline void
 string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE striptype)
 {
-    npy_int64 len = buf.num_codepoints();
+    size_t len = buf.num_codepoints();
     if (len == 0) {
         out.buffer_fill_with_zeros_after_index(0);
         return;
     }
 
-    npy_int64 i = 0;
+    size_t i = 0;
     if (striptype != STRIPTYPE::RIGHTSTRIP) {
         while (i < len) {
             if (!buf.isspace(i)) {
@@ -234,9 +234,9 @@ string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE striptype)
         }
     }
 
-    npy_int64 j = len - 1;
+    npy_intp j = len - 1;  // Could also turn negative if we're stripping the whole string
     if (striptype != STRIPTYPE::LEFTSTRIP) {
-        while (j >= i) {
+        while (j >= static_cast<npy_intp>(i)) {
             if (!buf.isspace(j)) {
                 break;
             }
@@ -253,20 +253,20 @@ template <ENCODING enc>
 static inline void
 string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPTYPE striptype)
 {
-    npy_int64 len1 = buf1.num_codepoints();
+    size_t len1 = buf1.num_codepoints();
     if (len1 == 0) {
         out.buffer_fill_with_zeros_after_index(0);
         return;
     }
 
-    npy_int64 len2 = buf2.num_codepoints();
+    size_t len2 = buf2.num_codepoints();
     if (len2 == 0) {
         buf1.buffer_memcpy(out, len1);
         out.buffer_fill_with_zeros_after_index(len1);
         return;
     }
 
-    npy_int64 i = 0;
+    size_t i = 0;
     if (striptype != STRIPTYPE::RIGHTSTRIP) {
         while (i < len1) {
             if (findchar(buf2, len2, buf1[i]) < 0) {
@@ -276,9 +276,9 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
         }
     }
 
-    npy_int64 j = len1 - 1;
+    npy_intp j = len1 - 1;  // Could also turn negative if we're stripping the whole string
     if (striptype != STRIPTYPE::LEFTSTRIP) {
-        while (j >= i) {
+        while (j >= static_cast<npy_intp>(i)) {
             if (findchar(buf2, len2, buf1[j]) < 0) {
                 break;
             }
@@ -299,11 +299,11 @@ template <ENCODING enc>
 static inline npy_intp
 string_count(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
-    npy_int64 len1 = buf1.num_codepoints();
-    npy_int64 len2 = buf2.num_codepoints();
+    size_t len1 = buf1.num_codepoints();
+    size_t len2 = buf2.num_codepoints();
 
     adjust_offsets(&start, &end, len1);
-    if (end < start || end - start < len2) {
+    if (end - start < static_cast<npy_int64>(len2)) {
         return (npy_intp) 0;
     }
 
@@ -339,9 +339,9 @@ static inline void
 string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 count,
                Buffer<enc> out)
 {
-    npy_int64 len1 = buf1.num_codepoints();
-    npy_int64 len2 = buf2.num_codepoints();
-    npy_int64 len3 = buf3.num_codepoints();
+    size_t len1 = buf1.num_codepoints();
+    size_t len2 = buf2.num_codepoints();
+    size_t len3 = buf3.num_codepoints();
     Buffer<enc> end1 = buf1 + len1;
 
     // Only try to replace if replacements are possible.

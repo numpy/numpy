@@ -109,6 +109,7 @@ def test_NPY_NO_EXPORT():
 # private, to clean up our public API and avoid confusion.
 PUBLIC_MODULES = ['numpy.' + s for s in [
     "array_api",
+    "array_api.fft",
     "array_api.linalg",
     "ctypeslib",
     "dtypes",

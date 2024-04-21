@@ -7,6 +7,7 @@ import numpy as np
 from . import numeric as _nx
 from .numeric import result_type, nan, asanyarray, ndim
 from numpy._core.multiarray import add_docstring
+from numpy._core._multiarray_umath import _array_converter
 from numpy._core import overrides
 
 __all__ = ['logspace', 'linspace', 'geomspace']
@@ -17,13 +18,13 @@ array_function_dispatch = functools.partial(
 
 
 def _linspace_dispatcher(start, stop, num=None, endpoint=None, retstep=None,
-                         dtype=None, axis=None):
+                         dtype=None, axis=None, *, device=None):
     return (start, stop)
 
 
 @array_function_dispatch(_linspace_dispatcher)
 def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
-             axis=0):
+             axis=0, *, device=None):
     """
     Return evenly spaced numbers over a specified interval.
 
@@ -64,13 +65,17 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         array of integers.
 
         .. versionadded:: 1.9.0
-
     axis : int, optional
         The axis in the result to store the samples.  Relevant only if start
         or stop are array-like.  By default (0), the samples will be along a
         new axis inserted at the beginning. Use -1 to get an axis at the end.
 
         .. versionadded:: 1.16.0
+    device : str, optional
+        The device on which to place the created array. Default: None.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -126,21 +131,22 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         )
     div = (num - 1) if endpoint else num
 
-    # Convert float/complex array scalars to float (gh-3504),
-    # and make sure one can use variables that have
-    # an __array_interface__ (gh-6634).
-    start = asanyarray(start) * 1.0
-    stop = asanyarray(stop) * 1.0
+    conv = _array_converter(start, stop)
+    start, stop = conv.as_arrays()
+    dt = conv.result_type(ensure_inexact=True)
 
-    dt = result_type(start, stop, float(num))
     if dtype is None:
         dtype = dt
         integer_dtype = False
     else:
         integer_dtype = _nx.issubdtype(dtype, _nx.integer)
 
-    delta = stop - start
-    y = _nx.arange(0, num, dtype=dt).reshape((-1,) + (1,) * ndim(delta))
+    # Use `dtype=type(dt)` to enforce a floating point evaluation:
+    delta = np.subtract(stop, start, dtype=type(dt))
+    y = _nx.arange(
+        0, num, dtype=dt, device=device
+    ).reshape((-1,) + (1,) * ndim(delta))
+
     # In-place multiplication y *= delta/div is faster, but prevents
     # the multiplicant from overriding what class is produced, and thus
     # prevents, e.g. use of Quantities, see gh-7142. Hence, we multiply
@@ -180,10 +186,11 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     if integer_dtype:
         _nx.floor(y, out=y)
 
+    y = conv.wrap(y.astype(dtype, copy=False))
     if retstep:
-        return y.astype(dtype, copy=False), step
+        return y, step
     else:
-        return y.astype(dtype, copy=False)
+        return y
 
 
 def _logspace_dispatcher(start, stop, num=None, endpoint=None, base=None,

@@ -4,6 +4,7 @@ from typing import (
     Any,
     overload,
     TypeVar,
+    Literal as L,
 )
 
 import numpy as np
@@ -64,6 +65,7 @@ def eye(
     dtype: None = ...,
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
@@ -74,6 +76,7 @@ def eye(
     dtype: _DTypeLike[_SCT] = ...,
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -84,6 +87,7 @@ def eye(
     dtype: DTypeLike = ...,
     order: _OrderCF = ...,
     *,
+    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
