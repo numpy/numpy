@@ -5760,8 +5760,11 @@ def append(arr, values, axis=None):
 
     >>> a = np.array([1, 2], dtype=int)
     >>> b = []
-    >>> np.append(a, b)
+    >>> c = np.append(a, b)
+    >>> c
     array([1., 2.])
+    >>> c.dtype
+    float64
 
     Default dtype for empty lists is `float64` thus making the output of dtype
     `float64` when appended with dtype `int64`
