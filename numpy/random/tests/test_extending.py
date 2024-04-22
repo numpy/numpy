@@ -47,6 +47,10 @@ else:
 
 
 @pytest.mark.skipif(
+    'editable' in np.__path__[0],
+    reason='Editable install cannot find .pxd headers'
+)
+@pytest.mark.skipif(
         sys.platform == "win32" and sys.maxsize < 2**32,
         reason="Failing in 32-bit Windows wheel build job, skip for now"
 )
