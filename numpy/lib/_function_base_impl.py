@@ -5732,13 +5732,6 @@ def append(arr, values, axis=None):
     insert : Insert elements into an array.
     delete : Delete elements from an array.
 
-    Notes
-    -----
-    If dtype of `values` is different from the dtype of `arr` then
-    their dtypes are compared to figure out the common dtype they can
-    both be safely coerced to. For e.g. `int64` and `float64` can both
-    go to `float64`. See examples section below.
-
     Examples
     --------
     >>> np.append([1, 2, 3], [[4, 5, 6], [7, 8, 9]])
@@ -5759,14 +5752,13 @@ def append(arr, values, axis=None):
     dimension(s)
 
     >>> a = np.array([1, 2], dtype=int)
-    >>> b = []
-    >>> c = np.append(a, b)
+    >>> c = np.append(a, [])
     >>> c
     array([1., 2.])
     >>> c.dtype
     float64
 
-    Default dtype for empty lists is `float64` thus making the output of dtype
+    Default dtype for empty ndarrays is `float64` thus making the output of dtype
     `float64` when appended with dtype `int64`
 
     """
