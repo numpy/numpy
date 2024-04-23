@@ -5,7 +5,7 @@ import sys
 import sysconfig
 import pytest
 
-from numpy.testing import IS_WASM, IS_PYPY, NOGIL_BUILD
+from numpy.testing import IS_WASM, IS_PYPY, NOGIL_BUILD, IS_EDITABLE
 
 # This import is copied from random.tests.test_extending
 try:
@@ -23,6 +23,13 @@ else:
         cython = None
 
 pytestmark = pytest.mark.skipif(cython is None, reason="requires cython")
+
+
+if IS_EDITABLE:
+    pytest.skip(
+        "Editable install doesn't support tests with a compile step",
+        allow_module_level=True
+    )
 
 
 @pytest.fixture(scope='module')
