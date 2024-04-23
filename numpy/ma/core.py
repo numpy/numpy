@@ -167,6 +167,10 @@ class MaskError(MAError):
 # b: boolean - c: complex - f: floats - i: integer - O: object - S: string
 default_filler = {'b': True,
                   'c': 1.e20 + 0.0j,
+                  "int8": 127,
+                  "uint8": 255,
+                  "int16": 32767,
+                  "uint16": 65535,
                   "float16": 65504,
                   "float32": 1.e20,
                   "float64": 1.e20,
