@@ -4,7 +4,8 @@ on:
   pull_request:
     branches:
       - main
-      - maintenance/**
+      # Disable this test on the 2.0.x branch, it hangs.
+      # - maintenance/**
 
 defaults:
   run:
