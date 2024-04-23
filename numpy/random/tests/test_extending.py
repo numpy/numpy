@@ -10,7 +10,7 @@ import textwrap
 import warnings
 
 import numpy as np
-from numpy.testing import IS_WASM
+from numpy.testing import IS_WASM, IS_EDITABLE
 
 
 try:
@@ -47,7 +47,7 @@ else:
 
 
 @pytest.mark.skipif(
-    'editable' in np.__path__[0],
+    IS_EDITABLE,
     reason='Editable install cannot find .pxd headers'
 )
 @pytest.mark.skipif(
