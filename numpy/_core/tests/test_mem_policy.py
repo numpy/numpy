@@ -8,7 +8,7 @@ import warnings
 import pytest
 
 import numpy as np
-from numpy.testing import extbuild, assert_warns, IS_WASM
+from numpy.testing import extbuild, assert_warns, IS_WASM, IS_EDITABLE
 from numpy._core.multiarray import get_handler_name
 
 
@@ -28,6 +28,9 @@ def get_module(tmp_path):
         pytest.skip('link fails on cygwin')
     if IS_WASM:
         pytest.skip("Can't build module inside Wasm")
+    if IS_EDITABLE:
+        pytest.skip("Can't build module for editable install")
+
     functions = [
         ("get_default_policy", "METH_NOARGS", """
              Py_INCREF(PyDataMem_DefaultHandler);
