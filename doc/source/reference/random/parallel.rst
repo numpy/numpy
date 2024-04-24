@@ -97,6 +97,10 @@ streams, about :math:`2^{20}`, then the probability that at least one pair of
 them are identical is about :math:`2^{-88}`, which is in solidly-ignorable
 territory ([2]_).
 
+Note that while `~SeedSequence` attempts to solve many of the issues related to
+user-provided small seeds, we still recommend using ``secrets.randbits(128)`` seeds
+for community practice reasons.
+
 .. [1] The algorithm is carefully designed to eliminate a number of possible
        ways to collide. For example, if one only does one level of spawning, it
        is guaranteed that all states will be unique. But it's easier to
