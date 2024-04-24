@@ -99,7 +99,7 @@ territory ([2]_).
 
 Note that while `SeedSequence` attempts to solve many of the issues related to
 user-provided small seeds, we still recommend using ``secrets.randbits(128)`` seeds
-for community practice reasons. 
+for community practice reasons.
 
 Note that while `SeedSequence` attempts to solve many of the issues related to
 user-provided small seeds, we still recommend using ``secrets.randbits(128)`` seeds
