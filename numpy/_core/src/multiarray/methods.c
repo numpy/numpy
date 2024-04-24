@@ -181,14 +181,16 @@ array_put(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    static char *keywords[] = {"order", NULL};
+    static char *keywords[] = {"order", "copy", NULL};
     PyArray_Dims newshape;
     PyObject *ret;
     NPY_ORDER order = NPY_CORDER;
+    NPY_COPYMODE copy = NPY_COPY_IF_NEEDED;
     Py_ssize_t n = PyTuple_Size(args);
 
-    if (!NpyArg_ParseKeywords(kwds, "|O&", keywords,
-                PyArray_OrderConverter, &order)) {
+    if (!NpyArg_ParseKeywords(kwds, "|$O&O&", keywords,
+                PyArray_OrderConverter, &order,
+                PyArray_CopyConverter, &copy)) {
         return NULL;
     }
 
@@ -210,7 +212,7 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
             goto fail;
         }
     }
-    ret = PyArray_Newshape(self, &newshape, order);
+    ret = _reshape_with_copy_arg(self, &newshape, order, copy);
     npy_free_cache_dim_obj(newshape);
     return ret;
 

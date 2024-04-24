@@ -165,6 +165,58 @@ class TestNonarrayArgs:
         tgt = [[1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11, 12]]
         assert_equal(np.reshape(arr, (2, 6)), tgt)
 
+    def test_reshape_shape_arg(self):
+        arr = np.arange(12)
+        shape = (3, 4)
+        expected = arr.reshape(shape)
+
+        with pytest.raises(
+            TypeError,
+            match="You cannot specify 'newshape' and 'shape' "
+                  "arguments at the same time."
+        ):
+            np.reshape(arr, shape=shape, newshape=shape)
+        with pytest.raises(
+            TypeError,
+            match=r"reshape\(\) missing 1 required positional "
+                  "argument: 'shape'"
+        ):
+            np.reshape(arr)
+
+        assert_equal(np.reshape(arr, shape), expected)
+        assert_equal(np.reshape(arr, shape, order="C"), expected)
+        assert_equal(np.reshape(arr, shape=shape), expected)
+        assert_equal(np.reshape(arr, shape=shape, order="C"), expected)
+        with pytest.warns(DeprecationWarning):
+            actual = np.reshape(arr, newshape=shape)
+            assert_equal(actual, expected)
+
+    def test_reshape_copy_arg(self):
+        arr = np.arange(24).reshape(2, 3, 4)
+        arr_f_ord = np.array(arr, order="F")
+        shape = (12, 2)
+
+        assert np.shares_memory(np.reshape(arr, shape), arr)
+        assert np.shares_memory(np.reshape(arr, shape, order="C"), arr)
+        assert np.shares_memory(
+            np.reshape(arr_f_ord, shape, order="F"), arr_f_ord)
+        assert np.shares_memory(np.reshape(arr, shape, copy=None), arr)
+        assert np.shares_memory(np.reshape(arr, shape, copy=False), arr)
+        assert np.shares_memory(arr.reshape(shape, copy=False), arr)
+        assert not np.shares_memory(np.reshape(arr, shape, copy=True), arr)
+        assert not np.shares_memory(
+            np.reshape(arr, shape, order="C", copy=True), arr)
+        assert not np.shares_memory(
+            np.reshape(arr, shape, order="F", copy=True), arr)
+        assert not np.shares_memory(
+            np.reshape(arr, shape, order="F", copy=None), arr)
+
+        err_msg = "Unable to avoid creating a copy while reshaping."
+        with pytest.raises(ValueError, match=err_msg):
+            np.reshape(arr, shape, order="F", copy=False)
+        with pytest.raises(ValueError, match=err_msg):
+            np.reshape(arr_f_ord, shape, order="C", copy=False)
+
     def test_round(self):
         arr = [1.56, 72.54, 6.35, 3.25]
         tgt = [1.6, 72.5, 6.4, 3.2]
