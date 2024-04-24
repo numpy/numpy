@@ -171,7 +171,7 @@ class TestNonarrayArgs:
         expected = arr.reshape(shape)
 
         with pytest.raises(
-            ValueError,
+            TypeError,
             match="You cannot specify 'newshape' and 'shape' "
                   "arguments at the same time."
         ):
