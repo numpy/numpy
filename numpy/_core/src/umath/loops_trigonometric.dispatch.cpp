@@ -1,4 +1,3 @@
-#include "numpy/npy_math.h"
 #include "simd/simd.h"
 #include "loops_utils.h"
 #include "loops.h"
@@ -31,7 +30,7 @@ namespace hn = hwy::HWY_NAMESPACE;
  * elements or when there's no native FUSED support instead of fallback to libc
  */
 
-#if NPY_SIMD_FMA3  // native support
+#if HWY_NATIVE_FMA  // native support
 typedef enum
 {
     SIMD_COMPUTE_SIN,
@@ -44,7 +43,7 @@ using vec_f32 = hn::Vec<decltype(f32)>;
 using vec_s32 = hn::Vec<decltype(s32)>;
 using opmask_t = hn::Mask<decltype(f32)>;
 
-NPY_FINLINE HWY_ATTR vec_f32
+HWY_INLINE HWY_ATTR vec_f32
 simd_range_reduction_f32(vec_f32& x, vec_f32& y, const vec_f32& c1, const vec_f32& c2, const vec_f32& c3)
 {
     vec_f32 reduced_x = hn::MulAdd(y, c1, x);
@@ -53,7 +52,7 @@ simd_range_reduction_f32(vec_f32& x, vec_f32& y, const vec_f32& c1, const vec_f3
     return reduced_x;
 }
 
-NPY_FINLINE HWY_ATTR vec_f32
+HWY_INLINE HWY_ATTR vec_f32
 simd_cosine_poly_f32(vec_f32& x2)
 {
     const vec_f32 invf8 = hn::Set(f32, 0x1.98e616p-16f);
@@ -73,7 +72,7 @@ simd_cosine_poly_f32(vec_f32& x2)
  * Maximum ULP across all 32-bit floats = 0.647
  * Polynomial approximation based on unpublished work by T. Myklebust
  */
-NPY_FINLINE HWY_ATTR vec_f32
+HWY_INLINE HWY_ATTR vec_f32
 simd_sine_poly_f32(vec_f32& x, vec_f32& x2)
 {
     const vec_f32 invf9 = hn::Set(f32, 0x1.7d3bbcp-19f);
@@ -87,26 +86,6 @@ simd_sine_poly_f32(vec_f32& x, vec_f32& x2)
     r = hn::MulAdd(r, x2, hn::Zero(f32));
     r = hn::MulAdd(r, x, x);
     return r;
-}
-
-NPY_FINLINE HWY_ATTR vec_f32
-GatherIndexN(const float* src, npy_intp ssrc, npy_intp len)
-{
-    float temp[hn::Lanes(f32)] = { 0.0f };
-    for (auto ii = 0; ii < std::min(len, (npy_intp)hn::Lanes(f32)); ++ii) {
-        temp[ii] = src[ii * ssrc];
-    }
-    return hn::LoadU(f32, temp);
-}
-
-NPY_FINLINE HWY_ATTR void
-ScatterIndexN(vec_f32 vec, float* dst, npy_intp sdst, npy_intp len)
-{
-    float temp[hn::Lanes(f32)];
-    hn::StoreU(vec, f32, temp);
-    for (auto ii = 0; ii < std::min(len, (npy_intp)hn::Lanes(f32)); ++ii) {
-        dst[ii * sdst] = temp[ii];
-    }
 }
 
 static void HWY_ATTR SIMD_MSVC_NOINLINE
@@ -130,23 +109,15 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
     const vec_f32 max_cody = hn::Set(f32, max_codi);
 
     const int lanes = hn::Lanes(f32);
-    //npy_intp load_index[lanes/2];
-    //for (auto i = 0; i < lanes; ++i) {
-    //    load_index[i] = i * ssrc;
-    //}
-    //vec_s32 vec_lindex = hn::LoadU(s32, load_index);
-    //npy_intp store_index[lanes/2];
-    //for (auto i = 0; i < lanes; ++i) {
-    //    store_index[i] = i * sdst;
-    //}
-    //vec_s32 vec_sindex = hn::LoadU(s32, store_index);
+    const vec_s32 src_index = hn::Mul(hn::Iota(s32, 0), hn::Set(s32, ssrc));
+    const vec_s32 dst_index = hn::Mul(hn::Iota(s32, 0), hn::Set(s32, sdst));
 
     for (; len > 0; len -= lanes, src += ssrc*lanes, dst += sdst*lanes) {
         vec_f32 x_in;
         if (ssrc == 1) {
             x_in = hn::LoadN(f32, src, len);
         } else {
-            x_in = GatherIndexN(src, ssrc, len);
+            x_in = hn::GatherIndexN(f32, src, src_index, len);
         }
         opmask_t nnan_mask = hn::Not(hn::IsNaN(x_in));
         // Eliminate NaN to avoid FP invalid exception
@@ -191,7 +162,7 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
             if (sdst == 1) {
                 hn::StoreN(cos, f32, dst, len);
             } else {
-                ScatterIndexN(cos, dst, sdst, len);
+                hn::ScatterIndexN(cos, f32, dst, dst_index, len);
             }
         }
         if (!hn::AllTrue(f32, simd_mask)) {
@@ -221,7 +192,7 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
     npyv_cleanup();
     }
 }
-#endif // NPY_SIMD_FMA3
+#endif // HWY_NATIVE_FMA
 
 /* Disable SIMD code sin/cos f64 and revert to libm: see
  * https://mail.python.org/archives/list/numpy-discussion@python.org/thread/C6EYZZSR4EWGVKHAZXLE7IBILRMNVK7L/
@@ -242,7 +213,7 @@ DISPATCH_DOUBLE_FUNC(cos)
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(FLOAT_sin)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
-#if NPY_SIMD_F32 && NPY_SIMD_FMA3
+#if HWY_NATIVE_FMA
     const npy_float *src = (npy_float*)args[0];
           npy_float *dst = (npy_float*)args[1];
 
@@ -271,7 +242,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(FLOAT_sin)
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(FLOAT_cos)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
-#if NPY_SIMD_F32 && NPY_SIMD_FMA3
+#if HWY_NATIVE_FMA
     const npy_float *src = (npy_float*)args[0];
           npy_float *dst = (npy_float*)args[1];
 
