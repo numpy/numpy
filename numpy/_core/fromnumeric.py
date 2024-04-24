@@ -307,11 +307,11 @@ def reshape(a, /, shape=None, *, newshape=None, order='C', copy=None):
     if newshape is None and shape is None:
         raise TypeError(
             "reshape() missing 1 required positional argument: 'shape'")
-    if newshape is not None and shape is not None:
-        raise ValueError(
-            "You cannot specify 'newshape' and 'shape' arguments "
-            "at the same time.")
     if newshape is not None:
+        if shape is not None:
+            raise TypeError(
+                "You cannot specify 'newshape' and 'shape' arguments "
+                "at the same time.")
         # Deprecated in NumPy 2.1, 2024-04-18
         warnings.warn(
             "`newshape` keyword argument is deprecated, "
@@ -321,10 +321,9 @@ def reshape(a, /, shape=None, *, newshape=None, order='C', copy=None):
             stacklevel=2,
         )
         shape = newshape
-    kwargs = {"order": order}
     if copy is not None:
-        kwargs["copy"] = copy
-    return _wrapfunc(a, 'reshape', shape, **kwargs)
+        return _wrapfunc(a, 'reshape', shape, order=order, copy=copy)
+    return _wrapfunc(a, 'reshape', shape, order=order)
 
 
 def _choose_dispatcher(a, choices, out=None, mode=None):
