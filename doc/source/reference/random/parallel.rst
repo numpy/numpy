@@ -98,8 +98,8 @@ them are identical is about :math:`2^{-88}`, which is in solidly-ignorable
 territory ([2]_).
 
 Note that while `~SeedSequence` attempts to solve many of the issues related to
-user-provided small seeds, we still recommend using ``secrets.randbits(128)`` seeds
-for community practice reasons.
+user-provided small seeds, we still recommend using :py:func:`secrets.randbits` to generate
+seeds with 128 bits of entropy to avoid the remaining biases introduced by human-chosen seeds.
 
 .. [1] The algorithm is carefully designed to eliminate a number of possible
        ways to collide. For example, if one only does one level of spawning, it
