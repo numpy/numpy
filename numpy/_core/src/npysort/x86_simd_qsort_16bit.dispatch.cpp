@@ -2,6 +2,13 @@
 #ifndef __CYGWIN__
 
 #include "x86-simd-sort/src/x86simdsort-static-incl.h"
+/*
+ * MSVC doesn't set the macro __AVX512VBMI2__ which is required for the 16-bit
+ * functions and therefore we need to manually include this file here
+ */
+#ifdef _MSC_VER
+#include "x86-simd-sort/src/avx512-16bit-qsort.hpp"
+#endif
 
 namespace np { namespace qsort_simd {
 
