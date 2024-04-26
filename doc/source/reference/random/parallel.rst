@@ -45,6 +45,10 @@ These properties together mean that we can safely mix together the usual
 user-provided seed with simple incrementing counters to get `~BitGenerator`
 states that are (to very high probability) independent of each other. We can
 wrap this together into an API that is easy to use and difficult to misuse.
+Note that while `~SeedSequence` attempts to solve many of the issues related to
+user-provided small seeds, we still :ref:`recommend<recommend-secrets-randbits>`
+using :py:func:`secrets.randbits` to generate seeds with 128 bits of entropy to
+avoid the remaining biases introduced by human-chosen seeds.
 
 .. code-block:: python
 
@@ -96,10 +100,6 @@ that pool, pessimistically-estimated ([1]_), will be about :math:`n^2*2^{-128}` 
 streams, about :math:`2^{20}`, then the probability that at least one pair of
 them are identical is about :math:`2^{-88}`, which is in solidly-ignorable
 territory ([2]_).
-
-Note that while `~SeedSequence` attempts to solve many of the issues related to
-user-provided small seeds, we still recommend using :py:func:`secrets.randbits` to generate
-seeds with 128 bits of entropy to avoid the remaining biases introduced by human-chosen seeds.
 
 .. [1] The algorithm is carefully designed to eliminate a number of possible
        ways to collide. For example, if one only does one level of spawning, it
