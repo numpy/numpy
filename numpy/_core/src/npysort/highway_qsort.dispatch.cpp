@@ -16,6 +16,5 @@ namespace np { namespace highway { namespace qsort_simd {
     DISPATCH_VQSORT(uint64_t)
     DISPATCH_VQSORT(double)
     DISPATCH_VQSORT(float)
-}
 
 } } } // np::highway::qsort_simd
