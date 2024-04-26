@@ -189,6 +189,9 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps,
         copy_input(ip, step_in, nin, &((T *)op_or_buff)[1], nout*2 - 1);
         plan->exec(&((T *)op_or_buff)[1], *(T *)fp, pocketfft::FORWARD);
         op_or_buff[0] = op_or_buff[0].imag();  // I0->R0, I0=0
+        if (!(npts & 1)) {
+            op_or_buff[nout - 1].imag(0.0);
+        }
         if (buffered) {
             copy_output(op_or_buff, op, step_out, nout);
         }
