@@ -1625,12 +1625,19 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
             Buffer<ENCODING::UTF8> inbuf((char *)s1.buf, s1.size);
             Buffer<ENCODING::UTF8> fill((char *)s2.buf, s2.size);
 
+            size_t num_codepoints = inbuf.num_codepoints();
+            npy_intp width = (npy_intp)*(npy_int64*)in2;
+
+            if (num_codepoints > (size_t)width) {
+                width = num_codepoints;
+            }
+
             char *buf = NULL;
             npy_intp newsize;
             int overflowed = npy_mul_sizes_with_overflow(
                     &(newsize),
                     (npy_intp)num_bytes_for_utf8_character((unsigned char *)s2.buf),
-                    (npy_intp)*(npy_int64*)in2 - inbuf.num_codepoints());
+                    width - num_codepoints);
             newsize += s1.size;
 
             if (overflowed) {
@@ -1752,6 +1759,9 @@ zfill_strided_loop(PyArrayMethod_Context *context,
             Buffer<ENCODING::UTF8> inbuf((char *)is.buf, is.size);
             size_t in_codepoints = inbuf.num_codepoints();
             size_t width = (size_t)*(npy_int64 *)in2;
+            if (in_codepoints > width) {
+                width = in_codepoints;
+            }
             // number of leading one-byte characters plus the size of the
             // original string
             size_t outsize = (width - in_codepoints) + is.size;
