@@ -56,6 +56,8 @@ pseudo-randomness was good for in the first place.
   or cryptographic purposes. See the :py:mod:`secrets` module from the
   standard library for such use cases.
 
+.. _recommend-secrets-randbits:
+
 Seeds should be large positive integers. `default_rng` can take positive
 integers of any size. We recommend using very large, unique numbers to ensure
 that your seed is different from anyone else's. This is good practice to ensure
