@@ -183,7 +183,6 @@ class TestFFT1D:
         with pytest.raises(TypeError, match="Cannot cast"):
             np.fft.fft(x, out=np.zeros_like(x, dtype=float))
 
-
     @pytest.mark.parametrize('norm', (None, 'backward', 'ortho', 'forward'))
     def test_ifft(self, norm):
         x = random(30) + 1j*random(30)
@@ -257,6 +256,17 @@ class TestFFT1D:
             assert_allclose(
                 np.fft.rfft(x, n=n) / n,
                 np.fft.rfft(x, n=n, norm="forward"), atol=1e-6)
+
+    def test_rfft_even(self):
+        x = np.arange(8)
+        n = 4
+        y = np.fft.rfft(x, n)
+        assert_allclose(y, np.fft.fft(x[:n])[:n//2 + 1], rtol=1e-14)
+
+    def test_rfft_odd(self):
+        x = np.array([1, 0, 2, 3, -3])
+        y = np.fft.rfft(x)
+        assert_allclose(y, np.fft.fft(x)[:3], rtol=1e-14)
 
     def test_irfft(self):
         x = random(30)
