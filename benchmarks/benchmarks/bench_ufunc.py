@@ -566,8 +566,6 @@ class BinaryBench(Benchmark):
         N = 1000000
         self.a = np.random.rand(N).astype(dtype)
         self.b = np.random.rand(N).astype(dtype)
-        self.a_i64 = np.random.randint(20, size=N).astype(np.int64)
-        self.b_i64 = np.random.randint(4, size=N).astype(np.int64)
 
     def time_pow(self, dtype):
         np.power(self.a, self.b)
