@@ -259,8 +259,9 @@ class TestFFT1D:
 
     def test_rfft_even(self):
         x = np.arange(8)
-        y = np.fft.rfft(x, 4)
-        assert_allclose(y, [6.0, -2.0+2.0j, -2.0], rtol=1e-14)
+        n = 4
+        y = np.fft.rfft(x, n)
+        assert_allclose(y, np.fft.fft(x[:n])[:n//2 + 1], rtol=1e-14)
 
     def test_rfft_odd(self):
         x = np.array([1, 0, 2, 3, -3])
