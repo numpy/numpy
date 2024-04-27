@@ -572,17 +572,11 @@ class BinaryBench(Benchmark):
     def time_pow(self, dtype):
         np.power(self.a, self.b)
 
-    def time_pow_32(self):
-        np.power(self.a32, self.b32)
-
     def time_pow_2(self, dtype):
         np.power(self.a, 2.0)
 
     def time_pow_half(self, dtype):
         np.power(self.a, 0.5)
-
-    def time_atan2_32(self):
-        np.arctan2(self.a32, self.b32)
 
     def time_atan2(self, dtype):
         np.arctan2(self.a, self.b)
@@ -593,14 +587,14 @@ class BinaryBenchInteger(Benchmark):
 
     def setup(self, dtype):
         N = 1000000
-        self.a_i64 = np.random.randint(20, size=N).astype(dtype)
-        self.b_i64 = np.random.randint(4, size=N).astype(dtype)
+        self.a = np.random.randint(20, size=N).astype(dtype)
+        self.b = np.random.randint(4, size=N).astype(dtype)
         
     def time_pow(self, dtype):
         np.power(self.a, self.b)
 
-    def time_pow_two(self):
+    def time_pow_two(self, dtype):
         np.power(self.a, 2)
 
-    def time_pow_five(self):
+    def time_pow_five(self, dtype):
         np.power(self.a, 5)
