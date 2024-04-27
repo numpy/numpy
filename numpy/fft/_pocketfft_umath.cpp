@@ -183,7 +183,7 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps,
          * Pocketfft uses FFTpack order, R0,R1,I1,...Rn-1,In-1,Rn[,In] (last
          * for npts odd only). To make unpacking easy, we place the real data
          * offset by one in the buffer, so that we just have to move R0 and
-         * create I0=0. Note that copy_data will zero the In component for
+         * create I0=0. Note that copy_input will zero the In component for
          * even number of points.
          */
         copy_input(ip, step_in, nin, &((T *)op_or_buff)[1], nout*2 - 1);
