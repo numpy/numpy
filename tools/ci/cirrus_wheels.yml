@@ -86,7 +86,7 @@ macosx_arm64_task:
 
   build_script:
     - brew install python@3.10
-    - ln -s python3 /opt/homebrew/opt/python@3.10/libexec/bin/python
+    - ln -sf python3 /opt/homebrew/opt/python@3.10/libexec/bin/python
     - which python
     # needed for submodules
     - git submodule update --init
