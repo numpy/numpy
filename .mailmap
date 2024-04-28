@@ -7,7 +7,8 @@
 #
 # This file is up-to-date if the command git log --format="%aN <%aE>" | sort -u
 # gives no duplicates.
-
+ 
+@cook-1229 <70235336+cook-1229@users.noreply.github.com>
 @8bitmp3 <19637339+8bitmp3@users.noreply.github.com>
 @DWesl <22566757+DWesl@users.noreply.github.com>
 @Endolith <endolith@gmail.com>
@@ -450,6 +451,7 @@ Norwid Behrnd <nbehrnd@yahoo.com> <nbehrnd@users.noreply.github.com>
 Oliver Eberle <oliver_eberle@web.de>
 Oleksiy Kononenko <Oleksiy.S.Kononenko@gmail.com>
 Oleksiy Kononenko <Oleksiy.S.Kononenko@gmail.com> <35204136+oleksiyskononenko@users.noreply.github.com>
+Olivier Barthelemy <perso.olivier.barthelemy@gmail.com>
 Omar Ali <Omarh90@gmail.com>
 Omid Rajaei <rajaei.net@gmail.com>
 Omid Rajaei <rajaei.net@gmail.com> <89868505+rajaeinet@users.noreply.github.com>
