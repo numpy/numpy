@@ -2,7 +2,7 @@
 Contributors
 ============
 
-A total of 193 people contributed to this release.  People with a "+" by their
+A total of 198 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * @Algorithmist-Girl +
@@ -34,6 +34,7 @@ names contributed a patch for the first time.
 * Anton Prosekin +
 * Antony Lee
 * Bas van Beek
+* Ben Woodruff +
 * Bharat Raghunathan
 * Bhavya Alekhya +
 * Brandon Smith +
@@ -71,29 +72,32 @@ names contributed a patch for the first time.
 * Even Rouault +
 * Evgeni Burovski
 * Filipe Laíns +
+* Francisco Sousa +
 * Ganesh Kathiresan
 * Gonzalo Tornaría +
 * Hans Meine
 * Heberto Mayorquin +
 * Heinz-Alexander Fuetterer +
 * Hood Chatham
+* Hugo van Kemenade
 * Ivan A. Melnikov +
 * Jacob M. Casey +
 * Jake Lishman +
 * Jake VanderPlas
-* Jake Vanderplas
 * James Oliver +
 * Jan Wassenberg +
 * Janukan Sivajeyan +
 * Johann Rohwer +
 * Johannes Kaisinger +
 * John Muradeli +
+* Joris Van den Bossche
 * Kai Striega
 * Kevin Sheppard
 * Kevin Wu +
 * Khawaja Junaid +
 * Kit Lee +
 * Kristian Minchev +
+* Kristoffer Pedersen +
 * Kuan-Wei Chiu +
 * Lane Votapka +
 * Larry Bradley
@@ -156,6 +160,7 @@ names contributed a patch for the first time.
 * Richard Howe +
 * Robert Kern
 * Rohit Goswami
+* Romain Geissler +
 * Ronald van Elburg +
 * Ross Barnowski
 * Sam James +
@@ -202,7 +207,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 1006 pull requests were merged for this release.
+A total of 1041 pull requests were merged for this release.
 
 * `#15457 <https://github.com/numpy/numpy/pull/15457>`__: BUG: Adds support for array parameter declaration in fortran...
 * `#21199 <https://github.com/numpy/numpy/pull/21199>`__: ENH: expose datetime.c functions to cython
@@ -1210,3 +1215,39 @@ A total of 1006 pull requests were merged for this release.
 * `#26170 <https://github.com/numpy/numpy/pull/26170>`__: DOC: mention np.lib.NumPyVersion in the 2.0 migration guide
 * `#26171 <https://github.com/numpy/numpy/pull/26171>`__: ENH: inherit numerical dtypes from abstract ones.
 * `#26173 <https://github.com/numpy/numpy/pull/26173>`__: DOC, TST: make ``numpy.version`` officially public
+* `#26186 <https://github.com/numpy/numpy/pull/26186>`__: MAINT: Update Pyodide to 0.25.1
+* `#26192 <https://github.com/numpy/numpy/pull/26192>`__: BUG: Infinite Loop in numpy.base_repr
+* `#26193 <https://github.com/numpy/numpy/pull/26193>`__: BUG: fix reference counting error in wrapping_method_resolve_descriptors
+* `#26194 <https://github.com/numpy/numpy/pull/26194>`__: DOC: Mention ``copy=True`` for ``__array__`` method in the migration...
+* `#26205 <https://github.com/numpy/numpy/pull/26205>`__: BUG: introduce PyArray_SafeCast to fix issues around stringdtype...
+* `#26231 <https://github.com/numpy/numpy/pull/26231>`__: API: Readd np.bool_ typing stub
+* `#26256 <https://github.com/numpy/numpy/pull/26256>`__: MAINT: Update array-api-tests job
+* `#26259 <https://github.com/numpy/numpy/pull/26259>`__: DOC: Backport various documentation fixes
+* `#26262 <https://github.com/numpy/numpy/pull/26262>`__: BLD: update to OpenBLAS 0.3.27.0.1
+* `#26265 <https://github.com/numpy/numpy/pull/26265>`__: MAINT: Fix some typos
+* `#26272 <https://github.com/numpy/numpy/pull/26272>`__: BUG: Fixes for ``np.vectorize``.
+* `#26283 <https://github.com/numpy/numpy/pull/26283>`__: DOC: correct PR referenced in __array_wraps__ change note
+* `#26293 <https://github.com/numpy/numpy/pull/26293>`__: BUG: Ensure seed sequences are restored through pickling (#26260)
+* `#26297 <https://github.com/numpy/numpy/pull/26297>`__: BUG: Workaround for Intel Compiler mask conversion bug
+* `#26305 <https://github.com/numpy/numpy/pull/26305>`__: DOC: Bump pydata-sphinx-theme version
+* `#26306 <https://github.com/numpy/numpy/pull/26306>`__: MAINT: Robust string meson template substitution
+* `#26307 <https://github.com/numpy/numpy/pull/26307>`__: BLD: use newer openblas wheels [wheel build]
+* `#26312 <https://github.com/numpy/numpy/pull/26312>`__: DOC: Follow-up fixes for new theme
+* `#26330 <https://github.com/numpy/numpy/pull/26330>`__: BUG: Fix invalid constructor in string_fastsearch.h with C++...
+* `#26331 <https://github.com/numpy/numpy/pull/26331>`__: MAINT: address improper error handling and cleanup for ``spin``
+* `#26332 <https://github.com/numpy/numpy/pull/26332>`__: BUG: use PyArray_SafeCast in array_astype
+* `#26334 <https://github.com/numpy/numpy/pull/26334>`__: MAINT: Disable compiler sanitizer tests on 2.0.x
+* `#26351 <https://github.com/numpy/numpy/pull/26351>`__: ENH: introduce a notion of "compatible" stringdtype instances...
+* `#26357 <https://github.com/numpy/numpy/pull/26357>`__: DOC: Added small clarification note, based on discussion in issue...
+* `#26358 <https://github.com/numpy/numpy/pull/26358>`__: BUG: Fix rfft for even input length.
+* `#26360 <https://github.com/numpy/numpy/pull/26360>`__: MAINT: Simplify bugfix for even rfft
+* `#26373 <https://github.com/numpy/numpy/pull/26373>`__: DOC: fix np.unique release notes [skip cirrus]
+* `#26374 <https://github.com/numpy/numpy/pull/26374>`__: ENH: add support for nan-like null strings in string replace
+* `#26393 <https://github.com/numpy/numpy/pull/26393>`__: BUG: Make sure that NumPy scalars are supported by can_cast
+* `#26400 <https://github.com/numpy/numpy/pull/26400>`__: MNT: more gracefully handle spin adding arguments to functions...
+* `#26402 <https://github.com/numpy/numpy/pull/26402>`__: DOC: Add missing methods to numpy.strings docs
+* `#26403 <https://github.com/numpy/numpy/pull/26403>`__: DOC: Fix links in random documentation.
+* `#26417 <https://github.com/numpy/numpy/pull/26417>`__: BUG: support nan-like null strings in [l,r]strip
+* `#26423 <https://github.com/numpy/numpy/pull/26423>`__: DOC: Fix some typos and incorrect markups
+* `#26424 <https://github.com/numpy/numpy/pull/26424>`__: DOC: add reference docs for NpyString C API
+
