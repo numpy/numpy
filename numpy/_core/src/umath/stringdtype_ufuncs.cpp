@@ -1352,7 +1352,7 @@ string_replace_strided_loop(
                     else {
                         npy_gil_error(PyExc_ValueError,
                                       "Only NaN-like null strings can be used "
-                                      "as as search strings for replace");
+                                      "as search strings for replace");
                     }
                 }
             }
