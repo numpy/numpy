@@ -1350,9 +1350,9 @@ string_replace_strided_loop(
                         goto next_step;
                     }
                     else {
-                    npy_gil_error(PyExc_ValueError,
-                                  "Only nan-like null values are not supported "
-                                  "as search strings for replace");
+                        npy_gil_error(PyExc_ValueError,
+                                      "Only NaN-like null strings can be used "
+                                      "as as search strings for replace");
                     }
                 }
             }
@@ -1378,10 +1378,8 @@ string_replace_strided_loop(
                 in_count = NPY_MAX_INT64;
             }
 
-            npy_int64 start = 0;
-            npy_int64 end = NPY_MAX_INT64;
-
-            npy_int64 found_count = string_count<ENCODING::UTF8>(buf1, buf2, start, end);
+            npy_int64 found_count = string_count<ENCODING::UTF8>(
+                    buf1, buf2, 0, NPY_MAX_INT64);
             if (found_count == -2) {
                 goto fail;
             }
