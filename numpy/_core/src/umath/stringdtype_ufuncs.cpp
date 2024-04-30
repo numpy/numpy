@@ -1351,8 +1351,8 @@ string_replace_strided_loop(
                     }
                     else {
                         npy_gil_error(PyExc_ValueError,
-                                      "Only NaN-like null strings can be used "
-                                      "as search strings for replace");
+                                      "Only string or NaN-like null strings can "
+                                      "be used as search strings for replace");
                     }
                 }
             }
@@ -1380,7 +1380,7 @@ string_replace_strided_loop(
 
             npy_int64 found_count = string_count<ENCODING::UTF8>(
                     buf1, buf2, 0, NPY_MAX_INT64);
-            if (found_count == -2) {
+            if (found_count < 0) {
                 goto fail;
             }
 
@@ -1397,7 +1397,8 @@ string_replace_strided_loop(
             }
             else {
                 // replace i2 with i3
-                max_size = i1s.size * (i3s.size/i2s.size + 1);
+                size_t change = i2s.size >= i3s.size ? 0 : i3s.size - i2s.size;
+                max_size = i1s.size + count * change;
             }
             char *new_buf = (char *)PyMem_RawCalloc(max_size, 1);
             Buffer<ENCODING::UTF8> outbuf(new_buf, max_size);
