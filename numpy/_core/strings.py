@@ -1112,19 +1112,18 @@ def replace(a, old, new, count=-1):
     a_dt = arr.dtype
     old = np.asanyarray(old, dtype=getattr(old, 'dtype', a_dt))
     new = np.asanyarray(new, dtype=getattr(new, 'dtype', a_dt))
+    count = np.asanyarray(count)
+
+    if arr.dtype.char == "T":
+        return _replace(arr, old, new, count)
 
     max_int64 = np.iinfo(np.int64).max
     counts = _count_ufunc(arr, old, 0, max_int64)
-    count = np.asanyarray(count)
     counts = np.where(count < 0, counts, np.minimum(counts, count))
 
-    if arr.dtype.char == "T":
-        shape = np.broadcast_shapes(counts.shape, new.shape, old.shape)
-        out = np.empty_like(arr, shape=shape)
-    else:
-        buffersizes = str_len(arr) + counts * (str_len(new) - str_len(old))
-        out_dtype = f"{arr.dtype.char}{buffersizes.max()}"
-        out = np.empty_like(arr, shape=buffersizes.shape, dtype=out_dtype)
+    buffersizes = str_len(arr) + counts * (str_len(new) - str_len(old))
+    out_dtype = f"{arr.dtype.char}{buffersizes.max()}"
+    out = np.empty_like(arr, shape=buffersizes.shape, dtype=out_dtype)
     return _replace(arr, old, new, counts, out=out)
 
 
