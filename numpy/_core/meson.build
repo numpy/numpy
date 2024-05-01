@@ -244,6 +244,8 @@ endforeach
 
 # variable attributes tested via "int %s a" % attribute
 optional_variable_attributes = [
+  ['thread_local', 'HAVE_THREAD_LOCAL'],
+  ['_Thread_local', 'HAVE__THREAD_LOCAL'],
   ['__thread', 'HAVE__THREAD'],
   ['__declspec(thread)', 'HAVE___DECLSPEC_THREAD_']
 ]
@@ -262,7 +264,7 @@ foreach optional_attr: optional_variable_attributes
       return 0;
     }
   '''
-  if cc.compiles(code)
+  if cc.compiles(code, name: optional_attr[0])
     cdata.set10(optional_attr[1], true)
   endif
 endforeach

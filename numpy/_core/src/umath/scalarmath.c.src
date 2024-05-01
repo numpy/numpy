@@ -963,7 +963,7 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
             *may_need_deferring = NPY_TRUE;
         }
         if (!IS_SAFE(NPY_DOUBLE, NPY_@TYPE@)) {
-            if (npy_promotion_state != NPY_USE_WEAK_PROMOTION) {
+            if (get_npy_promotion_state() != NPY_USE_WEAK_PROMOTION) {
                 /* Legacy promotion and weak-and-warn not handled here */
                 return PROMOTION_REQUIRED;
             }
@@ -986,7 +986,7 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
              * long -> (c)longdouble is safe, so `OTHER_IS_UNKNOWN_OBJECT` will
              * be returned below for huge integers.
              */
-            if (npy_promotion_state != NPY_USE_WEAK_PROMOTION) {
+            if (get_npy_promotion_state() != NPY_USE_WEAK_PROMOTION) {
                 /* Legacy promotion and weak-and-warn not handled here */
                 return PROMOTION_REQUIRED;
             }
@@ -996,7 +996,7 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
         long val = PyLong_AsLongAndOverflow(value, &overflow);
         if (overflow) {
             /* handle as if "unsafe" */
-            if (npy_promotion_state != NPY_USE_WEAK_PROMOTION) {
+            if (get_npy_promotion_state() != NPY_USE_WEAK_PROMOTION) {
                 return OTHER_IS_UNKNOWN_OBJECT;
             }
             return CONVERT_PYSCALAR;
@@ -1018,7 +1018,7 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
             *may_need_deferring = NPY_TRUE;
         }
         if (!IS_SAFE(NPY_CDOUBLE, NPY_@TYPE@)) {
-            if (npy_promotion_state != NPY_USE_WEAK_PROMOTION) {
+            if (get_npy_promotion_state() != NPY_USE_WEAK_PROMOTION) {
                 /* Legacy promotion and weak-and-warn not handled here */
                 return PROMOTION_REQUIRED;
             }
