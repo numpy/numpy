@@ -68,7 +68,7 @@ macosx_arm64_task:
         CIBW_PRERELEASE_PYTHONS: True
         CIBW_BUILD: cp312-*
   env:
-    PATH: /opt/homebrew/opt/python@3.10/bin:/usr/local/lib:/usr/local/include:$PATH
+    PATH: /opt/homebrew/opt/python@3.10/libexec/bin:/usr/local/lib:/usr/local/include:$PATH
     CIBW_ARCHS: arm64
     # Specifying CIBW_ENVIRONMENT_MACOS overrides pyproject.toml, so include
     # all the settings from there, otherwise they're lost.
@@ -86,7 +86,6 @@ macosx_arm64_task:
 
   build_script:
     - brew install python@3.10
-    - ln -sf python3 /opt/homebrew/opt/python@3.10/libexec/bin/python
     - which python
     # needed for submodules
     - git submodule update --init
