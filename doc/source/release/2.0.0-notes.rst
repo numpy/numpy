@@ -1481,7 +1481,7 @@ the ``unique_inverse`` output is now shaped such that the input can be reconstru
 directly using ``np.take(unique, unique_inverse)`` when ``axis=None``, and
 ``np.take_along_axis(unique, unique_inverse, axis=axis)`` otherwise.
 
-(`gh-25553 <https://github.com/numpy/numpy/pull/24126>`__,
+(`gh-25553 <https://github.com/numpy/numpy/pull/25553>`__,
 `gh-25570 <https://github.com/numpy/numpy/pull/25570>`__)
 
 ``any`` and ``all`` return booleans for object arrays
