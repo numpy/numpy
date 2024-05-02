@@ -174,7 +174,7 @@ def fromrecords(
     dtype: None = ...,
     shape: None | _ShapeLike = ...,
     *,
-    formats: DTypeLike,
+    formats: DTypeLike = ...,
     names: None | str | Sequence[str] = ...,
     titles: None | str | Sequence[str] = ...,
     aligned: bool = ...,
