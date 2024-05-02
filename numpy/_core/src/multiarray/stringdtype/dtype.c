@@ -185,6 +185,30 @@ _eq_comparison(int scoerce, int ocoerce, PyObject *sna, PyObject *ona)
     return na_eq_cmp(sna, ona);
 }
 
+// Currently this can only return 0 or -1, the latter indicating that the
+// error indicator is set. Pass in out_na if you want to figure out which
+// na is valid.
+NPY_NO_EXPORT int
+stringdtype_compatible_na(PyObject *na1, PyObject *na2, PyObject **out_na) {
+    if ((na1 != NULL) && (na2 != NULL)) {
+        int na_eq = na_eq_cmp(na1, na2);
+
+        if (na_eq < 0) {
+            return -1;
+        }
+        else if (na_eq == 0) {
+            PyErr_Format(PyExc_TypeError,
+                         "Cannot find a compatible null string value for "
+                         "null strings '%R' and '%R'", na1, na2);
+            return -1;
+        }
+    }
+    if (out_na != NULL) {
+        *out_na = na1 ? na1 : na2;
+    }
+    return 0;
+}
+
 /*
  * This is used to determine the correct dtype to return when dealing
  * with a mix of different dtypes (for example when creating an array
@@ -193,18 +217,18 @@ _eq_comparison(int scoerce, int ocoerce, PyObject *sna, PyObject *ona)
 static PyArray_StringDTypeObject *
 common_instance(PyArray_StringDTypeObject *dtype1, PyArray_StringDTypeObject *dtype2)
 {
-    int eq = _eq_comparison(dtype1->coerce, dtype2->coerce, dtype1->na_object,
-                            dtype2->na_object);
+    PyObject *out_na_object = NULL;
 
-    if (eq <= 0) {
-        PyErr_SetString(
-                PyExc_ValueError,
-                "Cannot find common instance for unequal dtype instances");
+    if (stringdtype_compatible_na(
+                dtype1->na_object, dtype2->na_object, &out_na_object) == -1) {
+        PyErr_Format(PyExc_TypeError,
+                     "Cannot find common instance for incompatible dtypes "
+                     "'%R' and '%R'", (PyObject *)dtype1, (PyObject *)dtype2);
         return NULL;
     }
 
     return (PyArray_StringDTypeObject *)new_stringdtype_instance(
-            dtype1->na_object, dtype1->coerce);
+            out_na_object, dtype1->coerce && dtype1->coerce);
 }
 
 /*
@@ -280,30 +304,22 @@ stringdtype_setitem(PyArray_StringDTypeObject *descr, PyObject *obj, char **data
 {
     npy_packed_static_string *sdata = (npy_packed_static_string *)dataptr;
 
-    int is_cmp = 0;
-
     // borrow reference
     PyObject *na_object = descr->na_object;
 
-    // Note there are two different na_object != NULL checks here.
-    //
-    // Do not refactor this!
-    //
     // We need the result of the comparison after acquiring the allocator, but
     // cannot use functions requiring the GIL when the allocator is acquired,
     // so we do the comparison before acquiring the allocator.
 
-    if (na_object != NULL) {
-        is_cmp = na_eq_cmp(obj, na_object);
-        if (is_cmp == -1) {
-            return -1;
-        }
+    int na_cmp = na_eq_cmp(obj, na_object);
+    if (na_cmp == -1) {
+        return -1;
     }
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
 
     if (na_object != NULL) {
-        if (is_cmp) {
+        if (na_cmp) {
             if (NpyString_pack_null(allocator, sdata) < 0) {
                 PyErr_SetString(PyExc_MemoryError,
                                 "Failed to pack null string during StringDType "

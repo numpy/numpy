@@ -911,9 +911,7 @@ def_gen.shuffle(D_2D, axis=1)
 
 def_gen.__str__()
 def_gen.__repr__()
-def_gen_state: dict[str, Any]
-def_gen_state = def_gen.__getstate__()
-def_gen.__setstate__(def_gen_state)
+def_gen.__setstate__(dict(def_gen.bit_generator.state))
 
 # RandomState
 random_st: np.random.RandomState = np.random.RandomState()

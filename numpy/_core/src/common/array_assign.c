@@ -15,7 +15,7 @@
 
 #include <numpy/ndarraytypes.h>
 #include "npy_config.h"
-#include "npy_pycompat.h"
+
 
 #include "shape.h"
 

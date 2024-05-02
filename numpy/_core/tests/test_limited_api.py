@@ -5,7 +5,7 @@ import sys
 import sysconfig
 import pytest
 
-from numpy.testing import IS_WASM, IS_PYPY
+from numpy.testing import IS_WASM, IS_PYPY, NOGIL_BUILD, IS_EDITABLE
 
 # This import is copied from random.tests.test_extending
 try:
@@ -23,6 +23,13 @@ else:
         cython = None
 
 pytestmark = pytest.mark.skipif(cython is None, reason="requires cython")
+
+
+if IS_EDITABLE:
+    pytest.skip(
+        "Editable install doesn't support tests with a compile step",
+        allow_module_level=True
+    )
 
 
 @pytest.fixture(scope='module')
@@ -66,6 +73,10 @@ def install_temp(tmpdir_factory):
         "Py_LIMITED_API is incompatible with Py_DEBUG, Py_TRACE_REFS, "
         "and Py_REF_DEBUG"
     ),
+)
+@pytest.mark.xfail(
+    NOGIL_BUILD,
+    reason="Py_GIL_DISABLED builds do not currently support the limited API",
 )
 @pytest.mark.skipif(IS_PYPY, reason="no support for limited API in PyPy")
 def test_limited_api(install_temp):

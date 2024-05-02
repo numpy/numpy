@@ -559,21 +559,22 @@ class ArgParsingReduce(Benchmark):
         np.add.reduce(*arg_pack.args, **arg_pack.kwargs)
 
 class BinaryBench(Benchmark):
-    def setup(self):
+    params = [np.float32, np.float64]
+    param_names = ['dtype']
+
+    def setup(self, dtype):
         N = 1000000
-        self.a32 = np.random.rand(N).astype(np.float32)
-        self.b32 = np.random.rand(N).astype(np.float32)
-        self.a64 = np.random.rand(N).astype(np.float64)
-        self.b64 = np.random.rand(N).astype(np.float64)
+        self.a = np.random.rand(N).astype(dtype)
+        self.b = np.random.rand(N).astype(dtype)
 
-    def time_pow_32(self):
-        np.power(self.a32, self.b32)
+    def time_pow(self, dtype):
+        np.power(self.a, self.b)
 
-    def time_pow_64(self):
-        np.power(self.a64, self.b64)
+    def time_pow_2(self, dtype):
+        np.power(self.a, 2.0)
 
-    def time_atan2_32(self):
-        np.arctan2(self.a32, self.b32)
+    def time_pow_half(self, dype):
+        np.power(self.a, 0.5)
 
-    def time_atan2_64(self):
-        np.arctan2(self.a64, self.b64)
+    def time_atan2(self, dtype):
+        np.arctan2(self.a, self.b)

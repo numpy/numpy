@@ -11,7 +11,7 @@
 
 #include "npy_config.h"
 
-#include "npy_pycompat.h"
+
 
 #include "arrayobject.h"
 #include "iterators.h"

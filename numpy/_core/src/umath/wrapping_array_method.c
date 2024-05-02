@@ -26,6 +26,7 @@
 
 #include "numpy/ndarraytypes.h"
 
+#include "npy_pycompat.h"
 #include "common.h"
 #include "array_method.h"
 #include "legacy_array_method.h"
@@ -54,7 +55,7 @@ wrapping_method_resolve_descriptors(
             self->wrapped_meth, self->wrapped_dtypes,
             orig_given_descrs, orig_loop_descrs, view_offset);
     for (int i = 0; i < nargs; i++) {
-        Py_XDECREF(orig_given_descrs);
+        Py_XDECREF(orig_given_descrs[i]);
     }
     if (casting < 0) {
         return -1;
@@ -62,7 +63,7 @@ wrapping_method_resolve_descriptors(
     int res = self->translate_loop_descrs(
             nin, nout, dtypes, given_descrs, orig_loop_descrs, loop_descrs);
     for (int i = 0; i < nargs; i++) {
-        Py_DECREF(orig_given_descrs);
+        Py_DECREF(orig_loop_descrs[i]);
     }
     if (res < 0) {
         return -1;
@@ -250,8 +251,9 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
     PyObject *loops = ufunc->_loops;
     Py_ssize_t length = PyList_Size(loops);
     for (Py_ssize_t i = 0; i < length; i++) {
-        PyObject *item = PyList_GetItem(loops, i);
+        PyObject *item = PyList_GetItemRef(loops, i);
         PyObject *cur_DType_tuple = PyTuple_GetItem(item, 0);
+        Py_DECREF(item);
         int cmp = PyObject_RichCompareBool(cur_DType_tuple, wrapped_dt_tuple, Py_EQ);
         if (cmp < 0) {
             goto finish;

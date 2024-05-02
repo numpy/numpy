@@ -582,6 +582,57 @@ string_zfill_loop(PyArrayMethod_Context *context,
 }
 
 
+template <ENCODING enc>
+static int
+string_partition_index_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    STARTPOSITION startposition = *(STARTPOSITION *)(context->method->static_data);
+    int elsize1 = context->descriptors[0]->elsize;
+    int elsize2 = context->descriptors[1]->elsize;
+    int outsize1 = context->descriptors[3]->elsize;
+    int outsize2 = context->descriptors[4]->elsize;
+    int outsize3 = context->descriptors[5]->elsize;
+
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *in3 = data[2];
+    char *out1 = data[3];
+    char *out2 = data[4];
+    char *out3 = data[5];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf1(in1, elsize1);
+        Buffer<enc> buf2(in2, elsize2);
+        Buffer<enc> outbuf1(out1, outsize1);
+        Buffer<enc> outbuf2(out2, outsize2);
+        Buffer<enc> outbuf3(out3, outsize3);
+
+        npy_intp final_len1, final_len2, final_len3;
+        string_partition(buf1, buf2, *(npy_int64 *)in3, outbuf1, outbuf2, outbuf3,
+                         &final_len1, &final_len2, &final_len3, startposition);
+        if (final_len1 < 0 || final_len2 < 0 || final_len3 < 0) {
+            return -1;
+        }
+        outbuf1.buffer_fill_with_zeros_after_index(final_len1);
+        outbuf2.buffer_fill_with_zeros_after_index(final_len2);
+        outbuf3.buffer_fill_with_zeros_after_index(final_len3);
+
+        in1 += strides[0];
+        in2 += strides[1];
+        in3 += strides[2];
+        out1 += strides[3];
+        out2 += strides[4];
+        out3 += strides[5];
+    }
+
+    return 0;
+}
+
+
 /* Resolve descriptors & promoter functions */
 
 static NPY_CASTING
@@ -947,6 +998,55 @@ string_zfill_resolve_descriptors(
 }
 
 
+static int
+string_partition_promoter(PyObject *NPY_UNUSED(ufunc),
+        PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
+        PyArray_DTypeMeta *new_op_dtypes[])
+{
+    Py_INCREF(op_dtypes[0]);
+    new_op_dtypes[0] = op_dtypes[0];
+    Py_INCREF(op_dtypes[1]);
+    new_op_dtypes[1] = op_dtypes[1];
+
+    new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_Int64DType);
+
+    Py_INCREF(op_dtypes[0]);
+    new_op_dtypes[3] = op_dtypes[0];
+    Py_INCREF(op_dtypes[0]);
+    new_op_dtypes[4] = op_dtypes[0];
+    Py_INCREF(op_dtypes[0]);
+    new_op_dtypes[5] = op_dtypes[0];
+    return 0;
+}
+
+
+static NPY_CASTING
+string_partition_resolve_descriptors(
+        PyArrayMethodObject *self,
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[3]),
+        PyArray_Descr *const given_descrs[3],
+        PyArray_Descr *loop_descrs[3],
+        npy_intp *NPY_UNUSED(view_offset))
+{
+    if (!given_descrs[3] || !given_descrs[4] || !given_descrs[5]) {
+        PyErr_Format(PyExc_TypeError,
+            "The '%s' ufunc requires the 'out' keyword to be set. The "
+            "python wrapper in numpy.strings can be used without the "
+            "out keyword.", self->name);
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    for (int i = 0; i < 6; i++) {
+        loop_descrs[i] = NPY_DT_CALL_ensure_canonical(given_descrs[i]);
+        if (!loop_descrs[i]) {
+            return _NPY_ERROR_OCCURRED_IN_CAST;
+        }
+    }
+
+    return NPY_NO_CASTING;
+}
+
+
 /*
  * Machinery to add the string loops to the existing ufuncs.
  */
@@ -1228,7 +1328,7 @@ init_mixed_type_ufunc(PyObject *umath, const char *name, int nin, int nout,
 NPY_NO_EXPORT int
 init_string_ufuncs(PyObject *umath)
 {
-    NPY_TYPES dtypes[] = {NPY_STRING, NPY_STRING, NPY_STRING, NPY_STRING, NPY_STRING};
+    NPY_TYPES dtypes[] = {NPY_STRING, NPY_STRING, NPY_STRING, NPY_STRING, NPY_STRING, NPY_STRING};
 
     if (init_comparison(umath) < 0) {
         return -1;
@@ -1597,6 +1697,34 @@ init_string_ufuncs(PyObject *umath)
     }
     if (init_promoter(umath, "_zfill", 2, 1, string_zfill_promoter) < 0) {
         return -1;
+    }
+
+    dtypes[0] = dtypes[1] = dtypes[3] = dtypes[4] = dtypes[5] = NPY_OBJECT;
+    dtypes[2] = NPY_INT64;
+
+    const char *partition_names[] = {"_partition_index", "_rpartition_index"};
+
+    static STARTPOSITION partition_startpositions[] = {
+        STARTPOSITION::FRONT, STARTPOSITION::BACK
+    };
+
+    for (int i = 0; i < 2; i++) {
+        if (init_ufunc(
+                umath, partition_names[i], 3, 3, dtypes, ENCODING::ASCII,
+                string_partition_index_loop<ENCODING::ASCII>,
+                string_partition_resolve_descriptors, &partition_startpositions[i]) < 0) {
+            return -1;
+        }
+        if (init_ufunc(
+                umath, partition_names[i], 3, 3, dtypes, ENCODING::UTF32,
+                string_partition_index_loop<ENCODING::UTF32>,
+                string_partition_resolve_descriptors, &partition_startpositions[i]) < 0) {
+            return -1;
+        }
+        if (init_promoter(umath, partition_names[i], 3, 3,
+                string_partition_promoter) < 0) {
+            return -1;
+        }
     }
 
     return 0;

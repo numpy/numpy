@@ -57,5 +57,6 @@ py.install_sources(
     'tests/test_linalg.py',
     'tests/test_regression.py',
   ],
-  subdir: 'numpy/linalg/tests'
+  subdir: 'numpy/linalg/tests',
+  install_tag: 'tests'
 )

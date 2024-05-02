@@ -16,7 +16,7 @@
 #include "numpyos.h"
 
 #include "npy_config.h"
-#include "npy_pycompat.h"
+
 
 #include "common.h"
 #include "numpy/arrayscalars.h"

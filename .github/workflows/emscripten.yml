@@ -5,6 +5,28 @@ on:
     branches:
       - main
       - maintenance/**
+  # Note: this workflow gets triggered on the same schedule as the
+  # wheels.yml workflow, with the exception that this workflow runs
+  # the test suite for the Pyodide wheel too, prior to uploading it.
+  #
+  # Run on schedule to upload to Anaconda.org
+  schedule:
+    #        ┌───────────── minute (0 - 59)
+    #        │  ┌───────────── hour (0 - 23)
+    #        │  │ ┌───────────── day of the month (1 - 31)
+    #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
+    #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
+    #        │  │ │ │ │
+    - cron: "42 2 * * SUN,WED"
+  workflow_dispatch:
+    inputs:
+      push_wheels:
+        # Can be 'true' or 'false'. Default is 'false'.
+        # Warning: this will overwrite existing wheels.
+        description: >
+          Push wheels to Anaconda.org if the build succeeds
+        required: false
+        default: 'false'
 
 env:
   FORCE_COLOR: 3
@@ -23,7 +45,7 @@ jobs:
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     env:
-      PYODIDE_VERSION: 0.25.0
+      PYODIDE_VERSION: 0.25.1
       # PYTHON_VERSION and EMSCRIPTEN_VERSION are determined by PYODIDE_VERSION.
       # The appropriate versions can be found in the Pyodide repodata.json
       # "info" field, or in Makefile.envs:
@@ -42,7 +64,7 @@ jobs:
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         id: setup-python
-        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -69,11 +91,6 @@ jobs:
           with open(env_file, "a") as myfile:
               myfile.write(f"PYODIDE_BUILD_PATH={pyodide_build_path}\n")
 
-      - name: Apply patch(es) for pyodide-build installation
-        run: |
-          ls -a ${{ env.PYODIDE_BUILD_PATH }}
-          patch -d "${{ env.PYODIDE_BUILD_PATH }}" -p1 < tools/ci/emscripten/0001-do-not-set-meson-environment-variable-pyodide-gh-4502.patch
-
       - name: Build NumPy for Pyodide
         run: |
           pyodide build -Cbuild-dir=build -Csetup-args="--cross-file=$PWD/tools/ci/emscripten/emscripten.meson.cross" -Csetup-args="-Dblas=none" -Csetup-args="-Dlapack=none"
@@ -95,3 +112,15 @@ jobs:
           source .venv-pyodide/bin/activate
           cd ..
           pytest --pyargs numpy -m "not slow"
+
+        # Push to https://anaconda.org/scientific-python-nightly-wheels/numpy
+        # WARNING: this job will overwrite any existing WASM wheels.
+      - name: Push to Anaconda PyPI index
+        if: >-
+          (github.repository == 'numpy/numpy') &&
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.push_wheels == 'true') ||
+          (github.event_name == 'schedule')
+        uses: scientific-python/upload-nightly-action@b67d7fcc0396e1128a474d1ab2b48aa94680f9fc # v0.5.0
+        with:
+          artifacts_path: dist/
+          anaconda_nightly_upload_token: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}

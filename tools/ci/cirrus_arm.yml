@@ -74,6 +74,7 @@ freebsd_test_task:
 
   install_devtools_script: |
     pkg install -y git bash ninja ccache blas cblas lapack pkgconf
+    pkg install -y python311
 
   <<: *MODIFIED_CLONE
 
@@ -86,22 +87,22 @@ freebsd_test_task:
   prepare_env_script: |
     # Create a venv (the `source` command needs bash, not the default sh shell)
     chsh -s /usr/local/bin/bash
-    python -m venv .venv
+    python3.11 -m venv .venv
     source .venv/bin/activate
     # Minimal build and test requirements
-    python -m pip install -U pip
-    python -m pip install meson-python Cython pytest hypothesis
+    python3.11 -m pip install -U pip
+    python3.11 -m pip install meson-python Cython pytest hypothesis
 
   build_script: |
     chsh -s /usr/local/bin/bash
     source .venv/bin/activate
-    python -m pip install . --no-build-isolation -v -Csetup-args="-Dallow-noblas=false"
+    python3.11 -m pip install . --no-build-isolation -v -Csetup-args="-Dallow-noblas=false"
 
   test_script: |
     chsh -s /usr/local/bin/bash
     source .venv/bin/activate
     cd tools
-    python -m pytest --pyargs numpy -m "not slow"
+    python3.11 -m pytest --pyargs numpy -m "not slow"
     ccache -s
 
   on_failure:

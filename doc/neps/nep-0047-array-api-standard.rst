@@ -8,7 +8,7 @@ NEP 47 — Adopting the array API standard
 :Author: Stephan Hoyer <shoyer@gmail.com>
 :Author: Aaron Meurer <asmeurer@gmail.com>
 :Status: Superseded
-:Replaced-By: 56
+:Replaced-By: :ref:`NEP56`
 :Type: Standards Track
 :Created: 2021-01-21
 :Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/message/Z6AA5CL47NHBNEPTFWYOTSUVSRDGHYPN/

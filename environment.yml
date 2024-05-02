@@ -35,7 +35,7 @@ dependencies:
   - scipy
   - pandas
   - matplotlib
-  - pydata-sphinx-theme=0.13.3
+  - pydata-sphinx-theme=0.15.2
   - doxygen
   # NOTE: breathe 4.33.0 collides with sphinx.ext.graphviz
   - breathe>4.33.0

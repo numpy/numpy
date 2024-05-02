@@ -16,7 +16,7 @@ authors = [{name = "Travis E. Oliphant et al."}]
 maintainers = [
     {name = "NumPy Developers", email="numpy-discussion@python.org"},
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 readme = "README.md"
 classifiers = [
     'Development Status :: 5 - Production/Stable',
@@ -26,7 +26,6 @@ classifiers = [
     'Programming Language :: C',
     'Programming Language :: Python',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
@@ -184,6 +183,9 @@ repair-wheel-command = ""
 [tool.meson-python]
 meson = 'vendored-meson/meson/meson.py'
 
+[tool.meson-python.args]
+install = ['--tags=runtime,python-runtime,tests,devel']
+
 [tool.spin]
 package = 'numpy'
 
@@ -199,8 +201,10 @@ cli = 'vendored-meson/meson/meson.py'
   ".spin/cmds.py:lint",
 ]
 "Environments" = [
-  "spin.cmds.meson.run", ".spin/cmds.py:ipython",
-  ".spin/cmds.py:python", "spin.cmds.meson.gdb",
+  "spin.cmds.meson.run",
+  ".spin/cmds.py:ipython",
+  ".spin/cmds.py:python",
+  "spin.cmds.meson.gdb",
   "spin.cmds.meson.lldb"
 ]
 "Documentation" = [

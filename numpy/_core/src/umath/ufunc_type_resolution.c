@@ -33,9 +33,11 @@
 #endif
 
 #include "npy_config.h"
-#include "npy_pycompat.h"
+
+#include "numpy/npy_common.h"
 #include "npy_import.h"
 
+#include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
 #include "ufunc_type_resolution.h"
 #include "ufunc_object.h"

@@ -2132,6 +2132,12 @@ def _create_arrays(broadcast_shape, dim_sizes, list_of_core_dims, dtypes,
     return arrays
 
 
+def _get_vectorize_dtype(dtype):
+    if dtype.char in "SU":
+        return dtype.char
+    return dtype
+
+
 @set_module('numpy')
 class vectorize:
     """
@@ -2330,7 +2336,7 @@ class vectorize:
                 if char not in typecodes['All']:
                     raise ValueError("Invalid otype specified: %s" % (char,))
         elif iterable(otypes):
-            otypes = ''.join([_nx.dtype(x).char for x in otypes])
+            otypes = [_get_vectorize_dtype(_nx.dtype(x)) for x in otypes]
         elif otypes is not None:
             raise ValueError("Invalid otype specification")
         self.otypes = otypes
@@ -5737,12 +5743,23 @@ def append(arr, values, axis=None):
     array([[1, 2, 3],
            [4, 5, 6],
            [7, 8, 9]])
+
     >>> np.append([[1, 2, 3], [4, 5, 6]], [7, 8, 9], axis=0)
     Traceback (most recent call last):
         ...
     ValueError: all the input arrays must have same number of dimensions, but
     the array at index 0 has 2 dimension(s) and the array at index 1 has 1
     dimension(s)
+
+    >>> a = np.array([1, 2], dtype=int)
+    >>> c = np.append(a, [])
+    >>> c
+    array([1., 2.])
+    >>> c.dtype
+    float64
+
+    Default dtype for empty ndarrays is `float64` thus making the output of dtype
+    `float64` when appended with dtype `int64`
 
     """
     arr = asanyarray(arr)

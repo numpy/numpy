@@ -4,6 +4,9 @@
  *
  * These definitions are only relevant for the public API and we reserve
  * the slots 320-360 in the API table generation for this (currently).
+ *
+ * TODO: This file should be consolidated with the API table generation
+ *       (although not sure the current generation is worth preserving).
  */
 #ifndef NUMPY_CORE_INCLUDE_NUMPY__PUBLIC_DTYPE_API_TABLE_H_
 #define NUMPY_CORE_INCLUDE_NUMPY__PUBLIC_DTYPE_API_TABLE_H_
@@ -61,17 +64,21 @@
 /* Object/Void */
 #define PyArray_ObjectDType (*(PyArray_DTypeMeta *)(PyArray_API + 320)[33])
 #define PyArray_VoidDType (*(PyArray_DTypeMeta *)(PyArray_API + 320)[34])
-/* Abstract */
-#define PyArray_PyIntAbstractDType \
-    (*(PyArray_DTypeMeta *)(PyArray_API + 320)[35])
-#define PyArray_PyFloatAbstractDType \
-    (*(PyArray_DTypeMeta *)(PyArray_API + 320)[36])
-#define PyArray_PyComplexAbstractDType \
-    (*(PyArray_DTypeMeta *)(PyArray_API + 320)[37])
+/* Python types (used as markers for scalars) */
+#define PyArray_PyLongDType (*(PyArray_DTypeMeta *)(PyArray_API + 320)[35])
+#define PyArray_PyFloatDType (*(PyArray_DTypeMeta *)(PyArray_API + 320)[36])
+#define PyArray_PyComplexDType (*(PyArray_DTypeMeta *)(PyArray_API + 320)[37])
+/* Default integer type */
 #define PyArray_DefaultIntDType (*(PyArray_DTypeMeta *)(PyArray_API + 320)[38])
 /* New non-legacy DTypes follow in the order they were added */
 #define PyArray_StringDType (*(PyArray_DTypeMeta *)(PyArray_API + 320)[39])
-/* NOTE: offset 40 is free, after that a new range will need to be used */
+
+/* NOTE: offset 40 is free */
+
+/* Need to start with a larger offset again for the abstract classes: */
+#define PyArray_IntAbstractDType (*(PyArray_DTypeMeta *)PyArray_API[366])
+#define PyArray_FloatAbstractDType (*(PyArray_DTypeMeta *)PyArray_API[367])
+#define PyArray_ComplexAbstractDType (*(PyArray_DTypeMeta *)PyArray_API[368])
 
 #endif /* NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION */
 

@@ -1300,6 +1300,26 @@ defdict = {
           docstrings.get('numpy._core.umath._zfill'),
           None,
           ),
+'_partition_index':
+    Ufunc(3, 3, None,
+          docstrings.get('numpy._core.umath._partition_index'),
+          None,
+          ),
+'_rpartition_index':
+    Ufunc(3, 3, None,
+          docstrings.get('numpy._core.umath._rpartition_index'),
+          None,
+          ),
+'_partition':
+    Ufunc(2, 3, None,
+          docstrings.get('numpy._core.umath._partition'),
+          None,
+          ),
+'_rpartition':
+    Ufunc(2, 3, None,
+          docstrings.get('numpy._core.umath._rpartition'),
+          None,
+          ),
 }
 
 def indent(st, spaces):
@@ -1430,7 +1450,7 @@ def make_arrays(funcdict):
                 % (name, funcnames))
             code1list.append("static void * %s_data[] = {%s};"
                             % (name, datanames))
-            code1list.append("static char %s_signatures[] = {%s};"
+            code1list.append("static const char %s_signatures[] = {%s};"
                             % (name, signames))
             uf.empty = False
         else:

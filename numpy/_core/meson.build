@@ -96,10 +96,7 @@ if use_svml
   endif
 endif
 
-use_highway = not get_option('disable-highway') and not (
-  host_machine.system() == 'darwin' and
-  cpu_family == 'aarch64'
-)
+use_highway = not get_option('disable-highway')
 if use_highway and not fs.exists('src/highway/README.md')
   error('Missing the `highway` git submodule! Run `git submodule update --init` to fix this.')
 endif
@@ -108,11 +105,12 @@ if use_highway
   highway_lib = static_library('highway',
     [
       # required for hwy::Abort symbol
-      'src/highway/hwy/targets.cc'
+      'src/highway/hwy/abort.cc'
     ],
     cpp_args: '-DTOOLCHAIN_MISS_ASM_HWCAP_H',
     include_directories: ['src/highway'],
-    install: false
+    install: false,
+    gnu_symbol_visibility: 'hidden',
   )
 else
   highway_lib = []
@@ -121,6 +119,11 @@ endif
 use_intel_sort = not get_option('disable-intel-sort') and cpu_family in ['x86', 'x86_64']
 if use_intel_sort and not fs.exists('src/npysort/x86-simd-sort/README.md')
   error('Missing the `x86-simd-sort` git submodule! Run `git submodule update --init` to fix this.')
+endif
+
+if not fs.exists('src/common/pythoncapi-compat')
+  error('Missing the `pythoncapi-compat` git submodule! ' +
+        'Run `git submodule update --init` to fix this.')
 endif
 
 # Check sizes of types. Note, some of these landed in config.h before, but were
@@ -347,7 +350,7 @@ max_opt = {
   'msvc': ['/O2'],
   'intel-cl': ['/O3'],
 }.get(compiler_id, ['-O3'])
-max_opt = cc.has_multi_arguments(max_opt) ? max_opt : []
+max_opt = cc.has_multi_arguments(max_opt) and get_option('buildtype') != 'debug' ? max_opt : []
 
 # Optional GCC compiler builtins and their call arguments.
 # If given, a required header and definition name (HAVE_ prepended)
@@ -556,6 +559,7 @@ npymath_lib = static_library('npymath',
   install_dir: np_dir / '_core/lib',
   name_prefix: name_prefix_staticlib,
   name_suffix: name_suffix_staticlib,
+  gnu_symbol_visibility: 'hidden',
 )
 
 dir_separator = '/'
@@ -713,6 +717,7 @@ py.extension_module('_multiarray_tests',
   gnu_symbol_visibility: 'default',
   install: true,
   subdir: 'numpy/_core',
+  install_tag: 'tests'
 )
 
 _umath_tests_mtargets = mod_features.multi_targets(
@@ -749,6 +754,7 @@ foreach gen: test_modules_src
     install: true,
     subdir: 'numpy/_core',
     link_with: gen[2],
+    install_tag: 'tests'
   )
 endforeach
 
@@ -1324,4 +1330,4 @@ py.install_sources(
 )
 
 subdir('include')
-install_subdir('tests', install_dir: np_dir / '_core', install_tag: 'python-runtime')
+install_subdir('tests', install_dir: np_dir / '_core', install_tag: 'tests')
