@@ -10,19 +10,19 @@ build_and_store_wheels: &BUILD_AND_STORE_WHEELS
 # Build linux_aarch64 natively
 ######################################################################
 
-#linux_aarch64_task:
-#  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
-#  compute_engine_instance:
-#    image_project: cirrus-images
-#    image: family/docker-builder-arm64
-#    architecture: arm64
-#    platform: linux
-#    cpu: 1
-#    memory: 8G
-#  matrix:
-#    # build in a matrix because building and testing all four wheels in a
-#    # single task takes longer than 60 mins (the default time limit for a
-#    # cirrus-ci task).
+linux_aarch64_task:
+  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
+  compute_engine_instance:
+    image_project: cirrus-images
+    image: family/docker-builder-arm64
+    architecture: arm64
+    platform: linux
+    cpu: 1
+    memory: 8G
+  matrix:
+    # build in a matrix because building and testing all four wheels in a
+    # single task takes longer than 60 mins (the default time limit for a
+    # cirrus-ci task).
 #    - env:
 #        CIRRUS_CLONE_SUBMODULES: true
 #        CIBW_BUILD: cp39-*
@@ -33,19 +33,19 @@ build_and_store_wheels: &BUILD_AND_STORE_WHEELS
 #    - env:
 #        CIRRUS_CLONE_SUBMODULES: true
 #        CIBW_BUILD: cp311-*
-#    - env:
-#        CIRRUS_CLONE_SUBMODULES: true
-#        CIBW_PRERELEASE_PYTHONS: True
-#        CIBW_BUILD: cp312-*
-#
-#  build_script: |
-#    apt update
-#    apt install -y python3-venv python-is-python3 gfortran libatlas-base-dev libgfortran5 eatmydata
-#    git fetch origin
-#    bash ./tools/wheels/cibw_before_build.sh ${PWD}
-#    which python
-#    echo $CIRRUS_CHANGE_MESSAGE
-#  <<: *BUILD_AND_STORE_WHEELS
+    - env:
+        CIRRUS_CLONE_SUBMODULES: true
+        CIBW_PRERELEASE_PYTHONS: True
+        CIBW_BUILD: cp312-*
+
+  build_script: |
+    apt update
+    apt install -y python3-venv python-is-python3 gfortran libatlas-base-dev libgfortran5 eatmydata
+    git fetch origin
+    bash ./tools/wheels/cibw_before_build.sh ${PWD}
+    which python
+    echo $CIRRUS_CHANGE_MESSAGE
+  <<: *BUILD_AND_STORE_WHEELS
 
 
 ######################################################################
