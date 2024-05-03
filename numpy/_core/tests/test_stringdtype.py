@@ -1210,11 +1210,16 @@ BINARY_FUNCTIONS = [
 
 PASSES_THROUGH_NAN_NULLS = [
     "add",
+    "center",
+    "ljust",
     "multiply",
     "replace",
+    "rjust",
     "strip",
     "lstrip",
     "rstrip",
+    "replace"
+    "zfill",
 ]
 
 NULLS_ARE_FALSEY = [
@@ -1226,7 +1231,6 @@ NULLS_ALWAYS_ERROR = [
     "count",
     "find",
     "rfind",
-    "replace",
 ]
 
 SUPPORTS_NULLS = (

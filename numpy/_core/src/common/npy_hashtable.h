@@ -13,6 +13,9 @@ typedef struct {
     PyObject **buckets;
     npy_intp size;  /* current size */
     npy_intp nelem;  /* number of elements */
+#ifdef Py_GIL_DISABLED
+    PyThread_type_lock *mutex;
+#endif
 } PyArrayIdentityHash;
 
 
