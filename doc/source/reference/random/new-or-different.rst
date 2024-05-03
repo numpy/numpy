@@ -12,16 +12,16 @@ implementations.
 ================== ==================== =============
 Feature            Older Equivalent     Notes
 ------------------ -------------------- -------------
-`~.Generator`      `~.RandomState`      ``Generator`` requires a stream
+`Generator`        `RandomState`        `Generator` requires a stream
                                         source, called a `BitGenerator`
                                         A number of these are provided.
-                                        ``RandomState`` uses
-                                        the Mersenne Twister `~.MT19937` by
+                                        `RandomState` uses
+                                        the Mersenne Twister `MT19937` by
                                         default, but can also be instantiated
                                         with any BitGenerator.
 ------------------ -------------------- -------------
-``random``         ``random_sample``,   Access the values in a BitGenerator,
-                   ``rand``             convert them to ``float64`` in the
+`random`           `random_sample`,     Access the values in a BitGenerator,
+                   `rand`               convert them to ``float64`` in the
                                         interval ``[0.0.,`` `` 1.0)``.
                                         In addition to the ``size`` kwarg, now
                                         supports ``dtype='d'`` or ``dtype='f'``,
@@ -31,8 +31,8 @@ Feature            Older Equivalent     Notes
                                         Many other distributions are also
                                         supported.
 ------------------ -------------------- -------------
-``integers``       ``randint``,         Use the ``endpoint`` kwarg to adjust
-                   ``random_integers``  the inclusion or exclusion of the
+`integers`         `randint`,           Use the ``endpoint`` kwarg to adjust
+                   `random_integers`    the inclusion or exclusion of the
                                         ``high`` interval endpoint
 ================== ==================== =============
 
@@ -40,7 +40,7 @@ Feature            Older Equivalent     Notes
   methods which are 2-10 times faster than NumPy's default implementation in
   `~.Generator.standard_normal`, `~.Generator.standard_exponential` or
   `~.Generator.standard_gamma`. Because of the change in algorithms, it is not
-  possible to reproduce the exact random values using ``Generator`` for these
+  possible to reproduce the exact random values using `Generator` for these
   distributions or any distribution method that relies on them.
 
 .. ipython:: python
@@ -63,8 +63,8 @@ Feature            Older Equivalent     Notes
 
 * `~.Generator.integers` is now the canonical way to generate integer
   random numbers from a discrete uniform distribution. This replaces both
-  ``randint`` and the deprecated ``random_integers``.
-* The ``rand`` and ``randn`` methods are only available through the legacy
+  `randint` and the deprecated `random_integers`.
+* The `rand` and `randn` methods are only available through the legacy
   `~.RandomState`.
 * `Generator.random` is now the canonical way to generate floating-point
   random numbers, which replaces `RandomState.random_sample`,

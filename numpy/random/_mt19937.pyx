@@ -67,9 +67,9 @@ cdef class MT19937(BitGenerator):
 
     Notes
     -----
-    ``MT19937`` provides a capsule containing function pointers that produce
+    `MT19937` provides a capsule containing function pointers that produce
     doubles, and unsigned 32 and 64- bit integers [1]_. These are not
-    directly consumable in Python and must be consumed by a ``Generator``
+    directly consumable in Python and must be consumed by a `Generator`
     or similar object that supports low-level access.
 
     The Python stdlib module "random" also contains a Mersenne Twister
@@ -77,7 +77,7 @@ cdef class MT19937(BitGenerator):
 
     **State and Seeding**
 
-    The ``MT19937`` state vector consists of a 624-element array of
+    The `MT19937` state vector consists of a 624-element array of
     32-bit unsigned integers plus a single integer value between 0 and 624
     that indexes the current position within the main array.
 
@@ -111,7 +111,7 @@ cdef class MT19937(BitGenerator):
 
     **Compatibility Guarantee**
 
-    ``MT19937`` makes a guarantee that a fixed seed will always produce
+    `MT19937` makes a guarantee that a fixed seed will always produce
     the same random integer stream.
 
     References

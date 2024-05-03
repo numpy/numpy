@@ -2,7 +2,7 @@
 
 .. currentmodule:: numpy.random
 
-Upgrading ``PCG64`` with ``PCG64DXSM``
+Upgrading `PCG64` with `PCG64DXSM`
 ======================================
 
 Uses of the `PCG64` `BitGenerator` in a massively-parallel context have been
