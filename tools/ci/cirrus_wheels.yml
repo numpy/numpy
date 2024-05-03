@@ -1,6 +1,6 @@
 build_and_store_wheels: &BUILD_AND_STORE_WHEELS
   install_cibuildwheel_script:
-    - python -m pip install cibuildwheel
+    - python -m pip install "cibuildwheel<2.17.0"
   cibuildwheel_script:
     - cibuildwheel
   wheels_artifacts:
