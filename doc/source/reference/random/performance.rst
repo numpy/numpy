@@ -24,7 +24,7 @@ even on 32-bit processes, this is your choice.
 
 `MT19937` `fails some statistical tests`_ and is not especially
 fast compared to modern PRNGs. For these reasons, we mostly do not recommend
-using it on its own, only through the legacy `~.RandomState` for
+using it on its own, only through the legacy `RandomState` for
 reproducing old results. That said, it has a very long history as a default in
 many systems.
 

@@ -22,7 +22,7 @@ outside of NumPy's control that limit our ability to guarantee much more than
 this. For example, different CPUs implement floating point arithmetic
 differently, and this can cause differences in certain edge cases that cascade
 to the rest of the stream. `Generator.multivariate_normal`, for another
-example, uses a matrix decomposition from ``numpy.linalg``. Even on the same
+example, uses a matrix decomposition from `numpy.linalg`. Even on the same
 platform, a different build of ``numpy`` may use a different version of this
 matrix decomposition algorithm from the LAPACK that it links to, causing
 `Generator.multivariate_normal` to return completely different (but equally
