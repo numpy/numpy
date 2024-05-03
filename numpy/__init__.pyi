@@ -1713,11 +1713,19 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
 
     @overload
     def reshape(
-        self, shape: _ShapeLike, /, *, order: _OrderACF = ...
+        self,
+        shape: _ShapeLike,
+        /,
+        *,
+        order: _OrderACF = ...,
+        copy: None | bool = ...,
     ) -> ndarray[Any, _DType_co]: ...
     @overload
     def reshape(
-        self, *shape: SupportsIndex, order: _OrderACF = ...
+        self,
+        *shape: SupportsIndex,
+        order: _OrderACF = ...,
+        copy: None | bool = ...,
     ) -> ndarray[Any, _DType_co]: ...
 
     @overload

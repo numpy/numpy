@@ -1,7 +1,7 @@
 # doxygen required, use apt-get or dnf
-sphinx>=4.5.0
+sphinx==7.2.6
 numpydoc==1.4
-pydata-sphinx-theme==0.13.3
+pydata-sphinx-theme==0.15.2
 sphinx-design
 scipy
 matplotlib

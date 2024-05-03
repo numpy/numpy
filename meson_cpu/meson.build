@@ -75,12 +75,14 @@ subdir('x86')
 subdir('ppc64')
 subdir('s390x')
 subdir('arm')
+subdir('riscv64')
 
 CPU_FEATURES = {}
 CPU_FEATURES += ARM_FEATURES
 CPU_FEATURES += X86_FEATURES
 CPU_FEATURES += PPC64_FEATURES
 CPU_FEATURES += S390X_FEATURES
+CPU_FEATURES += RV64_FEATURES
 
 # Parse the requested baseline (CPU_CONF_BASELINE) and dispatch features
 # (CPU_CONF_DISPATCH).
@@ -93,6 +95,7 @@ min_features = {
   's390x': [],
   'arm': [],
   'aarch64': [ASIMD],
+  'riscv64': [],
   'wasm32': [],
 }.get(cpu_family, [])
 if host_machine.endian() == 'little' and cpu_family == 'ppc64'
@@ -107,6 +110,7 @@ max_features_dict = {
   's390x': S390X_FEATURES,
   'arm': ARM_FEATURES,
   'aarch64': ARM_FEATURES,
+  'riscv64': RV64_FEATURES,
   'wasm32': {},
 }.get(cpu_family, {})
 max_features = []

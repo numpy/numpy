@@ -181,14 +181,16 @@ array_put(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    static char *keywords[] = {"order", NULL};
+    static char *keywords[] = {"order", "copy", NULL};
     PyArray_Dims newshape;
     PyObject *ret;
     NPY_ORDER order = NPY_CORDER;
+    NPY_COPYMODE copy = NPY_COPY_IF_NEEDED;
     Py_ssize_t n = PyTuple_Size(args);
 
-    if (!NpyArg_ParseKeywords(kwds, "|O&", keywords,
-                PyArray_OrderConverter, &order)) {
+    if (!NpyArg_ParseKeywords(kwds, "|$O&O&", keywords,
+                PyArray_OrderConverter, &order,
+                PyArray_CopyConverter, &copy)) {
         return NULL;
     }
 
@@ -210,7 +212,7 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
             goto fail;
         }
     }
-    ret = PyArray_Newshape(self, &newshape, order);
+    ret = _reshape_with_copy_arg(self, &newshape, order, copy);
     npy_free_cache_dim_obj(newshape);
     return ret;
 
@@ -811,8 +813,8 @@ array_astype(PyArrayObject *self,
 
     /*
      * If the memory layout matches and, data types are equivalent,
-     * and it's not a subtype if subok is False, then we
-     * can skip the copy.
+     * it's not a subtype if subok is False, and if the cast says
+     * view are possible, we can skip the copy.
      */
     if (forcecopy != NPY_AS_TYPE_COPY_ALWAYS &&
                     (order == NPY_KEEPORDER ||
@@ -823,11 +825,15 @@ array_astype(PyArrayObject *self,
                         PyArray_IS_C_CONTIGUOUS(self)) ||
                     (order == NPY_FORTRANORDER &&
                         PyArray_IS_F_CONTIGUOUS(self))) &&
-                (subok || PyArray_CheckExact(self)) &&
-                PyArray_EquivTypes(dtype, PyArray_DESCR(self))) {
-        Py_DECREF(dtype);
-        Py_INCREF(self);
-        return (PyObject *)self;
+                (subok || PyArray_CheckExact(self))) {
+        npy_intp view_offset;
+        npy_intp is_safe = PyArray_SafeCast(dtype, PyArray_DESCR(self),
+                                             &view_offset, NPY_NO_CASTING, 1);
+        if (is_safe && (view_offset != NPY_MIN_INTP)) {
+            Py_DECREF(dtype);
+            Py_INCREF(self);
+            return (PyObject *)self;
+        }
     }
 
     if (!PyArray_CanCastArrayTo(self, dtype, casting)) {

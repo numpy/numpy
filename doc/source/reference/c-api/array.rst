@@ -3815,13 +3815,118 @@ Other conversions
     in the *vals* array. The sequence can be smaller then *maxvals* as
     the number of converted objects is returned.
 
+.. _including-the-c-api:
 
-Miscellaneous
--------------
+Including and importing the C API
+---------------------------------
+
+To use the NumPy C-API you typically need to include the
+``numpy/ndarrayobject.h`` header and ``numpy/ufuncobject.h`` for some ufunc
+related functionality (``arrayobject.h`` is an alias for ``ndarrayobject.h``).
+
+These two headers export most relevant functionality.  In general any project
+which uses the NumPy API must import NumPy using one of the functions
+``PyArray_ImportNumPyAPI()`` or ``import_array()``.
+In some places, functionality which requires ``import_array()`` is not
+needed, because you only need type definitions.  In this case, it is
+sufficient to include ``numpy/ndarratypes.h``.
+
+For the typical Python project, multiple C or C++ files will be compiled into
+a single shared object (the Python C-module) and ``PyArray_ImportNumPyAPI()``
+should be called inside it's module initialization.
+
+When you have a single C-file, this will consist of:
+
+.. code-block:: c
+
+    #include "numpy/ndarrayobject.h"
+
+    PyMODINIT_FUNC PyInit_my_module(void)
+    {
+        if (PyArray_ImportNumPyAPI() < 0) {
+            return NULL;
+        }
+        /* Other initialization code. */
+    }
+
+However, most projects will have additional C files which are all
+linked together into a single Python module.
+In this case, the helper C files typically do not have a canonical place
+where ``PyArray_ImportNumPyAPI`` should be called (although it is OK and
+fast to call it often).
+
+To solve this, NumPy provides the following pattern that the the main
+file is modified to define ``PY_ARRAY_UNIQUE_SYMBOL`` before the include:
+
+.. code-block:: c
+
+    /* Main module file */
+    #define PY_ARRAY_UNIQUE_SYMBOL MyModule
+    #include "numpy/ndarrayobject.h"
+
+    PyMODINIT_FUNC PyInit_my_module(void)
+    {
+        if (PyArray_ImportNumPyAPI() < 0) {
+            return NULL;
+        }
+        /* Other initialization code. */
+    }
+
+while the other files use:
+
+.. code-block:: C
+
+    /* Second file without any import */
+    #define NO_IMPORT_ARRAY
+    #define PY_ARRAY_UNIQUE_SYMBOL MyModule
+    #include "numpy/ndarrayobject.h"
+
+You can of course add the defines to a local header used throughout.
+You just have to make sure that the main file does _not_ define
+``NO_IMPORT_ARRAY``.
+
+For ``numpy/ufuncobject.h`` the same logic applies, but the unique symbol
+mechanism is ``#define PY_UFUNC_UNIQUE_SYMBOL`` (both can match).
+
+Additionally, you will probably wish to add a
+``#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION``
+to avoid warnings about possible use of old API.
+
+.. note::
+    If you are experiencing access violations make sure that the NumPy API
+    was properly imported and the symbol ``PyArray_API`` is not ``NULL``.
+    When in a debugger, this symbols actual name will be
+    ``PY_ARRAY_UNIQUE_SYMBOL``+``PyArray_API``, so for example
+    ``MyModulePyArray_API`` in the above.
+    (E.g. even a ``printf("%p\n", PyArray_API);`` just before the crash.)
 
 
-Importing the API
-~~~~~~~~~~~~~~~~~
+Mechanism details and dynamic linking
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The main part of the mechanism is that without NumPy needs to define
+a ``void **PyArray_API`` table for you to look up all functions.
+Depending on your macro setup, this takes different routes depending on
+whether :c:macro:`NO_IMPORT_ARRAY` and  :c:macro:`PY_ARRAY_UNIQUE_SYMBOL`
+are defined:
+
+* If neither is defined, the C-API is declared to
+  ``static void **PyArray_API``, so it is only visible within the
+  compilation unit/file using ``#includes numpy/arrayobject.h``.
+* If only ``PY_ARRAY_UNIQUE_SYMBOL`` is defined (it could be empty) then
+  the it is declared to a non-static ``void **`` allowing it to be used
+  by other files which are linked.
+* If ``NO_IMPORT_ARRAY`` is defined, the table is declared as
+  ``extern void **``, meaning that it must be linked to a file which does not
+  use ``NO_IMPORT_ARRAY``.
+
+The ``PY_ARRAY_UNIQUE_SYMBOL`` mechanism additionally mangles the names to
+avoid conflicts.
+
+.. versionchanged::
+    NumPy 2.1 changed the headers to avoid sharing the table outside of a
+    single shared object/dll (this was always the case on Windows).
+    Please see :c:macro:`NPY_API_SYMBOL_ATTRIBUTE` for details.
 
 In order to make use of the C-API from another extension module, the
 :c:func:`import_array` function must be called. If the extension module is
@@ -3845,26 +3950,41 @@ the C-API is needed then some additional steps must be taken.
     module that will make use of the C-API. It imports the module
     where the function-pointer table is stored and points the correct
     variable to it.
+    This macro includes a ``return NULL;`` on error, so that
+    ``PyArray_ImportNumPyAPI()`` is preferable for custom error checking.
+    You may also see use of ``_import_array()`` (a function, not
+    a macro, but you may want to raise a better error if it fails) and
+    the variations ``import_array1(ret)`` which customizes the return value.
 
 .. c:macro:: PY_ARRAY_UNIQUE_SYMBOL
 
+.. c:macro:: NPY_API_SYMBOL_ATTRIBUTE
+
+    .. versionadded:: 2.1
+
+    An additional symbol which can be used to share e.g. visibility beyond
+    shared object boundaries.
+    By default, NumPy adds the C visibility hidden attribute (if available):
+    ``void __attribute__((visibility("hidden"))) **PyArray_API;``.
+    You can change this by defining ``NPY_API_SYMBOL_ATTRIBUTE``, which will
+    make this:
+    ``void NPY_API_SYMBOL_ATTRIBUTE **PyArray_API;`` (with additional
+    name mangling via the unique symbol).
+
+    Adding an empty ``#define NPY_API_SYMBOL_ATTRIBUTE`` will have the same
+    behavior as NumPy 1.x.
+
+    .. note::
+        Windows never had shared visbility although you can use this macro
+        to achieve it.  We generally discourage sharing beyond shared boundary
+        lines since importing the array API includes NumPy version checks.
+
 .. c:macro:: NO_IMPORT_ARRAY
 
-    Using these #defines you can use the C-API in multiple files for a
-    single extension module. In each file you must define
-    :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` to some name that will hold the
-    C-API (*e.g.* myextension_ARRAY_API). This must be done **before**
-    including the numpy/arrayobject.h file. In the module
-    initialization routine you call :c:func:`import_array`. In addition,
-    in the files that do not have the module initialization
-    sub_routine define :c:macro:`NO_IMPORT_ARRAY` prior to including
-    numpy/arrayobject.h.
-
-    Suppose I have two files coolmodule.c and coolhelper.c which need
-    to be compiled and linked into a single extension module. Suppose
-    coolmodule.c contains the required initcool module initialization
-    function (with the import_array() function called). Then,
-    coolmodule.c would have at the top:
+    Defining ``NO_IMPORT_ARRAY`` before the ``ndarrayobject.h`` include
+    indicates that the NumPy C API import is handled in a different file
+    and the include mechanism will not be added here.
+    You must have one file without ``NO_IMPORT_ARRAY`` defined.
 
     .. code-block:: c
 
@@ -3900,6 +4020,7 @@ the C-API is needed then some additional steps must be taken.
       also changes the name of the variable holding the C-API, which
       defaults to ``PyArray_API``, to whatever the macro is
       #defined to.
+
 
 Checking the API Version
 ~~~~~~~~~~~~~~~~~~~~~~~~

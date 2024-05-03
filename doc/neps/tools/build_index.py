@@ -75,7 +75,7 @@ def nep_metadata():
                     f'NEP {nr} has been Superseded, but has no Replaced-By tag'
                 )
 
-            replaced_by = int(tags['Replaced-By'])
+            replaced_by = int(re.findall(r'\d+', tags['Replaced-By'])[0])
             replacement_nep = neps[replaced_by]
 
             if not 'Replaces' in replacement_nep:
@@ -105,13 +105,8 @@ def nep_metadata():
 
 def parse_replaces_metadata(replacement_nep):
     """Handle :Replaces: as integer or list of integers"""
-    replaces = replacement_nep['Replaces']
-    if ' ' in replaces:
-        # Replaces multiple NEPs, should be comma-separated ints
-        replaced_neps = [int(s) for s in replaces.split(', ')]
-    else:
-        replaced_neps = [int(replaces)]
-
+    replaces = re.findall(r'\d+', replacement_nep['Replaces'])
+    replaced_neps = [int(s) for s in replaces]
     return replaced_neps
 
 

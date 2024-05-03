@@ -21,7 +21,7 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  gcc_sanitizers:
+  clang_sanitizers:
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
@@ -35,6 +35,8 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install dependencies
       run: |
+        sudo apt update
+        sudo apt install -y llvm libstdc++-12-dev
         pip install -r requirements/build_requirements.txt
         pip install -r requirements/ci_requirements.txt
     - name: Build
@@ -43,7 +45,7 @@ jobs:
         TERM: xterm-256color
         PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run:
-        spin build --with-scipy-openblas=32 -- --werror -Db_sanitize=address,undefined
+        CC=clang CXX=clang++ spin build --with-scipy-openblas=32 -- -Db_sanitize=address,undefined
     - name: Test
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       env:
@@ -52,5 +54,5 @@ jobs:
         pip install pytest pytest-xdist hypothesis typing_extensions
         ASAN_OPTIONS=detect_leaks=0:symbolize=1:strict_init_order=true:allocator_may_return_null=1:halt_on_error=1 \
         UBSAN_OPTIONS=halt_on_error=0 \
-        LD_PRELOAD=$(gcc --print-file-name=libasan.so) \
+        LD_PRELOAD=$(clang --print-file-name=libclang_rt.asan-x86_64.so) \
         python -m spin test -- -v -s
