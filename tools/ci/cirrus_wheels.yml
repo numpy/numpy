@@ -78,6 +78,7 @@ macosx_arm64_task:
     CIBW_ENVIRONMENT_MACOS: >
       RUNNER_OS=macOS
       # SDKROOT=/Applications/Xcode-15.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.4.sdk
+      export SDKROOT=${SDKROOT:-$(xcrun --show-sdk-path)}
       LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
       CFLAGS="-fno-strict-aliasing -DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64"
       CXXFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64"
