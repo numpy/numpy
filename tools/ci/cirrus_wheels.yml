@@ -10,42 +10,42 @@ build_and_store_wheels: &BUILD_AND_STORE_WHEELS
 # Build linux_aarch64 natively
 ######################################################################
 
-linux_aarch64_task:
-  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
-  compute_engine_instance:
-    image_project: cirrus-images
-    image: family/docker-builder-arm64
-    architecture: arm64
-    platform: linux
-    cpu: 1
-    memory: 8G
-  matrix:
-    # build in a matrix because building and testing all four wheels in a
-    # single task takes longer than 60 mins (the default time limit for a
-    # cirrus-ci task).
-    - env:
-        CIRRUS_CLONE_SUBMODULES: true
-        CIBW_BUILD: cp39-*
-        EXPECT_CPU_FEATURES: NEON NEON_FP16 NEON_VFPV4 ASIMD ASIMDHP ASIMDDP ASIMDFHM
-    - env:
-        CIRRUS_CLONE_SUBMODULES: true
-        CIBW_BUILD: cp310-*
-    - env:
-        CIRRUS_CLONE_SUBMODULES: true
-        CIBW_BUILD: cp311-*
-    - env:
-        CIRRUS_CLONE_SUBMODULES: true
-        CIBW_PRERELEASE_PYTHONS: True
-        CIBW_BUILD: cp312-*
-
-  build_script: |
-    apt update
-    apt install -y python3-venv python-is-python3 gfortran libatlas-base-dev libgfortran5 eatmydata
-    git fetch origin
-    bash ./tools/wheels/cibw_before_build.sh ${PWD}
-    which python
-    echo $CIRRUS_CHANGE_MESSAGE
-  <<: *BUILD_AND_STORE_WHEELS
+#linux_aarch64_task:
+#  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
+#  compute_engine_instance:
+#    image_project: cirrus-images
+#    image: family/docker-builder-arm64
+#    architecture: arm64
+#    platform: linux
+#    cpu: 1
+#    memory: 8G
+#  matrix:
+#    # build in a matrix because building and testing all four wheels in a
+#    # single task takes longer than 60 mins (the default time limit for a
+#    # cirrus-ci task).
+#    - env:
+#        CIRRUS_CLONE_SUBMODULES: true
+#        CIBW_BUILD: cp39-*
+#        EXPECT_CPU_FEATURES: NEON NEON_FP16 NEON_VFPV4 ASIMD ASIMDHP ASIMDDP ASIMDFHM
+#    - env:
+#        CIRRUS_CLONE_SUBMODULES: true
+#        CIBW_BUILD: cp310-*
+#    - env:
+#        CIRRUS_CLONE_SUBMODULES: true
+#        CIBW_BUILD: cp311-*
+#    - env:
+#        CIRRUS_CLONE_SUBMODULES: true
+#        CIBW_PRERELEASE_PYTHONS: True
+#        CIBW_BUILD: cp312-*
+#
+#  build_script: |
+#    apt update
+#    apt install -y python3-venv python-is-python3 gfortran libatlas-base-dev libgfortran5 eatmydata
+#    git fetch origin
+#    bash ./tools/wheels/cibw_before_build.sh ${PWD}
+#    which python
+#    echo $CIRRUS_CHANGE_MESSAGE
+#  <<: *BUILD_AND_STORE_WHEELS
 
 
 ######################################################################
@@ -57,12 +57,12 @@ macosx_arm64_task:
   macos_instance:
     image: ghcr.io/cirruslabs/macos-monterey-xcode:14
   matrix:
-    - env:
-        CIRRUS_CLONE_SUBMODULES: true
-        CIBW_BUILD: cp39-*
-    - env:
-        CIRRUS_CLONE_SUBMODULES: true
-        CIBW_BUILD: cp310-* cp311-*
+#    - env:
+#        CIRRUS_CLONE_SUBMODULES: true
+#        CIBW_BUILD: cp39-*
+#    - env:
+#        CIRRUS_CLONE_SUBMODULES: true
+#        CIBW_BUILD: cp310-* cp311-*
     - env:
         CIRRUS_CLONE_SUBMODULES: true
         CIBW_PRERELEASE_PYTHONS: True
@@ -77,7 +77,7 @@ macosx_arm64_task:
     # Find out SDKROOT via `xcrun --sdk macosx --show-sdk-path`
     CIBW_ENVIRONMENT_MACOS: >
       RUNNER_OS=macOS
-      SDKROOT=/Applications/Xcode-14.0.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk
+      SDKROOT=/Applications/Xcode-15.0.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.0.sdk
       LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
       CFLAGS="-fno-strict-aliasing -DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64"
       CXXFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64"
