@@ -123,7 +123,7 @@ cdef class Philox(BitGenerator):
     >>> rg = [Generator(Philox(s)) for s in sg.spawn(10)]
 
     `Philox` can be used in parallel applications by calling the :meth:`jumped`
-    method  to advances the state as-if :math:`2^{128}` random numbers have
+    method to advance the state as-if :math:`2^{128}` random numbers have
     been generated. Alternatively, :meth:`advance` can be used to advance the
     counter for any positive step in [0, 2**256). When using :meth:`jumped`, all
     generators should be chained to ensure that the segments come from the same
