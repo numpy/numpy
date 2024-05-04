@@ -1,0 +1,5 @@
+``histogram`` auto-binning now returns bin sizes >=1 for integer input data
+---------------------------------------------------------------------------
+For integer input data, bin sizes smaller than 1 result in spurious empty
+bins.  This is now avoided when the number of bins is computed using one of the
+algorithms provided by `histogram_bin_edges`.
