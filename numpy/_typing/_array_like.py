@@ -12,6 +12,8 @@ from typing import (
 )
 if sys.version_info >= (3, 11):
     from typing import TypeVarTuple, Unpack
+elif TYPE_CHECKING:
+    from typing_extensions import TypeVarTuple, Unpack
 
 import numpy as np
 from numpy import (

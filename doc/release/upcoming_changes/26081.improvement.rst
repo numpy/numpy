@@ -37,7 +37,7 @@ This PR also provides the ``np.typing.Array`` type alias in the style of
 
 .. code::
 
-   from typing import Literal, TypeVar, TypeVarTuple
+   from typing import Literal, TypeVar
    import numpy as np
    import numpy.typing as npt
 
@@ -51,7 +51,6 @@ This PR also provides the ``np.typing.Array`` type alias in the style of
 
    arr = np.arange(12, dtype=np.uint16)
    stacked = stack_1Ds(arr, arr, arr)
-   reveal_type(stacked) # 
 
 
 Note that, if shape is unknown or arbitrary, it is still recommended to use
@@ -59,6 +58,7 @@ Note that, if shape is unknown or arbitrary, it is still recommended to use
 allow arbitrarily shape arrays.  e.g.:
 
 .. code::
+
    from typing import TypeVarTuple
    Shapes = TypeVarTuple("Shapes")
 
