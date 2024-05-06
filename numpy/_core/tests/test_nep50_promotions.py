@@ -346,6 +346,7 @@ def test_oob_creation(sctype, create):
 
 def test_thread_local_promotion_state():
     b = threading.Barrier(2)
+
     def legacy_no_warn():
         np._set_promotion_state("legacy")
         b.wait()
