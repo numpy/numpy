@@ -121,7 +121,7 @@
     #define NPY_TLS _Thread_local
 #elif defined(HAVE___THREAD)
     #define NPY_TLS __thread
-#elif defined(HAVE__DECLSPEC_THREAD_)
+#elif defined(HAVE___DECLSPEC_THREAD_)
     #define NPY_TLS __declspec(thread)
 #else
     #define NPY_TLS
