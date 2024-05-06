@@ -31,10 +31,22 @@ String operations
    :toctree: generated/
 
    add
+   ljust
+   lower
    lstrip
+   mod
+   multiply
+   partition
    replace
+   rjust
+   rpartition
    rstrip
    strip
+   swapcase
+   title
+   translate
+   upper
+   zfill
 
 Comparison
 ----------
@@ -61,11 +73,17 @@ String information
    count
    endswith
    find
+   index
+   isalnum
    isalpha
    isdecimal
    isdigit
+   islower
    isnumeric
    isspace
+   istitle
+   isupper
    rfind
+   rindex
    startswith
    str_len
