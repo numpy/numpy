@@ -158,7 +158,8 @@ add_newdoc('Array', repr(Array),
     Can be used during runtime for typing arrays with a given dtype
     and specified shape.  Particularly useful for functions which modify number
     of axes.  If it is important to enforce integer axis sizes, use np.ndarray
-    for typing.
+    for typing.  If axes dimensions are variable, it is best to use
+    `npt.NDArray <numpy.typing.NDArray>`.
 
     .. versionadded:: 2.1
 

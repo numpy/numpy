@@ -33,9 +33,7 @@ shape by a tuple of ``int`` subtypes, which are reflected in the type of
    reveal_type(transpose(arr).shape)  # tuple[Series, Time]
 
 This PR also provides the ``np.typing.Array`` type alias in the style of
-``NDArray``.  It allows specifying a shaped array with simpler dtype syntax.
-By relying on variadic type parameters, it also allows typing functions that
-handle an unknown number of axes:
+``NDArray``.  It allows specifying a shaped array with simpler dtype syntax:
 
 .. code::
 
@@ -43,10 +41,28 @@ handle an unknown number of axes:
    import numpy as np
    import numpy.typing as npt
 
+   Float = np.floating[npt.NBitBase]
    DType = TypeVar("DType", bound=np.generic)
+
+   Float1D = npt.Array[int, Float]
+   Float2D = npt.Array[int, int, Float]
+   def stack_1Ds(*args: Float1D) -> Float2D:
+      return np.stack(args)
+
+   arr = np.arange(12, dtype=np.uint16)
+   stacked = stack_1Ds(arr, arr, arr)
+   reveal_type(stacked) # 
+
+
+Note that, if shape is unknown or arbitrary, it is still recommended to use
+``NDArray``.  Because ``TypeVarTuple`` cannot be bound, not all type checkers
+allow arbitrarily shape arrays.  e.g.:
+
+.. code::
+   from typing import TypeVarTuple
    Shapes = TypeVarTuple("Shapes")
 
-   def stack(
+   def stack_two_arrays(
        a: npt.Array[*Shapes, DType],
        b: npt.Array[*Shapes, DType],
    ) -> npt.Array[Literal[2], *Shapes, DType]: ...
@@ -56,3 +72,8 @@ handle an unknown number of axes:
    
    double_arr: npt.Array[Literal[2], Literal[3], Literal[4], np.uint16]
    double_arr = stack(arr, arr)
+
+
+In mypy, this generates the error:
+``Type argument "tuple[*Shapes]" of "ndarray" must be a subtype of
+"tuple[int, ...]"  [type-var]``

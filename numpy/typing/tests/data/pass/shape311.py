@@ -3,25 +3,34 @@ from typing import Literal, NewType, TypeVar, TypeVarTuple
 
 import numpy as np
 import numpy.typing as npt
-from typing_extensions import assert_type
+from typing_extensions import assert_type, cast, reveal_type
 
 if sys.version_info >= (3, 11):
     DType = TypeVar("DType", bound=np.generic)
-    Shapes = TypeVarTuple("Shapes")
 
-    def stack(
-        a: npt.Array[*Shapes, DType],
-        b: npt.Array[*Shapes, DType],
-    ) -> npt.Array[Literal[2], *Shapes, DType]:
-        return np.stack((a, b))
-
-    arr: npt.Array[Literal[3], Literal[4], np.uint16]
-    arr = np.arange(12, dtype=np.uint16).reshape((3, 4))
-
-    double_arr = stack(arr, arr)
-    assert_type(double_arr, npt.Array[Literal[2], Literal[3], Literal[4], np.uint16])
-
+    # Check that typevartuple in alias is packed correctly
     Length = NewType("Length", int)
     Width = NewType("Width", int)
-    arr2: npt.Array[Length, Width, np.int8] = np.array([[0]])
-    assert_type(arr2, npt.Array[Length, Width, np.int8])
+    arr: npt.Array[Length, Width, np.int8] = np.array([[0]])
+    assert_type(arr, np.ndarray[tuple[Length, Width], np.dtype[np.int8]])
+
+    # Check that typevartuple in alias is unpacked correctly
+    M = TypeVar("M", bound=int)
+    N = TypeVar("N", bound=int)
+    T = TypeVar("T", bound=np.generic)
+
+
+    def mult(vec: npt.Array[N, T], mat: npt.Array[M, N, T]) -> npt.Array[M, T]:
+        return mat @ vec  # type: ignore
+
+
+    arr2: np.ndarray[tuple[Width], np.dtype[np.int8]] = np.array([0])
+    assert_type(mult(arr2, arr), np.ndarray[tuple[Length], np.dtype[np.int8]])
+
+
+    # Check that shape works
+    def return_shp(a: npt.Array[M, N, DType]) -> tuple[M, N]:
+        return a.shape
+
+    shp = return_shp(arr)
+    assert_type(shp, tuple[Length, Width])
