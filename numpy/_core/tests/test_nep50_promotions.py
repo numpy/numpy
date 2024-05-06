@@ -344,6 +344,7 @@ def test_oob_creation(sctype, create):
     assert create(sctype, iinfo.max) == iinfo.max
 
 
+@pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for threads")
 def test_thread_local_promotion_state():
     b = threading.Barrier(2)
 
