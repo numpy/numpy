@@ -1231,6 +1231,8 @@ PASSES_THROUGH_NAN_NULLS = [
     "strip",
     "lstrip",
     "rstrip",
+    "replace"
+    "zfill",
 ]
 
 NULLS_ARE_FALSEY = [
@@ -1242,7 +1244,6 @@ NULLS_ALWAYS_ERROR = [
     "count",
     "find",
     "rfind",
-    "replace",
 ]
 
 SUPPORTS_NULLS = (
