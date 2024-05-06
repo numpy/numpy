@@ -1096,7 +1096,13 @@ NAN_PRESERVING_FUNCTIONS = [
     "capitalize",
     "expandtabs",
     "lower",
-    "splitlines" "swapcase" "title" "upper",
+    "lstrip",
+    "rstrip",
+    "splitlines",
+    "strip",
+    "swapcase",
+    "title",
+    "upper",
 ]
 
 BOOL_OUTPUT_FUNCTIONS = [
@@ -1123,7 +1129,10 @@ UNARY_FUNCTIONS = [
     "istitle",
     "isupper",
     "lower",
+    "lstrip",
+    "rstrip",
     "splitlines",
+    "strip",
     "swapcase",
     "title",
     "upper",
@@ -1145,10 +1154,20 @@ UNIMPLEMENTED_VEC_STRING_FUNCTIONS = [
     "upper",
 ]
 
+ONLY_IN_NP_CHAR = [
+    "join",
+    "split",
+    "rsplit",
+    "splitlines"
+]
+
 
 @pytest.mark.parametrize("function_name", UNARY_FUNCTIONS)
 def test_unary(string_array, unicode_array, function_name):
-    func = getattr(np.char, function_name)
+    if function_name in ONLY_IN_NP_CHAR:
+        func = getattr(np.char, function_name)
+    else:
+        func = getattr(np.strings, function_name)
     dtype = string_array.dtype
     sres = func(string_array)
     ures = func(unicode_array)
@@ -1189,6 +1208,10 @@ def test_unary(string_array, unicode_array, function_name):
             with pytest.raises(ValueError):
                 func(na_arr)
         return
+    if not (is_nan or is_str):
+        with pytest.raises(ValueError):
+            func(na_arr)
+        return
     res = func(na_arr)
     if is_nan and function_name in NAN_PRESERVING_FUNCTIONS:
         assert res[0] is dtype.na_object
@@ -1212,14 +1235,16 @@ BINARY_FUNCTIONS = [
     ("find", (None, "A")),
     ("index", (None, "e")),
     ("join", ("-", None)),
-    pytest.param("ljust", (None, 12), marks=unicode_bug_fail),
-    ("partition", (None, "A")),
+    ("ljust", (None, 12)),
+    ("lstrip", (None, "A")),
     ("replace", (None, "A", "B")),
     ("rfind", (None, "A")),
     ("rindex", (None, "e")),
-    pytest.param("rjust", (None, 12), marks=unicode_bug_fail),
-    ("rpartition", (None, "A")),
+    ("rjust", (None, 12)),
+    ("rsplit", (None, "A")),
+    ("rstrip", (None, "A")),
     ("split", (None, "A")),
+    ("strip", (None, "A")),
     ("startswith", (None, "A")),
     pytest.param("zfill", (None, 12), marks=unicode_bug_fail),
 ]
@@ -1273,10 +1298,13 @@ def call_func(func, args, array, sanitize=True):
 
 @pytest.mark.parametrize("function_name, args", BINARY_FUNCTIONS)
 def test_binary(string_array, unicode_array, function_name, args):
-    func = getattr(np.char, function_name)
+    if function_name in ONLY_IN_NP_CHAR:
+        func = getattr(np.char, function_name)
+    else:
+        func = getattr(np.strings, function_name)
     sres = call_func(func, args, string_array)
     ures = call_func(func, args, unicode_array, sanitize=False)
-    if sres.dtype == StringDType():
+    if not isinstance(sres, tuple) and sres.dtype == StringDType():
         ures = ures.astype(StringDType())
     assert_array_equal(sres, ures)
 
@@ -1475,7 +1503,8 @@ class TestImplementation:
         view = self.get_view(self.a)
         sizes = np.where(is_short, view['size_and_flags'] & 0xf,
                          view['size'])
-        assert_array_equal(sizes, np.strings.str_len(self.a))
+        assert_array_equal(sizes, np.strings
+                           .str_len(self.a))
         assert_array_equal(view['xsiz'][2:],
                            np.void(b'\x00' * (self.sizeofstr // 4 - 1)))
         # Check that the medium string uses only 1 byte for its length
