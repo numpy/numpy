@@ -1496,6 +1496,16 @@ to achieve the previous behavior.
 
 (`gh-25712 <https://github.com/numpy/numpy/pull/25712>`__)
 
+``np.can_cast`` cannot be called on Python int, float, or complex
+-----------------------------------------------------------------
+``np.can_cast`` cannot be called with Python int, float, or complex instances
+anymore.  This is because NEP 50 means that the result of ``can_cast`` must
+not depend on the value passed in.
+Unfortunately, for Python scalars whether a cast should be considered
+``"same_kind"`` or ``"safe"`` may depend on the context and value so that
+this is currently not implemented.
+In some cases, this means you may have to add a specific path for:
+``if type(obj) in (int, float, complex): ...``.
 
 
 **Content from release note snippets in doc/release/upcoming_changes:**
