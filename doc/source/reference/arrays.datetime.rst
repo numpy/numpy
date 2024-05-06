@@ -205,8 +205,12 @@ simple datetime calculations.
 There are two Timedelta units ('Y', years and 'M', months) which are treated
 specially, because how much time they represent changes depending
 on when they are used. While a timedelta day unit is equivalent to
-24 hours, there is no way to convert a month unit into days, because
-different months have different numbers of days.
+24 hours, month and year units cannot be converted directly into days
+without using 'unsafe' casting.
+
+The `numpy.ndarray.astype` method can be used for unsafe
+conversion of months/years to days. The conversion follows
+calculating the averaged values from the 400 year leap-year cycle.
 
 .. admonition:: Example
 
@@ -219,6 +223,7 @@ different months have different numbers of days.
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
     TypeError: Cannot cast NumPy timedelta64 scalar from metadata [Y] to [D] according to the rule 'same_kind'
+
 
 Datetime units
 ==============
