@@ -32,6 +32,7 @@ String operations
 
    add
    lstrip
+   replace
    rstrip
    strip
 
