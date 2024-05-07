@@ -3493,7 +3493,7 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self),
          * TODO: `PyArray_IsScalar` should not be required for new dtypes.
          *       weak-promotion branch is in practice identical to dtype one.
          */
-        if (npy_promotion_state == NPY_USE_WEAK_PROMOTION) {
+        if (get_npy_promotion_state() == NPY_USE_WEAK_PROMOTION) {
             PyObject *descr = PyObject_GetAttr(from_obj, npy_ma_str_dtype);
             if (descr == NULL) {
                 goto finish;
