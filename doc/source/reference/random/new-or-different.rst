@@ -23,7 +23,7 @@ Feature                 Older Equivalent   Notes
 `~.Generator.random`    `random_sample`,   Access the values in a
                         `rand`             BitGenerator, convert them to
                                            ``float64`` in the interval
-                                           ``[0.0.,`` `` 1.0)``. In addition
+                                           ``[0.0., 1.0)``. In addition
                                            to the ``size`` kwarg, now
                                            supports ``dtype='d'`` or
                                            ``dtype='f'``, and an ``out``
