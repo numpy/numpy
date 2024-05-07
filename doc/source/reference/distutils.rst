@@ -14,7 +14,7 @@ Packaging (:mod:`numpy.distutils`)
 .. warning::
 
    Note that ``setuptools`` does major releases often and those may contain
-   changes that break ``numpy.distutils``, which will *not* be updated anymore
+   changes that break :mod:`numpy.distutils`, which will *not* be updated anymore
    for new ``setuptools`` versions. It is therefore recommended to set an
    upper version bound in your build configuration for the last known version
    of ``setuptools`` that works with your build.
