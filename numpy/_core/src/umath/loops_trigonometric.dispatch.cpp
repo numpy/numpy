@@ -30,7 +30,7 @@ namespace hn = hwy::HWY_NAMESPACE;
  * elements or when there's no native FUSED support instead of fallback to libc
  */
 
-#if HWY_NATIVE_FMA  // native support
+#if NPY_SIMD_FMA3  // native support
 typedef enum
 {
     SIMD_COMPUTE_SIN,
@@ -192,7 +192,7 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
     npyv_cleanup();
     }
 }
-#endif // HWY_NATIVE_FMA
+#endif // NPY_SIMD_FMA3
 
 /* Disable SIMD code sin/cos f64 and revert to libm: see
  * https://mail.python.org/archives/list/numpy-discussion@python.org/thread/C6EYZZSR4EWGVKHAZXLE7IBILRMNVK7L/
@@ -213,7 +213,7 @@ DISPATCH_DOUBLE_FUNC(cos)
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(FLOAT_sin)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
-#if HWY_NATIVE_FMA
+#if NPY_SIMD_FMA3
     const npy_float *src = (npy_float*)args[0];
           npy_float *dst = (npy_float*)args[1];
 
@@ -242,7 +242,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(FLOAT_sin)
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(FLOAT_cos)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
-#if HWY_NATIVE_FMA
+#if NPY_SIMD_FMA3
     const npy_float *src = (npy_float*)args[0];
           npy_float *dst = (npy_float*)args[1];
 
