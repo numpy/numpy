@@ -577,14 +577,8 @@ class chararray(ndarray):
 
     def __getitem__(self, obj):
         val = ndarray.__getitem__(self, obj)
-
         if isinstance(val, character):
-            temp = val.rstrip()
-            if len(temp) == 0:
-                val = ''
-            else:
-                val = temp
-
+            return val.rstrip()
         return val
 
     # IMPLEMENTATION NOTE: Most of the methods of this class are
