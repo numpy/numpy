@@ -95,7 +95,7 @@ def changelog(ctx, token, revision_range):
 )
 @click.argument("meson_args", nargs=-1)
 @click.pass_context
-def build(ctx, meson_args, with_scipy_openblas, jobs=None, clean=False, verbose=False, quiet=False):
+def build(ctx, meson_args, with_scipy_openblas, jobs=None, clean=False, verbose=False, quiet=False, *args, **kwargs):
     """🔧 Build package with Meson/ninja and install
 
     MESON_ARGS are passed through e.g.:
@@ -136,7 +136,7 @@ def build(ctx, meson_args, with_scipy_openblas, jobs=None, clean=False, verbose=
     help="Number of parallel build jobs"
 )
 @click.pass_context
-def docs(ctx, sphinx_target, clean, first_build, jobs):
+def docs(ctx, sphinx_target, clean, first_build, jobs, *args, **kwargs):
     """📖 Build Sphinx documentation
 
     By default, SPHINXOPTS="-W", raising errors on warnings.
@@ -205,7 +205,7 @@ Which tests to run. Can be a module, function, class, or method:
     '--verbose', '-v', is_flag=True, default=False
 )
 @click.pass_context
-def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose):
+def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose, *args, **kwargs):
     """🔧 Run tests
 
     PYTEST_ARGS are passed through directly to pytest, e.g.:
@@ -486,7 +486,7 @@ def bench(ctx, tests, compare, verbose, quick, commits):
 })
 @click.argument("python_args", metavar='', nargs=-1)
 @click.pass_context
-def python(ctx, python_args):
+def python(ctx, python_args, *args, **kwargs):
     """🐍 Launch Python shell with PYTHONPATH set
 
     OPTIONS are passed through directly to Python, e.g.:
