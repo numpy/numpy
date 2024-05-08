@@ -36,10 +36,8 @@ String operations
    lstrip
    mod
    multiply
-   partition
    replace
    rjust
-   rpartition
    rstrip
    strip
    swapcase
