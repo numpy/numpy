@@ -13,7 +13,6 @@ extern NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[];
 #define NPY_USE_WEAK_PROMOTION 1
 #define NPY_USE_WEAK_PROMOTION_AND_WARN 2
 
-extern NPY_NO_EXPORT NPY_TLS int npy_promotion_state;
 extern NPY_NO_EXPORT PyObject *NO_NEP50_WARNING_CTX;
 extern NPY_NO_EXPORT PyObject *npy_DTypePromotionError;
 extern NPY_NO_EXPORT PyObject *npy_UFuncNoLoopError;

@@ -56,7 +56,7 @@ NPY_NO_EXPORT PyObject *NO_NEP50_WARNING_CTX = NULL;
 NPY_NO_EXPORT PyObject *npy_DTypePromotionError = NULL;
 NPY_NO_EXPORT PyObject *npy_UFuncNoLoopError = NULL;
 
-NPY_NO_EXPORT NPY_TLS int npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
+static NPY_TLS int npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
 
 NPY_NO_EXPORT int
 get_npy_promotion_state() {
