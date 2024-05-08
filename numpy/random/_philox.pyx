@@ -93,14 +93,14 @@ cdef class Philox(BitGenerator):
     the sequence in increments of :math:`2^{128}`. These features allow
     multiple non-overlapping sequences to be generated.
 
-    ``Philox`` provides a capsule containing function pointers that produce
+    `Philox` provides a capsule containing function pointers that produce
     doubles, and unsigned 32 and 64- bit integers. These are not
-    directly consumable in Python and must be consumed by a ``Generator``
+    directly consumable in Python and must be consumed by a `Generator`
     or similar object that supports low-level access.
 
     **State and Seeding**
 
-    The ``Philox`` state vector consists of a 256-bit value encoded as
+    The `Philox` state vector consists of a 256-bit value encoded as
     a 4-element uint64 array and a 128-bit value encoded as a 2-element uint64
     array. The former is a counter which is incremented by 1 for every 4 64-bit
     randoms produced. The second is a key which determined the sequence
@@ -122,10 +122,10 @@ cdef class Philox(BitGenerator):
     >>> sg = SeedSequence(1234)
     >>> rg = [Generator(Philox(s)) for s in sg.spawn(10)]
 
-    ``Philox`` can be used in parallel applications by calling the ``jumped``
-    method  to advances the state as-if :math:`2^{128}` random numbers have
-    been generated. Alternatively, ``advance`` can be used to advance the
-    counter for any positive step in [0, 2**256). When using ``jumped``, all
+    `Philox` can be used in parallel applications by calling the :meth:`jumped`
+    method to advance the state as-if :math:`2^{128}` random numbers have
+    been generated. Alternatively, :meth:`advance` can be used to advance the
+    counter for any positive step in [0, 2**256). When using :meth:`jumped`, all
     generators should be chained to ensure that the segments come from the same
     sequence.
 
@@ -136,7 +136,7 @@ cdef class Philox(BitGenerator):
     ...    rg.append(Generator(bit_generator))
     ...    bit_generator = bit_generator.jumped()
 
-    Alternatively, ``Philox`` can be used in parallel applications by using
+    Alternatively, `Philox` can be used in parallel applications by using
     a sequence of distinct keys where each instance uses different key.
 
     >>> key = 2**96 + 2**33 + 2**17 + 2**9
@@ -144,7 +144,7 @@ cdef class Philox(BitGenerator):
 
     **Compatibility Guarantee**
 
-    ``Philox`` makes a guarantee that a fixed ``seed`` will always produce
+    `Philox` makes a guarantee that a fixed ``seed`` will always produce
     the same random integer stream.
 
     Examples

@@ -50,30 +50,30 @@ cdef class SFC64(BitGenerator):
 
     Notes
     -----
-    ``SFC64`` is a 256-bit implementation of Chris Doty-Humphrey's Small Fast
-    Chaotic PRNG ([1]_). ``SFC64`` has a few different cycles that one might be
+    `SFC64` is a 256-bit implementation of Chris Doty-Humphrey's Small Fast
+    Chaotic PRNG ([1]_). `SFC64` has a few different cycles that one might be
     on, depending on the seed; the expected period will be about
-    :math:`2^{255}` ([2]_). ``SFC64`` incorporates a 64-bit counter which means
+    :math:`2^{255}` ([2]_). `SFC64` incorporates a 64-bit counter which means
     that the absolute minimum cycle length is :math:`2^{64}` and that distinct
     seeds will not run into each other for at least :math:`2^{64}` iterations.
 
-    ``SFC64`` provides a capsule containing function pointers that produce
+    `SFC64` provides a capsule containing function pointers that produce
     doubles, and unsigned 32 and 64- bit integers. These are not
-    directly consumable in Python and must be consumed by a ``Generator``
+    directly consumable in Python and must be consumed by a `Generator`
     or similar object that supports low-level access.
 
     **State and Seeding**
 
-    The ``SFC64`` state vector consists of 4 unsigned 64-bit values. The last
+    The `SFC64` state vector consists of 4 unsigned 64-bit values. The last
     is a 64-bit counter that increments by 1 each iteration.
 
     The input seed is processed by `SeedSequence` to generate the first
-    3 values, then the ``SFC64`` algorithm is iterated a small number of times
+    3 values, then the `SFC64` algorithm is iterated a small number of times
     to mix.
 
     **Compatibility Guarantee**
 
-    ``SFC64`` makes a guarantee that a fixed seed will always produce the same
+    `SFC64` makes a guarantee that a fixed seed will always produce the same
     random integer stream.
 
     References
