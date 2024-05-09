@@ -51,11 +51,22 @@ NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[] = {0, 3, 5, 10, 10, 20, 20, 20, 20};
 /*
  * Whether or not legacy value-based promotion/casting is used.
  */
-NPY_NO_EXPORT int npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
+
 NPY_NO_EXPORT PyObject *NO_NEP50_WARNING_CTX = NULL;
 NPY_NO_EXPORT PyObject *npy_DTypePromotionError = NULL;
 NPY_NO_EXPORT PyObject *npy_UFuncNoLoopError = NULL;
 
+static NPY_TLS int npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
+
+NPY_NO_EXPORT int
+get_npy_promotion_state() {
+    return npy_promotion_state;
+}
+
+NPY_NO_EXPORT void
+set_npy_promotion_state(int new_promotion_state) {
+    npy_promotion_state = new_promotion_state;
+}
 
 static PyObject *
 PyArray_GetGenericToVoidCastingImpl(void);
@@ -100,13 +111,14 @@ npy_give_promotion_warnings(void)
 
 NPY_NO_EXPORT PyObject *
 npy__get_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(arg)) {
-    if (npy_promotion_state == NPY_USE_WEAK_PROMOTION) {
+    int promotion_state = get_npy_promotion_state();
+    if (promotion_state == NPY_USE_WEAK_PROMOTION) {
         return PyUnicode_FromString("weak");
     }
-    else if (npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN) {
+    else if (promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN) {
         return PyUnicode_FromString("weak_and_warn");
     }
-    else if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+    else if (promotion_state == NPY_USE_LEGACY_PROMOTION) {
         return PyUnicode_FromString("legacy");
     }
     PyErr_SetString(PyExc_SystemError, "invalid promotion state!");
@@ -123,14 +135,15 @@ npy__set_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *arg)
                 "must be a string.");
         return NULL;
     }
+    int new_promotion_state;
     if (PyUnicode_CompareWithASCIIString(arg, "weak") == 0) {
-        npy_promotion_state = NPY_USE_WEAK_PROMOTION;
+        new_promotion_state = NPY_USE_WEAK_PROMOTION;
     }
     else if (PyUnicode_CompareWithASCIIString(arg, "weak_and_warn") == 0) {
-        npy_promotion_state = NPY_USE_WEAK_PROMOTION_AND_WARN;
+        new_promotion_state = NPY_USE_WEAK_PROMOTION_AND_WARN;
     }
     else if (PyUnicode_CompareWithASCIIString(arg, "legacy") == 0) {
-        npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
+        new_promotion_state = NPY_USE_LEGACY_PROMOTION;
     }
     else {
         PyErr_Format(PyExc_TypeError,
@@ -138,6 +151,7 @@ npy__set_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *arg)
                 "'weak', 'legacy', or 'weak_and_warn' but got '%.100S'", arg);
         return NULL;
     }
+    set_npy_promotion_state(new_promotion_state);
     Py_RETURN_NONE;
 }
 
@@ -930,7 +944,7 @@ PyArray_CanCastArrayTo(PyArrayObject *arr, PyArray_Descr *to,
         to = NULL;
     }
 
-    if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+    if (get_npy_promotion_state() == NPY_USE_LEGACY_PROMOTION) {
         /*
          * If it's a scalar, check the value.  (This only currently matters for
          * numeric types and for `to == NULL` it can't be numeric.)
@@ -1954,10 +1968,11 @@ PyArray_CheckLegacyResultType(
         npy_intp ndtypes, PyArray_Descr **dtypes)
 {
     PyArray_Descr *ret = NULL;
-    if (npy_promotion_state == NPY_USE_WEAK_PROMOTION) {
+    int promotion_state = get_npy_promotion_state();
+    if (promotion_state == NPY_USE_WEAK_PROMOTION) {
         return 0;
     }
-    if (npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN
+    if (promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN
             && !npy_give_promotion_warnings()) {
         return 0;
     }
@@ -2054,12 +2069,13 @@ PyArray_CheckLegacyResultType(
         Py_DECREF(ret);
         return 0;
     }
-    if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+
+    if (promotion_state == NPY_USE_LEGACY_PROMOTION) {
         Py_SETREF(*new_result, ret);
         return 0;
     }
 
-    assert(npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN);
+    assert(promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN);
     if (PyErr_WarnFormat(PyExc_UserWarning, 1,
             "result dtype changed due to the removal of value-based "
             "promotion from NumPy. Changed from %S to %S.",

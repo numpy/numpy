@@ -1965,10 +1965,12 @@ linear_search_type_resolver(PyUFuncObject *self,
 
     ufunc_name = ufunc_get_name_cstr(self);
 
-    assert(npy_promotion_state != NPY_USE_WEAK_PROMOTION_AND_WARN);
+    int promotion_state = get_npy_promotion_state();
+
+    assert(promotion_state != NPY_USE_WEAK_PROMOTION_AND_WARN);
     /* Always "use" with new promotion in case of Python int/float/complex */
     int use_min_scalar;
-    if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+    if (promotion_state == NPY_USE_LEGACY_PROMOTION) {
         use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
     }
     else {
@@ -2167,10 +2169,12 @@ type_tuple_type_resolver(PyUFuncObject *self,
 
     ufunc_name = ufunc_get_name_cstr(self);
 
-    assert(npy_promotion_state != NPY_USE_WEAK_PROMOTION_AND_WARN);
+    int promotion_state = get_npy_promotion_state();
+
+    assert(promotion_state != NPY_USE_WEAK_PROMOTION_AND_WARN);
     /* Always "use" with new promotion in case of Python int/float/complex */
     int use_min_scalar;
-    if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+    if (promotion_state == NPY_USE_LEGACY_PROMOTION) {
         use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
     }
     else {

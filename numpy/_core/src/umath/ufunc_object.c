@@ -670,7 +670,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
 
         // TODO: Is this equivalent/better by removing the logic which enforces
         //       that we always use weak promotion in the core?
-        if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+        if (get_npy_promotion_state() == NPY_USE_LEGACY_PROMOTION) {
             continue;  /* Skip use of special dtypes */
         }
 
@@ -6073,8 +6073,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
     PyArray_Descr *operation_descrs[NPY_MAXARGS] = {NULL};
 
     /* This entry-point to promotion lives in the NEP 50 future: */
-    int original_promotion_state = npy_promotion_state;
-    npy_promotion_state = NPY_USE_WEAK_PROMOTION;
+    int original_promotion_state = get_npy_promotion_state();
+    set_npy_promotion_state(NPY_USE_WEAK_PROMOTION);
 
     npy_bool promoting_pyscalars = NPY_FALSE;
     npy_bool allow_legacy_promotion = NPY_TRUE;
@@ -6261,7 +6261,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
     Py_DECREF(capsule);
 
   finish:
-    npy_promotion_state = original_promotion_state;
+    set_npy_promotion_state(original_promotion_state);
 
     Py_XDECREF(result_dtype_tuple);
     for (int i = 0; i < ufunc->nargs; i++) {
