@@ -2299,7 +2299,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
     """
     res = isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan)
-    if res.size == 0:
+    if res.size == 0 and not asanyarray(a).size == asanyarray(b).size == 0:
         return False
     res = all(res)
     return builtins.bool(res)

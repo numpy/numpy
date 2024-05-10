@@ -8335,7 +8335,7 @@ def allclose(a, b, masked_equal=True, rtol=1e-5, atol=1e-8):
 
     d = filled(less_equal(absolute(x - y), atol + rtol * absolute(y)),
                masked_equal)
-    if d.size == 0:
+    if d.size == 0 and not asanyarray(x).size == asanyarray(y).size == 0:
         return False
     return np.all(d)
 
