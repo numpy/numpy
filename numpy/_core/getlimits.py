@@ -151,6 +151,7 @@ _MACHAR_PARAMS = {
 #    v = (ftype(-1.0) / ftype(10.0))
 #    v.view(v.dtype.newbyteorder('<')).tobytes()
 #
+# Uses division to work around deficiencies in strtold on some platforms.
 # See:
 # https://perl5.git.perl.org/perl.git/blob/3118d7d684b56cbeb702af874f4326683c45f045:/Configure
 
