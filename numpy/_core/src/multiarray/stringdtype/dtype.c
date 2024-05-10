@@ -33,7 +33,6 @@ new_stringdtype_instance(PyObject *na_object, int coerce)
 
     char *default_string_buf = NULL;
     char *na_name_buf = NULL;
-    char array_owned = 0;
 
     npy_string_allocator *allocator = NpyString_new_allocator(PyMem_RawMalloc, PyMem_RawFree,
                                                               PyMem_RawRealloc);
@@ -138,7 +137,7 @@ fail:
     if (na_name_buf != NULL) {
         PyMem_RawFree(na_name_buf);
     }
-    if (allocator != NULL && array_owned != 2) {
+    if (allocator != NULL) {
         NpyString_free_allocator(allocator);
     }
     return NULL;
@@ -660,7 +659,7 @@ stringdtype_dealloc(PyArray_StringDTypeObject *self)
 {
     Py_XDECREF(self->na_object);
     // this can be null if an error happens while initializing an instance
-    if (self->allocator != NULL && self->array_owned != 2) {
+    if (self->allocator != NULL) {
         NpyString_free_allocator(self->allocator);
     }
     PyMem_RawFree((char *)self->na_name.buf);
