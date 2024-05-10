@@ -1080,7 +1080,13 @@ NAN_PRESERVING_FUNCTIONS = [
     "capitalize",
     "expandtabs",
     "lower",
-    "splitlines" "swapcase" "title" "upper",
+    "lstrip",
+    "rstrip",
+    "splitlines",
+    "strip",
+    "swapcase",
+    "title",
+    "upper",
 ]
 
 BOOL_OUTPUT_FUNCTIONS = [
@@ -1107,7 +1113,10 @@ UNARY_FUNCTIONS = [
     "istitle",
     "isupper",
     "lower",
+    "lstrip",
+    "rstrip",
     "splitlines",
+    "strip",
     "swapcase",
     "title",
     "upper",
@@ -1129,10 +1138,20 @@ UNIMPLEMENTED_VEC_STRING_FUNCTIONS = [
     "upper",
 ]
 
+ONLY_IN_NP_CHAR = [
+    "join",
+    "split",
+    "rsplit",
+    "splitlines"
+]
+
 
 @pytest.mark.parametrize("function_name", UNARY_FUNCTIONS)
 def test_unary(string_array, unicode_array, function_name):
-    func = getattr(np.char, function_name)
+    if function_name in ONLY_IN_NP_CHAR:
+        func = getattr(np.char, function_name)
+    else:
+        func = getattr(np.strings, function_name)
     dtype = string_array.dtype
     sres = func(string_array)
     ures = func(unicode_array)
@@ -1173,6 +1192,10 @@ def test_unary(string_array, unicode_array, function_name):
             with pytest.raises(ValueError):
                 func(na_arr)
         return
+    if not (is_nan or is_str):
+        with pytest.raises(ValueError):
+            func(na_arr)
+        return
     res = func(na_arr)
     if is_nan and function_name in NAN_PRESERVING_FUNCTIONS:
         assert res[0] is dtype.na_object
@@ -1197,13 +1220,17 @@ BINARY_FUNCTIONS = [
     ("index", (None, "e")),
     ("join", ("-", None)),
     ("ljust", (None, 12)),
+    ("lstrip", (None, "A")),
     ("partition", (None, "A")),
     ("replace", (None, "A", "B")),
     ("rfind", (None, "A")),
     ("rindex", (None, "e")),
     ("rjust", (None, 12)),
+    ("rsplit", (None, "A")),
+    ("rstrip", (None, "A")),
     ("rpartition", (None, "A")),
     ("split", (None, "A")),
+    ("strip", (None, "A")),
     ("startswith", (None, "A")),
     ("zfill", (None, 12)),
 ]
@@ -1260,10 +1287,13 @@ def call_func(func, args, array, sanitize=True):
 
 @pytest.mark.parametrize("function_name, args", BINARY_FUNCTIONS)
 def test_binary(string_array, unicode_array, function_name, args):
-    func = getattr(np.char, function_name)
+    if function_name in ONLY_IN_NP_CHAR:
+        func = getattr(np.char, function_name)
+    else:
+        func = getattr(np.strings, function_name)
     sres = call_func(func, args, string_array)
     ures = call_func(func, args, unicode_array, sanitize=False)
-    if sres.dtype == StringDType():
+    if not isinstance(sres, tuple) and sres.dtype == StringDType():
         ures = ures.astype(StringDType())
     assert_array_equal(sres, ures)
 
