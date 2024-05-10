@@ -1492,8 +1492,7 @@ class TestImplementation:
         view = self.get_view(self.a)
         sizes = np.where(is_short, view['size_and_flags'] & 0xf,
                          view['size'])
-        assert_array_equal(sizes, np.strings
-                           .str_len(self.a))
+        assert_array_equal(sizes, np.strings.str_len(self.a))
         assert_array_equal(view['xsiz'][2:],
                            np.void(b'\x00' * (self.sizeofstr // 4 - 1)))
         # Check that the medium string uses only 1 byte for its length
