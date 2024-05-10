@@ -150,6 +150,9 @@ _MACHAR_PARAMS = {
 #
 # 20230201 - use (ftype(-1.0) / ftype(10.0)).newbyteorder('<').tobytes()
 #            instead because stold may have deficiencies on some platforms.
+# 20340511 - use
+#            v = (np.longdouble(-1.0) / np.longdouble(10.0))
+#            v.view(v.dtype.newbyteorder('<')).tobytes()
 # See:
 # https://perl5.git.perl.org/perl.git/blob/3118d7d684b56cbeb702af874f4326683c45f045:/Configure
 
