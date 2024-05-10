@@ -1107,6 +1107,7 @@ string_lrstrip_chars_strided_loop(
             if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
                 npy_gil_error(PyExc_MemoryError, "Failed to pack string in %s",
                               ufunc_name);
+                PyMem_RawFree(new_buf);
                 goto fail;
             }
 
@@ -1188,7 +1189,6 @@ string_lrstrip_whitespace_strided_loop(
         const npy_packed_static_string *ps = (npy_packed_static_string *)in;
         npy_static_string s = {0, NULL};
         int s_isnull = NpyString_load(allocator, ps, &s);
-
 
         if (s_isnull == -1) {
             npy_gil_error(PyExc_MemoryError, "Failed to load string in %s",
