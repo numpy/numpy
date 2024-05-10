@@ -44,7 +44,7 @@ def add_newdoc(place, name, doc):
 
     skip = (
         # gufuncs do not use the OUT_SCALAR replacement strings
-        'matmul', 'vecdot',
+        'matmul', 'vecdot', 'matvec', 'vecmat',
         # clip has 3 inputs, which is not handled by this
         'clip',
     )
@@ -2880,8 +2880,8 @@ add_newdoc('numpy._core.umath', 'vecdot',
         Input arrays, scalars not allowed.
     out : ndarray, optional
         A location into which the result is stored. If provided, it must have
-        a shape that the broadcasted shape of `x1` and `x2` with the last axis
-        removed. If not provided or None, a freshly-allocated array is used.
+        the broadcasted shape of `x1` and `x2` with the last axis removed.
+        If not provided or None, a freshly-allocated array is used.
     **kwargs
         For other keyword-only arguments, see the
         :ref:`ufunc docs <ufuncs.kwargs>`.
@@ -2913,6 +2913,122 @@ add_newdoc('numpy._core.umath', 'vecdot',
     >>> n = np.array([0., 0.6, 0.8])
     >>> np.vecdot(v, n)
     array([ 3.,  8., 10.])
+
+    .. versionadded:: 2.0.0
+    """)
+
+add_newdoc('numpy._core.umath', 'matvec',
+    """
+    Matrix-vector dot product of two arrays.
+
+    Let :math:`\\mathbf{A}` be a maxtrix in ``x1`` and :math:`\\mathbf{v}` be
+    a vector in ``x2``. The matrix-vector product is defined as:
+
+    .. math::
+       \\mathbf{A} \\cdot \\mathbf{b} = \\sum_{j=0}^{n-1} A_{ij} v_j
+
+    where the sum is over the last dimensions in ``x1`` and ``x2``
+    (unless ``axes`` is specified).  (For a matrix-vector product with the
+    vector conjugated, use ``np.vecmat(x2, x1.mT)``.)
+
+    Parameters
+    ----------
+    x1, x2 : array_like
+        Input arrays, scalars not allowed.
+    out : ndarray, optional
+        A location into which the result is stored. If provided, it must have
+        the broadcasted shape of ``x1`` and ``x2`` with the summation axis
+        removed. If not provided or None, a freshly-allocated array is used.
+    **kwargs
+        For other keyword-only arguments, see the
+        :ref:`ufunc docs <ufuncs.kwargs>`.
+
+    Returns
+    -------
+    y : ndarray
+        The matrix-vector product of the inputs.
+
+    Raises
+    ------
+    ValueError
+        If the last dimensions of ``x1`` and ``x2`` are not the same size.
+
+        If a scalar value is passed in.
+
+    See Also
+    --------
+    vecmat : Vector-matrix product.
+    einsum : Einstein summation convention.
+
+    Examples
+    --------
+    Rotate a set of vectors from Y to X along Z.
+
+    >>> a = np.array([[0., 1., 0.], [-1., 0., 0.], [0., 0., 1.]])
+    >>> v = np.array([[1., 0., 0.], [0., 1., 0.], [0., 0., 1.], [0., 6., 8.]])
+    >>> np.matvec(a, v)
+    array([[ 0., -1.,  0.],
+           [ 1.,  0.,  0.],
+           [ 0.,  0.,  1.],
+           [ 6.,  0.,  8.]])
+
+    .. versionadded:: 2.0.0
+    """)
+
+add_newdoc('numpy._core.umath', 'vecmat',
+    """
+    Vector-matrix dot product of two arrays.
+
+    Let :math:`\\mathbf{v}` be a vector in ``x1`` and :math:`\\mathbf{A}` be
+    a matrix in ``x2``. The vector-matrix product is defined as:
+
+    .. math::
+       \\mathbf{b} \\cdot \\mathbf{A} = \\sum_{i=0}^{n-1} \\overline{v_i}A_{ij}
+
+    where the sum is over the last dimension of ``x1`` and the one-but-last
+    dimensions in ``x2`` (unless `axes` is specified) and where
+    :math:`\\overline{v_i}` denotes the complex conjugate if :math:`v`
+    is complex and the identity otherwise. (For a non-conjugated vector-matrix
+    product, use ``np.matvec(x2.mT, x1)``.)
+
+    Parameters
+    ----------
+    x1, x2 : array_like
+        Input arrays, scalars not allowed.
+    out : ndarray, optional
+        A location into which the result is stored. If provided, it must have
+        the broadcasted shape of ``x1`` and ``x2`` with the summation axis
+        removed. If not provided or None, a freshly-allocated array is used.
+    **kwargs
+        For other keyword-only arguments, see the
+        :ref:`ufunc docs <ufuncs.kwargs>`.
+
+    Returns
+    -------
+    y : ndarray
+        The vector-matrix product of the inputs.
+
+    Raises
+    ------
+    ValueError
+        If the last dimensions of ``x1`` and the one-but-last dimension of
+        ``x2`` are not the same size.
+
+        If a scalar value is passed in.
+
+    See Also
+    --------
+    matvec : Matrix-vector product.
+    einsum : Einstein summation convention.
+
+    Examples
+    --------
+    Project a vector along X and Y.
+
+    >>> n = np.array([0., 4., 2.])
+    >>> m = np.array([[1., 0., 0.], [0., 1., 0.], [0., 0., 0.]])
+    >>> np.vecmat(n, m)
+    array([ 0.,  4., 0.])
 
     .. versionadded:: 2.0.0
     """)
