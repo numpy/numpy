@@ -1244,9 +1244,9 @@ class TestPower:
             result = np.power(a, 2.)
             assert_array_max_ulp(result, expected.astype(dt), maxulp=1)
 
-            expected = np.sqrt(a)
+            expected = np.sqrt(a).astype(dt)
             result = np.power(a, 0.5)
-            assert_array_max_ulp(result[:-1], expected[:-1].astype(dt), maxulp=1)
+            assert_array_max_ulp(result[:-1], expected[:-1], maxulp=1)
 
 
 class TestFloat_power:
