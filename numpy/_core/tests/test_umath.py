@@ -1239,15 +1239,19 @@ class TestPower:
         # gh-26055
         for dt in [np.float32, np.float64]:
             a = np.array([0, 1.1, 2, 12e12, -10., np.inf, -np.inf], dt)
-
             expected = np.array([0.0, 1.21, 4., 1.44e+26, 100, np.inf, np.inf])
             result = np.power(a, 2.)
             assert_array_max_ulp(result, expected.astype(dt), maxulp=1)
 
+            a = np.array([0, 1.1, 2, 12e12, np.inf], dt)
             expected = np.sqrt(a).astype(dt)
             result = np.power(a, 0.5)
-            assert_array_max_ulp(result[:-1], expected[:-1], maxulp=1)
+            assert_array_max_ulp(result, expected, maxulp=1)
 
+            with warnings.catch_warnings(record=True) as w:
+                warnings.filterwarnings('always', '', RuntimeWarning)
+                assert_(np.isnan(np.power(-10, .5)))
+                assert_(w[0].category is RuntimeWarning)
 
 class TestFloat_power:
     def test_type_conversion(self):
