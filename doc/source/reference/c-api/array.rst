@@ -1802,14 +1802,14 @@ the functions that must be implemented for each slot.
    "default" value that may differ from the "identity" value normally used.
    For example:
 
-       - ``0.0`` is the default for ``sum([])``.  But ``-0.0`` is the correct
-         identity otherwise as it preserves the sign for ``sum([-0.0])``.
-       - We use no identity for object, but return the default of ``0`` and
-         ``1`` for the empty ``sum([], dtype=object)`` and
-         ``prod([], dtype=object)``.
-         This allows ``np.sum(np.array(["a", "b"], dtype=object))`` to work.
-       - ``-inf`` or ``INT_MIN`` for ``max`` is an identity, but at least
-         ``INT_MIN`` not a good *default* when there are no items.
+   - ``0.0`` is the default for ``sum([])``.  But ``-0.0`` is the correct
+     identity otherwise as it preserves the sign for ``sum([-0.0])``.
+   - We use no identity for object, but return the default of ``0`` and
+     ``1`` for the empty ``sum([], dtype=object)`` and
+     ``prod([], dtype=object)``.
+     This allows ``np.sum(np.array(["a", "b"], dtype=object))`` to work.
+   - ``-inf`` or ``INT_MIN`` for ``max`` is an identity, but at least
+     ``INT_MIN`` not a good *default* when there are no items.
 
    *initial* is a pointer to the data for the initial value, which should be
    filled in. Returns -1, 0, or 1 indicating error, no initial value, and the
@@ -3912,7 +3912,7 @@ are defined:
 
 * If neither is defined, the C-API is declared to
   ``static void **PyArray_API``, so it is only visible within the
-  compilation unit/file using ``#includes numpy/arrayobject.h``.
+  compilation unit/file using ``#include <numpy/arrayobject.h>``.
 * If only ``PY_ARRAY_UNIQUE_SYMBOL`` is defined (it could be empty) then
   the it is declared to a non-static ``void **`` allowing it to be used
   by other files which are linked.
