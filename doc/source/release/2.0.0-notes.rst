@@ -12,9 +12,9 @@ NumPy 2.0.0 Release Notes
     and those full notes should be complete (if not copy-edited well enough
     yet).
 
-NumPy 2.0.0 is the first major release since 2006. It is the result of 10
-months of development since the last feature release and is the work of 193
-contributors spread over 1006 pull requests. It contains a large number of
+NumPy 2.0.0 is the first major release since 2006. It is the result of 11
+months of development since the last feature release and is the work of 198
+contributors spread over 1041 pull requests. It contains a large number of
 exciting new features as well as changes to both the Python and C APIs.
 
 This major release includes breaking changes that could not happen in a regular
@@ -1509,7 +1509,5 @@ this is currently not implemented.
 In some cases, this means you may have to add a specific path for:
 ``if type(obj) in (int, float, complex): ...``.
 
+(`gh-26393 <https://github.com/numpy/numpy/pull/26393>`__)
 
-**Content from release note snippets in doc/release/upcoming_changes:**
-
-.. include:: notes-towncrier.rst
