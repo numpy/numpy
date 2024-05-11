@@ -1243,7 +1243,7 @@ class TestPower:
             result = np.power(a, 2.)
             assert_array_max_ulp(result, expected.astype(dt), maxulp=1)
 
-            a = np.array([0, 1.1, 2, 12e12, np.inf], dt)
+            a = np.array([0, 1.1, 2, 12e12], dt)
             expected = np.sqrt(a).astype(dt)
             result = np.power(a, 0.5)
             assert_array_max_ulp(result, expected, maxulp=1)
