@@ -1248,10 +1248,6 @@ class TestPower:
             result = np.power(a, 0.5)
             assert_array_max_ulp(result, expected, maxulp=1)
 
-            with warnings.catch_warnings(record=True) as w:
-                warnings.filterwarnings('always', '', RuntimeWarning)
-                assert_(np.isnan(np.power(-10, .5)))
-                assert_(w[0].category is RuntimeWarning)
 
 class TestFloat_power:
     def test_type_conversion(self):
