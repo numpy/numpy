@@ -1344,7 +1344,9 @@ def nanpercentile(
 
     Notes
     -----
-    For more information please see `numpy.percentile`
+    The behavior of `numpy.nanpercentile` with percentage `q` is that of
+    `numpy.quantile` with argument ``q/100`` (ignoring nan values).
+    For more information, please see `numpy.quantile`.
 
     Examples
     --------
@@ -1532,7 +1534,9 @@ def nanquantile(
 
     Notes
     -----
-    For more information please see `numpy.quantile`
+    The behavior of `numpy.nanquantile` is the same as that of
+    `numpy.quantile` (ignoring nan values).
+    For more information, please see `numpy.quantile`.
 
     Examples
     --------

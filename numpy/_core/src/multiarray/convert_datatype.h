@@ -12,7 +12,7 @@ extern NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[];
 #define NPY_USE_LEGACY_PROMOTION 0
 #define NPY_USE_WEAK_PROMOTION 1
 #define NPY_USE_WEAK_PROMOTION_AND_WARN 2
-extern NPY_NO_EXPORT int npy_promotion_state;
+
 extern NPY_NO_EXPORT PyObject *NO_NEP50_WARNING_CTX;
 extern NPY_NO_EXPORT PyObject *npy_DTypePromotionError;
 extern NPY_NO_EXPORT PyObject *npy_UFuncNoLoopError;
@@ -102,6 +102,11 @@ PyArray_GetCastInfo(
         PyArray_Descr *from, PyArray_Descr *to, PyArray_DTypeMeta *to_dtype,
         npy_intp *view_offset);
 
+NPY_NO_EXPORT npy_intp
+PyArray_SafeCast(PyArray_Descr *type1, PyArray_Descr *type2,
+                 npy_intp* view_offset, NPY_CASTING minimum_safety,
+                 npy_intp ignore_errors);
+
 NPY_NO_EXPORT int
 PyArray_CheckCastSafety(NPY_CASTING casting,
         PyArray_Descr *from, PyArray_Descr *to, PyArray_DTypeMeta *to_dtype);
@@ -109,8 +114,8 @@ PyArray_CheckCastSafety(NPY_CASTING casting,
 NPY_NO_EXPORT NPY_CASTING
 legacy_same_dtype_resolve_descriptors(
         PyArrayMethodObject *self,
-        PyArray_DTypeMeta *dtypes[2],
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const dtypes[2],
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset);
 
@@ -124,13 +129,19 @@ legacy_cast_get_strided_loop(
 NPY_NO_EXPORT NPY_CASTING
 simple_cast_resolve_descriptors(
         PyArrayMethodObject *self,
-        PyArray_DTypeMeta *dtypes[2],
-        PyArray_Descr *input_descrs[2],
+        PyArray_DTypeMeta *const dtypes[2],
+        PyArray_Descr *const input_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset);
 
 NPY_NO_EXPORT int
 PyArray_InitializeCasts(void);
+
+NPY_NO_EXPORT int
+get_npy_promotion_state();
+
+NPY_NO_EXPORT void
+set_npy_promotion_state(int new_promotion_state);
 
 #ifdef __cplusplus
 }

@@ -1,3 +1,4 @@
+import os.path
 import sys
 import hashlib
 
@@ -2738,10 +2739,50 @@ def test_generator_ctor_old_style_pickle():
     rg = np.random.Generator(np.random.PCG64DXSM(0))
     rg.standard_normal(1)
     # Directly call reduce which is used in pickling
-    ctor, args, state_a = rg.__reduce__()
+    ctor, (bit_gen, ), _ = rg.__reduce__()
     # Simulate unpickling an old pickle that only has the name
-    assert args[:1] == ("PCG64DXSM",)
-    b = ctor(*args[:1])
-    b.bit_generator.state = state_a
+    assert bit_gen.__class__.__name__ == "PCG64DXSM"
+    print(ctor)
+    b = ctor(*("PCG64DXSM",))
+    print(b)
+    b.bit_generator.state = bit_gen.state
     state_b = b.bit_generator.state
-    assert state_a == state_b
+    assert bit_gen.state == state_b
+
+
+def test_pickle_preserves_seed_sequence():
+    # GH 26234
+    # Add explicit test that bit generators preserve seed sequences
+    import pickle
+
+    rg = np.random.Generator(np.random.PCG64DXSM(20240411))
+    ss = rg.bit_generator.seed_seq
+    rg_plk = pickle.loads(pickle.dumps(rg))
+    ss_plk = rg_plk.bit_generator.seed_seq
+    assert_equal(ss.state, ss_plk.state)
+    assert_equal(ss.pool, ss_plk.pool)
+
+    rg.bit_generator.seed_seq.spawn(10)
+    rg_plk = pickle.loads(pickle.dumps(rg))
+    ss_plk = rg_plk.bit_generator.seed_seq
+    assert_equal(ss.state, ss_plk.state)
+
+
+@pytest.mark.parametrize("version", [121, 126])
+def test_legacy_pickle(version):
+    # Pickling format was changes in 1.22.x and in 2.0.x
+    import pickle
+    import gzip
+
+    base_path = os.path.split(os.path.abspath(__file__))[0]
+    pkl_file = os.path.join(
+        base_path, "data", f"generator_pcg64_np{version}.pkl.gz"
+    )
+    with gzip.open(pkl_file) as gz:
+        rg = pickle.load(gz)
+    state = rg.bit_generator.state['state']
+
+    assert isinstance(rg, Generator)
+    assert isinstance(rg.bit_generator, np.random.PCG64)
+    assert state['state'] == 35399562948360463058890781895381311971
+    assert state['inc'] == 87136372517582989555478159403783844777

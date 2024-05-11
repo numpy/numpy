@@ -70,6 +70,9 @@ if __name__ == "__main__":
 
     # For NumPy 2.0, this should only have one field: `version`
     template = textwrap.dedent(f'''
+        """
+        Module to expose more detailed version info for the installed `numpy`
+        """
         version = "{version}"
         __version__ = version
         full_version = version

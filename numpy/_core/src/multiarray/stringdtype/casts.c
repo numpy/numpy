@@ -79,7 +79,10 @@ string_to_string_resolve_descriptors(PyObject *NPY_UNUSED(self),
         return NPY_UNSAFE_CASTING;
     }
 
-    *view_offset = 0;
+    // views are only legal between descriptors that share allocators (e.g. the same object)
+    if (descr0->allocator == descr1->allocator) {
+        *view_offset = 0;
+    };
 
     return NPY_NO_CASTING;
 }
@@ -156,7 +159,7 @@ unicode_to_string(PyArrayMethod_Context *context, char *const data[],
                   npy_intp const dimensions[], npy_intp const strides[],
                   NpyAuxData *NPY_UNUSED(auxdata))
 {
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     PyArray_StringDTypeObject *sdescr = (PyArray_StringDTypeObject *)descrs[1];
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(sdescr);
@@ -571,6 +574,9 @@ string_to_pylong(char *in, int has_null,
 {
     PyObject *val_obj = non_nullable_string_to_pystring(
             in, has_null, default_string, allocator);
+    if (val_obj == NULL) {
+        return NULL;
+    }
     // interpret as an integer in base 10
     PyObject *pylong_value = PyLong_FromUnicodeObject(val_obj, 10);
     Py_DECREF(val_obj);
@@ -1669,7 +1675,7 @@ void_to_string(PyArrayMethod_Context *context, char *const data[],
                npy_intp const dimensions[], npy_intp const strides[],
                NpyAuxData *NPY_UNUSED(auxdata))
 {
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)descrs[1];
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
@@ -1799,7 +1805,7 @@ bytes_to_string(PyArrayMethod_Context *context, char *const data[],
                 npy_intp const dimensions[], npy_intp const strides[],
                 NpyAuxData *NPY_UNUSED(auxdata))
 {
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)descrs[1];
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);

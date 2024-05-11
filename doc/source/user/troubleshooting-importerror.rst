@@ -183,6 +183,34 @@ that usually works is to upgrade the NumPy version::
 
     pip install numpy --upgrade
 
+
+Downstream ImportError or AttributeError
+========================================
+
+If you see a message such as::
+
+    A module that was compiled using NumPy 1.x cannot be run in
+    NumPy 2.0.0 as it may crash. To support both 1.x and 2.x
+    versions of NumPy, modules must be compiled with NumPy 2.0.
+    Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+Either as an ``ImportError`` or with::
+
+    AttributeError: _ARRAY_API not found
+
+Then you are using NumPy 2 together with a module that was build with NumPy 1.
+NumPy 2 made some changes that require rebuilding such modules to avoid
+possibly incorrect results or crashes.
+
+As the error message suggests, the easiest solution is likely to downgrade
+NumPy to `numpy<2`.
+Alternatively, you can search the traceback (from the back) to find the first
+line that isn't inside NumPy to see which module needs to be updated.
+
+NumPy 2 was released in the first half of 2024 and especially smaller
+modules downstream are expected need time to adapt and publish a new version.
+
+
 Segfaults or crashes
 ====================
 

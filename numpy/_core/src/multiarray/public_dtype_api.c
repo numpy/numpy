@@ -169,10 +169,15 @@ _fill_dtype_api(void *full_api_table[])
     api_table[33] = &PyArray_ObjectDType;
     api_table[34] = &PyArray_VoidDType;
     /* Abstract */
-    api_table[35] = &PyArray_PyIntAbstractDType;
-    api_table[36] = &PyArray_PyFloatAbstractDType;
-    api_table[37] = &PyArray_PyComplexAbstractDType;
+    api_table[35] = &PyArray_PyLongDType;
+    api_table[36] = &PyArray_PyFloatDType;
+    api_table[37] = &PyArray_PyComplexDType;
     api_table[38] = &PyArray_DefaultIntDType;
     /* Non-legacy DTypes that are built in to NumPy */
     api_table[39] = &PyArray_StringDType;
+
+    /* Abstract ones added directly: */
+    full_api_table[366] = &PyArray_IntAbstractDType;
+    full_api_table[367] = &PyArray_FloatAbstractDType;
+    full_api_table[368] = &PyArray_ComplexAbstractDType;
 }

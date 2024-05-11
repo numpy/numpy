@@ -2142,7 +2142,7 @@ def base_repr(number, base=2, padding=0):
     elif base < 2:
         raise ValueError("Bases less than 2 not handled in base_repr.")
 
-    num = abs(number)
+    num = abs(int(number))
     res = []
     while num:
         res.append(digits[num % base])

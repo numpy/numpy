@@ -113,14 +113,18 @@
     #define NPY_NOINLINE static
 #endif
 
-#ifdef HAVE___THREAD
+#ifdef __cplusplus
+    #define NPY_TLS thread_local
+#elif defined(HAVE_THREAD_LOCAL)
+    #define NPY_TLS thread_local
+#elif defined(HAVE__THREAD_LOCAL)
+    #define NPY_TLS _Thread_local
+#elif defined(HAVE___THREAD)
     #define NPY_TLS __thread
+#elif defined(HAVE___DECLSPEC_THREAD_)
+    #define NPY_TLS __declspec(thread)
 #else
-    #ifdef HAVE___DECLSPEC_THREAD_
-        #define NPY_TLS __declspec(thread)
-    #else
-        #define NPY_TLS
-    #endif
+    #define NPY_TLS
 #endif
 
 #ifdef WITH_CPYCHECKER_RETURNS_BORROWED_REF_ATTRIBUTE

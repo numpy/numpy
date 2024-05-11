@@ -14,13 +14,13 @@ Prerequisites
 
 Building NumPy requires the following installed software:
 
-1) Python__ 3.9.x or newer.
+1) Python__ 3.10.x or newer.
 
    Please note that the Python development headers also need to be installed,
    e.g., on Debian/Ubuntu one needs to install both `python3` and
    `python3-dev`. On Windows and macOS this is normally not an issue.
 
-2) Cython >= 3.0
+2) Cython >= 3.0.6
 
 3) pytest__ (optional)
 
@@ -44,7 +44,7 @@ Hypothesis__ https://hypothesis.readthedocs.io/en/latest/
 .. note::
 
    More extensive information on building NumPy is maintained at
-   https://numpy.org/devdocs/user/building.html#building-from-source
+   https://numpy.org/devdocs/building/#building-numpy-from-source
 
 
 Basic installation

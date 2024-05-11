@@ -239,23 +239,29 @@ else:
     switcher_version = f"{version}"
 
 html_theme_options = {
-  "logo": {
-      "image_light": "_static/numpylogo.svg",
-      "image_dark": "_static/numpylogo_dark.svg",
-  },
-  "github_url": "https://github.com/numpy/numpy",
-  "collapse_navigation": True,
-  "external_links": [
-      {"name": "Learn", "url": "https://numpy.org/numpy-tutorials/"},
-      {"name": "NEPs", "url": "https://numpy.org/neps"}
-      ],
-  "header_links_before_dropdown": 6,
-  # Add light/dark mode and documentation version switcher:
-  "navbar_end": ["theme-switcher", "version-switcher", "navbar-icon-links"],
-  "switcher": {
-      "version_match": switcher_version,
-      "json_url": "https://numpy.org/doc/_static/versions.json",
-  },
+    "logo": {
+        "image_light": "_static/numpylogo.svg",
+        "image_dark": "_static/numpylogo_dark.svg",
+    },
+    "github_url": "https://github.com/numpy/numpy",
+    "collapse_navigation": True,
+    "external_links": [
+        {"name": "Learn", "url": "https://numpy.org/numpy-tutorials/"},
+        {"name": "NEPs", "url": "https://numpy.org/neps"},
+    ],
+    "header_links_before_dropdown": 6,
+    # Add light/dark mode and documentation version switcher:
+    "navbar_end": [
+        "search-button",
+        "theme-switcher",
+        "version-switcher",
+        "navbar-icon-links"
+    ],
+    "navbar_persistent": [],
+    "switcher": {
+        "version_match": switcher_version,
+        "json_url": "https://numpy.org/doc/_static/versions.json",
+    },
 }
 
 html_title = "%s v%s Manual" % (project, version)

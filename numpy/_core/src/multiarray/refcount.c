@@ -21,7 +21,7 @@
 
 #include "npy_config.h"
 
-#include "npy_pycompat.h"
+
 
 /*
  * Helper function to clear a strided memory (normally or always contiguous)

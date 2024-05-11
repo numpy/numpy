@@ -177,7 +177,7 @@ resolve_descriptors_with_scalars(
 {
     int value_range = 0;
 
-    npy_bool first_is_pyint = dtypes[0] == &PyArray_PyIntAbstractDType;
+    npy_bool first_is_pyint = dtypes[0] == &PyArray_PyLongDType;
     int arr_idx = first_is_pyint? 1 : 0;
     int scalar_idx = first_is_pyint? 0 : 1;
     PyObject *scalar = input_scalars[scalar_idx];
@@ -327,7 +327,7 @@ template<COMP comp>
 static int
 add_dtype_loops(PyObject *umath, PyArrayMethod_Spec *spec, PyObject *info)
 {
-    PyArray_DTypeMeta *PyInt = &PyArray_PyIntAbstractDType;
+    PyArray_DTypeMeta *PyInt = &PyArray_PyLongDType;
 
     PyObject *name = PyUnicode_FromString(comp_name(comp));
     if (name == nullptr) {
@@ -441,7 +441,7 @@ init_special_int_comparisons(PyObject *umath)
      * `np.equal(2, 4)` (with two python integers) use an object loop.
      */
     PyObject *dtype_tuple = PyTuple_Pack(3,
-            &PyArray_PyIntAbstractDType, &PyArray_PyIntAbstractDType, Bool);
+            &PyArray_PyLongDType, &PyArray_PyLongDType, Bool);
     if (dtype_tuple == NULL) {
         goto finish;
     }
