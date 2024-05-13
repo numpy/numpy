@@ -54,7 +54,9 @@ def arraylikes():
             self.a = a
 
         def __array__(self, dtype=None, copy=None):
-            return self.a
+            if dtype is None:
+                return self.a
+            return self.a.astype(dtype)
 
     yield param(ArrayDunder, id="__array__")
 

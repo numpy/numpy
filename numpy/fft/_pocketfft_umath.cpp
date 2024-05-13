@@ -172,6 +172,7 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps,
     auto plan = pocketfft::detail::get_plan<pocketfft::detail::pocketfft_r<T>>(npts);
     auto buffered = (step_out != sizeof(std::complex<T>));
     pocketfft::detail::arr<std::complex<T>> buff(buffered ? nout : 0);
+    auto nin_used = nin <= npts ? nin : npts;
     for (size_t i = 0; i < n_outer; i++, ip += si, fp += sf, op += so) {
         std::complex<T> *op_or_buff = buffered ? buff.data() : (std::complex<T> *)op;
         /*
@@ -183,10 +184,10 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps,
          * Pocketfft uses FFTpack order, R0,R1,I1,...Rn-1,In-1,Rn[,In] (last
          * for npts odd only). To make unpacking easy, we place the real data
          * offset by one in the buffer, so that we just have to move R0 and
-         * create I0=0. Note that copy_data will zero the In component for
+         * create I0=0. Note that copy_input will zero the In component for
          * even number of points.
          */
-        copy_input(ip, step_in, nin, &((T *)op_or_buff)[1], nout*2 - 1);
+        copy_input(ip, step_in, nin_used, &((T *)op_or_buff)[1], nout*2 - 1);
         plan->exec(&((T *)op_or_buff)[1], *(T *)fp, pocketfft::FORWARD);
         op_or_buff[0] = op_or_buff[0].imag();  // I0->R0, I0=0
         if (buffered) {
@@ -297,17 +298,17 @@ static PyUFuncGenericFunction fft_functions[] = {
     wrap_legacy_cpp_ufunc<fft_loop<npy_float>>,
     wrap_legacy_cpp_ufunc<fft_loop<npy_longdouble>>
 };
-static char fft_types[] = {
+static const char fft_types[] = {
     NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE,
     NPY_CFLOAT, NPY_FLOAT, NPY_CFLOAT,
     NPY_CLONGDOUBLE, NPY_LONGDOUBLE, NPY_CLONGDOUBLE
 };
-static void *fft_data[] = {
+static void *const fft_data[] = {
     (void*)&pocketfft::FORWARD,
     (void*)&pocketfft::FORWARD,
     (void*)&pocketfft::FORWARD
 };
-static void *ifft_data[] = {
+static void *const ifft_data[] = {
     (void*)&pocketfft::BACKWARD,
     (void*)&pocketfft::BACKWARD,
     (void*)&pocketfft::BACKWARD
@@ -323,7 +324,7 @@ static PyUFuncGenericFunction rfft_n_odd_functions[] = {
     wrap_legacy_cpp_ufunc<rfft_n_odd_loop<npy_float>>,
     wrap_legacy_cpp_ufunc<rfft_n_odd_loop<npy_longdouble>>
 };
-static char rfft_types[] = {
+static const char rfft_types[] = {
     NPY_DOUBLE, NPY_DOUBLE, NPY_CDOUBLE,
     NPY_FLOAT, NPY_FLOAT, NPY_CFLOAT,
     NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_CLONGDOUBLE
@@ -334,7 +335,7 @@ static PyUFuncGenericFunction irfft_functions[] = {
     wrap_legacy_cpp_ufunc<irfft_loop<npy_float>>,
     wrap_legacy_cpp_ufunc<irfft_loop<npy_longdouble>>
 };
-static char irfft_types[] = {
+static const char irfft_types[] = {
     NPY_CDOUBLE, NPY_DOUBLE, NPY_DOUBLE,
     NPY_CFLOAT, NPY_FLOAT, NPY_FLOAT,
     NPY_CLONGDOUBLE, NPY_LONGDOUBLE, NPY_LONGDOUBLE

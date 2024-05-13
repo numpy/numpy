@@ -5028,3 +5028,184 @@ add_newdoc('numpy._core.umath', '_zfill',
     array(['001', '-01', '+01'], dtype='<U3')
 
     """)
+
+add_newdoc('numpy._core.umath', '_partition_index',
+    """
+    Partition each element in ``x1`` around ``x2``, at precomputed
+    index ``x3``.
+
+    For each element in ``x1``, split the element at the first
+    occurrence of ``x2`` at location ``x3``, and return a 3-tuple
+    containing the part before the separator, the separator itself,
+    and the part after the separator. If the separator is not found,
+    the first item of the tuple will contain the whole string, and
+    the second and third ones will be the empty string.
+
+    Parameters
+    ----------
+    x1 : array-like, with ``bytes_``, or ``str_`` dtype
+        Input array
+    x2 : array-like, with ``bytes_``, or ``str_`` dtype
+        Separator to split each string element in ``x1``.
+    x3 : array-like, with any integer dtype
+        The indices of the separator (<0 to indicate the separator is not
+        present).
+
+    Returns
+    -------
+    out : 3-tuple:
+        - array with ``bytes_`` or ``str_`` dtype with the part before the
+          separator
+        - array with ``bytes_`` or ``str_`` dtype with the separator
+        - array with ``bytes_`` or ``str_`` dtype with the part after the
+          separator
+
+    See Also
+    --------
+    str.partition
+
+    Examples
+    --------
+    The ufunc is used most easily via ``np.strings.partition``,
+    which calls it after calculating the indices::
+
+    >>> x = np.array(["Numpy is nice!"])
+    >>> np.strings.partition(x, " ")
+    (array(['Numpy'], dtype='<U5'),
+     array([' '], dtype='<U1'),
+     array(['is nice!'], dtype='<U8'))
+
+    """)
+
+add_newdoc('numpy._core.umath', '_rpartition_index',
+    """
+    Partition each element in ``x1`` around the right-most separator,
+    ``x2``, at precomputed index ``x3``.
+
+    For each element in ``x1``, split the element at the last
+    occurrence of ``x2`` at location ``x3``, and return a 3-tuple
+    containing the part before the separator, the separator itself,
+    and the part after the separator. If the separator is not found,
+    the third item of the tuple will contain the whole string, and
+    the first and second ones will be the empty string.
+
+    Parameters
+    ----------
+    x1 : array-like, with ``bytes_``, or ``str_`` dtype
+        Input array
+    x2 : array-like, with ``bytes_``, or ``str_`` dtype
+        Separator to split each string element in ``x1``.
+    x3 : array-like, with any integer dtype
+        The indices of the separator (<0 to indicate the separator is not
+        present).
+
+    Returns
+    -------
+    out : 3-tuple:
+        - array with ``bytes_`` or ``str_`` dtype with the part before the
+          separator
+        - array with ``bytes_`` or ``str_`` dtype with the separator
+        - array with ``bytes_`` or ``str_`` dtype with the part after the
+          separator
+
+    See Also
+    --------
+    str.rpartition
+
+    Examples
+    --------
+    The ufunc is used most easily via ``np.strings.rpartition``,
+    which calls it after calculating the indices::
+
+    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> np.strings.rpartition(a, 'A')
+    (array(['aAaAa', '  a', 'abB'], dtype='<U5'),
+     array(['A', 'A', 'A'], dtype='<U1'),
+     array(['', '  ', 'Bba'], dtype='<U3'))
+
+    """)
+
+add_newdoc('numpy._core.umath', '_partition',
+    """
+    Partition each element in ``x1`` around ``x2``.
+
+    For each element in ``x1``, split the element at the first
+    occurrence of ``x2`` and return a 3-tuple containing the part before
+    the separator, the separator itself, and the part after the
+    separator. If the separator is not found, the first item of the
+    tuple will contain the whole string, and the second and third ones
+    will be the empty string.
+
+    Parameters
+    ----------
+    x1 : array-like, with ``StringDType`` dtype
+        Input array
+    x2 : array-like, with ``StringDType`` dtype
+        Separator to split each string element in ``x1``.
+
+    Returns
+    -------
+    out : 3-tuple:
+        - ``StringDType`` array with the part before the separator
+        - ``StringDType`` array with the separator
+        - ``StringDType`` array with the part after the separator
+
+    See Also
+    --------
+    str.partition
+
+    Examples
+    --------
+    The ufunc is used most easily via ``np.strings.partition``,
+    which calls it under the hood::
+
+    >>> x = np.array(["Numpy is nice!"], dtype="T")
+    >>> np.strings.partition(x, " ")
+    (array(['Numpy'], dtype=StringDType()),
+     array([' '], dtype=StringDType()),
+     array(['is nice!'], dtype=StringDType()))
+
+    """)
+
+add_newdoc('numpy._core.umath', '_rpartition',
+    """
+    Partition each element in ``x1`` around the right-most separator,
+    ``x2``.
+
+    For each element in ``x1``, split the element at the last
+    occurrence of ``x2`` at location ``x3``, and return a 3-tuple
+    containing the part before the separator, the separator itself,
+    and the part after the separator. If the separator is not found,
+    the third item of the tuple will contain the whole string, and
+    the first and second ones will be the empty string.
+
+    Parameters
+    ----------
+    x1 : array-like, with ``StringDType`` dtype
+        Input array
+    x2 : array-like, with ``StringDType`` dtype
+        Separator to split each string element in ``x1``.
+
+    Returns
+    -------
+    out : 3-tuple:
+        - ``StringDType`` array with the part before the separator
+        - ``StringDType`` array with the separator
+        - ``StringDType`` array with the part after the separator
+
+    See Also
+    --------
+    str.rpartition
+
+    Examples
+    --------
+    The ufunc is used most easily via ``np.strings.rpartition``,
+    which calls it after calculating the indices::
+
+    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'], dtype="T")
+    >>> np.strings.rpartition(a, 'A')
+    (array(['aAaAa', '  a', 'abB'], dtype=StringDType()),
+     array(['A', 'A', 'A'], dtype=StringDType()),
+     array(['', '  ', 'Bba'], dtype=StringDType()))
+
+    """)

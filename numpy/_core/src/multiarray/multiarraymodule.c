@@ -1451,23 +1451,6 @@ PyArray_EquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
         return 1;
     }
 
-    if (Py_TYPE(Py_TYPE(type1)) == &PyType_Type) {
-        /*
-         * 2021-12-17: This case is nonsense and should be removed eventually!
-         *
-         * boost::python has/had a bug effectively using EquivTypes with
-         * `type(arbitrary_obj)`.  That is clearly wrong as that cannot be a
-         * `PyArray_Descr *`.  We assume that `type(type(type(arbitrary_obj))`
-         * is always in practice `type` (this is the type of the metaclass),
-         * but for our descriptors, `type(type(descr))` is DTypeMeta.
-         *
-         * In that case, we just return False.  There is a possibility that
-         * this actually _worked_ effectively (returning 1 sometimes).
-         * We ignore that possibility for simplicity; it really is not our bug.
-         */
-        return 0;
-    }
-
     /*
      * Do not use PyArray_CanCastTypeTo because it supports legacy flexible
      * dtypes as input.
@@ -1588,8 +1571,7 @@ _array_fromobject_generic(
             }
             else {
                 if (copy == NPY_COPY_NEVER) {
-                    PyErr_SetString(PyExc_ValueError,
-                            "Unable to avoid copy while creating a new array.");
+                    PyErr_SetString(PyExc_ValueError, npy_no_copy_err_msg);
                     goto finish;
                 }
                 ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
@@ -1611,7 +1593,10 @@ _array_fromobject_generic(
 
         /* One more chance for faster exit if user specified the dtype. */
         oldtype = PyArray_DESCR(oparr);
-        if (PyArray_EquivTypes(oldtype, dtype)) {
+        npy_intp view_offset;
+        npy_intp is_safe = PyArray_SafeCast(oldtype, dtype, &view_offset, NPY_NO_CASTING, 1);
+        npy_intp view_safe = (is_safe && (view_offset != NPY_MIN_INTP));
+        if (view_safe) {
             if (copy != NPY_COPY_ALWAYS && STRIDING_OK(oparr, order)) {
                 if (oldtype == dtype) {
                     Py_INCREF(op);
@@ -3505,6 +3490,36 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self),
     if (PyArray_Check(from_obj)) {
         ret = PyArray_CanCastArrayTo((PyArrayObject *)from_obj, d2, casting);
     }
+    else if (PyArray_IsScalar(from_obj, Generic)) {
+        /*
+         * TODO: `PyArray_IsScalar` should not be required for new dtypes.
+         *       weak-promotion branch is in practice identical to dtype one.
+         */
+        if (get_npy_promotion_state() == NPY_USE_WEAK_PROMOTION) {
+            PyObject *descr = PyObject_GetAttr(from_obj, npy_ma_str_dtype);
+            if (descr == NULL) {
+                goto finish;
+            }
+            if (!PyArray_DescrCheck(descr)) {
+                Py_DECREF(descr);
+                PyErr_SetString(PyExc_TypeError,
+                    "numpy_scalar.dtype did not return a dtype instance.");
+                goto finish;
+            }
+            ret = PyArray_CanCastTypeTo((PyArray_Descr *)descr, d2, casting);
+            Py_DECREF(descr);
+        }
+        else {
+            /* need to convert to object to consider old value-based logic */
+            PyArrayObject *arr;
+            arr = (PyArrayObject *)PyArray_FROM_O(from_obj);
+            if (arr == NULL) {
+                goto finish;
+            }
+            ret = PyArray_CanCastArrayTo(arr, d2, casting);
+            Py_DECREF(arr);
+        }
+    }
     else if (PyArray_IsPythonNumber(from_obj)) {
         PyErr_SetString(PyExc_TypeError,
                 "can_cast() does not support Python ints, floats, and "
@@ -3512,15 +3527,6 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self),
                 "This change was part of adopting NEP 50, we may "
                 "explicitly allow them again in the future.");
         goto finish;
-    }
-    else if (PyArray_IsScalar(from_obj, Generic)) {
-        PyArrayObject *arr;
-        arr = (PyArrayObject *)PyArray_FROM_O(from_obj);
-        if (arr == NULL) {
-            goto finish;
-        }
-        ret = PyArray_CanCastArrayTo(arr, d2, casting);
-        Py_DECREF(arr);
     }
     /* Otherwise use CanCastTypeTo */
     else {
@@ -4791,6 +4797,7 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_convert = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_preserve = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_convert_if_no_array = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_cpu = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_dtype = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_err_msg_substr = NULL;
 
 static int
@@ -4867,6 +4874,10 @@ intern_strings(void)
     }
     npy_ma_str_cpu = PyUnicode_InternFromString("cpu");
     if (npy_ma_str_cpu == NULL) {
+        return -1;
+    }
+    npy_ma_str_dtype = PyUnicode_InternFromString("dtype");
+    if (npy_ma_str_dtype == NULL) {
         return -1;
     }
     npy_ma_str_array_err_msg_substr = PyUnicode_InternFromString(

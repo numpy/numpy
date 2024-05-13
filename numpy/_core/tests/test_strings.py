@@ -795,6 +795,60 @@ class TestMethods:
         res = np.array(res, dtype=dt)
         assert_array_equal(np.strings.zfill(buf, width), res)
 
+    @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
+        ("this is the partition method", "ti", "this is the par",
+            "ti", "tion method"),
+        ("http://www.python.org", "://", "http", "://", "www.python.org"),
+        ("http://www.python.org", "?", "http://www.python.org", "", ""),
+        ("http://www.python.org", "http://", "", "http://", "www.python.org"),
+        ("http://www.python.org", "org", "http://www.python.", "org", ""),
+        ("http://www.python.org", ["://", "?", "http://", "org"],
+            ["http", "http://www.python.org", "", "http://www.python."],
+            ["://", "", "http://", "org"],
+            ["www.python.org", "", "www.python.org", ""]),
+        ("mississippi", "ss", "mi", "ss", "issippi"),
+        ("mississippi", "i", "m", "i", "ssissippi"),
+        ("mississippi", "w", "mississippi", "", ""),
+    ])
+    def test_partition(self, buf, sep, res1, res2, res3, dt):
+        buf = np.array(buf, dtype=dt)
+        sep = np.array(sep, dtype=dt)
+        res1 = np.array(res1, dtype=dt)
+        res2 = np.array(res2, dtype=dt)
+        res3 = np.array(res3, dtype=dt)
+        act1, act2, act3 = np.strings.partition(buf, sep)
+        assert_array_equal(act1, res1)
+        assert_array_equal(act2, res2)
+        assert_array_equal(act3, res3)
+        assert_array_equal(act1 + act2 + act3, buf)
+
+    @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
+        ("this is the partition method", "ti", "this is the parti",
+            "ti", "on method"),
+        ("http://www.python.org", "://", "http", "://", "www.python.org"),
+        ("http://www.python.org", "?", "", "", "http://www.python.org"),
+        ("http://www.python.org", "http://", "", "http://", "www.python.org"),
+        ("http://www.python.org", "org", "http://www.python.", "org", ""),
+        ("http://www.python.org", ["://", "?", "http://", "org"],
+            ["http", "", "", "http://www.python."],
+            ["://", "", "http://", "org"],
+            ["www.python.org", "http://www.python.org", "www.python.org", ""]),
+        ("mississippi", "ss", "missi", "ss", "ippi"),
+        ("mississippi", "i", "mississipp", "i", ""),
+        ("mississippi", "w", "", "", "mississippi"),
+    ])
+    def test_rpartition(self, buf, sep, res1, res2, res3, dt):
+        buf = np.array(buf, dtype=dt)
+        sep = np.array(sep, dtype=dt)
+        res1 = np.array(res1, dtype=dt)
+        res2 = np.array(res2, dtype=dt)
+        res3 = np.array(res3, dtype=dt)
+        act1, act2, act3 = np.strings.rpartition(buf, sep)
+        assert_array_equal(act1, res1)
+        assert_array_equal(act2, res2)
+        assert_array_equal(act3, res3)
+        assert_array_equal(act1 + act2 + act3, buf)
+
 
 @pytest.mark.parametrize("dt", ["U", "T"])
 class TestMethodsWithUnicode:
@@ -967,6 +1021,47 @@ class TestMethodsWithUnicode:
         fillchar = np.array(fillchar, dtype=dt)
         res = np.array(res, dtype=dt)
         assert_array_equal(np.strings.rjust(buf, width, fillchar), res)
+
+    @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
+        ("āāāāĀĀĀĀ", "Ă", "āāāāĀĀĀĀ", "", ""),
+        ("āāāāĂĀĀĀĀ", "Ă", "āāāā", "Ă", "ĀĀĀĀ"),
+        ("āāāāĂĂĀĀĀĀ", "ĂĂ", "āāāā", "ĂĂ", "ĀĀĀĀ"),
+        ("𐌁𐌁𐌁𐌁𐌀𐌀𐌀𐌀", "𐌂", "𐌁𐌁𐌁𐌁𐌀𐌀𐌀𐌀", "", ""),
+        ("𐌁𐌁𐌁𐌁𐌂𐌀𐌀𐌀𐌀", "𐌂", "𐌁𐌁𐌁𐌁", "𐌂", "𐌀𐌀𐌀𐌀"),
+        ("𐌁𐌁𐌁𐌁𐌂𐌂𐌀𐌀𐌀𐌀", "𐌂𐌂", "𐌁𐌁𐌁𐌁", "𐌂𐌂", "𐌀𐌀𐌀𐌀"),
+        ("𐌁𐌁𐌁𐌁𐌂𐌂𐌂𐌂𐌀𐌀𐌀𐌀", "𐌂𐌂𐌂𐌂", "𐌁𐌁𐌁𐌁", "𐌂𐌂𐌂𐌂", "𐌀𐌀𐌀𐌀"),
+    ])
+    def test_partition(self, buf, sep, res1, res2, res3, dt):
+        buf = np.array(buf, dtype=dt)
+        sep = np.array(sep, dtype=dt)
+        res1 = np.array(res1, dtype=dt)
+        res2 = np.array(res2, dtype=dt)
+        res3 = np.array(res3, dtype=dt)
+        act1, act2, act3 = np.strings.partition(buf, sep)
+        assert_array_equal(act1, res1)
+        assert_array_equal(act2, res2)
+        assert_array_equal(act3, res3)
+        assert_array_equal(act1 + act2 + act3, buf)
+
+    @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
+        ("āāāāĀĀĀĀ", "Ă", "", "", "āāāāĀĀĀĀ"),
+        ("āāāāĂĀĀĀĀ", "Ă", "āāāā", "Ă", "ĀĀĀĀ"),
+        ("āāāāĂĂĀĀĀĀ", "ĂĂ", "āāāā", "ĂĂ", "ĀĀĀĀ"),
+        ("𐌁𐌁𐌁𐌁𐌀𐌀𐌀𐌀", "𐌂", "", "", "𐌁𐌁𐌁𐌁𐌀𐌀𐌀𐌀"),
+        ("𐌁𐌁𐌁𐌁𐌂𐌀𐌀𐌀𐌀", "𐌂", "𐌁𐌁𐌁𐌁", "𐌂", "𐌀𐌀𐌀𐌀"),
+        ("𐌁𐌁𐌁𐌁𐌂𐌂𐌀𐌀𐌀𐌀", "𐌂𐌂", "𐌁𐌁𐌁𐌁", "𐌂𐌂", "𐌀𐌀𐌀𐌀"),
+    ])
+    def test_rpartition(self, buf, sep, res1, res2, res3, dt):
+        buf = np.array(buf, dtype=dt)
+        sep = np.array(sep, dtype=dt)
+        res1 = np.array(res1, dtype=dt)
+        res2 = np.array(res2, dtype=dt)
+        res3 = np.array(res3, dtype=dt)
+        act1, act2, act3 = np.strings.rpartition(buf, sep)
+        assert_array_equal(act1, res1)
+        assert_array_equal(act2, res2)
+        assert_array_equal(act3, res3)
+        assert_array_equal(act1 + act2 + act3, buf)
 
 
 class TestMixedTypeMethods:

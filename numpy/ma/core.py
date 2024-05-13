@@ -877,7 +877,7 @@ class _DomainSafeDivide:
             self.tolerance = np.finfo(float).tiny
         # don't call ma ufuncs from __array_wrap__ which would fail for scalars
         a, b = np.asarray(a), np.asarray(b)
-        with np.errstate(invalid='ignore'):
+        with np.errstate(all='ignore'):
             return umath.absolute(a) * self.tolerance >= umath.absolute(b)
 
 

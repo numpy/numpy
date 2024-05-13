@@ -283,13 +283,6 @@ class TestFromStringAndFileInvalidData(_DeprecationTestCase):
             assert_array_equal(res, x)
 
 
-class TestNonZero(_DeprecationTestCase):
-    # 2019-05-26, 1.17.0
-    def test_zerod(self):
-        self.assert_deprecated(lambda: np.nonzero(np.array(0)))
-        self.assert_deprecated(lambda: np.nonzero(np.array(1)))
-
-
 class TestToString(_DeprecationTestCase):
     # 2020-03-06 1.19.0
     message = re.escape("tostring() is deprecated. Use tobytes() instead.")

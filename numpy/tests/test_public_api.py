@@ -114,14 +114,14 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "f2py",
     "fft",
     "lib",
-    "lib.format",  # was this meant to be public?
+    "lib.array_utils",
+    "lib.format",
+    "lib.introspect",
     "lib.mixins",
-    "lib.recfunctions",
+    "lib.npyio",
+    "lib.recfunctions",  # note: still needs cleaning, was forgotten for 2.0
     "lib.scimath",
     "lib.stride_tricks",
-    "lib.npyio",
-    "lib.introspect",
-    "lib.array_utils",
     "linalg",
     "ma",
     "ma.extras",
@@ -134,11 +134,12 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "polynomial.legendre",
     "polynomial.polynomial",
     "random",
+    "strings",
     "testing",
     "testing.overrides",
     "typing",
     "typing.mypy_plugin",
-    "version"  # Should be removed for NumPy 2.0
+    "version",
 ]]
 if sys.version_info < (3, 12):
     PUBLIC_MODULES += [
@@ -158,7 +159,6 @@ PUBLIC_ALIASED_MODULES = [
     "numpy.char",
     "numpy.emath",
     "numpy.rec",
-    "numpy.strings",
 ]
 
 
@@ -535,7 +535,7 @@ def test_core_shims_coherence():
         # no need to add it to np.core
         if (
             member_name.startswith("_")
-            or member_name == "tests"
+            or member_name in ["tests", "strings"]
             or f"numpy.{member_name}" in PUBLIC_ALIASED_MODULES 
         ):
             continue

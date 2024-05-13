@@ -254,8 +254,8 @@ class TestAll:
 @pytest.mark.parametrize("dtype", ["i8", "U10", "object", "datetime64[ms]"])
 def test_any_and_all_result_dtype(dtype):
     arr = np.ones(3, dtype=dtype)
-    assert np.any(arr).dtype == np.bool_
-    assert np.all(arr).dtype == np.bool_
+    assert np.any(arr).dtype == np.bool
+    assert np.all(arr).dtype == np.bool
 
 
 class TestCopy:
@@ -1900,6 +1900,13 @@ class TestVectorize:
         f = vectorize((lambda x: x), ['float64'])
         r = f([2])
         assert_equal(r.dtype, np.dtype('float64'))
+
+    def test_datetime_conversion(self):
+        otype = "datetime64[ns]"
+        arr = np.array(['2024-01-01', '2024-01-02', '2024-01-03'], 
+                       dtype='datetime64[ns]')
+        assert_array_equal(np.vectorize(lambda x: x, signature="(i)->(j)",
+                                        otypes=[otype])(arr), arr)
 
 
 class TestLeaks:

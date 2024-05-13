@@ -1,9 +1,8 @@
 # Building with Meson
 
 _Note: this is for early adopters. It has been tested on Linux and macOS, and
-with Python 3.9-3.12. Windows will be tested soon. There is one CI job to keep
-the build stable. This may have rough edges, please open an issue if you run
-into a problem._
+with Python 3.10-3.12. There is one CI job to keep the build stable. This may
+have rough edges, please open an issue if you run into a problem._
 
 ### Developer build
 

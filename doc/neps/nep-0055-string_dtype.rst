@@ -534,11 +534,33 @@ future NumPy or a downstream library may add locale-aware sorting, case folding,
 and normalization for NumPy unicode strings arrays, but we are not proposing
 adding these features at this time.
 
-Two ``StringDType`` instances are considered identical if they are created with
-the same ``na_object`` and ``coerce`` parameter. We propose checking for unequal
-``StringDType`` instances in the ``resolve_descriptors`` function of binary
-ufuncs that take two string arrays and raising an error if an operation is
-performed with unequal ``StringDType`` instances.
+Two ``StringDType`` instances are considered equal if they are created with the
+same ``na_object`` and ``coerce`` parameter. For ufuncs that accept more than
+one string argument we also introduce the concept of "compatible"
+``StringDType`` instances. We allow distinct DType instances to be used in ufunc
+operations together if have the same ``na_object`` or if only one
+or the other DType has an ``na_object`` explicitly set. We do not consider
+string coercion for determining whether instances are compatible, although if
+the result of the operation is a string, the result will inherit the stricter
+string coercion setting of the original operands.
+
+This notion of "compatible" instances will be enforced in the
+``resolve_descriptors`` function of binary ufuncs. This choice makes it easier
+to work with non-default ``StringDType`` instances, because python strings are
+coerced to the default ``StringDType`` instance, so the following idiomatic
+expression is allowed::
+
+  >>> arr = np.array(["hello", "world"], dtype=StringDType(na_object=None))
+  >>> arr + "!"
+  array(['hello!', 'world!'], dtype=StringDType(na_object=None))
+
+If we only considered equality of ``StringDType`` instances, this would
+be an error, making for an awkward user experience. If the operands have
+distinct ``na_object`` settings, NumPy will raise an error because the choice
+for the result DType is ambiguous::
+
+  >>> arr + np.array("!", dtype=StringDType(na_object=""))
+  TypeError: Cannot find common instance for incompatible dtype instances
 
 ``np.strings`` namespace
 ************************

@@ -1,7 +1,7 @@
 NumPy core math library
 =======================
 
-The numpy core math library ('npymath') is a first step in this direction. This
+The numpy core math library (``npymath``) is a first step in this direction. This
 library contains most math-related C99 functionality, which can be used on
 platforms where C99 is not well supported. The core math functions have the
 same API as the C99 ones, except for the ``npy_*`` prefix.
@@ -304,7 +304,7 @@ Linking against the core math library in an extension
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To use the core math library that NumPy ships as a static library in your own
-Python extension, you need to add the npymath compile and link options to your
+Python extension, you need to add the ``npymath`` compile and link options to your
 extension. The exact steps to take will depend on the build system you are using.
 The generic steps to take are:
 

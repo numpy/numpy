@@ -2,14 +2,14 @@
 
 Random ``Generator``
 ====================
-The `~Generator` provides access to
+The `Generator` provides access to
 a wide range of distributions, and served as a replacement for
 :class:`~numpy.random.RandomState`.  The main difference between
-the two is that ``Generator`` relies on an additional BitGenerator to
+the two is that `Generator` relies on an additional BitGenerator to
 manage state and generate the random bits, which are then transformed into
 random values from useful distributions. The default BitGenerator used by
-``Generator`` is `~PCG64`.  The BitGenerator
-can be changed by passing an instantized BitGenerator to ``Generator``.
+`Generator` is `PCG64`.  The BitGenerator
+can be changed by passing an instantized BitGenerator to `Generator`.
 
 
 .. autofunction:: default_rng

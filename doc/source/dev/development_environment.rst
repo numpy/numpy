@@ -247,7 +247,10 @@ of Python is encouraged, see :ref:`advanced_debugging`.
 
 In terms of debugging, NumPy also needs to be built in a debug mode. You need to use
 ``debug`` build type and disable optimizations to make sure ``-O0`` flag is used
-during object building. To generate source-level debug information within the build process run::
+during object building. Note that NumPy should NOT be installed in your environment
+before you build with the ``spin build`` command.
+
+To generate source-level debug information within the build process run::
 
     $ spin build --clean -- -Dbuildtype=debug -Ddisable-optimization=true
 
@@ -271,13 +274,14 @@ you want to debug. For instance ``mytest.py``::
     x = np.arange(5)
     np.empty_like(x)
 
-Now, you can run::
+Note that your test file needs to be outside the NumPy clone you have. Now, you can
+run::
 
-    $ spin gdb mytest.py
+    $ spin gdb /path/to/mytest.py
 
 In case you are using clang toolchain::
 
-    $ lldb python mytest.py
+    $ spin lldb /path/to/mytest.py
 
 And then in the debugger::
 

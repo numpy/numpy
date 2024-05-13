@@ -33,9 +33,11 @@
 #endif
 
 #include "npy_config.h"
-#include "npy_pycompat.h"
+
+#include "numpy/npy_common.h"
 #include "npy_import.h"
 
+#include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
 #include "ufunc_type_resolution.h"
 #include "ufunc_object.h"
@@ -226,7 +228,7 @@ NPY_NO_EXPORT int
 PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
                             NPY_CASTING casting,
                             PyArrayObject **operands,
-                            PyArray_Descr **dtypes)
+                            PyArray_Descr *const *dtypes)
 {
     int i, nin = ufunc->nin, nop = nin + ufunc->nout;
 
@@ -1471,7 +1473,7 @@ PyUFunc_TrueDivisionTypeResolver(PyUFuncObject *ufunc,
 
 static int
 find_userloop(PyUFuncObject *ufunc,
-                PyArray_Descr **dtypes,
+                PyArray_Descr *const *dtypes,
                 PyUFuncGenericFunction *out_innerloop,
                 void **out_innerloopdata)
 {
@@ -1535,7 +1537,7 @@ find_userloop(PyUFuncObject *ufunc,
 
 NPY_NO_EXPORT int
 PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
-                                PyArray_Descr **dtypes,
+                                PyArray_Descr *const *dtypes,
                                 PyUFuncGenericFunction *out_innerloop,
                                 void **out_innerloopdata,
                                 int *out_needs_api)
@@ -1963,10 +1965,12 @@ linear_search_type_resolver(PyUFuncObject *self,
 
     ufunc_name = ufunc_get_name_cstr(self);
 
-    assert(npy_promotion_state != NPY_USE_WEAK_PROMOTION_AND_WARN);
+    int promotion_state = get_npy_promotion_state();
+
+    assert(promotion_state != NPY_USE_WEAK_PROMOTION_AND_WARN);
     /* Always "use" with new promotion in case of Python int/float/complex */
     int use_min_scalar;
-    if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+    if (promotion_state == NPY_USE_LEGACY_PROMOTION) {
         use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
     }
     else {
@@ -2165,10 +2169,12 @@ type_tuple_type_resolver(PyUFuncObject *self,
 
     ufunc_name = ufunc_get_name_cstr(self);
 
-    assert(npy_promotion_state != NPY_USE_WEAK_PROMOTION_AND_WARN);
+    int promotion_state = get_npy_promotion_state();
+
+    assert(promotion_state != NPY_USE_WEAK_PROMOTION_AND_WARN);
     /* Always "use" with new promotion in case of Python int/float/complex */
     int use_min_scalar;
-    if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+    if (promotion_state == NPY_USE_LEGACY_PROMOTION) {
         use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
     }
     else {

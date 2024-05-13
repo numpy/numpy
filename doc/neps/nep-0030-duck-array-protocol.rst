@@ -7,7 +7,7 @@ NEP 30 — Duck typing for NumPy arrays - implementation
 :Author: Peter Andreas Entschev <pentschev@nvidia.com>
 :Author: Stephan Hoyer <shoyer@google.com>
 :Status: Superseded
-:Replaced-By: 56
+:Replaced-By: :ref:`NEP56`
 :Type: Standards Track
 :Created: 2019-07-31
 :Updated: 2019-07-31

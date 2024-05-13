@@ -37,9 +37,8 @@ of the flexible itemsize array types (:class:`str_`,
 
    **Figure:** Hierarchy of type objects representing the array data
    types. Not shown are the two integer types :class:`intp` and
-   :class:`uintp` which just point to the integer type that holds a
-   pointer for the platform. All the number types can be obtained
-   using bit-width names as well.
+   :class:`uintp` which are used for indexing (the same as the
+   default integer since NumPy 2).
 
 
 .. TODO - use something like this instead of the diagram above, as it generates
@@ -377,21 +376,29 @@ are also provided.
 
    Alias for the signed integer type (one of `numpy.byte`, `numpy.short`,
    `numpy.intc`, `numpy.int_`, `numpy.long` and `numpy.longlong`)
-   that is the same size as a pointer.
+   that is used as a default integer and for indexing.
 
-   Compatible with the C ``intptr_t``.
+   Compatible with the C ``Py_ssize_t``.
 
-   :Character code: ``'p'``
+   :Character code: ``'n'``
+
+   .. versionchanged:: 2.0
+      Before NumPy 2, this had the same size as a pointer.  In practice this
+      is almost always identical, but the character code ``'p'`` maps to the C
+      ``intptr_t``.  The character code ``'n'`` was added in NumPy 2.0.
 
 .. attribute:: uintp
 
-   Alias for the unsigned integer type (one of `numpy.ubyte`, `numpy.ushort`,
-   `numpy.uintc`, `numpy.uint`, `numpy.ulong` and `numpy.ulonglong`)
-   that is the same size as a pointer.
+   Alias for the unsigned integer type that is the same size as ``intp``.
 
-   Compatible with the C ``uintptr_t``.
+   Compatible with the C ``size_t``.
 
-   :Character code: ``'P'``
+   :Character code: ``'N'``
+
+   .. versionchanged:: 2.0
+      Before NumPy 2, this had the same size as a pointer.  In practice this
+      is almost always identical, but the character code ``'P'`` maps to the C
+      ``uintptr_t``.  The character code ``'N'`` was added in NumPy 2.0.
 
 .. autoclass:: numpy.float16
 

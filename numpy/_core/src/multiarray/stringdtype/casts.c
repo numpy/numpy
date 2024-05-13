@@ -79,7 +79,10 @@ string_to_string_resolve_descriptors(PyObject *NPY_UNUSED(self),
         return NPY_UNSAFE_CASTING;
     }
 
-    *view_offset = 0;
+    // views are only legal between descriptors that share allocators (e.g. the same object)
+    if (descr0->allocator == descr1->allocator) {
+        *view_offset = 0;
+    };
 
     return NPY_NO_CASTING;
 }
@@ -156,7 +159,7 @@ unicode_to_string(PyArrayMethod_Context *context, char *const data[],
                   npy_intp const dimensions[], npy_intp const strides[],
                   NpyAuxData *NPY_UNUSED(auxdata))
 {
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     PyArray_StringDTypeObject *sdescr = (PyArray_StringDTypeObject *)descrs[1];
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(sdescr);
@@ -1672,7 +1675,7 @@ void_to_string(PyArrayMethod_Context *context, char *const data[],
                npy_intp const dimensions[], npy_intp const strides[],
                NpyAuxData *NPY_UNUSED(auxdata))
 {
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)descrs[1];
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
@@ -1802,7 +1805,7 @@ bytes_to_string(PyArrayMethod_Context *context, char *const data[],
                 npy_intp const dimensions[], npy_intp const strides[],
                 NpyAuxData *NPY_UNUSED(auxdata))
 {
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)descrs[1];
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);

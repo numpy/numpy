@@ -1,0 +1,15 @@
+API symbols now hidden but customizable
+---------------------------------------
+NumPy now defaults to hide the API symbols it adds to allow all NumPy API
+usage.
+This means that by default you cannot dynamically fetch the NumPy API from
+another library (this was never possible on windows).
+
+If you are experiencing linking errors related to ``PyArray_API`` or
+``PyArray_RUNTIME_VERSION``, you can define the
+:c:macro:`NPY_API_SYMBOL_ATTRIBUTE` to opt-out of this change.
+
+If you are experiencing problems due to an upstream header including NumPy,
+the solution is to make sure you ``#include "numpy/ndarrayobject.h"`` before
+their header and import NumPy yourself based on  :ref:`including-the-c-api`.
+
