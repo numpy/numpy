@@ -364,7 +364,6 @@ from numpy._core.numeric import (
     convolve as convolve,
     outer as outer,
     tensordot as tensordot,
-    vecdot as vecdot,
     roll as roll,
     rollaxis as rollaxis,
     moveaxis as moveaxis,
@@ -3321,7 +3320,7 @@ logical_and: _UFunc_Nin2_Nout1[L['logical_and'], L[20], L[True]]
 logical_not: _UFunc_Nin1_Nout1[L['logical_not'], L[20], None]
 logical_or: _UFunc_Nin2_Nout1[L['logical_or'], L[20], L[False]]
 logical_xor: _UFunc_Nin2_Nout1[L['logical_xor'], L[19], L[False]]
-matmul: _GUFunc_Nin2_Nout1[L['matmul'], L[19], None]
+matmul: _GUFunc_Nin2_Nout1[L['matmul'], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]]
 maximum: _UFunc_Nin2_Nout1[L['maximum'], L[21], None]
 minimum: _UFunc_Nin2_Nout1[L['minimum'], L[21], None]
 mod: _UFunc_Nin2_Nout1[L['remainder'], L[16], None]
@@ -3350,7 +3349,7 @@ tan: _UFunc_Nin1_Nout1[L['tan'], L[8], None]
 tanh: _UFunc_Nin1_Nout1[L['tanh'], L[8], None]
 true_divide: _UFunc_Nin2_Nout1[L['true_divide'], L[11], None]
 trunc: _UFunc_Nin1_Nout1[L['trunc'], L[7], None]
-vecdot: _GUFunc_Nin2_Nout1[L['vecdot'], L[19], None]
+vecdot: _GUFunc_Nin2_Nout1[L['vecdot'], L[19], None, L["(n),(n)->()"]]
 
 abs = absolute
 acos = arccos
