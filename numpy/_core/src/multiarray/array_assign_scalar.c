@@ -215,6 +215,73 @@ fail:
 }
 
 /*
+ * Assigns the scalar value to every element of the destination raw array using
+ * backward filling.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+raw_array_assign_bfill(int ndim, npy_intp const *shape,
+        PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
+        PyArray_Descr *src_dtype, int axis)
+{
+    int idim = 1;
+
+    if (shape[ndim - 1 - axis] <= 1) {
+        return 0;
+    }
+
+    NPY_BEGIN_THREADS_DEF;
+
+    /* Check both uint and true alignment */
+    if (!raw_array_is_aligned(ndim, shape, dst_data, dst_strides,
+                              npy_uint_alignment(dst_dtype->elsize)) ||
+        !raw_array_is_aligned(ndim, shape, dst_data, dst_strides,
+                              dst_dtype->alignment)) {
+        goto fail;
+    }
+
+    npy_intp dir;
+    if (axis == 0) {
+        dir = 1;
+    }
+    else {
+        dir = shape[ndim - 1];
+    }
+
+    char *tmp_data = dst_data;
+    do {
+        // Iterate over the components of the current element
+        for (npy_intp i = shape[ndim - 1] - 1; i >= 0; --i) {
+            char *src = tmp_data + i * dst_strides[ndim - 1];
+            if (src == NULL || (*(PyObject **)src) == Py_None) {
+                // Find the next valid value
+                npy_intp j = 1;
+                while ((axis == 0 && j < shape[ndim - 1] - i) ||
+                    (axis == 1 && j <= shape[ndim - 2] - idim)) {
+                    char *next = tmp_data + (i + j * dir) * dst_strides[ndim - 1];
+                    if (next != NULL && (*(PyObject **)next) != Py_None) {
+                        // Found the next valid value
+                        memcpy(src, next, dst_strides[ndim - 1]);
+                        break;
+                    }
+                    ++j;
+                }
+            }
+        }
+        tmp_data += shape[ndim - 1] * dst_strides[ndim - 1];
+    } while (idim++ < shape[ndim - 2]);
+
+    NPY_END_THREADS;
+    return 0;
+
+fail:
+    NPY_END_THREADS;
+    return -1;
+}
+
+
+/*
  * Assigns a scalar value specified by 'src_dtype' and 'src_data'
  * to elements of 'dst'.
  *

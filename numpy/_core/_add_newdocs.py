@@ -3553,6 +3553,36 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('fill',
 
     """))
 
+add_newdoc('numpy._core.multiarray', 'ndarray', ('bfill',
+    """
+    a.bfill(axis)
+
+    Fill empty values of the array with the next valid value along a 
+    certain axis.
+
+    Parameters
+    ----------
+    axis : scalar
+        The specified axis in which to bfill. 0 for rows, 1 for columns.
+        Default is 0.
+
+    Examples
+    --------
+    >>> a = np.array([None, 2])
+    >>> a.bfill(axis=0)
+    >>> a
+    array([2, 2])
+    >>> a = np.array([[None, 2], [1, 1]])
+    >>> a.bfill(axis=1)
+    >>> a
+    array([[1, 2], [1, 1]])
+    >>> a = np.array([[None, 2], [1, 1]])
+    >>> a.bfill()
+    >>> a
+    array([[2, 2], [1, 1]])
+
+    Bfill works for 1d and 2d arrays. You can only have axis = 1 in 2d arrays. 
+    """))
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('flatten',
     """

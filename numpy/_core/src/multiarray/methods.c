@@ -164,6 +164,23 @@ array_fill(PyArrayObject *self, PyObject *args)
 }
 
 static PyObject *
+array_bfill(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    int axis = 0;
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("bfill", args, len_args, kwnames,
+            "|axis", &PyArray_AxisConverter, &axis,
+            NULL, NULL, NULL) < 0) {
+        return NULL;
+    }
+    if (PyArray_Bfill(self, axis) < 0) {
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
+
+static PyObject *
 array_put(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *indices, *values;
@@ -2986,6 +3003,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"fill",
         (PyCFunction)array_fill,
         METH_VARARGS, NULL},
+    {"bfill",
+        (PyCFunction)array_bfill,
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"flatten",
         (PyCFunction)array_flatten,
         METH_FASTCALL | METH_KEYWORDS, NULL},

@@ -280,7 +280,7 @@ class TestMatrixReturn:
             'dot': np.array([1.0]),
             }
         excluded_methods = [
-            'argmin', 'choose', 'dump', 'dumps', 'fill', 'getfield',
+            'argmin', 'choose', 'dump', 'dumps', 'fill', 'bfill', 'getfield',
             'getA', 'getA1', 'item', 'nonzero', 'put', 'putmask', 'resize',
             'searchsorted', 'setflags', 'setfield', 'sort',
             'partition', 'argpartition', 'newbyteorder', 'to_device',

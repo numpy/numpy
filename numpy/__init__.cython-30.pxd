@@ -663,6 +663,7 @@ cdef extern from "numpy/arrayobject.h":
     npy_intp PyArray_PyIntAsIntp (object)
     int PyArray_Broadcast (broadcast) except -1
     int PyArray_FillWithScalar (ndarray, object) except -1
+    int PyArray_Bfill (ndarray, int) except -1
     npy_bool PyArray_CheckStrides (int, int, npy_intp, npy_intp, npy_intp *, npy_intp *)
     dtype PyArray_DescrNewByteorder (dtype, char)
     object PyArray_IterAllButAxis (object, int *)

@@ -425,6 +425,104 @@ class TestAttributes:
         with pytest.raises(ValueError, match=".*read-only"):
             a.fill(0)
 
+    def test_bfill_axis_0(self):
+        # 1d bfill
+        x = np.array([1, None, None, 3])
+        y = np.array([1, 3, 3, 3])
+        x.bfill()
+        assert_equal(x, y)
+
+        # first 2d bfill
+        x = np.array([[1, None, None, 3], [1, None, None, 3]])
+        y = np.array([[1, 3, 3, 3], [1, 3, 3, 3]])
+        x.bfill(axis=0)
+        assert_equal(x, y)
+
+        # second 2d bfill
+        x = np.array([[1, None, 2, None], [None, 6, 7, 7],
+                    [None, None, 2, None]])
+        y = np.array([[1, 2, 2, None], [6, 6, 7, 7], [2, 2, 2, None]])
+        x.bfill()
+        assert_equal(x, y)
+
+        # third 2d bfill
+        x = np.array([[1], [None]])
+        y = np.array([[1], [None]])
+        x.bfill(axis=0)
+        assert_equal(x, y)
+
+        # None as last index
+        x = np.array([1, None, None, None])
+        y = np.array([1, None, None, None])
+        x.bfill()
+        assert_equal(x, y)
+
+    def test_bfill_axis_1(self):
+        # first 2d bfill
+        x = np.array([[1, None, None, 3], [1, 5, 6, 3]])
+        y = np.array([[1, 5, 6, 3], [1, 5, 6, 3]])
+        x.bfill(axis=1)
+        assert_equal(x, y)
+
+        # second 2d bfill
+        x = np.array([[1, None, 2, None], [None, 6, 7, 7],
+                    [None, None, 2, None]])
+        y = np.array([[1, 6, 2, 7], [None, 6, 7, 7], [None, None, 2, None]])
+        x.bfill(axis=1)
+        assert_equal(x, y)
+
+        # third 2d bfill
+        x = np.array([[1], [None]])
+        y = np.array([[1], [None]])
+        x.bfill(axis=1)
+        assert_equal(x, y)
+
+        # fourth 2d bfill
+        x = np.array([[1], [None], [4]])
+        y = np.array([[1], [4], [4]])
+        x.bfill(axis=1)
+        assert_equal(x, y)
+
+        # fifth 2d bfill
+        x = np.array([[None], [None], [4]])
+        y = np.array([[4], [4], [4]])
+        x.bfill(axis=1)
+        assert_equal(x, y)
+
+    def test_bfill_errors(self):
+        # not writable array
+        non_writable_array = np.zeros(11)
+        non_writable_array.setflags(write=False)
+        with pytest.raises(ValueError, match=".*read-only"):
+            non_writable_array.bfill()
+
+        # cannot use bfill on empty array
+        empty_array = np.asarray(list())
+        with pytest.raises(IndexError,
+                            match="cannot backward fill an empty array"):
+            empty_array.bfill()
+
+        # invalid axis for 1d array
+        array_1d = np.array([1, None, None, 3])
+        with pytest.raises(ValueError,
+                            match="for 1d arrays, axis must be equal to 0"):
+            array_1d.bfill(axis=1)
+
+        # invalid axis for 2d array
+        array_2d = np.array([[1, None, None, 3], [1, None, None, 3]])
+        with pytest.raises(ValueError,
+                            match="axis needs to either be 0 or 1"):
+            array_2d.bfill(axis=2)
+        with pytest.raises(TypeError):
+            array_2d.bfill(axis='test')
+        
+        # 3d array
+        dim1, dim2, dim3 = 2, 3, 4
+        array_3d = np.zeros((dim1, dim2, dim3))
+        with pytest.raises(ValueError,
+                            match="can only use bfill with 1d or 2d arrays"):
+            array_3d.bfill()
+
 
 class TestArrayConstruction:
     def test_array(self):

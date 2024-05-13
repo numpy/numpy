@@ -75,4 +75,4 @@
 
 # Version 18 (NumPy 2.0.0)
 # Version 18 (NumPy 2.1.0) No change
-0x00000012 = 2b8f1f4da822491ff030b2b37dff07e3
+0x00000012 = 992ca2dd5aca56f5c6f28a4b36b66d98

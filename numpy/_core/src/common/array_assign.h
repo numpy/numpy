@@ -61,6 +61,17 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
         PyArray_Descr *wheremask_dtype, char *wheremask_data,
         npy_intp const *wheremask_strides);
 
+/*
+ * Assigns the scalar value to every element of the destination raw array using
+ * backward filling.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+raw_array_assign_bfill(int ndim, npy_intp const *shape,
+        PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
+        PyArray_Descr *src_dtype, int axis);
+
 /******** LOW-LEVEL ARRAY MANIPULATION HELPERS ********/
 
 /*

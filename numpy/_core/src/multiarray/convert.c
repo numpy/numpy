@@ -438,6 +438,42 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     return retcode;
 }
 
+/*NUMPY_API*/
+NPY_NO_EXPORT int
+PyArray_Bfill(PyArrayObject *arr, int axis)
+{
+    if (PyArray_FailUnlessWriteable(arr, "assignment destination") < 0) {
+        return -1;
+    }
+    if (PyArray_Size((PyObject *)arr) == 0)  {
+        PyErr_SetString(PyExc_IndexError,
+                        "cannot backward fill an empty array");
+        return -1;
+    }
+    int ndim = PyArray_NDIM(arr);
+    if (ndim == 1 && axis != 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "for 1d arrays, axis must be equal to 0");
+        return -1;
+    }
+    if (ndim > 2) {
+        PyErr_SetString(PyExc_ValueError,
+                        "can only use bfill with 1d or 2d arrays");
+        return -1;
+    }
+    if (axis != 0 && axis != 1) {
+        PyErr_SetString(PyExc_ValueError,
+                        "axis needs to either be 0 or 1");
+        return -1;
+    }
+
+    PyArray_Descr *descr = PyArray_DESCR(arr);
+    return raw_array_assign_bfill(
+            PyArray_NDIM(arr), PyArray_DIMS(arr), descr,
+            PyArray_BYTES(arr), PyArray_STRIDES(arr),
+            descr, axis);
+}
+
 /*
  * Internal function to fill an array with zeros.
  * Used in einsum and dot, which ensures the dtype is, in some sense, numerical
