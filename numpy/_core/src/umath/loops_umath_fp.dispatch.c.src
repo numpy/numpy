@@ -226,10 +226,55 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
  *  #type = npy_double, npy_float#
  *  #vsub = , f#
  *  #sfx  = f64, f32#
+ *  #sqrt  = sqrt, sqrtf#
  */
 /**begin repeat1
- *  #func = power, arctan2#
- *  #intrin = pow, atan2#
+ *  #func = power#
+ *  #intrin = pow#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
+{
+    int stride_zero = steps[1]==0;
+    if (stride_zero) {
+        BINARY_DEFS
+        const @type@ in2 = *(@type@ *)ip2;
+        if (in2 == 2.0) {
+            BINARY_LOOP_SLIDING {
+                const @type@ in1 = *(@type@ *)ip1;
+                *(@type@ *)op1 = in1 * in1;
+            }
+            return;
+        }
+    }
+#if NPY_SIMD && defined(NPY_HAVE_AVX512_SKX) && defined(NPY_CAN_LINK_SVML)
+    const @type@ *src1 = (@type@*)args[0];
+    const @type@ *src2 = (@type@*)args[1];
+          @type@ *dst  = (@type@*)args[2];
+    const int lsize = sizeof(src1[0]);
+    const npy_intp ssrc1 = steps[0] / lsize;
+    const npy_intp ssrc2 = steps[1] / lsize;
+    const npy_intp sdst  = steps[2] / lsize;
+    const npy_intp len = dimensions[0];
+    assert(len <= 1 || (steps[0] % lsize == 0 && steps[1] % lsize == 0));
+    if (!is_mem_overlap(src1, steps[0], dst, steps[2], len) && !is_mem_overlap(src2, steps[1], dst, steps[2], len) &&
+        npyv_loadable_stride_@sfx@(ssrc1) && npyv_loadable_stride_@sfx@(ssrc2) &&
+        npyv_storable_stride_@sfx@(sdst)) {
+        simd_@intrin@_@sfx@(src1, ssrc1, src2, ssrc2, dst, sdst, len);
+        return;
+    }
+#endif
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *(@type@ *)op1 = npy_@intrin@@vsub@(in1, in2);
+    }
+}
+/**end repeat1**/
+
+/**begin repeat1
+ *  #func = arctan2#
+ *  #intrin = atan2#
  */
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
@@ -258,4 +303,5 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
     }
 }
 /**end repeat1**/
+
 /**end repeat**/
