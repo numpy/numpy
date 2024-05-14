@@ -461,6 +461,10 @@ def test_nonzero(strings):
     is_nonzero = np.array([i for i, item in enumerate(arr) if len(item) != 0])
     assert_array_equal(arr.nonzero()[0], is_nonzero)
 
+def test_fancy_indexing(string_list):
+    sarr = np.array(string_list, dtype="T")
+    assert_array_equal(sarr, sarr[np.arange(sarr.shape[0])])
+
 
 def test_creation_functions():
     assert_array_equal(np.zeros(3, dtype="T"), ["", "", ""])
