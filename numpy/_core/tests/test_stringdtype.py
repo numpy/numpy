@@ -460,10 +460,28 @@ def test_sort(dtype, strings):
         ["", "a", "😸", "ááðfáíóåéë"],
     ],
 )
-def test_nonzero(strings):
-    arr = np.array(strings, dtype="T")
-    is_nonzero = np.array([i for i, item in enumerate(arr) if len(item) != 0])
+def test_nonzero(strings, na_object):
+    dtype = get_dtype(na_object)
+    arr = np.array(strings, dtype=dtype)
+    is_nonzero = np.array(
+        [i for i, item in enumerate(strings) if len(item) != 0])
     assert_array_equal(arr.nonzero()[0], is_nonzero)
+
+    if na_object is not pd_NA and na_object == 'unset':
+        return
+
+    strings_with_na = np.array(strings + [na_object], dtype=dtype)
+    is_nan = np.isnan(np.array([dtype.na_object], dtype=dtype))[0]
+
+    if is_nan:
+        assert strings_with_na.nonzero()[0][-1] == 4
+    else:
+        assert strings_with_na.nonzero()[0][-1] == 3
+
+    # check that the casting to bool and nonzero give consistent results
+    assert_array_equal(strings_with_na[strings_with_na.nonzero()],
+                       strings_with_na[strings_with_na.astype(bool)])
+
 
 def test_where(string_list, na_object):
     dtype = get_dtype(na_object)

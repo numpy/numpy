@@ -395,6 +395,7 @@ string_to_bool(PyArrayMethod_Context *context, char *const data[],
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
     int has_null = descr->na_object != NULL;
     int has_string_na = descr->has_string_na;
+    int has_nan_na = descr->has_nan_na;
     const npy_static_string *default_string = &descr->default_string;
 
     npy_intp N = dimensions[0];
@@ -415,8 +416,13 @@ string_to_bool(PyArrayMethod_Context *context, char *const data[],
         }
         else if (is_null) {
             if (has_null && !has_string_na) {
-                // numpy treats NaN as truthy, following python
-                *out = NPY_TRUE;
+                if (has_nan_na) {
+                    // numpy treats NaN as truthy, following python
+                    *out = NPY_TRUE;
+                }
+                else {
+                    *out = NPY_FALSE;
+                }
             }
             else {
                 *out = (npy_bool)(default_string->size == 0);
