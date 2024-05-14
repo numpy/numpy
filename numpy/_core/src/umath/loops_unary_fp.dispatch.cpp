@@ -20,7 +20,17 @@ template <typename T>
 struct OpRound {
   HWY_INLINE hn::VFromD<hn::ScalableTag<T>> operator()(
       hn::VFromD<hn::ScalableTag<T>> a) {
+#if HWY_TARGET >= HWY_SSSE3
+   hn::ScalableTag<T> d;
+   auto infmask = hn::IsInf(a);
+   auto nanmask = hn::IsNaN(a);
+   auto mask = hn::Or(infmask, nanmask);
+   auto b = hn::IfThenElse(mask, hn::Set(d, 0), a);
+   b = hn::Round(b);
+   return hn::IfThenElse(mask, a, b);
+#else
     return hn::Round(a);
+#endif
   }
 };
 
@@ -28,7 +38,17 @@ template <typename T>
 struct OpFloor {
   HWY_INLINE hn::VFromD<hn::ScalableTag<T>> operator()(
       hn::VFromD<hn::ScalableTag<T>> a) {
+#if HWY_TARGET >= HWY_SSSE3
+   hn::ScalableTag<T> d;
+   auto infmask = hn::IsInf(a);
+   auto nanmask = hn::IsNaN(a);
+   auto mask = hn::Or(infmask, nanmask);
+   auto b = hn::IfThenElse(mask, hn::Set(d, 0), a);
+   b = hn::Floor(b);
+   return hn::IfThenElse(mask, a, b);
+#else
     return hn::Floor(a);
+#endif
   }
 };
 
@@ -36,7 +56,17 @@ template <typename T>
 struct OpCeil {
   HWY_INLINE hn::VFromD<hn::ScalableTag<T>> operator()(
       hn::VFromD<hn::ScalableTag<T>> a) {
+#if HWY_TARGET >= HWY_SSSE3
+   hn::ScalableTag<T> d;
+   auto infmask = hn::IsInf(a);
+   auto nanmask = hn::IsNaN(a);
+   auto mask = hn::Or(infmask, nanmask);
+   auto b = hn::IfThenElse(mask, hn::Set(d, 0), a);
+   b = hn::Ceil(b);
+   return hn::IfThenElse(mask, a, b);
+#else
     return hn::Ceil(a);
+#endif
   }
 };
 
@@ -44,7 +74,17 @@ template <typename T>
 struct OpTrunc {
   HWY_INLINE hn::VFromD<hn::ScalableTag<T>> operator()(
       hn::VFromD<hn::ScalableTag<T>> a) {
+#if HWY_TARGET >= HWY_SSSE3
+   hn::ScalableTag<T> d;
+   auto infmask = hn::IsInf(a);
+   auto nanmask = hn::IsNaN(a);
+   auto mask = hn::Or(infmask, nanmask);
+   auto b = hn::IfThenElse(mask, hn::Set(d, 0), a);
+   b = hn::Trunc(b);
+   return hn::IfThenElse(mask, a, b);
+#else
     return hn::Trunc(a);
+#endif
   }
 };
 
