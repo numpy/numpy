@@ -20,8 +20,9 @@ from numpy import (
 from numpy.exceptions import AxisError
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_raises, assert_allclose, IS_PYPY,
-    assert_warns, assert_raises_regex, suppress_warnings, HAS_REFCOUNT, IS_WASM
+    assert_array_almost_equal, assert_raises, assert_allclose,
+    assert_warns, assert_raises_regex, suppress_warnings, HAS_REFCOUNT,
+    IS_WASM, NOGIL_BUILD
     )
 import numpy.lib._function_base_impl as nfb
 from numpy.random import rand
@@ -1921,6 +1922,9 @@ class TestLeaks:
             return 0
 
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    @pytest.mark.skipif(NOGIL_BUILD,
+                        reason=("Functions are immortalized if a thread is "
+                                "launched, making this test flaky"))
     @pytest.mark.parametrize('name, incr', [
             ('bound', A.iters),
             ('unbound', 0),

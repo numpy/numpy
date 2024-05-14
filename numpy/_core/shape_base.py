@@ -60,18 +60,18 @@ def atleast_1d(*arys):
     (array([1]), array([3, 4]))
 
     """
+    if len(arys) == 1:
+        result = asanyarray(arys[0])
+        if result.ndim == 0:
+            result = result.reshape(1)
+        return result
     res = []
     for ary in arys:
-        ary = asanyarray(ary)
-        if ary.ndim == 0:
-            result = ary.reshape(1)
-        else:
-            result = ary
+        result = asanyarray(ary)
+        if result.ndim == 0:
+            result = result.reshape(1)
         res.append(result)
-    if len(res) == 1:
-        return res[0]
-    else:
-        return tuple(res)
+    return tuple(res)
 
 
 def _atleast_2d_dispatcher(*arys):

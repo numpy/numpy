@@ -966,8 +966,10 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         }
     }
 
+    int current_promotion_state = get_npy_promotion_state();
+
     if (force_legacy_promotion
-            && npy_promotion_state == NPY_USE_LEGACY_PROMOTION
+            && current_promotion_state == NPY_USE_LEGACY_PROMOTION
             && (ufunc->ntypes != 0 || ufunc->userloops != NULL)) {
         /*
          * We must use legacy promotion for value-based logic. Call the old
@@ -982,11 +984,10 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
     }
 
     /* Pause warnings and always use "new" path */
-    int old_promotion_state = npy_promotion_state;
-    npy_promotion_state = NPY_USE_WEAK_PROMOTION;
+    set_npy_promotion_state(NPY_USE_WEAK_PROMOTION);
     PyObject *info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, op_dtypes, allow_legacy_promotion);
-    npy_promotion_state = old_promotion_state;
+    set_npy_promotion_state(current_promotion_state);
 
     if (info == NULL) {
         goto handle_error;
@@ -996,7 +997,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
     PyObject *all_dtypes = PyTuple_GET_ITEM(info, 0);
 
     /* If necessary, check if the old result would have been different */
-    if (NPY_UNLIKELY(npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN)
+    if (NPY_UNLIKELY(current_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN)
             && (force_legacy_promotion || promoting_pyscalars)
             && npy_give_promotion_warnings()) {
         PyArray_DTypeMeta *check_dtypes[NPY_MAXARGS];
@@ -1005,11 +1006,11 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
                     all_dtypes, i);
         }
         /* Before calling to the legacy promotion, pretend that is the state: */
-        npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
+        set_npy_promotion_state(NPY_USE_LEGACY_PROMOTION);
         int res = legacy_promote_using_legacy_type_resolver(ufunc,
                 ops, signature, check_dtypes, NULL, NPY_TRUE);
         /* Reset the promotion state: */
-        npy_promotion_state = NPY_USE_WEAK_PROMOTION_AND_WARN;
+        set_npy_promotion_state(NPY_USE_WEAK_PROMOTION_AND_WARN);
         if (res < 0) {
             goto handle_error;
         }

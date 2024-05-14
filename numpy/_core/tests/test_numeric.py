@@ -1492,6 +1492,17 @@ class TestTypes:
             assert_(np.can_cast(fi.min, dt))
             assert_(np.can_cast(fi.max, dt))
 
+    @pytest.mark.parametrize("dtype",
+            list("?bhilqBHILQefdgFDG") + [rational])
+    def test_can_cast_scalars(self, dtype):
+        # Basic test to ensure that scalars are supported in can-cast
+        # (does not check behavior exhaustively).
+        dtype = np.dtype(dtype)
+        scalar = dtype.type(0)
+
+        assert np.can_cast(scalar, "int64") == np.can_cast(dtype, "int64")
+        assert np.can_cast(scalar, "float32", casting="unsafe")
+
 
 # Custom exception class to test exception propagation in fromiter
 class NIterError(Exception):

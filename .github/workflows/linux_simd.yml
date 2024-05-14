@@ -178,19 +178,19 @@ jobs:
         python -m pip install pytest pytest-xdist hypothesis typing_extensions
 
     - name: Build
-      run: spin build -- -Dallow-noblas=true -Dcpu-baseline=avx512f -Dtest-simd='BASELINE,AVX512_KNL,AVX512_KNM,AVX512_SKX,AVX512_CLX,AVX512_CNL,AVX512_ICL,AVX512_SPR'
+      run: spin build -- -Dallow-noblas=true -Dcpu-baseline=avx512_skx -Dtest-simd='BASELINE,AVX512_KNL,AVX512_KNM,AVX512_SKX,AVX512_CLX,AVX512_CNL,AVX512_ICL,AVX512_SPR'
 
     - name: Meson Log
       if: always()
       run: cat build/meson-logs/meson-log.txt
 
-    - name: SIMD tests (KNM)
+    - name: SIMD tests (SKX)
       run: |
         export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
         export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
         cd build-install &&
-        sde -knm -- python -c "import numpy; numpy.show_config()" &&
-        sde -knm -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_simd*
+        sde -skx -- python -c "import numpy; numpy.show_config()" &&
+        sde -skx -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_simd*
 
     - name: linalg/ufunc/umath tests (TGL)
       run: |

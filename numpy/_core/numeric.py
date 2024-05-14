@@ -18,7 +18,7 @@ from .multiarray import (
     fromstring, inner, lexsort, matmul, may_share_memory, min_scalar_type,
     ndarray, nditer, nested_iters, promote_types, putmask, result_type,
     shares_memory, vdot, where, zeros, normalize_axis_index,
-    _get_promotion_state, _set_promotion_state
+    _get_promotion_state, _set_promotion_state, vecdot
 )
 
 from . import overrides
@@ -52,8 +52,8 @@ __all__ = [
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
     'identity', 'allclose', 'putmask',
     'flatnonzero', 'inf', 'nan', 'False_', 'True_', 'bitwise_not',
-    'full', 'full_like', 'matmul', 'shares_memory', 'may_share_memory',
-    '_get_promotion_state', '_set_promotion_state']
+    'full', 'full_like', 'matmul', 'vecdot', 'shares_memory',
+    'may_share_memory', '_get_promotion_state', '_set_promotion_state']
 
 
 def _zeros_like_dispatcher(

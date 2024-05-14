@@ -235,7 +235,7 @@ only one "data type". The data type is recorded in the ``dtype`` attribute.
     >>> a.dtype
     dtype('int64')  # "int" for integer, "64" for 64-bit
 
-ref:`Read more about array attributes here <arrays.ndarray>` and learn about
+:ref:`Read more about array attributes here <arrays.ndarray>` and learn about
 :ref:`array objects here <arrays>`.
 
 How to create a basic array

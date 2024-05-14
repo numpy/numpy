@@ -73,9 +73,9 @@ cdef class PCG64(BitGenerator):
     The specific member of the PCG family that we use is PCG XSL RR 128/64
     as described in the paper ([2]_).
 
-    ``PCG64`` provides a capsule containing function pointers that produce
+    `PCG64` provides a capsule containing function pointers that produce
     doubles, and unsigned 32 and 64- bit integers. These are not
-    directly consumable in Python and must be consumed by a ``Generator``
+    directly consumable in Python and must be consumed by a `Generator`
     or similar object that supports low-level access.
 
     Supports the method :meth:`advance` to advance the RNG an arbitrary number of
@@ -84,7 +84,7 @@ cdef class PCG64(BitGenerator):
 
     **State and Seeding**
 
-    The ``PCG64`` state vector consists of 2 unsigned 128-bit values,
+    The `PCG64` state vector consists of 2 unsigned 128-bit values,
     which are represented externally as Python ints. One is the state of the
     PRNG, which is advanced by a linear congruential generator (LCG). The
     second is a fixed odd increment used in the LCG.
@@ -104,7 +104,7 @@ cdef class PCG64(BitGenerator):
 
     **Compatibility Guarantee**
 
-    ``PCG64`` makes a guarantee that a fixed seed will always produce
+    `PCG64` makes a guarantee that a fixed seed will always produce
     the same random integer stream.
 
     References
@@ -305,13 +305,13 @@ cdef class PCG64DXSM(BitGenerator):
     generator ([1]_, [2]_). PCG-64 DXSM has a period of :math:`2^{128}` and supports
     advancing an arbitrary number of steps as well as :math:`2^{127}` streams.
     The specific member of the PCG family that we use is PCG CM DXSM 128/64. It
-    differs from ``PCG64`` in that it uses the stronger DXSM output function,
+    differs from `PCG64` in that it uses the stronger DXSM output function,
     a 64-bit "cheap multiplier" in the LCG, and outputs from the state before
     advancing it rather than advance-then-output.
 
-    ``PCG64DXSM`` provides a capsule containing function pointers that produce
+    `PCG64DXSM` provides a capsule containing function pointers that produce
     doubles, and unsigned 32 and 64- bit integers. These are not
-    directly consumable in Python and must be consumed by a ``Generator``
+    directly consumable in Python and must be consumed by a `Generator`
     or similar object that supports low-level access.
 
     Supports the method :meth:`advance` to advance the RNG an arbitrary number of
@@ -320,7 +320,7 @@ cdef class PCG64DXSM(BitGenerator):
 
     **State and Seeding**
 
-    The ``PCG64DXSM`` state vector consists of 2 unsigned 128-bit values,
+    The `PCG64DXSM` state vector consists of 2 unsigned 128-bit values,
     which are represented externally as Python ints. One is the state of the
     PRNG, which is advanced by a linear congruential generator (LCG). The
     second is a fixed odd increment used in the LCG.
@@ -340,7 +340,7 @@ cdef class PCG64DXSM(BitGenerator):
 
     **Compatibility Guarantee**
 
-    ``PCG64DXSM`` makes a guarantee that a fixed seed will always produce
+    `PCG64DXSM` makes a guarantee that a fixed seed will always produce
     the same random integer stream.
 
     References
