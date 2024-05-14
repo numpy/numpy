@@ -125,6 +125,8 @@ add_newdoc('NDArray', repr(NDArray),
 
     Can be used during runtime for typing arrays with a given dtype
     and unspecified shape.
+    See `npt.Array <numpy.typing.Array>`for dealing with arrays of specified
+    shape.
 
     .. versionadded:: 1.21
 
@@ -155,11 +157,10 @@ add_newdoc('Array', repr(Array),
     alias :term:`generic <generic type>` w.r.t. its shape and
     `dtype.type <numpy.dtype.type>`.
 
-    Can be used during runtime for typing arrays with a given dtype
-    and specified shape.  Particularly useful for functions which modify number
-    of axes.  If it is important to enforce integer axis sizes, use
-    `np.ndarray <numpy.ndarray>` for typing.  If axes dimensions are
-    variable, it is best to use `npt.NDArray <numpy.typing.NDArray>`.
+    Can be used for typing arrays with a given dtype and specified shape.
+    Particularly useful for functions which modify number of axes.
+    If axes dimensions are unknown, it is best to use
+    `npt.NDArray <numpy.typing.NDArray>`.
 
     In python < 3.11, ``from __future__ import annotations`` may be required.
 
@@ -183,7 +184,7 @@ add_newdoc('Array', repr(Array),
         >>> Length = NewType("Length", int)
         >>> Width = NewType("Width", int)
         >>> GreyscaleImage = npt.Array[Length, Width, np.int8]
-        >>> a: GreyscaleImage = np.arange(100, dtype=np.int8).reshape((10,10))
+        >>> a: GreyscaleImage = np.arange(100, dtype=np.int8).reshape((10, 10))
 
         >>> def one_d(a: list[str | int | float]) -> npt.Array[int, Any]:
         ...     return np.array(a)

@@ -2,7 +2,7 @@
 ---------------------------------------------------------------
 Static typing for ``ndarray`` is a long-term effort that continues 
 with this change.  Arrays are a generic type, parameterized by both 
-shape and data type.  The shape parameter could previously be assigned
+shape and data type.  The previous shape-type placeholder could previously be assigned
 any value.  This change restricts it to a tuple of ints, as one would expect
 from using ``ndarray.shape``.  However, this change also allows parameterizing
 shape by a tuple of ``int`` subtypes, which are reflected in the type of

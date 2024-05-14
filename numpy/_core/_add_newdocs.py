@@ -3017,6 +3017,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__class_getitem__',
     :pep:`585` : Type hinting generics in standard collections.
     numpy.typing.NDArray : An ndarray alias :term:`generic <generic type>`
                         w.r.t. its `dtype.type <numpy.dtype.type>`.
+    numpy.typing.Array : An ndarray alias :term:`generic <generic type>` w.r.t.
+        both its `shape <numpy.ndarray.shape>` and `dtype.type
+        <numpy.dtype.type>`.
 
     """))
 
