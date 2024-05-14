@@ -40,13 +40,17 @@ def na_object(request):
     return request.param
 
 
-@pytest.fixture()
-def dtype(na_object, coerce):
+def get_dtype(na_object, coerce=True):
     # explicit is check for pd_NA because != with pd_NA returns pd_NA
     if na_object is pd_NA or na_object != "unset":
         return StringDType(na_object=na_object, coerce=coerce)
     else:
         return StringDType(coerce=coerce)
+
+
+@pytest.fixture()
+def dtype(na_object, coerce):
+    return get_dtype(na_object, coerce)
 
 
 # second copy for cast tests to do a cartesian product over dtypes
@@ -460,6 +464,14 @@ def test_nonzero(strings):
     arr = np.array(strings, dtype="T")
     is_nonzero = np.array([i for i, item in enumerate(arr) if len(item) != 0])
     assert_array_equal(arr.nonzero()[0], is_nonzero)
+
+def test_where(string_list, na_object):
+    dtype = get_dtype(na_object)
+    a = np.array(string_list, dtype=dtype)
+    b = a[::-1]
+    res = np.where([True, False, True, False, True, False], a, b)
+    assert_array_equal(res, [a[0], b[1], a[2], b[3], a[4], b[5]])
+
 
 def test_fancy_indexing(string_list):
     sarr = np.array(string_list, dtype="T")

@@ -3258,7 +3258,8 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         return NULL;
     }
 
-    NPY_cast_info cast_info = {.func = NULL};
+    NPY_cast_info x_cast_info = {.func = NULL};
+    NPY_cast_info y_cast_info = {.func = NULL};
 
     ax = (PyArrayObject*)PyArray_FROM_O(x);
     if (ax == NULL) {
@@ -3286,9 +3287,19 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     if (common_dt == NULL) {
         goto fail;
     }
+    PyArray_Descr *x_dt, *y_dt;
+    int has_ref = PyDataType_REFCHK(common_dt);
+    if (has_ref) {
+        x_dt = PyArray_DESCR(op_in[2]);
+        y_dt = PyArray_DESCR(op_in[3]);
+    }
+    else {
+        x_dt = common_dt;
+        y_dt = common_dt;
+    }
     /* `PyArray_DescrFromType` cannot fail for simple builtin types: */
-    PyArray_Descr * op_dt[4] = {common_dt, PyArray_DescrFromType(NPY_BOOL),
-                                common_dt, common_dt};
+    PyArray_Descr * op_dt[4] = {common_dt, PyArray_DescrFromType(NPY_BOOL), x_dt, y_dt};
+
     NpyIter * iter;
     NPY_BEGIN_THREADS_DEF;
 
@@ -3305,8 +3316,6 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 
     npy_intp itemsize = common_dt->elsize;
 
-    int has_ref = PyDataType_REFCHK(common_dt);
-
     NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
 
     npy_intp transfer_strides[2] = {itemsize, itemsize};
@@ -3316,12 +3325,16 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
                     (itemsize != 2) && (itemsize != 1))) {
         // The iterator has NPY_ITER_ALIGNED flag so no need to check alignment
         // of the input arrays.
-        //
-        // There's also no need to set up a cast for y, since the iterator
-        // ensures both casts are identical.
         if (PyArray_GetDTypeTransferFunction(
-                1, itemsize, itemsize, common_dt, common_dt, 0,
-                &cast_info, &transfer_flags) != NPY_SUCCEED) {
+                    1, itemsize, itemsize,
+                    PyArray_DESCR(op_in[2]), common_dt, 0,
+                    &x_cast_info, &transfer_flags) != NPY_SUCCEED) {
+            goto fail;
+        }
+        if (PyArray_GetDTypeTransferFunction(
+                    1, itemsize, itemsize,
+                    PyArray_DESCR(op_in[3]), common_dt, 0,
+                    &y_cast_info, &transfer_flags) != NPY_SUCCEED) {
             goto fail;
         }
     }
@@ -3374,18 +3387,18 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
                     if (*csrc) {
                         char *args[2] = {xsrc, dst};
 
-                        if (cast_info.func(
-                                &cast_info.context, args, &one,
-                                transfer_strides, cast_info.auxdata) < 0) {
+                        if (x_cast_info.func(
+                                &x_cast_info.context, args, &one,
+                                transfer_strides, x_cast_info.auxdata) < 0) {
                             goto fail;
                         }
                     }
                     else {
                         char *args[2] = {ysrc, dst};
 
-                        if (cast_info.func(
-                                &cast_info.context, args, &one,
-                                transfer_strides, cast_info.auxdata) < 0) {
+                        if (y_cast_info.func(
+                                &y_cast_info.context, args, &one,
+                                transfer_strides, y_cast_info.auxdata) < 0) {
                             goto fail;
                         }
                     }
@@ -3405,7 +3418,8 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     Py_DECREF(ax);
     Py_DECREF(ay);
     Py_DECREF(common_dt);
-    NPY_cast_info_xfree(&cast_info);
+    NPY_cast_info_xfree(&x_cast_info);
+    NPY_cast_info_xfree(&y_cast_info);
 
     if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
         Py_DECREF(ret);
@@ -3419,7 +3433,8 @@ fail:
     Py_XDECREF(ax);
     Py_XDECREF(ay);
     Py_XDECREF(common_dt);
-    NPY_cast_info_xfree(&cast_info);
+    NPY_cast_info_xfree(&x_cast_info);
+    NPY_cast_info_xfree(&y_cast_info);
     return NULL;
 }
 
