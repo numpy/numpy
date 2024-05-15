@@ -12,6 +12,16 @@
 
 #include "arrayfunction_override.h"
 
+static PyThread_type_lock global_mutex;
+
+int init_argparse_mutex() {
+    global_mutex = PyThread_allocate_lock();
+    if (global_mutex == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+    return 0;
+}
 
 /**
  * Small wrapper converting to array just like CPython does.
@@ -274,15 +284,20 @@ _npy_parse_arguments(const char *funcname,
         /* ... is NULL, NULL, NULL terminated: name, converter, value */
         ...)
 {
-    if (NPY_UNLIKELY(cache->npositional == -1)) {
-        va_list va;
-        va_start(va, kwnames);
-
-        int res = initialize_keywords(funcname, cache, va);
-        va_end(va);
-        if (res < 0) {
-            return -1;
+    if (NPY_UNLIKELY(!cache->initialized)) {
+        PyThread_acquire_lock(global_mutex, WAIT_LOCK);
+        if (!cache->initialized) {
+            va_list va;
+            va_start(va, kwnames);
+            int res = initialize_keywords(funcname, cache, va);
+            va_end(va);
+            if (res < 0) {
+                PyThread_release_lock(global_mutex);
+                return -1;
+            }
+            cache->initialized = 1;
         }
+        PyThread_release_lock(global_mutex);
     }
 
     if (NPY_UNLIKELY(len_args > cache->npositional)) {
