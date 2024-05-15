@@ -11,8 +11,8 @@
 #include "fast_loop_macros.h"
 #include "loops_utils.h"
 #include <hwy/highway.h>
-#include "hwy/print-inl.h"
 #include <hwy/aligned_allocator.h>
+
 
 namespace hn = hwy::HWY_NAMESPACE;
 HWY_BEFORE_NAMESPACE();
@@ -193,7 +193,16 @@ HWY_INLINE void Super(char** args,
     auto store_index = hn::Mul(hn::Iota(di, 0), hn::Set(di, sdst));
     size_t full = size & -hn::Lanes(d);
     size_t remainder = size - full;
-    if (sdst == 1 && ssrc != 1) {
+    if (ssrc < 0) {
+      auto load_index_reverse =
+          hn::Reverse(di, hn::Add(hn::Mul(hn::Iota(di, 0), hn::Set(di, -ssrc)), hn::Set(di, -ssrc)));
+      for (size_t i = 0; i < full; i += hn::Lanes(d)) {
+        const auto in = hn::GatherIndex(d, input_array + (i + hn::Lanes(d)) * ssrc,
+                                        load_index_reverse);
+        auto x = op(in);
+        hn::ScatterIndex(x, d, output_array + i * sdst, store_index);
+      }
+    } else if (sdst == 1 && ssrc != 1) {
       for (size_t i = 0; i < full; i += hn::Lanes(d)) {
         const auto in = hn::GatherIndex(d, input_array + i * ssrc, load_index);
         auto x = op(in);
