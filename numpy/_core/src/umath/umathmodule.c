@@ -22,6 +22,7 @@
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_3kcompat.h"
 #include "npy_pycompat.h"
+#include "npy_argparse.h"
 #include "abstract.h"
 
 #include "numpy/npy_math.h"
@@ -318,6 +319,10 @@ int initumath(PyObject *m)
     }
 
     if (init_special_int_comparisons(d) < 0) {
+        return -1;
+    }
+
+    if (init_argparse_mutex() < 0) {
         return -1;
     }
 
