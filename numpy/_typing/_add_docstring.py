@@ -125,7 +125,7 @@ add_newdoc('NDArray', repr(NDArray),
 
     Can be used during runtime for typing arrays with a given dtype
     and unspecified shape.
-    See `npt.Array <numpy.typing.Array>`for dealing with arrays of specified
+    See `npt.Array <numpy.typing.Array>` for dealing with arrays of specified
     shape.
 
     .. versionadded:: 1.21
