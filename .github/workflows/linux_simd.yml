@@ -170,10 +170,6 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt update
-        sudo apt install -y g++-13
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 1
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 1
         python -m pip install -r requirements/build_requirements.txt
         python -m pip install pytest pytest-xdist hypothesis typing_extensions
 
@@ -224,10 +220,6 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt update
-        sudo apt install -y g++-13
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 1
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 1
         python -m pip install -r requirements/build_requirements.txt
         python -m pip install pytest pytest-xdist hypothesis typing_extensions
 
