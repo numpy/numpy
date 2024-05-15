@@ -18,6 +18,7 @@ COMPARISONS = [
 
 MAX = np.iinfo(np.int64).max
 
+IS_PYPY_LT_7_3_16 = IS_PYPY and sys.implementation.version < (7, 3, 16)
 
 @pytest.mark.parametrize(["op", "ufunc", "sym"], COMPARISONS)
 def test_mixed_string_comparison_ufuncs_fail(op, ufunc, sym):
@@ -903,7 +904,7 @@ class TestMethodsWithUnicode:
         '\U00011066',
         '\U000104A0',
         pytest.param('\U0001F107', marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY,
+            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
             reason="PYPY bug in Py_UNICODE_ISALNUM",
             strict=True)),
     ])
@@ -920,7 +921,7 @@ class TestMethodsWithUnicode:
         ('\U0001F46F', False),
         ('\u2177', True),
         pytest.param('\U00010429', True, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY,
+            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
             reason="PYPY bug in Py_UNICODE_ISLOWER",
             strict=True)),
         ('\U0001044E', True),
@@ -938,7 +939,7 @@ class TestMethodsWithUnicode:
         ('\U0001F46F', False),
         ('\u2177', False),
         pytest.param('\U00010429', False, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY,
+            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
             reason="PYPY bug in Py_UNICODE_ISUPPER",
             strict=True)),
         ('\U0001044E', False),
@@ -951,12 +952,12 @@ class TestMethodsWithUnicode:
         ('\u1FFc', True),
         ('Greek \u1FFcitlecases ...', True),
         pytest.param('\U00010401\U00010429', True, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY,
+            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
             reason="PYPY bug in Py_UNICODE_ISISTITLE",
             strict=True)),
         ('\U00010427\U0001044E', True),
         pytest.param('\U00010429', False, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY,
+            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
             reason="PYPY bug in Py_UNICODE_ISISTITLE",
             strict=True)),
         ('\U0001044E', False),
