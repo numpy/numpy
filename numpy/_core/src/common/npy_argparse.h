@@ -20,7 +20,6 @@
 NPY_NO_EXPORT int
 PyArray_PythonPyIntFromInt(PyObject *obj, int *value);
 
-
 #define _NPY_MAX_KWARGS 15
 
 typedef struct {
@@ -28,10 +27,12 @@ typedef struct {
     int nargs;
     int npositional_only;
     int nrequired;
+    npy_uint8 initialized;
     /* Null terminated list of keyword argument name strings */
     PyObject *kw_strings[_NPY_MAX_KWARGS+1];
 } _NpyArgParserCache;
 
+NPY_NO_EXPORT int init_argparse_mutex(void);
 
 /*
  * The sole purpose of this macro is to hide the argument parsing cache.

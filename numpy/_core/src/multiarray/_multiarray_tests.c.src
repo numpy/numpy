@@ -2432,6 +2432,9 @@ PyMODINIT_FUNC PyInit__multiarray_tests(void)
         return m;
     }
     import_array();
+    if (init_argparse_mutex() < 0) {
+        return NULL;
+    }
     if (PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _multiarray_tests module.");
