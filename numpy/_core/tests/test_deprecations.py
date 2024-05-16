@@ -716,3 +716,19 @@ class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
     @pytest.mark.parametrize("string", ["(2)i,", "(3)3S,", "f,(2)f"])
     def test_parenthesized_repeat_count(self, string):
         self.assert_deprecated(np.dtype, args=(string,))
+
+
+class TestDeprecatedSaveFixImports(_DeprecationTestCase):
+    # Deprecated in Numpy 2.0, 2024-05
+    message = "Passing fix_imports into numpy.save"
+    
+    def test_deprecated(self):
+        sample_args = ('a.npy', np.array(np.zeros((1024, 10))))
+        self.assert_not_deprecated(np.save, args=sample_args)
+        self.assert_deprecated(np.save, args=sample_args, kwargs={'fix_imports': True})
+        self.assert_deprecated(np.save, args=sample_args, kwargs={'fix_imports': False})
+        for allow_pickle in [True, False]:
+            self.assert_not_deprecated(np.save, args=sample_args, kwargs={'allow_pickle': allow_pickle})
+            self.assert_deprecated(np.save, args=sample_args, kwargs={'allow_pickle': allow_pickle, 'fix_imports': True})
+            self.assert_deprecated(np.save, args=sample_args, kwargs={'allow_pickle': allow_pickle, 'fix_imports': False})
+    
