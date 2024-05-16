@@ -720,7 +720,7 @@ class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
 
 class TestDeprecatedSaveFixImports(_DeprecationTestCase):
     # Deprecated in Numpy 2.0, 2024-05
-    message = "Passing fix_imports into numpy.save"
+    message = "The 'fix_imports' flag is deprecated and has no effect."
     
     def test_deprecated(self):
         sample_args = ('a.npy', np.array(np.zeros((1024, 10))))
