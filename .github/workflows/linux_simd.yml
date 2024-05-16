@@ -152,7 +152,7 @@ jobs:
 
   intel_sde_avx512:
     needs: [baseline_only]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
@@ -170,15 +170,11 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt update
-        sudo apt install -y g++-13
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 1
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 1
         python -m pip install -r requirements/build_requirements.txt
         python -m pip install pytest pytest-xdist hypothesis typing_extensions
 
     - name: Build
-      run: spin build -- -Dallow-noblas=true -Dcpu-baseline=avx512_skx -Dtest-simd='BASELINE,AVX512_KNL,AVX512_KNM,AVX512_SKX,AVX512_CLX,AVX512_CNL,AVX512_ICL,AVX512_SPR'
+      run: CC=gcc-13 CXX=g++-13 spin build -- -Dallow-noblas=true -Dcpu-baseline=avx512_skx -Dtest-simd='BASELINE,AVX512_KNL,AVX512_KNM,AVX512_SKX,AVX512_CLX,AVX512_CNL,AVX512_ICL,AVX512_SPR'
 
     - name: Meson Log
       if: always()
@@ -206,7 +202,7 @@ jobs:
 
   intel_sde_spr:
     needs: [baseline_only]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
@@ -224,15 +220,11 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt update
-        sudo apt install -y g++-13
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 1
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 1
         python -m pip install -r requirements/build_requirements.txt
         python -m pip install pytest pytest-xdist hypothesis typing_extensions
 
     - name: Build
-      run: spin build -- -Dallow-noblas=true -Dcpu-baseline=avx512_spr
+      run: CC=gcc-13 CXX=g++-13 spin build -- -Dallow-noblas=true -Dcpu-baseline=avx512_spr
 
     - name: Meson Log
       if: always()
