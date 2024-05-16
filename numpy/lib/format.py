@@ -741,7 +741,7 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
                                  "when allow_pickle=False")
         if pickle_kwargs is None:
             pickle_kwargs = {}
-        pickle.dump(array, fp, protocol=3, **pickle_kwargs)
+        pickle.dump(array, fp, protocol=4, **pickle_kwargs)
     elif array.flags.f_contiguous and not array.flags.c_contiguous:
         if isfileobj(fp):
             array.T.tofile(fp)
