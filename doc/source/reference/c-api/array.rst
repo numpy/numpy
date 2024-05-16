@@ -3371,13 +3371,13 @@ Data-type descriptors
     can also be used with the "O&" character in PyArg_ParseTuple
     processing.
 
-.. c:function:: int Pyarray_DescrAlignConverter( \
+.. c:function:: int PyArray_DescrAlignConverter( \
         PyObject* obj, PyArray_Descr** dtype)
 
     Like :c:func:`PyArray_DescrConverter` except it aligns C-struct-like
     objects on word-boundaries as the compiler would.
 
-.. c:function:: int Pyarray_DescrAlignConverter2( \
+.. c:function:: int PyArray_DescrAlignConverter2( \
         PyObject* obj, PyArray_Descr** dtype)
 
     Like :c:func:`PyArray_DescrConverter2` except it aligns C-struct-like
