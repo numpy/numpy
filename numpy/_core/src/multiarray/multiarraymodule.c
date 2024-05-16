@@ -3288,17 +3288,24 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     if (common_dt == NULL) {
         goto fail;
     }
+    npy_intp itemsize = common_dt->elsize;
 
     // If x and y don't have references, we ask the iterator to create buffers
     // using the common data type of x and y and then do fast trivial copies
     // in the loop below.
     // Otherwise trivial copies aren't possible and we handle the cast item by item
     // in the loop.
-    PyArray_Descr *x_dt = PyArray_DESCR(op_in[2]), *y_dt = PyArray_DESCR(op_in[3]);
-    int has_ref = (PyDataType_REFCHK(x_dt) || PyDataType_REFCHK(y_dt));
-    if (!has_ref) {
+    PyArray_Descr *x_dt, *y_dt;
+    int trivial_copy_loop = !PyDataType_REFCHK(common_dt) &&
+            ((itemsize == 16) || (itemsize == 8) || (itemsize == 4) ||
+             (itemsize == 2) || (itemsize == 1));
+    if (trivial_copy_loop) {
         x_dt = common_dt;
         y_dt = common_dt;
+    }
+    else {
+        x_dt = PyArray_DESCR(op_in[2]);
+        y_dt = PyArray_DESCR(op_in[3]);
     }
     /* `PyArray_DescrFromType` cannot fail for simple builtin types: */
     PyArray_Descr * op_dt[4] = {common_dt, PyArray_DescrFromType(NPY_BOOL), x_dt, y_dt};
@@ -3317,7 +3324,6 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     /* Get the result from the iterator object array */
     ret = (PyObject*)NpyIter_GetOperandArray(iter)[0];
     PyArray_Descr *ret_dt = PyArray_DESCR((PyArrayObject *)ret);
-    npy_intp itemsize = ret_dt->elsize;
 
     NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
 
@@ -3325,8 +3331,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     npy_intp y_strides[2] = {y_dt->elsize, itemsize};
     npy_intp one = 1;
 
-    if (has_ref || ((itemsize != 16) && (itemsize != 8) && (itemsize != 4) &&
-                    (itemsize != 2) && (itemsize != 1))) {
+    if (!trivial_copy_loop) {
         // The iterator has NPY_ITER_ALIGNED flag so no need to check alignment
         // of the input arrays.
         if (PyArray_GetDTypeTransferFunction(
@@ -3370,19 +3375,19 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
             npy_intp ystride = strides[3];
 
             /* constant sizes so compiler replaces memcpy */
-            if (!has_ref && itemsize == 16) {
+            if (trivial_copy_loop && itemsize == 16) {
                 INNER_WHERE_LOOP(16);
             }
-            else if (!has_ref && itemsize == 8) {
+            else if (trivial_copy_loop && itemsize == 8) {
                 INNER_WHERE_LOOP(8);
             }
-            else if (!has_ref && itemsize == 4) {
+            else if (trivial_copy_loop && itemsize == 4) {
                 INNER_WHERE_LOOP(4);
             }
-            else if (!has_ref && itemsize == 2) {
+            else if (trivial_copy_loop && itemsize == 2) {
                 INNER_WHERE_LOOP(2);
             }
-            else if (!has_ref && itemsize == 1) {
+            else if (trivial_copy_loop && itemsize == 1) {
                 INNER_WHERE_LOOP(1);
             }
             else {
