@@ -501,7 +501,7 @@ def _save_dispatcher(file, arr, allow_pickle=None, fix_imports=None):
 
 
 @array_function_dispatch(_save_dispatcher)
-def save(file, arr, allow_pickle=True, fix_imports=None):
+def save(file, arr, allow_pickle=True, fix_imports=np._NoValue):
     """
     Save an array to a binary file in NumPy ``.npy`` format.
 
@@ -560,7 +560,7 @@ def save(file, arr, allow_pickle=True, fix_imports=None):
     >>> print(a, b)
     # [1 2] [1 3]
     """
-    if fix_imports is not None:
+    if fix_imports is not np._NoValue:
         # Deprecated 2024-05-16, NumPy 2.1
         warnings.warn(
             "The 'fix_imports' flag is deprecated and has no effect. "
