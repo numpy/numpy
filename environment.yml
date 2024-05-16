@@ -17,7 +17,7 @@ dependencies:
   - pkg-config
   - meson-python
   - pip
-  - spin
+  - spin=0.8 # Unpin when spin 0.9.1 is released
   - ccache
   # For testing
   - pytest
