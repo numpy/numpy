@@ -520,7 +520,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
         arbitrary code) and portability (pickled objects may not be loadable
         on different Python installations, for example if the stored objects
         require libraries that are not available, and not all pickled data is
-        compatible between Python 2 and Python 3).
+        compatible between different versions of Python).
         Default: True
     fix_imports : bool, optional
         Only useful in forcing objects in object arrays on Python 3 to be
