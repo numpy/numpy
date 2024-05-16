@@ -725,10 +725,16 @@ class TestDeprecatedSaveFixImports(_DeprecationTestCase):
     def test_deprecated(self):
         sample_args = ('a.npy', np.array(np.zeros((1024, 10))))
         self.assert_not_deprecated(np.save, args=sample_args)
-        self.assert_deprecated(np.save, args=sample_args, kwargs={'fix_imports': True})
-        self.assert_deprecated(np.save, args=sample_args, kwargs={'fix_imports': False})
+        self.assert_deprecated(np.save, args=sample_args,
+                               kwargs={'fix_imports': True})
+        self.assert_deprecated(np.save, args=sample_args,
+                               kwargs={'fix_imports': False})
         for allow_pickle in [True, False]:
-            self.assert_not_deprecated(np.save, args=sample_args, kwargs={'allow_pickle': allow_pickle})
-            self.assert_deprecated(np.save, args=sample_args, kwargs={'allow_pickle': allow_pickle, 'fix_imports': True})
-            self.assert_deprecated(np.save, args=sample_args, kwargs={'allow_pickle': allow_pickle, 'fix_imports': False})
-    
+            self.assert_not_deprecated(np.save, args=sample_args,
+                                       kwargs={'allow_pickle': allow_pickle})
+            self.assert_deprecated(np.save, args=sample_args,
+                                   kwargs={'allow_pickle': allow_pickle,
+                                           'fix_imports': True})
+            self.assert_deprecated(np.save, args=sample_args,
+                                   kwargs={'allow_pickle': allow_pickle,
+                                           'fix_imports': False})
