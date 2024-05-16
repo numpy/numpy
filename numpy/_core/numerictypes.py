@@ -369,7 +369,11 @@ def _preprocess_dtype(dtype, err_msg):
     if isinstance(dtype, ma.dtype):
         dtype = dtype.type
     if isinstance(dtype, ndarray) or dtype not in allTypes.values():
-        raise TypeError(f"{err_msg}, but it is a {type(dtype)}.")
+        if isinstance(dtype, str):
+            message = f"{err_msg}, but {repr(dtype)} is not a valid kind name."
+        else:
+            message = f"{err_msg}, but it is a {type(dtype)}."
+        raise TypeError(message)
     return dtype
 
 
