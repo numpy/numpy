@@ -74,10 +74,14 @@ Highlights of this release include:
   - New, easier to use, initialization functions:
     :c:func:`PyArray_ImportNumPyAPI` and :c:func:`PyUFunc_ImportUFuncAPI`.
 
-- Improved behavior:
+- Improved behavior: 
 
-  - Improvements to type promotion behavior was changed by adopting :ref:`NEP 50 <NEP50>`. This fixes many user surprises about promotions which previously often depended on data values of input arrays rather than only their dtypes.  Please see the NEP and the :ref:`numpy-2-migration-guide` for details as this change can lead to changes in output dtypes and lower precision results for mixed-dtype operations.
-
+  - Improvements to type promotion behavior was changed by adopting :ref:`NEP
+    50 <NEP50>`. This fixes many user surprises about promotions which
+    previously often depended on data values of input arrays rather than only
+    their dtypes.  Please see the NEP and the :ref:`numpy-2-migration-guide`
+    for details as this change can lead to changes in output dtypes and lower
+    precision results for mixed-dtype operations.
   - The default integer type on Windows is now ``int64`` rather than ``int32``,
     matching the behavior on other platforms,
   - The maximum number of array dimensions is changed from 32 to 64
