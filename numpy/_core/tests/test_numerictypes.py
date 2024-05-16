@@ -472,7 +472,7 @@ class TestIsDType:
             np.isdtype("int64", np.int64)
         with assert_raises_regex(TypeError, r".*kind argument must.*"):
             np.isdtype(np.int64, 1)
-        with assert_raises_regex(TypeError, r".*is not a known kind name.*"):
+        with assert_raises_regex(ValueError, r".*is not a known kind name.*"):
             np.isdtype(np.int64, "int64")
 
     def test_sctypes_complete(self):
