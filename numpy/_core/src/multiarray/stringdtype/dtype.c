@@ -415,8 +415,23 @@ fail:
 // PyArray_NonzeroFunc
 // Unicode strings are nonzero if their length is nonzero.
 npy_bool
-nonzero(void *data, void *NPY_UNUSED(arr))
+nonzero(void *data, void *arr)
 {
+    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
+    int has_null = descr->na_object != NULL;
+    int has_nan_na = descr->has_nan_na;
+    int has_string_na = descr->has_string_na;
+    if (has_null && NpyString_isnull((npy_packed_static_string *)data)) {
+        if (!has_string_na) {
+            if (has_nan_na) {
+                // numpy treats NaN as truthy, following python
+                return 1;
+            }
+            else {
+                return 0;
+            }
+        }
+    }
     return NpyString_size((npy_packed_static_string *)data) != 0;
 }
 
