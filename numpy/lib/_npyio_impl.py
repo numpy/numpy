@@ -524,9 +524,11 @@ def save(file, arr, allow_pickle=True, fix_imports=np._NoValue):
         Default: True
     fix_imports : bool, optional
         The `fix_imports` flag is deprecated and has no effect.
+
         .. deprecated:: 2.1
             This flag is ignored since NumPy 1.17 and was only needed to
             support loading some files in Python 2 written in Python 3.
+
     See Also
     --------
     savez : Save several arrays into a ``.npz`` archive
