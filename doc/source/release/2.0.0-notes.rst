@@ -76,8 +76,7 @@ Highlights of this release include:
 
 - Improved behavior:
 
-  - Improvements to type promotion behavior was changed by adopting `NEP
-    50 <NEP50>`_. This fixes many user surprises about promotions which
+  - Improvements to type promotion behavior was changed by adopting :ref:`NEP 50 <NEP50>`. This fixes many user surprises about promotions which
     previously often depended on data values of input arrays rather than only
     their dtypes.  Please see the NEP and the :ref:`numpy-2-migration-guide`
     for details as this change can lead to changes in output dtypes and lower
