@@ -93,9 +93,10 @@ for is_complex, full_name in [(False, "longdouble"), (True, "clongdouble")]:
 # Building `sctypes`
 ####################
 
-sctypes = {"int": [], "uint": [], "float": [], "complex": [], "others": []}
+sctypes = {"int": set(), "uint": set(), "float": set(),
+           "complex": set(), "others": set()}
 
-for type_info in set(typeinfo.values()):
+for type_info in typeinfo.values():
     if type_info.kind in ["M", "m"]:  # exclude timedelta and datetime
         continue
 
@@ -108,9 +109,11 @@ for type_info in set(typeinfo.values()):
         ("others", ma.generic)
     ]:
         if issubclass(concrete_type, abstract_type):
-            sctypes[type_group].append(concrete_type)
+            sctypes[type_group].add(concrete_type)
             break
 
 # sort sctype groups by bitsize
-for sctype_list in sctypes.values():
+for sctype_key in sctypes.keys():
+    sctype_list = list(sctypes[sctype_key])
     sctype_list.sort(key=lambda x: dtype(x).itemsize)
+    sctypes[sctype_key] = sctype_list
