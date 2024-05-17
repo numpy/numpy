@@ -501,7 +501,7 @@ def _save_dispatcher(file, arr, allow_pickle=None, fix_imports=None):
 
 
 @array_function_dispatch(_save_dispatcher)
-def save(file, arr, allow_pickle=True, fix_imports=True):
+def save(file, arr, allow_pickle=True, fix_imports=np._NoValue):
     """
     Save an array to a binary file in NumPy ``.npy`` format.
 
@@ -523,10 +523,11 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
         compatible between different versions of Python).
         Default: True
     fix_imports : bool, optional
-        Only useful in forcing objects in object arrays on Python 3 to be
-        pickled in a Python 2 compatible way. If `fix_imports` is True, pickle
-        will try to map the new Python 3 names to the old module names used in
-        Python 2, so that the pickle data stream is readable with Python 2.
+        The `fix_imports` flag is deprecated and has no effect.
+
+        .. deprecated:: 2.1
+            This flag is ignored since NumPy 1.17 and was only needed to
+            support loading some files in Python 2 written in Python 3.
 
     See Also
     --------
@@ -561,6 +562,12 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     >>> print(a, b)
     # [1 2] [1 3]
     """
+    if fix_imports is not np._NoValue:
+        # Deprecated 2024-05-16, NumPy 2.1
+        warnings.warn(
+            "The 'fix_imports' flag is deprecated and has no effect. "
+            "(Deprecated in NumPy 2.1)",
+            DeprecationWarning, stacklevel=2)
     if hasattr(file, 'write'):
         file_ctx = contextlib.nullcontext(file)
     else:
