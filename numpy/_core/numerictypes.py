@@ -360,7 +360,11 @@ def issubsctype(arg1, arg2):
     return issubclass(obj2sctype(arg1), obj2sctype(arg2))
 
 
-def _preprocess_dtype(dtype, err_msg):
+class _PreprocessDTypeError(Exception):
+    pass
+
+
+def _preprocess_dtype(dtype):
     """
     Preprocess dtype argument by:
       1. fetching type from a data type
@@ -369,7 +373,7 @@ def _preprocess_dtype(dtype, err_msg):
     if isinstance(dtype, ma.dtype):
         dtype = dtype.type
     if isinstance(dtype, ndarray) or dtype not in allTypes.values():
-        raise TypeError(f"{err_msg}, but it is a {type(dtype)}.")
+        raise _PreprocessDTypeError()
     return dtype
 
 
@@ -414,9 +418,13 @@ def isdtype(dtype, kind):
     True
 
     """
-    dtype = _preprocess_dtype(
-        dtype, err_msg="dtype argument must be a NumPy dtype"
-    )
+    try:
+        dtype = _preprocess_dtype(dtype)
+    except _PreprocessDTypeError:
+        raise TypeError(
+            "dtype argument must be a NumPy dtype, "
+            f"but it is a {type(dtype)}."
+        ) from None
 
     input_kinds = kind if isinstance(kind, tuple) else (kind,)
 
@@ -446,11 +454,14 @@ def isdtype(dtype, kind):
                 f" {repr(kind)} is not a known kind name."
             ) from None
         else:
-            kind = _preprocess_dtype(
-                kind,
-                err_msg="kind argument must be comprised of "
-                        "NumPy dtypes or strings only"
-            )
+            try:
+                kind = _preprocess_dtype(kind)
+            except _PreprocessDTypeError:
+                raise TypeError(
+                    "kind argument must be comprised of "
+                    "NumPy dtypes or strings only, "
+                    f"but is a {type(kind)}."
+                ) from None
             processed_kinds.add(kind)
 
     return dtype in processed_kinds
