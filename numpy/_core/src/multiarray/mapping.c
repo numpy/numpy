@@ -1580,7 +1580,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
 
             if (PyArray_GetDTypeTransferFunction(is_aligned,
                     itemsize, itemsize,
-                    PyArray_DESCR(self), PyArray_DESCR(self),
+                    PyArray_DESCR(self), PyArray_DESCR((PyArrayObject *)result),
                     0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
                 goto finish;
             }
