@@ -440,6 +440,11 @@ def isdtype(dtype, kind):
                 sctypes["int"] + sctypes["uint"] +
                 sctypes["float"] + sctypes["complex"]
             )
+        elif isinstance(kind, str):
+            raise ValueError(
+                "kind argument is a string, but"
+                f" {repr(kind)} is not a known kind name."
+            ) from None
         else:
             kind = _preprocess_dtype(
                 kind,
