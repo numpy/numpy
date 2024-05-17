@@ -452,7 +452,7 @@ def isdtype(dtype, kind):
             raise ValueError(
                 "kind argument is a string, but"
                 f" {repr(kind)} is not a known kind name."
-            ) from None
+            )
         else:
             try:
                 kind = _preprocess_dtype(kind)
