@@ -85,7 +85,7 @@ jobs:
           - [macos-14, macosx_arm64, accelerate]  # always use accelerate
           - [windows-2019, win_amd64, ""]
           - [windows-2019, win32, ""]
-        python: ["cp310", "cp311", "cp312", "pp310"]
+        python: ["cp310", "cp311", "cp312", "pp310", "cp313"]
         exclude:
           # Don't build PyPy 32-bit windows
           - buildplat: [windows-2019, win32, ""]
