@@ -50,5 +50,5 @@ EOF
 fi
 if [[ $RUNNER_OS == "Windows" ]]; then
     # delvewheel is the equivalent of delocate/auditwheel for windows.
-    python -m pip install delvewheel
+    python -m pip install delvewheel wheel
 fi
