@@ -55,7 +55,8 @@ months ('M'), weeks ('W'), and days ('D'), while the time units are
 hours ('h'), minutes ('m'), seconds ('s'), milliseconds ('ms'), and
 some additional SI-prefix seconds-based units. The `datetime64` data type
 also accepts the string "NAT", in any combination of lowercase/uppercase
-letters, for a "Not A Time" value. The string "now" gives results for the current time.
+letters, for a "Not A Time" value. The string "now" gives results for the 
+current time.
 
 .. admonition:: Example
 
