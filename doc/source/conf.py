@@ -143,6 +143,10 @@ default_role = "autolink"
 # for source files.
 exclude_dirs = []
 
+exclude_patterns = []
+if sys.version_info[:2] >= (3, 12):
+    exclude_patterns += ["reference/distutils.rst"]
+
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False
 
