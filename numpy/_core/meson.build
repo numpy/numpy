@@ -1206,8 +1206,7 @@ py.extension_module('_multiarray_umath',
     src_numpy_api[1],  # __multiarray_api.h
     src_umath_doc_h,
     npy_math_internal_h,
-  ],
-  objects: svml_objects,
+  ] + svml_objects,
   c_args: c_args_common,
   cpp_args: cpp_args_common,
   include_directories: [
