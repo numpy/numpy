@@ -608,7 +608,9 @@ def common_fill_value(a, b):
 
 def filled(a, fill_value=None):
     """
-    Return input as an array with masked data replaced by a fill value.
+    Return a copy of `a`, with masked values replaced by a fill value.
+    However, if there are no masked values to fill, `a` will be returned
+    instead as an ndarray.
 
     If `a` is not a `MaskedArray`, `a` itself is returned.
     If `a` is a `MaskedArray` and `fill_value` is None, `fill_value` is set to
