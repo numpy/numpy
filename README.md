@@ -15,8 +15,7 @@ https://stackoverflow.com/questions/tagged/numpy)
 https://doi.org/10.1038/s41586-020-2649-2)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/numpy/numpy/badge)](https://securityscorecards.dev/viewer/?uri=github.com/numpy/numpy)
 
-
-NumPy is the fundamental package for scientific computing with Python.
+**NumPy is the fundamental package for scientific computing with Python.**
 
 - **Website:** https://www.numpy.org
 - **Documentation:** https://numpy.org/doc
@@ -26,14 +25,14 @@ NumPy is the fundamental package for scientific computing with Python.
 - **Bug reports:** https://github.com/numpy/numpy/issues
 - **Report a security vulnerability:** https://tidelift.com/docs/security
 
-It provides:
+**It provides:**
 
 - a powerful N-dimensional array object
 - sophisticated (broadcasting) functions
 - tools for integrating C/C++ and Fortran code
 - useful linear algebra, Fourier transform, and random number capabilities
 
-Testing:
+**Testing:**
 
 NumPy requires `pytest` and `hypothesis`.  Tests can then be run after installation with:
 
