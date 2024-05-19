@@ -132,8 +132,10 @@ def build(ctx, meson_args, with_scipy_openblas, jobs=None, clean=False, verbose=
 @click.option(
     '--jobs', '-j',
     metavar='N_JOBS',
-    default="auto",
-    help="Number of parallel build jobs"
+    # Avoids pydata_sphinx_theme extension warning from default="auto".
+    default="1",
+    help=("Number of parallel build jobs."
+          "Can be set to `auto` to use all cores.")
 )
 @click.pass_context
 def docs(ctx, sphinx_target, clean, first_build, jobs, *args, **kwargs):
