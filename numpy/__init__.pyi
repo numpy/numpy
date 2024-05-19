@@ -636,7 +636,7 @@ def show_config() -> None: ...
 
 _NdArraySubClass = TypeVar("_NdArraySubClass", bound=NDArray[Any])
 _DTypeScalar_co = TypeVar("_DTypeScalar_co", covariant=True, bound=generic)
-_ByteOrder = L["S", "<", ">", "=", "|", "L", "B", "N", "I"]
+_ByteOrder = L["S", "<", ">", "=", "|", "L", "B", "N", "I", "little", "big", "native"]
 
 @final
 class dtype(Generic[_DTypeScalar_co]):
