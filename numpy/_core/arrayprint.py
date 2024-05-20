@@ -329,6 +329,18 @@ def get_printoptions():
     --------
     set_printoptions, printoptions
 
+    Examples
+    --------
+
+    >>> np.get_printoptions()
+    {'edgeitems': 3, 'threshold': 1000, ..., 'legacy': False}
+
+    >>> np.get_printoptions()['linewidth']
+    75
+    >>> np.set_printoptions(linewidth=100)
+    >>> np.get_printoptions()['linewidth']
+    100
+
     """
     opts = _format_options.copy()
     opts['legacy'] = {
