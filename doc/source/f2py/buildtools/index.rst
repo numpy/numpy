@@ -7,23 +7,6 @@ F2PY and build systems
 In this section we will cover the various popular build systems and their usage
 with ``f2py``.
 
-.. versionchanged:: NumPy 1.26.x
-
-   The default build system for ``f2py`` has traditionally been through the
-   enhanced ``numpy.distutils`` module. This module is based on ``distutils``
-   which was removed in ``Python 3.12.0`` in **October 2023**. Like the rest of
-   NumPy and SciPy, ``f2py`` uses ``meson`` now, see
-   :ref:`distutils-status-migration` for some more details.
-
-    All changes to ``f2py`` are tested on SciPy, so their `CI configuration`_ is
-    always supported.
-
-
-.. note::
-
-   See :ref:`f2py-meson-distutils` for migration information.
-
-
 Basic concepts
 ===============
 
@@ -98,6 +81,12 @@ adapted to generate ``f2py`` extension modules. Here we will cover a subset of
 the more popular systems.
 
 .. note::
+
+   The current default build system for ``f2py`` is ``meson``.
+   If you need information about the migration from ``numpy.distutils`` to
+   ``meson``, refer to this section in the Version 1.26 documentation.
+
+.. note::
    ``make`` has no place in a modern multi-language setup, and so is not
    discussed further.
 
@@ -107,11 +96,9 @@ Build systems
 .. toctree::
    :maxdepth: 2
 
-   distutils
    meson
    cmake
    skbuild
-   distutils-to-meson
 
 .. _`issue 20385`: https://github.com/numpy/numpy/issues/20385
 

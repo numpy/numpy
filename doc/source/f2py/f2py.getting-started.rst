@@ -20,23 +20,18 @@ following steps:
   Fortran/C/Python bindings.
 
 * F2PY compiles all sources and builds an extension module containing
-  the wrappers.
-
-  * In building the extension modules, F2PY uses ``meson`` and used to use
-    ``numpy.distutils`` For different build systems, see :ref:`f2py-bldsys`.
+  the wrappers. F2PY uses ``meson`` for its default build system.
+  For different build systems, see :ref:`f2py-bldsys`.
 
 
 .. note::
 
-   See :ref:`f2py-meson-distutils` for migration information.
-
-
-  * Depending on your operating system, you may need to install the Python
-    development headers (which provide the file ``Python.h``) separately. In
-    Linux Debian-based distributions this package should be called ``python3-dev``,
-    in Fedora-based distributions it is ``python3-devel``. For macOS, depending
-    how Python was installed, your mileage may vary. In Windows, the headers are
-    typically installed already, see :ref:`f2py-windows`.
+  Depending on your operating system, you may need to install the Python
+  development headers (which provide the file ``Python.h``) separately. In
+  Linux Debian-based distributions this package should be called ``python3-dev``,
+  in Fedora-based distributions it is ``python3-devel``. For macOS, depending
+  how Python was installed, your mileage may vary. In Windows, the headers are
+  typically installed already, see :ref:`f2py-windows`.
 
 .. note::
 
