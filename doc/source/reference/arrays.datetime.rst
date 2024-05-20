@@ -90,8 +90,8 @@ current time.
     >>> np.datetime64('nat')
     np.datetime64('NaT')
 
-    >>> np.datetime64('now', 'ms')
-    numpy.datetime64('2024-05-18T18:02:42.000')
+    >>> np.datetime64('now', 'ms') #doctest: +SKIP
+    numpy.datetime64('2024-05-18T18:02:42.000') # may vary
 
 When creating an array of datetimes from a string, it is still possible
 to automatically select the unit from the inputs, by using the
