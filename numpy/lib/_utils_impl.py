@@ -102,7 +102,7 @@ def get_include():
     Examples
     --------
     >>> np.get_include()
-    '/home/guido/.local/lib/python3.12/site-packages/numpy/core/include'
+    '.../site-packages/numpy/core/include'  # may vary
 
     """
     import numpy
