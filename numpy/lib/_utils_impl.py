@@ -99,6 +99,11 @@ def get_include():
         $ pkg-config --cflags
         -I/path/to/site-packages/numpy/_core/include
 
+    Examples
+    --------
+    >>> np.get_include()
+    '/home/guido/.local/lib/python3.12/site-packages/numpy/core/include'
+
     """
     import numpy
     if numpy.show_config is None:
