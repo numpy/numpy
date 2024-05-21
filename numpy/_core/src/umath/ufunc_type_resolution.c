@@ -78,15 +78,7 @@ npy_casting_to_py_object(NPY_CASTING casting)
  */
 static int
 raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
-    static PyObject *exc_type = NULL;
     PyObject *exc_value;
-
-    npy_cache_import(
-        "numpy._core._exceptions", "_UFuncBinaryResolutionError",
-        &exc_type);
-    if (exc_type == NULL) {
-        return -1;
-    }
 
     /* produce an error object */
     exc_value = Py_BuildValue(
@@ -97,7 +89,8 @@ raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
     if (exc_value == NULL){
         return -1;
     }
-    PyErr_SetObject(exc_type, exc_value);
+    PyErr_SetObject(
+            npy_ma_global_data->_UFuncBinaryResolutionError, exc_value);
     Py_DECREF(exc_value);
 
     return -1;
@@ -110,15 +103,6 @@ NPY_NO_EXPORT int
 raise_no_loop_found_error(
         PyUFuncObject *ufunc, PyObject **dtypes)
 {
-    static PyObject *exc_type = NULL;
-
-    npy_cache_import(
-        "numpy._core._exceptions", "_UFuncNoLoopError",
-        &exc_type);
-    if (exc_type == NULL) {
-        return -1;
-    }
-
     PyObject *dtypes_tup = PyArray_TupleFromItems(ufunc->nargs, dtypes, 1);
     if (dtypes_tup == NULL) {
         return -1;
@@ -129,7 +113,7 @@ raise_no_loop_found_error(
     if (exc_value == NULL) {
         return -1;
     }
-    PyErr_SetObject(exc_type, exc_value);
+    PyErr_SetObject(npy_ma_global_data->_UFuncNoLoopError, exc_value);
     Py_DECREF(exc_value);
 
     return -1;
@@ -181,15 +165,8 @@ raise_input_casting_error(
         PyArray_Descr *to,
         npy_intp i)
 {
-    static PyObject *exc_type = NULL;
-    npy_cache_import(
-        "numpy._core._exceptions", "_UFuncInputCastingError",
-        &exc_type);
-    if (exc_type == NULL) {
-        return -1;
-    }
-
-    return raise_casting_error(exc_type, ufunc, casting, from, to, i);
+    return raise_casting_error(npy_ma_global_data->_UFuncInputCastingError,
+                               ufunc, casting, from, to, i);
 }
 
 
@@ -204,15 +181,8 @@ raise_output_casting_error(
         PyArray_Descr *to,
         npy_intp i)
 {
-    static PyObject *exc_type = NULL;
-    npy_cache_import(
-        "numpy._core._exceptions", "_UFuncOutputCastingError",
-        &exc_type);
-    if (exc_type == NULL) {
-        return -1;
-    }
-
-    return raise_casting_error(exc_type, ufunc, casting, from, to, i);
+    return raise_casting_error(npy_ma_global_data->_UFuncOutputCastingError,
+                               ufunc, casting, from, to, i);
 }
 
 
@@ -1443,7 +1413,7 @@ PyUFunc_TrueDivisionTypeResolver(PyUFuncObject *ufunc,
     int type_num1, type_num2;
     static PyObject *default_type_tup = NULL;
 
-    /* Set default type for integer inputs to NPY_DOUBLE */
+        /* Set default type for integer inputs to NPY_DOUBLE */
     if (default_type_tup == NULL) {
         PyArray_Descr *tmp = PyArray_DescrFromType(NPY_DOUBLE);
 
@@ -1457,6 +1427,7 @@ PyUFunc_TrueDivisionTypeResolver(PyUFuncObject *ufunc,
         }
         Py_DECREF(tmp);
     }
+
 
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;

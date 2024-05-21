@@ -111,13 +111,15 @@ npy_forward_method(
  * initialization is not thread-safe, but relies on the CPython GIL to
  * be correct.
  */
-#define NPY_FORWARD_NDARRAY_METHOD(name) \
-        static PyObject *callable = NULL; \
-        npy_cache_import("numpy._core._methods", name, &callable); \
-        if (callable == NULL) { \
-            return NULL; \
-        } \
-        return npy_forward_method(callable, (PyObject *)self, args, len_args, kwnames)
+#define NPY_FORWARD_NDARRAY_METHOD(name)                                \
+    npy_cache_import(                                                   \
+            "numpy._core._methods", #name,                              \
+            &npy_ma_global_data->name);                                 \
+    if (npy_ma_global_data->name == NULL) {                             \
+        return NULL;                                                    \
+    }                                                                   \
+    return npy_forward_method(npy_ma_global_data->name,                 \
+                              (PyObject *)self, args, len_args, kwnames)
 
 
 static PyObject *
@@ -356,14 +358,14 @@ static PyObject *
 array_max(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    NPY_FORWARD_NDARRAY_METHOD("_amax");
+    NPY_FORWARD_NDARRAY_METHOD(_amax);
 }
 
 static PyObject *
 array_min(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    NPY_FORWARD_NDARRAY_METHOD("_amin");
+    NPY_FORWARD_NDARRAY_METHOD(_amin);
 }
 
 static PyObject *
@@ -387,7 +389,6 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
 {
     PyObject *ret = NULL;
     PyObject *safe;
-    static PyObject *checkfunc = NULL;
     int self_elsize, typed_elsize;
 
     if (self == NULL) {
@@ -405,14 +406,15 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
     /* check that we are not reinterpreting memory containing Objects. */
     if (_may_have_objects(PyArray_DESCR(self)) || _may_have_objects(typed)) {
         npy_cache_import("numpy._core._internal", "_getfield_is_safe",
-                         &checkfunc);
-        if (checkfunc == NULL) {
+                         &npy_ma_global_data->_getfield_is_safe);
+        if (npy_ma_global_data->_getfield_is_safe == NULL) {
             Py_DECREF(typed);
             return NULL;
         }
 
         /* only returns True or raises */
-        safe = PyObject_CallFunction(checkfunc, "OOi", PyArray_DESCR(self),
+        safe = PyObject_CallFunction(npy_ma_global_data->_getfield_is_safe,
+                                     "OOi", PyArray_DESCR(self),
                                      typed, offset);
         if (safe == NULL) {
             Py_DECREF(typed);
@@ -2244,17 +2246,19 @@ array_setstate(PyArrayObject *self, PyObject *args)
 NPY_NO_EXPORT int
 PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 {
-    static PyObject *method = NULL;
     PyObject *ret;
-    npy_cache_import("numpy._core._methods", "_dump", &method);
-    if (method == NULL) {
+    npy_cache_import("numpy._core._methods", "_dump",
+                     &npy_ma_global_data->_dump);
+    if (npy_ma_global_data->_dump == NULL) {
         return -1;
     }
     if (protocol < 0) {
-        ret = PyObject_CallFunction(method, "OO", self, file);
+        ret = PyObject_CallFunction(
+                npy_ma_global_data->_dump, "OO", self, file);
     }
     else {
-        ret = PyObject_CallFunction(method, "OOi", self, file, protocol);
+        ret = PyObject_CallFunction(
+                npy_ma_global_data->_dump, "OOi", self, file, protocol);
     }
     if (ret == NULL) {
         return -1;
@@ -2267,16 +2271,17 @@ PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 NPY_NO_EXPORT PyObject *
 PyArray_Dumps(PyObject *self, int protocol)
 {
-    static PyObject *method = NULL;
-    npy_cache_import("numpy._core._methods", "_dumps", &method);
-    if (method == NULL) {
+    npy_cache_import("numpy._core._methods", "_dumps",
+                     &npy_ma_global_data->_dumps);
+    if (npy_ma_global_data->_dumps == NULL) {
         return NULL;
     }
     if (protocol < 0) {
-        return PyObject_CallFunction(method, "O", self);
+        return PyObject_CallFunction(npy_ma_global_data->_dumps, "O", self);
     }
     else {
-        return PyObject_CallFunction(method, "Oi", self, protocol);
+        return PyObject_CallFunction(
+                npy_ma_global_data->_dumps, "Oi", self, protocol);
     }
 }
 
@@ -2285,7 +2290,7 @@ static PyObject *
 array_dump(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    NPY_FORWARD_NDARRAY_METHOD("_dump");
+    NPY_FORWARD_NDARRAY_METHOD(_dump);
 }
 
 
@@ -2293,7 +2298,7 @@ static PyObject *
 array_dumps(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    NPY_FORWARD_NDARRAY_METHOD("_dumps");
+    NPY_FORWARD_NDARRAY_METHOD(_dumps);
 }
 
 
@@ -2345,14 +2350,14 @@ static PyObject *
 array_mean(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    NPY_FORWARD_NDARRAY_METHOD("_mean");
+    NPY_FORWARD_NDARRAY_METHOD(_mean);
 }
 
 static PyObject *
 array_sum(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    NPY_FORWARD_NDARRAY_METHOD("_sum");
+    NPY_FORWARD_NDARRAY_METHOD(_sum);
 }
 
 
@@ -2382,7 +2387,7 @@ static PyObject *
 array_prod(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    NPY_FORWARD_NDARRAY_METHOD("_prod");
+    NPY_FORWARD_NDARRAY_METHOD(_prod);
 }
 
 static PyObject *
@@ -2442,7 +2447,7 @@ static PyObject *
 array_any(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    NPY_FORWARD_NDARRAY_METHOD("_any");
+    NPY_FORWARD_NDARRAY_METHOD(_any);
 }
 
 
@@ -2450,21 +2455,21 @@ static PyObject *
 array_all(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    NPY_FORWARD_NDARRAY_METHOD("_all");
+    NPY_FORWARD_NDARRAY_METHOD(_all);
 }
 
 static PyObject *
 array_stddev(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    NPY_FORWARD_NDARRAY_METHOD("_std");
+    NPY_FORWARD_NDARRAY_METHOD(_std);
 }
 
 static PyObject *
 array_variance(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    NPY_FORWARD_NDARRAY_METHOD("_var");
+    NPY_FORWARD_NDARRAY_METHOD(_var);
 }
 
 static PyObject *
@@ -2545,7 +2550,7 @@ static PyObject *
 array_clip(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    NPY_FORWARD_NDARRAY_METHOD("_clip");
+    NPY_FORWARD_NDARRAY_METHOD(_clip);
 }
 
 

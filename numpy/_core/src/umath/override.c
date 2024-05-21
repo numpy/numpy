@@ -176,10 +176,8 @@ copy_positional_args_to_kwargs(const char **keywords,
              * This is only relevant for reduce, which is the only one with
              * 5 keyword arguments.
              */
-            static PyObject *NoValue = NULL;
             assert(strcmp(keywords[i], "initial") == 0);
-            npy_cache_import("numpy", "_NoValue", &NoValue);
-            if (args[i] == NoValue) {
+            if (args[i] == npy_ma_global_data->_NoValue) {
                 continue;
             }
         }
@@ -365,19 +363,19 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         /* Check if there is a method left to call */
         if (!override_obj) {
             /* No acceptable override found. */
-            static PyObject *errmsg_formatter = NULL;
             PyObject *errmsg;
 
-            npy_cache_import("numpy._core._internal",
-                             "array_ufunc_errmsg_formatter",
-                             &errmsg_formatter);
-
-            if (errmsg_formatter != NULL) {
-                /* All tuple items must be set before use */
-                Py_INCREF(Py_None);
-                PyTuple_SET_ITEM(override_args, 0, Py_None);
-                errmsg = PyObject_Call(errmsg_formatter, override_args,
-                                       normal_kwds);
+            /* All tuple items must be set before use */
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(override_args, 0, Py_None);
+            npy_cache_import(
+                    "numpy._core._internal",
+                    "array_ufunc_errmsg_formatter",
+                    &npy_ma_global_data->array_ufunc_errmsg_formatter);
+            if (npy_ma_global_data->array_ufunc_errmsg_formatter != NULL) {
+                errmsg = PyObject_Call(
+                        npy_ma_global_data->array_ufunc_errmsg_formatter,
+                        override_args, normal_kwds);
                 if (errmsg != NULL) {
                     PyErr_SetObject(PyExc_TypeError, errmsg);
                     Py_DECREF(errmsg);

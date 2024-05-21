@@ -252,14 +252,14 @@ get_args_and_kwargs(
 static void
 set_no_matching_types_error(PyObject *public_api, PyObject *types)
 {
-    static PyObject *errmsg_formatter = NULL;
     /* No acceptable override found, raise TypeError. */
     npy_cache_import("numpy._core._internal",
                      "array_function_errmsg_formatter",
-                     &errmsg_formatter);
-    if (errmsg_formatter != NULL) {
+                     &npy_ma_global_data->array_function_errmsg_formatter);
+    if (npy_ma_global_data->array_function_errmsg_formatter != NULL) {
         PyObject *errmsg = PyObject_CallFunctionObjArgs(
-                errmsg_formatter, public_api, types, NULL);
+                npy_ma_global_data->array_function_errmsg_formatter,
+                public_api, types, NULL);
         if (errmsg != NULL) {
             PyErr_SetObject(PyExc_TypeError, errmsg);
             Py_DECREF(errmsg);

@@ -724,13 +724,13 @@ _convert_from_commastring(PyObject *obj, int align)
 {
     PyObject *parsed;
     PyArray_Descr *res;
-    static PyObject *_commastring = NULL;
     assert(PyUnicode_Check(obj));
-    npy_cache_import("numpy._core._internal", "_commastring", &_commastring);
-    if (_commastring == NULL) {
+    npy_cache_import("numpy._core._internal", "_commastring",
+                     &npy_ma_global_data->_commastring);
+    if (npy_ma_global_data->_commastring == NULL) {
         return NULL;
     }
-    parsed = PyObject_CallOneArg(_commastring, obj);
+    parsed = PyObject_CallOneArg(npy_ma_global_data->_commastring, obj);
     if (parsed == NULL) {
         return NULL;
     }

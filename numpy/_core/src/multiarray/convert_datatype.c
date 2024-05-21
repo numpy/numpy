@@ -48,14 +48,6 @@
  */
 NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[] = {0, 3, 5, 10, 10, 20, 20, 20, 20};
 
-/*
- * Whether or not legacy value-based promotion/casting is used.
- */
-
-NPY_NO_EXPORT PyObject *NO_NEP50_WARNING_CTX = NULL;
-NPY_NO_EXPORT PyObject *npy_DTypePromotionError = NULL;
-NPY_NO_EXPORT PyObject *npy_UFuncNoLoopError = NULL;
-
 static NPY_TLS int npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
 
 NPY_NO_EXPORT int
@@ -92,13 +84,14 @@ npy_give_promotion_warnings(void)
 
     npy_cache_import(
             "numpy._core._ufunc_config", "NO_NEP50_WARNING",
-            &NO_NEP50_WARNING_CTX);
-    if (NO_NEP50_WARNING_CTX == NULL) {
+            &npy_ma_global_data->NO_NEP50_WARNING);
+    if (npy_ma_global_data->NO_NEP50_WARNING == NULL) {
         PyErr_WriteUnraisable(NULL);
         return 1;
     }
 
-    if (PyContextVar_Get(NO_NEP50_WARNING_CTX, Py_False, &val) < 0) {
+    if (PyContextVar_Get(npy_ma_global_data->NO_NEP50_WARNING,
+                         Py_False, &val) < 0) {
         /* Errors should not really happen, but if it does assume we warn. */
         PyErr_WriteUnraisable(NULL);
         return 1;
@@ -409,12 +402,7 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
             !PyTypeNum_ISCOMPLEX(type_num) &&
             PyTypeNum_ISNUMBER(type_num) &&
             !PyTypeNum_ISBOOL(type_num)) {
-        static PyObject *cls = NULL;
-        npy_cache_import("numpy.exceptions", "ComplexWarning", &cls);
-        if (cls == NULL) {
-            return NULL;
-        }
-        int ret = PyErr_WarnEx(cls,
+        int ret = PyErr_WarnEx(npy_ma_global_data->ComplexWarning,
                 "Casting complex values to real discards "
                 "the imaginary part", 1);
         if (ret < 0) {
@@ -2638,13 +2626,7 @@ complex_to_noncomplex_get_loop(
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    static PyObject *cls = NULL;
-    int ret;
-    npy_cache_import("numpy.exceptions", "ComplexWarning", &cls);
-    if (cls == NULL) {
-        return -1;
-    }
-    ret = PyErr_WarnEx(cls,
+    int ret = PyErr_WarnEx(npy_ma_global_data->ComplexWarning,
             "Casting complex values to real discards "
             "the imaginary part", 1);
     if (ret < 0) {

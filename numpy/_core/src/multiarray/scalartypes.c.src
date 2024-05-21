@@ -609,14 +609,15 @@ _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
 
 static PyObject *
 _void_scalar_to_string(PyObject *obj, int repr) {
-    static PyObject *tostring_func = NULL;
     npy_cache_import("numpy._core.arrayprint",
-                     "_void_scalar_to_string", &tostring_func);
-    if (tostring_func == NULL) {
+                     "_void_scalar_to_string",
+                     &npy_ma_global_data->_void_scalar_to_string);
+    if (npy_ma_global_data->_void_scalar_to_string == NULL) {
         return NULL;
     }
     PyObject *is_repr = repr ? Py_True : Py_False;
-    return PyObject_CallFunctionObjArgs(tostring_func, obj, is_repr, NULL);
+    return PyObject_CallFunctionObjArgs(
+            npy_ma_global_data->_void_scalar_to_string, obj, is_repr, NULL);
 }
 
 static PyObject *
@@ -3036,13 +3037,7 @@ object_arrtype_alloc(PyTypeObject *type, Py_ssize_t items)
      * Object scalars should not actually exist, if they exist we should
      * consider it to be a bug.
      */
-    static PyObject *visibleDeprecationWarning = NULL;
-    npy_cache_import("numpy", "VisibleDeprecationWarning",
-                     &visibleDeprecationWarning);
-    if (visibleDeprecationWarning == NULL) {
-        return NULL;
-    }
-    if (PyErr_WarnEx(visibleDeprecationWarning,
+    if (PyErr_WarnEx(npy_ma_global_data->VisibleDeprecationWarning,
             "Creating a NumPy object scalar.  NumPy object scalars should "
             "never be created.  If you see this message please inform the "
             "NumPy developers.  Since this message should never be shown "

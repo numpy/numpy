@@ -611,15 +611,6 @@ PyArray_AssignFromCache(PyArrayObject *self, coercion_cache_obj *cache) {
 static void
 raise_memory_error(int nd, npy_intp const *dims, PyArray_Descr *descr)
 {
-    static PyObject *exc_type = NULL;
-
-    npy_cache_import(
-        "numpy._core._exceptions", "_ArrayMemoryError",
-        &exc_type);
-    if (exc_type == NULL) {
-        goto fail;
-    }
-
     PyObject *shape = PyArray_IntTupleFromIntp(nd, dims);
     if (shape == NULL) {
         goto fail;
@@ -631,7 +622,7 @@ raise_memory_error(int nd, npy_intp const *dims, PyArray_Descr *descr)
     if (exc_value == NULL){
         goto fail;
     }
-    PyErr_SetObject(exc_type, exc_value);
+    PyErr_SetObject(npy_ma_global_data->_ArrayMemoryError, exc_value);
     Py_DECREF(exc_value);
     return;
 

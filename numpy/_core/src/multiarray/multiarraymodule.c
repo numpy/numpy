@@ -4265,11 +4265,8 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     }
     else if (result == MEM_OVERLAP_TOO_HARD) {
         if (raise_exceptions) {
-            static PyObject *too_hard_cls = NULL;
-            npy_cache_import("numpy.exceptions", "TooHardError", &too_hard_cls);
-            if (too_hard_cls) {
-                PyErr_SetString(too_hard_cls, "Exceeded max_work");
-            }
+            PyErr_SetString(npy_ma_global_data->TooHardError,
+                            "Exceeded max_work");
             return NULL;
         }
         else {
@@ -4772,6 +4769,7 @@ set_flaginfo(PyObject *d)
 }
 
 NPY_VISIBILITY_HIDDEN npy_ma_str_struct *npy_ma_str = NULL;
+NPY_VISIBILITY_HIDDEN npy_ma_global_data_struct *npy_ma_global_data = NULL;
 
 static int
 intern_strings(void)
@@ -4872,33 +4870,92 @@ intern_strings(void)
     return 0;
 }
 
+#define IMPORT_GLOBAL(base_path, name, object)  \
+    assert(object == NULL);                     \
+    npy_cache_import(base_path, name, &object); \
+    if (object == NULL) {                       \
+        return -1;                              \
+    }
 
 /*
- * Initializes global constants.  At some points these need to be cleaned
- * up, and sometimes we also import them where they are needed.  But for
- * some things, adding an `npy_cache_import` everywhere seems inconvenient.
+ * Initializes global constants.
  *
- * These globals should not need the C-layer at all and will be imported
- * before anything on the C-side is initialized.
+ * All global constants should live inside the npy_ma_global_data
+ * struct.
+ *
+ * Not all entries in the struct are initialized here, some are
+ * initialized later but care must be taken in those cases to initialize
+ * the constant in a thread-safe manner, ensuring it is initialized
+ * exactly once.
+ *
+ * Anything initialized here is initialized during module import which
+ * the python interpreter ensures is done in a single thread.
+ *
+ * Anything imported here should not need the C-layer at all and will be
+ * imported before anything on the C-side is initialized.
  */
 static int
 initialize_static_globals(void)
 {
-    assert(npy_DTypePromotionError == NULL);
-    npy_cache_import(
-            "numpy.exceptions", "DTypePromotionError",
-            &npy_DTypePromotionError);
-    if (npy_DTypePromotionError == NULL) {
-        return -1;
-    }
+    // this is module-level global heap allocation, it is currently
+    // never freed
+    npy_ma_global_data = PyMem_Calloc(1, sizeof(npy_ma_global_data_struct));
 
-    assert(npy_UFuncNoLoopError == NULL);
-    npy_cache_import(
-            "numpy._core._exceptions", "_UFuncNoLoopError",
-            &npy_UFuncNoLoopError);
-    if (npy_UFuncNoLoopError == NULL) {
-        return -1;
-    }
+    // cached reference to objects defined in python
+
+    IMPORT_GLOBAL("math", "floor",
+                  npy_ma_global_data->math_floor_func);
+
+    IMPORT_GLOBAL("math", "ceil",
+                  npy_ma_global_data->math_ceil_func);
+
+    IMPORT_GLOBAL("math", "trunc",
+                  npy_ma_global_data->math_trunc_func);
+
+    IMPORT_GLOBAL("math", "gcd",
+                  npy_ma_global_data->math_gcd_func);
+
+    IMPORT_GLOBAL("numpy.exceptions", "AxisError",
+                  npy_ma_global_data->AxisError);
+
+    IMPORT_GLOBAL("numpy.exceptions", "ComplexWarning",
+                  npy_ma_global_data->ComplexWarning);
+
+    IMPORT_GLOBAL("numpy.exceptions", "DTypePromotionError",
+                  npy_ma_global_data->DTypePromotionError);
+
+    IMPORT_GLOBAL("numpy.exceptions", "TooHardError",
+                  npy_ma_global_data->TooHardError);
+
+    IMPORT_GLOBAL("numpy.exceptions", "VisibleDeprecationWarning",
+                  npy_ma_global_data->VisibleDeprecationWarning);
+
+    IMPORT_GLOBAL("numpy._globals", "_CopyMode",
+                  npy_ma_global_data->_CopyMode);
+
+    IMPORT_GLOBAL("numpy._globals", "_NoValue",
+                  npy_ma_global_data->_NoValue);
+
+    IMPORT_GLOBAL("numpy._core._exceptions", "_ArrayMemoryError",
+                  npy_ma_global_data->_ArrayMemoryError);
+
+    IMPORT_GLOBAL("numpy._core._exceptions", "_UFuncBinaryResolutionError",
+                  npy_ma_global_data->_UFuncBinaryResolutionError);
+
+    IMPORT_GLOBAL("numpy._core._exceptions", "_UFuncInputCastingError",
+                  npy_ma_global_data->_UFuncInputCastingError);
+
+    IMPORT_GLOBAL("numpy._core._exceptions", "_UFuncNoLoopError",
+                  npy_ma_global_data->_UFuncNoLoopError);
+
+    IMPORT_GLOBAL("numpy._core._exceptions", "_UFuncOutputCastingError",
+                  npy_ma_global_data->_UFuncOutputCastingError);
+
+    IMPORT_GLOBAL("os", "fspath",
+                  npy_ma_global_data->os_fspath);
+
+    IMPORT_GLOBAL("os", "PathLike",
+                  npy_ma_global_data->os_PathLike);
 
     char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
     if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
@@ -5182,14 +5239,14 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
      * init_string_dtype() but that needs to happen after
      * the legacy dtypemeta classes are available.
      */
-    static PyObject *add_dtype_helper = NULL;
-    npy_cache_import("numpy.dtypes", "_add_dtype_helper", &add_dtype_helper);
-    if (add_dtype_helper == NULL) {
+    npy_cache_import("numpy.dtypes", "_add_dtype_helper",
+                     &npy_ma_global_data->_add_dtype_helper);
+    if (npy_ma_global_data->_add_dtype_helper == NULL) {
         goto err;
     }
 
     if (PyObject_CallFunction(
-            add_dtype_helper,
+            npy_ma_global_data->_add_dtype_helper,
             "Os", (PyObject *)&PyArray_StringDType, NULL) == NULL) {
         goto err;
     }
