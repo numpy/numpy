@@ -1427,6 +1427,25 @@ PyUFunc_RemainderTypeResolver(PyUFuncObject *ufunc,
 }
 
 
+static PyObject *default_truediv_type_tup = NULL;
+
+NPY_NO_EXPORT int
+init_ufunc_type_resolution_cache() {
+    /* Initialize default_truediv_type_tup global */
+    PyArray_Descr *tmp = PyArray_DescrFromType(NPY_DOUBLE);
+
+    if (tmp == NULL) {
+        return -1;
+    }
+    default_truediv_type_tup = PyTuple_Pack(3, tmp, tmp, tmp);
+    if (default_truediv_type_tup == NULL) {
+        Py_DECREF(tmp);
+        return -1;
+    }
+    Py_DECREF(tmp);
+    return 0;
+}
+
 /*
  * True division should return float64 results when both inputs are integer
  * types. The PyUFunc_DefaultTypeResolver promotes 8 bit integers to float16
@@ -1441,22 +1460,6 @@ PyUFunc_TrueDivisionTypeResolver(PyUFuncObject *ufunc,
                                  PyArray_Descr **out_dtypes)
 {
     int type_num1, type_num2;
-    static PyObject *default_type_tup = NULL;
-
-    /* Set default type for integer inputs to NPY_DOUBLE */
-    if (default_type_tup == NULL) {
-        PyArray_Descr *tmp = PyArray_DescrFromType(NPY_DOUBLE);
-
-        if (tmp == NULL) {
-            return -1;
-        }
-        default_type_tup = PyTuple_Pack(3, tmp, tmp, tmp);
-        if (default_type_tup == NULL) {
-            Py_DECREF(tmp);
-            return -1;
-        }
-        Py_DECREF(tmp);
-    }
 
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;
@@ -1465,7 +1468,7 @@ PyUFunc_TrueDivisionTypeResolver(PyUFuncObject *ufunc,
             (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) &&
             (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2))) {
         return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
-                                           default_type_tup, out_dtypes);
+                                           default_truediv_type_tup, out_dtypes);
     }
     return PyUFunc_DivisionTypeResolver(ufunc, casting, operands,
                                         type_tup, out_dtypes);

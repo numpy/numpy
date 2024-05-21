@@ -72,6 +72,9 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
                                    PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
+init_ufunc_type_resolution_cache();
+
+NPY_NO_EXPORT int
 PyUFunc_TrueDivisionTypeResolver(PyUFuncObject *ufunc,
                                  NPY_CASTING casting,
                                  PyArrayObject **operands,

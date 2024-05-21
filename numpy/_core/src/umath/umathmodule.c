@@ -31,6 +31,7 @@
 #include "stringdtype_ufuncs.h"
 #include "special_integer_comparisons.h"
 #include "extobj.h"  /* for _extobject_contextvar exposure */
+#include "ufunc_type_resolution.h"
 
 /* Automatically generated code to define all ufuncs: */
 #include "funcs.inc"
@@ -343,6 +344,10 @@ int initumath(PyObject *m)
     }
 
     if (init_special_int_comparisons(d) < 0) {
+        return -1;
+    }
+
+    if (init_ufunc_type_resolution_cache() < 0) {
         return -1;
     }
 
