@@ -366,7 +366,7 @@ conf_data.set('PYTHON_VERSION', py.language_version())
 # `np.show_config()`; needs some special handling for the case BLAS was found
 # but CBLAS not (and hence BLAS was also disabled)
 dependency_map = {
-  'LAPACK': lapack_dep,
+  'LAPACK': lapack,
 }
 if have_blas
   dependency_map += {'BLAS': blas}
