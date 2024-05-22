@@ -8,6 +8,7 @@ import hashlib
 import base64
 import subprocess
 from subprocess import Popen, PIPE, STDOUT
+from distutils import log
 from numpy.distutils.exec_command import filepath_from_subprocess_output
 from numpy.distutils.fcompiler import FCompiler
 from distutils.version import LooseVersion
@@ -69,9 +70,8 @@ class GnuFCompiler(FCompiler):
                     # from the version string
                     return ('gfortran', v)
 
-        # If still nothing, raise an error to make the problem easy to find.
-        err = 'A valid Fortran version was not found in this string:\n'
-        raise ValueError(err + version_string)
+        # If still nothing, warn to make the problem easy to find.
+        log.warn('A valid Fortran version was not found in this string:\n' + version_string)
 
     def version_match(self, version_string):
         v = self.gnu_version_match(version_string)
@@ -544,7 +544,6 @@ def _can_target(cmd, arch):
 
 
 if __name__ == '__main__':
-    from distutils import log
     from numpy.distutils import customized_fcompiler
     log.set_verbosity(2)
 
