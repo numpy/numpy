@@ -7,9 +7,10 @@ from numpy.testing import assert_array_equal, IS_PYPY
 
 class TestDLPack:
     @pytest.mark.skipif(IS_PYPY, reason="PyPy can't get refcounts.")
-    def test_dunder_dlpack_refcount(self):
+    @pytest.mark.parametrize(max_version, [(0, 0), None, (1, 0), (100, 3)])
+    def test_dunder_dlpack_refcount(self, max_version):
         x = np.arange(5)
-        y = x.__dlpack__()
+        y = x.__dlpack__(max_version=max_version)
         assert sys.getrefcount(x) == 3
         del y
         assert sys.getrefcount(x) == 2
