@@ -71,7 +71,8 @@ class GnuFCompiler(FCompiler):
                     return ('gfortran', v)
 
         # If still nothing, warn to make the problem easy to find.
-        log.warn('A valid Fortran version was not found in this string:\n' + version_string)
+        log.warn('A valid Fortran version was not found in this string:\n'
+                 + version_string)
 
     def version_match(self, version_string):
         v = self.gnu_version_match(version_string)
