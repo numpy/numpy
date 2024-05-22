@@ -9,12 +9,13 @@
 #include "npy_argparse.h"
 #include "npy_dlpack.h"
 #include "multiarraymodule.h"
+#include "conversion_utils.h"
 
 
 /*
  * Deleter for a NumPy exported dlpack DLManagedTensor(Versioned).
  */
-static void
+NPY_NO_EXPORT static void
 array_dlpack_deleter(DLManagedTensorVersioned *self)
 {
     /*
@@ -113,7 +114,7 @@ array_dlpack_internal_capsule_deleter(PyObject *self)
 {
     DLManagedTensorVersioned *managed =
         (DLManagedTensorVersioned *)PyCapsule_GetPointer(
-            self, NPY_DLPACK_VERSIONED_CAPSULE_NAME);
+            self, NPY_DLPACK_VERSIONED_INTERNAL_CAPSULE_NAME);
     if (managed == NULL) {
         PyErr_WriteUnraisable(NULL);
         return;
@@ -134,7 +135,8 @@ static void
 array_dlpack_internal_capsule_deleter_unversioned(PyObject *self)
 {
     DLManagedTensor *managed =
-        (DLManagedTensor *)PyCapsule_GetPointer(self, NPY_DLPACK_CAPSULE_NAME);
+        (DLManagedTensor *)PyCapsule_GetPointer(
+            self, NPY_DLPACK_INTERNAL_CAPSULE_NAME);
     if (managed == NULL) {
         PyErr_WriteUnraisable(NULL);
         return;
@@ -190,7 +192,7 @@ array_get_dl_device(PyArrayObject *self) {
  */
 static int
 fill_dl_tensor_information(
-    DLTensor *dl_tensor, PyArrayObject *self)
+    DLTensor *dl_tensor, PyArrayObject *self, DLDevice *result_device)
 {
     npy_intp itemsize = PyArray_ITEMSIZE(self);
     int ndim = PyArray_NDIM(self);
@@ -258,11 +260,6 @@ fill_dl_tensor_information(
         return -1;
     }
 
-    DLDevice device = array_get_dl_device(self);
-    if (PyErr_Occurred()) {
-        return -1;
-    }
-
     /*
      * Note: the `dlpack.h` header suggests/standardizes that `data` must be
      * 256-byte aligned.  We ignore this intentionally, because `__dlpack__`
@@ -278,7 +275,7 @@ fill_dl_tensor_information(
      */
     dl_tensor->data = PyArray_DATA(self);
     dl_tensor->byte_offset = 0;
-    dl_tensor->device = device;
+    dl_tensor->device = *result_device;
     dl_tensor->dtype = managed_dtype;
 
     for (int i = 0; i < ndim; ++i) {
@@ -299,7 +296,8 @@ fill_dl_tensor_information(
 
 
 static PyObject *
-create_dlpack_capsule(PyArrayObject *self, int versioned)
+create_dlpack_capsule(
+        PyArrayObject *self, int versioned, DLDevice *result_device)
 {
     int ndim = PyArray_NDIM(self);
 
@@ -354,7 +352,7 @@ create_dlpack_capsule(PyArrayObject *self, int versioned)
     /* Note that strides may be set to NULL later if C-contiguous */
     dl_tensor->strides = dl_tensor->shape + ndim;
 
-    if (fill_dl_tensor_information(dl_tensor, self) < 0) {
+    if (fill_dl_tensor_information(dl_tensor, self, result_device) < 0) {
         PyMem_Free(ptr);
         return NULL;
     }
@@ -372,17 +370,55 @@ create_dlpack_capsule(PyArrayObject *self, int versioned)
 }
 
 
-PyObject *
+static int
+device_converter(PyObject *obj, DLDevice *result_device)
+{
+    int type, id;
+    if (obj == Py_None) {
+        return NPY_SUCCEED;
+    }
+    if (!PyTuple_Check(obj)) {
+        PyErr_SetString(PyExc_TypeError, "dl_device must be a tuple");
+        return NPY_FAIL;
+    }
+    if (!PyArg_ParseTuple(obj, "ii", &type, &id)) {
+        return NPY_FAIL;
+    }
+    /* We can honor the request if matches the existing one or is CPU */
+    if (type == result_device->device_type && id == result_device->device_id) {
+        return NPY_SUCCEED;
+    }
+    if (type == kDLCPU && id == 0) {
+        result_device->device_type = type;
+        result_device->device_id = id;
+        return NPY_SUCCEED;
+    }
+
+    PyErr_SetString(PyExc_ValueError, "unsupported device requested");
+    return NPY_FAIL;
+}
+
+
+NPY_NO_EXPORT PyObject *
 array_dlpack(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *stream = Py_None;
     PyObject *max_version = Py_None;
+    NPY_COPYMODE copy_mode = NPY_COPY_IF_NEEDED;
     long major_version = 0;
+    /* We allow the user to request a result device in principle. */
+    DLDevice result_device = array_get_dl_device(self);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
+
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("__dlpack__", args, len_args, kwnames,
             "$stream", NULL, &stream,
             "$max_version", NULL, &max_version,
+            "$dl_device", &device_converter, &result_device,
+            "$copy", &PyArray_CopyConverter, &copy_mode,
             NULL, NULL, NULL)) {
         return NULL;
     }
@@ -405,10 +441,23 @@ array_dlpack(PyArrayObject *self,
         return NULL;
     }
 
+    /* If the user requested a copy be made, honor that here already */
+    if (copy_mode == NPY_COPY_ALWAYS) {
+        /* TODO: It may be good to check ability to export dtype first. */
+        self = (PyArrayObject *)PyArray_NewCopy(self, NPY_KEEPORDER);
+        if (self == NULL) {
+            return NULL;
+        }
+    }
+    else {
+        Py_INCREF(self);
+    }
+
     if (major_version < 1 && !(PyArray_FLAGS(self) & NPY_ARRAY_WRITEABLE)) {
         PyErr_SetString(PyExc_BufferError,
             "Cannot export readonly array since signalling readonly "
             "is unsupported by DLPack (supported by newer DLPack version).");
+        Py_DECREF(self);
         return NULL;
     }
 
@@ -420,7 +469,11 @@ array_dlpack(PyArrayObject *self,
      * Version 0 support should be deprecated in NumPy 2.1 and the branches
      * can then be removed again.
      */
-    return create_dlpack_capsule(self, major_version >= 1);
+    PyObject *res = create_dlpack_capsule(
+            self, major_version >= 1, &result_device);
+    Py_DECREF(self);
+
+    return res;
 }
 
 PyObject *
@@ -434,13 +487,33 @@ array_dlpack_device(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 }
 
 NPY_NO_EXPORT PyObject *
-from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
-    static PyObject *kwnames = NULL;
+from_dlpack(PyObject *NPY_UNUSED(self),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    PyObject *obj, *copy = Py_None, *device = Py_None;
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("from_dlpack", args, len_args, kwnames,
+            "obj", NULL, &obj,
+            "$copy", NULL, &copy,
+            "$device", NULL, &device,
+            NULL, NULL, NULL) < 0) {
+        return NULL;
+    }
+
+    /* Prepare the arguments to call objects __dlpack__() method */
+    static PyObject *call_kwnames = NULL;
+    static PyObject *dl_cpu_device_tuple = NULL;
     static PyObject *max_version = NULL;
 
-    if (kwnames == NULL) {
-        kwnames = Py_BuildValue("(s)", "max_version");
-        if (kwnames == NULL) {
+    if (call_kwnames == NULL) {
+        call_kwnames = Py_BuildValue("(sss)", "dl_device", "copy", "max_version");
+        if (call_kwnames == NULL) {
+            return NULL;
+        }
+    }
+    if (dl_cpu_device_tuple == NULL) {
+        dl_cpu_device_tuple = Py_BuildValue("(i,i)", 1, 0);
+        if (dl_cpu_device_tuple == NULL) {
             return NULL;
         }
     }
@@ -451,21 +524,42 @@ from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
         }
     }
 
-    PyObject *args[2] = {obj, max_version};
+    /* 
+     * Prepare arguments for the full call. We always forward copy and pass
+     * our max_version. `device` is always passed as `None`, but if the user
+     * provided a device, we will replace it with the "cpu": (1, 0).
+     */
+    PyObject *call_args[] = {obj, Py_None, copy, max_version};
     Py_ssize_t nargsf = 1 | PY_VECTORCALL_ARGUMENTS_OFFSET;
 
+    /* If device is passed it must be "cpu" and replace it with (1, 0) */
+    if (device != Py_None) {
+        /* test that device is actually CPU */
+        NPY_DEVICE device_request = NPY_DEVICE_CPU;
+        if (!PyArray_DeviceConverterOptional(device, &device_request)) {
+            return NULL;
+        }
+        assert(device_request == NPY_DEVICE_CPU);
+        call_args[1] = dl_cpu_device_tuple;
+    }
+
+
     PyObject *capsule = PyObject_VectorcallMethod(
-            npy_ma_str___dlpack__, args, nargsf, kwnames);
+            npy_ma_str___dlpack__, call_args, nargsf, call_kwnames);
     if (capsule == NULL) {
         /*
          * TODO: This path should be deprecated in NumPy 2.1.  Once deprecated
          * the below code can be simplified w.r.t. to versioned/unversioned.
+         *
+         * We try without any arguments if both device and copy are None,
+         * since the exporter may not support older versions of the protocol.
          */
-        if (PyErr_ExceptionMatches(PyExc_TypeError)) {
+        if (PyErr_ExceptionMatches(PyExc_TypeError)
+                && device == Py_None && copy == Py_None) {
             /* max_version may be unsupported, try without kwargs */
             PyErr_Clear();
             capsule = PyObject_VectorcallMethod(
-                npy_ma_str___dlpack__, args, nargsf, NULL);
+                npy_ma_str___dlpack__, call_args, nargsf, NULL);
         }
         if (capsule == NULL) {
             return NULL;

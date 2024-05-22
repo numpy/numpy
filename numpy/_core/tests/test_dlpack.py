@@ -5,9 +5,19 @@ import numpy as np
 from numpy.testing import assert_array_equal, IS_PYPY
 
 
+def new_and_old_dlpack():
+    yield np.arange(5)
+    # Support only old version:
+    class OldDLPack(np.ndarray):
+        def __dlpack__(self, stream=None):
+            return super().__dlpack__(stream=None)
+
+    yield np.arange(5).view(OldDLPack)
+
+
 class TestDLPack:
     @pytest.mark.skipif(IS_PYPY, reason="PyPy can't get refcounts.")
-    @pytest.mark.parametrize(max_version, [(0, 0), None, (1, 0), (100, 3)])
+    @pytest.mark.parametrize("max_version", [(0, 0), None, (1, 0), (100, 3)])
     def test_dunder_dlpack_refcount(self, max_version):
         x = np.arange(5)
         y = x.__dlpack__(max_version=max_version)
@@ -16,6 +26,13 @@ class TestDLPack:
         assert sys.getrefcount(x) == 2
 
     def test_dunder_dlpack_stream(self):
+        x = np.arange(5)
+        x.__dlpack__(stream=None)
+
+        with pytest.raises(RuntimeError):
+            x.__dlpack__(stream=1)
+
+    def test_dunder_dlpack_copy(self):
         x = np.arange(5)
         x.__dlpack__(stream=None)
 
@@ -31,12 +48,13 @@ class TestDLPack:
             np.from_dlpack(z)
 
     @pytest.mark.skipif(IS_PYPY, reason="PyPy can't get refcounts.")
-    def test_from_dlpack_refcount(self):
-        x = np.arange(5)
-        y = np.from_dlpack(x)
-        assert sys.getrefcount(x) == 3
+    @pytest.mark.parametrize("arr", new_and_old_dlpack())
+    def test_from_dlpack_refcount(self, arr):
+        arr = arr.copy()
+        y = np.from_dlpack(arr)
+        assert sys.getrefcount(arr) == 3
         del y
-        assert sys.getrefcount(x) == 2
+        assert sys.getrefcount(arr) == 2
 
     @pytest.mark.parametrize("dtype", [
         np.bool,
@@ -45,8 +63,9 @@ class TestDLPack:
         np.float16, np.float32, np.float64,
         np.complex64, np.complex128
     ])
-    def test_dtype_passthrough(self, dtype):
-        x = np.arange(5).astype(dtype)
+    @pytest.mark.parametrize("arr", new_and_old_dlpack())
+    def test_dtype_passthrough(self, arr, dtype):
+        x = arr.astype(dtype)
         y = np.from_dlpack(x)
 
         assert y.dtype == x.dtype
@@ -98,20 +117,26 @@ class TestDLPack:
         z = y[::2]
         assert z.__dlpack_device__() == (1, 0)
 
-    def dlpack_deleter_exception(self):
+    def dlpack_deleter_exception(self, max_version):
         x = np.arange(5)
-        _ = x.__dlpack__()
+        _ = x.__dlpack__(max_version=max_version)
         raise RuntimeError
 
-    def test_dlpack_destructor_exception(self):
+    @pytest.mark.parametrize("max_version", [None, (1, 0)])
+    def test_dlpack_destructor_exception(self, max_version):
         with pytest.raises(RuntimeError):
-            self.dlpack_deleter_exception()
+            self.dlpack_deleter_exception(max_version=max_version)
 
     def test_readonly(self):
         x = np.arange(5)
         x.flags.writeable = False
+        # Raises without max_version
         with pytest.raises(BufferError):
             x.__dlpack__()
+
+        # But works fine if we try with version
+        y = np.from_dlpack(x)
+        assert not y.flags.writeable
 
     def test_ndim0(self):
         x = np.array(1.0)
@@ -123,3 +148,23 @@ class TestDLPack:
                        buffer=np.ones(1000, dtype=np.uint8), order='F')
         y = np.from_dlpack(x)
         assert_array_equal(x, y)
+
+    def test_copy(self):
+        x = np.arange(5)
+
+        y = np.from_dlpack(x)
+        assert np.may_share_memory(x, y)
+        y = np.from_dlpack(x, copy=True)
+        assert not np.may_share_memory(x, y)
+
+    def test_device(self):
+        x = np.arange(5)
+        # requesting (1, 0), i.e. CPU device works in both calls:
+        x.__dlpack__(dl_device=(1, 0))
+        np.from_dlpack(x, device="cpu")
+        np.from_dlpack(x, device=None)
+
+        with pytest.raises(ValueError):
+            x.__dlpack__(dl_device=(10, 0))
+        with pytest.raises(ValueError):
+            np.from_dlpack(x, device="gpu")
