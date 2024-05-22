@@ -15,7 +15,7 @@
 /*
  * Deleter for a NumPy exported dlpack DLManagedTensor(Versioned).
  */
-NPY_NO_EXPORT static void
+static void
 array_dlpack_deleter(DLManagedTensorVersioned *self)
 {
     /*
@@ -476,7 +476,7 @@ array_dlpack(PyArrayObject *self,
     return res;
 }
 
-PyObject *
+NPY_NO_EXPORT PyObject *
 array_dlpack_device(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 {
     DLDevice device = array_get_dl_device(self);

@@ -7,8 +7,9 @@ from numpy.testing import assert_array_equal, IS_PYPY
 
 def new_and_old_dlpack():
     yield np.arange(5)
-    # Support only old version:
+
     class OldDLPack(np.ndarray):
+        # Support only the "old" version
         def __dlpack__(self, stream=None):
             return super().__dlpack__(stream=None)
 
