@@ -362,7 +362,7 @@ def test_thread_local_promotion_state():
         np._set_promotion_state("weak")
         b.wait()
         assert np._get_promotion_state() == "weak"
-        with pytest.warns(RuntimeWarning):
+        with pytest.raises(RuntimeWarning):
             np.float16(1) + 131008
 
     task1 = threading.Thread(target=legacy_no_warn)
