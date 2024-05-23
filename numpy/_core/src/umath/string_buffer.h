@@ -262,12 +262,12 @@ struct Buffer {
     char *buf;
     char *after;
 
-    inline Buffer<enc>()
+    inline Buffer()
     {
         buf = after = NULL;
     }
 
-    inline Buffer<enc>(char *buf_, npy_int64 elsize_)
+    inline Buffer(char *buf_, npy_int64 elsize_)
     {
         buf = buf_;
         after = buf_ + elsize_;
