@@ -119,7 +119,8 @@ static struct {
                 {NPY_CPU_FEATURE_ASIMDHP, "ASIMDHP"},
                 {NPY_CPU_FEATURE_ASIMDDP, "ASIMDDP"},
                 {NPY_CPU_FEATURE_ASIMDFHM, "ASIMDFHM"},
-                {NPY_CPU_FEATURE_SVE, "SVE"}};
+                {NPY_CPU_FEATURE_SVE, "SVE"},
+                {NPY_CPU_FEATURE_RVV, "RVV"}};
 
 
 NPY_VISIBILITY_HIDDEN PyObject *
@@ -325,7 +326,6 @@ npy__cpu_check_env(int disable, const char *env) {
         ) < 0) {
             return -1;
         }
-        return 0;
     }
 
     #define NOTSUPP_BODY \
@@ -811,6 +811,28 @@ npy__cpu_init_features(void)
         npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4] = npy__cpu_have[NPY_CPU_FEATURE_NEON];
     #endif
 #endif
+}
+
+/************** RISC-V 64 ***************/
+
+#elif defined(__riscv) && __riscv_xlen == 64
+
+#include <sys/auxv.h>
+
+#ifndef HWCAP_RVV
+    // https://github.com/torvalds/linux/blob/v6.8/arch/riscv/include/uapi/asm/hwcap.h#L24
+    #define COMPAT_HWCAP_ISA_V	(1 << ('V' - 'A'))
+#endif
+
+static void
+npy__cpu_init_features(void)
+{
+    memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
+
+    unsigned int hwcap = getauxval(AT_HWCAP);
+    if (hwcap & COMPAT_HWCAP_ISA_V) {
+        npy__cpu_have[NPY_CPU_FEATURE_RVV]  = 1;
+    }
 }
 
 /*********** Unsupported ARCH ***********/

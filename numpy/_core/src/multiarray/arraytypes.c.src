@@ -274,10 +274,10 @@ static int
 #endif
             ) {
         PyArray_Descr *descr = PyArray_DescrFromType(NPY_@TYPE@);
-
-        if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION || (
-                    npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN
-                        && !npy_give_promotion_warnings())) {
+        int promotion_state = get_npy_promotion_state();
+        if (promotion_state == NPY_USE_LEGACY_PROMOTION || (
+                    promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN
+                    && !npy_give_promotion_warnings())) {
             /*
              * This path will be taken both for the "promotion" case such as
              * `uint8_arr + 123` as well as the assignment case.

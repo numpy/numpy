@@ -20,6 +20,7 @@
 #include "conversion_utils.h"  /* for PyArray_TypestrConvert */
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "descriptor.h"
+#include "multiarraymodule.h"
 #include "alloc.h"
 #include "assert.h"
 #include "npy_buffer.h"
@@ -2701,7 +2702,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         Py_DECREF(ret);
         return NULL;
     }
-    obj = PyObject_GetAttrString(mod, "dtype");
+    obj = PyObject_GetAttr(mod, npy_ma_str_dtype);
     Py_DECREF(mod);
     if (obj == NULL) {
         Py_DECREF(ret);

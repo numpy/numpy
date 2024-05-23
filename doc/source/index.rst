@@ -21,10 +21,10 @@ NumPy documentation
 `Historical versions of documentation <https://numpy.org/doc/>`_
    
 **Useful links**:
-`Installation <https://numpy.org/install/>`_ |
-`Source Repository <https://github.com/numpy/numpy>`_ |
-`Issue Tracker <https://github.com/numpy/numpy/issues>`_ |
-`Q&A Support <https://numpy.org/gethelp/>`_ |
+`Installation <https://numpy.org/install/>`_ |
+`Source Repository <https://github.com/numpy/numpy>`_ |
+`Issue Tracker <https://github.com/numpy/numpy/issues>`_ |
+`Q&A Support <https://numpy.org/gethelp/>`_ |
 `Mailing List <https://mail.python.org/mailman/listinfo/numpy-discussion>`_
 
 NumPy is the fundamental package for scientific computing in Python. It is a
@@ -36,13 +36,15 @@ basic statistical operations, random simulation and much more.
 
 
 
-.. grid:: 2
+.. grid:: 1 1 2 2
+    :gutter: 2 3 4 4
 
     .. grid-item-card::
         :img-top: ../source/_static/index-images/getting_started.svg
+        :text-align: center
 
         Getting started
-        ^^^^^^^^^^^^^^^
+        ^^^
 
         New to NumPy? Check out the Absolute Beginner's Guide. It contains an
         introduction to NumPy's main concepts and links to additional tutorials.
@@ -58,9 +60,10 @@ basic statistical operations, random simulation and much more.
 
     .. grid-item-card::
         :img-top: ../source/_static/index-images/user_guide.svg
+        :text-align: center
 
         User guide
-        ^^^^^^^^^^
+        ^^^
 
         The user guide provides in-depth information on the
         key concepts of NumPy with useful background information and explanation.
@@ -76,9 +79,10 @@ basic statistical operations, random simulation and much more.
 
     .. grid-item-card::
         :img-top: ../source/_static/index-images/api.svg
+        :text-align: center
 
         API reference
-        ^^^^^^^^^^^^^
+        ^^^
 
         The reference guide contains a detailed description of the functions,
         modules, and objects included in NumPy. The reference describes how the
@@ -96,9 +100,10 @@ basic statistical operations, random simulation and much more.
 
     .. grid-item-card::
         :img-top: ../source/_static/index-images/contributor.svg
+        :text-align: center
 
         Contributor's guide
-        ^^^^^^^^^^^^^^^^^^^
+        ^^^
 
         Want to add to the codebase? Can help add translation or a flowchart to the
         documentation? The contributing guidelines will guide you through the

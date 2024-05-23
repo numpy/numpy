@@ -53,6 +53,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
+    strategy:
+      matrix:
+        version: ["3.10", "3.11", "3.12", "3.13-dev"]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
@@ -60,7 +63,7 @@ jobs:
         fetch-tags: true
     - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
-        python-version: '3.10'
+        python-version: ${{ matrix.version }}
     - uses: ./.github/meson_actions
 
   pypy:
@@ -279,3 +282,30 @@ jobs:
       run: |
         # Need the explicit `bash -c` here because `grep` returns exit code 1 for no matches
         bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/,vendored-meson/ | grep 'unreachable'"
+    - name: Check usage of install_tag
+      run: |
+        rm -rf build-install
+        ./vendored-meson/meson/meson.py install -C build --destdir ../build-install --tags=runtime,python-runtime,devel
+        python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy') --no-tests
+
+  free-threaded:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push'
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-tags: true
+    # TODO: replace with setup-python when there is support
+    - uses: deadsnakes/action@6c8b9b82fe0b4344f4b98f2775fcc395df45e494 # v3.1.0
+      with:
+          python-version: '3.13-dev'
+          nogil: true
+    # TODO: remove cython nightly install when cython does a release
+    - name: Install nightly Cython
+      run: |
+        pip install git+https://github.com/cython/cython
+    - uses: ./.github/meson_actions
+      env:
+        PYTHON_GIL: 0

@@ -172,6 +172,7 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps,
     auto plan = pocketfft::detail::get_plan<pocketfft::detail::pocketfft_r<T>>(npts);
     auto buffered = (step_out != sizeof(std::complex<T>));
     pocketfft::detail::arr<std::complex<T>> buff(buffered ? nout : 0);
+    auto nin_used = nin <= npts ? nin : npts;
     for (size_t i = 0; i < n_outer; i++, ip += si, fp += sf, op += so) {
         std::complex<T> *op_or_buff = buffered ? buff.data() : (std::complex<T> *)op;
         /*
@@ -183,10 +184,10 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps,
          * Pocketfft uses FFTpack order, R0,R1,I1,...Rn-1,In-1,Rn[,In] (last
          * for npts odd only). To make unpacking easy, we place the real data
          * offset by one in the buffer, so that we just have to move R0 and
-         * create I0=0. Note that copy_data will zero the In component for
+         * create I0=0. Note that copy_input will zero the In component for
          * even number of points.
          */
-        copy_input(ip, step_in, nin, &((T *)op_or_buff)[1], nout*2 - 1);
+        copy_input(ip, step_in, nin_used, &((T *)op_or_buff)[1], nout*2 - 1);
         plan->exec(&((T *)op_or_buff)[1], *(T *)fp, pocketfft::FORWARD);
         op_or_buff[0] = op_or_buff[0].imag();  // I0->R0, I0=0
         if (buffered) {

@@ -1235,6 +1235,19 @@ class TestPower:
             r = np.array([1, 1, np.inf, 0, np.inf, 0, np.inf, 0], dt)
             assert_equal(np.power(a, b), r)
 
+    def test_power_fast_paths(self):
+        # gh-26055
+        for dt in [np.float32, np.float64]:
+            a = np.array([0, 1.1, 2, 12e12, -10., np.inf, -np.inf], dt)
+            expected = np.array([0.0, 1.21, 4., 1.44e+26, 100, np.inf, np.inf])
+            result = np.power(a, 2.)
+            assert_array_max_ulp(result, expected.astype(dt), maxulp=1)
+
+            a = np.array([0, 1.1, 2, 12e12], dt)
+            expected = np.sqrt(a).astype(dt)
+            result = np.power(a, 0.5)
+            assert_array_max_ulp(result, expected, maxulp=1)
+
 
 class TestFloat_power:
     def test_type_conversion(self):

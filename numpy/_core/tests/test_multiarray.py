@@ -8452,10 +8452,9 @@ class TestArrayCreationCopyArgument(object):
         for copy in self.true_vals:
             res = np.array(arr, copy=copy)
             assert_array_equal(res, base_arr)
-            # An additional copy is currently forced by numpy in this case,
-            # you could argue, numpy does not trust the ArrayLike. This
-            # may be open for change:
-            assert res is not base_arr
+            # An additional copy is no longer forced by NumPy in this case.
+            # NumPy trusts the ArrayLike made a copy:
+            assert res is base_arr
 
         for copy in self.if_needed_vals + self.false_vals:
             res = np.array(arr, copy=copy)
@@ -8488,9 +8487,11 @@ class TestArrayCreationCopyArgument(object):
         assert_array_equal(arr, base_arr)
         assert arr is base_arr
 
-        # As of NumPy 2, explicitly passing copy=True does not trigger passing
-        # it to __array__ (deprecation warning is not triggered).
-        arr = np.array(a, copy=True)
+        # As of NumPy 2.1, explicitly passing copy=True does trigger passing
+        # it to __array__ (deprecation warning is triggered).
+        with pytest.warns(DeprecationWarning,
+                          match="__array__.*must implement.*'copy'"):
+            arr = np.array(a, copy=True)
         assert_array_equal(arr, base_arr)
         assert arr is not base_arr
 
@@ -8501,10 +8502,45 @@ class TestArrayCreationCopyArgument(object):
                     match=r"Unable to avoid copy(.|\n)*numpy_2_0_migration_guide.html"):
                 np.array(a, copy=False)
 
+    def test___array__copy_once(self):
+        size = 100
+        base_arr = np.zeros((size, size))
+        copy_arr = np.zeros((size, size))
+
+        class ArrayRandom:
+            def __init__(self):
+                self.true_passed = False
+
+            def __array__(self, dtype=None, copy=None):
+                if copy:
+                    self.true_passed = True
+                    return copy_arr
+                else:
+                    return base_arr
+
+        arr_random = ArrayRandom()
+        first_copy = np.array(arr_random, copy=True)
+        assert arr_random.true_passed
+        assert first_copy is copy_arr
+
+        arr_random = ArrayRandom()
+        no_copy = np.array(arr_random, copy=False)
+        assert not arr_random.true_passed
+        assert no_copy is base_arr
+
+        arr_random = ArrayRandom()
+        _ = np.array([arr_random], copy=True)
+        assert not arr_random.true_passed
+
+        arr_random = ArrayRandom()
+        second_copy = np.array(arr_random, copy=True, order="F")
+        assert arr_random.true_passed
+        assert second_copy is not copy_arr
+
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test__array__reference_leak(self):
         class NotAnArray:
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 raise NotImplementedError()
 
         x = NotAnArray()

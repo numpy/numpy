@@ -1,0 +1,1 @@
+* Scalars and 0D arrays are disallowed for `numpy.nonzero` and `numpy.ndarray.nonzero`.

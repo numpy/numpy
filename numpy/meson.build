@@ -273,7 +273,6 @@ pure_subdirs = [
   'matrixlib',
   'polynomial',
   'testing',
-  'tests',
   'typing',
   'rec',
   'char',
@@ -312,8 +311,13 @@ else
 endif
 
 foreach subdir: pure_subdirs
-  install_subdir(subdir, install_dir: np_dir, install_tag: 'python-runtime')
+  install_subdir(subdir, install_dir: np_dir, install_tag: 'python-runtime', exclude_directories: ['tests'])
+  if fs.is_dir(subdir/'tests')
+    install_subdir(subdir/'tests', install_dir: np_dir/subdir, install_tag: 'tests')
+  endif
 endforeach
+
+install_subdir('tests', install_dir: np_dir, install_tag: 'tests')
 
 compilers = {
   'C': cc,
@@ -362,7 +366,7 @@ conf_data.set('PYTHON_VERSION', py.language_version())
 # `np.show_config()`; needs some special handling for the case BLAS was found
 # but CBLAS not (and hence BLAS was also disabled)
 dependency_map = {
-  'LAPACK': lapack_dep,
+  'LAPACK': lapack,
 }
 if have_blas
   dependency_map += {'BLAS': blas}

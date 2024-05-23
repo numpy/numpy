@@ -1,0 +1,3 @@
+ * `numpy.save` now uses pickle protocol version 4 for saving arrays with
+   object dtype, which allows for pickle objects larger than 4GB and improves
+   saving speed by about 5% for large arrays.

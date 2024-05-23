@@ -1992,7 +1992,35 @@ PrintFloat_Printf_g(PyObject *obj, int precision)
     return PyUnicode_FromString(str);
 }
 
-
+/*
+ *  format_float_OSprintf_g(val, precision)
+ *
+ *  Print a floating point scalar using the system's printf function,
+ *  equivalent to:
+ *
+ *      printf("%.*g", precision, val);
+ *
+ *  for half/float/double, or replacing 'g' by 'Lg' for longdouble. This
+ *  method is designed to help cross-validate the format_float_* methods.
+ *
+ *  Parameters
+ *  ----------
+ *  val : python float or numpy floating scalar
+ *      Value to format.
+ *
+ *  precision : non-negative integer, optional
+ *      Precision given to printf.
+ *
+ *  Returns
+ *  -------
+ *  rep : string
+ *      The string representation of the floating point value
+ *
+ *  See Also
+ *  --------
+ *  format_float_scientific
+ *  format_float_positional
+ */
 static PyObject *
 printf_float_g(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {

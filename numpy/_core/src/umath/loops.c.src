@@ -471,13 +471,49 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 int
 }
 /**end repeat1**/
 
+static inline @type@
+_@TYPE@_squared_exponentiation_helper(@type@ base, @type@ exponent_two, int first_bit) {
+   // Helper method to calculate power using squared exponentiation
+   // The algorithm is partly unrolled. The second and third argument are the exponent//2 and the first bit of the exponent
+   @type@ out = first_bit ? base : 1;
+   while (exponent_two > 0) {
+        base *= base;
+        if (exponent_two & 1) {
+            out *= base;
+        }
+        exponent_two >>= 1;
+    }
+   return out;
+}
+
 NPY_NO_EXPORT void
 @TYPE@_power(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
+    if (steps[1]==0) {
+        // stride for second argument is 0
+        BINARY_DEFS
+        const @type@ in2 = *(@type@ *)ip2;
+        #if @SIGNED@
+            if (in2 < 0) {
+                npy_gil_error(PyExc_ValueError,
+                              "Integers to negative integer powers are not allowed.");
+                return;
+            }
+        #endif
+
+        int first_bit = in2 & 1;
+        @type@ in2start = in2 >> 1;
+
+        BINARY_LOOP_SLIDING {
+            @type@ in1 = *(@type@ *)ip1;
+
+            *((@type@ *) op1) = _@TYPE@_squared_exponentiation_helper(in1, in2start, first_bit);
+        }
+        return;
+    }
     BINARY_LOOP {
         @type@ in1 = *(@type@ *)ip1;
         @type@ in2 = *(@type@ *)ip2;
-        @type@ out;
 
 #if @SIGNED@
         if (in2 < 0) {
@@ -495,16 +531,9 @@ NPY_NO_EXPORT void
             continue;
         }
 
-        out = in2 & 1 ? in1 : 1;
+        int first_bit = in2 & 1;
         in2 >>= 1;
-        while (in2 > 0) {
-            in1 *= in1;
-            if (in2 & 1) {
-                out *= in1;
-            }
-            in2 >>= 1;
-        }
-        *((@type@ *) op1) = out;
+        *((@type@ *) op1) = _@TYPE@_squared_exponentiation_helper(in1, in2, first_bit);
     }
 }
 /**end repeat**/

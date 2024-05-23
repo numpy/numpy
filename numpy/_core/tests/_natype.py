@@ -16,7 +16,7 @@ def _create_binary_propagating_op(name, is_divmod=False):
             other is pd_NA
             or isinstance(other, (str, bytes))
             or isinstance(other, (numbers.Number, np.bool))
-            or util.is_array(other)
+            or isinstance(other, np.ndarray)
             and not other.shape
         ):
             # Need the other.shape clause to handle NumPy scalars,
@@ -27,7 +27,7 @@ def _create_binary_propagating_op(name, is_divmod=False):
             else:
                 return pd_NA
 
-        elif util.is_array(other):
+        elif isinstance(other, np.ndarray):
             out = np.empty(other.shape, dtype=object)
             out[:] = pd_NA
 
@@ -36,14 +36,14 @@ def _create_binary_propagating_op(name, is_divmod=False):
             else:
                 return out
 
-        elif is_cmp and isinstance(other, (date, time, timedelta)):
+        elif is_cmp and isinstance(other, (np.datetime64, np.timedelta64)):
             return pd_NA
 
-        elif isinstance(other, date):
+        elif isinstance(other, np.datetime64):
             if name in ["__sub__", "__rsub__"]:
                 return pd_NA
 
-        elif isinstance(other, timedelta):
+        elif isinstance(other, np.timedelta64):
             if name in ["__sub__", "__rsub__", "__add__", "__radd__"]:
                 return pd_NA
 

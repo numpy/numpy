@@ -12,7 +12,7 @@ extern NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[];
 #define NPY_USE_LEGACY_PROMOTION 0
 #define NPY_USE_WEAK_PROMOTION 1
 #define NPY_USE_WEAK_PROMOTION_AND_WARN 2
-extern NPY_NO_EXPORT int npy_promotion_state;
+
 extern NPY_NO_EXPORT PyObject *NO_NEP50_WARNING_CTX;
 extern NPY_NO_EXPORT PyObject *npy_DTypePromotionError;
 extern NPY_NO_EXPORT PyObject *npy_UFuncNoLoopError;
@@ -136,6 +136,12 @@ simple_cast_resolve_descriptors(
 
 NPY_NO_EXPORT int
 PyArray_InitializeCasts(void);
+
+NPY_NO_EXPORT int
+get_npy_promotion_state();
+
+NPY_NO_EXPORT void
+set_npy_promotion_state(int new_promotion_state);
 
 #ifdef __cplusplus
 }

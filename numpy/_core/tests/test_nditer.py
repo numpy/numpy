@@ -11,7 +11,6 @@ from numpy import array, arange, nditer, all
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises,
     IS_WASM, HAS_REFCOUNT, suppress_warnings, break_cycles,
-    NOGIL_BUILD
     )
 
 def iter_multi_index(i):
@@ -68,8 +67,8 @@ def test_iter_refcount():
     rc2_dt = sys.getrefcount(dt)
     it2 = it.copy()
     assert_(sys.getrefcount(a) > rc2_a)
-    if not NOGIL_BUILD:
-        # np.dtype('f4') is immortal in the nogil build
+    if sys.version_info < (3, 13):
+        # np.dtype('f4') is immortal after Python 3.13
         assert_(sys.getrefcount(dt) > rc2_dt)
     it = None
     assert_equal(sys.getrefcount(a), rc2_a)

@@ -183,6 +183,9 @@ repair-wheel-command = ""
 [tool.meson-python]
 meson = 'vendored-meson/meson/meson.py'
 
+[tool.meson-python.args]
+install = ['--tags=runtime,python-runtime,tests,devel']
+
 [tool.spin]
 package = 'numpy'
 
@@ -198,8 +201,10 @@ cli = 'vendored-meson/meson/meson.py'
   ".spin/cmds.py:lint",
 ]
 "Environments" = [
-  "spin.cmds.meson.run", ".spin/cmds.py:ipython",
-  ".spin/cmds.py:python", "spin.cmds.meson.gdb",
+  "spin.cmds.meson.run",
+  ".spin/cmds.py:ipython",
+  ".spin/cmds.py:python",
+  "spin.cmds.meson.gdb",
   "spin.cmds.meson.lldb"
 ]
 "Documentation" = [

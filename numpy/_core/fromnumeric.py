@@ -206,13 +206,13 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     return _wrapfunc(a, 'take', indices, axis=axis, out=out, mode=mode)
 
 
-def _reshape_dispatcher(a, newshape, order=None):
+def _reshape_dispatcher(a, /, shape=None, *, newshape=None, order=None,
+                        copy=None):
     return (a,)
 
 
-# not deprecated --- copy if necessary, view otherwise
 @array_function_dispatch(_reshape_dispatcher)
-def reshape(a, newshape, order='C'):
+def reshape(a, /, shape=None, *, newshape=None, order='C', copy=None):
     """
     Gives a new shape to an array without changing its data.
 
@@ -220,14 +220,18 @@ def reshape(a, newshape, order='C'):
     ----------
     a : array_like
         Array to be reshaped.
-    newshape : int or tuple of ints
+    shape : int or tuple of ints
         The new shape should be compatible with the original shape. If
         an integer, then the result will be a 1-D array of that length.
         One shape dimension can be -1. In this case, the value is
         inferred from the length of the array and remaining dimensions.
+    newshape : int or tuple of ints
+        .. deprecated:: 2.1
+            Replaced by ``shape`` argument. Retained for backward
+            compatibility.
     order : {'C', 'F', 'A'}, optional
-        Read the elements of `a` using this index order, and place the
-        elements into the reshaped array using this index order.  'C'
+        Read the elements of ``a`` using this index order, and place the
+        elements into the reshaped array using this index order. 'C'
         means to read / write the elements using C-like index order,
         with the last axis index changing fastest, back to the first
         axis index changing slowest. 'F' means to read / write the
@@ -236,8 +240,12 @@ def reshape(a, newshape, order='C'):
         the 'C' and 'F' options take no account of the memory layout of
         the underlying array, and only refer to the order of indexing.
         'A' means to read / write the elements in Fortran-like index
-        order if `a` is Fortran *contiguous* in memory, C-like order
+        order if ``a`` is Fortran *contiguous* in memory, C-like order
         otherwise.
+    copy : bool, optional
+        If ``True``, then the array data is copied. If ``None``, a copy will
+        only be made if it's required by ``order``. For ``False`` it raises
+        a ``ValueError`` if a copy cannot be avoided. Default: ``None``.
 
     Returns
     -------
@@ -255,9 +263,9 @@ def reshape(a, newshape, order='C'):
     It is not always possible to change the shape of an array without copying
     the data.
 
-    The `order` keyword gives the index ordering both for *fetching* the values
-    from `a`, and then *placing* the values into the output array.
-    For example, let's say you have an array:
+    The ``order`` keyword gives the index ordering both for *fetching*
+    the values from ``a``, and then *placing* the values into the output
+    array. For example, let's say you have an array:
 
     >>> a = np.arange(6).reshape((3, 2))
     >>> a
@@ -296,7 +304,26 @@ def reshape(a, newshape, order='C'):
            [3, 4],
            [5, 6]])
     """
-    return _wrapfunc(a, 'reshape', newshape, order=order)
+    if newshape is None and shape is None:
+        raise TypeError(
+            "reshape() missing 1 required positional argument: 'shape'")
+    if newshape is not None:
+        if shape is not None:
+            raise TypeError(
+                "You cannot specify 'newshape' and 'shape' arguments "
+                "at the same time.")
+        # Deprecated in NumPy 2.1, 2024-04-18
+        warnings.warn(
+            "`newshape` keyword argument is deprecated, "
+            "use `shape=...` or pass shape positionally instead. "
+            "(deprecated in NumPy 2.1)",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        shape = newshape
+    if copy is not None:
+        return _wrapfunc(a, 'reshape', shape, order=order, copy=copy)
+    return _wrapfunc(a, 'reshape', shape, order=order)
 
 
 def _choose_dispatcher(a, choices, out=None, mode=None):
