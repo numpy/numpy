@@ -1828,10 +1828,10 @@ _convert_from_str(PyObject *obj, int align)
                     break;
 
                 case NPY_DEPRECATED_STRINGLTR2:
-                    DEPRECATE(
-                        "Data type alias `a` was removed in NumPy 2.0. "
-                        "Use `S` alias instead."
-                    );
+                    if (DEPRECATE("Data type alias 'a' was deprecated in NumPy 2.0. "
+                                  "Use the 'S' alias instead.") < 0) {
+                        return NULL;
+                    }
                     check_num = NPY_STRING;
                     break;
 
@@ -1900,10 +1900,10 @@ _convert_from_str(PyObject *obj, int align)
         }
 
         if (strcmp(type, "a") == 0) {
-            DEPRECATE(
-                "Data type alias `a` was removed in NumPy 2.0. "
-                "Use `S` alias instead."
-            );
+            if (DEPRECATE("Data type alias 'a' was deprecated in NumPy 2.0. "
+                          "Use the 'S' alias instead.") < 0) {
+                return NULL;
+            }
         }
 
         /*
