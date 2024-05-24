@@ -933,6 +933,11 @@ class TestRandomDist:
         res = hashlib.sha256(actual.view(np.int8)).hexdigest()
         assert_(choice_hash == res)
 
+    def test_choice_array_size_empty_tuple(self):
+        assert_array_equal(random.choice([[1, 2, 3]], size=()), [1, 2, 3])
+        assert_array_equal(random.choice([[1]], size=()), [1])
+        assert_array_equal(random.choice([[1]], size=(), axis=1), [1])
+
     def test_bytes(self):
         random = Generator(MT19937(self.seed))
         actual = random.bytes(10)
