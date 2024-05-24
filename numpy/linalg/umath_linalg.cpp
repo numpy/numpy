@@ -1523,7 +1523,7 @@ eigh_wrapper(char JOBZ,
                            UPLO,
                            (fortran_int)dimensions[0], dispatch_scalar<typ>())) {
         LINEARIZE_DATA_t matrix_in_ld;
-        LINEARIZE_DATA_t eigenvectors_out_ld;
+        LINEARIZE_DATA_t eigenvectors_out_ld  = {}; /* silence uninitialized warning */
         LINEARIZE_DATA_t eigenvalues_out_ld;
 
         init_linearize_data(&matrix_in_ld,
@@ -2465,8 +2465,8 @@ eig_wrapper(char JOBVL,
                            (fortran_int)dimensions[0], dispatch_scalar<ftype>())) {
         LINEARIZE_DATA_t a_in;
         LINEARIZE_DATA_t w_out;
-        LINEARIZE_DATA_t vl_out;
-        LINEARIZE_DATA_t vr_out;
+        LINEARIZE_DATA_t vl_out = {}; /* silence uninitialized warning */
+        LINEARIZE_DATA_t vr_out = {}; /* silence uninitialized warning */
 
         init_linearize_data(&a_in,
                             geev_params.N, geev_params.N,
