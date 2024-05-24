@@ -253,14 +253,24 @@ class NpzFile(Mapping):
             bytes.close()
             if magic == format.MAGIC_PREFIX:
                 info = self.zip.NameToInfo[key]
-                assert info.compress_type == 0
-                self.zip.fp.seek(
-                    info.header_offset + len(info.FileHeader()) + 20
-                )
-                return format.read_array(self.zip.fp,
-                                         allow_pickle=self.allow_pickle,
-                                         pickle_kwargs=self.pickle_kwargs,
-                                         max_header_size=self.max_header_size)
+                if info.compress_type == 0:
+                    self.zip.fp.seek(
+                        info.header_offset + len(info.FileHeader()) + 20
+                    )
+                    return format.read_array(
+                        self.zip.fp,
+                        allow_pickle=self.allow_pickle,
+                        pickle_kwargs=self.pickle_kwargs,
+                        max_header_size=self.max_header_size
+                    )
+                else:
+                    bytes = self.zip.open(key)
+                    return format.read_array(
+                        bytes,
+                        allow_pickle=self.allow_pickle,
+                        pickle_kwargs=self.pickle_kwargs,
+                        max_header_size=self.max_header_size
+                    )
             else:
                 return self.zip.read(key)
         else:
