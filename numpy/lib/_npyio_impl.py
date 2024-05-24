@@ -252,7 +252,7 @@ class NpzFile(Mapping):
             magic = bytes.read(len(format.MAGIC_PREFIX))
             bytes.close()
             if magic == format.MAGIC_PREFIX:
-                info = self.zip.NameToInfo[key]
+                info = self.zip.getinfo(key)
                 if info.compress_type == 0:
                     self.zip.fp.seek(
                         info.header_offset + len(info.FileHeader()) + 20
