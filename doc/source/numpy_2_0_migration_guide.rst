@@ -246,6 +246,7 @@ removed member          migration guideline
 add_docstring           It's still available as ``np.lib.add_docstring``.
 add_newdoc              It's still available as ``np.lib.add_newdoc``.
 add_newdoc_ufunc        It's an internal function and doesn't have a replacement.
+alltrue                 Use ``all`` instead.
 asfarray                Use ``np.asarray`` with a float dtype instead.
 byte_bounds             Now it's available under ``np.lib.array_utils.byte_bounds``
 cast                    Use ``np.asarray(arr, dtype=dtype)`` instead.
@@ -253,6 +254,7 @@ cfloat                  Use ``np.complex128`` instead.
 clongfloat              Use ``np.clongdouble`` instead.
 compat                  There's no replacement, as Python 2 is no longer supported.
 complex\_               Use ``np.complex128`` instead.
+cumproduct              Use ``np.cumprod`` instead.
 DataSource              It's still available as ``np.lib.npyio.DataSource``.
 deprecate               Emit ``DeprecationWarning`` with ``warnings.warn`` directly,
                         or use ``typing.deprecated``.
@@ -286,6 +288,7 @@ longfloat               Use ``np.longdouble`` instead.
 lookfor                 Search NumPy's documentation directly.
 obj2sctype              Use ``np.dtype(obj).type`` instead.
 PINF                    Use ``np.inf`` instead.
+product                 Use ``np.prod`` instead.
 PZERO                   Use ``0.0`` instead.
 recfromcsv              Use ``np.genfromtxt`` with comma delimiter instead.
 recfromtxt              Use ``np.genfromtxt`` instead.
@@ -301,6 +304,7 @@ set_string_function     Use ``np.set_printoptions`` instead with a formatter
                         for custom printing of NumPy objects.
 singlecomplex           Use ``np.complex64`` instead.
 string\_                Use ``np.bytes_`` instead.
+sometrue                Use ``any`` instead.
 source                  Use ``inspect.getsource`` instead.
 tracemalloc_domain      It's now available from ``np.lib``.
 unicode\_               Use ``np.str_`` instead.
