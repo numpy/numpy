@@ -539,39 +539,33 @@ const f2c_doublecomplex numeric_limits<f2c_doublecomplex>::nan = {NPY_NAN, NPY_N
  * column_strides: the number of bytes between consecutive columns.
  * output_lead_dim: BLAS/LAPACK-side leading dimension, in elements
  */
-typedef struct linearize_data_struct
+struct linearize_data
 {
   npy_intp rows;
   npy_intp columns;
   npy_intp row_strides;
   npy_intp column_strides;
   npy_intp output_lead_dim;
-} LINEARIZE_DATA_t;
+};
 
-static inline void
-init_linearize_data_ex(LINEARIZE_DATA_t *lin_data,
-                       npy_intp rows,
+static inline
+linearize_data init_linearize_data_ex(npy_intp rows,
                        npy_intp columns,
                        npy_intp row_strides,
                        npy_intp column_strides,
                        npy_intp output_lead_dim)
 {
-    lin_data->rows = rows;
-    lin_data->columns = columns;
-    lin_data->row_strides = row_strides;
-    lin_data->column_strides = column_strides;
-    lin_data->output_lead_dim = output_lead_dim;
+    return {rows, columns, row_strides, column_strides, output_lead_dim};
 }
 
-static inline void
-init_linearize_data(LINEARIZE_DATA_t *lin_data,
-                    npy_intp rows,
+static inline
+linearize_data init_linearize_data(npy_intp rows,
                     npy_intp columns,
                     npy_intp row_strides,
                     npy_intp column_strides)
 {
-    init_linearize_data_ex(
-        lin_data, rows, columns, row_strides, column_strides, columns);
+    return init_linearize_data_ex(
+        rows, columns, row_strides, column_strides, columns);
 }
 
 #if _UMATH_LINALG_DEBUG
@@ -601,7 +595,7 @@ dump_ufunc_object(PyUFuncObject* ufunc)
 }
 
 static inline void
-dump_linearize_data(const char* name, const LINEARIZE_DATA_t* params)
+dump_linearize_data(const char* name, const linearize_data* params)
 {
     TRACE_TXT("\n\t%s rows: %zd columns: %zd"\
               "\n\t\trow_strides: %td column_strides: %td"\
@@ -843,7 +837,7 @@ template<typename typ>
 static inline void *
 linearize_matrix(typ *dst,
                         typ *src,
-                        const LINEARIZE_DATA_t* data)
+                        const linearize_data* data)
 {
     using ftyp = fortran_type_t<typ>;
     if (dst) {
@@ -888,7 +882,7 @@ template<typename typ>
 static inline void *
 delinearize_matrix(typ *dst,
                           typ *src,
-                          const LINEARIZE_DATA_t* data)
+                          const linearize_data* data)
 {
 using ftyp = fortran_type_t<typ>;
 
@@ -935,7 +929,7 @@ using ftyp = fortran_type_t<typ>;
 
 template<typename typ>
 static inline void
-nan_matrix(typ *dst, const LINEARIZE_DATA_t* data)
+nan_matrix(typ *dst, const linearize_data* data)
 {
     int i, j;
     for (i = 0; i < data->rows; i++) {
@@ -951,7 +945,7 @@ nan_matrix(typ *dst, const LINEARIZE_DATA_t* data)
 
 template<typename typ>
 static inline void
-zero_matrix(typ *dst, const LINEARIZE_DATA_t* data)
+zero_matrix(typ *dst, const linearize_data* data)
 {
     int i, j;
     for (i = 0; i < data->rows; i++) {
@@ -1166,9 +1160,8 @@ slogdet(char **args,
     tmp_buff = (char *)malloc(matrix_size + pivot_size);
 
     if (tmp_buff) {
-        LINEARIZE_DATA_t lin_data;
         /* swapped steps to get matrix in FORTRAN order */
-        init_linearize_data(&lin_data, m, m, steps[1], steps[0]);
+        linearize_data lin_data = init_linearize_data(m, m, steps[1], steps[0]);
         BEGIN_OUTER_LOOP_3
             linearize_matrix((typ*)tmp_buff, (typ*)args[0], &lin_data);
             slogdet_single_element(m,
@@ -1218,11 +1211,11 @@ det(char **args,
     tmp_buff = (char *)malloc(matrix_size + pivot_size);
 
     if (tmp_buff) {
-        LINEARIZE_DATA_t lin_data;
+        /* swapped steps to get matrix in FORTRAN order */
+        linearize_data lin_data = init_linearize_data(m, m, steps[1], steps[0]);
+
         typ sign;
         basetyp logdet;
-        /* swapped steps to get matrix in FORTRAN order */
-        init_linearize_data(&lin_data, m, m, steps[1], steps[0]);
 
         BEGIN_OUTER_LOOP_2
             linearize_matrix((typ*)tmp_buff, (typ*)args[0], &lin_data);
@@ -1522,20 +1515,11 @@ eigh_wrapper(char JOBZ,
                            JOBZ,
                            UPLO,
                            (fortran_int)dimensions[0], dispatch_scalar<typ>())) {
-        LINEARIZE_DATA_t matrix_in_ld;
-        LINEARIZE_DATA_t eigenvectors_out_ld  = {}; /* silence uninitialized warning */
-        LINEARIZE_DATA_t eigenvalues_out_ld;
-
-        init_linearize_data(&matrix_in_ld,
-                            eigh_params.N, eigh_params.N,
-                            steps[1], steps[0]);
-        init_linearize_data(&eigenvalues_out_ld,
-                            1, eigh_params.N,
-                            0, steps[2]);
+        linearize_data matrix_in_ld = init_linearize_data(eigh_params.N, eigh_params.N, steps[1], steps[0]);
+        linearize_data eigenvalues_out_ld = init_linearize_data(1, eigh_params.N, 0, steps[2]);
+        linearize_data eigenvectors_out_ld  = {}; /* silence uninitialized warning */
         if ('V' == eigh_params.JOBZ) {
-            init_linearize_data(&eigenvectors_out_ld,
-                                eigh_params.N, eigh_params.N,
-                                steps[4], steps[3]);
+            eigenvectors_out_ld = init_linearize_data(eigh_params.N, eigh_params.N, steps[4], steps[3]);
         }
 
         for (iter = 0; iter < outer_dim; ++iter) {
@@ -1739,11 +1723,9 @@ using ftyp = fortran_type_t<typ>;
     n = (fortran_int)dimensions[0];
     nrhs = (fortran_int)dimensions[1];
     if (init_gesv(&params, n, nrhs)) {
-        LINEARIZE_DATA_t a_in, b_in, r_out;
-
-        init_linearize_data(&a_in, n, n, steps[1], steps[0]);
-        init_linearize_data(&b_in, nrhs, n, steps[3], steps[2]);
-        init_linearize_data(&r_out, nrhs, n, steps[5], steps[4]);
+        linearize_data a_in = init_linearize_data(n, n, steps[1], steps[0]);
+        linearize_data b_in = init_linearize_data(nrhs, n, steps[3], steps[2]);
+        linearize_data r_out = init_linearize_data(nrhs, n, steps[5], steps[4]);
 
         BEGIN_OUTER_LOOP_3
             int not_ok;
@@ -1778,10 +1760,9 @@ using ftyp = fortran_type_t<typ>;
 
     n = (fortran_int)dimensions[0];
     if (init_gesv(&params, n, 1)) {
-        LINEARIZE_DATA_t a_in, b_in, r_out;
-        init_linearize_data(&a_in, n, n, steps[1], steps[0]);
-        init_linearize_data(&b_in, 1, n, 1, steps[2]);
-        init_linearize_data(&r_out, 1, n, 1, steps[3]);
+        linearize_data a_in = init_linearize_data(n, n, steps[1], steps[0]);
+        linearize_data b_in = init_linearize_data(1, n, 1, steps[2]);
+        linearize_data r_out = init_linearize_data(1, n, 1, steps[3]);
 
         BEGIN_OUTER_LOOP_3
             int not_ok;
@@ -1815,9 +1796,8 @@ using ftyp = fortran_type_t<typ>;
 
     n = (fortran_int)dimensions[0];
     if (init_gesv(&params, n, n)) {
-        LINEARIZE_DATA_t a_in, r_out;
-        init_linearize_data(&a_in, n, n, steps[1], steps[0]);
-        init_linearize_data(&r_out, n, n, steps[3], steps[2]);
+        linearize_data a_in = init_linearize_data(n, n, steps[1], steps[0]);
+        linearize_data r_out = init_linearize_data(n, n, steps[3], steps[2]);
 
         BEGIN_OUTER_LOOP_2
             int not_ok;
@@ -1976,9 +1956,8 @@ cholesky(char uplo, char **args, npy_intp const *dimensions, npy_intp const *ste
 
     n = (fortran_int)dimensions[0];
     if (init_potrf(&params, uplo, n)) {
-        LINEARIZE_DATA_t a_in, r_out;
-        init_linearize_data(&a_in, n, n, steps[1], steps[0]);
-        init_linearize_data(&r_out, n, n, steps[3], steps[2]);
+        linearize_data a_in = init_linearize_data(n, n, steps[1], steps[0]);
+        linearize_data r_out = init_linearize_data(n, n, steps[3], steps[2]);
         BEGIN_OUTER_LOOP_2
             int not_ok;
             linearize_matrix(params.A, (ftyp*)args[0], &a_in);
@@ -2463,27 +2442,25 @@ eig_wrapper(char JOBVL,
     if (init_geev(&geev_params,
                            JOBVL, JOBVR,
                            (fortran_int)dimensions[0], dispatch_scalar<ftype>())) {
-        LINEARIZE_DATA_t a_in;
-        LINEARIZE_DATA_t w_out;
-        LINEARIZE_DATA_t vl_out = {}; /* silence uninitialized warning */
-        LINEARIZE_DATA_t vr_out = {}; /* silence uninitialized warning */
+        linearize_data vl_out = {}; /* silence uninitialized warning */
+        linearize_data vr_out = {}; /* silence uninitialized warning */
 
-        init_linearize_data(&a_in,
+        linearize_data a_in = init_linearize_data(
                             geev_params.N, geev_params.N,
                             steps[1], steps[0]);
         steps += 2;
-        init_linearize_data(&w_out,
+        linearize_data w_out = init_linearize_data(
                             1, geev_params.N,
                             0, steps[0]);
         steps += 1;
         if ('V' == geev_params.JOBVL) {
-            init_linearize_data(&vl_out,
+            vl_out = init_linearize_data(
                                 geev_params.N, geev_params.N,
                                 steps[1], steps[0]);
             steps += 2;
         }
         if ('V' == geev_params.JOBVR) {
-            init_linearize_data(&vr_out,
+            vr_out = init_linearize_data(
                                 geev_params.N, geev_params.N,
                                 steps[1], steps[0]);
         }
@@ -2951,13 +2928,13 @@ using basetyp = basetype_t<typ>;
                    (fortran_int)dimensions[0],
                    (fortran_int)dimensions[1],
 dispatch_scalar<typ>())) {
-        LINEARIZE_DATA_t a_in, u_out = {}, s_out = {}, v_out = {};
+        linearize_data u_out = {}, s_out = {}, v_out = {};
         fortran_int min_m_n = params.M < params.N ? params.M : params.N;
 
-        init_linearize_data(&a_in, params.N, params.M, steps[1], steps[0]);
+        linearize_data a_in = init_linearize_data(params.N, params.M, steps[1], steps[0]);
         if ('N' == params.JOBZ) {
             /* only the singular values are wanted */
-            init_linearize_data(&s_out, 1, min_m_n, 0, steps[2]);
+            s_out = init_linearize_data(1, min_m_n, 0, steps[2]);
         } else {
             fortran_int u_columns, v_rows;
             if ('S' == params.JOBZ) {
@@ -2967,13 +2944,13 @@ dispatch_scalar<typ>())) {
                 u_columns = params.M;
                 v_rows = params.N;
             }
-            init_linearize_data(&u_out,
+            u_out = init_linearize_data(
                                 u_columns, params.M,
                                 steps[3], steps[2]);
-            init_linearize_data(&s_out,
+            s_out = init_linearize_data(
                                 1, min_m_n,
                                 0, steps[4]);
-            init_linearize_data(&v_out,
+            v_out = init_linearize_data(
                                 params.N, v_rows,
                                 steps[6], steps[5]);
         }
@@ -3294,10 +3271,9 @@ using ftyp = fortran_type_t<typ>;
     n = (fortran_int)dimensions[1];
 
     if (init_geqrf(&params, m, n)) {
-        LINEARIZE_DATA_t a_in, tau_out;
 
-        init_linearize_data(&a_in, n, m, steps[1], steps[0]);
-        init_linearize_data(&tau_out, 1, fortran_int_min(m, n), 1, steps[2]);
+        linearize_data a_in = init_linearize_data(n, m, steps[1], steps[0]);
+        linearize_data tau_out = init_linearize_data(1, fortran_int_min(m, n), 1, steps[2]);
 
         BEGIN_OUTER_LOOP_2
             int not_ok;
@@ -3588,11 +3564,9 @@ using ftyp = fortran_type_t<typ>;
     n = (fortran_int)dimensions[1];
 
     if (init_gqr(&params, m, n)) {
-        LINEARIZE_DATA_t a_in, tau_in, q_out;
-
-        init_linearize_data(&a_in, n, m, steps[1], steps[0]);
-        init_linearize_data(&tau_in, 1, fortran_int_min(m, n), 1, steps[2]);
-        init_linearize_data(&q_out, fortran_int_min(m, n), m, steps[4], steps[3]);
+        linearize_data a_in = init_linearize_data(n, m, steps[1], steps[0]);
+        linearize_data tau_in = init_linearize_data(1, fortran_int_min(m, n), 1, steps[2]);
+        linearize_data q_out = init_linearize_data(fortran_int_min(m, n), m, steps[4], steps[3]);
 
         BEGIN_OUTER_LOOP_3
             int not_ok;
@@ -3644,11 +3618,9 @@ using ftyp = fortran_type_t<typ>;
 
 
     if (init_gqr_complete(&params, m, n)) {
-        LINEARIZE_DATA_t a_in, tau_in, q_out;
-
-        init_linearize_data(&a_in, n, m, steps[1], steps[0]);
-        init_linearize_data(&tau_in, 1, fortran_int_min(m, n), 1, steps[2]);
-        init_linearize_data(&q_out, m, m, steps[4], steps[3]);
+        linearize_data a_in = init_linearize_data(n, m, steps[1], steps[0]);
+        linearize_data tau_in = init_linearize_data(1, fortran_int_min(m, n), 1, steps[2]);
+        linearize_data q_out = init_linearize_data(m, m, steps[4], steps[3]);
 
         BEGIN_OUTER_LOOP_3
             int not_ok;
@@ -4051,13 +4023,11 @@ using basetyp = basetype_t<typ>;
     excess = m - n;
 
     if (init_gelsd(&params, m, n, nrhs, dispatch_scalar<ftyp>{})) {
-        LINEARIZE_DATA_t a_in, b_in, x_out, s_out, r_out;
-
-        init_linearize_data(&a_in, n, m, steps[1], steps[0]);
-        init_linearize_data_ex(&b_in, nrhs, m, steps[3], steps[2], fortran_int_max(n, m));
-        init_linearize_data_ex(&x_out, nrhs, n, steps[5], steps[4], fortran_int_max(n, m));
-        init_linearize_data(&r_out, 1, nrhs, 1, steps[6]);
-        init_linearize_data(&s_out, 1, fortran_int_min(n, m), 1, steps[7]);
+        linearize_data a_in = init_linearize_data(n, m, steps[1], steps[0]);
+        linearize_data b_in = init_linearize_data_ex(nrhs, m, steps[3], steps[2], fortran_int_max(n, m));
+        linearize_data x_out = init_linearize_data_ex(nrhs, n, steps[5], steps[4], fortran_int_max(n, m));
+        linearize_data r_out = init_linearize_data(1, nrhs, 1, steps[6]);
+        linearize_data s_out = init_linearize_data(1, fortran_int_min(n, m), 1, steps[7]);
 
         BEGIN_OUTER_LOOP_7
             int not_ok;
