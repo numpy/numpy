@@ -504,6 +504,13 @@ def test_creation_functions():
     assert np.empty(3, dtype="T")[0] == ""
 
 
+def test_concatenate(string_list):
+    sarr = np.array(string_list, dtype="T")
+    sarr_cat = np.array(string_list + string_list, dtype="T")
+
+    assert_array_equal(np.concatenate([sarr], axis=0), sarr)
+
+
 def test_create_with_copy_none(string_list):
     arr = np.array(string_list, dtype=StringDType())
     # create another stringdtype array with an arena that has a different

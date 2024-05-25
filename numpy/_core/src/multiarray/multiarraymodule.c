@@ -467,7 +467,6 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
         if (ret == NULL) {
             return NULL;
         }
-        assert(PyArray_DESCR(ret) == descr);
     }
 
     /*
