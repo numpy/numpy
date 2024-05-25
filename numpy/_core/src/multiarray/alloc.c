@@ -428,15 +428,15 @@ PyDataMem_SetHandler(PyObject *handler)
 {
     PyObject *old_handler;
     PyObject *token;
-    if (!PyCapsule_IsValid(handler, MEM_HANDLER_CAPSULE_NAME)) {
-        PyErr_SetString(PyExc_ValueError, "Capsule must be named 'mem_handler'");
-        return NULL;
-    }
     if (PyContextVar_Get(current_handler, NULL, &old_handler)) {
         return NULL;
     }
     if (handler == NULL) {
         handler = PyDataMem_DefaultHandler;
+    }
+    if (!PyCapsule_IsValid(handler, MEM_HANDLER_CAPSULE_NAME)) {
+        PyErr_SetString(PyExc_ValueError, "Capsule must be named 'mem_handler'");
+        return NULL;
     }
     token = PyContextVar_Set(current_handler, handler);
     if (token == NULL) {
