@@ -466,25 +466,13 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                 finalline = ''
                 origfinalline = ''
             else:
-                if not strictf77:
-                    # F90 continuation
-                    r = cont1.match(l)
-                    if r:
-                        l = r.group('line')  # Continuation follows ..
-                    if cont:
-                        ll = ll + cont2.match(l).group('line')
-                        finalline = ''
-                        origfinalline = ''
-                    else:
-                        # clean up line beginning from possible digits.
-                        l = '     ' + l[5:]
-                        if localdolowercase:
-                            finalline = ll.lower()
-                        else:
-                            finalline = ll
-                        origfinalline = ll
-                        ll = l
-                    cont = (r is not None)
+                r = cont1.match(l)
+                if r:
+                    l = r.group('line') # Continuation follows ..
+                if cont:
+                    ll = ll + cont2.match(l).group('line')
+                    finalline = ''
+                    origfinalline = ''
                 else:
                     # clean up line beginning from possible digits.
                     l = '     ' + l[5:]
