@@ -76,3 +76,15 @@ class TestIncludeFiles(util.F2PyTest):
         exp = 7.0
         res = self.module.add(3.0, 4.0)
         assert  exp == res
+
+class TestF77Comments(util.F2PyTest):
+    # Check that comments are stripped from F77 continuation lines
+    sources = [util.getpath("tests", "src", "regression", "f77comments.f")]
+
+    @pytest.mark.slow
+    def test_gh26148(self):
+        x1 = np.array(3, dtype=np.int32)
+        x2 = np.array(5, dtype=np.int32)
+        res=self.module.testsub(x1, x2)
+        assert(res[0] == 8)
+        assert(res[1] == 15)
