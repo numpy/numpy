@@ -1079,6 +1079,54 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     array([[ 2.,  2., -1.],
            [ 2.,  2., -1.]])
 
+    The `varargs` argument define the spacing between sample points in the
+    input array. It can take two forms:
+
+    1. Receives scalars representing sample distance:
+
+    >>> dx = 2
+    >>> x = np.array([0., 2., 4., 6., 8.])
+    >>> y = x ** 2
+    >>> np.gradient(y, dx, edge_order=2)
+    array([ 0.,  4.,  8., 12., 16.])  # y = 2x
+
+    2. Receives arrays specifying coordinates:
+
+    >>> np.gradient(y, x, edge_order=2)
+    array([ 0.,  4.,  8., 12., 16.])  # y = 2x
+
+    It's possible to provide different data for spacing along each dimension.
+    The number of arguments must match the number of dimensions in the input
+    data.
+
+    >>> dx = 2
+    >>> dy = 3
+    >>> x = np.arange(0, 6, dx)
+    >>> y = np.arange(0, 9, dy)
+    >>> xs, ys = np.meshgrid(x, y)
+    >>> zs = xs + ys
+    zs
+    array([[ 0,  2,  4],
+           [ 3,  5,  7],
+           [ 6,  8, 10]])
+    >>> np.gradient(zs, dy, dx)  # Passing two scalars
+    (array([[1., 1., 1.],
+            [1., 1., 1.],
+            [1., 1., 1.]]),
+     array([[1., 1., 1.],
+            [1., 1., 1.],
+            [1., 1., 1.]]))
+
+    Mixing scalars and arrays is also allowed:
+
+    >>> np.gradient(zs, y, dx)  # Passing one array and one scalar
+    (array([[1., 1., 1.],
+            [1., 1., 1.],
+            [1., 1., 1.]]),
+     array([[1., 1., 1.],
+            [1., 1., 1.],
+            [1., 1., 1.]]))
+
     Notes
     -----
     Assuming that :math:`f\\in C^{3}` (i.e., :math:`f` has at least 3 continuous
