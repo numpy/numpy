@@ -992,7 +992,7 @@ cdef class Generator:
         if a.ndim == 0:
             return idx
 
-        if not is_scalar and idx.ndim == 0:
+        if not is_scalar and idx.ndim == 0 and a.ndim == 1:
             # If size == () then the user requested a 0-d array as opposed to
             # a scalar object when size is None. However a[idx] is always a
             # scalar and not an array. So this makes sure the result is an
