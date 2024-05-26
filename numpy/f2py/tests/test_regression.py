@@ -88,3 +88,15 @@ class TestF77Comments(util.F2PyTest):
         res=self.module.testsub(x1, x2)
         assert(res[0] == 8)
         assert(res[1] == 15)
+
+class TestF90Contiuation(util.F2PyTest):
+    # Check that comments are stripped from F90 continuation lines
+    sources = [util.getpath("tests", "src", "regression", "f90continuation.f90")]
+
+    @pytest.mark.slow
+    def test_gh26148b(self):
+        x1 = np.array(3, dtype=np.int32)
+        x2 = np.array(5, dtype=np.int32)
+        res=self.module.testsub(x1, x2)
+        assert(res[0] == 8)
+        assert(res[1] == 15)
