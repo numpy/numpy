@@ -1024,7 +1024,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
 
     Examples
     --------
-    >>> f = np.array([1, 2, 4, 7, 11, 16], dtype=float)
+    >>> f = np.array([1, 2, 4, 7, 11, 16])
     >>> np.gradient(f)
     array([1. , 1.5, 2.5, 3.5, 4.5, 5. ])
     >>> np.gradient(f, 2)
@@ -1040,7 +1040,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
 
     Or a non uniform one:
 
-    >>> x = np.array([0., 1., 1.5, 3.5, 4., 6.], dtype=float)
+    >>> x = np.array([0., 1., 1.5, 3.5, 4., 6.])
     >>> np.gradient(f, x)
     array([1. ,  3. ,  3.5,  6.7,  6.9,  2.5])
 
@@ -1048,20 +1048,22 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     axis. In this example the first array stands for the gradient in
     rows and the second one in columns direction:
 
-    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=float))
-    [array([[ 2.,  2., -1.],
-           [ 2.,  2., -1.]]), array([[1. , 2.5, 4. ],
-           [1. , 1. , 1. ]])]
+    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]]))
+    (array([[ 2.,  2., -1.],
+            [ 2.,  2., -1.]]),
+     array([[1. , 2.5, 4. ],
+            [1. , 1. , 1. ]]))
 
     In this example the spacing is also specified:
     uniform for axis=0 and non uniform for axis=1
 
     >>> dx = 2.
     >>> y = [1., 1.5, 3.5]
-    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=float), dx, y)
-    [array([[ 1. ,  1. , -0.5],
-           [ 1. ,  1. , -0.5]]), array([[2. , 2. , 2. ],
-           [2. , 1.7, 0.5]])]
+    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]]), dx, y)
+    (array([[ 1. ,  1. , -0.5],
+            [ 1. ,  1. , -0.5]]),
+     array([[2. , 2. , 2. ],
+            [2. , 1.7, 0.5]]))
 
     It is possible to specify how boundaries are treated using `edge_order`
 
