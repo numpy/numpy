@@ -83,7 +83,8 @@ Extensibility
 
 We aim to continue making it easier to extend NumPy. The primary topic here is to
 improve the dtype system - see for example :ref:`NEP41` and related NEPs linked
-from it. In NumPy 2.0, a new C API for user-defined dtypes was made public. We aim
+from it. In NumPy 2.0, a `new C API for user-defined dtypes <https://numpy.org/devdocs/reference/c-api/array.html#custom-data-types>`__
+was made public. We aim
 to encourage its usage and improve this API further.
 
 Ideas for new dtypes that may be developed outside of the main NumPy repository
@@ -145,11 +146,14 @@ NumPy 2.0 stabilization & downstream usage
 
 We made a very large amount of changes (and improvements!) in NumPy 2.0. The
 release process has taken a very long time, and part of the ecosystem is still
-catching up. We may need to slow down for a while, and possible help the rest
+catching up. We may need to slow down for a while, and possibly help the rest
 of the ecosystem with adapting to the ABI and API changes.
 
 We will need to assess the costs and benefits to NumPy itself,
-downstream package authors, and end users. Based on that assessment
+downstream package authors, and end users. Based on that assessment, we need to
+come to a conclusion on whether it's realistic to do another ABI-breaking
+release again in the future or not. This will also inform the future evolution
+of our C API.
 
 
 Security
@@ -175,7 +179,7 @@ Maintenance
   - dtypes that support missing values
 
 - Write a strategy on how to deal with overlap between NumPy and SciPy for ``linalg``.
-- Deprecate ``np.matrix`` (very slowly) - this is feasible ones the switch-over
+- Deprecate ``np.matrix`` (very slowly) - this is feasible once the switch-over
   from sparse matrices to sparse arrays in SciPy is complete.
 - Add new indexing modes for "vectorized indexing" and "outer indexing" (see :ref:`NEP21`).
 - Make the polynomial API easier to use.
