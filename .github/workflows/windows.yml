@@ -37,7 +37,7 @@ jobs:
 
     - name: Install build dependencies from PyPI
       run: |
-        python -m pip install spin Cython
+        python -m pip install -r requirements/build_requirements.txt
 
     - name: Install pkg-config
       run: |
