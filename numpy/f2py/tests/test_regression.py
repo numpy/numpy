@@ -2,6 +2,7 @@ import os
 import pytest
 
 import numpy as np
+import numpy.testing as npt
 
 from . import util
 
@@ -88,6 +89,13 @@ class TestF77Comments(util.F2PyTest):
         res=self.module.testsub(x1, x2)
         assert(res[0] == 8)
         assert(res[1] == 15)
+
+    @pytest.mark.slow
+    def test_gh26466(self):
+        # Check that comments after PARAMETER directions are stripped
+        expected = np.arange(1, 11, dtype=np.float32)*2
+        res=self.module.testsub2()
+        npt.assert_allclose(expected, res)
 
 class TestF90Contiuation(util.F2PyTest):
     # Check that comments are stripped from F90 continuation lines

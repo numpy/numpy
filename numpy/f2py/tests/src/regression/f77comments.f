@@ -11,3 +11,16 @@
 
       RETURN
       END SUBROUTINE TESTSUB
+
+      SUBROUTINE TESTSUB2(OUTPUT)
+      IMPLICIT NONE
+      INTEGER, PARAMETER :: N = 10 ! Array dimension
+      REAL, INTENT(OUT) :: OUTPUT(N)
+      INTEGER :: I
+
+      DO I = 1, N
+         OUTPUT(I) = I * 2.0
+      END DO
+
+      RETURN
+      END
