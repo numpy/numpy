@@ -52,3 +52,11 @@ if [[ $RUNNER_OS == "Windows" ]]; then
     # delvewheel is the equivalent of delocate/auditwheel for windows.
     python -m pip install delvewheel wheel
 fi
+
+# TODO: delete along with enabling build isolation by unsetting
+# CIBW_BUILD_FRONTEND when numpy is buildable under free-threaded
+# python with a released version of cython
+FREE_THREADED_BUILD="$(python -c"import sysconfig; print(bool(sysconfig.get_config_var('Py_GIL_DISABLED')))")"
+if [[ $FREE_THREADED_BUILD == "True" ]]; then
+    python -m pip install git+https://github.com/cython/cython meson-python ninja
+fi
