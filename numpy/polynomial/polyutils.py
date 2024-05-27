@@ -347,7 +347,7 @@ def mapdomain(x, old, new):
 
     """
     if not np.isscalar(x):
-        x = np.asaanyarray(x)
+        x = np.asanyarray(x)
     off, scl = mapparms(old, new)
     return off + scl*x
 

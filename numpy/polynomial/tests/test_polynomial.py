@@ -630,7 +630,7 @@ class TestMisc:
 
     def test_result_type(self):
         w = np.array([-1, 1], dtype=np.float32)
-        p=np.polynomial.Polynomial(w, domain=w, window=w)
+        p = np.polynomial.Polynomial(w, domain=w, window=w)
         v = p(2)
         assert_equal(v.dtype, np.float32)
 
