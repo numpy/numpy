@@ -18,7 +18,7 @@ from numpy.testing import (
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
     _gen_alignment_data, assert_array_almost_equal_nulp, IS_WASM, IS_MUSL,
-    IS_PYPY
+    IS_PYPY, HAS_REFCOUNT
     )
 from numpy.testing._private.utils import _glibc_older_than
 
@@ -262,6 +262,17 @@ class TestOut:
             with assert_raises(TypeError):
                 # Out argument must be tuple, since there are multiple outputs.
                 r1, r2 = np.frexp(d, out=o1, subok=subok)
+
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    def test_out_wrap_no_leak(self):
+        # Regression test for gh-26545
+        class ArrSubclass(np.ndarray):
+            pass
+
+        arr = np.arange(10).view(ArrSubclass)
+
+        arr *= 1
+        assert sys.getrefcount(arr) == 2
 
 
 class TestComparisons:
