@@ -56,7 +56,7 @@ body:
     label: "Runtime Environment:"
     description: |
       1. Install `threadpoolctl` (e.g. with `pip` or `conda`)
-      2. Paste the output of `import numpy; print(numpy.show_runtime())`.
+      2. Paste the output of `import numpy; numpy.show_runtime()`.
 
       Note: Only valid for NumPy 1.24 or newer.
   validations:
