@@ -400,6 +400,7 @@ class TestSetOps:
             (np.uint16, np.uint8),
             (np.uint8, np.int16),
             (np.int16, np.uint8),
+            (np.uint64, np.int64),
         ]
     )
     @pytest.mark.parametrize("kind", [None, "sort", "table"])
@@ -415,10 +416,8 @@ class TestSetOps:
 
         expected = np.array([True, True, False, False])
 
-        expect_failure = kind == "table" and any((
-            dtype1 == np.int8 and dtype2 == np.int16,
-            dtype1 == np.int16 and dtype2 == np.int8
-        ))
+        expect_failure = kind == "table" and (
+            dtype1 == np.int16 and dtype2 == np.int8)
 
         if expect_failure:
             with pytest.raises(RuntimeError, match="exceed the maximum"):
