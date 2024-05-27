@@ -346,7 +346,6 @@ def mapdomain(x, old, new):
     array([-1.0+1.j , -0.6+0.6j, -0.2+0.2j,  0.2-0.2j,  0.6-0.6j,  1.0-1.j ]) # may vary
 
     """
-    x = np.asanyarray(x)
     off, scl = mapparms(old, new)
     return off + scl*x
 
