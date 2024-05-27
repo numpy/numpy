@@ -133,6 +133,13 @@ class TestIndexing:
         b = np.array([])
         assert_raises(IndexError, a.__getitem__, b)
 
+    def test_gh_26542(self):
+        a = np.array([0, 1, 2])
+        idx = np.array([2, 1, 0])
+        a[idx] = a
+        expected = np.array([2, 1, 0])
+        assert_equal(a, expected)
+
     def test_ellipsis_index(self):
         a = np.array([[1, 2, 3],
                       [4, 5, 6],

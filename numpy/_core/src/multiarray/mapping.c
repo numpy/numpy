@@ -1999,6 +1999,10 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                 goto fail;
             }
 
+            if (solve_may_share_memory(self, tmp_arr, 1) == 1) {
+                tmp_arr = (PyArrayObject *)PyArray_NewCopy(tmp_arr, NPY_ANYORDER);
+            }
+
             /* trivial_set checks the index for us */
             if (mapiter_trivial_set(
                     self, ind, tmp_arr, is_aligned, &cast_info) < 0) {
