@@ -311,3 +311,6 @@ class TestPolynomial:
 
         v = np.polyval([5.], np.float16(5.0))
         assert_equal(v.dtype, np.float64)
+
+        v = np.polyval(np.array([], dtype=np.float32), 5.0)
+        assert_equal(v.dtype, np.float32)
