@@ -314,3 +314,4 @@ class TestPolynomial:
 
         v = np.polyval(np.array([], dtype=np.float32), 5.0)
         assert_equal(v.dtype, np.float32)
+        assert np.isscalar(v)
