@@ -45,13 +45,13 @@ jobs:
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     env:
-      PYODIDE_VERSION: 0.25.1
+      PYODIDE_VERSION: 0.26.0
       # PYTHON_VERSION and EMSCRIPTEN_VERSION are determined by PYODIDE_VERSION.
       # The appropriate versions can be found in the Pyodide repodata.json
       # "info" field, or in Makefile.envs:
       # https://github.com/pyodide/pyodide/blob/main/Makefile.envs#L2
-      PYTHON_VERSION: 3.11.3
-      EMSCRIPTEN_VERSION: 3.1.46
+      PYTHON_VERSION: 3.12.1
+      EMSCRIPTEN_VERSION: 3.1.58
       NODE_VERSION: 18
     steps:
       - name: Checkout NumPy
@@ -75,7 +75,7 @@ jobs:
           actions-cache-folder: emsdk-cache
 
       - name: Install pyodide-build
-        run: pip install "pydantic<2" pyodide-build==${{ env.PYODIDE_VERSION }}
+        run: pip install pyodide-build==${{ env.PYODIDE_VERSION }}
 
       - name: Find installation for pyodide-build
         shell: python
@@ -93,7 +93,11 @@ jobs:
 
       - name: Build NumPy for Pyodide
         run: |
-          pyodide build -Cbuild-dir=build -Csetup-args="--cross-file=$PWD/tools/ci/emscripten/emscripten.meson.cross" -Csetup-args="-Dblas=none" -Csetup-args="-Dlapack=none"
+          pyodide build \
+          -Cbuild-dir=build \
+          -Csetup-args="--cross-file=$PWD/tools/ci/emscripten/emscripten.meson.cross" \
+          -Csetup-args="-Dblas=none" \
+          -Csetup-args="-Dlapack=none"
 
       - name: Set up Node.js
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
