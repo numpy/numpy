@@ -1394,6 +1394,11 @@ def setxor1d(ar1, ar2, assume_unique=False):
     if not assume_unique:
         ar1 = unique(ar1)
         ar2 = unique(ar2)
+    else:
+        if np.ndim(ar1) > 1:
+            ar1 = np.ravel(ar1)
+        if np.ndim(ar2) > 1:
+            ar2 = np.ravel(ar2)
 
     aux = ma.concatenate((ar1, ar2))
     if aux.size == 0:
