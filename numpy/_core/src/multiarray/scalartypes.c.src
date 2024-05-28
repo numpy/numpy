@@ -1201,7 +1201,9 @@ halftype_@kind@(PyObject *self)
     if (string == NULL || npy_legacy_print_mode <= 125) {
         return string;
     }
-    return PyUnicode_FromFormat("np.float16(%S)", string);
+    PyObject *res = PyUnicode_FromFormat("np.float16(%S)", string);
+    Py_DECREF(string);
+    return res;
 #endif
 }
 
