@@ -1017,10 +1017,10 @@ def gradient(f, *varargs, axis=None, edge_order=1):
 
     Returns
     -------
-    gradient : ndarray or list of ndarray
-        A list of ndarrays (or a single ndarray if there is only one dimension)
-        corresponding to the derivatives of f with respect to each dimension.
-        Each derivative has the same shape as f.
+    gradient : ndarray or tuple of ndarray
+        A tuple of ndarrays (or a single ndarray if there is only one
+        dimension) corresponding to the derivatives of f with respect
+        to each dimension. Each derivative has the same shape as f.
 
     Examples
     --------
@@ -1106,15 +1106,11 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     >>> x = np.arange(0, 6, dx)
     >>> y = np.arange(0, 9, dy)
     >>> xs, ys = np.meshgrid(x, y)
-    >>> zs = xs + ys
-    zs
-    array([[ 0,  2,  4],
-           [ 3,  5,  7],
-           [ 6,  8, 10]])
+    >>> zs = xs + 2 * ys
     >>> np.gradient(zs, dy, dx)  # Passing two scalars
-    (array([[1., 1., 1.],
-            [1., 1., 1.],
-            [1., 1., 1.]]),
+    (array([[2., 2., 2.],
+            [2., 2., 2.],
+            [2., 2., 2.]]),
      array([[1., 1., 1.],
             [1., 1., 1.],
             [1., 1., 1.]]))
@@ -1122,9 +1118,9 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     Mixing scalars and arrays is also allowed:
 
     >>> np.gradient(zs, y, dx)  # Passing one array and one scalar
-    (array([[1., 1., 1.],
-            [1., 1., 1.],
-            [1., 1., 1.]]),
+    (array([[2., 2., 2.],
+            [2., 2., 2.],
+            [2., 2., 2.]]),
      array([[1., 1., 1.],
             [1., 1., 1.],
             [1., 1., 1.]]))
