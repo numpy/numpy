@@ -6,10 +6,7 @@ on:
       - main
       - maintenance/**
   # Note: this workflow gets triggered on the same schedule as the
-  # wheels.yml workflow, with the exception that this workflow runs
-  # the test suite for the Pyodide wheel too, prior to uploading it.
-  #
-  # Run on schedule to upload to Anaconda.org
+  # wheels.yml workflow to upload WASM wheels to Anaconda.org.
   schedule:
     #        ┌───────────── minute (0 - 59)
     #        │  ┌───────────── hour (0 - 23)
@@ -36,7 +33,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read # to fetch code (actions/checkout)
+  contents: read  # to fetch code (actions/checkout)
 
 jobs:
   build-wasm-emscripten:
@@ -44,78 +41,22 @@ jobs:
     runs-on: ubuntu-22.04
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
-    env:
-      PYODIDE_VERSION: 0.26.0
-      # PYTHON_VERSION and EMSCRIPTEN_VERSION are determined by PYODIDE_VERSION.
-      # The appropriate versions can be found in the Pyodide repodata.json
-      # "info" field, or in Makefile.envs:
-      # https://github.com/pyodide/pyodide/blob/main/Makefile.envs#L2
-      PYTHON_VERSION: 3.12.1
-      EMSCRIPTEN_VERSION: 3.1.58
-      NODE_VERSION: 18
     steps:
       - name: Checkout NumPy
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4.1.1
         with:
           submodules: recursive
-          # This input shall fetch tags without the need to fetch the
-          # entire VCS history, see https://github.com/actions/checkout#usage
           fetch-tags: true
 
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        id: setup-python
-        uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
+      - uses: pypa/cibuildwheel@bd033a44476646b606efccdd5eed92d5ea1d77ad  # v2.20.0
+        env:
+          CIBW_PLATFORM: pyodide
+
+      - name: Upload wheel artifact(s)
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808  # v4.3.3
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Set up Emscripten toolchain
-        uses: mymindstorm/setup-emsdk@6ab9eb1bda2574c4ddb79809fc9247783eaf9021 # v14
-        with:
-          version: ${{ env.EMSCRIPTEN_VERSION }}
-          actions-cache-folder: emsdk-cache
-
-      - name: Install pyodide-build
-        run: pip install pyodide-build==${{ env.PYODIDE_VERSION }}
-
-      - name: Find installation for pyodide-build
-        shell: python
-        run: |
-          import os
-          import pyodide_build
-          from pathlib import Path
-
-          pyodide_build_path = Path(pyodide_build.__file__).parent
-
-          env_file = os.getenv('GITHUB_ENV')
-
-          with open(env_file, "a") as myfile:
-              myfile.write(f"PYODIDE_BUILD_PATH={pyodide_build_path}\n")
-
-      - name: Build NumPy for Pyodide
-        run: |
-          pyodide build \
-          -Cbuild-dir=build \
-          -Csetup-args="--cross-file=$PWD/tools/ci/emscripten/emscripten.meson.cross" \
-          -Csetup-args="-Dblas=none" \
-          -Csetup-args="-Dlapack=none"
-
-      - name: Set up Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Set up Pyodide virtual environment
-        run: |
-          pyodide venv .venv-pyodide
-          source .venv-pyodide/bin/activate
-          pip install dist/*.whl
-          pip install -r requirements/emscripten_test_requirements.txt
-
-      - name: Test NumPy for Pyodide
-        run: |
-          source .venv-pyodide/bin/activate
-          cd ..
-          pytest --pyargs numpy -m "not slow"
+          name: cp312-pyodide_wasm32
+          path: ./wheelhouse/*.whl
 
         # Push to https://anaconda.org/scientific-python-nightly-wheels/numpy
         # WARNING: this job will overwrite any existing WASM wheels.
@@ -124,7 +65,7 @@ jobs:
           (github.repository == 'numpy/numpy') &&
           (github.event_name == 'workflow_dispatch' && github.event.inputs.push_wheels == 'true') ||
           (github.event_name == 'schedule')
-        uses: scientific-python/upload-nightly-action@b67d7fcc0396e1128a474d1ab2b48aa94680f9fc # v0.5.0
+        uses: scientific-python/upload-nightly-action@b67d7fcc0396e1128a474d1ab2b48aa94680f9fc  # v0.5.0
         with:
-          artifacts_path: dist/
+          artifacts_path: wheelhouse/
           anaconda_nightly_upload_token: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
