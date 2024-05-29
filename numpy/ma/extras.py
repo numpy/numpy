@@ -1395,7 +1395,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
         ar1 = unique(ar1)
         ar2 = unique(ar2)
 
-    aux = ma.concatenate((ar1, ar2))
+    aux = ma.concatenate((ar1, ar2), axis=None)
     if aux.size == 0:
         return aux
     aux.sort()
