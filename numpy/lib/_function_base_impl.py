@@ -986,7 +986,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     ----------
     f : array_like
         An N-dimensional array containing samples of a scalar function.
-    varargs : list of scalar or array, optional
+    varargs : list of scalar or array, optional. (see Examples below).
         Spacing between f values. Default unitary spacing for all dimensions.
         Spacing can be specified using:
 
@@ -1077,7 +1077,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     The `axis` keyword can be used to specify a subset of axes of which the
     gradient is calculated
 
-    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=float), axis=0)
+    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]]), axis=0)
     array([[ 2.,  2., -1.],
            [ 2.,  2., -1.]])
 
@@ -1087,14 +1087,16 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     1. An array, specifying coordinates, which may be unevenly spaced:
 
 
-    >>> x = np.array([0., 2., 4., 6., 8.])
+    >>> x = np.array([0., 2., 3., 6., 8.])
     >>> y = x ** 2
     >>> np.gradient(y, x, edge_order=2)
-    array([ 0.,  4.,  8., 12., 16.])
+    array([ 0.,  4.,  6., 12., 16.])
 
     2. A scalar, representing the fixed sample distance:
 
     >>> dx = 2
+    >>> x = np.array([0., 2., 4., 6., 8.])
+    >>> y = x ** 2
     >>> np.gradient(y, dx, edge_order=2)
     array([ 0.,  4.,  8., 12., 16.])
 
