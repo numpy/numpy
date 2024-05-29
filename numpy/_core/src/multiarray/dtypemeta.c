@@ -444,12 +444,6 @@ string_unicode_new(PyArray_DTypeMeta *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
-    PyArray_Descr *res = PyArray_DescrNewFromType(self->type_num);
-
-    if (res == NULL) {
-        return NULL;
-    }
-
     if (self->type_num == NPY_UNICODE) {
         // unicode strings are 4 bytes per character
         if (npy_mul_sizes_with_overflow(&size, size, 4)) {
@@ -463,6 +457,12 @@ string_unicode_new(PyArray_DTypeMeta *self, PyObject *args, PyObject *kwargs)
     if (size > NPY_MAX_INT) {
         PyErr_SetString(PyExc_TypeError,
                         "Strings too large to store inside array.");
+        return NULL;
+    }
+
+    PyArray_Descr *res = PyArray_DescrNewFromType(self->type_num);
+
+    if (res == NULL) {
         return NULL;
     }
 
