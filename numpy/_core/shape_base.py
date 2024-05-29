@@ -1,5 +1,5 @@
 __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'block', 'hstack',
-           'stack', 'vstack']
+           'stack', 'unstack', 'vstack']
 
 import functools
 import itertools
@@ -10,7 +10,6 @@ from . import numeric as _nx
 from . import overrides
 from .multiarray import array, asanyarray, normalize_axis_index
 from . import fromnumeric as _from_nx
-
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -261,6 +260,7 @@ def vstack(tup, *, dtype=None, casting="same_kind"):
     dstack : Stack arrays in sequence depth wise (along third axis).
     column_stack : Stack 1-D arrays as columns into a 2-D array.
     vsplit : Split an array into multiple sub-arrays vertically (row-wise).
+    unstack : Split an array into a tuple of sub-arrays along an axis.
 
     Examples
     --------
@@ -331,8 +331,9 @@ def hstack(tup, *, dtype=None, casting="same_kind"):
     vstack : Stack arrays in sequence vertically (row wise).
     dstack : Stack arrays in sequence depth wise (along third axis).
     column_stack : Stack 1-D arrays as columns into a 2-D array.
-    hsplit : Split an array into multiple sub-arrays 
+    hsplit : Split an array into multiple sub-arrays
              horizontally (column-wise).
+    unstack : Split an array into a tuple of sub-arrays along an axis.
 
     Examples
     --------
@@ -414,6 +415,7 @@ def stack(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
     concatenate : Join a sequence of arrays along an existing axis.
     block : Assemble an nd-array from nested lists of blocks.
     split : Split array into a list of multiple sub-arrays of equal size.
+    unstack : Split an array into a tuple of sub-arrays along an axis.
 
     Examples
     --------
@@ -455,6 +457,77 @@ def stack(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
     return _nx.concatenate(expanded_arrays, axis=axis, out=out,
                            dtype=dtype, casting=casting)
 
+def _unstack_dispatcher(x, *, axis=None):
+    return (x,)
+
+@array_function_dispatch(_unstack_dispatcher)
+def unstack(x, /, *, axis=0):
+    """
+    Splits an array into a sequence of arrays along the given axis.
+
+    The ``axis`` parameter specifies the axis along which the array will be
+    split. of the new axis in the dimensions of the result. For example, if
+    ``axis=0`` it will be the first dimension and if ``axis=-1`` it will be
+    the last dimension.
+
+    The result is a tuple of arrays split along ``axis``. ``unstack`` serves
+    as the reverse operation of :py:func:`stack`, i.e., ``stack(unstack(x,
+    axis=axis), axis=axis) == x``.
+
+    .. versionadded:: 2.1.0
+
+    Parameters
+    ----------
+    x : ndarray
+        The array to be unstacked.
+
+    Returns
+    -------
+    unstacked : tuple of ndarrays
+        The unstacked arrays.
+
+    See Also
+    --------
+    stack : Join a sequence of arrays along a new axis.
+    concatenate : Join a sequence of arrays along an existing axis.
+    vstack : Stack arrays in sequence vertically (row wise).
+    hstack : Stack arrays in sequence horizontally (column wise).
+    dstack : Stack arrays in sequence depth wise (along third axis).
+    column_stack : Stack 1-D arrays as columns into a 2-D array.
+    vsplit : Split an array into multiple sub-arrays vertically (row-wise).
+    unstack : Split an array into a tuple of sub-arrays along an axis.
+    block : Assemble an nd-array from nested lists of blocks.
+    split : Split array into a list of multiple sub-arrays of equal size.
+
+    Examples
+    --------
+    >>> arr = np.arange(24).reshape((2, 3, 4))
+    >>> np.unstack(arr)
+    (array([[ 0,  1,  2,  3],
+            [ 4,  5,  6,  7],
+            [ 8,  9, 10, 11]]),
+     array([[12, 13, 14, 15],
+            [16, 17, 18, 19],
+            [20, 21, 22, 23]]))
+    >>> np.unstack(arr, axis=1)
+    (array([[ 0,  1,  2,  3],
+            [12, 13, 14, 15]]),
+     array([[ 4,  5,  6,  7],
+            [16, 17, 18, 19]]),
+     array([[ 8,  9, 10, 11],
+            [20, 21, 22, 23]]))
+    >>> arr2 = np.stack(np.unstack(arr, axis=1), axis=1)
+    >>> arr2.shape
+    (2, 3, 4)
+    >>> np.all(arr == arr2)
+    np.True_
+
+    """
+    x = asanyarray(x)
+
+    axis = normalize_axis_index(axis, x.ndim)
+    slices = (slice(None),) * axis
+    return tuple(x[slices + (i, ...)] for i in range(x.shape[axis]))
 
 # Internal functions to eliminate the overhead of repeated dispatch in one of
 # the two possible paths inside np.block.
@@ -709,7 +782,7 @@ def block(arrays):
     second-last dimension (-2), and so on until the outermost list is reached.
 
     Blocks can be of any dimension, but will not be broadcasted using
-    the normal rules. Instead, leading axes of size 1 are inserted, 
+    the normal rules. Instead, leading axes of size 1 are inserted,
     to make ``block.ndim`` the same for all blocks. This is primarily useful
     for working with scalars, and means that code like ``np.block([v, 1])``
     is valid, where ``v.ndim == 1``.
@@ -755,6 +828,7 @@ def block(arrays):
     dstack : Stack arrays in sequence depth wise (along third axis).
     column_stack : Stack 1-D arrays as columns into a 2-D array.
     vsplit : Split an array into multiple sub-arrays vertically (row-wise).
+    unstack : Split an array into a tuple of sub-arrays along an axis.
 
     Notes
     -----

@@ -165,8 +165,8 @@ else:
         str_, subtract, sum, swapaxes, take, tan, tanh, tensordot,
         timedelta64, trace, transpose, true_divide, trunc, typecodes, ubyte,
         ufunc, uint, uint16, uint32, uint64, uint8, uintc, uintp, ulong,
-        ulonglong, unsignedinteger, ushort, var, vdot, vecdot, void, vstack,
-        where, zeros, zeros_like
+        ulonglong, unsignedinteger, unstack, ushort, var, vdot, vecdot, void,
+        vstack, where, zeros, zeros_like
     )
 
     # NOTE: It's still under discussion whether these aliases 
