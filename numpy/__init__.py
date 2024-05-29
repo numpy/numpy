@@ -235,6 +235,8 @@ else:
         ix_, c_, r_, s_, ogrid, mgrid, unravel_index, ravel_multi_index, 
         index_exp
     )
+    from .lib._info import __array_namespace_info__
+
     from . import matrixlib as _mat
     from .matrixlib import (
         asmatrix, bmat, matrix
