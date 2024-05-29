@@ -265,3 +265,47 @@ class Where(Benchmark):
             fun(self.nmxs > 2, self.nmxs, self.nmys)
         elif msize == 'big':
             fun(self.nmxl > 2, self.nmxl, self.nmyl)
+
+
+class Cov(Benchmark):
+    param_names = ["size"]
+    params = [["small", "large"]]
+
+    def setup(self, size):
+        # Set the proportion of masked values.
+        prop_mask = 0.2
+        # Set up a "small" array with 10 vars and 10 obs.
+        rng = np.random.default_rng()
+        data = rng.random((10, 10), dtype=np.float32)
+        self.small = np.ma.array(data, mask=(data <= prop_mask))
+        # Set up a "large" array with 100 vars and 100 obs.
+        data = rng.random((100, 100), dtype=np.float32)
+        self.large = np.ma.array(data, mask=(data <= prop_mask))
+
+    def time_cov(self, size):
+        if size == "small":
+            np.ma.cov(self.small)
+        if size == "large":
+            np.ma.cov(self.large)
+
+
+class Corrcoef(Benchmark):
+    param_names = ["size"]
+    params = [["small", "large"]]
+
+    def setup(self, size):
+        # Set the proportion of masked values.
+        prop_mask = 0.2
+        # Set up a "small" array with 10 vars and 10 obs.
+        rng = np.random.default_rng()
+        data = rng.random((10, 10), dtype=np.float32)
+        self.small = np.ma.array(data, mask=(data <= prop_mask))
+        # Set up a "large" array with 100 vars and 100 obs.
+        data = rng.random((100, 100), dtype=np.float32)
+        self.large = np.ma.array(data, mask=(data <= prop_mask))
+
+    def time_corrcoef(self, size):
+        if size == "small":
+            np.ma.corrcoef(self.small)
+        if size == "large":
+            np.ma.corrcoef(self.large)
