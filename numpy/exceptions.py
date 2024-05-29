@@ -175,15 +175,9 @@ class AxisError(ValueError, IndexError):
     __slots__ = ("axis", "ndim", "_msg")
 
     def __init__(self, axis, ndim=None, msg_prefix=None):
-        if ndim is msg_prefix is None:
-            # single-argument form: directly set the error message
-            self._msg = axis
-            self.axis = None
-            self.ndim = None
-        else:
-            self._msg = msg_prefix
-            self.axis = axis
-            self.ndim = ndim
+        self._msg = msg_prefix
+        self.axis = axis
+        self.ndim = ndim
 
     def __str__(self):
         axis = self.axis
@@ -192,7 +186,10 @@ class AxisError(ValueError, IndexError):
         if axis is ndim is None:
             return self._msg
         else:
-            msg = f"axis {axis} is out of bounds for array of dimension {ndim}"
+            if ndim is None:
+                msg = f"axis {axis} is out of bounds"
+            else:
+                msg = f"axis {axis} is out of bounds for array of dimension {ndim}"
             if self._msg is not None:
                 msg = f"{self._msg}: {msg}"
             return msg
