@@ -1081,7 +1081,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     array([[ 2.,  2., -1.],
            [ 2.,  2., -1.]])
 
-    The `varargs` argument define the spacing between sample points in the
+    The `varargs` argument defines the spacing between sample points in the
     input array. It can take two forms:
 
     1. Receives scalars representing sample distance:
