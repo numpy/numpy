@@ -1084,18 +1084,19 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     The `varargs` argument defines the spacing between sample points in the
     input array. It can take two forms:
 
-    1. Receives scalars representing sample distance:
+    1. An array, specifying coordinates, which may be unevenly spaced:
 
-    >>> dx = 2
+
     >>> x = np.array([0., 2., 4., 6., 8.])
     >>> y = x ** 2
-    >>> np.gradient(y, dx, edge_order=2)
-    array([ 0.,  4.,  8., 12., 16.])  # y = 2x
-
-    2. Receives arrays specifying coordinates:
-
     >>> np.gradient(y, x, edge_order=2)
-    array([ 0.,  4.,  8., 12., 16.])  # y = 2x
+    array([ 0.,  4.,  8., 12., 16.])
+
+    2. A scalar, representing the fixed sample distance:
+
+    >>> dx = 2
+    >>> np.gradient(y, dx, edge_order=2)
+    array([ 0.,  4.,  8., 12., 16.])
 
     It's possible to provide different data for spacing along each dimension.
     The number of arguments must match the number of dimensions in the input
