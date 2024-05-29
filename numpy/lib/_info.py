@@ -56,10 +56,75 @@ if TYPE_CHECKING:
 
 
 def __array_namespace_info__() -> ModuleType:
+    """
+    Get the array API inspection namespace for NumPy.
+
+    The array API inspection namespace defines the following functions:
+
+    - capabilities()
+    - default_device()
+    - default_dtypes()
+    - dtypes()
+    - devices()
+
+    See
+    https://data-apis.org/array-api/latest/API_specification/inspection.html
+    for more details.
+
+    Returns
+    -------
+    info : ModuleType
+        The array API inspection namespace for NumPy.
+
+    Examples
+    --------
+    >>> info = np.__array_namespace_info__()
+    >>> info.default_dtypes()
+    {'real floating': numpy.float64,
+     'complex floating': numpy.complex128,
+     'integral': numpy.int64,
+     'indexing': numpy.int64}
+    """
     import numpy.lib._info
     return numpy.lib._info
 
 def capabilities() -> Capabilities:
+    """
+    Return a dictionary of array API library capabilities.
+
+    The resulting dictionary has the following keys:
+
+    - **"boolean indexing"**: boolean indicating whether an array library
+      supports boolean indexing. Always ``True`` for NumPy.
+
+    - **"data-dependent shapes"**: boolean indicating whether an array library
+        supports data-dependent output shapes. Always ``True`` for NumPy.
+
+    - **"max rank"**: The maximum number of supported dimensions for arrays.
+      Always ``32`` for NumPy.
+
+    See
+    https://data-apis.org/array-api/latest/API_specification/generated/array_api.info.capabilities.html
+    for more details.
+
+    See Also
+    --------
+    default_device, default_dtypes, dtypes, devices
+
+    Returns
+    -------
+    capabilities : Capabilities
+        A dictionary of array API library capabilities.
+
+    Examples
+    --------
+    >>> info = np.__array_namespace_info__()
+    >>> info.capabilities()
+    {'boolean indexing': True,
+     'data-dependent shapes': True,
+     'max rank': 32}
+
+    """
     return {"boolean indexing": True,
             "data-dependent shapes": True,
             # Note: 'max rank' is part of the draft 2024.12 standard
@@ -67,12 +132,69 @@ def capabilities() -> Capabilities:
             }
 
 def default_device() -> str:
+    """
+    The default device used for new NumPy arrays.
+
+    For NumPy, this always returns ``'cpu'``.
+
+    See Also
+    --------
+    capabilities, default_dtypes, dtypes, devices
+
+    Returns
+    -------
+    device : str
+        The default device used for new NumPy arrays.
+
+    Examples
+    --------
+    >>> info = np.__array_namespace_info__()
+    >>> info.default_device()
+    'cpu'
+
+    """
     return 'cpu'
 
 def default_dtypes(
     *,
     device: Optional[str] = None,
 ) -> DefaultDataTypes:
+    """
+    The default data types used for new NumPy arrays.
+
+    For NumPy, this always returns the following dictionary:
+
+    - **"real floating"**: ``numpy.float64``
+    - **"complex floating"**: ``numpy.complex128``
+    - **"integral"**: ``numpy.int64``
+    - **"indexing"**: ``numpy.int64``
+
+    Parameters
+    ----------
+    device : str, optional
+        The device to get the default data types for. For NumPy, only
+        ``'cpu'`` is allowed.
+
+    Returns
+    -------
+    dtypes : DefaultDataTypes
+        A dictionary describing the default data types used for new NumPy
+        arrays.
+
+    See Also
+    --------
+    capabilities, default_device, dtypes, devices
+
+    Examples
+    --------
+    >>> info = np.__array_namespace_info__()
+    >>> info.default_dtypes()
+    {'real floating': numpy.float64,
+     'complex floating': numpy.complex128,
+     'integral': numpy.int64,
+     'indexing': numpy.int64}
+
+    """
     if device not in ['cpu', None]:
         raise ValueError(f'Device not understood. Only "cpu" is allowed, but received: {device}')
     return {
@@ -87,6 +209,57 @@ def dtypes(
     device: Optional[str] = None,
     kind: Optional[Union[str, Tuple[str, ...]]] = None,
 ) -> DataTypes:
+    """
+    The array API data types supported by NumPy.
+
+    Note that this function only returns data types that are defined by the
+    array API.
+
+    Parameters
+    ----------
+    device : str, optional
+        The device to get the data types for. For NumPy, only ``'cpu'`` is
+        allowed.
+    kind : str or tuple of str, optional
+        The kind of data types to return. If ``None``, all data types are
+        returned. If a string, only data types of that kind are returned. If a
+        tuple, a dictionary containing the union of the given kinds is
+        returned. The following kinds are supported:
+
+            - ``'bool'``: boolean data types (e.g., ``bool``).
+            - ``'signed integer'``: signed integer data types (e.g., ``int8``,
+              ``int16``, ``int32``, ``int64``).
+            - ``'unsigned integer'``: unsigned integer data types (e.g.,
+              ``uint8``, ``uint16``, ``uint32``, ``uint64``).
+            - ``'integral'``: integer data types. Shorthand for ``('signed
+              integer', 'unsigned integer')``.
+            - ``'real floating'``: real-valued floating-point data types
+              (e.g., ``float32``, ``float64``).
+            - ``'complex floating'``: complex floating-point data types (e.g.,
+              ``complex64``, ``complex128``).
+            - ``'numeric'``: numeric data types. Shorthand for ``('integral',
+              'real floating', 'complex floating')``.
+
+    Returns
+    -------
+    dtypes : DataTypes
+        A dictionary mapping the names of data types to the corresponding
+        NumPy data types.
+
+    See Also
+    --------
+    capabilities, default_device, default_dtypes, devices
+
+    Examples
+    --------
+    >>> info = np.__array_namespace_info__()
+    >>> info.dtypes(kind='signed integer')
+    {'int8': numpy.int8,
+     'int16': numpy.int16,
+     'int32': numpy.int32,
+     'int64': numpy.int64}
+
+    """
     if device not in ['cpu', None]:
         raise ValueError(f'Device not understood. Only "cpu" is allowed, but received: {device}')
     if kind is None:
@@ -165,4 +338,25 @@ def dtypes(
     raise ValueError(f"unsupported kind: {kind!r}")
 
 def devices() -> List[str]:
+    """
+    The devices supported by NumPy.
+
+    For NumPy, this always returns ``['cpu']``.
+
+    Returns
+    -------
+    devices : list of str
+        The devices supported by NumPy.
+
+    See Also
+    --------
+    capabilities, default_device, default_dtypes, dtypes
+
+    Examples
+    --------
+    >>> info = np.__array_namespace_info__()
+    >>> info.devices()
+    ['cpu']
+
+    """
     return ['cpu']
