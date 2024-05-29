@@ -1086,7 +1086,6 @@ def gradient(f, *varargs, axis=None, edge_order=1):
 
     1. An array, specifying coordinates, which may be unevenly spaced:
 
-
     >>> x = np.array([0., 2., 3., 6., 8.])
     >>> y = x ** 2
     >>> np.gradient(y, x, edge_order=2)
