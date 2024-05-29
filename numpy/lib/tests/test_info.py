@@ -7,17 +7,20 @@ def test_capabilities():
     caps = info.capabilities()
     assert caps["boolean indexing"] == True
     assert caps["data-dependent shapes"] == True
-    assert caps["max rank"] == 32
+    assert caps["max rank"] == 64
+    np.zeros((1,)*64)
+    with pytest.raises(ValueError):
+        np.zeros((1,)*65)
 
 def test_default_device():
-    assert info.default_device() == 'cpu'
+    assert info.default_device() == 'cpu' == np.asarray(0).device
 
 def test_default_dtypes():
     dtypes = info.default_dtypes()
-    assert dtypes["real floating"] == np.float64
-    assert dtypes["complex floating"] == np.complex128
-    assert dtypes["integral"] == np.int64
-    assert dtypes["indexing"] == np.int64
+    assert dtypes["real floating"] == np.float64 == np.asarray(0.0).dtype
+    assert dtypes["complex floating"] == np.complex128 == np.asarray(0.0j).dtype
+    assert dtypes["integral"] == np.int64 == np.asarray(0).dtype
+    assert dtypes["indexing"] == np.int64 == np.argmax(np.zeros(10)).dtype
 
     with pytest.raises(ValueError, match='Device not understood'):
         info.default_dtypes(device='gpu')
