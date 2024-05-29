@@ -14,7 +14,7 @@ https://stackoverflow.com/questions/tagged/numpy)
 [![Nature Paper](https://img.shields.io/badge/DOI-10.1038%2Fs41586--020--2649--2-blue)](
 https://doi.org/10.1038/s41586-020-2649-2)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/numpy/numpy/badge)](https://securityscorecards.dev/viewer/?uri=github.com/numpy/numpy)
-[![numpy Downloads Last Month](https://assets.piptrends.com/get-last-month-downloads-badge/numpy.svg 'numpy Downloads Last Month by pip Trends')](https://piptrends.com/package/numpy)
+[![numpy Downloads Last Month](https://assets.piptrends.com/get-last-month-downloads-badge/numpy.svg 'numpy Downloads Last Month by pip Trends')
 
 NumPy is the fundamental package for scientific computing with Python.
 
