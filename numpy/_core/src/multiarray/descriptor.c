@@ -2020,6 +2020,7 @@ arraydescr_dealloc(PyArray_Descr *self)
 {
     Py_XDECREF(self->typeobj);
     if (!PyDataType_ISLEGACY(self)) {
+        /* non legacy dtypes must not have fields, etc. */
         Py_TYPE(self)->tp_free((PyObject *)self);
         return;
     }
