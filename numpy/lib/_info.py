@@ -17,7 +17,11 @@ if TYPE_CHECKING:
     from numpy.dtyping import DtypeLike
 
     Capabilities = TypedDict(
-        "Capabilities", {"boolean indexing": bool, "data-dependent shapes": bool}
+        "Capabilities", {
+            "boolean indexing": bool,
+            "data-dependent shapes": bool,
+            "max rank": int | None,
+        },
     )
 
     DefaultDataTypes = TypedDict(
@@ -58,6 +62,8 @@ def __array_namespace_info__() -> ModuleType:
 def capabilities() -> Capabilities:
     return {"boolean indexing": True,
             "data-dependent shapes": True,
+            # Note: 'max rank' is part of the draft 2024.12 standard
+            "max rank": 32,
             }
 
 def default_device() -> str:
