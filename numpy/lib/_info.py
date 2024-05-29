@@ -20,7 +20,7 @@ if TYPE_CHECKING:
         "Capabilities", {
             "boolean indexing": bool,
             "data-dependent shapes": bool,
-            "max rank": int | None,
+            # "max rank": int | None,
         },
     )
 
@@ -100,9 +100,6 @@ def capabilities() -> Capabilities:
     - **"data-dependent shapes"**: boolean indicating whether an array library
         supports data-dependent output shapes. Always ``True`` for NumPy.
 
-    - **"max rank"**: The maximum number of supported dimensions for arrays.
-      Always ``64`` for NumPy.
-
     See
     https://data-apis.org/array-api/latest/API_specification/generated/array_api.info.capabilities.html
     for more details.
@@ -121,14 +118,13 @@ def capabilities() -> Capabilities:
     >>> info = np.__array_namespace_info__()
     >>> info.capabilities()
     {'boolean indexing': True,
-     'data-dependent shapes': True,
-     'max rank': 64}
+     'data-dependent shapes': True}
 
     """
     return {"boolean indexing": True,
             "data-dependent shapes": True,
-            # Note: 'max rank' is part of the draft 2024.12 standard
-            "max rank": 64,
+            # 'max rank' will be part of the 2024.12 standard
+            # "max rank": 64,
             }
 
 def default_device() -> str:

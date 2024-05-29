@@ -7,10 +7,13 @@ def test_capabilities():
     caps = info.capabilities()
     assert caps["boolean indexing"] == True
     assert caps["data-dependent shapes"] == True
-    assert caps["max rank"] == 64
-    np.zeros((1,)*64)
-    with pytest.raises(ValueError):
-        np.zeros((1,)*65)
+
+    # This will be added in the 2024.12 release of the array API standard.
+
+    # assert caps["max rank"] == 64
+    # np.zeros((1,)*64)
+    # with pytest.raises(ValueError):
+    #     np.zeros((1,)*65)
 
 def test_default_device():
     assert info.default_device() == 'cpu' == np.asarray(0).device
