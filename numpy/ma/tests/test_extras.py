@@ -1659,6 +1659,17 @@ class TestArraySetOps:
         assert_(isinstance(test, MaskedArray))
         assert_equal(test, [1, 2, 3, 4, 5, 6])
         #
+        assert_array_equal([], setxor1d([], []))
+
+    def test_setxor1d_unique(self):
+        # Test setxor1d with assume_unique=True
+        a = array([1, 2, 5, 7, -1], mask=[0, 0, 0, 0, 1])
+        b = [1, 2, 3, 4, 5]
+        test = setxor1d(a, b, assume_unique=True)
+        assert_equal(test, array([3, 4, 7, -1], mask=[0, 0, 0, 1]))
+        #
+        a = array([1, 8, 2, 3], mask=[0, 1, 0, 0])
+        b = array([6, 5, 4, 8], mask=[0, 0, 0, 1])
         test = setxor1d(a, b, assume_unique=True)
         assert_(isinstance(test, MaskedArray))
         assert_equal(test, [1, 2, 3, 4, 5, 6])
@@ -1668,8 +1679,6 @@ class TestArraySetOps:
         test = setxor1d(a, b, assume_unique=True)
         assert_(isinstance(test, MaskedArray))
         assert_equal(test, [1, 2, 3, 4, 5, 6])
-        #
-        assert_array_equal([], setxor1d([], []))
 
     def test_isin(self):
         # the tests for in1d cover most of isin's behavior
