@@ -5,19 +5,34 @@ This is the namespace for inspection functions as defined by the array API stand
 See https://data-apis.org/array-api/latest/API_specification/inspection.html
 for more details.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from numpy import (bool, int8, int16, int32, int64, uint8, uint16, uint32,
-                   uint64, float32, float64, complex64, complex128)
+from numpy import (
+    bool,
+    int8,
+    int16,
+    int32,
+    int64,
+    uint8,
+    uint16,
+    uint32,
+    uint64,
+    float32,
+    float64,
+    complex64,
+    complex128,
+)
 
 if TYPE_CHECKING:
     from typing import Optional, Union, Tuple, List, ModuleType, TypedDict
     from numpy.dtyping import DtypeLike
 
     Capabilities = TypedDict(
-        "Capabilities", {
+        "Capabilities",
+        {
             "boolean indexing": bool,
             "data-dependent shapes": bool,
             # "max rank": int | None,
@@ -86,7 +101,9 @@ def __array_namespace_info__() -> ModuleType:
      'indexing': numpy.int64}
     """
     import numpy.lib._info
+
     return numpy.lib._info
+
 
 def capabilities() -> Capabilities:
     """
@@ -121,11 +138,13 @@ def capabilities() -> Capabilities:
      'data-dependent shapes': True}
 
     """
-    return {"boolean indexing": True,
-            "data-dependent shapes": True,
-            # 'max rank' will be part of the 2024.12 standard
-            # "max rank": 64,
-            }
+    return {
+        "boolean indexing": True,
+        "data-dependent shapes": True,
+        # 'max rank' will be part of the 2024.12 standard
+        # "max rank": 64,
+    }
+
 
 def default_device() -> str:
     """
@@ -149,7 +168,8 @@ def default_device() -> str:
     'cpu'
 
     """
-    return 'cpu'
+    return "cpu"
+
 
 def default_dtypes(
     *,
@@ -191,14 +211,17 @@ def default_dtypes(
      'indexing': numpy.int64}
 
     """
-    if device not in ['cpu', None]:
-        raise ValueError(f'Device not understood. Only "cpu" is allowed, but received: {device}')
+    if device not in ["cpu", None]:
+        raise ValueError(
+            f'Device not understood. Only "cpu" is allowed, but received: {device}'
+        )
     return {
         "real floating": float64,
         "complex floating": complex128,
         "integral": int64,
         "indexing": int64,
     }
+
 
 def dtypes(
     *,
@@ -256,8 +279,10 @@ def dtypes(
      'int64': numpy.int64}
 
     """
-    if device not in ['cpu', None]:
-        raise ValueError(f'Device not understood. Only "cpu" is allowed, but received: {device}')
+    if device not in ["cpu", None]:
+        raise ValueError(
+            f'Device not understood. Only "cpu" is allowed, but received: {device}'
+        )
     if kind is None:
         return {
             "bool": bool,
@@ -333,6 +358,7 @@ def dtypes(
         return res
     raise ValueError(f"unsupported kind: {kind!r}")
 
+
 def devices() -> List[str]:
     """
     The devices supported by NumPy.
@@ -355,4 +381,4 @@ def devices() -> List[str]:
     ['cpu']
 
     """
-    return ['cpu']
+    return ["cpu"]
