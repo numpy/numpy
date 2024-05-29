@@ -31,6 +31,10 @@ String operations
    :toctree: generated/
 
    add
+   center
+   capitalize
+   decode
+   encode
    ljust
    lower
    lstrip
