@@ -101,7 +101,7 @@ def capabilities() -> Capabilities:
         supports data-dependent output shapes. Always ``True`` for NumPy.
 
     - **"max rank"**: The maximum number of supported dimensions for arrays.
-      Always ``32`` for NumPy.
+      Always ``64`` for NumPy.
 
     See
     https://data-apis.org/array-api/latest/API_specification/generated/array_api.info.capabilities.html
@@ -122,13 +122,13 @@ def capabilities() -> Capabilities:
     >>> info.capabilities()
     {'boolean indexing': True,
      'data-dependent shapes': True,
-     'max rank': 32}
+     'max rank': 64}
 
     """
     return {"boolean indexing": True,
             "data-dependent shapes": True,
             # Note: 'max rank' is part of the draft 2024.12 standard
-            "max rank": 32,
+            "max rank": 64,
             }
 
 def default_device() -> str:
