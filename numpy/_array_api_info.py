@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 from numpy import (
     bool,
+    intp,
     int8,
     int16,
     int32,
@@ -178,8 +179,8 @@ class __array_namespace_info__:
 
         - **"real floating"**: ``numpy.float64``
         - **"complex floating"**: ``numpy.complex128``
-        - **"integral"**: ``numpy.int64``
-        - **"indexing"**: ``numpy.int64``
+        - **"integral"**: ``numpy.intp``
+        - **"indexing"**: ``numpy.intp``
 
         Parameters
         ----------
@@ -214,8 +215,8 @@ class __array_namespace_info__:
         return {
             "real floating": float64,
             "complex floating": complex128,
-            "integral": int64,
-            "indexing": int64,
+            "integral": intp,
+            "indexing": intp,
         }
 
 
