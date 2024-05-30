@@ -216,7 +216,7 @@ cli = 'vendored-meson/meson/meson.py'
 
 [tool.codespell]
 # Ref: https://github.com/codespell-project/codespell#using-a-config-file
-skip = '.git*,*.pdf,*.svg,*.css,.mailmap,./doc/changelog,./doc/source/release/*-notes.rst'
+skip = '.git*,*.pdf,*.svg,*.css,.mailmap,./doc/changelog,./doc/source/release/*-notes.rst,recarray_from_file.fits'
 check-hidden = true
 # some cases + pragma to add to line to ignore entire line
 # Assume that capitalized shortish (up to 10) Word is a name - skip
