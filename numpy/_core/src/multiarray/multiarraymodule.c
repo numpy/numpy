@@ -5008,6 +5008,16 @@ initialize_static_globals(void)
         }
     }
 
+    npy_ma_global_data->one_obj = PyLong_FromLong((long) 1);
+    if (npy_ma_global_data->one_obj == NULL) {
+        return -1;
+    }
+
+    npy_ma_global_data->zero_obj = PyLong_FromLong((long) 0);
+    if (npy_ma_global_data->zero_obj == NULL) {
+        return -1;
+    }
+
     return 0;
 }
 

@@ -44,6 +44,13 @@ typedef struct npy_ma_global_data_struct {
     PyObject *ndarray_array_ufunc;
     PyObject *ndarray_array_finalize;
     PyObject *ndarray_array_function;
+
+    /*
+     * References to the '1' and '0' PyLong objects
+     */
+    PyObject *one_obj;
+    PyObject *zero_obj;
+
     /*
      * References to items obtained via an import at module initialization
      *
