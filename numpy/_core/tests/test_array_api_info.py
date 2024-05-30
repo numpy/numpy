@@ -51,43 +51,23 @@ def test_dtypes_all():
     }
 
 
-@pytest.mark.parametrize(
-    "kind,expected",
-    [
-        ("bool", {"bool": np.bool_}),
-        (
-            "signed integer",
-            {"int8": np.int8, "int16": np.int16, "int32": np.int32, "int64": np.int64},
-        ),
-        (
-            "unsigned integer",
-            {
-                "uint8": np.uint8,
-                "uint16": np.uint16,
-                "uint32": np.uint32,
-                "uint64": np.uint64,
-            },
-        ),
-        (
-            "integral",
-            {
-                "int8": np.int8,
-                "int16": np.int16,
-                "int32": np.int32,
-                "int64": np.int64,
-                "uint8": np.uint8,
-                "uint16": np.uint16,
-                "uint32": np.uint32,
-                "uint64": np.uint64,
-            },
-        ),
-        ("real floating", {"float32": np.float32, "float64": np.float64}),
-        ("complex floating", {"complex64": np.complex64, "complex128": np.complex128}),
-    ],
-)
-def test_dtypes_kind(kind, expected):
-    assert info.dtypes(kind=kind) == expected
+dtype_categories = {
+    "bool": {'bool': np.bool_},
+    "signed integer": {'int8': np.int8, 'int16': np.int16, 'int32': np.int32, 'int64': np.int64},
+    "unsigned integer": {'uint8': np.uint8, 'uint16': np.uint16, 'uint32': np.uint32, 'uint64': np.uint64},
+    "integral": ('signed integer', 'unsigned integer'),
+    "real floating": {'float32': np.float32, 'float64': np.float64},
+    "complex floating": {'complex64': np.complex64, 'complex128': np.complex128},
+    "numeric": ('integral', 'real floating', 'complex floating'),
+}
 
+@pytest.mark.parametrize("kind", dtype_categories)
+def test_dtypes_kind(kind):
+    expected = dtype_categories[kind]
+    if isinstance(expected, tuple):
+        assert info.dtypes(kind=kind) == info.dtypes(kind=expected)
+    else:
+        assert info.dtypes(kind=kind) == expected
 
 def test_dtypes_tuple():
     dtypes = info.dtypes(kind=("bool", "integral"))
