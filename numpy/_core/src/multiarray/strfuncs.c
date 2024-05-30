@@ -7,6 +7,7 @@
 #include "numpy/arrayobject.h"
 #include "npy_pycompat.h"
 #include "npy_import.h"
+#include "multiarraymodule.h"
 #include "strfuncs.h"
 
 static void
