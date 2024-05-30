@@ -7,6 +7,7 @@
 #include "npy_import.h"
 #include "ufunc_override.h"
 #include "scalartypes.h"
+#include "multiarraymodule.h"
 
 /*
  * Check whether an object has __array_ufunc__ defined on its class and it
@@ -19,14 +20,7 @@
 NPY_NO_EXPORT PyObject *
 PyUFuncOverride_GetNonDefaultArrayUfunc(PyObject *obj)
 {
-    static PyObject *ndarray_array_ufunc = NULL;
     PyObject *cls_array_ufunc;
-
-    /* On first entry, cache ndarray's __array_ufunc__ */
-    if (ndarray_array_ufunc == NULL) {
-        ndarray_array_ufunc = PyObject_GetAttrString((PyObject *)&PyArray_Type,
-                                                     "__array_ufunc__");
-    }
 
     /* Fast return for ndarray */
     if (PyArray_CheckExact(obj)) {
@@ -49,7 +43,7 @@ PyUFuncOverride_GetNonDefaultArrayUfunc(PyObject *obj)
         return NULL;
     }
     /* Ignore if the same as ndarray.__array_ufunc__ */
-    if (cls_array_ufunc == ndarray_array_ufunc) {
+    if (cls_array_ufunc == npy_ma_global_data->ndarray_array_ufunc) {
         Py_DECREF(cls_array_ufunc);
         return NULL;
     }

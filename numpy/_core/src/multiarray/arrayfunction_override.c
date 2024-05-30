@@ -11,17 +11,6 @@
 
 #include "arrayfunction_override.h"
 
-/* Return the ndarray.__array_function__ method. */
-static PyObject *
-get_ndarray_array_function(void)
-{
-    PyObject* method = PyObject_GetAttrString((PyObject *)&PyArray_Type,
-                                              "__array_function__");
-    assert(method != NULL);
-    return method;
-}
-
-
 /*
  * Get an object's __array_function__ method in the fastest way possible.
  * Never raises an exception. Returns NULL if the method doesn't exist.
@@ -29,16 +18,10 @@ get_ndarray_array_function(void)
 static PyObject *
 get_array_function(PyObject *obj)
 {
-    static PyObject *ndarray_array_function = NULL;
-
-    if (ndarray_array_function == NULL) {
-        ndarray_array_function = get_ndarray_array_function();
-    }
-
     /* Fast return for ndarray */
     if (PyArray_CheckExact(obj)) {
-        Py_INCREF(ndarray_array_function);
-        return ndarray_array_function;
+        Py_INCREF(npy_ma_global_data->ndarray_array_function);
+        return npy_ma_global_data->ndarray_array_function;
     }
 
     PyObject *array_function = PyArray_LookupSpecial(obj, npy_ma_str->array_function);
@@ -142,12 +125,7 @@ fail:
 static int
 is_default_array_function(PyObject *obj)
 {
-    static PyObject *ndarray_array_function = NULL;
-
-    if (ndarray_array_function == NULL) {
-        ndarray_array_function = get_ndarray_array_function();
-    }
-    return obj == ndarray_array_function;
+    return obj == npy_ma_global_data->ndarray_array_function;
 }
 
 

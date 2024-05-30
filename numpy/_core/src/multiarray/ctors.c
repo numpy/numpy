@@ -928,17 +928,11 @@ PyArray_NewFromDescr_int(
      */
     if (subtype != &PyArray_Type) {
         PyObject *res, *func;
-        static PyObject *ndarray_array_finalize = NULL;
-        /* First time, cache ndarray's __array_finalize__ */
-        if (ndarray_array_finalize == NULL) {
-            ndarray_array_finalize = PyObject_GetAttr(
-                (PyObject *)&PyArray_Type, npy_ma_str_array_finalize);
-        }
         func = PyObject_GetAttr((PyObject *)subtype, npy_ma_str->array_finalize);
         if (func == NULL) {
             goto fail;
         }
-        else if (func == ndarray_array_finalize) {
+        else if (func == npy_ma_global_data->ndarray_array_finalize) {
             Py_DECREF(func);
         }
         else if (func == Py_None) {

@@ -31,6 +31,12 @@ NPY_VISIBILITY_HIDDEN extern npy_ma_str_struct *npy_ma_str;
 
 typedef struct npy_ma_global_data_struct {
     /*
+     * A reference to ndarray's implementations for __array_*__ special methods
+     */
+    PyObject *ndarray_array_ufunc;
+    PyObject *ndarray_array_finalize;
+    PyObject *ndarray_array_function;
+    /*
      * References to items obtained via an import at module initialization
      *
      * These are immutable

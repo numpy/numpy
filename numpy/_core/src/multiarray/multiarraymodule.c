@@ -5230,6 +5230,14 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
+    // initialize static references to ndarray.__array_*__ special methods
+    npy_ma_global_data->ndarray_array_finalize = PyObject_GetAttrString(
+            (PyObject *)&PyArray_Type, "__array_finalize__");
+    npy_ma_global_data->ndarray_array_ufunc = PyObject_GetAttrString(
+            (PyObject *)&PyArray_Type, "__array_ufunc__");
+    npy_ma_global_data->ndarray_array_function = PyObject_GetAttrString(
+            (PyObject *)&PyArray_Type, "__array_function__");
+
     /*
      * Initialize np.dtypes.StringDType
      *
