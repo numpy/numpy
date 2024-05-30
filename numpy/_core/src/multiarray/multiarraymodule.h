@@ -31,6 +31,14 @@ NPY_VISIBILITY_HIDDEN extern npy_ma_str_struct *npy_ma_str;
 
 typedef struct npy_ma_global_data_struct {
     /*
+     * Used in ufunc_type_resolution.c to avoid reconstructing a tuple
+     * storing the default true division return types
+     * This is immutable and set at module initialization so can be used
+     * without acquiring the global data mutex
+     */
+    PyObject *default_truediv_type_tup;
+
+    /*
      * A reference to ndarray's implementations for __array_*__ special methods
      */
     PyObject *ndarray_array_ufunc;

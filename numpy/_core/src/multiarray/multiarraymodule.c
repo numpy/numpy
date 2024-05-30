@@ -4965,6 +4965,20 @@ initialize_static_globals(void)
         numpy_warn_if_no_mem_policy = 0;
     }
 
+    // default_truediv_type_tup
+    PyArray_Descr *tmp = PyArray_DescrFromType(NPY_DOUBLE);
+    if (tmp == NULL) {
+        return -1;
+    }
+
+    npy_ma_global_data->default_truediv_type_tup =
+            PyTuple_Pack(3, tmp, tmp, tmp);
+    if (npy_ma_global_data->default_truediv_type_tup == NULL) {
+        Py_DECREF(tmp);
+        return -1;
+    }
+    Py_DECREF(tmp);
+
     PyObject *flags = PySys_GetObject("flags");  /* borrowed object */
     if (flags == NULL) {
         PyErr_SetString(PyExc_AttributeError, "cannot get sys.flags");
