@@ -943,7 +943,7 @@ PyArray_NewFromDescr_int(
             ndarray_array_finalize = PyObject_GetAttr(
                 (PyObject *)&PyArray_Type, npy_ma_str_array_finalize);
         }
-        func = PyObject_GetAttr((PyObject *)subtype, npy_ma_str_array_finalize);
+        func = PyObject_GetAttr((PyObject *)subtype, npy_ma_str->array_finalize);
         if (func == NULL) {
             goto fail;
         }
@@ -2045,7 +2045,7 @@ PyArray_FromStructInterface(PyObject *input)
     PyObject *attr;
     char endian = NPY_NATBYTE;
 
-    attr = PyArray_LookupSpecial_OnInstance(input, npy_ma_str_array_struct);
+    attr = PyArray_LookupSpecial_OnInstance(input, npy_ma_str->array_struct);
     if (attr == NULL) {
         if (PyErr_Occurred()) {
             return NULL;
@@ -2169,7 +2169,7 @@ PyArray_FromInterface(PyObject *origin)
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
 
-    iface = PyArray_LookupSpecial_OnInstance(origin, npy_ma_str_array_interface);
+    iface = PyArray_LookupSpecial_OnInstance(origin, npy_ma_str->array_interface);
 
     if (iface == NULL) {
         if (PyErr_Occurred()) {
@@ -2472,7 +2472,7 @@ check_or_clear_and_warn_error_if_due_to_copy_kwarg(PyObject *kwnames)
         goto restore_error;
     }
     int copy_kwarg_unsupported = PyUnicode_Contains(
-            str_value, npy_ma_str_array_err_msg_substr);
+            str_value, npy_ma_str->array_err_msg_substr);
     Py_DECREF(str_value);
     if (copy_kwarg_unsupported == -1) {
         goto restore_error;
@@ -2524,7 +2524,7 @@ PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int copy,
     PyObject *new;
     PyObject *array_meth;
 
-    array_meth = PyArray_LookupSpecial_OnInstance(op, npy_ma_str_array);
+    array_meth = PyArray_LookupSpecial_OnInstance(op, npy_ma_str->array);
     if (array_meth == NULL) {
         if (PyErr_Occurred()) {
             return NULL;

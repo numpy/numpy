@@ -1044,7 +1044,7 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     }
     Py_DECREF(out_kwd_obj);
     /* check where if it exists */
-    where_obj = PyDict_GetItemWithError(kwds, npy_ma_str_where);
+    where_obj = PyDict_GetItemWithError(kwds, npy_ma_str->where);
     if (where_obj == NULL) {
         if (PyErr_Occurred()) {
             return -1;

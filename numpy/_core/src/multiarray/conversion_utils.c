@@ -1440,7 +1440,7 @@ PyArray_DeviceConverterOptional(PyObject *object, NPY_DEVICE *device)
     }
 
     if (PyUnicode_Check(object) &&
-        PyUnicode_Compare(object, npy_ma_str_cpu) == 0) {
+        PyUnicode_Compare(object, npy_ma_str->cpu) == 0) {
         *device = NPY_DEVICE_CPU;
         return NPY_SUCCEED;
     }

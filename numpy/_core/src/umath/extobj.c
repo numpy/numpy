@@ -47,7 +47,6 @@ NPY_NO_EXPORT PyObject *npy_extobj_contextvar = NULL;
 /* The python strings for the above error modes defined in extobj.h */
 const char *errmode_cstrings[] = {
         "ignore", "warn", "raise", "call", "print", "log"};
-static PyObject *errmode_strings[6] = {NULL};
 
 /* Default user error mode (underflows are ignored, others warn) */
 #define UFUNC_ERR_DEFAULT                               \
@@ -158,8 +157,9 @@ init_extobj(void)
      * inputs.
      */
     for (int i = 0; i <= UFUNC_ERR_LOG; i++) {
-        errmode_strings[i] = PyUnicode_InternFromString(errmode_cstrings[i]);
-        if (errmode_strings[i] == NULL) {
+        npy_ma_str->errmode_strings[i] = PyUnicode_InternFromString(
+                errmode_cstrings[i]);
+        if (npy_ma_str->errmode_strings[i] == NULL) {
             return -1;
         }
     }
@@ -191,7 +191,8 @@ errmodeconverter(PyObject *obj, int *mode)
     }
     int i = 0;
     for (; i <= UFUNC_ERR_LOG; i++) {
-        int eq = PyObject_RichCompareBool(obj, errmode_strings[i], Py_EQ);
+        int eq = PyObject_RichCompareBool(
+                obj, npy_ma_str->errmode_strings[i], Py_EQ);
         if (eq == -1) {
             return 0;
         }
@@ -338,19 +339,23 @@ extobj_get_extobj_dict(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(noarg))
     }
     /* Set all error modes: */
     mode = (extobj.errmask & UFUNC_MASK_DIVIDEBYZERO) >> UFUNC_SHIFT_DIVIDEBYZERO;
-    if (PyDict_SetItemString(result, "divide", errmode_strings[mode]) < 0) {
+    if (PyDict_SetItemString(result, "divide",
+                             npy_ma_str->errmode_strings[mode]) < 0) {
         goto fail;
     }
     mode = (extobj.errmask & UFUNC_MASK_OVERFLOW) >> UFUNC_SHIFT_OVERFLOW;
-    if (PyDict_SetItemString(result, "over", errmode_strings[mode]) < 0) {
+    if (PyDict_SetItemString(result, "over",
+                             npy_ma_str->errmode_strings[mode]) < 0) {
         goto fail;
     }
     mode = (extobj.errmask & UFUNC_MASK_UNDERFLOW) >> UFUNC_SHIFT_UNDERFLOW;
-    if (PyDict_SetItemString(result, "under", errmode_strings[mode]) < 0) {
+    if (PyDict_SetItemString(result, "under",
+                             npy_ma_str->errmode_strings[mode]) < 0) {
         goto fail;
     }
     mode = (extobj.errmask & UFUNC_MASK_INVALID) >> UFUNC_SHIFT_INVALID;
-    if (PyDict_SetItemString(result, "invalid", errmode_strings[mode]) < 0) {
+    if (PyDict_SetItemString(result, "invalid",
+                             npy_ma_str->errmode_strings[mode]) < 0) {
         goto fail;
     }
 

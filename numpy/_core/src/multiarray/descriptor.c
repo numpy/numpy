@@ -2717,7 +2717,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         Py_DECREF(ret);
         return NULL;
     }
-    obj = PyObject_GetAttr(mod, npy_ma_str_dtype);
+    obj = PyObject_GetAttr(mod, npy_ma_str->dtype);
     Py_DECREF(mod);
     if (obj == NULL) {
         Py_DECREF(ret);

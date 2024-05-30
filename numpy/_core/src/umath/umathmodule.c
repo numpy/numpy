@@ -295,7 +295,7 @@ int initumath(PyObject *m)
 
     if (intern_strings() < 0) {
         PyErr_SetString(PyExc_RuntimeError,
-           "cannot intern umath strings while initializing _multiarray_umath.");
+           "cannot intern strings while initializing _multiarray_umath.");
         return -1;
     }
 

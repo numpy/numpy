@@ -136,7 +136,7 @@ PyArray_GetPriority(PyObject *obj, double default_)
         return NPY_SCALAR_PRIORITY;
     }
 
-    ret = PyArray_LookupSpecial_OnInstance(obj, npy_ma_str_array_priority);
+    ret = PyArray_LookupSpecial_OnInstance(obj, npy_ma_str->array_priority);
     if (ret == NULL) {
         if (PyErr_Occurred()) {
             /* TODO[gh-14801]: propagate crashes during attribute access? */
@@ -3493,7 +3493,7 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self),
          *       weak-promotion branch is in practice identical to dtype one.
          */
         if (get_npy_promotion_state() == NPY_USE_WEAK_PROMOTION) {
-            PyObject *descr = PyObject_GetAttr(from_obj, npy_ma_str_dtype);
+            PyObject *descr = PyObject_GetAttr(from_obj, npy_ma_str->dtype);
             if (descr == NULL) {
                 goto finish;
             }
@@ -4771,115 +4771,102 @@ set_flaginfo(PyObject *d)
     return;
 }
 
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_current_allocator = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_function = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_struct = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_interface = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_priority = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_wrap = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_finalize = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_implementation = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis1 = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis2 = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_like = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_numpy = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_where = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_convert = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_preserve = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_convert_if_no_array = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_cpu = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_dtype = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_err_msg_substr = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str___dlpack__ = NULL;
+NPY_VISIBILITY_HIDDEN npy_ma_str_struct *npy_ma_str = NULL;
 
 static int
 intern_strings(void)
 {
-    npy_ma_str_current_allocator = PyUnicode_InternFromString("current_allocator");
-    if (npy_ma_str_current_allocator == NULL) {
+    // this is module-level global heap allocation, it is currently
+    // never freed
+    npy_ma_str = PyMem_Calloc(sizeof(npy_ma_str_struct), 1);
+    npy_ma_str->current_allocator = PyUnicode_InternFromString("current_allocator");
+    if (npy_ma_str->current_allocator == NULL) {
         return -1;
     }
-    npy_ma_str_array = PyUnicode_InternFromString("__array__");
-    if (npy_ma_str_array == NULL) {
+    npy_ma_str->array = PyUnicode_InternFromString("__array__");
+    if (npy_ma_str->array == NULL) {
         return -1;
     }
-    npy_ma_str_array_function = PyUnicode_InternFromString("__array_function__");
-    if (npy_ma_str_array_function == NULL) {
+    npy_ma_str->array_function = PyUnicode_InternFromString("__array_function__");
+    if (npy_ma_str->array_function == NULL) {
         return -1;
     }
-    npy_ma_str_array_struct = PyUnicode_InternFromString("__array_struct__");
-    if (npy_ma_str_array_struct == NULL) {
+    npy_ma_str->array_struct = PyUnicode_InternFromString("__array_struct__");
+    if (npy_ma_str->array_struct == NULL) {
         return -1;
     }
-    npy_ma_str_array_priority = PyUnicode_InternFromString("__array_priority__");
-    if (npy_ma_str_array_priority == NULL) {
+    npy_ma_str->array_priority = PyUnicode_InternFromString("__array_priority__");
+    if (npy_ma_str->array_priority == NULL) {
         return -1;
     }
-    npy_ma_str_array_interface = PyUnicode_InternFromString("__array_interface__");
-    if (npy_ma_str_array_interface == NULL) {
+    npy_ma_str->array_interface = PyUnicode_InternFromString("__array_interface__");
+    if (npy_ma_str->array_interface == NULL) {
         return -1;
     }
-    npy_ma_str_array_wrap = PyUnicode_InternFromString("__array_wrap__");
-    if (npy_ma_str_array_wrap == NULL) {
+    npy_ma_str->array_wrap = PyUnicode_InternFromString("__array_wrap__");
+    if (npy_ma_str->array_wrap == NULL) {
         return -1;
     }
-    npy_ma_str_array_finalize = PyUnicode_InternFromString("__array_finalize__");
-    if (npy_ma_str_array_finalize == NULL) {
+    npy_ma_str->array_finalize = PyUnicode_InternFromString("__array_finalize__");
+    if (npy_ma_str->array_finalize == NULL) {
         return -1;
     }
-    npy_ma_str_implementation = PyUnicode_InternFromString("_implementation");
-    if (npy_ma_str_implementation == NULL) {
+    npy_ma_str->implementation = PyUnicode_InternFromString("_implementation");
+    if (npy_ma_str->implementation == NULL) {
         return -1;
     }
-    npy_ma_str_axis1 = PyUnicode_InternFromString("axis1");
-    if (npy_ma_str_axis1 == NULL) {
+    npy_ma_str->axis1 = PyUnicode_InternFromString("axis1");
+    if (npy_ma_str->axis1 == NULL) {
         return -1;
     }
-    npy_ma_str_axis2 = PyUnicode_InternFromString("axis2");
-    if (npy_ma_str_axis2 == NULL) {
+    npy_ma_str->axis2 = PyUnicode_InternFromString("axis2");
+    if (npy_ma_str->axis2 == NULL) {
         return -1;
     }
-    npy_ma_str_like = PyUnicode_InternFromString("like");
-    if (npy_ma_str_like == NULL) {
+    npy_ma_str->like = PyUnicode_InternFromString("like");
+    if (npy_ma_str->like == NULL) {
         return -1;
     }
-    npy_ma_str_numpy = PyUnicode_InternFromString("numpy");
-    if (npy_ma_str_numpy == NULL) {
+    npy_ma_str->numpy = PyUnicode_InternFromString("numpy");
+    if (npy_ma_str->numpy == NULL) {
         return -1;
     }
-    npy_ma_str_where = PyUnicode_InternFromString("where");
-    if (npy_ma_str_where == NULL) {
+    npy_ma_str->where = PyUnicode_InternFromString("where");
+    if (npy_ma_str->where == NULL) {
         return -1;
     }
     /* scalar policies */
-    npy_ma_str_convert = PyUnicode_InternFromString("convert");
-    if (npy_ma_str_convert == NULL) {
+    npy_ma_str->convert = PyUnicode_InternFromString("convert");
+    if (npy_ma_str->convert == NULL) {
         return -1;
     }
-    npy_ma_str_preserve = PyUnicode_InternFromString("preserve");
-    if (npy_ma_str_preserve == NULL) {
+    npy_ma_str->preserve = PyUnicode_InternFromString("preserve");
+    if (npy_ma_str->preserve == NULL) {
         return -1;
     }
-    npy_ma_str_convert_if_no_array = PyUnicode_InternFromString("convert_if_no_array");
-    if (npy_ma_str_convert_if_no_array == NULL) {
+    npy_ma_str->convert_if_no_array = PyUnicode_InternFromString("convert_if_no_array");
+    if (npy_ma_str->convert_if_no_array == NULL) {
         return -1;
     }
-    npy_ma_str_cpu = PyUnicode_InternFromString("cpu");
-    if (npy_ma_str_cpu == NULL) {
+    npy_ma_str->cpu = PyUnicode_InternFromString("cpu");
+    if (npy_ma_str->cpu == NULL) {
         return -1;
     }
-    npy_ma_str_dtype = PyUnicode_InternFromString("dtype");
-    if (npy_ma_str_dtype == NULL) {
+    npy_ma_str->dtype = PyUnicode_InternFromString("dtype");
+    if (npy_ma_str->dtype == NULL) {
         return -1;
     }
-    npy_ma_str_array_err_msg_substr = PyUnicode_InternFromString(
+    npy_ma_str->array_err_msg_substr = PyUnicode_InternFromString(
             "__array__() got an unexpected keyword argument 'copy'");
-    if (npy_ma_str_array_err_msg_substr == NULL) {
+    if (npy_ma_str->array_err_msg_substr == NULL) {
         return -1;
     }
-    npy_ma_str___dlpack__ = PyUnicode_InternFromString("__dlpack__");
-    if (npy_ma_str___dlpack__ == NULL) {
+    npy_ma_str->out = PyUnicode_InternFromString("out");
+    if (npy_ma_str->out == NULL) {
+        return -1;
+    }
+    npy_ma_str->__dlpack__ = PyUnicode_InternFromString("__dlpack__");
+    if (npy_ma_str->__dlpack__ == NULL) {
         return -1;
     }
     return 0;
