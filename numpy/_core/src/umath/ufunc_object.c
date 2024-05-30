@@ -698,16 +698,13 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
                  * TODO: Just like the general dual NEP 50/legacy promotion
                  * support this is meant as a temporary hack for NumPy 1.25.
                  */
-                static PyArrayObject *zero_arr = NULL;
-                if (NPY_UNLIKELY(zero_arr == NULL)) {
-                    zero_arr = (PyArrayObject *)PyArray_ZEROS(
-                            0, NULL, NPY_LONG, NPY_FALSE);
-                    if (zero_arr == NULL) {
-                        goto fail;
-                    }
-                    ((PyArrayObject_fields *)zero_arr)->flags |= (
-                        NPY_ARRAY_WAS_PYTHON_INT|NPY_ARRAY_WAS_INT_AND_REPLACED);
+                PyArrayObject *zero_arr = (PyArrayObject *)PyArray_ZEROS(
+                        0, NULL, NPY_LONG, NPY_FALSE);
+                if (zero_arr == NULL) {
+                    goto fail;
                 }
+                ((PyArrayObject_fields *)zero_arr)->flags |= (
+                        NPY_ARRAY_WAS_PYTHON_INT|NPY_ARRAY_WAS_INT_AND_REPLACED);
                 Py_INCREF(zero_arr);
                 Py_SETREF(out_op[i], zero_arr);
             }
@@ -6530,10 +6527,6 @@ ufunc_get_signature(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 
 #undef _typecharfromnum
 
-/*
- * Docstring is now set from python
- * static char *Ufunctype__doc__ = NULL;
- */
 static PyGetSetDef ufunc_getset[] = {
     {"__doc__",
         (getter)ufunc_get_doc,
