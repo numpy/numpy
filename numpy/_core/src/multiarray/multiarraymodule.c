@@ -5008,6 +5008,11 @@ initialize_static_globals(void)
         }
     }
 
+    npy_ma_global_data->kwnames_is_copy = Py_BuildValue("(s)", "copy");
+    if (npy_ma_global_data->kwnames_is_copy == NULL) {
+        return -1;
+    }
+
     npy_ma_global_data->one_obj = PyLong_FromLong((long) 1);
     if (npy_ma_global_data->one_obj == NULL) {
         return -1;

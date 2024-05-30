@@ -2528,15 +2528,6 @@ PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int copy,
         return Py_NotImplemented;
     }
 
-    static PyObject *kwnames_is_copy = NULL;
-    if (kwnames_is_copy == NULL) {
-        kwnames_is_copy = Py_BuildValue("(s)", "copy");
-        if (kwnames_is_copy == NULL) {
-            Py_DECREF(array_meth);
-            return NULL;
-        }
-    }
-
     Py_ssize_t nargs = 0;
     PyObject *arguments[2];
     PyObject *kwnames = NULL;
@@ -2552,7 +2543,7 @@ PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int copy,
      * signature of the __array__ method being called does not have `copy`.
      */
     if (copy != -1) {
-        kwnames = kwnames_is_copy;
+        kwnames = npy_ma_global_data->kwnames_is_copy;
         arguments[nargs] = copy == 1 ? Py_True : Py_False;
     }
 

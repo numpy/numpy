@@ -90,6 +90,17 @@ typedef struct npy_ma_global_data_struct {
     } unpack_lookup_big[256];
 
     /*
+     * Used in the __array__ internals to avoid building a tuple inline
+     */
+    PyObject *kwnames_is_copy;
+
+    /*
+     * Used in __imatmul__ to avoid building tuples inline
+     */
+    PyObject *axes_1d_obj_kwargs;
+    PyObject *axes_2d_obj_kwargs;
+
+    /*
      * Used for CPU feature detection and dispatch
      *
      * Filled in during module initialization and thereafter immutable

@@ -287,9 +287,12 @@ int initumath(PyObject *m)
 
     s = PyDict_GetItemString(d, "conjugate");
     s2 = PyDict_GetItemString(d, "remainder");
+
     /* Setup the array object's numerical structures with appropriate
        ufuncs in d*/
-    _PyArray_SetNumericOps(d);
+    if (_PyArray_SetNumericOps(d) < 0) {
+        return -1;
+    }
 
     PyDict_SetItemString(d, "conj", s);
     PyDict_SetItemString(d, "mod", s2);
