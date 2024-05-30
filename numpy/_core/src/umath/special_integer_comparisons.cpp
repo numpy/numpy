@@ -293,7 +293,7 @@ get_loop(PyArrayMethod_Context *context,
 
 
 /*
- * Machinery to add the python integer to NumPy intger comparsisons as well
+ * Machinery to add the python integer to NumPy integer comparsisons as well
  * as a special promotion to special case Python int with Python int
  * comparisons.
  */

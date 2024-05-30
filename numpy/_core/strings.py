@@ -63,7 +63,7 @@ __all__ = [
     # _vec_string - Will probably not become ufuncs
     "mod", "decode", "encode", "translate",
 
-    # Removed from namespace until behavior has been crystalized
+    # Removed from namespace until behavior has been crystallized
     # "join", "split", "rsplit", "splitlines",
 ]
 

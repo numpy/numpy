@@ -823,7 +823,7 @@ cannot not be accessed directly.
 
 .. c:function:: PyArray_ArrayDescr *PyDataType_SUBARRAY(PyArray_Descr *descr)
 
-    Information about a subarray dtype eqivalent to the Python `np.dtype.base`
+    Information about a subarray dtype equivalent to the Python `np.dtype.base`
     and `np.dtype.shape`.
 
     If this is non- ``NULL``, then this data-type descriptor is a
@@ -3975,7 +3975,7 @@ the C-API is needed then some additional steps must be taken.
     behavior as NumPy 1.x.
 
     .. note::
-        Windows never had shared visbility although you can use this macro
+        Windows never had shared visibility although you can use this macro
         to achieve it.  We generally discourage sharing beyond shared boundary
         lines since importing the array API includes NumPy version checks.
 

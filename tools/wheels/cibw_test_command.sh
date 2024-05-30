@@ -1,5 +1,5 @@
 # This script is used by .github/workflows/wheels.yml to run the full test
-# suite, checks for lincense inclusion and that the openblas version is correct.
+# suite, checks for license inclusion and that the openblas version is correct.
 set -xe
 
 PROJECT_DIR="$1"
