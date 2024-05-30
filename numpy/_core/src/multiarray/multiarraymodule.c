@@ -4965,9 +4965,19 @@ initialize_static_globals(void)
         numpy_warn_if_no_mem_policy = 0;
     }
 
+    PyObject *flags = PySys_GetObject("flags");  /* borrowed object */
+    if (flags == NULL) {
+        PyErr_SetString(PyExc_AttributeError, "cannot get sys.flags");
+        return -1;
+    }
+    PyObject *level = PyObject_GetAttrString(flags, "optimize");
+    if (level == NULL) {
+        return -1;
+    }
+    npy_ma_global_data->optimize = PyLong_AsLong(level);
+    Py_DECREF(level);
     return 0;
 }
-
 
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,

@@ -61,6 +61,12 @@ typedef struct npy_ma_global_data_struct {
     PyObject *os_fspath;
 
     /*
+     * stores sys.flags.optimize as a long, which is used in the add_docstring
+     * implementation
+     */
+    long optimize;
+
+    /*
      * Used for CPU feature detection and dispatch
      *
      * Filled in during module initialization and thereafter immutable
