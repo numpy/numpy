@@ -986,7 +986,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     ----------
     f : array_like
         An N-dimensional array containing samples of a scalar function.
-    varargs : list of scalar or array, optional. (see Examples below).
+    varargs : list of scalar or array, optional
         Spacing between f values. Default unitary spacing for all dimensions.
         Spacing can be specified using:
 
@@ -999,7 +999,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
         4. Any combination of N scalars/arrays with the meaning of 2. and 3.
 
         If `axis` is given, the number of varargs must equal the number of axes.
-        Default: 1.
+        Default: 1. (see Examples below).
 
     edge_order : {1, 2}, optional
         Gradient is calculated using N-th order accurate differences
