@@ -55,6 +55,13 @@ typedef struct npy_ma_global_data_struct {
     PyObject *os_fspath;
 
     /*
+     * Used for CPU feature detection and dispatch
+     *
+     * Filled in during module initialization and thereafter immutable
+     */
+    PyObject *cpu_dispatch_registry;
+
+    /*
      * The following entries store cached references to object obtained
      * via an import. All of these are initialized at runtime by
      * npy_cache_import.
