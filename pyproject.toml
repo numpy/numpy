@@ -223,4 +223,4 @@ check-hidden = true
 # Skip all shortish (up to 5) ACRONYMS
 ignore-regex = '"worl"|https://citeseerx\.ist\.psu\.edu|\b([A-Z][a-z]{1,9}|[A-Z]{1,5})\b|.*codespell-ignore.*|/seh/'
 # some common hits and some "questionable" and false positives (rare words)
-ignore-words-list = 'nd,nin,numers,numer,inout,ccompiler,fo,CCompiler,dout,ans,ser,ot,asign,siz,alow,fro,delimitor,alo,dum,desig,recuse,implementor'
+ignore-words-list = 'nd,nin,numers,numer,inout,ccompiler,fo,CCompiler,dout,ans,ser,ot,asign,siz,alow,fro,delimitor,alo,dum,desig,recuse,implementor,arange,aranges'
