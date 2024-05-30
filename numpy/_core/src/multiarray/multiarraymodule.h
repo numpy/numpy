@@ -39,6 +39,20 @@ typedef struct npy_ma_global_data_struct {
     PyObject *default_truediv_type_tup;
 
     /*
+     * Used to set up the default extobj context variable
+     *
+     * This is immutable and set at module initialization so can be used
+     * without acquiring the global data mutex
+     */
+    PyObject *default_extobj_capsule;
+
+    /*
+     * The global ContextVar to store the extobject. It is exposed to Python
+     * as `_extobj_contextvar`.
+     */
+    PyObject *npy_extobj_contextvar;
+
+    /*
      * A reference to ndarray's implementations for __array_*__ special methods
      */
     PyObject *ndarray_array_ufunc;

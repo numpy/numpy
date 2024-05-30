@@ -18,14 +18,6 @@
 #include "common.h"
 
 
-/*
- * The global ContextVar to store the extobject. It is exposed to Python
- * as `_extobj_contextvar`.
- */
-static PyObject *default_extobj_capsule = NULL;
-NPY_NO_EXPORT PyObject *npy_extobj_contextvar = NULL;
-
-
 #define UFUNC_ERR_IGNORE 0
 #define UFUNC_ERR_WARN   1
 #define UFUNC_ERR_RAISE  2
@@ -130,7 +122,8 @@ fetch_curr_extobj_state(npy_extobj *extobj)
 {
     PyObject *capsule;
     if (PyContextVar_Get(
-            npy_extobj_contextvar, default_extobj_capsule, &capsule) < 0) {
+            npy_ma_global_data->npy_extobj_contextvar,
+            npy_ma_global_data->default_extobj_capsule, &capsule) < 0) {
         return -1;
     }
     npy_extobj *obj = PyCapsule_GetPointer(capsule, "numpy.ufunc.extobj");
@@ -164,15 +157,15 @@ init_extobj(void)
         }
     }
 
-    default_extobj_capsule = make_extobj_capsule(
+    npy_ma_global_data->default_extobj_capsule = make_extobj_capsule(
             NPY_BUFSIZE, UFUNC_ERR_DEFAULT, Py_None);
-    if (default_extobj_capsule == NULL) {
+    if (npy_ma_global_data->default_extobj_capsule == NULL) {
         return -1;
     }
-    npy_extobj_contextvar = PyContextVar_New(
-            "numpy.ufunc.extobj", default_extobj_capsule);
-    if (npy_extobj_contextvar == NULL) {
-        Py_CLEAR(default_extobj_capsule);
+    npy_ma_global_data->npy_extobj_contextvar = PyContextVar_New(
+            "numpy.ufunc.extobj", npy_ma_global_data->default_extobj_capsule);
+    if (npy_ma_global_data->npy_extobj_contextvar == NULL) {
+        Py_CLEAR(npy_ma_global_data->default_extobj_capsule);
         return -1;
     }
     return 0;
@@ -213,7 +206,7 @@ errmodeconverter(PyObject *obj, int *mode)
 /*
  * This function is currently exposed as `umath._seterrobj()`, it is private
  * and returns a capsule representing the errstate.  This capsule is then
- * assigned to the `npy_extobj_contextvar` in Python.
+ * assigned to the `_extobj_contextvar` in Python.
  */
 NPY_NO_EXPORT PyObject *
 extobj_make_extobj(PyObject *NPY_UNUSED(mod),
