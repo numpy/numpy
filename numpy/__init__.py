@@ -235,7 +235,6 @@ else:
         ix_, c_, r_, s_, ogrid, mgrid, unravel_index, ravel_multi_index, 
         index_exp
     )
-    from .lib._info import __array_namespace_info__
 
     from . import matrixlib as _mat
     from .matrixlib import (
@@ -292,6 +291,8 @@ else:
     __future_scalars__ = {"str", "bytes", "object"}
 
     __array_api_version__ = "2022.12"
+
+    from ._array_api_info import __array_namespace_info__
 
     # now that numpy core module is imported, can initialize limits
     _core.getlimits._register_known_types()
