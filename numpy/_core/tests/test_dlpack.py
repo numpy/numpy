@@ -34,11 +34,16 @@ class TestDLPack:
             x.__dlpack__(stream=1)
 
     def test_dunder_dlpack_copy(self):
+        # Checks the argument parsing of __dlpack__ explicitly.
+        # Honoring the flag is tested in the from_dlpack round-tripping test.
         x = np.arange(5)
-        x.__dlpack__(stream=None)
+        x.__dlpack__(copy=True)
+        x.__dlpack__(copy=None)
+        x.__dlpack__(copy=False)
 
-        with pytest.raises(RuntimeError):
-            x.__dlpack__(stream=1)
+        with pytest.raises(ValueError):
+            # NOTE: The copy converter should be stricter, but not just here.
+            x.__dlpack__(copy=np.array([1, 2, 3]))
 
     def test_strides_not_multiple_of_itemsize(self):
         dt = np.dtype([('int', np.int32), ('char', np.int8)])
@@ -154,6 +159,8 @@ class TestDLPack:
         x = np.arange(5)
 
         y = np.from_dlpack(x)
+        assert np.may_share_memory(x, y)
+        y = np.from_dlpack(x, copy=False)
         assert np.may_share_memory(x, y)
         y = np.from_dlpack(x, copy=True)
         assert not np.may_share_memory(x, y)
