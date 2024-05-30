@@ -182,20 +182,16 @@ site-packages directory.
             $python setup.py install
             will install the module in your site-packages file.
 
-            See the setuptools section
-            'Building Extension Modules'
+            See the setuptools section 'Building Extension Modules'
             at setuptools.pypa.io for more information.
         '''
 
         from setuptools import setup, Extension
         import numpy as np
 
-        module1 = Extension('spam',
-                            sources=['spammodule.c'])
+        module1 = Extension('spam', sources=['spammodule.c'])
 
-        setup(name = 'spam',
-            version='1.0',
-            ext_modules = [module1])
+        setup(name='spam', version='1.0', ext_modules=[module1])
 
 
 Once the spam module is imported into python, you can call logit
@@ -372,8 +368,7 @@ using ``python setup.py build_ext --inplace``.
             $python setup.py install
             will install the module in your site-packages file.
 
-            See the setuptools section
-            'Building Extension Modules'
+            See the setuptools section 'Building Extension Modules'
             at setuptools.pypa.io for more information.
         '''
 
@@ -384,9 +379,7 @@ using ``python setup.py build_ext --inplace``.
                             sources=['single_type_logit.c'],
                             include_dirs=[get_include()])
 
-        setup(name = 'npufunc',
-            version='1.0',
-            ext_modules = [npufunc])
+        setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
 
 After the above has been installed, it can be imported and used as follows.
@@ -622,8 +615,7 @@ or installed to site-packages via ``python setup.py install``.
             $python setup.py install
             will install the module in your site-packages file.
 
-            See the setuptools section
-            'Building Extension Modules'
+            See the setuptools section 'Building Extension Modules'
             at setuptools.pypa.io for more information.
         '''
 
@@ -639,9 +631,7 @@ or installed to site-packages via ``python setup.py install``.
                             library_dirs=[path_to_npymath],
                             libraries=["npymath"])
 
-        setup(name = 'npufunc',
-            version='1.0',
-            ext_modules = [npufunc])
+        setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
 
 After the above has been installed, it can be imported and used as follows.
