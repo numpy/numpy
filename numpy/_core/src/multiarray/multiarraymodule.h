@@ -75,6 +75,14 @@ typedef struct npy_ma_global_data_struct {
     long optimize;
 
     /*
+     * LUT used by unpack_bits
+     */
+    union {
+        npy_uint8  bytes[8];
+        npy_uint64 uint64;
+    } unpack_lookup_big[256];
+
+    /*
      * Used for CPU feature detection and dispatch
      *
      * Filled in during module initialization and thereafter immutable

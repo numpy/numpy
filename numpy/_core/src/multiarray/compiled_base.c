@@ -1747,15 +1747,6 @@ fail:
 static PyObject *
 unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
 {
-    static int unpack_init = 0;
-    /*
-     * lookuptable for bitorder big as it has been around longer
-     * bitorder little is handled via byteswapping in the loop
-     */
-    static union {
-        npy_uint8  bytes[8];
-        npy_uint64 uint64;
-    } unpack_lookup_big[256];
     PyArrayObject *inp;
     PyArrayObject *new = NULL;
     PyArrayObject *out = NULL;
@@ -1841,22 +1832,6 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
         goto fail;
     }
 
-    /*
-     * setup lookup table under GIL, 256 8 byte blocks representing 8 bits
-     * expanded to 1/0 bytes
-     */
-    if (unpack_init == 0) {
-        npy_intp j;
-        for (j=0; j < 256; j++) {
-            npy_intp k;
-            for (k=0; k < 8; k++) {
-                npy_uint8 v = (j & (1 << k)) == (1 << k);
-                unpack_lookup_big[j].bytes[7 - k] = v;
-            }
-        }
-        unpack_init = 1;
-    }
-
     count = PyArray_DIM(new, axis) * 8;
     if (outdims[axis] > count) {
         in_n = count / 8;
@@ -1883,7 +1858,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             /* for unity stride we can just copy out of the lookup table */
             if (order == 'b') {
                 for (index = 0; index < in_n; index++) {
-                    npy_uint64 v = unpack_lookup_big[*inptr].uint64;
+                    npy_uint64 v = npy_ma_global_data->unpack_lookup_big[*inptr].uint64;
                     memcpy(outptr, &v, 8);
                     outptr += 8;
                     inptr += in_stride;
@@ -1891,7 +1866,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             }
             else {
                 for (index = 0; index < in_n; index++) {
-                    npy_uint64 v = unpack_lookup_big[*inptr].uint64;
+                    npy_uint64 v = npy_ma_global_data->unpack_lookup_big[*inptr].uint64;
                     if (order != 'b') {
                         v = npy_bswap8(v);
                     }
@@ -1902,7 +1877,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             }
             /* Clean up the tail portion */
             if (in_tail) {
-                npy_uint64 v = unpack_lookup_big[*inptr].uint64;
+                npy_uint64 v = npy_ma_global_data->unpack_lookup_big[*inptr].uint64;
                 if (order != 'b') {
                     v = npy_bswap8(v);
                 }

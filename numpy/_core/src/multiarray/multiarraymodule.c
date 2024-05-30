@@ -4990,6 +4990,24 @@ initialize_static_globals(void)
     }
     npy_ma_global_data->optimize = PyLong_AsLong(level);
     Py_DECREF(level);
+
+    /*
+     * see unpack_bits for how this table is used.
+     *
+     * LUT for bigendian bitorder, littleendian is handled via
+     * byteswapping in the loop.
+     *
+     * 256 8 byte blocks representing 8 bits expanded to 1 or 0 bytes
+     */
+    npy_intp j;
+    for (j=0; j < 256; j++) {
+        npy_intp k;
+        for (k=0; k < 8; k++) {
+            npy_uint8 v = (j & (1 << k)) == (1 << k);
+            npy_ma_global_data->unpack_lookup_big[j].bytes[7 - k] = v;
+        }
+    }
+
     return 0;
 }
 
