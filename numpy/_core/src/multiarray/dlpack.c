@@ -297,7 +297,7 @@ fill_dl_tensor_information(
 
 static PyObject *
 create_dlpack_capsule(
-        PyArrayObject *self, int versioned, DLDevice *result_device)
+        PyArrayObject *self, int versioned, DLDevice *result_device, int copied)
 {
     int ndim = PyArray_NDIM(self);
 
@@ -336,6 +336,9 @@ create_dlpack_capsule(
         managed->flags = 0;
         if (!PyArray_CHKFLAGS(self, NPY_ARRAY_WRITEABLE)) {
             managed->flags |= DLPACK_FLAG_BITMASK_READ_ONLY;
+        }
+        if (copied) {
+            managed->flags |= DLPACK_FLAG_BITMASK_IS_COPIED;
         }
     }
     else {
@@ -470,7 +473,8 @@ array_dlpack(PyArrayObject *self,
      * can then be removed again.
      */
     PyObject *res = create_dlpack_capsule(
-            self, major_version >= 1, &result_device);
+            self, major_version >= 1, &result_device,
+            copy_mode == NPY_COPY_ALWAYS);
     Py_DECREF(self);
 
     return res;
