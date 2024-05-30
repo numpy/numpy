@@ -1420,7 +1420,7 @@ class Configuration:
         """Apply glob to paths and prepend local_path if needed.
 
         Applies glob.glob(...) to each path in the sequence (if needed) and
-        pre-pends the local_path if needed. Because this is called on all
+        prepends the local_path if needed. Because this is called on all
         source lists, this allows wildcard characters to be specified in lists
         of sources for extension modules and libraries and scripts and allows
         path-names be relative to the source directory.
