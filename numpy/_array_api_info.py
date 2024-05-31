@@ -143,7 +143,6 @@ class __array_namespace_info__:
             # "max rank": 64,
         }
 
-
     def default_device(self) -> str:
         """
         The default device used for new NumPy arrays.
@@ -219,7 +218,6 @@ class __array_namespace_info__:
             "integral": dtype(intp),
             "indexing": dtype(intp),
         }
-
 
     def dtypes(
         self,
@@ -356,7 +354,6 @@ class __array_namespace_info__:
                 res.update(self.dtypes(kind=k))
             return res
         raise ValueError(f"unsupported kind: {kind!r}")
-
 
     def devices(self) -> List[str]:
         """
