@@ -103,6 +103,8 @@ class __array_namespace_info__:
      'indexing': numpy.int64}
     """
 
+    __module__ = 'numpy'
+
     def capabilities(self) -> Capabilities:
         """
         Return a dictionary of array API library capabilities.
