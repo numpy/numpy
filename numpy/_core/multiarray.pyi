@@ -525,6 +525,8 @@ def asanyarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
+    copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> _ArrayType: ...
 @overload
@@ -533,6 +535,8 @@ def asanyarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
+    copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -541,6 +545,8 @@ def asanyarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
+    copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
@@ -549,6 +555,8 @@ def asanyarray(
     dtype: _DTypeLike[_SCT],
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
+    copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -557,6 +565,8 @@ def asanyarray(
     dtype: DTypeLike,
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
+    copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
