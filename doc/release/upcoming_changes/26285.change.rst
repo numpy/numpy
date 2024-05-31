@@ -1,0 +1,13 @@
+``ma.corrcoef`` may return a slightly different result
+------------------------------------------------------
+A pairwise observation approach is currently used in `ma.corrcoef` to 
+calculate the standard deviations for each pair of variables. This has been 
+changed as it is being used to normalise the covariance, estimated using 
+`ma.cov`, which does not consider the observations for each variable in a 
+pairwise manner, rendering it unnecessary. The normalisation has been 
+replaced by the more appropriate standard deviation for each variable, 
+which significantly reduces the wall time, but will return slightly different 
+estimates of the correlation coefficients in cases where the observations 
+between a pair of variables are not aligned. However, it will return the same 
+estimates in all other cases, including returning the same correlation matrix 
+as `corrcoef` when using a masked array with no masked values.
