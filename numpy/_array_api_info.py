@@ -1,9 +1,11 @@
 """
 Array API Inspection namespace
 
-This is the namespace for inspection functions as defined by the array API standard.
-See https://data-apis.org/array-api/latest/API_specification/inspection.html
-for more details.
+This is the namespace for inspection functions as defined by the array API
+standard. See
+https://data-apis.org/array-api/latest/API_specification/inspection.html for
+more details.
+
 """
 
 from __future__ import annotations
@@ -101,6 +103,7 @@ class __array_namespace_info__:
      'complex floating': numpy.complex128,
      'integral': numpy.int64,
      'indexing': numpy.int64}
+
     """
 
     __module__ = 'numpy'
@@ -114,8 +117,9 @@ class __array_namespace_info__:
         - **"boolean indexing"**: boolean indicating whether an array library
           supports boolean indexing. Always ``True`` for NumPy.
 
-        - **"data-dependent shapes"**: boolean indicating whether an array library
-          supports data-dependent output shapes. Always ``True`` for NumPy.
+        - **"data-dependent shapes"**: boolean indicating whether an array
+          library supports data-dependent output shapes. Always ``True`` for
+          NumPy.
 
         See
         https://data-apis.org/array-api/latest/API_specification/generated/array_api.info.capabilities.html
@@ -123,7 +127,10 @@ class __array_namespace_info__:
 
         See Also
         --------
-        __array_namespace_info__.default_device, __array_namespace_info__.default_dtypes, __array_namespace_info__.dtypes, __array_namespace_info__.devices
+        __array_namespace_info__.default_device,
+        __array_namespace_info__.default_dtypes,
+        __array_namespace_info__.dtypes,
+        __array_namespace_info__.devices
 
         Returns
         -------
@@ -153,7 +160,10 @@ class __array_namespace_info__:
 
         See Also
         --------
-        __array_namespace_info__.capabilities, __array_namespace_info__.default_dtypes, __array_namespace_info__.dtypes, __array_namespace_info__.devices
+        __array_namespace_info__.capabilities,
+        __array_namespace_info__.default_dtypes,
+        __array_namespace_info__.dtypes,
+        __array_namespace_info__.devices
 
         Returns
         -------
@@ -198,7 +208,10 @@ class __array_namespace_info__:
 
         See Also
         --------
-        __array_namespace_info__.capabilities, __array_namespace_info__.default_device, __array_namespace_info__.dtypes, __array_namespace_info__.devices
+        __array_namespace_info__.capabilities,
+        __array_namespace_info__.default_device,
+        __array_namespace_info__.dtypes,
+        __array_namespace_info__.devices
 
         Examples
         --------
@@ -212,7 +225,8 @@ class __array_namespace_info__:
         """
         if device not in ["cpu", None]:
             raise ValueError(
-                f'Device not understood. Only "cpu" is allowed, but received: {device}'
+                'Device not understood. Only "cpu" is allowed, but received:'
+                f' {device}'
             )
         return {
             "real floating": dtype(float64),
@@ -230,8 +244,8 @@ class __array_namespace_info__:
         """
         The array API data types supported by NumPy.
 
-        Note that this function only returns data types that are defined by the
-        array API.
+        Note that this function only returns data types that are defined by
+        the array API.
 
         Parameters
         ----------
@@ -266,7 +280,10 @@ class __array_namespace_info__:
 
         See Also
         --------
-        __array_namespace_info__.capabilities, __array_namespace_info__.default_device, __array_namespace_info__.default_dtypes, __array_namespace_info__.devices
+        __array_namespace_info__.capabilities,
+        __array_namespace_info__.default_device,
+        __array_namespace_info__.default_dtypes,
+        __array_namespace_info__.devices
 
         Examples
         --------
@@ -280,7 +297,8 @@ class __array_namespace_info__:
         """
         if device not in ["cpu", None]:
             raise ValueError(
-                f'Device not understood. Only "cpu" is allowed, but received: {device}'
+                'Device not understood. Only "cpu" is allowed, but received:'
+                f' {device}'
             )
         if kind is None:
             return {
@@ -370,7 +388,10 @@ class __array_namespace_info__:
 
         See Also
         --------
-        __array_namespace_info__.capabilities, __array_namespace_info__.default_device, __array_namespace_info__.default_dtypes, __array_namespace_info__.dtypes
+        __array_namespace_info__.capabilities,
+        __array_namespace_info__.default_device,
+        __array_namespace_info__.default_dtypes,
+        __array_namespace_info__.dtypes
 
         Examples
         --------
