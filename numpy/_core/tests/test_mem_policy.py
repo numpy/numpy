@@ -48,7 +48,7 @@ def get_module(tmp_path):
          """),
         ("set_wrong_capsule_name_data_policy", "METH_NOARGS", """
              PyObject *secret_data =
-                 PyCapsule_New(&secret_data_handler, "wrong_mem_handler", NULL);
+                 PyCapsule_New(&secret_data_handler, "not_mem_handler", NULL);
              if (secret_data == NULL) {
                  return NULL;
              }
