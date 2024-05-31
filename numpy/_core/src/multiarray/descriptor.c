@@ -2025,6 +2025,7 @@ arraydescr_dealloc(PyArray_Descr *self)
 {
     Py_XDECREF(self->typeobj);
     if (!PyDataType_ISLEGACY(self)) {
+        Py_TYPE(self)->tp_free((PyObject *)self);
         return;
     }
     _PyArray_LegacyDescr *lself = (_PyArray_LegacyDescr *)self;
