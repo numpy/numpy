@@ -113,7 +113,7 @@ class __array_namespace_info__:
           supports boolean indexing. Always ``True`` for NumPy.
 
         - **"data-dependent shapes"**: boolean indicating whether an array library
-            supports data-dependent output shapes. Always ``True`` for NumPy.
+          supports data-dependent output shapes. Always ``True`` for NumPy.
 
         See
         https://data-apis.org/array-api/latest/API_specification/generated/array_api.info.capabilities.html
@@ -240,23 +240,23 @@ class __array_namespace_info__:
             allowed.
         kind : str or tuple of str, optional
             The kind of data types to return. If ``None``, all data types are
-            returned. If a string, only data types of that kind are returned. If a
-            tuple, a dictionary containing the union of the given kinds is
-            returned. The following kinds are supported:
+            returned. If a string, only data types of that kind are returned.
+            If a tuple, a dictionary containing the union of the given kinds
+            is returned. The following kinds are supported:
 
-                - ``'bool'``: boolean data types (e.g., ``bool``).
-                - ``'signed integer'``: signed integer data types (e.g., ``int8``,
-                  ``int16``, ``int32``, ``int64``).
-                - ``'unsigned integer'``: unsigned integer data types (e.g.,
-                  ``uint8``, ``uint16``, ``uint32``, ``uint64``).
-                - ``'integral'``: integer data types. Shorthand for ``('signed
-                  integer', 'unsigned integer')``.
-                - ``'real floating'``: real-valued floating-point data types
-                  (e.g., ``float32``, ``float64``).
-                - ``'complex floating'``: complex floating-point data types (e.g.,
-                  ``complex64``, ``complex128``).
-                - ``'numeric'``: numeric data types. Shorthand for ``('integral',
-                  'real floating', 'complex floating')``.
+            - ``'bool'``: boolean data types (i.e., ``bool``).
+            - ``'signed integer'``: signed integer data types (i.e., ``int8``,
+              ``int16``, ``int32``, ``int64``).
+            - ``'unsigned integer'``: unsigned integer data types (i.e.,
+              ``uint8``, ``uint16``, ``uint32``, ``uint64``).
+            - ``'integral'``: integer data types. Shorthand for ``('signed
+              integer', 'unsigned integer')``.
+            - ``'real floating'``: real-valued floating-point data types
+              (i.e., ``float32``, ``float64``).
+            - ``'complex floating'``: complex floating-point data types (i.e.,
+              ``complex64``, ``complex128``).
+            - ``'numeric'``: numeric data types. Shorthand for ``('integral',
+              'real floating', 'complex floating')``.
 
         Returns
         -------
