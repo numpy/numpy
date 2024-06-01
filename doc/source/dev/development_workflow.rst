@@ -171,11 +171,13 @@ Standard acronyms to start the commit message with are::
    DOC: documentation
    ENH: enhancement
    MAINT: maintenance commit (refactoring, typos, etc.)
+   MNT: alias for MAINT
+   REL: related to releasing numpy
    REV: revert an earlier commit
    STY: style fix (whitespace, PEP8)
    TST: addition or modification of tests
    TYP: static typing
-   REL: related to releasing numpy
+   WIP: work in progress, do not merge
 
 Commands to skip continuous integration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

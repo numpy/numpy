@@ -54,7 +54,7 @@ PyArray_New(
 NPY_NO_EXPORT PyObject *
 _array_from_array_like(PyObject *op,
         PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context,
-        int copy);
+        int copy, int *was_copied_by__array__);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
@@ -84,8 +84,8 @@ NPY_NO_EXPORT PyObject *
 PyArray_FromInterface(PyObject *input);
 
 NPY_NO_EXPORT PyObject *
-PyArray_FromArrayAttr_int(
-        PyObject *op, PyArray_Descr *descr, int copy);
+PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int copy,
+                          int *was_copied_by__array__);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode,

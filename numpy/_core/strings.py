@@ -626,7 +626,6 @@ def center(a, width, fillchar=' '):
 
     """
     a = np.asanyarray(a)
-    width = np.maximum(str_len(a), width)
     fillchar = np.asanyarray(fillchar, dtype=a.dtype)
 
     if np.any(str_len(fillchar) != 1):
@@ -636,6 +635,7 @@ def center(a, width, fillchar=' '):
     if a.dtype.char == "T":
         return _center(a, width, fillchar)
 
+    width = np.maximum(str_len(a), width)
     out_dtype = f"{a.dtype.char}{width.max()}"
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     out = np.empty_like(a, shape=shape, dtype=out_dtype)
@@ -682,7 +682,6 @@ def ljust(a, width, fillchar=' '):
 
     """
     a = np.asanyarray(a)
-    width = np.maximum(str_len(a), width)
     fillchar = np.asanyarray(fillchar, dtype=a.dtype)
 
     if np.any(str_len(fillchar) != 1):
@@ -692,6 +691,7 @@ def ljust(a, width, fillchar=' '):
     if a.dtype.char == "T":
         return _ljust(a, width, fillchar)
 
+    width = np.maximum(str_len(a), width)
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     out_dtype = f"{a.dtype.char}{width.max()}"
     out = np.empty_like(a, shape=shape, dtype=out_dtype)
@@ -738,7 +738,6 @@ def rjust(a, width, fillchar=' '):
 
     """
     a = np.asanyarray(a)
-    width = np.maximum(str_len(a), width)
     fillchar = np.asanyarray(fillchar, dtype=a.dtype)
 
     if np.any(str_len(fillchar) != 1):
@@ -748,6 +747,7 @@ def rjust(a, width, fillchar=' '):
     if a.dtype.char == "T":
         return _rjust(a, width, fillchar)
 
+    width = np.maximum(str_len(a), width)
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     out_dtype = f"{a.dtype.char}{width.max()}"
     out = np.empty_like(a, shape=shape, dtype=out_dtype)
@@ -784,11 +784,11 @@ def zfill(a, width):
 
     """
     a = np.asanyarray(a)
-    width = np.maximum(str_len(a), width)
 
     if a.dtype.char == "T":
         return _zfill(a, width)
 
+    width = np.maximum(str_len(a), width)
     shape = np.broadcast_shapes(a.shape, width.shape)
     out_dtype = f"{a.dtype.char}{width.max()}"
     out = np.empty_like(a, shape=shape, dtype=out_dtype)
@@ -1153,14 +1153,14 @@ def replace(a, old, new, count=-1):
     a_dt = arr.dtype
     old = np.asanyarray(old, dtype=getattr(old, 'dtype', a_dt))
     new = np.asanyarray(new, dtype=getattr(new, 'dtype', a_dt))
+    count = np.asanyarray(count)
+
+    if arr.dtype.char == "T":
+        return _replace(arr, old, new, count)
 
     max_int64 = np.iinfo(np.int64).max
     counts = _count_ufunc(arr, old, 0, max_int64)
-    count = np.asanyarray(count)
     counts = np.where(count < 0, counts, np.minimum(counts, count))
-
-    if arr.dtype.char == "T":
-        return _replace(arr, old, new, counts)
 
     buffersizes = str_len(arr) + counts * (str_len(new) - str_len(old))
     out_dtype = f"{arr.dtype.char}{buffersizes.max()}"

@@ -2,6 +2,7 @@
 #define _MULTIARRAYMODULE
 
 #include "numpy/ndarraytypes.h"
+#include "npy_pycompat.h"
 #include "get_attr_string.h"
 #include "npy_import.h"
 #include "ufunc_override.h"
@@ -99,12 +100,11 @@ PyUFuncOverride_GetOutObjects(PyObject *kwds, PyObject **out_kwd_obj, PyObject *
         *out_kwd_obj = NULL;
         return -1;
     }
-    /* borrowed reference */
-    *out_kwd_obj = _PyDict_GetItemStringWithError(kwds, "out");
-    if (*out_kwd_obj == NULL) {
-        if (PyErr_Occurred()) {
-            return -1;
-        }
+    int result = PyDict_GetItemStringRef(kwds, "out", out_kwd_obj);
+    if (result == -1) {
+        return -1;
+    }
+    else if (result == 0) {
         Py_INCREF(Py_None);
         *out_kwd_obj = Py_None;
         return 0;
@@ -118,15 +118,14 @@ PyUFuncOverride_GetOutObjects(PyObject *kwds, PyObject **out_kwd_obj, PyObject *
         seq = PySequence_Fast(*out_kwd_obj,
                               "Could not convert object to sequence");
         if (seq == NULL) {
-            *out_kwd_obj = NULL;
+            Py_CLEAR(*out_kwd_obj);
             return -1;
         }
         *out_objs = PySequence_Fast_ITEMS(seq);
-        *out_kwd_obj = seq;
+        Py_SETREF(*out_kwd_obj, seq);
         return PySequence_Fast_GET_SIZE(seq);
     }
     else {
-        Py_INCREF(*out_kwd_obj);
         *out_objs = out_kwd_obj;
         return 1;
     }

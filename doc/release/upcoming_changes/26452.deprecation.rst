@@ -1,0 +1,4 @@
+  * The `fix_imports` keyword argument in `numpy.save` is deprecated. Since
+    NumPy 1.17, `numpy.save` uses a pickle protocol that no longer supports
+    Python 2, and ignored `fix_imports` keyword. This keyword is kept only
+    for backward compatibility. It is now deprecated.

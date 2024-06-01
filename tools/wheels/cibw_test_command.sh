@@ -6,6 +6,7 @@ PROJECT_DIR="$1"
 
 python -m pip install threadpoolctl
 python -c "import numpy; numpy.show_config()"
+
 if [[ $RUNNER_OS == "Windows" ]]; then
     # GH 20391
     PY_DIR=$(python -c "import sys; print(sys.prefix)")
@@ -26,6 +27,18 @@ fi
 # Set available memory value to avoid OOM problems on aarch64.
 # See gh-22418.
 export NPY_AVAILABLE_MEM="4 GB"
+
+FREE_THREADED_BUILD="$(python -c"import sysconfig; print(bool(sysconfig.get_config_var('Py_GIL_DISABLED')))")"
+if [[ $FREE_THREADED_BUILD == "True" ]]; then
+    # TODO: delete when numpy is buildable under free-threaded python
+    # with a released version of cython
+    python -m pip install git+https://github.com/cython/cython
+    # TODO: delete when importing numpy no longer enables the GIL
+    # setting to zero ensures the GIL is disabled while running the
+    # tests under free-threaded python
+    export PYTHON_GIL=0
+fi
+
 # Run full tests with -n=auto. This makes pytest-xdist distribute tests across
 # the available N CPU cores: 2 by default for Linux instances and 4 for macOS arm64
 python -c "import sys; import numpy; sys.exit(not numpy.test(label='full', extra_argv=['-n=auto']))"

@@ -953,9 +953,7 @@ assert_type(def_gen.shuffle(D_2D, axis=1), None)
 assert_type(np.random.Generator(pcg64), np.random.Generator)
 assert_type(def_gen.__str__(), str)
 assert_type(def_gen.__repr__(), str)
-def_gen_state = def_gen.__getstate__()
-assert_type(def_gen_state, dict[str, Any])
-assert_type(def_gen.__setstate__(def_gen_state), None)
+assert_type(def_gen.__setstate__(dict(def_gen.bit_generator.state)), None)
 
 # RandomState
 random_st: np.random.RandomState = np.random.RandomState()

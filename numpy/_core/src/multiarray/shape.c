@@ -202,6 +202,14 @@ NPY_NO_EXPORT PyObject *
 PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
                  NPY_ORDER order)
 {
+    return _reshape_with_copy_arg(self, newdims, order, NPY_COPY_IF_NEEDED);
+}
+
+
+NPY_NO_EXPORT PyObject *
+_reshape_with_copy_arg(PyArrayObject *array, PyArray_Dims *newdims,
+                       NPY_ORDER order, NPY_COPYMODE copy)
+{
     npy_intp i;
     npy_intp *dimensions = newdims->ptr;
     PyArrayObject *ret;
@@ -212,7 +220,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     int flags;
 
     if (order == NPY_ANYORDER) {
-        order = PyArray_ISFORTRAN(self) ? NPY_FORTRANORDER : NPY_CORDER;
+        order = PyArray_ISFORTRAN(array) ? NPY_FORTRANORDER : NPY_CORDER;
     }
     else if (order == NPY_KEEPORDER) {
         PyErr_SetString(PyExc_ValueError,
@@ -220,56 +228,74 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
         return NULL;
     }
     /*  Quick check to make sure anything actually needs to be done */
-    if (ndim == PyArray_NDIM(self)) {
+    if (ndim == PyArray_NDIM(array) && copy != NPY_COPY_ALWAYS) {
         same = NPY_TRUE;
         i = 0;
         while (same && i < ndim) {
-            if (PyArray_DIM(self,i) != dimensions[i]) {
+            if (PyArray_DIM(array, i) != dimensions[i]) {
                 same=NPY_FALSE;
             }
             i++;
         }
         if (same) {
-            return PyArray_View(self, NULL, NULL);
+            return PyArray_View(array, NULL, NULL);
         }
     }
 
     /*
      * fix any -1 dimensions and check new-dimensions against old size
      */
-    if (_fix_unknown_dimension(newdims, self) < 0) {
+    if (_fix_unknown_dimension(newdims, array) < 0) {
         return NULL;
     }
     /*
-     * sometimes we have to create a new copy of the array
-     * in order to get the right orientation and
-     * because we can't just reuse the buffer with the
-     * data in the order it is in.
+     * Memory order doesn't depend on a copy/no-copy context.
+     * 'order' argument is always honored.
      */
-    Py_INCREF(self);
-    if (((order == NPY_CORDER && !PyArray_IS_C_CONTIGUOUS(self)) ||
-         (order == NPY_FORTRANORDER && !PyArray_IS_F_CONTIGUOUS(self)))) {
-        int success = 0;
-        success = _attempt_nocopy_reshape(self, ndim, dimensions,
-                                          newstrides, order);
-        if (success) {
-            /* no need to copy the array after all */
-            strides = newstrides;
+    if (copy == NPY_COPY_ALWAYS) {
+        PyObject *newcopy = PyArray_NewCopy(array, order);
+        if (newcopy == NULL) {
+            return NULL;
         }
-        else {
-            PyObject *newcopy;
-            newcopy = PyArray_NewCopy(self, order);
-            Py_DECREF(self);
-            if (newcopy == NULL) {
+        array = (PyArrayObject *)newcopy;
+    }
+    else {
+        /*
+         * sometimes we have to create a new copy of the array
+         * in order to get the right orientation and
+         * because we can't just reuse the buffer with the
+         * data in the order it is in.
+         */
+        Py_INCREF(array);
+        if (((order == NPY_CORDER && !PyArray_IS_C_CONTIGUOUS(array)) ||
+                (order == NPY_FORTRANORDER && !PyArray_IS_F_CONTIGUOUS(array)))) {
+            int success = 0;
+            success = _attempt_nocopy_reshape(array, ndim, dimensions,
+                                              newstrides, order);
+            if (success) {
+                /* no need to copy the array after all */
+                strides = newstrides;
+            }
+            else if (copy == NPY_COPY_NEVER) {
+                PyErr_SetString(PyExc_ValueError,
+                                "Unable to avoid creating a copy while reshaping.");
+                Py_DECREF(array);
                 return NULL;
             }
-            self = (PyArrayObject *)newcopy;
+            else {
+                PyObject *newcopy = PyArray_NewCopy(array, order);
+                Py_DECREF(array);
+                if (newcopy == NULL) {
+                    return NULL;
+                }
+                array = (PyArrayObject *)newcopy;
+            }
         }
     }
     /* We always have to interpret the contiguous buffer correctly */
 
     /* Make sure the flags argument is set. */
-    flags = PyArray_FLAGS(self);
+    flags = PyArray_FLAGS(array);
     if (ndim > 1) {
         if (order == NPY_FORTRANORDER) {
             flags &= ~NPY_ARRAY_C_CONTIGUOUS;
@@ -281,16 +307,15 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
         }
     }
 
-    Py_INCREF(PyArray_DESCR(self));
+    Py_INCREF(PyArray_DESCR(array));
     ret = (PyArrayObject *)PyArray_NewFromDescr_int(
-            Py_TYPE(self), PyArray_DESCR(self),
-            ndim, dimensions, strides, PyArray_DATA(self),
-            flags, (PyObject *)self, (PyObject *)self,
+            Py_TYPE(array), PyArray_DESCR(array),
+            ndim, dimensions, strides, PyArray_DATA(array),
+            flags, (PyObject *)array, (PyObject *)array,
             _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
-    Py_DECREF(self);
+    Py_DECREF(array);
     return (PyObject *)ret;
 }
-
 
 
 /* For backward compatibility -- Not recommended */

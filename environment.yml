@@ -17,7 +17,7 @@ dependencies:
   - pkg-config
   - meson-python
   - pip
-  - spin
+  - spin=0.8 # Unpin when spin 0.9.1 is released
   - ccache
   # For testing
   - pytest
@@ -26,7 +26,7 @@ dependencies:
   - hypothesis
   # For type annotations
   - typing_extensions>=4.2.0  # needed for python < 3.10
-  - mypy=1.7.1
+  - mypy=1.10.0
   # For building docs
   - sphinx>=4.5.0
   - sphinx-design
@@ -35,8 +35,9 @@ dependencies:
   - scipy
   - pandas
   - matplotlib
-  - pydata-sphinx-theme=0.13.3
+  - pydata-sphinx-theme>=0.15.2
   - doxygen
+  - towncrier
   # NOTE: breathe 4.33.0 collides with sphinx.ext.graphviz
   - breathe>4.33.0
   # For linting

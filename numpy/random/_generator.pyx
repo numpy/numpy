@@ -146,7 +146,7 @@ cdef class Generator:
 
     Container for the BitGenerators.
 
-    ``Generator`` exposes a number of methods for generating random
+    `Generator` exposes a number of methods for generating random
     numbers drawn from a variety of probability distributions. In addition to
     the distribution-specific arguments, each method takes a keyword argument
     `size` that defaults to ``None``. If `size` is ``None``, then a single
@@ -159,7 +159,7 @@ cdef class Generator:
 
     **No Compatibility Guarantee**
 
-    ``Generator`` does not provide a version compatibility guarantee. In
+    `Generator` does not provide a version compatibility guarantee. In
     particular, as better algorithms evolve the bit stream may change.
 
     Parameters
@@ -171,8 +171,8 @@ cdef class Generator:
     -----
     The Python stdlib module `random` contains pseudo-random number generator
     with a number of methods that are similar to the ones available in
-    ``Generator``. It uses Mersenne Twister, and this bit generator can
-    be accessed using ``MT19937``. ``Generator``, besides being
+    `Generator`. It uses Mersenne Twister, and this bit generator can
+    be accessed using `MT19937`. `Generator`, besides being
     NumPy-aware, has the advantage that it provides a much larger number
     of probability distributions to choose from.
 
@@ -214,17 +214,19 @@ cdef class Generator:
 
     # Pickling support:
     def __getstate__(self):
-        return self.bit_generator.state
+        return None
 
-    def __setstate__(self, state):
-        self.bit_generator.state = state
+    def __setstate__(self, bit_gen):
+        if isinstance(bit_gen, dict):
+            # Legacy path
+            # Prior to 2.0.x only the state of the underlying bit generator
+            # was preserved and any seed sequence information was lost
+            self.bit_generator.state = bit_gen
 
     def __reduce__(self):
-        ctor, name_tpl, state = self._bit_generator.__reduce__()
-
         from ._pickle import __generator_ctor
-        # Requirements of __generator_ctor are (name, ctor)
-        return __generator_ctor, (name_tpl[0], ctor), state
+        # Requirements of __generator_ctor are (bit_generator, )
+        return __generator_ctor, (self._bit_generator, ), None
 
     @property
     def bit_generator(self):
@@ -990,7 +992,7 @@ cdef class Generator:
         if a.ndim == 0:
             return idx
 
-        if not is_scalar and idx.ndim == 0:
+        if not is_scalar and idx.ndim == 0 and a.ndim == 1:
             # If size == () then the user requested a 0-d array as opposed to
             # a scalar object when size is None. However a[idx] is always a
             # scalar and not an array. So this makes sure the result is an
@@ -5023,11 +5025,11 @@ def default_rng(seed=None):
     
     Examples
     --------
-    ``default_rng`` is the recommended constructor for the random number class
-    ``Generator``. Here are several ways we can construct a random 
-    number generator using ``default_rng`` and the ``Generator`` class. 
+    `default_rng` is the recommended constructor for the random number class
+    `Generator`. Here are several ways we can construct a random 
+    number generator using `default_rng` and the `Generator` class. 
     
-    Here we use ``default_rng`` to generate a random float:
+    Here we use `default_rng` to generate a random float:
  
     >>> import numpy as np
     >>> rng = np.random.default_rng(12345)
@@ -5039,7 +5041,7 @@ def default_rng(seed=None):
     >>> type(rfloat)
     <class 'float'>
      
-    Here we use ``default_rng`` to generate 3 random integers between 0 
+    Here we use `default_rng` to generate 3 random integers between 0 
     (inclusive) and 10 (exclusive):
         
     >>> import numpy as np

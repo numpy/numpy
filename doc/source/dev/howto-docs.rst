@@ -376,7 +376,7 @@ membergroups and members-only options:
        :outline:
        :no-link:
 
-Checkout the `doxygenclass documentation <https://breathe.readthedocs.io/en/latest/class.html#class-example>_`
+Checkout the `doxygenclass documentation <https://breathe.readthedocs.io/en/latest/class.html#class-example>`__
 for more details and to see it in action.
 
 ``doxygennamespace``

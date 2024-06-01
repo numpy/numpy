@@ -471,8 +471,18 @@ class TestIsDType:
         with assert_raises_regex(TypeError, r".*must be a NumPy dtype.*"):
             np.isdtype("int64", np.int64)
         with assert_raises_regex(TypeError, r".*kind argument must.*"):
+            np.isdtype(np.int64, 1)
+        with assert_raises_regex(ValueError, r".*not a known kind name.*"):
             np.isdtype(np.int64, "int64")
 
+    def test_sctypes_complete(self):
+        # issue 26439: int32/intc were masking eachother on 32-bit builds
+        assert np.int32 in sctypes['int']
+        assert np.intc in sctypes['int']
+        assert np.int64 in sctypes['int']
+        assert np.uint32 in sctypes['uint']
+        assert np.uintc in sctypes['uint']
+        assert np.uint64 in sctypes['uint']
 
 class TestSctypeDict:
     def test_longdouble(self):

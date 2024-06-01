@@ -2614,3 +2614,9 @@ class TestRegression:
                            base=np.array([10.0]))
         with pytest.raises(AssertionError, match="not almost equal"):
             assert_almost_equal(out2, expected)
+
+    def test_vectorize_fixed_width_string(self):
+        arr = np.array(["SOme wOrd Ǆ ß ᾛ ΣΣ ﬃ⁵Å Ç Ⅰ"]).astype(np.str_)
+        f = str.casefold
+        res = np.vectorize(f, otypes=[arr.dtype])(arr)
+        assert res.dtype == "U30"

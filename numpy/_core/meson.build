@@ -96,10 +96,7 @@ if use_svml
   endif
 endif
 
-use_highway = not get_option('disable-highway') and not (
-  host_machine.system() == 'darwin' and
-  cpu_family == 'aarch64'
-)
+use_highway = not get_option('disable-highway')
 if use_highway and not fs.exists('src/highway/README.md')
   error('Missing the `highway` git submodule! Run `git submodule update --init` to fix this.')
 endif
@@ -108,11 +105,12 @@ if use_highway
   highway_lib = static_library('highway',
     [
       # required for hwy::Abort symbol
-      'src/highway/hwy/targets.cc'
+      'src/highway/hwy/abort.cc'
     ],
     cpp_args: '-DTOOLCHAIN_MISS_ASM_HWCAP_H',
     include_directories: ['src/highway'],
-    install: false
+    install: false,
+    gnu_symbol_visibility: 'hidden',
   )
 else
   highway_lib = []
@@ -246,6 +244,8 @@ endforeach
 
 # variable attributes tested via "int %s a" % attribute
 optional_variable_attributes = [
+  ['thread_local', 'HAVE_THREAD_LOCAL'],
+  ['_Thread_local', 'HAVE__THREAD_LOCAL'],
   ['__thread', 'HAVE__THREAD'],
   ['__declspec(thread)', 'HAVE___DECLSPEC_THREAD_']
 ]
@@ -264,7 +264,7 @@ foreach optional_attr: optional_variable_attributes
       return 0;
     }
   '''
-  if cc.compiles(code)
+  if cc.compiles(code, name: optional_attr[0])
     cdata.set10(optional_attr[1], true)
   endif
 endforeach
@@ -561,6 +561,7 @@ npymath_lib = static_library('npymath',
   install_dir: np_dir / '_core/lib',
   name_prefix: name_prefix_staticlib,
   name_suffix: name_suffix_staticlib,
+  gnu_symbol_visibility: 'hidden',
 )
 
 dir_separator = '/'
@@ -718,6 +719,7 @@ py.extension_module('_multiarray_tests',
   gnu_symbol_visibility: 'default',
   install: true,
   subdir: 'numpy/_core',
+  install_tag: 'tests'
 )
 
 _umath_tests_mtargets = mod_features.multi_targets(
@@ -754,6 +756,7 @@ foreach gen: test_modules_src
     install: true,
     subdir: 'numpy/_core',
     link_with: gen[2],
+    install_tag: 'tests'
   )
 endforeach
 
@@ -1203,8 +1206,7 @@ py.extension_module('_multiarray_umath',
     src_numpy_api[1],  # __multiarray_api.h
     src_umath_doc_h,
     npy_math_internal_h,
-  ],
-  objects: svml_objects,
+  ] + svml_objects,
   c_args: c_args_common,
   cpp_args: cpp_args_common,
   include_directories: [
@@ -1329,4 +1331,4 @@ py.install_sources(
 )
 
 subdir('include')
-install_subdir('tests', install_dir: np_dir / '_core', install_tag: 'python-runtime')
+install_subdir('tests', install_dir: np_dir / '_core', install_tag: 'tests')

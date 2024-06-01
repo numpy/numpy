@@ -416,10 +416,25 @@ Miscellanea
 
    ma.allequal
    ma.allclose
+   ma.amax
+   ma.amin
    ma.apply_along_axis
    ma.apply_over_axes
    ma.arange
    ma.choose
+   ma.compress_nd
+   ma.convolve
+   ma.correlate
    ma.ediff1d
+   ma.flatten_mask
+   ma.flatten_structured_array
+   ma.fromflex
    ma.indices
+   ma.left_shift
+   ma.ndim
+   ma.put
+   ma.putmask
+   ma.right_shift
+   ma.round_
+   ma.take
    ma.where

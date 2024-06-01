@@ -8,7 +8,7 @@ project('${modulename}',
                           ])
 fc = meson.get_compiler('fortran')
 
-py = import('python').find_installation('${python}', pure: false)
+py = import('python').find_installation('''${python}''', pure: false)
 py_dep = py.dependency()
 
 incdir_numpy = run_command(py,

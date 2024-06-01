@@ -49,6 +49,9 @@ stringdtype_finalize_descr(PyArray_Descr *dtype);
 NPY_NO_EXPORT int
 _eq_comparison(int scoerce, int ocoerce, PyObject *sna, PyObject *ona);
 
+NPY_NO_EXPORT int
+stringdtype_compatible_na(PyObject *na1, PyObject *na2, PyObject **out_na);
+
 #ifdef __cplusplus
 }
 #endif

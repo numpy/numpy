@@ -18,7 +18,7 @@ from numpy.testing import (
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
     _gen_alignment_data, assert_array_almost_equal_nulp, IS_WASM, IS_MUSL,
-    IS_PYPY
+    IS_PYPY, HAS_REFCOUNT
     )
 from numpy.testing._private.utils import _glibc_older_than
 
@@ -262,6 +262,17 @@ class TestOut:
             with assert_raises(TypeError):
                 # Out argument must be tuple, since there are multiple outputs.
                 r1, r2 = np.frexp(d, out=o1, subok=subok)
+
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    def test_out_wrap_no_leak(self):
+        # Regression test for gh-26545
+        class ArrSubclass(np.ndarray):
+            pass
+
+        arr = np.arange(10).view(ArrSubclass)
+
+        arr *= 1
+        assert sys.getrefcount(arr) == 2
 
 
 class TestComparisons:
@@ -1234,6 +1245,19 @@ class TestPower:
                                 np.inf, -np.inf, np.inf, -np.inf], dt)
             r = np.array([1, 1, np.inf, 0, np.inf, 0, np.inf, 0], dt)
             assert_equal(np.power(a, b), r)
+
+    def test_power_fast_paths(self):
+        # gh-26055
+        for dt in [np.float32, np.float64]:
+            a = np.array([0, 1.1, 2, 12e12, -10., np.inf, -np.inf], dt)
+            expected = np.array([0.0, 1.21, 4., 1.44e+26, 100, np.inf, np.inf])
+            result = np.power(a, 2.)
+            assert_array_max_ulp(result, expected.astype(dt), maxulp=1)
+
+            a = np.array([0, 1.1, 2, 12e12], dt)
+            expected = np.sqrt(a).astype(dt)
+            result = np.power(a, 0.5)
+            assert_array_max_ulp(result, expected, maxulp=1)
 
 
 class TestFloat_power:

@@ -422,29 +422,29 @@ defdict = {
 */
 
 static PyUFuncGenericFunction always_error_functions[] = { always_error_loop };
-static void *always_error_data[] = { (void *)NULL };
-static char always_error_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static void *const always_error_data[] = { (void *)NULL };
+static const char always_error_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 static PyUFuncGenericFunction inner1d_functions[] = { INTP_inner1d, DOUBLE_inner1d };
-static void *inner1d_data[] = { (void *)NULL, (void *)NULL };
-static char inner1d_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static void *const inner1d_data[] = { (void *)NULL, (void *)NULL };
+static const char inner1d_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 static PyUFuncGenericFunction innerwt_functions[] = { INTP_innerwt, DOUBLE_innerwt };
-static void *innerwt_data[] = { (void *)NULL, (void *)NULL };
-static char innerwt_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static void *const innerwt_data[] = { (void *)NULL, (void *)NULL };
+static const char innerwt_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 static PyUFuncGenericFunction matrix_multiply_functions[] = { INTP_matrix_multiply, FLOAT_matrix_multiply, DOUBLE_matrix_multiply };
-static void *matrix_multiply_data[] = { (void *)NULL, (void *)NULL, (void *)NULL };
-static char matrix_multiply_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP,  NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,  NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static void *const matrix_multiply_data[] = { (void *)NULL, (void *)NULL, (void *)NULL };
+static const char matrix_multiply_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP,  NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,  NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 static PyUFuncGenericFunction cross1d_functions[] = { INTP_cross1d, DOUBLE_cross1d };
-static void *cross1d_data[] = { (void *)NULL, (void *)NULL };
-static char cross1d_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static void *const cross1d_data[] = { (void *)NULL, (void *)NULL };
+static const char cross1d_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 static PyUFuncGenericFunction euclidean_pdist_functions[] =
                             { FLOAT_euclidean_pdist, DOUBLE_euclidean_pdist };
-static void *eucldiean_pdist_data[] = { (void *)NULL, (void *)NULL };
-static char euclidean_pdist_signatures[] = { NPY_FLOAT, NPY_FLOAT,
+static void *const eucldiean_pdist_data[] = { (void *)NULL, (void *)NULL };
+static const char euclidean_pdist_signatures[] = { NPY_FLOAT, NPY_FLOAT,
                                              NPY_DOUBLE, NPY_DOUBLE };
 
 static PyUFuncGenericFunction cumsum_functions[] = { INTP_cumsum, DOUBLE_cumsum };
-static void *cumsum_data[] = { (void *)NULL, (void *)NULL };
-static char cumsum_signatures[] = { NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE };
+static void *const cumsum_data[] = { (void *)NULL, (void *)NULL };
+static const char cumsum_signatures[] = { NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE };
 
 
 static int

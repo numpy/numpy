@@ -20,6 +20,7 @@
 #include "conversion_utils.h"  /* for PyArray_TypestrConvert */
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "descriptor.h"
+#include "multiarraymodule.h"
 #include "alloc.h"
 #include "assert.h"
 #include "npy_buffer.h"
@@ -1827,10 +1828,10 @@ _convert_from_str(PyObject *obj, int align)
                     break;
 
                 case NPY_DEPRECATED_STRINGLTR2:
-                    DEPRECATE(
-                        "Data type alias `a` was removed in NumPy 2.0. "
-                        "Use `S` alias instead."
-                    );
+                    if (DEPRECATE("Data type alias 'a' was deprecated in NumPy 2.0. "
+                                  "Use the 'S' alias instead.") < 0) {
+                        return NULL;
+                    }
                     check_num = NPY_STRING;
                     break;
 
@@ -1899,10 +1900,10 @@ _convert_from_str(PyObject *obj, int align)
         }
 
         if (strcmp(type, "a") == 0) {
-            DEPRECATE(
-                "Data type alias `a` was removed in NumPy 2.0. "
-                "Use `S` alias instead."
-            );
+            if (DEPRECATE("Data type alias 'a' was deprecated in NumPy 2.0. "
+                          "Use the 'S' alias instead.") < 0) {
+                return NULL;
+            }
         }
 
         /*
@@ -2024,6 +2025,7 @@ arraydescr_dealloc(PyArray_Descr *self)
 {
     Py_XDECREF(self->typeobj);
     if (!PyDataType_ISLEGACY(self)) {
+        Py_TYPE(self)->tp_free((PyObject *)self);
         return;
     }
     _PyArray_LegacyDescr *lself = (_PyArray_LegacyDescr *)self;
@@ -2701,7 +2703,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         Py_DECREF(ret);
         return NULL;
     }
-    obj = PyObject_GetAttrString(mod, "dtype");
+    obj = PyObject_GetAttr(mod, npy_ma_str_dtype);
     Py_DECREF(mod);
     if (obj == NULL) {
         Py_DECREF(ret);

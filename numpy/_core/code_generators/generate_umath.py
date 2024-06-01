@@ -1450,7 +1450,7 @@ def make_arrays(funcdict):
                 % (name, funcnames))
             code1list.append("static void * %s_data[] = {%s};"
                             % (name, datanames))
-            code1list.append("static char %s_signatures[] = {%s};"
+            code1list.append("static const char %s_signatures[] = {%s};"
                             % (name, signames))
             uf.empty = False
         else:

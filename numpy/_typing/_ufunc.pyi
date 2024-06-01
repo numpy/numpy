@@ -33,6 +33,7 @@ _4Tuple = tuple[_T, _T, _T, _T]
 _NTypes = TypeVar("_NTypes", bound=int)
 _IDType = TypeVar("_IDType", bound=Any)
 _NameType = TypeVar("_NameType", bound=str)
+_Signature = TypeVar("_Signature", bound=str)
 
 
 class _SupportsArrayUFunc(Protocol):
@@ -366,7 +367,7 @@ class _UFunc_Nin2_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         signature: str | _4Tuple[None | str] = ...,
     ) -> _2Tuple[NDArray[Any]]: ...
 
-class _GUFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: ignore[misc]
+class _GUFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType, _Signature]):  # type: ignore[misc]
     @property
     def __name__(self) -> _NameType: ...
     @property
@@ -379,11 +380,8 @@ class _GUFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: 
     def nout(self) -> Literal[1]: ...
     @property
     def nargs(self) -> Literal[3]: ...
-
-    # NOTE: In practice the only gufunc in the main namespace is `matmul`,
-    # so we can use its signature here
     @property
-    def signature(self) -> Literal["(n?,k),(k,m?)->(n?,m?)"]: ...
+    def signature(self) -> _Signature: ...
     @property
     def reduce(self) -> None: ...
     @property

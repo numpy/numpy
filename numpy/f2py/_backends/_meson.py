@@ -73,8 +73,8 @@ class MesonTemplate:
         self.substitutions["python"] = self.python_exe
 
     def sources_substitution(self) -> None:
-        self.substitutions["source_list"] = f",\n{self.indent}".join(
-            [f"{self.indent}'{source}'," for source in self.sources]
+        self.substitutions["source_list"] = ",\n".join(
+            [f"{self.indent}'''{source}'''," for source in self.sources]
         )
 
     def deps_substitution(self) -> None:
@@ -85,7 +85,7 @@ class MesonTemplate:
     def libraries_substitution(self) -> None:
         self.substitutions["lib_dir_declarations"] = "\n".join(
             [
-                f"lib_dir_{i} = declare_dependency(link_args : ['-L{lib_dir}'])"
+                f"lib_dir_{i} = declare_dependency(link_args : ['''-L{lib_dir}'''])"
                 for i, lib_dir in enumerate(self.library_dirs)
             ]
         )
@@ -106,7 +106,7 @@ class MesonTemplate:
 
     def include_substitution(self) -> None:
         self.substitutions["inc_list"] = f",\n{self.indent}".join(
-            [f"{self.indent}'{inc}'," for inc in self.include_dirs]
+            [f"{self.indent}'''{inc}'''," for inc in self.include_dirs]
         )
 
     def generate_meson_build(self):
@@ -114,7 +114,7 @@ class MesonTemplate:
             node()
         template = Template(self.meson_build_template())
         meson_build = template.substitute(self.substitutions)
-        meson_build = re.sub(r',,', ',', meson_build)
+        meson_build = re.sub(r",,", ",", meson_build)
         return meson_build
 
 

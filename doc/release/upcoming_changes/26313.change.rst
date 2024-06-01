@@ -1,0 +1,2 @@
+* As `numpy.vecdot` is now a ufunc it has a less precise signature.
+  This is due to the limitations of ufunc's typing stub.

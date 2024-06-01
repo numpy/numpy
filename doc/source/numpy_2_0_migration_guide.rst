@@ -19,7 +19,7 @@ Ruff plugin
 ===========
 
 Many of the changes covered in the 2.0 release notes and in this migration
-guide can be automatically adapted to in downstream code with a dedicated
+guide can be automatically adapted in downstream code with a dedicated
 `Ruff <https://docs.astral.sh/ruff/>`__ rule, namely rule
 `NPY201 <https://docs.astral.sh/ruff/rules/numpy2-deprecation/>`__.
 
@@ -43,9 +43,8 @@ NumPy 2.0 changes promotion (the result of combining dissimilar data types)
 as per :ref:`NEP 50 <NEP50>`. Please see the NEP for details on this change.
 It includes a table of example changes and a backwards compatibility section.
 
-The largest backwards compatibility change of this is that it means that
-the precision of scalars is now preserved consistently.
-Two examples are:
+The largest backwards compatibility change is that the precision of scalars
+is now preserved consistently.  Two examples are:
 
 * ``np.float32(3) + 3.`` now returns a float32 when it previously returned
   a float64.
@@ -97,7 +96,7 @@ C-API Changes
 =============
 
 Some definitions were removed or replaced due to being outdated or
-unmaintainable.  Some new API definition will evaluate differently at
+unmaintainable.  Some new API definitions will evaluate differently at
 runtime between NumPy 2.0 and NumPy 1.x.
 Some are defined in ``numpy/_core/include/numpy/npy_2_compat.h``
 (for example ``NPY_DEFAULT_INT``) which can be vendored in full or part
@@ -116,10 +115,10 @@ The ``PyArray_Descr`` struct has been changed
 One of the most impactful C-API changes is that the ``PyArray_Descr`` struct
 is now more opaque to allow us to add additional flags and have
 itemsizes not limited by the size of ``int`` as well as allow improving
-structured dtypes in the future and not burdon new dtypes with their fields.
+structured dtypes in the future and not burden new dtypes with their fields.
 
 Code which only uses the type number and other initial fields is unaffected.
-Most code will hopefull mainly access the ``->elsize`` field, when the
+Most code will hopefully mainly access the ``->elsize`` field, when the
 dtype/descriptor itself is attached to an array (e.g. ``arr->descr->elsize``)
 this is best replaced with ``PyArray_ITEMSIZE(arr)``.
 
@@ -127,7 +126,7 @@ Where not possible, new accessor functions are required:
 
 * ``PyDataType_ELSIZE`` and ``PyDataType_SET_ELSIZE`` (note that the result
   is now ``npy_intp`` and not ``int``).
-* ``PyDataType_ALIGNENT``
+* ``PyDataType_ALIGNMENT``
 * ``PyDataType_FIELDS``, ``PyDataType_NAMES``, ``PyDataType_SUBARRAY``
 * ``PyDataType_C_METADATA``
 
@@ -146,7 +145,7 @@ or adding ``npy2_compat.h`` into your code base and explicitly include it
 when compiling with NumPy 1.x (as they are new API).
 Including the file has no effect on NumPy 2.
 
-Please do not hesitate to open a NumPy issue, if you require assistence or
+Please do not hesitate to open a NumPy issue, if you require assistance or
 the provided functions are not sufficient.
 
 **Custom User DTypes:**
@@ -180,7 +179,7 @@ Functionality which previously did not require import includes:
 
 Increased maximum number of dimensions
 --------------------------------------
-The maximum number of dimensions (and arguments) was increased to 64, this
+The maximum number of dimensions (and arguments) was increased to 64. This
 affects the ``NPY_MAXDIMS`` and ``NPY_MAXARGS`` macros.
 It may be good to review their use, and we generally encourage you to
 not use these macros (especially ``NPY_MAXARGS``), so that a future version of
@@ -237,7 +236,7 @@ Please refer to `NEP 52 <https://numpy.org/neps/nep-0052-python-api-cleanup.html
 Main namespace
 --------------
 
-About 100 members of the main ``np`` namespace has been deprecated, removed, or
+About 100 members of the main ``np`` namespace have been deprecated, removed, or
 moved to a new place. It was done to reduce clutter and establish only one way to
 access a given attribute. The table below shows members that have been removed:
 
@@ -247,6 +246,7 @@ removed member          migration guideline
 add_docstring           It's still available as ``np.lib.add_docstring``.
 add_newdoc              It's still available as ``np.lib.add_newdoc``.
 add_newdoc_ufunc        It's an internal function and doesn't have a replacement.
+alltrue                 Use ``all`` instead.
 asfarray                Use ``np.asarray`` with a float dtype instead.
 byte_bounds             Now it's available under ``np.lib.array_utils.byte_bounds``
 cast                    Use ``np.asarray(arr, dtype=dtype)`` instead.
@@ -254,6 +254,7 @@ cfloat                  Use ``np.complex128`` instead.
 clongfloat              Use ``np.clongdouble`` instead.
 compat                  There's no replacement, as Python 2 is no longer supported.
 complex\_               Use ``np.complex128`` instead.
+cumproduct              Use ``np.cumprod`` instead.
 DataSource              It's still available as ``np.lib.npyio.DataSource``.
 deprecate               Emit ``DeprecationWarning`` with ``warnings.warn`` directly,
                         or use ``typing.deprecated``.
@@ -287,6 +288,7 @@ longfloat               Use ``np.longdouble`` instead.
 lookfor                 Search NumPy's documentation directly.
 obj2sctype              Use ``np.dtype(obj).type`` instead.
 PINF                    Use ``np.inf`` instead.
+product                 Use ``np.prod`` instead.
 PZERO                   Use ``0.0`` instead.
 recfromcsv              Use ``np.genfromtxt`` with comma delimiter instead.
 recfromtxt              Use ``np.genfromtxt`` instead.
@@ -302,6 +304,7 @@ set_string_function     Use ``np.set_printoptions`` instead with a formatter
                         for custom printing of NumPy objects.
 singlecomplex           Use ``np.complex64`` instead.
 string\_                Use ``np.bytes_`` instead.
+sometrue                Use ``any`` instead.
 source                  Use ``inspect.getsource`` instead.
 tracemalloc_domain      It's now available from ``np.lib``.
 unicode\_               Use ``np.str_`` instead.
@@ -412,20 +415,23 @@ The :ref:`copy keyword behavior changes <copy-keyword-changes-2.0>` in
 `~numpy.asarray`, `~numpy.array` and `ndarray.__array__
 <numpy.ndarray.__array__>` may require these changes:
 
-1. Code using ``np.array(..., copy=False)`` can in most cases be changed to
-   ``np.asarray(...)``. Older code tended to use ``np.array`` like this because
-   it had less overhead than the default ``np.asarray`` copy-if-needed
-   behavior. This is no longer true, and ``np.asarray`` is the preferred function.
-2. For code that explicitly needs to pass ``None``/``False`` meaning "copy if
-   needed" in a way that's compatible with NumPy 1.x and 2.x, see
-   `scipy#20172 <https://github.com/scipy/scipy/pull/20172>`__ for an example
-   of how to do so.
-3. For any ``__array__`` method on a non-NumPy array-like object, a
-   ``copy=None`` keyword can be added to the signature - this will work with
-   older NumPy versions as well. If ``copy`` keyword is considered in
-   the ``__array__`` method implementation, then for ``copy=True`` always
-   return a new copy.
+* Code using ``np.array(..., copy=False)`` can in most cases be changed to
+  ``np.asarray(...)``. Older code tended to use ``np.array`` like this because
+  it had less overhead than the default ``np.asarray`` copy-if-needed
+  behavior. This is no longer true, and ``np.asarray`` is the preferred function.
+* For code that explicitly needs to pass ``None``/``False`` meaning "copy if
+  needed" in a way that's compatible with NumPy 1.x and 2.x, see
+  `scipy#20172 <https://github.com/scipy/scipy/pull/20172>`__ for an example
+  of how to do so.
+* For any ``__array__`` method on a non-NumPy array-like object, ``dtype=None``
+  and ``copy=None`` keywords must be added to the signature - this will work with older
+  NumPy versions as well (although older numpy versions will never pass in ``copy`` keyword).
+  If the keywords are added to the ``__array__`` signature, then for:
 
+  * ``copy=True`` and any ``dtype`` value always return a new copy,
+  * ``copy=None`` create a copy if required (for example by ``dtype``),
+  * ``copy=False`` a copy must never be made. If a copy is needed to return a numpy array
+    or satisfy ``dtype``, then raise an exception (``ValueError``).
 
 Writing numpy-version-dependent code
 ------------------------------------

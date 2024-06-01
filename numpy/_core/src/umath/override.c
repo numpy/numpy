@@ -4,7 +4,7 @@
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
 #include "npy_import.h"
-
+#include "npy_pycompat.h"
 #include "override.h"
 #include "ufunc_override.h"
 
@@ -148,18 +148,17 @@ static int
 normalize_signature_keyword(PyObject *normal_kwds)
 {
     /* If the keywords include `sig` rename to `signature`. */
-    PyObject* obj = _PyDict_GetItemStringWithError(normal_kwds, "sig");
-    if (obj == NULL && PyErr_Occurred()) {
+    PyObject* obj = NULL;
+    int result = PyDict_GetItemStringRef(normal_kwds, "sig", &obj);
+    if (result == -1) {
         return -1;
     }
-    if (obj != NULL) {
-        /*
-         * No INCREF or DECREF needed: got a borrowed reference above,
-         * and, unlike e.g. PyList_SetItem, PyDict_SetItem INCREF's it.
-         */
+    if (result == 1) {
         if (PyDict_SetItemString(normal_kwds, "signature", obj) < 0) {
+            Py_DECREF(obj);
             return -1;
         }
+        Py_DECREF(obj);
         if (PyDict_DelItemString(normal_kwds, "sig") < 0) {
             return -1;
         }

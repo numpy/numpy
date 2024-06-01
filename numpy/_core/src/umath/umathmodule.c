@@ -21,6 +21,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_3kcompat.h"
+#include "npy_pycompat.h"
 #include "abstract.h"
 
 #include "numpy/npy_math.h"
@@ -303,29 +304,35 @@ int initumath(PyObject *m)
      * TODO: This should probably be done at a better place, or even in the
      *       code generator directly.
      */
-    s = _PyDict_GetItemStringWithError(d, "logical_and");
-    if (s == NULL) {
+    int res = PyDict_GetItemStringRef(d, "logical_and", &s);
+    if (res <= 0) {
         return -1;
     }
     if (install_logical_ufunc_promoter(s) < 0) {
+        Py_DECREF(s);
         return -1;
     }
+    Py_DECREF(s);
 
-    s = _PyDict_GetItemStringWithError(d, "logical_or");
-    if (s == NULL) {
+    res = PyDict_GetItemStringRef(d, "logical_or", &s);
+    if (res <= 0) {
         return -1;
     }
     if (install_logical_ufunc_promoter(s) < 0) {
+        Py_DECREF(s);
         return -1;
     }
+    Py_DECREF(s);
 
-    s = _PyDict_GetItemStringWithError(d, "logical_xor");
-    if (s == NULL) {
+    res = PyDict_GetItemStringRef(d, "logical_xor", &s);
+    if (res <= 0) {
         return -1;
     }
     if (install_logical_ufunc_promoter(s) < 0) {
+        Py_DECREF(s);
         return -1;
     }
+    Py_DECREF(s);
 
     if (init_string_ufuncs(d) < 0) {
         return -1;
