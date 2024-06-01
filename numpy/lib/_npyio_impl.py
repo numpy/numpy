@@ -466,6 +466,9 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         # to seek past the beginning of the file
         fid.seek(-min(N, len(magic)), 1)  # back-up
         if magic.startswith(_ZIP_PREFIX) or magic.startswith(_ZIP_SUFFIX):
+            # warn if user passed `mmap_mode`
+            if mmap_mode is not None:
+                warnings.warn("`mmap_mode` with zip-files (e.g. .npz) is unsupported")
             # zip-file (assume .npz)
             # Potentially transfer file ownership to NpzFile
             stack.pop_all()
