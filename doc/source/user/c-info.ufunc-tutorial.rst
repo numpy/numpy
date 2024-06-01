@@ -182,21 +182,16 @@ site-packages directory.
             $python setup.py install
             will install the module in your site-packages file.
 
-            See the distutils section of
-            'Extending and Embedding the Python Interpreter'
-            at docs.python.org for more information.
+            See the setuptools section 'Building Extension Modules'
+            at setuptools.pypa.io for more information.
         '''
 
+        from setuptools import setup, Extension
+        import numpy as np
 
-        from distutils.core import setup, Extension
+        module1 = Extension('spam', sources=['spammodule.c'])
 
-        module1 = Extension('spam', sources=['spammodule.c'],
-                                include_dirs=['/usr/local/lib'])
-
-        setup(name = 'spam',
-                version='1.0',
-                description='This is my spam package',
-                ext_modules = [module1])
+        setup(name='spam', version='1.0', ext_modules=[module1])
 
 
 Once the spam module is imported into python, you can call logit
@@ -355,8 +350,8 @@ using ``python setup.py build_ext --inplace``.
         '''
             setup.py file for single_type_logit.c
             Note that since this is a numpy extension
-            we use numpy.distutils instead of
-            distutils from the python standard library.
+            we add an include_dirs=[get_include()] so that the
+            extension is built with numpy's C/C++ header files.
 
             Calling
             $python setup.py build_ext --inplace
@@ -373,33 +368,26 @@ using ``python setup.py build_ext --inplace``.
             $python setup.py install
             will install the module in your site-packages file.
 
-            See the distutils section of
-            'Extending and Embedding the Python Interpreter'
-            at docs.python.org  and the documentation
-            on numpy.distutils for more information.
+            See the setuptools section 'Building Extension Modules'
+            at setuptools.pypa.io for more information.
         '''
 
+        from setuptools import setup, Extension
+        from numpy import get_include
 
-        def configuration(parent_package='', top_path=None):
-            from numpy.distutils.misc_util import Configuration
+        npufunc = Extension('npufunc',
+                            sources=['single_type_logit.c'],
+                            include_dirs=[get_include()])
 
-            config = Configuration('npufunc_directory',
-                                   parent_package,
-                                   top_path)
-            config.add_extension('npufunc', ['single_type_logit.c'])
+        setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
-            return config
-
-        if __name__ == "__main__":
-            from numpy.distutils.core import setup
-            setup(configuration=configuration)
 
 After the above has been installed, it can be imported and used as follows.
 
 >>> import numpy as np
 >>> import npufunc
 >>> npufunc.logit(0.5)
-0.0
+np.float64(0.0)
 >>> a = np.linspace(0,1,5)
 >>> npufunc.logit(a)
 array([       -inf, -1.09861229,  0.        ,  1.09861229,         inf])
@@ -607,8 +595,10 @@ or installed to site-packages via ``python setup.py install``.
         '''
             setup.py file for multi_type_logit.c
             Note that since this is a numpy extension
-            we use numpy.distutils instead of
-            distutils from the python standard library.
+            we add an include_dirs=[get_include()] so that the
+            extension is built with numpy's C/C++ header files.
+            Furthermore, we also have to include the npymath
+            lib for half-float d-type.
 
             Calling
             $python setup.py build_ext --inplace
@@ -625,38 +615,31 @@ or installed to site-packages via ``python setup.py install``.
             $python setup.py install
             will install the module in your site-packages file.
 
-            See the distutils section of
-            'Extending and Embedding the Python Interpreter'
-            at docs.python.org  and the documentation
-            on numpy.distutils for more information.
+            See the setuptools section 'Building Extension Modules'
+            at setuptools.pypa.io for more information.
         '''
 
+        from setuptools import setup, Extension
+        from numpy import get_include
+        from os import path
 
-        def configuration(parent_package='', top_path=None):
-            from numpy.distutils.misc_util import Configuration, get_info
+        path_to_npymath = path.join(get_include(), '..', 'lib')
+        npufunc = Extension('npufunc',
+                            sources=['multi_type_logit.c'],
+                            include_dirs=[get_include()],
+                            # Necessary for the half-float d-type.
+                            library_dirs=[path_to_npymath],
+                            libraries=["npymath"])
 
-            #Necessary for the half-float d-type.
-            info = get_info('npymath')
+        setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
-            config = Configuration('npufunc_directory',
-                                    parent_package,
-                                    top_path)
-            config.add_extension('npufunc',
-                                    ['multi_type_logit.c'],
-                                    extra_info=info)
-
-            return config
-
-        if __name__ == "__main__":
-            from numpy.distutils.core import setup
-            setup(configuration=configuration)
 
 After the above has been installed, it can be imported and used as follows.
 
 >>> import numpy as np
 >>> import npufunc
 >>> npufunc.logit(0.5)
-0.0
+np.float64(0.0)
 >>> a = np.linspace(0,1,5)
 >>> npufunc.logit(a)
 array([       -inf, -1.09861229,  0.        ,  1.09861229,         inf])
@@ -678,13 +661,17 @@ the line
 
     .. code-block:: python
 
-        config.add_extension('npufunc', ['single_type_logit.c'])
+        npufunc = Extension('npufunc',
+                            sources=['single_type_logit.c'],
+                            include_dirs=[get_include()])
 
 is replaced with
 
     .. code-block:: python
 
-        config.add_extension('npufunc', ['multi_arg_logit.c'])
+        npufunc = Extension('npufunc',
+                            sources=['multi_arg_logit.c'],
+                            include_dirs=[get_include()])
 
 The C file is given below. The ufunc generated takes two arguments ``A``
 and ``B``. It returns a tuple whose first element is ``A * B`` and whose second
@@ -809,13 +796,17 @@ the line
 
     .. code-block:: python
 
-        config.add_extension('npufunc', ['single_type_logit.c'])
+        npufunc = Extension('npufunc',
+                            sources=['single_type_logit.c'],
+                            include_dirs=[get_include()])
 
 is replaced with
 
     .. code-block:: python
 
-        config.add_extension('npufunc', ['add_triplet.c'])
+        npufunc = Extension('npufunc',
+                            sources=['add_triplet.c'],
+                            include_dirs=[get_include()])
 
 The C file is given below.
 
@@ -892,7 +883,7 @@ The C file is given below.
             NULL
         };
 
-        PyMODINIT_FUNC PyInit_struct_ufunc_test(void)
+        PyMODINIT_FUNC PyInit_npufunc(void)
         {
             PyObject *m, *add_triplet, *d;
             PyObject *dtype_dict;
