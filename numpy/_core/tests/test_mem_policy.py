@@ -46,6 +46,16 @@ def get_module(tmp_path):
              Py_DECREF(secret_data);
              return old;
          """),
+        ("set_wrong_capsule_name_data_policy", "METH_NOARGS", """
+             PyObject *wrong_name_capsule =
+                 PyCapsule_New(&secret_data_handler, "not_mem_handler", NULL);
+             if (wrong_name_capsule == NULL) {
+                 return NULL;
+             }
+             PyObject *old = PyDataMem_SetHandler(wrong_name_capsule);
+             Py_DECREF(wrong_name_capsule);
+             return old;
+         """),
         ("set_old_policy", "METH_O", """
              PyObject *old;
              if (args != NULL && PyCapsule_CheckExact(args)) {
@@ -251,6 +261,10 @@ def test_set_policy(get_module):
     else:
         get_module.set_old_policy(orig_policy)
         assert get_handler_name() == orig_policy_name
+
+    with pytest.raises(ValueError,
+                       match="Capsule must be named 'mem_handler'"):
+        get_module.set_wrong_capsule_name_data_policy()
 
 
 @pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")

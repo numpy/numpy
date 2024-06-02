@@ -5230,7 +5230,8 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     /*
      * Initialize the default PyDataMem_Handler capsule singleton.
      */
-    PyDataMem_DefaultHandler = PyCapsule_New(&default_handler, "mem_handler", NULL);
+    PyDataMem_DefaultHandler = PyCapsule_New(
+            &default_handler, MEM_HANDLER_CAPSULE_NAME, NULL);
     if (PyDataMem_DefaultHandler == NULL) {
         goto err;
     }
