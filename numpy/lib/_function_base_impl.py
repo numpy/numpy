@@ -2345,15 +2345,14 @@ class vectorize:
     >>> @np.vectorize
     ... def identity(x):
     ...     return x
-    ...
     >>> identity([0, 1, 2])
     array([0, 1, 2])
     >>> @np.vectorize(otypes=[float])
     ... def as_float(x):
     ...     return x
-    ...
     >>> as_float([0, 1, 2])
     array([0., 1., 2.])
+
     """
     def __init__(self, pyfunc=np._NoValue, otypes=None, doc=None,
                  excluded=None, cache=False, signature=None):
