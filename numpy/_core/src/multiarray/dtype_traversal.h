@@ -69,17 +69,21 @@ static inline int
 NPY_traverse_info_copy(
         NPY_traverse_info *traverse_info, NPY_traverse_info *original)
 {
-    traverse_info->func = NULL;
+    /* Note that original may be identical to traverse_info! */
     if (original->func == NULL) {
         /* Allow copying also of unused clear info */
+        traverse_info->func = NULL;
         return 0;
     }
-    traverse_info->auxdata = NULL;
     if (original->auxdata != NULL) {
         traverse_info->auxdata = NPY_AUXDATA_CLONE(original->auxdata);
         if (traverse_info->auxdata == NULL) {
+            traverse_info->func = NULL;
             return -1;
         }
+    }
+    else {
+        traverse_info->auxdata = NULL;
     }
     Py_INCREF(original->descr);
     traverse_info->descr = original->descr;

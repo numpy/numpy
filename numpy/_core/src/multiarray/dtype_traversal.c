@@ -398,13 +398,6 @@ subarray_traverse_data_free(NpyAuxData *data)
 }
 
 
-/*
- * We seem to be neither using nor exposing this right now, so leave it NULL.
- * (The implementation below should be functional.)
- */
-#define subarray_traverse_data_clone NULL
-
-#ifndef subarray_traverse_data_clone
 /* traverse data copy function */
 static NpyAuxData *
 subarray_traverse_data_clone(NpyAuxData *data)
@@ -426,7 +419,6 @@ subarray_traverse_data_clone(NpyAuxData *data)
 
     return (NpyAuxData *)newdata;
 }
-#endif
 
 
 static int
@@ -469,7 +461,7 @@ get_subarray_traverse_func(
 
     auxdata->count = size;
     auxdata->base.free = &subarray_traverse_data_free;
-    auxdata->base.clone = subarray_traverse_data_clone;
+    auxdata->base.clone = &subarray_traverse_data_clone;
 
     if (get_traverse_func(
             traverse_context, dtype, aligned,
