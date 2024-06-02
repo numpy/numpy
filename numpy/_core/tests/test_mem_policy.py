@@ -47,13 +47,13 @@ def get_module(tmp_path):
              return old;
          """),
         ("set_wrong_capsule_name_data_policy", "METH_NOARGS", """
-             PyObject *secret_data =
+             PyObject *wrong_name_capsule =
                  PyCapsule_New(&secret_data_handler, "not_mem_handler", NULL);
-             if (secret_data == NULL) {
+             if (wrong_name_capsule == NULL) {
                  return NULL;
              }
-             PyObject *old = PyDataMem_SetHandler(secret_data);
-             Py_DECREF(secret_data);
+             PyObject *old = PyDataMem_SetHandler(wrong_name_capsule);
+             Py_DECREF(wrong_name_capsule);
              return old;
          """),
         ("set_old_policy", "METH_O", """
