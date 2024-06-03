@@ -180,3 +180,6 @@ if HAVE_SCPDT:
     import doctest
     dt_config.optionflags = doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS
 
+    # recognize the StringDType repr
+    dt_config.check_namespace['StringDType'] = numpy.dtypes.StringDType
+
