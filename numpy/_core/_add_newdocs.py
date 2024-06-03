@@ -1034,7 +1034,7 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
         The device on which to place the created array. Default: None.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
-        .. versionadded:: 2.0.0
+        .. versionadded:: 2.1.0
     copy : bool, optional
         If ``True``, then the object is copied. If ``None`` then the object is
         copied only if needed, i.e. if ``__array__`` returns a copy, if obj
@@ -1043,7 +1043,7 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
         For ``False`` it raises a ``ValueError`` if a copy cannot be avoided.
         Default: ``None``.
 
-        .. versionadded:: 2.0.0
+        .. versionadded:: 2.1.0
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
