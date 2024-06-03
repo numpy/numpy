@@ -425,11 +425,11 @@ def readfortrancode(ffile, dowithline=show, istop=1):
             if l[-1] not in "\n\r\f":
                 break
             l = l[:-1]
-        if not strictf77:
-            (l, rl) = split_by_unquoted(l, '!')
-            l += ' '
-            if rl[:5].lower() == '!f2py':  # f2py directive
-                l, _ = split_by_unquoted(l + 4 * ' ' + rl[5:], '!')
+        # Unconditionally remove comments
+        (l, rl) = split_by_unquoted(l, '!')
+        l += ' '
+        if rl[:5].lower() == '!f2py':  # f2py directive
+            l, _ = split_by_unquoted(l + 4 * ' ' + rl[5:], '!')
         if l.strip() == '':  # Skip empty line
             if sourcecodeform == 'free':
                 # In free form, a statement continues in the next line
@@ -466,25 +466,13 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                 finalline = ''
                 origfinalline = ''
             else:
-                if not strictf77:
-                    # F90 continuation
-                    r = cont1.match(l)
-                    if r:
-                        l = r.group('line')  # Continuation follows ..
-                    if cont:
-                        ll = ll + cont2.match(l).group('line')
-                        finalline = ''
-                        origfinalline = ''
-                    else:
-                        # clean up line beginning from possible digits.
-                        l = '     ' + l[5:]
-                        if localdolowercase:
-                            finalline = ll.lower()
-                        else:
-                            finalline = ll
-                        origfinalline = ll
-                        ll = l
-                    cont = (r is not None)
+                r = cont1.match(l)
+                if r:
+                    l = r.group('line') # Continuation follows ..
+                if cont:
+                    ll = ll + cont2.match(l).group('line')
+                    finalline = ''
+                    origfinalline = ''
                 else:
                     # clean up line beginning from possible digits.
                     l = '     ' + l[5:]

@@ -2,6 +2,7 @@ import os
 import pytest
 
 import numpy as np
+import numpy.testing as npt
 
 from . import util
 
@@ -76,3 +77,34 @@ class TestIncludeFiles(util.F2PyTest):
         exp = 7.0
         res = self.module.add(3.0, 4.0)
         assert  exp == res
+
+class TestF77Comments(util.F2PyTest):
+    # Check that comments are stripped from F77 continuation lines
+    sources = [util.getpath("tests", "src", "regression", "f77comments.f")]
+
+    @pytest.mark.slow
+    def test_gh26148(self):
+        x1 = np.array(3, dtype=np.int32)
+        x2 = np.array(5, dtype=np.int32)
+        res=self.module.testsub(x1, x2)
+        assert(res[0] == 8)
+        assert(res[1] == 15)
+
+    @pytest.mark.slow
+    def test_gh26466(self):
+        # Check that comments after PARAMETER directions are stripped
+        expected = np.arange(1, 11, dtype=np.float32)*2
+        res=self.module.testsub2()
+        npt.assert_allclose(expected, res)
+
+class TestF90Contiuation(util.F2PyTest):
+    # Check that comments are stripped from F90 continuation lines
+    sources = [util.getpath("tests", "src", "regression", "f90continuation.f90")]
+
+    @pytest.mark.slow
+    def test_gh26148b(self):
+        x1 = np.array(3, dtype=np.int32)
+        x2 = np.array(5, dtype=np.int32)
+        res=self.module.testsub(x1, x2)
+        assert(res[0] == 8)
+        assert(res[1] == 15)

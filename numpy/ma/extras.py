@@ -1395,7 +1395,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
         ar1 = unique(ar1)
         ar2 = unique(ar2)
 
-    aux = ma.concatenate((ar1, ar2))
+    aux = ma.concatenate((ar1, ar2), axis=None)
     if aux.size == 0:
         return aux
     aux.sort()
@@ -1569,7 +1569,14 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
         tup = (None, slice(None))
     #
     if y is None:
-        xnotmask = np.logical_not(xmask).astype(int)
+        # Check if we can guarantee that the integers in the (N - ddof) 
+        # normalisation can be accurately represented with single-precision 
+        # before computing the dot product.
+        if x.shape[0] > 2 ** 24 or x.shape[1] > 2 ** 24:
+            xnm_dtype = np.float64
+        else:
+            xnm_dtype = np.float32
+        xnotmask = np.logical_not(xmask).astype(xnm_dtype)
     else:
         y = array(y, copy=False, ndmin=2, dtype=float)
         ymask = ma.getmaskarray(y)
@@ -1584,7 +1591,16 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
                     x._sharedmask = False
                     y._sharedmask = False
         x = ma.concatenate((x, y), axis)
-        xnotmask = np.logical_not(np.concatenate((xmask, ymask), axis)).astype(int)
+        # Check if we can guarantee that the integers in the (N - ddof) 
+        # normalisation can be accurately represented with single-precision 
+        # before computing the dot product.
+        if x.shape[0] > 2 ** 24 or x.shape[1] > 2 ** 24:
+            xnm_dtype = np.float64
+        else:
+            xnm_dtype = np.float32
+        xnotmask = np.logical_not(np.concatenate((xmask, ymask), axis)).astype(
+            xnm_dtype
+        )
     x -= x.mean(axis=rowvar)[tup]
     return (x, xnotmask, rowvar)
 
@@ -1671,11 +1687,17 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
 
     (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
     if not rowvar:
-        fact = np.dot(xnotmask.T, xnotmask) * 1. - ddof
-        result = (dot(x.T, x.conj(), strict=False) / fact).squeeze()
+        fact = np.dot(xnotmask.T, xnotmask) - ddof
+        mask = np.less_equal(fact, 0, dtype=bool)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            data = np.dot(filled(x.T, 0), filled(x.conj(), 0)) / fact
+        result = ma.array(data, mask=mask).squeeze()
     else:
-        fact = np.dot(xnotmask, xnotmask.T) * 1. - ddof
-        result = (dot(x, x.T.conj(), strict=False) / fact).squeeze()
+        fact = np.dot(xnotmask, xnotmask.T) - ddof
+        mask = np.less_equal(fact, 0, dtype=bool)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            data = np.dot(filled(x, 0), filled(x.T.conj(), 0)) / fact
+        result = ma.array(data, mask=mask).squeeze()
     return result
 
 
@@ -1744,39 +1766,15 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
     if bias is not np._NoValue or ddof is not np._NoValue:
         # 2015-03-15, 1.10
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
-    # Get the data
-    (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
-    # Compute the covariance matrix
-    if not rowvar:
-        fact = np.dot(xnotmask.T, xnotmask) * 1.
-        c = (dot(x.T, x.conj(), strict=False) / fact).squeeze()
-    else:
-        fact = np.dot(xnotmask, xnotmask.T) * 1.
-        c = (dot(x, x.T.conj(), strict=False) / fact).squeeze()
-    # Check whether we have a scalar
+    # Estimate the covariance matrix.
+    corr = cov(x, y, rowvar, allow_masked=allow_masked)
+    # The non-masked version returns a masked value for a scalar.
     try:
-        diag = ma.diagonal(c)
+        std = ma.sqrt(ma.diagonal(corr))
     except ValueError:
-        return 1
-    #
-    if xnotmask.all():
-        _denom = ma.sqrt(ma.multiply.outer(diag, diag))
-    else:
-        _denom = diagflat(diag)
-        _denom._sharedmask = False  # We know return is always a copy
-        n = x.shape[1 - rowvar]
-        if rowvar:
-            for i in range(n - 1):
-                for j in range(i + 1, n):
-                    _x = mask_cols(vstack((x[i], x[j]))).var(axis=1)
-                    _denom[i, j] = _denom[j, i] = ma.sqrt(ma.multiply.reduce(_x))
-        else:
-            for i in range(n - 1):
-                for j in range(i + 1, n):
-                    _x = mask_cols(
-                            vstack((x[:, i], x[:, j]))).var(axis=1)
-                    _denom[i, j] = _denom[j, i] = ma.sqrt(ma.multiply.reduce(_x))
-    return c / _denom
+        return ma.MaskedConstant()
+    corr /= ma.multiply.outer(std, std)
+    return corr
 
 #####--------------------------------------------------------------------------
 #---- --- Concatenation helpers ---

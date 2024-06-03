@@ -1,0 +1,5 @@
+``ma.cov`` and ``ma.corrcoef`` are now significantly faster
+-----------------------------------------------------------
+The private function has been refactored along with `ma.cov` and 
+`ma.corrcoef`. They are now significantly faster, particularly on large, 
+masked arrays.

@@ -1997,14 +1997,11 @@ array_empty(PyObject *NPY_UNUSED(ignored),
     ret = (PyArrayObject *)PyArray_Empty_int(
         shape.len, shape.ptr, dt_info.descr, dt_info.dtype, is_f_order);
 
-    npy_free_cache_dim_obj(shape);
-    return (PyObject *)ret;
-
 fail:
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     npy_free_cache_dim_obj(shape);
-    return NULL;
+    return (PyObject *)ret;
 }
 
 static PyObject *
@@ -5233,7 +5230,8 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     /*
      * Initialize the default PyDataMem_Handler capsule singleton.
      */
-    PyDataMem_DefaultHandler = PyCapsule_New(&default_handler, "mem_handler", NULL);
+    PyDataMem_DefaultHandler = PyCapsule_New(
+            &default_handler, MEM_HANDLER_CAPSULE_NAME, NULL);
     if (PyDataMem_DefaultHandler == NULL) {
         goto err;
     }

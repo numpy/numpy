@@ -686,7 +686,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
         Input arrays.
     assume_unique : bool
         If True, the input arrays are both assumed to be unique, which
-        can speed up the calculation.  Default is False.
+        can speed up the calculation. Default is False.
 
     Returns
     -------
@@ -706,7 +706,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
         ar1 = unique(ar1)
         ar2 = unique(ar2)
 
-    aux = np.concatenate((ar1, ar2))
+    aux = np.concatenate((ar1, ar2), axis=None)
     if aux.size == 0:
         return aux
 

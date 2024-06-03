@@ -28,7 +28,7 @@ NumPy includes several constants:
 
     .. rubric:: References
 
-    https://en.wikipedia.org/wiki/Euler-Mascheroni_constant
+    https://en.wikipedia.org/wiki/Euler%27s_constant
 
 
 .. data:: inf
