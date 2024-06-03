@@ -517,11 +517,7 @@ def unstack(x, /, *, axis=0):
     np.True_
 
     """
-    x = asanyarray(x)
-
-    axis = normalize_axis_index(axis, x.ndim)
-    slices = (slice(None),) * axis
-    return tuple(x[slices + (i, ...)] for i in range(x.shape[axis]))
+    return tuple(_nx.moveaxis(x, axis, 0))
 
 # Internal functions to eliminate the overhead of repeated dispatch in one of
 # the two possible paths inside np.block.
