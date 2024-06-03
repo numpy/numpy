@@ -142,8 +142,8 @@ Advanced types, not listed above, are explored in section
 
 .. _canonical-python-and-c-types:
 
-Relationship Between NumPy Data Types and C Data Data Types
-===========================================================
+Relationship Between NumPy Data Types and C Data Types
+======================================================
 
 NumPy provides both bit sized type names and names based on the names of C types.
 Since the definition of C types are platform dependent, this means the explicitly
