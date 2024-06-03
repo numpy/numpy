@@ -468,11 +468,7 @@ def unstack(x, /, *, axis=0):
     The ``axis`` parameter specifies the axis along which the array will be
     split. of the new axis in the dimensions of the result. For example, if
     ``axis=0`` it will be the first dimension and if ``axis=-1`` it will be
-    the last dimension.
-
-    The result is a tuple of arrays split along ``axis``. ``unstack`` serves
-    as the reverse operation of :py:func:`stack`, i.e., ``stack(unstack(x,
-    axis=axis), axis=axis) == x``.
+    the last dimension. The result is a tuple of arrays split along ``axis``.
 
     .. versionadded:: 2.1.0
 
@@ -492,6 +488,14 @@ def unstack(x, /, *, axis=0):
     concatenate : Join a sequence of arrays along an existing axis.
     block : Assemble an nd-array from nested lists of blocks.
     split : Split array into a list of multiple sub-arrays of equal size.
+
+    Notes
+    -----
+    ``unstack`` serves as the reverse operation of :py:func:`stack`, i.e.,
+    ``stack(unstack(x, axis=axis), axis=axis) == x``.
+
+    This function is equivalent to tuple(np.moveaxis(x, axis, 0)), since
+    iterating on an array iterates along the first axis.
 
     Examples
     --------
