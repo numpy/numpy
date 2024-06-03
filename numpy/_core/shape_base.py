@@ -490,12 +490,6 @@ def unstack(x, /, *, axis=0):
     --------
     stack : Join a sequence of arrays along a new axis.
     concatenate : Join a sequence of arrays along an existing axis.
-    vstack : Stack arrays in sequence vertically (row wise).
-    hstack : Stack arrays in sequence horizontally (column wise).
-    dstack : Stack arrays in sequence depth wise (along third axis).
-    column_stack : Stack 1-D arrays as columns into a 2-D array.
-    vsplit : Split an array into multiple sub-arrays vertically (row-wise).
-    unstack : Split an array into a tuple of sub-arrays along an axis.
     block : Assemble an nd-array from nested lists of blocks.
     split : Split array into a list of multiple sub-arrays of equal size.
 
