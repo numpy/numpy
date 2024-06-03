@@ -18,11 +18,14 @@ jobs:
     name: x86-64, LP64 OpenBLAS
     runs-on: windows-2019
     # To enable this job on a fork, comment out:
-    if: github.repository == 'numpy/numpy'
+    # if: github.repository == 'numpy/numpy'
     strategy:
       fail-fast: false
       matrix:
-        compiler: ["MSVC", "Clang-cl"]
+        compiler: [
+          #"MSVC", 
+          "Clang-cl"
+        ]
     steps:
     - name: Checkout
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -69,6 +72,13 @@ jobs:
       run: |
         cat build/meson-logs/meson-log.txt
 
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-install
+        path: |
+          build-install\usr\Lib
+
     - name: Install test dependencies
       run: |
         python -m pip install -r requirements/test_requirements.txt
@@ -76,7 +86,8 @@ jobs:
 
     - name: Run test suite
       run: |
-        spin test
+        spin test -v -t numpy/_core/tests/test_einsum.py::TestEinsum::test_einsum_sums_int8
+        spin test -v -t numpy/_core/tests/test_einsum.py::TestEinsum::test_einsum_sums_uint8
 
   msvc_32bit_python_no_openblas:
     name: MSVC, 32-bit Python, no BLAS
