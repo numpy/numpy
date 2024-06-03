@@ -1667,7 +1667,7 @@ def _nanquantile_ureduce_func(
     else:
         if weights is None:
             result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
-                                        overwrite_input, method, weights)
+                                         overwrite_input, method, weights)
             # apply_along_axis fills in collapsed axis with results.
             # Move that axis to the beginning to match percentile's
             # convention.
@@ -1676,16 +1676,18 @@ def _nanquantile_ureduce_func(
         else:
             # We need to apply along axis over 2 arrays, a and weights.
             if out is None:
-                result = np.empty_like(a, shape=q.shape + a.shape[:axis] + a.shape[axis+1:])
+                result = np.empty_like(
+                    a, shape=q.shape + a.shape[:axis] + a.shape[axis+1:]
+                )
             else:
                 result = out
             Ni, Nk = a.shape[:axis], a.shape[axis+1:]
             for ii in np.ndindex(Ni):
                 for kk in np.ndindex(Nk):
                     f = _nanquantile_1d(
-                        a[ii + np.s_[:,] + kk], q,
+                        a[ii + np.s_[:, ] + kk], q,
                         overwrite_input=overwrite_input, method=method,
-                        weights=weights[ii + np.s_[:,] + kk])
+                        weights=weights[ii + np.s_[:, ] + kk])
                     Nj = f.shape
                     for jj in np.ndindex(Nj):
                         result[jj + ii + kk] = f[jj]
