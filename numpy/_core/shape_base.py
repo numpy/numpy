@@ -463,12 +463,13 @@ def _unstack_dispatcher(x, *, axis=None):
 @array_function_dispatch(_unstack_dispatcher)
 def unstack(x, /, *, axis=0):
     """
-    Splits an array into a sequence of arrays along the given axis.
+    Split an array into a sequence of arrays along the given axis.
 
-    The ``axis`` parameter specifies the axis along which the array will be
-    split. of the new axis in the dimensions of the result. For example, if
-    ``axis=0`` it will be the first dimension and if ``axis=-1`` it will be
-    the last dimension. The result is a tuple of arrays split along ``axis``.
+    The ``axis`` parameter specifies the dimension along which the array will
+    be split. For example, if ``axis=0`` (the default) it will be the first
+    dimension and if ``axis=-1`` it will be the last dimension.
+
+    The result is a tuple of arrays split along ``axis``.
 
     .. versionadded:: 2.1.0
 
@@ -494,7 +495,7 @@ def unstack(x, /, *, axis=0):
     ``unstack`` serves as the reverse operation of :py:func:`stack`, i.e.,
     ``stack(unstack(x, axis=axis), axis=axis) == x``.
 
-    This function is equivalent to tuple(np.moveaxis(x, axis, 0)), since
+    This function is equivalent to ``tuple(np.moveaxis(x, axis, 0))``, since
     iterating on an array iterates along the first axis.
 
     Examples
