@@ -621,23 +621,23 @@ class TestEinsum:
                            [2.])  # contig_stride0_outstride0_two
 
     def test_einsum_sums_int8(self):
-        if (
-                (sys.platform == 'darwin' and platform.machine() == 'x86_64')
-                or
-                USING_CLANG_CL
-        ):
-            pytest.xfail('Fails on macOS x86-64 and when using clang-cl '
-                         'with Meson, see gh-23838')
+        #if (
+        #        (sys.platform == 'darwin' and platform.machine() == 'x86_64')
+        #        or
+        #        USING_CLANG_CL
+        #):
+        #    pytest.xfail('Fails on macOS x86-64 and when using clang-cl '
+        #                 'with Meson, see gh-23838')
         self.check_einsum_sums('i1')
 
     def test_einsum_sums_uint8(self):
-        if (
-                (sys.platform == 'darwin' and platform.machine() == 'x86_64')
-                or
-                USING_CLANG_CL
-        ):
-            pytest.xfail('Fails on macOS x86-64 and when using clang-cl '
-                         'with Meson, see gh-23838')
+        #if (
+        #        (sys.platform == 'darwin' and platform.machine() == 'x86_64')
+        #        or
+        #        USING_CLANG_CL
+        #):
+        #    pytest.xfail('Fails on macOS x86-64 and when using clang-cl '
+        #                 'with Meson, see gh-23838')
         self.check_einsum_sums('u1')
 
     def test_einsum_sums_int16(self):
