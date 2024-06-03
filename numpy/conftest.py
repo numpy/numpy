@@ -3,12 +3,20 @@ Pytest configuration and fixtures for the Numpy test suite.
 """
 import os
 import tempfile
+from contextlib import contextmanager
+import warnings
 
 import hypothesis
 import pytest
 import numpy
 
 from numpy._core._multiarray_tests import get_fpu_mode
+
+try:
+    from scipy_doctest.conftest import dt_config
+    HAVE_SCPDT = True
+except ModuleNotFoundError:
+    HAVE_SCPDT = False
 
 
 _old_fpu_mode = None
@@ -136,3 +144,39 @@ def weak_promotion(request):
 
     yield request.param
     numpy._set_promotion_state(state)
+
+
+if HAVE_SCPDT:
+
+    @contextmanager
+    def warnings_errors_and_rng(test=None):
+        """Filter out the wall of DeprecationWarnings.
+        """
+        msgs = ["The numpy.linalg.linalg",
+                "The numpy.fft.helper",
+                "dep_util",
+                "pkg_resources",
+                "numpy.core.umath",
+                "msvccompiler",
+                "Deprecated call",
+                "numpy.core",
+                "`np.compat`",
+                "Importing from numpy.matlib"
+        ]
+
+        msg = "|".join(msgs)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=DeprecationWarning, message=msg)
+            yield
+
+    # find and check doctests under this context manager
+    dt_config.user_context_mgr = warnings_errors_and_rng
+
+    # numpy specific tweaks from refguide-check
+    dt_config.rndm_markers.add('#uninitialized')
+    dt_config.rndm_markers.add('# uninitialized')
+
+    import doctest
+    dt_config.optionflags = doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS
+
