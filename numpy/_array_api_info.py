@@ -134,7 +134,7 @@ class __array_namespace_info__:
 
         Returns
         -------
-        capabilities : Capabilities
+        capabilities : dict
             A dictionary of array API library capabilities.
 
         Examples
@@ -202,7 +202,7 @@ class __array_namespace_info__:
 
         Returns
         -------
-        dtypes : DefaultDataTypes
+        dtypes : dict
             A dictionary describing the default data types used for new NumPy
             arrays.
 
@@ -274,7 +274,7 @@ class __array_namespace_info__:
 
         Returns
         -------
-        dtypes : DataTypes
+        dtypes : dict
             A dictionary mapping the names of data types to the corresponding
             NumPy data types.
 
