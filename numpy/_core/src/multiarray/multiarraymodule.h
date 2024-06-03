@@ -27,22 +27,25 @@ typedef struct npy_ma_str_struct {
     PyObject *__dlpack__;
 } npy_ma_str_struct;
 
-NPY_VISIBILITY_HIDDEN extern npy_ma_str_struct *npy_ma_str;
+/*
+ * A struct that stores static global data used throughout
+ * _multiarray_umath, mostly to cache results that would be
+ * prohibitively expensive to compute at runtime in a tight loop.
+ *
+ * All items in this struct should be initialized during module
+ * initialization and thereafter should be immutable. Mutating items in
+ * this struct after module initialization is likely not thread-safe.
+ */
 
-typedef struct npy_ma_global_data_struct {
+typedef struct npy_ma_static_data_struct {
     /*
      * Used in ufunc_type_resolution.c to avoid reconstructing a tuple
-     * storing the default true division return types
-     * This is immutable and set at module initialization so can be used
-     * without acquiring the global data mutex
+     * storing the default true division return types.
      */
     PyObject *default_truediv_type_tup;
 
     /*
      * Used to set up the default extobj context variable
-     *
-     * This is immutable and set at module initialization so can be used
-     * without acquiring the global data mutex
      */
     PyObject *default_extobj_capsule;
 
@@ -67,8 +70,6 @@ typedef struct npy_ma_global_data_struct {
 
     /*
      * References to items obtained via an import at module initialization
-     *
-     * These are immutable
      */
     PyObject *AxisError;
     PyObject *ComplexWarning;
@@ -116,20 +117,34 @@ typedef struct npy_ma_global_data_struct {
 
     /*
      * Used for CPU feature detection and dispatch
-     *
-     * Filled in during module initialization and thereafter immutable
      */
     PyObject *cpu_dispatch_registry;
 
     /*
-     * The following entries store cached references to object obtained
-     * via an import. All of these are initialized at runtime by
-     * npy_cache_import.
+     * A look-up table to recover integer type numbers from type characters.
+     *
+     * See the _MAX_LETTER and LETTER_TO_NUM macros in arraytypes.c.src.
+     *
+     * The smallest type number is ?, the largest is bounded by 'z'.
+     */
+    npy_int16 _letter_to_num['z' + 1 - '?'];
+} npy_ma_static_data_struct;
+
+
+/*
+ * A struct storing thread-unsafe global state for the _multiarray_umath
+ * module. We should refactor so the global state is thread-safe,
+ * e.g. by adding locking.
+ */
+typedef struct npy_ma_thread_unsafe_state_struct {
+    /*
+     * Cached references to objects obtained via an import. All of these are
+     * can be initialized at any time by npy_cache_import.
      *
      * Currently these are not initialized in a thread-safe manner but the
-     * failure mode is a reference leak for references to imported modules so
-     * it will never lead to a crash unless there is something janky that we
-     * don't support going on like reloading.
+     * failure mode is a reference leak for references to imported immortal
+     * modules so it will never lead to a crash unless users are doing something
+     * janky that we don't support like reloading.
      *
      * TODO: maybe make each entry a struct that looks like:
      *
@@ -138,14 +153,17 @@ typedef struct npy_ma_global_data_struct {
      *          PyObject *value;
      *      }
      *
-     * so is thread-safe initialization and only the possibility of contention
-     * before the cache is initialized, not on every single read.
+     * so the initialization is thread-safe and the only possibile lock
+     * contention happens before the cache is initialized, not on every single
+     * read.
      */
     PyObject *_add_dtype_helper;
     PyObject *_all;
     PyObject *_amax;
     PyObject *_amin;
     PyObject *_any;
+    PyObject *array_function_errmsg_formatter;
+    PyObject *array_ufunc_errmsg_formatter;
     PyObject *_clip;
     PyObject *_commastring;
     PyObject *_convert_to_stringdtype_kwargs;
@@ -154,7 +172,11 @@ typedef struct npy_ma_global_data_struct {
     PyObject *_dump;
     PyObject *_dumps;
     PyObject *_getfield_is_safe;
+    PyObject *internal_gcd_func;
     PyObject *_mean;
+    PyObject *NO_NEP50_WARNING;
+    PyObject *npy_ctypes_check;
+    PyObject *numpy_matrix;
     PyObject *_prod;
     PyObject *_promote_fields;
     PyObject *_std;
@@ -170,7 +192,5 @@ typedef struct npy_ma_global_data_struct {
     PyObject *numpy_matrix;
     PyObject *NO_NEP50_WARNING;
 } npy_ma_global_data_struct;
-
-NPY_VISIBILITY_HIDDEN extern npy_ma_global_data_struct *npy_ma_global_data;
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_MULTIARRAYMODULE_H_ */

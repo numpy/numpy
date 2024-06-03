@@ -726,11 +726,11 @@ _convert_from_commastring(PyObject *obj, int align)
     PyArray_Descr *res;
     assert(PyUnicode_Check(obj));
     npy_cache_import("numpy._core._internal", "_commastring",
-                     &npy_ma_global_data->_commastring);
-    if (npy_ma_global_data->_commastring == NULL) {
+                     &npy_ma_thread_unsafe_state->_commastring);
+    if (npy_ma_thread_unsafe_state->_commastring == NULL) {
         return NULL;
     }
-    parsed = PyObject_CallOneArg(npy_ma_global_data->_commastring, obj);
+    parsed = PyObject_CallOneArg(npy_ma_thread_unsafe_state->_commastring, obj);
     if (parsed == NULL) {
         return NULL;
     }

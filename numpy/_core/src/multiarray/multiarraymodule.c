@@ -4265,7 +4265,7 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     }
     else if (result == MEM_OVERLAP_TOO_HARD) {
         if (raise_exceptions) {
-            PyErr_SetString(npy_ma_global_data->TooHardError,
+            PyErr_SetString(npy_ma_static_data->TooHardError,
                             "Exceeded max_work");
             return NULL;
         }
@@ -4769,7 +4769,8 @@ set_flaginfo(PyObject *d)
 }
 
 NPY_VISIBILITY_HIDDEN npy_ma_str_struct *npy_ma_str = NULL;
-NPY_VISIBILITY_HIDDEN npy_ma_global_data_struct *npy_ma_global_data = NULL;
+NPY_VISIBILITY_HIDDEN npy_ma_static_data_struct *npy_ma_static_data = NULL;
+NPY_VISIBILITY_HIDDEN npy_ma_thread_unsafe_state_struct *npy_ma_thread_unsafe_state = NULL;
 
 static int
 intern_strings(void)
@@ -4880,7 +4881,7 @@ intern_strings(void)
 /*
  * Initializes global constants.
  *
- * All global constants should live inside the npy_ma_global_data
+ * All global constants should live inside the npy_ma_static_data
  * struct.
  *
  * Not all entries in the struct are initialized here, some are
@@ -4899,63 +4900,63 @@ initialize_static_globals(void)
 {
     // this is module-level global heap allocation, it is currently
     // never freed
-    npy_ma_global_data = PyMem_Calloc(1, sizeof(npy_ma_global_data_struct));
+    npy_ma_static_data = PyMem_Calloc(1, sizeof(npy_ma_static_data_struct));
 
     // cached reference to objects defined in python
 
     IMPORT_GLOBAL("math", "floor",
-                  npy_ma_global_data->math_floor_func);
+                  npy_ma_static_data->math_floor_func);
 
     IMPORT_GLOBAL("math", "ceil",
-                  npy_ma_global_data->math_ceil_func);
+                  npy_ma_static_data->math_ceil_func);
 
     IMPORT_GLOBAL("math", "trunc",
-                  npy_ma_global_data->math_trunc_func);
+                  npy_ma_static_data->math_trunc_func);
 
     IMPORT_GLOBAL("math", "gcd",
-                  npy_ma_global_data->math_gcd_func);
+                  npy_ma_static_data->math_gcd_func);
 
     IMPORT_GLOBAL("numpy.exceptions", "AxisError",
-                  npy_ma_global_data->AxisError);
+                  npy_ma_static_data->AxisError);
 
     IMPORT_GLOBAL("numpy.exceptions", "ComplexWarning",
-                  npy_ma_global_data->ComplexWarning);
+                  npy_ma_static_data->ComplexWarning);
 
     IMPORT_GLOBAL("numpy.exceptions", "DTypePromotionError",
-                  npy_ma_global_data->DTypePromotionError);
+                  npy_ma_static_data->DTypePromotionError);
 
     IMPORT_GLOBAL("numpy.exceptions", "TooHardError",
-                  npy_ma_global_data->TooHardError);
+                  npy_ma_static_data->TooHardError);
 
     IMPORT_GLOBAL("numpy.exceptions", "VisibleDeprecationWarning",
-                  npy_ma_global_data->VisibleDeprecationWarning);
+                  npy_ma_static_data->VisibleDeprecationWarning);
 
     IMPORT_GLOBAL("numpy._globals", "_CopyMode",
-                  npy_ma_global_data->_CopyMode);
+                  npy_ma_static_data->_CopyMode);
 
     IMPORT_GLOBAL("numpy._globals", "_NoValue",
-                  npy_ma_global_data->_NoValue);
+                  npy_ma_static_data->_NoValue);
 
     IMPORT_GLOBAL("numpy._core._exceptions", "_ArrayMemoryError",
-                  npy_ma_global_data->_ArrayMemoryError);
+                  npy_ma_static_data->_ArrayMemoryError);
 
     IMPORT_GLOBAL("numpy._core._exceptions", "_UFuncBinaryResolutionError",
-                  npy_ma_global_data->_UFuncBinaryResolutionError);
+                  npy_ma_static_data->_UFuncBinaryResolutionError);
 
     IMPORT_GLOBAL("numpy._core._exceptions", "_UFuncInputCastingError",
-                  npy_ma_global_data->_UFuncInputCastingError);
+                  npy_ma_static_data->_UFuncInputCastingError);
 
     IMPORT_GLOBAL("numpy._core._exceptions", "_UFuncNoLoopError",
-                  npy_ma_global_data->_UFuncNoLoopError);
+                  npy_ma_static_data->_UFuncNoLoopError);
 
     IMPORT_GLOBAL("numpy._core._exceptions", "_UFuncOutputCastingError",
-                  npy_ma_global_data->_UFuncOutputCastingError);
+                  npy_ma_static_data->_UFuncOutputCastingError);
 
     IMPORT_GLOBAL("os", "fspath",
-                  npy_ma_global_data->os_fspath);
+                  npy_ma_static_data->os_fspath);
 
     IMPORT_GLOBAL("os", "PathLike",
-                  npy_ma_global_data->os_PathLike);
+                  npy_ma_static_data->os_PathLike);
 
     char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
     if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
@@ -4971,9 +4972,9 @@ initialize_static_globals(void)
         return -1;
     }
 
-    npy_ma_global_data->default_truediv_type_tup =
+    npy_ma_static_data->default_truediv_type_tup =
             PyTuple_Pack(3, tmp, tmp, tmp);
-    if (npy_ma_global_data->default_truediv_type_tup == NULL) {
+    if (npy_ma_static_data->default_truediv_type_tup == NULL) {
         Py_DECREF(tmp);
         return -1;
     }
@@ -4988,7 +4989,7 @@ initialize_static_globals(void)
     if (level == NULL) {
         return -1;
     }
-    npy_ma_global_data->optimize = PyLong_AsLong(level);
+    npy_ma_static_data->optimize = PyLong_AsLong(level);
     Py_DECREF(level);
 
     /*
@@ -5004,22 +5005,22 @@ initialize_static_globals(void)
         npy_intp k;
         for (k=0; k < 8; k++) {
             npy_uint8 v = (j & (1 << k)) == (1 << k);
-            npy_ma_global_data->unpack_lookup_big[j].bytes[7 - k] = v;
+            npy_ma_static_data->unpack_lookup_big[j].bytes[7 - k] = v;
         }
     }
 
-    npy_ma_global_data->kwnames_is_copy = Py_BuildValue("(s)", "copy");
-    if (npy_ma_global_data->kwnames_is_copy == NULL) {
+    npy_ma_static_data->kwnames_is_copy = Py_BuildValue("(s)", "copy");
+    if (npy_ma_static_data->kwnames_is_copy == NULL) {
         return -1;
     }
 
-    npy_ma_global_data->one_obj = PyLong_FromLong((long) 1);
-    if (npy_ma_global_data->one_obj == NULL) {
+    npy_ma_static_data->one_obj = PyLong_FromLong((long) 1);
+    if (npy_ma_static_data->one_obj == NULL) {
         return -1;
     }
 
-    npy_ma_global_data->zero_obj = PyLong_FromLong((long) 0);
-    if (npy_ma_global_data->zero_obj == NULL) {
+    npy_ma_static_data->zero_obj = PyLong_FromLong((long) 0);
+    if (npy_ma_static_data->zero_obj == NULL) {
         return -1;
     }
 
@@ -5288,11 +5289,11 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     }
 
     // initialize static references to ndarray.__array_*__ special methods
-    npy_ma_global_data->ndarray_array_finalize = PyObject_GetAttrString(
+    npy_ma_static_data->ndarray_array_finalize = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_finalize__");
-    npy_ma_global_data->ndarray_array_ufunc = PyObject_GetAttrString(
+    npy_ma_static_data->ndarray_array_ufunc = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_ufunc__");
-    npy_ma_global_data->ndarray_array_function = PyObject_GetAttrString(
+    npy_ma_static_data->ndarray_array_function = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_function__");
 
     /*
@@ -5305,13 +5306,13 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
      * the legacy dtypemeta classes are available.
      */
     npy_cache_import("numpy.dtypes", "_add_dtype_helper",
-                     &npy_ma_global_data->_add_dtype_helper);
-    if (npy_ma_global_data->_add_dtype_helper == NULL) {
+                     &npy_ma_thread_unsafe_state->_add_dtype_helper);
+    if (npy_ma_thread_unsafe_state->_add_dtype_helper == NULL) {
         goto err;
     }
 
     if (PyObject_CallFunction(
-            npy_ma_global_data->_add_dtype_helper,
+            npy_ma_thread_unsafe_state->_add_dtype_helper,
             "Os", (PyObject *)&PyArray_StringDType, NULL) == NULL) {
         goto err;
     }

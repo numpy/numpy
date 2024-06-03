@@ -33,6 +33,7 @@
 #include "dragon4.h"
 #include "npy_longdouble.h"
 #include "npy_buffer.h"
+#include "multiarraymodule.h"
 
 #include <stdlib.h>
 
@@ -611,13 +612,13 @@ static PyObject *
 _void_scalar_to_string(PyObject *obj, int repr) {
     npy_cache_import("numpy._core.arrayprint",
                      "_void_scalar_to_string",
-                     &npy_ma_global_data->_void_scalar_to_string);
-    if (npy_ma_global_data->_void_scalar_to_string == NULL) {
+                     &npy_ma_thread_unsafe_state->_void_scalar_to_string);
+    if (npy_ma_thread_unsafe_state->_void_scalar_to_string == NULL) {
         return NULL;
     }
     PyObject *is_repr = repr ? Py_True : Py_False;
     return PyObject_CallFunctionObjArgs(
-            npy_ma_global_data->_void_scalar_to_string, obj, is_repr, NULL);
+            npy_ma_thread_unsafe_state->_void_scalar_to_string, obj, is_repr, NULL);
 }
 
 static PyObject *
@@ -3037,7 +3038,7 @@ object_arrtype_alloc(PyTypeObject *type, Py_ssize_t items)
      * Object scalars should not actually exist, if they exist we should
      * consider it to be a bug.
      */
-    if (PyErr_WarnEx(npy_ma_global_data->VisibleDeprecationWarning,
+    if (PyErr_WarnEx(npy_ma_static_data->VisibleDeprecationWarning,
             "Creating a NumPy object scalar.  NumPy object scalars should "
             "never be created.  If you see this message please inform the "
             "NumPy developers.  Since this message should never be shown "

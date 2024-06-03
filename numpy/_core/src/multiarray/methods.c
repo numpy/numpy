@@ -114,11 +114,11 @@ npy_forward_method(
 #define NPY_FORWARD_NDARRAY_METHOD(name)                                \
     npy_cache_import(                                                   \
             "numpy._core._methods", #name,                              \
-            &npy_ma_global_data->name);                                 \
-    if (npy_ma_global_data->name == NULL) {                             \
+            &npy_ma_thread_unsafe_state->name);                         \
+    if (npy_ma_thread_unsafe_state->name == NULL) {                     \
         return NULL;                                                    \
     }                                                                   \
-    return npy_forward_method(npy_ma_global_data->name,                 \
+    return npy_forward_method(npy_ma_thread_unsafe_state->name,         \
                               (PyObject *)self, args, len_args, kwnames)
 
 
@@ -406,14 +406,14 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
     /* check that we are not reinterpreting memory containing Objects. */
     if (_may_have_objects(PyArray_DESCR(self)) || _may_have_objects(typed)) {
         npy_cache_import("numpy._core._internal", "_getfield_is_safe",
-                         &npy_ma_global_data->_getfield_is_safe);
-        if (npy_ma_global_data->_getfield_is_safe == NULL) {
+                         &npy_ma_thread_unsafe_state->_getfield_is_safe);
+        if (npy_ma_thread_unsafe_state->_getfield_is_safe == NULL) {
             Py_DECREF(typed);
             return NULL;
         }
 
         /* only returns True or raises */
-        safe = PyObject_CallFunction(npy_ma_global_data->_getfield_is_safe,
+        safe = PyObject_CallFunction(npy_ma_thread_unsafe_state->_getfield_is_safe,
                                      "OOi", PyArray_DESCR(self),
                                      typed, offset);
         if (safe == NULL) {
@@ -2248,17 +2248,17 @@ PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 {
     PyObject *ret;
     npy_cache_import("numpy._core._methods", "_dump",
-                     &npy_ma_global_data->_dump);
-    if (npy_ma_global_data->_dump == NULL) {
+                     &npy_ma_thread_unsafe_state->_dump);
+    if (npy_ma_thread_unsafe_state->_dump == NULL) {
         return -1;
     }
     if (protocol < 0) {
         ret = PyObject_CallFunction(
-                npy_ma_global_data->_dump, "OO", self, file);
+                npy_ma_thread_unsafe_state->_dump, "OO", self, file);
     }
     else {
         ret = PyObject_CallFunction(
-                npy_ma_global_data->_dump, "OOi", self, file, protocol);
+                npy_ma_thread_unsafe_state->_dump, "OOi", self, file, protocol);
     }
     if (ret == NULL) {
         return -1;
@@ -2272,16 +2272,16 @@ NPY_NO_EXPORT PyObject *
 PyArray_Dumps(PyObject *self, int protocol)
 {
     npy_cache_import("numpy._core._methods", "_dumps",
-                     &npy_ma_global_data->_dumps);
-    if (npy_ma_global_data->_dumps == NULL) {
+                     &npy_ma_thread_unsafe_state->_dumps);
+    if (npy_ma_thread_unsafe_state->_dumps == NULL) {
         return NULL;
     }
     if (protocol < 0) {
-        return PyObject_CallFunction(npy_ma_global_data->_dumps, "O", self);
+        return PyObject_CallFunction(npy_ma_thread_unsafe_state->_dumps, "O", self);
     }
     else {
         return PyObject_CallFunction(
-                npy_ma_global_data->_dumps, "Oi", self, protocol);
+                npy_ma_thread_unsafe_state->_dumps, "Oi", self, protocol);
     }
 }
 

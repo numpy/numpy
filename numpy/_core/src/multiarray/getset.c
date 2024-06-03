@@ -388,12 +388,12 @@ array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
         PyObject *safe;
 
         npy_cache_import("numpy._core._internal", "_view_is_safe",
-                         &npy_ma_global_data->_view_is_safe);
-        if (npy_ma_global_data->_view_is_safe == NULL) {
+                         &npy_ma_thread_unsafe_state->_view_is_safe);
+        if (npy_ma_thread_unsafe_state->_view_is_safe == NULL) {
             goto fail;
         }
 
-        safe = PyObject_CallFunction(npy_ma_global_data->_view_is_safe,
+        safe = PyObject_CallFunction(npy_ma_thread_unsafe_state->_view_is_safe,
                                      "OO", PyArray_DESCR(self), newtype);
         if (safe == NULL) {
             goto fail;

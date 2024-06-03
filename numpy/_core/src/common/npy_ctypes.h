@@ -22,12 +22,12 @@ npy_ctypes_check(PyTypeObject *obj)
     int ret;
 
     npy_cache_import("numpy._core._internal", "npy_ctypes_check",
-                     &npy_ma_global_data->npy_ctypes_check);
-    if (npy_ma_global_data->npy_ctypes_check == NULL) {
+                     &npy_ma_thread_unsafe_state->npy_ctypes_check);
+    if (npy_ma_thread_unsafe_state->npy_ctypes_check == NULL) {
         goto fail;
     }
 
-    ret_obj = PyObject_CallFunctionObjArgs(npy_ma_global_data->npy_ctypes_check,
+    ret_obj = PyObject_CallFunctionObjArgs(npy_ma_thread_unsafe_state->npy_ctypes_check,
                                            (PyObject *)obj, NULL);
     if (ret_obj == NULL) {
         goto fail;

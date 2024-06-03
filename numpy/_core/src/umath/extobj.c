@@ -122,8 +122,8 @@ fetch_curr_extobj_state(npy_extobj *extobj)
 {
     PyObject *capsule;
     if (PyContextVar_Get(
-            npy_ma_global_data->npy_extobj_contextvar,
-            npy_ma_global_data->default_extobj_capsule, &capsule) < 0) {
+            npy_ma_static_data->npy_extobj_contextvar,
+            npy_ma_static_data->default_extobj_capsule, &capsule) < 0) {
         return -1;
     }
     npy_extobj *obj = PyCapsule_GetPointer(capsule, "numpy.ufunc.extobj");
@@ -157,15 +157,15 @@ init_extobj(void)
         }
     }
 
-    npy_ma_global_data->default_extobj_capsule = make_extobj_capsule(
+    npy_ma_static_data->default_extobj_capsule = make_extobj_capsule(
             NPY_BUFSIZE, UFUNC_ERR_DEFAULT, Py_None);
-    if (npy_ma_global_data->default_extobj_capsule == NULL) {
+    if (npy_ma_static_data->default_extobj_capsule == NULL) {
         return -1;
     }
-    npy_ma_global_data->npy_extobj_contextvar = PyContextVar_New(
-            "numpy.ufunc.extobj", npy_ma_global_data->default_extobj_capsule);
-    if (npy_ma_global_data->npy_extobj_contextvar == NULL) {
-        Py_CLEAR(npy_ma_global_data->default_extobj_capsule);
+    npy_ma_static_data->npy_extobj_contextvar = PyContextVar_New(
+            "numpy.ufunc.extobj", npy_ma_static_data->default_extobj_capsule);
+    if (npy_ma_static_data->npy_extobj_contextvar == NULL) {
+        Py_CLEAR(npy_ma_static_data->default_extobj_capsule);
         return -1;
     }
     return 0;

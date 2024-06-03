@@ -20,8 +20,8 @@ get_array_function(PyObject *obj)
 {
     /* Fast return for ndarray */
     if (PyArray_CheckExact(obj)) {
-        Py_INCREF(npy_ma_global_data->ndarray_array_function);
-        return npy_ma_global_data->ndarray_array_function;
+        Py_INCREF(npy_ma_static_data->ndarray_array_function);
+        return npy_ma_static_data->ndarray_array_function;
     }
 
     PyObject *array_function = PyArray_LookupSpecial(obj, npy_ma_str->array_function);
@@ -125,7 +125,7 @@ fail:
 static int
 is_default_array_function(PyObject *obj)
 {
-    return obj == npy_ma_global_data->ndarray_array_function;
+    return obj == npy_ma_static_data->ndarray_array_function;
 }
 
 
@@ -233,10 +233,10 @@ set_no_matching_types_error(PyObject *public_api, PyObject *types)
     /* No acceptable override found, raise TypeError. */
     npy_cache_import("numpy._core._internal",
                      "array_function_errmsg_formatter",
-                     &npy_ma_global_data->array_function_errmsg_formatter);
-    if (npy_ma_global_data->array_function_errmsg_formatter != NULL) {
+                     &npy_ma_thread_unsafe_state->array_function_errmsg_formatter);
+    if (npy_ma_thread_unsafe_state->array_function_errmsg_formatter != NULL) {
         PyObject *errmsg = PyObject_CallFunctionObjArgs(
-                npy_ma_global_data->array_function_errmsg_formatter,
+                npy_ma_thread_unsafe_state->array_function_errmsg_formatter,
                 public_api, types, NULL);
         if (errmsg != NULL) {
             PyErr_SetObject(PyExc_TypeError, errmsg);
