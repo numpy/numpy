@@ -231,21 +231,32 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
                  PyArrayObject *out, NPY_CLIPMODE clipmode)
 {
     PyArray_Descr *dtype;
-    PyArrayObject *obj = NULL, *self, *indices;
+    PyArrayObject *obj = NULL, *self, *indices, *tmp;
     npy_intp nd, i, n, m, max_item, chunk, itemsize, nelem;
     npy_intp shape[NPY_MAXDIMS];
 
     npy_bool needs_refcounting;
 
-    indices = NULL;
+    indices = tmp = NULL;
     self = (PyArrayObject *)PyArray_CheckAxis(self0, &axis,
                                     NPY_ARRAY_CARRAY_RO);
     if (self == NULL) {
         return NULL;
     }
-    indices = (PyArrayObject *)PyArray_ContiguousFromAny(indices0,
-                                                         NPY_INTP,
-                                                         0, 0);
+    tmp = (PyArrayObject *)PyArray_ContiguousFromAny(indices0,
+                                                     NPY_INT64,
+                                                     0, 0);
+    if (tmp == NULL) {
+        goto fail;
+    }
+
+    if (NPY_SIZEOF_INTP != 8) {
+        indices = (PyArrayObject *)PyArray_Cast(tmp, NPY_INTP);
+        Py_DECREF(tmp);
+    } else {
+        indices = tmp;
+    }
+
     if (indices == NULL) {
         goto fail;
     }

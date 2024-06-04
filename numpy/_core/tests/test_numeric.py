@@ -324,6 +324,38 @@ class TestNonarrayArgs:
         out = np.take(a, indices)
         assert_equal(out, tgt)
 
+        # take 32 64
+        x32 = np.array([1, 2, 3, 4, 5], dtype=np.int32)
+        x64 = np.array([0, 2, 2, 3], dtype=np.int64)
+        tgt = np.array([1, 3, 3, 4], dtype=np.int32)
+        out = np.take(x32, x64)
+        assert_equal(out, tgt)
+        assert_equal(out.dtype, tgt.dtype)
+
+        # take 64 32
+        x64 = np.array([1, 2, 3, 4, 5], dtype=np.int64)
+        x32 = np.array([0, 2, 2, 3], dtype=np.int32)
+        tgt = np.array([1, 3, 3, 4], dtype=np.int64)
+        out = np.take(x64, x32)
+        assert_equal(out, tgt)
+        assert_equal(out.dtype, tgt.dtype)
+
+        # take 32 32
+        x32_0 = np.array([1, 2, 3, 4, 5], dtype=np.int32)
+        x32_1 = np.array([0, 2, 2, 3], dtype=np.int32)
+        tgt = np.array([1, 3, 3, 4], dtype=np.int32)
+        out = np.take(x32_0, x32_1)
+        assert_equal(out, tgt)
+        assert_equal(out.dtype, tgt.dtype)
+
+        # take 64 64
+        x64_0 = np.array([1, 2, 3, 4, 5], dtype=np.int64)
+        x64_1 = np.array([0, 2, 2, 3], dtype=np.int64)
+        tgt = np.array([1, 3, 3, 4], dtype=np.int64)
+        out = np.take(x64_0, x64_1)
+        assert_equal(out, tgt)
+        assert_equal(out.dtype, tgt.dtype)
+
     def test_trace(self):
         c = [[1, 2], [3, 4], [5, 6]]
         assert_equal(np.trace(c), 5)
