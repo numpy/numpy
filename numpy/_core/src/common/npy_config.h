@@ -182,6 +182,16 @@
 #undef HAVE_CACOSHF
 #undef HAVE_CACOSHL
 
+/*
+ * musl's clog is low precision for some inputs.  As of MUSL 1.2.5,
+ * the first comment in clog.c is "// FIXME".
+ * See https://github.com/numpy/numpy/pull/24416#issuecomment-1678208628
+ * and https://github.com/numpy/numpy/pull/24448
+ */
+#undef HAVE_CLOG
+#undef HAVE_CLOGF
+#undef HAVE_CLOGL
+
 #endif  /* defined(__GLIBC) */
 #endif  /* defined(HAVE_FEATURES_H) */
 
