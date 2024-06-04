@@ -7,11 +7,6 @@ https://data-apis.org/array-api/latest/API_specification/inspection.html for
 more details.
 
 """
-
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
 from numpy._core import (
     dtype,
     bool,
@@ -29,49 +24,6 @@ from numpy._core import (
     complex64,
     complex128,
 )
-
-if TYPE_CHECKING:
-    from typing import Optional, Union, Tuple, List, TypedDict
-    from numpy.dtyping import DtypeLike
-
-    Capabilities = TypedDict(
-        "Capabilities",
-        {
-            "boolean indexing": bool,
-            "data-dependent shapes": bool,
-            # "max rank": int | None,
-        },
-    )
-
-    DefaultDataTypes = TypedDict(
-        "DefaultDataTypes",
-        {
-            "real floating": DtypeLike,
-            "complex floating": DtypeLike,
-            "integral": DtypeLike,
-            "indexing": DtypeLike,
-        },
-    )
-
-    DataTypes = TypedDict(
-        "DataTypes",
-        {
-            "bool": DtypeLike,
-            "float32": DtypeLike,
-            "float64": DtypeLike,
-            "complex64": DtypeLike,
-            "complex128": DtypeLike,
-            "int8": DtypeLike,
-            "int16": DtypeLike,
-            "int32": DtypeLike,
-            "int64": DtypeLike,
-            "uint8": DtypeLike,
-            "uint16": DtypeLike,
-            "uint32": DtypeLike,
-            "uint64": DtypeLike,
-        },
-        total=False,
-    )
 
 
 class __array_namespace_info__:
@@ -108,7 +60,7 @@ class __array_namespace_info__:
 
     __module__ = 'numpy'
 
-    def capabilities(self) -> Capabilities:
+    def capabilities(self):
         """
         Return a dictionary of array API library capabilities.
 
@@ -152,7 +104,7 @@ class __array_namespace_info__:
             # "max rank": 64,
         }
 
-    def default_device(self) -> str:
+    def default_device(self):
         """
         The default device used for new NumPy arrays.
 
@@ -179,11 +131,7 @@ class __array_namespace_info__:
         """
         return "cpu"
 
-    def default_dtypes(
-        self,
-        *,
-        device: Optional[str] = None,
-    ) -> DefaultDataTypes:
+    def default_dtypes(self, *, device):
         """
         The default data types used for new NumPy arrays.
 
@@ -235,12 +183,7 @@ class __array_namespace_info__:
             "indexing": dtype(intp),
         }
 
-    def dtypes(
-        self,
-        *,
-        device: Optional[str] = None,
-        kind: Optional[Union[str, Tuple[str, ...]]] = None,
-    ) -> DataTypes:
+    def dtypes(self, *, device, kind=None):
         """
         The array API data types supported by NumPy.
 
@@ -375,7 +318,7 @@ class __array_namespace_info__:
             return res
         raise ValueError(f"unsupported kind: {kind!r}")
 
-    def devices(self) -> List[str]:
+    def devices(self):
         """
         The devices supported by NumPy.
 

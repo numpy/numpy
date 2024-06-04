@@ -315,7 +315,7 @@ else:
         set(lib._polynomial_impl.__all__) |
         set(lib._npyio_impl.__all__) |
         set(lib._index_tricks_impl.__all__) |
-        {"emath", "show_config", "__version__"}
+        {"emath", "show_config", "__version__", "__array_namespace_info__"}
     )
 
     # Filter out Cython harmless warnings
