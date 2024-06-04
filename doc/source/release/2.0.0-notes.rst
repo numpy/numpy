@@ -276,6 +276,9 @@ Deprecations
 
 * ``np.compat`` has been deprecated, as Python 2 is no longer supported.
 
+* ``numpy.int8`` will no longer support conversion of out of bounds python integers to integer arrays. For example, conversion of 255 to int8 will not return -1.
+  ``np.array(value).astype(dtype)`` will give the desired result.
+
 * ``np.safe_eval`` has been deprecated. ``ast.literal_eval`` should be used instead.
 
   (`gh-23830 <https://github.com/numpy/numpy/pull/23830>`__)
