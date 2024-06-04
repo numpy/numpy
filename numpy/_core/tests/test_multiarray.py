@@ -10237,7 +10237,7 @@ class TestDevice:
         (np.arange, 5),
         (np.empty_like, []),
         (np.zeros, 5),
-        (np.empty, (5,5)),
+        (np.empty, (5, 5)),
         (np.asarray, []),
         (np.asanyarray, []),
     ])
