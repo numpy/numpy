@@ -131,7 +131,7 @@ class __array_namespace_info__:
         """
         return "cpu"
 
-    def default_dtypes(self, *, device):
+    def default_dtypes(self, *, device=None):
         """
         The default data types used for new NumPy arrays.
 
@@ -183,7 +183,7 @@ class __array_namespace_info__:
             "indexing": dtype(intp),
         }
 
-    def dtypes(self, *, device, kind=None):
+    def dtypes(self, *, device=None, kind=None):
         """
         The array API data types supported by NumPy.
 
