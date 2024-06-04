@@ -10250,6 +10250,13 @@ class TestDevice:
         assert arr.device == "cpu"
 
         with assert_raises_regex(
+            ValueError,
+            r"Device not understood. Only \"cpu\" is allowed, "
+            r"but received: nonsense"
+        ):
+            func(arg, device="nonsense")
+
+        with assert_raises_regex(
             AttributeError,
             r"attribute 'device' of '(numpy.|)ndarray' objects is "
             r"not writable"
