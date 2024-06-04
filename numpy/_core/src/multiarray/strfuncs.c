@@ -9,10 +9,6 @@
 #include "npy_import.h"
 #include "strfuncs.h"
 
-static PyObject *PyArray_StrFunction = NULL;
-static PyObject *PyArray_ReprFunction = NULL;
-
-
 static void
 npy_PyErr_SetStringChained(PyObject *type, const char *message)
 {
@@ -30,22 +26,7 @@ npy_PyErr_SetStringChained(PyObject *type, const char *message)
 NPY_NO_EXPORT void
 PyArray_SetStringFunction(PyObject *op, int repr)
 {
-    if (repr) {
-        /* Dispose of previous callback */
-        Py_XDECREF(PyArray_ReprFunction);
-        /* Add a reference to new callback */
-        Py_XINCREF(op);
-        /* Remember new callback */
-        PyArray_ReprFunction = op;
-    }
-    else {
-        /* Dispose of previous callback */
-        Py_XDECREF(PyArray_StrFunction);
-        /* Add a reference to new callback */
-        Py_XINCREF(op);
-        /* Remember new callback */
-        PyArray_StrFunction = op;
-    }
+    PyErr_SetString(PyExc_ValueError, "PyArray_SetStringFunction was removed");
 }
 
 
@@ -53,11 +34,6 @@ NPY_NO_EXPORT PyObject *
 array_repr(PyArrayObject *self)
 {
     static PyObject *repr = NULL;
-
-    if (PyArray_ReprFunction != NULL) {
-        return PyObject_CallFunctionObjArgs(PyArray_ReprFunction, self, NULL);
-    }
-
     /*
      * We need to do a delayed import here as initialization on module load
      * leads to circular import problems.
@@ -76,11 +52,6 @@ NPY_NO_EXPORT PyObject *
 array_str(PyArrayObject *self)
 {
     static PyObject *str = NULL;
-
-    if (PyArray_StrFunction != NULL) {
-        return PyObject_CallFunctionObjArgs(PyArray_StrFunction, self, NULL);
-    }
-
     /*
      * We need to do a delayed import here as initialization on module load leads
      * to circular import problems.
