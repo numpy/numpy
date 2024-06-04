@@ -5417,14 +5417,14 @@ def insert(arr, obj, values, axis=None):
     Notes
     -----
     Note that for higher dimensional inserts ``obj=0`` behaves very
-    differently from ``obj=[0]`` just like ``arr[:,0,:] = values`` is
-    different from ``arr[:,[0],:] = values``.
+    differently from ``obj=[0]`` just like ``arr[:,0,:] = values`` 
+    is different from ``arr[:,[0],:] = values``.
     This difference arises due to the broadcasting rules and
     axis manipulation in NumPy:
     
-    - Using `obj=0` specifies a single position, leading to direct
+    Using `obj=0` specifies a single position, leading to direct
     insertion along the specified axis.
-    - Using `obj=[0]` treats the index as a list, which results in different
+    Using `obj=[0]` treats the index as a list, which results in different
     broadcasting behavior and can affect how values are inserted.
 
     For a more detailed explanation of broadcasting and indexing,
