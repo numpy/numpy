@@ -157,19 +157,19 @@ npy_ObjectLogicalNot(PyObject *i1)
 
 static PyObject *
 npy_ObjectFloor(PyObject *obj) {
-    return PyObject_CallFunction(npy_ma_static_data->math_floor_func,
+    return PyObject_CallFunction(npy_ma_static_data.math_floor_func,
                                  "O", obj);
 }
 
 static PyObject *
 npy_ObjectCeil(PyObject *obj) {
-    return PyObject_CallFunction(npy_ma_static_data->math_ceil_func,
+    return PyObject_CallFunction(npy_ma_static_data.math_ceil_func,
                                  "O", obj);
 }
 
 static PyObject *
 npy_ObjectTrunc(PyObject *obj) {
-    return PyObject_CallFunction(npy_ma_static_data->math_trunc_func,
+    return PyObject_CallFunction(npy_ma_static_data.math_trunc_func,
                                  "O", obj);
 }
 
@@ -180,7 +180,7 @@ npy_ObjectGCD(PyObject *i1, PyObject *i2)
 
     /* use math.gcd if valid on the provided types */
     {
-        gcd = PyObject_CallFunction(npy_ma_static_data->math_gcd_func,
+        gcd = PyObject_CallFunction(npy_ma_static_data.math_gcd_func,
                                     "OO", i1, i2);
         if (gcd != NULL) {
             return gcd;
@@ -192,11 +192,11 @@ npy_ObjectGCD(PyObject *i1, PyObject *i2)
     /* otherwise, use our internal one, written in python */
     {
         npy_cache_import("numpy._core._internal", "_gcd",
-                         &npy_ma_thread_unsafe_state->internal_gcd_func);
-        if (npy_ma_thread_unsafe_state->internal_gcd_func == NULL) {
+                         &npy_ma_thread_unsafe_state.internal_gcd_func);
+        if (npy_ma_thread_unsafe_state.internal_gcd_func == NULL) {
             return NULL;
         }
-        gcd = PyObject_CallFunction(npy_ma_thread_unsafe_state->internal_gcd_func,
+        gcd = PyObject_CallFunction(npy_ma_thread_unsafe_state.internal_gcd_func,
                                     "OO", i1, i2);
         if (gcd == NULL) {
             return NULL;

@@ -84,13 +84,13 @@ npy_give_promotion_warnings(void)
 
     npy_cache_import(
             "numpy._core._ufunc_config", "NO_NEP50_WARNING",
-            &npy_ma_thread_unsafe_state->NO_NEP50_WARNING);
-    if (npy_ma_thread_unsafe_state->NO_NEP50_WARNING == NULL) {
+            &npy_ma_thread_unsafe_state.NO_NEP50_WARNING);
+    if (npy_ma_thread_unsafe_state.NO_NEP50_WARNING == NULL) {
         PyErr_WriteUnraisable(NULL);
         return 1;
     }
 
-    if (PyContextVar_Get(npy_ma_thread_unsafe_state->NO_NEP50_WARNING,
+    if (PyContextVar_Get(npy_ma_thread_unsafe_state.NO_NEP50_WARNING,
                          Py_False, &val) < 0) {
         /* Errors should not really happen, but if it does assume we warn. */
         PyErr_WriteUnraisable(NULL);
@@ -402,7 +402,7 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
             !PyTypeNum_ISCOMPLEX(type_num) &&
             PyTypeNum_ISNUMBER(type_num) &&
             !PyTypeNum_ISBOOL(type_num)) {
-        int ret = PyErr_WarnEx(npy_ma_static_data->ComplexWarning,
+        int ret = PyErr_WarnEx(npy_ma_static_data.ComplexWarning,
                 "Casting complex values to real discards "
                 "the imaginary part", 1);
         if (ret < 0) {
@@ -2184,12 +2184,12 @@ PyArray_Zero(PyArrayObject *arr)
            if they simply memcpy it into a ndarray without using
            setitem(), refcount errors will occur
         */
-        memcpy(zeroval, &npy_ma_static_data->zero_obj, sizeof(PyObject *));
+        memcpy(zeroval, &npy_ma_static_data.zero_obj, sizeof(PyObject *));
         return zeroval;
     }
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
-    ret = PyArray_SETITEM(arr, zeroval, npy_ma_static_data->zero_obj);
+    ret = PyArray_SETITEM(arr, zeroval, npy_ma_static_data.zero_obj);
     ((PyArrayObject_fields *)arr)->flags = storeflags;
     if (ret < 0) {
         PyDataMem_FREE(zeroval);
@@ -2223,13 +2223,13 @@ PyArray_One(PyArrayObject *arr)
            if they simply memcpy it into a ndarray without using
            setitem(), refcount errors will occur
         */
-        memcpy(oneval, &npy_ma_static_data->one_obj, sizeof(PyObject *));
+        memcpy(oneval, &npy_ma_static_data.one_obj, sizeof(PyObject *));
         return oneval;
     }
 
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
-    ret = PyArray_SETITEM(arr, oneval, npy_ma_static_data->one_obj);
+    ret = PyArray_SETITEM(arr, oneval, npy_ma_static_data.one_obj);
     ((PyArrayObject_fields *)arr)->flags = storeflags;
     if (ret < 0) {
         PyDataMem_FREE(oneval);
@@ -2612,7 +2612,7 @@ complex_to_noncomplex_get_loop(
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    int ret = PyErr_WarnEx(npy_ma_static_data->ComplexWarning,
+    int ret = PyErr_WarnEx(npy_ma_static_data.ComplexWarning,
             "Casting complex values to real discards "
             "the imaginary part", 1);
     if (ret < 0) {
@@ -3239,8 +3239,8 @@ nonstructured_to_structured_get_loop(
 static PyObject *
 PyArray_GetGenericToVoidCastingImpl(void)
 {
-    Py_INCREF(npy_ma_static_data->GenericToVoidMethod);
-    return npy_ma_static_data->GenericToVoidMethod;
+    Py_INCREF(npy_ma_static_data.GenericToVoidMethod);
+    return npy_ma_static_data.GenericToVoidMethod;
 }
 
 
@@ -3377,8 +3377,8 @@ structured_to_nonstructured_get_loop(
 static PyObject *
 PyArray_GetVoidToGenericCastingImpl(void)
 {
-    Py_INCREF(npy_ma_static_data->VoidToGenericMethod);
-    return npy_ma_static_data->VoidToGenericMethod;
+    Py_INCREF(npy_ma_static_data.VoidToGenericMethod);
+    return npy_ma_static_data.VoidToGenericMethod;
 }
 
 
@@ -3742,8 +3742,8 @@ object_to_any_resolve_descriptors(
 static PyObject *
 PyArray_GetObjectToGenericCastingImpl(void)
 {
-    Py_INCREF(npy_ma_static_data->ObjectToGenericMethod);
-    return npy_ma_static_data->ObjectToGenericMethod;
+    Py_INCREF(npy_ma_static_data.ObjectToGenericMethod);
+    return npy_ma_static_data.ObjectToGenericMethod;
 }
 
 
@@ -3779,8 +3779,8 @@ any_to_object_resolve_descriptors(
 static PyObject *
 PyArray_GetGenericToObjectCastingImpl(void)
 {
-    Py_INCREF(npy_ma_static_data->GenericToObjectMethod);
-    return npy_ma_static_data->GenericToObjectMethod;
+    Py_INCREF(npy_ma_static_data.GenericToObjectMethod);
+    return npy_ma_static_data.GenericToObjectMethod;
 }
 
 
@@ -3847,7 +3847,7 @@ initialize_void_and_object_globals(void) {
     method->get_strided_loop = &structured_to_nonstructured_get_loop;
     method->nin = 1;
     method->nout = 1;
-    npy_ma_static_data->VoidToGenericMethod = (PyObject *)method;
+    npy_ma_static_data.VoidToGenericMethod = (PyObject *)method;
 
     method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
     if (method == NULL) {
@@ -3862,7 +3862,7 @@ initialize_void_and_object_globals(void) {
     method->get_strided_loop = &nonstructured_to_structured_get_loop;
     method->nin = 1;
     method->nout = 1;
-    npy_ma_static_data->GenericToVoidMethod = (PyObject *)method;
+    npy_ma_static_data.GenericToVoidMethod = (PyObject *)method;
 
     method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
     if (method == NULL) {
@@ -3877,7 +3877,7 @@ initialize_void_and_object_globals(void) {
     method->casting = NPY_UNSAFE_CASTING;
     method->resolve_descriptors = &object_to_any_resolve_descriptors;
     method->get_strided_loop = &object_to_any_get_loop;
-    npy_ma_static_data->ObjectToGenericMethod = (PyObject *)method;
+    npy_ma_static_data.ObjectToGenericMethod = (PyObject *)method;
 
     method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
     if (method == NULL) {
@@ -3892,7 +3892,7 @@ initialize_void_and_object_globals(void) {
     method->casting = NPY_SAFE_CASTING;
     method->resolve_descriptors = &any_to_object_resolve_descriptors;
     method->get_strided_loop = &any_to_object_get_loop;
-    npy_ma_static_data->GenericToObjectMethod = (PyObject *)method;
+    npy_ma_static_data.GenericToObjectMethod = (PyObject *)method;
 
     return 0;
 }

@@ -1788,7 +1788,7 @@ static int
 static int
 emit_complexwarning(void)
 {
-    return PyErr_WarnEx(npy_ma_static_data->ComplexWarning,
+    return PyErr_WarnEx(npy_ma_static_data.ComplexWarning,
             "Casting complex values to real discards the imaginary part", 1);
 }
 

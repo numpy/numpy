@@ -186,8 +186,8 @@ static int
 pyscalar_mode_conv(PyObject *obj, scalar_policy *policy)
 {
     PyObject *strings[3] = {
-            npy_ma_str->convert, npy_ma_str->preserve,
-            npy_ma_str->convert_if_no_array};
+            npy_ma_str.convert, npy_ma_str.preserve,
+            npy_ma_str.convert_if_no_array};
 
     /* First quick pass using the identity (should practically always match) */
     for (int i = 0; i < 3; i++) {

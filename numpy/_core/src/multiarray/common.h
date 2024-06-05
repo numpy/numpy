@@ -142,12 +142,12 @@ check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
     if (NPY_UNLIKELY((*axis < -ndim) || (*axis >= ndim))) {
         /* Invoke the AxisError constructor */
         PyObject *exc = PyObject_CallFunction(
-                npy_ma_static_data->AxisError, "iiO", *axis, ndim,
+                npy_ma_static_data.AxisError, "iiO", *axis, ndim,
                 msg_prefix);
         if (exc == NULL) {
             return -1;
         }
-        PyErr_SetObject(npy_ma_static_data->AxisError, exc);
+        PyErr_SetObject(npy_ma_static_data.AxisError, exc);
         Py_DECREF(exc);
 
         return -1;

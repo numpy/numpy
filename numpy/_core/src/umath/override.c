@@ -114,19 +114,19 @@ initialize_normal_kwds(PyObject *out_args,
 
     if (out_args != NULL) {
         /* Replace `out` argument with the normalized version */
-        int res = PyDict_SetItem(normal_kwds, npy_ma_str->out, out_args);
+        int res = PyDict_SetItem(normal_kwds, npy_ma_str.out, out_args);
         if (res < 0) {
             return -1;
         }
     }
     else {
         /* Ensure that `out` is not present. */
-        int res = PyDict_Contains(normal_kwds, npy_ma_str->out);
+        int res = PyDict_Contains(normal_kwds, npy_ma_str.out);
         if (res < 0) {
             return -1;
         }
         if (res) {
-            return PyDict_DelItem(normal_kwds, npy_ma_str->out);
+            return PyDict_DelItem(normal_kwds, npy_ma_str.out);
         }
     }
     return 0;
@@ -177,7 +177,7 @@ copy_positional_args_to_kwargs(const char **keywords,
              * 5 keyword arguments.
              */
             assert(strcmp(keywords[i], "initial") == 0);
-            if (args[i] == npy_ma_static_data->_NoValue) {
+            if (args[i] == npy_ma_static_data._NoValue) {
                 continue;
             }
         }
@@ -371,10 +371,10 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             npy_cache_import(
                     "numpy._core._internal",
                     "array_ufunc_errmsg_formatter",
-                    &npy_ma_thread_unsafe_state->array_ufunc_errmsg_formatter);
-            if (npy_ma_thread_unsafe_state->array_ufunc_errmsg_formatter != NULL) {
+                    &npy_ma_thread_unsafe_state.array_ufunc_errmsg_formatter);
+            if (npy_ma_thread_unsafe_state.array_ufunc_errmsg_formatter != NULL) {
                 errmsg = PyObject_Call(
-                        npy_ma_thread_unsafe_state->array_ufunc_errmsg_formatter,
+                        npy_ma_thread_unsafe_state.array_ufunc_errmsg_formatter,
                         override_args, normal_kwds);
                 if (errmsg != NULL) {
                     PyErr_SetObject(PyExc_TypeError, errmsg);

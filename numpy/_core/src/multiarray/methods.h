@@ -14,11 +14,11 @@ extern NPY_NO_EXPORT PyMethodDef array_methods[];
 static inline PyObject *
 NpyPath_PathlikeToFspath(PyObject *file)
 {
-    if (!PyObject_IsInstance(file, npy_ma_static_data->os_PathLike)) {
+    if (!PyObject_IsInstance(file, npy_ma_static_data.os_PathLike)) {
         Py_INCREF(file);
         return file;
     }
-    return PyObject_CallFunctionObjArgs(npy_ma_static_data->os_fspath,
+    return PyObject_CallFunctionObjArgs(npy_ma_static_data.os_fspath,
                                         file, NULL);
 }
 

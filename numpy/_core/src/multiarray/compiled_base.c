@@ -1414,7 +1414,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
 
     /* Don't add docstrings */
 #if PY_VERSION_HEX > 0x030b0000
-    if (npy_ma_static_data->optimize > 1) {
+    if (npy_ma_static_data.optimize > 1) {
 #else
     if (Py_OptimizeFlag > 1) {
 #endif
@@ -1858,7 +1858,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             /* for unity stride we can just copy out of the lookup table */
             if (order == 'b') {
                 for (index = 0; index < in_n; index++) {
-                    npy_uint64 v = npy_ma_static_data->unpack_lookup_big[*inptr].uint64;
+                    npy_uint64 v = npy_ma_static_data.unpack_lookup_big[*inptr].uint64;
                     memcpy(outptr, &v, 8);
                     outptr += 8;
                     inptr += in_stride;
@@ -1866,7 +1866,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             }
             else {
                 for (index = 0; index < in_n; index++) {
-                    npy_uint64 v = npy_ma_static_data->unpack_lookup_big[*inptr].uint64;
+                    npy_uint64 v = npy_ma_static_data.unpack_lookup_big[*inptr].uint64;
                     if (order != 'b') {
                         v = npy_bswap8(v);
                     }
@@ -1877,7 +1877,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             }
             /* Clean up the tail portion */
             if (in_tail) {
-                npy_uint64 v = npy_ma_static_data->unpack_lookup_big[*inptr].uint64;
+                npy_uint64 v = npy_ma_static_data.unpack_lookup_big[*inptr].uint64;
                 if (order != 'b') {
                     v = npy_bswap8(v);
                 }

@@ -20,11 +20,11 @@ get_array_function(PyObject *obj)
 {
     /* Fast return for ndarray */
     if (PyArray_CheckExact(obj)) {
-        Py_INCREF(npy_ma_static_data->ndarray_array_function);
-        return npy_ma_static_data->ndarray_array_function;
+        Py_INCREF(npy_ma_static_data.ndarray_array_function);
+        return npy_ma_static_data.ndarray_array_function;
     }
 
-    PyObject *array_function = PyArray_LookupSpecial(obj, npy_ma_str->array_function);
+    PyObject *array_function = PyArray_LookupSpecial(obj, npy_ma_str.array_function);
     if (array_function == NULL && PyErr_Occurred()) {
         PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
@@ -125,7 +125,7 @@ fail:
 static int
 is_default_array_function(PyObject *obj)
 {
-    return obj == npy_ma_static_data->ndarray_array_function;
+    return obj == npy_ma_static_data.ndarray_array_function;
 }
 
 
@@ -153,7 +153,7 @@ array_function_method_impl(PyObject *func, PyObject *types, PyObject *args,
         }
     }
 
-    PyObject *implementation = PyObject_GetAttr(func, npy_ma_str->implementation);
+    PyObject *implementation = PyObject_GetAttr(func, npy_ma_str.implementation);
     if (implementation == NULL) {
         return NULL;
     }
@@ -233,10 +233,10 @@ set_no_matching_types_error(PyObject *public_api, PyObject *types)
     /* No acceptable override found, raise TypeError. */
     npy_cache_import("numpy._core._internal",
                      "array_function_errmsg_formatter",
-                     &npy_ma_thread_unsafe_state->array_function_errmsg_formatter);
-    if (npy_ma_thread_unsafe_state->array_function_errmsg_formatter != NULL) {
+                     &npy_ma_thread_unsafe_state.array_function_errmsg_formatter);
+    if (npy_ma_thread_unsafe_state.array_function_errmsg_formatter != NULL) {
         PyObject *errmsg = PyObject_CallFunctionObjArgs(
-                npy_ma_thread_unsafe_state->array_function_errmsg_formatter,
+                npy_ma_thread_unsafe_state.array_function_errmsg_formatter,
                 public_api, types, NULL);
         if (errmsg != NULL) {
             PyErr_SetObject(PyExc_TypeError, errmsg);
@@ -299,12 +299,12 @@ array_implement_c_array_function_creation(
     }
 
     /* The like argument must be present in the keyword arguments, remove it */
-    if (PyDict_DelItem(kwargs, npy_ma_str->like) < 0) {
+    if (PyDict_DelItem(kwargs, npy_ma_str.like) < 0) {
         goto finish;
     }
 
     /* Fetch the actual symbol (the long way right now) */
-    numpy_module = PyImport_Import(npy_ma_str->numpy);
+    numpy_module = PyImport_Import(npy_ma_str.numpy);
     if (numpy_module == NULL) {
         goto finish;
     }

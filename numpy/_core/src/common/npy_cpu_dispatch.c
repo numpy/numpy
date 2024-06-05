@@ -8,7 +8,7 @@
 NPY_VISIBILITY_HIDDEN int
 npy_cpu_dispatch_tracer_init(PyObject *mod)
 {
-    if (npy_ma_static_data->cpu_dispatch_registry != NULL) {
+    if (npy_ma_static_data.cpu_dispatch_registry != NULL) {
         PyErr_Format(PyExc_RuntimeError, "CPU dispatcher tracer already initlized");
         return -1;
     }
@@ -25,7 +25,7 @@ npy_cpu_dispatch_tracer_init(PyObject *mod)
     if (err != 0) {
         return -1;
     }
-    npy_ma_static_data->cpu_dispatch_registry = reg_dict;
+    npy_ma_static_data.cpu_dispatch_registry = reg_dict;
     return 0;
 }
 
@@ -33,13 +33,13 @@ NPY_VISIBILITY_HIDDEN void
 npy_cpu_dispatch_trace(const char *fname, const char *signature,
                        const char **dispatch_info)
 {
-    PyObject *func_dict = PyDict_GetItemString(npy_ma_static_data->cpu_dispatch_registry, fname);
+    PyObject *func_dict = PyDict_GetItemString(npy_ma_static_data.cpu_dispatch_registry, fname);
     if (func_dict == NULL) {
         func_dict = PyDict_New();
         if (func_dict == NULL) {
             return;
         }
-        int err = PyDict_SetItemString(npy_ma_static_data->cpu_dispatch_registry, fname, func_dict);
+        int err = PyDict_SetItemString(npy_ma_static_data.cpu_dispatch_registry, fname, func_dict);
         Py_DECREF(func_dict);
         if (err != 0) {
             return;

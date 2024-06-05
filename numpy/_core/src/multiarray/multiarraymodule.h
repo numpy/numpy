@@ -211,8 +211,10 @@ typedef struct npy_ma_thread_unsafe_state_struct {
     int reload_guard_initialized;
 } npy_ma_thread_unsafe_state_struct;
 
-NPY_VISIBILITY_HIDDEN extern npy_ma_str_struct *npy_ma_str;
-NPY_VISIBILITY_HIDDEN extern npy_ma_static_data_struct *npy_ma_static_data;
-NPY_VISIBILITY_HIDDEN extern npy_ma_thread_unsafe_state_struct *npy_ma_thread_unsafe_state;
+
+NPY_VISIBILITY_HIDDEN extern npy_ma_str_struct npy_ma_str;
+NPY_VISIBILITY_HIDDEN extern npy_ma_static_data_struct npy_ma_static_data;
+NPY_VISIBILITY_HIDDEN extern npy_ma_thread_unsafe_state_struct npy_ma_thread_unsafe_state;
+
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_MULTIARRAYMODULE_H_ */

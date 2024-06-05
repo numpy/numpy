@@ -90,7 +90,7 @@ raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
         return -1;
     }
     PyErr_SetObject(
-            npy_ma_static_data->_UFuncBinaryResolutionError, exc_value);
+            npy_ma_static_data._UFuncBinaryResolutionError, exc_value);
     Py_DECREF(exc_value);
 
     return -1;
@@ -113,7 +113,7 @@ raise_no_loop_found_error(
     if (exc_value == NULL) {
         return -1;
     }
-    PyErr_SetObject(npy_ma_static_data->_UFuncNoLoopError, exc_value);
+    PyErr_SetObject(npy_ma_static_data._UFuncNoLoopError, exc_value);
     Py_DECREF(exc_value);
 
     return -1;
@@ -165,7 +165,7 @@ raise_input_casting_error(
         PyArray_Descr *to,
         npy_intp i)
 {
-    return raise_casting_error(npy_ma_static_data->_UFuncInputCastingError,
+    return raise_casting_error(npy_ma_static_data._UFuncInputCastingError,
                                ufunc, casting, from, to, i);
 }
 
@@ -181,7 +181,7 @@ raise_output_casting_error(
         PyArray_Descr *to,
         npy_intp i)
 {
-    return raise_casting_error(npy_ma_static_data->_UFuncOutputCastingError,
+    return raise_casting_error(npy_ma_static_data._UFuncOutputCastingError,
                                ufunc, casting, from, to, i);
 }
 
@@ -1420,7 +1420,7 @@ PyUFunc_TrueDivisionTypeResolver(PyUFuncObject *ufunc,
             (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2))) {
         return PyUFunc_DefaultTypeResolver(
                 ufunc, casting, operands,
-                npy_ma_static_data->default_truediv_type_tup, out_dtypes);
+                npy_ma_static_data.default_truediv_type_tup, out_dtypes);
     }
     return PyUFunc_DivisionTypeResolver(ufunc, casting, operands,
                                         type_tup, out_dtypes);

@@ -668,10 +668,10 @@ PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
     int n = PyArray_NDIM(ap);
     int i;
 
-    if (check_and_adjust_axis_msg(&a1, n, npy_ma_str->axis1) < 0) {
+    if (check_and_adjust_axis_msg(&a1, n, npy_ma_str.axis1) < 0) {
         return NULL;
     }
-    if (check_and_adjust_axis_msg(&a2, n, npy_ma_str->axis2) < 0) {
+    if (check_and_adjust_axis_msg(&a2, n, npy_ma_str.axis2) < 0) {
         return NULL;
     }
 
