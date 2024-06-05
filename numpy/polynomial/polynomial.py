@@ -1443,14 +1443,14 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     --------
     >>> from numpy.polynomial import polynomial as P
     >>> x = np.linspace(-1,1,51)  # x "data": [-1, -0.96, ..., 0.96, 1]
-    >>> rng = np.random.default_rng(seed=123)
+    >>> rng = np.random.default_rng()
     >>> err = rng.normal(size=len(x))
     >>> y = x**3 - x + err  # x^3 - x + Gaussian noise
     >>> c, stats = P.polyfit(x,y,3,full=True)
     >>> c # c[0], c[1] approx. -1, c[2] should be approx. 0, c[3] approx. 1
-    array([ 0.23111996, -1.02785049, -0.2241444 ,  1.08405657])
+    array([ 0.23111996, -1.02785049, -0.2241444 ,  1.08405657]) # may vary
     >>> stats # note the large SSR, explaining the rather poor results
-    [array([48.312088]),
+    [array([48.312088]),                                        # may vary
      4,
      array([1.38446749, 1.32119158, 0.50443316, 0.28853036]),
      1.1324274851176597e-14]

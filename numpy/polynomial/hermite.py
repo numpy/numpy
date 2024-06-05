@@ -1460,11 +1460,11 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
     --------
     >>> from numpy.polynomial.hermite import hermfit, hermval
     >>> x = np.linspace(-10, 10)
-    >>> rng = np.random.default_rng(seed=123)
+    >>> rng = np.random.default_rng()
     >>> err = rng.normal(scale=1./10,size=len(x))
     >>> y = hermval(x, [1, 2, 3]) + err
     >>> hermfit(x, y, 2)
-    array([1.02294967, 2.00016403, 2.99994614])
+    array([1.02294967, 2.00016403, 2.99994614]) # may vary
 
     """
     return pu._fit(hermvander, x, y, deg, rcond, full, w)
