@@ -231,18 +231,21 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
                  PyArrayObject *out, NPY_CLIPMODE clipmode)
 {
     PyArray_Descr *dtype;
-    PyArrayObject *obj = NULL, *self, *indices, *tmp;
+    PyArrayObject *obj = NULL, *self, *indices;
     npy_intp nd, i, n, m, max_item, chunk, itemsize, nelem;
     npy_intp shape[NPY_MAXDIMS];
 
     npy_bool needs_refcounting;
 
-    indices = tmp = NULL;
+    indices = NULL;
     self = (PyArrayObject *)PyArray_CheckAxis(self0, &axis,
                                     NPY_ARRAY_CARRAY_RO);
     if (self == NULL) {
         return NULL;
     }
+
+#if NPY_SIZEOF_INTP == NPY_SIZEOF_INT
+    PyArrayObject *tmp;
     tmp = (PyArrayObject *)PyArray_ContiguousFromAny(indices0,
                                                      NPY_INT64,
                                                      0, 0);
@@ -250,12 +253,13 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         goto fail;
     }
 
-    if (NPY_SIZEOF_INTP != 8) {
-        indices = (PyArrayObject *)PyArray_Cast(tmp, NPY_INTP);
-        Py_DECREF(tmp);
-    } else {
-        indices = tmp;
-    }
+    indices = (PyArrayObject *)PyArray_Cast(tmp, NPY_INTP);
+    Py_DECREF(tmp);
+#else
+    indices = (PyArrayObject *)PyArray_ContiguousFromAny(indices0,
+                                                         NPY_INT64,
+                                                         0, 0);
+#endif
 
     if (indices == NULL) {
         goto fail;
