@@ -1404,6 +1404,36 @@ class TestLog:
                 assert_array_almost_equal_nulp(np.log(x_f64[::jj]), y_true[::jj], nulp=2)
                 assert_array_almost_equal_nulp(np.log(x_special[::jj]), y_special[::jj], nulp=2)
 
+    # Reference values were computed with mpmath, with mp.dps = 200.
+    @pytest.mark.parametrize(
+        'z, wref',
+        [(1 + 1e-12j, 5e-25 + 1e-12j),
+         (1.000000000000001 + 3e-08j,
+          1.5602230246251546e-15 + 2.999999999999996e-08j),
+         (0.9999995000000417 + 0.0009999998333333417j,
+          7.831475869017683e-18 + 0.001j),
+         (0.9999999999999996 + 2.999999999999999e-08j,
+          5.9107901499372034e-18 + 3e-08j),
+         (0.99995000042 - 0.009999833j,
+          -7.015159763822903e-15 - 0.009999999665816696j)],
+    )
+    def test_log_precision_float64(self, z, wref):
+        w = np.log(z)
+        assert_allclose(w, wref, rtol=1e-15)
+
+    # Reference values were computed with mpmath, with mp.dps = 200.
+    @pytest.mark.parametrize(
+        'z, wref',
+        [(np.complex64(1.0 + 3e-6j), np.complex64(4.5e-12+3e-06j)),
+         (np.complex64(1.0 - 2e-5j), np.complex64(1.9999999e-10 - 2e-5j)),
+         (np.complex64(0.9999999 + 1e-06j),
+          np.complex64(-1.192088e-07+1.0000001e-06j))],
+    )
+    def test_log_precision_float32(self, z, wref):
+        w = np.log(z)
+        assert_allclose(w, wref, rtol=1e-6)
+
+
 class TestExp:
     def test_exp_values(self):
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
