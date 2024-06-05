@@ -805,12 +805,12 @@ class TestBitShifts:
         [operator.rshift, operator.lshift], ids=['>>', '<<'])
     def test_shift_all_bits(self, type_code, op):
         """Shifts where the shift amount is the width of the type or wider """
-        if (
-                USING_CLANG_CL and
-                type_code in ("l", "L") and
-                op is operator.lshift
-        ):
-            pytest.xfail("Failing on clang-cl builds")
+        # if (
+        #         USING_CLANG_CL and
+        #         type_code in ("l", "L") and
+        #         op is operator.lshift
+        # ):
+        #     pytest.xfail("Failing on clang-cl builds")
         # gh-2449
         dt = np.dtype(type_code)
         nbits = dt.itemsize * 8

@@ -20,7 +20,7 @@ jobs:
   x86_conda:
     name: macOS x86-64 conda
     # To enable this workflow on a fork, comment out:
-    if: github.repository == 'numpy/numpy'
+    # if: github.repository == 'numpy/numpy'
     runs-on: macos-13
     strategy:
       fail-fast: false
@@ -88,12 +88,19 @@ jobs:
         conda activate numpy-dev
         CC="ccache $CC" spin build -j2 -- -Dallow-noblas=false
 
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-install
+        path: |
+          build-install
+
     - name: Run test suite (full)
       shell: bash -l {0}
       run: |
         conda activate numpy-dev
         export OMP_NUM_THREADS=2
-        spin test -j2 -m full
+        spin test -v -t numpy/_core/tests/test_scalarmath.py::TestBitShifts::test_shift_all_bits
 
     - name: Ccache statistics
       shell: bash -l {0}
