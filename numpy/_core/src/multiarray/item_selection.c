@@ -244,23 +244,11 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         return NULL;
     }
 
-#if NPY_SIZEOF_INTP == NPY_SIZEOF_INT
-    PyArrayObject *tmp;
-    tmp = (PyArrayObject *)PyArray_ContiguousFromAny(indices0,
-                                                     NPY_INT64,
-                                                     0, 0);
-    if (tmp == NULL) {
-        goto fail;
-    }
-
-    indices = (PyArrayObject *)PyArray_Cast(tmp, NPY_INTP);
-    Py_DECREF(tmp);
-#else
-    indices = (PyArrayObject *)PyArray_ContiguousFromAny(indices0,
-                                                         NPY_INT64,
-                                                         0, 0);
-#endif
-
+    indices = (PyArrayObject *)PyArray_FromAny(indices0,
+                                               PyArray_DescrFromType(NPY_INTP),
+                                               0, 0,
+                                               NPY_ARRAY_SAME_KIND_CASTING,
+                                               NULL);
     if (indices == NULL) {
         goto fail;
     }
