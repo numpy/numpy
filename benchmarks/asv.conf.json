@@ -18,7 +18,7 @@
     "branches": ["HEAD"],
 
     "build_command": [
-        "python -m build --wheel -o {build_cache_dir} {build_dir}"
+        "python -m build --wheel -C'setup-args=-Db_lto=true' -C'setup-args=-Dbuildtype=release' -o {build_cache_dir} {build_dir}"
     ],
 
     // The DVCS being used.  If not set, it will be automatically
