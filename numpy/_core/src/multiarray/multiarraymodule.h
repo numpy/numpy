@@ -194,12 +194,25 @@ typedef struct npy_ma_thread_unsafe_state_struct {
     PyObject *_var;
     PyObject *_view_is_safe;
     PyObject *_void_scalar_to_string;
-    PyObject *array_function_errmsg_formatter;
-    PyObject *array_ufunc_errmsg_formatter;
-    PyObject *internal_gcd_func;
-    PyObject *npy_ctypes_check;
-    PyObject *numpy_matrix;
-    PyObject *NO_NEP50_WARNING;
-} npy_ma_global_data_struct;
+
+    /*
+     * Used to test the internal-only scaled float test dtype
+     */
+    npy_bool get_sfloat_dtype_initialized;
+
+    /*
+     * controls the global madvise hugepage setting
+     */
+    int madvise_hugepage;
+
+    /*
+     * used to detect module reloading in the reload guard
+     */
+    int reload_guard_initialized;
+} npy_ma_thread_unsafe_state_struct;
+
+NPY_VISIBILITY_HIDDEN extern npy_ma_str_struct *npy_ma_str;
+NPY_VISIBILITY_HIDDEN extern npy_ma_static_data_struct *npy_ma_static_data;
+NPY_VISIBILITY_HIDDEN extern npy_ma_thread_unsafe_state_struct *npy_ma_thread_unsafe_state;
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_MULTIARRAYMODULE_H_ */

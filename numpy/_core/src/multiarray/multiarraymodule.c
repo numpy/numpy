@@ -4345,8 +4345,6 @@ _set_numpy_warn_if_no_mem_policy(PyObject *NPY_UNUSED(self), PyObject *arg)
 
 static PyObject *
 _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
-    static int initialized = 0;
-
 #if !defined(PYPY_VERSION)
     if (PyThreadState_Get()->interp != PyInterpreterState_Main()) {
         if (PyErr_WarnEx(PyExc_UserWarning,
@@ -4362,11 +4360,11 @@ _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
             return NULL;
         }
         /* No need to give the other warning in a sub-interpreter as well... */
-        initialized = 1;
+        npy_ma_thread_unsafe_state->reload_guard_initialized = 1;
         Py_RETURN_NONE;
     }
 #endif
-    if (initialized) {
+    if (npy_ma_thread_unsafe_state->reload_guard_initialized) {
         if (PyErr_WarnEx(PyExc_UserWarning,
                 "The NumPy module was reloaded (imported a second time). "
                 "This can in some cases result in small but subtle issues "
@@ -4374,7 +4372,7 @@ _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
             return NULL;
         }
     }
-    initialized = 1;
+    npy_ma_thread_unsafe_state->reload_guard_initialized = 1;
     Py_RETURN_NONE;
 }
 
@@ -4901,6 +4899,7 @@ initialize_static_globals(void)
     // this is module-level global heap allocation, it is currently
     // never freed
     npy_ma_static_data = PyMem_Calloc(1, sizeof(npy_ma_static_data_struct));
+    npy_ma_thread_unsafe_state = PyMem_Calloc(1, sizeof(npy_ma_thread_unsafe_state_struct));
 
     // cached reference to objects defined in python
 
