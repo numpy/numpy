@@ -170,6 +170,8 @@ from numpy._typing._extended_precision import (
     complex512 as complex512,
 )
 
+from numpy._array_api_info import __array_namespace_info__ as __array_namespace_info__
+
 from collections.abc import (
     Callable,
     Iterable,

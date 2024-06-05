@@ -62,3 +62,18 @@ an entry point.
    instead, as do function signatures; the only known incompatibility that may
    remain is that the standard forbids unsafe casts for in-place operators
    while NumPy supports those.
+
+Inspection
+==========
+
+NumPy implements the `array API inspection utilities
+<https://data-apis.org/array-api/latest/API_specification/inspection.html>`__.
+These functions can be accessed via the ``__array_namespace_info__()``
+function, which returns a namespace containing the inspection utilities.
+
+.. currentmodule:: numpy
+
+.. autosummary::
+   :toctree: generated
+
+   __array_namespace_info__
