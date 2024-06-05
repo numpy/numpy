@@ -4624,7 +4624,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_NOARGS,
         "Give a warning on reload and big warning in sub-interpreters."},
     {"from_dlpack", (PyCFunction)from_dlpack,
-        METH_O, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 
@@ -4815,6 +4815,7 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_convert_if_no_array = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_cpu = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_dtype = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_err_msg_substr = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str___dlpack__ = NULL;
 
 static int
 intern_strings(void)
@@ -4899,6 +4900,10 @@ intern_strings(void)
     npy_ma_str_array_err_msg_substr = PyUnicode_InternFromString(
             "__array__() got an unexpected keyword argument 'copy'");
     if (npy_ma_str_array_err_msg_substr == NULL) {
+        return -1;
+    }
+    npy_ma_str___dlpack__ = PyUnicode_InternFromString("__dlpack__");
+    if (npy_ma_str___dlpack__ == NULL) {
         return -1;
     }
     return 0;
