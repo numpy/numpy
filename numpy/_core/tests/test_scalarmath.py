@@ -18,12 +18,6 @@ from numpy.testing import (
     assert_warns, _SUPPORTS_SVE,
     )
 
-try:
-    COMPILERS = np.show_config(mode="dicts")["Compilers"]
-    USING_CLANG_CL = COMPILERS["c"]["name"] == "clang-cl"
-except TypeError:
-    USING_CLANG_CL = False
-
 types = [np.bool, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.int_, np.uint, np.longlong, np.ulonglong,
          np.single, np.double, np.longdouble, np.csingle,
@@ -805,12 +799,6 @@ class TestBitShifts:
         [operator.rshift, operator.lshift], ids=['>>', '<<'])
     def test_shift_all_bits(self, type_code, op):
         """Shifts where the shift amount is the width of the type or wider """
-        if (
-                USING_CLANG_CL and
-                type_code in ("l", "L") and
-                op is operator.lshift
-        ):
-            pytest.xfail("Failing on clang-cl builds")
         # gh-2449
         dt = np.dtype(type_code)
         nbits = dt.itemsize * 8
