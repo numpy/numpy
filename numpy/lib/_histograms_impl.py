@@ -973,7 +973,7 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
     Examples
     --------
     >>> rng = np.random.default_rng()
-    >>> r = rng.standard_normal(size=(100,3))
+    >>> r = rng.normal(size=(100,3))
     >>> H, edges = np.histogramdd(r, bins = (5, 8, 4))
     >>> H.shape, edges[0].size, edges[1].size, edges[2].size
     ((5, 8, 4), 6, 9, 5)

@@ -275,7 +275,7 @@ def tensorsolve(a, b, axes=None):
     >>> a = np.eye(2*3*4)
     >>> a.shape = (2*3, 4, 2, 3, 4)
     >>> rng = np.random.default_rng()
-    >>> b = rng.standard_normal(size=(2*3, 4))
+    >>> b = rng.normal(size=(2*3, 4))
     >>> x = np.linalg.tensorsolve(a, b)
     >>> x.shape
     (2, 3, 4)
@@ -458,7 +458,7 @@ def tensorinv(a, ind=2):
     >>> ainv.shape
     (8, 3, 4, 6)
     >>> rng = np.random.default_rng()
-    >>> b = rng.standard_normal(size=(4, 6))
+    >>> b = rng.normal(size=(4, 6))
     >>> np.allclose(np.tensordot(ainv, b), np.linalg.tensorsolve(a, b))
     True
 
@@ -468,7 +468,7 @@ def tensorinv(a, ind=2):
     >>> ainv.shape
     (8, 3, 24)
     >>> rng = np.random.default_rng()
-    >>> b = rng.standard_normal(24)
+    >>> b = rng.normal(size=24)
     >>> np.allclose(np.tensordot(ainv, b, 1), np.linalg.tensorsolve(a, b))
     True
 
@@ -982,7 +982,7 @@ def qr(a, mode='reduced'):
     Examples
     --------
     >>> rng = np.random.default_rng()
-    >>> a = rng.standard_normal(size=(9, 6))
+    >>> a = rng.normal(size=(9, 6))
     >>> Q, R = np.linalg.qr(a)
     >>> np.allclose(a, np.dot(Q, R))  # a does equal QR
     True
@@ -1708,12 +1708,9 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
     Examples
     --------
     >>> rng = np.random.default_rng()
-    >>> a_re = rng.standard_normal(size=(9, 6))
-    >>> a_im = rng.standard_normal(size=(9, 6))
-    >>> a = a_re + 1j*a_im
-    >>> b_re = rng.standard_normal(size=(2, 7, 8, 3))
-    >>> b_im = rng.standard_normal(size=(2, 7, 8, 3))
-    >>> b = b_re + 1j*b_im
+    >>> a = rng.normal(size=(9, 6)) + 1j*rng.normal(size=(9, 6))
+    >>> b = rng.normal(size=(2, 7, 8, 3)) + 1j*rng.normal(size=(2, 7, 8, 3))
+
 
     Reconstruction based on full SVD, 2D case:
 
@@ -2191,7 +2188,7 @@ def pinv(a, rcond=None, hermitian=False, *, rtol=_NoValue):
     ``a+ * a * a+ == a+``:
 
     >>> rng = np.random.default_rng()
-    >>> a = rng.standard_normal(size=(9, 6))
+    >>> a = rng.normal(size=(9, 6))
     >>> B = np.linalg.pinv(a)
     >>> np.allclose(a, np.dot(a, np.dot(B, a)))
     True

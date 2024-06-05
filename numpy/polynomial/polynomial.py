@@ -1444,16 +1444,16 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     >>> from numpy.polynomial import polynomial as P
     >>> x = np.linspace(-1,1,51)  # x "data": [-1, -0.96, ..., 0.96, 1]
     >>> rng = np.random.default_rng(seed=123)
-    >>> err = rng.standard_normal(size=len(x))
+    >>> err = rng.normal(size=len(x))
     >>> y = x**3 - x + err  # x^3 - x + Gaussian noise
     >>> c, stats = P.polyfit(x,y,3,full=True)
     >>> c # c[0], c[1] approx. -1, c[2] should be approx. 0, c[3] approx. 1
-    array([ 0.23111996, -1.02785049, -0.2241444 ,  1.08405657]) # may vary
+    array([ 0.23111996, -1.02785049, -0.2241444 ,  1.08405657])
     >>> stats # note the large SSR, explaining the rather poor results
-    [array([48.312088]),                                      # may vary
-     4,                                                       # may vary
-     array([1.38446749, 1.32119158, 0.50443316, 0.28853036]), # may vary
-     1.1324274851176597e-14]                                  # may vary
+    [array([48.312088]),
+     4,
+     array([1.38446749, 1.32119158, 0.50443316, 0.28853036]),
+     1.1324274851176597e-14]
 
     Same thing without the added noise
 
@@ -1462,10 +1462,10 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     >>> c # c[0], c[1] ~= -1, c[2] should be "very close to 0", c[3] ~= 1
     array([-6.73496154e-17, -1.00000000e+00,  0.00000000e+00,  1.00000000e+00])
     >>> stats # note the minuscule SSR
-    [array([8.79579319e-31]),                                 # may vary
-     4,                                                       # may vary
-     array([1.38446749, 1.32119158, 0.50443316, 0.28853036]), # may vary
-     1.1324274851176597e-14]                                  # may vary
+    [array([8.79579319e-31]),
+     4,
+     array([1.38446749, 1.32119158, 0.50443316, 0.28853036]),
+     1.1324274851176597e-14]
 
     """
     return pu._fit(polyvander, x, y, deg, rcond, full, w)
