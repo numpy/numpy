@@ -10,12 +10,6 @@ from numpy.testing import (
     assert_raises, suppress_warnings, assert_raises_regex, assert_allclose
     )
 
-try:
-    COMPILERS = np.show_config(mode="dicts")["Compilers"]
-    USING_CLANG_CL = COMPILERS["c"]["name"] == "clang-cl"
-except TypeError:
-    USING_CLANG_CL = False
-
 # Setup for optimize einsum
 chars = 'abcdefghij'
 sizes = np.array([2, 3, 4, 5, 4, 3, 2, 6, 5, 4, 3])
