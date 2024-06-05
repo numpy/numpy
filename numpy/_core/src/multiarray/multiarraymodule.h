@@ -128,6 +128,15 @@ typedef struct npy_ma_static_data_struct {
      * The smallest type number is ?, the largest is bounded by 'z'.
      */
     npy_int16 _letter_to_num['z' + 1 - '?'];
+
+    /*
+     * references to ArrayMethod implementations that are cached
+     * to avoid repeatedly creating them
+     */
+    PyObject *VoidToGenericMethod;
+    PyObject *GenericToVoidMethod;
+    PyObject *ObjectToGenericMethod;
+    PyObject *GenericToObjectMethod;
 } npy_ma_static_data_struct;
 
 

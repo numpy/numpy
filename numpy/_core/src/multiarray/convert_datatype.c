@@ -3236,20 +3236,11 @@ nonstructured_to_structured_get_loop(
     return 0;
 }
 
-// these are filled in during module initialization
-// we do not include these in the global data struct
-// to avoid the need to #include array_method.h for
-// all users of the global data struct
-static PyArrayMethodObject *VoidToGenericMethod = NULL;
-static PyArrayMethodObject *GenericToVoidMethod = NULL;
-static PyArrayMethodObject *ObjectToGenericMethod = NULL;
-static PyArrayMethodObject *GenericToObjectMethod = NULL;
-
 static PyObject *
 PyArray_GetGenericToVoidCastingImpl(void)
 {
-    Py_INCREF(GenericToVoidMethod);
-    return (PyObject *)GenericToVoidMethod;
+    Py_INCREF(npy_ma_static_data->GenericToVoidMethod);
+    return npy_ma_static_data->GenericToVoidMethod;
 }
 
 
@@ -3386,8 +3377,8 @@ structured_to_nonstructured_get_loop(
 static PyObject *
 PyArray_GetVoidToGenericCastingImpl(void)
 {
-    Py_INCREF(VoidToGenericMethod);
-    return (PyObject *)VoidToGenericMethod;
+    Py_INCREF(npy_ma_static_data->VoidToGenericMethod);
+    return npy_ma_static_data->VoidToGenericMethod;
 }
 
 
@@ -3751,8 +3742,8 @@ object_to_any_resolve_descriptors(
 static PyObject *
 PyArray_GetObjectToGenericCastingImpl(void)
 {
-    Py_INCREF(ObjectToGenericMethod);
-    return (PyObject *)ObjectToGenericMethod;
+    Py_INCREF(npy_ma_static_data->ObjectToGenericMethod);
+    return npy_ma_static_data->ObjectToGenericMethod;
 }
 
 
@@ -3788,8 +3779,8 @@ any_to_object_resolve_descriptors(
 static PyObject *
 PyArray_GetGenericToObjectCastingImpl(void)
 {
-    Py_INCREF(GenericToObjectMethod);
-    return (PyObject *)GenericToObjectMethod;
+    Py_INCREF(npy_ma_static_data->GenericToObjectMethod);
+    return npy_ma_static_data->GenericToObjectMethod;
 }
 
 
@@ -3843,62 +3834,65 @@ PyArray_InitializeObjectToObjectCast(void)
 
 static int
 initialize_void_and_object_globals(void) {
-    VoidToGenericMethod = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
-
-    if (VoidToGenericMethod == NULL) {
+    PyArrayMethodObject *method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
+    if (method == NULL) {
         PyErr_NoMemory();
         return -1;
     }
 
-    VoidToGenericMethod->name = "void_to_any_cast";
-    VoidToGenericMethod->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
-    VoidToGenericMethod->casting = -1;
-    VoidToGenericMethod->resolve_descriptors = &structured_to_nonstructured_resolve_descriptors;
-    VoidToGenericMethod->get_strided_loop = &structured_to_nonstructured_get_loop;
-    VoidToGenericMethod->nin = 1;
-    VoidToGenericMethod->nout = 1;
+    method->name = "void_to_any_cast";
+    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
+    method->casting = -1;
+    method->resolve_descriptors = &structured_to_nonstructured_resolve_descriptors;
+    method->get_strided_loop = &structured_to_nonstructured_get_loop;
+    method->nin = 1;
+    method->nout = 1;
+    npy_ma_static_data->VoidToGenericMethod = (PyObject *)method;
 
-    GenericToVoidMethod = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
-    if (GenericToVoidMethod == NULL) {
+    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
+    if (method == NULL) {
         PyErr_NoMemory();
         return -1;
     }
 
-    GenericToVoidMethod->name = "any_to_void_cast";
-    GenericToVoidMethod->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
-    GenericToVoidMethod->casting = -1;
-    GenericToVoidMethod->resolve_descriptors = &nonstructured_to_structured_resolve_descriptors;
-    GenericToVoidMethod->get_strided_loop = &nonstructured_to_structured_get_loop;
-    GenericToVoidMethod->nin = 1;
-    GenericToVoidMethod->nout = 1;
+    method->name = "any_to_void_cast";
+    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
+    method->casting = -1;
+    method->resolve_descriptors = &nonstructured_to_structured_resolve_descriptors;
+    method->get_strided_loop = &nonstructured_to_structured_get_loop;
+    method->nin = 1;
+    method->nout = 1;
+    npy_ma_static_data->GenericToVoidMethod = (PyObject *)method;
 
-    ObjectToGenericMethod = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
-    if (ObjectToGenericMethod == NULL) {
+    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
+    if (method == NULL) {
         PyErr_NoMemory();
         return -1;
     }
 
-    ObjectToGenericMethod->nin = 1;
-    ObjectToGenericMethod->nout = 1;
-    ObjectToGenericMethod->name = "object_to_any_cast";
-    ObjectToGenericMethod->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
-    ObjectToGenericMethod->casting = NPY_UNSAFE_CASTING;
-    ObjectToGenericMethod->resolve_descriptors = &object_to_any_resolve_descriptors;
-    ObjectToGenericMethod->get_strided_loop = &object_to_any_get_loop;
+    method->nin = 1;
+    method->nout = 1;
+    method->name = "object_to_any_cast";
+    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
+    method->casting = NPY_UNSAFE_CASTING;
+    method->resolve_descriptors = &object_to_any_resolve_descriptors;
+    method->get_strided_loop = &object_to_any_get_loop;
+    npy_ma_static_data->ObjectToGenericMethod = (PyObject *)method;
 
-    GenericToObjectMethod = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
-    if (GenericToObjectMethod == NULL) {
+    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
+    if (method == NULL) {
         PyErr_NoMemory();
         return -1;
     }
 
-    GenericToObjectMethod->nin = 1;
-    GenericToObjectMethod->nout = 1;
-    GenericToObjectMethod->name = "any_to_object_cast";
-    GenericToObjectMethod->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
-    GenericToObjectMethod->casting = NPY_SAFE_CASTING;
-    GenericToObjectMethod->resolve_descriptors = &any_to_object_resolve_descriptors;
-    GenericToObjectMethod->get_strided_loop = &any_to_object_get_loop;
+    method->nin = 1;
+    method->nout = 1;
+    method->name = "any_to_object_cast";
+    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
+    method->casting = NPY_SAFE_CASTING;
+    method->resolve_descriptors = &any_to_object_resolve_descriptors;
+    method->get_strided_loop = &any_to_object_get_loop;
+    npy_ma_static_data->GenericToObjectMethod = (PyObject *)method;
 
     return 0;
 }
