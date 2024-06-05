@@ -126,6 +126,14 @@
 #undef HAVE_CPOWL
 #undef HAVE_CEXPL
 
+/*
+ * cygwin uses newlib, which has naive implementations of the
+ * complex log functions.
+ */
+#undef HAVE_CLOG
+#undef HAVE_CLOGF
+#undef HAVE_CLOGL
+
 #include <cygwin/version.h>
 #if CYGWIN_VERSION_DLL_MAJOR < 3003
 // rather than blocklist cabsl, hypotl, modfl, sqrtl, error out
