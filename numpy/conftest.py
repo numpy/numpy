@@ -161,13 +161,14 @@ if HAVE_SCPDT:
                 "Deprecated call",
                 "numpy.core",
                 "`np.compat`",
-                "Importing from numpy.matlib"
-        ]
+                "Importing from numpy.matlib"]
 
         msg = "|".join(msgs)
 
         with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', category=DeprecationWarning, message=msg)
+            warnings.filterwarnings(
+                'ignore', category=DeprecationWarning, message=msg
+            )
             yield
 
     # find and check doctests under this context manager
@@ -190,10 +191,10 @@ if HAVE_SCPDT:
 
     # xfail problematic tutorials
     dt_config.pytest_extra_xfail = {
-        'how-to-verify-bug.rst' : '',
+        'how-to-verify-bug.rst': '',
         'c-info.ufunc-tutorial.rst': '',
         'basics.interoperability.rst': 'needs pandas',
         'basics.dispatch.rst': 'errors out in /testing/overrides.py',
         'basics.subclassing.rst': '.. testcode:: admonitions not understood'
-        }
+    }
 
