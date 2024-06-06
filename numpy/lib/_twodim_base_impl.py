@@ -89,7 +89,8 @@ def fliplr(m):
            [0.,  2.,  0.],
            [3.,  0.,  0.]])
 
-    >>> A = np.random.randn(2,3,5)
+    >>> rng = np.random.default_rng()
+    >>> A = rng.normal(size=(2,3,5))
     >>> np.all(np.fliplr(A) == A[:,::-1,...])
     True
 
@@ -142,7 +143,8 @@ def flipud(m):
            [0.,  2.,  0.],
            [1.,  0.,  0.]])
 
-    >>> A = np.random.randn(2,3,5)
+    >>> rng = np.random.default_rng()
+    >>> A = rng.normal(size=(2,3,5))
     >>> np.all(np.flipud(A) == A[::-1,...])
     True
 

@@ -323,7 +323,8 @@ def flip(m, axis=None):
             [7, 6]],
            [[1, 0],
             [3, 2]]])
-    >>> A = np.random.randn(3,4,5)
+    >>> rng = np.random.default_rng()
+    >>> A = rng.normal(size=(3,4,5))
     >>> np.all(np.flip(A,2) == A[:,:,::-1,...])
     True
     """
