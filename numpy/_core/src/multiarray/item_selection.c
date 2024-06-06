@@ -245,10 +245,10 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     }
 
     indices = (PyArrayObject *)PyArray_FromAny(indices0,
-                                               PyArray_DescrFromType(NPY_INTP),
-                                               0, 0,
-                                               NPY_ARRAY_SAME_KIND_CASTING,
-                                               NULL);
+                PyArray_DescrFromType(NPY_INTP),
+                0, 0,
+                NPY_ARRAY_SAME_KIND_CASTING | NPY_ARRAY_DEFAULT,
+                NULL);
     if (indices == NULL) {
         goto fail;
     }
