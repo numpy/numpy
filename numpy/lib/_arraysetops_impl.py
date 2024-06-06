@@ -435,7 +435,7 @@ def unique_all(x):
 
     Examples
     --------
-    >>> np.unique_all([1, 1, 2])
+    >>> np.unique_all([1, 1, 2])  # doctest: +NORMALIZE_WHITESPACE
     UniqueAllResult(
             values=array([1, 2]),
             indices=array([0, 2]),
