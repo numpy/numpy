@@ -188,3 +188,12 @@ if HAVE_SCPDT:
         'numpy.random.Generator.f',  # tries to import from scipy.stats
     ])
 
+    # xfail problematic tutorials
+    dt_config.pytest_extra_xfail = {
+        'how-to-verify-bug.rst' : '',
+        'c-info.ufunc-tutorial.rst': '',
+        'basics.interoperability.rst': 'needs pandas',
+        'basics.dispatch.rst': 'errors out in /testing/overrides.py',
+        'basics.subclassing.rst': '.. testcode:: admonitions not understood'
+        }
+
