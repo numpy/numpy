@@ -167,6 +167,18 @@ def setbufsize(size):
     size : int
         Size of buffer.
 
+    Returns
+    -------
+    bufsize : int
+        Previous size of ufunc buffer in bytes.
+
+    Examples
+    --------
+    >>> np.setbufsize(4096)
+    8192
+    >>> np.getbufsize()
+    4096
+
     """
     old = _get_extobj_dict()["bufsize"]
     extobj = _make_extobj(bufsize=size)
