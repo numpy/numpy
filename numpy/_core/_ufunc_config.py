@@ -167,6 +167,24 @@ def setbufsize(size):
     size : int
         Size of buffer.
 
+    Returns
+    -------
+    bufsize : int
+        Previous size of ufunc buffer in bytes.
+
+    Examples
+    --------
+    When exiting a `numpy.errstate` context manager the bufsize is restored:
+
+    >>> with np.errstate():
+    ...     np.setbufsize(4096)
+    ...     print(np.getbufsize())
+    ...
+    8192
+    4096
+    >>> np.getbufsize()
+    8192
+
     """
     old = _get_extobj_dict()["bufsize"]
     extobj = _make_extobj(bufsize=size)
