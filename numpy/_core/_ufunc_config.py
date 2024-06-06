@@ -184,6 +184,11 @@ def getbufsize():
     getbufsize : int
         Size of ufunc buffer in bytes.
 
+    Examples
+    --------
+    >>> np.getbufsize()
+    8192
+
     """
     return _get_extobj_dict()["bufsize"]
 
