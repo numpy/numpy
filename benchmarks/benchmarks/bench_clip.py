@@ -27,7 +27,7 @@ class ClipInteger(Benchmark):
     ]
 
     def setup(self, dtype, size):
-        rnd = np.random.RandomState(12345)
+        rnd = np.random.RandomState(1301109903)
         self.array = rnd.randint(256, size=size, dtype=dtype)
         self.dataout = np.full_like(self.array, 128)
 
