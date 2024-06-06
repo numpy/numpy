@@ -722,6 +722,19 @@ def matrix_transpose(x, /):
     --------
     transpose : Generic transpose method.
 
+    Examples
+    --------
+    >>> np.matrix_transpose([[1, 2], [3, 4]])
+    array([[1, 3],
+           [2, 4]])
+
+    >>> np.matrix_transpose([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+    array([[[1, 3],
+            [2, 4]],
+
+           [[5, 7],
+            [6, 8]]])
+
     """
     x = asanyarray(x)
     if x.ndim < 2:
