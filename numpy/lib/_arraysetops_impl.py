@@ -476,6 +476,11 @@ def unique_counts(x):
     --------
     unique : Find the unique elements of an array.
 
+    Examples
+    --------
+    >>> np.unique_counts([1, 1, 2])
+    UniqueCountsResult(values=array([1, 2]), counts=array([2, 1]))
+
     """
     result = unique(
         x,
