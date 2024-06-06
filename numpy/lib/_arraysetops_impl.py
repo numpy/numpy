@@ -570,6 +570,11 @@ def unique_values(x):
     --------
     unique : Find the unique elements of an array.
 
+    Examples
+    --------
+    >>> np.unique_values([1, 1, 2])
+    array([1, 2])
+
     """
     return unique(
         x,
