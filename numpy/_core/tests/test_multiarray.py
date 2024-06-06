@@ -10241,10 +10241,29 @@ class TestDevice:
     """
     Test arr.device attribute and arr.to_device() method.
     """
-    def test_device(self):
-        arr = np.arange(5)
-
+    @pytest.mark.parametrize("func, arg", [
+        (np.arange, 5),
+        (np.empty_like, []),
+        (np.zeros, 5),
+        (np.empty, (5, 5)),
+        (np.asarray, []),
+        (np.asanyarray, []),
+    ])
+    def test_device(self, func, arg):
+        arr = func(arg)
         assert arr.device == "cpu"
+        arr = func(arg, device=None)
+        assert arr.device == "cpu"
+        arr = func(arg, device="cpu")
+        assert arr.device == "cpu"
+
+        with assert_raises_regex(
+            ValueError,
+            r"Device not understood. Only \"cpu\" is allowed, "
+            r"but received: nonsense"
+        ):
+            func(arg, device="nonsense")
+
         with assert_raises_regex(
             AttributeError,
             r"attribute 'device' of '(numpy.|)ndarray' objects is "

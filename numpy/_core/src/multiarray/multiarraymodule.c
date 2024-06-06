@@ -1781,8 +1781,10 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *op;
+    NPY_COPYMODE copy = NPY_COPY_IF_NEEDED;
     npy_dtype_info dt_info = {NULL, NULL};
     NPY_ORDER order = NPY_KEEPORDER;
+    NPY_DEVICE device = NPY_DEVICE_CPU;
     PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
@@ -1791,6 +1793,8 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
                 "a", NULL, &op,
                 "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
                 "|order", &PyArray_OrderConverter, &order,
+                "$device", &PyArray_DeviceConverterOptional, &device,
+                "$copy", &PyArray_CopyConverter, &copy,
                 "$like", NULL, &like,
                 NULL, NULL, NULL) < 0) {
             Py_XDECREF(dt_info.descr);
@@ -1812,7 +1816,7 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, dt_info.descr, dt_info.dtype, NPY_COPY_IF_NEEDED, order, NPY_TRUE, 0);
+            op, dt_info.descr, dt_info.dtype, copy, order, NPY_TRUE, 0);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
