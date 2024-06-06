@@ -1,1 +1,1 @@
-* `numpy.asanyarray` now support ``copy`` and ``device`` arguments, matching `numpy.asarray`.
+* `numpy.asanyarray` now supports ``copy`` and ``device`` arguments, matching `numpy.asarray`.
