@@ -37,9 +37,14 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
+  get_commit_message:
+    name: Get commit message
+    uses: ./.github/workflows/commit_message.yml
+
   mypy:
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
+    needs: get_commit_message
     name: "MyPy"
     runs-on: ${{ matrix.os_python[0] }}
     strategy:

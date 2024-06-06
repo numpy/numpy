@@ -53,9 +53,14 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
+  get_commit_message:
+    name: Get commit message
+    uses: ./.github/workflows/commit_message.yml
+
   openblas32_stable_nightly:
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
+    needs: get_commit_message
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -119,6 +124,7 @@ jobs:
 
   openblas_no_pkgconfig_fedora:
     if: github.repository == 'numpy/numpy'
+    needs: get_commit_message
     runs-on: ubuntu-latest
     container: fedora:39
     name: "OpenBLAS (Fedora, no pkg-config, LP64/ILP64)"
@@ -154,6 +160,7 @@ jobs:
 
   flexiblas_fedora:
     if: github.repository == 'numpy/numpy'
+    needs: get_commit_message
     runs-on: ubuntu-latest
     container: fedora:39
     name: "FlexiBLAS (LP64, ILP64 on Fedora)"
@@ -189,6 +196,7 @@ jobs:
 
   openblas_cmake:
     if: github.repository == 'numpy/numpy'
+    needs: get_commit_message
     runs-on: ubuntu-latest
     name: "OpenBLAS with CMake"
     steps:
@@ -217,6 +225,7 @@ jobs:
  
   netlib-debian:
     if: github.repository == 'numpy/numpy'
+    needs: get_commit_message
     runs-on: ubuntu-latest
     name: "Debian libblas/liblapack"
     steps:
@@ -246,6 +255,7 @@ jobs:
 
   netlib-split:
     if: github.repository == 'numpy/numpy'
+    needs: get_commit_message
     runs-on: ubuntu-latest
     container: opensuse/tumbleweed
     name: "OpenSUSE Netlib BLAS/LAPACK"
@@ -277,6 +287,7 @@ jobs:
 
   mkl:
     if: github.repository == 'numpy/numpy'
+    needs: get_commit_message
     runs-on: ubuntu-latest
     name: "MKL (LP64, ILP64, SDL)"
     steps:
@@ -340,6 +351,7 @@ jobs:
 
   blis:
     if: github.repository == 'numpy/numpy'
+    needs: get_commit_message
     runs-on: ubuntu-latest
     name: "BLIS"
     steps:
@@ -376,6 +388,7 @@ jobs:
 
   atlas:
     if: github.repository == 'numpy/numpy'
+    needs: get_commit_message
     runs-on: ubuntu-latest
     name: "ATLAS"
     steps:

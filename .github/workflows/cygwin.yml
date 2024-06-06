@@ -13,7 +13,12 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
+  get_commit_message:
+    name: Get commit message
+    uses: ./.github/workflows/commit_message.yml
+
   cygwin_build_test:
+    needs: get_commit_message
     runs-on: windows-latest
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
