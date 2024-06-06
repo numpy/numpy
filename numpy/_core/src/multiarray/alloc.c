@@ -48,7 +48,7 @@ NPY_NO_EXPORT PyObject *
 _get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 {
 #ifdef NPY_OS_LINUX
-    if (npy_ma_thread_unsafe_state.madvise_hugepage) {
+    if (npy_thread_unsafe_state.madvise_hugepage) {
         Py_RETURN_TRUE;
     }
 #endif
@@ -66,12 +66,12 @@ _get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 NPY_NO_EXPORT PyObject *
 _set_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *enabled_obj)
 {
-    int was_enabled = npy_ma_thread_unsafe_state.madvise_hugepage;
+    int was_enabled = npy_thread_unsafe_state.madvise_hugepage;
     int enabled = PyObject_IsTrue(enabled_obj);
     if (enabled < 0) {
         return NULL;
     }
-    npy_ma_thread_unsafe_state.madvise_hugepage = enabled;
+    npy_thread_unsafe_state.madvise_hugepage = enabled;
     if (was_enabled) {
         Py_RETURN_TRUE;
     }
@@ -110,7 +110,7 @@ _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
 #ifdef NPY_OS_LINUX
         /* allow kernel allocating huge pages for large arrays */
         if (NPY_UNLIKELY(nelem * esz >= ((1u<<22u))) &&
-            npy_ma_thread_unsafe_state.madvise_hugepage) {
+            npy_thread_unsafe_state.madvise_hugepage) {
             npy_uintp offset = 4096u - (npy_uintp)p % (4096u);
             npy_uintp length = nelem * esz - offset;
             /**

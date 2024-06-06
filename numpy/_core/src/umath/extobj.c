@@ -122,8 +122,8 @@ fetch_curr_extobj_state(npy_extobj *extobj)
 {
     PyObject *capsule;
     if (PyContextVar_Get(
-            npy_ma_static_data.npy_extobj_contextvar,
-            npy_ma_static_data.default_extobj_capsule, &capsule) < 0) {
+            npy_static_pydata.npy_extobj_contextvar,
+            npy_static_pydata.default_extobj_capsule, &capsule) < 0) {
         return -1;
     }
     npy_extobj *obj = PyCapsule_GetPointer(capsule, "numpy.ufunc.extobj");
@@ -150,22 +150,22 @@ init_extobj(void)
      * inputs.
      */
     for (int i = 0; i <= UFUNC_ERR_LOG; i++) {
-        npy_ma_str.errmode_strings[i] = PyUnicode_InternFromString(
+        npy_interned_str.errmode_strings[i] = PyUnicode_InternFromString(
                 errmode_cstrings[i]);
-        if (npy_ma_str.errmode_strings[i] == NULL) {
+        if (npy_interned_str.errmode_strings[i] == NULL) {
             return -1;
         }
     }
 
-    npy_ma_static_data.default_extobj_capsule = make_extobj_capsule(
+    npy_static_pydata.default_extobj_capsule = make_extobj_capsule(
             NPY_BUFSIZE, UFUNC_ERR_DEFAULT, Py_None);
-    if (npy_ma_static_data.default_extobj_capsule == NULL) {
+    if (npy_static_pydata.default_extobj_capsule == NULL) {
         return -1;
     }
-    npy_ma_static_data.npy_extobj_contextvar = PyContextVar_New(
-            "numpy.ufunc.extobj", npy_ma_static_data.default_extobj_capsule);
-    if (npy_ma_static_data.npy_extobj_contextvar == NULL) {
-        Py_CLEAR(npy_ma_static_data.default_extobj_capsule);
+    npy_static_pydata.npy_extobj_contextvar = PyContextVar_New(
+            "numpy.ufunc.extobj", npy_static_pydata.default_extobj_capsule);
+    if (npy_static_pydata.npy_extobj_contextvar == NULL) {
+        Py_CLEAR(npy_static_pydata.default_extobj_capsule);
         return -1;
     }
     return 0;
@@ -185,7 +185,7 @@ errmodeconverter(PyObject *obj, int *mode)
     int i = 0;
     for (; i <= UFUNC_ERR_LOG; i++) {
         int eq = PyObject_RichCompareBool(
-                obj, npy_ma_str.errmode_strings[i], Py_EQ);
+                obj, npy_interned_str.errmode_strings[i], Py_EQ);
         if (eq == -1) {
             return 0;
         }
@@ -333,22 +333,22 @@ extobj_get_extobj_dict(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(noarg))
     /* Set all error modes: */
     mode = (extobj.errmask & UFUNC_MASK_DIVIDEBYZERO) >> UFUNC_SHIFT_DIVIDEBYZERO;
     if (PyDict_SetItemString(result, "divide",
-                             npy_ma_str.errmode_strings[mode]) < 0) {
+                             npy_interned_str.errmode_strings[mode]) < 0) {
         goto fail;
     }
     mode = (extobj.errmask & UFUNC_MASK_OVERFLOW) >> UFUNC_SHIFT_OVERFLOW;
     if (PyDict_SetItemString(result, "over",
-                             npy_ma_str.errmode_strings[mode]) < 0) {
+                             npy_interned_str.errmode_strings[mode]) < 0) {
         goto fail;
     }
     mode = (extobj.errmask & UFUNC_MASK_UNDERFLOW) >> UFUNC_SHIFT_UNDERFLOW;
     if (PyDict_SetItemString(result, "under",
-                             npy_ma_str.errmode_strings[mode]) < 0) {
+                             npy_interned_str.errmode_strings[mode]) < 0) {
         goto fail;
     }
     mode = (extobj.errmask & UFUNC_MASK_INVALID) >> UFUNC_SHIFT_INVALID;
     if (PyDict_SetItemString(result, "invalid",
-                             npy_ma_str.errmode_strings[mode]) < 0) {
+                             npy_interned_str.errmode_strings[mode]) < 0) {
         goto fail;
     }
 

@@ -1,7 +1,7 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_MULTIARRAYMODULE_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_MULTIARRAYMODULE_H_
 
-typedef struct npy_ma_str_struct {
+typedef struct npy_interned_str_struct {
     PyObject *current_allocator;
     PyObject *array;
     PyObject *array_function;
@@ -25,7 +25,7 @@ typedef struct npy_ma_str_struct {
     PyObject *out;
     PyObject *errmode_strings[6];
     PyObject *__dlpack__;
-} npy_ma_str_struct;
+} npy_interned_str_struct;
 
 /*
  * A struct that stores static global data used throughout
@@ -37,7 +37,7 @@ typedef struct npy_ma_str_struct {
  * this struct after module initialization is likely not thread-safe.
  */
 
-typedef struct npy_ma_static_data_struct {
+typedef struct npy_static_pydata_struct {
     /*
      * Used in ufunc_type_resolution.c to avoid reconstructing a tuple
      * storing the default true division return types.
@@ -91,20 +91,6 @@ typedef struct npy_ma_static_data_struct {
     PyObject *os_fspath;
 
     /*
-     * stores sys.flags.optimize as a long, which is used in the add_docstring
-     * implementation
-     */
-    long optimize;
-
-    /*
-     * LUT used by unpack_bits
-     */
-    union {
-        npy_uint8  bytes[8];
-        npy_uint64 uint64;
-    } unpack_lookup_big[256];
-
-    /*
      * Used in the __array__ internals to avoid building a tuple inline
      */
     PyObject *kwnames_is_copy;
@@ -121,15 +107,6 @@ typedef struct npy_ma_static_data_struct {
     PyObject *cpu_dispatch_registry;
 
     /*
-     * A look-up table to recover integer type numbers from type characters.
-     *
-     * See the _MAX_LETTER and LETTER_TO_NUM macros in arraytypes.c.src.
-     *
-     * The smallest type number is ?, the largest is bounded by 'z'.
-     */
-    npy_int16 _letter_to_num['z' + 1 - '?'];
-
-    /*
      * references to ArrayMethod implementations that are cached
      * to avoid repeatedly creating them
      */
@@ -137,15 +114,40 @@ typedef struct npy_ma_static_data_struct {
     PyObject *GenericToVoidMethod;
     PyObject *ObjectToGenericMethod;
     PyObject *GenericToObjectMethod;
-} npy_ma_static_data_struct;
+} npy_static_pydata_struct;
 
+
+typedef struct npy_static_cdata_struct {
+    /*
+     * stores sys.flags.optimize as a long, which is used in the add_docstring
+     * implementation
+     */
+    long optimize;
+
+    /*
+     * LUT used by unpack_bits
+     */
+    union {
+        npy_uint8  bytes[8];
+        npy_uint64 uint64;
+    } unpack_lookup_big[256];
+
+    /*
+     * A look-up table to recover integer type numbers from type characters.
+     *
+     * See the _MAX_LETTER and LETTER_TO_NUM macros in arraytypes.c.src.
+     *
+     * The smallest type number is ?, the largest is bounded by 'z'.
+     */
+    npy_int16 _letter_to_num['z' + 1 - '?'];
+} npy_static_cdata_struct;
 
 /*
  * A struct storing thread-unsafe global state for the _multiarray_umath
  * module. We should refactor so the global state is thread-safe,
  * e.g. by adding locking.
  */
-typedef struct npy_ma_thread_unsafe_state_struct {
+typedef struct npy_thread_unsafe_state_struct {
     /*
      * Cached references to objects obtained via an import. All of these are
      * can be initialized at any time by npy_cache_import.
@@ -209,12 +211,13 @@ typedef struct npy_ma_thread_unsafe_state_struct {
      * used to detect module reloading in the reload guard
      */
     int reload_guard_initialized;
-} npy_ma_thread_unsafe_state_struct;
+} npy_thread_unsafe_state_struct;
 
 
-NPY_VISIBILITY_HIDDEN extern npy_ma_str_struct npy_ma_str;
-NPY_VISIBILITY_HIDDEN extern npy_ma_static_data_struct npy_ma_static_data;
-NPY_VISIBILITY_HIDDEN extern npy_ma_thread_unsafe_state_struct npy_ma_thread_unsafe_state;
+NPY_VISIBILITY_HIDDEN extern npy_interned_str_struct npy_interned_str;
+NPY_VISIBILITY_HIDDEN extern npy_static_pydata_struct npy_static_pydata;
+NPY_VISIBILITY_HIDDEN extern npy_static_cdata_struct npy_static_cdata;
+NPY_VISIBILITY_HIDDEN extern npy_thread_unsafe_state_struct npy_thread_unsafe_state;
 
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_MULTIARRAYMODULE_H_ */

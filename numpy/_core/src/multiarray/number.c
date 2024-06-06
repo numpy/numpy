@@ -124,15 +124,15 @@ _PyArray_SetNumericOps(PyObject *dict)
     SET(clip);
 
     // initialize static globals needed for matmul
-    npy_ma_static_data.axes_1d_obj_kwargs = Py_BuildValue(
+    npy_static_pydata.axes_1d_obj_kwargs = Py_BuildValue(
             "{s, [(i), (i, i), (i)]}", "axes", -1, -2, -1, -1);
-    if (npy_ma_static_data.axes_1d_obj_kwargs == NULL) {
+    if (npy_static_pydata.axes_1d_obj_kwargs == NULL) {
         return -1;
     }
 
-    npy_ma_static_data.axes_2d_obj_kwargs = Py_BuildValue(
+    npy_static_pydata.axes_2d_obj_kwargs = Py_BuildValue(
             "{s, [(i, i), (i, i), (i, i)]}", "axes", -2, -1, -2, -1, -2, -1);
-    if (npy_ma_static_data.axes_2d_obj_kwargs == NULL) {
+    if (npy_static_pydata.axes_2d_obj_kwargs == NULL) {
         return -1;
     }
 
@@ -305,10 +305,10 @@ array_inplace_matrix_multiply(PyArrayObject *self, PyObject *other)
      * passing the correct `axes=`.
      */
     if (PyArray_NDIM(self) == 1) {
-        kwargs = npy_ma_static_data.axes_1d_obj_kwargs;
+        kwargs = npy_static_pydata.axes_1d_obj_kwargs;
     }
     else {
-        kwargs = npy_ma_static_data.axes_2d_obj_kwargs;
+        kwargs = npy_static_pydata.axes_2d_obj_kwargs;
     }
     PyObject *res = PyObject_Call(n_ops.matmul, args, kwargs);
     Py_DECREF(args);
@@ -318,7 +318,7 @@ array_inplace_matrix_multiply(PyArrayObject *self, PyObject *other)
          * AxisError should indicate that the axes argument didn't work out
          * which should mean the second operand not being 2 dimensional.
          */
-        if (PyErr_ExceptionMatches(npy_ma_static_data.AxisError)) {
+        if (PyErr_ExceptionMatches(npy_static_pydata.AxisError)) {
             PyErr_SetString(PyExc_ValueError,
                 "inplace matrix multiplication requires the first operand to "
                 "have at least one and the second at least two dimensions.");
