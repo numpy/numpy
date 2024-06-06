@@ -159,7 +159,7 @@ class SortGenerator:
         Returns a randomly-shuffled array.
         """
         arr = np.arange(size, dtype=dtype)
-        rnd = np.random.RandomState(12345)
+        rnd = np.random.RandomState(1792364059)
         rnd.shuffle(arr)
         return arr
 
