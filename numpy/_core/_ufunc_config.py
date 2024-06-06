@@ -174,10 +174,16 @@ def setbufsize(size):
 
     Examples
     --------
-    >>> np.setbufsize(4096)
+    When exiting a `numpy.errstate` context manager the bufsize is restored:
+
+    >>> with np.errstate():
+    ...     np.setbufsize(4096)
+    ...     print(np.getbufsize())
+    ...
     8192
-    >>> np.getbufsize()
     4096
+    >>> np.getbufsize()
+    8192
 
     """
     old = _get_extobj_dict()["bufsize"]
