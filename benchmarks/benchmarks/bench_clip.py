@@ -11,7 +11,7 @@ class ClipFloat(Benchmark):
     ]
 
     def setup(self, dtype, size):
-        rnd = np.random.RandomState(12345)
+        rnd = np.random.RandomState(994584855)
         self.array = rnd.random(size=size).astype(dtype)
         self.dataout = np.full_like(self.array, 0.5)
 
