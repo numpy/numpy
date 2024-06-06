@@ -6939,7 +6939,7 @@ add_newdoc('numpy._core.multiarray', 'StringDType',
     >>> arr = np.array(["hello", None, "world"],
     ...                dtype=StringDType(na_object=None))
     >>> arr
-    array(["hello", None, "world", dtype=StringDType(na_object=None))
+    array(["hello", None, "world"], dtype=StringDType(na_object=None))
     >>> arr[1] is None
     True
 

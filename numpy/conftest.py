@@ -183,3 +183,8 @@ if HAVE_SCPDT:
     # recognize the StringDType repr
     dt_config.check_namespace['StringDType'] = numpy.dtypes.StringDType
 
+    # temporary skips
+    dt_config.skiplist = set([
+        'numpy.random.Generator.f',  # tries to import from scipy.stats
+    ])
+
