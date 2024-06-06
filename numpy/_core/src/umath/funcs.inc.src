@@ -268,6 +268,7 @@ npy_ObjectClip(PyObject *arr, PyObject *min, PyObject *max) {
  * #ctype = npy_cfloat, npy_cdouble, npy_clongdouble#
  * #ftype = npy_float, npy_double, npy_longdouble#
  * #c = f, ,l#
+ * #C = F, ,L#
  */
 
 static void
@@ -321,8 +322,8 @@ nc_log1p@c@(@ctype@ *x, @ctype@ *r)
          *  +/- pi, otherwise it is +/- 0.0 (i.e. same as x_im).
          */
         if (npy_isnan(x_re)) {
-            npy_csetreal@c@(r, NAN);
-            npy_csetimag@c@(r, NAN);
+            npy_csetreal@c@(r, NPY_NAN@C@);
+            npy_csetimag@c@(r, NPY_NAN@C@);
         }
         else if (x_re >= -1) {
             /*
