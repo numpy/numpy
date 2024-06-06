@@ -1045,6 +1045,7 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
         Default: ``None``.
 
         .. versionadded:: 2.1.0
+
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
