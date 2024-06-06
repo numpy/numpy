@@ -258,6 +258,110 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose, *args, **kwargs):
     ctx.forward(meson.test)
 
 
+@click.command()
+@click.argument("pytest_args", nargs=-1)
+@click.option(
+    "-m",
+    "markexpr",
+    metavar='MARKEXPR',
+    default="not slow",
+    help="Run tests with the given markers"
+)
+@click.option(
+    "-j",
+    "n_jobs",
+    metavar='N_JOBS',
+    default="1",
+    help=("Number of parallel jobs for testing. "
+          "Can be set to `auto` to use all cores.")
+)
+@click.option(
+    "--tests", "-t",
+    metavar='TESTS',
+    help=("""
+Which tests to run. Can be a module, function, class, or method:
+
+ \b
+ numpy.random
+ numpy.random.tests.test_generator_mt19937
+ numpy.random.tests.test_generator_mt19937::TestMultivariateHypergeometric
+ numpy.random.tests.test_generator_mt19937::TestMultivariateHypergeometric::test_edge_cases
+ \b
+""")
+)
+@click.option(
+    '--verbose', '-v', is_flag=True, default=False
+)
+@click.pass_context
+def smoke_docs(ctx, pytest_args, markexpr, n_jobs, tests, verbose, *args, **kwargs):
+    """🔧 Run tests
+
+    PYTEST_ARGS are passed through directly to pytest, e.g.:
+
+      spin test -- --pdb
+
+    To run tests on a directory or file:
+
+     \b
+     spin test numpy/linalg
+     spin test numpy/linalg/tests/test_linalg.py
+
+    To report the durations of the N slowest tests:
+
+      spin test -- --durations=N
+
+    To run tests that match a given pattern:
+
+     \b
+     spin test -- -k "geometric"
+     spin test -- -k "geometric and not rgeometric"
+
+    By default, spin will run `-m 'not slow'`. To run the full test suite, use
+    `spin -m full`
+
+    For more, see `pytest --help`.
+    """  # noqa: E501
+    if (not pytest_args) and (not tests):
+        pytest_args = ('numpy',)
+
+    if '-m' not in pytest_args:
+        if markexpr != "full":
+            pytest_args = ('-m', markexpr) + pytest_args
+
+    if (n_jobs != "1") and ('-n' not in pytest_args):
+        pytest_args = ('-n', str(n_jobs)) + pytest_args
+
+    if tests and not ('--pyargs' in pytest_args):
+        pytest_args = ('--pyargs', tests) + pytest_args
+
+    if verbose:
+        pytest_args = ('-v',) + pytest_args
+
+
+    doctest_args = (
+        # ignores are for things fail doctest collection (optionals etc)
+        '--ignore=numpy/distutils',
+        '--ignore=numpy/_core/cversions.py',
+        '--ignore=numpy/_pyinstaller',
+        '--ignore=numpy/random/_examples',
+        '--ignore=numpy/compat',
+        '--ignore=numpy/f2py/_backends/_distutils.py',
+        # turn doctesting on:
+        '--doctest-modules',
+        '--doctest-collect=api'
+    )
+
+    pytest_args = pytest_args + doctest_args
+
+    ctx.params['pytest_args'] = pytest_args
+
+    for extra_param in ('markexpr', 'n_jobs', 'tests', 'verbose'):
+        del ctx.params[extra_param]
+
+    ctx.forward(meson.test)
+
+
+
 # From scipy: benchmarks/benchmarks/common.py
 def _set_mem_rlimit(max_mem=None):
     """
