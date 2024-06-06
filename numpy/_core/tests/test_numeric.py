@@ -324,6 +324,18 @@ class TestNonarrayArgs:
         out = np.take(a, indices)
         assert_equal(out, tgt)
 
+        pairs = [
+            (np.int32, np.int32), (np.int32, np.int64),
+            (np.int64, np.int32), (np.int64, np.int64)
+        ]
+        for array_type, indices_type in pairs:
+            x = np.array([1, 2, 3, 4, 5], dtype=array_type)
+            ind = np.array([0, 2, 2, 3], dtype=indices_type)
+            tgt = np.array([1, 3, 3, 4], dtype=array_type)
+            out = np.take(x, ind)
+            assert_equal(out, tgt)
+            assert_equal(out.dtype, tgt.dtype)  
+
     def test_trace(self):
         c = [[1, 2], [3, 4], [5, 6]]
         assert_equal(np.trace(c), 5)
