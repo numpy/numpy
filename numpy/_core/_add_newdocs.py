@@ -1035,6 +1035,7 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.1.0
+
     copy : bool, optional
         If ``True``, then the object is copied. If ``None`` then the object is
         copied only if needed, i.e. if ``__array__`` returns a copy, if obj
