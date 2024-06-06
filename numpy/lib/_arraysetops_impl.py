@@ -525,6 +525,11 @@ def unique_inverse(x):
     --------
     unique : Find the unique elements of an array.
 
+    Examples
+    --------
+    >>> np.unique_inverse([1, 1, 2])
+    UniqueInverseResult(values=array([1, 2]), inverse_indices=array([0, 0, 1]))
+
     """
     result = unique(
         x,
