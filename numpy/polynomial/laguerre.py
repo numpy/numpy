@@ -1442,7 +1442,7 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
     >>> from numpy.polynomial.laguerre import lagfit, lagval
     >>> x = np.linspace(0, 10)
     >>> rng = np.random.default_rng()
-    >>> err = rng.normal(scale=1./10,size=len(x))
+    >>> err = rng.normal(scale=1./10, size=len(x))
     >>> y = lagval(x, [1, 2, 3]) + err
     >>> lagfit(x, y, 2)
     array([1.00578369, 1.99417356, 2.99827656]) # may vary

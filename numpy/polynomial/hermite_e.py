@@ -1388,7 +1388,7 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
     >>> from numpy.polynomial.hermite_e import hermefit, hermeval
     >>> x = np.linspace(-10, 10)
     >>> rng = np.random.default_rng()
-    >>> err = rng.normal(scale=1./10,size=len(x))
+    >>> err = rng.normal(scale=1./10, size=len(x))
     >>> y = hermeval(x, [1, 2, 3]) + err
     >>> hermefit(x, y, 2)
     array([1.02284196, 2.00032805, 2.99978457]) # may vary
