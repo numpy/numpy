@@ -5418,43 +5418,49 @@ def insert(arr, obj, values, axis=None):
     -----
     Note that for higher dimensional inserts ``obj=0`` behaves very different
     from ``obj=[0]`` just like ``arr[:,0,:] = values`` is different from
-    ``arr[:,[0],:] = values``.
+    ``arr[:,[0],:] = values``. This is because of the difference between basic
+    and advanced :ref:`indexing <basics.indexing>`.
 
     Examples
     --------
-    >>> a = np.array([[1, 1], [2, 2], [3, 3]])
+    >>> a = np.arange(6).reshape(3, 2)
     >>> a
-    array([[1, 1],
-           [2, 2],
-           [3, 3]])
-    >>> np.insert(a, 1, 5)
-    array([1, 5, 1, ..., 2, 3, 3])
-    >>> np.insert(a, 1, 5, axis=1)
-    array([[1, 5, 1],
-           [2, 5, 2],
-           [3, 5, 3]])
+    array([[0, 1],
+           [2, 3],
+           [4, 5]])
+    >>> np.insert(a, 1, 6)
+    array([0, 6, 1, 2, 3, 4, 5])
+    >>> np.insert(a, 1, 6, axis=1)
+    array([[0, 6, 1],
+           [2, 6, 3],
+           [4, 6, 5]])
 
-    Difference between sequence and scalars:
+    Difference between sequence and scalars,
+    showing how ``obj=[1]`` behaves different from ``obj=1``:
 
-    >>> np.insert(a, [1], [[1],[2],[3]], axis=1)
-    array([[1, 1, 1],
-           [2, 2, 2],
-           [3, 3, 3]])
-    >>> np.array_equal(np.insert(a, 1, [1, 2, 3], axis=1),
-    ...                np.insert(a, [1], [[1],[2],[3]], axis=1))
+    >>> np.insert(a, [1], [[7],[8],[9]], axis=1)
+    array([[0, 7, 1],
+           [2, 8, 3],
+           [4, 9, 5]])
+    >>> np.insert(a, 1, [[7],[8],[9]], axis=1)
+    array([[0, 7, 8, 9, 1],
+           [2, 7, 8, 9, 3],
+           [4, 7, 8, 9, 5]])
+    >>> np.array_equal(np.insert(a, 1, [7, 8, 9], axis=1),
+    ...                np.insert(a, [1], [[7],[8],[9]], axis=1))
     True
 
     >>> b = a.flatten()
     >>> b
-    array([1, 1, 2, 2, 3, 3])
-    >>> np.insert(b, [2, 2], [5, 6])
-    array([1, 1, 5, ..., 2, 3, 3])
+    array([0, 1, 2, 3, 4, 5])
+    >>> np.insert(b, [2, 2], [6, 7])
+    array([0, 1, 6, 7, 2, 3, 4, 5])
 
-    >>> np.insert(b, slice(2, 4), [5, 6])
-    array([1, 1, 5, ..., 2, 3, 3])
+    >>> np.insert(b, slice(2, 4), [7, 8])
+    array([0, 1, 7, 2, 8, 3, 4, 5])
 
     >>> np.insert(b, [2, 2], [7.13, False]) # type casting
-    array([1, 1, 7, ..., 2, 3, 3])
+    array([0, 1, 7, 0, 2, 3, 4, 5])
 
     >>> x = np.arange(8).reshape(2, 4)
     >>> idx = (1, 3)
