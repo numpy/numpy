@@ -587,6 +587,63 @@ def cross(
 ) -> NDArray[object_]: ...
 
 @overload
+def cross2d(
+    x1: _ArrayLikeUnknown,
+    x2: _ArrayLikeUnknown,
+    axisa: int = ...,
+    axisb: int = ...,
+    axis: None | int = ...,
+) -> NDArray[Any]: ...
+@overload
+def cross2d(
+    x1: _ArrayLikeBool_co,
+    x2: _ArrayLikeBool_co,
+    axisa: int = ...,
+    axisb: int = ...,
+    axis: None | int = ...,
+) -> NoReturn: ...
+@overload
+def cross2d(
+    x1: _ArrayLikeUInt_co,
+    x2: _ArrayLikeUInt_co,
+    axisa: int = ...,
+    axisb: int = ...,
+    axis: None | int = ...,
+) -> NDArray[unsignedinteger[Any]]: ...
+@overload
+def cross2d(
+    x1: _ArrayLikeInt_co,
+    x2: _ArrayLikeInt_co,
+    axisa: int = ...,
+    axisb: int = ...,
+    axis: None | int = ...,
+) -> NDArray[signedinteger[Any]]: ...
+@overload
+def cross2d(
+    x1: _ArrayLikeFloat_co,
+    x2: _ArrayLikeFloat_co,
+    axisa: int = ...,
+    axisb: int = ...,
+    axisc: int = ...,
+) -> NDArray[floating[Any]]: ...
+@overload
+def cross2d(
+    x1: _ArrayLikeComplex_co,
+    x2: _ArrayLikeComplex_co,
+    axisa: int = ...,
+    axisb: int = ...,
+    axis: None | int = ...,
+) -> NDArray[complexfloating[Any, Any]]: ...
+@overload
+def cross2d(
+    x1: _ArrayLikeObject_co,
+    x2: _ArrayLikeObject_co,
+    axisa: int = ...,
+    axisb: int = ...,
+    axis: None | int = ...,
+) -> NDArray[object_]: ...
+
+@overload
 def indices(
     dimensions: Sequence[int],
     dtype: type[int] = ...,

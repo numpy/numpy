@@ -370,6 +370,7 @@ from numpy._core.numeric import (
     rollaxis as rollaxis,
     moveaxis as moveaxis,
     cross as cross,
+    cross2d as cross2d,
     indices as indices,
     fromfunction as fromfunction,
     isscalar as isscalar,

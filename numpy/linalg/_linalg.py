@@ -13,8 +13,8 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'slogdet', 'det',
            'svd', 'svdvals', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond',
            'matrix_rank', 'LinAlgError', 'multi_dot', 'trace', 'diagonal',
-           'cross', 'outer', 'tensordot', 'matmul', 'matrix_transpose',
-           'matrix_norm', 'vector_norm', 'vecdot']
+           'cross', 'cross2d', 'outer', 'tensordot', 'matmul',
+           'matrix_transpose', 'matrix_norm', 'vector_norm', 'vecdot']
 
 import functools
 import operator
@@ -29,8 +29,9 @@ from numpy._core import (
     amax, prod, abs, atleast_2d, intp, asanyarray, object_, matmul,
     swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
     reciprocal, overrides, diagonal as _core_diagonal, trace as _core_trace,
-    cross as _core_cross, outer as _core_outer, tensordot as _core_tensordot,
-    matmul as _core_matmul, matrix_transpose as _core_matrix_transpose,
+    cross as _core_cross, cross2d as _core_cross2d, outer as _core_outer,
+    tensordot as _core_tensordot, matmul as _core_matmul,
+    matrix_transpose as _core_matrix_transpose,
     transpose as _core_transpose, vecdot as _core_vecdot,
 )
 from numpy._globals import _NoValue
@@ -3172,6 +3173,72 @@ def cross(x1, x2, /, *, axis=-1):
         )
 
     return _core_cross(x1, x2, axis=axis)
+
+
+# cross2d
+
+def _cross2d_dispatcher(x1, x2, /, *, axis=None):
+    return (x1, x2,)
+
+
+@array_function_dispatch(_cross2d_dispatcher)
+def cross2d(x1, x2, /, *, axis=-1):
+    """
+    Returns the cross product of 2-element vectors.
+
+    If ``x1`` and/or ``x2`` are multi-dimensional arrays, then
+    the scalar cross-product of each pair of corresponding 2-element vectors
+    is independently computed.
+
+    This function is Array API compatible, contrary to
+    :func:`numpy.cross2d`.
+
+    Parameters
+    ----------
+    x1 : array_like
+        The first input array.
+    x2 : array_like
+        The second input array. Must be compatible with ``x1`` for all
+        non-compute axes. The size of the axis over which to compute
+        the scalar cross-product must be the same size as the respective axis
+        in ``x1``.
+    axis : int, optional
+        The axis (dimension) of ``x1`` and ``x2`` containing the vectors for
+        which to compute the scalar cross-product. Default: ``-1``.
+
+    Returns
+    -------
+    out : ndarray
+        An array containing the scalar cross products.
+
+    See Also
+    --------
+    numpy.cross2d
+
+    Examples
+    --------
+
+    Remember to use np.arrays and not lists.
+
+    >>> x = np.array([1, 2])
+    >>> y = np.array([4, 5])
+    >>> np.linalg.cross2d(x, y)
+    array(-3)
+
+    Verify that `numpy.cross2d` gives the same result.
+
+    >>> np.cross2d(x, y)
+    array(-3)
+
+    """
+    if x1.shape[axis] != 2 or x2.shape[axis] != 2:
+        raise ValueError(
+            "Both input arrays must be (arrays of) 2-dimensional vectors, "
+            f"but they are {x1.shape[axis]} and {x2.shape[axis]} "
+            "dimensional instead."
+        )
+
+    return _core_cross2d(x1, x2, axis=axis)
 
 
 # matmul

@@ -2315,6 +2315,14 @@ def test_cross():
         np.linalg.cross(x_2dim, x_2dim)
 
 
+def test_cross2d():
+    x = np.arange(4).reshape((2, 2))
+    actual = np.linalg.cross2d(x, x + 1)
+    expected = np.array([-1, -1])
+
+    assert_equal(actual, expected)
+
+
 def test_tensordot():
     # np.linalg.tensordot is just an alias for np.tensordot
     x = np.arange(6).reshape((2, 3))

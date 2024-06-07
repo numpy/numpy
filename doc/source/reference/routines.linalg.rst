@@ -69,6 +69,7 @@ Matrix and vector products
    linalg.matrix_power
    kron
    linalg.cross
+   linalg.cross2d
 
 Decompositions
 --------------

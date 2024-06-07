@@ -129,6 +129,10 @@ assert_type(np.linalg.cross(AR_i8, AR_i8), npt.NDArray[np.signedinteger[Any]])
 assert_type(np.linalg.cross(AR_f8, AR_f8), npt.NDArray[np.floating[Any]])
 assert_type(np.linalg.cross(AR_c16, AR_c16), npt.NDArray[np.complexfloating[Any, Any]])
 
+assert_type(np.linalg.cross2d(AR_i8, AR_i8), npt.NDArray[np.signedinteger[Any]])
+assert_type(np.linalg.cross2d(AR_f8, AR_f8), npt.NDArray[np.floating[Any]])
+assert_type(np.linalg.cross2d(AR_c16, AR_c16), npt.NDArray[np.complexfloating[Any, Any]])
+
 assert_type(np.linalg.matmul(AR_i8, AR_i8), npt.NDArray[np.signedinteger[Any]])
 assert_type(np.linalg.matmul(AR_f8, AR_f8), npt.NDArray[np.floating[Any]])
 assert_type(np.linalg.matmul(AR_c16, AR_c16), npt.NDArray[np.complexfloating[Any, Any]])

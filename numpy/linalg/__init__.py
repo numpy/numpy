@@ -27,6 +27,7 @@ Matrix and vector products
 --------------------------
 
    cross
+   cross2d
    multi_dot
    matrix_power
    tensordot

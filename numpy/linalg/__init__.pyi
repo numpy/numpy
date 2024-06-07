@@ -27,6 +27,7 @@ from numpy.linalg._linalg import (
     trace as trace,
     diagonal as diagonal,
     cross as cross,
+    cross2d as cross2d,
 )
 
 from numpy._core.fromnumeric import (

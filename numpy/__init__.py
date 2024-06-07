@@ -134,7 +134,7 @@ else:
         can_cast, cbrt, cdouble, ceil, character, choose, clip, clongdouble,
         complex128, complex64, complexfloating, compress, concat, concatenate,
         conj, conjugate, convolve, copysign, copyto, correlate, cos, cosh,
-        count_nonzero, cross, csingle, cumprod, cumsum,
+        count_nonzero, cross, cross2d, csingle, cumprod, cumsum,
         datetime64, datetime_as_string, datetime_data, deg2rad, degrees,
         diagonal, divide, divmod, dot, double, dtype, e, einsum, einsum_path,
         empty, empty_like, equal, errstate, euler_gamma, exp, exp2, expm1,
