@@ -98,24 +98,15 @@ NPY_NO_EXPORT PyObject *
 _umath_strings_richcompare(
         PyArrayObject *self, PyArrayObject *other, int cmp_op, int rstrip);
 
-/*
- * global variable to determine if legacy printing is enabled, accessible from
- * C. For simplicity the mode is encoded as an integer where INT_MAX means no
- * legacy mode, and '113'/'121' means 1.13/1.21 legacy mode; and 0 maps to
- * INT_MAX. We can upgrade this if we have more complex requirements in the
- * future.
- */
-int npy_legacy_print_mode = INT_MAX;
-
 
 static PyObject *
 set_legacy_print_mode(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, "i", &npy_legacy_print_mode)) {
+    if (!PyArg_ParseTuple(args, "i", &npy_thread_unsafe_state.legacy_print_mode)) {
         return NULL;
     }
-    if (!npy_legacy_print_mode) {
-        npy_legacy_print_mode = INT_MAX;
+    if (!npy_thread_unsafe_state.legacy_print_mode) {
+        npy_thread_unsafe_state.legacy_print_mode = INT_MAX;
     }
     Py_RETURN_NONE;
 }
@@ -4333,8 +4324,8 @@ _set_numpy_warn_if_no_mem_policy(PyObject *NPY_UNUSED(self), PyObject *arg)
     if (res < 0) {
         return NULL;
     }
-    int old_value = numpy_warn_if_no_mem_policy;
-    numpy_warn_if_no_mem_policy = res;
+    int old_value = npy_thread_unsafe_state.warn_if_no_mem_policy;
+    npy_thread_unsafe_state.warn_if_no_mem_policy = res;
     if (old_value) {
         Py_RETURN_TRUE;
     }
@@ -4774,69 +4765,13 @@ static int
 initialize_thread_unsafe_state(void) {
     char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
     if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
-        numpy_warn_if_no_mem_policy = 1;
+        npy_thread_unsafe_state.warn_if_no_mem_policy = 1;
     }
     else {
-        numpy_warn_if_no_mem_policy = 0;
+        npy_thread_unsafe_state.warn_if_no_mem_policy = 0;
     }
 
-    // default_truediv_type_tup
-    PyArray_Descr *tmp = PyArray_DescrFromType(NPY_DOUBLE);
-    if (tmp == NULL) {
-        return -1;
-    }
-
-    npy_static_pydata.default_truediv_type_tup =
-            PyTuple_Pack(3, tmp, tmp, tmp);
-    if (npy_static_pydata.default_truediv_type_tup == NULL) {
-        Py_DECREF(tmp);
-        return -1;
-    }
-    Py_DECREF(tmp);
-
-    PyObject *flags = PySys_GetObject("flags");  /* borrowed object */
-    if (flags == NULL) {
-        PyErr_SetString(PyExc_AttributeError, "cannot get sys.flags");
-        return -1;
-    }
-    PyObject *level = PyObject_GetAttrString(flags, "optimize");
-    if (level == NULL) {
-        return -1;
-    }
-    npy_static_cdata.optimize = PyLong_AsLong(level);
-    Py_DECREF(level);
-
-    /*
-     * see unpack_bits for how this table is used.
-     *
-     * LUT for bigendian bitorder, littleendian is handled via
-     * byteswapping in the loop.
-     *
-     * 256 8 byte blocks representing 8 bits expanded to 1 or 0 bytes
-     */
-    npy_intp j;
-    for (j=0; j < 256; j++) {
-        npy_intp k;
-        for (k=0; k < 8; k++) {
-            npy_uint8 v = (j & (1 << k)) == (1 << k);
-            npy_static_cdata.unpack_lookup_big[j].bytes[7 - k] = v;
-        }
-    }
-
-    npy_static_pydata.kwnames_is_copy = Py_BuildValue("(s)", "copy");
-    if (npy_static_pydata.kwnames_is_copy == NULL) {
-        return -1;
-    }
-
-    npy_static_pydata.one_obj = PyLong_FromLong((long) 1);
-    if (npy_static_pydata.one_obj == NULL) {
-        return -1;
-    }
-
-    npy_static_pydata.zero_obj = PyLong_FromLong((long) 0);
-    if (npy_static_pydata.zero_obj == NULL) {
-        return -1;
-    }
+    npy_thread_unsafe_state.legacy_print_mode = INT_MAX;
 
     return 0;
 }
@@ -4900,6 +4835,10 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     }
 
     if (initialize_static_globals() < 0) {
+        goto err;
+    }
+
+    if (initialize_thread_unsafe_state() < 0) {
         goto err;
     }
 

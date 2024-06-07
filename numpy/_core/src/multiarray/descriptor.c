@@ -23,7 +23,7 @@
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "descriptor.h"
 #include "npy_static_data.h"
-#include "multiarraymodule.h"
+#include "multiarraymodule.h"  // for thread unsafe state access
 #include "alloc.h"
 #include "assert.h"
 #include "npy_buffer.h"
