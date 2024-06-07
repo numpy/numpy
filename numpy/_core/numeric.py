@@ -1828,7 +1828,7 @@ def cross2d(a, b, axisa=-1, axisb=-1, axis=None):
     b = moveaxis(b, axisb, -1)
     msg = ("incompatible dimensions for cross2d product\n"
            "(dimension must be 2)")
-    if a.shape[-1] !=2 or b.shape[-1] != 2:
+    if a.shape[-1] != 2 or b.shape[-1] != 2:
         raise ValueError(msg)
 
     # Create the output array
