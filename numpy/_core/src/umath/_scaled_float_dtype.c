@@ -25,6 +25,7 @@
 #include "dtypemeta.h"
 #include "dispatching.h"
 #include "gil_utils.h"
+#include "multiarraymodule.h"
 
 typedef struct {
     PyArray_Descr base;

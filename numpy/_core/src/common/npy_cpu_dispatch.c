@@ -3,7 +3,7 @@
 
 #include "npy_cpu_dispatch.h"
 #include "numpy/ndarraytypes.h"
-#include "multiarraymodule.h"
+#include "npy_static_data.h"
 
 NPY_VISIBILITY_HIDDEN int
 npy_cpu_dispatch_tracer_init(PyObject *mod)

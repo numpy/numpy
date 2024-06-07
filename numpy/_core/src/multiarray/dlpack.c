@@ -8,7 +8,7 @@
 #include "numpy/arrayobject.h"
 #include "npy_argparse.h"
 #include "npy_dlpack.h"
-#include "multiarraymodule.h"
+#include "npy_static_data.h"
 #include "conversion_utils.h"
 
 

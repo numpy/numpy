@@ -25,6 +25,7 @@
 #include "alloc.h"
 #include "npy_buffer.h"
 #include "shape.h"
+#include "multiarraymodule.h"
 
 /*******************  array attribute get and set routines ******************/
 

@@ -7,6 +7,7 @@
 #include "numpy/ndarraytypes.h"
 #include "get_attr_string.h"
 #include "npy_import.h"
+#include "npy_static_data.h"
 #include "multiarraymodule.h"
 
 #include "arrayfunction_override.h"

@@ -22,6 +22,7 @@
 #include "conversion_utils.h"  /* for PyArray_TypestrConvert */
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "descriptor.h"
+#include "npy_static_data.h"
 #include "multiarraymodule.h"
 #include "alloc.h"
 #include "assert.h"

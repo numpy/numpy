@@ -21,7 +21,7 @@
 #include "abstractdtypes.h"
 #include "convert_datatype.h"
 #include "descriptor.h"
-#include "multiarraymodule.h"
+#include "npy_static_data.h"
 #include "ctors.h"
 
 #include "npy_config.h"

@@ -19,7 +19,7 @@
 
 #include "shape.h"
 
-#include "multiarraymodule.h" /* for interned strings */
+#include "npy_static_data.h" /* for interned strings */
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "common.h" /* for convert_shape_to_string */
 #include "alloc.h"

@@ -14,7 +14,6 @@
 #include "extobj.h"
 #include "numpy/ufuncobject.h"
 
-#include "ufunc_object.h"  /* for npy_um_str_pyvals_name */
 #include "common.h"
 
 

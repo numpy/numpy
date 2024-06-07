@@ -18,6 +18,7 @@
 #include "conversion_utils.h"
 #include "alloc.h"
 #include "npy_buffer.h"
+#include "npy_static_data.h"
 #include "multiarraymodule.h"
 
 static int

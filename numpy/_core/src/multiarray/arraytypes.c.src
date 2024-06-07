@@ -42,6 +42,7 @@
 #include "arraytypes.h"
 
 #include "umathmodule.h"
+#include "npy_static_data.h"
 
 /*
  * Define a stack allocated dummy array with only the minimum information set:

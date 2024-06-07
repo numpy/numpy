@@ -4,6 +4,7 @@
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
 #include "npy_import.h"
+#include "npy_static_data.h"
 #include "multiarraymodule.h"
 #include "npy_pycompat.h"
 #include "override.h"

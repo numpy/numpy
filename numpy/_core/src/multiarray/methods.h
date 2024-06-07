@@ -1,7 +1,7 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_METHODS_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_METHODS_H_
 
-#include "multiarraymodule.h"
+#include "npy_static_data.h"
 #include "npy_import.h"
 
 extern NPY_NO_EXPORT PyMethodDef array_methods[];

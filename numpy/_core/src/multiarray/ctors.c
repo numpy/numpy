@@ -16,7 +16,7 @@
 #include "npy_pycompat.h"
 #include "npy_ctypes.h"
 
-#include "multiarraymodule.h"
+#include "npy_static_data.h"
 
 #include "common.h"
 #include "ctors.h"

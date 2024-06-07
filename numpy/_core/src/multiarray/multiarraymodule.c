@@ -23,6 +23,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
+#include "multiarraymodule.h"
 #include "numpy/npy_math.h"
 #include "npy_argparse.h"
 #include "npy_config.h"
@@ -63,7 +64,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "ctors.h"
 #include "array_assign.h"
 #include "common.h"
-#include "multiarraymodule.h"
+#include "npy_static_data.h"
 #include "cblasfuncs.h"
 #include "vdot.h"
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
@@ -4766,193 +4767,11 @@ set_flaginfo(PyObject *d)
     return;
 }
 
-// static variables are zero-filled by default, no need to explicitly do so
-NPY_VISIBILITY_HIDDEN npy_interned_str_struct npy_interned_str;
-NPY_VISIBILITY_HIDDEN npy_static_pydata_struct npy_static_pydata;
-NPY_VISIBILITY_HIDDEN npy_static_cdata_struct npy_static_cdata;
+// static variables are automatically zero-initialized
 NPY_VISIBILITY_HIDDEN npy_thread_unsafe_state_struct npy_thread_unsafe_state;
 
 static int
-intern_strings(void)
-{
-    // this is module-level global heap allocation, it is currently
-    // never freed
-    npy_interned_str.current_allocator = PyUnicode_InternFromString("current_allocator");
-    if (npy_interned_str.current_allocator == NULL) {
-        return -1;
-    }
-    npy_interned_str.array = PyUnicode_InternFromString("__array__");
-    if (npy_interned_str.array == NULL) {
-        return -1;
-    }
-    npy_interned_str.array_function = PyUnicode_InternFromString("__array_function__");
-    if (npy_interned_str.array_function == NULL) {
-        return -1;
-    }
-    npy_interned_str.array_struct = PyUnicode_InternFromString("__array_struct__");
-    if (npy_interned_str.array_struct == NULL) {
-        return -1;
-    }
-    npy_interned_str.array_priority = PyUnicode_InternFromString("__array_priority__");
-    if (npy_interned_str.array_priority == NULL) {
-        return -1;
-    }
-    npy_interned_str.array_interface = PyUnicode_InternFromString("__array_interface__");
-    if (npy_interned_str.array_interface == NULL) {
-        return -1;
-    }
-    npy_interned_str.array_wrap = PyUnicode_InternFromString("__array_wrap__");
-    if (npy_interned_str.array_wrap == NULL) {
-        return -1;
-    }
-    npy_interned_str.array_finalize = PyUnicode_InternFromString("__array_finalize__");
-    if (npy_interned_str.array_finalize == NULL) {
-        return -1;
-    }
-    npy_interned_str.implementation = PyUnicode_InternFromString("_implementation");
-    if (npy_interned_str.implementation == NULL) {
-        return -1;
-    }
-    npy_interned_str.axis1 = PyUnicode_InternFromString("axis1");
-    if (npy_interned_str.axis1 == NULL) {
-        return -1;
-    }
-    npy_interned_str.axis2 = PyUnicode_InternFromString("axis2");
-    if (npy_interned_str.axis2 == NULL) {
-        return -1;
-    }
-    npy_interned_str.like = PyUnicode_InternFromString("like");
-    if (npy_interned_str.like == NULL) {
-        return -1;
-    }
-    npy_interned_str.numpy = PyUnicode_InternFromString("numpy");
-    if (npy_interned_str.numpy == NULL) {
-        return -1;
-    }
-    npy_interned_str.where = PyUnicode_InternFromString("where");
-    if (npy_interned_str.where == NULL) {
-        return -1;
-    }
-    /* scalar policies */
-    npy_interned_str.convert = PyUnicode_InternFromString("convert");
-    if (npy_interned_str.convert == NULL) {
-        return -1;
-    }
-    npy_interned_str.preserve = PyUnicode_InternFromString("preserve");
-    if (npy_interned_str.preserve == NULL) {
-        return -1;
-    }
-    npy_interned_str.convert_if_no_array = PyUnicode_InternFromString("convert_if_no_array");
-    if (npy_interned_str.convert_if_no_array == NULL) {
-        return -1;
-    }
-    npy_interned_str.cpu = PyUnicode_InternFromString("cpu");
-    if (npy_interned_str.cpu == NULL) {
-        return -1;
-    }
-    npy_interned_str.dtype = PyUnicode_InternFromString("dtype");
-    if (npy_interned_str.dtype == NULL) {
-        return -1;
-    }
-    npy_interned_str.array_err_msg_substr = PyUnicode_InternFromString(
-            "__array__() got an unexpected keyword argument 'copy'");
-    if (npy_interned_str.array_err_msg_substr == NULL) {
-        return -1;
-    }
-    npy_interned_str.out = PyUnicode_InternFromString("out");
-    if (npy_interned_str.out == NULL) {
-        return -1;
-    }
-    npy_interned_str.__dlpack__ = PyUnicode_InternFromString("__dlpack__");
-    if (npy_interned_str.__dlpack__ == NULL) {
-        return -1;
-    }
-    return 0;
-}
-
-#define IMPORT_GLOBAL(base_path, name, object)  \
-    assert(object == NULL);                     \
-    npy_cache_import(base_path, name, &object); \
-    if (object == NULL) {                       \
-        return -1;                              \
-    }
-
-/*
- * Initializes global constants.
- *
- * All global constants should live inside the npy_static_pydata
- * struct.
- *
- * Not all entries in the struct are initialized here, some are
- * initialized later but care must be taken in those cases to initialize
- * the constant in a thread-safe manner, ensuring it is initialized
- * exactly once.
- *
- * Anything initialized here is initialized during module import which
- * the python interpreter ensures is done in a single thread.
- *
- * Anything imported here should not need the C-layer at all and will be
- * imported before anything on the C-side is initialized.
- */
-static int
-initialize_static_globals(void)
-{
-    // cached reference to objects defined in python
-
-    IMPORT_GLOBAL("math", "floor",
-                  npy_static_pydata.math_floor_func);
-
-    IMPORT_GLOBAL("math", "ceil",
-                  npy_static_pydata.math_ceil_func);
-
-    IMPORT_GLOBAL("math", "trunc",
-                  npy_static_pydata.math_trunc_func);
-
-    IMPORT_GLOBAL("math", "gcd",
-                  npy_static_pydata.math_gcd_func);
-
-    IMPORT_GLOBAL("numpy.exceptions", "AxisError",
-                  npy_static_pydata.AxisError);
-
-    IMPORT_GLOBAL("numpy.exceptions", "ComplexWarning",
-                  npy_static_pydata.ComplexWarning);
-
-    IMPORT_GLOBAL("numpy.exceptions", "DTypePromotionError",
-                  npy_static_pydata.DTypePromotionError);
-
-    IMPORT_GLOBAL("numpy.exceptions", "TooHardError",
-                  npy_static_pydata.TooHardError);
-
-    IMPORT_GLOBAL("numpy.exceptions", "VisibleDeprecationWarning",
-                  npy_static_pydata.VisibleDeprecationWarning);
-
-    IMPORT_GLOBAL("numpy._globals", "_CopyMode",
-                  npy_static_pydata._CopyMode);
-
-    IMPORT_GLOBAL("numpy._globals", "_NoValue",
-                  npy_static_pydata._NoValue);
-
-    IMPORT_GLOBAL("numpy._core._exceptions", "_ArrayMemoryError",
-                  npy_static_pydata._ArrayMemoryError);
-
-    IMPORT_GLOBAL("numpy._core._exceptions", "_UFuncBinaryResolutionError",
-                  npy_static_pydata._UFuncBinaryResolutionError);
-
-    IMPORT_GLOBAL("numpy._core._exceptions", "_UFuncInputCastingError",
-                  npy_static_pydata._UFuncInputCastingError);
-
-    IMPORT_GLOBAL("numpy._core._exceptions", "_UFuncNoLoopError",
-                  npy_static_pydata._UFuncNoLoopError);
-
-    IMPORT_GLOBAL("numpy._core._exceptions", "_UFuncOutputCastingError",
-                  npy_static_pydata._UFuncOutputCastingError);
-
-    IMPORT_GLOBAL("os", "fspath",
-                  npy_static_pydata.os_fspath);
-
-    IMPORT_GLOBAL("os", "PathLike",
-                  npy_static_pydata.os_PathLike);
-
+initialize_thread_unsafe_state(void) {
     char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
     if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
         numpy_warn_if_no_mem_policy = 1;

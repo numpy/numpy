@@ -29,6 +29,7 @@
 #include "strfuncs.h"
 #include "array_assign.h"
 #include "npy_dlpack.h"
+#include "npy_static_data.h"
 #include "multiarraymodule.h"
 
 #include "methods.h"

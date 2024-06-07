@@ -35,7 +35,8 @@
 #include "dtype_transfer.h"
 #include "dtype_traversal.h"
 #include "arrayobject.h"
-
+#include "npy_static_data.h"
+#include "multiarraymodule.h"
 
 /*
  * Required length of string when converting from unsigned integer type.

@@ -8,7 +8,7 @@
 #include "npy_cpu_dispatch.h"
 #include "numpy/npy_cpu.h"
 
-#include "multiarraymodule.h"
+#include "npy_static_data.h"
 #include "npy_import.h"
 #include <limits.h>
 

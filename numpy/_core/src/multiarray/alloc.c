@@ -11,6 +11,7 @@
 #include "numpy/npy_common.h"
 #include "npy_config.h"
 #include "alloc.h"
+#include "npy_static_data.h"
 #include "multiarraymodule.h"
 
 #include <assert.h>

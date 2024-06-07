@@ -26,6 +26,8 @@
 #include "templ_common.h"
 #include "refcount.h"
 #include "dtype_traversal.h"
+#include "npy_static_data.h"
+#include "multiarraymodule.h"
 
 #include <assert.h>
 

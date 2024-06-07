@@ -10,7 +10,7 @@
 #include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "abstractdtypes.h"
-#include "multiarraymodule.h"
+#include "npy_static_data.h"
 
 
 /*

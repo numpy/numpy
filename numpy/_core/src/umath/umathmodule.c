@@ -209,29 +209,6 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
  *****************************************************************************
  */
 
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_ufunc = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_wrap = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_pyvals_name = NULL;
-
-/* intern some strings used in ufuncs, returns 0 on success */
-static int
-intern_strings(void)
-{
-    npy_um_str_array_ufunc = PyUnicode_InternFromString("__array_ufunc__");
-    if (npy_um_str_array_ufunc == NULL) {
-        return -1;
-    }
-    npy_um_str_array_wrap = PyUnicode_InternFromString("__array_wrap__");
-    if (npy_um_str_array_wrap == NULL) {
-        return -1;
-    }
-    npy_um_str_pyvals_name = PyUnicode_InternFromString(UFUNC_PYVALS_NAME);
-    if (npy_um_str_pyvals_name == NULL) {
-        return -1;
-    }
-    return 0;
-}
-
 /* Setup the umath part of the module */
 
 int initumath(PyObject *m)
@@ -296,12 +273,6 @@ int initumath(PyObject *m)
 
     PyDict_SetItemString(d, "conj", s);
     PyDict_SetItemString(d, "mod", s2);
-
-    if (intern_strings() < 0) {
-        PyErr_SetString(PyExc_RuntimeError,
-           "cannot intern strings while initializing _multiarray_umath.");
-        return -1;
-    }
 
     /*
      * Set up promoters for logical functions

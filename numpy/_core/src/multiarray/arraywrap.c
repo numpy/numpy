@@ -12,7 +12,7 @@
 #include "get_attr_string.h"
 
 #include "arraywrap.h"
-#include "multiarraymodule.h"
+#include "npy_static_data.h"
 
 
 /*

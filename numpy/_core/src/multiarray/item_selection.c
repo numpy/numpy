@@ -15,7 +15,7 @@
 
 
 
-#include "multiarraymodule.h"
+#include "npy_static_data.h"
 #include "common.h"
 #include "dtype_transfer.h"
 #include "dtypemeta.h"

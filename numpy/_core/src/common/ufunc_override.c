@@ -7,7 +7,7 @@
 #include "npy_import.h"
 #include "ufunc_override.h"
 #include "scalartypes.h"
-#include "multiarraymodule.h"
+#include "npy_static_data.h"
 
 /*
  * Check whether an object has __array_ufunc__ defined on its class and it
@@ -35,7 +35,7 @@ PyUFuncOverride_GetNonDefaultArrayUfunc(PyObject *obj)
      * Does the class define __array_ufunc__? (Note that LookupSpecial has fast
      * return for basic python types, so no need to worry about those here)
      */
-    cls_array_ufunc = PyArray_LookupSpecial(obj, npy_um_str_array_ufunc);
+    cls_array_ufunc = PyArray_LookupSpecial(obj, npy_interned_str.array_ufunc);
     if (cls_array_ufunc == NULL) {
         if (PyErr_Occurred()) {
             PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
