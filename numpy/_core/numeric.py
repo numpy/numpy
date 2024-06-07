@@ -1575,11 +1575,12 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     >>> np.cross(x, y)
     array([-3,  6, -3])
 
-    One vector with dimension 2.
+    For one vector with dimension 2, add a zero to the third dimension.
 
     >>> x = [1, 2]
+    >>> x_3 = np.pad(x, (0, 1))
     >>> y = [4, 5, 6]
-    >>> np.cross(x, y)
+    >>> np.cross(x_3, y)
     array([12, -6, -3])
 
     Equivalently:
@@ -1589,12 +1590,19 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     >>> np.cross(x, y)
     array([12, -6, -3])
 
-    Both vectors with dimension 2.
+    For both vectors with dimension 2, either pad with zeros or use `cross2d`.
+    Notice that the output will be a 3d vector.
 
     >>> x = [1, 2]
     >>> y = [4, 5]
-    >>> np.cross(x, y)
-    array(-3)
+    >>> x_3 = np.pad(x, (0, 1))
+    >>> y_3 = np.pad(y, (0, 1))
+    >>> np.cross(x_3, y_3)
+    array([ 0,  0, -3])
+    >>> np.cross(x_3, y_3)[2:]
+    array([-3])
+    >>> np.cross2d(x, y)
+    array([-3])
 
     Multiple vector cross-products. Note that the direction of the cross
     product vector is defined by the *right-hand rule*.
@@ -1648,8 +1656,10 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     if a.shape[-1] == 2 or b.shape[-1] == 2:
         # Deprecated in NumPy 2.0, 2023-09-26
         warnings.warn(
-            "Arrays of 2-dimensional vectors are deprecated. Use arrays of "
-            "3-dimensional vectors instead. (deprecated in NumPy 2.0)",
+            "Arrays of 2-dimensional vectors are deprecated. "
+            "Use arrays of 3-dimensional vectors instead, or "
+            "use cross2d for arrays of all 2-dimensional vectors. "
+            "(deprecated in NumPy 2.0)",
             DeprecationWarning, stacklevel=2
         )
 
@@ -1772,6 +1782,7 @@ def cross2d(a, b, axisa=-1, axisb=-1, axis=None):
     cross : Vector cross product of 3 dimensional vectors.
     linalg.cross2d : An Array API compatible variation of `numpy.cross2d`,
                      which accepts (arrays of) 2-element vectors only.
+    det: A similar floating point option.
 
     Notes
     -----
@@ -1800,15 +1811,28 @@ def cross2d(a, b, axisa=-1, axisb=-1, axis=None):
     The choice of axis matters.
 
     >>> u = [[1, 2], [3, 4]]
-    >>> v = [[3, 4], [5, 6]]
+    >>> v = [[5, 6], [7, 8]]
     >>> np.cross2d(u, v)
-    array([-2, -2])
-    >>> np.cross2d(u, v, axisa=0)
-    array([-5, -8])
-    >>> np.cross2d(u, v, axisb=0)
-    array([-1,  2])
-    >>> np.cross2d(u, v, axis=0)
     array([-4, -4])
+    >>> np.cross2d(u, v, axisa=0)
+    array([-9, -12])
+    >>> np.cross2d(u, v, axisb=0)
+    array([-3, 0])
+    >>> np.cross2d(u, v, axis=0)
+    array([-8, -8])
+
+    The scalar cross product of 2-dimensional vectors is the determinant of
+    a 2 by 2 matrix whose rows (or columns) are those vectors. Here we
+    stack an array of vectors to illustrate the similarlity. Note the subtle
+    difference where `det` returns a float even with integer inputs.
+
+    >>> u = [[1, 2], [3, 4], [-1, 5]]
+    >>> v = [[5, 6], [7, 8], [-2, 9]]
+    >>> np.cross2d(u, v)
+    array([-4, -4,  1])
+    >>> stacked_array = np.stack((u, v), axis=1)
+    >>> np.linalg.det(stacked_array)
+    array([-4., -4.,  1.])
 
     """
     if axis is not None:
