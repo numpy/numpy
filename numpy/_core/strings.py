@@ -199,9 +199,9 @@ def mod(a, values):
 
     Examples
     --------
-    >>> np.char.mod("%.3f", [1, 2, 3])
+    >>> np.strings.mod("%.3f", [1, 2, 3])
     array(['1.000', '2.000', '3.000'], dtype='<U5')
-    >>> np.char.mod("0x%02x", [8, 9, 10, 11])
+    >>> np.strings.mod("0x%02x", [8, 9, 10, 11])
     array(['0x08', '0x09', '0x0a', '0x0b'], dtype='<U4')
 
     """
@@ -269,6 +269,20 @@ def rfind(a, sub, start=0, end=None):
     See Also
     --------
     str.rfind
+
+    Examples
+    --------
+
+    While `string.find` returns the lowest index:
+
+    >>> a = np.array(["very repetitive very repetitive very"])
+    >>> np.strings.find(a, "very")
+    array([0])
+
+    `string.rfind` returns the highes index:
+
+    >>> np.strings.rfind(a, "very")
+    array([32])
 
     """
     end = end if end is not None else MAX
