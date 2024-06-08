@@ -165,8 +165,7 @@ if HAVE_SCPDT:
                 "This function is deprecated.",    # random_integers
                 "Data type alias 'a'",     # numpy.rec.fromfile
                 "Arrays of 2-dimensional vectors",   # matlib.cross
-                "`in1d` is deprecated",
-        ]
+                "`in1d` is deprecated", ]
         msg = "|".join(msgs)
 
         msgs_r = [
