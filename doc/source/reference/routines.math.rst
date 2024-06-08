@@ -71,6 +71,7 @@ Sums, products, differences
    ediff1d
    gradient
    cross
+   trapezoid
 
 Exponents and logarithms
 ------------------------
