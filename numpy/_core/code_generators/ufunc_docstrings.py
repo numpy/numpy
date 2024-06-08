@@ -4377,7 +4377,7 @@ add_newdoc('numpy._core.umath', 'isalpha',
     --------
     >>> np.char.isalpha(["yes", "alpha"])
     array([ True,  True])
-    >>> np.char.isalpha(["not", "\x00", "alpha"])
+    >>> np.char.isalpha(["not", "\\x00", "alpha"])
     array([ True, False,  True])
     >>> np.char.isalpha(["n0t", "4lpha"])
     array([ False, False])
