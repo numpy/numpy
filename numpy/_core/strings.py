@@ -421,6 +421,16 @@ def startswith(a, prefix, start=0, end=None):
     --------
     str.startswith
 
+    Examples
+    --------
+    >>> s = np.array(['foo', 'bar'])
+    >>> s
+    array(['foo', 'bar'], dtype='<U3')
+    >>> np.strings.startswith(s, 'ba')
+    array([False,  True])
+    >>> np.strings.startswith(s, 'a', start=1, end=2)
+    array([False,  True])
+
     """
     end = end if end is not None else MAX
     return _startswith_ufunc(a, prefix, start, end)
