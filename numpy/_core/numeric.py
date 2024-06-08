@@ -1782,7 +1782,7 @@ def cross2d(a, b, axisa=-1, axisb=-1, axis=None):
     cross : Vector cross product of 3 dimensional vectors.
     linalg.cross2d : An Array API compatible variation of `numpy.cross2d`,
                      which accepts (arrays of) 2-element vectors only.
-    det: A similar floating point option.
+    linalg.det: A similar floating point option.
 
     Notes
     -----
