@@ -196,7 +196,14 @@ def mod(a, values):
     out : ndarray
         Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
         depending on input types
-        
+
+    Examples
+    --------
+    >>> np.char.mod("%.3f", [1, 2, 3])
+    array(['1.000', '2.000', '3.000'], dtype='<U5')
+    >>> np.char.mod("0x%02x", [8, 9, 10, 11])
+    array(['0x08', '0x09', '0x0a', '0x0b'], dtype='<U4')
+
     """
     return _to_bytes_or_str_array(
         _vec_string(a, np.object_, '__mod__', (values,)), a)
