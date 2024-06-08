@@ -1347,9 +1347,9 @@ def _splitlines(a, keepends=None):
 
     Examples
     --------
-    >>> np.char.splitlines("first line\nsecond line")
+    >>> np.char.splitlines("first line\\nsecond line")
     array(list(['first line', 'second line']), dtype=object)
-    >>> a = np.array(["first\nsecond", "third\nfourth"])
+    >>> a = np.array(["first\\nsecond", "third\\nfourth"])
     >>> np.char.splitlines(a)
     array([list(['first', 'second']), list(['third', 'fourth'])], dtype=object)
 
