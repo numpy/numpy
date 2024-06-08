@@ -103,9 +103,6 @@ jobs:
             # `np.polynomial.set_default_printstyle`)
             python tools/refguide_check.py --rst
             python tools/refguide_check.py --doctests
-            #
-            pip install scipy-doctest spin
-            spin smoke-docs -v
 
       - persist_to_workspace:
           root: ~/repo

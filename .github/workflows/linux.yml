@@ -180,6 +180,11 @@ jobs:
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       run: |
         spin bench --quick
+    - name: Run smoke-docs
+      shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+      run: |
+        pip install scipy-doctest
+        spin smoke-docs
 
   sdist:
     needs: [smoke_test]
