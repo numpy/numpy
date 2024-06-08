@@ -161,6 +161,21 @@ def docs(ctx, sphinx_target, clean, first_build, jobs, *args, **kwargs):
     """
     meson.docs.ignore_unknown_options = True
 
+    # See https://github.com/scientific-python/spin/pull/199
+    # Can be changed when spin updates to 0.11, and moved to pyproject.toml
+    if clean:
+        clean_dirs = [
+            './doc/build/',
+            './doc/source/reference/generated',
+            './doc/source/reference/random/bit_generators/generated',
+            './doc/source/reference/random/generated',
+        ]
+
+        for target_dir in clean_dirs:
+            if os.path.isdir(target_dir):
+                print(f"Removing {target_dir!r}")
+                shutil.rmtree(target_dir)
+
     # Run towncrier without staging anything for commit. This is the way to get
     # release notes snippets included in a local doc build.
     cmd = ['towncrier', 'build', '--version', '2.x.y', '--keep', '--draft']
