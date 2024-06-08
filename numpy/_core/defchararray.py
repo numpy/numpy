@@ -1259,6 +1259,16 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         fastest).  If order is 'A', then the returned array may
         be in any order (either C-, Fortran-contiguous, or even
         discontiguous).
+
+    Examples
+    --------
+    >>> np.char.array(["a", "b", "c"])
+    chararray(['a', 'b', 'c'], dtype='<U1')
+    >>> np.char.array(["a", "b", "c"], itemsize=8)
+    array(['a', 'b', 'c'], dtype='<U8')
+    >>> np.char.array([1, 2, 3])
+    chararray([b'1', b'2', b'3'], dtype='|S1')
+
     """
     if isinstance(obj, (bytes, str)):
         if unicode is None:
