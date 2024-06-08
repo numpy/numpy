@@ -161,13 +161,26 @@ if HAVE_SCPDT:
                 "Deprecated call",
                 "numpy.core",
                 "`np.compat`",
-                "Importing from numpy.matlib"]
-
+                "Importing from numpy.matlib",
+                "This function is deprecated.",    # random_integers
+                "Data type alias 'a'",     # numpy.rec.fromfile
+                "Arrays of 2-dimensional vectors",   # matlib.cross
+                "`in1d` is deprecated",
+        ]
         msg = "|".join(msgs)
+
+        msgs_r = [
+            "invalid value encountered",
+            "divide by zero encountered"
+        ]
+        msg_r = "|".join(msgs_r)
 
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 'ignore', category=DeprecationWarning, message=msg
+            )
+            warnings.filterwarnings(
+                'ignore', category=RuntimeWarning, message=msg_r
             )
             yield
 
@@ -187,6 +200,8 @@ if HAVE_SCPDT:
     # temporary skips
     dt_config.skiplist = set([
         'numpy.random.Generator.f',  # tries to import from scipy.stats
+        'numpy.savez',    # unclosed file
+        'numpy.matlib.savez',
     ])
 
     # xfail problematic tutorials
