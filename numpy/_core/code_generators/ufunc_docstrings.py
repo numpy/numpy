@@ -1667,8 +1667,7 @@ add_newdoc('numpy._core.umath', 'invert',
     >>> ~x1
     array([False,  True])
 
-    """
-)
+    """)
 
 add_newdoc('numpy._core.umath', 'isfinite',
     """
