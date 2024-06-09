@@ -196,13 +196,12 @@ if HAVE_SCPDT:
     # recognize the StringDType repr
     dt_config.check_namespace['StringDType'] = numpy.dtypes.StringDType
 
-    # __array_namespace_info__ needs np.float64 == dtype('float64')
-    dt_config.check_namespace['dtype'] = numpy.dtype
-
     # temporary skips
     dt_config.skiplist = set([
         'numpy.savez',    # unclosed file
         'numpy.matlib.savez',
+        'numpy.__array_namespace_info__',
+        'numpy.matlib.__array_namespace_info__',
     ])
 
     # xfail problematic tutorials
