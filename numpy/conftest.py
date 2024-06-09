@@ -198,7 +198,6 @@ if HAVE_SCPDT:
 
     # temporary skips
     dt_config.skiplist = set([
-        'numpy.random.Generator.f',  # tries to import from scipy.stats
         'numpy.savez',    # unclosed file
         'numpy.matlib.savez',
     ])
