@@ -183,8 +183,8 @@ jobs:
     - name: Run smoke-docs
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       run: |
-        pip install scipy-doctest hypothesis matplotlib
-        spin smoke-docs
+        pip install scipy-doctest hypothesis matplotlib scipy pytz
+        spin smoke-docs -v
 
   sdist:
     needs: [smoke_test]
