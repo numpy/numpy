@@ -11,7 +11,7 @@ PYVER:=$(shell python3 -c 'from sys import version_info as v; print("{0}.{1}".fo
 PYTHON = python$(PYVER)
 
 # You can set these variables from the command line.
-SPHINXOPTS    ?=
+SPHINXOPTS    ?= -W
 SPHINXBUILD   ?= LANG=C sphinx-build
 PAPER         ?=
 DOXYGEN       ?= doxygen
@@ -25,7 +25,7 @@ FILES=
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
-ALLSPHINXOPTS   = -WT --keep-going -d build/doctrees $(PAPEROPT_$(PAPER)) \
+ALLSPHINXOPTS   = -T --keep-going -d build/doctrees $(PAPEROPT_$(PAPER)) \
                   $(SPHINXOPTS) source
 
 .PHONY: help clean html web htmlhelp latex changes linkcheck \
