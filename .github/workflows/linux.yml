@@ -309,3 +309,26 @@ jobs:
     - uses: ./.github/meson_actions
       env:
         PYTHON_GIL: 0
+
+  test-editable:
+    needs: [smoke_test]
+    runs-on: ubuntu-22.04
+    if: github.event_name != 'push'
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-tags: true
+    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      with:
+        python-version: '3.10'
+    - name: Install build and test dependencies from PyPI
+      run: |
+        pip install -r requirements/build_requirements.txt
+        pip install -r requirements/test_requirements.txt
+    - name: Install editable NumPy
+      run: |
+        pip install -e . -v --no-build-isolation
+    - name: Run test suite
+      run: |
+        pytest numpy
