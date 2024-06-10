@@ -114,7 +114,7 @@ jobs:
         pytest --pyargs numpy -m "not slow"
 
   full:
-    # Build a wheel, install it, then run the full test suite with code coverage
+    # Install editable install, then run the full test suite with code coverage
     needs: [smoke_test]
     runs-on: ubuntu-22.04
     steps:
