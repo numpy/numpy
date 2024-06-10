@@ -138,7 +138,7 @@ jobs:
         mkdir -p ./.openblas
         python -c"import scipy_openblas32 as ob32; print(ob32.get_pkg_config())" > ./.openblas/scipy-openblas.pc
 
-    - name: Build a wheel
+    - name: Install editable install
       env:
         PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
