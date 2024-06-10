@@ -397,7 +397,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     if ((ni > 0) && (PyArray_Size((PyObject *)self) == 0)) {
         PyErr_SetString(PyExc_IndexError, 
                         "cannot replace elements of an empty array");
-        return NULL;
+        goto fail;
     }
     Py_INCREF(PyArray_DESCR(self));
     values = (PyArrayObject *)PyArray_FromAny(values0, PyArray_DESCR(self), 0, 0,
@@ -419,9 +419,8 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         Py_INCREF(PyArray_DESCR(self));
         obj = (PyArrayObject *)PyArray_FromArray(self,
                                                  PyArray_DESCR(self), flags);
-        if (obj != self) {
-            copied = 1;
-        }
+        copied = 1;
+        assert(self != obj);
         self = obj;
     }
     max_item = PyArray_SIZE(self);
