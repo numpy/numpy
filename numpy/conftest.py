@@ -213,3 +213,13 @@ if HAVE_SCPDT:
         'basics.subclassing.rst': '.. testcode:: admonitions not understood'
     }
 
+    # ignores are for things fail doctest collection (optionals etc)
+    dt_config.pytest_extra_ignore = [
+        'numpy/distutils',
+        'numpy/_core/cversions.py',
+        'numpy/_pyinstaller',
+        'numpy/random/_examples',
+        'numpy/compat',
+        'numpy/f2py/_backends/_distutils.py',
+    ]
+

@@ -313,16 +313,8 @@ def smoke_docs(ctx, pytest_args, n_jobs, verbose, *args, **kwargs):
     if verbose:
         pytest_args = ('-v',) + pytest_args
 
-
+    # turn doctesting on:
     doctest_args = (
-        # ignores are for things fail doctest collection (optionals etc)
-        '--ignore=numpy/distutils',
-        '--ignore=numpy/_core/cversions.py',
-        '--ignore=numpy/_pyinstaller',
-        '--ignore=numpy/random/_examples',
-        '--ignore=numpy/compat',
-        '--ignore=numpy/f2py/_backends/_distutils.py',
-        # turn doctesting on:
         '--doctest-modules',
         '--doctest-collect=api'
     )
