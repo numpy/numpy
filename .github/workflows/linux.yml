@@ -114,7 +114,7 @@ jobs:
         pytest --pyargs numpy -m "not slow"
 
   full:
-    # Install editable install, then run the full test suite with code coverage
+    # Install as editable, then run the full test suite with code coverage
     needs: [smoke_test]
     runs-on: ubuntu-22.04
     steps:
@@ -138,7 +138,7 @@ jobs:
         mkdir -p ./.openblas
         python -c"import scipy_openblas32 as ob32; print(ob32.get_pkg_config())" > ./.openblas/scipy-openblas.pc
 
-    - name: Install editable install
+    - name: Install as editable
       env:
         PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
