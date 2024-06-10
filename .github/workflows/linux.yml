@@ -114,7 +114,7 @@ jobs:
         pytest --pyargs numpy -m "not slow"
 
   full:
-    # Build a wheel, install it, then run the full test suite with code coverage
+    # Install as editable, then run the full test suite with code coverage
     needs: [smoke_test]
     runs-on: ubuntu-22.04
     steps:
@@ -138,16 +138,14 @@ jobs:
         mkdir -p ./.openblas
         python -c"import scipy_openblas32 as ob32; print(ob32.get_pkg_config())" > ./.openblas/scipy-openblas.pc
 
-    - name: Build a wheel
+    - name: Install as editable
       env:
         PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
-        python -m build --wheel --no-isolation --skip-dependency-check
-        pip install dist/numpy*.whl
+        pip install -e . --no-build-isolation
     - name: Run full test suite
       run: |
-        cd tools
-        pytest --pyargs numpy --cov-report=html:build/coverage
+        pytest numpy --cov-report=html:build/coverage
         # TODO: gcov
 
   benchmark:
