@@ -23,7 +23,7 @@ guide can be automatically adapted in downstream code with a dedicated
 `Ruff <https://docs.astral.sh/ruff/>`__ rule, namely rule
 `NPY201 <https://docs.astral.sh/ruff/rules/numpy2-deprecation/>`__.
 
-You should install ``ruff>=0.2.0`` and add the ``NPY201`` rule to your
+You should install ``ruff>=0.4.8`` and add the ``NPY201`` rule to your
 ``pyproject.toml``::
 
     [tool.ruff.lint]
@@ -149,8 +149,8 @@ Please do not hesitate to open a NumPy issue, if you require assistance or
 the provided functions are not sufficient.
 
 **Custom User DTypes:**
-Existing user dtypes must now use ``PyArray_DescrProto`` to define their
-dtype and slightly modify the code. See note in `PyArray_RegisterDataType`.
+Existing user dtypes must now use :c:type:`PyArray_DescrProto` to define
+their dtype and slightly modify the code. See note in :c:func:`PyArray_RegisterDataType`.
 
 Functionality moved to headers requiring ``import_array()``
 -----------------------------------------------------------
@@ -202,13 +202,13 @@ native C99 types. While the memory layout of those types remains identical
 to the types used in NumPy 1.x, the API is slightly different, since direct
 field access (like ``c.real`` or ``c.imag``) is no longer possible.
 
-It is recommended to use the functions `npy_creal` and `npy_cimag` (and the
-corresponding float and long double variants) to retrieve
+It is recommended to use the functions ``npy_creal`` and ``npy_cimag``
+(and the corresponding float and long double variants) to retrieve
 the real or imaginary part of a complex number, as these will work with both
-NumPy 1.x and with NumPy 2.x. New functions `npy_csetreal` and `npy_csetimag`,
-along with compatibility macros `NPY_CSETREAL` and `NPY_CSETIMAG` (and the
-corresponding float and long double variants), have been
-added for setting the real or imaginary part.
+NumPy 1.x and with NumPy 2.x. New functions ``npy_csetreal`` and
+``npy_csetimag``, along with compatibility macros ``NPY_CSETREAL`` and
+``NPY_CSETIMAG`` (and the corresponding float and long double variants),
+have been added for setting the real or imaginary part.
 
 The underlying type remains a struct under C++ (all of the above still remains
 valid).
@@ -382,7 +382,6 @@ expired member          migration guideline
 newbyteorder            Use ``arr.view(arr.dtype.newbyteorder(order))`` instead.
 ptp                     Use ``np.ptp(arr, ...)`` instead.
 setitem                 Use ``arr[index] = value`` instead.
-...                     ...
 ======================  ========================================================
 
 
