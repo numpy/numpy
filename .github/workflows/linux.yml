@@ -142,12 +142,10 @@ jobs:
       env:
         PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
-        python -m build --wheel --no-isolation --skip-dependency-check
-        pip install dist/numpy*.whl
+        pip install -e . --no-build-isolation
     - name: Run full test suite
       run: |
-        cd tools
-        pytest --pyargs numpy --cov-report=html:build/coverage
+        pytest numpy --cov-report=html:build/coverage
         # TODO: gcov
 
   benchmark:
