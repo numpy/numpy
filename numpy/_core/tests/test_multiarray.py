@@ -503,6 +503,14 @@ class TestArrayConstruction:
         assert_array_equal(e, [[1, 3, 7], [1, 2, 3]])
         assert_array_equal(d, [[1, 5, 3], [1,2,3]])
 
+    def test_array_copy_str(self):
+        with pytest.raises(
+            ValueError,
+            match="strings are not allowed for 'copy' keyword. "
+                  "Use True/False/None instead."
+        ):
+            np.array([1, 2, 3], copy="always")
+
     def test_array_cont(self):
         d = np.ones(10)[::2]
         assert_(np.ascontiguousarray(d).flags.c_contiguous)

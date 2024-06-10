@@ -249,6 +249,12 @@ PyArray_CopyConverter(PyObject *obj, NPY_COPYMODE *copymode) {
             return NPY_FAIL;
         }
     }
+    else if(PyUnicode_Check(obj)) {
+        PyErr_SetString(PyExc_ValueError,
+                        "strings are not allowed for 'copy' keyword. "
+                        "Use True/False/None instead.");
+        return NPY_FAIL;
+    }
     else {
         npy_bool bool_copymode;
         if (!PyArray_BoolConverter(obj, &bool_copymode)) {
