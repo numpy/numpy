@@ -113,10 +113,10 @@ jobs:
         cd tools
         pytest --pyargs numpy -m "not slow"
 
-  full:
-    # Build a wheel, install it, then run the full test suite with code coverage
+  test-editable:
     needs: [smoke_test]
     runs-on: ubuntu-22.04
+    if: github.event_name != 'push'
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
@@ -129,26 +129,12 @@ jobs:
       run: |
         pip install -r requirements/build_requirements.txt
         pip install -r requirements/test_requirements.txt
-    - name: Install gfortran and setup OpenBLAS (MacPython build)
+    - name: Install editable NumPy
       run: |
-        set -xe
-        sudo apt update
-        sudo apt install gfortran libgfortran5
-        python -m pip install -r requirements/ci32_requirements.txt
-        mkdir -p ./.openblas
-        python -c"import scipy_openblas32 as ob32; print(ob32.get_pkg_config())" > ./.openblas/scipy-openblas.pc
-
-    - name: Build a wheel
-      env:
-        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
+        pip install -e . -v --no-build-isolation
+    - name: Run test suite
       run: |
-        python -m build --wheel --no-isolation --skip-dependency-check
-        pip install dist/numpy*.whl
-    - name: Run full test suite
-      run: |
-        cd tools
-        pytest --pyargs numpy --cov-report=html:build/coverage
-        # TODO: gcov
+        pytest numpy
 
   benchmark:
     needs: [smoke_test]
@@ -310,25 +296,3 @@ jobs:
       env:
         PYTHON_GIL: 0
 
-  test-editable:
-    needs: [smoke_test]
-    runs-on: ubuntu-22.04
-    if: github.event_name != 'push'
-    steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      with:
-        submodules: recursive
-        fetch-tags: true
-    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
-      with:
-        python-version: '3.10'
-    - name: Install build and test dependencies from PyPI
-      run: |
-        pip install -r requirements/build_requirements.txt
-        pip install -r requirements/test_requirements.txt
-    - name: Install editable NumPy
-      run: |
-        pip install -e . -v --no-build-isolation
-    - name: Run test suite
-      run: |
-        pytest numpy
