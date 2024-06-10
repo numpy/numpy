@@ -1513,7 +1513,7 @@ def searchsorted(a, v, side='left', sorter=None):
     try:
         np.less.resolve_dtypes((dtype_a, dtype_v, None))
     except UFuncTypeError:
-        raise ValueError(
+        raise TypeError(
                 f"Incompatible types for searching: a ({dtype_a}) and v"
                 f" ({dtype_v})")
     return _wrapfunc(a, 'searchsorted', v, side=side, sorter=sorter)
