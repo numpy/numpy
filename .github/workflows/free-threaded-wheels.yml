@@ -76,9 +76,12 @@ jobs:
         buildplat:
           - [ubuntu-20.04, manylinux_x86_64, ""]
           - [ubuntu-20.04, musllinux_x86_64, ""]
-          # TODO: build numpy and set up Windows and MacOS
-          # cibuildwheel does not yet support Mac for free-threaded python
-          # windows is supported but numpy doesn't build on the image yet
+          - [macos-13, macosx_x86_64, openblas]
+          # targeting macos >= 14. Could probably build on macos-14, but it would be a cross-compile
+          - [macos-13, macosx_x86_64, accelerate]
+          - [macos-14, macosx_arm64, accelerate]  # always use accelerate
+          # TODO: set up Windows wheels windows is supported on cibuildwheel but
+          # numpy doesn't build on the image yet
         python: ["cp313t"]
     env:
       IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}
