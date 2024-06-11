@@ -13,7 +13,8 @@ class MeshGrid(Benchmark):
     timeout = 10
 
     def setup(self, size, ndims, ind, ndtype):
-        self.grid_dims = [(np.random.ranf(size)).astype(ndtype) for
+        rnd = np.random.RandomState(1864768776)
+        self.grid_dims = [(rnd.random_sample(size)).astype(ndtype) for
                           x in range(ndims)]
 
     def time_meshgrid(self, size, ndims, ind, ndtype):
