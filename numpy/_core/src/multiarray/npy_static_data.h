@@ -7,6 +7,9 @@ initialize_static_globals(void);
 NPY_NO_EXPORT int
 intern_strings(void);
 
+NPY_NO_EXPORT int
+verify_static_structs_initialized(void);
+
 typedef struct npy_interned_str_struct {
     PyObject *current_allocator;
     PyObject *array;
@@ -146,6 +149,8 @@ typedef struct npy_static_cdata_struct {
      * See the _MAX_LETTER and LETTER_TO_NUM macros in arraytypes.c.src.
      *
      * The smallest type number is ?, the largest is bounded by 'z'.
+     *
+     * This is initialized alongside the built-in dtypes
      */
     npy_int16 _letter_to_num['z' + 1 - '?'];
 } npy_static_cdata_struct;

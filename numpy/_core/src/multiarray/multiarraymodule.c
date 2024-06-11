@@ -5088,6 +5088,10 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
+    if (verify_static_structs_initialized() < 0) {
+        goto err;
+    }
+
     /*
      * Export the API tables
      */

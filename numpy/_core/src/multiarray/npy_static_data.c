@@ -12,112 +12,55 @@
 #include "numpy/arrayobject.h"
 #include "npy_import.h"
 #include "npy_static_data.h"
+#include "extobj.h"
 
 // static variables are zero-filled by default, no need to explicitly do so
 NPY_VISIBILITY_HIDDEN npy_interned_str_struct npy_interned_str;
 NPY_VISIBILITY_HIDDEN npy_static_pydata_struct npy_static_pydata;
 NPY_VISIBILITY_HIDDEN npy_static_cdata_struct npy_static_cdata;
 
+#define INTERN_STRING(struct_member, string)                             \
+    assert(npy_interned_str.struct_member == NULL);                      \
+    npy_interned_str.struct_member = PyUnicode_InternFromString(string); \
+    if (npy_interned_str.struct_member == NULL) {                        \
+        return -1;                                                       \
+    }                                                                    \
+
 NPY_NO_EXPORT int
 intern_strings(void)
 {
-    npy_interned_str.current_allocator = PyUnicode_InternFromString("current_allocator");
-    if (npy_interned_str.current_allocator == NULL) {
-        return -1;
-    }
-    npy_interned_str.array = PyUnicode_InternFromString("__array__");
-    if (npy_interned_str.array == NULL) {
-        return -1;
-    }
-    npy_interned_str.array_function = PyUnicode_InternFromString("__array_function__");
-    if (npy_interned_str.array_function == NULL) {
-        return -1;
-    }
-    npy_interned_str.array_struct = PyUnicode_InternFromString("__array_struct__");
-    if (npy_interned_str.array_struct == NULL) {
-        return -1;
-    }
-    npy_interned_str.array_priority = PyUnicode_InternFromString("__array_priority__");
-    if (npy_interned_str.array_priority == NULL) {
-        return -1;
-    }
-    npy_interned_str.array_interface = PyUnicode_InternFromString("__array_interface__");
-    if (npy_interned_str.array_interface == NULL) {
-        return -1;
-    }
-    npy_interned_str.array_ufunc = PyUnicode_InternFromString("__array_ufunc__");
-    if (npy_interned_str.array_ufunc == NULL) {
-        return -1;
-    }
-    npy_interned_str.array_wrap = PyUnicode_InternFromString("__array_wrap__");
-    if (npy_interned_str.array_wrap == NULL) {
-        return -1;
-    }
-    npy_interned_str.array_finalize = PyUnicode_InternFromString("__array_finalize__");
-    if (npy_interned_str.array_finalize == NULL) {
-        return -1;
-    }
-    npy_interned_str.implementation = PyUnicode_InternFromString("_implementation");
-    if (npy_interned_str.implementation == NULL) {
-        return -1;
-    }
-    npy_interned_str.axis1 = PyUnicode_InternFromString("axis1");
-    if (npy_interned_str.axis1 == NULL) {
-        return -1;
-    }
-    npy_interned_str.axis2 = PyUnicode_InternFromString("axis2");
-    if (npy_interned_str.axis2 == NULL) {
-        return -1;
-    }
-    npy_interned_str.like = PyUnicode_InternFromString("like");
-    if (npy_interned_str.like == NULL) {
-        return -1;
-    }
-    npy_interned_str.numpy = PyUnicode_InternFromString("numpy");
-    if (npy_interned_str.numpy == NULL) {
-        return -1;
-    }
-    npy_interned_str.where = PyUnicode_InternFromString("where");
-    if (npy_interned_str.where == NULL) {
-        return -1;
-    }
-    npy_interned_str.convert = PyUnicode_InternFromString("convert");
-    if (npy_interned_str.convert == NULL) {
-        return -1;
-    }
-    npy_interned_str.preserve = PyUnicode_InternFromString("preserve");
-    if (npy_interned_str.preserve == NULL) {
-        return -1;
-    }
-    npy_interned_str.convert_if_no_array = PyUnicode_InternFromString("convert_if_no_array");
-    if (npy_interned_str.convert_if_no_array == NULL) {
-        return -1;
-    }
-    npy_interned_str.cpu = PyUnicode_InternFromString("cpu");
-    if (npy_interned_str.cpu == NULL) {
-        return -1;
-    }
-    npy_interned_str.dtype = PyUnicode_InternFromString("dtype");
-    if (npy_interned_str.dtype == NULL) {
-        return -1;
-    }
-    npy_interned_str.array_err_msg_substr = PyUnicode_InternFromString(
+    INTERN_STRING(current_allocator, "current_allocator");
+    INTERN_STRING(array, "__array__");
+    INTERN_STRING(array_function, "__array_function__");
+    INTERN_STRING(array_struct, "__array_struct__");
+    INTERN_STRING(array_priority, "__array_priority__");
+    INTERN_STRING(array_interface, "__array_interface__");
+    INTERN_STRING(array_ufunc, "__array_ufunc__");
+    INTERN_STRING(array_wrap, "__array_wrap__");
+    INTERN_STRING(array_finalize, "__array_finalize__");
+    INTERN_STRING(implementation, "_implementation");
+    INTERN_STRING(axis1, "axis1");
+    INTERN_STRING(axis2, "axis2");
+    INTERN_STRING(like, "like");
+    INTERN_STRING(numpy, "numpy");
+    INTERN_STRING(where, "where");
+    INTERN_STRING(convert, "convert");
+    INTERN_STRING(preserve, "preserve");
+    INTERN_STRING(convert_if_no_array, "convert_if_no_array");
+    INTERN_STRING(cpu, "cpu");
+    INTERN_STRING(dtype, "dtype");
+    INTERN_STRING(
+            array_err_msg_substr,
             "__array__() got an unexpected keyword argument 'copy'");
-    if (npy_interned_str.array_err_msg_substr == NULL) {
-        return -1;
-    }
-    npy_interned_str.out = PyUnicode_InternFromString("out");
-    if (npy_interned_str.out == NULL) {
-        return -1;
-    }
-    npy_interned_str.__dlpack__ = PyUnicode_InternFromString("__dlpack__");
-    if (npy_interned_str.__dlpack__ == NULL) {
-        return -1;
-    }
-    npy_interned_str.pyvals_name = PyUnicode_InternFromString("UFUNC_PYVALS_NAME");
-    if (npy_interned_str.pyvals_name == NULL) {
-        return -1;
-    }
+    INTERN_STRING(out, "out");
+    INTERN_STRING(errmode_strings[0], "ignore");
+    INTERN_STRING(errmode_strings[1], "warn");
+    INTERN_STRING(errmode_strings[2], "raise");
+    INTERN_STRING(errmode_strings[3], "call");
+    INTERN_STRING(errmode_strings[4], "print");
+    INTERN_STRING(errmode_strings[5], "log");
+    INTERN_STRING(__dlpack__, "__dlpack__");
+    INTERN_STRING(pyvals_name, "UFUNC_PYVALS_NAME");
     return 0;
 }
 
@@ -149,7 +92,13 @@ intern_strings(void)
 NPY_NO_EXPORT int
 initialize_static_globals(void)
 {
-    // cached reference to objects defined in python
+    /*
+     * Initialize contents of npy_static_pydata struct
+     *
+     * This struct holds cached references to python objects
+     * that we want to keep alive for the lifetime of the
+     * module for performance reasons
+     */
 
     IMPORT_GLOBAL("math", "floor",
                   npy_static_pydata.math_floor_func);
@@ -219,6 +168,32 @@ initialize_static_globals(void)
     }
     Py_DECREF(tmp);
 
+    npy_static_pydata.kwnames_is_copy = Py_BuildValue("(s)", "copy");
+    if (npy_static_pydata.kwnames_is_copy == NULL) {
+        return -1;
+    }
+
+    npy_static_pydata.one_obj = PyLong_FromLong((long) 1);
+    if (npy_static_pydata.one_obj == NULL) {
+        return -1;
+    }
+
+    npy_static_pydata.zero_obj = PyLong_FromLong((long) 0);
+    if (npy_static_pydata.zero_obj == NULL) {
+        return -1;
+    }
+
+    /*
+     * Initialize contents of npy_static_cdata struct
+     *
+     * Note that some entries are initialized elsewhere. Care
+     * must be taken to ensure all entries are initialized during
+     * module initialization and immutable thereafter.
+     *
+     * This struct holds global static caches. These are set
+     * up this way for performance reasons.
+     */
+
     PyObject *flags = PySys_GetObject("flags");  /* borrowed object */
     if (flags == NULL) {
         PyErr_SetString(PyExc_AttributeError, "cannot get sys.flags");
@@ -248,22 +223,40 @@ initialize_static_globals(void)
         }
     }
 
-    npy_static_pydata.kwnames_is_copy = Py_BuildValue("(s)", "copy");
-    if (npy_static_pydata.kwnames_is_copy == NULL) {
-        return -1;
-    }
-
-    npy_static_pydata.one_obj = PyLong_FromLong((long) 1);
-    if (npy_static_pydata.one_obj == NULL) {
-        return -1;
-    }
-
-    npy_static_pydata.zero_obj = PyLong_FromLong((long) 0);
-    if (npy_static_pydata.zero_obj == NULL) {
-        return -1;
-    }
-
     return 0;
 }
+/*
+ * Verifies all entries in npy_interned_str and npy_static_pydata are
+ * non-NULL.
+ *
+ * Called at the end of initialization for _multiarray_umath. Some
+ * entries are initialized outside of this file because they depend on
+ * items that are initialized late in module initialization but they
+ * should all be initialized by the time this function is called.
+ */
 
-  
+NPY_NO_EXPORT int
+verify_static_structs_initialized(void) {
+    // verify all entries in npy_interned_str are filled in
+    for (int i=0; i < (sizeof(npy_interned_str_struct)/sizeof(PyObject *)); i++) {
+        if (*(((PyObject **)&npy_interned_str) + i) == NULL) {
+            PyErr_Format(
+                    PyExc_SystemError,
+                    "NumPy internal error: NULL entry detected in "
+                    "npy_interned_str at index %d", i);
+            return -1;
+        }
+    }
+
+    // verify all entries in npy_static_pydata are filled in
+    for (int i=0; i < (sizeof(npy_static_pydata_struct)/sizeof(PyObject *)); i++) {
+        if (*(((PyObject **)&npy_static_pydata) + i) == NULL) {
+            PyErr_Format(
+                    PyExc_SystemError,
+                    "NumPy internal error: NULL entry detected in "
+                    "npy_static_pydata at index %d", i);
+            return -1;
+        }
+    }
+    return 0;
+}

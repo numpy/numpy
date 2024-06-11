@@ -35,10 +35,6 @@
 #define UFUNC_SHIFT_UNDERFLOW    6
 #define UFUNC_SHIFT_INVALID      9
 
-/* The python strings for the above error modes defined in extobj.h */
-const char *errmode_cstrings[] = {
-        "ignore", "warn", "raise", "call", "print", "log"};
-
 /* Default user error mode (underflows are ignored, others warn) */
 #define UFUNC_ERR_DEFAULT                               \
         (UFUNC_ERR_WARN << UFUNC_SHIFT_DIVIDEBYZERO) +  \
@@ -144,18 +140,6 @@ fetch_curr_extobj_state(npy_extobj *extobj)
 NPY_NO_EXPORT int
 init_extobj(void)
 {
-    /*
-     * First initialize the string constants we need to parse `errstate()`
-     * inputs.
-     */
-    for (int i = 0; i <= UFUNC_ERR_LOG; i++) {
-        npy_interned_str.errmode_strings[i] = PyUnicode_InternFromString(
-                errmode_cstrings[i]);
-        if (npy_interned_str.errmode_strings[i] == NULL) {
-            return -1;
-        }
-    }
-
     npy_static_pydata.default_extobj_capsule = make_extobj_capsule(
             NPY_BUFSIZE, UFUNC_ERR_DEFAULT, Py_None);
     if (npy_static_pydata.default_extobj_capsule == NULL) {
