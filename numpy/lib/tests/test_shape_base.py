@@ -115,10 +115,13 @@ class TestPutAlongAxis:
         # sanity check
         a = a_base.copy()
         put_along_axis(a, indices, values, axis=0)
+        assert np.all(a == [[2, 2, 2], [1, 1, 1]])
 
         # invalid indices
         a = a_base.copy()
-        assert_raises(ValueError, put_along_axis, a, indices, values, axis=None)
+        with assert_raises(ValueError) as exc:
+            put_along_axis(a, indices, values, axis=None)
+        assert "single dimension" in str(exc.exception)
 
 
 
