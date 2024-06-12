@@ -7,6 +7,7 @@ abc module from the stdlib, hence it is only available for Python >= 2.6.
 
 """
 import os
+import sys
 import abc
 import numbers
 from typing import Callable
@@ -106,7 +107,7 @@ class ABCPolyBase(abc.ABC):
     # the full set of superscripts and subscripts, including common/default
     # fonts in Windows shells/terminals. Therefore, default to ascii-only
     # printing on windows.
-    _use_unicode = not os.name == 'nt'
+    _use_unicode = os.name != 'nt' or 'ipykernel' in sys.modules
 
     @property
     def symbol(self):
