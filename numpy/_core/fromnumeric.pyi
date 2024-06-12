@@ -89,6 +89,15 @@ def take(
     mode: _ModeKind = ...,
 ) -> _ArrayType: ...
 
+def top_k(
+    a: ArrayLike,
+    k: int,
+    /,
+    *,
+    axis: None | int = ...,
+    largest: bool = ...,
+) -> tuple[NDArray[Any], NDArray[intp]]: ...
+
 @overload
 def reshape(
     a: _ArrayLike[_SCT],
