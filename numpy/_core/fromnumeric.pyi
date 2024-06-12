@@ -200,6 +200,15 @@ def take[ArrayT: np.ndarray](
     mode: _ModeKind = "raise",
 ) -> ArrayT: ...
 
+def top_k(
+    a: ArrayLike,
+    k: int,
+    /,
+    *,
+    axis: None | int = ...,
+    largest: bool = ...,
+) -> tuple[NDArray[Any], NDArray[intp]]: ...
+
 # keep in sync with `ma.core.reshape`
 @overload  # shape: index
 def reshape[ScalarT: np.generic](
