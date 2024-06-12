@@ -3177,11 +3177,11 @@ class TestMethods:
         self.assert_partitioned(np.array(d)[p],[1])
 
     def assert_top_k(self, a, axis: int, x, y):
-        x_value, x_indices = x
-        y_value, y_indices = y
+        x_value, x_ind = x
+        y_value, y_ind = y
         assert_equal(np.sort(x_value, axis=axis), np.sort(y_value, axis=axis))
-        assert_equal(np.sort(x_indices, axis=axis), np.sort(y_indices, axis=axis))
-        assert_equal(np.take_along_axis(a, x_indices, axis=axis), x_value)
+        assert_equal(np.sort(x_ind, axis=axis), np.sort(y_ind, axis=axis))
+        assert_equal(np.take_along_axis(a, x_ind, axis=axis), x_value)
 
     def test_top_k(self):
 
