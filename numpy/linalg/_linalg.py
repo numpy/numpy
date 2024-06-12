@@ -3275,8 +3275,8 @@ def cross2d(x1, x2, /, *, axis=-1):
         raise ValueError("At least one array has zero dimension")
 
     # Check axis_x1 and axis_x2 are within bounds
-    axis1 = normalize_axis_index(axis1, x1.ndim, msg_prefix='x1')
-    axis2 = normalize_axis_index(axis2, x2.ndim, msg_prefix='x2')
+    axis1 = normalize_axis_index(axis1, x1.ndim, msg_prefix='axis for x1')
+    axis2 = normalize_axis_index(axis2, x2.ndim, msg_prefix='axis for x2')
 
     # Move working axis to the end of the shape
     x1 = moveaxis(x1, axis1, -1)
@@ -3289,26 +3289,8 @@ def cross2d(x1, x2, /, *, axis=-1):
             "dimensional instead."
         )
 
-    # Create the output array
-    shape = broadcast(x1[..., 0], x2[..., 0]).shape
-    dtype = promote_types(x1.dtype, x2.dtype)
-    cp = empty(shape, dtype)
-
-    # recast arrays as dtype
-    x1 = x1.astype(dtype)
-    x2 = x2.astype(dtype)
-
-    # create local aliases for readability
-    x1_0 = x1[..., 0]
-    x1_1 = x1[..., 1]
-    x2_0 = x2[..., 0]
-    x2_1 = x2[..., 1]
-
-    # x1_0 * x2_1 - x1_1 * x2_0
-    multiply(x1_0, x2_1, out=cp)
-    cp -= x1_1 * x2_0
-    return cp
-
+    result = x1[..., 0] * x2[..., 1] - x1[..., 1] * x2[..., 0]
+    return result
 
 # matmul
 
