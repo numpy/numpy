@@ -272,27 +272,27 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose, *args, **kwargs):
     '--verbose', '-v', is_flag=True, default=False
 )
 @click.pass_context
-def smoke_docs(ctx, pytest_args, n_jobs, verbose, *args, **kwargs):
+def check_docs(ctx, pytest_args, n_jobs, verbose, *args, **kwargs):
     """🔧 Run doctests of objects in the public API.
 
     PYTEST_ARGS are passed through directly to pytest, e.g.:
 
-      spin smoke-docs -- --pdb
+      spin check-docs -- --pdb
 
     To run tests on a directory:
 
      \b
-     spin smoke-docs numpy/linalg
+     spin check-docs numpy/linalg
 
     To report the durations of the N slowest doctests:
 
-      spin smoke-docs -- --durations=N
+      spin check-docs -- --durations=N
 
     To run doctests that match a given pattern:
 
      \b
-     spin smoke-docs -- -k "slogdet"
-     spin smoke-docs numpy/linalg -- -k "det and not slogdet"
+     spin check-docs -- -k "slogdet"
+     spin check-docs numpy/linalg -- -k "det and not slogdet"
 
     \b
     Note:
