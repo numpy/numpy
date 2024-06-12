@@ -8144,6 +8144,37 @@ def correlate(a, v, mode='valid', propagate_mask=True):
     See Also
     --------
     numpy.correlate : Equivalent function in the top-level NumPy module.
+
+    Examples
+    --------
+    Basic correlation:
+
+    >>> a = np.ma.array([1, 2, 3])
+    >>> v = np.ma.array([0, 1, 0])
+    >>> np.ma.correlate(a, v, mode='valid')
+    masked_array(data=[2],
+                 mask=[False],
+           fill_value=999999)
+
+    Correlation with masked elements:
+
+    >>> a = np.ma.array([1, 2, 3], mask=[False, True, False])
+    >>> v = np.ma.array([0, 1, 0])
+    >>> np.ma.correlate(a, v, mode='valid', propagate_mask=True)
+    masked_array(data=[--],
+                 mask=[ True],
+           fill_value=999999,
+                dtype=int64)
+
+    Correlation with different modes and mixed array types:
+
+    >>> a = np.ma.array([1, 2, 3])
+    >>> v = np.ma.array([0, 1, 0])
+    >>> np.ma.correlate(a, v, mode='full')
+    masked_array(data=[0, 1, 2, 3, 0],
+                 mask=[False, False, False, False, False],
+           fill_value=999999)
+
     """
     return _convolve_or_correlate(np.correlate, a, v, mode, propagate_mask)
 
