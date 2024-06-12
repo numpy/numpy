@@ -2353,7 +2353,7 @@ class TestCross2d:
 
     def test_ValueError(self):
         u = np.array([1, 2, 3])
-        v = np.array([4,5])
+        v = np.array([4, 5])
         assert_raises(ValueError, np.linalg.cross2d, u, v)
 
     def test_uint8_int32_mixed_dtypes(self):
