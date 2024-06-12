@@ -236,6 +236,22 @@ class TestBuiltin:
         with pytest.raises(ValueError):
             type(np.dtype("U"))(-1)
 
+        # OverflowError on 32 bit
+        with pytest.raises((TypeError, OverflowError)):
+            # see gh-26556
+            type(np.dtype("S"))(2**61)
+
+        with pytest.raises(TypeError):
+            np.dtype("S1234hello")
+
+    def test_leading_zero_parsing(self):
+        dt1 = np.dtype('S010')
+        dt2 = np.dtype('S10')
+
+        assert dt1 == dt2
+        assert repr(dt1) == "dtype('S10')"
+        assert dt1.itemsize == 10
+
 
 class TestRecord:
     def test_equivalent_record(self):
