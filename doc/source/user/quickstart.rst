@@ -459,7 +459,7 @@ operate elementwise on an array, producing an array as output.
     `corrcoef`,
     `cov`,
     `cross`,
-    `cross2d`,
+    `~linalg.cross2d`,
     `cumprod`,
     `cumsum`,
     `diff`,
@@ -1016,10 +1016,11 @@ Basic Statistics
     `var`
 Basic Linear Algebra
     `cross`,
-    `cross2d`,
+    `~linalg.cross2d`,
     `dot`,
     `outer`,
-    `linalg.svd`,
+    `~linalg.svd`,
+    `~linalg.svdvals`,
     `vdot`
 
 Less basic

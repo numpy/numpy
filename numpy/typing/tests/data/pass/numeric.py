@@ -66,9 +66,6 @@ np.moveaxis(A, (0, 1), (1, 2))
 np.cross(B, A)
 np.cross(A, A)
 
-np.cross2d(A[:,:2,:2].tolist(), A[:,:2,:2])
-np.cross2d(A[:,:2,:2], A[:,:2,:2])
-
 np.indices([0, 1, 2])
 np.indices([0, 1, 2], sparse=False)
 np.indices([0, 1, 2], sparse=True)

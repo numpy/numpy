@@ -47,7 +47,7 @@ __all__ = [
     'can_cast', 'promote_types', 'min_scalar_type',
     'result_type', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
     'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
-    'rollaxis', 'moveaxis', 'cross', 'cross2d', 'tensordot', 'little_endian',
+    'rollaxis', 'moveaxis', 'cross', 'tensordot', 'little_endian',
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
     'identity', 'allclose', 'putmask',
@@ -1557,7 +1557,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     outer : Outer product.
     linalg.cross : An Array API compatible variation of `numpy.cross`,
                    which accepts (arrays of) 3-element vectors only.
-    cross2d : A version for 2-element vectors only.
+    linalg.cross2d : A version for 2-element vectors only.
     ix_ : Construct index arrays.
 
     Notes
@@ -1590,8 +1590,8 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     >>> np.cross(x, y)
     array([12, -6, -3])
 
-    For both vectors with dimension 2, either pad with zeros or use `cross2d`.
-    Notice that the output will be a 3d vector.
+    For both vectors with dimension 2, pad with zeros to get a
+    3d vector, or use `linalg.cross2d`.
 
     >>> x = [1, 2]
     >>> y = [4, 5]
@@ -1601,7 +1601,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     array([ 0,  0, -3])
     >>> np.cross(x_3, y_3)[2:]
     array([-3])
-    >>> np.cross2d(x, y)
+    >>> np.linalg.cross2d(x, y)
     array([-3])
 
     Multiple vector cross-products. Note that the direction of the cross
@@ -1657,8 +1657,8 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
         # Deprecated in NumPy 2.0, 2023-09-26
         warnings.warn(
             "Arrays of 2-dimensional vectors are deprecated. "
-            "Use arrays of 3-dimensional vectors instead, or "
-            "use cross2d for arrays of all 2-dimensional vectors. "
+            "Use arrays of 3-dimensional vectors instead, or use "
+            "`linalg.cross2d` for arrays of all 2-dimensional vectors. "
             "(deprecated in NumPy 2.0)",
             DeprecationWarning, stacklevel=2
         )
@@ -1733,147 +1733,6 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
             cp2 -= a1 * b0
 
     return moveaxis(cp, -1, axisc)
-
-
-def _cross2d_dispatcher(a, b, axisa=None, axisb=None, axis=None):
-    return (a, b)
-
-
-@array_function_dispatch(_cross2d_dispatcher)
-def cross2d(a, b, axisa=-1, axisb=-1, axis=None):
-    """
-    Return the cross product of two (arrays of) vectors of dimension 2.
-
-    This is a dimension 2 version of `cross`.
-    As the dimension of both `a` and `b` is 2, the third component of the
-    input vectors are assumed to be zero.
-    The cross product is calculated accordingly and
-    the z-component of the cross product is returned as a scalar.
-
-    Parameters
-    ----------
-    a : array_like
-        Components of the first vector(s).
-    b : array_like
-        Components of the second vector(s).
-    axisa : int, optional
-        Axis of `a` that defines the vector(s).  By default, the last axis.
-    axisb : int, optional
-        Axis of `b` that defines the vector(s).  By default, the last axis.
-    axis : int, optional
-        If defined, the axis of `a` and `b` that defines the vector(s).
-        Overrides `axisa` and `axisb`.
-
-    Returns
-    -------
-    c : ndarray
-        Scalar cross product(s) of 2d vectors.
-
-    Raises
-    ------
-    ValueError
-        When the dimension of the vector(s) in `a` and/or `b` does not
-        equal 2.
-
-    See Also
-    --------
-    inner : Inner product
-    outer : Outer product.
-    cross : Vector cross product of 3 dimensional vectors.
-    linalg.cross2d : An Array API compatible variation of `numpy.cross2d`,
-                     which accepts (arrays of) 2-element vectors only.
-    linalg.det: A similar floating point option.
-
-    Notes
-    -----
-    .. versionadded:: 2.1.0
-
-    Supports full broadcasting of the inputs.
-
-    Examples
-    --------
-    Scalar cross product of 2-dimensional vectors.
-
-    >>> x = [1, 2]
-    >>> y = [4, 5]
-    >>> np.cross2d(x, y)
-    array(-3)
-
-    Multiple scalar cross products. Note that the direction of the cross
-    product vector is defined by the *right-hand rule* and
-    the cross product of a vector with itself is always zero.
-
-    >>> x = np.array([[1, 2], [3, 4], [5, 6]])
-    >>> y = np.array([[3, 4], [1, 2], [5, 6]])
-    >>> np.cross2d(x, y)
-    array([-2,  2,  0])
-
-    The choice of axis matters.
-
-    >>> u = [[1, 2], [3, 4]]
-    >>> v = [[5, 6], [7, 8]]
-    >>> np.cross2d(u, v)
-    array([-4, -4])
-    >>> np.cross2d(u, v, axisa=0)
-    array([-9, -12])
-    >>> np.cross2d(u, v, axisb=0)
-    array([-3, 0])
-    >>> np.cross2d(u, v, axis=0)
-    array([-8, -8])
-
-    The scalar cross product of 2-dimensional vectors is the determinant of
-    a 2 by 2 matrix whose rows (or columns) are those vectors. Here we
-    stack an array of vectors to illustrate the similarlity. Note the subtle
-    difference where `det` returns a float even with integer inputs.
-
-    >>> u = [[1, 2], [3, 4], [-1, 5]]
-    >>> v = [[5, 6], [7, 8], [-2, 9]]
-    >>> np.cross2d(u, v)
-    array([-4, -4,  1])
-    >>> stacked_array = np.stack((u, v), axis=1)
-    >>> np.linalg.det(stacked_array)
-    array([-4., -4.,  1.])
-
-    """
-    if axis is not None:
-        axisa, axisb = (axis,) * 2
-    a = asarray(a)
-    b = asarray(b)
-
-    if (a.ndim < 1) or (b.ndim < 1):
-        raise ValueError("At least one array has zero dimension")
-
-    # Check axisa and axisb are within bounds
-    axisa = normalize_axis_index(axisa, a.ndim, msg_prefix='axisa')
-    axisb = normalize_axis_index(axisb, b.ndim, msg_prefix='axisb')
-
-    # Move working axis to the end of the shape
-    a = moveaxis(a, axisa, -1)
-    b = moveaxis(b, axisb, -1)
-    msg = ("incompatible dimensions for cross2d product\n"
-           "(dimension must be 2)")
-    if a.shape[-1] != 2 or b.shape[-1] != 2:
-        raise ValueError(msg)
-
-    # Create the output array
-    shape = broadcast(a[..., 0], b[..., 0]).shape
-    dtype = promote_types(a.dtype, b.dtype)
-    cp = empty(shape, dtype)
-
-    # recast arrays as dtype
-    a = a.astype(dtype)
-    b = b.astype(dtype)
-
-    # create local aliases for readability
-    a0 = a[..., 0]
-    a1 = a[..., 1]
-    b0 = b[..., 0]
-    b1 = b[..., 1]
-
-    # a0 * b1 - a1 * b0
-    multiply(a0, b1, out=cp)
-    cp -= a1 * b0
-    return cp
 
 
 little_endian = (sys.byteorder == 'little')

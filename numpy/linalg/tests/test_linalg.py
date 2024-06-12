@@ -2315,12 +2315,54 @@ def test_cross():
         np.linalg.cross(x_2dim, x_2dim)
 
 
-def test_cross2d():
-    x = np.arange(4).reshape((2, 2))
-    actual = np.linalg.cross2d(x, x + 1)
-    expected = np.array([-1, -1])
+class TestCross2d:
 
-    assert_equal(actual, expected)
+    def test_basic_cross2d(self):
+        x = np.arange(4).reshape((2, 2))
+        actual = np.linalg.cross2d(x, x + 1)
+        expected = np.array([-1, -1])
+
+        assert_equal(actual, expected)
+
+    def test_2x2_anticommutativity(self):
+        u = [1, 2]
+        v = [3, 4]
+        z = -2
+        cp = np.linalg.cross2d(u, v)
+        assert_equal(cp, z)
+        cp = np.linalg.cross2d(v, u)
+        assert_equal(cp, -z)
+
+    def test_broadcasting(self):
+        # Ticket #2624 (Trac #2032)
+        u = np.tile([1, 2], (11, 1))
+        v = np.tile([3, 4], (11, 1))
+        z = -2
+        assert_equal(np.linalg.cross2d(u, v), z)
+        assert_equal(np.linalg.cross2d(v, u), -z)
+        assert_equal(np.linalg.cross2d(u, u), 0)
+
+    def test_broadcasting_shapes(self):
+        u = np.ones((2, 1, 2))
+        v = np.ones((5, 2))
+        assert_equal(np.linalg.cross2d(u, v).shape, (2, 5))
+        u = np.ones((10, 2, 5))
+        v = np.ones((2, 5))
+        assert_equal(np.linalg.cross2d(u, v, axis=-2).shape, (10, 5))
+        assert_raises(AxisError, np.linalg.cross2d, u, v, axis=-5)
+
+    def test_ValueError(self):
+        u = np.array([1, 2, 3])
+        v = np.array([4,5])
+        assert_raises(ValueError, np.linalg.cross2d, u, v)
+
+    def test_uint8_int32_mixed_dtypes(self):
+        # regression test for gh-19138, adapted from cross
+        u = np.array([[195, 8]], np.uint8)
+        v = np.array([250, 166], np.int32)
+        z = np.array([-30370], dtype=np.int32)
+        assert_equal(np.linalg.cross2d(v, u), z)
+        assert_equal(np.linalg.cross2d(u, v), -z)
 
 
 def test_tensordot():

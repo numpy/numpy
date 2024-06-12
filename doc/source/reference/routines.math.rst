@@ -71,7 +71,6 @@ Sums, products, differences
    ediff1d
    gradient
    cross
-   cross2d
 
 Exponents and logarithms
 ------------------------

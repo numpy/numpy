@@ -23,16 +23,15 @@ from typing import NamedTuple, Any
 
 from numpy._utils import set_module
 from numpy._core import (
-    array, asarray, zeros, empty, empty_like, intc, single, double,
+    array, asarray, broadcast, zeros, empty, empty_like, intc, single, double,
     csingle, cdouble, inexact, complexfloating, newaxis, all, inf, dot,
     add, multiply, sqrt, sum, isfinite, finfo, errstate, moveaxis, amin,
     amax, prod, abs, atleast_2d, intp, asanyarray, object_, matmul,
     swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
     reciprocal, overrides, diagonal as _core_diagonal, trace as _core_trace,
-    cross as _core_cross, cross2d as _core_cross2d, outer as _core_outer,
-    tensordot as _core_tensordot, matmul as _core_matmul,
-    matrix_transpose as _core_matrix_transpose,
-    transpose as _core_transpose, vecdot as _core_vecdot,
+    cross as _core_cross, outer as _core_outer, tensordot as _core_tensordot,
+    matmul as _core_matmul, matrix_transpose as _core_matrix_transpose,
+    transpose as _core_transpose, vecdot as _core_vecdot, promote_types
 )
 from numpy._globals import _NoValue
 from numpy.lib._twodim_base_impl import triu, eye
@@ -3184,14 +3183,19 @@ def _cross2d_dispatcher(x1, x2, /, *, axis=None):
 @array_function_dispatch(_cross2d_dispatcher)
 def cross2d(x1, x2, /, *, axis=-1):
     """
-    Returns the cross product of 2-element vectors.
+    Returns the cross product of two (arrays of) vectors of dimension 2.
+
+    This is a dimension 2 version of `linalg.cross`.
+    As the dimension of both `x1` and `x2` is 2, the third
+    component of each input vector is assumed to be zero.
+    The z-component of the cross product is calculated
+    accordingly and returned as a scalar.
 
     If ``x1`` and/or ``x2`` are multi-dimensional arrays, then
     the scalar cross-product of each pair of corresponding 2-element vectors
     is independently computed.
 
-    This function is Array API compatible, contrary to
-    :func:`numpy.cross2d`.
+    This function is Array API compatible.
 
     Parameters
     ----------
@@ -3211,34 +3215,99 @@ def cross2d(x1, x2, /, *, axis=-1):
     out : ndarray
         An array containing the scalar cross products.
 
+    Raises
+    ------
+    ValueError
+        When the dimension of the vector(s) in `x1` and/or `x2` does not
+        equal 2.
+
     See Also
     --------
-    numpy.cross2d
+    cross : Vector cross product of 3 dimensional vectors
+    inner : Inner product
+    outer : Outer product
+    linalg.det: A similar floating point option
 
     Examples
     --------
+    Scalar cross product of 2-dimensional vectors:
 
-    Remember to use np.arrays and not lists.
-
-    >>> x = np.array([1, 2])
-    >>> y = np.array([4, 5])
+    >>> x = [1, 2]
+    >>> y = [4, 5]
     >>> np.linalg.cross2d(x, y)
     array(-3)
 
-    Verify that `numpy.cross2d` gives the same result.
+    Multiple scalar cross products. Note the direction of the cross
+    product is defined by the *right-hand rule*, and
+    the cross product of a vector with itself is zero.
 
-    >>> np.cross2d(x, y)
-    array(-3)
+    >>> x = np.array([[1, 2], [3, 4], [5, 6]])
+    >>> y = np.array([[3, 4], [1, 2], [5, 6]])
+    >>> np.linalg.cross2d(x, y)
+    array([-2,  2,  0])
+
+    The choice of axis matters:
+
+    >>> u = [[1, 2], [3, 4]]
+    >>> v = [[5, 6], [7, 8]]
+    >>> np.linalg.cross2d(u, v)
+    array([-4, -4])
+    >>> np.linalg.cross2d(u, v, axis=0)
+    array([-8, -8])
+
+    Compare `~linalg.cross2d` with `~linalg.det`:
+
+    >>> u = [[1, 2], [3, 4], [-1, 5]]
+    >>> v = [[5, 6], [7, 8], [-2, 9]]
+    >>> np.linalg.cross2d(u, v)
+    array([-4, -4,  1])
+    >>> stacked_array = np.stack((u, v), axis=1)
+    >>> np.linalg.det(stacked_array)
+    array([-4., -4.,  1.])
 
     """
-    if x1.shape[axis] != 2 or x2.shape[axis] != 2:
+    x1 = asarray(x1)
+    x2 = asarray(x2)
+
+    axis1, axis2 = (axis,) * 2
+ 
+    if (x1.ndim < 1) or (x2.ndim < 1):
+        raise ValueError("At least one array has zero dimension")
+
+    # Check axis_x1 and axis_x2 are within bounds
+    axis1 = normalize_axis_index(axis1, x1.ndim, msg_prefix='x1')
+    axis2 = normalize_axis_index(axis2, x2.ndim, msg_prefix='x2')
+
+    # Move working axis to the end of the shape
+    x1 = moveaxis(x1, axis1, -1)
+    x2 = moveaxis(x2, axis2, -1)
+
+    if x1.shape[-1] != 2 or x2.shape[-1] != 2:
         raise ValueError(
             "Both input arrays must be (arrays of) 2-dimensional vectors, "
-            f"but they are {x1.shape[axis]} and {x2.shape[axis]} "
+            f"but they are {x1.shape[-1]} and {x2.shape[-1]} "
             "dimensional instead."
         )
 
-    return _core_cross2d(x1, x2, axis=axis)
+    # Create the output array
+    shape = broadcast(x1[..., 0], x2[..., 0]).shape
+    dtype = promote_types(x1.dtype, x2.dtype)
+    cp = empty(shape, dtype)
+
+    # recast arrays as dtype
+    x1 = x1.astype(dtype)
+    x2 = x2.astype(dtype)
+
+    # create local aliases for readability
+    x1_0 = x1[..., 0]
+    x1_1 = x1[..., 1]
+    x2_0 = x2[..., 0]
+    x2_1 = x2[..., 1]
+
+    # x1_0 * x2_1 - x1_1 * x2_0
+    multiply(x1_0, x2_1, out=cp)
+    cp -= x1_1 * x2_0
+    return cp
 
 
 # matmul

@@ -1,6 +1,5 @@
-New functions `numpy.cross2d` and `numpy.linalg.cross2d`
+New function `numpy.linalg.cross2d`
 --------------------------------------------------------
-These two functions provide an option for those using only 2-dimensional
+This function provides an option for those using only 2-dimensional
 arrays in `numpy.cross` (2d vectors were deprecated in NumPy 2.0).
-The function `numpy.linalg.cross2d` is an Array API compatible version of
-`numpy.cross2d`.
+The function `numpy.linalg.cross2d` is Array API compatible.

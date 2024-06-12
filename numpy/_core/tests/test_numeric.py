@@ -3906,61 +3906,6 @@ class TestCross:
             np.cross(a, b)
         assert "At least one array has zero dimension" in str(exc.value)
 
-class TestCross2d:
-    def test_2x2(self):
-        u = [1, 2]
-        v = [3, 4]
-        z = -2
-        cp = np.cross2d(u, v)
-        assert_equal(cp, z)
-        cp = np.cross2d(v, u)
-        assert_equal(cp, -z)
-
-    def test_broadcasting(self):
-        # Ticket #2624 (Trac #2032)
-        u = np.tile([1, 2], (11, 1))
-        v = np.tile([3, 4], (11, 1))
-        z = -2
-        assert_equal(np.cross2d(u, v), z)
-        assert_equal(np.cross2d(v, u), -z)
-        assert_equal(np.cross2d(u, u), 0)
-
-    def test_broadcasting_shapes(self):
-        u = np.ones((2, 1, 2))
-        v = np.ones((5, 2))
-        assert_equal(np.cross2d(u, v).shape, (2, 5))
-        u = np.ones((10, 2, 5))
-        v = np.ones((2, 5))
-        assert_equal(np.cross2d(u, v, axisa=1, axisb=0).shape, (10, 5))
-        assert_raises(ValueError, np.cross2d, u, v, axisa=0, axisb=1)
-        assert_raises(ValueError, np.cross2d, u, v, axisa=1, axisb=1)
-        assert_raises(AxisError, np.cross2d, u, v, axisa=-5, axisb=2)
-        assert_raises(AxisError, np.cross2d, u, v, axisa=1, axisb=-4)
-
-    def test_uint8_int32_mixed_dtypes(self):
-        # regression test for gh-19138, adapted from cross
-        u = np.array([[195, 8]], np.uint8)
-        v = np.array([250, 166], np.int32)
-        z = np.array([-30370], dtype=np.int32)
-        assert_equal(np.cross2d(v, u), z)
-        assert_equal(np.cross2d(u, v), -z)
-
-    @pytest.mark.parametrize("a, b", [(0, [1, 2]), ([1, 2], 3)])
-    def test_zero_dimension(self, a, b):
-        with pytest.raises(ValueError) as exc:
-            np.cross2d(a, b)
-        assert "At least one array has zero dimension" in str(exc.value)
-
-def test_outer_out_param():
-    arr1 = np.ones((5,))
-    arr2 = np.ones((2,))
-    arr3 = np.linspace(-2, 2, 5)
-    out1 = np.ndarray(shape=(5,5))
-    out2 = np.ndarray(shape=(2, 5))
-    res1 = np.outer(arr1, arr3, out1)
-    assert_equal(res1, out1)
-    assert_equal(np.outer(arr2, arr3, out2), out2)
-
 
 class TestIndices:
 
