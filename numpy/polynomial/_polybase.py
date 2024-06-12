@@ -281,25 +281,25 @@ class ABCPolyBase(abc.ABC):
         Returns
         -------
         coef
-            The coefficients of`other` if it is a compatible instance,
-            of ABCPolyBase, otherwise `other`.
+            The coefficients of `other` if it is a compatible instance
+            of :class:`ABCPolyBase`, otherwise `other`.
 
         Raises
         ------
         TypeError
-            When `other` is an incompatible instance of ABCPolyBase.
+            When `other` is an incompatible instance of :class:`ABCPolyBase`.
 
         """
-        if isinstance(other, ABCPolyBase):
-            if not isinstance(other, self.__class__):
-                raise TypeError("Polynomial types differ")
-            elif not np.all(self.domain == other.domain):
+        if isinstance(other, self.__class__):
+            if not (self.domain == other.domain).all():
                 raise TypeError("Domains differ")
-            elif not np.all(self.window == other.window):
+            elif not (self.window == other.window).all():
                 raise TypeError("Windows differ")
             elif self.symbol != other.symbol:
                 raise ValueError("Polynomial symbols differ")
             return other.coef
+        elif isinstance(other, ABCPolyBase):
+            raise TypeError("Polynomial types differ")
         return other
 
     def __init__(self, coef, domain=None, window=None, symbol='x'):
