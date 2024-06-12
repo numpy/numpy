@@ -1590,8 +1590,8 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     >>> np.cross(x, y)
     array([12, -6, -3])
 
-    For both vectors with dimension 2, pad with zeros to get a
-    3d vector, or use `linalg.cross2d`.
+    For both vectors with dimension 2, either pad with zeros
+    or use `linalg.cross2d`.
 
     >>> x = [1, 2]
     >>> y = [4, 5]
@@ -1599,10 +1599,10 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     >>> y_3 = np.pad(y, (0, 1))
     >>> np.cross(x_3, y_3)
     array([ 0,  0, -3])
-    >>> np.cross(x_3, y_3)[2:]
-    array([-3])
+    >>> np.cross(x_3, y_3)[2:].squeeze()
+    array(-3)
     >>> np.linalg.cross2d(x, y)
-    array([-3])
+    array(-3)
 
     Multiple vector cross-products. Note that the direction of the cross
     product vector is defined by the *right-hand rule*.
@@ -1632,6 +1632,16 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     array([[-24,  48, -24],
            [-30,  60, -30],
            [-36,  72, -36]])
+
+    Here's a one-line option for 2D arrays to avoid warnings.
+    The function `linalg.cross2d` uses this approach and
+    ensures arraylike objects are treated as arrays.
+
+    >>> x = np.arange(24).reshape((3,4,2))
+    >>> y = np.arange(8).reshape((4,2))
+    >>> cross2d = x[..., 0] * y[..., 1] - x[..., 1] * y[..., 0]
+    >>> np.all(np.cross(x,y) == cross2d)
+    True
 
     """
     if axis is not None:

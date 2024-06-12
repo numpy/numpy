@@ -23,7 +23,7 @@ from typing import NamedTuple, Any
 
 from numpy._utils import set_module
 from numpy._core import (
-    array, asarray, broadcast, zeros, empty, empty_like, intc, single, double,
+    array, asarray, zeros, empty, empty_like, intc, single, double,
     csingle, cdouble, inexact, complexfloating, newaxis, all, inf, dot,
     add, multiply, sqrt, sum, isfinite, finfo, errstate, moveaxis, amin,
     amax, prod, abs, atleast_2d, intp, asanyarray, object_, matmul,
@@ -31,7 +31,7 @@ from numpy._core import (
     reciprocal, overrides, diagonal as _core_diagonal, trace as _core_trace,
     cross as _core_cross, outer as _core_outer, tensordot as _core_tensordot,
     matmul as _core_matmul, matrix_transpose as _core_matrix_transpose,
-    transpose as _core_transpose, vecdot as _core_vecdot, promote_types
+    transpose as _core_transpose, vecdot as _core_vecdot
 )
 from numpy._globals import _NoValue
 from numpy.lib._twodim_base_impl import triu, eye
@@ -3266,8 +3266,8 @@ def cross2d(x1, x2, /, *, axis=-1):
     array([-4., -4.,  1.])
 
     """
-    x1 = asarray(x1)
-    x2 = asarray(x2)
+    x1 = asanyarray(x1)
+    x2 = asanyarray(x2)
 
     axis1, axis2 = (axis,) * 2
  
@@ -3290,6 +3290,10 @@ def cross2d(x1, x2, /, *, axis=-1):
         )
 
     result = x1[..., 0] * x2[..., 1] - x1[..., 1] * x2[..., 0]
+
+    # If a single number is returned, ensure it is returned as an array.
+    result = asanyarray(result)
+
     return result
 
 # matmul
