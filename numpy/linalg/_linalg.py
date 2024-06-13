@@ -1886,6 +1886,22 @@ def svdvals(x, /):
     --------
     scipy.linalg.svdvals : Compute singular values of a matrix.
 
+    Examples
+    --------
+
+    >>> np.linalg.svdvals([[1, 2, 3, 4, 5],
+                           [1, 4, 9, 16, 25],
+                           [1, 8, 27, 64, 125]])
+    array([146.68862757,   5.57510612,   0.60393245])
+
+    Determine the rank of a matrix using singular values:
+
+    >>> s = np.linalg.svdvals([[1, 2, 3],
+                               [2, 4, 6],
+                               [-1, 1, -1]]); s
+    array([8.38434191e+00, 1.64402274e+00, 2.31534378e-16])
+    >>> np.count_nonzero(s > 1e-10)  # Matrix of rank 2
+    2
     """
     return svd(x, compute_uv=False, hermitian=False)
 
