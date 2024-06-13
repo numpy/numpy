@@ -1,7 +1,7 @@
 #include <stdio.h>
-
+#include <stdlib.h>
 int diff(int x, int y) {
-    return x - y;
+    return abs(x - y);
 }
 
 int main(void) {
@@ -13,7 +13,7 @@ int main(void) {
     printf("\n整数2: ");
     scanf("%d", &n2);
 
-    printf("\nそれらの差は %d です。\n", diff(n1, n2));
+    printf("\nそれらの絶対値は %d です。\n", diff(n1, n2));
 
     return 0;
 }
