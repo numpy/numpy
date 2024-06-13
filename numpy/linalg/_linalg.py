@@ -3073,6 +3073,58 @@ def diagonal(x, /, *, offset=0):
     --------
     numpy.diagonal
 
+    Examples
+    --------
+    >>> a = np.arange(8).reshape(2,2,2); a
+    array([[0, 1],
+           [2, 3]])
+    >>> np.linalg.diagonal(a)
+    array([0, 3])
+
+    A 3-D example:
+
+    >>> a = np.arange(8).reshape(2,2,2); a
+    array([[[0, 1],
+            [2, 3]],
+           [[4, 5],
+            [6, 7]]])
+    >>> np.linalg.diagonal(a)
+    array([[0, 3],
+           [4, 7]])
+
+    Diagonals adjacent to the main diagonal can be obtained by using the
+    `offset` argument:
+
+    >>> a = np.arange(9).reshape(3, 3)
+    >>> a
+    array([[0, 1, 2],
+           [3, 4, 5],
+           [6, 7, 8]])
+    >>> np.linalg.diagonal(a, offset=1)  # First superdiagonal
+    array([1, 5])
+    >>> np.linalg.diagonal(a, offset=2)  # Second superdiagonal
+    array([2])
+    >>> np.linalg.diagonal(a, offset=-1)  # First subdiagonal
+    array([3, 7])
+    >>> np.linalg.diagonal(a, offset=-2)  # Second subdiagonal
+    array([6])
+
+    The anti-diagonal can be obtained by reversing the order of elements
+    using either `numpy.flipud` or `numpy.fliplr`.
+
+    >>> a = np.arange(9).reshape(3, 3)
+    >>> a
+    array([[0, 1, 2],
+           [3, 4, 5],
+           [6, 7, 8]])
+    >>> np.linalg.diagonal(np.fliplr(a))  # Horizontal flip
+    array([2, 4, 6])
+    >>> np.linalg.diagonal(np.flipud(a))  # Vertical flip
+    array([6, 4, 2])
+
+    Note that the order in which the diagonal is retrieved varies depending
+    on the flip function.
+
     """
     return _core_diagonal(x, offset, axis1=-2, axis2=-1)
 
@@ -3184,13 +3236,13 @@ def cross(x1, x2, /, *, axis=-1):
 
     >>> x = np.array([[1,2,3], [4,5,6]])
     >>> y = np.array([[4,5,6], [1,2,3]])
-    >>> np.cross(x, y)
+    >>> np.linalg.cross(x, y)
     array([[-3,  6, -3],
            [ 3, -6,  3]])
 
     >>> x = np.array([[1, 2], [3, 4], [5, 6]])
     >>> y = np.array([[4, 5], [6, 1], [2, 3]])
-    >>> np.cross(x, y, axis=0)
+    >>> np.linalg.cross(x, y, axis=0)
     array([[-24,  6],
            [ 18, 24],
            [-6,  -18]])
