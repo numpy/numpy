@@ -352,6 +352,75 @@ def check_docs(ctx, pytest_args, n_jobs, verbose, *args, **kwargs):
     ctx.forward(meson.test)
 
 
+@click.command()
+@click.argument("pytest_args", nargs=-1)
+@click.option(
+    "-j",
+    "n_jobs",
+    metavar='N_JOBS',
+    default="1",
+    help=("Number of parallel jobs for testing. "
+          "Can be set to `auto` to use all cores.")
+)
+@click.option(
+    '--verbose', '-v', is_flag=True, default=False
+)
+@click.pass_context
+def check_tutorials(ctx, pytest_args, n_jobs, verbose, *args, **kwargs):
+    """🔧 Run doctests of user-facing rst tutorials.
+
+    To test all tutorials in the numpy/doc/source/user/ directory, use
+
+      spin check-tutorials
+
+    To run tests on a specific RST file:
+
+     \b
+     spin check-tutorials numpy/doc/source/user/absolute-beginners.rst
+
+    \b
+    Note:
+    -----
+
+    \b
+     - This command only runs doctests and skips everything under tests/
+     - This command only doctests public objects: those which are accessible
+       from the top-level `__init__.py` file.
+
+    """  # noqa: E501
+    # handle all of
+    #   - `spin check-tutorials` (pytest_args == ())
+    #   - `spin check-tutorials path/to/rst`, and
+    #   - `spin check-tutorials path/to/rst -- --durations=3`
+    if (not pytest_args) or all(arg.startswith('-') for arg in pytest_args):
+        pytest_args = ('numpy/doc/source/user',) + pytest_args
+
+    # make all paths relative to the numpy source folder
+    pytest_args = tuple(
+        str(curdir / '..' / '..' / arg) if not arg.startswith('-') else arg
+        for arg in pytest_args
+   )
+
+    if (n_jobs != "1") and ('-n' not in pytest_args):
+        pytest_args = ('-n', str(n_jobs)) + pytest_args
+
+    if verbose:
+        pytest_args = ('-v',) + pytest_args
+
+    # turn doctesting on:
+    doctest_args = (
+        '--doctest-glob=*rst',
+    )
+
+    pytest_args = pytest_args + doctest_args
+
+    ctx.params['pytest_args'] = pytest_args
+
+    for extra_param in ('n_jobs', 'verbose'):
+        del ctx.params[extra_param]
+
+    ctx.forward(meson.test)
+
 
 # From scipy: benchmarks/benchmarks/common.py
 def _set_mem_rlimit(max_mem=None):
