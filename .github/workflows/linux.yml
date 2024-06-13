@@ -183,6 +183,7 @@ jobs:
       run: |
         pip install scipy-doctest hypothesis matplotlib scipy pytz
         spin check-docs -v
+        spin check-tutorials -v
 
   sdist:
     needs: [smoke_test]
