@@ -3075,7 +3075,7 @@ def diagonal(x, /, *, offset=0):
 
     Examples
     --------
-    >>> a = np.arange(8).reshape(2,2,2); a
+    >>> a = np.arange(4).reshape(2, 2); a
     array([[0, 1],
            [2, 3]])
     >>> np.linalg.diagonal(a)
@@ -3083,7 +3083,7 @@ def diagonal(x, /, *, offset=0):
 
     A 3-D example:
 
-    >>> a = np.arange(8).reshape(2,2,2); a
+    >>> a = np.arange(8).reshape(2, 2, 2); a
     array([[[0, 1],
             [2, 3]],
            [[4, 5],
@@ -3402,6 +3402,39 @@ def matrix_norm(x, /, *, keepdims=False, ord="fro"):
     See Also
     --------
     numpy.linalg.norm : Generic norm function
+
+    Examples
+    --------
+    >>> from numpy import linalg as LA
+    >>> a = np.arange(9) - 4
+    >>> a
+    array([-4, -3, -2, ...,  2,  3,  4])
+    >>> b = a.reshape((3, 3))
+    >>> b
+    array([[-4, -3, -2],
+           [-1,  0,  1],
+           [ 2,  3,  4]])
+
+    >>> LA.norm(b)
+    7.745966692414834
+    >>> LA.matrix_norm(b, ord='fro')
+    7.745966692414834
+    >>> LA.matrix_norm(b, ord=np.inf)
+    9.0
+    >>> LA.matrix_norm(b, -np.inf)
+    2.0
+
+    >>> LA.matrix_norm(b, ord=1)
+    7.0
+    >>> LA.matrix_norm(b, ord=-1)
+    6.0
+    >>> LA.matrix_norm(b, ord=2)
+    7.3484692283495345
+
+    >>> LA.matrix_norm(a, -2)
+    0.0
+    >>> LA.matrix_norm(b, -2)
+    1.8570331885190563e-016 # may vary
 
     """
     x = asanyarray(x)
