@@ -1890,18 +1890,19 @@ def svdvals(x, /):
     --------
 
     >>> np.linalg.svdvals([[1, 2, 3, 4, 5],
-                           [1, 4, 9, 16, 25],
-                           [1, 8, 27, 64, 125]])
+    ...                    [1, 4, 9, 16, 25],
+    ...                    [1, 8, 27, 64, 125]])
     array([146.68862757,   5.57510612,   0.60393245])
 
     Determine the rank of a matrix using singular values:
 
     >>> s = np.linalg.svdvals([[1, 2, 3],
-                               [2, 4, 6],
-                               [-1, 1, -1]]); s
+    ...                        [2, 4, 6],
+    ...                        [-1, 1, -1]]); s
     array([8.38434191e+00, 1.64402274e+00, 2.31534378e-16])
     >>> np.count_nonzero(s > 1e-10)  # Matrix of rank 2
     2
+
     """
     return svd(x, compute_uv=False, hermitian=False)
 
@@ -3227,6 +3228,38 @@ def trace(x, /, *, offset=0, dtype=None):
     See Also
     --------
     numpy.trace
+
+    Examples
+    --------
+    >>> np.linalg.trace(np.eye(3))
+    3.0
+    >>> a = np.arange(8).reshape((2, 2, 2))
+    >>> np.linalg.trace(a)
+    array([6, 8])
+
+    Trace is computed with the last two axes as the 2-d sub-arrays.
+    This behavior differs from :py:func:`numpy.trace` which uses the first two
+    axes by default.
+
+    >>> a = np.arange(24).reshape((3, 2, 2, 2))
+    >>> np.linalg.trace(a).shape
+    (3, 2)
+
+    Traces adjacent to the main diagonal can be obtained by using the
+    `offset` argument:
+
+    >>> a = np.arange(9).reshape((3, 3)); a
+    array([[0, 1, 2],
+           [3, 4, 5],
+           [6, 7, 8]])
+    >>> np.linalg.trace(a, offset=1)  # First superdiagonal
+    12
+    >>> np.linalg.trace(a, offset=2)  # Second superdiagonal
+    2
+    >>> np.linalg.trace(a, offset=-1)  # First subdiagonal
+    10
+    >>> np.linalg.trace(a, offset=-2)  # Second subdiagonal
+    6
 
     """
     return _core_trace(x, offset, axis1=-2, axis2=-1, dtype=dtype)
