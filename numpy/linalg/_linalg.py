@@ -3235,7 +3235,7 @@ def trace(x, /, *, offset=0, dtype=None):
     3.0
     >>> a = np.arange(8).reshape((2, 2, 2))
     >>> np.linalg.trace(a)
-    array([6, 8])
+    array([3, 11])
 
     Trace is computed with the last two axes as the 2-d sub-arrays.
     This behavior differs from :py:func:`numpy.trace` which uses the first two
@@ -3557,6 +3557,34 @@ def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
     See Also
     --------
     numpy.linalg.norm : Generic norm function
+
+    Examples
+    --------
+    >>> from numpy import linalg as LA
+    >>> a = np.arange(9) + 1
+    >>> a
+    array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> b = a.reshape((3, 3))
+    >>> b
+    array([[1, 2, 3],
+           [4, 5, 6],
+           [7, 8, 9]])
+
+    >>> LA.vector_norm(b)
+    16.881943016134134
+    >>> LA.vector_norm(b, ord=np.inf)
+    9.0
+    >>> LA.vector_norm(b, ord=-np.inf)
+    1.0
+
+    >>> LA.vector_norm(b, ord=1)
+    45.0
+    >>> LA.vector_norm(b, ord=-1)
+    0.3534857623790153
+    >>> LA.vector_norm(b, ord=2)
+    16.881943016134134
+    >>> LA.vector_norm(b, ord=-2)
+    0.8058837395885292
 
     """
     x = asanyarray(x)
