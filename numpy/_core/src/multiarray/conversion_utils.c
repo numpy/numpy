@@ -1203,7 +1203,7 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
  * that it is in an unpickle context instead of a normal context without
  * evil global state like we create here.
  */
-NPY_NO_EXPORT int evil_global_disable_warn_O4O8_flag = 0;
+NPY_NO_EXPORT NPY_TLS int evil_global_disable_warn_O4O8_flag = 0;
 
 /*
  * Convert a gentype (that is actually a generic kind character) and
