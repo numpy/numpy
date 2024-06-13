@@ -876,6 +876,40 @@ def outer(x1, x2, /):
     --------
     outer
 
+    Examples
+    --------
+    Make a (*very* coarse) grid for computing a Mandelbrot set:
+
+    >>> rl = np.linalg.outer(np.ones((5,)), np.linspace(-2, 2, 5))
+    >>> rl
+    array([[-2., -1.,  0.,  1.,  2.],
+           [-2., -1.,  0.,  1.,  2.],
+           [-2., -1.,  0.,  1.,  2.],
+           [-2., -1.,  0.,  1.,  2.],
+           [-2., -1.,  0.,  1.,  2.]])
+    >>> im = np.linalg.outer(1j*np.linspace(2, -2, 5), np.ones((5,)))
+    >>> im
+    array([[0.+2.j, 0.+2.j, 0.+2.j, 0.+2.j, 0.+2.j],
+           [0.+1.j, 0.+1.j, 0.+1.j, 0.+1.j, 0.+1.j],
+           [0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j],
+           [0.-1.j, 0.-1.j, 0.-1.j, 0.-1.j, 0.-1.j],
+           [0.-2.j, 0.-2.j, 0.-2.j, 0.-2.j, 0.-2.j]])
+    >>> grid = rl + im
+    >>> grid
+    array([[-2.+2.j, -1.+2.j,  0.+2.j,  1.+2.j,  2.+2.j],
+           [-2.+1.j, -1.+1.j,  0.+1.j,  1.+1.j,  2.+1.j],
+           [-2.+0.j, -1.+0.j,  0.+0.j,  1.+0.j,  2.+0.j],
+           [-2.-1.j, -1.-1.j,  0.-1.j,  1.-1.j,  2.-1.j],
+           [-2.-2.j, -1.-2.j,  0.-2.j,  1.-2.j,  2.-2.j]])
+
+    An example using a "vector" of letters:
+
+    >>> x = np.array(['a', 'b', 'c'], dtype=object)
+    >>> np.linalg.outer(x, [1, 2, 3])
+    array([['a', 'aa', 'aaa'],
+           ['b', 'bb', 'bbb'],
+           ['c', 'cc', 'ccc']], dtype=object)
+
     """
     x1 = asanyarray(x1)
     x2 = asanyarray(x2)
@@ -3415,13 +3449,13 @@ def matrix_norm(x, /, *, keepdims=False, ord="fro"):
            [-1,  0,  1],
            [ 2,  3,  4]])
 
-    >>> LA.norm(b)
+    >>> LA.matrix_norm(b)
     7.745966692414834
     >>> LA.matrix_norm(b, ord='fro')
     7.745966692414834
     >>> LA.matrix_norm(b, ord=np.inf)
     9.0
-    >>> LA.matrix_norm(b, -np.inf)
+    >>> LA.matrix_norm(b, ord=-np.inf)
     2.0
 
     >>> LA.matrix_norm(b, ord=1)
@@ -3430,10 +3464,7 @@ def matrix_norm(x, /, *, keepdims=False, ord="fro"):
     6.0
     >>> LA.matrix_norm(b, ord=2)
     7.3484692283495345
-
-    >>> LA.matrix_norm(a, -2)
-    0.0
-    >>> LA.matrix_norm(b, -2)
+    >>> LA.matrix_norm(b, ord=-2)
     1.8570331885190563e-016 # may vary
 
     """
