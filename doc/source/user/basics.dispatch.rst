@@ -300,7 +300,7 @@ implement the ``__array_ufunc__`` and ``__array_function__`` protocols in the
 To check if a Numpy function can be overridden via ``__array_ufunc__``, you can
 use :func:`~numpy.testing.overrides.allows_array_ufunc_override`:
 
->>> from np.testing.overrides import allows_array_ufunc_override
+>>> from numpy.testing.overrides import allows_array_ufunc_override
 >>> allows_array_ufunc_override(np.add)
 True
 

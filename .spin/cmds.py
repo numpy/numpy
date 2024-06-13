@@ -273,6 +273,78 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose, *args, **kwargs):
     ctx.forward(meson.test)
 
 
+@click.command()
+@click.argument("pytest_args", nargs=-1)
+@click.option(
+    "-j",
+    "n_jobs",
+    metavar='N_JOBS',
+    default="1",
+    help=("Number of parallel jobs for testing. "
+          "Can be set to `auto` to use all cores.")
+)
+@click.option(
+    '--verbose', '-v', is_flag=True, default=False
+)
+@click.pass_context
+def check_docs(ctx, pytest_args, n_jobs, verbose, *args, **kwargs):
+    """🔧 Run doctests of objects in the public API.
+
+    PYTEST_ARGS are passed through directly to pytest, e.g.:
+
+      spin check-docs -- --pdb
+
+    To run tests on a directory:
+
+     \b
+     spin check-docs numpy/linalg
+
+    To report the durations of the N slowest doctests:
+
+      spin check-docs -- --durations=N
+
+    To run doctests that match a given pattern:
+
+     \b
+     spin check-docs -- -k "slogdet"
+     spin check-docs numpy/linalg -- -k "det and not slogdet"
+
+    \b
+    Note:
+    -----
+
+    \b
+     - This command only runs doctests and skips everything under tests/
+     - This command only doctests public objects: those which are accessible
+       from the top-level `__init__.py` file.
+
+    """  # noqa: E501
+    if (not pytest_args):
+        pytest_args = ('numpy',)
+
+    if (n_jobs != "1") and ('-n' not in pytest_args):
+        pytest_args = ('-n', str(n_jobs)) + pytest_args
+
+    if verbose:
+        pytest_args = ('-v',) + pytest_args
+
+    # turn doctesting on:
+    doctest_args = (
+        '--doctest-modules',
+        '--doctest-collect=api'
+    )
+
+    pytest_args = pytest_args + doctest_args
+
+    ctx.params['pytest_args'] = pytest_args
+
+    for extra_param in ('n_jobs', 'verbose'):
+        del ctx.params[extra_param]
+
+    ctx.forward(meson.test)
+
+
+
 # From scipy: benchmarks/benchmarks/common.py
 def _set_mem_rlimit(max_mem=None):
     """

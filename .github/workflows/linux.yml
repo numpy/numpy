@@ -178,6 +178,11 @@ jobs:
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       run: |
         spin bench --quick
+    - name: Check docstests
+      shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+      run: |
+        pip install scipy-doctest hypothesis matplotlib scipy pytz
+        spin check-docs -v
 
   sdist:
     needs: [smoke_test]
