@@ -210,7 +210,8 @@ if HAVE_SCPDT:
         'c-info.ufunc-tutorial.rst': '',
         'basics.interoperability.rst': 'needs pandas',
         'basics.dispatch.rst': 'errors out in /testing/overrides.py',
-        'basics.subclassing.rst': '.. testcode:: admonitions not understood'
+        'basics.subclassing.rst': '.. testcode:: admonitions not understood',
+        'misc.rst': 'manipulates warnings',
     }
 
     # ignores are for things fail doctest collection (optionals etc)
