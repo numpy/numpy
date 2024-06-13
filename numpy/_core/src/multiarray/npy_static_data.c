@@ -156,17 +156,12 @@ initialize_static_globals(void)
 
     // default_truediv_type_tupS
     PyArray_Descr *tmp = PyArray_DescrFromType(NPY_DOUBLE);
-    if (tmp == NULL) {
-        return -1;
-    }
-
     npy_static_pydata.default_truediv_type_tup =
             PyTuple_Pack(3, tmp, tmp, tmp);
+    Py_DECREF(tmp);
     if (npy_static_pydata.default_truediv_type_tup == NULL) {
-        Py_DECREF(tmp);
         return -1;
     }
-    Py_DECREF(tmp);
 
     npy_static_pydata.kwnames_is_copy = Py_BuildValue("(s)", "copy");
     if (npy_static_pydata.kwnames_is_copy == NULL) {
@@ -225,6 +220,8 @@ initialize_static_globals(void)
 
     return 0;
 }
+
+
 /*
  * Verifies all entries in npy_interned_str and npy_static_pydata are
  * non-NULL.
@@ -234,7 +231,6 @@ initialize_static_globals(void)
  * items that are initialized late in module initialization but they
  * should all be initialized by the time this function is called.
  */
-
 NPY_NO_EXPORT int
 verify_static_structs_initialized(void) {
     // verify all entries in npy_interned_str are filled in
