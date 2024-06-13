@@ -340,7 +340,7 @@ def get_printoptions():
     --------
 
     >>> np.get_printoptions()
-    {'edgeitems': 3, 'threshold': 1000, ..., 'legacy': False}
+    {'edgeitems': 3, 'threshold': 1000, ..., 'override_repr': None}
 
     >>> np.get_printoptions()['linewidth']
     75
