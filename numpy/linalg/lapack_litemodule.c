@@ -34,6 +34,9 @@ typedef CBLAS_INT        fortran_int;
 #define FINT_PYFMT       "i"
 #endif
 
+// initialized during module init
+static PyThread_type_lock lapack_lite_lock = NULL;
+
 typedef struct { float r, i; } f2c_complex;
 typedef struct { double r, i; } f2c_doublecomplex;
 /* typedef long int (*L_fp)(); */
@@ -149,10 +152,15 @@ lapack_lite_dgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
     TRY(check_object(iwork,NPY_INT64,"iwork","NPY_INT64","dgelsd"));
 #endif
 
+    PyThread_acquire_lock(lapack_lite_lock, 1);
+
     lapack_lite_status =
             FNAME(dgelsd)(&m,&n,&nrhs,DDATA(a),&lda,DDATA(b),&ldb,
                           DDATA(s),&rcond,&rank,DDATA(work),&lwork,
                           IDATA(iwork),&info);
+
+    PyThread_release_lock(lapack_lite_lock);
+
     if (PyErr_Occurred()) {
         return NULL;
     }
@@ -185,9 +193,14 @@ lapack_lite_dgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
         TRY(check_object(tau,NPY_DOUBLE,"tau","NPY_DOUBLE","dgeqrf"));
         TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dgeqrf"));
 
+        PyThread_acquire_lock(lapack_lite_lock, 1);
+
         lapack_lite_status =
                 FNAME(dgeqrf)(&m, &n, DDATA(a), &lda, DDATA(tau),
                               DDATA(work), &lwork, &info);
+
+        PyThread_release_lock(lapack_lite_lock);
+
         if (PyErr_Occurred()) {
             return NULL;
         }
@@ -217,9 +230,15 @@ lapack_lite_dorgqr(PyObject *NPY_UNUSED(self), PyObject *args)
         TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dorgqr"));
         TRY(check_object(tau,NPY_DOUBLE,"tau","NPY_DOUBLE","dorgqr"));
         TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dorgqr"));
+
+        PyThread_acquire_lock(lapack_lite_lock, 1);
+
         lapack_lite_status =
             FNAME(dorgqr)(&m, &n, &k, DDATA(a), &lda, DDATA(tau), DDATA(work),
                           &lwork, &info);
+
+        PyThread_release_lock(lapack_lite_lock);
+
         if (PyErr_Occurred()) {
             return NULL;
         }
@@ -266,9 +285,14 @@ lapack_lite_zgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
     TRY(check_object(iwork,NPY_INT64,"iwork","NPY_INT64","zgelsd"));
 #endif
 
+    PyThread_acquire_lock(lapack_lite_lock, 1);
+
     lapack_lite_status =
         FNAME(zgelsd)(&m,&n,&nrhs,ZDATA(a),&lda,ZDATA(b),&ldb,DDATA(s),&rcond,
                       &rank,ZDATA(work),&lwork,DDATA(rwork),IDATA(iwork),&info);
+
+    PyThread_release_lock(lapack_lite_lock);
+
     if (PyErr_Occurred()) {
         return NULL;
     }
@@ -301,9 +325,14 @@ lapack_lite_zgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
         TRY(check_object(tau,NPY_CDOUBLE,"tau","NPY_CDOUBLE","zgeqrf"));
         TRY(check_object(work,NPY_CDOUBLE,"work","NPY_CDOUBLE","zgeqrf"));
 
+        PyThread_acquire_lock(lapack_lite_lock, 1);
+
         lapack_lite_status =
             FNAME(zgeqrf)(&m, &n, ZDATA(a), &lda, ZDATA(tau), ZDATA(work),
                           &lwork, &info);
+
+        PyThread_release_lock(lapack_lite_lock);
+
         if (PyErr_Occurred()) {
             return NULL;
         }
@@ -333,10 +362,14 @@ lapack_lite_zungqr(PyObject *NPY_UNUSED(self), PyObject *args)
         TRY(check_object(tau,NPY_CDOUBLE,"tau","NPY_CDOUBLE","zungqr"));
         TRY(check_object(work,NPY_CDOUBLE,"work","NPY_CDOUBLE","zungqr"));
 
+        PyThread_acquire_lock(lapack_lite_lock, 1);
 
         lapack_lite_status =
             FNAME(zungqr)(&m, &n, &k, ZDATA(a), &lda, ZDATA(tau), ZDATA(work),
                           &lwork, &info);
+
+        PyThread_release_lock(lapack_lite_lock);
+
         if (PyErr_Occurred()) {
             return NULL;
         }
@@ -354,7 +387,13 @@ lapack_lite_xerbla(PyObject *NPY_UNUSED(self), PyObject *args)
 
     NPY_BEGIN_THREADS_DEF;
     NPY_BEGIN_THREADS;
+
+    PyThread_acquire_lock(lapack_lite_lock, 1);
+
     FNAME(xerbla)("test", &info);
+
+    PyThread_release_lock(lapack_lite_lock);
+
     NPY_END_THREADS;
 
     if (PyErr_Occurred()) {
@@ -408,6 +447,8 @@ PyMODINIT_FUNC PyInit_lapack_lite(void)
 #else
     PyDict_SetItemString(d, "_ilp64", Py_False);
 #endif
+
+    lapack_lite_lock = PyThread_allocate_lock();
 
     return m;
 }
