@@ -3253,7 +3253,7 @@ def trace(x, /, *, offset=0, dtype=None):
            [3, 4, 5],
            [6, 7, 8]])
     >>> np.linalg.trace(a, offset=1)  # First superdiagonal
-    12
+    6
     >>> np.linalg.trace(a, offset=2)  # Second superdiagonal
     2
     >>> np.linalg.trace(a, offset=-1)  # First subdiagonal
@@ -3633,6 +3633,15 @@ def vecdot(x1, x2, /, *, axis=-1):
     See Also
     --------
     numpy.vecdot
+
+    Examples
+    --------
+    Get the projected size along a given normal for an array of vectors.
+
+    >>> v = np.array([[0., 5., 0.], [0., 0., 10.], [0., 6., 8.]])
+    >>> n = np.array([0., 0.6, 0.8])
+    >>> np.linalg.vecdot(v, n)
+    array([ 3.,  8., 10.])
 
     """
     return _core_vecdot(x1, x2, axis=axis)
