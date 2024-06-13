@@ -3170,6 +3170,31 @@ def cross(x1, x2, /, *, axis=-1):
     --------
     numpy.cross
 
+    Examples
+    --------
+    Vector cross-product.
+
+    >>> x = np.array([1, 2, 3])
+    >>> y = np.array([4, 5, 6])
+    >>> np.linalg.cross(x, y)
+    array([-3,  6, -3])
+
+    Multiple vector cross-products. Note that the direction of the cross
+    product vector is defined by the *right-hand rule*.
+
+    >>> x = np.array([[1,2,3], [4,5,6]])
+    >>> y = np.array([[4,5,6], [1,2,3]])
+    >>> np.cross(x, y)
+    array([[-3,  6, -3],
+           [ 3, -6,  3]])
+
+    >>> x = np.array([[1, 2], [3, 4], [5, 6]])
+    >>> y = np.array([[4, 5], [6, 1], [2, 3]])
+    >>> np.cross(x, y, axis=0)
+    array([[-24,  6],
+           [ 18, 24],
+           [-6,  -18]])
+
     """
     if x1.shape[axis] != 3 or x2.shape[axis] != 3:
         raise ValueError(
