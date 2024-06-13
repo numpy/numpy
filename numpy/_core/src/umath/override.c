@@ -373,14 +373,13 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
                     "numpy._core._internal",
                     "array_ufunc_errmsg_formatter",
                     &npy_thread_unsafe_state.array_ufunc_errmsg_formatter);
-            if (npy_thread_unsafe_state.array_ufunc_errmsg_formatter != NULL) {
-                errmsg = PyObject_Call(
-                        npy_thread_unsafe_state.array_ufunc_errmsg_formatter,
-                        override_args, normal_kwds);
-                if (errmsg != NULL) {
-                    PyErr_SetObject(PyExc_TypeError, errmsg);
-                    Py_DECREF(errmsg);
-                }
+            assert(npy_thread_unsafe_state.array_ufunc_errmsg_formatter != NULL);
+            errmsg = PyObject_Call(
+                    npy_thread_unsafe_state.array_ufunc_errmsg_formatter,
+                    override_args, normal_kwds);
+            if (errmsg != NULL) {
+                PyErr_SetObject(PyExc_TypeError, errmsg);
+                Py_DECREF(errmsg);
             }
             Py_DECREF(override_args);
             goto fail;

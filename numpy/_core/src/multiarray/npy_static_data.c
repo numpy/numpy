@@ -154,7 +154,7 @@ initialize_static_globals(void)
     IMPORT_GLOBAL("os", "PathLike",
                   npy_static_pydata.os_PathLike);
 
-    // default_truediv_type_tupS
+    // default_truediv_type_tup
     PyArray_Descr *tmp = PyArray_DescrFromType(NPY_DOUBLE);
     npy_static_pydata.default_truediv_type_tup =
             PyTuple_Pack(3, tmp, tmp, tmp);

@@ -5044,10 +5044,19 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     // initialize static references to ndarray.__array_*__ special methods
     npy_static_pydata.ndarray_array_finalize = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_finalize__");
+    if (npy_static_pydata.ndarray_array_finalize == NULL) {
+        goto err;
+    }
     npy_static_pydata.ndarray_array_ufunc = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_ufunc__");
+    if (npy_static_pydata.ndarray_array_ufunc == NULL) {
+        goto err;
+    }
     npy_static_pydata.ndarray_array_function = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_function__");
+    if (npy_static_pydata.ndarray_array_function == NULL) {
+        goto err;
+    }
 
     /*
      * Initialize np.dtypes.StringDType
@@ -5087,6 +5096,15 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (current_handler == NULL) {
         goto err;
     }
+
+    // initialize static reference to a zero-like array
+    npy_static_pydata.zero_pyint_like_arr = PyArray_ZEROS(
+            0, NULL, NPY_LONG, NPY_FALSE);
+    if (npy_static_pydata.zero_pyint_like_arr == NULL) {
+        goto err;
+    }
+    ((PyArrayObject_fields *)npy_static_pydata.zero_pyint_like_arr)->flags |=
+            (NPY_ARRAY_WAS_PYTHON_INT|NPY_ARRAY_WAS_INT_AND_REPLACED);
 
     if (verify_static_structs_initialized() < 0) {
         goto err;
