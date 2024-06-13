@@ -137,7 +137,7 @@ jobs:
           fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@a8d190a111314a07eb5116036c4b3fb26a4e3162  # v2.19.0
+        uses: pypa/cibuildwheel@932529cab190fafca8c735a551657247fa8f8eaf  # v2.19.1
         env:
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_FREE_THREADED_SUPPORT: True
