@@ -667,6 +667,17 @@ class TestPrintOptions:
         np.set_printoptions(formatter={'float_kind':None})
         assert_equal(repr(x), "array([0., 1., 2.])")
 
+    def test_override_repr(self):
+        x = np.arange(3)
+        np.set_printoptions(override_repr=lambda x: "FOO")
+        assert_equal(repr(x), "FOO")
+        np.set_printoptions(override_repr=None)
+        assert_equal(repr(x), "array([0, 1, 2])")
+
+        with np.printoptions(override_repr=lambda x: "BAR"):
+            assert_equal(repr(x), "BAR")
+        assert_equal(repr(x), "array([0, 1, 2])")
+
     def test_0d_arrays(self):
         assert_equal(str(np.array('café', '<U4')), 'café')
 

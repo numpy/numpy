@@ -59,11 +59,14 @@ _format_options = {
     'formatter': None,
     # Internally stored as an int to simplify comparisons; converted from/to
     # str/False on the way in/out.
-    'legacy': sys.maxsize}
+    'legacy': sys.maxsize,
+    'override_repr': None,
+}
 
 def _make_options_dict(precision=None, threshold=None, edgeitems=None,
                        linewidth=None, suppress=None, nanstr=None, infstr=None,
-                       sign=None, formatter=None, floatmode=None, legacy=None):
+                       sign=None, formatter=None, floatmode=None, legacy=None,
+                       override_repr=None):
     """
     Make a dictionary out of the non-None arguments, plus conversion of
     *legacy* and sanity checks.
@@ -119,7 +122,7 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
                      linewidth=None, suppress=None, nanstr=None,
                      infstr=None, formatter=None, sign=None, floatmode=None,
-                     *, legacy=None):
+                     *, legacy=None, override_repr=None):
     """
     Set printing options.
 
@@ -224,6 +227,9 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
         .. versionadded:: 1.14.0
         .. versionchanged:: 1.22.0
+    override_repr: callable, optional
+        If set a passed function will be used for generating arrays' repr.
+        Other options will be ignored.
 
     See Also
     --------
@@ -285,9 +291,10 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     """
     opt = _make_options_dict(precision, threshold, edgeitems, linewidth,
                              suppress, nanstr, infstr, sign, formatter,
-                             floatmode, legacy)
-    # formatter is always reset
+                             floatmode, legacy, override_repr)
+    # formatter and override_repr are always reset
     opt['formatter'] = formatter
+    opt['override_repr'] = override_repr
     _format_options.update(opt)
 
     # set the C variable for legacy mode
@@ -1552,6 +1559,10 @@ def _array_repr_implementation(
         arr, max_line_width=None, precision=None, suppress_small=None,
         array2string=array2string):
     """Internal version of array_repr() that allows overriding array2string."""
+    override_repr = _format_options["override_repr"]
+    if override_repr is not None:
+        return override_repr(arr)
+
     if max_line_width is None:
         max_line_width = _format_options['linewidth']
 
