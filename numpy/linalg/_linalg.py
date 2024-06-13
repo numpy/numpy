@@ -3300,6 +3300,53 @@ def matmul(x1, x2, /):
     --------
     numpy.matmul
 
+    Examples
+    --------
+    For 2-D arrays it is the matrix product:
+
+    >>> a = np.array([[1, 0],
+    ...               [0, 1]])
+    >>> b = np.array([[4, 1],
+    ...               [2, 2]])
+    >>> np.linalg.matmul(a, b)
+    array([[4, 1],
+           [2, 2]])
+
+    For 2-D mixed with 1-D, the result is the usual.
+
+    >>> a = np.array([[1, 0],
+    ...               [0, 1]])
+    >>> b = np.array([1, 2])
+    >>> np.linalg.matmul(a, b)
+    array([1, 2])
+    >>> np.linalg.matmul(b, a)
+    array([1, 2])
+
+
+    Broadcasting is conventional for stacks of arrays
+
+    >>> a = np.arange(2 * 2 * 4).reshape((2, 2, 4))
+    >>> b = np.arange(2 * 2 * 4).reshape((2, 4, 2))
+    >>> np.linalg.matmul(a,b).shape
+    (2, 2, 2)
+    >>> np.linalg.matmul(a, b)[0, 1, 1]
+    98
+    >>> sum(a[0, 1, :] * b[0 , :, 1])
+    98
+
+    Vector, vector returns the scalar inner product, but neither argument
+    is complex-conjugated:
+
+    >>> np.linalg.matmul([2j, 3j], [2j, 3j])
+    (-13+0j)
+
+    Scalar multiplication raises an error.
+
+    >>> np.linalg.matmul([1,2], 3)
+    Traceback (most recent call last):
+    ...
+    ValueError: matmul: Input operand 1 does not have enough dimensions ...
+
     """
     return _core_matmul(x1, x2)
 
