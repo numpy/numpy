@@ -1132,15 +1132,7 @@ def main(argv):
     parser = ArgumentParser(usage=__doc__.lstrip())
     parser.add_argument("module_names", metavar="SUBMODULES", default=[],
                         nargs='*', help="Submodules to check (default: all public)")
-    parser.add_argument("--doctests", action="store_true",
-                        help="Run also doctests on ")
     parser.add_argument("-v", "--verbose", action="count", default=0)
-    parser.add_argument("--doctest-warnings", action="store_true",
-                        help="Enforce warning checking for doctests")
-    parser.add_argument("--rst", nargs='?', const='doc', default=None,
-                        help=("Run also examples from *rst files "
-                              "discovered walking the directory(s) specified, "
-                              "defaults to 'doc'"))
     args = parser.parse_args(argv)
 
     modules = []
@@ -1148,8 +1140,6 @@ def main(argv):
 
     if not args.module_names:
         args.module_names = list(PUBLIC_SUBMODULES) + [BASE_MODULE]
-
-    os.environ['SCIPY_PIL_IMAGE_VIEWER'] = 'true'
 
     module_names = list(args.module_names)
     for name in module_names:
@@ -1163,9 +1153,6 @@ def main(argv):
     results = []
     errormsgs = []
 
-
-    if args.doctests or args.rst:
-        init_matplotlib()
 
     for submodule_name in module_names:
         prefix = BASE_MODULE + '.'
@@ -1186,7 +1173,7 @@ def main(argv):
         if submodule_name in args.module_names:
             modules.append(module)
 
-    if args.doctests or not args.rst:
+    if modules:
         print("Running checks for %d modules:" % (len(modules),))
         for module in modules:
             if dots:
@@ -1201,9 +1188,6 @@ def main(argv):
                                        module.__name__)
             mod_results += check_rest(module, set(names).difference(deprecated),
                                       dots=dots)
-            if args.doctests:
-                mod_results += check_doctests(module, (args.verbose >= 2), dots=dots,
-                                              doctest_warnings=args.doctest_warnings)
 
             for v in mod_results:
                 assert isinstance(v, tuple), v
@@ -1214,18 +1198,6 @@ def main(argv):
                 sys.stderr.write('\n')
                 sys.stderr.flush()
 
-    if args.rst:
-        base_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
-        rst_path = os.path.relpath(os.path.join(base_dir, args.rst))
-        if os.path.exists(rst_path):
-            print('\nChecking files in %s:' % rst_path)
-            check_documentation(rst_path, results, args, dots)
-        else:
-            sys.stderr.write(f'\ninvalid --rst argument "{args.rst}"')
-            errormsgs.append('invalid directory argument to --rst')
-        if dots:
-            sys.stderr.write("\n")
-            sys.stderr.flush()
 
     # Report results
     for module, mod_results in results:
