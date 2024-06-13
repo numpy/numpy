@@ -13,7 +13,7 @@ int main(void) {
     printf("\n整数2: ");
     scanf("%d", &n2);
 
-    printf("\nそれらの絶対値は %d です。\n", diff(n1, n2));
+    printf("\nそれらの絶対値= %d です。\n", diff(n1, n2));
 
     return 0;
 }
