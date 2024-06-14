@@ -1565,6 +1565,12 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
 
     Supports full broadcasting of the inputs.
 
+    Dimension-2 input arrays were deprecated in 2.0.0. If you do need this
+    functionality, you can use::
+
+        def cross2d(x, y):
+            return x[..., 0] * y[..., 1] - x[..., 1] * y[..., 0]
+
     Examples
     --------
     Vector cross-product.
