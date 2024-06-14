@@ -1242,15 +1242,15 @@ class TestNanFunctions_Percentile:
             np.nanpercentile(megamat, perc, axis=(1, 2)).shape, (2, 3, 6)
         )
 
-    @pytest.mark.parametrize("value", [0, 1, 2, 3, 1e200])
-    def test_nan_value_with_weight(self, value):
+    @pytest.mark.parametrize("nan_weight", [0, 1, 2, 3, 1e200])
+    def test_nan_value_with_weight(self, nan_weight):
         x = [1, np.nan, 2, 3]
         result = np.float64(2.0)
         q_unweighted = np.nanpercentile(x, 50, method="inverted_cdf")
         assert_equal(q_unweighted, result)
 
         # The weight value at the nan position should not matter.
-        w = [1.0, value, 1.0, 1.0]
+        w = [1.0, nan_weight, 1.0, 1.0]
         q_weighted = np.nanpercentile(x, 50, weights=w, method="inverted_cdf")
         assert_equal(q_weighted, result)
 
