@@ -319,6 +319,11 @@ def check_docs(ctx, pytest_args, n_jobs, verbose, *args, **kwargs):
        from the top-level `__init__.py` file.
 
     """  # noqa: E501
+    try:
+        # prevent obscure error later
+        import scipy_doctest
+    except ModuleNotFoundError as e:
+        raise ModuleNotFoundError("scipy-doctest not installed") from e
     if (not pytest_args):
         pytest_args = ('numpy',)
 
