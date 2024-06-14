@@ -256,11 +256,12 @@ def top_k(a, k, /, *, axis=-1, largest=True):
 
     Notes
     -----
-    `The returned indices are not guaranteed to be sorted according to
+    The returned indices are not guaranteed to be sorted according to
     the values. Furthermore, the returned indices are not guaranteed
     to be the earliest/latest occurrence of the element. E.g.,
-    ``np.top_k([3,3], 1)`` can return ``(array([3]), array([1]))``
-    rather than ``(array([3]), array([0]))``.
+    ``np.top_k([3,3,3], 1)`` can return ``(array([3]), array([1]))``
+    rather than ``(array([3]), array([0]))`` or
+    ``(array([3]), array([2]))``.
 
     Warning: The treatment of ``np.nan`` in the input array is undefined.
 
