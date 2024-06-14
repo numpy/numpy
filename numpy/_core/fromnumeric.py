@@ -258,7 +258,7 @@ def top_k(a, k, /, *, axis=-1, largest=True):
     -----
     `The returned indices are not guaranteed to be sorted according to
     the values. Furthermore, the returned indices are not guaranteed
-    to be the smallest/largest occurrence of the element. E.g.,
+    to be the earliest/latest occurrence of the element. E.g.,
     ``np.top_k([3,3], 1)`` can return ``(array([3]), array([1]))``
     rather than ``(array([3]), array([0]))``.
 
