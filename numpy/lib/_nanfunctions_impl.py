@@ -1665,6 +1665,7 @@ def _nanquantile_ureduce_func(
         wgt = None if weights is None else weights.ravel()
         result = _nanquantile_1d(part, q, overwrite_input, method, weights=wgt)
     else:
+        # Note that this code could try to fill in `out` right away
         if weights is None:
             result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
                                          overwrite_input, method, weights)
@@ -1675,22 +1676,23 @@ def _nanquantile_ureduce_func(
                 result = np.moveaxis(result, axis, 0)
         else:
             # We need to apply along axis over 2 arrays, a and weights.
-            if out is None:
-                result = np.empty_like(
-                    a, shape=q.shape + a.shape[:axis] + a.shape[axis+1:]
-                )
-            else:
+            # move operation axes to end for simplicity:
+            a = np.moveaxis(a, axis, -1)
+            weights = np.moveaxis(weights, axis, -1)
+            if out is not None:
                 result = out
-            Ni, Nk = a.shape[:axis], a.shape[axis+1:]
-            for ii in np.ndindex(Ni):
-                for kk in np.ndindex(Nk):
-                    f = _nanquantile_1d(
-                        a[ii + np.s_[:, ] + kk], q,
+            else:
+                # weights are limited to `inverted_cdf` so the result dtype
+                # is known to be identical to that of `a` here:
+                result = np.empty_like(a, shape=q.shape + a.shape[:-1])
+
+            for ii in np.ndindex(a.shape[:-1]):
+                result[(...,) + ii] = _nanquantile_1d(
+                        a[ii], q, weights=weights[ii],
                         overwrite_input=overwrite_input, method=method,
-                        weights=weights[ii + np.s_[:, ] + kk])
-                    Nj = f.shape
-                    for jj in np.ndindex(Nj):
-                        result[jj + ii + kk] = f[jj]
+                )
+            # This path dealt with `out` already...
+            return result
 
     if out is not None:
         out[...] = result
