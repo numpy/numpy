@@ -264,6 +264,18 @@ def top_k(a, k, /, *, axis=-1, largest=True):
     argpartition : Indirect partition.
     sort : Full sorting.
 
+    Notes
+    -----
+    The returned indices are not guaranteed to be sorted according to
+    the values. Furthermore, the returned indices are not guaranteed
+    to be the earliest/latest occurrence of the element. E.g.,
+    ``np.top_k([3,3,3], 1)`` can return ``(array([3]), array([1]))``
+    rather than ``(array([3]), array([0]))`` or
+    ``(array([3]), array([2]))``.
+
+    `top_k` works for real/complex inputs with nan values, see
+    `partition` for notes on the enhanced sort order.
+
     Examples
     --------
     >>> a = np.array([[1,2,3,4,5], [5,4,3,2,1], [3,4,5,1,2]])
@@ -282,7 +294,7 @@ def top_k(a, k, /, *, axis=-1, largest=True):
     >>> a.flatten()
     array([1, 2, 3, 4, 5, 5, 4, 3, 2, 1, 3, 4, 5, 1, 2])
     >>> np.top_k(a, 2, axis=None)
-    (array([5, 5]), array([ 5, 12]))
+    (array([5, 5]), array([ 4, 12]))
     """
     if k <= 0:
         raise ValueError(f'k(={k}) provided must be positive.')
