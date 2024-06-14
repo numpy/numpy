@@ -1,0 +1,5 @@
+New function `numpy.top_k`
+----------------------------
+
+A new function ``np.top_k(array, k, axis=..., largest=...)`` was added,
+which returns the largest/smallest k values along a given axis.
