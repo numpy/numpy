@@ -2307,6 +2307,14 @@ def test_cross():
 
     assert_equal(actual, expected)
 
+    # We test that lists are converted to arrays.
+    u = [1, 2, 3]
+    v = [4, 5, 6]
+    actual = np.linalg.cross(u, v)
+    expected = array([-3,  6, -3])
+
+    assert_equal(actual, expected)
+
     with assert_raises_regex(
         ValueError,
         r"input arrays must be \(arrays of\) 3-dimensional vectors"
