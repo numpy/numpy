@@ -335,8 +335,8 @@ def _set_reflect_both(padded, axis, width_pair, method,
         # Avoid wrapping with only a subset of the original area 
         # by ensuring period can only be a multiple of the original 
         # area's length.
-        old_length = (old_length - 1) // (original_period - 1) \
-        * (original_period - 1) + 1
+        old_length = ((old_length - 1) // (original_period - 1)
+            * (original_period - 1) + 1)
         edge_offset = 0  # Edge is not included, no need to offset pad amount
         old_length -= 1  # but must be omitted from the chunk
 
