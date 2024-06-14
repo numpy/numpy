@@ -293,7 +293,8 @@ def _get_stats(padded, axis, width_pair, length_pair, stat_func):
     return left_stat, right_stat
 
 
-def _set_reflect_both(padded, axis, width_pair, method, include_edge=False):
+def _set_reflect_both(padded, axis, width_pair, method, 
+                      original_period, include_edge=False):
     """
     Pad `axis` of `arr` with reflection.
 
@@ -308,6 +309,8 @@ def _set_reflect_both(padded, axis, width_pair, method, include_edge=False):
         dimension.
     method : str
         Controls method of reflection; options are 'even' or 'odd'.
+    original_period : int
+        Original length of data on `axis` of `arr`.
     include_edge : bool
         If true, edge value is included in reflection, otherwise the edge
         value forms the symmetric axis to the reflection.
@@ -320,11 +323,20 @@ def _set_reflect_both(padded, axis, width_pair, method, include_edge=False):
     """
     left_pad, right_pad = width_pair
     old_length = padded.shape[axis] - right_pad - left_pad
-
+    
     if include_edge:
+        # Avoid wrapping with only a subset of the original area 
+        # by ensuring period can only be a multiple of the original 
+        # area's length.
+        old_length = old_length // original_period * original_period
         # Edge is included, we need to offset the pad amount by 1
         edge_offset = 1
     else:
+        # Avoid wrapping with only a subset of the original area 
+        # by ensuring period can only be a multiple of the original 
+        # area's length.
+        old_length = ((old_length - 1) // (original_period - 1)
+            * (original_period - 1) + 1)
         edge_offset = 0  # Edge is not included, no need to offset pad amount
         old_length -= 1  # but must be omitted from the chunk
 
@@ -865,7 +877,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
                 # the length of the original values in the current dimension.
                 left_index, right_index = _set_reflect_both(
                     roi, axis, (left_index, right_index),
-                    method, include_edge
+                    method, array.shape[axis], include_edge
                 )
 
     elif mode == "wrap":
