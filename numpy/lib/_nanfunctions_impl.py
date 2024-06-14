@@ -1670,15 +1670,17 @@ def _nanquantile_ureduce_func(
             result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
                                          overwrite_input, method, weights)
             # apply_along_axis fills in collapsed axis with results.
-            # Move that axis to the beginning to match percentile's
+            # Move those axes to the beginning to match percentile's
             # convention.
             if q.ndim != 0:
-                result = np.moveaxis(result, axis, 0)
+                from_ax = [axis + i for i in range(q.ndim)]
+                result = np.moveaxis(result, from_ax, list(range(q.ndim)))
         else:
             # We need to apply along axis over 2 arrays, a and weights.
             # move operation axes to end for simplicity:
             a = np.moveaxis(a, axis, -1)
-            weights = np.moveaxis(weights, axis, -1)
+            if weights is not None:
+                weights = np.moveaxis(weights, axis, -1)
             if out is not None:
                 result = out
             else:

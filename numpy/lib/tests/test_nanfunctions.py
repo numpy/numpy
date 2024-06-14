@@ -1262,29 +1262,41 @@ class TestNanFunctions_Percentile:
     def test_nan_value_with_weight_ndim(self, axis):
         # Create a multi-dimensional array to test
         np.random.seed(1)
-        x = np.random.random(size=(100, 99, 2))
+        x_no_nan = np.random.random(size=(100, 99, 2))
         # Set some places to NaN (not particularly smart) so there is always
         # some non-Nan.
+        x = x_no_nan.copy()
         x[np.arange(99), np.arange(99), 0] = np.nan
 
-        q = np.array([[0.2, 0.5], [0.7, 0.3]])
+        p = np.array([[20., 50., 30], [70, 33, 80]])
 
-        q_unweighted = np.nanpercentile(
-            x, q, axis=axis, method="inverted_cdf")
-
+        # We just use ones as weights, but replace it with 0 or 1e200 at the
+        # NaN positions below.
         weights = np.ones_like(x)
-        weights[np.isnan(x)] = 1e200  # huge value, shouldn't matter
 
-        q_weighted = np.nanpercentile(
-            x, q, axis=axis, weights=weights, method="inverted_cdf")
-        assert_equal(q_weighted, q_unweighted)
+        # For comparison use weighted normal percentile with nan weights at
+        # 0 (and no NaNs); not sure this is strictly identical but should be
+        # sufficiently so (if a percentile lies exactly on a 0 value).
+        weights[np.isnan(x)] = 0
+        p_expected = np.percentile(
+            x_no_nan, p, axis=axis, weights=weights, method="inverted_cdf")
+
+        p_unweighted = np.nanpercentile(
+            x, p, axis=axis, method="inverted_cdf")
+        # The normal and unweighted versions should be identical:
+        assert_equal(p_unweighted, p_expected)
+
+        weights[np.isnan(x)] = 1e200  # huge value, shouldn't matter
+        p_weighted = np.nanpercentile(
+            x, p, axis=axis, weights=weights, method="inverted_cdf")
+        assert_equal(p_weighted, p_expected)
         # Also check with out passed:
-        out = np.empty_like(q_weighted)
+        out = np.empty_like(p_weighted)
         res = np.nanpercentile(
-            x, q, axis=axis, weights=weights, out=out, method="inverted_cdf")
+            x, p, axis=axis, weights=weights, out=out, method="inverted_cdf")
 
         assert res is out
-        assert_equal(out, q_unweighted)
+        assert_equal(out, p_expected)
 
 
 class TestNanFunctions_Quantile:
