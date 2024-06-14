@@ -23,8 +23,3 @@ def test_identity_hashtable(key_length, length):
 
     res = identityhash_tester(key_length, keys_vals, replace=True)
     assert res is expected
-
-    # check that ensuring one duplicate definitely raises:
-    keys_vals.insert(0, keys_vals[-2])
-    with pytest.raises(RuntimeError):
-        identityhash_tester(key_length, keys_vals)

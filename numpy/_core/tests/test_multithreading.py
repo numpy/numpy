@@ -1,4 +1,5 @@
 import concurrent.futures
+import threading
 
 import numpy as np
 import pytest
@@ -30,12 +31,28 @@ def test_parallel_randomstate_creation():
 def test_parallel_ufunc_execution():
     # if the loop data cache or dispatch cache are not thread-safe
     # computing ufuncs simultaneously in multiple threads leads
-    # to a data race
+    # to a data race that causes crashes or spurious exceptions
     def func():
         arr = np.random.random((25,))
         np.isnan(arr)
 
     run_threaded(func, 500)
+
+    # see gh-26690
+    NUM_THREADS = 50
+
+    b = threading.Barrier(NUM_THREADS)
+
+    a = np.ones(1000)
+
+    def f():
+        b.wait()
+        return a.sum()
+
+    threads = [threading.Thread(target=f) for _ in range(NUM_THREADS)]
+
+    [t.start() for t in threads]
+    [t.join() for t in threads]
 
 def test_temp_elision_thread_safety():
     amid = np.ones(50000)
