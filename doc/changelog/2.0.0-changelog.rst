@@ -2,16 +2,19 @@
 Contributors
 ============
 
-A total of 198 people contributed to this release.  People with a "+" by their
+A total of 212 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * @Algorithmist-Girl +
 * @DWesl
 * @Illviljan
+* @Searchingdays
 * @ellaella12 +
 * @liang3zy22 +
 * @matoro +
 * @mcp292 +
+* @mgunyho +
+* @msavinash +
 * @mykykh +
 * @pojaghi +
 * @pratiklp00 +
@@ -33,6 +36,7 @@ names contributed a patch for the first time.
 * Ankur Singh +
 * Anton Prosekin +
 * Antony Lee
+* Arun Kannawadi +
 * Bas van Beek
 * Ben Woodruff +
 * Bharat Raghunathan
@@ -51,6 +55,8 @@ names contributed a patch for the first time.
 * Christopher Sidebottom
 * Clément Robert
 * Cédric Hannotier
+* Cobalt Yang +
+* Gonçalo Bárias +
 * D.J. Ramones +
 * DanShatford +
 * Daniel Li +
@@ -69,11 +75,13 @@ names contributed a patch for the first time.
 * Emily Hunt +
 * Éric Piel +
 * Eric Wieser
+* Eric Xie +
 * Even Rouault +
 * Evgeni Burovski
 * Filipe Laíns +
 * Francisco Sousa +
 * Ganesh Kathiresan
+* Gonçalo Bárias +
 * Gonzalo Tornaría +
 * Hans Meine
 * Heberto Mayorquin +
@@ -91,6 +99,8 @@ names contributed a patch for the first time.
 * Johannes Kaisinger +
 * John Muradeli +
 * Joris Van den Bossche
+* Justus Magin
+* Jyn Spring 琴春
 * Kai Striega
 * Kevin Sheppard
 * Kevin Wu +
@@ -106,19 +116,22 @@ names contributed a patch for the first time.
 * Linus Sommer +
 * Logan Thomas
 * Lucas Colley +
+* Luiz Eduardo Amaral +
 * Lukas Geiger
 * Lysandros Nikolaou +
 * Maanas Arora +
 * Maharshi Basu +
 * Mahder Gebremedhin +
 * Marcel Bargull +
+* Marcel Loose +
 * Mark Mentovai +
 * Mark Ryan +
-* Marten Henric van Kerkwijk +
 * Marten van Kerkwijk
 * Mateusz Sokół
 * Matt Haberland
+* Matt Thompson +
 * Matthew Barber
+* Matthew Thompson +
 * Matthias Bussonnier
 * Matthias Koeppe
 * Matthias Schaufelberger +
@@ -143,6 +156,7 @@ names contributed a patch for the first time.
 * Nyakku Shigure +
 * Ola x Nilsson +
 * Olivier Mattelaer +
+* Olivier Grisel
 * Omid Rajaei
 * Pablo Losada +
 * Pamphile Roy
@@ -187,6 +201,7 @@ names contributed a patch for the first time.
 * Thomas Li
 * Tim Hoffmann
 * Tim Paine +
+* Timo Röhling +
 * Trey Woodlief +
 * Tyler Reddy
 * Victor Tang +
@@ -196,18 +211,17 @@ names contributed a patch for the first time.
 * Will Ayd
 * William Andrea +
 * William Ayd +
+* Xiangyi Wang +
 * Yash Pethe +
 * Yuki K
 * Zach Brugh +
 * Zach Rottman +
 * Zolisa Bleki
-* mgunyho +
-* msavinash +
 
 Pull requests merged
 ====================
 
-A total of 1041 pull requests were merged for this release.
+A total of 1078 pull requests were merged for this release.
 
 * `#15457 <https://github.com/numpy/numpy/pull/15457>`__: BUG: Adds support for array parameter declaration in fortran...
 * `#21199 <https://github.com/numpy/numpy/pull/21199>`__: ENH: expose datetime.c functions to cython
@@ -1250,4 +1264,41 @@ A total of 1041 pull requests were merged for this release.
 * `#26417 <https://github.com/numpy/numpy/pull/26417>`__: BUG: support nan-like null strings in [l,r]strip
 * `#26423 <https://github.com/numpy/numpy/pull/26423>`__: DOC: Fix some typos and incorrect markups
 * `#26424 <https://github.com/numpy/numpy/pull/26424>`__: DOC: add reference docs for NpyString C API
+* `#26425 <https://github.com/numpy/numpy/pull/26425>`__: REL: Prepare for the NumPy 2.0.0rc2 release [wheel build]
+* `#26427 <https://github.com/numpy/numpy/pull/26427>`__: TYP: Fix ``fromrecords`` type hint and bump mypy to 1.10.0.
+* `#26457 <https://github.com/numpy/numpy/pull/26457>`__: MAINT: Various CI fixes
+* `#26458 <https://github.com/numpy/numpy/pull/26458>`__: BUG: Use Python pickle protocol version 4 for np.save (#26388)
+* `#26459 <https://github.com/numpy/numpy/pull/26459>`__: BUG: fixes for three related stringdtype issues (#26436)
+* `#26460 <https://github.com/numpy/numpy/pull/26460>`__: MAINT: Bump pypa/cibuildwheel from 2.17.0 to 2.18.0
+* `#26461 <https://github.com/numpy/numpy/pull/26461>`__: BUG: int32 and intc should both appear in sctypes
+* `#26482 <https://github.com/numpy/numpy/pull/26482>`__: DOC: Skip API documentation for numpy.distutils with Python 3.12...
+* `#26527 <https://github.com/numpy/numpy/pull/26527>`__: DOC: fix NEP 50 reference
+* `#26536 <https://github.com/numpy/numpy/pull/26536>`__: BUG: cast missing in PyPy-specific f2py code, pin spin in CI...
+* `#26539 <https://github.com/numpy/numpy/pull/26539>`__: ENH: improve the error raised by ``numpy.isdtype``
+* `#26540 <https://github.com/numpy/numpy/pull/26540>`__: BLD: Make NumPy build reproducibly
+* `#26541 <https://github.com/numpy/numpy/pull/26541>`__: BUG: fix incorrect error handling for dtype('a') deprecation
+* `#26543 <https://github.com/numpy/numpy/pull/26543>`__: BUG: fix assert in PyArry_ConcatenateArrays with StringDType
+* `#26544 <https://github.com/numpy/numpy/pull/26544>`__: BUG: Fix handling of size=() in Generator.choice when a.ndim...
+* `#26554 <https://github.com/numpy/numpy/pull/26554>`__: BUG: Fix in1d fast-path range
+* `#26555 <https://github.com/numpy/numpy/pull/26555>`__: BUG: Fix typo in array-wrap code that lead to memory leak
+* `#26569 <https://github.com/numpy/numpy/pull/26569>`__: MAINT: Avoid by-pointer parameter passing for LINEARIZE_DATA_t...
+* `#26583 <https://github.com/numpy/numpy/pull/26583>`__: BUG: Fix memory leaks found with valgrind
+* `#26584 <https://github.com/numpy/numpy/pull/26584>`__: MAINT: Unpin pydata-sphinx-theme
+* `#26587 <https://github.com/numpy/numpy/pull/26587>`__: DOC: Added web docs for missing ma and strings routines
+* `#26591 <https://github.com/numpy/numpy/pull/26591>`__: BUG: Fix memory leaks found by valgrind
+* `#26592 <https://github.com/numpy/numpy/pull/26592>`__: DOC: Various documentation updates
+* `#26635 <https://github.com/numpy/numpy/pull/26635>`__: DOC: update 2.0 docs
+* `#26651 <https://github.com/numpy/numpy/pull/26651>`__: DOC: Update 2.0 migration guide
+* `#26652 <https://github.com/numpy/numpy/pull/26652>`__: BUG: Disallow string inputs for copy keyword in np.array and...
+* `#26653 <https://github.com/numpy/numpy/pull/26653>`__: BUG: Fix F77 ! comment handling
+* `#26654 <https://github.com/numpy/numpy/pull/26654>`__: DOC: Set default as ``-j 1`` for spin docs and move ``-W`` to...
+* `#26657 <https://github.com/numpy/numpy/pull/26657>`__: BUG: fix memory leaks found with valgrind (next)
+* `#26659 <https://github.com/numpy/numpy/pull/26659>`__: BUG: Replace dots with underscores in f2py meson backend for...
+* `#26673 <https://github.com/numpy/numpy/pull/26673>`__: CI: upgrade FreeBSD Cirrus job from FreeBSD 13.2 to 14.0
+* `#26674 <https://github.com/numpy/numpy/pull/26674>`__: MNT: catch invalid fixed-width dtype sizes
+* `#26677 <https://github.com/numpy/numpy/pull/26677>`__: CI: Use default llvm on Windows.
+* `#26694 <https://github.com/numpy/numpy/pull/26694>`__: DOC: document workaround for deprecation of dim-2 inputs to `cross`
+* `#26695 <https://github.com/numpy/numpy/pull/26695>`__: BUG: Adds asanyarray to start of linalg.cross (#26667)
+* `#26696 <https://github.com/numpy/numpy/pull/26696>`__: BUG: weighted nanpercentile, nanquantile and multi-dim q
+* `#26697 <https://github.com/numpy/numpy/pull/26697>`__: BUG: Fix bug in numpy.pad()
 
