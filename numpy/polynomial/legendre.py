@@ -426,7 +426,7 @@ def legmulx(c):
 
     See Also
     --------
-    legadd, legmul, legdiv, legpow
+    legadd, legsub, legmul, legdiv, legpow
 
     Notes
     -----
