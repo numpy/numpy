@@ -433,6 +433,14 @@ def unique_all(x):
     --------
     unique : Find the unique elements of an array.
 
+    Examples
+    --------
+    >>> np.unique_all([1, 1, 2])
+    UniqueAllResult(values=array([1, 2]),
+                    indices=array([0, 2]),
+                    inverse_indices=array([0, 0, 1]),
+                    counts=array([2, 1]))
+
     """
     result = unique(
         x,
@@ -475,6 +483,11 @@ def unique_counts(x):
     See Also
     --------
     unique : Find the unique elements of an array.
+
+    Examples
+    --------
+    >>> np.unique_counts([1, 1, 2])
+    UniqueCountsResult(values=array([1, 2]), counts=array([2, 1]))
 
     """
     result = unique(
@@ -520,6 +533,11 @@ def unique_inverse(x):
     --------
     unique : Find the unique elements of an array.
 
+    Examples
+    --------
+    >>> np.unique_inverse([1, 1, 2])
+    UniqueInverseResult(values=array([1, 2]), inverse_indices=array([0, 0, 1]))
+
     """
     result = unique(
         x,
@@ -559,6 +577,11 @@ def unique_values(x):
     See Also
     --------
     unique : Find the unique elements of an array.
+
+    Examples
+    --------
+    >>> np.unique_values([1, 1, 2])
+    array([1, 2])
 
     """
     return unique(

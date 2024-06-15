@@ -722,6 +722,18 @@ def matrix_transpose(x, /):
     --------
     transpose : Generic transpose method.
 
+    Examples
+    --------
+    >>> np.matrix_transpose([[1, 2], [3, 4]])
+    array([[1, 3],
+           [2, 4]])
+
+    >>> np.matrix_transpose([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+    array([[[1, 3],
+            [2, 4]],
+           [[5, 7],
+            [6, 8]]])
+
     """
     x = asanyarray(x)
     if x.ndim < 2:
@@ -2343,6 +2355,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     ndarray.sum : Equivalent method.
     add: ``numpy.add.reduce`` equivalent function.
     cumsum : Cumulative sum of array elements.
+    trapezoid : Integration of array values using composite trapezoidal rule.
 
     mean, average
 
@@ -2669,6 +2682,7 @@ def cumsum(a, axis=None, dtype=None, out=None):
     See Also
     --------
     sum : Sum array elements.
+    trapezoid : Integration of array values using composite trapezoidal rule.
     diff : Calculate the n-th discrete difference along given axis.
 
     Notes

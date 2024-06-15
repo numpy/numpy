@@ -48,7 +48,10 @@ jobs:
     - name: Install Clang-cl
       if: matrix.compiler == 'Clang-cl'
       run: |
-        choco install llvm -y --version=16.0.6
+        # llvm is preinstalled, but leave
+        # this here in case we need to pin the
+        # version at some point.
+        #choco install llvm -y
 
     - name: Install NumPy (MSVC)
       if: matrix.compiler == 'MSVC'

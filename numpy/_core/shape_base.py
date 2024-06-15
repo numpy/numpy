@@ -417,7 +417,8 @@ def stack(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
 
     Examples
     --------
-    >>> arrays = [np.random.randn(3, 4) for _ in range(10)]
+    >>> rng = np.random.default_rng()
+    >>> arrays = [rng.normal(size=(3,4)) for _ in range(10)]
     >>> np.stack(arrays, axis=0).shape
     (10, 3, 4)
 

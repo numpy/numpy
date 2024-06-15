@@ -1548,7 +1548,7 @@ cdef class Generator:
         and ``m = 20`` is:
         
         >>> import matplotlib.pyplot as plt
-        >>> from scipy import stats  # doctest: +SKIP
+        >>> from scipy import stats
         >>> dfnum, dfden, size = 20, 20, 10000
         >>> s = rng.f(dfnum=dfnum, dfden=dfden, size=size)
         >>> bins, density, _ = plt.hist(s, 30, density=True)

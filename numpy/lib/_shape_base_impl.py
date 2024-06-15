@@ -162,6 +162,9 @@ def take_along_axis(arr, indices, axis):
     """
     # normalize inputs
     if axis is None:
+        if indices.ndim != 1:
+            raise ValueError(
+                'when axis=None, `indices` must have a single dimension.')
         arr = arr.flat
         arr_shape = (len(arr),)  # flatiter has no .shape
         axis = 0
@@ -252,6 +255,9 @@ def put_along_axis(arr, indices, values, axis):
     """
     # normalize inputs
     if axis is None:
+        if indices.ndim != 1:
+            raise ValueError(
+                'when axis=None, `indices` must have a single dimension.')
         arr = arr.flat
         axis = 0
         arr_shape = (len(arr),)  # flatiter has no .shape

@@ -3,12 +3,20 @@ Pytest configuration and fixtures for the Numpy test suite.
 """
 import os
 import tempfile
+from contextlib import contextmanager
+import warnings
 
 import hypothesis
 import pytest
 import numpy
 
 from numpy._core._multiarray_tests import get_fpu_mode
+
+try:
+    from scipy_doctest.conftest import dt_config
+    HAVE_SCPDT = True
+except ModuleNotFoundError:
+    HAVE_SCPDT = False
 
 
 _old_fpu_mode = None
@@ -136,3 +144,82 @@ def weak_promotion(request):
 
     yield request.param
     numpy._set_promotion_state(state)
+
+
+if HAVE_SCPDT:
+
+    @contextmanager
+    def warnings_errors_and_rng(test=None):
+        """Filter out the wall of DeprecationWarnings.
+        """
+        msgs = ["The numpy.linalg.linalg",
+                "The numpy.fft.helper",
+                "dep_util",
+                "pkg_resources",
+                "numpy.core.umath",
+                "msvccompiler",
+                "Deprecated call",
+                "numpy.core",
+                "`np.compat`",
+                "Importing from numpy.matlib",
+                "This function is deprecated.",    # random_integers
+                "Data type alias 'a'",     # numpy.rec.fromfile
+                "Arrays of 2-dimensional vectors",   # matlib.cross
+                "`in1d` is deprecated", ]
+        msg = "|".join(msgs)
+
+        msgs_r = [
+            "invalid value encountered",
+            "divide by zero encountered"
+        ]
+        msg_r = "|".join(msgs_r)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', category=DeprecationWarning, message=msg
+            )
+            warnings.filterwarnings(
+                'ignore', category=RuntimeWarning, message=msg_r
+            )
+            yield
+
+    # find and check doctests under this context manager
+    dt_config.user_context_mgr = warnings_errors_and_rng
+
+    # numpy specific tweaks from refguide-check
+    dt_config.rndm_markers.add('#uninitialized')
+    dt_config.rndm_markers.add('# uninitialized')
+
+    import doctest
+    dt_config.optionflags = doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS
+
+    # recognize the StringDType repr
+    dt_config.check_namespace['StringDType'] = numpy.dtypes.StringDType
+
+    # temporary skips
+    dt_config.skiplist = set([
+        'numpy.savez',    # unclosed file
+        'numpy.matlib.savez',
+        'numpy.__array_namespace_info__',
+        'numpy.matlib.__array_namespace_info__',
+    ])
+
+    # xfail problematic tutorials
+    dt_config.pytest_extra_xfail = {
+        'how-to-verify-bug.rst': '',
+        'c-info.ufunc-tutorial.rst': '',
+        'basics.interoperability.rst': 'needs pandas',
+        'basics.dispatch.rst': 'errors out in /testing/overrides.py',
+        'basics.subclassing.rst': '.. testcode:: admonitions not understood'
+    }
+
+    # ignores are for things fail doctest collection (optionals etc)
+    dt_config.pytest_extra_ignore = [
+        'numpy/distutils',
+        'numpy/_core/cversions.py',
+        'numpy/_pyinstaller',
+        'numpy/random/_examples',
+        'numpy/compat',
+        'numpy/f2py/_backends/_distutils.py',
+    ]
+

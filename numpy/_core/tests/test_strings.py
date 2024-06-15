@@ -716,6 +716,7 @@ class TestMethods:
     def test_expandtabs_raises_overflow(self, dt):
         with pytest.raises(OverflowError, match="new string is too long"):
             np.strings.expandtabs(np.array("\ta\n\tb", dtype=dt), sys.maxsize)
+            np.strings.expandtabs(np.array("\ta\n\tb", dtype=dt), 2**61)
 
     FILL_ERROR = "The fill character must be exactly one character long"
 

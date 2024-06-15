@@ -249,6 +249,12 @@ PyArray_CopyConverter(PyObject *obj, NPY_COPYMODE *copymode) {
             return NPY_FAIL;
         }
     }
+    else if(PyUnicode_Check(obj)) {
+        PyErr_SetString(PyExc_ValueError,
+                        "strings are not allowed for 'copy' keyword. "
+                        "Use True/False/None instead.");
+        return NPY_FAIL;
+    }
     else {
         npy_bool bool_copymode;
         if (!PyArray_BoolConverter(obj, &bool_copymode)) {
@@ -1197,7 +1203,7 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
  * that it is in an unpickle context instead of a normal context without
  * evil global state like we create here.
  */
-NPY_NO_EXPORT int evil_global_disable_warn_O4O8_flag = 0;
+NPY_NO_EXPORT NPY_TLS int evil_global_disable_warn_O4O8_flag = 0;
 
 /*
  * Convert a gentype (that is actually a generic kind character) and

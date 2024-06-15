@@ -161,6 +161,21 @@ def docs(ctx, sphinx_target, clean, first_build, jobs, *args, **kwargs):
     """
     meson.docs.ignore_unknown_options = True
 
+    # See https://github.com/scientific-python/spin/pull/199
+    # Can be changed when spin updates to 0.11, and moved to pyproject.toml
+    if clean:
+        clean_dirs = [
+            './doc/build/',
+            './doc/source/reference/generated',
+            './doc/source/reference/random/bit_generators/generated',
+            './doc/source/reference/random/generated',
+        ]
+
+        for target_dir in clean_dirs:
+            if os.path.isdir(target_dir):
+                print(f"Removing {target_dir!r}")
+                shutil.rmtree(target_dir)
+
     # Run towncrier without staging anything for commit. This is the way to get
     # release notes snippets included in a local doc build.
     cmd = ['towncrier', 'build', '--version', '2.x.y', '--keep', '--draft']
@@ -256,6 +271,83 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose, *args, **kwargs):
     for extra_param in ('markexpr', 'n_jobs', 'tests', 'verbose'):
         del ctx.params[extra_param]
     ctx.forward(meson.test)
+
+
+@click.command()
+@click.argument("pytest_args", nargs=-1)
+@click.option(
+    "-j",
+    "n_jobs",
+    metavar='N_JOBS',
+    default="1",
+    help=("Number of parallel jobs for testing. "
+          "Can be set to `auto` to use all cores.")
+)
+@click.option(
+    '--verbose', '-v', is_flag=True, default=False
+)
+@click.pass_context
+def check_docs(ctx, pytest_args, n_jobs, verbose, *args, **kwargs):
+    """🔧 Run doctests of objects in the public API.
+
+    PYTEST_ARGS are passed through directly to pytest, e.g.:
+
+      spin check-docs -- --pdb
+
+    To run tests on a directory:
+
+     \b
+     spin check-docs numpy/linalg
+
+    To report the durations of the N slowest doctests:
+
+      spin check-docs -- --durations=N
+
+    To run doctests that match a given pattern:
+
+     \b
+     spin check-docs -- -k "slogdet"
+     spin check-docs numpy/linalg -- -k "det and not slogdet"
+
+    \b
+    Note:
+    -----
+
+    \b
+     - This command only runs doctests and skips everything under tests/
+     - This command only doctests public objects: those which are accessible
+       from the top-level `__init__.py` file.
+
+    """  # noqa: E501
+    try:
+        # prevent obscure error later
+        import scipy_doctest
+    except ModuleNotFoundError as e:
+        raise ModuleNotFoundError("scipy-doctest not installed") from e
+    if (not pytest_args):
+        pytest_args = ('numpy',)
+
+    if (n_jobs != "1") and ('-n' not in pytest_args):
+        pytest_args = ('-n', str(n_jobs)) + pytest_args
+
+    if verbose:
+        pytest_args = ('-v',) + pytest_args
+
+    # turn doctesting on:
+    doctest_args = (
+        '--doctest-modules',
+        '--doctest-collect=api'
+    )
+
+    pytest_args = pytest_args + doctest_args
+
+    ctx.params['pytest_args'] = pytest_args
+
+    for extra_param in ('n_jobs', 'verbose'):
+        del ctx.params[extra_param]
+
+    ctx.forward(meson.test)
+
 
 
 # From scipy: benchmarks/benchmarks/common.py

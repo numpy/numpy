@@ -1589,12 +1589,13 @@ add_newdoc('numpy._core.umath', 'invert',
     the integers in the input arrays. This ufunc implements the C/Python
     operator ``~``.
 
-    For signed integer inputs, the two's complement is returned.  In a
-    two's-complement system negative numbers are represented by the two's
-    complement of the absolute value. This is the most common method of
-    representing signed integers on computers [1]_. A N-bit
-    two's-complement system can represent every integer in the range
-    :math:`-2^{N-1}` to :math:`+2^{N-1}-1`.
+    For signed integer inputs, the bit-wise NOT of the absolute value is
+    returned. In a two's-complement system, this operation effectively flips
+    all the bits, resulting in a representation that corresponds to the
+    negative of the input plus one. This is the most common method of
+    representing signed integers on computers [1]_. A N-bit two's-complement
+    system can represent every integer in the range :math:`-2^{N-1}` to
+    :math:`+2^{N-1}-1`.
 
     Parameters
     ----------
@@ -1646,8 +1647,8 @@ add_newdoc('numpy._core.umath', 'invert',
     >>> np.binary_repr(x, width=16)
     '1111111111110010'
 
-    When using signed integer types the result is the two's complement of
-    the result for the unsigned type:
+    When using signed integer types, the result is the bit-wise NOT of
+    the unsigned type, interpreted as a signed integer:
 
     >>> np.invert(np.array([13], dtype=np.int8))
     array([-14], dtype=int8)

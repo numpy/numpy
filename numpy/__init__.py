@@ -235,6 +235,7 @@ else:
         ix_, c_, r_, s_, ogrid, mgrid, unravel_index, ravel_multi_index, 
         index_exp
     )
+
     from . import matrixlib as _mat
     from .matrixlib import (
         asmatrix, bmat, matrix
@@ -291,6 +292,8 @@ else:
 
     __array_api_version__ = "2022.12"
 
+    from ._array_api_info import __array_namespace_info__
+
     # now that numpy core module is imported, can initialize limits
     _core.getlimits._register_known_types()
 
@@ -312,7 +315,7 @@ else:
         set(lib._polynomial_impl.__all__) |
         set(lib._npyio_impl.__all__) |
         set(lib._index_tricks_impl.__all__) |
-        {"emath", "show_config", "__version__"}
+        {"emath", "show_config", "__version__", "__array_namespace_info__"}
     )
 
     # Filter out Cython harmless warnings
