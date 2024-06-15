@@ -2,7 +2,7 @@
 Contributors
 ============
 
-A total of 213 people contributed to this release.  People with a "+" by their
+A total of 212 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * @Algorithmist-Girl +
@@ -126,7 +126,6 @@ names contributed a patch for the first time.
 * Marcel Loose +
 * Mark Mentovai +
 * Mark Ryan +
-* Marten Henric van Kerkwijk +
 * Marten van Kerkwijk
 * Mateusz Sokół
 * Matt Haberland
