@@ -18,32 +18,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  get_commit_message:
-    name: Get commit message
+  get_commit_tags:
+    name: Get commit tags
     runs-on: ubuntu-latest
+    # To enable this workflow on a fork, comment out:
     if: "github.repository == 'numpy/numpy'"
     outputs:
       message: ${{ steps.commit_message.outputs.message }}
     steps:
       - name: Checkout project
         uses: actions/checkout@v4
-        # Gets the correct commit message for pull request
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Get commit message
         id: commit_message
         run: |
           set -xe
-          COMMIT_MSG=$(git log --no-merges -1 --oneline)
-          echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
+          COMMIT_TAGS=$(git log --format=%B -n 1 | grep -o '\[[^]]*\]' | tr '\n' ' ' | xargs || true)
+          echo "message=$COMMIT_TAGS" >> $GITHUB_OUTPUT
           echo github.ref ${{ github.ref }}
-
   test_f2py_rtools:
     name: cp311 (meson) f2py rtools
     runs-on: windows-2019
-    needs: get_commit_message
+    needs: get_commit_tags
     if: >-
-      contains(needs.get_commit_message.outputs.message, '[winci f2py]') ||
+      contains(needs.get_commit_tags.outputs.message, '[winci f2py]') ||
+      contains(needs.get_commit_tags.outputs.message, '[f2py winci]') ||
       github.event_name == 'schedule' ||
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && ( ! endsWith(github.ref, 'dev0')))
@@ -59,19 +59,32 @@ jobs:
           architecture: 'x64'
           cache: 'pip'
           cache-dependency-path: 'environment.yml'
+      - name: Setup Cache for Rtools
+        id: cache-rtools
+        uses: actions/cache@v3
+        with:
+          path: C:\rtools43
+          key: ${{ runner.os }}-rtools43-${{ hashFiles('**/rtools43-cache-key') }}
+          restore-keys: |
+            ${{ runner.os }}-rtools43-
       # NumPy needs min GCC 8.2 so rtools >= 4.3
+      # 4.4.6104 is already present on windows-2019
       # RTools Ver <-> GCC Ver
       # RTools 4.0 <-> GCC 8
       # RTools 4.3 <-> GCC 12
       # RTools 4.4 <-> GCC 13
-      - name: Install rtools (mingw-w64)
+      - name: Install rtools (mingw-w64) if not cached
+        if: steps.cache-rtools.outputs.cache-hit != 'true'
         run: |
-          choco install rtools -y --no-progress --force --version=4.4.6104
+          Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
           choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+          choco install rtools -y --no-progress --force --version=4.3.5550
+          echo "c:\rtools43\mingw64\bin;" >> $env:GITHUB_PATH
       - name: pip-packages
         run: |
           python -m pip install -r requirements/f2pyCI_requirements.txt
       - name: Build and test # Fastest build, no BLAS or SIMD
         run: |
-          spin build -j2 -- -Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none
-          spin test -t numpy.f2py -m full -- -vvvvvv
+          $env:PATH="C:\\rtools43\\mingw64\\bin;$env:PATH"
+          python -mspin build -j2 -- -Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none
+          python -mspin test -t numpy.f2py -m full -- -vvvvvv
