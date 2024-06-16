@@ -1,0 +1,13 @@
+# Minimal subset of test_ and ci_ requirements
+spin
+Cython
+wheel==0.38.1
+setuptools
+hypothesis==6.81.1
+pytest==7.4.0
+pytz==2023.3.post1
+pytest-cov==4.1.0
+meson
+ninja; sys_platform != "emscripten"
+pytest-xdist
+charset-normalizer

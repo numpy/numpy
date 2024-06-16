@@ -39,7 +39,7 @@ jobs:
           echo github.ref ${{ github.ref }}
 
   test_f2py_rtools:
-    name: cp312 (meson) f2py rtools
+    name: cp311 (meson) f2py rtools
     runs-on: windows-2019
     needs: get_commit_message
     if: >-
@@ -55,24 +55,23 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.11'
           architecture: 'x64'
           cache: 'pip'
           cache-dependency-path: 'environment.yml'
+      # NumPy needs min GCC 8.2 so rtools >= 4.3
+      # RTools Ver <-> GCC Ver
+      # RTools 4.0 <-> GCC 8
+      # RTools 4.3 <-> GCC 12
+      # RTools 4.4 <-> GCC 13
       - name: Install rtools (mingw-w64)
         run: |
-          choco install rtools -y --no-progress --force --version=4.0.0.20220206
-          echo "c:\rtools40\ucrt64\bin;" >> $env:GITHUB_PATH
+          choco install rtools -y --no-progress --force --version=4.4.6104
           choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
       - name: pip-packages
         run: |
-          python -m pip install -r requirements/test_requirements.txt
-      - name: Build
+          python -m pip install -r requirements/f2pyCI_requirements.txt
+      - name: Build and test # Fastest build, no BLAS or SIMD
         run: |
-          pip install -r requirements/ci_requirements.txt
-          spin config-openblas --with-scipy-openblas=32
-          $env:PKG_CONFIG_PATH="$pwd/.openblas"
-          python -m pip install .
-      - name: Test F2PY
-        run: |
+          spin build -j2 -- -Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none
           spin test -t numpy.f2py -m full -- -vvvvvv
