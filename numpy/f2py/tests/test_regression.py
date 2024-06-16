@@ -124,7 +124,6 @@ def test_gh26623():
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(platform.system() not in ['Linux', 'Darwin'], reason='Unsupported on this platform for now')
 def test_gh25784():
     # Compile dubious file using passed flags
     try:
