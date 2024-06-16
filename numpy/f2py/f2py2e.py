@@ -635,6 +635,7 @@ def run_compile():
         r'--((f(90)?compiler(-exec|)|compiler)=|help-compiler)')
     flib_flags = [_m for _m in sys.argv[1:] if _reg3.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in flib_flags]
+    # TODO: Once distutils is dropped completely, i.e. min_ver >= 3.12, unify into --fflags
     reg_f77_f90_flags = re.compile(r'--f(77|90)flags=')
     reg_distutils_flags = re.compile(r'--((f(77|90)exec|opt|arch)=|(debug|noopt|noarch|help-fcompiler))')
     fc_flags = [_m for _m in sys.argv[1:] if reg_f77_f90_flags.match(_m)]
