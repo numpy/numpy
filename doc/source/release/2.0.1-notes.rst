@@ -1,0 +1,11 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 2.0.1 Release Notes
+==========================
+
+NumPy 2.0.1 is a maintenance release that fixes bugs and regressions
+discovered after the 2.0.0 release.
+
+The Python versions supported by this release are 3.9-3.12.
+

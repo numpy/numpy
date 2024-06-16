@@ -54,6 +54,9 @@ Highlights of this release include:
   - A new tracing and introspection API, `~numpy.lib.introspect.opt_func_info`,
     to determine which hardware-specific kernels are available and will be
     dispatched to.
+  - `numpy.save` now uses pickle protocol version 4 for saving arrays with
+    object dtype, which allows for pickle objects larger than 4GB and improves
+    saving speed by about 5% for large arrays.
 
 - Python API improvements:
 
