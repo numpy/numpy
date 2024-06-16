@@ -18,7 +18,7 @@ jobs:
     name: x86-64, LP64 OpenBLAS
     runs-on: windows-2019
     # To enable this job on a fork, comment out:
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[wingha skip]') && !contains(github.event.head_commit.message, '[skip wingha]')"
     strategy:
       fail-fast: false
       matrix:
@@ -85,7 +85,7 @@ jobs:
     name: MSVC, 32-bit Python, no BLAS
     runs-on: windows-2019
     # To enable this job on a fork, comment out:
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[wingha skip]') && !contains(github.event.head_commit.message, '[skip wingha]')"
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1

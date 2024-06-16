@@ -39,7 +39,7 @@ permissions:
 jobs:
   mypy:
     # To enable this workflow on a fork, comment out:
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[mypy skip]') && !contains(github.event.head_commit.message, '[skip mypy]')"
     name: "MyPy"
     runs-on: ${{ matrix.os_python[0] }}
     strategy:

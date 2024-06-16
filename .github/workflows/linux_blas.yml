@@ -55,7 +55,7 @@ permissions:
 jobs:
   openblas32_stable_nightly:
     # To enable this workflow on a fork, comment out:
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[nixblas skip]') && !contains(github.event.head_commit.message, '[skip nixblas]')"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -118,7 +118,7 @@ jobs:
 
 
   openblas_no_pkgconfig_fedora:
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[nixblas skip]') && !contains(github.event.head_commit.message, '[skip nixblas]')"
     runs-on: ubuntu-latest
     container: fedora:39
     name: "OpenBLAS (Fedora, no pkg-config, LP64/ILP64)"
@@ -153,7 +153,7 @@ jobs:
 
 
   flexiblas_fedora:
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[nixblas skip]') && !contains(github.event.head_commit.message, '[skip nixblas]')"
     runs-on: ubuntu-latest
     container: fedora:39
     name: "FlexiBLAS (LP64, ILP64 on Fedora)"
@@ -188,7 +188,7 @@ jobs:
 
 
   openblas_cmake:
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[nixblas skip]') && !contains(github.event.head_commit.message, '[skip nixblas]')"
     runs-on: ubuntu-latest
     name: "OpenBLAS with CMake"
     steps:
@@ -216,7 +216,7 @@ jobs:
 
  
   netlib-debian:
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[nixblas skip]') && !contains(github.event.head_commit.message, '[skip nixblas]')"
     runs-on: ubuntu-latest
     name: "Debian libblas/liblapack"
     steps:
@@ -245,7 +245,7 @@ jobs:
 
 
   netlib-split:
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[nixblas skip]') && !contains(github.event.head_commit.message, '[skip nixblas]')"
     runs-on: ubuntu-latest
     container: opensuse/tumbleweed
     name: "OpenSUSE Netlib BLAS/LAPACK"
@@ -276,7 +276,7 @@ jobs:
 
 
   mkl:
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[nixblas skip]') && !contains(github.event.head_commit.message, '[skip nixblas]')"
     runs-on: ubuntu-latest
     name: "MKL (LP64, ILP64, SDL)"
     steps:
@@ -339,7 +339,7 @@ jobs:
       run: spin test -- numpy/linalg
 
   blis:
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[nixblas skip]') && !contains(github.event.head_commit.message, '[skip nixblas]')"
     runs-on: ubuntu-latest
     name: "BLIS"
     steps:
@@ -375,7 +375,7 @@ jobs:
       run: spin test -- numpy/linalg
 
   atlas:
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[nixblas skip]') && !contains(github.event.head_commit.message, '[skip nixblas]')"
     runs-on: ubuntu-latest
     name: "ATLAS"
     steps:

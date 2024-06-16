@@ -20,7 +20,7 @@ jobs:
   x86_conda:
     name: macOS x86-64 conda
     # To enable this workflow on a fork, comment out:
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[macos skip]') && !contains(github.event.head_commit.message, '[skip macos]')"
     runs-on: macos-13
     strategy:
       fail-fast: false
@@ -104,7 +104,7 @@ jobs:
 
   accelerate:
     name: Accelerate (LP64, ILP64) - ${{ matrix.build_runner[1] }}
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[macos skip]') && !contains(github.event.head_commit.message, '[skip macos]')"
     runs-on: ${{ matrix.build_runner[0] }}
     strategy:
       fail-fast: false
