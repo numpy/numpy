@@ -17,10 +17,32 @@ permissions:
 
 
 jobs:
+  get_commit_tags:
+    name: Get commit tags
+    runs-on: ubuntu-latest
+    if: "github.repository == 'numpy/numpy'"
+    outputs:
+      message: ${{ steps.commit_message.outputs.message }}
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+        # Gets the correct commit message for pull request
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get commit message
+        id: commit_message
+        run: |
+          set -xe
+          COMMIT_TAGS=$(git log --format=%B -n 1 | grep -o '\[[^]]*\]' | tr '\n' ' ' | xargs)
+          echo "message=$COMMIT_TAGS" >> $GITHUB_OUTPUT
+          echo github.ref ${{ github.ref }}
   musllinux_x86_64:
     runs-on: ubuntu-latest
     # To enable this workflow on a fork, comment out:
-    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[musl skip]') && !contains(github.event.head_commit.message, '[skip musl]')"
+    needs: get_commit_tags
+    if: >-
+      !contains(needs.get_commit_tags.outputs.message, '[musl skip]') &&
+      !contains(needs.get_commit_tags.outputs.message, '[skip musl]')
     container:
       # Use container used for building musllinux wheels
       # it has git installed, all the pythons, etc

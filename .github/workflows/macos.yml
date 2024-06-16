@@ -17,10 +17,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  get_commit_tags:
+    name: Get commit tags
+    runs-on: ubuntu-latest
+    if: "github.repository == 'numpy/numpy'"
+    outputs:
+      message: ${{ steps.commit_message.outputs.message }}
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+        # Gets the correct commit message for pull request
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get commit message
+        id: commit_message
+        run: |
+          set -xe
+          COMMIT_TAGS=$(git log --format=%B -n 1 | grep -o '\[[^]]*\]' | tr '\n' ' ' | xargs)
+          echo "message=$COMMIT_TAGS" >> $GITHUB_OUTPUT
+          echo github.ref ${{ github.ref }}
   x86_conda:
     name: macOS x86-64 conda
-    # To enable this workflow on a fork, comment out:
-    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[macos skip]') && !contains(github.event.head_commit.message, '[skip macos]')"
+    needs: get_commit_tags
+    if: >-
+      !contains(needs.get_commit_tags.outputs.message, '[macos skip]') &&
+      !contains(needs.get_commit_tags.outputs.message, '[skip macos]')
     runs-on: macos-13
     strategy:
       fail-fast: false
@@ -104,7 +125,10 @@ jobs:
 
   accelerate:
     name: Accelerate (LP64, ILP64) - ${{ matrix.build_runner[1] }}
-    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[macos skip]') && !contains(github.event.head_commit.message, '[skip macos]')"
+    needs: get_commit_tags
+    if: >-
+      !contains(needs.get_commit_tags.outputs.message, '[macos skip]') &&
+      !contains(needs.get_commit_tags.outputs.message, '[skip macos]')
     runs-on: ${{ matrix.build_runner[0] }}
     strategy:
       fail-fast: false
