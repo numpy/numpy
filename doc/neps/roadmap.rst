@@ -49,7 +49,8 @@ towards support for newer SIMD instruction sets, like SVE on arm64, is ongoing.
 
 Other performance improvement ideas include:
 
-- A better story around parallel execution.
+- A better story around parallel execution (related is support for free-threaded
+  CPython, see further down).
 - Optimizations in individual functions.
 
 Furthermore we would like to improve the benchmarking system, in terms of coverage,
@@ -84,8 +85,8 @@ Extensibility
 We aim to continue making it easier to extend NumPy. The primary topic here is to
 improve the dtype system - see for example :ref:`NEP41` and related NEPs linked
 from it. In NumPy 2.0, a `new C API for user-defined dtypes <https://numpy.org/devdocs/reference/c-api/array.html#custom-data-types>`__
-was made public. We aim
-to encourage its usage and improve this API further.
+was made public. We aim to encourage its usage and improve this API further,
+including support for writing a dtype in Python.
 
 Ideas for new dtypes that may be developed outside of the main NumPy repository
 first, and that could potentially be upstreamed into NumPy later, include:
@@ -121,6 +122,8 @@ We intend to write a NEP covering the support levels we provide and what is
 required for a platform to move to a higher tier of support, similar to
 `PEP 11 <https://peps.python.org/pep-0011/>`__.
 
+Support for free-threaded CPython
+`````````````````````````````````
 CPython 3.13 will be the first release to offer a free-threaded build (i.e.,
 a CPython build with the GIL disabled). Work is in progress to support this
 well in NumPy. After that is stable and complete, there may be opportunities to
@@ -131,14 +134,37 @@ Binary size reduction
 `````````````````````
 The number of downloads of NumPy from PyPI and other platforms continues to
 increase - as of May 2024 we're at >200 million downloads/month from PyPI
-alone). Reducing the size of an installed NumPy package has many benefits:
+alone. Reducing the size of an installed NumPy package has many benefits:
 faster installs, lower disk space usage, smaller load on PyPI, less
-environmental impact, easier to fit more packages on top of NumPy into an AWS
-Lambda layer, lower latency for Pyodide users, and so on. We aim for
-significant reductions, as well as making it easier for end users and packagers
-to produce smaller custom builds (e.g., we added support for stripping tests
-before 2.1.0). See `gh-25737 <https://github.com/numpy/numpy/issues/25737>`__
-for details.
+environmental impact, easier to fit more packages on top of NumPy in
+resource-constrained environments and platforms like AWS Lambda, lower latency
+for Pyodide users, and so on. We aim for significant reductions, as well as
+making it easier for end users and packagers to produce smaller custom builds
+(e.g., we added support for stripping tests before 2.1.0). See
+`gh-25737 <https://github.com/numpy/numpy/issues/25737>`__ for details.
+
+Support use of CPython's limited C API
+``````````````````````````````````````
+Use of the CPython limited C API, allowing producing ``abi3`` wheels that use
+the stable ABI and are hence independent of CPython feature releases, has
+benefits for both downstream packages that use NumPy's C API and for NumPy
+itself. In NumPy 2.0, work was done to enable using the limited C API with
+the Cython support in NumPy (see `gh-25531 <https://github.com/numpy/numpy/pull/25531`__).
+More work and testing is needed to ensure full support for downstream packages.
+
+We also want to explore what is needed for NumPy itself to use the limited
+C API - this would make testing new CPython dev and pre-release versions across
+the ecosystem easier, and significantly reduce the maintenance effort for CI
+jobs in NumPy itself.
+
+Create a header-only package for NumPy
+``````````````````````````````````````
+We have reduced the platform-dependent content in the public NumPy headers to
+almost nothing. It is now feasible to create a separate package with only
+NumPy headers and a discovery mechanism for them, in order to enable downstream
+packages to build against the NumPy C API without having NumPy installed.
+This will make it easier/cheaper to use NumPy's C API, especially on more
+niche platforms for which we don't provide wheels.
 
 
 NumPy 2.0 stabilization & downstream usage
