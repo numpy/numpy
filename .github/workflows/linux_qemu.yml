@@ -29,7 +29,7 @@ permissions:
 jobs:
   linux_qemu:
     # To enable this workflow on a fork, comment out:
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[qemu skip]') && !contains(github.event.head_commit.message, '[skip qemu]')"
     runs-on: ubuntu-22.04
     continue-on-error: true
     strategy:

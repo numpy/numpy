@@ -49,7 +49,7 @@ jobs:
 
   smoke_test:
     # To enable this job on a fork, comment out:
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[linux skip]') && !contains(github.event.head_commit.message, '[skip linux]')"
     runs-on: ubuntu-latest
     env:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"

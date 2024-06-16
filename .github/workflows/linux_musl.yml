@@ -20,7 +20,7 @@ jobs:
   musllinux_x86_64:
     runs-on: ubuntu-latest
     # To enable this workflow on a fork, comment out:
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[musl skip]') && !contains(github.event.head_commit.message, '[skip musl]')"
     container:
       # Use container used for building musllinux wheels
       # it has git installed, all the pythons, etc
