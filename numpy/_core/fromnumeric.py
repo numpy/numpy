@@ -918,6 +918,13 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
 
     Notes
     -----
+    The returned indices are not guaranteed to be sorted according to
+    the values. Furthermore, the default selection algorithm ``introselect``
+    is unstable, and hence the returned indices are not guaranteed
+    to be the earliest/latest occurrence of the element.
+
+    The treatment of ``np.nan`` in the input array is undefined.
+
     See `partition` for notes on the different selection algorithms.
 
     Examples
