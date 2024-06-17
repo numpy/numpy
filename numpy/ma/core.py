@@ -7506,6 +7506,37 @@ def reshape(a, new_shape, order='C'):
     --------
     MaskedArray.reshape : equivalent function
 
+    Examples
+    --------
+    Reshaping a 1-D array:
+
+    >>> a = np.ma.array([1, 2, 3, 4])
+    >>> np.ma.reshape(a, (2, 2))
+    masked_array(
+      data=[[1, 2],
+            [3, 4]],
+      mask=False,
+      fill_value=999999)
+
+    Reshaping a 2-D array:
+
+    >>> b = np.ma.array([[1, 2], [3, 4]])
+    >>> np.ma.reshape(b, (1, 4))
+    masked_array(data=[[1, 2, 3, 4]],
+                 mask=False,
+           fill_value=999999)
+
+    Reshaping a 1-D array with a mask:
+
+    >>> c = np.ma.array([1, 2, 3, 4], mask=[False, True, False, False])
+    >>> np.ma.reshape(c, (2, 2))
+    masked_array(
+      data=[[1, --],
+            [3, 4]],
+      mask=[[False,  True],
+            [False, False]],
+      fill_value=999999)
+
     """
     # We can't use 'frommethod', it whine about some parameters. Dmmit.
     try:
