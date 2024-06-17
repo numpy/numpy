@@ -31,7 +31,7 @@ jobs:
         id: commit_message
         run: |
           set -xe
-          COMMIT_TAGS=$(git log --format=%B -n 1 | grep -o '\[[^]]*\]' | tr '\n' ' ' | xargs)
+          COMMIT_TAGS=$(git log --format=%B -n 1 | grep -o '\[[^]]*\]' | tr '\n' ' ' | xargs || true)
           echo "message=$COMMIT_TAGS" >> $GITHUB_OUTPUT
           echo github.ref ${{ github.ref }}
   analysis:
