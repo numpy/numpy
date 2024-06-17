@@ -24,9 +24,32 @@ permissions:
   contents: read
 
 jobs:
+  get_commit_tags:
+    name: Get commit tags
+    runs-on: ubuntu-latest
+    # To enable this workflow on a fork, comment out:
+    if: "github.repository == 'numpy/numpy'"
+    outputs:
+      message: ${{ steps.commit_message.outputs.message }}
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get commit message
+        id: commit_message
+        run: |
+          set -xe
+          COMMIT_TAGS=$(git log --format=%B -n 1 | grep -o '\[[^]]*\]' | tr '\n' ' ' | xargs)
+          echo "message=$COMMIT_TAGS" >> $GITHUB_OUTPUT
+          echo github.ref ${{ github.ref }}
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    needs: get_commit_tags
+    if: >-
+      !contains(needs.get_commit_tags.outputs.message, '[codeql skip]') &&
+      !contains(needs.get_commit_tags.outputs.message, '[skip codeql]')
     permissions:
       actions: read
       contents: read

@@ -16,13 +16,13 @@ jobs:
   get_commit_tags:
     name: Get commit tags
     runs-on: ubuntu-latest
+    # To enable this workflow on a fork, comment out:
     if: "github.repository == 'numpy/numpy'"
     outputs:
       message: ${{ steps.commit_message.outputs.message }}
     steps:
       - name: Checkout project
         uses: actions/checkout@v4
-        # Gets the correct commit message for pull request
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Get commit message
@@ -34,7 +34,6 @@ jobs:
           echo github.ref ${{ github.ref }}
   cygwin_build_test:
     runs-on: windows-latest
-    # To enable this workflow on a fork, comment out:
     needs: get_commit_tags
     if: >-
       !contains(needs.get_commit_tags.outputs.message, '[cygwin skip]') &&
