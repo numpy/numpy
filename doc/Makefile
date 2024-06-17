@@ -50,6 +50,7 @@ help:
 
 clean:
 	-rm -rf build/*
+	-rm -rf source/.jupyterlite.doit.db
 	find . -name generated -type d -prune -exec rm -rf "{}" ";"
 
 gitwash-update:
