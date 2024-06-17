@@ -15,3 +15,7 @@ pickleshare
 # needed to build release notes
 towncrier
 toml
+
+# interactive documentation utilities
+jupyterlite-sphinx>=0.15.0
+jupyterlite-pyodide-kernel
