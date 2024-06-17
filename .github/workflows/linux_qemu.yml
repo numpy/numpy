@@ -30,6 +30,7 @@ jobs:
   get_commit_tags:
     name: Get commit tags
     runs-on: ubuntu-latest
+    # To enable this workflow on a fork, comment out:
     if: "github.repository == 'numpy/numpy'"
     outputs:
       message: ${{ steps.commit_message.outputs.message }}
@@ -47,7 +48,6 @@ jobs:
           echo "message=$COMMIT_TAGS" >> $GITHUB_OUTPUT
           echo github.ref ${{ github.ref }}
   linux_qemu:
-    # To enable this workflow on a fork, comment out:
     needs: get_commit_tags
     if: >-
       !contains(needs.get_commit_tags.outputs.message, '[qemu skip]') &&
