@@ -696,10 +696,12 @@ def astype(
     x: NDArray[Any],
     dtype: _DTypeLike[_SCT],
     copy: bool = ...,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def astype(
     x: NDArray[Any],
     dtype: DTypeLike,
     copy: bool = ...,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[Any]: ...

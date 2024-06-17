@@ -695,7 +695,8 @@ class TestPtp:
 
 class TestCumsum:
 
-    def test_basic(self):
+    @pytest.mark.parametrize("cumsum", [np.cumsum, np.cumulative_sum])
+    def test_basic(self, cumsum):
         ba = [1, 2, 10, 11, 6, 5, 4]
         ba2 = [[1, 2, 3, 4], [5, 6, 7, 9], [10, 3, 4, 5]]
         for ctype in [np.int8, np.uint8, np.int16, np.uint16, np.int32,
@@ -705,15 +706,15 @@ class TestCumsum:
             a2 = np.array(ba2, ctype)
 
             tgt = np.array([1, 3, 13, 24, 30, 35, 39], ctype)
-            assert_array_equal(np.cumsum(a, axis=0), tgt)
+            assert_array_equal(cumsum(a, axis=0), tgt)
 
             tgt = np.array(
                 [[1, 2, 3, 4], [6, 8, 10, 13], [16, 11, 14, 18]], ctype)
-            assert_array_equal(np.cumsum(a2, axis=0), tgt)
+            assert_array_equal(cumsum(a2, axis=0), tgt)
 
             tgt = np.array(
                 [[1, 3, 6, 10], [5, 11, 18, 27], [10, 13, 17, 22]], ctype)
-            assert_array_equal(np.cumsum(a2, axis=1), tgt)
+            assert_array_equal(cumsum(a2, axis=1), tgt)
 
 
 class TestProd:
@@ -738,7 +739,8 @@ class TestProd:
 
 class TestCumprod:
 
-    def test_basic(self):
+    @pytest.mark.parametrize("cumprod", [np.cumprod, np.cumulative_prod])
+    def test_basic(self, cumprod):
         ba = [1, 2, 10, 11, 6, 5, 4]
         ba2 = [[1, 2, 3, 4], [5, 6, 7, 9], [10, 3, 4, 5]]
         for ctype in [np.int16, np.uint16, np.int32, np.uint32,
@@ -746,21 +748,50 @@ class TestCumprod:
             a = np.array(ba, ctype)
             a2 = np.array(ba2, ctype)
             if ctype in ['1', 'b']:
-                assert_raises(ArithmeticError, np.cumprod, a)
-                assert_raises(ArithmeticError, np.cumprod, a2, 1)
-                assert_raises(ArithmeticError, np.cumprod, a)
+                assert_raises(ArithmeticError, cumprod, a)
+                assert_raises(ArithmeticError, cumprod, a2, 1)
+                assert_raises(ArithmeticError, cumprod, a)
             else:
-                assert_array_equal(np.cumprod(a, axis=-1),
+                assert_array_equal(cumprod(a, axis=-1),
                                    np.array([1, 2, 20, 220,
                                              1320, 6600, 26400], ctype))
-                assert_array_equal(np.cumprod(a2, axis=0),
+                assert_array_equal(cumprod(a2, axis=0),
                                    np.array([[1, 2, 3, 4],
                                              [5, 12, 21, 36],
                                              [50, 36, 84, 180]], ctype))
-                assert_array_equal(np.cumprod(a2, axis=-1),
+                assert_array_equal(cumprod(a2, axis=-1),
                                    np.array([[1, 2, 6, 24],
                                              [5, 30, 210, 1890],
                                              [10, 30, 120, 600]], ctype))
+
+
+def test_cumulative_include_initial():
+    arr = np.arange(8).reshape((2, 2, 2))
+
+    expected = np.array([
+        [[0, 0], [0, 1], [2, 4]], [[0, 0], [4, 5], [10, 12]]
+    ])
+    assert_array_equal(
+        np.cumulative_sum(arr, axis=1, include_initial=True), expected
+    )
+
+    expected = np.array([
+        [[1, 0, 0], [1, 2, 6]], [[1, 4, 20], [1, 6, 42]]
+    ])
+    assert_array_equal(
+        np.cumulative_prod(arr, axis=2, include_initial=True), expected
+    )
+
+    out = np.zeros((3, 2), dtype=np.float64)
+    expected = np.array([[0, 0], [1, 2], [4, 6]], dtype=np.float64)
+    arr = np.arange(1, 5).reshape((2, 2))
+    np.cumulative_sum(arr, axis=0, out=out, include_initial=True)
+    assert_array_equal(out, expected)
+
+    expected = np.array([1, 2, 4])
+    assert_array_equal(
+        np.cumulative_prod(np.array([2, 2]), include_initial=True), expected
+    )
 
 
 class TestDiff:

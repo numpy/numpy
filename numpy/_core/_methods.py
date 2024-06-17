@@ -98,8 +98,8 @@ def _count_reduce_items(arr, axis, keepdims=False, where=True):
 
 def _clip(a, min=None, max=None, out=None, **kwargs):
     if min is None and max is None:
-        raise ValueError("One of max or min must be given")
-
+        # return identity
+        return um.positive(a, out=out, **kwargs)
     if min is None:
         return um.minimum(a, max, out=out, **kwargs)
     elif max is None:
