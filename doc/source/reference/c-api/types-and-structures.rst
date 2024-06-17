@@ -215,12 +215,11 @@ The :c:data:`PyArray_Type` can also be sub-typed.
 
 .. tip::
 
-    The ``tp_as_number`` methods use a generic approach to call whatever
-    function has been registered for handling the operation.  When the
-    ``_multiarray_umath module`` is imported, it sets the numeric operations
-    for all arrays to the corresponding ufuncs. This choice can be changed with
-    :c:func:`PyUFunc_ReplaceLoopBySignature` The ``tp_str`` and ``tp_repr``
-    methods can also be altered using :c:func:`PyArray_SetStringFunction`.
+    The :c:member:`tp_as_number <PyTypeObject.tp_as_number>` methods use
+    a generic approach to call whatever function has been registered for
+    handling the operation. When the ``_multiarray_umath`` module is imported,
+    it sets the numeric operations for all arrays to the corresponding ufuncs.
+    This choice can be changed with :c:func:`PyUFunc_ReplaceLoopBySignature`.
 
 PyGenericArrType_Type
 ---------------------

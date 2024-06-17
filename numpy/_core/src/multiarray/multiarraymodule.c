@@ -3177,31 +3177,6 @@ fail:
 }
 
 static PyObject *
-array_set_string_function(PyObject *NPY_UNUSED(self), PyObject *args,
-        PyObject *kwds)
-{
-    PyObject *op = NULL;
-    int repr = 1;
-    static char *kwlist[] = {"f", "repr", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|Oi:set_string_function", kwlist, &op, &repr)) {
-        return NULL;
-    }
-    /* reset the array_repr function to built-in */
-    if (op == Py_None) {
-        op = NULL;
-    }
-    if (op != NULL && !PyCallable_Check(op)) {
-        PyErr_SetString(PyExc_TypeError,
-                "Argument must be callable.");
-        return NULL;
-    }
-    PyArray_SetStringFunction(op, repr);
-    Py_RETURN_NONE;
-}
-
-
-static PyObject *
 array_set_datetimeparse_function(PyObject *NPY_UNUSED(self),
         PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds))
 {
@@ -4417,9 +4392,6 @@ static struct PyMethodDef array_module_methods[] = {
     {"_reconstruct",
         (PyCFunction)array__reconstruct,
         METH_VARARGS, NULL},
-    {"set_string_function",
-        (PyCFunction)array_set_string_function,
-        METH_VARARGS|METH_KEYWORDS, NULL},
     {"set_datetimeparse_function",
         (PyCFunction)array_set_datetimeparse_function,
         METH_VARARGS|METH_KEYWORDS, NULL},

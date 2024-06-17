@@ -59,11 +59,14 @@ _format_options = {
     'formatter': None,
     # Internally stored as an int to simplify comparisons; converted from/to
     # str/False on the way in/out.
-    'legacy': sys.maxsize}
+    'legacy': sys.maxsize,
+    'override_repr': None,
+}
 
 def _make_options_dict(precision=None, threshold=None, edgeitems=None,
                        linewidth=None, suppress=None, nanstr=None, infstr=None,
-                       sign=None, formatter=None, floatmode=None, legacy=None):
+                       sign=None, formatter=None, floatmode=None, legacy=None,
+                       override_repr=None):
     """
     Make a dictionary out of the non-None arguments, plus conversion of
     *legacy* and sanity checks.
@@ -119,7 +122,7 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
                      linewidth=None, suppress=None, nanstr=None,
                      infstr=None, formatter=None, sign=None, floatmode=None,
-                     *, legacy=None):
+                     *, legacy=None, override_repr=None):
     """
     Set printing options.
 
@@ -224,6 +227,9 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
         .. versionadded:: 1.14.0
         .. versionchanged:: 1.22.0
+    override_repr: callable, optional
+        If set a passed function will be used for generating arrays' repr.
+        Other options will be ignored.
 
     See Also
     --------
@@ -285,9 +291,10 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     """
     opt = _make_options_dict(precision, threshold, edgeitems, linewidth,
                              suppress, nanstr, infstr, sign, formatter,
-                             floatmode, legacy)
-    # formatter is always reset
+                             floatmode, legacy, override_repr)
+    # formatter and override_repr are always reset
     opt['formatter'] = formatter
+    opt['override_repr'] = override_repr
     _format_options.update(opt)
 
     # set the C variable for legacy mode
@@ -333,7 +340,7 @@ def get_printoptions():
     --------
 
     >>> np.get_printoptions()
-    {'edgeitems': 3, 'threshold': 1000, ..., 'legacy': False}
+    {'edgeitems': 3, 'threshold': 1000, ..., 'override_repr': None}
 
     >>> np.get_printoptions()['linewidth']
     75
@@ -1552,6 +1559,10 @@ def _array_repr_implementation(
         arr, max_line_width=None, precision=None, suppress_small=None,
         array2string=array2string):
     """Internal version of array_repr() that allows overriding array2string."""
+    override_repr = _format_options["override_repr"]
+    if override_repr is not None:
+        return override_repr(arr)
+
     if max_line_width is None:
         max_line_width = _format_options['linewidth']
 
@@ -1727,78 +1738,3 @@ _default_array_str = functools.partial(_array_str_implementation,
                                        array2string=_array2string_impl)
 _default_array_repr = functools.partial(_array_repr_implementation,
                                         array2string=_array2string_impl)
-
-
-def set_string_function(f, repr=True):
-    """
-    Set a Python function to be used when pretty printing arrays.
-
-    .. deprecated:: 2.0
-        Use `np.set_printoptions` instead with a formatter for custom
-        printing of NumPy objects.
-
-    Parameters
-    ----------
-    f : function or None
-        Function to be used to pretty print arrays. The function should expect
-        a single array argument and return a string of the representation of
-        the array. If None, the function is reset to the default NumPy function
-        to print arrays.
-    repr : bool, optional
-        If True (default), the function for pretty printing (``__repr__``)
-        is set, if False the function that returns the default string
-        representation (``__str__``) is set.
-
-    See Also
-    --------
-    set_printoptions, get_printoptions
-
-    Examples
-    --------
-    >>> from numpy._core.arrayprint import set_string_function
-    >>> def pprint(arr):
-    ...     return 'HA! - What are you going to do now?'
-    ...
-    >>> set_string_function(pprint)
-    >>> a = np.arange(10)
-    >>> a
-    HA! - What are you going to do now?
-    >>> _ = a
-    >>> # [0 1 2 3 4 5 6 7 8 9]
-
-    We can reset the function to the default:
-
-    >>> set_string_function(None)
-    >>> a
-    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-
-    `repr` affects either pretty printing or normal string representation.
-    Note that ``__repr__`` is still affected by setting ``__str__``
-    because the width of each array element in the returned string becomes
-    equal to the length of the result of ``__str__()``.
-
-    >>> x = np.arange(4)
-    >>> set_string_function(lambda x:'random', repr=False)
-    >>> x.__str__()
-    'random'
-    >>> x.__repr__()
-    'array([0, 1, 2, 3])'
-
-    """
-
-    # Deprecated in NumPy 2.0, 2023-07-11
-    warnings.warn(
-        "`set_string_function` is deprecated. Use `np.set_printoptions` "
-        "with a formatter for custom printing NumPy objects. "
-        "(deprecated in NumPy 2.0)",
-        DeprecationWarning,
-        stacklevel=2
-    )
-
-    if f is None:
-        if repr:
-            return multiarray.set_string_function(_default_array_repr, 1)
-        else:
-            return multiarray.set_string_function(_default_array_str, 0)
-    else:
-        return multiarray.set_string_function(f, repr)
