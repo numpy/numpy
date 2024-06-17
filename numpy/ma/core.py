@@ -7394,6 +7394,28 @@ def put(a, indices, values, mode='raise'):
     --------
     MaskedArray.put
 
+    Examples
+    --------
+    Putting values in a masked array:
+
+    >>> a = np.ma.array([1, 2, 3, 4], mask=[False, True, False, False])
+    >>> np.ma.put(a, [1, 3], [10, 30])
+    >>> a
+    masked_array(data=[ 1, 10,  3, 30],
+                 mask=False,
+           fill_value=999999)
+
+    Using put with a 2D array:
+
+    >>> b = np.ma.array([[1, 2], [3, 4]], mask=[[False, True], [False, False]])
+    >>> np.ma.put(b, [[0, 1], [1, 0]], [[10, 20], [30, 40]])
+    >>> b
+    masked_array(
+      data=[[40, 30],
+            [ 3,  4]],
+      mask=False,
+      fill_value=999999)
+
     """
     # We can't use 'frommethod', the order of arguments is different
     try:
