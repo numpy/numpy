@@ -10,5 +10,7 @@
 #include "half.hpp"
 #include "meta.hpp"
 #include "float_status.hpp"
+#include "slice.hpp"
+#include "math.hpp"
 
 #endif // NUMPY_CORE_SRC_COMMON_COMMON_HPP

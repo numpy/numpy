@@ -58,9 +58,6 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void BOOL_@kind@,
    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)))
 /**end repeat**/
 
-NPY_NO_EXPORT void
-BOOL__ones_like(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data));
-
 /**begin repeat
  * #kind = isnan, isinf, isfinite#
  **/
@@ -168,9 +165,6 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
 #define @S@@TYPE@_fmin @S@@TYPE@_minimum
 #define @S@@TYPE@_fmax_indexed @S@@TYPE@_maximum_indexed
 #define @S@@TYPE@_fmin_indexed @S@@TYPE@_minimum_indexed
-
-NPY_NO_EXPORT void
-@S@@TYPE@__ones_like(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 @S@@TYPE@_positive(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
@@ -444,9 +438,9 @@ NPY_NO_EXPORT void
 @TYPE@_logical_not(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 /**begin repeat1
- * #kind = isnan, isinf, isfinite, signbit, copysign, nextafter, spacing#
- * #func = npy_isnan, npy_isinf, npy_isfinite, npy_signbit, npy_copysign, nextafter, spacing#
- * #dispatched = 1, 1, 1, 1, 0, 0, 0#
+ * #kind = isnan, isinf, isfinite, signbit, nextafter, spacing#
+ * #func = npy_isnan, npy_isinf, npy_isfinite, npy_signbit, nextafter, spacing#
+ * #dispatched = 1, 1, 1, 1, 0, 0#
  **/
 
 #if !@fd@ || !@dispatched@
@@ -495,9 +489,6 @@ NPY_NO_EXPORT void
 
 NPY_NO_EXPORT void
 @TYPE@_reciprocal(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data));
-
-NPY_NO_EXPORT void
-@TYPE@__ones_like(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 @TYPE@_conjugate(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
@@ -649,9 +640,6 @@ NPY_NO_EXPORT void
 C@TYPE@_reciprocal(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
-C@TYPE@__ones_like(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data));
-
-NPY_NO_EXPORT void
 C@TYPE@_conjugate(char **args, const npy_intp *dimensions, const npy_intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
@@ -720,9 +708,6 @@ NPY_NO_EXPORT void
 @TYPE@_isfinite(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 #define @TYPE@_isnan @TYPE@_isnat
-
-NPY_NO_EXPORT void
-@TYPE@__ones_like(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data));
 
 /**begin repeat1
  * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
