@@ -7337,6 +7337,33 @@ def left_shift(a, n):
     --------
     numpy.left_shift
 
+    Examples
+    --------
+    Shift with a masked array:
+
+    >>> arr = np.ma.array([10, 20, 30], mask=[False, True, False])
+    >>> np.ma.left_shift(arr, 1)
+    masked_array(data=[20, --, 60],
+                 mask=[False,  True, False],
+           fill_value=999999)
+
+    Large shift:
+
+    >>> np.ma.left_shift(10, 10)
+    masked_array(data=10240,
+                 mask=False,
+           fill_value=999999)
+
+    Shift with a scalar and an array:
+
+    >>> scalar = 10
+    >>> arr = np.ma.array([1, 2, 3], mask=[False, True, False])
+    >>> np.ma.left_shift(scalar, arr)
+    masked_array(data=[20, --, 80],
+                 mask=[False,  True, False],
+           fill_value=999999)
+
+
     """
     m = getmask(a)
     if m is nomask:
