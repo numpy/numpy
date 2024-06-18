@@ -49,6 +49,7 @@ def fix(x, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.fix(3.14)
     3.0
     >>> np.fix(3)
@@ -111,6 +112,7 @@ def isposinf(x, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.isposinf(np.inf)
     True
     >>> np.isposinf(-np.inf)
@@ -180,6 +182,7 @@ def isneginf(x, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.isneginf(-np.inf)
     True
     >>> np.isneginf(np.inf)

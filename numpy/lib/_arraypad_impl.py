@@ -49,7 +49,7 @@ def _slice_at_axis(sl, axis):
 
     Examples
     --------
-    >>> _slice_at_axis(slice(None, 3, -1), 1)
+    >>> np._slice_at_axis(slice(None, 3, -1), 1)
     (slice(None, None, None), slice(None, 3, -1), (...,))
     """
     return (slice(None),) * axis + (sl,) + (...,)
@@ -684,6 +684,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = [1, 2, 3, 4, 5]
     >>> np.pad(a, (2, 3), 'constant', constant_values=(4, 6))
     array([4, 4, 1, ..., 6, 6, 6])
