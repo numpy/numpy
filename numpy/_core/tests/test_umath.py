@@ -2102,6 +2102,7 @@ class TestAVXFloat32Transcendental:
                 assert_array_almost_equal_nulp(np.sin(x_f32_large[::jj]), sin_true[::jj], nulp=2)
                 assert_array_almost_equal_nulp(np.cos(x_f32_large[::jj]), cos_true[::jj], nulp=2)
 
+
 class TestLogAddExp(_FilterInvalids):
     def test_logaddexp_values(self):
         x = [1, 2, 3, 4, 5]
@@ -2152,13 +2153,203 @@ class TestLog1p:
         assert_almost_equal(ncu.log1p(0.2), ncu.log(1.2))
         assert_almost_equal(ncu.log1p(1e-6), ncu.log(1+1e-6))
 
-    def test_special(self):
+    # Special cases that we test for equality.  The floating point warnings
+    # triggered by some of these values are ignored.
+    @pytest.mark.parametrize(
+        'z, wref',
+        [(np.nan, np.nan),
+         (np.inf, np.inf),
+         (-1.0, -np.inf),
+         (-2.0, np.nan),
+         (-np.inf, np.nan),
+         (complex(np.nan, 0.0), complex(np.nan, np.nan)),
+         (complex(np.nan, 1), complex(np.nan, np.nan)),
+         (complex(1, np.nan), complex(np.nan, np.nan)),
+         (complex(np.inf, 1), complex(np.inf, 0.0)),
+         (complex(np.inf, -1), complex(np.inf, -0.0)),
+         (complex(-np.inf, 1), complex(np.inf, np.pi)),
+         (complex(-np.inf, -1), complex(np.inf, -np.pi)),
+         (complex(-np.inf, 0.0), complex(np.inf, np.pi)),
+         (complex(-np.inf, -0.0), complex(np.inf, -np.pi)),
+         (complex(0, np.inf), complex(np.inf, np.pi/2)),
+         (complex(0, -np.inf), complex(np.inf, -np.pi/2)),
+         (complex(-1, 0), complex(-np.inf, 0))]
+    )
+    def test_special(self, z, wref):
         with np.errstate(invalid="ignore", divide="ignore"):
-            assert_equal(ncu.log1p(np.nan), np.nan)
-            assert_equal(ncu.log1p(np.inf), np.inf)
-            assert_equal(ncu.log1p(-1.), -np.inf)
-            assert_equal(ncu.log1p(-2.), np.nan)
-            assert_equal(ncu.log1p(-np.inf), np.nan)
+            w = np.log1p(z)
+            assert_equal(w, wref)
+
+    # Test w = log1p(z) for complex double z (np.complex128).
+    # Reference values were computed with mpmath, e.g.
+    #    from mpmath import mp
+    #    mp.dps = 200
+    #    wref = complex(mp.log1p(z))
+    @pytest.mark.parametrize(
+        'z, wref',
+        [
+         # Near 0+0j:
+         (0.0, 0.0 + 0.0j),
+         (3.4259e-13 + 6.71894e-08j,
+          3.448472077361198e-13 + 6.718939999997688e-08j),
+         (1e-280 + 0j, 1e-280 + 0j),
+         (1e-18 + 0j, 1e-18 + 0j),
+         (1e-18 + 1e-12j, 1.0000005e-18 + 1e-12j),
+         (-1e-15 + 3e-8j, -5.5e-16 + 3.000000000000002e-08j),
+         (1e-15 + 3e-8j, 1.4499999999999983e-15 + 2.999999999999996e-08j),
+         (1e-50 + 1e-200j, 1e-50 + 1e-200j),
+         (1e-200 - 1e-200j, 1e-200 - 1e-200j),
+         (1e-18j, 5.0000000000000005e-37 + 1e-18j),
+         (-1.25e-8 + 5e-12j, -1.2500000078124988e-08 + 5.0000000625e-12j),
+         (-8e-8 - 0.0004j, 3.200000005993663e-15-0.0004000000106666662j),
+         # Close to or on the unit circle |z+1| = 1:
+         (-4.999958e-05 - 0.009999833j,
+          -7.0554155328678184e-15 - 0.009999999665816696j),
+         (-0.57113 - 0.90337j, 3.4168883248419116e-06 - 1.1275564209486122j),
+         (-0.011228922063957758 + 0.14943813247359922j,
+          -4.499779370610757e-17 + 0.15j),
+         (-0.2892646601647662 + 0.7034589443707598j,
+          -3.951471916126033e-07 + 0.7802529500871193j),
+         (-1.9999999995065196 - 3.141592653092555e-05j,
+          -1.4766035946815242e-16 - 3.1415612376632573j),
+         (1e-18 + 0.1j, 0.0049751654265840425 + 0.09966865249116204j),
+         (0.1 + 1e-18j, 0.09531017980432487+9.090909090909091e-19j),
+         (-1.25e-05 + 0.005j, 7.812499999381789e-11 + 0.005000020833177082j),
+         (-0.01524813-0.173952j, -2.228118716056777e-06-0.1748418364650139j),
+         # Very large real or imaginary part:
+         (1e200 + 1e200j, 460.8635921890891 + 0.7853981633974483j),
+         (-1 + 1e250j, 575.6462732485114 + 1.5707963267948966j),
+         (1e250 + 1j, 575.6462732485114 + 1e-250j),
+         (1e275 + 1e-225j, 633.2109005733626 + 0j),
+         (7.5e307 + 1.25e308j, 709.5730945433543+1.0303768265243125j),
+         # Other:
+         (1.0, 0.6931471805599453 + 0j),
+         (-0.75 + 0j, -1.3862943611198906 + 0j),
+         (0.2 + 0.3j, 0.21263386770217205 + 0.24497866312686414j),
+         (-0.978249978133276 - 0.015379941691430407j,
+          -3.6254002951579887 - 0.6154905511361795j),
+         ]
+    )
+    def test_complex_double(self, z, wref):
+        w = np.log1p(z)
+        assert_allclose(w.real, wref.real, rtol=1e-15)
+        assert_allclose(w.imag, wref.imag, rtol=1e-15)
+
+    # Test w = log1p(z) for complex float z (np.complex64).
+    # Reference values were computed with mpmath, e.g.
+    #    from mpmath import mp
+    #    mp.dps = 200
+    #    wref = np.complex64(mp.log1p(z))
+    @pytest.mark.parametrize(
+        'z, wref',
+        [(np.complex64(0.0), np.complex64(0.0)),
+         (np.complex64(1e-10 + 3e-6j), np.complex64(1.045e-10 + 3e-06j)),
+         (np.complex64(-1e-8 - 2e-5j), np.complex64(-9.8e-09 - 2e-05j)),
+         (np.complex64(-2e-32 + 3e-32j), np.complex64(-2e-32 + 3e-32j)),
+         (np.complex64(-0.57113 - 0.90337j),
+          np.complex64(3.4470238e-06 - 1.1275564j)),
+         (np.complex64(-0.5 + 0.866025j),
+          np.complex64(-3.7479518e-07+1.0471973j)),
+         (np.complex64(-3 - 0.5j), np.complex64(0.7234595-2.896614j)),
+         (np.complex64(2.0 - 0.5j), np.complex64(1.1123117-0.16514868j)),
+         (np.complex64(3e31 - 4e31j), np.complex64(72.98958 - 0.9272952j)),
+         (np.complex64(9e37 - 1e38j), np.complex64(87.7949-0.8379812j))]
+    )
+    def test_complex_single(self, z, wref):
+        w = np.log1p(z)
+        rtol = 5*np.finfo(np.float32).eps
+        assert_allclose(w.real, wref.real, rtol=rtol)
+        assert_allclose(w.imag, wref.imag, rtol=rtol)
+
+    # The reference values for the 80 bit extended precision test were
+    # computed using mpmath, with a couple utility functions that are a
+    # bit too long to include here.
+    @pytest.mark.skipif(np.finfo(np.longdouble).machep != -63,
+                        reason='reference values are for 80 bit '
+                               'extended precision')
+    @pytest.mark.parametrize(
+        'z, wref',
+        [(np.longdouble('-0.2') + np.longdouble('0.6')*1j,
+          np.longdouble('1.084202172485504434e-20') +
+          np.longdouble('0.6435011087932843868')*1j),
+         (np.longdouble('3e-18') + np.longdouble('-4e-18')*1j,
+          np.longdouble('3.0000000000000000036e-18') +
+          np.longdouble('-3.999999999999999988e-18')*1j),
+         (np.longdouble('-3.1') + np.longdouble('0.35')*1j,
+          np.longdouble('0.7556368318234345338') +
+          np.longdouble('2.9764439761751664002')*1j),
+         (('3.3e4931', '9.75e4931'),
+          np.longdouble('11356.378588993875164') +
+          np.longdouble('1.2444375100881339706')*1j)]
+    )
+    def test_longdouble_is_80_bit_extended(self, z, wref):
+        if isinstance(z, tuple):
+            z = np.longdouble(z[0]) + np.longdouble(z[1])*1j
+        w = np.log1p(z)
+        rtol = 5*np.finfo(np.longdouble).eps
+        assert_allclose(w.real, wref.real, rtol=rtol)
+        assert_allclose(w.imag, wref.imag, rtol=rtol)
+
+    # The reference values for the IEEE float128 test were computed
+    # with mpmath, e.g.:
+    #
+    #   from mpmath import mp
+    #   mp.prec = 1024  # bits of precision
+    #   with mp.workprec(113):  # Emulate IEEE float128 input
+    #       z = mp.mpc('-0.2', '0.6')
+    #   w = mp.log1p(z)  # Compute with high precision.
+    #   with mp.workprec(113):
+    #       print(w.real)
+    #       print(w.imag)
+    #
+    @pytest.mark.skipif(np.finfo(np.longdouble).machep != -112,
+                        reason='reference values are for IEEE float128')
+    @pytest.mark.skipif(sys.platform == 'emscripten',
+                        reason="emscripten's math library does not support "
+                               "IEEE float128")
+    @pytest.mark.parametrize(
+        'z, wref',
+        [(np.longdouble('-0.2') + np.longdouble('0.6')*1j,
+          np.longdouble('-1.92592994438723585305597794258493e-35') +
+          np.longdouble('0.643501108793284386802809228717323')*1j),
+         (np.longdouble('3e-23') + np.longdouble('-5e-22')*1j,
+          np.longdouble('3.000000000000000000012455e-23') +
+          np.longdouble('-4.99999999999999999999985e-22')*1j),
+         (np.longdouble('-1.3') + np.longdouble('1.9')*1j,
+          np.longdouble('0.654166409825089380175052108173541') +
+          np.longdouble('1.72739820377691197435359801635447')*1j)]
+    )
+    def test_longdouble_is_ieee_float128(self, z, wref):
+        w = np.log1p(z)
+        rtol = 10*np.finfo(np.longdouble).eps
+        assert_allclose(w.real, wref.real, rtol=rtol)
+        assert_allclose(w.imag, wref.imag, rtol=rtol)
+
+    @pytest.mark.parametrize('typ', [np.complex64, np.complex128])
+    def test_branch_cut(self, typ):
+        x = -1.5
+        zpos = typ(x, 0.0)
+        wpos = np.log1p(zpos)
+        realtype = zpos.real.dtype.type
+        eps = np.finfo(realtype).eps
+        # On some platforms, atan2(0.0, -0.5) is not exactly equal to np.pi.
+        assert_allclose(wpos.imag, realtype(np.pi), rtol=2*eps)
+        zneg = typ(x, -0.0)
+        wneg = np.log1p(zneg)
+        assert_allclose(wneg.imag, realtype(-np.pi), rtol=2*eps)
+        assert wpos.real == wneg.real
+
+    @pytest.mark.parametrize('x', [-0.5, -1e-12, -1e-18, 0.0, 1e-18, 1e-12])
+    @pytest.mark.parametrize('typ', [np.complex64, np.complex128])
+    def test_imag_zero(self, x, typ):
+        # Test real inputs with x > -1 and the imaginary part +/- 0.0.
+        zpos = typ(x, 0.0)
+        wpos = np.log1p(zpos)
+        assert_equal(wpos.imag, 0.0)
+        zneg = typ(x, -0.0)
+        wneg = np.log1p(zneg)
+        assert_equal(wneg.imag, -0.0)
+        assert wpos.real == wneg.real
 
 
 class TestExpm1:
