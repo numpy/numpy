@@ -42,6 +42,10 @@ enter in a script or at a Python prompt. Everything else is **output**, the
 results of running your code. Note that ``>>>`` and ``...`` are not part of the
 code and may cause an error if entered at a Python prompt.
 
+To run the code in the examples, you can copy and paste it into a Python script or
+REPL, or use the experimental interactive examples in the browser provided in various
+locations in the documentation.
+
 Why use NumPy?
 --------------
 
