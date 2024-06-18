@@ -45,6 +45,7 @@ def atleast_1d(*arys):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.atleast_1d(1.0)
     array([1.])
 
@@ -103,6 +104,7 @@ def atleast_2d(*arys):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.atleast_2d(3.0)
     array([[3.]])
 
@@ -163,6 +165,7 @@ def atleast_3d(*arys):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.atleast_3d(3.0)
     array([[[3.]]])
 
@@ -264,6 +267,7 @@ def vstack(tup, *, dtype=None, casting="same_kind"):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([1, 2, 3])
     >>> b = np.array([4, 5, 6])
     >>> np.vstack((a,b))
@@ -336,6 +340,7 @@ def hstack(tup, *, dtype=None, casting="same_kind"):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array((1,2,3))
     >>> b = np.array((4,5,6))
     >>> np.hstack((a,b))
@@ -417,6 +422,7 @@ def stack(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
 
     Examples
     --------
+    >>> import numpy as np
     >>> rng = np.random.default_rng()
     >>> arrays = [rng.normal(size=(3,4)) for _ in range(10)]
     >>> np.stack(arrays, axis=0).shape
@@ -789,8 +795,9 @@ def block(arrays):
 
     Examples
     --------
-    The most common use of this function is to build a block matrix
+    The most common use of this function is to build a block matrix:
 
+    >>> import numpy as np
     >>> A = np.eye(2) * 2
     >>> B = np.eye(3) * 3
     >>> np.block([
@@ -803,7 +810,7 @@ def block(arrays):
            [1., 1., 0., 3., 0.],
            [1., 1., 0., 0., 3.]])
 
-    With a list of depth 1, `block` can be used as `hstack`
+    With a list of depth 1, `block` can be used as `hstack`:
 
     >>> np.block([1, 2, 3])              # hstack([1, 2, 3])
     array([1, 2, 3])
@@ -835,7 +842,7 @@ def block(arrays):
            [2, 2],
            [2, 2]])
 
-    It can also be used in places of `atleast_1d` and `atleast_2d`
+    It can also be used in place of `atleast_1d` and `atleast_2d`:
 
     >>> a = np.array(0)
     >>> b = np.array([1])
