@@ -326,7 +326,7 @@ add_newdoc('numpy._core', 'nditer',
     Here is how we might write an ``iter_add`` function, using the
     Python iterator protocol:
 
-    >>>import numpy as np
+    >>> import numpy as np
 
     >>> def iter_add_py(x, y, out=None):
     ...     addop = np.add

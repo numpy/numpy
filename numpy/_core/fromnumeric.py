@@ -933,7 +933,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     --------
     One dimensional array:
 
-    >>> impport numpy as np
+    >>> import numpy as np
     >>> x = np.array([3, 4, 2, 1])
     >>> x[np.argpartition(x, 3)]
     array([2, 1, 3, 4]) # may vary

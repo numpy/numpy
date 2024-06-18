@@ -224,8 +224,9 @@ def sqrt(x):
 
     Examples
     --------
-    >>> import numpy as np
     For real, non-negative inputs this works just like `numpy.sqrt`:
+
+    >>> import numpy as np
 
     >>> np.emath.sqrt(1)
     1.0
