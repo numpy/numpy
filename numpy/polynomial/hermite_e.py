@@ -127,6 +127,7 @@ def poly2herme(pol):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.hermite_e import poly2herme
     >>> poly2herme(np.arange(4))
     array([  2.,  10.,   2.,   3.])
@@ -1137,6 +1138,7 @@ def hermevander(x, deg):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.hermite_e import hermevander
     >>> x = np.array([-1, 0, 1])
     >>> hermevander(x, 3)
@@ -1389,6 +1391,7 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.hermite_e import hermefit, hermeval
     >>> x = np.linspace(-10, 10)
     >>> rng = np.random.default_rng()

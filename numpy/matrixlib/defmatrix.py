@@ -56,6 +56,7 @@ def asmatrix(data, dtype=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([[1, 2], [3, 4]])
 
     >>> m = np.asmatrix(x)
@@ -103,6 +104,7 @@ class matrix(N.ndarray):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.matrix('1 2; 3 4')
     >>> a
     matrix([[1, 2],
@@ -1065,6 +1067,7 @@ def bmat(obj, ldict=None, gdict=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> A = np.asmatrix('1 1; 1 1')
     >>> B = np.asmatrix('2 2; 2 2')
     >>> C = np.asmatrix('3 4; 5 6')
