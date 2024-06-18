@@ -217,6 +217,10 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         by not inserting spaces after commas that separate fields and after
         colons.
 
+        If set to ``'1.25'`` approximates printing of 1.25 which mainly means
+        that numeric scalars are printed without their type information, e.g.
+        as ``3.0`` rather than ``np.float64(3.0)``.
+
         If set to `False`, disables legacy mode.
 
         Unrecognized strings will be ignored with a warning for forward
@@ -224,6 +228,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
         .. versionadded:: 1.14.0
         .. versionchanged:: 1.22.0
+        .. versionchanged:: 2.0
 
     See Also
     --------
