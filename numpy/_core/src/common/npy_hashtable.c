@@ -234,7 +234,7 @@ PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
         if (tb_item[0] != NULL && tb_item[0] != value && !replace) {
             UNLOCK_TABLE(tb);
             PyErr_SetString(PyExc_RuntimeError,
-                    "Identity cache already includes the item.");
+                    "Identity cache already includes an item with this key.");
             return -1;
         }
         tb_item[0] = value;
