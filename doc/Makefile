@@ -51,6 +51,7 @@ help:
 clean:
 	-rm -rf build/*
 	-rm -rf source/.jupyterlite.doit.db
+	-rm -rf source/contents/*.ipynb
 	find . -name generated -type d -prune -exec rm -rf "{}" ";"
 
 gitwash-update:
