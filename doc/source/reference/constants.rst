@@ -62,6 +62,9 @@ NumPy includes several constants:
 
     .. rubric:: Examples
 
+.. try_examples::
+
+    >>> import numpy as np
     >>> np.inf
     inf
     >>> np.array([1]) / 0.
@@ -92,6 +95,9 @@ NumPy includes several constants:
 
     .. rubric:: Examples
 
+.. try_examples::
+
+    >>> import numpy as np
     >>> np.nan
     nan
     >>> np.log(-1)
@@ -106,6 +112,9 @@ NumPy includes several constants:
 
     .. rubric:: Examples
 
+.. try_examples::
+
+    >>> import numpy as np
     >>> np.newaxis is None
     True
     >>> x = np.arange(3)
@@ -121,16 +130,16 @@ NumPy includes several constants:
     [[2]]])
     >>> x[:, np.newaxis] * x
     array([[0, 0, 0],
-    [0, 1, 2],
-    [0, 2, 4]])
+        [0, 1, 2],
+        [0, 2, 4]])
 
     Outer product, same as ``outer(x, y)``:
 
     >>> y = np.arange(3, 6)
     >>> x[:, np.newaxis] * y
     array([[ 0,  0,  0],
-    [ 3,  4,  5],
-    [ 6,  8, 10]])
+        [ 3,  4,  5],
+        [ 6,  8, 10]])
 
     ``x[np.newaxis, :]`` is equivalent to ``x[np.newaxis]`` and ``x[None]``:
 
