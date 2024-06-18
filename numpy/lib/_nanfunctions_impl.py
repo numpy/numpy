@@ -330,6 +330,7 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, np.nan]])
     >>> np.nanmin(a)
     1.0
@@ -463,6 +464,7 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, np.nan]])
     >>> np.nanmax(a)
     3.0
@@ -551,6 +553,7 @@ def nanargmin(a, axis=None, out=None, *, keepdims=np._NoValue):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[np.nan, 4], [2, 3]])
     >>> np.argmin(a)
     0
@@ -612,6 +615,7 @@ def nanargmax(a, axis=None, out=None, *, keepdims=np._NoValue):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[np.nan, 4], [2, 3]])
     >>> np.argmax(a)
     0
@@ -714,6 +718,7 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.nansum(1)
     1
     >>> np.nansum([1])
@@ -805,6 +810,7 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.nanprod(1)
     1
     >>> np.nanprod([1])
@@ -872,6 +878,7 @@ def nancumsum(a, axis=None, dtype=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.nancumsum(1)
     array([1])
     >>> np.nancumsum([1])
@@ -939,6 +946,7 @@ def nancumprod(a, axis=None, dtype=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.nancumprod(1)
     array([1])
     >>> np.nancumprod([1])
@@ -1036,6 +1044,7 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, np.nan], [3, 4]])
     >>> np.nanmean(a)
     2.6666666666666665
@@ -1201,6 +1210,7 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[10.0, 7, 4], [3, 2, 1]])
     >>> a[0, 1] = np.nan
     >>> a
@@ -1365,6 +1375,7 @@ def nanpercentile(
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[10., 7., 4.], [3., 2., 1.]])
     >>> a[0][1] = np.nan
     >>> a
@@ -1555,6 +1566,7 @@ def nanquantile(
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[10., 7., 4.], [3., 2., 1.]])
     >>> a[0][1] = np.nan
     >>> a
@@ -1831,6 +1843,7 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, np.nan], [3, 4]])
     >>> np.nanvar(a)
     1.5555555555555554
@@ -2027,6 +2040,7 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, np.nan], [3, 4]])
     >>> np.nanstd(a)
     1.247219128924647
