@@ -49,8 +49,11 @@ Other performance improvement ideas include:
 
 - A better story around parallel execution (related is support for free-threaded
   CPython, see further down).
-- Using improvements in the ufunc context (``errstate``) to allow users
-  for example to enable faster but less precise versions of certain loops.
+- Enable the ability to allow NumPy to use faster, but less precise,
+  implementations for ufuncs.
+  Until now, the only state modifying ufunc behavior has been ``np.errstate``.
+  But, with NumPy 2.0 improvements in the ``np.errstate`` and the ufunc C
+  implementation make this type of addition easier.
 - Optimizations in individual functions.
 
 Furthermore we would like to improve the benchmarking system, in terms of coverage,
