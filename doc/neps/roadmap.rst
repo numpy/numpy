@@ -49,8 +49,8 @@ Other performance improvement ideas include:
 
 - A better story around parallel execution (related is support for free-threaded
   CPython, see further down).
-- Using recent improvements in our ufunc context to allow users for example to
-  enable faster but less precise versions of certain loops.
+- Using improvements in the ufunc context (``errstate``) to allow users
+  for example to enable faster but less precise versions of certain loops.
 - Optimizations in individual functions.
 
 Furthermore we would like to improve the benchmarking system, in terms of coverage,
@@ -97,7 +97,7 @@ first, and that could potentially be upstreamed into NumPy later, include:
   ``latin1``)
 - A unit dtype
 
-We further plan to extend the new API around ufuncs as the needs arise.
+We further plan to extend the ufunc C API as needs arise.
 One possibility here is creating a new, more powerful, API to allow hooking
 into existing NumPy ufunc implementations.
 
@@ -127,9 +127,9 @@ required for a platform to move to a higher tier of support, similar to
 
 Further consistency fixes to promotion and scalar logic
 ```````````````````````````````````````````````````````
-NumPy 2 fixed many issues around promotion especially with respect to scalars.
-We plan to continue slowly fixing remaining inconsistencies.
-For example, NumPy converts 0-D objects to scalars and some promotions
+NumPy 2.0 fixed many issues around promotion especially with respect to scalars.
+We plan to continue fixing remaining inconsistencies.
+For example, NumPy converts 0-D objects to scalars, and some promotions
 still allowed by NumPy are problematic.
 
 Support for free-threaded CPython
