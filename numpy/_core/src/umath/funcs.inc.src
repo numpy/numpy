@@ -308,15 +308,6 @@ nc_log@c@(@ctype@ *x, @ctype@ *r)
 }
 
 static void
-nc_log1p@c@(@ctype@ *x, @ctype@ *r)
-{
-    @ftype@ l = npy_hypot@c@(npy_creal@c@(*x) + 1,npy_cimag@c@(*x));
-    npy_csetimag@c@(r, npy_atan2@c@(npy_cimag@c@(*x), npy_creal@c@(*x) + 1));
-    npy_csetreal@c@(r, npy_log@c@(l));
-    return;
-}
-
-static void
 nc_exp@c@(@ctype@ *x, @ctype@ *r)
 {
     *r = npy_cexp@c@(*x);
