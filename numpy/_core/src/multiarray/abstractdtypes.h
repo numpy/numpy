@@ -47,6 +47,8 @@ npy_mark_tmp_array_if_pyscalar(
      * a custom DType registered, and then we should use that.
      * Further, `np.float64` is a double subclass, so must reject it.
      */
+    // TODO,NOTE: This function should be changed to do exact long checks
+    //            For NumPy 2.1!
     if (PyLong_Check(obj)
             && (PyArray_ISINTEGER(arr) || PyArray_ISOBJECT(arr))) {
         ((PyArrayObject_fields *)arr)->flags |= NPY_ARRAY_WAS_PYTHON_INT;
