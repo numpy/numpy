@@ -477,6 +477,7 @@ class finfo:
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.finfo(np.float64).dtype
     dtype('float64')
     >>> np.finfo(np.complex64).dtype
@@ -663,6 +664,7 @@ class iinfo:
     --------
     With types:
 
+    >>> import numpy as np
     >>> ii16 = np.iinfo(np.int16)
     >>> ii16.min
     -32768
