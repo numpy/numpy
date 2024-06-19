@@ -62,6 +62,8 @@
 #include "legacy_array_method.h"
 #include "abstractdtypes.h"
 #include "mapping.h"
+#include "npy_static_data.h"
+#include "multiarraymodule.h"
 
 /* TODO: Only for `NpyIter_GetTransferFlags` until it is public */
 #define NPY_ITERATOR_IMPLEMENTATION_CODE
@@ -698,18 +700,9 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
                  * TODO: Just like the general dual NEP 50/legacy promotion
                  * support this is meant as a temporary hack for NumPy 1.25.
                  */
-                static PyArrayObject *zero_arr = NULL;
-                if (NPY_UNLIKELY(zero_arr == NULL)) {
-                    zero_arr = (PyArrayObject *)PyArray_ZEROS(
-                            0, NULL, NPY_LONG, NPY_FALSE);
-                    if (zero_arr == NULL) {
-                        goto fail;
-                    }
-                    ((PyArrayObject_fields *)zero_arr)->flags |= (
-                        NPY_ARRAY_WAS_PYTHON_INT|NPY_ARRAY_WAS_INT_AND_REPLACED);
-                }
-                Py_INCREF(zero_arr);
-                Py_SETREF(out_op[i], zero_arr);
+                Py_INCREF(npy_static_pydata.zero_pyint_like_arr);
+                Py_SETREF(out_op[i],
+                          (PyArrayObject *)npy_static_pydata.zero_pyint_like_arr);
             }
             *promoting_pyscalars = NPY_TRUE;
         }
@@ -1341,8 +1334,6 @@ _check_keepdims_support(PyUFuncObject *ufunc) {
 static int
 _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
                 PyArrayObject **op, int broadcast_ndim, int **remap_axis) {
-    static PyObject *AxisError_cls = NULL;
-
     int nin = ufunc->nin;
     int nop = ufunc->nargs;
     int iop, list_size;
@@ -1388,12 +1379,7 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
         if (PyTuple_Check(op_axes_tuple)) {
             if (PyTuple_Size(op_axes_tuple) != op_ncore) {
                 /* must have been a tuple with too many entries. */
-                npy_cache_import(
-                        "numpy.exceptions", "AxisError", &AxisError_cls);
-                if (AxisError_cls == NULL) {
-                    return -1;
-                }
-                PyErr_Format(AxisError_cls,
+                PyErr_Format(npy_static_pydata.AxisError,
                         "%s: operand %d has %d core dimensions, "
                         "but %zd dimensions are specified by axes tuple.",
                         ufunc_get_name_cstr(ufunc), iop, op_ncore,
@@ -1417,11 +1403,7 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
                 return -1;
             }
             /* If it is a single integer, inform user that more are needed */
-            npy_cache_import("numpy.exceptions", "AxisError", &AxisError_cls);
-            if (AxisError_cls == NULL) {
-                return -1;
-            }
-            PyErr_Format(AxisError_cls,
+            PyErr_Format(npy_static_pydata.AxisError,
                     "%s: operand %d has %d core dimensions, "
                     "but the axes item is a single integer.",
                     ufunc_get_name_cstr(ufunc), iop, op_ncore);
@@ -5254,8 +5236,7 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
 {
     PyArrayObject *ap1 = NULL;
     PyObject *tmp;
-    static PyObject *_numpy_matrix;
-    npy_cache_import("numpy", "matrix", &_numpy_matrix);
+    npy_cache_import("numpy", "matrix", &npy_thread_unsafe_state.numpy_matrix);
 
     const char *matrix_deprecation_msg = (
             "%s.outer() was passed a numpy matrix as %s argument. "
@@ -5266,7 +5247,7 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
 
     tmp = PyTuple_GET_ITEM(args, 0);
 
-    if (PyObject_IsInstance(tmp, _numpy_matrix)) {
+    if (PyObject_IsInstance(tmp, npy_thread_unsafe_state.numpy_matrix)) {
         /* DEPRECATED 2020-05-13, NumPy 1.20 */
         if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
                 matrix_deprecation_msg, ufunc->name, "first") < 0) {
@@ -5283,7 +5264,7 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
 
     PyArrayObject *ap2 = NULL;
     tmp = PyTuple_GET_ITEM(args, 1);
-    if (PyObject_IsInstance(tmp, _numpy_matrix)) {
+    if (PyObject_IsInstance(tmp, npy_thread_unsafe_state.numpy_matrix)) {
         /* DEPRECATED 2020-05-13, NumPy 1.20 */
         if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
                 matrix_deprecation_msg, ufunc->name, "second") < 0) {
@@ -6432,15 +6413,14 @@ _typecharfromnum(int num) {
 static PyObject *
 ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 {
-    static PyObject *_sig_formatter;
     PyObject *doc;
 
     npy_cache_import(
         "numpy._core._internal",
         "_ufunc_doc_signature_formatter",
-        &_sig_formatter);
+        &npy_thread_unsafe_state._ufunc_doc_signature_formatter);
 
-    if (_sig_formatter == NULL) {
+    if (npy_thread_unsafe_state._ufunc_doc_signature_formatter == NULL) {
         return NULL;
     }
 
@@ -6449,7 +6429,7 @@ ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
      * introspection on name and nin + nout to automate the first part
      * of it the doc string shouldn't need the calling convention
      */
-    doc = PyObject_CallFunctionObjArgs(_sig_formatter,
+    doc = PyObject_CallFunctionObjArgs(npy_thread_unsafe_state._ufunc_doc_signature_formatter,
                                        (PyObject *)ufunc, NULL);
     if (doc == NULL) {
         return NULL;
@@ -6543,10 +6523,6 @@ ufunc_get_signature(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 
 #undef _typecharfromnum
 
-/*
- * Docstring is now set from python
- * static char *Ufunctype__doc__ = NULL;
- */
 static PyGetSetDef ufunc_getset[] = {
     {"__doc__",
         (getter)ufunc_get_doc,

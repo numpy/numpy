@@ -4,6 +4,8 @@
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
 #include "npy_import.h"
+#include "npy_static_data.h"
+#include "multiarraymodule.h"
 #include "npy_pycompat.h"
 #include "override.h"
 #include "ufunc_override.h"
@@ -110,29 +112,22 @@ initialize_normal_kwds(PyObject *out_args,
             }
         }
     }
-    static PyObject *out_str = NULL;
-    if (out_str == NULL) {
-        out_str = PyUnicode_InternFromString("out");
-        if (out_str == NULL) {
-            return -1;
-        }
-    }
 
     if (out_args != NULL) {
         /* Replace `out` argument with the normalized version */
-        int res = PyDict_SetItem(normal_kwds, out_str, out_args);
+        int res = PyDict_SetItem(normal_kwds, npy_interned_str.out, out_args);
         if (res < 0) {
             return -1;
         }
     }
     else {
         /* Ensure that `out` is not present. */
-        int res = PyDict_Contains(normal_kwds, out_str);
+        int res = PyDict_Contains(normal_kwds, npy_interned_str.out);
         if (res < 0) {
             return -1;
         }
         if (res) {
-            return PyDict_DelItem(normal_kwds, out_str);
+            return PyDict_DelItem(normal_kwds, npy_interned_str.out);
         }
     }
     return 0;
@@ -182,10 +177,8 @@ copy_positional_args_to_kwargs(const char **keywords,
              * This is only relevant for reduce, which is the only one with
              * 5 keyword arguments.
              */
-            static PyObject *NoValue = NULL;
             assert(strcmp(keywords[i], "initial") == 0);
-            npy_cache_import("numpy", "_NoValue", &NoValue);
-            if (args[i] == NoValue) {
+            if (args[i] == npy_static_pydata._NoValue) {
                 continue;
             }
         }
@@ -371,23 +364,22 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         /* Check if there is a method left to call */
         if (!override_obj) {
             /* No acceptable override found. */
-            static PyObject *errmsg_formatter = NULL;
             PyObject *errmsg;
 
-            npy_cache_import("numpy._core._internal",
-                             "array_ufunc_errmsg_formatter",
-                             &errmsg_formatter);
-
-            if (errmsg_formatter != NULL) {
-                /* All tuple items must be set before use */
-                Py_INCREF(Py_None);
-                PyTuple_SET_ITEM(override_args, 0, Py_None);
-                errmsg = PyObject_Call(errmsg_formatter, override_args,
-                                       normal_kwds);
-                if (errmsg != NULL) {
-                    PyErr_SetObject(PyExc_TypeError, errmsg);
-                    Py_DECREF(errmsg);
-                }
+            /* All tuple items must be set before use */
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(override_args, 0, Py_None);
+            npy_cache_import(
+                    "numpy._core._internal",
+                    "array_ufunc_errmsg_formatter",
+                    &npy_thread_unsafe_state.array_ufunc_errmsg_formatter);
+            assert(npy_thread_unsafe_state.array_ufunc_errmsg_formatter != NULL);
+            errmsg = PyObject_Call(
+                    npy_thread_unsafe_state.array_ufunc_errmsg_formatter,
+                    override_args, normal_kwds);
+            if (errmsg != NULL) {
+                PyErr_SetObject(PyExc_TypeError, errmsg);
+                Py_DECREF(errmsg);
             }
             Py_DECREF(override_args);
             goto fail;

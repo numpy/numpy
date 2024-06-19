@@ -17,6 +17,7 @@
 #include "gil_utils.h"
 #include "conversion_utils.h"
 #include "npy_import.h"
+#include "multiarraymodule.h"
 
 /*
  * Internal helper to create new instances
@@ -707,8 +708,6 @@ stringdtype_repr(PyArray_StringDTypeObject *self)
     return ret;
 }
 
-static PyObject *_convert_to_stringdtype_kwargs = NULL;
-
 // implementation of __reduce__ magic method to reconstruct a StringDType
 // object from the serialized data in the pickle. Uses the python
 // _convert_to_stringdtype_kwargs for convenience because this isn't
@@ -717,18 +716,21 @@ static PyObject *
 stringdtype__reduce__(PyArray_StringDTypeObject *self, PyObject *NPY_UNUSED(args))
 {
     npy_cache_import("numpy._core._internal", "_convert_to_stringdtype_kwargs",
-                     &_convert_to_stringdtype_kwargs);
+                     &npy_thread_unsafe_state._convert_to_stringdtype_kwargs);
 
-    if (_convert_to_stringdtype_kwargs == NULL) {
+    if (npy_thread_unsafe_state._convert_to_stringdtype_kwargs == NULL) {
         return NULL;
     }
 
     if (self->na_object != NULL) {
-        return Py_BuildValue("O(iO)", _convert_to_stringdtype_kwargs,
-                             self->coerce, self->na_object);
+        return Py_BuildValue(
+                "O(iO)", npy_thread_unsafe_state._convert_to_stringdtype_kwargs,
+                self->coerce, self->na_object);
     }
 
-    return Py_BuildValue("O(i)", _convert_to_stringdtype_kwargs, self->coerce);
+    return Py_BuildValue(
+            "O(i)", npy_thread_unsafe_state._convert_to_stringdtype_kwargs,
+            self->coerce);
 }
 
 static PyMethodDef PyArray_StringDType_methods[] = {

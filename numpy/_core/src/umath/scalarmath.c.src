@@ -1788,12 +1788,7 @@ static int
 static int
 emit_complexwarning(void)
 {
-    static PyObject *cls = NULL;
-    npy_cache_import("numpy.exceptions", "ComplexWarning", &cls);
-    if (cls == NULL) {
-        return -1;
-    }
-    return PyErr_WarnEx(cls,
+    return PyErr_WarnEx(npy_static_pydata.ComplexWarning,
             "Casting complex values to real discards the imaginary part", 1);
 }
 

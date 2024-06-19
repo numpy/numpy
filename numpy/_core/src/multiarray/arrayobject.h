@@ -9,8 +9,6 @@
 extern "C" {
 #endif
 
-extern NPY_NO_EXPORT npy_bool numpy_warn_if_no_mem_policy;
-
 NPY_NO_EXPORT PyObject *
 _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
                      int rstrip);
