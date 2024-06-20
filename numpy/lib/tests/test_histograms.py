@@ -413,6 +413,119 @@ class TestHistogram:
         expected_hist = np.array([1, 0])
         assert_array_equal(hist, expected_hist)
 
+    def test_histogram_positive_data(self):
+        data = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+        bins = 5
+        hist, bin_edges = np.histogram(data, bins=bins, symlog=True)
+        assert len(hist) == bins
+        assert len(bin_edges) == bins + 1
+
+    def test_symlog(self):
+        """
+        Tests the histogram function with symlog parameter.
+        """
+
+        data = np.array(
+            [
+                -2.40000e-03,
+                -3.50000e-01,
+                -4.60000e-02,
+                -2.00000e-01,
+                -3.60000e-04,
+                -4.00000e00,
+                -2.60000e01,
+                -3.64000e02,
+                -2.43000e02,
+                -1.53240e04,
+                -1.35525e05,
+                1.20000e-02,
+                3.00000e-01,
+                1.40000e-03,
+                7.00000e-01,
+                7.00000e00,
+                3.60000e01,
+                9.46000e02,
+                2.54520e04,
+                -4.80000e-03,
+                -7.00000e-01,
+                -9.20000e-02,
+                -4.00000e-01,
+                -7.20000e-04,
+                -8.00000e00,
+                -5.20000e01,
+                -7.28000e02,
+                -4.86000e02,
+                -3.06480e04,
+                -2.71050e05,
+                2.40000e-02,
+                6.00000e-01,
+                2.80000e-03,
+                1.40000e00,
+                1.40000e01,
+                7.20000e01,
+                1.89200e03,
+                5.09040e04,
+                -1.20000e-03,
+                -1.75000e-01,
+                -2.30000e-02,
+                -1.00000e-01,
+                -1.80000e-04,
+                -2.00000e00,
+                -1.30000e01,
+                -1.82000e02,
+                -1.21500e02,
+                -7.66200e03,
+                -6.77625e04,
+                6.00000e-03,
+                1.50000e-01,
+                7.00000e-04,
+                3.50000e-01,
+                3.50000e00,
+                1.80000e01,
+                4.73000e02,
+                1.27260e04,
+            ]
+        )
+
+        bins_a = 5
+        histogram_a = np.histogram(data, bins=bins_a, symlog=True)
+        assert len(histogram_a[0]) == bins_a
+        assert len(histogram_a[1]) == bins_a + 1
+        assert np.array_equal(histogram_a[0], np.array([16, 16, 1, 13, 11]))
+
+        bins_b = 10
+        histogram_b = np.histogram(data, bins=bins_b, symlog=True)
+        assert len(histogram_b[0]) == bins_b
+        assert len(histogram_b[1]) == bins_b + 1
+        assert np.array_equal(
+            histogram_b[0], np.array([6, 10, 10, 6, 1, 0, 6, 7, 7, 4])
+        )
+
+        bins_c = [
+            -2.71050000e05,
+            -6.98491231e00,
+            -1.80000000e-04,
+            1.80000000e-04,
+            6.98491231e00,
+            2.71050000e05,
+        ]
+
+        with pytest.warns(
+            UserWarning,
+            match=(
+                "symlog option is only valid when bins is an integer. "
+                "Attempting without symlog."
+            ),
+        ):
+            histogram_c_a = np.histogram(data, bins=bins_c, symlog=True)
+        assert len(histogram_c_a[0]) == len(bins_c) - 1
+        assert len(histogram_c_a[1]) == len(bins_c)
+        assert np.array_equal(histogram_c_a[0], np.array([16, 16, 1, 13, 11]))
+
+        histogram_c_b = np.histogram(data, bins=bins_c)
+        assert len(histogram_c_b[0]) == len(bins_c) - 1
+        assert len(histogram_c_b[1]) == len(bins_c)
+        assert np.array_equal(histogram_c_b[0], np.array([16, 16, 1, 13, 11]))
 
 class TestHistogramOptimBinNums:
     """
