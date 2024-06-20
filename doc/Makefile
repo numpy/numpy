@@ -17,7 +17,7 @@ PAPER         ?=
 DOXYGEN       ?= doxygen
 # For merging a documentation archive into a git checkout of numpy/doc
 # Turn a tag like v1.18.0 into 1.18
-# Use sed -n -e 's/patttern/match/p' to return a blank value if no match
+# Use sed -n -e 's/pattern/match/p' to return a blank value if no match
 TAG ?= $(shell git describe --tag | sed -n -e's,v\([1-9]\.[0-9]*\)\.[0-9].*,\1,p')
 
 FILES=

@@ -307,10 +307,10 @@ code:
 
 .. code-block:: c
 
-    doub = PyArray_DescrFromType(NPY_DOUBLE);
-    PyArray_RegisterCastFunc(doub, NPY_FLOAT,
+    d = PyArray_DescrFromType(NPY_DOUBLE);
+    PyArray_RegisterCastFunc(d, NPY_FLOAT,
          (PyArray_VectorUnaryFunc *)double_to_float);
-    Py_DECREF(doub);
+    Py_DECREF(d);
 
 
 Registering coercion rules

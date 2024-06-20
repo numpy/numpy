@@ -18,7 +18,7 @@ if is_pure_conda:
     # communal Conda bin directory. DLLs from NumPy's dependencies must also be
     # collected to capture MKL, OpenBlas, OpenMP, etc.
     from PyInstaller.utils.hooks import conda_support
-    datas = conda_support.collect_dynamic_libs("numpy", dependencies=True)
+    _ = conda_support.collect_dynamic_libs("numpy", dependencies=True)
 
 # Submodules PyInstaller cannot detect.  `_dtype_ctypes` is only imported
 # from C and `_multiarray_tests` is used in tests (which are not packed).

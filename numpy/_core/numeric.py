@@ -1147,17 +1147,17 @@ def tensordot(a, b, axes=2):
 
     # Move the axes to sum over to the end of "a"
     # and to the front of "b"
-    notin = [k for k in range(nda) if k not in axes_a]
-    newaxes_a = notin + axes_a
+    not_in = [k for k in range(nda) if k not in axes_a]
+    newaxes_a = not_in + axes_a
     N2 = math.prod(as_[axis] for axis in axes_a)
-    newshape_a = (math.prod([as_[ax] for ax in notin]), N2)
-    olda = [as_[axis] for axis in notin]
+    newshape_a = (math.prod([as_[ax] for ax in not_in]), N2)
+    olda = [as_[axis] for axis in not_in]
 
-    notin = [k for k in range(ndb) if k not in axes_b]
-    newaxes_b = axes_b + notin
+    not_in = [k for k in range(ndb) if k not in axes_b]
+    newaxes_b = axes_b + not_in
     N2 = math.prod(bs[axis] for axis in axes_b)
-    newshape_b = (N2, math.prod([bs[ax] for ax in notin]))
-    oldb = [bs[axis] for axis in notin]
+    newshape_b = (N2, math.prod([bs[ax] for ax in not_in]))
+    oldb = [bs[axis] for axis in not_in]
 
     at = a.transpose(newaxes_a).reshape(newshape_a)
     bt = b.transpose(newaxes_b).reshape(newshape_b)

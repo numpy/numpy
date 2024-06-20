@@ -2961,7 +2961,7 @@ class TestMinMax:
 
     def test_reduce_reorder(self):
         # gh 10370, 11029 Some compilers reorder the call to npy_getfloatstatus
-        # and put it before the call to an intrisic function that causes
+        # and put it before the call to an intrinsic function that causes
         # invalid status to be set. Also make sure warnings are not emitted
         for n in (2, 4, 8, 16, 32):
             for dt in (np.float32, np.float16, np.complex64):

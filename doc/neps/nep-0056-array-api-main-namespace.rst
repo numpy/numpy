@@ -302,7 +302,7 @@ three types of behavior rather than two - ``copy=None`` means "copy if needed".
 an exception because they use* ``copy=False`` *explicitly in their copy but a
 copy was previously made anyway, they have to inspect their code and determine
 whether the intent of the code was the old or the new semantics (both seem
-rougly equally likely), and adapt the code as appropriate. We expect most cases
+roughly equally likely), and adapt the code as appropriate. We expect most cases
 to be* ``np.array(..., copy=False)``, *because until a few years ago that had
 lower overhead than* ``np.asarray(...)``. *This was solved though, and*
 ``np.asarray(...)`` *is idiomatic NumPy usage.*

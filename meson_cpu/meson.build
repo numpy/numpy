@@ -202,13 +202,13 @@ foreach opt_name, conf : parse_options
         endif
       endforeach
     else
-      filterd = []
+      filtered = []
       foreach fet : result
         if fet not in accumulate
-          filterd += fet
+          filtered += fet
         endif
       endforeach
-      result = filterd
+      result = filtered
     endif # append
   endforeach # tok : tokens
   if ignored.length() > 0

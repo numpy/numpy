@@ -1403,7 +1403,7 @@ PyArray_DTypeMeta *_Void_dtype = NULL;
  * This function is exposed with an underscore "privately" because the
  * public version is a static inline function which only calls the function
  * on 2.x but directly accesses the `descr` struct on 1.x.
- * Once 1.x backwards compatibility is gone, it shoudl be exported without
+ * Once 1.x backwards compatibility is gone, it should be exported without
  * the underscore directly.
  * Internally, we define a private inline function `PyDataType_GetArrFuncs`
  * for convenience as we are allowed to access the `DType` slots directly.
