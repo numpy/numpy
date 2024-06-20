@@ -4174,6 +4174,15 @@ class TestRoundingFunctions:
         assert_equal(np.ceil(f), -1)
         assert_equal(np.trunc(f), -1)
 
+    @pytest.mark.parametrize('func', [np.floor, np.ceil, np.trunc])
+    @pytest.mark.parametrize('dtype', [np.bool, np.float64, np.float32,
+                                       np.int64, np.uint32])
+    def test_output_dtype(self, func, dtype):
+        arr = np.array([-2, 0, 4, 8]).astype(dtype)
+        result = func(arr)
+        assert_equal(arr, result)
+        assert result.dtype == dtype
+
 
 class TestComplexFunctions:
     funcs = [np.arcsin,  np.arccos,  np.arctan, np.arcsinh, np.arccosh,
