@@ -1,0 +1,3 @@
+* `numpy.floor`, `numpy.ceil`, and `numpy.trunc` now won't perform casting
+  to a floating dtype for integer dtype input arrays. Boolean arrays are
+  cast to ``int8`` dtype.
