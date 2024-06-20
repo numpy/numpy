@@ -74,7 +74,7 @@
 #ifdef import_array1
 
 static inline int
-PyArray_ImportNumPyAPI()
+PyArray_ImportNumPyAPI(void)
 {
     if (NPY_UNLIKELY(PyArray_API == NULL)) {
         import_array1(-1);
