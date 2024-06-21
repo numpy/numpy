@@ -66,7 +66,7 @@ intern_strings(void)
 
 #define IMPORT_GLOBAL(base_path, name, object)  \
     assert(object == NULL);                     \
-    npy_cache_import(base_path, name, &object); \
+    object = npy_import(base_path, name);       \
     if (object == NULL) {                       \
         return -1;                              \
     }
