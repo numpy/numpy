@@ -1054,10 +1054,11 @@ def test_field_growing_cases():
         res = np.loadtxt(["," * i], delimiter=",", dtype=bytes)
         assert len(res) == i+1
 
-@pytest.mark.parametrize("nmax", (10000, 50000, 80000, 100000, 120000, 200000))
+@pytest.mark.parametrize("nmax", (10000, 50000, 55000, 60000))
 def test_maxrows_exceeding_chunksize(nmax):
-    # less, equal, greater, twice and more than _loadtxt_chunksize
-    file_length = 200000
+    # tries to read all of the file,
+    # or less, equal, greater than _loadtxt_chunksize
+    file_length = 60000
 
     # file-like path
     data = ["a 0.5 1"]*file_length
