@@ -78,19 +78,18 @@ div.admonition-legacy>.admonition-title {
 
 .try_examples_button {
   color: white;
-  background-color: #0054a6;
+  background-color: var(--pst-color-info);
   border: none;
   padding: 5px 10px;
-  border-radius: 10px;
-  margin-top: 2px;  /* better alignment under admonitions */
-  margin-bottom: 5px;
+  border-radius: 0.25rem;
+  margin-top: 3px;  /* better alignment under admonitions */
+  margin-bottom: 5px !important; /* fix uneven button sizes under admonitions */
   box-shadow: 0 2px 5px rgba(108, 108, 108, 0.2);
   font-weight: bold;
   font-size: small;
 }
 
 .try_examples_button:hover {
-  background-color: #0066cc;
   transform: scale(1.02);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   cursor: pointer;
