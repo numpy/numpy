@@ -970,7 +970,7 @@ def test_parametric_unit_discovery(
     """Check that the correct unit (e.g. month, day, second) is discovered from
     the data when a user specifies a unitless datetime."""
     # Unit should be "D" (days) due to last entry
-    data = [generic_data] * 50000 + [long_datum]
+    data = [generic_data] * nrows + [long_datum]
     expected = np.array(data, dtype=expected_dtype)
 
     # file-like path
