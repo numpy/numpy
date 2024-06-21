@@ -31,6 +31,7 @@
 #include "stringdtype_ufuncs.h"
 #include "special_integer_comparisons.h"
 #include "extobj.h"  /* for _extobject_contextvar exposure */
+#include "ufunc_type_resolution.h"
 
 /* Automatically generated code to define all ufuncs: */
 #include "funcs.inc"
@@ -208,29 +209,6 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
  *****************************************************************************
  */
 
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_ufunc = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_wrap = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_pyvals_name = NULL;
-
-/* intern some strings used in ufuncs, returns 0 on success */
-static int
-intern_strings(void)
-{
-    npy_um_str_array_ufunc = PyUnicode_InternFromString("__array_ufunc__");
-    if (npy_um_str_array_ufunc == NULL) {
-        return -1;
-    }
-    npy_um_str_array_wrap = PyUnicode_InternFromString("__array_wrap__");
-    if (npy_um_str_array_wrap == NULL) {
-        return -1;
-    }
-    npy_um_str_pyvals_name = PyUnicode_InternFromString(UFUNC_PYVALS_NAME);
-    if (npy_um_str_pyvals_name == NULL) {
-        return -1;
-    }
-    return 0;
-}
-
 /* Setup the umath part of the module */
 
 int initumath(PyObject *m)
@@ -272,8 +250,8 @@ int initumath(PyObject *m)
 #undef ADDSCONST
     PyModule_AddIntConstant(m, "UFUNC_BUFSIZE_DEFAULT", (long)NPY_BUFSIZE);
 
-    Py_INCREF(npy_extobj_contextvar);
-    PyModule_AddObject(m, "_extobj_contextvar", npy_extobj_contextvar);
+    Py_INCREF(npy_static_pydata.npy_extobj_contextvar);
+    PyModule_AddObject(m, "_extobj_contextvar", npy_static_pydata.npy_extobj_contextvar);
 
     PyModule_AddObject(m, "PINF", PyFloat_FromDouble(NPY_INFINITY));
     PyModule_AddObject(m, "NINF", PyFloat_FromDouble(-NPY_INFINITY));
@@ -286,18 +264,15 @@ int initumath(PyObject *m)
 
     s = PyDict_GetItemString(d, "conjugate");
     s2 = PyDict_GetItemString(d, "remainder");
+
     /* Setup the array object's numerical structures with appropriate
        ufuncs in d*/
-    _PyArray_SetNumericOps(d);
+    if (_PyArray_SetNumericOps(d) < 0) {
+        return -1;
+    }
 
     PyDict_SetItemString(d, "conj", s);
     PyDict_SetItemString(d, "mod", s2);
-
-    if (intern_strings() < 0) {
-        PyErr_SetString(PyExc_RuntimeError,
-           "cannot intern umath strings while initializing _multiarray_umath.");
-        return -1;
-    }
 
     /*
      * Set up promoters for logical functions

@@ -1101,6 +1101,7 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/nditer_constr.c',
   'src/multiarray/nditer_pywrap.c',
   src_file.process('src/multiarray/nditer_templ.c.src'),
+  'src/multiarray/npy_static_data.c',
   'src/multiarray/number.c',
   'src/multiarray/refcount.c',
   src_file.process('src/multiarray/scalartypes.c.src'),

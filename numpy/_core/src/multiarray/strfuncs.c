@@ -7,6 +7,7 @@
 #include "numpy/arrayobject.h"
 #include "npy_pycompat.h"
 #include "npy_import.h"
+#include "multiarraymodule.h"
 #include "strfuncs.h"
 
 static void
@@ -33,36 +34,38 @@ PyArray_SetStringFunction(PyObject *op, int repr)
 NPY_NO_EXPORT PyObject *
 array_repr(PyArrayObject *self)
 {
-    static PyObject *repr = NULL;
     /*
      * We need to do a delayed import here as initialization on module load
      * leads to circular import problems.
      */
-    npy_cache_import("numpy._core.arrayprint", "_default_array_repr", &repr);
-    if (repr == NULL) {
+    npy_cache_import("numpy._core.arrayprint", "_default_array_repr",
+                     &npy_thread_unsafe_state._default_array_repr);
+    if (npy_thread_unsafe_state._default_array_repr == NULL) {
         npy_PyErr_SetStringChained(PyExc_RuntimeError,
                 "Unable to configure default ndarray.__repr__");
         return NULL;
     }
-    return PyObject_CallFunctionObjArgs(repr, self, NULL);
+    return PyObject_CallFunctionObjArgs(
+            npy_thread_unsafe_state._default_array_repr, self, NULL);
 }
 
 
 NPY_NO_EXPORT PyObject *
 array_str(PyArrayObject *self)
 {
-    static PyObject *str = NULL;
     /*
      * We need to do a delayed import here as initialization on module load leads
      * to circular import problems.
      */
-    npy_cache_import("numpy._core.arrayprint", "_default_array_str", &str);
-    if (str == NULL) {
+    npy_cache_import("numpy._core.arrayprint", "_default_array_str",
+                     &npy_thread_unsafe_state._default_array_str);
+    if (npy_thread_unsafe_state._default_array_str == NULL) {
         npy_PyErr_SetStringChained(PyExc_RuntimeError,
                 "Unable to configure default ndarray.__str__");
         return NULL;
     }
-    return PyObject_CallFunctionObjArgs(str, self, NULL);
+    return PyObject_CallFunctionObjArgs(
+            npy_thread_unsafe_state._default_array_str, self, NULL);
 }
 
 

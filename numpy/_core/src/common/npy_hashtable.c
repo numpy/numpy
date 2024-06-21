@@ -210,10 +210,13 @@ _resize_if_necessary(PyArrayIdentityHash *tb)
  * @param value Normally a Python object, no reference counting is done.
  *        use NULL to clear an item.  If the item does not exist, no
  *        action is performed for NULL.
- * @param replace If 1, allow replacements.
+ * @param replace If 1, allow replacements. If replace is 0 an error is raised
+ *        if the stored value is different from the value to be cached. If the
+ *        value to be cached is identical to the stored value, the value to be
+ *        cached is ignored and no error is raised.
  * @returns 0 on success, -1 with a MemoryError or RuntimeError (if an item
- *        is added which is already in the cache).  The caller should avoid
- *        the RuntimeError.
+ *        is added which is already in the cache and replace is 0).  The
+ *        caller should avoid the RuntimeError.
  */
 NPY_NO_EXPORT int
 PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
@@ -228,10 +231,10 @@ PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
 
     PyObject **tb_item = find_item(tb, key);
     if (value != NULL) {
-        if (tb_item[0] != NULL && !replace) {
+        if (tb_item[0] != NULL && tb_item[0] != value && !replace) {
             UNLOCK_TABLE(tb);
             PyErr_SetString(PyExc_RuntimeError,
-                    "Identity cache already includes the item.");
+                    "Identity cache already includes an item with this key.");
             return -1;
         }
         tb_item[0] = value;
