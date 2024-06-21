@@ -1040,6 +1040,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
             # Due to chunking, certain error reports are less clear, currently.
             if filelike:
                 data = iter(data)  # cannot chunk when reading from file
+                filelike = False
 
             c_byte_converters = False
             if read_dtype_via_object_chunks == "S":
