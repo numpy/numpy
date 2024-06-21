@@ -508,7 +508,7 @@ cdata.set('NPY_VISIBILITY_HIDDEN', visibility_hidden)
 
 # if not set, we're using lapack_lite
 if have_lapack
-  cdata.set10('HAVE_EXTERNAL_LAPACK', have_blas)
+  cdata.set10('HAVE_EXTERNAL_LAPACK', have_lapack)
 endif
 
 config_h = configure_file(
