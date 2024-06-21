@@ -151,6 +151,9 @@ manylinux-x86_64-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"
 musllinux-x86_64-image = "musllinux_1_1"
 
+[tool.cibuildwheel.pyodide]
+config-settings = "build-dir=build setup-args=--cross-file=$PWD/tools/ci/emscripten/emscripten.meson.cross setup-args=-Dblas=none setup-args=-Dlapack=none"
+
 [tool.cibuildwheel.linux.environment]
 # RUNNER_OS is a GitHub Actions specific env var; define it here so it works on Cirrus CI too
 RUNNER_OS="Linux"
@@ -179,6 +182,13 @@ repair-wheel-command = "bash -el ./tools/wheels/repair_windows.sh {wheel} {dest_
 select = "*-win32"
 config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=true build-dir=build"
 repair-wheel-command = ""
+
+[[tool.cibuildwheel.overrides]]
+select = "*pyodide*"
+before-test = "pip install -r {project}/requirements/emscripten_test_requirements.txt"
+# Pyodide ensures that the wheels are already repaired by auditwheel-emscripten
+repair-wheel-command = ""
+test-command = "python -m pytest --pyargs numpy -m 'not slow'"
 
 [tool.meson-python]
 meson = 'vendored-meson/meson/meson.py'
