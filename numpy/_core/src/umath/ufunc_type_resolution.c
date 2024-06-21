@@ -35,10 +35,9 @@
 #include "npy_config.h"
 
 #include "numpy/npy_common.h"
-#include "npy_import.h"
-
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
+#include "npy_import.h"
 #include "ufunc_type_resolution.h"
 #include "ufunc_object.h"
 #include "common.h"

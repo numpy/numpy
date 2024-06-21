@@ -4842,6 +4842,10 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
+    if (init_import_mutex() < 0) {
+        goto err;
+    }
+
     if (init_extobj() < 0) {
         goto err;
     }
@@ -5067,14 +5071,15 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
      * init_string_dtype() but that needs to happen after
      * the legacy dtypemeta classes are available.
      */
-    npy_cache_import("numpy.dtypes", "_add_dtype_helper",
-                     &npy_thread_unsafe_state._add_dtype_helper);
-    if (npy_thread_unsafe_state._add_dtype_helper == NULL) {
+    
+    if (npy_cache_import_runtime(
+            "numpy.dtypes", "_add_dtype_helper",
+            &npy_runtime_imports._add_dtype_helper) == -1) {
         goto err;
     }
 
     if (PyObject_CallFunction(
-            npy_thread_unsafe_state._add_dtype_helper,
+            npy_runtime_imports._add_dtype_helper.obj,
             "Os", (PyObject *)&PyArray_StringDType, NULL) == NULL) {
         goto err;
     }

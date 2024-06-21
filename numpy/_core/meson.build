@@ -1041,6 +1041,7 @@ src_multiarray_umath_common = [
   'src/common/mem_overlap.c',
   'src/common/npy_argparse.c',
   'src/common/npy_hashtable.c',
+  'src/common/npy_import.c',
   'src/common/npy_longdouble.c',
   'src/common/ucsnarrow.c',
   'src/common/ufunc_override.c',
