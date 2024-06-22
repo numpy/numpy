@@ -1051,7 +1051,7 @@ def test_field_growing_cases():
     assert len(res) == 0
 
     for i in range(1, 1024):
-        res = np.loadtxt(["," * i], delimiter=",", dtype=bytes)
+        res = np.loadtxt(["," * i], delimiter=",", dtype=bytes, max_rows=10)
         assert len(res) == i+1
 
 @pytest.mark.parametrize("nmax", (10000, 50000, 55000, 60000))
