@@ -216,8 +216,10 @@ assert_type(np.block(C), npt.NDArray[Any])
 
 if sys.version_info >= (3, 12):
     from collections.abc import Buffer
+else:
+    from typing_extensions import Buffer
 
-    def create_array(obj: npt.ArrayLike) -> npt.NDArray[Any]: ...
+def create_array(obj: npt.ArrayLike) -> npt.NDArray[Any]: ...
 
-    buffer: Buffer
-    assert_type(create_array(buffer), npt.NDArray[Any])
+buffer: Buffer
+assert_type(create_array(buffer), npt.NDArray[Any])

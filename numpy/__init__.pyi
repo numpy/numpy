@@ -1388,15 +1388,7 @@ _NumberType = TypeVar("_NumberType", bound=number[Any])
 if sys.version_info >= (3, 12):
     from collections.abc import Buffer as _SupportsBuffer
 else:
-    _SupportsBuffer = (
-        bytes
-        | bytearray
-        | memoryview
-        | _array.array[Any]
-        | mmap.mmap
-        | NDArray[Any]
-        | generic
-    )
+    from typing_extensions import Buffer as _SupportsBuffer
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)

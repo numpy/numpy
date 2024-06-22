@@ -80,16 +80,13 @@ _DualArrayLike = Union[
 
 if sys.version_info >= (3, 12):
     from collections.abc import Buffer
-
-    ArrayLike = Buffer | _DualArrayLike[
-        dtype[Any],
-        Union[bool, int, float, complex, str, bytes],
-    ]
 else:
-    ArrayLike = _DualArrayLike[
-        dtype[Any],
-        Union[bool, int, float, complex, str, bytes],
-    ]
+    from typing_extensions import Buffer
+
+ArrayLike = Buffer | _DualArrayLike[
+    dtype[Any],
+    Union[bool, int, float, complex, str, bytes],
+]
 
 # `ArrayLike<X>_co`: array-like objects that can be coerced into `X`
 # given the casting rules `same_kind`
