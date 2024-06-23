@@ -375,6 +375,12 @@ typedef struct
 
 #include <complex.h>
 
+// Downstream libraries like sympy would like to use I
+// see https://github.com/numpy/numpy/issues/26787
+#ifdef I
+#undef I
+#endif
+
 #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 typedef _Dcomplex npy_cdouble;
 typedef _Fcomplex npy_cfloat;
