@@ -269,6 +269,26 @@ An example commit message to run only Windows F2PY tests and skip other jobs:
 
 Note: The ``[skip azp]`` tag can be anywhere in the commit message, but ``[skip cirrus]`` must be in the first or last line.
 
+Being CI Sensitive
+------------------
+
+Being mindful of CI doesn't have to mean keeping track of an ever increasing
+combinatorial set of tags. Instead, consider the following development workflow
+change to prevent hammering CI.
+
+- Make a fork
+  + Do **not** open a pull request (or a draft)
+- Comment out the special case handling for ``numpy/numpy`` which prevents CI running on forks
+  + For most CI workflows this is ``if: "github.repository == 'numpy/numpy'"``
+  + If that seems too complicated, delete all but the CI workflow which needs testing
+    - Make a single clean commit with this change
+  + Continue working on this branch
+- Finally, when everything is ready, make a new branch, and rebase, dropping the
+  single commit which removed / commented out ``numpy`` handling
+  + Open a pull request; profit with CI passing / fixes at minimal overhead
+
+Note that this is best suited to actions which do not require special
+authentication.
 
 Test building wheels
 ~~~~~~~~~~~~~~~~~~~~
