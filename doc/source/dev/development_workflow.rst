@@ -229,25 +229,25 @@ these fragments in each commit message of a PR:
   `See the configuration file for these checks.
   <https://github.com/numpy/numpy/blob/main/.cirrus.star>`__
 
-Additional CI Skip Tags
-~~~~~~~~~~~~~~~~~~~~~~~
+Additional CI Tags
+~~~~~~~~~~~~~~~~~~
 
 There are a range of additional tags that provide more fine-grained control over
-CI jobs. These tags allow are meant to skip specific jobs that are not needed
-for your changes. Here are the new tags you can use:
+CI jobs. These tags allow are meant to skip or include specific jobs that are
+not needed for your changes. Here are the new tags you can use:
 
-* ``[skip circle]``: skip the CircleCI jobs (documentation and preview mostly)
-* ``[skip linux]``: skip Linux jobs, this is typically not a good idea unless another specific CI run is requested
-* ``[skip nixblas]``: skip BLAS NumPy jobs
-* ``[skip sanitizer]``: skip compiler sanitizer jobs (Linux)
-* ``[skip musl]``: skip musllinux_x86_64 jobs
-* ``[skip qemu]``: skip Linux QEMU jobs
-* ``[skip simd]``: skip SIMD optimization jobs
-* ``[skip macos]``: skip MacOS jobs
-* ``[skip mypy]``: skip ``mypy`` type checking jobs
-* ``[skip wingha]``: skip Windows GHA jobs
-* ``[skip wasm]``: skip Emscripten/Pyodide jobs
-* ``[skip codeql]``: skip CodeQL analysis jobs
+* ``[skip/only circle]``: skip / run only the CircleCI jobs (documentation and preview mostly)
+* ``[skip/only linux]``: skip / run only Linux jobs, this is typically not a good idea unless another specific CI run is requested
+* ``[skip/only nixblas]``: skip / run only BLAS NumPy jobs
+* ``[skip/only sanitizer]``: skip / run only compiler sanitizer jobs (Linux)
+* ``[skip/only musl]``: skip / run only musllinux_x86_64 jobs
+* ``[skip/only qemu]``: skip / run only Linux QEMU jobs
+* ``[skip/only simd]``: skip / run only SIMD optimization jobs
+* ``[skip/only macos]``: skip / run only MacOS jobs
+* ``[skip/only mypy]``: skip / run only ``mypy`` type checking jobs
+* ``[skip/only wingha]``: skip / run only Windows GHA jobs
+* ``[skip/only wasm]``: skip / run only Emscripten/Pyodide jobs
+* ``[skip/only codeql]``: skip / run only CodeQL analysis jobs
 
 These tags do not need to be in the first line of the commit message and can
 appear anywhere in the body of the commit itself. Additionally, they can be used
@@ -260,7 +260,7 @@ An example commit message to run only Windows F2PY tests and skip other jobs:
 
 .. code-block:: text
 
-   CI: Configure F2PY GHA Windows [winci f2py]
+   CI: Configure F2PY GHA Windows [only winf2py]
 
    [skip circle] [skip linux] [skip nixblas] [skip sanitizer] [skip musl]
    [skip qemu] [skip simd] [skip macos] [skip mypy] [skip wingha] [wasm skip]
@@ -269,10 +269,23 @@ An example commit message to run only Windows F2PY tests and skip other jobs:
    [skip azp]
    [skip cirrus]
 
-Note: The ``[skip azp]`` tag can be anywhere in the commit message, but ``[skip cirrus]`` must be in the first or last line.
+Note: The ``[skip azp]`` tag can be anywhere in the commit message,
+but ``[skip cirrus]`` must be in the first or last line.
+
+Helper (compound) tags
+----------------------
+
+Since the tags can be a bit of a mouthful, there are some short-hand helpers,
+which expand to the above.
+
+* ``[skip gha]``: Skips everything on GithubActions except for ``[only ]`` directives
+* ``[skip except]``: Skips everything except for ``[only ]`` directives
+* ``[docs only]``: Skips everything but the documentation job
+* ``[skip exotic]``: ``[skip quemu] [skip simd] [skip macos] [skip wingha] [skip wasm] [skip musl] [skip circle] [skip azp] [ckip cirrus]``
+* ``[skip tools]``: Expands to ``[skip codeql] [skip mypy] [skip sanitizer]``
 
 Being CI Sensitive
-------------------
+~~~~~~~~~~~~~~~~~~
 
 Being mindful of CI doesn't have to mean keeping track of an ever increasing
 combinatorial set of tags. Instead, consider the following development workflow
@@ -284,13 +297,13 @@ change to prevent hammering CI.
   + For most CI workflows this is ``if: "github.repository == 'numpy/numpy'"``
   + If that seems too complicated, delete all but the CI workflow which needs testing
     - Make a single clean commit with this change
-  + Continue working on this branch
+  + Continue working on this branch, open a pull request to another branch of your own repo
 - Finally, when everything is ready, make a new branch, and rebase, dropping the
   single commit which removed / commented out ``numpy`` handling
   + Open a pull request; profit with CI passing / fixes at minimal overhead
 
 Note that this is best suited to actions which do not require special
-authentication.
+authentication, so the ``dependency-review.yml`` should be the first to go.
 
 Test building wheels
 ~~~~~~~~~~~~~~~~~~~~
