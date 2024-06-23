@@ -249,7 +249,9 @@ for your changes. Here are the new tags you can use:
 * ``[skip wasm]``: skip Emscripten/Pyodide jobs
 * ``[skip codeql]``: skip CodeQL analysis jobs
 
-These tags do not need to be in the first line of the commit message and can appear anywhere in the body of the commit itself. Additionally, they can be used in any order, i.e. ``[skip mypy]`` is the same as ``[mypy skip]``
+These tags do not need to be in the first line of the commit message and can
+appear anywhere in the body of the commit itself. Additionally, they can be used
+in any order, i.e. ``[skip mypy]`` is the same as ``[mypy skip]``.
 
 Example Usage
 -------------
