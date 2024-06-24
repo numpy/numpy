@@ -387,7 +387,7 @@ def iterable(y):
 
 def _weights_are_valid(weights, a, axis):
     """Validate weights array.
-
+    
     We assume, weights is not None.
     """
     wgt = np.asanyarray(weights)
@@ -447,7 +447,7 @@ def average(a, axis=None, weights=None, returned=False, *,
         The calculation is::
 
             avg = sum(a * weights) / sum(weights)
-
+        
         where the sum is over all included elements.
         The only constraint on the values of `weights` is that `sum(weights)`
         must not be 0.
@@ -2000,7 +2000,7 @@ def disp(mesg, device=None, linefeed=True):
         "(deprecated in NumPy 2.0)",
         DeprecationWarning,
         stacklevel=2
-    )
+    )    
 
     if device is None:
         device = sys.stdout
@@ -3798,7 +3798,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
         Axis or axes along which the medians are computed. The default,
         axis=None, will compute the median along a flattened version of
         the array.
-
+        
         .. versionadded:: 1.9.0
 
         If a sequence of axes, the array is first flattened along the
@@ -4593,7 +4593,7 @@ def quantile(a,
     **Weighted quantiles:**
     For weighted quantiles, the above coverage conditions still hold. The
     empirical cumulative distribution is simply replaced by its weighted
-    version, i.e.
+    version, i.e. 
     :math:`P(Y \\leq t) = \\frac{1}{\\sum_i w_i} \\sum_i w_i 1_{x_i \\leq t}`.
     Only ``method="inverted_cdf"`` supports weights.
 
@@ -5039,7 +5039,7 @@ def _quantile(
             return result
 
         r_shape = arr.shape[1:]
-        if quantiles.ndim > 0:
+        if quantiles.ndim > 0: 
             r_shape = quantiles.shape + r_shape
         if out is None:
             result = np.empty_like(arr, shape=r_shape)
