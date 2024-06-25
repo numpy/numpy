@@ -1,0 +1,5 @@
+New function ``unstack()``
+--------------------------
+
+A new function ``unstack()``, which splits an array into a tuple of arrays
+along an axis. It serves as the inverse of ``np.stack()``.
