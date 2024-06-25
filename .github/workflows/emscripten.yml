@@ -39,11 +39,32 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
+  get_commit_tags:
+    name: Get commit tags
+    runs-on: ubuntu-latest
+    # To enable this workflow on a fork, comment out:
+    if: "github.repository == 'numpy/numpy'"
+    outputs:
+      message: ${{ steps.commit_message.outputs.message }}
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get commit message
+        id: commit_message
+        run: |
+          set -xe
+          COMMIT_TAGS=$(git log --format=%B -n 1 | grep -o '\[[^]]*\]' | tr '\n' ' ' | xargs || true)
+          echo "message=$COMMIT_TAGS" >> $GITHUB_OUTPUT
+          echo github.ref ${{ github.ref }}
   build-wasm-emscripten:
     name: Build NumPy distribution for Pyodide
     runs-on: ubuntu-22.04
-    # To enable this workflow on a fork, comment out:
-    if: github.repository == 'numpy/numpy'
+    needs: get_commit_tags
+    if: >-
+      !contains(needs.get_commit_tags.outputs.message, '[wasm skip]') &&
+      !contains(needs.get_commit_tags.outputs.message, '[skip wasm]')
     env:
       PYODIDE_VERSION: 0.26.0
       # PYTHON_VERSION and EMSCRIPTEN_VERSION are determined by PYODIDE_VERSION.
