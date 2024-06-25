@@ -140,6 +140,21 @@ class TestIndexing:
         expected = np.array([2, 1, 0])
         assert_equal(a, expected)
 
+    def test_gh_26542_2d(self):
+        a = np.array([[0, 1, 2]])
+        idx_row = np.zeros(3, dtype=int)
+        idx_col = np.array([2, 1, 0])
+        a[idx_row, idx_col] = a
+        expected = np.array([[2, 1, 0]])
+        assert_equal(a, expected)
+
+    def test_gh_26542_index_overlap(self):
+        arr = np.arange(100)
+        expected_vals = np.copy(arr[:-10])
+        arr[10:] = arr[:-10]
+        actual_vals = arr[10:]
+        assert_equal(actual_vals, expected_vals)
+
     def test_ellipsis_index(self):
         a = np.array([[1, 2, 3],
                       [4, 5, 6],

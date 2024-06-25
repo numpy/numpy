@@ -1960,6 +1960,10 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         tmp_arr = (PyArrayObject *)op;
     }
 
+    if (tmp_arr && solve_may_share_memory(self, tmp_arr, 1) == 1) {
+        Py_SETREF(tmp_arr, (PyArrayObject *)PyArray_NewCopy(tmp_arr, NPY_ANYORDER));
+    }
+
     /*
      * Special case for very simple 1-d fancy indexing, which however
      * is quite common. This saves not only a lot of setup time in the
@@ -1997,10 +2001,6 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                     PyArray_DESCR(self), PyArray_DESCR(self),
                     0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
                 goto fail;
-            }
-
-            if (solve_may_share_memory(self, tmp_arr, 1) == 1) {
-                tmp_arr = (PyArrayObject *)PyArray_NewCopy(tmp_arr, NPY_ANYORDER);
             }
 
             /* trivial_set checks the index for us */
