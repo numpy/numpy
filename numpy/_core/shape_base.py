@@ -457,7 +457,7 @@ def stack(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
     return _nx.concatenate(expanded_arrays, axis=axis, out=out,
                            dtype=dtype, casting=casting)
 
-def _unstack_dispatcher(x, *, axis=None):
+def _unstack_dispatcher(x, /, *, axis=None):
     return (x,)
 
 @array_function_dispatch(_unstack_dispatcher)

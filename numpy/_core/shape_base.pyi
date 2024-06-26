@@ -120,8 +120,17 @@ def stack(
 @overload
 def unstack(
     array: _ArrayLike[_SCT],
-    axis: int = 0
+    /,
+    *,
+    axis: int = ...,
 ) -> tuple[NDArray[_SCT], ...]: ...
+@overload
+def unstack(
+    array: ArrayLike,
+    /,
+    *,
+    axis: int = ...,
+) -> tuple[NDArray[Any], ...]: ...
 
 @overload
 def block(arrays: _ArrayLike[_SCT]) -> NDArray[_SCT]: ...

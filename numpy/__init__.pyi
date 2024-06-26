@@ -397,6 +397,7 @@ from numpy._core.shape_base import (
     hstack as hstack,
     stack as stack,
     vstack as vstack,
+    unstack as unstack,
 )
 
 from numpy.lib import (
