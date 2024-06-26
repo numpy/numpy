@@ -477,6 +477,8 @@ def unstack(x, /, *, axis=0):
     ----------
     x : ndarray
         The array to be unstacked.
+    axis : int, optional
+        Axis along which the array will be split. Default: ``0``.
 
     Returns
     -------
