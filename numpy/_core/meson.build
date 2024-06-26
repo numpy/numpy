@@ -105,7 +105,10 @@ if use_highway
   highway_lib = static_library('highway',
     [
       # required for hwy::Abort symbol
-      'src/highway/hwy/abort.cc'
+      'src/highway/hwy/abort.cc',
+      'src/highway/hwy/per_target.cc',
+      'src/highway/hwy/targets.cc',
+      'src/highway/hwy/print.cc'
     ],
     cpp_args: '-DTOOLCHAIN_MISS_ASM_HWCAP_H',
     include_directories: ['src/highway'],
@@ -969,12 +972,12 @@ foreach gen_mtargets : [
   ],
   [
     'loops_unary_fp.dispatch.h',
-    src_file.process('src/umath/loops_unary_fp.dispatch.c.src'),
+    'src/umath/loops_unary_fp.dispatch.cpp',
     [
-      SSE41, SSE2,
+      SSE42, SSE2,
       VSX2,
       ASIMD, NEON,
-      VXE, VX
+      VXE, VX, RVV
     ]
   ],
   [
@@ -1020,7 +1023,8 @@ foreach gen_mtargets : [
       'src/common',
       'src/multiarray',
       'src/npymath',
-      'src/umath'
+      'src/umath',
+      'src/highway',
     ]
   )
   if not is_variable('multiarray_umath_mtargets')
@@ -1216,6 +1220,7 @@ py.extension_module('_multiarray_umath',
     'src/multiarray',
     'src/npymath',
     'src/umath',
+    'src/highway',
   ],
   dependencies: [blas_dep],
   link_with: [npymath_lib, multiarray_umath_mtargets.static_lib('_multiarray_umath_mtargets')] + highway_lib,
