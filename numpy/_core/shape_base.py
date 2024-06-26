@@ -524,6 +524,8 @@ def unstack(x, /, *, axis=0):
     np.True_
 
     """
+    if x.ndim == 0:
+        raise ValueError("Input array must be at least 1-d.")
     return tuple(_nx.moveaxis(x, axis, 0))
 
 # Internal functions to eliminate the overhead of repeated dispatch in one of

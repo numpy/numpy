@@ -520,6 +520,7 @@ def test_unstack():
 
     assert_raises(ValueError, np.unstack, a, axis=3)
     assert_raises(ValueError, np.unstack, a, axis=-4)
+    assert_raises(ValueError, np.unstack, np.array(0), axis=0)
 
 
 @pytest.mark.parametrize("axis", [0])
