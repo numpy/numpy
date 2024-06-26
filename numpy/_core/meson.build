@@ -944,12 +944,10 @@ foreach gen_mtargets : [
   ],
   [
     'loops_trigonometric.dispatch.h',
-    src_file.process('src/umath/loops_trigonometric.dispatch.c.src'),
+    'src/umath/loops_trigonometric.dispatch.cpp',
     [
-      AVX512F, [AVX2, FMA3],
-      VSX4, VSX3, VSX2,
+      AVX512_SKX, [AVX2, FMA3],
       NEON_VFPV4,
-      VXE2, VXE
     ]
   ],
   [
@@ -1020,7 +1018,8 @@ foreach gen_mtargets : [
       'src/common',
       'src/multiarray',
       'src/npymath',
-      'src/umath'
+      'src/umath',
+      'src/highway',
     ]
   )
   if not is_variable('multiarray_umath_mtargets')

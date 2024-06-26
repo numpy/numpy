@@ -474,6 +474,8 @@ npy__cpu_init_features(void)
     // third call to the cpuid to get extended AVX2 & AVX512 feature bits
     npy__cpu_cpuid(reg, 7);
     npy__cpu_have[NPY_CPU_FEATURE_AVX2]   = (reg[1] & (1 << 5))  != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_AVX2]   = npy__cpu_have[NPY_CPU_FEATURE_AVX2] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_FMA3];
     if (!npy__cpu_have[NPY_CPU_FEATURE_AVX2])
         return;
     // detect AVX2 & FMA3
@@ -641,7 +643,7 @@ static void
 npy__cpu_init_features(void)
 {
     memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
-    
+
     unsigned int hwcap = getauxval(AT_HWCAP);
     if ((hwcap & HWCAP_S390_VX) == 0) {
         return;
@@ -653,7 +655,7 @@ npy__cpu_init_features(void)
        npy__cpu_have[NPY_CPU_FEATURE_VXE2] = 1;
        return;
     }
-    
+
     npy__cpu_have[NPY_CPU_FEATURE_VXE] = (hwcap & HWCAP_S390_VXE) != 0;
 
     npy__cpu_have[NPY_CPU_FEATURE_VX]  = 1;
