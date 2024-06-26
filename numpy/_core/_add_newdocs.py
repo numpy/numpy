@@ -1679,7 +1679,7 @@ add_newdoc('numpy._core.multiarray', 'frombuffer',
 
 add_newdoc('numpy._core.multiarray', 'from_dlpack',
     """
-    from_dlpack(x, /)
+    from_dlpack(x, /, *, device=None, copy=None)
 
     Create a NumPy array from an object implementing the ``__dlpack__``
     protocol. Generally, the returned NumPy array is a read-only view
@@ -1690,6 +1690,16 @@ add_newdoc('numpy._core.multiarray', 'from_dlpack',
     x : object
         A Python object that implements the ``__dlpack__`` and
         ``__dlpack_device__`` methods.
+    device : device, optional
+        Device on which to place the created array. If device is ``None``
+        and ``x`` supports DLPack, the output array will be on the same
+        device as ``x``. Default: ``None``.
+    copy : bool, optional
+        Boolean indicating whether or not to copy the input. If ``True``,
+        the copy will be made. If ``False``, the function will never copy,
+        and will raise ``BufferError`` in case a copy is deemed necessary.
+        If ``None``, the function will reuse the existing memory buffer if
+        possible and copy otherwise. Default: ``None``.
 
     Returns
     -------
@@ -2380,14 +2390,20 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_struct__',
     """Array protocol: C-struct side."""))
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__dlpack__',
-    """a.__dlpack__(*, stream=None)
+    """
+    a.__dlpack__(*, stream=None, max_version=None, dl_device=None, copy=None)
 
-    DLPack Protocol: Part of the Array API."""))
+    DLPack Protocol: Part of the Array API.
+
+    """))
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__dlpack_device__',
-    """a.__dlpack_device__()
+    """
+    a.__dlpack_device__()
 
-    DLPack Protocol: Part of the Array API."""))
+    DLPack Protocol: Part of the Array API.
+
+    """))
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('base',
     """
