@@ -12,7 +12,6 @@ from typing import (
 
 import numpy as np
 from numpy import (
-    ComplexWarning as ComplexWarning,
     generic,
     unsignedinteger,
     signedinteger,
