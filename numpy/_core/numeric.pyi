@@ -7,15 +7,11 @@ from typing import (
     SupportsAbs,
     SupportsIndex,
     NoReturn,
+    TypeGuard,
 )
-if sys.version_info >= (3, 10):
-    from typing import TypeGuard
-else:
-    from typing_extensions import TypeGuard
 
 import numpy as np
 from numpy import (
-    ComplexWarning as ComplexWarning,
     generic,
     unsignedinteger,
     signedinteger,

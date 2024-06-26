@@ -1,4 +1,3 @@
-import sys
 from collections.abc import Sequence, Iterator, Callable, Iterable
 from typing import (
     Literal as L,
@@ -8,12 +7,8 @@ from typing import (
     Protocol,
     SupportsIndex,
     SupportsInt,
+    TypeGuard
 )
-
-if sys.version_info >= (3, 10):
-    from typing import TypeGuard
-else:
-    from typing_extensions import TypeGuard
 
 from numpy import (
     vectorize as vectorize,
