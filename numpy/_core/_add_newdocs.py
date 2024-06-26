@@ -937,7 +937,7 @@ add_newdoc('numpy._core.multiarray', 'asarray',
         'K' (keep) preserve input order
         Defaults to 'K'.
     device : str, optional
-        The device on which to place the created array. Default: None.
+        The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
@@ -1031,7 +1031,7 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
         'K' (keep) preserve input order
         Defaults to 'C'.
     device : str, optional
-        The device on which to place the created array. Default: None.
+        The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.1.0
@@ -1235,7 +1235,7 @@ add_newdoc('numpy._core.multiarray', 'empty',
         (C-style) or column-major (Fortran-style) order in
         memory.
     device : str, optional
-        The device on which to place the created array. Default: None.
+        The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
@@ -1691,15 +1691,15 @@ add_newdoc('numpy._core.multiarray', 'from_dlpack',
         A Python object that implements the ``__dlpack__`` and
         ``__dlpack_device__`` methods.
     device : device, optional
-        Device on which to place the created array. If device is ``None``
-        and ``x`` supports DLPack, the output array will be on the same
-        device as ``x``. Default: ``None``.
+        Device on which to place the created array. Default: ``None``.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
     copy : bool, optional
         Boolean indicating whether or not to copy the input. If ``True``,
         the copy will be made. If ``False``, the function will never copy,
         and will raise ``BufferError`` in case a copy is deemed necessary.
         If ``None``, the function will reuse the existing memory buffer if
         possible and copy otherwise. Default: ``None``.
+
 
     Returns
     -------
@@ -1768,7 +1768,7 @@ add_newdoc('numpy._core.multiarray', 'arange',
         The type of the output array.  If `dtype` is not given, infer the data
         type from the other input arguments.
     device : str, optional
-        The device on which to place the created array. Default: None.
+        The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
