@@ -987,7 +987,6 @@ def test_parametric_unit_discovery(
     os.close(fd)
     with open(fname, "w") as fh:
         fh.write("\n".join(data)+"\n")
-        fh.close()
     # loading the full file...
     a = np.loadtxt(fname, dtype=unitless_dtype)
     assert len(a) == len(expected)
