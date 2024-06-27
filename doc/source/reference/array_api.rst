@@ -13,7 +13,7 @@ NumPy aims to implement support for the
 `2023.12 version <https://data-apis.org/array-api/2023.12/index.html>`__
 and future versions of the standard - assuming that those future versions can be
 upgraded to given NumPy's
-`backwards compatibility policy <https://numpy.org/neps/nep-0023-backwards-compatibility.html>`__.
+:ref:`backwards compatibility policy <NEP23>`.
 
 For usage guidelines for downstream libraries and end users who want to write
 code that will work with both NumPy and other array libraries, we refer to the
@@ -33,8 +33,8 @@ rather than anything NumPy-specific, the `array-api-strict
     standard, via a separate ``numpy.array_api`` submodule. This module was
     marked as experimental (it emitted a warning on import) and removed in
     NumPy 2.0 because full support was included in the main namespace.
-    `NEP 47 <https://numpy.org/neps/nep-0047-array-api-standard.html>`__ and
-    `NEP 56 <https://numpy.org/neps/nep-0056-array-api-main-namespace.html>`__
+    :ref:`NEP 47 <NEP47>` and
+    :ref:`NEP 56 <NEP56>`
     describe the motivation and scope for implementing the array API standard
     in NumPy.
 
@@ -57,7 +57,7 @@ an entry point.
 .. rubric:: Footnotes
 
 .. [1] With a few very minor exceptions, as documented in
-   `NEP 56 <https://numpy.org/neps/nep-0056-array-api-main-namespace.html>`__.
+   :ref:`NEP 56 <NEP56>`.
    The ``sum``, ``prod`` and ``trace`` behavior adheres to the 2023.12 version
    instead, as do function signatures; the only known incompatibility that may
    remain is that the standard forbids unsafe casts for in-place operators
