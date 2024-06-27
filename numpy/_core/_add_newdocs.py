@@ -1692,7 +1692,8 @@ add_newdoc('numpy._core.multiarray', 'from_dlpack',
         ``__dlpack_device__`` methods.
     device : device, optional
         Device on which to place the created array. Default: ``None``.
-        For Array-API interoperability only, so must be ``"cpu"`` if passed.
+        Must be ``"cpu"`` if passed which may allow importing an array
+        that is not already CPU available.
     copy : bool, optional
         Boolean indicating whether or not to copy the input. If ``True``,
         the copy will be made. If ``False``, the function will never copy,
