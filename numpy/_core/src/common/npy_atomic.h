@@ -17,8 +17,14 @@
 #elif _MSC_VER
     #include <intrin.h>
     #define MSC_ATOMICS
+#elif defined(__GNUC__) && (__GNUC__ > 4)
+    #define GCC_ATOMICS
+#elif defined(__clang__)
+    #if __has_builtin(__atomic_load)
+        #define GCC_ATOMICS
+    #endif
 #else
-    #error "no support for missing C11 atomics except with MSVC"
+    #error "no supported atomic implementation for this platform/compiler"
 #endif
 
 
@@ -33,10 +39,13 @@ static inline npy_uint8 npy_atomic_load_uint8(const npy_uint8 *obj) {
 #else
 #error "Unsupported MSVC build configuration, neither x86 or ARM"
 #endif
+#elif defined(GCC_ATOMICS)
+    return __atomic_load_n(obj, __ATOMIC_SEQ_CST);
 #endif
 }
 
 #undef MSC_ATOMICS
 #undef STDC_ATOMICS
+#undef GCC_ATOMICS
 
 #endif // NUMPY_CORE_SRC_COMMON_NPY_NPY_ATOMIC_H_
