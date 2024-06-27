@@ -1698,6 +1698,8 @@ add_newdoc('numpy._core.multiarray', 'from_dlpack',
         Boolean indicating whether or not to copy the input. If ``True``,
         the copy will be made. If ``False``, the function will never copy,
         and will raise ``BufferError`` in case a copy is deemed necessary.
+        Passing it requests a copy from the exporter who may or may not
+        implement the capability.
         If ``None``, the function will reuse the existing memory buffer if
         possible and copy otherwise. Default: ``None``.
 
