@@ -209,7 +209,8 @@ NumPy 2.0 Python API removals
 
 * ``np.tracemalloc_domain`` is now only available from ``np.lib``.
 
-* ``np.recfromcsv`` and ``recfromtxt`` are now only available from ``np.lib.npyio``.
+* ``np.recfromcsv`` and ``np.recfromtxt`` were removed from the main namespace.
+  Use ``np.genfromtxt`` with comma delimiter instead.
 
 * ``np.issctype``, ``np.maximum_sctype``, ``np.obj2sctype``, ``np.sctype2char``,
   ``np.sctypes``, ``np.issubsctype`` were all removed from the
