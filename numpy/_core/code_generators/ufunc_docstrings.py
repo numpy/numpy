@@ -4374,6 +4374,17 @@ add_newdoc('numpy._core.umath', 'isalpha',
     --------
     str.isalpha
 
+    Examples
+    --------
+    >>> np.char.isalpha(["yes", "alpha"])
+    array([ True,  True])
+    >>> np.char.isalpha(["not", "\\x00", "alpha"])
+    array([ True, False,  True])
+    >>> np.char.isalpha(["n0t", "4lpha"])
+    array([ False, False])
+    >>> np.char.isalpha(bytes([0x61, 0x6c, 0x70, 0x68, 0x61]))
+    np.True_
+
     """)
 
 add_newdoc('numpy._core.umath', 'isdigit',
@@ -4439,6 +4450,15 @@ add_newdoc('numpy._core.umath', 'isspace',
     See Also
     --------
     str.isspace
+
+    Examples
+    --------
+    >>> np.char.isspace(list("a b c"))
+    array([False,  True, False,  True, False])
+    >>> np.char.isspace(b'\x0a \x0b \x0c')
+    np.True_
+    >>> np.char.isspace(b'\x0a \x0b \x0c N')
+    np.False_
 
     """)
 

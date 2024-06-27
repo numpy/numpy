@@ -196,7 +196,14 @@ def mod(a, values):
     out : ndarray
         Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
         depending on input types
-        
+
+    Examples
+    --------
+    >>> np.strings.mod("%.3f", [1, 2, 3])
+    array(['1.000', '2.000', '3.000'], dtype='<U5')
+    >>> np.strings.mod("0x%02x", [8, 9, 10, 11])
+    array(['0x08', '0x09', '0x0a', '0x0b'], dtype='<U4')
+
     """
     return _to_bytes_or_str_array(
         _vec_string(a, np.object_, '__mod__', (values,)), a)
@@ -262,6 +269,20 @@ def rfind(a, sub, start=0, end=None):
     See Also
     --------
     str.rfind
+
+    Examples
+    --------
+
+    While `string.find` returns the lowest index:
+
+    >>> a = np.array(["very repetitive very repetitive very"])
+    >>> np.strings.find(a, "very")
+    array([0])
+
+    `string.rfind` returns the highes index:
+
+    >>> np.strings.rfind(a, "very")
+    array([32])
 
     """
     end = end if end is not None else MAX
@@ -399,6 +420,16 @@ def startswith(a, prefix, start=0, end=None):
     See Also
     --------
     str.startswith
+
+    Examples
+    --------
+    >>> s = np.array(['foo', 'bar'])
+    >>> s
+    array(['foo', 'bar'], dtype='<U3')
+    >>> np.strings.startswith(s, 'ba')
+    array([False,  True])
+    >>> np.strings.startswith(s, 'a', start=1, end=2)
+    array([False,  True])
 
     """
     end = end if end is not None else MAX
@@ -1313,6 +1344,14 @@ def _splitlines(a, keepends=None):
     See Also
     --------
     str.splitlines
+
+    Examples
+    --------
+    >>> np.char.splitlines("first line\\nsecond line")
+    array(list(['first line', 'second line']), dtype=object)
+    >>> a = np.array(["first\\nsecond", "third\\nfourth"])
+    >>> np.char.splitlines(a)
+    array([list(['first', 'second']), list(['third', 'fourth'])], dtype=object)
 
     """
     return _vec_string(
