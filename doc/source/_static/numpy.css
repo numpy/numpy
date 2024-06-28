@@ -101,3 +101,9 @@ div.admonition-legacy>.admonition-title {
   gap: 10px;
   margin-bottom: 20px;
 }
+
+/* Better gaps for examples buttons under admonitions */
+
+.try_examples_outer_iframe {
+  margin-top: 0.4em;
+}
