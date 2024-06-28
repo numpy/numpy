@@ -254,6 +254,9 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose, *args, **kwargs):
         pytest_args = ('numpy',)
 
     if '-m' not in pytest_args:
+        if len(pytest_args) == 1 and not tests:
+            tests = pytest_args[0]
+            pytest_args = ()
         if markexpr != "full":
             pytest_args = ('-m', markexpr) + pytest_args
 
