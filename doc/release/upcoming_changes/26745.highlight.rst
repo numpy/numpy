@@ -2,7 +2,9 @@ Interactive examples in the NumPy documentation
 -----------------------------------------------
 
 The NumPy documentation includes a number of examples that
-can now be run interactively using WebAssembly and Pyodide.
+can now be run interactively in your browser using WebAssembly and Pyodide.
+Comment
+
 Please note that the examples are currenrlt experimental in
 nature and may not work as expected for all methods in the
 public API.
