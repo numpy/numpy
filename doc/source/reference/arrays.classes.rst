@@ -673,7 +673,8 @@ iterating. The ndenumerate iterator can achieve this.
 
   >>> import numpy as np
   >>> for i, val in np.ndenumerate(a):
-  ...     if sum(i)%5 == 0: print(i, val)
+  ...     if sum(i)%5 == 0:
+              print(i, val)
   (0, 0, 0) 10
   (1, 1, 3) 25
   (2, 0, 3) 29
