@@ -823,6 +823,8 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     the real parts except when they are equal, in which case the order
     is determined by the imaginary parts.
 
+    The sort order of ``np.nan`` is bigger than ``np.inf``.
+
     Examples
     --------
     >>> a = np.array([7, 1, 7, 7, 1, 5, 7, 2, 3, 2, 6, 2, 3, 0])
@@ -923,7 +925,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     is unstable, and hence the returned indices are not guaranteed
     to be the earliest/latest occurrence of the element.
 
-    The treatment of ``np.nan`` in the input array is undefined.
+    The sort order of ``np.nan`` is bigger than ``np.inf``.
 
     See `partition` for notes on the different selection algorithms.
 
