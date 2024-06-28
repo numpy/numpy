@@ -634,6 +634,7 @@ an iterator that will cycle over the entire array in C-style
 contiguous order.
 
   >>> import numpy as np
+  >>> a = np.arange(24).reshape(3,2,4) + 10
   >>> for i, val in enumerate(a.flat):
   ...     if i%5 == 0: print(i, val)
   0 10
