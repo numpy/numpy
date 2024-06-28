@@ -1,7 +1,7 @@
 /*
  * Provides wrappers around C11 standard library atomics and MSVC intrinsics
  * to provide basic atomic load and store functionality. This is based on
- * code in CPython's pyatomic.h, pyatomic_std.h, and pyatomic_msc.h
+ * code in CPython's pyatomic.h, and platform-specific sidecar headers.
  */
 
 #ifndef NUMPY_CORE_SRC_COMMON_NPY_ATOMIC_H_
