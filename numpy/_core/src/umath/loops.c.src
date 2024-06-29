@@ -2083,25 +2083,48 @@ NPY_NO_EXPORT void
         const @ftype@ in2i = ((@ftype@ *)ip2)[1];
         const @ftype@ in2r_abs = npy_fabs@c@(in2r);
         const @ftype@ in2i_abs = npy_fabs@c@(in2i);
+        @ftype@ rr, ri;
         if (in2r_abs >= in2i_abs) {
             if (in2r_abs == 0 && in2i_abs == 0) {
                 /* divide by zero should yield a complex inf or nan */
-                ((@ftype@ *)op1)[0] = in1r/in2r_abs;
-                ((@ftype@ *)op1)[1] = in1i/in2i_abs;
+                rr = in1r/in2r_abs;
+                ri = in1i/in2i_abs;
             }
             else {
                 const @ftype@ rat = in2i/in2r;
                 const @ftype@ scl = 1.0@c@/(in2r + in2i*rat);
-                ((@ftype@ *)op1)[0] = (in1r + in1i*rat)*scl;
-                ((@ftype@ *)op1)[1] = (in1i - in1r*rat)*scl;
+                rr = (in1r + in1i*rat)*scl;
+                ri = (in1i - in1r*rat)*scl;
             }
         }
         else {
             const @ftype@ rat = in2r/in2i;
             const @ftype@ scl = 1.0@c@/(in2i + in2r*rat);
-            ((@ftype@ *)op1)[0] = (in1r*rat + in1i)*scl;
-            ((@ftype@ *)op1)[1] = (in1i*rat - in1r)*scl;
+            rr = (in1r*rat + in1i)*scl;
+            ri = (in1i*rat - in1r)*scl;
         }
+        /* Recover infinities and zeros that computed as nan+nanj.  See e.g.
+           the C11, Annex G.5.2, routine _Cdivd(). */
+        if (npy_isnan(rr) && npy_isnan(ri)) {
+            if ((npy_isinf(in1r) || npy_isinf(in1i))
+                && npy_isfinite(in2r) && npy_isfinite(in2i))
+            {
+                @ftype@ x = npy_copysign@c@(npy_isinf(in1r) ? 1.0 : 0.0, in1r);
+                @ftype@ y = npy_copysign@c@(npy_isinf(in1i) ? 1.0 : 0.0, in1i);
+                rr = NPY_INFINITY@C@ * (x*in2r + y*in2i);
+                ri = NPY_INFINITY@C@ * (y*in2r - x*in2i);
+            }
+            else if ((npy_isinf(in2r_abs) || npy_isinf(in2i_abs))
+                     && npy_isfinite(in1r) && npy_isfinite(in1i))
+            {
+                @ftype@ x = npy_copysign@c@(npy_isinf(in2r) ? 1.0 : 0.0, in2r);
+                @ftype@ y = npy_copysign@c@(npy_isinf(in2i) ? 1.0 : 0.0, in2i);
+                rr = 0.0 * (in1r*x + in1i*y);
+                ri = 0.0 * (in1i*x - in1r*y);
+            }
+        }
+        ((@ftype@ *)op1)[0] = rr;
+        ((@ftype@ *)op1)[1] = ri;
     }
 }
 
