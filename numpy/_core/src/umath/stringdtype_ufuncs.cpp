@@ -1028,6 +1028,25 @@ all_strings_promoter(PyObject *NPY_UNUSED(ufunc),
                      PyArray_DTypeMeta *const signature[],
                      PyArray_DTypeMeta *new_op_dtypes[])
 {
+    if ((op_dtypes[0] != &PyArray_StringDType &&
+         op_dtypes[1] != &PyArray_StringDType &&
+         op_dtypes[2] != &PyArray_StringDType)) {
+        /*
+         * This promoter was triggered with only unicode arguments, so use
+         * unicode.  This can happen due to `dtype=` support which sets the
+         * output DType/signature.
+         */
+        new_op_dtypes[0] = NPY_DT_NewRef(&PyArray_UnicodeDType);
+        new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_UnicodeDType);
+        new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_UnicodeDType);
+        return 0;
+    }
+    if ((signature[0] == &PyArray_UnicodeDType &&
+         signature[1] == &PyArray_UnicodeDType &&
+         signature[2] == &PyArray_UnicodeDType)) {
+        /* Unicode forced, but didn't override a string input: invalid */
+        return -1;
+    }
     new_op_dtypes[0] = NPY_DT_NewRef(&PyArray_StringDType);
     new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_StringDType);
     new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_StringDType);
@@ -2528,6 +2547,17 @@ init_stringdtype_ufuncs(PyObject *umath)
     };
 
     if (add_promoter(umath, "add", lall_strings_promoter_dtypes, 3,
+                     all_strings_promoter) < 0) {
+        return -1;
+    }
+
+    PyArray_DTypeMeta *out_strings_promoter_dtypes[] = {
+        &PyArray_UnicodeDType,
+        &PyArray_UnicodeDType,
+        &PyArray_StringDType,
+    };
+
+    if (add_promoter(umath, "add", out_strings_promoter_dtypes, 3,
                      all_strings_promoter) < 0) {
         return -1;
     }
