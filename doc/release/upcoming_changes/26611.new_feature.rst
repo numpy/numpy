@@ -1,0 +1,2 @@
+* `numpy.printoptions`, `numpy.get_printoptions`, and `numpy.set_printoptions` now support
+  a new option, ``override_repr``, for defining custom ``repr(array)`` behavior.

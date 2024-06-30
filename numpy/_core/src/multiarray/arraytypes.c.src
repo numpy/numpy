@@ -42,6 +42,7 @@
 #include "arraytypes.h"
 
 #include "umathmodule.h"
+#include "npy_static_data.h"
 
 /*
  * Define a stack allocated dummy array with only the minimum information set:
@@ -4185,8 +4186,7 @@ NPY_NO_EXPORT _PyArray_LegacyDescr @from@_Descr = {
 
 /* The smallest type number is ?, the largest bounded by 'z'. */
 #define _MAX_LETTER ('z' + 1)
-static npy_int16 _letter_to_num[_MAX_LETTER - '?'];
-#define LETTER_TO_NUM(letter) _letter_to_num[letter - '?']
+#define LETTER_TO_NUM(letter) npy_static_cdata._letter_to_num[letter - '?']
 
 static _PyArray_LegacyDescr *_builtin_descrs[] = {
     &BOOL_Descr,

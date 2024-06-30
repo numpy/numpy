@@ -970,12 +970,15 @@ def test_parametric_unit_discovery(
     """Check that the correct unit (e.g. month, day, second) is discovered from
     the data when a user specifies a unitless datetime."""
     # Unit should be "D" (days) due to last entry
-    data = [generic_data] * 50000 + [long_datum]
+    data = [generic_data] * nrows + [long_datum]
     expected = np.array(data, dtype=expected_dtype)
+    assert len(data) == nrows+1
+    assert len(data) == len(expected)
 
     # file-like path
     txt = StringIO("\n".join(data))
     a = np.loadtxt(txt, dtype=unitless_dtype)
+    assert len(a) == len(expected)
     assert a.dtype == expected.dtype
     assert_equal(a, expected)
 
@@ -983,11 +986,17 @@ def test_parametric_unit_discovery(
     fd, fname = mkstemp()
     os.close(fd)
     with open(fname, "w") as fh:
-        fh.write("\n".join(data))
+        fh.write("\n".join(data)+"\n")
+    # loading the full file...
     a = np.loadtxt(fname, dtype=unitless_dtype)
-    os.remove(fname)
+    assert len(a) == len(expected)
     assert a.dtype == expected.dtype
     assert_equal(a, expected)
+    # loading half of the file...
+    a = np.loadtxt(fname, dtype=unitless_dtype, max_rows=int(nrows/2))
+    os.remove(fname)
+    assert len(a) == int(nrows/2)
+    assert_equal(a, expected[:int(nrows/2)])
 
 
 def test_str_dtype_unit_discovery_with_converter():
@@ -1041,5 +1050,26 @@ def test_field_growing_cases():
     assert len(res) == 0
 
     for i in range(1, 1024):
-        res = np.loadtxt(["," * i], delimiter=",", dtype=bytes)
+        res = np.loadtxt(["," * i], delimiter=",", dtype=bytes, max_rows=10)
         assert len(res) == i+1
+
+@pytest.mark.parametrize("nmax", (10000, 50000, 55000, 60000))
+def test_maxrows_exceeding_chunksize(nmax):
+    # tries to read all of the file,
+    # or less, equal, greater than _loadtxt_chunksize
+    file_length = 60000
+
+    # file-like path
+    data = ["a 0.5 1"]*file_length
+    txt = StringIO("\n".join(data))
+    res = np.loadtxt(txt, dtype=str, delimiter=" ", max_rows=nmax)
+    assert len(res) == nmax
+
+    # file-obj path
+    fd, fname = mkstemp()
+    os.close(fd)
+    with open(fname, "w") as fh:
+        fh.write("\n".join(data))
+    res = np.loadtxt(fname, dtype=str, delimiter=" ", max_rows=nmax)
+    os.remove(fname)
+    assert len(res) == nmax

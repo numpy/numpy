@@ -594,16 +594,16 @@ class TestAssignment:
     )
     def test_unicode_assignment(self):
         # gh-5049
-        from numpy._core.arrayprint import set_string_function
+        from numpy._core.arrayprint import set_printoptions
 
         @contextmanager
         def inject_str(s):
             """ replace ndarray.__str__ temporarily """
-            set_string_function(lambda x: s, repr=False)
+            set_printoptions(formatter={"all": lambda x: s})
             try:
                 yield
             finally:
-                set_string_function(None, repr=False)
+                set_printoptions()
 
         a1d = np.array(['test'])
         a0d = np.array('done')

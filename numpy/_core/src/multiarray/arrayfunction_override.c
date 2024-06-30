@@ -7,20 +7,10 @@
 #include "numpy/ndarraytypes.h"
 #include "get_attr_string.h"
 #include "npy_import.h"
+#include "npy_static_data.h"
 #include "multiarraymodule.h"
 
 #include "arrayfunction_override.h"
-
-/* Return the ndarray.__array_function__ method. */
-static PyObject *
-get_ndarray_array_function(void)
-{
-    PyObject* method = PyObject_GetAttrString((PyObject *)&PyArray_Type,
-                                              "__array_function__");
-    assert(method != NULL);
-    return method;
-}
-
 
 /*
  * Get an object's __array_function__ method in the fastest way possible.
@@ -29,19 +19,13 @@ get_ndarray_array_function(void)
 static PyObject *
 get_array_function(PyObject *obj)
 {
-    static PyObject *ndarray_array_function = NULL;
-
-    if (ndarray_array_function == NULL) {
-        ndarray_array_function = get_ndarray_array_function();
-    }
-
     /* Fast return for ndarray */
     if (PyArray_CheckExact(obj)) {
-        Py_INCREF(ndarray_array_function);
-        return ndarray_array_function;
+        Py_INCREF(npy_static_pydata.ndarray_array_function);
+        return npy_static_pydata.ndarray_array_function;
     }
 
-    PyObject *array_function = PyArray_LookupSpecial(obj, npy_ma_str_array_function);
+    PyObject *array_function = PyArray_LookupSpecial(obj, npy_interned_str.array_function);
     if (array_function == NULL && PyErr_Occurred()) {
         PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
@@ -142,12 +126,7 @@ fail:
 static int
 is_default_array_function(PyObject *obj)
 {
-    static PyObject *ndarray_array_function = NULL;
-
-    if (ndarray_array_function == NULL) {
-        ndarray_array_function = get_ndarray_array_function();
-    }
-    return obj == ndarray_array_function;
+    return obj == npy_static_pydata.ndarray_array_function;
 }
 
 
@@ -175,7 +154,7 @@ array_function_method_impl(PyObject *func, PyObject *types, PyObject *args,
         }
     }
 
-    PyObject *implementation = PyObject_GetAttr(func, npy_ma_str_implementation);
+    PyObject *implementation = PyObject_GetAttr(func, npy_interned_str.implementation);
     if (implementation == NULL) {
         return NULL;
     }
@@ -252,14 +231,14 @@ get_args_and_kwargs(
 static void
 set_no_matching_types_error(PyObject *public_api, PyObject *types)
 {
-    static PyObject *errmsg_formatter = NULL;
     /* No acceptable override found, raise TypeError. */
     npy_cache_import("numpy._core._internal",
                      "array_function_errmsg_formatter",
-                     &errmsg_formatter);
-    if (errmsg_formatter != NULL) {
+                     &npy_thread_unsafe_state.array_function_errmsg_formatter);
+    if (npy_thread_unsafe_state.array_function_errmsg_formatter != NULL) {
         PyObject *errmsg = PyObject_CallFunctionObjArgs(
-                errmsg_formatter, public_api, types, NULL);
+                npy_thread_unsafe_state.array_function_errmsg_formatter,
+                public_api, types, NULL);
         if (errmsg != NULL) {
             PyErr_SetObject(PyExc_TypeError, errmsg);
             Py_DECREF(errmsg);
@@ -321,12 +300,12 @@ array_implement_c_array_function_creation(
     }
 
     /* The like argument must be present in the keyword arguments, remove it */
-    if (PyDict_DelItem(kwargs, npy_ma_str_like) < 0) {
+    if (PyDict_DelItem(kwargs, npy_interned_str.like) < 0) {
         goto finish;
     }
 
     /* Fetch the actual symbol (the long way right now) */
-    numpy_module = PyImport_Import(npy_ma_str_numpy);
+    numpy_module = PyImport_Import(npy_interned_str.numpy);
     if (numpy_module == NULL) {
         goto finish;
     }

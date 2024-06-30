@@ -9,7 +9,6 @@ from decimal import Decimal
 import numpy as np
 from numpy._core import umath, sctypes
 from numpy._core.numerictypes import obj2sctype
-from numpy._core.arrayprint import set_string_function
 from numpy.exceptions import AxisError
 from numpy.random import rand, randint, randn
 from numpy.testing import (
@@ -3592,24 +3591,6 @@ class TestArgwhere:
 
     def test_list(self):
         assert_equal(np.argwhere([4, 0, 2, 1, 3]), [[0], [2], [3], [4]])
-
-
-@pytest.mark.filterwarnings(
-    "ignore:.*set_string_function.*:DeprecationWarning"
-)
-class TestStringFunction:
-
-    def test_set_string_function(self):
-        a = np.array([1])
-        set_string_function(lambda x: "FOO", repr=True)
-        assert_equal(repr(a), "FOO")
-        set_string_function(None, repr=True)
-        assert_equal(repr(a), "array([1])")
-
-        set_string_function(lambda x: "FOO", repr=False)
-        assert_equal(str(a), "FOO")
-        set_string_function(None, repr=False)
-        assert_equal(str(a), "[1]")
 
 
 class TestRoll:

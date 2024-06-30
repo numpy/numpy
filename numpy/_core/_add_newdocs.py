@@ -1846,15 +1846,6 @@ add_newdoc('numpy._core.multiarray', '_reconstruct',
 
     """)
 
-
-add_newdoc('numpy._core.multiarray', 'set_string_function',
-    """
-    set_string_function(f, repr=1)
-
-    Internal method to set a function to be used when pretty printing arrays.
-
-    """)
-
 add_newdoc('numpy._core.multiarray', 'promote_types',
     """
     promote_types(type1, type2)
