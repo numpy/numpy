@@ -1,14 +1,16 @@
 # finfo return type misalignment
 array_api_tests/test_data_type_functions.py::test_finfo[float32]
 
-# out.dtype=float32, but should be int16
-# dtype('float16') not found
+# for int inputs out.dtype=float32, but should be int
 array_api_tests/test_operators_and_elementwise_functions.py::test_ceil
 array_api_tests/test_operators_and_elementwise_functions.py::test_floor
 array_api_tests/test_operators_and_elementwise_functions.py::test_trunc
 
 # 'shape' arg is present. 'newshape' is retained for backward compat.
 array_api_tests/test_signatures.py::test_func_signature[reshape]
+
+# 'min/max' args are present. 'a_min/a_max' are retained for backward compat.
+array_api_tests/test_signatures.py::test_func_signature[clip]
 
 # missing 'descending' keyword arguments
 array_api_tests/test_signatures.py::test_func_signature[argsort]

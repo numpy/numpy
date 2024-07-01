@@ -134,23 +134,23 @@ else:
         can_cast, cbrt, cdouble, ceil, character, choose, clip, clongdouble,
         complex128, complex64, complexfloating, compress, concat, concatenate,
         conj, conjugate, convolve, copysign, copyto, correlate, cos, cosh,
-        count_nonzero, cross, csingle, cumprod, cumsum,
-        datetime64, datetime_as_string, datetime_data, deg2rad, degrees,
-        diagonal, divide, divmod, dot, double, dtype, e, einsum, einsum_path,
-        empty, empty_like, equal, errstate, euler_gamma, exp, exp2, expm1,
-        fabs, finfo, flatiter, flatnonzero, flexible, float16, float32,
-        float64, float_power, floating, floor, floor_divide, fmax, fmin, fmod,
-        format_float_positional, format_float_scientific, frexp, from_dlpack,
-        frombuffer, fromfile, fromfunction, fromiter, frompyfunc, fromstring,
-        full, full_like, gcd, generic, geomspace, get_printoptions,
-        getbufsize, geterr, geterrcall, greater, greater_equal, half,
-        heaviside, hstack, hypot, identity, iinfo, iinfo, indices, inexact,
-        inf, inner, int16, int32, int64, int8, int_, intc, integer, intp,
-        invert, is_busday, isclose, isdtype, isfinite, isfortran, isinf,
-        isnan, isnat, isscalar, issubdtype, lcm, ldexp, left_shift, less,
-        less_equal, lexsort, linspace, little_endian, log, log10, log1p, log2,
-        logaddexp, logaddexp2, logical_and, logical_not, logical_or,
-        logical_xor, logspace, long, longdouble, longlong, matmul,
+        count_nonzero, cross, csingle, cumprod, cumsum, cumulative_prod,
+        cumulative_sum, datetime64, datetime_as_string, datetime_data,
+        deg2rad, degrees, diagonal, divide, divmod, dot, double, dtype, e,
+        einsum, einsum_path, empty, empty_like, equal, errstate, euler_gamma,
+        exp, exp2, expm1, fabs, finfo, flatiter, flatnonzero, flexible,
+        float16, float32, float64, float_power, floating, floor, floor_divide,
+        fmax, fmin, fmod, format_float_positional, format_float_scientific,
+        frexp, from_dlpack, frombuffer, fromfile, fromfunction, fromiter,
+        frompyfunc, fromstring, full, full_like, gcd, generic, geomspace,
+        get_printoptions, getbufsize, geterr, geterrcall, greater,
+        greater_equal, half, heaviside, hstack, hypot, identity, iinfo, iinfo,
+        indices, inexact, inf, inner, int16, int32, int64, int8, int_, intc,
+        integer, intp, invert, is_busday, isclose, isdtype, isfinite,
+        isfortran, isinf, isnan, isnat, isscalar, issubdtype, lcm, ldexp,
+        left_shift, less, less_equal, lexsort, linspace, little_endian, log,
+        log10, log1p, log2, logaddexp, logaddexp2, logical_and, logical_not,
+        logical_or, logical_xor, logspace, long, longdouble, longlong, matmul,
         matrix_transpose, max, maximum, may_share_memory, mean, memmap, min,
         min_scalar_type, minimum, mod, modf, moveaxis, multiply, nan, ndarray,
         ndim, nditer, negative, nested_iters, newaxis, nextafter, nonzero,
@@ -290,7 +290,7 @@ else:
     # import with `from numpy import *`.
     __future_scalars__ = {"str", "bytes", "object"}
 
-    __array_api_version__ = "2022.12"
+    __array_api_version__ = "2023.12"
 
     from ._array_api_info import __array_namespace_info__
 
