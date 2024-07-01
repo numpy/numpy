@@ -4355,12 +4355,14 @@ def quantile(a,
     The table above includes only the estimators from H&F that are continuous
     functions of probability `q` (estimators 4-9). NumPy also provides the
     three discontinuous estimators from H&F (estimators 1-3), where ``j`` is
-    defined as above and ``m`` and ``g`` are defined as follows.
+    defined as above, ``m`` is defined as follows, and ``g`` is a function
+    of the real-valued ``index = q*n + m - 1`` and ``j``.
 
-    1. ``inverted_cdf``: ``m = 0`` and ``g = int(q*n > 0)``
-    2. ``averaged_inverted_cdf``: ``m = 0`` and ``g = (1 + int(q*n > 0)) / 2``
+    1. ``inverted_cdf``: ``m = 0`` and ``g = int(index - j > 0)``
+    2. ``averaged_inverted_cdf``: ``m = 0`` and
+       ``g = (1 + int(index - j > 0)) / 2``
     3. ``closest_observation``: ``m = -1/2`` and
-       ``1 - int((g == 0) & (j%2 == 0))``
+       ``g = 1 - int((index == j) & (j%2 == 1))``
 
     For backward compatibility with previous versions of NumPy, `quantile`
     provides four additional discontinuous estimators. Like
@@ -4608,7 +4610,9 @@ def _discret_interpolation_to_boundaries(index, gamma_condition_fun):
 
 
 def _closest_observation(n, quantiles):
-    gamma_fun = lambda gamma, index: (gamma == 0) & (np.floor(index) % 2 == 0)
+    # "choose the nearest even order statistic at g=0" (H&F (1996) pp. 362).
+    # Order is 1-based so for zero-based indexing round to nearest odd index.
+    gamma_fun = lambda gamma, index: (gamma == 0) & (np.floor(index) % 2 == 1)
     return _discret_interpolation_to_boundaries((n * quantiles) - 1 - 0.5,
                                                 gamma_fun)
 
