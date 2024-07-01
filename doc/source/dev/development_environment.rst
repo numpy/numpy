@@ -205,7 +205,7 @@ since the linter runs as part of the CI pipeline.
 For more details on Style Guidelines:
 
 - `Python Style Guide`_
-- `C Style Guide`_
+- :ref:`NEP45`
 
 Rebuilding & cleaning the workspace
 -----------------------------------
@@ -327,7 +327,6 @@ typically packaged as ``python-dbg``) is highly recommended.
 .. _Waf: https://code.google.com/p/waf/
 .. _`match test names using python operators`: https://docs.pytest.org/en/latest/usage.html#specifying-tests-selecting-tests
 .. _`Python Style Guide`: https://www.python.org/dev/peps/pep-0008/
-.. _`C Style Guide`: https://numpy.org/neps/nep-0045-c_style_guide.html
 
 Understanding the code & getting started
 ----------------------------------------

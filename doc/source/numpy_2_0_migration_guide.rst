@@ -231,7 +231,7 @@ private.
 Please see the tables below for guidance on migration.  For most changes this
 means replacing it with a backwards compatible alternative. 
 
-Please refer to `NEP 52 <https://numpy.org/neps/nep-0052-python-api-cleanup.html>`_ for more details.
+Please refer to :ref:`NEP52` for more details.
 
 Main namespace
 --------------
