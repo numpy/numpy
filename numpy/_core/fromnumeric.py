@@ -925,9 +925,9 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     is unstable, and hence the returned indices are not guaranteed
     to be the earliest/latest occurrence of the element.
 
-    The sort order of ``np.nan`` is bigger than ``np.inf``.
-
-    See `partition` for notes on the different selection algorithms.
+    `argpartition` works for real/complex inputs with nan values,
+    see `partition` for notes on the enhanced sort order and
+    different selection algorithms.
 
     Examples
     --------
