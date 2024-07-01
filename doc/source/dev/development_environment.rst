@@ -327,7 +327,6 @@ typically packaged as ``python-dbg``) is highly recommended.
 .. _Waf: https://code.google.com/p/waf/
 .. _`match test names using python operators`: https://docs.pytest.org/en/latest/usage.html#specifying-tests-selecting-tests
 .. _`Python Style Guide`: https://www.python.org/dev/peps/pep-0008/
-.. :ref:`NEP45`
 
 Understanding the code & getting started
 ----------------------------------------
