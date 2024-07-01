@@ -78,6 +78,8 @@ jobs:
         buildplat:
           - [ubuntu-20.04, manylinux_x86_64, ""]
           - [ubuntu-20.04, musllinux_x86_64, ""]
+          - [ubuntu-20.04, manylinux_i686, ""]
+          - [ubuntu-20.04, musllinux_i686, ""]
           - [macos-13, macosx_x86_64, openblas]
 
           # targeting macos >= 14. Could probably build on macos-14, but it would be a cross-compile
@@ -91,6 +93,8 @@ jobs:
           - buildplat: [windows-2019, win32, ""]
             python: "pp310"
           - buildplat: [ ubuntu-20.04, musllinux_x86_64, "" ]
+            python: "pp310"
+          - buildplat: [ ubuntu-20.04, musllinux_i686, "" ]
             python: "pp310"
           - buildplat: [ macos-14, macosx_arm64, accelerate ]
             python: "pp310"
