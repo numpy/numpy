@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from typing import Any, TypeVar
-from numpy import ndarray, dtype, float64
+from numpy import ndarray, dtype, float64, generic
 
 from numpy import (
     amax as amax,
@@ -15,10 +15,13 @@ from numpy import (
     angle as angle
 )
 
+from numpy._typing import _ArrayLike, _ScalarLike_co, _ShapeLike
+
 # TODO: Set the `bound` to something more suitable once we
 # have proper shape support
 _ShapeType = TypeVar("_ShapeType", bound=Any)
 _DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
+_SCT = TypeVar("_SCT", bound=generic)
 
 __all__: list[str]
 
@@ -371,7 +374,13 @@ class _extrema_operation(_MaskedUFunc):
     def reduce(self, target, axis=...): ...
     def outer(self, a, b): ...
 
-def min(obj, axis=..., out=..., fill_value=..., keepdims=...): ...
+def min(
+    obj: MaskedArray[_ShapeLike, _SCT] | _ArrayLike[_SCT],
+    axis: None | _ShapeLike = ...,
+    out: None = ...,
+    fill_value: None | _ScalarLike_co = ...,
+    keepdims: None | bool = ...,
+) -> _SCT: ...
 def max(obj, axis=..., out=..., fill_value=..., keepdims=...): ...
 def ptp(obj, axis=..., out=..., fill_value=..., keepdims=...): ...
 
