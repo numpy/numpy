@@ -114,6 +114,15 @@ argument to pytest::
 
     $ spin test -v -t numpy/_core/tests/test_multiarray.py -- -k "MatMul and not vector"
 
+To run "doctests" -- to check that the code examples in the documentation is correct --
+use the `check-docs` spin command. It relies on the `scipy-docs` package, which
+provides several additional features on top of the standard library ``doctest``
+package. Install ``scipy-doctest`` and run on of::
+
+  $ spin check-docs -v
+  $ spin check-docs numpy/linalg
+  $ spin check-docs -v -- -k 'det and not slogdet'
+
 .. note::
 
     Remember that all tests of NumPy should pass before committing your changes.
