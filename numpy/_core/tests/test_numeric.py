@@ -2740,9 +2740,9 @@ class TestClip:
         assert actual.tolist() == expected.tolist()
 
     def test_clip_all_none(self):
-        a = np.arange(10, dtype=object)
-        with assert_raises_regex(ValueError, 'max or min'):
-            np.clip(a, None, None)
+        arr = np.arange(10, dtype=object)
+        assert_equal(np.clip(arr, None, None), arr)
+        assert_equal(np.clip(arr), arr)
 
     def test_clip_invalid_casting(self):
         a = np.arange(10, dtype=object)
@@ -2858,6 +2858,27 @@ class TestClip:
         expected = np.minimum(amax, np.maximum(arr, amin, dtype=t), dtype=t)
         assert result.dtype == t
         assert_array_equal(result, expected)
+
+    def test_clip_min_max_args(self):
+        arr = np.arange(5)
+
+        assert_array_equal(np.clip(arr), arr)
+        assert_array_equal(np.clip(arr, min=2, max=3), np.clip(arr, 2, 3))
+        assert_array_equal(np.clip(arr, min=None, max=2),
+                           np.clip(arr, None, 2))
+
+        with assert_raises_regex(TypeError, "missing 1 required positional "
+                                 "argument: 'a_max'"):
+            np.clip(arr, 2)
+        with assert_raises_regex(TypeError, "missing 1 required positional "
+                                 "argument: 'a_min'"):
+            np.clip(arr, a_max=2)
+        msg = ("Passing `min` or `max` keyword argument when `a_min` and "
+               "`a_max` are provided is forbidden.")
+        with assert_raises_regex(ValueError, msg):
+            np.clip(arr, 2, 3, max=3)
+        with assert_raises_regex(ValueError, msg):
+            np.clip(arr, 2, 3, min=2)
 
 
 class TestAllclose:

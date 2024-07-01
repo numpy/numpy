@@ -2575,12 +2575,12 @@ def array_equiv(a1, a2):
     return builtins.bool((a1 == a2).all())
 
 
-def _astype_dispatcher(x, dtype, /, *, copy=None):
+def _astype_dispatcher(x, dtype, /, *, copy=None, device=None):
     return (x, dtype)
 
 
 @array_function_dispatch(_astype_dispatcher)
-def astype(x, dtype, /, *, copy = True):
+def astype(x, dtype, /, *, copy=True, device=None):
     """
     Copies an array to a specified data type.
 
@@ -2601,6 +2601,11 @@ def astype(x, dtype, /, *, copy = True):
         matches the data type of the input array, the input array must be
         returned; otherwise, a newly allocated array must be returned.
         Defaults to ``True``.
+    device : str, optional
+        The device on which to place the returned array. Default: None.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
+
+        .. versionadded:: 2.1.0
 
     Returns
     -------
@@ -2629,6 +2634,11 @@ def astype(x, dtype, /, *, copy = True):
     if not isinstance(x, np.ndarray):
         raise TypeError(
             f"Input should be a NumPy array. It is a {type(x)} instead."
+        )
+    if device is not None and device != "cpu":
+        raise ValueError(
+            'Device not understood. Only "cpu" is allowed, but received:'
+            f' {device}'
         )
     return x.astype(dtype, copy=copy)
 
