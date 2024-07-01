@@ -10217,7 +10217,7 @@ def test_partition_fp(N, dtype):
     arr[1] = np.inf
     o1 = np.partition(arr, -2, kind='introselect')
     o2 = arr[np.argpartition(arr, -2, kind='introselect')]
-    for out in [o1,o2]:
+    for out in [o1, o2]:
         assert_(np.isnan(out[-1]))
         assert_equal(out[-2], np.inf)
 
