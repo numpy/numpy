@@ -11,10 +11,29 @@ match exactly, and could be adjusted):
         return None
 """
 
+import threading
+
 import pytest
 
 import numpy as np
-from numpy._core._multiarray_tests import argparse_example_function as func
+from numpy._core._multiarray_tests import (
+    argparse_example_function as func,
+    threaded_argparse_example_function as thread_func,
+)
+from numpy.testing import IS_WASM
+
+
+@pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for threads")
+def test_thread_safe_argparse_cache():
+    b = threading.Barrier(8)
+
+    def call_thread_func():
+        b.wait()
+        thread_func(arg1=3, arg2=None)
+
+    tasks = [threading.Thread(target=call_thread_func) for _ in range(8)]
+    [t.start() for t in tasks]
+    [t.join() for t in tasks]
 
 
 def test_invalid_integers():
