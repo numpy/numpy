@@ -760,7 +760,9 @@ def polyval(p, x):
 
     """
     p = NX.asarray(p)
-    if isinstance(x, poly1d):
+    if p.size == 0:
+        return NX.int64(0).astype(p.dtype)
+    if isinstance(x, (poly1d, float, int, complex)):
         y = 0
     else:
         x = NX.asanyarray(x)

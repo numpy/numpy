@@ -301,3 +301,17 @@ class TestPolynomial:
         # this never used to be allowed - let's not add features to deprecated
         # APIs
         assert_raises(AttributeError, setattr, p, 'coeffs', np.array(1))
+
+    def test_polyval_return_types(self):
+        v = np.polyval(np.array([5.], dtype=np.float32), 5.0)
+        assert_equal(v.dtype, np.float32)
+
+        v = np.polyval(np.array([5.], dtype=np.float16), 5.0)
+        assert_equal(v.dtype, np.float16)
+
+        v = np.polyval([5.], np.float16(5.0))
+        assert_equal(v.dtype, np.float64)
+
+        v = np.polyval(np.array([], dtype=np.float32), 5.0)
+        assert_equal(v.dtype, np.float32)
+        assert np.isscalar(v)
