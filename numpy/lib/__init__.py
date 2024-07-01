@@ -85,5 +85,5 @@ def __getattr__(attr):
             "Arrayterator class use numpy.lib.Arrayterator."
         )
     else:
-        raise AttributeError("module {!r} has no attribute "
-                             "{!r}".format(__name__, attr))
+        raise AttributeError(
+            f"module {__name__!r} has no attribute {attr!r}")

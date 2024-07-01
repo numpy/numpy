@@ -305,7 +305,7 @@ cdef class SeedSequence():
         elif not isinstance(entropy, (int, np.integer, list, tuple, range,
                                       np.ndarray)):
             raise TypeError('SeedSequence expects int or sequence of ints for '
-                            'entropy not {}'.format(entropy))
+                            f'entropy not {entropy}')
         self.entropy = entropy
         self.spawn_key = tuple(spawn_key)
         self.pool_size = pool_size

@@ -60,7 +60,7 @@ class IntelFCompiler(BaseIntelFCompiler):
         v = self.get_version()
         mpopt = 'openmp' if v and v < '15' else 'qopenmp'
         return ['-fp-model', 'strict', '-O1',
-                '-assume', 'minus0', '-{}'.format(mpopt)]
+                '-assume', 'minus0', f'-{mpopt}']
 
     def get_flags_arch(self):
         return []

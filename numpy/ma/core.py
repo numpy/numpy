@@ -4057,10 +4057,8 @@ class MaskedArray(ndarray):
                 dtype=str(self.dtype)
             )
             is_structured = bool(self.dtype.names)
-            key = '{}_{}'.format(
-                'long' if is_long else 'short',
-                'flx' if is_structured else 'std'
-            )
+            key = (f"{'long' if is_long else 'short'}_"
+                   f"{'flx' if is_structured else 'std'}")
             return _legacy_print_templates[key] % parameters
 
         prefix = f"masked_{name}("
@@ -4128,8 +4126,7 @@ class MaskedArray(ndarray):
 
         # join keys with values and indentations
         result = ',\n'.join(
-            '{}{}={}'.format(indents[k], k, reprs[k])
-            for k in keys
+            f'{indents[k]}{k}={reprs[k]}' for k in keys
         )
         return prefix + result + ')'
 

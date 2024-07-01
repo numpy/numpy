@@ -526,7 +526,7 @@ multiplication::
         def __init__(self, value):
             self.value = value
         def __repr__(self):
-            return "MyObject({!r})".format(self.value)
+            return f"MyObject({self.value!r})"
         def __mul__(self, other):
             return MyObject(1234)
         def __rmul__(self, other):

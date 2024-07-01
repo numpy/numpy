@@ -506,10 +506,11 @@ class ArgPack:
         self.args = args
         self.kwargs = kwargs
     def __repr__(self):
-        return '({})'.format(', '.join(
+        joined_elements = ', '.join(
             [repr(a) for a in self.args] +
-            ['{}={}'.format(k, repr(v)) for k, v in self.kwargs.items()]
-        ))
+            [f'{k}={repr(v)}' for k, v in self.kwargs.items()]
+        )
+        return f'({joined_elements})'
 
 
 class ArgParsing(Benchmark):

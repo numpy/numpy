@@ -2555,7 +2555,10 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
             target_name = '__'.join(target)
 
         wrap_path = os.path.join(output_dir, os.path.basename(dispatch_src))
-        wrap_path = "{0}.{2}{1}".format(*os.path.splitext(wrap_path), ext_name.lower())
+        wrap_path = (
+            f"{os.path.splitext(wrap_path)[0]}."
+            f"{ext_name.lower()}{os.path.splitext(wrap_path)[1]}"
+        )
         if nochange and os.path.exists(wrap_path):
             return wrap_path
 

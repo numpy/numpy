@@ -21,7 +21,7 @@ def _binary_method(ufunc, name):
         if _disables_array_ufunc(other):
             return NotImplemented
         return ufunc(self, other)
-    func.__name__ = '__{}__'.format(name)
+    func.__name__ = f'__{name}__'
     return func
 
 
@@ -31,7 +31,7 @@ def _reflected_binary_method(ufunc, name):
         if _disables_array_ufunc(other):
             return NotImplemented
         return ufunc(other, self)
-    func.__name__ = '__r{}__'.format(name)
+    func.__name__ = f'__r{name}__'
     return func
 
 
@@ -39,7 +39,7 @@ def _inplace_binary_method(ufunc, name):
     """Implement an in-place binary method with a ufunc, e.g., __iadd__."""
     def func(self, other):
         return ufunc(self, other, out=(self,))
-    func.__name__ = '__i{}__'.format(name)
+    func.__name__ = f'__i{name}__'
     return func
 
 
@@ -54,7 +54,7 @@ def _unary_method(ufunc, name):
     """Implement a unary special method with a ufunc."""
     def func(self):
         return ufunc(self)
-    func.__name__ = '__{}__'.format(name)
+    func.__name__ = f'__{name}__'
     return func
 
 

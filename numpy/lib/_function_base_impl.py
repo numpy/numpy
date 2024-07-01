@@ -870,7 +870,7 @@ def select(condlist, choicelist, default=0):
     for i, cond in enumerate(condlist):
         if cond.dtype.type is not np.bool:
             raise TypeError(
-                'invalid entry {} in condlist: should be boolean ndarray'.format(i))
+                f'invalid entry {i} in condlist: should be boolean ndarray')
 
     if choicelist[0].ndim == 0:
         # This may be common, so avoid the call.
@@ -2063,10 +2063,10 @@ def disp(mesg, device=None, linefeed=True):
 
 # See https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
 _DIMENSION_NAME = r'\w+'
-_CORE_DIMENSION_LIST = '(?:{0:}(?:,{0:})*)?'.format(_DIMENSION_NAME)
-_ARGUMENT = r'\({}\)'.format(_CORE_DIMENSION_LIST)
-_ARGUMENT_LIST = '{0:}(?:,{0:})*'.format(_ARGUMENT)
-_SIGNATURE = '^{0:}->{0:}$'.format(_ARGUMENT_LIST)
+_CORE_DIMENSION_LIST = f'(?:{_DIMENSION_NAME:}(?:,{_DIMENSION_NAME:})*)?'
+_ARGUMENT = fr'\({_CORE_DIMENSION_LIST}\)'
+_ARGUMENT_LIST = f'{_ARGUMENT:}(?:,{_ARGUMENT:})*'
+_SIGNATURE = f'^{_ARGUMENT_LIST:}->{_ARGUMENT_LIST:}$'
 
 
 def _parse_gufunc_signature(signature):
@@ -2088,7 +2088,7 @@ def _parse_gufunc_signature(signature):
 
     if not re.match(_SIGNATURE, signature):
         raise ValueError(
-            'not a valid gufunc signature: {}'.format(signature))
+            f'not a valid gufunc signature: {signature}')
     return tuple([tuple(re.findall(_DIMENSION_NAME, arg))
                   for arg in re.findall(_ARGUMENT, arg_list)]
                  for arg_list in signature.split('->'))
@@ -5357,7 +5357,7 @@ def delete(arr, obj, axis=None):
             if obj.shape != (N,):
                 raise ValueError('boolean array argument obj to delete '
                                  'must be one dimensional and match the axis '
-                                 'length of {}'.format(N))
+                                 f'length of {N}')
 
             # optimization, the other branch is slower
             keep = ~obj

@@ -410,8 +410,8 @@ else:
             import numpy.char as char
             return char.chararray
 
-        raise AttributeError("module {!r} has no attribute "
-                             "{!r}".format(__name__, attr))
+        raise AttributeError(f"module {__name__!r} has no attribute "
+                             f"{attr!r}")
 
     def __dir__():
         public_symbols = (
@@ -483,7 +483,7 @@ else:
                             "\nIf you compiled yourself, more information is available at:"
                             "\nhttps://numpy.org/devdocs/building/index.html"
                             "\nOtherwise report this to the vendor "
-                            "that provided NumPy.\n\n{}\n".format(error_message))
+                            f"that provided NumPy.\n\n{error_message}\n")
                         raise RuntimeError(msg)
                 del _wn
             del w

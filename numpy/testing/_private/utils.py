@@ -834,8 +834,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             n_elements = flagged.size if flagged.ndim != 0 else reduced.size
             percent_mismatch = 100 * n_mismatch / n_elements
             remarks = [
-                'Mismatched elements: {} / {} ({:.3g}%)'.format(
-                    n_mismatch, n_elements, percent_mismatch)]
+                f'Mismatched elements: {n_mismatch} '
+                f'/ {n_elements} ({percent_mismatch:.3g}%)']
 
             with errstate(all='ignore'):
                 # ignore errors for non-numeric types
@@ -2504,21 +2504,17 @@ def _assert_no_gc_cycles_context(name=None):
 
     if n_objects_in_cycles:
         name_str = f' when calling {name}' if name is not None else ''
+        joined_elements = ''.join(
+            "\n  {} object with id={}:\n    {}".format(
+                type(o).__name__,
+                id(o),
+                pprint.pformat(o).replace('\n', '\n    ')
+            ) for o in objects_in_cycles
+        )
         raise AssertionError(
-            "Reference cycles were found{}: {} objects were collected, "
-            "of which {} are shown below:{}"
-            .format(
-                name_str,
-                n_objects_in_cycles,
-                len(objects_in_cycles),
-                ''.join(
-                    "\n  {} object with id={}:\n    {}".format(
-                        type(o).__name__,
-                        id(o),
-                        pprint.pformat(o).replace('\n', '\n    ')
-                    ) for o in objects_in_cycles
-                )
-            )
+            f"Reference cycles were found{name_str}: {n_objects_in_cycles} "
+            f"objects were collected, of which {len(objects_in_cycles)} are "
+            f"shown below:{joined_elements}"
         )
 
 

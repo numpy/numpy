@@ -53,7 +53,9 @@ class build(old_build):
     def finalize_options(self):
         build_scripts = self.build_scripts
         old_build.finalize_options(self)
-        plat_specifier = ".{}-{}.{}".format(get_platform(), *sys.version_info[:2])
+        plat_specifier = (
+            f".{get_platform()}-{sys.version_info[0]}.{sys.version_info[1]}"
+        )
         if build_scripts is None:
             self.build_scripts = os.path.join(self.build_base,
                                               'scripts' + plat_specifier)

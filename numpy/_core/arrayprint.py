@@ -80,7 +80,7 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
     modes = ['fixed', 'unique', 'maxprec', 'maxprec_equal']
     if floatmode not in modes + [None]:
         raise ValueError("floatmode option must be one of " +
-                         ", ".join('"{}"'.format(m) for m in modes))
+                         ", ".join(f'"{m}"' for m in modes))
 
     if sign not in [None, '-', '+', ' ']:
         raise ValueError("sign option must be one of ' ', '+', or '-'")
@@ -951,7 +951,7 @@ def _none_or_positive_arg(x, name):
     if x is None:
         return -1
     if x < 0:
-        raise ValueError("{} must be >= 0".format(name))
+        raise ValueError(f"{name} must be >= 0")
     return x
 
 class FloatingFormat:
@@ -1348,7 +1348,7 @@ class _TimelikeFormat:
         if len(non_nat) < data.size:
             # data contains a NaT
             max_str_len = max(max_str_len, 5)
-        self._format = '%{}s'.format(max_str_len)
+        self._format = f'%{max_str_len}s'
         self._nat = "'NaT'".rjust(max_str_len)
 
     def _format_non_nat(self, x):
@@ -1457,9 +1457,10 @@ class StructuredVoidFormat:
             for field, format_function in zip(x, self.format_functions)
         ]
         if len(str_fields) == 1:
-            return "({},)".format(str_fields[0])
+            return f"({str_fields[0]},)"
         else:
-            return "({})".format(", ".join(str_fields))
+            all_str_fields = ', '.join(str_fields)
+            return f"({all_str_fields})"
 
 
 def _void_scalar_to_string(x, is_repr=True):
@@ -1596,7 +1597,7 @@ def _array_repr_implementation(
     if skipdtype:
         return arr_str
 
-    dtype_str = "dtype={})".format(dtype_short_repr(arr.dtype))
+    dtype_str = f"dtype={dtype_short_repr(arr.dtype)})"
 
     # compute whether we should put dtype on a new line: Do so if adding the
     # dtype would extend the last line past max_line_width.

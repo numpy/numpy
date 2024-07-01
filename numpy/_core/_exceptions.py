@@ -86,12 +86,10 @@ class _UFuncInputCastingError(_UFuncCastingError):
 
     def __str__(self):
         # only show the number if more than one input exists
-        i_str = "{} ".format(self.in_i) if self.ufunc.nin != 1 else ""
+        i_str = f"{self.in_i} " if self.ufunc.nin != 1 else ""
         return (
-            "Cannot cast ufunc {!r} input {}from {!r} to {!r} with casting "
-            "rule {!r}"
-        ).format(
-            self.ufunc.__name__, i_str, self.from_, self.to, self.casting
+            f"Cannot cast ufunc {self.ufunc.__name__!r} input {i_str}from "
+            f"{self.from_!r} to {self.to!r} with casting rule {self.casting!r}"
         )
 
 
@@ -104,12 +102,10 @@ class _UFuncOutputCastingError(_UFuncCastingError):
 
     def __str__(self):
         # only show the number if more than one output exists
-        i_str = "{} ".format(self.out_i) if self.ufunc.nout != 1 else ""
+        i_str = f"{self.out_i} " if self.ufunc.nout != 1 else ""
         return (
-            "Cannot cast ufunc {!r} output {}from {!r} to {!r} with casting "
-            "rule {!r}"
-        ).format(
-            self.ufunc.__name__, i_str, self.from_, self.to, self.casting
+            f"Cannot cast ufunc {self.ufunc.__name__!r} output {i_str}from "
+            f"{self.from_!r} to {self.to!r} with casting rule {self.casting!r}"
         )
 
 
@@ -156,17 +152,17 @@ class _ArrayMemoryError(MemoryError):
         # format with a sensible number of digits
         if unit_i == 0:
             # no decimal point on bytes
-            return '{:.0f} {}'.format(n_units, unit_name)
+            return f'{n_units:.0f} {unit_name}'
         elif round(n_units) < 1000:
             # 3 significant figures, if none are dropped to the left of the .
-            return '{:#.3g} {}'.format(n_units, unit_name)
+            return f'{n_units:#.3g} {unit_name}'
         else:
             # just give all the digits otherwise
-            return '{:#.0f} {}'.format(n_units, unit_name)
+            return f'{n_units:#.0f} {unit_name}'
 
     def __str__(self):
         size_str = self._size_to_string(self._total_size)
         return (
-            "Unable to allocate {} for an array with shape {} and data type {}"
-            .format(size_str, self.shape, self.dtype)
+            f"Unable to allocate {size_str} for an array with "
+            f"shape {self.shape} and data type {self.dtype}"
         )
