@@ -2566,7 +2566,15 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @overload
     def __imatmul__(self: NDArray[object_], other: Any) -> NDArray[object_]: ...
 
-    def __dlpack__(self: NDArray[number[Any]], *, stream: None = ...) -> _PyCapsule: ...
+    def __dlpack__(
+        self: NDArray[number[Any]],
+        *,
+        stream: int | Any | None = ...,
+        max_version: tuple[int, int] | None = ...,
+        dl_device: tuple[int, L[0]] | None = ...,
+        copy: bool | None = ...,
+    ) -> _PyCapsule: ...
+
     def __dlpack_device__(self) -> tuple[int, L[0]]: ...
 
     def __array_namespace__(self, *, api_version: str | None = ...) -> Any: ...
@@ -3924,4 +3932,10 @@ _CharDType = TypeVar("_CharDType", dtype[str_], dtype[bytes_])
 class _SupportsDLPack(Protocol[_T_contra]):
     def __dlpack__(self, *, stream: None | _T_contra = ...) -> _PyCapsule: ...
 
-def from_dlpack(obj: _SupportsDLPack[None], /) -> NDArray[Any]: ...
+def from_dlpack(
+    obj: _SupportsDLPack[None],
+    /,
+    *,
+    device: L["cpu"] | None = ...,
+    copy: bool | None = ...,
+) -> NDArray[Any]: ...
