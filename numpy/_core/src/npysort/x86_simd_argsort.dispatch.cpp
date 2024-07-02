@@ -1,87 +1,26 @@
 #include "x86_simd_qsort.hpp"
 #ifndef __CYGWIN__
 
-#if defined(NPY_HAVE_AVX512_SKX)
-#include "x86-simd-sort/src/avx512-64bit-argsort.hpp"
-#elif defined(NPY_HAVE_AVX2)
-#include "x86-simd-sort/src/avx2-32bit-half.hpp"
-#include "x86-simd-sort/src/avx2-32bit-qsort.hpp"
-#include "x86-simd-sort/src/avx2-64bit-qsort.hpp"
-#include "x86-simd-sort/src/xss-common-argsort.h"
-#endif
+#include "x86-simd-sort/src/x86simdsort-static-incl.h"
 
-namespace {
-template<typename T>
-void x86_argsort(T* arr, size_t* arg, npy_intp num)
-{
-#if defined(NPY_HAVE_AVX512_SKX)
-    avx512_argsort(arr, arg, num, true);
-#elif defined(NPY_HAVE_AVX2)
-    avx2_argsort(arr, arg, num, true);
-#endif
-}
-
-template<typename T>
-void x86_argselect(T* arr, size_t* arg, npy_intp kth, npy_intp num)
-{
-#if defined(NPY_HAVE_AVX512_SKX)
-    avx512_argselect(arr, arg, kth, num, true);
-#elif defined(NPY_HAVE_AVX2)
-    avx2_argselect(arr, arg, kth, num, true);
-#endif
-}
-} // anonymous
+#define DISPATCH_ARG_METHODS(TYPE) \
+template<> void NPY_CPU_DISPATCH_CURFX(ArgQSelect)(TYPE* arr, npy_intp* arg, npy_intp num, npy_intp kth) \
+{ \
+    x86simdsortStatic::argselect(arr, reinterpret_cast<size_t*>(arg), kth, num, true); \
+} \
+template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(TYPE* arr, npy_intp *arg, npy_intp size) \
+{ \
+    x86simdsortStatic::argsort(arr, reinterpret_cast<size_t*>(arg), size, true); \
+} \
 
 namespace np { namespace qsort_simd {
 
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSelect)(int32_t *arr, npy_intp* arg, npy_intp num, npy_intp kth)
-{
-    x86_argselect(arr, reinterpret_cast<size_t*>(arg), kth, num);
-}
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSelect)(uint32_t *arr, npy_intp* arg, npy_intp num, npy_intp kth)
-{
-    x86_argselect(arr, reinterpret_cast<size_t*>(arg), kth, num);
-}
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSelect)(int64_t*arr, npy_intp* arg, npy_intp num, npy_intp kth)
-{
-    x86_argselect(arr, reinterpret_cast<size_t*>(arg), kth, num);
-}
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSelect)(uint64_t*arr, npy_intp* arg, npy_intp num, npy_intp kth)
-{
-    x86_argselect(arr, reinterpret_cast<size_t*>(arg), kth, num);
-}
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSelect)(float *arr, npy_intp* arg, npy_intp num, npy_intp kth)
-{
-    x86_argselect(arr, reinterpret_cast<size_t*>(arg), kth, num);
-}
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSelect)(double *arr, npy_intp* arg, npy_intp num, npy_intp kth)
-{
-    x86_argselect(arr, reinterpret_cast<size_t*>(arg), kth, num);
-}
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(int32_t *arr, npy_intp *arg, npy_intp size)
-{
-    x86_argsort(arr, reinterpret_cast<size_t*>(arg), size);
-}
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(uint32_t *arr, npy_intp *arg, npy_intp size)
-{
-    x86_argsort(arr, reinterpret_cast<size_t*>(arg), size);
-}
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(int64_t *arr, npy_intp *arg, npy_intp size)
-{
-    x86_argsort(arr, reinterpret_cast<size_t*>(arg), size);
-}
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(uint64_t *arr, npy_intp *arg, npy_intp size)
-{
-    x86_argsort(arr, reinterpret_cast<size_t*>(arg), size);
-}
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(float *arr, npy_intp *arg, npy_intp size)
-{
-    x86_argsort(arr, reinterpret_cast<size_t*>(arg), size);
-}
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(double *arr, npy_intp *arg, npy_intp size)
-{
-    x86_argsort(arr, reinterpret_cast<size_t*>(arg), size);
-}
+    DISPATCH_ARG_METHODS(uint32_t)
+    DISPATCH_ARG_METHODS(int32_t)
+    DISPATCH_ARG_METHODS(float)
+    DISPATCH_ARG_METHODS(uint64_t)
+    DISPATCH_ARG_METHODS(int64_t)
+    DISPATCH_ARG_METHODS(double)
 
 }} // namespace np::simd
 
