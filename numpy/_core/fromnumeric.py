@@ -284,7 +284,7 @@ def top_k(a, k, /, *, axis=-1, largest=True):
     >>> a.flatten()
     array([1, 2, 3, 4, 5, 5, 4, 3, 2, 1, 3, 4, 5, 1, 2])
     >>> np.top_k(a, 2, axis=None)
-    (array([5, 5]), array([ 5, 12]))
+    (array([5, 5]), array([ 4, 12]))
     """
     if k <= 0:
         raise ValueError(f'k(={k}) provided must be positive.')
