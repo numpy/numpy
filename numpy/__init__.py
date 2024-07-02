@@ -163,8 +163,8 @@ else:
         shares_memory, short, sign, signbit, signedinteger, sin, single, sinh,
         size, sort, spacing, sqrt, square, squeeze, stack, std,
         str_, subtract, sum, swapaxes, take, tan, tanh, tensordot,
-        timedelta64, trace, transpose, true_divide, trunc, typecodes, ubyte,
-        ufunc, uint, uint16, uint32, uint64, uint8, uintc, uintp, ulong,
+        timedelta64, top_k, trace, transpose, true_divide, trunc, typecodes,
+        ubyte, ufunc, uint, uint16, uint32, uint64, uint8, uintc, uintp, ulong,
         ulonglong, unsignedinteger, unstack, ushort, var, vdot, vecdot, void,
         vstack, where, zeros, zeros_like
     )

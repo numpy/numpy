@@ -335,6 +335,12 @@ class TestNonarrayArgs:
             assert_equal(out, tgt)
             assert_equal(out.dtype, tgt.dtype)  
 
+    def test_top_k(self):
+        a = [[1, 2], [2, 1]]
+        y = ([[2], [2]], [[1], [0]])
+        out = np.top_k(a, 1)
+        assert_equal(out, y)
+
     def test_trace(self):
         c = [[1, 2], [3, 4], [5, 6]]
         assert_equal(np.trace(c), 5)
