@@ -15,3 +15,6 @@ pickleshare
 # needed to build release notes
 towncrier
 toml
+
+# TODO: https://github.com/numpy/numpy/issues/26820
+pillow==10.3.0
