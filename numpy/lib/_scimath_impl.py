@@ -66,6 +66,7 @@ def _tocomplex(arr):
 
     Examples
     --------
+    >>> import numpy as np
 
     First, consider an input of type short:
 
@@ -124,6 +125,7 @@ def _fix_real_lt_zero(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.lib.scimath._fix_real_lt_zero([1,2])
     array([1, 2])
 
@@ -152,6 +154,7 @@ def _fix_int_lt_zero(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.lib.scimath._fix_int_lt_zero([1,2])
     array([1, 2])
 
@@ -179,6 +182,7 @@ def _fix_real_abs_gt_1(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.lib.scimath._fix_real_abs_gt_1([0,1])
     array([0, 1])
 
@@ -221,6 +225,8 @@ def sqrt(x):
     Examples
     --------
     For real, non-negative inputs this works just like `numpy.sqrt`:
+
+    >>> import numpy as np
 
     >>> np.emath.sqrt(1)
     1.0
@@ -282,6 +288,7 @@ def log(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.emath.log(np.exp(1))
     1.0
 
@@ -330,6 +337,7 @@ def log10(x):
 
     Examples
     --------
+    >>> import numpy as np
 
     (We set the printing precision so the example can be auto-tested)
 
@@ -373,6 +381,7 @@ def logn(n, x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.set_printoptions(precision=4)
 
     >>> np.emath.logn(2, [4, 8])
@@ -420,6 +429,7 @@ def log2(x):
 
     Examples
     --------
+
     We set the printing precision so the example can be auto-tested:
 
     >>> np.set_printoptions(precision=4)
@@ -468,6 +478,7 @@ def power(x, p):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.set_printoptions(precision=4)
 
     >>> np.emath.power(2, 2)
@@ -523,6 +534,7 @@ def arccos(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.set_printoptions(precision=4)
 
     >>> np.emath.arccos(1) # a scalar is returned
@@ -569,6 +581,7 @@ def arcsin(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.set_printoptions(precision=4)
 
     >>> np.emath.arcsin(0)
@@ -617,6 +630,7 @@ def arctanh(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.set_printoptions(precision=4)
 
     >>> np.emath.arctanh(0.5)

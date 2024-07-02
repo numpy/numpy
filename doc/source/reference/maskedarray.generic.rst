@@ -35,19 +35,21 @@ masked (invalid).
 
 The package ensures that masked entries are not used in computations.
 
-As an illustration, let's consider the following dataset::
+.. try_examples::
+
+   As an illustration, let's consider the following dataset:
 
    >>> import numpy as np
    >>> import numpy.ma as ma
    >>> x = np.array([1, 2, 3, -1, 5])
 
-We wish to mark the fourth entry as invalid. The easiest is to create a masked
-array::
+   We wish to mark the fourth entry as invalid. The easiest is to create a masked
+   array::
 
    >>> mx = ma.masked_array(x, mask=[0, 0, 0, 1, 0])
 
-We can now compute the mean of the dataset, without taking the invalid data
-into account::
+   We can now compute the mean of the dataset, without taking the invalid data
+   into account:
 
    >>> mx.mean()
    2.75
@@ -62,17 +64,19 @@ class, which is a subclass of :class:`numpy.ndarray`. The class, its
 attributes and methods are described in more details in the
 :ref:`MaskedArray class <maskedarray.baseclass>` section.
 
-The :mod:`numpy.ma` module can be used as an addition to :mod:`numpy`: ::
+.. try_examples::
+
+The :mod:`numpy.ma` module can be used as an addition to :mod:`numpy`:
 
    >>> import numpy as np
    >>> import numpy.ma as ma
 
-To create an array with the second element invalid, we would do::
+   To create an array with the second element invalid, we would do::
 
    >>> y = ma.array([1, 2, 3], mask = [0, 1, 0])
 
-To create a masked array where all values close to 1.e20 are invalid, we would
-do::
+   To create a masked array where all values close to 1.e20 are invalid, we would
+   do:
 
    >>> z = ma.masked_values([1.0, 1.e20, 3.0, 4.0], 1.e20)
 
@@ -108,17 +112,20 @@ There are several ways to construct a masked array.
   mask of the view is set to :attr:`nomask` if the array has no named fields,
   or an array of boolean with the same structure as the array otherwise.
 
-     >>> x = np.array([1, 2, 3])
-     >>> x.view(ma.MaskedArray)
-     masked_array(data=[1, 2, 3],
-                  mask=False,
-            fill_value=999999)
-     >>> x = np.array([(1, 1.), (2, 2.)], dtype=[('a',int), ('b', float)])
-     >>> x.view(ma.MaskedArray)
-     masked_array(data=[(1, 1.0), (2, 2.0)],
-                  mask=[(False, False), (False, False)],
-            fill_value=(999999, 1e+20),
-                 dtype=[('a', '<i8'), ('b', '<f8')])
+.. try_examples::
+
+   >>> import numpy as np
+   >>> x = np.array([1, 2, 3])
+   >>> x.view(ma.MaskedArray)
+   masked_array(data=[1, 2, 3],
+               mask=False,
+         fill_value=999999)
+   >>> x = np.array([(1, 1.), (2, 2.)], dtype=[('a',int), ('b', float)])
+   >>> x.view(ma.MaskedArray)
+   masked_array(data=[(1, 1.0), (2, 2.0)],
+               mask=[(False, False), (False, False)],
+         fill_value=(999999, 1e+20),
+               dtype=[('a', '<i8'), ('b', '<f8')])
 
 * Yet another possibility is to use any of the following functions:
 
@@ -191,23 +198,26 @@ Accessing only the valid entries
 
 To retrieve only the valid entries, we can use the inverse of the mask as an
 index. The inverse of the mask can be calculated with the
-:func:`numpy.logical_not` function or simply with the ``~`` operator::
+:func:`numpy.logical_not` function or simply with the ``~`` operator:
 
+.. try_examples::
+
+   >>> import numpy as np
    >>> x = ma.array([[1, 2], [3, 4]], mask=[[0, 1], [1, 0]])
    >>> x[~x.mask]
    masked_array(data=[1, 4],
-                mask=[False, False],
-          fill_value=999999)
+                  mask=[False, False],
+            fill_value=999999)
 
-Another way to retrieve the valid data is to use the :meth:`compressed`
-method, which returns a one-dimensional :class:`~numpy.ndarray` (or one of its
-subclasses, depending on the value of the :attr:`~MaskedArray.baseclass`
-attribute)::
+   Another way to retrieve the valid data is to use the :meth:`compressed`
+   method, which returns a one-dimensional :class:`~numpy.ndarray` (or one of its
+   subclasses, depending on the value of the :attr:`~MaskedArray.baseclass`
+   attribute):
 
    >>> x.compressed()
    array([1, 4])
 
-Note that the output of :meth:`compressed` is always 1D.
+   Note that the output of :meth:`compressed` is always 1D.
 
 
 
@@ -218,7 +228,9 @@ Masking an entry
 ~~~~~~~~~~~~~~~~
 
 The recommended way to mark one or several specific entries of a masked array
-as invalid is to assign the special value :attr:`masked` to them::
+as invalid is to assign the special value :attr:`masked` to them:
+
+.. try_examples::
 
    >>> x = ma.array([1, 2, 3])
    >>> x[0] = ma.masked
@@ -257,8 +269,11 @@ but this usage is discouraged.
 
 
 All the entries of an array can be masked at once by assigning ``True`` to the
-mask::
+mask:
 
+.. try_examples::
+
+   >>> import numpy.ma as ma
    >>> x = ma.array([1, 2, 3], mask=[0, 0, 1])
    >>> x.mask = True
    >>> x
@@ -267,8 +282,8 @@ mask::
           fill_value=999999,
                dtype=int64)
 
-Finally, specific entries can be masked and/or unmasked by assigning to the
-mask a sequence of booleans::
+   Finally, specific entries can be masked and/or unmasked by assigning to the
+   mask a sequence of booleans:
 
    >>> x = ma.array([1, 2, 3])
    >>> x.mask = [0, 1, 0]
@@ -281,8 +296,11 @@ Unmasking an entry
 ~~~~~~~~~~~~~~~~~~
 
 To unmask one or several specific entries, we can just assign one or several
-new valid values to them::
+new valid values to them:
 
+.. try_examples::
+
+   >>> import numpy.ma as ma
    >>> x = ma.array([1, 2, 3], mask=[0, 0, 1])
    >>> x
    masked_array(data=[1, 2, --],
@@ -300,37 +318,44 @@ new valid values to them::
    attribute. This feature was introduced to prevent overwriting the mask.
    To force the unmasking of an entry where the array has a hard mask,
    the mask must first to be softened using the :meth:`soften_mask` method
-   before the allocation. It can be re-hardened with :meth:`harden_mask`::
+   before the allocation. It can be re-hardened with :meth:`harden_mask` as
+   follows:
 
-      >>> x = ma.array([1, 2, 3], mask=[0, 0, 1], hard_mask=True)
-      >>> x
-      masked_array(data=[1, 2, --],
-                   mask=[False, False,  True],
-             fill_value=999999)
-      >>> x[-1] = 5
-      >>> x
-      masked_array(data=[1, 2, --],
-                   mask=[False, False,  True],
-             fill_value=999999)
-      >>> x.soften_mask()
-      masked_array(data=[1, 2, --],
-                   mask=[False, False,  True],
-             fill_value=999999)
-      >>> x[-1] = 5
-      >>> x
-      masked_array(data=[1, 2, 5],
-                   mask=[False, False, False],
-             fill_value=999999)
-      >>> x.harden_mask()
-      masked_array(data=[1, 2, 5],
-                   mask=[False, False, False],
-             fill_value=999999)
+.. try_examples::
+
+   >>> import numpy.ma as ma
+   >>> x = ma.array([1, 2, 3], mask=[0, 0, 1], hard_mask=True)
+   >>> x
+   masked_array(data=[1, 2, --],
+                  mask=[False, False,  True],
+            fill_value=999999)
+   >>> x[-1] = 5
+   >>> x
+   masked_array(data=[1, 2, --],
+                  mask=[False, False,  True],
+            fill_value=999999)
+   >>> x.soften_mask()
+   masked_array(data=[1, 2, --],
+                  mask=[False, False,  True],
+            fill_value=999999)
+   >>> x[-1] = 5
+   >>> x
+   masked_array(data=[1, 2, 5],
+                  mask=[False, False, False],
+            fill_value=999999)
+   >>> x.harden_mask()
+   masked_array(data=[1, 2, 5],
+                  mask=[False, False, False],
+            fill_value=999999)
 
 
 To unmask all masked entries of a masked array (provided the mask isn't a hard
 mask), the simplest solution is to assign the constant :attr:`nomask` to the
-mask::
+mask:
 
+.. try_examples::
+
+   >>> import numpy.ma as ma
    >>> x = ma.array([1, 2, 3], mask=[0, 0, 1])
    >>> x
    masked_array(data=[1, 2, --],
@@ -352,8 +377,11 @@ its mechanisms for indexing and slicing.
 When accessing a single entry of a masked array with no named fields, the
 output is either a scalar (if the corresponding entry of the mask is
 ``False``) or the special value :attr:`masked` (if the corresponding entry of
-the mask is ``True``)::
+the mask is ``True``):
 
+.. try_examples::
+
+   >>> import numpy.ma as ma
    >>> x = ma.array([1, 2, 3], mask=[0, 0, 1])
    >>> x[0]
    1
@@ -367,6 +395,9 @@ If the masked array has named fields, accessing a single entry returns a
 array with the same dtype as the initial array if at least one of the fields
 is masked.
 
+.. try_examples::
+
+   >>> import numpy.ma as ma
    >>> y = ma.masked_array([(1,2), (3, 4)],
    ...                mask=[(0, 0), (0, 1)],
    ...               dtype=[('a', int), ('b', int)])
@@ -382,6 +413,9 @@ mask is either :attr:`nomask` (if there was no invalid entries in the original
 array) or a view of the corresponding slice of the original mask. The view is
 required to ensure propagation of any modification of the mask to the original.
 
+.. try_examples::
+
+   >>> import numpy.ma as ma
    >>> x = ma.array([1, 2, 3, 4, 5], mask=[0, 1, 0, 0, 1])
    >>> mx = x[:3]
    >>> mx
@@ -397,6 +431,7 @@ required to ensure propagation of any modification of the mask to the original.
    array([False, False, False, False,  True])
    >>> x.data
    array([ 1, -1,  3,  4,  5])
+
 
 Accessing a field of a masked array with structured datatype returns a
 :class:`MaskedArray`.
@@ -417,8 +452,11 @@ meaning that the corresponding :attr:`~MaskedArray.data` entries
 The :mod:`numpy.ma` module comes with a specific implementation of most
 ufuncs. Unary and binary functions that have a validity domain (such as
 :func:`~numpy.log` or :func:`~numpy.divide`) return the :data:`masked`
-constant whenever the input is masked or falls outside the validity domain::
+constant whenever the input is masked or falls outside the validity domain:
 
+.. try_examples::
+
+   >>> import numpy.ma as ma
    >>> ma.log([-1, 0, 1, 2])
    masked_array(data=[--, --, 0.0, 0.6931471805599453],
                 mask=[ True,  True, False, False],
@@ -430,8 +468,11 @@ result of a binary ufunc is masked wherever any of the input is masked. If the
 ufunc also returns the optional context output (a 3-element tuple containing
 the name of the ufunc, its arguments and its domain), the context is processed
 and entries of the output masked array are masked wherever the corresponding
-input fall outside the validity domain::
+input fall outside the validity domain:
 
+.. try_examples::
+
+   >>> import numpy.ma as ma
    >>> x = ma.array([-1, 1, 0, 2, 3], mask=[0, 0, 0, 0, 1])
    >>> np.log(x)
    masked_array(data=[--, 0.0, --, 0.6931471805599453, --],
@@ -447,7 +488,9 @@ Data with a given value representing missing data
 
 Let's consider a list of elements, ``x``, where values of -9999. represent
 missing data. We wish to compute the average value of the data and the vector
-of anomalies (deviations from the average)::
+of anomalies (deviations from the average):
+
+.. try_examples::
 
    >>> import numpy.ma as ma
    >>> x = [0.,1.,-9999.,3.,4.]
@@ -466,6 +509,10 @@ Filling in the missing data
 Suppose now that we wish to print that same data, but with the missing values
 replaced by the average value.
 
+.. try_examples::
+
+   >>> import numpy.ma as ma
+   >>> mx = ma.masked_values (x, -9999.)
    >>> print(mx.filled(mx.mean()))
    [0.  1.  2.  3.  4.]
 
@@ -475,6 +522,8 @@ Numerical operations
 
 Numerical operations can be easily performed without worrying about missing
 values, dividing by zero, square roots of negative numbers, etc.::
+
+.. try_examples::
 
    >>> import numpy.ma as ma
    >>> x = ma.array([1., -1., 3., 4., 5., 6.], mask=[0,0,0,0,1,0])
@@ -492,8 +541,12 @@ Ignoring extreme values
 
 Let's consider an array ``d`` of floats between 0 and 1. We wish to
 compute the average of the values of ``d`` while ignoring any data outside
-the range ``[0.2, 0.9]``::
+the range ``[0.2, 0.9]``:
 
+.. try_examples::
+
+   >>> import numpy as np
+   >>> import numpy.ma as ma
    >>> d = np.linspace(0, 1, 20)
    >>> print(d.mean() - ma.masked_outside(d, 0.2, 0.9).mean())
    -0.05263157894736836

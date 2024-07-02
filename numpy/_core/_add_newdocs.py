@@ -45,6 +45,7 @@ add_newdoc('numpy._core', 'flatiter',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(6).reshape(2, 3)
     >>> fl = x.flat
     >>> type(fl)
@@ -72,6 +73,7 @@ add_newdoc('numpy._core', 'flatiter', ('base',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(5)
     >>> fl = x.flat
     >>> fl.base is x
@@ -86,6 +88,7 @@ add_newdoc('numpy._core', 'flatiter', ('coords',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(6).reshape(2, 3)
     >>> fl = x.flat
     >>> fl.coords
@@ -104,6 +107,7 @@ add_newdoc('numpy._core', 'flatiter', ('index',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(6).reshape(2, 3)
     >>> fl = x.flat
     >>> fl.index
@@ -131,6 +135,7 @@ add_newdoc('numpy._core', 'flatiter', ('copy',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(6).reshape(2, 3)
     >>> x
     array([[0, 1, 2],
@@ -321,6 +326,8 @@ add_newdoc('numpy._core', 'nditer',
     Here is how we might write an ``iter_add`` function, using the
     Python iterator protocol:
 
+    >>> import numpy as np
+
     >>> def iter_add_py(x, y, out=None):
     ...     addop = np.add
     ...     it = np.nditer([x, y, out], [],
@@ -426,6 +433,7 @@ add_newdoc('numpy._core', 'nditer', ('copy',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(10)
     >>> y = x + 1
     >>> it = np.nditer([x, y])
@@ -542,6 +550,7 @@ add_newdoc('numpy._core', 'nested_iters',
     [a[:, 0, :], a[:, 1, 0], a[:, 2, :]] since we specified
     the first iter's axes as [1]
 
+    >>> import numpy as np
     >>> a = np.arange(12).reshape(2, 3, 2)
     >>> i, j = np.nested_iters(a, [[1], [0, 2]], flags=["multi_index"])
     >>> for x in i:
@@ -616,6 +625,7 @@ add_newdoc('numpy._core', 'broadcast',
 
     Manually adding two vectors, using broadcasting:
 
+    >>> import numpy as np
     >>> x = np.array([[1], [2], [3]])
     >>> y = np.array([4, 5, 6])
     >>> b = np.broadcast(x, y)
@@ -644,6 +654,8 @@ add_newdoc('numpy._core', 'broadcast', ('index',
 
     Examples
     --------
+
+    >>> import numpy as np
     >>> x = np.array([[1], [2], [3]])
     >>> y = np.array([4, 5, 6])
     >>> b = np.broadcast(x, y)
@@ -669,6 +681,8 @@ add_newdoc('numpy._core', 'broadcast', ('iters',
 
     Examples
     --------
+
+    >>> import numpy as np
     >>> x = np.array([1, 2, 3])
     >>> y = np.array([[4], [5], [6]])
     >>> b = np.broadcast(x, y)
@@ -686,6 +700,7 @@ add_newdoc('numpy._core', 'broadcast', ('ndim',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 3])
     >>> y = np.array([[4], [5], [6]])
     >>> b = np.broadcast(x, y)
@@ -701,6 +716,7 @@ add_newdoc('numpy._core', 'broadcast', ('nd',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 3])
     >>> y = np.array([[4], [5], [6]])
     >>> b = np.broadcast(x, y)
@@ -715,6 +731,7 @@ add_newdoc('numpy._core', 'broadcast', ('numiter',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 3])
     >>> y = np.array([[4], [5], [6]])
     >>> b = np.broadcast(x, y)
@@ -729,6 +746,7 @@ add_newdoc('numpy._core', 'broadcast', ('shape',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 3])
     >>> y = np.array([[4], [5], [6]])
     >>> b = np.broadcast(x, y)
@@ -743,6 +761,7 @@ add_newdoc('numpy._core', 'broadcast', ('size',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 3])
     >>> y = np.array([[4], [5], [6]])
     >>> b = np.broadcast(x, y)
@@ -767,6 +786,7 @@ add_newdoc('numpy._core', 'broadcast', ('reset',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 3])
     >>> y = np.array([[4], [5], [6]])
     >>> b = np.broadcast(x, y)
@@ -870,6 +890,7 @@ add_newdoc('numpy._core.multiarray', 'array',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.array([1, 2, 3])
     array([1, 2, 3])
 
@@ -977,6 +998,7 @@ add_newdoc('numpy._core.multiarray', 'asarray',
     Convert a list into an array:
 
     >>> a = [1, 2]
+    >>> import numpy as np
     >>> np.asarray(a)
     array([1, 2])
 
@@ -1073,6 +1095,7 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
     Convert a list into an array:
 
     >>> a = [1, 2]
+    >>> import numpy as np
     >>> np.asanyarray(a)
     array([1, 2])
 
@@ -1120,6 +1143,7 @@ add_newdoc('numpy._core.multiarray', 'ascontiguousarray',
     --------
     Starting with a Fortran-contiguous array:
 
+    >>> import numpy as np
     >>> x = np.ones((2, 3), order='F')
     >>> x.flags['F_CONTIGUOUS']
     True
@@ -1185,6 +1209,7 @@ add_newdoc('numpy._core.multiarray', 'asfortranarray',
     --------
     Starting with a C-contiguous array:
 
+    >>> import numpy as np
     >>> x = np.ones((2, 3), order='C')
     >>> x.flags['C_CONTIGUOUS']
     True
@@ -1266,6 +1291,7 @@ add_newdoc('numpy._core.multiarray', 'empty',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.empty([2, 2])
     array([[ -9.74499359e+001,   6.69583040e-309],
            [  2.13182611e-314,   3.06959433e-309]])         #uninitialized
@@ -1328,6 +1354,7 @@ add_newdoc('numpy._core.multiarray', 'zeros',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.zeros(5)
     array([ 0.,  0.,  0.,  0.,  0.])
 
@@ -1416,6 +1443,7 @@ add_newdoc('numpy._core.multiarray', 'fromstring',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.fromstring('1 2', dtype=int, sep=' ')
     array([1, 2])
     >>> np.fromstring('1, 2', dtype=int, sep=',')
@@ -1456,6 +1484,7 @@ add_newdoc('numpy._core.multiarray', 'compare_chararrays',
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(["a", "b", "cde"])
     >>> b = np.array(["a", "a", "dec"])
     >>> np.char.compare_chararrays(a, b, ">", True)
@@ -1499,6 +1528,7 @@ add_newdoc('numpy._core.multiarray', 'fromiter',
 
     Examples
     --------
+    >>> import numpy as np
     >>> iterable = (x*x for x in range(5))
     >>> np.fromiter(iterable, float)
     array([  0.,   1.,   4.,   9.,  16.])
@@ -1583,6 +1613,7 @@ add_newdoc('numpy._core.multiarray', 'fromfile',
     --------
     Construct an ndarray:
 
+    >>> import numpy as np
     >>> dt = np.dtype([('time', [('min', np.int64), ('sec', np.int64)]),
     ...                ('temp', float)])
     >>> x = np.zeros((1,), dtype=dt)
@@ -1663,6 +1694,7 @@ add_newdoc('numpy._core.multiarray', 'frombuffer',
 
     Examples
     --------
+    >>> import numpy as np
     >>> s = b'hello world'
     >>> np.frombuffer(s, dtype='S1', count=5, offset=6)
     array([b'w', b'o', b'r', b'l', b'd'], dtype='|S1')
@@ -1818,6 +1850,7 @@ add_newdoc('numpy._core.multiarray', 'arange',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.arange(3)
     array([0, 1, 2])
     >>> np.arange(3.0)
@@ -1893,6 +1926,7 @@ add_newdoc('numpy._core.multiarray', 'promote_types',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.promote_types('f4', 'f8')
     dtype('float64')
 
@@ -2070,6 +2104,7 @@ add_newdoc('numpy._core.multiarray', 'c_einsum',
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(25).reshape(5,5)
     >>> b = np.arange(5)
     >>> c = np.arange(6).reshape(2,3)
@@ -2347,6 +2382,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray',
 
     First mode, `buffer` is None:
 
+    >>> import numpy as np
     >>> np.ndarray(shape=(2,2), dtype=float, order='F')
     array([[0.0e+000, 0.0e+000], # random
            [     nan, 2.5e-323]])
@@ -2397,6 +2433,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('base',
     --------
     The base of an array that owns its memory is None:
 
+    >>> import numpy as np
     >>> x = np.array([1,2,3,4])
     >>> x.base is None
     True
@@ -2466,6 +2503,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('ctypes',
 
     Examples
     --------
+    >>> import numpy as np
     >>> import ctypes
     >>> x = np.array([[0, 1], [2, 3]], dtype=np.int32)
     >>> x
@@ -2534,6 +2572,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('imag',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.sqrt([1+0j, 0+1j])
     >>> x.imag
     array([ 0.        ,  0.70710678])
@@ -2549,6 +2588,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('itemsize',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1,2,3], dtype=np.float64)
     >>> x.itemsize
     8
@@ -2645,6 +2685,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('flat',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(1, 7).reshape(2, 3)
     >>> x
     array([[1, 2, 3],
@@ -2689,6 +2730,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('nbytes',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.zeros((3,5,2), dtype=np.complex128)
     >>> x.nbytes
     480
@@ -2704,6 +2746,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('ndim',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 3])
     >>> x.ndim
     1
@@ -2720,6 +2763,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('real',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.sqrt([1+0j, 0+1j])
     >>> x.real
     array([ 1.        ,  0.70710678])
@@ -2751,6 +2795,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('shape',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 3, 4])
     >>> x.shape
     (4,)
@@ -2798,6 +2843,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('size',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.zeros((3, 5, 2), dtype=np.complex128)
     >>> x.size
     30
@@ -2846,6 +2892,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('strides',
 
     Examples
     --------
+    >>> import numpy as np
     >>> y = np.reshape(np.arange(2*3*4), (2,3,4))
     >>> y
     array([[[ 0,  1,  2,  3],
@@ -2883,6 +2930,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('T',
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, 4]])
     >>> a
     array([[1, 2],
@@ -2920,6 +2968,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('mT',
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, 4]])
     >>> a
     array([[1, 2],
@@ -3224,6 +3273,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 2.5])
     >>> x
     array([1. ,  2. ,  2.5])
@@ -3258,6 +3308,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('byteswap',
 
     Examples
     --------
+    >>> import numpy as np
     >>> A = np.array([1, 256, 8755], dtype=np.int16)
     >>> list(map(hex, A))
     ['0x1', '0x100', '0x2233']
@@ -3393,6 +3444,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('copy',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([[1,2,3],[4,5,6]], order='F')
 
     >>> y = x.copy()
@@ -3531,6 +3583,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('fill',
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([1, 2])
     >>> a.fill(0)
     >>> a
@@ -3590,6 +3643,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('flatten',
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1,2], [3,4]])
     >>> a.flatten()
     array([1, 2, 3, 4])
@@ -3622,6 +3676,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('getfield',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.diag([1.+1.j]*2)
     >>> x[1, 1] = 2 + 4.j
     >>> x
@@ -3682,6 +3737,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('item',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.random.seed(123)
     >>> x = np.random.randint(9, size=(3, 3))
     >>> x
@@ -3904,6 +3960,8 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('resize',
     Shrinking an array: array is flattened (in the order that the data are
     stored in memory), resized, and reshaped:
 
+    >>> import numpy as np
+
     >>> a = np.array([[0, 1], [2, 3]], order='C')
     >>> a.resize((2, 1))
     >>> a
@@ -4001,6 +4059,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('setfield',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.eye(3)
     >>> x.getfield(np.float64)
     array([[1.,  0.,  0.],
@@ -4070,6 +4129,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('setflags',
 
     Examples
     --------
+    >>> import numpy as np
     >>> y = np.array([[3, 1, 7],
     ...               [2, 0, 0],
     ...               [8, 5, 9]])
@@ -4141,6 +4201,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('sort',
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1,4], [3,1]])
     >>> a.sort(axis=1)
     >>> a
@@ -4212,6 +4273,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('partition',
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([3, 4, 2, 1])
     >>> a.partition(3)
     >>> a
@@ -4374,6 +4436,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('tolist',
     For a 1D array, ``a.tolist()`` is almost the same as ``list(a)``,
     except that ``tolist`` changes numpy scalars to Python scalars:
 
+    >>> import numpy as np
     >>> a = np.uint32([1, 2])
     >>> a_list = list(a)
     >>> a_list
@@ -4437,6 +4500,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('tobytes', """
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([[0, 1], [2, 3]], dtype='<u2')
     >>> x.tobytes()
     b'\\x00\\x00\\x01\\x00\\x02\\x00\\x03\\x00'
@@ -4508,6 +4572,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('transpose',
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, 4]])
     >>> a
     array([[1, 2],
@@ -4593,6 +4658,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('view',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([(1, 2)], dtype=[('a', np.int8), ('b', np.int8)])
 
     Viewing array data using a different type and dtype:
@@ -4713,6 +4779,7 @@ add_newdoc('numpy._core.umath', 'frompyfunc',
     --------
     Use frompyfunc to add broadcasting to the Python function ``oct``:
 
+    >>> import numpy as np
     >>> oct_array = np.frompyfunc(oct, 1, 1)
     >>> oct_array(np.array((10, 30, 100)))
     array(['0o12', '0o36', '0o144'], dtype=object)
@@ -4959,6 +5026,7 @@ add_newdoc('numpy._core', 'ufunc', ('identity',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.add.identity
     0
     >>> np.multiply.identity
@@ -4983,6 +5051,7 @@ add_newdoc('numpy._core', 'ufunc', ('nargs',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.add.nargs
     3
     >>> np.multiply.nargs
@@ -5001,6 +5070,7 @@ add_newdoc('numpy._core', 'ufunc', ('nin',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.add.nin
     2
     >>> np.multiply.nin
@@ -5023,6 +5093,7 @@ add_newdoc('numpy._core', 'ufunc', ('nout',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.add.nout
     1
     >>> np.multiply.nout
@@ -5047,6 +5118,7 @@ add_newdoc('numpy._core', 'ufunc', ('ntypes',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.add.ntypes
     18
     >>> np.multiply.ntypes
@@ -5073,6 +5145,7 @@ add_newdoc('numpy._core', 'ufunc', ('types',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.add.types
     ['??->?', 'bb->b', 'BB->B', 'hh->h', 'HH->H', 'ii->i', 'II->I', 'll->l',
     'LL->L', 'qq->q', 'QQ->Q', 'ff->f', 'dd->d', 'gg->g', 'FF->F', 'DD->D',
@@ -5120,6 +5193,7 @@ add_newdoc('numpy._core', 'ufunc', ('signature',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.linalg._umath_linalg.det.signature
     '(m,m)->()'
     >>> np.matmul.signature
@@ -5217,6 +5291,7 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.multiply.reduce([2,3,5])
     30
 
@@ -5315,6 +5390,7 @@ add_newdoc('numpy._core', 'ufunc', ('accumulate',
     --------
     1-D array examples:
 
+    >>> import numpy as np
     >>> np.add.accumulate([2, 3, 5])
     array([ 2,  5, 10])
     >>> np.multiply.accumulate([2, 3, 5])
@@ -5412,6 +5488,7 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
     --------
     To take the running sum of four successive values:
 
+    >>> import numpy as np
     >>> np.add.reduceat(np.arange(8),[0,4, 1,5, 2,6, 3,7])[::2]
     array([ 6, 10, 14, 18])
 
@@ -5553,6 +5630,7 @@ add_newdoc('numpy._core', 'ufunc', ('at',
     --------
     Set items 0 and 1 to their negative values:
 
+    >>> import numpy as np
     >>> a = np.array([1, 2, 3, 4])
     >>> np.negative.at(a, [0, 1])
     >>> a
@@ -5624,6 +5702,7 @@ add_newdoc('numpy._core', 'ufunc', ('resolve_dtypes',
     --------
     This API requires passing dtypes, define them for convenience:
 
+    >>> import numpy as np
     >>> int32 = np.dtype("int32")
     >>> float32 = np.dtype("float32")
 
@@ -5773,6 +5852,7 @@ add_newdoc('numpy._core.multiarray', 'dtype',
     --------
     Using array-scalar type:
 
+    >>> import numpy as np
     >>> np.dtype(np.int16)
     dtype('int16')
 
@@ -5842,6 +5922,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('alignment',
     Examples
     --------
 
+    >>> import numpy as np
     >>> x = np.dtype('i4')
     >>> x.alignment
     4
@@ -5870,6 +5951,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('byteorder',
     Examples
     --------
 
+    >>> import numpy as np
     >>> dt = np.dtype('i2')
     >>> dt.byteorder
     '='
@@ -5901,6 +5983,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('char',
     Examples
     --------
 
+    >>> import numpy as np
     >>> x = np.dtype(float)
     >>> x.char
     'd'
@@ -5921,6 +6004,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('descr',
     Examples
     --------
 
+    >>> import numpy as np
     >>> x = np.dtype(float)
     >>> x.descr
     [('', '<f8')]
@@ -5953,6 +6037,8 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('fields',
 
     Examples
     --------
+
+    >>> import numpy as np
     >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
     >>> print(dt.fields)
     {'grades': (dtype(('float64',(2,))), 16), 'name': (dtype('|S16'), 0)}
@@ -5975,6 +6061,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('flags',
     Examples
     --------
 
+    >>> import numpy as np
     >>> x = np.dtype([('a', np.int32, 8), ('b', np.float64, 6)])
     >>> x.flags
     16
@@ -6013,6 +6100,8 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('isbuiltin',
 
     Examples
     --------
+
+    >>> import numpy as np
     >>> dt = np.dtype('i2')
     >>> dt.isbuiltin
     1
@@ -6051,6 +6140,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('itemsize',
     Examples
     --------
 
+    >>> import numpy as np
     >>> arr = np.array([[1, 2], [3, 4]])
     >>> arr.dtype
     dtype('int64')
@@ -6084,6 +6174,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('kind',
     Examples
     --------
 
+    >>> import numpy as np
     >>> dt = np.dtype('i4')
     >>> dt.kind
     'i'
@@ -6114,6 +6205,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('metadata',
     Examples
     --------
 
+    >>> import numpy as np
     >>> dt = np.dtype(float, metadata={"key": "value"})
     >>> dt.metadata["key"]
     'value'
@@ -6144,6 +6236,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('name',
     Examples
     --------
 
+    >>> import numpy as np
     >>> x = np.dtype(float)
     >>> x.name
     'float64'
@@ -6177,6 +6270,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('num',
     Examples
     --------
 
+    >>> import numpy as np
     >>> dt = np.dtype(str)
     >>> dt.num
     19
@@ -6195,6 +6289,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('shape',
     Examples
     --------
 
+    >>> import numpy as np
     >>> dt = np.dtype(('i4', 4))
     >>> dt.shape
     (4,)
@@ -6214,6 +6309,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('ndim',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.dtype(float)
     >>> x.ndim
     0
@@ -6249,6 +6345,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('subdtype',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = numpy.dtype('8f')
     >>> x.subdtype
     (dtype('float32'), (8,))
@@ -6270,6 +6367,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('base',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = numpy.dtype('8f')
     >>> x.base
     dtype('float32')
@@ -6325,6 +6423,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('newbyteorder',
     >>> sys_is_le = sys.byteorder == 'little'
     >>> native_code = '<' if sys_is_le else '>'
     >>> swapped_code = '>' if sys_is_le else '<'
+    >>> import numpy as np
     >>> native_dt = np.dtype(native_code+'i2')
     >>> swapped_dt = np.dtype(swapped_code+'i2')
     >>> native_dt.newbyteorder('S') == swapped_dt
@@ -6500,6 +6599,7 @@ add_newdoc('numpy._core.multiarray', 'busdaycalendar',
 
     Examples
     --------
+    >>> import numpy as np
     >>> # Some important days in July
     ... bdd = np.busdaycalendar(
     ...             holidays=['2011-07-01', '2011-07-04', '2011-07-17'])
@@ -6551,6 +6651,7 @@ add_newdoc('numpy._core.multiarray', 'normalize_axis_index',
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib.array_utils import normalize_axis_index
     >>> normalize_axis_index(0, ndim=3)
     0
@@ -6593,6 +6694,7 @@ add_newdoc('numpy._core.multiarray', 'datetime_data',
 
     Examples
     --------
+    >>> import numpy as np
     >>> dt_25s = np.dtype('timedelta64[25s]')
     >>> np.datetime_data(dt_25s)
     ('s', 25)
@@ -6938,6 +7040,8 @@ add_newdoc('numpy._core.multiarray', 'StringDType',
 
     Examples
     --------
+
+    >>> import numpy as np
 
     >>> from numpy.dtypes import StringDType
     >>> np.array(["hello", "world"], dtype=StringDType())

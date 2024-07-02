@@ -186,6 +186,7 @@ def take(a, indices, axis=None, out=None, mode='raise'):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = [4, 3, 5, 7, 6, 8]
     >>> indices = [0, 1, 4]
     >>> np.take(a, indices)
@@ -293,6 +294,7 @@ def reshape(a, /, shape=None, *, newshape=None, order='C', copy=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1,2,3], [4,5,6]])
     >>> np.reshape(a, 6)
     array([1, 2, 3, 4, 5, 6])
@@ -416,6 +418,7 @@ def choose(a, choices, out=None, mode='raise'):
     Examples
     --------
 
+    >>> import numpy as np
     >>> choices = [[0, 1, 2, 3], [10, 11, 12, 13],
     ...   [20, 21, 22, 23], [30, 31, 32, 33]]
     >>> np.choose([2, 3, 1, 0], choices
@@ -490,6 +493,7 @@ def repeat(a, repeats, axis=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.repeat(3, 4)
     array([3, 3, 3, 3])
     >>> x = np.array([[1,2],[3,4]])
@@ -551,6 +555,7 @@ def put(a, ind, v, mode='raise'):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(5)
     >>> np.put(a, [0, 2], [-44, -55])
     >>> a
@@ -599,6 +604,7 @@ def swapaxes(a, axis1, axis2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([[1,2,3]])
     >>> np.swapaxes(x,0,1)
     array([[1],
@@ -670,6 +676,7 @@ def transpose(a, axes=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, 4]])
     >>> a
     array([[1, 2],
@@ -724,6 +731,7 @@ def matrix_transpose(x, /):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.matrix_transpose([[1, 2], [3, 4]])
     array([[1, 3],
            [2, 4]])
@@ -827,6 +835,7 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([7, 1, 7, 7, 1, 5, 7, 2, 3, 2, 6, 2, 3, 0])
     >>> p = np.partition(a, 4)
     >>> p
@@ -933,6 +942,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     --------
     One dimensional array:
 
+    >>> import numpy as np
     >>> x = np.array([3, 4, 2, 1])
     >>> x[np.argpartition(x, 3)]
     array([2, 1, 3, 4]) # may vary
@@ -1086,6 +1096,7 @@ def sort(a, axis=-1, kind=None, order=None, *, stable=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1,4],[3,1]])
     >>> np.sort(a)                # sort along the last axis
     array([[1, 4],
@@ -1196,6 +1207,7 @@ def argsort(a, axis=-1, kind=None, order=None, *, stable=None):
     --------
     One dimensional array:
 
+    >>> import numpy as np
     >>> x = np.array([3, 1, 2])
     >>> np.argsort(x)
     array([1, 2, 0])
@@ -1298,6 +1310,7 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(6).reshape(2,3) + 10
     >>> a
     array([[10, 11, 12],
@@ -1395,6 +1408,7 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(6).reshape(2,3) + 10
     >>> a
     array([[10, 11, 12],
@@ -1508,6 +1522,7 @@ def searchsorted(a, v, side='left', sorter=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.searchsorted([11,12,13,14,15], 13)
     2
     >>> np.searchsorted([11,12,13,14,15], 13, side='right')
@@ -1571,7 +1586,8 @@ def resize(a, new_shape):
 
     Examples
     --------
-    >>> a=np.array([[0,1],[2,3]])
+    >>> import numpy as np
+    >>> a = np.array([[0,1],[2,3]])
     >>> np.resize(a,(2,3))
     array([[0, 1, 2],
            [3, 0, 1]])
@@ -1645,6 +1661,7 @@ def squeeze(a, axis=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([[[0], [1], [2]]])
     >>> x.shape
     (1, 3, 1)
@@ -1758,6 +1775,7 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(4).reshape(2,2)
     >>> a
     array([[0, 1],
@@ -1865,6 +1883,7 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.trace(np.eye(3))
     3.0
     >>> a = np.arange(8).reshape((2,2,2))
@@ -1956,6 +1975,7 @@ def ravel(a, order='C'):
     --------
     It is equivalent to ``reshape(-1, order=order)``.
 
+    >>> import numpy as np
     >>> x = np.array([[1, 2, 3], [4, 5, 6]])
     >>> np.ravel(x)
     array([1, 2, 3, 4, 5, 6])
@@ -2054,6 +2074,7 @@ def nonzero(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([[3, 0, 0], [0, 4, 0], [5, 6, 0]])
     >>> x
     array([[3, 0, 0],
@@ -2127,6 +2148,7 @@ def shape(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.shape(np.eye(3))
     (3, 3)
     >>> np.shape([[1, 3]])
@@ -2194,6 +2216,7 @@ def compress(condition, a, axis=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, 4], [5, 6]])
     >>> a
     array([[1, 2],
@@ -2283,6 +2306,7 @@ def clip(a, a_min=np._NoValue, a_max=np._NoValue, out=None, *,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(10)
     >>> a
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -2419,6 +2443,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.sum([0.5, 1.5])
     2.0
     >>> np.sum([0.5, 0.7, 0.2, 1.5], dtype=np.int32)
@@ -2537,6 +2562,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.any([[True, False], [True, True]])
     True
 
@@ -2649,6 +2675,7 @@ def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.all([[True,False],[True,True]])
     False
 
@@ -2924,6 +2951,7 @@ def cumsum(a, axis=None, dtype=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1,2,3], [4,5,6]])
     >>> a
     array([[1, 2, 3],
@@ -3008,6 +3036,7 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([[4, 9, 2, 10],
     ...               [6, 9, 7, 12]])
 
@@ -3130,6 +3159,7 @@ def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(4).reshape((2,2))
     >>> a
     array([[0, 1],
@@ -3273,6 +3303,7 @@ def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(4).reshape((2,2))
     >>> a
     array([[0, 1],
@@ -3418,6 +3449,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     --------
     By default, calculate the product of all elements:
 
+    >>> import numpy as np
     >>> np.prod([1.,2.])
     2.0
 
@@ -3507,6 +3539,7 @@ def cumprod(a, axis=None, dtype=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([1,2,3])
     >>> np.cumprod(a) # intermediate results 1, 1*2
     ...               # total product 1*2*3 = 6
@@ -3559,6 +3592,7 @@ def ndim(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.ndim([[1,2,3],[4,5,6]])
     2
     >>> np.ndim(np.array([[1,2,3],[4,5,6]]))
@@ -3603,6 +3637,7 @@ def size(a, axis=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1,2,3],[4,5,6]])
     >>> np.size(a)
     6
@@ -3707,6 +3742,7 @@ def round(a, decimals=0, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.round([0.37, 1.64])
     array([0., 2.])
     >>> np.round([0.37, 1.64], decimals=1)
@@ -3821,6 +3857,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, 4]])
     >>> np.mean(a)
     2.5
@@ -4001,6 +4038,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, 4]])
     >>> np.std(a)
     1.1180339887498949 # may vary
@@ -4203,6 +4241,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, 4]])
     >>> np.var(a)
     1.25

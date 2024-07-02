@@ -127,6 +127,7 @@ class memmap(ndarray):
 
     Examples
     --------
+    >>> import numpy as np
     >>> data = np.arange(12, dtype='float32')
     >>> data.resize((3,4))
 
