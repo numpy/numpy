@@ -17,7 +17,7 @@ from numpy import (
 
 # TODO: Set the `bound` to something more suitable once we
 # have proper shape support
-_ShapeType = TypeVar("_ShapeType", bound=Any)
+_ShapeType = TypeVar("_ShapeType", covariant=True, bound=tuple[int, ...])
 _DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
 
 __all__: list[str]

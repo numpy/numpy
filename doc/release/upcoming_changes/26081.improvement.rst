@@ -1,0 +1,79 @@
+``ndarray`` Shapes are now covariant and bound
+---------------------------------------------------------------
+Static typing for ``ndarray`` is a long-term effort that continues 
+with this change.  Arrays are a generic type, parameterized by both 
+shape and data type.  The previous shape-type placeholder could previously be assigned
+any value.  This change restricts it to a tuple of ints, as one would expect
+from using ``ndarray.shape``.  However, this change also allows parameterizing
+shape by a tuple of ``int`` subtypes, which are reflected in the type of
+``ndarray.shape``, and allows typing functions that manipulate axes:
+
+.. code::
+
+   from typing import Any, NewType, TypeVar
+   import numpy as np
+
+   Time = NewType("Time", int)
+   Series = NewType("Series", int)
+   DType = TypeVar("DType", bound=np.dtype)
+   Ax1 = TypeVar("Ax1", bound=int)
+   Ax2 = TypeVar("Ax2", bound=int)
+
+   arr: np.ndarray[tuple[Time, Series], Any] = np.arange(4.0).reshape((2, 2))
+
+   def check_shape(a: np.ndarray[tuple[int, ...], Any]) -> bool: ...
+
+   check_shape(arr)  # passes type checking
+
+   def transpose(
+      a: np.ndarray[tuple[Ax1, Ax2], DType]
+   ) -> np.ndarray[tuple[Ax2, Ax1], DType]: ...
+
+   reveal_type(arr.shape)  # tuple[Time, Series]
+   reveal_type(transpose(arr).shape)  # tuple[Series, Time]
+
+This PR also provides the ``np.typing.Array`` type alias in the style of
+``NDArray``.  It allows specifying a shaped array with simpler dtype syntax:
+
+.. code::
+
+   from typing import Literal, TypeVar
+   import numpy as np
+   import numpy.typing as npt
+
+   Float = np.floating[npt.NBitBase]
+   DType = TypeVar("DType", bound=np.generic)
+
+   Float1D = npt.Array[int, Float]
+   Float2D = npt.Array[int, int, Float]
+   def stack_1Ds(*args: Float1D) -> Float2D:
+      return np.stack(args)
+
+   arr = np.arange(12, dtype=np.uint16)
+   stacked = stack_1Ds(arr, arr, arr)
+
+
+Note that, if shape is unknown or arbitrary, it is still recommended to use
+``NDArray``.  Because ``TypeVarTuple`` cannot be bound, not all type checkers
+allow arbitrarily shape arrays.  e.g.:
+
+.. code::
+
+   from typing import TypeVarTuple
+   Shapes = TypeVarTuple("Shapes")
+
+   def stack_two_arrays(
+       a: npt.Array[*Shapes, DType],
+       b: npt.Array[*Shapes, DType],
+   ) -> npt.Array[Literal[2], *Shapes, DType]: ...
+
+   arr: npt.Array[Literal[3], Literal[4], np.uint16]
+   arr = np.arange(12, dtype=np.uint16).reshape((3, 4))
+   
+   double_arr: npt.Array[Literal[2], Literal[3], Literal[4], np.uint16]
+   double_arr = stack(arr, arr)
+
+
+In mypy, this generates the error:
+``Type argument "tuple[*Shapes]" of "ndarray" must be a subtype of
+"tuple[int, ...]"  [type-var]``

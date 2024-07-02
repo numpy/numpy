@@ -156,13 +156,14 @@ API
 # further down in this file
 
 from numpy._typing import (
+    Array,
     ArrayLike,
     DTypeLike,
     NBitBase,
     NDArray,
 )
 
-__all__ = ["ArrayLike", "DTypeLike", "NBitBase", "NDArray"]
+__all__ = ["Array", "ArrayLike", "DTypeLike", "NBitBase", "NDArray"]
 
 if __doc__ is not None:
     from numpy._typing._add_docstring import _docstrings
