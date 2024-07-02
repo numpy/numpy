@@ -41,10 +41,6 @@ def replace_scalar_type_names():
         ('tp_name', ctypes.c_char_p),
     ]
 
-    # prevent numpy attaching docstrings to the scalar types
-    assert 'numpy._core._add_newdocs_scalars' not in sys.modules
-    sys.modules['numpy._core._add_newdocs_scalars'] = object()
-
     import numpy
 
     # change the __name__ of the scalar types
@@ -58,9 +54,6 @@ def replace_scalar_type_names():
         c_typ = PyTypeObject.from_address(id(typ))
         c_typ.tp_name = _name_cache[typ] = b"numpy." + name.encode('utf8')
 
-    # now generate the docstrings as usual
-    del sys.modules['numpy._core._add_newdocs_scalars']
-    import numpy._core._add_newdocs_scalars
 
 replace_scalar_type_names()
 
