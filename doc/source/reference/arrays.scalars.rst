@@ -189,7 +189,7 @@ Inexact types
    `format_float_positional` and `format_float_scientific`.
 
    This means that variables with equal binary values but whose datatypes are of
-   different precisions may display differently::
+   different precisions may display differently:
 
       >>> import numpy as np
 
