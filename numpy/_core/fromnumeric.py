@@ -263,7 +263,8 @@ def top_k(a, k, /, *, axis=-1, largest=True):
     rather than ``(array([3]), array([0]))`` or
     ``(array([3]), array([2]))``.
 
-    Warning: The treatment of ``np.nan`` in the input array is undefined.
+    `top_k` works for real/complex inputs with nan values, see
+    `partition` for notes on the enhanced sort order.
 
     Examples
     --------
