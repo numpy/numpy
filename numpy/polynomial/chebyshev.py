@@ -670,6 +670,10 @@ def chebmulx(c):
     out : ndarray
         Array representing the result of the multiplication.
 
+    See Also
+    --------
+    chebadd, chebsub, chebmul, chebdiv, chebpow
+
     Notes
     -----
 

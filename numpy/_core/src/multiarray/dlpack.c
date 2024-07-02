@@ -8,7 +8,7 @@
 #include "numpy/arrayobject.h"
 #include "npy_argparse.h"
 #include "npy_dlpack.h"
-#include "multiarraymodule.h"
+#include "npy_static_data.h"
 #include "conversion_utils.h"
 
 
@@ -549,7 +549,7 @@ from_dlpack(PyObject *NPY_UNUSED(self),
 
 
     PyObject *capsule = PyObject_VectorcallMethod(
-            npy_ma_str___dlpack__, call_args, nargsf, call_kwnames);
+            npy_interned_str.__dlpack__, call_args, nargsf, call_kwnames);
     if (capsule == NULL) {
         /*
          * TODO: This path should be deprecated in NumPy 2.1.  Once deprecated
@@ -563,7 +563,7 @@ from_dlpack(PyObject *NPY_UNUSED(self),
             /* max_version may be unsupported, try without kwargs */
             PyErr_Clear();
             capsule = PyObject_VectorcallMethod(
-                npy_ma_str___dlpack__, call_args, nargsf, NULL);
+                npy_interned_str.__dlpack__, call_args, nargsf, NULL);
         }
         if (capsule == NULL) {
             return NULL;

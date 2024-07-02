@@ -490,6 +490,39 @@ def test_stack():
         stack((a, b), dtype=np.int64, axis=1, casting="safe")
 
 
+def test_unstack():
+    a = np.arange(24).reshape((2, 3, 4))
+
+    for stacks in [np.unstack(a),
+                   np.unstack(a, axis=0),
+                   np.unstack(a, axis=-3)]:
+        assert isinstance(stacks, tuple)
+        assert len(stacks) == 2
+        assert_array_equal(stacks[0], a[0])
+        assert_array_equal(stacks[1], a[1])
+
+    for stacks in [np.unstack(a, axis=1),
+                   np.unstack(a, axis=-2)]:
+        assert isinstance(stacks, tuple)
+        assert len(stacks) == 3
+        assert_array_equal(stacks[0], a[:, 0])
+        assert_array_equal(stacks[1], a[:, 1])
+        assert_array_equal(stacks[2], a[:, 2])
+
+    for stacks in [np.unstack(a, axis=2),
+                   np.unstack(a, axis=-1)]:
+        assert isinstance(stacks, tuple)
+        assert len(stacks) == 4
+        assert_array_equal(stacks[0], a[:, :, 0])
+        assert_array_equal(stacks[1], a[:, :, 1])
+        assert_array_equal(stacks[2], a[:, :, 2])
+        assert_array_equal(stacks[3], a[:, :, 3])
+
+    assert_raises(ValueError, np.unstack, a, axis=3)
+    assert_raises(ValueError, np.unstack, a, axis=-4)
+    assert_raises(ValueError, np.unstack, np.array(0), axis=0)
+
+
 @pytest.mark.parametrize("axis", [0])
 @pytest.mark.parametrize("out_dtype", ["c8", "f4", "f8", ">f8", "i8"])
 @pytest.mark.parametrize("casting",

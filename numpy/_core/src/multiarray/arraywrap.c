@@ -12,7 +12,7 @@
 #include "get_attr_string.h"
 
 #include "arraywrap.h"
-#include "multiarraymodule.h"
+#include "npy_static_data.h"
 
 
 /*
@@ -57,7 +57,7 @@ npy_find_array_wrap(
             }
         }
         else {
-            PyObject *new_wrap = PyArray_LookupSpecial_OnInstance(obj, npy_ma_str_array_wrap);
+            PyObject *new_wrap = PyArray_LookupSpecial_OnInstance(obj, npy_interned_str.array_wrap);
             if (new_wrap == NULL) {
                 if (PyErr_Occurred()) {
                     goto fail;
@@ -160,7 +160,7 @@ npy_apply_wrap(
         else {
             /* Replace passed wrap/wrap_type (borrowed refs) with new_wrap/type. */
             new_wrap = PyArray_LookupSpecial_OnInstance(
-                    original_out, npy_ma_str_array_wrap);
+                    original_out, npy_interned_str.array_wrap);
             if (new_wrap != NULL) {
                 wrap = new_wrap;
                 wrap_type = (PyObject *)Py_TYPE(original_out);

@@ -3171,6 +3171,9 @@ def cross(x1, x2, /, *, axis=-1):
     numpy.cross
 
     """
+    x1 = asanyarray(x1)
+    x2 = asanyarray(x2)
+
     if x1.shape[axis] != 3 or x2.shape[axis] != 3:
         raise ValueError(
             "Both input arrays must be (arrays of) 3-dimensional vectors, "

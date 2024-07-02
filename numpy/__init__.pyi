@@ -260,6 +260,7 @@ from numpy._core.fromnumeric import (
     all as all,
     any as any,
     cumsum as cumsum,
+    cumulative_sum as cumulative_sum,
     ptp as ptp,
     max as max,
     min as min,
@@ -267,6 +268,7 @@ from numpy._core.fromnumeric import (
     amin as amin,
     prod as prod,
     cumprod as cumprod,
+    cumulative_prod as cumulative_prod,
     ndim as ndim,
     size as size,
     around as around,
@@ -399,6 +401,7 @@ from numpy._core.shape_base import (
     hstack as hstack,
     stack as stack,
     vstack as vstack,
+    unstack as unstack,
 )
 
 from numpy.lib import (

@@ -408,6 +408,10 @@ def hermemulx(c):
     out : ndarray
         Array representing the result of the multiplication.
 
+    See Also
+    --------
+    hermeadd, hermesub, hermemul, hermediv, hermepow
+
     Notes
     -----
     The multiplication uses the recursion relationship for Hermite

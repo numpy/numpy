@@ -251,7 +251,9 @@ asfarray                Use ``np.asarray`` with a float dtype instead.
 byte_bounds             Now it's available under ``np.lib.array_utils.byte_bounds``
 cast                    Use ``np.asarray(arr, dtype=dtype)`` instead.
 cfloat                  Use ``np.complex128`` instead.
+charrarray              It's still available as ``np.char.chararray``.
 clongfloat              Use ``np.clongdouble`` instead.
+compare_chararrays      It's still available as ``np.char.compare_chararrays``.
 compat                  There's no replacement, as Python 2 is no longer supported.
 complex\_               Use ``np.complex128`` instead.
 cumproduct              Use ``np.cumprod`` instead.
@@ -266,6 +268,7 @@ find_common_type        Use ``numpy.promote_types`` or ``numpy.result_type`` ins
                         To achieve semantics for the ``scalar_types`` argument, 
                         use ``numpy.result_type`` and pass the Python values ``0``, 
                         ``0.0``, or ``0j``.
+format_parser           It's still available as ``np.rec.format_parser``.
 get_array_wrap
 float\_                 Use ``np.float64`` instead.
 geterrobj               Use the np.errstate context manager instead.

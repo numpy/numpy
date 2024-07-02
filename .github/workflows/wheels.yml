@@ -130,6 +130,11 @@ jobs:
       - name: Setup macOS
         if: matrix.buildplat[0] == 'macos-13' || matrix.buildplat[0] == 'macos-14'
         run: |
+          # Needed due to https://github.com/actions/runner-images/issues/3371
+          # Supported versions: https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md
+          echo "FC=gfortran-13" >> "$GITHUB_ENV"
+          echo "F77=gfortran-13" >> "$GITHUB_ENV"
+          echo "F90=gfortran-13" >> "$GITHUB_ENV"
           if [[ ${{ matrix.buildplat[2] }} == 'accelerate' ]]; then
             # macosx_arm64 and macosx_x86_64 with accelerate
             # only target Sonoma onwards
@@ -149,7 +154,7 @@ jobs:
           fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@a8d190a111314a07eb5116036c4b3fb26a4e3162  # v2.19.0
+        uses: pypa/cibuildwheel@932529cab190fafca8c735a551657247fa8f8eaf  # v2.19.1
         env:
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}

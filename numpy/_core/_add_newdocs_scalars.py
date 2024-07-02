@@ -301,11 +301,11 @@ add_newdoc_for_scalar_type('datetime64', [],
     offset of +0000.
 
     >>> np.datetime64(10, 'Y')
-    numpy.datetime64('1980')
+    np.datetime64('1980')
     >>> np.datetime64('1980', 'Y')
-    numpy.datetime64('1980')
+    np.datetime64('1980')
     >>> np.datetime64(10, 'D')
-    numpy.datetime64('1970-01-11')
+    np.datetime64('1970-01-11')
 
     See :ref:`arrays.datetime` for more information.
     """)

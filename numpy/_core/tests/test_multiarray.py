@@ -594,16 +594,16 @@ class TestAssignment:
     )
     def test_unicode_assignment(self):
         # gh-5049
-        from numpy._core.arrayprint import set_string_function
+        from numpy._core.arrayprint import set_printoptions
 
         @contextmanager
         def inject_str(s):
             """ replace ndarray.__str__ temporarily """
-            set_string_function(lambda x: s, repr=False)
+            set_printoptions(formatter={"all": lambda x: s})
             try:
                 yield
             finally:
-                set_string_function(None, repr=False)
+                set_printoptions()
 
         a1d = np.array(['test'])
         a0d = np.array('done')
@@ -10258,6 +10258,16 @@ def test_partition_fp(N, dtype):
             np.partition(arr, k, kind='introselect'))
     assert_arr_partitioned(np.sort(arr)[k], k,
             arr[np.argpartition(arr, k, kind='introselect')])
+
+    # Check that `np.inf < np.nan`
+    # This follows np.sort
+    arr[0] = np.nan
+    arr[1] = np.inf
+    o1 = np.partition(arr, -2, kind='introselect')
+    o2 = arr[np.argpartition(arr, -2, kind='introselect')]
+    for out in [o1, o2]:
+        assert_(np.isnan(out[-1]))
+        assert_equal(out[-2], np.inf)
 
 def test_cannot_assign_data():
     a = np.arange(10)

@@ -1,0 +1,12 @@
+`lapack_lite` is now thread safe
+--------------------------------
+
+NumPy provides a minimal low-performance version of LAPACK named ``lapack_lite``
+that can be used if no BLAS/LAPACK system is detected at build time.
+
+Until now, ``lapack_lite`` was not thread safe. Single-threaded use cases did
+not hit any issues, but running linear algebra operations in multiple threads
+could lead to errors, incorrect results, or seg faults due to data races.
+
+We have added a global lock, serializing access to ``lapack_lite`` in multiple
+threads.

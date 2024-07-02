@@ -1846,15 +1846,6 @@ add_newdoc('numpy._core.multiarray', '_reconstruct',
 
     """)
 
-
-add_newdoc('numpy._core.multiarray', 'set_string_function',
-    """
-    set_string_function(f, repr=1)
-
-    Internal method to set a function to be used when pretty printing arrays.
-
-    """)
-
 add_newdoc('numpy._core.multiarray', 'promote_types',
     """
     promote_types(type1, type2)
@@ -6612,7 +6603,7 @@ add_newdoc('numpy._core.multiarray', 'datetime_data',
     as a timedelta
 
     >>> np.datetime64('2010', np.datetime_data(dt_25s))
-    numpy.datetime64('2010-01-01T00:00:00','25s')
+    np.datetime64('2010-01-01T00:00:00','25s')
     """)
 
 
@@ -6953,19 +6944,19 @@ add_newdoc('numpy._core.multiarray', 'StringDType',
     array(["hello", "world"], dtype=StringDType())
 
     >>> arr = np.array(["hello", None, "world"],
-                       dtype=StringDType(na_object=None))
+    ...                dtype=StringDType(na_object=None))
     >>> arr
-    array(["hello", None, "world", dtype=StringDType(na_object=None))
+    array(["hello", None, "world"], dtype=StringDType(na_object=None))
     >>> arr[1] is None
     True
 
     >>> arr = np.array(["hello", np.nan, "world"],
-                       dtype=StringDType(na_object=np.nan))
+    ...                dtype=StringDType(na_object=np.nan))
     >>> np.isnan(arr)
     array([False, True, False])
 
     >>> np.array([1.2, object(), "hello world"],
-                 dtype=StringDType(coerce=True))
+    ...          dtype=StringDType(coerce=True))
     ValueError: StringDType only allows string data when string coercion
     is disabled.
 
