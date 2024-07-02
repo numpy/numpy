@@ -1391,15 +1391,7 @@ _NumberType = TypeVar("_NumberType", bound=number[Any])
 if sys.version_info >= (3, 12):
     from collections.abc import Buffer as _SupportsBuffer
 else:
-    _SupportsBuffer = (
-        bytes
-        | bytearray
-        | memoryview
-        | _array.array[Any]
-        | mmap.mmap
-        | NDArray[Any]
-        | generic
-    )
+    from typing_extensions import Buffer as _SupportsBuffer
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
@@ -1462,8 +1454,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         order: _OrderKACF = ...,
     ) -> _ArraySelf: ...
 
-    if sys.version_info >= (3, 12):
-        def __buffer__(self, flags: int, /) -> memoryview: ...
+    def __buffer__(self, flags: int, /) -> memoryview: ...
 
     def __class_getitem__(self, item: Any) -> GenericAlias: ...
 
@@ -2625,8 +2616,7 @@ class generic(_ArrayOrScalarCommon):
     @property
     def flat(self: _ScalarType) -> flatiter[NDArray[_ScalarType]]: ...
 
-    if sys.version_info >= (3, 12):
-        def __buffer__(self, flags: int, /) -> memoryview: ...
+    def __buffer__(self, flags: int, /) -> memoryview: ...
 
     @overload
     def astype(
