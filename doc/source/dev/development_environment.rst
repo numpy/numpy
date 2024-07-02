@@ -117,7 +117,7 @@ argument to pytest::
 To run "doctests" -- to check that the code examples in the documentation is correct --
 use the `check-docs` spin command. It relies on the `scipy-docs` package, which
 provides several additional features on top of the standard library ``doctest``
-package. Install ``scipy-doctest`` and run on of::
+package. Install ``scipy-doctest`` and run one of::
 
   $ spin check-docs -v
   $ spin check-docs numpy/linalg
