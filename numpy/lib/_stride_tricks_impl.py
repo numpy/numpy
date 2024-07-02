@@ -204,6 +204,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib.stride_tricks import sliding_window_view
     >>> x = np.arange(6)
     >>> x.shape
@@ -413,6 +414,7 @@ def broadcast_to(array, shape, subok=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 3])
     >>> np.broadcast_to(x, (3, 3))
     array([[1, 2, 3],
@@ -475,6 +477,7 @@ def broadcast_shapes(*args):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.broadcast_shapes((1, 2), (3, 1), (3, 2))
     (3, 2)
 
@@ -526,6 +529,7 @@ def broadcast_arrays(*args, subok=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([[1,2,3]])
     >>> y = np.array([[4],[5]])
     >>> np.broadcast_arrays(x, y)

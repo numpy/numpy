@@ -5023,13 +5023,13 @@ def default_rng(seed=None):
     is instantiated. This function does not manage a default global instance.
 
     See :ref:`seeding_and_entropy` for more information about seeding.
-    
+
     Examples
     --------
     `default_rng` is the recommended constructor for the random number class
     `Generator`. Here are several ways we can construct a random 
     number generator using `default_rng` and the `Generator` class. 
-    
+
     Here we use `default_rng` to generate a random float:
  
     >>> import numpy as np

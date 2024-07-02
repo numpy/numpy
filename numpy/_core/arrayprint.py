@@ -251,6 +251,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     --------
     Floating point precision can be set:
 
+    >>> import numpy as np
     >>> np.set_printoptions(precision=4)
     >>> np.array([1.123456789])
     [1.1235]
@@ -344,6 +345,7 @@ def get_printoptions():
 
     Examples
     --------
+    >>> import numpy as np
 
     >>> np.get_printoptions()
     {'edgeitems': 3, 'threshold': 1000, ..., 'override_repr': None}
@@ -378,6 +380,7 @@ def printoptions(*args, **kwargs):
 
     Examples
     --------
+    >>> import numpy as np
 
     >>> from numpy.testing import assert_equal
     >>> with np.printoptions(precision=2):
@@ -739,6 +742,7 @@ def array2string(a, max_line_width=None, precision=None,
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1e-16,1,2,3])
     >>> np.array2string(x, precision=2, separator=',',
     ...                       suppress_small=True)
@@ -1164,6 +1168,7 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.format_float_scientific(np.float32(np.pi))
     '3.1415927e+00'
     >>> s = np.float32(1.23e24)
@@ -1251,6 +1256,7 @@ def format_float_positional(x, precision=None, unique=True,
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.format_float_positional(np.float32(np.pi))
     '3.1415927'
     >>> np.format_float_positional(np.float16(np.pi))
@@ -1505,6 +1511,7 @@ def dtype_is_implied(dtype):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np._core.arrayprint.dtype_is_implied(int)
     True
     >>> np.array([1, 2, 3], int)
@@ -1650,6 +1657,7 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.array_repr(np.array([1,2]))
     'array([1, 2])'
     >>> np.array_repr(np.ma.array([0.]))
@@ -1730,6 +1738,7 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.array_str(np.arange(3))
     '[0 1 2]'
 

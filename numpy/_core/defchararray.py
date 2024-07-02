@@ -78,10 +78,11 @@ def equal(x1, x2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> y = "aa "
     >>> x = "aa"
     >>> np.char.equal(x, y)
-    array(True)    
+    array(True)
 
     See Also
     --------
@@ -115,10 +116,11 @@ def not_equal(x1, x2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.not_equal(x1, 'b')
     array([ True, False,  True])
-    
+
     """
     return compare_chararrays(x1, x2, '!=', True)
 
@@ -149,10 +151,11 @@ def greater_equal(x1, x2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.greater_equal(x1, 'b')
     array([False,  True,  True])
-    
+
     """
     return compare_chararrays(x1, x2, '>=', True)
 
@@ -182,10 +185,11 @@ def less_equal(x1, x2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.less_equal(x1, 'b')
     array([ True,  True, False])
-    
+
     """
     return compare_chararrays(x1, x2, '<=', True)
 
@@ -215,10 +219,11 @@ def greater(x1, x2):
     
     Examples
     --------
+    >>> import numpy as np
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.greater(x1, 'b')
     array([False, False,  True])
-    
+
     """
     return compare_chararrays(x1, x2, '>', True)
 
@@ -248,10 +253,11 @@ def less(x1, x2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.less(x1, 'b')
     array([True, False, False])
-    
+
     """
     return compare_chararrays(x1, x2, '<', True)
 
@@ -283,6 +289,7 @@ def multiply(a, i):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(["a", "b", "c"])
     >>> np.strings.multiply(a, 3)
     array(['aaa', 'bbb', 'ccc'], dtype='<U3')
@@ -334,10 +341,11 @@ def partition(a, sep):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array(["Numpy is nice!"])
     >>> np.char.partition(x, " ")
     array([['Numpy', ' ', 'is nice!']], dtype='<U8')
-    
+
     See Also
     --------
     str.partition
@@ -378,6 +386,7 @@ def rpartition(a, sep):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.char.rpartition(a, 'A')
     array([['aAaAa', 'A', ''],
@@ -515,6 +524,7 @@ class chararray(ndarray):
 
     Examples
     --------
+    >>> import numpy as np
     >>> charar = np.char.chararray((3, 3))
     >>> charar[:] = 'a'
     >>> charar
@@ -1383,9 +1393,10 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.char.asarray(['hello', 'world'])
     chararray(['hello', 'world'], dtype='<U5')
-    
+
     """
     return array(obj, itemsize, copy=False,
                  unicode=unicode, order=order)

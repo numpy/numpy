@@ -75,6 +75,7 @@ def require(a, dtype=None, requirements=None, *, like=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(6).reshape(2,3)
     >>> x.flags
       C_CONTIGUOUS : True

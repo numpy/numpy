@@ -30,6 +30,7 @@ def opt_func_info(func_name=None, signature=None):
     Retrieve dispatch information for functions named 'add' or 'sub' and
     data types 'float64' or 'float32':
 
+    >>> import numpy as np
     >>> dict = np.lib.introspect.opt_func_info(
     ...     func_name="add|abs", signature="float64|complex64"
     ... )

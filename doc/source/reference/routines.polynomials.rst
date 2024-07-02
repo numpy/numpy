@@ -83,17 +83,19 @@ convert from the legacy polynomial API to the new.
 For example, the following demonstrates how you would convert a `numpy.poly1d`
 instance representing the expression :math:`x^{2} + 2x + 3` to a
 `~numpy.polynomial.polynomial.Polynomial` instance representing the same
-expression::
+expression:
+
+    >>> import numpy as np
 
     >>> p1d = np.poly1d([1, 2, 3])
     >>> p = np.polynomial.Polynomial(p1d.coef[::-1])
 
-In addition to the ``coef`` attribute, polynomials from the polynomial
-package also have ``domain`` and ``window`` attributes.
-These attributes are most relevant when fitting
-polynomials to data, though it should be noted that polynomials with
-different ``domain`` and ``window`` attributes are not considered equal, and
-can't be mixed in arithmetic::
+    In addition to the ``coef`` attribute, polynomials from the polynomial
+    package also have ``domain`` and ``window`` attributes.
+    These attributes are most relevant when fitting
+    polynomials to data, though it should be noted that polynomials with
+    different ``domain`` and ``window`` attributes are not considered equal, and
+    can't be mixed in arithmetic:
 
     >>> p1 = np.polynomial.Polynomial([1, 2, 3])
     >>> p1

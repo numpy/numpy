@@ -68,6 +68,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 4, 7, 0])
     >>> np.ediff1d(x)
     array([ 1,  2,  3, -7])
@@ -233,6 +234,7 @@ def unique(ar, return_index=False, return_inverse=False,
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.unique([1, 1, 2, 2, 3, 3])
     array([1, 2, 3])
     >>> a = np.array([[1, 1], [2, 3]])
@@ -435,6 +437,7 @@ def unique_all(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.unique_all([1, 1, 2])
     UniqueAllResult(values=array([1, 2]),
                     indices=array([0, 2]),
@@ -486,6 +489,7 @@ def unique_counts(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.unique_counts([1, 1, 2])
     UniqueCountsResult(values=array([1, 2]), counts=array([2, 1]))
 
@@ -535,6 +539,7 @@ def unique_inverse(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.unique_inverse([1, 1, 2])
     UniqueInverseResult(values=array([1, 2]), inverse_indices=array([0, 0, 1]))
 
@@ -580,6 +585,7 @@ def unique_values(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.unique_values([1, 1, 2])
     array([1, 2])
 
@@ -634,6 +640,7 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.intersect1d([1, 3, 4, 3], [3, 1, 2, 1])
     array([1, 3])
 
@@ -719,6 +726,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([1, 2, 3, 2, 4])
     >>> b = np.array([2, 3, 5, 7, 5])
     >>> np.setxor1d(a,b)
@@ -822,6 +830,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> test = np.array([0, 1, 2, 5, 0])
     >>> states = [0, 2]
     >>> mask = np.in1d(test, states)
@@ -1060,6 +1069,7 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
 
     Examples
     --------
+    >>> import numpy as np
     >>> element = 2*np.arange(4).reshape((2, 2))
     >>> element
     array([[0, 2],
@@ -1129,6 +1139,7 @@ def union1d(ar1, ar2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.union1d([-1, 0, 1], [-2, 0, 2])
     array([-2, -1,  0,  1,  2])
 
@@ -1171,6 +1182,7 @@ def setdiff1d(ar1, ar2, assume_unique=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([1, 2, 3, 2, 4, 1])
     >>> b = np.array([3, 4, 5, 6])
     >>> np.setdiff1d(a, b)

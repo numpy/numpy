@@ -42,6 +42,7 @@ def fftshift(x, axes=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> freqs = np.fft.fftfreq(10, 0.1)
     >>> freqs
     array([ 0.,  1.,  2., ..., -3., -2., -1.])
@@ -97,6 +98,7 @@ def ifftshift(x, axes=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> freqs = np.fft.fftfreq(9, d=1./9).reshape(3, 3)
     >>> freqs
     array([[ 0.,  1.,  2.],
@@ -153,6 +155,7 @@ def fftfreq(n, d=1.0, device=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> signal = np.array([-2, 8, 6, 4, 1, 0, 3, 5], dtype=float)
     >>> fourier = np.fft.fft(signal)
     >>> n = signal.size
@@ -211,6 +214,7 @@ def rfftfreq(n, d=1.0, device=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> signal = np.array([-2, 8, 6, 4, 1, 0, 3, 5, -3, 4], dtype=float)
     >>> fourier = np.fft.rfft(signal)
     >>> n = signal.size
