@@ -181,8 +181,9 @@ jobs:
     - name: Check docstests
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       run: |
-        pip install scipy-doctest hypothesis matplotlib scipy pytz
+        pip install scipy-doctest hypothesis matplotlib scipy pytz pandas
         spin check-docs -v
+        spin check-tutorials -v
 
   sdist:
     needs: [smoke_test]
