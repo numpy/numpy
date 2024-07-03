@@ -21,13 +21,23 @@ ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'power', 'rad2deg', 'radians', 'reciprocal', 'remainder',
           'right_shift', 'rint', 'sign', 'signbit', 'sin',
           'sinh', 'spacing', 'sqrt', 'square', 'subtract', 'tan', 'tanh',
-          'true_divide', 'trunc']
+          'true_divide', 'trunc', 'vecdot']
 arrayfuncdisp = ['real', 'round']
 
+for name in ufuncs:
+    f = getattr(np, name, None)
+    if not isinstance(f, np.ufunc):
+        raise ValueError(f"Bench target `np.{name}` is not a ufunc")
 
-for name in dir(np):
-    if isinstance(getattr(np, name, None), np.ufunc) and name not in ufuncs:
-        print("Missing ufunc %r" % (name,))
+all_ufuncs = (getattr(np, name, None) for name in dir(np))
+all_ufuncs = set(filter(lambda f: isinstance(f, np.ufunc), all_ufuncs))
+bench_ufuncs = set((getattr(np, name, None) for name in ufuncs))
+
+missing_ufuncs = all_ufuncs - bench_ufuncs
+if len(missing_ufuncs) > 0:
+    missing_ufunc_names = [f.__name__ for f in missing_ufuncs]
+    raise NotImplementedError(
+        "Missing benchmarks for ufuncs %r" % missing_ufunc_names)
 
 
 class ArrayFunctionDispatcher(Benchmark):
