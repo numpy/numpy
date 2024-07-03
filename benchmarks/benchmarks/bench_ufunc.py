@@ -24,10 +24,13 @@ ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'true_divide', 'trunc']
 arrayfuncdisp = ['real', 'round']
 
-
+missing_ufuncs = []
 for name in dir(np):
     if isinstance(getattr(np, name, None), np.ufunc) and name not in ufuncs:
-        print("Missing ufunc %r" % (name,))
+        missing_ufuncs.append(name)
+if len(missing_ufuncs) > 0:
+    raise NotImplementedError(
+        "Missing benchmarks for ufuncs %r" % missing_ufuncs)
 
 
 class ArrayFunctionDispatcher(Benchmark):
