@@ -876,6 +876,40 @@ def outer(x1, x2, /):
     --------
     outer
 
+    Examples
+    --------
+    Make a (*very* coarse) grid for computing a Mandelbrot set:
+
+    >>> rl = np.linalg.outer(np.ones((5,)), np.linspace(-2, 2, 5))
+    >>> rl
+    array([[-2., -1.,  0.,  1.,  2.],
+           [-2., -1.,  0.,  1.,  2.],
+           [-2., -1.,  0.,  1.,  2.],
+           [-2., -1.,  0.,  1.,  2.],
+           [-2., -1.,  0.,  1.,  2.]])
+    >>> im = np.linalg.outer(1j*np.linspace(2, -2, 5), np.ones((5,)))
+    >>> im
+    array([[0.+2.j, 0.+2.j, 0.+2.j, 0.+2.j, 0.+2.j],
+           [0.+1.j, 0.+1.j, 0.+1.j, 0.+1.j, 0.+1.j],
+           [0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j],
+           [0.-1.j, 0.-1.j, 0.-1.j, 0.-1.j, 0.-1.j],
+           [0.-2.j, 0.-2.j, 0.-2.j, 0.-2.j, 0.-2.j]])
+    >>> grid = rl + im
+    >>> grid
+    array([[-2.+2.j, -1.+2.j,  0.+2.j,  1.+2.j,  2.+2.j],
+           [-2.+1.j, -1.+1.j,  0.+1.j,  1.+1.j,  2.+1.j],
+           [-2.+0.j, -1.+0.j,  0.+0.j,  1.+0.j,  2.+0.j],
+           [-2.-1.j, -1.-1.j,  0.-1.j,  1.-1.j,  2.-1.j],
+           [-2.-2.j, -1.-2.j,  0.-2.j,  1.-2.j,  2.-2.j]])
+
+    An example using a "vector" of letters:
+
+    >>> x = np.array(['a', 'b', 'c'], dtype=object)
+    >>> np.linalg.outer(x, [1, 2, 3])
+    array([['a', 'aa', 'aaa'],
+           ['b', 'bb', 'bbb'],
+           ['c', 'cc', 'ccc']], dtype=object)
+
     """
     x1 = asanyarray(x1)
     x2 = asanyarray(x2)
@@ -1851,6 +1885,23 @@ def svdvals(x, /):
     See Also
     --------
     scipy.linalg.svdvals : Compute singular values of a matrix.
+
+    Examples
+    --------
+
+    >>> np.linalg.svdvals([[1, 2, 3, 4, 5],
+    ...                    [1, 4, 9, 16, 25],
+    ...                    [1, 8, 27, 64, 125]])
+    array([146.68862757,   5.57510612,   0.60393245])
+
+    Determine the rank of a matrix using singular values:
+
+    >>> s = np.linalg.svdvals([[1, 2, 3],
+    ...                        [2, 4, 6],
+    ...                        [-1, 1, -1]]); s
+    array([8.38434191e+00, 1.64402274e+00, 2.31534378e-16])
+    >>> np.count_nonzero(s > 1e-10)  # Matrix of rank 2
+    2
 
     """
     return svd(x, compute_uv=False, hermitian=False)
@@ -3073,6 +3124,58 @@ def diagonal(x, /, *, offset=0):
     --------
     numpy.diagonal
 
+    Examples
+    --------
+    >>> a = np.arange(4).reshape(2, 2); a
+    array([[0, 1],
+           [2, 3]])
+    >>> np.linalg.diagonal(a)
+    array([0, 3])
+
+    A 3-D example:
+
+    >>> a = np.arange(8).reshape(2, 2, 2); a
+    array([[[0, 1],
+            [2, 3]],
+           [[4, 5],
+            [6, 7]]])
+    >>> np.linalg.diagonal(a)
+    array([[0, 3],
+           [4, 7]])
+
+    Diagonals adjacent to the main diagonal can be obtained by using the
+    `offset` argument:
+
+    >>> a = np.arange(9).reshape(3, 3)
+    >>> a
+    array([[0, 1, 2],
+           [3, 4, 5],
+           [6, 7, 8]])
+    >>> np.linalg.diagonal(a, offset=1)  # First superdiagonal
+    array([1, 5])
+    >>> np.linalg.diagonal(a, offset=2)  # Second superdiagonal
+    array([2])
+    >>> np.linalg.diagonal(a, offset=-1)  # First subdiagonal
+    array([3, 7])
+    >>> np.linalg.diagonal(a, offset=-2)  # Second subdiagonal
+    array([6])
+
+    The anti-diagonal can be obtained by reversing the order of elements
+    using either `numpy.flipud` or `numpy.fliplr`.
+
+    >>> a = np.arange(9).reshape(3, 3)
+    >>> a
+    array([[0, 1, 2],
+           [3, 4, 5],
+           [6, 7, 8]])
+    >>> np.linalg.diagonal(np.fliplr(a))  # Horizontal flip
+    array([2, 4, 6])
+    >>> np.linalg.diagonal(np.flipud(a))  # Vertical flip
+    array([6, 4, 2])
+
+    Note that the order in which the diagonal is retrieved varies depending
+    on the flip function.
+
     """
     return _core_diagonal(x, offset, axis1=-2, axis2=-1)
 
@@ -3126,6 +3229,38 @@ def trace(x, /, *, offset=0, dtype=None):
     --------
     numpy.trace
 
+    Examples
+    --------
+    >>> np.linalg.trace(np.eye(3))
+    3.0
+    >>> a = np.arange(8).reshape((2, 2, 2))
+    >>> np.linalg.trace(a)
+    array([3, 11])
+
+    Trace is computed with the last two axes as the 2-d sub-arrays.
+    This behavior differs from :py:func:`numpy.trace` which uses the first two
+    axes by default.
+
+    >>> a = np.arange(24).reshape((3, 2, 2, 2))
+    >>> np.linalg.trace(a).shape
+    (3, 2)
+
+    Traces adjacent to the main diagonal can be obtained by using the
+    `offset` argument:
+
+    >>> a = np.arange(9).reshape((3, 3)); a
+    array([[0, 1, 2],
+           [3, 4, 5],
+           [6, 7, 8]])
+    >>> np.linalg.trace(a, offset=1)  # First superdiagonal
+    6
+    >>> np.linalg.trace(a, offset=2)  # Second superdiagonal
+    2
+    >>> np.linalg.trace(a, offset=-1)  # First subdiagonal
+    10
+    >>> np.linalg.trace(a, offset=-2)  # Second subdiagonal
+    6
+
     """
     return _core_trace(x, offset, axis1=-2, axis2=-1, dtype=dtype)
 
@@ -3169,6 +3304,31 @@ def cross(x1, x2, /, *, axis=-1):
     See Also
     --------
     numpy.cross
+
+    Examples
+    --------
+    Vector cross-product.
+
+    >>> x = np.array([1, 2, 3])
+    >>> y = np.array([4, 5, 6])
+    >>> np.linalg.cross(x, y)
+    array([-3,  6, -3])
+
+    Multiple vector cross-products. Note that the direction of the cross
+    product vector is defined by the *right-hand rule*.
+
+    >>> x = np.array([[1,2,3], [4,5,6]])
+    >>> y = np.array([[4,5,6], [1,2,3]])
+    >>> np.linalg.cross(x, y)
+    array([[-3,  6, -3],
+           [ 3, -6,  3]])
+
+    >>> x = np.array([[1, 2], [3, 4], [5, 6]])
+    >>> y = np.array([[4, 5], [6, 1], [2, 3]])
+    >>> np.linalg.cross(x, y, axis=0)
+    array([[-24,  6],
+           [ 18, 24],
+           [-6,  -18]])
 
     """
     x1 = asanyarray(x1)
@@ -3222,6 +3382,53 @@ def matmul(x1, x2, /):
     See Also
     --------
     numpy.matmul
+
+    Examples
+    --------
+    For 2-D arrays it is the matrix product:
+
+    >>> a = np.array([[1, 0],
+    ...               [0, 1]])
+    >>> b = np.array([[4, 1],
+    ...               [2, 2]])
+    >>> np.linalg.matmul(a, b)
+    array([[4, 1],
+           [2, 2]])
+
+    For 2-D mixed with 1-D, the result is the usual.
+
+    >>> a = np.array([[1, 0],
+    ...               [0, 1]])
+    >>> b = np.array([1, 2])
+    >>> np.linalg.matmul(a, b)
+    array([1, 2])
+    >>> np.linalg.matmul(b, a)
+    array([1, 2])
+
+
+    Broadcasting is conventional for stacks of arrays
+
+    >>> a = np.arange(2 * 2 * 4).reshape((2, 2, 4))
+    >>> b = np.arange(2 * 2 * 4).reshape((2, 4, 2))
+    >>> np.linalg.matmul(a,b).shape
+    (2, 2, 2)
+    >>> np.linalg.matmul(a, b)[0, 1, 1]
+    98
+    >>> sum(a[0, 1, :] * b[0 , :, 1])
+    98
+
+    Vector, vector returns the scalar inner product, but neither argument
+    is complex-conjugated:
+
+    >>> np.linalg.matmul([2j, 3j], [2j, 3j])
+    (-13+0j)
+
+    Scalar multiplication raises an error.
+
+    >>> np.linalg.matmul([1,2], 3)
+    Traceback (most recent call last):
+    ...
+    ValueError: matmul: Input operand 1 does not have enough dimensions ...
 
     """
     return _core_matmul(x1, x2)
@@ -3282,6 +3489,36 @@ def matrix_norm(x, /, *, keepdims=False, ord="fro"):
     --------
     numpy.linalg.norm : Generic norm function
 
+    Examples
+    --------
+    >>> from numpy import linalg as LA
+    >>> a = np.arange(9) - 4
+    >>> a
+    array([-4, -3, -2, ...,  2,  3,  4])
+    >>> b = a.reshape((3, 3))
+    >>> b
+    array([[-4, -3, -2],
+           [-1,  0,  1],
+           [ 2,  3,  4]])
+
+    >>> LA.matrix_norm(b)
+    7.745966692414834
+    >>> LA.matrix_norm(b, ord='fro')
+    7.745966692414834
+    >>> LA.matrix_norm(b, ord=np.inf)
+    9.0
+    >>> LA.matrix_norm(b, ord=-np.inf)
+    2.0
+
+    >>> LA.matrix_norm(b, ord=1)
+    7.0
+    >>> LA.matrix_norm(b, ord=-1)
+    6.0
+    >>> LA.matrix_norm(b, ord=2)
+    7.3484692283495345
+    >>> LA.matrix_norm(b, ord=-2)
+    1.8570331885190563e-016 # may vary
+
     """
     x = asanyarray(x)
     return norm(x, axis=(-2, -1), keepdims=keepdims, ord=ord)
@@ -3320,6 +3557,34 @@ def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
     See Also
     --------
     numpy.linalg.norm : Generic norm function
+
+    Examples
+    --------
+    >>> from numpy import linalg as LA
+    >>> a = np.arange(9) + 1
+    >>> a
+    array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> b = a.reshape((3, 3))
+    >>> b
+    array([[1, 2, 3],
+           [4, 5, 6],
+           [7, 8, 9]])
+
+    >>> LA.vector_norm(b)
+    16.881943016134134
+    >>> LA.vector_norm(b, ord=np.inf)
+    9.0
+    >>> LA.vector_norm(b, ord=-np.inf)
+    1.0
+
+    >>> LA.vector_norm(b, ord=1)
+    45.0
+    >>> LA.vector_norm(b, ord=-1)
+    0.3534857623790153
+    >>> LA.vector_norm(b, ord=2)
+    16.881943016134134
+    >>> LA.vector_norm(b, ord=-2)
+    0.8058837395885292
 
     """
     x = asanyarray(x)
@@ -3399,6 +3664,15 @@ def vecdot(x1, x2, /, *, axis=-1):
     See Also
     --------
     numpy.vecdot
+
+    Examples
+    --------
+    Get the projected size along a given normal for an array of vectors.
+
+    >>> v = np.array([[0., 5., 0.], [0., 0., 10.], [0., 6., 8.]])
+    >>> n = np.array([0., 0.6, 0.8])
+    >>> np.linalg.vecdot(v, n)
+    array([ 3.,  8., 10.])
 
     """
     return _core_vecdot(x1, x2, axis=axis)
