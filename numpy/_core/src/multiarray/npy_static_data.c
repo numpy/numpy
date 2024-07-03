@@ -148,6 +148,9 @@ initialize_static_globals(void)
     IMPORT_GLOBAL("numpy._core._exceptions", "_UFuncOutputCastingError",
                   npy_static_pydata._UFuncOutputCastingError);
 
+    IMPORT_GLOBAL("numpy._core._printoptions", "_format_options",
+                  npy_static_pydata._format_options);
+
     IMPORT_GLOBAL("os", "fspath",
                   npy_static_pydata.os_fspath);
 

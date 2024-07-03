@@ -99,16 +99,42 @@ _umath_strings_richcompare(
         PyArrayObject *self, PyArrayObject *other, int cmp_op, int rstrip);
 
 
-static PyObject *
-set_legacy_print_mode(PyObject *NPY_UNUSED(self), PyObject *args)
-{
-    if (!PyArg_ParseTuple(args, "i", &npy_thread_unsafe_state.legacy_print_mode)) {
-        return NULL;
+NPY_NO_EXPORT int
+get_legacy_print_mode(void) {
+    /*
+     * Get the C value of the legacy printing mode.
+     * accessible from C. For simplicity the mode is encoded as an
+     * integer where INT_MAX means no legacy mode, and '113'/'121'/'125'
+     * means 1.13/1.21/1.25 legacy mode; and 0 maps to INT_MAX. We can
+     * upgrade this if we have more complex requirements in the future.
+     */
+    PyObject *val = NULL;
+    PyContextVar_Get(npy_static_pydata._format_options, NULL, &val);
+    if (val == NULL) {
+        PyErr_SetString(PyExc_SystemError,
+                        "NumPy internal error: unable to get _format_options "
+                        "context variable");
+        return -1;
     }
-    if (!npy_thread_unsafe_state.legacy_print_mode) {
-        npy_thread_unsafe_state.legacy_print_mode = INT_MAX;
+    PyObject *legacy_print_mode = NULL;
+    if (PyDict_GetItemStringRef(val, "legacy", &legacy_print_mode) == -1) {
+        return -1;
     }
-    Py_RETURN_NONE;
+    Py_DECREF(val);
+    if (legacy_print_mode == NULL) {
+        PyErr_SetString(PyExc_SystemError,
+                        "NumPy internal error: unable to get legacy print "
+                        "mode");
+    }
+    long long ret = PyLong_AsLongLong(legacy_print_mode);
+    Py_DECREF(legacy_print_mode);
+    // TODO: check for overflow, which should never happen
+    if (ret == LLONG_MAX) {
+        return INT_MAX;
+    }
+    // in principle this cast to int could overflow, in practice ret is never
+    // bigger than 125 and will almost certainly never exceed INT_MAX
+    return (int)ret;
 }
 
 
@@ -4540,8 +4566,6 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"normalize_axis_index", (PyCFunction)normalize_axis_index,
         METH_FASTCALL | METH_KEYWORDS, NULL},
-    {"set_legacy_print_mode", (PyCFunction)set_legacy_print_mode,
-        METH_VARARGS, NULL},
     {"_discover_array_parameters", (PyCFunction)_discover_array_parameters,
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"_get_castingimpl",  (PyCFunction)_get_castingimpl,
@@ -4770,8 +4794,6 @@ initialize_thread_unsafe_state(void) {
     else {
         npy_thread_unsafe_state.warn_if_no_mem_policy = 0;
     }
-
-    npy_thread_unsafe_state.legacy_print_mode = INT_MAX;
 
     return 0;
 }

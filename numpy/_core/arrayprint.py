@@ -35,38 +35,17 @@ from . import numerictypes as _nt
 from .umath import absolute, isinf, isfinite, isnat
 from . import multiarray
 from .multiarray import (array, dragon4_positional, dragon4_scientific,
-                         datetime_as_string, datetime_data, ndarray,
-                         set_legacy_print_mode as c_set_legacy_print_mode)
+                         datetime_as_string, datetime_data, ndarray)
 from .fromnumeric import any
 from .numeric import concatenate, asarray, errstate
 from .numerictypes import (longlong, intc, int_, float64, complex128,
                            flexible)
 from .overrides import array_function_dispatch, set_module
+from ._printoptions import _format_options
 import operator
 import warnings
 import contextlib
-from contextvars import ContextVar
 
-
-_default_format_options_dict = {
-    "edgeitems": 3,  # repr N leading and trailing items of each dimension
-    "threshold": 1000,  # total items > triggers array summarization
-    "floatmode": "maxprec",
-    "precision": 8,  # precision of floating point representations
-    "suppress": False,  # suppress printing small floating values in exp format
-    "linewidth": 75,
-    "nanstr": "nan",
-    "infstr": "inf",
-    "sign": "-",
-    "formatter": None,
-    # Internally stored as an int to simplify comparisons; converted from/to
-    # str/False on the way in/out.
-    'legacy': sys.maxsize,
-    'override_repr': None,
-}
-
-_format_options = ContextVar(
-    "format_options", default=_default_format_options_dict.copy())
 
 def _make_options_dict(precision=None, threshold=None, edgeitems=None,
                        linewidth=None, suppress=None, nanstr=None, infstr=None,
@@ -124,17 +103,9 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
 
 
 def _set_legacy_print_mode(format_options: dict) -> None:
-    # set the C variable for legacy mode
     if format_options['legacy'] == 113:
-        c_set_legacy_print_mode(113)
         # reset the sign option in legacy mode to avoid confusion
         format_options['sign'] = '-'
-    elif format_options['legacy'] == 121:
-        c_set_legacy_print_mode(121)
-    elif format_options['legacy'] == 125:
-        c_set_legacy_print_mode(125)
-    elif format_options['legacy'] == sys.maxsize:
-        c_set_legacy_print_mode(0)
 
 
 @set_module('numpy')

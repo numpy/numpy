@@ -105,6 +105,7 @@ typedef struct npy_static_pydata_struct {
     PyObject *math_gcd_func;
     PyObject *os_PathLike;
     PyObject *os_fspath;
+    PyObject *_format_options;
 
     /*
      * Used in the __array__ internals to avoid building a tuple inline

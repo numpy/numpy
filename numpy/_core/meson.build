@@ -1295,6 +1295,7 @@ python_sources = [
   '_internal.pyi',
   '_machar.py',
   '_methods.py',
+  '_printoptions.py',
   '_string_helpers.py',
   '_type_aliases.py',
   '_type_aliases.pyi',
