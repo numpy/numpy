@@ -137,30 +137,6 @@ def _set_legacy_print_mode(format_options: dict) -> None:
         c_set_legacy_print_mode(0)
 
 
-def _set_printoptions(precision=None, threshold=None, edgeitems=None,
-                     linewidth=None, suppress=None, nanstr=None,
-                     infstr=None, formatter=None, sign=None, floatmode=None,
-                      legacy=None, override_repr=None):
-    """
-    ...
-    """
-    new_opt = _make_options_dict(precision, threshold, edgeitems, linewidth,
-                            suppress, nanstr, infstr, sign, formatter,
-                            floatmode, legacy)
-    # formatter is always reset
-    new_opt['formatter'] = formatter
-    new_opt['override_repr'] = override_repr
-
-    current_opt = _format_options.get().copy()
-    current_opt.update(new_opt)
-    updated_opt = current_opt
-
-    _set_legacy_print_mode(updated_opt)
-
-    token = _format_options.set(updated_opt)
-    return token
-
-
 @set_module('numpy')
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
                      linewidth=None, suppress=None, nanstr=None,
@@ -338,9 +314,21 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     array([ 0.  ,  1.11,  2.22, ...,  7.78,  8.89, 10.  ])
 
     """
-    _set_printoptions(precision, threshold, edgeitems, linewidth, suppress,
-                      nanstr, infstr, formatter, sign, floatmode, legacy,
-                      override_repr)
+    new_opt = _make_options_dict(precision, threshold, edgeitems, linewidth,
+                            suppress, nanstr, infstr, sign, formatter,
+                            floatmode, legacy)
+    # formatter is always reset
+    new_opt['formatter'] = formatter
+    new_opt['override_repr'] = override_repr
+
+    current_opt = _format_options.get().copy()
+    current_opt.update(new_opt)
+    updated_opt = current_opt
+
+    _set_legacy_print_mode(updated_opt)
+
+    token = _format_options.set(updated_opt)
+    return token
 
 
 @set_module('numpy')
@@ -422,7 +410,7 @@ def printoptions(*args, **kwargs):
 
     """
     try:
-        token = _set_printoptions(*args, **kwargs)
+        token = set_printoptions(*args, **kwargs)
         yield get_printoptions()
     finally:
         _format_options.reset(token)
