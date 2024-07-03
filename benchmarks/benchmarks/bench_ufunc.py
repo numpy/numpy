@@ -21,7 +21,7 @@ ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'power', 'rad2deg', 'radians', 'reciprocal', 'remainder',
           'right_shift', 'rint', 'sign', 'signbit', 'sin',
           'sinh', 'spacing', 'sqrt', 'square', 'subtract', 'tan', 'tanh',
-          'true_divide', 'trunc']
+          'true_divide', 'trunc', 'vecdot']
 arrayfuncdisp = ['real', 'round']
 
 for name in ufuncs:
