@@ -20,14 +20,32 @@
 extern "C" {
 #endif
 
-/*
- * Macros to protect CRT calls against instant termination when passed an
- * invalid parameter (https://bugs.python.org/issue23524).
- */
+/* Python13 removes _PyLong_AsInt */
+static inline int
+Npy__PyLong_AsInt(PyObject *obj)
+{
+    int overflow;
+    long result = PyLong_AsLongAndOverflow(obj, &overflow);
+
+    /* INT_MAX and INT_MIN are defined in Python.h */
+    if (overflow || result > INT_MAX || result < INT_MIN) {
+        /* XXX: could be cute and give a different
+           message for overflow == -1 */
+        PyErr_SetString(PyExc_OverflowError,
+                        "Python int too large to convert to C int");
+        return -1;
+    }
+    return (int)result;
+}
+
 #if defined _MSC_VER && _MSC_VER >= 1900
 
 #include <stdlib.h>
 
+/*
+ * Macros to protect CRT calls against instant termination when passed an
+ * invalid parameter (https://bugs.python.org/issue23524).
+ */
 extern _invalid_parameter_handler _Py_silent_invalid_parameter_handler;
 #define NPY_BEGIN_SUPPRESS_IPH { _invalid_parameter_handler _Py_old_handler = \
     _set_thread_local_invalid_parameter_handler(_Py_silent_invalid_parameter_handler);
@@ -39,7 +57,6 @@ extern _invalid_parameter_handler _Py_silent_invalid_parameter_handler;
 #define NPY_END_SUPPRESS_IPH
 
 #endif /* _MSC_VER >= 1900 */
-
 
 /*
  * PyFile_* compatibility
