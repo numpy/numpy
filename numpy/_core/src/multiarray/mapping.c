@@ -1960,7 +1960,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         tmp_arr = (PyArrayObject *)op;
     }
 
-    if (tmp_arr && solve_may_share_memory(self, tmp_arr, 1) == 1) {
+    if (tmp_arr && solve_may_share_memory(self, tmp_arr, 1) != 0) {
         Py_SETREF(tmp_arr, (PyArrayObject *)PyArray_NewCopy(tmp_arr, NPY_ANYORDER));
     }
 
