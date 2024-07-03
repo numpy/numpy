@@ -4702,7 +4702,7 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     DUAL_INHERIT(CDouble, Complex, ComplexFloating);
     SINGLE_INHERIT(CLongDouble, ComplexFloating);
 
-    DUAL_INHERIT2(String, String, Character);
+    DUAL_INHERIT2(String, Bytes, Character);
     DUAL_INHERIT2(Unicode, Unicode, Character);
 
     SINGLE_INHERIT(Void, Flexible);

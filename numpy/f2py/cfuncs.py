@@ -878,13 +878,13 @@ int_from_pyobj(int* v, PyObject *obj, const char *errmess)
     PyObject* tmp = NULL;
 
     if (PyLong_Check(obj)) {
-        *v = Npy__PyLong_AsInt(obj);
+        *v = _PyLong_AsInt(obj);
         return !(*v == -1 && PyErr_Occurred());
     }
 
     tmp = PyNumber_Long(obj);
     if (tmp) {
-        *v = Npy__PyLong_AsInt(tmp);
+        *v = _PyLong_AsInt(tmp);
         Py_DECREF(tmp);
         return !(*v == -1 && PyErr_Occurred());
     }
