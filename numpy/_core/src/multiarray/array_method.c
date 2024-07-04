@@ -31,6 +31,7 @@
 #define _MULTIARRAYMODULE
 
 #include <npy_pycompat.h>
+#include <numpy/ndarrayobject.h>
 #include "arrayobject.h"
 #include "array_coercion.h"
 #include "array_method.h"
