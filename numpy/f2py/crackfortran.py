@@ -2083,14 +2083,16 @@ def postcrack(block, args=None, tab=''):
         args = block['args']
     block['body'] = analyzebody(block, args, tab=tab)
 
-    userisdefined = []
     if 'use' in block:
         useblock = block['use']
-        for k in list(useblock.keys()):
-            if '__user__' in k:
-                userisdefined.append(k)
+        userisdefined = [
+            k
+            for k in useblock
+            if '__user__' in k
+        ]
     else:
         useblock = {}
+        userisdefined = []
     name = ''
     if 'name' in block:
         name = block['name']
@@ -2473,10 +2475,11 @@ def get_parameters(vars, global_params={}):
                        ('selected_real_kind', _selected_real_kind_func), ]:
         if name not in g_params:
             g_params[name] = func
-    param_names = []
-    for n in get_sorted_names(vars):
-        if 'attrspec' in vars[n] and 'parameter' in vars[n]['attrspec']:
-            param_names.append(n)
+    param_names = [
+        n
+        for n in get_sorted_names(vars)
+        if 'attrspec' in vars[n] and 'parameter' in vars[n]['attrspec']
+    ]
     kind_re = re.compile(r'\bkind\s*\(\s*(?P<value>.*)\s*\)', re.I)
     selected_int_kind_re = re.compile(
         r'\bselected_int_kind\s*\(\s*(?P<value>.*)\s*\)', re.I)
@@ -2619,9 +2622,11 @@ def analyzevars(block):
             svars.append(a)
         except KeyError:
             pass
-    for n in list(vars.keys()):
-        if n not in args:
-            svars.append(n)
+    svars.extend(
+        n
+        for n in vars
+        if n not in args
+    )
 
     params = get_parameters(vars, get_useparameters(block))
     # At this point, params are read and interpreted, but
@@ -3381,10 +3386,11 @@ def true_intent_list(var):
 def vars2fortran(block, vars, args, tab='', as_interface=False):
     setmesstext(block)
     ret = ''
-    nout = []
-    for a in args:
-        if a in block['vars']:
-            nout.append(a)
+    nout = [
+        a
+        for a in args
+        if a in block['vars']
+    ]
     if 'commonvars' in block:
         for a in block['commonvars']:
             if a in vars:

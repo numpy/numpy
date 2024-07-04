@@ -1436,8 +1436,10 @@ def make_arrays(funcdict):
             else:
                 funclist.append('NULL')
 
-            for x in t.in_ + t.out:
-                siglist.append('NPY_%s' % (english_upper(chartoname[x]),))
+            siglist.extend(
+                'NPY_%s' % (english_upper(chartoname[x]),)
+                for x in t.in_ + t.out
+            )
 
             k += 1
 

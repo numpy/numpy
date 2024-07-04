@@ -44,8 +44,9 @@ def flags_info(arr):
 
 
 def flags2names(flags):
-    info = []
-    for flagname in [
+    return [
+        flagname
+        for flagname in (
             "CONTIGUOUS",
             "FORTRAN",
             "OWNDATA",
@@ -60,10 +61,9 @@ def flags2names(flags):
             "BEHAVED_RO",
             "CARRAY",
             "FARRAY",
-    ]:
-        if abs(flags) & getattr(wrap, flagname, 0):
-            info.append(flagname)
-    return info
+        )
+        if abs(flags) & getattr(wrap, flagname, 0)
+    ]
 
 
 class Intent:
@@ -226,29 +226,27 @@ class Type:
 
     def smaller_types(self):
         bits = c_names_dict[self.NAME].alignment
-        types = []
-        for name in _type_names:
-            if c_names_dict[name].alignment < bits:
-                types.append(Type(name))
-        return types
+        return [
+            Type(name)
+            for name in _type_names
+            if c_names_dict[name].alignment < bits
+        ]
 
     def equal_types(self):
         bits = c_names_dict[self.NAME].alignment
-        types = []
-        for name in _type_names:
-            if name == self.NAME:
-                continue
-            if c_names_dict[name].alignment == bits:
-                types.append(Type(name))
-        return types
+        return [
+            Type(name)
+            for name in _type_names
+            if name != self.NAME and c_names_dict[name].alignment == bits
+        ]
 
     def larger_types(self):
         bits = c_names_dict[self.NAME].alignment
-        types = []
-        for name in _type_names:
-            if c_names_dict[name].alignment > bits:
-                types.append(Type(name))
-        return types
+        return [
+            Type(name)
+            for name in _type_names
+            if c_names_dict[name].alignment > bits
+        ]
 
 
 class Array:

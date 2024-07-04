@@ -207,9 +207,10 @@ class Base:
             seed = csv.readline()
             seed = seed.split(',')
             seed = [int(s.strip(), 0) for s in seed[1:]]
-            data = []
-            for line in csv:
-                data.append(int(line.split(',')[-1].strip(), 0))
+            data = [
+                int(line.split(',')[-1].strip(), 0)
+                for line in csv
+            ]
             return {'seed': seed, 'data': np.array(data, dtype=cls.dtype)}
 
     def test_raw(self):

@@ -162,7 +162,7 @@ PUBLIC_ALIASED_MODULES = [
 ]
 
 
-PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
+PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in (
     "compat",
     "compat.py3k",
     "conftest",
@@ -207,10 +207,10 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "random.mtrand",
     "random.bit_generator",
     "testing.print_coercion_tables",
-]]
+)]
 if sys.version_info < (3, 12):
-    PRIVATE_BUT_PRESENT_MODULES += [
-        'numpy.' + s for s in [
+    PRIVATE_BUT_PRESENT_MODULES.extend(
+        'numpy.' + s for s in (
             "distutils.armccompiler",
             "distutils.fujitsuccompiler",
             "distutils.ccompiler",
@@ -266,8 +266,8 @@ if sys.version_info < (3, 12):
             "distutils.numpy_distribution",
             "distutils.pathccompiler",
             "distutils.unixccompiler",
-        ]
-    ]
+        )
+    )
 
 
 def is_unexpected(name):
@@ -406,10 +406,11 @@ def test_api_importable():
 
         return True
 
-    module_names = []
-    for module_name in PUBLIC_MODULES:
-        if not check_importable(module_name):
-            module_names.append(module_name)
+    module_names = [
+        module_name
+        for module_name in PUBLIC_MODULES
+        if not check_importable(module_name)
+    ]
 
     if module_names:
         raise AssertionError("Modules in the public API that cannot be "
@@ -428,9 +429,11 @@ def test_api_importable():
     with warnings.catch_warnings(record=True) as w:
         warnings.filterwarnings('always', category=DeprecationWarning)
         warnings.filterwarnings('always', category=ImportWarning)
-        for module_name in PRIVATE_BUT_PRESENT_MODULES:
-            if not check_importable(module_name):
-                module_names.append(module_name)
+        module_names.extend(
+            module_name
+            for module_name in PRIVATE_BUT_PRESENT_MODULES
+            if not check_importable(module_name)
+        )
 
     if module_names:
         raise AssertionError("Modules that are not really public but looked "

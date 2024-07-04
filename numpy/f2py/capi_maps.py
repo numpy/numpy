@@ -550,10 +550,11 @@ def sign2map(a, var):
               isintent_callback, 'callback',
               isintent_aux, 'auxiliary',
               ]
-        rl = []
-        for i in range(0, len(il), 2):
-            if il[i](var):
-                rl.append(il[i + 1])
+        rl = [
+            il[i + 1]
+            for i in range(0, len(il), 2)
+            if il[i](var)
+        ]
         if isstring(var):
             rl.append('slen(%s)=%s' % (a, ret['length']))
         if isarray(var):

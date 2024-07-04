@@ -465,12 +465,11 @@ def order_dict(d):
     return sorted(o, key=_key)
 
 def merge_api_dicts(dicts):
-    ret = {}
-    for d in dicts:
-        for k, v in d.items():
-            ret[k] = v
-
-    return ret
+    return {
+        k: v
+        for d in dicts
+        for k, v in d.items()
+    }
 
 def check_api_dict(d):
     """Check that an api dict is valid (does not use the same index twice)
