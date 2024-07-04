@@ -1408,7 +1408,7 @@ def make_arrays(funcdict):
                     ) from None
 
                 astype = ''
-                if not t.astype is None:
+                if t.astype is not None:
                     astype = '_As_%s' % thedict[t.astype]
                 astr = ('%s_functions[%d] = PyUFunc_%s%s;' %
                            (name, k, thedict[t.type], astype))
