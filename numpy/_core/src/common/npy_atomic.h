@@ -17,7 +17,7 @@
 #elif _MSC_VER
     #include <intrin.h>
     #define MSC_ATOMICS
-    #if !defined(_M_X64) || !defined(_M_IX86) || !defined(_M_ARM64)
+    #if !defined(_M_X64) && !defined(_M_IX86) && !defined(_M_ARM64)
         #error "Unsupported MSVC build configuration, neither x86 or ARM"
     #endif
 #elif defined(__GNUC__) && (__GNUC__ > 4)
