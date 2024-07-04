@@ -185,11 +185,11 @@ There can be various reason for the incompatibility:
 * You have recently upgraded NumPy, most likely to NumPy 2, and the other
   module now also needs to be upgraded.  (NumPy 2 was released in June 2024.)
 
-* Especially if you have version constraints on some packages, ``pip`` may
-  have found incompatible versions when installing.
+* You have version constraints and ``pip`` may
+  have installed a combination of incompatible packages.
 
-* Manual forced versions or setup steps, such as copying a compiled extension
-  to another computer with a different NumPy version.
+* You have compiled locally or have copied a compiled extension from
+  elsewhere (which is, in general, a bad idea).
 
 The best solution will usually be to upgrade the failing package:
 
@@ -216,7 +216,6 @@ not yet exist or cannot be installed for other reasons.  In that case:
 * Add additional version pins to the failing package to help ``pip``
   resolve compatible versions of NumPy and the package.
 
-* Investigate how the packages got installed and why incompatibilities arose.
 
 
 Segfaults or crashes
