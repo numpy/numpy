@@ -44,7 +44,7 @@ def allows_array_ufunc_override(func):
     will work correctly for ufuncs defined outside of Numpy.
 
     """
-    return isinstance(func, np.ufunc)
+    return isinstance(func, _ufunc)
 
 
 def get_overridable_numpy_array_functions():

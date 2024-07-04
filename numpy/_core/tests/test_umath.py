@@ -693,11 +693,11 @@ class TestDivision:
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning, "invalid value encountered in floor_divide")
             div = np.floor_divide(fnan, fone)
-            assert(np.isnan(div)), "dt: %s, div: %s" % (dt, div)
+            assert(np.isnan(div)), "div: %s" % div
             div = np.floor_divide(fone, fnan)
-            assert(np.isnan(div)), "dt: %s, div: %s" % (dt, div)
+            assert(np.isnan(div)), "div: %s" % div
             div = np.floor_divide(fnan, fzer)
-            assert(np.isnan(div)), "dt: %s, div: %s" % (dt, div)
+            assert(np.isnan(div)), "div: %s" % div
         # verify 1.0//0.0 computations return inf
         with np.errstate(divide='ignore'):
             z = np.floor_divide(y, x)

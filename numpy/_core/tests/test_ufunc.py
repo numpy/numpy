@@ -486,8 +486,8 @@ class TestUfunc:
         np.add(3, 4, signature=(float_dtype, float_dtype, None))
 
     @pytest.mark.parametrize("get_kwarg", [
-            lambda dt: dict(dtype=x),
-            lambda dt: dict(signature=(x, None, None))])
+            lambda dt: dict(dtype=dt),
+            lambda dt: dict(signature=(dt, None, None))])
     def test_signature_dtype_instances_allowed(self, get_kwarg):
         # We allow certain dtype instances when there is a clear singleton
         # and the given one is equivalent; mainly for backcompat.
