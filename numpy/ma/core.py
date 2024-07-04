@@ -3117,7 +3117,7 @@ class MaskedArray(ndarray):
             input_args = args[:func.nin]
             m = reduce(mask_or, [getmaskarray(arg) for arg in input_args])
             # Get the domain mask
-            domain = ufunc_domain.get(func, None)
+            domain = ufunc_domain.get(func)
             if domain is not None:
                 # Take the domain, and make sure it's a ndarray
                 with np.errstate(divide='ignore', invalid='ignore'):
