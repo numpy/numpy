@@ -35,7 +35,6 @@ from numpy import ndarray, array as nxarray
 from numpy.lib.array_utils import normalize_axis_index, normalize_axis_tuple
 from numpy.lib._function_base_impl import _ureduce
 from numpy.lib._index_tricks_impl import AxisConcatenator
-from numpy._core.numeric import normalize_axis_tuple
 
 
 def issequence(seq):

@@ -8,7 +8,6 @@ import numpy as np
 import subprocess
 import pathlib
 import os
-import re
 
 def assert_features_equal(actual, desired, fname):
     __tracebackhide__ = True  # Hide traceback for py.test

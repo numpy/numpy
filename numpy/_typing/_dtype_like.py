@@ -1,4 +1,4 @@
-from collections.abc import Sequence
+from collections.abc import Sequence  # noqa: F811
 from typing import (
     Any,
     TypeAlias,

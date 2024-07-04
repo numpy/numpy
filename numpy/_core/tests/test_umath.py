@@ -4,7 +4,6 @@ import fnmatch
 import itertools
 import pytest
 import sys
-import os
 import operator
 from fractions import Fraction
 from functools import reduce
