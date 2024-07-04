@@ -77,10 +77,7 @@ def has_nested_fields(ndtype):
     False
 
     """
-    for name in ndtype.names or ():
-        if ndtype[name].names is not None:
-            return True
-    return False
+    return any(ndtype[name].names is not None for name in ndtype.names or ())
 
 
 def flatten_dtype(ndtype, flatten_base=False):
