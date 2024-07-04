@@ -5240,7 +5240,7 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
 
     tmp = PyTuple_GET_ITEM(args, 0);
 
-    if (PyObject_IsInstance(tmp, npy_runtime_imports.numpy_matrix.obj)) {
+    if (PyObject_IsInstance(tmp, npy_runtime_imports.numpy_matrix)) {
         /* DEPRECATED 2020-05-13, NumPy 1.20 */
         if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
                 matrix_deprecation_msg, ufunc->name, "first") < 0) {
@@ -5257,7 +5257,7 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
 
     PyArrayObject *ap2 = NULL;
     tmp = PyTuple_GET_ITEM(args, 1);
-    if (PyObject_IsInstance(tmp, npy_runtime_imports.numpy_matrix.obj)) {
+    if (PyObject_IsInstance(tmp, npy_runtime_imports.numpy_matrix)) {
         /* DEPRECATED 2020-05-13, NumPy 1.20 */
         if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
                 matrix_deprecation_msg, ufunc->name, "second") < 0) {
@@ -6414,7 +6414,7 @@ ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
      * of it the doc string shouldn't need the calling convention
      */
     doc = PyObject_CallFunctionObjArgs(
-            npy_runtime_imports._ufunc_doc_signature_formatter.obj,
+            npy_runtime_imports._ufunc_doc_signature_formatter,
             (PyObject *)ufunc, NULL);
     if (doc == NULL) {
         return NULL;

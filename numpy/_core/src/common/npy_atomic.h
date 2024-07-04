@@ -17,6 +17,9 @@
 #elif _MSC_VER
     #include <intrin.h>
     #define MSC_ATOMICS
+    #if !defined(_M_X64) || !defined(_M_IX86) || !defined(_M_ARM64)
+        #error "Unsupported MSVC build configuration, neither x86 or ARM"
+    #endif
 #elif defined(__GNUC__) && (__GNUC__ > 4)
     #define GCC_ATOMICS
 #elif defined(__clang__)
@@ -28,19 +31,64 @@
 #endif
 
 
-static inline npy_uint8 npy_atomic_load_uint8(const npy_uint8 *obj) {
+static inline npy_uint8
+npy_atomic_load_uint8(const npy_uint8 *obj) {
 #ifdef STDC_ATOMICS
     return (npy_uint8)atomic_load((const _Atomic(uint8_t)*)obj);
 #elif defined(MSC_ATOMICS)
 #if defined(_M_X64) || defined(_M_IX86)
     return *(volatile npy_uint8 *)obj;
-#elif defined(_M_ARM64)
+#else // defined(_M_ARM64)
     return (npy_uint8)__ldar8((unsigned __int8 volatile *)obj);
-#else
-#error "Unsupported MSVC build configuration, neither x86 or ARM"
 #endif
 #elif defined(GCC_ATOMICS)
     return __atomic_load_n(obj, __ATOMIC_SEQ_CST);
+#endif
+}
+
+static inline void*
+npy_atomic_load_ptr(const void *obj) {
+#ifdef STDC_ATOMICS
+    return atomic_load((const _Atomic(void *)*)obj);
+#elif defined(MSC_ATOMICS)
+#if SIZEOF_VOID_P == 8
+#if defined(_M_X64) || defined(_M_IX86)
+    return *(volatile uint64_t *)obj;
+#elif defined(_M_ARM64)
+    return (uint64_t)__ldar64((unsigned __int64 volatile *)obj);
+#endif
+#else
+#if defined(_M_X64) || defined(_M_IX86)
+    return *(volatile uint32_t *)obj;
+#elif defined(_M_ARM64)
+    return (uint32_t)__ldar32((unsigned __int32 volatile *)obj);
+#endif
+#endif
+#elif defined(GCC_ATOMICS)
+    return (void *)__atomic_load_n((void * const *)obj, __ATOMIC_SEQ_CST);
+#endif
+}
+
+static inline void
+npy_atomic_store_uint8(npy_uint8 *obj, npy_uint8 value) {
+#ifdef STDC_ATOMICS
+    atomic_store((_Atomic(uint8_t)*)obj, value);
+#elif defined(MSC_ATOMICS)
+    _InterlockedExchange8((volatile char *)obj, (char)value);
+#elif defined(GCC_ATOMICS)
+    __atomic_store_n(obj, value, __ATOMIC_SEQ_CST);
+#endif
+}
+
+static inline void
+npy_atomic_store_ptr(void *obj, void *value)
+{
+#ifdef STDC_ATOMICS
+    atomic_store((_Atomic(void *)*)obj, value);
+#elif defined(MSC_ATOMICS)
+    _InterlockedExchangePointer((void * volatile *)obj, (void *)value);
+#elif defined(GCC_ATOMICS)
+    __atomic_store_n((void **)obj, value, __ATOMIC_SEQ_CST);
 #endif
 }
 

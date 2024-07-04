@@ -5079,7 +5079,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     }
 
     if (PyObject_CallFunction(
-            npy_runtime_imports._add_dtype_helper.obj,
+            npy_runtime_imports._add_dtype_helper,
             "Os", (PyObject *)&PyArray_StringDType, NULL) == NULL) {
         goto err;
     }

@@ -7,49 +7,39 @@
 #include "npy_atomic.h"
 
 /*
- * Holds a cached PyObject where the cache is initialized via a
- * runtime import. The cache is only filled once.
- */
-
-typedef struct npy_runtime_import {
-    npy_uint8 initialized;
-    PyObject *obj;
-} npy_runtime_import;
-
-/*
  * Cached references to objects obtained via an import. All of these are
  * can be initialized at any time by npy_cache_import_runtime.
  */
 typedef struct npy_runtime_imports_struct {
     PyThread_type_lock import_mutex;
-    npy_runtime_import _add_dtype_helper;
-    npy_runtime_import _all;
-    npy_runtime_import _amax;
-    npy_runtime_import _amin;
-    npy_runtime_import _any;
-    npy_runtime_import array_function_errmsg_formatter;
-    npy_runtime_import array_ufunc_errmsg_formatter;
-    npy_runtime_import _clip;
-    npy_runtime_import _commastring;
-    npy_runtime_import _convert_to_stringdtype_kwargs;
-    npy_runtime_import _default_array_repr;
-    npy_runtime_import _default_array_str;
-    npy_runtime_import _dump;
-    npy_runtime_import _dumps;
-    npy_runtime_import _getfield_is_safe;
-    npy_runtime_import internal_gcd_func;
-    npy_runtime_import _mean;
-    npy_runtime_import NO_NEP50_WARNING;
-    npy_runtime_import npy_ctypes_check;
-    npy_runtime_import numpy_matrix;
-    npy_runtime_import _prod;
-    npy_runtime_import _promote_fields;
-    npy_runtime_import _std;
-    npy_runtime_import _sum;
-    npy_runtime_import _ufunc_doc_signature_formatter;
-    npy_runtime_import _var;
-    npy_runtime_import _view_is_safe;
-    npy_runtime_import _void_scalar_to_string;
+    PyObject *_add_dtype_helper;
+    PyObject *_all;
+    PyObject *_amax;
+    PyObject *_amin;
+    PyObject *_any;
+    PyObject *array_function_errmsg_formatter;
+    PyObject *array_ufunc_errmsg_formatter;
+    PyObject *_clip;
+    PyObject *_commastring;
+    PyObject *_convert_to_stringdtype_kwargs;
+    PyObject *_default_array_repr;
+    PyObject *_default_array_str;
+    PyObject *_dump;
+    PyObject *_dumps;
+    PyObject *_getfield_is_safe;
+    PyObject *internal_gcd_func;
+    PyObject *_mean;
+    PyObject *NO_NEP50_WARNING;
+    PyObject *npy_ctypes_check;
+    PyObject *numpy_matrix;
+    PyObject *_prod;
+    PyObject *_promote_fields;
+    PyObject *_std;
+    PyObject *_sum;
+    PyObject *_ufunc_doc_signature_formatter;
+    PyObject *_var;
+    PyObject *_view_is_safe;
+    PyObject *_void_scalar_to_string;
 } npy_runtime_imports_struct;
 
 NPY_VISIBILITY_HIDDEN extern npy_runtime_imports_struct npy_runtime_imports;
@@ -90,22 +80,16 @@ npy_import(const char *module, const char *attr)
  * @param cache Storage location for imported function.
  */
 static inline int
-npy_cache_import_runtime(const char *module, const char *attr, npy_runtime_import *cache) {
-    if (cache->initialized) {
-        return 0;
-    }
-    else {
-        if (!npy_atomic_load_uint8(&cache->initialized)) {
-            PyThread_acquire_lock(npy_runtime_imports.import_mutex, WAIT_LOCK);
-            if (!cache->initialized) {
-                cache->obj = npy_import(module, attr);
-                cache->initialized = 1;
+npy_cache_import_runtime(const char *module, const char *attr, PyObject **obj) {
+    if (!npy_atomic_load_ptr(obj)) {
+        PyThread_acquire_lock(npy_runtime_imports.import_mutex, WAIT_LOCK);
+        if (!npy_atomic_load_ptr(obj)) {
+            npy_atomic_store_ptr(obj, npy_import(module, attr));
+            if (obj == NULL) {
+                return -1;
             }
-            PyThread_release_lock(npy_runtime_imports.import_mutex);
         }
-    }
-    if (cache->obj == NULL) {
-        return -1;
+        PyThread_release_lock(npy_runtime_imports.import_mutex);
     }
     return 0;    
 }

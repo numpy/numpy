@@ -196,7 +196,7 @@ npy_ObjectGCD(PyObject *i1, PyObject *i2)
                                      &npy_runtime_imports.internal_gcd_func) == -1) {
             return NULL;
         }
-        gcd = PyObject_CallFunction(npy_runtime_imports.internal_gcd_func.obj,
+        gcd = PyObject_CallFunction(npy_runtime_imports.internal_gcd_func,
                                     "OO", i1, i2);
         if (gcd == NULL) {
             return NULL;

@@ -237,7 +237,7 @@ set_no_matching_types_error(PyObject *public_api, PyObject *types)
             "array_function_errmsg_formatter",
             &npy_runtime_imports.array_function_errmsg_formatter) == 0) {
         PyObject *errmsg = PyObject_CallFunctionObjArgs(
-                npy_runtime_imports.array_function_errmsg_formatter.obj,
+                npy_runtime_imports.array_function_errmsg_formatter,
                 public_api, types, NULL);
         if (errmsg != NULL) {
             PyErr_SetObject(PyExc_TypeError, errmsg);

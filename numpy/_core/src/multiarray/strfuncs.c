@@ -45,7 +45,7 @@ array_repr(PyArrayObject *self)
         return NULL;
     }
     return PyObject_CallFunctionObjArgs(
-            npy_runtime_imports._default_array_repr.obj, self, NULL);
+            npy_runtime_imports._default_array_repr, self, NULL);
 }
 
 
@@ -64,7 +64,7 @@ array_str(PyArrayObject *self)
         return NULL;
     }
     return PyObject_CallFunctionObjArgs(
-            npy_runtime_imports._default_array_str.obj, self, NULL);
+            npy_runtime_imports._default_array_str, self, NULL);
 }
 
 

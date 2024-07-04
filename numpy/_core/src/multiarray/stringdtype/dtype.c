@@ -723,12 +723,12 @@ stringdtype__reduce__(PyArray_StringDTypeObject *self, PyObject *NPY_UNUSED(args
 
     if (self->na_object != NULL) {
         return Py_BuildValue(
-                "O(iO)", npy_runtime_imports._convert_to_stringdtype_kwargs.obj,
+                "O(iO)", npy_runtime_imports._convert_to_stringdtype_kwargs,
                 self->coerce, self->na_object);
     }
 
     return Py_BuildValue(
-            "O(i)", npy_runtime_imports._convert_to_stringdtype_kwargs.obj,
+            "O(i)", npy_runtime_imports._convert_to_stringdtype_kwargs,
             self->coerce);
 }
 

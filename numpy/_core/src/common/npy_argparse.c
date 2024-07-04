@@ -285,23 +285,20 @@ _npy_parse_arguments(const char *funcname,
         /* ... is NULL, NULL, NULL terminated: name, converter, value */
         ...)
 {
-    if (NPY_UNLIKELY(!cache->initialized)) {
-        // only do a possibly slow atomic load if the cache isn't already initialized
+    if (!npy_atomic_load_uint8(&cache->initialized)) {
+        PyThread_acquire_lock(argparse_mutex, WAIT_LOCK);
         if (!npy_atomic_load_uint8(&cache->initialized)) {
-            PyThread_acquire_lock(argparse_mutex, WAIT_LOCK);
-            if (!cache->initialized) {
-                va_list va;
-                va_start(va, kwnames);
-                int res = initialize_keywords(funcname, cache, va);
-                va_end(va);
-                if (res < 0) {
-                    PyThread_release_lock(argparse_mutex);
-                    return -1;
-                }
-                cache->initialized = 1;
+            va_list va;
+            va_start(va, kwnames);
+            int res = initialize_keywords(funcname, cache, va);
+            va_end(va);
+            if (res < 0) {
+                PyThread_release_lock(argparse_mutex);
+                return -1;
             }
-            PyThread_release_lock(argparse_mutex);
+            npy_atomic_store_uint8(&cache->initialized, 1);
         }
+        PyThread_release_lock(argparse_mutex);
     }
 
     if (NPY_UNLIKELY(len_args > cache->npositional)) {

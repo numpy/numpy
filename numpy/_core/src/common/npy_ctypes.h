@@ -21,6 +21,7 @@ npy_ctypes_check(PyTypeObject *obj)
     PyObject *ret_obj;
     int ret;
 
+
     if (npy_cache_import_runtime(
                 "numpy._core._internal", "npy_ctypes_check",
                 &npy_runtime_imports.npy_ctypes_check) == -1) {
@@ -28,7 +29,7 @@ npy_ctypes_check(PyTypeObject *obj)
     }
 
     ret_obj = PyObject_CallFunctionObjArgs(
-            npy_runtime_imports.npy_ctypes_check.obj, (PyObject *)obj, NULL);
+            npy_runtime_imports.npy_ctypes_check, (PyObject *)obj, NULL);
     if (ret_obj == NULL) {
         goto fail;
     }

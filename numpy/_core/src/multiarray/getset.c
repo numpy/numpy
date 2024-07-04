@@ -394,7 +394,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
             goto fail;
         }
 
-        safe = PyObject_CallFunction(npy_runtime_imports._view_is_safe.obj,
+        safe = PyObject_CallFunction(npy_runtime_imports._view_is_safe,
                                      "OO", PyArray_DESCR(self), newtype);
         if (safe == NULL) {
             goto fail;

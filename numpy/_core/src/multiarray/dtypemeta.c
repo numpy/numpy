@@ -772,7 +772,7 @@ void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
             return NULL;
         }
         PyObject *result = PyObject_CallFunctionObjArgs(
-                npy_runtime_imports._promote_fields.obj,
+                npy_runtime_imports._promote_fields,
                 descr1, descr2, NULL);
         if (result == NULL) {
             return NULL;
@@ -1246,7 +1246,7 @@ dtypemeta_wrap_legacy_descriptor(
         }
 
         if (PyObject_CallFunction(
-                npy_runtime_imports._add_dtype_helper.obj,
+                npy_runtime_imports._add_dtype_helper,
                 "Os", (PyObject *)dtype_class, alias) == NULL) {
             return -1;
         }

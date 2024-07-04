@@ -731,7 +731,7 @@ _convert_from_commastring(PyObject *obj, int align)
             &npy_runtime_imports._commastring) == -1) {
         return NULL;
     }
-    parsed = PyObject_CallOneArg(npy_runtime_imports._commastring.obj, obj);
+    parsed = PyObject_CallOneArg(npy_runtime_imports._commastring, obj);
     if (parsed == NULL) {
         return NULL;
     }

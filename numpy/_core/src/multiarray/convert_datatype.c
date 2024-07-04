@@ -90,7 +90,7 @@ npy_give_promotion_warnings(void)
         return 1;
     }
 
-    if (PyContextVar_Get(npy_runtime_imports.NO_NEP50_WARNING.obj,
+    if (PyContextVar_Get(npy_runtime_imports.NO_NEP50_WARNING,
                          Py_False, &val) < 0) {
         /* Errors should not really happen, but if it does assume we warn. */
         PyErr_WriteUnraisable(NULL);

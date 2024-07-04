@@ -117,7 +117,7 @@ npy_forward_method(
                                  &npy_runtime_imports.name) == -1) {    \
         return NULL;                                                    \
     }                                                                   \
-    return npy_forward_method(npy_runtime_imports.name.obj,             \
+    return npy_forward_method(npy_runtime_imports.name,                 \
                               (PyObject *)self, args, len_args, kwnames)
 
 
@@ -412,7 +412,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
         }
 
         /* only returns True or raises */
-        safe = PyObject_CallFunction(npy_runtime_imports._getfield_is_safe.obj,
+        safe = PyObject_CallFunction(npy_runtime_imports._getfield_is_safe,
                                      "OOi", PyArray_DESCR(self),
                                      typed, offset);
         if (safe == NULL) {
@@ -2254,11 +2254,11 @@ PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 
     if (protocol < 0) {
         ret = PyObject_CallFunction(
-                npy_runtime_imports._dump.obj, "OO", self, file);
+                npy_runtime_imports._dump, "OO", self, file);
     }
     else {
         ret = PyObject_CallFunction(
-                npy_runtime_imports._dump.obj, "OOi", self, file, protocol);
+                npy_runtime_imports._dump, "OOi", self, file, protocol);
     }
     if (ret == NULL) {
         return -1;
@@ -2276,11 +2276,11 @@ PyArray_Dumps(PyObject *self, int protocol)
         return NULL;
     }
     if (protocol < 0) {
-        return PyObject_CallFunction(npy_runtime_imports._dumps.obj, "O", self);
+        return PyObject_CallFunction(npy_runtime_imports._dumps, "O", self);
     }
     else {
         return PyObject_CallFunction(
-                npy_runtime_imports._dumps.obj, "Oi", self, protocol);
+                npy_runtime_imports._dumps, "Oi", self, protocol);
     }
 }
 

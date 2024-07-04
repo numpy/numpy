@@ -615,7 +615,7 @@ _void_scalar_to_string(PyObject *obj, int repr) {
     }
     PyObject *is_repr = repr ? Py_True : Py_False;
     return PyObject_CallFunctionObjArgs(
-            npy_runtime_imports._void_scalar_to_string.obj, obj, is_repr, NULL);
+            npy_runtime_imports._void_scalar_to_string, obj, is_repr, NULL);
 }
 
 static PyObject *

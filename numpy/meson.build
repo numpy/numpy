@@ -214,28 +214,28 @@ else
   lapack_dep = declare_dependency(dependencies: [lapack, blas_dep])
 endif
 
-# Determine whether it is necessary to link libatomic. This could be the
-# case on 32-bit platforms when atomic operations are used on 64-bit
-# types or on RISC-V using 8-bit atomics, so we explicitly check for
-# both 64 bit and 8 bit operations.  The check is adapted from SciPy,
-# who copied it from Mesa.
+# Determine whether it is necessary to link libatomic with gcc. This
+# could be the case on 32-bit platforms when atomic operations are used
+# on 64-bit types or on RISC-V using 8-bit atomics, so we explicitly
+# check for both 64 bit and 8 bit operations.  The check is adapted from
+# SciPy, who copied it from Mesa.
 null_dep = dependency('', required : false)
 atomic_dep = null_dep
 code_non_lockfree = '''
   #include <stdint.h>
   int main() {
    struct {
-     uint64_t *u64v;
-     uint8_t *u8v;
+     void *p;
+     uint8_t u8v;
    } x;
+   x.p = NULL;
    x.u8v = 0;
-   x.u64v = 0;
-   uint64_t res1 = __atomic_load_n(x.u64v, __ATOMIC_ACQUIRE) &
-          __atomic_add_fetch(x.u64v, (uint64_t)1, __ATOMIC_ACQ_REL);
-   uint8_t res2 = __atomic_load_n(x.u8v, __ATOMIC_ACQUIRE) &
-          __atomic_add_fetch(x.u8v, (uint8_t)1, __ATOMIC_ACQ_REL);
+   uint8_t res = __atomic_load_n(x.u8v, __ATOMIC_SEQ_CST);
+   __atomic_store_n(x.u8v, 1, ATOMIC_SEQ_CST);
+   void *p = __atomic_load_n(x.p, __ATOMIC_SEQ_CST);
+   __atomic_store_n((void **)x.p, NULL, __ATOMIC_SEQ_CST)
    return 0;
-  }
+   }
 '''
 if cc.get_id() != 'msvc'
   if not cc.links(

@@ -376,7 +376,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
                 goto fail;
             }
             errmsg = PyObject_Call(
-                    npy_runtime_imports.array_ufunc_errmsg_formatter.obj,
+                    npy_runtime_imports.array_ufunc_errmsg_formatter,
                     override_args, normal_kwds);
             if (errmsg != NULL) {
                 PyErr_SetObject(PyExc_TypeError, errmsg);
