@@ -3029,8 +3029,8 @@ def param_eval(v, g_params, params, dimspec=None):
             ubound = param_parse(dimrange[1], params)
             dimrange = range(int(lbound), int(ubound)+1)
     else:
-        raise ValueError(f'param_eval: multidimensional array parameters '
-                         '{dimspec} not supported')
+        raise ValueError('param_eval: multidimensional array parameters '
+                         f'{dimspec} not supported')
 
     # Parse parameter value
     v = (v[2:-2] if v.startswith('(/') else v).split(',')

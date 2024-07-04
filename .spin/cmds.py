@@ -774,7 +774,7 @@ def notes(ctx, version_override):
     # Check if `towncrier` is installed
     if not shutil.which("towncrier"):
         raise click.ClickException(
-            f"please install `towncrier` to use this command"
+            "please install `towncrier` to use this command"
         )
 
     click.secho(

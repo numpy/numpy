@@ -538,7 +538,7 @@ class TestSFC64(Base):
         )
 
         base_path = os.path.split(os.path.abspath(__file__))[0]
-        pkl_file = os.path.join(base_path, "data", f"sfc64_np126.pkl.gz")
+        pkl_file = os.path.join(base_path, "data", "sfc64_np126.pkl.gz")
         with gzip.open(pkl_file) as gz:
             sfc = pickle.load(gz)
 
