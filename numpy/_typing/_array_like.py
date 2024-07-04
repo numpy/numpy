@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Collection, Callable, Sequence
-from typing import Any, Protocol, Union, TypeVar, runtime_checkable
+from typing import Any, Protocol, Union, TypeAlias, TypeVar, runtime_checkable
 
 import numpy as np
 from numpy import (
@@ -29,7 +29,7 @@ _ScalarType_co = TypeVar("_ScalarType_co", bound=generic, covariant=True)
 _DType = TypeVar("_DType", bound=dtype[Any])
 _DType_co = TypeVar("_DType_co", covariant=True, bound=dtype[Any])
 
-NDArray = ndarray[Any, dtype[_ScalarType_co]]
+NDArray: TypeAlias = ndarray[Any, dtype[_ScalarType_co]]
 
 # The `_SupportsArray` protocol only cares about the default dtype
 # (i.e. `dtype=None` or no `dtype` parameter at all) of the to-be returned
@@ -54,7 +54,7 @@ class _SupportsArrayFunc(Protocol):
 
 
 # TODO: Wait until mypy supports recursive objects in combination with typevars
-_FiniteNestedSequence = Union[
+_FiniteNestedSequence: TypeAlias = Union[
     _T,
     Sequence[_T],
     Sequence[Sequence[_T]],
@@ -63,7 +63,7 @@ _FiniteNestedSequence = Union[
 ]
 
 # A subset of `npt.ArrayLike` that can be parametrized w.r.t. `np.generic`
-_ArrayLike = Union[
+_ArrayLike: TypeAlias = Union[
     _SupportsArray[dtype[_ScalarType]],
     _NestedSequence[_SupportsArray[dtype[_ScalarType]]],
 ]
@@ -71,7 +71,7 @@ _ArrayLike = Union[
 # A union representing array-like objects; consists of two typevars:
 # One representing types that can be parametrized w.r.t. `np.dtype`
 # and another one for the rest
-_DualArrayLike = Union[
+_DualArrayLike: TypeAlias = Union[
     _SupportsArray[_DType],
     _NestedSequence[_SupportsArray[_DType]],
     _T,
@@ -81,35 +81,35 @@ _DualArrayLike = Union[
 if sys.version_info >= (3, 12):
     from collections.abc import Buffer
 
-    ArrayLike = Buffer | _DualArrayLike[
+    ArrayLike: TypeAlias = Buffer | _DualArrayLike[
         dtype[Any],
         Union[bool, int, float, complex, str, bytes],
     ]
 else:
-    ArrayLike = _DualArrayLike[
+    ArrayLike: TypeAlias = _DualArrayLike[
         dtype[Any],
         Union[bool, int, float, complex, str, bytes],
     ]
 
 # `ArrayLike<X>_co`: array-like objects that can be coerced into `X`
 # given the casting rules `same_kind`
-_ArrayLikeBool_co = _DualArrayLike[
+_ArrayLikeBool_co: TypeAlias = _DualArrayLike[
     dtype[np.bool],
     bool,
 ]
-_ArrayLikeUInt_co = _DualArrayLike[
+_ArrayLikeUInt_co: TypeAlias = _DualArrayLike[
     dtype[Union[np.bool, unsignedinteger[Any]]],
     bool,
 ]
-_ArrayLikeInt_co = _DualArrayLike[
+_ArrayLikeInt_co: TypeAlias = _DualArrayLike[
     dtype[Union[np.bool, integer[Any]]],
     Union[bool, int],
 ]
-_ArrayLikeFloat_co = _DualArrayLike[
+_ArrayLikeFloat_co: TypeAlias = _DualArrayLike[
     dtype[Union[np.bool, integer[Any], floating[Any]]],
     Union[bool, int, float],
 ]
-_ArrayLikeComplex_co = _DualArrayLike[
+_ArrayLikeComplex_co: TypeAlias = _DualArrayLike[
     dtype[Union[
         np.bool,
         integer[Any],
@@ -118,37 +118,37 @@ _ArrayLikeComplex_co = _DualArrayLike[
     ]],
     Union[bool, int, float, complex],
 ]
-_ArrayLikeNumber_co = _DualArrayLike[
+_ArrayLikeNumber_co: TypeAlias = _DualArrayLike[
     dtype[Union[np.bool, number[Any]]],
     Union[bool, int, float, complex],
 ]
-_ArrayLikeTD64_co = _DualArrayLike[
+_ArrayLikeTD64_co: TypeAlias = _DualArrayLike[
     dtype[Union[np.bool, integer[Any], timedelta64]],
     Union[bool, int],
 ]
-_ArrayLikeDT64_co = Union[
+_ArrayLikeDT64_co: TypeAlias = Union[
     _SupportsArray[dtype[datetime64]],
     _NestedSequence[_SupportsArray[dtype[datetime64]]],
 ]
-_ArrayLikeObject_co = Union[
+_ArrayLikeObject_co: TypeAlias = Union[
     _SupportsArray[dtype[object_]],
     _NestedSequence[_SupportsArray[dtype[object_]]],
 ]
 
-_ArrayLikeVoid_co = Union[
+_ArrayLikeVoid_co: TypeAlias = Union[
     _SupportsArray[dtype[void]],
     _NestedSequence[_SupportsArray[dtype[void]]],
 ]
-_ArrayLikeStr_co = _DualArrayLike[
+_ArrayLikeStr_co: TypeAlias = _DualArrayLike[
     dtype[str_],
     str,
 ]
-_ArrayLikeBytes_co = _DualArrayLike[
+_ArrayLikeBytes_co: TypeAlias = _DualArrayLike[
     dtype[bytes_],
     bytes,
 ]
 
-_ArrayLikeInt = _DualArrayLike[
+_ArrayLikeInt: TypeAlias = _DualArrayLike[
     dtype[integer[Any]],
     int,
 ]
@@ -161,7 +161,7 @@ class _UnknownType:
     ...
 
 
-_ArrayLikeUnknown = _DualArrayLike[
+_ArrayLikeUnknown: TypeAlias = _DualArrayLike[
     dtype[_UnknownType],
     _UnknownType,
 ]
