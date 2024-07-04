@@ -425,6 +425,23 @@ class TestAttributes:
         with pytest.raises(ValueError, match=".*read-only"):
             a.fill(0)
 
+    def test_fill_subarrays(self):
+        base_allocator = os.environ.get("PYTHONMALLOC", None)
+        if base_allocator is None or "debug" not in base_allocator:
+            os.environ["PYTHONMALLOC"] = "debug"
+
+        dtype = np.dtype("2<i8, 2<i8, 2<i8")
+        data = ([1, 2], [3, 4], [5, 6])
+
+        arr = np.empty(1, dtype=dtype)
+        # Crashes if the allocator and deallocator use mismatched domains
+        arr.fill(data)
+
+        assert_equal(arr, np.array(data, dtype=dtype))
+
+        if base_allocator is not None:
+            os.environ["PYTHONMALLOC"] = base_allocator
+
 
 class TestArrayConstruction:
     def test_array(self):
@@ -3509,17 +3526,17 @@ class TestMethods:
         bad_array = [1, 2, 3]
         assert_raises(TypeError, np.put, bad_array, [0, 2], 5)
 
-        # when calling np.put, make sure an 
-        # IndexError is raised if the 
+        # when calling np.put, make sure an
+        # IndexError is raised if the
         # array is empty
         empty_array = np.asarray(list())
-        with pytest.raises(IndexError, 
+        with pytest.raises(IndexError,
                             match="cannot replace elements of an empty array"):
             np.put(empty_array, 1, 1, mode="wrap")
-        with pytest.raises(IndexError, 
+        with pytest.raises(IndexError,
                             match="cannot replace elements of an empty array"):
             np.put(empty_array, 1, 1, mode="clip")
-        
+
 
     def test_ravel(self):
         a = np.array([[0, 1], [2, 3]])
