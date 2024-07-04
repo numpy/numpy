@@ -195,6 +195,7 @@ from typing import (
     Final,
     final,
     ClassVar,
+    TypeAlias
 )
 
 # Ensures that the stubs are picked up
@@ -641,7 +642,7 @@ def show_config() -> None: ...
 
 _NdArraySubClass = TypeVar("_NdArraySubClass", bound=NDArray[Any])
 _DTypeScalar_co = TypeVar("_DTypeScalar_co", covariant=True, bound=generic)
-_ByteOrder = L["S", "<", ">", "=", "|", "L", "B", "N", "I", "little", "big", "native"]
+_ByteOrder: TypeAlias = L["S", "<", ">", "=", "|", "L", "B", "N", "I", "little", "big", "native"]
 
 @final
 class dtype(Generic[_DTypeScalar_co]):
@@ -894,7 +895,7 @@ class dtype(Generic[_DTypeScalar_co]):
     @property
     def type(self) -> type[_DTypeScalar_co]: ...
 
-_ArrayLikeInt = (
+_ArrayLikeInt: TypeAlias = (
     int
     | integer[Any]
     | Sequence[int | integer[Any]]
@@ -941,14 +942,14 @@ class flatiter(Generic[_NdArraySubClass]):
     @overload
     def __array__(self, dtype: _DType, /) -> ndarray[Any, _DType]: ...
 
-_OrderKACF = L[None, "K", "A", "C", "F"]
-_OrderACF = L[None, "A", "C", "F"]
-_OrderCF = L[None, "C", "F"]
+_OrderKACF: TypeAlias = L[None, "K", "A", "C", "F"]
+_OrderACF: TypeAlias = L[None, "A", "C", "F"]
+_OrderCF: TypeAlias = L[None, "C", "F"]
 
-_ModeKind = L["raise", "wrap", "clip"]
-_PartitionKind = L["introselect"]
-_SortKind = L["quicksort", "mergesort", "heapsort", "stable"]
-_SortSide = L["left", "right"]
+_ModeKind: TypeAlias = L["raise", "wrap", "clip"]
+_PartitionKind: TypeAlias = L["introselect"]
+_SortKind: TypeAlias = L["quicksort", "mergesort", "heapsort", "stable"]
+_SortSide: TypeAlias = L["left", "right"]
 
 _ArraySelf = TypeVar("_ArraySelf", bound=_ArrayOrScalarCommon)
 
@@ -1391,7 +1392,7 @@ _NumberType = TypeVar("_NumberType", bound=number[Any])
 if sys.version_info >= (3, 12):
     from collections.abc import Buffer as _SupportsBuffer
 else:
-    _SupportsBuffer = (
+    _SupportsBuffer: TypeAlias = (
         bytes
         | bytearray
         | memoryview
@@ -1404,22 +1405,22 @@ else:
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
 _T_contra = TypeVar("_T_contra", contravariant=True)
-_2Tuple = tuple[_T, _T]
-_CastingKind = L["no", "equiv", "safe", "same_kind", "unsafe"]
+_2Tuple: TypeAlias = tuple[_T, _T]
+_CastingKind: TypeAlias = L["no", "equiv", "safe", "same_kind", "unsafe"]
 
-_ArrayUInt_co = NDArray[np.bool | unsignedinteger[Any]]
-_ArrayInt_co = NDArray[np.bool | integer[Any]]
-_ArrayFloat_co = NDArray[np.bool | integer[Any] | floating[Any]]
-_ArrayComplex_co = NDArray[np.bool | integer[Any] | floating[Any] | complexfloating[Any, Any]]
-_ArrayNumber_co = NDArray[np.bool | number[Any]]
-_ArrayTD64_co = NDArray[np.bool | integer[Any] | timedelta64]
+_ArrayUInt_co: TypeAlias = NDArray[np.bool | unsignedinteger[Any]]
+_ArrayInt_co: TypeAlias = NDArray[np.bool | integer[Any]]
+_ArrayFloat_co: TypeAlias = NDArray[np.bool | integer[Any] | floating[Any]]
+_ArrayComplex_co: TypeAlias = NDArray[np.bool | integer[Any] | floating[Any] | complexfloating[Any, Any]]
+_ArrayNumber_co: TypeAlias = NDArray[np.bool | number[Any]]
+_ArrayTD64_co: TypeAlias = NDArray[np.bool | integer[Any] | timedelta64]
 
 # Introduce an alias for `dtype` to avoid naming conflicts.
-_dtype = dtype
+_dtype: TypeAlias = dtype
 
 # `builtins.PyCapsule` unfortunately lacks annotations as of the moment;
 # use `Any` as a stopgap measure
-_PyCapsule = Any
+_PyCapsule: TypeAlias = Any
 
 class _SupportsItem(Protocol[_T_co]):
     def item(self, args: Any, /) -> _T_co: ...
@@ -2837,7 +2838,7 @@ class bool(generic):
     __gt__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
     __ge__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
 
-bool_ = bool
+bool_: TypeAlias = bool
 
 class object_(generic):
     def __init__(self, value: object = ..., /) -> None: ...
@@ -2893,9 +2894,9 @@ class datetime64(generic):
     __gt__: _ComparisonOp[datetime64, _ArrayLikeDT64_co]
     __ge__: _ComparisonOp[datetime64, _ArrayLikeDT64_co]
 
-_IntValue = SupportsInt | _CharLike_co | SupportsIndex
-_FloatValue = None | _CharLike_co | SupportsFloat | SupportsIndex
-_ComplexValue = (
+_IntValue: TypeAlias = SupportsInt | _CharLike_co | SupportsIndex
+_FloatValue: TypeAlias = None | _CharLike_co | SupportsFloat | SupportsIndex
+_ComplexValue: TypeAlias = (
     None
     | _CharLike_co
     | SupportsFloat
@@ -3049,18 +3050,18 @@ class unsignedinteger(integer[_NBit1]):
     __divmod__: _UnsignedIntDivMod[_NBit1]
     __rdivmod__: _UnsignedIntDivMod[_NBit1]
 
-uint8 = unsignedinteger[_8Bit]
-uint16 = unsignedinteger[_16Bit]
-uint32 = unsignedinteger[_32Bit]
-uint64 = unsignedinteger[_64Bit]
+uint8: TypeAlias = unsignedinteger[_8Bit]
+uint16: TypeAlias = unsignedinteger[_16Bit]
+uint32: TypeAlias = unsignedinteger[_32Bit]
+uint64: TypeAlias = unsignedinteger[_64Bit]
 
-ubyte = unsignedinteger[_NBitByte]
-ushort = unsignedinteger[_NBitShort]
-uintc = unsignedinteger[_NBitIntC]
-uintp = unsignedinteger[_NBitIntP]
-uint = uintp
-ulong = unsignedinteger[_NBitLong]
-ulonglong = unsignedinteger[_NBitLongLong]
+ubyte: TypeAlias = unsignedinteger[_NBitByte]
+ushort: TypeAlias = unsignedinteger[_NBitShort]
+uintc: TypeAlias = unsignedinteger[_NBitIntC]
+uintp: TypeAlias = unsignedinteger[_NBitIntP]
+uint: TypeAlias = uintp
+ulong: TypeAlias = unsignedinteger[_NBitLong]
+ulonglong: TypeAlias = unsignedinteger[_NBitLongLong]
 
 class inexact(number[_NBit1]):  # type: ignore
     def __getnewargs__(self: inexact[_64Bit]) -> tuple[float, ...]: ...
@@ -3106,14 +3107,14 @@ class floating(inexact[_NBit1]):
     __divmod__: _FloatDivMod[_NBit1]
     __rdivmod__: _FloatDivMod[_NBit1]
 
-float16 = floating[_16Bit]
-float32 = floating[_32Bit]
-float64 = floating[_64Bit]
+float16: TypeAlias = floating[_16Bit]
+float32: TypeAlias = floating[_32Bit]
+float64: TypeAlias = floating[_64Bit]
 
-half = floating[_NBitHalf]
-single = floating[_NBitSingle]
-double = floating[_NBitDouble]
-longdouble = floating[_NBitLongDouble]
+half: TypeAlias = floating[_NBitHalf]
+single: TypeAlias = floating[_NBitSingle]
+double: TypeAlias = floating[_NBitDouble]
+longdouble: TypeAlias = floating[_NBitLongDouble]
 
 # The main reason for `complexfloating` having two typevars is cosmetic.
 # It is used to clarify why `complex128`s precision is `_64Bit`, the latter
@@ -3144,12 +3145,12 @@ class complexfloating(inexact[_NBit1], Generic[_NBit1, _NBit2]):
     __pow__: _ComplexOp[_NBit1]
     __rpow__: _ComplexOp[_NBit1]
 
-complex64 = complexfloating[_32Bit, _32Bit]
-complex128 = complexfloating[_64Bit, _64Bit]
+complex64: TypeAlias = complexfloating[_32Bit, _32Bit]
+complex128: TypeAlias = complexfloating[_64Bit, _64Bit]
 
-csingle = complexfloating[_NBitSingle, _NBitSingle]
-cdouble = complexfloating[_NBitDouble, _NBitDouble]
-clongdouble = complexfloating[_NBitLongDouble, _NBitLongDouble]
+csingle: TypeAlias = complexfloating[_NBitSingle, _NBitSingle]
+cdouble: TypeAlias = complexfloating[_NBitDouble, _NBitDouble]
+clongdouble: TypeAlias = complexfloating[_NBitLongDouble, _NBitLongDouble]
 
 class flexible(generic): ...  # type: ignore
 
@@ -3528,7 +3529,7 @@ class iinfo(Generic[_IntType]):
     @overload
     def __new__(cls, dtype: str) -> iinfo[Any]: ...
 
-_NDIterFlagsKind = L[
+_NDIterFlagsKind: TypeAlias = L[
     "buffered",
     "c_index",
     "copy_if_overlap",
@@ -3544,7 +3545,7 @@ _NDIterFlagsKind = L[
     "zerosize_ok",
 ]
 
-_NDIterOpFlagsKind = L[
+_NDIterOpFlagsKind: TypeAlias = L[
     "aligned",
     "allocate",
     "arraymask",
@@ -3635,7 +3636,7 @@ class nditer:
     @property
     def value(self) -> tuple[NDArray[Any], ...]: ...
 
-_MemMapModeKind = L[
+_MemMapModeKind: TypeAlias = L[
     "readonly", "r",
     "copyonwrite", "c",
     "readwrite", "r+",

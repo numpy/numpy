@@ -3,6 +3,7 @@ from typing import (
     Any,
     Sequence,
     Union,
+    TypeAlias,
     TypeVar,
     Protocol,
     TypedDict,
@@ -60,7 +61,7 @@ from ._char_codes import (
 _SCT = TypeVar("_SCT", bound=np.generic)
 _DType_co = TypeVar("_DType_co", covariant=True, bound=np.dtype[Any])
 
-_DTypeLikeNested = Any  # TODO: wait for support for recursive types
+_DTypeLikeNested: TypeAlias = Any  # TODO: wait for support for recursive types
 
 
 # Mandatory keys
@@ -87,7 +88,7 @@ class _SupportsDType(Protocol[_DType_co]):
 
 
 # A subset of `npt.DTypeLike` that can be parametrized w.r.t. `np.generic`
-_DTypeLike = Union[
+_DTypeLike: TypeAlias = Union[
     np.dtype[_SCT],
     type[_SCT],
     _SupportsDType[np.dtype[_SCT]],
@@ -95,7 +96,7 @@ _DTypeLike = Union[
 
 
 # Would create a dtype[np.void]
-_VoidDTypeLike = Union[
+_VoidDTypeLike: TypeAlias = Union[
     # (flexible_dtype, itemsize)
     tuple[_DTypeLikeNested, int],
     # (fixed_dtype, shape)
@@ -115,7 +116,7 @@ _VoidDTypeLike = Union[
 
 # Anything that can be coerced into numpy.dtype.
 # Reference: https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html
-DTypeLike = Union[
+DTypeLike: TypeAlias = Union[
     np.dtype[Any],
     # default data type (float64)
     None,
@@ -137,14 +138,14 @@ DTypeLike = Union[
 
 # Aliases for commonly used dtype-like objects.
 # Note that the precision of `np.number` subclasses is ignored herein.
-_DTypeLikeBool = Union[
+_DTypeLikeBool: TypeAlias = Union[
     type[bool],
     type[np.bool],
     np.dtype[np.bool],
     _SupportsDType[np.dtype[np.bool]],
     _BoolCodes,
 ]
-_DTypeLikeUInt = Union[
+_DTypeLikeUInt: TypeAlias = Union[
     type[np.unsignedinteger],
     np.dtype[np.unsignedinteger],
     _SupportsDType[np.dtype[np.unsignedinteger]],
@@ -160,7 +161,7 @@ _DTypeLikeUInt = Union[
     _UIntPCodes,
     _UIntCodes,
 ]
-_DTypeLikeInt = Union[
+_DTypeLikeInt: TypeAlias = Union[
     type[int],
     type[np.signedinteger],
     np.dtype[np.signedinteger],
@@ -177,7 +178,7 @@ _DTypeLikeInt = Union[
     _IntPCodes,
     _IntCodes,
 ]
-_DTypeLikeFloat = Union[
+_DTypeLikeFloat: TypeAlias = Union[
     type[float],
     type[np.floating],
     np.dtype[np.floating],
@@ -190,7 +191,7 @@ _DTypeLikeFloat = Union[
     _DoubleCodes,
     _LongDoubleCodes,
 ]
-_DTypeLikeComplex = Union[
+_DTypeLikeComplex: TypeAlias = Union[
     type[complex],
     type[np.complexfloating],
     np.dtype[np.complexfloating],
@@ -201,47 +202,47 @@ _DTypeLikeComplex = Union[
     _CDoubleCodes,
     _CLongDoubleCodes,
 ]
-_DTypeLikeDT64 = Union[
+_DTypeLikeDT64: TypeAlias = Union[
     type[np.timedelta64],
     np.dtype[np.timedelta64],
     _SupportsDType[np.dtype[np.timedelta64]],
     _TD64Codes,
 ]
-_DTypeLikeTD64 = Union[
+_DTypeLikeTD64: TypeAlias = Union[
     type[np.datetime64],
     np.dtype[np.datetime64],
     _SupportsDType[np.dtype[np.datetime64]],
     _DT64Codes,
 ]
-_DTypeLikeStr = Union[
+_DTypeLikeStr: TypeAlias = Union[
     type[str],
     type[np.str_],
     np.dtype[np.str_],
     _SupportsDType[np.dtype[np.str_]],
     _StrCodes,
 ]
-_DTypeLikeBytes = Union[
+_DTypeLikeBytes: TypeAlias = Union[
     type[bytes],
     type[np.bytes_],
     np.dtype[np.bytes_],
     _SupportsDType[np.dtype[np.bytes_]],
     _BytesCodes,
 ]
-_DTypeLikeVoid = Union[
+_DTypeLikeVoid: TypeAlias = Union[
     type[np.void],
     np.dtype[np.void],
     _SupportsDType[np.dtype[np.void]],
     _VoidCodes,
     _VoidDTypeLike,
 ]
-_DTypeLikeObject = Union[
+_DTypeLikeObject: TypeAlias = Union[
     type,
     np.dtype[np.object_],
     _SupportsDType[np.dtype[np.object_]],
     _ObjectCodes,
 ]
 
-_DTypeLikeComplex_co = Union[
+_DTypeLikeComplex_co: TypeAlias = Union[
     _DTypeLikeBool,
     _DTypeLikeUInt,
     _DTypeLikeInt,
