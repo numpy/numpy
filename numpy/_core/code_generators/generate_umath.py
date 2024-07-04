@@ -1376,10 +1376,9 @@ def make_arrays(funcdict):
         funclist = []
         datalist = []
         siglist = []
-        k = 0
         sub = 0
 
-        for t in uf.type_descriptions:
+        for k, t in enumerate(uf.type_descriptions):
             cfunc_alias = t.cfunc_alias if t.cfunc_alias else name
             cfunc_fname = None
             if t.func_data is FullTypeDescr:
@@ -1438,8 +1437,6 @@ def make_arrays(funcdict):
 
             for x in t.in_ + t.out:
                 siglist.append('NPY_%s' % (english_upper(chartoname[x]),))
-
-            k += 1
 
         if funclist or siglist or datalist:
             funcnames = ', '.join(funclist)
