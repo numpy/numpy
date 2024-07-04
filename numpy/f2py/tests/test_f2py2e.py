@@ -1,6 +1,11 @@
-import textwrap, re, sys, subprocess, shlex
+import re
+import shlex
+import subprocess
+import sys
+import textwrap
 from pathlib import Path
 from collections import namedtuple
+
 import platform
 
 import pytest

@@ -1,8 +1,10 @@
 # NOTE: Please avoid the use of numpy.testing since NPYV intrinsics
 # may be involved in their functionality.
-import pytest, math, re
 import itertools
+import math
 import operator
+import re
+import pytest
 from numpy._core._simd import targets, clear_floatstatus, get_floatstatus
 from numpy._core._multiarray_umath import __cpu_baseline__
 
