@@ -77,12 +77,19 @@ from numpy._typing import (
     _IntLike_co,
     _FloatLike_co,
     _TD64Like_co,
+
+    # Ufuncs
+    _UFunc_Nin1_Nout1,
+    _UFunc_Nin2_Nout1,
+    _UFunc_Nin1_Nout2,
+    _UFunc_Nin2_Nout2,
 )
 
 _T_co = TypeVar("_T_co", covariant=True)
 _T_contra = TypeVar("_T_contra", contravariant=True)
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
+_IdentityType = TypeVar("_IdentityType", bound=object)
 
 # Valid time units
 _UnitKind = L[
@@ -659,12 +666,53 @@ def fromstring(
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
+@overload
+def frompyfunc(
+    func: Callable[..., Any], /,
+    nin: L[1],
+    nout: L[1],
+    *,
+    identity: None = ...,
+) -> _UFunc_Nin1_Nout1[Any, L[1], None]: ...
+@overload
+def frompyfunc(
+    func: Callable[..., Any], /,
+    nin: L[2],
+    nout: L[1],
+    *,
+    identity: _IdentityType,
+) -> _UFunc_Nin2_Nout1[Any, L[1], _IdentityType]: ...
+@overload
+def frompyfunc(
+    func: Callable[..., Any], /,
+    nin: L[2],
+    nout: L[1],
+    *,
+    identity: None = ...,
+) -> _UFunc_Nin2_Nout1[Any, L[1], None]: ...
+@overload
+def frompyfunc(
+    func: Callable[..., tuple[Any, Any]], /,
+    nin: L[1],
+    nout: L[2],
+    *,
+    identity: None = ...,
+) -> _UFunc_Nin1_Nout2[Any, L[1], None]: ...
+@overload
+def frompyfunc(
+    func: Callable[..., tuple[Any, Any]], /,
+    nin: L[2],
+    nout: L[2],
+    *,
+    identity: None = ...,
+) -> _UFunc_Nin2_Nout2[Any, L[1], None]: ...
+@overload
 def frompyfunc(
     func: Callable[..., Any], /,
     nin: SupportsIndex,
     nout: SupportsIndex,
     *,
-    identity: Any = ...,
+    identity: None | object = ...,
 ) -> ufunc: ...
 
 @overload
