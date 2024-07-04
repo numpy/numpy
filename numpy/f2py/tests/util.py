@@ -221,10 +221,7 @@ def check_language(lang, code_snippet=None):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        if runmeson.returncode == 0:
-            return True
-        else:
-            return False
+        return runmeson.returncode == 0
     finally:
         shutil.rmtree(tmpdir)
     return False
