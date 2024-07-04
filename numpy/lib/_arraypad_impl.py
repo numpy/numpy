@@ -860,7 +860,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
 
     elif mode in {"reflect", "symmetric"}:
         method = kwargs.get("reflect_type", "even")
-        include_edge = True if mode == "symmetric" else False
+        include_edge = mode == "symmetric"
         for axis, (left_index, right_index) in zip(axes, pad_width):
             if array.shape[axis] == 1 and (left_index > 0 or right_index > 0):
                 # Extending singleton dimension for 'reflect' is legacy
