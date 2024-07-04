@@ -9725,7 +9725,8 @@ class TestArrayFinalize:
                 raise Exception(self)
 
         # a plain object can't be weakref'd
-        class Dummy: pass
+        class Dummy:
+            pass
 
         # get a weak reference to an object within an array
         obj_arr = np.array(Dummy())

@@ -5435,7 +5435,8 @@ class TestMaskedConstant:
 
     def test_subclass(self):
         # https://github.com/astropy/astropy/issues/6645
-        class Sub(type(np.ma.masked)): pass
+        class Sub(type(np.ma.masked)):
+            pass
 
         a = Sub()
         assert_(a is Sub())
