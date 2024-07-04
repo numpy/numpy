@@ -3120,7 +3120,7 @@ def test_writebacks():
             assert_equal(au.flags.writeable, False)
             it.operands[0][:] = 0
             raise ValueError('exit context manager on exception')
-    except:
+    except Exception:
         pass
     assert_equal(au, 0)
     assert_equal(au.flags.writeable, True)
