@@ -426,21 +426,16 @@ class TestAttributes:
             a.fill(0)
 
     def test_fill_subarrays(self):
-        base_allocator = os.environ.get("PYTHONMALLOC", None)
-        if base_allocator is None or "debug" not in base_allocator:
-            os.environ["PYTHONMALLOC"] = "debug"
+        # NOTE:
+        # This is also a regression test for a crash with PYTHONMALLOC=debug
 
         dtype = np.dtype("2<i8, 2<i8, 2<i8")
         data = ([1, 2], [3, 4], [5, 6])
 
         arr = np.empty(1, dtype=dtype)
-        # Crashes if the allocator and deallocator use mismatched domains
         arr.fill(data)
 
         assert_equal(arr, np.array(data, dtype=dtype))
-
-        if base_allocator is not None:
-            os.environ["PYTHONMALLOC"] = base_allocator
 
 
 class TestArrayConstruction:
