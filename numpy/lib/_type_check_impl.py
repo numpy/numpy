@@ -689,7 +689,7 @@ def common_type(*arrays):
         if issubclass(t, _nx.integer):
             p = 2  # array_precision[_nx.double]
         else:
-            p = array_precision.get(t, None)
+            p = array_precision.get(t)
             if p is None:
                 raise TypeError("can't get common type for non-numeric array")
         precision = max(precision, p)
