@@ -4,9 +4,9 @@ from typing import Any
 import numpy as np
 
 if sys.version_info >= (3, 11):
-    from typing import assert_type
+    from typing import assert_type, LiteralString
 else:
-    from typing_extensions import assert_type
+    from typing_extensions import assert_type, LiteralString
 
 f: float
 f8: np.float64
@@ -49,8 +49,8 @@ assert_type(np.iinfo(u4), np.iinfo[np.uint32])
 assert_type(np.iinfo('i2'), np.iinfo[Any])
 
 assert_type(iinfo_i8.dtype, np.dtype[np.int64])
-assert_type(iinfo_i8.kind, str)
+assert_type(iinfo_i8.kind, LiteralString)
 assert_type(iinfo_i8.bits, int)
-assert_type(iinfo_i8.key, str)
+assert_type(iinfo_i8.key, LiteralString)
 assert_type(iinfo_i8.min, int)
 assert_type(iinfo_i8.max, int)

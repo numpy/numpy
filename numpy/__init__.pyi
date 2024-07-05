@@ -184,6 +184,7 @@ from collections.abc import (
     Sequence,
 )
 from typing import (
+    TYPE_CHECKING,
     Literal as L,
     Any,
     Generator,
@@ -199,8 +200,15 @@ from typing import (
     Final,
     final,
     ClassVar,
-    TypeAlias
+    TypeAlias,
 )
+
+if sys.version_info >= (3, 11):
+    from typing import LiteralString
+elif TYPE_CHECKING:
+    from typing_extensions import LiteralString
+else:
+    LiteralString: TypeAlias = str
 
 # Ensures that the stubs are picked up
 from numpy import (
@@ -604,7 +612,7 @@ from numpy.matrixlib import (
     bmat as bmat,
 )
 
-_AnyStr_contra = TypeVar("_AnyStr_contra", str, bytes, contravariant=True)
+_AnyStr_contra = TypeVar("_AnyStr_contra", LiteralString, builtins.str, bytes, contravariant=True)
 
 # Protocol for representing file-like-objects accepted
 # by `ndarray.tofile` and `fromfile`
@@ -631,8 +639,8 @@ class _SupportsWrite(Protocol[_AnyStr_contra]):
 __all__: list[str]
 def __dir__() -> Sequence[str]: ...
 
-__version__: str
-__array_api_version__: str
+__version__: LiteralString
+__array_api_version__: LiteralString
 test: PytestTester
 
 # TODO: Move placeholders to their respective module once
@@ -645,8 +653,99 @@ def show_config() -> None: ...
 _NdArraySubClass = TypeVar("_NdArraySubClass", bound=NDArray[Any])
 _NdArraySubClass_co = TypeVar("_NdArraySubClass_co", bound=NDArray[Any], covariant=True)
 _DTypeScalar_co = TypeVar("_DTypeScalar_co", covariant=True, bound=generic)
-_ByteOrder: TypeAlias = L["S", "<", ">", "=", "|", "L", "B", "N", "I", "little", "big", "native"]
 _SCT = TypeVar("_SCT", bound=generic)
+
+_ByteOrderChar: TypeAlias = L[
+    "<",  # little-endian
+    ">",  # big-endian
+    "=",  # native order
+    "|",  # ignore
+]
+# can be anything, is case-insensitive, and only the first character matters
+_ByteOrder: TypeAlias = L[
+    "S",                # swap the current order (default)
+    "<", "L", "little", # little-endian
+    ">", "B", "big",    # big endian
+    "=", "N", "native", # native order
+    "|", "I",           # ignore
+]
+_DTypeKind: TypeAlias = L[
+    "b",  # boolean
+    "i",  # signed integer
+    "u",  # unsigned integer
+    "f",  # floating-point
+    "c",  # complex floating-point
+    "m",  # timedelta64
+    "M",  # datetime64
+    "O",  # python object
+    "S",  # byte-string (fixed-width)
+    "U",  # unicode-string (fixed-width)
+    "V",  # void
+    "T",  # unicode-string (variable-width)
+]
+_DTypeChar: TypeAlias = L[
+    "?",  # bool
+    "b",  # byte
+    "B",  # ubyte
+    "h",  # short
+    "H",  # ushort
+    "i",  # intc
+    "I",  # uintc
+    "l",  # long
+    "L",  # ulong
+    "q",  # longlong
+    "Q",  # ulonglong
+    "e",  # half
+    "f",  # single
+    "d",  # double
+    "g",  # longdouble
+    "F",  # csingle
+    "D",  # cdouble
+    "G",  # clongdouble
+    "O",  # object
+    "S",  # bytes_ (S0)
+    "a",  # bytes_ (deprecated)
+    "U",  # str_
+    "V",  # void
+    "M",  # datetime64
+    "m",  # timedelta64
+    "c",  # bytes_ (S1)
+    "T",  # StringDType
+]
+_DTypeNum: TypeAlias = L[
+    0,  # bool
+    1,  # byte
+    2,  # ubyte
+    3,  # short
+    4,  # ushort
+    5,  # intc
+    6,  # uintc
+    7,  # long
+    8,  # ulong
+    9,  # longlong
+    10,  # ulonglong
+    23,  # half
+    11,  # single
+    12,  # double
+    13,  # longdouble
+    14,  # csingle
+    15,  # cdouble
+    16,  # clongdouble
+    17,  # object
+    18,  # bytes_
+    19,  # str_
+    20,  # void
+    21,  # datetime64
+    22,  # timedelta64
+    25,  # no type
+    256,  # user-defined
+    2056,  # StringDType
+]
+_DTypeBuiltinKind: TypeAlias = L[
+    0,  # structured array type, with fields
+    1,  # compiled into numpy
+    2,  # user-defined
+]
 
 @final
 class dtype(Generic[_DTypeScalar_co]):
@@ -858,21 +957,19 @@ class dtype(Generic[_DTypeScalar_co]):
     @property
     def base(self) -> dtype[Any]: ...
     @property
-    def byteorder(self) -> builtins.str: ...
+    def byteorder(self) -> _ByteOrderChar: ...
     @property
-    def char(self) -> builtins.str: ...
+    def char(self) -> _DTypeChar: ...
     @property
-    def descr(self) -> list[tuple[builtins.str, builtins.str] | tuple[builtins.str, builtins.str, _Shape]]: ...
+    def descr(self) -> list[tuple[LiteralString, LiteralString] | tuple[LiteralString, LiteralString, _Shape]]: ...
     @property
-    def fields(
-        self,
-    ) -> None | MappingProxyType[builtins.str, tuple[dtype[Any], int] | tuple[dtype[Any], int, Any]]: ...
+    def fields(self,) -> None | MappingProxyType[LiteralString, tuple[dtype[Any], int] | tuple[dtype[Any], int, Any]]: ...
     @property
     def flags(self) -> int: ...
     @property
     def hasobject(self) -> builtins.bool: ...
     @property
-    def isbuiltin(self) -> int: ...
+    def isbuiltin(self) -> _DTypeBuiltinKind: ...
     @property
     def isnative(self) -> builtins.bool: ...
     @property
@@ -880,22 +977,22 @@ class dtype(Generic[_DTypeScalar_co]):
     @property
     def itemsize(self) -> int: ...
     @property
-    def kind(self) -> builtins.str: ...
+    def kind(self) -> _DTypeKind: ...
     @property
     def metadata(self) -> None | MappingProxyType[builtins.str, Any]: ...
     @property
-    def name(self) -> builtins.str: ...
+    def name(self) -> LiteralString: ...
     @property
-    def num(self) -> int: ...
+    def num(self) -> _DTypeNum: ...
     @property
-    def shape(self) -> _Shape: ...
+    def shape(self) -> tuple[()] | _Shape: ...
     @property
     def ndim(self) -> int: ...
     @property
     def subdtype(self) -> None | tuple[dtype[Any], _Shape]: ...
-    def newbyteorder(self: _DType, __new_order: _ByteOrder = ...) -> _DType: ...
+    def newbyteorder(self: _DType, new_order: _ByteOrder = ..., /) -> _DType: ...
     @property
-    def str(self) -> builtins.str: ...
+    def str(self) -> LiteralString: ...
     @property
     def type(self) -> type[_DTypeScalar_co]: ...
 
@@ -957,7 +1054,14 @@ _OrderCF: TypeAlias = L[None, "C", "F"]
 
 _ModeKind: TypeAlias = L["raise", "wrap", "clip"]
 _PartitionKind: TypeAlias = L["introselect"]
-_SortKind: TypeAlias = L["quicksort", "mergesort", "heapsort", "stable"]
+# in practice, only the first case-insensitive character is considered (so e.g.
+# "QuantumSort3000" will be interpreted as quicksort).
+_SortKind: TypeAlias = L[
+    "Q", "quick", "quicksort",
+    "M", "merge", "mergesort",
+    "H", "heap", "heapsort",
+    "S", "stable", "stablesort",
+]
 _SortSide: TypeAlias = L["left", "right"]
 
 _ArraySelf = TypeVar("_ArraySelf", bound=_ArrayOrScalarCommon)
@@ -1009,7 +1113,7 @@ class _ArrayOrScalarCommon:
     def __array_priority__(self) -> float: ...
     @property
     def __array_struct__(self) -> Any: ...  # builtins.PyCapsule
-    def __array_namespace__(self, *, api_version: str | None = ...) -> Any: ...
+    def __array_namespace__(self, *, api_version: None | _ArrayAPIVersion = ...) -> Any: ...
     def __setstate__(self, state: tuple[
         SupportsIndex,  # version
         _ShapeLike,  # Shape
@@ -1434,6 +1538,8 @@ if sys.version_info >= (3, 13):
     from types import CapsuleType as _PyCapsule
 else:
     _PyCapsule: TypeAlias = Any
+
+_ArrayAPIVersion: TypeAlias = L["2021.12", "2022.12", "2023.12"]
 
 class _SupportsItem(Protocol[_T_co]):
     def item(self, args: Any, /) -> _T_co: ...
@@ -3247,7 +3353,7 @@ newaxis: None
 @final
 class ufunc:
     @property
-    def __name__(self) -> str: ...
+    def __name__(self) -> LiteralString: ...
     @property
     def __doc__(self) -> str: ...
     __call__: Callable[..., Any]
@@ -3260,7 +3366,7 @@ class ufunc:
     @property
     def ntypes(self) -> int: ...
     @property
-    def types(self) -> list[str]: ...
+    def types(self) -> list[LiteralString]: ...
     # Broad return type because it has to encompass things like
     #
     # >>> np.logical_and.identity is True
@@ -3275,7 +3381,7 @@ class ufunc:
     def identity(self) -> Any: ...
     # This is None for ufuncs and a string for gufuncs.
     @property
-    def signature(self) -> None | str: ...
+    def signature(self) -> None | LiteralString: ...
     # The next four methods will always exist, but they will just
     # raise a ValueError ufuncs with that don't accept two input
     # arguments and return one output argument. Because of that we
@@ -3536,9 +3642,9 @@ class finfo(Generic[_FloatType]):
 
 class iinfo(Generic[_IntType]):
     dtype: dtype[_IntType]
-    kind: str
+    kind: LiteralString
     bits: int
-    key: str
+    key: LiteralString
     @property
     def min(self) -> int: ...
     @property
@@ -3714,8 +3820,8 @@ class memmap(ndarray[_ShapeType, _DType_co]):
 class vectorize:
     pyfunc: Callable[..., Any]
     cache: builtins.bool
-    signature: None | str
-    otypes: None | str
+    signature: None | LiteralString
+    otypes: None | LiteralString
     excluded: set[int | str]
     __doc__: None | str
     def __init__(
@@ -3731,7 +3837,7 @@ class vectorize:
 
 class poly1d:
     @property
-    def variable(self) -> str: ...
+    def variable(self) -> LiteralString: ...
     @property
     def order(self) -> int: ...
     @property
