@@ -5,7 +5,6 @@ from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
     assert_raises, _assert_valid_refcount,
     )
-import pytest
 
 
 class TestRegression:

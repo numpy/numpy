@@ -3,13 +3,10 @@ Tests related to deprecation warnings. Also a convenient place
 to document how deprecations should eventually be turned into errors.
 
 """
-import datetime
-import operator
 import warnings
 import pytest
 import tempfile
 import re
-import sys
 
 import numpy as np
 from numpy.testing import (

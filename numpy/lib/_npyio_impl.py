@@ -9,7 +9,7 @@ import warnings
 import weakref
 import contextlib
 import operator
-from operator import itemgetter, index as opindex, methodcaller
+from operator import itemgetter
 from collections.abc import Mapping
 import pickle
 

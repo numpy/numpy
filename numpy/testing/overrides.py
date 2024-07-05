@@ -63,7 +63,7 @@ def get_overridable_numpy_array_functions():
     """
     # 'import numpy' doesn't import recfunctions, so make sure it's imported
     # so ufuncs defined there show up in the ufunc listing
-    from numpy.lib import recfunctions
+    from numpy.lib import recfunctions  # noqa: F401
     return _array_functions.copy()
 
 def allows_array_function_override(func):

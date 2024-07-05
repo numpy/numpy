@@ -31,18 +31,13 @@ import inspect
 import io
 import os
 import re
-import shutil
 import sys
-import tempfile
 import warnings
 import docutils.core
 from argparse import ArgumentParser
-from contextlib import contextmanager, redirect_stderr
 
 from docutils.parsers.rst import directives
 
-import sphinx
-import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'doc', 'sphinxext'))
 from numpydoc.docscrape_sphinx import get_doc_object

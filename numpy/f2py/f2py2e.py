@@ -15,10 +15,7 @@ import sys
 import os
 import pprint
 import re
-from pathlib import Path
-from itertools import dropwhile
 import argparse
-import copy
 
 from . import crackfortran
 from . import rules

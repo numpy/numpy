@@ -1,4 +1,3 @@
-import os
 import sys
 import copy
 import platform
@@ -7,7 +6,6 @@ from pathlib import Path
 
 import numpy as np
 
-from numpy.testing import assert_, assert_equal
 from numpy._core._type_aliases import c_names_dict as _c_names_dict
 from . import util
 

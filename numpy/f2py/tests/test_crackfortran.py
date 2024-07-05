@@ -1,7 +1,5 @@
 import importlib
-import codecs
 import time
-import unicodedata
 import pytest
 import numpy as np
 from numpy.f2py.crackfortran import markinnerspaces, nameargspattern

@@ -5,8 +5,6 @@ __umath_generated.c
 """
 import os
 import re
-import struct
-import sys
 import textwrap
 import argparse
 

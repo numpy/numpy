@@ -12,7 +12,6 @@ from ._backend import Backend
 from string import Template
 from itertools import chain
 
-import warnings
 
 
 class MesonTemplate:

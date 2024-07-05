@@ -1,6 +1,4 @@
 import itertools
-import sys
-import platform
 
 import pytest
 

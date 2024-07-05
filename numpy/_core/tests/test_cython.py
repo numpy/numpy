@@ -1,9 +1,7 @@
 from datetime import datetime
 import os
-import shutil
 import subprocess
 import sys
-import time
 import pytest
 
 import numpy as np
