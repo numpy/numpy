@@ -1415,9 +1415,10 @@ _ArrayTD64_co: TypeAlias = NDArray[np.bool | integer[Any] | timedelta64]
 # Introduce an alias for `dtype` to avoid naming conflicts.
 _dtype: TypeAlias = dtype
 
-# `builtins.PyCapsule` unfortunately lacks annotations as of the moment;
-# use `Any` as a stopgap measure
-_PyCapsule: TypeAlias = Any
+if sys.version_info >= (3, 13):
+    from types import CapsuleType as _PyCapsule
+else:
+    _PyCapsule: TypeAlias = Any
 
 class _SupportsItem(Protocol[_T_co]):
     def item(self, args: Any, /) -> _T_co: ...
