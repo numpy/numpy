@@ -234,7 +234,7 @@ class TestFlags:
         a = np.arange(10)
         setattr(a.flags, flag, flag_value)
 
-        class MyArr():
+        class MyArr:
             __array_struct__ = a.__array_struct__
 
         assert memoryview(a).readonly is not writeable
@@ -7247,7 +7247,7 @@ class TestMatmul(MatmulCommon):
 
     def test_matmul_exception_multiply(self):
         # test that matmul fails if `__mul__` is missing
-        class add_not_multiply():
+        class add_not_multiply:
             def __add__(self, other):
                 return self
         a = np.full((3,3), add_not_multiply())
@@ -7256,7 +7256,7 @@ class TestMatmul(MatmulCommon):
 
     def test_matmul_exception_add(self):
         # test that matmul fails if `__add__` is missing
-        class multiply_not_add():
+        class multiply_not_add:
             def __mul__(self, other):
                 return self
         a = np.full((3,3), multiply_not_add())
@@ -8677,7 +8677,7 @@ class TestArrayAttributeDeletion:
             assert_raises(AttributeError, delattr, a, s)
 
 
-class TestArrayInterface():
+class TestArrayInterface:
     class Foo:
         def __init__(self, value):
             self.value = value
