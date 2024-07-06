@@ -220,10 +220,7 @@ def check_language(lang, code_snippet=None):
             cwd=tmpdir,
             capture_output=True,
         )
-        if runmeson.returncode == 0:
-            return True
-        else:
-            return False
+        return runmeson.returncode == 0
     finally:
         shutil.rmtree(tmpdir)
     return False
