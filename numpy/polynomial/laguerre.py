@@ -1688,9 +1688,9 @@ class Laguerre(ABCPolyBase):
     domain : (2,) array_like, optional
         Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
         to the interval ``[window[0], window[1]]`` by shifting and scaling.
-        The default value is [0, 1].
+        The default value is [0., 1.].
     window : (2,) array_like, optional
-        Window, see `domain` for its use. The default value is [0, 1].
+        Window, see `domain` for its use. The default value is [0., 1.].
 
         .. versionadded:: 1.6.0
     symbol : str, optional
