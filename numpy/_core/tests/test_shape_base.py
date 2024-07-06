@@ -154,7 +154,7 @@ class TestHstack:
 
     def test_generator(self):
         with pytest.raises(TypeError, match="arrays to stack must be"):
-            hstack((np.arange(3) for _ in range(2)))
+            hstack(np.arange(3) for _ in range(2))
         with pytest.raises(TypeError, match="arrays to stack must be"):
             hstack(map(lambda x: x, np.ones((3, 2))))
 
@@ -209,7 +209,7 @@ class TestVstack:
 
     def test_generator(self):
         with pytest.raises(TypeError, match="arrays to stack must be"):
-            vstack((np.arange(3) for _ in range(2)))
+            vstack(np.arange(3) for _ in range(2))
 
     def test_casting_and_dtype(self):
         a = np.array([1, 2, 3])
@@ -477,7 +477,7 @@ def test_stack():
 
     # do not accept generators
     with pytest.raises(TypeError, match="arrays to stack must be"):
-        stack((x for x in range(3)))
+        stack(x for x in range(3))
 
     #casting and dtype test
     a = np.array([1, 2, 3])

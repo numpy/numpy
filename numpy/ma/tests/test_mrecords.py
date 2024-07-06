@@ -70,7 +70,7 @@ class TestMRecords:
         assert_equal(mbase_last.recordmask, True)
         assert_equal(mbase_last._mask.item(), (True, True, True))
         assert_equal(mbase_last['a'], mbase['a'][-1])
-        assert_((mbase_last['a'] is masked))
+        assert_(mbase_last['a'] is masked)
         # as slice ..........
         mbase_sl = mbase[:2]
         assert_(isinstance(mbase_sl, mrecarray))
