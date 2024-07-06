@@ -3032,7 +3032,7 @@ def _multi_dot_three(A, B, C, out=None):
 
 def _multi_dot_matrix_chain_order(arrays, return_costs=False):
     """
-    Return a np.array that encodes the optimal order of mutiplications.
+    Return a np.array that encodes the optimal order of multiplications.
 
     The optimal order array is then used by `_multi_dot()` to do the
     multiplication.

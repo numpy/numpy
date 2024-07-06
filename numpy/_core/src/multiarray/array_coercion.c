@@ -1185,7 +1185,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
     }
 
     /*
-     * For a sequence we need to make a copy of the final aggreate anyway.
+     * For a sequence we need to make a copy of the final aggregate anyway.
      * There's no need to pass explicit `copy=True`, so we switch
      * to `copy=None` (copy if needed).
      */
