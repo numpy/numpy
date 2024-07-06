@@ -606,7 +606,7 @@ static int
 convert_ufunc_arguments(PyUFuncObject *ufunc,
         ufunc_full_args full_args, PyArrayObject *out_op[],
         PyArray_DTypeMeta *out_op_DTypes[],
-        npy_bool *force_legacy_promotion, npy_bool *allow_legacy_promotion,
+        npy_bool *force_legacy_promotion,
         npy_bool *promoting_pyscalars,
         PyObject *order_obj, NPY_ORDER *out_order,
         PyObject *casting_obj, NPY_CASTING *out_casting,
@@ -622,7 +622,6 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
     /* Convert and fill in input arguments */
     npy_bool all_scalar = NPY_TRUE;
     npy_bool any_scalar = NPY_FALSE;
-    *allow_legacy_promotion = NPY_TRUE;
     *force_legacy_promotion = NPY_FALSE;
     *promoting_pyscalars = NPY_FALSE;
     for (int i = 0; i < nin; i++) {
@@ -657,11 +656,6 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
             break;
         }
 
-        if (!NPY_DT_is_legacy(out_op_DTypes[i])) {
-            *allow_legacy_promotion = NPY_FALSE;
-            // TODO: A subclass of int, float, complex could reach here and
-            //       it should not be flagged as "weak" if it does.
-        }
         if (PyArray_NDIM(out_op[i]) == 0) {
             any_scalar = NPY_TRUE;
         }
@@ -707,7 +701,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
             *promoting_pyscalars = NPY_TRUE;
         }
     }
-    if (*allow_legacy_promotion && (!all_scalar && any_scalar)) {
+    if ((!all_scalar && any_scalar)) {
         *force_legacy_promotion = should_use_min_scalar(nin, out_op, 0, NULL);
     }
 
@@ -2351,8 +2345,7 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
     }
 
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
-            ops, signature, operation_DTypes, NPY_FALSE, NPY_TRUE,
-            NPY_FALSE, NPY_TRUE);
+            ops, signature, operation_DTypes, NPY_FALSE, NPY_FALSE, NPY_TRUE);
     if (evil_ndim_mutating_hack) {
         ((PyArrayObject_fields *)out)->nd = 0;
     }
@@ -4433,13 +4426,12 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     npy_bool subok = NPY_TRUE;
     int keepdims = -1;  /* We need to know if it was passed */
     npy_bool force_legacy_promotion;
-    npy_bool allow_legacy_promotion;
     npy_bool promoting_pyscalars;
     if (convert_ufunc_arguments(ufunc,
             /* extract operand related information: */
             full_args, operands,
             operand_DTypes,
-            &force_legacy_promotion, &allow_legacy_promotion,
+            &force_legacy_promotion,
             &promoting_pyscalars,
             /* extract general information: */
             order_obj, &order,
@@ -4460,7 +4452,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
      */
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
             operands, signature,
-            operand_DTypes, force_legacy_promotion, allow_legacy_promotion,
+            operand_DTypes, force_legacy_promotion,
             promoting_pyscalars, NPY_FALSE);
     if (ufuncimpl == NULL) {
         goto fail;
@@ -5790,22 +5782,20 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         operand_DTypes[0] = NPY_DTYPE(PyArray_DESCR(op1_array));
         Py_INCREF(operand_DTypes[0]);
         int force_legacy_promotion = 0;
-        int allow_legacy_promotion = NPY_DT_is_legacy(operand_DTypes[0]);
 
         if (op2_array != NULL) {
             tmp_operands[1] = op2_array;
             operand_DTypes[1] = NPY_DTYPE(PyArray_DESCR(op2_array));
             Py_INCREF(operand_DTypes[1]);
-            allow_legacy_promotion &= NPY_DT_is_legacy(operand_DTypes[1]);
             tmp_operands[2] = tmp_operands[0];
             operand_DTypes[2] = operand_DTypes[0];
             Py_INCREF(operand_DTypes[2]);
 
-            if (allow_legacy_promotion && ((PyArray_NDIM(op1_array) == 0)
-                                           != (PyArray_NDIM(op2_array) == 0))) {
-                    /* both are legacy and only one is 0-D: force legacy */
-                    force_legacy_promotion = should_use_min_scalar(2, tmp_operands, 0, NULL);
-                }
+            if ((PyArray_NDIM(op1_array) == 0)
+                    != (PyArray_NDIM(op2_array) == 0)) {
+                /* both are legacy and only one is 0-D: force legacy */
+                force_legacy_promotion = should_use_min_scalar(2, tmp_operands, 0, NULL);
+            }
         }
         else {
             tmp_operands[1] = tmp_operands[0];
@@ -5816,7 +5806,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
         ufuncimpl = promote_and_get_ufuncimpl(ufunc, tmp_operands, signature,
                         operand_DTypes, force_legacy_promotion,
-                        allow_legacy_promotion, NPY_FALSE, NPY_FALSE);
+                        NPY_FALSE, NPY_FALSE);
         if (ufuncimpl == NULL) {
             for (int i = 0; i < 3; i++) {
                 Py_XDECREF(signature[i]);
@@ -6058,7 +6048,6 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
     set_npy_promotion_state(NPY_USE_WEAK_PROMOTION);
 
     npy_bool promoting_pyscalars = NPY_FALSE;
-    npy_bool allow_legacy_promotion = NPY_TRUE;
 
     if (_get_fixed_signature(ufunc, NULL, signature_obj, signature) < 0) {
         goto finish;
@@ -6091,9 +6080,6 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
             }
             DTypes[i] = NPY_DTYPE(descr);
             Py_INCREF(DTypes[i]);
-            if (!NPY_DT_is_legacy(DTypes[i])) {
-                allow_legacy_promotion = NPY_FALSE;
-            }
         }
          /* Explicitly allow int, float, and complex for the "weak" types. */
         else if (descr_obj == (PyObject *)&PyLong_Type) {
@@ -6149,7 +6135,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
     if (!reduction) {
         ufuncimpl = promote_and_get_ufuncimpl(ufunc,
                 dummy_arrays, signature, DTypes, NPY_FALSE,
-                allow_legacy_promotion, promoting_pyscalars, NPY_FALSE);
+                promoting_pyscalars, NPY_FALSE);
         if (ufuncimpl == NULL) {
             goto finish;
         }
