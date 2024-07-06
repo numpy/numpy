@@ -23,7 +23,7 @@ typedef struct npy_thread_unsafe_state_struct {
      *          PyObject *value;
      *      }
      *
-     * so the initialization is thread-safe and the only possibile lock
+     * so the initialization is thread-safe and the only possible lock
      * contention happens before the cache is initialized, not on every single
      * read.
      */

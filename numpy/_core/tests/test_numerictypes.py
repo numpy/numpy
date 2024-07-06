@@ -476,7 +476,7 @@ class TestIsDType:
             np.isdtype(np.int64, "int64")
 
     def test_sctypes_complete(self):
-        # issue 26439: int32/intc were masking eachother on 32-bit builds
+        # issue 26439: int32/intc were masking each other on 32-bit builds
         assert np.int32 in sctypes['int']
         assert np.intc in sctypes['int']
         assert np.int64 in sctypes['int']

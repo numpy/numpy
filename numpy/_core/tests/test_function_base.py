@@ -223,7 +223,7 @@ class TestGeomspace:
         assert_allclose(y, [-5, 3j])
 
     def test_complex_shortest_path(self):
-        # test the shortest logorithmic spiral is used, see gh-25644
+        # test the shortest logarithmic spiral is used, see gh-25644
         x = 1.2 + 3.4j
         y = np.exp(1j*(np.pi-.1)) * x
         z = np.geomspace(x, y, 5)

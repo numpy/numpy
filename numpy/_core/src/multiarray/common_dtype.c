@@ -132,7 +132,7 @@ reduce_dtypes_to_most_knowledgeable(
         }
 
         if (res == (PyArray_DTypeMeta *)Py_NotImplemented) {
-            /* guess at other being more "knowledgable" */
+            /* guess at other being more "knowledgeable" */
             PyArray_DTypeMeta *tmp = dtypes[low];
             dtypes[low] = dtypes[high];
             dtypes[high] = tmp;
