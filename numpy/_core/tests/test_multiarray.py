@@ -6886,7 +6886,7 @@ class TestDot:
 
     def test_dtype_discovery_fails(self):
         # See gh-14247, error checking was missing for failed dtype discovery
-        class BadObject(object):
+        class BadObject:
             def __array__(self, dtype=None, copy=None):
                 raise TypeError("just this tiny mint leaf")
 
@@ -8356,7 +8356,7 @@ class TestNewBufferProtocol:
                 np.frombuffer(buffer)
 
 
-class TestArrayCreationCopyArgument(object):
+class TestArrayCreationCopyArgument:
 
     class RaiseOnBool:
 
