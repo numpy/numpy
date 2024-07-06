@@ -651,7 +651,7 @@ class TestNanFunctions_CumSumProd(SharedNanFunctionsTestsMixin):
             tgt = mat
             res = f(mat, axis=1)
             assert_equal(res, tgt)
-            tgt = np.zeros((0))
+            tgt = np.zeros(0)
             res = f(mat, axis=None)
             assert_equal(res, tgt)
 

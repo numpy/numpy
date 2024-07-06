@@ -6480,11 +6480,11 @@ class TestStats:
                         [True],
                         [False]])
         _cases = [
-            (0, True, 7.07106781*np.ones((5))),
-            (1, True, 1.41421356*np.ones((5))),
+            (0, True, 7.07106781*np.ones(5)),
+            (1, True, 1.41421356*np.ones(5)),
             (0, whf,
              np.array([4.0824829 , 8.16496581, 5., 7.39509973, 8.49836586])),
-            (0, whp, 2.5*np.ones((5)))
+            (0, whp, 2.5*np.ones(5))
         ]
         for _ax, _wh, _res in _cases:
             assert_allclose(a.std(axis=_ax, where=_wh), _res)
