@@ -218,8 +218,7 @@ def check_language(lang, code_snippet=None):
             ["meson", "setup", "btmp"],
             check=False,
             cwd=tmpdir,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
         )
         if runmeson.returncode == 0:
             return True

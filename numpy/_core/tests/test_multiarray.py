@@ -234,7 +234,7 @@ class TestFlags:
         a = np.arange(10)
         setattr(a.flags, flag, flag_value)
 
-        class MyArr():
+        class MyArr:
             __array_struct__ = a.__array_struct__
 
         assert memoryview(a).readonly is not writeable
@@ -6480,11 +6480,11 @@ class TestStats:
                         [True],
                         [False]])
         _cases = [
-            (0, True, 7.07106781*np.ones((5))),
-            (1, True, 1.41421356*np.ones((5))),
+            (0, True, 7.07106781*np.ones(5)),
+            (1, True, 1.41421356*np.ones(5)),
             (0, whf,
              np.array([4.0824829 , 8.16496581, 5., 7.39509973, 8.49836586])),
-            (0, whp, 2.5*np.ones((5)))
+            (0, whp, 2.5*np.ones(5))
         ]
         for _ax, _wh, _res in _cases:
             assert_allclose(a.std(axis=_ax, where=_wh), _res)
@@ -6886,7 +6886,7 @@ class TestDot:
 
     def test_dtype_discovery_fails(self):
         # See gh-14247, error checking was missing for failed dtype discovery
-        class BadObject(object):
+        class BadObject:
             def __array__(self, dtype=None, copy=None):
                 raise TypeError("just this tiny mint leaf")
 
@@ -7247,7 +7247,7 @@ class TestMatmul(MatmulCommon):
 
     def test_matmul_exception_multiply(self):
         # test that matmul fails if `__mul__` is missing
-        class add_not_multiply():
+        class add_not_multiply:
             def __add__(self, other):
                 return self
         a = np.full((3,3), add_not_multiply())
@@ -7256,7 +7256,7 @@ class TestMatmul(MatmulCommon):
 
     def test_matmul_exception_add(self):
         # test that matmul fails if `__add__` is missing
-        class multiply_not_add():
+        class multiply_not_add:
             def __mul__(self, other):
                 return self
         a = np.full((3,3), multiply_not_add())
@@ -8356,7 +8356,7 @@ class TestNewBufferProtocol:
                 np.frombuffer(buffer)
 
 
-class TestArrayCreationCopyArgument(object):
+class TestArrayCreationCopyArgument:
 
     class RaiseOnBool:
 
@@ -8677,7 +8677,7 @@ class TestArrayAttributeDeletion:
             assert_raises(AttributeError, delattr, a, s)
 
 
-class TestArrayInterface():
+class TestArrayInterface:
     class Foo:
         def __init__(self, value):
             self.value = value

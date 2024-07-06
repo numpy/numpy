@@ -1071,8 +1071,8 @@ class TestRegression:
         with open(filename, 'rb') as f:
             xp = pickle.load(f, encoding='latin1')
         xpd = xp.astype(np.float64)
-        assert_((xp.__array_interface__['data'][0] !=
-                xpd.__array_interface__['data'][0]))
+        assert_(xp.__array_interface__['data'][0] !=
+                xpd.__array_interface__['data'][0])
 
     def test_compress_small_type(self):
         # Ticket #789, changeset 5217.
