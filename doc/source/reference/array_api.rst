@@ -18,7 +18,7 @@ upgraded to given NumPy's
 For usage guidelines for downstream libraries and end users who want to write
 code that will work with both NumPy and other array libraries, we refer to the
 documentation of the array API standard itself and to code and
-developer-focused documention in SciPy and scikit-learn.
+developer-focused documentation in SciPy and scikit-learn.
 
 Note that in order to use standard-complaint code with older NumPy versions
 (< 2.0), the `array-api-compat
