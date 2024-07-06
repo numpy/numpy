@@ -653,7 +653,7 @@ The ``metadata`` field is kept, but the macro version should also be preferred.
 
 Descriptor ``elsize`` and ``alignment`` access
 ----------------------------------------------
-Unless compiling only with NumPy 2 support, the ``elsize`` and ``aligment``
+Unless compiling only with NumPy 2 support, the ``elsize`` and ``alignment``
 fields must now be accessed via ``PyDataType_ELSIZE``,
 ``PyDataType_SET_ELSIZE``, and ``PyDataType_ALIGNMENT``.
 In cases where the descriptor is attached to an array, we advise
