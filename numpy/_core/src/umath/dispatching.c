@@ -996,7 +996,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
     npy_promotion_state = NPY_USE_WEAK_PROMOTION;
     PyObject *info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);
-    set_npy_promotion_state(current_promotion_state);
+    npy_promotion_state = current_promotion_state;
 
     if (info == NULL) {
         goto handle_error;
