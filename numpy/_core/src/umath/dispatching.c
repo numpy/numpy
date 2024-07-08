@@ -992,7 +992,6 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
     }
 
     /* Pause warnings and always use "new" path */
-    int old_promotion_state = npy_promotion_state;
     npy_promotion_state = NPY_USE_WEAK_PROMOTION;
     PyObject *info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);
