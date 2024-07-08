@@ -974,7 +974,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         }
     }
 
-    int current_promotion_state = get_npy_promotion_state();
+    int current_promotion_state = npy_promotion_state;
 
     if (force_legacy_promotion && legacy_promotion_is_possible
             && current_promotion_state == NPY_USE_LEGACY_PROMOTION
