@@ -22,6 +22,7 @@ else:
 class SubClass(npt.NDArray[np.object_]): ...
 
 f8: np.float64
+i8: np.int64
 B: SubClass
 AR_f8: npt.NDArray[np.float64]
 AR_i8: npt.NDArray[np.int64]
@@ -213,3 +214,14 @@ with open("test_file", "wb") as f:
 assert_type(AR_f8.__array_finalize__(None), None)
 assert_type(AR_f8.__array_finalize__(B), None)
 assert_type(AR_f8.__array_finalize__(AR_f8), None)
+
+assert_type(f8.device, Literal["cpu"])
+assert_type(AR_f8.device, Literal["cpu"])
+
+assert_type(f8.to_device("cpu"), np.float64)
+assert_type(i8.to_device("cpu"), np.int64)
+assert_type(AR_f8.to_device("cpu"), npt.NDArray[np.float64])
+assert_type(AR_i8.to_device("cpu"), npt.NDArray[np.int64])
+
+assert_type(f8.__array_namespace__(), Any)
+assert_type(AR_f8.__array_namespace__(), Any)
