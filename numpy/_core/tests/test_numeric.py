@@ -2880,6 +2880,24 @@ class TestClip:
         with assert_raises_regex(ValueError, msg):
             np.clip(arr, 2, 3, min=2)
 
+    @pytest.mark.parametrize("dtype,min,max", [
+        ("int32", -2**32-1, 2**32),
+        ("int32", -2**320, None),
+        ("int32", None, 2**300),
+        ("int32", -1000, 2**32),
+        ("int32", -2**32-1, 1000),
+        ("uint8", -1, 129),
+    ])
+    def test_out_of_bound_pyints(self, dtype, min, max):
+        a = np.arange(10000).astype(dtype)
+        # Check min only
+        c = np.clip(a, min=min, max=max)
+        assert not np.may_share_memory(a, c)
+        assert c.dtype == a.dtype
+        if min is not None:
+            assert (c >= min).all()
+        if max is not None:
+            assert (c <= max).all()
 
 class TestAllclose:
     rtol = 1e-5
