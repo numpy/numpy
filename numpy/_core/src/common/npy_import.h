@@ -82,14 +82,16 @@ npy_import(const char *module, const char *attr)
 static inline int
 npy_cache_import_runtime(const char *module, const char *attr, PyObject **obj) {
     if (!npy_atomic_load_ptr(obj)) {
+        PyObject* value = npy_import(module, attr);
+        if (value == NULL) {
+            return -1;
+        }
         PyThread_acquire_lock(npy_runtime_imports.import_mutex, WAIT_LOCK);
         if (!npy_atomic_load_ptr(obj)) {
-            npy_atomic_store_ptr(obj, npy_import(module, attr));
-            if (obj == NULL) {
-                return -1;
-            }
+            npy_atomic_store_ptr(obj, Py_NewRef(value));
         }
         PyThread_release_lock(npy_runtime_imports.import_mutex);
+        Py_DECREF(value);
     }
     return 0;    
 }

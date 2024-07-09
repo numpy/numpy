@@ -38,7 +38,7 @@ NPY_NO_EXPORT int init_argparse_mutex(void);
  * The sole purpose of this macro is to hide the argument parsing cache.
  * Since this cache must be static, this also removes a source of error.
  */
-#define NPY_PREPARE_ARGPARSER static _NpyArgParserCache __argparse_cache = {-1}
+#define NPY_PREPARE_ARGPARSER static _NpyArgParserCache __argparse_cache;
 
 /**
  * Macro to help with argument parsing.
