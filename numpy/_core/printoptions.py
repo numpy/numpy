@@ -1,7 +1,17 @@
+"""
+Stores and defines the low-level format_options context variable.
+
+This is defined in its own file outside of the arrayprint module
+so we can import it from C while initializing the multiarray
+C module during import without introducing circular dependencies.
+"""
+
 import sys
 from contextvars import ContextVar
 
-_default_format_options_dict = {
+__all__ = ["format_options"]
+
+default_format_options_dict = {
     "edgeitems": 3,  # repr N leading and trailing items of each dimension
     "threshold": 1000,  # total items > triggers array summarization
     "floatmode": "maxprec",
@@ -18,5 +28,5 @@ _default_format_options_dict = {
     'override_repr': None,
 }
 
-_format_options = ContextVar(
-    "format_options", default=_default_format_options_dict.copy())
+format_options = ContextVar(
+    "format_options", default=default_format_options_dict.copy())

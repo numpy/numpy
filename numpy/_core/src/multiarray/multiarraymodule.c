@@ -29,6 +29,7 @@
 #include "npy_config.h"
 #include "npy_pycompat.h"
 #include "npy_import.h"
+#include "npy_static_data.h"
 #include "convert_datatype.h"
 #include "legacy_dtype_implementation.h"
 
@@ -108,19 +109,20 @@ get_legacy_print_mode(void) {
      * means 1.13/1.21/1.25 legacy mode; and 0 maps to INT_MAX. We can
      * upgrade this if we have more complex requirements in the future.
      */
-    PyObject *val = NULL;
-    PyContextVar_Get(npy_static_pydata._format_options, NULL, &val);
-    if (val == NULL) {
+    PyObject *format_options = NULL;
+    PyContextVar_Get(npy_static_pydata.format_options, NULL, &format_options);
+    if (format_options == NULL) {
         PyErr_SetString(PyExc_SystemError,
-                        "NumPy internal error: unable to get _format_options "
+                        "NumPy internal error: unable to get format_options "
                         "context variable");
         return -1;
     }
     PyObject *legacy_print_mode = NULL;
-    if (PyDict_GetItemStringRef(val, "legacy", &legacy_print_mode) == -1) {
+    if (PyDict_GetItemRef(format_options, npy_interned_str.legacy,
+                          &legacy_print_mode) == -1) {
         return -1;
     }
-    Py_DECREF(val);
+    Py_DECREF(format_options);
     if (legacy_print_mode == NULL) {
         PyErr_SetString(PyExc_SystemError,
                         "NumPy internal error: unable to get legacy print "
@@ -128,12 +130,14 @@ get_legacy_print_mode(void) {
     }
     long long ret = PyLong_AsLongLong(legacy_print_mode);
     Py_DECREF(legacy_print_mode);
-    // TODO: check for overflow, which should never happen
-    if (ret == LLONG_MAX) {
+    if ((ret == -1) && PyErr_Occurred()) {
+        return -1;
+    }
+    if (ret > INT_MAX) {
         return INT_MAX;
     }
     // in principle this cast to int could overflow, in practice ret is never
-    // bigger than 125 and will almost certainly never exceed INT_MAX
+    // bigger than 125 and we explicitly check for values greater than INT_MAX above.
     return (int)ret;
 }
 
