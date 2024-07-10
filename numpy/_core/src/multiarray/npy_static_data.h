@@ -23,6 +23,7 @@ typedef struct npy_interned_str_struct {
     PyObject *implementation;
     PyObject *axis1;
     PyObject *axis2;
+    PyObject *item;
     PyObject *like;
     PyObject *numpy;
     PyObject *where;
