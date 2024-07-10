@@ -4,6 +4,7 @@ import sys
 import importlib
 from docutils import nodes
 from docutils.parsers.rst import Directive
+from datetime import datetime
 
 # Minimum version, enforced by sphinx
 needs_sphinx = '4.3'
@@ -107,7 +108,8 @@ source_suffix = '.rst'
 
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2024, NumPy Developers'
+year = datetime.now().year
+copyright = f'2008-{year}, NumPy Developers'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
