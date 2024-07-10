@@ -463,6 +463,7 @@ class TestMethods:
         ("xyxzx", "x", "yxzx"),
         (["xyzzyhelloxyzzy", "hello"], ["xyz", "xyz"],
          ["helloxyzzy", "hello"]),
+        (["ba", "ac", "baa", "bba"], "b", ["a", "ac", "aa", "a"]),
     ])
     def test_lstrip(self, a, chars, out, dt):
         a = np.array(a, dtype=dt)
@@ -488,6 +489,7 @@ class TestMethods:
         ("xyxzx", "x", "xyxz"),
         (["xyzzyhelloxyzzy", "hello"], ["xyz", "xyz"],
          ["xyzzyhello", "hello"]),
+        (["ab", "ac", "aab", "abb"], "b", ["a", "ac", "aa", "a"]),
     ])
     def test_rstrip(self, a, chars, out, dt):
         a = np.array(a, dtype=dt)
@@ -511,6 +513,7 @@ class TestMethods:
         ("xyxzx", "x", "yxz"),
         (["xyzzyhelloxyzzy", "hello"], ["xyz", "xyz"],
          ["hello", "hello"]),
+        (["bab", "ac", "baab", "bbabb"], "b", ["a", "ac", "aa", "a"]),
     ])
     def test_strip(self, a, chars, out, dt):
         a = np.array(a, dtype=dt)

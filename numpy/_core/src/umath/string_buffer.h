@@ -1281,9 +1281,7 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
             }
             num_bytes -= traverse_buf.num_bytes_next_character();
             j--;
-            if (j > 0) {
-                traverse_buf--;
-            }
+            traverse_buf--;
         }
     }
 
