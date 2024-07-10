@@ -909,6 +909,9 @@ def test_longdouble_operators_with_obj(sctype, op):
     #
     # That would recurse infinitely.  Other scalars return the python object
     # on cast, so this type of things works OK.
+    #
+    # As of NumPy 2.1, this has been consolidated into the np.generic binops
+    # and now checks `.item()`.  That also allows the below path to work now.
     try:
         op(sctype(3), None)
     except TypeError:
@@ -917,6 +920,15 @@ def test_longdouble_operators_with_obj(sctype, op):
         op(None, sctype(3))
     except TypeError:
         pass
+
+
+@pytest.mark.parametrize("op", [operator.add, operator.pow, operator.sub])
+@pytest.mark.parametrize("sctype", [np.longdouble, np.clongdouble])
+def test_longdouble_with_arrlike(sctype, op):
+    # As of NumPy 2.1, longdouble behaves like other types and can coerce
+    # e.g. lists.  (Not necessarily better, but consistent.)
+    assert_array_equal(op(sctype(3), [1, 2]), op(3, np.array([1, 2])))
+    assert_array_equal(op([1, 2], sctype(3)), op(np.array([1, 2]), 3))
 
 
 @pytest.mark.parametrize("op", reasonable_operators_for_scalars)
