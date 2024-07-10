@@ -1590,6 +1590,13 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
         }
     }
 
+    if (ufunc->process_core_dims_func != NULL) {
+        int status = ufunc->process_core_dims_func(ufunc, core_dim_sizes);
+        if (status != 0) {
+            return -1;
+        }
+    }
+
     /*
      * Make sure no core dimension is unspecified.
      */
@@ -4688,6 +4695,8 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
 
     /* Type resolution and inner loop selection functions */
     ufunc->type_resolver = &PyUFunc_DefaultTypeResolver;
+
+    ufunc->process_core_dims_func = NULL;
 
     ufunc->op_flags = NULL;
     ufunc->_loops = NULL;

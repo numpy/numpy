@@ -65,6 +65,9 @@ typedef int (PyUFunc_TypeResolutionFunc)(
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes);
 
+typedef int (PyUFunc_ProcessCoreDimsFunc)(
+                                struct _tagPyUFuncObject *ufunc,
+                                npy_intp *core_dim_sizes);
 
 typedef struct _tagPyUFuncObject {
         PyObject_HEAD
@@ -190,6 +193,10 @@ typedef struct _tagPyUFuncObject {
         void *_dispatch_cache;
         /* A PyListObject of `(tuple of DTypes, ArrayMethod/Promoter)` */
         PyObject *_loops;
+    #endif
+    #if NPY_FEATURE_VERSION >= NPY_2_1_API_VERSION
+        /* User defined function to process core dimensions of a gufunc. */
+        PyUFunc_ProcessCoreDimsFunc *process_core_dims_func;
     #endif
 } PyUFuncObject;
 
