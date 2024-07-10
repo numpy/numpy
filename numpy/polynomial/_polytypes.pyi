@@ -57,6 +57,13 @@ _SCT = TypeVar("_SCT", bound=np.number[Any] | np.object_)
 _Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_SCT]]
 _Array2D: TypeAlias = np.ndarray[tuple[int, int], np.dtype[_SCT]]
 
+_FloatArray1D: TypeAlias = _Array1D[np.floating[Any]]
+_FloatArrayND: TypeAlias = npt.NDArray[np.floating[Any]]
+_ComplexArray1D: TypeAlias = _Array1D[np.complexfloating[Any, Any]]
+_ComplexArrayND: TypeAlias = npt.NDArray[np.complexfloating[Any, Any]]
+_ObjectArray1D: TypeAlias = _Array1D[np.object_]
+_ObjectArrayND: TypeAlias = npt.NDArray[np.object_]
+
 _Array1: TypeAlias = np.ndarray[tuple[Literal[1]], np.dtype[_SCT]]
 _Array2: TypeAlias = np.ndarray[tuple[Literal[2]], np.dtype[_SCT]]
 _Line: TypeAlias = np.ndarray[tuple[Literal[1, 2]], np.dtype[_SCT]]
@@ -86,7 +93,7 @@ _AnyComplexSeries1D: TypeAlias = (
     | _SupportsLenAndGetItem[_AnyComplexScalar]
 )
 _AnyObjectSeries1D: TypeAlias = (
-    npt.NDArray[np.object_]
+    _ObjectArrayND
     | _SupportsLenAndGetItem[_AnyObjectScalar]
 )
 _AnySeries1D: TypeAlias = (
@@ -107,7 +114,7 @@ _AnyComplexSeriesND: TypeAlias = (
     | _NestedSequence[complex | np.number[Any]]
 )
 _AnyObjectSeriesND: TypeAlias = (
-    npt.NDArray[np.object_]
+    _ObjectArrayND
     | _AnyObjectScalar
     | _SupportsArray[np.dtype[np.object_]]
     | _NestedSequence[_AnyObjectScalar]
@@ -128,17 +135,9 @@ class _Named(Protocol[_Name_co]):
 @final
 class _FuncLine(_Named[_Name_co], Protocol[_Name_co]):
     @overload
-    def __call__(  # type: ignore[overload-overlap]
-        self, /,
-        off: _SCT,
-        scl: _SCT,
-    ) -> _Line[_SCT]: ...
+    def __call__(self, /, off: _SCT, scl: _SCT) -> _Line[_SCT]: ...  # type: ignore[overload-overlap]
     @overload
-    def __call__(  # type: ignore[overload-overlap]
-        self, /,
-        off: int,
-        scl: int,
-    ) -> _Line[np.int_] : ...
+    def __call__(self, /, off: int, scl: int) -> _Line[np.int_] : ...  # type: ignore[overload-overlap]
     @overload
     def __call__(self, /, off: float, scl: float) -> _Line[np.float64]: ...
     @overload
@@ -153,20 +152,11 @@ class _FuncLine(_Named[_Name_co], Protocol[_Name_co]):
 @final
 class _FuncFromRoots(_Named[_Name_co], Protocol[_Name_co]):
     @overload
-    def __call__(  # type: ignore[overload-overlap]
-        self, /,
-        roots: _AnyRealSeries1D,
-    ) -> _Array1D[np.floating[Any]]: ...
+    def __call__(self, /, roots: _AnyRealSeries1D) -> _FloatArray1D: ...  # type: ignore[overload-overlap]
     @overload
-    def __call__(
-        self, /,
-        roots: _AnyComplexSeries1D,
-    ) -> _Array1D[np.complexfloating[Any, Any]]: ...
+    def __call__(self, /, roots: _AnyComplexSeries1D) -> _ComplexArray1D: ...
     @overload
-    def __call__(
-        self, /,
-        roots: _AnySeries1D,
-    ) -> _Array1D[np.object_]: ...
+    def __call__(self, /, roots: _AnySeries1D) -> _ObjectArray1D: ...
 
 @final
 class _FuncBinOp(_Named[_Name_co], Protocol[_Name_co]):
@@ -175,49 +165,37 @@ class _FuncBinOp(_Named[_Name_co], Protocol[_Name_co]):
         self, /,
         c1: _AnyRealSeries1D,
         c2: _AnyRealSeries1D,
-    ) -> _Array1D[np.floating[Any]]: ...
+    ) -> _FloatArray1D: ...
     @overload
     def __call__(
         self, /,
         c1: _AnyComplexSeries1D,
         c2: _AnyComplexSeries1D,
-    ) -> _Array1D[np.complexfloating[Any, Any]]: ...
+    ) -> _ComplexArray1D: ...
     @overload
     def __call__(
         self, /,
         c1: _AnySeries1D,
         c2: _AnySeries1D,
-    ) -> _Array1D[np.object_]: ...
+    ) -> _ObjectArray1D: ...
 
 @final
 class _FuncUnOp(_Named[_Name_co], Protocol[_Name_co]):
     @overload
-    def __call__(  # type: ignore[overload-overlap]
-        self, /,
-        c: _AnyRealSeries1D,
-    ) -> _Array1D[np.floating[Any]]: ...
+    def __call__(self, /, c: _AnyRealSeries1D) -> _FloatArray1D: ...  # type: ignore[overload-overlap]
     @overload
-    def __call__(
-        self, /,
-        c: _AnyComplexSeries1D,
-    ) -> _Array1D[np.complexfloating[Any, Any]]: ...
+    def __call__(self, /, c: _AnyComplexSeries1D) -> _ComplexArray1D: ...
     @overload
-    def __call__(self, /, c: _AnySeries1D) -> _Array1D[np.object_]: ...
+    def __call__(self, /, c: _AnySeries1D) -> _ObjectArray1D: ...
 
 @final
 class _FuncPoly2Ortho(_Named[_Name_co], Protocol[_Name_co]):
     @overload
-    def __call__(  # type: ignore[overload-overlap]
-        self, /,
-        pol: _AnyRealSeries1D,
-    ) -> _Array1D[np.floating[Any]]: ...
+    def __call__(self, /, pol: _AnyRealSeries1D) -> _FloatArray1D: ...  # type: ignore[overload-overlap]
     @overload
-    def __call__(
-        self, /,
-        pol: _AnyComplexSeries1D,
-    ) -> _Array1D[np.complexfloating[Any, Any]]: ...
+    def __call__(self, /, pol: _AnyComplexSeries1D) -> _ComplexArray1D: ...
     @overload
-    def __call__(self, /, pol: _AnySeries1D) -> _Array1D[np.object_]: ...
+    def __call__(self, /, pol: _AnySeries1D) -> _ObjectArray1D: ...
 
 @final
 class _FuncPow(_Named[_Name_co], Protocol[_Name_co]):
@@ -227,21 +205,21 @@ class _FuncPow(_Named[_Name_co], Protocol[_Name_co]):
         c: _AnyRealSeries1D,
         pow: _AnyInt,
         maxpower: None | _AnyInt = ...,
-    ) -> _Array1D[np.floating[Any]]: ...
+    ) -> _FloatArray1D: ...
     @overload
     def __call__(
         self, /,
         c: _AnyComplexSeries1D,
         pow: _AnyInt,
         maxpower: None | _AnyInt = ...,
-    ) -> _Array1D[np.complexfloating[Any, Any]]: ...
+    ) -> _ComplexArray1D: ...
     @overload
     def __call__(
         self, /,
         c: _AnySeries1D,
         pow: _AnyInt,
         maxpower: None | _AnyInt = ...,
-    ) -> _Array1D[np.object_]: ...
+    ) -> _ObjectArray1D: ...
 
 @final
 class _FuncDer(_Named[_Name_co], Protocol[_Name_co]):
@@ -252,7 +230,7 @@ class _FuncDer(_Named[_Name_co], Protocol[_Name_co]):
         m: SupportsIndex = ...,
         scl: _AnyComplexScalar = ...,
         axis: SupportsIndex = ...,
-    ) -> npt.NDArray[np.floating[Any]]: ...
+    ) -> _FloatArrayND: ...
     @overload
     def __call__(
         self, /,
@@ -260,7 +238,7 @@ class _FuncDer(_Named[_Name_co], Protocol[_Name_co]):
         m: SupportsIndex = ...,
         scl: _AnyComplexScalar = ...,
         axis: SupportsIndex = ...,
-    ) -> npt.NDArray[np.complexfloating[Any, Any]]: ...
+    ) -> _ComplexArrayND: ...
     @overload
     def __call__(
         self, /,
@@ -268,7 +246,7 @@ class _FuncDer(_Named[_Name_co], Protocol[_Name_co]):
         m: SupportsIndex = ...,
         scl: _AnyComplexScalar = ...,
         axis: SupportsIndex = ...,
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> _ObjectArrayND: ...
 
 @final
 class _FuncInteg(_Named[_Name_co], Protocol[_Name_co]):
@@ -281,7 +259,7 @@ class _FuncInteg(_Named[_Name_co], Protocol[_Name_co]):
         lbnd: _AnyComplexScalar = ...,
         scl: _AnyComplexScalar = ...,
         axis: SupportsIndex = ...,
-    ) -> npt.NDArray[np.floating[Any]]: ...
+    ) -> _FloatArrayND: ...
     @overload
     def __call__(
         self, /,
@@ -291,7 +269,7 @@ class _FuncInteg(_Named[_Name_co], Protocol[_Name_co]):
         lbnd: _AnyComplexScalar = ...,
         scl: _AnyComplexScalar = ...,
         axis: SupportsIndex = ...,
-    ) -> npt.NDArray[np.complexfloating[Any, Any]]: ...
+    ) -> _ComplexArrayND: ...
     @overload
     def __call__(
         self, /,
@@ -301,7 +279,7 @@ class _FuncInteg(_Named[_Name_co], Protocol[_Name_co]):
         lbnd: _AnyComplexScalar = ...,
         scl: _AnyComplexScalar = ...,
         axis: SupportsIndex = ...,
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> _ObjectArrayND: ...
 
 _AnyRealRoots: TypeAlias = (
     _Array1D[np.floating[Any] | np.integer[Any]]
@@ -311,8 +289,8 @@ _AnyComplexRoots: TypeAlias = (
     _Array1D[np.number[Any]]
     | Sequence[_AnyComplexScalar]
 )
-_AnyObjectRoots: TypeAlias = _Array1D[np.object_] | Sequence[_AnyObjectScalar]
-_AnyRoots: TypeAlias = _Array1D[np.object_] | Sequence[_AnyScalar]
+_AnyObjectRoots: TypeAlias = _ObjectArray1D | Sequence[_AnyObjectScalar]
+_AnyRoots: TypeAlias = _ObjectArray1D | Sequence[_AnyScalar]
 
 _AnyRealPoints: TypeAlias = (
     npt.NDArray[np.floating[Any] | np.integer[Any]]
@@ -325,7 +303,7 @@ _AnyComplexPoints: TypeAlias = (
     | list[_AnyComplexSeriesND]
 )
 _AnyObjectPoints: TypeAlias = (
-    npt.NDArray[np.object_]
+    _ObjectArrayND
     | tuple[_AnyObjectSeriesND, ...]
     | list[_AnyObjectSeriesND]
 )
@@ -364,21 +342,21 @@ class _FuncValFromRoots(_Named[_Name_co], Protocol[_Name_co]):
         x: _AnyRealScalar | _AnyRealPoints,
         r: _AnyRealSeriesND,
         tensor: bool = ...,
-    ) -> npt.NDArray[np.floating[Any]]: ...
+    ) -> _FloatArrayND: ...
     @overload
     def __call__(
         self, /,
         x: _AnyComplexScalar | _AnyComplexPoints,
         r: _AnyComplexSeriesND,
         tensor: bool = ...,
-    ) -> npt.NDArray[np.complexfloating[Any, Any]]: ...
+    ) -> _ComplexArrayND: ...
     @overload
     def __call__(
         self, /,
         x: _AnyScalar | _AnyPoints,
         r: _AnySeriesND,
         tensor: bool = ...,
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> _ObjectArrayND: ...
 
 @final
 class _FuncVal(_Named[_Name_co], Protocol[_Name_co]):
@@ -409,21 +387,21 @@ class _FuncVal(_Named[_Name_co], Protocol[_Name_co]):
         x: _AnyRealPoints,
         c: _AnyRealSeriesND,
         tensor: bool = ...,
-    ) -> npt.NDArray[np.floating[Any]]: ...
+    ) -> _FloatArrayND: ...
     @overload
     def __call__(
         self, /,
         x: _AnyComplexPoints,
         c: _AnyComplexSeriesND,
         tensor: bool = ...,
-    ) -> npt.NDArray[np.complexfloating[Any, Any]]: ...
+    ) -> _ComplexArrayND: ...
     @overload
     def __call__(
         self, /,
         x: _AnyPoints,
         c: _AnySeriesND,
         tensor: bool = ...,
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> _ObjectArrayND: ...
 
 @final
 class _FuncVal2D(_Named[_Name_co], Protocol[_Name_co]):
@@ -454,21 +432,21 @@ class _FuncVal2D(_Named[_Name_co], Protocol[_Name_co]):
         x: _AnyRealPoints,
         y: _AnyRealPoints,
         c: _AnyRealSeriesND,
-    ) -> npt.NDArray[np.floating[Any]]: ...
+    ) -> _FloatArrayND: ...
     @overload
     def __call__(
         self, /,
         x: _AnyComplexPoints,
         y: _AnyComplexPoints,
         c: _AnyComplexSeriesND,
-    ) -> npt.NDArray[np.complexfloating[Any, Any]]: ...
+    ) -> _ComplexArrayND: ...
     @overload
     def __call__(
         self, /,
         x: _AnyPoints,
         y: _AnyPoints,
         c: _AnySeriesND,
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> _ObjectArrayND: ...
 
 @final
 class _FuncVal3D(_Named[_Name_co], Protocol[_Name_co]):
@@ -503,7 +481,7 @@ class _FuncVal3D(_Named[_Name_co], Protocol[_Name_co]):
         y: _AnyRealPoints,
         z: _AnyRealPoints,
         c: _AnyRealSeriesND,
-    ) -> npt.NDArray[np.floating[Any]]: ...
+    ) -> _FloatArrayND: ...
     @overload
     def __call__(
         self, /,
@@ -511,7 +489,7 @@ class _FuncVal3D(_Named[_Name_co], Protocol[_Name_co]):
         y: _AnyComplexPoints,
         z: _AnyComplexPoints,
         c: _AnyComplexSeriesND,
-    ) -> npt.NDArray[np.complexfloating[Any, Any]]: ...
+    ) -> _ComplexArrayND: ...
     @overload
     def __call__(
         self, /,
@@ -519,7 +497,7 @@ class _FuncVal3D(_Named[_Name_co], Protocol[_Name_co]):
         y: _AnyPoints,
         z: _AnyPoints,
         c: _AnySeriesND,
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> _ObjectArrayND: ...
 
 _AnyValF: TypeAlias = Callable[
     [npt.ArrayLike, npt.ArrayLike, bool],
@@ -559,7 +537,7 @@ class _FuncValND(_Named[_Name_co], Protocol[_Name_co]):
         c: _AnyRealSeriesND,
         /,
         *args: _AnyRealPoints,
-    ) -> npt.NDArray[np.floating[Any]]: ...
+    ) -> _FloatArrayND: ...
     @overload
     def __call__(
         self,
@@ -567,7 +545,7 @@ class _FuncValND(_Named[_Name_co], Protocol[_Name_co]):
         c: _AnyComplexSeriesND,
         /,
         *args: _AnyComplexPoints,
-    ) -> npt.NDArray[np.complexfloating[Any, Any]]: ...
+    ) -> _ComplexArrayND: ...
     @overload
     def __call__(
         self,
@@ -575,7 +553,7 @@ class _FuncValND(_Named[_Name_co], Protocol[_Name_co]):
         c: _AnySeriesND,
         /,
         *args: _AnyObjectPoints,
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> _ObjectArrayND: ...
 
 @final
 class _FuncVander(_Named[_Name_co], Protocol[_Name_co]):
@@ -584,19 +562,19 @@ class _FuncVander(_Named[_Name_co], Protocol[_Name_co]):
         self, /,
         x: _AnyRealSeriesND,
         deg: SupportsIndex,
-    ) -> npt.NDArray[np.floating[Any]]: ...
+    ) -> _FloatArrayND: ...
     @overload
     def __call__(
         self, /,
         x: _AnyComplexSeriesND,
         deg: SupportsIndex,
-    ) -> npt.NDArray[np.complexfloating[Any, Any]]: ...
+    ) -> _ComplexArrayND: ...
     @overload
     def __call__(
         self, /,
         x: _AnySeriesND,
         deg: SupportsIndex,
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> _ObjectArrayND: ...
     @overload
     def __call__(
         self, /,
@@ -614,21 +592,21 @@ class _FuncVander2D(_Named[_Name_co], Protocol[_Name_co]):
         x: _AnyRealSeriesND,
         y: _AnyRealSeriesND,
         deg: _AnyDegrees,
-    ) -> npt.NDArray[np.floating[Any]]: ...
+    ) -> _FloatArrayND: ...
     @overload
     def __call__(
         self, /,
         x: _AnyComplexSeriesND,
         y: _AnyComplexSeriesND,
         deg: _AnyDegrees,
-    ) -> npt.NDArray[np.complexfloating[Any, Any]]: ...
+    ) -> _ComplexArrayND: ...
     @overload
     def __call__(
         self, /,
         x: _AnySeriesND,
         y: _AnySeriesND,
         deg: _AnyDegrees,
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> _ObjectArrayND: ...
     @overload
     def __call__(
         self, /,
@@ -646,7 +624,7 @@ class _FuncVander3D(_Named[_Name_co], Protocol[_Name_co]):
         y: _AnyRealSeriesND,
         z: _AnyRealSeriesND,
         deg: _AnyDegrees,
-    ) -> npt.NDArray[np.floating[Any]]: ...
+    ) -> _FloatArrayND: ...
     @overload
     def __call__(
         self, /,
@@ -654,7 +632,7 @@ class _FuncVander3D(_Named[_Name_co], Protocol[_Name_co]):
         y: _AnyComplexSeriesND,
         z: _AnyComplexSeriesND,
         deg: _AnyDegrees,
-    ) -> npt.NDArray[np.complexfloating[Any, Any]]: ...
+    ) -> _ComplexArrayND: ...
     @overload
     def __call__(
         self, /,
@@ -662,7 +640,7 @@ class _FuncVander3D(_Named[_Name_co], Protocol[_Name_co]):
         y: _AnySeriesND,
         z: _AnySeriesND,
         deg: _AnyDegrees,
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> _ObjectArrayND: ...
     @overload
     def __call__(
         self, /,
@@ -686,14 +664,14 @@ class _FuncVanderND(_Named[_Name_co], Protocol[_Name_co]):
         vander_fs: _SupportsLenAndGetItem[_AnyFuncVander],
         points: _SupportsLenAndGetItem[_ArrayLikeFloat_co],
         degrees: _SupportsLenAndGetItem[SupportsIndex],
-    ) -> npt.NDArray[np.floating[Any]]: ...
+    ) -> _FloatArrayND: ...
     @overload
     def __call__(
         self, /,
         vander_fs: _SupportsLenAndGetItem[_AnyFuncVander],
         points: _SupportsLenAndGetItem[_ArrayLikeComplex_co],
         degrees: _SupportsLenAndGetItem[SupportsIndex],
-    ) -> npt.NDArray[np.complexfloating[Any, Any]]: ...
+    ) -> _ComplexArrayND: ...
     @overload
     def __call__(
         self, /,
@@ -702,7 +680,7 @@ class _FuncVanderND(_Named[_Name_co], Protocol[_Name_co]):
             _ArrayLikeObject_co | _ArrayLikeComplex_co,
         ],
         degrees: _SupportsLenAndGetItem[SupportsIndex],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> _ObjectArrayND: ...
     @overload
     def __call__(
         self, /,
@@ -722,7 +700,7 @@ class _FuncFit(_Named[_Name_co], Protocol[_Name_co]):
         rcond: None | float = ...,
         full: Literal[False] = ...,
         w: None | _AnyRealSeries1D = ...,
-    ) -> npt.NDArray[np.floating[Any]]: ...
+    ) -> _FloatArrayND: ...
     @overload
     def __call__(
         self, /,
@@ -732,7 +710,7 @@ class _FuncFit(_Named[_Name_co], Protocol[_Name_co]):
         rcond: None | float = ...,
         full: Literal[False] = ...,
         w: None | _AnyComplexSeriesND = ...,
-    ) -> npt.NDArray[np.complexfloating[Any, Any]]: ...
+    ) -> _ComplexArrayND: ...
     @overload
     def __call__(
         self, /,
@@ -742,7 +720,7 @@ class _FuncFit(_Named[_Name_co], Protocol[_Name_co]):
         rcond: None | float = ...,
         full: Literal[False] = ...,
         w: None | _AnySeries1D = ...,
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> _ObjectArrayND: ...
     @overload
     def __call__(
         self,
@@ -782,7 +760,7 @@ class _FuncRoots(_Named[_Name_co], Protocol[_Name_co]):
         c: _AnyComplexSeries1D,
     ) -> _Array1D[np.complex128]: ...
     @overload
-    def __call__(self, /, c: _AnySeries1D) -> _Array1D[np.object_]: ...
+    def __call__(self, /, c: _AnySeries1D) -> _ObjectArray1D: ...
 
 @final
 class _FuncCompanion(_Named[_Name_co], Protocol[_Name_co]):
@@ -819,7 +797,7 @@ class _FuncWeight(_Named[_Name_co], Protocol[_Name_co]):
         c: _AnyComplexSeriesND,
     ) -> npt.NDArray[np.complex128]: ...
     @overload
-    def __call__(self, /, c: _AnySeriesND) -> npt.NDArray[np.object_]: ...
+    def __call__(self, /, c: _AnySeriesND) -> _ObjectArrayND: ...
 
 _N_pts = TypeVar("_N_pts", bound=int)
 

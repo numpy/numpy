@@ -27,13 +27,18 @@ from ._polytypes import (
     _AnySeries1D,
     _AnySeriesND,
     _AnyRealScalar,
-    _Array1D,
     _Array2,
     _CoefArrayND,
     _CoefArray1D,
+    _ComplexArray1D,
+    _ComplexArrayND,
+    _FloatArray1D,
+    _FloatArrayND,
     _FuncBinOp,
     _FuncValND,
     _FuncVanderND,
+    _ObjectArray1D,
+    _ObjectArrayND,
     _SimpleSequence,
     _SupportsLenAndGetItem,
     _Tuple2,
@@ -57,103 +62,103 @@ _AnyVanderF: TypeAlias = Callable[[npt.ArrayLike, SupportsIndex], _CoefArrayND]
 def as_series(
     alist: npt.NDArray[np.integer[Any]],
     trim: bool = ...,
-) -> list[_Array1D[np.floating[Any]]]: ...
+) -> list[_FloatArray1D]: ...
 @overload
 def as_series(
-    alist: npt.NDArray[np.floating[Any]],
+    alist: _FloatArrayND,
     trim: bool = ...,
-) -> list[_Array1D[np.floating[Any]]]: ...
+) -> list[_FloatArray1D]: ...
 @overload
 def as_series(
-    alist: npt.NDArray[np.complexfloating[Any, Any]],
+    alist: _ComplexArrayND,
     trim: bool = ...,
-) -> list[_Array1D[np.complexfloating[Any, Any]]]: ...
+) -> list[_ComplexArray1D]: ...
 @overload
 def as_series(
-    alist: npt.NDArray[np.object_],
+    alist: _ObjectArrayND,
     trim: bool = ...,
-) -> list[_Array1D[np.object_]]: ...
+) -> list[_ObjectArray1D]: ...
 @overload
 def as_series(  # type: ignore[overload-overlap]
     alist: Iterable[npt.NDArray[np.integer[Any]]],
     trim: bool = ...,
-) -> list[_Array1D[np.floating[Any]]]: ...
+) -> list[_FloatArray1D]: ...
 @overload
 def as_series(
-    alist: Iterable[npt.NDArray[np.floating[Any]]],
+    alist: Iterable[_FloatArrayND],
     trim: bool = ...,
-) -> list[_Array1D[np.floating[Any]]]: ...
+) -> list[_FloatArray1D]: ...
 @overload
 def as_series(
-    alist: Iterable[npt.NDArray[np.complexfloating[Any, Any]]],
+    alist: Iterable[_ComplexArrayND],
     trim: bool = ...,
-) -> list[_Array1D[np.complexfloating[Any, Any]]]: ...
+) -> list[_ComplexArray1D]: ...
 @overload
 def as_series(
-    alist: Iterable[npt.NDArray[np.object_]],
+    alist: Iterable[_ObjectArrayND],
     trim: bool = ...,
-) -> list[_Array1D[np.object_]]: ...
+) -> list[_ObjectArray1D]: ...
 @overload
 def as_series(  # type: ignore[overload-overlap]
     alist: Iterable[_AnyRealSeries1D | float],
     trim: bool = ...,
-) -> list[_Array1D[np.floating[Any]]]: ...
+) -> list[_FloatArray1D]: ...
 @overload
 def as_series(
     alist: Iterable[_AnyComplexSeries1D | complex],
     trim: bool = ...,
-) -> list[_Array1D[np.complexfloating[Any, Any]]]: ...
+) -> list[_ComplexArray1D]: ...
 @overload
 def as_series(
     alist: Iterable[_AnyObjectSeries1D | object],
     trim: bool = ...,
-) -> list[_Array1D[np.object_]]: ...
+) -> list[_ObjectArray1D]: ...
 
 _T_seq = TypeVar("_T_seq", bound=_CoefArrayND | _SimpleSequence[_AnyScalar])
 def trimseq(seq: _T_seq) -> _T_seq: ...
 
 @overload
 def trimcoef(  # type: ignore[overload-overlap]
-    c: npt.NDArray[np.integer[Any]] | npt.NDArray[np.floating[Any]],
+    c: npt.NDArray[np.integer[Any]] | _FloatArrayND,
     tol: _AnyRealScalar = ...,
-) -> _Array1D[np.floating[Any]]: ...
+) -> _FloatArray1D: ...
 @overload
 def trimcoef(
-    c: npt.NDArray[np.complexfloating[Any, Any]],
+    c: _ComplexArrayND,
     tol: _AnyRealScalar = ...,
-) -> _Array1D[np.complexfloating[Any, Any]]: ...
+) -> _ComplexArray1D: ...
 @overload
 def trimcoef(
-    c: npt.NDArray[np.object_],
+    c: _ObjectArrayND,
     tol: _AnyRealScalar = ...,
-) -> _Array1D[np.object_]: ...
+) -> _ObjectArray1D: ...
 @overload
 def trimcoef(  # type: ignore[overload-overlap]
     c: _AnyRealSeries1D | float,
     tol: _AnyRealScalar = ...,
-) -> _Array1D[np.floating[Any]]: ...
+) -> _FloatArray1D: ...
 @overload
 def trimcoef(
     c: _AnyComplexSeries1D | complex,
     tol: _AnyRealScalar = ...,
-) -> _Array1D[np.complexfloating[Any, Any]]: ...
+) -> _ComplexArray1D: ...
 @overload
 def trimcoef(
     c: _AnyObjectSeries1D | object,
     tol: _AnyRealScalar = ...,
-) -> _Array1D[np.object_]: ...
+) -> _ObjectArray1D: ...
 
 @overload
 def getdomain(  # type: ignore[overload-overlap]
-    x: npt.NDArray[np.floating[Any]] | npt.NDArray[np.integer[Any]],
+    x: _FloatArrayND | npt.NDArray[np.integer[Any]],
 ) -> _Array2[np.float64]: ...
 @overload
 def getdomain(
-    x: npt.NDArray[np.complexfloating[Any, Any]],
+    x: _ComplexArrayND,
 ) -> _Array2[np.complex128]: ...
 @overload
 def getdomain(
-    x: npt.NDArray[np.object_],
+    x: _ObjectArrayND,
 ) -> _Array2[np.object_]: ...
 @overload
 def getdomain(  # type: ignore[overload-overlap]
@@ -232,37 +237,37 @@ def mapdomain(  # type: ignore[overload-overlap]
     x: npt.NDArray[np.floating[Any] | np.integer[Any]],
     old: npt.NDArray[np.floating[Any] | np.integer[Any]],
     new: npt.NDArray[np.floating[Any] | np.integer[Any]],
-) -> _Array1D[np.floating[Any]]: ...
+) -> _FloatArray1D: ...
 @overload
 def mapdomain(
     x: npt.NDArray[np.number[Any]],
     old: npt.NDArray[np.number[Any]],
     new: npt.NDArray[np.number[Any]],
-) -> _Array1D[np.complexfloating[Any, Any]]: ...
+) -> _ComplexArray1D: ...
 @overload
 def mapdomain(
     x: npt.NDArray[np.object_ | np.number[Any]],
     old: npt.NDArray[np.object_ | np.number[Any]],
     new: npt.NDArray[np.object_ | np.number[Any]],
-) -> _Array1D[np.object_]: ...
+) -> _ObjectArray1D: ...
 @overload
 def mapdomain(
     x: _AnyRealSeries1D,
     old: _AnyRealSeries1D,
     new: _AnyRealSeries1D,
-) -> _Array1D[np.floating[Any]]: ...
+) -> _FloatArray1D: ...
 @overload
 def mapdomain(
     x: _AnyComplexSeries1D,
     old: _AnyComplexSeries1D,
     new: _AnyComplexSeries1D,
-) -> _Array1D[np.complexfloating[Any, Any]]: ...
+) -> _ComplexArray1D: ...
 @overload
 def mapdomain(
     x: _AnySeries1D,
     old:_AnySeries1D,
     new: _AnySeries1D,
-) -> _Array1D[np.object_]: ...
+) -> _ObjectArray1D: ...
 @overload
 def mapdomain(
     x: object,
@@ -284,19 +289,19 @@ def _fromroots(  # type: ignore[overload-overlap]
     line_f: _AnyLineF,
     mul_f: _AnyMulF,
     roots: _AnyRealSeries1D,
-) -> _Array1D[np.floating[Any]]: ...
+) -> _FloatArray1D: ...
 @overload
 def _fromroots(
     line_f: _AnyLineF,
     mul_f: _AnyMulF,
     roots: _AnyComplexSeries1D,
-) -> _Array1D[np.complexfloating[Any, Any]]: ...
+) -> _ComplexArray1D: ...
 @overload
 def _fromroots(
     line_f: _AnyLineF,
     mul_f: _AnyMulF,
     roots: _AnyObjectSeries1D,
-) -> _Array1D[np.object_]: ...
+) -> _ObjectArray1D: ...
 @overload
 def _fromroots(
     line_f: _AnyLineF,
@@ -313,19 +318,19 @@ def _div(  # type: ignore[overload-overlap]
     mul_f: _AnyMulF,
     c1: _AnyRealSeries1D,
     c2: _AnyRealSeries1D,
-) -> _Tuple2[_Array1D[np.floating[Any]]]: ...
+) -> _Tuple2[_FloatArray1D]: ...
 @overload
 def _div(
     mul_f: _AnyMulF,
     c1: _AnyComplexSeries1D,
     c2: _AnyComplexSeries1D,
-) -> _Tuple2[_Array1D[np.complexfloating[Any, Any]]]: ...
+) -> _Tuple2[_ComplexArray1D]: ...
 @overload
 def _div(
     mul_f: _AnyMulF,
     c1: _AnyObjectSeries1D,
     c2: _AnyObjectSeries1D,
-) -> _Tuple2[_Array1D[np.object_]]: ...
+) -> _Tuple2[_ObjectArray1D]: ...
 @overload
 def _div(
     mul_f: _AnyMulF,
@@ -343,21 +348,21 @@ def _pow(  # type: ignore[overload-overlap]
     c: _AnyRealSeries1D,
     pow: _AnyInt,
     maxpower: None | _AnyInt = ...,
-) -> _Array1D[np.floating[Any]]: ...
+) -> _FloatArray1D: ...
 @overload
 def _pow(
     mul_f: _AnyMulF,
     c: _AnyComplexSeries1D,
     pow: _AnyInt,
     maxpower: None | _AnyInt = ...,
-) -> _Array1D[np.complexfloating[Any, Any]]: ...
+) -> _ComplexArray1D: ...
 @overload
 def _pow(
     mul_f: _AnyMulF,
     c: _AnyObjectSeries1D,
     pow: _AnyInt,
     maxpower: None | _AnyInt = ...,
-) -> _Array1D[np.object_]: ...
+) -> _ObjectArray1D: ...
 @overload
 def _pow(
     mul_f: _AnyMulF,
@@ -377,7 +382,7 @@ def _fit(  # type: ignore[overload-overlap]
     rcond: None | float = ...,
     full: Literal[False] = ...,
     w: None | _AnyRealSeries1D = ...,
-) -> npt.NDArray[np.floating[Any]]: ...
+) -> _FloatArrayND: ...
 @overload
 def _fit(
     vander_f: _AnyVanderF,
@@ -388,7 +393,7 @@ def _fit(
     rcond: None | float = ...,
     full: Literal[False] = ...,
     w: None | _AnyComplexSeries1D = ...,
-) -> npt.NDArray[np.complexfloating[Any, Any]]: ...
+) -> _ComplexArrayND: ...
 @overload
 def _fit(
     vander_f: _AnyVanderF,
