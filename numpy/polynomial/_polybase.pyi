@@ -6,9 +6,7 @@ from typing import (
     ClassVar,
     Generic,
     Literal,
-    SupportsComplex,
     SupportsIndex,
-    SupportsInt,
     TypeAlias,
     TypeGuard,
     TypeVar,
@@ -20,15 +18,15 @@ import numpy.typing as npt
 from numpy._typing import _ArrayLikeInt_co
 
 from ._polytypes import (
-    _AnySeriesND,
-    _Array1D,
+    _AnyInt,
+    _AnyComplexScalar,
     _AnyComplexSeriesND,
     _AnyObjectSeriesND,
     _AnyScalar,
     _AnySeries1D,
-    _Interval,
+    _AnySeriesND,
+    _Array2,
     _CoefArray1D,
-    _AnyNumberScalar,
     _SupportsLenAndGetItem,
     _Tuple2,
 )
@@ -60,9 +58,9 @@ class ABCPolyBase(Generic[_NameCo]):
     _use_unicode: ClassVar[bool]
 
     basis_name: _NameCo
-    coef: _Array1D[np.number[Any]]
-    domain: _Interval[Any]
-    window: _Interval[Any]
+    coef: _CoefArray1D
+    domain: _Array2[np.inexact[Any] | np.object_]
+    window: _Array2[np.inexact[Any] | np.object_]
 
     _symbol: LiteralString
     @property
@@ -85,7 +83,7 @@ class ABCPolyBase(Generic[_NameCo]):
     @overload
     def __call__(
         self, /,
-        arg: _AnyNumberScalar,
+        arg: _AnyComplexScalar,
     ) -> np.float64 | np.complex128: ...
     @overload
     def __call__(
@@ -127,7 +125,7 @@ class ABCPolyBase(Generic[_NameCo]):
     def __rmod__(self: _Self, x: _AnyOther, /) -> _Self: ...
     def __rdivmod__(self: _Self, x: _AnyOther, /) -> _Tuple2[_Self]: ...
     def __len__(self, /) -> int: ...
-    def __iter__(self, /) -> Iterator[np.number[Any] | SupportsComplex]: ...
+    def __iter__(self, /) -> Iterator[np.inexact[Any] | object]: ...
     def __getstate__(self, /) -> dict[str, Any]: ...
     def __setstate__(self, dict: dict[str, Any], /) -> None: ...
 
@@ -140,7 +138,7 @@ class ABCPolyBase(Generic[_NameCo]):
     def degree(self, /) -> int: ...
     def cutdeg(self: _Self, /) -> _Self: ...
     def trim(self: _Self, /, tol: float = ...) -> _Self: ...
-    def truncate(self: _Self, /, size: SupportsInt) -> _Self: ...
+    def truncate(self: _Self, /, size: _AnyInt) -> _Self: ...
 
     @overload
     def convert(
@@ -174,8 +172,8 @@ class ABCPolyBase(Generic[_NameCo]):
         self: _Self,
         /,
         m: SupportsIndex = ...,
-        k: _AnyNumberScalar | _SupportsLenAndGetItem[_AnyNumberScalar] = ...,
-        lbnd: None | _AnyNumberScalar = ...,
+        k: _AnyComplexScalar | _SupportsLenAndGetItem[_AnyComplexScalar] = ...,
+        lbnd: None | _AnyComplexScalar = ...,
     ) -> _Self: ...
 
     def deriv(self: _Self, /, m: SupportsIndex = ...) -> _Self: ...
