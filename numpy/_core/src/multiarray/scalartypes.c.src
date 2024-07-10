@@ -191,9 +191,9 @@ find_binary_operation_path(
     *self_op = NULL;
 
     if (PyArray_IsScalar(other, Generic) ||
-            PyLong_Check(other) ||
-            PyFloat_Check(other) ||
-            PyComplex_Check(other) ||
+            PyLong_CheckExact(other) ||
+            PyFloat_CheckExact(other) ||
+            PyComplex_CheckExact(other) ||
             PyBool_Check(other)) {
         /*
          * The other operand is ready for the operation already.  Must pass on
