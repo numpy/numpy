@@ -2539,7 +2539,7 @@ def get_parameters(vars, global_params={}):
                 outmess(f'get_parameters[TODO]: '
                         f'implement evaluation of complex expression {v}\n')
 
-            dimspec = ([s.lstrip('dimension').strip()
+            dimspec = ([s.removeprefix('dimension').strip()
                         for s in vars[n]['attrspec']
                        if s.startswith('dimension')] or [None])[0]
 
