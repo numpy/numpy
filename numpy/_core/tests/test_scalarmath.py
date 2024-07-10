@@ -12,6 +12,7 @@ from hypothesis.extra import numpy as hynp
 
 import numpy as np
 from numpy.exceptions import ComplexWarning
+from numpy._core._rational_tests import rational
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_almost_equal,
     assert_array_equal, IS_PYPY, suppress_warnings, _gen_alignment_data,
@@ -31,7 +32,7 @@ objecty_things = [object(), None]
 reasonable_operators_for_scalars = [
     operator.lt, operator.le, operator.eq, operator.ne, operator.ge,
     operator.gt, operator.add, operator.floordiv, operator.mod,
-    operator.mul, operator.pow, operator.sub, operator.truediv,
+    operator.mul, operator.pow, operator.sub, operator.truediv
 ]
 
 
@@ -864,8 +865,8 @@ def recursionlimit(n):
 
 
 @given(sampled_from(objecty_things),
-       sampled_from(reasonable_operators_for_scalars),
-       sampled_from(types))
+       sampled_from(reasonable_operators_for_scalars + [operator.xor]),
+       sampled_from(types + [rational]))
 def test_operator_object_left(o, op, type_):
     try:
         with recursionlimit(200):
@@ -875,8 +876,8 @@ def test_operator_object_left(o, op, type_):
 
 
 @given(sampled_from(objecty_things),
-       sampled_from(reasonable_operators_for_scalars),
-       sampled_from(types))
+       sampled_from(reasonable_operators_for_scalars + [operator.xor]),
+       sampled_from(types + [rational]))
 def test_operator_object_right(o, op, type_):
     try:
         with recursionlimit(200):
