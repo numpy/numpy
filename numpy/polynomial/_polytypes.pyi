@@ -109,7 +109,7 @@ _AnySeriesND: TypeAlias = (
     | _NestedSequence[SupportsComplex | SupportsFloat]
 )
 
-_SCT_domain = TypeVar("_SCT_domain", np.float64, np.complex128, np.object_)
+_SCT_domain = TypeVar("_SCT_domain", bound=np.inexact[Any] | np.object_)
 _Interval: TypeAlias = np.ndarray[tuple[Literal[2]], np.dtype[_SCT_domain]]
 
 _T = TypeVar("_T", bound=object)
