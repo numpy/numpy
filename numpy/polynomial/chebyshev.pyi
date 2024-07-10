@@ -154,7 +154,7 @@ def chebinterpolate(
 
 _Self = TypeVar("_Self", bound=object)
 
-class Chebyshev(ABCPolyBase):
+class Chebyshev(ABCPolyBase[L["T"]]):
     @overload
     @classmethod
     def interpolate(

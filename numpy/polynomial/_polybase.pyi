@@ -4,6 +4,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
+    Generic,
     Literal,
     SupportsComplex,
     SupportsIndex,
@@ -42,22 +43,23 @@ else:
 __all__ = ["ABCPolyBase"]
 
 
+_NameCo = TypeVar("_NameCo", bound=None | LiteralString, covariant=True)
 _Self = TypeVar("_Self", bound="ABCPolyBase")
 _Size = TypeVar("_Size", bound=int)
 
 _AnyOther: TypeAlias = ABCPolyBase | _AnyScalar | _AnySeries1D
 _Hundred: TypeAlias = Literal[100]
 
-class ABCPolyBase:
+class ABCPolyBase(Generic[_NameCo]):
     __hash__: ClassVar[None]  # type: ignore[assignment]
     __array_ufunc__: ClassVar[None]
 
-    basis_name: ClassVar[None | LiteralString]
     maxpower: ClassVar[_Hundred]
     _superscript_mapping: ClassVar[Mapping[int, str]]
     _subscript_mapping: ClassVar[Mapping[int, str]]
     _use_unicode: ClassVar[bool]
 
+    basis_name: _NameCo
     coef: _Array1D[np.number[Any]]
     domain: _Interval[Any]
     window: _Interval[Any]
@@ -83,7 +85,7 @@ class ABCPolyBase:
     @overload
     def __call__(
         self, /,
-        arg: _AnyScalar,
+        arg: _AnyNumberScalar,
     ) -> np.float64 | np.complex128: ...
     @overload
     def __call__(
