@@ -73,7 +73,7 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
         options['legacy'] = sys.maxsize
     elif legacy == False:  # noqa: E712
         warnings.warn(
-            f"Passing `legacy={legacy}` is deprecated.",
+            f"Passing `legacy={legacy!r}` is deprecated.",
             FutureWarning, stacklevel=3
         )
         options['legacy'] = sys.maxsize
