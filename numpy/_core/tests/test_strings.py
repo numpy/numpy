@@ -467,10 +467,12 @@ class TestMethods:
     ])
     def test_lstrip(self, a, chars, out, dt):
         a = np.array(a, dtype=dt)
+        out = np.array(out, dtype=dt)
         if chars is not None:
             chars = np.array(chars, dtype=dt)
-        out = np.array(out, dtype=dt)
-        assert_array_equal(np.strings.lstrip(a, chars), out)
+            assert_array_equal(np.strings.lstrip(a, chars), out)
+        else:
+            assert_array_equal(np.strings.lstrip(a), out)
 
     @pytest.mark.parametrize("a,chars,out", [
         ("", None, ""),
@@ -486,6 +488,7 @@ class TestMethods:
         ("xyzzyhelloxyzzy", "xyz", "xyzzyhello"),
         ("hello", "xyz", "hello"),
         ("xyxz", "xyxz", ""),
+        ("    ", None, ""),
         ("xyxzx", "x", "xyxz"),
         (["xyzzyhelloxyzzy", "hello"], ["xyz", "xyz"],
          ["xyzzyhello", "hello"]),
@@ -493,10 +496,12 @@ class TestMethods:
     ])
     def test_rstrip(self, a, chars, out, dt):
         a = np.array(a, dtype=dt)
+        out = np.array(out, dtype=dt)
         if chars is not None:
             chars = np.array(chars, dtype=dt)
-        out = np.array(out, dtype=dt)
-        assert_array_equal(np.strings.rstrip(a, chars), out)
+            assert_array_equal(np.strings.rstrip(a, chars), out)
+        else:
+            assert_array_equal(np.strings.rstrip(a), out)
 
     @pytest.mark.parametrize("a,chars,out", [
         ("", None, ""),
