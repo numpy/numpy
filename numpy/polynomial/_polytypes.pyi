@@ -24,7 +24,6 @@ from numpy._typing import (
     _ArrayLikeInt_co,
     _ArrayLikeObject_co,
     _NestedSequence,
-    _SupportsArray,
 )
 
 if sys.version_info >= (3, 11):
@@ -53,10 +52,16 @@ class _SimpleSequence(Protocol[_V_co]):
     def __getitem__(self: _Self, ii: slice, /) -> _Self: ...
 
 _SCT = TypeVar("_SCT", bound=np.number[Any] | np.object_)
+_SCT_co = TypeVar("_SCT_co", bound=np.number[Any] | np.object_, covariant=True)
+
+class _SupportsArray(Protocol[_SCT_co]):
+    def __array__(self ,) -> npt.NDArray[_SCT_co]: ...
 
 _Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_SCT]]
 _Array2D: TypeAlias = np.ndarray[tuple[int, int], np.dtype[_SCT]]
 
+_IntArray1D: TypeAlias = _Array1D[np.integer[Any]]
+_IntArrayND: TypeAlias = npt.NDArray[np.integer[Any]]
 _FloatArray1D: TypeAlias = _Array1D[np.floating[Any]]
 _FloatArrayND: TypeAlias = npt.NDArray[np.floating[Any]]
 _ComplexArray1D: TypeAlias = _Array1D[np.complexfloating[Any, Any]]
@@ -71,6 +76,9 @@ _Line: TypeAlias = np.ndarray[tuple[Literal[1, 2]], np.dtype[_SCT]]
 _CoefArray1D: TypeAlias = _Array1D[np.inexact[Any] | np.object_]
 _CoefArrayND: TypeAlias = npt.NDArray[np.inexact[Any] | np.object_]
 
+_AnyIntArg: TypeAlias = SupportsInt | SupportsIndex
+
+_AnyIntScalar: TypeAlias = int | np.integer[Any]
 _AnyRealScalar: TypeAlias = float | np.floating[Any] | np.integer[Any]
 _AnyComplexScalar: TypeAlias = complex | np.number[Any]
 _AnyObjectScalar: TypeAlias = (
@@ -80,50 +88,58 @@ _AnyObjectScalar: TypeAlias = (
     | numbers.Complex
 )
 _AnyScalar: TypeAlias = _AnyComplexScalar | _AnyObjectScalar
-_AnyInt: TypeAlias = SupportsInt | SupportsIndex
 
+_AnyIntSeries1D: TypeAlias = (
+    _SupportsArray[np.integer[Any]]
+    | _SupportsLenAndGetItem[_AnyIntScalar]
+)
 _AnyRealSeries1D: TypeAlias = (
-    npt.NDArray[np.floating[Any] | np.integer[Any]]
-    | _SupportsArray[np.dtype[np.floating[Any] | np.integer[Any]]]
-    | _SupportsLenAndGetItem[float | np.floating[Any] | np.integer[Any]]
+    _SupportsArray[np.integer[Any] | np.floating[Any]]
+    | _SupportsLenAndGetItem[_AnyRealScalar]
 )
 _AnyComplexSeries1D: TypeAlias = (
-    npt.NDArray[np.number[Any]]
-    | _SupportsArray[np.dtype[np.number[Any]]]
+    _SupportsArray[np.number[Any]]
     | _SupportsLenAndGetItem[_AnyComplexScalar]
 )
 _AnyObjectSeries1D: TypeAlias = (
-    _ObjectArrayND
+    _SupportsArray[np.object_]
     | _SupportsLenAndGetItem[_AnyObjectScalar]
 )
 _AnySeries1D: TypeAlias = (
-    npt.NDArray[np.number[Any] | np.object_]
-    | _SupportsLenAndGetItem[_AnyScalar | object]
+    _SupportsArray[np.number[Any] | np.object_]
+    | _SupportsLenAndGetItem[object]
+)
+
+_AnyIntSeriesND: TypeAlias = (
+    int
+    | _SupportsArray[np.integer[Any]]
+    | _NestedSequence[int]
+    | _NestedSequence[_SupportsArray[np.integer[Any]]]
 )
 
 _AnyRealSeriesND: TypeAlias = (
-    npt.NDArray[np.floating[Any] | np.integer[Any]]
-    | _AnyRealScalar
-    | _SupportsArray[np.dtype[np.floating[Any] | np.integer[Any]]]
-    | _NestedSequence[float | np.floating[Any] | np.integer[Any]]
+    float
+    | _SupportsArray[np.integer[Any] | np.floating[Any]]
+    | _NestedSequence[float]
+    | _NestedSequence[_SupportsArray[np.integer[Any] | np.floating[Any]]]
 )
 _AnyComplexSeriesND: TypeAlias = (
-    npt.NDArray[np.number[Any]]
-    | _AnyComplexScalar
-    | _SupportsArray[np.dtype[np.number[Any]]]
-    | _NestedSequence[complex | np.number[Any]]
+    complex
+    | _SupportsArray[np.number[Any]]
+    | _NestedSequence[complex]
+    | _NestedSequence[_SupportsArray[np.number[Any]]]
 )
 _AnyObjectSeriesND: TypeAlias = (
-    _ObjectArrayND
-    | _AnyObjectScalar
-    | _SupportsArray[np.dtype[np.object_]]
+    _AnyObjectScalar
+    | _SupportsArray[np.object_]
     | _NestedSequence[_AnyObjectScalar]
+    | _NestedSequence[_SupportsArray[np.object_]]
 )
 _AnySeriesND: TypeAlias = (
-    npt.NDArray[np.number[Any] | np.object_]
-    | _AnyScalar
-    | _SupportsArray[np.dtype[np.number[Any] | np.object_]]
-    | _NestedSequence[_AnyScalar | object]
+    _AnyScalar
+    | _SupportsArray[np.number[Any] | np.object_]
+    | _NestedSequence[object]
+    | _NestedSequence[_SupportsArray[np.number[Any] | np.object_]]
 )
 
 _Name_co = TypeVar("_Name_co", bound=LiteralString, covariant=True)
@@ -203,22 +219,22 @@ class _FuncPow(_Named[_Name_co], Protocol[_Name_co]):
     def __call__(  # type: ignore[overload-overlap]
         self, /,
         c: _AnyRealSeries1D,
-        pow: _AnyInt,
-        maxpower: None | _AnyInt = ...,
+        pow: _AnyIntArg,
+        maxpower: None | _AnyIntArg = ...,
     ) -> _FloatArray1D: ...
     @overload
     def __call__(
         self, /,
         c: _AnyComplexSeries1D,
-        pow: _AnyInt,
-        maxpower: None | _AnyInt = ...,
+        pow: _AnyIntArg,
+        maxpower: None | _AnyIntArg = ...,
     ) -> _ComplexArray1D: ...
     @overload
     def __call__(
         self, /,
         c: _AnySeries1D,
-        pow: _AnyInt,
-        maxpower: None | _AnyInt = ...,
+        pow: _AnyIntArg,
+        maxpower: None | _AnyIntArg = ...,
     ) -> _ObjectArray1D: ...
 
 @final
@@ -696,7 +712,7 @@ class _FuncFit(_Named[_Name_co], Protocol[_Name_co]):
         self, /,
         x: _AnyRealSeries1D,
         y: _AnyRealSeriesND,
-        deg: _ArrayLikeInt_co,
+        deg: int | _AnyIntSeries1D,
         rcond: None | float = ...,
         full: Literal[False] = ...,
         w: None | _AnyRealSeries1D = ...,
@@ -706,7 +722,7 @@ class _FuncFit(_Named[_Name_co], Protocol[_Name_co]):
         self, /,
         x: _AnyComplexSeries1D,
         y: _AnyComplexSeriesND,
-        deg: _ArrayLikeInt_co,
+        deg: int | _AnyIntSeries1D,
         rcond: None | float = ...,
         full: Literal[False] = ...,
         w: None | _AnyComplexSeriesND = ...,
@@ -716,7 +732,7 @@ class _FuncFit(_Named[_Name_co], Protocol[_Name_co]):
         self, /,
         x: _AnySeries1D,
         y: _AnySeriesND,
-        deg: _ArrayLikeInt_co,
+        deg: int | _AnyIntSeries1D,
         rcond: None | float = ...,
         full: Literal[False] = ...,
         w: None | _AnySeries1D = ...,
@@ -726,7 +742,7 @@ class _FuncFit(_Named[_Name_co], Protocol[_Name_co]):
         self,
         x: _AnySeries1D,
         y: _AnySeriesND,
-        deg: _ArrayLikeInt_co,
+        deg: int | _AnyIntSeries1D,
         rcond: None | float,
         full: Literal[True],
         /,
@@ -737,7 +753,7 @@ class _FuncFit(_Named[_Name_co], Protocol[_Name_co]):
         self, /,
         x: _AnySeries1D,
         y: _AnySeriesND,
-        deg: _ArrayLikeInt_co,
+        deg: int | _AnyIntSeries1D,
         rcond: None | float = ...,
         *,
         full: Literal[True],
@@ -809,4 +825,4 @@ class _FuncPts(_Named[_Name_co], Protocol[_Name_co]):
         npts: _N_pts,
     ) -> np.ndarray[tuple[_N_pts], np.dtype[np.float64]]: ...
     @overload
-    def __call__(self, /, npts: _AnyInt) -> _Array1D[np.float64]: ...
+    def __call__(self, /, npts: _AnyIntArg) -> _Array1D[np.float64]: ...

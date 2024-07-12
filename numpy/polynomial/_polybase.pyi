@@ -1,3 +1,4 @@
+import abc
 import sys
 from collections.abc import Iterator, Mapping, Sequence
 from typing import (
@@ -15,18 +16,24 @@ from typing import (
 
 import numpy as np
 import numpy.typing as npt
-from numpy._typing import _ArrayLikeInt_co
 
 from ._polytypes import (
-    _AnyInt,
+    _AnyComplexSeries1D,
+    _AnyIntArg,
     _AnyComplexScalar,
     _AnyComplexSeriesND,
+    _AnyIntSeries1D,
+    _AnyObjectSeries1D,
     _AnyObjectSeriesND,
+    _AnyRealScalar,
+    _AnyRealSeries1D,
     _AnyScalar,
     _AnySeries1D,
     _AnySeriesND,
+    _Array1D,
     _Array2,
     _CoefArray1D,
+    _ComplexArrayND,
     _SupportsLenAndGetItem,
     _Tuple2,
 )
@@ -43,12 +50,11 @@ __all__ = ["ABCPolyBase"]
 
 _NameCo = TypeVar("_NameCo", bound=None | LiteralString, covariant=True)
 _Self = TypeVar("_Self", bound="ABCPolyBase")
-_Size = TypeVar("_Size", bound=int)
 
 _AnyOther: TypeAlias = ABCPolyBase | _AnyScalar | _AnySeries1D
 _Hundred: TypeAlias = Literal[100]
 
-class ABCPolyBase(Generic[_NameCo]):
+class ABCPolyBase(Generic[_NameCo], metaclass=abc.ABCMeta):
     __hash__: ClassVar[None]  # type: ignore[assignment]
     __array_ufunc__: ClassVar[None]
 
@@ -67,8 +73,7 @@ class ABCPolyBase(Generic[_NameCo]):
     def symbol(self, /) -> LiteralString: ...
 
     def __init__(
-        self,
-        /,
+        self, /,
         coef: _AnySeries1D,
         domain: None | _AnySeries1D = ...,
         window: None | _AnySeries1D = ...,
@@ -132,26 +137,27 @@ class ABCPolyBase(Generic[_NameCo]):
     def has_samecoef(self, /, other: ABCPolyBase) -> bool: ...
     def has_samedomain(self, /, other: ABCPolyBase) -> bool: ...
     def has_samewindow(self, /, other: ABCPolyBase) -> bool: ...
-    def has_sametype(self: _Self, /, other: object) -> TypeGuard[_Self]: ...
+    @overload
+    def has_sametype(self: _Self, /, other: ABCPolyBase) -> TypeGuard[_Self]: ...
+    @overload
+    def has_sametype(self, /, other: object) -> Literal[False]: ...
 
     def copy(self: _Self, /) -> _Self: ...
     def degree(self, /) -> int: ...
     def cutdeg(self: _Self, /) -> _Self: ...
-    def trim(self: _Self, /, tol: float = ...) -> _Self: ...
-    def truncate(self: _Self, /, size: _AnyInt) -> _Self: ...
+    def trim(self: _Self, /, tol: _AnyRealScalar = ...) -> _Self: ...
+    def truncate(self: _Self, /, size: _AnyIntArg) -> _Self: ...
 
     @overload
     def convert(
         self,
         domain: None | _AnySeries1D,
-        kind: type[_Self],
-        /,
+        kind: type[_Self], /,
         window: None | _AnySeries1D = ...,
     ) -> _Self: ...
     @overload
     def convert(
-        self,
-        /,
+        self, /,
         domain: None | _AnySeries1D = ...,
         *,
         kind: type[_Self],
@@ -159,8 +165,7 @@ class ABCPolyBase(Generic[_NameCo]):
     ) -> _Self: ...
     @overload
     def convert(
-        self: _Self,
-        /,
+        self: _Self, /,
         domain: None | _AnySeries1D = ...,
         kind: type[_Self] = ...,
         window: None | _AnySeries1D = ...,
@@ -169,8 +174,7 @@ class ABCPolyBase(Generic[_NameCo]):
     def mapparms(self, /) -> _Tuple2[Any]: ...
 
     def integ(
-        self: _Self,
-        /,
+        self: _Self, /,
         m: SupportsIndex = ...,
         k: _AnyComplexScalar | _SupportsLenAndGetItem[_AnyComplexScalar] = ...,
         lbnd: None | _AnyComplexScalar = ...,
@@ -180,37 +184,21 @@ class ABCPolyBase(Generic[_NameCo]):
 
     def roots(self, /) -> _CoefArray1D: ...
 
-    @overload
     def linspace(
-        self,
-        /,
-        n: _Size,
+        self, /,
+        n: SupportsIndex = ...,
         domain: None | _AnySeries1D = ...,
-    ) -> tuple[
-        np.ndarray[tuple[_Size], np.dtype[np.float64]],
-        np.ndarray[tuple[_Size], np.dtype[np.float64 | np.complex128]],
-    ]: ...
-    @overload
-    def linspace(
-        self,
-        /,
-        n: _Hundred = ...,
-        domain: None | _AnySeries1D = ...,
-    ) -> tuple[
-        np.ndarray[tuple[_Hundred], np.dtype[np.float64]],
-        np.ndarray[tuple[_Hundred], np.dtype[np.float64 | np.complex128]],
-    ]: ...
+    ) -> _Tuple2[_Array1D[np.float64 | np.complex128]]: ...
 
     @overload
     @classmethod
     def fit(
-        cls: type[_Self],
-        /,
+        cls: type[_Self], /,
         x: _AnySeries1D,
         y: _AnySeries1D,
-        deg: _ArrayLikeInt_co,
+        deg: int | _AnyIntSeries1D,
         domain: None | _AnySeries1D = ...,
-        rcond: float = ...,
+        rcond: _AnyRealScalar = ...,
         full: Literal[False] = ...,
         w: None | _AnySeries1D = ...,
         window: None | _AnySeries1D = ...,
@@ -222,9 +210,9 @@ class ABCPolyBase(Generic[_NameCo]):
         cls: type[_Self], /,
         x: _AnySeries1D,
         y: _AnySeries1D,
-        deg: _ArrayLikeInt_co,
+        deg: int | _AnyIntSeries1D,
         domain: None | _AnySeries1D = ...,
-        rcond: float = ...,
+        rcond: _AnyRealScalar = ...,
         *,
         full: Literal[True],
         w: None | _AnySeries1D = ...,
@@ -237,11 +225,10 @@ class ABCPolyBase(Generic[_NameCo]):
         cls: type[_Self],
         x: _AnySeries1D,
         y: _AnySeries1D,
-        deg: _ArrayLikeInt_co,
+        deg: int | _AnyIntSeries1D,
         domain: None | _AnySeries1D,
-        rcond: float,
-        full: Literal[True],
-        /,
+        rcond: _AnyRealScalar,
+        full: Literal[True], /,
         w: None | _AnySeries1D = ...,
         window: None | _AnySeries1D = ...,
         symbol: str = ...,
@@ -249,34 +236,33 @@ class ABCPolyBase(Generic[_NameCo]):
 
     @classmethod
     def fromroots(
-        cls: type[_Self],
-        /,
+        cls: type[_Self], /,
         roots: _AnySeriesND,
         domain: None | _AnySeries1D = ...,
         window: None | _AnySeries1D = ...,
+        symbol: str = ...,
     ) -> _Self: ...
 
     @classmethod
     def identity(
-        cls: type[_Self],
-        /,
+        cls: type[_Self], /,
         domain: None | _AnySeries1D = ...,
         window: None | _AnySeries1D = ...,
+        symbol: str = ...,
     ) -> _Self: ...
 
     @classmethod
     def basis(
-        cls: type[_Self],
-        /,
-        deg: int,
+        cls: type[_Self], /,
+        deg: _AnyIntArg,
         domain: None | _AnySeries1D = ...,
         window: None | _AnySeries1D = ...,
+        symbol: str = ...,
     ) -> _Self: ...
 
     @classmethod
     def cast(
-        cls: type[_Self],
-        /,
+        cls: type[_Self], /,
         series: ABCPolyBase,
         domain: None | _AnySeries1D = ...,
         window: None | _AnySeries1D = ...,

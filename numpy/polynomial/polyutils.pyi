@@ -11,15 +11,15 @@ from typing import (
 
 import numpy as np
 import numpy.typing as npt
-from numpy._typing import _ArrayLikeInt_co, _FloatLike_co
 
 from ._polytypes import (
     _AnyComplexScalar,
     _AnyComplexSeries1D,
     _AnyComplexSeriesND,
+    _AnyIntSeries1D,
     _AnyRealSeries1D,
     _AnyRealSeriesND,
-    _AnyInt,
+    _AnyIntArg,
     _AnyComplexSeries1D,
     _AnyObjectSeries1D,
     _AnyRealScalar,
@@ -37,6 +37,7 @@ from ._polytypes import (
     _FuncBinOp,
     _FuncValND,
     _FuncVanderND,
+    _IntArrayND,
     _ObjectArray1D,
     _ObjectArrayND,
     _SimpleSequence,
@@ -60,12 +61,7 @@ _AnyVanderF: TypeAlias = Callable[[npt.ArrayLike, SupportsIndex], _CoefArrayND]
 
 @overload
 def as_series(
-    alist: npt.NDArray[np.integer[Any]],
-    trim: bool = ...,
-) -> list[_FloatArray1D]: ...
-@overload
-def as_series(
-    alist: _FloatArrayND,
+    alist: _IntArrayND | _FloatArrayND,
     trim: bool = ...,
 ) -> list[_FloatArray1D]: ...
 @overload
@@ -80,12 +76,7 @@ def as_series(
 ) -> list[_ObjectArray1D]: ...
 @overload
 def as_series(  # type: ignore[overload-overlap]
-    alist: Iterable[npt.NDArray[np.integer[Any]]],
-    trim: bool = ...,
-) -> list[_FloatArray1D]: ...
-@overload
-def as_series(
-    alist: Iterable[_FloatArrayND],
+    alist: Iterable[_FloatArrayND | _IntArrayND],
     trim: bool = ...,
 ) -> list[_FloatArray1D]: ...
 @overload
@@ -119,7 +110,7 @@ def trimseq(seq: _T_seq) -> _T_seq: ...
 
 @overload
 def trimcoef(  # type: ignore[overload-overlap]
-    c: npt.NDArray[np.integer[Any]] | _FloatArrayND,
+    c: _IntArrayND | _FloatArrayND,
     tol: _AnyRealScalar = ...,
 ) -> _FloatArray1D: ...
 @overload
@@ -150,7 +141,7 @@ def trimcoef(
 
 @overload
 def getdomain(  # type: ignore[overload-overlap]
-    x: _FloatArrayND | npt.NDArray[np.integer[Any]],
+    x: _FloatArrayND | _IntArrayND,
 ) -> _Array2[np.float64]: ...
 @overload
 def getdomain(
@@ -229,8 +220,8 @@ def mapdomain(
 @overload
 def mapdomain(
     x: _AnyScalar,
-    old: _AnyObjectSeries1D | _AnyComplexSeries1D,
-    new: _AnyObjectSeries1D | _AnyComplexSeries1D,
+    old: _AnySeries1D,
+    new: _AnySeries1D,
 ) -> object: ...
 @overload
 def mapdomain(  # type: ignore[overload-overlap]
@@ -251,7 +242,7 @@ def mapdomain(
     new: npt.NDArray[np.object_ | np.number[Any]],
 ) -> _ObjectArray1D: ...
 @overload
-def mapdomain(
+def mapdomain(  # type: ignore[overload-overlap]
     x: _AnyRealSeries1D,
     old: _AnyRealSeries1D,
     new: _AnyRealSeries1D,
@@ -346,29 +337,29 @@ _sub: Final[_FuncBinOp]
 def _pow(  # type: ignore[overload-overlap]
     mul_f: _AnyMulF,
     c: _AnyRealSeries1D,
-    pow: _AnyInt,
-    maxpower: None | _AnyInt = ...,
+    pow: _AnyIntArg,
+    maxpower: None | _AnyIntArg = ...,
 ) -> _FloatArray1D: ...
 @overload
 def _pow(
     mul_f: _AnyMulF,
     c: _AnyComplexSeries1D,
-    pow: _AnyInt,
-    maxpower: None | _AnyInt = ...,
+    pow: _AnyIntArg,
+    maxpower: None | _AnyIntArg = ...,
 ) -> _ComplexArray1D: ...
 @overload
 def _pow(
     mul_f: _AnyMulF,
     c: _AnyObjectSeries1D,
-    pow: _AnyInt,
-    maxpower: None | _AnyInt = ...,
+    pow: _AnyIntArg,
+    maxpower: None | _AnyIntArg = ...,
 ) -> _ObjectArray1D: ...
 @overload
 def _pow(
     mul_f: _AnyMulF,
     c: _AnySeries1D,
-    pow: _AnyInt,
-    maxpower: None | _AnyInt = ...,
+    pow: _AnyIntArg,
+    maxpower: None | _AnyIntArg = ...,
 ) -> _CoefArray1D: ...
 
 # keep in sync with `_polytypes._FuncFit`
@@ -377,9 +368,9 @@ def _fit(  # type: ignore[overload-overlap]
     vander_f: _AnyVanderF,
     x: _AnyRealSeries1D,
     y: _AnyRealSeriesND,
-    deg: _ArrayLikeInt_co,
+    deg: _AnyIntSeries1D,
     domain: None | _AnyRealSeries1D = ...,
-    rcond: None | float = ...,
+    rcond: None | _AnyRealScalar = ...,
     full: Literal[False] = ...,
     w: None | _AnyRealSeries1D = ...,
 ) -> _FloatArrayND: ...
@@ -388,9 +379,9 @@ def _fit(
     vander_f: _AnyVanderF,
     x: _AnyComplexSeries1D,
     y: _AnyComplexSeriesND,
-    deg: _ArrayLikeInt_co,
+    deg: _AnyIntSeries1D,
     domain: None | _AnyComplexSeries1D = ...,
-    rcond: None | float = ...,
+    rcond: None | _AnyRealScalar = ...,
     full: Literal[False] = ...,
     w: None | _AnyComplexSeries1D = ...,
 ) -> _ComplexArrayND: ...
@@ -399,9 +390,9 @@ def _fit(
     vander_f: _AnyVanderF,
     x: _AnySeries1D,
     y: _AnySeriesND,
-    deg: _ArrayLikeInt_co,
+    deg: _AnyIntSeries1D,
     domain: None | _AnySeries1D = ...,
-    rcond: None | float = ...,
+    rcond: None | _AnyRealScalar = ...,
     full: Literal[False] = ...,
     w: None | _AnySeries1D = ...,
 ) -> _CoefArrayND: ...
@@ -410,9 +401,9 @@ def _fit(
     vander_f: _AnyVanderF,
     x: _AnySeries1D,
     y: _AnySeries1D,
-    deg: _ArrayLikeInt_co,
+    deg: _AnyIntSeries1D,
     domain: None | _AnySeries1D,
-    rcond: None | float ,
+    rcond: None | _AnyRealScalar ,
     full: Literal[True],
     /,
     w: None | _AnySeries1D = ...,
@@ -422,13 +413,13 @@ def _fit(
     vander_f: _AnyVanderF,
     x: _AnySeries1D,
     y: _AnySeries1D,
-    deg: _ArrayLikeInt_co,
+    deg: _AnyIntSeries1D,
     domain: None | _AnySeries1D = ...,
-    rcond: None | float = ...,
+    rcond: None | _AnyRealScalar = ...,
     *,
     full: Literal[True],
     w: None | _AnySeries1D = ...,
 ) -> tuple[_CoefArray1D, Sequence[np.inexact[Any] | np.int32]]: ...
 
 def _as_int(x: SupportsIndex, desc: str) -> int: ...
-def format_float(x: _FloatLike_co, parens: bool = ...) -> str: ...
+def format_float(x: _AnyRealScalar, parens: bool = ...) -> str: ...
