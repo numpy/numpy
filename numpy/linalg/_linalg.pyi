@@ -97,10 +97,8 @@ class QRResult(NamedTuple):
     R: NDArray[Any]
 
 class SlogdetResult(NamedTuple):
-    # TODO: `sign` and `logabsdet` are scalars for input 2D arrays and
-    # a `(x.ndim - 2)`` dimensionl arrays otherwise
-    sign: Any
-    logabsdet: Any
+    sign: NDArray[Any]
+    logabsdet: NDArray[Any]
 
 class SVDResult(NamedTuple):
     U: NDArray[Any]
