@@ -5228,7 +5228,8 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
 {
     PyArrayObject *ap1 = NULL;
     PyObject *tmp;
-    npy_cache_import("numpy", "matrix", &npy_thread_unsafe_state.numpy_matrix);
+    npy_cache_import_runtime("numpy", "matrix",
+                             &npy_runtime_imports.numpy_matrix);
 
     const char *matrix_deprecation_msg = (
             "%s.outer() was passed a numpy matrix as %s argument. "
@@ -5239,7 +5240,7 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
 
     tmp = PyTuple_GET_ITEM(args, 0);
 
-    if (PyObject_IsInstance(tmp, npy_thread_unsafe_state.numpy_matrix)) {
+    if (PyObject_IsInstance(tmp, npy_runtime_imports.numpy_matrix)) {
         /* DEPRECATED 2020-05-13, NumPy 1.20 */
         if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
                 matrix_deprecation_msg, ufunc->name, "first") < 0) {
@@ -5256,7 +5257,7 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
 
     PyArrayObject *ap2 = NULL;
     tmp = PyTuple_GET_ITEM(args, 1);
-    if (PyObject_IsInstance(tmp, npy_thread_unsafe_state.numpy_matrix)) {
+    if (PyObject_IsInstance(tmp, npy_runtime_imports.numpy_matrix)) {
         /* DEPRECATED 2020-05-13, NumPy 1.20 */
         if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
                 matrix_deprecation_msg, ufunc->name, "second") < 0) {
@@ -6401,12 +6402,9 @@ ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 {
     PyObject *doc;
 
-    npy_cache_import(
-        "numpy._core._internal",
-        "_ufunc_doc_signature_formatter",
-        &npy_thread_unsafe_state._ufunc_doc_signature_formatter);
-
-    if (npy_thread_unsafe_state._ufunc_doc_signature_formatter == NULL) {
+    if (npy_cache_import_runtime(
+            "numpy._core._internal", "_ufunc_doc_signature_formatter",
+            &npy_runtime_imports._ufunc_doc_signature_formatter) == -1) {
         return NULL;
     }
 
@@ -6415,8 +6413,9 @@ ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
      * introspection on name and nin + nout to automate the first part
      * of it the doc string shouldn't need the calling convention
      */
-    doc = PyObject_CallFunctionObjArgs(npy_thread_unsafe_state._ufunc_doc_signature_formatter,
-                                       (PyObject *)ufunc, NULL);
+    doc = PyObject_CallFunctionObjArgs(
+            npy_runtime_imports._ufunc_doc_signature_formatter,
+            (PyObject *)ufunc, NULL);
     if (doc == NULL) {
         return NULL;
     }

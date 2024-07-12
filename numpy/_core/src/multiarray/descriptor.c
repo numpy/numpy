@@ -726,12 +726,12 @@ _convert_from_commastring(PyObject *obj, int align)
     PyObject *parsed;
     PyArray_Descr *res;
     assert(PyUnicode_Check(obj));
-    npy_cache_import("numpy._core._internal", "_commastring",
-                     &npy_thread_unsafe_state._commastring);
-    if (npy_thread_unsafe_state._commastring == NULL) {
+    if (npy_cache_import_runtime(
+            "numpy._core._internal", "_commastring",
+            &npy_runtime_imports._commastring) == -1) {
         return NULL;
     }
-    parsed = PyObject_CallOneArg(npy_thread_unsafe_state._commastring, obj);
+    parsed = PyObject_CallOneArg(npy_runtime_imports._commastring, obj);
     if (parsed == NULL) {
         return NULL;
     }

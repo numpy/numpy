@@ -608,15 +608,14 @@ _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
 
 static PyObject *
 _void_scalar_to_string(PyObject *obj, int repr) {
-    npy_cache_import("numpy._core.arrayprint",
-                     "_void_scalar_to_string",
-                     &npy_thread_unsafe_state._void_scalar_to_string);
-    if (npy_thread_unsafe_state._void_scalar_to_string == NULL) {
+    if (npy_cache_import_runtime(
+                "numpy._core.arrayprint", "_void_scalar_to_string",
+                &npy_runtime_imports._void_scalar_to_string) == -1) {
         return NULL;
     }
     PyObject *is_repr = repr ? Py_True : Py_False;
     return PyObject_CallFunctionObjArgs(
-            npy_thread_unsafe_state._void_scalar_to_string, obj, is_repr, NULL);
+            npy_runtime_imports._void_scalar_to_string, obj, is_repr, NULL);
 }
 
 static PyObject *

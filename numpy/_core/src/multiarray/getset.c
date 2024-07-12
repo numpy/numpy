@@ -388,13 +388,13 @@ array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
     if (_may_have_objects(PyArray_DESCR(self)) || _may_have_objects(newtype)) {
         PyObject *safe;
 
-        npy_cache_import("numpy._core._internal", "_view_is_safe",
-                         &npy_thread_unsafe_state._view_is_safe);
-        if (npy_thread_unsafe_state._view_is_safe == NULL) {
+        if (npy_cache_import_runtime(
+                "numpy._core._internal", "_view_is_safe",
+                &npy_runtime_imports._view_is_safe) == -1) {
             goto fail;
         }
 
-        safe = PyObject_CallFunction(npy_thread_unsafe_state._view_is_safe,
+        safe = PyObject_CallFunction(npy_runtime_imports._view_is_safe,
                                      "OO", PyArray_DESCR(self), newtype);
         if (safe == NULL) {
             goto fail;

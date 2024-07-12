@@ -766,13 +766,13 @@ void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
 
     if (descr1->names != NULL && descr2->names != NULL) {
         /* If both have fields promoting individual fields may be possible */
-        npy_cache_import("numpy._core._internal", "_promote_fields",
-                         &npy_thread_unsafe_state._promote_fields);
-        if (npy_thread_unsafe_state._promote_fields == NULL) {
+        if (npy_cache_import_runtime(
+                    "numpy._core._internal", "_promote_fields",
+                    &npy_runtime_imports._promote_fields) == -1) {
             return NULL;
         }
         PyObject *result = PyObject_CallFunctionObjArgs(
-                npy_thread_unsafe_state._promote_fields,
+                npy_runtime_imports._promote_fields,
                 descr1, descr2, NULL);
         if (result == NULL) {
             return NULL;
@@ -1240,14 +1240,13 @@ dtypemeta_wrap_legacy_descriptor(
 
     /* And it to the types submodule if it is a builtin dtype */
     if (!PyTypeNum_ISUSERDEF(descr->type_num)) {
-        npy_cache_import("numpy.dtypes", "_add_dtype_helper",
-                         &npy_thread_unsafe_state._add_dtype_helper);
-        if (npy_thread_unsafe_state._add_dtype_helper == NULL) {
+        if (npy_cache_import_runtime("numpy.dtypes", "_add_dtype_helper",
+                                     &npy_runtime_imports._add_dtype_helper) == -1) {
             return -1;
         }
 
         if (PyObject_CallFunction(
-                npy_thread_unsafe_state._add_dtype_helper,
+                npy_runtime_imports._add_dtype_helper,
                 "Os", (PyObject *)dtype_class, alias) == NULL) {
             return -1;
         }
