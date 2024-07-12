@@ -11,6 +11,8 @@ from numpy.testing import IS_PYPY
 from . import util
 
 
+@pytest.mark.filterwarnings(r"ignore:.*The global interpreter lock \(GIL\) "
+                            r"has been enabled.*:RuntimeWarning")
 class TestF77Callback(util.F2PyTest):
     sources = [util.getpath("tests", "src", "callback", "foo.f")]
 
