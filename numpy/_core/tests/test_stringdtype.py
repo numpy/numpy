@@ -11,7 +11,7 @@ import pytest
 
 from numpy.dtypes import StringDType
 from numpy._core.tests._natype import pd_NA
-from numpy.testing import assert_array_equal, IS_WASM
+from numpy.testing import assert_array_equal, IS_WASM, IS_PYPY
 
 
 @pytest.fixture
@@ -510,9 +510,13 @@ def test_concatenate(string_list):
 
     assert_array_equal(np.concatenate([sarr], axis=0), sarr)
 
+
 def test_resize_method(string_list):
     sarr = np.array(string_list, dtype="T")
-    sarr.resize(len(string_list)+3)
+    if IS_PYPY:
+        sarr.resize(len(string_list)+3, refcheck=False)
+    else:
+        sarr.resize(len(string_list)+3)
     assert_array_equal(sarr, np.array(string_list + ['']*3,  dtype="T"))
 
 
