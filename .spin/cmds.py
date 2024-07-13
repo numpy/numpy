@@ -246,7 +246,7 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose, *args, **kwargs):
      spin test -- -k "geometric and not rgeometric"
 
     By default, spin will run `-m 'not slow'`. To run the full test suite, use
-    `spin -m full`
+    `spin test -m full`
 
     For more, see `pytest --help`.
     """  # noqa: E501
