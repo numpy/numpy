@@ -510,6 +510,11 @@ def test_concatenate(string_list):
 
     assert_array_equal(np.concatenate([sarr], axis=0), sarr)
 
+def test_resize_method(string_list):
+    sarr = np.array(string_list, dtype="T")
+    sarr.resize(len(string_list)+3)
+    assert_array_equal(sarr, np.array(string_list + ['']*3,  dtype="T"))
+
 
 def test_create_with_copy_none(string_list):
     arr = np.array(string_list, dtype=StringDType())

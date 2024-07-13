@@ -141,8 +141,9 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
     }
 
     if (newnbytes > oldnbytes && PyArray_ISWRITEABLE(self)) {
-        /* Fill new memory with zeros */
-        if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_ITEM_REFCOUNT)) {
+        /* Fill new memory with zeros (PyLong zero for object arrays) */
+        if (PyDataType_ISLEGACY(PyArray_DESCR(self)) &&
+            PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_ITEM_REFCOUNT)) {
             PyObject *zero = PyLong_FromLong(0);
             char *optr;
             optr = PyArray_BYTES(self) + oldnbytes;
