@@ -5102,16 +5102,24 @@ class TestClip:
                 'uint', 1024, 10, 100, inplace=inplace)
 
     @pytest.mark.parametrize("inplace", [False, True])
-    def test_int_range_error(self, inplace):
-        # E.g. clipping uint with negative integers fails to promote
-        # (changed with NEP 50 and may be adaptable)
-        # Similar to last check in `test_basic`
+    def test_int_out_of_range(self, inplace):
+        # Simple check for out-of-bound integers, also testing the in-place
+        # path.
         x = (np.random.random(1000) * 255).astype("uint8")
-        with pytest.raises(OverflowError):
-            x.clip(-1, 10, out=x if inplace else None)
+        out = np.empty_like(x)
+        res = x.clip(-1, 300, out=out if inplace else None)
+        assert res is out or not inplace
+        assert (res == x).all()
 
-        with pytest.raises(OverflowError):
-            x.clip(0, 256, out=x if inplace else None)
+        res = x.clip(-1, 50, out=out if inplace else None)
+        assert res is out or not inplace
+        assert (res <= 50).all()
+        assert (res[x <= 50] == x[x <= 50]).all()
+
+        res = x.clip(100, 1000, out=out if inplace else None)
+        assert res is out or not inplace
+        assert (res >= 100).all()
+        assert (res[x >= 100] == x[x >= 100]).all()
 
     def test_record_array(self):
         rec = np.array([(-5, 2.0, 3.0), (5.0, 4.0, 3.0)],
