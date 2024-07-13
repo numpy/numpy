@@ -440,6 +440,22 @@ class TestSetOps:
         else:
             assert_array_equal(isin(ar1, ar2, kind=kind), expected)
 
+    @pytest.mark.parametrize("data", [
+        np.array([2**63, 2**63+1], dtype=np.uint64),
+        np.array([-2**62, -2**62-1], dtype=np.int64),
+    ])
+    @pytest.mark.parametrize("kind", [None, "sort", "table"])
+    def test_isin_mixed_huge_vals(self, kind, data):
+        """Test values outside intp range (negative ones if 32bit system)"""
+        query = data[1]
+        res = np.isin(data, query, kind=kind)
+        assert_array_equal(res, [False, True])
+        # Also check that nothing weird happens for values can't possibly
+        # in range.
+        data = data.astype(np.int32)  # clearly different values
+        res = np.isin(data, query, kind=kind)
+        assert_array_equal(res, [False, False])
+
     @pytest.mark.parametrize("kind", [None, "sort", "table"])
     def test_isin_mixed_boolean(self, kind):
         """Test that isin works as expected for bool/int input."""
