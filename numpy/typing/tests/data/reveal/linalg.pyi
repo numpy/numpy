@@ -12,6 +12,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import assert_type
 
+AR_u8: npt.NDArray[np.uint64]
 AR_i8: npt.NDArray[np.int64]
 AR_f8: npt.NDArray[np.float64]
 AR_c16: npt.NDArray[np.complex128]
@@ -109,6 +110,22 @@ assert_type(np.linalg.norm(AR_c16), np.floating[Any])
 assert_type(np.linalg.norm(AR_S), np.floating[Any])
 assert_type(np.linalg.norm(AR_f8, axis=0), Any)
 
+assert_type(np.linalg.tensordot(AR_b, AR_b), npt.NDArray[np.bool])
+assert_type(np.linalg.tensordot(AR_u8, AR_u8), npt.NDArray[np.unsignedinteger[Any]])
+assert_type(np.linalg.tensordot(AR_i8, AR_i8), npt.NDArray[np.signedinteger[Any]])
+assert_type(np.linalg.tensordot(AR_f8, AR_f8), npt.NDArray[np.floating[Any]])
+assert_type(np.linalg.tensordot(AR_c16, AR_c16), npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(np.linalg.tensordot(AR_m, AR_m), npt.NDArray[np.timedelta64])
+assert_type(np.linalg.tensordot(AR_O, AR_O), npt.NDArray[np.object_])
+
+assert_type(np.linalg.matrix_transpose(AR_i8), npt.NDArray[np.int64])
+assert_type(np.linalg.matrix_transpose(AR_f8), npt.NDArray[np.float64])
+assert_type(np.linalg.matrix_transpose(AR_c16), npt.NDArray[np.complex128])
+assert_type(np.linalg.matrix_transpose(AR_O), npt.NDArray[np.object_])
+assert_type(np.linalg.matrix_transpose(AR_m), npt.NDArray[np.timedelta64])
+assert_type(np.linalg.matrix_transpose(AR_S), npt.NDArray[np.str_])
+assert_type(np.linalg.matrix_transpose(AR_b), npt.NDArray[np.bool_])
+
 assert_type(np.linalg.matrix_norm(AR_i8), np.floating[Any])
 assert_type(np.linalg.matrix_norm(AR_f8), np.floating[Any])
 assert_type(np.linalg.matrix_norm(AR_c16), np.floating[Any])
@@ -132,3 +149,10 @@ assert_type(np.linalg.cross(AR_c16, AR_c16), npt.NDArray[np.complex128])
 assert_type(np.linalg.matmul(AR_i8, AR_i8), npt.NDArray[np.int64])
 assert_type(np.linalg.matmul(AR_f8, AR_f8), npt.NDArray[np.float64])
 assert_type(np.linalg.matmul(AR_c16, AR_c16), npt.NDArray[np.complex128])
+
+assert_type(np.linalg.vecdot(AR_b, AR_b), np.bool | npt.NDArray[np.bool])
+assert_type(np.linalg.vecdot(AR_u8, AR_u8), np.unsignedinteger[Any] | npt.NDArray[np.unsignedinteger[Any]])
+assert_type(np.linalg.vecdot(AR_i8, AR_i8), np.signedinteger[Any] | npt.NDArray[np.signedinteger[Any]])
+assert_type(np.linalg.vecdot(AR_f8, AR_f8), np.floating[Any] | npt.NDArray[np.floating[Any]])
+assert_type(np.linalg.vecdot(AR_c16, AR_c16), np.complexfloating[Any, Any] | npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(np.linalg.vecdot(AR_O, AR_O), object | npt.NDArray[np.object_])

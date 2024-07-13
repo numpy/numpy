@@ -13,6 +13,7 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 from numpy._typing import (
+    _ArrayLike,
     _ArrayLikeBool_co,
     _ArrayLikeInt_co,
     _ArrayLikeUInt_co,
@@ -25,6 +26,7 @@ from numpy._typing import (
     _DTypeLike,
     _FloatLike_co,
     _IntLike_co,
+    _ShapeLike,
 )
 from numpy.linalg import LinAlgError
 
@@ -98,19 +100,19 @@ class SVDResult(NamedTuple):
 def tensorsolve(  # type: ignore[overload-overlap]
     a: _ArrayLikeInt_co,
     b: _ArrayLikeInt_co,
-    axes: None | Iterable[int] =...,
+    axes: None | Iterable[SupportsIndex] =...,
 ) -> npt.NDArray[np.float64]: ...
 @overload
 def tensorsolve(
     a: _ArrayLikeFloat_co,
     b: _ArrayLikeFloat_co,
-    axes: None | Iterable[int] =...,
+    axes: None | Iterable[SupportsIndex] =...,
 ) -> npt.NDArray[np.floating[Any]]: ...
 @overload
 def tensorsolve(
     a: _ArrayLikeComplex_co,
     b: _ArrayLikeComplex_co,
-    axes: None | Iterable[int] =...,
+    axes: None | Iterable[SupportsIndex] =...,
 ) -> npt.NDArray[np.complexfloating[Any, Any]]: ...
 
 @overload
@@ -427,6 +429,61 @@ def norm(
 ) -> npt.NDArray[Any]: ...
 
 @overload
+def tensordot(  # type: ignore[overload-overlap]
+    x1: _ArrayLikeBool_co,
+    x2: _ArrayLikeBool_co,
+    /, *,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
+) -> npt.NDArray[np.bool]: ...
+@overload
+def tensordot(
+    x1: _ArrayLikeUInt_co,
+    x2: _ArrayLikeUInt_co,
+    /, *,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
+) -> npt.NDArray[np.unsignedinteger[Any]]: ...
+@overload
+def tensordot(
+    x1: _ArrayLikeInt_co,
+    x2: _ArrayLikeInt_co,
+    /, *,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
+) -> npt.NDArray[np.signedinteger[Any]]: ...
+@overload
+def tensordot(
+    x1: _ArrayLikeFloat_co,
+    x2: _ArrayLikeFloat_co,
+    /, *,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
+) -> npt.NDArray[np.floating[Any]]: ...
+@overload
+def tensordot(
+    x1: _ArrayLikeComplex_co,
+    x2: _ArrayLikeComplex_co,
+    /, *,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
+) -> npt.NDArray[np.complexfloating[Any, Any]]: ...
+@overload
+def tensordot(
+    x1: _ArrayLikeTD64_co,
+    x2: _ArrayLikeTD64_co,
+    /, *,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
+) -> npt.NDArray[np.timedelta64]: ...
+@overload
+def tensordot(
+    x1: _ArrayLikeObject_co,
+    x2: _ArrayLikeObject_co,
+    /, *,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
+) -> npt.NDArray[np.object_]: ...
+
+@overload
+def matrix_transpose(x: _ArrayLike[_SCT], /) -> npt.NDArray[_SCT]: ...
+@overload
+def matrix_transpose(x: npt.ArrayLike, /) -> npt.NDArray[Any]: ...
+
+@overload
 def matrix_norm(
     x: npt.ArrayLike,
     /, *,
@@ -669,3 +726,56 @@ def matmul(
     x2: _ArrayLikeObject_co | _ArrayLikeNumber_co,
     /,
 ) -> npt.NDArray[np.object_]: ...
+
+@overload
+def vecdot(  # type: ignore[overload-overlap]
+    x1: _ArrayLikeBool_co,
+    x2: _ArrayLikeBool_co,
+    /, *,
+    axis: SupportsIndex = ...,
+) -> np.bool | npt.NDArray[np.bool]: ...
+@overload
+def vecdot(
+    x1: _ArrayLikeUInt_co,
+    x2: _ArrayLikeUInt_co,
+    /, *,
+    axis: SupportsIndex = ...,
+) -> np.unsignedinteger[Any] | npt.NDArray[np.unsignedinteger[Any]]: ...
+@overload
+def vecdot(
+    x1: _ArrayLikeInt_co,
+    x2: _ArrayLikeInt_co,
+    /, *,
+    axis: SupportsIndex = ...,
+) -> np.signedinteger[Any] | npt.NDArray[np.signedinteger[Any]]: ...
+@overload
+def vecdot(
+    x1: _ArrayLikeFloat_co,
+    x2: _ArrayLikeFloat_co,
+    /, *,
+    axis: SupportsIndex = ...,
+) -> np.floating[Any] | npt.NDArray[np.floating[Any]]: ...
+@overload
+def vecdot(
+    x1: _ArrayLikeComplex_co,
+    x2: _ArrayLikeComplex_co,
+    /, *,
+    axis: SupportsIndex = ...,
+) -> (
+    np.complexfloating[Any, Any]
+    | npt.NDArray[np.complexfloating[Any, Any]]
+): ...
+@overload
+def vecdot(
+    x1: _ArrayLikeNumber_co,
+    x2: _ArrayLikeNumber_co,
+    /, *,
+    axis: SupportsIndex = ...,
+) -> np.number[Any] | npt.NDArray[np.number[Any]]: ...
+@overload
+def vecdot(
+    x1: _ArrayLikeObject_co | _ArrayLikeNumber_co,
+    x2: _ArrayLikeObject_co | _ArrayLikeNumber_co,
+    /, *,
+    axis: SupportsIndex = ...,
+) -> object | npt.NDArray[np.object_]: ...

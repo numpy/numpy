@@ -46,3 +46,5 @@ np.linalg.det(AR_O)  # E: incompatible type
 np.linalg.norm(AR_f8, ord="bob")  # E: No overload variant
 
 np.linalg.multi_dot([AR_M])  # E: incompatible type
+
+np.linalg.vecdot(AR_M, AR_M)  # E: incompatible type
