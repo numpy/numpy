@@ -892,8 +892,25 @@ def _in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
 
             # Mask out elements we know won't work
             basic_mask = (ar1 <= ar2_max) & (ar1 >= ar2_min)
+            in_range_ar1 = ar1[basic_mask]
+            if in_range_ar1.size == 0:
+                # Nothing more to do, since all values are out of range.
+                return outgoing_array
+
+            # Unfortunately, ar2_min can be out of range for `intp` even
+            # if the calculation result must fit in range (and be positive).
+            # In that case, use ar2.dtype which must work for all unmasked
+            # values.
+            try:
+                ar2_min = np.array(ar2_min, dtype=np.intp)
+                dtype = np.intp
+            except OverflowError:
+                dtype = ar2.dtype
+
+            out = np.empty_like(in_range_ar1, dtype=np.intp)
             outgoing_array[basic_mask] = isin_helper_ar[
-                    np.subtract(ar1[basic_mask], ar2_min, dtype=np.intp)]
+                    np.subtract(in_range_ar1, ar2_min, dtype=dtype,
+                                out=out, casting="unsafe")]
 
             return outgoing_array
         elif kind == 'table':  # not range_safe_from_overflow
