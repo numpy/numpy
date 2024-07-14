@@ -1,10 +1,12 @@
 import os
 import datetime as dt
 from collections.abc import Sequence, Callable, Iterable
+import sys
 from typing import (
     Literal as L,
     Any,
     TypeAlias,
+    TypedDict,
     overload,
     TypeVar,
     SupportsIndex,
@@ -77,6 +79,11 @@ from numpy._typing import (
     _FloatLike_co,
     _TD64Like_co,
 )
+
+if sys.version_info >= (3, 13):
+    from types import CapsuleType
+else:
+    CapsuleType = object
 
 __all__ = [
     '_ARRAY_API',
@@ -207,17 +214,116 @@ class _SupportsLenAndGetItem(Protocol[_T_contra, _T_co]):
     def __len__(self) -> int: ...
     def __getitem__(self, key: _T_contra, /) -> _T_co: ...
 
+class _FlagDict(TypedDict):
+    C: L[1]
+    CONTIGUOUS: L[1]
+    C_CONTIGUOUS: L[1]
+    F: L[2]
+    FORTRAN: L[2]
+    F_CONTIGUOUS: L[2]
+    O: L[4]
+    OWNDATA: L[4]
+    A: L[256]
+    ALIGNED: L[256]
+    W: L[1024]
+    WRITEABLE: L[1024]
+    X: L[8192]
+    WRITEBACKIFCOPY: L[8192]
+
+
+class _TypeInfo(TypedDict):
+    bool: np.dtype[np.bool]
+    NPY_BOOL: np.dtype[np.bool]
+
+    float16: np.dtype[np.float16]
+    NPY_HALF: np.dtype[np.half]
+    float32: np.dtype[np.float32]
+    NPY_FLOAT: np.dtype[np.single]
+    float64: np.dtype[np.float64]
+    NPY_DOUBLE: np.dtype[np.double]
+    longdouble: np.dtype[np.longdouble]
+    NPY_LONGDOUBLE: np.dtype[np.longdouble]
+
+    complex64: np.dtype[np.complex64]
+    NPY_CFLOAT: np.dtype[np.csingle]
+    complex128: np.dtype[np.complex128]
+    NPY_CDOUBLE: np.dtype[np.cdouble]
+    clongdouble: np.dtype[np.clongdouble]
+    NPY_CLONGDOUBLE: np.dtype[np.clongdouble]
+
+    bytes_: np.dtype[np.bytes_]
+    NPY_STRING: np.dtype[np.bytes_]
+    str_: np.dtype[np.str_]
+    NPY_UNICODE: np.dtype[np.str_]
+    void: np.dtype[np.void]
+    NPY_VOID: np.dtype[np.void]
+
+    object_: np.dtype[np.object_]
+    NPY_OBJECT: np.dtype[np.object_]
+
+    datetime64: np.dtype[np.datetime64]
+    NPY_DATETIME: np.dtype[np.datetime64]
+    timedelta64: np.dtype[np.timedelta64]
+    NPY_TIMEDELTA: np.dtype[np.timedelta64]
+
+    int8: np.dtype[np.int8]
+    byte: np.dtype[np.int8]
+    NPY_BYTE: np.dtype[np.byte]
+    uint8: np.dtype[np.uint8]
+    ubyte: np.dtype[np.ubyte]
+    NPY_UBYTE: np.dtype[np.ubyte]
+    int16: np.dtype[np.int16]
+    short: np.dtype[np.short]
+    NPY_SHORT: np.dtype[np.short]
+    uint16: np.dtype[np.uint16]
+    ushort: np.dtype[np.ushort]
+    NPY_USHORT: np.dtype[np.ushort]
+    int32: np.dtype[np.int32]
+    intc: np.dtype[np.intc]
+    NPY_INT: np.dtype[np.intc]
+    uint32: np.dtype[np.uint32]
+    uintc: np.dtype[np.uintc]
+    NPY_UINT: np.dtype[np.uintc]
+    int64: np.dtype[np.int64]
+    long: np.dtype[np.long]
+    NPY_LONG: np.dtype[np.long]
+    uint64: np.dtype[np.uint64]
+    ulong: np.dtype[np.ulong]
+    NPY_ULONG: np.dtype[np.ulong]
+    longlong: np.dtype[np.longlong]
+    NPY_LONGLONG: np.dtype[np.longlong]
+    ulonglong: np.dtype[np.ulonglong]
+    NPY_ULONGLONG: np.dtype[np.ulonglong]
+    intp: np.dtype[np.intp]
+    uintp: np.dtype[np.uintp]
+
+
+_ARRAY_API: Final[CapsuleType]
+DATETIMEUNITS: Final[CapsuleType]
+
 ALLOW_THREADS: Final[L[0, 1]]  # system-specific
 BUFSIZE: Final[L[8192]]
+MAXDIMS: Final[L[64]]
 
 CLIP: Final[L[0]]
 WRAP: Final[L[1]]
 RAISE: Final[L[2]]
 
-MAXDIMS: Final[L[64]]
-
-MAY_SHARE_BOUNDS: Final[L[0]]
 MAY_SHARE_EXACT: Final[L[-1]]
+MAY_SHARE_BOUNDS: Final[L[0]]
+
+ITEM_HASOBJECT: Final[L[1]]
+LIST_PICKLE: Final[L[2]]
+ITEM_IS_POINTER: Final[L[4]]
+NEEDS_INIT: Final[L[8]]
+NEEDS_PYAPI: Final[L[16]]
+USE_GETITEM: Final[L[32]]
+USE_SETITEM: Final[L[64]]
+
+_flagdict: Final[_FlagDict]
+
+typeinfo: Final[_TypeInfo]
+
 
 tracemalloc_domain: Final[L[389047]]
 
