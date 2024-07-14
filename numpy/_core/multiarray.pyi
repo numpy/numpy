@@ -1,10 +1,11 @@
-import os
 import datetime as dt
-from collections.abc import Sequence, Callable, Iterable
+import os
 import sys
+from collections.abc import Mapping, Sequence, Callable, Iterable
 from typing import (
     Literal as L,
     Any,
+    NoReturn,
     TypeAlias,
     TypedDict,
     overload,
@@ -22,8 +23,13 @@ from numpy import (
     busdaycalendar as busdaycalendar,
     broadcast as broadcast,
     dtype as dtype,
+    flatiter as flatiter,
+    interp as interp,
+    interp as interp_complex,
+    matmul as matmul,
     ndarray as ndarray,
     nditer as nditer,
+    vecdot as vecdot,
 
     # The rest
     ufunc,
@@ -49,7 +55,6 @@ from numpy import (
     _NDIterFlagsKind,
     _NDIterOpFlagsKind,
 )
-
 from numpy._typing import (
     # Shapes
     _ShapeLike,
@@ -79,11 +84,28 @@ from numpy._typing import (
     _FloatLike_co,
     _TD64Like_co,
 )
+from numpy.lib.array_utils import (
+    normalize_axis_index as normalize_axis_index,
+)
+
+from .einsumfunc import (
+    einsum as c_einsum,
+)
+from .numeric import (
+    correlate as correlate,
+    correlate as correlate2,
+    count_nonzero as count_nonzero,
+)
+
+if sys.version_info >= (3, 11):
+    from types import LiteralString
+else:
+    LiteralString: TypeAlias = str
 
 if sys.version_info >= (3, 13):
     from types import CapsuleType
 else:
-    CapsuleType = object
+    CapsuleType: TypeAlias = Any
 
 __all__ = [
     '_ARRAY_API',
@@ -214,6 +236,17 @@ class _SupportsLenAndGetItem(Protocol[_T_contra, _T_co]):
     def __len__(self) -> int: ...
     def __getitem__(self, key: _T_contra, /) -> _T_co: ...
 
+class _SupportsDLPack(Protocol[_T_contra]):
+    def __dlpack__(
+        self,
+        /, *,
+        stream: None | _T_contra = ...,
+        max_version: tuple[int, int] | None = ...,
+        dl_device: tuple[int, int] | None = ...,
+        copy: None | bool = ...,
+    ) -> CapsuleType: ...
+    # def __dlpack_device__(self, /) -> tuple[int, int]: ...
+
 class _FlagDict(TypedDict):
     C: L[1]
     CONTIGUOUS: L[1]
@@ -297,6 +330,7 @@ class _TypeInfo(TypedDict):
     intp: np.dtype[np.intp]
     uintp: np.dtype[np.uintp]
 
+error: Final[type[Exception]] = Exception
 
 _ARRAY_API: Final[CapsuleType]
 DATETIMEUNITS: Final[CapsuleType]
@@ -323,7 +357,6 @@ USE_SETITEM: Final[L[64]]
 _flagdict: Final[_FlagDict]
 
 typeinfo: Final[_TypeInfo]
-
 
 tracemalloc_domain: Final[L[389047]]
 
@@ -1265,3 +1298,65 @@ def nested_iters(
     casting: _CastingKind = ...,
     buffersize: SupportsIndex = ...,
 ) -> tuple[nditer, ...]: ...
+
+def from_dlpack(x: _SupportsDLPack[Any], /) -> NDArray[Any]: ...
+
+def _place(
+    input: NDArray[Any],
+    mask: NDArray[Any],
+    vals: NDArray[Any],
+) -> None: ...
+
+def _reconstruct(
+    subtype: type[_ArrayType],
+    shape: _ShapeLike,
+    dtype: DTypeLike,
+) -> _ArrayType: ...
+
+# TODO: figure out the signature (it takes least 3 arguments)
+_vec_string: Callable[..., Any]
+
+def _monotonicity(x: ArrayLike) -> int: ...
+def _get_promotion_state() -> LiteralString: ...
+def _set_promotion_state(state: LiteralString, /) -> None: ...
+
+def dragon4_positional(
+    x: _FloatLike_co,
+    precision: _IntLike_co = ...,
+    min_digits: _IntLike_co = ...,
+    unique: bool = ...,
+    fractional: bool = ...,
+    trim: None | L['k', '.', '0', '-'] = ...,
+    sign: bool = ...,
+    pad_left: _IntLike_co = ...,
+    pad_right: _IntLike_co = ...,
+) -> str: ...
+
+def dragon4_scientific(
+    x: _FloatLike_co,
+    precision: _IntLike_co = ...,
+    min_digits: _IntLike_co = ...,
+    unique: bool = ...,
+    fractional: bool = ...,
+    trim: None | L['k', '.', '0', '-'] = ...,
+    sign: bool = ...,
+    pad_left: _IntLike_co = ...,
+    pad_right: _IntLike_co = ...,
+    exp_digits: _IntLike_co = ...,
+) -> str: ...
+
+def format_longfloat(
+    x: np.longdouble,
+    precision: _IntLike_co = ...,
+) -> str: ...
+
+def get_handler_name(a: None | NDArray[Any] = ...) -> LiteralString | None: ...
+def get_handler_version(a: None | NDArray[Any] = ...) -> int | None: ...
+
+def scalar(dtype: DTypeLike, obj: _ScalarLike_co) -> NDArray[Any]: ...
+
+# NOTE: this function has been removed: raises a `RuntimeError` when called
+set_datetimeparse_function: Callable[..., NoReturn]
+
+def set_legacy_print_mode(mode: _IntLike_co, /) -> None: ...
+def set_typeDict(dict: Mapping[str, type[np.generic]]) -> None: ...
