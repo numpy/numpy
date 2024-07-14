@@ -150,7 +150,10 @@ from numpy._typing._callable import (
     _FloatDivMod,
     _ComplexOp,
     _NumberOp,
-    _ComparisonOp,
+    _ComparisonOpLT,
+    _ComparisonOpLE,
+    _ComparisonOpGT,
+    _ComparisonOpGE,
 )
 
 # NOTE: Numpy's mypy plugin is used for removing the types unavailable
@@ -2795,10 +2798,10 @@ class number(generic, Generic[_NBit1]):  # type: ignore
     __rpow__: _NumberOp
     __truediv__: _NumberOp
     __rtruediv__: _NumberOp
-    __lt__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
-    __le__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
-    __gt__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
-    __ge__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
+    __lt__: _ComparisonOpLT[_NumberLike_co, _ArrayLikeNumber_co]
+    __le__: _ComparisonOpLE[_NumberLike_co, _ArrayLikeNumber_co]
+    __gt__: _ComparisonOpGT[_NumberLike_co, _ArrayLikeNumber_co]
+    __ge__: _ComparisonOpGE[_NumberLike_co, _ArrayLikeNumber_co]
 
 class bool(generic):
     def __init__(self, value: object = ..., /) -> None: ...
@@ -2841,10 +2844,10 @@ class bool(generic):
     __rmod__: _BoolMod
     __divmod__: _BoolDivMod
     __rdivmod__: _BoolDivMod
-    __lt__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
-    __le__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
-    __gt__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
-    __ge__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
+    __lt__: _ComparisonOpLT[_NumberLike_co, _ArrayLikeNumber_co]
+    __le__: _ComparisonOpLE[_NumberLike_co, _ArrayLikeNumber_co]
+    __gt__: _ComparisonOpGT[_NumberLike_co, _ArrayLikeNumber_co]
+    __ge__: _ComparisonOpGE[_NumberLike_co, _ArrayLikeNumber_co]
 
 bool_: TypeAlias = bool
 
@@ -2897,10 +2900,10 @@ class datetime64(generic):
     @overload
     def __sub__(self, other: _TD64Like_co, /) -> datetime64: ...
     def __rsub__(self, other: datetime64, /) -> timedelta64: ...
-    __lt__: _ComparisonOp[datetime64, _ArrayLikeDT64_co]
-    __le__: _ComparisonOp[datetime64, _ArrayLikeDT64_co]
-    __gt__: _ComparisonOp[datetime64, _ArrayLikeDT64_co]
-    __ge__: _ComparisonOp[datetime64, _ArrayLikeDT64_co]
+    __lt__: _ComparisonOpLT[datetime64, _ArrayLikeDT64_co]
+    __le__: _ComparisonOpLE[datetime64, _ArrayLikeDT64_co]
+    __gt__: _ComparisonOpGT[datetime64, _ArrayLikeDT64_co]
+    __ge__: _ComparisonOpGE[datetime64, _ArrayLikeDT64_co]
 
 _IntValue: TypeAlias = SupportsInt | _CharLike_co | SupportsIndex
 _FloatValue: TypeAlias = None | _CharLike_co | SupportsFloat | SupportsIndex
@@ -3025,10 +3028,10 @@ class timedelta64(generic):
     def __rmod__(self, other: timedelta64, /) -> timedelta64: ...
     def __divmod__(self, other: timedelta64, /) -> tuple[int64, timedelta64]: ...
     def __rdivmod__(self, other: timedelta64, /) -> tuple[int64, timedelta64]: ...
-    __lt__: _ComparisonOp[_TD64Like_co, _ArrayLikeTD64_co]
-    __le__: _ComparisonOp[_TD64Like_co, _ArrayLikeTD64_co]
-    __gt__: _ComparisonOp[_TD64Like_co, _ArrayLikeTD64_co]
-    __ge__: _ComparisonOp[_TD64Like_co, _ArrayLikeTD64_co]
+    __lt__: _ComparisonOpLT[_TD64Like_co, _ArrayLikeTD64_co]
+    __le__: _ComparisonOpLE[_TD64Like_co, _ArrayLikeTD64_co]
+    __gt__: _ComparisonOpGT[_TD64Like_co, _ArrayLikeTD64_co]
+    __ge__: _ComparisonOpGE[_TD64Like_co, _ArrayLikeTD64_co]
 
 class unsignedinteger(integer[_NBit1]):
     # NOTE: `uint64 + signedinteger -> float64`
