@@ -214,7 +214,7 @@ CLIP: Final[L[0]]
 WRAP: Final[L[1]]
 RAISE: Final[L[2]]
 
-MAXDIMS: Final[L[32]]
+MAXDIMS: Final[L[64]]
 
 MAY_SHARE_BOUNDS: Final[L[0]]
 MAY_SHARE_EXACT: Final[L[-1]]
