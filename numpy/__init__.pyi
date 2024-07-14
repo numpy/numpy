@@ -389,7 +389,6 @@ from numpy._core.numeric import (
 from numpy._core.numerictypes import (
     isdtype as isdtype,
     issubdtype as issubdtype,
-    cast as cast,
     ScalarType as ScalarType,
     typecodes as typecodes,
 )
@@ -439,7 +438,6 @@ from numpy.lib._function_base_impl import (
     angle as angle,
     unwrap as unwrap,
     sort_complex as sort_complex,
-    disp as disp,
     flip as flip,
     rot90 as rot90,
     extract as extract,
