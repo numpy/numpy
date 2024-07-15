@@ -79,9 +79,13 @@ from numpy._typing import (
     _ArrayLikeObject_co,
     _ArrayLikeStr_co,
     _ArrayLikeBytes_co,
+    _ArrayLikeNumber_co,
     _ScalarLike_co,
+    _UIntLike_co,
     _IntLike_co,
     _FloatLike_co,
+    _ComplexLike_co,
+    _NumberLike_co,
     _TD64Like_co,
 )
 from numpy.lib.array_utils import (
@@ -642,7 +646,146 @@ def concatenate(
     casting: None | _CastingKind = ...
 ) -> _ArrayType: ...
 
-def inner(a: ArrayLike, b: ArrayLike, /) -> Any: ...
+@overload
+def inner(a: bool | np.bool, b: bool | np.bool, /) -> np.bool: ...
+@overload
+def inner(a: _UIntLike_co, b: _UIntLike_co, /) -> np.unsignedinteger[Any]: ...
+@overload
+def inner(a: _IntLike_co, b: _IntLike_co, /) -> np.signedinteger[Any]: ...
+@overload
+def inner(a: _FloatLike_co, b: _FloatLike_co, /) -> np.floating[Any]: ...
+@overload
+def inner(
+    a: _ComplexLike_co,
+    b: _ComplexLike_co,
+    /,
+) -> np.complexfloating[Any, Any]: ...
+
+@overload
+def inner(a: bool | np.bool, b: _ArrayLikeBool_co, /) -> NDArray[np.bool]: ...
+@overload
+def inner(a: _ArrayLikeBool_co, b: bool | np.bool, /) -> NDArray[np.bool]: ...
+@overload
+def inner(
+    a: _UIntLike_co,
+    b: _ArrayLikeUInt_co,
+    /,
+) -> NDArray[np.unsignedinteger[Any]]: ...
+@overload
+def inner(
+    a: _ArrayLikeUInt_co,
+    b: _UIntLike_co,
+    /,
+) -> NDArray[np.unsignedinteger[Any]]: ...
+@overload
+def inner(
+    a: _IntLike_co,
+    b: _ArrayLikeInt_co,
+    /,
+) -> NDArray[np.signedinteger[Any]]: ...
+@overload
+def inner(
+    a: _ArrayLikeInt_co,
+    b: _IntLike_co,
+    /,
+) -> NDArray[np.signedinteger[Any]]: ...
+@overload
+def inner(
+    a: _FloatLike_co,
+    b: _ArrayLikeFloat_co,
+    /,
+) -> NDArray[np.floating[Any]]: ...
+@overload
+def inner(
+    a: _ArrayLikeFloat_co,
+    b: _FloatLike_co,
+    /,
+) -> NDArray[np.floating[Any]]: ...
+@overload
+def inner(
+    a: _ComplexLike_co,
+    b: _ArrayLikeComplex_co,
+    /,
+) -> NDArray[np.complexfloating[Any, Any]]: ...
+@overload
+def inner(
+    b: _ArrayLikeComplex_co,
+    a: _ComplexLike_co,
+    /,
+) -> NDArray[np.complexfloating[Any, Any]]: ...
+@overload
+def inner(
+    a: _NumberLike_co,
+    b: _ArrayLikeNumber_co,
+    /,
+) -> NDArray[np.number[Any]]: ...
+@overload
+def inner(
+    a: _ArrayLikeNumber_co,
+    b: _NumberLike_co,
+    /,
+) -> NDArray[np.number[Any]]: ...
+@overload
+def inner(
+    a: _NumberLike_co,
+    b: _ArrayLikeObject_co,
+    /,
+) -> NDArray[np.object_]: ...
+@overload
+def inner(
+    a: _ArrayLikeObject_co,
+    b: _NumberLike_co,
+    /,
+) -> NDArray[np.object_]: ...
+
+@overload
+def inner(
+    a: _ArrayLikeBool_co,
+    b: _ArrayLikeBool_co,
+    /,
+) -> NDArray[np.bool] | np.bool: ...
+@overload
+def inner(
+    a: _ArrayLikeUInt_co,
+    b: _ArrayLikeUInt_co,
+    /,
+) -> NDArray[np.unsignedinteger[Any]] | np.unsignedinteger[Any]: ...
+@overload
+def inner(
+    a: _ArrayLikeInt_co,
+    b: _ArrayLikeInt_co,
+    /,
+) -> NDArray[np.signedinteger[Any]] | np.signedinteger[Any]: ...
+@overload
+def inner(
+    a: _ArrayLikeFloat_co,
+    b: _ArrayLikeFloat_co,
+    /,
+) -> NDArray[np.floating[Any]] | np.floating[Any]: ...
+@overload
+def inner(
+    a: _ArrayLikeComplex_co,
+    b: _ArrayLikeComplex_co,
+    /,
+) -> NDArray[np.complexfloating[Any, Any]] | np.complexfloating[Any, Any]: ...
+@overload
+def inner(
+    a: _ArrayLikeNumber_co,
+    b: _ArrayLikeNumber_co,
+    /,
+) -> NDArray[np.number[Any]] | np.number[Any]: ...
+@overload
+def inner(
+    a: _ArrayLikeObject_co | _ArrayLikeNumber_co,
+    b: _ArrayLikeObject_co | _ArrayLikeNumber_co,
+    /,
+) -> NDArray[np.object_] | object: ...
+@overload
+def inner(
+    a: ArrayLike,
+    b: ArrayLike,
+    /,
+) -> NDArray[Any] | np.number[Any] | object: ...
 
 @overload
 def where(cond: ArrayLike, /) -> tuple[NDArray[intp], ...]: ...

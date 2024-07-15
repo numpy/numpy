@@ -16,15 +16,22 @@ class SubClass(npt.NDArray[_SCT]): ...
 
 subclass: SubClass[np.float64]
 
-AR_f8: npt.NDArray[np.float64]
-AR_i8: npt.NDArray[np.int64]
+AR_b1: npt.NDArray[np.bool]
 AR_u1: npt.NDArray[np.uint8]
+AR_i8: npt.NDArray[np.int64]
+AR_f8: npt.NDArray[np.float64]
 AR_m: npt.NDArray[np.timedelta64]
 AR_M: npt.NDArray[np.datetime64]
+AR_O: npt.NDArray[np.object_]
 
 AR_LIKE_f: list[float]
 AR_LIKE_i: list[int]
 
+b1: np.bool
+u1: np.uint8
+i8: np.int64
+f8: np.float64
+c16: np.complex128
 m: np.timedelta64
 M: np.datetime64
 
@@ -59,7 +66,30 @@ assert_type(b_i8_f8_f8.numiter, int)
 assert_type(b_i8_f8_f8.shape, tuple[int, ...])
 assert_type(b_i8_f8_f8.size, int)
 
-assert_type(np.inner(AR_f8, AR_i8), Any)
+# TODO
+assert_type(np.inner(b1, b1), np.bool)
+assert_type(np.inner(u1, b1), np.unsignedinteger[Any])
+assert_type(np.inner(u1, u1), np.unsignedinteger[Any])
+assert_type(np.inner(i8, u1), np.signedinteger[Any])
+assert_type(np.inner(i8, i8), np.signedinteger[Any])
+assert_type(np.inner(f8, i8), np.floating[Any])
+assert_type(np.inner(f8, f8), np.floating[Any])
+assert_type(np.inner(c16, b1), np.complexfloating[Any, Any])
+assert_type(np.inner(c16, c16), np.complexfloating[Any, Any])
+
+assert_type(np.inner(b1, AR_b1), npt.NDArray[np.bool])
+assert_type(np.inner(AR_b1, b1), npt.NDArray[np.bool])
+assert_type(np.inner(b1, AR_i8), npt.NDArray[np.signedinteger[Any]])
+assert_type(np.inner(i8, AR_i8), npt.NDArray[np.signedinteger[Any]])
+assert_type(np.inner(i8, AR_LIKE_f), npt.NDArray[np.floating[Any]])
+assert_type(np.inner(AR_LIKE_f, f8), npt.NDArray[np.floating[Any]])
+assert_type(np.inner(c16, AR_b1), npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(np.inner(u1, AR_O), npt.NDArray[np.object_])
+assert_type(np.inner(c16, AR_O), npt.NDArray[np.object_])
+
+assert_type(np.inner(AR_f8, AR_i8), npt.NDArray[np.floating[Any]] | np.floating[Any])
+assert_type(np.inner(AR_f8, AR_LIKE_i), npt.NDArray[np.floating[Any]] | np.floating[Any])
+assert_type(np.inner(AR_f8, AR_LIKE_f), npt.NDArray[np.floating[Any]] | np.floating[Any])
 
 assert_type(np.where([True, True, False]), tuple[npt.NDArray[np.intp], ...])
 assert_type(np.where([True, True, False], 1, 0), npt.NDArray[Any])
