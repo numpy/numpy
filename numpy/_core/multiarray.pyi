@@ -662,9 +662,17 @@ def inner(
 ) -> np.complexfloating[Any, Any]: ...
 
 @overload
-def inner(a: bool | np.bool, b: _ArrayLikeBool_co, /) -> NDArray[np.bool]: ...
+def inner(
+    a: bool | np.bool,
+    b: _ArrayLikeBool_co,
+    /,
+) -> NDArray[np.bool]: ...
 @overload
-def inner(a: _ArrayLikeBool_co, b: bool | np.bool, /) -> NDArray[np.bool]: ...
+def inner(
+    a: _ArrayLikeBool_co,
+    b: bool | np.bool,
+    /,
+) -> NDArray[np.bool]: ...
 @overload
 def inner(
     a: _UIntLike_co,
@@ -737,7 +745,6 @@ def inner(
     b: _NumberLike_co,
     /,
 ) -> NDArray[np.object_]: ...
-
 @overload
 def inner(
     a: _ArrayLikeBool_co,
@@ -781,11 +788,7 @@ def inner(
     /,
 ) -> NDArray[np.object_] | object: ...
 @overload
-def inner(
-    a: ArrayLike,
-    b: ArrayLike,
-    /,
-) -> NDArray[Any] | np.number[Any] | object: ...
+def inner(a: ArrayLike, b: ArrayLike, /) -> Any: ...
 
 @overload
 def where(cond: ArrayLike, /) -> tuple[NDArray[intp], ...]: ...
@@ -829,9 +832,161 @@ def min_scalar_type(a: ArrayLike, /) -> dtype[Any]: ...
 def result_type(*arrays_and_dtypes: ArrayLike | DTypeLike) -> dtype[Any]: ...
 
 @overload
-def dot(a: ArrayLike, b: ArrayLike, out: None = ...) -> Any: ...
-@overload
 def dot(a: ArrayLike, b: ArrayLike, out: _ArrayType) -> _ArrayType: ...
+@overload
+def dot(a: bool | np.bool, b: bool | np.bool, out: None = ...) -> np.bool: ...
+@overload
+def dot(
+    a: _UIntLike_co,
+    b: _UIntLike_co,
+    out: None = ...
+) -> np.unsignedinteger[Any]: ...
+@overload
+def dot(
+    a: _IntLike_co,
+    b: _IntLike_co,
+    out: None = ...
+) -> np.signedinteger[Any]: ...
+@overload
+def dot(
+    a: _FloatLike_co,
+    b: _FloatLike_co,
+    out: None = ...,
+) -> np.floating[Any]: ...
+@overload
+def dot(
+    a: _ComplexLike_co,
+    b: _ComplexLike_co,
+    out: None = ...,
+) -> np.complexfloating[Any, Any]: ...
+@overload
+def dot(
+    a: bool | np.bool,
+    b: _ArrayLikeBool_co,
+    out: None = ...,
+) -> NDArray[np.bool]: ...
+@overload
+def dot(
+    a: _ArrayLikeBool_co,
+    b: bool | np.bool,
+    out: None = ...,
+) -> NDArray[np.bool]: ...
+@overload
+def dot(
+    a: _UIntLike_co,
+    b: _ArrayLikeUInt_co,
+    out: None = ...,
+) -> NDArray[np.unsignedinteger[Any]]: ...
+@overload
+def dot(
+    a: _ArrayLikeUInt_co,
+    b: _UIntLike_co,
+    out: None = ...,
+) -> NDArray[np.unsignedinteger[Any]]: ...
+@overload
+def dot(
+    a: _IntLike_co,
+    b: _ArrayLikeInt_co,
+    out: None = ...,
+) -> NDArray[np.signedinteger[Any]]: ...
+@overload
+def dot(
+    a: _ArrayLikeInt_co,
+    b: _IntLike_co,
+    out: None = ...,
+) -> NDArray[np.signedinteger[Any]]: ...
+@overload
+def dot(
+    a: _FloatLike_co,
+    b: _ArrayLikeFloat_co,
+    out: None = ...,
+) -> NDArray[np.floating[Any]]: ...
+@overload
+def dot(
+    a: _ArrayLikeFloat_co,
+    b: _FloatLike_co,
+    out: None = ...,
+) -> NDArray[np.floating[Any]]: ...
+@overload
+def dot(
+    a: _ComplexLike_co,
+    b: _ArrayLikeComplex_co,
+    out: None = ...,
+) -> NDArray[np.complexfloating[Any, Any]]: ...
+@overload
+def dot(
+    b: _ArrayLikeComplex_co,
+    a: _ComplexLike_co,
+    out: None = ...,
+) -> NDArray[np.complexfloating[Any, Any]]: ...
+@overload
+def dot(
+    a: _NumberLike_co,
+    b: _ArrayLikeNumber_co,
+    out: None = ...,
+) -> NDArray[np.number[Any]]: ...
+@overload
+def dot(
+    a: _ArrayLikeNumber_co,
+    b: _NumberLike_co,
+    out: None = ...,
+) -> NDArray[np.number[Any]]: ...
+@overload
+def dot(
+    a: _NumberLike_co,
+    b: _ArrayLikeObject_co,
+    out: None = ...,
+) -> NDArray[np.object_]: ...
+@overload
+def dot(
+    a: _ArrayLikeObject_co,
+    b: _NumberLike_co,
+    out: None = ...,
+) -> NDArray[np.object_]: ...
+@overload
+def dot(
+    a: _ArrayLikeBool_co,
+    b: _ArrayLikeBool_co,
+    out: None = ...,
+) -> NDArray[np.bool] | np.bool: ...
+@overload
+def dot(
+    a: _ArrayLikeUInt_co,
+    b: _ArrayLikeUInt_co,
+    out: None = ...,
+) -> NDArray[np.unsignedinteger[Any]] | np.unsignedinteger[Any]: ...
+@overload
+def dot(
+    a: _ArrayLikeInt_co,
+    b: _ArrayLikeInt_co,
+    out: None = ...,
+) -> NDArray[np.signedinteger[Any]] | np.signedinteger[Any]: ...
+@overload
+def dot(
+    a: _ArrayLikeFloat_co,
+    b: _ArrayLikeFloat_co,
+    out: None = ...,
+) -> NDArray[np.floating[Any]] | np.floating[Any]: ...
+@overload
+def dot(
+    a: _ArrayLikeComplex_co,
+    b: _ArrayLikeComplex_co,
+    out: None = ...,
+) -> NDArray[np.complexfloating[Any, Any]] | np.complexfloating[Any, Any]: ...
+@overload
+def dot(
+    a: _ArrayLikeNumber_co,
+    b: _ArrayLikeNumber_co,
+    out: None = ...,
+) -> NDArray[np.number[Any]] | np.number[Any]: ...
+@overload
+def dot(
+    a: _ArrayLikeObject_co | _ArrayLikeNumber_co,
+    b: _ArrayLikeObject_co | _ArrayLikeNumber_co,
+    out: None = ...,
+) -> NDArray[np.object_] | object: ...
+@overload
+def dot(a: ArrayLike, b: ArrayLike, out: None = ...) -> Any: ...
 
 @overload
 def vdot(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co, /) -> np.bool: ...  # type: ignore[misc]
