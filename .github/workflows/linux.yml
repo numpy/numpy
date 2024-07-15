@@ -311,3 +311,6 @@ jobs:
       run: |
         pip install git+https://github.com/cython/cython
     - uses: ./.github/meson_actions
+      env:
+        # needed until f2py grows a config flag for GIL-disabled support
+        PYTHON_GIL: 0
