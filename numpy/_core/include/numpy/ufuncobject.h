@@ -65,6 +65,32 @@ typedef int (PyUFunc_TypeResolutionFunc)(
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes);
 
+/*
+ * This is the signature for the functions that may be assigned to the
+ * `process_core_dims_func` field of the PyUFuncObject structure.  This
+ * function is only used by generalized ufuncs (i.e. those with the field
+ * `core_enabled` set to 1).  The function is called during the processing
+ * of the arguments when a gufunc is called. The function can check the
+ * core dimensions of the input and output arrays and set an exception if
+ * any requirements are not satisfied. If the caller of the gufunc didn't
+ * provide output arrays, the core dimensions associated with the output
+ * arrays (i.e. those that are not also used in input arrays) will have
+ * the value -1 in `core_dim_sizes`.  This function can replace any output
+ * core dimensions that are -1 with a value that is appropriate for the
+ * gufunc.
+ *
+ * Parameter       Description
+ * --------------- ------------------------------------------------------
+ * ufunc           The ufunc object
+ * core_dim_sizes  An array with length `ufunc->core_num_dim_ix`.
+ *                 The core dimensions of the arrays passed to the gufunc
+ *                 will have been set.  If the caller didn't provide the
+ *                 output arrays, the output-only core dimensions will have
+ *                 the value -1.
+ *
+ * The function must return 0 on success, -1 on failure (with an exception
+ * set).
+ */
 typedef int (PyUFunc_ProcessCoreDimsFunc)(
                                 struct _tagPyUFuncObject *ufunc,
                                 npy_intp *core_dim_sizes);
@@ -195,7 +221,9 @@ typedef struct _tagPyUFuncObject {
         PyObject *_loops;
     #endif
     #if NPY_FEATURE_VERSION >= NPY_2_1_API_VERSION
-        /* User defined function to process core dimensions of a gufunc. */
+        /*
+         * Optional function to process core dimensions of a gufunc.
+         */
         PyUFunc_ProcessCoreDimsFunc *process_core_dims_func;
     #endif
 } PyUFuncObject;
