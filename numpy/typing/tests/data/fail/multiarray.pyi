@@ -17,6 +17,8 @@ def func(a: int) -> None: ...
 
 np.where(AR_b, 1)  # E: No overload variant
 
+np.lexsort(1)  # E: incompatible type
+
 np.can_cast(AR_f8, 1)  # E: incompatible type
 
 np.vdot(AR_M, AR_M)  # E: incompatible type

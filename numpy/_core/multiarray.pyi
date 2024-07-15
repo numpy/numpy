@@ -206,6 +206,7 @@ _T_co = TypeVar("_T_co", covariant=True)
 _T_contra = TypeVar("_T_contra", contravariant=True)
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
+_Self = TypeVar("_Self", bound=object)
 
 # Valid time units
 _UnitKind: TypeAlias = L[
@@ -232,10 +233,16 @@ _RollKind: TypeAlias = L[  # `raise` is deliberately excluded
     "modifiedpreceding",
 ]
 
+@final
 class _SupportsLenAndGetItem(Protocol[_T_contra, _T_co]):
     def __len__(self) -> int: ...
     def __getitem__(self, key: _T_contra, /) -> _T_co: ...
 
+@final
+class _SupportsPartialOrder(Protocol):
+    def __lt__(self: _Self, key: _Self, /) -> bool | np.bool: ...
+
+@final
 class _SupportsDLPack(Protocol[_T_contra]):
     def __dlpack__(
         self,
@@ -612,29 +619,38 @@ def concatenate(
     casting: None | _CastingKind = ...
 ) -> _ArrayType: ...
 
-def inner(
-    a: ArrayLike,
-    b: ArrayLike,
-    /,
-) -> Any: ...
+def inner(a: ArrayLike, b: ArrayLike, /) -> Any: ...
 
 @overload
-def where(
-    condition: ArrayLike,
-    /,
-) -> tuple[NDArray[intp], ...]: ...
+def where(cond: ArrayLike, /) -> tuple[NDArray[intp], ...]: ...
 @overload
-def where(
-    condition: ArrayLike,
-    x: ArrayLike,
-    y: ArrayLike,
-    /,
-) -> NDArray[Any]: ...
+def where(cond: ArrayLike, x: ArrayLike, y: ArrayLike, /) -> NDArray[Any]: ...
 
+@overload
 def lexsort(
-    keys: ArrayLike,
-    axis: None | SupportsIndex = ...,
-) -> Any: ...
+    keys: Sequence[NDArray[Any] | Sequence[_ScalarLike_co]],
+    axis: SupportsIndex = ...,
+) -> NDArray[np.intp]: ...
+@overload
+def lexsort(
+    keys: Sequence[_ScalarLike_co],
+    axis: SupportsIndex = ...,
+) -> np.intp: ...
+@overload
+def lexsort(
+    keys: Sequence[Sequence[_SupportsPartialOrder]],
+    axis: SupportsIndex = ...,
+) -> NDArray[np.intp]: ...
+@overload
+def lexsort(
+    keys: Sequence[_SupportsPartialOrder],
+    axis: SupportsIndex = ...,
+) -> np.intp: ...
+@overload
+def lexsort(
+    keys: NDArray[Any] | Sequence[Any],
+    axis: SupportsIndex = ...,
+) -> NDArray[np.intp] | np.intp: ...
 
 def can_cast(
     from_: ArrayLike | DTypeLike,
@@ -642,14 +658,9 @@ def can_cast(
     casting: None | _CastingKind = ...,
 ) -> bool: ...
 
-def min_scalar_type(
-    a: ArrayLike,
-    /,
-) -> dtype[Any]: ...
+def min_scalar_type(a: ArrayLike, /) -> dtype[Any]: ...
 
-def result_type(
-    *arrays_and_dtypes: ArrayLike | DTypeLike,
-) -> dtype[Any]: ...
+def result_type(*arrays_and_dtypes: ArrayLike | DTypeLike) -> dtype[Any]: ...
 
 @overload
 def dot(a: ArrayLike, b: ArrayLike, out: None = ...) -> Any: ...
