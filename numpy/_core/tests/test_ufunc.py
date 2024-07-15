@@ -2694,67 +2694,6 @@ class TestGUFuncProcessCoreDims:
                            match='both inputs have core dimension 0'):
             umt.conv1d_full([], [])
 
-    def test_wl1_pdist_basic(self):
-        x = np.array([[1.0, 2.0, 3.0],
-                      [4.0, 4.0, 4.0],
-                      [4.0, 2.0, 3.0],
-                      [0.0, 1.0, 3.0]])
-        w = np.array([1.0, 2.0, 1.0])
-        result = umt.wl1_pdist(x, w)
-        # x has shape (4, 3), w has shape (3), so m=4, n=3.
-        # Output shape must be 4*3/2 = 6.
-        # Expected result computed by inspection
-        expected = np.array([8.0, 3.0, 3.0, 5.0, 11.0, 6.0])
-        assert_equal(result, expected)
-
-    def test_wl1_pdist_flexible_dim_missing(self):
-        x = np.array([2, 5, -2, 8, 4])
-        result = umt.wl1_pdist(x, 1.0)
-        assert_equal(result, np.array([3.0, 4.0, 6.0, 2.0, 7.0,
-                                       3.0, 1.0, 10.0, 6.0, 4.0]))
-
-    def test_wl1_pdist_flexible_dim_missing_broadcast(self):
-        x = np.array([[0, 1, 2, 0],
-                      [1, 1, 1, 2],
-                      [2, 3, 1, 0],
-                      [1, 1, 0, 3],
-                      [2, 3, 3, 3]])
-        w = 1.0
-        result = umt.wl1_pdist(x, w)
-        # x has shape (5, 4), w has shape (). Since the core dimension
-        # n is missing from w, the function acts like the inputs have
-        # shapes (5, 4, 1) and (1).  So m=4, n=1, and output core
-        # dimension must be m*(m-1)/2 = 6.  Then broadcasting gives
-        # the final expected shape to be (5, 6).  The values in the
-        # result are the pairwise distance along each row.
-        expected = np.array([[1.0, 2.0, 0.0, 1.0, 1.0, 2.0],
-                             [0.0, 0.0, 1.0, 0.0, 1.0, 1.0],
-                             [1.0, 1.0, 2.0, 2.0, 3.0, 1.0],
-                             [0.0, 1.0, 2.0, 1.0, 2.0, 3.0],
-                             [1.0, 1.0, 1.0, 0.0, 0.0, 0.0]])
-        assert_equal(result, expected)
-
-    def test_wl1_pdist_with_axes(self):
-        x = np.array([[0, 1, 2, 0],
-                      [1, 1, 1, 2],
-                      [2, 3, 1, 0],
-                      [1, 1, 0, 3],
-                      [2, 3, 3, 3]])
-        result1 = umt.wl1_pdist(x, np.ones(4))
-        assert result1.shape == (10,)
-        result2 = umt.wl1_pdist(x.T, np.ones(4), axes=[(1, 0), (0,), (0,)])
-        assert_equal(result1, result2)
-
-    def test_wl1_pdist_bad_output_shape(self):
-        x = np.array([[1, 2, 7],
-                      [5, 4, 0],
-                      [9, 8, 9],
-                      [0, 4, 9]])
-        w = np.ones((2, 3))
-        out = np.zeros((2, 4))
-        with pytest.raises(ValueError, match=r'does not equal m\*\(m - 1\)/2'):
-            umt.wl1_pdist(x, w, out=out)
-
 
 @pytest.mark.parametrize('ufunc', [getattr(np, x) for x in dir(np)
                                    if isinstance(getattr(np, x), np.ufunc)])
