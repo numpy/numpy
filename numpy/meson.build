@@ -369,7 +369,7 @@ install_subdir('tests', install_dir: np_dir, install_tag: 'tests')
 compilers = {
   'C': cc,
   'CPP': cpp,
-  'CYTHON': meson.get_compiler('cython')
+  'CYTHON': cy,
 }
 
 machines = {

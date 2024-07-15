@@ -34,10 +34,6 @@ if [[ $FREE_THREADED_BUILD == "True" ]]; then
     # with a released version of cython
     python -m pip uninstall -y cython
     python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
-    # TODO: delete when importing numpy no longer enables the GIL
-    # setting to zero ensures the GIL is disabled while running the
-    # tests under free-threaded python
-    export PYTHON_GIL=0
 fi
 
 # Run full tests with -n=auto. This makes pytest-xdist distribute tests across

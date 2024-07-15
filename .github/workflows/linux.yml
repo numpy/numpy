@@ -311,5 +311,3 @@ jobs:
       run: |
         pip install git+https://github.com/cython/cython
     - uses: ./.github/meson_actions
-      env:
-        PYTHON_GIL: 0
