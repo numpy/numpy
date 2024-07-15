@@ -2689,6 +2689,11 @@ class TestGUFuncProcessCoreDims:
         with pytest.raises(ValueError, match=r'does not equal m \+ n - 1'):
             umt.conv1d_full(x, y, out=out)
 
+    def test_bad_input_both_inputs_length_zero(self):
+        with pytest.raises(ValueError,
+                           match='both inputs have core dimension 0'):
+            umt.conv1d_full([], [])
+
     def test_wl1_pdist_basic(self):
         x = np.array([[1.0, 2.0, 3.0],
                       [4.0, 4.0, 4.0],

@@ -780,6 +780,12 @@ int conv1d_full_process_core_dims(PyUFuncObject *ufunc,
     npy_intp p = core_dim_sizes[2];
     npy_intp required_p = m + n - 1;
 
+    if (m == 0 && n == 0) {
+        PyErr_SetString(PyExc_ValueError,
+            "conv1d_full: both inputs have core dimension 0; the function "
+            "requires that at least one input has positive size.");
+        return -1;
+    }
     if (p == -1) {
         core_dim_sizes[2] = required_p;
         return 0;
