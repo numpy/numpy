@@ -205,7 +205,12 @@ __all__ = [
 _T_co = TypeVar("_T_co", covariant=True)
 _T_contra = TypeVar("_T_contra", contravariant=True)
 _SCT = TypeVar("_SCT", bound=generic)
-_ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
+_ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
+_ArrayType_co = TypeVar(
+    "_ArrayType_co",
+    bound=ndarray[Any, Any],
+    covariant=True,
+)
 _Self = TypeVar("_Self", bound=object)
 
 # Valid time units
@@ -237,6 +242,12 @@ _RollKind: TypeAlias = L[  # `raise` is deliberately excluded
 class _SupportsLenAndGetItem(Protocol[_T_contra, _T_co]):
     def __len__(self) -> int: ...
     def __getitem__(self, key: _T_contra, /) -> _T_co: ...
+
+# Unlike `numpy._typing._SupportsArray`, this one parametrizes the entire
+# returned `ndarray` type, instead of only the dtype.
+@final
+class _SupportsArray(Protocol[_ArrayType_co]):
+    def __array__(self, /) -> _ArrayType_co: ...
 
 @final
 class _SupportsPartialOrder(Protocol):
@@ -421,6 +432,18 @@ def empty_like(
 @overload
 def array(
     object: _ArrayType,
+    dtype: None = ...,
+    *,
+    copy: None | bool | _CopyMode = ...,
+    order: _OrderKACF = ...,
+    subok: L[True],
+    ndmin: int = ...,
+    like: None | _SupportsArrayFunc = ...,
+) -> _ArrayType: ...
+# this overload should not be merged with the one above
+@overload
+def array(
+    object: _SupportsArray[_ArrayType],
     dtype: None = ...,
     *,
     copy: None | bool | _CopyMode = ...,
