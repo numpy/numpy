@@ -629,7 +629,6 @@ class _SupportsWrite(Protocol[_AnyStr_contra]):
 __all__: list[str]
 __dir__: list[str]
 __version__: str
-__git_version__: str
 __array_api_version__: str
 test: PytestTester
 
