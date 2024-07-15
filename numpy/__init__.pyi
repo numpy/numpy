@@ -625,7 +625,8 @@ class _SupportsWrite(Protocol[_AnyStr_contra]):
     def write(self, s: _AnyStr_contra, /) -> object: ...
 
 __all__: list[str]
-__dir__: list[str]
+def __dir__() -> Sequence[str]: ...
+
 __version__: str
 __array_api_version__: str
 test: PytestTester
