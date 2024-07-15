@@ -904,6 +904,7 @@ _ArrayLikeInt: TypeAlias = (
 )
 
 _FlatIterSelf = TypeVar("_FlatIterSelf", bound=flatiter[Any])
+_FlatShapeType = TypeVar("_FlatShapeType", bound=tuple[int])
 
 @final
 class flatiter(Generic[_NdArraySubClass]):
@@ -938,9 +939,13 @@ class flatiter(Generic[_NdArraySubClass]):
         value: Any,
     ) -> None: ...
     @overload
-    def __array__(self: flatiter[ndarray[_ShapeType, _DType]], dtype: None = ..., /) -> ndarray[_ShapeType, _DType]: ...
+    def __array__(self: flatiter[ndarray[_FlatShapeType, _DType]], dtype: None = ..., /) -> ndarray[_FlatShapeType, _DType]: ...
     @overload
-    def __array__(self: flatiter[ndarray[_ShapeType, Any]], dtype: _DType, /) -> ndarray[_ShapeType, _DType]: ...
+    def __array__(self: flatiter[ndarray[_FlatShapeType, Any]], dtype: _DType, /) -> ndarray[_FlatShapeType, _DType]: ...
+    @overload
+    def __array__(self: flatiter[ndarray[Any, _DType]], dtype: None = ..., /) -> ndarray[Any, _DType]: ...
+    @overload
+    def __array__(self, dtype: _DType, /) -> ndarray[Any, _DType]: ...
 
 _OrderKACF: TypeAlias = L[None, "K", "A", "C", "F"]
 _OrderACF: TypeAlias = L[None, "A", "C", "F"]
