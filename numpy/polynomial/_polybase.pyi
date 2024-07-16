@@ -1,4 +1,6 @@
 import abc
+import decimal
+import numbers
 import sys
 from collections.abc import Iterator, Mapping, Sequence
 from typing import (
@@ -23,7 +25,6 @@ from numpy._typing import (
 
     _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
-    _ArrayLikeObject_co,
 )
 
 from ._polytypes import (
@@ -39,6 +40,7 @@ from ._polytypes import (
     _SeriesLikeInt_co,
     _SeriesLikeCoef_co,
 
+    _ArrayLikeNumberObject_co,
     _ArrayLikeCoef_co,
 )
 
@@ -55,6 +57,7 @@ __all__: Final[Sequence[str]] = ("ABCPolyBase",)
 
 _NameCo = TypeVar("_NameCo", bound=None | LiteralString, covariant=True)
 _Self = TypeVar("_Self", bound="ABCPolyBase")
+_Other = TypeVar("_Other", bound="ABCPolyBase")
 
 _AnyOther: TypeAlias = ABCPolyBase | _CoefLike_co | _SeriesLikeCoef_co
 _Hundred: TypeAlias = Literal[100]
@@ -88,30 +91,38 @@ class ABCPolyBase(Generic[_NameCo], metaclass=abc.ABCMeta):
     ) -> None: ...
 
     @overload
+    def __call__(self, /, arg: _Other) -> _Other: ...
+    # TODO: Once `_ShapeType@ndarray` is covariant and bounded (see #26081),
+    # additionally include 0-d arrays as input types with scalar return type.
+    @overload
     def __call__(
         self,
         /,
-        arg: _FloatLike_co,
+        arg: _FloatLike_co | decimal.Decimal | numbers.Real | np.object_,
     ) -> np.float64 | np.complex128: ...
     @overload
-    def __call__(self, /, arg: _NumberLike_co) -> np.complex128: ...
-    @overload
     def __call__(
         self,
         /,
-        arg: _ArrayLikeFloat_co,
-    ) -> npt.NDArray[np.float64 | np.complex128 | np.object_]: ...
+        arg: _NumberLike_co | numbers.Complex,
+    ) -> np.complex128: ...
+    @overload
+    def __call__(self, /, arg: _ArrayLikeFloat_co) -> (
+        npt.NDArray[np.float64]
+        | npt.NDArray[np.complex128]
+        | npt.NDArray[np.object_]
+    ): ...
     @overload
     def __call__(
         self,
         /,
         arg: _ArrayLikeComplex_co,
-    ) -> npt.NDArray[np.complex128 | np.object_]: ...
+    ) -> npt.NDArray[np.complex128] | npt.NDArray[np.object_]: ...
     @overload
     def __call__(
         self,
         /,
-        arg: _ArrayLikeObject_co,
+        arg: _ArrayLikeNumberObject_co,
     ) -> npt.NDArray[np.object_]: ...
 
     def __str__(self, /) -> str: ...
@@ -160,20 +171,23 @@ class ABCPolyBase(Generic[_NameCo], metaclass=abc.ABCMeta):
     def convert(
         self,
         domain: None | _SeriesLikeCoef_co,
-        kind: type[_Self], /,
+        kind: type[_Other],
+        /,
         window: None | _SeriesLikeCoef_co = ...,
-    ) -> _Self: ...
+    ) -> _Other: ...
     @overload
     def convert(
-        self, /,
+        self,
+        /,
         domain: None | _SeriesLikeCoef_co = ...,
         *,
-        kind: type[_Self],
+        kind: type[_Other],
         window: None | _SeriesLikeCoef_co = ...,
-    ) -> _Self: ...
+    ) -> _Other: ...
     @overload
     def convert(
-        self: _Self, /,
+        self: _Self,
+        /,
         domain: None | _SeriesLikeCoef_co = ...,
         kind: type[_Self] = ...,
         window: None | _SeriesLikeCoef_co = ...,
