@@ -1,5 +1,6 @@
 import sys
 from collections.abc import Sequence
+from decimal import Decimal
 from typing import Any, Literal as L, TypeAlias, TypeVar
 
 import numpy as np
@@ -51,7 +52,7 @@ AR_O_co: npt.NDArray[np.object_ | np.number[Any]]
 SQ_i: Sequence[int]
 SQ_f: Sequence[float]
 SQ_c: Sequence[complex]
-SQ_O: Sequence[object]
+SQ_O: Sequence[Decimal]
 
 PS_poly: npp.Polynomial
 PS_cheb: npp.Chebyshev

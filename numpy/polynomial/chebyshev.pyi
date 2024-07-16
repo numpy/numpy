@@ -14,11 +14,11 @@ from numpy._typing import _IntLike_co
 
 from ._polybase import ABCPolyBase
 from ._polytypes import (
-    _AnySeries1D,
+    _SeriesLikeCoef_co,
     _Array1,
-    _Array1D,
+    _Series,
     _Array2,
-    _CoefArray1D,
+    _CoefSeries,
     _FuncBinOp,
     _FuncCompanion,
     _FuncDer,
@@ -81,18 +81,18 @@ __all__ = [
 ]
 
 _SCT = TypeVar("_SCT", bound=np.number[Any] | np.object_)
-def _cseries_to_zseries(c: npt.NDArray[_SCT]) -> _Array1D[_SCT]: ...
-def _zseries_to_cseries(zs: npt.NDArray[_SCT]) -> _Array1D[_SCT]: ...
+def _cseries_to_zseries(c: npt.NDArray[_SCT]) -> _Series[_SCT]: ...
+def _zseries_to_cseries(zs: npt.NDArray[_SCT]) -> _Series[_SCT]: ...
 def _zseries_mul(
     z1: npt.NDArray[_SCT],
     z2: npt.NDArray[_SCT],
-) -> _Array1D[_SCT]:    ...
+) -> _Series[_SCT]:    ...
 def _zseries_div(
     z1: npt.NDArray[_SCT],
     z2: npt.NDArray[_SCT],
-) -> _Array1D[_SCT]:    ...
-def _zseries_der(zs: npt.NDArray[_SCT]) -> _Array1D[_SCT]: ...
-def _zseries_int(zs: npt.NDArray[_SCT]) -> _Array1D[_SCT]: ...
+) -> _Series[_SCT]:    ...
+def _zseries_der(zs: npt.NDArray[_SCT]) -> _Series[_SCT]: ...
+def _zseries_int(zs: npt.NDArray[_SCT]) -> _Series[_SCT]: ...
 
 poly2cheb: _FuncPoly2Ortho[L["poly2cheb"]]
 cheb2poly: _FuncUnOp[L["cheb2poly"]]
@@ -160,9 +160,9 @@ class Chebyshev(ABCPolyBase[L["T"]]):
     def interpolate(
         cls: type[_Self],
         /,
-        func: Callable[[npt.NDArray[np.float64]], _CoefArray1D],
+        func: Callable[[npt.NDArray[np.float64]], _CoefSeries],
         deg: _IntLike_co,
-        domain: None | _AnySeries1D = ...,
+        domain: None | _SeriesLikeCoef_co = ...,
         args: tuple[()] = ...,
     ) -> _Self:        ...
     @overload
@@ -172,10 +172,10 @@ class Chebyshev(ABCPolyBase[L["T"]]):
         /,
         func: Callable[
             Concatenate[npt.NDArray[np.float64], ...],
-            _CoefArray1D,
+            _CoefSeries,
         ],
         deg: _IntLike_co,
-        domain: None | _AnySeries1D = ...,
+        domain: None | _SeriesLikeCoef_co = ...,
         *,
         args: Iterable[Any],
     ) -> _Self:        ...
@@ -185,10 +185,10 @@ class Chebyshev(ABCPolyBase[L["T"]]):
         cls: type[_Self],
         func: Callable[
             Concatenate[npt.NDArray[np.float64], ...],
-            _CoefArray1D,
+            _CoefSeries,
         ],
         deg: _IntLike_co,
-        domain: None | _AnySeries1D,
+        domain: None | _SeriesLikeCoef_co,
         args: Iterable[Any],
         /,
     ) -> _Self:        ...

@@ -5,6 +5,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
+    Final,
     Generic,
     Literal,
     SupportsIndex,
@@ -16,26 +17,29 @@ from typing import (
 
 import numpy as np
 import numpy.typing as npt
+from numpy._typing import (
+    _FloatLike_co,
+    _NumberLike_co,
+
+    _ArrayLikeFloat_co,
+    _ArrayLikeComplex_co,
+    _ArrayLikeObject_co,
+)
 
 from ._polytypes import (
-    _AnyComplexSeries1D,
-    _AnyIntArg,
-    _AnyComplexScalar,
-    _AnyComplexSeriesND,
-    _AnyIntSeries1D,
-    _AnyObjectSeries1D,
-    _AnyObjectSeriesND,
-    _AnyRealScalar,
-    _AnyRealSeries1D,
-    _AnyScalar,
-    _AnySeries1D,
-    _AnySeriesND,
-    _Array1D,
+    _AnyInt,
+    _CoefLike_co,
+
     _Array2,
-    _CoefArray1D,
-    _ComplexArrayND,
-    _SupportsLenAndGetItem,
     _Tuple2,
+
+    _Series,
+    _CoefSeries,
+
+    _SeriesLikeInt_co,
+    _SeriesLikeCoef_co,
+
+    _ArrayLikeCoef_co,
 )
 
 if sys.version_info >= (3, 11):
@@ -45,14 +49,16 @@ elif TYPE_CHECKING:
 else:
     LiteralString: TypeAlias = str
 
-__all__ = ["ABCPolyBase"]
+
+__all__: Final[Sequence[str]] = ("ABCPolyBase",)
 
 
 _NameCo = TypeVar("_NameCo", bound=None | LiteralString, covariant=True)
 _Self = TypeVar("_Self", bound="ABCPolyBase")
 
-_AnyOther: TypeAlias = ABCPolyBase | _AnyScalar | _AnySeries1D
+_AnyOther: TypeAlias = ABCPolyBase | _CoefLike_co | _SeriesLikeCoef_co
 _Hundred: TypeAlias = Literal[100]
+
 
 class ABCPolyBase(Generic[_NameCo], metaclass=abc.ABCMeta):
     __hash__: ClassVar[None]  # type: ignore[assignment]
@@ -64,7 +70,7 @@ class ABCPolyBase(Generic[_NameCo], metaclass=abc.ABCMeta):
     _use_unicode: ClassVar[bool]
 
     basis_name: _NameCo
-    coef: _CoefArray1D
+    coef: _CoefSeries
     domain: _Array2[np.inexact[Any] | np.object_]
     window: _Array2[np.inexact[Any] | np.object_]
 
@@ -73,38 +79,40 @@ class ABCPolyBase(Generic[_NameCo], metaclass=abc.ABCMeta):
     def symbol(self, /) -> LiteralString: ...
 
     def __init__(
-        self, /,
-        coef: _AnySeries1D,
-        domain: None | _AnySeries1D = ...,
-        window: None | _AnySeries1D = ...,
+        self,
+        /,
+        coef: _SeriesLikeCoef_co,
+        domain: None | _SeriesLikeCoef_co = ...,
+        window: None | _SeriesLikeCoef_co = ...,
         symbol: str = ...,
     ) -> None: ...
 
     @overload
-    def __call__(  # type: ignore[overload-overlap]
-        self, /,
-        arg: complex | np.complexfloating[Any, Any]
-    ) -> np.complex128: ...
-    @overload
     def __call__(
-        self, /,
-        arg: _AnyComplexScalar,
+        self,
+        /,
+        arg: _FloatLike_co,
     ) -> np.float64 | np.complex128: ...
     @overload
-    def __call__(
-        self, /,
-        arg: _AnyObjectSeriesND,
-    ) -> npt.NDArray[np.object_]: ...
+    def __call__(self, /, arg: _NumberLike_co) -> np.complex128: ...
     @overload
     def __call__(
-        self, /,
-        arg: _AnyComplexSeriesND,
+        self,
+        /,
+        arg: _ArrayLikeFloat_co,
+    ) -> npt.NDArray[np.float64 | np.complex128 | np.object_]: ...
+    @overload
+    def __call__(
+        self,
+        /,
+        arg: _ArrayLikeComplex_co,
     ) -> npt.NDArray[np.complex128 | np.object_]: ...
     @overload
     def __call__(
-        self, /,
-        arg: _AnySeries1D,
-    ) -> npt.NDArray[np.float64 | np.complex128 | np.object_]: ...
+        self,
+        /,
+        arg: _ArrayLikeObject_co,
+    ) -> npt.NDArray[np.object_]: ...
 
     def __str__(self, /) -> str: ...
     def __repr__(self, /) -> str: ...
@@ -145,30 +153,30 @@ class ABCPolyBase(Generic[_NameCo], metaclass=abc.ABCMeta):
     def copy(self: _Self, /) -> _Self: ...
     def degree(self, /) -> int: ...
     def cutdeg(self: _Self, /) -> _Self: ...
-    def trim(self: _Self, /, tol: _AnyRealScalar = ...) -> _Self: ...
-    def truncate(self: _Self, /, size: _AnyIntArg) -> _Self: ...
+    def trim(self: _Self, /, tol: _FloatLike_co = ...) -> _Self: ...
+    def truncate(self: _Self, /, size: _AnyInt) -> _Self: ...
 
     @overload
     def convert(
         self,
-        domain: None | _AnySeries1D,
+        domain: None | _SeriesLikeCoef_co,
         kind: type[_Self], /,
-        window: None | _AnySeries1D = ...,
+        window: None | _SeriesLikeCoef_co = ...,
     ) -> _Self: ...
     @overload
     def convert(
         self, /,
-        domain: None | _AnySeries1D = ...,
+        domain: None | _SeriesLikeCoef_co = ...,
         *,
         kind: type[_Self],
-        window: None | _AnySeries1D = ...,
+        window: None | _SeriesLikeCoef_co = ...,
     ) -> _Self: ...
     @overload
     def convert(
         self: _Self, /,
-        domain: None | _AnySeries1D = ...,
+        domain: None | _SeriesLikeCoef_co = ...,
         kind: type[_Self] = ...,
-        window: None | _AnySeries1D = ...,
+        window: None | _SeriesLikeCoef_co = ...,
     ) -> _Self: ...
 
     def mapparms(self, /) -> _Tuple2[Any]: ...
@@ -176,87 +184,87 @@ class ABCPolyBase(Generic[_NameCo], metaclass=abc.ABCMeta):
     def integ(
         self: _Self, /,
         m: SupportsIndex = ...,
-        k: _AnyComplexScalar | _SupportsLenAndGetItem[_AnyComplexScalar] = ...,
-        lbnd: None | _AnyComplexScalar = ...,
+        k: _CoefLike_co | _SeriesLikeCoef_co = ...,
+        lbnd: None | _CoefLike_co = ...,
     ) -> _Self: ...
 
     def deriv(self: _Self, /, m: SupportsIndex = ...) -> _Self: ...
 
-    def roots(self, /) -> _CoefArray1D: ...
+    def roots(self, /) -> _CoefSeries: ...
 
     def linspace(
         self, /,
         n: SupportsIndex = ...,
-        domain: None | _AnySeries1D = ...,
-    ) -> _Tuple2[_Array1D[np.float64 | np.complex128]]: ...
+        domain: None | _SeriesLikeCoef_co = ...,
+    ) -> _Tuple2[_Series[np.float64 | np.complex128]]: ...
 
     @overload
     @classmethod
     def fit(
         cls: type[_Self], /,
-        x: _AnySeries1D,
-        y: _AnySeries1D,
-        deg: int | _AnyIntSeries1D,
-        domain: None | _AnySeries1D = ...,
-        rcond: _AnyRealScalar = ...,
+        x: _SeriesLikeCoef_co,
+        y: _SeriesLikeCoef_co,
+        deg: int | _SeriesLikeInt_co,
+        domain: None | _SeriesLikeCoef_co = ...,
+        rcond: _FloatLike_co = ...,
         full: Literal[False] = ...,
-        w: None | _AnySeries1D = ...,
-        window: None | _AnySeries1D = ...,
+        w: None | _SeriesLikeCoef_co = ...,
+        window: None | _SeriesLikeCoef_co = ...,
         symbol: str = ...,
     ) -> _Self: ...
     @overload
     @classmethod
     def fit(
         cls: type[_Self], /,
-        x: _AnySeries1D,
-        y: _AnySeries1D,
-        deg: int | _AnyIntSeries1D,
-        domain: None | _AnySeries1D = ...,
-        rcond: _AnyRealScalar = ...,
+        x: _SeriesLikeCoef_co,
+        y: _SeriesLikeCoef_co,
+        deg: int | _SeriesLikeInt_co,
+        domain: None | _SeriesLikeCoef_co = ...,
+        rcond: _FloatLike_co = ...,
         *,
         full: Literal[True],
-        w: None | _AnySeries1D = ...,
-        window: None | _AnySeries1D = ...,
+        w: None | _SeriesLikeCoef_co = ...,
+        window: None | _SeriesLikeCoef_co = ...,
         symbol: str = ...,
     ) -> tuple[_Self, Sequence[np.inexact[Any] | np.int32]]: ...
     @overload
     @classmethod
     def fit(
         cls: type[_Self],
-        x: _AnySeries1D,
-        y: _AnySeries1D,
-        deg: int | _AnyIntSeries1D,
-        domain: None | _AnySeries1D,
-        rcond: _AnyRealScalar,
+        x: _SeriesLikeCoef_co,
+        y: _SeriesLikeCoef_co,
+        deg: int | _SeriesLikeInt_co,
+        domain: None | _SeriesLikeCoef_co,
+        rcond: _FloatLike_co,
         full: Literal[True], /,
-        w: None | _AnySeries1D = ...,
-        window: None | _AnySeries1D = ...,
+        w: None | _SeriesLikeCoef_co = ...,
+        window: None | _SeriesLikeCoef_co = ...,
         symbol: str = ...,
     ) -> tuple[_Self, Sequence[np.inexact[Any] | np.int32]]: ...
 
     @classmethod
     def fromroots(
         cls: type[_Self], /,
-        roots: _AnySeriesND,
-        domain: None | _AnySeries1D = ...,
-        window: None | _AnySeries1D = ...,
+        roots: _ArrayLikeCoef_co,
+        domain: None | _SeriesLikeCoef_co = ...,
+        window: None | _SeriesLikeCoef_co = ...,
         symbol: str = ...,
     ) -> _Self: ...
 
     @classmethod
     def identity(
         cls: type[_Self], /,
-        domain: None | _AnySeries1D = ...,
-        window: None | _AnySeries1D = ...,
+        domain: None | _SeriesLikeCoef_co = ...,
+        window: None | _SeriesLikeCoef_co = ...,
         symbol: str = ...,
     ) -> _Self: ...
 
     @classmethod
     def basis(
         cls: type[_Self], /,
-        deg: _AnyIntArg,
-        domain: None | _AnySeries1D = ...,
-        window: None | _AnySeries1D = ...,
+        deg: _AnyInt,
+        domain: None | _SeriesLikeCoef_co = ...,
+        window: None | _SeriesLikeCoef_co = ...,
         symbol: str = ...,
     ) -> _Self: ...
 
@@ -264,8 +272,8 @@ class ABCPolyBase(Generic[_NameCo], metaclass=abc.ABCMeta):
     def cast(
         cls: type[_Self], /,
         series: ABCPolyBase,
-        domain: None | _AnySeries1D = ...,
-        window: None | _AnySeries1D = ...,
+        domain: None | _SeriesLikeCoef_co = ...,
+        window: None | _SeriesLikeCoef_co = ...,
     ) -> _Self: ...
 
     @classmethod

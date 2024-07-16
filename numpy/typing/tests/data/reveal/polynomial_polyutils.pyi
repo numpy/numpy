@@ -1,5 +1,6 @@
 import sys
 from collections.abc import Sequence
+from decimal import Decimal
 from fractions import Fraction
 from typing import Any, Literal as L, TypeAlias
 
@@ -25,8 +26,7 @@ num_int: int
 num_float: float
 num_complex: complex
 # will result in an `object_` dtype
-num_fraction: Fraction
-num_object: object
+num_object: Decimal | Fraction
 
 sct_int: np.int_
 sct_float: np.float64
@@ -41,8 +41,7 @@ arr_object: npt.NDArray[np.object_]
 seq_num_int: Sequence[int]
 seq_num_float: Sequence[float]
 seq_num_complex: Sequence[complex]
-seq_num_fraction: Sequence[Fraction]
-seq_num_object: Sequence[object]
+seq_num_object: Sequence[Decimal | Fraction]
 
 seq_sct_int: Sequence[np.int_]
 seq_sct_float: Sequence[np.float64]
@@ -57,8 +56,7 @@ seq_arr_object: Sequence[npt.NDArray[np.object_]]
 seq_seq_num_int: Sequence[Sequence[int]]
 seq_seq_num_float: Sequence[Sequence[float]]
 seq_seq_num_complex: Sequence[Sequence[complex]]
-seq_seq_num_fraction: Sequence[Sequence[Fraction]]
-seq_seq_num_object: Sequence[Sequence[object]]
+seq_seq_num_object: Sequence[Sequence[Decimal | Fraction]]
 
 seq_seq_sct_int: Sequence[Sequence[np.int_]]
 seq_seq_sct_float: Sequence[Sequence[np.float64]]
@@ -75,7 +73,6 @@ assert_type(pu.as_series(arr_object), list[_ArrObject1D])
 assert_type(pu.as_series(seq_num_int), list[_ArrFloat1D])
 assert_type(pu.as_series(seq_num_float), list[_ArrFloat1D])
 assert_type(pu.as_series(seq_num_complex), list[_ArrComplex1D])
-assert_type(pu.as_series(seq_num_fraction), list[_ArrObject1D])
 assert_type(pu.as_series(seq_num_object), list[_ArrObject1D])
 
 assert_type(pu.as_series(seq_sct_int), list[_ArrFloat1D])
@@ -91,7 +88,6 @@ assert_type(pu.as_series(seq_arr_object), list[_ArrObject1D])
 assert_type(pu.as_series(seq_seq_num_int), list[_ArrFloat1D])
 assert_type(pu.as_series(seq_seq_num_float), list[_ArrFloat1D])
 assert_type(pu.as_series(seq_seq_num_complex), list[_ArrComplex1D])
-assert_type(pu.as_series(seq_seq_num_fraction), list[_ArrObject1D])
 assert_type(pu.as_series(seq_seq_num_object), list[_ArrObject1D])
 
 assert_type(pu.as_series(seq_seq_sct_int), list[_ArrFloat1D])
@@ -104,7 +100,7 @@ assert_type(pu.as_series(seq_seq_sct_object), list[_ArrObject1D])
 assert_type(pu.trimcoef(num_int), _ArrFloat1D)
 assert_type(pu.trimcoef(num_float), _ArrFloat1D)
 assert_type(pu.trimcoef(num_complex), _ArrComplex1D)
-assert_type(pu.trimcoef(num_fraction), _ArrObject1D)
+assert_type(pu.trimcoef(num_object), _ArrObject1D)
 assert_type(pu.trimcoef(num_object), _ArrObject1D)
 
 assert_type(pu.trimcoef(sct_int), _ArrFloat1D)
@@ -120,7 +116,6 @@ assert_type(pu.trimcoef(arr_object), _ArrObject1D)
 assert_type(pu.trimcoef(seq_num_int), _ArrFloat1D)
 assert_type(pu.trimcoef(seq_num_float), _ArrFloat1D)
 assert_type(pu.trimcoef(seq_num_complex), _ArrComplex1D)
-assert_type(pu.trimcoef(seq_num_fraction), _ArrObject1D)
 assert_type(pu.trimcoef(seq_num_object), _ArrObject1D)
 
 assert_type(pu.trimcoef(seq_sct_int), _ArrFloat1D)
@@ -133,7 +128,7 @@ assert_type(pu.trimcoef(seq_sct_object), _ArrObject1D)
 assert_type(pu.getdomain(num_int), _ArrFloat1D_2)
 assert_type(pu.getdomain(num_float), _ArrFloat1D_2)
 assert_type(pu.getdomain(num_complex), _ArrComplex1D_2)
-assert_type(pu.getdomain(num_fraction), _ArrObject1D_2)
+assert_type(pu.getdomain(num_object), _ArrObject1D_2)
 assert_type(pu.getdomain(num_object), _ArrObject1D_2)
 
 assert_type(pu.getdomain(sct_int), _ArrFloat1D_2)
@@ -149,7 +144,6 @@ assert_type(pu.getdomain(arr_object), _ArrObject1D_2)
 assert_type(pu.getdomain(seq_num_int), _ArrFloat1D_2)
 assert_type(pu.getdomain(seq_num_float), _ArrFloat1D_2)
 assert_type(pu.getdomain(seq_num_complex), _ArrComplex1D_2)
-assert_type(pu.getdomain(seq_num_fraction), _ArrObject1D_2)
 assert_type(pu.getdomain(seq_num_object), _ArrObject1D_2)
 
 assert_type(pu.getdomain(seq_sct_int), _ArrFloat1D_2)
@@ -164,9 +158,7 @@ assert_type(pu.mapparms(seq_num_int, seq_num_float), _Tuple2[float])
 assert_type(pu.mapparms(seq_num_float, seq_num_float), _Tuple2[float])
 assert_type(pu.mapparms(seq_num_float, seq_num_complex), _Tuple2[complex])
 assert_type(pu.mapparms(seq_num_complex, seq_num_complex), _Tuple2[complex])
-assert_type(pu.mapparms(seq_num_complex, seq_num_fraction), _Tuple2[object])
-assert_type(pu.mapparms(seq_num_fraction, seq_num_fraction), _Tuple2[object])
-assert_type(pu.mapparms(seq_num_fraction, seq_num_fraction), _Tuple2[object])
+assert_type(pu.mapparms(seq_num_complex, seq_num_object), _Tuple2[object])
 assert_type(pu.mapparms(seq_num_object, seq_num_object), _Tuple2[object])
 
 assert_type(pu.mapparms(seq_sct_int, seq_sct_int), _Tuple2[np.floating[Any]])
@@ -194,9 +186,8 @@ assert_type(pu.mapdomain(num_float, seq_num_float, seq_num_float), np.floating[A
 assert_type(pu.mapdomain(num_float, seq_num_float, seq_num_complex), np.complexfloating[Any, Any])
 assert_type(pu.mapdomain(num_float, seq_num_complex, seq_num_complex), np.complexfloating[Any, Any])
 assert_type(pu.mapdomain(num_complex, seq_num_complex, seq_num_complex), np.complexfloating[Any, Any])
-assert_type(pu.mapdomain(num_complex, seq_num_complex, seq_num_fraction), object)
-assert_type(pu.mapdomain(num_complex, seq_num_fraction, seq_num_fraction), object)
-assert_type(pu.mapdomain(num_fraction, seq_num_fraction, seq_num_fraction), object)
+assert_type(pu.mapdomain(num_complex, seq_num_complex, seq_num_object), object)
+assert_type(pu.mapdomain(num_complex, seq_num_object, seq_num_object), object)
 assert_type(pu.mapdomain(num_object, seq_num_object, seq_num_object), object)
 
 assert_type(pu.mapdomain(seq_num_int, seq_num_int, seq_num_int), _ArrFloat1D)
@@ -206,9 +197,8 @@ assert_type(pu.mapdomain(seq_num_float, seq_num_float, seq_num_float), _ArrFloat
 assert_type(pu.mapdomain(seq_num_float, seq_num_float, seq_num_complex), _ArrComplex1D)
 assert_type(pu.mapdomain(seq_num_float, seq_num_complex, seq_num_complex), _ArrComplex1D)
 assert_type(pu.mapdomain(seq_num_complex, seq_num_complex, seq_num_complex), _ArrComplex1D)
-assert_type(pu.mapdomain(seq_num_complex, seq_num_complex, seq_num_fraction), _ArrObject1D)
-assert_type(pu.mapdomain(seq_num_complex, seq_num_fraction, seq_num_fraction), _ArrObject1D)
-assert_type(pu.mapdomain(seq_num_fraction, seq_num_fraction, seq_num_fraction), _ArrObject1D)
+assert_type(pu.mapdomain(seq_num_complex, seq_num_complex, seq_num_object), _ArrObject1D)
+assert_type(pu.mapdomain(seq_num_complex, seq_num_object, seq_num_object), _ArrObject1D)
 assert_type(pu.mapdomain(seq_num_object, seq_num_object, seq_num_object), _ArrObject1D)
 
 assert_type(pu.mapdomain(seq_sct_int, seq_sct_int, seq_sct_int), _ArrFloat1D)
