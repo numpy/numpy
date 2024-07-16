@@ -34,9 +34,19 @@ if [[ $FREE_THREADED_BUILD == "True" ]]; then
     # with a released version of cython
     python -m pip uninstall -y cython
     python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
-    # TODO: delete when importing numpy no longer enables the GIL
-    # setting to zero ensures the GIL is disabled while running the
-    # tests under free-threaded python
+
+    # Manually check that importing NumPy does not re-enable the GIL.
+    # Afterwards, force the GIL to always be disabled so it does not get
+    # re-enabled during the tests.
+    #
+    # TODO: delete when f2py grows the ability to define extensions that declare
+    # they can run without the gil or when we can work around the fact the f2py
+    # tests import modules that don't declare gil-disabled support.
+    if [[ $(python -c "import numpy" 2>&1) == "*The global interpreter lock (GIL) has been enabled*" ]]; then
+        echo "Error: Importing NumPy re-enables the GIL in the free-threaded build"
+        exit 1
+    fi
+
     export PYTHON_GIL=0
 fi
 
