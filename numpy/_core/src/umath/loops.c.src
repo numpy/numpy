@@ -1969,6 +1969,7 @@ HALF_ldexp_int64(char **args, npy_intp const *dimensions, npy_intp const *steps,
  * #c = f, , l#
  * #C = F, , L#
  * #SIMD = 1, 1, 0#
+ * #fma = fmaf, fma, fmal#
  */
 
 #if !@SIMD@
@@ -2040,8 +2041,8 @@ NPY_NO_EXPORT void
         const @ftype@ in1i = ((@ftype@ *)ip1)[1];
         const @ftype@ in2r = ((@ftype@ *)ip2)[0];
         const @ftype@ in2i = ((@ftype@ *)ip2)[1];
-        ((@ftype@ *)op1)[0] = in1r*in2r - in1i*in2i;
-        ((@ftype@ *)op1)[1] = in1r*in2i + in1i*in2r;
+        ((@ftype@ *)op1)[0] = @fma@(in1r, in2r, -in1i*in2i);
+        ((@ftype@ *)op1)[1] = @fma@(in1r, in2i, in1i*in2r);
     }
 }
 
@@ -2092,15 +2093,15 @@ NPY_NO_EXPORT void
             else {
                 const @ftype@ rat = in2i/in2r;
                 const @ftype@ scl = 1.0@c@/(in2r + in2i*rat);
-                ((@ftype@ *)op1)[0] = (in1r + in1i*rat)*scl;
-                ((@ftype@ *)op1)[1] = (in1i - in1r*rat)*scl;
+                ((@ftype@ *)op1)[0] = @fma@(in1i, rat, in1r)*scl;
+                ((@ftype@ *)op1)[1] = @fma@(-in1r, rat, in1i)*scl;
             }
         }
         else {
             const @ftype@ rat = in2r/in2i;
             const @ftype@ scl = 1.0@c@/(in2i + in2r*rat);
-            ((@ftype@ *)op1)[0] = (in1r*rat + in1i)*scl;
-            ((@ftype@ *)op1)[1] = (in1i*rat - in1r)*scl;
+            ((@ftype@ *)op1)[0] = @fma@(in1r, rat, in1i)*scl;
+            ((@ftype@ *)op1)[1] = @fma@(in1i, rat, -in1r)*scl;
         }
     }
 }
@@ -2190,8 +2191,8 @@ NPY_NO_EXPORT void
     UNARY_LOOP {
         const @ftype@ in1r = ((@ftype@ *)ip1)[0];
         const @ftype@ in1i = ((@ftype@ *)ip1)[1];
-        ((@ftype@ *)op1)[0] = in1r*in1r - in1i*in1i;
-        ((@ftype@ *)op1)[1] = in1r*in1i + in1i*in1r;
+        ((@ftype@ *)op1)[0] = @fma@(in1r, in1r, -in1i*in1i);
+        ((@ftype@ *)op1)[1] = @fma@(in1r, in1i, in1i*in1r);
     }
 }
 #endif
@@ -2204,12 +2205,12 @@ NPY_NO_EXPORT void
         const @ftype@ in1i = ((@ftype@ *)ip1)[1];
         if (npy_fabs@c@(in1i) <= npy_fabs@c@(in1r)) {
             const @ftype@ r = in1i/in1r;
-            const @ftype@ d = in1r + in1i*r;
+            const @ftype@ d = @fma@(in1i, r, in1r);
             ((@ftype@ *)op1)[0] = 1/d;
             ((@ftype@ *)op1)[1] = -r/d;
         } else {
             const @ftype@ r = in1r/in1i;
-            const @ftype@ d = in1r*r + in1i;
+            const @ftype@ d = @fma@(in1r, r, in1i);
             ((@ftype@ *)op1)[0] = r/d;
             ((@ftype@ *)op1)[1] = -1/d;
         }
