@@ -759,7 +759,7 @@ class _FuncFit(_Named[_Name_co], Protocol[_Name_co]):
         deg: int | _SeriesLikeInt_co,
         rcond: None | float,
         full: Literal[True],
-        /
+        /,
         w: None | _SeriesLikeFloat_co = ...,
     ) -> tuple[_FloatArray, _FullFitResult]: ...
     @overload
