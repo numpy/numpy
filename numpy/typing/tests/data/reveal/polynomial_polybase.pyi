@@ -218,7 +218,8 @@ assert_type(5 * PS_poly, npp.Polynomial)
 assert_type(5 / PS_poly, npp.Polynomial)
 assert_type(5 // PS_poly, npp.Polynomial)
 assert_type(5 % PS_poly, npp.Polynomial)
-
 assert_type(divmod(PS_poly, 5), tuple[npp.Polynomial, npp.Polynomial])
+assert_type(divmod(5, PS_poly), tuple[npp.Polynomial, npp.Polynomial])
+
 assert_type(PS_poly**1, npp.Polynomial)
 assert_type(PS_poly**1.0, npp.Polynomial)
