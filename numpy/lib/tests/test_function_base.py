@@ -3994,6 +3994,20 @@ class TestQuantile:
         quantile = np.quantile(arr, [Fraction(1, 2)], method='weibull')
         assert_equal(quantile, np.array(Fraction(1, 20)))
 
+    def test_closest_observation(self):
+        # Round ties to nearest even order statistic (see #26656)
+        m = 'closest_observation'
+        q = 0.5
+        arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        assert_equal(2, np.quantile(arr[0:3], q, method=m))
+        assert_equal(2, np.quantile(arr[0:4], q, method=m))
+        assert_equal(2, np.quantile(arr[0:5], q, method=m))
+        assert_equal(3, np.quantile(arr[0:6], q, method=m))
+        assert_equal(4, np.quantile(arr[0:7], q, method=m))
+        assert_equal(4, np.quantile(arr[0:8], q, method=m))
+        assert_equal(4, np.quantile(arr[0:9], q, method=m))
+        assert_equal(5, np.quantile(arr, q, method=m))
+
 
 class TestLerp:
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,

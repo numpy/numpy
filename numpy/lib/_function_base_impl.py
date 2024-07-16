@@ -4400,7 +4400,66 @@ def quantile(a,
 
     Notes
     -----
-    In general, the quantile at probability level :math:`q` of a cumulative
+    Given a sample `a` from an underlying distribution, `quantile` provides a
+    nonparametric estimate of the inverse cumulative distribution function.
+
+    By default, this is done by interpolating between adjacent elements in
+    ``y``, a sorted copy of `a`::
+
+        (1-g)*y[j] + g*y[j+1]
+
+    where the index ``j`` and coefficient ``g`` are the integral and
+    fractional components of ``q * (n-1)``, and ``n`` is the number of
+    elements in the sample.
+
+    This is a special case of Equation 1 of H&F [1]_. More generally,
+
+    - ``j = (q*n + m - 1) // 1``, and
+    - ``g = (q*n + m - 1) % 1``,
+
+    where ``m`` may be defined according to several different conventions.
+    The preferred convention may be selected using the ``method`` parameter:
+
+    =============================== =============== ===============
+    ``method``                      number in H&F   ``m``
+    =============================== =============== ===============
+    ``interpolated_inverted_cdf``   4               ``0``
+    ``hazen``                       5               ``1/2``
+    ``weibull``                     6               ``q``
+    ``linear`` (default)            7               ``1 - q``
+    ``median_unbiased``             8               ``q/3 + 1/3``
+    ``normal_unbiased``             9               ``q/4 + 3/8``
+    =============================== =============== ===============
+
+    Note that indices ``j`` and ``j + 1`` are clipped to the range ``0`` to
+    ``n - 1`` when the results of the formula would be outside the allowed
+    range of non-negative indices. The ``- 1`` in the formulas for ``j`` and
+    ``g`` accounts for Python's 0-based indexing.
+
+    The table above includes only the estimators from H&F that are continuous
+    functions of probability `q` (estimators 4-9). NumPy also provides the
+    three discontinuous estimators from H&F (estimators 1-3), where ``j`` is
+    defined as above, ``m`` is defined as follows, and ``g`` is a function
+    of the real-valued ``index = q*n + m - 1`` and ``j``.
+
+    1. ``inverted_cdf``: ``m = 0`` and ``g = int(index - j > 0)``
+    2. ``averaged_inverted_cdf``: ``m = 0`` and
+       ``g = (1 + int(index - j > 0)) / 2``
+    3. ``closest_observation``: ``m = -1/2`` and
+       ``g = 1 - int((index == j) & (j%2 == 1))``
+
+    For backward compatibility with previous versions of NumPy, `quantile`
+    provides four additional discontinuous estimators. Like
+    ``method='linear'``, all have ``m = 1 - q`` so that ``j = q*(n-1) // 1``,
+    but ``g`` is defined as follows.
+
+    - ``lower``: ``g = 0``
+    - ``midpoint``: ``g = 0.5``
+    - ``higher``: ``g = 1``
+    - ``nearest``: ``g = (q*(n-1) % 1) > 0.5``
+
+    **Weighted quantiles:**
+    More formally, the quantile at probability level :math:`q` of a cumulative
     distribution function :math:`F(y)=P(Y \\leq y)` with probability measure
     :math:`P` is defined as any number :math:`x` that fulfills the
     *coverage conditions*
@@ -4748,7 +4807,9 @@ def _discret_interpolation_to_boundaries(index, gamma_condition_fun):
 
 
 def _closest_observation(n, quantiles):
-    gamma_fun = lambda gamma, index: (gamma == 0) & (np.floor(index) % 2 == 0)
+    # "choose the nearest even order statistic at g=0" (H&F (1996) pp. 362).
+    # Order is 1-based so for zero-based indexing round to nearest odd index.
+    gamma_fun = lambda gamma, index: (gamma == 0) & (np.floor(index) % 2 == 1)
     return _discret_interpolation_to_boundaries((n * quantiles) - 1 - 0.5,
                                                 gamma_fun)
 
