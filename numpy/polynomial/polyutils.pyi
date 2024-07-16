@@ -230,12 +230,6 @@ def mapdomain(
     new: _SeriesLikeComplex_co,
 ) -> np.complexfloating[Any, Any]: ...
 @overload
-def mapdomain(
-    x: _CoefLike_co,
-    old: _SeriesLikeCoef_co,
-    new: _SeriesLikeCoef_co,
-) -> object: ...
-@overload
 def mapdomain(  # type: ignore[overload-overlap]
     x: npt.NDArray[np.floating[Any] | np.integer[Any]],
     old: npt.NDArray[np.floating[Any] | np.integer[Any]],
@@ -273,7 +267,7 @@ def mapdomain(
 ) -> _ObjectSeries: ...
 @overload
 def mapdomain(
-    x: object,
+    x: _CoefLike_co,
     old: _SeriesLikeCoef_co,
     new: _SeriesLikeCoef_co,
 ) -> object: ...
