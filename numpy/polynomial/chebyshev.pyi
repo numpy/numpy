@@ -86,11 +86,11 @@ def _zseries_to_cseries(zs: npt.NDArray[_SCT]) -> _Series[_SCT]: ...
 def _zseries_mul(
     z1: npt.NDArray[_SCT],
     z2: npt.NDArray[_SCT],
-) -> _Series[_SCT]:    ...
+) -> _Series[_SCT]: ...
 def _zseries_div(
     z1: npt.NDArray[_SCT],
     z2: npt.NDArray[_SCT],
-) -> _Series[_SCT]:    ...
+) -> _Series[_SCT]: ...
 def _zseries_der(zs: npt.NDArray[_SCT]) -> _Series[_SCT]: ...
 def _zseries_int(zs: npt.NDArray[_SCT]) -> _Series[_SCT]: ...
 
@@ -130,27 +130,25 @@ chebpts1: _FuncPts[L["chebpts1"]]
 chebpts2: _FuncPts[L["chebpts2"]]
 
 # keep in sync with `Chebyshev.interpolate`
-_RT = TypeVar(
-    "_RT",
-    np.float64,
-    np.complex128,
-    np.floating[Any],
-    np.complexfloating[Any, Any],
-    np.number[Any],
-    np.object_,
-)
+_RT = TypeVar("_RT", bound=np.number[Any] | np.bool | np.object_)
+@overload
+def chebinterpolate(
+    func: np.ufunc,
+    deg: _IntLike_co,
+    args: tuple[()] = ...,
+) -> npt.NDArray[np.float64 | np.complex128 | np.object_]: ...
 @overload
 def chebinterpolate(
     func: Callable[[npt.NDArray[np.float64]], _RT],
     deg: _IntLike_co,
     args: tuple[()] = ...,
-) -> npt.NDArray[_RT]:    ...
+) -> npt.NDArray[_RT]: ...
 @overload
 def chebinterpolate(
     func: Callable[Concatenate[npt.NDArray[np.float64], ...], _RT],
     deg: _IntLike_co,
     args: Iterable[Any],
-) -> npt.NDArray[_RT]:    ...
+) -> npt.NDArray[_RT]: ...
 
 _Self = TypeVar("_Self", bound=object)
 
@@ -164,7 +162,7 @@ class Chebyshev(ABCPolyBase[L["T"]]):
         deg: _IntLike_co,
         domain: None | _SeriesLikeCoef_co = ...,
         args: tuple[()] = ...,
-    ) -> _Self:        ...
+    ) -> _Self: ...
     @overload
     @classmethod
     def interpolate(
@@ -178,7 +176,7 @@ class Chebyshev(ABCPolyBase[L["T"]]):
         domain: None | _SeriesLikeCoef_co = ...,
         *,
         args: Iterable[Any],
-    ) -> _Self:        ...
+    ) -> _Self: ...
     @overload
     @classmethod
     def interpolate(
@@ -191,4 +189,4 @@ class Chebyshev(ABCPolyBase[L["T"]]):
         domain: None | _SeriesLikeCoef_co,
         args: Iterable[Any],
         /,
-    ) -> _Self:        ...
+    ) -> _Self: ...

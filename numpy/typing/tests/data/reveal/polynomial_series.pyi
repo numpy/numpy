@@ -25,6 +25,7 @@ AR_c16: npt.NDArray[np.complex128]
 AR_O: npt.NDArray[np.object_]
 
 PS_poly: npp.Polynomial
+PS_cheb: npp.Chebyshev
 
 assert_type(npp.polynomial.polyroots(AR_f8), _ArrFloat1D64)
 assert_type(npp.polynomial.polyroots(AR_c16), _ArrComplex1D128)
@@ -118,4 +119,26 @@ assert_type(
 assert_type(
     npp.polynomial.polyfit(AR_f8, AR_c16, 1, full=True)[0],
     npt.NDArray[np.complexfloating[Any, Any]],
+)
+
+assert_type(npp.chebyshev.chebgauss(2), tuple[_ArrFloat1D64, _ArrFloat1D64])
+
+assert_type(npp.chebyshev.chebweight(AR_f8), npt.NDArray[np.float64])
+assert_type(npp.chebyshev.chebweight(AR_c16), npt.NDArray[np.complex128])
+assert_type(npp.chebyshev.chebweight(AR_O), npt.NDArray[np.object_])
+
+assert_type(npp.chebyshev.poly2cheb(AR_f8), _ArrFloat1D)
+assert_type(npp.chebyshev.poly2cheb(AR_c16), _ArrComplex1D)
+assert_type(npp.chebyshev.poly2cheb(AR_O), _ArrObject1D)
+
+assert_type(npp.chebyshev.cheb2poly(AR_f8), _ArrFloat1D)
+assert_type(npp.chebyshev.cheb2poly(AR_c16), _ArrComplex1D)
+assert_type(npp.chebyshev.cheb2poly(AR_O), _ArrObject1D)
+
+assert_type(npp.chebyshev.chebpts1(6), _ArrFloat1D64)
+assert_type(npp.chebyshev.chebpts2(6), _ArrFloat1D64)
+
+assert_type(
+    npp.chebyshev.chebinterpolate(np.tanh, 3),
+    npt.NDArray[np.float64 | np.complex128 | np.object_],
 )
