@@ -2622,3 +2622,17 @@ class TestRegression:
         f = str.casefold
         res = np.vectorize(f, otypes=[arr.dtype])(arr)
         assert res.dtype == "U30"
+
+    def test_repeated_square_consistency(self):
+        # gh-26940
+        buf = np.array([-5.171866611150749e-07 + 2.5618634555957426e-07j,
+                        0, 0, 0, 0, 0])
+        # Test buffer with regular and reverse strides
+        for in_vec in [buf[:3], buf[:3][::-1]]:
+            expected_res = np.square(in_vec)
+            # Output vector immediately follows input vector
+            # to reproduce off-by-one in nomemoverlap check.
+            for res in [buf[3:], buf[3:][::-1]]:
+                res = buf[3:]
+                np.square(in_vec, out=res)
+                assert_equal(res, expected_res)
