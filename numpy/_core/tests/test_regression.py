@@ -12,7 +12,8 @@ import numpy as np
 from numpy.exceptions import AxisError, ComplexWarning
 from numpy.testing import (
         assert_, assert_equal, IS_PYPY, assert_almost_equal,
-        assert_array_equal, assert_array_almost_equal, assert_raises,
+        assert_array_equal, assert_array_almost_equal,
+        assert_array_almost_equal_nulp, assert_raises,
         assert_raises_regex, assert_warns, suppress_warnings,
         _assert_valid_refcount, HAS_REFCOUNT, IS_PYSTON, IS_WASM
         )
@@ -2644,3 +2645,11 @@ class TestRegression:
             data = np.broadcast_to(vals, (128, 128, 128))
             data = data.transpose(0, 2, 1).copy()
             np.unique(data)
+
+    def test_mult_scalar_vec_consistency(self):
+        # gh-26740 (the part about numpy scalar and vector inconsistency)
+        buf = np.array([-5.171866611150749e-07 + 2.5618634555957426e-07j,
+                        0, 0])
+        res0 = buf * buf
+        res1 = np.asarray([x * x for x in buf])
+        assert_array_almost_equal_nulp(res0, res1)
