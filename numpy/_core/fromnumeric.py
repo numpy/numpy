@@ -238,8 +238,13 @@ def top_k(a, k, /, *, axis=-1, largest=True):
         The default is -1 (the last axis).
         If None, a flattened array is used.
     largest: bool, optional
-        If True, largest elements are returned. Otherwise the smallest
-        are returned.
+        If True, largest elements are returned.
+        Otherwise the smallest are returned.
+        For floats and complex, ``np.nan``, and values containing
+        ``np.nan`` (e.g., ``nan+0j``), are pushed to the back of
+        the array.
+        Otherwise, ``np.top_k`` follows the ``np.nan`` sort order
+        of `sort`.
 
     Returns
     -------
@@ -263,9 +268,6 @@ def top_k(a, k, /, *, axis=-1, largest=True):
     rather than ``(array([3]), array([0]))`` or
     ``(array([3]), array([2]))``.
 
-    `top_k` works for real/complex inputs with nan values, see
-    `partition` for notes on the enhanced sort order.
-
     Examples
     --------
     >>> a = np.array([[1,2,3,4,5], [5,4,3,2,1], [3,4,5,1,2]])
@@ -285,12 +287,22 @@ def top_k(a, k, /, *, axis=-1, largest=True):
     array([1, 2, 3, 4, 5, 5, 4, 3, 2, 1, 3, 4, 5, 1, 2])
     >>> np.top_k(a, 2, axis=None)
     (array([5, 5]), array([ 4, 12]))
+    >>> np.top_k(np.array([1., 2., 3., np.nan]), 2)
+    (array([3., 2.]), array([2, 1]))
     """
     if k <= 0:
         raise ValueError(f'k(={k}) provided must be positive.')
 
-    positive_axis: int
     _arr = np.asanyarray(a)
+
+    to_negate = largest and (
+        np.dtype(_arr.dtype).char in np.typecodes["AllFloat"])
+    if to_negate:
+        # Push nans to the back of the array
+        topk_values, topk_indices = top_k(-_arr, k, axis=axis, largest=False)
+        return -topk_values, topk_indices
+
+    positive_axis: int
     if axis is None:
         arr = _arr.ravel()
         positive_axis = 0

@@ -3224,6 +3224,15 @@ class TestMethods:
         assert_equal(y_val, np.array([5, 5], dtype=np.int8))
         assert_equal(np.take_along_axis(a.ravel(), y_ind, axis=-1), y_val)
 
+    @pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+    def test_top_k_floating_nan(self, dtype):
+        # Checks if np.nan are pushed to the back.
+        # This differs from the sort order of sorting functions
+        # such as np.sort and np.partition
+        a = np.array([np.nan, 1, 2, 3, np.nan], dtype=dtype)
+        val, ind = np.top_k(a, 3)
+        assert not np.isnan(val).any()
+
     def test_flatten(self):
         x0 = np.array([[1, 2, 3], [4, 5, 6]], np.int32)
         x1 = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]], np.int32)
