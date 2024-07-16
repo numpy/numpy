@@ -227,7 +227,7 @@ of the arrays that were passed to the ufunc.  The two primary uses of
 this "hook" are:
 
 * Check that constraints on the core dimensions required
-  by the ufunc are satisfied (and raise an exception if they are not).
+  by the ufunc are satisfied (and set an exception if they are not).
 * Compute output shapes for any output core dimensions that were not
   determined by the input arrays.
 
@@ -242,7 +242,7 @@ In this case, the ufunc author might define the function like this:
         int minmax_process_core_dims(PyUFuncObject ufunc,
                                      npy_intp *core_dim_sizes)
         {
-            npy_intp n = core_dims_sizes[0];
+            npy_intp n = core_dim_sizes[0];
             if (n == 0) {
                 PyExc_SetString("minmax requires the core dimension "
                                 "to be at least 1.");
@@ -274,18 +274,18 @@ that occurred in the input arrays.
 
 .. warning::
     The function must never change a value in ``core_dim_sizes`` that
-    is not -1 on input.  Change such values will generally result in
-    incorrect output from the ufunc, and could result in the Python
-    interpreter crashing.
+    is not -1 on input.  Changing a value that was not -1 will generally
+    result in incorrect output from the ufunc, and could result in the
+    Python interpreter crashing.
 
 For example, consider the generalized ufunc ``conv1d`` for which
-the elementary function is to compute the "full" convolution of two
+the elementary function computes the "full" convolution of two
 one-dimensional arrays ``x`` and ``y`` with lengths ``m`` and ``n``,
 respectively.  The output of this convolution has length ``m + n - 1``.
 To implement this as a generalized ufunc, the signature is set to
 ``(m),(n)->(p)``, and in the "hook" function, if the core dimension
 ``p`` is found to be -1, it is replaced with ``m + n - 1``.  If ``p``
-if *not* -1, it must be verified that the given value equals ``m + n - 1``.
+is *not* -1, it must be verified that the given value equals ``m + n - 1``.
 If it does not, the function must set an exception and return -1.
 For a meaningful result, the operation also requires that ``m + n``
 is at least 1, i.e. both inputs can't have length 0.
