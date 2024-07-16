@@ -341,15 +341,15 @@ abs_ptrdiff(char *a, char *b)
     ((labs(steps[0]) < MAX_STEP_SIZE)  && \
      (labs(steps[1]) < MAX_STEP_SIZE)  && \
      (labs(steps[2]) < MAX_STEP_SIZE)  && \
-     (nomemoverlap(args[0], steps[0] * dimensions[0], args[2], steps[2] * dimensions[0])) && \
-     (nomemoverlap(args[1], steps[1] * dimensions[0], args[2], steps[2] * dimensions[0])))
+     (nomemoverlap(args[0], steps[0], args[2], steps[2], dimensions[0])) && \
+     (nomemoverlap(args[1], steps[1], args[2], steps[2], dimensions[0])))
 
 #define IS_UNARY_TWO_OUT_SMALL_STEPS_AND_NOMEMOVERLAP \
     ((labs(steps[0]) < MAX_STEP_SIZE)  && \
      (labs(steps[1]) < MAX_STEP_SIZE)  && \
      (labs(steps[2]) < MAX_STEP_SIZE)  && \
-     (nomemoverlap(args[0], steps[0] * dimensions[0], args[2], steps[2] * dimensions[0])) && \
-     (nomemoverlap(args[0], steps[0] * dimensions[0], args[1], steps[1] * dimensions[0])))
+     (nomemoverlap(args[0], steps[0], args[2], steps[2], dimensions[0])) && \
+     (nomemoverlap(args[0], steps[0], args[1], steps[1], dimensions[0])))
 
 /*
  * 1) Output should be contiguous, can handle strided input data
@@ -359,7 +359,7 @@ abs_ptrdiff(char *a, char *b)
 #define IS_OUTPUT_BLOCKABLE_UNARY(esizein, esizeout, vsize) \
     ((steps[0] & (esizein-1)) == 0 && \
      steps[1] == (esizeout) && llabs(steps[0]) < MAX_STEP_SIZE && \
-     (nomemoverlap(args[1], steps[1] * dimensions[0], args[0], steps[0] * dimensions[0])))
+     (nomemoverlap(args[1], steps[1], args[0], steps[0], dimensions[0])))
 
 #define IS_BLOCKABLE_REDUCE(esize, vsize) \
     (steps[1] == (esize) && abs_ptrdiff(args[1], args[0]) >= (vsize) && \
