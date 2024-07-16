@@ -211,7 +211,6 @@ assert_type(pu.mapdomain(seq_sct_complex, seq_sct_complex, seq_sct_complex), _Ar
 assert_type(pu.mapdomain(seq_sct_complex, seq_sct_complex, seq_sct_object), _ArrObject1D)
 assert_type(pu.mapdomain(seq_sct_complex, seq_sct_object, seq_sct_object), _ArrObject1D)
 assert_type(pu.mapdomain(seq_sct_object, seq_sct_object, seq_sct_object), _ArrObject1D)
-assert_type(pu.mapdomain(seq_sct_object, seq_sct_object, seq_sct_object), _ArrObject1D)
 
 assert_type(pu.mapdomain(arr_int, arr_int, arr_int), _ArrFloat1D)
 assert_type(pu.mapdomain(arr_int, arr_int, arr_float), _ArrFloat1D)

@@ -46,17 +46,6 @@ _V = TypeVar("_V")
 _V_co = TypeVar("_V_co", covariant=True)
 _Self = TypeVar("_Self", bound=object)
 
-class _SupportsLenAndGetItem(Protocol[_V_co]):
-    def __len__(self, /) -> int: ...
-    def __getitem__(self, i: int, /) -> _V_co: ...
-
-class _SimpleSequence(Protocol[_V_co]):
-    def __len__(self, /) -> int: ...
-    @overload
-    def __getitem__(self, i: int, /) -> _V_co: ...
-    @overload
-    def __getitem__(self: _Self, ii: slice, /) -> _Self: ...
-
 _SCT = TypeVar("_SCT", bound=np.number[Any] | np.bool | np.object_)
 _SCT_co = TypeVar(
     "_SCT_co",
@@ -98,23 +87,24 @@ _CoefLike_co: TypeAlias = _NumberLike_co | _NumberObjectLike_co
 # The term "series" is used here to refer to 1-d arrays of numeric scalars.
 _SeriesLikeInt_co: TypeAlias = (
     _SupportsArray[np.integer[Any] | np.bool]
-    | _SupportsLenAndGetItem[_IntLike_co]
+    | Sequence[_IntLike_co]
 )
 _SeriesLikeFloat_co: TypeAlias = (
     _SupportsArray[np.floating[Any] | np.integer[Any] | np.bool]
-    | _SupportsLenAndGetItem[_FloatLike_co]
+    | Sequence[_FloatLike_co]
 )
 _SeriesLikeComplex_co: TypeAlias = (
     _SupportsArray[np.integer[Any] | np.inexact[Any] | np.bool]
-    | _SupportsLenAndGetItem[_ComplexLike_co]
+    | Sequence[_ComplexLike_co]
 )
 _SeriesLikeNumberObject_co: TypeAlias = (
     _SupportsArray[np.object_]
-    | _SupportsLenAndGetItem[_NumberObjectLike_co]
+    | Sequence[_NumberObjectLike_co]
 )
 _SeriesLikeCoef_co: TypeAlias = (
+    # npt.NDArray[np.number[Any] | np.bool | np.object_]
     _SupportsArray[np.number[Any] | np.bool | np.object_]
-    | _SupportsLenAndGetItem[_CoefLike_co]
+    | Sequence[_CoefLike_co]
 )
 
 _ArrayLikeNumberObject_co: TypeAlias = (
@@ -123,7 +113,11 @@ _ArrayLikeNumberObject_co: TypeAlias = (
     | _SeriesLikeNumberObject_co
     | _NestedSequence[_SeriesLikeNumberObject_co]
 )
-_ArrayLikeCoef_co: TypeAlias = _ArrayLikeNumber_co | _ArrayLikeNumberObject_co
+_ArrayLikeCoef_co: TypeAlias = (
+    npt.NDArray[np.number[Any] | np.bool | np.object_]
+    | _ArrayLikeNumber_co
+    | _ArrayLikeNumberObject_co
+)
 
 _Name_co = TypeVar("_Name_co", bound=LiteralString, covariant=True)
 
@@ -256,7 +250,7 @@ class _FuncInteg(_Named[_Name_co], Protocol[_Name_co]):
         self, /,
         c: _ArrayLikeFloat_co,
         m: SupportsIndex = ...,
-        k: _NumberLike_co | _SupportsLenAndGetItem[_NumberLike_co] = ...,
+        k: _NumberLike_co | Sequence[_NumberLike_co] = ...,
         lbnd: _NumberLike_co = ...,
         scl: _NumberLike_co = ...,
         axis: SupportsIndex = ...,
@@ -266,7 +260,7 @@ class _FuncInteg(_Named[_Name_co], Protocol[_Name_co]):
         self, /,
         c: _ArrayLikeComplex_co,
         m: SupportsIndex = ...,
-        k: _NumberLike_co | _SupportsLenAndGetItem[_NumberLike_co] = ...,
+        k: _NumberLike_co | Sequence[_NumberLike_co] = ...,
         lbnd: _NumberLike_co = ...,
         scl: _NumberLike_co = ...,
         axis: SupportsIndex = ...,
@@ -276,7 +270,7 @@ class _FuncInteg(_Named[_Name_co], Protocol[_Name_co]):
         self, /,
         c: _ArrayLikeNumberObject_co,
         m: SupportsIndex = ...,
-        k: _NumberLike_co | _SupportsLenAndGetItem[_CoefLike_co] = ...,
+        k: _NumberLike_co | Sequence[_CoefLike_co] = ...,
         lbnd: _NumberLike_co = ...,
         scl: _NumberLike_co = ...,
         axis: SupportsIndex = ...,
@@ -583,7 +577,7 @@ class _FuncVander(_Named[_Name_co], Protocol[_Name_co]):
         deg: SupportsIndex,
     ) -> _CoefArray: ...
 
-_AnyDegrees: TypeAlias = _SupportsLenAndGetItem[SupportsIndex]
+_AnyDegrees: TypeAlias = Sequence[SupportsIndex]
 
 @final
 class _FuncVander2D(_Named[_Name_co], Protocol[_Name_co]):
@@ -662,32 +656,32 @@ class _FuncVanderND(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(  # type: ignore[overload-overlap]
         self, /,
-        vander_fs: _SupportsLenAndGetItem[_AnyFuncVander],
-        points: _SupportsLenAndGetItem[_ArrayLikeFloat_co],
-        degrees: _SupportsLenAndGetItem[SupportsIndex],
+        vander_fs: Sequence[_AnyFuncVander],
+        points: Sequence[_ArrayLikeFloat_co],
+        degrees: Sequence[SupportsIndex],
     ) -> _FloatArray: ...
     @overload
     def __call__(
         self, /,
-        vander_fs: _SupportsLenAndGetItem[_AnyFuncVander],
-        points: _SupportsLenAndGetItem[_ArrayLikeComplex_co],
-        degrees: _SupportsLenAndGetItem[SupportsIndex],
+        vander_fs: Sequence[_AnyFuncVander],
+        points: Sequence[_ArrayLikeComplex_co],
+        degrees: Sequence[SupportsIndex],
     ) -> _ComplexArray: ...
     @overload
     def __call__(
         self, /,
-        vander_fs: _SupportsLenAndGetItem[_AnyFuncVander],
-        points: _SupportsLenAndGetItem[
+        vander_fs: Sequence[_AnyFuncVander],
+        points: Sequence[
             _ArrayLikeObject_co | _ArrayLikeComplex_co,
         ],
-        degrees: _SupportsLenAndGetItem[SupportsIndex],
+        degrees: Sequence[SupportsIndex],
     ) -> _ObjectArray: ...
     @overload
     def __call__(
         self, /,
-        vander_fs: _SupportsLenAndGetItem[_AnyFuncVander],
-        points: _SupportsLenAndGetItem[npt.ArrayLike],
-        degrees: _SupportsLenAndGetItem[SupportsIndex],
+        vander_fs: Sequence[_AnyFuncVander],
+        points: Sequence[npt.ArrayLike],
+        degrees: Sequence[SupportsIndex],
     ) -> _CoefArray: ...
 
 @final
@@ -710,39 +704,39 @@ class _FuncFit(_Named[_Name_co], Protocol[_Name_co]):
         deg: int | _SeriesLikeInt_co,
         rcond: None | float = ...,
         full: Literal[False] = ...,
-        w: None | _ArrayLikeComplex_co = ...,
+        w: None | _SeriesLikeFloat_co = ...,
     ) -> _ComplexArray: ...
     @overload
     def __call__(
         self, /,
-        x: _SeriesLikeCoef_co,
+        x: _SeriesLikeComplex_co,
         y: _ArrayLikeCoef_co,
         deg: int | _SeriesLikeInt_co,
         rcond: None | float = ...,
         full: Literal[False] = ...,
-        w: None | _SeriesLikeCoef_co = ...,
+        w: None | _SeriesLikeFloat_co = ...,
     ) -> _ObjectArray: ...
     @overload
     def __call__(
         self,
-        x: _SeriesLikeCoef_co,
+        x: _SeriesLikeComplex_co,
         y: _ArrayLikeCoef_co,
         deg: int | _SeriesLikeInt_co,
         rcond: None | float,
         full: Literal[True],
         /,
-        w: None | _SeriesLikeCoef_co = ...,
+        w: None | _SeriesLikeFloat_co = ...,
     ) -> tuple[_CoefArray, Sequence[np.inexact[Any] | np.int32]]: ...
     @overload
     def __call__(
         self, /,
-        x: _SeriesLikeCoef_co,
+        x: _SeriesLikeComplex_co,
         y: _ArrayLikeCoef_co,
         deg: int | _SeriesLikeInt_co,
         rcond: None | float = ...,
         *,
         full: Literal[True],
-        w: None | _SeriesLikeCoef_co = ...,
+        w: None | _SeriesLikeFloat_co = ...,
     ) -> tuple[_CoefArray, Sequence[np.inexact[Any] | np.int32]]: ...
 
 @final
