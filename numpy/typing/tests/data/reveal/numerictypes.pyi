@@ -52,4 +52,4 @@ assert_type(np.bool_, type[np.bool])
 
 assert_type(np.typecodes["Character"], Literal["c"])
 assert_type(np.typecodes["Complex"], Literal["FDG"])
-assert_type(np.typecodes["All"], Literal["?bhilqpBHILQPefdgFDGSUVOMm"])
+assert_type(np.typecodes["All"], Literal["?bhilqnpBHILQNPefdgFDGSUVOMm"])

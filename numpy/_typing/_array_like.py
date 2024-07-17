@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Collection, Callable, Sequence
-from typing import Any, Protocol, Union, TypeAlias, TypeVar, runtime_checkable
+from typing import Any, Protocol, TypeAlias, TypeVar, runtime_checkable
 
 import numpy as np
 from numpy import (
@@ -54,41 +54,41 @@ class _SupportsArrayFunc(Protocol):
 
 
 # TODO: Wait until mypy supports recursive objects in combination with typevars
-_FiniteNestedSequence: TypeAlias = Union[
-    _T,
-    Sequence[_T],
-    Sequence[Sequence[_T]],
-    Sequence[Sequence[Sequence[_T]]],
-    Sequence[Sequence[Sequence[Sequence[_T]]]],
-]
+_FiniteNestedSequence: TypeAlias = (
+    _T
+    | Sequence[_T]
+    | Sequence[Sequence[_T]]
+    | Sequence[Sequence[Sequence[_T]]]
+    | Sequence[Sequence[Sequence[Sequence[_T]]]]
+)
 
 # A subset of `npt.ArrayLike` that can be parametrized w.r.t. `np.generic`
-_ArrayLike: TypeAlias = Union[
-    _SupportsArray[dtype[_ScalarType]],
-    _NestedSequence[_SupportsArray[dtype[_ScalarType]]],
-]
+_ArrayLike: TypeAlias = (
+    _SupportsArray[dtype[_ScalarType]]
+    | _NestedSequence[_SupportsArray[dtype[_ScalarType]]]
+)
 
 # A union representing array-like objects; consists of two typevars:
 # One representing types that can be parametrized w.r.t. `np.dtype`
 # and another one for the rest
-_DualArrayLike: TypeAlias = Union[
-    _SupportsArray[_DType],
-    _NestedSequence[_SupportsArray[_DType]],
-    _T,
-    _NestedSequence[_T],
-]
+_DualArrayLike: TypeAlias = (
+    _SupportsArray[_DType]
+    | _NestedSequence[_SupportsArray[_DType]]
+    | _T
+    | _NestedSequence[_T]
+)
 
 if sys.version_info >= (3, 12):
     from collections.abc import Buffer
 
     ArrayLike: TypeAlias = Buffer | _DualArrayLike[
         dtype[Any],
-        Union[bool, int, float, complex, str, bytes],
+        bool | int | float | complex | str | bytes,
     ]
 else:
     ArrayLike: TypeAlias = _DualArrayLike[
         dtype[Any],
-        Union[bool, int, float, complex, str, bytes],
+        bool | int | float | complex | str | bytes,
     ]
 
 # `ArrayLike<X>_co`: array-like objects that can be coerced into `X`
@@ -98,47 +98,47 @@ _ArrayLikeBool_co: TypeAlias = _DualArrayLike[
     bool,
 ]
 _ArrayLikeUInt_co: TypeAlias = _DualArrayLike[
-    dtype[Union[np.bool, unsignedinteger[Any]]],
+    dtype[np.bool] | dtype[unsignedinteger[Any]],
     bool,
 ]
 _ArrayLikeInt_co: TypeAlias = _DualArrayLike[
-    dtype[Union[np.bool, integer[Any]]],
-    Union[bool, int],
+    dtype[np.bool] | dtype[integer[Any]],
+    bool | int,
 ]
 _ArrayLikeFloat_co: TypeAlias = _DualArrayLike[
-    dtype[Union[np.bool, integer[Any], floating[Any]]],
-    Union[bool, int, float],
+    dtype[np.bool] | dtype[integer[Any]] | dtype[floating[Any]],
+    bool | int | float,
 ]
 _ArrayLikeComplex_co: TypeAlias = _DualArrayLike[
-    dtype[Union[
-        np.bool,
-        integer[Any],
-        floating[Any],
-        complexfloating[Any, Any],
-    ]],
-    Union[bool, int, float, complex],
+    (
+        dtype[np.bool]
+        | dtype[integer[Any]]
+        | dtype[floating[Any]]
+        | dtype[complexfloating[Any, Any]]
+    ),
+    bool | int | float | complex,
 ]
 _ArrayLikeNumber_co: TypeAlias = _DualArrayLike[
-    dtype[Union[np.bool, number[Any]]],
-    Union[bool, int, float, complex],
+    dtype[np.bool] | dtype[number[Any]],
+    bool | int | float | complex,
 ]
 _ArrayLikeTD64_co: TypeAlias = _DualArrayLike[
-    dtype[Union[np.bool, integer[Any], timedelta64]],
-    Union[bool, int],
+    dtype[np.bool] | dtype[integer[Any]] | dtype[timedelta64],
+    bool | int,
 ]
-_ArrayLikeDT64_co: TypeAlias = Union[
-    _SupportsArray[dtype[datetime64]],
-    _NestedSequence[_SupportsArray[dtype[datetime64]]],
-]
-_ArrayLikeObject_co: TypeAlias = Union[
-    _SupportsArray[dtype[object_]],
-    _NestedSequence[_SupportsArray[dtype[object_]]],
-]
+_ArrayLikeDT64_co: TypeAlias = (
+    _SupportsArray[dtype[datetime64]]
+    | _NestedSequence[_SupportsArray[dtype[datetime64]]]
+)
+_ArrayLikeObject_co: TypeAlias = (
+    _SupportsArray[dtype[object_]]
+    | _NestedSequence[_SupportsArray[dtype[object_]]]
+)
 
-_ArrayLikeVoid_co: TypeAlias = Union[
-    _SupportsArray[dtype[void]],
-    _NestedSequence[_SupportsArray[dtype[void]]],
-]
+_ArrayLikeVoid_co: TypeAlias = (
+    _SupportsArray[dtype[void]]
+    | _NestedSequence[_SupportsArray[dtype[void]]]
+)
 _ArrayLikeStr_co: TypeAlias = _DualArrayLike[
     dtype[str_],
     str,
@@ -148,6 +148,7 @@ _ArrayLikeBytes_co: TypeAlias = _DualArrayLike[
     bytes,
 ]
 
+# NOTE: This includes `builtins.bool`, but not `numpy.bool`.
 _ArrayLikeInt: TypeAlias = _DualArrayLike[
     dtype[integer[Any]],
     int,
