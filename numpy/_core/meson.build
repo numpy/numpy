@@ -1278,6 +1278,7 @@ py.extension_module('_simd',
   link_with: [npymath_lib, _simd_mtargets.static_lib('_simd_mtargets')],
   install: true,
   subdir: 'numpy/_core',
+  install_tag: 'tests',
 )
 
 python_sources = [
