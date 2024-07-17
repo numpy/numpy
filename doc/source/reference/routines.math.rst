@@ -63,6 +63,8 @@ Sums, products, differences
    sum
    nanprod
    nansum
+   cumulative_sum
+   cumulative_prod
    cumprod
    cumsum
    nancumprod

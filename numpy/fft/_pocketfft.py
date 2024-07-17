@@ -34,7 +34,7 @@ import functools
 import warnings
 
 from numpy.lib.array_utils import normalize_axis_index
-from numpy._core import (asarray, empty, zeros, swapaxes, result_type,
+from numpy._core import (asarray, empty_like, result_type,
                          conjugate, take, sqrt, reciprocal)
 from . import _pocketfft_umath as pfu
 from numpy._core import overrides
@@ -85,8 +85,8 @@ def _raw_fft(a, n, axis, is_real, is_forward, norm, out=None):
             out_dtype = real_dtype
         else:  # Others, complex output.
             out_dtype = result_type(a.dtype, 1j)
-        out = empty(a.shape[:axis] + (n_out,) + a.shape[axis+1:],
-                    dtype=out_dtype)
+        out = empty_like(a, shape=a.shape[:axis] + (n_out,) + a.shape[axis+1:],
+                         dtype=out_dtype)
     elif ((shape := getattr(out, "shape", None)) is not None
           and (len(shape) != a.ndim or shape[axis] != n_out)):
         raise ValueError("output array has wrong shape.")

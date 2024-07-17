@@ -27,7 +27,6 @@ or in RST-based documentations::
 
 """
 import copy
-import doctest
 import inspect
 import io
 import os
@@ -39,7 +38,6 @@ import warnings
 import docutils.core
 from argparse import ArgumentParser
 from contextlib import contextmanager, redirect_stderr
-from doctest import NORMALIZE_WHITESPACE, ELLIPSIS, IGNORE_EXCEPTION_DETAIL
 
 from docutils.parsers.rst import directives
 
@@ -48,8 +46,6 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'doc', 'sphinxext'))
 from numpydoc.docscrape_sphinx import get_doc_object
-
-SKIPBLOCK = doctest.register_optionflag('SKIPBLOCK')
 
 # Enable specific Sphinx directives
 from sphinx.directives.other import SeeAlso, Only
@@ -97,52 +93,6 @@ OTHER_MODULE_DOCS = {
     'io.arff': 'io',
 }
 
-# these names are known to fail doctesting and we like to keep it that way
-# e.g. sometimes pseudocode is acceptable etc
-#
-# Optionally, a subset of methods can be skipped by setting dict-values
-# to a container of method-names
-DOCTEST_SKIPDICT = {
-    # cases where NumPy docstrings import things from SciPy:
-    'numpy.lib.vectorize': None,
-    'numpy.random.standard_gamma': None,
-    'numpy.random.gamma': None,
-    'numpy.random.vonmises': None,
-    'numpy.random.power': None,
-    'numpy.random.zipf': None,
-    # cases where NumPy docstrings import things from other 3'rd party libs:
-    'numpy._core.from_dlpack': None,
-    # remote / local file IO with DataSource is problematic in doctest:
-    'numpy.lib.npyio.DataSource': None,
-    'numpy.lib.Repository': None,
-}
-
-# Skip non-numpy RST files, historical release notes
-# Any single-directory exact match will skip the directory and all subdirs.
-# Any exact match (like 'doc/release') will scan subdirs but skip files in
-# the matched directory.
-# Any filename will skip that file
-RST_SKIPLIST = [
-    'scipy-sphinx-theme',
-    'sphinxext',
-    'neps',
-    'changelog',
-    'doc/release',
-    'doc/source/release',
-    'doc/release/upcoming_changes',
-    'c-info.ufunc-tutorial.rst',
-    'c-info.python-as-glue.rst',
-    'f2py.getting-started.rst',
-    'f2py-examples.rst',
-    'arrays.nditer.cython.rst',
-    'how-to-verify-bug.rst',
-    # See PR 17222, these should be fixed
-    'basics.dispatch.rst',
-    'basics.subclassing.rst',
-    'basics.interoperability.rst',
-    'misc.rst',
-    'TESTS.rst'
-]
 
 # these names are not required to be present in ALL despite being in
 # autosummary:: listing
@@ -161,14 +111,6 @@ REFGUIDE_AUTOSUMMARY_SKIPLIST = [
     # priority -- focus on just getting docstrings executed / correct
     r'numpy\.*',
 ]
-# deprecated windows in scipy.signal namespace
-for name in ('barthann', 'bartlett', 'blackmanharris', 'blackman', 'bohman',
-             'boxcar', 'chebwin', 'cosine', 'exponential', 'flattop',
-             'gaussian', 'general_gaussian', 'hamming', 'hann', 'hanning',
-             'kaiser', 'nuttall', 'parzen', 'slepian', 'triang', 'tukey'):
-    REFGUIDE_AUTOSUMMARY_SKIPLIST.append(r'scipy\.signal\.' + name)
-
-HAVE_MATPLOTLIB = False
 
 
 def short_path(path, cwd=None):
@@ -609,520 +551,6 @@ def check_rest(module, names, dots=True):
     return results
 
 
-### Doctest helpers ####
-
-# the namespace to run examples in
-DEFAULT_NAMESPACE = {'np': np}
-
-# the namespace to do checks in
-CHECK_NAMESPACE = {
-      'np': np,
-      'numpy': np,
-      'assert_allclose': np.testing.assert_allclose,
-      'assert_equal': np.testing.assert_equal,
-      # recognize numpy repr's
-      'array': np.array,
-      'matrix': np.matrix,
-      'int64': np.int64,
-      'uint64': np.uint64,
-      'int8': np.int8,
-      'int32': np.int32,
-      'float32': np.float32,
-      'float64': np.float64,
-      'dtype': np.dtype,
-      'nan': np.nan,
-      'inf': np.inf,
-      'StringIO': io.StringIO,
-}
-
-
-class DTRunner(doctest.DocTestRunner):
-    """
-    The doctest runner
-    """
-    DIVIDER = "\n"
-
-    def __init__(self, item_name, checker=None, verbose=None, optionflags=0):
-        self._item_name = item_name
-        doctest.DocTestRunner.__init__(self, checker=checker, verbose=verbose,
-                                       optionflags=optionflags)
-
-    def _report_item_name(self, out, new_line=False):
-        if self._item_name is not None:
-            if new_line:
-                out("\n")
-            self._item_name = None
-
-    def report_start(self, out, test, example):
-        self._checker._source = example.source
-        return doctest.DocTestRunner.report_start(self, out, test, example)
-
-    def report_success(self, out, test, example, got):
-        if self._verbose:
-            self._report_item_name(out, new_line=True)
-        return doctest.DocTestRunner.report_success(self, out, test, example, got)
-
-    def report_unexpected_exception(self, out, test, example, exc_info):
-        self._report_item_name(out)
-        return doctest.DocTestRunner.report_unexpected_exception(
-            self, out, test, example, exc_info)
-
-    def report_failure(self, out, test, example, got):
-        self._report_item_name(out)
-        return doctest.DocTestRunner.report_failure(self, out, test,
-                                                    example, got)
-
-class Checker(doctest.OutputChecker):
-    """
-    Check the docstrings
-    """
-    obj_pattern = re.compile('at 0x[0-9a-fA-F]+>')
-    vanilla = doctest.OutputChecker()
-    rndm_markers = {'# random', '# Random', '#random', '#Random', "# may vary",
-                    "# uninitialized", "#uninitialized", "# uninit"}
-    stopwords = {'plt.', '.hist', '.show', '.ylim', '.subplot(',
-                 'set_title', 'imshow', 'plt.show', '.axis(', '.plot(',
-                 '.bar(', '.title', '.ylabel', '.xlabel', 'set_ylim', 'set_xlim',
-                 '# reformatted', '.set_xlabel(', '.set_ylabel(', '.set_zlabel(',
-                 '.set(xlim=', '.set(ylim=', '.set(xlabel=', '.set(ylabel='}
-
-    def __init__(self, parse_namedtuples=True, ns=None, atol=1e-8, rtol=1e-2):
-        self.parse_namedtuples = parse_namedtuples
-        self.atol, self.rtol = atol, rtol
-        if ns is None:
-            self.ns = CHECK_NAMESPACE
-        else:
-            self.ns = ns
-
-    def check_output(self, want, got, optionflags):
-        # cut it short if they are equal
-        if want == got:
-            return True
-
-        # skip stopwords in source
-        if any(word in self._source for word in self.stopwords):
-            return True
-
-        # skip random stuff
-        if any(word in want for word in self.rndm_markers):
-            return True
-
-        # skip function/object addresses
-        if self.obj_pattern.search(got):
-            return True
-
-        # ignore comments (e.g. signal.freqresp)
-        if want.lstrip().startswith("#"):
-            return True
-
-        # try the standard doctest
-        try:
-            if self.vanilla.check_output(want, got, optionflags):
-                return True
-        except Exception:
-            pass
-
-        # OK then, convert strings to objects
-        try:
-            a_want = eval(want, dict(self.ns))
-            a_got = eval(got, dict(self.ns))
-        except Exception:
-            # Maybe we're printing a numpy array? This produces invalid python
-            # code: `print(np.arange(3))` produces "[0 1 2]" w/o commas between
-            # values. So, reinsert commas and retry.
-            # TODO: handle (1) abbreviation (`print(np.arange(10000))`), and
-            #              (2) n-dim arrays with n > 1
-            s_want = want.strip()
-            s_got = got.strip()
-            cond = (s_want.startswith("[") and s_want.endswith("]") and
-                    s_got.startswith("[") and s_got.endswith("]"))
-            if cond:
-                s_want = ", ".join(s_want[1:-1].split())
-                s_got = ", ".join(s_got[1:-1].split())
-                return self.check_output(s_want, s_got, optionflags)
-
-            if not self.parse_namedtuples:
-                return False
-            # suppose that "want"  is a tuple, and "got" is smth like
-            # MoodResult(statistic=10, pvalue=0.1).
-            # Then convert the latter to the tuple (10, 0.1),
-            # and then compare the tuples.
-            try:
-                num = len(a_want)
-                regex = (r'[\w\d_]+\(' +
-                         ', '.join([r'[\w\d_]+=(.+)']*num) +
-                         r'\)')
-                grp = re.findall(regex, got.replace('\n', ' '))
-                if len(grp) > 1:  # no more than one for now
-                    return False
-                # fold it back to a tuple
-                got_again = '(' + ', '.join(grp[0]) + ')'
-                return self.check_output(want, got_again, optionflags)
-            except Exception:
-                return False
-
-        # ... and defer to numpy
-        try:
-            return self._do_check(a_want, a_got)
-        except Exception:
-            # heterog tuple, eg (1, np.array([1., 2.]))
-           try:
-                return all(self._do_check(w, g) for w, g in zip(a_want, a_got))
-           except (TypeError, ValueError):
-                return False
-
-    def _do_check(self, want, got):
-        # This should be done exactly as written to correctly handle all of
-        # numpy-comparable objects, strings, and heterogeneous tuples
-        try:
-            if want == got:
-                return True
-        except Exception:
-            pass
-        return np.allclose(want, got, atol=self.atol, rtol=self.rtol)
-
-
-def _run_doctests(tests, full_name, verbose, doctest_warnings):
-    """
-    Run modified doctests for the set of `tests`.
-
-    Parameters
-    ----------
-    tests : list
-
-    full_name : str
-
-    verbose : bool
-    doctest_warnings : bool
-
-    Returns
-    -------
-    tuple(bool, list)
-        Tuple of (success, output)
-    """
-    flags = NORMALIZE_WHITESPACE | ELLIPSIS
-    runner = DTRunner(full_name, checker=Checker(), optionflags=flags,
-                      verbose=verbose)
-
-    output = io.StringIO(newline='')
-    success = True
-
-    # Redirect stderr to the stdout or output
-    tmp_stderr = sys.stdout if doctest_warnings else output
-
-    @contextmanager
-    def temp_cwd():
-        cwd = os.getcwd()
-        tmpdir = tempfile.mkdtemp()
-        try:
-            os.chdir(tmpdir)
-            yield tmpdir
-        finally:
-            os.chdir(cwd)
-            shutil.rmtree(tmpdir)
-
-    # Run tests, trying to restore global state afterward
-    cwd = os.getcwd()
-    with np.errstate(), np.printoptions(), temp_cwd() as tmpdir, \
-            redirect_stderr(tmp_stderr):
-        # try to ensure random seed is NOT reproducible
-        np.random.seed(None)
-
-        ns = {}
-        for t in tests:
-            # We broke the tests up into chunks to try to avoid PSEUDOCODE
-            # This has the unfortunate side effect of restarting the global
-            # namespace for each test chunk, so variables will be "lost" after
-            # a chunk. Chain the globals to avoid this
-            t.globs.update(ns)
-            t.filename = short_path(t.filename, cwd)
-            # Process our options
-            if any([SKIPBLOCK in ex.options for ex in t.examples]):
-                continue
-            fails, successes = runner.run(t, out=output.write, clear_globs=False)
-            if fails > 0:
-                success = False
-            ns = t.globs
-
-    output.seek(0)
-    return success, output.read()
-
-
-def check_doctests(module, verbose, ns=None,
-                   dots=True, doctest_warnings=False):
-    """
-    Check code in docstrings of the module's public symbols.
-
-    Parameters
-    ----------
-    module : ModuleType
-        Name of module
-    verbose : bool
-        Should the result be verbose
-    ns : dict
-        Name space of module
-    dots : bool
-
-    doctest_warnings : bool
-
-    Returns
-    -------
-    results : list
-        List of [(item_name, success_flag, output), ...]
-    """
-    if ns is None:
-        ns = dict(DEFAULT_NAMESPACE)
-
-    # Loop over non-deprecated items
-    results = []
-
-    for name in get_all_dict(module)[0]:
-        full_name = module.__name__ + '.' + name
-
-        if full_name in DOCTEST_SKIPDICT:
-            skip_methods = DOCTEST_SKIPDICT[full_name]
-            if skip_methods is None:
-                continue
-        else:
-            skip_methods = None
-
-        try:
-            obj = getattr(module, name)
-        except AttributeError:
-            import traceback
-            results.append((full_name, False,
-                            "Missing item!\n" +
-                            traceback.format_exc()))
-            continue
-
-        finder = doctest.DocTestFinder()
-        try:
-            tests = finder.find(obj, name, globs=dict(ns))
-        except Exception:
-            import traceback
-            results.append((full_name, False,
-                            "Failed to get doctests!\n" +
-                            traceback.format_exc()))
-            continue
-
-        if skip_methods is not None:
-            tests = [i for i in tests if
-                     i.name.partition(".")[2] not in skip_methods]
-
-        success, output = _run_doctests(tests, full_name, verbose,
-                                        doctest_warnings)
-
-        if dots:
-            output_dot('.' if success else 'F')
-
-        results.append((full_name, success, output))
-
-        if HAVE_MATPLOTLIB:
-            import matplotlib.pyplot as plt
-            plt.close('all')
-
-    return results
-
-
-def check_doctests_testfile(fname, verbose, ns=None,
-                   dots=True, doctest_warnings=False):
-    """
-    Check code in a text file.
-
-    Mimic `check_doctests` above, differing mostly in test discovery.
-    (which is borrowed from stdlib's doctest.testfile here,
-     https://github.com/python-git/python/blob/master/Lib/doctest.py)
-
-    Parameters
-    ----------
-    fname : str
-        File name
-    verbose : bool
-
-    ns : dict
-        Name space
-
-    dots : bool
-
-    doctest_warnings : bool
-
-    Returns
-    -------
-    list
-        List of [(item_name, success_flag, output), ...]
-
-    Notes
-    -----
-
-    refguide can be signalled to skip testing code by adding
-    ``#doctest: +SKIP`` to the end of the line. If the output varies or is
-    random, add ``# may vary`` or ``# random`` to the comment. for example
-
-    >>> plt.plot(...)  # doctest: +SKIP
-    >>> random.randint(0,10)
-    5 # random
-
-    We also try to weed out pseudocode:
-    * We maintain a list of exceptions which signal pseudocode,
-    * We split the text file into "blocks" of code separated by empty lines
-      and/or intervening text.
-    * If a block contains a marker, the whole block is then assumed to be
-      pseudocode. It is then not being doctested.
-
-    The rationale is that typically, the text looks like this:
-
-    blah
-    <BLANKLINE>
-    >>> from numpy import some_module   # pseudocode!
-    >>> func = some_module.some_function
-    >>> func(42)                  # still pseudocode
-    146
-    <BLANKLINE>
-    blah
-    <BLANKLINE>
-    >>> 2 + 3        # real code, doctest it
-    5
-
-    """
-    if ns is None:
-        ns = CHECK_NAMESPACE
-    results = []
-
-    _, short_name = os.path.split(fname)
-    if short_name in DOCTEST_SKIPDICT:
-        return results
-
-    full_name = fname
-    with open(fname, encoding='utf-8') as f:
-        text = f.read()
-
-    PSEUDOCODE = set(['some_function', 'some_module', 'import example',
-                      'ctypes.CDLL',     # likely need compiling, skip it
-                      'integrate.nquad(func,'  # ctypes integrate tutotial
-    ])
-
-    # split the text into "blocks" and try to detect and omit pseudocode blocks.
-    parser = doctest.DocTestParser()
-    good_parts = []
-    base_line_no = 0
-    for part in text.split('\n\n'):
-        try:
-            tests = parser.get_doctest(part, ns, fname, fname, base_line_no)
-        except ValueError as e:
-            if e.args[0].startswith('line '):
-                # fix line number since `parser.get_doctest` does not increment
-                # the reported line number by base_line_no in the error message
-                parts = e.args[0].split()
-                parts[1] = str(int(parts[1]) + base_line_no)
-                e.args = (' '.join(parts),) + e.args[1:]
-            raise
-        if any(word in ex.source for word in PSEUDOCODE
-                                 for ex in tests.examples):
-            # omit it
-            pass
-        else:
-            # `part` looks like a good code, let's doctest it
-            good_parts.append((part, base_line_no))
-        base_line_no += part.count('\n') + 2
-
-    # Reassemble the good bits and doctest them:
-    tests = []
-    for good_text, line_no in good_parts:
-        tests.append(parser.get_doctest(good_text, ns, fname, fname, line_no))
-    success, output = _run_doctests(tests, full_name, verbose,
-                                    doctest_warnings)
-
-    if dots:
-        output_dot('.' if success else 'F')
-
-    results.append((full_name, success, output))
-
-    if HAVE_MATPLOTLIB:
-        import matplotlib.pyplot as plt
-        plt.close('all')
-
-    return results
-
-
-def iter_included_files(base_path, verbose=0, suffixes=('.rst',)):
-    """
-    Generator function to walk `base_path` and its subdirectories, skipping
-    files or directories in RST_SKIPLIST, and yield each file with a suffix in
-    `suffixes`
-
-    Parameters
-    ----------
-    base_path : str
-        Base path of the directory to be processed
-    verbose : int
-
-    suffixes : tuple
-
-    Yields
-    ------
-    path
-        Path of the directory and its sub directories
-    """
-    if os.path.exists(base_path) and os.path.isfile(base_path):
-        yield base_path
-    for dir_name, subdirs, files in os.walk(base_path, topdown=True):
-        if dir_name in RST_SKIPLIST:
-            if verbose > 0:
-                sys.stderr.write('skipping files in %s' % dir_name)
-            files = []
-        for p in RST_SKIPLIST:
-            if p in subdirs:
-                if verbose > 0:
-                    sys.stderr.write('skipping %s and subdirs' % p)
-                subdirs.remove(p)
-        for f in files:
-            if (os.path.splitext(f)[1] in suffixes and
-                    f not in RST_SKIPLIST):
-                yield os.path.join(dir_name, f)
-
-
-def check_documentation(base_path, results, args, dots):
-    """
-    Check examples in any *.rst located inside `base_path`.
-    Add the output to `results`.
-
-    See Also
-    --------
-    check_doctests_testfile
-    """
-    for filename in iter_included_files(base_path, args.verbose):
-        if dots:
-            sys.stderr.write(filename + ' ')
-            sys.stderr.flush()
-
-        tut_results = check_doctests_testfile(
-            filename,
-            (args.verbose >= 2), dots=dots,
-            doctest_warnings=args.doctest_warnings)
-
-        # stub out a "module" which is needed when reporting the result
-        def scratch():
-            pass
-        scratch.__name__ = filename
-        results.append((scratch, tut_results))
-        if dots:
-            sys.stderr.write('\n')
-            sys.stderr.flush()
-
-
-def init_matplotlib():
-    """
-    Check feasibility of matplotlib initialization.
-    """
-    global HAVE_MATPLOTLIB
-
-    try:
-        import matplotlib
-        matplotlib.use('Agg')
-        HAVE_MATPLOTLIB = True
-    except ImportError:
-        HAVE_MATPLOTLIB = False
-
 
 def main(argv):
     """
@@ -1132,15 +560,7 @@ def main(argv):
     parser = ArgumentParser(usage=__doc__.lstrip())
     parser.add_argument("module_names", metavar="SUBMODULES", default=[],
                         nargs='*', help="Submodules to check (default: all public)")
-    parser.add_argument("--doctests", action="store_true",
-                        help="Run also doctests on ")
     parser.add_argument("-v", "--verbose", action="count", default=0)
-    parser.add_argument("--doctest-warnings", action="store_true",
-                        help="Enforce warning checking for doctests")
-    parser.add_argument("--rst", nargs='?', const='doc', default=None,
-                        help=("Run also examples from *rst files "
-                              "discovered walking the directory(s) specified, "
-                              "defaults to 'doc'"))
     args = parser.parse_args(argv)
 
     modules = []
@@ -1148,8 +568,6 @@ def main(argv):
 
     if not args.module_names:
         args.module_names = list(PUBLIC_SUBMODULES) + [BASE_MODULE]
-
-    os.environ['SCIPY_PIL_IMAGE_VIEWER'] = 'true'
 
     module_names = list(args.module_names)
     for name in module_names:
@@ -1163,9 +581,6 @@ def main(argv):
     results = []
     errormsgs = []
 
-
-    if args.doctests or args.rst:
-        init_matplotlib()
 
     for submodule_name in module_names:
         prefix = BASE_MODULE + '.'
@@ -1186,7 +601,7 @@ def main(argv):
         if submodule_name in args.module_names:
             modules.append(module)
 
-    if args.doctests or not args.rst:
+    if modules:
         print("Running checks for %d modules:" % (len(modules),))
         for module in modules:
             if dots:
@@ -1201,9 +616,6 @@ def main(argv):
                                        module.__name__)
             mod_results += check_rest(module, set(names).difference(deprecated),
                                       dots=dots)
-            if args.doctests:
-                mod_results += check_doctests(module, (args.verbose >= 2), dots=dots,
-                                              doctest_warnings=args.doctest_warnings)
 
             for v in mod_results:
                 assert isinstance(v, tuple), v
@@ -1214,18 +626,6 @@ def main(argv):
                 sys.stderr.write('\n')
                 sys.stderr.flush()
 
-    if args.rst:
-        base_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
-        rst_path = os.path.relpath(os.path.join(base_dir, args.rst))
-        if os.path.exists(rst_path):
-            print('\nChecking files in %s:' % rst_path)
-            check_documentation(rst_path, results, args, dots)
-        else:
-            sys.stderr.write(f'\ninvalid --rst argument "{args.rst}"')
-            errormsgs.append('invalid directory argument to --rst')
-        if dots:
-            sys.stderr.write("\n")
-            sys.stderr.flush()
 
     # Report results
     for module, mod_results in results:

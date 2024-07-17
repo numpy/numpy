@@ -76,9 +76,12 @@ jobs:
         buildplat:
           - [ubuntu-20.04, manylinux_x86_64, ""]
           - [ubuntu-20.04, musllinux_x86_64, ""]
-          # TODO: build numpy and set up Windows and MacOS
-          # cibuildwheel does not yet support Mac for free-threaded python
-          # windows is supported but numpy doesn't build on the image yet
+          - [macos-13, macosx_x86_64, openblas]
+          # targeting macos >= 14. Could probably build on macos-14, but it would be a cross-compile
+          - [macos-13, macosx_x86_64, accelerate]
+          - [macos-14, macosx_arm64, accelerate]  # always use accelerate
+          # TODO: set up Windows wheels windows is supported on cibuildwheel but
+          # numpy doesn't build on the image yet
         python: ["cp313t"]
     env:
       IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}
@@ -108,13 +111,18 @@ jobs:
         if: runner.os == 'windows'
 
       # Used to push the built wheels
-      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      - uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
         with:
           python-version: "3.x"
 
       - name: Setup macOS
         if: matrix.buildplat[0] == 'macos-13' || matrix.buildplat[0] == 'macos-14'
         run: |
+          # Needed due to https://github.com/actions/runner-images/issues/3371
+          # Supported versions: https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md
+          echo "FC=gfortran-13" >> "$GITHUB_ENV"
+          echo "F77=gfortran-13" >> "$GITHUB_ENV"
+          echo "F90=gfortran-13" >> "$GITHUB_ENV"
           if [[ ${{ matrix.buildplat[2] }} == 'accelerate' ]]; then
             # macosx_arm64 and macosx_x86_64 with accelerate
             # only target Sonoma onwards
@@ -134,7 +142,7 @@ jobs:
           fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@ba8be0d98853f5744f24e7f902c8adef7ae2e7f3  # v2.18.1
+        uses: pypa/cibuildwheel@7e5a838a63ac8128d71ab2dfd99e4634dd1bca09  # v2.19.2
         env:
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_FREE_THREADED_SUPPORT: True
@@ -143,7 +151,7 @@ jobs:
           # cibw_before_build.sh when a released cython can build numpy
           CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation"
 
-      - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+      - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4.3.4
         with:
           name: ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
           path: ./wheelhouse/*.whl

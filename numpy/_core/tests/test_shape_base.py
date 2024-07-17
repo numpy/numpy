@@ -154,7 +154,7 @@ class TestHstack:
 
     def test_generator(self):
         with pytest.raises(TypeError, match="arrays to stack must be"):
-            hstack((np.arange(3) for _ in range(2)))
+            hstack(np.arange(3) for _ in range(2))
         with pytest.raises(TypeError, match="arrays to stack must be"):
             hstack(map(lambda x: x, np.ones((3, 2))))
 
@@ -209,7 +209,7 @@ class TestVstack:
 
     def test_generator(self):
         with pytest.raises(TypeError, match="arrays to stack must be"):
-            vstack((np.arange(3) for _ in range(2)))
+            vstack(np.arange(3) for _ in range(2))
 
     def test_casting_and_dtype(self):
         a = np.array([1, 2, 3])
@@ -477,7 +477,7 @@ def test_stack():
 
     # do not accept generators
     with pytest.raises(TypeError, match="arrays to stack must be"):
-        stack((x for x in range(3)))
+        stack(x for x in range(3))
 
     #casting and dtype test
     a = np.array([1, 2, 3])
@@ -488,6 +488,39 @@ def test_stack():
     #casting and dtype with TypeError
     with assert_raises(TypeError):
         stack((a, b), dtype=np.int64, axis=1, casting="safe")
+
+
+def test_unstack():
+    a = np.arange(24).reshape((2, 3, 4))
+
+    for stacks in [np.unstack(a),
+                   np.unstack(a, axis=0),
+                   np.unstack(a, axis=-3)]:
+        assert isinstance(stacks, tuple)
+        assert len(stacks) == 2
+        assert_array_equal(stacks[0], a[0])
+        assert_array_equal(stacks[1], a[1])
+
+    for stacks in [np.unstack(a, axis=1),
+                   np.unstack(a, axis=-2)]:
+        assert isinstance(stacks, tuple)
+        assert len(stacks) == 3
+        assert_array_equal(stacks[0], a[:, 0])
+        assert_array_equal(stacks[1], a[:, 1])
+        assert_array_equal(stacks[2], a[:, 2])
+
+    for stacks in [np.unstack(a, axis=2),
+                   np.unstack(a, axis=-1)]:
+        assert isinstance(stacks, tuple)
+        assert len(stacks) == 4
+        assert_array_equal(stacks[0], a[:, :, 0])
+        assert_array_equal(stacks[1], a[:, :, 1])
+        assert_array_equal(stacks[2], a[:, :, 2])
+        assert_array_equal(stacks[3], a[:, :, 3])
+
+    assert_raises(ValueError, np.unstack, a, axis=3)
+    assert_raises(ValueError, np.unstack, a, axis=-4)
+    assert_raises(ValueError, np.unstack, np.array(0), axis=0)
 
 
 @pytest.mark.parametrize("axis", [0])

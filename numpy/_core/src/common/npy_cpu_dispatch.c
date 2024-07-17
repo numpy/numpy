@@ -1,11 +1,14 @@
-#include "npy_cpu_dispatch.h"
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
 
-static PyObject *npy__cpu_dispatch_registery = NULL;
+#include "npy_cpu_dispatch.h"
+#include "numpy/ndarraytypes.h"
+#include "npy_static_data.h"
 
 NPY_VISIBILITY_HIDDEN int
 npy_cpu_dispatch_tracer_init(PyObject *mod)
 {
-    if (npy__cpu_dispatch_registery != NULL) {
+    if (npy_static_pydata.cpu_dispatch_registry != NULL) {
         PyErr_Format(PyExc_RuntimeError, "CPU dispatcher tracer already initlized");
         return -1;
     }
@@ -22,7 +25,7 @@ npy_cpu_dispatch_tracer_init(PyObject *mod)
     if (err != 0) {
         return -1;
     }
-    npy__cpu_dispatch_registery = reg_dict;
+    npy_static_pydata.cpu_dispatch_registry = reg_dict;
     return 0;
 }
 
@@ -30,13 +33,13 @@ NPY_VISIBILITY_HIDDEN void
 npy_cpu_dispatch_trace(const char *fname, const char *signature,
                        const char **dispatch_info)
 {
-    PyObject *func_dict = PyDict_GetItemString(npy__cpu_dispatch_registery, fname);
+    PyObject *func_dict = PyDict_GetItemString(npy_static_pydata.cpu_dispatch_registry, fname);
     if (func_dict == NULL) {
         func_dict = PyDict_New();
         if (func_dict == NULL) {
             return;
         }
-        int err = PyDict_SetItemString(npy__cpu_dispatch_registery, fname, func_dict);
+        int err = PyDict_SetItemString(npy_static_pydata.cpu_dispatch_registry, fname, func_dict);
         Py_DECREF(func_dict);
         if (err != 0) {
             return;

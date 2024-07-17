@@ -18,11 +18,8 @@ from typing import (
     TypeVar,
     Final,
     SupportsIndex,
+    ParamSpec
 )
-if sys.version_info >= (3, 10):
-    from typing import ParamSpec
-else:
-    from typing_extensions import ParamSpec
 
 import numpy as np
 from numpy import number, object_, _FloatValue

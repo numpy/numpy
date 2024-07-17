@@ -480,6 +480,12 @@ read_rows(stream *s,
         ((PyArrayObject_fields *)data_array)->dimensions[0] = row_count;
     }
 
+    /*
+     * If row_size is too big, F_CONTIGUOUS is always set
+     * as array was created for only one row of data.
+     * We just update the contiguous flags here.
+     */
+    PyArray_UpdateFlags(data_array, NPY_ARRAY_F_CONTIGUOUS);
     return data_array;
 
   error:

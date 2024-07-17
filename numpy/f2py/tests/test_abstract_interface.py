@@ -6,6 +6,8 @@ from numpy.f2py import crackfortran
 from numpy.testing import IS_WASM
 
 
+@pytest.mark.filterwarnings(r"ignore:.*The global interpreter lock \(GIL\) "
+                            r"has been enabled.*:RuntimeWarning")
 @pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
 @pytest.mark.slow
 class TestAbstractInterface(util.F2PyTest):

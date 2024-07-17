@@ -21,7 +21,7 @@
 #include "abstractdtypes.h"
 #include "convert_datatype.h"
 #include "descriptor.h"
-#include "multiarraymodule.h"
+#include "npy_static_data.h"
 #include "ctors.h"
 
 #include "npy_config.h"
@@ -186,8 +186,8 @@ static int
 pyscalar_mode_conv(PyObject *obj, scalar_policy *policy)
 {
     PyObject *strings[3] = {
-            npy_ma_str_convert, npy_ma_str_preserve,
-            npy_ma_str_convert_if_no_array};
+            npy_interned_str.convert, npy_interned_str.preserve,
+            npy_interned_str.convert_if_no_array};
 
     /* First quick pass using the identity (should practically always match) */
     for (int i = 0; i < 3; i++) {

@@ -25,6 +25,7 @@
 #include "alloc.h"
 #include "npy_buffer.h"
 #include "shape.h"
+#include "multiarraymodule.h"
 
 /*******************  array attribute get and set routines ******************/
 
@@ -385,16 +386,16 @@ array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
 
     /* check that we are not reinterpreting memory containing Objects. */
     if (_may_have_objects(PyArray_DESCR(self)) || _may_have_objects(newtype)) {
-        static PyObject *checkfunc = NULL;
         PyObject *safe;
 
-        npy_cache_import("numpy._core._internal", "_view_is_safe", &checkfunc);
-        if (checkfunc == NULL) {
+        if (npy_cache_import_runtime(
+                "numpy._core._internal", "_view_is_safe",
+                &npy_runtime_imports._view_is_safe) == -1) {
             goto fail;
         }
 
-        safe = PyObject_CallFunction(checkfunc, "OO",
-                                     PyArray_DESCR(self), newtype);
+        safe = PyObject_CallFunction(npy_runtime_imports._view_is_safe,
+                                     "OO", PyArray_DESCR(self), newtype);
         if (safe == NULL) {
             goto fail;
         }

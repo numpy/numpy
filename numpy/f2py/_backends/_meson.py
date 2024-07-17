@@ -28,7 +28,7 @@ class MesonTemplate:
         include_dirs: list[Path],
         object_files: list[Path],
         linker_args: list[str],
-        c_args: list[str],
+        fortran_args: list[str],
         build_type: str,
         python_exe: str,
     ):
@@ -46,12 +46,18 @@ class MesonTemplate:
             self.include_dirs = []
         self.substitutions = {}
         self.objects = object_files
+        # Convert args to '' wrapped variant for meson
+        self.fortran_args = [
+            f"'{x}'" if not (x.startswith("'") and x.endswith("'")) else x
+            for x in fortran_args
+        ]
         self.pipeline = [
             self.initialize_template,
             self.sources_substitution,
             self.deps_substitution,
             self.include_substitution,
             self.libraries_substitution,
+            self.fortran_args_substitution,
         ]
         self.build_type = build_type
         self.python_exe = python_exe
@@ -109,6 +115,14 @@ class MesonTemplate:
             [f"{self.indent}'''{inc}'''," for inc in self.include_dirs]
         )
 
+    def fortran_args_substitution(self) -> None:
+        if self.fortran_args:
+            self.substitutions["fortran_args"] = (
+                f"{self.indent}fortran_args: [{', '.join([arg for arg in self.fortran_args])}],"
+            )
+        else:
+            self.substitutions["fortran_args"] = ""
+
     def generate_meson_build(self):
         for node in self.pipeline:
             node()
@@ -126,6 +140,7 @@ class MesonBackend(Backend):
         self.build_type = (
             "debug" if any("debug" in flag for flag in self.fc_flags) else "release"
         )
+        self.fc_flags = _get_flags(self.fc_flags)
 
     def _move_exec_to_root(self, build_dir: Path):
         walk_dir = Path(build_dir) / self.meson_build_dir
@@ -203,3 +218,17 @@ def _prepare_sources(mname, sources, bdir):
         if not Path(source).suffix == ".pyf"
     ]
     return extended_sources
+
+
+def _get_flags(fc_flags):
+    flag_values = []
+    flag_pattern = re.compile(r"--f(77|90)flags=(.*)")
+    for flag in fc_flags:
+        match_result = flag_pattern.match(flag)
+        if match_result:
+            values = match_result.group(2).strip().split()
+            values = [val.strip("'\"") for val in values]
+            flag_values.extend(values)
+    # Hacky way to preserve order of flags
+    unique_flags = list(dict.fromkeys(flag_values))
+    return unique_flags

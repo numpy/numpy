@@ -463,13 +463,16 @@ class TestMethods:
         ("xyxzx", "x", "yxzx"),
         (["xyzzyhelloxyzzy", "hello"], ["xyz", "xyz"],
          ["helloxyzzy", "hello"]),
+        (["ba", "ac", "baa", "bba"], "b", ["a", "ac", "aa", "a"]),
     ])
     def test_lstrip(self, a, chars, out, dt):
         a = np.array(a, dtype=dt)
+        out = np.array(out, dtype=dt)
         if chars is not None:
             chars = np.array(chars, dtype=dt)
-        out = np.array(out, dtype=dt)
-        assert_array_equal(np.strings.lstrip(a, chars), out)
+            assert_array_equal(np.strings.lstrip(a, chars), out)
+        else:
+            assert_array_equal(np.strings.lstrip(a), out)
 
     @pytest.mark.parametrize("a,chars,out", [
         ("", None, ""),
@@ -485,16 +488,20 @@ class TestMethods:
         ("xyzzyhelloxyzzy", "xyz", "xyzzyhello"),
         ("hello", "xyz", "hello"),
         ("xyxz", "xyxz", ""),
+        ("    ", None, ""),
         ("xyxzx", "x", "xyxz"),
         (["xyzzyhelloxyzzy", "hello"], ["xyz", "xyz"],
          ["xyzzyhello", "hello"]),
+        (["ab", "ac", "aab", "abb"], "b", ["a", "ac", "aa", "a"]),
     ])
     def test_rstrip(self, a, chars, out, dt):
         a = np.array(a, dtype=dt)
+        out = np.array(out, dtype=dt)
         if chars is not None:
             chars = np.array(chars, dtype=dt)
-        out = np.array(out, dtype=dt)
-        assert_array_equal(np.strings.rstrip(a, chars), out)
+            assert_array_equal(np.strings.rstrip(a, chars), out)
+        else:
+            assert_array_equal(np.strings.rstrip(a), out)
 
     @pytest.mark.parametrize("a,chars,out", [
         ("", None, ""),
@@ -511,6 +518,7 @@ class TestMethods:
         ("xyxzx", "x", "yxz"),
         (["xyzzyhelloxyzzy", "hello"], ["xyz", "xyz"],
          ["hello", "hello"]),
+        (["bab", "ac", "baab", "bbabb"], "b", ["a", "ac", "aa", "a"]),
     ])
     def test_strip(self, a, chars, out, dt):
         a = np.array(a, dtype=dt)
@@ -716,6 +724,7 @@ class TestMethods:
     def test_expandtabs_raises_overflow(self, dt):
         with pytest.raises(OverflowError, match="new string is too long"):
             np.strings.expandtabs(np.array("\ta\n\tb", dtype=dt), sys.maxsize)
+            np.strings.expandtabs(np.array("\ta\n\tb", dtype=dt), 2**61)
 
     FILL_ERROR = "The fill character must be exactly one character long"
 

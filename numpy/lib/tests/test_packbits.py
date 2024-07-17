@@ -282,7 +282,7 @@ def test_unpackbits_large():
     assert_array_equal(np.packbits(np.unpackbits(d, axis=0), axis=0), d)
 
 
-class TestCount():
+class TestCount:
     x = np.array([
         [1, 0, 1, 0, 0, 1, 0],
         [0, 1, 1, 1, 0, 0, 0],

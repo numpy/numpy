@@ -79,7 +79,7 @@ ideas and feedback. If you want to alert us to a gap,
 
 If you're looking for subjects, our formal roadmap for documentation is a
 *NumPy Enhancement Proposal (NEP)*,
-`NEP 44 - Restructuring the NumPy Documentation <https://www.numpy.org/neps/nep-0044-restructuring-numpy-docs>`__.
+:ref:`NEP44`.
 It identifies areas where our docs need help and lists several
 additions we'd like to see, including :ref:`Jupyter notebooks <numpy_tutorials>`.
 

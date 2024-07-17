@@ -114,6 +114,15 @@ argument to pytest::
 
     $ spin test -v -t numpy/_core/tests/test_multiarray.py -- -k "MatMul and not vector"
 
+To run "doctests" -- to check that the code examples in the documentation is correct --
+use the `check-docs` spin command. It relies on the `scipy-docs` package, which
+provides several additional features on top of the standard library ``doctest``
+package. Install ``scipy-doctest`` and run one of::
+
+  $ spin check-docs -v
+  $ spin check-docs numpy/linalg
+  $ spin check-docs -v -- -k 'det and not slogdet'
+
 .. note::
 
     Remember that all tests of NumPy should pass before committing your changes.
@@ -205,7 +214,7 @@ since the linter runs as part of the CI pipeline.
 For more details on Style Guidelines:
 
 - `Python Style Guide`_
-- `C Style Guide`_
+- :ref:`NEP45`
 
 Rebuilding & cleaning the workspace
 -----------------------------------
@@ -327,7 +336,6 @@ typically packaged as ``python-dbg``) is highly recommended.
 .. _Waf: https://code.google.com/p/waf/
 .. _`match test names using python operators`: https://docs.pytest.org/en/latest/usage.html#specifying-tests-selecting-tests
 .. _`Python Style Guide`: https://www.python.org/dev/peps/pep-0008/
-.. _`C Style Guide`: https://numpy.org/neps/nep-0045-c_style_guide.html
 
 Understanding the code & getting started
 ----------------------------------------

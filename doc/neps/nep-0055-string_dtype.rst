@@ -990,7 +990,7 @@ in the array buffer as a short string.
 
 No matter where it is stored, once a string is initialized it is marked with the
 ``NPY_STRING_INITIALIZED`` flag. This lets us clearly distinguish between an
-unitialized empty string and a string that has been mutated into the empty
+uninitialized empty string and a string that has been mutated into the empty
 string.
 
 The size of the allocation is stored in the arena to allow reuse of the arena

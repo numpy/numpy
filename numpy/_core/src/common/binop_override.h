@@ -6,6 +6,7 @@
 #include "numpy/arrayobject.h"
 
 #include "get_attr_string.h"
+#include "npy_static_data.h"
 
 /*
  * Logic for deciding when binops should return NotImplemented versus when
@@ -128,7 +129,7 @@ binop_should_defer(PyObject *self, PyObject *other, int inplace)
      * Classes with __array_ufunc__ are living in the future, and only need to
      * check whether __array_ufunc__ equals None.
      */
-    attr = PyArray_LookupSpecial(other, npy_um_str_array_ufunc);
+    attr = PyArray_LookupSpecial(other, npy_interned_str.array_ufunc);
     if (attr != NULL) {
         defer = !inplace && (attr == Py_None);
         Py_DECREF(attr);

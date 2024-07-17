@@ -59,13 +59,14 @@ FMA3 = mod_features.new(
   'FMA3', 24, implies: F16C, args: '-mfma',
   test_code: files(source_root + '/numpy/distutils/checks/cpu_fma3.c')[0]
 )
+# match this to HWY_AVX2
 AVX2 = mod_features.new(
-  'AVX2', 25, implies: F16C, args: '-mavx2',
+  'AVX2', 25, implies: FMA3, args: ['-mavx2', '-maes', '-mpclmul', '-mbmi', '-mbmi2'],
   test_code: files(source_root + '/numpy/distutils/checks/cpu_avx2.c')[0]
 )
 # 25-40 left as margin for any extra features
 AVX512F = mod_features.new(
-  'AVX512F', 40, implies: [FMA3, AVX2],
+  'AVX512F', 40, implies: [AVX2],
   # Disables mmx because of stack corruption that may happen during mask
   # conversions.
   # TODO (seiko2plus): provide more clarification

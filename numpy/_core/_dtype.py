@@ -277,9 +277,7 @@ def _is_packed(dtype):
     if align:
         total_offset = _aligned_offset(total_offset, max_alignment)
 
-    if total_offset != dtype.itemsize:
-        return False
-    return True
+    return total_offset == dtype.itemsize
 
 
 def _struct_list_str(dtype):

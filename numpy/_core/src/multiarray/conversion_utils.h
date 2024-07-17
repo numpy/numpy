@@ -113,7 +113,7 @@ PyArray_DeviceConverterOptional(PyObject *object, NPY_DEVICE *device);
  * that it is in an unpickle context instead of a normal context without
  * evil global state like we create here.
  */
-extern NPY_NO_EXPORT int evil_global_disable_warn_O4O8_flag;
+extern NPY_NO_EXPORT NPY_TLS int evil_global_disable_warn_O4O8_flag;
 
 /*
  * Convert function which replaces np._NoValue with NULL.

@@ -409,5 +409,10 @@ PyMODINIT_FUNC PyInit_lapack_lite(void)
     PyDict_SetItemString(d, "_ilp64", Py_False);
 #endif
 
+#if Py_GIL_DISABLED
+    // signal this module supports running with the GIL disabled
+    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+#endif
+
     return m;
 }

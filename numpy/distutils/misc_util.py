@@ -489,10 +489,7 @@ def is_string(s):
 
 def all_strings(lst):
     """Return True if all items in lst are string objects. """
-    for item in lst:
-        if not is_string(item):
-            return False
-    return True
+    return all(is_string(item) for item in lst)
 
 def is_sequence(seq):
     if is_string(seq):
@@ -527,17 +524,11 @@ def get_language(sources):
 
 def has_f_sources(sources):
     """Return True if sources contains Fortran files """
-    for source in sources:
-        if fortran_ext_match(source):
-            return True
-    return False
+    return any(fortran_ext_match(source) for source in sources)
 
 def has_cxx_sources(sources):
     """Return True if sources contains C++ files """
-    for source in sources:
-        if cxx_ext_match(source):
-            return True
-    return False
+    return any(cxx_ext_match(source) for source in sources)
 
 def filter_sources(sources):
     """Return four lists of filenames containing
@@ -1420,7 +1411,7 @@ class Configuration:
         """Apply glob to paths and prepend local_path if needed.
 
         Applies glob.glob(...) to each path in the sequence (if needed) and
-        pre-pends the local_path if needed. Because this is called on all
+        prepends the local_path if needed. Because this is called on all
         source lists, this allows wildcard characters to be specified in lists
         of sources for extension modules and libraries and scripts and allows
         path-names be relative to the source directory.

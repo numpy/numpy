@@ -53,3 +53,6 @@ assert_type(np.kron(AR_f8, AR_f8), npt.NDArray[np.floating[Any]])
 
 assert_type(np.tile(AR_i8, 5), npt.NDArray[np.int64])
 assert_type(np.tile(AR_LIKE_f8, [2, 2]), npt.NDArray[Any])
+
+assert_type(np.unstack(AR_i8, axis=0), tuple[npt.NDArray[np.int64], ...])
+assert_type(np.unstack(AR_LIKE_f8, axis=0), tuple[npt.NDArray[Any], ...])

@@ -346,7 +346,8 @@ def mapdomain(x, old, new):
     array([-1.0+1.j , -0.6+0.6j, -0.2+0.2j,  0.2-0.2j,  0.6-0.6j,  1.0-1.j ]) # may vary
 
     """
-    x = np.asanyarray(x)
+    if type(x) not in (int, float, complex) and not isinstance(x, np.generic):
+        x = np.asanyarray(x)
     off, scl = mapparms(old, new)
     return off + scl*x
 
@@ -479,7 +480,7 @@ def _valnd(val_f, c, *args):
     """
     args = [np.asanyarray(a) for a in args]
     shape0 = args[0].shape
-    if not all((a.shape == shape0 for a in args[1:])):
+    if not all(a.shape == shape0 for a in args[1:]):
         if len(args) == 3:
             raise ValueError('x, y, z are incompatible')
         elif len(args) == 2:

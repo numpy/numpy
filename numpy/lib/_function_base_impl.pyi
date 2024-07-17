@@ -1,4 +1,3 @@
-import sys
 from collections.abc import Sequence, Iterator, Callable, Iterable
 from typing import (
     Literal as L,
@@ -8,16 +7,11 @@ from typing import (
     Protocol,
     SupportsIndex,
     SupportsInt,
+    TypeGuard
 )
-
-if sys.version_info >= (3, 10):
-    from typing import TypeGuard
-else:
-    from typing_extensions import TypeGuard
 
 from numpy import (
     vectorize as vectorize,
-    ufunc,
     generic,
     floating,
     complexfloating,
@@ -317,12 +311,6 @@ def extract(condition: ArrayLike, arr: _ArrayLike[_SCT]) -> NDArray[_SCT]: ...
 def extract(condition: ArrayLike, arr: ArrayLike) -> NDArray[Any]: ...
 
 def place(arr: NDArray[Any], mask: ArrayLike, vals: Any) -> None: ...
-
-def disp(
-    mesg: object,
-    device: None | _SupportsWriteFlush = ...,
-    linefeed: bool = ...,
-) -> None: ...
 
 @overload
 def cov(

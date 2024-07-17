@@ -22,8 +22,8 @@ masked arrays:
 
 >>> m = np.ma.masked_array(x, np.isnan(x))
 >>> m
-masked_array(data = [2.0 1.0 3.0 -- 5.0 2.0 3.0 --],
-      mask = [False False False  True False False False  True],
+masked_array(data=[2.0, 1.0, 3.0, --, 5.0, 2.0, 3.0, --],
+             mask=[False, False, False, True, False, False, False, True],
       fill_value=1e+20)
 
 Here, we construct a masked array that suppress all ``NaN`` values.  We

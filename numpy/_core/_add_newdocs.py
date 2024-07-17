@@ -937,7 +937,7 @@ add_newdoc('numpy._core.multiarray', 'asarray',
         'K' (keep) preserve input order
         Defaults to 'K'.
     device : str, optional
-        The device on which to place the created array. Default: None.
+        The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
@@ -1031,7 +1031,7 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
         'K' (keep) preserve input order
         Defaults to 'C'.
     device : str, optional
-        The device on which to place the created array. Default: None.
+        The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.1.0
@@ -1235,7 +1235,7 @@ add_newdoc('numpy._core.multiarray', 'empty',
         (C-style) or column-major (Fortran-style) order in
         memory.
     device : str, optional
-        The device on which to place the created array. Default: None.
+        The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
@@ -1679,7 +1679,7 @@ add_newdoc('numpy._core.multiarray', 'frombuffer',
 
 add_newdoc('numpy._core.multiarray', 'from_dlpack',
     """
-    from_dlpack(x, /)
+    from_dlpack(x, /, *, device=None, copy=None)
 
     Create a NumPy array from an object implementing the ``__dlpack__``
     protocol. Generally, the returned NumPy array is a read-only view
@@ -1690,6 +1690,19 @@ add_newdoc('numpy._core.multiarray', 'from_dlpack',
     x : object
         A Python object that implements the ``__dlpack__`` and
         ``__dlpack_device__`` methods.
+    device : device, optional
+        Device on which to place the created array. Default: ``None``.
+        Must be ``"cpu"`` if passed which may allow importing an array
+        that is not already CPU available.
+    copy : bool, optional
+        Boolean indicating whether or not to copy the input. If ``True``,
+        the copy will be made. If ``False``, the function will never copy,
+        and will raise ``BufferError`` in case a copy is deemed necessary.
+        Passing it requests a copy from the exporter who may or may not
+        implement the capability.
+        If ``None``, the function will reuse the existing memory buffer if
+        possible and copy otherwise. Default: ``None``.
+
 
     Returns
     -------
@@ -1758,7 +1771,7 @@ add_newdoc('numpy._core.multiarray', 'arange',
         The type of the output array.  If `dtype` is not given, infer the data
         type from the other input arguments.
     device : str, optional
-        The device on which to place the created array. Default: None.
+        The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
@@ -1843,15 +1856,6 @@ add_newdoc('numpy._core.multiarray', '_reconstruct',
     """_reconstruct(subtype, shape, dtype)
 
     Construct an empty array. Used by Pickles.
-
-    """)
-
-
-add_newdoc('numpy._core.multiarray', 'set_string_function',
-    """
-    set_string_function(f, repr=1)
-
-    Internal method to set a function to be used when pretty printing arrays.
 
     """)
 
@@ -2389,14 +2393,20 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_struct__',
     """Array protocol: C-struct side."""))
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__dlpack__',
-    """a.__dlpack__(*, stream=None)
+    """
+    a.__dlpack__(*, stream=None, max_version=None, dl_device=None, copy=None)
 
-    DLPack Protocol: Part of the Array API."""))
+    DLPack Protocol: Part of the Array API.
+
+    """))
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__dlpack_device__',
-    """a.__dlpack_device__()
+    """
+    a.__dlpack_device__()
 
-    DLPack Protocol: Part of the Array API."""))
+    DLPack Protocol: Part of the Array API.
+
+    """))
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('base',
     """
@@ -6612,7 +6622,7 @@ add_newdoc('numpy._core.multiarray', 'datetime_data',
     as a timedelta
 
     >>> np.datetime64('2010', np.datetime_data(dt_25s))
-    numpy.datetime64('2010-01-01T00:00:00','25s')
+    np.datetime64('2010-01-01T00:00:00','25s')
     """)
 
 
@@ -6953,19 +6963,19 @@ add_newdoc('numpy._core.multiarray', 'StringDType',
     array(["hello", "world"], dtype=StringDType())
 
     >>> arr = np.array(["hello", None, "world"],
-                       dtype=StringDType(na_object=None))
+    ...                dtype=StringDType(na_object=None))
     >>> arr
-    array(["hello", None, "world", dtype=StringDType(na_object=None))
+    array(["hello", None, "world"], dtype=StringDType(na_object=None))
     >>> arr[1] is None
     True
 
     >>> arr = np.array(["hello", np.nan, "world"],
-                       dtype=StringDType(na_object=np.nan))
+    ...                dtype=StringDType(na_object=np.nan))
     >>> np.isnan(arr)
     array([False, True, False])
 
     >>> np.array([1.2, object(), "hello world"],
-                 dtype=StringDType(coerce=True))
+    ...          dtype=StringDType(coerce=True))
     ValueError: StringDType only allows string data when string coercion
     is disabled.
 

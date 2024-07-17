@@ -10,6 +10,11 @@ if not cy.version().version_compare('>=3.0.6')
   error('tests requires Cython >= 3.0.6')
 endif
 
+cython_args = []
+if cy.version().version_compare('>=3.1.0')
+  cython_args += ['-Xfreethreading_compatible=True']
+endif
+
 npy_include_path = run_command(py, [
     '-c',
     'import os; os.chdir(".."); import numpy; print(os.path.abspath(numpy.get_include()))'
@@ -34,4 +39,5 @@ py.extension_module(
       '-DNPY_TARGET_VERSION=NPY_2_0_API_VERSION',
     ],
     include_directories: [npy_include_path],
+    cython_args: cython_args,
 )

@@ -6,7 +6,7 @@ NpyString API
 .. versionadded:: 2.0
 
 This API allows access to the UTF-8 string data stored in NumPy StringDType
-arrays. See `NEP-55 <https://numpy.org/neps/nep-0055-string_dtype.html>`_ for
+arrays. See :ref:`NEP-55 <NEP55>` for
 more in-depth details into the design of StringDType.
 
 Examples

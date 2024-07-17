@@ -176,7 +176,7 @@ Previous proposals and discussion
 ---------------------------------
 
 The duck typing protocol proposed here was described in a high level in
-`NEP 22 <https://numpy.org/neps/nep-0022-ndarray-duck-typing-overview.html>`_.
+:ref:`NEP 22 <NEP22>`.
 
 Additionally, longer discussions about the protocol and related proposals
 took place in

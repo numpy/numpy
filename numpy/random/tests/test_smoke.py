@@ -434,13 +434,13 @@ class RNG:
     def test_pickle(self):
         pick = pickle.dumps(self.rg)
         unpick = pickle.loads(pick)
-        assert_((type(self.rg) == type(unpick)))
+        assert_(type(self.rg) == type(unpick))
         assert_(comp_state(self.rg.bit_generator.state,
                            unpick.bit_generator.state))
 
         pick = pickle.dumps(self.rg)
         unpick = pickle.loads(pick)
-        assert_((type(self.rg) == type(unpick)))
+        assert_(type(self.rg) == type(unpick))
         assert_(comp_state(self.rg.bit_generator.state,
                            unpick.bit_generator.state))
 
@@ -735,7 +735,7 @@ class TestMT19937(RNG):
         self.rg.bit_generator.state = state
         state2 = self.rg.bit_generator.state
         assert_((state[1] == state2['state']['key']).all())
-        assert_((state[2] == state2['state']['pos']))
+        assert_(state[2] == state2['state']['pos'])
 
 
 class TestPhilox(RNG):

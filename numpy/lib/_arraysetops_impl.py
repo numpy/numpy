@@ -228,8 +228,13 @@ def unique(ar, return_index=False, return_inverse=False,
     .. versionchanged: 2.0
         For multi-dimensional inputs, ``unique_inverse`` is reshaped
         such that the input can be reconstructed using
-        ``np.take(unique, unique_inverse)`` when ``axis = None``, and
-        ``np.take_along_axis(unique, unique_inverse, axis=axis)`` otherwise.
+        ``np.take(unique, unique_inverse, axis=axis)``. The result is
+        now not 1-dimensional when ``axis=None``.
+
+        Note that in NumPy 2.0.0 a higher dimensional array was returned also
+        when ``axis`` was not ``None``.  This was reverted, but
+        ``inverse.reshape(-1)`` can be used to ensure compatibility with both
+        versions.
 
     Examples
     --------
@@ -282,7 +287,7 @@ def unique(ar, return_index=False, return_inverse=False,
     ar = np.asanyarray(ar)
     if axis is None:
         ret = _unique1d(ar, return_index, return_inverse, return_counts, 
-                        equal_nan=equal_nan, inverse_shape=ar.shape)
+                        equal_nan=equal_nan, inverse_shape=ar.shape, axis=None)
         return _unpack_tuple(ret)
 
     # axis was specified and not None
@@ -328,13 +333,15 @@ def unique(ar, return_index=False, return_inverse=False,
 
     output = _unique1d(consolidated, return_index,
                        return_inverse, return_counts,
-                       equal_nan=equal_nan, inverse_shape=inverse_shape)
+                       equal_nan=equal_nan, inverse_shape=inverse_shape,
+                       axis=axis)
     output = (reshape_uniq(output[0]),) + output[1:]
     return _unpack_tuple(output)
 
 
 def _unique1d(ar, return_index=False, return_inverse=False,
-              return_counts=False, *, equal_nan=True, inverse_shape=None):
+              return_counts=False, *, equal_nan=True, inverse_shape=None,
+              axis=None):
     """
     Find the unique elements of an array, ignoring shape.
     """
@@ -371,7 +378,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         imask = np.cumsum(mask) - 1
         inv_idx = np.empty(mask.shape, dtype=np.intp)
         inv_idx[perm] = imask
-        ret += (inv_idx.reshape(inverse_shape),)
+        ret += (inv_idx.reshape(inverse_shape) if axis is None else inv_idx,)
     if return_counts:
         idx = np.concatenate(np.nonzero(mask) + ([mask.size],))
         ret += (np.diff(idx),)
@@ -915,8 +922,25 @@ def _in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
 
             # Mask out elements we know won't work
             basic_mask = (ar1 <= ar2_max) & (ar1 >= ar2_min)
+            in_range_ar1 = ar1[basic_mask]
+            if in_range_ar1.size == 0:
+                # Nothing more to do, since all values are out of range.
+                return outgoing_array
+
+            # Unfortunately, ar2_min can be out of range for `intp` even
+            # if the calculation result must fit in range (and be positive).
+            # In that case, use ar2.dtype which must work for all unmasked
+            # values.
+            try:
+                ar2_min = np.array(ar2_min, dtype=np.intp)
+                dtype = np.intp
+            except OverflowError:
+                dtype = ar2.dtype
+
+            out = np.empty_like(in_range_ar1, dtype=np.intp)
             outgoing_array[basic_mask] = isin_helper_ar[
-                    np.subtract(ar1[basic_mask], ar2_min, dtype=np.intp)]
+                    np.subtract(in_range_ar1, ar2_min, dtype=dtype,
+                                out=out, casting="unsafe")]
 
             return outgoing_array
         elif kind == 'table':  # not range_safe_from_overflow

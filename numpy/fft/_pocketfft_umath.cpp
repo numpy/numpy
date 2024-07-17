@@ -419,5 +419,10 @@ PyMODINIT_FUNC PyInit__pocketfft_umath(void)
         return NULL;
     }
 
+#if Py_GIL_DISABLED
+    // signal this module supports running with the GIL disabled
+    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+#endif
+
     return m;
 }

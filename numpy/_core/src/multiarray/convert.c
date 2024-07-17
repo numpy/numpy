@@ -408,9 +408,9 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     char *value = (char *)value_buffer_stack;
     PyArray_Descr *descr = PyArray_DESCR(arr);
 
-    if ((size_t)descr->elsize > sizeof(value_buffer_stack)) {
+    if (PyDataType_ELSIZE(descr) > sizeof(value_buffer_stack)) {
         /* We need a large temporary buffer... */
-        value_buffer_heap = PyObject_Calloc(1, descr->elsize);
+        value_buffer_heap = PyMem_Calloc(1, PyDataType_ELSIZE(descr));
         if (value_buffer_heap == NULL) {
             PyErr_NoMemory();
             return -1;

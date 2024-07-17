@@ -51,4 +51,5 @@ ${dep_list}
 ${lib_list}
 ${lib_dir_list}
                      ],
+${fortran_args}
                      install : true)

@@ -16,6 +16,7 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
+from datetime import datetime
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
@@ -48,7 +49,8 @@ master_doc = 'content'
 
 # General information about the project.
 project = 'NumPy Enhancement Proposals'
-copyright = '2017-2018, NumPy Developers'
+year = datetime.now().year
+copyright = f'2017-{year}, NumPy Developers'
 author = 'NumPy Developers'
 title = 'NumPy Enhancement Proposals Documentation'
 

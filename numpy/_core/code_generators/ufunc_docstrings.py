@@ -3619,8 +3619,10 @@ add_newdoc('numpy._core.umath', 'sign',
     Notes
     -----
     There is more than one definition of sign in common use for complex
-    numbers.  The definition used here is equivalent to :math:`x/\\sqrt{x*x}`
-    which is different from a common alternative, :math:`x/|x|`.
+    numbers.  The definition used here, :math:`x/|x|`, is the more common
+    and useful one, but is different from the one used in numpy prior to
+    version 2.0, :math:`x/\\sqrt{x*x}`, which is equivalent to 
+    ``sign(x.real) + 0j if x.real != 0 else sign(x.imag) + 0j``.
 
     Examples
     --------

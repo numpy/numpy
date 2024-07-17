@@ -523,7 +523,6 @@ cdef extern from "numpy/arrayobject.h":
     # more than is probably needed until it can be checked further.
     int PyArray_INCREF (ndarray) except *  # uses PyArray_Item_INCREF...
     int PyArray_XDECREF (ndarray) except *  # uses PyArray_Item_DECREF...
-    void PyArray_SetStringFunction (object, int)
     dtype PyArray_DescrFromType (int)
     object PyArray_TypeObjectFromType (int)
     char * PyArray_Zero (ndarray)

@@ -151,10 +151,10 @@ def empty_like(
            [          0,           0, -1073741821]])
     >>> a = np.array([[1., 2., 3.],[4.,5.,6.]])
     >>> np.empty_like(a)
-    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], # uninit
+    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], # uninitialized
            [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
 
-    """
+    """   # NOQA
     return (prototype,)
 
 
@@ -1580,27 +1580,27 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
     --------
     >>> # First business day in October 2011 (not accounting for holidays)
     ... np.busday_offset('2011-10', 0, roll='forward')
-    numpy.datetime64('2011-10-03')
+    np.datetime64('2011-10-03')
     >>> # Last business day in February 2012 (not accounting for holidays)
     ... np.busday_offset('2012-03', -1, roll='forward')
-    numpy.datetime64('2012-02-29')
+    np.datetime64('2012-02-29')
     >>> # Third Wednesday in January 2011
     ... np.busday_offset('2011-01', 2, roll='forward', weekmask='Wed')
-    numpy.datetime64('2011-01-19')
+    np.datetime64('2011-01-19')
     >>> # 2012 Mother's Day in Canada and the U.S.
     ... np.busday_offset('2012-05', 1, roll='forward', weekmask='Sun')
-    numpy.datetime64('2012-05-13')
+    np.datetime64('2012-05-13')
 
     >>> # First business day on or after a date
     ... np.busday_offset('2011-03-20', 0, roll='forward')
-    numpy.datetime64('2011-03-21')
+    np.datetime64('2011-03-21')
     >>> np.busday_offset('2011-03-22', 0, roll='forward')
-    numpy.datetime64('2011-03-22')
+    np.datetime64('2011-03-22')
     >>> # First business day after a date
     ... np.busday_offset('2011-03-20', 1, roll='backward')
-    numpy.datetime64('2011-03-21')
+    np.datetime64('2011-03-21')
     >>> np.busday_offset('2011-03-22', 1, roll='backward')
-    numpy.datetime64('2011-03-23')
+    np.datetime64('2011-03-23')
     """
     return (dates, offsets, weekmask, holidays, out)
 

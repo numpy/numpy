@@ -41,6 +41,8 @@ by arrays ``xdata`` and ``ydata``, the
 `~chebyshev.Chebyshev.fit` class method::
 
     >>> from numpy.polynomial import Chebyshev
+    >>> xdata = [1, 2, 3, 4]
+    >>> ydata = [1, 4, 9, 16]
     >>> c = Chebyshev.fit(xdata, ydata, deg=1)
 
 is preferred over the `chebyshev.chebfit` function from the

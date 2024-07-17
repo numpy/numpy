@@ -7,11 +7,22 @@
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_2_compat.h"
 #include "npy_argparse.h"
-
+#include "npy_atomic.h"
 #include "npy_import.h"
 
 #include "arrayfunction_override.h"
 
+static PyThread_type_lock argparse_mutex;
+
+NPY_NO_EXPORT int
+init_argparse_mutex(void) {
+    argparse_mutex = PyThread_allocate_lock();
+    if (argparse_mutex == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+    return 0;
+}
 
 /**
  * Small wrapper converting to array just like CPython does.
@@ -274,15 +285,20 @@ _npy_parse_arguments(const char *funcname,
         /* ... is NULL, NULL, NULL terminated: name, converter, value */
         ...)
 {
-    if (NPY_UNLIKELY(cache->npositional == -1)) {
-        va_list va;
-        va_start(va, kwnames);
-
-        int res = initialize_keywords(funcname, cache, va);
-        va_end(va);
-        if (res < 0) {
-            return -1;
+    if (!npy_atomic_load_uint8(&cache->initialized)) {
+        PyThread_acquire_lock(argparse_mutex, WAIT_LOCK);
+        if (!npy_atomic_load_uint8(&cache->initialized)) {
+            va_list va;
+            va_start(va, kwnames);
+            int res = initialize_keywords(funcname, cache, va);
+            va_end(va);
+            if (res < 0) {
+                PyThread_release_lock(argparse_mutex);
+                return -1;
+            }
+            npy_atomic_store_uint8(&cache->initialized, 1);
         }
+        PyThread_release_lock(argparse_mutex);
     }
 
     if (NPY_UNLIKELY(len_args > cache->npositional)) {

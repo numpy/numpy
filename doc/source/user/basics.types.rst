@@ -56,7 +56,7 @@ dtype objects also contain information about the type, such as its bit-width
 and its byte-order.  The data type can also be used indirectly to query
 properties of the type, such as whether it is an integer::
 
-    >>> d = np.dtype(int64)
+    >>> d = np.dtype(np.int64)
     >>> d
     dtype('int64')
 

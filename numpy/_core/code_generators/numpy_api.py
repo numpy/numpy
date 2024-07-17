@@ -116,6 +116,8 @@ multiarray_funcs_api = {
     # Unused slot 41, was `PyArray_GetNumericOps`,
     'PyArray_INCREF':                       (42,),
     'PyArray_XDECREF':                      (43,),
+    # `PyArray_SetStringFunction` was stubbed out
+    # and should be removed in the future.
     'PyArray_SetStringFunction':            (44,),
     'PyArray_DescrFromType':                (45,),
     'PyArray_TypeObjectFromType':           (46,),

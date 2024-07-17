@@ -147,10 +147,11 @@ class Bounded(Benchmark):
              ]]
 
     def setup(self, bitgen, args):
+        seed = 707250673
         if bitgen == 'numpy':
-            self.rg = np.random.RandomState()
+            self.rg = np.random.RandomState(seed)
         else:
-            self.rg = Generator(getattr(np.random, bitgen)())
+            self.rg = Generator(getattr(np.random, bitgen)(seed))
         self.rg.random()
 
     def time_bounded(self, bitgen, args):

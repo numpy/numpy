@@ -1,5 +1,5 @@
 # This script is used by .github/workflows/wheels.yml to run the full test
-# suite, checks for lincense inclusion and that the openblas version is correct.
+# suite, checks for license inclusion and that the openblas version is correct.
 set -xe
 
 PROJECT_DIR="$1"
@@ -32,10 +32,21 @@ FREE_THREADED_BUILD="$(python -c"import sysconfig; print(bool(sysconfig.get_conf
 if [[ $FREE_THREADED_BUILD == "True" ]]; then
     # TODO: delete when numpy is buildable under free-threaded python
     # with a released version of cython
-    python -m pip install git+https://github.com/cython/cython
-    # TODO: delete when importing numpy no longer enables the GIL
-    # setting to zero ensures the GIL is disabled while running the
-    # tests under free-threaded python
+    python -m pip uninstall -y cython
+    python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
+
+    # Manually check that importing NumPy does not re-enable the GIL.
+    # Afterwards, force the GIL to always be disabled so it does not get
+    # re-enabled during the tests.
+    #
+    # TODO: delete when f2py grows the ability to define extensions that declare
+    # they can run without the gil or when we can work around the fact the f2py
+    # tests import modules that don't declare gil-disabled support.
+    if [[ $(python -c "import numpy" 2>&1) == "*The global interpreter lock (GIL) has been enabled*" ]]; then
+        echo "Error: Importing NumPy re-enables the GIL in the free-threaded build"
+        exit 1
+    fi
+
     export PYTHON_GIL=0
 fi
 

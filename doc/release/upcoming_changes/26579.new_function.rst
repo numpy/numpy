@@ -1,0 +1,6 @@
+New function `numpy.unstack`
+----------------------------
+
+A new function ``np.unstack(array, axis=...)`` was added, which splits
+an array into a tuple of arrays along an axis. It serves as the inverse
+of `numpy.stack`.

@@ -3,7 +3,7 @@ wheel==0.38.1
 #setuptools==65.5.1 ; python_version < '3.12'
 #setuptools         ; python_version >= '3.12'
 setuptools
-hypothesis==6.81.1
+hypothesis==6.104.1
 pytest==7.4.0
 pytz==2023.3.post1
 pytest-cov==4.1.0

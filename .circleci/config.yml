@@ -95,14 +95,10 @@ jobs:
      #      destination: neps
 
       - run:
-          name: run doctests on documentation
+          name: run refguide-check
           command: |
             . venv/bin/activate
-            # Note: keep these two checks separate, because they seem to
-            # influence each other through changing global state (e.g., via
-            # `np.polynomial.set_default_printstyle`)
-            python tools/refguide_check.py --rst
-            python tools/refguide_check.py --doctests
+            python tools/refguide_check.py -v
 
       - persist_to_workspace:
           root: ~/repo

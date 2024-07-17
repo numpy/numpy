@@ -1071,8 +1071,8 @@ class TestRegression:
         with open(filename, 'rb') as f:
             xp = pickle.load(f, encoding='latin1')
         xpd = xp.astype(np.float64)
-        assert_((xp.__array_interface__['data'][0] !=
-                xpd.__array_interface__['data'][0]))
+        assert_(xp.__array_interface__['data'][0] !=
+                xpd.__array_interface__['data'][0])
 
     def test_compress_small_type(self):
         # Ticket #789, changeset 5217.
@@ -2567,15 +2567,17 @@ class TestRegression:
         assert xp is np
         xp = arr.__array_namespace__(api_version="2022.12")
         assert xp is np
+        xp = arr.__array_namespace__(api_version="2023.12")
+        assert xp is np
         xp = arr.__array_namespace__(api_version=None)
         assert xp is np
 
         with pytest.raises(
             ValueError,
-            match="Version \"2023.12\" of the Array API Standard "
+            match="Version \"2024.12\" of the Array API Standard "
                   "is not supported."
         ):
-            arr.__array_namespace__(api_version="2023.12")
+            arr.__array_namespace__(api_version="2024.12")
 
         with pytest.raises(
             ValueError,

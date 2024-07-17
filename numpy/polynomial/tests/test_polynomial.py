@@ -627,3 +627,12 @@ class TestMisc:
 
     def test_polyline_zero(self):
         assert_equal(poly.polyline(3, 0), [3])
+
+    def test_result_type(self):
+        w = np.array([-1, 1], dtype=np.float32)
+        p = np.polynomial.Polynomial(w, domain=w, window=w)
+        v = p(2)
+        assert_equal(v.dtype, np.float32)
+
+        arr = np.polydiv(1, np.float32(1))
+        assert_equal(arr[0].dtype, np.float64)

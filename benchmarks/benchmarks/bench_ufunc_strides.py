@@ -8,7 +8,7 @@ UFUNCS_UNARY = [uf for uf in UFUNCS if "O->O" in uf.types]
 
 class _AbstractBinary(Benchmark):
     params = []
-    param_names = ['ufunc', 'stride_in0', 'stride_in1' 'stride_out', 'dtype']
+    param_names = ['ufunc', 'stride_in0', 'stride_in1', 'stride_out', 'dtype']
     timeout = 10
     arrlen = 10000
     data_finite = True

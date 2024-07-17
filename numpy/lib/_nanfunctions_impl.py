@@ -141,7 +141,7 @@ def _copyto(a, val, mask):
     return a
 
 
-def _remove_nan_1d(arr1d, overwrite_input=False):
+def _remove_nan_1d(arr1d, second_arr1d=None, overwrite_input=False):
     """
     Equivalent to arr1d[~arr1d.isnan()], but in a different order
 
@@ -151,6 +151,8 @@ def _remove_nan_1d(arr1d, overwrite_input=False):
     ----------
     arr1d : ndarray
         Array to remove nans from
+    second_arr1d : ndarray or None
+        A second array which will have the same positions removed as arr1d.
     overwrite_input : bool
         True if `arr1d` can be modified in place
 
@@ -158,6 +160,8 @@ def _remove_nan_1d(arr1d, overwrite_input=False):
     -------
     res : ndarray
         Array with nan elements removed
+    second_res : ndarray or None
+        Second array with nan element positions of first array removed.
     overwrite_input : bool
         True if `res` can be modified in place, given the constraint on the
         input
@@ -172,9 +176,12 @@ def _remove_nan_1d(arr1d, overwrite_input=False):
     if s.size == arr1d.size:
         warnings.warn("All-NaN slice encountered", RuntimeWarning,
                       stacklevel=6)
-        return arr1d[:0], True
+        if second_arr1d is None:
+            return arr1d[:0], None, True
+        else:
+            return arr1d[:0], second_arr1d[:0], True
     elif s.size == 0:
-        return arr1d, overwrite_input
+        return arr1d, second_arr1d, overwrite_input
     else:
         if not overwrite_input:
             arr1d = arr1d.copy()
@@ -183,7 +190,15 @@ def _remove_nan_1d(arr1d, overwrite_input=False):
         # fill nans in beginning of array with non-nans of end
         arr1d[s[:enonan.size]] = enonan
 
-        return arr1d[:-s.size], True
+        if second_arr1d is None:
+            return arr1d[:-s.size], None, True
+        else:
+            if not overwrite_input:
+                second_arr1d = second_arr1d.copy()
+            enonan = second_arr1d[-s.size:][~c[-s.size:]]
+            second_arr1d[s[:enonan.size]] = enonan
+
+            return arr1d[:-s.size], second_arr1d[:-s.size], True
 
 
 def _divide_by_count(a, b, out=None):
@@ -1061,7 +1076,7 @@ def _nanmedian1d(arr1d, overwrite_input=False):
     Private function for rank 1 arrays. Compute the median ignoring NaNs.
     See nanmedian for parameter usage
     """
-    arr1d_parsed, overwrite_input = _remove_nan_1d(
+    arr1d_parsed, _, overwrite_input = _remove_nan_1d(
         arr1d, overwrite_input=overwrite_input,
     )
 
@@ -1650,13 +1665,36 @@ def _nanquantile_ureduce_func(
         wgt = None if weights is None else weights.ravel()
         result = _nanquantile_1d(part, q, overwrite_input, method, weights=wgt)
     else:
-        result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
-                                     overwrite_input, method, weights)
-        # apply_along_axis fills in collapsed axis with results.
-        # Move that axis to the beginning to match percentile's
-        # convention.
-        if q.ndim != 0:
-            result = np.moveaxis(result, axis, 0)
+        # Note that this code could try to fill in `out` right away
+        if weights is None:
+            result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
+                                         overwrite_input, method, weights)
+            # apply_along_axis fills in collapsed axis with results.
+            # Move those axes to the beginning to match percentile's
+            # convention.
+            if q.ndim != 0:
+                from_ax = [axis + i for i in range(q.ndim)]
+                result = np.moveaxis(result, from_ax, list(range(q.ndim)))
+        else:
+            # We need to apply along axis over 2 arrays, a and weights.
+            # move operation axes to end for simplicity:
+            a = np.moveaxis(a, axis, -1)
+            if weights is not None:
+                weights = np.moveaxis(weights, axis, -1)
+            if out is not None:
+                result = out
+            else:
+                # weights are limited to `inverted_cdf` so the result dtype
+                # is known to be identical to that of `a` here:
+                result = np.empty_like(a, shape=q.shape + a.shape[:-1])
+
+            for ii in np.ndindex(a.shape[:-1]):
+                result[(...,) + ii] = _nanquantile_1d(
+                        a[ii], q, weights=weights[ii],
+                        overwrite_input=overwrite_input, method=method,
+                )
+            # This path dealt with `out` already...
+            return result
 
     if out is not None:
         out[...] = result
@@ -1670,8 +1708,9 @@ def _nanquantile_1d(
     Private function for rank 1 arrays. Compute quantile ignoring NaNs.
     See nanpercentile for parameter usage
     """
-    arr1d, overwrite_input = _remove_nan_1d(arr1d,
-        overwrite_input=overwrite_input)
+    # TODO: What to do when arr1d = [1, np.nan] and weights = [0, 1]?
+    arr1d, weights, overwrite_input = _remove_nan_1d(arr1d,
+        second_arr1d=weights, overwrite_input=overwrite_input)
     if arr1d.size == 0:
         # convert to scalar
         return np.full(q.shape, np.nan, dtype=arr1d.dtype)[()]

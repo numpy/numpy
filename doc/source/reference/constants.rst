@@ -88,8 +88,6 @@ NumPy includes several constants:
     NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
     (IEEE 754). This means that Not a Number is not equivalent to infinity.
 
-    `NaN` and `NAN` are aliases of `nan`.
-
     .. rubric:: Examples
 
     >>> np.nan

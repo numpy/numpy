@@ -1,5 +1,6 @@
 import os
 import pytest
+import platform
 
 import numpy as np
 import numpy.testing as npt
@@ -109,6 +110,7 @@ class TestF90Contiuation(util.F2PyTest):
         assert(res[0] == 8)
         assert(res[1] == 15)
 
+@pytest.mark.slow
 def test_gh26623():
     # Including libraries with . should not generate an incorrect meson.build
     try:
@@ -119,3 +121,21 @@ def test_gh26623():
         )
     except RuntimeError as rerr:
         assert "lparen got assign" not in str(rerr)
+
+
+@pytest.mark.slow
+@pytest.mark.skipif(platform.system() not in ['Linux', 'Darwin'], reason='Unsupported on this platform for now')
+def test_gh25784():
+    # Compile dubious file using passed flags
+    try:
+        aa = util.build_module(
+            [util.getpath("tests", "src", "regression", "f77fixedform.f95")],
+            options=[
+                # Meson will collect and dedup these to pass to fortran_args:
+                "--f77flags='-ffixed-form -O2'",
+                "--f90flags=\"-ffixed-form -Og\"",
+            ],
+            module_name="Blah",
+        )
+    except ImportError as rerr:
+        assert "unknown_subroutine_" in str(rerr)

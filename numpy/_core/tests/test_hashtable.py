@@ -24,7 +24,12 @@ def test_identity_hashtable(key_length, length):
     res = identityhash_tester(key_length, keys_vals, replace=True)
     assert res is expected
 
-    # check that ensuring one duplicate definitely raises:
-    keys_vals.insert(0, keys_vals[-2])
+    if length == 1:
+        return
+
+    # add a new item with a key that is already used and a new value, this
+    # should error if replace is False, see gh-26690
+    new_key = (keys_vals[1][0], object())
+    keys_vals[0] = new_key
     with pytest.raises(RuntimeError):
         identityhash_tester(key_length, keys_vals)

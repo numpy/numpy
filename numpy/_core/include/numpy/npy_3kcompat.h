@@ -5,8 +5,7 @@
  * hence the "3k" naming.
  *
  * If you want to use this for your own projects, it's recommended to make a
- * copy of it. Although the stuff below is unlikely to change, we don't provide
- * strong backwards compatibility guarantees at the moment.
+ * copy of it. We don't provide backwards compatibility guarantees.
  */
 
 #ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_3KCOMPAT_H_
@@ -15,27 +14,13 @@
 #include <Python.h>
 #include <stdio.h>
 
-#ifndef NPY_PY3K
-#define NPY_PY3K 1
-#endif
-
-#include "numpy/npy_common.h"
-#include "numpy/ndarrayobject.h"
+#include "npy_common.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/*
- * PyInt -> PyLong
- */
-
-
-/*
- * This is a renamed copy of the Python non-limited API function _PyLong_AsInt. It is
- * included here because it is missing from the PyPy API. It completes the PyLong_As*
- * group of functions and can be useful in replacing PyInt_Check.
- */
+/* Python13 removes _PyLong_AsInt */
 static inline int
 Npy__PyLong_AsInt(PyObject *obj)
 {
@@ -53,128 +38,14 @@ Npy__PyLong_AsInt(PyObject *obj)
     return (int)result;
 }
 
+#if defined _MSC_VER && _MSC_VER >= 1900
 
-#if defined(NPY_PY3K)
-/* Return True only if the long fits in a C long */
-static inline int PyInt_Check(PyObject *op) {
-    int overflow = 0;
-    if (!PyLong_Check(op)) {
-        return 0;
-    }
-    PyLong_AsLongAndOverflow(op, &overflow);
-    return (overflow == 0);
-}
-
-
-#define PyInt_FromLong PyLong_FromLong
-#define PyInt_AsLong PyLong_AsLong
-#define PyInt_AS_LONG PyLong_AsLong
-#define PyInt_AsSsize_t PyLong_AsSsize_t
-#define PyNumber_Int PyNumber_Long
-
-/* NOTE:
- *
- * Since the PyLong type is very different from the fixed-range PyInt,
- * we don't define PyInt_Type -> PyLong_Type.
- */
-#endif /* NPY_PY3K */
-
-/* Py3 changes PySlice_GetIndicesEx' first argument's type to PyObject* */
-#ifdef NPY_PY3K
-#  define NpySlice_GetIndicesEx PySlice_GetIndicesEx
-#else
-#  define NpySlice_GetIndicesEx(op, nop, start, end, step, slicelength) \
-    PySlice_GetIndicesEx((PySliceObject *)op, nop, start, end, step, slicelength)
-#endif
-
-#if PY_VERSION_HEX < 0x030900a4
-    /* Introduced in https://github.com/python/cpython/commit/d2ec81a8c99796b51fb8c49b77a7fe369863226f */
-    #define Py_SET_TYPE(obj, type) ((Py_TYPE(obj) = (type)), (void)0)
-    /* Introduced in https://github.com/python/cpython/commit/b10dc3e7a11fcdb97e285882eba6da92594f90f9 */
-    #define Py_SET_SIZE(obj, size) ((Py_SIZE(obj) = (size)), (void)0)
-    /* Introduced in https://github.com/python/cpython/commit/c86a11221df7e37da389f9c6ce6e47ea22dc44ff */
-    #define Py_SET_REFCNT(obj, refcnt) ((Py_REFCNT(obj) = (refcnt)), (void)0)
-#endif
-
-
-#define Npy_EnterRecursiveCall(x) Py_EnterRecursiveCall(x)
-
-/*
- * PyString -> PyBytes
- */
-
-#if defined(NPY_PY3K)
-
-#define PyString_Type PyBytes_Type
-#define PyString_Check PyBytes_Check
-#define PyStringObject PyBytesObject
-#define PyString_FromString PyBytes_FromString
-#define PyString_FromStringAndSize PyBytes_FromStringAndSize
-#define PyString_AS_STRING PyBytes_AS_STRING
-#define PyString_AsStringAndSize PyBytes_AsStringAndSize
-#define PyString_FromFormat PyBytes_FromFormat
-#define PyString_Concat PyBytes_Concat
-#define PyString_ConcatAndDel PyBytes_ConcatAndDel
-#define PyString_AsString PyBytes_AsString
-#define PyString_GET_SIZE PyBytes_GET_SIZE
-#define PyString_Size PyBytes_Size
-
-#define PyUString_Type PyUnicode_Type
-#define PyUString_Check PyUnicode_Check
-#define PyUStringObject PyUnicodeObject
-#define PyUString_FromString PyUnicode_FromString
-#define PyUString_FromStringAndSize PyUnicode_FromStringAndSize
-#define PyUString_FromFormat PyUnicode_FromFormat
-#define PyUString_Concat PyUnicode_Concat2
-#define PyUString_ConcatAndDel PyUnicode_ConcatAndDel
-#define PyUString_GET_SIZE PyUnicode_GET_SIZE
-#define PyUString_Size PyUnicode_Size
-#define PyUString_InternFromString PyUnicode_InternFromString
-#define PyUString_Format PyUnicode_Format
-
-#define PyBaseString_Check(obj) (PyUnicode_Check(obj))
-
-#else
-
-#define PyBytes_Type PyString_Type
-#define PyBytes_Check PyString_Check
-#define PyBytesObject PyStringObject
-#define PyBytes_FromString PyString_FromString
-#define PyBytes_FromStringAndSize PyString_FromStringAndSize
-#define PyBytes_AS_STRING PyString_AS_STRING
-#define PyBytes_AsStringAndSize PyString_AsStringAndSize
-#define PyBytes_FromFormat PyString_FromFormat
-#define PyBytes_Concat PyString_Concat
-#define PyBytes_ConcatAndDel PyString_ConcatAndDel
-#define PyBytes_AsString PyString_AsString
-#define PyBytes_GET_SIZE PyString_GET_SIZE
-#define PyBytes_Size PyString_Size
-
-#define PyUString_Type PyString_Type
-#define PyUString_Check PyString_Check
-#define PyUStringObject PyStringObject
-#define PyUString_FromString PyString_FromString
-#define PyUString_FromStringAndSize PyString_FromStringAndSize
-#define PyUString_FromFormat PyString_FromFormat
-#define PyUString_Concat PyString_Concat
-#define PyUString_ConcatAndDel PyString_ConcatAndDel
-#define PyUString_GET_SIZE PyString_GET_SIZE
-#define PyUString_Size PyString_Size
-#define PyUString_InternFromString PyString_InternFromString
-#define PyUString_Format PyString_Format
-
-#define PyBaseString_Check(obj) (PyBytes_Check(obj) || PyUnicode_Check(obj))
-
-#endif /* NPY_PY3K */
+#include <stdlib.h>
 
 /*
  * Macros to protect CRT calls against instant termination when passed an
  * invalid parameter (https://bugs.python.org/issue23524).
  */
-#if defined _MSC_VER && _MSC_VER >= 1900
-
-#include <stdlib.h>
-
 extern _invalid_parameter_handler _Py_silent_invalid_parameter_handler;
 #define NPY_BEGIN_SUPPRESS_IPH { _invalid_parameter_handler _Py_old_handler = \
     _set_thread_local_invalid_parameter_handler(_Py_silent_invalid_parameter_handler);
@@ -186,20 +57,6 @@ extern _invalid_parameter_handler _Py_silent_invalid_parameter_handler;
 #define NPY_END_SUPPRESS_IPH
 
 #endif /* _MSC_VER >= 1900 */
-
-
-static inline void
-PyUnicode_ConcatAndDel(PyObject **left, PyObject *right)
-{
-    Py_SETREF(*left, PyUnicode_Concat(*left, right));
-    Py_DECREF(right);
-}
-
-static inline void
-PyUnicode_Concat2(PyObject **left, PyObject *right)
-{
-    Py_SETREF(*left, PyUnicode_Concat(*left, right));
-}
 
 /*
  * PyFile_* compatibility
@@ -216,13 +73,6 @@ npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
     PyObject *ret, *os, *io, *io_raw;
     npy_off_t pos;
     FILE *handle;
-
-    /* For Python 2 PyFileObject, use PyFile_AsFile */
-#if !defined(NPY_PY3K)
-    if (PyFile_Check(file)) {
-        return PyFile_AsFile(file);
-    }
-#endif
 
     /* Flush first to ensure things end up in the file in the correct order */
     ret = PyObject_CallMethod(file, "flush", "");
@@ -335,13 +185,6 @@ npy_PyFile_DupClose2(PyObject *file, FILE* handle, npy_off_t orig_pos)
     PyObject *ret, *io, *io_raw;
     npy_off_t position;
 
-    /* For Python 2 PyFileObject, do nothing */
-#if !defined(NPY_PY3K)
-    if (PyFile_Check(file)) {
-        return 0;
-    }
-#endif
-
     position = npy_ftell(handle);
 
     /* Close the FILE* handle */
@@ -395,24 +238,6 @@ npy_PyFile_DupClose2(PyObject *file, FILE* handle, npy_off_t orig_pos)
     return 0;
 }
 
-static inline int
-npy_PyFile_Check(PyObject *file)
-{
-    int fd;
-    /* For Python 2, check if it is a PyFileObject */
-#if !defined(NPY_PY3K)
-    if (PyFile_Check(file)) {
-        return 1;
-    }
-#endif
-    fd = PyObject_AsFileDescriptor(file);
-    if (fd == -1) {
-        PyErr_Clear();
-        return 0;
-    }
-    return 1;
-}
-
 static inline PyObject*
 npy_PyFile_OpenFile(PyObject *filename, const char *mode)
 {
@@ -437,8 +262,8 @@ npy_PyFile_CloseFile(PyObject *file)
     return 0;
 }
 
-
-/* This is a copy of _PyErr_ChainExceptions
+/* This is a copy of _PyErr_ChainExceptions, which
+ *  is no longer exported from Python3.12
  */
 static inline void
 npy_PyErr_ChainExceptions(PyObject *exc, PyObject *val, PyObject *tb)
@@ -447,30 +272,25 @@ npy_PyErr_ChainExceptions(PyObject *exc, PyObject *val, PyObject *tb)
         return;
 
     if (PyErr_Occurred()) {
-        /* only py3 supports this anyway */
-        #ifdef NPY_PY3K
-            PyObject *exc2, *val2, *tb2;
-            PyErr_Fetch(&exc2, &val2, &tb2);
-            PyErr_NormalizeException(&exc, &val, &tb);
-            if (tb != NULL) {
-                PyException_SetTraceback(val, tb);
-                Py_DECREF(tb);
-            }
-            Py_DECREF(exc);
-            PyErr_NormalizeException(&exc2, &val2, &tb2);
-            PyException_SetContext(val2, val);
-            PyErr_Restore(exc2, val2, tb2);
-        #endif
+        PyObject *exc2, *val2, *tb2;
+        PyErr_Fetch(&exc2, &val2, &tb2);
+        PyErr_NormalizeException(&exc, &val, &tb);
+        if (tb != NULL) {
+            PyException_SetTraceback(val, tb);
+            Py_DECREF(tb);
+        }
+        Py_DECREF(exc);
+        PyErr_NormalizeException(&exc2, &val2, &tb2);
+        PyException_SetContext(val2, val);
+        PyErr_Restore(exc2, val2, tb2);
     }
     else {
         PyErr_Restore(exc, val, tb);
     }
 }
 
-
 /* This is a copy of _PyErr_ChainExceptions, with:
- *  - a minimal implementation for python 2
- *  - __cause__ used instead of __context__
+ *  __cause__ used instead of __context__
  */
 static inline void
 npy_PyErr_ChainExceptionsCause(PyObject *exc, PyObject *val, PyObject *tb)
@@ -479,63 +299,22 @@ npy_PyErr_ChainExceptionsCause(PyObject *exc, PyObject *val, PyObject *tb)
         return;
 
     if (PyErr_Occurred()) {
-        /* only py3 supports this anyway */
-        #ifdef NPY_PY3K
-            PyObject *exc2, *val2, *tb2;
-            PyErr_Fetch(&exc2, &val2, &tb2);
-            PyErr_NormalizeException(&exc, &val, &tb);
-            if (tb != NULL) {
-                PyException_SetTraceback(val, tb);
-                Py_DECREF(tb);
-            }
-            Py_DECREF(exc);
-            PyErr_NormalizeException(&exc2, &val2, &tb2);
-            PyException_SetCause(val2, val);
-            PyErr_Restore(exc2, val2, tb2);
-        #endif
+        PyObject *exc2, *val2, *tb2;
+        PyErr_Fetch(&exc2, &val2, &tb2);
+        PyErr_NormalizeException(&exc, &val, &tb);
+        if (tb != NULL) {
+            PyException_SetTraceback(val, tb);
+            Py_DECREF(tb);
+        }
+        Py_DECREF(exc);
+        PyErr_NormalizeException(&exc2, &val2, &tb2);
+        PyException_SetCause(val2, val);
+        PyErr_Restore(exc2, val2, tb2);
     }
     else {
         PyErr_Restore(exc, val, tb);
     }
 }
-
-/*
- * PyObject_Cmp
- */
-#if defined(NPY_PY3K)
-static inline int
-PyObject_Cmp(PyObject *i1, PyObject *i2, int *cmp)
-{
-    int v;
-    v = PyObject_RichCompareBool(i1, i2, Py_LT);
-    if (v == 1) {
-        *cmp = -1;
-        return 1;
-    }
-    else if (v == -1) {
-        return -1;
-    }
-
-    v = PyObject_RichCompareBool(i1, i2, Py_GT);
-    if (v == 1) {
-        *cmp = 1;
-        return 1;
-    }
-    else if (v == -1) {
-        return -1;
-    }
-
-    v = PyObject_RichCompareBool(i1, i2, Py_EQ);
-    if (v == 1) {
-        *cmp = 0;
-        return 1;
-    }
-    else {
-        *cmp = 0;
-        return -1;
-    }
-}
-#endif
 
 /*
  * PyCObject functions adapted to PyCapsules.

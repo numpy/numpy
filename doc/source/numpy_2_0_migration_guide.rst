@@ -213,7 +213,7 @@ have been added for setting the real or imaginary part.
 The underlying type remains a struct under C++ (all of the above still remains
 valid).
 
-This has implications for Cython. It is recommened to always use the native
+This has implications for Cython. It is recommended to always use the native
 typedefs ``cfloat_t``, ``cdouble_t``, ``clongdouble_t`` rather than the NumPy
 types ``npy_cfloat``, etc, unless you have to interface with C code written
 using the NumPy types. You can still write cython code using the ``c.real`` and
@@ -231,7 +231,7 @@ private.
 Please see the tables below for guidance on migration.  For most changes this
 means replacing it with a backwards compatible alternative. 
 
-Please refer to `NEP 52 <https://numpy.org/neps/nep-0052-python-api-cleanup.html>`_ for more details.
+Please refer to :ref:`NEP52` for more details.
 
 Main namespace
 --------------
@@ -251,7 +251,9 @@ asfarray                Use ``np.asarray`` with a float dtype instead.
 byte_bounds             Now it's available under ``np.lib.array_utils.byte_bounds``
 cast                    Use ``np.asarray(arr, dtype=dtype)`` instead.
 cfloat                  Use ``np.complex128`` instead.
+charrarray              It's still available as ``np.char.chararray``.
 clongfloat              Use ``np.clongdouble`` instead.
+compare_chararrays      It's still available as ``np.char.compare_chararrays``.
 compat                  There's no replacement, as Python 2 is no longer supported.
 complex\_               Use ``np.complex128`` instead.
 cumproduct              Use ``np.cumprod`` instead.
@@ -266,6 +268,7 @@ find_common_type        Use ``numpy.promote_types`` or ``numpy.result_type`` ins
                         To achieve semantics for the ``scalar_types`` argument, 
                         use ``numpy.result_type`` and pass the Python values ``0``, 
                         ``0.0``, or ``0j``.
+format_parser           It's still available as ``np.rec.format_parser``.
 get_array_wrap
 float\_                 Use ``np.float64`` instead.
 geterrobj               Use the np.errstate context manager instead.

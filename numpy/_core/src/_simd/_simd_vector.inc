@@ -92,7 +92,7 @@ static PyTypeObject PySIMDVectorType = {
  * miss-align load variable of 256/512-bit vector from non-aligned
  * 256/512-bit stack pointer.
  *
- * check the following links for more clearification:
+ * check the following links for more clarification:
  * https://github.com/numpy/numpy/pull/18330#issuecomment-821539919
  * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=49001
  */

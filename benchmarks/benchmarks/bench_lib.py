@@ -66,10 +66,10 @@ class Nan(Benchmark):
             ]
 
     def setup(self, array_size, percent_nans):
-        np.random.seed(123)
+        rnd = np.random.RandomState(1819780348)
         # produce a randomly shuffled array with the
         # approximate desired percentage np.nan content
-        base_array = np.random.uniform(size=array_size)
+        base_array = rnd.uniform(size=array_size)
         base_array[base_array < percent_nans / 100.] = np.nan
         self.arr = base_array
 

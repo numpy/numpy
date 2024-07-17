@@ -1,0 +1,7 @@
+* `numpy.cumulative_sum` and `numpy.cumulative_prod` were added as Array API
+  compatible alternatives for `numpy.cumsum` and `numpy.cumprod`. The new functions
+  can include a fixed initial (zeros for ``sum`` and ones for ``prod``) in the result.
+* `numpy.clip` now supports ``max`` and ``min`` keyword arguments which are meant
+  to replace ``a_min`` and ``a_max``. Also, for ``np.clip(a)`` or ``np.clip(a, None, None)``
+  a copy of the input array will be returned instead of raising an error.
+* `numpy.astype` now supports ``device`` argument.

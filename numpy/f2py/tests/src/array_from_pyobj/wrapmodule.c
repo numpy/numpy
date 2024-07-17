@@ -115,7 +115,7 @@ static PyObject *f2py_rout_wrap_attrs(PyObject *capi_self,
                        PyArray_DESCR(arr)->type,
                        PyArray_TYPE(arr),
                        PyArray_ITEMSIZE(arr),
-                       PyArray_DESCR(arr)->alignment,
+                       PyDataType_ALIGNMENT(arr),
                        PyArray_FLAGS(arr),
                        PyArray_ITEMSIZE(arr));
 }
