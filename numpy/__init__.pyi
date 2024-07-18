@@ -901,6 +901,7 @@ _ArrayLikeInt: TypeAlias = (
 )
 
 _FlatIterSelf = TypeVar("_FlatIterSelf", bound=flatiter[Any])
+_FlatShapeType = TypeVar("_FlatShapeType", bound=tuple[int])
 
 @final
 class flatiter(Generic[_NdArraySubClass]):
@@ -934,6 +935,10 @@ class flatiter(Generic[_NdArraySubClass]):
         key: _ArrayLikeInt | slice | ellipsis | tuple[_ArrayLikeInt | slice | ellipsis],
         value: Any,
     ) -> None: ...
+    @overload
+    def __array__(self: flatiter[ndarray[_FlatShapeType, _DType]], dtype: None = ..., /) -> ndarray[_FlatShapeType, _DType]: ...
+    @overload
+    def __array__(self: flatiter[ndarray[_FlatShapeType, Any]], dtype: _DType, /) -> ndarray[_FlatShapeType, _DType]: ...
     @overload
     def __array__(self: flatiter[ndarray[Any, _DType]], dtype: None = ..., /) -> ndarray[Any, _DType]: ...
     @overload
@@ -1469,11 +1474,11 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @overload
     def __array__(
         self, dtype: None = ..., /, *, copy: None | bool = ...
-    ) -> ndarray[Any, _DType_co]: ...
+    ) -> ndarray[_ShapeType, _DType_co]: ...
     @overload
     def __array__(
         self, dtype: _DType, /, *, copy: None | bool = ...
-    ) -> ndarray[Any, _DType]: ...
+    ) -> ndarray[_ShapeType, _DType]: ...
 
     def __array_ufunc__(
         self,
@@ -1704,11 +1709,13 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         axis: None | SupportsIndex = ...,
     ) -> ndarray[Any, _DType_co]: ...
 
+    # TODO: use `tuple[int]` as shape type once covariant (#26081)
     def flatten(
         self,
         order: _OrderKACF = ...,
     ) -> ndarray[Any, _DType_co]: ...
 
+    # TODO: use `tuple[int]` as shape type once covariant (#26081)
     def ravel(
         self,
         order: _OrderKACF = ...,
@@ -2613,6 +2620,7 @@ _NBit2 = TypeVar("_NBit2", bound=NBitBase)
 class generic(_ArrayOrScalarCommon):
     @abstractmethod
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    # TODO: use `tuple[()]` as shape type once covariant (#26081)
     @overload
     def __array__(self: _ScalarType, dtype: None = ..., /) -> NDArray[_ScalarType]: ...
     @overload
@@ -3740,6 +3748,7 @@ class poly1d:
 
     __hash__: ClassVar[None]  # type: ignore
 
+    # TODO: use `tuple[int]` as shape type once covariant (#26081)
     @overload
     def __array__(self, t: None = ..., copy: None | bool = ...) -> NDArray[Any]: ...
     @overload
