@@ -212,8 +212,10 @@ else:
 
 # Ensures that the stubs are picked up
 from numpy import (
+    core as core,
     ctypeslib as ctypeslib,
     exceptions as exceptions,
+    f2py as f2py,
     fft as fft,
     lib as lib,
     linalg as linalg,
@@ -221,6 +223,7 @@ from numpy import (
     polynomial as polynomial,
     random as random,
     testing as testing,
+    typing as typing,
     version as version,
     exceptions as exceptions,
     dtypes as dtypes,
