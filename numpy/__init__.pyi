@@ -613,6 +613,126 @@ from numpy.matrixlib import (
     bmat as bmat,
 )
 
+__all__ = [
+    "emath", "show_config", "__version__", "__array_namespace_info__",
+
+    # __numpy_submodules__
+    "linalg", "fft", "dtypes", "random", "polynomial", "ma", "exceptions", "lib",
+    "ctypeslib", "testing", "test", "rec", "char", "strings",
+    "core", "typing", "f2py",
+
+    # _core.__all__
+    "abs", "acos", "acosh", "asin", "asinh", "atan", "atanh", "atan2", "bitwise_invert",
+    "bitwise_left_shift", "bitwise_right_shift", "concat", "pow", "permute_dims",
+    "memmap", "sctypeDict", "record", "recarray",
+
+    # _core.numeric.__all__
+    "newaxis", "ndarray", "flatiter", "nditer", "nested_iters", "ufunc", "arange",
+    "array", "asarray", "asanyarray", "ascontiguousarray", "asfortranarray", "zeros",
+    "count_nonzero", "empty", "broadcast", "dtype", "fromstring", "fromfile",
+    "frombuffer", "from_dlpack", "where", "argwhere", "copyto", "concatenate",
+    "lexsort", "astype", "can_cast", "promote_types", "min_scalar_type", "result_type",
+    "isfortran", "empty_like", "zeros_like", "ones_like", "correlate", "convolve",
+    "inner", "dot", "outer", "vdot", "roll", "rollaxis", "moveaxis", "cross",
+    "tensordot", "little_endian", "fromiter", "array_equal", "array_equiv", "indices",
+    "fromfunction", "isclose", "isscalar", "binary_repr", "base_repr", "ones",
+    "identity", "allclose", "putmask", "flatnonzero", "inf", "nan", "False_", "True_",
+    "bitwise_not", "full", "full_like", "matmul", "vecdot", "shares_memory",
+    "may_share_memory", "_get_promotion_state", "_set_promotion_state",
+    "all", "amax", "amin", "any", "argmax", "argmin", "argpartition", "argsort",
+    "around", "choose", "clip", "compress", "cumprod", "cumsum", "cumulative_prod",
+    "cumulative_sum", "diagonal", "mean", "max", "min", "matrix_transpose", "ndim",
+    "nonzero", "partition", "prod", "ptp", "put", "ravel", "repeat", "reshape",
+    "resize", "round", "searchsorted", "shape", "size", "sort", "squeeze", "std", "sum",
+    "swapaxes", "take", "trace", "transpose", "var",
+    "absolute", "add", "arccos", "arccosh", "arcsin", "arcsinh", "arctan", "arctan2",
+    "arctanh", "bitwise_and", "bitwise_or", "bitwise_xor", "cbrt", "ceil", "conj",
+    "conjugate", "copysign", "cos", "cosh", "bitwise_count", "deg2rad", "degrees",
+    "divide", "divmod", "e", "equal", "euler_gamma", "exp", "exp2", "expm1", "fabs",
+    "floor", "floor_divide", "float_power", "fmax", "fmin", "fmod", "frexp",
+    "frompyfunc", "gcd", "greater", "greater_equal", "heaviside", "hypot", "invert",
+    "isfinite", "isinf", "isnan", "isnat", "lcm", "ldexp", "left_shift", "less",
+    "less_equal", "log", "log10", "log1p", "log2", "logaddexp", "logaddexp2",
+    "logical_and", "logical_not", "logical_or", "logical_xor", "maximum", "minimum",
+    "mod", "modf", "multiply", "negative", "nextafter", "not_equal", "pi", "positive",
+    "power", "rad2deg", "radians", "reciprocal", "remainder", "right_shift", "rint",
+    "sign", "signbit", "sin", "sinh", "spacing", "sqrt", "square", "subtract", "tan",
+    "tanh", "true_divide", "trunc", "ScalarType", "typecodes", "issubdtype",
+    "datetime_data", "datetime_as_string", "busday_offset", "busday_count", "is_busday",
+    "busdaycalendar", "isdtype",
+    "complexfloating", "character", "unsignedinteger", "inexact", "generic", "floating",
+    "integer", "signedinteger", "number", "flexible", "bool", "float16", "float32",
+    "float64", "longdouble", "complex64", "complex128", "clongdouble",
+    "bytes_", "str_", "void", "object_", "datetime64", "timedelta64", "int8", "byte",
+    "uint8", "ubyte", "int16", "short", "uint16", "ushort", "int32", "intc", "uint32",
+    "uintc", "int64", "long", "uint64", "ulong", "longlong", "ulonglong", "intp",
+    "uintp", "double", "cdouble", "single", "csingle", "half", "bool_", "int_", "uint",
+    "uint128", "uint256", "int128", "int256", "float80", "float96", "float128",
+    "float256", "complex160", "complex192", "complex256", "complex512",
+    "array2string", "array_str", "array_repr", "set_printoptions", "get_printoptions",
+    "printoptions", "format_float_positional", "format_float_scientific", "require",
+    "seterr", "geterr", "setbufsize", "getbufsize", "seterrcall", "geterrcall",
+    "errstate", "_no_nep50_warning",
+    # _core.function_base.__all__
+    "logspace", "linspace", "geomspace",
+    # _core.getlimits.__all__
+    "finfo", "iinfo",
+    # _core.shape_base.__all__
+    "atleast_1d", "atleast_2d", "atleast_3d", "block", "hstack", "stack", "unstack",
+    "vstack",
+    # _core.einsumfunc.__all__
+    "einsum", "einsum_path",
+
+    # lib._histograms_impl.__all__
+    "histogram", "histogramdd", "histogram_bin_edges",
+    # lib._nanfunctions_impl.__all__
+    "nansum", "nanmax", "nanmin", "nanargmax", "nanargmin", "nanmean", "nanmedian",
+    "nanpercentile", "nanvar", "nanstd", "nanprod", "nancumsum", "nancumprod",
+    "nanquantile",
+    # lib._function_base_impl.__all__
+    "select", "piecewise", "trim_zeros", "copy", "iterable", "percentile", "diff",
+    "gradient", "angle", "unwrap", "sort_complex", "flip", "rot90", "extract", "place",
+    "vectorize", "asarray_chkfinite", "average", "bincount", "digitize", "cov",
+    "corrcoef", "median", "sinc", "hamming", "hanning", "bartlett", "blackman",
+    "kaiser", "i0", "meshgrid", "delete", "insert", "append", "interp", "quantile",
+    "trapezoid", # "trapz",
+    # lib._twodim_base_impl.__all__
+    "diag", "diagflat", "eye", "fliplr", "flipud", "tri", "triu", "tril", "vander",
+    "histogram2d", "mask_indices", "tril_indices", "tril_indices_from", "triu_indices",
+    "triu_indices_from",
+    # lib._shape_base_impl.__all__
+    "column_stack", "dstack", "array_split", "split", "hsplit", "vsplit", "dsplit",
+    "apply_over_axes", "expand_dims", "apply_along_axis", "kron", "tile",
+    "take_along_axis", "put_along_axis", # "row_stack",
+    # lib._type_check_impl.__all__
+    "iscomplexobj", "isrealobj", "imag", "iscomplex", "isreal", "nan_to_num", "real",
+    "real_if_close", "typename", "mintypecode", "common_type",
+    # lib._arraysetops_impl.__all__
+    "ediff1d", "intersect1d", "isin", "setdiff1d", "setxor1d", "union1d", "unique",
+    "unique_all", "unique_counts", "unique_inverse", "unique_values", # "in1d",
+    # lib._ufunclike_impl.__all__
+    "fix", "isneginf", "isposinf",
+    # lib._arraypad_impl.__all__
+    "pad",
+    # lib._utils_impl.__all__
+    "get_include", "info", "show_runtime",
+    # lib._stride_tricks_impl.__all__
+    "broadcast_to", "broadcast_arrays", "broadcast_shapes",
+    # lib._polynomial_impl.__all__
+    "poly", "roots", "polyint", "polyder", "polyadd", "polysub", "polymul", "polydiv",
+    "polyval", "poly1d", "polyfit",
+    # lib._npyio_impl.__all__
+    "savetxt", "loadtxt", "genfromtxt", "load", "save", "savez", "savez_compressed",
+    "packbits", "unpackbits", "fromregex",
+    # lib._index_tricks_impl.__all__
+    "ravel_multi_index", "unravel_index", "mgrid", "ogrid", "r_", "c_", "s_",
+    "index_exp", "ix_", "ndenumerate", "ndindex", "fill_diagonal", "diag_indices",
+    "diag_indices_from",
+
+    # matrixlib.__all__
+    "matrix", "bmat", "asmatrix",
+]
+
 _AnyStr_contra = TypeVar("_AnyStr_contra", LiteralString, builtins.str, bytes, contravariant=True)
 
 # Protocol for representing file-like-objects accepted
@@ -637,7 +757,6 @@ class _MemMapIOProtocol(Protocol):
 class _SupportsWrite(Protocol[_AnyStr_contra]):
     def write(self, s: _AnyStr_contra, /) -> object: ...
 
-__all__: list[str]
 def __dir__() -> Sequence[str]: ...
 
 __version__: LiteralString
