@@ -749,6 +749,8 @@ def test_npdistop(hello_world_f90, monkeypatch):
         assert rout.stdout == eout
 
 
+@pytest.mark.skipif(sys.version_info <= (3, 12),
+                    reason='Python 3.12 or newer required')
 def test_requires_gil(hello_world_f90, monkeypatch):
     """
     CLI :: --requires-gil
@@ -772,6 +774,8 @@ def test_requires_gil(hello_world_f90, monkeypatch):
         assert rout.returncode == 0
 
 
+@pytest.mark.skipif(sys.version_info <= (3, 12),
+                    reason='Python 3.12 or newer required')
 def test_no_requires_gil(hello_world_f90, monkeypatch):
     """
     CLI :: --no-requires-gil
