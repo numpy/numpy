@@ -2,6 +2,7 @@
 Pytest configuration and fixtures for the Numpy test suite.
 """
 import os
+import sys
 import tempfile
 from contextlib import contextmanager
 import warnings
@@ -11,6 +12,7 @@ import pytest
 import numpy
 
 from numpy._core._multiarray_tests import get_fpu_mode
+from numpy.testing._private.utils import NOGIL_BUILD
 
 try:
     from scipy_doctest.conftest import dt_config
@@ -72,11 +74,29 @@ def pytest_addoption(parser):
                            "automatically."))
 
 
+gil_enabled_at_start = True
+if NOGIL_BUILD:
+    gil_enabled_at_start = sys._is_gil_enabled()
+
+
 def pytest_sessionstart(session):
     available_mem = session.config.getoption('available_memory')
     if available_mem is not None:
         os.environ['NPY_AVAILABLE_MEM'] = available_mem
 
+
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
+    if NOGIL_BUILD and not gil_enabled_at_start and sys._is_gil_enabled():
+        terminalreporter.ensure_newline()
+        terminalreporter.section("GIL re-enabled", sep="=", red=True, bold=True)
+        terminalreporter.line("The GIL was re-enabled at runtime during the tests.")
+        terminalreporter.line("This can happen with no test failures if the RuntimeWarning")
+        terminalreporter.line("raised by Python when this happens is filtered by a test.")
+        terminalreporter.line("")
+        terminalreporter.line("Please ensure all new C modules declare support for running")
+        terminalreporter.line("without the GIL. Any new tests that intentionally imports code")
+        terminalreporter.line("that re-enables the GIL should do so in a subprocess.")
+        pytest.exit("GIL re-enabled during tests", returncode=1)
 
 #FIXME when yield tests are gone.
 @pytest.hookimpl()
