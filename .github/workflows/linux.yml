@@ -310,16 +310,4 @@ jobs:
     - name: Install nightly Cython
       run: |
         pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
-    # Set PYTHON_GIL=0 to force GIL off during tests and then manually verify
-    # importing numpy does not enable the GIL. When f2py grows the ability to
-    # declare GIL-disabled support we can just run the tests without the
-    # environment variable
     - uses: ./.github/meson_actions
-      env:
-        PYTHON_GIL: 0
-    - name: Verify import does not re-enable GIL
-      run: |
-        if [[ $(python -c "import numpy" 2>&1) == "*The global interpreter lock (GIL) has been enabled*" ]]; then
-            echo "Error: Importing NumPy re-enables the GIL in the free-threaded build"
-            exit 1
-        fi
