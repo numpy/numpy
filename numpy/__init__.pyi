@@ -1420,7 +1420,7 @@ _ArrayNumber_co: TypeAlias = NDArray[np.bool | number[Any]]
 _ArrayTD64_co: TypeAlias = NDArray[np.bool | integer[Any] | timedelta64]
 
 # Introduce an alias for `dtype` to avoid naming conflicts.
-_dtype: TypeAlias = dtype
+_dtype: TypeAlias = dtype[_ScalarType]
 
 if sys.version_info >= (3, 13):
     from types import CapsuleType as _PyCapsule
