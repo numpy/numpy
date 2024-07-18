@@ -462,6 +462,7 @@ from numpy.lib._function_base_impl import (
     append as append,
     interp as interp,
     quantile as quantile,
+    trapezoid as trapezoid,
 )
 
 from numpy.lib._histograms_impl import (

@@ -13,6 +13,7 @@ from typing import (
 from numpy import (
     vectorize as vectorize,
     generic,
+    integer,
     floating,
     complexfloating,
     intp,
@@ -21,6 +22,7 @@ from numpy import (
     timedelta64,
     datetime64,
     object_,
+    bool as bool_,
     _OrderKACF,
 )
 
@@ -632,6 +634,68 @@ def percentile(
 # NOTE: Not an alias, but they do have identical signatures
 # (that we can reuse)
 quantile = percentile
+
+
+_SCT_fm = TypeVar(
+    "_SCT_fm",
+    bound=floating[Any] | complexfloating[ANy, Any] | timedelta64,
+)
+
+class _SupportsRMulFloat(Protocol[_T_co]):
+    def __rmul__(self, other: float, /) -> _T_co: ...
+
+@overload
+def trapezoid(  # type: ignore[overload-overlap]
+    y: Sequence[_FloatLike_co],
+    x: Sequence[_FloatLike_co] | None = ...,
+    dx: float = ...,
+    axis: SupportsIndex = ...,
+) -> float64: ...
+@overload
+def trapezoid(
+    y: Sequence[_ComplexLike_co],
+    x: Sequence[_ComplexLike_co] | None = ...,
+    dx: float = ...,
+    axis: SupportsIndex = ...,
+) -> complex128: ...
+@overload
+def trapezoid(
+    y: _ArrayLike[bool_ | integer[Any]],
+    x: _ArrayLike[bool_ | integer[Any]] | None = ...,
+    dx: float = ...,
+    axis: SupportsIndex = ...,
+) -> float64 | NDArray[float64]: ...
+@overload
+def trapezoid(  # type: ignore[overload-overlap]
+    y: _ArrayLikeObject_co,
+    x: _ArrayLikeFloat_co | _ArrayLikeObject_co | None = ...,
+    dx: float = ...,
+    axis: SupportsIndex = ...,
+) -> float | NDArray[object_]: ...
+@overload
+def trapezoid(
+    y: _ArrayLike[_SCT_fm],
+    x: _ArrayLike[_SCT_fm] | _ArrayLikeInt_co | None = ...,
+    dx: float = ...,
+    axis: SupportsIndex = ...,
+) -> _SCT_fm | NDArray[_SCT_fm]: ...
+@overload
+def trapezoid(
+    y: Sequence[_SupportsRMulFloat[_T]],
+    x: Sequence[_SupportsRMulFloat[_T] | _T] | None = ...,
+    dx: float = ...,
+    axis: SupportsIndex = ...,
+) -> _T: ...
+@overload
+def trapezoid(
+    y: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    x: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co | None = ...,
+    dx: float = ...,
+    axis: SupportsIndex = ...,
+) -> (
+    floating[Any] | complexfloating[Any, Any] | timedelta64
+    | NDArray[floating[Any] | complexfloating[Any, Any] | timedelta64 | object_]
+): ...
 
 def meshgrid(
     *xi: ArrayLike,
