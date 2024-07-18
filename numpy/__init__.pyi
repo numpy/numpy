@@ -32,8 +32,6 @@ from numpy._typing import (
     _ArrayLikeTD64_co,
     _ArrayLikeDT64_co,
     _ArrayLikeObject_co,
-    _ArrayLikeStr_co,
-    _ArrayLikeBytes_co,
     _ArrayLikeUnknown,
     _UnknownType,
 
@@ -72,7 +70,6 @@ from numpy._typing import (
     _NBitShort,
     _NBitIntC,
     _NBitIntP,
-    _NBitInt,
     _NBitLong,
     _NBitLongLong,
     _NBitHalf,
