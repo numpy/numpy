@@ -19,6 +19,11 @@ m: np.timedelta64
 U: np.str_
 S: np.bytes_
 V: np.void
+O: np.object_  # cannot exists at runtime
+
+array_nd: np.ndarray[Any, Any]
+array_0d: np.ndarray[tuple[()], Any]
+array_2d_2x2: np.ndarray[tuple[Literal[2], Literal[2]], Any]
 
 assert_type(c8.real, np.float32)
 assert_type(c8.imag, np.float32)
@@ -156,3 +161,27 @@ assert_type(f8.__ceil__(), int)
 assert_type(f8.__floor__(), int)
 
 assert_type(i8.is_integer(), Literal[True])
+
+assert_type(O.real, np.object_)
+assert_type(O.imag, np.object_)
+assert_type(int(O), int)
+assert_type(float(O), float)
+assert_type(complex(O), complex)
+
+# These fail fail because of a mypy __new__ bug:
+# https://github.com/python/mypy/issues/15182
+# According to the typing spec, the following statements are valid, see
+# https://typing.readthedocs.io/en/latest/spec/constructors.html#new-method
+
+# assert_type(np.object_(), None)
+# assert_type(np.object_(None), None)
+# assert_type(np.object_(array_nd), np.ndarray[Any, np.dtype[np.object_]])
+# assert_type(np.object_([]), npt.NDArray[np.object_])
+# assert_type(np.object_(()), npt.NDArray[np.object_])
+# assert_type(np.object_(range(4)), npt.NDArray[np.object_])
+# assert_type(np.object_(+42), int)
+# assert_type(np.object_(1 / 137), float)
+# assert_type(np.object_('Developers! ' * (1 << 6)), str)
+# assert_type(np.object_(object()), object)
+# assert_type(np.object_({False, True, NotADirectoryError}), set[Any])
+# assert_type(np.object_({'spam': 'food', 'ham': 'food'}), dict[str, str])
