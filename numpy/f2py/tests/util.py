@@ -130,9 +130,9 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     if module_name is None:
         module_name = get_temp_module_name()
     gil_options = []
-    if '--requires-gil' not in options and '--no-requires-gil' not in options:
+    if '--freethreading-compatible' not in options and '--no-freethreading-compatible' not in options:
         # default to disabling the GIL if unset in options
-        gil_options = ['--no-requires-gil']
+        gil_options = ['--freethreading-compatible']
     f2py_opts = ["-c", "-m", module_name] + options + gil_options + f2py_sources
     f2py_opts += ["--backend", "meson"]
     if skip:

@@ -106,12 +106,13 @@ Options:
                    functions. --wrap-functions is default because it ensures
                    maximum portability/compiler independence.
 
-  --[no-]requires-gil    Create a module that declares it does or doesn't
-                   require the GIL. The default is --requires-gil for
-                   backward compatibility. Inspect the Fortran code you are
-                   wrapping for thread safety issues before passing
-                   --no-requires-gil, as ``f2py`` does not analyze fortran
-                   code for thread safety issues.
+  --[no-]freethreading-compatible    Create a module that declares it does or
+                   doesn't require the GIL. The default is
+                   --freethreading-compatible for backward
+                   compatibility. Inspect the Fortran code you are wrapping for
+                   thread safety issues before passing
+                   --no-freethreading-compatible, as f2py does not analyze
+                   fortran code for thread safety issues.
 
   --include-paths <path1>:<path2>:...   Search include files from the given
                    directories.
@@ -269,9 +270,9 @@ def scaninputline(inputline):
             cfuncs.userincludes[l[9:-1]] = '#include ' + l[8:]
         elif l == '--skip-empty-wrappers':
             emptygen = False
-        elif l == '--requires-gil':
+        elif l == '--no-freethreading-compatible':
             requires_gil = 1
-        elif l == '--no-requires-gil':
+        elif l == '--freethreading-compatible':
             requires_gil = 0
         elif l[0] == '-':
             errmess('Unknown option %s\n' % repr(l))
@@ -633,7 +634,7 @@ def run_compile():
         sysinfo_flags = [f[7:] for f in sysinfo_flags]
 
     _reg2 = re.compile(
-        r'--((no-|)(wrap-functions|lower|requires-gil)|debug-capi|quiet|skip-empty-wrappers)|-include')
+        r'--((no-|)(wrap-functions|lower|freethreading-compatible)|debug-capi|quiet|skip-empty-wrappers)|-include')
     f2py_flags = [_m for _m in sys.argv[1:] if _reg2.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in f2py_flags]
     f2py_flags2 = []

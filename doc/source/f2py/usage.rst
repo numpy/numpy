@@ -86,12 +86,12 @@ Here ``<fortran files>`` may also contain signature files. Among other options
   ``--wrap-functions`` is default because it ensures maximum portability and
   compiler independence.
 
-``--[no-]requires-gil``
+``--[no-]freethreading-compatible``
   Create a module that declares it does or doesn't require the GIL. The default
-  is ``--requires-gil`` for backwards compatibility. Inspect the fortran
-  code you are wrapping for thread safety issues before passing
-  ``--no-requires-gil``, as ``f2py`` does not analyze fortran code for thread
-  safety issues.
+  is ``--no-freethreading-compatible`` for backwards compatibility. Inspect the
+  fortran code you are wrapping for thread safety issues before passing
+  ``--freethreading-compatible``, as ``f2py`` does not analyze fortran code for
+  thread safety issues.
 
 ``--include-paths "<path1>:<path2>..."``
   Search include files from given directories.

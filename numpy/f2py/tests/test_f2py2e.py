@@ -751,16 +751,16 @@ def test_npdistop(hello_world_f90, monkeypatch):
 
 @pytest.mark.skipif(sys.version_info <= (3, 12),
                     reason='Python 3.12 or newer required')
-def test_requires_gil(hello_world_f90, monkeypatch):
+def test_no_freethreading_compatible(hello_world_f90, monkeypatch):
     """
-    CLI :: --requires-gil
+    CLI :: --no-freethreading-compatible
     """
     ipath = Path(hello_world_f90)
-    monkeypatch.setattr(sys, "argv", f'f2py -m blah {ipath} -c --requires-gil'.split())
+    monkeypatch.setattr(sys, "argv", f'f2py -m blah {ipath} -c --no-freethreading-compatible'.split())
 
     with util.switchdir(ipath.parent):
         f2pycli()
-        cmd = f"{sys.executable} -c \"import blah; blah.hi();"
+        cmd = f"{sys.executable} -c \"import sys; print(sys._is_gil_enabled()); import blah; blah.hi();"
         if NOGIL_BUILD:
             cmd += "import sys; assert sys._is_gil_enabled() is True\""
         else:
@@ -776,12 +776,12 @@ def test_requires_gil(hello_world_f90, monkeypatch):
 
 @pytest.mark.skipif(sys.version_info <= (3, 12),
                     reason='Python 3.12 or newer required')
-def test_no_requires_gil(hello_world_f90, monkeypatch):
+def test_freethreading_compatible(hello_world_f90, monkeypatch):
     """
-    CLI :: --no-requires-gil
+    CLI :: --freethreading_compatible
     """
     ipath = Path(hello_world_f90)
-    monkeypatch.setattr(sys, "argv", f'f2py -m blah {ipath} -c --no-requires-gil'.split())
+    monkeypatch.setattr(sys, "argv", f'f2py -m blah {ipath} -c --freethreading-compatible'.split())
 
     with util.switchdir(ipath.parent):
         f2pycli()
