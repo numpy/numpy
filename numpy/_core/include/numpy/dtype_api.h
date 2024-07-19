@@ -449,7 +449,7 @@ typedef PyArray_DTypeMeta *(PyArrayDTypeMeta_CommonDType)(
 
 static inline PyArray_DTypeMeta *
 NPY_DT_NewRef(PyArray_DTypeMeta *o) {
-    Py_INCREF(o);
+    Py_INCREF((PyObject *)o);
     return o;
 }
 
