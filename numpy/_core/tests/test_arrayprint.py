@@ -1246,3 +1246,4 @@ def test_printoptions_asyncio_safe():
 
     loop = asyncio.new_event_loop()
     asyncio.run(main())
+    loop.close()
