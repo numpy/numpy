@@ -2856,6 +2856,7 @@ class bool(generic):
 
 bool_: TypeAlias = bool
 
+@final
 class object_(generic):
     def __init__(self, value: object = ..., /) -> None: ...
     @property
@@ -3452,8 +3453,20 @@ class ndenumerate(Generic[_ScalarType_co]):
     def __new__(cls, arr: float | _NestedSequence[float]) -> ndenumerate[float64]: ...
     @overload
     def __new__(cls, arr: complex | _NestedSequence[complex]) -> ndenumerate[complex128]: ...
+    @overload
+    def __new__(cls, arr: object) -> ndenumerate[object_]: ...
 
-    def __next__(self) -> tuple[_Shape, _ScalarType_co]: ...
+    # The first overload is a (semi-)workaround for a mypy bug (tested with v1.10 and v1.11)
+    @overload
+    def __next__(
+        self: ndenumerate[np.bool | datetime64 | timedelta64 | number[Any] | flexible],
+        /,
+    ) -> tuple[_Shape, _ScalarType_co]: ...
+    @overload
+    def __next__(self: ndenumerate[object_], /) -> tuple[_Shape, Any]: ...
+    @overload
+    def __next__(self, /) -> tuple[_Shape, _ScalarType_co]: ...
+
     def __iter__(self: _T) -> _T: ...
 
 class ndindex:

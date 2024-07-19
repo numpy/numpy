@@ -13,24 +13,31 @@ AR_LIKE_b: list[bool]
 AR_LIKE_i: list[int]
 AR_LIKE_f: list[float]
 AR_LIKE_U: list[str]
+AR_LIKE_O: list[object]
 
 AR_i8: npt.NDArray[np.int64]
+AR_O: npt.NDArray[np.object_]
 
 assert_type(np.ndenumerate(AR_i8), np.ndenumerate[np.int64])
 assert_type(np.ndenumerate(AR_LIKE_f), np.ndenumerate[np.float64])
 assert_type(np.ndenumerate(AR_LIKE_U), np.ndenumerate[np.str_])
+assert_type(np.ndenumerate(AR_LIKE_O), np.ndenumerate[np.object_])
 
 assert_type(np.ndenumerate(AR_i8).iter, np.flatiter[npt.NDArray[np.int64]])
 assert_type(np.ndenumerate(AR_LIKE_f).iter, np.flatiter[npt.NDArray[np.float64]])
 assert_type(np.ndenumerate(AR_LIKE_U).iter, np.flatiter[npt.NDArray[np.str_]])
+assert_type(np.ndenumerate(AR_LIKE_O).iter, np.flatiter[npt.NDArray[np.object_]])
 
 assert_type(next(np.ndenumerate(AR_i8)), tuple[tuple[int, ...], np.int64])
 assert_type(next(np.ndenumerate(AR_LIKE_f)), tuple[tuple[int, ...], np.float64])
 assert_type(next(np.ndenumerate(AR_LIKE_U)), tuple[tuple[int, ...], np.str_])
+# this fails due to an unknown mypy bug
+# assert_type(next(np.ndenumerate(AR_LIKE_O)), tuple[tuple[int, ...], Any])
 
 assert_type(iter(np.ndenumerate(AR_i8)), np.ndenumerate[np.int64])
 assert_type(iter(np.ndenumerate(AR_LIKE_f)), np.ndenumerate[np.float64])
 assert_type(iter(np.ndenumerate(AR_LIKE_U)), np.ndenumerate[np.str_])
+assert_type(iter(np.ndenumerate(AR_LIKE_O)), np.ndenumerate[np.object_])
 
 assert_type(np.ndindex(1, 2, 3), np.ndindex)
 assert_type(np.ndindex((1, 2, 3)), np.ndindex)
