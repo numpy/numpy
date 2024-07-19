@@ -102,12 +102,13 @@ _umath_strings_richcompare(
 
 NPY_NO_EXPORT int
 get_legacy_print_mode(void) {
-    /*
-     * Get the C value of the legacy printing mode.
-     * accessible from C. For simplicity the mode is encoded as an
-     * integer where INT_MAX means no legacy mode, and '113'/'121'/'125'
-     * means 1.13/1.21/1.25 legacy mode; and 0 maps to INT_MAX. We can
-     * upgrade this if we have more complex requirements in the future.
+    /* Get the C value of the legacy printing mode.
+     *
+     * It is stored as a Python context variable so we access it via the C
+     * API. For simplicity the mode is encoded as an integer where INT_MAX
+     * means no legacy mode, and '113'/'121'/'125' means 1.13/1.21/1.25 legacy
+     * mode; and 0 maps to INT_MAX. We can upgrade this if we have more
+     * complex requirements in the future.
      */
     PyObject *format_options = NULL;
     PyContextVar_Get(npy_static_pydata.format_options, NULL, &format_options);
@@ -127,8 +128,9 @@ get_legacy_print_mode(void) {
         PyErr_SetString(PyExc_SystemError,
                         "NumPy internal error: unable to get legacy print "
                         "mode");
+        return -1;
     }
-    long long ret = PyLong_AsLongLong(legacy_print_mode);
+    Py_ssize_t ret = PyLong_AsSsize_t(legacy_print_mode);
     Py_DECREF(legacy_print_mode);
     if ((ret == -1) && PyErr_Occurred()) {
         return -1;
@@ -136,8 +138,6 @@ get_legacy_print_mode(void) {
     if (ret > INT_MAX) {
         return INT_MAX;
     }
-    // in principle this cast to int could overflow, in practice ret is never
-    // bigger than 125 and we explicitly check for values greater than INT_MAX above.
     return (int)ret;
 }
 
