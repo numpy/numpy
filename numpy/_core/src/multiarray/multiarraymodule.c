@@ -131,7 +131,7 @@ get_legacy_print_mode(void) {
     }
     Py_ssize_t ret = PyLong_AsSsize_t(legacy_print_mode);
     Py_DECREF(legacy_print_mode);
-    if ((ret == -1) && PyErr_Occurred()) {
+    if (error_converting(ret)) {
         return -1;
     }
     if (ret > INT_MAX) {
