@@ -959,10 +959,6 @@ class FloatingFormat:
         self.sign = sign
         self.exp_format = False
         self.large_exponent = False
-        current_options = format_options.get()
-        self.nanstr = current_options['nanstr']
-        self.infstr = current_options['infstr']
-
         self.fillFormat(data)
 
     def fillFormat(self, data):
@@ -1045,20 +1041,22 @@ class FloatingFormat:
         if data.size != finite_vals.size:
             neginf = self.sign != '-' or any(data[isinf(data)] < 0)
             offset = self.pad_right + 1  # +1 for decimal pt
+            current_options = format_options.get()
             self.pad_left = max(
-                self.pad_left, len(self.nanstr) - offset,
-                len(self.infstr) + neginf - offset
+                self.pad_left, len(current_options['nanstr']) - offset,
+                len(current_options['infstr']) + neginf - offset
             )
 
     def __call__(self, x):
         if not np.isfinite(x):
             with errstate(invalid='ignore'):
+                current_options = format_options.get()
                 if np.isnan(x):
                     sign = '+' if self.sign == '+' else ''
-                    ret = sign + self.nanstr
+                    ret = sign + current_options['nanstr']
                 else:  # isinf
                     sign = '-' if x < 0 else '+' if self.sign == '+' else ''
-                    ret = sign + self.infstr
+                    ret = sign + current_options['infstr']
                 return ' '*(
                     self.pad_left + self.pad_right + 1 - len(ret)
                 ) + ret
