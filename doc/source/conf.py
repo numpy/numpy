@@ -286,7 +286,9 @@ mathjax_path = "scipy-mathjax/MathJax.js?config=scipy-mathjax"
 plot_html_show_formats = False
 plot_html_show_source_link = False
 
-copybutton_prompt_text = ">>> "
+# sphinx-copybutton configurations
+copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+copybutton_prompt_is_regexp = True
 # -----------------------------------------------------------------------------
 # LaTeX output
 # -----------------------------------------------------------------------------
