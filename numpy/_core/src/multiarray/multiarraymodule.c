@@ -65,7 +65,6 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "ctors.h"
 #include "array_assign.h"
 #include "common.h"
-#include "npy_static_data.h"
 #include "cblasfuncs.h"
 #include "vdot.h"
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
