@@ -760,7 +760,7 @@ def test_no_freethreading_compatible(hello_world_f90, monkeypatch):
 
     with util.switchdir(ipath.parent):
         f2pycli()
-        cmd = f"{sys.executable} -c \"import sys; print(sys._is_gil_enabled()); import blah; blah.hi();"
+        cmd = f"{sys.executable} -c \"import blah; blah.hi();"
         if NOGIL_BUILD:
             cmd += "import sys; assert sys._is_gil_enabled() is True\""
         else:
