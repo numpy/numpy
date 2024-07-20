@@ -40,16 +40,18 @@ def install_temp(tmpdir_factory):
         pytest.skip("No usable 'meson' found")
     if sys.platform == "win32":
         subprocess.check_call(["meson", "setup",
+                               "--werror",
                                "--buildtype=release",
                                "--vsenv", str(srcdir)],
                               cwd=build_dir,
                               )
     else:
-        subprocess.check_call(["meson", "setup", str(srcdir)],
+        subprocess.check_call(["meson", "setup", "--werror", str(srcdir)],
                               cwd=build_dir
                               )
     try:
-        subprocess.check_call(["meson", "compile", "-vv"], cwd=build_dir)
+        subprocess.check_call(
+            ["meson", "compile", "-vv"], cwd=build_dir)
     except subprocess.CalledProcessError as p:
         print(f"{p.stdout=}")
         print(f"{p.stderr=}")
@@ -73,5 +75,6 @@ def test_limited_api(install_temp):
     and building a cython extension with the limited API
     """
 
-    import limited_api1
-    import limited_api2
+    import limited_api1  # Earliest (3.6)
+    import limited_api_latest  # Latest version (current Python)
+    import limited_api2  # cython
