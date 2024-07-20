@@ -1,5 +1,0 @@
-`np.quantile` with method ``closest_observation`` chooses nearest even order statistic
---------------------------------------------------------------------------------------
-This changes the definition of nearest for border cases from the nearest odd
-order statistic to nearest even order statistic. The numpy implementation now
-matches other reference implementations.
