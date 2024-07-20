@@ -140,6 +140,7 @@ class nd_grid:
     Users should use these pre-defined instances instead of using `nd_grid`
     directly.
     """
+    __slots__ = ('sparse',)
 
     def __init__(self, sparse=False):
         self.sparse = sparse
@@ -261,6 +262,7 @@ class MGridClass(nd_grid):
     (3, 4, 5, 6)
 
     """
+    __slots__ = ()
 
     def __init__(self):
         super().__init__(sparse=False)
@@ -312,6 +314,7 @@ class OGridClass(nd_grid):
      array([[0, 1, 2, 3, 4]]))
 
     """
+    __slots__ = ()
 
     def __init__(self):
         super().__init__(sparse=True)
@@ -326,6 +329,8 @@ class AxisConcatenator:
 
     For detailed documentation on usage, see `r_`.
     """
+    __slots__ = ('axis', 'matrix', 'trans1d', 'ndmin')
+
     # allow ma.mr_ to override this
     concatenate = staticmethod(_nx.concatenate)
     makemat = staticmethod(matrixlib.matrix)
@@ -539,6 +544,7 @@ class RClass(AxisConcatenator):
     matrix([[1, 2, 3, 4, 5, 6]])
 
     """
+    __slots__ = ()
 
     def __init__(self):
         AxisConcatenator.__init__(self, 0)
@@ -571,6 +577,7 @@ class CClass(AxisConcatenator):
     array([[1, 2, 3, ..., 4, 5, 6]])
 
     """
+    __slots__ = ()
 
     def __init__(self):
         AxisConcatenator.__init__(self, -1, ndmin=2, trans1d=0)
@@ -771,6 +778,7 @@ class IndexExpression:
     array([2, 4])
 
     """
+    __slots__ = ('maketuple',)
 
     def __init__(self, maketuple):
         self.maketuple = maketuple
@@ -1023,7 +1031,7 @@ def diag_indices_from(arr):
 
     Examples
     --------
-    
+
     Create a 4 by 4 array.
 
     >>> a = np.arange(16).reshape(4, 4)
@@ -1032,7 +1040,7 @@ def diag_indices_from(arr):
            [ 4,  5,  6,  7],
            [ 8,  9, 10, 11],
            [12, 13, 14, 15]])
-    
+
     Get the indices of the diagonal elements.
 
     >>> di = np.diag_indices_from(a)
