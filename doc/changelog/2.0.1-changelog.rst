@@ -1,25 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 2.0.1 Release Notes
-==========================
-
-NumPy 2.0.1 is a maintenance release that fixes bugs and regressions
-discovered after the 2.0.0 release. NumPy 2.0.1 is the last planned
-release in the 2.0.x series, 2.1.0rc1 should be out shortly.
-
-The Python versions supported by this release are 3.9-3.12.
-
-Improvements
-============
-
-``np.quantile`` with method ``closest_observation`` chooses nearest even order statistic
-----------------------------------------------------------------------------------------
-This changes the definition of nearest for border cases from the nearest odd
-order statistic to nearest even order statistic. The numpy implementation now
-matches other reference implementations.
-
-(`gh-26656 <https://github.com/numpy/numpy/pull/26656>`__)
 
 Contributors
 ============
