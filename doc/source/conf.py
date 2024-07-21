@@ -87,6 +87,7 @@ extensions = [
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
     'sphinx.ext.mathjax',
+    'sphinx_copybutton',
     'sphinx_design',
 ]
 
@@ -285,6 +286,9 @@ mathjax_path = "scipy-mathjax/MathJax.js?config=scipy-mathjax"
 plot_html_show_formats = False
 plot_html_show_source_link = False
 
+# sphinx-copybutton configurations
+copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+copybutton_prompt_is_regexp = True
 # -----------------------------------------------------------------------------
 # LaTeX output
 # -----------------------------------------------------------------------------
