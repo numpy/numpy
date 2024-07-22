@@ -11,7 +11,11 @@
  * can be initialized at any time by npy_cache_import_runtime.
  */
 typedef struct npy_runtime_imports_struct {
+#if PY_VERSION_HEX < 0x30d00b3
     PyThread_type_lock import_mutex;
+#else
+    PyMutex import_mutex;
+#endif
     PyObject *_add_dtype_helper;
     PyObject *_all;
     PyObject *_amax;
@@ -86,11 +90,19 @@ npy_cache_import_runtime(const char *module, const char *attr, PyObject **obj) {
         if (value == NULL) {
             return -1;
         }
+#if PY_VERSION_HEX < 0x30d00b3
         PyThread_acquire_lock(npy_runtime_imports.import_mutex, WAIT_LOCK);
+#else
+        PyMutex_Lock(&npy_runtime_imports.import_mutex);
+#endif
         if (!npy_atomic_load_ptr(obj)) {
             npy_atomic_store_ptr(obj, Py_NewRef(value));
         }
+#if PY_VERSION_HEX < 0x30d00b3
         PyThread_release_lock(npy_runtime_imports.import_mutex);
+#else
+        PyMutex_Unlock(&npy_runtime_imports.import_mutex);
+#endif
         Py_DECREF(value);
     }
     return 0;    
