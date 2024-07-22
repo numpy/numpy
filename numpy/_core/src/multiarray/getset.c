@@ -26,6 +26,7 @@
 #include "npy_buffer.h"
 #include "shape.h"
 #include "multiarraymodule.h"
+#include "array_api_standard.h"
 
 /*******************  array attribute get and set routines ******************/
 
@@ -882,12 +883,6 @@ array_itemset(PyArrayObject *self, PyObject *args)
                     "`itemset` was removed from the ndarray class in "
                     "NumPy 2.0. Use `arr[index] = value` instead.");
     return NULL;
-}
-
-static PyObject *
-array_device(PyArrayObject *self, void *NPY_UNUSED(ignored))
-{
-    return PyUnicode_FromString("cpu");
 }
 
 NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {

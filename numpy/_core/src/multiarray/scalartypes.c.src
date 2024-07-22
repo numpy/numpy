@@ -35,6 +35,7 @@
 #include "npy_buffer.h"
 #include "npy_static_data.h"
 #include "multiarraymodule.h"
+#include "array_api_standard.h"
 
 #include <stdlib.h>
 
@@ -1677,6 +1678,9 @@ static PyGetSetDef gentype_getsets[] = {
     {"ptp",
         (getter)gentype_ptp,
         (setter)0, NULL, NULL},
+    {"device",
+        (getter)array_device,
+        (setter)0, NULL, NULL},
     {"__array_interface__",
         (getter)gentype_interface_get,
         NULL,
@@ -2450,6 +2454,15 @@ static PyMethodDef gentype_methods[] = {
     {"setflags",
         (PyCFunction)gentype_setflags,
         METH_VARARGS | METH_KEYWORDS, NULL},
+
+    /* For Array API compatibility */
+    {"__array_namespace__",
+        (PyCFunction)array_array_namespace,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"to_device",
+        (PyCFunction)array_to_device,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+
     {NULL, NULL, 0, NULL} /* sentinel */
 };
 

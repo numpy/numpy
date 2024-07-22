@@ -34,6 +34,7 @@
 
 #include "methods.h"
 #include "alloc.h"
+#include "array_api_standard.h"
 
 #include <stdarg.h>
 
@@ -2802,73 +2803,6 @@ array_class_getitem(PyObject *cls, PyObject *args)
                             ((PyTypeObject *)cls)->tp_name);
     }
     return Py_GenericAlias(cls, args);
-}
-
-static PyObject *
-array_array_namespace(PyArrayObject *self, PyObject *args, PyObject *kwds)
-{
-    static char *kwlist[] = {"api_version", NULL};
-    PyObject *array_api_version = Py_None;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|$O:__array_namespace__", kwlist,
-                                     &array_api_version)) {
-        return NULL;
-    }
-
-    if (array_api_version != Py_None) {
-        if (!PyUnicode_Check(array_api_version))
-        {
-            PyErr_Format(PyExc_ValueError,
-                "Only None and strings are allowed as the Array API version, "
-                "but received: %S.", array_api_version);
-            return NULL;
-        } else if (PyUnicode_CompareWithASCIIString(array_api_version, "2021.12") != 0 &&
-            PyUnicode_CompareWithASCIIString(array_api_version, "2022.12") != 0 &&
-            PyUnicode_CompareWithASCIIString(array_api_version, "2023.12") != 0)
-        {
-            PyErr_Format(PyExc_ValueError,
-                "Version \"%U\" of the Array API Standard is not supported.",
-                array_api_version);
-            return NULL;
-        }
-    }
-
-    PyObject *numpy_module = PyImport_ImportModule("numpy");
-    if (numpy_module == NULL){
-        return NULL;
-    }
-
-    return numpy_module;
-}
-
-static PyObject *
-array_to_device(PyArrayObject *self, PyObject *args, PyObject *kwds)
-{
-    static char *kwlist[] = {"", "stream", NULL};
-    char *device = "";
-    PyObject *stream = Py_None;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|$O:to_device", kwlist,
-                                     &device,
-                                     &stream)) {
-        return NULL;
-    }
-
-    if (stream != Py_None) {
-        PyErr_SetString(PyExc_ValueError,
-                        "The stream argument in to_device() "
-                        "is not supported");
-        return NULL;
-    }
-
-    if (strcmp(device, "cpu") != 0) {
-        PyErr_Format(PyExc_ValueError,
-                     "Unsupported device: %s.", device);
-        return NULL;
-    }
-
-    Py_INCREF(self);
-    return (PyObject *)self;
 }
 
 NPY_NO_EXPORT PyMethodDef array_methods[] = {

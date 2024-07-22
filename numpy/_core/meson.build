@@ -1064,6 +1064,7 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/array_coercion.c',
   'src/multiarray/array_converter.c',
   'src/multiarray/array_method.c',
+  'src/multiarray/array_api_standard.c',
   'src/multiarray/array_assign_scalar.c',
   'src/multiarray/array_assign_array.c',
   'src/multiarray/arrayfunction_override.c',
