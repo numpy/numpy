@@ -146,69 +146,83 @@ class nd_grid:
     def __init__(self, sparse=False):
         self.sparse = sparse
 
-    def __getitem__(self, key):
-        try:
-            size = []
-            # Mimic the behavior of `np.arange` and use a data type
-            # which is at least as large as `np.int_`
-            num_list = [0]
-            for k in range(len(key)):
-                step = key[k].step
-                start = key[k].start
-                stop = key[k].stop
-                if start is None:
-                    start = 0
-                if step is None:
-                    step = 1
-                if isinstance(step, (_nx.complexfloating, complex)):
-                    step = abs(step)
-                    size.append(int(step))
-                else:
-                    size.append(
-                        int(math.ceil((stop - start) / (step*1.0))))
-                num_list += [start, stop, step]
-            typ = _nx.result_type(*num_list)
-            if self.sparse:
-                nn = [_nx.arange(_x, dtype=_t)
-                      for _x, _t in zip(size, (typ,)*len(size))]
-            else:
-                nn = _nx.indices(size, typ)
-            for k, kk in enumerate(key):
-                step = kk.step
-                start = kk.start
-                if start is None:
-                    start = 0
-                if step is None:
-                    step = 1
-                if isinstance(step, (_nx.complexfloating, complex)):
-                    step = int(abs(step))
-                    if step != 1:
-                        step = (kk.stop - start) / float(step - 1)
-                nn[k] = (nn[k]*step+start)
-            if self.sparse:
-                slobj = [_nx.newaxis]*len(size)
-                for k in range(len(size)):
-                    slobj[k] = slice(None, None)
-                    nn[k] = nn[k][tuple(slobj)]
-                    slobj[k] = _nx.newaxis
-                return tuple(nn)  # ogrid -> tuple of arrays
-            return nn  # mgrid -> ndarray
-        except (IndexError, TypeError):
-            step = key.step
-            stop = key.stop
-            start = key.start
-            if start is None:
+    def __getitem__(self, key, /):
+        # Mimic the behavior of `np.arange` and use a data type
+        # which is at least as large as `np.int_`
+        if isinstance(key, slice):
+            if (start := key.start) is None:
                 start = 0
-            if isinstance(step, (_nx.complexfloating, complex)):
+            stop = key.stop
+            if (step := key.step) is None:
+                return _nx.arange(start, stop)
+
+            # for `step: complex` this is 4-5x faster than
+            # `isinstance(step, (complex, _nx.complexfloating))`
+            if (
+                isinstance(step, complex)
+                or isinstance(step, _nx.complexfloating)
+            ):
                 # Prevent the (potential) creation of integer arrays
-                step_float = abs(step)
-                step = length = int(step_float)
+                step = length = int(step_float := abs(step))
                 if step != 1:
-                    step = (key.stop-start)/float(step-1)
-                typ = _nx.result_type(start, stop, step_float)
-                return _nx.arange(0, length, 1, dtype=typ)*step + start
+                    step = (stop - start) / float(step - 1)
+                sctype = _nx.result_type(start, stop, step_float)
+                return _nx.arange(length, dtype=sctype) * step + start
+
+            return _nx.arange(start, stop, step)
+
+        sizes = []
+        scalars = [0]
+        for kk in key:
+            if (start := kk.start) is None:
+                start = 0
+            stop = kk.stop
+            if (step := kk.step) is None:
+                step = 1
+                sizes.append(int(math.ceil(stop - start)))
+            elif (
+                isinstance(step, complex)
+                or isinstance(step, _nx.complexfloating)
+            ):
+                step = abs(step)
+                sizes.append(int(step))
             else:
-                return _nx.arange(start, stop, step)
+                sizes.append(
+                    int(math.ceil((stop - start) / step))
+                )
+            scalars += [start, stop, step]
+        sctype = _nx.result_type(*scalars)
+
+        if sparse := self.sparse:
+            # mgrid -> ndarray
+            shape = (1,) * len(sizes)
+            nn = [
+                np.arange(n, dtype=sctype).reshape(
+                    shape[:i] + (n,) + shape[i + 1:],
+                )
+                for i, n in enumerate(sizes)
+            ]
+            # nn = list(_nx.indices(sizes, sctype, sparse=True))
+        else:
+            # ogrid -> tuple of ndarray
+            nn = _nx.indices(sizes, sctype)
+
+        for k, kk in enumerate(key):
+            if (start := kk.start) is None:
+                start = 0
+            if (step := kk.step) is None:
+                step = 1
+            elif (
+                    isinstance(step, complex)
+                    or isinstance(step, _nx.complexfloating)
+            ) and (step := int(abs(step))) != 1:
+                nn[k] *= (kk.stop - start) / float(step - 1)
+            else:
+                nn[k] *= step
+            if start:
+                nn[k] += start
+
+        return tuple(nn) if sparse else nn
 
 
 class MGridClass(nd_grid):
@@ -1042,6 +1056,7 @@ def diag_indices_from(arr):
 
     Examples
     --------
+
     >>> import numpy as np
 
     Create a 4 by 4 array.
