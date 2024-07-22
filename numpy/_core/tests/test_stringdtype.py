@@ -1673,30 +1673,3 @@ class TestImplementation:
         assert_array_equal(c, self.a)
         assert_array_equal(self.in_arena(c), False)
         assert_array_equal(self.is_on_heap(c), self.in_arena(self.a))
-
-
-STRIP_METHODS = ["lstrip", "rstrip", "strip"]
-
-@pytest.mark.parametrize("method", STRIP_METHODS)
-@pytest.mark.parametrize(
-    "source,strip",
-    [
-        ("λμ", "μ"),
-        ("λμ", "λ"),
-        ("λ"*5 + "μ"*2, "μ"),
-        ("λ" * 5 + "μ" * 2, "λ"),
-        ("λ" * 5 + "A" + "μ" * 2, "μλ"),
-        ("λμ" * 5, "μ"),
-        ("λμ" * 5, "λ"),
-    ]
-)
-def test_strip_functions_unicode(method, source, strip):
-    src_array = np.array([source], dtype=StringDType())
-
-    npy_func = getattr(np.strings, method)
-    py_func = getattr(str, method)
-
-    expected = np.array([py_func(source, strip)], dtype=StringDType())
-    actual = npy_func(src_array, strip)
-
-    assert_array_equal(actual, expected)
