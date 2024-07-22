@@ -28,7 +28,13 @@
 static const char* umath_linalg_version_string = "0.1.5";
 
 // global lock to serialize calls into lapack_lite
+#if !HAVE_EXTERNAL_LAPACK
+#if PY_VERSION_HEX < 0x30d00b3
 static PyThread_type_lock lapack_lite_lock;
+#else
+static PyMutex lapack_lite_lock = {0};
+#endif
+#endif
 
 /*
  ****************************************************************************
@@ -407,8 +413,13 @@ FNAME(zgemm)(char *transa, char *transb,
     #define LOCK_LAPACK_LITE
     #define UNLOCK_LAPACK_LITE
 #else
+#if PY_VERSION_HEX < 0x30d00b3
     #define LOCK_LAPACK_LITE PyThread_acquire_lock(lapack_lite_lock, WAIT_LOCK)
     #define UNLOCK_LAPACK_LITE PyThread_release_lock(lapack_lite_lock)
+#else
+    #define LOCK_LAPACK_LITE PyMutex_Lock(&lapack_lite_lock)
+    #define UNLOCK_LAPACK_LITE PyMutex_Unlock(&lapack_lite_lock)
+#endif
 #endif
 
 /*
@@ -4687,11 +4698,13 @@ PyMODINIT_FUNC PyInit__umath_linalg(void)
         return NULL;
     }
 
+#if PY_VERSION_HEX < 0x30d00b3 && !HAVE_EXTERNAL_LAPACK
     lapack_lite_lock = PyThread_allocate_lock();
     if (lapack_lite_lock == NULL) {
         PyErr_NoMemory();
         return NULL;
     }
+#endif
 
 #ifdef HAVE_BLAS_ILP64
     PyDict_SetItemString(d, "_ilp64", Py_True);
