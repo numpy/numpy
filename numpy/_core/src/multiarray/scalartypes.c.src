@@ -229,9 +229,9 @@ find_binary_operation_path(
      * If we are here, we need to operate on Python scalars.  In general
      * that would just fails since NumPy doesn't know the other object!
      *
-     * However, NumPy (historically) often makes this work magically because
-     * it object ufuncs end up casting to object with `.item()` and that may
-     * returns Python type often (e.g. float for float32, float64)!
+     * However, NumPy (historically) made this often work magically because
+     * ufuncs for object dtype end up casting to object with `.item()`. This in
+     * turn ofthen returns a Python type (e.g. float for float32, float64)!
      * Retrying then succeeds. So if (and only if) `self.item()` returns a new
      * type, we can safely attempt the operation (again) with that.
      */
@@ -245,6 +245,7 @@ find_binary_operation_path(
         return 0;
     }
     /* The operation can't work and we will return NotImplemented */
+    Py_DECREF(self_item);
     return 0;
 }
 
