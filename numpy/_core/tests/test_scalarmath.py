@@ -29,10 +29,13 @@ complex_floating_types = np.complexfloating.__subclasses__()
 
 objecty_things = [object(), None]
 
-reasonable_operators_for_scalars = [
+binary_operators_for_scalars = [
     operator.lt, operator.le, operator.eq, operator.ne, operator.ge,
     operator.gt, operator.add, operator.floordiv, operator.mod,
     operator.mul, operator.pow, operator.sub, operator.truediv
+]
+binary_operators_for_scalar_ints = binary_operators_for_scalars + [
+    operator.xor, operator.or_, operator.and_
 ]
 
 
@@ -109,7 +112,7 @@ def check_ufunc_scalar_equivalence(op, arr1, arr2):
 
 @pytest.mark.slow
 @settings(max_examples=10000, deadline=2000)
-@given(sampled_from(reasonable_operators_for_scalars),
+@given(sampled_from(binary_operators_for_scalars),
        hynp.arrays(dtype=hynp.scalar_dtypes(), shape=()),
        hynp.arrays(dtype=hynp.scalar_dtypes(), shape=()))
 def test_array_scalar_ufunc_equivalence(op, arr1, arr2):
@@ -122,7 +125,7 @@ def test_array_scalar_ufunc_equivalence(op, arr1, arr2):
 
 
 @pytest.mark.slow
-@given(sampled_from(reasonable_operators_for_scalars),
+@given(sampled_from(binary_operators_for_scalars),
        hynp.scalar_dtypes(), hynp.scalar_dtypes())
 def test_array_scalar_ufunc_dtypes(op, dt1, dt2):
     # Same as above, but don't worry about sampling weird values so that we
@@ -865,7 +868,7 @@ def recursionlimit(n):
 
 
 @given(sampled_from(objecty_things),
-       sampled_from(reasonable_operators_for_scalars + [operator.xor]),
+       sampled_from(binary_operators_for_scalar_ints),
        sampled_from(types + [rational]))
 def test_operator_object_left(o, op, type_):
     try:
@@ -876,7 +879,7 @@ def test_operator_object_left(o, op, type_):
 
 
 @given(sampled_from(objecty_things),
-       sampled_from(reasonable_operators_for_scalars + [operator.xor]),
+       sampled_from(binary_operators_for_scalar_ints),
        sampled_from(types + [rational]))
 def test_operator_object_right(o, op, type_):
     try:
@@ -886,7 +889,7 @@ def test_operator_object_right(o, op, type_):
         pass
 
 
-@given(sampled_from(reasonable_operators_for_scalars),
+@given(sampled_from(binary_operators_for_scalars),
        sampled_from(types),
        sampled_from(types))
 def test_operator_scalars(op, type1, type2):
@@ -896,7 +899,7 @@ def test_operator_scalars(op, type1, type2):
         pass
 
 
-@pytest.mark.parametrize("op", reasonable_operators_for_scalars)
+@pytest.mark.parametrize("op", binary_operators_for_scalars)
 @pytest.mark.parametrize("sctype", [np.longdouble, np.clongdouble])
 def test_longdouble_operators_with_obj(sctype, op):
     # This is/used to be tricky, because NumPy generally falls back to
@@ -931,7 +934,7 @@ def test_longdouble_with_arrlike(sctype, op):
     assert_array_equal(op([1, 2], sctype(3)), op(np.array([1, 2]), 3))
 
 
-@pytest.mark.parametrize("op", reasonable_operators_for_scalars)
+@pytest.mark.parametrize("op", binary_operators_for_scalars)
 @pytest.mark.parametrize("sctype", [np.longdouble, np.clongdouble])
 @np.errstate(all="ignore")
 def test_longdouble_operators_with_large_int(sctype, op):
@@ -1121,7 +1124,7 @@ def test_truediv_int():
 @pytest.mark.slow
 @pytest.mark.parametrize("op",
     # TODO: Power is a bit special, but here mostly bools seem to behave oddly
-    [op for op in reasonable_operators_for_scalars if op is not operator.pow])
+    [op for op in binary_operators_for_scalars if op is not operator.pow])
 @pytest.mark.parametrize("sctype", types)
 @pytest.mark.parametrize("other_type", [float, int, complex])
 @pytest.mark.parametrize("rop", [True, False])
