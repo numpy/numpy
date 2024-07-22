@@ -1073,6 +1073,29 @@ class TestMethodsWithUnicode:
         assert_array_equal(act3, res3)
         assert_array_equal(act1 + act2 + act3, buf)
 
+    @pytest.mark.parametrize("method", ["strip", "lstrip", "rstrip"])
+    @pytest.mark.parametrize(
+        "source,strip",
+        [
+            ("λμ", "μ"),
+            ("λμ", "λ"),
+            ("λ"*5 + "μ"*2, "μ"),
+            ("λ" * 5 + "μ" * 2, "λ"),
+            ("λ" * 5 + "A" + "μ" * 2, "μλ"),
+            ("λμ" * 5, "μ"),
+            ("λμ" * 5, "λ"),
+    ])
+    def test_strip_functions_unicode(self, source, strip, method, dt):
+        src_array = np.array([source], dtype=dt)
+
+        npy_func = getattr(np.strings, method)
+        py_func = getattr(str, method)
+
+        expected = np.array([py_func(source, strip)], dtype=dt)
+        actual = npy_func(src_array, strip)
+
+        assert_array_equal(actual, expected)
+
 
 class TestMixedTypeMethods:
     def test_center(self):

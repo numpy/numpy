@@ -1231,12 +1231,22 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
     if (striptype != STRIPTYPE::RIGHTSTRIP) {
         for (; new_start < len1; traverse_buf++) {
             Py_ssize_t res;
+            size_t current_point_bytes = traverse_buf.num_bytes_next_character();
             switch (enc) {
                 case ENCODING::ASCII:
-                case ENCODING::UTF8:
                 {
                     CheckedIndexer<char> ind(buf2.buf, len2);
                     res = findchar<char>(ind, len2, *traverse_buf);
+                    break;
+                }
+                case ENCODING::UTF8:
+                {
+                    if (current_point_bytes == 1) {
+                        CheckedIndexer<char> ind(buf2.buf, len2);
+                        res = findchar<char>(ind, len2, *traverse_buf);
+                    } else {
+                        res = fastsearch(buf2.buf, buf2.after - buf2.buf,traverse_buf.buf, current_point_bytes, -1, FAST_SEARCH);
+                    }
                     break;
                 }
                 case ENCODING::UTF32:
@@ -1264,13 +1274,23 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
 
     if (striptype != STRIPTYPE::LEFTSTRIP) {
         while (new_stop > new_start) {
+            size_t current_point_bytes = traverse_buf.num_bytes_next_character();
             Py_ssize_t res;
             switch (enc) {
                 case ENCODING::ASCII:
-                case ENCODING::UTF8:
                 {
                     CheckedIndexer<char> ind(buf2.buf, len2);
                     res = findchar<char>(ind, len2, *traverse_buf);
+                    break;
+                }
+                case ENCODING::UTF8:
+                {
+                    if (current_point_bytes == 1) {
+                        CheckedIndexer<char> ind(buf2.buf, len2);
+                        res = findchar<char>(ind, len2, *traverse_buf);
+                    } else {
+                        res = fastsearch(buf2.buf, buf2.after - buf2.buf, traverse_buf.buf, current_point_bytes, -1, FAST_RSEARCH);
+                    }
                     break;
                 }
                 case ENCODING::UTF32:
@@ -1283,7 +1303,7 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
             if (res < 0) {
                 break;
             }
-            num_bytes -= traverse_buf.num_bytes_next_character();
+            num_bytes -= current_point_bytes;;
             new_stop--;
             // Do not step to character -1: can't find it's start for utf-8.
             if (new_stop > 0) {
