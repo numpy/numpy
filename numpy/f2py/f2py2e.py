@@ -28,11 +28,12 @@ from . import cfuncs
 from . import f90mod_rules
 from . import __version__
 from . import capi_maps
+from .cfuncs import errmess
 from numpy.f2py._backends import f2py_build_generator
 
 f2py_version = __version__.version
 numpy_version = __version__.version
-errmess = sys.stderr.write
+
 # outmess=sys.stdout.write
 show = pprint.pprint
 outmess = auxfuncs.outmess
