@@ -13,7 +13,7 @@
 #undef NPY_INTERNAL_BUILD
 #endif
 // for add_INT32_negative_indexed
-#define NPY_TARGET_VERSION NPY_2_0_API_VERSION
+#define NPY_TARGET_VERSION NPY_2_1_API_VERSION
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "numpy/ndarrayobject.h"
