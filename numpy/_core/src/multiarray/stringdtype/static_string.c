@@ -131,7 +131,11 @@ struct npy_string_allocator {
     npy_string_free_func free;
     npy_string_realloc_func realloc;
     npy_string_arena arena;
+#if PY_VERSION_HEX < 0x30d00b3
     PyThread_type_lock *allocator_lock;
+#else
+    PyMutex allocator_lock;
+#endif
 };
 
 static void
@@ -245,18 +249,22 @@ NpyString_new_allocator(npy_string_malloc_func m, npy_string_free_func f,
     if (allocator == NULL) {
         return NULL;
     }
+#if PY_VERSION_HEX < 0x30d00b3
     PyThread_type_lock *allocator_lock = PyThread_allocate_lock();
     if (allocator_lock == NULL) {
         f(allocator);
         PyErr_SetString(PyExc_MemoryError, "Unable to allocate thread lock");
         return NULL;
     }
+    allocator->allocator_lock = allocator_lock;
+#else
+    memset(&allocator->allocator_lock, 0, sizeof(PyMutex));
+#endif
     allocator->malloc = m;
     allocator->free = f;
     allocator->realloc = r;
     // arena buffer gets allocated in arena_malloc
     allocator->arena = NEW_ARENA;
-    allocator->allocator_lock = allocator_lock;
 
     return allocator;
 }
@@ -269,9 +277,11 @@ NpyString_free_allocator(npy_string_allocator *allocator)
     if (allocator->arena.buffer != NULL) {
         f(allocator->arena.buffer);
     }
+#if PY_VERSION_HEX < 0x30d00b3
     if (allocator->allocator_lock != NULL) {
         PyThread_free_lock(allocator->allocator_lock);
     }
+#endif
 
     f(allocator);
 }
@@ -288,9 +298,13 @@ NpyString_free_allocator(npy_string_allocator *allocator)
 NPY_NO_EXPORT npy_string_allocator *
 NpyString_acquire_allocator(const PyArray_StringDTypeObject *descr)
 {
+#if PY_VERSION_HEX < 0x30d00b3
     if (!PyThread_acquire_lock(descr->allocator->allocator_lock, NOWAIT_LOCK)) {
         PyThread_acquire_lock(descr->allocator->allocator_lock, WAIT_LOCK);
     }
+#else
+    PyMutex_Lock(&descr->allocator->allocator_lock);
+#endif
     return descr->allocator;
 }
 
@@ -358,7 +372,11 @@ NpyString_acquire_allocators(size_t n_descriptors,
 NPY_NO_EXPORT void
 NpyString_release_allocator(npy_string_allocator *allocator)
 {
+#if PY_VERSION_HEX < 0x30d00b3
     PyThread_release_lock(allocator->allocator_lock);
+#else
+    PyMutex_Unlock(&allocator->allocator_lock);
+#endif
 }
 
 /*NUMPY_API
