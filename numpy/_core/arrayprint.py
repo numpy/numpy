@@ -280,13 +280,13 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     """
     new_opt = _make_options_dict(precision, threshold, edgeitems, linewidth,
-                            suppress, nanstr, infstr, sign, formatter,
-                            floatmode, legacy)
-    # formatter is always reset
+                                 suppress, nanstr, infstr, sign, formatter,
+                                 floatmode, legacy)
+    # formatter and override_repr are always reset
     new_opt['formatter'] = formatter
     new_opt['override_repr'] = override_repr
 
-    updated_opt = format_options.get().copy()
+    updated_opt = format_options.get() | new_opt
     updated_opt.update(new_opt)
 
     if updated_opt['legacy'] == 113:
@@ -1450,8 +1450,7 @@ def _void_scalar_to_string(x, is_repr=True):
     options = format_options.get().copy()
 
     if options["legacy"] <= 125:
-        return StructuredVoidFormat.from_data(
-            array(x), **options)(x)
+        return StructuredVoidFormat.from_data(array(x), **options)(x)
 
     if options.get('formatter') is None:
         options['formatter'] = {}
