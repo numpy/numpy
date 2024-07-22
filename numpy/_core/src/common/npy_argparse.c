@@ -12,15 +12,27 @@
 
 #include "arrayfunction_override.h"
 
+#if PY_VERSION_HEX < 0x30d00b3
 static PyThread_type_lock argparse_mutex;
+#define LOCK_ARGPARSE_MUTEX                             \
+    PyThread_acquire_lock(argparse_mutex, WAIT_LOCK)
+#define UNLOCK_ARGPARSE_MUTEX                            \
+    PyThread_release_lock(argparse_mutex)
+#else
+static PyMutex argparse_mutex = {0};
+#define LOCK_ARGPARSE_MUTEX PyMutex_Lock(&argparse_mutex)
+#define UNLOCK_ARGPARSE_MUTEX PyMutex_Unlock(&argparse_mutex)
+#endif
 
 NPY_NO_EXPORT int
 init_argparse_mutex(void) {
+#if PY_VERSION_HEX < 0x30d00b3
     argparse_mutex = PyThread_allocate_lock();
     if (argparse_mutex == NULL) {
         PyErr_NoMemory();
         return -1;
     }
+#endif
     return 0;
 }
 
@@ -286,19 +298,19 @@ _npy_parse_arguments(const char *funcname,
         ...)
 {
     if (!npy_atomic_load_uint8(&cache->initialized)) {
-        PyThread_acquire_lock(argparse_mutex, WAIT_LOCK);
+        LOCK_ARGPARSE_MUTEX;
         if (!npy_atomic_load_uint8(&cache->initialized)) {
             va_list va;
             va_start(va, kwnames);
             int res = initialize_keywords(funcname, cache, va);
             va_end(va);
             if (res < 0) {
-                PyThread_release_lock(argparse_mutex);
+                UNLOCK_ARGPARSE_MUTEX;
                 return -1;
             }
             npy_atomic_store_uint8(&cache->initialized, 1);
         }
-        PyThread_release_lock(argparse_mutex);
+        UNLOCK_ARGPARSE_MUTEX;
     }
 
     if (NPY_UNLIKELY(len_args > cache->npositional)) {
