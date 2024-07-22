@@ -207,12 +207,11 @@ def scaninputline(inputline):
     dorestdoc = 0
     wrapfuncs = 1
     buildpath = '.'
-    include_paths, inputline = get_includes(inputline)
+    include_paths, freethreading_compatible, inputline = get_newer_options(inputline)
     signsfile, modulename = None, None
     options = {'buildpath': buildpath,
                'coutput': None,
                'f2py_wrapper_output': None}
-    requires_gil = 1
     for l in inputline:
         if l == '':
             pass
@@ -270,10 +269,6 @@ def scaninputline(inputline):
             cfuncs.userincludes[l[9:-1]] = '#include ' + l[8:]
         elif l == '--skip-empty-wrappers':
             emptygen = False
-        elif l == '--no-freethreading-compatible':
-            requires_gil = 1
-        elif l == '--freethreading-compatible':
-            requires_gil = 0
         elif l[0] == '-':
             errmess('Unknown option %s\n' % repr(l))
             sys.exit()
@@ -340,7 +335,7 @@ def scaninputline(inputline):
     options['wrapfuncs'] = wrapfuncs
     options['buildpath'] = buildpath
     options['include_paths'] = include_paths
-    options['requires_gil'] = requires_gil
+    options['requires_gil'] = not freethreading_compatible
     options.setdefault('f2cmap_file', None)
     return files, options
 
@@ -553,21 +548,22 @@ class CombineIncludePaths(argparse.Action):
             include_paths_set.add(values)
         setattr(namespace, 'include_paths', list(include_paths_set))
 
-def include_parser():
+def f2py_parser():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-I", dest="include_paths", action=CombineIncludePaths)
     parser.add_argument("--include-paths", dest="include_paths", action=CombineIncludePaths)
     parser.add_argument("--include_paths", dest="include_paths", action=CombineIncludePaths)
+    parser.add_argument("--freethreading-compatible", dest="ftcompat", action=argparse.BooleanOptionalAction)
     return parser
 
-def get_includes(iline):
+def get_newer_options(iline):
     iline = (' '.join(iline)).split()
-    parser = include_parser()
+    parser = f2py_parser()
     args, remain = parser.parse_known_args(iline)
     ipaths = args.include_paths
     if args.include_paths is None:
         ipaths = []
-    return ipaths, remain
+    return ipaths, args.ftcompat, remain
 
 def make_f2py_compile_parser():
     parser = argparse.ArgumentParser(add_help=False)
@@ -736,7 +732,7 @@ def run_compile():
             run_main(f" {' '.join(f2py_flags)} {' '.join(pyf_files)}".split())
 
     # Order matters here, includes are needed for run_main above
-    include_dirs, sources = get_includes(sources)
+    include_dirs, _, sources = get_newer_options(sources)
     # Now use the builder
     builder = build_backend(
         modulename,
