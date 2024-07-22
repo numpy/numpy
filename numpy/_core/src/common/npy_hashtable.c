@@ -30,6 +30,7 @@
 #endif
 
 #ifdef Py_GIL_DISABLED
+#if PY_VERSION_HEX < 0x30d00b3
 // TODO: replace with PyMutex when it is public
 #define LOCK_TABLE(tb)                                      \
     if (!PyThread_acquire_lock(tb->mutex, NOWAIT_LOCK)) {   \
@@ -47,6 +48,12 @@
     if (tb->mutex != NULL) {                    \
         PyThread_free_lock(tb->mutex);          \
     }
+#else
+#define LOCK_TABLE(tb) PyMutex_Lock(&tb->mutex)
+#define UNLOCK_TABLE(tb) PyMutex_Unlock(&tb->mutex)
+#define INITIALIZE_LOCK(tb) memset(&tb->mutex, 0, sizeof(PyMutex))
+#define FREE_LOCK(tb)
+#endif
 #else
 // the GIL serializes access to the table so no need
 // for locking if it is enabled
@@ -252,7 +259,7 @@ PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
 
 
 NPY_NO_EXPORT PyObject *
-PyArrayIdentityHash_GetItem(PyArrayIdentityHash const *tb, PyObject *const *key)
+PyArrayIdentityHash_GetItem(PyArrayIdentityHash *tb, PyObject *const *key)
 {
     LOCK_TABLE(tb);
     PyObject *res = find_item(tb, key)[0];
