@@ -1324,6 +1324,7 @@ python_sources = [
   'numerictypes.py',
   'numerictypes.pyi',
   'overrides.py',
+  'printoptions.py',
   'records.py',
   'records.pyi',
   'shape_base.py',

@@ -337,7 +337,11 @@ genint_type_repr(PyObject *self)
     if (value_string == NULL) {
         return NULL;
     }
-    if (npy_thread_unsafe_state.legacy_print_mode <= 125) {
+    int legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode <= 125) {
         return value_string;
     }
 
@@ -374,7 +378,11 @@ genbool_type_str(PyObject *self)
 static PyObject *
 genbool_type_repr(PyObject *self)
 {
-    if (npy_thread_unsafe_state.legacy_print_mode <= 125) {
+    int legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode <= 125) {
         return genbool_type_str(self);
     }
     return PyUnicode_FromString(
@@ -500,7 +508,11 @@ stringtype_@form@(PyObject *self)
     if (ret == NULL) {
         return NULL;
     }
-    if (npy_thread_unsafe_state.legacy_print_mode > 125) {
+    int legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode > 125) {
         Py_SETREF(ret, PyUnicode_FromFormat("np.bytes_(%S)", ret));
     }
 #endif   /* IS_repr */
@@ -547,7 +559,11 @@ unicodetype_@form@(PyObject *self)
     if (ret == NULL) {
         return NULL;
     }
-    if (npy_thread_unsafe_state.legacy_print_mode > 125) {
+    int legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode > 125) {
         Py_SETREF(ret, PyUnicode_FromFormat("np.str_(%S)", ret));
     }
 #endif  /* IS_repr */
@@ -627,7 +643,11 @@ voidtype_repr(PyObject *self)
         /* Python helper checks for the legacy mode printing */
         return _void_scalar_to_string(self, 1);
     }
-    if (npy_thread_unsafe_state.legacy_print_mode > 125) {
+    int legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode > 125) {
         return _void_to_hex(s->obval, s->descr->elsize, "np.void(b'", "\\x", "')");
     }
     else {
@@ -679,7 +699,11 @@ datetimetype_repr(PyObject *self)
      */
     if ((scal->obmeta.num == 1 && scal->obmeta.base != NPY_FR_h) ||
             scal->obmeta.base == NPY_FR_GENERIC) {
-        if (npy_thread_unsafe_state.legacy_print_mode > 125) {
+        int legacy_print_mode = get_legacy_print_mode();
+        if (legacy_print_mode == -1) {
+            return NULL;
+        }
+        if (legacy_print_mode > 125) {
             ret = PyUnicode_FromFormat("np.datetime64('%s')", iso);
         }
         else {
@@ -691,7 +715,11 @@ datetimetype_repr(PyObject *self)
         if (meta == NULL) {
             return NULL;
         }
-        if (npy_thread_unsafe_state.legacy_print_mode > 125) {
+        int legacy_print_mode = get_legacy_print_mode();
+        if (legacy_print_mode == -1) {
+            return NULL;
+        }
+        if (legacy_print_mode > 125) {
             ret = PyUnicode_FromFormat("np.datetime64('%s','%S')", iso, meta);
         }
         else {
@@ -735,7 +763,11 @@ timedeltatype_repr(PyObject *self)
 
     /* The metadata unit */
     if (scal->obmeta.base == NPY_FR_GENERIC) {
-        if (npy_thread_unsafe_state.legacy_print_mode > 125) {
+        int legacy_print_mode = get_legacy_print_mode();
+        if (legacy_print_mode == -1) {
+            return NULL;
+        }
+        if (legacy_print_mode > 125) {
             ret = PyUnicode_FromFormat("np.timedelta64(%S)", val);
         }
         else {
@@ -748,7 +780,11 @@ timedeltatype_repr(PyObject *self)
             Py_DECREF(val);
             return NULL;
         }
-        if (npy_thread_unsafe_state.legacy_print_mode > 125) {
+        int legacy_print_mode = get_legacy_print_mode();
+        if (legacy_print_mode == -1) {
+            return NULL;
+        }
+        if (legacy_print_mode > 125) {
             ret = PyUnicode_FromFormat("np.timedelta64(%S,'%S')", val, meta);
         }
         else {
@@ -1050,7 +1086,11 @@ static PyObject *
                          npy_bool sign)
 {
 
-    if (npy_thread_unsafe_state.legacy_print_mode <= 113) {
+    int legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode <= 113) {
         return legacy_@name@_format@kind@(val);
     }
 
@@ -1081,7 +1121,11 @@ static PyObject *
     if (string == NULL) {
         return NULL;
     }
-    if (npy_thread_unsafe_state.legacy_print_mode > 125) {
+    int legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode > 125) {
         Py_SETREF(string, PyUnicode_FromFormat("@repr_format@", string));
     }
 #endif  /* IS_repr */
@@ -1096,7 +1140,11 @@ c@name@type_@kind@(PyObject *self)
     npy_c@name@ val = PyArrayScalar_VAL(self, C@Name@);
     TrimMode trim = TrimMode_DptZeros;
 
-    if (npy_thread_unsafe_state.legacy_print_mode <= 113) {
+    int legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode <= 113) {
         return legacy_c@name@_format@kind@(val);
     }
 
@@ -1109,7 +1157,11 @@ c@name@type_@kind@(PyObject *self)
 #ifdef IS_str
         ret = PyUnicode_FromFormat("%Sj", istr);
 #else  /* IS_repr */
-        if (npy_thread_unsafe_state.legacy_print_mode <= 125) {
+        int legacy_print_mode = get_legacy_print_mode();
+        if (legacy_print_mode == -1) {
+            return NULL;
+        }
+        if (legacy_print_mode <= 125) {
             ret = PyUnicode_FromFormat("%Sj", istr);
         }
         else {
@@ -1157,7 +1209,11 @@ c@name@type_@kind@(PyObject *self)
 #ifdef IS_str
     string = PyUnicode_FromFormat("(%S%Sj)", rstr, istr);
 #else  /* IS_repr */
-    if (npy_thread_unsafe_state.legacy_print_mode > 125) {
+    legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode > 125) {
         string = PyUnicode_FromFormat("@crepr_format@", rstr, istr);
     }
     else {
@@ -1182,7 +1238,11 @@ halftype_@kind@(PyObject *self)
     float floatval = npy_half_to_float(val);
     float absval;
 
-    if (npy_thread_unsafe_state.legacy_print_mode <= 113) {
+    int legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode <= 113) {
         return legacy_float_format@kind@(floatval);
     }
 
@@ -1198,7 +1258,11 @@ halftype_@kind@(PyObject *self)
 #ifdef IS_str
     return string;
 #else
-    if (string == NULL || npy_thread_unsafe_state.legacy_print_mode <= 125) {
+    legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (string == NULL || legacy_print_mode <= 125) {
         return string;
     }
     PyObject *res = PyUnicode_FromFormat("np.float16(%S)", string);

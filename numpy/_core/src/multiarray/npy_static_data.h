@@ -36,6 +36,7 @@ typedef struct npy_interned_str_struct {
     PyObject *errmode_strings[6];
     PyObject *__dlpack__;
     PyObject *pyvals_name;
+    PyObject *legacy;
 } npy_interned_str_struct;
 
 /*
@@ -105,6 +106,7 @@ typedef struct npy_static_pydata_struct {
     PyObject *math_gcd_func;
     PyObject *os_PathLike;
     PyObject *os_fspath;
+    PyObject *format_options;
 
     /*
      * Used in the __array__ internals to avoid building a tuple inline

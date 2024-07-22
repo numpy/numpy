@@ -29,6 +29,7 @@
 #include "npy_config.h"
 #include "npy_pycompat.h"
 #include "npy_import.h"
+#include "npy_static_data.h"
 #include "convert_datatype.h"
 #include "legacy_dtype_implementation.h"
 
@@ -64,7 +65,6 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "ctors.h"
 #include "array_assign.h"
 #include "common.h"
-#include "npy_static_data.h"
 #include "cblasfuncs.h"
 #include "vdot.h"
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
@@ -99,16 +99,45 @@ _umath_strings_richcompare(
         PyArrayObject *self, PyArrayObject *other, int cmp_op, int rstrip);
 
 
-static PyObject *
-set_legacy_print_mode(PyObject *NPY_UNUSED(self), PyObject *args)
-{
-    if (!PyArg_ParseTuple(args, "i", &npy_thread_unsafe_state.legacy_print_mode)) {
-        return NULL;
+NPY_NO_EXPORT int
+get_legacy_print_mode(void) {
+    /* Get the C value of the legacy printing mode.
+     *
+     * It is stored as a Python context variable so we access it via the C
+     * API. For simplicity the mode is encoded as an integer where INT_MAX
+     * means no legacy mode, and '113'/'121'/'125' means 1.13/1.21/1.25 legacy
+     * mode; and 0 maps to INT_MAX. We can upgrade this if we have more
+     * complex requirements in the future.
+     */
+    PyObject *format_options = NULL;
+    PyContextVar_Get(npy_static_pydata.format_options, NULL, &format_options);
+    if (format_options == NULL) {
+        PyErr_SetString(PyExc_SystemError,
+                        "NumPy internal error: unable to get format_options "
+                        "context variable");
+        return -1;
     }
-    if (!npy_thread_unsafe_state.legacy_print_mode) {
-        npy_thread_unsafe_state.legacy_print_mode = INT_MAX;
+    PyObject *legacy_print_mode = NULL;
+    if (PyDict_GetItemRef(format_options, npy_interned_str.legacy,
+                          &legacy_print_mode) == -1) {
+        return -1;
     }
-    Py_RETURN_NONE;
+    Py_DECREF(format_options);
+    if (legacy_print_mode == NULL) {
+        PyErr_SetString(PyExc_SystemError,
+                        "NumPy internal error: unable to get legacy print "
+                        "mode");
+        return -1;
+    }
+    Py_ssize_t ret = PyLong_AsSsize_t(legacy_print_mode);
+    Py_DECREF(legacy_print_mode);
+    if (error_converting(ret)) {
+        return -1;
+    }
+    if (ret > INT_MAX) {
+        return INT_MAX;
+    }
+    return (int)ret;
 }
 
 
@@ -4540,8 +4569,6 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"normalize_axis_index", (PyCFunction)normalize_axis_index,
         METH_FASTCALL | METH_KEYWORDS, NULL},
-    {"set_legacy_print_mode", (PyCFunction)set_legacy_print_mode,
-        METH_VARARGS, NULL},
     {"_discover_array_parameters", (PyCFunction)_discover_array_parameters,
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"_get_castingimpl",  (PyCFunction)_get_castingimpl,
@@ -4770,8 +4797,6 @@ initialize_thread_unsafe_state(void) {
     else {
         npy_thread_unsafe_state.warn_if_no_mem_policy = 0;
     }
-
-    npy_thread_unsafe_state.legacy_print_mode = INT_MAX;
 
     return 0;
 }
