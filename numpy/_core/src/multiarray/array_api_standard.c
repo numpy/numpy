@@ -32,7 +32,7 @@ array_to_device(PyObject *self, PyObject *args, PyObject *kwds)
 
     if (strcmp(device, "cpu") != 0) {
         PyErr_Format(PyExc_ValueError,
-                     "Unsupported device: %s.", device);
+                     "Unsupported device: %s. Only 'cpu' is accepted.", device);
         return NULL;
     }
 

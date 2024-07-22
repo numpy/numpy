@@ -26,6 +26,9 @@ i8: np.int64
 B: SubClass
 AR_f8: npt.NDArray[np.float64]
 AR_i8: npt.NDArray[np.int64]
+AR_u1: npt.NDArray[np.uint8]
+AR_c8: npt.NDArray[np.complex64]
+AR_m: npt.NDArray[np.timedelta64]
 AR_U: npt.NDArray[np.str_]
 AR_V: npt.NDArray[np.void]
 
@@ -222,6 +225,9 @@ assert_type(f8.to_device("cpu"), np.float64)
 assert_type(i8.to_device("cpu"), np.int64)
 assert_type(AR_f8.to_device("cpu"), npt.NDArray[np.float64])
 assert_type(AR_i8.to_device("cpu"), npt.NDArray[np.int64])
+assert_type(AR_u1.to_device("cpu"), npt.NDArray[np.uint8])
+assert_type(AR_c8.to_device("cpu"), npt.NDArray[np.complex64])
+assert_type(AR_m.to_device("cpu"), npt.NDArray[np.timedelta64])
 
 assert_type(f8.__array_namespace__(), Any)
 assert_type(AR_f8.__array_namespace__(), Any)
