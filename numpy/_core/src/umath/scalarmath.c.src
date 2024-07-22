@@ -1264,7 +1264,7 @@ static PyObject *
              * even a subclass of a NumPy scalar (currently).
              *
              * We drop through to the generic path here which checks for the
-             * (c)longdouble infinite recursion problem.
+             * infinite recursion problem (gh-18548, gh-26767).
              */
         case PROMOTION_REQUIRED:
             /*
