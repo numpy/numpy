@@ -158,8 +158,10 @@ _ArrayLikeInt: TypeAlias = _DualArrayLike[
 # Used as the first overload, should only match NDArray[Any],
 # not any actual types.
 # https://github.com/numpy/numpy/pull/22193
-class _UnknownType:
-    ...
+if sys.version_info >= (3, 11):
+    from typing import Never as _UnknownType
+else:
+    from typing import NoReturn as _UnknownType
 
 
 _ArrayLikeUnknown: TypeAlias = _DualArrayLike[
