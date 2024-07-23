@@ -75,4 +75,6 @@ __expired_attributes__ = {
     "compare_chararrays": 
         "It's still available as `np.char.compare_chararrays`.",
     "format_parser": "It's still available as `np.rec.format_parser`.",
+    "alltrue": "Use `np.all` instead.",
+    "sometrue": "Use `np.any` instead.",
 }
