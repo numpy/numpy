@@ -18,6 +18,7 @@ from numpy._typing import (
     # Arrays
     ArrayLike,
     NDArray,
+    _ArrayLike,
     _SupportsArray,
     _NestedSequence,
     _FiniteNestedSequence,
@@ -3426,8 +3427,12 @@ def _no_nep50_warning() -> Generator[None, None, None]: ...
 def _get_promotion_state() -> str: ...
 def _set_promotion_state(state: str, /) -> None: ...
 
-class ndenumerate(Generic[_ScalarType]):
-    iter: flatiter[NDArray[_ScalarType]]
+_ScalarType_co = TypeVar("_ScalarType_co", bound=generic, covariant=True)
+
+class ndenumerate(Generic[_ScalarType_co]):
+    @property
+    def iter(self) -> flatiter[NDArray[_ScalarType_co]]: ...
+
     @overload
     def __new__(
         cls, arr: _FiniteNestedSequence[_SupportsArray[dtype[_ScalarType]]],
@@ -3444,7 +3449,8 @@ class ndenumerate(Generic[_ScalarType]):
     def __new__(cls, arr: float | _NestedSequence[float]) -> ndenumerate[float64]: ...
     @overload
     def __new__(cls, arr: complex | _NestedSequence[complex]) -> ndenumerate[complex128]: ...
-    def __next__(self: ndenumerate[_ScalarType]) -> tuple[_Shape, _ScalarType]: ...
+
+    def __next__(self) -> tuple[_Shape, _ScalarType_co]: ...
     def __iter__(self: _T) -> _T: ...
 
 class ndindex:
