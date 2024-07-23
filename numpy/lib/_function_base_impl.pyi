@@ -462,8 +462,18 @@ def median(
 @overload
 def median(
     a: _ArrayLikeFloat_co | _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    axis: None | _ShapeLike,
+    out: _ArrayType,
+    /,
+    overwrite_input: bool = ...,
+    keepdims: bool = ...,
+) -> _ArrayType: ...
+@overload
+def median(
+    a: _ArrayLikeFloat_co | _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
     axis: None | _ShapeLike = ...,
-    out: _ArrayType = ...,
+    *,
+    out: _ArrayType,
     overwrite_input: bool = ...,
     keepdims: bool = ...,
 ) -> _ArrayType: ...
@@ -620,12 +630,25 @@ def percentile(
 def percentile(
     a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
     q: _ArrayLikeFloat_co,
-    axis: None | _ShapeLike = ...,
-    out: _ArrayType = ...,
+    axis: None | _ShapeLike,
+    out: _ArrayType,
+    /,
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: bool = ...,
     *,
+    weights: None | _ArrayLikeFloat_co = ...,
+) -> _ArrayType: ...
+@overload
+def percentile(
+    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    q: _ArrayLikeFloat_co,
+    axis: None | _ShapeLike = ...,
+    *,
+    out: _ArrayType,
+    overwrite_input: bool = ...,
+    method: _MethodKind = ...,
+    keepdims: bool = ...,
     weights: None | _ArrayLikeFloat_co = ...,
 ) -> _ArrayType: ...
 
