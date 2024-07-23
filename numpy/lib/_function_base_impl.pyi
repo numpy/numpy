@@ -638,7 +638,7 @@ quantile = percentile
 
 _SCT_fm = TypeVar(
     "_SCT_fm",
-    bound=floating[Any] | complexfloating[ANy, Any] | timedelta64,
+    bound=floating[Any] | complexfloating[Any, Any] | timedelta64,
 )
 
 class _SupportsRMulFloat(Protocol[_T_co]):
