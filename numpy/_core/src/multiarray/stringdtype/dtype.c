@@ -585,6 +585,20 @@ stringdtype_get_clear_loop(void *NPY_UNUSED(traverse_context),
 }
 
 static int
+stringdtype_get_fill_zero_loop(void *NPY_UNUSED(traverse_context),
+                               PyArray_Descr *NPY_UNUSED(descr),
+                               int NPY_UNUSED(aligned),
+                               npy_intp NPY_UNUSED(fixed_stride),
+                               PyArrayMethod_TraverseLoop **out_loop,
+                               NpyAuxData **NPY_UNUSED(out_auxdata),
+                               NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    *flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+    *out_loop = &stringdtype_clear_loop;
+    return 0;
+}
+
+static int
 stringdtype_is_known_scalar_type(PyArray_DTypeMeta *cls,
                                  PyTypeObject *pytype)
 {
@@ -648,6 +662,7 @@ static PyType_Slot PyArray_StringDType_Slots[] = {
         {NPY_DT_PyArray_ArrFuncs_argmax, &argmax},
         {NPY_DT_PyArray_ArrFuncs_argmin, &argmin},
         {NPY_DT_get_clear_loop, &stringdtype_get_clear_loop},
+        {NPY_DT_get_fill_zero_loop, &stringdtype_get_fill_zero_loop},
         {NPY_DT_finalize_descr, &stringdtype_finalize_descr},
         {_NPY_DT_is_known_scalar_type, &stringdtype_is_known_scalar_type},
         {0, NULL}};
