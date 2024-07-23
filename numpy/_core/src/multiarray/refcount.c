@@ -57,6 +57,51 @@ PyArray_ClearBuffer(
 
 
 /*
+ * Helper function to zero an array buffer.
+ *
+ * Here "zeroing" means an abstract zeroing operation,
+ * which for an array of references might be something
+ * more complicated than zero-filling the buffer.
+ *
+ * Failure (returns -1) indicates some sort of programming or
+ * logical error and should not happen for a data type that has
+ * been set up correctly.
+ */
+NPY_NO_EXPORT int
+PyArray_ZeroBuffer(
+        PyArray_Descr *descr, char *data,
+        npy_intp stride, npy_intp size, int aligned)
+{
+    if (!PyDataType_REFCHK(descr)) {
+        return 0;
+    }
+
+    NPY_traverse_info zero_info;
+    NPY_traverse_info_init(&zero_info);
+    /* Flags unused: float errors do not matter and we do not release GIL */
+    NPY_ARRAYMETHOD_FLAGS flags_unused;
+    PyArrayMethod_GetTraverseLoop *get_fill_zero_loop =
+            NPY_DT_SLOTS(NPY_DTYPE(descr))->get_fill_zero_loop;
+    if (get_fill_zero_loop != NULL) {
+        if (get_fill_zero_loop(
+                    NULL, descr, 1, descr->elsize, &(zero_info.func),
+                    &(zero_info.auxdata), &flags_unused) < 0) {
+            goto fail;
+        }
+    }
+
+    int res = zero_info.func(
+            NULL, descr, data, size, stride, zero_info.auxdata);
+    NPY_traverse_info_xfree(&zero_info);
+    return res;
+
+  fail:
+    NPY_traverse_info_xfree(&zero_info);
+    return -1;
+}
+
+
+/*
  * Helper function to clear whole array.  It seems plausible that we should
  * be able to get away with assuming the array is contiguous.
  *
