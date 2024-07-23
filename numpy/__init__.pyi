@@ -686,12 +686,12 @@ __all__ = [
     "nanquantile",
     # lib._function_base_impl.__all__
     # NOTE: `trapz` is omitted because it is deprecated
-    # TODO: add `trapezoid` once type-hinted
     "select", "piecewise", "trim_zeros", "copy", "iterable", "percentile", "diff",
     "gradient", "angle", "unwrap", "sort_complex", "flip", "rot90", "extract", "place",
     "vectorize", "asarray_chkfinite", "average", "bincount", "digitize", "cov",
     "corrcoef", "median", "sinc", "hamming", "hanning", "bartlett", "blackman",
     "kaiser", "i0", "meshgrid", "delete", "insert", "append", "interp", "quantile",
+    "trapezoid",
     # lib._twodim_base_impl.__all__
     "diag", "diagflat", "eye", "fliplr", "flipud", "tri", "triu", "tril", "vander",
     "histogram2d", "mask_indices", "tril_indices", "tril_indices_from", "triu_indices",
