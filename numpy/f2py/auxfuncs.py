@@ -17,6 +17,7 @@ from copy import deepcopy
 
 from . import __version__
 from . import cfuncs
+from .cfuncs import errmess
 
 __all__ = [
     'applyrules', 'debugcapi', 'dictappend', 'errmess', 'gentitle',
@@ -51,7 +52,6 @@ __all__ = [
 f2py_version = __version__.version
 
 
-errmess = sys.stderr.write
 show = pprint.pprint
 
 options = {}
