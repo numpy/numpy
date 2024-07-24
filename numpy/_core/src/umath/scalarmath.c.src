@@ -798,8 +798,9 @@ typedef enum {
      */
     CONVERT_PYSCALAR,
     /*
-     * Other object is an unknown scalar or array-like, we (typically) use
+     * Other object is an unknown scalar or array-like, we also use
      * the generic path, which normally ends up in the ufunc machinery.
+     * (So it ends up identical to PROMOTION_REQUIRED.)
      */
     OTHER_IS_UNKNOWN_OBJECT,
     /*
@@ -1262,12 +1263,9 @@ static PyObject *
              * also integers that are too large to convert to `long`), or
              * even a subclass of a NumPy scalar (currently).
              *
-             * Generally, we try dropping through to the array path here,
-             * but this can lead to infinite recursions for (c)longdouble.
+             * We drop through to the generic path here which checks for the
+             * infinite recursion problem (gh-18548, gh-26767).
              */
-#if defined(IS_longdouble) || defined(IS_clongdouble)
-            Py_RETURN_NOTIMPLEMENTED;
-#endif
         case PROMOTION_REQUIRED:
             /*
              * Python scalar that is larger than the current one, or two
@@ -1544,9 +1542,6 @@ static PyObject *
         case CONVERSION_SUCCESS:
             break;  /* successfully extracted value we can proceed */
         case OTHER_IS_UNKNOWN_OBJECT:
-#if defined(IS_longdouble) || defined(IS_clongdouble)
-            Py_RETURN_NOTIMPLEMENTED;
-#endif
         case PROMOTION_REQUIRED:
             return PyGenericArrType_Type.tp_as_number->nb_power(a, b, modulo);
         case CONVERT_PYSCALAR:
@@ -1955,9 +1950,6 @@ static PyObject*
         case CONVERSION_SUCCESS:
             break;  /* successfully extracted value we can proceed */
         case OTHER_IS_UNKNOWN_OBJECT:
-#if defined(IS_longdouble) || defined(IS_clongdouble)
-            Py_RETURN_NOTIMPLEMENTED;
-#endif
         case PROMOTION_REQUIRED:
             return PyGenericArrType_Type.tp_richcompare(self, other, cmp_op);
         case CONVERT_PYSCALAR:
