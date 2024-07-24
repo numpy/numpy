@@ -66,7 +66,7 @@ stages:
       displayName: 'Fetch submodules'
     - script: |
             # yum does not have a ninja package, so use the PyPI one
-            docker run -v $(pwd):/numpy -e CFLAGS="-msse2 -std=c99 -UNDEBUG" \
+            docker run -v $(pwd):/numpy -e CFLAGS="-msse2 -std=c99" \
             -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2014_i686 \
             /bin/bash -xc "source /numpy/tools/ci/run_32_bit_linux_docker.sh"
       displayName: 'Run 32-bit manylinux2014 Docker Build / Tests'
