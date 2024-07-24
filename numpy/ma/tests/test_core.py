@@ -251,7 +251,7 @@ class TestMaskedArray:
 
         # The above only failed due a long chain of oddity, try also with
         # an object array that cannot be converted to bool always:
-        class NotBool():
+        class NotBool:
             def __bool__(self):
                 raise ValueError("not a bool!")
         masked_obj = np.ma.masked_array([NotBool(), 'b'], mask=[True, False])
@@ -4631,7 +4631,7 @@ class TestMaskedArrayFunctions:
         # getdata() used to be bad for pandas series due to its _data
         # attribute.  This test is a regression test mainly and may be
         # removed if getdata() is adjusted.
-        class Series():
+        class Series:
             _data = "nonsense"
 
             def __array__(self, dtype=None, copy=None):

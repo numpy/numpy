@@ -2961,7 +2961,7 @@ class TestMinMax:
 
     def test_reduce_reorder(self):
         # gh 10370, 11029 Some compilers reorder the call to npy_getfloatstatus
-        # and put it before the call to an intrisic function that causes
+        # and put it before the call to an intrinsic function that causes
         # invalid status to be set. Also make sure warnings are not emitted
         for n in (2, 4, 8, 16, 32):
             for dt in (np.float32, np.float16, np.complex64):
@@ -4138,6 +4138,14 @@ class TestRationalFunctions:
         assert_equal(np.gcd(a, b), [2**100,               2**50 * 3**5])
         assert_equal(np.lcm(a, b), [2**100 * 3**5 * 5**7, 2**100 * 3**10])
 
+    def test_inf_and_nan(self):
+        inf = np.array([np.inf], dtype=np.object_)
+        assert_raises(ValueError, np.gcd, inf, 1)
+        assert_raises(ValueError, np.gcd, 1, inf)
+        assert_raises(ValueError, np.gcd, np.nan, inf)
+        assert_raises(TypeError, np.gcd, 4, float(np.inf))
+        
+
 
 class TestRoundingFunctions:
 
@@ -4173,6 +4181,15 @@ class TestRoundingFunctions:
         assert_equal(np.floor(f), -2)
         assert_equal(np.ceil(f), -1)
         assert_equal(np.trunc(f), -1)
+
+    @pytest.mark.parametrize('func', [np.floor, np.ceil, np.trunc])
+    @pytest.mark.parametrize('dtype', [np.bool, np.float64, np.float32,
+                                       np.int64, np.uint32])
+    def test_output_dtype(self, func, dtype):
+        arr = np.array([-2, 0, 4, 8]).astype(dtype)
+        result = func(arr)
+        assert_equal(arr, result)
+        assert result.dtype == dtype
 
 
 class TestComplexFunctions:

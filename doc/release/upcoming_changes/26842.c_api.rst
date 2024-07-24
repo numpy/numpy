@@ -1,0 +1,5 @@
+Many shims removed from npy_3kcompat.h
+--------------------------------------
+Many of the old shims and helper functions were removed from
+``npy_3kcompat.h``. If you find yourself in need of these, vendor the previous
+version of the file into your codebase.

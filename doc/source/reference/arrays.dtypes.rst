@@ -273,7 +273,7 @@ Array-protocol type strings (see :ref:`arrays.interface`)
 
    .. admonition:: Example
 
-       .. try_examples::
+      .. try_examples::
 
          >>> import numpy as np
 
@@ -408,10 +408,10 @@ Type strings
 
       .. try_examples::
 
-         >>> import numpy as np
-
          Data-type with fields ``big`` (big-endian 32-bit integer) and
          ``little`` (little-endian 32-bit integer):
+
+         >>> import numpy as np
 
          >>> dt = np.dtype([('big', '>i4'), ('little', '<i4')])
 
@@ -451,10 +451,10 @@ Type strings
 
       .. try_examples::
 
-         >>> import numpy as np
-
          Data type with fields ``r``, ``g``, ``b``, ``a``, each being
          an 8-bit unsigned integer:
+
+         >>> import numpy as np
 
          >>> dt = np.dtype({'names': ['r','g','b','a'],
          ...                'formats': [np.uint8, np.uint8, np.uint8, np.uint8]})
@@ -484,11 +484,11 @@ Type strings
 
       .. try_examples::
 
-         >>> import numpy as np
-
          Data type containing field ``col1`` (10-character string at
          byte position 0), ``col2`` (32-bit float at byte position 10),
          and ``col3`` (integers at byte position 14):
+
+         >>> import numpy as np
 
          >>> dt = np.dtype({'col1': ('U10', 0), 'col2': (np.float32, 10),
          ...                'col3': (int, 14)})
@@ -511,10 +511,10 @@ Type strings
 
       .. try_examples::
 
-         >>> import numpy as np
-
          32-bit integer, whose first two bytes are interpreted as an integer
          via field ``real``, and the following two bytes via field ``imag``.
+
+         >>> import numpy as np
 
          >>> dt = np.dtype((np.int32,{'real':(np.int16, 0),'imag':(np.int16, 2)}))
 
@@ -553,10 +553,10 @@ This equivalence can only be handled through ``==``, not through ``is``.
 
    .. try_examples::
 
-      >>> import numpy as np
-
       A :class:`dtype` object is equal to all data type specifications that are
       equivalent to it.
+
+      >>> import numpy as np
 
       >>> a = np.array([1, 2], dtype=float)
       >>> a.dtype == np.dtype(np.float64)
@@ -576,9 +576,9 @@ Second, there is no guarantee that data type objects are singletons.
 
    .. try_examples::
 
-      >>> import numpy as np
-
       Do not use ``is`` because data type objects may or may not be singletons.
+
+      >>> import numpy as np
 
       >>> np.dtype(float) is np.dtype(float)
       True

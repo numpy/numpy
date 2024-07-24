@@ -1514,7 +1514,7 @@ class TestPromotion:
     @np._no_nep50_warning()
     def test_float_int_pyscalar_promote_rational(
             self, weak_promotion, other, expected):
-        # Note that rationals are a bit akward as they promote with float64
+        # Note that rationals are a bit awkward as they promote with float64
         # or default ints, but not float16 or uint8/int8 (which looks
         # inconsistent here).  The new promotion fixes this (partially?)
         if not weak_promotion and type(other) == float:

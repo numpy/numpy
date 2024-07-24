@@ -41,6 +41,7 @@ __docformat__ = 'restructuredtext'
 API_FILES = [join('multiarray', 'alloc.c'),
              join('multiarray', 'abstractdtypes.c'),
              join('multiarray', 'arrayfunction_override.c'),
+             join('multiarray', 'array_api_standard.c'),
              join('multiarray', 'array_assign_array.c'),
              join('multiarray', 'array_assign_scalar.c'),
              join('multiarray', 'array_coercion.c'),

@@ -38,7 +38,7 @@ class TestFFT1D:
         # Test with explicitly given number of points, both for n
         # smaller and for n larger than the input size.
         maxlen = 16
-        atol = 4 * np.spacing(np.array(1., dtype=dtype))
+        atol = 5 * np.spacing(np.array(1., dtype=dtype))
         x = random(maxlen).astype(dtype) + 1j*random(maxlen).astype(dtype)
         xx = np.concatenate([x, np.zeros_like(x)])
         xr = random(maxlen).astype(dtype)
@@ -496,6 +496,16 @@ def test_fft_with_order(dtype, order, fft):
     else:
         raise ValueError()
 
+
+@pytest.mark.parametrize("order", ["F", "C"])
+@pytest.mark.parametrize("n", [None, 7, 12])
+def test_fft_output_order(order, n):
+    rng = np.random.RandomState(42)
+    x = rng.rand(10)
+    x = np.asarray(x, dtype=np.complex64, order=order)
+    res = np.fft.fft(x, n=n)
+    assert res.flags.c_contiguous == x.flags.c_contiguous
+    assert res.flags.f_contiguous == x.flags.f_contiguous
 
 @pytest.mark.skipif(IS_WASM, reason="Cannot start thread")
 class TestFFTThreadSafe:

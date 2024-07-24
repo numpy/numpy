@@ -244,10 +244,10 @@ fully-dimensional result array.
 ::
 
    >>> np.ogrid[0:4, 0:6]
-   [array([[0],
+   (array([[0],
            [1],
            [2],
-           [3]]), array([[0, 1, 2, 3, 4, 5]])]
+           [3]]), array([[0, 1, 2, 3, 4, 5]]))
 
 All three methods described here can be used to evaluate function values on a
 grid.

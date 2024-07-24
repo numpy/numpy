@@ -34,10 +34,10 @@ objects implementing the :class:`memoryview` or :ref:`array
 
    .. try_examples::
 
-      >>> import numpy as np
-
       A 2-dimensional array of size 2 x 3, composed of 4-byte integer
       elements:
+
+      >>> import numpy as np
 
       >>> x = np.array([[1, 2, 3], [4, 5, 6]], np.int32)
       >>> type(x)
@@ -366,10 +366,10 @@ Many of these methods take an argument named *axis*. In such cases,
 
    .. try_examples::
 
-      >>> import numpy as np
-
       A 3-dimensional array of size 3 x 3 x 3, summed over each of its
-      three axes
+      three axes:
+
+      >>> import numpy as np
 
       >>> x = np.arange(27).reshape((3,3,3))
       >>> x

@@ -53,7 +53,7 @@
 #if NPY_ABI_VERSION < 0x02000000
   /*
    * Define 2.0 feature version as it is needed below to decide whether we
-   * compile for both 1.x and 2.x (defining it gaurantees 1.x only).
+   * compile for both 1.x and 2.x (defining it guarantees 1.x only).
    */
   #define NPY_2_0_API_VERSION 0x00000012
   /*
@@ -74,7 +74,7 @@
 #ifdef import_array1
 
 static inline int
-PyArray_ImportNumPyAPI()
+PyArray_ImportNumPyAPI(void)
 {
     if (NPY_UNLIKELY(PyArray_API == NULL)) {
         import_array1(-1);

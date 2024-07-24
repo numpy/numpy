@@ -29,6 +29,7 @@ dependencies:
   - mypy=1.10.0
   # For building docs
   - sphinx>=4.5.0
+  - sphinx-copybutton
   - sphinx-design
   - numpydoc=1.4.0
   - ipython

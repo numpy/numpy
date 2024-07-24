@@ -209,7 +209,8 @@ NumPy 2.0 Python API removals
 
 * ``np.tracemalloc_domain`` is now only available from ``np.lib``.
 
-* ``np.recfromcsv`` and ``recfromtxt`` are now only available from ``np.lib.npyio``.
+* ``np.recfromcsv`` and ``np.recfromtxt`` were removed from the main namespace.
+  Use ``np.genfromtxt`` with comma delimiter instead.
 
 * ``np.issctype``, ``np.maximum_sctype``, ``np.obj2sctype``, ``np.sctype2char``,
   ``np.sctypes``, ``np.issubsctype`` were all removed from the
@@ -652,7 +653,7 @@ The ``metadata`` field is kept, but the macro version should also be preferred.
 
 Descriptor ``elsize`` and ``alignment`` access
 ----------------------------------------------
-Unless compiling only with NumPy 2 support, the ``elsize`` and ``aligment``
+Unless compiling only with NumPy 2 support, the ``elsize`` and ``alignment``
 fields must now be accessed via ``PyDataType_ELSIZE``,
 ``PyDataType_SET_ELSIZE``, and ``PyDataType_ALIGNMENT``.
 In cases where the descriptor is attached to an array, we advise
@@ -1494,6 +1495,12 @@ When multi-dimensional inputs are passed to ``np.unique`` with ``return_inverse=
 the ``unique_inverse`` output is now shaped such that the input can be reconstructed
 directly using ``np.take(unique, unique_inverse)`` when ``axis=None``, and
 ``np.take_along_axis(unique, unique_inverse, axis=axis)`` otherwise.
+
+.. note::
+    This change was reverted in 2.0.1 except for ``axis=None``.  The correct
+    reconstruction is always ``np.take(unique, unique_inverse, axis=axis)``.
+    When 2.0.0 needs to be supported, add ``unique_inverse.reshape(-1)``
+    to code.
 
 (`gh-25553 <https://github.com/numpy/numpy/pull/25553>`__,
 `gh-25570 <https://github.com/numpy/numpy/pull/25570>`__)

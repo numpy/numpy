@@ -418,7 +418,7 @@ Example 1: Matrix creation from a string
     [-0.13450292  0.08187135]]
 
 
-Example 2: Matrix creation from nested sequence
+Example 2: Matrix creation from a nested sequence
 
 .. try_examples::
 

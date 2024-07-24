@@ -18,8 +18,7 @@ def _convert_from_string(data):
 
     rows = data.split(';')
     newdata = []
-    count = 0
-    for row in rows:
+    for count, row in enumerate(rows):
         trow = row.split(',')
         newrow = []
         for col in trow:
@@ -29,7 +28,6 @@ def _convert_from_string(data):
             Ncols = len(newrow)
         elif len(newrow) != Ncols:
             raise ValueError("Rows not the same size.")
-        count += 1
         newdata.append(newrow)
     return newdata
 

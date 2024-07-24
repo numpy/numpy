@@ -27,6 +27,15 @@
 
 static const char* umath_linalg_version_string = "0.1.5";
 
+// global lock to serialize calls into lapack_lite
+#if !HAVE_EXTERNAL_LAPACK
+#if PY_VERSION_HEX < 0x30d00b3
+static PyThread_type_lock lapack_lite_lock;
+#else
+static PyMutex lapack_lite_lock = {0};
+#endif
+#endif
+
 /*
  ****************************************************************************
  *                        Debugging support                                 *
@@ -400,6 +409,18 @@ FNAME(zgemm)(char *transa, char *transb,
 #define LAPACK(FUNC)                            \
     FNAME(FUNC)
 
+#ifdef HAVE_EXTERNAL_LAPACK
+    #define LOCK_LAPACK_LITE
+    #define UNLOCK_LAPACK_LITE
+#else
+#if PY_VERSION_HEX < 0x30d00b3
+    #define LOCK_LAPACK_LITE PyThread_acquire_lock(lapack_lite_lock, WAIT_LOCK)
+    #define UNLOCK_LAPACK_LITE PyThread_release_lock(lapack_lite_lock)
+#else
+    #define LOCK_LAPACK_LITE PyMutex_Lock(&lapack_lite_lock)
+    #define UNLOCK_LAPACK_LITE PyMutex_Unlock(&lapack_lite_lock)
+#endif
+#endif
 
 /*
  *****************************************************************************
@@ -1110,7 +1131,9 @@ using ftyp = fortran_type_t<typ>;
     fortran_int lda = fortran_int_max(m, 1);
     int i;
     /* note: done in place */
+    LOCK_LAPACK_LITE;
     getrf(&m, &m, (ftyp*)src, &lda, pivots, &info);
+    UNLOCK_LAPACK_LITE;
 
     if (info == 0) {
         int change_sign = 0;
@@ -1262,22 +1285,26 @@ static inline fortran_int
 call_evd(EIGH_PARAMS_t<npy_float> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(ssyevd)(&params->JOBZ, &params->UPLO, &params->N,
                           params->A, &params->LDA, params->W,
                           params->WORK, &params->LWORK,
                           params->IWORK, &params->LIWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 static inline fortran_int
 call_evd(EIGH_PARAMS_t<npy_double> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(dsyevd)(&params->JOBZ, &params->UPLO, &params->N,
                           params->A, &params->LDA, params->W,
                           params->WORK, &params->LWORK,
                           params->IWORK, &params->LIWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1364,12 +1391,14 @@ static inline fortran_int
 call_evd(EIGH_PARAMS_t<npy_cfloat> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(cheevd)(&params->JOBZ, &params->UPLO, &params->N,
                           (fortran_type_t<npy_cfloat>*)params->A, &params->LDA, params->W,
                           (fortran_type_t<npy_cfloat>*)params->WORK, &params->LWORK,
                           params->RWORK, &params->LRWORK,
                           params->IWORK, &params->LIWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1377,12 +1406,14 @@ static inline fortran_int
 call_evd(EIGH_PARAMS_t<npy_cdouble> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(zheevd)(&params->JOBZ, &params->UPLO, &params->N,
                           (fortran_type_t<npy_cdouble>*)params->A, &params->LDA, params->W,
                           (fortran_type_t<npy_cdouble>*)params->WORK, &params->LWORK,
                           params->RWORK, &params->LRWORK,
                           params->IWORK, &params->LIWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1616,11 +1647,13 @@ static inline fortran_int
 call_gesv(GESV_PARAMS_t<fortran_real> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(sgesv)(&params->N, &params->NRHS,
                           params->A, &params->LDA,
                           params->IPIV,
                           params->B, &params->LDB,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1628,11 +1661,13 @@ static inline fortran_int
 call_gesv(GESV_PARAMS_t<fortran_doublereal> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(dgesv)(&params->N, &params->NRHS,
                           params->A, &params->LDA,
                           params->IPIV,
                           params->B, &params->LDB,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1640,11 +1675,13 @@ static inline fortran_int
 call_gesv(GESV_PARAMS_t<fortran_complex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(cgesv)(&params->N, &params->NRHS,
                           params->A, &params->LDA,
                           params->IPIV,
                           params->B, &params->LDB,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1652,11 +1689,13 @@ static inline fortran_int
 call_gesv(GESV_PARAMS_t<fortran_doublecomplex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(zgesv)(&params->N, &params->NRHS,
                           params->A, &params->LDA,
                           params->IPIV,
                           params->B, &params->LDB,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1870,9 +1909,11 @@ static inline fortran_int
 call_potrf(POTR_PARAMS_t<fortran_real> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(spotrf)(&params->UPLO,
                           &params->N, params->A, &params->LDA,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1880,9 +1921,11 @@ static inline fortran_int
 call_potrf(POTR_PARAMS_t<fortran_doublereal> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(dpotrf)(&params->UPLO,
                           &params->N, params->A, &params->LDA,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1890,9 +1933,11 @@ static inline fortran_int
 call_potrf(POTR_PARAMS_t<fortran_complex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(cpotrf)(&params->UPLO,
                           &params->N, params->A, &params->LDA,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1900,9 +1945,11 @@ static inline fortran_int
 call_potrf(POTR_PARAMS_t<fortran_doublecomplex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(zpotrf)(&params->UPLO,
                           &params->N, params->A, &params->LDA,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -2073,6 +2120,7 @@ static inline fortran_int
 call_geev(GEEV_PARAMS_t<float>* params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(sgeev)(&params->JOBVL, &params->JOBVR,
                           &params->N, params->A, &params->LDA,
                           params->WR, params->WI,
@@ -2080,6 +2128,7 @@ call_geev(GEEV_PARAMS_t<float>* params)
                           params->VRR, &params->LDVR,
                           params->WORK, &params->LWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -2087,6 +2136,7 @@ static inline fortran_int
 call_geev(GEEV_PARAMS_t<double>* params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(dgeev)(&params->JOBVL, &params->JOBVR,
                           &params->N, params->A, &params->LDA,
                           params->WR, params->WI,
@@ -2094,6 +2144,7 @@ call_geev(GEEV_PARAMS_t<double>* params)
                           params->VRR, &params->LDVR,
                           params->WORK, &params->LWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -2285,6 +2336,7 @@ call_geev(GEEV_PARAMS_t<fortran_complex>* params)
 {
     fortran_int rv;
 
+    LOCK_LAPACK_LITE;
     LAPACK(cgeev)(&params->JOBVL, &params->JOBVR,
                           &params->N, params->A, &params->LDA,
                           params->W,
@@ -2293,6 +2345,7 @@ call_geev(GEEV_PARAMS_t<fortran_complex>* params)
                           params->WORK, &params->LWORK,
                           params->WR, /* actually RWORK */
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 #endif
@@ -2302,6 +2355,7 @@ call_geev(GEEV_PARAMS_t<fortran_doublecomplex>* params)
 {
     fortran_int rv;
 
+    LOCK_LAPACK_LITE;
     LAPACK(zgeev)(&params->JOBVL, &params->JOBVR,
                           &params->N, params->A, &params->LDA,
                           params->W,
@@ -2310,6 +2364,7 @@ call_geev(GEEV_PARAMS_t<fortran_doublecomplex>* params)
                           params->WORK, &params->LWORK,
                           params->WR, /* actually RWORK */
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -2632,6 +2687,7 @@ static inline fortran_int
 call_gesdd(GESDD_PARAMS_t<fortran_real> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(sgesdd)(&params->JOBZ, &params->M, &params->N,
                           params->A, &params->LDA,
                           params->S,
@@ -2640,12 +2696,14 @@ call_gesdd(GESDD_PARAMS_t<fortran_real> *params)
                           params->WORK, &params->LWORK,
                           (fortran_int*)params->IWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 static inline fortran_int
 call_gesdd(GESDD_PARAMS_t<fortran_doublereal> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(dgesdd)(&params->JOBZ, &params->M, &params->N,
                           params->A, &params->LDA,
                           params->S,
@@ -2654,6 +2712,7 @@ call_gesdd(GESDD_PARAMS_t<fortran_doublereal> *params)
                           params->WORK, &params->LWORK,
                           (fortran_int*)params->IWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -2760,6 +2819,7 @@ static inline fortran_int
 call_gesdd(GESDD_PARAMS_t<fortran_complex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(cgesdd)(&params->JOBZ, &params->M, &params->N,
                           params->A, &params->LDA,
                           params->S,
@@ -2769,12 +2829,14 @@ call_gesdd(GESDD_PARAMS_t<fortran_complex> *params)
                           params->RWORK,
                           params->IWORK,
                           &rv);
+    LOCK_LAPACK_LITE;
     return rv;
 }
 static inline fortran_int
 call_gesdd(GESDD_PARAMS_t<fortran_doublecomplex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(zgesdd)(&params->JOBZ, &params->M, &params->N,
                           params->A, &params->LDA,
                           params->S,
@@ -2784,6 +2846,7 @@ call_gesdd(GESDD_PARAMS_t<fortran_doublecomplex> *params)
                           params->RWORK,
                           params->IWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -3074,22 +3137,26 @@ static inline fortran_int
 call_geqrf(GEQRF_PARAMS_t<double> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(dgeqrf)(&params->M, &params->N,
                           params->A, &params->LDA,
                           params->TAU,
                           params->WORK, &params->LWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 static inline fortran_int
 call_geqrf(GEQRF_PARAMS_t<f2c_doublecomplex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(zgeqrf)(&params->M, &params->N,
                           params->A, &params->LDA,
                           params->TAU,
                           params->WORK, &params->LWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -3316,22 +3383,26 @@ static inline fortran_int
 call_gqr(GQR_PARAMS_t<double> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(dorgqr)(&params->M, &params->MC, &params->MN,
                           params->Q, &params->LDA,
                           params->TAU,
                           params->WORK, &params->LWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 static inline fortran_int
 call_gqr(GQR_PARAMS_t<f2c_doublecomplex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(zungqr)(&params->M, &params->MC, &params->MN,
                           params->Q, &params->LDA,
                           params->TAU,
                           params->WORK, &params->LWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -3712,6 +3783,7 @@ static inline fortran_int
 call_gelsd(GELSD_PARAMS_t<fortran_real> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(sgelsd)(&params->M, &params->N, &params->NRHS,
                           params->A, &params->LDA,
                           params->B, &params->LDB,
@@ -3720,6 +3792,7 @@ call_gelsd(GELSD_PARAMS_t<fortran_real> *params)
                           params->WORK, &params->LWORK,
                           params->IWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -3728,6 +3801,7 @@ static inline fortran_int
 call_gelsd(GELSD_PARAMS_t<fortran_doublereal> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(dgelsd)(&params->M, &params->N, &params->NRHS,
                           params->A, &params->LDA,
                           params->B, &params->LDB,
@@ -3736,6 +3810,7 @@ call_gelsd(GELSD_PARAMS_t<fortran_doublereal> *params)
                           params->WORK, &params->LWORK,
                           params->IWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -3839,6 +3914,7 @@ static inline fortran_int
 call_gelsd(GELSD_PARAMS_t<fortran_complex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(cgelsd)(&params->M, &params->N, &params->NRHS,
                           params->A, &params->LDA,
                           params->B, &params->LDB,
@@ -3847,6 +3923,7 @@ call_gelsd(GELSD_PARAMS_t<fortran_complex> *params)
                           params->WORK, &params->LWORK,
                           params->RWORK, (fortran_int*)params->IWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -3854,6 +3931,7 @@ static inline fortran_int
 call_gelsd(GELSD_PARAMS_t<fortran_doublecomplex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(zgelsd)(&params->M, &params->N, &params->NRHS,
                           params->A, &params->LDA,
                           params->B, &params->LDB,
@@ -3862,6 +3940,7 @@ call_gelsd(GELSD_PARAMS_t<fortran_doublecomplex> *params)
                           params->WORK, &params->LWORK,
                           params->RWORK, (fortran_int*)params->IWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -4567,7 +4646,7 @@ addUfuncs(PyObject *dictionary) {
 
 
 /* -------------------------------------------------------------------------- */
-                  /* Module initialization stuff  */
+                  /* Module initialization and state  */
 
 static PyMethodDef UMath_LinAlgMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
@@ -4619,10 +4698,23 @@ PyMODINIT_FUNC PyInit__umath_linalg(void)
         return NULL;
     }
 
+#if PY_VERSION_HEX < 0x30d00b3 && !HAVE_EXTERNAL_LAPACK
+    lapack_lite_lock = PyThread_allocate_lock();
+    if (lapack_lite_lock == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+#endif
+
 #ifdef HAVE_BLAS_ILP64
     PyDict_SetItemString(d, "_ilp64", Py_True);
 #else
     PyDict_SetItemString(d, "_ilp64", Py_False);
+#endif
+
+#if Py_GIL_DISABLED
+    // signal this module supports running with the GIL disabled
+    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
 #endif
 
     return m;

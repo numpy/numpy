@@ -133,6 +133,28 @@ class TestIndexing:
         b = np.array([])
         assert_raises(IndexError, a.__getitem__, b)
 
+    def test_gh_26542(self):
+        a = np.array([0, 1, 2])
+        idx = np.array([2, 1, 0])
+        a[idx] = a
+        expected = np.array([2, 1, 0])
+        assert_equal(a, expected)
+
+    def test_gh_26542_2d(self):
+        a = np.array([[0, 1, 2]])
+        idx_row = np.zeros(3, dtype=int)
+        idx_col = np.array([2, 1, 0])
+        a[idx_row, idx_col] = a
+        expected = np.array([[2, 1, 0]])
+        assert_equal(a, expected)
+
+    def test_gh_26542_index_overlap(self):
+        arr = np.arange(100)
+        expected_vals = np.copy(arr[:-10])
+        arr[10:] = arr[:-10]
+        actual_vals = arr[10:]
+        assert_equal(actual_vals, expected_vals)
+
     def test_ellipsis_index(self):
         a = np.array([[1, 2, 3],
                       [4, 5, 6],
@@ -961,7 +983,7 @@ class TestMultiIndexingAutomated:
             elif indx is None:
                 # this is like taking a slice with one element from a new axis:
                 indices.append(['n', np.array([0], dtype=np.intp)])
-                arr = arr.reshape((arr.shape[:ax] + (1,) + arr.shape[ax:]))
+                arr = arr.reshape(arr.shape[:ax] + (1,) + arr.shape[ax:])
                 continue
             if isinstance(indx, np.ndarray) and indx.dtype == bool:
                 if indx.shape != arr.shape[ax:ax+indx.ndim]:
@@ -976,9 +998,9 @@ class TestMultiIndexingAutomated:
                     flat_indx = np.array([0]*indx.sum(), dtype=np.intp)
                 # concatenate axis into a single one:
                 if indx.ndim != 0:
-                    arr = arr.reshape((arr.shape[:ax]
+                    arr = arr.reshape(arr.shape[:ax]
                                   + (np.prod(arr.shape[ax:ax+indx.ndim]),)
-                                  + arr.shape[ax+indx.ndim:]))
+                                  + arr.shape[ax+indx.ndim:])
                     indx = flat_indx
                 else:
                     # This could be changed, a 0-d boolean index can
@@ -1045,9 +1067,9 @@ class TestMultiIndexingAutomated:
                 # First of all, reshape arr to combine fancy axes into one:
                 orig_shape = arr.shape
                 orig_slice = orig_shape[ax:ax + len(indx[1:])]
-                arr = arr.reshape((arr.shape[:ax]
+                arr = arr.reshape(arr.shape[:ax]
                                     + (np.prod(orig_slice).astype(int),)
-                                    + arr.shape[ax + len(indx[1:]):]))
+                                    + arr.shape[ax + len(indx[1:]):])
 
                 # Check if broadcasting works
                 res = np.broadcast(*indx[1:])
@@ -1081,9 +1103,9 @@ class TestMultiIndexingAutomated:
                     raise ValueError
                 arr = arr.take(mi.ravel(), axis=ax)
                 try:
-                    arr = arr.reshape((arr.shape[:ax]
+                    arr = arr.reshape(arr.shape[:ax]
                                         + mi.shape
-                                        + arr.shape[ax+1:]))
+                                        + arr.shape[ax+1:])
                 except ValueError:
                     # too many dimensions, probably
                     raise IndexError

@@ -958,7 +958,7 @@ add_newdoc('numpy._core.multiarray', 'asarray',
         'K' (keep) preserve input order
         Defaults to 'K'.
     device : str, optional
-        The device on which to place the created array. Default: None.
+        The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
@@ -1053,7 +1053,7 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
         'K' (keep) preserve input order
         Defaults to 'C'.
     device : str, optional
-        The device on which to place the created array. Default: None.
+        The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.1.0
@@ -1260,7 +1260,7 @@ add_newdoc('numpy._core.multiarray', 'empty',
         (C-style) or column-major (Fortran-style) order in
         memory.
     device : str, optional
-        The device on which to place the created array. Default: None.
+        The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
@@ -1711,7 +1711,7 @@ add_newdoc('numpy._core.multiarray', 'frombuffer',
 
 add_newdoc('numpy._core.multiarray', 'from_dlpack',
     """
-    from_dlpack(x, /)
+    from_dlpack(x, /, *, device=None, copy=None)
 
     Create a NumPy array from an object implementing the ``__dlpack__``
     protocol. Generally, the returned NumPy array is a read-only view
@@ -1722,6 +1722,19 @@ add_newdoc('numpy._core.multiarray', 'from_dlpack',
     x : object
         A Python object that implements the ``__dlpack__`` and
         ``__dlpack_device__`` methods.
+    device : device, optional
+        Device on which to place the created array. Default: ``None``.
+        Must be ``"cpu"`` if passed which may allow importing an array
+        that is not already CPU available.
+    copy : bool, optional
+        Boolean indicating whether or not to copy the input. If ``True``,
+        the copy will be made. If ``False``, the function will never copy,
+        and will raise ``BufferError`` in case a copy is deemed necessary.
+        Passing it requests a copy from the exporter who may or may not
+        implement the capability.
+        If ``None``, the function will reuse the existing memory buffer if
+        possible and copy otherwise. Default: ``None``.
+
 
     Returns
     -------
@@ -1790,7 +1803,7 @@ add_newdoc('numpy._core.multiarray', 'arange',
         The type of the output array.  If `dtype` is not given, infer the data
         type from the other input arguments.
     device : str, optional
-        The device on which to place the created array. Default: None.
+        The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
@@ -2416,14 +2429,20 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_struct__',
     """Array protocol: C-struct side."""))
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__dlpack__',
-    """a.__dlpack__(*, stream=None)
+    """
+    a.__dlpack__(*, stream=None, max_version=None, dl_device=None, copy=None)
 
-    DLPack Protocol: Part of the Array API."""))
+    DLPack Protocol: Part of the Array API.
+
+    """))
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__dlpack_device__',
-    """a.__dlpack_device__()
+    """
+    a.__dlpack_device__()
 
-    DLPack Protocol: Part of the Array API."""))
+    DLPack Protocol: Part of the Array API.
+
+    """))
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('base',
     """
@@ -4659,15 +4678,16 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('view',
     Examples
     --------
     >>> import numpy as np
-    >>> x = np.array([(1, 2)], dtype=[('a', np.int8), ('b', np.int8)])
+    >>> x = np.array([(-1, 2)], dtype=[('a', np.int8), ('b', np.int8)])
 
     Viewing array data using a different type and dtype:
 
-    >>> y = x.view(dtype=np.int16, type=np.matrix)
-    >>> y
-    matrix([[513]], dtype=int16)
-    >>> print(type(y))
-    <class 'numpy.matrix'>
+    >>> nonneg = np.dtype([("a", np.uint8), ("b", np.uint8)])
+    >>> y = x.view(dtype=nonneg, type=np.recarray)
+    >>> x["a"]
+    array([-1], dtype=int8)
+    >>> y.a
+    array([255], dtype=uint8)
 
     Creating a view on a structured array so it can be used in calculations
 

@@ -540,7 +540,7 @@ class TestNumPyFunctions:
 
 class TestArrayLike:
     def setup_method(self):
-        class MyArray():
+        class MyArray:
             def __init__(self, function=None):
                 self.function = function
 
@@ -554,7 +554,7 @@ class TestArrayLike:
 
         self.MyArray = MyArray
 
-        class MyNoArrayFunctionArray():
+        class MyNoArrayFunctionArray:
             def __init__(self, function=None):
                 self.function = function
 
