@@ -1,5 +1,7 @@
 #ifndef _NPY_SIMD_H_
 #define _NPY_SIMD_H_
+
+#include <stdalign.h>  /* for alignof until C23 */
 /**
  * the NumPy C SIMD vectorization interface "NPYV" are types and functions intended
  * to simplify vectorization of code on different platforms, currently supports
@@ -150,28 +152,28 @@ typedef double     npyv_lanetype_f64;
 #ifndef NPY_SIMD_MAXSTORE_STRIDE64
     #define NPY_SIMD_MAXSTORE_STRIDE64 0
 #endif
-#define NPYV_IMPL_MAXSTRIDE(SFX, MAXLOAD, MAXSTORE)                          \
-    NPY_FINLINE int                                                          \
-    npyv_loadable_stride_##SFX(npy_intp stride)                              \
-    {                                                                        \
-        if (_Alignof(npyv_lanetype_##SFX) != sizeof(npyv_lanetype_##SFX) &&  \
-                stride % sizeof(npyv_lanetype_##SFX) != 0) {                 \
-            /* stride not a multiple of itemsize, cannot handle. */          \
-            return 0;                                                        \
-        }                                                                    \
-        stride = stride / sizeof(npyv_lanetype_##SFX);                       \
-        return MAXLOAD > 0 ? llabs(stride) <= MAXLOAD : 1;                   \
-    }                                                                        \
-    NPY_FINLINE int                                                          \
-    npyv_storable_stride_##SFX(npy_intp stride)                              \
-    {                                                                        \
-        if (_Alignof(npyv_lanetype_##SFX) != sizeof(npyv_lanetype_##SFX) &&  \
-                stride % sizeof(npyv_lanetype_##SFX) != 0) {                 \
-            /* stride not a multiple of itemsize, cannot handle. */          \
-            return 0;                                                        \
-        }                                                                    \
-        stride = stride / sizeof(npyv_lanetype_##SFX);                       \
-        return MAXSTORE > 0 ? llabs(stride) <= MAXSTORE : 1;                 \
+#define NPYV_IMPL_MAXSTRIDE(SFX, MAXLOAD, MAXSTORE)                         \
+    NPY_FINLINE int                                                         \
+    npyv_loadable_stride_##SFX(npy_intp stride)                             \
+    {                                                                       \
+        if (alignof(npyv_lanetype_##SFX) != sizeof(npyv_lanetype_##SFX) &&  \
+                stride % sizeof(npyv_lanetype_##SFX) != 0) {                \
+            /* stride not a multiple of itemsize, cannot handle. */         \
+            return 0;                                                       \
+        }                                                                   \
+        stride = stride / sizeof(npyv_lanetype_##SFX);                      \
+        return MAXLOAD > 0 ? llabs(stride) <= MAXLOAD : 1;                  \
+    }                                                                       \
+    NPY_FINLINE int                                                         \
+    npyv_storable_stride_##SFX(npy_intp stride)                             \
+    {                                                                       \
+        if (alignof(npyv_lanetype_##SFX) != sizeof(npyv_lanetype_##SFX) &&  \
+                stride % sizeof(npyv_lanetype_##SFX) != 0) {                \
+            /* stride not a multiple of itemsize, cannot handle. */         \
+            return 0;                                                       \
+        }                                                                   \
+        stride = stride / sizeof(npyv_lanetype_##SFX);                      \
+        return MAXSTORE > 0 ? llabs(stride) <= MAXSTORE : 1;                \
     }
 #if NPY_SIMD
     NPYV_IMPL_MAXSTRIDE(u32, NPY_SIMD_MAXLOAD_STRIDE32, NPY_SIMD_MAXSTORE_STRIDE32)
