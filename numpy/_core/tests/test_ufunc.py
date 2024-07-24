@@ -2746,7 +2746,7 @@ def test_ufunc_noncontiguous(ufunc):
             orig_dt = np.dtype(t)
             off_dt = f"S{orig_dt.alignment}"  # offset by alignment
             dtype = np.dtype([("_", off_dt), ("t", orig_dt)], align=False)
-            args_o.append(np.empty(6, dtype="b")["t"])
+            args_o.append(np.empty(6, dtype=dtype)["t"])
 
         for a in args_c + args_n + args_o:
             a.flat = range(1,7)
