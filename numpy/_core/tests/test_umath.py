@@ -4142,6 +4142,9 @@ class TestRationalFunctions:
         inf = np.array([np.inf], dtype=np.object_)
         assert_raises(ValueError, np.gcd, inf, 1)
         assert_raises(ValueError, np.gcd, 1, inf)
+        assert_raises(ValueError, np.gcd, np.nan, inf)
+        assert_raises(TypeError, np.gcd, 4, float(np.inf))
+        
 
 
 class TestRoundingFunctions:
