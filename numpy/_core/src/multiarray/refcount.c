@@ -18,8 +18,8 @@
 #include "iterators.h"
 #include "dtypemeta.h"
 #include "refcount.h"
-
 #include "npy_config.h"
+#include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 
 
 
@@ -87,9 +87,17 @@ PyArray_ZeroContiguousBuffer(
         }
     }
     else {
-        memset(data, 0, size);
-        NPY_traverse_info_xfree(&zero_info);
-        return 0;
+        npy_intp nbytes;
+        if (!npy_mul_sizes_with_overflow(&nbytes, size, stride)) {
+            memset(data, 0, nbytes);
+            NPY_traverse_info_xfree(&zero_info);
+            return 0;
+        }
+        else {
+            PyErr_SetString(PyExc_OverflowError,
+                            "Integer overflow in computing resized buffer size");
+            goto fail;
+        }
     }
 
     int res = zero_info.func(
