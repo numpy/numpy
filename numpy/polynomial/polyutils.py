@@ -95,6 +95,7 @@ def as_series(alist, trim=True):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial import polyutils as pu
     >>> a = np.arange(4)
     >>> pu.as_series(a)
@@ -218,6 +219,7 @@ def getdomain(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial import polyutils as pu
     >>> points = np.arange(4)**2 - 5; points
     array([-5, -4, -1,  4])
@@ -323,6 +325,7 @@ def mapdomain(x, old, new):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial import polyutils as pu
     >>> old_domain = (-1,1)
     >>> new_domain = (0,2*np.pi)

@@ -192,6 +192,7 @@ def rot90(m, k=1, axes=(0, 1)):
 
     Examples
     --------
+    >>> import numpy as np
     >>> m = np.array([[1,2],[3,4]], int)
     >>> m
     array([[1, 2],
@@ -297,6 +298,7 @@ def flip(m, axis=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> A = np.arange(8).reshape((2,2,2))
     >>> A
     array([[[0, 1],
@@ -360,6 +362,7 @@ def iterable(y):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.iterable([1, 2, 3])
     True
     >>> np.iterable(2)
@@ -502,6 +505,7 @@ def average(a, axis=None, weights=None, returned=False, *,
 
     Examples
     --------
+    >>> import numpy as np
     >>> data = np.arange(1, 5)
     >>> data
     array([1, 2, 3, 4])
@@ -627,7 +631,9 @@ def asarray_chkfinite(a, dtype=None, order=None):
 
     Examples
     --------
-    Convert a list into an array.  If all elements are finite
+    >>> import numpy as np
+
+    Convert a list into an array. If all elements are finite, then
     ``asarray_chkfinite`` is identical to ``asarray``.
 
     >>> a = [1, 2]
@@ -728,6 +734,8 @@ def piecewise(x, condlist, funclist, *args, **kw):
 
     Examples
     --------
+    >>> import numpy as np
+
     Define the signum function, which is -1 for ``x < 0`` and +1 for ``x >= 0``.
 
     >>> x = np.linspace(-2.5, 2.5, 6)
@@ -816,6 +824,8 @@ def select(condlist, choicelist, default=0):
 
     Examples
     --------
+    >>> import numpy as np
+
     Beginning with an array of integers from 0 to 5 (inclusive),
     elements less than ``3`` are negated, elements greater than ``3``
     are squared, and elements not meeting either of these conditions
@@ -938,6 +948,8 @@ def copy(a, order='K', subok=False):
 
     Examples
     --------
+    >>> import numpy as np
+
     Create an array x, with a reference y and a copy z:
 
     >>> x = np.array([1, 2, 3])
@@ -1025,6 +1037,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
 
     Examples
     --------
+    >>> import numpy as np
     >>> f = np.array([1, 2, 4, 7, 11, 16])
     >>> np.gradient(f)
     array([1. , 1.5, 2.5, 3.5, 4.5, 5. ])
@@ -1437,6 +1450,7 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 4, 7, 0])
     >>> np.diff(x)
     array([ 1,  2,  3, -7])
@@ -1571,6 +1585,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> xp = [1, 2, 3]
     >>> fp = [3, 2, 0]
     >>> np.interp(2.5, xp, fp)
@@ -1686,6 +1701,7 @@ def angle(z, deg=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.angle([1.0, 1.0j, 1+1j])               # in radians
     array([ 0.        ,  1.57079633,  0.78539816]) # may vary
     >>> np.angle(1+1j, deg=True)                  # in degrees
@@ -1760,6 +1776,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
 
     Examples
     --------
+    >>> import numpy as np
     >>> phase = np.linspace(0, np.pi, num=5)
     >>> phase[3:] += np.pi
     >>> phase
@@ -1829,6 +1846,7 @@ def sort_complex(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.sort_complex([5, 3, 6, 2, 1])
     array([1.+0.j, 2.+0.j, 3.+0.j, 5.+0.j, 6.+0.j])
 
@@ -1874,6 +1892,7 @@ def trim_zeros(filt, trim='fb'):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array((0, 0, 0, 1, 2, 3, 0, 2, 1, 0))
     >>> np.trim_zeros(a)
     array([1, 2, 3, 0, 2, 1])
@@ -1939,6 +1958,7 @@ def extract(condition, arr):
 
     Examples
     --------
+    >>> import numpy as np
     >>> arr = np.arange(12).reshape((3, 4))
     >>> arr
     array([[ 0,  1,  2,  3],
@@ -1996,6 +2016,7 @@ def place(arr, mask, vals):
 
     Examples
     --------
+    >>> import numpy as np
     >>> arr = np.arange(6).reshape(2, 3)
     >>> np.place(arr, arr>2, [44, 55])
     >>> arr
@@ -2031,6 +2052,8 @@ def disp(mesg, device=None, linefeed=True):
 
     Examples
     --------
+    >>> import numpy as np
+
     Besides ``sys.stdout``, a file-like object can also be used as it has
     both required methods:
 
@@ -2270,6 +2293,7 @@ class vectorize:
 
     Examples
     --------
+    >>> import numpy as np
     >>> def myfunc(a, b):
     ...     "Return a-b if a>b, otherwise return a+b"
     ...     if a > b:
@@ -2691,6 +2715,8 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
 
     Examples
     --------
+    >>> import numpy as np
+
     Consider two variables, :math:`x_0` and :math:`x_1`, which
     correlate perfectly, but in opposite directions:
 
@@ -2894,6 +2920,8 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
 
     Examples
     --------
+    >>> import numpy as np
+
     In this example we generate two random arrays, ``xarr`` and ``yarr``, and
     compute the row-wise and column-wise Pearson correlation coefficients,
     ``R``. Since ``rowvar`` is  true by  default, we first find the row-wise
@@ -3031,6 +3059,7 @@ def blackman(M):
 
     Examples
     --------
+    >>> import numpy as np
     >>> import matplotlib.pyplot as plt
     >>> np.blackman(12)
     array([-1.38777878e-17,   3.26064346e-02,   1.59903635e-01, # may vary
@@ -3139,6 +3168,7 @@ def bartlett(M):
 
     Examples
     --------
+    >>> import numpy as np
     >>> import matplotlib.pyplot as plt
     >>> np.bartlett(12)
     array([ 0.        ,  0.18181818,  0.36363636,  0.54545455,  0.72727273, # may vary
@@ -3240,6 +3270,7 @@ def hanning(M):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.hanning(12)
     array([0.        , 0.07937323, 0.29229249, 0.57115742, 0.82743037,
            0.97974649, 0.97974649, 0.82743037, 0.57115742, 0.29229249,
@@ -3339,6 +3370,7 @@ def hamming(M):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.hamming(12)
     array([ 0.08      ,  0.15302337,  0.34890909,  0.60546483,  0.84123594, # may vary
             0.98136677,  0.98136677,  0.84123594,  0.60546483,  0.34890909,
@@ -3518,6 +3550,7 @@ def i0(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.i0(0.)
     array(1.0)
     >>> np.i0([0, 1, 2, 3])
@@ -3614,6 +3647,7 @@ def kaiser(M, beta):
 
     Examples
     --------
+    >>> import numpy as np
     >>> import matplotlib.pyplot as plt
     >>> np.kaiser(12, 14)
      array([7.72686684e-06, 3.46009194e-03, 4.65200189e-02, # may vary
@@ -3716,6 +3750,7 @@ def sinc(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> import matplotlib.pyplot as plt
     >>> x = np.linspace(-4, 4, 41)
     >>> np.sinc(x)
@@ -3894,6 +3929,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[10, 7, 4], [3, 2, 1]])
     >>> a
     array([[10,  7,  4],
@@ -4105,6 +4141,7 @@ def percentile(a,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[10, 7, 4], [3, 2, 1]])
     >>> a
     array([[10,  7,  4],
@@ -4402,6 +4439,7 @@ def quantile(a,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[10, 7, 4], [3, 2, 1]])
     >>> a
     array([[10,  7,  4],
@@ -4937,6 +4975,8 @@ def trapezoid(y, x=None, dx=1.0, axis=-1):
 
     Examples
     --------
+    >>> import numpy as np
+
     Use the trapezoidal rule on evenly spaced points:
 
     >>> np.trapezoid([1, 2, 3])
@@ -5117,6 +5157,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
     Examples
     --------
+    >>> import numpy as np
     >>> nx, ny = (3, 2)
     >>> x = np.linspace(0, 1, nx)
     >>> y = np.linspace(0, 1, ny)
@@ -5244,6 +5285,7 @@ def delete(arr, obj, axis=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> arr = np.array([[1,2,3,4], [5,6,7,8], [9,10,11,12]])
     >>> arr
     array([[ 1,  2,  3,  4],
@@ -5428,6 +5470,7 @@ def insert(arr, obj, values, axis=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(6).reshape(3, 2)
     >>> a
     array([[0, 1],
@@ -5604,6 +5647,7 @@ def append(arr, values, axis=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.append([1, 2, 3], [[4, 5, 6], [7, 8, 9]])
     array([1, 2, 3, ..., 7, 8, 9])
 
@@ -5716,6 +5760,7 @@ def digitize(x, bins, right=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([0.2, 6.4, 3.0, 1.6])
     >>> bins = np.array([0.0, 1.0, 2.5, 4.0, 10.0])
     >>> inds = np.digitize(x, bins)

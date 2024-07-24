@@ -66,6 +66,7 @@ class Arrayterator:
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(3 * 4 * 5 * 6).reshape(3, 4, 5, 6)
     >>> a_itor = np.lib.Arrayterator(a, 2)
     >>> a_itor.shape

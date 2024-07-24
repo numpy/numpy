@@ -327,6 +327,7 @@ add_newdoc('numpy._core.numerictypes', "integer", ('is_integer',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.int64(-2).is_integer()
     True
     >>> np.uint32(5).is_integer()

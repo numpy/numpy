@@ -84,6 +84,7 @@ add_newdoc('numpy._core.umath', 'absolute',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([-1.2, 1.2])
     >>> np.absolute(x)
     array([ 1.2,  1.2])
@@ -136,6 +137,7 @@ add_newdoc('numpy._core.umath', 'add',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.add(1.0, 4.0)
     5.0
     >>> x1 = np.arange(9.0).reshape((3, 3))
@@ -203,6 +205,8 @@ add_newdoc('numpy._core.umath', 'arccos',
 
     Examples
     --------
+    >>> import numpy as np
+
     We expect the arccos of 1 to be 0, and of -1 to be pi:
 
     >>> np.arccos([1, -1])
@@ -263,6 +267,7 @@ add_newdoc('numpy._core.umath', 'arccosh',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.arccosh([np.e, 10.0])
     array([ 1.65745445,  2.99322285])
     >>> np.arccosh(1)
@@ -315,6 +320,7 @@ add_newdoc('numpy._core.umath', 'arcsin',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.arcsin(1)     # pi/2
     1.5707963267948966
     >>> np.arcsin(-1)    # -pi/2
@@ -366,6 +372,7 @@ add_newdoc('numpy._core.umath', 'arcsinh',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.arcsinh(np.array([np.e, 10.0]))
     array([ 1.72538256,  2.99822295])
 
@@ -420,6 +427,8 @@ add_newdoc('numpy._core.umath', 'arctan',
     Examples
     --------
     We expect the arctan of 0 to be 0, and of 1 to be pi/4:
+
+    >>> import numpy as np
 
     >>> np.arctan([0, 1])
     array([ 0.        ,  0.78539816])
@@ -500,6 +509,8 @@ add_newdoc('numpy._core.umath', 'arctan2',
     --------
     Consider four points in different quadrants:
 
+    >>> import numpy as np
+
     >>> x = np.array([-1, +1, +1, -1])
     >>> y = np.array([-1, -1, +1, +1])
     >>> np.arctan2(y, x) * 180 / np.pi
@@ -567,6 +578,7 @@ add_newdoc('numpy._core.umath', 'arctanh',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.arctanh([0, -0.5])
     array([ 0.        , -0.54930614])
 
@@ -603,6 +615,8 @@ add_newdoc('numpy._core.umath', 'bitwise_and',
 
     Examples
     --------
+    >>> import numpy as np
+
     The number 13 is represented by ``00001101``.  Likewise, 17 is
     represented by ``00010001``.  The bit-wise AND of 13 and 17 is
     therefore ``000000001``, or 1:
@@ -665,6 +679,8 @@ add_newdoc('numpy._core.umath', 'bitwise_or',
 
     Examples
     --------
+    >>> import numpy as np
+
     The number 13 has the binary representation ``00001101``. Likewise,
     16 is represented by ``00010000``.  The bit-wise OR of 13 and 16 is
     then ``00011101``, or 29:
@@ -732,6 +748,8 @@ add_newdoc('numpy._core.umath', 'bitwise_xor',
 
     Examples
     --------
+    >>> import numpy as np
+
     The number 13 is represented by ``00001101``. Likewise, 17 is
     represented by ``00010001``.  The bit-wise XOR of 13 and 17 is
     therefore ``00011100``, or 28:
@@ -786,6 +804,8 @@ add_newdoc('numpy._core.umath', 'ceil',
 
     Examples
     --------
+    >>> import numpy as np
+
     >>> a = np.array([-1.7, -1.5, -0.2, 0.2, 1.5, 1.7, 2.0])
     >>> np.ceil(a)
     array([-1., -1., -0.,  1.,  2.,  2.,  2.])
@@ -822,6 +842,7 @@ add_newdoc('numpy._core.umath', 'trunc',
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([-1.7, -1.5, -0.2, 0.2, 1.5, 1.7, 2.0])
     >>> np.trunc(a)
     array([-1., -1., -0.,  0.,  1.,  1.,  2.])
@@ -856,6 +877,7 @@ add_newdoc('numpy._core.umath', 'conjugate',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.conjugate(1+2j)
     (1-2j)
 
@@ -894,6 +916,7 @@ add_newdoc('numpy._core.umath', 'cos',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.cos(np.array([0, np.pi/2, np.pi]))
     array([  1.00000000e+00,   6.12303177e-17,  -1.00000000e+00])
     >>>
@@ -931,6 +954,7 @@ add_newdoc('numpy._core.umath', 'cosh',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.cosh(0)
     1.0
 
@@ -967,6 +991,8 @@ add_newdoc('numpy._core.umath', 'degrees',
     Examples
     --------
     Convert a radian array to degrees
+
+    >>> import numpy as np
 
     >>> rad = np.arange(12.)*np.pi/6
     >>> np.degrees(rad)
@@ -1009,6 +1035,7 @@ add_newdoc('numpy._core.umath', 'rad2deg',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.rad2deg(np.pi/2)
     90.0
 
@@ -1052,6 +1079,7 @@ add_newdoc('numpy._core.umath', 'heaviside',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.heaviside([-1.5, 0, 2.0], 0.5)
     array([ 0. ,  0.5,  1. ])
     >>> np.heaviside([-1.5, 0, 2.0], 1)
@@ -1091,6 +1119,7 @@ add_newdoc('numpy._core.umath', 'divide',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.divide(2.0, 4.0)
     0.5
     >>> x1 = np.arange(9.0).reshape((3, 3))
@@ -1136,6 +1165,7 @@ add_newdoc('numpy._core.umath', 'equal',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.equal([0, 1, 3], np.arange(3))
     array([ True,  True, False])
 
@@ -1201,6 +1231,8 @@ add_newdoc('numpy._core.umath', 'exp',
     --------
     Plot the magnitude and phase of ``exp(x)`` in the complex plane:
 
+    >>> import numpy as np
+
     >>> import matplotlib.pyplot as plt
 
     >>> x = np.linspace(-2*np.pi, 2*np.pi, 100)
@@ -1248,6 +1280,7 @@ add_newdoc('numpy._core.umath', 'exp2',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.exp2([2, 3])
     array([ 4.,  8.])
 
@@ -1285,6 +1318,8 @@ add_newdoc('numpy._core.umath', 'expm1',
     about 32 significant digits. This example shows the superiority of
     expm1 in this case.
 
+    >>> import numpy as np
+
     >>> np.expm1(1e-10)
     1.00000000005e-10
     >>> np.exp(1e-10) - 1
@@ -1319,6 +1354,7 @@ add_newdoc('numpy._core.umath', 'fabs',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.fabs(-1)
     1.0
     >>> np.fabs([-1.2, 1.2])
@@ -1358,6 +1394,7 @@ add_newdoc('numpy._core.umath', 'floor',
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([-1.7, -1.5, -0.2, 0.2, 1.5, 1.7, 2.0])
     >>> np.floor(a)
     array([-2., -2., -1.,  0.,  1.,  1.,  2.])
@@ -1396,6 +1433,7 @@ add_newdoc('numpy._core.umath', 'floor_divide',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.floor_divide(7,3)
     2
     >>> np.floor_divide([1., 2., 3., 4.], 2.5)
@@ -1449,6 +1487,7 @@ add_newdoc('numpy._core.umath', 'fmod',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.fmod([-3, -2, -1, 1, 2, 3], 2)
     array([-1,  0, -1,  1,  0,  1])
     >>> np.remainder([-3, -2, -1, 1, 2, 3], 2)
@@ -1493,6 +1532,7 @@ add_newdoc('numpy._core.umath', 'greater',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.greater([4,2],[2,2])
     array([ True, False])
 
@@ -1530,6 +1570,7 @@ add_newdoc('numpy._core.umath', 'greater_equal',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.greater_equal([4, 2, 1], [2, 2, 2])
     array([ True, True, False])
 
@@ -1567,6 +1608,7 @@ add_newdoc('numpy._core.umath', 'hypot',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.hypot(3*np.ones((3, 3)), 4*np.ones((3, 3)))
     array([[ 5.,  5.,  5.],
            [ 5.,  5.,  5.],
@@ -1630,6 +1672,8 @@ add_newdoc('numpy._core.umath', 'invert',
 
     Examples
     --------
+    >>> import numpy as np
+
     We've seen that 13 is represented by ``00001101``.
     The invert or bit-wise NOT of 13 is then:
 
@@ -1706,6 +1750,7 @@ add_newdoc('numpy._core.umath', 'isfinite',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.isfinite(1)
     True
     >>> np.isfinite(0)
@@ -1762,6 +1807,7 @@ add_newdoc('numpy._core.umath', 'isinf',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.isinf(np.inf)
     True
     >>> np.isinf(np.nan)
@@ -1807,6 +1853,7 @@ add_newdoc('numpy._core.umath', 'isnan',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.isnan(np.nan)
     True
     >>> np.isnan(np.inf)
@@ -1840,6 +1887,7 @@ add_newdoc('numpy._core.umath', 'isnat',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.isnat(np.datetime64("NaT"))
     True
     >>> np.isnat(np.datetime64("2016-01-01"))
@@ -1880,6 +1928,7 @@ add_newdoc('numpy._core.umath', 'left_shift',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.binary_repr(5)
     '101'
     >>> np.left_shift(5, 2)
@@ -1935,6 +1984,7 @@ add_newdoc('numpy._core.umath', 'less',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.less([1, 2], [2, 2])
     array([ True, False])
 
@@ -1971,6 +2021,7 @@ add_newdoc('numpy._core.umath', 'less_equal',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.less_equal([4, 2, 1], [2, 2, 2])
     array([False,  True,  True])
 
@@ -2036,6 +2087,7 @@ add_newdoc('numpy._core.umath', 'log',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.log([1, np.e, np.e**2, 0])
     array([  0.,   1.,   2., -inf])
 
@@ -2090,6 +2142,7 @@ add_newdoc('numpy._core.umath', 'log10',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.log10([1e-15, -3.])
     array([-15.,  nan])
 
@@ -2138,6 +2191,7 @@ add_newdoc('numpy._core.umath', 'log2',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([0, 1, 2, 2**4])
     >>> np.log2(x)
     array([-inf,   0.,   1.,   4.])
@@ -2181,6 +2235,7 @@ add_newdoc('numpy._core.umath', 'logaddexp',
 
     Examples
     --------
+    >>> import numpy as np
     >>> prob1 = np.log(1e-50)
     >>> prob2 = np.log(2.5e-50)
     >>> prob12 = np.logaddexp(prob1, prob2)
@@ -2224,6 +2279,7 @@ add_newdoc('numpy._core.umath', 'logaddexp2',
 
     Examples
     --------
+    >>> import numpy as np
     >>> prob1 = np.log2(1e-50)
     >>> prob2 = np.log2(2.5e-50)
     >>> prob12 = np.logaddexp2(prob1, prob2)
@@ -2283,6 +2339,7 @@ add_newdoc('numpy._core.umath', 'log1p',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.log1p(1e-99)
     1e-99
     >>> np.log(1 + 1e-99)
@@ -2315,6 +2372,7 @@ add_newdoc('numpy._core.umath', 'logical_and',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.logical_and(True, False)
     False
     >>> np.logical_and([True, False], [False, False])
@@ -2358,6 +2416,7 @@ add_newdoc('numpy._core.umath', 'logical_not',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.logical_not(3)
     False
     >>> np.logical_not([True, False, 0, 1])
@@ -2394,6 +2453,7 @@ add_newdoc('numpy._core.umath', 'logical_or',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.logical_or(True, False)
     True
     >>> np.logical_or([True, False], [False, False])
@@ -2437,6 +2497,7 @@ add_newdoc('numpy._core.umath', 'logical_xor',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.logical_xor(True, False)
     True
     >>> np.logical_xor([True, True, False, False], [True, False, True, False])
@@ -2499,6 +2560,7 @@ add_newdoc('numpy._core.umath', 'maximum',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.maximum([2, 3, 4], [1, 5, 2])
     array([2, 5, 4])
 
@@ -2558,6 +2620,7 @@ add_newdoc('numpy._core.umath', 'minimum',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.minimum([2, 3, 4], [1, 5, 2])
     array([1, 3, 2])
 
@@ -2618,6 +2681,7 @@ add_newdoc('numpy._core.umath', 'fmax',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.fmax([2, 3, 4], [1, 5, 2])
     array([ 2.,  5.,  4.])
 
@@ -2676,6 +2740,7 @@ add_newdoc('numpy._core.umath', 'fmin',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.fmin([2, 3, 4], [1, 5, 2])
     array([1, 3, 2])
 
@@ -2807,6 +2872,8 @@ add_newdoc('numpy._core.umath', 'matmul',
     --------
     For 2-D arrays it is the matrix product:
 
+    >>> import numpy as np
+
     >>> a = np.array([[1, 0],
     ...               [0, 1]])
     >>> b = np.array([[4, 1],
@@ -2908,6 +2975,8 @@ add_newdoc('numpy._core.umath', 'vecdot',
 
     Examples
     --------
+    >>> import numpy as np
+
     Get the projected size along a given normal for an array of vectors.
 
     >>> v = np.array([[0., 5., 0.], [0., 0., 10.], [0., 6., 8.]])
@@ -2951,6 +3020,7 @@ add_newdoc('numpy._core.umath', 'modf',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.modf([0, 3.5])
     (array([ 0. ,  0.5]), array([ 0.,  3.]))
     >>> np.modf(-0.5)
@@ -2981,6 +3051,7 @@ add_newdoc('numpy._core.umath', 'multiply',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.multiply(2.0, 4.0)
     8.0
 
@@ -3021,6 +3092,7 @@ add_newdoc('numpy._core.umath', 'negative',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.negative([1.,-1.])
     array([-1.,  1.])
 
@@ -3057,6 +3129,7 @@ add_newdoc('numpy._core.umath', 'positive',
 
     Examples
     --------
+    >>> import numpy as np
 
     >>> x1 = np.array(([1., -1.]))
     >>> np.positive(x1)
@@ -3095,6 +3168,7 @@ add_newdoc('numpy._core.umath', 'not_equal',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.not_equal([1.,2.], [1., 3.])
     array([False,  True])
     >>> np.not_equal([1, 2], [[1, 3],[1, 4]])
@@ -3159,6 +3233,8 @@ add_newdoc('numpy._core.umath', 'power',
 
     Examples
     --------
+    >>> import numpy as np
+
     Cube each element in an array.
 
     >>> x1 = np.arange(6)
@@ -3246,6 +3322,8 @@ add_newdoc('numpy._core.umath', 'float_power',
 
     Examples
     --------
+    >>> import numpy as np
+
     Cube each element in a list.
 
     >>> x1 = range(6)
@@ -3309,6 +3387,8 @@ add_newdoc('numpy._core.umath', 'radians',
 
     Examples
     --------
+    >>> import numpy as np
+
     Convert a degree array to radians
 
     >>> deg = np.arange(12.) * 30.
@@ -3353,6 +3433,7 @@ add_newdoc('numpy._core.umath', 'deg2rad',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.deg2rad(180)
     3.1415926535897931
 
@@ -3387,6 +3468,7 @@ add_newdoc('numpy._core.umath', 'reciprocal',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.reciprocal(2.)
     0.5
     >>> np.reciprocal([1, 2., 3.33])
@@ -3443,6 +3525,7 @@ add_newdoc('numpy._core.umath', 'remainder',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.remainder([4, 7], [2, 3])
     array([0, 1])
     >>> np.remainder(np.arange(7), 5)
@@ -3494,6 +3577,7 @@ add_newdoc('numpy._core.umath', 'divmod',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.divmod(np.arange(5), 3)
     (array([0, 0, 0, 1, 1]), array([0, 1, 2, 0, 1]))
 
@@ -3537,6 +3621,7 @@ add_newdoc('numpy._core.umath', 'right_shift',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.binary_repr(10)
     '1010'
     >>> np.right_shift(10, 1)
@@ -3585,6 +3670,7 @@ add_newdoc('numpy._core.umath', 'rint',
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([-1.7, -1.5, -0.2, 0.2, 1.5, 1.7, 2.0])
     >>> np.rint(a)
     array([-2., -2., -0.,  0.,  2.,  2.,  2.])
@@ -3626,6 +3712,7 @@ add_newdoc('numpy._core.umath', 'sign',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.sign([-5., 4.5])
     array([-1.,  1.])
     >>> np.sign(0)
@@ -3653,6 +3740,7 @@ add_newdoc('numpy._core.umath', 'signbit',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.signbit(-1.2)
     True
     >>> np.signbit(np.array([1, -2.3, 2.1]))
@@ -3683,6 +3771,7 @@ add_newdoc('numpy._core.umath', 'copysign',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.copysign(1.3, -1)
     -1.3
     >>> 1/np.copysign(0, 1)
@@ -3718,6 +3807,7 @@ add_newdoc('numpy._core.umath', 'nextafter',
 
     Examples
     --------
+    >>> import numpy as np
     >>> eps = np.finfo(np.float64).eps
     >>> np.nextafter(1, 2) == eps + 1
     True
@@ -3753,6 +3843,7 @@ add_newdoc('numpy._core.umath', 'spacing',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.spacing(1) == np.finfo(np.float64).eps
     True
 
@@ -3794,6 +3885,8 @@ add_newdoc('numpy._core.umath', 'sin',
 
     Examples
     --------
+    >>> import numpy as np
+
     Print sine of one angle:
 
     >>> np.sin(np.pi/2.)
@@ -3847,6 +3940,7 @@ add_newdoc('numpy._core.umath', 'sinh',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.sinh(0)
     0.0
     >>> np.sinh(np.pi*1j/2)
@@ -3905,6 +3999,7 @@ add_newdoc('numpy._core.umath', 'sqrt',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.sqrt([1,4,9])
     array([ 1.,  2.,  3.])
 
@@ -3939,6 +4034,7 @@ add_newdoc('numpy._core.umath', 'cbrt',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.cbrt([1,8,27])
     array([ 1.,  2.,  3.])
 
@@ -3968,6 +4064,7 @@ add_newdoc('numpy._core.umath', 'square',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.square([-1j, 1])
     array([-1.-0.j,  1.+0.j])
 
@@ -3996,6 +4093,7 @@ add_newdoc('numpy._core.umath', 'subtract',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.subtract(1.0, 4.0)
     -3.0
 
@@ -4048,6 +4146,7 @@ add_newdoc('numpy._core.umath', 'tan',
 
     Examples
     --------
+    >>> import numpy as np
     >>> from math import pi
     >>> np.tan(np.array([-pi,pi/2,pi]))
     array([  1.22460635e-16,   1.63317787e+16,  -1.22460635e-16])
@@ -4101,6 +4200,7 @@ add_newdoc('numpy._core.umath', 'tanh',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.tanh((0, np.pi*1j, np.pi*1j/2))
     array([ 0. +0.00000000e+00j,  0. -1.22460635e-16j,  0. +1.63317787e+16j])
 
@@ -4156,6 +4256,7 @@ add_newdoc('numpy._core.umath', 'frexp',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(9)
     >>> y1, y2 = np.frexp(x)
     >>> y1
@@ -4203,6 +4304,7 @@ add_newdoc('numpy._core.umath', 'ldexp',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.ldexp(5, np.arange(4))
     array([ 5., 10., 20., 40.], dtype=float16)
 
@@ -4234,6 +4336,7 @@ add_newdoc('numpy._core.umath', 'gcd',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.gcd(12, 20)
     4
     >>> np.gcd.reduce([15, 25, 35])
@@ -4265,6 +4368,7 @@ add_newdoc('numpy._core.umath', 'lcm',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.lcm(12, 20)
     60
     >>> np.lcm.reduce([3, 12, 20])
@@ -4305,6 +4409,7 @@ add_newdoc('numpy._core.umath', 'bitwise_count',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.bitwise_count(1023)
     10
     >>> a = np.array([2**i - 1 for i in range(16)])
@@ -4337,6 +4442,7 @@ add_newdoc('numpy._core.umath', 'str_len',
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(['Grace Hopper Conference', 'Open Source Day'])
     >>> np.strings.str_len(a)
     array([23, 15])
@@ -4406,6 +4512,7 @@ add_newdoc('numpy._core.umath', 'isdigit',
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(['a', 'b', '0'])
     >>> np.strings.isdigit(a)
     array([False, False,  True])
@@ -4466,10 +4573,11 @@ add_newdoc('numpy._core.umath', 'isalnum',
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(['a', '1', 'a1', '(', ''])
     >>> np.strings.isalnum(a)
     array([ True,  True,  True, False, False])
-    
+
     """)
 
 add_newdoc('numpy._core.umath', 'islower',
@@ -4495,6 +4603,7 @@ add_newdoc('numpy._core.umath', 'islower',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.strings.islower("GHC")
     array(False)
     >>> np.strings.islower("ghc")
@@ -4525,8 +4634,9 @@ add_newdoc('numpy._core.umath', 'isupper',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.strings.isupper("GHC")
-    array(True)     
+    array(True)
     >>> a = np.array(["hello", "HELLO", "Hello"])
     >>> np.strings.isupper(a)
     array([False,  True, False]) 
@@ -4555,12 +4665,13 @@ add_newdoc('numpy._core.umath', 'istitle',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.strings.istitle("Numpy Is Great")
     array(True)
 
     >>> np.strings.istitle("Numpy is great")
     array(False)
-    
+
     """)
 
 add_newdoc('numpy._core.umath', 'isdecimal',
@@ -4589,6 +4700,7 @@ add_newdoc('numpy._core.umath', 'isdecimal',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.strings.isdecimal(['12345', '4.99', '123ABC', ''])
     array([ True, False, False, False])
 
@@ -4620,6 +4732,7 @@ add_newdoc('numpy._core.umath', 'isnumeric',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.strings.isnumeric(['123', '123abc', '9.0', '1/4', 'VIII'])
     array([ True, False, False, False, False])
 
@@ -4656,6 +4769,7 @@ add_newdoc('numpy._core.umath', 'find',
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(["NumPy is a Python library"])
     >>> np.strings.find(a, "Python", 0, None)
     array([11])
@@ -4724,6 +4838,7 @@ add_newdoc('numpy._core.umath', 'count',
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
@@ -4764,6 +4879,7 @@ add_newdoc('numpy._core.umath', 'index',
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(["Computer Science"])
     >>> np.strings.index(a, "Science")
     array([9])
@@ -4796,6 +4912,7 @@ add_newdoc('numpy._core.umath', 'rindex',
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(["Computer Science"])
     >>> np.strings.rindex(a, "Science")
     array([9])
@@ -4869,6 +4986,7 @@ add_newdoc('numpy._core.umath', 'endswith',
 
     Examples
     --------
+    >>> import numpy as np
     >>> s = np.array(['foo', 'bar'])
     >>> s
     array(['foo', 'bar'], dtype='<U3')
@@ -4917,6 +5035,7 @@ add_newdoc('numpy._core.umath', '_center',
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['a1b2','1b2a','b2a1','2a1b']); c
     array(['a1b2', '1b2a', 'b2a1', '2a1b'], dtype='<U4')
     >>> np.strings.center(c, width=9)
@@ -4956,6 +5075,7 @@ add_newdoc('numpy._core.umath', '_ljust',
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.ljust(c, width=3)
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
@@ -4992,6 +5112,7 @@ add_newdoc('numpy._core.umath', '_rjust',
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.rjust(a, width=3)
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
@@ -5027,6 +5148,7 @@ add_newdoc('numpy._core.umath', '_zfill',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.strings.zfill(['1', '-1', '+1'], 3)
     array(['001', '-01', '+01'], dtype='<U3')
 
@@ -5069,6 +5191,8 @@ add_newdoc('numpy._core.umath', '_partition_index',
 
     Examples
     --------
+    >>> import numpy as np
+
     The ufunc is used most easily via ``np.strings.partition``,
     which calls it after calculating the indices::
 
@@ -5117,6 +5241,8 @@ add_newdoc('numpy._core.umath', '_rpartition_index',
 
     Examples
     --------
+    >>> import numpy as np
+
     The ufunc is used most easily via ``np.strings.rpartition``,
     which calls it after calculating the indices::
 
@@ -5159,6 +5285,8 @@ add_newdoc('numpy._core.umath', '_partition',
 
     Examples
     --------
+    >>> import numpy as np
+
     The ufunc is used most easily via ``np.strings.partition``,
     which calls it under the hood::
 
@@ -5202,6 +5330,8 @@ add_newdoc('numpy._core.umath', '_rpartition',
 
     Examples
     --------
+    >>> import numpy as np
+
     The ufunc is used most easily via ``np.strings.rpartition``,
     which calls it after calculating the indices::
 

@@ -72,6 +72,7 @@ def has_nested_fields(ndtype):
 
     Examples
     --------
+    >>> import numpy as np
     >>> dt = np.dtype([('name', 'S4'), ('x', float), ('y', float)])
     >>> np.lib._iotools.has_nested_fields(dt)
     False
@@ -97,6 +98,7 @@ def flatten_dtype(ndtype, flatten_base=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> dt = np.dtype([('name', 'S4'), ('x', float), ('y', float),
     ...                ('block', int, (2, 3))])
     >>> np.lib._iotools.flatten_dtype(dt)
@@ -263,6 +265,7 @@ class NameValidator:
 
     Examples
     --------
+    >>> import numpy as np
     >>> validator = np.lib._iotools.NameValidator()
     >>> validator(['file', 'field2', 'with space', 'CaSe'])
     ('file_', 'field2', 'with_space', 'CaSe')
@@ -400,6 +403,7 @@ def str2bool(value):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.lib._iotools.str2bool('TRUE')
     True
     >>> np.lib._iotools.str2bool('false')
@@ -841,6 +845,7 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.lib._iotools.easy_dtype(float)
     dtype('float64')
     >>> np.lib._iotools.easy_dtype("i4, f8")

@@ -115,6 +115,7 @@ def take_along_axis(arr, indices, axis):
 
     Examples
     --------
+    >>> import numpy as np
 
     For this sample array
 
@@ -236,6 +237,7 @@ def put_along_axis(arr, indices, values, axis):
 
     Examples
     --------
+    >>> import numpy as np
 
     For this sample array
 
@@ -331,6 +333,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
 
     Examples
     --------
+    >>> import numpy as np
     >>> def my_func(a):
     ...     \"\"\"Average first and last element of a 1-D array\"\"\"
     ...     return (a[0] + a[-1]) * 0.5
@@ -461,6 +464,7 @@ def apply_over_axes(func, a, axes):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(24).reshape(2,3,4)
     >>> a
     array([[[ 0,  1,  2,  3],
@@ -549,6 +553,7 @@ def expand_dims(a, axis):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2])
     >>> x.shape
     (2,)
@@ -651,6 +656,7 @@ def column_stack(tup):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array((1,2,3))
     >>> b = np.array((2,3,4))
     >>> np.column_stack((a,b))
@@ -710,6 +716,7 @@ def dstack(tup):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array((1,2,3))
     >>> b = np.array((2,3,4))
     >>> np.dstack((a,b))
@@ -762,6 +769,7 @@ def array_split(ary, indices_or_sections, axis=0):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(8.0)
     >>> np.array_split(x, 3)
     [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.])]
@@ -858,6 +866,7 @@ def split(ary, indices_or_sections, axis=0):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(9.0)
     >>> np.split(x, 3)
     [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.,  8.])]
@@ -901,6 +910,7 @@ def hsplit(ary, indices_or_sections):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(16.0).reshape(4, 4)
     >>> x
     array([[ 0.,   1.,   2.,   3.],
@@ -971,6 +981,7 @@ def vsplit(ary, indices_or_sections):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(16.0).reshape(4, 4)
     >>> x
     array([[ 0.,   1.,   2.,   3.],
@@ -1024,6 +1035,7 @@ def dsplit(ary, indices_or_sections):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(16.0).reshape(2, 2, 4)
     >>> x
     array([[[ 0.,   1.,   2.,   3.],
@@ -1126,6 +1138,7 @@ def kron(a, b):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.kron([1,10,100], [5,6,7])
     array([  5,   6,   7, ..., 500, 600, 700])
     >>> np.kron([5,6,7], [1,10,100])
@@ -1240,6 +1253,7 @@ def tile(A, reps):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([0, 1, 2])
     >>> np.tile(a, 2)
     array([0, 1, 2, 0, 1, 2])

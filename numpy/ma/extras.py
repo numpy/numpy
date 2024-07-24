@@ -70,6 +70,7 @@ def count_masked(arr, axis=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(9).reshape((3,3))
     >>> a = np.ma.array(a)
     >>> a[1, 0] = np.ma.masked
@@ -133,6 +134,7 @@ def masked_all(shape, dtype=float):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.ma.masked_all((3, 3))
     masked_array(
       data=[[--, --, --],
@@ -196,6 +198,7 @@ def masked_all_like(arr):
 
     Examples
     --------
+    >>> import numpy as np
     >>> arr = np.zeros((2, 3), dtype=np.float32)
     >>> arr
     array([[0., 0., 0.],
@@ -499,6 +502,7 @@ if apply_over_axes.__doc__ is not None:
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.ma.arange(24).reshape(2,3,4)
     >>> a[:,0,1] = np.ma.masked
     >>> a[:,1,:] = np.ma.masked
@@ -608,6 +612,7 @@ def average(a, axis=None, weights=None, returned=False, *,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.ma.array([1., 2., 3., 4.], mask=[False, False, True, True])
     >>> np.ma.average(a, weights=[3, 1, 0, 0])
     1.25
@@ -761,6 +766,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.ma.array(np.arange(8), mask=[0]*4 + [1]*4)
     >>> np.ma.median(x)
     1.5
@@ -895,6 +901,7 @@ def compress_nd(x, axis=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> arr = [[1, 2], [3, 4]]
     >>> mask = [[0, 1], [0, 0]]
     >>> x = np.ma.array(arr, mask=mask)
@@ -956,6 +963,7 @@ def compress_rowcols(x, axis=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
     ...                                                   [1, 0, 0],
     ...                                                   [0, 0, 0]])
@@ -1009,6 +1017,7 @@ def compress_rows(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
     ...                                                   [1, 0, 0],
     ...                                                   [0, 0, 0]])
@@ -1047,6 +1056,7 @@ def compress_cols(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
     ...                                                   [1, 0, 0],
     ...                                                   [0, 0, 0]])
@@ -1107,6 +1117,7 @@ def mask_rowcols(a, axis=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.zeros((3, 3), dtype=int)
     >>> a[1, 1] = 1
     >>> a
@@ -1163,6 +1174,7 @@ def mask_rows(a, axis=np._NoValue):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.zeros((3, 3), dtype=int)
     >>> a[1, 1] = 1
     >>> a
@@ -1213,6 +1225,7 @@ def mask_cols(a, axis=np._NoValue):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.zeros((3, 3), dtype=int)
     >>> a[1, 1] = 1
     >>> a
@@ -1266,6 +1279,7 @@ def ediff1d(arr, to_end=None, to_begin=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> arr = np.ma.array([1, 2, 4, 7, 0])
     >>> np.ma.ediff1d(arr)
     masked_array(data=[ 1,  2,  3, -7],
@@ -1303,6 +1317,7 @@ def unique(ar1, return_index=False, return_inverse=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = [1, 2, 1000, 2, 3]
     >>> mask = [0, 0, 1, 0, 0]
     >>> masked_a = np.ma.masked_array(a, mask)
@@ -1354,6 +1369,7 @@ def intersect1d(ar1, ar2, assume_unique=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.ma.array([1, 3, 3, 3], mask=[0, 0, 0, 1])
     >>> y = np.ma.array([3, 1, 1, 1], mask=[0, 0, 0, 1])
     >>> np.ma.intersect1d(x, y)
@@ -1383,6 +1399,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> ar1 = np.ma.array([1, 2, 3, 2, 4])
     >>> ar2 = np.ma.array([2, 3, 5, 7, 5])
     >>> np.ma.setxor1d(ar1, ar2)
@@ -1427,6 +1444,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> ar1 = np.ma.array([0, 1, 2, 5, 0])
     >>> ar2 = [0, 2]
     >>> np.ma.in1d(ar1, ar2)
@@ -1477,6 +1495,7 @@ def isin(element, test_elements, assume_unique=False, invert=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> element = np.ma.array([1, 2, 3, 4, 5, 6])
     >>> test_elements = [0, 2]
     >>> np.ma.isin(element, test_elements)
@@ -1502,6 +1521,7 @@ def union1d(ar1, ar2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> ar1 = np.ma.array([1, 2, 3, 4])
     >>> ar2 = np.ma.array([3, 4, 5, 6])
     >>> np.ma.union1d(ar1, ar2)
@@ -1526,6 +1546,7 @@ def setdiff1d(ar1, ar2, assume_unique=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.ma.array([1, 2, 3, 4], mask=[0, 1, 0, 1])
     >>> np.ma.setdiff1d(x, [1, 2])
     masked_array(data=[3, --],
@@ -1659,6 +1680,7 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.ma.array([[0, 1], [1, 1]], mask=[0, 1, 0, 1])
     >>> y = np.ma.array([[1, 0], [0, 1]], mask=[0, 0, 1, 1])
     >>> np.ma.cov(x, y)
@@ -1751,6 +1773,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.ma.array([[0, 1], [1, 1]], mask=[0, 1, 0, 1])
     >>> np.ma.corrcoef(x)
     masked_array(
@@ -1824,6 +1847,7 @@ class mr_class(MAxisConcatenator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.ma.mr_[np.ma.array([1,2,3]), 0, 0, np.ma.array([4,5,6])]
     masked_array(data=[1, 2, 3, ..., 4, 5, 6],
                  mask=False,
@@ -1869,6 +1893,7 @@ def ndenumerate(a, compressed=True):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.ma.arange(9).reshape((3, 3))
     >>> a[1, 0] = np.ma.masked
     >>> a[1, 2] = np.ma.masked
@@ -1938,6 +1963,7 @@ def flatnotmasked_edges(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.ma.arange(10)
     >>> np.ma.flatnotmasked_edges(a)
     array([0, 9])
@@ -1995,6 +2021,7 @@ def notmasked_edges(a, axis=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(9).reshape((3, 3))
     >>> m = np.zeros_like(a)
     >>> m[1:, 1:] = 1
@@ -2044,6 +2071,7 @@ def flatnotmasked_contiguous(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.ma.arange(10)
     >>> np.ma.flatnotmasked_contiguous(a)
     [slice(0, 10, None)]
@@ -2105,6 +2133,7 @@ def notmasked_contiguous(a, axis=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(12).reshape((3, 4))
     >>> mask = np.zeros_like(a)
     >>> mask[1:, :-1] = 1; mask[0, 1] = 1; mask[-1, 0] = 0
@@ -2206,6 +2235,7 @@ def clump_unmasked(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.ma.masked_array(np.arange(10))
     >>> a[[0, 1, 2, 6, 8, 9]] = np.ma.masked
     >>> np.ma.clump_unmasked(a)
@@ -2245,6 +2275,7 @@ def clump_masked(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.ma.masked_array(np.arange(10))
     >>> a[[0, 1, 2, 6, 8, 9]] = np.ma.masked
     >>> np.ma.clump_masked(a)

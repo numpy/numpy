@@ -146,6 +146,7 @@ class AxisError(ValueError, IndexError):
 
     Examples
     --------
+    >>> import numpy as np
     >>> array_1d = np.arange(10)
     >>> np.cumsum(array_1d, axis=1)
     Traceback (most recent call last):
@@ -222,6 +223,7 @@ class DTypePromotionError(TypeError):
     Datetimes and complex numbers are incompatible classes and cannot be
     promoted:
 
+    >>> import numpy as np
     >>> np.result_type(np.dtype("M8[s]"), np.complex128)  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
      ...

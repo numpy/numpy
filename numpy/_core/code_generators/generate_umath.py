@@ -249,6 +249,7 @@ def english_upper(s):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib.utils import english_upper
     >>> s = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'
     >>> english_upper(s)

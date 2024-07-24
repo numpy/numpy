@@ -272,6 +272,7 @@ def tensorsolve(a, b, axes=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.eye(2*3*4)
     >>> a.shape = (2*3, 4, 2, 3, 4)
     >>> rng = np.random.default_rng()
@@ -380,6 +381,7 @@ def solve(a, b):
     ``x0 + 2 * x1 = 1`` and
     ``3 * x0 + 5 * x1 = 2``:
 
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, 5]])
     >>> b = np.array([1, 2])
     >>> x = np.linalg.solve(a, b)
@@ -452,6 +454,7 @@ def tensorinv(a, ind=2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.eye(4*6)
     >>> a.shape = (4, 6, 8, 3)
     >>> ainv = np.linalg.tensorinv(a, ind=2)
@@ -541,6 +544,7 @@ def inv(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.linalg import inv
     >>> a = np.array([[1., 2.], [3., 4.]])
     >>> ainv = inv(a)
@@ -652,6 +656,7 @@ def matrix_power(a, n):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.linalg import matrix_power
     >>> i = np.array([[0, 1], [-1, 0]]) # matrix equiv. of the imaginary unit
     >>> matrix_power(i, 3) # should = -i
@@ -806,6 +811,7 @@ def cholesky(a, /, *, upper=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> A = np.array([[1,-2j],[2j,5]])
     >>> A
     array([[ 1.+0.j, -0.-2.j],
@@ -1015,6 +1021,7 @@ def qr(a, mode='reduced'):
 
     Examples
     --------
+    >>> import numpy as np
     >>> rng = np.random.default_rng()
     >>> a = rng.normal(size=(9, 6))
     >>> Q, R = np.linalg.qr(a)
@@ -1190,6 +1197,7 @@ def eigvals(a):
     if `Q` is orthogonal, then ``Q * A * Q.T`` has the same eigenvalues as
     ``A``:
 
+    >>> import numpy as np
     >>> from numpy import linalg as LA
     >>> x = np.random.random()
     >>> Q = np.array([[np.cos(x), -np.sin(x)], [np.sin(x), np.cos(x)]])
@@ -1286,6 +1294,7 @@ def eigvalsh(a, UPLO='L'):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy import linalg as LA
     >>> a = np.array([[1, -2j], [2j, 5]])
     >>> LA.eigvalsh(a)
@@ -1426,6 +1435,7 @@ def eig(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy import linalg as LA
 
     (Almost) trivial example with real eigenvalues and eigenvectors.
@@ -1566,6 +1576,7 @@ def eigh(a, UPLO='L'):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy import linalg as LA
     >>> a = np.array([[1, -2j], [2j, 5]])
     >>> a
@@ -1608,12 +1619,14 @@ def eigh(a, UPLO='L'):
            [0.+2.j, 2.+0.j]])
     >>> wa, va = LA.eigh(a)
     >>> wb, vb = LA.eig(b)
-    >>> wa; wb
+    >>> wa
     array([1., 6.])
+    >>> wb
     array([6.+0.j, 1.+0.j])
-    >>> va; vb
+    >>> va
     array([[-0.4472136 +0.j        , -0.89442719+0.j        ], # may vary
            [ 0.        +0.89442719j,  0.        -0.4472136j ]])
+    >>> vb
     array([[ 0.89442719+0.j       , -0.        +0.4472136j],
            [-0.        +0.4472136j,  0.89442719+0.j       ]])
 
@@ -1741,6 +1754,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> rng = np.random.default_rng()
     >>> a = rng.normal(size=(9, 6)) + 1j*rng.normal(size=(9, 6))
     >>> b = rng.normal(size=(2, 7, 8, 3)) + 1j*rng.normal(size=(2, 7, 8, 3))
@@ -1965,6 +1979,7 @@ def cond(x, p=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy import linalg as LA
     >>> a = np.array([[1, 0, -1], [0, 1, 0], [1, 0, 1]])
     >>> a
@@ -2123,6 +2138,7 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.linalg import matrix_rank
     >>> matrix_rank(np.eye(4)) # Full rank matrix
     4
@@ -2238,6 +2254,7 @@ def pinv(a, rcond=None, hermitian=False, *, rtol=_NoValue):
     The following example checks that ``a * a+ * a == a`` and
     ``a+ * a * a+ == a+``:
 
+    >>> import numpy as np
     >>> rng = np.random.default_rng()
     >>> a = rng.normal(size=(9, 6))
     >>> B = np.linalg.pinv(a)
@@ -2334,6 +2351,7 @@ def slogdet(a):
     --------
     The determinant of a 2-D array ``[[a, b], [c, d]]`` is ``ad - bc``:
 
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, 4]])
     >>> (sign, logabsdet) = np.linalg.slogdet(a)
     >>> (sign, logabsdet)
@@ -2408,6 +2426,7 @@ def det(a):
     --------
     The determinant of a 2-D array [[a, b], [c, d]] is ad - bc:
 
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, 4]])
     >>> np.linalg.det(a)
     -2.0 # may vary
@@ -2504,6 +2523,7 @@ def lstsq(a, b, rcond=None):
     --------
     Fit a line, ``y = mx + c``, through some noisy data-points:
 
+    >>> import numpy as np
     >>> x = np.array([0, 1, 2, 3])
     >>> y = np.array([-1, 0.2, 0.9, 2.1])
 
@@ -2705,6 +2725,8 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
     Examples
     --------
+
+    >>> import numpy as np
     >>> from numpy import linalg as LA
     >>> a = np.arange(9) - 4
     >>> a
@@ -2942,6 +2964,7 @@ def multi_dot(arrays, *, out=None):
     --------
     `multi_dot` allows you to write::
 
+    >>> import numpy as np
     >>> from numpy.linalg import multi_dot
     >>> # Prepare some data
     >>> A = np.random.random((10000, 100))
