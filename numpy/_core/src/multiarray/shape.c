@@ -138,8 +138,8 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         npy_intp size = newsize - oldsize;
         char *data = PyArray_BYTES(self) + oldnbytes;
         int aligned = PyArray_ISALIGNED(self);
-        if (PyArray_ZeroBuffer(PyArray_DESCR(self), data,
-                               stride, size, aligned) < 0) {
+        if (PyArray_ZeroContiguousBuffer(PyArray_DESCR(self), data,
+                                         stride, size, aligned) < 0) {
             return NULL;
         }
     }

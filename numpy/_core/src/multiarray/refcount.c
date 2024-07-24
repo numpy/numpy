@@ -59,23 +59,20 @@ PyArray_ClearBuffer(
 /*
  * Helper function to zero an array buffer.
  *
- * Here "zeroing" means an abstract zeroing operation,
- * which for an array of references might be something
- * more complicated than zero-filling the buffer.
+ * Here "zeroing" means an abstract zeroing operation, which for an
+ * array of references might be something more complicated than
+ * zero-filling the buffer.
  *
- * Failure (returns -1) indicates some sort of programming or
- * logical error and should not happen for a data type that has
- * been set up correctly.
+ * Failure (returns -1) indicates some sort of programming or logical
+ * error and should not happen for a data type that has been set up
+ * correctly. In principle a sufficiently weird dtype might run out of
+ * memory but in practice this likely won't happen.
  */
 NPY_NO_EXPORT int
-PyArray_ZeroBuffer(
+PyArray_ZeroContiguousBuffer(
         PyArray_Descr *descr, char *data,
         npy_intp stride, npy_intp size, int aligned)
 {
-    if (!PyDataType_REFCHK(descr)) {
-        return 0;
-    }
-
     NPY_traverse_info zero_info;
     NPY_traverse_info_init(&zero_info);
     /* Flags unused: float errors do not matter and we do not release GIL */
@@ -84,10 +81,15 @@ PyArray_ZeroBuffer(
             NPY_DT_SLOTS(NPY_DTYPE(descr))->get_fill_zero_loop;
     if (get_fill_zero_loop != NULL) {
         if (get_fill_zero_loop(
-                    NULL, descr, 1, descr->elsize, &(zero_info.func),
+                    NULL, descr, aligned, descr->elsize, &(zero_info.func),
                     &(zero_info.auxdata), &flags_unused) < 0) {
             goto fail;
         }
+    }
+    else {
+        memset(data, 0, size);
+        NPY_traverse_info_xfree(&zero_info);
+        return 0;
     }
 
     int res = zero_info.func(
