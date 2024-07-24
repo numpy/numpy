@@ -314,8 +314,10 @@ def get_printoptions():
         - suppress : bool
         - nanstr : str
         - infstr : str
-        - formatter : dict of callables
         - sign : str
+        - formatter : dict of callables
+        - floatmode : str
+        - legacy : str or False
 
         For a full description of these options, see `set_printoptions`.
 

@@ -41,6 +41,7 @@ intern_strings(void)
     INTERN_STRING(implementation, "_implementation");
     INTERN_STRING(axis1, "axis1");
     INTERN_STRING(axis2, "axis2");
+    INTERN_STRING(item, "item");
     INTERN_STRING(like, "like");
     INTERN_STRING(numpy, "numpy");
     INTERN_STRING(where, "where");
