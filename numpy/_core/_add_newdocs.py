@@ -4612,15 +4612,16 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('view',
 
     Examples
     --------
-    >>> x = np.array([(1, 2)], dtype=[('a', np.int8), ('b', np.int8)])
+    >>> x = np.array([(-1, 2)], dtype=[('a', np.int8), ('b', np.int8)])
 
     Viewing array data using a different type and dtype:
 
-    >>> y = x.view(dtype=np.int16, type=np.matrix)
-    >>> y
-    matrix([[513]], dtype=int16)
-    >>> print(type(y))
-    <class 'numpy.matrix'>
+    >>> nonneg = np.dtype([("a", np.uint8), ("b", np.uint8)])
+    >>> y = x.view(dtype=nonneg, type=np.recarray)
+    >>> x["a"]
+    array([-1], dtype=int8)
+    >>> y.a
+    array([255], dtype=uint8)
 
     Creating a view on a structured array so it can be used in calculations
 
