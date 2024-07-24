@@ -86,6 +86,29 @@ class TestRegression:
         x = self.mt19937.beta(tiny/32, tiny/40, size=50)
         assert not np.any(np.isnan(x))
 
+    def test_beta_expected_zero_frequency(self):
+        # gh-24475: For small a and b (e.g. a=0.0025, b=0.0025), beta
+        # would generate too many zeros.
+        a = 0.0025
+        b = 0.0025
+        n = 1000000
+        x = self.mt19937.beta(a, b, size=n)
+        nzeros = np.count_nonzero(x == 0)
+        # beta CDF at x = np.finfo(np.double).smallest_subnormal/2
+        # is p = 0.0776169083131899, e.g,
+        #
+        #    import numpy as np
+        #    from mpmath import mp
+        #    mp.dps = 160
+        #    x = mp.mpf(np.finfo(np.float64).smallest_subnormal)/2
+        #    # CDF of the beta distribution at x:
+        #    p = mp.betainc(a, b, x1=0, x2=x, regularized=True)
+        #    n = 1000000
+        #    exprected_freq = float(n*p)
+        #
+        expected_freq = 77616.90831318991
+        assert 0.95*expected_freq < nzeros < 1.05*expected_freq
+
     def test_choice_sum_of_probs_tolerance(self):
         # The sum of probs should be 1.0 with some tolerance.
         # For low precision dtypes the tolerance was too tight.
