@@ -610,9 +610,9 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
+#if @simd@
     npy_intp len = dimensions[0];
 
-#if @simd@
     if (is_mem_overlap(args[0], steps[0], args[1], steps[1], len) ||
         !npyv_loadable_stride_@sfx@(steps[0]) ||
         !npyv_storable_stride_@sfx@(steps[1])
