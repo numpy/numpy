@@ -2725,7 +2725,7 @@ def test_ufunc_types(ufunc):
 @pytest.mark.parametrize('ufunc', [getattr(np, x) for x in dir(np)
                                 if isinstance(getattr(np, x), np.ufunc)])
 @np._no_nep50_warning()
-def test_ufunc_noncontiguous(ufunc):
+def test_ufunc_noncontiguous_or_offset(ufunc):
     '''
     Check that contiguous and non-contiguous calls to ufuncs
     have the same results for values in range(9)
@@ -2737,19 +2737,31 @@ def test_ufunc_noncontiguous(ufunc):
             continue
         inp, out = typ.split('->')
         args_c = [np.empty(6, t) for t in inp]
+        # non contiguous (3 step)
         args_n = [np.empty(18, t)[::3] for t in inp]
-        for a in args_c:
+        # If alignment != itemsize, `args_o` is (probably) not itemsize aligned
+        # something that SIMD code needs.
+        args_o = []
+        for t in inp:
+            dtype = np.dtype(t)
+            start = dtype.alignment
+            stop = start + 6 * dtype.itemsize
+            a = np.empty(7 * dtype.itemsize, dtype="b")[start:stop].view(dtype)
+            args_o.append(a)
+
+        for a in args_c + args_n + args_o:
             a.flat = range(1,7)
-        for a in args_n:
-            a.flat = range(1,7)
+
         with warnings.catch_warnings(record=True):
             warnings.filterwarnings("always")
             res_c = ufunc(*args_c)
             res_n = ufunc(*args_n)
+            res_o = ufunc(*args_o)
         if len(out) == 1:
             res_c = (res_c,)
             res_n = (res_n,)
-        for c_ar, n_ar in zip(res_c, res_n):
+            res_o = (res_o,)
+        for c_ar, n_ar, o_ar in zip(res_c, res_n, res_o):
             dt = c_ar.dtype
             if np.issubdtype(dt, np.floating):
                 # for floating point results allow a small fuss in comparisons
@@ -2758,8 +2770,10 @@ def test_ufunc_noncontiguous(ufunc):
                 res_eps = np.finfo(dt).eps
                 tol = 2*res_eps
                 assert_allclose(res_c, res_n, atol=tol, rtol=tol)
+                assert_allclose(res_c, res_o, atol=tol, rtol=tol)
             else:
                 assert_equal(c_ar, n_ar)
+                assert_equal(c_ar, o_ar)
 
 
 @pytest.mark.parametrize('ufunc', [np.sign, np.equal])
