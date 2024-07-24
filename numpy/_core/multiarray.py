@@ -859,9 +859,11 @@ def vdot(a, b):
     dot(`a`, `b`).  If the first argument is complex the complex conjugate
     of the first argument is used for the calculation of the dot product.
 
-    Note that `vdot` handles multidimensional arrays differently than `dot`:
-    it does *not* perform a matrix product, but flattens input arguments
-    to 1-D vectors first. Consequently, it should only be used for vectors.
+    Note that `vdot` handles multidimensional arrays differently than `dot`: 
+    it does not perform a matrix product, but flattens input arguments to 1-D vectors first. 
+    The runtime of this function is linear in `a.size` and `b.size`. When `(a, b)` are 2-D arrays 
+    of the same shape, this function returns their `Frobenius inner-product` (also known as the 
+    *trace inner product* or the *standard inner product* on a vector space of matrices).
 
     Parameters
     ----------
