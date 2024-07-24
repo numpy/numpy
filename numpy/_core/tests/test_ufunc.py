@@ -2725,7 +2725,7 @@ def test_ufunc_types(ufunc):
 @pytest.mark.parametrize('ufunc', [getattr(np, x) for x in dir(np)
                                 if isinstance(getattr(np, x), np.ufunc)])
 @np._no_nep50_warning()
-def test_ufunc_noncontiguous_or_offset(ufunc):
+def test_ufunc_noncontiguous(ufunc):
     '''
     Check that contiguous and non-contiguous calls to ufuncs
     have the same results for values in range(9)
@@ -2739,15 +2739,14 @@ def test_ufunc_noncontiguous_or_offset(ufunc):
         args_c = [np.empty(6, t) for t in inp]
         # non contiguous (3 step)
         args_n = [np.empty(18, t)[::3] for t in inp]
-        # If alignment != itemsize, `args_o` is (probably) not itemsize aligned
-        # something that SIMD code needs.
+        # alignment != itemsize is possible.  So create an array with such
+        # an odd step manually.
         args_o = []
         for t in inp:
-            dtype = np.dtype(t)
-            start = dtype.alignment
-            stop = start + 6 * dtype.itemsize
-            a = np.empty(7 * dtype.itemsize, dtype="b")[start:stop].view(dtype)
-            args_o.append(a)
+            orig_dt = np.dtype(t)
+            off_dt = f"S{orig_dt.alignment}"  # offset by alignment
+            dtype = np.dtype([("_", off_dt), ("t", orig_dt)], align=False)
+            args_o.append(np.empty(6, dtype="b")["t"])
 
         for a in args_c + args_n + args_o:
             a.flat = range(1,7)
