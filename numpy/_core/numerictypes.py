@@ -225,10 +225,11 @@ def issctype(rep):
         res = obj2sctype(rep)
         if res and res != object_:
             return True
-        return False
+        else:
+            return False
     except Exception:
         return False
-
+        
 
 @set_module('numpy')
 def obj2sctype(rep, default=None):

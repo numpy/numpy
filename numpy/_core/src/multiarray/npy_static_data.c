@@ -61,12 +61,13 @@ intern_strings(void)
     INTERN_STRING(errmode_strings[5], "log");
     INTERN_STRING(__dlpack__, "__dlpack__");
     INTERN_STRING(pyvals_name, "UFUNC_PYVALS_NAME");
+    INTERN_STRING(legacy, "legacy");
     return 0;
 }
 
 #define IMPORT_GLOBAL(base_path, name, object)  \
     assert(object == NULL);                     \
-    npy_cache_import(base_path, name, &object); \
+    object = npy_import(base_path, name);       \
     if (object == NULL) {                       \
         return -1;                              \
     }
@@ -147,6 +148,9 @@ initialize_static_globals(void)
 
     IMPORT_GLOBAL("numpy._core._exceptions", "_UFuncOutputCastingError",
                   npy_static_pydata._UFuncOutputCastingError);
+
+    IMPORT_GLOBAL("numpy._core.printoptions", "format_options",
+                  npy_static_pydata.format_options);
 
     IMPORT_GLOBAL("os", "fspath",
                   npy_static_pydata.os_fspath);

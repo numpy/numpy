@@ -806,7 +806,7 @@ def crackline(line, reset=0):
             raise Exception('crackline: groupcounter(=%s) is nonpositive. '
                             'Check the blocks.'
                             % (groupcounter))
-        m1 = beginpattern[0].match((line))
+        m1 = beginpattern[0].match(line)
         if (m1) and (not m1.group('this') == groupname[groupcounter]):
             raise Exception('crackline: End group %s does not match with '
                             'previous Begin group %s\n\t%s' %
@@ -2539,7 +2539,7 @@ def get_parameters(vars, global_params={}):
                 outmess(f'get_parameters[TODO]: '
                         f'implement evaluation of complex expression {v}\n')
 
-            dimspec = ([s.lstrip('dimension').strip()
+            dimspec = ([s.removeprefix('dimension').strip()
                         for s in vars[n]['attrspec']
                        if s.startswith('dimension')] or [None])[0]
 
@@ -2735,8 +2735,8 @@ def analyzevars(block):
                         d = param_parse(d, params)
                     except (ValueError, IndexError, KeyError):
                         outmess(
-                            ('analyzevars: could not parse dimension for '
-                            f'variable {d!r}\n')
+                            'analyzevars: could not parse dimension for '
+                            f'variable {d!r}\n'
                         )
 
                     dim_char = ':' if d == ':' else '*'
@@ -2816,9 +2816,9 @@ def analyzevars(block):
                                         compute_deps(v1, deps)
                             all_deps = set()
                             compute_deps(v, all_deps)
-                            if ((v in n_deps
+                            if (v in n_deps
                                  or '=' in vars[v]
-                                 or 'depend' in vars[v])):
+                                 or 'depend' in vars[v]):
                                 # Skip a variable that
                                 # - n depends on
                                 # - has user-defined initialization expression

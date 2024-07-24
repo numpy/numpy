@@ -4,6 +4,7 @@ import sys
 import importlib
 from docutils import nodes
 from docutils.parsers.rst import Directive
+from datetime import datetime
 
 # Minimum version, enforced by sphinx
 needs_sphinx = '4.3'
@@ -86,6 +87,7 @@ extensions = [
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
     'sphinx.ext.mathjax',
+    'sphinx_copybutton',
     'sphinx_design',
 ]
 
@@ -107,7 +109,8 @@ source_suffix = '.rst'
 
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2024, NumPy Developers'
+year = datetime.now().year
+copyright = f'2008-{year}, NumPy Developers'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -283,6 +286,9 @@ mathjax_path = "scipy-mathjax/MathJax.js?config=scipy-mathjax"
 plot_html_show_formats = False
 plot_html_show_source_link = False
 
+# sphinx-copybutton configurations
+copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+copybutton_prompt_is_regexp = True
 # -----------------------------------------------------------------------------
 # LaTeX output
 # -----------------------------------------------------------------------------

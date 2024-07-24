@@ -1404,7 +1404,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
     >>> ar2 = np.ma.array([2, 3, 5, 7, 5])
     >>> np.ma.setxor1d(ar1, ar2)
     masked_array(data=[1, 4, 5, 7],
-                 mask=False,    
+                 mask=False,
            fill_value=999999)
 
     """
@@ -1590,8 +1590,8 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
         tup = (None, slice(None))
     #
     if y is None:
-        # Check if we can guarantee that the integers in the (N - ddof) 
-        # normalisation can be accurately represented with single-precision 
+        # Check if we can guarantee that the integers in the (N - ddof)
+        # normalisation can be accurately represented with single-precision
         # before computing the dot product.
         if x.shape[0] > 2 ** 24 or x.shape[1] > 2 ** 24:
             xnm_dtype = np.float64
@@ -1612,8 +1612,8 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
                     x._sharedmask = False
                     y._sharedmask = False
         x = ma.concatenate((x, y), axis)
-        # Check if we can guarantee that the integers in the (N - ddof) 
-        # normalisation can be accurately represented with single-precision 
+        # Check if we can guarantee that the integers in the (N - ddof)
+        # normalisation can be accurately represented with single-precision
         # before computing the dot product.
         if x.shape[0] > 2 ** 24 or x.shape[1] > 2 ** 24:
             xnm_dtype = np.float64
@@ -1695,7 +1695,7 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
           [ True,  True,  True,  True]],
     fill_value=1e+20,
     dtype=float64)
-    
+
     """
     # Check inputs
     if ddof is not None and ddof != int(ddof):
@@ -1814,6 +1814,8 @@ class MAxisConcatenator(AxisConcatenator):
     mr_class
 
     """
+    __slots__ = ()
+
     concatenate = staticmethod(concatenate)
 
     @classmethod
@@ -1852,6 +1854,8 @@ class mr_class(MAxisConcatenator):
            fill_value=999999)
 
     """
+    __slots__ = ()
+
     def __init__(self):
         MAxisConcatenator.__init__(self, 0)
 

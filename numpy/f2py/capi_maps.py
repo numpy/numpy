@@ -689,6 +689,8 @@ def modsign2map(m):
     else:
         ret['interface_usercode'] = ''
     ret['pymethoddef'] = getpymethoddef(m) or ''
+    if 'gil_used' in m:
+        ret['gil_used'] = m['gil_used']
     if 'coutput' in m:
         ret['coutput'] = m['coutput']
     if 'f2py_wrapper_output' in m:

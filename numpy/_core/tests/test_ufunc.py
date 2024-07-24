@@ -2652,8 +2652,51 @@ class TestUfunc:
             pass  # ok, just not implemented
 
 
+class TestGUFuncProcessCoreDims:
+
+    def test_conv1d_full_without_out(self):
+        x = np.arange(5.0)
+        y = np.arange(13.0)
+        w = umt.conv1d_full(x, y)
+        assert_equal(w, np.convolve(x, y, mode='full'))
+
+    def test_conv1d_full_with_out(self):
+        x = np.arange(5.0)
+        y = np.arange(13.0)
+        out = np.zeros(len(x) + len(y) - 1)
+        umt.conv1d_full(x, y, out=out)
+        assert_equal(out, np.convolve(x, y, mode='full'))
+
+    def test_conv1d_full_basic_broadcast(self):
+        # x.shape is (3, 6)
+        x = np.array([[1, 3, 0, -10, 2, 2],
+                      [0, -1, 2, 2, 10, 4],
+                      [8, 9, 10, 2, 23, 3]])
+        # y.shape is (2, 1, 7)
+        y = np.array([[[3, 4, 5, 20, 30, 40, 29]],
+                      [[5, 6, 7, 10, 11, 12, -5]]])
+        # result should have shape (2, 3, 12)
+        result = umt.conv1d_full(x, y)
+        assert result.shape == (2, 3, 12)
+        for i in range(2):
+            for j in range(3):
+                assert_equal(result[i, j], np.convolve(x[j], y[i, 0]))
+
+    def test_bad_out_shape(self):
+        x = np.ones((1, 2))
+        y = np.ones((2, 3))
+        out = np.zeros((2, 3))  # Not the correct shape.
+        with pytest.raises(ValueError, match=r'does not equal m \+ n - 1'):
+            umt.conv1d_full(x, y, out=out)
+
+    def test_bad_input_both_inputs_length_zero(self):
+        with pytest.raises(ValueError,
+                           match='both inputs have core dimension 0'):
+            umt.conv1d_full([], [])
+
+
 @pytest.mark.parametrize('ufunc', [getattr(np, x) for x in dir(np)
-                                if isinstance(getattr(np, x), np.ufunc)])
+                                   if isinstance(getattr(np, x), np.ufunc)])
 def test_ufunc_types(ufunc):
     '''
     Check all ufuncs that the correct type is returned. Avoid

@@ -1,4 +1,5 @@
 import sys
+from fractions import Fraction
 from typing import Any
 from collections.abc import Callable
 
@@ -14,6 +15,8 @@ vectorized_func: np.vectorize
 
 f8: np.float64
 AR_LIKE_f8: list[float]
+AR_LIKE_c16: list[complex]
+AR_LIKE_O: list[Fraction]
 
 AR_i8: npt.NDArray[np.int64]
 AR_f8: npt.NDArray[np.float64]
@@ -158,6 +161,21 @@ assert_type(np.quantile(AR_O, [0.5]), npt.NDArray[np.object_])
 assert_type(np.quantile(AR_f8, [0.5], keepdims=True), Any)
 assert_type(np.quantile(AR_f8, [0.5], axis=[1]), Any)
 assert_type(np.quantile(AR_f8, [0.5], out=AR_c16), npt.NDArray[np.complex128])
+
+assert_type(np.trapezoid(AR_LIKE_f8), np.float64)
+assert_type(np.trapezoid(AR_LIKE_f8, AR_LIKE_f8), np.float64)
+assert_type(np.trapezoid(AR_LIKE_c16), np.complex128)
+assert_type(np.trapezoid(AR_LIKE_c16, AR_LIKE_f8), np.complex128)
+assert_type(np.trapezoid(AR_LIKE_f8, AR_LIKE_c16), np.complex128)
+assert_type(np.trapezoid(AR_LIKE_O), float)
+assert_type(np.trapezoid(AR_LIKE_O, AR_LIKE_f8), float)
+assert_type(np.trapezoid(AR_f8), np.float64 | npt.NDArray[np.float64])
+assert_type(np.trapezoid(AR_f8, AR_f8), np.float64 | npt.NDArray[np.float64])
+assert_type(np.trapezoid(AR_c16), np.complex128 | npt.NDArray[np.complex128])
+assert_type(np.trapezoid(AR_c16, AR_c16), np.complex128 | npt.NDArray[np.complex128])
+assert_type(np.trapezoid(AR_m), np.timedelta64 | npt.NDArray[np.timedelta64])
+assert_type(np.trapezoid(AR_O), float | npt.NDArray[np.object_])
+assert_type(np.trapezoid(AR_O, AR_LIKE_f8), float | npt.NDArray[np.object_])
 
 assert_type(np.meshgrid(AR_f8, AR_i8, copy=False), tuple[npt.NDArray[Any], ...])
 assert_type(np.meshgrid(AR_f8, AR_i8, AR_c16, indexing="ij"), tuple[npt.NDArray[Any], ...])

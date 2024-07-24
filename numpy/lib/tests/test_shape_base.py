@@ -514,7 +514,7 @@ class TestColumnStack:
 
     def test_generator(self):
         with pytest.raises(TypeError, match="arrays to stack must be"):
-            column_stack((np.arange(3) for _ in range(2)))
+            column_stack(np.arange(3) for _ in range(2))
 
 
 class TestDstack:
@@ -551,7 +551,7 @@ class TestDstack:
 
     def test_generator(self):
         with pytest.raises(TypeError, match="arrays to stack must be"):
-            dstack((np.arange(3) for _ in range(2)))
+            dstack(np.arange(3) for _ in range(2))
 
 
 # array_split has more comprehensive test of splitting.

@@ -1,0 +1,8 @@
+New ``PyUFuncObject`` field ``process_core_dims_func``
+------------------------------------------------------
+The field ``process_core_dims_func`` was added to the structure
+``PyUFuncObject``.  For generalized ufuncs, this field can be set to a
+function of type ``PyUFunc_ProcessCoreDimsFunc`` that will be called when the
+ufunc is called. It allows the ufunc author to check that core dimensions
+satisfy additional constraints, and to set output core dimension sizes if they
+have not been provided.

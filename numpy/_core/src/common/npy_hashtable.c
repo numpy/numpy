@@ -30,30 +30,15 @@
 #endif
 
 #ifdef Py_GIL_DISABLED
-// TODO: replace with PyMutex when it is public
-#define LOCK_TABLE(tb)                                      \
-    if (!PyThread_acquire_lock(tb->mutex, NOWAIT_LOCK)) {   \
-        PyThread_acquire_lock(tb->mutex, WAIT_LOCK);        \
-    }
-#define UNLOCK_TABLE(tb) PyThread_release_lock(tb->mutex);
-#define INITIALIZE_LOCK(tb)                     \
-    tb->mutex = PyThread_allocate_lock();       \
-    if (tb->mutex == NULL) {                    \
-        PyErr_NoMemory();                       \
-        PyMem_Free(res);                        \
-        return NULL;                            \
-    }
-#define FREE_LOCK(tb)                           \
-    if (tb->mutex != NULL) {                    \
-        PyThread_free_lock(tb->mutex);          \
-    }
+#define LOCK_TABLE(tb) PyMutex_Lock(&tb->mutex)
+#define UNLOCK_TABLE(tb) PyMutex_Unlock(&tb->mutex)
+#define INITIALIZE_LOCK(tb) memset(&tb->mutex, 0, sizeof(PyMutex))
 #else
 // the GIL serializes access to the table so no need
 // for locking if it is enabled
 #define LOCK_TABLE(tb)
 #define UNLOCK_TABLE(tb)
 #define INITIALIZE_LOCK(tb)
-#define FREE_LOCK(tb)
 #endif
 
 /*
@@ -143,7 +128,6 @@ NPY_NO_EXPORT void
 PyArrayIdentityHash_Dealloc(PyArrayIdentityHash *tb)
 {
     PyMem_Free(tb->buckets);
-    FREE_LOCK(tb);
     PyMem_Free(tb);
 }
 
@@ -252,7 +236,7 @@ PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
 
 
 NPY_NO_EXPORT PyObject *
-PyArrayIdentityHash_GetItem(PyArrayIdentityHash const *tb, PyObject *const *key)
+PyArrayIdentityHash_GetItem(PyArrayIdentityHash *tb, PyObject *const *key)
 {
     LOCK_TABLE(tb);
     PyObject *res = find_item(tb, key)[0];

@@ -7,6 +7,7 @@ import pytest
 
 from . import util
 from numpy.f2py.f2py2e import main as f2pycli
+from numpy.testing._private.utils import NOGIL_BUILD
 
 #########################
 # CLI utils and classes #
@@ -573,7 +574,7 @@ def test_debugcapi_bld(hello_world_f90, monkeypatch):
 
     with util.switchdir(ipath.parent):
         f2pycli()
-        cmd_run = shlex.split("python3 -c \"import blah; blah.hi()\"")
+        cmd_run = shlex.split(f"{sys.executable} -c \"import blah; blah.hi()\"")
         rout = subprocess.run(cmd_run, capture_output=True, encoding='UTF-8')
         eout = ' Hello World\n'
         eerr = textwrap.dedent("""\
@@ -742,15 +743,63 @@ def test_npdistop(hello_world_f90, monkeypatch):
 
     with util.switchdir(ipath.parent):
         f2pycli()
-        cmd_run = shlex.split("python -c \"import blah; blah.hi()\"")
+        cmd_run = shlex.split(f"{sys.executable} -c \"import blah; blah.hi()\"")
         rout = subprocess.run(cmd_run, capture_output=True, encoding='UTF-8')
         eout = ' Hello World\n'
         assert rout.stdout == eout
 
 
+@pytest.mark.skipif(sys.version_info <= (3, 12),
+                    reason='Python 3.12 or newer required')
+def test_no_freethreading_compatible(hello_world_f90, monkeypatch):
+    """
+    CLI :: --no-freethreading-compatible
+    """
+    ipath = Path(hello_world_f90)
+    monkeypatch.setattr(sys, "argv", f'f2py -m blah {ipath} -c --no-freethreading-compatible'.split())
+
+    with util.switchdir(ipath.parent):
+        f2pycli()
+        cmd = f"{sys.executable} -c \"import blah; blah.hi();"
+        if NOGIL_BUILD:
+            cmd += "import sys; assert sys._is_gil_enabled() is True\""
+        else:
+            cmd += "\""
+        cmd_run = shlex.split(cmd)
+        rout = subprocess.run(cmd_run, capture_output=True, encoding='UTF-8')
+        eout = ' Hello World\n'
+        assert rout.stdout == eout
+        if NOGIL_BUILD:
+            assert "The global interpreter lock (GIL) has been enabled to load module 'blah'" in rout.stderr
+        assert rout.returncode == 0
+
+
+@pytest.mark.skipif(sys.version_info <= (3, 12),
+                    reason='Python 3.12 or newer required')
+def test_freethreading_compatible(hello_world_f90, monkeypatch):
+    """
+    CLI :: --freethreading_compatible
+    """
+    ipath = Path(hello_world_f90)
+    monkeypatch.setattr(sys, "argv", f'f2py -m blah {ipath} -c --freethreading-compatible'.split())
+
+    with util.switchdir(ipath.parent):
+        f2pycli()
+        cmd = f"{sys.executable} -c \"import blah; blah.hi();"
+        if NOGIL_BUILD:
+            cmd += "import sys; assert sys._is_gil_enabled() is False\""
+        else:
+            cmd += "\""
+        cmd_run = shlex.split(cmd)
+        rout = subprocess.run(cmd_run, capture_output=True, encoding='UTF-8')
+        eout = ' Hello World\n'
+        assert rout.stdout == eout
+        assert rout.stderr == ""
+        assert rout.returncode == 0
+
+
 # Numpy distutils flags
 # TODO: These should be tested separately
-
 
 def test_npd_fcompiler():
     """

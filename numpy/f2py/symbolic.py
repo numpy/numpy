@@ -1084,9 +1084,9 @@ def as_factors(obj):
                 if coeff == 1:
                     return Expr(Op.FACTORS, {term: 1})
                 return Expr(Op.FACTORS, {term: 1, Expr.number(coeff): 1})
-        if ((obj.op is Op.APPLY
+        if (obj.op is Op.APPLY
              and obj.data[0] is ArithOp.DIV
-             and not obj.data[2])):
+             and not obj.data[2]):
             return Expr(Op.FACTORS, {obj.data[1][0]: 1, obj.data[1][1]: -1})
         return Expr(Op.FACTORS, {obj: 1})
     raise OpError(f'cannot convert {type(obj)} to terms Expr')

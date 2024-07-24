@@ -81,6 +81,7 @@
 #define NPY_1_24_API_VERSION 0x00000010
 #define NPY_1_25_API_VERSION 0x00000011
 #define NPY_2_0_API_VERSION 0x00000012
+#define NPY_2_1_API_VERSION 0x00000013
 
 
 /*
@@ -160,6 +161,8 @@
     #define NPY_FEATURE_VERSION_STRING "1.25"
 #elif NPY_FEATURE_VERSION == NPY_2_0_API_VERSION
     #define NPY_FEATURE_VERSION_STRING "2.0"
+#elif NPY_FEATURE_VERSION == NPY_2_1_API_VERSION
+    #define NPY_FEATURE_VERSION_STRING "2.1"
 #else
     #error "Missing version string define for new NumPy version."
 #endif

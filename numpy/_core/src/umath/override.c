@@ -369,13 +369,14 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             /* All tuple items must be set before use */
             Py_INCREF(Py_None);
             PyTuple_SET_ITEM(override_args, 0, Py_None);
-            npy_cache_import(
+            if (npy_cache_import_runtime(
                     "numpy._core._internal",
                     "array_ufunc_errmsg_formatter",
-                    &npy_thread_unsafe_state.array_ufunc_errmsg_formatter);
-            assert(npy_thread_unsafe_state.array_ufunc_errmsg_formatter != NULL);
+                    &npy_runtime_imports.array_ufunc_errmsg_formatter) == -1) {
+                goto fail;
+            }
             errmsg = PyObject_Call(
-                    npy_thread_unsafe_state.array_ufunc_errmsg_formatter,
+                    npy_runtime_imports.array_ufunc_errmsg_formatter,
                     override_args, normal_kwds);
             if (errmsg != NULL) {
                 PyErr_SetObject(PyExc_TypeError, errmsg);

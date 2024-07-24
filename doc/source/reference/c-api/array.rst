@@ -823,7 +823,7 @@ cannot not be accessed directly.
 
 .. c:function:: PyArray_ArrayDescr *PyDataType_SUBARRAY(PyArray_Descr *descr)
 
-    Information about a subarray dtype eqivalent to the Python `np.dtype.base`
+    Information about a subarray dtype equivalent to the Python `np.dtype.base`
     and `np.dtype.shape`.
 
     If this is non- ``NULL``, then this data-type descriptor is a
@@ -1239,6 +1239,11 @@ User-defined data types
 
         With these two changes, the code should compile and work on both 1.x
         and 2.x or later.
+
+        In the unlikely case that you are heap allocating the dtype struct you
+        should free it again on NumPy 2, since a copy is made.
+        The struct is not a valid Python object, so do not use ``Py_DECREF``
+        on it.
 
     Register a data-type as a new user-defined data type for
     arrays. The type must have most of its entries filled in. This is
@@ -3975,7 +3980,7 @@ the C-API is needed then some additional steps must be taken.
     behavior as NumPy 1.x.
 
     .. note::
-        Windows never had shared visbility although you can use this macro
+        Windows never had shared visibility although you can use this macro
         to achieve it.  We generally discourage sharing beyond shared boundary
         lines since importing the array API includes NumPy version checks.
 

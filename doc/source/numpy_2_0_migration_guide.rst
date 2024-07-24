@@ -213,7 +213,7 @@ have been added for setting the real or imaginary part.
 The underlying type remains a struct under C++ (all of the above still remains
 valid).
 
-This has implications for Cython. It is recommened to always use the native
+This has implications for Cython. It is recommended to always use the native
 typedefs ``cfloat_t``, ``cdouble_t``, ``clongdouble_t`` rather than the NumPy
 types ``npy_cfloat``, etc, unless you have to interface with C code written
 using the NumPy types. You can still write cython code using the ``c.real`` and
@@ -231,7 +231,7 @@ private.
 Please see the tables below for guidance on migration.  For most changes this
 means replacing it with a backwards compatible alternative. 
 
-Please refer to `NEP 52 <https://numpy.org/neps/nep-0052-python-api-cleanup.html>`_ for more details.
+Please refer to :ref:`NEP52` for more details.
 
 Main namespace
 --------------
@@ -246,7 +246,7 @@ removed member          migration guideline
 add_docstring           It's still available as ``np.lib.add_docstring``.
 add_newdoc              It's still available as ``np.lib.add_newdoc``.
 add_newdoc_ufunc        It's an internal function and doesn't have a replacement.
-alltrue                 Use ``all`` instead.
+alltrue                 Use ``np.all`` instead.
 asfarray                Use ``np.asarray`` with a float dtype instead.
 byte_bounds             Now it's available under ``np.lib.array_utils.byte_bounds``
 cast                    Use ``np.asarray(arr, dtype=dtype)`` instead.
@@ -307,7 +307,7 @@ set_string_function     Use ``np.set_printoptions`` instead with a formatter
                         for custom printing of NumPy objects.
 singlecomplex           Use ``np.complex64`` instead.
 string\_                Use ``np.bytes_`` instead.
-sometrue                Use ``any`` instead.
+sometrue                Use ``np.any`` instead.
 source                  Use ``inspect.getsource`` instead.
 tracemalloc_domain      It's now available from ``np.lib``.
 unicode\_               Use ``np.str_`` instead.

@@ -123,7 +123,7 @@ jobs:
         if: runner.os == 'windows'
 
       # Used to push the built wheels
-      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      - uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
         with:
           python-version: "3.x"
 
@@ -154,12 +154,12 @@ jobs:
           fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@932529cab190fafca8c735a551657247fa8f8eaf  # v2.19.1
+        uses: pypa/cibuildwheel@7e5a838a63ac8128d71ab2dfd99e4634dd1bca09  # v2.19.2
         env:
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
-      - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+      - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4.3.4
         with:
           name: ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
           path: ./wheelhouse/*.whl
@@ -218,7 +218,7 @@ jobs:
         with:
           submodules: true
       # Used to push the built wheels
-      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      - uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
         with:
           # Build sdist on lowest supported Python
           python-version: "3.10"
@@ -240,7 +240,7 @@ jobs:
           python -mpip install twine
           twine check dist/*
 
-      - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+      - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4.3.4
         with:
           name: sdist
           path: ./dist/*

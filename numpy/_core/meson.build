@@ -47,7 +47,8 @@ C_ABI_VERSION = '0x02000000'
 # 0x00000010 - 1.24.x
 # 0x00000011 - 1.25.x
 # 0x00000012 - 2.0.x
-C_API_VERSION = '0x00000012'
+# 0x00000013 - 2.1.x
+C_API_VERSION = '0x00000013'
 
 # Check whether we have a mismatch between the set C API VERSION and the
 # actual C API VERSION. Will raise a MismatchCAPIError if so.
@@ -1041,6 +1042,7 @@ src_multiarray_umath_common = [
   'src/common/mem_overlap.c',
   'src/common/npy_argparse.c',
   'src/common/npy_hashtable.c',
+  'src/common/npy_import.c',
   'src/common/npy_longdouble.c',
   'src/common/ucsnarrow.c',
   'src/common/ufunc_override.c',
@@ -1063,6 +1065,7 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/array_coercion.c',
   'src/multiarray/array_converter.c',
   'src/multiarray/array_method.c',
+  'src/multiarray/array_api_standard.c',
   'src/multiarray/array_assign_scalar.c',
   'src/multiarray/array_assign_array.c',
   'src/multiarray/arrayfunction_override.c',
@@ -1277,6 +1280,7 @@ py.extension_module('_simd',
   link_with: [npymath_lib, _simd_mtargets.static_lib('_simd_mtargets')],
   install: true,
   subdir: 'numpy/_core',
+  install_tag: 'tests',
 )
 
 python_sources = [
@@ -1320,6 +1324,7 @@ python_sources = [
   'numerictypes.py',
   'numerictypes.pyi',
   'overrides.py',
+  'printoptions.py',
   'records.py',
   'records.pyi',
   'shape_base.py',

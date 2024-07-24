@@ -78,10 +78,7 @@ def has_nested_fields(ndtype):
     False
 
     """
-    for name in ndtype.names or ():
-        if ndtype[name].names is not None:
-            return True
-    return False
+    return any(ndtype[name].names is not None for name in ndtype.names or ())
 
 
 def flatten_dtype(ndtype, flatten_base=False):
@@ -568,7 +565,7 @@ class StringConverter:
         >>> StringConverter.upgrade_mapper(dateparser, default=defaultdate)
         """
         # Func is a single functions
-        if hasattr(func, '__call__'):
+        if callable(func):
             cls._mapper.insert(-1, (cls._getsubdtype(default), func, default))
             return
         elif hasattr(func, '__iter__'):
@@ -615,7 +612,7 @@ class StringConverter:
                 dtype = np.dtype(dtype_or_func)
             except TypeError:
                 # dtype_or_func must be a function, then
-                if not hasattr(dtype_or_func, '__call__'):
+                if not callable(dtype_or_func):
                     errmsg = ("The input argument `dtype` is neither a"
                               " function nor a dtype (got '%s' instead)")
                     raise TypeError(errmsg % type(dtype_or_func))

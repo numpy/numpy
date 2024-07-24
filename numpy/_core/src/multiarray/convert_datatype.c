@@ -83,15 +83,14 @@ npy_give_promotion_warnings(void)
 {
     PyObject *val;
 
-    npy_cache_import(
+    if (npy_cache_import_runtime(
             "numpy._core._ufunc_config", "NO_NEP50_WARNING",
-            &npy_thread_unsafe_state.NO_NEP50_WARNING);
-    if (npy_thread_unsafe_state.NO_NEP50_WARNING == NULL) {
+            &npy_runtime_imports.NO_NEP50_WARNING) == -1) {
         PyErr_WriteUnraisable(NULL);
         return 1;
     }
 
-    if (PyContextVar_Get(npy_thread_unsafe_state.NO_NEP50_WARNING,
+    if (PyContextVar_Get(npy_runtime_imports.NO_NEP50_WARNING,
                          Py_False, &val) < 0) {
         /* Errors should not really happen, but if it does assume we warn. */
         PyErr_WriteUnraisable(NULL);

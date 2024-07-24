@@ -28,11 +28,12 @@ from . import cfuncs
 from . import f90mod_rules
 from . import __version__
 from . import capi_maps
+from .cfuncs import errmess
 from numpy.f2py._backends import f2py_build_generator
 
 f2py_version = __version__.version
 numpy_version = __version__.version
-errmess = sys.stderr.write
+
 # outmess=sys.stdout.write
 show = pprint.pprint
 outmess = auxfuncs.outmess
@@ -105,6 +106,14 @@ Options:
   --[no-]wrap-functions    Create Fortran subroutine wrappers to Fortran 77
                    functions. --wrap-functions is default because it ensures
                    maximum portability/compiler independence.
+
+  --[no-]freethreading-compatible    Create a module that declares it does or
+                   doesn't require the GIL. The default is
+                   --freethreading-compatible for backward
+                   compatibility. Inspect the Fortran code you are wrapping for
+                   thread safety issues before passing
+                   --no-freethreading-compatible, as f2py does not analyze
+                   fortran code for thread safety issues.
 
   --include-paths <path1>:<path2>:...   Search include files from the given
                    directories.
@@ -199,7 +208,7 @@ def scaninputline(inputline):
     dorestdoc = 0
     wrapfuncs = 1
     buildpath = '.'
-    include_paths, inputline = get_includes(inputline)
+    include_paths, freethreading_compatible, inputline = get_newer_options(inputline)
     signsfile, modulename = None, None
     options = {'buildpath': buildpath,
                'coutput': None,
@@ -327,6 +336,7 @@ def scaninputline(inputline):
     options['wrapfuncs'] = wrapfuncs
     options['buildpath'] = buildpath
     options['include_paths'] = include_paths
+    options['requires_gil'] = not freethreading_compatible
     options.setdefault('f2cmap_file', None)
     return files, options
 
@@ -364,6 +374,11 @@ def callcrackfortran(files, options):
     else:
         for mod in postlist:
             mod["f2py_wrapper_output"] = options["f2py_wrapper_output"]
+    for mod in postlist:
+        if options["requires_gil"]:
+            mod['gil_used'] = 'Py_MOD_GIL_USED'
+        else:
+            mod['gil_used'] = 'Py_MOD_GIL_NOT_USED'
     return postlist
 
 
@@ -534,21 +549,22 @@ class CombineIncludePaths(argparse.Action):
             include_paths_set.add(values)
         setattr(namespace, 'include_paths', list(include_paths_set))
 
-def include_parser():
+def f2py_parser():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-I", dest="include_paths", action=CombineIncludePaths)
     parser.add_argument("--include-paths", dest="include_paths", action=CombineIncludePaths)
     parser.add_argument("--include_paths", dest="include_paths", action=CombineIncludePaths)
+    parser.add_argument("--freethreading-compatible", dest="ftcompat", action=argparse.BooleanOptionalAction)
     return parser
 
-def get_includes(iline):
+def get_newer_options(iline):
     iline = (' '.join(iline)).split()
-    parser = include_parser()
+    parser = f2py_parser()
     args, remain = parser.parse_known_args(iline)
     ipaths = args.include_paths
     if args.include_paths is None:
         ipaths = []
-    return ipaths, remain
+    return ipaths, args.ftcompat, remain
 
 def make_f2py_compile_parser():
     parser = argparse.ArgumentParser(add_help=False)
@@ -615,7 +631,7 @@ def run_compile():
         sysinfo_flags = [f[7:] for f in sysinfo_flags]
 
     _reg2 = re.compile(
-        r'--((no-|)(wrap-functions|lower)|debug-capi|quiet|skip-empty-wrappers)|-include')
+        r'--((no-|)(wrap-functions|lower|freethreading-compatible)|debug-capi|quiet|skip-empty-wrappers)|-include')
     f2py_flags = [_m for _m in sys.argv[1:] if _reg2.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in f2py_flags]
     f2py_flags2 = []
@@ -717,7 +733,7 @@ def run_compile():
             run_main(f" {' '.join(f2py_flags)} {' '.join(pyf_files)}".split())
 
     # Order matters here, includes are needed for run_main above
-    include_dirs, sources = get_includes(sources)
+    include_dirs, _, sources = get_newer_options(sources)
     # Now use the builder
     builder = build_backend(
         modulename,
