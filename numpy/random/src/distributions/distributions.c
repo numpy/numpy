@@ -439,13 +439,20 @@ double random_beta(bitgen_t *bitgen_state, double a, double b) {
         if ((X > 0) && (Y > 0)) {
           return X / XpY;
         } else {
-          double logX = log(U) / a;
-          double logY = log(V) / b;
-          double logM = logX > logY ? logX : logY;
-          logX -= logM;
-          logY -= logM;
-
-          return exp(logX - log(exp(logX) + exp(logY)));
+          /*
+           * Either X or Y underflowed to 0, so we lost information in
+           * U**(1/a) or V**(1/b). We still compute X/(X+Y) here, but we
+           * work with logarithms as much as we can to avoid the underflow.
+           */
+          double logX = log(U)/a;
+          double logY = log(V)/b;
+          double delta = logX - logY;
+          if (delta > 0) {
+            return exp(-log1p(exp(-delta)));
+          }
+          else {
+            return exp(delta - log1p(exp(delta)));
+          }
         }
       }
     }
