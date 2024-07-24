@@ -4138,7 +4138,7 @@ class TestRationalFunctions:
         assert_equal(np.gcd(a, b), [2**100,               2**50 * 3**5])
         assert_equal(np.lcm(a, b), [2**100 * 3**5 * 5**7, 2**100 * 3**10])
 
-    def test_inf(self):
+    def test_inf_and_nan(self):
         inf = np.array([np.inf], dtype=np.object_)
         assert_raises(ValueError, np.gcd, inf, 1)
         assert_raises(ValueError, np.gcd, 1, inf)
