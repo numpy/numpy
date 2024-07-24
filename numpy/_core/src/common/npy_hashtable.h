@@ -15,7 +15,7 @@ typedef struct {
     npy_intp nelem;  /* number of elements */
 #ifdef Py_GIL_DISABLED
 #if PY_VERSION_HEX < 0x30d00b3
-    PyThread_type_lock *mutex;
+#error "GIL-disabled builds require Python 3.13.0b3 or newer"
 #else
     PyMutex mutex;
 #endif
