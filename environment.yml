@@ -39,7 +39,7 @@ dependencies:
   - pydata-sphinx-theme>=0.15.2
   - doxygen
   - towncrier
-  - jupyterlite-sphinx>=0.15.0
+  - jupyterlite-sphinx>=0.16.2
   - jupyterlite-pyodide-kernel
   # NOTE: breathe 4.33.0 collides with sphinx.ext.graphviz
   - breathe>4.33.0
