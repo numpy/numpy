@@ -87,17 +87,11 @@ PyArray_ZeroContiguousBuffer(
         }
     }
     else {
-        npy_intp nbytes;
-        if (!npy_mul_sizes_with_overflow(&nbytes, size, stride)) {
-            memset(data, 0, nbytes);
-            NPY_traverse_info_xfree(&zero_info);
-            return 0;
-        }
-        else {
-            PyErr_SetString(PyExc_OverflowError,
-                            "Integer overflow in computing resized buffer size");
-            goto fail;
-        }
+        /* the multiply here should never overflow, since we already
+           checked if the new array size doesn't overflow */
+        memset(data, 0, size*stride);
+        NPY_traverse_info_xfree(&zero_info);
+        return 0;
     }
 
     int res = zero_info.func(
