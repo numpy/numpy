@@ -77,7 +77,6 @@ add_newdoc('ArrayLike', 'typing.Union[...]',
 
     Examples
     --------
-    .. code-block:: python
 
         >>> import numpy as np
         >>> import numpy.typing as npt
@@ -108,7 +107,6 @@ add_newdoc('DTypeLike', 'typing.Union[...]',
 
     Examples
     --------
-    .. code-block:: python
 
         >>> import numpy as np
         >>> import numpy.typing as npt
@@ -130,7 +128,6 @@ add_newdoc('NDArray', repr(NDArray),
 
     Examples
     --------
-    .. code-block:: python
 
         >>> import numpy as np
         >>> import numpy.typing as npt
