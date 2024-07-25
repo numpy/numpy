@@ -1,9 +1,8 @@
 {
     "global_min_height": "400px",
     "ignore_patterns": [
-        "distutils*",
-        "typing*",
-        "numpy.__array_namespace_info__*",
-        "f2py*"
+        "distutils.html*",
+        "typing.html*",
+        "numpy.__array_namespace_info__.html*"
     ]
 }
