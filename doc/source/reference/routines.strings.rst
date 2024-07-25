@@ -11,10 +11,10 @@ The `numpy.strings` module provides a set of universal functions operating
 on arrays of type `numpy.str_` or `numpy.bytes_`.
 For example,
 
-   .. try_examples::
+.. try_examples::
 
-      >>> np.strings.add(["num", "doc"], ["py", "umentation"])
-      array(['numpy', 'documentation'], dtype='<U13')
+   >>> np.strings.add(["num", "doc"], ["py", "umentation"])
+   array(['numpy', 'documentation'], dtype='<U13')
 
 These universal functions are also used in `numpy.char`, which provides
 the `numpy.char.chararray` array subclass, in order for those routines
