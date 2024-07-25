@@ -1073,6 +1073,9 @@ def test_longdouble_complex():
 @pytest.mark.parametrize("subtype", [float, int, complex, np.float16])
 @np._no_nep50_warning()
 def test_pyscalar_subclasses(subtype, __op__, __rop__, op, cmp):
+    # This tests that python scalar subclasses behave like a float64 (if they
+    # don't override it).
+    # In an earlier version of NEP 50, they behaved like the Python buildins.
     def op_func(self, other):
         return __op__
 
@@ -1095,25 +1098,29 @@ def test_pyscalar_subclasses(subtype, __op__, __rop__, op, cmp):
 
     # When no deferring is indicated, subclasses are handled normally.
     myt = type("myt", (subtype,), {__rop__: rop_func})
+    behaves_like = lambda x: np.array(subtype(x))[()]
 
     # Check for float32, as a float subclass float64 may behave differently
     res = op(myt(1), np.float16(2))
-    expected = op(subtype(1), np.float16(2))
+    expected = op(behaves_like(1), np.float16(2))
     assert res == expected
     assert type(res) == type(expected)
     res = op(np.float32(2), myt(1))
-    expected = op(np.float32(2), subtype(1))
+    expected = op(np.float32(2), behaves_like(1))
     assert res == expected
     assert type(res) == type(expected)
 
-    # Same check for longdouble:
+    # Same check for longdouble (compare via dtype to accept float64 when
+    # longdouble has the identical size), which is currently not perfectly
+    # consistent.
     res = op(myt(1), np.longdouble(2))
-    expected = op(subtype(1), np.longdouble(2))
+    expected = op(behaves_like(1), np.longdouble(2))
     assert res == expected
-    assert type(res) == type(expected)
+    assert np.dtype(type(res)) == np.dtype(type(expected))
     res = op(np.float32(2), myt(1))
-    expected = op(np.longdouble(2), subtype(1))
+    expected = op(np.float32(2), behaves_like(1))
     assert res == expected
+    assert np.dtype(type(res)) == np.dtype(type(expected))
 
 
 def test_truediv_int():
