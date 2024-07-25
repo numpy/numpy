@@ -749,8 +749,8 @@ def test_npdistop(hello_world_f90, monkeypatch):
         assert rout.stdout == eout
 
 
-@pytest.mark.skipif(sys.version_info <= (3, 12),
-                    reason='Python 3.12 or newer required')
+@pytest.mark.skipif((platform.system() != 'Linux') or sys.version_info <= (3, 12),
+                    reason='Compiler and Python 3.12 or newer required')
 def test_no_freethreading_compatible(hello_world_f90, monkeypatch):
     """
     CLI :: --no-freethreading-compatible
@@ -774,8 +774,8 @@ def test_no_freethreading_compatible(hello_world_f90, monkeypatch):
         assert rout.returncode == 0
 
 
-@pytest.mark.skipif(sys.version_info <= (3, 12),
-                    reason='Python 3.12 or newer required')
+@pytest.mark.skipif((platform.system() != 'Linux') or sys.version_info <= (3, 12),
+                    reason='Compiler and Python 3.12 or newer required')
 def test_freethreading_compatible(hello_world_f90, monkeypatch):
     """
     CLI :: --freethreading_compatible
