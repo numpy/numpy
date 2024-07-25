@@ -1389,7 +1389,8 @@ static PyObject *
     npy_bool may_need_deferring;
     conversion_result res = convert_to_@name@(
             other, &other_val_conv, &may_need_deferring);
-    other_val = other_val_conv;  /* Need a float value */
+    /* Actual float cast `other_val` is set below on success. */
+
     if (res == CONVERSION_ERROR) {
         return NULL;  /* an error occurred (should never happen) */
     }
@@ -1400,6 +1401,7 @@ static PyObject *
         case DEFER_TO_OTHER_KNOWN_SCALAR:
             Py_RETURN_NOTIMPLEMENTED;
         case CONVERSION_SUCCESS:
+            other_val = other_val_conv;  /* Need a float value */
             break;  /* successfully extracted value we can proceed */
         case OTHER_IS_UNKNOWN_OBJECT:
         case PROMOTION_REQUIRED:
