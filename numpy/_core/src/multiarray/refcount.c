@@ -59,9 +59,9 @@ PyArray_ClearBuffer(
 /*
  * Helper function to zero an array buffer.
  *
- * Here "zeroing" means an abstract zeroing operation, which for an
- * array of references might be something more complicated than
- * zero-filling the buffer.
+ * Here "zeroing" means an abstract zeroing operation, implementing the
+ * the behavior of `np.zeros`.  E.g. for an of references this is more
+ * complicated than zero-filling the buffer.
  *
  * Failure (returns -1) indicates some sort of programming or logical
  * error and should not happen for a data type that has been set up
