@@ -9,7 +9,9 @@ String functionality
 
 The `numpy.strings` module provides a set of universal functions operating
 on arrays of type `numpy.str_` or `numpy.bytes_`.
-For example
+For example,
+
+   .. try_examples::
 
       >>> np.strings.add(["num", "doc"], ["py", "umentation"])
       array(['numpy', 'documentation'], dtype='<U13')
