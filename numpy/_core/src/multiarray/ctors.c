@@ -822,6 +822,12 @@ PyArray_NewFromDescr_int(
 
 
     if (data == NULL) {
+        /* This closely follows PyArray_ZeroContiguousBuffer. We can't use
+         *  that because here we need to allocate after checking if there is
+         *  custom zeroing logic and that function accepts an already-allocated
+         *  array
+         */
+
         /* float errors do not matter and we do not release GIL */
         NPY_ARRAYMETHOD_FLAGS zero_flags;
         PyArrayMethod_GetTraverseLoop *get_fill_zero_loop =
