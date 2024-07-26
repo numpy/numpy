@@ -90,7 +90,7 @@ div.admonition-legacy>.admonition-title {
 }
 
 /* Use more acccessible colours for text in dark mode */
-.try_examples_button[data-theme=dark] [data-mode=dark] {
+[data-theme=dark] .try_examples_button {
   color: black;
 }
 
