@@ -85,7 +85,7 @@ jobs:
           - [macos-14, macosx_arm64, accelerate]  # always use accelerate
           - [windows-2019, win_amd64, ""]
           - [windows-2019, win32, ""]
-        python: ["cp310", "cp311", "cp312", "pp310", "cp313"]
+        python: ["cp310", "cp311", "cp312", "pp310", "cp313", "cp313t"]
         exclude:
           # Don't build PyPy 32-bit windows
           - buildplat: [windows-2019, win32, ""]
@@ -94,6 +94,13 @@ jobs:
             python: "pp310"
           - buildplat: [ macos-14, macosx_arm64, accelerate ]
             python: "pp310"
+          - buildplat: [ windows-2019, win_amd64, "" ]
+            python: "cp313t"
+          - buildplat: [ windows-2019, win32, "" ]
+            python: "cp313t"
+          - buildplat: [ macos13, macosx_x86_64, openblas ]
+            python: "cp313t"
+
     env:
       IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}
       IS_PUSH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
@@ -153,10 +160,16 @@ jobs:
             echo "CIBW_ENVIRONMENT_MACOS=$CIBW PKG_CONFIG_PATH=$PKG_CONFIG_PATH DYLD_LIBRARY_PATH=$DYLD" >> "$GITHUB_ENV"  
           fi
 
+      - name: Set up free-threaded build
+        if: matrix.python == 'cp313t'
+        run: |
+          echo "CIBW_BUILD_FRONTEND=pip; args: --no-build-isolation" >> "$GITHUB_ENV"
+
       - name: Build wheels
         uses: pypa/cibuildwheel@7e5a838a63ac8128d71ab2dfd99e4634dd1bca09  # v2.19.2
         env:
           CIBW_PRERELEASE_PYTHONS: True
+          CIBW_FREE_THREADED_SUPPORT: True
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
       - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4.3.4
