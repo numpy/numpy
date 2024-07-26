@@ -109,6 +109,9 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     code = f"import sys; sys.path = {sys.path!r}; import numpy.f2py; numpy.f2py.main()"
 
     d = get_module_dir()
+    # gh-27045 : Skip if no compilers are found
+    if not has_fortran_compiler():
+        pytest.skip("No Fortran compiler available")
 
     # Copy files
     dst_sources = []
@@ -285,6 +288,9 @@ def has_f77_compiler():
 def has_f90_compiler():
     return checker.has_f90
 
+def has_fortran_compiler():
+    return (checker.has_f90 and checker.has_f77)
+
 #
 # Building with meson
 #
@@ -303,6 +309,11 @@ def build_meson(source_files, module_name=None, **kwargs):
     """
     Build a module via Meson and import it.
     """
+
+    # gh-27045 : Skip if no compilers are found
+    if not has_fortran_compiler():
+        pytest.skip("No Fortran compiler available")
+
     build_dir = get_module_dir()
     if module_name is None:
         module_name = get_temp_module_name()
@@ -327,13 +338,7 @@ def build_meson(source_files, module_name=None, **kwargs):
         extra_dat=kwargs.get("extra_dat", {}),
     )
 
-    # Compile the module
-    # NOTE: Catch-all since without distutils it is hard to determine which
-    # compiler stack is on the CI
-    try:
-        backend.compile()
-    except subprocess.CalledProcessError:
-        pytest.skip("Failed to compile module")
+    backend.compile()
 
     # Import the compiled module
     sys.path.insert(0, f"{build_dir}/{backend.meson_build_dir}")
@@ -369,6 +374,7 @@ class F2PyTest:
         F2PyTest._has_c_compiler = has_c_compiler()
         F2PyTest._has_f77_compiler = has_f77_compiler()
         F2PyTest._has_f90_compiler = has_f90_compiler()
+        F2PyTest._has_fortran_compiler = has_fortran_compiler()
 
     def setup_method(self):
         if self.module is not None:
@@ -386,7 +392,7 @@ class F2PyTest:
             pytest.skip("No Fortran 77 compiler available")
         if needs_f90 and not self._has_f90_compiler:
             pytest.skip("No Fortran 90 compiler available")
-        if needs_pyf and not (self._has_f90_compiler or self._has_f77_compiler):
+        if needs_pyf and not self._has_fortran_compiler:
             pytest.skip("No Fortran compiler available")
 
         # Build the module
