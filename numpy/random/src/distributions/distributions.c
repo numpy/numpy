@@ -998,7 +998,7 @@ int64_t random_geometric(bitgen_t *bitgen_state, double p) {
 }
 
 RAND_INT_TYPE random_zipf(bitgen_t *bitgen_state, double a) {
-  double am1, b;
+  double am1, b, Umin;
 
   if (a >= 1025) {
     /*
@@ -1011,10 +1011,21 @@ RAND_INT_TYPE random_zipf(bitgen_t *bitgen_state, double a) {
   }
   am1 = a - 1.0;
   b = pow(2.0, am1);
+  /*
+   * In the while loop, X is generated from the uniform distribution (Umin, 1].
+   * Values below Umin would result in X being rejected because it is too
+   * large, so there is no point in including them in the distribution of U.
+   */
+  Umin = pow(RAND_INT_MAX, -am1);
   while (1) {
-    double T, U, V, X;
+    double U01, T, U, V, X;
 
-    U = 1.0 - next_double(bitgen_state);
+    /*
+     * U is sampled from (Umin, 1]. Note that Umin might be 0, and we don't
+     * want U to be 0.
+     */
+    U01 = next_double(bitgen_state);
+    U = U01*Umin + (1 - U01);
     V = next_double(bitgen_state);
     X = floor(pow(U, -1.0 / am1));
     /*

@@ -170,3 +170,14 @@ class TestRegression:
         n = 8
         sample = self.mt19937.zipf(10000, size=n)
         assert_array_equal(sample, np.ones(n, dtype=np.int64))
+
+    def test_zipf_a_near_1(self):
+        # Regression test for gh-9829: a call such as rng.zipf(1.0000000000001)
+        # would hang.
+        n = 100000
+        sample = self.mt19937.zipf(1.0000000000001, size=n)
+        # Not much of a test, but let's do something more than verify that
+        # it doesn't hang.  Certainly for a monotonically decreasing
+        # discrete distribution truncated to signed 64 bit integers, more
+        # than half should be less than 2**62.
+        assert np.count_nonzero(sample < 2**62) > n/2
