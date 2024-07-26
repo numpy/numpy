@@ -197,7 +197,19 @@ def mod(a, values):
     out : ndarray
         Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
         depending on input types
-        
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.array(["NumPy is a %s library"])
+    >>> np.strings.mod(a, values=["Python"])
+    array(['NumPy is a Python library'], dtype='<U25')
+
+    >>> a = np.array([b'%d bytes', b'%d bits'])
+    >>> values = np.array([8, 64])
+    >>> np.strings.mod(a, values)
+    array([b'8 bytes', b'64 bits'], dtype='|S7')
+
     """
     return _to_bytes_or_str_array(
         _vec_string(a, np.object_, '__mod__', (values,)), a)
