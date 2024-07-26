@@ -45,12 +45,15 @@ def check_language(lang, code_snippet=None):
                     f"{lang}_compiler.compiles({lang}_code,"
                     f" name: '{lang} feature check')\n"
                 )
-        runmeson = subprocess.run(
-            ["meson", "setup", "btmp"],
-            check=False,
-            cwd=tmpdir,
-            capture_output=True,
-        )
+        try:
+            runmeson = subprocess.run(
+                ["meson", "setup", "btmp"],
+                check=False,
+                cwd=tmpdir,
+                capture_output=True,
+            )
+        except subprocess.CalledProcessError:
+            pytest.skip("meson not present, skipping compiler dependent test")
         return runmeson.returncode == 0
     finally:
         shutil.rmtree(tmpdir)
