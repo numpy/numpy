@@ -1204,6 +1204,7 @@ py.extension_module('_multiarray_umath',
     'src/multiarray',
     'src/npymath',
     'src/umath',
+    'src/highway'
   ],
   dependencies: [blas_dep],
   link_with: [npymath_lib, multiarray_umath_mtargets.static_lib('_multiarray_umath_mtargets')] + highway_lib,
