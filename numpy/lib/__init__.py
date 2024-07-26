@@ -67,7 +67,8 @@ def __getattr__(attr):
         raise AttributeError(
             "numpy.lib.emath was an alias for emath module that was removed "
             "in NumPy 2.0. Replace usages of numpy.lib.emath with "
-            "numpy.emath."
+            "numpy.emath.", 
+            name=None
         )
     elif attr in (
         "histograms", "type_check", "nanfunctions", "function_base",
@@ -77,12 +78,14 @@ def __getattr__(attr):
         raise AttributeError(
             f"numpy.lib.{attr} is now private. If you are using a public "
             "function, it should be available in the main numpy namespace, "
-            "otherwise check the NumPy 2.0 migration guide."
+            "otherwise check the NumPy 2.0 migration guide.", 
+            name=None
         )
     elif attr == "arrayterator":
         raise AttributeError(
             "numpy.lib.arrayterator submodule is now private. To access "
-            "Arrayterator class use numpy.lib.Arrayterator."
+            "Arrayterator class use numpy.lib.Arrayterator.", 
+            name=None
         )
     else:
         raise AttributeError("module {!r} has no attribute "
