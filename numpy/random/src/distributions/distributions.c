@@ -1000,6 +1000,15 @@ int64_t random_geometric(bitgen_t *bitgen_state, double p) {
 RAND_INT_TYPE random_zipf(bitgen_t *bitgen_state, double a) {
   double am1, b;
 
+  if (a >= 1025) {
+    /*
+     * If a exceeds 1025, the calculation of b will overflow and the loop
+     * will not terminate.  It is safe to simply return 1 here, because the
+     * probability of generating a value greater than 1 in this case is
+     * less than 3e-309.
+     */
+    return (RAND_INT_TYPE) 1;
+  }
   am1 = a - 1.0;
   b = pow(2.0, am1);
   while (1) {
