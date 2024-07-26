@@ -89,6 +89,11 @@ div.admonition-legacy>.admonition-title {
   font-size: small;
 }
 
+/* Use more acccessible colours for text in dark mode */
+.try_examples_button[data-theme=dark] [data-mode=dark] {
+  color: black;
+}
+
 .try_examples_button:hover {
   transform: scale(1.02);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
