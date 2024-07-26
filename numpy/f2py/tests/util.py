@@ -31,6 +31,8 @@ from numpy.f2py._backends._meson import MesonBackend
 #
 
 def check_language(lang, code_snippet=None):
+    if sys.platform == "win32":
+        pytest.skip("No Fortran tests on Windows (Issue #25134)", allow_module_level=True)
     tmpdir = tempfile.mkdtemp()
     try:
         meson_file = os.path.join(tmpdir, "meson.build")
@@ -53,7 +55,7 @@ def check_language(lang, code_snippet=None):
                 capture_output=True,
             )
         except subprocess.CalledProcessError:
-            pytest.skip("meson not present, skipping compiler dependent test")
+            pytest.skip("meson not present, skipping compiler dependent test", allow_module_level=True)
         return runmeson.returncode == 0
     finally:
         shutil.rmtree(tmpdir)
