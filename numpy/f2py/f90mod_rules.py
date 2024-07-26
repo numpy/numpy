@@ -110,11 +110,22 @@ def buildhooks(pymod):
                 notvars.append(b['name'])
         for n in m['vars'].keys():
             var = m['vars'][n]
-            if (n not in notvars) and (not l_or(isintent_hide, isprivate)(var)):
+            # heuristic to find public/private declarations of filtered
+            # subroutines
+            if len(var) == 1 and 'attrspec' in var and var['attrspec'][0] in ('public', 'private'):
+                is_not_var = True
+            else:
+                is_not_var = False
+
+            if (n not in notvars and not is_not_var) and (not l_or(isintent_hide, isprivate)(var)):
                 onlyvars.append(n)
                 mfargs.append(n)
         outmess('\t\tConstructing F90 module support for "%s"...\n' %
                 (m['name']))
+        if len(onlyvars) == 0 and len(notvars) == 1 and m['name'] in notvars:
+            outmess(f"\t\t\tSkipping {m['name']} since there are no public vars/func in this module...\n")
+            continue
+
         if m['name'] in usenames and not contains_functions_or_subroutines:
             outmess(f"\t\t\tSkipping {m['name']} since it is in 'use'...\n")
             continue
