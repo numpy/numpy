@@ -1092,15 +1092,10 @@ def qr(a, mode='reduced'):
     a = _to_native_byte_order(a)
     mn = min(m, n)
 
-    if m <= n:
-        gufunc = _umath_linalg.qr_r_raw_m
-    else:
-        gufunc = _umath_linalg.qr_r_raw_n
-
     signature = 'D->D' if isComplexType(t) else 'd->d'
     with errstate(call=_raise_linalgerror_qr, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
-        tau = gufunc(a, signature=signature)
+        tau = _umath_linalg.qr_r_raw(a, signature=signature)
 
     # handle modes that don't return q
     if mode == 'r':
@@ -1833,15 +1828,9 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
     m, n = a.shape[-2:]
     if compute_uv:
         if full_matrices:
-            if m < n:
-                gufunc = _umath_linalg.svd_m_f
-            else:
-                gufunc = _umath_linalg.svd_n_f
+            gufunc = _umath_linalg.svd_f
         else:
-            if m < n:
-                gufunc = _umath_linalg.svd_m_s
-            else:
-                gufunc = _umath_linalg.svd_n_s
+            gufunc = _umath_linalg.svd_s
 
         signature = 'D->DdD' if isComplexType(t) else 'd->ddd'
         with errstate(call=_raise_linalgerror_svd_nonconvergence,
@@ -1853,16 +1842,11 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
         vh = vh.astype(result_t, copy=False)
         return SVDResult(wrap(u), s, wrap(vh))
     else:
-        if m < n:
-            gufunc = _umath_linalg.svd_m
-        else:
-            gufunc = _umath_linalg.svd_n
-
         signature = 'D->d' if isComplexType(t) else 'd->d'
         with errstate(call=_raise_linalgerror_svd_nonconvergence,
                       invalid='call', over='ignore', divide='ignore',
                       under='ignore'):
-            s = gufunc(a, signature=signature)
+            s = _umath_linalg.svd(a, signature=signature)
         s = s.astype(_realType(result_t), copy=False)
         return s
 
@@ -2570,11 +2554,6 @@ def lstsq(a, b, rcond=None):
     if rcond is None:
         rcond = finfo(t).eps * max(n, m)
 
-    if m <= n:
-        gufunc = _umath_linalg.lstsq_m
-    else:
-        gufunc = _umath_linalg.lstsq_n
-
     signature = 'DDd->Ddid' if isComplexType(t) else 'ddd->ddid'
     if n_rhs == 0:
         # lapack can't handle n_rhs = 0 - so allocate
@@ -2583,7 +2562,8 @@ def lstsq(a, b, rcond=None):
 
     with errstate(call=_raise_linalgerror_lstsq, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
-        x, resids, rank, s = gufunc(a, b, rcond, signature=signature)
+        x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                                                 signature=signature)
     if m == 0:
         x[...] = 0
     if n_rhs == 0:
