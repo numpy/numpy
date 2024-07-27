@@ -115,7 +115,7 @@ static PyObject *f2py_rout_wrap_attrs(PyObject *capi_self,
                        PyArray_DESCR(arr)->type,
                        PyArray_TYPE(arr),
                        PyArray_ITEMSIZE(arr),
-                       PyDataType_ALIGNMENT(arr),
+                       PyDataType_ALIGNMENT(PyArray_DESCR(arr)),
                        PyArray_FLAGS(arr),
                        PyArray_ITEMSIZE(arr));
 }
@@ -214,13 +214,18 @@ PyMODINIT_FUNC PyInit_test_array_from_pyobj_ext(void) {
   ADDCONST("DEFAULT", NPY_ARRAY_DEFAULT);
   ADDCONST("UPDATE_ALL", NPY_ARRAY_UPDATE_ALL);
 
-#undef ADDCONST(
+#undef ADDCONST
 
   if (PyErr_Occurred())
     Py_FatalError("can't initialize module wrap");
 
 #ifdef F2PY_REPORT_ATEXIT
   on_exit(f2py_report_on_exit,(void*)"array_from_pyobj.wrap.call");
+#endif
+
+#if Py_GIL_DISABLED
+    // signal whether this module supports running with the GIL disabled
+    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
 #endif
 
   return m;

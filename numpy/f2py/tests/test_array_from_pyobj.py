@@ -90,10 +90,7 @@ class Intent:
         return "Intent(%r)" % (self.intent_list)
 
     def is_intent(self, *names):
-        for name in names:
-            if name not in self.intent_list:
-                return False
-        return True
+        return all(name in self.intent_list for name in names)
 
     def is_intent_exact(self, *names):
         return len(self.intent_list) == len(names) and self.is_intent(*names)

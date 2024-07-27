@@ -7,6 +7,7 @@ import pytest
 
 from . import util
 from numpy.f2py.f2py2e import main as f2pycli
+from numpy.testing._private.utils import NOGIL_BUILD
 
 #######################
 # F2PY Test utilities #
@@ -587,7 +588,7 @@ def test_debugcapi_bld(hello_world_f90, monkeypatch):
 
     with util.switchdir(ipath.parent):
         f2pycli()
-        cmd_run = shlex.split("python3 -c \"import blah; blah.hi()\"")
+        cmd_run = shlex.split(f"{sys.executable} -c \"import blah; blah.hi()\"")
         rout = subprocess.run(cmd_run, capture_output=True, encoding='UTF-8')
         eout = ' Hello World\n'
         eerr = textwrap.dedent("""\
@@ -756,14 +757,14 @@ def test_npdistop(hello_world_f90, monkeypatch):
 
     with util.switchdir(ipath.parent):
         f2pycli()
-        cmd_run = shlex.split("python -c \"import blah; blah.hi()\"")
+        cmd_run = shlex.split(f"{sys.executable} -c \"import blah; blah.hi()\"")
         rout = subprocess.run(cmd_run, capture_output=True, encoding='UTF-8')
         eout = ' Hello World\n'
         assert rout.stdout == eout
 
 
-@pytest.mark.skipif(sys.version_info <= (3, 12),
-                    reason='Python 3.12 or newer required')
+@pytest.mark.skipif((platform.system() != 'Linux') or sys.version_info <= (3, 12),
+                    reason='Compiler and Python 3.12 or newer required')
 def test_no_freethreading_compatible(hello_world_f90, monkeypatch):
     """
     CLI :: --no-freethreading-compatible
@@ -787,8 +788,8 @@ def test_no_freethreading_compatible(hello_world_f90, monkeypatch):
         assert rout.returncode == 0
 
 
-@pytest.mark.skipif(sys.version_info <= (3, 12),
-                    reason='Python 3.12 or newer required')
+@pytest.mark.skipif((platform.system() != 'Linux') or sys.version_info <= (3, 12),
+                    reason='Compiler and Python 3.12 or newer required')
 def test_freethreading_compatible(hello_world_f90, monkeypatch):
     """
     CLI :: --freethreading_compatible
@@ -813,7 +814,6 @@ def test_freethreading_compatible(hello_world_f90, monkeypatch):
 
 # Numpy distutils flags
 # TODO: These should be tested separately
-
 
 def test_npd_fcompiler():
     """
