@@ -371,7 +371,7 @@ else:
             return char
         elif attr == "array_api":
             raise AttributeError("`numpy.array_api` is not available from "
-                                 "numpy 2.0 onwards")
+                                 "numpy 2.0 onwards", name=None)
         elif attr == "core":
             import numpy.core as core
             return core
@@ -384,7 +384,7 @@ else:
                 return distutils
             else:
                 raise AttributeError("`numpy.distutils` is not available from "
-                                     "Python 3.12 onwards")
+                                     "Python 3.12 onwards", name=None)
 
         if attr in __future_scalars__:
             # And future warnings for those that will change, but also give
@@ -394,12 +394,13 @@ else:
                 "corresponding NumPy scalar.", FutureWarning, stacklevel=2)
 
         if attr in __former_attrs__:
-            raise AttributeError(__former_attrs__[attr])
+            raise AttributeError(__former_attrs__[attr], name=None)
         
         if attr in __expired_attributes__:
             raise AttributeError(
                 f"`np.{attr}` was removed in the NumPy 2.0 release. "
-                f"{__expired_attributes__[attr]}"
+                f"{__expired_attributes__[attr]}",
+                name=None
             )
 
         if attr == "chararray":
