@@ -1079,6 +1079,10 @@ class _MaskedBinaryOperation(_MaskedUFunc):
             except Exception:
                 pass
 
+        # Ensures the result keeps the original dtype
+        if isinstance(result, np.ma.MaskedArray):
+            result = result.astype(a.dtype)
+
         # Transforms to a (subclass of) MaskedArray
         masked_result = result.view(get_masked_subclass(a, b))
         masked_result._mask = m
