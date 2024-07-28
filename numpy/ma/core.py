@@ -1052,6 +1052,10 @@ class _MaskedBinaryOperation(_MaskedUFunc):
         with np.errstate():
             np.seterr(divide='ignore', invalid='ignore')
             result = self.f(da, db, *args, **kwargs)
+
+        # Ensures the result keeps the original dtype
+        result = result.astype(a.dtype)
+
         # Get the mask for the result
         (ma, mb) = (getmask(a), getmask(b))
         if ma is nomask:
@@ -1078,10 +1082,6 @@ class _MaskedBinaryOperation(_MaskedUFunc):
                 np.copyto(result, da, casting='unsafe', where=m)
             except Exception:
                 pass
-
-        # Ensures the result keeps the original dtype
-        if isinstance(result, np.ma.MaskedArray):
-            result = result.astype(a.dtype)
 
         # Transforms to a (subclass of) MaskedArray
         masked_result = result.view(get_masked_subclass(a, b))
