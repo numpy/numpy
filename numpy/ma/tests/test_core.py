@@ -4960,7 +4960,9 @@ class TestMaskedArrayFunctions:
         assert_equal(test, masked_equal([-1, -1, -1, -1, -1], -1))
 
     def test_masked_array_multiplication_dtype(self):
-        x = np.ma.array([1.0, 2.0, 3.0], mask=[False, False, False], dtype=np.float32)
+        x = np.ma.array(
+            [1.0, 2.0, 3.0], mask=[False, False, False], dtype=np.float32
+        )
         y = x * 2
         assert_(isinstance(y, np.ma.MaskedArray))
         assert_equal(y.dtype, np.float32)
