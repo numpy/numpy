@@ -412,3 +412,22 @@ class Test_ARM_Features(AbstractTest):
                 # if the kernel reports any one of the following ARM8 features.
                 ASIMD=("AES", "SHA1", "SHA2", "PMULL", "CRC32")
             )
+
+
+is_riscv = re.match("^riscv(64|32)", machine, re.IGNORECASE)
+@pytest.mark.skipif(not is_linux or not is_riscv,
+                    reason="Only for Linux and RISC-V")
+class Test_RISCV_Features(AbstractTest):
+    features = ["RVV"]
+
+    def load_flags(self):
+        isa = self.get_cpuinfo_item("isa")
+        rv_flags = [s.strip() for s in list(isa)[0][4:].split('_')]
+        values = values.union([ch for ch in rv_flags[0].upper()])
+        for s in rv_flags[1:]:
+            values = values.union([s.upper()])
+        self.features_flags = values
+        if 'V' in values:
+            self.features_map = dict(
+                RVV="V"
+            )
