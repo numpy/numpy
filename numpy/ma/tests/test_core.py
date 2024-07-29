@@ -4008,7 +4008,7 @@ class TestMaskedArrayMathMethods:
         assert_(np.ma.is_masked(a.anom()))
 
     def test_anom(self):
-        a = masked_array(np.arange(1, 7).reshape(2, 3))
+        a = masked_array(np.arange(1, 7).reshape(2, 3), dtype=np.float64)
         assert_almost_equal(a.anom(),
                             [[-2.5, -1.5, -0.5], [0.5, 1.5, 2.5]])
         assert_almost_equal(a.anom(axis=0),
