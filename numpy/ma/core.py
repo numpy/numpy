@@ -1064,7 +1064,8 @@ class _MaskedBinaryOperation(_MaskedUFunc):
         # Ensure result dtype matches original dtype for specified types
         if original_dtype is not None and \
                 result.dtype != original_dtype:
-            if original_dtype in allowed_dtypes and result.dtype in allowed_dtypes:
+            if original_dtype in allowed_dtypes and \
+                    result.dtype in allowed_dtypes:
                 result = result.astype(original_dtype, casting='unsafe')
 
         (ma, mb) = (getmask(a), getmask(b))
