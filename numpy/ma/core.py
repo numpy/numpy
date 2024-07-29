@@ -1053,6 +1053,18 @@ class _MaskedBinaryOperation(_MaskedUFunc):
             np.seterr(divide='ignore', invalid='ignore')
             result = self.f(da, db, *args, **kwargs)
         # Get the mask for the result
+
+        # Get the original dtype (assuming a and b have the same dtype)
+        original_dtype = a.dtype if isinstance(a, np.ndarray) else b.dtype if isinstance(b, np.ndarray) else None
+
+        # Define the allowed dtypes
+        allowed_dtypes = (np.float32, np.float64, np.int32, np.int64)
+
+        # Ensure result dtype matches original dtype for specified types
+        if original_dtype is not None and result.dtype != original_dtype:
+            if original_dtype in allowed_dtypes and result.dtype in allowed_dtypes:
+                result = result.astype(original_dtype, casting='unsafe')
+
         (ma, mb) = (getmask(a), getmask(b))
         if ma is nomask:
             if mb is nomask:
