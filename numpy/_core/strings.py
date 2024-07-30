@@ -197,7 +197,19 @@ def mod(a, values):
     out : ndarray
         Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
         depending on input types
-        
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.array(["NumPy is a %s library"])
+    >>> np.strings.mod(a, values=["Python"])
+    array(['NumPy is a Python library'], dtype='<U25')
+
+    >>> a = np.array([b'%d bytes', b'%d bits'])
+    >>> values = np.array([8, 64])
+    >>> np.strings.mod(a, values)
+    array([b'8 bytes', b'64 bits'], dtype='|S7')
+
     """
     return _to_bytes_or_str_array(
         _vec_string(a, np.object_, '__mod__', (values,)), a)
@@ -264,6 +276,18 @@ def rfind(a, sub, start=0, end=None):
     See Also
     --------
     str.rfind
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.array(["Computer Science"])
+    >>> np.strings.rfind(a, "Science", start=0, end=None)
+    array([9])
+    >>> np.strings.rfind(a, "Science", start=0, end=8)
+    array([-1])
+    >>> b = np.array(["Computer Science", "Science"])
+    >>> np.strings.rfind(b, "Science", start=0, end=None)
+    array([9, 0])
 
     """
     end = end if end is not None else MAX
@@ -403,6 +427,17 @@ def startswith(a, prefix, start=0, end=None):
     See Also
     --------
     str.startswith
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> s = np.array(['foo', 'bar'])
+    >>> s
+    array(['foo', 'bar'], dtype='<U3')
+    >>> np.strings.startswith(s, 'fo')
+    array([True,  False])
+    >>> np.strings.startswith(s, 'o', start=1, end=2)
+    array([True,  False])
 
     """
     end = end if end is not None else MAX

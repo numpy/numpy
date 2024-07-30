@@ -4482,6 +4482,17 @@ add_newdoc('numpy._core.umath', 'isalpha',
     --------
     str.isalpha
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.array(['a', 'b', '0'])
+    >>> np.strings.isalpha(a)
+    array([ True,  True, False])
+
+    >>> a = np.array([['a', 'b', '0'], ['c', '1', '2']])
+    >>> np.strings.isalpha(a)
+    array([[ True,  True, False], [ True, False, False]])
+
     """)
 
 add_newdoc('numpy._core.umath', 'isdigit',
