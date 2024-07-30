@@ -2620,3 +2620,11 @@ class TestRegression:
         f = str.casefold
         res = np.vectorize(f, otypes=[arr.dtype])(arr)
         assert res.dtype == "U30"
+
+    def test_sort_unique_crash(self):
+        # gh-27037
+        for _ in range(4):
+            vals = np.linspace(0, 1, num=128)
+            data = np.broadcast_to(vals, (128, 128, 128))
+            data = data.transpose(0, 2, 1).copy()
+            np.unique(data)
