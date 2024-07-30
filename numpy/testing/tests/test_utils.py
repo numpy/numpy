@@ -1923,8 +1923,7 @@ def test_xy_rename(assert_func):
         assert_func(1, y=1)
 
     type_message = '...got multiple values for argument'
-    # explicit linebreak to support Python 3.9
-    with pytest.warns(DeprecationWarning, match=dep_message), \
-          pytest.raises(TypeError, match=type_message):
+    with (pytest.warns(DeprecationWarning, match=dep_message),
+          pytest.raises(TypeError, match=type_message)):
         assert_func(1, x=1)
         assert_func(1, 2, y=2)

@@ -2862,7 +2862,6 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         (PyCFunction) array_format,
         METH_VARARGS, NULL},
 
-    /* for typing; requires python >= 3.9 */
     {"__class_getitem__",
         (PyCFunction)array_class_getitem,
         METH_CLASS | METH_O, NULL},

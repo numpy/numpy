@@ -3218,8 +3218,6 @@ def test_warn_noclose():
         assert len(sup.log) == 1
 
 
-@pytest.mark.skipif(sys.version_info[:2] == (3, 9) and sys.platform == "win32",
-                    reason="Errors with Python 3.9 on Windows")
 @pytest.mark.parametrize(["in_dtype", "buf_dtype"],
         [("i", "O"), ("O", "i"),  # most simple cases
          ("i,O", "O,O"),  # structured partially only copying O
