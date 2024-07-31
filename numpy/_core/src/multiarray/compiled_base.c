@@ -150,11 +150,10 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
         }
         if (PyArray_SIZE(tmp1) > 0) {
             /* The input is not empty, so convert it to NPY_INTP. */
-            PyArrayObject *tmp2 = (PyArrayObject *)PyArray_ContiguousFromAny(
-                                                    (PyObject *)tmp1,
-                                                    NPY_INTP, 1, 1);
+            lst = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)tmp1,
+                                                             NPY_INTP, 1, 1);
             Py_DECREF(tmp1);
-            if (tmp2 == NULL) {
+            if (lst == NULL) {
                 /* Failed converting to NPY_INTP. */
                 if (PyErr_ExceptionMatches(PyExc_TypeError)) {
                     PyErr_Clear();
@@ -169,10 +168,6 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
                     goto fail;
                 }
             }
-            else {
-                /* Cast to NPY_INTP succeeded, so no deprecation warning. */
-                Py_DECREF(tmp2);
-            }
         }
         else {
             /* Got an empty list. */
@@ -180,10 +175,11 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
         }
     }
 
-    /* Legacy conversion. This must be changed when the deprecation expires. */
-    lst = (PyArrayObject *)PyArray_ContiguousFromAny(list, NPY_INTP, 1, 1);
     if (lst == NULL) {
-        goto fail;
+        lst = (PyArrayObject *)PyArray_ContiguousFromAny(list, NPY_INTP, 1, 1);
+        if (lst == NULL) {
+            goto fail;
+        }
     }
     len = PyArray_SIZE(lst);
 
