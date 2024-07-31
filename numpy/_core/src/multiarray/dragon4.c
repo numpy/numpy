@@ -163,12 +163,11 @@ typedef struct {
     char repr[16384];
 } Dragon4_Scratch;
 
-static int _bigint_static_in_use = 0;
-static Dragon4_Scratch _bigint_static;
+static NPY_TLS int _bigint_static_in_use = 0;
+static NPY_TLS Dragon4_Scratch _bigint_static;
 
 static Dragon4_Scratch*
 get_dragon4_bigint_scratch(void) {
-    /* this test+set is not threadsafe, but no matter because we have GIL */
     if (_bigint_static_in_use) {
         PyErr_SetString(PyExc_RuntimeError,
             "numpy float printing code is not re-entrant. "

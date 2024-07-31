@@ -9,6 +9,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, HAS_REFCOUNT,
     assert_raises_regex, IS_WASM
     )
+from numpy.testing._private.utils import run_threaded
 from numpy._core.arrayprint import _typelessdata
 import textwrap
 
@@ -1249,3 +1250,10 @@ def test_printoptions_asyncio_safe():
     loop = asyncio.new_event_loop()
     asyncio.run(main())
     loop.close()
+
+@pytest.mark.skipif(IS_WASM, reason="wasm doesn't support threads")
+def test_multithreaded_array_printing():
+    # the dragon4 implementation uses a static scratch space for performance
+    # reasons this test makes sure it is set up in a thread-safe manner
+
+    run_threaded(TestPrintOptions().test_floatmode, 500)
