@@ -12,7 +12,7 @@ if not cy.version().version_compare('>=3.0.6')
 endif
 
 base_cython_args = []
-if cy.version().version_compare('>=3.1.0a0')
+if cy.version().version_compare('>=3.1.0')
   base_cython_args += ['-Xfreethreading_compatible=True']
 endif
 

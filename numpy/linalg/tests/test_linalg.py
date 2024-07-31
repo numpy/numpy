@@ -4,6 +4,7 @@
 import os
 import sys
 import itertools
+import threading
 import traceback
 import textwrap
 import subprocess
@@ -1943,7 +1944,9 @@ def test_generalized_raise_multiloop():
 
     assert_raises(np.linalg.LinAlgError, np.linalg.inv, x)
 
-
+@pytest.mark.skipif(
+    threading.active_count() > 1,
+    reason="skipping test that uses fork because there are multiple threads")
 def test_xerbla_override():
     # Check that our xerbla has been successfully linked in. If it is not,
     # the default xerbla routine is called, which prints a message to stdout
