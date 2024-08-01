@@ -1,23 +1,13 @@
-import concurrent.futures
 import threading
 
 import numpy as np
 import pytest
 
 from numpy.testing import IS_WASM
+from numpy.testing._private.utils import run_threaded
 
 if IS_WASM:
     pytest.skip(allow_module_level=True, reason="no threading support in wasm")
-
-
-def run_threaded(func, iters, pass_count=False):
-    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as tpe:
-        if pass_count:
-            futures = [tpe.submit(func, i) for i in range(iters)]
-        else:
-            futures = [tpe.submit(func) for _ in range(iters)]
-        for f in futures:
-            f.result()
 
 
 def test_parallel_randomstate_creation():

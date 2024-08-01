@@ -17,6 +17,7 @@ from unittest.case import SkipTest
 from warnings import WarningMessage
 import pprint
 import sysconfig
+import concurrent.futures
 
 import numpy as np
 from numpy._core import (
@@ -40,7 +41,7 @@ __all__ = [
         'HAS_REFCOUNT', "IS_WASM", 'suppress_warnings', 'assert_array_compare',
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
         '_OLD_PROMOTION', 'IS_MUSL', '_SUPPORTS_SVE', 'NOGIL_BUILD',
-        'IS_EDITABLE'
+        'IS_EDITABLE', 'run_threaded',
         ]
 
 
@@ -2697,3 +2698,14 @@ def _get_glibc_version():
 
 _glibcver = _get_glibc_version()
 _glibc_older_than = lambda x: (_glibcver != '0.0' and _glibcver < x)
+
+
+def run_threaded(func, iters, pass_count=False):
+    """Runs a function many times in parallel"""
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as tpe:
+        if pass_count:
+            futures = [tpe.submit(func, i) for i in range(iters)]
+        else:
+            futures = [tpe.submit(func) for _ in range(iters)]
+        for f in futures:
+            f.result()
