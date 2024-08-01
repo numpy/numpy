@@ -1,6 +1,7 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_ABSTRACTDTYPES_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_ABSTRACTDTYPES_H_
 
+#include "numpy/ndarraytypes.h"
 #include "arrayobject.h"
 #include "dtypemeta.h"
 
@@ -67,6 +68,19 @@ npy_mark_tmp_array_if_pyscalar(
     }
     return 0;
 }
+
+
+NPY_NO_EXPORT int
+npy_update_operand_for_scalar(
+    PyArrayObject **operand, PyObject *scalar, PyArray_Descr *descr,
+    NPY_CASTING casting);
+
+
+NPY_NO_EXPORT PyArray_Descr *
+npy_find_descr_for_scalar(
+    PyObject *scalar, PyArray_Descr *original_descr,
+    PyArray_DTypeMeta *in_DT, PyArray_DTypeMeta *op_DT);
+
 
 #ifdef __cplusplus
 }
