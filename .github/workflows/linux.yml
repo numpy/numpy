@@ -232,7 +232,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: data-apis/array-api-tests
-        ref: '809a1984414cfc0bca68a823aeaeba7df3900d17'  # Latest commit as of 2024-06-26
+        ref: '827edd804bcace9d64176b8115138d29ae3e8dec'  # Latest commit as of 2024-07-30
         submodules: 'true'
         path: 'array-api-tests'
     - name: Set up Python
@@ -253,7 +253,7 @@ jobs:
         PYTHONWARNINGS: 'ignore::UserWarning::,ignore::DeprecationWarning::,ignore::RuntimeWarning::'
       run: |
         cd ${GITHUB_WORKSPACE}/array-api-tests
-        pytest array_api_tests -v -c pytest.ini --ci --max-examples=2 --derandomize --disable-deadline --skips-file ${GITHUB_WORKSPACE}/tools/ci/array-api-skips.txt
+        pytest array_api_tests -v -c pytest.ini --ci --max-examples=100 --derandomize --disable-deadline --xfails-file ${GITHUB_WORKSPACE}/tools/ci/array-api-xfails.txt
 
   custom_checks:
     needs: [smoke_test]

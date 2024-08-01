@@ -4158,5 +4158,10 @@ class TestAsType:
             actual, np.astype(actual, actual.dtype, copy=False)
         )
 
+        actual = np.astype(np.int64(10), np.float64)
+        expected = np.float64(10)
+        assert_equal(actual, expected)
+        assert_equal(actual.dtype, expected.dtype)
+
         with pytest.raises(TypeError, match="Input should be a NumPy array"):
             np.astype(data, np.float64)
