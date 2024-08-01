@@ -88,14 +88,14 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_absolute)
 {
 #if @VECTOR@
     npy_intp len = dimensions[0];
-    npy_intp ssrc = steps[0] / sizeof(@ftype@);
-    npy_intp sdst = steps[1] / sizeof(@ftype@);
 
     if (!is_mem_overlap(args[0], steps[0], args[1], steps[1], len) &&
-        npyv_loadable_stride_@sfx@(ssrc) && npyv_storable_stride_@sfx@(sdst)
-        && steps[0] % sizeof(@ftype@) == 0
-        && steps[1] % sizeof(@ftype@) == 0
+        npyv_loadable_stride_@sfx@(steps[0]) &&
+        npyv_storable_stride_@sfx@(steps[1])
     ) {
+        npy_intp ssrc = steps[0] / sizeof(@ftype@);
+        npy_intp sdst = steps[1] / sizeof(@ftype@);
+
         const @ftype@ *src = (@ftype@*)args[0];
               @ftype@ *dst = (@ftype@*)args[1];
 

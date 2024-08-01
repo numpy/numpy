@@ -2737,19 +2737,30 @@ def test_ufunc_noncontiguous(ufunc):
             continue
         inp, out = typ.split('->')
         args_c = [np.empty(6, t) for t in inp]
+        # non contiguous (3 step)
         args_n = [np.empty(18, t)[::3] for t in inp]
-        for a in args_c:
+        # alignment != itemsize is possible.  So create an array with such
+        # an odd step manually.
+        args_o = []
+        for t in inp:
+            orig_dt = np.dtype(t)
+            off_dt = f"S{orig_dt.alignment}"  # offset by alignment
+            dtype = np.dtype([("_", off_dt), ("t", orig_dt)], align=False)
+            args_o.append(np.empty(6, dtype=dtype)["t"])
+
+        for a in args_c + args_n + args_o:
             a.flat = range(1,7)
-        for a in args_n:
-            a.flat = range(1,7)
+
         with warnings.catch_warnings(record=True):
             warnings.filterwarnings("always")
             res_c = ufunc(*args_c)
             res_n = ufunc(*args_n)
+            res_o = ufunc(*args_o)
         if len(out) == 1:
             res_c = (res_c,)
             res_n = (res_n,)
-        for c_ar, n_ar in zip(res_c, res_n):
+            res_o = (res_o,)
+        for c_ar, n_ar, o_ar in zip(res_c, res_n, res_o):
             dt = c_ar.dtype
             if np.issubdtype(dt, np.floating):
                 # for floating point results allow a small fuss in comparisons
@@ -2758,8 +2769,10 @@ def test_ufunc_noncontiguous(ufunc):
                 res_eps = np.finfo(dt).eps
                 tol = 2*res_eps
                 assert_allclose(res_c, res_n, atol=tol, rtol=tol)
+                assert_allclose(res_c, res_o, atol=tol, rtol=tol)
             else:
                 assert_equal(c_ar, n_ar)
+                assert_equal(c_ar, o_ar)
 
 
 @pytest.mark.parametrize('ufunc', [np.sign, np.equal])
