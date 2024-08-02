@@ -18,7 +18,8 @@ from numpy.testing import (
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
     _gen_alignment_data, assert_array_almost_equal_nulp, IS_WASM, IS_MUSL,
-    IS_PYPY, HAS_REFCOUNT
+    IS_PYPY, HAS_REFCOUNT,
+    assert_array_compare
     )
 from numpy.testing._private.utils import _glibc_older_than
 
@@ -642,6 +643,38 @@ class TestDivision:
             assert_(np.isinf(y)[0])
             y = 0.0/x
             assert_(np.isnan(y)[0])
+
+    def test_corner_cases_division_complex(self):
+        def assert_array_strict_equal(x, y):
+            def comparison(a, b):
+                return np.logical_and(a == b,
+                                      (np.copysign(1., a)
+                                       == np.copysign(1., b)))
+            assert_array_compare(comparison, x.real, y.real, strict=True)
+            assert_array_compare(comparison, x.imag, y.imag, strict=True)
+
+        x = ['inf+1j']
+        y = ['0.0+1j']
+        r = ['nan-infj']
+
+        # test recover of infs if numerator has infs and denominator is finite
+        x += ['inf-infj', 'inf+infj', 'nan+infj', 'inf+nanj']
+        y += ['1+0j', '0.0+1j', complex(2**1000, 2**-1000),
+              complex(2**1000, 2**-1000)]
+        r += ['inf-infj', 'inf-infj', 'inf+infj', 'inf-infj']
+        # test recover of zeros if denominator is infinite
+        x += ['1+1j', '1+1j', '1+1j', '1+1j', 'inf+1j', '1+infj', 'inf+1j']
+        y += ['inf+infj', 'inf-infj', '-inf+infj', '-inf-infj', 'inf+infj',
+              'inf+infj', '1+infj']
+        r += ['0.0+0j', '0.0+0j', '0.0-0j', '-0.0+0j', 'nan+nanj',
+              'nan+nanj', 'nan+nanj']
+
+        x = np.array(x, dtype=np.complex128)
+        y = np.array(y, dtype=np.complex128)
+        r = np.array(r, dtype=np.complex128)
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning, "invalid value encountered in divide")
+            assert_array_strict_equal(x/y, r)
 
     def test_floor_division_complex(self):
         # check that floor division, divmod and remainder raises type errors
