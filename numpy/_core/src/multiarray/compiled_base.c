@@ -157,9 +157,10 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
                 /* Failed converting to NPY_INTP. */
                 if (PyErr_ExceptionMatches(PyExc_TypeError)) {
                     PyErr_Clear();
+                    /* Deprecated 2024-08-02, NumPy 2.1 */
                     if (DEPRECATE("Non-integer input passed to bincount. In a "
                                   "future version of NumPy, this will be an "
-                                  "error.") < 0) {
+                                  "error. (Deprecated NumPy 2.1)") < 0) {
                         goto fail;
                     }
                 }
