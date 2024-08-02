@@ -5163,7 +5163,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
 
     // initialize static reference to a zero-like array
     npy_static_pydata.zero_pyint_like_arr = PyArray_ZEROS(
-            0, NULL, NPY_LONG, NPY_FALSE);
+            0, NULL, NPY_DEFAULT_INT, NPY_FALSE);
     if (npy_static_pydata.zero_pyint_like_arr == NULL) {
         goto err;
     }
