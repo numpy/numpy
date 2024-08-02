@@ -141,10 +141,9 @@ on the vertical axis and the precision on the horizontal axis.
 .. figure:: figures/nep-0050-promotion-no-fonts.svg
     :figclass: align-center
 
-Promotion is always found along the lines in the schema from left to right
-and down to up.  The final result dtype will smallest kind and precision
-(i.e. down and left) which is still equal or higher in both kind and precision
-while following the (green) lines.
+The input dtype with the higher kind determines the kind of the result dtype.
+The result dtype has a precision as low as possible without appearing to the
+left of either input dtype in the diagram.
 
 Note the following specific rules and observations:
 1. When a Python ``float`` or ``complex`` interacts with a NumPy integer
@@ -158,9 +157,9 @@ Note the following specific rules and observations:
    This pattern however is broken since NumPy always considers ``float64``
    and ``complex128`` to be acceptable promotion results for any integer
    value.
-3. A special case that the above leads to is that NumPy promotes many
-   combinations of signed and unsigned integers to ``float64`` because no
-   integer dtype can hold both inputs.
+3. A special case is that NumPy promotes many combinations of signed and
+   unsigned integers to ``float64``.  A higher kind is used here because no
+   signed integer dtype is sufficiently precise to hold a ``uint64``.
 
 The precision here comes from the bit size of the numerical value but
 an ``int32`` cannot always be stored in a ``float32`` without loss of
