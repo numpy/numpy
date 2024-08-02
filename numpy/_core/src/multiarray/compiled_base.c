@@ -101,7 +101,7 @@ minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
  * arr_bincount is registered as bincount.
  *
  * bincount accepts one, two or three arguments. The first is an array of
- * non-negative integers The second, if present, is an array of weights,
+ * non-negative integers. The second, if present, is an array of weights,
  * which must be promotable to double. Call these arguments list and
  * weight. Both must be one-dimensional with len(weight) == len(list). If
  * weight is not present then bincount(list)[i] is the number of occurrences
@@ -130,9 +130,57 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
         return NULL;
     }
 
-    lst = (PyArrayObject *)PyArray_ContiguousFromAny(list, NPY_INTP, 1, 1);
+    /*
+     * Accepting arbitrary lists that are cast to NPY_INTP, possibly
+     * losing precision because of unsafe casts, is deprecated.  We
+     * continue to use PyArray_ContiguousFromAny(list, NPY_INTP, 1, 1)
+     * to convert the input during the deprecation period, but we also
+     * check to see if a deprecation warning should be generated.
+     * Some refactoring will be needed when the deprecation expires.
+     */
+
+    /* Check to see if we should generate a deprecation warning. */
+    if (!PyArray_Check(list)) {
+        /* list is not a numpy array, so convert it. */
+        PyArrayObject *tmp1 = (PyArrayObject *)PyArray_FromAny(
+                                                    list, NULL, 1, 1,
+                                                    NPY_ARRAY_DEFAULT, NULL);
+        if (tmp1 == NULL) {
+            goto fail;
+        }
+        if (PyArray_SIZE(tmp1) > 0) {
+            /* The input is not empty, so convert it to NPY_INTP. */
+            lst = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)tmp1,
+                                                             NPY_INTP, 1, 1);
+            Py_DECREF(tmp1);
+            if (lst == NULL) {
+                /* Failed converting to NPY_INTP. */
+                if (PyErr_ExceptionMatches(PyExc_TypeError)) {
+                    PyErr_Clear();
+                    /* Deprecated 2024-08-02, NumPy 2.1 */
+                    if (DEPRECATE("Non-integer input passed to bincount. In a "
+                                  "future version of NumPy, this will be an "
+                                  "error. (Deprecated NumPy 2.1)") < 0) {
+                        goto fail;
+                    }
+                }
+                else {
+                    /* Failure was not a TypeError. */
+                    goto fail;
+                }
+            }
+        }
+        else {
+            /* Got an empty list. */
+            Py_DECREF(tmp1);
+        }
+    }
+
     if (lst == NULL) {
-        goto fail;
+        lst = (PyArrayObject *)PyArray_ContiguousFromAny(list, NPY_INTP, 1, 1);
+        if (lst == NULL) {
+            goto fail;
+        }
     }
     len = PyArray_SIZE(lst);
 

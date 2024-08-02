@@ -217,6 +217,11 @@ class TestBincount(_DeprecationTestCase):
     def test_bincount_minlength(self):
         self.assert_deprecated(lambda: np.bincount([1, 2, 3], minlength=None))
 
+    # 2024-07-29, 2.1.0
+    @pytest.mark.parametrize('badlist', [[0.5, 1.2, 1.5],
+                                         ['0', '1', '1']])
+    def test_bincount_bad_list(self, badlist):
+        self.assert_deprecated(lambda: np.bincount(badlist))
 
 
 class TestGeneratorSum(_DeprecationTestCase):
