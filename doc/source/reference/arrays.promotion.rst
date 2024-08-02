@@ -55,7 +55,7 @@ may be unexpected:
    example, the result of an operation involving ``int64`` and ``float16``
    is ``float64``.
 2. When mixing unsigned and signed integers with the same precision, the
-   result will has *higher* precision than either inputs. Additionally,
+   result will have *higher* precision than either inputs. Additionally,
    if one of them has 64bit precision already, no higher precision integer
    is available and for example an operation involving ``int64`` and ``uint64``
    gives ``float64``.
@@ -97,7 +97,7 @@ or ``complex``, the result always has type ``float64`` or ``complex128``:
   >> np.int16(1) + 1.0
   np.float64(2.0)
 
-However, these rules can also lead to surprising behaviors when working with
+However, these rules can also lead to surprising behavior when working with
 low precision dtypes.
 
 First, since the Python value is converted to a NumPy one before the operation
@@ -135,7 +135,7 @@ e.g., ``np.array(100, dtype="uint8") + 100`` will *not* warn.
 Numerical promotion
 -------------------
 
-The following images shows the numerical promotion rules with the kinds
+The following image shows the numerical promotion rules with the kinds
 on the vertical axis and the precision on the horizontal axis.
 
 .. figure:: figures/nep-0050-promotion-no-fonts.svg
@@ -161,13 +161,9 @@ Note the following specific rules and observations:
    unsigned integers to ``float64``.  A higher kind is used here because no
    signed integer dtype is sufficiently precise to hold a ``uint64``.
 
-The precision here comes from the bit size of the numerical value but
-an ``int32`` cannot always be stored in a ``float32`` without loss of
-precision, this leads to the 
 
-
-Notable or special promotion behaviors
---------------------------------------
+Exceptions to the general promotion rules
+-----------------------------------------
 
 In NumPy promotion refers to what specific functions do with the result and
 in some cases, this means that NumPy may deviate from what the `np.result_type`
@@ -179,8 +175,8 @@ Behavior of ``sum`` and ``prod``
 when summing over integer values (or booleans).  This is usually an ``int64``.
 The reason for this is that integer summations are otherwise very likely
 to overflow and give confusing results.
-This rule also applies to the underlying ``np.add.reduce``, ``np.multiply.reduce``
-and other reduction methods.
+This rule also applies to the underlying ``np.add.reduce`` and
+``np.multiply.reduce``.
 
 Notable behavior with NumPy or Python integer scalars
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -188,8 +184,7 @@ NumPy promotion refers to the result dtype and operation precision,
 but the operation will sometimes dictate that result.
 Division always returns floating point values and comparison always booleans.
 
-This leads to some special behaviors which may appear as "exceptions" to
-the rules:
+This leads to what may appear as "exceptions" to the rules:
 * NumPy comparisons with Python integers or mixed precision integers always
   return the correct result.  The inputs will never be cast in a way which
   loses precision.
@@ -212,7 +207,8 @@ promotion is not well defined and simply rejected.
 
 The following rules apply:
 * NumPy byte strings (``np.bytes_``) can be promoted to unicode strings
-  (``np.str_``).  The promotion takes into account the length of both.
+  (``np.str_``).  However, casting the bytes to unicode will fail for
+  non-ascii characters.
 * For some purposes NumPy will promote almost any other datatype to strings.
   This applies to array creation or concatenation.
 * The array constructers like ``np.array()`` will use ``object`` dtype when
@@ -222,17 +218,15 @@ The following rules apply:
 * NumPy ``timedelta`` can in some cases promote with integers.
 
 .. note::
-    Some of these rules describe the state as of NumPy 2.0 and details
-    may be surprising and are under consideration to be change in the future.
-    However, changes always have to be weighed against backwards compatibility
-    concerns.
-    Please raise an issue if you have particular ideas about how promotion
-    should work
+    Some of these rules are somewhat surprising, and are being considered for
+    change in the future. However, any backward-incompatible changes have to
+    be weighed against the risks of breaking existing code. Please raise an
+    issue if you have particular ideas about how promotion should work.
 
 Details of promoted ``dtype`` instances
 ---------------------------------------
-The above promotion mainly refers to the behavior when mixing different DType
-classes.
+The above discussion has mainly dealt with the behavior when mixing different
+DType classes.
 A ``dtype`` instance attached to an array can carry additional information
 such as byte-order, metadata, string length, or exact structured dtype layout.
 
@@ -245,15 +239,15 @@ During promotion NumPy does *not* take these storage details into account:
 * Resulting structured dtypes will be packed (but aligned if inputs were).
 
 This behaviors is the best behavior for most programs where storage details
-are not relevant to the final results, but the use of incorrect byte-order
+are not relevant to the final results and where the use of incorrect byte-order
 could drastically slow down evaluation.
 
 
 .. [#hist-reasons]: To a large degree, this may just be for choices made early
-   on in NumPy's predecessors even.  For more details, see `NEP 50 <NEP50>`.
+   on in NumPy's predecessors.  For more details, see `NEP 50 <NEP50>`.
 
 .. [#NEP50]: See also `NEP 50 <NEP50>` which changed the rules for NumPy 2.0.
-   previous versions of NumPy would sometimes return higher precision results
+   Previous versions of NumPy would sometimes return higher precision results
    based on the input value of Python scalars.
    Further, previous versions of NumPy would typically ignore the higher
    precision of NumPy scalars or 0-D arrays for promotion purposes.
