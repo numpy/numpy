@@ -701,7 +701,7 @@ def test_f2cmap(capfd, f2cmap_f90, monkeypatch):
         assert "Reading f2cmap from 'mapfile' ..." in out
         assert "Mapping \"real(kind=real32)\" to \"float\"" in out
         assert "Mapping \"real(kind=real64)\" to \"double\"" in out
-        assert "Mapping \"integer(kind=int64)\" to \"long_long\"" in out
+        assert "Mapping \"integer(kind=int64)\" to \"long\"" in out
         assert "Successfully applied user defined f2cmap changes" in out
 
 
