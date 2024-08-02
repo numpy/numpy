@@ -1368,7 +1368,7 @@ def shares_memory(a, b, max_work=None):
             the exact solution may take extremely long in some cases.
         max_work=0
             Only the memory bounds of a and b are checked.
-            This is equivalent to using may_share_memory().
+            This is equivalent to using ``may_share_memory()``.
 
     Raises
     ------
