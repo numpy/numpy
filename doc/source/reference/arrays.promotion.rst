@@ -158,10 +158,9 @@ Note the following specific rules and observations:
    This pattern however is broken since NumPy always considers ``float64``
    and ``complex128`` to be acceptable promotion results for any integer
    value.
-3. A special case the above leads to is that NumPy will promote many
+3. A special case that the above leads to is that NumPy promotes many
    combinations of signed and unsigned integers to ``float64`` because no
    integer dtype can hold both inputs.
-   This can unfortunately be 
 
 The precision here comes from the bit size of the numerical value but
 an ``int32`` cannot always be stored in a ``float32`` without loss of
@@ -203,18 +202,18 @@ the rules:
   between any NumPy integer with any Python integer value by casting both
   to ``float64``.
 
-It should be noted that while these exceptions can apply to more functions,
-NumPy may choose to not implement them in all such cases.
+In principle, some of these exceptions may make sense for other functions.
+Please raise an issue if you feel this is the case.
 
 Promotion of non-numerical datatypes
 ------------------------------------
 
-NumPy extends the promotion to non-numerical types, although in most cases
+NumPy extends the promotion to non-numerical types, although in many cases
 promotion is not well defined and simply rejected.
 
 The following rules apply:
 * NumPy byte strings (``np.bytes_``) can be promoted to unicode strings
-  (``np.str_``).  A ``result_type``
+  (``np.str_``).  The promotion takes into account the length of both.
 * For some purposes NumPy will promote almost any other datatype to strings.
   This applies to array creation or concatenation.
 * The array constructers like ``np.array()`` will use ``object`` dtype when
@@ -228,6 +227,8 @@ The following rules apply:
     may be surprising and are under consideration to be change in the future.
     However, changes always have to be weighed against backwards compatibility
     concerns.
+    Please raise an issue if you have particular ideas about how promotion
+    should work
 
 Details of promoted ``dtype`` instances
 ---------------------------------------
@@ -250,8 +251,7 @@ could drastically slow down evaluation.
 
 
 .. [#hist-reasons]: To a large degree, this may just be for choices made early
-   on in NumPy's predecessors even.  You may find some more details also in
-   `NEP 50 <NEP50>`.
+   on in NumPy's predecessors even.  For more details, see `NEP 50 <NEP50>`.
 
 .. [#NEP50]: See also `NEP 50 <NEP50>` which changed the rules for NumPy 2.0.
    previous versions of NumPy would sometimes return higher precision results
