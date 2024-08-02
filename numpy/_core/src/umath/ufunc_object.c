@@ -2356,7 +2356,7 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
     if (evil_ndim_mutating_hack) {
         ((PyArrayObject_fields *)out)->nd = 0;
     }
-    // TODO: Clean up multiple cleanup!
+
     if (ufuncimpl == NULL) {
         /* DTypes may currently get filled in fallbacks and XDECREF for error: */
         Py_XDECREF(operation_DTypes[0]);
@@ -2372,18 +2372,15 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
      * casting safety could in principle be set to the default same-kind.
      * (although this should possibly happen through a deprecation)
      */
-    if (resolve_descriptors(3, ufunc, ufuncimpl,
-            ops, out_descrs, signature, operation_DTypes, NULL, casting) < 0) {
-        /* DTypes may currently get filled in fallbacks and XDECREF for error: */
-        Py_XDECREF(operation_DTypes[0]);
-        Py_XDECREF(operation_DTypes[1]);
-        Py_XDECREF(operation_DTypes[2]);
-        return NULL;
-    }
-    /* DTypes may currently get filled in fallbacks and XDECREF for error: */
+    int res = resolve_descriptors(3, ufunc, ufuncimpl,
+            ops, out_descrs, signature, operation_DTypes, NULL, casting);
+
     Py_XDECREF(operation_DTypes[0]);
     Py_XDECREF(operation_DTypes[1]);
     Py_XDECREF(operation_DTypes[2]);
+    if (res < 0) {
+        return NULL;
+    }
 
     /*
      * The first operand and output should be the same array, so they should

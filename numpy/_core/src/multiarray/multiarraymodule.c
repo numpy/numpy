@@ -1957,14 +1957,14 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
     if (src == NULL) {
         goto fail;
     }
-    PyArray_DTypeMeta *dtype = NPY_DTYPE(PyArray_DESCR(src));
-    Py_INCREF(dtype);
-    if (npy_mark_tmp_array_if_pyscalar(src_obj, src, &dtype)) {
+    PyArray_DTypeMeta *DType = NPY_DTYPE(PyArray_DESCR(src));
+    Py_INCREF(DType);
+    if (npy_mark_tmp_array_if_pyscalar(src_obj, src, &DType)) {
         /* The user passed a Python scalar */
         PyArray_Descr *descr = npy_find_descr_for_scalar(
-                src_obj, PyArray_DESCR(src), dtype,
+                src_obj, PyArray_DESCR(src), DType,
                 NPY_DTYPE(PyArray_DESCR(dst)));
-        Py_DECREF(dtype);
+        Py_DECREF(DType);
         if (descr == NULL) {
             goto fail;
         }
@@ -1975,17 +1975,17 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
         }
     }
     else {
-        Py_DECREF(dtype);
+        Py_DECREF(DType);
     }
 
     if (wheremask_in != NULL) {
         /* Get the boolean where mask */
-        PyArray_Descr *dtype = PyArray_DescrFromType(NPY_BOOL);
-        if (dtype == NULL) {
+        PyArray_Descr *descr = PyArray_DescrFromType(NPY_BOOL);
+        if (descr == NULL) {
             goto fail;
         }
         wheremask = (PyArrayObject *)PyArray_FromAny(wheremask_in,
-                                        dtype, 0, 0, 0, NULL);
+                                        descr, 0, 0, 0, NULL);
         if (wheremask == NULL) {
             goto fail;
         }
