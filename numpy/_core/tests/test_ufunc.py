@@ -620,9 +620,9 @@ class TestUfunc:
     def test_cast_safety_scalar(self, ufunc):
         # We test add and equal, because equal has special scalar handling
         # Note that the "equiv" casting behavior should maybe be considered
-        # a current implementation.
+        # a current implementation detail.
         with pytest.raises(TypeError):
-            # The loop picked is integral, which is not safe
+            # this picks an integer loop, which is not safe
             ufunc(3., 4., dtype=int, casting="safe")
 
         with pytest.raises(TypeError):

@@ -428,7 +428,7 @@ def test_copyto_cast_safety():
     # As a special thing, object is equiv currently:
     np.copyto(np.arange(3, dtype=object), 3, casting="equiv")
 
-    # The following raises an overflow error/givs a warning but not
+    # The following raises an overflow error/gives a warning but not
     # type error (due to casting), though:
     with pytest.raises(OverflowError):
         np.copyto(np.arange(3), 2**80, casting="safe")
