@@ -1,5 +1,6 @@
 # Editor temporary/working/backup files #
 #########################################
+env/
 .#*
 [#]*#
 *~
