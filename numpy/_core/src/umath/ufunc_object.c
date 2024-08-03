@@ -4034,6 +4034,7 @@ resolve_descriptors(int nop,
 {
     int retval = -1;
     NPY_CASTING safety;
+    int n_cleanup = 0;  /* number of original_descrs filled (to XDECREF) */
     PyArray_Descr *original_descrs[NPY_MAXARGS];
 
     NPY_UF_DBG_PRINT("Resolving the descriptors\n");
@@ -4070,6 +4071,7 @@ resolve_descriptors(int nop,
                 input_scalars[i] = NULL;
             }
         }
+        n_cleanup = nop;
 
         npy_intp view_offset = NPY_MIN_INTP;  /* currently ignored */
         safety = ufuncimpl->resolve_descriptors_with_scalars(
@@ -4115,14 +4117,12 @@ resolve_descriptors(int nop,
             PyArray_Descr *new_descr = npy_find_descr_for_scalar(
                     input, descr, original_DTypes[i], signature[i]);
             if (new_descr == NULL) {
-                nop = i;  /* only this much is initialized */
                 goto finish;
             }
             int res = npy_update_operand_for_scalar(
                 &operands[i], input, new_descr, casting);
             Py_DECREF(new_descr);
             if (res < 0) {
-                nop = i;  /* only this much is initialized */
                 goto finish;
             }
 
@@ -4136,9 +4136,9 @@ resolve_descriptors(int nop,
          */
         original_descrs[i] = PyArray_CastDescrToDType(descr, signature[i]);
         if (original_descrs[i] == NULL) {
-            nop = i;  /* only this much is initialized */
             goto finish;
         }
+        n_cleanup += 1;
     }
 
     if (ufuncimpl->resolve_descriptors != &wrapped_legacy_resolve_descriptors) {
@@ -4173,7 +4173,7 @@ resolve_descriptors(int nop,
     retval = 0;
 
   finish:
-    for (int i = 0; i < nop; i++) {
+    for (int i = 0; i < n_cleanup; i++) {
         Py_XDECREF(original_descrs[i]);
     }
     return retval;
