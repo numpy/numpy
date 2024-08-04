@@ -32,6 +32,12 @@ linux_aarch64_task:
     - env:
         CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp312-*
+    - env:
+        CIRRUS_CLONE_SUBMODULES: true
+        CIBW_BUILD: cp313-*
+    - env:
+        CIRRUS_CLONE_SUBMODULES: true
+        CIBW_BUILD: cp313t-*
 
   initial_setup_script: |
     apt update
@@ -62,7 +68,7 @@ macosx_arm64_task:
         CIBW_BUILD: cp310-* cp311
     - env:
         CIRRUS_CLONE_SUBMODULES: true
-        CIBW_BUILD: cp312-*
+        CIBW_BUILD: cp312-* cp313-*
   env:
     PATH: /usr/local/lib:/usr/local/include:$PATH
     CIBW_ARCHS: arm64
