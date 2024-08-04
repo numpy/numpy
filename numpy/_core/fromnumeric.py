@@ -1508,8 +1508,10 @@ def searchsorted(a, v, side='left', sorter=None):
     array([0, 5, 1, 2])
 
     """
-    dtype_a = np.asarray(a).dtype
-    dtype_v = np.asarray(v).dtype
+    a = np.asanyarray(a)
+    v = np.asanyarray(v)
+    dtype_a = a.dtype
+    dtype_v = v.dtype
     try:
         np.less.resolve_dtypes((dtype_a, dtype_v, None))
     except UFuncTypeError:
