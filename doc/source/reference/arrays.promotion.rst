@@ -146,6 +146,7 @@ The result dtype has a precision as low as possible without appearing to the
 left of either input dtype in the diagram.
 
 Note the following specific rules and observations:
+
 1. When a Python ``float`` or ``complex`` interacts with a NumPy integer
    the result will be ``float64`` or ``complex128`` (yellow border).
    NumPy booleans will also be cast to the default integer.[#default-int]
@@ -185,6 +186,7 @@ but the operation will sometimes dictate that result.
 Division always returns floating point values and comparison always booleans.
 
 This leads to what may appear as "exceptions" to the rules:
+
 * NumPy comparisons with Python integers or mixed precision integers always
   return the correct result.  The inputs will never be cast in a way which
   loses precision.
@@ -206,6 +208,7 @@ NumPy extends the promotion to non-numerical types, although in many cases
 promotion is not well defined and simply rejected.
 
 The following rules apply:
+
 * NumPy byte strings (``np.bytes_``) can be promoted to unicode strings
   (``np.str_``).  However, casting the bytes to unicode will fail for
   non-ascii characters.
@@ -243,14 +246,14 @@ are not relevant to the final results and where the use of incorrect byte-order
 could drastically slow down evaluation.
 
 
-.. [#hist-reasons]: To a large degree, this may just be for choices made early
+.. [#hist-reasons] To a large degree, this may just be for choices made early
    on in NumPy's predecessors.  For more details, see `NEP 50 <NEP50>`.
 
-.. [#NEP50]: See also `NEP 50 <NEP50>` which changed the rules for NumPy 2.0.
-   Previous versions of NumPy would sometimes return higher precision results
-   based on the input value of Python scalars.
+.. [#NEP50] See also :ref:`NEP 50 <NEP50>` which changed the rules for
+   NumPy 2.0. Previous versions of NumPy would sometimes return higher
+   precision results based on the input value of Python scalars.
    Further, previous versions of NumPy would typically ignore the higher
    precision of NumPy scalars or 0-D arrays for promotion purposes.
 
-.. [#default-int]: The default integer is marked as ``int64`` in the schema
+.. [#default-int] The default integer is marked as ``int64`` in the schema
    but is ``int32`` on 32bit platforms.  However, normal PCs are 64bit.
