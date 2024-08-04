@@ -159,9 +159,8 @@ PyArray_ArrFuncs default_funcs = {
 /*
  * Internal version of PyArrayInitDTypeMeta_FromSpec.
  *
- * See the documentation of that function for more details.  Does not do any
- * error checking.
-
+ * See the documentation of that function for more details.
+ *
  * Setting priv to a nonzero value indicates that a dtypemeta is being
  * initialized from inside NumPy, otherwise this function is being called by
  * the public implementation.
