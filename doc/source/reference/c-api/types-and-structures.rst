@@ -1611,3 +1611,40 @@ for completeness and assistance in understanding the code.
    ``arrayobject.h`` header. This type is not exposed to Python and
    could be replaced with a C-structure. As a Python type it takes
    advantage of reference- counted memory management.
+
+NumPy C-API and C complex
+=========================
+
+When you use the NumPy C-API, you will have access to complex real declarations
+``npy_cdouble`` and ``npy_cfloat``, which are declared in terms of the C
+standard types from ``complex.h``. Unfortunately, ``complex.h`` contains
+`#define I ...`` (where the actual definition depends on the compiler), which
+means that any downstream user that does ``#include <numpy/arrayobject.h>``
+could get ``I`` defined, and using something like declaring ``double I;`` in
+their code will result in an obscure compiler error like
+
+.. code-block::C
+   error: expected ‘)’ before ‘__extension__’
+                    double I,
+
+In order to avoid this, we undefine ``I`` after ``#include <complex.h>``. If
+you were expecting ``I`` to be defined, you will actually get a different error:
+
+.. code-block::C
+    error: 'I' undeclared (first use in this function)
+
+If you are encountering this error, you can fix it by using ``_Complex_I``
+instead of ``I`` (on glibc systems), or by redefining it
+
+.. code-block::C
+    /* re-add `I` after numpy removed it */
+    #if defined(_MSC_VER)
+      #define I _FCbuild(0.0f, 1.0f)
+    #elif defined(_Imaginary_I)
+      #define I _Imaginary_I
+    #elif defined(_Complex_I)
+      #define I _Complex_I
+    #else
+      // non-POSIX, not MSVC
+      #error "Don't know how to define 'I'"
+    #endif
