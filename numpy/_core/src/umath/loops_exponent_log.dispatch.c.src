@@ -1350,12 +1350,17 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(DOUBLE_@func@)
  *  #TYPE = FLOAT, DOUBLE#
  *  #c = f, #
  *  #C = F, #
+ *  #suffix = f32, f64#
  */
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_frexp)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
 #ifdef SIMD_AVX512_SKX
-    if (IS_UNARY_TWO_OUT_SMALL_STEPS_AND_NOMEMOVERLAP) {
+    if ((npyv_loadable_stride_@suffix@(steps[0])) &&
+        (npyv_storable_stride_@suffix@(steps[1])) &&
+        (npyv_storable_stride_@suffix@(steps[2])) &&
+        (!is_mem_overlap(args[0], steps[0], args[2], steps[2], dimensions[0])) &&
+        (!is_mem_overlap(args[0], steps[0], args[1], steps[1], dimensions[0]))) {
         AVX512_SKX_frexp_@TYPE@(args, dimensions, steps);
         return;
     }
@@ -1370,7 +1375,11 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_ldexp)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
 #ifdef SIMD_AVX512_SKX
-    if (IS_BINARY_SMALL_STEPS_AND_NOMEMOVERLAP) {
+    if ((npyv_loadable_stride_@suffix@(steps[0])) &&
+        (npyv_storable_stride_@suffix@(steps[1])) &&
+        (npyv_storable_stride_@suffix@(steps[2])) &&
+        (!is_mem_overlap(args[0], steps[0], args[2], steps[2], dimensions[0])) &&
+        (!is_mem_overlap(args[1], steps[1], args[2], steps[2], dimensions[0]))) {
         AVX512_SKX_ldexp_@TYPE@(args, dimensions, steps);
         return;
     }
