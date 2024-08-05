@@ -562,9 +562,9 @@ genint_type_repr(PyObject *self)
     int num = _typenum_fromtypeobj((PyObject *)Py_TYPE(self), 0);
 
     PyObject *repr;
-    if (num == 0) {
+    if (num == NPY_NOTYPE) {
         /* Not a builtin scalar (presumably), just use the name */
-        repr = PyUnicode_FromFormat("%S(%S)", Py_TYPE(self)->tp_name, value_string);
+        repr = PyUnicode_FromFormat("%s(%S)", Py_TYPE(self)->tp_name, value_string);
         Py_DECREF(value_string);
         return repr;
     }
