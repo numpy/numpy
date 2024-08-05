@@ -3472,7 +3472,11 @@ class TestLikeFuncs:
     def test_filled_like(self):
         self.check_like_function(np.full_like, 0, True)
         self.check_like_function(np.full_like, 1, True)
-        self.check_like_function(np.full_like, 1000, True)
+        # Large integers may overflow, but using int64 is OK (casts)
+        # see also gh-27075
+        with pytest.raises(OverflowError):
+            np.full_like(np.ones(3, dtype=np.int8), 1000)
+        self.check_like_function(np.full_like, np.int64(1000), True)
         self.check_like_function(np.full_like, 123.456, True)
         # Inf to integer casts cause invalid-value errors: ignore them.
         with np.errstate(invalid="ignore"):

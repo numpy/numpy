@@ -616,6 +616,31 @@ class TestUfunc:
         expected = call_ufunc(arr.astype(np.float64))  # upcast
         assert_array_equal(expected, res)
 
+    @pytest.mark.parametrize("ufunc", [np.add, np.equal])
+    def test_cast_safety_scalar(self, ufunc):
+        # We test add and equal, because equal has special scalar handling
+        # Note that the "equiv" casting behavior should maybe be considered
+        # a current implementation detail.
+        with pytest.raises(TypeError):
+            # this picks an integer loop, which is not safe
+            ufunc(3., 4., dtype=int, casting="safe")
+
+        with pytest.raises(TypeError):
+            # We accept python float as float64 but not float32 for equiv.
+            ufunc(3., 4., dtype="float32", casting="equiv")
+
+        # Special case for object and equal (note that equiv implies safe)
+        ufunc(3, 4, dtype=object, casting="equiv")
+        # Picks a double loop for both, first is equiv, second safe:
+        ufunc(np.array([3.]), 3., casting="equiv")
+        ufunc(np.array([3.]), 3, casting="safe")
+        ufunc(np.array([3]), 3, casting="equiv")
+
+    def test_cast_safety_scalar_special(self):
+        # We allow this (and it succeeds) via object, although the equiv
+        # part may not be important.
+        np.equal(np.array([3]), 2**300, casting="equiv")
+
     def test_true_divide(self):
         a = np.array(10)
         b = np.array(20)

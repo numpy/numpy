@@ -1929,29 +1929,63 @@ array_asfortranarray(PyObject *NPY_UNUSED(ignored),
 
 
 static PyObject *
-array_copyto(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+array_copyto(PyObject *NPY_UNUSED(ignored),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    static char *kwlist[] = {"dst", "src", "casting", "where", NULL};
-    PyObject *wheremask_in = NULL;
-    PyArrayObject *dst = NULL, *src = NULL, *wheremask = NULL;
+    PyObject *dst_obj, *src_obj, *wheremask_in = NULL;
+    PyArrayObject *src = NULL, *wheremask = NULL;
     NPY_CASTING casting = NPY_SAME_KIND_CASTING;
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!O&|O&O:copyto", kwlist,
-                &PyArray_Type, &dst,
-                &PyArray_Converter, &src,
-                &PyArray_CastingConverter, &casting,
-                &wheremask_in)) {
+    if (npy_parse_arguments("copyto", args, len_args, kwnames,
+            "dst", NULL, &dst_obj,
+            "src", NULL, &src_obj,
+            "|casting", &PyArray_CastingConverter, &casting,
+            "|where", NULL, &wheremask_in,
+            NULL, NULL, NULL) < 0) {
         goto fail;
+    }
+
+    if (!PyArray_Check(dst_obj)) {
+        PyErr_Format(PyExc_TypeError,
+            "copyto() argument 1 must be a numpy.ndarray, not %s",
+            Py_TYPE(dst_obj)->tp_name);
+    }
+    PyArrayObject *dst = (PyArrayObject *)dst_obj;
+
+    src = (PyArrayObject *)PyArray_FromAny(src_obj, NULL, 0, 0, 0, NULL);
+    if (src == NULL) {
+        goto fail;
+    }
+    PyArray_DTypeMeta *DType = NPY_DTYPE(PyArray_DESCR(src));
+    Py_INCREF(DType);
+    if (npy_mark_tmp_array_if_pyscalar(src_obj, src, &DType)) {
+        /* The user passed a Python scalar */
+        PyArray_Descr *descr = npy_find_descr_for_scalar(
+                src_obj, PyArray_DESCR(src), DType,
+                NPY_DTYPE(PyArray_DESCR(dst)));
+        Py_DECREF(DType);
+        if (descr == NULL) {
+            goto fail;
+        }
+        int res = npy_update_operand_for_scalar(&src, src_obj, descr, casting);
+        Py_DECREF(descr);
+        if (res < 0) {
+            goto fail;
+        }
+    }
+    else {
+        Py_DECREF(DType);
     }
 
     if (wheremask_in != NULL) {
         /* Get the boolean where mask */
-        PyArray_Descr *dtype = PyArray_DescrFromType(NPY_BOOL);
-        if (dtype == NULL) {
+        PyArray_Descr *descr = PyArray_DescrFromType(NPY_BOOL);
+        if (descr == NULL) {
             goto fail;
         }
         wheremask = (PyArrayObject *)PyArray_FromAny(wheremask_in,
-                                        dtype, 0, 0, 0, NULL);
+                                        descr, 0, 0, 0, NULL);
         if (wheremask == NULL) {
             goto fail;
         }
@@ -4431,7 +4465,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"copyto",
         (PyCFunction)array_copyto,
-        METH_VARARGS|METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"nested_iters",
         (PyCFunction)NpyIter_NestedIters,
         METH_VARARGS|METH_KEYWORDS, NULL},
@@ -5129,7 +5163,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
 
     // initialize static reference to a zero-like array
     npy_static_pydata.zero_pyint_like_arr = PyArray_ZEROS(
-            0, NULL, NPY_LONG, NPY_FALSE);
+            0, NULL, NPY_DEFAULT_INT, NPY_FALSE);
     if (npy_static_pydata.zero_pyint_like_arr == NULL) {
         goto err;
     }

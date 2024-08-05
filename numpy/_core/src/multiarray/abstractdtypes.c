@@ -378,3 +378,117 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyComplexDType = {{{
     .dt_slots = &pycomplexdtype_slots,
     .scalar_type = NULL,  /* set in initialize_and_map_pytypes_to_dtypes */
 };
+
+
+/*
+ * Additional functions to deal with Python literal int, float, complex
+ */
+/*
+ * This function takes an existing array operand and if the new descr does
+ * not match, replaces it with a new array that has the correct descriptor
+ * and holds exactly the scalar value.
+ */
+NPY_NO_EXPORT int
+npy_update_operand_for_scalar(
+    PyArrayObject **operand, PyObject *scalar, PyArray_Descr *descr,
+    NPY_CASTING casting)
+{
+    if (PyArray_EquivTypes(PyArray_DESCR(*operand), descr)) {
+        /*
+        * TODO: This is an unfortunate work-around for legacy type resolvers
+        *       (see `convert_ufunc_arguments` in `ufunc_object.c`), that
+        *       currently forces us to replace the array.
+        */
+        if (!(PyArray_FLAGS(*operand) & NPY_ARRAY_WAS_PYTHON_INT)) {
+            return 0;
+        }
+    }
+    else if (NPY_UNLIKELY(casting == NPY_EQUIV_CASTING) &&
+             descr->type_num != NPY_OBJECT) {
+        /*
+         * increadibly niche, but users could pass equiv casting and we
+         * actually need to cast.  Let object pass (technically correct) but
+         * in all other cases, we don't technically consider equivalent.
+         * NOTE(seberg): I don't think we should be beholden to this logic.
+         */
+        PyErr_Format(PyExc_TypeError,
+            "cannot cast Python %s to %S under the casting rule 'equiv'",
+            Py_TYPE(scalar)->tp_name, descr);
+        return -1;
+    }
+
+    Py_INCREF(descr);
+    PyArrayObject *new = (PyArrayObject *)PyArray_NewFromDescr(
+            &PyArray_Type, descr, 0, NULL, NULL, NULL, 0, NULL);
+    Py_SETREF(*operand, new);
+    if (*operand == NULL) {
+        return -1;
+    }
+    if (scalar == NULL) {
+        /* The ufunc.resolve_dtypes paths can go here.  Anything should go. */
+        return 0;
+    }
+    return PyArray_SETITEM(new, PyArray_BYTES(*operand), scalar);
+}
+
+
+/*
+ * When a user passed a Python literal (int, float, complex), special promotion
+ * rules mean that we don't know the exact descriptor that should be used.
+ *
+ * Typically, this just doesn't really matter.  Unfortunately, there are two
+ * exceptions:
+ * 1. The user might have passed `signature=` which may not be compatible.
+ *    In that case, we cannot really assume "safe" casting.
+ * 2. It is at least fathomable that a DType doesn't deal with this directly.
+ *    or that using the original int64/object is wrong in the type resolution.
+ *
+ * The solution is to assume that we can use the common DType of the signature
+ * and the Python scalar DType (`in_DT`) as a safe intermediate.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+npy_find_descr_for_scalar(
+    PyObject *scalar, PyArray_Descr *original_descr,
+    PyArray_DTypeMeta *in_DT, PyArray_DTypeMeta *op_DT)
+{
+    PyArray_Descr *res;
+    /* There is a good chance, descriptors already match... */
+    if (NPY_DTYPE(original_descr) == op_DT) {
+        Py_INCREF(original_descr);
+        return original_descr;
+    }
+
+    PyArray_DTypeMeta *common = PyArray_CommonDType(in_DT, op_DT);
+    if (common == NULL) {
+        PyErr_Clear();
+        /* This is fine.  We simply assume the original descr is viable. */
+        Py_INCREF(original_descr);
+        return original_descr;
+    }
+    /* A very likely case is that there is nothing to do: */
+    if (NPY_DTYPE(original_descr) == common) {
+        Py_DECREF(common);
+        Py_INCREF(original_descr);
+        return original_descr;
+    }
+    if (!NPY_DT_is_parametric(common) ||
+            /* In some paths we only have a scalar type, can't discover */
+            scalar == NULL ||
+            /* If the DType doesn't know the scalar type, guess at default. */
+            !NPY_DT_CALL_is_known_scalar_type(common, Py_TYPE(scalar))) {
+        if (common->singleton != NULL) {
+            Py_INCREF(common->singleton);
+            res = common->singleton;
+            Py_INCREF(res);
+        }
+        else {
+            res = NPY_DT_CALL_default_descr(common);
+        }
+    }
+    else {
+        res = NPY_DT_CALL_discover_descr_from_pyobject(common, scalar);
+    }
+
+    Py_DECREF(common);
+    return res;
+}

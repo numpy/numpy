@@ -101,8 +101,8 @@ static int
 resolve_descriptors(int nop,
         PyUFuncObject *ufunc, PyArrayMethodObject *ufuncimpl,
         PyArrayObject *operands[], PyArray_Descr *dtypes[],
-        PyArray_DTypeMeta *signature[], PyObject *inputs_tup,
-        NPY_CASTING casting);
+        PyArray_DTypeMeta *signature[], PyArray_DTypeMeta *original_DTypes[],
+        PyObject *inputs_tup, NPY_CASTING casting);
 
 
 /*UFUNC_API*/
@@ -2356,11 +2356,12 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
     if (evil_ndim_mutating_hack) {
         ((PyArrayObject_fields *)out)->nd = 0;
     }
-    /* DTypes may currently get filled in fallbacks and XDECREF for error: */
-    Py_XDECREF(operation_DTypes[0]);
-    Py_XDECREF(operation_DTypes[1]);
-    Py_XDECREF(operation_DTypes[2]);
+
     if (ufuncimpl == NULL) {
+        /* DTypes may currently get filled in fallbacks and XDECREF for error: */
+        Py_XDECREF(operation_DTypes[0]);
+        Py_XDECREF(operation_DTypes[1]);
+        Py_XDECREF(operation_DTypes[2]);
         return NULL;
     }
 
@@ -2371,8 +2372,13 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
      * casting safety could in principle be set to the default same-kind.
      * (although this should possibly happen through a deprecation)
      */
-    if (resolve_descriptors(3, ufunc, ufuncimpl,
-            ops, out_descrs, signature, NULL, casting) < 0) {
+    int res = resolve_descriptors(3, ufunc, ufuncimpl,
+            ops, out_descrs, signature, operation_DTypes, NULL, casting);
+
+    Py_XDECREF(operation_DTypes[0]);
+    Py_XDECREF(operation_DTypes[1]);
+    Py_XDECREF(operation_DTypes[2]);
+    if (res < 0) {
         return NULL;
     }
 
@@ -4023,12 +4029,13 @@ static int
 resolve_descriptors(int nop,
         PyUFuncObject *ufunc, PyArrayMethodObject *ufuncimpl,
         PyArrayObject *operands[], PyArray_Descr *dtypes[],
-        PyArray_DTypeMeta *signature[], PyObject *inputs_tup,
-        NPY_CASTING casting)
+        PyArray_DTypeMeta *signature[], PyArray_DTypeMeta *original_DTypes[],
+        PyObject *inputs_tup, NPY_CASTING casting)
 {
     int retval = -1;
     NPY_CASTING safety;
-    PyArray_Descr *original_dtypes[NPY_MAXARGS];
+    int n_cleanup = 0;  /* number of original_descrs filled (to XDECREF) */
+    PyArray_Descr *original_descrs[NPY_MAXARGS];
 
     NPY_UF_DBG_PRINT("Resolving the descriptors\n");
 
@@ -4043,12 +4050,12 @@ resolve_descriptors(int nop,
         PyObject *input_scalars[NPY_MAXARGS];
         for (int i = 0; i < nop; i++) {
             if (operands[i] == NULL) {
-                original_dtypes[i] = NULL;
+                original_descrs[i] = NULL;
             }
             else {
                 /* For abstract DTypes, we might want to change what this is */
-                original_dtypes[i] = PyArray_DTYPE(operands[i]);
-                Py_INCREF(original_dtypes[i]);
+                original_descrs[i] = PyArray_DTYPE(operands[i]);
+                Py_INCREF(original_descrs[i]);
             }
             /*
              * Check whether something is a scalar of the given type.
@@ -4064,31 +4071,74 @@ resolve_descriptors(int nop,
                 input_scalars[i] = NULL;
             }
         }
+        n_cleanup = nop;
 
         npy_intp view_offset = NPY_MIN_INTP;  /* currently ignored */
         safety = ufuncimpl->resolve_descriptors_with_scalars(
-            ufuncimpl, signature, original_dtypes, input_scalars,
+            ufuncimpl, signature, original_descrs, input_scalars,
             dtypes, &view_offset
         );
+
+        /* For scalars, replace the operand if needed (scalars can't be out) */
+        for (int i = 0; i < nin; i++) {
+            if ((PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_LITERAL)) {
+                /* `resolve_descriptors_with_scalars` decides the descr */
+                if (npy_update_operand_for_scalar(
+                        &operands[i], input_scalars[i], dtypes[i],
+                        /* ignore cast safety for this op (resolvers job) */
+                        NPY_SAFE_CASTING) < 0) {
+                    goto finish;
+                }
+            }
+        }
         goto check_safety;
     }
 
     for (int i = 0; i < nop; ++i) {
         if (operands[i] == NULL) {
-            original_dtypes[i] = NULL;
+            original_descrs[i] = NULL;
+            continue;
         }
-        else {
-            /*
-             * The dtype may mismatch the signature, in which case we need
-             * to make it fit before calling the resolution.
-             */
-            PyArray_Descr *descr = PyArray_DTYPE(operands[i]);
-            original_dtypes[i] = PyArray_CastDescrToDType(descr, signature[i]);
-            if (original_dtypes[i] == NULL) {
-                nop = i;  /* only this much is initialized */
+        PyArray_Descr *descr = PyArray_DTYPE(operands[i]);
+
+        /*
+         * If we are working with Python literals/scalars, deal with them.
+         * If needed, we create new array with the right descriptor.
+         */
+        if ((PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_LITERAL)) {
+            PyObject *input;
+            if (inputs_tup == NULL) {
+                input = NULL;
+            }
+            else {
+                input = PyTuple_GET_ITEM(inputs_tup, i);
+            }
+
+            PyArray_Descr *new_descr = npy_find_descr_for_scalar(
+                    input, descr, original_DTypes[i], signature[i]);
+            if (new_descr == NULL) {
                 goto finish;
             }
+            int res = npy_update_operand_for_scalar(
+                &operands[i], input, new_descr, casting);
+            Py_DECREF(new_descr);
+            if (res < 0) {
+                goto finish;
+            }
+
+            /* Descriptor may have been modified along the way */
+            descr = PyArray_DESCR(operands[i]);
         }
+
+        /*
+         * The dtype may mismatch the signature, in which case we need
+         * to make it fit before calling the resolution.
+         */
+        original_descrs[i] = PyArray_CastDescrToDType(descr, signature[i]);
+        if (original_descrs[i] == NULL) {
+            goto finish;
+        }
+        n_cleanup += 1;
     }
 
     if (ufuncimpl->resolve_descriptors != &wrapped_legacy_resolve_descriptors) {
@@ -4096,7 +4146,7 @@ resolve_descriptors(int nop,
         npy_intp view_offset = NPY_MIN_INTP;  /* currently ignored */
 
         safety = ufuncimpl->resolve_descriptors(ufuncimpl,
-                signature, original_dtypes, dtypes, &view_offset);
+                signature, original_descrs, dtypes, &view_offset);
         goto check_safety;
     }
     else {
@@ -4123,8 +4173,8 @@ resolve_descriptors(int nop,
     retval = 0;
 
   finish:
-    for (int i = 0; i < nop; i++) {
-        Py_XDECREF(original_dtypes[i]);
+    for (int i = 0; i < n_cleanup; i++) {
+        Py_XDECREF(original_descrs[i]);
     }
     return retval;
 }
@@ -4467,47 +4517,9 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 
     /* Find the correct descriptors for the operation */
     if (resolve_descriptors(nop, ufunc, ufuncimpl,
-            operands, operation_descrs, signature, full_args.in, casting) < 0) {
+            operands, operation_descrs, signature, operand_DTypes,
+            full_args.in, casting) < 0) {
         goto fail;
-    }
-
-    if (promoting_pyscalars) {
-        /*
-         * Python integers need to be cast specially.  For other python
-         * scalars it does not hurt either.  It would be nice to never create
-         * the array in this case, but that is difficult until value-based
-         * promotion rules are gone.  (After that, we may get away with using
-         * dummy arrays rather than real arrays for the legacy resolvers.)
-         */
-        for (int i = 0; i < nin; i++) {
-            int orig_flags = PyArray_FLAGS(operands[i]);
-            if (!(orig_flags & NPY_ARRAY_WAS_PYTHON_LITERAL)) {
-                continue;
-            }
-            /*
-             * If descriptor matches, no need to convert, but integers may
-             * have been too large.
-             */
-            if (!(orig_flags & NPY_ARRAY_WAS_INT_AND_REPLACED)
-                    && PyArray_EquivTypes(
-                        PyArray_DESCR(operands[i]), operation_descrs[i])) {
-                continue;
-            }
-            /* Otherwise, replace the operand with a new array */
-            PyArray_Descr *descr = operation_descrs[i];
-            Py_INCREF(descr);
-            PyArrayObject *new = (PyArrayObject *)PyArray_NewFromDescr(
-                    &PyArray_Type, descr, 0, NULL, NULL, NULL, 0, NULL);
-            Py_SETREF(operands[i], new);
-            if (operands[i] == NULL) {
-                goto fail;
-            }
-
-            PyObject *value = PyTuple_GET_ITEM(full_args.in, i);
-            if (PyArray_SETITEM(new, PyArray_BYTES(operands[i]), value) < 0) {
-                goto fail;
-            }
-        }
     }
 
     /*
@@ -5827,7 +5839,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
         /* Find the correct operation_descrs for the operation */
         int resolve_result = resolve_descriptors(nop, ufunc, ufuncimpl,
-                tmp_operands, operation_descrs, signature, NULL, NPY_UNSAFE_CASTING);
+                tmp_operands, operation_descrs, signature, operand_DTypes, NULL, NPY_UNSAFE_CASTING);
         for (int i = 0; i < 3; i++) {
             Py_XDECREF(signature[i]);
             Py_XDECREF(operand_DTypes[i]);
@@ -6152,7 +6164,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
 
         /* Find the correct descriptors for the operation */
         if (resolve_descriptors(ufunc->nargs, ufunc, ufuncimpl,
-                dummy_arrays, operation_descrs, signature,
+                dummy_arrays, operation_descrs, signature, DTypes,
                 NULL, casting) < 0) {
             goto finish;
         }
