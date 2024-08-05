@@ -38,6 +38,7 @@ linux_aarch64_task:
     - env:
         CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp313t-*
+        CIBW_FREE_THREADED_SUPPORT: 1
 
   initial_setup_script: |
     apt update
