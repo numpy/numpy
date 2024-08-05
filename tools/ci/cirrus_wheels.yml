@@ -39,6 +39,7 @@ linux_aarch64_task:
         CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp313t-*
         CIBW_FREE_THREADED_SUPPORT: 1
+        CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation"
 
   initial_setup_script: |
     apt update
