@@ -923,7 +923,8 @@ def tril_indices(n, k=0, m=None):
     -------
     inds : tuple of arrays
         The indices for the triangle. The returned tuple contains two arrays,
-        each with the indices along one dimension of the array.
+        each with the indices along one dimension of the array. Indices are
+        ordered based on rows and then columns.
 
     See also
     --------
@@ -1076,8 +1077,9 @@ def triu_indices(n, k=0, m=None):
     -------
     inds : tuple, shape(2) of ndarrays, shape(`n`)
         The indices for the triangle. The returned tuple contains two arrays,
-        each with the indices along one dimension of the array.  Can be used
-        to slice a ndarray of shape(`n`, `n`).
+        each with the indices along one dimension of the array. Indices are
+        ordered based on rows and then columns. Can be used to slice a
+        ndarray of shape(`n`, `n`).
 
     See also
     --------
