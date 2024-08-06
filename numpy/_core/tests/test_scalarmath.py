@@ -27,7 +27,7 @@ types = [np.bool, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
 floating_types = np.floating.__subclasses__()
 complex_floating_types = np.complexfloating.__subclasses__()
 
-objecty_things = [object(), None]
+objecty_things = [object(), None, np.array(None, dtype=object)]
 
 binary_operators_for_scalars = [
     operator.lt, operator.le, operator.eq, operator.ne, operator.ge,
