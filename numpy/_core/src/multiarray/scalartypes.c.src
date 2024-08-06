@@ -209,14 +209,14 @@ find_binary_operation_path(
      * our ufuncs without preventing recursion.
      * It may be nice to avoid double lookup in `BINOP_GIVE_UP_IF_NEEDED`.
      */
-    PyObject *attr = PyArray_LookupSpecial(other, npy_interned_str.array_ufunc);
-    if (attr != NULL) {
+    PyObject *attr;
+    if (PyArray_LookupSpecial(other, npy_interned_str.array_ufunc, &attr) < 0) {
+        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+    }
+    else if (attr != NULL) {
         Py_DECREF(attr);
         *other_op = Py_NewRef(other);
         return 0;
-    }
-    else if (PyErr_Occurred()) {
-        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
 
     /*

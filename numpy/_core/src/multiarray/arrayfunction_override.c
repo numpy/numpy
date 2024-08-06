@@ -4,6 +4,7 @@
 #include <Python.h>
 #include "structmember.h"
 
+#include "numpy/ndarrayobject.h"
 #include "numpy/ndarraytypes.h"
 #include "get_attr_string.h"
 #include "npy_import.h"
@@ -25,8 +26,9 @@ get_array_function(PyObject *obj)
         return npy_static_pydata.ndarray_array_function;
     }
 
-    PyObject *array_function = PyArray_LookupSpecial(obj, npy_interned_str.array_function);
-    if (array_function == NULL && PyErr_Occurred()) {
+    PyObject *array_function;
+    if (PyArray_LookupSpecial(
+            obj, npy_interned_str.array_function, &array_function) < 0) {
         PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
 

@@ -57,11 +57,12 @@ npy_find_array_wrap(
             }
         }
         else {
-            PyObject *new_wrap = PyArray_LookupSpecial_OnInstance(obj, npy_interned_str.array_wrap);
-            if (new_wrap == NULL) {
-                if (PyErr_Occurred()) {
-                    goto fail;
-                }
+            PyObject *new_wrap;
+            if (PyArray_LookupSpecial_OnInstance(
+                    obj, npy_interned_str.array_wrap, &new_wrap) < 0) {
+                goto fail;
+            }
+            else if (new_wrap == NULL) {
                 continue;
             }
             double curr_priority = PyArray_GetPriority(obj, 0);
@@ -159,14 +160,13 @@ npy_apply_wrap(
         }
         else {
             /* Replace passed wrap/wrap_type (borrowed refs) with new_wrap/type. */
-            new_wrap = PyArray_LookupSpecial_OnInstance(
-                    original_out, npy_interned_str.array_wrap);
-            if (new_wrap != NULL) {
+            if (PyArray_LookupSpecial_OnInstance(
+                    original_out, npy_interned_str.array_wrap, &new_wrap) < 0) {
+                return NULL;
+            }
+            else if (new_wrap != NULL) {
                 wrap = new_wrap;
                 wrap_type = (PyObject *)Py_TYPE(original_out);
-            }
-            else if (PyErr_Occurred()) {
-                return NULL;
             }
         }
     }

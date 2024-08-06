@@ -1,6 +1,7 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
+#include "numpy/ndarrayobject.h"
 #include "numpy/ndarraytypes.h"
 #include "npy_pycompat.h"
 #include "get_attr_string.h"
@@ -35,14 +36,12 @@ PyUFuncOverride_GetNonDefaultArrayUfunc(PyObject *obj)
      * Does the class define __array_ufunc__? (Note that LookupSpecial has fast
      * return for basic python types, so no need to worry about those here)
      */
-    cls_array_ufunc = PyArray_LookupSpecial(obj, npy_interned_str.array_ufunc);
-    if (cls_array_ufunc == NULL) {
-        if (PyErr_Occurred()) {
-            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
-        }
+    if (PyArray_LookupSpecial(
+            obj, npy_interned_str.array_ufunc, &cls_array_ufunc) < 0) {
+        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
         return NULL;
     }
-    /* Ignore if the same as ndarray.__array_ufunc__ */
+    /* Ignore if the same as ndarray.__array_ufunc__ (it may be NULL here) */
     if (cls_array_ufunc == npy_static_pydata.ndarray_array_ufunc) {
         Py_DECREF(cls_array_ufunc);
         return NULL;

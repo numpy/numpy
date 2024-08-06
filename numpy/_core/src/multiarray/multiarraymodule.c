@@ -157,12 +157,13 @@ PyArray_GetPriority(PyObject *obj, double default_)
         return NPY_SCALAR_PRIORITY;
     }
 
-    ret = PyArray_LookupSpecial_OnInstance(obj, npy_interned_str.array_priority);
-    if (ret == NULL) {
-        if (PyErr_Occurred()) {
-            /* TODO[gh-14801]: propagate crashes during attribute access? */
-            PyErr_Clear();
-        }
+    if (PyArray_LookupSpecial_OnInstance(
+            obj, npy_interned_str.array_priority, &ret) < 0) {
+        /* TODO[gh-14801]: propagate crashes during attribute access? */
+        PyErr_Clear();
+        return default_;
+    }
+    else if (ret == NULL) {
         return default_;
     }
 
