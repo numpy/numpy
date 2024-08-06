@@ -743,6 +743,8 @@ def getdata(a, subok=True):
            [3, 4]])
 
     """
+    if isinstance(a, (int, float, complex)) or not hasattr(a, 'dtype'):
+        return a
     try:
         data = a._data
     except AttributeError:
@@ -1061,12 +1063,12 @@ class _MaskedBinaryOperation(_MaskedUFunc):
         # Define the allowed dtypes
         allowed_dtypes = (np.float32, np.float64, np.int32, np.int64)
 
-        # Ensure result dtype matches original dtype for specified types
-        if original_dtype is not None and \
-                result.dtype != original_dtype:
-            if original_dtype in allowed_dtypes and \
-                    result.dtype in allowed_dtypes:
-                result = result.astype(original_dtype, casting='unsafe')
+        # # Ensure result dtype matches original dtype for specified types
+        # if original_dtype is not None and \
+        #         result.dtype != original_dtype:
+        #     if original_dtype in allowed_dtypes and \
+        #             result.dtype in allowed_dtypes:
+        #         result = result.astype(original_dtype, casting='unsafe')
 
         (ma, mb) = (getmask(a), getmask(b))
         if ma is nomask:
