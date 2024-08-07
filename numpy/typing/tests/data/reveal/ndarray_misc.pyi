@@ -6,7 +6,6 @@ function-based counterpart in `../from_numeric.py`.
 
 """
 
-import sys
 import operator
 import ctypes as ct
 from typing import Any, Literal
@@ -14,10 +13,7 @@ from typing import Any, Literal
 import numpy as np
 import numpy.typing as npt
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 class SubClass(npt.NDArray[np.object_]): ...
 

@@ -1,14 +1,10 @@
-import sys
 from typing import Any
 
 import numpy as np
 import numpy.typing as npt
 from numpy._typing import _32Bit, _64Bit
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 f8 = np.float64()
 i8 = np.int64()

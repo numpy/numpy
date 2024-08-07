@@ -1,13 +1,9 @@
-import sys
-from typing import Any, Literal, TypeAlias
+from typing import Literal, TypeAlias
 
 import numpy as np
 import numpy.typing as npt
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 a: np.flatiter[npt.NDArray[np.str_]]
 a_1d: np.flatiter[np.ndarray[tuple[int], np.dtype[np.bytes_]]]

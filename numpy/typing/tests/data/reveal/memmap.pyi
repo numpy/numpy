@@ -1,12 +1,8 @@
-import sys
 from typing import Any
 
 import numpy as np
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 memmap_obj: np.memmap[Any, np.dtype[np.str_]]
 
