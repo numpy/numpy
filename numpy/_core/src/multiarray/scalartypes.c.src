@@ -194,14 +194,29 @@ find_binary_operation_path(
             PyLong_CheckExact(other) ||
             PyFloat_CheckExact(other) ||
             PyComplex_CheckExact(other) ||
-            PyBool_Check(other)) {
+            PyBool_Check(other) ||
+            PyArray_Check(other)) {
         /*
          * The other operand is ready for the operation already.  Must pass on
          * on float/long/complex mainly for weak promotion (NEP 50).
          */
-        Py_INCREF(other);
-        *other_op = other;
+        *other_op = Py_NewRef(other);
         return 0;
+    }
+    /*
+     * If other has __array_ufunc__ always use ufunc.  If array-ufunc was None
+     * we already deferred.  And any custom object with array-ufunc cannot call
+     * our ufuncs without preventing recursion.
+     * It may be nice to avoid double lookup in `BINOP_GIVE_UP_IF_NEEDED`.
+     */
+    PyObject *attr = PyArray_LookupSpecial(other, npy_interned_str.array_ufunc);
+    if (attr != NULL) {
+        Py_DECREF(attr);
+        *other_op = Py_NewRef(other);
+        return 0;
+    }
+    else if (PyErr_Occurred()) {
+        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
 
     /*
@@ -216,7 +231,13 @@ find_binary_operation_path(
     }
 
     if (!was_scalar || PyArray_DESCR(arr)->type_num != NPY_OBJECT) {
-        /* The array is OK for usage and we can simply forward it
+        /* 
+         * The array is OK for usage and we can simply forward it.  There
+         * is a theoretical subtlety here:  If the other object implements
+         * `__array_wrap__`, we may ignore that.  However, this only matters
+         * if the other object has the identical `__array_priority__` and
+         * additionally already deferred back to us.
+         * (`obj + scalar` and `scalar + obj` are not symmetric.)
          *
          * NOTE: Future NumPy may need to distinguish scalars here, one option
          *       could be marking the array.

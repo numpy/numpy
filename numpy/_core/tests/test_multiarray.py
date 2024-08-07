@@ -4025,6 +4025,18 @@ class TestBinop:
         assert res.shape == (3,)
         assert res[0] == 'result'
 
+    @pytest.mark.parametrize("scalar", [
+            np.longdouble(1), np.timedelta64(120, 'm')])
+    @pytest.mark.parametrize("op", [operator.add, operator.xor])
+    def test_scalar_binop_guarantees_ufunc(self, scalar, op):
+        # Test that __array_ufunc__ will always cause ufunc use even when
+        # we have to protect some other calls from recursing (see gh-26904).
+        class SomeClass:
+            def __array_ufunc__(self, ufunc, method, *inputs, **kw):
+                return "result"
+
+        assert SomeClass() + scalar == "result"
+        assert scalar + SomeClass() == "result"
 
     def test_ufunc_override_normalize_signature(self):
         # gh-5674
