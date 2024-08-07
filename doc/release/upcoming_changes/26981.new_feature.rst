@@ -1,9 +1,0 @@
-``f2py`` can generate freethreading-compatible C extensions
------------------------------------------------------------
-
-Pass ``--freethreading-compatible`` to the f2py CLI tool to produce a C
-extension marked as compatible with the free threading CPython
-interpreter. Doing so prevents the interpreter from re-enabling the GIL at
-runtime when it imports the C extension. Note that ``f2py`` does not analyze
-fortran code for thread safety, so you must verify that the wrapped fortran
-code is thread safe before marking the extension as compatible.

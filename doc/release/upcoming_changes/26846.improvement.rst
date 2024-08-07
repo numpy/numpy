@@ -1,6 +1,0 @@
-The `numpy.printoptions` context manager is now thread and async-safe
----------------------------------------------------------------------
-
-In prior versions of NumPy, the printoptions were defined using a combination
-of Python and C global variables. We have refactored so the state is stored in
-a python ``ContextVar``, making the context manager thread and async-safe.
