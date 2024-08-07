@@ -40,7 +40,7 @@ So for example: ``123.new_feature.rst`` would have the content::
     The ``my_new_feature`` option is now available for `my_favorite_function`.
     To use it, write ``np.my_favorite_function(..., my_new_feature=True)``.
 
-``highlight`` is usually formatted as bulled points making the fragment
+``highlight`` is usually formatted as bullet points making the fragment
 ``* This is a highlight``.
 
 Note the use of single-backticks to get an internal link (assuming

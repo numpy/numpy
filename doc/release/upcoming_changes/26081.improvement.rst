@@ -1,0 +1,11 @@
+``ndarray`` shape-type parameter is now covariant and bound to ``tuple[int, ...]``
+----------------------------------------------------------------------------------
+Static typing for ``ndarray`` is a long-term effort that continues
+with this change.  It is a generic type with type parameters for
+the shape and the data type.  Previously, the shape type parameter could be
+any value.  This change restricts it to a tuple of ints, as one would expect
+from using ``ndarray.shape``.  Further, the shape-type parameter has been
+changed from invariant to covariant.  This change also applies to the subtypes
+of ``ndarray``, e.g. ``numpy.ma.MaskedArray``.  See the
+`typing docs <https://typing.readthedocs.io/en/latest/reference/generics.html#variance-of-generic-types>`_
+for more information.
