@@ -76,8 +76,8 @@ jobs:
         # Github Actions doesn't support pairing matrix values together, let's improvise
         # https://github.com/github/feedback/discussions/7835#discussioncomment-1769026
         buildplat:
-          - [ubuntu-20.04, manylinux_x86_64, ""]
-          - [ubuntu-20.04, musllinux_x86_64, ""]
+          - [ubuntu-22.04, manylinux_x86_64, ""]
+          - [ubuntu-22.04, musllinux_x86_64, ""]
           - [macos-13, macosx_x86_64, openblas]
 
           # targeting macos >= 14. Could probably build on macos-14, but it would be a cross-compile
@@ -90,7 +90,7 @@ jobs:
           # Don't build PyPy 32-bit windows
           - buildplat: [windows-2019, win32, ""]
             python: "pp310"
-          - buildplat: [ ubuntu-20.04, musllinux_x86_64, "" ]
+          - buildplat: [ ubuntu-22.04, musllinux_x86_64, "" ]
             python: "pp310"
           - buildplat: [ macos-14, macosx_arm64, accelerate ]
             python: "pp310"
