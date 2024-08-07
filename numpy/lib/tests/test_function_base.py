@@ -2848,6 +2848,11 @@ class TestBincount:
         y = np.bincount(x, minlength=5)
         assert_array_equal(y, np.zeros(5, dtype=int))
 
+    @pytest.mark.parametrize('minlength', [0, 3])
+    def test_empty_list(self, minlength):
+        assert_array_equal(np.bincount([], minlength=minlength),
+                           np.zeros(minlength, dtype=int))
+
     def test_with_incorrect_minlength(self):
         x = np.array([], dtype=int)
         assert_raises_regex(TypeError,

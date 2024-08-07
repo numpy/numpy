@@ -7,22 +7,17 @@
 
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
-
 #include "numpy/npy_math.h"
 
 #include "npy_config.h"
-
-
-
 #include "arraywrap.h"
 #include "ctors.h"
-
 #include "shape.h"
-
 #include "npy_static_data.h" /* for interned strings */
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "common.h" /* for convert_shape_to_string */
 #include "alloc.h"
+#include "refcount.h"
 
 static int
 _fix_unknown_dimension(PyArray_Dims *newshape, PyArrayObject *arr);
@@ -30,9 +25,6 @@ _fix_unknown_dimension(PyArray_Dims *newshape, PyArrayObject *arr);
 static int
 _attempt_nocopy_reshape(PyArrayObject *self, int newnd, const npy_intp *newdims,
                         npy_intp *newstrides, int is_f_order);
-
-static void
-_putzero(char *optr, PyObject *zero, PyArray_Descr *dtype);
 
 /*NUMPY_API
  * Resize (reallocate data).  Only works if nothing else is referencing this
@@ -141,20 +133,14 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
     }
 
     if (newnbytes > oldnbytes && PyArray_ISWRITEABLE(self)) {
-        /* Fill new memory with zeros */
-        if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_ITEM_REFCOUNT)) {
-            PyObject *zero = PyLong_FromLong(0);
-            char *optr;
-            optr = PyArray_BYTES(self) + oldnbytes;
-            npy_intp n_new = newsize - oldsize;
-            for (npy_intp i = 0; i < n_new; i++) {
-                _putzero((char *)optr, zero, PyArray_DESCR(self));
-                optr += elsize;
-            }
-            Py_DECREF(zero);
-        }
-        else{
-            memset(PyArray_BYTES(self) + oldnbytes, 0, newnbytes - oldnbytes);
+        /* Fill new memory with zeros (PyLong zero for object arrays) */
+        npy_intp stride = elsize;
+        npy_intp size = newsize - oldsize;
+        char *data = PyArray_BYTES(self) + oldnbytes;
+        int aligned = PyArray_ISALIGNED(self);
+        if (PyArray_ZeroContiguousBuffer(PyArray_DESCR(self), data,
+                                         stride, size, aligned) < 0) {
+            return NULL;
         }
     }
 
@@ -335,41 +321,6 @@ PyArray_Reshape(PyArrayObject *self, PyObject *shape)
     ret = PyArray_Newshape(self, &newdims, NPY_CORDER);
     npy_free_cache_dim_obj(newdims);
     return ret;
-}
-
-
-static void
-_putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
-{
-    if (!PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)) {
-        memset(optr, 0, dtype->elsize);
-    }
-    else if (PyDataType_HASFIELDS(dtype)) {
-        PyObject *key, *value, *title = NULL;
-        PyArray_Descr *new;
-        int offset;
-        Py_ssize_t pos = 0;
-        while (PyDict_Next(PyDataType_FIELDS(dtype), &pos, &key, &value)) {
-            if (NPY_TITLE_KEY(key, value)) {
-                continue;
-            }
-            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
-                return;
-            }
-            _putzero(optr + offset, zero, new);
-        }
-    }
-    else {
-        npy_intp i;
-        npy_intp nsize = dtype->elsize / sizeof(zero);
-
-        for (i = 0; i < nsize; i++) {
-            Py_INCREF(zero);
-            memcpy(optr, &zero, sizeof(zero));
-            optr += sizeof(zero);
-        }
-    }
-    return;
 }
 
 

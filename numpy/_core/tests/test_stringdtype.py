@@ -11,7 +11,7 @@ import pytest
 
 from numpy.dtypes import StringDType
 from numpy._core.tests._natype import pd_NA
-from numpy.testing import assert_array_equal, IS_WASM
+from numpy.testing import assert_array_equal, IS_WASM, IS_PYPY
 
 
 @pytest.fixture
@@ -495,6 +495,16 @@ def test_fancy_indexing(string_list):
     sarr = np.array(string_list, dtype="T")
     assert_array_equal(sarr, sarr[np.arange(sarr.shape[0])])
 
+    # see gh-27003 and gh-27053
+    for ind in [[True, True], [0, 1], ...]:
+        for lop in [['a'*16, 'b'*16], ['', '']]:
+            a = np.array(lop, dtype="T")
+            rop = ['d'*16, 'e'*16]
+            for b in [rop, np.array(rop, dtype="T")]:
+                a[ind] = b
+                assert_array_equal(a, b)
+                assert a[0] == 'd'*16
+
 
 def test_creation_functions():
     assert_array_equal(np.zeros(3, dtype="T"), ["", "", ""])
@@ -509,6 +519,15 @@ def test_concatenate(string_list):
     sarr_cat = np.array(string_list + string_list, dtype="T")
 
     assert_array_equal(np.concatenate([sarr], axis=0), sarr)
+
+
+def test_resize_method(string_list):
+    sarr = np.array(string_list, dtype="T")
+    if IS_PYPY:
+        sarr.resize(len(string_list)+3, refcheck=False)
+    else:
+        sarr.resize(len(string_list)+3)
+    assert_array_equal(sarr, np.array(string_list + ['']*3,  dtype="T"))
 
 
 def test_create_with_copy_none(string_list):

@@ -954,15 +954,7 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
         return CONVERSION_SUCCESS;
     }
 
-    if (PyFloat_Check(value)) {
-        if (!PyFloat_CheckExact(value)) {
-            /* A NumPy double is a float subclass, but special. */
-            if (PyArray_IsScalar(value, Double)) {
-                descr = PyArray_DescrFromType(NPY_DOUBLE);
-                goto numpy_scalar;
-            }
-            *may_need_deferring = NPY_TRUE;
-        }
+    if (PyFloat_CheckExact(value)) {
         if (!IS_SAFE(NPY_DOUBLE, NPY_@TYPE@)) {
             if (get_npy_promotion_state() != NPY_USE_WEAK_PROMOTION) {
                 /* Legacy promotion and weak-and-warn not handled here */
@@ -978,10 +970,7 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
         return CONVERSION_SUCCESS;
     }
 
-    if (PyLong_Check(value)) {
-        if (!PyLong_CheckExact(value)) {
-            *may_need_deferring = NPY_TRUE;
-        }
+    if (PyLong_CheckExact(value)) {
         if (!IS_SAFE(NPY_LONG, NPY_@TYPE@)) {
             /*
              * long -> (c)longdouble is safe, so `OTHER_IS_UNKNOWN_OBJECT` will
@@ -1009,15 +998,7 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
         return CONVERSION_SUCCESS;
     }
 
-    if (PyComplex_Check(value)) {
-        if (!PyComplex_CheckExact(value)) {
-            /* A NumPy complex double is a float subclass, but special. */
-            if (PyArray_IsScalar(value, CDouble)) {
-                descr = PyArray_DescrFromType(NPY_CDOUBLE);
-                goto numpy_scalar;
-            }
-            *may_need_deferring = NPY_TRUE;
-        }
+    if (PyComplex_CheckExact(value)) {
         if (!IS_SAFE(NPY_CDOUBLE, NPY_@TYPE@)) {
             if (get_npy_promotion_state() != NPY_USE_WEAK_PROMOTION) {
                 /* Legacy promotion and weak-and-warn not handled here */
@@ -1079,7 +1060,6 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
         return OTHER_IS_UNKNOWN_OBJECT;
     }
 
-  numpy_scalar:
     if (descr->typeobj != Py_TYPE(value)) {
         /*
          * This is a subclass of a builtin type, we may continue normally,
@@ -1409,7 +1389,8 @@ static PyObject *
     npy_bool may_need_deferring;
     conversion_result res = convert_to_@name@(
             other, &other_val_conv, &may_need_deferring);
-    other_val = other_val_conv;  /* Need a float value */
+    /* Actual float cast `other_val` is set below on success. */
+
     if (res == CONVERSION_ERROR) {
         return NULL;  /* an error occurred (should never happen) */
     }
@@ -1420,6 +1401,7 @@ static PyObject *
         case DEFER_TO_OTHER_KNOWN_SCALAR:
             Py_RETURN_NOTIMPLEMENTED;
         case CONVERSION_SUCCESS:
+            other_val = other_val_conv;  /* Need a float value */
             break;  /* successfully extracted value we can proceed */
         case OTHER_IS_UNKNOWN_OBJECT:
         case PROMOTION_REQUIRED:

@@ -1,0 +1,24 @@
+Cast-safety fixes in ``copyto`` and ``full``
+--------------------------------------------
+``copyto`` now uses NEP 50 correctly and applies this to its cast safety.
+Python integer to NumPy integer casts and Python float to NumPy float casts
+are now considered "safe" even if assignment may fail or precision may be lost.
+This means the following examples change slightly:
+
+* ``np.copyto(int8_arr, 1000)`` previously performed an unsafe/same-kind cast
+   of the Python integer.  It will now always raise, to achieve an unsafe cast
+   you must pass an array or NumPy scalar.
+* ``np.copyto(uint8_arr, 1000, casting="safe")`` will raise an OverflowError
+  rather than a TypeError due to same-kind casting.
+* ``np.copyto(float32_arr, 1e300, casting="safe")`` will overflow to ``inf``
+  (float32 cannot hold ``1e300``) rather raising a TypeError.
+
+Further, only the dtype is used when assigning NumPy scalars (or 0-d arrays),
+meaning that the following behaves differently:
+
+* ``np.copyto(float32_arr, np.float64(3.0), casting="safe")`` raises.
+* ``np.coptyo(int8_arr, np.int64(100), casting="safe")`` raises.
+  Previously, NumPy checked whether the 100 fits the ``int8_arr``.
+
+This aligns ``copyto``, ``full``, and ``full_like`` with the correct NumPy 2
+behavior.

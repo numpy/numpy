@@ -362,7 +362,11 @@ NPY_INPLACE npy_longdouble npy_heavisidel(npy_longdouble x, npy_longdouble h0);
 
 static inline double npy_creal(const npy_cdouble z)
 {
+#if defined(__cplusplus)
     return ((double *) &z)[0];
+#else
+    return creal(z);
+#endif
 }
 
 static inline void npy_csetreal(npy_cdouble *z, const double r)
@@ -372,7 +376,11 @@ static inline void npy_csetreal(npy_cdouble *z, const double r)
 
 static inline double npy_cimag(const npy_cdouble z)
 {
+#if defined(__cplusplus)
     return ((double *) &z)[1];
+#else
+    return cimag(z);
+#endif
 }
 
 static inline void npy_csetimag(npy_cdouble *z, const double i)
@@ -382,7 +390,11 @@ static inline void npy_csetimag(npy_cdouble *z, const double i)
 
 static inline float npy_crealf(const npy_cfloat z)
 {
+#if defined(__cplusplus)
     return ((float *) &z)[0];
+#else
+    return crealf(z);
+#endif
 }
 
 static inline void npy_csetrealf(npy_cfloat *z, const float r)
@@ -392,7 +404,11 @@ static inline void npy_csetrealf(npy_cfloat *z, const float r)
 
 static inline float npy_cimagf(const npy_cfloat z)
 {
+#if defined(__cplusplus)
     return ((float *) &z)[1];
+#else
+    return cimagf(z);
+#endif
 }
 
 static inline void npy_csetimagf(npy_cfloat *z, const float i)
@@ -402,7 +418,11 @@ static inline void npy_csetimagf(npy_cfloat *z, const float i)
 
 static inline npy_longdouble npy_creall(const npy_clongdouble z)
 {
+#if defined(__cplusplus)
     return ((longdouble_t *) &z)[0];
+#else
+    return creall(z);
+#endif
 }
 
 static inline void npy_csetreall(npy_clongdouble *z, const longdouble_t r)
@@ -412,7 +432,11 @@ static inline void npy_csetreall(npy_clongdouble *z, const longdouble_t r)
 
 static inline npy_longdouble npy_cimagl(const npy_clongdouble z)
 {
+#if defined(__cplusplus)
     return ((longdouble_t *) &z)[1];
+#else
+    return cimagl(z);
+#endif
 }
 
 static inline void npy_csetimagl(npy_clongdouble *z, const longdouble_t i)

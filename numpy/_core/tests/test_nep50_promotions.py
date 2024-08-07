@@ -352,18 +352,11 @@ def test_thread_local_promotion_state():
         np._set_promotion_state("legacy")
         b.wait()
         assert np._get_promotion_state() == "legacy"
-        # turn warnings into errors, this should not warn with
-        # legacy promotion state
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            np.float16(1) + 131008
 
     def weak_warn():
         np._set_promotion_state("weak")
         b.wait()
         assert np._get_promotion_state() == "weak"
-        with pytest.raises(RuntimeWarning):
-            np.float16(1) + 131008
 
     task1 = threading.Thread(target=legacy_no_warn)
     task2 = threading.Thread(target=weak_warn)

@@ -1350,7 +1350,7 @@ def shares_memory(a, b, max_work=None):
     .. warning::
 
        This function can be exponentially slow for some inputs, unless
-       `max_work` is set to a finite number or ``MAY_SHARE_BOUNDS``.
+       `max_work` is set to zero or a positive integer.
        If in doubt, use `numpy.may_share_memory` instead.
 
     Parameters
@@ -1362,12 +1362,13 @@ def shares_memory(a, b, max_work=None):
         of candidate solutions to consider). The following special
         values are recognized:
 
-        max_work=MAY_SHARE_EXACT  (default)
+        max_work=-1 (default)
             The problem is solved exactly. In this case, the function returns
             True only if there is an element shared between the arrays. Finding
             the exact solution may take extremely long in some cases.
-        max_work=MAY_SHARE_BOUNDS
+        max_work=0
             Only the memory bounds of a and b are checked.
+            This is equivalent to using ``may_share_memory()``.
 
     Raises
     ------

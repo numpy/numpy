@@ -12,6 +12,8 @@ build_and_store_wheels: &BUILD_AND_STORE_WHEELS
 
 linux_aarch64_task:
   use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
+  env:
+    CIRRUS_CLONE_SUBMODULES: true
   compute_engine_instance:
     image_project: cirrus-images
     image: family/docker-builder-arm64
@@ -24,14 +26,17 @@ linux_aarch64_task:
     # single task takes longer than 60 mins (the default time limit for a
     # cirrus-ci task).
     - env:
-        CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp310-*
     - env:
-        CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp311-*
     - env:
-        CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp312-*
+    - env:
+        CIBW_BUILD: cp313-*
+    - env:
+        CIBW_BUILD: cp313t-*
+        CIBW_FREE_THREADED_SUPPORT: 1
+        CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation"
 
   initial_setup_script: |
     apt update
@@ -52,17 +57,21 @@ linux_aarch64_task:
 
 macosx_arm64_task:
   use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
+  env:
+      CIRRUS_CLONE_SUBMODULES: true
   macos_instance:
     matrix:
       image: ghcr.io/cirruslabs/macos-monterey-xcode
 
   matrix:
     - env:
-        CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp310-* cp311
     - env:
-        CIRRUS_CLONE_SUBMODULES: true
-        CIBW_BUILD: cp312-*
+        CIBW_BUILD: cp312-* cp313-*
+    - env:
+        CIBW_BUILD: cp313t-*
+        CIBW_FREE_THREADED_SUPPORT: 1
+        CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation"
   env:
     PATH: /usr/local/lib:/usr/local/include:$PATH
     CIBW_ARCHS: arm64

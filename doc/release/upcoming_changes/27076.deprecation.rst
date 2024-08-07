@@ -1,0 +1,3 @@
+* Passing non-integer inputs as the first argument of `bincount` is now
+  deprecated, because such inputs are silently cast to integers with no
+  warning about loss of precision.
