@@ -1,12 +1,8 @@
-import sys
 from typing import Any
 
 import numpy as np
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type, LiteralString
-else:
-    from typing_extensions import assert_type, LiteralString
+from typing_extensions import assert_type, LiteralString
 
 f: float
 f8: np.float64

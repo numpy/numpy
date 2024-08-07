@@ -1,14 +1,10 @@
-import sys
 from types import EllipsisType
 from typing import Any, Literal
 
 import numpy as np
 import numpy.typing as npt
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 AR_LIKE_b: list[bool]
 AR_LIKE_i: list[int]
