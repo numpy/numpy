@@ -4035,8 +4035,8 @@ class TestBinop:
             def __array_ufunc__(self, ufunc, method, *inputs, **kw):
                 return "result"
 
-        assert SomeClass() + np.longdouble(1) == "result"
-        assert np.longdouble(1) + SomeClass() == "result"
+        assert SomeClass() + scalar == "result"
+        assert scalar + SomeClass() == "result"
 
     def test_ufunc_override_normalize_signature(self):
         # gh-5674
