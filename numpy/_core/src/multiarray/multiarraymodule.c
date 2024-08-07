@@ -1950,6 +1950,7 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
         PyErr_Format(PyExc_TypeError,
             "copyto() argument 1 must be a numpy.ndarray, not %s",
             Py_TYPE(dst_obj)->tp_name);
+        goto fail;
     }
     PyArrayObject *dst = (PyArrayObject *)dst_obj;
 
