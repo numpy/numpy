@@ -18,5 +18,5 @@ towncrier
 toml
 
 # interactive documentation utilities
-jupyterlite-sphinx>=0.16.2
+jupyterlite-sphinx>=0.16.4
 jupyterlite-pyodide-kernel
