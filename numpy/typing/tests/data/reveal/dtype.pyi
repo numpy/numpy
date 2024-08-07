@@ -1,6 +1,9 @@
 import sys
 import ctypes as ct
-from typing import Any
+import datetime as dt
+from decimal import Decimal
+from fractions import Fraction
+from typing import Any, TypeAlias
 
 import numpy as np
 
@@ -12,6 +15,22 @@ else:
 dtype_U: np.dtype[np.str_]
 dtype_V: np.dtype[np.void]
 dtype_i8: np.dtype[np.int64]
+
+# equivalent to type[int]
+py_int_co: type[int] | type[bool]
+# equivalent to type[float] (type-check only)
+py_float_co: type[float] | type[int] | type[bool]
+# equivalent to type[complex] (type-check only)
+py_complex_co: type[complex] | type[float] | type[int] | type[bool]
+# equivalent to type[object]
+py_object_co: (
+    type[object]
+    | type[complex] | type[float] | type[int] | type[bool]
+    | type[str] | type[bytes]
+    # ...
+)
+py_character_co: type[str] | type[bytes]
+
 
 assert_type(np.dtype(np.float64), np.dtype[np.float64])
 assert_type(np.dtype(np.float64, metadata={"test": "test"}), np.dtype[np.float64])
@@ -27,13 +46,24 @@ assert_type(np.dtype("bytes"), np.dtype[np.bytes_])
 assert_type(np.dtype("str"), np.dtype[np.str_])
 
 # Python types
-assert_type(np.dtype(complex), np.dtype[np.cdouble])
-assert_type(np.dtype(float), np.dtype[np.double])
-assert_type(np.dtype(int), np.dtype[np.int_])
 assert_type(np.dtype(bool), np.dtype[np.bool])
+assert_type(np.dtype(int), np.dtype[np.int_ | np.bool])
+assert_type(np.dtype(py_int_co), np.dtype[np.int_ | np.bool])
+assert_type(np.dtype(float), np.dtype[np.float64 | np.int_ | np.bool])
+assert_type(np.dtype(py_float_co), np.dtype[np.float64 | np.int_ | np.bool])
+assert_type(np.dtype(complex), np.dtype[np.complex128 | np.float64 | np.int_ | np.bool])
+assert_type(np.dtype(py_complex_co), np.dtype[np.complex128 | np.float64 | np.int_ | np.bool])
+assert_type(np.dtype(object), np.dtype[np.object_ | Any])
+assert_type(np.dtype(py_object_co), np.dtype[np.object_ | Any])
+
 assert_type(np.dtype(str), np.dtype[np.str_])
 assert_type(np.dtype(bytes), np.dtype[np.bytes_])
-assert_type(np.dtype(object), np.dtype[np.object_])
+
+assert_type(np.dtype(list), np.dtype[np.object_])
+assert_type(np.dtype(dt.datetime), np.dtype[np.object_])
+assert_type(np.dtype(dt.timedelta), np.dtype[np.object_])
+assert_type(np.dtype(Decimal), np.dtype[np.object_])
+assert_type(np.dtype(Fraction), np.dtype[np.object_])
 
 # ctypes
 assert_type(np.dtype(ct.c_double), np.dtype[np.double])
@@ -44,7 +74,7 @@ assert_type(np.dtype(ct.c_char), np.dtype[np.bytes_])
 assert_type(np.dtype(ct.py_object), np.dtype[np.object_])
 
 # Special case for None
-assert_type(np.dtype(None), np.dtype[np.double])
+assert_type(np.dtype(None), np.dtype[np.float64])
 
 # Dtypes of dtypes
 assert_type(np.dtype(np.dtype(np.float64)), np.dtype[np.float64])
