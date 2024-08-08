@@ -78,6 +78,12 @@ from numpy._typing import (
     _FloatLike_co,
     _TD64Like_co,
 )
+from numpy._typing._ufunc import (
+    _PyFunc_Nin1_Nout1,
+    _PyFunc_Nin2_Nout1,
+    _PyFunc_Nin3P_Nout1,
+    _PyFunc_Nin1P_Nout2P,
+)
 
 _T_co = TypeVar("_T_co", covariant=True)
 _T_contra = TypeVar("_T_contra", contravariant=True)
@@ -88,6 +94,9 @@ _ArrayType_co = TypeVar(
     bound=ndarray[Any, Any],
     covariant=True,
 )
+_IDType = TypeVar("_IDType")
+_Nin = TypeVar("_Nin", bound=int)
+_Nout = TypeVar("_Nout", bound=int)
 
 # Valid time units
 _UnitKind = L[
@@ -678,12 +687,77 @@ def fromstring(
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
+@overload
+def frompyfunc(  # type: ignore[overload-overlap]
+    func: Callable[[Any], Any], /,
+    nin: L[1],
+    nout: L[1],
+    *,
+    identity: None = ...,
+) -> _PyFunc_Nin1_Nout1[None]: ...
+@overload
+def frompyfunc(  # type: ignore[overload-overlap]
+    func: Callable[[Any], Any], /,
+    nin: L[1],
+    nout: L[1],
+    *,
+    identity: _IDType,
+) -> _PyFunc_Nin1_Nout1[_IDType]: ...
+@overload
+def frompyfunc(
+    func: Callable[[Any, Any], Any], /,
+    nin: L[2],
+    nout: L[1],
+    *,
+    identity: None = ...,
+) -> _PyFunc_Nin2_Nout1[None]: ...
+@overload
+def frompyfunc(
+    func: Callable[[Any, Any], Any], /,
+    nin: L[2],
+    nout: L[1],
+    *,
+    identity: _IDType,
+) -> _PyFunc_Nin2_Nout1[_IDType]: ...
+@overload
+def frompyfunc(
+    func: Callable[..., Any], /,
+    nin: _Nin,
+    nout: L[1],
+    *,
+    identity: None = ...,
+) -> _PyFunc_Nin3P_Nout1[None, _Nin]: ...
+@overload
+def frompyfunc(
+    func: Callable[..., Any], /,
+    nin: _Nin,
+    nout: L[1],
+    *,
+    identity: _IDType,
+) -> _PyFunc_Nin3P_Nout1[_IDType, _Nin]: ...
+@overload
+def frompyfunc(
+    func: Callable[..., tuple[Any, ...]], /,
+    nin: _Nin,
+    nout: _Nout,
+    *,
+    identity: None = ...,
+) -> _PyFunc_Nin1P_Nout2P[None, _Nin, _Nout]: ...
+@overload
+def frompyfunc(
+    func: Callable[..., tuple[Any, ...]], /,
+    nin: _Nin,
+    nout: _Nout,
+    *,
+    identity: _IDType,
+) -> _PyFunc_Nin1P_Nout2P[_IDType, _Nin, _Nout]: ...
+@overload
 def frompyfunc(
     func: Callable[..., Any], /,
     nin: SupportsIndex,
     nout: SupportsIndex,
     *,
-    identity: Any = ...,
+    identity: None | object = ...,
 ) -> ufunc: ...
 
 @overload
