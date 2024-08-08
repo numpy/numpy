@@ -30,7 +30,9 @@ py_object_co: (
     # ...
 )
 py_character_co: type[str] | type[bytes]
-py_flexible_co: type[str] | type[bytes] | type[memoryview]
+# TODO: also include type[bytes] here once mypy has been upgraded to 1.11,
+# which should resolve the `memoryview` typeshed issue.
+py_flexible_co: type[memoryview] | type[str]
 
 
 assert_type(np.dtype(np.float64), np.dtype[np.float64])
@@ -59,7 +61,9 @@ assert_type(np.dtype(py_object_co), np.dtype[np.object_ | Any])
 
 assert_type(np.dtype(str), np.dtype[np.str_])
 assert_type(np.dtype(bytes), np.dtype[np.bytes_])
+assert_type(np.dtype(py_character_co), np.dtype[np.character])
 assert_type(np.dtype(memoryview), np.dtype[np.void])
+assert_type(np.dtype(py_flexible_co), np.dtype[np.flexible])
 
 assert_type(np.dtype(list), np.dtype[np.object_])
 assert_type(np.dtype(dt.datetime), np.dtype[np.object_])
