@@ -998,32 +998,30 @@ def test_header_growth_axis():
 
             assert len(fp.getvalue()) == expected_header_length
 
-@pytest.mark.parametrize('dt, fail', [
-    (np.dtype({'names': ['a', 'b'], 'formats':  [float, np.dtype('S3',
-                 metadata={'some': 'stuff'})]}), True),
-    (np.dtype(int, metadata={'some': 'stuff'}), False),
-    (np.dtype([('subarray', (int, (2,)))], metadata={'some': 'stuff'}), False),
+@pytest.mark.parametrize('dt', [
+    np.dtype({'names': ['a', 'b'], 'formats':  [float, np.dtype('S3',
+                 metadata={'some': 'stuff'})]}),
+    np.dtype(int, metadata={'some': 'stuff'}),
+    np.dtype([('subarray', (int, (2,)))], metadata={'some': 'stuff'}),
     # recursive: metadata on the field of a dtype
-    (np.dtype({'names': ['a', 'b'], 'formats': [
+    np.dtype({'names': ['a', 'b'], 'formats': [
         float, np.dtype({'names': ['c'], 'formats': [np.dtype(int, metadata={})]})
-    ]}), False)
+    ]}),
     ])
 @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
         reason="PyPy bug in error formatting")
-def test_metadata_dtype(dt, fail):
+def test_metadata_dtype(dt):
     # gh-14142
     arr = np.ones(10, dtype=dt)
     buf = BytesIO()
     with assert_warns(UserWarning):
         np.save(buf, arr)
     buf.seek(0)
-    if fail:
-        with assert_raises(ValueError):
-            np.load(buf)
-    else:
-        arr2 = np.load(buf)
-        # BUG: assert_array_equal does not check metadata
-        from numpy.lib._utils_impl import drop_metadata
-        assert_array_equal(arr, arr2)
-        assert drop_metadata(arr.dtype) is not arr.dtype
-        assert drop_metadata(arr2.dtype) is arr2.dtype
+
+    # Loading should work (metadata was stripped):
+    arr2 = np.load(buf)
+    # BUG: assert_array_equal does not check metadata
+    from numpy.lib._utils_impl import drop_metadata
+    assert_array_equal(arr, arr2)
+    assert drop_metadata(arr.dtype) is not arr.dtype
+    assert drop_metadata(arr2.dtype) is arr2.dtype
