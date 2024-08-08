@@ -1015,6 +1015,9 @@ class TestMaskedArray:
         mx[1].data[0] = 0.
         assert_(mx2[0] == 0.)
 
+#          HERE
+
+
 
 class TestMaskedArrayArithmetic:
     # Base test class for MaskedArrays.
@@ -1921,6 +1924,31 @@ class TestMaskedArrayArithmetic:
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
         assert_equal(a.mask, [0, 0, 0, 0, 1])
+
+    def test_multiplication_type_promotion(self):
+        # Define and test for float32
+        arr_float32 = np.array([0, 1], dtype='float32')
+        marr_float32 = np.ma.masked_array(arr_float32)
+        assert_equal((arr_float32 * 2).dtype, np.float32)
+        assert_equal((marr_float32 * 2).dtype, np.float32)
+
+        # Define and test for float64
+        arr_float64 = np.array([0, 1], dtype='float64')
+        marr_float64 = np.ma.masked_array(arr_float64)
+        assert_equal((arr_float64 * 2).dtype, np.float64)
+        assert_equal((marr_float64 * 2).dtype, np.float64)
+
+        # Define and test for int32
+        arr_int32 = np.array([0, 1], dtype='int32')
+        marr_int32 = np.ma.masked_array(arr_int32)
+        assert_equal((arr_int32 * 2).dtype, np.int32)
+        assert_equal((marr_int32 * 2).dtype, np.int32)
+
+        # Define and test for int64
+        arr_int64 = np.array([0, 1], dtype='int64')
+        marr_int64 = np.ma.masked_array(arr_int64)
+        assert_equal((arr_int64 * 2).dtype, np.int64)
+        assert_equal((marr_int64 * 2).dtype, np.int64)
 
 
 class TestMaskedArrayAttributes:
@@ -3980,7 +4008,7 @@ class TestMaskedArrayMathMethods:
         assert_(np.ma.is_masked(a.anom()))
 
     def test_anom(self):
-        a = masked_array(np.arange(1, 7).reshape(2, 3))
+        a = masked_array(np.arange(1, 7).reshape(2, 3), dtype=np.float64)
         assert_almost_equal(a.anom(),
                             [[-2.5, -1.5, -0.5], [0.5, 1.5, 2.5]])
         assert_almost_equal(a.anom(axis=0),

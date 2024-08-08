@@ -743,6 +743,8 @@ def getdata(a, subok=True):
            [3, 4]])
 
     """
+    if isinstance(a, (int, float, complex)) or not hasattr(a, 'dtype'):
+        return a
     try:
         data = a._data
     except AttributeError:

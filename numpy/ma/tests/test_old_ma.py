@@ -500,7 +500,7 @@ class TestMa:
         y = arange(10)
 
         x = arange(10)
-        xm = arange(10)
+        xm = arange(10, dtype=np.float64)
         xm[2] = masked
         x += 1
         assert_(eq(x, y + 1))
@@ -508,31 +508,31 @@ class TestMa:
         assert_(eq(x, y + 1))
 
         x = arange(10)
-        xm = arange(10)
+        xm = arange(10, dtype=np.float64)
         xm[2] = masked
         x -= 1
         assert_(eq(x, y - 1))
         xm -= 1
         assert_(eq(xm, y - 1))
 
-        x = arange(10) * 1.0
-        xm = arange(10) * 1.0
+        x = arange(10, dtype=np.float64) * 1.0
+        xm = arange(10, dtype=np.float64) * 1.0
         xm[2] = masked
         x *= 2.0
         assert_(eq(x, y * 2))
         xm *= 2.0
         assert_(eq(xm, y * 2))
 
-        x = arange(10) * 2
-        xm = arange(10)
+        x = arange(10, dtype=np.float64) * 2
+        xm = arange(10, dtype=np.float64)
         xm[2] = masked
         x //= 2
         assert_(eq(x, y))
         xm //= 2
         assert_(eq(x, y))
 
-        x = arange(10) * 1.0
-        xm = arange(10) * 1.0
+        x = arange(10, dtype=np.float64) * 1.0
+        xm = arange(10, dtype=np.float64) * 1.0
         xm[2] = masked
         x /= 2.0
         assert_(eq(x, y / 2.0))
@@ -540,7 +540,7 @@ class TestMa:
         assert_(eq(xm, ones((10,))))
 
         x = arange(10).astype(np.float32)
-        xm = arange(10)
+        xm = arange(10).astype(np.float32)
         xm[2] = masked
         x += 1.
         assert_(eq(x, y + 1.))
