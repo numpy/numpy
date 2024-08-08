@@ -450,6 +450,10 @@ def _get_bin_edges(a, bins, range, weights):
         bin_edges = np.linspace(
             first_edge, last_edge, n_equal_bins + 1,
             endpoint=True, dtype=bin_type)
+        if np.any(bin_edges[:-1] >= bin_edges[1:]):
+            raise ValueError(
+                f'Too many bins for data range. Cannot create {n_equal_bins} '
+                f'finite-sized bins.')
         return bin_edges, (first_edge, last_edge, n_equal_bins)
     else:
         return bin_edges, None
