@@ -6,6 +6,7 @@ from fractions import Fraction
 from typing import Any, Literal, TypeAlias
 
 import numpy as np
+from numpy.dtypes import StringDType
 
 if sys.version_info >= (3, 11):
     from typing import assert_type
@@ -31,12 +32,13 @@ ct_floating: type[ct.c_float | ct.c_double | ct.c_longdouble]
 ct_number: type[ct.c_uint8 | ct.c_float]
 ct_generic: type[ct.c_bool | ct.c_char]
 
-cs_integer: Literal['u1', '<i2', 'L']
-cs_number: Literal['=L' ,'i', 'c16']
-cs_flex: Literal['>V', 'S']
-cs_generic: Literal['H', 'U', 'h', '|M8[Y]', '?']
+cs_integer: Literal["u1", "<i2", "L"]
+cs_number: Literal["=L" ,"i", "c16"]
+cs_flex: Literal[">V", "S"]
+cs_generic: Literal["H", "U", "h", "|M8[Y]", "?"]
 
 dt_inexact: np.dtype[np.inexact[Any]]
+dt_string: StringDType
 
 
 assert_type(np.dtype(np.float64), np.dtype[np.float64])
@@ -74,10 +76,10 @@ assert_type(np.dtype(Decimal), np.dtype[np.object_])
 assert_type(np.dtype(Fraction), np.dtype[np.object_])
 
 # char-codes
-assert_type(np.dtype('u1'), np.dtype[np.uint8])
-assert_type(np.dtype('l'), np.dtype[np.long])
-assert_type(np.dtype('longlong'), np.dtype[np.longlong])
-assert_type(np.dtype('>g'), np.dtype[np.longdouble])
+assert_type(np.dtype("u1"), np.dtype[np.uint8])
+assert_type(np.dtype("l"), np.dtype[np.long])
+assert_type(np.dtype("longlong"), np.dtype[np.longlong])
+assert_type(np.dtype(">g"), np.dtype[np.longdouble])
 assert_type(np.dtype(cs_integer), np.dtype[np.integer[Any]])
 assert_type(np.dtype(cs_number), np.dtype[np.number[Any]])
 assert_type(np.dtype(cs_flex), np.dtype[np.flexible])
@@ -103,6 +105,13 @@ assert_type(np.dtype("S8"), np.dtype[Any])
 
 # Void
 assert_type(np.dtype(("U", 10)), np.dtype[np.void])
+
+# StringDType
+assert_type(np.dtype(dt_string), StringDType)
+assert_type(np.dtype("T"), StringDType)
+assert_type(np.dtype("=T"), StringDType)
+assert_type(np.dtype("|T"), StringDType)
+
 
 # Methods and attributes
 assert_type(dtype_U.base, np.dtype[Any])
