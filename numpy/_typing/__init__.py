@@ -71,6 +71,7 @@ from ._char_codes import (
     _BytesCodes as _BytesCodes,
     _VoidCodes as _VoidCodes,
     _ObjectCodes as _ObjectCodes,
+    _StringCodes as _StringCodes,
     _UnsignedIntegerCodes as _UnsignedIntegerCodes,
     _SignedIntegerCodes as _SignedIntegerCodes,
     _IntegerCodes as _IntegerCodes,

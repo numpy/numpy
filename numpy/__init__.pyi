@@ -123,6 +123,7 @@ from numpy._typing import (
     _BytesCodes,
     _VoidCodes,
     _ObjectCodes,
+    _StringCodes,
 
     _UnsignedIntegerCodes,
     _SignedIntegerCodes,
@@ -941,6 +942,16 @@ class dtype(Generic[_DTypeScalar_co]):
     def __new__(cls, dtype: _VoidCodes | _VoidDTypeLike, align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[void]: ...
     @overload
     def __new__(cls, dtype: _ObjectCodes | type[ct.py_object[Any]], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[object_]: ...
+
+    # `StringDType` requires special treatment because it has no scalar type
+    @overload
+    def __new__(
+        cls,
+        dtype: dtypes.StringDType | _StringCodes,
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[builtins.str, Any] = ...
+    ) -> dtypes.StringDType: ...
 
     # Combined char-codes and ctypes, analogous to the scalar-type hierarchy
     @overload
