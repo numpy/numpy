@@ -32,6 +32,8 @@ objects implementing the :class:`memoryview` or :ref:`array
 
 .. admonition:: Example
 
+   .. try_examples::
+
       A 2-dimensional array of size 2 x 3, composed of 4-byte integer
       elements:
 
@@ -361,6 +363,8 @@ Many of these methods take an argument named *axis*. In such cases,
   axis (for each 1-D subarray that can be created along the given axis).
 
 .. admonition:: Example of the *axis* argument
+
+   .. try_examples::
 
       A 3-dimensional array of size 3 x 3 x 3, summed over each of its
       three axes:

@@ -1,0 +1,9 @@
+{
+    "global_min_height": "400px",
+    "ignore_patterns": [
+        "distutils.html*",
+        "\/*.strings.*.html*",
+        "reference\/typing.html*",
+        "numpy.__array_namespace_info__.html*"
+    ]
+}
