@@ -2986,9 +2986,13 @@ array_einsum(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     }
 
     /* Get the keyword arguments */
+    int error = 0;
     if (kwds != NULL) {
         PyObject *key, *value;
         Py_ssize_t pos = 0;
+#if Py_GIL_DISABLED
+        Py_BEGIN_CRITICAL_SECTION(kwds);
+#endif
         while (PyDict_Next(kwds, &pos, &key, &value)) {
             char *str = NULL;
 
@@ -3003,7 +3007,8 @@ array_einsum(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
             if (str == NULL) {
                 PyErr_Clear();
                 PyErr_SetString(PyExc_TypeError, "invalid keyword");
-                goto finish;
+                error = 1;
+                break;
             }
 
             if (strcmp(str,"out") == 0) {
@@ -3014,35 +3019,47 @@ array_einsum(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
                     PyErr_SetString(PyExc_TypeError,
                                 "keyword parameter out must be an "
                                 "array for einsum");
-                    goto finish;
+                    error = 1;
+                    break;
                 }
             }
             else if (strcmp(str,"order") == 0) {
                 if (!PyArray_OrderConverter(value, &order)) {
-                    goto finish;
+                    error = 1;
+                    break;
                 }
             }
             else if (strcmp(str,"casting") == 0) {
                 if (!PyArray_CastingConverter(value, &casting)) {
-                    goto finish;
+                    error = 1;
+                    break;
                 }
             }
             else if (strcmp(str,"dtype") == 0) {
                 if (!PyArray_DescrConverter2(value, &dtype)) {
-                    goto finish;
+                    error = 1;
+                    break;
                 }
             }
             else {
                 PyErr_Format(PyExc_TypeError,
                             "'%s' is an invalid keyword for einsum",
                             str);
-                goto finish;
+                error = 1;
+                break;
             }
         }
+#if Py_GIL_DISABLED
+        Py_END_CRITICAL_SECTION();
+#endif
+    }
+
+    if (error) {
+        goto finish;
     }
 
     ret = (PyObject *)PyArray_EinsteinSum(subscripts, nop, op, dtype,
-                                        order, casting, out);
+                                          order, casting, out);
 
     /* If no output was supplied, possibly convert to a scalar */
     if (ret != NULL && out == NULL) {
