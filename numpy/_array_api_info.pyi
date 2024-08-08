@@ -1,6 +1,4 @@
-import sys
 from typing import (
-    TYPE_CHECKING,
     ClassVar,
     Literal,
     TypeAlias,
@@ -9,17 +7,10 @@ from typing import (
     final,
     overload,
 )
+from typing_extensions import Never
 
 import numpy as np
 
-if sys.version_info >= (3, 11):
-    from typing import Never
-elif TYPE_CHECKING:
-    from typing_extensions import Never
-else:
-    # `NoReturn` and `Never` are equivalent (but not equal) for type-checkers,
-    # but are used in different places by convention
-    from typing import NoReturn as Never
 
 _Device: TypeAlias = Literal["cpu"]
 _DeviceLike: TypeAlias = None | _Device

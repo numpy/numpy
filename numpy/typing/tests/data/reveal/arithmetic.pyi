@@ -1,14 +1,10 @@
-import sys
 from typing import Any
 
 import numpy as np
 import numpy.typing as npt
 from numpy._typing import _32Bit,_64Bit, _128Bit
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 # Can't directly import `np.float128` as it is not available on all platforms
 f16: np.floating[_128Bit]

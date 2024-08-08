@@ -1,7 +1,5 @@
-import sys
 from collections.abc import Callable, Sequence
 from typing import (
-    TYPE_CHECKING,
     Any,
     Literal,
     NoReturn,
@@ -31,12 +29,7 @@ from numpy._typing import (
     _NumberLike_co,
 )
 
-if sys.version_info >= (3, 11):
-    from typing import LiteralString
-elif TYPE_CHECKING:
-    from typing_extensions import LiteralString
-else:
-    LiteralString: TypeAlias = str
+from typing_extensions import LiteralString
 
 _T = TypeVar("_T")
 _T_contra = TypeVar("_T_contra", contravariant=True)

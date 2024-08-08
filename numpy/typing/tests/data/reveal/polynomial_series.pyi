@@ -1,15 +1,11 @@
 from collections.abc import Sequence
-import sys
 from typing import Any, TypeAlias
 
 import numpy as np
 import numpy.polynomial as npp
 import numpy.typing as npt
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 _ArrFloat1D: TypeAlias = np.ndarray[tuple[int], np.dtype[np.floating[Any]]]
 _ArrFloat1D64: TypeAlias = np.ndarray[tuple[int], np.dtype[np.float64]]

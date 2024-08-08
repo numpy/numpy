@@ -184,7 +184,6 @@ from collections.abc import (
     Sequence,
 )
 from typing import (
-    TYPE_CHECKING,
     Literal as L,
     Any,
     Generator,
@@ -203,12 +202,12 @@ from typing import (
     TypeAlias,
 )
 
-if sys.version_info >= (3, 11):
-    from typing import LiteralString
-elif TYPE_CHECKING:
-    from typing_extensions import LiteralString
-else:
-    LiteralString: TypeAlias = str
+# NOTE: `typing_extensions` is always available in `.pyi` stubs or when
+# `TYPE_CHECKING` - even if not available at runtime.
+# This is because the `typeshed` stubs for the standard library include
+# `typing_extensions` stubs:
+# https://github.com/python/typeshed/blob/main/stdlib/typing_extensions.pyi
+from typing_extensions import LiteralString
 
 # Ensures that the stubs are picked up
 from numpy import (
