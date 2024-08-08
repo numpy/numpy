@@ -124,6 +124,17 @@ from numpy._typing import (
     _VoidCodes,
     _ObjectCodes,
 
+    _UnsignedIntegerCodes,
+    _SignedIntegerCodes,
+    _IntegerCodes,
+    _FloatingCodes,
+    _ComplexFloatingCodes,
+    _InexactCodes,
+    _NumberCodes,
+    _CharacterCodes,
+    _FlexibleCodes,
+    _GenericCodes,
+
     # Ufuncs
     _UFunc_Nin1_Nout1,
     _UFunc_Nin2_Nout1,
@@ -751,6 +762,22 @@ _DTypeBuiltinKind: TypeAlias = L[
     2,  # user-defined
 ]
 
+# NOTE: `type[S] | type[T]` is equivalent to `type[S | T]`
+_UnsignedIntegerCType: TypeAlias = type[
+    ct.c_uint8 | ct.c_uint16 | ct.c_uint32 | ct.c_uint64
+    | ct.c_ubyte | ct.c_ushort | ct.c_uint | ct.c_ulong | ct.c_ulonglong
+    | ct.c_size_t | ct.c_void_p
+]
+_SignedIntegerCType: TypeAlias = type[
+    ct.c_int8 | ct.c_int16 | ct.c_int32 | ct.c_int64
+    | ct.c_byte | ct.c_short | ct.c_int | ct.c_long | ct.c_longlong
+    | ct.c_ssize_t
+]
+_FloatingCType: TypeAlias = type[ct.c_float | ct.c_double | ct.c_longdouble]
+_IntegerCType: TypeAlias = _UnsignedIntegerCType | _SignedIntegerCType
+_NumberCType: TypeAlias = _IntegerCType | _IntegerCType
+_GenericCType: TypeAlias = _NumberCType | type[ct.c_bool | ct.c_char | ct.py_object[Any]]
+
 # some commonly used builtin types that are known to result in a
 # `dtype[object_]`, when their *type* is passed to the `dtype` constructor
 # NOTE: `builtins.object` should not be included here
@@ -805,7 +832,6 @@ class dtype(Generic[_DTypeScalar_co]):
     # NOTE: This also accepts `dtype: type[complex | float | int | bool]`
     @overload
     def __new__(cls, dtype: type[complex], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[complex128 | float64 | int_ | np.bool]: ...
-
     # TODO: This weird `memoryview` order is needed to work around a bug in
     # typeshed, which causes typecheckers to treat `memoryview` as a subtype
     # of `bytes`, even though there's no mention of that in the typing docs.
@@ -822,6 +848,9 @@ class dtype(Generic[_DTypeScalar_co]):
     def __new__(cls, dtype: type[builtins.str | bytes], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[character]: ...
     @overload
     def __new__(cls, dtype: type[memoryview | builtins.str | bytes], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[flexible]: ...
+    # NOTE: `dtype: type[object]` also accepts e.g. `type[object | complex | ...]`
+    @overload
+    def __new__(cls, dtype: type[_BuiltinObjectLike], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[object_]: ...
 
     # `unsignedinteger` string-based representations and ctypes
     @overload
@@ -846,8 +875,6 @@ class dtype(Generic[_DTypeScalar_co]):
     def __new__(cls, dtype: _ULongCodes | type[ct.c_ulong], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[ulong]: ...
     @overload
     def __new__(cls, dtype: _ULongLongCodes | type[ct.c_ulonglong], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[ulonglong]: ...
-    # TODO: (dtype: Union[{all unsigned integer codes}]) -> dtype[unsignedinteger]
-    # TODO: (dtype: type[Union[{all unsigned integer ctypes}]]) -> dtype[unsignedinteger]
 
     # `signedinteger` string-based representations and ctypes
     @overload
@@ -870,10 +897,6 @@ class dtype(Generic[_DTypeScalar_co]):
     def __new__(cls, dtype: _LongCodes | type[ct.c_long], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[long]: ...
     @overload
     def __new__(cls, dtype: _LongLongCodes | type[ct.c_longlong], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[longlong]: ...
-    # TODO: (dtype: Union[{all signed integer codes}]) -> dtype[signedinteger]
-    # TODO: (dtype: type[Union[{all signed integer ctypes}]]) -> dtype[signedinteger]
-    # TODO: (dtype: Union[{all integer codes}]) -> dtype[integer]
-    # TODO: (dtype: type[Union[{all integer ctypes}]]) -> dtype[integer]
 
     # `floating` string-based representations and ctypes
     @overload
@@ -890,8 +913,6 @@ class dtype(Generic[_DTypeScalar_co]):
     def __new__(cls, dtype: _DoubleCodes | type[ct.c_double], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[double]: ...
     @overload
     def __new__(cls, dtype: _LongDoubleCodes | type[ct.c_longdouble], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[longdouble]: ...
-    # TODO: (dtype: Union[{all floating codes}]) -> dtype[floating]
-    # TODO: (dtype: type[ct.c_float | ct.c_double | ct.c_longdouble]) -> dtype[floating]
 
     # `complexfloating` string-based representations
     @overload
@@ -904,10 +925,6 @@ class dtype(Generic[_DTypeScalar_co]):
     def __new__(cls, dtype: _CDoubleCodes, align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[cdouble]: ...
     @overload
     def __new__(cls, dtype: _CLongDoubleCodes, align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[clongdouble]: ...
-    # TODO: (dtype: Union[{all complex codes}]) -> dtype[complexfloating]
-    # TODO: (dtype: Union[{all inexact codes}]) -> dtype[inexact]
-    # TODO: (dtype: Union[{all number codes}]) -> dtype[number]
-    # TODO: (dtype: type[Union[{all number ctypes}]]) -> dtype[number]
 
     # Miscellaneous string-based representations and ctypes
     @overload
@@ -916,35 +933,98 @@ class dtype(Generic[_DTypeScalar_co]):
     def __new__(cls, dtype: _TD64Codes, align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[timedelta64]: ...
     @overload
     def __new__(cls, dtype: _DT64Codes, align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[datetime64]: ...
-
     @overload
     def __new__(cls, dtype: _StrCodes, align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[str_]: ...
     @overload
     def __new__(cls, dtype: _BytesCodes | type[ct.c_char], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[bytes_]: ...
     @overload
-    def __new__(cls, dtype: _BytesCodes, align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[bytes_]: ...
-
-    # TODO: (dtype: _StrCodes | _BytesCodes) -> dtype[character]
-    @overload
-    def __new__(cls, dtype: _VoidCodes, align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[void]: ...
-    # TODO: (dtype: _StrCodes | _BytesCodes | _VoidCodes) -> dtype[flexible]
+    def __new__(cls, dtype: _VoidCodes | _VoidDTypeLike, align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[void]: ...
     @overload
     def __new__(cls, dtype: _ObjectCodes | type[ct.py_object[Any]], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[object_]: ...
-    # TODO: (dtype: Union[{all literal codes}]) -> dtype[generic]
 
-    # Structured (`void`-like) dtypes
+    # Combined char-codes and ctypes, analogous to the scalar-type hierarchy
     @overload
     def __new__(
         cls,
-        dtype: _VoidDTypeLike,
+        dtype: _UnsignedIntegerCodes | _UnsignedIntegerCType,
         align: builtins.bool = ...,
         copy: builtins.bool = ...,
         metadata: dict[builtins.str, Any] = ...,
-    ) -> dtype[void]: ...
+    ) -> dtype[unsignedinteger[Any]]: ...
+    @overload
+    def __new__(
+        cls,
+        dtype: _SignedIntegerCodes | _SignedIntegerCType,
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[builtins.str, Any] = ...,
+    ) -> dtype[signedinteger[Any]]: ...
+    @overload
+    def __new__(
+        cls,
+        dtype: _IntegerCodes | _IntegerCType,
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[builtins.str, Any] = ...,
+    ) -> dtype[integer[Any]]: ...
+    @overload
+    def __new__(
+        cls,
+        dtype: _FloatingCodes | _FloatingCType,
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[builtins.str, Any] = ...,
+    ) -> dtype[floating[Any]]: ...
+    @overload
+    def __new__(
+        cls,
+        dtype: _ComplexFloatingCodes,
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[builtins.str, Any] = ...,
+    ) -> dtype[complexfloating[Any, Any]]: ...
+    @overload
+    def __new__(
+        cls,
+        dtype: _InexactCodes | _FloatingCType,
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[builtins.str, Any] = ...,
+    ) -> dtype[inexact[Any]]: ...
+    @overload
+    def __new__(
+        cls,
+        dtype: _NumberCodes | _NumberCType,
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[builtins.str, Any] = ...,
+    ) -> dtype[number[Any]]: ...
+    @overload
+    def __new__(
+        cls,
+        dtype: _CharacterCodes | type[ct.c_char],
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[builtins.str, Any] = ...,
+    ) -> dtype[character]: ...
+    @overload
+    def __new__(
+        cls,
+        dtype: _FlexibleCodes | type[ct.c_char],
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[builtins.str, Any] = ...,
+    ) -> dtype[flexible]: ...
+    @overload
+    def __new__(
+        cls,
+        dtype: _GenericCodes | _GenericCType,
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[builtins.str, Any] = ...,
+    ) -> dtype[generic]: ...
 
-    # Handle strings that can't be expressed as literals; i.e. S1, S2, ...
-    # NOTE: This isn't limited to flexible types, because `dtype: str` also
-    # accepts e.g. `str | Literal['f8']`
+    # Handle strings that can't be expressed as literals; i.e. "S1", "S2", ...
     @overload
     def __new__(
         cls,
@@ -955,16 +1035,9 @@ class dtype(Generic[_DTypeScalar_co]):
     ) -> dtype[Any]: ...
 
     # Catch-all overload for object-likes
-    # NOTE: `dtype: type[object]` also accepts e.g. `type[object | complex | ...]`
-    @overload
-    def __new__(
-        cls,
-        dtype: type[_BuiltinObjectLike],
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
-        metadata: dict[builtins.str, Any] = ...,
-    ) -> dtype[object_]: ...
-    # NOTE: `object_ | Any` is *not* equivalent to `Any`, see:
+    # NOTE: `object_ | Any` is *not* equivalent to `Any` -- it describes some
+    # (static) type `T` s.t. `object_ <: T <: builtins.object` (`<:` denotes
+    # the subtyping relation, the (gradual) typing analogue of `issubclass()`).
     # https://typing.readthedocs.io/en/latest/spec/concepts.html#union-types
     @overload
     def __new__(
