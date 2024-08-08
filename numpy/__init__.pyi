@@ -3190,7 +3190,6 @@ class inexact(number[_NBit1]):  # type: ignore
     def __getnewargs__(self: inexact[_64Bit]) -> tuple[float, ...]: ...
 
 _IntType = TypeVar("_IntType", bound=integer[Any])
-_FloatType = TypeVar('_FloatType', bound=floating[Any])
 
 class floating(inexact[_NBit1]):
     def __init__(self, value: _FloatValue = ..., /) -> None: ...
@@ -3620,27 +3619,30 @@ class busdaycalendar:
     @property
     def holidays(self) -> NDArray[datetime64]: ...
 
-class finfo(Generic[_FloatType]):
-    dtype: dtype[_FloatType]
-    bits: int
-    eps: _FloatType
-    epsneg: _FloatType
-    iexp: int
-    machep: int
-    max: _FloatType
-    maxexp: int
-    min: _FloatType
-    minexp: int
-    negep: int
-    nexp: int
-    nmant: int
-    precision: int
-    resolution: _FloatType
-    smallest_subnormal: _FloatType
+
+_FloatType_co = TypeVar('_FloatType_co', bound=floating[Any], covariant=True)
+
+class finfo(Generic[_FloatType_co]):
+    dtype: Final[dtype[_FloatType_co]]
+    bits: Final[int]
+    eps: Final[_FloatType_co]
+    epsneg: Final[_FloatType_co]
+    iexp: Final[int]
+    machep: Final[int]
+    max: Final[_FloatType_co]
+    maxexp: Final[int]
+    min: Final[_FloatType_co]
+    minexp: Final[int]
+    negep: Final[int]
+    nexp: Final[int]
+    nmant: Final[int]
+    precision: Final[int]
+    resolution: Final[_FloatType_co]
+    smallest_subnormal: Final[_FloatType_co]
     @property
-    def smallest_normal(self) -> _FloatType: ...
+    def smallest_normal(self) -> _FloatType_co: ...
     @property
-    def tiny(self) -> _FloatType: ...
+    def tiny(self) -> _FloatType_co: ...
     @overload
     def __new__(
         cls, dtype: inexact[_NBit1] | _DTypeLike[inexact[_NBit1]]
@@ -3654,18 +3656,22 @@ class finfo(Generic[_FloatType]):
         cls, dtype: str
     ) -> finfo[floating[Any]]: ...
 
-class iinfo(Generic[_IntType]):
-    dtype: dtype[_IntType]
-    kind: LiteralString
-    bits: int
-    key: LiteralString
+_IntType_co = TypeVar("_IntType_co", bound=integer[Any], covariant=True)
+
+class iinfo(Generic[_IntType_co]):
+    dtype: Final[dtype[_IntType_co]]
+    kind: Final[LiteralString]
+    bits: Final[int]
+    key: Final[LiteralString]
     @property
     def min(self) -> int: ...
     @property
     def max(self) -> int: ...
 
     @overload
-    def __new__(cls, dtype: _IntType | _DTypeLike[_IntType]) -> iinfo[_IntType]: ...
+    def __new__(
+        cls, dtype: _IntType_co | _DTypeLike[_IntType_co]
+    ) -> iinfo[_IntType_co]: ...
     @overload
     def __new__(cls, dtype: int | type[int]) -> iinfo[int_]: ...
     @overload
