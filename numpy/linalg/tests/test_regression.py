@@ -161,3 +161,18 @@ class TestRegression:
         x = np.zeros((4, 3, 2))
         res = np.linalg.matrix_rank(x, rtol=rtol)
         assert res.shape == (4,)
+
+    def test_openblas_threading(self):
+        # gh-27036
+        # Test whether matrix multiplication involving a large matrix always
+        # gives the same (correct) answer
+        x = np.arange(500000, dtype=np.float64)
+        src = np.vstack((x, -10*x)).T
+        matrix = np.array([[0, 1], [1, 0]])
+        expected = np.vstack((-10*x, x)).T  # src @ matrix
+        for i in range(200):
+            result = src @ matrix
+            mismatches = (~np.isclose(result, expected)).sum()
+            if mismatches != 0:
+                assert False, ("unexpected result from matmul, "
+                    "probably due to OpenBLAS threading issues")
