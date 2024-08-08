@@ -45,7 +45,7 @@ _is_basic_python_type(PyTypeObject *tp)
  * Assumes that the special method is a numpy-specific one, so does not look
  * at builtin types. It does check base ndarray and numpy scalar types.
  *
- * In future, could be made more like _Py_LookupSpecial
+ * It may make sense to just replace this with `PyObject_GetOptionalAttr`.
  */
 static inline int
 PyArray_LookupSpecial(
