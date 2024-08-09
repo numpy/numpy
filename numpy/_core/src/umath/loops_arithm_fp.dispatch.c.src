@@ -307,6 +307,7 @@ simd_csquare_f64(npyv_f64 x)
  * #sfx = f32, f64#
  * #c = f, #
  * #C = F, #
+ * #fma = fmaf, fma#
  */
 /**begin repeat1
  * arithmetic
@@ -523,8 +524,8 @@ loop_scalar:
         const @ftype@ b_r = ((@ftype@ *)b_src1)[0];
         const @ftype@ b_i = ((@ftype@ *)b_src1)[1];
     #if @is_mul@
-        ((@ftype@ *)b_dst)[0] = a_r*b_r - a_i*b_i;
-        ((@ftype@ *)b_dst)[1] = a_r*b_i + a_i*b_r;
+        ((@ftype@ *)b_dst)[0] = @fma@(a_r, b_r, -a_i*b_i);
+        ((@ftype@ *)b_dst)[1] = @fma@(a_r, b_i, a_i*b_r);
     #else
         ((@ftype@ *)b_dst)[0] = a_r @OP@ b_r;
         ((@ftype@ *)b_dst)[1] = a_i @OP@ b_i;
@@ -554,8 +555,8 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@_indexed)
     #if @is_mul@
         const @ftype@ a_r = indexed[0];
         const @ftype@ a_i = indexed[1];
-        indexed[0] = a_r*b_r - a_i*b_i;
-        indexed[1] = a_r*b_i + a_i*b_r;
+        indexed[0] = @fma@(a_r, b_r, -a_i*b_i);
+        indexed[1] = @fma@(a_r, b_i, a_i*b_r);
     #else
         indexed[0] @OP@= b_r;
         indexed[1] @OP@= b_i;
@@ -647,8 +648,8 @@ loop_scalar:
         const @ftype@ rl = ((@ftype@ *)b_src)[0];
         const @ftype@ im = ((@ftype@ *)b_src)[1];
     #if @is_square@
-        ((@ftype@ *)b_dst)[0] = rl*rl - im*im;
-        ((@ftype@ *)b_dst)[1] = rl*im + im*rl;
+        ((@ftype@ *)b_dst)[0] = @fma@(rl, rl, -im*im);
+        ((@ftype@ *)b_dst)[1] = @fma@(rl, im, im*rl);
     #else
         ((@ftype@ *)b_dst)[0] = rl;
         ((@ftype@ *)b_dst)[1] = -im;
