@@ -4105,12 +4105,18 @@ class TestMedian:
         a0 = np.array(1)
         a1 = np.arange(2)
         a2 = np.arange(6).reshape(2, 3)
+        a3 = np.array([
+            np.datetime64('2002-04-10'), 
+            np.datetime64('2002-04-11'), 
+            np.datetime64('2002-04-12')
+        ])
         assert_equal(np.median(a0), 1)
         assert_allclose(np.median(a1), 0.5)
         assert_allclose(np.median(a2), 2.5)
         assert_allclose(np.median(a2, axis=0), [1.5,  2.5,  3.5])
         assert_equal(np.median(a2, axis=1), [1, 4])
         assert_allclose(np.median(a2, axis=None), 2.5)
+        assert_equal(np.median(a3), np.datetime64('2002-04-11'))
 
         a = np.array([0.0444502, 0.0463301, 0.141249, 0.0606775])
         assert_almost_equal((a[1] + a[3]) / 2., np.median(a))
