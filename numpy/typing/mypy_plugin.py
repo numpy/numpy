@@ -69,9 +69,10 @@ def _get_precision_dict() -> dict[str, str]:
         ("_NBitLongDouble", np.longdouble),
     ]
     ret = {}
+    module = "numpy._typing"
     for name, typ in names:
         n: int = 8 * typ().dtype.itemsize
-        ret[f'numpy._typing._nbit.{name}'] = f"numpy._{n}Bit"
+        ret[f'{module}._nbit.{name}'] = f"{module}._nbit_base._{n}Bit"
     return ret
 
 
@@ -91,7 +92,6 @@ def _get_extended_precision_list() -> list[str]:
         "complex512",
     ]
     return [i for i in extended_names if hasattr(np, i)]
-
 
 def _get_c_intp_name() -> str:
     # Adapted from `np.core._internal._getintp_ctype`
