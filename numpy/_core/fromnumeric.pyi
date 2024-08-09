@@ -11,6 +11,7 @@ from numpy import (
     float16,
     floating,
     complexfloating,
+    timedelta64,
     object_,
     generic,
     _OrderKACF,
@@ -35,6 +36,7 @@ from numpy._typing import (
     _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
     _ArrayLikeObject_co,
+    _ArrayLikeTD64_co,
     _IntLike_co,
     _BoolLike_co,
     _ComplexLike_co,
@@ -1061,6 +1063,16 @@ def mean(
     *,
     where: _ArrayLikeBool_co = ...,
 ) -> complexfloating[Any, Any]: ...
+@overload
+def mean(
+    a: _ArrayLikeTD64_co,
+    axis: None = ...,
+    dtype: None = ...,
+    out: None = ...,
+    keepdims: Literal[False] = ...,
+    *,
+    where: _ArrayLikeBool_co = ...,
+) -> timedelta64: ...
 @overload
 def mean(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,

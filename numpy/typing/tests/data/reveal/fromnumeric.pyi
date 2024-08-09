@@ -21,6 +21,7 @@ AR_u8: npt.NDArray[np.uint64]
 AR_i8: npt.NDArray[np.int64]
 AR_O: npt.NDArray[np.object_]
 AR_subclass: NDArraySubclass
+AR_m: npt.NDArray[np.timedelta64]
 
 b: np.bool
 f4: np.float32
@@ -294,6 +295,7 @@ assert_type(np.around(AR_f4, out=AR_subclass), NDArraySubclass)
 assert_type(np.mean(AR_b), np.floating[Any])
 assert_type(np.mean(AR_i8), np.floating[Any])
 assert_type(np.mean(AR_f4), np.floating[Any])
+assert_type(np.mean(AR_m), np.timedelta64)
 assert_type(np.mean(AR_c16), np.complexfloating[Any, Any])
 assert_type(np.mean(AR_O), Any)
 assert_type(np.mean(AR_f4, axis=0), Any)
