@@ -664,12 +664,6 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
             continue;
         }
 
-        // TODO: Is this equivalent/better by removing the logic which enforces
-        //       that we always use weak promotion in the core?
-        if (get_npy_promotion_state() == NPY_USE_LEGACY_PROMOTION) {
-            continue;  /* Skip use of special dtypes */
-        }
-
         /*
          * Handle the "weak" Python scalars/literals.  We use a special DType
          * for these.
@@ -6065,10 +6059,6 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
     PyArray_DTypeMeta *signature[NPY_MAXARGS] = {NULL};
     PyArray_Descr *operation_descrs[NPY_MAXARGS] = {NULL};
 
-    /* This entry-point to promotion lives in the NEP 50 future: */
-    int original_promotion_state = get_npy_promotion_state();
-    set_npy_promotion_state(NPY_USE_WEAK_PROMOTION);
-
     npy_bool promoting_pyscalars = NPY_FALSE;
 
     if (_get_fixed_signature(ufunc, NULL, signature_obj, signature) < 0) {
@@ -6250,8 +6240,6 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
     Py_DECREF(capsule);
 
   finish:
-    set_npy_promotion_state(original_promotion_state);
-
     Py_XDECREF(result_dtype_tuple);
     for (int i = 0; i < ufunc->nargs; i++) {
         Py_XDECREF(signature[i]);

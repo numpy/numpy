@@ -17,8 +17,7 @@ from .multiarray import (
     empty, empty_like, flatiter, frombuffer, from_dlpack, fromfile, fromiter,
     fromstring, inner, lexsort, matmul, may_share_memory, min_scalar_type,
     ndarray, nditer, nested_iters, promote_types, putmask, result_type,
-    shares_memory, vdot, where, zeros, normalize_axis_index,
-    _get_promotion_state, _set_promotion_state, vecdot
+    shares_memory, vdot, where, zeros, normalize_axis_index, vecdot
 )
 
 from . import overrides
@@ -28,7 +27,7 @@ from .overrides import set_array_function_like_doc, set_module
 from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
 from ..exceptions import AxisError
-from ._ufunc_config import errstate, _no_nep50_warning
+from ._ufunc_config import errstate
 
 bitwise_not = invert
 ufunc = type(sin)
@@ -53,7 +52,7 @@ __all__ = [
     'identity', 'allclose', 'putmask',
     'flatnonzero', 'inf', 'nan', 'False_', 'True_', 'bitwise_not',
     'full', 'full_like', 'matmul', 'vecdot', 'shares_memory',
-    'may_share_memory', '_get_promotion_state', '_set_promotion_state']
+    'may_share_memory']
 
 
 def _zeros_like_dispatcher(
@@ -2457,7 +2456,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     elif isinstance(y, int):
         y = float(y)
 
-    with errstate(invalid='ignore'), _no_nep50_warning():
+    with errstate(invalid='ignore'):
         result = (less_equal(abs(x-y), atol + rtol * abs(y))
                   & isfinite(y)
                   | (x == y))

@@ -1071,7 +1071,6 @@ def test_longdouble_complex():
 
 @pytest.mark.parametrize(["__op__", "__rop__", "op", "cmp"], ops_with_names)
 @pytest.mark.parametrize("subtype", [float, int, complex, np.float16])
-@np._no_nep50_warning()
 def test_pyscalar_subclasses(subtype, __op__, __rop__, op, cmp):
     # This tests that python scalar subclasses behave like a float64 (if they
     # don't override it).

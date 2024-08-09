@@ -1488,21 +1488,22 @@ class TestTypes:
         assert_(not np.can_cast([('f0', ('i4,i4'), (2,))], 'i4',
                                 casting='unsafe'))
 
-    @pytest.mark.xfail(np._get_promotion_state() != "legacy",
-            reason="NEP 50: no python int/float/complex support (yet)")
     def test_can_cast_values(self):
-        # gh-5917
-        for dt in sctypes['int'] + sctypes['uint']:
-            ii = np.iinfo(dt)
-            assert_(np.can_cast(ii.min, dt))
-            assert_(np.can_cast(ii.max, dt))
-            assert_(not np.can_cast(ii.min - 1, dt))
-            assert_(not np.can_cast(ii.max + 1, dt))
+        # With NumPy 2 and NEP 50, can_cast errors on Python scalars.  We could
+        # define this as (usually safe) at some point, and already do so
+        # in `copyto` and ufuncs (but there an error is raised if the integer
+        # is out of bounds and a warning for out-of-bound floats).
+        # Raises even for unsafe, previously checked within range (for floats
+        # that was approximately whether it would overflow to inf).
+        with pytest.raises(TypeError):
+            np.can_cast(4, "int8", casting="unsafe")
 
-        for dt in sctypes['float']:
-            fi = np.finfo(dt)
-            assert_(np.can_cast(fi.min, dt))
-            assert_(np.can_cast(fi.max, dt))
+        with pytest.raises(TypeError):
+            np.can_cast(4.0, "float64", casting="unsafe")
+
+        with pytest.raises(TypeError):
+            np.can_cast(4j, "complex128", casting="unsafe")
+
 
     @pytest.mark.parametrize("dtype",
             list("?bhilqBHILQefdgFDG") + [rational])

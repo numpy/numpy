@@ -14,7 +14,6 @@ from numpy._core import umath as um
 from numpy._core.multiarray import asanyarray
 from numpy._core import numerictypes as nt
 from numpy._core import _exceptions
-from numpy._core._ufunc_config import _no_nep50_warning
 from numpy._globals import _NoValue
 
 # save those O(100) nanoseconds!
@@ -135,9 +134,8 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
 
     ret = umr_sum(arr, axis, dtype, out, keepdims, where=where)
     if isinstance(ret, mu.ndarray):
-        with _no_nep50_warning():
-            ret = um.true_divide(
-                    ret, rcount, out=ret, casting='unsafe', subok=False)
+        ret = um.true_divide(
+                ret, rcount, out=ret, casting='unsafe', subok=False)
         if is_float16_result and out is None:
             ret = arr.dtype.type(ret)
     elif hasattr(ret, 'dtype'):
@@ -180,9 +178,8 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
             # matching rcount to arrmean when where is specified as array
             div = rcount.reshape(arrmean.shape)
         if isinstance(arrmean, mu.ndarray):
-            with _no_nep50_warning():
-                arrmean = um.true_divide(arrmean, div, out=arrmean,
-                                         casting='unsafe', subok=False)
+            arrmean = um.true_divide(arrmean, div, out=arrmean,
+                                     casting='unsafe', subok=False)
         elif hasattr(arrmean, "dtype"):
             arrmean = arrmean.dtype.type(arrmean / rcount)
         else:
@@ -212,9 +209,8 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
 
     # divide by degrees of freedom
     if isinstance(ret, mu.ndarray):
-        with _no_nep50_warning():
-            ret = um.true_divide(
-                    ret, rcount, out=ret, casting='unsafe', subok=False)
+        ret = um.true_divide(
+                ret, rcount, out=ret, casting='unsafe', subok=False)
     elif hasattr(ret, 'dtype'):
         ret = ret.dtype.type(ret / rcount)
     else:
