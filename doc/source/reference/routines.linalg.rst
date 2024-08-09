@@ -62,6 +62,8 @@ Matrix and vector products
    outer
    matmul
    linalg.matmul (Array API compatible location)
+   matvec
+   vecmat
    tensordot
    linalg.tensordot (Array API compatible location)
    einsum

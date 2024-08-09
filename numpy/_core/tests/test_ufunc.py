@@ -827,19 +827,76 @@ class TestUfunc:
         actual3 = np.vecdot(arr1.astype("object"), arr2)
         assert_array_equal(actual3, expected.astype("object"))
 
-    def test_vecdot_complex(self):
+    def test_matvec(self):
+        arr1 = np.arange(6).reshape((2, 3))
+        arr2 = np.arange(3).reshape((1, 3))
+
+        actual = np.matvec(arr1, arr2)
+        expected = np.array([[5, 14]])
+
+        assert_array_equal(actual, expected)
+
+        actual2 = np.matvec(arr1.T, arr2.T, axes=[(-1, -2), -2, -1])
+        assert_array_equal(actual2, expected)
+
+        actual3 = np.matvec(arr1.astype("object"), arr2)
+        assert_array_equal(actual3, expected.astype("object"))
+
+    @pytest.mark.parametrize("vec", [
+        np.array([[1., 2., 3.], [4., 5., 6.]]),
+        np.array([[1., 2j, 3.], [4., 5., 6j]]),
+        np.array([[1., 2., 3.], [4., 5., 6.]], dtype=object),
+        np.array([[1., 2j, 3.], [4., 5., 6j]], dtype=object)])
+    @pytest.mark.parametrize("matrix", [
+        None,
+        np.array([[1.+1j, 0.5, -0.5j],
+                  [0.25, 2j, 0.],
+                  [4., 0., -1j]])])
+    def test_vecmatvec_identity(self, matrix, vec):
+        """Check that (x†A)x equals x†(Ax)."""
+        mat = matrix if matrix is not None else np.eye(3)
+        matvec = np.matvec(mat, vec)  # Ax
+        vecmat = np.vecmat(vec, mat)  # x†A
+        if matrix is None:
+            assert_array_equal(matvec, vec)
+            assert_array_equal(vecmat.conj(), vec)
+        assert_array_equal(matvec, (mat @ vec[..., np.newaxis]).squeeze(-1))
+        assert_array_equal(vecmat, (vec[..., np.newaxis].mT.conj()
+                                    @ mat).squeeze(-2))
+        expected = np.einsum('...i,ij,...j', vec.conj(), mat, vec)
+        vec_matvec = (vec.conj() * matvec).sum(-1)
+        vecmat_vec = (vecmat * vec).sum(-1)
+        assert_array_equal(vec_matvec, expected)
+        assert_array_equal(vecmat_vec, expected)
+
+    @pytest.mark.parametrize("ufunc, shape1, shape2, conj", [
+        (np.vecdot, (3,), (3,), True),
+        (np.vecmat, (3,), (3, 1), True),
+        (np.matvec, (1, 3), (3,), False),
+        (np.matmul, (1, 3), (3, 1), False),
+    ])
+    def test_vecdot_matvec_vecmat_complex(self, ufunc, shape1, shape2, conj):
         arr1 = np.array([1, 2j, 3])
         arr2 = np.array([1, 2, 3])
 
-        actual = np.vecdot(arr1, arr2)
-        expected = np.array([10-4j])
-        assert_array_equal(actual, expected)
+        actual1 = ufunc(arr1.reshape(shape1), arr2.reshape(shape2))
+        expected1 = np.array(((arr1.conj() if conj else arr1) * arr2).sum(),
+                             ndmin=min(len(shape1), len(shape2)))
+        assert_array_equal(actual1, expected1)
+        # This would fail for conj=True, since matmul omits the conjugate.
+        if not conj:
+            assert_array_equal(arr1.reshape(shape1) @ arr2.reshape(shape2),
+                               expected1)
 
-        actual2 = np.vecdot(arr2, arr1)
-        assert_array_equal(actual2, expected.conj())
+        actual2 = ufunc(arr2.reshape(shape1), arr1.reshape(shape2))
+        expected2 = np.array(((arr2.conj() if conj else arr2) * arr1).sum(),
+                             ndmin=min(len(shape1), len(shape2)))
+        assert_array_equal(actual2, expected2)
 
-        actual3 = np.vecdot(arr1.astype("object"), arr2.astype("object"))
-        assert_array_equal(actual3, expected.astype("object"))
+        actual3 = ufunc(arr1.reshape(shape1).astype("object"),
+                        arr2.reshape(shape2).astype("object"))
+        expected3 = expected1.astype(object)
+        assert_array_equal(actual3, expected3)
 
     def test_vecdot_subclass(self):
         class MySubclass(np.ndarray):
@@ -2761,9 +2818,9 @@ def test_ufunc_noncontiguous(ufunc):
             # bool, object, datetime are too irregular for this simple test
             continue
         inp, out = typ.split('->')
-        args_c = [np.empty(6, t) for t in inp]
-        # non contiguous (3 step)
-        args_n = [np.empty(18, t)[::3] for t in inp]
+        args_c = [np.empty((6, 6), t) for t in inp]
+        # non contiguous (2, 3 step on the two dimensions)
+        args_n = [np.empty((12, 18), t)[::2, ::3] for t in inp]
         # alignment != itemsize is possible.  So create an array with such
         # an odd step manually.
         args_o = []
@@ -2771,10 +2828,9 @@ def test_ufunc_noncontiguous(ufunc):
             orig_dt = np.dtype(t)
             off_dt = f"S{orig_dt.alignment}"  # offset by alignment
             dtype = np.dtype([("_", off_dt), ("t", orig_dt)], align=False)
-            args_o.append(np.empty(6, dtype=dtype)["t"])
-
+            args_o.append(np.empty((6, 6), dtype=dtype)["t"])
         for a in args_c + args_n + args_o:
-            a.flat = range(1,7)
+            a.flat = range(1, 37)
 
         with warnings.catch_warnings(record=True):
             warnings.filterwarnings("always")
@@ -2792,7 +2848,7 @@ def test_ufunc_noncontiguous(ufunc):
                 # since different algorithms (libm vs. intrinsics) can be used
                 # for different input strides
                 res_eps = np.finfo(dt).eps
-                tol = 2*res_eps
+                tol = 3*res_eps
                 assert_allclose(res_c, res_n, atol=tol, rtol=tol)
                 assert_allclose(res_c, res_o, atol=tol, rtol=tol)
             else:

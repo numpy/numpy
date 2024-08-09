@@ -1154,6 +1154,22 @@ defdict = {
           TD(O),
           signature='(n),(n)->()',
           ),
+'matvec':
+    Ufunc(2, 1, None,
+          docstrings.get('numpy._core.umath.matvec'),
+          "PyUFunc_SimpleUniformOperationTypeResolver",
+          TD(notimes_or_obj),
+          TD(O),
+          signature='(m,n),(n)->(m)',
+          ),
+'vecmat':
+    Ufunc(2, 1, None,
+          docstrings.get('numpy._core.umath.vecmat'),
+          "PyUFunc_SimpleUniformOperationTypeResolver",
+          TD(notimes_or_obj),
+          TD(O),
+          signature='(n),(n,m)->(m)',
+          ),
 'str_len':
     Ufunc(1, 1, Zero,
           docstrings.get('numpy._core.umath.str_len'),

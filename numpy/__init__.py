@@ -151,10 +151,10 @@ else:
         left_shift, less, less_equal, lexsort, linspace, little_endian, log,
         log10, log1p, log2, logaddexp, logaddexp2, logical_and, logical_not,
         logical_or, logical_xor, logspace, long, longdouble, longlong, matmul,
-        matrix_transpose, max, maximum, may_share_memory, mean, memmap, min,
-        min_scalar_type, minimum, mod, modf, moveaxis, multiply, nan, ndarray,
-        ndim, nditer, negative, nested_iters, newaxis, nextafter, nonzero,
-        not_equal, number, object_, ones, ones_like, outer, partition,
+        matvec, matrix_transpose, max, maximum, may_share_memory, mean, memmap,
+        min, min_scalar_type, minimum, mod, modf, moveaxis, multiply, nan,
+        ndarray, ndim, nditer, negative, nested_iters, newaxis, nextafter,
+        nonzero, not_equal, number, object_, ones, ones_like, outer, partition,
         permute_dims, pi, positive, pow, power, printoptions, prod,
         promote_types, ptp, put, putmask, rad2deg, radians, ravel, recarray,
         reciprocal, record, remainder, repeat, require, reshape, resize,
@@ -165,11 +165,11 @@ else:
         str_, subtract, sum, swapaxes, take, tan, tanh, tensordot,
         timedelta64, trace, transpose, true_divide, trunc, typecodes, ubyte,
         ufunc, uint, uint16, uint32, uint64, uint8, uintc, uintp, ulong,
-        ulonglong, unsignedinteger, unstack, ushort, var, vdot, vecdot, void,
-        vstack, where, zeros, zeros_like
+        ulonglong, unsignedinteger, unstack, ushort, var, vdot, vecdot,
+        vecmat, void, vstack, where, zeros, zeros_like
     )
 
-    # NOTE: It's still under discussion whether these aliases 
+    # NOTE: It's still under discussion whether these aliases
     # should be removed.
     for ta in ["float96", "float128", "complex192", "complex256"]:
         try:
@@ -184,12 +184,12 @@ else:
         histogram, histogram_bin_edges, histogramdd
     )
     from .lib._nanfunctions_impl import (
-        nanargmax, nanargmin, nancumprod, nancumsum, nanmax, nanmean, 
+        nanargmax, nanargmin, nancumprod, nancumsum, nanmax, nanmean,
         nanmedian, nanmin, nanpercentile, nanprod, nanquantile, nanstd,
         nansum, nanvar
     )
     from .lib._function_base_impl import (
-        select, piecewise, trim_zeros, copy, iterable, percentile, diff, 
+        select, piecewise, trim_zeros, copy, iterable, percentile, diff,
         gradient, angle, unwrap, sort_complex, flip, rot90, extract, place,
         vectorize, asarray_chkfinite, average, bincount, digitize, cov,
         corrcoef, median, sinc, hamming, hanning, bartlett, blackman,
@@ -197,8 +197,8 @@ else:
         interp, quantile
     )
     from .lib._twodim_base_impl import (
-        diag, diagflat, eye, fliplr, flipud, tri, triu, tril, vander, 
-        histogram2d, mask_indices, tril_indices, tril_indices_from, 
+        diag, diagflat, eye, fliplr, flipud, tri, triu, tril, vander,
+        histogram2d, mask_indices, tril_indices, tril_indices_from,
         triu_indices, triu_indices_from
     )
     from .lib._shape_base_impl import (
@@ -207,7 +207,7 @@ else:
         take_along_axis, tile, vsplit
     )
     from .lib._type_check_impl import (
-        iscomplexobj, isrealobj, imag, iscomplex, isreal, nan_to_num, real, 
+        iscomplexobj, isrealobj, imag, iscomplex, isreal, nan_to_num, real,
         real_if_close, typename, mintypecode, common_type
     )
     from .lib._arraysetops_impl import (
@@ -232,7 +232,7 @@ else:
     )
     from .lib._index_tricks_impl import (
         diag_indices_from, diag_indices, fill_diagonal, ndindex, ndenumerate,
-        ix_, c_, r_, s_, ogrid, mgrid, unravel_index, ravel_multi_index, 
+        ix_, c_, r_, s_, ogrid, mgrid, unravel_index, ravel_multi_index,
         index_exp
     )
 
@@ -246,7 +246,7 @@ else:
     # (experimental label) are not added here, because `from numpy import *`
     # must not raise any warnings - that's too disruptive.
     __numpy_submodules__ = {
-        "linalg", "fft", "dtypes", "random", "polynomial", "ma", 
+        "linalg", "fft", "dtypes", "random", "polynomial", "ma",
         "exceptions", "lib", "ctypeslib", "testing", "typing",
         "f2py", "test", "rec", "char", "core", "strings",
     }
@@ -395,7 +395,7 @@ else:
 
         if attr in __former_attrs__:
             raise AttributeError(__former_attrs__[attr], name=None)
-        
+
         if attr in __expired_attributes__:
             raise AttributeError(
                 f"`np.{attr}` was removed in the NumPy 2.0 release. "
@@ -419,7 +419,7 @@ else:
             globals().keys() | __numpy_submodules__
         )
         public_symbols -= {
-            "matrixlib", "matlib", "tests", "conftest", "version", 
+            "matrixlib", "matlib", "tests", "conftest", "version",
             "compat", "distutils", "array_api"
         }
         return list(public_symbols)
@@ -493,7 +493,7 @@ else:
     def hugepage_setup():
         """
         We usually use madvise hugepages support, but on some old kernels it
-        is slow and thus better avoided. Specifically kernel version 4.6 
+        is slow and thus better avoided. Specifically kernel version 4.6
         had a bug fix which probably fixed this:
         https://github.com/torvalds/linux/commit/7cf91a98e607c2f935dbcc177d70011e95b8faff
         """
@@ -502,7 +502,7 @@ else:
             # If there is an issue with parsing the kernel version,
             # set use_hugepage to 0. Usage of LooseVersion will handle
             # the kernel version parsing better, but avoided since it
-            # will increase the import time. 
+            # will increase the import time.
             # See: #16679 for related discussion.
             try:
                 use_hugepage = 1

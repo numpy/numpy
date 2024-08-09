@@ -16,12 +16,12 @@ ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'isinf', 'isnan', 'isnat', 'lcm', 'ldexp', 'left_shift', 'less',
           'less_equal', 'log', 'log10', 'log1p', 'log2', 'logaddexp',
           'logaddexp2', 'logical_and', 'logical_not', 'logical_or',
-          'logical_xor', 'matmul', 'maximum', 'minimum', 'mod', 'modf',
-          'multiply', 'negative', 'nextafter', 'not_equal', 'positive',
+          'logical_xor', 'matmul', 'matvec', 'maximum', 'minimum', 'mod',
+          'modf', 'multiply', 'negative', 'nextafter', 'not_equal', 'positive',
           'power', 'rad2deg', 'radians', 'reciprocal', 'remainder',
           'right_shift', 'rint', 'sign', 'signbit', 'sin',
           'sinh', 'spacing', 'sqrt', 'square', 'subtract', 'tan', 'tanh',
-          'true_divide', 'trunc', 'vecdot']
+          'true_divide', 'trunc', 'vecdot', 'vecmat']
 arrayfuncdisp = ['real', 'round']
 
 for name in ufuncs:
@@ -597,7 +597,7 @@ class BinaryBenchInteger(Benchmark):
         N = 1000000
         self.a = np.random.randint(20, size=N).astype(dtype)
         self.b = np.random.randint(4, size=N).astype(dtype)
-        
+
     def time_pow(self, dtype):
         np.power(self.a, self.b)
 

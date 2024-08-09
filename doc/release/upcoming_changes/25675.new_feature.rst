@@ -1,0 +1,20 @@
+New functions for matrix-vector and vector-matrix products
+----------------------------------------------------------
+
+Two new generalized ``ufunc``s were defined:
+
+* `numpy.matvec` - matrix-vector product, treating the arguments as
+  stacks of matrices and column vectors, respectively.
+
+* `numpy.vecmat` - vector-matrix product, treating the arguments as
+  stacks of column vectors and matrices, respectively. For complex
+  vectors, the conjugate is taken.
+
+These add to the existing `numpy.matmul` as well as to `numpy.vecdot`,
+which was added in numpy 2.0.
+
+Note that `numpy.matmul` never takes a complex conjugate, also not
+when its left input is a vector, while both `numpy.vecdot` and
+`numpy.vecmat` do take the conjugate for complex vectors on the
+left-hand side (which are taken to be the ones that are transposed,
+following the physics convention).
