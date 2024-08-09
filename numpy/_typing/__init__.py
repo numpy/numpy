@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from .. import ufunc
 from .._utils import set_module
-from typing import TYPE_CHECKING, final
+from typing import final
 
 
 @final  # Disallow the creation of arbitrary `NBitBase` subclasses
@@ -206,19 +205,10 @@ from ._array_like import (
     _UnknownType as _UnknownType,
 )
 
-if TYPE_CHECKING:
-    from ._ufunc import (
-        _UFunc_Nin1_Nout1 as _UFunc_Nin1_Nout1,
-        _UFunc_Nin2_Nout1 as _UFunc_Nin2_Nout1,
-        _UFunc_Nin1_Nout2 as _UFunc_Nin1_Nout2,
-        _UFunc_Nin2_Nout2 as _UFunc_Nin2_Nout2,
-        _GUFunc_Nin2_Nout1 as _GUFunc_Nin2_Nout1,
-    )
-else:
-    # Declare the (type-check-only) ufunc subclasses as ufunc aliases during
-    # runtime; this helps autocompletion tools such as Jedi (numpy/numpy#19834)
-    _UFunc_Nin1_Nout1 = ufunc
-    _UFunc_Nin2_Nout1 = ufunc
-    _UFunc_Nin1_Nout2 = ufunc
-    _UFunc_Nin2_Nout2 = ufunc
-    _GUFunc_Nin2_Nout1 = ufunc
+from ._ufunc import (
+    _UFunc_Nin1_Nout1 as _UFunc_Nin1_Nout1,
+    _UFunc_Nin2_Nout1 as _UFunc_Nin2_Nout1,
+    _UFunc_Nin1_Nout2 as _UFunc_Nin1_Nout2,
+    _UFunc_Nin2_Nout2 as _UFunc_Nin2_Nout2,
+    _GUFunc_Nin2_Nout1 as _GUFunc_Nin2_Nout1,
+)
