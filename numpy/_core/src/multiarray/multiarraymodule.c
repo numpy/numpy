@@ -2704,13 +2704,13 @@ fail:
 }
 
 static int
-einsum_sub_op_from_str(PyObject *args, PyObject **str_obj, char **subscripts,
-                       PyArrayObject **op)
+einsum_sub_op_from_str(
+        Py_ssize_t nargs, PyObject *const *args,
+        PyObject **str_obj, char **subscripts, PyArrayObject **op)
 {
-    int i, nop;
+    Py_ssize_t nop = nargs - 1;
     PyObject *subscripts_str;
 
-    nop = PyTuple_GET_SIZE(args) - 1;
     if (nop <= 0) {
         PyErr_SetString(PyExc_ValueError,
                         "must specify the einstein sum subscripts string "
@@ -2723,7 +2723,7 @@ einsum_sub_op_from_str(PyObject *args, PyObject **str_obj, char **subscripts,
     }
 
     /* Get the subscripts string */
-    subscripts_str = PyTuple_GET_ITEM(args, 0);
+    subscripts_str = args[0];
     if (PyUnicode_Check(subscripts_str)) {
         *str_obj = PyUnicode_AsASCIIString(subscripts_str);
         if (*str_obj == NULL) {
@@ -2740,15 +2740,13 @@ einsum_sub_op_from_str(PyObject *args, PyObject **str_obj, char **subscripts,
     }
 
     /* Set the operands to NULL */
-    for (i = 0; i < nop; ++i) {
+    for (Py_ssize_t i = 0; i < nop; ++i) {
         op[i] = NULL;
     }
 
     /* Get the operands */
-    for (i = 0; i < nop; ++i) {
-        PyObject *obj = PyTuple_GET_ITEM(args, i+1);
-
-        op[i] = (PyArrayObject *)PyArray_FROM_OF(obj, NPY_ARRAY_ENSUREARRAY);
+    for (Py_ssize_t i = 0; i < nop; ++i) {
+        op[i] = (PyArrayObject *)PyArray_FROM_OF(args[i+1], NPY_ARRAY_ENSUREARRAY);
         if (op[i] == NULL) {
             goto fail;
         }
@@ -2757,7 +2755,7 @@ einsum_sub_op_from_str(PyObject *args, PyObject **str_obj, char **subscripts,
     return nop;
 
 fail:
-    for (i = 0; i < nop; ++i) {
+    for (Py_ssize_t i = 0; i < nop; ++i) {
         Py_XDECREF(op[i]);
         op[i] = NULL;
     }
@@ -2861,13 +2859,12 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
  * Returns -1 on error, number of operands placed in op otherwise.
  */
 static int
-einsum_sub_op_from_lists(PyObject *args,
-                char *subscripts, int subsize, PyArrayObject **op)
+einsum_sub_op_from_lists(Py_ssize_t nargs, PyObject *const *args,
+                         char *subscripts, int subsize, PyArrayObject **op)
 {
     int subindex = 0;
-    npy_intp i, nop;
 
-    nop = PyTuple_Size(args)/2;
+    Py_ssize_t nop = nargs / 2;
 
     if (nop == 0) {
         PyErr_SetString(PyExc_ValueError, "must provide at least an "
@@ -2880,15 +2877,12 @@ einsum_sub_op_from_lists(PyObject *args,
     }
 
     /* Set the operands to NULL */
-    for (i = 0; i < nop; ++i) {
+    for (Py_ssize_t i = 0; i < nop; ++i) {
         op[i] = NULL;
     }
 
     /* Get the operands and build the subscript string */
-    for (i = 0; i < nop; ++i) {
-        PyObject *obj = PyTuple_GET_ITEM(args, 2*i);
-        int n;
-
+    for (Py_ssize_t i = 0; i < nop; ++i) {
         /* Comma between the subscripts for each operand */
         if (i != 0) {
             subscripts[subindex++] = ',';
@@ -2899,14 +2893,13 @@ einsum_sub_op_from_lists(PyObject *args,
             }
         }
 
-        op[i] = (PyArrayObject *)PyArray_FROM_OF(obj, NPY_ARRAY_ENSUREARRAY);
+        op[i] = (PyArrayObject *)PyArray_FROM_OF(args[2*i], NPY_ARRAY_ENSUREARRAY);
         if (op[i] == NULL) {
             goto fail;
         }
 
-        obj = PyTuple_GET_ITEM(args, 2*i+1);
-        n = einsum_list_to_subscripts(obj, subscripts+subindex,
-                                      subsize-subindex);
+        int n = einsum_list_to_subscripts(
+                args[2*i + 1], subscripts+subindex, subsize-subindex);
         if (n < 0) {
             goto fail;
         }
@@ -2914,10 +2907,7 @@ einsum_sub_op_from_lists(PyObject *args,
     }
 
     /* Add the '->' to the string if provided */
-    if (PyTuple_Size(args) == 2*nop+1) {
-        PyObject *obj;
-        int n;
-
+    if (nargs == 2*nop+1) {
         if (subindex + 2 >= subsize) {
             PyErr_SetString(PyExc_ValueError,
                     "subscripts list is too long");
@@ -2926,9 +2916,8 @@ einsum_sub_op_from_lists(PyObject *args,
         subscripts[subindex++] = '-';
         subscripts[subindex++] = '>';
 
-        obj = PyTuple_GET_ITEM(args, 2*nop);
-        n = einsum_list_to_subscripts(obj, subscripts+subindex,
-                                      subsize-subindex);
+        int n = einsum_list_to_subscripts(
+                args[2*nop], subscripts+subindex, subsize-subindex);
         if (n < 0) {
             goto fail;
         }
@@ -2941,7 +2930,7 @@ einsum_sub_op_from_lists(PyObject *args,
     return nop;
 
 fail:
-    for (i = 0; i < nop; ++i) {
+    for (Py_ssize_t i = 0; i < nop; ++i) {
         Py_XDECREF(op[i]);
         op[i] = NULL;
     }
@@ -2950,36 +2939,39 @@ fail:
 }
 
 static PyObject *
-array_einsum(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+array_einsum(PyObject *NPY_UNUSED(dummy),
+        PyObject *const *args, Py_ssize_t nargsf, PyObject *kwnames)
 {
     char *subscripts = NULL, subscripts_buffer[256];
     PyObject *str_obj = NULL, *str_key_obj = NULL;
-    PyObject *arg0;
-    int i, nop;
+    int nop;
     PyArrayObject *op[NPY_MAXARGS];
     NPY_ORDER order = NPY_KEEPORDER;
     NPY_CASTING casting = NPY_SAFE_CASTING;
+    PyObject *out_obj = NULL;
     PyArrayObject *out = NULL;
     PyArray_Descr *dtype = NULL;
     PyObject *ret = NULL;
+    NPY_PREPARE_ARGPARSER;
 
-    if (PyTuple_GET_SIZE(args) < 1) {
+    Py_ssize_t nargs = PyVectorcall_NARGS(nargsf);
+
+    if (nargs < 1) {
         PyErr_SetString(PyExc_ValueError,
                         "must specify the einstein sum subscripts string "
                         "and at least one operand, or at least one operand "
                         "and its corresponding subscripts list");
         return NULL;
     }
-    arg0 = PyTuple_GET_ITEM(args, 0);
 
     /* einsum('i,j', a, b), einsum('i,j->ij', a, b) */
-    if (PyBytes_Check(arg0) || PyUnicode_Check(arg0)) {
-        nop = einsum_sub_op_from_str(args, &str_obj, &subscripts, op);
+    if (PyBytes_Check(args[0]) || PyUnicode_Check(args[0])) {
+        nop = einsum_sub_op_from_str(nargs, args, &str_obj, &subscripts, op);
     }
     /* einsum(a, [0], b, [1]), einsum(a, [0], b, [1], [0,1]) */
     else {
-        nop = einsum_sub_op_from_lists(args, subscripts_buffer,
-                                    sizeof(subscripts_buffer), op);
+        nop = einsum_sub_op_from_lists(nargs, args, subscripts_buffer,
+                                       sizeof(subscripts_buffer), op);
         subscripts = subscripts_buffer;
     }
     if (nop <= 0) {
@@ -2987,63 +2979,26 @@ array_einsum(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     }
 
     /* Get the keyword arguments */
-    if (kwds != NULL) {
-        PyObject *key, *value;
-        Py_ssize_t pos = 0;
-        while (PyDict_Next(kwds, &pos, &key, &value)) {
-            char *str = NULL;
-
-            Py_XDECREF(str_key_obj);
-            str_key_obj = PyUnicode_AsASCIIString(key);
-            if (str_key_obj != NULL) {
-                key = str_key_obj;
-            }
-
-            str = PyBytes_AsString(key);
-
-            if (str == NULL) {
-                PyErr_Clear();
-                PyErr_SetString(PyExc_TypeError, "invalid keyword");
-                goto finish;
-            }
-
-            if (strcmp(str,"out") == 0) {
-                if (PyArray_Check(value)) {
-                    out = (PyArrayObject *)value;
-                }
-                else {
-                    PyErr_SetString(PyExc_TypeError,
-                                "keyword parameter out must be an "
-                                "array for einsum");
-                    goto finish;
-                }
-            }
-            else if (strcmp(str,"order") == 0) {
-                if (!PyArray_OrderConverter(value, &order)) {
-                    goto finish;
-                }
-            }
-            else if (strcmp(str,"casting") == 0) {
-                if (!PyArray_CastingConverter(value, &casting)) {
-                    goto finish;
-                }
-            }
-            else if (strcmp(str,"dtype") == 0) {
-                if (!PyArray_DescrConverter2(value, &dtype)) {
-                    goto finish;
-                }
-            }
-            else {
-                PyErr_Format(PyExc_TypeError,
-                            "'%s' is an invalid keyword for einsum",
-                            str);
-                goto finish;
-            }
+    if (kwnames != NULL) {
+        if (npy_parse_arguments("einsum", args+nargs, 0, kwnames,
+                "$out", NULL, &out_obj,
+                "$order", &PyArray_OrderConverter, &order,
+                "$casting", &PyArray_CastingConverter, &casting,
+                "$dtype", &PyArray_DescrConverter2, &dtype,
+                NULL, NULL, NULL) < 0) {
+            goto finish;
         }
+        if (out_obj != NULL && !PyArray_Check(out_obj)) {
+            PyErr_SetString(PyExc_TypeError,
+                        "keyword parameter out must be an "
+                        "array for einsum");
+            goto finish;
+        }
+        out = (PyArrayObject *)out_obj;
     }
 
     ret = (PyObject *)PyArray_EinsteinSum(subscripts, nop, op, dtype,
-                                        order, casting, out);
+                                          order, casting, out);
 
     /* If no output was supplied, possibly convert to a scalar */
     if (ret != NULL && out == NULL) {
@@ -3051,7 +3006,7 @@ array_einsum(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     }
 
 finish:
-    for (i = 0; i < nop; ++i) {
+    for (Py_ssize_t i = 0; i < nop; ++i) {
         Py_XDECREF(op[i]);
     }
     Py_XDECREF(dtype);
@@ -4518,7 +4473,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_FASTCALL, NULL},
     {"c_einsum",
         (PyCFunction)array_einsum,
-        METH_VARARGS|METH_KEYWORDS, NULL},
+        METH_FASTCALL|METH_KEYWORDS, NULL},
     {"correlate",
         (PyCFunction)array_correlate,
         METH_FASTCALL | METH_KEYWORDS, NULL},
