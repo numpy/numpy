@@ -26,7 +26,8 @@ __all__ = [
     'ndim', 'nonzero', 'partition', 'prod', 'ptp', 'put',
     'ravel', 'repeat', 'reshape', 'resize', 'round',
     'searchsorted', 'shape', 'size', 'sort', 'squeeze',
-    'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
+    'std', 'sum', 'swapaxes', 'take', 'top_k', 'trace',
+    'transpose', 'var',
 ]
 
 _gentype = types.GeneratorType
@@ -205,6 +206,124 @@ def take(a, indices, axis=None, out=None, mode='raise'):
            [5, 7]])
     """
     return _wrapfunc(a, 'take', indices, axis=axis, out=out, mode=mode)
+
+
+def _top_k_dispatcher(a, k, /, *, axis=-1, largest=True):
+    return (a,)
+
+
+@array_function_dispatch(_top_k_dispatcher)
+def top_k(a, k, /, *, axis=-1, largest=True):
+    """
+    Returns the ``k`` largest/smallest elements and corresponding
+    indices along the given ``axis``.
+
+    When ``axis`` is None, a flattened array is used.
+
+    If ``largest`` is false, then the ``k`` smallest elements are returned.
+
+    A tuple of ``(values, indices)`` is returned, where ``values`` and
+    ``indices`` of the largest/smallest elements of each row of the input
+    array in the given ``axis``.
+
+    Parameters
+    ----------
+    a: array_like
+        The source array
+    k: int
+        The number of largest/smallest elements to return. ``k`` must
+        be a positive integer and within indexable range specified by
+        ``axis``.
+    axis: int, optional
+        Axis along which to find the largest/smallest elements.
+        The default is -1 (the last axis).
+        If None, a flattened array is used.
+    largest: bool, optional
+        If True, largest elements are returned.
+        Otherwise the smallest are returned.
+        For floats and complex, ``np.nan``, and values containing
+        ``np.nan`` (e.g., ``nan+0j``), are pushed to the back of
+        the array.
+        Otherwise, ``np.top_k`` follows the ``np.nan`` sort order
+        of `sort`.
+
+    Returns
+    -------
+    tuple_of_array: tuple
+        The output tuple of ``(topk_values, topk_indices)``, where
+        ``topk_values`` are returned elements from the source array
+        (not necessarily in sorted order), and ``topk_indices`` are
+        the corresponding indices.
+
+    See Also
+    --------
+    argpartition : Indirect partition.
+    sort : Full sorting.
+
+    Notes
+    -----
+    The returned indices are not guaranteed to be sorted according to
+    the values. Furthermore, the returned indices are not guaranteed
+    to be the earliest/latest occurrence of the element. E.g.,
+    ``np.top_k([3,3,3], 1)`` can return ``(array([3]), array([1]))``
+    rather than ``(array([3]), array([0]))`` or
+    ``(array([3]), array([2]))``.
+
+    Examples
+    --------
+    >>> a = np.array([[1,2,3,4,5], [5,4,3,2,1], [3,4,5,1,2]])
+    >>> np.top_k(a, 2)
+    (array([[4, 5],
+            [4, 5],
+            [4, 5]]),
+     array([[3, 4],
+            [1, 0],
+            [1, 2]]))
+    >>> np.top_k(a, 2, axis=0)
+    (array([[3, 4, 3, 2, 2],
+            [5, 4, 5, 4, 5]]),
+     array([[2, 1, 1, 1, 2],
+            [1, 2, 2, 0, 0]]))
+    >>> a.flatten()
+    array([1, 2, 3, 4, 5, 5, 4, 3, 2, 1, 3, 4, 5, 1, 2])
+    >>> np.top_k(a, 2, axis=None)
+    (array([5, 5]), array([ 4, 12]))
+    >>> np.top_k(np.array([1., 2., 3., np.nan]), 2)
+    (array([3., 2.]), array([2, 1]))
+    """
+    if k <= 0:
+        raise ValueError(f'k(={k}) provided must be positive.')
+
+    _arr = np.asanyarray(a)
+
+    to_negate = largest and (
+        np.dtype(_arr.dtype).char in np.typecodes["AllFloat"])
+    if to_negate:
+        # Push nans to the back of the array
+        topk_values, topk_indices = top_k(-_arr, k, axis=axis, largest=False)
+        return -topk_values, topk_indices
+
+    positive_axis: int
+    if axis is None:
+        arr = _arr.ravel()
+        positive_axis = 0
+    else:
+        arr = _arr
+        positive_axis = axis if axis > 0 else axis % arr.ndim
+
+    slice_start = (np.s_[:],) * positive_axis
+    if largest:
+        indices_array = np.argpartition(arr, -k, axis=axis)
+        slice = slice_start + (np.s_[-k:],)
+        topk_indices = indices_array[slice]
+    else:
+        indices_array = np.argpartition(arr, k-1, axis=axis)
+        slice = slice_start + (np.s_[:k],)
+        topk_indices = indices_array[slice]
+
+    topk_values = np.take_along_axis(arr, topk_indices, axis=axis)
+
+    return (topk_values, topk_indices)
 
 
 def _reshape_dispatcher(a, /, shape=None, *, newshape=None, order=None,

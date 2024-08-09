@@ -3199,6 +3199,63 @@ class TestMethods:
         p = np.argpartition(d, kth)
         self.assert_partitioned(np.array(d)[p],[1])
 
+    def assert_top_k(self, a, axis: int, x, y):
+        x_value, x_ind = x
+        y_value, y_ind = y
+        assert_equal(np.sort(x_value, axis=axis), np.sort(y_value, axis=axis))
+        assert_equal(np.sort(x_ind, axis=axis), np.sort(y_ind, axis=axis))
+        assert_equal(np.take_along_axis(a, x_ind, axis=axis), x_value)
+
+    def test_top_k(self):
+
+        a = np.array([
+            [1, 2, 3, 4, 5],
+            [5, 4, 2, 3, 1],
+            [3, 5, 4, 1, 2]
+        ], dtype=np.int8)
+
+        with assert_raises_regex(
+            ValueError,
+            r"k\(=0\) provided must be positive."
+        ):
+            np.top_k(a, 0)
+
+        y = (
+            np.array([[4, 5], [4, 5], [4, 5]], dtype=np.int8),
+            np.array([[3, 4], [0, 1], [1, 2]], dtype=np.intp)
+        )
+        self.assert_top_k(a, -1, np.top_k(a, 2), y)
+        self.assert_top_k(a, 1, np.top_k(a, 2), y)
+
+        axis = 0
+        y = (
+            np.array([[5, 4, 3, 4, 5],
+                      [3, 5, 4, 3, 2]], dtype=np.int8),
+            np.array([[1, 1, 0, 0, 0],
+                      [2, 2, 2, 1, 2]], dtype=np.int8)
+        )
+        self.assert_top_k(a, axis, np.top_k(a, 2, axis=axis), y)
+
+        y = (
+            np.array([[1, 2], [1, 2], [1, 2]], dtype=np.int8),
+            np.array([[0, 1], [2, 4], [3, 4]], dtype=np.intp)
+        )
+        self.assert_top_k(a, -1, np.top_k(a, 2, largest=False), y)
+        self.assert_top_k(a, 1, np.top_k(a, 2, largest=False), y)
+
+        y_val, y_ind = np.top_k(a, 2, axis=None)
+        assert_equal(y_val, np.array([5, 5], dtype=np.int8))
+        assert_equal(np.take_along_axis(a.ravel(), y_ind, axis=-1), y_val)
+
+    @pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+    def test_top_k_floating_nan(self, dtype):
+        # Checks if np.nan are pushed to the back.
+        # This differs from the sort order of sorting functions
+        # such as np.sort and np.partition
+        a = np.array([np.nan, 1, 2, 3, np.nan], dtype=dtype)
+        val, ind = np.top_k(a, 3)
+        assert not np.isnan(val).any()
+
     def test_flatten(self):
         x0 = np.array([[1, 2, 3], [4, 5, 6]], np.int32)
         x1 = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]], np.int32)
