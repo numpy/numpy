@@ -27,6 +27,102 @@ from importlib import import_module
 from numpy.f2py._backends._meson import MesonBackend
 
 #
+# Check if compilers are available at all...
+#
+
+def check_language(lang, code_snippet=None):
+    if sys.platform == "win32":
+        pytest.skip("No Fortran tests on Windows (Issue #25134)", allow_module_level=True)
+    tmpdir = tempfile.mkdtemp()
+    try:
+        meson_file = os.path.join(tmpdir, "meson.build")
+        with open(meson_file, "w") as f:
+            f.write("project('check_compilers')\n")
+            f.write(f"add_languages('{lang}')\n")
+            if code_snippet:
+                f.write(f"{lang}_compiler = meson.get_compiler('{lang}')\n")
+                f.write(f"{lang}_code = '''{code_snippet}'''\n")
+                f.write(
+                    f"_have_{lang}_feature ="
+                    f"{lang}_compiler.compiles({lang}_code,"
+                    f" name: '{lang} feature check')\n"
+                )
+        try:
+            runmeson = subprocess.run(
+                ["meson", "setup", "btmp"],
+                check=False,
+                cwd=tmpdir,
+                capture_output=True,
+            )
+        except subprocess.CalledProcessError:
+            pytest.skip("meson not present, skipping compiler dependent test", allow_module_level=True)
+        return runmeson.returncode == 0
+    finally:
+        shutil.rmtree(tmpdir)
+    return False
+
+
+fortran77_code = '''
+C Example Fortran 77 code
+      PROGRAM HELLO
+      PRINT *, 'Hello, Fortran 77!'
+      END
+'''
+
+fortran90_code = '''
+! Example Fortran 90 code
+program hello90
+  type :: greeting
+    character(len=20) :: text
+  end type greeting
+
+  type(greeting) :: greet
+  greet%text = 'hello, fortran 90!'
+  print *, greet%text
+end program hello90
+'''
+
+# Dummy class for caching relevant checks
+class CompilerChecker:
+    def __init__(self):
+        self.compilers_checked = False
+        self.has_c = False
+        self.has_f77 = False
+        self.has_f90 = False
+
+    def check_compilers(self):
+        if (not self.compilers_checked) and (not sys.platform == "cygwin"):
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                futures = [
+                    executor.submit(check_language, "c"),
+                    executor.submit(check_language, "fortran", fortran77_code),
+                    executor.submit(check_language, "fortran", fortran90_code)
+                ]
+
+                self.has_c = futures[0].result()
+                self.has_f77 = futures[1].result()
+                self.has_f90 = futures[2].result()
+
+            self.compilers_checked = True
+
+if not IS_WASM:
+    checker = CompilerChecker()
+    checker.check_compilers()
+
+def has_c_compiler():
+    return checker.has_c
+
+def has_f77_compiler():
+    return checker.has_f77
+
+def has_f90_compiler():
+    return checker.has_f90
+
+def has_fortran_compiler():
+    return (checker.has_f90 and checker.has_f77)
+
+
+#
 # Maintaining a temporary module directory
 #
 
@@ -109,6 +205,9 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     code = f"import sys; sys.path = {sys.path!r}; import numpy.f2py; numpy.f2py.main()"
 
     d = get_module_dir()
+    # gh-27045 : Skip if no compilers are found
+    if not has_fortran_compiler():
+        pytest.skip("No Fortran compiler available")
 
     # Copy files
     dst_sources = []
@@ -129,7 +228,11 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     # Prepare options
     if module_name is None:
         module_name = get_temp_module_name()
-    f2py_opts = ["-c", "-m", module_name] + options + f2py_sources
+    gil_options = []
+    if '--freethreading-compatible' not in options and '--no-freethreading-compatible' not in options:
+        # default to disabling the GIL if unset in options
+        gil_options = ['--freethreading-compatible']
+    f2py_opts = ["-c", "-m", module_name] + options + gil_options + f2py_sources
     f2py_opts += ["--backend", "meson"]
     if skip:
         f2py_opts += ["skip:"] + skip
@@ -196,96 +299,6 @@ def build_code(source_code,
 
 
 #
-# Check if compilers are available at all...
-#
-
-def check_language(lang, code_snippet=None):
-    tmpdir = tempfile.mkdtemp()
-    try:
-        meson_file = os.path.join(tmpdir, "meson.build")
-        with open(meson_file, "w") as f:
-            f.write("project('check_compilers')\n")
-            f.write(f"add_languages('{lang}')\n")
-            if code_snippet:
-                f.write(f"{lang}_compiler = meson.get_compiler('{lang}')\n")
-                f.write(f"{lang}_code = '''{code_snippet}'''\n")
-                f.write(
-                    f"_have_{lang}_feature ="
-                    f"{lang}_compiler.compiles({lang}_code,"
-                    f" name: '{lang} feature check')\n"
-                )
-        runmeson = subprocess.run(
-            ["meson", "setup", "btmp"],
-            check=False,
-            cwd=tmpdir,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        if runmeson.returncode == 0:
-            return True
-        else:
-            return False
-    finally:
-        shutil.rmtree(tmpdir)
-    return False
-
-fortran77_code = '''
-C Example Fortran 77 code
-      PROGRAM HELLO
-      PRINT *, 'Hello, Fortran 77!'
-      END
-'''
-
-fortran90_code = '''
-! Example Fortran 90 code
-program hello90
-  type :: greeting
-    character(len=20) :: text
-  end type greeting
-
-  type(greeting) :: greet
-  greet%text = 'hello, fortran 90!'
-  print *, greet%text
-end program hello90
-'''
-
-# Dummy class for caching relevant checks
-class CompilerChecker:
-    def __init__(self):
-        self.compilers_checked = False
-        self.has_c = False
-        self.has_f77 = False
-        self.has_f90 = False
-
-    def check_compilers(self):
-        if (not self.compilers_checked) and (not sys.platform == "cygwin"):
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                futures = [
-                    executor.submit(check_language, "c"),
-                    executor.submit(check_language, "fortran", fortran77_code),
-                    executor.submit(check_language, "fortran", fortran90_code)
-                ]
-
-                self.has_c = futures[0].result()
-                self.has_f77 = futures[1].result()
-                self.has_f90 = futures[2].result()
-
-            self.compilers_checked = True
-
-if not IS_WASM:
-    checker = CompilerChecker()
-    checker.check_compilers()
-
-def has_c_compiler():
-    return checker.has_c
-
-def has_f77_compiler():
-    return checker.has_f77
-
-def has_f90_compiler():
-    return checker.has_f90
-
-#
 # Building with meson
 #
 
@@ -303,6 +316,11 @@ def build_meson(source_files, module_name=None, **kwargs):
     """
     Build a module via Meson and import it.
     """
+
+    # gh-27045 : Skip if no compilers are found
+    if not has_fortran_compiler():
+        pytest.skip("No Fortran compiler available")
+
     build_dir = get_module_dir()
     if module_name is None:
         module_name = get_temp_module_name()
@@ -327,13 +345,7 @@ def build_meson(source_files, module_name=None, **kwargs):
         extra_dat=kwargs.get("extra_dat", {}),
     )
 
-    # Compile the module
-    # NOTE: Catch-all since without distutils it is hard to determine which
-    # compiler stack is on the CI
-    try:
-        backend.compile()
-    except subprocess.CalledProcessError:
-        pytest.skip("Failed to compile module")
+    backend.compile()
 
     # Import the compiled module
     sys.path.insert(0, f"{build_dir}/{backend.meson_build_dir}")
@@ -369,6 +381,7 @@ class F2PyTest:
         F2PyTest._has_c_compiler = has_c_compiler()
         F2PyTest._has_f77_compiler = has_f77_compiler()
         F2PyTest._has_f90_compiler = has_f90_compiler()
+        F2PyTest._has_fortran_compiler = has_fortran_compiler()
 
     def setup_method(self):
         if self.module is not None:
@@ -386,7 +399,7 @@ class F2PyTest:
             pytest.skip("No Fortran 77 compiler available")
         if needs_f90 and not self._has_f90_compiler:
             pytest.skip("No Fortran 90 compiler available")
-        if needs_pyf and not (self._has_f90_compiler or self._has_f77_compiler):
+        if needs_pyf and not self._has_fortran_compiler:
             pytest.skip("No Fortran compiler available")
 
         # Build the module

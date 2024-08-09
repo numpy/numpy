@@ -50,6 +50,17 @@ functions will be appended to ``self.module`` data member. Thus, the child class
 be able to access the fortran functions specified in source file by calling
 ``self.module.[fortran_function_name]``.
 
+.. versionadded:: v2.0.0b1
+
+Each of the ``f2py`` tests should run without failure if no Fortran compilers
+are present on the host machine. To facilitate this, the ``CompilerChecker`` is
+used, essentially providing a ``meson`` dependent set of utilities namely
+``has_{c,f77,f90,fortran}_compiler()``.
+
+For the CLI tests in ``test_f2py2e``, flags which are expected to call ``meson``
+or otherwise depend on a compiler need to call ``compiler_check_f2pycli()``
+instead of ``f2pycli()``.
+
 Example
 ~~~~~~~
 
