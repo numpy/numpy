@@ -6,6 +6,7 @@
 #include <Python.h>
 
 #include "numpy/npy_3kcompat.h"
+#include "npy_pycompat.h"
 
 #include "lowlevel_strided_loops.h"
 #include "numpy/arrayobject.h"
@@ -224,24 +225,23 @@ npy_discover_dtype_from_pytype(PyTypeObject *pytype)
     PyObject *DType;
 
     if (pytype == &PyArray_Type) {
-        DType = Py_None;
+        DType = Py_NewRef(Py_None);
     }
     else if (pytype == &PyFloat_Type) {
-        DType = (PyObject *)&PyArray_PyFloatDType;
+        DType = Py_NewRef((PyObject *)&PyArray_PyFloatDType);
     }
     else if (pytype == &PyLong_Type) {
-        DType = (PyObject *)&PyArray_PyLongDType;
+        DType = Py_NewRef((PyObject *)&PyArray_PyLongDType);
     }
     else {
-        DType = PyDict_GetItem(_global_pytype_to_type_dict,
-                               (PyObject *)pytype);
+        int res = PyDict_GetItemRef(_global_pytype_to_type_dict,
+                                    (PyObject *)pytype, (PyObject **)&DType);
 
-        if (DType == NULL) {
-            /* the python type is not known */
+        if (res <= 0) {
+            /* the python type is not known or an error was set */
             return NULL;
         }
     }
-    Py_INCREF(DType);
     assert(DType == Py_None || PyObject_TypeCheck(DType, (PyTypeObject *)&PyArrayDTypeMeta_Type));
     return (PyArray_DTypeMeta *)DType;
 }

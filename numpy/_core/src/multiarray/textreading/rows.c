@@ -58,13 +58,18 @@ create_conv_funcs(
 
     PyObject *key, *value;
     Py_ssize_t pos = 0;
+    int error = 0;
+#if Py_GIL_DISABLED
+    Py_BEGIN_CRITICAL_SECTION(converters);
+#endif
     while (PyDict_Next(converters, &pos, &key, &value)) {
         Py_ssize_t column = PyNumber_AsSsize_t(key, PyExc_IndexError);
         if (column == -1 && PyErr_Occurred()) {
             PyErr_Format(PyExc_TypeError,
                     "keys of the converters dictionary must be integers; "
                     "got %.100R", key);
-            goto error;
+            error = 1;
+            break;
         }
         if (usecols != NULL) {
             /*
@@ -92,7 +97,8 @@ create_conv_funcs(
                 PyErr_Format(PyExc_ValueError,
                         "converter specified for column %zd, which is invalid "
                         "for the number of fields %zd.", column, num_fields);
-                goto error;
+                error = 1;
+                break;
             }
             if (column < 0) {
                 column += num_fields;
@@ -102,11 +108,20 @@ create_conv_funcs(
             PyErr_Format(PyExc_TypeError,
                     "values of the converters dictionary must be callable, "
                     "but the value associated with key %R is not", key);
-            goto error;
+            error = 1;
+            break;
         }
         Py_INCREF(value);
         conv_funcs[column] = value;
     }
+#if Py_GIL_DISABLED
+    Py_END_CRITICAL_SECTION();
+#endif
+
+    if (error) {
+        goto error;
+    }
+    
     return conv_funcs;
 
   error:
