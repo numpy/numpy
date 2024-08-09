@@ -17,6 +17,7 @@ from typing import (
     Protocol,
     NoReturn,
 )
+from typing_extensions import LiteralString
 
 from numpy import ufunc, _CastingKind, _OrderKACF
 from numpy.typing import NDArray
@@ -32,9 +33,9 @@ _3Tuple = tuple[_T, _T, _T]
 _4Tuple = tuple[_T, _T, _T, _T]
 
 _NTypes = TypeVar("_NTypes", bound=int, covariant=True)
-_IDType = TypeVar("_IDType", bound=Any, covariant=True)
-_NameType = TypeVar("_NameType", bound=str, covariant=True)
-_Signature = TypeVar("_Signature", bound=str, covariant=True)
+_IDType = TypeVar("_IDType", covariant=True)
+_NameType = TypeVar("_NameType", bound=LiteralString, covariant=True)
+_Signature = TypeVar("_Signature", bound=LiteralString, covariant=True)
 
 
 class _SupportsArrayUFunc(Protocol):
