@@ -1,5 +1,4 @@
 # TODO: Sort out any and all missing functions in this namespace
-import builtins
 import os
 import datetime as dt
 from collections.abc import Sequence, Callable, Iterable
@@ -8,16 +7,20 @@ from typing import (
     Any,
     TypeAlias,
     overload,
+    TypeAlias,
     TypeVar,
+    TypedDict,
     SupportsIndex,
     final,
     Final,
     Protocol,
     ClassVar,
+    type_check_only,
 )
+from typing_extensions import Unpack
 
 import numpy as np
-from numpy import (
+from numpy import (  # type: ignore[attr-defined]
     # Re-exports
     busdaycalendar as busdaycalendar,
     broadcast as broadcast,
@@ -57,6 +60,7 @@ from numpy._typing import (
     # DTypes
     DTypeLike,
     _DTypeLike,
+    _SupportsDType,
 
     # Arrays
     NDArray,
@@ -90,6 +94,7 @@ from numpy._typing._ufunc import (
 _T_co = TypeVar("_T_co", covariant=True)
 _T_contra = TypeVar("_T_contra", contravariant=True)
 _SCT = TypeVar("_SCT", bound=generic)
+_DType = TypeVar("_DType", bound=np.dtype[Any])
 _ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
 _ArrayType_co = TypeVar(
     "_ArrayType_co",
@@ -102,7 +107,9 @@ _Nin = TypeVar("_Nin", bound=int)
 _Nout = TypeVar("_Nout", bound=int)
 
 _SizeType = TypeVar("_SizeType", bound=int)
+_ShapeType = TypeVar("_ShapeType", bound=tuple[int, ...])
 _1DArray: TypeAlias = ndarray[tuple[_SizeType], dtype[_SCT]]
+_Array: TypeAlias = ndarray[_ShapeType, dtype[_SCT]]
 
 # Valid time units
 _UnitKind = L[
@@ -136,6 +143,119 @@ class _SupportsLenAndGetItem(Protocol[_T_contra, _T_co]):
 class _SupportsArray(Protocol[_ArrayType_co]):
     def __array__(self, /) -> _ArrayType_co: ...
 
+@type_check_only
+class _KwargsEmptyLike(TypedDict, total=False):
+    device: None | L["cpu"]
+
+@type_check_only
+class _KwargsEmpty(_KwargsEmptyLike, total=False):
+    like: None | _SupportsArrayFunc
+
+@type_check_only
+class _ConstructorEmpty(Protocol):
+    # 1-D shape
+    @overload
+    def __call__(
+        self, /,
+        shape: _SizeType,
+        dtype: None = ...,
+        order: _OrderCF = ...,
+        **kwargs: Unpack[_KwargsEmpty],
+    ) -> _Array[tuple[_SizeType], float64]: ...
+    @overload
+    def __call__(
+        self, /,
+        shape: _SizeType,
+        dtype: _DType | _SupportsDType[_DType],
+        order: _OrderCF = ...,
+        **kwargs: Unpack[_KwargsEmpty],
+    ) -> ndarray[tuple[_SizeType], _DType]: ...
+    @overload
+    def __call__(
+        self, /,
+        shape: _SizeType,
+        dtype: type[_SCT],
+        order: _OrderCF = ...,
+        **kwargs: Unpack[_KwargsEmpty],
+    ) -> _Array[tuple[_SizeType], _SCT]: ...
+    @overload
+    def __call__(
+        self, /,
+        shape: _SizeType,
+        dtype: DTypeLike,
+        order: _OrderCF = ...,
+        **kwargs: Unpack[_KwargsEmpty],
+    ) -> _Array[tuple[_SizeType], Any]: ...
+
+    # known shape
+    @overload
+    def __call__(
+        self, /,
+        shape: _ShapeType,
+        dtype: None = ...,
+        order: _OrderCF = ...,
+        **kwargs: Unpack[_KwargsEmpty],
+    ) -> _Array[_ShapeType, float64]: ...
+    @overload
+    def __call__(
+        self, /,
+        shape: _ShapeType,
+        dtype: _DType | _SupportsDType[_DType],
+        order: _OrderCF = ...,
+        **kwargs: Unpack[_KwargsEmpty],
+    ) -> ndarray[_ShapeType, _DType]: ...
+    @overload
+    def __call__(
+        self, /,
+        shape: _ShapeType,
+        dtype: type[_SCT],
+        order: _OrderCF = ...,
+        **kwargs: Unpack[_KwargsEmpty],
+    ) -> _Array[_ShapeType, _SCT]: ...
+    @overload
+    def __call__(
+        self, /,
+        shape: _ShapeType,
+        dtype: DTypeLike,
+        order: _OrderCF = ...,
+        **kwargs: Unpack[_KwargsEmpty],
+    ) -> _Array[_ShapeType, Any]: ...
+
+    # unknown shape
+    @overload
+    def __call__(
+        self, /,
+        shape: _ShapeLike,
+        dtype: None = ...,
+        order: _OrderCF = ...,
+        **kwargs: Unpack[_KwargsEmpty],
+    ) -> NDArray[float64]: ...
+    @overload
+    def __call__(
+        self, /,
+        shape: _ShapeLike,
+        dtype: _DType | _SupportsDType[_DType],
+        order: _OrderCF = ...,
+        **kwargs: Unpack[_KwargsEmpty],
+    ) -> ndarray[Any, _DType]: ...
+    @overload
+    def __call__(
+        self, /,
+        shape: _ShapeLike,
+        dtype: type[_SCT],
+        order: _OrderCF = ...,
+        **kwargs: Unpack[_KwargsEmpty],
+    ) -> NDArray[_SCT]: ...
+    @overload
+    def __call__(
+        self, /,
+        shape: _ShapeLike,
+        dtype: DTypeLike,
+        order: _OrderCF = ...,
+        **kwargs: Unpack[_KwargsEmpty],
+    ) -> NDArray[Any]: ...
+
+
 __all__: list[str]
 
 ALLOW_THREADS: Final[int]  # 0 or 1 (system-specific)
@@ -147,6 +267,9 @@ MAXDIMS: L[32]
 MAY_SHARE_BOUNDS: L[0]
 MAY_SHARE_EXACT: L[-1]
 tracemalloc_domain: L[389047]
+
+zeros: Final[_ConstructorEmpty]
+empty: Final[_ConstructorEmpty]
 
 @overload
 def empty_like(
@@ -263,62 +386,6 @@ def array(
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
-    like: None | _SupportsArrayFunc = ...,
-) -> NDArray[Any]: ...
-
-@overload
-def zeros(
-    shape: _ShapeLike,
-    dtype: None = ...,
-    order: _OrderCF = ...,
-    *,
-    device: None | L["cpu"] = ...,
-    like: None | _SupportsArrayFunc = ...,
-) -> NDArray[float64]: ...
-@overload
-def zeros(
-    shape: _ShapeLike,
-    dtype: _DTypeLike[_SCT],
-    order: _OrderCF = ...,
-    *,
-    device: None | L["cpu"] = ...,
-    like: None | _SupportsArrayFunc = ...,
-) -> NDArray[_SCT]: ...
-@overload
-def zeros(
-    shape: _ShapeLike,
-    dtype: DTypeLike,
-    order: _OrderCF = ...,
-    *,
-    device: None | L["cpu"] = ...,
-    like: None | _SupportsArrayFunc = ...,
-) -> NDArray[Any]: ...
-
-@overload
-def empty(
-    shape: _ShapeLike,
-    dtype: None = ...,
-    order: _OrderCF = ...,
-    *,
-    device: None | L["cpu"] = ...,
-    like: None | _SupportsArrayFunc = ...,
-) -> NDArray[float64]: ...
-@overload
-def empty(
-    shape: _ShapeLike,
-    dtype: _DTypeLike[_SCT],
-    order: _OrderCF = ...,
-    *,
-    device: None | L["cpu"] = ...,
-    like: None | _SupportsArrayFunc = ...,
-) -> NDArray[_SCT]: ...
-@overload
-def empty(
-    shape: _ShapeLike,
-    dtype: DTypeLike,
-    order: _OrderCF = ...,
-    *,
-    device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
