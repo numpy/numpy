@@ -3885,7 +3885,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
     0.55000000074505806 # may vary
 
     Computing the mean in timedelta64 is available:
-    >>> b = np.array([np.timedelta64(1,'D'), np.timedelta64(3,'D')])
+    >>> b = np.array([1, 3], dtype="timedelta64[D]")
     >>> np.mean(b)
     2 days
 
