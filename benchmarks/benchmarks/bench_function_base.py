@@ -10,133 +10,197 @@ except ImportError:
 
 
 class Linspace(Benchmark):
+    """
+    Benchmark for numpy's linspace function.
+    """
     def setup(self):
+        """Sets up the data for the benchmarks."""
         self.d = np.array([1, 2, 3])
 
     def time_linspace_scalar(self):
+        """Benchmark for linspace with scalar inputs."""
         np.linspace(0, 10, 2)
 
     def time_linspace_array(self):
+        """Benchmark for linspace with array inputs."""
         np.linspace(self.d, 10, 10)
 
+
 class Histogram1D(Benchmark):
+    """
+    Benchmark for 1d histogram computations using numpy.
+    """
     def setup(self):
+        """Sets up the data for the benchmarks."""
         self.d = np.linspace(0, 100, 100000)
 
     def time_full_coverage(self):
+        """Benchmark for histogram covering the full range."""
         np.histogram(self.d, 200, (0, 100))
 
     def time_small_coverage(self):
+        """Benchmark for histogram covering a small range."""
         np.histogram(self.d, 200, (50, 51))
 
     def time_fine_binning(self):
+        """Benchmark for histogram with fine binning."""
         np.histogram(self.d, 10000, (0, 100))
 
 
 class Histogram2D(Benchmark):
+    """
+    Benchmark for 2D histogram computations using numpy.
+    """
     def setup(self):
-        self.d = np.linspace(0, 100, 200000).reshape((-1,2))
+        self.d = np.linspace(0, 100, 200000).reshape((-1, 2))
 
     def time_full_coverage(self):
+        """Benchmark for 2D histogram covering the full range."""
         np.histogramdd(self.d, (200, 200), ((0, 100), (0, 100)))
 
     def time_small_coverage(self):
+        """Benchmark for 2D histogram covering a small range."""
         np.histogramdd(self.d, (200, 200), ((50, 51), (50, 51)))
 
     def time_fine_binning(self):
+        """Benchmark for 2D histogram with fine binning."""
         np.histogramdd(self.d, (10000, 10000), ((0, 100), (0, 100)))
 
 
 class Bincount(Benchmark):
+    """
+    Benchmark for numpy's bincount function.
+    """
     def setup(self):
+        """Sets up the data for the benchmarks."""
         self.d = np.arange(80000, dtype=np.intp)
         self.e = self.d.astype(np.float64)
 
     def time_bincount(self):
+        """Benchmark for basic bincount."""
         np.bincount(self.d)
 
     def time_weights(self):
+        """Benchmark for bincount with weights."""
         np.bincount(self.d, weights=self.e)
 
 
 class Mean(Benchmark):
+    """
+    Benchmark for computing the mean of arrays.
+    """
     param_names = ['size']
     params = [[1, 10, 100_000]]
 
     def setup(self, size):
+        """Sets up the data for the benchmarks."""
         self.array = np.arange(2*size).reshape(2, size)
 
     def time_mean(self, size):
+        """Benchmark for mean calculation."""
         np.mean(self.array)
 
     def time_mean_axis(self, size):
+        """Benchmark for mean calculation along axis 1."""
         np.mean(self.array, axis=1)
 
 
 class Median(Benchmark):
+    """
+    Benchmark for computing the median of arrays.
+    """
     def setup(self):
+        """Sets up the data for the benchmarks."""
         self.e = np.arange(10000, dtype=np.float32)
         self.o = np.arange(10001, dtype=np.float32)
         self.tall = np.random.random((10000, 20))
         self.wide = np.random.random((20, 10000))
 
     def time_even(self):
+        """Benchmark for median of an even-length array."""
         np.median(self.e)
 
     def time_odd(self):
+        """Benchmark for median of an odd-length array."""
         np.median(self.o)
 
     def time_even_inplace(self):
+        """Benchmark for in-place median of an even-length array."""
         np.median(self.e, overwrite_input=True)
 
     def time_odd_inplace(self):
+        """Benchmark for in-place median of an odd-length array."""
         np.median(self.o, overwrite_input=True)
 
     def time_even_small(self):
+        """Benchmark for median of a small even-length array."""
         np.median(self.e[:500], overwrite_input=True)
 
     def time_odd_small(self):
+        """Benchmark for median of a small odd-length array."""
         np.median(self.o[:500], overwrite_input=True)
 
     def time_tall(self):
+        """Benchmark for median calculation along axis -1 of a tall array."""
         np.median(self.tall, axis=-1)
 
     def time_wide(self):
+        """Benchmark for median calculation along axis 0 of a wide array."""
         np.median(self.wide, axis=0)
 
 
 class Percentile(Benchmark):
+    """
+    Benchmark for computing percentiles.
+    """
     def setup(self):
+        """Sets up the data for the benchmarks."""
         self.e = np.arange(10000, dtype=np.float32)
         self.o = np.arange(21, dtype=np.float32)
 
     def time_quartile(self):
+        """Benchmark for calculating the first and third quartiles."""
         np.percentile(self.e, [25, 75])
 
     def time_percentile(self):
+        """Benchmark for calculating multiple percentiles."""
         np.percentile(self.e, [25, 35, 55, 65, 75])
 
     def time_percentile_small(self):
+        """Benchmark for calculating percentiles on a small array."""
         np.percentile(self.o, [25, 75])
 
 
 class Select(Benchmark):
+    """
+    Benchmark for numpy's select function.
+    """
     def setup(self):
-        self.d = np.arange(20000)
-        self.e = self.d.copy()
+        """Sets up the data for the benchmarks"""
+        self.d = np.arange(20000)  # Generate an array of integers from 0 to 19,999.
+        self.e = self.d.copy()  # Copy of the original array
         self.cond = [(self.d > 4), (self.d < 2)]
         self.cond_large = [(self.d > 4), (self.d < 2)] * 10
 
     def time_select(self):
+        """Benchmark for np.select with the defined conditions."""
         np.select(self.cond, [self.d, self.e])
 
     def time_select_larger(self):
+        """Benchmark for np.select with a larger set of conditions."""
         np.select(self.cond_large, ([self.d, self.e] * 10))
 
 
 def memoize(f):
+    """Memoization decorater to cache fuction results.
+    This helps avoid recomputing results for the same input.
+    Parameters: 
+    - f, The function to be memoized.
+    """
     _memoized = {}
+
     def wrapped(*args):
+        # Check if the result is already computed and cached.
         if args not in _memoized:
             _memoized[args] = f(*args)
 
@@ -146,8 +210,10 @@ def memoize(f):
 
 
 class SortGenerator:
+    """
+    A class for generating arrays used in sorting benchmarks.
+    """
     # The size of the unsorted area in the "random unsorted area"
-    # benchmarks
     AREA_SIZE = 100
     # The size of the "partially ordered" sub-arrays
     BUBBLE_SIZE = 100
@@ -157,6 +223,10 @@ class SortGenerator:
     def random(size, dtype, rnd):
         """
         Returns a randomly-shuffled array.
+        Parameters:
+        - size: The size of the array to generate.
+        - dtype: The data type of the array.
+        - rnd: Random state for reproducibility.
         """
         arr = np.arange(size, dtype=dtype)
         rnd = np.random.RandomState(1792364059)
@@ -166,17 +236,25 @@ class SortGenerator:
 
     @staticmethod
     @memoize
-    def ordered(size, dtype, rnd):
+    def ordered(size, dtype):
         """
         Returns an ordered array.
+        Parameters:
+        - size: The size of the array to generate.
+        - dtypeL The data type of the array.
         """
         return np.arange(size, dtype=dtype)
 
     @staticmethod
     @memoize
-    def reversed(size, dtype, rnd):
+    def reversed(size, dtype):
         """
-        Returns an array that's in descending order.
+        Returns an array, of a specified size, that's in descending order.
+        Parameters:
+        - size: The number of elements in the array.
+        - dtype: The desired data type of the array elements.
+        Returns:
+        - ndarray: An array of integers in descending order.
         """
         dtype = np.dtype(dtype)
         try:
@@ -189,17 +267,26 @@ class SortGenerator:
 
     @staticmethod
     @memoize
-    def uniform(size, dtype, rnd):
+    def uniform(size, dtype):
         """
         Returns an array that has the same value everywhere.
+        Parameters:
+        - size: The number of elements in the array.
+        - dtype: The desired data type of the array elements.
         """
         return np.ones(size, dtype=dtype)
 
     @staticmethod
     @memoize
-    def sorted_block(size, dtype, block_size, rnd):
+    def sorted_block(size, dtype, block_size):
         """
         Returns an array with blocks that are all sorted.
+        Parameters:
+        - size (int): The total number of elements in the array.
+        - dtype (str or dtype): The desired data type of the array elements.
+        - block_size (int): The size of each sorted block within the array.
+        Returns:
+        ndarray: An array where elements are arranged in sorted blocks.
         """
         a = np.arange(size, dtype=dtype)
         b = []
@@ -253,6 +340,10 @@ class Sort(Benchmark):
 
 
 class Partition(Benchmark):
+    """
+    Benchmark tests the performance of partitioning operations
+    on arrays of different types.
+    """
     params = [
         ['float64', 'int64', 'float32', 'int32', 'int16', 'float16'],
         [
@@ -272,19 +363,28 @@ class Partition(Benchmark):
     ARRAY_SIZE = 100000
 
     def setup(self, dtype, array_type, k):
+        """Sets up the data for the benchmarks."""
         rnd = np.random.seed(2136297818)
         array_class = array_type[0]
         self.arr = getattr(SortGenerator, array_class)(
             self.ARRAY_SIZE, dtype, *array_type[1:], rnd)
 
     def time_partition(self, dtype, array_type, k):
+        """Measures the time taken to partition the array."""
         temp = np.partition(self.arr, k)
 
     def time_argpartition(self, dtype, array_type, k):
+        """Measures the time taken to perform argpartition on the array."""
         temp = np.argpartition(self.arr, k)
 
+
 class SortWorst(Benchmark):
+    """
+    Benchmark tests the sorting performance on worst-case scenarios
+    for the quicksort algorithm
+    """
     def setup(self):
+        """Sets up the data for the benchmarks."""
         # quicksort median of 3 worst case
         self.worst = np.arange(1000000)
         x = self.worst
@@ -294,6 +394,7 @@ class SortWorst(Benchmark):
             x = x[:-2]
 
     def time_sort_worst(self):
+        """Measures the time taken to sort the worst-case array."""
         np.sort(self.worst)
 
     # Retain old benchmark name for backward compatibility
@@ -301,7 +402,11 @@ class SortWorst(Benchmark):
 
 
 class Where(Benchmark):
+    """
+    Benchmark tests the performace of the np.where function
+    under various conditions and array types."""
     def setup(self):
+        """Sets up the data for the benchmarks."""
         self.d = np.arange(20000)
         self.d_o = self.d.astype(object)
         self.e = self.d.copy()
@@ -375,4 +480,3 @@ class Where(Benchmark):
 
     def time_interleaved_ones_x8(self):
         np.where(self.rep_ones_8)
-
