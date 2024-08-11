@@ -331,8 +331,8 @@ class Sort(Benchmark):
 
     def time_sort(self, kind, dtype, array_type):
         # Using np.sort(...) instead of arr.sort(...) because it makes a copy.
-        # This is important because the data is prepared once per benchmark, but
-        # used across multiple runs.
+        # This is important because the data is prepared once per benchmark, 
+        # but used across multiple runs.
         np.sort(self.arr, kind=kind)
 
     def time_argsort(self, kind, dtype, array_type):
