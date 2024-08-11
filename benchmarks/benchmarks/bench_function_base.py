@@ -177,7 +177,7 @@ class Select(Benchmark):
     """
     def setup(self):
         """Sets up the data for the benchmarks"""
-        self.d = np.arange(20000)  # Generate an array of integers from 0 to 19,999.
+        self.d = np.arange(20000)
         self.e = self.d.copy()  # Copy of the original array
         self.cond = [(self.d > 4), (self.d < 2)]
         self.cond_large = [(self.d > 4), (self.d < 2)] * 10
