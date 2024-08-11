@@ -1,1 +1,0 @@
-* `numpy.reshape` and `numpy.ndarray.reshape` now support ``shape`` and ``copy`` arguments.

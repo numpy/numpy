@@ -1,2 +1,0 @@
-* NumPy now supports DLPack v1, support for older versions will
-  be deprecated in the future.
