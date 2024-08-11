@@ -1,0 +1,8 @@
+Improved ``numpy.dtypes`` type hints
+------------------------------------
+
+The type annotations for ``numpy.dtypes`` are now a better reflection of the
+runtime:
+The ``numpy.dtype`` type-aliases have been replaced with specialized ``dtype``
+*subtypes*, and the previously missing annotations for
+``numpy.dtypes.StringDType`` have been added.
