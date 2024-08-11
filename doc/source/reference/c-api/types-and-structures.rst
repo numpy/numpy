@@ -1612,3 +1612,29 @@ for completeness and assistance in understanding the code.
    ``arrayobject.h`` header. This type is not exposed to Python and
    could be replaced with a C-structure. As a Python type it takes
    advantage of reference- counted memory management.
+
+
+NumPy C-API and C complex
+=========================
+When you use the NumPy C-API, you will have access to complex real declarations
+``npy_cdouble`` and ``npy_cfloat``, which are declared in terms of the C
+standard types from ``complex.h``. Unfortunately, ``complex.h`` contains
+`#define I ...`` (where the actual definition depends on the compiler), which
+means that any downstream user that does ``#include <numpy/arrayobject.h>``
+could get ``I`` defined, and using something like declaring ``double I;`` in
+their code will result in an obscure compiler error like
+
+.. code-block::C
+    error: expected ‘)’ before ‘__extension__’
+                    double I,
+
+This error can be avoided  by adding::
+
+    #undef I
+
+to your code.
+
+.. versionchanged:: 2.0
+    The inclusion of ``complex.h`` was new in NumPy 2, so that code defining
+    a different ``I`` may not have required the ``#undef I`` on older versions.
+    NumPy 2.0.1 briefly included the ``#under I``
