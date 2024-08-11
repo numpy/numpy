@@ -14,6 +14,26 @@ on:
 permissions: read-all
 
 jobs:
+  get_commit_tags:
+    name: Get commit tags
+    runs-on: ubuntu-latest
+    # To enable this workflow on a fork, comment out:
+    if: "github.repository == 'numpy/numpy'"
+    outputs:
+      message: ${{ steps.commit_message.outputs.message }}
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+        # Gets the correct commit message for pull request
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get commit message
+        id: commit_message
+        run: |
+          set -xe
+          COMMIT_TAGS=$(git log --format=%B -n 1 | grep -o '\[[^]]*\]' | tr '\n' ' ' | xargs || true)
+          echo "message=$COMMIT_TAGS" >> $GITHUB_OUTPUT
+          echo github.ref ${{ github.ref }}
   analysis:
     name: Scorecards analysis
     runs-on: ubuntu-latest

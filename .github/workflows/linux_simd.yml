@@ -51,9 +51,30 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  baseline_only:
+  get_commit_tags:
+    name: Get commit tags
+    runs-on: ubuntu-latest
     # To enable this workflow on a fork, comment out:
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy'"
+    outputs:
+      message: ${{ steps.commit_message.outputs.message }}
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get commit message
+        id: commit_message
+        run: |
+          set -xe
+          COMMIT_TAGS=$(git log --format=%B -n 1 | grep -o '\[[^]]*\]' | tr '\n' ' ' | xargs || true)
+          echo "message=$COMMIT_TAGS" >> $GITHUB_OUTPUT
+          echo github.ref ${{ github.ref }}
+  baseline_only:
+    needs: get_commit_tags
+    if: >-
+      !contains(needs.get_commit_tags.outputs.message, '[simd skip]') &&
+      !contains(needs.get_commit_tags.outputs.message, '[skip simd]')
     runs-on: ubuntu-latest
     env:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-dispatch=none"

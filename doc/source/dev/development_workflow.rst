@@ -223,9 +223,52 @@ these fragments in each commit message of a PR:
 
 * ``[skip cirrus]``: skip Cirrus jobs
 
-  `CirrusCI <https://cirrus-ci.org/>`__ mostly triggers Linux aarch64 and MacOS Arm64 wheels
-  uploads.
-  `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.cirrus.star>`__
+  `CirrusCI <https://cirrus-ci.org/>`__ mostly triggers Linux aarch64 and MacOS
+  Arm64 wheels uploads. This is particularly expensive (see `gh-24280
+  <https://github.com/numpy/numpy/issues/24280>`__) and should be minimized.
+  `See the configuration file for these checks.
+  <https://github.com/numpy/numpy/blob/main/.cirrus.star>`__
+
+Additional CI Skip Tags
+~~~~~~~~~~~~~~~~~~~~~~~
+
+There are a range of additional tags that provide more fine-grained control over
+CI jobs. These tags allow are meant to skip specific jobs that are not needed
+for your changes. Here are the new tags you can use:
+
+* ``[skip circle]``: skip the CircleCI jobs (documentation and preview mostly)
+* ``[skip linux]``: skip Linux jobs, this is typically not a good idea unless another specific CI run is requested
+* ``[skip nixblas]``: skip BLAS NumPy jobs
+* ``[skip sanitizer]``: skip compiler sanitizer jobs (Linux)
+* ``[skip musl]``: skip musllinux_x86_64 jobs
+* ``[skip qemu]``: skip Linux QEMU jobs
+* ``[skip simd]``: skip SIMD optimization jobs
+* ``[skip macos]``: skip MacOS jobs
+* ``[skip mypy]``: skip ``mypy`` type checking jobs
+* ``[skip wingha]``: skip Windows GHA jobs
+* ``[skip wasm]``: skip Emscripten/Pyodide jobs
+* ``[skip codeql]``: skip CodeQL analysis jobs
+
+These tags do not need to be in the first line of the commit message and can appear anywhere in the body of the commit itself. Additionally, they can be used in any order, i.e. ``[skip mypy]`` is the same as ``[mypy skip]``
+
+Example Usage
+-------------
+
+An example commit message to run only Windows F2PY tests and skip other jobs:
+
+.. code-block:: text
+
+   CI: Configure F2PY GHA Windows [winci f2py]
+
+   [skip circle] [skip linux] [skip nixblas] [skip sanitizer] [skip musl]
+   [skip qemu] [skip simd] [skip macos] [skip mypy] [skip wingha] [wasm skip]
+   [codeql skip]
+
+   [skip azp]
+   [skip cirrus]
+
+Note: The ``[skip azp]`` tag can be anywhere in the commit message, but ``[skip cirrus]`` must be in the first or last line.
+
 
 Test building wheels
 ~~~~~~~~~~~~~~~~~~~~
