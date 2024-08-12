@@ -56,15 +56,20 @@ def get_wheel_names(version):
         The release version. For instance, "1.18.3".
 
     """
+    ret = []
     http = urllib3.PoolManager(cert_reqs="CERT_REQUIRED")
     tmpl = re.compile(rf"^.*{PREFIX}-{version}{SUFFIX}")
-    index_url = f"{STAGING_URL}/files"
-    index_html = http.request("GET", index_url)
-    soup = BeautifulSoup(index_html.data, "html.parser")
-    return soup.find_all(string=tmpl)
+    # TODO: generalize this by searching for `showing 1 of N` and
+    # looping over N pages, starting from 1
+    for i in range(1, 3):
+        index_url = f"{STAGING_URL}/files?page={i}"
+        index_html = http.request("GET", index_url)
+        soup = BeautifulSoup(index_html.data, "html.parser")
+        ret += soup.find_all(string=tmpl)
+    return ret
 
 
-def download_wheels(version, wheelhouse):
+def download_wheels(version, wheelhouse, test=False):
     """Download release wheels.
 
     The release wheels for the given NumPy version are downloaded
@@ -86,8 +91,15 @@ def download_wheels(version, wheelhouse):
         wheel_path = os.path.join(wheelhouse, wheel_name)
         with open(wheel_path, "wb") as f:
             with http.request("GET", wheel_url, preload_content=False,) as r:
-                print(f"{i + 1:<4}{wheel_name}")
-                shutil.copyfileobj(r, f)
+                info = r.info()
+                length = int(info.get('Content-Length', '0'))
+                if length == 0:
+                    length = 'unknown size'
+                else:
+                    length = f"{(length / 1024 / 1024):.2f}MB"
+                print(f"{i + 1:<4}{wheel_name} {length}")
+                if not test:
+                    shutil.copyfileobj(r, f)
     print(f"\nTotal files downloaded: {len(wheel_names)}")
 
 
@@ -101,6 +113,10 @@ if __name__ == "__main__":
         default=os.path.join(os.getcwd(), "release", "installers"),
         help="Directory in which to store downloaded wheels\n"
              "[defaults to <cwd>/release/installers]")
+    parser.add_argument(
+        "-t", "--test",
+        action = 'store_true',
+        help="only list available wheels, do not download")
 
     args = parser.parse_args()
 
@@ -110,4 +126,4 @@ if __name__ == "__main__":
             f"{wheelhouse} wheelhouse directory is not present."
             " Perhaps you need to use the '-w' flag to specify one.")
 
-    download_wheels(args.version, wheelhouse)
+    download_wheels(args.version, wheelhouse, test=args.test)
