@@ -220,6 +220,19 @@ using the NumPy types. You can still write cython code using the ``c.real`` and
 ``c.imag`` attributes (using the native typedefs), but you can no longer use
 in-place operators ``c.imag += 1`` in Cython's c++ mode.
 
+Because NumPy 2 now includes ``complex.h`` code that uses a variable named
+``I`` may see an error such as
+
+.. code-block::C
+   error: expected ‘)’ before ‘__extension__’
+                    double I,
+
+to use the name ``I`` requires an ``#undef I`` now.
+
+.. note::
+  NumPy 2.0.1 briefly included the ``#undef I`` to help users not already
+  including ``complex.h``.
+
 
 Changes to namespaces
 =====================
