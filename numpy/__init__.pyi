@@ -783,9 +783,8 @@ _GenericCType: TypeAlias = _NumberCType | type[ct.c_bool | ct.c_char | ct.py_obj
 # `dtype[object_]`, when their *type* is passed to the `dtype` constructor
 # NOTE: `builtins.object` should not be included here
 _BuiltinObjectLike: TypeAlias = (
-    type | bytearray | slice | BaseException
+    slice | Decimal | Fraction | UUID
     | dt.date | dt.time | dt.timedelta | dt.tzinfo
-    | Decimal | Fraction | UUID
     | tuple[Any, ...] | list[Any] | set[Any] | frozenset[Any] | dict[Any, Any]
 )  # fmt: skip
 
@@ -794,8 +793,18 @@ class dtype(Generic[_DTypeScalar_co]):
     names: None | tuple[builtins.str, ...]
     def __hash__(self) -> int: ...
 
-    # Overload for `dtype` instances, scalar types, and instances that have
-    # with a `dtype: dtype[_SCT]` attribute
+    # `None` results in the default dtype
+    @overload
+    def __new__(
+        cls,
+        dtype: None | type[float64],
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[builtins.str, Any] = ...
+    ) -> dtype[float64]: ...
+
+    # Overload for `dtype` instances, scalar types, and instances that have a
+    # `dtype: dtype[_SCT]` attribute
     @overload
     def __new__(
         cls,
@@ -805,53 +814,119 @@ class dtype(Generic[_DTypeScalar_co]):
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[_SCT]: ...
 
-    # `None` results in the default dtype
+    # Builtin types
+    #
+    # NOTE: Typecheckers act as if `bool <: int <: float <: complex <: object`,
+    # even though at runtime `int`, `float`, and `complex` aren't subtypes..
+    # This makes it impossible to express e.g. "a float that isn't an int",
+    # since type checkers treat `_: float` like `_: float | int`.
+    #
+    # For more details, see:
+    # - https://github.com/numpy/numpy/issues/27032#issuecomment-2278958251
+    # - https://typing.readthedocs.io/en/latest/spec/special-types.html#special-cases-for-float-and-complex
     @overload
     def __new__(
         cls,
-        dtype: None,
+        dtype: type[builtins.bool | np.bool],
         align: builtins.bool = ...,
         copy: builtins.bool = ...,
-        metadata: dict[builtins.str, Any] = ...
-    ) -> dtype[float64]: ...
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[np.bool]: ...
+    # NOTE: `_: type[int]` also accepts `type[int | bool]`
+    @overload
+    def __new__(
+        cls,
+        dtype: type[int | int_ | np.bool],
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[int_ | np.bool]: ...
+    # NOTE: `_: type[float]` also accepts `type[float | int | bool]`
+    # NOTE: `float64` inheritcs from `float` at runtime; but this isn't
+    # reflected in these stubs. So an explicit `float64` is required here.
+    @overload
+    def __new__(
+        cls,
+        dtype: None | type[float | float64 | int_ | np.bool],
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[float64 | int_ | np.bool]: ...
+    # NOTE: `_: type[complex]` also accepts `type[complex | float | int | bool]`
+    @overload
+    def __new__(
+        cls,
+        dtype: type[complex | complex128 | float64 | int_ | np.bool],
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[complex128 | float64 | int_ | np.bool]: ...
+    @overload
+    def __new__(
+        cls,
+        dtype: type[bytes],  # also includes `type[bytes_]`
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[bytes_]: ...
+    @overload
+    def __new__(
+        cls,
+        dtype: type[str],  # also includes `type[str_]`
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[str_]: ...
+    # NOTE: These `memoryview` overloads assume PEP 688, which requires mypy to
+    # be run with the (undocumented) `--disable-memoryview-promotion` flag,
+    # This will be the default in a future mypy release, see:
+    # https://github.com/python/mypy/issues/15313
+    # Pyright / Pylance requires setting `disableBytesTypePromotions=true`,
+    # which is the default in strict mode
+    @overload
+    def __new__(
+        cls,
+        dtype: type[memoryview | void],
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[void]: ...
+    # NOTE: `_: type[object]` would also accept e.g. `type[object | complex]`,
+    # and is therefore not included here
+    @overload
+    def __new__(
+        cls,
+        dtype: type[_BuiltinObjectLike | object_],
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[object_]: ...
 
-    # Builtin types
-    # NOTE: Type-checkers act as if `bool <: int <: float <: complex <: object`,
-    # even though at runtime, `int`, `float` and `complex` are not subtypes of
-    # each other.
-    # This makes it impossible to express e.g. "a float that isn't an int",
-    # since type checkers treat `_: float` as if it's `_: float | int`.
-    # https://typing.readthedocs.io/en/latest/spec/special-types.html#special-cases-for-float-and-complex
+    # Unions of builtins.
     @overload
-    def __new__(cls, dtype: type[builtins.bool], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[np.bool]: ...
-    # NOTE: this also accepts `dtype: type[int | bool]`
+    def __new__(
+        cls,
+        dtype: type[bytes | str],
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[character]: ...
     @overload
-    def __new__(cls, dtype: type[int], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[int_ | np.bool]: ...
-    # NOTE: This also accepts `dtype: type[float | int | bool]`
+    def __new__(
+        cls,
+        dtype: type[bytes | str | memoryview],
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[flexible]: ...
     @overload
-    def __new__(cls, dtype: type[float], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[float64 | int_ | np.bool]: ...
-    # NOTE: This also accepts `dtype: type[complex | float | int | bool]`
-    @overload
-    def __new__(cls, dtype: type[complex], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[complex128 | float64 | int_ | np.bool]: ...
-    # TODO: This weird `memoryview` order is needed to work around a bug in
-    # typeshed, which causes typecheckers to treat `memoryview` as a subtype
-    # of `bytes`, even though there's no mention of that in the typing docs.
-    @overload
-    def __new__(cls, dtype: type[memoryview], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[void]: ...
-    @overload
-    def __new__(cls, dtype: type[builtins.str], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[str_]: ...
-    # TODO: remove this overload once the typeshed bug is fixed
-    @overload
-    def __new__(cls, dtype: type[memoryview | builtins.str], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[flexible]: ...
-    @overload
-    def __new__(cls, dtype: type[bytes], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[bytes_]: ...
-    @overload
-    def __new__(cls, dtype: type[builtins.str | bytes], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[character]: ...
-    @overload
-    def __new__(cls, dtype: type[memoryview | builtins.str | bytes], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[flexible]: ...
-    # NOTE: `dtype: type[object]` also accepts e.g. `type[object | complex | ...]`
-    @overload
-    def __new__(cls, dtype: type[_BuiltinObjectLike], align: builtins.bool = ..., copy: builtins.bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[object_]: ...
+    def __new__(
+        cls,
+        dtype: type[complex | bytes | str | memoryview | _BuiltinObjectLike],
+        align: builtins.bool = ...,
+        copy: builtins.bool = ...,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[np.bool | int_ | float64 | complex128 | flexible | object_]: ...
 
     # `unsignedinteger` string-based representations and ctypes
     @overload

@@ -25,8 +25,7 @@ py_float_co: type[float | int | bool]
 py_complex_co: type[complex | float | int | bool]
 py_object: type[_PyObjectLike]
 py_character: type[str | bytes]
-# TODO: also include `bytes` here once mypy has been upgraded to >=1.11
-py_flexible: type[memoryview] | type[str]  # | type[bytes]
+py_flexible: type[str | bytes | memoryview]
 
 ct_floating: type[ct.c_float | ct.c_double | ct.c_longdouble]
 ct_number: type[ct.c_uint8 | ct.c_float]
