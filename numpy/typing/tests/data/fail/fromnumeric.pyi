@@ -89,6 +89,8 @@ np.trace(A, axis2=[])  # E: No overload variant
 
 np.ravel(a, order="bob")  # E: No overload variant
 
+np.nonzero(0)  # E: No overload variant
+
 np.compress(  # E: No overload variant
     [True], A, axis=1.0
 )
