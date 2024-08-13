@@ -688,7 +688,7 @@ From other objects
     Encapsulate the functionality of functions and methods that take
     the axis= keyword and work properly with None as the axis
     argument. The input array is ``obj``, while ``*axis`` is a
-    converted integer (so that >=MAXDIMS is the None value), and
+    converted integer (so that `*axis == NPY_RAVEL_AXIS` is the None value), and
     ``requirements`` gives the needed properties of ``obj``. The
     output is a converted version of the input so that requirements
     are met and if needed a flattening has occurred. On output
