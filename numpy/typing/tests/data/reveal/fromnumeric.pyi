@@ -23,6 +23,8 @@ AR_O: npt.NDArray[np.object_]
 AR_subclass: NDArraySubclass
 AR_m: npt.NDArray[np.timedelta64]
 AR_0d: np.ndarray[tuple[()], np.dtype[Any]]
+AR_1d: np.ndarray[tuple[int], np.dtype[Any]]
+AR_nd: np.ndarray[tuple[int, ...], np.dtype[Any]]
 
 b: np.bool
 f4: np.float32
@@ -131,9 +133,11 @@ assert_type(np.ravel(AR_f4), npt.NDArray[np.float32])
 
 assert_type(np.nonzero(b), NoReturn)
 assert_type(np.nonzero(f4), NoReturn)
-assert_type(np.nonzero(AR_0d), NoReturn)
 assert_type(np.nonzero(AR_b), tuple[npt.NDArray[np.intp], ...])
 assert_type(np.nonzero(AR_f4), tuple[npt.NDArray[np.intp], ...])
+assert_type(np.nonzero(AR_0d), NoReturn)
+assert_type(np.nonzero(AR_1d), tuple[npt.NDArray[np.intp], ...])
+assert_type(np.nonzero(AR_nd), tuple[npt.NDArray[np.intp], ...])
 
 assert_type(np.shape(b), tuple[int, ...])
 assert_type(np.shape(f4), tuple[int, ...])
