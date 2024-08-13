@@ -62,6 +62,8 @@ assert_type(np.average(AR_f8, weights=AR_c16, returned=True), tuple[np.complexfl
 assert_type(np.average(AR_O, returned=True), tuple[Any, Any])
 assert_type(np.average(AR_f8, axis=0), Any)
 assert_type(np.average(AR_f8, axis=0, returned=True), tuple[Any, Any])
+assert_type(np.average(AR_m), np.timedelta64)
+assert_type(np.average(AR_m, returned=True), tuple[Any, Any])
 
 assert_type(np.asarray_chkfinite(AR_f8), npt.NDArray[np.float64])
 assert_type(np.asarray_chkfinite(AR_LIKE_f8), npt.NDArray[Any])

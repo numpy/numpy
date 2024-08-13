@@ -11,7 +11,7 @@ AR_O: npt.NDArray[np.object_]
 
 def func(a: int) -> None: ...
 
-np.average(AR_m)  # E: incompatible type
+np.average(AR_M)  # E: incompatible type
 np.select(1, [AR_f8])  # E: incompatible type
 np.angle(AR_m)  # E: incompatible type
 np.unwrap(AR_m)  # E: incompatible type
