@@ -146,6 +146,13 @@ def test_default_int(install_temp):
 
     assert checks.get_default_integer() is np.dtype(int)
 
+
+def test_ravel_axis(install_temp):
+    import checks
+
+    assert checks.get_ravel_axis() == np.iinfo("intc").min
+
+
 def test_convert_datetime64_to_datetimestruct(install_temp):
     # GH#21199
     import checks
