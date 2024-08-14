@@ -272,9 +272,11 @@ def tensorsolve(a, b, axes=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.eye(2*3*4)
     >>> a.shape = (2*3, 4, 2, 3, 4)
-    >>> b = np.random.randn(2*3, 4)
+    >>> rng = np.random.default_rng()
+    >>> b = rng.normal(size=(2*3, 4))
     >>> x = np.linalg.tensorsolve(a, b)
     >>> x.shape
     (2, 3, 4)
@@ -379,6 +381,7 @@ def solve(a, b):
     ``x0 + 2 * x1 = 1`` and
     ``3 * x0 + 5 * x1 = 2``:
 
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, 5]])
     >>> b = np.array([1, 2])
     >>> x = np.linalg.solve(a, b)
@@ -451,12 +454,14 @@ def tensorinv(a, ind=2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.eye(4*6)
     >>> a.shape = (4, 6, 8, 3)
     >>> ainv = np.linalg.tensorinv(a, ind=2)
     >>> ainv.shape
     (8, 3, 4, 6)
-    >>> b = np.random.randn(4, 6)
+    >>> rng = np.random.default_rng()
+    >>> b = rng.normal(size=(4, 6))
     >>> np.allclose(np.tensordot(ainv, b), np.linalg.tensorsolve(a, b))
     True
 
@@ -465,7 +470,8 @@ def tensorinv(a, ind=2):
     >>> ainv = np.linalg.tensorinv(a, ind=1)
     >>> ainv.shape
     (8, 3, 24)
-    >>> b = np.random.randn(24)
+    >>> rng = np.random.default_rng()
+    >>> b = rng.normal(size=24)
     >>> np.allclose(np.tensordot(ainv, b, 1), np.linalg.tensorsolve(a, b))
     True
 
@@ -538,6 +544,7 @@ def inv(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.linalg import inv
     >>> a = np.array([[1., 2.], [3., 4.]])
     >>> ainv = inv(a)
@@ -649,6 +656,7 @@ def matrix_power(a, n):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.linalg import matrix_power
     >>> i = np.array([[0, 1], [-1, 0]]) # matrix equiv. of the imaginary unit
     >>> matrix_power(i, 3) # should = -i
@@ -803,6 +811,7 @@ def cholesky(a, /, *, upper=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> A = np.array([[1,-2j],[2j,5]])
     >>> A
     array([[ 1.+0.j, -0.-2.j],
@@ -872,6 +881,40 @@ def outer(x1, x2, /):
     See also
     --------
     outer
+
+    Examples
+    --------
+    Make a (*very* coarse) grid for computing a Mandelbrot set:
+
+    >>> rl = np.linalg.outer(np.ones((5,)), np.linspace(-2, 2, 5))
+    >>> rl
+    array([[-2., -1.,  0.,  1.,  2.],
+           [-2., -1.,  0.,  1.,  2.],
+           [-2., -1.,  0.,  1.,  2.],
+           [-2., -1.,  0.,  1.,  2.],
+           [-2., -1.,  0.,  1.,  2.]])
+    >>> im = np.linalg.outer(1j*np.linspace(2, -2, 5), np.ones((5,)))
+    >>> im
+    array([[0.+2.j, 0.+2.j, 0.+2.j, 0.+2.j, 0.+2.j],
+           [0.+1.j, 0.+1.j, 0.+1.j, 0.+1.j, 0.+1.j],
+           [0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j],
+           [0.-1.j, 0.-1.j, 0.-1.j, 0.-1.j, 0.-1.j],
+           [0.-2.j, 0.-2.j, 0.-2.j, 0.-2.j, 0.-2.j]])
+    >>> grid = rl + im
+    >>> grid
+    array([[-2.+2.j, -1.+2.j,  0.+2.j,  1.+2.j,  2.+2.j],
+           [-2.+1.j, -1.+1.j,  0.+1.j,  1.+1.j,  2.+1.j],
+           [-2.+0.j, -1.+0.j,  0.+0.j,  1.+0.j,  2.+0.j],
+           [-2.-1.j, -1.-1.j,  0.-1.j,  1.-1.j,  2.-1.j],
+           [-2.-2.j, -1.-2.j,  0.-2.j,  1.-2.j,  2.-2.j]])
+
+    An example using a "vector" of letters:
+
+    >>> x = np.array(['a', 'b', 'c'], dtype=object)
+    >>> np.linalg.outer(x, [1, 2, 3])
+    array([['a', 'aa', 'aaa'],
+           ['b', 'bb', 'bbb'],
+           ['c', 'cc', 'ccc']], dtype=object)
 
     """
     x1 = asanyarray(x1)
@@ -978,7 +1021,9 @@ def qr(a, mode='reduced'):
 
     Examples
     --------
-    >>> a = np.random.randn(9, 6)
+    >>> import numpy as np
+    >>> rng = np.random.default_rng()
+    >>> a = rng.normal(size=(9, 6))
     >>> Q, R = np.linalg.qr(a)
     >>> np.allclose(a, np.dot(Q, R))  # a does equal QR
     True
@@ -1047,15 +1092,10 @@ def qr(a, mode='reduced'):
     a = _to_native_byte_order(a)
     mn = min(m, n)
 
-    if m <= n:
-        gufunc = _umath_linalg.qr_r_raw_m
-    else:
-        gufunc = _umath_linalg.qr_r_raw_n
-
     signature = 'D->D' if isComplexType(t) else 'd->d'
     with errstate(call=_raise_linalgerror_qr, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
-        tau = gufunc(a, signature=signature)
+        tau = _umath_linalg.qr_r_raw(a, signature=signature)
 
     # handle modes that don't return q
     if mode == 'r':
@@ -1152,6 +1192,7 @@ def eigvals(a):
     if `Q` is orthogonal, then ``Q * A * Q.T`` has the same eigenvalues as
     ``A``:
 
+    >>> import numpy as np
     >>> from numpy import linalg as LA
     >>> x = np.random.random()
     >>> Q = np.array([[np.cos(x), -np.sin(x)], [np.sin(x), np.cos(x)]])
@@ -1248,6 +1289,7 @@ def eigvalsh(a, UPLO='L'):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy import linalg as LA
     >>> a = np.array([[1, -2j], [2j, 5]])
     >>> LA.eigvalsh(a)
@@ -1388,6 +1430,7 @@ def eig(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy import linalg as LA
 
     (Almost) trivial example with real eigenvalues and eigenvectors.
@@ -1528,6 +1571,7 @@ def eigh(a, UPLO='L'):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy import linalg as LA
     >>> a = np.array([[1, -2j], [2j, 5]])
     >>> a
@@ -1570,12 +1614,14 @@ def eigh(a, UPLO='L'):
            [0.+2.j, 2.+0.j]])
     >>> wa, va = LA.eigh(a)
     >>> wb, vb = LA.eig(b)
-    >>> wa; wb
+    >>> wa
     array([1., 6.])
+    >>> wb
     array([6.+0.j, 1.+0.j])
-    >>> va; vb
+    >>> va
     array([[-0.4472136 +0.j        , -0.89442719+0.j        ], # may vary
            [ 0.        +0.89442719j,  0.        -0.4472136j ]])
+    >>> vb
     array([[ 0.89442719+0.j       , -0.        +0.4472136j],
            [-0.        +0.4472136j,  0.89442719+0.j       ]])
 
@@ -1703,8 +1749,11 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
 
     Examples
     --------
-    >>> a = np.random.randn(9, 6) + 1j*np.random.randn(9, 6)
-    >>> b = np.random.randn(2, 7, 8, 3) + 1j*np.random.randn(2, 7, 8, 3)
+    >>> import numpy as np
+    >>> rng = np.random.default_rng()
+    >>> a = rng.normal(size=(9, 6)) + 1j*rng.normal(size=(9, 6))
+    >>> b = rng.normal(size=(2, 7, 8, 3)) + 1j*rng.normal(size=(2, 7, 8, 3))
+
 
     Reconstruction based on full SVD, 2D case:
 
@@ -1779,15 +1828,9 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
     m, n = a.shape[-2:]
     if compute_uv:
         if full_matrices:
-            if m < n:
-                gufunc = _umath_linalg.svd_m_f
-            else:
-                gufunc = _umath_linalg.svd_n_f
+            gufunc = _umath_linalg.svd_f
         else:
-            if m < n:
-                gufunc = _umath_linalg.svd_m_s
-            else:
-                gufunc = _umath_linalg.svd_n_s
+            gufunc = _umath_linalg.svd_s
 
         signature = 'D->DdD' if isComplexType(t) else 'd->ddd'
         with errstate(call=_raise_linalgerror_svd_nonconvergence,
@@ -1799,16 +1842,11 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
         vh = vh.astype(result_t, copy=False)
         return SVDResult(wrap(u), s, wrap(vh))
     else:
-        if m < n:
-            gufunc = _umath_linalg.svd_m
-        else:
-            gufunc = _umath_linalg.svd_n
-
         signature = 'D->d' if isComplexType(t) else 'd->d'
         with errstate(call=_raise_linalgerror_svd_nonconvergence,
                       invalid='call', over='ignore', divide='ignore',
                       under='ignore'):
-            s = gufunc(a, signature=signature)
+            s = _umath_linalg.svd(a, signature=signature)
         s = s.astype(_realType(result_t), copy=False)
         return s
 
@@ -1845,6 +1883,23 @@ def svdvals(x, /):
     See Also
     --------
     scipy.linalg.svdvals : Compute singular values of a matrix.
+
+    Examples
+    --------
+
+    >>> np.linalg.svdvals([[1, 2, 3, 4, 5],
+    ...                    [1, 4, 9, 16, 25],
+    ...                    [1, 8, 27, 64, 125]])
+    array([146.68862757,   5.57510612,   0.60393245])
+
+    Determine the rank of a matrix using singular values:
+
+    >>> s = np.linalg.svdvals([[1, 2, 3],
+    ...                        [2, 4, 6],
+    ...                        [-1, 1, -1]]); s
+    array([8.38434191e+00, 1.64402274e+00, 2.31534378e-16])
+    >>> np.count_nonzero(s > 1e-10)  # Matrix of rank 2
+    2
 
     """
     return svd(x, compute_uv=False, hermitian=False)
@@ -1908,6 +1963,7 @@ def cond(x, p=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy import linalg as LA
     >>> a = np.array([[1, 0, -1], [0, 1, 0], [1, 0, 1]])
     >>> a
@@ -2066,6 +2122,7 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.linalg import matrix_rank
     >>> matrix_rank(np.eye(4)) # Full rank matrix
     4
@@ -2181,7 +2238,9 @@ def pinv(a, rcond=None, hermitian=False, *, rtol=_NoValue):
     The following example checks that ``a * a+ * a == a`` and
     ``a+ * a * a+ == a+``:
 
-    >>> a = np.random.randn(9, 6)
+    >>> import numpy as np
+    >>> rng = np.random.default_rng()
+    >>> a = rng.normal(size=(9, 6))
     >>> B = np.linalg.pinv(a)
     >>> np.allclose(a, np.dot(a, np.dot(B, a)))
     True
@@ -2276,6 +2335,7 @@ def slogdet(a):
     --------
     The determinant of a 2-D array ``[[a, b], [c, d]]`` is ``ad - bc``:
 
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, 4]])
     >>> (sign, logabsdet) = np.linalg.slogdet(a)
     >>> (sign, logabsdet)
@@ -2350,6 +2410,7 @@ def det(a):
     --------
     The determinant of a 2-D array [[a, b], [c, d]] is ad - bc:
 
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, 4]])
     >>> np.linalg.det(a)
     -2.0 # may vary
@@ -2446,6 +2507,7 @@ def lstsq(a, b, rcond=None):
     --------
     Fit a line, ``y = mx + c``, through some noisy data-points:
 
+    >>> import numpy as np
     >>> x = np.array([0, 1, 2, 3])
     >>> y = np.array([-1, 0.2, 0.9, 2.1])
 
@@ -2492,11 +2554,6 @@ def lstsq(a, b, rcond=None):
     if rcond is None:
         rcond = finfo(t).eps * max(n, m)
 
-    if m <= n:
-        gufunc = _umath_linalg.lstsq_m
-    else:
-        gufunc = _umath_linalg.lstsq_n
-
     signature = 'DDd->Ddid' if isComplexType(t) else 'ddd->ddid'
     if n_rhs == 0:
         # lapack can't handle n_rhs = 0 - so allocate
@@ -2505,7 +2562,8 @@ def lstsq(a, b, rcond=None):
 
     with errstate(call=_raise_linalgerror_lstsq, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
-        x, resids, rank, s = gufunc(a, b, rcond, signature=signature)
+        x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                                                 signature=signature)
     if m == 0:
         x[...] = 0
     if n_rhs == 0:
@@ -2647,6 +2705,8 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
     Examples
     --------
+
+    >>> import numpy as np
     >>> from numpy import linalg as LA
     >>> a = np.arange(9) - 4
     >>> a
@@ -2884,6 +2944,7 @@ def multi_dot(arrays, *, out=None):
     --------
     `multi_dot` allows you to write::
 
+    >>> import numpy as np
     >>> from numpy.linalg import multi_dot
     >>> # Prepare some data
     >>> A = np.random.random((10000, 100))
@@ -2974,7 +3035,7 @@ def _multi_dot_three(A, B, C, out=None):
 
 def _multi_dot_matrix_chain_order(arrays, return_costs=False):
     """
-    Return a np.array that encodes the optimal order of mutiplications.
+    Return a np.array that encodes the optimal order of multiplications.
 
     The optimal order array is then used by `_multi_dot()` to do the
     multiplication.
@@ -3066,6 +3127,58 @@ def diagonal(x, /, *, offset=0):
     --------
     numpy.diagonal
 
+    Examples
+    --------
+    >>> a = np.arange(4).reshape(2, 2); a
+    array([[0, 1],
+           [2, 3]])
+    >>> np.linalg.diagonal(a)
+    array([0, 3])
+
+    A 3-D example:
+
+    >>> a = np.arange(8).reshape(2, 2, 2); a
+    array([[[0, 1],
+            [2, 3]],
+           [[4, 5],
+            [6, 7]]])
+    >>> np.linalg.diagonal(a)
+    array([[0, 3],
+           [4, 7]])
+
+    Diagonals adjacent to the main diagonal can be obtained by using the
+    `offset` argument:
+
+    >>> a = np.arange(9).reshape(3, 3)
+    >>> a
+    array([[0, 1, 2],
+           [3, 4, 5],
+           [6, 7, 8]])
+    >>> np.linalg.diagonal(a, offset=1)  # First superdiagonal
+    array([1, 5])
+    >>> np.linalg.diagonal(a, offset=2)  # Second superdiagonal
+    array([2])
+    >>> np.linalg.diagonal(a, offset=-1)  # First subdiagonal
+    array([3, 7])
+    >>> np.linalg.diagonal(a, offset=-2)  # Second subdiagonal
+    array([6])
+
+    The anti-diagonal can be obtained by reversing the order of elements
+    using either `numpy.flipud` or `numpy.fliplr`.
+
+    >>> a = np.arange(9).reshape(3, 3)
+    >>> a
+    array([[0, 1, 2],
+           [3, 4, 5],
+           [6, 7, 8]])
+    >>> np.linalg.diagonal(np.fliplr(a))  # Horizontal flip
+    array([2, 4, 6])
+    >>> np.linalg.diagonal(np.flipud(a))  # Vertical flip
+    array([6, 4, 2])
+
+    Note that the order in which the diagonal is retrieved varies depending
+    on the flip function.
+
     """
     return _core_diagonal(x, offset, axis1=-2, axis2=-1)
 
@@ -3119,6 +3232,38 @@ def trace(x, /, *, offset=0, dtype=None):
     --------
     numpy.trace
 
+    Examples
+    --------
+    >>> np.linalg.trace(np.eye(3))
+    3.0
+    >>> a = np.arange(8).reshape((2, 2, 2))
+    >>> np.linalg.trace(a)
+    array([3, 11])
+
+    Trace is computed with the last two axes as the 2-d sub-arrays.
+    This behavior differs from :py:func:`numpy.trace` which uses the first two
+    axes by default.
+
+    >>> a = np.arange(24).reshape((3, 2, 2, 2))
+    >>> np.linalg.trace(a).shape
+    (3, 2)
+
+    Traces adjacent to the main diagonal can be obtained by using the
+    `offset` argument:
+
+    >>> a = np.arange(9).reshape((3, 3)); a
+    array([[0, 1, 2],
+           [3, 4, 5],
+           [6, 7, 8]])
+    >>> np.linalg.trace(a, offset=1)  # First superdiagonal
+    6
+    >>> np.linalg.trace(a, offset=2)  # Second superdiagonal
+    2
+    >>> np.linalg.trace(a, offset=-1)  # First subdiagonal
+    10
+    >>> np.linalg.trace(a, offset=-2)  # Second subdiagonal
+    6
+
     """
     return _core_trace(x, offset, axis1=-2, axis2=-1, dtype=dtype)
 
@@ -3163,7 +3308,35 @@ def cross(x1, x2, /, *, axis=-1):
     --------
     numpy.cross
 
+    Examples
+    --------
+    Vector cross-product.
+
+    >>> x = np.array([1, 2, 3])
+    >>> y = np.array([4, 5, 6])
+    >>> np.linalg.cross(x, y)
+    array([-3,  6, -3])
+
+    Multiple vector cross-products. Note that the direction of the cross
+    product vector is defined by the *right-hand rule*.
+
+    >>> x = np.array([[1,2,3], [4,5,6]])
+    >>> y = np.array([[4,5,6], [1,2,3]])
+    >>> np.linalg.cross(x, y)
+    array([[-3,  6, -3],
+           [ 3, -6,  3]])
+
+    >>> x = np.array([[1, 2], [3, 4], [5, 6]])
+    >>> y = np.array([[4, 5], [6, 1], [2, 3]])
+    >>> np.linalg.cross(x, y, axis=0)
+    array([[-24,  6],
+           [ 18, 24],
+           [-6,  -18]])
+
     """
+    x1 = asanyarray(x1)
+    x2 = asanyarray(x2)
+
     if x1.shape[axis] != 3 or x2.shape[axis] != 3:
         raise ValueError(
             "Both input arrays must be (arrays of) 3-dimensional vectors, "
@@ -3212,6 +3385,53 @@ def matmul(x1, x2, /):
     See Also
     --------
     numpy.matmul
+
+    Examples
+    --------
+    For 2-D arrays it is the matrix product:
+
+    >>> a = np.array([[1, 0],
+    ...               [0, 1]])
+    >>> b = np.array([[4, 1],
+    ...               [2, 2]])
+    >>> np.linalg.matmul(a, b)
+    array([[4, 1],
+           [2, 2]])
+
+    For 2-D mixed with 1-D, the result is the usual.
+
+    >>> a = np.array([[1, 0],
+    ...               [0, 1]])
+    >>> b = np.array([1, 2])
+    >>> np.linalg.matmul(a, b)
+    array([1, 2])
+    >>> np.linalg.matmul(b, a)
+    array([1, 2])
+
+
+    Broadcasting is conventional for stacks of arrays
+
+    >>> a = np.arange(2 * 2 * 4).reshape((2, 2, 4))
+    >>> b = np.arange(2 * 2 * 4).reshape((2, 4, 2))
+    >>> np.linalg.matmul(a,b).shape
+    (2, 2, 2)
+    >>> np.linalg.matmul(a, b)[0, 1, 1]
+    98
+    >>> sum(a[0, 1, :] * b[0 , :, 1])
+    98
+
+    Vector, vector returns the scalar inner product, but neither argument
+    is complex-conjugated:
+
+    >>> np.linalg.matmul([2j, 3j], [2j, 3j])
+    (-13+0j)
+
+    Scalar multiplication raises an error.
+
+    >>> np.linalg.matmul([1,2], 3)
+    Traceback (most recent call last):
+    ...
+    ValueError: matmul: Input operand 1 does not have enough dimensions ...
 
     """
     return _core_matmul(x1, x2)
@@ -3272,6 +3492,36 @@ def matrix_norm(x, /, *, keepdims=False, ord="fro"):
     --------
     numpy.linalg.norm : Generic norm function
 
+    Examples
+    --------
+    >>> from numpy import linalg as LA
+    >>> a = np.arange(9) - 4
+    >>> a
+    array([-4, -3, -2, ...,  2,  3,  4])
+    >>> b = a.reshape((3, 3))
+    >>> b
+    array([[-4, -3, -2],
+           [-1,  0,  1],
+           [ 2,  3,  4]])
+
+    >>> LA.matrix_norm(b)
+    7.745966692414834
+    >>> LA.matrix_norm(b, ord='fro')
+    7.745966692414834
+    >>> LA.matrix_norm(b, ord=np.inf)
+    9.0
+    >>> LA.matrix_norm(b, ord=-np.inf)
+    2.0
+
+    >>> LA.matrix_norm(b, ord=1)
+    7.0
+    >>> LA.matrix_norm(b, ord=-1)
+    6.0
+    >>> LA.matrix_norm(b, ord=2)
+    7.3484692283495345
+    >>> LA.matrix_norm(b, ord=-2)
+    1.8570331885190563e-016 # may vary
+
     """
     x = asanyarray(x)
     return norm(x, axis=(-2, -1), keepdims=keepdims, ord=ord)
@@ -3310,6 +3560,34 @@ def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
     See Also
     --------
     numpy.linalg.norm : Generic norm function
+
+    Examples
+    --------
+    >>> from numpy import linalg as LA
+    >>> a = np.arange(9) + 1
+    >>> a
+    array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> b = a.reshape((3, 3))
+    >>> b
+    array([[1, 2, 3],
+           [4, 5, 6],
+           [7, 8, 9]])
+
+    >>> LA.vector_norm(b)
+    16.881943016134134
+    >>> LA.vector_norm(b, ord=np.inf)
+    9.0
+    >>> LA.vector_norm(b, ord=-np.inf)
+    1.0
+
+    >>> LA.vector_norm(b, ord=1)
+    45.0
+    >>> LA.vector_norm(b, ord=-1)
+    0.3534857623790153
+    >>> LA.vector_norm(b, ord=2)
+    16.881943016134134
+    >>> LA.vector_norm(b, ord=-2)
+    0.8058837395885292
 
     """
     x = asanyarray(x)
@@ -3389,6 +3667,15 @@ def vecdot(x1, x2, /, *, axis=-1):
     See Also
     --------
     numpy.vecdot
+
+    Examples
+    --------
+    Get the projected size along a given normal for an array of vectors.
+
+    >>> v = np.array([[0., 5., 0.], [0., 0., 10.], [0., 6., 8.]])
+    >>> n = np.array([0., 0.6, 0.8])
+    >>> np.linalg.vecdot(v, n)
+    array([ 3.,  8., 10.])
 
     """
     return _core_vecdot(x1, x2, axis=axis)

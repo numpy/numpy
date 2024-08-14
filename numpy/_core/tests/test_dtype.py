@@ -236,6 +236,22 @@ class TestBuiltin:
         with pytest.raises(ValueError):
             type(np.dtype("U"))(-1)
 
+        # OverflowError on 32 bit
+        with pytest.raises((TypeError, OverflowError)):
+            # see gh-26556
+            type(np.dtype("S"))(2**61)
+
+        with pytest.raises(TypeError):
+            np.dtype("S1234hello")
+
+    def test_leading_zero_parsing(self):
+        dt1 = np.dtype('S010')
+        dt2 = np.dtype('S10')
+
+        assert dt1 == dt2
+        assert repr(dt1) == "dtype('S10')"
+        assert dt1.itemsize == 10
+
 
 class TestRecord:
     def test_equivalent_record(self):
@@ -1498,7 +1514,7 @@ class TestPromotion:
     @np._no_nep50_warning()
     def test_float_int_pyscalar_promote_rational(
             self, weak_promotion, other, expected):
-        # Note that rationals are a bit akward as they promote with float64
+        # Note that rationals are a bit awkward as they promote with float64
         # or default ints, but not float16 or uint8/int8 (which looks
         # inconsistent here).  The new promotion fixes this (partially?)
         if not weak_promotion and type(other) == float:

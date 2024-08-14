@@ -7,7 +7,7 @@ requires = [
 
 [project]
 name = "numpy"
-version = "2.1.0.dev0"
+version = "2.2.0.dev0"
 # TODO: add `license-files` once PEP 639 is accepted (see meson-python#88)
 license = {file = "LICENSE.txt"}
 
@@ -211,5 +211,7 @@ cli = 'vendored-meson/meson/meson.py'
   ".spin/cmds.py:docs",
   ".spin/cmds.py:changelog",
   ".spin/cmds.py:notes",
+  ".spin/cmds.py:check_docs",
+  ".spin/cmds.py:check_tutorials",
 ]
 "Metrics" = [".spin/cmds.py:bench"]

@@ -160,13 +160,12 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(HALF_@func@)
 #if NPY_SIMD && defined(NPY_CAN_LINK_SVML)
     const npy_half *src = (npy_half*)args[0];
           npy_half *dst = (npy_half*)args[1];
-    const int lsize = sizeof(src[0]);
-    const npy_intp ssrc = steps[0] / lsize;
-    const npy_intp sdst = steps[1] / lsize;
+
     const npy_intp len = dimensions[0];
+
     if (!is_mem_overlap(src, steps[0], dst, steps[1], len) &&
-        (ssrc == 1) &&
-        (sdst == 1)) {
+        (steps[0] == sizeof(npy_half)) &&
+        (steps[1] == sizeof(npy_half))) {
 #if defined(NPY_HAVE_AVX512_SPR)
         __svml_@intrin@s32(src, dst, len);
         return;
@@ -201,14 +200,15 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
 #if NPY_SIMD && defined(NPY_HAVE_AVX512_SKX) && defined(NPY_CAN_LINK_SVML)
     const @type@ *src = (@type@*)args[0];
           @type@ *dst = (@type@*)args[1];
-    const int lsize = sizeof(src[0]);
-    const npy_intp ssrc = steps[0] / lsize;
-    const npy_intp sdst = steps[1] / lsize;
+
     const npy_intp len = dimensions[0];
-    assert(len <= 1 || (steps[0] % lsize == 0 && steps[1] % lsize == 0));
+
     if (!is_mem_overlap(src, steps[0], dst, steps[1], len) &&
-        npyv_loadable_stride_@sfx@(ssrc) &&
-        npyv_storable_stride_@sfx@(sdst)) {
+        npyv_loadable_stride_@sfx@(steps[0]) &&
+        npyv_storable_stride_@sfx@(steps[1]))
+    {
+        const npy_intp ssrc = steps[0] / sizeof(@type@);
+        const npy_intp sdst = steps[1] / sizeof(@type@);
         simd_@intrin@_@sfx@(src, ssrc, dst, sdst, len);
         return;
     }
@@ -251,15 +251,19 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
     const @type@ *src1 = (@type@*)args[0];
     const @type@ *src2 = (@type@*)args[1];
           @type@ *dst  = (@type@*)args[2];
-    const int lsize = sizeof(src1[0]);
-    const npy_intp ssrc1 = steps[0] / lsize;
-    const npy_intp ssrc2 = steps[1] / lsize;
-    const npy_intp sdst  = steps[2] / lsize;
+
     const npy_intp len = dimensions[0];
-    assert(len <= 1 || (steps[0] % lsize == 0 && steps[1] % lsize == 0));
-    if (!is_mem_overlap(src1, steps[0], dst, steps[2], len) && !is_mem_overlap(src2, steps[1], dst, steps[2], len) &&
-        npyv_loadable_stride_@sfx@(ssrc1) && npyv_loadable_stride_@sfx@(ssrc2) &&
-        npyv_storable_stride_@sfx@(sdst)) {
+
+    if (!is_mem_overlap(src1, steps[0], dst, steps[2], len) &&
+        !is_mem_overlap(src2, steps[1], dst, steps[2], len) &&
+        npyv_loadable_stride_@sfx@(steps[0]) &&
+        npyv_loadable_stride_@sfx@(steps[1]) &&
+        npyv_storable_stride_@sfx@(steps[2])
+    ) {
+        const npy_intp ssrc1 = steps[0] / sizeof(@type@);
+        const npy_intp ssrc2 = steps[1] / sizeof(@type@);
+        const npy_intp sdst  = steps[2] / sizeof(@type@);
+
         simd_@intrin@_@sfx@(src1, ssrc1, src2, ssrc2, dst, sdst, len);
         return;
     }
@@ -283,15 +287,19 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
     const @type@ *src1 = (@type@*)args[0];
     const @type@ *src2 = (@type@*)args[1];
           @type@ *dst  = (@type@*)args[2];
-    const int lsize = sizeof(src1[0]);
-    const npy_intp ssrc1 = steps[0] / lsize;
-    const npy_intp ssrc2 = steps[1] / lsize;
-    const npy_intp sdst  = steps[2] / lsize;
+
     const npy_intp len = dimensions[0];
-    assert(len <= 1 || (steps[0] % lsize == 0 && steps[1] % lsize == 0));
-    if (!is_mem_overlap(src1, steps[0], dst, steps[2], len) && !is_mem_overlap(src2, steps[1], dst, steps[2], len) &&
-        npyv_loadable_stride_@sfx@(ssrc1) && npyv_loadable_stride_@sfx@(ssrc2) &&
-        npyv_storable_stride_@sfx@(sdst)) {
+
+    if (!is_mem_overlap(src1, steps[0], dst, steps[2], len) &&
+        !is_mem_overlap(src2, steps[1], dst, steps[2], len) &&
+        npyv_loadable_stride_@sfx@(steps[0]) &&
+        npyv_loadable_stride_@sfx@(steps[1]) &&
+        npyv_storable_stride_@sfx@(steps[2])
+    ) {
+        const npy_intp ssrc1 = steps[0] / sizeof(@type@);
+        const npy_intp ssrc2 = steps[1] / sizeof(@type@);
+        const npy_intp sdst  = steps[2] / sizeof(@type@);
+
         simd_@intrin@_@sfx@(src1, ssrc1, src2, ssrc2, dst, sdst, len);
         return;
     }

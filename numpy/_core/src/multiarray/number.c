@@ -23,6 +23,10 @@
  ****************   Implement Number Protocol ****************************
  *************************************************************************/
 
+// this is not in the global data struct to avoid needing to include the
+// definition of the NumericOps struct in multiarraymodule.h
+//
+// it is filled in during module initialization in a thread-safe manner
 NPY_NO_EXPORT NumericOps n_ops; /* NB: static objects initialized to zero */
 
 /*
@@ -118,6 +122,20 @@ _PyArray_SetNumericOps(PyObject *dict)
     SET(conjugate);
     SET(matmul);
     SET(clip);
+
+    // initialize static globals needed for matmul
+    npy_static_pydata.axes_1d_obj_kwargs = Py_BuildValue(
+            "{s, [(i), (i, i), (i)]}", "axes", -1, -2, -1, -1);
+    if (npy_static_pydata.axes_1d_obj_kwargs == NULL) {
+        return -1;
+    }
+
+    npy_static_pydata.axes_2d_obj_kwargs = Py_BuildValue(
+            "{s, [(i, i), (i, i), (i, i)]}", "axes", -2, -1, -2, -1, -2, -1);
+    if (npy_static_pydata.axes_2d_obj_kwargs == NULL) {
+        return -1;
+    }
+
     return 0;
 }
 
@@ -268,14 +286,14 @@ array_matrix_multiply(PyObject *m1, PyObject *m2)
 static PyObject *
 array_inplace_matrix_multiply(PyArrayObject *self, PyObject *other)
 {
-    static PyObject *AxisError_cls = NULL;
-    npy_cache_import("numpy.exceptions", "AxisError", &AxisError_cls);
-    if (AxisError_cls == NULL) {
-        return NULL;
-    }
-
     INPLACE_GIVE_UP_IF_NEEDED(self, other,
             nb_inplace_matrix_multiply, array_inplace_matrix_multiply);
+
+    PyObject *args = PyTuple_Pack(3, self, other, self);
+    if (args == NULL) {
+        return NULL;
+    }
+    PyObject *kwargs;
 
     /*
      * Unlike `matmul(a, b, out=a)` we ensure that the result is not broadcast
@@ -286,33 +304,11 @@ array_inplace_matrix_multiply(PyArrayObject *self, PyObject *other)
      * The error here will be confusing, but for now, we enforce this by
      * passing the correct `axes=`.
      */
-    static PyObject *axes_1d_obj_kwargs = NULL;
-    static PyObject *axes_2d_obj_kwargs = NULL;
-    if (NPY_UNLIKELY(axes_1d_obj_kwargs == NULL)) {
-        axes_1d_obj_kwargs = Py_BuildValue(
-                "{s, [(i), (i, i), (i)]}", "axes", -1, -2, -1, -1);
-        if (axes_1d_obj_kwargs == NULL) {
-            return NULL;
-        }
-    }
-    if (NPY_UNLIKELY(axes_2d_obj_kwargs == NULL)) {
-        axes_2d_obj_kwargs = Py_BuildValue(
-                "{s, [(i, i), (i, i), (i, i)]}", "axes", -2, -1, -2, -1, -2, -1);
-        if (axes_2d_obj_kwargs == NULL) {
-            return NULL;
-        }
-    }
-
-    PyObject *args = PyTuple_Pack(3, self, other, self);
-    if (args == NULL) {
-        return NULL;
-    }
-    PyObject *kwargs;
     if (PyArray_NDIM(self) == 1) {
-        kwargs = axes_1d_obj_kwargs;
+        kwargs = npy_static_pydata.axes_1d_obj_kwargs;
     }
     else {
-        kwargs = axes_2d_obj_kwargs;
+        kwargs = npy_static_pydata.axes_2d_obj_kwargs;
     }
     PyObject *res = PyObject_Call(n_ops.matmul, args, kwargs);
     Py_DECREF(args);
@@ -322,7 +318,7 @@ array_inplace_matrix_multiply(PyArrayObject *self, PyObject *other)
          * AxisError should indicate that the axes argument didn't work out
          * which should mean the second operand not being 2 dimensional.
          */
-        if (PyErr_ExceptionMatches(AxisError_cls)) {
+        if (PyErr_ExceptionMatches(npy_static_pydata.AxisError)) {
             PyErr_SetString(PyExc_ValueError,
                 "inplace matrix multiplication requires the first operand to "
                 "have at least one and the second at least two dimensions.");

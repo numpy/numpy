@@ -126,6 +126,7 @@ def poly2lag(pol):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.laguerre import poly2lag
     >>> poly2lag(np.arange(4))
     array([ 23., -63.,  58., -18.])
@@ -1062,7 +1063,7 @@ def lagval3d(x, y, z, c):
     >>> c = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
     >>> lagval3d(1, 1, 2, c)
     -1.0
-    
+
     """
     return pu._valnd(lagval, c, x, y, z)
 
@@ -1128,7 +1129,7 @@ def laggrid3d(x, y, z, c):
             [ -2., -18.]],
            [[ -2., -14.],
             [ -1.,  -5.]]])
-    
+
     """
     return pu._gridnd(lagval, c, x, y, z)
 
@@ -1169,6 +1170,7 @@ def lagvander(x, deg):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.laguerre import lagvander
     >>> x = np.array([0, 1, 2])
     >>> lagvander(x, 3)
@@ -1244,12 +1246,13 @@ def lagvander2d(x, y, deg):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.laguerre import lagvander2d
     >>> x = np.array([0])
     >>> y = np.array([2])
     >>> lagvander2d(x, y, [2, 1])
     array([[ 1., -1.,  1., -1.,  1., -1.]])
-    
+
     """
     return pu._vander_nd_flat((lagvander, lagvander), (x, y), deg)
 
@@ -1306,6 +1309,7 @@ def lagvander3d(x, y, z, deg):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.laguerre import lagvander3d
     >>> x = np.array([0])
     >>> y = np.array([2])
@@ -1439,12 +1443,14 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.laguerre import lagfit, lagval
     >>> x = np.linspace(0, 10)
-    >>> err = np.random.randn(len(x))/10
+    >>> rng = np.random.default_rng()
+    >>> err = rng.normal(scale=1./10, size=len(x))
     >>> y = lagval(x, [1, 2, 3]) + err
     >>> lagfit(x, y, 2)
-    array([ 0.96971004,  2.00193749,  3.00288744]) # may vary
+    array([1.00578369, 1.99417356, 2.99827656]) # may vary
 
     """
     return pu._fit(lagvander, x, y, deg, rcond, full, w)
@@ -1480,7 +1486,7 @@ def lagcompanion(c):
     >>> lagcompanion([1, 2, 3])
     array([[ 1.        , -0.33333333],
            [-1.        ,  4.33333333]])
-           
+
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
@@ -1687,9 +1693,9 @@ class Laguerre(ABCPolyBase):
     domain : (2,) array_like, optional
         Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
         to the interval ``[window[0], window[1]]`` by shifting and scaling.
-        The default value is [0, 1].
+        The default value is [0., 1.].
     window : (2,) array_like, optional
-        Window, see `domain` for its use. The default value is [0, 1].
+        Window, see `domain` for its use. The default value is [0., 1.].
 
         .. versionadded:: 1.6.0
     symbol : str, optional

@@ -20,6 +20,7 @@ i8: np.int64
 A: npt.NDArray[np.float64]
 B: SubClass[np.float64]
 C: list[int]
+D: SubClass[np.float64 | np.int64]
 
 def func(i: int, j: int, **kwargs: Any) -> SubClass[np.float64]: ...
 
@@ -31,12 +32,16 @@ assert_type(np.empty_like(A, dtype='c16'), npt.NDArray[Any])
 
 assert_type(np.array(A), npt.NDArray[np.float64])
 assert_type(np.array(B), npt.NDArray[np.float64])
-assert_type(np.array(B, subok=True), SubClass[np.float64])
 assert_type(np.array([1, 1.0]), npt.NDArray[Any])
 assert_type(np.array(deque([1, 2, 3])), npt.NDArray[Any])
 assert_type(np.array(A, dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.array(A, dtype='c16'), npt.NDArray[Any])
 assert_type(np.array(A, like=A), npt.NDArray[np.float64])
+assert_type(np.array(A, subok=True), npt.NDArray[np.float64])
+assert_type(np.array(B, subok=True), SubClass[np.float64])
+assert_type(np.array(B, subok=True, ndmin=0), SubClass[np.float64])
+assert_type(np.array(B, subok=True, ndmin=1), SubClass[np.float64])
+assert_type(np.array(D), npt.NDArray[np.float64 | np.int64])
 
 assert_type(np.zeros([1, 5, 6]), npt.NDArray[np.float64])
 assert_type(np.zeros([1, 5, 6], dtype=np.int64), npt.NDArray[np.int64])

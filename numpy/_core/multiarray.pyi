@@ -82,7 +82,12 @@ from numpy._typing import (
 _T_co = TypeVar("_T_co", covariant=True)
 _T_contra = TypeVar("_T_contra", contravariant=True)
 _SCT = TypeVar("_SCT", bound=generic)
-_ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
+_ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
+_ArrayType_co = TypeVar(
+    "_ArrayType_co",
+    bound=ndarray[Any, Any],
+    covariant=True,
+)
 
 # Valid time units
 _UnitKind = L[
@@ -112,6 +117,9 @@ _RollKind = L[  # `raise` is deliberately excluded
 class _SupportsLenAndGetItem(Protocol[_T_contra, _T_co]):
     def __len__(self) -> int: ...
     def __getitem__(self, key: _T_contra, /) -> _T_co: ...
+
+class _SupportsArray(Protocol[_ArrayType_co]):
+    def __array__(self, /) -> _ArrayType_co: ...
 
 __all__: list[str]
 
@@ -185,6 +193,17 @@ def array(
     order: _OrderKACF = ...,
     subok: L[True],
     ndmin: int = ...,
+    like: None | _SupportsArrayFunc = ...,
+) -> _ArrayType: ...
+@overload
+def array(
+    object: _SupportsArray[_ArrayType],
+    dtype: None = ...,
+    *,
+    copy: None | bool | _CopyMode = ...,
+    order: _OrderKACF = ...,
+    subok: L[True],
+    ndmin: L[0] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> _ArrayType: ...
 @overload
@@ -525,6 +544,8 @@ def asanyarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
+    copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> _ArrayType: ...
 @overload
@@ -533,6 +554,8 @@ def asanyarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
+    copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -541,6 +564,8 @@ def asanyarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
+    copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
@@ -549,6 +574,8 @@ def asanyarray(
     dtype: _DTypeLike[_SCT],
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
+    copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -557,6 +584,8 @@ def asanyarray(
     dtype: DTypeLike,
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
+    copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 

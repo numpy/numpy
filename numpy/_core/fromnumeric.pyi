@@ -11,6 +11,7 @@ from numpy import (
     float16,
     floating,
     complexfloating,
+    timedelta64,
     object_,
     generic,
     _OrderKACF,
@@ -35,6 +36,7 @@ from numpy._typing import (
     _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
     _ArrayLikeObject_co,
+    _ArrayLikeTD64_co,
     _IntLike_co,
     _BoolLike_co,
     _ComplexLike_co,
@@ -399,6 +401,8 @@ def clip(
     a_max: None | ArrayLike,
     out: None = ...,
     *,
+    min: None | ArrayLike = ...,
+    max: None | ArrayLike = ...,
     dtype: None = ...,
     where: None | _ArrayLikeBool_co = ...,
     order: _OrderKACF = ...,
@@ -413,6 +417,8 @@ def clip(
     a_max: None | ArrayLike,
     out: None = ...,
     *,
+    min: None | ArrayLike = ...,
+    max: None | ArrayLike = ...,
     dtype: None = ...,
     where: None | _ArrayLikeBool_co = ...,
     order: _OrderKACF = ...,
@@ -427,6 +433,8 @@ def clip(
     a_max: None | ArrayLike,
     out: None = ...,
     *,
+    min: None | ArrayLike = ...,
+    max: None | ArrayLike = ...,
     dtype: None = ...,
     where: None | _ArrayLikeBool_co = ...,
     order: _OrderKACF = ...,
@@ -441,6 +449,8 @@ def clip(
     a_max: None | ArrayLike,
     out: None = ...,
     *,
+    min: None | ArrayLike = ...,
+    max: None | ArrayLike = ...,
     dtype: None = ...,
     where: None | _ArrayLikeBool_co = ...,
     order: _OrderKACF = ...,
@@ -455,6 +465,8 @@ def clip(
     a_max: None | ArrayLike,
     out: _ArrayType = ...,
     *,
+    min: None | ArrayLike = ...,
+    max: None | ArrayLike = ...,
     dtype: DTypeLike,
     where: None | _ArrayLikeBool_co = ...,
     order: _OrderKACF = ...,
@@ -469,6 +481,8 @@ def clip(
     a_max: None | ArrayLike,
     out: _ArrayType,
     *,
+    min: None | ArrayLike = ...,
+    max: None | ArrayLike = ...,
     dtype: DTypeLike = ...,
     where: None | _ArrayLikeBool_co = ...,
     order: _OrderKACF = ...,
@@ -598,6 +612,57 @@ def cumsum(
     axis: None | SupportsIndex = ...,
     dtype: DTypeLike = ...,
     out: _ArrayType = ...,
+) -> _ArrayType: ...
+
+@overload
+def cumulative_sum(
+    x: _ArrayLike[_SCT],
+    /,
+    *,
+    axis: None | SupportsIndex = ...,
+    dtype: None = ...,
+    out: None = ...,
+    include_initial: bool = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def cumulative_sum(
+    x: ArrayLike,
+    /,
+    *,
+    axis: None | SupportsIndex = ...,
+    dtype: None = ...,
+    out: None = ...,
+    include_initial: bool = ...,
+) -> NDArray[Any]: ...
+@overload
+def cumulative_sum(
+    x: ArrayLike,
+    /,
+    *,
+    axis: None | SupportsIndex = ...,
+    dtype: _DTypeLike[_SCT] = ...,
+    out: None = ...,
+    include_initial: bool = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def cumulative_sum(
+    x: ArrayLike,
+    /,
+    *,
+    axis: None | SupportsIndex = ...,
+    dtype: DTypeLike = ...,
+    out: None = ...,
+    include_initial: bool = ...,
+) -> NDArray[Any]: ...
+@overload
+def cumulative_sum(
+    x: ArrayLike,
+    /,
+    *,
+    axis: None | SupportsIndex = ...,
+    dtype: DTypeLike = ...,
+    out: _ArrayType = ...,
+    include_initial: bool = ...,
 ) -> _ArrayType: ...
 
 @overload
@@ -840,6 +905,97 @@ def cumprod(
     out: _ArrayType = ...,
 ) -> _ArrayType: ...
 
+@overload
+def cumulative_prod(
+    x: _ArrayLikeBool_co,
+    /,
+    *,
+    axis: None | SupportsIndex = ...,
+    dtype: None = ...,
+    out: None = ...,
+    include_initial: bool = ...,
+) -> NDArray[int_]: ...
+@overload
+def cumulative_prod(
+    x: _ArrayLikeUInt_co,
+    /,
+    *,
+    axis: None | SupportsIndex = ...,
+    dtype: None = ...,
+    out: None = ...,
+    include_initial: bool = ...,
+) -> NDArray[uint64]: ...
+@overload
+def cumulative_prod(
+    x: _ArrayLikeInt_co,
+    /,
+    *,
+    axis: None | SupportsIndex = ...,
+    dtype: None = ...,
+    out: None = ...,
+    include_initial: bool = ...,
+) -> NDArray[int64]: ...
+@overload
+def cumulative_prod(
+    x: _ArrayLikeFloat_co,
+    /,
+    *,
+    axis: None | SupportsIndex = ...,
+    dtype: None = ...,
+    out: None = ...,
+    include_initial: bool = ...,
+) -> NDArray[floating[Any]]: ...
+@overload
+def cumulative_prod(
+    x: _ArrayLikeComplex_co,
+    /,
+    *,
+    axis: None | SupportsIndex = ...,
+    dtype: None = ...,
+    out: None = ...,
+    include_initial: bool = ...,
+) -> NDArray[complexfloating[Any, Any]]: ...
+@overload
+def cumulative_prod(
+    x: _ArrayLikeObject_co,
+    /,
+    *,
+    axis: None | SupportsIndex = ...,
+    dtype: None = ...,
+    out: None = ...,
+    include_initial: bool = ...,
+) -> NDArray[object_]: ...
+@overload
+def cumulative_prod(
+    x: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    /,
+    *,
+    axis: None | SupportsIndex = ...,
+    dtype: _DTypeLike[_SCT] = ...,
+    out: None = ...,
+    include_initial: bool = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def cumulative_prod(
+    x: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    /,
+    *,
+    axis: None | SupportsIndex = ...,
+    dtype: DTypeLike = ...,
+    out: None = ...,
+    include_initial: bool = ...,
+) -> NDArray[Any]: ...
+@overload
+def cumulative_prod(
+    x: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    /,
+    *,
+    axis: None | SupportsIndex = ...,
+    dtype: DTypeLike = ...,
+    out: _ArrayType = ...,
+    include_initial: bool = ...,
+) -> _ArrayType: ...
+
 def ndim(a: ArrayLike) -> int: ...
 
 def size(a: ArrayLike, axis: None | int = ...) -> int: ...
@@ -907,6 +1063,16 @@ def mean(
     *,
     where: _ArrayLikeBool_co = ...,
 ) -> complexfloating[Any, Any]: ...
+@overload
+def mean(
+    a: _ArrayLikeTD64_co,
+    axis: None = ...,
+    dtype: None = ...,
+    out: None = ...,
+    keepdims: Literal[False] = ...,
+    *,
+    where: _ArrayLikeBool_co = ...,
+) -> timedelta64: ...
 @overload
 def mean(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,

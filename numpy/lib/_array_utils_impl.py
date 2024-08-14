@@ -29,6 +29,7 @@ def byte_bounds(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> I = np.eye(2, dtype='f'); I.dtype
     dtype('float32')
     >>> low, high = np.lib.array_utils.byte_bounds(I)

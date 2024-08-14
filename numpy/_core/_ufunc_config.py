@@ -74,6 +74,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> orig_settings = np.seterr(all='ignore')  # seterr to known value
     >>> np.int16(32000) * np.int16(3)
     30464
@@ -130,6 +131,7 @@ def geterr():
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.geterr()
     {'divide': 'warn', 'over': 'warn', 'under': 'ignore', 'invalid': 'warn'}
     >>> np.arange(3.) / np.arange(3.)  # doctest: +SKIP
@@ -167,6 +169,25 @@ def setbufsize(size):
     size : int
         Size of buffer.
 
+    Returns
+    -------
+    bufsize : int
+        Previous size of ufunc buffer in bytes.
+
+    Examples
+    --------
+    When exiting a `numpy.errstate` context manager the bufsize is restored:
+
+    >>> import numpy as np
+    >>> with np.errstate():
+    ...     np.setbufsize(4096)
+    ...     print(np.getbufsize())
+    ...
+    8192
+    4096
+    >>> np.getbufsize()
+    8192
+
     """
     old = _get_extobj_dict()["bufsize"]
     extobj = _make_extobj(bufsize=size)
@@ -183,6 +204,12 @@ def getbufsize():
     -------
     getbufsize : int
         Size of ufunc buffer in bytes.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> np.getbufsize()
+    8192
 
     """
     return _get_extobj_dict()["bufsize"]
@@ -236,6 +263,8 @@ def seterrcall(func):
     >>> def err_handler(type, flag):
     ...     print("Floating point error (%s), with flag %s" % (type, flag))
     ...
+
+    >>> import numpy as np
 
     >>> orig_handler = np.seterrcall(err_handler)
     >>> orig_err = np.seterr(all='call')
@@ -304,6 +333,7 @@ def geterrcall():
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.geterrcall()  # we did not yet set a handler, returns None
 
     >>> orig_settings = np.seterr(all='call')
@@ -371,6 +401,7 @@ class errstate:
 
     Examples
     --------
+    >>> import numpy as np
     >>> olderr = np.seterr(all='ignore')  # Set error handling to known state.
 
     >>> np.arange(3) / 0.

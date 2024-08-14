@@ -1,5 +1,5 @@
 # This script is used by .github/workflows/wheels.yml to run the full test
-# suite, checks for lincense inclusion and that the openblas version is correct.
+# suite, checks for license inclusion and that the openblas version is correct.
 set -xe
 
 PROJECT_DIR="$1"
@@ -32,11 +32,16 @@ FREE_THREADED_BUILD="$(python -c"import sysconfig; print(bool(sysconfig.get_conf
 if [[ $FREE_THREADED_BUILD == "True" ]]; then
     # TODO: delete when numpy is buildable under free-threaded python
     # with a released version of cython
-    python -m pip install git+https://github.com/cython/cython
-    # TODO: delete when importing numpy no longer enables the GIL
-    # setting to zero ensures the GIL is disabled while running the
-    # tests under free-threaded python
-    export PYTHON_GIL=0
+    python -m pip uninstall -y cython
+    python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
+
+    # Manually check that importing NumPy does not re-enable the GIL.
+    # In principle the tests should catch this but it seems harmless to leave it
+    # here as a final sanity check before uploading broken wheels
+    if [[ $(python -c "import numpy" 2>&1) == "*The global interpreter lock (GIL) has been enabled*" ]]; then
+        echo "Error: Importing NumPy re-enables the GIL in the free-threaded build"
+        exit 1
+    fi
 fi
 
 # Run full tests with -n=auto. This makes pytest-xdist distribute tests across

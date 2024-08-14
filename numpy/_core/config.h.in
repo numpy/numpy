@@ -108,6 +108,8 @@
 #mesondefine HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE
 #mesondefine HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE
 
+#mesondefine HAVE_EXTERNAL_LAPACK
+
 #ifndef __cplusplus
 /* #undef inline */
 #endif

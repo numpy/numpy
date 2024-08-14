@@ -26,7 +26,7 @@ details are found in :ref:`reference`.
    :maxdepth: 1
 
    numpy-for-matlab-users
-   NumPy tutorials <https://numpy.org/numpy-tutorials/features.html>
+   NumPy tutorials <https://numpy.org/numpy-tutorials/>
    howtos_index
 
 .. toctree::

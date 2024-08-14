@@ -21,6 +21,7 @@ AR_u8: npt.NDArray[np.uint64]
 AR_i8: npt.NDArray[np.int64]
 AR_O: npt.NDArray[np.object_]
 AR_subclass: NDArraySubclass
+AR_m: npt.NDArray[np.timedelta64]
 
 b: np.bool
 f4: np.float32
@@ -193,6 +194,15 @@ assert_type(np.cumsum(f, dtype=float), npt.NDArray[Any])
 assert_type(np.cumsum(f, dtype=np.float64), npt.NDArray[np.float64])
 assert_type(np.cumsum(AR_f4, out=AR_subclass), NDArraySubclass)
 
+assert_type(np.cumulative_sum(b), npt.NDArray[np.bool])
+assert_type(np.cumulative_sum(f4), npt.NDArray[np.float32])
+assert_type(np.cumulative_sum(f), npt.NDArray[Any])
+assert_type(np.cumulative_sum(AR_b), npt.NDArray[np.bool])
+assert_type(np.cumulative_sum(AR_f4), npt.NDArray[np.float32])
+assert_type(np.cumulative_sum(f, dtype=float), npt.NDArray[Any])
+assert_type(np.cumulative_sum(f, dtype=np.float64), npt.NDArray[np.float64])
+assert_type(np.cumulative_sum(AR_f4, out=AR_subclass), NDArraySubclass)
+
 assert_type(np.ptp(b), np.bool)
 assert_type(np.ptp(f4), np.float32)
 assert_type(np.ptp(f), Any)
@@ -249,6 +259,17 @@ assert_type(np.cumprod(AR_f4, dtype=np.float64), npt.NDArray[np.float64])
 assert_type(np.cumprod(AR_f4, dtype=float), npt.NDArray[Any])
 assert_type(np.cumprod(AR_f4, out=AR_subclass), NDArraySubclass)
 
+assert_type(np.cumulative_prod(AR_b), npt.NDArray[np.int_])
+assert_type(np.cumulative_prod(AR_u8), npt.NDArray[np.uint64])
+assert_type(np.cumulative_prod(AR_i8), npt.NDArray[np.int64])
+assert_type(np.cumulative_prod(AR_f4), npt.NDArray[np.floating[Any]])
+assert_type(np.cumulative_prod(AR_c16), npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(np.cumulative_prod(AR_O), npt.NDArray[np.object_])
+assert_type(np.cumulative_prod(AR_f4, axis=0), npt.NDArray[np.floating[Any]])
+assert_type(np.cumulative_prod(AR_f4, dtype=np.float64), npt.NDArray[np.float64])
+assert_type(np.cumulative_prod(AR_f4, dtype=float), npt.NDArray[Any])
+assert_type(np.cumulative_prod(AR_f4, out=AR_subclass), NDArraySubclass)
+
 assert_type(np.ndim(b), int)
 assert_type(np.ndim(f4), int)
 assert_type(np.ndim(f), int)
@@ -274,6 +295,7 @@ assert_type(np.around(AR_f4, out=AR_subclass), NDArraySubclass)
 assert_type(np.mean(AR_b), np.floating[Any])
 assert_type(np.mean(AR_i8), np.floating[Any])
 assert_type(np.mean(AR_f4), np.floating[Any])
+assert_type(np.mean(AR_m), np.timedelta64)
 assert_type(np.mean(AR_c16), np.complexfloating[Any, Any])
 assert_type(np.mean(AR_O), Any)
 assert_type(np.mean(AR_f4, axis=0), Any)

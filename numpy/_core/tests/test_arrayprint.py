@@ -7,8 +7,9 @@ import pytest
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, HAS_REFCOUNT,
-    assert_raises_regex,
+    assert_raises_regex, IS_WASM
     )
+from numpy.testing._private.utils import run_threaded
 from numpy._core.arrayprint import _typelessdata
 import textwrap
 
@@ -667,6 +668,17 @@ class TestPrintOptions:
         np.set_printoptions(formatter={'float_kind':None})
         assert_equal(repr(x), "array([0., 1., 2.])")
 
+    def test_override_repr(self):
+        x = np.arange(3)
+        np.set_printoptions(override_repr=lambda x: "FOO")
+        assert_equal(repr(x), "FOO")
+        np.set_printoptions(override_repr=None)
+        assert_equal(repr(x), "array([0, 1, 2])")
+
+        with np.printoptions(override_repr=lambda x: "BAR"):
+            assert_equal(repr(x), "BAR")
+        assert_equal(repr(x), "array([0, 1, 2])")
+
     def test_0d_arrays(self):
         assert_equal(str(np.array('café', '<U4')), 'café')
 
@@ -1189,3 +1201,59 @@ def test_scalar_void_float_str():
     # we do not do that.
     scalar = np.void((1.0, 2.0), dtype=[('f0', '<f8'), ('f1', '>f4')])
     assert str(scalar) == "(1.0, 2.0)"
+
+@pytest.mark.skipif(IS_WASM, reason="wasm doesn't support asyncio")
+@pytest.mark.skipif(sys.version_info < (3, 11),
+                    reason="asyncio.barrier was added in Python 3.11")
+def test_printoptions_asyncio_safe():
+    asyncio = pytest.importorskip("asyncio")
+
+    b = asyncio.Barrier(2)
+
+    async def legacy_113():
+        np.set_printoptions(legacy='1.13', precision=12)
+        await b.wait()
+        po = np.get_printoptions()
+        assert po['legacy'] == '1.13'
+        assert po['precision'] == 12
+        orig_linewidth = po['linewidth']
+        with np.printoptions(linewidth=34, legacy='1.21'):
+            po = np.get_printoptions()
+            assert po['legacy'] == '1.21'
+            assert po['precision'] == 12
+            assert po['linewidth'] == 34
+        po = np.get_printoptions()
+        assert po['linewidth'] == orig_linewidth
+        assert po['legacy'] == '1.13'
+        assert po['precision'] == 12
+
+    async def legacy_125():
+        np.set_printoptions(legacy='1.25', precision=7)
+        await b.wait()
+        po = np.get_printoptions()
+        assert po['legacy'] == '1.25'
+        assert po['precision'] == 7
+        orig_linewidth = po['linewidth']
+        with np.printoptions(linewidth=6, legacy='1.13'):
+            po = np.get_printoptions()
+            assert po['legacy'] == '1.13'
+            assert po['precision'] == 7
+            assert po['linewidth'] == 6
+        po = np.get_printoptions()
+        assert po['linewidth'] == orig_linewidth
+        assert po['legacy'] == '1.25'
+        assert po['precision'] == 7
+
+    async def main():
+        await asyncio.gather(legacy_125(), legacy_125())
+
+    loop = asyncio.new_event_loop()
+    asyncio.run(main())
+    loop.close()
+
+@pytest.mark.skipif(IS_WASM, reason="wasm doesn't support threads")
+def test_multithreaded_array_printing():
+    # the dragon4 implementation uses a static scratch space for performance
+    # reasons this test makes sure it is set up in a thread-safe manner
+
+    run_threaded(TestPrintOptions().test_floatmode, 500)

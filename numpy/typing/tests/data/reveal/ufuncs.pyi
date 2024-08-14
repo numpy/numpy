@@ -1,5 +1,5 @@
 import sys
-from typing import Literal, Any
+from typing import Literal, Any, NoReturn
 
 import numpy as np
 import numpy.typing as npt
@@ -96,3 +96,27 @@ assert_type(np.bitwise_count.signature, None)
 assert_type(np.bitwise_count.identity, None)
 assert_type(np.bitwise_count(i8), Any)
 assert_type(np.bitwise_count(AR_i8), npt.NDArray[Any])
+
+assert_type(np.absolute.outer(), NoReturn)
+assert_type(np.frexp.outer(), NoReturn)
+assert_type(np.divmod.outer(), NoReturn)
+assert_type(np.matmul.outer(), NoReturn)
+
+assert_type(np.absolute.reduceat(), NoReturn)
+assert_type(np.frexp.reduceat(), NoReturn)
+assert_type(np.divmod.reduceat(), NoReturn)
+assert_type(np.matmul.reduceat(), NoReturn)
+
+assert_type(np.absolute.reduce(), NoReturn)
+assert_type(np.frexp.reduce(), NoReturn)
+assert_type(np.divmod.reduce(), NoReturn)
+assert_type(np.matmul.reduce(), NoReturn)
+
+assert_type(np.absolute.accumulate(), NoReturn)
+assert_type(np.frexp.accumulate(), NoReturn)
+assert_type(np.divmod.accumulate(), NoReturn)
+assert_type(np.matmul.accumulate(), NoReturn)
+
+assert_type(np.frexp.at(), NoReturn)
+assert_type(np.divmod.at(), NoReturn)
+assert_type(np.matmul.at(), NoReturn)

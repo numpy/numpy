@@ -18,8 +18,8 @@
 #include "iterators.h"
 #include "dtypemeta.h"
 #include "refcount.h"
-
 #include "npy_config.h"
+#include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 
 
 
@@ -53,6 +53,55 @@ PyArray_ClearBuffer(
             NULL, clear_info.descr, data, size, stride, clear_info.auxdata);
     NPY_traverse_info_xfree(&clear_info);
     return res;
+}
+
+
+/*
+ * Helper function to zero an array buffer.
+ *
+ * Here "zeroing" means an abstract zeroing operation, implementing the
+ * the behavior of `np.zeros`.  E.g. for an of references this is more
+ * complicated than zero-filling the buffer.
+ *
+ * Failure (returns -1) indicates some sort of programming or logical
+ * error and should not happen for a data type that has been set up
+ * correctly. In principle a sufficiently weird dtype might run out of
+ * memory but in practice this likely won't happen.
+ */
+NPY_NO_EXPORT int
+PyArray_ZeroContiguousBuffer(
+        PyArray_Descr *descr, char *data,
+        npy_intp stride, npy_intp size, int aligned)
+{
+    NPY_traverse_info zero_info;
+    NPY_traverse_info_init(&zero_info);
+    /* Flags unused: float errors do not matter and we do not release GIL */
+    NPY_ARRAYMETHOD_FLAGS flags_unused;
+    PyArrayMethod_GetTraverseLoop *get_fill_zero_loop =
+            NPY_DT_SLOTS(NPY_DTYPE(descr))->get_fill_zero_loop;
+    if (get_fill_zero_loop != NULL) {
+        if (get_fill_zero_loop(
+                    NULL, descr, aligned, descr->elsize, &(zero_info.func),
+                    &(zero_info.auxdata), &flags_unused) < 0) {
+            goto fail;
+        }
+    }
+    else {
+        /* the multiply here should never overflow, since we already
+           checked if the new array size doesn't overflow */
+        memset(data, 0, size*stride);
+        NPY_traverse_info_xfree(&zero_info);
+        return 0;
+    }
+
+    int res = zero_info.func(
+            NULL, descr, data, size, stride, zero_info.auxdata);
+    NPY_traverse_info_xfree(&zero_info);
+    return res;
+
+  fail:
+    NPY_traverse_info_xfree(&zero_info);
+    return -1;
 }
 
 

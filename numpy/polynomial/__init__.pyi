@@ -1,21 +1,23 @@
-from numpy._pytesttester import PytestTester
+from typing import Final, Literal
 
-from numpy.polynomial import (
-    chebyshev as chebyshev,
-    hermite as hermite,
-    hermite_e as hermite_e,
-    laguerre as laguerre,
-    legendre as legendre,
-    polynomial as polynomial,
-)
-from numpy.polynomial.chebyshev import Chebyshev as Chebyshev
-from numpy.polynomial.hermite import Hermite as Hermite
-from numpy.polynomial.hermite_e import HermiteE as HermiteE
-from numpy.polynomial.laguerre import Laguerre as Laguerre
-from numpy.polynomial.legendre import Legendre as Legendre
-from numpy.polynomial.polynomial import Polynomial as Polynomial
+from .polynomial import Polynomial
+from .chebyshev import Chebyshev
+from .legendre import Legendre
+from .hermite import Hermite
+from .hermite_e import HermiteE
+from .laguerre import Laguerre
 
-__all__: list[str]
-test: PytestTester
+__all__ = [
+    "set_default_printstyle",
+    "polynomial", "Polynomial",
+    "chebyshev", "Chebyshev",
+    "legendre", "Legendre",
+    "hermite", "Hermite",
+    "hermite_e", "HermiteE",
+    "laguerre", "Laguerre",
+]
 
-def set_default_printstyle(style): ...
+def set_default_printstyle(style: Literal["ascii", "unicode"]) -> None: ...
+
+from numpy._pytesttester import PytestTester as _PytestTester
+test: Final[_PytestTester]

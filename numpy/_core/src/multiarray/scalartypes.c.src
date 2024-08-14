@@ -21,6 +21,7 @@
 #include "ctors.h"
 #include "dtypemeta.h"
 #include "usertypes.h"
+#include "number.h"
 #include "numpyos.h"
 #include "can_cast_table.h"
 #include "common.h"
@@ -33,13 +34,13 @@
 #include "dragon4.h"
 #include "npy_longdouble.h"
 #include "npy_buffer.h"
+#include "npy_static_data.h"
+#include "multiarraymodule.h"
+#include "array_api_standard.h"
 
 #include <stdlib.h>
 
 #include "binop_override.h"
-
-/* determines if legacy mode is enabled, global set in multiarraymodule.c */
-extern int npy_legacy_print_mode;
 
 /*
  * used for allocating a single scalar, so use the default numpy
@@ -122,19 +123,6 @@ gentype_free(PyObject *v)
 
 
 static PyObject *
-gentype_power(PyObject *m1, PyObject *m2, PyObject *modulo)
-{
-    if (modulo != Py_None) {
-        /* modular exponentiation is not implemented (gh-8804) */
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
-    }
-
-    BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_power, gentype_power);
-    return PyArray_Type.tp_as_number->nb_power(m1, m2, Py_None);
-}
-
-static PyObject *
 gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
         char *str)
 {
@@ -165,33 +153,216 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
     }
 }
 
+
+/*
+ * Helper function to deal with binary operator deferral.  Must be passed a
+ * valid self (a generic scalar) and an other item.
+ * May fill self_item and/or other_arr (but not both) with non-NULL values.
+ *
+ * Why this dance?  When the other object is a exactly Python scalar something
+ * awkward happens historically in NumPy.
+ * NumPy doesn't define a result, but the ufunc would cast to `astype(object)`
+ * which is the same as `scalar.item()`.  And that operation converts e.g.
+ * float32 or float64 to Python floats.
+ * It then retries. And because it is a builtin type now the operation may
+ * succeed.
+ *
+ * This retrying pass only makes sense if the other object is a Python
+ * scalar (otherwise we fill in `other_arr` which can be used to call the
+ * ufunc).
+ * Additionally, if `self.item()` has the same type as `self` we would end up
+ * in an infinite recursion.
+ *
+ * So the result of this function means the following:
+ *   - < 0 error return.
+ *   - self_op is filled in: Retry the Python operator.
+ *   - other_op is filled in: Use the array operator (goes into ufuncs)
+ *     (This may be the original generic if it is one.)
+ *   - neither is filled in: Return NotImplemented.
+ *
+ * It is not possible for both to be filled.  If `other` is also a generics,
+ * it is returned.
+ */
+static inline int
+find_binary_operation_path(
+    PyObject *self, PyObject *other, PyObject **self_op, PyObject **other_op)
+{
+    *other_op = NULL;
+    *self_op = NULL;
+
+    if (PyArray_IsScalar(other, Generic) ||
+            PyLong_CheckExact(other) ||
+            PyFloat_CheckExact(other) ||
+            PyComplex_CheckExact(other) ||
+            PyBool_Check(other) ||
+            PyArray_Check(other)) {
+        /*
+         * The other operand is ready for the operation already.  Must pass on
+         * on float/long/complex mainly for weak promotion (NEP 50).
+         */
+        *other_op = Py_NewRef(other);
+        return 0;
+    }
+    /*
+     * If other has __array_ufunc__ always use ufunc.  If array-ufunc was None
+     * we already deferred.  And any custom object with array-ufunc cannot call
+     * our ufuncs without preventing recursion.
+     * It may be nice to avoid double lookup in `BINOP_GIVE_UP_IF_NEEDED`.
+     */
+    PyObject *attr;
+    if (PyArray_LookupSpecial(other, npy_interned_str.array_ufunc, &attr) < 0) {
+        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+    }
+    else if (attr != NULL) {
+        Py_DECREF(attr);
+        *other_op = Py_NewRef(other);
+        return 0;
+    }
+
+    /*
+     * Now check `other`.  We want to know whether it is an object scalar
+     * and the easiest way is by converting to an array here.
+     */
+    int was_scalar;
+    PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny_int(
+                other, NULL, NULL, 0, 0, 0, NULL, &was_scalar);
+    if (arr == NULL) {
+        return -1;
+    }
+
+    if (!was_scalar || PyArray_DESCR(arr)->type_num != NPY_OBJECT) {
+        /* 
+         * The array is OK for usage and we can simply forward it.  There
+         * is a theoretical subtlety here:  If the other object implements
+         * `__array_wrap__`, we may ignore that.  However, this only matters
+         * if the other object has the identical `__array_priority__` and
+         * additionally already deferred back to us.
+         * (`obj + scalar` and `scalar + obj` are not symmetric.)
+         *
+         * NOTE: Future NumPy may need to distinguish scalars here, one option
+         *       could be marking the array.
+         */
+         *other_op = (PyObject *)arr;
+         return 0;
+    }
+    Py_DECREF(arr);
+
+    /*
+     * If we are here, we need to operate on Python scalars.  In general
+     * that would just fails since NumPy doesn't know the other object!
+     *
+     * However, NumPy (historically) made this often work magically because
+     * ufuncs for object dtype end up casting to object with `.item()`. This in
+     * turn ofthen returns a Python type (e.g. float for float32, float64)!
+     * Retrying then succeeds. So if (and only if) `self.item()` returns a new
+     * type, we can safely attempt the operation (again) with that.
+     */
+    PyObject *self_item = PyObject_CallMethodNoArgs(self, npy_interned_str.item);
+    if (self_item == NULL) {
+        return -1;
+    }
+    if (Py_TYPE(self_item) != Py_TYPE(self)) {
+        /* self_item can be used to retry the operation */
+        *self_op = self_item;
+        return 0;
+    }
+    /* The operation can't work and we will return NotImplemented */
+    Py_DECREF(self_item);
+    return 0;
+}
+
+
+/*
+ * These are defined below as they require special handling, we still define
+ * a _gen version here.  `power` is special as it has three arguments.
+ */
 static PyObject *
-gentype_add(PyObject *m1, PyObject* m2)
+gentype_add(PyObject *m1, PyObject *m2);
+
+static PyObject *
+gentype_multiply(PyObject *m1, PyObject *m2);
+
+
+/**begin repeat
+ *
+ * #name = add, multiply, subtract, remainder, divmod,
+ *         lshift, rshift, and, xor, or, floor_divide, true_divide#
+ * #ufunc = add, multiply, subtract, remainder, divmod,
+ *         left_shift, right_shift, bitwise_and, bitwise_xor, bitwise_or,
+ *         floor_divide, true_divide#
+ * #func = Add, Multiply, Subtract, Remainder, Divmod,
+ *         Lshift, Rshift, And, Xor, Or, FloorDivide, TrueDivide#
+ * #suff = _gen, _gen,,,,,,,,,,#
+ */
+/* NOTE: We suffix the name for functions requiring special handling first. */
+static PyObject *
+gentype_@name@@suff@(PyObject *m1, PyObject *m2)
+{
+    BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_@name@, gentype_@name@);
+
+    PyObject *self = NULL;
+    PyObject *other = NULL;
+    PyObject *self_op, *other_op;
+
+    if (!PyArray_IsScalar(m2, Generic)) {
+        self = m1;
+        other = m2;
+    }
+    else {
+        self = m2;
+        other = m1;
+    }
+    if (find_binary_operation_path(self, other, &self_op, &other_op) < 0) {
+        return NULL;
+    }
+    if (self_op != NULL) {
+        PyObject *res;
+        if (self == m1) {
+            res = PyNumber_@func@(self_op, m2);
+        }
+        else {
+            res = PyNumber_@func@(m1, self_op);
+        }
+        Py_DECREF(self_op);
+        return res;
+    }
+    else if (other_op != NULL) {
+        /* Call the corresponding ufunc (with the array) */
+        PyObject *res;
+        if (self == m1) {
+            res = PyArray_GenericBinaryFunction(m1, other_op, n_ops.@ufunc@);
+        }
+        else {
+            res = PyArray_GenericBinaryFunction(other_op, m2, n_ops.@ufunc@);
+        }
+        Py_DECREF(other_op);
+        return res;
+    }
+    else {
+        assert(other_op == NULL);
+        Py_RETURN_NOTIMPLEMENTED;
+    }
+}
+
+/**end repeat**/
+
+/*
+ * The following operators use the above, but require specialization.
+ */
+
+static PyObject *
+gentype_add(PyObject *m1, PyObject *m2)
 {
     /* special case str.__radd__, which should not call array_add */
     if (PyBytes_Check(m1) || PyUnicode_Check(m1)) {
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
     }
-    BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_add, gentype_add);
-    return PyArray_Type.tp_as_number->nb_add(m1, m2);
+
+    return gentype_add_gen(m1, m2);
 }
 
-/**begin repeat
- *
- * #name = subtract, remainder, divmod, lshift, rshift,
- *         and, xor, or, floor_divide, true_divide#
- */
-static PyObject *
-gentype_@name@(PyObject *m1, PyObject *m2)
-{
-    BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_@name@, gentype_@name@);
-    return PyArray_Type.tp_as_number->nb_@name@(m1, m2);
-}
-
-/**end repeat**/
-
-/* Get a nested slot, or NULL if absent */
+/* Get a nested slot, or NULL if absent (for multiply implementation) */
 #define GET_NESTED_SLOT(type, group, slot) \
     ((type)->group == NULL ? NULL : (type)->group->slot)
 
@@ -220,10 +391,74 @@ gentype_multiply(PyObject *m1, PyObject *m2)
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
     }
-    /* All normal cases are handled by PyArray's multiply */
-    BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_multiply, gentype_multiply);
-    return PyArray_Type.tp_as_number->nb_multiply(m1, m2);
+
+    return gentype_multiply_gen(m1, m2);
 }
+
+
+/*
+ * NOTE: The three argument nature of power  requires code duplication here.
+ */
+static PyObject *
+gentype_power(PyObject *m1, PyObject *m2, PyObject *modulo)
+{
+    if (modulo != Py_None) {
+        /* modular exponentiation is not implemented (gh-8804) */
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
+    }
+
+    BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_power, gentype_power);
+
+    PyObject *self = NULL;
+    PyObject *other = NULL;
+    PyObject *self_op, *other_op;
+
+    if (!PyArray_IsScalar(m2, Generic)) {
+        self = m1;
+        other = m2;
+    }
+    else {
+        self = m2;
+        other = m1;
+    }
+    if (find_binary_operation_path(self, other, &self_op, &other_op) < 0) {
+        return NULL;
+    }
+    if (self_op != NULL) {
+        PyObject *res;
+        if (self == m1) {
+            res = PyNumber_Power(self_op, m2, Py_None);
+        }
+        else {
+            res = PyNumber_Power(m1, self_op, Py_None);
+        }
+        Py_DECREF(self_op);
+        return res;
+    }
+    else if (other_op != NULL) {
+        /* Call the corresponding ufunc (with the array)
+         * NOTE: As of NumPy 2.0 there are inconsistencies in array_power
+         *       calling it would fail a (niche) test because an array is
+         *       returned in one of the fast-paths.
+         *       (once NumPy propagates 0-D arrays, this is irrelevant)
+         */
+        PyObject *res;
+        if (self == m1) {
+            res = PyArray_GenericBinaryFunction(m1, other_op, n_ops.power);
+        }
+        else {
+            res = PyArray_GenericBinaryFunction(other_op, m2, n_ops.power);
+        }
+        Py_DECREF(other_op);
+        return res;
+    }
+    else {
+        assert(other_op == NULL);
+        Py_RETURN_NOTIMPLEMENTED;
+    }
+}
+
 
 /**begin repeat
  * #TYPE    = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
@@ -337,16 +572,20 @@ genint_type_repr(PyObject *self)
     if (value_string == NULL) {
         return NULL;
     }
-    if (npy_legacy_print_mode <= 125) {
+    int legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode <= 125) {
         return value_string;
     }
 
     int num = _typenum_fromtypeobj((PyObject *)Py_TYPE(self), 0);
 
     PyObject *repr;
-    if (num == 0) {
+    if (num == NPY_NOTYPE) {
         /* Not a builtin scalar (presumably), just use the name */
-        repr = PyUnicode_FromFormat("%S(%S)", Py_TYPE(self)->tp_name, value_string);
+        repr = PyUnicode_FromFormat("%s(%S)", Py_TYPE(self)->tp_name, value_string);
         Py_DECREF(value_string);
         return repr;
     }
@@ -374,7 +613,11 @@ genbool_type_str(PyObject *self)
 static PyObject *
 genbool_type_repr(PyObject *self)
 {
-    if (npy_legacy_print_mode <= 125) {
+    int legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode <= 125) {
         return genbool_type_str(self);
     }
     return PyUnicode_FromString(
@@ -500,7 +743,11 @@ stringtype_@form@(PyObject *self)
     if (ret == NULL) {
         return NULL;
     }
-    if (npy_legacy_print_mode > 125) {
+    int legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode > 125) {
         Py_SETREF(ret, PyUnicode_FromFormat("np.bytes_(%S)", ret));
     }
 #endif   /* IS_repr */
@@ -547,7 +794,11 @@ unicodetype_@form@(PyObject *self)
     if (ret == NULL) {
         return NULL;
     }
-    if (npy_legacy_print_mode > 125) {
+    int legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode > 125) {
         Py_SETREF(ret, PyUnicode_FromFormat("np.str_(%S)", ret));
     }
 #endif  /* IS_repr */
@@ -609,14 +860,14 @@ _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
 
 static PyObject *
 _void_scalar_to_string(PyObject *obj, int repr) {
-    static PyObject *tostring_func = NULL;
-    npy_cache_import("numpy._core.arrayprint",
-                     "_void_scalar_to_string", &tostring_func);
-    if (tostring_func == NULL) {
+    if (npy_cache_import_runtime(
+                "numpy._core.arrayprint", "_void_scalar_to_string",
+                &npy_runtime_imports._void_scalar_to_string) == -1) {
         return NULL;
     }
     PyObject *is_repr = repr ? Py_True : Py_False;
-    return PyObject_CallFunctionObjArgs(tostring_func, obj, is_repr, NULL);
+    return PyObject_CallFunctionObjArgs(
+            npy_runtime_imports._void_scalar_to_string, obj, is_repr, NULL);
 }
 
 static PyObject *
@@ -627,7 +878,11 @@ voidtype_repr(PyObject *self)
         /* Python helper checks for the legacy mode printing */
         return _void_scalar_to_string(self, 1);
     }
-    if (npy_legacy_print_mode > 125) {
+    int legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode > 125) {
         return _void_to_hex(s->obval, s->descr->elsize, "np.void(b'", "\\x", "')");
     }
     else {
@@ -679,7 +934,11 @@ datetimetype_repr(PyObject *self)
      */
     if ((scal->obmeta.num == 1 && scal->obmeta.base != NPY_FR_h) ||
             scal->obmeta.base == NPY_FR_GENERIC) {
-        if (npy_legacy_print_mode > 125) {
+        int legacy_print_mode = get_legacy_print_mode();
+        if (legacy_print_mode == -1) {
+            return NULL;
+        }
+        if (legacy_print_mode > 125) {
             ret = PyUnicode_FromFormat("np.datetime64('%s')", iso);
         }
         else {
@@ -691,7 +950,11 @@ datetimetype_repr(PyObject *self)
         if (meta == NULL) {
             return NULL;
         }
-        if (npy_legacy_print_mode > 125) {
+        int legacy_print_mode = get_legacy_print_mode();
+        if (legacy_print_mode == -1) {
+            return NULL;
+        }
+        if (legacy_print_mode > 125) {
             ret = PyUnicode_FromFormat("np.datetime64('%s','%S')", iso, meta);
         }
         else {
@@ -735,7 +998,11 @@ timedeltatype_repr(PyObject *self)
 
     /* The metadata unit */
     if (scal->obmeta.base == NPY_FR_GENERIC) {
-        if (npy_legacy_print_mode > 125) {
+        int legacy_print_mode = get_legacy_print_mode();
+        if (legacy_print_mode == -1) {
+            return NULL;
+        }
+        if (legacy_print_mode > 125) {
             ret = PyUnicode_FromFormat("np.timedelta64(%S)", val);
         }
         else {
@@ -748,7 +1015,11 @@ timedeltatype_repr(PyObject *self)
             Py_DECREF(val);
             return NULL;
         }
-        if (npy_legacy_print_mode > 125) {
+        int legacy_print_mode = get_legacy_print_mode();
+        if (legacy_print_mode == -1) {
+            return NULL;
+        }
+        if (legacy_print_mode > 125) {
             ret = PyUnicode_FromFormat("np.timedelta64(%S,'%S')", val, meta);
         }
         else {
@@ -1050,7 +1321,11 @@ static PyObject *
                          npy_bool sign)
 {
 
-    if (npy_legacy_print_mode <= 113) {
+    int legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode <= 113) {
         return legacy_@name@_format@kind@(val);
     }
 
@@ -1081,7 +1356,11 @@ static PyObject *
     if (string == NULL) {
         return NULL;
     }
-    if (npy_legacy_print_mode > 125) {
+    int legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode > 125) {
         Py_SETREF(string, PyUnicode_FromFormat("@repr_format@", string));
     }
 #endif  /* IS_repr */
@@ -1096,7 +1375,11 @@ c@name@type_@kind@(PyObject *self)
     npy_c@name@ val = PyArrayScalar_VAL(self, C@Name@);
     TrimMode trim = TrimMode_DptZeros;
 
-    if (npy_legacy_print_mode <= 113) {
+    int legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode <= 113) {
         return legacy_c@name@_format@kind@(val);
     }
 
@@ -1109,7 +1392,11 @@ c@name@type_@kind@(PyObject *self)
 #ifdef IS_str
         ret = PyUnicode_FromFormat("%Sj", istr);
 #else  /* IS_repr */
-        if (npy_legacy_print_mode <= 125) {
+        int legacy_print_mode = get_legacy_print_mode();
+        if (legacy_print_mode == -1) {
+            return NULL;
+        }
+        if (legacy_print_mode <= 125) {
             ret = PyUnicode_FromFormat("%Sj", istr);
         }
         else {
@@ -1157,7 +1444,11 @@ c@name@type_@kind@(PyObject *self)
 #ifdef IS_str
     string = PyUnicode_FromFormat("(%S%Sj)", rstr, istr);
 #else  /* IS_repr */
-    if (npy_legacy_print_mode > 125) {
+    legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode > 125) {
         string = PyUnicode_FromFormat("@crepr_format@", rstr, istr);
     }
     else {
@@ -1182,7 +1473,11 @@ halftype_@kind@(PyObject *self)
     float floatval = npy_half_to_float(val);
     float absval;
 
-    if (npy_legacy_print_mode <= 113) {
+    int legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (legacy_print_mode <= 113) {
         return legacy_float_format@kind@(floatval);
     }
 
@@ -1198,7 +1493,11 @@ halftype_@kind@(PyObject *self)
 #ifdef IS_str
     return string;
 #else
-    if (string == NULL || npy_legacy_print_mode <= 125) {
+    legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        return NULL;
+    }
+    if (string == NULL || legacy_print_mode <= 125) {
         return string;
     }
     PyObject *res = PyUnicode_FromFormat("np.float16(%S)", string);
@@ -1265,8 +1564,6 @@ static PyNumberMethods gentype_as_number = {
 static PyObject *
 gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
 {
-    PyObject *arr, *ret;
-
     /*
      * If the other object is None, False is always right. This avoids
      * the array None comparison, at least until deprecation it is fixed.
@@ -1287,17 +1584,35 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
 
    RICHCMP_GIVE_UP_IF_NEEDED(self, other);
 
-    arr = PyArray_FromScalar(self, NULL);
-    if (arr == NULL) {
+    PyObject *self_op;
+    PyObject *other_op;
+    if (find_binary_operation_path(self, other, &self_op, &other_op) < 0) {
         return NULL;
     }
-    /*
-     * Call via PyObject_RichCompare to ensure that other.__eq__
-     * has a chance to run when necessary
-     */
-    ret = PyObject_RichCompare(arr, other, cmp_op);
-    Py_DECREF(arr);
-    return ret;
+
+    /* We can always just call RichCompare again */
+    if (other_op != NULL) {
+        /* If we use richcompare again, need to ensure that one op is array */
+        self_op = PyArray_FromScalar(self, NULL);
+        if (self_op == NULL) {
+            Py_DECREF(other_op);
+            return NULL;
+        }
+        PyObject *res = PyObject_RichCompare(self_op, other_op, cmp_op);
+        Py_DECREF(self_op);
+        Py_DECREF(other_op);
+        return res;
+    }
+    else if (self_op != NULL) {
+        /* Try again, since other is an object scalar and this one mutated */
+        PyObject *res = PyObject_RichCompare(self_op, other, cmp_op);
+        Py_DECREF(self_op);
+        return res;
+    }
+    else {
+        /* Comparison with arbitrary objects cannot be defined. */
+        Py_RETURN_NOTIMPLEMENTED;
+    }
 }
 
 static PyObject *
@@ -1677,6 +1992,9 @@ static PyGetSetDef gentype_getsets[] = {
         (setter)0, NULL, NULL},
     {"ptp",
         (getter)gentype_ptp,
+        (setter)0, NULL, NULL},
+    {"device",
+        (getter)array_device,
         (setter)0, NULL, NULL},
     {"__array_interface__",
         (getter)gentype_interface_get,
@@ -2451,6 +2769,15 @@ static PyMethodDef gentype_methods[] = {
     {"setflags",
         (PyCFunction)gentype_setflags,
         METH_VARARGS | METH_KEYWORDS, NULL},
+
+    /* For Array API compatibility */
+    {"__array_namespace__",
+        (PyCFunction)array_array_namespace,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"to_device",
+        (PyCFunction)array_to_device,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+
     {NULL, NULL, 0, NULL} /* sentinel */
 };
 
@@ -3036,13 +3363,7 @@ object_arrtype_alloc(PyTypeObject *type, Py_ssize_t items)
      * Object scalars should not actually exist, if they exist we should
      * consider it to be a bug.
      */
-    static PyObject *visibleDeprecationWarning = NULL;
-    npy_cache_import("numpy", "VisibleDeprecationWarning",
-                     &visibleDeprecationWarning);
-    if (visibleDeprecationWarning == NULL) {
-        return NULL;
-    }
-    if (PyErr_WarnEx(visibleDeprecationWarning,
+    if (PyErr_WarnEx(npy_static_pydata.VisibleDeprecationWarning,
             "Creating a NumPy object scalar.  NumPy object scalars should "
             "never be created.  If you see this message please inform the "
             "NumPy developers.  Since this message should never be shown "

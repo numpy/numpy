@@ -8,6 +8,7 @@ import pickle
 import warnings
 from contextlib import nullcontext
 
+import numpy as np
 from numpy._core import multiarray as mu
 from numpy._core import umath as um
 from numpy._core.multiarray import asanyarray
@@ -97,10 +98,18 @@ def _count_reduce_items(arr, axis, keepdims=False, where=True):
     return items
 
 def _clip(a, min=None, max=None, out=None, **kwargs):
-    if min is None and max is None:
-        raise ValueError("One of max or min must be given")
+    if a.dtype.kind in "iu":
+        # If min/max is a Python integer, deal with out-of-bound values here.
+        # (This enforces NEP 50 rules as no value based promotion is done.)
+        if type(min) is int and min <= np.iinfo(a.dtype).min:
+            min = None
+        if type(max) is int and max >= np.iinfo(a.dtype).max:
+            max = None
 
-    if min is None:
+    if min is None and max is None:
+        # return identity
+        return um.positive(a, out=out, **kwargs)
+    elif min is None:
         return um.minimum(a, max, out=out, **kwargs)
     elif max is None:
         return um.maximum(a, min, out=out, **kwargs)

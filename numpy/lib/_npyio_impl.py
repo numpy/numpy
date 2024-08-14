@@ -51,6 +51,7 @@ class BagObj:
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib._npyio_impl import BagObj as BO
     >>> class BagDemo:
     ...     def __getitem__(self, key): # An instance of BagObj(BagDemo)
@@ -157,6 +158,7 @@ class NpzFile(Mapping):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from tempfile import TemporaryFile
     >>> outfile = TemporaryFile()
     >>> x = np.arange(10)
@@ -403,6 +405,8 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
 
     Examples
     --------
+    >>> import numpy as np
+
     Store data to disk, and load it again:
 
     >>> np.save('/tmp/123', np.array([[1, 2, 3], [4, 5, 6]]))
@@ -542,6 +546,8 @@ def save(file, arr, allow_pickle=True, fix_imports=np._NoValue):
 
     Examples
     --------
+    >>> import numpy as np
+
     >>> from tempfile import TemporaryFile
     >>> outfile = TemporaryFile()
 
@@ -644,6 +650,7 @@ def savez(file, *args, **kwds):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from tempfile import TemporaryFile
     >>> outfile = TemporaryFile()
     >>> x = np.arange(10)
@@ -732,6 +739,7 @@ def savez_compressed(file, *args, **kwds):
 
     Examples
     --------
+    >>> import numpy as np
     >>> test_array = np.random.rand(3, 2)
     >>> test_vector = np.random.rand(4)
     >>> np.savez_compressed('/tmp/123', a=test_array, b=test_vector)
@@ -1040,6 +1048,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
             # Due to chunking, certain error reports are less clear, currently.
             if filelike:
                 data = iter(data)  # cannot chunk when reading from file
+                filelike = False
 
             c_byte_converters = False
             if read_dtype_via_object_chunks == "S":
@@ -1055,7 +1064,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
                 next_arr = _load_from_filelike(
                     data, delimiter=delimiter, comment=comment, quote=quote,
                     imaginary_unit=imaginary_unit,
-                    usecols=usecols, skiplines=skiplines, max_rows=max_rows,
+                    usecols=usecols, skiplines=skiplines, max_rows=chunk_size,
                     converters=converters, dtype=dtype,
                     encoding=encoding, filelike=filelike,
                     byte_converters=byte_converters,
@@ -1242,6 +1251,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     Examples
     --------
+    >>> import numpy as np
     >>> from io import StringIO   # StringIO behaves like a file object
     >>> c = StringIO("0 1\n2 3")
     >>> np.loadtxt(c)
@@ -1517,6 +1527,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = y = z = np.arange(0.0,5.0,1.0)
     >>> np.savetxt('test.out', x, delimiter=',')   # X is an array
     >>> np.savetxt('test.out', (x,y,z))   # x,y,z equal sized 1D arrays
@@ -1693,6 +1704,7 @@ def fromregex(file, regexp, dtype, encoding=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from io import StringIO
     >>> text = StringIO("1312 foo\n1534  bar\n444   qux")
 

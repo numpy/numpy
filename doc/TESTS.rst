@@ -74,6 +74,24 @@ Testing a subset of NumPy::
 
 For detailed info on testing, see :ref:`testing-builds`
 
+
+Running doctests
+----------------
+
+NumPy documentation contains code examples, "doctests". To check that the examples
+are correct, install the ``scipy-doctest`` package::
+
+  $ pip install scipy-doctest
+
+and run one of::
+
+  $ spin check-docs -v
+  $ spin check-docs numpy/linalg
+  $ spin check-docs -- -k 'det and not slogdet'
+
+Note that the doctests are not run when you use ``spin test``.
+
+
 Other methods of running tests
 ------------------------------
 

@@ -93,15 +93,9 @@ class Extension(old_Extension):
         return
 
     def has_cxx_sources(self):
-        for source in self.sources:
-            if cxx_ext_re(str(source)):
-                return True
-        return False
+        return any(cxx_ext_re(str(source)) for source in self.sources)
 
     def has_f2py_sources(self):
-        for source in self.sources:
-            if fortran_pyf_ext_re(source):
-                return True
-        return False
+        return any(fortran_pyf_ext_re(source) for source in self.sources)
 
 # class Extension
