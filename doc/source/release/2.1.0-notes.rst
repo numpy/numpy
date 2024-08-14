@@ -101,6 +101,49 @@ been provided.
 New Features
 ============
 
+Preliminary Support for Free-Threaded CPython 3.13
+--------------------------------------------------
+
+CPython 3.13 will be available as an experimental free-threaded build. See
+https://py-free-threading.github.io, `PEP 703
+<https://peps.python.org/pep-0703/>`_ and the `CPython 3.13 release notes
+<https://docs.python.org/3.13/whatsnew/3.13.html#free-threaded-cpython>`_ for
+more detail about free-threaded Python.
+
+NumPy 2.1 has preliminary support for the free-threaded build of CPython
+3.13. This support was enabled by fixing a number of C thread-safety issues in
+NumPy. Before NumPy 2.1, NumPy used a large number of C global static variables
+to store runtime caches and other state. We have either refactored to avoid the
+need for global state, converted the global state to thread-local state, or
+added locking.
+
+Support for free-threaded Python does not mean that NumPy is thread
+safe. Read-only shared access to ndarray should be safe. NumPy exposes shared
+mutable state and we have not added any locking to the array object itself to
+serialize access to shared state. Care must be taken in user code to avoid
+races if you would like to mutate the same array in multiple threads. It is
+certainly possible to crash NumPy by mutating an array simultaneously in
+multiple threads, for example by calling a ufunc and the ``resize`` method
+simultaneously. For now our guidance is: "don't do that". In the future we would
+like to provide stronger guarantees.
+
+Object arrays in particular need special care, since the GIL
+previously provided locking for object array access and no longer does. See
+`Issue #27199 <https://github.com/numpy/numpy/issues/27199>`_ for more
+information about object arrays in the free-threaded build.
+
+If you are interested in free-threaded Python, for example because you have a
+multiprocessing-based workflow that you are interested in running with Python
+threads, we encourage testing and experimentation.
+
+If you run into problems that you suspect are because of NumPy, please `open an
+issue <https://github.com/numpy/numpy/issues/new/choose>`_, checking first if
+the bug also occurs in the "regular" non-free-threaded CPython 3.13 build. Many
+threading bugs can also occur in code that releases the GIL; disabling the GIL
+only makes it easier to hit threading bugs.
+
+(`gh-26157 <https://github.com/numpy/numpy/issues/26157#issuecomment-2233864940>`__)
+
 * ``numpy.reshape`` and ``numpy.ndarray.reshape`` now support ``shape`` and
   ``copy`` arguments.
 
