@@ -19,7 +19,7 @@ SSE3 = mod_features.new(
 )
 SSSE3 = mod_features.new(
   'SSSE3', 4, implies: SSE3,
-  args: '-mssse3',
+  args: ['-mssse3','-DHWY_WANT_SSSE3=1'],
   test_code: files(source_root + '/numpy/distutils/checks/cpu_ssse3.c')[0]
 )
 SSE41 = mod_features.new(
@@ -33,7 +33,7 @@ POPCNT = mod_features.new(
   test_code: files(source_root + '/numpy/distutils/checks/cpu_popcnt.c')[0]
 )
 SSE42 = mod_features.new(
-  'SSE42', 7, implies: POPCNT, args: '-msse4.2',
+  'SSE42', 7, implies: POPCNT, args: ['-msse4.2', '-DHWY_WANT_SSE4=1'],
   test_code: files(source_root + '/numpy/distutils/checks/cpu_sse42.c')[0]
 )
 # 7-20 left as margin for any extra features
@@ -196,6 +196,8 @@ if compiler_id == 'msvc'
     AVX512_ICL
   ]
     fet.update(args: '')
+  SSE42.update(args: '-DHWY_WANT_SSE4=1')
+  SSSE3.update(args: '-DHWY_WANT_SSSE3=1')
   endforeach
   # MSVC compiler doesn't support the following features independently
   FMA3.update(implies: [F16C, AVX2])
