@@ -1,5 +1,6 @@
 import os
 from collections.abc import Sequence, Iterable
+from types import EllipsisType
 from typing import (
     Any,
     TypeVar,
@@ -97,19 +98,19 @@ class recarray(ndarray[_ShapeType_co, _DType_co]):
     def __getitem__(self: recarray[Any, dtype[void]], indx: (
         None
         | slice
-        | ellipsis
+        | EllipsisType
         | SupportsIndex
         | _ArrayLikeInt_co
-        | tuple[None | slice | ellipsis | _ArrayLikeInt_co | SupportsIndex, ...]
+        | tuple[None | slice | EllipsisType | _ArrayLikeInt_co | SupportsIndex, ...]
     )) -> recarray[Any, _DType_co]: ...
     @overload
     def __getitem__(self, indx: (
         None
         | slice
-        | ellipsis
+        | EllipsisType
         | SupportsIndex
         | _ArrayLikeInt_co
-        | tuple[None | slice | ellipsis | _ArrayLikeInt_co | SupportsIndex, ...]
+        | tuple[None | slice | EllipsisType | _ArrayLikeInt_co | SupportsIndex, ...]
     )) -> ndarray[Any, _DType_co]: ...
     @overload
     def __getitem__(self, indx: str) -> NDArray[Any]: ...

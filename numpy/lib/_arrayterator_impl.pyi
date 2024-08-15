@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from types import EllipsisType
 from typing import (
     Any,
     TypeVar,
@@ -14,10 +15,10 @@ _DType = TypeVar("_DType", bound=dtype[Any])
 _ScalarType = TypeVar("_ScalarType", bound=generic)
 
 _Index = (
-    ellipsis
+    EllipsisType
     | int
     | slice
-    | tuple[ellipsis | int | slice, ...]
+    | tuple[EllipsisType | int | slice, ...]
 )
 
 __all__: list[str]
