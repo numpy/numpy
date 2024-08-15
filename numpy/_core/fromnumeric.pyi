@@ -1,5 +1,16 @@
 from collections.abc import Sequence
-from typing import Any, NoReturn, overload, TypeVar, Literal, SupportsIndex
+from typing import (
+    Any,
+    Literal,
+    NoReturn,
+    Protocol,
+    SupportsIndex,
+    TypeAlias,
+    TypeVar,
+    overload,
+    type_check_only,
+)
+from typing_extensions import Never
 
 import numpy as np
 from numpy import (
@@ -29,7 +40,6 @@ from numpy._typing import (
     _ArrayLike,
     NDArray,
     _ShapeLike,
-    _Shape,
     _ArrayLikeBool_co,
     _ArrayLikeUInt_co,
     _ArrayLikeInt_co,
@@ -46,7 +56,21 @@ from numpy._typing import (
 
 _SCT = TypeVar("_SCT", bound=generic)
 _SCT_uifcO = TypeVar("_SCT_uifcO", bound=number[Any] | object_)
-_ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
+_ArrayType = TypeVar("_ArrayType", bound=np.ndarray[Any, Any])
+_ShapeType = TypeVar("_ShapeType", bound=tuple[int, ...])
+_ShapeType_co = TypeVar("_ShapeType_co", bound=tuple[int, ...], covariant=True)
+
+@type_check_only
+class _SupportsShape(Protocol[_ShapeType_co]):
+    # NOTE: it matters that `self` is positional only
+    @property
+    def shape(self, /) -> _ShapeType_co: ...
+
+# a "sequence" that isn't a string, bytes, bytearray, or memoryview
+_T = TypeVar("_T")
+_PyArray: TypeAlias = list[_T] | tuple[_T, ...]
+# `int` also covers `bool`
+_PyScalar: TypeAlias = int | float | complex | bytes | str
 
 __all__: list[str]
 
@@ -373,7 +397,24 @@ def nonzero(a: np.generic | np.ndarray[tuple[()], Any]) -> NoReturn: ...
 @overload
 def nonzero(a: _ArrayLike[Any]) -> tuple[NDArray[intp], ...]: ...
 
-def shape(a: ArrayLike) -> _Shape: ...
+# this prevents `Any` from being returned with Pyright
+@overload
+def shape(a: _SupportsShape[Never]) -> tuple[int, ...]: ...
+@overload
+def shape(a: _SupportsShape[_ShapeType]) -> _ShapeType: ...
+@overload
+def shape(a: _PyScalar) -> tuple[()]: ...
+# `collections.abc.Sequence` can't be used hesre, since `bytes` and `str` are
+# subtypes of it, which would make the return types incompatible.
+@overload
+def shape(a: _PyArray[_PyScalar]) -> tuple[int]: ...
+@overload
+def shape(a: _PyArray[_PyArray[_PyScalar]]) -> tuple[int, int]: ...
+# this overload will be skipped by typecheckers that don't support PEP 688
+@overload
+def shape(a: memoryview | bytearray) -> tuple[int]: ...
+@overload
+def shape(a: ArrayLike) -> tuple[int, ...]: ...
 
 @overload
 def compress(
