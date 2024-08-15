@@ -8900,7 +8900,8 @@ class TestConversion:
         assert_equal(bool(np.array([False])), False)
         assert_equal(bool(np.array([True])), True)
         assert_equal(bool(np.array([[42]])), True)
-        assert_raises(ValueError, bool, np.array([1, 2]))
+
+    def test_to_bool_scalar_not_convertible(self):
 
         class NotConvertible:
             def __bool__(self):
@@ -8918,6 +8919,16 @@ class TestConversion:
 
         assert_raises(Error, bool, self_containing)  # previously stack overflow
         self_containing[0] = None  # resolve circular reference
+
+    def test_to_bool_scalar_size_errors(self):
+        with pytest.raises(ValueError, match=".*one element is ambiguous"):
+            bool(np.array([1, 2]))
+
+        with pytest.raises(ValueError, match=".*empty array is ambiguous"):
+            bool(np.empty((3, 0)))
+
+        with pytest.raises(ValueError, match=".*empty array is ambiguous"):
+            bool(np.empty((0,)))
 
     def test_to_int_scalar(self):
         # gh-9972 means that these aren't always the same
