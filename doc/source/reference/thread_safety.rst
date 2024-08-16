@@ -15,15 +15,17 @@ NumPy releases the GIL for many low-level operations, threads that spend most of
 the time in low-level code will run in parallel.
 
 It is possible to share NumPy arrays between threads, but extreme care must be
-taken to avoid creating thread safety issues when mutating shared arrays. If
-two threads simultaneously read from and write to the same array, at best they
-will see inconsistent views of the same array data. It is also possible to crash
-the Python interpreter by, for example, resizing an array while another thread
-is reading from it to compute a ufunc operation.
+taken to avoid creating thread safety issues when mutating arrays that are
+shared between multiple threads. If two threads simultaneously read from and
+write to the same array, they will at best produce inconsistent, racey results that
+are not reproducible, let alone correct. It is also possible to crash the Python
+interpreter by, for example, resizing an array while another thread is reading
+from it to compute a ufunc operation.
 
-In the future, we may add locking to ndarray to make working with shared NumPy
-arrays easier, but for now we suggest focusing on read-only access of arrays
-that are shared between threads.
+In the future, we may add locking to ndarray to make writing multithreaded
+algorithms using NumPy arrays safer, but for now we suggest focusing on
+read-only access of arrays that are shared between threads, or adding your own
+locking if you need to mutation and multithreading.
 
 Note that operations that *do not* release the GIL will see no performance gains
 from use of the `threading` module, and instead might be better served with
