@@ -4,14 +4,6 @@
 NumPy 2.0.0 Release Notes
 =========================
 
-.. note::
-
-    The release of 2.0 is in progress and the current release overview and
-    highlights are still in a draft state. However, the highlights should
-    already list the most significant changes detailed in the full notes below,
-    and those full notes should be complete (if not copy-edited well enough
-    yet).
-
 NumPy 2.0.0 is the first major release since 2006. It is the result of 11
 months of development since the last feature release and is the work of 212
 contributors spread over 1078 pull requests. It contains a large number of
