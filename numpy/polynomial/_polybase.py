@@ -113,6 +113,22 @@ class ABCPolyBase(abc.ABC):
         return self._symbol
 
     @property
+    def coeffs(self):
+        """Polynomial coefficients for the natural variable.
+
+        Coefficients `coef` define the internal representation of the 
+        polynomial over its `window`, while coefficients `coeffs` describe 
+        the polynomial over its `domain` for the natural variable.
+
+        Returns
+        -------
+        coeffs : ndarray
+            Array of coefficients for the natural variable of the polynomial.
+
+        """
+        return self.convert().coef
+
+    @property
     @abc.abstractmethod
     def domain(self):
         pass
@@ -281,7 +297,7 @@ class ABCPolyBase(abc.ABC):
         Returns
         -------
         coef
-            The coefficients of`other` if it is a compatible instance,
+            The coefficients of `other` if it is a compatible instance,
             of ABCPolyBase, otherwise `other`.
 
         Raises
