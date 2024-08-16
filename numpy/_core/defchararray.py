@@ -17,13 +17,24 @@ The preferred alias for `defchararray` is `numpy.char`.
 """
 import functools
 
+import numpy as np
 from .._utils import set_module
 from .numerictypes import bytes_, str_, character
 from .numeric import ndarray, array as narray, asarray as asnarray
 from numpy._core.multiarray import compare_chararrays
 from numpy._core import overrides
 from numpy.strings import *
-from numpy.strings import multiply as strings_multiply
+from numpy.strings import (
+    multiply as strings_multiply,
+    partition as strings_partition,
+    rpartition as strings_rpartition,
+)
+from numpy._core.strings import (
+    _split as split,
+    _rsplit as rsplit,
+    _splitlines as splitlines,
+    _join as join,
+)
 
 __all__ = [
     'equal', 'not_equal', 'greater_equal', 'less_equal',
@@ -67,10 +78,11 @@ def equal(x1, x2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> y = "aa "
     >>> x = "aa"
     >>> np.char.equal(x, y)
-    array(True)    
+    array(True)
 
     See Also
     --------
@@ -104,10 +116,11 @@ def not_equal(x1, x2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.not_equal(x1, 'b')
     array([ True, False,  True])
-    
+
     """
     return compare_chararrays(x1, x2, '!=', True)
 
@@ -138,10 +151,11 @@ def greater_equal(x1, x2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.greater_equal(x1, 'b')
     array([False,  True,  True])
-    
+
     """
     return compare_chararrays(x1, x2, '>=', True)
 
@@ -171,10 +185,11 @@ def less_equal(x1, x2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.less_equal(x1, 'b')
     array([ True,  True, False])
-    
+
     """
     return compare_chararrays(x1, x2, '<=', True)
 
@@ -204,10 +219,11 @@ def greater(x1, x2):
     
     Examples
     --------
+    >>> import numpy as np
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.greater(x1, 'b')
     array([False, False,  True])
-    
+
     """
     return compare_chararrays(x1, x2, '>', True)
 
@@ -237,10 +253,11 @@ def less(x1, x2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.less(x1, 'b')
     array([True, False, False])
-    
+
     """
     return compare_chararrays(x1, x2, '<', True)
 
@@ -272,6 +289,7 @@ def multiply(a, i):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(["a", "b", "c"])
     >>> np.strings.multiply(a, 3)
     array(['aaa', 'bbb', 'ccc'], dtype='<U3')
@@ -293,6 +311,90 @@ def multiply(a, i):
         return strings_multiply(a, i)
     except TypeError:
         raise ValueError("Can only multiply by integers")
+
+
+def partition(a, sep):
+    """
+    Partition each element in `a` around `sep`.
+
+    Calls :meth:`str.partition` element-wise.
+
+    For each element in `a`, split the element as the first
+    occurrence of `sep`, and return 3 strings containing the part
+    before the separator, the separator itself, and the part after
+    the separator. If the separator is not found, return 3 strings
+    containing the string itself, followed by two empty strings.
+
+    Parameters
+    ----------
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Input array
+    sep : {str, unicode}
+        Separator to split each string element in `a`.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types. The output array will have an extra
+        dimension with 3 elements per input element.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> x = np.array(["Numpy is nice!"])
+    >>> np.char.partition(x, " ")
+    array([['Numpy', ' ', 'is nice!']], dtype='<U8')
+
+    See Also
+    --------
+    str.partition
+
+    """
+    return np.stack(strings_partition(a, sep), axis=-1)
+
+
+def rpartition(a, sep):
+    """
+    Partition (split) each element around the right-most separator.
+
+    Calls :meth:`str.rpartition` element-wise.
+
+    For each element in `a`, split the element as the last
+    occurrence of `sep`, and return 3 strings containing the part
+    before the separator, the separator itself, and the part after
+    the separator. If the separator is not found, return 3 strings
+    containing the string itself, followed by two empty strings.
+
+    Parameters
+    ----------
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Input array
+    sep : str or unicode
+        Right-most separator to split each element in array.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input types. The output array will have an extra
+        dimension with 3 elements per input element.
+
+    See Also
+    --------
+    str.rpartition
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> np.char.rpartition(a, 'A')
+    array([['aAaAa', 'A', ''],
+       ['  a', 'A', '  '],
+       ['abB', 'A', 'Bba']], dtype='<U5')
+
+    """
+    return np.stack(strings_rpartition(a, sep), axis=-1)
 
 
 @set_module("numpy.char")
@@ -422,6 +524,7 @@ class chararray(ndarray):
 
     Examples
     --------
+    >>> import numpy as np
     >>> charar = np.char.chararray((3, 3))
     >>> charar[:] = 'a'
     >>> charar
@@ -479,19 +582,13 @@ class chararray(ndarray):
 
     def __array_finalize__(self, obj):
         # The b is a special case because it is used for reconstructing.
-        if self.dtype.char not in 'SUbc':
+        if self.dtype.char not in 'VSUbc':
             raise ValueError("Can only create a chararray from string data.")
 
     def __getitem__(self, obj):
         val = ndarray.__getitem__(self, obj)
-
         if isinstance(val, character):
-            temp = val.rstrip()
-            if len(temp) == 0:
-                val = ''
-            else:
-                val = temp
-
+            return val.rstrip()
         return val
 
     # IMPLEMENTATION NOTE: Most of the methods of this class are
@@ -1296,9 +1393,10 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.char.asarray(['hello', 'world'])
     chararray(['hello', 'world'], dtype='<U5')
-    
+
     """
     return array(obj, itemsize, copy=False,
                  unicode=unicode, order=order)

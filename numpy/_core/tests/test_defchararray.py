@@ -738,6 +738,16 @@ class TestOperations:
 
         assert_(arr[0, 0] == b'abc')
 
+    @pytest.mark.parametrize('data', [['plate', '   ', 'shrimp'],
+                                      [b'retro', b'  ', b'encabulator']])
+    def test_getitem_length_zero_item(self, data):
+        # Regression test for gh-26375.
+        a = np.char.array(data)
+        # a.dtype.type() will be an empty string or bytes instance.
+        # The equality test will fail if a[1] has the wrong type
+        # or does not have length 0.
+        assert_equal(a[1], a.dtype.type())
+
 
 class TestMethodsEmptyArray:
     def setup_method(self):

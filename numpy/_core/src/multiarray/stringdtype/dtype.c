@@ -17,6 +17,7 @@
 #include "gil_utils.h"
 #include "conversion_utils.h"
 #include "npy_import.h"
+#include "multiarraymodule.h"
 
 /*
  * Internal helper to create new instances
@@ -33,7 +34,6 @@ new_stringdtype_instance(PyObject *na_object, int coerce)
 
     char *default_string_buf = NULL;
     char *na_name_buf = NULL;
-    char array_owned = 0;
 
     npy_string_allocator *allocator = NpyString_new_allocator(PyMem_RawMalloc, PyMem_RawFree,
                                                               PyMem_RawRealloc);
@@ -138,7 +138,7 @@ fail:
     if (na_name_buf != NULL) {
         PyMem_RawFree(na_name_buf);
     }
-    if (allocator != NULL && array_owned != 2) {
+    if (allocator != NULL) {
         NpyString_free_allocator(allocator);
     }
     return NULL;
@@ -185,6 +185,30 @@ _eq_comparison(int scoerce, int ocoerce, PyObject *sna, PyObject *ona)
     return na_eq_cmp(sna, ona);
 }
 
+// Currently this can only return 0 or -1, the latter indicating that the
+// error indicator is set. Pass in out_na if you want to figure out which
+// na is valid.
+NPY_NO_EXPORT int
+stringdtype_compatible_na(PyObject *na1, PyObject *na2, PyObject **out_na) {
+    if ((na1 != NULL) && (na2 != NULL)) {
+        int na_eq = na_eq_cmp(na1, na2);
+
+        if (na_eq < 0) {
+            return -1;
+        }
+        else if (na_eq == 0) {
+            PyErr_Format(PyExc_TypeError,
+                         "Cannot find a compatible null string value for "
+                         "null strings '%R' and '%R'", na1, na2);
+            return -1;
+        }
+    }
+    if (out_na != NULL) {
+        *out_na = na1 ? na1 : na2;
+    }
+    return 0;
+}
+
 /*
  * This is used to determine the correct dtype to return when dealing
  * with a mix of different dtypes (for example when creating an array
@@ -193,18 +217,18 @@ _eq_comparison(int scoerce, int ocoerce, PyObject *sna, PyObject *ona)
 static PyArray_StringDTypeObject *
 common_instance(PyArray_StringDTypeObject *dtype1, PyArray_StringDTypeObject *dtype2)
 {
-    int eq = _eq_comparison(dtype1->coerce, dtype2->coerce, dtype1->na_object,
-                            dtype2->na_object);
+    PyObject *out_na_object = NULL;
 
-    if (eq <= 0) {
-        PyErr_SetString(
-                PyExc_ValueError,
-                "Cannot find common instance for unequal dtype instances");
+    if (stringdtype_compatible_na(
+                dtype1->na_object, dtype2->na_object, &out_na_object) == -1) {
+        PyErr_Format(PyExc_TypeError,
+                     "Cannot find common instance for incompatible dtypes "
+                     "'%R' and '%R'", (PyObject *)dtype1, (PyObject *)dtype2);
         return NULL;
     }
 
     return (PyArray_StringDTypeObject *)new_stringdtype_instance(
-            dtype1->na_object, dtype1->coerce);
+            out_na_object, dtype1->coerce && dtype1->coerce);
 }
 
 /*
@@ -280,30 +304,22 @@ stringdtype_setitem(PyArray_StringDTypeObject *descr, PyObject *obj, char **data
 {
     npy_packed_static_string *sdata = (npy_packed_static_string *)dataptr;
 
-    int is_cmp = 0;
-
     // borrow reference
     PyObject *na_object = descr->na_object;
 
-    // Note there are two different na_object != NULL checks here.
-    //
-    // Do not refactor this!
-    //
     // We need the result of the comparison after acquiring the allocator, but
     // cannot use functions requiring the GIL when the allocator is acquired,
     // so we do the comparison before acquiring the allocator.
 
-    if (na_object != NULL) {
-        is_cmp = na_eq_cmp(obj, na_object);
-        if (is_cmp == -1) {
-            return -1;
-        }
+    int na_cmp = na_eq_cmp(obj, na_object);
+    if (na_cmp == -1) {
+        return -1;
     }
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
 
     if (na_object != NULL) {
-        if (is_cmp) {
+        if (na_cmp) {
             if (NpyString_pack_null(allocator, sdata) < 0) {
                 PyErr_SetString(PyExc_MemoryError,
                                 "Failed to pack null string during StringDType "
@@ -400,8 +416,23 @@ fail:
 // PyArray_NonzeroFunc
 // Unicode strings are nonzero if their length is nonzero.
 npy_bool
-nonzero(void *data, void *NPY_UNUSED(arr))
+nonzero(void *data, void *arr)
 {
+    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
+    int has_null = descr->na_object != NULL;
+    int has_nan_na = descr->has_nan_na;
+    int has_string_na = descr->has_string_na;
+    if (has_null && NpyString_isnull((npy_packed_static_string *)data)) {
+        if (!has_string_na) {
+            if (has_nan_na) {
+                // numpy treats NaN as truthy, following python
+                return 1;
+            }
+            else {
+                return 0;
+            }
+        }
+    }
     return NpyString_size((npy_packed_static_string *)data) != 0;
 }
 
@@ -517,7 +548,7 @@ stringdtype_ensure_canonical(PyArray_StringDTypeObject *self)
 
 static int
 stringdtype_clear_loop(void *NPY_UNUSED(traverse_context),
-                       PyArray_Descr *descr, char *data, npy_intp size,
+                       const PyArray_Descr *descr, char *data, npy_intp size,
                        npy_intp stride, NpyAuxData *NPY_UNUSED(auxdata))
 {
     PyArray_StringDTypeObject *sdescr = (PyArray_StringDTypeObject *)descr;
@@ -554,88 +585,36 @@ stringdtype_get_clear_loop(void *NPY_UNUSED(traverse_context),
 }
 
 static int
-stringdtype_is_known_scalar_type(PyArray_DTypeMeta *NPY_UNUSED(cls),
+stringdtype_is_known_scalar_type(PyArray_DTypeMeta *cls,
                                  PyTypeObject *pytype)
 {
-    if (pytype == &PyFloat_Type) {
+    if (python_builtins_are_known_scalar_types(cls, pytype)) {
         return 1;
     }
-    if (pytype == &PyLong_Type) {
-        return 1;
-    }
-    if (pytype == &PyBool_Type) {
-        return 1;
-    }
-    if (pytype == &PyComplex_Type) {
-        return 1;
-    }
-    if (pytype == &PyUnicode_Type) {
-        return 1;
-    }
-    if (pytype == &PyBytes_Type) {
-        return 1;
-    }
-    if (pytype == &PyBoolArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyByteArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyShortArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyIntArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyLongArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyLongLongArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyUByteArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyUShortArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyUIntArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyULongArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyULongLongArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyHalfArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyFloatArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyDoubleArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyLongDoubleArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyCFloatArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyCDoubleArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyCLongDoubleArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyIntpArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyUIntpArrType_Type) {
-        return 1;
-    }
-    if (pytype == &PyDatetimeArrType_Type) {
+    // accept every built-in numpy dtype
+    else if (pytype == &PyBoolArrType_Type ||
+             pytype == &PyByteArrType_Type ||
+             pytype == &PyShortArrType_Type ||
+             pytype == &PyIntArrType_Type ||
+             pytype == &PyLongArrType_Type ||
+             pytype == &PyLongLongArrType_Type ||
+             pytype == &PyUByteArrType_Type ||
+             pytype == &PyUShortArrType_Type ||
+             pytype == &PyUIntArrType_Type ||
+             pytype == &PyULongArrType_Type ||
+             pytype == &PyULongLongArrType_Type ||
+             pytype == &PyHalfArrType_Type ||
+             pytype == &PyFloatArrType_Type ||
+             pytype == &PyDoubleArrType_Type ||
+             pytype == &PyLongDoubleArrType_Type ||
+             pytype == &PyCFloatArrType_Type ||
+             pytype == &PyCDoubleArrType_Type ||
+             pytype == &PyCLongDoubleArrType_Type ||
+             pytype == &PyIntpArrType_Type ||
+             pytype == &PyUIntpArrType_Type ||
+             pytype == &PyDatetimeArrType_Type ||
+             pytype == &PyTimedeltaArrType_Type)
+    {
         return 1;
     }
     return 0;
@@ -696,7 +675,7 @@ stringdtype_dealloc(PyArray_StringDTypeObject *self)
 {
     Py_XDECREF(self->na_object);
     // this can be null if an error happens while initializing an instance
-    if (self->allocator != NULL && self->array_owned != 2) {
+    if (self->allocator != NULL) {
         NpyString_free_allocator(self->allocator);
     }
     PyMem_RawFree((char *)self->na_name.buf);
@@ -729,8 +708,6 @@ stringdtype_repr(PyArray_StringDTypeObject *self)
     return ret;
 }
 
-static PyObject *_convert_to_stringdtype_kwargs = NULL;
-
 // implementation of __reduce__ magic method to reconstruct a StringDType
 // object from the serialized data in the pickle. Uses the python
 // _convert_to_stringdtype_kwargs for convenience because this isn't
@@ -738,19 +715,21 @@ static PyObject *_convert_to_stringdtype_kwargs = NULL;
 static PyObject *
 stringdtype__reduce__(PyArray_StringDTypeObject *self, PyObject *NPY_UNUSED(args))
 {
-    npy_cache_import("numpy._core._internal", "_convert_to_stringdtype_kwargs",
-                     &_convert_to_stringdtype_kwargs);
-
-    if (_convert_to_stringdtype_kwargs == NULL) {
+    if (npy_cache_import_runtime(
+                "numpy._core._internal", "_convert_to_stringdtype_kwargs",
+                &npy_runtime_imports._convert_to_stringdtype_kwargs) == -1) {
         return NULL;
     }
 
     if (self->na_object != NULL) {
-        return Py_BuildValue("O(iO)", _convert_to_stringdtype_kwargs,
-                             self->coerce, self->na_object);
+        return Py_BuildValue(
+                "O(iO)", npy_runtime_imports._convert_to_stringdtype_kwargs,
+                self->coerce, self->na_object);
     }
 
-    return Py_BuildValue("O(i)", _convert_to_stringdtype_kwargs, self->coerce);
+    return Py_BuildValue(
+            "O(i)", npy_runtime_imports._convert_to_stringdtype_kwargs,
+            self->coerce);
 }
 
 static PyMethodDef PyArray_StringDType_methods[] = {
@@ -922,8 +901,7 @@ load_new_string(npy_packed_static_string *out, npy_static_string *out_ss,
                       "Failed to allocate string in %s", err_context);
         return -1;
     }
-    int is_null = NpyString_load(allocator, out_pss, out_ss);
-    if (is_null == -1) {
+    if (NpyString_load(allocator, out_pss, out_ss) == -1) {
         npy_gil_error(PyExc_MemoryError,
                       "Failed to load string in %s", err_context);
         return -1;

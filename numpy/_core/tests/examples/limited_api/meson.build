@@ -35,6 +35,16 @@ py.extension_module(
 )
 
 py.extension_module(
+    'limited_api_latest',
+    'limited_api_latest.c',
+    c_args: [
+      '-DNPY_NO_DEPRECATED_API=NPY_1_21_API_VERSION',
+    ],
+    include_directories: [npy_include_path],
+    limited_api: py.language_version(),
+)
+
+py.extension_module(
     'limited_api2',
     'limited_api2.pyx',
     install: false,

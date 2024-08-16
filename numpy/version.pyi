@@ -1,7 +1,24 @@
-version: str
-__version__: str
-full_version: str
+import sys
+from typing import Final, TypeAlias
 
-git_revision: str
-release: bool
-short_version: str
+if sys.version_info >= (3, 11):
+    from typing import LiteralString
+else:
+    LiteralString: TypeAlias = str
+
+__all__ = (
+    '__version__',
+    'full_version',
+    'git_revision',
+    'release',
+    'short_version',
+    'version',
+)
+
+version: Final[LiteralString]
+__version__: Final[LiteralString]
+full_version: Final[LiteralString]
+
+git_revision: Final[LiteralString]
+release: Final[bool]
+short_version: Final[LiteralString]

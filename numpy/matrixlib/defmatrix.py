@@ -18,8 +18,7 @@ def _convert_from_string(data):
 
     rows = data.split(';')
     newdata = []
-    count = 0
-    for row in rows:
+    for count, row in enumerate(rows):
         trow = row.split(',')
         newrow = []
         for col in trow:
@@ -29,7 +28,6 @@ def _convert_from_string(data):
             Ncols = len(newrow)
         elif len(newrow) != Ncols:
             raise ValueError("Rows not the same size.")
-        count += 1
         newdata.append(newrow)
     return newdata
 
@@ -56,6 +54,7 @@ def asmatrix(data, dtype=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([[1, 2], [3, 4]])
 
     >>> m = np.asmatrix(x)
@@ -103,6 +102,7 @@ class matrix(N.ndarray):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.matrix('1 2; 3 4')
     >>> a
     matrix([[1, 2],
@@ -1065,6 +1065,7 @@ def bmat(obj, ldict=None, gdict=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> A = np.asmatrix('1 1; 1 1')
     >>> B = np.asmatrix('2 2; 2 2')
     >>> C = np.asmatrix('3 4; 5 6')

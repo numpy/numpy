@@ -4,6 +4,7 @@ import sys
 import importlib
 from docutils import nodes
 from docutils.parsers.rst import Directive
+from datetime import datetime
 
 # Minimum version, enforced by sphinx
 needs_sphinx = '4.3'
@@ -41,10 +42,6 @@ def replace_scalar_type_names():
         ('tp_name', ctypes.c_char_p),
     ]
 
-    # prevent numpy attaching docstrings to the scalar types
-    assert 'numpy._core._add_newdocs_scalars' not in sys.modules
-    sys.modules['numpy._core._add_newdocs_scalars'] = object()
-
     import numpy
 
     # change the __name__ of the scalar types
@@ -58,9 +55,6 @@ def replace_scalar_type_names():
         c_typ = PyTypeObject.from_address(id(typ))
         c_typ.tp_name = _name_cache[typ] = b"numpy." + name.encode('utf8')
 
-    # now generate the docstrings as usual
-    del sys.modules['numpy._core._add_newdocs_scalars']
-    import numpy._core._add_newdocs_scalars
 
 replace_scalar_type_names()
 
@@ -93,6 +87,7 @@ extensions = [
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
     'sphinx.ext.mathjax',
+    'sphinx_copybutton',
     'sphinx_design',
 ]
 
@@ -114,7 +109,8 @@ source_suffix = '.rst'
 
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2024, NumPy Developers'
+year = datetime.now().year
+copyright = f'2008-{year}, NumPy Developers'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -142,6 +138,10 @@ default_role = "autolink"
 # List of directories, relative to source directories, that shouldn't be searched
 # for source files.
 exclude_dirs = []
+
+exclude_patterns = []
+if sys.version_info[:2] >= (3, 12):
+    exclude_patterns += ["reference/distutils.rst"]
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False
@@ -239,23 +239,30 @@ else:
     switcher_version = f"{version}"
 
 html_theme_options = {
-  "logo": {
-      "image_light": "_static/numpylogo.svg",
-      "image_dark": "_static/numpylogo_dark.svg",
-  },
-  "github_url": "https://github.com/numpy/numpy",
-  "collapse_navigation": True,
-  "external_links": [
-      {"name": "Learn", "url": "https://numpy.org/numpy-tutorials/"},
-      {"name": "NEPs", "url": "https://numpy.org/neps"}
-      ],
-  "header_links_before_dropdown": 6,
-  # Add light/dark mode and documentation version switcher:
-  "navbar_end": ["theme-switcher", "version-switcher", "navbar-icon-links"],
-  "switcher": {
-      "version_match": switcher_version,
-      "json_url": "https://numpy.org/doc/_static/versions.json",
-  },
+    "logo": {
+        "image_light": "_static/numpylogo.svg",
+        "image_dark": "_static/numpylogo_dark.svg",
+    },
+    "github_url": "https://github.com/numpy/numpy",
+    "collapse_navigation": True,
+    "external_links": [
+        {"name": "Learn", "url": "https://numpy.org/numpy-tutorials/"},
+        {"name": "NEPs", "url": "https://numpy.org/neps"},
+    ],
+    "header_links_before_dropdown": 6,
+    # Add light/dark mode and documentation version switcher:
+    "navbar_end": [
+        "search-button",
+        "theme-switcher",
+        "version-switcher",
+        "navbar-icon-links"
+    ],
+    "navbar_persistent": [],
+    "switcher": {
+        "version_match": switcher_version,
+        "json_url": "https://numpy.org/doc/_static/versions.json",
+    },
+    "show_version_warning_banner": True,
 }
 
 html_title = "%s v%s Manual" % (project, version)
@@ -279,6 +286,9 @@ mathjax_path = "scipy-mathjax/MathJax.js?config=scipy-mathjax"
 plot_html_show_formats = False
 plot_html_show_source_link = False
 
+# sphinx-copybutton configurations
+copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+copybutton_prompt_is_regexp = True
 # -----------------------------------------------------------------------------
 # LaTeX output
 # -----------------------------------------------------------------------------
@@ -378,7 +388,7 @@ latex_use_modindex = False
 # -----------------------------------------------------------------------------
 
 texinfo_documents = [
-  ("contents", 'numpy', 'NumPy Documentation', _stdauthor, 'NumPy',
+  ("index", 'numpy', 'NumPy Documentation', _stdauthor, 'NumPy',
    "NumPy: array processing for numbers, strings, records, and objects.",
    'Programming',
    1),

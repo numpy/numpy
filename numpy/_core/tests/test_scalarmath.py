@@ -12,17 +12,12 @@ from hypothesis.extra import numpy as hynp
 
 import numpy as np
 from numpy.exceptions import ComplexWarning
+from numpy._core._rational_tests import rational
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_almost_equal,
     assert_array_equal, IS_PYPY, suppress_warnings, _gen_alignment_data,
     assert_warns, _SUPPORTS_SVE,
     )
-
-try:
-    COMPILERS = np.show_config(mode="dicts")["Compilers"]
-    USING_CLANG_CL = COMPILERS["c"]["name"] == "clang-cl"
-except TypeError:
-    USING_CLANG_CL = False
 
 types = [np.bool, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.int_, np.uint, np.longlong, np.ulonglong,
@@ -32,12 +27,15 @@ types = [np.bool, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
 floating_types = np.floating.__subclasses__()
 complex_floating_types = np.complexfloating.__subclasses__()
 
-objecty_things = [object(), None]
+objecty_things = [object(), None, np.array(None, dtype=object)]
 
-reasonable_operators_for_scalars = [
+binary_operators_for_scalars = [
     operator.lt, operator.le, operator.eq, operator.ne, operator.ge,
     operator.gt, operator.add, operator.floordiv, operator.mod,
-    operator.mul, operator.pow, operator.sub, operator.truediv,
+    operator.mul, operator.pow, operator.sub, operator.truediv
+]
+binary_operators_for_scalar_ints = binary_operators_for_scalars + [
+    operator.xor, operator.or_, operator.and_
 ]
 
 
@@ -114,7 +112,7 @@ def check_ufunc_scalar_equivalence(op, arr1, arr2):
 
 @pytest.mark.slow
 @settings(max_examples=10000, deadline=2000)
-@given(sampled_from(reasonable_operators_for_scalars),
+@given(sampled_from(binary_operators_for_scalars),
        hynp.arrays(dtype=hynp.scalar_dtypes(), shape=()),
        hynp.arrays(dtype=hynp.scalar_dtypes(), shape=()))
 def test_array_scalar_ufunc_equivalence(op, arr1, arr2):
@@ -127,7 +125,7 @@ def test_array_scalar_ufunc_equivalence(op, arr1, arr2):
 
 
 @pytest.mark.slow
-@given(sampled_from(reasonable_operators_for_scalars),
+@given(sampled_from(binary_operators_for_scalars),
        hynp.scalar_dtypes(), hynp.scalar_dtypes())
 def test_array_scalar_ufunc_dtypes(op, dt1, dt2):
     # Same as above, but don't worry about sampling weird values so that we
@@ -805,12 +803,6 @@ class TestBitShifts:
         [operator.rshift, operator.lshift], ids=['>>', '<<'])
     def test_shift_all_bits(self, type_code, op):
         """Shifts where the shift amount is the width of the type or wider """
-        if (
-                USING_CLANG_CL and
-                type_code in ("l", "L") and
-                op is operator.lshift
-        ):
-            pytest.xfail("Failing on clang-cl builds")
         # gh-2449
         dt = np.dtype(type_code)
         nbits = dt.itemsize * 8
@@ -876,8 +868,8 @@ def recursionlimit(n):
 
 
 @given(sampled_from(objecty_things),
-       sampled_from(reasonable_operators_for_scalars),
-       sampled_from(types))
+       sampled_from(binary_operators_for_scalar_ints),
+       sampled_from(types + [rational]))
 def test_operator_object_left(o, op, type_):
     try:
         with recursionlimit(200):
@@ -887,8 +879,8 @@ def test_operator_object_left(o, op, type_):
 
 
 @given(sampled_from(objecty_things),
-       sampled_from(reasonable_operators_for_scalars),
-       sampled_from(types))
+       sampled_from(binary_operators_for_scalar_ints),
+       sampled_from(types + [rational]))
 def test_operator_object_right(o, op, type_):
     try:
         with recursionlimit(200):
@@ -897,7 +889,7 @@ def test_operator_object_right(o, op, type_):
         pass
 
 
-@given(sampled_from(reasonable_operators_for_scalars),
+@given(sampled_from(binary_operators_for_scalars),
        sampled_from(types),
        sampled_from(types))
 def test_operator_scalars(op, type1, type2):
@@ -907,7 +899,7 @@ def test_operator_scalars(op, type1, type2):
         pass
 
 
-@pytest.mark.parametrize("op", reasonable_operators_for_scalars)
+@pytest.mark.parametrize("op", binary_operators_for_scalars)
 @pytest.mark.parametrize("sctype", [np.longdouble, np.clongdouble])
 def test_longdouble_operators_with_obj(sctype, op):
     # This is/used to be tricky, because NumPy generally falls back to
@@ -920,6 +912,9 @@ def test_longdouble_operators_with_obj(sctype, op):
     #
     # That would recurse infinitely.  Other scalars return the python object
     # on cast, so this type of things works OK.
+    #
+    # As of NumPy 2.1, this has been consolidated into the np.generic binops
+    # and now checks `.item()`.  That also allows the below path to work now.
     try:
         op(sctype(3), None)
     except TypeError:
@@ -930,7 +925,16 @@ def test_longdouble_operators_with_obj(sctype, op):
         pass
 
 
-@pytest.mark.parametrize("op", reasonable_operators_for_scalars)
+@pytest.mark.parametrize("op", [operator.add, operator.pow, operator.sub])
+@pytest.mark.parametrize("sctype", [np.longdouble, np.clongdouble])
+def test_longdouble_with_arrlike(sctype, op):
+    # As of NumPy 2.1, longdouble behaves like other types and can coerce
+    # e.g. lists.  (Not necessarily better, but consistent.)
+    assert_array_equal(op(sctype(3), [1, 2]), op(3, np.array([1, 2])))
+    assert_array_equal(op([1, 2], sctype(3)), op(np.array([1, 2]), 3))
+
+
+@pytest.mark.parametrize("op", binary_operators_for_scalars)
 @pytest.mark.parametrize("sctype", [np.longdouble, np.clongdouble])
 @np.errstate(all="ignore")
 def test_longdouble_operators_with_large_int(sctype, op):
@@ -1069,6 +1073,9 @@ def test_longdouble_complex():
 @pytest.mark.parametrize("subtype", [float, int, complex, np.float16])
 @np._no_nep50_warning()
 def test_pyscalar_subclasses(subtype, __op__, __rop__, op, cmp):
+    # This tests that python scalar subclasses behave like a float64 (if they
+    # don't override it).
+    # In an earlier version of NEP 50, they behaved like the Python buildins.
     def op_func(self, other):
         return __op__
 
@@ -1091,25 +1098,29 @@ def test_pyscalar_subclasses(subtype, __op__, __rop__, op, cmp):
 
     # When no deferring is indicated, subclasses are handled normally.
     myt = type("myt", (subtype,), {__rop__: rop_func})
+    behaves_like = lambda x: np.array(subtype(x))[()]
 
     # Check for float32, as a float subclass float64 may behave differently
     res = op(myt(1), np.float16(2))
-    expected = op(subtype(1), np.float16(2))
+    expected = op(behaves_like(1), np.float16(2))
     assert res == expected
     assert type(res) == type(expected)
     res = op(np.float32(2), myt(1))
-    expected = op(np.float32(2), subtype(1))
+    expected = op(np.float32(2), behaves_like(1))
     assert res == expected
     assert type(res) == type(expected)
 
-    # Same check for longdouble:
+    # Same check for longdouble (compare via dtype to accept float64 when
+    # longdouble has the identical size), which is currently not perfectly
+    # consistent.
     res = op(myt(1), np.longdouble(2))
-    expected = op(subtype(1), np.longdouble(2))
+    expected = op(behaves_like(1), np.longdouble(2))
     assert res == expected
-    assert type(res) == type(expected)
+    assert np.dtype(type(res)) == np.dtype(type(expected))
     res = op(np.float32(2), myt(1))
-    expected = op(np.longdouble(2), subtype(1))
+    expected = op(np.float32(2), behaves_like(1))
     assert res == expected
+    assert np.dtype(type(res)) == np.dtype(type(expected))
 
 
 def test_truediv_int():
@@ -1120,7 +1131,7 @@ def test_truediv_int():
 @pytest.mark.slow
 @pytest.mark.parametrize("op",
     # TODO: Power is a bit special, but here mostly bools seem to behave oddly
-    [op for op in reasonable_operators_for_scalars if op is not operator.pow])
+    [op for op in binary_operators_for_scalars if op is not operator.pow])
 @pytest.mark.parametrize("sctype", types)
 @pytest.mark.parametrize("other_type", [float, int, complex])
 @pytest.mark.parametrize("rop", [True, False])

@@ -35,6 +35,7 @@ Special-purpose namespaces
 - :ref:`numpy.emath <routines.emath>` - mathematical functions with automatic domain
 - :ref:`numpy.lib <routines.lib>` - utilities & functionality which do not fit the main namespace
 - :ref:`numpy.rec <routines.rec>` - record arrays (largely superseded by dataframe libraries)
+- :ref:`numpy.version <routines.version>` - small module with more detailed version info
 
 Legacy namespaces
 =================
@@ -67,6 +68,7 @@ and/or this code is deprecated or isn't reliable.
    numpy.emath <routines.emath>
    numpy.lib <routines.lib>
    numpy.rec <routines.rec>
+   numpy.version <routines.version>
    numpy.char <routines.char>
    numpy.distutils <distutils>
    numpy.f2py <../f2py/index>

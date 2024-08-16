@@ -5,6 +5,8 @@ is adopted in the main test suite.  A few may be moved elsewhere.
 """
 
 import operator
+import threading
+import warnings
 
 import numpy as np
 
@@ -340,3 +342,26 @@ def test_oob_creation(sctype, create):
 
     assert create(sctype, iinfo.min) == iinfo.min
     assert create(sctype, iinfo.max) == iinfo.max
+
+
+@pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for threads")
+def test_thread_local_promotion_state():
+    b = threading.Barrier(2)
+
+    def legacy_no_warn():
+        np._set_promotion_state("legacy")
+        b.wait()
+        assert np._get_promotion_state() == "legacy"
+
+    def weak_warn():
+        np._set_promotion_state("weak")
+        b.wait()
+        assert np._get_promotion_state() == "weak"
+
+    task1 = threading.Thread(target=legacy_no_warn)
+    task2 = threading.Thread(target=weak_warn)
+
+    task1.start()
+    task2.start()
+    task1.join()
+    task2.join()

@@ -68,6 +68,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 4, 7, 0])
     >>> np.ediff1d(x)
     array([ 1,  2,  3, -7])
@@ -228,11 +229,17 @@ def unique(ar, return_index=False, return_inverse=False,
     .. versionchanged: 2.0
         For multi-dimensional inputs, ``unique_inverse`` is reshaped
         such that the input can be reconstructed using
-        ``np.take(unique, unique_inverse)`` when ``axis = None``, and
-        ``np.take_along_axis(unique, unique_inverse, axis=axis)`` otherwise.
+        ``np.take(unique, unique_inverse, axis=axis)``. The result is
+        now not 1-dimensional when ``axis=None``.
+
+        Note that in NumPy 2.0.0 a higher dimensional array was returned also
+        when ``axis`` was not ``None``.  This was reverted, but
+        ``inverse.reshape(-1)`` can be used to ensure compatibility with both
+        versions.
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.unique([1, 1, 2, 2, 3, 3])
     array([1, 2, 3])
     >>> a = np.array([[1, 1], [2, 3]])
@@ -282,7 +289,7 @@ def unique(ar, return_index=False, return_inverse=False,
     ar = np.asanyarray(ar)
     if axis is None:
         ret = _unique1d(ar, return_index, return_inverse, return_counts, 
-                        equal_nan=equal_nan, inverse_shape=ar.shape)
+                        equal_nan=equal_nan, inverse_shape=ar.shape, axis=None)
         return _unpack_tuple(ret)
 
     # axis was specified and not None
@@ -328,13 +335,15 @@ def unique(ar, return_index=False, return_inverse=False,
 
     output = _unique1d(consolidated, return_index,
                        return_inverse, return_counts,
-                       equal_nan=equal_nan, inverse_shape=inverse_shape)
+                       equal_nan=equal_nan, inverse_shape=inverse_shape,
+                       axis=axis)
     output = (reshape_uniq(output[0]),) + output[1:]
     return _unpack_tuple(output)
 
 
 def _unique1d(ar, return_index=False, return_inverse=False,
-              return_counts=False, *, equal_nan=True, inverse_shape=None):
+              return_counts=False, *, equal_nan=True, inverse_shape=None,
+              axis=None):
     """
     Find the unique elements of an array, ignoring shape.
     """
@@ -371,7 +380,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         imask = np.cumsum(mask) - 1
         inv_idx = np.empty(mask.shape, dtype=np.intp)
         inv_idx[perm] = imask
-        ret += (inv_idx.reshape(inverse_shape),)
+        ret += (inv_idx.reshape(inverse_shape) if axis is None else inv_idx,)
     if return_counts:
         idx = np.concatenate(np.nonzero(mask) + ([mask.size],))
         ret += (np.diff(idx),)
@@ -433,6 +442,15 @@ def unique_all(x):
     --------
     unique : Find the unique elements of an array.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> np.unique_all([1, 1, 2])
+    UniqueAllResult(values=array([1, 2]),
+                    indices=array([0, 2]),
+                    inverse_indices=array([0, 0, 1]),
+                    counts=array([2, 1]))
+
     """
     result = unique(
         x,
@@ -475,6 +493,12 @@ def unique_counts(x):
     See Also
     --------
     unique : Find the unique elements of an array.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> np.unique_counts([1, 1, 2])
+    UniqueCountsResult(values=array([1, 2]), counts=array([2, 1]))
 
     """
     result = unique(
@@ -520,6 +544,12 @@ def unique_inverse(x):
     --------
     unique : Find the unique elements of an array.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> np.unique_inverse([1, 1, 2])
+    UniqueInverseResult(values=array([1, 2]), inverse_indices=array([0, 0, 1]))
+
     """
     result = unique(
         x,
@@ -559,6 +589,12 @@ def unique_values(x):
     See Also
     --------
     unique : Find the unique elements of an array.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> np.unique_values([1, 1, 2])
+    array([1, 2])
 
     """
     return unique(
@@ -611,6 +647,7 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.intersect1d([1, 3, 4, 3], [3, 1, 2, 1])
     array([1, 3])
 
@@ -686,7 +723,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
         Input arrays.
     assume_unique : bool
         If True, the input arrays are both assumed to be unique, which
-        can speed up the calculation.  Default is False.
+        can speed up the calculation. Default is False.
 
     Returns
     -------
@@ -696,6 +733,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([1, 2, 3, 2, 4])
     >>> b = np.array([2, 3, 5, 7, 5])
     >>> np.setxor1d(a,b)
@@ -706,7 +744,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
         ar1 = unique(ar1)
         ar2 = unique(ar2)
 
-    aux = np.concatenate((ar1, ar2))
+    aux = np.concatenate((ar1, ar2), axis=None)
     if aux.size == 0:
         return aux
 
@@ -799,6 +837,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> test = np.array([0, 1, 2, 5, 0])
     >>> states = [0, 2]
     >>> mask = np.in1d(test, states)
@@ -853,30 +892,16 @@ def _in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
         if ar2.dtype == bool:
             ar2 = ar2.astype(np.uint8)
 
-        ar2_min = np.min(ar2)
-        ar2_max = np.max(ar2)
+        ar2_min = int(np.min(ar2))
+        ar2_max = int(np.max(ar2))
 
-        ar2_range = int(ar2_max) - int(ar2_min)
+        ar2_range = ar2_max - ar2_min
 
         # Constraints on whether we can actually use the table method:
         #  1. Assert memory usage is not too large
         below_memory_constraint = ar2_range <= 6 * (ar1.size + ar2.size)
         #  2. Check overflows for (ar2 - ar2_min); dtype=ar2.dtype
         range_safe_from_overflow = ar2_range <= np.iinfo(ar2.dtype).max
-        #  3. Check overflows for (ar1 - ar2_min); dtype=ar1.dtype
-        if ar1.size > 0:
-            ar1_min = np.min(ar1)
-            ar1_max = np.max(ar1)
-
-            # After masking, the range of ar1 is guaranteed to be
-            # within the range of ar2:
-            ar1_upper = min(int(ar1_max), int(ar2_max))
-            ar1_lower = max(int(ar1_min), int(ar2_min))
-
-            range_safe_from_overflow &= all((
-                ar1_upper - int(ar2_min) <= np.iinfo(ar1.dtype).max,
-                ar1_lower - int(ar2_min) >= np.iinfo(ar1.dtype).min
-            ))
 
         # Optimal performance is for approximately
         # log10(size) > (log10(range) - 2.27) / 0.927.
@@ -906,8 +931,25 @@ def _in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
 
             # Mask out elements we know won't work
             basic_mask = (ar1 <= ar2_max) & (ar1 >= ar2_min)
-            outgoing_array[basic_mask] = isin_helper_ar[ar1[basic_mask] -
-                                                        ar2_min]
+            in_range_ar1 = ar1[basic_mask]
+            if in_range_ar1.size == 0:
+                # Nothing more to do, since all values are out of range.
+                return outgoing_array
+
+            # Unfortunately, ar2_min can be out of range for `intp` even
+            # if the calculation result must fit in range (and be positive).
+            # In that case, use ar2.dtype which must work for all unmasked
+            # values.
+            try:
+                ar2_min = np.array(ar2_min, dtype=np.intp)
+                dtype = np.intp
+            except OverflowError:
+                dtype = ar2.dtype
+
+            out = np.empty_like(in_range_ar1, dtype=np.intp)
+            outgoing_array[basic_mask] = isin_helper_ar[
+                    np.subtract(in_range_ar1, ar2_min, dtype=dtype,
+                                out=out, casting="unsafe")]
 
             return outgoing_array
         elif kind == 'table':  # not range_safe_from_overflow
@@ -1051,6 +1093,7 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
 
     Examples
     --------
+    >>> import numpy as np
     >>> element = 2*np.arange(4).reshape((2, 2))
     >>> element
     array([[0, 2],
@@ -1120,6 +1163,7 @@ def union1d(ar1, ar2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.union1d([-1, 0, 1], [-2, 0, 2])
     array([-2, -1,  0,  1,  2])
 
@@ -1162,6 +1206,7 @@ def setdiff1d(ar1, ar2, assume_unique=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([1, 2, 3, 2, 4, 1])
     >>> b = np.array([3, 4, 5, 6])
     >>> np.setdiff1d(a, b)

@@ -114,6 +114,15 @@ argument to pytest::
 
     $ spin test -v -t numpy/_core/tests/test_multiarray.py -- -k "MatMul and not vector"
 
+To run "doctests" -- to check that the code examples in the documentation is correct --
+use the `check-docs` spin command. It relies on the `scipy-docs` package, which
+provides several additional features on top of the standard library ``doctest``
+package. Install ``scipy-doctest`` and run one of::
+
+  $ spin check-docs -v
+  $ spin check-docs numpy/linalg
+  $ spin check-docs -v -- -k 'det and not slogdet'
+
 .. note::
 
     Remember that all tests of NumPy should pass before committing your changes.
@@ -205,7 +214,7 @@ since the linter runs as part of the CI pipeline.
 For more details on Style Guidelines:
 
 - `Python Style Guide`_
-- `C Style Guide`_
+- :ref:`NEP45`
 
 Rebuilding & cleaning the workspace
 -----------------------------------
@@ -247,7 +256,10 @@ of Python is encouraged, see :ref:`advanced_debugging`.
 
 In terms of debugging, NumPy also needs to be built in a debug mode. You need to use
 ``debug`` build type and disable optimizations to make sure ``-O0`` flag is used
-during object building. To generate source-level debug information within the build process run::
+during object building. Note that NumPy should NOT be installed in your environment
+before you build with the ``spin build`` command.
+
+To generate source-level debug information within the build process run::
 
     $ spin build --clean -- -Dbuildtype=debug -Ddisable-optimization=true
 
@@ -271,13 +283,14 @@ you want to debug. For instance ``mytest.py``::
     x = np.arange(5)
     np.empty_like(x)
 
-Now, you can run::
+Note that your test file needs to be outside the NumPy clone you have. Now, you can
+run::
 
-    $ spin gdb mytest.py
+    $ spin gdb /path/to/mytest.py
 
 In case you are using clang toolchain::
 
-    $ lldb python mytest.py
+    $ spin lldb /path/to/mytest.py
 
 And then in the debugger::
 
@@ -323,7 +336,6 @@ typically packaged as ``python-dbg``) is highly recommended.
 .. _Waf: https://code.google.com/p/waf/
 .. _`match test names using python operators`: https://docs.pytest.org/en/latest/usage.html#specifying-tests-selecting-tests
 .. _`Python Style Guide`: https://www.python.org/dev/peps/pep-0008/
-.. _`C Style Guide`: https://numpy.org/neps/nep-0045-c_style_guide.html
 
 Understanding the code & getting started
 ----------------------------------------

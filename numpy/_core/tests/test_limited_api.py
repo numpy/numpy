@@ -5,7 +5,7 @@ import sys
 import sysconfig
 import pytest
 
-from numpy.testing import IS_WASM, IS_PYPY
+from numpy.testing import IS_WASM, IS_PYPY, NOGIL_BUILD, IS_EDITABLE
 
 # This import is copied from random.tests.test_extending
 try:
@@ -25,6 +25,13 @@ else:
 pytestmark = pytest.mark.skipif(cython is None, reason="requires cython")
 
 
+if IS_EDITABLE:
+    pytest.skip(
+        "Editable install doesn't support tests with a compile step",
+        allow_module_level=True
+    )
+
+
 @pytest.fixture(scope='module')
 def install_temp(tmpdir_factory):
     # Based in part on test_cython from random.tests.test_extending
@@ -40,16 +47,18 @@ def install_temp(tmpdir_factory):
         pytest.skip("No usable 'meson' found")
     if sys.platform == "win32":
         subprocess.check_call(["meson", "setup",
+                               "--werror",
                                "--buildtype=release",
                                "--vsenv", str(srcdir)],
                               cwd=build_dir,
                               )
     else:
-        subprocess.check_call(["meson", "setup", str(srcdir)],
+        subprocess.check_call(["meson", "setup", "--werror", str(srcdir)],
                               cwd=build_dir
                               )
     try:
-        subprocess.check_call(["meson", "compile", "-vv"], cwd=build_dir)
+        subprocess.check_call(
+            ["meson", "compile", "-vv"], cwd=build_dir)
     except subprocess.CalledProcessError as p:
         print(f"{p.stdout=}")
         print(f"{p.stderr=}")
@@ -67,11 +76,16 @@ def install_temp(tmpdir_factory):
         "and Py_REF_DEBUG"
     ),
 )
+@pytest.mark.xfail(
+    NOGIL_BUILD,
+    reason="Py_GIL_DISABLED builds do not currently support the limited API",
+)
 @pytest.mark.skipif(IS_PYPY, reason="no support for limited API in PyPy")
 def test_limited_api(install_temp):
     """Test building a third-party C extension with the limited API
     and building a cython extension with the limited API
     """
 
-    import limited_api1
-    import limited_api2
+    import limited_api1  # Earliest (3.6)
+    import limited_api_latest  # Latest version (current Python)
+    import limited_api2  # cython

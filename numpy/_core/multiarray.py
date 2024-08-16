@@ -35,11 +35,10 @@ __all__ = [
     'empty', 'empty_like', 'error', 'flagsobj', 'flatiter', 'format_longfloat',
     'frombuffer', 'fromfile', 'fromiter', 'fromstring',
     'get_handler_name', 'get_handler_version', 'inner', 'interp',
-    'interp_complex', 'is_busday', 'lexsort', 'matmul', 'may_share_memory',
-    'min_scalar_type', 'ndarray', 'nditer', 'nested_iters',
+    'interp_complex', 'is_busday', 'lexsort', 'matmul', 'vecdot',
+    'may_share_memory', 'min_scalar_type', 'ndarray', 'nditer', 'nested_iters',
     'normalize_axis_index', 'packbits', 'promote_types', 'putmask',
     'ravel_multi_index', 'result_type', 'scalar', 'set_datetimeparse_function',
-    'set_legacy_print_mode',
     'set_typeDict', 'shares_memory', 'typeinfo',
     'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros',
     '_get_promotion_state', '_set_promotion_state']
@@ -145,16 +144,17 @@ def empty_like(
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = ([1,2,3], [4,5,6])                         # a is array-like
     >>> np.empty_like(a)
     array([[-1073741821, -1073741821,           3],    # uninitialized
            [          0,           0, -1073741821]])
     >>> a = np.array([[1., 2., 3.],[4.,5.,6.]])
     >>> np.empty_like(a)
-    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], # uninit
+    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], # uninitialized
            [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
 
-    """
+    """   # NOQA
     return (prototype,)
 
 
@@ -226,6 +226,7 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, 4]])
     >>> b = np.array([[5, 6]])
     >>> np.concatenate((a, b), axis=0)
@@ -324,6 +325,7 @@ def inner(a, b):
     --------
     Ordinary inner product for vectors:
 
+    >>> import numpy as np
     >>> a = np.array([1,2,3])
     >>> b = np.array([0,1,0])
     >>> np.inner(a, b)
@@ -400,6 +402,7 @@ def where(condition, x=None, y=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(10)
     >>> a
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -472,6 +475,7 @@ def lexsort(keys, axis=None):
     --------
     Sort names: first by surname, then by name.
 
+    >>> import numpy as np
     >>> surnames =    ('Hertz',    'Galilei', 'Hertz')
     >>> first_names = ('Heinrich', 'Galileo', 'Gustav')
     >>> ind = np.lexsort((first_names, surnames))
@@ -606,6 +610,7 @@ def can_cast(from_, to, casting=None):
     --------
     Basic examples
 
+    >>> import numpy as np
     >>> np.can_cast(np.int32, np.int64)
     True
     >>> np.can_cast(np.float64, complex)
@@ -656,6 +661,7 @@ def min_scalar_type(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.min_scalar_type(10)
     dtype('uint8')
 
@@ -734,6 +740,7 @@ def result_type(*arrays_and_dtypes):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.result_type(3, np.arange(7, dtype='i1'))
     dtype('int8')
 
@@ -813,6 +820,7 @@ def dot(a, b, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.dot(3, 4)
     12
 
@@ -876,6 +884,7 @@ def vdot(a, b):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([1+2j,3+4j])
     >>> b = np.array([5+6j,7+8j])
     >>> np.vdot(a, b)
@@ -945,6 +954,7 @@ def bincount(x, weights=None, minlength=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.bincount(np.arange(5))
     array([1, 1, 1, 1, 1])
     >>> np.bincount(np.array([0, 1, 1, 3, 2, 1, 7]))
@@ -1020,6 +1030,7 @@ def ravel_multi_index(multi_index, dims, mode=None, order=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> arr = np.array([[3,6,6],[4,5,1]])
     >>> np.ravel_multi_index(arr, (7,6))
     array([22, 41, 37])
@@ -1074,6 +1085,7 @@ def unravel_index(indices, shape=None, order=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.unravel_index([22, 41, 37], (7,6))
     (array([3, 6, 6]), array([4, 5, 1]))
     >>> np.unravel_index([31, 41, 13], (7,6), order='F')
@@ -1120,6 +1132,7 @@ def copyto(dst, src, casting=None, where=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> A = np.array([4, 5, 6])
     >>> B = [1, 2, 3]
     >>> np.copyto(A, B)
@@ -1165,6 +1178,7 @@ def putmask(a, /, mask, values):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(6).reshape(2, 3)
     >>> np.putmask(x, x>2, x**2)
     >>> x
@@ -1222,6 +1236,7 @@ def packbits(a, axis=None, bitorder='big'):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[[1,0,1],
     ...                [0,1,0]],
     ...               [[1,1,0],
@@ -1291,6 +1306,7 @@ def unpackbits(a, axis=None, count=None, bitorder='big'):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[2], [7], [23]], dtype=np.uint8)
     >>> a
     array([[ 2],
@@ -1334,7 +1350,7 @@ def shares_memory(a, b, max_work=None):
     .. warning::
 
        This function can be exponentially slow for some inputs, unless
-       `max_work` is set to a finite number or ``MAY_SHARE_BOUNDS``.
+       `max_work` is set to zero or a positive integer.
        If in doubt, use `numpy.may_share_memory` instead.
 
     Parameters
@@ -1346,12 +1362,13 @@ def shares_memory(a, b, max_work=None):
         of candidate solutions to consider). The following special
         values are recognized:
 
-        max_work=MAY_SHARE_EXACT  (default)
+        max_work=-1 (default)
             The problem is solved exactly. In this case, the function returns
             True only if there is an element shared between the arrays. Finding
             the exact solution may take extremely long in some cases.
-        max_work=MAY_SHARE_BOUNDS
+        max_work=0
             Only the memory bounds of a and b are checked.
+            This is equivalent to using ``may_share_memory()``.
 
     Raises
     ------
@@ -1368,6 +1385,7 @@ def shares_memory(a, b, max_work=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 3, 4])
     >>> np.shares_memory(x, np.array([5, 6, 7]))
     False
@@ -1432,6 +1450,7 @@ def may_share_memory(a, b, max_work=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
     False
     >>> x = np.zeros([3, 4])
@@ -1494,6 +1513,7 @@ def is_busday(dates, weekmask=None, holidays=None, busdaycal=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> # The weekdays are Friday, Saturday, and Monday
     ... np.is_busday(['2011-07-01', '2011-07-02', '2011-07-18'],
     ...                 holidays=['2011-07-01', '2011-07-04', '2011-07-17'])
@@ -1578,29 +1598,30 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
 
     Examples
     --------
+    >>> import numpy as np
     >>> # First business day in October 2011 (not accounting for holidays)
     ... np.busday_offset('2011-10', 0, roll='forward')
-    numpy.datetime64('2011-10-03')
+    np.datetime64('2011-10-03')
     >>> # Last business day in February 2012 (not accounting for holidays)
     ... np.busday_offset('2012-03', -1, roll='forward')
-    numpy.datetime64('2012-02-29')
+    np.datetime64('2012-02-29')
     >>> # Third Wednesday in January 2011
     ... np.busday_offset('2011-01', 2, roll='forward', weekmask='Wed')
-    numpy.datetime64('2011-01-19')
+    np.datetime64('2011-01-19')
     >>> # 2012 Mother's Day in Canada and the U.S.
     ... np.busday_offset('2012-05', 1, roll='forward', weekmask='Sun')
-    numpy.datetime64('2012-05-13')
+    np.datetime64('2012-05-13')
 
     >>> # First business day on or after a date
     ... np.busday_offset('2011-03-20', 0, roll='forward')
-    numpy.datetime64('2011-03-21')
+    np.datetime64('2011-03-21')
     >>> np.busday_offset('2011-03-22', 0, roll='forward')
-    numpy.datetime64('2011-03-22')
+    np.datetime64('2011-03-22')
     >>> # First business day after a date
     ... np.busday_offset('2011-03-20', 1, roll='backward')
-    numpy.datetime64('2011-03-21')
+    np.datetime64('2011-03-21')
     >>> np.busday_offset('2011-03-22', 1, roll='backward')
-    numpy.datetime64('2011-03-23')
+    np.datetime64('2011-03-23')
     """
     return (dates, offsets, weekmask, holidays, out)
 
@@ -1667,6 +1688,7 @@ def busday_count(begindates, enddates, weekmask=None, holidays=None,
 
     Examples
     --------
+    >>> import numpy as np
     >>> # Number of weekdays in January 2011
     ... np.busday_count('2011-01', '2011-02')
     21
@@ -1710,6 +1732,7 @@ def datetime_as_string(arr, unit=None, timezone=None, casting=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> import pytz
     >>> d = np.arange('2002-10-27T04:30', 4*60, 60, dtype='M8[m]')
     >>> d

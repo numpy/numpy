@@ -15,8 +15,8 @@ def _create_binary_propagating_op(name, is_divmod=False):
         if (
             other is pd_NA
             or isinstance(other, (str, bytes))
-            or isinstance(other, (numbers.Number, np.bool_))
-            or util.is_array(other)
+            or isinstance(other, (numbers.Number, np.bool))
+            or isinstance(other, np.ndarray)
             and not other.shape
         ):
             # Need the other.shape clause to handle NumPy scalars,
@@ -27,7 +27,7 @@ def _create_binary_propagating_op(name, is_divmod=False):
             else:
                 return pd_NA
 
-        elif util.is_array(other):
+        elif isinstance(other, np.ndarray):
             out = np.empty(other.shape, dtype=object)
             out[:] = pd_NA
 
@@ -36,14 +36,14 @@ def _create_binary_propagating_op(name, is_divmod=False):
             else:
                 return out
 
-        elif is_cmp and isinstance(other, (date, time, timedelta)):
+        elif is_cmp and isinstance(other, (np.datetime64, np.timedelta64)):
             return pd_NA
 
-        elif isinstance(other, date):
+        elif isinstance(other, np.datetime64):
             if name in ["__sub__", "__rsub__"]:
                 return pd_NA
 
-        elif isinstance(other, timedelta):
+        elif isinstance(other, np.timedelta64):
             if name in ["__sub__", "__rsub__", "__add__", "__radd__"]:
                 return pd_NA
 
@@ -119,7 +119,7 @@ class NAType:
     def __pow__(self, other):
         if other is pd_NA:
             return pd_NA
-        elif isinstance(other, (numbers.Number, np.bool_)):
+        elif isinstance(other, (numbers.Number, np.bool)):
             if other == 0:
                 # returning positive is correct for +/- 0.
                 return type(other)(1)
@@ -133,7 +133,7 @@ class NAType:
     def __rpow__(self, other):
         if other is pd_NA:
             return pd_NA
-        elif isinstance(other, (numbers.Number, np.bool_)):
+        elif isinstance(other, (numbers.Number, np.bool)):
             if other == 1:
                 return other
             else:
@@ -170,7 +170,7 @@ class NAType:
     __rxor__ = __xor__
 
     __array_priority__ = 1000
-    _HANDLED_TYPES = (np.ndarray, numbers.Number, str, np.bool_)
+    _HANDLED_TYPES = (np.ndarray, numbers.Number, str, np.bool)
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         types = self._HANDLED_TYPES + (NAType,)

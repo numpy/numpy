@@ -99,6 +99,11 @@ def get_include():
         $ pkg-config --cflags
         -I/path/to/site-packages/numpy/_core/include
 
+    Examples
+    --------
+    >>> np.get_include()
+    '.../site-packages/numpy/core/include'  # may vary
+
     """
     import numpy
     if numpy.show_config is None:

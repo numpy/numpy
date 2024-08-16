@@ -129,6 +129,10 @@ def get_default_integer():
         return cnp.dtype("intp")
     return None
 
+def get_ravel_axis():
+    return cnp.NPY_RAVEL_AXIS
+
+
 def conv_intp(cnp.intp_t val):
     return val
 
@@ -254,3 +258,11 @@ def compile_fillwithbyte():
     pos = cnp.PyArray_ZEROS(2, dims, cnp.NPY_UINT8, 0)
     cnp.PyArray_FILLWBYTE(pos, 1)
     return pos
+
+def inc2_cfloat_struct(cnp.ndarray[cnp.cfloat_t] arr):
+    # This works since we compile in C mode, it will fail in cpp mode
+    arr[1].real += 1
+    arr[1].imag += 1
+    # This works in both modes
+    arr[1].real = arr[1].real + 1
+    arr[1].imag = arr[1].imag + 1

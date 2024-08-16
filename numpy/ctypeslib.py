@@ -499,6 +499,22 @@ if ctypes is not None:
           `ctypes.Structure`\ s
         - insert padding fields
 
+        Examples
+        --------
+        Converting a simple dtype:
+
+        >>> dt = np.dtype('int8')
+        >>> ctype = np.ctypeslib.as_ctypes_type(dt)
+        >>> ctype
+        <class 'ctypes.c_byte'>
+
+        Converting a structured dtype:
+
+        >>> dt = np.dtype([('x', 'i4'), ('y', 'f4')])
+        >>> ctype = np.ctypeslib.as_ctypes_type(dt)
+        >>> ctype
+        <class 'struct'>
+
         """
         return _ctype_from_dtype(_dtype(dtype))
 

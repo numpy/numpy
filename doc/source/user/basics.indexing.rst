@@ -665,11 +665,11 @@ behave just like slicing).
 
 .. rubric:: Example
 
-Suppose ``x.shape`` is (10, 20, 30) and ``ind`` is a (2, 3, 4)-shaped
+Suppose ``x.shape`` is (10, 20, 30) and ``ind`` is a (2, 5, 2)-shaped
 indexing :class:`intp` array, then ``result = x[..., ind, :]`` has
-shape (10, 2, 3, 4, 30) because the (20,)-shaped subspace has been
-replaced with a (2, 3, 4)-shaped broadcasted indexing subspace. If
-we let *i, j, k* loop over the (2, 3, 4)-shaped subspace then
+shape (10, 2, 5, 2, 30) because the (20,)-shaped subspace has been
+replaced with a (2, 5, 2)-shaped broadcasted indexing subspace. If
+we let *i, j, k* loop over the (2, 5, 2)-shaped subspace then
 ``result[..., i, j, k, :] = x[..., ind[i, j, k], :]``. This example
 produces the same result as :meth:`x.take(ind, axis=-2) <ndarray.take>`.
 

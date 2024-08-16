@@ -1,6 +1,8 @@
 /**
  * This module provides the inner loops for the clip ufunc
  */
+#include <type_traits>
+
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -150,50 +152,100 @@ _NPY_CLIP(T x, T min, T max)
     return _NPY_MIN<Tag>(_NPY_MAX<Tag>((x), (min)), (max));
 }
 
-template <class Tag, class T = typename Tag::type>
-static void
-_npy_clip_(T **args, npy_intp const *dimensions, npy_intp const *steps)
+template <class Tag, class T>
+static inline void
+_npy_clip_const_minmax_(
+    char *ip, npy_intp is, char *op, npy_intp os, npy_intp n, T min_val, T max_val,
+    std::false_type /* non-floating point */
+)
 {
-    npy_intp n = dimensions[0];
-    if (steps[1] == 0 && steps[2] == 0) {
-        /* min and max are constant throughout the loop, the most common case
-         */
-        /* NOTE: it may be possible to optimize these checks for nan */
-        T min_val = *args[1];
-        T max_val = *args[2];
+    /* contiguous, branch to let the compiler optimize */
+    if (is == sizeof(T) && os == sizeof(T)) {
+        for (npy_intp i = 0; i < n; i++, ip += sizeof(T), op += sizeof(T)) {
+            *(T *)op = _NPY_CLIP<Tag>(*(T *)ip, min_val, max_val);
+        }
+    }
+    else {
+        for (npy_intp i = 0; i < n; i++, ip += is, op += os) {
+            *(T *)op = _NPY_CLIP<Tag>(*(T *)ip, min_val, max_val);
+        }
+    }
+}
 
-        T *ip1 = args[0], *op1 = args[3];
-        npy_intp is1 = steps[0] / sizeof(T), os1 = steps[3] / sizeof(T);
+template <class Tag, class T>
+static inline void
+_npy_clip_const_minmax_(
+    char *ip, npy_intp is, char *op, npy_intp os, npy_intp n, T min_val, T max_val,
+    std::true_type  /* floating point */
+)
+{
+    if (!npy_isnan(min_val) && !npy_isnan(max_val)) {
+        /*
+         * The min/max_val are not NaN so the comparison below will
+         * propagate NaNs in the input without further NaN checks.
+         */
 
         /* contiguous, branch to let the compiler optimize */
-        if (is1 == 1 && os1 == 1) {
-            for (npy_intp i = 0; i < n; i++, ip1++, op1++) {
-                *op1 = _NPY_CLIP<Tag>(*ip1, min_val, max_val);
+        if (is == sizeof(T) && os == sizeof(T)) {
+            for (npy_intp i = 0; i < n; i++, ip += sizeof(T), op += sizeof(T)) {
+                T x = *(T *)ip;
+                if (x < min_val) {
+                    x = min_val;
+                }
+                if (x > max_val) {
+                    x = max_val;
+                }
+                *(T *)op = x;
             }
         }
         else {
-            for (npy_intp i = 0; i < n; i++, ip1 += is1, op1 += os1) {
-                *op1 = _NPY_CLIP<Tag>(*ip1, min_val, max_val);
+            for (npy_intp i = 0; i < n; i++, ip += is, op += os) {
+                T x = *(T *)ip;
+                if (x < min_val) {
+                    x = min_val;
+                }
+                if (x > max_val) {
+                    x = max_val;
+                }
+                *(T *)op = x;
             }
         }
     }
     else {
-        T *ip1 = args[0], *ip2 = args[1], *ip3 = args[2], *op1 = args[3];
-        npy_intp is1 = steps[0] / sizeof(T), is2 = steps[1] / sizeof(T),
-                 is3 = steps[2] / sizeof(T), os1 = steps[3] / sizeof(T);
-        for (npy_intp i = 0; i < n;
-             i++, ip1 += is1, ip2 += is2, ip3 += is3, op1 += os1)
-            *op1 = _NPY_CLIP<Tag>(*ip1, *ip2, *ip3);
+        /* min_val and/or max_val are nans */
+        T x = npy_isnan(min_val) ? min_val : max_val;
+        for (npy_intp i = 0; i < n; i++, op += os) {
+            *(T *)op = x;
+        }
     }
-    npy_clear_floatstatus_barrier((char *)dimensions);
 }
 
-template <class Tag>
+template <class Tag, class T = typename Tag::type>
 static void
 _npy_clip(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
-    using T = typename Tag::type;
-    return _npy_clip_<Tag>((T **)args, dimensions, steps);
+    npy_intp n = dimensions[0];
+    if (steps[1] == 0 && steps[2] == 0) {
+        /* min and max are constant throughout the loop, the most common case */
+        T min_val = *(T *)args[1];
+        T max_val = *(T *)args[2];
+
+        _npy_clip_const_minmax_<Tag, T>(
+            args[0], steps[0], args[3], steps[3], n, min_val, max_val,
+            std::is_base_of<npy::floating_point_tag, Tag>{}
+        );
+    }
+    else {
+        char *ip1 = args[0], *ip2 = args[1], *ip3 = args[2], *op1 = args[3];
+        npy_intp is1 = steps[0], is2 = steps[1],
+                 is3 = steps[2], os1 = steps[3];
+        for (npy_intp i = 0; i < n;
+             i++, ip1 += is1, ip2 += is2, ip3 += is3, op1 += os1)
+        {
+            *(T *)op1 = _NPY_CLIP<Tag>(*(T *)ip1, *(T *)ip2, *(T *)ip3);
+        }
+    }
+    npy_clear_floatstatus_barrier((char *)dimensions);
 }
 
 extern "C" {

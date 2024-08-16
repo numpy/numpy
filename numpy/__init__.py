@@ -134,23 +134,23 @@ else:
         can_cast, cbrt, cdouble, ceil, character, choose, clip, clongdouble,
         complex128, complex64, complexfloating, compress, concat, concatenate,
         conj, conjugate, convolve, copysign, copyto, correlate, cos, cosh,
-        count_nonzero, cross, csingle, cumprod, cumsum,
-        datetime64, datetime_as_string, datetime_data, deg2rad, degrees,
-        diagonal, divide, divmod, dot, double, dtype, e, einsum, einsum_path,
-        empty, empty_like, equal, errstate, euler_gamma, exp, exp2, expm1,
-        fabs, finfo, flatiter, flatnonzero, flexible, float16, float32,
-        float64, float_power, floating, floor, floor_divide, fmax, fmin, fmod,
-        format_float_positional, format_float_scientific, frexp, from_dlpack,
-        frombuffer, fromfile, fromfunction, fromiter, frompyfunc, fromstring,
-        full, full_like, gcd, generic, geomspace, get_printoptions,
-        getbufsize, geterr, geterrcall, greater, greater_equal, half,
-        heaviside, hstack, hypot, identity, iinfo, iinfo, indices, inexact,
-        inf, inner, int16, int32, int64, int8, int_, intc, integer, intp,
-        invert, is_busday, isclose, isdtype, isfinite, isfortran, isinf,
-        isnan, isnat, isscalar, issubdtype, lcm, ldexp, left_shift, less,
-        less_equal, lexsort, linspace, little_endian, log, log10, log1p, log2,
-        logaddexp, logaddexp2, logical_and, logical_not, logical_or,
-        logical_xor, logspace, long, longdouble, longlong, matmul,
+        count_nonzero, cross, csingle, cumprod, cumsum, cumulative_prod,
+        cumulative_sum, datetime64, datetime_as_string, datetime_data,
+        deg2rad, degrees, diagonal, divide, divmod, dot, double, dtype, e,
+        einsum, einsum_path, empty, empty_like, equal, errstate, euler_gamma,
+        exp, exp2, expm1, fabs, finfo, flatiter, flatnonzero, flexible,
+        float16, float32, float64, float_power, floating, floor, floor_divide,
+        fmax, fmin, fmod, format_float_positional, format_float_scientific,
+        frexp, from_dlpack, frombuffer, fromfile, fromfunction, fromiter,
+        frompyfunc, fromstring, full, full_like, gcd, generic, geomspace,
+        get_printoptions, getbufsize, geterr, geterrcall, greater,
+        greater_equal, half, heaviside, hstack, hypot, identity, iinfo, iinfo,
+        indices, inexact, inf, inner, int16, int32, int64, int8, int_, intc,
+        integer, intp, invert, is_busday, isclose, isdtype, isfinite,
+        isfortran, isinf, isnan, isnat, isscalar, issubdtype, lcm, ldexp,
+        left_shift, less, less_equal, lexsort, linspace, little_endian, log,
+        log10, log1p, log2, logaddexp, logaddexp2, logical_and, logical_not,
+        logical_or, logical_xor, logspace, long, longdouble, longlong, matmul,
         matrix_transpose, max, maximum, may_share_memory, mean, memmap, min,
         min_scalar_type, minimum, mod, modf, moveaxis, multiply, nan, ndarray,
         ndim, nditer, negative, nested_iters, newaxis, nextafter, nonzero,
@@ -165,8 +165,8 @@ else:
         str_, subtract, sum, swapaxes, take, tan, tanh, tensordot,
         timedelta64, trace, transpose, true_divide, trunc, typecodes, ubyte,
         ufunc, uint, uint16, uint32, uint64, uint8, uintc, uintp, ulong,
-        ulonglong, unsignedinteger, ushort, var, vdot, vecdot, void, vstack,
-        where, zeros, zeros_like
+        ulonglong, unsignedinteger, unstack, ushort, var, vdot, vecdot, void,
+        vstack, where, zeros, zeros_like
     )
 
     # NOTE: It's still under discussion whether these aliases 
@@ -235,6 +235,7 @@ else:
         ix_, c_, r_, s_, ogrid, mgrid, unravel_index, ravel_multi_index, 
         index_exp
     )
+
     from . import matrixlib as _mat
     from .matrixlib import (
         asmatrix, bmat, matrix
@@ -289,7 +290,9 @@ else:
     # import with `from numpy import *`.
     __future_scalars__ = {"str", "bytes", "object"}
 
-    __array_api_version__ = "2022.12"
+    __array_api_version__ = "2023.12"
+
+    from ._array_api_info import __array_namespace_info__
 
     # now that numpy core module is imported, can initialize limits
     _core.getlimits._register_known_types()
@@ -312,7 +315,7 @@ else:
         set(lib._polynomial_impl.__all__) |
         set(lib._npyio_impl.__all__) |
         set(lib._index_tricks_impl.__all__) |
-        {"emath", "show_config", "__version__"}
+        {"emath", "show_config", "__version__", "__array_namespace_info__"}
     )
 
     # Filter out Cython harmless warnings
@@ -368,7 +371,7 @@ else:
             return char
         elif attr == "array_api":
             raise AttributeError("`numpy.array_api` is not available from "
-                                 "numpy 2.0 onwards")
+                                 "numpy 2.0 onwards", name=None)
         elif attr == "core":
             import numpy.core as core
             return core
@@ -381,7 +384,7 @@ else:
                 return distutils
             else:
                 raise AttributeError("`numpy.distutils` is not available from "
-                                     "Python 3.12 onwards")
+                                     "Python 3.12 onwards", name=None)
 
         if attr in __future_scalars__:
             # And future warnings for those that will change, but also give
@@ -391,12 +394,13 @@ else:
                 "corresponding NumPy scalar.", FutureWarning, stacklevel=2)
 
         if attr in __former_attrs__:
-            raise AttributeError(__former_attrs__[attr])
+            raise AttributeError(__former_attrs__[attr], name=None)
         
         if attr in __expired_attributes__:
             raise AttributeError(
                 f"`np.{attr}` was removed in the NumPy 2.0 release. "
-                f"{__expired_attributes__[attr]}"
+                f"{__expired_attributes__[attr]}",
+                name=None
             )
 
         if attr == "chararray":

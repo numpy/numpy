@@ -17,6 +17,7 @@ from unittest.case import SkipTest
 from warnings import WarningMessage
 import pprint
 import sysconfig
+import concurrent.futures
 
 import numpy as np
 from numpy._core import (
@@ -39,7 +40,8 @@ __all__ = [
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', "IS_WASM", 'suppress_warnings', 'assert_array_compare',
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
-        '_OLD_PROMOTION', 'IS_MUSL', '_SUPPORTS_SVE'
+        '_OLD_PROMOTION', 'IS_MUSL', '_SUPPORTS_SVE', 'NOGIL_BUILD',
+        'IS_EDITABLE', 'run_threaded',
         ]
 
 
@@ -54,6 +56,7 @@ verbose = 0
 IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 IS_PYPY = sys.implementation.name == 'pypy'
 IS_PYSTON = hasattr(sys, "pyston_version_info")
+IS_EDITABLE = not bool(np.__path__) or 'editable' in np.__path__[0]
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
 HAS_LAPACK64 = numpy.linalg._umath_linalg._ilp64
 
@@ -68,6 +71,7 @@ _v = sysconfig.get_config_var('HOST_GNU_TYPE') or ''
 if 'musl' in _v:
     IS_MUSL = True
 
+NOGIL_BUILD = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
 
 def assert_(val, msg=''):
     """
@@ -1949,8 +1953,15 @@ def assert_warns(warning_class, *args, **kwargs):
     >>> ret = np.testing.assert_warns(DeprecationWarning, deprecated_func, 4)
     >>> assert ret == 16
     """
-    if not args:
+    if not args and not kwargs:
         return _assert_warns_context(warning_class)
+    elif len(args) < 1:
+        if "match" in kwargs:
+            raise RuntimeError(
+                "assert_warns does not use 'match' kwarg, "
+                "use pytest.warns instead"
+                )
+        raise RuntimeError("assert_warns(...) needs at least one arg")
 
     func = args[0]
     args = args[1:]
@@ -2687,3 +2698,14 @@ def _get_glibc_version():
 
 _glibcver = _get_glibc_version()
 _glibc_older_than = lambda x: (_glibcver != '0.0' and _glibcver < x)
+
+
+def run_threaded(func, iters, pass_count=False):
+    """Runs a function many times in parallel"""
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as tpe:
+        if pass_count:
+            futures = [tpe.submit(func, i) for i in range(iters)]
+        else:
+            futures = [tpe.submit(func) for _ in range(iters)]
+        for f in futures:
+            f.result()

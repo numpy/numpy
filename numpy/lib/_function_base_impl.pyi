@@ -1,4 +1,3 @@
-import sys
 from collections.abc import Sequence, Iterator, Callable, Iterable
 from typing import (
     Literal as L,
@@ -8,17 +7,13 @@ from typing import (
     Protocol,
     SupportsIndex,
     SupportsInt,
+    TypeGuard
 )
-
-if sys.version_info >= (3, 10):
-    from typing import TypeGuard
-else:
-    from typing_extensions import TypeGuard
 
 from numpy import (
     vectorize as vectorize,
-    ufunc,
     generic,
+    integer,
     floating,
     complexfloating,
     intp,
@@ -27,6 +22,7 @@ from numpy import (
     timedelta64,
     datetime64,
     object_,
+    bool as bool_,
     _OrderKACF,
 )
 
@@ -318,12 +314,6 @@ def extract(condition: ArrayLike, arr: ArrayLike) -> NDArray[Any]: ...
 
 def place(arr: NDArray[Any], mask: ArrayLike, vals: Any) -> None: ...
 
-def disp(
-    mesg: object,
-    device: None | _SupportsWriteFlush = ...,
-    linefeed: bool = ...,
-) -> None: ...
-
 @overload
 def cov(
     m: _ArrayLikeFloat_co,
@@ -474,8 +464,18 @@ def median(
 @overload
 def median(
     a: _ArrayLikeFloat_co | _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    axis: None | _ShapeLike,
+    out: _ArrayType,
+    /,
+    overwrite_input: bool = ...,
+    keepdims: bool = ...,
+) -> _ArrayType: ...
+@overload
+def median(
+    a: _ArrayLikeFloat_co | _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
     axis: None | _ShapeLike = ...,
-    out: _ArrayType = ...,
+    *,
+    out: _ArrayType,
     overwrite_input: bool = ...,
     keepdims: bool = ...,
 ) -> _ArrayType: ...
@@ -632,18 +632,93 @@ def percentile(
 def percentile(
     a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
     q: _ArrayLikeFloat_co,
-    axis: None | _ShapeLike = ...,
-    out: _ArrayType = ...,
+    axis: None | _ShapeLike,
+    out: _ArrayType,
+    /,
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: bool = ...,
     *,
     weights: None | _ArrayLikeFloat_co = ...,
 ) -> _ArrayType: ...
+@overload
+def percentile(
+    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    q: _ArrayLikeFloat_co,
+    axis: None | _ShapeLike = ...,
+    *,
+    out: _ArrayType,
+    overwrite_input: bool = ...,
+    method: _MethodKind = ...,
+    keepdims: bool = ...,
+    weights: None | _ArrayLikeFloat_co = ...,
+) -> _ArrayType: ...
 
 # NOTE: Not an alias, but they do have identical signatures
 # (that we can reuse)
 quantile = percentile
+
+
+_SCT_fm = TypeVar(
+    "_SCT_fm",
+    bound=floating[Any] | complexfloating[Any, Any] | timedelta64,
+)
+
+class _SupportsRMulFloat(Protocol[_T_co]):
+    def __rmul__(self, other: float, /) -> _T_co: ...
+
+@overload
+def trapezoid(  # type: ignore[overload-overlap]
+    y: Sequence[_FloatLike_co],
+    x: Sequence[_FloatLike_co] | None = ...,
+    dx: float = ...,
+    axis: SupportsIndex = ...,
+) -> float64: ...
+@overload
+def trapezoid(
+    y: Sequence[_ComplexLike_co],
+    x: Sequence[_ComplexLike_co] | None = ...,
+    dx: float = ...,
+    axis: SupportsIndex = ...,
+) -> complex128: ...
+@overload
+def trapezoid(
+    y: _ArrayLike[bool_ | integer[Any]],
+    x: _ArrayLike[bool_ | integer[Any]] | None = ...,
+    dx: float = ...,
+    axis: SupportsIndex = ...,
+) -> float64 | NDArray[float64]: ...
+@overload
+def trapezoid(  # type: ignore[overload-overlap]
+    y: _ArrayLikeObject_co,
+    x: _ArrayLikeFloat_co | _ArrayLikeObject_co | None = ...,
+    dx: float = ...,
+    axis: SupportsIndex = ...,
+) -> float | NDArray[object_]: ...
+@overload
+def trapezoid(
+    y: _ArrayLike[_SCT_fm],
+    x: _ArrayLike[_SCT_fm] | _ArrayLikeInt_co | None = ...,
+    dx: float = ...,
+    axis: SupportsIndex = ...,
+) -> _SCT_fm | NDArray[_SCT_fm]: ...
+@overload
+def trapezoid(
+    y: Sequence[_SupportsRMulFloat[_T]],
+    x: Sequence[_SupportsRMulFloat[_T] | _T] | None = ...,
+    dx: float = ...,
+    axis: SupportsIndex = ...,
+) -> _T: ...
+@overload
+def trapezoid(
+    y: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    x: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co | None = ...,
+    dx: float = ...,
+    axis: SupportsIndex = ...,
+) -> (
+    floating[Any] | complexfloating[Any, Any] | timedelta64
+    | NDArray[floating[Any] | complexfloating[Any, Any] | timedelta64 | object_]
+): ...
 
 def meshgrid(
     *xi: ArrayLike,

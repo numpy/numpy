@@ -101,6 +101,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.linspace(2.0, 3.0, num=5)
     array([2.  , 2.25, 2.5 , 2.75, 3.  ])
     >>> np.linspace(2.0, 3.0, num=5, endpoint=False)
@@ -272,6 +273,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.logspace(2.0, 3.0, num=4)
     array([ 100.        ,  215.443469  ,  464.15888336, 1000.        ])
     >>> np.logspace(2.0, 3.0, num=4, endpoint=False)
@@ -378,6 +380,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.geomspace(1, 1000, num=4)
     array([    1.,    10.,   100.,  1000.])
     >>> np.geomspace(1, 1000, num=3, endpoint=False)

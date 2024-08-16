@@ -12,7 +12,7 @@
 
 #include "npy_config.h"
 
-#include "npy_pycompat.h"
+
 #include "array_assign.h"
 
 #include "common.h"

@@ -107,6 +107,21 @@ class TestSetOps:
 
         assert_array_equal([], setxor1d([], []))
 
+    def test_setxor1d_unique(self):
+        a = np.array([1, 8, 2, 3])
+        b = np.array([6, 5, 4, 8])
+
+        ec = np.array([1, 2, 3, 4, 5, 6])
+        c = setxor1d(a, b, assume_unique=True)
+        assert_array_equal(c, ec)
+
+        a = np.array([[1], [8], [2], [3]])
+        b = np.array([[6, 5], [4, 8]])
+
+        ec = np.array([1, 2, 3, 4, 5, 6])
+        c = setxor1d(a, b, assume_unique=True)
+        assert_array_equal(c, ec)
+
     def test_ediff1d(self):
         zero_elem = np.array([])
         one_elem = np.array([1])
@@ -400,6 +415,7 @@ class TestSetOps:
             (np.uint16, np.uint8),
             (np.uint8, np.int16),
             (np.int16, np.uint8),
+            (np.uint64, np.int64),
         ]
     )
     @pytest.mark.parametrize("kind", [None, "sort", "table"])
@@ -415,16 +431,30 @@ class TestSetOps:
 
         expected = np.array([True, True, False, False])
 
-        expect_failure = kind == "table" and any((
-            dtype1 == np.int8 and dtype2 == np.int16,
-            dtype1 == np.int16 and dtype2 == np.int8
-        ))
+        expect_failure = kind == "table" and (
+            dtype1 == np.int16 and dtype2 == np.int8)
 
         if expect_failure:
             with pytest.raises(RuntimeError, match="exceed the maximum"):
                 isin(ar1, ar2, kind=kind)
         else:
             assert_array_equal(isin(ar1, ar2, kind=kind), expected)
+
+    @pytest.mark.parametrize("data", [
+        np.array([2**63, 2**63+1], dtype=np.uint64),
+        np.array([-2**62, -2**62-1], dtype=np.int64),
+    ])
+    @pytest.mark.parametrize("kind", [None, "sort", "table"])
+    def test_isin_mixed_huge_vals(self, kind, data):
+        """Test values outside intp range (negative ones if 32bit system)"""
+        query = data[1]
+        res = np.isin(data, query, kind=kind)
+        assert_array_equal(res, [False, True])
+        # Also check that nothing weird happens for values can't possibly
+        # in range.
+        data = data.astype(np.int32)  # clearly different values
+        res = np.isin(data, query, kind=kind)
+        assert_array_equal(res, [False, False])
 
     @pytest.mark.parametrize("kind", [None, "sort", "table"])
     def test_isin_mixed_boolean(self, kind):
@@ -814,11 +844,8 @@ class TestUnique:
     def test_unique_inverse_with_axis(self, axis):
         x = np.array([[4, 4, 3], [2, 2, 1], [2, 2, 1], [4, 4, 3]])
         uniq, inv = unique(x, return_inverse=True, axis=axis)
-        assert_equal(inv.ndim, x.ndim)
-        if axis is None:
-            assert_array_equal(x, np.take(uniq, inv))
-        else:
-            assert_array_equal(x, np.take_along_axis(uniq, inv, axis=axis))
+        assert_equal(inv.ndim, x.ndim if axis is None else 1)
+        assert_array_equal(x, np.take(uniq, inv, axis=axis))
 
     def test_unique_axis_zeros(self):
         # issue 15559
@@ -830,7 +857,7 @@ class TestUnique:
         assert_equal(uniq.dtype, single_zero.dtype)
         assert_array_equal(uniq, np.empty(shape=(1, 0)))
         assert_array_equal(idx, np.array([0]))
-        assert_array_equal(inv, np.array([[0], [0]]))
+        assert_array_equal(inv, np.array([0, 0]))
         assert_array_equal(cnt, np.array([2]))
 
         # there's 0 elements of shape (2,) along axis 1
@@ -840,7 +867,7 @@ class TestUnique:
         assert_equal(uniq.dtype, single_zero.dtype)
         assert_array_equal(uniq, np.empty(shape=(2, 0)))
         assert_array_equal(idx, np.array([]))
-        assert_array_equal(inv, np.empty((1, 0)))
+        assert_array_equal(inv, np.array([]))
         assert_array_equal(cnt, np.array([]))
 
         # test a "complicated" shape
@@ -909,7 +936,7 @@ class TestUnique:
         msg = "Unique's return_index=True failed with axis=0"
         assert_array_equal(data[idx], uniq, msg)
         msg = "Unique's return_inverse=True failed with axis=0"
-        assert_array_equal(np.take_along_axis(uniq, inv, axis=0), data)
+        assert_array_equal(np.take(uniq, inv, axis=0), data)
         msg = "Unique's return_counts=True failed with axis=0"
         assert_array_equal(cnt, np.array([2, 2]), msg)
 
@@ -918,7 +945,7 @@ class TestUnique:
         msg = "Unique's return_index=True failed with axis=1"
         assert_array_equal(data[:, idx], uniq)
         msg = "Unique's return_inverse=True failed with axis=1"
-        assert_array_equal(np.take_along_axis(uniq, inv, axis=1), data)
+        assert_array_equal(np.take(uniq, inv, axis=1), data)
         msg = "Unique's return_counts=True failed with axis=1"
         assert_array_equal(cnt, np.array([2, 1, 1]), msg)
 

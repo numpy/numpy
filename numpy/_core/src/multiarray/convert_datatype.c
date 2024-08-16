@@ -35,7 +35,8 @@
 #include "dtype_transfer.h"
 #include "dtype_traversal.h"
 #include "arrayobject.h"
-
+#include "npy_static_data.h"
+#include "multiarraymodule.h"
 
 /*
  * Required length of string when converting from unsigned integer type.
@@ -48,14 +49,17 @@
  */
 NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[] = {0, 3, 5, 10, 10, 20, 20, 20, 20};
 
-/*
- * Whether or not legacy value-based promotion/casting is used.
- */
-NPY_NO_EXPORT int npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
-NPY_NO_EXPORT PyObject *NO_NEP50_WARNING_CTX = NULL;
-NPY_NO_EXPORT PyObject *npy_DTypePromotionError = NULL;
-NPY_NO_EXPORT PyObject *npy_UFuncNoLoopError = NULL;
+static NPY_TLS int npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
 
+NPY_NO_EXPORT int
+get_npy_promotion_state() {
+    return npy_promotion_state;
+}
+
+NPY_NO_EXPORT void
+set_npy_promotion_state(int new_promotion_state) {
+    npy_promotion_state = new_promotion_state;
+}
 
 static PyObject *
 PyArray_GetGenericToVoidCastingImpl(void);
@@ -79,15 +83,15 @@ npy_give_promotion_warnings(void)
 {
     PyObject *val;
 
-    npy_cache_import(
+    if (npy_cache_import_runtime(
             "numpy._core._ufunc_config", "NO_NEP50_WARNING",
-            &NO_NEP50_WARNING_CTX);
-    if (NO_NEP50_WARNING_CTX == NULL) {
+            &npy_runtime_imports.NO_NEP50_WARNING) == -1) {
         PyErr_WriteUnraisable(NULL);
         return 1;
     }
 
-    if (PyContextVar_Get(NO_NEP50_WARNING_CTX, Py_False, &val) < 0) {
+    if (PyContextVar_Get(npy_runtime_imports.NO_NEP50_WARNING,
+                         Py_False, &val) < 0) {
         /* Errors should not really happen, but if it does assume we warn. */
         PyErr_WriteUnraisable(NULL);
         return 1;
@@ -100,13 +104,14 @@ npy_give_promotion_warnings(void)
 
 NPY_NO_EXPORT PyObject *
 npy__get_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(arg)) {
-    if (npy_promotion_state == NPY_USE_WEAK_PROMOTION) {
+    int promotion_state = get_npy_promotion_state();
+    if (promotion_state == NPY_USE_WEAK_PROMOTION) {
         return PyUnicode_FromString("weak");
     }
-    else if (npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN) {
+    else if (promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN) {
         return PyUnicode_FromString("weak_and_warn");
     }
-    else if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+    else if (promotion_state == NPY_USE_LEGACY_PROMOTION) {
         return PyUnicode_FromString("legacy");
     }
     PyErr_SetString(PyExc_SystemError, "invalid promotion state!");
@@ -123,14 +128,15 @@ npy__set_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *arg)
                 "must be a string.");
         return NULL;
     }
+    int new_promotion_state;
     if (PyUnicode_CompareWithASCIIString(arg, "weak") == 0) {
-        npy_promotion_state = NPY_USE_WEAK_PROMOTION;
+        new_promotion_state = NPY_USE_WEAK_PROMOTION;
     }
     else if (PyUnicode_CompareWithASCIIString(arg, "weak_and_warn") == 0) {
-        npy_promotion_state = NPY_USE_WEAK_PROMOTION_AND_WARN;
+        new_promotion_state = NPY_USE_WEAK_PROMOTION_AND_WARN;
     }
     else if (PyUnicode_CompareWithASCIIString(arg, "legacy") == 0) {
-        npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
+        new_promotion_state = NPY_USE_LEGACY_PROMOTION;
     }
     else {
         PyErr_Format(PyExc_TypeError,
@@ -138,6 +144,7 @@ npy__set_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *arg)
                 "'weak', 'legacy', or 'weak_and_warn' but got '%.100S'", arg);
         return NULL;
     }
+    set_npy_promotion_state(new_promotion_state);
     Py_RETURN_NONE;
 }
 
@@ -395,12 +402,7 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
             !PyTypeNum_ISCOMPLEX(type_num) &&
             PyTypeNum_ISNUMBER(type_num) &&
             !PyTypeNum_ISBOOL(type_num)) {
-        static PyObject *cls = NULL;
-        npy_cache_import("numpy.exceptions", "ComplexWarning", &cls);
-        if (cls == NULL) {
-            return NULL;
-        }
-        int ret = PyErr_WarnEx(cls,
+        int ret = PyErr_WarnEx(npy_static_pydata.ComplexWarning,
                 "Casting complex values to real discards "
                 "the imaginary part", 1);
         if (ret < 0) {
@@ -465,14 +467,17 @@ _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
     /*
      * Check for less harmful non-standard returns.  The following two returns
      * should never happen:
-     * 1. No-casting must imply a view offset of 0.
+     * 1. No-casting must imply a view offset of 0 unless the DType
+          defines a finalization function, which implies it stores data
+          on the descriptor
      * 2. Equivalent-casting + 0 view offset is (usually) the definition
      *    of a "no" cast.  However, changing the order of fields can also
      *    create descriptors that are not equivalent but views.
      * Note that unsafe casts can have a view offset.  For example, in
      * principle, casting `<i8` to `<i4` is a cast with 0 offset.
      */
-    if (*view_offset != 0) {
+    if ((*view_offset != 0 &&
+         NPY_DT_SLOTS(NPY_DTYPE(from))->finalize_descr == NULL)) {
         assert(casting != NPY_NO_CASTING);
     }
     else {
@@ -645,6 +650,35 @@ NPY_NO_EXPORT npy_bool
 PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 {
     return PyArray_CanCastTypeTo(from, to, NPY_SAFE_CASTING);
+}
+
+
+/*
+ * This function returns true if the two types can be safely cast at
+ * *minimum_safety* casting level. Sets the *view_offset* if that is set
+ * for the cast. If ignore_error is set, the error indicator is cleared
+ * if there are any errors in cast setup and returns false, otherwise
+ * the error indicator is left set and returns -1.
+ */
+NPY_NO_EXPORT npy_intp
+PyArray_SafeCast(PyArray_Descr *type1, PyArray_Descr *type2,
+                 npy_intp* view_offset, NPY_CASTING minimum_safety,
+                 npy_intp ignore_error)
+{
+    if (type1 == type2) {
+        *view_offset = 0;
+        return 1;
+    }
+
+    NPY_CASTING safety = PyArray_GetCastInfo(type1, type2, NULL, view_offset);
+    if (safety < 0) {
+        if (ignore_error) {
+            PyErr_Clear();
+            return 0;
+        }
+        return -1;
+    }
+    return PyArray_MinCastSafety(safety, minimum_safety) == minimum_safety;
 }
 
 
@@ -898,7 +932,7 @@ PyArray_CanCastArrayTo(PyArrayObject *arr, PyArray_Descr *to,
         to = NULL;
     }
 
-    if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+    if (get_npy_promotion_state() == NPY_USE_LEGACY_PROMOTION) {
         /*
          * If it's a scalar, check the value.  (This only currently matters for
          * numeric types and for `to == NULL` it can't be numeric.)
@@ -1796,17 +1830,17 @@ PyArray_ResultType(
         all_descriptors[i_all] = NULL;  /* no descriptor for py-scalars */
         if (PyArray_FLAGS(arrs[i]) & NPY_ARRAY_WAS_PYTHON_INT) {
             /* This could even be an object dtype here for large ints */
-            all_DTypes[i_all] = &PyArray_PyIntAbstractDType;
+            all_DTypes[i_all] = &PyArray_PyLongDType;
             if (PyArray_TYPE(arrs[i]) != NPY_LONG) {
                 /* Not a "normal" scalar, so we cannot avoid the legacy path */
                 all_pyscalar = 0;
             }
         }
         else if (PyArray_FLAGS(arrs[i]) & NPY_ARRAY_WAS_PYTHON_FLOAT) {
-            all_DTypes[i_all] = &PyArray_PyFloatAbstractDType;
+            all_DTypes[i_all] = &PyArray_PyFloatDType;
         }
         else if (PyArray_FLAGS(arrs[i]) & NPY_ARRAY_WAS_PYTHON_COMPLEX) {
-            all_DTypes[i_all] = &PyArray_PyComplexAbstractDType;
+            all_DTypes[i_all] = &PyArray_PyComplexDType;
         }
         else {
             all_descriptors[i_all] = PyArray_DTYPE(arrs[i]);
@@ -1922,10 +1956,11 @@ PyArray_CheckLegacyResultType(
         npy_intp ndtypes, PyArray_Descr **dtypes)
 {
     PyArray_Descr *ret = NULL;
-    if (npy_promotion_state == NPY_USE_WEAK_PROMOTION) {
+    int promotion_state = get_npy_promotion_state();
+    if (promotion_state == NPY_USE_WEAK_PROMOTION) {
         return 0;
     }
-    if (npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN
+    if (promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN
             && !npy_give_promotion_warnings()) {
         return 0;
     }
@@ -2022,12 +2057,13 @@ PyArray_CheckLegacyResultType(
         Py_DECREF(ret);
         return 0;
     }
-    if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+
+    if (promotion_state == NPY_USE_LEGACY_PROMOTION) {
         Py_SETREF(*new_result, ret);
         return 0;
     }
 
-    assert(npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN);
+    assert(promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN);
     if (PyErr_WarnFormat(PyExc_UserWarning, 1,
             "result dtype changed due to the removal of value-based "
             "promotion from NumPy. Changed from %S to %S.",
@@ -2131,7 +2167,6 @@ PyArray_Zero(PyArrayObject *arr)
 {
     char *zeroval;
     int ret, storeflags;
-    static PyObject * zero_obj = NULL;
 
     if (_check_object_rec(PyArray_DESCR(arr)) < 0) {
         return NULL;
@@ -2142,12 +2177,6 @@ PyArray_Zero(PyArrayObject *arr)
         return NULL;
     }
 
-    if (zero_obj == NULL) {
-        zero_obj = PyLong_FromLong((long) 0);
-        if (zero_obj == NULL) {
-            return NULL;
-        }
-    }
     if (PyArray_ISOBJECT(arr)) {
         /* XXX this is dangerous, the caller probably is not
            aware that zeroval is actually a static PyObject*
@@ -2155,12 +2184,12 @@ PyArray_Zero(PyArrayObject *arr)
            if they simply memcpy it into a ndarray without using
            setitem(), refcount errors will occur
         */
-        memcpy(zeroval, &zero_obj, sizeof(PyObject *));
+        memcpy(zeroval, &npy_static_pydata.zero_obj, sizeof(PyObject *));
         return zeroval;
     }
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
-    ret = PyArray_SETITEM(arr, zeroval, zero_obj);
+    ret = PyArray_SETITEM(arr, zeroval, npy_static_pydata.zero_obj);
     ((PyArrayObject_fields *)arr)->flags = storeflags;
     if (ret < 0) {
         PyDataMem_FREE(zeroval);
@@ -2177,7 +2206,6 @@ PyArray_One(PyArrayObject *arr)
 {
     char *oneval;
     int ret, storeflags;
-    static PyObject * one_obj = NULL;
 
     if (_check_object_rec(PyArray_DESCR(arr)) < 0) {
         return NULL;
@@ -2188,12 +2216,6 @@ PyArray_One(PyArrayObject *arr)
         return NULL;
     }
 
-    if (one_obj == NULL) {
-        one_obj = PyLong_FromLong((long) 1);
-        if (one_obj == NULL) {
-            return NULL;
-        }
-    }
     if (PyArray_ISOBJECT(arr)) {
         /* XXX this is dangerous, the caller probably is not
            aware that oneval is actually a static PyObject*
@@ -2201,13 +2223,13 @@ PyArray_One(PyArrayObject *arr)
            if they simply memcpy it into a ndarray without using
            setitem(), refcount errors will occur
         */
-        memcpy(oneval, &one_obj, sizeof(PyObject *));
+        memcpy(oneval, &npy_static_pydata.one_obj, sizeof(PyObject *));
         return oneval;
     }
 
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
-    ret = PyArray_SETITEM(arr, oneval, one_obj);
+    ret = PyArray_SETITEM(arr, oneval, npy_static_pydata.one_obj);
     ((PyArrayObject_fields *)arr)->flags = storeflags;
     if (ret < 0) {
         PyDataMem_FREE(oneval);
@@ -2440,8 +2462,8 @@ PyArray_AddCastingImplementation_FromSpec(PyArrayMethod_Spec *spec, int private)
 NPY_NO_EXPORT NPY_CASTING
 legacy_same_dtype_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[2]),
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset)
 {
@@ -2483,7 +2505,7 @@ legacy_cast_get_strided_loop(
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     int out_needs_api = 0;
 
     *flags = context->method->flags & NPY_METH_RUNTIME_FLAGS;
@@ -2507,8 +2529,8 @@ legacy_cast_get_strided_loop(
 NPY_NO_EXPORT NPY_CASTING
 simple_cast_resolve_descriptors(
         PyArrayMethodObject *self,
-        PyArray_DTypeMeta *dtypes[2],
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const dtypes[2],
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset)
 {
@@ -2548,7 +2570,7 @@ get_byteswap_loop(
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     assert(descrs[0]->kind == descrs[1]->kind);
     assert(descrs[0]->elsize == descrs[1]->elsize);
     int itemsize = descrs[0]->elsize;
@@ -2590,13 +2612,7 @@ complex_to_noncomplex_get_loop(
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    static PyObject *cls = NULL;
-    int ret;
-    npy_cache_import("numpy.exceptions", "ComplexWarning", &cls);
-    if (cls == NULL) {
-        return -1;
-    }
-    ret = PyErr_WarnEx(cls,
+    int ret = PyErr_WarnEx(npy_static_pydata.ComplexWarning,
             "Casting complex values to real discards "
             "the imaginary part", 1);
     if (ret < 0) {
@@ -2727,8 +2743,8 @@ PyArray_InitializeNumericCasts(void)
 static int
 cast_to_string_resolve_descriptors(
         PyArrayMethodObject *self,
-        PyArray_DTypeMeta *dtypes[2],
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const dtypes[2],
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *NPY_UNUSED(view_offset))
 {
@@ -2879,8 +2895,8 @@ add_other_to_and_from_string_cast(
 NPY_NO_EXPORT NPY_CASTING
 string_to_string_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[2]),
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset)
 {
@@ -2932,7 +2948,7 @@ string_to_string_get_loop(
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
     int unicode_swap = 0;
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
 
     assert(NPY_DTYPE(descrs[0]) == NPY_DTYPE(descrs[1]));
     *flags = context->method->flags & NPY_METH_RUNTIME_FLAGS;
@@ -3033,7 +3049,7 @@ PyArray_InitializeStringCasts(void)
  */
 static NPY_CASTING
 cast_to_void_dtype_class(
-        PyArray_Descr **given_descrs, PyArray_Descr **loop_descrs,
+        PyArray_Descr *const *given_descrs, PyArray_Descr **loop_descrs,
         npy_intp *view_offset)
 {
     /* `dtype="V"` means unstructured currently (compare final path) */
@@ -3058,8 +3074,8 @@ cast_to_void_dtype_class(
 static NPY_CASTING
 nonstructured_to_structured_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[2]),
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset)
 {
@@ -3220,39 +3236,19 @@ nonstructured_to_structured_get_loop(
     return 0;
 }
 
-
 static PyObject *
 PyArray_GetGenericToVoidCastingImpl(void)
 {
-    static PyArrayMethodObject *method = NULL;
-
-    if (method != NULL) {
-        Py_INCREF(method);
-        return (PyObject *)method;
-    }
-
-    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
-    if (method == NULL) {
-        return PyErr_NoMemory();
-    }
-
-    method->name = "any_to_void_cast";
-    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
-    method->casting = -1;
-    method->resolve_descriptors = &nonstructured_to_structured_resolve_descriptors;
-    method->get_strided_loop = &nonstructured_to_structured_get_loop;
-    method->nin = 1;
-    method->nout = 1;
-
-    return (PyObject *)method;
+    Py_INCREF(npy_static_pydata.GenericToVoidMethod);
+    return npy_static_pydata.GenericToVoidMethod;
 }
 
 
 static NPY_CASTING
 structured_to_nonstructured_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *dtypes[2],
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const dtypes[2],
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset)
 {
@@ -3381,27 +3377,8 @@ structured_to_nonstructured_get_loop(
 static PyObject *
 PyArray_GetVoidToGenericCastingImpl(void)
 {
-    static PyArrayMethodObject *method = NULL;
-
-    if (method != NULL) {
-        Py_INCREF(method);
-        return (PyObject *)method;
-    }
-
-    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
-    if (method == NULL) {
-        return PyErr_NoMemory();
-    }
-
-    method->name = "void_to_any_cast";
-    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
-    method->casting = -1;
-    method->resolve_descriptors = &structured_to_nonstructured_resolve_descriptors;
-    method->get_strided_loop = &structured_to_nonstructured_get_loop;
-    method->nin = 1;
-    method->nout = 1;
-
-    return (PyObject *)method;
+    Py_INCREF(npy_static_pydata.VoidToGenericMethod);
+    return npy_static_pydata.VoidToGenericMethod;
 }
 
 
@@ -3521,8 +3498,8 @@ can_cast_fields_safety(
 static NPY_CASTING
 void_to_void_resolve_descriptors(
         PyArrayMethodObject *self,
-        PyArray_DTypeMeta *dtypes[2],
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const dtypes[2],
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset)
 {
@@ -3720,8 +3697,8 @@ PyArray_InitializeVoidToVoidCast(void)
 static NPY_CASTING
 object_to_any_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *dtypes[2],
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const dtypes[2],
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *NPY_UNUSED(view_offset))
 {
@@ -3765,37 +3742,17 @@ object_to_any_resolve_descriptors(
 static PyObject *
 PyArray_GetObjectToGenericCastingImpl(void)
 {
-    static PyArrayMethodObject *method = NULL;
-
-    if (method != NULL) {
-        Py_INCREF(method);
-        return (PyObject *)method;
-    }
-
-    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
-    if (method == NULL) {
-        return PyErr_NoMemory();
-    }
-
-    method->nin = 1;
-    method->nout = 1;
-    method->name = "object_to_any_cast";
-    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
-    method->casting = NPY_UNSAFE_CASTING;
-    method->resolve_descriptors = &object_to_any_resolve_descriptors;
-    method->get_strided_loop = &object_to_any_get_loop;
-
-    return (PyObject *)method;
+    Py_INCREF(npy_static_pydata.ObjectToGenericMethod);
+    return npy_static_pydata.ObjectToGenericMethod;
 }
-
 
 
 /* Any object is simple (could even use the default) */
 static NPY_CASTING
 any_to_object_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *dtypes[2],
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const dtypes[2],
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *NPY_UNUSED(view_offset))
 {
@@ -3822,27 +3779,8 @@ any_to_object_resolve_descriptors(
 static PyObject *
 PyArray_GetGenericToObjectCastingImpl(void)
 {
-    static PyArrayMethodObject *method = NULL;
-
-    if (method != NULL) {
-        Py_INCREF(method);
-        return (PyObject *)method;
-    }
-
-    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
-    if (method == NULL) {
-        return PyErr_NoMemory();
-    }
-
-    method->nin = 1;
-    method->nout = 1;
-    method->name = "any_to_object_cast";
-    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
-    method->casting = NPY_SAFE_CASTING;
-    method->resolve_descriptors = &any_to_object_resolve_descriptors;
-    method->get_strided_loop = &any_to_object_get_loop;
-
-    return (PyObject *)method;
+    Py_INCREF(npy_static_pydata.GenericToObjectMethod);
+    return npy_static_pydata.GenericToObjectMethod;
 }
 
 
@@ -3894,6 +3832,71 @@ PyArray_InitializeObjectToObjectCast(void)
     return res;
 }
 
+static int
+initialize_void_and_object_globals(void) {
+    PyArrayMethodObject *method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
+    if (method == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    method->name = "void_to_any_cast";
+    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
+    method->casting = -1;
+    method->resolve_descriptors = &structured_to_nonstructured_resolve_descriptors;
+    method->get_strided_loop = &structured_to_nonstructured_get_loop;
+    method->nin = 1;
+    method->nout = 1;
+    npy_static_pydata.VoidToGenericMethod = (PyObject *)method;
+
+    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
+    if (method == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    method->name = "any_to_void_cast";
+    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
+    method->casting = -1;
+    method->resolve_descriptors = &nonstructured_to_structured_resolve_descriptors;
+    method->get_strided_loop = &nonstructured_to_structured_get_loop;
+    method->nin = 1;
+    method->nout = 1;
+    npy_static_pydata.GenericToVoidMethod = (PyObject *)method;
+
+    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
+    if (method == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    method->nin = 1;
+    method->nout = 1;
+    method->name = "object_to_any_cast";
+    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
+    method->casting = NPY_UNSAFE_CASTING;
+    method->resolve_descriptors = &object_to_any_resolve_descriptors;
+    method->get_strided_loop = &object_to_any_get_loop;
+    npy_static_pydata.ObjectToGenericMethod = (PyObject *)method;
+
+    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
+    if (method == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    method->nin = 1;
+    method->nout = 1;
+    method->name = "any_to_object_cast";
+    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
+    method->casting = NPY_SAFE_CASTING;
+    method->resolve_descriptors = &any_to_object_resolve_descriptors;
+    method->get_strided_loop = &any_to_object_get_loop;
+    npy_static_pydata.GenericToObjectMethod = (PyObject *)method;
+
+    return 0;
+}
+
 
 NPY_NO_EXPORT int
 PyArray_InitializeCasts()
@@ -3914,5 +3917,10 @@ PyArray_InitializeCasts()
     if (PyArray_InitializeDatetimeCasts() < 0) {
         return -1;
     }
+
+    if (initialize_void_and_object_globals() < 0) {
+        return -1;
+    }
+
     return 0;
 }

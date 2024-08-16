@@ -1035,6 +1035,27 @@ class TestWarns:
         assert_equal(before_filters, after_filters,
                      "assert_warns does not preserver warnings state")
 
+    def test_args(self):
+        def f(a=0, b=1):
+            warnings.warn("yo")
+            return a + b
+
+        assert assert_warns(UserWarning, f, b=20) == 20
+
+        with pytest.raises(RuntimeError) as exc:
+            # assert_warns cannot do regexp matching, use pytest.warns
+            with assert_warns(UserWarning, match="A"):
+                warnings.warn("B", UserWarning)
+        assert "assert_warns" in str(exc)
+        assert "pytest.warns" in str(exc)
+
+        with pytest.raises(RuntimeError) as exc:
+            # assert_warns cannot do regexp matching, use pytest.warns
+            with assert_warns(UserWarning, wrong="A"):
+                warnings.warn("B", UserWarning)
+        assert "assert_warns" in str(exc)
+        assert "pytest.warns" not in str(exc)
+
     def test_warn_wrong_warning(self):
         def f():
             warnings.warn("yo", DeprecationWarning)
@@ -1902,8 +1923,7 @@ def test_xy_rename(assert_func):
         assert_func(1, y=1)
 
     type_message = '...got multiple values for argument'
-    # explicit linebreak to support Python 3.9
-    with pytest.warns(DeprecationWarning, match=dep_message), \
-          pytest.raises(TypeError, match=type_message):
+    with (pytest.warns(DeprecationWarning, match=dep_message),
+          pytest.raises(TypeError, match=type_message)):
         assert_func(1, x=1)
         assert_func(1, 2, y=2)

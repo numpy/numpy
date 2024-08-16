@@ -251,7 +251,7 @@ class TestMaskedArray:
 
         # The above only failed due a long chain of oddity, try also with
         # an object array that cannot be converted to bool always:
-        class NotBool():
+        class NotBool:
             def __bool__(self):
                 raise ValueError("not a bool!")
         masked_obj = np.ma.masked_array([NotBool(), 'b'], mask=[True, False])
@@ -2581,6 +2581,13 @@ class TestUfuncs:
             # also check that allclose uses ma ufuncs, to avoid warning
             allclose(m, 0.5)
 
+    def test_masked_array_underflow(self):
+        x = np.arange(0, 3, 0.1)
+        X = np.ma.array(x)
+        with np.errstate(under="raise"):
+            X2 = X/2.0
+            np.testing.assert_array_equal(X2, x/2)
+
 class TestMaskedArrayInPlaceArithmetic:
     # Test MaskedArray Arithmetic
 
@@ -4624,7 +4631,7 @@ class TestMaskedArrayFunctions:
         # getdata() used to be bad for pandas series due to its _data
         # attribute.  This test is a regression test mainly and may be
         # removed if getdata() is adjusted.
-        class Series():
+        class Series:
             _data = "nonsense"
 
             def __array__(self, dtype=None, copy=None):
