@@ -1,13 +1,13 @@
 .. _global_state:
 
-************
-Global state
-************
+****************************
+Global Configuration Options
+****************************
 
-NumPy exposes global state in legacy APIs and a few import-time,
-compile-time, or runtime options which change the global behaviour.
-Most of these are related to performance or for debugging purposes and
-will not be interesting to the vast majority of users.
+NumPy has a few import-time, compile-time, or runtime configuration
+options which change the global behaviour.  Most of these are related to
+performance or for debugging purposes and will not be interesting to the
+vast majority of users.
 
 
 Performance-related options
@@ -70,10 +70,3 @@ and set the ``ndarray.base``.
 
 .. versionchanged:: 1.25.2
     This variable is only checked on the first import.
-
-Legacy User DTypes
-==================
-
-The number of legacy user DTypes is stored in ``NPY_NUMUSERTPES``, a global
-variable that is exposed in the NumPy C API. This means that the legacy DType
-API is inherently not thread-safe.
