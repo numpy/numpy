@@ -7,7 +7,7 @@ import array as _array
 import datetime as dt
 import enum
 from abc import abstractmethod
-from types import TracebackType, MappingProxyType, GenericAlias
+from types import EllipsisType, TracebackType, MappingProxyType, GenericAlias
 from contextlib import contextmanager
 
 import numpy as np
@@ -1029,7 +1029,7 @@ class flatiter(Generic[_NdArraySubClass_co]):
     @overload
     def __getitem__(
         self,
-        key: _ArrayLikeInt | slice | ellipsis | tuple[_ArrayLikeInt | slice | ellipsis],
+        key: _ArrayLikeInt | slice | EllipsisType | tuple[_ArrayLikeInt | slice | EllipsisType],
     ) -> _NdArraySubClass_co: ...
     # TODO: `__setitem__` operates via `unsafe` casting rules, and can
     # thus accept any type accepted by the relevant underlying `np.generic`
@@ -1037,7 +1037,7 @@ class flatiter(Generic[_NdArraySubClass_co]):
     # This means that `value` must in reality be a supertype of `npt.ArrayLike`.
     def __setitem__(
         self,
-        key: _ArrayLikeInt | slice | ellipsis | tuple[_ArrayLikeInt | slice | ellipsis],
+        key: _ArrayLikeInt | slice | EllipsisType | tuple[_ArrayLikeInt | slice | EllipsisType],
         value: Any,
     ) -> None: ...
     @overload
@@ -1637,10 +1637,10 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType_co, _DType_co]):
     def __getitem__(self, key: (
         None
         | slice
-        | ellipsis
+        | EllipsisType
         | SupportsIndex
         | _ArrayLikeInt_co
-        | tuple[None | slice | ellipsis | _ArrayLikeInt_co | SupportsIndex, ...]
+        | tuple[None | slice | EllipsisType | _ArrayLikeInt_co | SupportsIndex, ...]
     )) -> ndarray[Any, _DType_co]: ...
     @overload
     def __getitem__(self: NDArray[void], key: str) -> NDArray[Any]: ...
@@ -3954,10 +3954,10 @@ class matrix(ndarray[_Shape2DType_co, _DType_co]):
         key: (
             None
             | slice
-            | ellipsis
+            | EllipsisType
             | SupportsIndex
             | _ArrayLikeInt_co
-            | tuple[None | slice | ellipsis | _ArrayLikeInt_co | SupportsIndex, ...]
+            | tuple[None | slice | EllipsisType | _ArrayLikeInt_co | SupportsIndex, ...]
         ),
         /,
     ) -> matrix[Any, _DType_co]: ...
