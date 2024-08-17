@@ -1264,6 +1264,13 @@ User-defined data types
     registered (checked only by the address of the pointer), then
     return the previously-assigned type-number.
 
+    The number of user DTypes known to numpy is stored in
+    ``NPY_NUMUSERTYPES``, a static global variable that is public in the
+    C API.  Accessing this symbol is inherently *not* thread-safe. If
+    for some reason you need to use this API in a multithreaded context,
+    you will need to add your own locking, NumPy does not ensure new
+    data types can be added in a thread-safe manner.
+
 .. c:function:: int PyArray_RegisterCastFunc( \
         PyArray_Descr* descr, int totype, PyArray_VectorUnaryFunc* castfunc)
 
