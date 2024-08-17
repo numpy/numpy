@@ -5,11 +5,12 @@ from functools import reduce
 from fractions import Fraction
 import numpy as np
 import numpy.polynomial.polynomial as poly
+import numpy.polynomial.polyutils as pu
 import pickle
 from copy import deepcopy
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
-    assert_array_equal, assert_raises_regex)
+    assert_array_equal, assert_raises_regex, assert_warns)
 
 
 def trim(x):
@@ -627,6 +628,14 @@ class TestMisc:
 
     def test_polyline_zero(self):
         assert_equal(poly.polyline(3, 0), [3])
+
+    def test_fit_degenerate_domain(self):
+        p = poly.Polynomial.fit([1], [2], deg=0)
+        assert_equal(p.coef, [2.])
+        p = poly.Polynomial.fit([1, 1], [2, 2.1], deg=0)
+        assert_almost_equal(p.coef, [2.05])
+        with assert_warns(pu.RankWarning):
+            p = poly.Polynomial.fit([1, 1], [2, 2.1], deg=1)
 
     def test_result_type(self):
         w = np.array([-1, 1], dtype=np.float32)
