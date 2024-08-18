@@ -128,7 +128,7 @@
 /* Sanity check the (requested) feature version */
 #if NPY_FEATURE_VERSION > NPY_API_VERSION
     #error "NPY_TARGET_VERSION higher than NumPy headers!"
-#elif NPY_FEATURE_VERSION < NPY_1_15_API_VERSION
+#elif NPY_FEATURE_VERSION < NPY_1_15_API_VERSION && !defined(_WIN32)
     /* No support for irrelevant old targets, no need for error, but warn. */
     #warning "Requested NumPy target lower than supported NumPy 1.15."
 #endif
