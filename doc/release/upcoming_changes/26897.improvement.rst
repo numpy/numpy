@@ -1,6 +1,0 @@
-Type hinting ``numpy.polynomial``
----------------------------------
-
-Starting from the 2.1 release, PEP 484 type annotations have been included for
-the functions and convenience classes in ``numpy.polynomial`` and its
-sub-packages.

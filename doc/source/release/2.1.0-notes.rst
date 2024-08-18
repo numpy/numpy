@@ -250,6 +250,23 @@ a python ``ContextVar``, making the context manager thread and async-safe.
 
 (`gh-26846 <https://github.com/numpy/numpy/pull/26846>`__)
 
+Type hinting ``numpy.polynomial``
+---------------------------------
+Starting from the 2.1 release, PEP 484 type annotations have been included for
+the functions and convenience classes in ``numpy.polynomial`` and its
+sub-packages.
+
+(`gh-26897 <https://github.com/numpy/numpy/pull/26897>`__)
+
+Improved ``numpy.dtypes`` type hints
+------------------------------------
+The type annotations for ``numpy.dtypes`` are now a better reflection of the
+runtime: The ``numpy.dtype`` type-aliases have been replaced with specialized
+``dtype`` *subtypes*, and the previously missing annotations for
+``numpy.dtypes.StringDType`` have been added.
+
+(`gh-27008 <https://github.com/numpy/numpy/pull/27008>`__)
+
 
 Performance improvements and changes
 ====================================

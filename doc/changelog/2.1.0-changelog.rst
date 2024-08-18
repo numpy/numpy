@@ -8,6 +8,7 @@ names contributed a patch for the first time.
 * !ogidig5 +
 * !partev
 * !vahidmech +
+* !h-vetinari
 * Aaron Meurer
 * Adrin Jalali +
 * Agriya Khetarpal
@@ -118,7 +119,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 455 pull requests were merged for this release.
+A total of 469 pull requests were merged for this release.
 
 * `#12150 <https://github.com/numpy/numpy/pull/12150>`__: ENH: When histogramming data with integer dtype, force bin width...
 * `#24448 <https://github.com/numpy/numpy/pull/24448>`__: TST: add some tests of np.log for complex input.
@@ -575,3 +576,17 @@ A total of 455 pull requests were merged for this release.
 * `#27162 <https://github.com/numpy/numpy/pull/27162>`__: BLD: use smaller scipy-openblas builds
 * `#27166 <https://github.com/numpy/numpy/pull/27166>`__: ENH: fix thread-unsafe C API usages
 * `#27173 <https://github.com/numpy/numpy/pull/27173>`__: MAINT: Bump pythoncapi-compat version.
+* `#27176 <https://github.com/numpy/numpy/pull/27176>`__: REL: Prepare for the NumPy 2.1.0rc1 release [wheel build]
+* `#27180 <https://github.com/numpy/numpy/pull/27180>`__: DOC: Add release notes for #26897
+* `#27181 <https://github.com/numpy/numpy/pull/27181>`__: DOC: Add release notes for #27008
+* `#27190 <https://github.com/numpy/numpy/pull/27190>`__: BUILD: use a shrunken version of scipy-openblas wheels [wheel...
+* `#27193 <https://github.com/numpy/numpy/pull/27193>`__: REV: Revert undef I and document it
+* `#27196 <https://github.com/numpy/numpy/pull/27196>`__: BUILD: improve download script
+* `#27197 <https://github.com/numpy/numpy/pull/27197>`__: MAINT: update default NPY_FEATURE_VERSION after dropping py39
+* `#27200 <https://github.com/numpy/numpy/pull/27200>`__: DOC: add free-threading release notes
+* `#27209 <https://github.com/numpy/numpy/pull/27209>`__: BUG: Fix NPY_RAVEL_AXIS on backwards compatible NumPy 2 builds
+* `#27216 <https://github.com/numpy/numpy/pull/27216>`__: TYP: Fixed & improved type hints for ``numpy.histogram2d``
+* `#27217 <https://github.com/numpy/numpy/pull/27217>`__: TYP: Fix incompatible overrides in the ``numpy._typing._ufunc``...
+* `#27229 <https://github.com/numpy/numpy/pull/27229>`__: BUG: Fix ``PyArray_ZeroContiguousBuffer`` (resize) with struct...
+* `#27233 <https://github.com/numpy/numpy/pull/27233>`__: DOC: add docs on thread safety in NumPy
+* `#27234 <https://github.com/numpy/numpy/pull/27234>`__: BUG: Allow fitting of degree zero polynomials with Polynomial.fit
