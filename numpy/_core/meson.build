@@ -931,7 +931,7 @@ foreach gen_mtargets : [
   ],
   [
     'loops_arithmetic.dispatch.h',
-    src_file.process('src/umath/loops_arithmetic.dispatch.c.src'),
+    'src/umath/loops_arithmetic.dispatch.cpp',
     [
       AVX512_SKX, AVX512F, AVX2, SSE41, SSE2,
       NEON,
