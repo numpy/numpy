@@ -49,8 +49,8 @@ __all__: Final[Sequence[str]] = ("ABCPolyBase",)
 
 
 _NameCo = TypeVar("_NameCo", bound=None | LiteralString, covariant=True)
-_Self = TypeVar("_Self", bound="ABCPolyBase")
-_Other = TypeVar("_Other", bound="ABCPolyBase")
+_Self = TypeVar("_Self")
+_Other = TypeVar("_Other", bound=ABCPolyBase[Any])
 
 _AnyOther: TypeAlias = ABCPolyBase | _CoefLike_co | _SeriesLikeCoef_co
 _Hundred: TypeAlias = Literal[100]
@@ -118,8 +118,6 @@ class ABCPolyBase(Generic[_NameCo], metaclass=abc.ABCMeta):
         arg: _ArrayLikeCoefObject_co,
     ) -> npt.NDArray[np.object_]: ...
 
-    def __str__(self, /) -> str: ...
-    def __repr__(self, /) -> str: ...
     def __format__(self, fmt_str: str, /) -> str: ...
     def __eq__(self, x: object, /) -> bool: ...
     def __ne__(self, x: object, /) -> bool: ...
@@ -181,7 +179,7 @@ class ABCPolyBase(Generic[_NameCo], metaclass=abc.ABCMeta):
         self: _Self,
         /,
         domain: None | _SeriesLikeCoef_co = ...,
-        kind: type[_Self] = ...,
+        kind: None | type[_Self] = ...,
         window: None | _SeriesLikeCoef_co = ...,
     ) -> _Self: ...
 
@@ -283,7 +281,7 @@ class ABCPolyBase(Generic[_NameCo], metaclass=abc.ABCMeta):
     ) -> _Self: ...
 
     @classmethod
-    def _str_term_unicode(cls, i: str, arg_str: str) -> str: ...
+    def _str_term_unicode(cls, /, i: str, arg_str: str) -> str: ...
     @staticmethod
     def _str_term_ascii(i: str, arg_str: str) -> str: ...
     @staticmethod

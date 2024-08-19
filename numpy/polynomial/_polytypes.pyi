@@ -21,6 +21,7 @@ from numpy._typing import (
     _ArrayLikeNumber_co,
     _ArrayLikeObject_co,
     _NestedSequence,
+    _SupportsArray,
 
     # scalar-likes
     _IntLike_co,
@@ -31,30 +32,14 @@ from numpy._typing import (
 
 from typing_extensions import LiteralString
 
+
 _T = TypeVar("_T")
 _T_contra = TypeVar("_T_contra", contravariant=True)
-
-_Tuple2: TypeAlias = tuple[_T, _T]
-
-_V = TypeVar("_V")
-_V_co = TypeVar("_V_co", covariant=True)
-_Self = TypeVar("_Self", bound=object)
-
+_Self = TypeVar("_Self")
 _SCT = TypeVar("_SCT", bound=np.number[Any] | np.bool | np.object_)
-_SCT_co = TypeVar(
-    "_SCT_co",
-    bound=np.number[Any] | np.bool | np.object_,
-    covariant=True,
-)
 
-@final
-class _SupportsArray(Protocol[_SCT_co]):
-    def __array__(self ,) -> npt.NDArray[_SCT_co]: ...
-
-@final
+# compatible with e.g. int, float, complex, Decimal, Fraction, and ABCPolyBase
 class _SupportsCoefOps(Protocol[_T_contra]):
-    # compatible with e.g. `int`, `float`, `complex`, `Decimal`, `Fraction`,
-    # and `ABCPolyBase`
     def __eq__(self, x: object, /) -> bool: ...
     def __ne__(self, x: object, /) -> bool: ...
 
@@ -64,19 +49,16 @@ class _SupportsCoefOps(Protocol[_T_contra]):
     def __add__(self: _Self, x: _T_contra, /) -> _Self: ...
     def __sub__(self: _Self, x: _T_contra, /) -> _Self: ...
     def __mul__(self: _Self, x: _T_contra, /) -> _Self: ...
-    def __truediv__(self: _Self, x: _T_contra, /) -> _Self | float: ...
     def __pow__(self: _Self, x: _T_contra, /) -> _Self | float: ...
 
     def __radd__(self: _Self, x: _T_contra, /) -> _Self: ...
     def __rsub__(self: _Self, x: _T_contra, /) -> _Self: ...
     def __rmul__(self: _Self, x: _T_contra, /) -> _Self: ...
-    def __rtruediv__(self: _Self, x: _T_contra, /) -> _Self | float: ...
 
 _Series: TypeAlias = np.ndarray[tuple[int], np.dtype[_SCT]]
 
 _FloatSeries: TypeAlias = _Series[np.floating[Any]]
 _ComplexSeries: TypeAlias = _Series[np.complexfloating[Any, Any]]
-_NumberSeries: TypeAlias = _Series[np.number[Any]]
 _ObjectSeries: TypeAlias = _Series[np.object_]
 _CoefSeries: TypeAlias = _Series[np.inexact[Any] | np.object_]
 
@@ -85,38 +67,38 @@ _ComplexArray: TypeAlias = npt.NDArray[np.complexfloating[Any, Any]]
 _ObjectArray: TypeAlias = npt.NDArray[np.object_]
 _CoefArray: TypeAlias = npt.NDArray[np.inexact[Any] | np.object_]
 
+_Tuple2: TypeAlias = tuple[_T, _T]
 _Array1: TypeAlias = np.ndarray[tuple[Literal[1]], np.dtype[_SCT]]
 _Array2: TypeAlias = np.ndarray[tuple[Literal[2]], np.dtype[_SCT]]
 
 _AnyInt: TypeAlias = SupportsInt | SupportsIndex
 
-_CoefObjectLike_co: TypeAlias = np.object_ | _SupportsCoefOps
+_CoefObjectLike_co: TypeAlias = np.object_ | _SupportsCoefOps[Any]
 _CoefLike_co: TypeAlias = _NumberLike_co | _CoefObjectLike_co
 
 # The term "series" is used here to refer to 1-d arrays of numeric scalars.
 _SeriesLikeBool_co: TypeAlias = (
-    _SupportsArray[np.bool]
+    _SupportsArray[np.dtype[np.bool]]
     | Sequence[bool | np.bool]
 )
 _SeriesLikeInt_co: TypeAlias = (
-    _SupportsArray[np.integer[Any] | np.bool]
+    _SupportsArray[np.dtype[np.integer[Any] | np.bool]]
     | Sequence[_IntLike_co]
 )
 _SeriesLikeFloat_co: TypeAlias = (
-    _SupportsArray[np.floating[Any] | np.integer[Any] | np.bool]
+    _SupportsArray[np.dtype[np.floating[Any] | np.integer[Any] | np.bool]]
     | Sequence[_FloatLike_co]
 )
 _SeriesLikeComplex_co: TypeAlias = (
-    _SupportsArray[np.integer[Any] | np.inexact[Any] | np.bool]
+    _SupportsArray[np.dtype[np.inexact[Any] | np.integer[Any] | np.bool]]
     | Sequence[_ComplexLike_co]
 )
 _SeriesLikeObject_co: TypeAlias = (
-    _SupportsArray[np.object_]
+    _SupportsArray[np.dtype[np.object_]]
     | Sequence[_CoefObjectLike_co]
 )
 _SeriesLikeCoef_co: TypeAlias = (
-    # npt.NDArray[np.number[Any] | np.bool | np.object_]
-    _SupportsArray[np.number[Any] | np.bool | np.object_]
+    _SupportsArray[np.dtype[np.number[Any] | np.bool | np.object_]]
     | Sequence[_CoefLike_co]
 )
 
@@ -158,8 +140,8 @@ class _FuncLine(_Named[_Name_co], Protocol[_Name_co]):
     def __call__(
         self,
         /,
-        off: _SupportsCoefOps,
-        scl: _SupportsCoefOps,
+        off: _SupportsCoefOps[Any],
+        scl: _SupportsCoefOps[Any],
     ) -> _Line[np.object_]: ...
 
 @final
@@ -307,7 +289,7 @@ class _FuncInteg(_Named[_Name_co], Protocol[_Name_co]):
         /,
         c: _ArrayLikeCoef_co,
         m: SupportsIndex = ...,
-        k: _SeriesLikeCoef_co | _SeriesLikeCoef_co = ...,
+        k: _CoefLike_co | _SeriesLikeCoef_co = ...,
         lbnd: _CoefLike_co = ...,
         scl: _CoefLike_co = ...,
         axis: SupportsIndex = ...,
@@ -362,7 +344,7 @@ class _FuncValFromRoots(_Named[_Name_co], Protocol[_Name_co]):
         x: _CoefLike_co,
         r: _CoefLike_co,
         tensor: bool = ...,
-    ) -> _SupportsCoefOps: ...
+    ) -> _SupportsCoefOps[Any]: ...
 
 @final
 class _FuncVal(_Named[_Name_co], Protocol[_Name_co]):
@@ -413,7 +395,7 @@ class _FuncVal(_Named[_Name_co], Protocol[_Name_co]):
         x: _CoefLike_co,
         c: _SeriesLikeObject_co,
         tensor: bool = ...,
-    ) -> _SupportsCoefOps: ...
+    ) -> _SupportsCoefOps[Any]: ...
 
 @final
 class _FuncVal2D(_Named[_Name_co], Protocol[_Name_co]):
@@ -464,7 +446,7 @@ class _FuncVal2D(_Named[_Name_co], Protocol[_Name_co]):
         x: _CoefLike_co,
         y: _CoefLike_co,
         c: _SeriesLikeCoef_co,
-    ) -> _SupportsCoefOps: ...
+    ) -> _SupportsCoefOps[Any]: ...
 
 @final
 class _FuncVal3D(_Named[_Name_co], Protocol[_Name_co]):
@@ -521,7 +503,7 @@ class _FuncVal3D(_Named[_Name_co], Protocol[_Name_co]):
         y: _CoefLike_co,
         z: _CoefLike_co,
         c: _SeriesLikeCoef_co,
-    ) -> _SupportsCoefOps: ...
+    ) -> _SupportsCoefOps[Any]: ...
 
 _AnyValF: TypeAlias = Callable[
     [npt.ArrayLike, npt.ArrayLike, bool],
@@ -566,18 +548,18 @@ class _FuncValND(_Named[_Name_co], Protocol[_Name_co]):
     def __call__(
         self,
         val_f: _AnyValF,
-        c: _ArrayLikeCoef_co,
+        c: _SeriesLikeObject_co,
         /,
-        *args: _ArrayLikeCoef_co,
-    ) -> _ObjectArray: ...
+        *args: _CoefObjectLike_co,
+    ) -> _SupportsCoefOps[Any]: ...
     @overload
     def __call__(
         self,
         val_f: _AnyValF,
-        c: _SeriesLikeObject_co,
+        c: _ArrayLikeCoef_co,
         /,
-        *args: _CoefObjectLike_co,
-    ) -> _SupportsCoefOps: ...
+        *args: _ArrayLikeCoef_co,
+    ) -> _ObjectArray: ...
 
 @final
 class _FuncVander(_Named[_Name_co], Protocol[_Name_co]):
