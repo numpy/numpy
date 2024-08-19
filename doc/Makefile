@@ -118,12 +118,14 @@ endif
 	tar -C build/merge/$(TAG) -xf build/dist.tar.gz
 	git -C build/merge add $(TAG)
 	@# For now, the user must do this. If it is onerous, automate it and change
-	@# the instructions in doc/HOWTO_RELEASE.rst
+	@# the instructions in doc/RELEASE_WALKTHROUGH.rst
 	@echo " "
 	@echo New documentation archive added to ./build/merge.
 	@echo Now add/modify the appropriate section after
 	@echo "    <!-- insert here -->"
 	@echo in build/merge/index.html,
+	@echo change _static/versions.json,
+	@echo and run \"python3 update.py\"
 	@echo then \"git commit\", \"git push\"
 
 
