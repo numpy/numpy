@@ -16,7 +16,7 @@ https://doi.org/10.1038/s41586-020-2649-2)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/numpy/numpy/badge)](https://securityscorecards.dev/viewer/?uri=github.com/numpy/numpy)
 
 
-NumPy is the fundamental package for scientific computing with Python.
+NumPy is the fundamental package for scientific computing with Python!
 
 - **Website:** https://www.numpy.org
 - **Documentation:** https://numpy.org/doc
