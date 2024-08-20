@@ -280,9 +280,9 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     array([ 0.  ,  1.11,  2.22, ...,  7.78,  8.89, 10.  ])
 
     """
-    _set_printoptions(precision, threshold, edgeitems, linewidth, suppress, nanstr,
-                      infstr, formatter, sign, floatmode, legacy=legacy,
-                      override_repr=override_repr)
+    _set_printoptions(precision, threshold, edgeitems, linewidth, suppress,
+                      nanstr, infstr, formatter, sign, floatmode,
+                      legacy=legacy, override_repr=override_repr)
 
 
 def _set_printoptions(precision=None, threshold=None, edgeitems=None,
