@@ -627,8 +627,9 @@ class TestPrintOptions:
     def test_basic(self):
         x = np.array([1.5, 0, 1.234567890])
         assert_equal(repr(x), "array([1.5       , 0.        , 1.23456789])")
-        np.set_printoptions(precision=4)
+        ret = np.set_printoptions(precision=4)
         assert_equal(repr(x), "array([1.5   , 0.    , 1.2346])")
+        assert ret is None
 
     def test_precision_zero(self):
         np.set_printoptions(precision=0)
