@@ -2232,9 +2232,8 @@ PyArray_FromInterface(PyObject *origin)
                     Py_SETREF(dtype, new_dtype);
                 }
             }
+            Py_DECREF(descr);
         }
-        // descr doesn't have to be specified so this may be NULL
-        Py_XDECREF(descr);
     }
     Py_CLEAR(attr);
 
