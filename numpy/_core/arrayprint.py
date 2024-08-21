@@ -280,6 +280,15 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     array([ 0.  ,  1.11,  2.22, ...,  7.78,  8.89, 10.  ])
 
     """
+    _set_printoptions(precision, threshold, edgeitems, linewidth, suppress,
+                      nanstr, infstr, formatter, sign, floatmode,
+                      legacy=legacy, override_repr=override_repr)
+
+
+def _set_printoptions(precision=None, threshold=None, edgeitems=None,
+                      linewidth=None, suppress=None, nanstr=None,
+                      infstr=None, formatter=None, sign=None, floatmode=None,
+                      *, legacy=None, override_repr=None):
     new_opt = _make_options_dict(precision, threshold, edgeitems, linewidth,
                                  suppress, nanstr, infstr, sign, formatter,
                                  floatmode, legacy)
@@ -293,8 +302,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     if updated_opt['legacy'] == 113:
         updated_opt['sign'] = '-'
 
-    token = format_options.set(updated_opt)
-    return token
+    return format_options.set(updated_opt)
 
 
 @set_module('numpy')
@@ -378,8 +386,9 @@ def printoptions(*args, **kwargs):
     --------
     set_printoptions, get_printoptions
 
-    """ 
-    token = set_printoptions(*args, **kwargs)
+    """
+    token = _set_printoptions(*args, **kwargs)
+
     try:
         yield get_printoptions()
     finally:
