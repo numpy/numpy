@@ -762,6 +762,17 @@ class TestArrayLikes:
         with pytest.raises(error):
             np.array(BadSequence())
 
+    def test_array_interface_descr_optional(self):
+        # The descr should be optional regresion test for gh-27249
+        arr = np.ones(10, dtype="V10")
+        iface = arr.__array_interface__
+        iface.pop("descr")
+
+        class MyClass:
+            __array_interface__ = iface
+
+        assert_array_equal(np.asarray(MyClass), arr)
+
 
 class TestAsArray:
     """Test expected behaviors of ``asarray``."""
