@@ -2232,8 +2232,8 @@ PyArray_FromInterface(PyObject *origin)
                     Py_SETREF(dtype, new_dtype);
                 }
             }
+            Py_DECREF(descr);
         }
-        Py_DECREF(descr);
     }
     Py_CLEAR(attr);
 
