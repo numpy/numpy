@@ -207,13 +207,13 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     return _wrapfunc(a, 'take', indices, axis=axis, out=out, mode=mode)
 
 
-def _reshape_dispatcher(a, /, shape=None, *, newshape=None, order=None,
+def _reshape_dispatcher(a, /, shape=None, order=None, *, newshape=None,
                         copy=None):
     return (a,)
 
 
 @array_function_dispatch(_reshape_dispatcher)
-def reshape(a, /, shape=None, *, newshape=None, order='C', copy=None):
+def reshape(a, /, shape=None, order='C', *, newshape=None, copy=None):
     """
     Gives a new shape to an array without changing its data.
 
@@ -226,10 +226,6 @@ def reshape(a, /, shape=None, *, newshape=None, order='C', copy=None):
         an integer, then the result will be a 1-D array of that length.
         One shape dimension can be -1. In this case, the value is
         inferred from the length of the array and remaining dimensions.
-    newshape : int or tuple of ints
-        .. deprecated:: 2.1
-            Replaced by ``shape`` argument. Retained for backward
-            compatibility.
     order : {'C', 'F', 'A'}, optional
         Read the elements of ``a`` using this index order, and place the
         elements into the reshaped array using this index order. 'C'
@@ -243,6 +239,10 @@ def reshape(a, /, shape=None, *, newshape=None, order='C', copy=None):
         'A' means to read / write the elements in Fortran-like index
         order if ``a`` is Fortran *contiguous* in memory, C-like order
         otherwise.
+    newshape : int or tuple of ints
+        .. deprecated:: 2.1
+            Replaced by ``shape`` argument. Retained for backward
+            compatibility.
     copy : bool, optional
         If ``True``, then the array data is copied. If ``None``, a copy will
         only be made if it's required by ``order``. For ``False`` it raises

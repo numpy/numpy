@@ -92,15 +92,21 @@ def take(
 @overload
 def reshape(
     a: _ArrayLike[_SCT],
-    newshape: _ShapeLike,
+    /,
+    shape: _ShapeLike = ...,
     order: _OrderACF = ...,
+    *,
+    newshape: _ShapeLike = ...,
     copy: None | bool = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def reshape(
     a: ArrayLike,
-    newshape: _ShapeLike,
+    /,
+    shape: _ShapeLike = ...,
     order: _OrderACF = ...,
+    *,
+    newshape: _ShapeLike = ...,
     copy: None | bool = ...,
 ) -> NDArray[Any]: ...
 

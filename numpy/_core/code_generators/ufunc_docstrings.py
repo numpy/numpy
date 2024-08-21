@@ -795,7 +795,7 @@ add_newdoc('numpy._core.umath', 'ceil',
     Returns
     -------
     y : ndarray or scalar
-        The ceiling of each element in `x`, with `float` dtype.
+        The ceiling of each element in `x`.
         $OUT_SCALAR_1
 
     See Also
