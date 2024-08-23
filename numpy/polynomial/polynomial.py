@@ -1468,7 +1468,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     array([-6.73496154e-17, -1.00000000e+00,  0.00000000e+00,  1.00000000e+00])
     >>> stats # note the minuscule SSR
     [array([8.79579319e-31]),
-     4,
+     np.int32(4),
      array([1.38446749, 1.32119158, 0.50443316, 0.28853036]),
      1.1324274851176597e-14]
 

@@ -919,7 +919,7 @@ add_newdoc('numpy._core.multiarray', 'array',
 
     >>> x = np.array([(1,2),(3,4)],dtype=[('a','<i4'),('b','<i4')])
     >>> x['a']
-    array([1, 3])
+    array([1, 3], dtype=int32)
 
     Creating an array from sub-classes:
 
@@ -3350,7 +3350,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('byteswap',
     array([1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0,
            0, 0], dtype=uint8)
     >>> A.view(A.dtype.newbyteorder()).byteswap(inplace=True)
-    array([1, 2, 3])
+    array([1, 2, 3], dtype='>i8')
     >>> A.view(np.uint8)
     array([0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0,
            0, 3], dtype=uint8)
@@ -4459,7 +4459,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('tolist',
     >>> a = np.uint32([1, 2])
     >>> a_list = list(a)
     >>> a_list
-    [1, 2]
+    [np.uint32(1), np.uint32(2)]
     >>> type(a_list[0])
     <class 'numpy.uint32'>
     >>> a_tolist = a.tolist()

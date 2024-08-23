@@ -77,7 +77,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     >>> import numpy as np
     >>> orig_settings = np.seterr(all='ignore')  # seterr to known value
     >>> np.int16(32000) * np.int16(3)
-    30464
+    np.int16(30464)
     >>> np.seterr(over='raise')
     {'divide': 'ignore', 'over': 'ignore', 'under': 'ignore', 'invalid': 'ignore'}
     >>> old_settings = np.seterr(all='warn', over='raise')
@@ -90,7 +90,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     >>> np.geterr()
     {'divide': 'print', 'over': 'print', 'under': 'print', 'invalid': 'print'}
     >>> np.int16(32000) * np.int16(3)
-    30464
+    np.int16(30464)
     >>> np.seterr(**orig_settings)  # restore original
     {'divide': 'print', 'over': 'print', 'under': 'print', 'invalid': 'print'}
 

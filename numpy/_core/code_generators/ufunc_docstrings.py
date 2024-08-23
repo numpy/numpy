@@ -703,7 +703,7 @@ add_newdoc('numpy._core.umath', 'bitwise_or',
     array([  6,   5, 255])
     >>> np.bitwise_or(np.array([2, 5, 255, 2147483647], dtype=np.int32),
     ...               np.array([4, 4, 4, 2147483647], dtype=np.int32))
-    array([         6,          5,        255, 2147483647])
+    array([         6,          5,        255, 2147483647], dtype=int32)
     >>> np.bitwise_or([True, True], [False, True])
     array([ True,  True])
 
@@ -1679,7 +1679,7 @@ add_newdoc('numpy._core.umath', 'invert',
 
     >>> x = np.invert(np.array(13, dtype=np.uint8))
     >>> x
-    242
+    np.uint8(242)
     >>> np.binary_repr(x, width=8)
     '11110010'
 
@@ -1687,7 +1687,7 @@ add_newdoc('numpy._core.umath', 'invert',
 
     >>> x = np.invert(np.array(13, dtype=np.uint16))
     >>> x
-    65522
+    np.uint16(65522)
     >>> np.binary_repr(x, width=16)
     '1111111111110010'
 
@@ -2683,7 +2683,7 @@ add_newdoc('numpy._core.umath', 'fmax',
     --------
     >>> import numpy as np
     >>> np.fmax([2, 3, 4], [1, 5, 2])
-    array([ 2.,  5.,  4.])
+    array([ 2,  5,  4])
 
     >>> np.fmax(np.eye(2), [0.5, 2])
     array([[ 1. ,  2. ],
@@ -4263,7 +4263,7 @@ add_newdoc('numpy._core.umath', 'frexp',
     array([ 0.   ,  0.5  ,  0.5  ,  0.75 ,  0.5  ,  0.625,  0.75 ,  0.875,
             0.5  ])
     >>> y2
-    array([0, 1, 2, 2, 3, 3, 3, 3, 4])
+    array([0, 1, 2, 2, 3, 3, 3, 3, 4], dtype=int32)
     >>> y1 * 2**y2
     array([ 0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.])
 
@@ -4411,7 +4411,7 @@ add_newdoc('numpy._core.umath', 'bitwise_count',
     --------
     >>> import numpy as np
     >>> np.bitwise_count(1023)
-    10
+    np.uint8(10)
     >>> a = np.array([2**i - 1 for i in range(16)])
     >>> np.bitwise_count(a)
     array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15],
