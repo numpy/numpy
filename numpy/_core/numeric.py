@@ -2624,7 +2624,7 @@ def array_equiv(a1, a2):
     except Exception:
         return False
 
-    return builtins.bool((a1 == a2).all())
+    return builtins.bool(asarray(a1 == a2).all())
 
 
 def _astype_dispatcher(x, dtype, /, *, copy=None, device=None):
