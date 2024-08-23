@@ -2554,24 +2554,24 @@ def array_equal(a1, a2, equal_nan=False):
     if a1.shape != a2.shape:
         return False
     if not equal_nan:
-        return builtins.bool((a1 == a2).all())
-    cannot_have_nan = (_dtype_cannot_hold_nan(a1.dtype)
-                       and _dtype_cannot_hold_nan(a2.dtype))
-    if cannot_have_nan:
-        if a1 is a2:
-            return True
-        return builtins.bool((a1 == a2).all())
+        return builtins.bool((asarray(a1 == a2)).all())
 
     if a1 is a2:
         # nan will compare equal so an array will compare equal to itself.
         return True
+
+    cannot_have_nan = (_dtype_cannot_hold_nan(a1.dtype)
+                       and _dtype_cannot_hold_nan(a2.dtype))
+    if cannot_have_nan:
+        return builtins.bool(asarray(a1 == a2).all())
+
     # Handling NaN values if equal_nan is True
     a1nan, a2nan = isnan(a1), isnan(a2)
     # NaN's occur at different locations
     if not (a1nan == a2nan).all():
         return False
     # Shapes of a1, a2 and masks are guaranteed to be consistent by this point
-    return builtins.bool((a1[~a1nan] == a2[~a1nan]).all())
+    return builtins.bool(asarray(a1[~a1nan] == a2[~a1nan]).all())
 
 
 def _array_equiv_dispatcher(a1, a2):
