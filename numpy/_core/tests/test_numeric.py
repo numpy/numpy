@@ -184,6 +184,7 @@ class TestNonarrayArgs:
 
         assert_equal(np.reshape(arr, shape), expected)
         assert_equal(np.reshape(arr, shape, order="C"), expected)
+        assert_equal(np.reshape(arr, shape, "C"), expected)
         assert_equal(np.reshape(arr, shape=shape), expected)
         assert_equal(np.reshape(arr, shape=shape, order="C"), expected)
         with pytest.warns(DeprecationWarning):
