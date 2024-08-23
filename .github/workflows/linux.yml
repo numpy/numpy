@@ -181,8 +181,7 @@ jobs:
     - name: Check docstests
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       run: |
-        pip install hypothesis matplotlib scipy pytz pandas
-        pip install git+https://github.com/scipy/scipy_doctest.git@strict-dtypes    # Temp
+        pip install scipy-doctest hypothesis matplotlib scipy pytz pandas
         spin check-docs -v
         spin check-tutorials -v
 
