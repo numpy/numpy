@@ -211,6 +211,9 @@ if HAVE_SCPDT:
     dt_config.rndm_markers.add('#uninitialized')
     dt_config.rndm_markers.add('# uninitialized')
 
+    # make the checker pick on mismatched dtypes
+    dt_config.strict_check = True
+
     import doctest
     dt_config.optionflags = doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS
 
