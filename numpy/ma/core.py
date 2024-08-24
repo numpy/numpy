@@ -7808,7 +7808,7 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
            fill_value=np.int64(999999),
                 dtype=uint8)
     >>> u8_arr[1,...] - u8_arr[0,...]
-    255
+    np.uint8(255)
 
     If this is not desirable, then the array should be cast to a larger
     integer type first:

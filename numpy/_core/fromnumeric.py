@@ -2452,7 +2452,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     >>> np.sum([0.5, 1.5])
     2.0
     >>> np.sum([0.5, 0.7, 0.2, 1.5], dtype=np.int32)
-    1
+    np.int32(1)
     >>> np.sum([[0, 1], [0, 5]])
     6
     >>> np.sum([[0, 1], [0, 5]], axis=0)
@@ -2465,7 +2465,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     If the accumulator is too small, overflow occurs:
 
     >>> np.ones(128, dtype=np.int8).sum(dtype=np.int8)
-    -128
+    np.int8(-128)
 
     You can also start the sum with a value other than zero:
 
@@ -3877,7 +3877,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
     >>> a[0, :] = 1.0
     >>> a[1, :] = 0.1
     >>> np.mean(a)
-    0.54999924
+    np.float32(0.54999924)
 
     Computing the mean in float64 is more accurate:
 
@@ -4064,7 +4064,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     >>> a[0, :] = 1.0
     >>> a[1, :] = 0.1
     >>> np.std(a)
-    0.45000005
+    np.float32(0.45000005)
 
     Computing the standard deviation in float64 is more accurate:
 
@@ -4267,7 +4267,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     >>> a[0, :] = 1.0
     >>> a[1, :] = 0.1
     >>> np.var(a)
-    0.20250003
+    np.float32(0.20250003)
 
     Computing the variance in float64 is more accurate:
 

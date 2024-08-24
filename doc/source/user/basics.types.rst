@@ -314,7 +314,7 @@ but gives -1486618624 (incorrect) for a 32-bit integer.
     >>> np.power(100, 9, dtype=np.int64)
     1000000000000000000
     >>> np.power(100, 9, dtype=np.int32)
-    -1486618624
+    np.int32(-1486618624)
 
 The behaviour of NumPy and Python integer types differs significantly for
 integer overflows and may confuse users expecting NumPy integers to behave
