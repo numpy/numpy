@@ -1,14 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 2.0.2 Release Notes
-==========================
-
-NumPy 2.0.2 is a maintenance release that fixes bugs and regressions
-discovered after the 2.0.1 release.
-
-The Python versions supported by this release are 3.9-3.12.
-
 
 Contributors
 ============
@@ -29,7 +18,6 @@ names contributed a patch for the first time.
 * Ralf Gommers
 * Sebastian Berg
 * Yair Chuchem +
-
 
 Pull requests merged
 ====================
@@ -55,4 +43,3 @@ A total of 19 pull requests were merged for this release.
 * `#27195 <https://github.com/numpy/numpy/pull/27195>`__: REV: Revert undef I and document it
 * `#27213 <https://github.com/numpy/numpy/pull/27213>`__: BUG: Fix NPY_RAVEL_AXIS on backwards compatible NumPy 2 builds
 * `#27279 <https://github.com/numpy/numpy/pull/27279>`__: BUG: Fix array_equal for numeric and non-numeric scalar types
-
