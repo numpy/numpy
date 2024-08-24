@@ -2571,7 +2571,7 @@ def array_equal(a1, a2, equal_nan=False):
     if not (a1nan == a2nan).all():
         return False
     # Shapes of a1, a2 and masks are guaranteed to be consistent by this point
-    return builtins.bool(asarray(a1[~a1nan] == a2[~a1nan]).all())
+    return builtins.bool((a1[~a1nan] == a2[~a1nan]).all())
 
 
 def _array_equiv_dispatcher(a1, a2):
