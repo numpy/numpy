@@ -113,16 +113,18 @@ class ABCPolyBase(abc.ABC):
         return self._symbol
 
     @property
-    def coeffs(self):
-        """Polynomial coefficients for the natural variable.
+    def coef_natural(self):
+        """Coefficients of the polynomial for the natural variable.
 
-        Coefficients `coef` define the internal representation of the 
-        polynomial over its `window`, while coefficients `coeffs` describe 
-        the polynomial over its `domain` for the natural variable.
+        Coefficients `coef_natural` describe the polynomial over its `domain`
+        for the natural variable. 
+
+        Note: They are different from the coefficients `coef`, which define 
+        the internal representation of the polynomial over its `window`.
 
         Returns
         -------
-        coeffs : ndarray
+        coef_natural : ndarray
             Array of coefficients for the natural variable of the polynomial.
 
         """
