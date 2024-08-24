@@ -52,7 +52,7 @@ jobs:
         restore-keys: |
           ${{ github.workflow }}-${{ matrix.python-version }}-ccache-macos-
 
-    - name: Setup Mambaforge
+    - name: Setup Miniforge
       uses: conda-incubator/setup-miniconda@a4260408e20b96e80095f42ff7f1a15b27dd94ca # v3.0.4
       with:
         python-version: ${{ matrix.python-version }}
@@ -60,7 +60,7 @@ jobs:
         channel-priority: true
         activate-environment: numpy-dev
         use-only-tar-bz2: false
-        miniforge-variant: Mambaforge
+        miniforge-variant: Miniforge3
         miniforge-version: latest
         use-mamba: true
 
