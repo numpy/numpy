@@ -2554,7 +2554,7 @@ def array_equal(a1, a2, equal_nan=False):
     if a1.shape != a2.shape:
         return False
     if not equal_nan:
-        return builtins.bool((asarray(a1 == a2)).all())
+        return builtins.bool((asanyarray(a1 == a2)).all())
 
     if a1 is a2:
         # nan will compare equal so an array will compare equal to itself.
