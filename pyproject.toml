@@ -149,7 +149,7 @@ test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"
-musllinux-x86_64-image = "musllinux_1_1"
+musllinux-x86_64-image = "musllinux_1_2"
 
 [tool.cibuildwheel.pyodide]
 config-settings = "build-dir=build setup-args=--cross-file=$PWD/tools/ci/emscripten/emscripten.meson.cross setup-args=-Dblas=none setup-args=-Dlapack=none"
