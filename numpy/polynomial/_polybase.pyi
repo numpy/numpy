@@ -1,10 +1,8 @@
 import abc
 import decimal
 import numbers
-import sys
 from collections.abc import Iterator, Mapping, Sequence
 from typing import (
-    TYPE_CHECKING,
     Any,
     ClassVar,
     Final,
@@ -44,12 +42,7 @@ from ._polytypes import (
     _ArrayLikeCoef_co,
 )
 
-if sys.version_info >= (3, 11):
-    from typing import LiteralString
-elif TYPE_CHECKING:
-    from typing_extensions import LiteralString
-else:
-    LiteralString: TypeAlias = str
+from typing_extensions import LiteralString
 
 
 __all__: Final[Sequence[str]] = ("ABCPolyBase",)

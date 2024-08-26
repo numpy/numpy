@@ -1,13 +1,9 @@
-import sys
 import ctypes as ct
 from typing import Any
 
 import numpy as np
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 dtype_U: np.dtype[np.str_]
 dtype_V: np.dtype[np.void]

@@ -6,10 +6,7 @@ from collections import deque
 import numpy as np
 import numpy.typing as npt
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 _SCT = TypeVar("_SCT", bound=np.generic, covariant=True)
 

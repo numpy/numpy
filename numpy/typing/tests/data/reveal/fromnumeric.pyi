@@ -1,15 +1,11 @@
 """Tests for :mod:`_core.fromnumeric`."""
 
-import sys
 from typing import Any, NoReturn
 
 import numpy as np
 import numpy.typing as npt
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 class NDArraySubclass(npt.NDArray[np.complex128]):
     ...

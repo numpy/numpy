@@ -1,12 +1,8 @@
-import sys
 from typing import Literal
 
 import numpy as np
 
-if sys.version_info >= (3, 11):
-    from typing import Never, assert_type
-else:
-    from typing_extensions import Never, assert_type
+from typing_extensions import Never, assert_type
 
 info = np.__array_namespace_info__()
 
