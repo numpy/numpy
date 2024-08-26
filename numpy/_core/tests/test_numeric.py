@@ -2131,6 +2131,13 @@ class TestArrayComparisons:
         assert_(res is expected)
         assert_(type(res) is bool)
 
+    def test_array_equal_different_scalar_types(self):
+        # https://github.com/numpy/numpy/issues/27271
+        a = np.array("foo")
+        b = np.array(1)
+        assert not np.array_equal(a, b)
+        assert not np.array_equiv(a, b)
+
     def test_none_compares_elementwise(self):
         a = np.array([None, 1, None], dtype=object)
         assert_equal(a == None, [True, False, True])
