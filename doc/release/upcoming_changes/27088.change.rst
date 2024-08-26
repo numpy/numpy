@@ -1,3 +1,2 @@
-PR `27088 <https://github.com/numpy/numpy/pull/27088>`_  contains changes to
-bump the musllinux image to 1_2 from 1_1. This is because the 1_1 image is
+Bump the musllinux CI image and wheels to 1_2 from 1_1. This is because 1_1 is
 `end of life <https://github.com/pypa/manylinux/issues/1629>`_.
