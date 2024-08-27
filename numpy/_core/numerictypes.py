@@ -452,7 +452,7 @@ def isdtype(dtype, kind):
         elif isinstance(kind, str):
             raise ValueError(
                 "kind argument is a string, but"
-                f" {repr(kind)} is not a known kind name."
+                f" {kind!r} is not a known kind name."
             )
         else:
             try:
