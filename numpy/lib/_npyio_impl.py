@@ -2109,7 +2109,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             user_missing_values = user_missing_values.decode('latin1')
 
         # Define the list of missing_values (one column: one list)
-        missing_values = [list(['']) for _ in range(nbcols)]
+        missing_values = [[''] for _ in range(nbcols)]
 
         # We have a dictionary: process it field by field
         if isinstance(user_missing_values, dict):
