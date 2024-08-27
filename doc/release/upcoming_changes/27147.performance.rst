@@ -2,7 +2,7 @@
   benchmarking, there are 5 clusters of performance around these kernels:
   ``PRESCOTT NEHALEM SANDYBRIDGE HASWELL SKYLAKEX``.
 
-* OpenBLAS on windows is linked without quadmath, simplfying licensing
+* OpenBLAS on windows is linked without quadmath, simplifying licensing
 
 * Due to a regression in OpenBLAS on windows, the performance improvements
   when using multiple threads for OpenBLAS 0.3.26 were reverted.
