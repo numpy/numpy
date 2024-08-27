@@ -60,7 +60,7 @@ jobs:
             # get newer, pre-release versions of critical packages
             pip install --progress-bar=off --pre --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple -r requirements/doc_requirements.txt
             # then install numpy HEAD, which will override the version installed above
-            spin build --scipy-openblas=64
+            spin build --with-scipy-openblas=64
 
       - run:
           name: build devdocs w/ref warnings
