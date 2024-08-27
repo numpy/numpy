@@ -1853,7 +1853,7 @@ def flatten_mask(mask):
 
     mask = np.asarray(mask)
     flattened = _flatsequence(_flatmask(mask))
-    return np.array([_ for _ in flattened], dtype=bool)
+    return np.array(list(flattened), dtype=bool)
 
 
 def _check_mask_axis(mask, axis, keepdims=np._NoValue):

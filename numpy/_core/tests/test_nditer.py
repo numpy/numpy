@@ -97,14 +97,14 @@ def test_iter_best_order():
             aview = a.reshape(shape)[dirs_index]
             # C-order
             i = nditer(aview, [], [['readonly']])
-            assert_equal([x for x in i], a)
+            assert_equal(list(i), a)
             # Fortran-order
             i = nditer(aview.T, [], [['readonly']])
-            assert_equal([x for x in i], a)
+            assert_equal(list(i), a)
             # Other order
             if len(shape) > 2:
                 i = nditer(aview.swapaxes(0, 1), [], [['readonly']])
-                assert_equal([x for x in i], a)
+                assert_equal(list(i), a)
 
 def test_iter_c_order():
     # Test forcing C order
@@ -123,14 +123,14 @@ def test_iter_c_order():
             aview = a.reshape(shape)[dirs_index]
             # C-order
             i = nditer(aview, order='C')
-            assert_equal([x for x in i], aview.ravel(order='C'))
+            assert_equal(list(i), aview.ravel(order='C'))
             # Fortran-order
             i = nditer(aview.T, order='C')
-            assert_equal([x for x in i], aview.T.ravel(order='C'))
+            assert_equal(list(i), aview.T.ravel(order='C'))
             # Other order
             if len(shape) > 2:
                 i = nditer(aview.swapaxes(0, 1), order='C')
-                assert_equal([x for x in i],
+                assert_equal(list(i),
                                     aview.swapaxes(0, 1).ravel(order='C'))
 
 def test_iter_f_order():
@@ -150,14 +150,14 @@ def test_iter_f_order():
             aview = a.reshape(shape)[dirs_index]
             # C-order
             i = nditer(aview, order='F')
-            assert_equal([x for x in i], aview.ravel(order='F'))
+            assert_equal(list(i), aview.ravel(order='F'))
             # Fortran-order
             i = nditer(aview.T, order='F')
-            assert_equal([x for x in i], aview.T.ravel(order='F'))
+            assert_equal(list(i), aview.T.ravel(order='F'))
             # Other order
             if len(shape) > 2:
                 i = nditer(aview.swapaxes(0, 1), order='F')
-                assert_equal([x for x in i],
+                assert_equal(list(i),
                                     aview.swapaxes(0, 1).ravel(order='F'))
 
 def test_iter_c_or_f_order():
@@ -177,14 +177,14 @@ def test_iter_c_or_f_order():
             aview = a.reshape(shape)[dirs_index]
             # C-order
             i = nditer(aview, order='A')
-            assert_equal([x for x in i], aview.ravel(order='A'))
+            assert_equal(list(i), aview.ravel(order='A'))
             # Fortran-order
             i = nditer(aview.T, order='A')
-            assert_equal([x for x in i], aview.T.ravel(order='A'))
+            assert_equal(list(i), aview.T.ravel(order='A'))
             # Other order
             if len(shape) > 2:
                 i = nditer(aview.swapaxes(0, 1), order='A')
-                assert_equal([x for x in i],
+                assert_equal(list(i),
                                     aview.swapaxes(0, 1).ravel(order='A'))
 
 def test_nditer_multi_index_set():
@@ -195,7 +195,7 @@ def test_nditer_multi_index_set():
     # Removes the iteration on two first elements of a[0]
     it.multi_index = (0, 2,)
 
-    assert_equal([i for i in it], [2, 3, 4, 5])
+    assert_equal(list(it), [2, 3, 4, 5])
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 def test_nditer_multi_index_set_refcount():
@@ -1677,12 +1677,12 @@ def test_iter_remove_axis():
 
     i = nditer(a, ['multi_index'])
     i.remove_axis(1)
-    assert_equal([x for x in i], a[:, 0,:].ravel())
+    assert_equal(list(i), a[:, 0,:].ravel())
 
     a = a[::-1,:,:]
     i = nditer(a, ['multi_index'])
     i.remove_axis(0)
-    assert_equal([x for x in i], a[0,:,:].ravel())
+    assert_equal(list(i), a[0,:,:].ravel())
 
 def test_iter_remove_multi_index_inner_loop():
     # Check that removing multi-index support works
@@ -1695,9 +1695,9 @@ def test_iter_remove_multi_index_inner_loop():
     assert_equal(i.itviews[0].shape, (2, 3, 4))
 
     # Removing the multi-index tracking causes all dimensions to coalesce
-    before = [x for x in i]
+    before = list(i)
     i.remove_multi_index()
-    after = [x for x in i]
+    after = list(i)
 
     assert_equal(before, after)
     assert_equal(i.ndim, 1)
@@ -2549,7 +2549,7 @@ class TestIterNested:
         vals = []
         for x in i:
             for y in j:
-                vals.append([z for z in k])
+                vals.append(list(k))
         assert_equal(vals, [[0, 2, 4], [1, 3, 5], [6, 8, 10], [7, 9, 11]])
 
     def test_iter_nested_iters_dtype_buffered(self):

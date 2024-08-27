@@ -290,7 +290,7 @@ class TestRegression:
         x = np.rec.array([(1, 1.1, '1.0'),
                          (2, 2.2, '2.0')], dtype=descr)
         x[0].tolist()
-        [i for i in x[0]]
+        list(x[0])
 
     def test_unicode_string_comparison(self):
         # Ticket #190
@@ -1028,7 +1028,7 @@ class TestRegression:
     def test_mem_fromiter_invalid_dtype_string(self):
         x = [1, 2, 3]
         assert_raises(ValueError,
-                              np.fromiter, [xi for xi in x], dtype='S')
+                              np.fromiter, list(x), dtype='S')
 
     def test_reduce_big_object_array(self):
         # Ticket #713
