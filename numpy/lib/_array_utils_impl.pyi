@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Tuple
+from typing import Any, Iterable
 
 from numpy import generic
 from numpy.typing import NDArray
@@ -16,7 +16,7 @@ def normalize_axis_tuple(
     ndim: int = ..., 
     argname: None | str = ..., 
     allow_duplicate: None | bool = ...,
-) -> Tuple[int, int]: ...
+) -> tuple[int, int]: ...
 
 def normalize_axis_index(
     axis: int = ...,
