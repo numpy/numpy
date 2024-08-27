@@ -106,7 +106,7 @@ from ._dtype import _kind_name
 
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
-from builtins import bool, int, float, complex, object, str, bytes
+from builtins import bool, int, float, complex, object, str, bytes  # noqa: UP029
 
 
 # We use this later
