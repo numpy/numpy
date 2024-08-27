@@ -122,7 +122,7 @@ def collect_stats(files, fd, pattern):
 
     current_file = None
     current_function = None
-    for i, line in enumerate(fd):
+    for line in fd:
         if re.match("f[lie]=.+", line):
             path = line.split('=', 2)[1].strip()
             if os.path.exists(path) and re.search(pattern, path):

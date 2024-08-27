@@ -38,7 +38,7 @@ def nep_metadata():
 
             # The title should be the first line after a line containing only
             # * or = signs.
-            for i, line in enumerate(lines[:-1]):
+            for line in lines[:-1]:
                 chars = set(line.rstrip())
                 if len(chars) == 1 and ("=" in chars or "*" in chars):
                     break
