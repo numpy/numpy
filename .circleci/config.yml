@@ -68,8 +68,8 @@ jobs:
             . venv/bin/activate
             # Don't use -q, show warning summary"
             SPHINXOPTS="-W -n" spin docs
-            if [[ $(find build/html -type f | wc -l) -lt 1000 ]]; then
-                echo "doc build failed: build/html is empty"
+            if [[ $(find doc/build/html -type f | wc -l) -lt 1000 ]]; then
+                echo "doc build failed: doc/build/html is empty"
                 exit -1
             fi
 
@@ -93,6 +93,11 @@ jobs:
             . venv/bin/activate
             spin check-docs -v
             spin check-tutorials -v
+            # Currently, this does two checks not done by check-docs:
+            #  - validates ReST blocks (via validate_rst_syntax)
+            #  - checks that all of a module's `__all__` is reflected in the
+            #    module-level docstring autosummary
+            python tools/refguide_check.py -v
 
       - persist_to_workspace:
           root: ~/repo
