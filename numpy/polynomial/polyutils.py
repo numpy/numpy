@@ -533,7 +533,7 @@ def _div(mul_f, c1, c2):
     # c1, c2 are trimmed copies
     [c1, c2] = as_series([c1, c2])
     if c2[-1] == 0:
-        raise ZeroDivisionError()
+        raise ZeroDivisionError  # FIXME: add message with details to exception
 
     lc1 = len(c1)
     lc2 = len(c2)

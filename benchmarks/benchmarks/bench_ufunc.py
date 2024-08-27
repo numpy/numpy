@@ -50,7 +50,7 @@ class ArrayFunctionDispatcher(Benchmark):
         try:
             self.afdn = getattr(np, ufuncname)
         except AttributeError:
-            raise NotImplementedError()
+            raise NotImplementedError
         self.args = []
         for _, aarg in get_squares_().items():
             arg = (aarg,) * 1  # no nin
@@ -97,7 +97,7 @@ class UFunc(Benchmark):
         try:
             self.ufn = getattr(np, ufuncname)
         except AttributeError:
-            raise NotImplementedError()
+            raise NotImplementedError
         self.args = []
         for _, aarg in get_squares_().items():
             arg = (aarg,) * self.ufn.nin
@@ -332,7 +332,7 @@ class UFuncSmall(Benchmark):
         try:
             self.f = getattr(np, ufuncname)
         except AttributeError:
-            raise NotImplementedError()
+            raise NotImplementedError
         self.array_5 = np.array([1., 2., 10., 3., 4.])
         self.array_int_3 = np.array([1, 2, 3])
         self.float64 = np.float64(1.1)

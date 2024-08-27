@@ -1097,14 +1097,14 @@ class TestCreation:
                 return 1
 
             def __getitem__(self, index):
-                raise ValueError()
+                raise ValueError
 
         class Map:
             def __len__(self):
                 return 1
 
             def __getitem__(self, index):
-                raise KeyError()
+                raise KeyError
 
         a = np.array([Map()])
         assert_(a.shape == (1,))
@@ -1121,7 +1121,7 @@ class TestCreation:
                 if ind in [0, 1]:
                     return ind
                 else:
-                    raise IndexError()
+                    raise IndexError
         d = np.array([Point2(), Point2(), Point2()])
         assert_equal(d.dtype, np.dtype(object))
 
@@ -8592,7 +8592,7 @@ class TestArrayCreationCopyArgument:
     def test__array__reference_leak(self):
         class NotAnArray:
             def __array__(self, dtype=None, copy=None):
-                raise NotImplementedError()
+                raise NotImplementedError
 
         x = NotAnArray()
 
@@ -9993,7 +9993,7 @@ class TestAlignment:
         elif order is None:
             assert_(x.flags.c_contiguous, err_msg)
         else:
-            raise ValueError()
+            raise ValueError
 
     def test_various_alignments(self):
         for align in [1, 2, 3, 4, 8, 12, 16, 32, 64, None]:

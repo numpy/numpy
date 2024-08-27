@@ -443,7 +443,7 @@ else:
         try:
             x = ones(2, dtype=float32)
             if not abs(x.dot(x) - float32(2.0)) < 1e-5:
-                raise AssertionError()
+                raise AssertionError
         except AssertionError:
             msg = ("The current Numpy installation ({!r}) fails to "
                    "pass simple sanity checks. This can be caused for example "
