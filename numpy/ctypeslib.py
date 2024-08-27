@@ -282,11 +282,11 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
 
     """
 
-    # normalize dtype to an Optional[dtype]
+    # normalize dtype to dtype | None
     if dtype is not None:
         dtype = _dtype(dtype)
 
-    # normalize flags to an Optional[int]
+    # normalize flags to int | None
     num = None
     if flags is not None:
         if isinstance(flags, str):
@@ -304,7 +304,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
                 raise TypeError("invalid flags specification") from e
             num = _num_fromflags(flags)
 
-    # normalize shape to an Optional[tuple]
+    # normalize shape to tuple | None
     if shape is not None:
         try:
             shape = tuple(shape)
