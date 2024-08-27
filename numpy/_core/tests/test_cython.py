@@ -215,10 +215,8 @@ def test_multiiter_fields(install_temp, arrays):
     assert bcast.shape == checks.get_multiiter_shape(bcast)
     assert bcast.index == checks.get_multiiter_current_index(bcast)
     assert all(
-        [
-            x.base is y.base
-            for x, y in zip(bcast.iters, checks.get_multiiter_iters(bcast))
-        ]
+        x.base is y.base
+        for x, y in zip(bcast.iters, checks.get_multiiter_iters(bcast))
     )
 
 
@@ -278,10 +276,8 @@ def test_npyiter_api(install_temp):
         x is y for x, y in zip(checks.get_npyiter_operands(it), it.operands)
     )
     assert all(
-        [
-            np.allclose(x, y)
-            for x, y in zip(checks.get_npyiter_itviews(it), it.itviews)
-        ]
+        np.allclose(x, y)
+        for x, y in zip(checks.get_npyiter_itviews(it), it.itviews)
     )
 
 
