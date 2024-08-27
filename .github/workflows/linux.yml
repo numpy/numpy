@@ -44,11 +44,11 @@ jobs:
     - name: Install linter requirements
       run:
         python -m pip install -r requirements/linter_requirements.txt
-    - name: Run linter on PR diff
+    - name: Run linter on PR
       env:
         BASE_REF: ${{ github.base_ref }}
       run:
-        python tools/linter.py --branch origin/"$BASE_REF"
+        python tools/linter.py
 
   smoke_test:
     # To enable this job on a fork, comment out:

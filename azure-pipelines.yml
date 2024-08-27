@@ -53,7 +53,7 @@ stages:
       # pip 21.1 emits a pile of garbage messages to annoy users :)
       #      failOnStderr: true
     - script: |
-        python tools/linter.py --branch origin/$(System.PullRequest.TargetBranch)
+        python tools/linter.py
       displayName: 'Run Lint Checks'
       failOnStderr: true
 
