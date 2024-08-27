@@ -27,7 +27,7 @@ UNARY_UFUNCS = [obj for obj in np._core.umath.__dict__.values()
 UNARY_OBJECT_UFUNCS = [uf for uf in UNARY_UFUNCS if "O->O" in uf.types]
 
 # Remove functions that do not support `floats`
-UNARY_OBJECT_UFUNCS.remove(getattr(np, 'bitwise_count'))
+UNARY_OBJECT_UFUNCS.remove(np.bitwise_count)
 
 
 class TestUfuncKwargs:

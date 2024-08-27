@@ -13,8 +13,8 @@ UNARY_UFUNCS = [obj for obj in np._core.umath.__dict__.values() if
 UNARY_OBJECT_UFUNCS = [uf for uf in UNARY_UFUNCS if "O->O" in uf.types]
 
 # Remove functions that do not support `floats`
-UNARY_OBJECT_UFUNCS.remove(getattr(np, 'invert'))
-UNARY_OBJECT_UFUNCS.remove(getattr(np, 'bitwise_count'))
+UNARY_OBJECT_UFUNCS.remove(np.invert)
+UNARY_OBJECT_UFUNCS.remove(np.bitwise_count)
 
 IS_AVX = __cpu_features__.get('AVX512F', False) or \
         (__cpu_features__.get('FMA3', False) and __cpu_features__.get('AVX2', False))

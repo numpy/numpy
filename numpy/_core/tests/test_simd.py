@@ -160,7 +160,7 @@ class _SIMD_BOOL(_Test_Utility):
         assert vor == data_or
 
         data_xor = [a ^ b for a, b in zip(data_a, data_b)]
-        vxor = getattr(self, "xor")(vdata_a, vdata_b)
+        vxor = self.xor(vdata_a, vdata_b)
         assert vxor == data_xor
 
         vnot = getattr(self, "not")(vdata_a)
@@ -171,15 +171,15 @@ class _SIMD_BOOL(_Test_Utility):
             return
 
         data_andc = [(a & ~b) & 0xFF for a, b in zip(data_a, data_b)]
-        vandc = getattr(self, "andc")(vdata_a, vdata_b)
+        vandc = self.andc(vdata_a, vdata_b)
         assert data_andc == vandc
 
         data_orc = [(a | ~b) & 0xFF for a, b in zip(data_a, data_b)]
-        vorc = getattr(self, "orc")(vdata_a, vdata_b)
+        vorc = self.orc(vdata_a, vdata_b)
         assert data_orc == vorc
 
         data_xnor = [~(a ^ b) & 0xFF for a, b in zip(data_a, data_b)]
-        vxnor = getattr(self, "xnor")(vdata_a, vdata_b)
+        vxnor = self.xnor(vdata_a, vdata_b)
         assert data_xnor == vxnor
 
     def test_tobits(self):
@@ -1072,7 +1072,7 @@ class _SIMD_ALL(_Test_Utility):
         if self.sfx not in ("u8"):
             return
         data_andc = [a & ~b for a, b in zip(data_cast_a, data_cast_b)]
-        vandc = cast(getattr(self, "andc")(vdata_a, vdata_b))
+        vandc = cast(self.andc(vdata_a, vdata_b))
         assert vandc == data_andc
 
     @pytest.mark.parametrize("intrin", ["any", "all"])
