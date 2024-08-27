@@ -1662,7 +1662,7 @@ def _nanquantile_ureduce_func(
         a: np.array,
         q: np.array,
         weights: np.array,
-        axis: int = None,
+        axis: int | None = None,
         out=None,
         overwrite_input: bool = False,
         method="linear",

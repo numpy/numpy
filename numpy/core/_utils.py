@@ -1,7 +1,7 @@
 import warnings
 
 
-def _raise_warning(attr: str, submodule: str = None) -> None:
+def _raise_warning(attr: str, submodule: str | None = None) -> None:
     new_module = "numpy._core"
     old_module = "numpy.core"
     if submodule is not None:

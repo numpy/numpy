@@ -2079,7 +2079,7 @@ def postcrack(block, args=None, tab=''):
     block = analyzecommon(block)
     block['vars'] = analyzevars(block)
     block['sortvars'] = sortvarnames(block['vars'])
-    if 'args' in block and block['args']:
+    if block.get('args'):
         args = block['args']
     block['body'] = analyzebody(block, args, tab=tab)
 
@@ -2095,7 +2095,7 @@ def postcrack(block, args=None, tab=''):
     if 'name' in block:
         name = block['name']
     # and not userisdefined: # Build a __user__ module
-    if 'externals' in block and block['externals']:
+    if block.get('externals'):
         interfaced = []
         if 'interfaced' in block:
             interfaced = block['interfaced']

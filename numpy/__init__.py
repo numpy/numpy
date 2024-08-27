@@ -477,7 +477,9 @@ else:
                 for _wn in w:
                     if _wn.category is exceptions.RankWarning:
                         # Ignore other warnings, they may not be relevant (see gh-25433).
-                        error_message = f"{_wn.category.__name__}: {str(_wn.message)}"
+                        error_message = (
+                            f"{_wn.category.__name__}: {_wn.message}"
+                        )
                         msg = (
                             "Polyfit sanity test emitted a warning, most likely due "
                             "to using a buggy Accelerate backend."
