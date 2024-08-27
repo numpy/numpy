@@ -83,7 +83,7 @@ def test_cython(tmp_path):
     g = glob.glob(str(target_dir / "*" / "extending.pyx.c"))
     with open(g[0]) as fid:
         txt_to_find = 'NumPy API declarations from "numpy/__init__'
-        for i, line in enumerate(fid):
+        for line in fid:
             if txt_to_find in line:
                 break
         else:

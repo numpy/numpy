@@ -191,12 +191,12 @@ class Type:
 
         if self.NAME == 'CHARACTER':
             info = c_names_dict[self.NAME]
-            self.type_num = getattr(wrap, 'NPY_STRING')
+            self.type_num = wrap.NPY_STRING
             self.elsize = 1
             self.dtype = np.dtype('c')
         elif self.NAME.startswith('STRING'):
             info = c_names_dict[self.NAME[:6]]
-            self.type_num = getattr(wrap, 'NPY_STRING')
+            self.type_num = wrap.NPY_STRING
             self.elsize = int(self.NAME[6:] or 0)
             self.dtype = np.dtype(f'S{self.elsize}')
         else:

@@ -258,7 +258,7 @@ class NDArrayGetItem(Benchmark):
             mdat = self.xs
         elif msize == 'big':
             mdat = self.xl
-        getattr(mdat, '__getitem__')(margs)
+        mdat.__getitem__(margs)
 
 
 class NDArraySetItem(Benchmark):
