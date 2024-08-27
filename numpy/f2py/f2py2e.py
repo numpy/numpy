@@ -547,7 +547,7 @@ class CombineIncludePaths(argparse.Action):
             include_paths_set.update(values.split(':'))
         else:
             include_paths_set.add(values)
-        setattr(namespace, 'include_paths', list(include_paths_set))
+        namespace.include_paths = list(include_paths_set)
 
 def f2py_parser():
     parser = argparse.ArgumentParser(add_help=False)
