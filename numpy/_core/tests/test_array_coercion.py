@@ -763,7 +763,7 @@ class TestArrayLikes:
             np.array(BadSequence())
 
     def test_array_interface_descr_optional(self):
-        # The descr should be optional regresion test for gh-27249
+        # The descr should be optional regression test for gh-27249
         arr = np.ones(10, dtype="V10")
         iface = arr.__array_interface__
         iface.pop("descr")

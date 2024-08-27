@@ -172,7 +172,7 @@ would give.
 
 Behavior of ``sum`` and ``prod``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**``np.sum`` and ``np.prod``:** Will alway return the default integer type
+**``np.sum`` and ``np.prod``:** Will always return the default integer type
 when summing over integer values (or booleans).  This is usually an ``int64``.
 The reason for this is that integer summations are otherwise very likely
 to overflow and give confusing results.
@@ -214,7 +214,7 @@ The following rules apply:
   non-ascii characters.
 * For some purposes NumPy will promote almost any other datatype to strings.
   This applies to array creation or concatenation.
-* The array constructers like ``np.array()`` will use ``object`` dtype when
+* The array constructors like ``np.array()`` will use ``object`` dtype when
   there is no viable promotion.
 * Structured dtypes can promote when their field names and order matches.
   In that case all fields are promoted individually.
