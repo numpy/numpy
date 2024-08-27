@@ -1071,9 +1071,10 @@ def qr(a, mode='reduced'):
     if mode not in ('reduced', 'complete', 'r', 'raw'):
         if mode in ('f', 'full'):
             # 2013-04-01, 1.8
-            msg = "".join((
-                    "The 'full' option is deprecated in favor of 'reduced'.\n",
-                    "For backward compatibility let mode default."))
+            msg = (
+                "The 'full' option is deprecated in favor of 'reduced'.\n"
+                "For backward compatibility let mode default."
+            )
             warnings.warn(msg, DeprecationWarning, stacklevel=2)
             mode = 'reduced'
         elif mode in ('e', 'economic'):

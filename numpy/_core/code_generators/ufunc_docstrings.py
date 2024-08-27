@@ -59,7 +59,7 @@ def add_newdoc(place, name, doc):
     for k, v in subst.items():
         doc = doc.replace('$' + k, v)
 
-    docdict['.'.join((place, name))] = doc
+    docdict[f'{place}.{name}'] = doc
 
 
 add_newdoc('numpy._core.umath', 'absolute',
