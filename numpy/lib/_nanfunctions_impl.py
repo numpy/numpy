@@ -27,6 +27,7 @@ import numpy._core.numeric as _nx
 from numpy.lib import _function_base_impl as fnb
 from numpy.lib._function_base_impl import _weights_are_valid
 from numpy._core import overrides
+from typing import Optional
 
 
 array_function_dispatch = functools.partial(
@@ -1662,7 +1663,7 @@ def _nanquantile_ureduce_func(
         a: np.array,
         q: np.array,
         weights: np.array,
-        axis: int = None,
+        axis: Optional[int] = None,
         out=None,
         overwrite_input: bool = False,
         method="linear",

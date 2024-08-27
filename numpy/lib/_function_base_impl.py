@@ -30,6 +30,7 @@ from numpy._utils import set_module
 
 # needed in this module for compatibility
 from numpy.lib._histograms_impl import histogram, histogramdd  # noqa: F401
+from typing import Optional
 
 
 array_function_dispatch = functools.partial(
@@ -4665,7 +4666,7 @@ def _quantile_ureduce_func(
         a: np.array,
         q: np.array,
         weights: np.array,
-        axis: int = None,
+        axis: Optional[int] = None,
         out=None,
         overwrite_input: bool = False,
         method="linear",
