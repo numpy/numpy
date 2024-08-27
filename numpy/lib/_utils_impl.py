@@ -178,7 +178,7 @@ class _Deprecate:
                     skip += len(line) + 1
                 doc = doc[skip:]
             depdoc = textwrap.indent(depdoc, ' ' * indent)
-            doc = '\n\n'.join([depdoc, doc])
+            doc = f'{depdoc}\n\n{doc}'
         newfunc.__doc__ = doc
 
         return newfunc
